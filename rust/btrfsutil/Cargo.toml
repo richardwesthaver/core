@@ -1,0 +1,9 @@
+### src/sys/btrfsutil/Cargo.toml --- libbtrfsutil Rust bindings
+[package]
+name = "btrfsutil-sys"
+version = "0.1.0"
+edition = "2021"
+[lib]
+path = "lib.rs"
+[build-dependencies]
+bindgen = "0.66.1"
