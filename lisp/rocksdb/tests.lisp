@@ -17,8 +17,6 @@
 
 (defsuite :rocksdb)
 
-(defsuite :rdb)
-
 (in-suite :rocksdb)
 
 (deftest set-opts ()

@@ -15,11 +15,7 @@
   :bug-tracker "https://lab.rwest.io/comp/startup/nas-t/issues"
   :depends-on (:macs)
   :in-order-to ((test-op (test-op "rocksdb/tests")))
-  :components ((:module "rocksdb"
-                :serial t
-                :components
-                ((:file "rocksdb")
-                 (:file "rdb")))))
+  :components ((:file "rocksdb/rocksdb")))
 
 (defsystem "rocksdb/tests"
   :version "0.1.0"

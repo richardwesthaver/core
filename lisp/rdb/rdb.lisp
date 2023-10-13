@@ -7,7 +7,6 @@
 ;; Commentary:
 
 ;; Code:
-(in-package :rocksdb)
 (defpackage :rdb
   (:use :cl :rocksdb :sb-alien :alien)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
