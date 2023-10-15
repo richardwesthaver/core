@@ -3,8 +3,8 @@
 ;; sxp is a unified S-Expression data format
 
 ;;; Code:
-(defpackage :sxp
-  (:use :cl :sb-mop :sym :fu :reexport)
+(pkg:defpkg :sxp
+    (:use :cl :sb-mop :sym :fu)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
   ;; TODO: hot-patch readtables into sxp classes/parsers
   (:import-from :readtables :defreadtable :in-readtable)

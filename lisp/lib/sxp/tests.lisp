@@ -1,9 +1,9 @@
 ;;; tests.lisp --- SEXP tests
-;; TODO 2023-09-01: refactor to macs.rt
-(defpackage :sxp-tests
-  (:use :cl :sxp :macs :rt)
-  (:export #:run-tests))
-(in-package :sxp-tests)
+(pkg:defpkg :sxp.tests
+    (:use :cl :sxp :macs :rt)
+  (:export :*test-file* :*test-string*))
+
+(in-package :sxp.tests)
 (in-readtable *macs-readtable*)
 (declaim
  (type (or string pathname) *test-file*)
