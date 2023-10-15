@@ -3,6 +3,71 @@
 ** btrfs
 ** btrfsutil
 * lisp
-** btrfs
-** rocksdb
+#+begin_src lisp :results silent
+  (let ((asds '("lisp/rdb.asd" "lisp/sxp.asd" 
+		"lisp/organ/organ.asd" "lisp/macs/macs.asd" "lisp/skel/skel.asd"
+		"lisp/ffi/rocksdb.asd" "lisp/ffi/btrfs.asd")))
+    (mapc (lambda (x) (asdf:load-asd x)) asds))
+#+end_src
+** rdb
+*** tests
+#+begin_src lisp :package rdb.tests :results output replace :exports results
+  (asdf:load-system :rdb/tests)
+  (in-package :rdb.tests)
+  (load "lisp/rdb/tests.lisp")
+  (setq log:*log-level* :debug)
+  (rt:do-tests :rdb)
+#+end_src
 
+#+RESULTS:
+: in suite RDB with 0/0 tests:
+: No tests failed.
+
+** sxp
+** ffi
+*** btrfs
+**** tests
+#+begin_src lisp :package rocksdb.tests :results output replace :exports results
+  (asdf:load-system :btrfs/tests)
+  (in-package :btrfs.tests)
+  (load "lisp/ffi/btrfs/tests.lisp")
+  (setq log:*log-level* :debug)
+  (rt:do-tests :btrfs)
+#+end_src
+
+#+RESULTS:
+: in suite BTRFS with 0/0 tests:
+: No tests failed.
+
+*** rocksdb
+**** tests
+#+begin_src lisp :package rocksdb.tests :results output replace :exports results
+  (asdf:load-system :rocksdb/tests)
+  (in-package :rocksdb.tests)
+  (load "lisp/ffi/rocksdb/tests.lisp")
+  (setq log:*log-level* :debug)
+  (rt:do-tests :rocksdb)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+in suite ROCKSDB with 2/2 tests:
+:DEBUG @ 7288.927  
+; running test: 
+; #<TEST DB :fn DB-test991 :args NIL :persist NIL {10032DD7C3}>
+:DEBUG @ 7288.98  
+; #<PASS (NULL-ALIEN ERRPTR)>
+:DEBUG @ 7288.98  
+; #<PASS (NULL-ALIEN ERRPTR)>
+:DEBUG @ 7288.98  
+; #<PASS (STRING= (OCTETS-TO-STRING VAL)
+                  (CONCATENATE 'STRING (MAP 'VECTOR #'CODE-CHAR RVAL)))>
+:DEBUG @ 7288.98  
+; #<PASS (NULL-ALIEN ERRPTR)>
+#<PASS DB-TEST991> 
+:DEBUG @ 7288.987  
+; running test: 
+; #<TEST SET-OPTS :fn SET-OPTS-test990 :args NIL :persist NIL {10031F2E43}>
+#<PASS SET-OPTS-TEST990> 
+No tests failed.
+#+end_example
