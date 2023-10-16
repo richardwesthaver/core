@@ -1,7 +1,10 @@
 ;;; uring.asd-*- mode: lisp; -*-
-(in-package :sys.uring)
 (defsystem :uring
-  :depends-on (sb-grovel)
-  :components ((grovel-constants-file "uring/cs" :package :uring)
-	       (grovel-constants-file "uring/cs.unix" :package :uring)
-	       (:file "uring/uring")))
+  :depends-on (:macs)
+  :in-order-to ((test-op (test-op "uring/tests")))
+  :components ((:file "uring/uring")))
+
+(defsystem :uring/tests
+  :depends-on (:uring :rt)
+  :components ((:file "uring/tests"))
+  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :uring)))

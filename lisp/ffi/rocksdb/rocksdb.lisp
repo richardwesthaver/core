@@ -59,7 +59,7 @@
 
 ;;; Code:
 (defpackage :rocksdb
-  (:use :cl :sb-alien :macs.alien)
+  (:use :cl :alien)
   (:export
    :load-rocksdb
    ;; ERR

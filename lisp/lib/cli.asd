@@ -5,5 +5,10 @@
   :bug-tracker "https://lab.rwest.io/ellis/macs/issues"
   :source-control (:hg "https://lab.rwest.io/ellis/macs")
   :depends-on (:macs :sxp)
-  :in-order-to ((test-op (test-op "macs/tests")))
-  :components ((:file "cli")))
+  :in-order-to ((test-op (test-op "cli/tests")))
+  :components ((:file "cli/cli")))
+
+(defsystem :cli/tests
+  :depends-on (:macs :rt :cli)
+  :components ((:file "cli/tests"))
+  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :cli)))

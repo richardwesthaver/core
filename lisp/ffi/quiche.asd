@@ -1,7 +1,9 @@
-(defsystem "quiche"
-  :version "0.1.0"
-  :maintainer "ellis <ellis@rwest.io>"
-  :homepage "https://nas-t.net"
-  :bug-tracker "https://lab.rwest.io/comp/startup/nas-t/issues"
+(defsystem :quiche
   :depends-on (:macs)
-  :components ((:file "quiche")))
+  :in-order-to ((test-op (test-op "quiche/tests")))
+  :components ((:file "quiche/quiche")))
+
+(defsystem :quche/tests
+  :depends-on (:rt :quiche)
+  :components ((:file "quche/tests"))
+  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :quiche)))

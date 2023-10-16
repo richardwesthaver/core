@@ -11,9 +11,7 @@
   :bug-tracker "https://lab.rwest.io/comp/core/issues"
   :depends-on (:macs :sxp)
   :in-order-to ((test-op (test-op "btrfs/tests")))
-  :components ((:module "btrfs"
-                :components
-                ((:file "btrfs")))))
+  :components ((:file "btrfs/btrfs")))))
 
 (defsystem "btrfs/tests"
   :version "0.1.0"

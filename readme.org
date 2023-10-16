@@ -5,14 +5,17 @@
 *** btrfsutil
 * lisp
 #+begin_src lisp :results silent
-  (let ((asds '("lisp/macs/macs.asd" 
+  (let ((asds '("lisp/macs/macs.asd" "lisp/lib/cli.asd" "lisp/lib/rt.asd"
 		"lisp/lib/rdb.asd" "lisp/lib/sxp.asd" "lisp/lib/organ/organ.asd" "lisp/lib/skel/skel.asd"
-		"lisp/ffi/rocksdb.asd" "lisp/ffi/btrfs.asd")))
-    (mapc (lambda (x) (asdf:load-asd x)) asds))
+		"lisp/ffi/rocksdb.asd" "lisp/ffi/btrfs.asd" "lisp/ffi/uring.asd")))
+    (mapc (lambda (x) (asdf:load-asd (pathname x))) asds))
+  (asdf:load-system :macs)
+  (asdf:load-system :rt)
 #+end_src
 ** macs
+*** pkg
 *** tests
-#+begin_src lisp :package rdb.tests :results output replace :exports results
+#+begin_src lisp :package pkg.tests :results output replace :exports results
   (asdf:load-system :cli)
   (asdf:load-system :macs/tests)
   (in-package :macs.tests)
@@ -23,30 +26,30 @@
 #+RESULTS:
 #+begin_example
 in suite MACS with 11/11 tests:
-:DEBUG @ 10521.106  
+:DEBUG @ 224.94667  
 ; running test: 
-; #<TEST PAN :fn PAN-test1353 :args NIL :persist NIL {100445A003}>
-:DEBUG @ 10521.113  
+; #<TEST PAN :fn PAN-test292 :args NIL :persist NIL {1004BEDAD3}>
+:DEBUG @ 224.95667  
 ; #<PASS (= 0 (FUNCALL P NIL))>
-:DEBUG @ 10521.113  
+:DEBUG @ 224.95667  
 ; #<PASS (= 1 (FUNCALL P 1))>
-:DEBUG @ 10521.113  
+:DEBUG @ 224.95667  
 ; #<PASS (= 1 B C)>
-#<PASS PAN-TEST1353> 
-:DEBUG @ 10521.113  
+#<PASS PAN-TEST292> 
+:DEBUG @ 224.95667  
 ; running test: 
-; #<TEST ANA :fn ANA-test1352 :args NIL :persist NIL {10043B24C3}>
-:DEBUG @ 10521.117  
+; #<TEST ANA :fn ANA-test291 :args NIL :persist NIL {1004BEB593}>
+:DEBUG @ 224.95667  
 ; #<PASS (= 8 (AIF (+ 2 2) (+ IT IT)))>
-#<PASS ANA-TEST1352> 
-:DEBUG @ 10521.117  
+#<PASS ANA-TEST291> 
+:DEBUG @ 224.95667  
 ; running test: 
-; #<TEST FMT :fn FMT-test1351 :args NIL :persist NIL {1003D5F413}>
-:DEBUG @ 10521.12  
+; #<TEST FMT :fn FMT-test290 :args NIL :persist NIL {1004BE9D93}>
+:DEBUG @ 224.96  
 ; #<PASS (STRING= (FORMAT NIL | 1 | 2 | 3 |~%) (FMT-ROW '(1 2 3)))>
-:DEBUG @ 10521.12  
+:DEBUG @ 224.96  
 ; #<PASS (STRING= (FMT-SXHASH (SXHASH T)) (FMT-SXHASH (SXHASH T)))>
-:DEBUG @ 10521.12  
+:DEBUG @ 224.96  
 ; #<PASS (STRING= FOOBAR
  ├─ :A
  ├─ :B
@@ -59,7 +62,7 @@ in suite MACS with 11/11 tests:
  ├─  C
  ╰─  D
 )>
-:DEBUG @ 10521.12  
+:DEBUG @ 224.96  
 ; #<PASS (STRING= SK-PROJECT
  ├─ :NAME
  │   ╰─ "foobar"
@@ -76,85 +79,85 @@ in suite MACS with 11/11 tests:
  ╰─ :VC
      ╰─ :HG
 )>
-#<PASS FMT-TEST1351> 
-:DEBUG @ 10521.12  
+#<PASS FMT-TEST290> 
+:DEBUG @ 224.96  
 ; running test: 
-; #<TEST ALIEN :fn ALIEN-test1350 :args NIL :persist NIL {1003D5D903}>
-:DEBUG @ 10521.123  
+; #<TEST ALIEN :fn ALIEN-test289 :args NIL :persist NIL {1004BE8283}>
+:DEBUG @ 224.96333  
 ; #<PASS (= 0 (FOREIGN-INT-TO-INTEGER 0 4))>
-:DEBUG @ 10521.123  
+:DEBUG @ 224.96333  
 ; #<PASS (= 1 (BOOL-TO-FOREIGN-INT T))>
-#<PASS ALIEN-TEST1350> 
-:DEBUG @ 10521.123  
+#<PASS ALIEN-TEST289> 
+:DEBUG @ 224.96333  
 ; running test: 
-; #<TEST THREAD :fn THREAD-test1349 :args NIL :persist NIL {1003D5BB43}>
-:DEBUG @ 10521.127  
+; #<TEST THREAD :fn THREAD-test288 :args NIL :persist NIL {1004B87423}>
+:DEBUG @ 224.96667  
 ; #<PASS (STRINGP (PRINT-THREAD-INFO NIL))>
-#<PASS THREAD-TEST1349> 
-:DEBUG @ 10521.127  
+#<PASS THREAD-TEST288> 
+:DEBUG @ 224.96667  
 ; running test: 
-; #<TEST REEXPORT :fn REEXPORT-test1348 :args NIL :persist NIL {1003D5A633}>
-#<PASS REEXPORT-TEST1348> 
-:DEBUG @ 10521.127  
+; #<TEST REEXPORT :fn REEXPORT-test287 :args NIL :persist NIL {1004A27883}>
+#<PASS REEXPORT-TEST287> 
+:DEBUG @ 224.96667  
 ; running test: 
-; #<TEST COND :fn COND-test1347 :args NIL :persist NIL {1003D59383}>
-#<PASS COND-TEST1347> 
-:DEBUG @ 10521.127  
+; #<TEST COND :fn COND-test286 :args NIL :persist NIL {1004A265D3}>
+#<PASS COND-TEST286> 
+:DEBUG @ 224.96667  
 ; running test: 
-; #<TEST LOG :fn LOG-test1346 :args NIL :persist NIL {1003D580A3}>
-:DEBUG @ 10521.127  
+; #<TEST LOG :fn LOG-test285 :args NIL :persist NIL {1004A25323}>
+:DEBUG @ 224.96667  
 ; test
 ; DEBUG
-:DEBUG @ 10521.127  
+:DEBUG @ 224.96667  
 ; test
 ; DEBUG
-:DEBUG @ 10521.13  
+:DEBUG @ 224.97  
 ; test
 ; DEBUG
-:DEBUG @ 10521.13  
+:DEBUG @ 224.97  
 ; #<PASS (DEBUG! test *LOG-LEVEL*)>
-#<PASS LOG-TEST1346> 
-:DEBUG @ 10521.13  
+#<PASS LOG-TEST285> 
+:DEBUG @ 224.97  
 ; running test: 
-; #<TEST LIST :fn LIST-test1345 :args NIL :persist NIL {1003CD8E43}>
-:DEBUG @ 10521.134  
+; #<TEST LIST :fn LIST-test284 :args NIL :persist NIL {1004A23F13}>
+:DEBUG @ 224.97333  
 ; #<PASS (EQ (ENSURE-CAR '(0)) (ENSURE-CAR 0))>
-:DEBUG @ 10521.134  
+:DEBUG @ 224.97333  
 ; #<PASS (EQ (ENSURE-CAR '(NIL)) (ENSURE-CAR NIL))>
-:DEBUG @ 10521.134  
+:DEBUG @ 224.97333  
 ; #<PASS (NOT (EQ (ENSURE-CONS 0) (ENSURE-CONS 0)))>
-:DEBUG @ 10521.134  
+:DEBUG @ 224.97333  
 ; #<PASS (EQUAL (ENSURE-CONS 0) (ENSURE-CONS 0))>
-#<PASS LIST-TEST1345> 
-:DEBUG @ 10521.134  
+#<PASS LIST-TEST284> 
+:DEBUG @ 224.97333  
 ; running test: 
-; #<TEST STR :fn STR-test1344 :args NIL :persist NIL {1003BADEE3}>
-:DEBUG @ 10521.14  
+; #<TEST STR :fn STR-test283 :args NIL :persist NIL {1004A21F63}>
+:DEBUG @ 224.97667  
 ; #<PASS (TYPEP test 'STRING-DESIGNATOR)>
-:DEBUG @ 10521.14  
+:DEBUG @ 224.97667  
 ; #<PASS (TYPEP 'TEST 'STRING-DESIGNATOR)>
-:DEBUG @ 10521.14  
+:DEBUG @ 224.97667  
 ; #<PASS (TYPEP C 'STRING-DESIGNATOR)>
-:DEBUG @ 10521.14  
+:DEBUG @ 224.97667  
 ; #<PASS (NOT (TYPEP 0 'STRING-DESIGNATOR))>
-#<PASS STR-TEST1344> 
-:DEBUG @ 10521.14  
+#<PASS STR-TEST283> 
+:DEBUG @ 224.97667  
 ; running test: 
-; #<TEST SYM :fn SYM-test1343 :args NIL :persist NIL {10037F7453}>
-:DEBUG @ 10521.144  
+; #<TEST SYM :fn SYM-test282 :args NIL :persist NIL {1004A20453}>
+:DEBUG @ 224.98  
 ; #<PASS (NOT (EQUALP (MAKE-GENSYM 'A) (MAKE-GENSYM 'A)))>
-:DEBUG @ 10521.144  
+:DEBUG @ 224.98  
 ; #<PASS (EQ (ENSURE-SYMBOL 'TESTS MACS.TESTS) 'TESTS)>
-:DEBUG @ 10521.144  
+:DEBUG @ 224.98  
 ; #<PASS (EQ 'FOO (FORMAT-SYMBOL MACS.TESTS ~A 'FOO))>
-:DEBUG @ 10521.144  
+:DEBUG @ 224.98  
 ; #<PASS (EQ (MAKE-KEYWORD 'FIZZ) FIZZ)>
-#<PASS SYM-TEST1343> 
+#<PASS SYM-TEST282> 
 No tests failed.
 #+end_example
 ** lib
-*** cli
-#+begin_src lisp :package rdb.tests :results output replace :exports results
+*** TODO cli
+#+begin_src lisp :package cli.tests :results output replace :exports results
   (asdf:load-system :cli)
   (asdf:load-system :cli/tests)
   (in-package :cli.tests)
@@ -162,7 +165,7 @@ No tests failed.
   (setq *log-level* :debug)
   (rt:do-tests :cli)
 #+end_src
-*** rt
+*** TODO rt
 #+begin_src lisp :package rt.tests :results output replace :exports results
   (asdf:load-system :rt/tests)
   (in-package :rt.tests)
@@ -361,7 +364,7 @@ No tests failed.
 ** ffi
 *** btrfs
 **** tests
-#+begin_src lisp :package rocksdb.tests :results output replace :exports results
+#+begin_src lisp :package btrfs.tests :results output replace :exports results
   (asdf:load-system :btrfs/tests)
   (in-package :btrfs.tests)
   (load "lisp/ffi/btrfs/tests.lisp")
@@ -402,3 +405,36 @@ in suite ROCKSDB with 2/2 tests:
 #<PASS SET-OPTS-TEST990> 
 No tests failed.
 #+end_example
+*** quiche
+**** tests
+#+begin_src lisp :package quiche.tests :results output replace :exports results
+  (asdf:load-system :quiche/tests)
+  (in-package :quiche.tests)
+  (load "lisp/ffi/quiche/tests.lisp")
+  (setq log:*log-level* :debug)
+  (rt:do-tests :uring)
+#+end_src
+*** uring
+**** tests
+#+begin_src lisp :package uring.tests :results output replace :exports results
+  (asdf:load-system :uring/tests)
+  (in-package :uring.tests)
+  (load "lisp/ffi/uring/tests.lisp")
+  (setq log:*log-level* :debug)
+  (rt:do-tests :uring)
+#+end_src
+#+RESULTS:
+: in suite URING with 0/0 tests:
+: No tests failed.
+*** tree-sitter
+**** tests
+#+begin_src lisp :package tree-sitter.tests :results output replace :exports results
+  (asdf:load-system :tree-sitter/tests)
+  (in-package :tree-sitter.tests)
+  (load "lisp/ffi/tree-sitter/tests.lisp")
+  (setq log:*log-level* :debug)
+  (rt:do-tests :tree-sitter)
+#+end_src
+#+RESULTS:
+: in suite TREE-SITTER with 0/0 tests:
+: No tests failed.
