@@ -1,3 +1,2 @@
-lisp/macs = ssh://git@lab.rwest.io/ellis/macs
 lisp/lib/skel = ssh://git@lab.rwest.io/ellis/skel
 lisp/lib/organ = ssh://git@lab.rwest.io/ellis/organ

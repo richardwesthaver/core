@@ -136,7 +136,7 @@
 (define-alien-type rocksdb-errptr (* (* t)))
 
 ;;; Cache
-(define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
+(define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity u32))
 
 ;;; Options
 
@@ -152,43 +152,43 @@
   (val c-string))
 
 ;;;; db
-(define-alien-routine rocksdb-options-create rocksdb-options)
+(define-alien-routine rocksdb-options-create (* rocksdb-options))
 (define-alien-routine rocksdb-options-destroy void 
   (options rocksdb-options))
 (define-alien-routine rocksdb-options-increase-parallelism void 
-  (opt rocksdb-options) (total-threads int))
+  (opt (* rocksdb-options)) (total-threads int))
 (define-alien-routine rocksdb-options-optimize-level-style-compaction void 
-  (opt rocksdb-options) 
-  (memtable_memory_budget (unsigned 4)))
+  (opt (* rocksdb-options))
+  (memtable-memory-budget u64))
 (define-alien-routine rocksdb-options-set-create-if-missing void 
-  (opt rocksdb-options) 
+  (opt (* rocksdb-options))
   (val boolean))
 (define-alien-routine rocksdb-options-set-block-based-table-factory void
-  (opt rocksdb-options)
-  (table-options rocksdb-block-based-table-options))
+  (opt (* rocksdb-options))
+  (table-options (* rocksdb-block-based-table-options)))
 ;;;; write
-(define-alien-routine rocksdb-writeoptions-create rocksdb-writeoptions)
+(define-alien-routine rocksdb-writeoptions-create (* rocksdb-writeoptions))
 (define-alien-routine rocksdb-writeoptions-destroy void
-  (opt rocksdb-writeoptions))
+  (opt (* rocksdb-writeoptions)))
 ;;;; read
-(define-alien-routine rocksdb-readoptions-create rocksdb-readoptions)
+(define-alien-routine rocksdb-readoptions-create (* rocksdb-readoptions))
 (define-alien-routine rocksdb-readoptions-destroy void
-  (opt rocksdb-readoptions))
+  (opt (* rocksdb-readoptions)))
 
 ;;; DB
-(define-alien-routine rocksdb-open rocksdb 
-  (opt rocksdb-options) 
+(define-alien-routine rocksdb-open (* rocksdb)
+  (opt (* rocksdb-options))
   (name c-string) 
   (errptr rocksdb-errptr))
 (define-alien-routine rocksdb-close void 
-  (db rocksdb))
+  (db (* rocksdb)))
 (define-alien-routine rocksdb-cancel-all-background-work void 
-  (db rocksdb) 
+  (db (* rocksdb))
   (wait boolean))
 
 (define-alien-routine rocksdb-put void 
-  (db rocksdb) 
-  (options rocksdb-writeoptions) 
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
   (key (* char))
   (keylen size-t) 
   (val (* char))
@@ -196,40 +196,40 @@
   (errptr rocksdb-errptr))
 
 (define-alien-routine rocksdb-get (* char)
-  (db rocksdb) 
-  (options rocksdb-readoptions) 
+  (db (* rocksdb))
+  (options (* rocksdb-readoptions))
   (key (* char))
   (keylen size-t) 
   (vallen (* size-t))
   (errptr rocksdb-errptr))
 
 (define-alien-routine rocksdb-delete void
-  (db rocksdb)
-  (options rocksdb-writeoptions)
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
   (key (* char))
   (keylen size-t)
   (errptr rocksdb-errptr))
 
 ;;; Iterators
-(define-alien-routine rocksdb-create-iterator rocksdb-iterator 
-  (db rocksdb) 
-  (opt rocksdb-readoptions))
+(define-alien-routine rocksdb-create-iterator (* rocksdb-iterator)
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions)))
 (define-alien-routine rocksdb-iter-destroy void 
-  (iter rocksdb-iterator))
+  (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-seek-to-first void 
-  (iter rocksdb-iterator))
+  (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-valid boolean 
-  (iter rocksdb-iterator))
+  (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-next void 
-  (iter rocksdb-iterator))
+  (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-prev void 
-  (iter rocksdb-iterator))
+  (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-key (* char)
-  (iter rocksdb-iterator) 
+  (iter (* rocksdb-iterator))
   (klen-ptr (* size-t)))
 (define-alien-routine rocksdb-iter-value (* char) 
-  (iter rocksdb-iterator) (vlen-ptr (* size-t)))
+  (iter (* rocksdb-iterator)) (vlen-ptr (* size-t)))
 (define-alien-routine rocksdb-destroy-db void
-  (options rocksdb-options)
+  (options (* rocksdb-options))
   (name c-string) 
   (errptr rocksdb-errptr))
