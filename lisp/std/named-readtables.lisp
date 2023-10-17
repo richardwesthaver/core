@@ -12,7 +12,7 @@
 ;; behavior (using standard) versus your source code (custom).
 
 ;;; Code:
-(pkg:defpkg :std/named-readtables
+(defpackage :std/named-readtables
   (:nicknames :named-readtables)
   (:use :cl)
   (:export
@@ -37,7 +37,7 @@
    #:readtable-does-not-exist
    #:parse-body))
 
-(in-package :named-readtables)
+(in-package :std/named-readtables)
 (pushnew :named-readtables *features*)
 
 (defmacro without-package-lock ((&rest package-names) &body body)

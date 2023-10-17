@@ -31,11 +31,11 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (require 'sb-sprof))
 
-(pkg:defpkg :rt
+(defpackage :std/rt
   (:use
-   :cl :sxp
-   :sym :list :cond :readtables :fu :fmt :log :ana :pan :sb-aprof
-   #+x86-64 :sb-sprof)
+   :std/base :std/sxp :std/fu :std/fmt :std/log :std/ana :std/pan 
+   :std/list :std/sym :std/cond :std/str
+   :sb-aprof #+x86-64 :sb-sprof)
   (:nicknames :rt)
   (:export
    :*default-test-opts*
@@ -90,8 +90,8 @@
    :test-form
    :test-results))
 
-(in-package :rt)
-(in-readtable *macs-readtable*)
+(in-package :std/rt)
+(in-readtable :std)
 
 ;;; Vars
 (defvar *default-test-opts* '(optimize sb-c::instrument-consing))

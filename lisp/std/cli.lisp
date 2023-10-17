@@ -18,9 +18,10 @@
 ;; install-ir, etc.
 
 ;;; Code:
-(pkg:defpkg :cli
-  (:use :cl :sym :cond :fu :str :ana :fmt :log)
-  (:import-from :ana :alet)
+(uiop:define-package :std/cli
+  (:nicknames :cli)
+  (:use :cl :std/base :std/fu :std/ana :std/fmt :std/log)
+  (:import-from :std/ana :alet)
   (:import-from :uiop :println)
   (:import-from :sb-posix :filename-designator)
   (:import-from :sb-ext :parse-native-namestring)
@@ -110,7 +111,7 @@
    :cli-version
    :cli-usage))
 
-(in-package :cli)
+(in-package :std/cli)
 
 (defun cli-arg0 () (car sb-ext:*posix-argv*))
 (defun cli-args () (cdr sb-ext:*posix-argv*))

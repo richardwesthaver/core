@@ -19,9 +19,9 @@
 ;; represented by objects of type ALIEN-VALUE.
 
 ;;; Code:
-(pkg:defpkg :std/alien
+(uiop:define-package :std/alien
   (:nicknames :alien)
-  (:use :cl :sb-vm :sb-ext :sb-c :str :sym :fu)
+  (:use :cl :sb-vm :sb-ext :sb-c :std/base :std/fu)
   (:use-reexport :sb-alien)
   (:export
    :copy-c-string

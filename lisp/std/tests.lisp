@@ -5,24 +5,10 @@
 ;; TODO: fix false positives when using (eval-test)
 
 ;;; Code:
-(defpackage :std/tests
-  (:use
-   :cl
-   :readtables
-   :str
-   :fmt
-   :sym
-   :list
-   :cond
-   :log
-   :fu
-   :ana
-   :pan
-   :fs
-   :alien
-   :thread
-   :rt))
-
+(uiop:define-package :std/tests
+  (:use :cl :std/all :std/rt)
+  (:use-reexport :std/tests/sxp))
+   
 (in-package :std/tests)
 
 (in-readtable :std)
@@ -49,8 +35,8 @@
   "Test STD.SYM"
   ;; gensyms
   (is (not (equalp (make-gensym 'a) (make-gensym 'a))))
-  (is (eq (ensure-symbol 'tests :macs.tests) 'tests))
-  (is (eq 'macs.tests::foo (format-symbol :macs.tests "~A" 'foo)))
+  (is (eq (ensure-symbol 'tests :std/tests) 'tests))
+  (is (eq 'std/tests::foo (format-symbol :std/tests "~A" 'foo)))
   (is (eq (make-keyword 'fizz) :fizz)))
 
 ;;;; TODO
@@ -101,7 +87,7 @@
 "#))
 ;; with plist option
   (is (string= 
-       #.(fmt:fmt-tree nil '(sk-project :name "foobar" :path "/a/b/c.asd" :vc :hg) :layout :down :plist t)
+       #.(std/fmt:fmt-tree nil '(sk-project :name "foobar" :path "/a/b/c.asd" :vc :hg) :layout :down :plist t)
        #"SK-PROJECT
  ├─ :NAME
  │   ╰─ "foobar"
@@ -129,3 +115,62 @@
       (is (= 0 (funcall p nil)))
       (is (= 1 (funcall p 1)))
       (is (= 1 b c)))))
+
+;;; RT
+(defsuite :rt)
+(in-suite :rt)
+(deftest rt (:bench 100 :profile t :persist nil)
+  (is (typep (make-fixture-prototype :empty nil) 'fixture-prototype))
+  (with-fixture (fx (make-fixture ((a 1) (b 2)) 
+		      (:+ () (+ (incf a) (incf b)))
+		      (:- () (- (decf a) (decf b)))
+		      (t () 0)))
+    (is (= 5 (funcall fx :+)))
+    (is (= 7 (funcall fx :+)))
+    (is (= 5 (funcall fx :-)))
+    (is (= 0 (funcall fx))))
+  (signals (error t) (test-form (make-instance 'test-result))))
+
+;;; CLI
+(defsuite :cli)
+(in-suite :cli)
+(unless *compile-tests*
+  (deftest cli-prompt ()
+    "Test MACS.CLI prompts"
+    (make-prompt! tpfoo "testing: ")
+    (defvar tcoll nil)
+    (defvar thist nil)
+    (let ((*standard-input* (make-string-input-stream 
+			     (format nil "~A~%~A~%" "foobar" "foobar"))))
+      ;; prompts 
+      (is (string= (tpfoo-prompt) "foobar"))
+      (is (string= "foobar"
+		   (cli:completing-read "nothing: " tcoll :history thist :default "foobar"))))))
+
+(defparameter *opts* (cli:make-opts (:name foo :global t :description "bar")
+			    (:name bar :description "foo")))
+
+(defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
+(defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds #(*cmd1*) :opts *opts* :description "cmd1 description"))
+(defparameter *cmds* (cli:make-cmds (:name "baz" :description "baz" :opts *opts*)))
+
+(defparameter *cli* (make-cli t :opts *opts* :cmds *cmds* :description "test cli"))
+
+(deftest cli ()
+  "test MACS.CLI OOS."
+  (let ((cli *cli*))
+    (is (eq (make-shorty "test") #\t))
+    (is (equalp (proc-args cli '("-f" "baz" "--bar" "fax")) ;; not eql
+		(make-cli-ast 
+		 (list (make-cli-node 'opt (find-short-opt cli #\f))
+		       (make-cli-node 'cmd (find-cmd cli "baz"))
+		       (make-cli-node 'opt (find-opt cli "bar"))
+		       (make-cli-node 'arg "fax")))))
+    (is (parse-args cli '("--bar" "baz" "-f" "yaks")))
+    (is (stringp
+	 (with-output-to-string (s)
+	   (print-version cli s)
+	   (print-usage cli s)
+	   (print-help cli s))))
+    (is (string= "foobar" (parse-str-opt "foobar")))))
+

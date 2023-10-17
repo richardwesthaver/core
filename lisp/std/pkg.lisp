@@ -15,7 +15,7 @@
    #:package-definition-form #:parse-defpkg-form
    #:ensure-package))
 
-(in-package :pkg)
+(in-package :std/pkg)
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun find-package* (package-designator &optional (error t))

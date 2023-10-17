@@ -3,9 +3,8 @@
 ;; inspired by alexandria/symbols.lisp
 
 ;;; Code:
-(pkg:defpkg :std/sym
-  (:use :cl :str :sb-int)
-  (:nicknames :sym)
+(uiop:define-package :std/sym
+  (:use :cl :std/str :sb-int)
   (:export
    #:ensure-symbol
    #:format-symbol
@@ -17,7 +16,7 @@
    #:with-unique-names
    #:symbolicate))
 
-(in-package :sym)
+(in-package :std/sym)
 
 ;; (reexport-from :sb-int
 ;; 	       :include '(:with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*))

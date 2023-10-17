@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :std/fu
   (:nicknames :fu)
-  (:use :cl :sb-mop :sb-c :named-readtables :sym :list :cond)
+  (:use :cl :sb-mop :sb-c :std/named-readtables :std/sym :std/list :std/cond)
   (:export
    :until
    #:mkstr
@@ -54,7 +54,7 @@
    :merge! :sort!
    :list-slot-values-using-class :list-class-methods :list-class-slots :list-indirect-slot-methods))
 
-(in-package :fu)  
+(in-package :std/fu)
 
 ;;; Misc
 (defmacro until (condition &body body)

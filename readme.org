@@ -5,238 +5,67 @@
 *** btrfsutil
 * lisp
 #+begin_src lisp :results silent
-  (let ((asds '("lisp/macs/macs.asd" "lisp/lib/cli.asd" "lisp/lib/rt.asd"
-		"lisp/lib/rdb.asd" "lisp/lib/sxp.asd" "lisp/lib/organ/organ.asd" "lisp/lib/skel/skel.asd"
-		"lisp/ffi/rocksdb.asd" "lisp/ffi/btrfs.asd" "lisp/ffi/uring.asd")))
+  (let ((asds '("lisp/std.asd" "lisp/lib/rdb.asd" "lisp/lib/organ/organ.asd" "lisp/lib/skel/skel.asd"
+                "lisp/ffi/rocksdb.asd" "lisp/ffi/btrfs.asd" "lisp/ffi/uring.asd")))
     (mapc (lambda (x) (asdf:load-asd (pathname x))) asds))
-  (asdf:load-system :macs)
-  (asdf:load-system :rt)
+  (asdf:load-system :std)
 #+end_src
-** macs
-*** pkg
+** std
 *** tests
-#+begin_src lisp :package pkg.tests :results output replace :exports results
-  (asdf:load-system :cli)
-  (asdf:load-system :macs/tests)
-  (in-package :macs.tests)
-  (load "lisp/macs/tests.lisp")
-  (setq *log-level* :debug)
-  (rt:do-tests :macs)
+#+begin_src lisp :package std/tests :results output replace :exports results
+  (load "lisp/std/tests.lisp")
+  (load "lisp/std/tests/sxp.lisp")
+  (rt:do-tests :named-readtables)
+  (rt:do-tests :std)  
+  (rt:do-tests :rt)
+  (rt:do-tests :cli)
+  (in-package :std/tests/sxp)
+  (setq *sxp-test-file* "lisp/std/tests/tests.sxp")
+  (rt:do-tests :sxp)
 #+end_src
 #+RESULTS:
 #+begin_example
-in suite MACS with 11/11 tests:
-:DEBUG @ 224.94667  
-; running test: 
-; #<TEST PAN :fn PAN-test292 :args NIL :persist NIL {1004BEDAD3}>
-:DEBUG @ 224.95667  
-; #<PASS (= 0 (FUNCALL P NIL))>
-:DEBUG @ 224.95667  
-; #<PASS (= 1 (FUNCALL P 1))>
-:DEBUG @ 224.95667  
-; #<PASS (= 1 B C)>
-#<PASS PAN-TEST292> 
-:DEBUG @ 224.95667  
-; running test: 
-; #<TEST ANA :fn ANA-test291 :args NIL :persist NIL {1004BEB593}>
-:DEBUG @ 224.95667  
-; #<PASS (= 8 (AIF (+ 2 2) (+ IT IT)))>
-#<PASS ANA-TEST291> 
-:DEBUG @ 224.95667  
-; running test: 
-; #<TEST FMT :fn FMT-test290 :args NIL :persist NIL {1004BE9D93}>
-:DEBUG @ 224.96  
-; #<PASS (STRING= (FORMAT NIL | 1 | 2 | 3 |~%) (FMT-ROW '(1 2 3)))>
-:DEBUG @ 224.96  
-; #<PASS (STRING= (FMT-SXHASH (SXHASH T)) (FMT-SXHASH (SXHASH T)))>
-:DEBUG @ 224.96  
-; #<PASS (STRING= FOOBAR
- ├─ :A
- ├─ :B
- ├─  C
- ╰─  D
-
-                  FOOBAR
- ├─ :A
- ├─ :B
- ├─  C
- ╰─  D
-)>
-:DEBUG @ 224.96  
-; #<PASS (STRING= SK-PROJECT
- ├─ :NAME
- │   ╰─ "foobar"
- ├─ :PATH
- │   ╰─ "/a/b/c.asd"
- ╰─ :VC
-     ╰─ :HG
-
-                  SK-PROJECT
- ├─ :NAME
- │   ╰─ "foobar"
- ├─ :PATH
- │   ╰─ "/a/b/c.asd"
- ╰─ :VC
-     ╰─ :HG
-)>
-#<PASS FMT-TEST290> 
-:DEBUG @ 224.96  
-; running test: 
-; #<TEST ALIEN :fn ALIEN-test289 :args NIL :persist NIL {1004BE8283}>
-:DEBUG @ 224.96333  
-; #<PASS (= 0 (FOREIGN-INT-TO-INTEGER 0 4))>
-:DEBUG @ 224.96333  
-; #<PASS (= 1 (BOOL-TO-FOREIGN-INT T))>
-#<PASS ALIEN-TEST289> 
-:DEBUG @ 224.96333  
-; running test: 
-; #<TEST THREAD :fn THREAD-test288 :args NIL :persist NIL {1004B87423}>
-:DEBUG @ 224.96667  
-; #<PASS (STRINGP (PRINT-THREAD-INFO NIL))>
-#<PASS THREAD-TEST288> 
-:DEBUG @ 224.96667  
-; running test: 
-; #<TEST REEXPORT :fn REEXPORT-test287 :args NIL :persist NIL {1004A27883}>
-#<PASS REEXPORT-TEST287> 
-:DEBUG @ 224.96667  
-; running test: 
-; #<TEST COND :fn COND-test286 :args NIL :persist NIL {1004A265D3}>
-#<PASS COND-TEST286> 
-:DEBUG @ 224.96667  
-; running test: 
-; #<TEST LOG :fn LOG-test285 :args NIL :persist NIL {1004A25323}>
-:DEBUG @ 224.96667  
-; test
-; DEBUG
-:DEBUG @ 224.96667  
-; test
-; DEBUG
-:DEBUG @ 224.97  
-; test
-; DEBUG
-:DEBUG @ 224.97  
-; #<PASS (DEBUG! test *LOG-LEVEL*)>
-#<PASS LOG-TEST285> 
-:DEBUG @ 224.97  
-; running test: 
-; #<TEST LIST :fn LIST-test284 :args NIL :persist NIL {1004A23F13}>
-:DEBUG @ 224.97333  
-; #<PASS (EQ (ENSURE-CAR '(0)) (ENSURE-CAR 0))>
-:DEBUG @ 224.97333  
-; #<PASS (EQ (ENSURE-CAR '(NIL)) (ENSURE-CAR NIL))>
-:DEBUG @ 224.97333  
-; #<PASS (NOT (EQ (ENSURE-CONS 0) (ENSURE-CONS 0)))>
-:DEBUG @ 224.97333  
-; #<PASS (EQUAL (ENSURE-CONS 0) (ENSURE-CONS 0))>
-#<PASS LIST-TEST284> 
-:DEBUG @ 224.97333  
-; running test: 
-; #<TEST STR :fn STR-test283 :args NIL :persist NIL {1004A21F63}>
-:DEBUG @ 224.97667  
-; #<PASS (TYPEP test 'STRING-DESIGNATOR)>
-:DEBUG @ 224.97667  
-; #<PASS (TYPEP 'TEST 'STRING-DESIGNATOR)>
-:DEBUG @ 224.97667  
-; #<PASS (TYPEP C 'STRING-DESIGNATOR)>
-:DEBUG @ 224.97667  
-; #<PASS (NOT (TYPEP 0 'STRING-DESIGNATOR))>
-#<PASS STR-TEST283> 
-:DEBUG @ 224.97667  
-; running test: 
-; #<TEST SYM :fn SYM-test282 :args NIL :persist NIL {1004A20453}>
-:DEBUG @ 224.98  
-; #<PASS (NOT (EQUALP (MAKE-GENSYM 'A) (MAKE-GENSYM 'A)))>
-:DEBUG @ 224.98  
-; #<PASS (EQ (ENSURE-SYMBOL 'TESTS MACS.TESTS) 'TESTS)>
-:DEBUG @ 224.98  
-; #<PASS (EQ 'FOO (FORMAT-SYMBOL MACS.TESTS ~A 'FOO))>
-:DEBUG @ 224.98  
-; #<PASS (EQ (MAKE-KEYWORD 'FIZZ) FIZZ)>
-#<PASS SYM-TEST282> 
+in suite NAMED-READTABLES with 1/1 tests:
+#<PASS READTABLES-TEST1041> 
+No tests failed.
+in suite STD with 10/10 tests:
+#<PASS PAN-TEST1051> 
+#<PASS ANA-TEST1050> 
+#<PASS FMT-TEST1049> 
+#<PASS ALIEN-TEST1048> 
+#<PASS THREAD-TEST1047> 
+#<PASS COND-TEST1046> 
+#<PASS LOG-TEST1045> 
+#<PASS LIST-TEST1044> 
+#<PASS STR-TEST1043> 
+#<PASS SYM-TEST1042> 
+No tests failed.
+in suite RT with 1/1 tests:
+#<PASS RT-TEST1052> 
+No tests failed.
+in suite CLI with 1/1 tests:
+#<PASS CLI-TEST1053> 
+No tests failed.
+in suite SXP with 4/4 tests:
+#<PASS SXP-STREAM-TEST1057> 
+#<PASS SXP-STRING-TEST1056> 
+#<PASS SXP-FILE-TEST1055> 
+#<PASS FORMS-TEST1054> 
 No tests failed.
 #+end_example
 ** lib
-*** TODO cli
-#+begin_src lisp :package cli.tests :results output replace :exports results
-  (asdf:load-system :cli)
-  (asdf:load-system :cli/tests)
-  (in-package :cli.tests)
-  (load "lisp/lib/cli/tests.lisp")
-  (setq *log-level* :debug)
-  (rt:do-tests :cli)
-#+end_src
-*** TODO rt
-#+begin_src lisp :package rt.tests :results output replace :exports results
-  (asdf:load-system :rt/tests)
-  (in-package :rt.tests)
-  (load "lisp/lib/cli/tests.lisp")
-  (setq *log-level* :debug)
-  (do-tests :rt)
-#+end_src
 *** rdb
 **** tests
 #+begin_src lisp :package rdb.tests :results output replace :exports results
   (asdf:load-system :rdb/tests)
-  (in-package :rdb.tests)
+  (in-package :rdb/tests)
   (load "lisp/lib/rdb/tests.lisp")
-  (setq *log-level* :debug)
-  (do-tests :rdb)
+  (setq log:*log-level* :debug)
+  (rt:do-tests :rdb)
 #+end_src
 #+RESULTS:
 : in suite RDB with 0/0 tests:
 : No tests failed.
-*** sxp
-**** tests
-#+begin_src lisp :package sxp.tests :results output replace :exports results
-  (asdf:load-system :sxp/tests)
-  (load "lisp/lib/sxp/tests.lisp")
-  (in-package :sxp.tests)
-  (let ((*default-pathname-defaults* #.#P"./lisp/lib/sxp/")
-	(log:*log-level* :debug))
-    (do-tests :sxp))
-#+end_src
-#+RESULTS:
-#+begin_example
-in suite SXP with 4/4 tests:
-:DEBUG @ 10905.557  
-; running test: 
-; #<TEST SXP-STREAM :fn SXP-STREAM-test1461 :args NIL :persist NIL {1002F41C33}>
-((foo 'bar `("test" ,baz ,@qux) 123 0.0123 1/3 `(,a1 ,a2))):DEBUG @ 10905.563  
-; #<PASS (WRITE-SXP-STREAM F NIL)>
-#<PASS SXP-STREAM-TEST1461> 
-:DEBUG @ 10905.563  
-; running test: 
-; #<TEST SXP-STRING :fn SXP-STRING-test1460 :args NIL :persist NIL {1002DEF703}>
-:DEBUG @ 10905.566  
-; #<PASS (FORMP (READ-SXP-STRING F *TEST-STRING*))>
-:DEBUG @ 10905.566  
-; #<PASS (EQUALP (READ-FROM-STRING (WRITE-SXP-STRING F))
-                 (READ-FROM-STRING *TEST-STRING*))>
-#<PASS SXP-STRING-TEST1460> 
-:DEBUG @ 10905.566  
-; running test: 
-; #<TEST SXP-FILE :fn SXP-FILE-test1459 :args NIL :persist NIL {1002DEDBF3}>
-:DEBUG @ 10905.57  
-; #<PASS (EQUAL (UNWRAP F) (UNWRAP F))>
-#<PASS SXP-FILE-TEST1459> 
-:DEBUG @ 10905.57  
-; running test: 
-; #<TEST FORMS :fn FORMS-test1458 :args NIL :persist NIL {1002DEC3C3}>
-:DEBUG @ 10905.577  
-; #<PASS (FORMP NIL)>
-:DEBUG @ 10905.577  
-; #<PASS (FORMP T)>
-:DEBUG @ 10905.577  
-; #<PASS (FORMP 3.14)>
-:DEBUG @ 10905.577  
-; #<PASS (FORMP string)>
-:DEBUG @ 10905.577  
-; #<PASS (FORMP (MAPC (LAMBDA (A1) `(',A1)) '(A)))>
-:DEBUG @ 10905.577  
-; #<PASS (FORMP NIL)>
-#<PASS FORMS-TEST1458> 
-No tests failed.
-#+end_example
 *** organ
 **** tests
 #+begin_src lisp :package organ.tests :results output replace :exports results

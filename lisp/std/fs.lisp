@@ -13,4 +13,4 @@
   (:use :cl :str :cond :fu)
   (:export))
 
-(in-package :fs)
+(in-package :std/fs)

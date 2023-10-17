@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :std/pan
   (:nicknames :pan)
-  (:use :cl :named-readtables :fu :ana)
+  (:use :cl :std/named-readtables :std/fu :std/ana)
   (:export
    #:pandoriclet
    #:pandoriclet-get
@@ -15,7 +15,7 @@
    #:plambda
    #:pandoric-eval))
 
-(in-package :pan)
+(in-package :std/pan)
 (in-readtable :std)
 
 (defun pandoriclet-get (letargs)

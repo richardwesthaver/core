@@ -8,12 +8,12 @@
 
 ;;; Code:
 (defpackage :std/thread
-  (:use :cl :macs.alien :sb-thread)
+  (:use :std/base :std/alien :sb-thread)
   (:nicknames :thread)
   (:export
    :print-thread-info :print-thread-message-top-level :thread-support-p))
 
-(in-package :thread)
+(in-package :std/thread)
 
 ;; (reexport-from :sb-thread
 ;; 	       :include '(:main-thread

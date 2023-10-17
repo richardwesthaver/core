@@ -14,13 +14,12 @@
 ;;     unicode< unicode> unicode= unicode-equal
 ;;     unicode<= unicode>=))
 
-(defpackage :std/str
+(uiop:define-package :std/str
   (:use :cl :uiop/driver :sb-unicode)
-  (:nicknames :str)
   (:export
    #:string-designator))
 
-(in-package :str)
+(in-package :std/str)
 
 ;; (mapc (lambda (s) (export s)) sb-unicode-syms)
 ;; (reexport-from 
@@ -32,5 +31,3 @@
 or a character."
   `(or symbol string character))
 ;;;  TODO 2023-08-27: camel snake kebab
-
-;;; format recipes

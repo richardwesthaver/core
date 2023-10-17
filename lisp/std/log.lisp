@@ -19,12 +19,12 @@
 ;;; Code:
 (defpackage :std/log
   (:nicknames :log)
-  (:use :cl :str :fmt :sym :fu)
+  (:use :std/base :std/fu)
   (:export :*log-level* :log-level-designator :log-timestamp-source 
    :log! :warn! :info! :debug! :trace!  :dbg!
    :debug-p))
 
-(in-package :log)
+(in-package :std/log)
 
 (deftype log-level-designator () '(member :warn :debug :info :trace))
 (declaim (type (or boolean log-level-designator) *log-level*))

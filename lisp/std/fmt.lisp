@@ -3,11 +3,11 @@
 ;;; Code:
 (defpackage :std/fmt
   (:nicknames :fmt)
-  (:use :cl :str :fu :list)
+  (:use :std/base :std/fu)
   (:import-from :uiop :println)
   (:export :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree))
 
-(in-package :fmt)
+(in-package :std/fmt)
 
 (defun iprintln (x &optional (n 2) stream)
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))

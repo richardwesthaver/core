@@ -2,14 +2,20 @@
 
 ;;; Code:
 (defpackage :std/list
-  (:nicknames :list)
   (:use :cl)
+  (:shadowing-import-from
+   :sb-int 
+   :ensure-list :recons :memq :assq :ensure-list 
+   :proper-list-of-length-p :proper-list-p :singleton-p)
   (:export
-   #:ensure-car
-   #:ensure-cons
-   :let-binding-transform))
+   :ensure-car
+   :ensure-cons
+   :let-binding-transform
+   ;; reexports
+   :ensure-list :recons :memq :assq :ensure-list 
+   :proper-list-of-length-p :proper-list-p :singleton-p))
 
-(in-package :list)
+(in-package :std/list)
 
 ;; (reexport-from :sb-int
 ;; 	       :include '(:recons :memq :assq :ensure-list :proper-list-of-length-p :proper-list-p

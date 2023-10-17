@@ -9,7 +9,7 @@
   :maintainer "ellis <ellis@rwest.io>"
   :homepage "https://nas-t.net"
   :bug-tracker "https://lab.rwest.io/comp/core/issues"
-  :depends-on (:macs :sxp)
+  :depends-on (:std :sxp)
   :in-order-to ((test-op (test-op "btrfs/tests")))
   :components ((:file "btrfs/btrfs")))))
 

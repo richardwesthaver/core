@@ -3,7 +3,6 @@
 ;;; Code:
 (defpackage :std/cond
   (:use :cl)
-  (:nicknames :cond)
   (:export
    #:nyi!
    #:required-argument
@@ -27,7 +26,7 @@
    #:invalid-argument-p
    #:unwind-protect-case))
 
-(in-package :cond)
+(in-package :std/cond)
 
 (defmacro nyi! (&optional comment)
   `(prog1
