@@ -7,7 +7,7 @@
 ;; Commentary:
 
 ;; Code:
-(pkg:defpkg :rdb
+(uiop:define-package :rdb
   (:use :cl :alien :fu :rocksdb)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:reexport :rocksdb)

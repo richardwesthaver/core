@@ -1,9 +1,9 @@
 (defsystem :quiche
-  :depends-on (:macs)
+  :depends-on (:std)
   :in-order-to ((test-op (test-op "quiche/tests")))
-  :components ((:file "quiche/quiche")))
+  :components ((:file "quiche")))
 
-(defsystem :quche/tests
+(defsystem :quiche/tests
   :depends-on (:rt :quiche)
-  :components ((:file "quche/tests"))
+  :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :quiche)))

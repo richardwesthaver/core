@@ -21,7 +21,7 @@
 ;;; Code:
 (uiop:define-package :std/alien
   (:nicknames :alien)
-  (:use :cl :sb-vm :sb-ext :sb-c :std/base :std/fu)
+  (:use :sb-vm :sb-ext :sb-c :std/base)
   (:use-reexport :sb-alien)
   (:export
    :copy-c-string

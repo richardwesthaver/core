@@ -136,7 +136,7 @@
 (define-alien-type rocksdb-errptr (* (* t)))
 
 ;;; Cache
-(define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity u32))
+(define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
 
 ;;; Options
 
@@ -159,7 +159,7 @@
   (opt (* rocksdb-options)) (total-threads int))
 (define-alien-routine rocksdb-options-optimize-level-style-compaction void 
   (opt (* rocksdb-options))
-  (memtable-memory-budget u64))
+  (memtable-memory-budget unsigned-long))
 (define-alien-routine rocksdb-options-set-create-if-missing void 
   (opt (* rocksdb-options))
   (val boolean))

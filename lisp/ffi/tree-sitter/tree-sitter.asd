@@ -4,11 +4,11 @@
 
 ;;; Code:
 (defsystem "tree-sitter"
-  :depends-on (:macs :sxp)
+  :depends-on (:std)
   :in-order-to ((test-op (test-op "tree-sitter/tests")))
-  :components ((:file "tree-sitter/tree-sitter")))
+  :components ((:file "tree-sitter")))
 
 (defsystem "tree-sitter/tests"
   :depends-on (:tree-sitter :rt)
-  :components ((:file "tree-sitter/tests"))
+  :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :tree-sitter)))

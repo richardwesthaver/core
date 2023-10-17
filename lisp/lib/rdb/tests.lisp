@@ -1,5 +1,5 @@
 (defpackage :rdb.tests
-  (:use :cl :rt :rdb))
+  (:use :std/base :rt :rdb))
 (in-package :rdb.tests)
 (defsuite :rdb)
 (in-suite :rdb)

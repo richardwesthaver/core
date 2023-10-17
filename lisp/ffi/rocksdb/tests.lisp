@@ -1,15 +1,17 @@
 ;;; rocksdb/tests.lisp --- RocksDB tests
 
 ;;; Code:
-(defpackage :rocksdb.tests
-  (:use :cl :rt :rocksdb :rdb :sb-alien :alien :sb-ext))
+(defpackage :rocksdb/tests
+  (:use :std :rt :rocksdb :alien :sb-ext))
 
-(in-package :rocksdb.tests)
+(in-package :rocksdb/tests)
 
 (defun rocksdb-test-dir ()
   (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
 
-(defun test-opts () (rdb::default-rocksdb-options%))
+(defun test-opts () (let ((default (rocksdb-options-create)))
+		      (rocksdb-options-set-create-if-missing default t)
+		      default))
 
 ;; not thread safe (gensym-counter)
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
