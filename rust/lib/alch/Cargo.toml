@@ -1,0 +1,13 @@
+[package]
+name = "alch"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2018"
+description = "Allocator Modules"
+documentation = "https://docs.rwest.io/alch"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+
+[dependencies]
+bumpalo = {version = "3.7.0", features = ["allocator_api"]}
+memmap2 = "0.5.0"

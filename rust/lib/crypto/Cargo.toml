@@ -1,0 +1,18 @@
+[package]
+name = "crypto"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2018"
+description = "Cryptographic Utility Modules"
+documentation = "https://docs.rwest.io/crypto"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+
+[dependencies]
+salsa20 = { version = "0.8.1", features = ["xsalsa20"] }
+hex = "*"
+ed25519 = "*"
+ed25519-dalek = "1.0.1"
+hash = { version = "0.1.0", path = "../hash" }
+
+[dev-dependencies]

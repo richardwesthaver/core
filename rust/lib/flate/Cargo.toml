@@ -1,0 +1,18 @@
+[package]
+name = "flate"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2021"
+description = "Archive and Compression Modules"
+documentation = "https://docs.rwest.io/rlib/flate"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+
+[dependencies]
+tar = "0.4.37"
+zstd = { version = "0.12.3", default-features = false }
+zip = { version = "0.5", default-features = false, features = ["deflate"] }
+flate2 = {version = "1.0", optional = true, features = ["rust_backend", "tokio"], default-features=false }
+rayon = { version = "1.5.1", optional = true }
+[dev-dependencies]
+tempfile = "3.2"

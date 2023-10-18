@@ -1,0 +1,15 @@
+[package]
+name = "db"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2021"
+description = "Database System"
+documentation = "https://docs.rwest.io/rlib/db"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+[dependencies]
+# rlib
+obj = { version = "0.1.0", path = "../obj" }
+rocksdb = { version = "0.21", default-features = false, features = ["zstd", "multi-threaded-cf"] }
+[dev-dependencies]
+tempfile = "3.2.0"

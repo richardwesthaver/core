@@ -1,0 +1,15 @@
+[package]
+name = "dsp"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2021"
+description = "DSP Modules"
+documentation = "https://docs.rwest.io/audio"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+dasp = { version = "0.11.0", features = ["slice", "interpolate", "signal"] }

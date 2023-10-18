@@ -1,0 +1,18 @@
+[package]
+name = "hash"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2018"
+description = "Hash Function Modules"
+documentation = "https://docs.rwest.io/hash"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+
+[dependencies]
+# contrib
+blake3 = "1.0.0"
+hashbrown = "0.11.2"
+rand = "0.8.0"
+serde = { version = "1.0.128", features = ["derive"] }
+sha2 = "0.9.5"
+hex = "0.4.3"

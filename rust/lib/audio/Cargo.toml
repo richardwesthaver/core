@@ -1,0 +1,14 @@
+[package]
+name = "audio"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2021"
+description = "Audio and DSP Modules"
+documentation = "https://docs.rwest.io/audio"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+
+[dependencies]
+dsp = { path = "dsp" }
+cpal = { version = "0.13.4" }
+hound = { version = "3.4.0" }

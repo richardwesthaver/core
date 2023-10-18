@@ -1,0 +1,13 @@
+[package]
+name = "logger"
+version = "0.1.0"
+authors = ["ellis"]
+edition = "2018"
+description = "Logging Modules"
+documentation = "https://docs.rwest.io/logger"
+repository = "https://hg.rwest.io/rlib"
+publish = ["crater"]
+
+[dependencies]
+log = { version = "0.4.14", features = ["kv_unstable"] }
+flexi_logger = { version = "0.19", features = ["async", "colors", "atty"] }
