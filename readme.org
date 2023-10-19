@@ -6,7 +6,7 @@
 ** lib
 *** alch
 *** audio
-#+begin_src shell :dir rust/lib/audio :results output replace
+#+begin_src shell :dir rust/lib/audio :results output replace :exports results
 cargo test
 #+end_src
 #+RESULTS:
@@ -26,7 +26,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 *** crypto
 *** db
 *** flate
-#+begin_src shell :dir rust/lib/flate :results output replace
+#+begin_src shell :dir rust/lib/flate :results output replace :exports results
 cargo test
 #+end_src
 #+RESULTS:
@@ -44,7 +44,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 #+end_example
 *** hash
-#+begin_src shell :dir rust/lib/hash :results output replace
+#+begin_src shell :dir rust/lib/hash :results output replace :exports results
 cargo test
 #+end_src
 #+RESULTS:
@@ -66,7 +66,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 #+end_example
 *** krypt
 *** logger
-#+begin_src shell :dir rust/lib/logger :results output replace
+#+begin_src shell :dir rust/lib/logger :results output replace :exports results
 cargo test
 #+end_src
 #+RESULTS:
@@ -84,7 +84,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 #+end_example
 *** sxp
-#+begin_src shell :dir rust/lib/sxp :results output replace
+#+begin_src shell :dir rust/lib/sxp :results output replace :exports results
 cargo test
 #+end_src
 #+RESULTS:
@@ -146,7 +146,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 #+end_example
 *** tenex
 *** util
-#+begin_src shell :dir rust/lib/util :results output replace
+#+begin_src shell :dir rust/lib/util :results output replace :exports results
 cargo test
 #+end_src
 #+RESULTS:
