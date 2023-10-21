@@ -59,7 +59,7 @@
 
 ;;; Code:
 (defpackage :rocksdb
-  (:use :cl :alien)
+  (:use :cl :alien :rocksdb/macs)
   (:export
    :load-rocksdb
    ;; ERR
@@ -69,10 +69,71 @@
    :rocksdb-open
    :rocksdb-close
    :rocksdb-destroy-db
+   :rocksdb-repair-db
+   :rocksdb-checkpoint-object-create
+   :rocksdb-checkpoint-create
+   :rocksdb-open-column-families
+   :rocksdb-list-column-families-destroy
+   :rocksdb-list-column-families
+   :rocksdb-create-column-family
+   :rocksdb-create-column-families
+   :rocksdb-drop-column-family
+   :rocksdb-column-family-handle-get-id
+   :rocksdb-column-family-handle-get-name
    :rocksdb-put
+   :rocksdb-put-cf
    :rocksdb-get
+   :rocksdb-get-with-ts
+   :rocksdb-get-cf
+   :rocksdb-get-cf-with-ts
+   :rocksdb-merge
+   :rocksdb-merge-cf
+   :rocksdb-write
    :rocksdb-delete
+   :rocksdb-delete-cf
+   :rocksdb-delete-range-cf
+   :rocksdb-multi-get
+   :rocksdb-multi-get-with-ts
+   :rocksdb-multi-get-cf
+   :rocksdb-multi-get-cf-with-ts
+   :rocksdb-batched-multi-get-cf
    :rocksdb-cancel-all-background-work
+   ;; writebatch
+   :rocksdb-writebatch-create
+   :rocksdb-writebatch-create-from
+   :rocksdb-writebatch-destroy
+   :rocksdb-writebatch-clear
+   :rocksdb-writebatch-count
+   :rocksdb-writebatch-put
+   :rocksdb-writebatch-put-cf
+   :rocksdb-writebatch-put-cf-with-ts
+   :rocksdb-writebatch-putv
+   :rocksdb-writebatch-putv-cf
+   :rocksdb-writebatch-merge
+   :rocksdb-writebatch-mergev-cf
+   :rocksdb-writebatch-delete
+   :rocksdb-writebatch-delete-cf
+   :rocksdb-writebatch-delete-cf-with-ts
+   :rocksdb-writebatch-singledelete-cf
+   :rocksdb-writebatch-singledelete-cf-with-ts
+   :rocksdb-writebatch-deletev
+   :rocksdb-writebatch-deletev-cf
+   :rocksdb-writebatch-deletev-cf-with-ts
+   :rocksdb-writebatch-delete-range
+   :rocksdb-writebatch-delete-range-cf
+   :rocksdb-writebatch-delete-rangev
+   :rocksdb-writebatch-delete-rangev-cf
+   :rocksdb-writebatch-put-log-data
+   :rocksdb-writebatch-iterate
+   :rocksdb-writebatch-data
+   :rocksdb-writebatch-set-save-point
+   :rocksdb-writebatch-rollback-to-save-point
+   :rocksdb-writebatch-pop-save-point
+   ;; flush
+   :rocksdb-flush
+   :rocksdb-flush-cf
+   :rocksdb-flush-cfs
+   :rocksdb-flush-wal
    ;; CACHE
    :rocksdb-cache
    :rocksdb-cache-create-lru
@@ -83,13 +144,78 @@
    :rocksdb-block-based-options-set-block-cache
    :set-block-based-options-cache-index-and-filter-blocks
    ;; OPTIONS
+   ;; opt-utils
+   :rocksdb-load-latest-options
+   :rocksdb-load-latest-options-destroy
+   :rocksdb-set-options
+   :rocksdb-set-options-cf
    :rocksdb-options
    :rocksdb-options-create
    :rocksdb-options-destroy
    :rocksdb-options-increase-parallelism
+   :rocksdb-options-optimize-for-point-lookup
    :rocksdb-options-optimize-level-style-compaction
+   :rocksdb-options-optimize-universal-style-compaction
+   :rocksdb-options-set-allow-ingest-behind
+   :rocksdb-options-get-allow-ingest-behind
+   :rocksdb-options-set-compaction-filter
+   :rocksdb-options-set-compaction-filter-factory
+   :rocksdb-options-compaction-readahead-size
+   :rocksdb-options-get-compaction-readahead-size
+   :rocksdb-options-set-comparator
+   :rocksdb-options-set-merge-operator
+   :rocksdb-options-set-uint64add-merge-operator
+   :rocksdb-options-set-compression-per-level
    :rocksdb-options-set-create-if-missing
+   :rocksdb-options-get-create-if-missing
+   :rocksdb-options-set-create-missing-column-families
+   :rocksdb-options-get-create-missing-column-families
+   :rocksdb-options-set-error-if-exists
+   :rocksdb-options-get-error-if-exists
+   :rocksdb-options-set-paranoid-checks
+   :rocksdb-options-get-paranoid-checks
+   :rocksdb-options-set-db-paths
+   :rocksdb-options-set-env
+   :rocksdb-options-set-info-log
+   :rocksdb-options-set-info-log-level
+   :rocksdb-options-get-info-log-level
+   :rocksdb-options-set-write-buffer-size
+   :rocksdb-options-get-write-buffer-size
+   :rocksdb-options-set-db-write-buffer-size
+   :rocksdb-options-get-db-write-buffer-size
+   :rocksdb-options-set-max-open-files
+   :rocksdb-options-get-max-open-files
+   :rocksdb-options-set-max-total-wal-size
+   :rocksdb-options-get-max-total-wal-size
+   :rocksdb-options-set-compression-options
+   :rocksdb-options-set-compression-options-zstd-max-train-bytes
+   :rocksdb-options-get-compression-options-zstd-max-train-bytes
+   :rocksdb-options-set-compression-options-use-zstd-dict-trainer
+   :rocksdb-options-get-compression-options-use-zstd-dict-trainer
+   :rocksdb-options-set-compression-options-parallel-threads
+   :rocksdb-options-get-compression-options-parallel-threads
+   :rocksdb-options-set-compression-options-max-dict-buffer-bytes
+   :rocksdb-options-get-compression-options-max-dict-buffer-bytes
    :rocksdb-options-set-block-based-table-factory
+   ;; blob
+   :rocksdb-options-set-enable-blob-files
+   :rocksdb-options-get-enable-blob-files
+   :rocksdb-options-set-min-blob-size
+   :rocksdb-options-set-blob-file-size
+   :rocksdb-options-set-blob-compression-type
+   :rocksdb-options-get-blob-compression-type
+   :rocksdb-options-set-enable-blob-gc
+   :rocksdb-options-get-enable-blob-gc
+   :rocksdb-options-set-blob-gc-age-cutoff
+   :rocksdb-options-get-blob-gc-age-cutoff
+   :rocksdb-options-set-blob-gc-force-threshold
+   :rocksdb-options-get-blob-gc-force-threshold
+   :rocksdb-options-set-blob-compaction-readahead-size
+   :rocksdb-options-get-blob-compaction-readahead-size
+   :rocksdb-options-set-blob-file-starting-level
+   :rocksdb-options-set-blob-cache
+   :rocksdb-options-set-prepopulate-blob-cache
+   :rocksdb-options-get-prepopulate-blob-cache
    ;; read
    :rocksdb-readoptions
    :rocksdb-readoptions-create
@@ -100,16 +226,43 @@
    :rocksdb-writeoptions-destroy
    ;; compact
    :rocksdb-compactoptions
+   :rocksdb-compact-range-cf
+   :rocksdb-suggest-compact-range
+   :rocksdb-suggest-compact-range-cf
+   :rocksdb-compact-range-opt
+   :rocksdb-compact-range-cf-opt
    ;; ITERATOR
    :rocksdb-iterator
    :rocksdb-iter-seek-to-first
+   :rocksdb-iter-seek-to-last
+   :rocksdb-iter-seek
+   :rocksdb-iter-seek-for-prev
    :rocksdb-iter-next
    :rocksdb-iter-prev
-   :rocksdb-iter-valid
    :rocksdb-create-iterator
    :rocksdb-iter-key
    :rocksdb-iter-value
-   :rocksdb-iter-destroy))
+   :rocksdb-iter-timestamp
+   :rocksdb-iter-destroy
+   :rocksdb-iter-valid
+   :rocksdb-iter-get-error   
+   :rocksdb-get-updates-since
+   :rocksdb-create-iterator-cf
+   :rocksdb-create-iterators
+   :rocksdb-create-snapshot
+   :rocksdb-release-snapshot
+   :rocksdb-property-value
+   :rocksdb-property-int
+   :rocksdb-property-int-cf
+   :rocksdb-property-value-cf
+   :rocksdb-approximate-sizes
+   :rocksdb-approximate-sizes-cf
+   :rocksdb-wal-iter-next
+   :rocksdb-wal-iter-valid
+   :rocksdb-wal-iter-status
+   :rocksdb-wal-iter-get-batch
+   :rocksdb-wal-iter-destroy
+))
 
 (in-package :rocksdb)
 
@@ -121,17 +274,40 @@
 (load-rocksdb)  
 
 ;;; Alien Types
+;;; db types
 (define-alien-type rocksdb (struct rocksdb-t))
+(define-alien-type rocksdb-logger (struct rocksdb-logger-t))
+(define-alien-type rocksdb-iterator (struct rocksdb-iterator-t))
+(define-alien-type rocksdb-cache (struct rocksdb-cache-t))
+(define-alien-type rocksdb-checkpoint (struct rocksdb-checkpoint-t))
+(define-alien-type rocksdb-snapshot (struct rocksdb-snapshot-t))
+(define-alien-type rocksdb-transaction (struct rocksdb-transaction-t))
+(define-alien-type rocksdb-transactiondb (struct rocksdb-transactiondb-t))
+(define-alien-type rocksdb-livefiles (struct rocksdb-column-family-livefiles-t))
+(define-alien-type rocksdb-writebatch (struct rocksdb-column-family-writebatch-t))
+(define-alien-type rocksdb-mergeoperator (struct rocksdb-mergeoperator-t))
+;;;; column-family
+(define-alien-type rocksdb-column-family-handle (struct rocksdb-column-family-handler-t))
+(define-alien-type rocksdb-column-family-metadata (struct rocksdb-column-family-metadata-t))
+;;;; options
 (define-alien-type rocksdb-options (struct rocksdb-options-t))
 (define-alien-type rocksdb-readoptions (struct rocksdb-readoptions-t))
 (define-alien-type rocksdb-writeoptions (struct rocksdb-writeoptions-t))
 (define-alien-type rocksdb-compactoptions (struct rocksdb-compactoptions-t))
 (define-alien-type rocksdb-block-based-table-options (struct rocksdb-block-based-table-options-t))
-(define-alien-type rocksdb-iterator (struct rocksdb-iterator-t))
-(define-alien-type rocksdb-cache (struct rocksdb-cache-t))
-(define-alien-type rocksdb-column-family-handle (struct rocksdb-column-family-handler-t))
+(define-alien-type rocksdb-flushoptions (struct rocksdb-flushoptions-t))
+(define-alien-type rocksdb-universal-compaction-options (struct rocksdb-universal-compaction-options-t))
+(define-alien-type rocksdb-envoptions (struct rocksdb-envoptions-t))
+;;;; stats
+(define-alien-type rocksdb-statistics-histogram-data (struct rocksdb-statistics-histogram-data-t))
+(define-alien-type rocksdb-memory-usage (struct rocksdb-memory-usage-t))
+;;;; sst
 (define-alien-type rocksdb-sstfilewriter (struct rocksdb-sstfilewriter-t))
-
+(define-alien-type rocksdb-sst-file-metadata (struct rocksdb-sst-file-metadata-t))
+;;;; wal
+(define-alien-type rocksdb-wal-iterator (struct rocksdb-wal-iterator-t))
+(define-alien-type rocksdb-wal-readoptions (struct rocksdb-wal-readoptions-t))
+;;;; errors
 ;; either (* void) or c-string (* (* char))
 (define-alien-type rocksdb-errptr (* (* t)))
 
@@ -140,7 +316,7 @@
 
 ;;; Options
 
-;;;; block-based
+;;;; bb-opts
 (define-alien-routine rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
 (define-alien-routine rocksdb-block-based-options-destroy void 
   (options (* rocksdb-block-based-table-options)))
@@ -151,10 +327,10 @@
   (options (* rocksdb-block-based-table-options))
   (val c-string))
 
-;;;; db
+;;;; db-opts
 (define-alien-routine rocksdb-options-create (* rocksdb-options))
 (define-alien-routine rocksdb-options-destroy void 
-  (options rocksdb-options))
+  (options (* rocksdb-options)))
 (define-alien-routine rocksdb-options-increase-parallelism void 
   (opt (* rocksdb-options)) (total-threads int))
 (define-alien-routine rocksdb-options-optimize-level-style-compaction void 
@@ -166,15 +342,20 @@
 (define-alien-routine rocksdb-options-set-block-based-table-factory void
   (opt (* rocksdb-options))
   (table-options (* rocksdb-block-based-table-options)))
-;;;; write
+;;;; write-opts
 (define-alien-routine rocksdb-writeoptions-create (* rocksdb-writeoptions))
 (define-alien-routine rocksdb-writeoptions-destroy void
   (opt (* rocksdb-writeoptions)))
-;;;; read
+;;;; read-opts
 (define-alien-routine rocksdb-readoptions-create (* rocksdb-readoptions))
 (define-alien-routine rocksdb-readoptions-destroy void
   (opt (* rocksdb-readoptions)))
 
+;;;; flush-opts
+(define-alien-routine rocksdb-flush void 
+  (db (* rocksdb))
+  (options (* rocksdb-flushoptions))
+  (errptr rocksdb-errptr))
 ;;; DB
 (define-alien-routine rocksdb-open (* rocksdb)
   (opt (* rocksdb-options))

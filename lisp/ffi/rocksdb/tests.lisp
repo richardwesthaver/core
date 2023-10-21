@@ -5,7 +5,9 @@
   (:use :std :rt :rocksdb :alien :sb-ext))
 
 (in-package :rocksdb/tests)
-
+(defsuite :rocksdb)
+(in-suite :rocksdb)
+(load-rocksdb)
 (defun rocksdb-test-dir ()
   (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
 
@@ -16,10 +18,6 @@
 ;; not thread safe (gensym-counter)
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
 (defun genval (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "val")))))
-
-(defsuite :rocksdb)
-
-(in-suite :rocksdb)
 
 (deftest set-opts ()
   (let ((opts (rocksdb-options-create))
