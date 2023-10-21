@@ -1,3 +1,4 @@
+lisp/lib/packy = ssh://git@lab.rwest.io/ellis/packy
 lisp/lib/skel = ssh://git@lab.rwest.io/ellis/skel
 lisp/lib/organ = ssh://git@lab.rwest.io/ellis/organ
 rust/lib/tenex = ssh://git@lab.rwest.io/ellis/tenex
