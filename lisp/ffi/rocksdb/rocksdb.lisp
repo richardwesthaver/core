@@ -142,7 +142,6 @@
    :rocksdb-block-based-options-create
    :rocksdb-block-based-options-destroy
    :rocksdb-block-based-options-set-block-cache
-   :set-block-based-options-cache-index-and-filter-blocks
    ;; OPTIONS
    ;; opt-utils
    :rocksdb-load-latest-options
@@ -281,11 +280,13 @@
 (define-alien-type rocksdb-cache (struct rocksdb-cache-t))
 (define-alien-type rocksdb-checkpoint (struct rocksdb-checkpoint-t))
 (define-alien-type rocksdb-snapshot (struct rocksdb-snapshot-t))
+(define-alien-type rocksdb-comparator (struct rocksdb-comparator-t))
 (define-alien-type rocksdb-transaction (struct rocksdb-transaction-t))
 (define-alien-type rocksdb-transactiondb (struct rocksdb-transactiondb-t))
 (define-alien-type rocksdb-livefiles (struct rocksdb-column-family-livefiles-t))
 (define-alien-type rocksdb-writebatch (struct rocksdb-column-family-writebatch-t))
 (define-alien-type rocksdb-mergeoperator (struct rocksdb-mergeoperator-t))
+(define-alien-type rocksdb-env (struct rocksdb-env-t))
 ;;;; column-family
 (define-alien-type rocksdb-column-family-handle (struct rocksdb-column-family-handler-t))
 (define-alien-type rocksdb-column-family-metadata (struct rocksdb-column-family-metadata-t))
@@ -315,7 +316,37 @@
 (define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
 
 ;;; Options
+(define-alien-routine rocksdb-load-latest-options void
+  (db-path c-string)
+  (env (* rocksdb-env))
+  (ignore-unknown-options boolean)
+  (cache (* rocksdb-cache))
+  (db-options (* (* rocksdb-options)))
+  (num-column-families (* size-t))
+  (column-family-names (* (* c-string)))
+  (column-family-options (* (* (* rocksdb-options))))
+  (errptr rocksdb-errptr))
 
+(define-alien-routine rocksdb-load-latest-options-destroy void
+  (db-options (* (* rocksdb-options)))
+  (list-column-family-names (* c-string))
+  (list-column-family-options (* (* rocksdb-options)))
+  (len size-t))
+
+(define-alien-routine rocksdb-set-options void
+  (db (* rocksdb))
+  (count int)
+  (keys (array c-string))
+  (values (array c-string))
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-set-options-cf void
+  (db (* rocksdb))
+  (handle (* rocksdb-column-family-handle))
+  (count int)
+  (keys (array c-string))
+  (values (array c-string))
+  (errptr (rocksdb-errptr)))
 ;;;; bb-opts
 (define-alien-routine rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
 (define-alien-routine rocksdb-block-based-options-destroy void 
@@ -342,6 +373,13 @@
 (define-alien-routine rocksdb-options-set-block-based-table-factory void
   (opt (* rocksdb-options))
   (table-options (* rocksdb-block-based-table-options)))
+(define-alien-routine rocksdb-options-set-allow-ingest-behind void
+  (opts (* rocksdb-options))
+  (val unsigned-char))
+(define-alien-routine rocksdb-options-set-merge-operator void
+  (opts (* rocksdb-options))
+  (comparator (* rocksdb-comparator)))
+
 ;;;; write-opts
 (define-alien-routine rocksdb-writeoptions-create (* rocksdb-writeoptions))
 (define-alien-routine rocksdb-writeoptions-destroy void
