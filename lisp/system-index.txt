@@ -1,10 +1,10 @@
+std/std.asd
+lib/rdb/rdb.asd
+lib/skel/skel.asd
 ffi/btrfs/btrfs.asd
 ffi/uring/uring.asd
+lib/organ/organ.asd
+lib/packy/packy.asd
 ffi/quiche/quiche.asd
 ffi/rocksdb/rocksdb.asd
 ffi/tree-sitter/tree-sitter.asd
-lib/organ/organ.asd
-lib/packy/packy.asd
-lib/rdb/rdb.asd
-lib/skel/skel.asd
-std/std.asd

@@ -1,0 +1,15 @@
+[package]
+name = "freesound"
+version = "0.1.0"
+edition = "2021"
+[lib]
+name = "freesound"
+path = "lib.rs"
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1.33", features = ["full"] }
+futures-util = "0.3"
+reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"] }
+oauth2 = { version = "4.4.2", features = ["rustls-tls"]}
+indicatif = "0.17.7"

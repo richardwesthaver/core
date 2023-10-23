@@ -1,0 +1,26 @@
+[package]
+name = "tenex"
+version = "0.1.0"
+edition = "2021"
+[workspace]
+members = [".","freesound","gitlab","nws","ipapi"]
+
+[dependencies]
+# ipapi = { path = "ipapi", optional = true }
+# gitlab = { path = "gitlab", optional = true }
+# nws = { path = "nws", optional = true }
+# freesound = { path = "freesound", optional = true }
+# tokio = "1.13"
+# serde_json = "1.0.66"
+# serde = { version = "1.0.127", features = ["derive"] }
+# chrono = { version = "0.4.19", features = ["serde"] }
+# jwt = { version = "0.15.0", optional = true }
+# oauth2 = { version = "4.1.0", optional = true }
+
+[features]
+# default = []
+# full = ["ipapi","nws","freesound","gitlab"]
+# ipapi = ["ipapi"]
+# nws = ["nws"]
+# #freesound = ["freesound"]
+# gitlab = ["gitlab"]
