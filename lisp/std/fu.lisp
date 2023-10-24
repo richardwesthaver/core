@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :std/fu
   (:nicknames :fu)
-  (:use :cl :sb-mop :sb-c :std/named-readtables :std/sym :std/list :std/cond)
+  (:use :cl :sb-mop :sb-c :std/named-readtables :std/sym :std/list :std/err)
   (:export
    :until
    #:mkstr

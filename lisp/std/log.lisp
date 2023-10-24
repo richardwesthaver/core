@@ -18,8 +18,7 @@
 
 ;;; Code:
 (defpackage :std/log
-  (:nicknames :log)
-  (:use :std/base :std/fu)
+  (:use :cl :std/base :std/fu)
   (:export :*log-level* :log-level-designator :log-timestamp-source 
    :log! :warn! :info! :debug! :trace!  :dbg!
    :debug-p))

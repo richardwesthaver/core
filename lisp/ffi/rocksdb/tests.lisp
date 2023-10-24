@@ -2,18 +2,19 @@
 
 ;;; Code:
 (defpackage :rocksdb/tests
-  (:use :std :rt :rocksdb :alien :sb-ext))
+  (:use :cl :std :std/rt :rocksdb :std/alien :sb-ext))
 
 (in-package :rocksdb/tests)
 (defsuite :rocksdb)
 (in-suite :rocksdb)
 (load-rocksdb)
-(defun rocksdb-test-dir ()
-  (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
+(eval-always
+  (defun rocksdb-test-dir ()
+    (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
 
-(defun test-opts () (let ((default (rocksdb-options-create)))
-		      (rocksdb-options-set-create-if-missing default t)
-		      default))
+  (defun test-opts () (let ((default (rocksdb-options-create)))
+			(rocksdb-options-set-create-if-missing default t)
+			default)))
 
 ;; not thread safe (gensym-counter)
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))

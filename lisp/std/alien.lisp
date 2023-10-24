@@ -21,7 +21,7 @@
 ;;; Code:
 (uiop:define-package :std/alien
   (:nicknames :alien)
-  (:use :sb-vm :sb-ext :sb-c :std/base)
+  (:use :cl :sb-vm :sb-ext :sb-c :std/base)
   (:use-reexport :sb-alien)
   (:export
    :copy-c-string
@@ -32,7 +32,7 @@
    :i2 :i3 :i4 :i8 :i16 :i24 :i32 :i64 :i128
    :f16 :f24 :f32 :f64 :f128))
 
-(in-package :alien)
+(in-package :std/alien)
 
 ;; (reexport-from :sb-vm
 ;; 	       :include

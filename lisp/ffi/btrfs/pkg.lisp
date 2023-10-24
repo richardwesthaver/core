@@ -14,8 +14,8 @@
 ;; debugging and experimentation.
 
 ;;; Code:
-(defpackage btrfs
-  (:use :cl :sb-alien)
+(defpackage btrfs/pkg
+  (:use :cl :std/alien)
   (:export
    :btrfs-shared-objects
    :btrfs-lib-path
@@ -23,7 +23,7 @@
    :load-btrfsutil :unload-btrfsutil
    :define-btrfs-ioctl))
 
-(in-package :btrfs)
+(in-package :btrfs/pkg)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar btrfs-shared-objects

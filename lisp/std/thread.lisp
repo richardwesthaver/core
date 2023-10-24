@@ -8,7 +8,7 @@
 
 ;;; Code:
 (defpackage :std/thread
-  (:use :std/base :std/alien :sb-thread)
+  (:use :cl :std/base :std/alien :sb-thread)
   (:nicknames :thread)
   (:export
    :print-thread-info :print-thread-message-top-level :thread-support-p))

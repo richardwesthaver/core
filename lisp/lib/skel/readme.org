@@ -1,0 +1,326 @@
+#+TITLE: skel
+#+DESCRIPTION: project skeletons
+* Overview 
++ status :: WIP
++ forge :: [[https://lab.rwest.io/ellis/skel][Heptapod]]
++ mirror :: [[https://github.com/richardwesthaver/skel][Github]]
+
+This system provides functions and macros for building and deploying
+project skeletons. /This is not a general purpose templating
+system/. It is specifically for my software stack.
+
+** Goals
+- vaporize boilerplate code and docs
+- integrate reasonably well with my tools (Emacs/etc)
+- object-oriented project management
+** Resources
+- [[https://www.gnu.org/software/emacs/manual/html_node/autotype/Skeleton-Language.html][skeleton-lanaguage (emacs)]]
+- [[https://github.com/emacs-mirror/emacs/tree/master/lisp/cedet/ede][cedet/ede (emacs)]]
+- [[https://www.gnu.org/software/make/manual/make.html][GNU make]]
+- [[https://docs.factorcode.org/content/article-vocabularies.html][Factor (forth) definitions]]
+* Quickstart
+Make sure you have sbcl installed:
+#+begin_src shell :results pp :exports both
+sbcl --version
+#+end_src
+
+#+RESULTS:
+: SBCL 2.3.8.18.master.74-8cf7faf9a
+
+Then compile the program. This command produces a binary called =skel=
+in the project root:
+#+begin_src shell :results raw silent
+sbcl --noinform  --non-interactive --eval '(ql:quickload :skel)' --eval '(asdf:make :skel/cli)'
+#+end_src
+
+Run the binary without any args, which will print a skeleton of the
+current project directory (=*skel-project*=).
+
+#+begin_src shell :results output replace :exports both
+  ./skel -h
+#+end_src
+
+#+RESULTS:
+#+begin_example
+skel v0.1.1
+  usage: skel [global] <command> [<arg>]
+
+  A hacker's project compiler and build tool.
+  options:
+     -h/--help* :  print this message
+     -v/--version* :  print version
+     -d/--debug* :  set log level (debug,info,trace,warn)
+     -c/--config* :  set a custom skel user config
+     -i/--input  :  input source
+     -o/--output  :  output target
+  commands:
+    init  :  initialize a skelfile in the current directory
+     -n/--name  :  project name
+    
+    show  :  describe the project skelfile
+     -f/--file  :  path to skelfile
+    
+    inspect  :  inspect the project skelfile
+     -f/--file  :  path to skelfile
+    
+    make  :  build project targets
+     -t/--target  :  target to build
+    
+    run  :  run a script or command
+    
+    push  :  push the current project upstream
+    
+    pull  :  pull the current project from remote
+    
+    clone  :  clone a remote project
+    
+    commit  :  commit changes to the project vc
+    
+    edit  :  edit a project file
+    
+    shell  :  open the sk-shell interpreter
+    
+#+end_example
+
+Here's skel's skelfile:
+
+#+begin_src shell :results output replace :wrap src skel :exports results
+cat skelfile
+#+end_src
+
+#+RESULTS:
+#+begin_src skel
+;;; skelfile @ 2023-10-08.02:37:25 -*- mode: skel; -*-
+:name skel
+:author "ellis"
+:version "0.1.0"
+:description "a hacker's project compiler"
+:license "MPL"
+:vc :hg
+:tags ("lisp")
+:rules ((build () (print (asdf:make :skel/cli)))
+        (clean () #$rm -rf */*.fasl$#))
+:documents ((:org "readme"))
+:components 
+((:elisp "sk")
+ (:lisp-system "skel"
+	       :depends-on ("macs" "sxp")
+	       :components
+	       ((:file "src/pkg")
+		(:module "core"
+			 :pathname "src/core"
+			 :depends-on ("src/pkg")
+			 :components
+			 ((:file "err")
+			  (:file "util" :depends-on ("err"))
+			  (:file "cfg" :depends-on ("util"))
+			  (:file "proto" :depends-on ("util"))
+			  (:file "obj" :depends-on ("proto"))
+			  (:file "header" :depends-on ("util"))
+			  (:file "vc" :depends-on ("obj" "header"))
+			  (:file "virt" :depends-on ("obj" "header"))
+			  (:file "mk" :depends-on ("vc"))
+			  (:file "vm" :depends-on ("obj" "virt" "mk"))))
+		(:module "comp" ;; compilers
+			 :pathname "src/comp"
+			 :depends-on ("core")
+			 :components
+			 ((:file "asd")
+			  (:file "containerfile")
+			  (:file "ignore")
+			  (:file "makefile")))
+		(:module "tools" ;; tools
+			 :pathname "src/tools"
+			 :depends-on ("core")
+			 :components
+			 ((:file "deploy")
+			  (:file "viz")))
+		(:module "ext" ;; extensions
+			 :pathname "src/ext"
+			 :depends-on ("core" "comp")
+			 :components
+			 ((:file "asdf")))))
+ (:lisp-system "skel/cli"
+	       :depends-on ("skel" "macs" "cli")
+	       :components ((:file "src/cli")))
+
+ (:lisp-system "skel/tests"
+	       :depends-on ("skel" "rt")
+	       :components ((:file "tests")))
+
+ (:lisp-system "skel/examples"
+	       :depends-on ("skel")
+	       :components ((:file "examples"))))
+:stash "~/stash"
+:shed "~/shed"
+:abbrevs nil
+:snippets ((autogen #$sbcl --eval '(asdf:make :skel/cli)'$#))
+#+end_src
+
+This is just a form without the top-level parentheses - you're free to
+omit them in a skelfile.
+
+** describe
+The =describe= command can be used to check the currently active
+skelfile, printing any errors and the parsed object.
+
+#+begin_src shell :results output replace :exports both
+  ./skel show
+#+end_src
+
+#+RESULTS:
+#+begin_example
+#<SKEL:SK-PROJECT :ID 1e61-38b1-c5fe-7eac>
+  [standard-object]
+
+Slots with :INSTANCE allocation:
+  NAME                           = SKEL
+  PATH                           = #P"/home/ellis/dev/skel/skelfile"
+  AUTHOR                         = "ellis"
+  VERSION                        = "0.1.0"
+  TAGS                           = ("lisp")
+  DESCRIPTION                    = "a hacker's project compiler"
+  LICENSE                        = "MPL"
+  AST                            = NIL
+  ID                             = 2189093230060928684
+  VC                             = :HG
+  RULES                          = ((BUILD NIL (PRINT (ASDF/OPERATE:MAKE :SKEL/CLI)))..
+  DOCUMENTS                      = ((:ORG "readme"))
+  COMPONENTS                     = ((:ELISP "sk")..
+  SCRIPTS                        = NIL
+  SNIPPETS                       = ((AUTOGEN "sbcl --eval '(asdf:make :skel/cli)'"))
+  STASH                          = #P"~/stash"
+  SHED                           = #P"~/shed"
+  ABBREVS                        = NIL
+  IMPORTS                        = NIL
+#+end_example
+
+** TODO compile
+Skelfiles can be compiled to produce a new project skeleton or update
+an existing one.
+
+Try compiling skel's skelfile:
+
+#+begin_src shell :results output replace :exports code
+./skel compile
+#+end_src
+
+You may also compile individual components of the project structure,
+for example, to compile the rules into a makefile:
+
+#+begin_src shell :results output replace :exports code
+./skel compile --rules
+#+end_src
+
+#+begin_src shell :results output :wrap src makefile :exports both
+cat makefile
+#+end_src
+
+#+RESULTS:
+#+begin_src makefile
+### SKEL @ 2023-09-14.01:47:59 --- A hacker's project compiler -*- mode:makefile ; -*-
+LISP=sbcl --noinform --non-interactive --eval "(asdf:load-asd \"skel.asd\")" --eval "(ql:quickload :skel)"
+.PHONY: compile clean
+compile:;$(LISP) --eval "(asdf:compile-system :skel)"
+test:compile;$(LISP) --eval "(ql:quickload :skel/tests)" --eval "(in-package :skel.tests)" --eval "(compile-file \"tests.lisp\")" --eval "(load-file \"tests.lisp\")" --eval "(do-tests :skel)"
+clean:;rm -rf *.fasl
+debug:compile;$(LISP) --eval "(start-repl)"
+#+end_src
+
+* Examples
+** Default
+When you run =skel init= this is the basic skelfile that will be
+generated in the current directory, depending on the following
+contexts:
+- default user config
+- directory contents
+- cli args
+With no cli args or user config and an empty directory the output
+looks like this:
+#+begin_src skel
+;;; examples @ 2023-10-09.23:38:23 -*- mode: skel; -*-
+:name "examples"
+#+end_src
+** Imports
+** Multi
+* Tests
+The unit tests may also be a useful reference:
+
+#+begin_src lisp :results output replace :wrap src lisp :exports both :package :skel.tests
+  (ql:quickload :skel/tests)
+  (in-package :skel.tests)
+  (setq *log-level* nil)
+  ;; (setq *catch-test-errors* nil)
+  (setq *compile-tests* t)
+  (list (multiple-value-list (do-tests :skel)) (test-results *test-suite*))
+#+end_src
+
+#+RESULTS:
+#+begin_src lisp
+To load "skel/tests":
+  Load 1 ASDF system:
+    skel/tests
+; Loading "skel/tests"
+..................................................
+[package skel.vc].................................
+[package skel.virt]...............................
+[package skel.comp.asd]...........................
+[package skel.make]...............................
+[package skel.ext.asdf]...........................
+[package skel.tests].
+in suite SKEL with 6/6 tests:
+#<PASS VM-TEST788> 
+#<PASS MAKEFILE-TEST787> 
+#<PASS SKELRC-TEST786> 
+#<PASS SKELFILE-TEST785> 
+#<PASS HEADER-COMMENTS-TEST784> 
+#<PASS SANITY-TEST783> 
+No tests failed.
+#+end_src
+
+* API
+- CLOS-based core classes
+- EIEIO-based wrapper classes
+#+begin_src dot :file api.svg :exports results
+  digraph { splines=true; label="CLOS API"; labelloc="t"; node [shape=record];
+    sk [label="(skel :ID :AST)"]
+    methods [label="(sk-compile sk-expand sk-build\nsk-run sk-init sk-new sk-save\nsk-tangle sk-weave sk-call sk-print)"]
+    skmet [label="(sk-meta :NAME :PATH :VERSION :DESCRIPTION)"]
+    skvcs [label="(sk-vc-meta :VC)"]
+    skcmd [label="(sk-command)"]
+    sktar [label="(sk-target)"]
+    sksrc [label="(sk-source)"]
+    skrec [label="(sk-recipe :COMMANDS)"]
+    skrul [label="(sk-rule :TARGET :SOURCE :RECIPE)"]
+    skdoc [label="(sk-document)"]
+    skscr [label="(sk-script)"]
+    skcfg [label="(sk-config)"]
+    sksni [label="(sk-snippet)"]    
+    skabb [label="(sk-abbrev)"]
+    skpro [label="(sk-project\l:RULES\l:DOCUMENTS\l:SCRIPTS\l:SNIPPETS\l:ABBREVS)\l"]
+    sk -> skmet
+    skmet -> skvcs
+    sk -> skcfg
+    sk -> sksni
+    sk -> skabb
+    sk -> sktar
+    sk -> skrul
+    sk -> sksrc
+    sk -> skcmd
+    skvcs -> skpro
+    skmet -> skdoc    
+    skmet -> skscr    
+    skrul -> skpro
+    skscr -> skpro
+    skdoc -> skpro
+    sksni -> skpro
+    skabb -> skpro
+    sktar -> skrul
+    sksrc -> skrul
+    skrec -> skrul
+    skcmd -> skrec
+  }
+#+end_src
+
+#+RESULTS:
+[[file:api.svg]]

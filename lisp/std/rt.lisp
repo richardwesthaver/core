@@ -32,9 +32,8 @@
   (require 'sb-sprof))
 
 (defpackage :std/rt
-  (:use
-   :std/base :std/sxp :std/fu :std/fmt :std/log :std/ana :std/pan 
-   :std/list :std/sym :std/cond :std/str
+  (:use 
+   :cl :std/base :std/sxp :std/fu :std/fmt :std/log :std/ana :std/pan 
    :sb-aprof #+x86-64 :sb-sprof)
   (:nicknames :rt)
   (:export
