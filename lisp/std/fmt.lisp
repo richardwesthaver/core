@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :std/fmt
   (:nicknames :fmt)
-  (:use :std/base :std/fu)
+  (:use :cl :std/base :std/fu)
   (:import-from :uiop :println)
   (:export :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree))
 

@@ -1,0 +1,107 @@
+#+TITLE: packy
+#+CREATED: 2021-10-13 Wed 02:18
+#+AUTHOR: ellis
+A one-stop shop for all your package-related needs. 
+
+a /Universal package manager/.
+
+#+begin_src shell :results output replace :exports both
+sbcl --noinform --non-interactive --eval '(asdf:make :packy)'
+#+end_src
+
+#+RESULTS:
+
+* Notes
+- why
+  - we have standards for everything nowadays.. container images
+    (OCI), language servers (LSP), Emoji codes.. why not packages and
+    package managers?
+  - what happens if upstream package registries go down during release CI? (ur fukt)    
+  - decent amount of external traffic comes from package registry streams (CITE)
+    - ezpz - cache it locally, and reduce cost at the same time
+  - data proximity matters
+  - public registries are ripe for supply-chain attacks
+  - there are too many package managers, and it's unreasonable to
+    demand our clients rely on them
+    - needless external footprint - keep this traffic away from bad
+      actors and inside the corporate VPN
+  - traffic control matters
+- how
+  - sexps
+    + define spec in CLOS (lisp objects)
+    + define validation tools
+    + use tools to validate implementations
+  - compilers
+    + functionality composed of lambdas and closures
+      - insert hooks, custom settings, flags
+    + ability to define optimization passes
+    + dependency traversal, cycle detection
+    + macros
+- goals
+  - simple design
+  - extensibility
+  - introspectable (from client and server)
+- inspiration
+  - [[https://www.gnu.org/software/emacs/manual/html_mono/ede.html#EDE-Project-Concepts][EDE]]
+  - [[https://elpa.gnu.org/][ELPA]]
+  - [[https://www.gnu.org/software/emacs/manual/html_node/org/Configuration.html][org-publish.el]]
+  - [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Packages.html][package.el]]
+  - [[https://firefox-source-docs.mozilla.org/contributing/vcs/mercurial_bundles.html][Mercurial]]
+  - [[https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html][Crates]]
+  - [[https://archlinux.org/pacman/][Pacman]]
+  - [[https://brew.sh/][Homebrew]]
+  - [[https://ultralisp.org/][Ultralisp]]
+- resources
+  - [[https://github.com/cargo-generate/cargo-generate][cargo-generate]]
+  - [[https://doc.rust-lang.org/book/ch14-05-extending-cargo.html][extending cargo]]
+  - [[https://github.com/quicklisp/quicklisp-projects][quicklisp-projects]]
+  - [[https://github.com/quicklisp/quicklisp-client][quicklisp-client]]
+  - [[https://github.com/ultralisp/ultralisp][ultralisp]]
+  - [[https://github.com/ultralisp/quickdist][quickdist]]
+** Design
+- core classes
+  - package
+  - source
+  - collection
+  - op
+  - env
+- mixed
+  - registry
+    source + collection
+  - dependency
+    source + package
+  - client
+    - op+env
+  - server
+    - op+collection+env
+  - peer
+    - client+server
+** targets
+The following package registries will be supported in v1.
+*** el
+Emacs Lisp packages (tarballs)
+*** vc
+Version Control Repo bundles (tar.zst)
+**** hg
+**** git
+*** ql
+Quicklisp compatible packages
+*** pip
+*** crater
+This is a private crate registry for the Rust programming
+language.
+
+The [[https://crates.io][crates.io]] package registry provides a number of excellent crates,
+integrates well with the =cargo= development tool, and should be
+preferred in all cases. I use =crater= when I need to:
+- import my unpublished crates
+- import the master branch of a published crate
+- import a local or patched version of a published crate
+- import a non-git crate (hg)
+
+=crater= also works well in intranet/local environments, and can be
+deployed for use in the following ways:
+- remote :: same as crates.io, registry index is publicly hosted on GitHub (default)
+- local :: registry index is stored locally, crates are retrieved remotely
+- static :: registry index and crate sources are stored locally, no
+     network requests are required

@@ -12,7 +12,7 @@
 ;; behavior (using standard) versus your source code (custom).
 
 ;;; Code:
-(defpackage :std/named-readtables
+(uiop:define-package :std/named-readtables
   (:nicknames :named-readtables)
   (:use :cl)
   (:export

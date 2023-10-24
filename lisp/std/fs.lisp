@@ -10,7 +10,7 @@
 ;;; Code:
 (defpackage :std/fs
   (:nicknames :fs)
-  (:use :cl :str :cond :fu)
+  (:use :cl :str :err :fu)
   (:export))
 
 (in-package :std/fs)

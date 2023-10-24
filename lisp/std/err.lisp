@@ -1,7 +1,8 @@
-;;; cond.lisp --- Conditions
+;;; err.lisp --- Conditions and other exception handlers
 
 ;;; Code:
-(defpackage :std/cond
+(defpackage :std/err
+  (:nicknames :err)
   (:use :cl)
   (:export
    #:nyi!
@@ -26,7 +27,7 @@
    #:invalid-argument-p
    #:unwind-protect-case))
 
-(in-package :std/cond)
+(in-package :std/err)
 
 (defmacro nyi! (&optional comment)
   `(prog1

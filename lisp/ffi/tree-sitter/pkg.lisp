@@ -1,7 +1,8 @@
-(pkg:defpkg :tree-sitter
+(defpackage :tree-sitter/pkg
+  (:nicknames :ts/pkg)
   (:use :cl :alien))
 
-(in-package :tree-sitter)
+(in-package :tree-sitter/pkg)
 
 (defun load-tree-sitter () 
   (unless (member :tree-sitter *features*)

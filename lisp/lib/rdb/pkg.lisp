@@ -7,8 +7,9 @@
 ;; Commentary:
 
 ;; Code:
-(uiop:define-package :rdb
-  (:use :cl :alien :fu :rocksdb)
+(uiop:define-package :rdb/pkg
+  (:nicknames :rdb)
+  (:use :cl :std/alien :std/fu :rocksdb)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:reexport :rocksdb)
   (:export 
@@ -28,7 +29,7 @@
    :unable-to-put-key-value-to-db 
    :unable-to-get-value-to-db))
 
-(in-package :rdb)
+(in-package :rdb/pkg)
 
 (defstruct rdb-opts
   (create-if-missing nil :type boolean)

@@ -58,8 +58,9 @@
   (5) All of the pointer arguments must be non-NULL.|#
 
 ;;; Code:
-(defpackage :rocksdb
-  (:use :cl :alien :rocksdb/macs)
+(defpackage :rocksdb/pkg
+  (:nicknames :rocksdb)
+  (:use :cl :std :rocksdb/macs)
   (:export
    :load-rocksdb
    ;; ERR
@@ -346,7 +347,8 @@
   (count int)
   (keys (array c-string))
   (values (array c-string))
-  (errptr (rocksdb-errptr)))
+  (errptr rocksdb-errptr))
+
 ;;;; bb-opts
 (define-alien-routine rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
 (define-alien-routine rocksdb-block-based-options-destroy void 
