@@ -17,9 +17,9 @@ use std::fmt;
 use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, Duration};
-use indicatif::{ProgressBar, ProgressStyle};
+use tenex_util::indicatif::{ProgressBar, ProgressStyle};
 use futures_util::StreamExt;
-use oauth2::{
+use tenex_util::oauth2::{
   basic::{BasicClient, BasicTokenType},
   AuthUrl, AuthorizationCode, ClientId, ClientSecret, EmptyExtraTokenFields,
   RedirectUrl, RefreshToken, StandardTokenResponse, TokenResponse, TokenUrl,
@@ -29,7 +29,7 @@ use serde::{Serialize, Deserialize};
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
-
+use tenex_util::open_browser;
 use reqwest::Client;
 
 pub const FREESOUND_ENDPOINT: &str = "https://freesound.org/apiv2";
@@ -125,33 +125,6 @@ impl ClientConfig {
     let content = fs::read(path)?;
     let config: ClientConfig = serde_json::from_slice(&content)?;
     Ok(config)
-  }
-}
-
-/// OS-specific browser command. supports Win/Mac/Linux
-pub fn open_browser(url: &str) {
-  if cfg!(target_os = "windows") {
-    // https://stackoverflow.com/a/49115945
-    std::process::Command::new("rundll32.exe")
-      .args(&["url.dll,FileProtocolHandler", url])
-      .status()
-      .expect("failed to open file");
-  } else if cfg!(target_os = "macos") || cfg!(target_os = "linux") {
-    // https://dwheeler.com/essays/open-files-urls.html
-    #[cfg(target_os = "macos")]
-    let cmd = "open";
-    #[cfg(target_os = "linux")]
-    let cmd = "xdg-open";
-
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
-    {
-      std::process::Command::new(cmd)
-        .arg(url)
-        .status()
-        .expect("failed to open URL");
-    }
-  } else {
-    unimplemented!() // ignore others
   }
 }
 
