@@ -439,6 +439,8 @@ inherited by a parent headline."
       (org-agenda-remove-restriction-lock t)
       (message nil))))
 
+;;; Tempo
+(setq tempo-interactive t)
 ;;; Keys
 (define-prefix-command 'scratch-keys nil "Scratch")
 

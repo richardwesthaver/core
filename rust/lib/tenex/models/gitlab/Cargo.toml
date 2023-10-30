@@ -1,0 +1,9 @@
+[package]
+name = "gitlab"
+version = "0.1.0"
+edition = "2021"
+[lib]
+name = "gitlab"
+path = "lib.rs"
+[dependencies]
+gitlab = "0.1510.0"
