@@ -3,11 +3,7 @@ name = "hash"
 version = "0.1.0"
 authors = ["ellis"]
 edition = "2018"
-description = "Hash Function Modules"
-documentation = "https://docs.rwest.io/hash"
-repository = "https://hg.rwest.io/rlib"
-publish = ["crater"]
-
+description = "Hash Functions"
 [dependencies]
 # contrib
 blake3 = "1.0.0"
