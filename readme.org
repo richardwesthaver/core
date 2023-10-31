@@ -2,13 +2,12 @@
 #+AUTHOR: Richard Westhaver
 #+EMAIL: ellis@rwest.io
 #+DESCRIPTION: The core of The Compiler Company software stack
-
 This repository contains a collection of software libraries shared
 across all of our products and projects.
 
 The basic structure consists of a top-level directory for each
-significant programming language we use. As of [2023-10-26 Thu] this
-includes Common Lisp, Emacs Lisp, and Rust.
+significant language we speak. As of [2023-10-26 Thu] this includes
+Common Lisp, Emacs Lisp, and Rust.
 
 - NOTE :: This is *not* a portable library. Starting in version =1.0=
   we will be depending on downstream forks of SBCL and Rust.
@@ -451,3 +450,14 @@ No tests failed.
 #+RESULTS:
 : in suite TREE-SITTER with 0/0 tests:
 : No tests failed.
+* emacs
+There are a few internal packages that link to system libraries at
+runtime - the following libraries need to be installed for a fully
+functioning editor:
+
+- libvoikko ::
+  =sudo pacman -Syu libvoikko=
+* lib
+** sxp
+** sk
+** mq

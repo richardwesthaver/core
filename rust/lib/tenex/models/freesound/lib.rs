@@ -6,9 +6,7 @@
 //! features such as basic search, upload, download, and even
 //! fingerprint search based on analysis files from Essentia.
 //!
-//! This module implements the client-side freesound.org API. It is
-//! used in MPK_SESH and is especially useful with the analysis data
-//! from MPK_DB.
+//! This module implements the client-side freesound.org API.
 //!
 //! REF: <https://freesound.org/docs/api/>
 //! ENDPOINT: <https://freesound.org/apiv2/>
@@ -35,7 +33,7 @@ use reqwest::Client;
 pub const FREESOUND_ENDPOINT: &str = "https://freesound.org/apiv2";
 
 pub const USER_AGENT: &str =
-  concat!("mpk/", env!("CARGO_PKG_VERSION"), " (https://rwest.io)");
+  concat!("tenex/", env!("CARGO_PKG_VERSION"), " (https://rwest.io)");
 
 pub const CONFIG_FILE: &str = "freesound.json";
 pub type Result<T> = std::result::Result<T, Error>;

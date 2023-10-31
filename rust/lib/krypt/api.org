@@ -1,0 +1,17 @@
+#+title: Krypt API
+#+description: Krypt API specification
+This document defines the ~krypt~ /library/ API as well as the
+standard /service/ APIs which can safely be embedded in user
+applications.
+* Library API
+** Structs
+** Traits
+** Functions
+** krypt.h
+* Service API
+** login
+** logout
+** encode
+** decode
+** verify
+** query
