@@ -3,8 +3,7 @@
 ;; default init file for GNU Emacs.
 
 ;;; Code:
-(require 'init/util)
-
+(load-file "util.el")
 (add-to-load-path (join-paths user-emacs-directory "lib/"))
-
-(require 'default)
+(load-file "default.el")
+(package-install-selected-packages)

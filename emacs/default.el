@@ -1,35 +1,76 @@
 ;;; default.el --- default config -*- lexical-binding: t -*-
 (load-theme 'modus-vivendi)
 (put 'upcase-region 'disabled nil)
-(repeat-mode 1)
+(setq package-archives 
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+	("nongnu" . "https://elpa.nongnu.org/nongnu/")
+	("melpa" . "https://melpa.org/packages/"))
+      use-package-always-ensure t
+      use-package-expand-minimally t)
+(package-initialize)
+;;; Packages
+(with-eval-after-load 'package
+  (mapc (lambda (x) (cl-pushnew x package-selected-packages)) 
+	'(org-web-tools 
+	  citeproc 
+	  all-the-icons all-the-icons-dired all-the-icons-ibuffer)))
+
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc
 (if (file-exists-p "~/.local/bin/rhg")
         (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
-(when (display-graphic-p)
-  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+(when (and (display-graphic-p) (package-installed-p 'all-the-icons-dired))
+  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
+  (add-hook 'ibuffer-mode-hook 'all-the-icons-ibuffer-mode))
+
+;;; Treesitter
+(require 'treesit)
+(mapc (lambda (x) (add-to-list 'treesit-language-source-alist x))
+      '((python . ("https://github.com/tree-sitter/tree-sitter-python"))
+	(commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))))
+
+(mapc (lambda (x) (add-to-list 'treesit-load-name-override-list x))
+      '((common-lisp "libtree-sitter-commonlisp" "tree_sitter_commonlisp")))
+
+(mapc (lambda (x) (add-to-list 'major-mode-remap-alist x))
+      '((c-mode . c-ts-mode)
+	(c++-mode . c++-ts-mode)
+	(bash-mode . bash-ts-mode)
+	(rust-mode . rust-ts-mode)
+	(python-mode . python-ts-mode)
+	(css-mode . css-ts-mode)
+	(html-mode . html-ts-mode)
+	(js-mode . js-ts-mode)
+	(toml-mode . toml-ts-mode)
+	(json-mode . json-ts-mode)
+	(dockerfile-mode . dockerfile-ts-mode)))
 
 ;;; Lisp
-(defvar slime-toggle nil)
-(defun slime-toggle ()
-  "toggle between lisp file and slime-repl"
-  (interactive)
-  (if (eq major-mode 'slime-repl-mode)
-          (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
+(use-package lisp-mode
+  :ensure nil
+  :config
+  (setq inferior-lisp-program "sbcl"
+	scheme-program-name "gsi"
+	guile-program "guile"
+	cmulisp-program "lisp"
+	scsh-program "scsh"))
+
+(use-package slime
+  :config
+  (defvar slime-toggle nil)
+  (defun slime-toggle ()
+    "toggle between lisp file and slime-repl"
+    (interactive)
+    (if (eq major-mode 'slime-repl-mode)
+        (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
       (progn
         (setq slime-toggle (current-buffer))
-        (slime-repl))))
-
-(setq inferior-lisp-program "sbcl")
-(setq scheme-program-name "gsi")
-(setq guile-program "guile")
-(setq cmulisp-program "lisp")
-(setq scsh-program "scsh")
+        (slime-repl)))))
 
 ;; paredit-map
-(defvar edit-map
+(defvar paredit-map
     (let ((map (make-sparse-keymap)))
     (pcase-dolist (`(,k . ,f)
                    '(("u" . backward-up-list)
@@ -57,14 +98,15 @@
 
 (map-keymap
  (lambda (_ cmd)
-     (put cmd 'repeat-map 'edit-map))
- edit-map)
+     (put cmd 'repeat-map 'paredit-map))
+ paredit-map)
 
 ;;; Rust
 (add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))
 (add-hook 'rust-mode-hook 'eglot-ensure)
-(add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer")))
 (setq rust-rustfmt-switches nil)
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer"))))
 
 ;;; Keyboard Macros
 (defun toggle-macro-recording ()
@@ -175,7 +217,6 @@
                                (delete-dups
                                 (ring-elements eshell-history-ring)))))
 ;;; Org
-(add-to-list 'package-selected-packages 'org-web-tools 'citeproc)
 ;; todos
 (setq org-todo-keywords
       '((type "TBD(0!)" "TODO(t!)" "|")
@@ -447,9 +488,6 @@ inherited by a parent headline."
 (keymap-set scratch-keys "n" #'new-scratch)
 (keymap-set scratch-keys "SPC" #'default-scratch-buffer)
 
-(with-eval-after-load 'default
-  (keymap-set keys-map "C-c i" #'scratch-keys))
-
 ;; Adapted from the `scratch.el' package by Ian Eure.
 (defun default-scratch-list-modes ()
   "List known major modes."
@@ -526,3 +564,5 @@ buffer."
     (switch-to-buffer (get-buffer-create bufname))
     (insert initial-scratch-message)
     (lisp-interaction-mode)))
+
+(provide 'default)
