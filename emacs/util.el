@@ -74,5 +74,9 @@ Concat ARGS and return a newly interned symbol."
              (setq result (concat (file-name-as-directory result) dir)))
     result))
 
+(defmacro add-packages (&rest pkgs)
+  "add list of packages PKGS to `package-selected-packages'"
+  `(mapc (lambda (x) (add-to-list 'package-selected-packages x)) ',pkgs))
+
 (provide 'util)
 ;; util.el ends here

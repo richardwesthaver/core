@@ -1,4 +1,4 @@
-use freesound::{write_sound, FreeSoundRequest, FreeSoundResponse, FreeSoundClient, Result, ClientConfig};
+use tenex::freesound::{write_sound, FreeSoundRequest, FreeSoundResponse, FreeSoundClient, Result, FreesoundConfig};
 use std::{env, path::Path};
 
 #[tokio::main]
@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     Ok(ref val) => Path::new(val),
     Err(_) => Path::new("freesound.json")
   };
-  let config = ClientConfig::load(&config_path)?;
+  let config = FreesoundConfig::load(&config_path)?;
   let mut client = FreeSoundClient::new_with_config(&config);
   if let Some(cmd) = cmd {
     if cmd.eq("auth") {

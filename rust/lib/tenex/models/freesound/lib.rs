@@ -16,7 +16,7 @@ use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, Duration};
 use tenex_util::indicatif::{ProgressBar, ProgressStyle};
-use futures_util::StreamExt;
+use tenex_util::StreamExt;
 use tenex_util::oauth2::{
   basic::{BasicClient, BasicTokenType},
   AuthUrl, AuthorizationCode, ClientId, ClientSecret, EmptyExtraTokenFields,
@@ -92,7 +92,7 @@ impl From<std::io::Error> for Error {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct ClientConfig {
+pub struct FreesoundConfig {
   pub client_id: Option<String>,
   pub client_secret: Option<String>,
   pub redirect_url: Option<String>,
@@ -102,7 +102,7 @@ pub struct ClientConfig {
   pub expires: Option<u64>,
 }
 
-impl ClientConfig {
+impl FreesoundConfig {
   pub fn update(
     &mut self,
     access_token: &str,
@@ -121,7 +121,7 @@ impl ClientConfig {
   }
   pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
     let content = fs::read(path)?;
-    let config: ClientConfig = serde_json::from_slice(&content)?;
+    let config: FreesoundConfig = serde_json::from_slice(&content)?;
     Ok(config)
   }
 }
@@ -164,7 +164,7 @@ pub async fn write_sound<P: AsRef<Path>>(
 #[derive(Debug, Default)]
 pub struct FreeSoundClient {
   pub client: Client,
-  pub cfg: ClientConfig,
+  pub cfg: FreesoundConfig,
 }
 
 impl FreeSoundClient {
@@ -177,7 +177,7 @@ impl FreeSoundClient {
   pub fn new() -> FreeSoundClient {
     FreeSoundClient {
       client: Client::new(),
-      cfg: ClientConfig {
+      cfg: FreesoundConfig {
         redirect_url: Some("http://localhost:8080".to_string()),
         ..Default::default()
       },
@@ -185,7 +185,7 @@ impl FreeSoundClient {
   }
 
   /// Create a new FreeSoundClient with the given CFG.
-  pub fn new_with_config(cfg: &ClientConfig) -> Self {
+  pub fn new_with_config(cfg: &FreesoundConfig) -> Self {
     FreeSoundClient {
       client: Client::new(),
       cfg: cfg.to_owned(),
@@ -312,7 +312,7 @@ impl FreeSoundClient {
           stream.write_all(response.as_bytes()).await.unwrap();
           let token_res = client
             .exchange_code(code)
-            .request_async(oauth2::reqwest::async_http_client)
+            .request_async(tenex_util::oauth2::reqwest::async_http_client)
             .await
             .unwrap();
 
@@ -334,7 +334,7 @@ impl FreeSoundClient {
         if let Some(t) = &self.cfg.refresh_token {
           let token_res = client
             .exchange_refresh_token(&RefreshToken::new(t.to_string()))
-            .request_async(oauth2::reqwest::async_http_client)
+            .request_async(tenex_util::oauth2::reqwest::async_http_client)
             .await
             .unwrap();
           self.update_cfg(token_res);
