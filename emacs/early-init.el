@@ -28,14 +28,13 @@
 ;; migrating them to `early-init.el`.
 ;; 
 ;;; Code:
-(setq frame-inhibit-implied-resize t
-      inhibit-startup-buffer-menu nil
+(setq inhibit-startup-buffer-menu nil
       initial-buffer-choice t
       use-dialog-box t
       use-file-dialog nil
       tool-bar-mode nil
-      menu-bar-mode nil
-      scroll-bar-mode t)
+      menu-bar-mode nil)
+(scroll-bar-mode 0)
 (when (and (fboundp 'native-comp-available-p)
            (native-comp-available-p))
   (setq native-comp-async-report-warnings-errors nil

@@ -75,3 +75,4 @@ Concat ARGS and return a newly interned symbol."
     result))
 
 (provide 'util)
+;; util.el ends here

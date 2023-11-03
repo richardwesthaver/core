@@ -1,19 +1,68 @@
 ;;; default.el --- default config -*- lexical-binding: t -*-
+
+;;; Code:
+
+;;; Default Settings
 (load-theme 'modus-vivendi)
 (put 'upcase-region 'disabled nil)
+
+(setq-default make-backup-files nil
+	      auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
+	      tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)
+	      confirm-kill-emacs nil
+	      confirm-kill-process nil
+	      use-short-answers t
+	      display-time-format "%Y-%m-%d %H:%M"
+	      ring-bell-function 'ignore
+	      gc-cons-percentage 0.6
+	      completion-ignore-case t
+	      ;; epa-pinentry-mode 'loopback
+	      shr-use-colors nil
+	      shr-use-fonts nil
+	      shr-max-image-proportion 0.6
+	      shr-image-animate nil
+	      shr-discard-aria-hidden t
+	      bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
+	      project-list-file (expand-file-name "projects" user-emacs-directory)
+	      emms-directory (expand-file-name "emms" user-emacs-directory)
+	      gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
+	      url-cache-directory (expand-file-name "url" user-emacs-directory)
+	      tab-always-indent 'complete
+	      shr-cookie-policy nil
+	      browse-url-browser-function 'browse-url-default-browser
+	      eww-search-prefix "https://duckduckgo.com/html?q="
+	      url-privacy-level '(email agent cookies lastloc)
+	      view-read-only t
+	      tramp-default-method "sshx")
+
+(when (string= system-type "darwin")       
+  (setq-default dired-use-ls-dired nil))
+
+;;; Default Variables
+(defvar company-domain "compiler.company")
+(defvar company-name "The Compiler Company, LLC")
+(defvar company-vc-domain "vc.compiler.company")
+
+;;; Packages
+(package-initialize)
+(with-eval-after-load 'package
+  (mapc (lambda (x) (cl-pushnew x package-selected-packages)) 
+	'(org-web-tools 
+	  citeproc 
+	  all-the-icons all-the-icons-dired all-the-icons-ibuffer
+	  slime
+	  rust-mode
+	  tree-sitter
+	  tree-sitter-langs)))
+
+(package-install-selected-packages t)
+
 (setq package-archives 
       '(("gnu" . "https://elpa.gnu.org/packages/")
 	("nongnu" . "https://elpa.nongnu.org/nongnu/")
 	("melpa" . "https://melpa.org/packages/"))
       use-package-always-ensure t
       use-package-expand-minimally t)
-(package-initialize)
-;;; Packages
-(with-eval-after-load 'package
-  (mapc (lambda (x) (cl-pushnew x package-selected-packages)) 
-	'(org-web-tools 
-	  citeproc 
-	  all-the-icons all-the-icons-dired all-the-icons-ibuffer)))
 
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc
@@ -26,26 +75,11 @@
   (add-hook 'ibuffer-mode-hook 'all-the-icons-ibuffer-mode))
 
 ;;; Treesitter
-(require 'treesit)
-(mapc (lambda (x) (add-to-list 'treesit-language-source-alist x))
-      '((python . ("https://github.com/tree-sitter/tree-sitter-python"))
-	(commonlisp . ("https://github.com/theHamsta/tree-sitter-commonlisp"))))
-
-(mapc (lambda (x) (add-to-list 'treesit-load-name-override-list x))
-      '((common-lisp "libtree-sitter-commonlisp" "tree_sitter_commonlisp")))
-
-(mapc (lambda (x) (add-to-list 'major-mode-remap-alist x))
-      '((c-mode . c-ts-mode)
-	(c++-mode . c++-ts-mode)
-	(bash-mode . bash-ts-mode)
-	(rust-mode . rust-ts-mode)
-	(python-mode . python-ts-mode)
-	(css-mode . css-ts-mode)
-	(html-mode . html-ts-mode)
-	(js-mode . js-ts-mode)
-	(toml-mode . toml-ts-mode)
-	(json-mode . json-ts-mode)
-	(dockerfile-mode . dockerfile-ts-mode)))
+(use-package tree-sitter
+  :config
+  (require 'tree-sitter-langs)
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
 ;;; Lisp
 (use-package lisp-mode
@@ -566,3 +600,4 @@ buffer."
     (lisp-interaction-mode)))
 
 (provide 'default)
+;; default.el ends here
