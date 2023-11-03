@@ -9,8 +9,9 @@
 (setq-default make-backup-files nil
 	      auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
 	      tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)
+	      dired-free-space nil
 	      confirm-kill-emacs nil
-	      confirm-kill-process nil
+	      confirm-kill-processes nil
 	      use-short-answers t
 	      display-time-format "%Y-%m-%d %H:%M"
 	      ring-bell-function 'ignore
@@ -45,24 +46,22 @@
 
 ;;; Packages
 (package-initialize)
+
 (with-eval-after-load 'package
-  (mapc (lambda (x) (cl-pushnew x package-selected-packages)) 
-	'(org-web-tools 
-	  citeproc 
-	  all-the-icons all-the-icons-dired all-the-icons-ibuffer
-	  slime
-	  rust-mode
-	  tree-sitter
-	  tree-sitter-langs)))
-
-(package-install-selected-packages t)
-
-(setq package-archives 
-      '(("gnu" . "https://elpa.gnu.org/packages/")
-	("nongnu" . "https://elpa.nongnu.org/nongnu/")
-	("melpa" . "https://melpa.org/packages/"))
-      use-package-always-ensure t
-      use-package-expand-minimally t)
+  (setq package-archives 
+	'(("gnu" . "https://elpa.gnu.org/packages/")
+	  ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+	  ("melpa" . "https://melpa.org/packages/"))
+	use-package-always-ensure t
+	use-package-expand-minimally t)
+  (add-packages
+   org-web-tools 
+   citeproc 
+   all-the-icons all-the-icons-dired all-the-icons-ibuffer
+   slime
+   rust-mode
+   tree-sitter-langs)
+  (package-install-selected-packages t))
 
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc

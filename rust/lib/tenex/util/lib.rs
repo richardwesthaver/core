@@ -4,6 +4,7 @@
 pub use oauth2;
 #[cfg(feature = "indicatif")]
 pub use indicatif;
+pub use futures_util::StreamExt;
 /// OS-specific browser command. supports Win/Mac/Linux
 pub fn open_browser(url: &str) {
   if cfg!(target_os = "windows") {
