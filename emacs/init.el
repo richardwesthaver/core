@@ -3,7 +3,6 @@
 ;; default init file for GNU Emacs.
 
 ;;; Code:
-(load-file "util.el")
+(dolist (x '("util.el" "default.el" "keys.el"))
+  (load-file (concat user-emacs-directory x)))
 (add-to-load-path (join-paths user-emacs-directory "lib/"))
-(load-file "default.el")
-(package-install-selected-packages)

@@ -10,3 +10,10 @@
 
 ;;; Code:
 
+(global-set-key (kbd "C-x C-b") #'ibuffer)
+(global-set-key (kbd "C-c l") #'org-store-link)
+(global-set-key (kbd "C-c C-l") #'org-insert-link-global)
+(global-set-key (kbd "C-c C-o") #'org-open-at-point-global)
+
+(provide 'keys)
+;; keys.el ends here
