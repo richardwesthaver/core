@@ -69,9 +69,8 @@
         (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
-(when (and (display-graphic-p) (package-installed-p 'all-the-icons-dired))
-  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
-  (add-hook 'ibuffer-mode-hook 'all-the-icons-ibuffer-mode))
+(add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
+(add-hook 'ibuffer-mode-hook #'all-the-icons-ibuffer-mode)
 
 ;;; Treesitter
 (use-package tree-sitter

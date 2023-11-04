@@ -3,7 +3,7 @@
 //! Media object types
 use crate::Objective;
 
-pub use mime::Mime;
+
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 /// External Media types.

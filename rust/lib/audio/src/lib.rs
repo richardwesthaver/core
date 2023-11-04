@@ -18,7 +18,9 @@ pub fn sample_format(format: cpal::SampleFormat) -> hound::SampleFormat {
 }
 
 /// Return `hound::WavSpec` from `cpal::SupportedStreamconfig`
-pub fn wav_spec_from_config(config: &cpal::SupportedStreamConfig) -> hound::WavSpec {
+pub fn wav_spec_from_config(
+  config: &cpal::SupportedStreamConfig,
+) -> hound::WavSpec {
   hound::WavSpec {
     channels: config.channels() as _,
     sample_rate: config.sample_rate().0 as _,
@@ -79,7 +81,9 @@ pub fn run<T: cpal::Sample>(
 
   let stream = device.build_output_stream(
     config,
-    move |data: &mut [T], _: &cpal::OutputCallbackInfo| write_data(data, channels, &mut next_value),
+    move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
+      write_data(data, channels, &mut next_value)
+    },
     err_fn,
   )?;
   stream.play()?;
@@ -90,8 +94,11 @@ pub fn run<T: cpal::Sample>(
 }
 
 /// write a stream of data
-fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
-where
+fn write_data<T>(
+  output: &mut [T],
+  channels: usize,
+  next_sample: &mut dyn FnMut() -> f32,
+) where
   T: cpal::Sample,
 {
   for frame in output.chunks_mut(channels) {

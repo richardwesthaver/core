@@ -5,6 +5,7 @@ pub use hex;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 pub use sha2::Sha512;
+pub use phf;
 // hashbrown is now the default for the Rust stdlib. We only need to
 // re-export in no_std envs.
 #[cfg(no_std)] 

@@ -5,6 +5,6 @@ use hash::Id;
 use std::collections::BTreeMap;
 
 /// Collection container trait for single-typed sets
-pub type Coll<T> = Vec<Box<Te>>;
+pub type Coll<T> = Vec<Box<T>>;
 
 pub struct Collection<T: Objective>(BTreeMap<Id, T>);
