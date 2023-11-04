@@ -3,6 +3,7 @@
 ;;; Code:
 (require 'cl-lib)
 
+;;; Helpers
 (defun group (source n)
   "This is Paul Graham's group utility from 'On Lisp'.
 
@@ -55,10 +56,7 @@ Coerce ARGS into a single string and return it."
 Concat ARGS and return a newly interned symbol."
   (intern (apply #'mkstr args)))
 
-(defmacro when-sys= (name body)
-  "(when (string= (system-name) NAME) BODY)"
-  `(when ,(string= (system-name) name) ,body))
-
+;;; Packages
 (defun add-to-load-path (&rest paths)
   "Add PATHS to `load-path'."
   (mapc (lambda (x)
@@ -67,6 +65,15 @@ Concat ARGS and return a newly interned symbol."
            ('_ (cl-pushnew x load-path))))
         paths))
 
+(defmacro add-packages (&rest pkgs)
+  "add list of packages PKGS to `package-selected-packages'"
+  `(mapc (lambda (x) (add-to-list 'package-selected-packages x)) ',pkgs))
+
+;;; OS
+(defmacro when-sys= (name body)
+  "(when (string= (system-name) NAME) BODY)"
+  `(when ,(string= (system-name) name) ,body))
+
 (defun join-paths (root &rest dirs)
   "helper function for joining strings to a path."
   (let ((result root))
@@ -74,9 +81,107 @@ Concat ARGS and return a newly interned symbol."
              (setq result (concat (file-name-as-directory result) dir)))
     result))
 
-(defmacro add-packages (&rest pkgs)
-  "add list of packages PKGS to `package-selected-packages'"
-  `(mapc (lambda (x) (add-to-list 'package-selected-packages x)) ',pkgs))
+(defun wc (&optional start end)
+  "Return a 3-element list with lines, words and characters in
+region or whole buffer."
+  (interactive)
+  (let ((n 0)
+        (start (if mark-active (region-beginning) (point-min)))
+        (end (if mark-active (region-end) (point-max))))
+    (save-excursion
+      (goto-char start)
+      (while (< (point) end) (if (forward-word 1) (setq n (1+ n)))))
+    (list (count-lines start end) n (- end start))))
+
+;;; Regexps
+(defvar default-line-regexp-alist
+  '((empty . "[\s\t]*$")
+    (indent . "^[\s\t]+")
+    (non-empty . "^.+$")
+    (list . "^\\([\s\t#*+]+\\|[0-9]+[^\s]?[).]+\\)")
+    (heading . "^[=-]+"))
+  "Alist of regexp types used by `default-line-regexp-p'.")
+
+(defun default-line-regexp-p (type &optional n)
+  "Test for TYPE on line.
+TYPE is the car of a cons cell in
+`default-line-regexp-alist'.  It matches a regular
+expression.
+With optional N, search in the Nth line from point."
+  (save-excursion
+    (goto-char (point-at-bol))
+    (and (not (bobp))
+         (or (beginning-of-line n) t)
+         (save-match-data
+           (looking-at
+            (alist-get type default-line-regexp-alist))))))
+
+;;; Time
+(defun format-iso-week-number (&optional date)
+  "format DATE as ISO week number with week days starting on
+    Monday. If DATE is nil use current date."
+  (let* ((week (format-time-string "%W" date))
+         (prefix (if (= (length week) 1)
+                     "w0" "w")))
+    (concat prefix week)))
+
+(defun last-day-of-year (&optional date)
+  "Return the last day of the year as time."
+  (encode-time 0 0 0 31 12 (nth 5 (decode-time
+                                   (or date (current-time))))))
+
+(defun last-day-of-month (&optional date)
+  "Return the last day of month as time."
+  (let* ((now (decode-time (or date (current-time))))
+         (month (nth 4 now))
+         (year (nth 5 now))
+         (last-day-of-month (calendar-last-day-of-month month year)))
+    (encode-time 0 0 0 last-day-of-month month year)))
+
+(defun last-day-of-week (&optional date)
+  "Return the last day of the week as time."
+  (let* ((now (or date (current-time)))
+         (datetime (decode-time now))
+         (dow (nth 6 datetime)))
+    (time-add now (days-to-time (- 7 dow)))))
+
+(defun first-day-of-week (&optional date)
+  "Return the first day of the week as time."
+  (let* ((now (or date (current-time)))
+         (datetime (decode-time now))
+         (dow (nth 6 datetime)))
+    (time-subtract now (days-to-time dow))))
+
+;;; VC
+(defvar git-check-ignore t
+  "When non-nil, check and obey '.gitignore' files.")
+
+(defun git-check-ignore (&optional dir)
+  "Return a list of files to be ignored in DIR (defaults to
+`default-directory'). Note that this does NOT include the .git
+directory."
+  (interactive)
+  (with-dir (or dir default-directory)
+    (mapcar (lambda (x)
+              (replace-regexp-in-string "\\\"" ""
+               (replace-regexp-in-string "\\\\\\(.\\|\n|\"\\)" "\\1" x)))
+            (split-string
+             (shell-command-to-string
+              "pwsh.exe -c git check-ignore $(ls)")))))
+
+(defun git-dir-p (dir)
+  "Return non-nil if DIR is a '.git' directory."
+  (when (string=
+         ".git"
+         (file-name-nondirectory
+          (directory-file-name dir)))
+    t))
+
+;;; Server
+;;;###autoload
+(defun kill-emacs-restart (&optional arg)
+  (interactive)
+  (kill-emacs arg t))
 
 (provide 'util)
 ;; util.el ends here

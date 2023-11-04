@@ -23,7 +23,8 @@
   "R" #'global-auto-revert-mode
   "t" #'toggle-frame-tab-bar
   "d" #'toggle-debug-on-error
-  "SPC" #'toggle-macro-recording)
+  "SPC" #'toggle-macro-recording
+  "w" #'toggle-theme)
 
 (defvar-keymap status-map
   :doc "User-specified keymap for status functions. Usually bound to 'C-c c .'."
@@ -35,11 +36,23 @@
   "d" #'list-dynamic-libraries
   "P" #'list-packages)
 
+(defvar-keymap server-map
+  :doc "User-specified keymap for server functions. Usually bound to 'C-c c q'."
+  "q"  #'kill-emacs
+  "r" #'kill-emacs-restart)
+
+(defvar-keymap review-map
+  :doc "User-specified keymap for review functions. Usually bound to 'C-c c r'."
+  "s" #'flyspell-buffer
+  "SPC" #'whitespace-cleanup)
+
 (defvar-keymap user-map
   :doc "User-specified keymap usually bound to 'C-c c' and populated in 'custom.el'."
   :prefix 'user-map
   "c" #'org-capture
   "l" #'org-store-link
+  "f" #'load-file
+  "u" #'compile
   "a" #'org-agenda
   "<return>" #'shell
   "C-<return>" #'term
@@ -48,10 +61,19 @@
   "s" #'speedbar
   "SPC" toggle-map
   "." status-map
+  "r" review-map
+  "q" server-map
   "<tab>" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
   "z" #'scratch-new
-  "Z" #'default-scratch-buffer)
+  "Z" #'default-scratch-buffer
+  ";" #'prog-comment-dwim
+  "C-;" #'prog-comment-timestamp-keyword)
+
+;;; Modes
+(keymap-set conf-toml-mode-map "C-c C-c C-r" #'rust-run)
+(keymap-set conf-toml-mode-map "C-c C-c C-u" #'rust-compile)
+(keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)
 
 ;;; C-x
 ;; (keymap-set ctl-x-map "C-b" #'ibuffer)

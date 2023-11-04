@@ -7,41 +7,42 @@
 (put 'list-threads 'disabled nil)
 (put 'list-timers 'disabled nil)
 
-(setq-default make-backup-files nil
-	      auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
-	      tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)
-	      dired-free-space nil
-	      confirm-kill-emacs nil
-	      confirm-kill-processes nil
-	      use-short-answers t
-	      display-time-format "%Y-%m-%d %H:%M"
-	      ring-bell-function 'ignore
-	      gc-cons-percentage 0.6
-	      completion-ignore-case t
-	      ;; epa-pinentry-mode 'loopback
-	      shr-use-colors nil
-	      shr-use-fonts nil
-	      shr-max-image-proportion 0.6
-	      shr-image-animate nil
-	      shr-discard-aria-hidden t
-	      bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
-	      project-list-file (expand-file-name "projects" user-emacs-directory)
-	      emms-directory (expand-file-name "emms" user-emacs-directory)
-	      gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
-	      url-cache-directory (expand-file-name "url" user-emacs-directory)
-	      tab-always-indent 'complete
-	      shr-cookie-policy nil
-	      browse-url-browser-function 'browse-url-default-browser
-	      eww-search-prefix "https://duckduckgo.com/html?q="
-	      url-privacy-level '(email agent cookies lastloc)
-	      view-read-only t
-	      tramp-default-method "sshx")
+(setq-default 
+ make-backup-files nil
+ auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
+ tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)
+ dired-free-space nil
+ confirm-kill-emacs nil
+ confirm-kill-processes nil
+ use-short-answers t
+ display-time-format "%Y-%m-%d %H:%M"
+ ring-bell-function 'ignore
+ gc-cons-percentage 0.6
+ completion-ignore-case t
+ ;; epa-pinentry-mode 'loopback
+ shr-use-colors nil
+ shr-use-fonts nil
+ shr-max-image-proportion 0.6
+ shr-image-animate nil
+ shr-discard-aria-hidden t
+ bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
+ project-list-file (expand-file-name "projects" user-emacs-directory)
+ emms-directory (expand-file-name "emms" user-emacs-directory)
+ gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
+ url-cache-directory (expand-file-name "url" user-emacs-directory)
+ tab-always-indent 'complete
+ shr-cookie-policy nil
+ browse-url-browser-function 'browse-url-default-browser
+ eww-search-prefix "https://duckduckgo.com/html?q="
+ url-privacy-level '(email agent cookies lastloc)
+ view-read-only t
+ tramp-default-method "sshx")
 
-(when (string= system-type "darwin")       
+(when-sys= "darwin"
   (setq-default dired-use-ls-dired nil))
 
 ;;; Variables
-(defvar default-theme 'modus-vivendi)
+(defvar default-theme 'modus-vivendi-deuteranopia)
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
@@ -160,6 +161,122 @@
 
 ;;; Bash
 (setq sh-basic-offset 2)
+
+;;; Comments
+(defcustom prog-comment-keywords
+  '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
+  "List of strings with comment keywords."
+  :group 'default)
+
+(defcustom prog-comment-timestamp-format-concise "%F"
+  "Specifier for date in `prog-comment-timestamp-keyword'.
+Refer to the doc string of `format-time-string' for the available
+options."
+  :group 'default)
+
+(defcustom prog-comment-timestamp-format-verbose "%F %T %z"
+  "Like `prog-comment-timestamp-format-concise', but longer."
+  :group 'default)
+
+;;;###autoload
+(defun prog-comment-dwim (arg)
+  "Flexible, do-what-I-mean commenting.
+
+If region is active and ARG is either a numeric argument greater
+than one or a universal prefix (\\[universal-argument]), then
+apply `comment-kill' on all comments in the region.
+
+If the region is active and no ARG is supplied, or is equal to a
+numeric prefix of 1, then toggle the comment status of the region.
+
+Else toggle the comment status of the line at point.  With a
+numeric prefix ARG, do so for ARGth lines (negative prefix
+operates on the lines before point)."
+  (interactive "p")
+  (cond
+   ((and (> arg 1) (use-region-p))
+    (let* ((beg (region-beginning))
+           (end (region-end))
+           (num (count-lines beg end)))
+      (save-excursion
+        (goto-char beg)
+        (comment-kill num))))
+   ((use-region-p)
+    (comment-or-uncomment-region (region-beginning) (region-end)))
+   (t
+    (save-excursion (comment-line (or arg 1))))))
+
+(defvar prog-comment--keyword-hist '()
+  "Input history of selected comment keywords.")
+
+(defun prog-comment--keyword-prompt (keywords)
+  "Prompt for candidate among KEYWORDS."
+  (let ((def (car prog-comment--keyword-hist)))
+    (completing-read
+     (format "Select keyword [%s]: " def)
+     keywords nil nil nil 'prog-comment--keyword-hist def)))
+
+
+;;;###autoload
+(defun prog-comment-timestamp-keyword (keyword &optional verbose)
+  "Add timestamped comment with KEYWORD.
+
+When called interactively, the list of possible keywords is that
+of `prog-comment-keywords', though it is possible to
+input arbitrary text.
+
+If point is at the beginning of the line or if line is empty (no
+characters at all or just indentation), the comment is started
+there in accordance with `comment-style'.  Any existing text
+after the point will be pushed to a new line and will not be
+turned into a comment.
+
+If point is anywhere else on the line, the comment is indented
+with `comment-indent'.
+
+The comment is always formatted as 'DELIMITER KEYWORD DATE:',
+with the date format being controlled by the variable
+`prog-comment-timestamp-format-concise'.
+
+With optional VERBOSE argument (such as a prefix argument
+`\\[universal-argument]'), use an alternative date format, as
+specified by `prog-comment-timestamp-format-verbose'."
+  (interactive
+   (list
+    (prog-comment--keyword-prompt prog-comment-keywords)
+    current-prefix-arg))
+  (let* ((date (if verbose
+                   comment-timestamp-format-verbose
+                 prog-comment-timestamp-format-concise))
+         (string (format "%s %s: " keyword (format-time-string date)))
+         (beg (point)))
+    (cond
+     ((or (eq beg (point-at-bol))
+          (default-line-regexp-p 'empty))
+      (let* ((maybe-newline (unless (default-line-regexp-p 'empty 1) "\n")))
+        ;; NOTE 2021-07-24: we use this `insert' instead of
+        ;; `comment-region' because of a yet-to-be-determined bug that
+        ;; traps `undo' to the two states between the insertion of the
+        ;; string and its transformation into a comment.
+        (insert
+         (concat comment-start
+                 ;; NOTE 2021-07-24: See function `comment-add' for
+                 ;; why we need this.
+                 (make-string
+                  (comment-add nil)
+                  (string-to-char comment-start))
+                 comment-padding
+                 string
+                 comment-end))
+        (indent-region beg (point))
+        (when maybe-newline
+          (save-excursion (insert maybe-newline)))))
+     (t
+      (comment-indent t)
+      (insert (concat " " string))))))
+
+(setq hexl-bits 8)	 
+(setq tab-width 4)
 
 ;;; Keyboard Macros
 (defun toggle-macro-recording ()
