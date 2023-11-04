@@ -12,3 +12,4 @@ rand = "0.8.0"
 serde = { version = "1.0.128", features = ["derive"] }
 sha2 = "0.9.5"
 hex = "0.4.3"
+phf = "0.11.2"
