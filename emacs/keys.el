@@ -10,10 +10,63 @@
 
 ;;; Code:
 
-(global-set-key (kbd "C-x C-b") #'ibuffer)
-(global-set-key (kbd "C-c l") #'org-store-link)
-(global-set-key (kbd "C-c C-l") #'org-insert-link-global)
-(global-set-key (kbd "C-c C-o") #'org-open-at-point-global)
+;;; User keys
+(defvar-keymap toggle-map
+  :doc "User-specified keymap for mode toggles. Usually bound to 'C-c c SPC'."
+  :prefix 'toggle-map
+  "v" #'global-visual-line-mode
+  "h" #'global-hl-line-mode
+  "l" #'global-line-numbers-mode
+  "L" #'global-display-line-numbers-mode
+  "a" #'gpm-mouse-mode
+  "r" #'refill-mode
+  "R" #'global-auto-revert-mode
+  "t" #'toggle-frame-tab-bar
+  "d" #'toggle-debug-on-error
+  "SPC" #'toggle-macro-recording)
+
+(defvar-keymap status-map
+  :doc "User-specified keymap for status functions. Usually bound to 'C-c c .'."
+  "l" #'eglot-list-connections
+  "p" #'list-processes
+  "t" #'list-threads
+  "a" #'list-abbrevs
+  "c" #'list-timers
+  "d" #'list-dynamic-libraries
+  "P" #'list-packages)
+
+(defvar-keymap user-map
+  :doc "User-specified keymap usually bound to 'C-c c' and populated in 'custom.el'."
+  :prefix 'user-map
+  "c" #'org-capture
+  "l" #'org-store-link
+  "a" #'org-agenda
+  "<return>" #'shell
+  "C-<return>" #'term
+  "S-<return>" #'eshell
+  "!" #'async-shell-command
+  "s" #'speedbar
+  "SPC" toggle-map
+  "." status-map
+  "<tab>" #'outline-cycle
+  "<backtab>" #'outline-cycle-buffer
+  "z" #'scratch-new
+  "Z" #'default-scratch-buffer)
+
+;;; C-x
+;; (keymap-set ctl-x-map "C-b" #'ibuffer)
+
+;;; C-x r
+(keymap-set ctl-x-r-map "SPC" #'point-to-register)
+(keymap-set ctl-x-r-map "C-l" #'list-registers)
+(keymap-set ctl-x-r-map "C-b" #'buffer-to-register)
+(keymap-set ctl-x-r-map "C-f" #'file-query-to-register)
+(keymap-set ctl-x-r-map "C-r" #'copy-register)
+
+;;; C-x x
+
+;;; Global
+(keymap-global-set "C-c c" user-map)
 
 (provide 'keys)
 ;; keys.el ends here
