@@ -2,9 +2,10 @@
 
 ;;; Code:
 
-;;; Default Settings
-(load-theme 'modus-vivendi)
+;;; Settings
 (put 'upcase-region 'disabled nil)
+(put 'list-threads 'disabled nil)
+(put 'list-timers 'disabled nil)
 
 (setq-default make-backup-files nil
 	      auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
@@ -39,10 +40,15 @@
 (when (string= system-type "darwin")       
   (setq-default dired-use-ls-dired nil))
 
-;;; Default Variables
+;;; Variables
+(defvar default-theme 'modus-vivendi)
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
+(defvar company-home "the.compiler.company")
+
+;;; Theme
+(add-hook 'after-init-hook (lambda () (load-theme default-theme)))
 
 ;;; Packages
 (package-initialize)
@@ -60,8 +66,14 @@
    all-the-icons all-the-icons-dired all-the-icons-ibuffer
    slime
    rust-mode
+   which-key
    tree-sitter-langs)
   (package-install-selected-packages t))
+
+;;; Desktop
+(add-hook 'kill-emacs-hook #'desktop-save)
+;;; Multisession
+(setq multisession-storage 'sqlite)
 
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc
@@ -102,43 +114,52 @@
         (slime-repl)))))
 
 ;; paredit-map
-(defvar paredit-map
-    (let ((map (make-sparse-keymap)))
-    (pcase-dolist (`(,k . ,f)
-                   '(("u" . backward-up-list)
-                     ("f" . forward-sexp)
-                     ("b" . backward-sexp)
-                     ("d" . down-list)
-                     ("k" . kill-sexp)
-                     ("n" . paredit-forward)
-                     ("p" . paredit-backward)
-                     ("K" . paredit-kill)
-                     ("]" . paredit-forward-slurp-sexp)
-                     ("[" . paredit-backward-slurp-sexp)
-                     ("}" . paredit-forward-barf-sexp)
-                     ("{" . paredit-backward-barf-sexp)
-                     ("C" . paredit-convolute-sexp)
-                     ("J" . paredit-join-sexps)
-                     ("S" . paredit-split-sexp)
-                     ("R" . paredit-raise-sexp)
-                     ("\\" . indent-region)
-                     ("/" . undo)
-                     ("t" . transpose-sexps)
-                     ("x" . eval-defun)))
-      (define-key map (kbd k) f))
-    map))
+;; (defvar paredit-map
+;;     (let ((map (make-sparse-keymap)))
+;;     (pcase-dolist (`(,k . ,f)
+;;                    '(("u" . backward-up-list)
+;;                      ("f" . forward-sexp)
+;;                      ("b" . backward-sexp)
+;;                      ("d" . down-list)
+;;                      ("k" . kill-sexp)
+;;                      ("n" . paredit-forward)
+;;                      ("p" . paredit-backward)
+;;                      ("K" . paredit-kill)
+;;                      ("]" . paredit-forward-slurp-sexp)
+;;                      ("[" . paredit-backward-slurp-sexp)
+;;                      ("}" . paredit-forward-barf-sexp)
+;;                      ("{" . paredit-backward-barf-sexp)
+;;                      ("C" . paredit-convolute-sexp)
+;;                      ("J" . paredit-join-sexps)
+;;                      ("S" . paredit-split-sexp)
+;;                      ("R" . paredit-raise-sexp)
+;;                      ("\\" . indent-region)
+;;                      ("/" . undo)
+;;                      ("t" . transpose-sexps)
+;;                      ("x" . eval-defun)))
+;;       (define-key map (kbd k) f))
+;;     map))
 
-(map-keymap
- (lambda (_ cmd)
-     (put cmd 'repeat-map 'paredit-map))
- paredit-map)
+;; (map-keymap
+;;  (lambda (_ cmd)
+;;      (put cmd 'repeat-map 'paredit-map))
+;;  paredit-map)
 
 ;;; Rust
 (add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))
 (add-hook 'rust-mode-hook 'eglot-ensure)
-(setq rust-rustfmt-switches nil)
+(setq rust-rustfmt-switches nil
+      rust-indent-offset 2)
+
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs '(rust-mode . ("rust-analyzer"))))
+
+;;; Python
+(setq python-indent-offset 2)
+(add-hook 'python-mode-hook 'eglot-ensure)
+
+;;; Bash
+(setq sh-basic-offset 2)
 
 ;;; Keyboard Macros
 (defun toggle-macro-recording ()
@@ -152,6 +173,46 @@
   (if defining-kbd-macro
       (end-kbd-macro)
     (call-last-kbd-macro)))
+
+;;; Registers
+;; - additional register vtypes: buffer
+(defun decrement-register (number register)
+  "Subtract NUMBER from the contents of register REGISTER.
+Interactively, NUMBER is the prefix arg."
+  (interactive "p\ncDecrement register: ")
+  (increment-register (- number) register))
+
+(defun copy-register (a b)
+  "Copy register A to B."
+  (interactive
+   (list (register-read-with-preview "From register: ")
+	 (register-read-with-preview "To register: ")))
+  (set-register b (get-register a)))
+
+(defun buffer-to-register (register &optional delete)
+  "Put current buffer in register - this would also work for
+  just buffers, as switch-to-buffer can use both, but it
+  facilitates for easier saving/restoring of registers."
+  (interactive "cPut current buffername in register: \nP.")
+  (set-register register (cons 'buffer (buffer-name (current-buffer)))))
+					    
+(defun file-to-register (register &optional delete)
+  "This is better than put-buffer-in-register for file-buffers, because a closed
+   file can be opened again, but does not work for no-file-buffers."
+  (interactive "cPut the filename of current buffer in register: \nP")
+  (set-register register (cons 'file (buffer-file-name (current-buffer)))))
+					    
+(defun file-query-to-register (register &optional delete)
+  (interactive 				    
+   (list 				    
+    (register-read-with-preview "File query to register: ")))
+  (set-register register (list 'file-query (buffer-file-name (current-buffer)) (point))))
+
+;; additional register-val handlers
+;; (cl-defmethod register-val-jump-to :around ((val cons) delete)
+;;   (cond
+;;    (t (cl-call-next-method val delete))))
+
 ;;; Outlines
 (defun outline-hook (rx)
   "Enable `outline-minor-mode' and set `outline-regexp'."
@@ -171,10 +232,88 @@
 	       (sh-mode "###+")
 	       (sh-script-mode "###+")
 	       (makefile-mode "###+"))
+
 ;;; Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode
     "Default major mode for new scratch buffers"
     :group 'default)
+
+;; Adapted from the `scratch.el' package by Ian Eure.
+(defun default-scratch-list-modes ()
+  "List known major modes."
+  (cl-loop for sym the symbols of obarray
+           for name = (symbol-name sym)
+           when (and (functionp sym)
+                     (not (member sym minor-mode-list))
+                     (string-match "-mode$" name)
+                     (not (string-match "--" name)))
+           collect name))
+
+(defun default-scratch-buffer-setup (region &optional mode)
+  "Add contents to `scratch' buffer and name it accordingly.
+
+REGION is added to the contents to the new buffer.
+
+Use the current buffer's major mode by default.  With optional
+MODE use that major mode instead."
+  (let* ((major (or mode major-mode))
+         (string (format "Scratch buffer for: %s\n\n" major))
+         (text (concat string region))
+         (buf (format "*Scratch for %s*" major)))
+    (with-current-buffer (get-buffer-create buf)
+      (funcall major)
+	  (save-excursion
+        (insert text)
+        (goto-char (point-min))
+        (comment-region (point-at-bol) (point-at-eol)))
+	  (vertical-motion 2))
+    (pop-to-buffer buf)))
+
+;;;###autoload
+(defun default-scratch-buffer (&optional arg)
+  "Produce a bespoke scratch buffer matching current major mode.
+
+With optional ARG as a prefix argument (\\[universal-argument]),
+use `default-scratch-buffer-mode'.
+
+With ARG as a double prefix argument, prompt for a major mode
+with completion.
+
+If region is active, copy its contents to the new scratch
+buffer."
+  (interactive "P")
+  (let* ((default-mode default-scratch-buffer-mode)
+         (modes (default-scratch-list-modes))
+         (region (with-current-buffer (current-buffer)
+                   (if (region-active-p)
+                       (buffer-substring-no-properties
+                        (region-beginning)
+                        (region-end))
+                     "")))
+         (m))
+    (pcase (prefix-numeric-value arg)
+      (16 (progn
+            (setq m (intern (completing-read "Select major mode: " modes nil t)))
+            (default-scratch-buffer-setup region m)))
+      (4 (default-scratch-buffer-setup region default-mode))
+      (_ (default-scratch-buffer-setup region)))))
+
+;;;###autoload
+(defun scratch-new ()
+  "create a new scratch buffer. (could be *scratch* - *scratchN*)"
+  (interactive)
+  (let ((n 0)
+        bufname)
+    (while (progn
+             (setq bufname
+		   (concat "*scratch"
+                           (if (= n 0) "" (int-to-string n))
+                           "*"))
+             (setq n (1+ n))
+             (get-buffer bufname)))
+    (switch-to-buffer (get-buffer-create bufname))
+    (insert initial-scratch-message)
+    (lisp-interaction-mode)))
 
 ;;; Shell
 (defun set-no-process-query-on-exit ()
@@ -184,28 +323,24 @@
 
 (add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
 (add-hook 'term-exec-hook 'set-no-process-query-on-exit)
+
 ;;; Eshell
 (defun eshell-new()
   "Open a new instance of eshell."
   (interactive)
   (eshell 'Z))
 
-(setq ;; eshell-scroll-to-bottom-on-input 'all
-      ;; eshell-error-if-no-glob t
-      eshell-highlight-prompt t
+(setq eshell-highlight-prompt t
       eshell-hist-ignoredups t
       eshell-save-history-on-exit t
       eshell-prefer-lisp-functions nil
       eshell-destroy-buffer-when-process-dies t)
 
 (add-hook 'eshell-mode-hook
-	  (lambda () (progn
-		       (eshell/alias "d" "dired $1")
-		       (eshell/alias "ff" "find-file $1")
-		       (eshell/alias "hgfe" "~/bin/sh/hg-fast-export.sh")
-		       ;; (eshell-syntax-highlighting-global-mode +1)
-		       ;; (setup-esh-help-eldoc)
-		       )))
+	  (lambda ()
+	    (eshell/alias "d" "dired $1")
+	    (eshell/alias "ff" "find-file $1")
+	    (eshell/alias "hgfe" "~/bin/sh/hg-fast-export.sh")))
 
 (defun eshell/clear ()
   "Clear the eshell buffer."
@@ -514,88 +649,6 @@ inherited by a parent headline."
 
 ;;; Tempo
 (setq tempo-interactive t)
-;;; Keys
-(define-prefix-command 'scratch-keys nil "Scratch")
-
-(keymap-set scratch-keys "n" #'new-scratch)
-(keymap-set scratch-keys "SPC" #'default-scratch-buffer)
-
-;; Adapted from the `scratch.el' package by Ian Eure.
-(defun default-scratch-list-modes ()
-  "List known major modes."
-  (cl-loop for sym the symbols of obarray
-           for name = (symbol-name sym)
-           when (and (functionp sym)
-                     (not (member sym minor-mode-list))
-                     (string-match "-mode$" name)
-                     (not (string-match "--" name)))
-           collect name))
-
-(defun default-scratch-buffer-setup (region &optional mode)
-  "Add contents to `scratch' buffer and name it accordingly.
-
-REGION is added to the contents to the new buffer.
-
-Use the current buffer's major mode by default.  With optional
-MODE use that major mode instead."
-  (let* ((major (or mode major-mode))
-         (string (format "Scratch buffer for: %s\n\n" major))
-         (text (concat string region))
-         (buf (format "*Scratch for %s*" major)))
-    (with-current-buffer (get-buffer-create buf)
-      (funcall major)
-	  (save-excursion
-          (insert text)
-          (goto-char (point-min))
-          (comment-region (point-at-bol) (point-at-eol)))
-	  (vertical-motion 2))
-    (pop-to-buffer buf)))
-
-;;;###autoload
-(defun default-scratch-buffer (&optional arg)
-  "Produce a bespoke scratch buffer matching current major mode.
-
-With optional ARG as a prefix argument (\\[universal-argument]),
-use `default-scratch-buffer-mode'.
-
-With ARG as a double prefix argument, prompt for a major mode
-with completion.
-
-If region is active, copy its contents to the new scratch
-buffer."
-  (interactive "P")
-  (let* ((default-mode default-scratch-buffer-mode)
-         (modes (default-scratch-list-modes))
-         (region (with-current-buffer (current-buffer)
-                   (if (region-active-p)
-                           (buffer-substring-no-properties
-                        (region-beginning)
-                        (region-end))
-                     "")))
-         (m))
-    (pcase (prefix-numeric-value arg)
-      (16 (progn
-              (setq m (intern (completing-read "Select major mode: " modes nil t)))
-              (default-scratch-buffer-setup region m)))
-      (4 (default-scratch-buffer-setup region default-mode))
-      (_ (default-scratch-buffer-setup region)))))
-
-;;;###autoload
-(defun new-scratch ()
-  "create a new scratch buffer. (could be *scratch* - *scratchN*)"
-  (interactive)
-  (let ((n 0)
-        bufname)
-    (while (progn
-               (setq bufname
-		   (concat "*scratch"
-                           (if (= n 0) "" (int-to-string n))
-                           "*"))
-               (setq n (1+ n))
-               (get-buffer bufname)))
-    (switch-to-buffer (get-buffer-create bufname))
-    (insert initial-scratch-message)
-    (lisp-interaction-mode)))
 
 (provide 'default)
 ;; default.el ends here
