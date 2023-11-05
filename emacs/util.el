@@ -56,7 +56,7 @@ Coerce ARGS into a single string and return it."
 Concat ARGS and return a newly interned symbol."
   (intern (apply #'mkstr args)))
 
-;;; Packages
+;;; Config
 (defun add-to-load-path (&rest paths)
   "Add PATHS to `load-path'."
   (mapc (lambda (x)

@@ -18,7 +18,10 @@
  display-time-format "%Y-%m-%d %H:%M"
  ring-bell-function 'ignore
  completion-ignore-case t
- epg-pinentry-mode 'loopback
+ ;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
+ ;; allow-emacs-pinentry
+ ;; allow-loopback-pinentry
+ ;; epg-pinentry-mode 'loopback
  shr-use-colors nil
  shr-use-fonts nil
  shr-max-image-proportion 0.6
@@ -48,6 +51,7 @@
 (defvar company-vc-domain "vc.compiler.company")
 (defvar company-home "the.compiler.company")
 
+(defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
 (defvar user-lab-directory (expand-file-name "lab" user-home-directory))
 (defvar user-stash-directory (expand-file-name "stash" user-home-directory))
@@ -64,23 +68,34 @@
 
 (with-eval-after-load 'package
   (setq package-archives 
-	'(("gnu" . "https://elpa.gnu.org/packages/")
-	  ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-	  ("melpa" . "https://melpa.org/packages/"))
-	use-package-always-ensure t
-	use-package-expand-minimally t)
+		'(("gnu" . "https://elpa.gnu.org/packages/")
+		  ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+		  ("melpa" . "https://melpa.org/packages/"))
+		use-package-always-ensure t
+		use-package-expand-minimally t)
   (add-packages
-   org-web-tools 
-   citeproc 
-   all-the-icons all-the-icons-dired all-the-icons-ibuffer
-   slime
-   rust-mode
-   which-key
-   tree-sitter-langs)
+   org-web-tools ;; web parsing
+   citeproc ;; citations
+   all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
+   corfu orderless ;; completion
+   slime ;; common lisp server
+   which-key ;; key helper
+   ;; langs
+   rust-mode)
   (package-install-selected-packages t))
 
+;;; Completions
+(use-package corfu
+  :custom (global-corfu-mode 1))
+
+(use-package orderless
+  :custom 
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
 ;;; Desktop
-(add-hook 'kill-emacs-hook #'desktop-save)
+(add-hook 'kill-emacs-hook #'desktop-save-in-desktop-dir)
+
 ;;; Multisession
 (setq multisession-storage 'sqlite)
 
@@ -93,22 +108,15 @@
 (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
 (add-hook 'ibuffer-mode-hook #'all-the-icons-ibuffer-mode)
 
-;;; Treesitter
-(use-package tree-sitter
-  :config
-  (require 'tree-sitter-langs)
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-
 ;;; Lisp
 (use-package lisp-mode
   :ensure nil
-  :config
-  (setq inferior-lisp-program "sbcl"
-	scheme-program-name "gsi"
-	guile-program "guile"
-	cmulisp-program "lisp"
-	scsh-program "scsh"))
+  :custom
+  inferior-lisp-program "sbcl"
+  scheme-program-name "gsi"
+  guile-program "guile"
+  cmulisp-program "lisp"
+  scsh-program "scsh")
 
 (use-package slime
   :config
