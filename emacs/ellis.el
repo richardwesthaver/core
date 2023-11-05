@@ -23,7 +23,6 @@
 ;; config file. Feel free to rip.
 
 ;;; Code:
-
 (setopt default-theme 'modus-vivendi-tinted)
 (enable-paredit-mode)
 (repeat-mode)
