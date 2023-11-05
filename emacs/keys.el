@@ -63,9 +63,11 @@
   "." status-map
   "r" review-map
   "q" server-map
+  "d i" #'image-dired
   "<tab>" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
-  "z" #'scratch-new
+  "z" #'scratch-buffer
+  "C-z" #'scratch-new
   "Z" #'default-scratch-buffer
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
@@ -79,7 +81,7 @@
    (keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)))
 
 ;;; C-x
-;; (keymap-set ctl-x-map "C-b" #'ibuffer)
+(keymap-set ctl-x-map "C-b" #'ibuffer)
 
 ;;; C-x r
 (keymap-set ctl-x-r-map "SPC" #'point-to-register)
@@ -92,6 +94,7 @@
 
 ;;; Global
 (keymap-global-set "C-c c" user-map)
+(keymap-global-set "<remap> <tab-to-tab-stop>" #'imenu)
 
 (provide 'keys)
 ;; keys.el ends here
