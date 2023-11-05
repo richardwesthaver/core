@@ -11,6 +11,32 @@
 ;;; Code:
 
 ;;; User keys
+;; paredit-map
+(defvar-keymap parens-map
+  :doc "parens-minor-mode keymap."
+  :repeat (:enter)
+  :prefix 'parens-map
+  "u" #'backward-up-list
+  "f" #'forward-sexp
+  "b" #'backward-sexp
+  "d" #'down-list
+  "k" #'kill-sexp
+  "n" #'paredit-forward
+  "p" #'paredit-backward
+  "K" #'paredit-kill
+  "]" #'paredit-forward-slurp-sexp
+  "[" #'paredit-backward-slurp-sexp
+  "}" #'paredit-forward-barf-sexp
+  "{" #'paredit-backward-barf-sexp
+  "C" #'paredit-convolute-sexp
+  "J" #'paredit-join-sexps
+  "S" #'paredit-split-sexp
+  "R" #'paredit-raise-sexp
+  "\\" #'indent-region
+  "/" #'undo
+  "t" #'transpose-sexps
+  "x" #'eval-defun)
+
 (defvar-keymap toggle-map
   :doc "User-specified keymap for mode toggles. Usually bound to 'C-c c SPC'."
   :prefix 'toggle-map
@@ -63,6 +89,7 @@
   "." status-map
   "r" review-map
   "q" server-map
+  "(" parens-map
   "d i" #'image-dired
   "<tab>" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
@@ -95,6 +122,7 @@
 ;;; Global
 (keymap-global-set "C-c c" user-map)
 (keymap-global-set "<remap> <tab-to-tab-stop>" #'imenu)
+(keymap-global-set "<XF86Paste>" parens-map)
 
 (provide 'keys)
 ;; keys.el ends here

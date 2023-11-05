@@ -135,38 +135,6 @@
     (setq slime-toggle (current-buffer))
     (slime-repl)))))
 
-;; paredit-map
-;; (defvar paredit-map
-;;     (let ((map (make-sparse-keymap)))
-;;     (pcase-dolist (`(,k . ,f)
-;;                    '(("u" . backward-up-list)
-;;                      ("f" . forward-sexp)
-;;                      ("b" . backward-sexp)
-;;                      ("d" . down-list)
-;;                      ("k" . kill-sexp)
-;;                      ("n" . paredit-forward)
-;;                      ("p" . paredit-backward)
-;;                      ("K" . paredit-kill)
-;;                      ("]" . paredit-forward-slurp-sexp)
-;;                      ("[" . paredit-backward-slurp-sexp)
-;;                      ("}" . paredit-forward-barf-sexp)
-;;                      ("{" . paredit-backward-barf-sexp)
-;;                      ("C" . paredit-convolute-sexp)
-;;                      ("J" . paredit-join-sexps)
-;;                      ("S" . paredit-split-sexp)
-;;                      ("R" . paredit-raise-sexp)
-;;                      ("\\" . indent-region)
-;;                      ("/" . undo)
-;;                      ("t" . transpose-sexps)
-;;                      ("x" . eval-defun)))
-;;       (define-key map (kbd k) f))
-;;     map))
-
-;; (map-keymap
-;;  (lambda (_ cmd)
-;;      (put cmd 'repeat-map 'paredit-map))
-;;  paredit-map)
-
 ;;; Rust
 (add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))
 (add-hook 'rust-mode-hook 'eglot-ensure)
