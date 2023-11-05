@@ -17,9 +17,8 @@
  use-short-answers t
  display-time-format "%Y-%m-%d %H:%M"
  ring-bell-function 'ignore
- gc-cons-percentage 0.6
  completion-ignore-case t
- ;; epa-pinentry-mode 'loopback
+ epg-pinentry-mode 'loopback
  shr-use-colors nil
  shr-use-fonts nil
  shr-max-image-proportion 0.6
@@ -43,10 +42,19 @@
 
 ;;; Variables
 (defvar default-theme 'modus-vivendi-deuteranopia)
+
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
 (defvar company-home "the.compiler.company")
+
+(defvar user-home-directory (expand-file-name "~"))
+(defvar user-lab-directory (expand-file-name "lab" user-home-directory))
+(defvar user-stash-directory (expand-file-name "stash" user-home-directory))
+(defvar user-store-directory (expand-file-name "store" user-home-directory))
+(defvar user-shed-directory (expand-file-name "shed" user-home-directory))
+(defvar user-mail-directory (expand-file-name "mail" user-home-directory))
+(defvar user-media-directory (expand-file-name "media" user-home-directory))
 
 ;;; Theme
 (add-hook 'after-init-hook (lambda () (load-theme default-theme)))
