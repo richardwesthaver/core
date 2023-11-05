@@ -152,36 +152,12 @@ With optional N, search in the Nth line from point."
          (dow (nth 6 datetime)))
     (time-subtract now (days-to-time dow))))
 
-;;; VC
-(defvar git-check-ignore t
-  "When non-nil, check and obey '.gitignore' files.")
-
-(defun git-check-ignore (&optional dir)
-  "Return a list of files to be ignored in DIR (defaults to
-`default-directory'). Note that this does NOT include the .git
-directory."
-  (interactive)
-  (with-dir (or dir default-directory)
-    (mapcar (lambda (x)
-              (replace-regexp-in-string "\\\"" ""
-               (replace-regexp-in-string "\\\\\\(.\\|\n|\"\\)" "\\1" x)))
-            (split-string
-             (shell-command-to-string
-              "pwsh.exe -c git check-ignore $(ls)")))))
-
-(defun git-dir-p (dir)
-  "Return non-nil if DIR is a '.git' directory."
-  (when (string=
-         ".git"
-         (file-name-nondirectory
-          (directory-file-name dir)))
-    t))
-
 ;;; Server
 ;;;###autoload
 (defun kill-emacs-restart (&optional arg)
   (interactive)
   (kill-emacs arg t))
+
 
 (provide 'util)
 ;; util.el ends here

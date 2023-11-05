@@ -6,12 +6,16 @@
 (put 'upcase-region 'disabled nil)
 (put 'list-threads 'disabled nil)
 (put 'list-timers 'disabled nil)
-
-(setq-default 
+(setq show-paren-context-when-offscreen 'overlay)
+(setopt
+ ;; tabs = bad
+ indent-tabs-mode nil
  make-backup-files nil
  auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
  tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)
  dired-free-space nil
+ mml-attach-file-at-the-end t
+ dired-mouse-drag-files t
  confirm-kill-emacs nil
  confirm-kill-processes nil
  use-short-answers t
@@ -34,17 +38,15 @@
  url-cache-directory (expand-file-name "url" user-emacs-directory)
  tab-always-indent 'complete
  shr-cookie-policy nil
+ ;; NOTE 2023-11-04: EXPERIMENTAL
+ shr-use-xwidgets-for-media t
  browse-url-browser-function 'browse-url-default-browser
+ eww-auto-rename-buffer 'title
  eww-search-prefix "https://duckduckgo.com/html?q="
- url-privacy-level '(email agent cookies lastloc)
- view-read-only t
- tramp-default-method "sshx")
-
-(when-sys= "darwin"
-  (setq-default dired-use-ls-dired nil))
+ view-read-only t)
 
 ;;; Variables
-(defvar default-theme 'modus-vivendi-deuteranopia)
+(defvar default-theme 'modus-operandi-tinted)
 
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
@@ -61,18 +63,20 @@
 (defvar user-media-directory (expand-file-name "media" user-home-directory))
 
 ;;; Theme
-(add-hook 'after-init-hook (lambda () (load-theme default-theme)))
+(defun load-default-theme () (interactive) (load-theme default-theme))
+
+(add-hook 'after-init-hook #'load-default-theme)
 
 ;;; Packages
 (package-initialize)
 
 (with-eval-after-load 'package
-  (setq package-archives 
-		'(("gnu" . "https://elpa.gnu.org/packages/")
-		  ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-		  ("melpa" . "https://melpa.org/packages/"))
-		use-package-always-ensure t
-		use-package-expand-minimally t)
+  (setq package-archives
+    '(("gnu" . "https://elpa.gnu.org/packages/")
+      ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+      ("melpa" . "https://melpa.org/packages/"))
+    use-package-always-ensure t
+    use-package-expand-minimally t)
   (add-packages
    org-web-tools ;; web parsing
    citeproc ;; citations
@@ -89,11 +93,12 @@
   :custom (global-corfu-mode 1))
 
 (use-package orderless
-  :custom 
+  :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
 ;;; Desktop
+(setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
 (add-hook 'kill-emacs-hook #'desktop-save-in-desktop-dir)
 
 ;;; Multisession
@@ -102,7 +107,7 @@
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc
 (if (file-exists-p "~/.local/bin/rhg")
-        (setq hg-binary "~/.local/bin/rhg"))
+    (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
 (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
@@ -125,10 +130,10 @@
     "toggle between lisp file and slime-repl"
     (interactive)
     (if (eq major-mode 'slime-repl-mode)
-        (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
+    (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
       (progn
-        (setq slime-toggle (current-buffer))
-        (slime-repl)))))
+    (setq slime-toggle (current-buffer))
+    (slime-repl)))))
 
 ;; paredit-map
 ;; (defvar paredit-map
@@ -263,8 +268,8 @@ specified by `prog-comment-timestamp-format-verbose'."
     current-prefix-arg))
   (let* ((date (if verbose
                    comment-timestamp-format-verbose
-                 prog-comment-timestamp-format-concise))
-         (string (format "%s %s: " keyword (format-time-string date)))
+         prog-comment-timestamp-format-concise))
+     (string (format "%s %s: " keyword (format-time-string date)))
          (beg (point)))
     (cond
      ((or (eq beg (point-at-bol))
@@ -291,7 +296,7 @@ specified by `prog-comment-timestamp-format-verbose'."
       (comment-indent t)
       (insert (concat " " string))))))
 
-(setq hexl-bits 8)	 
+(setq hexl-bits 8)
 (setq tab-width 4)
 
 ;;; Keyboard Macros
@@ -319,7 +324,7 @@ Interactively, NUMBER is the prefix arg."
   "Copy register A to B."
   (interactive
    (list (register-read-with-preview "From register: ")
-	 (register-read-with-preview "To register: ")))
+     (register-read-with-preview "To register: ")))
   (set-register b (get-register a)))
 
 (defun buffer-to-register (register &optional delete)
@@ -328,16 +333,16 @@ Interactively, NUMBER is the prefix arg."
   facilitates for easier saving/restoring of registers."
   (interactive "cPut current buffername in register: \nP.")
   (set-register register (cons 'buffer (buffer-name (current-buffer)))))
-					    
+
 (defun file-to-register (register &optional delete)
   "This is better than put-buffer-in-register for file-buffers, because a closed
    file can be opened again, but does not work for no-file-buffers."
   (interactive "cPut the filename of current buffer in register: \nP")
   (set-register register (cons 'file (buffer-file-name (current-buffer)))))
-					    
+
 (defun file-query-to-register (register &optional delete)
-  (interactive 				    
-   (list 				    
+  (interactive
+   (list
     (register-read-with-preview "File query to register: ")))
   (set-register register (list 'file-query (buffer-file-name (current-buffer)) (point))))
 
@@ -347,29 +352,34 @@ Interactively, NUMBER is the prefix arg."
 ;;    (t (cl-call-next-method val delete))))
 
 ;;; Outlines
-(defun outline-hook (rx)
+(defun outline-hook (&optional rx)
   "Enable `outline-minor-mode' and set `outline-regexp'."
-  (setq-local outline-regexp rx)
-  (outline-minor-mode t))
+  (setq-local outline-regexp (or rx outline-regexp))
+  (outline-minor-mode 1))
 
-(defun add-outline-hook (mode rx)
-    (let ((sym (symb mode "-hook")))
-      (add-hook sym (lambda () (outline-hook rx)))))
+(setq outline-minor-mode-use-buttons 'in-margins)
+
+(defun add-outline-hook (mode &optional rx)
+  (let ((sym (symb mode "-hook")))
+    (add-hook sym (lambda () (outline-hook rx)))))
 
 (defmacro outline-hooks (&rest pairs)
   `(mapc (lambda (x) (add-outline-hook (car x) (cadr x))) ',pairs))
 
 (outline-hooks (asm-mode ";;;+")
-	       (nasm-mode ";;;+")	       
-	       (rust-mode "\\(//!\\|////+\\)")
-	       (sh-mode "###+")
-	       (sh-script-mode "###+")
-	       (makefile-mode "###+"))
+           (nasm-mode ";;;+")
+           (rust-mode "\\(//!\\|////+\\)")
+           (sh-mode "###+")
+           (sh-script-mode "###+")
+           (makefile-mode "###+")
+           (conf-mode-hook "###+"))
+
+
 
 ;;; Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode
-    "Default major mode for new scratch buffers"
-    :group 'default)
+  "Default major mode for new scratch buffers"
+  :group 'default)
 
 ;; Adapted from the `scratch.el' package by Ian Eure.
 (defun default-scratch-list-modes ()
@@ -395,11 +405,11 @@ MODE use that major mode instead."
          (buf (format "*Scratch for %s*" major)))
     (with-current-buffer (get-buffer-create buf)
       (funcall major)
-	  (save-excursion
+      (save-excursion
         (insert text)
         (goto-char (point-min))
         (comment-region (point-at-bol) (point-at-eol)))
-	  (vertical-motion 2))
+      (vertical-motion 2))
     (pop-to-buffer buf)))
 
 ;;;###autoload
@@ -439,7 +449,7 @@ buffer."
         bufname)
     (while (progn
              (setq bufname
-		   (concat "*scratch"
+           (concat "*scratch"
                            (if (= n 0) "" (int-to-string n))
                            "*"))
              (setq n (1+ n))
@@ -470,10 +480,10 @@ buffer."
       eshell-destroy-buffer-when-process-dies t)
 
 (add-hook 'eshell-mode-hook
-	  (lambda ()
-	    (eshell/alias "d" "dired $1")
-	    (eshell/alias "ff" "find-file $1")
-	    (eshell/alias "hgfe" "~/bin/sh/hg-fast-export.sh")))
+      (lambda ()
+        (eshell/alias "d" "dired $1")
+        (eshell/alias "ff" "find-file $1")
+        (eshell/alias "hgfe" "~/bin/sh/hg-fast-export.sh")))
 
 (defun eshell/clear ()
   "Clear the eshell buffer."
@@ -482,13 +492,13 @@ buffer."
     (eshell-send-input)))
 
 (defun eshell-quit-or-delete-char (arg)
-    (interactive "p")
-    (if (and (eolp) (looking-back eshell-prompt-regexp))
-        (progn
-          (eshell-life-is-too-much) ; Why not? (eshell/exit)
-          (ignore-errors
-            (delete-window)))
-      (delete-forward-char arg)))
+  (interactive "p")
+  (if (and (eolp) (looking-back eshell-prompt-regexp))
+      (progn
+        (eshell-life-is-too-much) ; Why not? (eshell/exit)
+        (ignore-errors
+          (delete-window)))
+    (delete-forward-char arg)))
 
 (add-hook 'eshell-mode-hook
           (lambda ()
@@ -516,30 +526,35 @@ buffer."
   (insert (ido-completing-read "Eshell history: "
                                (delete-dups
                                 (ring-elements eshell-history-ring)))))
+;;; Tramp
+
+(setopt tramp-default-method "ssh"
+        tramp-default-user user-login-name
+        tramp-default-host "localhost")
 ;;; Org
 ;; todos
 (setq org-todo-keywords
       '((type "TBD(0!)" "TODO(t!)" "|")
-	(sequence "FIND(q!)" "READ(R@!)" "WATCH(W@!)" "|")
-	(sequence "RESEARCH(s!)" "RECORD(e!)" "|")
-	(sequence "OUTLINE(o!)" "RESEARCH(r!)" "DRAFT(m!)" "REVIEW(w!)" "|")
-	(sequence "FIX(i!)" "TEST(t!)" "|")
-	(type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
-	(type "KLUDGE(k@!)" "|")
-	(sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
+    (sequence "FIND(q!)" "READ(R@!)" "WATCH(W@!)" "|")
+    (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
+    (sequence "OUTLINE(o!)" "RESEARCH(r!)" "DRAFT(m!)" "REVIEW(w!)" "|")
+    (sequence "FIX(i!)" "TEST(t!)" "|")
+    (type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
+    (type "KLUDGE(k@!)" "|")
+    (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
 ;; captures
 (setq org-capture-templates
       '(("t" "task" entry (file "inbox.org") "* %^{title}\n- %?" :prepend t)
-	("1" "current-task-item" item (clock) "%i%?")
-	("2" "current-task-checkbox" checkitem (clock) "%i%?")
-	("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
-	("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
-	("l" "log" item (file+headline "log.org" "log") "%U %?" :prepend t)
-	("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)
-	("n" "note" plain (file+function "notes.org" org-ask-location) "%?")
-	("i" "idea" entry (file "inbox.org") "* OUTLINE %?\n:notes:\n:end:\n- _outline_ [/]\n  - [ ] \n  - [ ] \n- _refs_" :prepend t)
-	("b" "bug" entry (file "inbox.org") "* FIX %?\n- _review_\n- _fix_\n- _test_" :prepend t)
-	("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
+    ("1" "current-task-item" item (clock) "%i%?")
+    ("2" "current-task-checkbox" checkitem (clock) "%i%?")
+    ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
+    ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
+    ("l" "log" item (file+headline "log.org" "log") "%U %?" :prepend t)
+    ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)
+    ("n" "note" plain (file+function "notes.org" org-ask-location) "%?")
+    ("i" "idea" entry (file "inbox.org") "* OUTLINE %?\n:notes:\n:end:\n- _outline_ [/]\n  - [ ] \n  - [ ] \n- _refs_" :prepend t)
+    ("b" "bug" entry (file "inbox.org") "* FIX %?\n- _review_\n- _fix_\n- _test_" :prepend t)
+    ("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil)
 
@@ -547,17 +562,17 @@ buffer."
 
 (setq org-structure-template-alist
       '(("s" . "src")
-	("e" . "src emacs-lisp")
-	("x" . "src shell")
-	("l" . "src lisp")
-	("h" . "export html")
-	("p" . "src python")
-	("r" . "src rust")
-	("E" . "example")
-	("q" . "quote")
-	("c" . "center")
-	("C" . "comment")
-	("v" . "verse")))
+    ("e" . "src emacs-lisp")
+    ("x" . "src shell")
+    ("l" . "src lisp")
+    ("h" . "export html")
+    ("p" . "src python")
+    ("r" . "src rust")
+    ("E" . "example")
+    ("q" . "quote")
+    ("c" . "center")
+    ("C" . "comment")
+    ("v" . "verse")))
 
 (setq org-preview-latex-image-directory "~/.emacs.d/.cache/ltximg"
       org-latex-image-default-width "8cm")
@@ -565,7 +580,7 @@ buffer."
 (setq org-refile-use-cache t
       org-refile-allow-creating-parent-nodes 'confirm
       org-refile-targets '((nil :maxlevel . 3)
-			   (org-agenda-files :maxlevel . 3)))
+               (org-agenda-files :maxlevel . 3)))
 
 (setq org-confirm-babel-evaluate nil)
 
@@ -668,7 +683,7 @@ buffer."
             (command-execute 'outline-next-visible-heading)
             ;; disable (message) that org-set-tags generates
             (flet ((message (&rest ignored) nil))
-		  (org-set-tags 1 t))
+          (org-set-tags 1 t))
             (set-buffer-modified-p b-m-p))
         (error nil)))))
 
@@ -707,7 +722,7 @@ inherited by a parent headline."
 (defun org-agenda-reschedule-to-today ()
   (interactive)
   (flet ((org-read-date (&rest rest) (current-time)))
-	(call-interactively 'org-agenda-schedule)))
+    (call-interactively 'org-agenda-schedule)))
 
 ;; Patch org-mode to use vertical splitting
 (defadvice org-prepare-agenda (after org-fix-split)
