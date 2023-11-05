@@ -4,5 +4,9 @@
 
 ;;; Code:
 (dolist (x '("util.el" "default.el" "keys.el"))
-  (load-file (concat user-emacs-directory x)))
-(add-to-load-path (join-paths user-emacs-directory "lib/"))
+  (load (native-compile (concat user-emacs-directory x))))
+
+(add-to-load-path (expand-file-name "lib" user-emacs-directory))
+
+(if (and (boundp 'user-custom-file) (file-exists-p user-custom-file))
+	(load-file user-custom-file))

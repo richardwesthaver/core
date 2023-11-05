@@ -71,9 +71,12 @@
   "C-;" #'prog-comment-timestamp-keyword)
 
 ;;; Modes
-(keymap-set conf-toml-mode-map "C-c C-c C-r" #'rust-run)
-(keymap-set conf-toml-mode-map "C-c C-c C-u" #'rust-compile)
-(keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)
+(add-hook 
+ 'conf-toml-mode-hook
+ (lambda ()
+   (keymap-set conf-toml-mode-map "C-c C-c C-r" #'rust-run)
+   (keymap-set conf-toml-mode-map "C-c C-c C-u" #'rust-compile)
+   (keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)))
 
 ;;; C-x
 ;; (keymap-set ctl-x-map "C-b" #'ibuffer)
