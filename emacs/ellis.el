@@ -28,10 +28,26 @@
 (enable-paredit-mode)
 (repeat-mode)
 
+(keymap-global-set "C-<tab>" #'hippie-expand)
+(keymap-set minibuffer-local-map "C-<tab>" #'hippie-expand)
+
+(require 'sk)
+
+(add-hook 'prog-mode-hook #'skt-mode)
+(add-hook 'org-mode-hook #'skt-mode)
+
+(setopt skt-enable-tempo-elements t
+        skt-completing-read t
+        skt-delete-duplicate-marks t)
+
+(keymap-set skt-mode-map "C-c M-b" #'tempo-backward-mark)
+(keymap-set skt-mode-map "C-c M-f" #'tempo-forward-mark)
+(keymap-set skt-mode-map "C-c M-a" #'tempo-complete-tag)
+
 (use-package notmuch 
   :ensure t
   :custom 
-  notmuch-init-file "~/.notmuch-config"
+  ;; notmuch-init-file "~/.notmuch-config"
   mail-user-agent 'message-user-agent
   smtpmail-smtp-server "smtp.gmail.com"
   message-send-mail-function 'message-smtpmail-send-it
@@ -96,6 +112,21 @@
 
 (use-package sh-script
   :hook (sh-mode . flymake-mode))
+
+(use-package tempo
+  :custom
+  tempo-interactive t
+  :config
+  (tempo-define-template 
+   "org:readme"
+   '("#+TITLE: " p n>
+     "#+AUTHOR: " user-full-name " <" user-mail-address ">" n>)
+   "org:readme"
+   "Insert a readme.org file template.")
+  (tempo-define-template "org:src"
+                         '("#+begin_src " p n>
+                           "#+end_src" n>)
+                         "org:src"))
 
 (provide 'ellis)
 ;;; ellis.el ends here

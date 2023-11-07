@@ -12,6 +12,7 @@
 
 ;;; User keys
 ;; paredit-map
+(require 'default)
 (defvar-keymap parens-map
   :doc "parens-minor-mode keymap."
   :repeat (:enter)
