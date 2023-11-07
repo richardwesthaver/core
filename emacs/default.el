@@ -46,7 +46,7 @@
  view-read-only t)
 
 ;;; Variables
-(defvar default-theme 'modus-operandi-tinted)
+(defvar default-theme 'leuven-dark)
 
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
@@ -323,7 +323,7 @@ Interactively, NUMBER is the prefix arg."
 (defun outline-hook (&optional rx)
   "Enable `outline-minor-mode' and set `outline-regexp'."
   (setq-local outline-regexp (or rx outline-regexp))
-  (outline-minor-mode 1))
+  (outline-minor-mode))
 
 (setq outline-minor-mode-use-buttons 'in-margins)
 

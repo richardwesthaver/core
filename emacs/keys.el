@@ -46,6 +46,8 @@
   "L" #'global-display-line-numbers-mode
   "a" #'gpm-mouse-mode
   "r" #'refill-mode
+  "o" #'outline-minor-mode
+  "O" #'allout-mode
   "R" #'global-auto-revert-mode
   "t" #'toggle-frame-tab-bar
   "d" #'toggle-debug-on-error
