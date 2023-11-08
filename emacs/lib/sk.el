@@ -137,12 +137,12 @@ DOC, and NAME."
 
 ;;; Autotype
 ;; From: https://github.com/xFA25E/skempo/blob/master/skempo.el
-(defun modify-lisp-syntax-tables ()
-  (modify-syntax-entry ?* "w" (syntax-table))
-  (modify-syntax-entry ?- "w" (syntax-table)))
 
-(dolist (hook '(lisp-mode-hook emacs-lisp-mode-hook))
-  (add-hook hook #'modify-lisp-syntax-tables))
+;; (defun modify-lisp-syntax-tables ()
+;;   (modify-syntax-entry ?* "w" (syntax-table))
+;;   (modify-syntax-entry ?- "w" (syntax-table)))
+;; (dolist (hook '(lisp-mode-hook emacs-lisp-mode-hook))
+;;   (add-hook hook #'modify-lisp-syntax-tables))
 
 (defun skt--tags-variable (mode)
   "Return a tempo tags variable's symbol for MODE."
