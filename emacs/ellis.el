@@ -25,7 +25,8 @@
 ;;; Code:
 (setopt default-theme 'modus-vivendi-tinted)
 
-(enable-paredit-mode)
+(add-hook 'lisp-mode-hook #'enable-paredit-mode)
+(add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
 (repeat-mode)
 
 (keymap-global-set "C-<tab>" #'hippie-expand)
