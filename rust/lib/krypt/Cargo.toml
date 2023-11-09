@@ -6,6 +6,6 @@ edition = "2021"
 default = ["std"]
 std = ["linux-keyutils/std"]
 [dependencies]
+crypto = { path = "../crypto" }
 linux-keyutils = "0.2.3"
 zeroize = "1.6"
-[dev-dependencies]

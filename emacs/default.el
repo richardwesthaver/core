@@ -25,7 +25,7 @@
  ;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
  ;; allow-emacs-pinentry
  ;; allow-loopback-pinentry
- ;; epg-pinentry-mode 'loopback
+ epg-pinentry-mode 'loopback
  shr-use-colors nil
  shr-use-fonts nil
  shr-max-image-proportion 0.6
@@ -46,13 +46,6 @@
  view-read-only t)
 
 ;;; Variables
-(defvar default-theme 'leuven-dark)
-
-(defvar company-domain "compiler.company")
-(defvar company-name "The Compiler Company, LLC")
-(defvar company-vc-domain "vc.compiler.company")
-(defvar company-home "the.compiler.company")
-
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
 (defvar user-lab-directory (expand-file-name "lab" user-home-directory))
@@ -61,6 +54,13 @@
 (defvar user-shed-directory (expand-file-name "shed" user-home-directory))
 (defvar user-mail-directory (expand-file-name "mail" user-home-directory))
 (defvar user-media-directory (expand-file-name "media" user-home-directory))
+
+(defvar default-theme 'leuven-dark)
+(defvar company-source-directory (join-paths user-lab-directory "comp"))
+(defvar company-domain "compiler.company")
+(defvar company-name "The Compiler Company, LLC")
+(defvar company-vc-domain "vc.compiler.company")
+(defvar company-home "the.compiler.company")
 
 ;;; Theme
 (defun load-default-theme () (interactive) (load-theme default-theme))
@@ -451,7 +451,7 @@ buffer."
       (lambda ()
         (eshell/alias "d" "dired $1")
         (eshell/alias "ff" "find-file $1")
-        (eshell/alias "hgfe" "~/bin/sh/hg-fast-export.sh")))
+        (eshell/alias "hgfe" "hg-fast-export.sh")))
 
 (defun eshell/clear ()
   "Clear the eshell buffer."
@@ -524,7 +524,9 @@ buffer."
     ("b" "bug" entry (file "inbox.org") "* FIX %?\n- _review_\n- _fix_\n- _test_" :prepend t)
     ("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
 (setq org-html-htmlize-output-type 'css
-      org-html-head-include-default-style nil)
+      org-html-head-include-default-style nil
+      ;; comp2 default
+      org-ascii-text-width 80)
 
 (org-crypt-use-before-save-magic)
 
