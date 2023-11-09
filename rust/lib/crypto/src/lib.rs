@@ -7,7 +7,7 @@ mod tests;
 use con::{PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH};
 
 pub use salsa20::{self, XSalsa20};
-//use ed25519::signature::Signature as _;
+// use ed25519::signature::Signature as _;
 use ed25519_dalek::*;
 use hex::FromHex;
 

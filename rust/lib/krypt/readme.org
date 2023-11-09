@@ -10,6 +10,8 @@ This library is opinionated about the algorithms it uses and is not a
 general purpose tool.
 
 For an introduction to the key management techniques used, check [[https://rtfm.co.ua/en/what-is-linux-keyring-gnome-keyring-secret-service-and-d-bus/][here]].
+
+- [[https://blog.cloudflare.com/the-linux-kernel-key-retention-service-and-why-you-should-use-it-in-your-next-application/][Cloudflare - The Linux Kernel Key Retention Service and why you should use it in your next application]]
 * System Libraries
 - keyutils ::
   The library we are most keen on is [[https://man7.org/linux/man-pages/man7/keyutils.7.html][keyutils]] from the Linux Kernel
@@ -20,7 +22,7 @@ For an introduction to the key management techniques used, check [[https://rtfm.
 - secret-service ::
   The [[https://specifications.freedesktop.org/secret-service/latest/][secret-service]] API is the brain-child of GNOME Keyring dev Stef
   Walter and KWallet's Michael Leupold. User-space general-purpose
-  secrets management. Linux only. For an overview of 
+  secrets management. Linux only.
 - keychain ::
   [[https://developer.apple.com/documentation/security/keychain_services/][keychain-services]] serve a similar purpose to secret-service. It is
   MacOS only.

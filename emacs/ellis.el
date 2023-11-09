@@ -23,14 +23,37 @@
 ;; config file. Feel free to rip.
 
 ;;; Code:
-(setopt default-theme 'modus-vivendi-tinted)
+(setopt default-theme 'modus-vivendi-tinted
+        company-source-directory (join-paths user-home-directory "dev/comp"))
+
+(defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
+
+(defun edit-emacs-config (&optional src)
+  (interactive (list current-prefix-arg))
+  (let ((file (if src 
+                  (expand-file-name "default.el" emacs-config-source) 
+                user-custom-file)))
+    (find-file file)))
+
+(keymap-set user-map "e c" #'edit-emacs-config)
 
 (add-hook 'lisp-mode-hook #'enable-paredit-mode)
 (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
 (repeat-mode)
 
+(defun remember-project ()
+  (interactive)
+  (project-remember-project (project-current))
+  project--list)
+
+(defun remember-lab-projects ()
+  (interactive)
+  (project-remember-projects-under user-lab-directory t))
+
 (keymap-global-set "C-<tab>" #'hippie-expand)
 (keymap-set minibuffer-local-map "C-<tab>" #'hippie-expand)
+(keymap-set user-map "p r" #'remember-project)
+(keymap-set user-map "p s" #'remember-lab-projects)
 
 (require 'sk)
 
@@ -47,16 +70,31 @@
 
 (use-package notmuch 
   :ensure t
-  :custom 
+  :init
   ;; notmuch-init-file "~/.notmuch-config"
-  mail-user-agent 'message-user-agent
-  smtpmail-smtp-server "smtp.gmail.com"
-  message-send-mail-function 'message-smtpmail-send-it
-  smtpmail-debug-info t
-  message-default-mail-headers "Cc: \nBcc: \n"
-  message-kill-buffer-on-exit t
-  user-mail-address "ellis@rwest.io"
-  user-full-name "Richard Westhaver"
+  (setopt
+   mail-user-agent 'message-user-agent
+   smtpmail-smtp-server "smtp.gmail.com"
+   message-send-mail-function 'message-smtpmail-send-it
+   smtpmail-debug-info t
+   message-default-mail-headers "Cc: \nBcc: \n"
+   message-kill-buffer-on-exit t
+   user-mail-address "ellis@rwest.io"
+   user-full-name "Richard Westhaver"
+   notmuch-hello-sections '(notmuch-hello-insert-saved-searches 
+                            notmuch-hello-insert-search 
+                            notmuch-hello-insert-recent-searches 
+                            notmuch-hello-insert-alltags)
+   notmuch-show-logo nil
+   notmuch-search-oldest-first nil
+   notmuch-hello-hide-tags '("kill")
+   notmuch-saved-searches '((:name "inbox" :query "tag:inbox" :key "i")
+                            (:name "unread" :query "tag:unread" :key "u")
+                            (:name "new" :query "tag:new" :key "n")
+                            (:name "sent" :query "tag:sent" :key "e")
+                            (:name "drafts" :query "tag:draft" :key "d")
+                            (:name "all mail" :query "*" :key "a")
+                            (:name "todo" :query "tag:todo" :key "t")))
   :config
   ;;;###autoload
   (defun notmuch-exec-offlineimap ()
@@ -71,8 +109,29 @@
     (let* ((netrc (netrc-parse (expand-file-name "~/.netrc.gpg")))
            (hostentry (netrc-machine netrc host port port)))
       (when hostentry (netrc-get hostentry "password"))))
+
+  (defun mark-as-read ()
+    "mark message as read."
+    (interactive)
+    (notmuch-search-tag '("-new" "-unread" "-inbox")))
+
+  (defun mark-as-todo ()
+    "mark message as todo."
+    (interactive)
+    (mark-as-read)
+    (notmuch-search-tag '("-new" "-unread" "-inbox" "+todo")))
+
+  (defun mark-as-spam ()
+    "mark message as spam."
+    (interactive)
+    (mark-as-read)
+    (notmuch-search-tag (list "+spam")))
+
   (keymap-set user-map "e m" #'notmuch)
-  (keymap-set user-map "e M" #'notmuch-exec-offlineimap))
+  (keymap-set user-map "e M" #'notmuch-exec-offlineimap)
+  (keymap-set notmuch-search-mode-map "S" #'mark-as-spam)
+  (keymap-set notmuch-search-mode-map "R" #'mark-as-read)
+  (keymap-set notmuch-search-mode-map "T" #'mark-as-todo))
 
 (use-package elfeed :ensure t
   :custom
@@ -128,6 +187,24 @@
                          '("#+begin_src " p n>
                            "#+end_src" n>)
                          "org:src"))
+;;; Org Config
+;; populate org-babel
+(org-babel-do-load-languages
+ ;; TODO 2021-10-24: bqn, apl, k
+ 'org-babel-load-languages '((shell . t)
+			     (emacs-lisp . t)
+			     (lisp . t)
+			     (org . t)
+			     (eshell . t)
+			     (sed . t)
+			     (awk . t)
+			     (dot . t)
+			     (js . t)
+			     (C . t)
+			     (python . t)
+			     (lua . t)
+			     (lilypond . t)))
+
 
 (provide 'ellis)
 ;;; ellis.el ends here

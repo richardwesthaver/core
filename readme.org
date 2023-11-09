@@ -24,10 +24,11 @@ we build via CI and ship to production as well as use internally.
 
 * rust
 ** sys
+These crates contain FFI bindings to foreign libraries, usually in C.
 *** btrfs
 *** btrfsutil
 ** lib
-*** alch
+*** TODO alch
 *** audio
 #+begin_src shell :dir rust/lib/audio :results output replace :exports results
 cargo test
@@ -38,7 +39,7 @@ cargo test
 running 1 test
 test default_device ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
 
 running 0 tests
@@ -47,7 +48,35 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 #+end_example
 *** crypto
-*** db
+#+begin_src shell :dir rust/lib/crypto :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 6 tests
+test tests::salsa20_key0_iv1 ... ok
+test tests::salsa20_key0_ivhi ... ok
+test tests::salsa20_key1_iv0 ... ok
+test tests::xsalsa20_encrypt_hello_world ... ok
+test tests::xsalsa20_encrypt_zeros ... ok
+test tests::gen_keypair ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+*** TODO db
+#+begin_src shell :dir rust/lib/db :results output replace :exports results :eval no
+cargo test
+#+end_src
+
+#+RESULTS:
+
 *** flate
 #+begin_src shell :dir rust/lib/flate :results output replace :exports results
 cargo test
@@ -58,7 +87,7 @@ cargo test
 running 1 test
 test pack_test ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
 
 
 running 0 tests

@@ -11,8 +11,6 @@ publish = ["crater"]
 [dependencies]
 salsa20 = { version = "0.8.1", features = ["xsalsa20"] }
 hex = "*"
-ed25519 = "*"
+# ed25519 = "*"
 ed25519-dalek = "1.0.1"
 hash = { version = "0.1.0", path = "../hash" }
-
-[dev-dependencies]
