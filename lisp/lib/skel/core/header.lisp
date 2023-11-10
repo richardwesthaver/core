@@ -1,5 +1,9 @@
 ;;; File Headers
-(in-package :skel)
+(defpackage :skel/core/header
+  (:use :cl :std :skel/core/proto))
+
+(in-package :skel/core/header)
+
 (deftype file-header-kind () '(member :source :shebang))
 
 (declaim (inline %make-file-header))

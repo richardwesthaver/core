@@ -33,14 +33,14 @@ This covers variations of make-source-header-comment, make-source-file-header,
 make-shebang-comment, and make-shebang-file-header."
   (is (eq (type-of (make-shebang-file-header 
 		    (make-shebang-comment "/dev/null"))) 
-	  'skel/core::file-header))
+	  'file-header))
   (is (eq (type-of (make-source-file-header 
 		    (make-source-header-comment 
 		     "foo-test"
 		     :timestamp t
 		     :description "nothing to see here"
 		     :opts '("Definitely-Not_Emacs: T;"))))
-	  'skel::file-header)))
+	  'file-header)))
 
 (deftest skelfile ()
   "Ensure skelfiles are created and loaded correctly and that they signal

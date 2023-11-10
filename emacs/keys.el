@@ -45,6 +45,7 @@
   "h" #'global-hl-line-mode
   "l" #'global-line-numbers-mode
   "L" #'global-display-line-numbers-mode
+  "c" #'corfu-mode
   "a" #'gpm-mouse-mode
   "r" #'refill-mode
   "o" #'outline-minor-mode
@@ -85,7 +86,7 @@
   "a" #'org-agenda
   "<return>" #'shell
   "C-<return>" #'term
-  "S-<return>" #'eshell
+  "S-<return>" #'eshell-new
   "!" #'async-shell-command
   "s" #'speedbar
   "SPC" toggle-map
