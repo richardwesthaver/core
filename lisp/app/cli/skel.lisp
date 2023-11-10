@@ -1,11 +1,11 @@
 ;;; Code:
-(defpackage :cli/skel
-  (:use :cl :std :skel :skel/core/vc :skel/core/virt :skel/comp/make)
+(uiop:define-package :app/cli/skel
+  (:use :cl :std :std/cli :skel/pkg :skel/core/vc :skel/core/virt :skel/comp/make)
   (:import-from :sb-posix :getcwd)
   (:import-from :uiop :println)
   (:export :main))
 
-(in-package :cli/skel)
+(in-package :app/cli/skel)
 
 ;; HACK 2023-10-14: a bit too early to implement this, would rather
 ;; use the repl. they're useful for linking up with the debugger tho.

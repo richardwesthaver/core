@@ -20,7 +20,7 @@
 
 ;;; Code:
 (defpackage :skel/comp/make
-  (:use :cl :skel/pkg :std/fmt :std/sxp)
+  (:use :cl :skel/core/obj :std/fmt :std/sxp)
   (:export 
    :*default-makefile* :*makefile-extension* 
    :*mk-magic-vars* :*mk-command-prefixes*

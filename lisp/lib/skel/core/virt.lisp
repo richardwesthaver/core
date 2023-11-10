@@ -49,10 +49,8 @@
 ;; https://github.com/containers/common/blob/main/docs/containers.conf.5.md
 
 ;;; Code:
-(in-package :skel)
-
 (defpackage :skel/core/virt
-  (:use :cl :skel)
+  (:use :cl)
   (:export :containerfile))
 
 (in-package :skel/core/virt)
