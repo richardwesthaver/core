@@ -486,6 +486,9 @@ functioning editor:
 
 - libvoikko ::
   =sudo pacman -Syu libvoikko=
+- librsvg ::
+- imagemagick ::
+
 * lib
 ** sxp
 ** sk

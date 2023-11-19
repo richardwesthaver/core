@@ -37,8 +37,10 @@
 
 (keymap-set user-map "e c" #'edit-emacs-config)
 
-(add-hook 'lisp-mode-hook #'enable-paredit-mode)
-(add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
+
+;; (add-hook 'lisp-mode-hook #'enable-paredit-mode)
+;; (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
+
 (repeat-mode)
 
 (defun remember-project ()
@@ -69,6 +71,7 @@
 (keymap-set skt-mode-map "C-c M-a" #'tempo-complete-tag)
 
 (use-package notmuch 
+  :disabled (darwin-p)
   :ensure t
   :init
   ;; notmuch-init-file "~/.notmuch-config"
@@ -133,7 +136,9 @@
   (keymap-set notmuch-search-mode-map "R" #'mark-as-read)
   (keymap-set notmuch-search-mode-map "T" #'mark-as-todo))
 
-(use-package elfeed :ensure t
+(use-package elfeed 
+  :disabled (darwin-p)
+  :ensure t
   :custom
   elfeed-feeds 
   '(("http://threesixty360.wordpress.com/feed/" blog math)
@@ -168,9 +173,10 @@
   (keymap-set user-map "e f" #'elfeed)
   (keymap-set user-map "e F" #'elfeed-update))
 
-(use-package org-mime :ensure t)
+(use-package org-mime :disabled (darwin-p) :ensure t)
 
 (use-package sh-script
+  :disabled (darwin-p)
   :hook (sh-mode . flymake-mode))
 
 (use-package tempo
