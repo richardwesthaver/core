@@ -4,7 +4,11 @@
 
 ;;; Code:
 (dolist (x '("util.el" "default.el" "keys.el"))
-  (load (native-compile (concat user-emacs-directory x))))
+  (let ((y (concat user-emacs-directory x)))
+    (if (and (native-comp-available-p) (not (eq system-type 'darwin)))
+         (native-compile y)
+         (byte-compile-file y))
+	 (load y)))
 
 (add-to-load-path (expand-file-name "lib" user-emacs-directory))
 

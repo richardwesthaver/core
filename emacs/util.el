@@ -74,6 +74,9 @@ Concat ARGS and return a newly interned symbol."
   "(when (string= (system-name) NAME) BODY)"
   `(when ,(string= (system-name) name) ,body))
 
+(defun darwin-p () (string= system-type "darwin"))
+(defun linux-p () (string= system-type "gnu/linux"))
+
 (defun join-paths (root &rest dirs)
   "helper function for joining strings to a path."
   (let ((result root))
