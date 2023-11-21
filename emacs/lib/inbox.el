@@ -197,3 +197,5 @@ Format:
   (interactive)
   (org-sort-entries nil ?f #'org-sort-todo-priority #'org-sort-compare-todo-priority))
 
+(provide 'inbox)
+;; inbox.el ends here

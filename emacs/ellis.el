@@ -23,6 +23,8 @@
 ;; config file. Feel free to rip.
 
 ;;; Code:
+(require 'inbox)
+
 (setopt default-theme 'modus-vivendi-tinted
         company-source-directory (join-paths user-home-directory "dev/comp"))
 
@@ -74,7 +76,6 @@
   :disabled (darwin-p)
   :ensure t
   :init
-  ;; notmuch-init-file "~/.notmuch-config"
   (setopt
    mail-user-agent 'message-user-agent
    smtpmail-smtp-server "smtp.gmail.com"
@@ -146,6 +147,7 @@
     ("http://blog.cryptographyengineering.com/feeds/posts/default" blog)
     ("http://abstrusegoose.com/feed.xml" comic)
     ("http://accidental-art.tumblr.com/rss" image math)
+    ("http://researchcenter.paloaltonetworks.com/unit42/feed/" security)
     ("http://curiousprogrammer.wordpress.com/feed/" blog dev)
     ("http://feeds.feedburner.com/amazingsuperpowers" comic)
     ("http://amitp.blogspot.com/feeds/posts/default" blog dev)
@@ -168,8 +170,29 @@
     ("http://newartisans.com/rss.xml" dev blog)
     ;; comp
     ;; ("https://lab.rwest.io/comp.atom?feed_token=pHu9qwLkjy4CWJHx9rrJ" comp vc)
+    ("https://www.reddit.com/r/listentothis/.rss" music reddit)
+    ("https://www.ftc.gov/feeds/press-release-consumer-protection.xml" gov ftc)
+    ("https://api2.fcc.gov/edocs/public/api/v1/rss/" gov fcc)
     )
   :init
+  (defun yt-dl-it (url)
+    "Downloads the URL in an async shell"
+    (let ((default-directory "~/media/yt"))
+      (async-shell-command (format "youtube-dl %s" url))))
+
+  (defun elfeed-youtube-dl (&optional use-generic-p)
+    "Youtube-DL link"
+    (interactive "P")
+    (let ((entries (elfeed-search-selected)))
+      (cl-loop for entry in entries
+               do (elfeed-untag entry 'unread)
+               when (elfeed-entry-link entry)
+               do (yt-dl-it it))
+      (mapc #'elfeed-search-update-entry entries)
+      (unless (use-region-p) (forward-line))))
+
+  (keymap-set elfeed-search-mode-map (kbd "d") 'elfeed-youtube-dl)
+
   (keymap-set user-map "e f" #'elfeed)
   (keymap-set user-map "e F" #'elfeed-update))
 
@@ -211,6 +234,8 @@
 			     (lua . t)
 			     (lilypond . t)))
 
+
+(add-to-list 'slime-contribs 'slime-cape)
 
 (provide 'ellis)
 ;;; ellis.el ends here
