@@ -78,7 +78,9 @@
    :rocksdb-list-column-families
    :rocksdb-create-column-family
    :rocksdb-create-column-families
+   :rocksdb-create-column-families-destroy
    :rocksdb-drop-column-family
+   :rocksdb-column-family-handle-destroy
    :rocksdb-column-family-handle-get-id
    :rocksdb-column-family-handle-get-name
    :rocksdb-put
@@ -261,8 +263,7 @@
    :rocksdb-wal-iter-valid
    :rocksdb-wal-iter-status
    :rocksdb-wal-iter-get-batch
-   :rocksdb-wal-iter-destroy
-))
+   :rocksdb-wal-iter-destroy))
 
 (in-package :rocksdb)
 
@@ -271,10 +272,10 @@
     (sb-alien:load-shared-object "librocksdb.so" :dont-save t)
     (push :rocksdb *features*)))
 
-(load-rocksdb)  
+(load-rocksdb)
 
-;;; Alien Types
-;;; db types
+;;; Types
+;; db types
 (define-alien-type rocksdb (struct rocksdb-t))
 (define-alien-type rocksdb-logger (struct rocksdb-logger-t))
 (define-alien-type rocksdb-iterator (struct rocksdb-iterator-t))
@@ -288,10 +289,10 @@
 (define-alien-type rocksdb-writebatch (struct rocksdb-column-family-writebatch-t))
 (define-alien-type rocksdb-mergeoperator (struct rocksdb-mergeoperator-t))
 (define-alien-type rocksdb-env (struct rocksdb-env-t))
-;;;; column-family
+;; column-family
 (define-alien-type rocksdb-column-family-handle (struct rocksdb-column-family-handler-t))
 (define-alien-type rocksdb-column-family-metadata (struct rocksdb-column-family-metadata-t))
-;;;; options
+;; options
 (define-alien-type rocksdb-options (struct rocksdb-options-t))
 (define-alien-type rocksdb-readoptions (struct rocksdb-readoptions-t))
 (define-alien-type rocksdb-writeoptions (struct rocksdb-writeoptions-t))
@@ -300,16 +301,16 @@
 (define-alien-type rocksdb-flushoptions (struct rocksdb-flushoptions-t))
 (define-alien-type rocksdb-universal-compaction-options (struct rocksdb-universal-compaction-options-t))
 (define-alien-type rocksdb-envoptions (struct rocksdb-envoptions-t))
-;;;; stats
+;; stats
 (define-alien-type rocksdb-statistics-histogram-data (struct rocksdb-statistics-histogram-data-t))
 (define-alien-type rocksdb-memory-usage (struct rocksdb-memory-usage-t))
-;;;; sst
+;; sst
 (define-alien-type rocksdb-sstfilewriter (struct rocksdb-sstfilewriter-t))
 (define-alien-type rocksdb-sst-file-metadata (struct rocksdb-sst-file-metadata-t))
-;;;; wal
+;; wal
 (define-alien-type rocksdb-wal-iterator (struct rocksdb-wal-iterator-t))
 (define-alien-type rocksdb-wal-readoptions (struct rocksdb-wal-readoptions-t))
-;;;; errors
+;; errors
 ;; either (* void) or c-string (* (* char))
 (define-alien-type rocksdb-errptr (* (* t)))
 
@@ -429,6 +430,140 @@
   (options (* rocksdb-writeoptions))
   (key (* char))
   (keylen size-t)
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-merge void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (key (* char))
+  (keylen size-t)
+  (val (* char))
+  (vallen size-t)
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-merge-cf void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* char))
+  (keylen size-t)
+  (val (* char))
+  (vallen size-t)
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-write void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (batch (* rocksdb-writebatch))
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-get-cf (* char)
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions))
+  (key (* char))
+  (keylen size-t)
+  (vallen (* size-t))
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-multi-get void
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions))
+  (num-keys size-t)
+  (keys-list (array c-string))
+  (keys-list-sizes (array size-t))
+  (values-list (array c-string))
+  (values-list-sizes (array size-t))
+  (errs rocksdb-errptr))
+
+(define-alien-routine rocksdb-multi-get-cf void
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions))
+  (cfs (array rocksdb-column-family-handle))
+  (num-keys size-t)
+  (keys-list (array c-string))
+  (keys-list-sizes (array size-t))
+  (values-list (array c-string))
+  (values-list-sizes (array size-t))
+  (errs rocksdb-errptr))
+
+;;; CF
+(define-alien-routine rocksdb-create-column-family (* rocksdb-column-family-handle)
+  (db (* rocksdb))
+  (column-family-options (* rocksdb-options))
+  (column-family-name c-string)
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-create-column-families (array rocksdb-column-family-handle)
+  (db (* rocksdb))
+  (column-family-options (* rocksdb-options))
+  (num-column-familes int)
+  (column-family-names (array c-string))
+  (lencfs (* size-t))
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-create-column-families-destroy void
+  (list (array rocksdb-column-family-handle)))
+
+(define-alien-routine rocksdb-column-family-handle-destroy void
+  (* rocksdb-column-family-handle))
+
+(define-alien-routine rocksdb-column-family-handle-get-id unsigned-int
+  (* rocksdb-column-family-handle))
+
+(define-alien-routine rocksdb-column-family-handle-get-name c-string
+  (handle (* rocksdb-column-family-handle))
+  (name-len (* size-t)))
+
+(define-alien-routine rocksdb-drop-column-family void
+  (db (* rocksdb))
+  (handle (* rocksdb-column-family-handle))
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-open-column-families (* rocksdb)
+  (options (* rocksdb-options))
+  (name c-string)
+  (num-column-families int)
+  (column-family-names (array c-string))
+  (column-family-options (array rocksdb-options))
+  (column-family-handles (array rocksdb-column-family-handle))
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-list-column-families (array c-string)
+  (opt (* rocksdb-options))
+  (name c-string)
+  (lencf (* size-t))
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-list-column-families-destroy void
+  (list (array c-string))
+  (len size-t))
+
+(define-alien-routine rocksdb-put-cf void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* char))
+  (keylen size-t)
+  (val (* char))
+  (vallen size-t)
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-delete-cf void
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* char))
+  (keylen size-t)
+  (errptr rocksdb-errptr))
+
+(define-alien-routine rocksdb-delete-range-cf void
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (start-key (* char))
+  (start-key-len size-t)
+  (end-key (* char))
+  (end-key-len size-t)
   (errptr rocksdb-errptr))
 
 ;;; Iterators

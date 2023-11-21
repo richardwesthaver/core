@@ -3,3 +3,6 @@
 (in-package :rdb/tests)
 (defsuite :rdb)
 (in-suite :rdb)
+
+(deftest with-db ())
+(deftest with-iter ())
