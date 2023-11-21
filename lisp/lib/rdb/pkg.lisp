@@ -36,7 +36,7 @@
   (total-threads 1 :type integer) ;; numcpus is default
   (max-open-files 10000 :type integer)
   (use-fsync nil :type boolean)
-  (disable-auto-compations nil :type boolean))
+  (disable-auto-compactions nil :type boolean))
 
 ;; unsafe
 (defun bind-rocksdb-opts% (opts)

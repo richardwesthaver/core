@@ -89,6 +89,12 @@
    rust-mode)
   (package-install-selected-packages t))
 
+;;; Env
+(add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))
+(add-to-list 'exec-path (expand-file-name "~/.local/bin/"))
+(add-to-list 'exec-path "/bin/")
+(add-to-list 'exec-path "/usr/local/sbin/")
+
 ;;; Completions
 (use-package corfu
   :init (global-corfu-mode))
@@ -178,7 +184,6 @@
         (slime-repl)))))
 
 ;;; Rust
-(add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))
 (add-hook 'rust-mode-hook 'eglot-ensure)
 (setq rust-rustfmt-switches nil
       rust-indent-offset 2)

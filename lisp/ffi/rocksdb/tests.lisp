@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :rocksdb/tests
-  (:use :cl :std :std/rt :rocksdb :std/alien :sb-ext))
+  (:use :cl :std :std/rt :std/fu :rocksdb :std/alien :sb-ext))
 
 (in-package :rocksdb/tests)
 (defsuite :rocksdb)
