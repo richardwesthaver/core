@@ -5,20 +5,28 @@
   (:use :cl :std :std/rt :std/fu :rocksdb :std/alien :sb-ext))
 
 (in-package :rocksdb/tests)
+
 (defsuite :rocksdb)
 (in-suite :rocksdb)
-(load-rocksdb)
-(eval-always
-  (defun rocksdb-test-dir ()
-    (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
 
-  (defun test-opts () (let ((default (rocksdb-options-create)))
-			(rocksdb-options-set-create-if-missing default t)
-			default)))
+(load-rocksdb)
+
+(defun rocksdb-test-dir ()
+  (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
+
+(defun test-opts () 
+  (let ((default (rocksdb-options-create)))
+    (rocksdb-options-set-create-if-missing default t)
+    default))
 
 ;; not thread safe (gensym-counter)
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
 (defun genval (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "val")))))
+
+(defun setfa (place from) 
+  (loop for x across from
+	for i from 0 below (length from)
+	do (setf (deref place i) x)))
 
 (defun random-array (dim &optional (limit 4096))
   (let ((r (make-array dim)))
@@ -34,32 +42,31 @@
         (ropts (rocksdb-readoptions-create))
         (bopts (rocksdb-block-based-options-create)))
     (rocksdb-options-set-create-if-missing opts t)
+    ;; cleanup
     (rocksdb-options-destroy opts)
     (rocksdb-writeoptions-destroy wopts)
     (rocksdb-readoptions-destroy ropts)
     (rocksdb-block-based-options-destroy bopts)))
 
-(deftest db ()
+(deftest db-basic (:persist t)
+  "Test basic RocksDB functionality. Inserts a KV pair into a temporary
+DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
-         (db (rocksdb-open opts path nil)))
-    (let* ((key (genkey))
-           (val (genval))
-	   (klen (length key))
-	   (vlen (length val))
-           (wopts (rocksdb-writeoptions-create))
-           (ropts (rocksdb-readoptions-create)))
+         (db (rocksdb-open opts path nil))
+         (key (genkey))
+         (val (genval))
+	 (klen (length key))
+	 (vlen (length val))
+         (wopts (rocksdb-writeoptions-create))
+         (ropts (rocksdb-readoptions-create)))
       (with-alien ((k (* char) (make-alien char klen))
                    (v (* char) (make-alien char vlen))
                    (errptr rocksdb-errptr nil))
         ;; copy KEY to K
-	(loop for x across key
-	      for i from 0 below klen
-	      do (setf (deref k i) x))
+        (setfa k key)
         ;; copy VAL to V
-	(loop for y across val
-	      for i from 0 below vlen
-	      do (setf (deref v i) y))
+        (setfa v val)
         ;; put K:V in DB
         (rocksdb-put db 
                      wopts
@@ -80,8 +87,10 @@
         (rocksdb-delete db wopts k klen errptr)
 	(is (null-alien errptr))
         (rocksdb-writeoptions-destroy wopts)
-        (rocksdb-readoptions-destroy ropts)))
-    ;; final cleanup
-    (rocksdb-close db)
-    (rocksdb-options-destroy opts)
-    (sb-ext:delete-directory path :recursive t)))
+        (rocksdb-readoptions-destroy ropts)
+        ;; final cleanup
+        (rocksdb-cancel-all-background-work db nil)
+        (rocksdb-close db)
+        (rocksdb-destroy-db opts path errptr)
+	(is (null-alien errptr))
+        (rocksdb-options-destroy opts))))

@@ -53,6 +53,7 @@
    :test-name=
    :do-test
    :do-tests
+   :reset-tests
    :continue-testing
    :with-test-env
    :ensure-suite
@@ -124,6 +125,12 @@ used when the slot value of :BENCH is t.")
       (with-open-file (stream output :direction :output)
 	(do-suite (ensure-suite suite) :stream stream))
       (do-suite (ensure-suite suite) :stream output)))
+
+(defun reset-tests ()
+  (setq *testing* nil
+        *test-suite* nil
+        *test-suite-list* nil
+        *test-input* nil))
 
 ;; this assumes that *test-suite* is re-initialized correctly to the
 ;; correct test-suite object.
