@@ -25,7 +25,9 @@
   (:use-reexport :sb-alien)
   (:export
    :copy-c-string
-   :clone
+   :clone-strings
+   :clone-octets-to-alien
+   :clone-octets-from-alien
    :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int
    :defbytes
    :u1 :u2 :u3 :u4 :u8 :u16 :u24 :u32 :u64 :u128
@@ -63,6 +65,16 @@
                        (loop for i below (length list)
                              do (print (cast (deref x i) c-string))))))
       (free-alien x))))
+
+(defun clone-octets-to-alien (lispa aliena)
+  (loop for i from 0 below (length lispa)
+        do (setf (deref aliena i)
+                 (aref lispa i))))
+
+(defun clone-octets-from-alien (aliena lispa len)
+  (loop for i from 0 below len
+        do (setf (aref lispa i)
+                 (deref aliena i))))
 
 (defun foreign-int-to-integer (buffer size)
   "Check SIZE of int BUFFER. return BUFFER."

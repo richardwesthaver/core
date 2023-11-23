@@ -20,6 +20,11 @@
    ;; db
    :open-db
    :with-open-db 
+   ;; ops
+   :put-kv
+   :put-kv-str
+   :get-kv
+   :get-kv-str
    ;; iter
    :create-iter :with-iter
    :iter-key :iter-key-str
@@ -36,6 +41,7 @@
   (total-threads 1 :type integer) ;; numcpus is default
   (max-open-files 10000 :type integer)
   (use-fsync nil :type boolean)
+  (destroy nil :type boolean) ;; *
   (disable-auto-compactions nil :type boolean))
 
 ;; unsafe
@@ -57,7 +63,10 @@
 (defmacro with-open-db ((db-var db-path &optional opt) &body body)
   `(let ((,db-var (open-db ,db-path ,opt)))
      (unwind-protect (progn ,@body)
-       (rocksdb-close ,db-var))))
+       (rocksdb-close ,db-var)
+       (if (and ,opt (rdb-opts-destroy ,opt))
+           (with-alien ((err rocksdb-errptr nil))
+             (rocksdb-destroy-db (default-rocksdb-options%) ,db-path err))))))
 
 (defmacro with-iter ((iter-var db &optional opt) &body body)
   `(let ((,iter-var (create-iter ,db ,opt)))
@@ -114,12 +123,8 @@
     (with-alien ((errptr rocksdb-errptr nil)
 		 (k (* char) (make-alien char klen))
 		 (v (* char) (make-alien char vlen)))
-      (loop for x across key
-	    for i from 0 below klen
-	    do (setf (deref k i) x))
-      (loop for y across val
-	    for i from 0 below vlen
-	    do (setf (deref v i) y))
+      (clone-octets-to-alien key k)
+      (clone-octets-to-alien val v)
       (rocksdb-put db
 		   opts
 		   k
@@ -141,21 +146,17 @@
 
 (defun get-kv (db key &optional opt)
   (let ((opt (or opt (rocksdb-readoptions-create)))
-	(key (string-to-octets key))
 	(klen (length key)))
     (with-alien ((vlen (* size-t))
 		 (errptr rocksdb-errptr nil)
 		 (k (* char) (make-alien char klen)))
-      (loop for x across key
-	    for i from 0 below klen
-	    do (setf (deref k i) x))
-
+      (clone-octets-to-alien key k)
       (let* ((val (rocksdb-get db
-			      opt
-			      k
-			      klen
-			      vlen
-			      errptr))
+			       opt
+			       k
+			       klen
+			       vlen
+			       errptr))
 	     (vlen (deref vlen)))
 	(unless (null-alien errptr)
           (error 'unable-to-get-value-to-db
@@ -165,15 +166,13 @@
 	;; helps if we know the vlen beforehand, would need a custom
 	;; C-side function probably.
 	(let ((v (make-array vlen :element-type 'unsigned-byte)))
-	  (loop for i from 0 below vlen
-		with x = (deref val i) 
-		do (setf (aref v i) x))
-	  (map 'vector #'code-char v))))))
+          (clone-octets-from-alien val v vlen)
+	  v)))))
 
- (defun get-kv-str (db key &optional opt)
+(defun get-kv-str (db key &optional opt)
    (let ((k (string-to-octets key)))
      (let ((v (get-kv db k opt)))
-       (when v (print v)))))
+       (when v (concatenate 'string (map 'vector #'code-char v))))))
 
 (defun create-iter (db &optional opt)
   (unless opt
