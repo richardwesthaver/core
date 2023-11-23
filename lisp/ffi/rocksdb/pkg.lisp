@@ -60,7 +60,8 @@ set *errptr to a malloc()ed error message.
 ;;; Code:
 (defpackage :rocksdb/pkg
   (:nicknames :rocksdb)
-  (:use :cl :std/base :std/alien)
+  (:use :cl :std/base :std/alien :std/fu :std/sym)
+  (:import-from :std/fu :symb)
   (:export
    :load-rocksdb
    ;; ERR
@@ -277,98 +278,110 @@ set *errptr to a malloc()ed error message.
     (push :rocksdb *features*)))
 
 ;;; Macros
-(defmacro l* (fn forms)
-  (loop for x in forms
-        do `(',fn ,x)))
-
 (defmacro with-errptr (name result-type &rest args)
   `(define-alien-routine ,name ,result-type ,@args (errptr rocksdb-errptr)))
-
-(defmacro with-errptr* (&rest forms) `(l* with-errptr ',forms))
 
 (defmacro define-opt (name &rest fields)
   `(progn
      (define-alien-type ,name (struct ,(symb name '-t)))
      (define-alien-routine ,(symb name '-create) (* ,name))
-     (define-alien-routine ,(symb name '-destroy) void 
+     (define-alien-routine ,(symb name '-destroy) void
        (opt (* ,name)))
      ,(loop for x in fields
             do (cond
-                 ((consp x) 
-                  `(define-alien-routine ,(symb name '-set- (car x)) void (* ,name) ,@(cdr x)))
-                 (t 
-                  `(define-alien-routine ,(symb name '-set- x) void (* ,name) (val boolean)))))))
-
-(defmacro define-opt* (&rest forms) (loop for x in forms do `(define-opt ,x)))
+                   ((consp x) 
+                    `(define-alien-routine ,(symb name '-set- (car x)) void (opt (* ,name)) ,@(cdr x)))
+                   (t 
+                    `(define-alien-routine ,(symb name '-set- x) void (opt (* ,name)) (val boolean)))))))
 
 (defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symb ty '-t))))
-  
-(defmacro define-opaque* (&rest types) (loop for x in types do `(define-opaque ,x)))
 
-;;; Types
-;; db types
+;;; Exported Types
 (define-alien-type rocksdb-errptr (* (* t)))
+(define-opaque rocksdb)
+(define-opaque rocksdb)
+(define-opaque rocksdb-iterator)
+(define-opaque rocksdb-backup-engine)
+(define-opaque rocksdb-backup-engine-info)
+(define-opaque rocksdb-backup-engine-options)
+(define-opaque rocksdb-restore-options)
+(define-opaque rocksdb-memory-allocator)
+(define-opaque rocksdb-lru-cache-options)
+(define-opaque rocksdb-hyper-clock-cache-options)
+(define-opaque rocksdb-cache)
+(define-opaque rocksdb-compactionfilter)
+(define-opaque rocksdb-compactionfiltercontext)
+(define-opaque rocksdb-compactionfilterfactory)
+(define-opaque rocksdb-comparator)
+(define-opaque rocksdb-dbpath)
+(define-opaque rocksdb-env)
+(define-opaque rocksdb-fifo-compaction-options)
+(define-opaque rocksdb-filelock)
+(define-opaque rocksdb-filterpolicy)
+(define-opaque rocksdb-logger)
+(define-opaque rocksdb-mergeoperator)
+(define-opaque rocksdb-compactoptions)
+(define-opaque rocksdb-cuckoo-table-options)
+(define-opaque rocksdb-randomfile)
+(define-opaque rocksdb-seqfile)
+(define-opaque rocksdb-slicetransform)
+(define-opaque rocksdb-snapshot)
+(define-opaque rocksdb-writeablefile)
+(define-opaque rocksdb-writebatch)
+(define-opaque rocksdb-livefiles)
+(define-opaque rocksdb-column-family-handle)
+(define-opaque rocksdb-column-family-metadata)
+(define-opaque rocksdb-level-metadata)
+(define-opaque rocksdb-sst-file-metadata)
+(define-opaque rocksdb-envoptions)
+(define-opaque rocksdb-ingestexternalfileoptions)
+(define-opaque rocksdb-sstfilewriter)
+(define-opaque rocksdb-ratelimiter)
+(define-opaque rocksdb-perfcontext)
+(define-opaque rocksdb-pinnableslice)
+(define-opaque rocksdb-transactiondb-options)
+(define-opaque rocksdb-transactiondb)
+(define-opaque rocksdb-transaction-options)
+(define-opaque rocksdb-optimistictransactiondb)
+(define-opaque rocksdb-optimistictransaction-options)
+(define-opaque rocksdb-transaction)
+(define-opaque rocksdb-checkpoint)
+(define-opaque rocksdb-wal-iterator)
+(define-opaque rocksdb-wal-readoptions)
+(define-opaque rocksdb-memory-comsumers)
+(define-opaque rocksdb-memory-usage)
+(define-opaque rocksdb-universal-compaction-options)
+(define-opaque rocksdb-statistics-histogram-data)
 
-(define-opaque* rocksdb
-  rocksdb-logger
-  rocksdb-iterator
-  rocksdb-cache
-  rocksdb-checkpoint
-  rocksdb-snapshot
-  rocksdb-comparator
-  rocksdb-transaction
-  rocksdb-transactiondb
-  rocksdb-livefiles
-  rocksdb-writebatch
-  rocksdb-mergeoperator
-  rocksdb-env
-  rocksdb-column-family-handle
-  rocksdb-column-family-metadata
-  rocksdb-compactoptions
-  rocksdb-universal-compaction-options
-  rocksdb-envoptions
-  rocksdb-statistics-histogram-data
-  rocksdb-memory-usage
-  rocksdb-sstfilewriter
-  rocksdb-sst-file-metadata
-  rocksdb-wal-iterator
-  rocksdb-wal-readoptions)
+;;; Opts
+(define-opt rocksdb-options
+  create-if-missing
+  (block-based-table-factory
+   (table-options (* rocksdb-block-based-table-options)))
+  (allow-ingest-behind (val unsigned-char))
+  (merge-operator (comparator (* rocksdb-comparator))))
 
-;;; Cache
-(define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
+(define-opt rocksdb-block-based-options 
+    (block-cache 
+     (* rocksdb-cache))
+  (cache-index-and-filter-blocks
+   (val c-string)))
 
-;;; Options
-(define-opt* 
-    (rocksdb-options
-     create-if-missing
-     (block-based-table-factory
-      (table-options (* rocksdb-block-based-table-options)))
-     (allow-ingest-behind (val unsigned-char))
-     (merge-operator (comparator (* rocksdb-comparator))))
-
-    (rocksdb-block-based-options 
-     (block-cache (* rocksdb-cache))
-     (cache-index-and-filter-blocks 
-      (val c-string)))
-
-  (rocksdb-writeoptions)
-  (rocksdb-readoptions)
-  (rocksdb-flushoptions
-   (wait (val unsigned-char))))
+(define-opt rocksdb-writeoptions)
+(define-opt rocksdb-readoptions)
+(define-opt rocksdb-flushoptions
+    (wait (val unsigned-char)))
 
 (define-alien-routine rocksdb-options-increase-parallelism void 
       (opt (* rocksdb-options)) (total-threads int))
+
 (define-alien-routine rocksdb-options-optimize-level-style-compaction void 
       (opt (* rocksdb-options))
       (memtable-memory-budget unsigned-long))
 
 (define-alien-routine rocksdb-flushoptions-get-wait unsigned-char (* rocksdb-flushoptions))
-(with-errptr rocksdb-flush void 
-  (db (* rocksdb))
-  (options (* rocksdb-flushoptions)))
 
-(with-errptr
-  rocksdb-load-latest-options 
+(with-errptr rocksdb-load-latest-options 
   void
   (db-path c-string)
   (env (* rocksdb-env))
@@ -385,21 +398,21 @@ set *errptr to a malloc()ed error message.
   (list-column-family-options (* (* rocksdb-options)))
   (len size-t))
 
-(with-errptr* 
-    (rocksdb-set-options 
-     void
-     (db (* rocksdb))
-     (count int)
-     (keys (array c-string))
-     (values (array c-string)))
+(with-errptr
+  rocksdb-set-options 
+  void
+  (db (* rocksdb))
+  (count int)
+  (keys (array c-string))
+  (values (array c-string)))
 
-  (rocksdb-set-options-cf 
-   void
-   (db (* rocksdb))
-   (handle (* rocksdb-column-family-handle))
-   (count int)
-   (keys (array c-string))
-   (values (array c-string))))
+(with-errptr rocksdb-set-options-cf 
+  void
+  (db (* rocksdb))
+  (handle (* rocksdb-column-family-handle))
+  (count int)
+  (keys (array c-string))
+  (values (array c-string)))
 
 ;;; DB
 (with-errptr rocksdb-open (* rocksdb)
@@ -413,63 +426,62 @@ set *errptr to a malloc()ed error message.
   (db (* rocksdb))
   (wait boolean))
 
-(with-errptr* 
-    (rocksdb-put 
-     void 
-     (db (* rocksdb))
+(with-errptr rocksdb-put 
+      void 
+      (db (* rocksdb))
      (options (* rocksdb-writeoptions))
      (key (* char))
      (keylen size-t) 
      (val (* char))
      (vallen size-t))
 
-  (rocksdb-get 
-   (* char)
-   (db (* rocksdb))
-   (options (* rocksdb-readoptions))
-   (key (* char))
-   (keylen size-t) 
-   (vallen (* size-t)))
+(with-errptr rocksdb-get 
+  (* char)
+  (db (* rocksdb))
+  (options (* rocksdb-readoptions))
+  (key (* char))
+  (keylen size-t) 
+  (vallen (* size-t)))
 
-  (rocksdb-delete 
-   void
-   (db (* rocksdb))
-   (options (* rocksdb-writeoptions))
-   (key (* char))
-   (keylen size-t))
+(with-errptr rocksdb-delete 
+  void
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (key (* char))
+  (keylen size-t))
 
-  (rocksdb-merge 
-   void
-   (db (* rocksdb))
-   (opt (* rocksdb-writeoptions))
-   (key (* char))
-   (keylen size-t)
-   (val (* char))
-   (vallen size-t))
+(with-errptr rocksdb-merge 
+  void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (key (* char))
+  (keylen size-t)
+  (val (* char))
+  (vallen size-t))
 
-  (rocksdb-merge-cf 
-   void
-   (db (* rocksdb))
-   (opt (* rocksdb-writeoptions))
-   (cf (* rocksdb-column-family-handle))
-   (key (* char))
-   (keylen size-t)
-   (val (* char))
-   (vallen size-t))
+(with-errptr rocksdb-merge-cf 
+  void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* char))
+  (keylen size-t)
+  (val (* char))
+  (vallen size-t))
 
-  (rocksdb-write 
-   void
-   (db (* rocksdb))
-   (opt (* rocksdb-writeoptions))
-   (batch (* rocksdb-writebatch)))
+(with-errptr rocksdb-write 
+  void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (batch (* rocksdb-writebatch)))
 
-  (rocksdb-get-cf 
-   (* char)
-   (db (* rocksdb))
-   (opt (* rocksdb-readoptions))
-   (key (* char))
-   (keylen size-t)
-   (vallen (* size-t))))
+(with-errptr rocksdb-get-cf 
+  (* char)
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions))
+  (key (* char))
+  (keylen size-t)
+  (vallen (* size-t)))
 
 (define-alien-routine rocksdb-multi-get void
   (db (* rocksdb))
@@ -492,21 +504,26 @@ set *errptr to a malloc()ed error message.
   (values-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
-;;; CF
-(with-errptr* 
-    (rocksdb-create-column-family 
-     (* rocksdb-column-family-handle)
-     (db (* rocksdb))
-     (column-family-options (* rocksdb-options))
-     (column-family-name c-string))
+(define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
 
-  (rocksdb-create-column-families 
-   (array rocksdb-column-family-handle)
-   (db (* rocksdb))
-   (column-family-options (* rocksdb-options))
-   (num-column-familes int)
-   (column-family-names (array c-string))
-   (lencfs (* size-t))))
+(with-errptr rocksdb-flush void 
+  (db (* rocksdb))
+  (options (* rocksdb-flushoptions)))
+
+;;; CF
+(with-errptr rocksdb-create-column-family 
+  (* rocksdb-column-family-handle)
+  (db (* rocksdb))
+  (column-family-options (* rocksdb-options))
+  (column-family-name c-string))
+
+(with-errptr rocksdb-create-column-families 
+  (array rocksdb-column-family-handle)
+  (db (* rocksdb))
+  (column-family-options (* rocksdb-options))
+  (num-column-familes int)
+  (column-family-names (array c-string))
+  (lencfs (* size-t)))
 
 (define-alien-routine rocksdb-create-column-families-destroy void
   (list (array rocksdb-column-family-handle)))
@@ -521,59 +538,61 @@ set *errptr to a malloc()ed error message.
   (handle (* rocksdb-column-family-handle))
   (name-len (* size-t)))
 
-(with-errptr*
-    (rocksdb-drop-column-family 
-     void
-     (db (* rocksdb))
-     (handle (* rocksdb-column-family-handle)))
+(with-errptr rocksdb-drop-column-family 
+  void
+  (db (* rocksdb))
+  (handle (* rocksdb-column-family-handle)))
 
-  (rocksdb-open-column-families 
-   (* rocksdb)
-   (options (* rocksdb-options))
-   (name c-string)
-   (num-column-families int)
-   (column-family-names (array c-string))
-   (column-family-options (array rocksdb-options))
-   (column-family-handles (array rocksdb-column-family-handle)))
+(with-errptr rocksdb-open-column-families 
+  (* rocksdb)
+  (options (* rocksdb-options))
+  (name c-string)
+  (num-column-families int)
+  (column-family-names (array c-string))
+  (column-family-options (array rocksdb-options))
+  (column-family-handles (array rocksdb-column-family-handle)))
 
-  (rocksdb-list-column-families 
-   (array c-string)
-   (opt (* rocksdb-options))
-   (name c-string)
-   (lencf (* size-t))))
+(with-errptr rocksdb-list-column-families 
+  (array c-string)
+  (opt (* rocksdb-options))
+  (name c-string)
+  (lencf (* size-t)))
 
 (define-alien-routine rocksdb-list-column-families-destroy void
   (list (array c-string))
   (len size-t))
 
-(with-errptr* 
-    (rocksdb-put-cf 
-     void
-     (db (* rocksdb))
-     (opt (* rocksdb-writeoptions))
-     (cf (* rocksdb-column-family-handle))
-     (key (* char))
-     (keylen size-t)
-     (val (* char))
-     (vallen size-t))
+(with-errptr rocksdb-put-cf 
+  void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* char))
+  (keylen size-t)
+  (val (* char))
+  (vallen size-t))
 
-  (rocksdb-delete-cf 
-   void
-   (db (* rocksdb))
-   (options (* rocksdb-writeoptions))
-   (cf (* rocksdb-column-family-handle))
-   (key (* char))
-   (keylen size-t))
+(with-errptr rocksdb-delete-cf 
+  void
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* char))
+  (keylen size-t))
 
-  (rocksdb-delete-range-cf 
-   void
-   (db (* rocksdb))
-   (options (* rocksdb-writeoptions))
-   (cf (* rocksdb-column-family-handle))
-   (start-key (* char))
-   (start-key-len size-t)
-   (end-key (* char))
-   (end-key-len size-t)))
+(with-errptr rocksdb-delete-range-cf 
+  void
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (start-key (* char))
+  (start-key-len size-t)
+  (end-key (* char))
+  (end-key-len size-t))
+
+(with-errptr rocksdb-destroy-db void
+  (opts (* rocksdb-options))
+  (path c-string))
 
 ;;; Iterators
 (define-alien-routine rocksdb-create-iterator (* rocksdb-iterator)
@@ -593,7 +612,5 @@ set *errptr to a malloc()ed error message.
   (iter (* rocksdb-iterator))
   (klen-ptr (* size-t)))
 (define-alien-routine rocksdb-iter-value (* char) 
-  (iter (* rocksdb-iterator)) (vlen-ptr (* size-t)))
-(with-errptr rocksdb-destroy-db void
-  (opts (* rocksdb-options))
-  (path c-string) )
+  (iter (* rocksdb-iterator)) 
+  (vlen-ptr (* size-t)))
