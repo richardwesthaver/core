@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :std/pan
   (:nicknames :pan)
-  (:use :cl :std/named-readtables :std/fu :std/ana)
+  (:use :cl :std/named-readtables :std/fu :std/ana :std/base)
   (:export
    #:pandoriclet
    #:pandoriclet-get
@@ -67,9 +67,9 @@
                     syms))
          ,@body))
 
-(defun pandoric-hotpatch (box new)
-  (with-pandoric (this) box
-    (setq this new)))
+;; (defun pandoric-hotpatch (box new)
+;;   (with-pandoric (this) box
+;;     (setq this new)))
 
 (defmacro pandoric-recode (vars box new)
   `(with-pandoric (this ,@vars) ,box

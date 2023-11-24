@@ -15,9 +15,14 @@
 ;;     unicode<= unicode>=))
 
 (uiop:define-package :std/str
-  (:use :cl :uiop/driver :sb-unicode)
+  (:use :cl :uiop/driver :sb-unicode :cl-ppcre)
   (:export
-   #:string-designator))
+   :*omit-nulls*
+   :*whitespaces*
+   :string-designator
+   :split
+   :trim
+   :collapse-whitespaces))
 
 (in-package :std/str)
 
@@ -26,8 +31,43 @@
 ;;  :sb-unicode
 ;;  :include sb-unicode-syms)
 
+(defparameter *omit-nulls* nil)
+(defvar *whitespaces* (list #\Backspace #\Tab #\Linefeed #\Newline #\Vt #\Page
+                            #\Return #\Space #\Rubout
+                            #+sbcl #\Next-Line #-sbcl (code-char 133)
+                            #\No-break_space)
+  "On some implementations, linefeed and newline represent the same character (code).")
+
 (deftype string-designator ()
   "A string designator type. A string designator is either a string, a symbol,
 or a character."
   `(or symbol string character))
+
+(defun split (separator s &key (omit-nulls *omit-nulls*) limit (start 0) end)
+  "Split s into substring by separator (cl-ppcre takes a regex, we do not).
+
+  `limit' limits the number of elements returned (i.e. the string is
+  split at most `limit' - 1 times)."
+  ;; cl-ppcre:split doesn't return a null string if the separator appears at the end of s.
+  (let* ((limit (or limit (1+ (length s))))
+         (res (ppcre:split `(:sequence ,(string separator)) s :limit limit :start start :end end)))
+    (if omit-nulls
+        (remove-if (lambda (it) (emptyp it)) res)
+        res)))
+
+(defun collapse-whitespaces (s)
+  "Ensure there is only one space character between words.
+  Remove newlines."
+  (cl-ppcre:regex-replace-all "\\s+" s " "))
+
+(defun trim (s &key (char-bag *whitespaces*))
+  "Removes all characters in `char-bag` (default: whitespaces) at the beginning and end of `s`.
+   If supplied, char-bag has to be a sequence (e.g. string or list of characters).
+
+   Examples: (trim \"  foo \") => \"foo\"
+             (trim \"+-*foo-bar*-+\" :char-bag \"+-*\") => \"foo-bar\"
+             (trim \"afood\" :char-bag (str:concat \"a\" \"d\")) => \"foo\""
+  (when s
+    (string-trim char-bag s)))
+
 ;;;  TODO 2023-08-27: camel snake kebab

@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :std/fu
   (:nicknames :fu)
-  (:use :cl :sb-mop :sb-c :std/named-readtables :std/sym :std/list :std/err)
+  (:use :cl :sb-mop :sb-c :std/base)
   (:export
    :until
    #:mkstr
@@ -52,7 +52,13 @@
    :def!
    :eval-always
    :merge! :sort!
-   :list-slot-values-using-class :list-class-methods :list-class-slots :list-indirect-slot-methods))
+   :list-slot-values-using-class :list-class-methods :list-class-slots :list-indirect-slot-methods
+   :signed-array-length
+   :take
+   :maphash-keys
+   :hash-table-keys
+   :maphash-values
+   :hash-table-values))
 
 (in-package :std/fu)
 
@@ -966,3 +972,61 @@ non-nil, also include indirect (parent) methods."
 		      `(,ns ,v))))
 	      (when unboundp (list ns))))))
     slots)))
+
+;;; Seq utils
+
+(deftype signed-array-length ()
+  "A (possibly negated) array length."
+  '#.(let ((limit (1- array-dimension-limit)))
+       `(integer ,(- limit) ,limit)))
+
+(defun take (n seq)
+  "Return, at most, the first N elements of SEQ, as a *new* sequence
+of the same type as SEQ.
+
+If N is longer than SEQ, SEQ is simply copied.
+
+If N is negative, then |N| elements are taken (in their original
+order) from the end of SEQ."
+  #+sbcl (declare (sb-ext:muffle-conditions style-warning))
+  (declare (type signed-array-length n))
+  (seq-dispatch seq
+    (if (minusp n)
+        (last seq (abs n))
+        (firstn n seq))
+    (if (minusp n)
+        (subseq seq (max 0 (+ (length seq) n)))
+        (subseq seq 0 (min n (length seq))))))
+
+;;; Hashtable utils
+(declaim (inline maphash-keys))
+(defun maphash-keys (function table)
+  "Like MAPHASH, but calls FUNCTION with each key in the hash table TABLE."
+  (maphash (lambda (k v)
+             (declare (ignore v))
+             (funcall function k))
+           table))
+
+(declaim (inline maphash-values))
+(defun maphash-values (function table)
+  "Like MAPHASH, but calls FUNCTION with each value in the hash table TABLE."
+  (maphash (lambda (k v)
+             (declare (ignore k))
+             (funcall function v))
+           table))
+
+(defun hash-table-keys (table)
+  "Returns a list containing the keys of hash table TABLE."
+  (let ((keys nil))
+    (maphash-keys (lambda (k)
+                    (push k keys))
+                  table)
+    keys))
+
+(defun hash-table-values (table)
+  "Returns a list containing the values of hash table TABLE."
+  (let ((values nil))
+    (maphash-values (lambda (v)
+                      (push v values))
+                    table)
+    values))

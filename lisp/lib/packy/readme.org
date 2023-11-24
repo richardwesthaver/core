@@ -1,9 +1,9 @@
-#+TITLE: packy
-#+CREATED: 2021-10-13 Wed 02:18
-#+AUTHOR: ellis
-A one-stop shop for all your package-related needs. 
+{{{header(packy,Richard Westhaver,ellis@rwest.io,
+The Universal package manager.)}}}
 
-a /Universal package manager/.
+#+begin_center
+A one-stop shop for all your package-related needs.
+#+end_center
 
 #+begin_src shell :results output replace :exports both
 sbcl --noinform --non-interactive --eval '(asdf:make :packy)'
