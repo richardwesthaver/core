@@ -35,10 +35,12 @@
   (:use 
    :cl :std/base :std/sxp :std/fu :std/fmt :std/log :std/ana :std/pan 
    :sb-aprof #+x86-64 :sb-sprof)
+  (:import-from :sb-cover :store-coverage-data)
   (:nicknames :rt)
   (:export
    :*default-test-opts*
    :*compile-tests*
+   :*coverage-directory*
    :*catch-test-errors*
    :*test-suffix*
    :*default-test-suite-name*
@@ -88,7 +90,11 @@
    :test-name
    :tests
    :test-form
-   :test-results))
+   :test-results
+   :enable-coverage
+   :disable-coverage
+   :with-coverage
+   :cover-report))
 
 (in-package :std/rt)
 (in-readtable :std)
@@ -99,6 +105,7 @@
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
 compiler optimizations.")
+(defvar *coverage-directory* #P"/tmp/rt/")
 (defvar *catch-test-errors* t "When non-nil, cause errors in a test to be caught.")
 (defvar *test-suffix* "-test" "A suffix to append to every `test' defined with `deftest'.")
 (defvar *test-suite-list* nil "List of available `test-suite' objects.")
@@ -387,8 +394,10 @@ from TESTS."))
     (flet ((%do ()
 	     (if-let ((opt *compile-tests*))
 	       ;; RESEARCH 2023-08-31: with-compilation-unit?
-	       (progn 
-		 (when (eq opt t) (setq opt *default-test-opts*))
+	       (progn
+		 (if (eq opt t) 
+                     (setq opt *default-test-opts*)
+                     (setq opt (push *default-test-opts* opt)))
 		 ;; TODO 2023-09-21: handle failures here
 		 (funcall (compile-test self :declare opt))
 		 (setf r (make-test-result :pass (test-fn self))))
@@ -667,5 +676,22 @@ enabled using the `in-suite' macro, similiar to the `defpackage' API."
 NAME. Return the `test-suite'."
   (assert-suite name)
   `(setf *test-suite* (ensure-suite ',name)))
+
+;;; Coverage
+(defmacro enable-coverage ()
+  `(declaim (optimize store-coverage-data)))
+
+(defun disable-coverage ()
+  `(declaim (optimize (sb-cover:store-coverage-data 0))))
+
+(defmacro with-coverage (&body body)
+  `(progn
+     (enable-coverage)
+     ,@body
+     (disable-coverage)))
+
+(defun coverage-report ()
+  "Generate a coverage report."
+  (sb-cover:report *coverage-directory*))
 
 (provide :rt)
