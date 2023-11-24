@@ -1,0 +1,10 @@
+[package]
+name = "tz"
+version = "0.1.0"
+edition = "2021"
+description = "Tar and Zstd utility"
+[[bin]]
+name = "tz"
+path = "main.rs"
+[dependencies]
+flate = { path = "../../lib/flate" }
