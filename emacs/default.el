@@ -173,6 +173,10 @@
   :ensure t
   :config
   (setq slime-contribs '(slime-fancy slime-quicklisp))
+
+  (put 'make-instance 'common-lisp-indent-function 1)
+  (put 'reinitialize-instance 'common-lisp-indent-function 1)
+
   (defvar slime-toggle nil)
   (defun slime-toggle ()
     "toggle between lisp file and slime-repl"
@@ -181,7 +185,31 @@
     (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
       (progn
         (setq slime-toggle (current-buffer))
-        (slime-repl)))))
+        (slime-repl))))
+
+  (defun clouseau-inspect (string)
+    "Inspect a lisp value with Clouseau. make sure to load clouseau
+with a custom core or in your init file before using this
+function: '(ql:quickload :clouseau)'."
+    (interactive
+     (list (slime-read-from-minibuffer
+            "Inspect value (evaluated): "
+            (slime-sexp-at-point))))
+    (let ((inspector 'cl-user::*clouseau-inspector*))
+      (slime-eval-async
+          `(cl:progn
+            (cl:defvar ,inspector nil)
+            ;; (Re)start the inspector if necessary.
+            (cl:unless (cl:and (clim:application-frame-p ,inspector)
+                               (clim-internals::frame-process ,inspector))
+                       (cl:setf ,inspector (cl:nth-value 1 (clouseau:inspect nil :new-process t))))
+            ;; Tell the inspector to visualize the correct datum.
+            (cl:setf (clouseau:root-object ,inspector :run-hook-p t)
+                     (cl:eval (cl:read-from-string ,string)))
+            ;; Return nothing.
+            (cl:values)))))
+
+  (define-key slime-prefix-map (kbd "i") 'clouseau-inspect))
 
 ;;; Rust
 (add-hook 'rust-mode-hook 'eglot-ensure)
