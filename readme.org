@@ -5,12 +5,9 @@
 This repository contains a collection of software libraries shared
 across all of our products and projects.
 
-The basic structure consists of a top-level directory for each
-significant language we speak. As of [2023-10-26 Thu] this includes
-Common Lisp, Emacs Lisp, and Rust.
-
 - NOTE :: This is *not* a portable library. Starting in version =1.0=
-  we will be depending on downstream forks of SBCL and Rust.
+  we will be depending on separately distributed forks of SBCL and
+  Rust. See details here.
 
 To bootstrap the core you will need recent versions of [[https://www.gnu.org/software/emacs/][GNU Emacs]],
 [[https://www.rust-lang.org/][Rust]], and [[http://www.sbcl.org/][SBCL]]. For SBCL you will need to build from source with
@@ -21,15 +18,15 @@ We have a strong preference for vendoring our dependencies. The
 we build via CI and ship to production as well as use internally.
 
 [fn:1] [[http://www.sbcl.org/manual/#Saving-a-Core-Image][SBCL Manual - Saving a Core Image]] 
-
-* rust
-** sys
+* COMMENT tests
+** rust
+*** sys
 These crates contain FFI bindings to foreign libraries, usually in C.
-*** btrfs
-*** btrfsutil
-** lib
-*** TODO alch
-*** audio
+**** btrfs
+**** btrfsutil
+*** lib
+**** TODO alch
+**** audio
 #+begin_src shell :dir rust/lib/audio :results output replace :exports results
 cargo test
 #+end_src
@@ -47,7 +44,7 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 #+end_example
-*** crypto
+**** crypto
 #+begin_src shell :dir rust/lib/crypto :results output replace :exports results
 cargo test
 #+end_src
@@ -70,14 +67,14 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 #+end_example
-*** TODO db
+**** TODO db
 #+begin_src shell :dir rust/lib/db :results output replace :exports results :eval no
 cargo test
 #+end_src
 
 #+RESULTS:
 
-*** flate
+**** flate
 #+begin_src shell :dir rust/lib/flate :results output replace :exports results
 cargo test
 #+end_src
@@ -95,7 +92,7 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 #+end_example
-*** hash
+**** hash
 #+begin_src shell :dir rust/lib/hash :results output replace :exports results
 cargo test
 #+end_src
@@ -116,8 +113,8 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 #+end_example
-*** krypt
-*** logger
+**** krypt
+**** logger
 #+begin_src shell :dir rust/lib/logger :results output replace :exports results
 cargo test
 #+end_src
@@ -135,7 +132,7 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 #+end_example
-*** sxp
+**** sxp
 #+begin_src shell :dir rust/lib/sxp :results output replace :exports results
 cargo test
 #+end_src
@@ -196,8 +193,8 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 #+end_example
-*** tenex
-*** util
+**** tenex
+**** util
 #+begin_src shell :dir rust/lib/util :results output replace :exports results
 cargo test
 #+end_src
@@ -215,15 +212,15 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 #+end_example
-* lisp
+** lisp
 #+begin_src lisp :results silent
   (let ((asds '("lisp/std.asd" "lisp/lib/rdb.asd" "lisp/lib/organ/organ.asd" "lisp/lib/skel/skel.asd"
                 "lisp/ffi/rocksdb.asd" "lisp/ffi/btrfs.asd" "lisp/ffi/uring.asd")))
     (mapc (lambda (x) (asdf:load-asd (pathname x))) asds))
   (asdf:load-system :std)
 #+end_src
-** std
-*** tests
+*** std
+**** tests
 #+begin_src lisp :package std/tests :results output replace :exports results
   (load "lisp/std/tests.lisp")
   (load "lisp/std/tests/sxp.lisp")
@@ -265,9 +262,9 @@ in suite SXP with 4/4 tests:
 #<PASS FORMS-TEST1054> 
 No tests failed.
 #+end_example
-** lib
-*** rdb
-**** tests
+*** lib
+**** rdb
+***** tests
 #+begin_src lisp :package rdb.tests :results output replace :exports results
   (asdf:load-system :rdb/tests)
   (in-package :rdb/tests)
@@ -278,8 +275,8 @@ No tests failed.
 #+RESULTS:
 : in suite RDB with 0/0 tests:
 : No tests failed.
-*** organ
-**** tests
+**** organ
+***** tests
 #+begin_src lisp :package organ.tests :results output replace :exports results
   (asdf:load-system :organ/tests)
   (in-package :organ.tests)
@@ -316,8 +313,8 @@ in suite ORGAN with 3/3 tests:
 #<PASS ORG-FILE-TEST18306> 
 No tests failed.
 #+end_example
-*** skel
-**** tests
+**** skel
+***** tests
 #+begin_src lisp :package skel.tests :results output replace :exports results
   (asdf:load-system :skel/tests)
   (in-package :skel.tests)
@@ -402,9 +399,9 @@ endif)
 #<PASS SANITY-TEST17290> 
 No tests failed.
 #+end_example
-** ffi
-*** btrfs
-**** tests
+*** ffi
+**** btrfs
+***** tests
 #+begin_src lisp :package btrfs.tests :results output replace :exports results
   (asdf:load-system :btrfs/tests)
   (in-package :btrfs.tests)
@@ -415,8 +412,8 @@ No tests failed.
 #+RESULTS:
 : in suite BTRFS with 0/0 tests:
 : No tests failed.
-*** rocksdb
-**** tests
+**** rocksdb
+***** tests
 #+begin_src lisp :package rocksdb.tests :results output replace :exports results
   (asdf:load-system :rocksdb/tests)
   (in-package :rocksdb.tests)
@@ -446,8 +443,8 @@ in suite ROCKSDB with 2/2 tests:
 #<PASS SET-OPTS-TEST990> 
 No tests failed.
 #+end_example
-*** quiche
-**** tests
+**** quiche
+***** tests
 #+begin_src lisp :package quiche.tests :results output replace :exports results
   (asdf:load-system :quiche/tests)
   (in-package :quiche.tests)
@@ -455,8 +452,8 @@ No tests failed.
   (setq log:*log-level* :debug)
   (rt:do-tests :uring)
 #+end_src
-*** uring
-**** tests
+**** uring
+***** tests
 #+begin_src lisp :package uring.tests :results output replace :exports results
   (asdf:load-system :uring/tests)
   (in-package :uring.tests)
@@ -467,8 +464,8 @@ No tests failed.
 #+RESULTS:
 : in suite URING with 0/0 tests:
 : No tests failed.
-*** tree-sitter
-**** tests
+**** tree-sitter
+***** tests
 #+begin_src lisp :package tree-sitter.tests :results output replace :exports results
   (asdf:load-system :tree-sitter/tests)
   (in-package :tree-sitter.tests)
@@ -479,7 +476,7 @@ No tests failed.
 #+RESULTS:
 : in suite TREE-SITTER with 0/0 tests:
 : No tests failed.
-* emacs
+** emacs
 There are a few internal packages that link to system libraries at
 runtime - the following libraries need to be installed for a fully
 functioning editor:
@@ -489,7 +486,7 @@ functioning editor:
 - librsvg ::
 - imagemagick ::
 
-* lib
-** sxp
-** sk
-** mq
+** lib
+*** sxp
+*** sk
+*** mq

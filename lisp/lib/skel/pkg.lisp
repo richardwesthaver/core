@@ -9,7 +9,7 @@
   (require 'sb-posix))
 
 (uiop:define-package :skel/pkg
-    (:nicknames :std)
+    (:nicknames :skel)
   (:use :cl :std :sb-mop :cl-ppcre)
   (:import-from :sb-posix :getcwd :getuid)
   (:import-from :sb-unix :uid-username)
