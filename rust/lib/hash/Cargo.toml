@@ -5,7 +5,6 @@ authors = ["ellis"]
 edition = "2018"
 description = "Hash Functions"
 [dependencies]
-# contrib
 blake3 = "1.0.0"
 hashbrown = "0.11.2"
 rand = "0.8.0"
