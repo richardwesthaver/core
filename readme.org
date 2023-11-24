@@ -1,7 +1,4 @@
-#+TITLE: comp/core
-#+AUTHOR: Richard Westhaver
-#+EMAIL: ellis@rwest.io
-#+DESCRIPTION: The core of The Compiler Company software stack
+{{{header(core,Richard Westhaver,ellis@rwest.io,The Compiler Company Core)}}}
 This repository contains a collection of software libraries shared
 across all of our products and projects.
 
