@@ -10,5 +10,6 @@
    :std/fmt
    :std/sxp
    :std/cli
+   :std/gui
    :std/alien
    :std/thread))

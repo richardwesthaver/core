@@ -119,7 +119,7 @@
 (defun run ()
   (let ((*log-level* nil)
 	(*skel-user-config* (init-skel-user-config)))
-    (in-readtable *macs-readtable*) ;; should be in sxp
+    (in-readtable :std) ;; should be in sxp
     (with-cli () $cli
       (do-cmd $cli)
       (debug-opts $cli)

@@ -261,7 +261,7 @@ keys."
       `(,*default-cli-def* ,name (apply #'make-cli t (walk-cli-slots ',body))))
 
 (defmacro defmain (ret &body body)
-  "Define a main function in the current package which returns RET.
+  "Define a CLI main function in the current package which returns RET.
 
 Note that this macro does not export the defined function and requires
 `cli:main' to be an external symbol."
