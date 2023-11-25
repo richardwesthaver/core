@@ -1,0 +1,28 @@
+;;; skelfile @ 2023-10-08.02:37:25 -*- mode: skel; -*-
+:name skel
+:author "ellis"
+:version "0.1.0"
+:description "a hacker's project compiler"
+:license "MPL"
+:vc :hg
+:tags ("lisp")
+:rules ((build () (print (asdf:make :skel/cli)))
+        (clean () #$rm -rf */*.fasl$#))
+:documents ((:org "readme"))
+:components 
+((:elisp "sk")
+ (:lisp-system 
+  "skel"
+  :version "0.1.0"
+  :maintainer "ellis <ellis@rwest.io>"
+  :bug-tracker "https://lab.rwest.io/ellis/skel/issues"
+  :class :package-inferred-system
+  :defsystem-depends-on (:asdf-package-system)
+  :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std :organ :skel/pkg)
+  :in-order-to ((test-op (test-op skel/tests)))
+  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests))))
+:stash "~/dev/comp/stash"
+:shed "~/dev/comp/shed"
+:abbrevs nil
+:snippets 
+((autogen #$sbcl --eval '(ql:quickload :app/cli/skel)' --eval '(asdf:make :app/cli/skel)'$#))

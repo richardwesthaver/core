@@ -8,6 +8,7 @@
    :std/log
    :std/fu
    :std/fmt
+   :std/tbl
    :std/sxp
    :std/cli
    :std/gui
