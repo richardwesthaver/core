@@ -1,5 +1,4 @@
-#+TITLE: skel
-#+DESCRIPTION: project skeletons
+{{{header(skel,Richard Westhaver,ellis@rwest.io,Project Skeletons)}}}
 * Overview 
 + status :: WIP
 + forge :: [[https://lab.rwest.io/ellis/skel][Heptapod]]
@@ -85,7 +84,7 @@ skel v0.1.1
 Here's skel's skelfile:
 
 #+begin_src shell :results output replace :wrap src skel :exports results
-cat skelfile
+cat skel.sk
 #+end_src
 
 #+RESULTS:
@@ -103,58 +102,21 @@ cat skelfile
 :documents ((:org "readme"))
 :components 
 ((:elisp "sk")
- (:lisp-system "skel"
-	       :depends-on ("macs" "sxp")
-	       :components
-	       ((:file "src/pkg")
-		(:module "core"
-			 :pathname "src/core"
-			 :depends-on ("src/pkg")
-			 :components
-			 ((:file "err")
-			  (:file "util" :depends-on ("err"))
-			  (:file "cfg" :depends-on ("util"))
-			  (:file "proto" :depends-on ("util"))
-			  (:file "obj" :depends-on ("proto"))
-			  (:file "header" :depends-on ("util"))
-			  (:file "vc" :depends-on ("obj" "header"))
-			  (:file "virt" :depends-on ("obj" "header"))
-			  (:file "mk" :depends-on ("vc"))
-			  (:file "vm" :depends-on ("obj" "virt" "mk"))))
-		(:module "comp" ;; compilers
-			 :pathname "src/comp"
-			 :depends-on ("core")
-			 :components
-			 ((:file "asd")
-			  (:file "containerfile")
-			  (:file "ignore")
-			  (:file "makefile")))
-		(:module "tools" ;; tools
-			 :pathname "src/tools"
-			 :depends-on ("core")
-			 :components
-			 ((:file "deploy")
-			  (:file "viz")))
-		(:module "ext" ;; extensions
-			 :pathname "src/ext"
-			 :depends-on ("core" "comp")
-			 :components
-			 ((:file "asdf")))))
- (:lisp-system "skel/cli"
-	       :depends-on ("skel" "macs" "cli")
-	       :components ((:file "src/cli")))
-
- (:lisp-system "skel/tests"
-	       :depends-on ("skel" "rt")
-	       :components ((:file "tests")))
-
- (:lisp-system "skel/examples"
-	       :depends-on ("skel")
-	       :components ((:file "examples"))))
-:stash "~/stash"
-:shed "~/shed"
+ (:lisp-system 
+  "skel"
+  :version "0.1.0"
+  :maintainer "ellis <ellis@rwest.io>"
+  :bug-tracker "https://lab.rwest.io/ellis/skel/issues"
+  :class :package-inferred-system
+  :defsystem-depends-on (:asdf-package-system)
+  :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std :organ :skel/pkg)
+  :in-order-to ((test-op (test-op skel/tests)))
+  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests))))
+:stash "~/dev/comp/stash"
+:shed "~/dev/comp/shed"
 :abbrevs nil
-:snippets ((autogen #$sbcl --eval '(asdf:make :skel/cli)'$#))
+:snippets 
+((autogen #$sbcl --eval '(ql:quickload :app/cli/skel)' --eval '(asdf:make :app/cli/skel)'$#))
 #+end_src
 
 This is just a form without the top-level parentheses - you're free to
@@ -165,7 +127,7 @@ The =describe= command can be used to check the currently active
 skelfile, printing any errors and the parsed object.
 
 #+begin_src shell :results output replace :exports both
-  ./skel show
+  skel show
 #+end_src
 
 #+RESULTS:
@@ -202,14 +164,14 @@ an existing one.
 Try compiling skel's skelfile:
 
 #+begin_src shell :results output replace :exports code
-./skel compile
+  skel compile
 #+end_src
 
 You may also compile individual components of the project structure,
 for example, to compile the rules into a makefile:
 
 #+begin_src shell :results output replace :exports code
-./skel compile --rules
+  skel compile --rules
 #+end_src
 
 #+begin_src shell :results output :wrap src makefile :exports both
@@ -279,8 +241,9 @@ No tests failed.
 #+end_src
 
 * API
-- CLOS-based core classes
-- EIEIO-based wrapper classes
+- TODO :: CLOS-based core classes
+- TODO :: EIEIO-based wrapper classes
+
 #+begin_src dot :file api.svg :exports results
   digraph { splines=true; label="CLOS API"; labelloc="t"; node [shape=record];
     sk [label="(skel :ID :AST)"]
