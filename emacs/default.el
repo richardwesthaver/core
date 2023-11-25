@@ -397,10 +397,10 @@ Interactively, NUMBER is the prefix arg."
 ;;; Outlines
 (defun outline-hook (&optional rx)
   "Enable `outline-minor-mode' and set `outline-regexp'."
-  (setq-local outline-regexp (or rx outline-regexp))
-  (outline-minor-mode))
+  (when rx (setq-local outline-regexp rx))
+  (outline-minor-mode 1))
 
-(setq outline-minor-mode-use-buttons 'in-margins)
+(setq outline-minor-mode-use-buttons nil)
 
 (defun add-outline-hook (mode &optional rx)
   (let ((sym (symb mode "-hook")))
@@ -415,9 +415,14 @@ Interactively, NUMBER is the prefix arg."
            (sh-mode "###+")
            (sh-script-mode "###+")
            (makefile-mode "###+")
-           (conf-mode-hook "###+"))
-
-
+           (conf-mode "###+")
+           (common-lisp-mode)
+           (emacs-lisp-mode)
+           (lisp-data-mode)
+           (org-mode)
+           (css-mode)
+           (html-mode)
+           (skel-mode))
 
 ;;; Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode

@@ -24,7 +24,9 @@
 
 ;;; Code:
 (require 'inbox)
-
+(require 'sk)
+(require 'slime-cape)
+(require 'sxp)
 (setopt default-theme 'modus-vivendi-tinted
         company-source-directory (join-paths user-home-directory "dev/comp"))
 
@@ -38,7 +40,6 @@
     (find-file file)))
 
 (keymap-set user-map "e c" #'edit-emacs-config)
-
 
 ;; (add-hook 'lisp-mode-hook #'enable-paredit-mode)
 ;; (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
@@ -59,11 +60,11 @@
 (keymap-set user-map "p r" #'remember-project)
 (keymap-set user-map "p s" #'remember-lab-projects)
 
-(require 'sk)
-
 (add-hook 'prog-mode-hook #'skt-mode)
 (add-hook 'org-mode-hook #'skt-mode)
-(add-hook 'prog-mode-hook #'company-mode-on)
+(add-hook 'prog-mode-hook #'company-mode)
+
+(add-hook 'notmuch-message-mode-hook #'turn-on-orgtbl)
 
 (setopt skt-enable-tempo-elements t
         skt-completing-read t
@@ -73,8 +74,10 @@
 (keymap-set skt-mode-map "C-c M-f" #'tempo-forward-mark)
 (keymap-set skt-mode-map "C-c M-a" #'tempo-complete-tag)
 
+(use-package ol-notmuch
+  :ensure t)
+
 (use-package notmuch 
-  :disabled (darwin-p)
   :ensure t
   :init
   (setopt
@@ -139,7 +142,6 @@
   (keymap-set notmuch-search-mode-map "T" #'mark-as-todo))
 
 (use-package elfeed 
-  :disabled (darwin-p)
   :ensure t
   :custom
   elfeed-feeds 
@@ -197,10 +199,9 @@
   (keymap-set user-map "e f" #'elfeed)
   (keymap-set user-map "e F" #'elfeed-update))
 
-(use-package org-mime :disabled (darwin-p) :ensure t)
+(use-package org-mime :ensure t)
 
 (use-package sh-script
-  :disabled (darwin-p)
   :hook (sh-mode . flymake-mode))
 
 (use-package tempo
@@ -237,8 +238,8 @@
 
 
 (add-to-list 'slime-contribs 'slime-cape)
-(add-hook 'slime-mode-hook #'company-mode-on)
-(add-hook 'slime-repl-mode-hook #'company-mode-on)
+(add-hook 'slime-mode-hook #'company-mode)
+(add-hook 'slime-repl-mode-hook #'company-mode)
 
 (provide 'ellis)
 ;;; ellis.el ends here
