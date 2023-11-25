@@ -63,6 +63,7 @@
 
 (add-hook 'prog-mode-hook #'skt-mode)
 (add-hook 'org-mode-hook #'skt-mode)
+(add-hook 'prog-mode-hook #'company-mode-on)
 
 (setopt skt-enable-tempo-elements t
         skt-completing-read t
@@ -236,6 +237,8 @@
 
 
 (add-to-list 'slime-contribs 'slime-cape)
+(add-hook 'slime-mode-hook #'company-mode-on)
+(add-hook 'slime-repl-mode-hook #'company-mode-on)
 
 (provide 'ellis)
 ;;; ellis.el ends here

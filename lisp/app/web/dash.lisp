@@ -2,7 +2,8 @@
 
 ;;; Code:
 (uiop:define-package :app/web/dash
-    (:use :cl :std :hunchentoot :lass :spinneret)
+    (:use :cl :std :lack :lass :spinneret)
+  (:import-from :clack :clackup)
   (:export 
    :main
    :serve-static-assets
@@ -13,19 +14,11 @@
 (defparameter *web-dash-port* 8800)
 (defparameter *web-dash-static-directory* #P"/tmp/web/dash/static/")
 
-(defun serve-static-assets ()
-  "Serve static assets under the /src/static/ directory when called with the /static/ URL root."
-  (push (create-folder-dispatcher-and-handler
-         "/static/" (merge-pathnames *web-dash-static-directory*
-                                     (asdf:system-source-directory :app) ;; => NOT src/
-                                     ))
-        *dispatch-table*))
+(defvar *server*)
 
-(defvar *server* (serve-static-assets))
-
-(defun main (&key  (output *standard-output*))
+(defun main (&key  (output *standard-output*) (port *web-dash-port*))
   (let ((*standard-output* output))
-    (print "starting dash server on ~A" *web-dash-port*)
+    (print "starting dash server on ~A" port)
     (handler-case (bt:join-thread (find-if (lambda (th)
                                              (search "hunchentoot" (bt:thread-name th)))
                                            (bt:all-threads)))
@@ -37,6 +30,6 @@
        #+allegro excl:interrupt-signal
        () (progn
             (format *error-output* "Aborting.~&")
-            (hunchentoot:stop *server*)
+            (clack:stop *server*)
             (uiop:quit)))
       (error (c) (format t "Woops, an unknown error occured:~&~a~&" c)))))
