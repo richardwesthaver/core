@@ -15,6 +15,30 @@
 
 (defparameter *web-index-port* 8888)
 
+(defparameter *server* 
+  (make-instance 'easy-acceptor 
+    :port 8888
+    :name "index"))
+
+(define-easy-handler (b :uri "/b") (user)
+  (setf (content-type*) "text/plain")
+  (format nil "showing buffers for ~@[ ~A~]." user))
+
+(define-easy-handler (i :uri "/i") (user)
+  (setf (content-type*) "text/plain")
+  (format nil "showing inbox for ~@[ ~A~]." user))
+
+(define-easy-handler (a :uri "/a") (user)
+  (setf (content-type*) "text/plain")
+  (format nil "showing agenda for ~@[ ~A~]." user))
+
+(define-easy-handler (org :uri "/org") (user)
+  (setf (content-type*) "text/plain")
+  (format nil "showing org-files for ~@[ ~A~]." user))
+
+(deftag link (link body)
+  `(:a :href ,@link ,@body))
+
 (defmacro with-index-page (&optional (title "local index") &body body)
     `(with-html 
        (:doctype)
@@ -22,6 +46,13 @@
         (:head
          (:title ,title)
          (:body 
+          (:div :class "nav"
+           "( "
+           (link "https://compiler.company" "~")
+           (link "https://compiler.company/blog" "blog")
+           (link "https://compiler.company/docs" "docs")
+           (link "https://compiler.company/code" "code")
+           " )")
           ,@body
           (:footer ("Last update: ~A" (current-time))))))))
 
@@ -49,6 +80,10 @@
      (:section
       (:raw html)))))
 
-(defun main (&key (output *standard-output*))
+(defun main (&key (output *standard-output*) (port *web-index-port*))
   (let ((*standard-output* output))
-    (print "starting index server on ~A" *web-index-port*)))
+    (print "starting index server on ~A" port)
+    (start *server*)))
+
+(defun shutdown (&optional (target *server*))
+  (stop target))

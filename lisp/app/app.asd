@@ -75,7 +75,7 @@
 (defsystem :app/web/dash
   :class :package-inferred-system
   :defsystem-depends-on (:asdf-package-system)
-  :depends-on (:uiop :cl-ppcre :std/all :rdb :hunchentoot :parenscript :lass :spinneret :organ)
+  :depends-on (:uiop :cl-ppcre :std/all :rdb :lack :clack :parenscript :lass :spinneret :organ)
   :build-operation "program-op"
   :in-order-to ((test-op (test-op "app/tests")))
   :perform (test-op (o c) (symbol-call :std/rt :do-tests :app))
