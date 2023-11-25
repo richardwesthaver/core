@@ -1,10 +1,17 @@
 (defpackage :nlp/tests
-  (:use :cl :std :std/rt :nlp/stem/porter))
+  (:use :cl :std :std/rt :nlp))
 
 (in-package :nlp/tests)
 
 (defsuite :nlp)
 (in-suite :nlp)
 
-(deftest stem ()
-  (stem "hacking"))
+(defvar %docs (make-instance 'document-collection))
+
+(deftest porter-stem ()
+  (is (string= (stem "hacking") "hack")))
+
+(deftest dbscan ())
+
+(deftest textrank ())
+

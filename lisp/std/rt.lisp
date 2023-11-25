@@ -171,7 +171,7 @@ used when the slot value of :BENCH is t.")
   "Return the normalized `test-suite-designator' of A."
   (etypecase a
     (string a)
-    (symbol (symbol-name a))
+    (symbol (string-downcase (symbol-name a)))
     (test-object (test-name a))
     (t (format nil "~A" a))))
 
@@ -675,7 +675,8 @@ enabled using the `in-suite' macro, similiar to the `defpackage' API."
   "Set `*test-suite*' to the `test-suite' referred to by symbol
 NAME. Return the `test-suite'."
   (assert-suite name)
-  `(setf *test-suite* (ensure-suite ',name)))
+  `(progn
+     (setq *test-suite* (ensure-suite ,name))))
 
 ;;; Coverage
 (defmacro enable-coverage ()

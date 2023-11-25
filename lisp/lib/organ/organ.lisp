@@ -1,6 +1,6 @@
 ;;; organ.lisp --- Org parser
 (pkg:defpkg :organ
-  (:use :cl :cl-ppcre :std/sym :std/fu)
+  (:use :cl :cl-ppcre :std/sym :std/fu :organ/lexer)
   (:shadowing-import-from :sb-gray :fundamental-stream)
   (:import-from :uiop :read-file-string)
   (:export

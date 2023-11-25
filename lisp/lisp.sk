@@ -1,0 +1,4 @@
+;;; lisp.sk --- lisp skelfile -*- mode: skel; -*-
+:name "core/lisp"
+:description "Core Lisp Code"
+:author "Richard Westhaver <ellis@rwest.io>"
