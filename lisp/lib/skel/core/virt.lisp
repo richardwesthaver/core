@@ -50,7 +50,7 @@
 
 ;;; Code:
 (defpackage :skel/core/virt
-  (:use :cl)
+  (:use :cl :skel/core/obj :skel/core/proto)
   (:export :containerfile))
 
 (in-package :skel/core/virt)

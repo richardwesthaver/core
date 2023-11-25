@@ -1,5 +1,8 @@
 ;;; Utils
-(in-package :skel)
+(defpackage :skel/core/util
+  (:use :cl :skel/core/obj :skel/core/proto))
+
+(in-package :skel/core/util)
 
 (defun init-skelrc (&optional file)
   "Initialize a skelrc configuration based on the currently active

@@ -1,4 +1,4 @@
-;;; rank.lisp --- TextRank
+;;; textrank.lisp --- TextRank
 
 ;; based on https://web.eecs.umich.edu/~mihalcea/papers/mihalcea.emnlp04.pdf
 

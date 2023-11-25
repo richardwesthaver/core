@@ -13,7 +13,6 @@
 
 ;;; Code:
 (uiop:define-package :std/named-readtables
-  (:nicknames :named-readtables)
   (:use :cl)
   (:export
    #:defreadtable

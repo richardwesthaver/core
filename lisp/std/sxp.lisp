@@ -8,7 +8,7 @@
   (:nicknames :sxp)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
   ;; TODO: hot-patch readtables into sxp classes/parsers
-  (:import-from :named-readtables :defreadtable :in-readtable)
+  (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:export
    :sxp-fmt-designator
    :form :formp :sxp-error :sxp-fmt-error :sxp-syntax-error :reader :writer :fmt
