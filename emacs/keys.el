@@ -127,6 +127,8 @@
 (keymap-global-set "C-c c" user-map)
 (keymap-global-set "<remap> <tab-to-tab-stop>" #'imenu)
 (keymap-global-set "<XF86Paste>" parens-map)
+(keymap-global-set "C-c C-p" #'outline-previous-heading)
+(keymap-global-set "C-c C-n" #'outline-next-heading)
 
 (provide 'keys)
 ;; keys.el ends here

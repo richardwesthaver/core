@@ -24,11 +24,23 @@
 ;; (setq org-export-global-macros nil)
 
 ;;; Code:
+(require 'org)
+
+(defvar ulang-links-history nil)
+(defvar ulang-files-history nil)
 ;;;###autoload
-(defun ulang-init ()
-  (interactive)
-  (cl-pushnew '("header" .
-                "#+TITLE: $1
+(defun ulang-dblock-insert-links (regexp)
+  "Create dblock to insert links matching REGEXP."
+  (interactive (list (read-regexp "Insert links matching: " nil ulang-links-history)))
+  (org-create-dblock (list :name "links"
+                           :regexp regexp
+                           :id-only nil))
+  (org-update-dblock))
+
+(org-dynamic-block-define "links" 'ulang-dblock-insert-links)
+
+(cl-pushnew '("header" .
+              "#+TITLE: $1
 #+AUTHOR: $2
 #+EMAIL: $3
 #+DESCRIPTION: $4
@@ -38,10 +50,20 @@
 #+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/css/new.min.css\"/>
 #+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/css/night.css\"/>
 ")
-org-export-global-macros)
-  (cl-pushnew '("opts" . "#+OPTIONS: $1
-") org-export-global-macros)
-  (message "Initialized ULANG."))
+            org-export-global-macros)
+
+(cl-pushnew '("opts" . "#+OPTIONS: $1
+") 
+            org-export-global-macros)
+
+(setq org-link-abbrev-alist
+      '(("vc" . "https://vc.compiler.company/%s")
+        ("comp" . "https://compiler.company/%s")
+	("cdn" . "https://cdn.compiler.company/%s")
+        ("packy" . "https://packy.compiler.company/%s")
+        ("yt" . "https://youtube.com/watch?v=%s")))
+
+(message "Initialized ULANG.")
 
 (provide 'ulang)
 ;;; ulang.el ends here
