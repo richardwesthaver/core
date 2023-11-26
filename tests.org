@@ -1,0 +1,351 @@
+{{{header(tests,Richard Westhaver,ellis@rwest.io,core test results)}}}
+* tests
+** rust
+*** sys
+These crates contain FFI bindings to foreign libraries, usually in C.
+**** btrfs
+**** btrfsutil
+*** lib
+**** TODO alch
+**** audio
+#+begin_src shell :dir rust/lib/audio :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 1 test
+test default_device ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+**** crypto
+#+begin_src shell :dir rust/lib/crypto :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 6 tests
+test tests::salsa20_key0_iv1 ... ok
+test tests::salsa20_key0_ivhi ... ok
+test tests::salsa20_key1_iv0 ... ok
+test tests::xsalsa20_encrypt_hello_world ... ok
+test tests::xsalsa20_encrypt_zeros ... ok
+test tests::gen_keypair ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+**** TODO db
+#+begin_src shell :dir rust/lib/db :results output replace :exports results :eval no
+cargo test
+#+end_src
+
+#+RESULTS:
+
+**** flate
+#+begin_src shell :dir rust/lib/flate :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 1 test
+test pack_test ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+**** hash
+#+begin_src shell :dir rust/lib/hash :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 4 tests
+test tests::id_hex ... ok
+test tests::id_state_hash ... ok
+test tests::rand_id ... ok
+test tests::random_demon_id_is_valid ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+**** krypt
+**** logger
+#+begin_src shell :dir rust/lib/logger :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 1 test
+test tests::simple_init ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+**** sxp
+#+begin_src shell :dir rust/lib/sxp :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test canonical_fmt ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 5 tests
+test list_form ... ok
+test nil_form ... ok
+test num_form ... ok
+test str_form ... ok
+test sym_form ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test ser_enum ... ok
+test ser_form ... ok
+test ser_struct ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 5 tests
+test list_start_token ... ok
+test list_end_token ... ok
+test sym_token ... ok
+test str_token ... ok
+test num_token ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+**** tenex
+**** util
+#+begin_src shell :dir rust/lib/util :results output replace :exports results
+cargo test
+#+end_src
+#+RESULTS:
+#+begin_example
+
+running 1 test
+test tests::test_related_paths ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+#+end_example
+** lisp
+#+begin_src lisp :results silent
+  (let ((systems 
+          '("lisp/std/std.asd" "lisp/lib/rdb/rdb.asd" "lisp/lib/organ/organ.asd" "lisp/lib/skel/skel.asd"
+            "lisp/ffi/rocksdb/rocksdb.asd" "lisp/ffi/btrfs/btrfs.asd" "lisp/ffi/uring/uring.asd"
+            "lisp/ffi/k/k.asd" "lisp/ffi/bqn/bqn.asd" "lisp/ffi/tree-sitter/tree-sitter.asd" 
+            "lisp/ffi/blake3/blake3.asd")))
+    (mapc (lambda (x) (asdf:load-asd (pathname x))) systems))
+  (asdf:load-system :std)
+  (asdf:load-system :std/rt)
+#+end_src
+*** std
+**** tests
+#+begin_src lisp :results output replace :exports both
+  (load "lisp/std/tests.lisp")
+  (asdf:test-system :std)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+in suite std with 10/10 tests:
+#<PASS PAN> 
+#<PASS ANA> 
+#<PASS FMT> 
+#<PASS ALIEN> 
+#<PASS THREAD> 
+#<PASS COND> 
+#<PASS LOG> 
+#<PASS LIST> 
+#<PASS STR> 
+#<PASS SYM> 
+No tests failed.
+#+end_example
+
+#+begin_src lisp :results output replace :exports both
+  (setq *sxp-test-file* "lisp/std/tests/tests.sxp")
+  (load "lisp/std/tests/sxp.lisp")
+  (std/rt:do-tests :sxp)
+#+end_src
+
+#+RESULTS:
+: in suite sxp with 4/4 tests:
+: #<PASS SXP-STREAM> 
+: #<PASS SXP-STRING> 
+: #<PASS SXP-FILE> 
+: #<PASS FORMS> 
+: No tests failed.
+
+*** lib
+**** rdb
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/lib/rdb/tests.lisp")
+  (asdf:test-system :rdb)
+#+end_src
+#+RESULTS:
+: in suite rdb with 2/2 tests:
+: #<PASS WITH-ITER> 
+: #<PASS WITH-DB> 
+: No tests failed.
+**** organ
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/lib/organ/tests.lisp")
+  (asdf:test-system :organ)
+#+end_src
+#+RESULTS:
+: in suite organ with 3/3 tests:
+: #<PASS ORG-HEADLINE> 
+: #<PASS ORG-LINES> 
+: #<PASS ORG-FILE> 
+: No tests failed.
+**** skel
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/lib/skel/tests.lisp")
+  (asdf:test-system :skel)
+#+end_src
+#+RESULTS:
+: in suite skel with 6/6 tests:
+: #<PASS VM> 
+: #<PASS MAKEFILE> 
+: #<PASS SKELRC> 
+: #<PASS SKELFILE> 
+: #<PASS HEADER-COMMENTS> 
+: #<PASS SANITY> 
+: No tests failed.
+*** ffi
+**** btrfs
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/ffi/btrfs/tests.lisp")
+  (asdf:test-system :btrfs)
+#+end_src
+#+RESULTS:
+: in suite btrfs with 0/0 tests:
+: No tests failed.
+**** rocksdb
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/ffi/rocksdb/tests.lisp")
+  (asdf:test-system :rocksdb)
+#+end_src
+#+RESULTS:
+: in suite rocksdb with 2/2 tests:
+: #<PASS DB-BASIC> 
+: #<PASS SET-OPTS> 
+: No tests failed.
+**** uring
+***** tests
+#+begin_src lisp :package uring.tests :results output replace :exports results
+  (load "lisp/ffi/uring/tests.lisp")
+  (asdf:test-system :uring)
+#+end_src
+#+RESULTS:
+: in suite uring with 0/0 tests:
+: No tests failed.
+**** tree-sitter
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/ffi/tree-sitter/tests.lisp")
+  (asdf:test-system :tree-sitter)
+#+end_src
+#+RESULTS:
+: in suite tree-sitter with 0/0 tests:
+: No tests failed.
+**** k
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/ffi/k/tests.lisp")
+  (asdf:test-system :k)
+#+end_src
+#+RESULTS:
+: in suite k with 1/1 tests:
+: #<PASS K> 
+: No tests failed.
+**** bqn
+***** tests
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/ffi/bqn/tests.lisp")
+  (asdf:test-system :bqn)
+#+end_src
+#+RESULTS:
+: in suite bqn with 1/1 tests:
+: #<PASS BQN> 
+: No tests failed.
+
+** emacs
+There are a few internal packages that link to system libraries at
+runtime - the following libraries need to be installed for a fully
+functioning editor:
+
+- libvoikko ::
+  =sudo pacman -Syu libvoikko=
+- librsvg ::
+- imagemagick ::

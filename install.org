@@ -1,0 +1,25 @@
+{{{header(install,Richard Westhaver,ellis@rwest.io,core installation
+guide)}}} 
+The core is distributed via our public package registry:
+[[https://packy.compiler.company][packy.compiler.company]]. You can install any part of the core - from a
+complete Linux system to individual packages. Refer to the packy
+documentation for details.
+
+The simplest way to get started is by getting the installer for your
+platform with the following script:
+
+#+begin_src shell
+curl --proto '=https' --tlsv1.2 -sSf https://packy.compiler.company/do/install.sh | sh
+#+end_src
+
+#+RESULTS:
+
+* TODO Packages
+- State "TODO"       from              [2023-11-25 Sat 18:28]
+** Crates                                                              :rust:
+** ELPA                                                               :emacs:
+** Quicklisp                                                           :lisp:
+** AUR                                                               :pacman:
+* Images
+* Binaries
+* Source

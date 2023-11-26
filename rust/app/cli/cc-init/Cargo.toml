@@ -1,0 +1,11 @@
+[package]
+name = "cc-init"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+util = { path = "../../../lib/util", features = ["full"] }
+flate = { path = "../../../lib/flate" }
+logger = { path = "../../../lib/logger" }
+net = { path = "../../../lib/net" }
+tokio = { version = "1.34.0", features = ["full"] }

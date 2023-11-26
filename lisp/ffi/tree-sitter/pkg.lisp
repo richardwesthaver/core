@@ -1,6 +1,48 @@
 (defpackage :tree-sitter/pkg
-  (:nicknames :ts/pkg)
-  (:use :cl :alien))
+  (:nicknames :tree-sitter :ts)
+  (:use :cl :alien)
+  (:export 
+   :load-tree-sitter
+   :ts-state-id
+   :ts-symbol
+   :ts-field-id
+   :ts-language
+   :ts-parser
+   :ts-tree
+   :ts-query
+   :ts-query-cursor
+   :ts-lookahead-iterator
+   :ts-point
+   :ts-logger
+   :ts-node
+   :ts-tree-cursor
+   :ts-parser-new
+   :ts-parser-delete
+   :ts-parser-reset
+   :ts-parser-logger
+   :ts-parser-set-logger
+   :ts-parser-language
+   :ts-parser-parse
+   :ts-parser-parse-string
+   :ts-parser-print-dot-graphs
+   :ts-tree-copy
+   :ts-tree-delete
+   :ts-tree-language
+   :ts-tree-edit
+   :ts-tree-print-dot-graph
+   :ts-node-type
+   :ts-node-symbol
+   :ts-node-language
+   :ts-node-grammar-type
+   :ts-node-grammar-symbol
+   :ts-node-start-byte
+   :ts-node-start-point
+   :ts-node-end-byte
+   :ts-node-end-point
+   :ts-node-string
+   :ts-node-is-null
+   :ts-node-eq
+   :ts-tree-cursor-new))
 
 (in-package :tree-sitter/pkg)
 
@@ -8,8 +50,6 @@
   (unless (member :tree-sitter *features*)
     (sb-alien:load-shared-object "libtree-sitter.so" :dont-save t)
     (push :tree-sitter *features*)))
-
-(load-tree-sitter)
 
 ;;; Alien Types
 (define-alien-type ts-state-id unsigned-int)

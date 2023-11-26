@@ -193,9 +193,8 @@
                do (yt-dl-it it))
       (mapc #'elfeed-search-update-entry entries)
       (unless (use-region-p) (forward-line))))
-
+  :config
   (keymap-set elfeed-search-mode-map (kbd "d") 'elfeed-youtube-dl)
-
   (keymap-set user-map "e f" #'elfeed)
   (keymap-set user-map "e F" #'elfeed-update))
 
@@ -242,4 +241,12 @@
 (add-hook 'slime-repl-mode-hook #'company-mode)
 
 (provide 'ellis)
+;;; Tags
+;;;###autoload
+(defun refresh-tags ()
+  "Refresh TAGS database in `user-emacs-directory'."
+  (interactive)
+  (let ((default-directory user-emacs-directory))
+    (async-shell-command 
+     "etags ./*.el ./lib/*.el ~/dev/comp/org/*.el ~/dev/comp/core/emacs/*.el ~/dev/comp/core/emacs/lib/*.el -o TAGS")))
 ;;; ellis.el ends here

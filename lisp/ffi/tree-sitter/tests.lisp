@@ -1,8 +1,10 @@
 (defpackage :tree-sitter/tests
-  (:use :cl :rt :tree-sitter/pkg))
+  (:use :cl :rt :tree-sitter))
 
 (in-package :tree-sitter/tests)
 
 (defsuite :tree-sitter)
 
 (in-suite :tree-sitter)
+
+(load-tree-sitter)

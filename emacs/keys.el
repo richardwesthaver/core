@@ -74,6 +74,19 @@
 (defvar-keymap review-map
   :doc "User-specified keymap for review functions. Usually bound to 'C-c c r'."
   "s" #'flyspell-buffer
+  "SPC" #'whitespace-cleanup
+  "u" #'untabify
+  "q" #'query-replace-regexp)
+
+(defvar-keymap search-map
+  :doc "User-specified keymap for search functions. Usually bound to 'C-c c s'."
+  "g" #'grep
+  "r" #'rgrep
+  "z" #'zrgrep
+  "f" #'re-search-forward
+  "b" #'re-search-backward
+  "d" #'xref-find-definitions
+  "a" #'xref-find-apropos
   "SPC" #'whitespace-cleanup)
 
 (defvar-keymap user-map
@@ -88,9 +101,9 @@
   "C-<return>" #'term
   "S-<return>" #'eshell-new
   "!" #'async-shell-command
-  "s" #'speedbar
   "SPC" toggle-map
   "." status-map
+  "s" search-map
   "r" review-map
   "q" server-map
   "(" parens-map

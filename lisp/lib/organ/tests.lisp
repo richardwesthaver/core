@@ -1,7 +1,7 @@
-(defpackage :organ.tests
+(defpackage :organ/tests
   (:use :cl :organ :std :rt))
 
-(in-package :organ.tests)
+(in-package :organ/tests)
 
 (defvar *test-file* "readme.org")
 
