@@ -4,9 +4,9 @@ pub use clap::{
 };
 #[cfg(feature = "bs")]
 pub mod comp_gen {
-  pub use clap_generate::{
+  pub use clap_complete::{
     generate, generate_to,
-    generators::{Bash, Elvish, Fish, PowerShell, Zsh},
+    shells::{Bash, Elvish, Fish, PowerShell, Zsh},
     Generator,
   };
 }

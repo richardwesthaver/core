@@ -22,11 +22,6 @@
   (is (string= #"test "foo" "# "test \"foo\" "))
   (is (string= #$test "1 2 3"$# "test \"1 2 3\"")))
 
-#+cl-ppcre
-(deftest ppcre-readtables (:persist t)
-  "Test *macs-readtable* with cl-ppcre"
-  (is (= 1 1)))
-
 ;;; STD
 (defsuite :std)
 (in-suite :std)

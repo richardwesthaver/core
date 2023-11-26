@@ -5,13 +5,13 @@ mod err;
 pub use err::{Error, Result};
 
 // mod codec;
-mod client;
+pub mod client;
 pub use client::Client;
-mod server;
+pub mod server;
 pub use server::Server;
 pub mod coding;
 pub mod connection;
-mod engine;
+pub mod engine;
 #[cfg(feature = "axum")]
 pub use axum;
 #[cfg(feature = "dns")]

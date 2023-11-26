@@ -16,6 +16,7 @@
 ;;; Code:
 (defpackage btrfs/pkg
   (:use :cl :std/alien)
+  (:nicknames :btrfs)
   (:export
    :btrfs-shared-objects
    :btrfs-lib-path

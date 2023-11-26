@@ -7,4 +7,4 @@ description = "Tar and Zstd utility"
 name = "tz"
 path = "main.rs"
 [dependencies]
-flate = { path = "../../lib/flate" }
+flate = { path = "../../../lib/flate" }
