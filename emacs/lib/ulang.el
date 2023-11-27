@@ -25,7 +25,7 @@
 
 ;;; Code:
 (require 'org)
-
+(require 'ox)
 (defvar ulang-links-history nil)
 (defvar ulang-files-history nil)
 ;;;###autoload
@@ -40,7 +40,7 @@
 (org-dynamic-block-define "links" 'ulang-dblock-insert-links)
 
 (cl-pushnew '("header" .
-              "#+TITLE: $1
+                "#+TITLE: $1
 #+AUTHOR: $2
 #+EMAIL: $3
 #+DESCRIPTION: $4

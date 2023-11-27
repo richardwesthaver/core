@@ -58,7 +58,8 @@
    :maphash-keys
    :hash-table-keys
    :maphash-values
-   :hash-table-values))
+   :hash-table-values
+   :my-lisp-implementation))
 
 (in-package :std/fu)
 
@@ -1030,3 +1031,7 @@ order) from the end of SEQ."
                       (push v values))
                     table)
     values))
+
+(defun my-lisp-implementation ()
+  "Return the current lisp implemenation as a cons: (TYPE VERSION)"
+  (cons (lisp-implementation-type) (lisp-implementation-version)))
