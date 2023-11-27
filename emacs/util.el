@@ -158,9 +158,20 @@ With optional N, search in the Nth line from point."
 ;;; Server
 ;;;###autoload
 (defun kill-emacs-restart (&optional arg)
-  (interactive)
-  (kill-emacs arg t))
+  "Handler for SIGUSR1 signal, to (re)start an emacs server.
 
+Can be tested from within emacs with:
+  (signal-process (emacs-pid) 'sigusr1)
+
+or from the command line with:
+$ kill -USR1 <emacs-pid>
+$ emacsclient -c
+"
+  (interactive)
+  (server-force-delete)
+  (server-start))
+
+(define-key special-event-map [sigusr1] 'kill-emacs-restart)
 
 (provide 'util)
 ;; util.el ends here

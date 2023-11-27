@@ -25,13 +25,19 @@
 ;;; Code:
 (require 'inbox)
 (require 'sk)
-(require 'slime-cape)
+;; (require 'slime-cape)
 (require 'sxp)
-(setopt default-theme 'modus-vivendi-tinted
-        company-source-directory (join-paths user-home-directory "dev/comp"))
+(require 'ulang)
+
+(defalias 'make #'compile)
+
+(setopt default-theme 'modus-vivendi-tritanopia
+        user-lab-directory (join-paths user-home-directory "dev")
+        company-source-directory (join-paths user-lab-directory "comp"))
 
 (defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
 
+;;;###autoload
 (defun edit-emacs-config (&optional src)
   (interactive (list current-prefix-arg))
   (let ((file (if src 
@@ -41,8 +47,8 @@
 
 (keymap-set user-map "e c" #'edit-emacs-config)
 
-;; (add-hook 'lisp-mode-hook #'enable-paredit-mode)
-;; (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
+(add-hook 'common-lisp-mode-hook #'enable-paredit-mode)
+(add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
 
 (repeat-mode)
 
@@ -57,8 +63,8 @@
 
 (keymap-global-set "C-<tab>" #'hippie-expand)
 (keymap-set minibuffer-local-map "C-<tab>" #'hippie-expand)
-(keymap-set user-map "p r" #'remember-project)
-(keymap-set user-map "p s" #'remember-lab-projects)
+(keymap-set ctl-x-x-map "p p" #'remember-project)
+(keymap-set ctl-x-x-map "p l" #'remember-lab-projects)
 
 (add-hook 'prog-mode-hook #'skt-mode)
 (add-hook 'org-mode-hook #'skt-mode)
@@ -194,7 +200,7 @@
       (mapc #'elfeed-search-update-entry entries)
       (unless (use-region-p) (forward-line))))
   :config
-  (keymap-set elfeed-search-mode-map (kbd "d") 'elfeed-youtube-dl)
+  (keymap-set elfeed-search-mode-map "d" 'elfeed-youtube-dl)
   (keymap-set user-map "e f" #'elfeed)
   (keymap-set user-map "e F" #'elfeed-update))
 
@@ -236,11 +242,10 @@
 			     (lilypond . t)))
 
 
-(add-to-list 'slime-contribs 'slime-cape)
-(add-hook 'slime-mode-hook #'company-mode)
-(add-hook 'slime-repl-mode-hook #'company-mode)
+;; (add-to-list 'slime-contribs 'slime-cape)
+;; (add-hook 'slime-mode-hook #'company-mode)
+;; (add-hook 'slime-repl-mode-hook #'company-mode)
 
-(provide 'ellis)
 ;;; Tags
 ;;;###autoload
 (defun refresh-tags ()
@@ -248,5 +253,12 @@
   (interactive)
   (let ((default-directory user-emacs-directory))
     (async-shell-command 
-     "etags ./*.el ./lib/*.el ~/dev/comp/org/*.el ~/dev/comp/core/emacs/*.el ~/dev/comp/core/emacs/lib/*.el -o TAGS")))
+     "etags ./*.el \\
+./lib/*.el \\
+~/dev/comp/org/*.el \\
+~/dev/comp/core/emacs/*.el \\
+~/dev/comp/core/emacs/lib/*.el \\
+-o TAGS")))
+
+(provide 'ellis)
 ;;; ellis.el ends here

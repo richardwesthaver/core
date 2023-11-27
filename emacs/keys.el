@@ -9,10 +9,8 @@
 ;; global defaults defined here.
 
 ;;; Code:
-
-;;; User keys
-;; paredit-map
 (require 'default)
+
 (defvar-keymap parens-map
   :doc "parens-minor-mode keymap."
   :repeat (:enter)
@@ -52,9 +50,11 @@
   "O" #'allout-mode
   "R" #'global-auto-revert-mode
   "t" #'toggle-frame-tab-bar
+  "T" #'toggle-theme
   "d" #'toggle-debug-on-error
   "SPC" #'toggle-macro-recording
-  "w" #'toggle-theme)
+  "s" #'slime-toggle
+  "w" #'which-key-mode)
 
 (defvar-keymap status-map
   :doc "User-specified keymap for status functions. Usually bound to 'C-c c .'."
@@ -117,7 +117,7 @@
   "C-;" #'prog-comment-timestamp-keyword)
 
 ;;; Modes
-(add-hook 
+(add-hook
  'conf-toml-mode-hook
  (lambda ()
    (keymap-set conf-toml-mode-map "C-c C-c C-r" #'rust-run)
