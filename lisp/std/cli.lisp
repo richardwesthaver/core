@@ -23,7 +23,6 @@
   (:use :cl :std/base :std/fu :std/ana :std/fmt :std/log)
   (:import-from :std/ana :alet)
   (:import-from :uiop :println)
-  (:import-from :sb-posix :filename-designator)
   (:import-from :sb-ext :parse-native-namestring)
   (:shadowing-import-from :sb-ext :exit)
   (:export
@@ -36,6 +35,7 @@
    :*cli-opt-kinds*
    :global-opt-p
    :exec-path-list
+   :ld-library-path-list
    :argp
    :$val
    :$args
@@ -102,7 +102,7 @@
    ;; ast types
    :opt
    :cmd
-   :arg
+   ;; :arg
    :cli-name
    :cli-opts
    :cli-cmds
@@ -119,11 +119,23 @@
 (declaim (inline exec-path-list))
 (defun exec-path-list ()
   (let ((var (sb-posix:getenv "PATH")))
-    (mapcar #'directory
-	    (loop for i = 0 then (1+ j)
+    (let ((lst (loop for i = 0 then (1+ j)
 		  as j = (position #\: var :start i)
 		  collect (subseq var i j)
-		while j))))
+		while j)))
+      (unless (null (car lst))
+        (mapcar (lambda (x) (car (directory x)))
+                lst)))))
+
+(declaim (inline ld-library-path-list))
+(defun ld-library-path-list ()
+  (let ((var (sb-posix:getenv "LD_LIBRARY_PATH")))
+    (let ((lst (loop for i = 0 then (1+ j)
+		  as j = (position #\: var :start i)
+		  collect (subseq var i j)
+		while j)))
+      (unless (null (car lst))
+        (mapcar (lambda (x) (car (directory x))) lst)))))
 
 (defparameter *cli-group-separator*
   "--"

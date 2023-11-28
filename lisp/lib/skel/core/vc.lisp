@@ -39,7 +39,6 @@
 ;;; Code:
 (defpackage :skel/core/vc
   (:use :cl :sb-bsd-sockets)
-  (:import-from :sb-posix :getcwd)
   (:import-from :sb-ext :run-program)
   (:export
    :*hg-program* :*git-program*

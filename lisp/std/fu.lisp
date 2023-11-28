@@ -1034,4 +1034,7 @@ order) from the end of SEQ."
 
 (defun my-lisp-implementation ()
   "Return the current lisp implemenation as a cons: (TYPE VERSION)"
-  (cons (lisp-implementation-type) (lisp-implementation-version)))
+  (list 
+   (lisp-implementation-type) 
+   (lisp-implementation-version)
+   *features*))

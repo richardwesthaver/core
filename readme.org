@@ -14,4 +14,5 @@ We have a strong preference for vendoring our dependencies. The
 'super-repos' [[https://lab.rwest.io/comp/shed][shed]] and [[https://lab.rwest.io/comp/stash][stash]] contain all relevant source trees which
 we build via CI and ship to production as well as use internally.
 
+
 [fn:1] [[http://www.sbcl.org/manual/#Saving-a-Core-Image][SBCL Manual - Saving a Core Image]] 
