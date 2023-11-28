@@ -1,0 +1,10 @@
+;;; skelfile --- core skelfile -*- mode: skel; -*-
+:name "core"
+:author "Richard Westhaver <ellis@rwest.io>"
+:version "0.1.0"
+:license "MPL"
+:description "The Compiler Company Core"
+:vc :hg
+:tags ("core")
+:docs ((:org "readme") (:org "install") (:org "tests") (:org "todo"))
+:imports ("lisp/lisp.sk" "rust/rust.sk")

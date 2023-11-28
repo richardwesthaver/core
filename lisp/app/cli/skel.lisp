@@ -1,8 +1,6 @@
 ;;; Code:
 (uiop:define-package :app/cli/skel
   (:use :cl :std :std/cli :skel/pkg :skel/core/vc :skel/core/virt :skel/comp/make)
-  (:import-from :sb-posix :getcwd)
-  (:import-from :uiop :println)
   (:export :main))
 
 (in-package :app/cli/skel)
@@ -26,7 +24,7 @@
       (handler-bind
 	  ((sb-ext:file-exists 
 	     #'(lambda (s)
-		 (println (format nil "file already exists: ~A" (or file *default-skelfile*)))
+		 (uiop:println (format nil "file already exists: ~A" (or file *default-skelfile*)))
 		 (let ((f2 (skc-file-prompt)))
 		   (if (string= f2 "") 
 		       (error s)

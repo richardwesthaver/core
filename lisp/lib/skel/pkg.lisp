@@ -5,13 +5,9 @@
 ;;; Commentary:
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute) 
-  (require 'sb-posix))
-
 (uiop:define-package :skel/pkg
     (:nicknames :skel)
   (:use :cl :std :sb-mop :cl-ppcre)
-  (:import-from :sb-posix :getcwd :getuid)
   (:import-from :sb-unix :uid-username)
   (:import-from :uiop :ensure-absolute-pathname)
   (:shadowing-import-from :uiop :pathname-parent-directory-pathname :read-file-forms)
@@ -42,7 +38,7 @@
    ;; obj
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 
-   :sk-description :sk-kind :sk-rules :sk-id :sk-version :sk-name :sk-documents :sk-document 
+   :sk-description :sk-kind :sk-rules :sk-id :sk-version :sk-name :sk-docs :sk-document 
    :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    ;; accesors
    :sk-vc
