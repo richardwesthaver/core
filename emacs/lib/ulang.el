@@ -46,7 +46,9 @@
 #+DESCRIPTION: $4
 #+SUBTITLE: $4
 #+OPTIONS: ^:nil toc:nil num:nil html-postamble:nil
-#+HTML_HEAD: <link rel=\"stylesheet\" href=\"https://fonts.xz.style/serve/inter.css\"/>
+#+HTML_HEAD: <link href='https://fonts.googleapis.com/css?family=Inria Serif' rel='stylesheet'>
+#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/font/inter.css\"/>
+#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/font/commit-mono.css\"/>
 #+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/css/new.min.css\"/>
 #+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/css/night.css\"/>
 ")
