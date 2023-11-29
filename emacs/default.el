@@ -89,6 +89,10 @@
   (package-install-selected-packages t))
 
 ;;; Env
+(require 'exec-path-from-shell)
+(exec-path-from-shell-copy-env "SSH_AGENT_PID")
+(exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+(exec-path-from-shell-copy-env "PATH")
 (add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))
 (add-to-list 'exec-path (expand-file-name "~/.local/bin/"))
 (add-to-list 'exec-path "/bin/")
