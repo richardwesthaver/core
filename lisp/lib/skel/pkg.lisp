@@ -7,7 +7,7 @@
 ;;; Code:
 (uiop:define-package :skel/pkg
     (:nicknames :skel)
-  (:use :cl :std :sb-mop :cl-ppcre)
+  (:use :cl :cl-ppcre :std :sb-mop)
   (:import-from :sb-unix :uid-username)
   (:import-from :uiop :ensure-absolute-pathname)
   (:shadowing-import-from :uiop :pathname-parent-directory-pathname :read-file-forms)

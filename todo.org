@@ -1,3 +1,82 @@
-* TODO migrate to sb-grovel
+* TODO migrate to sb-grovel [0%]                                   :lisp:ffi:
+:PROPERTIES:
+:CUSTOM_ID: bb365025-e5e7-4407-acba-32e30d1a245a
+:END:
 - State "TODO"       from              [2023-11-27 Mon 23:42]
 [[file:lisp/ffi/]]
+** TODO blake3
+:PROPERTIES:
+:CUSTOM_ID: 656c2683-8780-407c-b955-3defc4959595
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO bqn
+:PROPERTIES:
+:CUSTOM_ID: b4757746-525b-49e4-b8ac-677375867d8f
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO btrfs
+:PROPERTIES:
+:CUSTOM_ID: b3b411fe-6b2d-4338-9e23-83536336a487
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO k
+:PROPERTIES:
+:CUSTOM_ID: 8a463084-efa0-4535-8239-b1c4955bde4c
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO rocksdb
+:PROPERTIES:
+:CUSTOM_ID: 2d4d70af-228f-424c-8374-9fc8ed5c6f92
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO tree-sitter
+:PROPERTIES:
+:CUSTOM_ID: 0cdf3412-cb00-4069-8e1b-b49c736377cf
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO uring
+:PROPERTIES:
+:CUSTOM_ID: 45a52407-ccaf-4ea1-99c4-d6f7ba0b2731
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO zstd
+:PROPERTIES:
+:CUSTOM_ID: 6ade8dd8-83b1-470d-a0da-a352ce4c2d06
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+** TODO xkb
+:PROPERTIES:
+:CUSTOM_ID: af778a5f-4834-4f0c-ae53-36d35cb98d8c
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:27]
+* TODO parse                                                       :lisp:lib:
+:PROPERTIES:
+:ID: parse
+:CUSTOM_ID: 8f54a69e-b256-4efd-98e8-75b4892f12b8
+:END:
+- State "TODO"       from              [2023-11-29 Wed 19:01]
+- lalr.lisp
+- lex.lisp
+* TBD wayland compositor                                          :rust:lisp:
+:PROPERTIES:
+:CUSTOM_ID: e18a90d7-10bc-44d3-8508-56483d29d385
+:END:
+- State "TBD"        from "TODO"       [2023-11-29 Wed 21:25]
+* TODO organ v0.2 [0%]                                           :lisp:organ:
+:PROPERTIES:
+:CUSTOM_ID: 4e7c55dc-e2fa-458f-ad3b-942b9aa336a4
+:END:
+- State "TODO"       from              [2023-11-29 Wed 21:25]
+** TBD organ-export
+:PROPERTIES:
+:CUSTOM_ID: 189584f5-fc22-4129-bd47-5d494a088684
+:END:
+- State "TBD"        from "TODO"       [2023-11-29 Wed 21:24]
+** TODO org-parse
+:PROPERTIES:
+:DEPENDENCIES: parse
+:HOOKS: organ-export
+:CUSTOM_ID: 63774177-9730-4961-8535-414fac7a6f4f
+:END:
+- State "TODO"       from              [2023-11-29 Wed 21:26]
+
