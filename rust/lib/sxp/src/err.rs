@@ -1,11 +1,15 @@
 //! err.rs --- When serializing or deserializing SXP goes wrong...
 
 use crate::io;
-use alloc::boxed::Box;
-use alloc::string::{String, ToString};
-use core::fmt::{self, Debug, Display};
-use core::result;
-use core::str::FromStr;
+use alloc::{
+  boxed::Box,
+  string::{String, ToString},
+};
+use core::{
+  fmt::{self, Debug, Display},
+  result,
+  str::FromStr,
+};
 use serde::{de, ser};
 #[cfg(feature = "std")]
 use std::error;
@@ -171,6 +175,7 @@ struct ErrorImpl {
   column: usize,
 }
 
+#[allow(dead_code)]
 pub(crate) enum ErrorCode {
   /// Catchall for syntax error messages
   Message(Box<str>),
@@ -234,17 +239,17 @@ impl Error {
     }
   }
 
-  #[cold]
-  pub(crate) fn fix_position<F>(self, f: F) -> Self
-  where
-    F: FnOnce(ErrorCode) -> Error,
-  {
-    if self.err.line == 0 {
-      f(self.err.code)
-    } else {
-      self
-    }
-  }
+  //   #[cold]
+  //   pub(crate) fn fix_position<F>(self, f: F) -> Self
+  //   where
+  //     F: FnOnce(ErrorCode) -> Error,
+  //   {
+  //     if self.err.line == 0 {
+  //       f(self.err.code)
+  //     } else {
+  //       self
+  //     }
+  //   }
 }
 
 impl Display for ErrorCode {

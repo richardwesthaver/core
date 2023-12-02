@@ -1,9 +1,14 @@
 //! ser.rs --- SXP Serializer
-use crate::fmt::{DefaultFormatter, WriteFormatter};
-use crate::tok::{format_escaped_str, format_escaped_str_contents};
-use crate::{err::ErrorCode, Error, Result};
-use core::fmt::{self, Display};
-use core::num::FpCategory;
+use crate::{
+  err::ErrorCode,
+  fmt::{DefaultFormatter, WriteFormatter},
+  tok::{format_escaped_str, format_escaped_str_contents},
+  Error, Result,
+};
+use core::{
+  fmt::{self, Display},
+  num::FpCategory,
+};
 use serde::ser::{self, Impossible, Serialize};
 use std::io::{self, Write};
 

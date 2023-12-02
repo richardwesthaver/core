@@ -7,5 +7,5 @@ name = "gitlab"
 path = "lib.rs"
 [dependencies]
 # version supported by heptapod
-gitlab = "=0.1410.0"
+gitlab-internal = { package = "gitlab", version = "=0.1410.0" }
 tenex-util = { path = "../../util", features = ["full"] }

@@ -3,14 +3,6 @@ name = "tenex"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = ["models/freesound",
-           "models/gitlab",
-           "models/nws",
-           "models/ipapi",
-           "models/aws",
-           "util"]
-
 [features]
 util = ["tenex-util"]
 oauth = ["tenex-util/oauth2"]
@@ -38,3 +30,4 @@ tokio = { version = "1.13", features = ["full"] }
 [[example]]
 name = "freesound"
 path = "examples/freesound.rs"
+required-features = ["freesound"]

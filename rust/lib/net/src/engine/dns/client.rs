@@ -77,7 +77,8 @@ impl Client {
       .collect::<Vec<_>>();
 
     if !ips.is_empty() {
-      // Discard the message if the channel is full; it will be retried eventually
+      // Discard the message if the channel is full; it will be retried
+      // eventually
       let _ = self.tx.as_mut().unwrap().try_send(ips);
     }
   }

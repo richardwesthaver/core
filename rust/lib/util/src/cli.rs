@@ -1,6 +1,7 @@
 //! cli module
 pub use clap::{
-  App, AppSettings, Arg, ArgGroup, ArgMatches, ArgSettings, ColorChoice, Subcommand, ValueHint,
+  App, AppSettings, Arg, ArgGroup, ArgMatches, ArgSettings, ColorChoice,
+  Subcommand, ValueHint,
 };
 #[cfg(feature = "bs")]
 pub mod comp_gen {

@@ -1,6 +1,5 @@
-use reqwest::Error;
 use log::trace;
-use reqwest::Client;
+use reqwest::{Client, Error};
 use std::net::IpAddr;
 
 pub async fn my_ip_verbose() -> Result<serde_json::Value, Error> {

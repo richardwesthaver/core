@@ -1,1 +1,1 @@
-pub use gitlab;
+pub use gitlab_internal::*;

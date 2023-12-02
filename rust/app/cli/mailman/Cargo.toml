@@ -1,0 +1,12 @@
+[package]
+name = "mailman"
+version = "0.1.0"
+edition = "2021"
+description = "Mail client util"
+[[bin]]
+name = "mailman"
+path = "main.rs"
+[dependencies]
+util = { path = "../../../lib/util", features = ["cli"] }
+jmap-client = { version = "0.3.0", features = ["async","tokio","rustls","websockets"] }
+tokio = { version = "1.34.0", features = ["full"] }

@@ -1,10 +1,10 @@
 //! Tenex utilities
 // re-exports
-#[cfg(feature = "oauth2")]
-pub use oauth2;
+pub use futures_util::StreamExt;
 #[cfg(feature = "indicatif")]
 pub use indicatif;
-pub use futures_util::StreamExt;
+#[cfg(feature = "oauth2")]
+pub use oauth2;
 /// OS-specific browser command. supports Win/Mac/Linux
 pub fn open_browser(url: &str) {
   if cfg!(target_os = "windows") {

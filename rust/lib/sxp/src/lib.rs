@@ -22,7 +22,7 @@ macro_rules! e {
 //   from_reader, from_slice, from_str, from_traits, Deserializer,
 // };
 
-mod fmt;
+pub mod fmt;
 #[doc(inline)]
 pub use fmt::{DefaultFormatter, Formatter, ReadFormatter, WriteFormatter};
 pub mod form;

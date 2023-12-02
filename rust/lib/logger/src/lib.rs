@@ -1,5 +1,7 @@
 //! logger library
-use flexi_logger::{with_thread, AdaptiveFormat, Duplicate, FileSpec, Logger, LoggerHandle};
+use flexi_logger::{
+  with_thread, AdaptiveFormat, Duplicate, FileSpec, Logger, LoggerHandle,
+};
 pub use log;
 use log::{Level, LevelFilter, Metadata, Record};
 
@@ -9,7 +11,8 @@ pub use err::{Error, Result};
 
 /// initialize a simple logger
 pub fn simple() -> Result<()> {
-  log::set_logger(&SimpleLogger).map(|()| log::set_max_level(LevelFilter::Trace))?;
+  log::set_logger(&SimpleLogger)
+    .map(|()| log::set_max_level(LevelFilter::Trace))?;
   Ok(())
 }
 

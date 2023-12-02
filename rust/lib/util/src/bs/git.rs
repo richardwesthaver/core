@@ -6,7 +6,8 @@ use std::{env, fs, fs::File, io, io::Read, path::PathBuf};
 /// not be found, a warning is generated.
 pub fn rerun_if_git_head_changed() {
   let mut manifest_dir = PathBuf::from(
-    env::var("CARGO_MANIFEST_DIR").expect("`CARGO_MANIFEST_DIR` is always set by cargo."),
+    env::var("CARGO_MANIFEST_DIR")
+      .expect("`CARGO_MANIFEST_DIR` is always set by cargo."),
   );
   let manifest_dir_copy = manifest_dir.clone();
 
@@ -63,8 +64,8 @@ fn get_git_paths(path: &PathBuf) -> Result<Option<Vec<PathBuf>>, io::Error> {
         ))
       }
     } else if metadata.is_file() {
-      // We are in a worktree, so find out where the actual worktrees/<name>/HEAD file
-      // is.
+      // We are in a worktree, so find out where the actual
+      // worktrees/<name>/HEAD file is.
       let mut git_file = File::open(&git_dir_or_file)?;
       let mut git_contents = String::new();
       let _ = git_file.read_to_string(&mut git_contents)?;
