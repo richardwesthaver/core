@@ -17,7 +17,8 @@ members = ["sys/btrfs",
            "lib/krypt",
            "app/cli/tz",
            "app/cli/cc-init",
-           "app/cli/mailman"]
+           "app/cli/mailman",
+           "app/cli/krypt"]
 
 [profile.release]
 lto = true

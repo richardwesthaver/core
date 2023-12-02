@@ -2,10 +2,9 @@
 name = "krypt"
 version = "0.1.0"
 edition = "2021"
-[features]
-default = ["std"]
-std = ["linux-keyutils/std"]
 [dependencies]
 crypto = { path = "../crypto" }
-linux-keyutils = "0.2.3"
+hash = { path = "../hash" }
+keyutils = "0.4"
 zeroize = "1.6"
+secret-service = { version = "3.0.0", features = ["rt-tokio-crypto-rust"] }
