@@ -8,6 +8,7 @@ members = ["models/freesound",
            "models/gitlab",
            "models/nws",
            "models/ipapi",
+           "models/aws",
            "util"]
 
 [features]
@@ -15,11 +16,12 @@ util = ["tenex-util"]
 oauth = ["tenex-util/oauth2"]
 progress = ["tenex-util/indicatif"]
 default = ["util"]
-full = ["ipapi","nws","freesound","gitlab","util","oauth","progress"]
+full = ["ipapi","nws","freesound","gitlab","util","oauth","progress","aws"]
 
 [dependencies]
 tenex-util = { path = "util", optional = true }
 ipapi = { path = "models/ipapi", optional = true }
+aws = { path = "models/aws", optional = true }
 gitlab = { path = "models/gitlab", optional = true }
 nws = { path = "models/nws", optional = true }
 freesound = { path = "models/freesound", optional = true }
