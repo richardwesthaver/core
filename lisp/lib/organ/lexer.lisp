@@ -1,5 +1,5 @@
 ;; https://github.com/Shinmera/plump/blob/master/lexer.lisp
-(pkg:defpkg :organ/lexer
+(defpackage :organ/lexer
   (:use :cl :cl-ppcre :std/base)
   (:export
    #:*string*

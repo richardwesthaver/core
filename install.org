@@ -21,5 +21,66 @@ curl --proto '=https' --tlsv1.2 -sSf https://packy.compiler.company/do/install.s
 ** Quicklisp                                                           :lisp:
 ** AUR                                                               :pacman:
 * Images
-* Binaries
+* Apps
+** Lisp
+*** cli/skel
+#+begin_src shell :results pp replace :exports code
+sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/skel)' --eval "(asdf:operate 'asdf:program-op :app/cli/skel)"
+#+end_src
+
+#+RESULTS:
+: To load "app/cli/skel":
+:   Load 1 ASDF system:
+:     app/cli/skel
+: ; Loading "app/cli/skel"
+: ...
+
+*** cli/organ
+#+begin_src shell :results pp replace :exports code
+sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/organ)' --eval '(asdf:make :app/cli/organ)'
+#+end_src
+
+#+RESULTS:
+: To load "app/cli/organ":
+:   Load 1 ASDF system:
+:     app/cli/organ
+: ; Loading "app/cli/organ"
+: ...
+
+*** cli/rdb
+#+begin_src shell :results pp replace :exports code
+sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/rdb)' --eval '(asdf:make :app/cli/rdb)'
+#+end_src
+
+#+RESULTS:
+: To load "app/cli/rdb":
+:   Load 1 ASDF system:
+:     app/cli/rdb
+: ; Loading "app/cli/rdb"
+: ..
+
+*** cli/homer
+#+begin_src shell :results pp replace :exports code
+sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/homer)' --eval "(asdf:operate 'asdf:program-op :app/cli/homer)"
+#+end_src
+
+#+RESULTS:
+: To load "app/cli/homer":
+:   Load 1 ASDF system:
+:     app/cli/homer
+: ; Loading "app/cli/homer"
+: 
+** Rust
+*** cli/tz
+#+begin_src shell :results output pp :exports code
+  cd rust/app/cli/tz && cargo build --release
+#+end_src
+
+*** cli/cc-init
+#+begin_src shell :results output pp :exports code
+  cd rust/app/cli/cc-init && cargo build --release
+#+end_src
+
+#+RESULTS:
+
 * Source

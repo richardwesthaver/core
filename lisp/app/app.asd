@@ -1,7 +1,7 @@
 ;;; app.asd --- application library
-#+sb-core-compression
-(defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
-  (uiop:dump-image (asdf:output-file o c) :executable t :compression t))
+;; #+sb-core-compression
+;; (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
+;;   (uiop:dump-image (asdf:output-file o c) :executable t :compression t))
 
 (defsystem :app
   :class :package-inferred-system
@@ -12,16 +12,13 @@
    :app/gui/skel
    :app/web/index :app/web/dash)
   :in-order-to ((test-op (test-op "app/tests")))
-  :perform (test-op (o c) (symbol-call :std/rt :do-tests :app))
-  :build-operation "program-op"
-  ;; :build-pathname "skel"
-  :entry-point "main")
+  :perform (test-op (o c) (symbol-call :std/rt :do-tests :app)))
 
 (defsystem :app/cli/skel
   :class :package-inferred-system
   :defsystem-depends-on (:asdf-package-system)
   :build-operation "program-op"
-  :depends-on (:uiop :cl-ppcre :std/all :skel)
+  :depends-on (:uiop :cl-ppcre :std/all :std/cli :skel)
   :in-order-to ((test-op (test-op "app/tests")))
   :perform (test-op (o c) (symbol-call :std/rt :do-tests :app))
   :build-operation "program-op"
@@ -32,10 +29,10 @@
   :class :package-inferred-system
   :defsystem-depends-on (:asdf-package-system)
   :build-operation "program-op"
-  :depends-on (:uiop :cl-ppcre :std/all :organ :nlp)
+  :depends-on (:uiop :cl-ppcre :std/all :std/cli :organ :nlp)
   :in-order-to ((test-op (test-op "app/tests")))
   :perform (test-op (o c) (symbol-call :std/rt :do-tests :app))
-  :build-operation "program-op"
+  :build-operation program-op
   :build-pathname "organ"
   :entry-point "app/cli/organ::main")
 

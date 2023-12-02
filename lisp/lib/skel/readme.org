@@ -29,7 +29,7 @@ sbcl --version
 Then compile the program. This command produces a binary called =skel=
 in the project root:
 #+begin_src shell :results raw silent
-sbcl --noinform  --non-interactive --eval '(ql:quickload :skel)' --eval '(asdf:make :skel/cli)'
+sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/skel)' --eval '(asdf:make :app/cli/skel)'
 #+end_src
 
 Run the binary without any args, which will print a skeleton of the
