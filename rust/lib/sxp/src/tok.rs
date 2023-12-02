@@ -3,14 +3,16 @@
 /// 'nil' variant. The modern rules of S-expressions are implicit in
 /// the SXP specification.
 use crate::{fmt::WriteFormatter, Error};
-use serde::de::{self, Unexpected, Visitor};
 use serde::{
+  de::{self, Unexpected, Visitor},
   forward_to_deserialize_any, Deserialize, Deserializer, Serialize, Serializer,
 };
-use std::fmt::{self, Debug, Display};
-use std::hash::{Hash, Hasher};
-use std::io::{self, Write};
-use std::str::FromStr;
+use std::{
+  fmt::{self, Debug, Display},
+  hash::{Hash, Hasher},
+  io::{self, Write},
+  str::FromStr,
+};
 
 /// Token types collected from the output of a type which implements
 /// Read+Format.

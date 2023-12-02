@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = ["ellis"]
 edition = "2021"
 description = "Database System"
-documentation = "https://docs.rwest.io/rlib/db"
-repository = "https://hg.rwest.io/rlib"
-publish = ["crater"]
+documentation = "https://docs.compiler.company/core/rust/lib/db"
+repository = "https://vc.compiler.company/comp/core"
 [dependencies]
 # rlib
 obj = { version = "0.1.0", path = "../obj" }

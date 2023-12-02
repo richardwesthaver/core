@@ -11,7 +11,7 @@ use std::collections::HashMap;
 pub struct PackageConfig {
   /// Name of this package
   pub name: String,
-  pub repo: RepoConfig,
+  pub repo: Option<RepoConfig>,
   pub bin: Option<ProgramConfig>,
   pub lib: Option<LibraryConfig>,
   pub babel: Option<HashMap<String, Vec<String>>>,
@@ -23,7 +23,7 @@ impl PackageConfig {
   pub fn new(name: &str) -> Self {
     PackageConfig {
       name: name.to_string(),
-      repo: RepoConfig::new(),
+      repo: None,
       bin: None,
       lib: None,
       babel: None,
@@ -35,7 +35,7 @@ impl Default for PackageConfig {
   fn default() -> Self {
     PackageConfig {
       name: ".".to_string(),
-      repo: RepoConfig::default(),
+      repo: None,
       bin: None,
       lib: None,
       babel: None,

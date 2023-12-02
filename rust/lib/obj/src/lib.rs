@@ -26,7 +26,9 @@ pub use config::auth::Oauth2Config;
 #[cfg(feature = "git")]
 pub use config::repo::git::GitRepository;
 #[cfg(feature = "hg")]
-pub use config::repo::hg::{export_hg_git, HgSubFile, HgwebConfig, MercurialConfig};
+pub use config::repo::hg::{
+  export_hg_git, HgSubFile, HgwebConfig, MercurialConfig,
+};
 
 pub use config::{
   auth::{AuthConfig, SshConfig},
@@ -40,7 +42,10 @@ pub use config::{
   project::ProjectConfig,
   registry::RegistryConfig,
   repo::RepoConfig,
-  user::{ShellConfig, TmuxPaneConfig, TmuxSessionConfig, TmuxWindowConfig, UserConfig},
+  user::{
+    ShellConfig, TmuxPaneConfig, TmuxSessionConfig, TmuxWindowConfig,
+    UserConfig,
+  },
 };
 
 use ron::extensions::Extensions;

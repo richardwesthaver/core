@@ -4,8 +4,10 @@
 //! fashion.
 
 use alloc::vec::Vec;
-use core::fmt::{self, Display};
-use core::result;
+use core::{
+  fmt::{self, Display},
+  result,
+};
 
 pub enum ErrorKind {
   Other,

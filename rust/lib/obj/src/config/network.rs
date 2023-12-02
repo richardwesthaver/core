@@ -38,11 +38,12 @@ pub enum EngineType {
   Dns,
   Ssh,
   Uds,
+  Raw,
 }
 
 impl Default for EngineType {
   fn default() -> Self {
-    Self::Http
+    Self::Raw
   }
 }
 
@@ -54,6 +55,7 @@ impl std::fmt::Display for EngineType {
       EngineType::Dns => write!(f, "dns"),
       EngineType::Ssh => write!(f, "ssh"),
       EngineType::Uds => write!(f, "uds"),
+      EngineType::Raw => write!(f, "raw"),
     }
   }
 }

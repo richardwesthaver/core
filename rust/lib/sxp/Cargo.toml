@@ -5,16 +5,6 @@ edition = "2021"
 description = "S-eXPressions"
 categories = ["encoding", "parser-implementations", "no-std"]
 
-[dependencies]
-itoa = "1.0.8"
-ryu = "1.0.14"
-serde = { version = "1.0.166", default-features = false }
-indexmap = { version = "2", optional = true }
-
-[dev-dependencies]
-serde_derive = "1.0.16"
-rand = "0.8.5"
-
 [features]
 default = ["std"]
 std = ["serde/std"]
@@ -22,6 +12,12 @@ alloc = ["serde/alloc"]
 # TODO
 order = ["indexmap", "std"]
 
-[profile.release]
-lto = true
-panic = "abort"
+[dependencies]
+itoa = "1"
+ryu = "1"
+serde = { version = "1", default-features = false }
+indexmap = { version = "2", optional = true }
+
+[dev-dependencies]
+serde_derive = "1"
+rand = "0.8.5"

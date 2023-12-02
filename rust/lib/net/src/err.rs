@@ -64,7 +64,9 @@ impl fmt::Display for Error {
     match *self {
       Error::Io(ref err) => write!(f, "net IO error: {}", err),
       #[cfg(feature = "client")]
-      Error::Reqwest(ref err) => write!(f, "net::client Reqwest error: {}", err),
+      Error::Reqwest(ref err) => {
+        write!(f, "net::client Reqwest error: {}", err)
+      }
       #[cfg(feature = "server")]
       Error::Axum(ref err) => write!(f, "net::server Axum error: {}", err),
       #[cfg(feature = "dns")]
@@ -82,7 +84,9 @@ impl fmt::Debug for Error {
     match *self {
       Error::Io(ref err) => write!(f, "net IO error: {}", err),
       #[cfg(feature = "client")]
-      Error::Reqwest(ref err) => write!(f, "net::client Reqwest error: {}", err),
+      Error::Reqwest(ref err) => {
+        write!(f, "net::client Reqwest error: {}", err)
+      }
       #[cfg(feature = "server")]
       Error::Axum(ref err) => write!(f, "net::server Axum error: {}", err),
       #[cfg(feature = "dns")]

@@ -1,8 +1,10 @@
 //! fmt.rs --- SXP Formatters
-use crate::io::{self, Write};
-use crate::read::Read;
-use crate::tok::CharEscape;
-use crate::Result;
+use crate::{
+  io::{self, Write},
+  read::Read,
+  tok::CharEscape,
+  Result,
+};
 
 pub fn indent<W: ?Sized + io::Write>(
   wr: &mut W,

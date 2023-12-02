@@ -29,7 +29,10 @@ fn test_text_tree() {
         )]
         .into_iter(),
       ),
-      StringTreeNode::with_children("Posts".to_string(), vec!["Child 3".to_string()].into_iter()),
+      StringTreeNode::with_children(
+        "Posts".to_string(),
+        vec!["Child 3".to_string()].into_iter(),
+      ),
     ]
     .into_iter(),
   );

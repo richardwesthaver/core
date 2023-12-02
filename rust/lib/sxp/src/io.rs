@@ -1,5 +1,5 @@
 //! io.rs --- minimal nostd-friendly `std::io` wrapper
-pub use self::imp::{Error, ErrorKind, Result, Write};
+pub use self::imp::{Error, Result, Write};
 
 #[cfg(not(feature = "std"))]
 #[path = "nostd.rs"]

@@ -1,7 +1,6 @@
 //! tests/de.rs --- DE
 //  TODO 2023-07-09
-use serde_derive::Deserialize;
-use std::io::BufReader;
+
 // use sxp::{
 //   from_reader, from_slice, from_str, from_traits,
 //   read::{SliceRead, StrRead},

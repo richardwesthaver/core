@@ -1,10 +1,7 @@
 //! read.rs --- sxp reader
 use crate::{err::ErrorCode, Error, Result};
 use alloc::vec::Vec;
-use core::char;
-use core::cmp;
-use core::ops::Deref;
-use core::str;
+use core::{char, cmp, ops::Deref, str};
 
 #[cfg(feature = "std")]
 use crate::io;
@@ -87,7 +84,7 @@ pub trait Read<'de> {
   /// truncating their input slice to avoid the extra check on every next
   /// call.
   #[doc(hidden)]
-  const should_early_return_if_failed: bool;
+  const SHOULD_EARLY_RETURN_IF_FAILED: bool;
 
   /// Mark a persistent failure of StreamDeserializer, either by setting the
   /// flag or by truncating the input data.
@@ -312,7 +309,7 @@ where
     Ok(n)
   }
 
-  const should_early_return_if_failed: bool = true;
+  const SHOULD_EARLY_RETURN_IF_FAILED: bool = true;
 
   #[inline]
   #[cold]
@@ -505,7 +502,7 @@ impl<'a> Read<'a> for SliceRead<'a> {
     Ok(n)
   }
 
-  const should_early_return_if_failed: bool = false;
+  const SHOULD_EARLY_RETURN_IF_FAILED: bool = false;
 
   #[inline]
   #[cold]
@@ -580,7 +577,7 @@ impl<'a> Read<'a> for StrRead<'a> {
     self.delegate.decode_hex_escape()
   }
 
-  const should_early_return_if_failed: bool = false;
+  const SHOULD_EARLY_RETURN_IF_FAILED: bool = false;
 
   #[inline]
   #[cold]
@@ -641,7 +638,7 @@ where
     R::decode_hex_escape(self)
   }
 
-  const should_early_return_if_failed: bool = R::should_early_return_if_failed;
+  const SHOULD_EARLY_RETURN_IF_FAILED: bool = R::SHOULD_EARLY_RETURN_IF_FAILED;
 
   fn set_failed(&mut self, failed: &mut bool) {
     R::set_failed(self, failed);

@@ -41,7 +41,11 @@ impl Level {
 }
 
 /// Pack a SRC directory, and return a compressed archive at DST.
-pub fn pack<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q, level: Option<Level>) {
+pub fn pack<P: AsRef<Path>, Q: AsRef<Path>>(
+  src: P,
+  dst: Q,
+  level: Option<Level>,
+) {
   let mut tar = tar::Builder::new(Vec::new());
   let src = src.as_ref();
   let parent = src.parent().unwrap();
@@ -51,7 +55,12 @@ pub fn pack<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q, level: Option<Level>
   let tar = tar.into_inner().unwrap();
   let dst = dst.as_ref();
   let file = fs::File::create(dst).expect("failed to create output path");
-  zstd::stream::copy_encode(&tar[..], file, level.unwrap_or(Level::Best).into_zstd()).unwrap();
+  zstd::stream::copy_encode(
+    &tar[..],
+    file,
+    level.unwrap_or(Level::Best).into_zstd(),
+  )
+  .unwrap();
 }
 
 /// unpack a tar.zst compressed archive or zst file
@@ -75,7 +84,10 @@ pub fn unpack_replace<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q) {
 }
 
 /// compress a file with zstd
-pub fn compress<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q) -> io::Result<()> {
+pub fn compress<P: AsRef<Path>, Q: AsRef<Path>>(
+  src: P,
+  dst: Q,
+) -> io::Result<()> {
   let mut file = fs::File::open(&src)?;
   let mut encoder = {
     let target = fs::File::create(dst.as_ref())?;

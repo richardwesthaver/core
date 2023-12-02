@@ -12,9 +12,10 @@
 
 //! > cargo run --example udp 9980 binary
 use serde_derive::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use std::net::UdpSocket;
-use std::time::Duration;
+use std::{
+  net::{SocketAddr, UdpSocket},
+  time::Duration,
+};
 #[derive(Serialize, Deserialize)]
 struct Packet {
   id: usize,

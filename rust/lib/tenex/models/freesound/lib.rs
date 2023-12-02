@@ -10,25 +10,28 @@
 //!
 //! REF: <https://freesound.org/docs/api/>
 //! ENDPOINT: <https://freesound.org/apiv2/>
-use std::cmp::min;
-use std::fmt;
-use std::fs;
-use std::path::Path;
-use std::time::{SystemTime, Duration};
-use tenex_util::indicatif::{ProgressBar, ProgressStyle};
-use tenex_util::StreamExt;
-use tenex_util::oauth2::{
-  basic::{BasicClient, BasicTokenType},
-  AuthUrl, AuthorizationCode, ClientId, ClientSecret, EmptyExtraTokenFields,
-  RedirectUrl, RefreshToken, StandardTokenResponse, TokenResponse, TokenUrl,
+use reqwest::{Client, IntoUrl, RequestBuilder, Response, Url};
+use serde::{Deserialize, Serialize};
+use std::{
+  cmp::min,
+  fmt, fs,
+  path::Path,
+  time::{Duration, SystemTime},
 };
-use reqwest::{IntoUrl, RequestBuilder, Response, Url};
-use serde::{Serialize, Deserialize};
-use tokio::fs::File;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::TcpListener;
-use tenex_util::open_browser;
-use reqwest::Client;
+use tenex_util::{
+  indicatif::{ProgressBar, ProgressStyle},
+  oauth2::{
+    basic::{BasicClient, BasicTokenType},
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, EmptyExtraTokenFields,
+    RedirectUrl, RefreshToken, StandardTokenResponse, TokenResponse, TokenUrl,
+  },
+  open_browser, StreamExt,
+};
+use tokio::{
+  fs::File,
+  io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+  net::TcpListener,
+};
 
 pub const FREESOUND_ENDPOINT: &str = "https://freesound.org/apiv2";
 
@@ -214,10 +217,12 @@ impl FreeSoundClient {
     ))
     .unwrap();
     let token_url =
-      TokenUrl::new(format!("{}/oauth2/access_token/", FREESOUND_ENDPOINT)).unwrap();
+      TokenUrl::new(format!("{}/oauth2/access_token/", FREESOUND_ENDPOINT))
+        .unwrap();
     BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url))
       .set_redirect_uri(
-        RedirectUrl::new(self.cfg.redirect_url.as_ref().unwrap().clone()).unwrap(),
+        RedirectUrl::new(self.cfg.redirect_url.as_ref().unwrap().clone())
+          .unwrap(),
       )
   }
 
@@ -280,7 +285,8 @@ impl FreeSoundClient {
           reader.read_line(&mut line).await.unwrap();
           let redirect_url = line.split_whitespace().nth(1).unwrap();
           let url =
-            Url::parse(&("http://localhost:8080".to_string() + redirect_url)).unwrap();
+            Url::parse(&("http://localhost:8080".to_string() + redirect_url))
+              .unwrap();
 
           let code_pair = url
             .query_pairs()
@@ -349,7 +355,10 @@ impl FreeSoundClient {
     Ok(())
   }
 
-  pub async fn request<'a>(&self, req: FreeSoundRequest<'a>) -> Result<Response> {
+  pub async fn request<'a>(
+    &self,
+    req: FreeSoundRequest<'a>,
+  ) -> Result<Response> {
     let res = self
       .client
       .execute(
@@ -438,10 +447,18 @@ impl<'a> FreeSoundRequest<'a> {
       FreeSoundRequest::SearchContent => "/search/content".to_string(),
       FreeSoundRequest::SearchCombined => "/search/combined".to_string(),
       FreeSoundRequest::Sound { ref id } => format!("/sounds/{}", id),
-      FreeSoundRequest::SoundAnalysis { ref id } => format!("/sounds/{}/analysis", id),
-      FreeSoundRequest::SoundSimilar { ref id } => format!("/sounds/{}/similar", id),
-      FreeSoundRequest::SoundComments { ref id } => format!("/sounds/{}/comments", id),
-      FreeSoundRequest::SoundDownload { ref id } => format!("/sounds/{}/download", id),
+      FreeSoundRequest::SoundAnalysis { ref id } => {
+        format!("/sounds/{}/analysis", id)
+      }
+      FreeSoundRequest::SoundSimilar { ref id } => {
+        format!("/sounds/{}/similar", id)
+      }
+      FreeSoundRequest::SoundComments { ref id } => {
+        format!("/sounds/{}/comments", id)
+      }
+      FreeSoundRequest::SoundDownload { ref id } => {
+        format!("/sounds/{}/download", id)
+      }
       _ => "".to_string(),
     };
     format!("{}{}", FREESOUND_ENDPOINT, slug)

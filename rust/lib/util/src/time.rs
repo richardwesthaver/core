@@ -142,7 +142,8 @@ impl Time {
   /// you call this in your game.
   pub fn set_delta_time(&mut self, time: Duration) {
     self.delta_seconds = duration_to_secs(time) * self.time_scale;
-    self.delta_time = secs_to_duration(duration_to_secs(time) * self.time_scale);
+    self.delta_time =
+      secs_to_duration(duration_to_secs(time) * self.time_scale);
     self.delta_real_seconds = duration_to_secs(time);
     self.delta_real_time = time;
 
@@ -442,8 +443,8 @@ mod tests {
   }
 
   // Test that fixed_update methods accumulate and return correctly
-  // Test confirms that with a fixed update every 1 second, it runs every 1 second
-  // only
+  // Test confirms that with a fixed update every 1 second, it runs every 1
+  // second only
   #[test]
   fn fixed_update_1sec() {
     use super::Time;

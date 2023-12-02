@@ -1,13 +1,16 @@
 //! hash - wrapper for hash algorithms and types
-pub use blake3::{derive_key, hash, keyed_hash, Hash as B3Hash, Hasher as B3Hasher, OutputReader};
+pub use blake3::{
+  derive_key, hash, keyed_hash, Hash as B3Hash, Hasher as B3Hasher,
+  OutputReader,
+};
 pub use hex;
+pub use phf;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 pub use sha2::Sha512;
-pub use phf;
 // hashbrown is now the default for the Rust stdlib. We only need to
 // re-export in no_std envs.
-#[cfg(no_std)] 
+#[cfg(no_std)]
 pub use hashbrown::{HashMap, HashSet};
 pub use std::hash::{Hash, Hasher};
 
@@ -20,13 +23,16 @@ pub const OUT_LEN_HEX: usize = OUT_LEN * 2;
 mod tests;
 /// a simple Id abstraction with help functions. I'm finding this easier than
 /// state machines and traits for the time-being.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Serialize, Deserialize, Hash)]
+#[derive(
+  Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Serialize, Deserialize, Hash,
+)]
 pub struct Id(pub Vec<u8>);
 
 impl Id {
   pub fn rand() -> Self {
     let mut rng = rand::thread_rng();
-    let vals: Vec<u8> = (0..KEY_LEN).map(|_| rng.gen_range(0..u8::MAX)).collect();
+    let vals: Vec<u8> =
+      (0..KEY_LEN).map(|_| rng.gen_range(0..u8::MAX)).collect();
     Id(vals)
   }
 

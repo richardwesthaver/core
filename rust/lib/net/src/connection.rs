@@ -48,7 +48,10 @@ pub struct Connection {
   pub remote_socket: Socket,
 }
 
-pub fn display_ip_or_host(ip: IpAddr, ip_to_host: &HashMap<IpAddr, String>) -> String {
+pub fn display_ip_or_host(
+  ip: IpAddr,
+  ip_to_host: &HashMap<IpAddr, String>,
+) -> String {
   match ip_to_host.get(&ip) {
     Some(host) => host.clone(),
     None => ip.to_string(),

@@ -1,3 +1,24 @@
 [workspace]
 resolver = "2"
-members = ["sys/btrfs","sys/btrfsutil","app/cli/tz","app/cli/cc-init"]
+members = ["sys/btrfs",
+           "sys/btrfsutil",
+           "sys/rocksdb",
+           "lib/util",
+           "lib/flate",
+           "lib/hash",
+           "lib/net",
+           "lib/obj",
+           "lib/audio",
+           "lib/logger",
+           # "lib/db",
+           "lib/sxp",
+           "lib/tenex",
+           "lib/crypto",
+           "lib/krypt",
+           "app/cli/tz",
+           "app/cli/cc-init",
+           "app/cli/mailman"]
+
+[profile.release]
+lto = true
+panic = "abort"

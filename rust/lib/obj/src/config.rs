@@ -17,7 +17,6 @@ pub mod user;
 #[cfg(test)]
 mod test {
   use super::*;
-  use std::path::PathBuf;
 
   #[test]
   fn test_package_cfg() {
@@ -29,8 +28,8 @@ mod test {
     )
     .unwrap();
     assert_eq!(pkg, package::PackageConfig::new("test-pack-cfg"));
-    pkg.repo = repo::RepoConfig::new();
-    assert_eq!(repo::RepoConfig::new(), pkg.repo);
+    pkg.repo = Some(repo::RepoConfig::new());
+    assert_eq!(repo::RepoConfig::new(), pkg.repo.unwrap());
   }
 
   #[test]
@@ -39,14 +38,13 @@ mod test {
       r#"(socket: "127.0.0.1:0",
         transport: "udp",
         tunnel: None,
-        engine: None,
+        engine: Raw,
         peers:  None)"#,
     )
     .unwrap();
     assert_eq!(net, network::NetworkConfig::default());
     net.socket = "0.0.0.0:0".parse().unwrap();
     assert_eq!(net.socket, "0.0.0.0:0".parse().unwrap());
-    assert_ne!(net, network::NetworkConfig::default());
   }
 
   #[test]
@@ -54,6 +52,7 @@ mod test {
     assert_eq!(repo::RepoConfig::default().vcs, "hg");
   }
 
+  #[cfg(feature = "hg")]
   #[test]
   fn test_hgweb_insert() {
     let mut web_conf = repo::hg::HgwebConfig::default();

@@ -1,6 +1,8 @@
 use super::SubRepo;
 use crate::Result;
-use hg_parser::{file_content, FileType, ManifestEntryDetails, MercurialRepository, Revision};
+use hg_parser::{
+  file_content, FileType, ManifestEntryDetails, MercurialRepository, Revision,
+};
 
 use logger::log::{error, info, trace};
 use serde::{Deserialize, Serialize};
@@ -55,7 +57,12 @@ impl HgSubFile {
   /// insert a subrepo into this HgSubFile. does not clone the source
   /// or ensure that path exists. Takes an optional argument of 'hg'
   /// or 'git' to indicate the subrepo-type. Value can be ommitted to
-  pub fn insert(&mut self, path: &str, source: &str, vcs: Option<&str>) -> Result<()> {
+  pub fn insert(
+    &mut self,
+    path: &str,
+    source: &str,
+    vcs: Option<&str>,
+  ) -> Result<()> {
     let mut prefix = "";
     // set prefix based on vcs (repo type)
     if let Some(i) = vcs {
@@ -206,7 +213,8 @@ pub fn export_hg_git<P: AsRef<Path>>(path: P) -> Result<()> {
 
     let time = header.time.timestamp_secs();
     let timezone = header.time.tz_offset_secs();
-    let tz = format!("{:+03}{:02}", -timezone / 3600, ((-timezone % 3600) / 60));
+    let tz =
+      format!("{:+03}{:02}", -timezone / 3600, ((-timezone % 3600) / 60));
 
     write!(writer, "reset refs/heads/")?;
     writer.write_all(&mut branch)?;
@@ -244,8 +252,8 @@ pub fn export_hg_git<P: AsRef<Path>>(path: P) -> Result<()> {
             match manifest_entry.details {
               ManifestEntryDetails::File(FileType::Symlink) => "120000",
               ManifestEntryDetails::File(FileType::Executable) => "100755",
-              ManifestEntryDetails::Tree | ManifestEntryDetails::File(FileType::Regular) =>
-                "100644",
+              ManifestEntryDetails::Tree
+              | ManifestEntryDetails::File(FileType::Regular) => "100644",
             }
           )?;
           writer.write_all(&mut file.path)?;
