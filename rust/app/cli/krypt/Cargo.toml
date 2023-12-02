@@ -1,0 +1,12 @@
+[package]
+name = "krypt-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Krypt CLI program"
+[[bin]]
+name = "krypt"
+path = "main.rs"
+[dependencies]
+krypt = { path = "../../../lib/krypt" }
+util = { path = "../../../lib/util", features = ["cli"] }
+tokio = { version = "1.34.0", features = ["full"] }

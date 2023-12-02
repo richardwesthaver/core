@@ -26,5 +26,3 @@ For an introduction to the key management techniques used, check [[https://rtfm.
 - keychain ::
   [[https://developer.apple.com/documentation/security/keychain_services/][keychain-services]] serve a similar purpose to secret-service. It is
   MacOS only.
-* TODO API
-The krypt API is described [[file:api.org][here]].
