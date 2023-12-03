@@ -12,12 +12,11 @@ publish = ["crater"]
 default = []
 full = ["time", "cli", "fmt", "bs"]
 time = ["chrono"]
-cli = ["clap", "anyhow", "terminal-clipboard", "indicatif", "clap_complete"]
+cli = ["anyhow", "terminal-clipboard", "indicatif", "clap_complete"]
 fmt = ["text_trees"]
 bs = ["platforms"]
 [dependencies]
-# contrib
-clap = { version = "3.0.0-beta.5", features = ["wrap_help", "suggestions", "env", "derive", "color", "unicode"], optional = true }
+# clap = { version = "4", features = ["wrap_help", "suggestions", "env", "derive", "color", "unicode", "cargo"], optional = true }
 chrono = { version = "0.4.19", features = ["serde"] , optional = true}
 anyhow = { version = "1.0.42", optional = true }
 text_trees = { version = "0.1.2", optional = true }

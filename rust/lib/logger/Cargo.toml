@@ -9,5 +9,5 @@ repository = "https://hg.rwest.io/rlib"
 publish = ["crater"]
 
 [dependencies]
-log = { version = "0.4.14", features = ["kv_unstable"] }
-flexi_logger = { version = "0.19", features = ["async", "colors", "atty"] }
+log = { version = "0.4", features = ["kv_unstable"] }
+flexi_logger = { version = "0.27", features = ["async", "colors"] }

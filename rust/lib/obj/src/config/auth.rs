@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "oauth")]
 use yup_oauth2::ApplicationSecret;
 
-#[derive(Serialize, Deserialize, Debug, Default, Hash)]
+#[derive(Serialize, Deserialize, Debug, Default, Hash, Clone)]
 pub struct AuthConfig {
   pub provider: String,
   #[cfg(feature = "oauth")]
@@ -13,7 +13,7 @@ pub struct AuthConfig {
   pub pw: Option<PasswordConfig>,
 }
 
-#[derive(Serialize, Deserialize, Default, Debug, Hash)]
+#[derive(Serialize, Deserialize, Default, Debug, Hash, Clone)]
 pub struct PasswordConfig(String, String);
 
 #[cfg(feature = "oauth")]

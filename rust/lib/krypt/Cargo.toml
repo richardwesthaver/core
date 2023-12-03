@@ -5,6 +5,10 @@ edition = "2021"
 [dependencies]
 crypto = { path = "../crypto" }
 hash = { path = "../hash" }
+obj = { path = "../obj", features = ["oauth"] }
+# sxp = { path = "../sxp" }
 keyutils = "0.4"
 zeroize = "1.6"
 secret-service = { version = "3.0.0", features = ["rt-tokio-crypto-rust"] }
+serde = { version = "1.0.193", features = ["derive"] }
+log = "0.4.20"
