@@ -1,26 +1,30 @@
 //! lib.rs --- Krypt Key Management Library
-pub use keyutils;
 pub mod ks;
-// pub use secret_service::SecretService;
-// pub use secret_service::EncryptionType;
+pub mod ss;
 
-//// Secret Service 
-// pub async fn connect_ss() -> Result<(), Box<dyn Error>> {
-// initialize secret service (dbus connection and encryption session)
-// let ss = SecretService::connect(EncryptionType::Dh).await?;
-// // get default collection
-// let collection = ss.get_default_collection().await?;
-// // create new item
-// collection.create_item(
-//     "test_label", // label
-//     HashMap::from([("test", "test_value")]), // properties
-//     b"test_secret", // secret
-//     false, // replace item with same attributes
-//     "text/plain" // secret content type
-// ).await?;
-//    Ok(())
-// }
+pub use keyutils;
 
-//// Tests
+use obj::{AuthConfig, Configure, DatabaseConfig, Objective, Result};
+use serde::{Deserialize, Serialize};
+use std::{fs, path::PathBuf};
+
 #[cfg(test)]
 mod tests;
+
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, Default)]
+pub struct KryptConfig {
+  auth: AuthConfig,
+  db: DatabaseConfig,
+}
+
+impl KryptConfig {
+  pub fn load_file(path: PathBuf) -> Result<KryptConfig> {
+    match fs::read_to_string(&path) {
+      Ok(cfg) => KryptConfig::from_json_str(&cfg),
+      Err(e) => Err(e.into()),
+    }
+  }
+}
+
+impl Objective for KryptConfig {}
+impl Configure for KryptConfig {}

@@ -1,13 +1,18 @@
 //! logger library
-use flexi_logger::{
+
+pub use flexi_logger::{
   with_thread, AdaptiveFormat, Duplicate, FileSpec, Logger, LoggerHandle,
 };
-pub use log;
-use log::{Level, LevelFilter, Metadata, Record};
+
+pub use log::{
+  self, debug, info, trace, warn, Level, LevelFilter, Metadata, Record,
+};
 
 mod err;
-
 pub use err::{Error, Result};
+
+#[cfg(test)]
+mod tests;
 
 /// initialize a simple logger
 pub fn simple() -> Result<()> {
@@ -62,6 +67,3 @@ pub fn file(env: &str, log_path: &str, log_name: &str) -> Result<LoggerHandle> {
       .start()?,
   )
 }
-
-#[cfg(test)]
-mod tests;

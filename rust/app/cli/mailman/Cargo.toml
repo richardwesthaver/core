@@ -8,5 +8,6 @@ name = "mailman"
 path = "main.rs"
 [dependencies]
 util = { path = "../../../lib/util", features = ["cli"] }
+clap = { version = "4.4.10", features = ["derive"] }
 jmap-client = { version = "0.3.0", features = ["async","tokio","rustls","websockets"] }
 tokio = { version = "1.34.0", features = ["full"] }
