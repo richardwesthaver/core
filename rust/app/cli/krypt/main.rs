@@ -4,6 +4,7 @@ use logger::{debug, info, trace, warn, Logger};
 use obj::Objective;
 use std::path::PathBuf;
 use util::Result;
+use util::cli::log_level_str_from_cli;
 #[derive(Debug, Parser)]
 #[command(name="krypt",author, version, about, long_about = None)]
 struct Cli {
@@ -50,14 +51,6 @@ enum Cmd {
   },
 }
 
-fn ll_str(b: u8) -> &'static str {
-  match b {
-    0 => "info",
-    1 => "debug",
-    _ => "trace",
-  }
-}
-
 fn check_config(cfg: KryptConfig) -> Result<()> {
   println!("{}", cfg.to_json_string()?);
   Ok(())
@@ -96,7 +89,7 @@ async fn main() -> Result<()> {
   // parse args
   let args = Cli::parse();
   // init logger
-  Logger::try_with_str(ll_str(args.level))?.start()?;
+  Logger::try_with_str(log_level_str_from_cli(args.level))?.start()?;
   trace!("{:?}", args);
   // load config
   let cfg = if let Some(path) = args.cfg {

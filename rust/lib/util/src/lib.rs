@@ -1,6 +1,6 @@
 //! util library
 #[cfg(feature = "anyhow")]
-pub use anyhow::Result;
+pub use anyhow::{Result,Context};
 #[cfg(feature = "bs")]
 pub mod bs;
 #[cfg(feature = "cli")]
@@ -12,3 +12,5 @@ pub mod path;
 mod tests;
 #[cfg(feature = "time")]
 pub mod time;
+#[cfg(feature = "url")]
+pub use url::Url;

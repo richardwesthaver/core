@@ -1,0 +1,31 @@
+# from rustup
+[package]
+name = "dl"
+version = "1.26.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[features]
+
+default = ["reqwest-backend", "reqwest-rustls-tls", "reqwest-default-tls"]
+
+curl-backend = ["curl"]
+reqwest-backend = ["reqwest", "env_proxy"]
+reqwest-default-tls = ["reqwest/default-tls"]
+reqwest-rustls-tls = ["reqwest/rustls-tls-native-roots"]
+
+[dependencies]
+anyhow = "1.0.75"
+curl = { version = "0.4.44", optional = true }
+env_proxy = { version = "0.4.1", optional = true }
+once_cell = "1.18.0"
+reqwest = { version = "0.11", default-features = false, features = ["blocking", "gzip", "socks"], optional = true }
+thiserror = "1.0.50"
+url = "2.5.0"
+
+[dev-dependencies]
+http-body-util = "0.1.0"
+hyper = { version = "1.0", default-features = false, features = ["server", "http1"] }
+hyper-util = { version = "0.1.1", features = ["tokio"] }
+tempfile = "3.8.1"
+tokio = { version = "1.34.0", features = ["sync"] }
