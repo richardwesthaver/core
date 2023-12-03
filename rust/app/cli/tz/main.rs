@@ -31,7 +31,7 @@ fn main() {
         }
       }
       _ => {
-        println!("mtz [pack|unpack] PATH");
+        println!("mtz [pack|unpack|unpackr] PATH");
       }
     }
   }

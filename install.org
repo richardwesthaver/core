@@ -8,11 +8,23 @@ documentation for details.
 The simplest way to get started is by getting the installer for your
 platform with the following script:
 
-#+begin_src shell
-curl --proto '=https' --tlsv1.2 -sSf https://packy.compiler.company/do/install.sh | sh
+#+begin_src shell :results pp replace :exports both :noeval t
+curl --proto '=https' --tlsv1.2 -sSf https://packy.compiler.company/do/init.sh | sh # -s -- --help
 #+end_src
 
 #+RESULTS:
+#+begin_example
+
+cc-init 0.1.0-0941fa04c53d+
+
+Usage: cc-init [OPTIONS]
+
+Options:
+  -y              Disable confirmation prompts
+  -l, --level...  Set the log level
+  -h, --help      Print help
+  -V, --version   Print version
+#+end_example
 
 * TODO Packages
 - State "TODO"       from              [2023-11-25 Sat 18:28]
@@ -29,11 +41,19 @@ sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/skel)' --eval 
 #+end_src
 
 #+RESULTS:
-: To load "app/cli/skel":
-:   Load 1 ASDF system:
-:     app/cli/skel
-: ; Loading "app/cli/skel"
-: ...
+#+begin_example
+To load "app/cli/skel":
+  Load 1 ASDF system:
+    app/cli/skel
+; Loading "app/cli/skel"
+..................................................
+[package skel/core/vc]............................
+[package skel/core/proto].........................
+[package skel/core/header]........................
+[package skel/core/obj]...........................
+[package skel/core/virt]..........................
+[package skel/comp/make]....
+#+end_example
 
 *** cli/organ
 #+begin_src shell :results pp replace :exports code
@@ -71,14 +91,31 @@ sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/homer)' --eval
 : ; Loading "app/cli/homer"
 : 
 ** Rust
-*** cli/tz
-#+begin_src shell :results output pp :exports code
-  cd rust/app/cli/tz && cargo build --release
-#+end_src
-
 *** cli/cc-init
 #+begin_src shell :results output pp :exports code
-  cd rust/app/cli/cc-init && cargo build --release
+  cd rust/app/cli/cc-init && cargo install --path .
+#+end_src
+
+#+RESULTS:
+
+
+*** cli/tz
+#+begin_src shell :results output pp :exports code
+  cd rust/app/cli/tz && cargo install --path .
+#+end_src
+
+#+RESULTS:
+
+*** cli/mailman
+#+begin_src shell :results output pp :exports code
+  cd rust/app/cli/cc-install && cargo install --path .
+#+end_src
+
+#+RESULTS:
+
+*** cli/krypt
+#+begin_src shell :results output pp :exports code
+  cd rust/app/cli/krypt && cargo install --path .
 #+end_src
 
 #+RESULTS:
