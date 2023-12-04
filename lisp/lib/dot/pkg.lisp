@@ -3,7 +3,8 @@
 ;; https://graphviz.org/doc/info/lang.html
 
 ;;; Code:
-(defpackage :dot
+(defpackage :dot/pkg
+  (:nicknames :dot)
   (:use :cl :std :cl-ppcre)
   (:export
    ;; Variables
@@ -42,95 +43,39 @@
 
 (in-package :dot)
 
-;;; Config
-(defun find-dot ()
-  "Find the DOT program using either the environment variable CL_DOT_DOT, search in the user's
-path, or search of likely installation locations."
-  (or
-   (uiop:getenv "CL_DOT_DOT")
-   (check-in-path "dot")
-   (loop for file in #+(or win32 mswindows) (list "\"C:/Program Files/ATT/Graphviz/bin/dot.exe\"")
-         #-(or win32 mswindows) (list "/usr/local/bin/dot" "/opt/local/bin/dot" "/usr/bin/dot")
-         when (probe-file file)
-           return file
-         finally (return nil))))
+;;; Context 
+(deftype context ()
+  "A context in which an attribute may occur."
+  '(member :graph :subgraph :cluster :node :edge))
 
-(defun find-neato ()
-  "Find the NEATO program using either the environment variable CL_DOT_NEATO, search in the user's
-path, or search of likely installation locations."
-  (or
-   (uiop:getenv "CL_DOT_NEATO")
-   (check-in-path "neato")
-   (loop for file in #+(or win32 mswindows) (list "\"C:/Program Files/ATT/Graphviz/bin/neato.exe\"")
-         #-(or win32 mswindows) (list "/usr/local/bin/neato" "/opt/local/bin/neato" "/usr/bin/neato")
-         when (probe-file file)
-           return file
-         finally (return nil))))
+(defun context-list-p (thing)
+  (and (listp thing)
+       (every (lambda (element) (typep element 'context)) thing)))
 
+(deftype context-set ()
+  "A set of contexts in which an attribute may occur."
+  '(satisfies context-list-p))
 
-(defun check-in-path (name)
-  (multiple-value-bind (outstring errstring exit-code)
-      (uiop:run-program (list  #+(or win32 mswindows)"where"
-                               #-(or win32 mswindows)"which"
-                               name) :force-shell t :output '(:string :stripped t) :ignore-error-status t)
-    (declare (ignore errstring))
-    (when (zerop exit-code) (uiop:parse-native-namestring outstring))))
+(defun foreign-name->lisp-name (name)
+  "Return an idiomatic Lisp name derived from the GraphViz name NAME."
+  (intern (string-upcase (substitute #\- #\_ name)) :keyword))
 
-(defvar *dot-path*
-  #+(or win32 mswindows) "\"C:/Program Files/ATT/Graphviz/bin/dot.exe\""
-  #-(or win32 mswindows) "/usr/bin/dot"
-  "Path to the dot command")
+(defstruct (attribute
+             (:constructor make-attribute (foreign-name allowed-in type
+                                           &aux
+                                           (name (foreign-name->lisp-name
+                                                  foreign-name))))
+             (:predicate nil)
+             (:copier nil))
+  "Description of a GraphViz attribute."
+  (name         nil :type symbol           :read-only t)
+  (foreign-name nil :type string           :read-only t)
+  (allowed-in   nil :type context-set      :read-only t)
+  (type         nil :type (or symbol cons) :read-only t))
 
-;; the path to the neato executable (used for drawing undirected
-;; graphs).
-(defvar *neato-path*
-  #+(or win32 mswindows) "\"C:/Program Files/ATT/Graphviz/bin/neato.exe\""
-  #-(or win32 mswindows) "/usr/bin/neato"
-  "Path to the neato command")
-
-(eval-when (:load-toplevel :execute)
-  (setf *dot-path* (find-dot))
-  (setf *neato-path* (find-neato)))
-
-;;; Dead Code
-(defgeneric object-node (object)
-  (:documentation
-   "Return a NODE instance for this object, or NIL. In the latter case
-the object will not be included in the graph, but it can still have an
-indirect effect via other protocol functions (e.g. OBJECT-KNOWS-OF).
-This function will only be called once for each object during the
-generation of a graph."))
-
-(defgeneric object-points-to (object)
-  (:documentation
-   "Return a list of objects to which the NODE of this object should be
-connected. The edges will be directed from this object to the others.
-To assign dot attributes to the generated edges, each object can optionally
-be wrapped in a instance of ATTRIBUTED.")
-  (:method ((object t))
-    nil))
-
-(defgeneric object-pointed-to-by (object)
-  (:documentation
-   "Return a list of objects to which the NODE of this object should be
-connected. The edges will be directed from the other objects to this
-one. To assign dot attributes to the generated edges, each object can
-optionally be wrapped in a instance of ATTRIBUTED.")
-  (:method ((object t))
-    nil))
-
-(defgeneric object-knows-of (object)
-  (:documentation
-   "Return a list of objects that this object knows should be part of the
-graph, but which it has no direct connections to.")
-  (:method ((object t))
-    nil))
-
-(defgeneric generate-graph (object &optional attributes)
-  (:documentation "Construct a GRAPH with ATTRIBUTES starting
-from OBJECT, using the GRAPH-OBJECT- protocol.")
-  (:method ((object t) &optional attributes)
-    (generate-graph-from-roots 'default (list object) attributes)))
+(defun find-attribute (name attributes)
+  (or (find name attributes :key #'attribute-name)
+      (error "Invalid attribute ~S" name)))
 
 ;;; Data
 (defparameter *node-shapes*
@@ -337,40 +282,6 @@ from OBJECT, using the GRAPH-OBJECT- protocol.")
         (make-attribute "xlp" '(:node :edge) 'text)
         (make-attribute "z" '(:node) 'float)))
 
-;;; Context 
-(deftype context ()
-  "A context in which an attribute may occur."
-  '(member :graph :subgraph :cluster :node :edge))
-
-(defun context-list-p (thing)
-  (and (listp thing)
-       (every (lambda (element) (typep element 'context)) thing)))
-
-(deftype context-set ()
-  "A set of contexts in which an attribute may occur."
-  '(satisfies context-list-p))
-
-(defun foreign-name->lisp-name (name)
-  "Return an idiomatic Lisp name derived from the GraphViz name NAME."
-  (intern (string-upcase (substitute #\- #\_ name)) :keyword))
-
-(defstruct (attribute
-             (:constructor make-attribute (foreign-name allowed-in type
-                                           &aux
-                                           (name (foreign-name->lisp-name
-                                                  foreign-name))))
-             (:predicate nil)
-             (:copier nil))
-  "Description of a GraphViz attribute."
-  (name         nil :type symbol           :read-only t)
-  (foreign-name nil :type string           :read-only t)
-  (allowed-in   nil :type context-set      :read-only t)
-  (type         nil :type (or symbol cons) :read-only t))
-
-(defun find-attribute (name attributes)
-  (or (find name attributes :key #'attribute-name)
-      (error "Invalid attribute ~S" name)))
-
 (defparameter *graph-attributes*
   (remove :graph *attributes* :test-not #'member :key #'attribute-allowed-in))
 
@@ -382,6 +293,96 @@ from OBJECT, using the GRAPH-OBJECT- protocol.")
 
 (defparameter *cluster-attributes*
   (remove :cluster *attributes* :test-not #'member :key #'attribute-allowed-in))
+
+;;; Config
+(defun find-dot ()
+  "Find the DOT program using either the environment variable CL_DOT_DOT, search in the user's
+path, or search of likely installation locations."
+  (or
+   (uiop:getenv "CL_DOT_DOT")
+   (check-in-path "dot")
+   (loop for file in #+(or win32 mswindows) (list "\"C:/Program Files/ATT/Graphviz/bin/dot.exe\"")
+         #-(or win32 mswindows) (list "/usr/local/bin/dot" "/opt/local/bin/dot" "/usr/bin/dot")
+         when (probe-file file)
+           return file
+         finally (return nil))))
+
+(defun find-neato ()
+  "Find the NEATO program using either the environment variable CL_DOT_NEATO, search in the user's
+path, or search of likely installation locations."
+  (or
+   (uiop:getenv "CL_DOT_NEATO")
+   (check-in-path "neato")
+   (loop for file in #+(or win32 mswindows) (list "\"C:/Program Files/ATT/Graphviz/bin/neato.exe\"")
+         #-(or win32 mswindows) (list "/usr/local/bin/neato" "/opt/local/bin/neato" "/usr/bin/neato")
+         when (probe-file file)
+           return file
+         finally (return nil))))
+
+
+(defun check-in-path (name)
+  (multiple-value-bind (outstring errstring exit-code)
+      (uiop:run-program (list  #+(or win32 mswindows)"where"
+                               #-(or win32 mswindows)"which"
+                               name) :force-shell t :output '(:string :stripped t) :ignore-error-status t)
+    (declare (ignore errstring))
+    (when (zerop exit-code) (uiop:parse-native-namestring outstring))))
+
+(defvar *dot-path*
+  #+(or win32 mswindows) "\"C:/Program Files/ATT/Graphviz/bin/dot.exe\""
+  #-(or win32 mswindows) "/usr/bin/dot"
+  "Path to the dot command")
+
+;; the path to the neato executable (used for drawing undirected
+;; graphs).
+(defvar *neato-path*
+  #+(or win32 mswindows) "\"C:/Program Files/ATT/Graphviz/bin/neato.exe\""
+  #-(or win32 mswindows) "/usr/bin/neato"
+  "Path to the neato command")
+
+(eval-when (:load-toplevel :execute)
+  (setf *dot-path* (find-dot))
+  (setf *neato-path* (find-neato)))
+
+;;; Dead Code
+(defgeneric object-node (object)
+  (:documentation
+   "Return a NODE instance for this object, or NIL. In the latter case
+the object will not be included in the graph, but it can still have an
+indirect effect via other protocol functions (e.g. OBJECT-KNOWS-OF).
+This function will only be called once for each object during the
+generation of a graph."))
+
+(defgeneric object-points-to (object)
+  (:documentation
+   "Return a list of objects to which the NODE of this object should be
+connected. The edges will be directed from this object to the others.
+To assign dot attributes to the generated edges, each object can optionally
+be wrapped in a instance of ATTRIBUTED.")
+  (:method ((object t))
+    nil))
+
+(defgeneric object-pointed-to-by (object)
+  (:documentation
+   "Return a list of objects to which the NODE of this object should be
+connected. The edges will be directed from the other objects to this
+one. To assign dot attributes to the generated edges, each object can
+optionally be wrapped in a instance of ATTRIBUTED.")
+  (:method ((object t))
+    nil))
+
+(defgeneric object-knows-of (object)
+  (:documentation
+   "Return a list of objects that this object knows should be part of the
+graph, but which it has no direct connections to.")
+  (:method ((object t))
+    nil))
+
+(defgeneric generate-graph (object &optional attributes)
+  (:documentation "Construct a GRAPH with ATTRIBUTES starting
+from OBJECT, using the GRAPH-OBJECT- protocol.")
+  (:method ((object t) &optional attributes)
+    (generate-graph-from-roots 'default (list object) attributes)))
 
 ;;; Classes
 
