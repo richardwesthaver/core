@@ -1,7 +1,9 @@
 ;;; File Headers
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/proto)
-  (:export :make-source-header-comment))
+  (:export
+   :make-file-header :make-shebang-file-header :make-source-file-header :file-header-kind
+   :make-source-header-comment :make-shebang-comment))
 
 (in-package :skel/core/header)
 
