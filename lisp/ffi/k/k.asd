@@ -7,10 +7,22 @@
 ;; 
 
 ;;; Code:
-(defsystem "k"
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require :sb-grovel))
+
+(defpackage :k.sys
+  (:use :cl :asdf :sb-grovel :sb-alien))
+
+(in-package :k.sys)
+
+(defsystem :k
   :description "ngn/k FFI"
-  :defsystem-depends-on (:asdf-package-system)
-  :class :package-inferred-system
-  :depends-on (:std :k/pkg)
-  :in-order-to ((test-op (test-op "k/tests")))
+  :depends-on (:sb-grovel :std)
+  :components ((:file "pkg")
+               (grovel-constants-file "constants"
+                                      :package :k))
+  :in-order-to ((test-op (test-op "k/tests"))))
+
+(defsystem :k/tests
+  :depends-on (:std/rt :k)
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :k)))

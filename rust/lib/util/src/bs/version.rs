@@ -29,11 +29,7 @@ pub fn generate_cargo_keys() {
     get_version_short(&commit)
   );
 
-  println!(
-    "cargo:rustc-env=CORE_TARGET={}",
-    get_platform()
-  );
-
+  println!("cargo:rustc-env=CORE_TARGET={}", get_platform());
 }
 
 pub fn get_platform() -> String {
