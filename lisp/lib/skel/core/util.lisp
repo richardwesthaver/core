@@ -1,6 +1,15 @@
 ;;; Utils
 (defpackage :skel/core/util
-  (:use :cl :skel/core/obj :skel/core/proto))
+  (:use :cl :skel/core/obj :skel/core/proto :std/fu)
+  (:export 
+   :init-skelrc :load-skelrc
+   :init-skel-user-config
+   :init-skelfile
+   :load-skelfile
+   :find-skelfile
+   :find-project-root
+   :describe-skeleton
+   :describe-project))
 
 (in-package :skel/core/util)
 
@@ -18,9 +27,28 @@ defaults. Defaults to ~/.skelrc."
   "Initialize the *SKEL-USER-CONFIG* var."
   (setq *skel-user-config* (load-skelrc file)))
 
-(defun load-skelfile (file)
-  "Load the 'skelfile' FILE."
-  (load-ast (sk-read-file (make-instance 'sk-project) file)))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun load-skelfile (file)
+    "Load the 'skelfile' FILE."
+    (load-ast (sk-read-file (make-instance 'sk-project) file)))
+
+  (defun find-project-root (path name)
+    "Return PATH if it is a `skel-project' by checking for
+  NAME."
+    (if (probe-file (merge-pathnames name path))
+        path
+        (let ((next (pathname-parent-directory-pathname path)))
+	  (when (eql path next)
+	    (find-project-root next name)))))
+
+  (defun init-skelfile (&optional file name cfg)
+    "Initialize a skelfile."
+    (let ((sk (make-instance 'sk-project 
+		:name (or name (pathname-name (getcwd)))))
+	  (path (or file *default-skelfile*))
+	  (fmt :collapsed))
+      (when cfg (setf sk (sk-install-user-config sk cfg)))
+      (sk-write-file sk :path path :fmt fmt))))
 
 (defun find-skelfile (start &key (load nil) (name *default-skelfile*) (walk t))
   "Walk up the current directory returning the path to a 'skelfile', else
@@ -39,24 +67,6 @@ return nil. When LOAD is non-nil, load the skelfile if found."
 	    (load-skelfile sk)
 	    sk)
 	(warn "failed to find skelfile"))))
-
-(defun find-project-root (path name)
-  "Return PATH if it is a `skel-project' by checking for
-  NAME."
-  (if (probe-file (merge-pathnames name path))
-      path
-      (let ((next (pathname-parent-directory-pathname path)))
-	(when (eql path next)
-	  (find-project-root next name)))))
-
-(defun init-skelfile (&optional file name cfg)
-  "Initialize a skelfile."
-  (let ((sk (make-instance 'sk-project 
-			   :name (or name (pathname-name (getcwd)))))
-	(path (or file *default-skelfile*))
-	(fmt :collapsed))
-    (when cfg (setf sk (sk-install-user-config sk cfg)))
-    (sk-write-file sk :path path :fmt fmt)))
 
 (defun describe-skeleton (skel &optional (stream t))
   "Describe the object SKEL which should inherit from the `skel' superclass."

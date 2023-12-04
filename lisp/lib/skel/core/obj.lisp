@@ -1,7 +1,17 @@
 ;;; Objects
 (defpackage :skel/core/obj
   (:use :cl :std :skel/core/proto :skel/core/vc :skel/core/header :sb-unix)
-  (:import-from :uiop :read-file-forms :ensure-absolute-pathname))
+  (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
+  (:export
+   ;; cfg
+   :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-project-registry* 
+   :*default-skelfile* :*default-skel-user* :*default-skel-cache* :*default-user-skel-config* 
+   :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
+   ;; obj
+   :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
+   :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 
+   :sk-description :sk-kind :sk-rules :sk-id :sk-version :sk-name :sk-docs :sk-document 
+   :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev))
 
 (in-package :skel/core/obj)
 

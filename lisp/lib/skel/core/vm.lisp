@@ -3,7 +3,9 @@
 ;; Stack slots refer to objects. a Stack is a sequence of objects
 ;; which can be output to a stream using a specialized function.
 (defpackage :skel/core/vm
-  (:use :cl :std :skel/core/obj :skel/core/proto))
+  (:use :cl :std :skel/core/obj :skel/core/proto)
+  (:export
+   :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push))
 
 (in-package :skel/core/vm)
 
