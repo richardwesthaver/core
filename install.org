@@ -115,16 +115,19 @@ Options:
 #+end_src
 
 #+RESULTS:
+
 *** cli/mailman
 #+begin_src shell :results output pp :exports code
   cd rust/app/cli/cc-install && cargo install --path .
 #+end_src
 
 #+RESULTS:
+
 *** cli/krypt
 #+begin_src shell :results output pp :exports code
   cd rust/app/cli/krypt && cargo install --path .
 #+end_src
 
 #+RESULTS:
+
 * Source
