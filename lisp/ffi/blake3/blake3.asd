@@ -11,10 +11,24 @@
 ;;   blake3_avx512_x86-64_unix.S
 
 ;;; Code:
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require :sb-grovel))
+
+(defpackage :blake3.sys
+  (:use :cl :asdf :sb-grovel :sb-alien))
+
+(in-package :blake3.sys)
+
 (defsystem "blake3"
   :description "BLAKE3/C FFI"
-  :defsystem-depends-on (:asdf-package-system)
-  :class :package-inferred-system
-  :depends-on (:std :blake3/pkg)
+  :depends-on (:sb-grovel :std)
   :in-order-to ((test-op (test-op "blake3/tests")))
+  :components ((:file "pkg")
+               (grovel-constants-file "constants"
+                                      :package :blake3))
+  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :blake3)))
+
+(defsystem "blake3/tests"
+  :depends-on (:std/rt :blake3)
+  :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :blake3)))
