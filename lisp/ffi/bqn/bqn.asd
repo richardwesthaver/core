@@ -10,10 +10,23 @@
 ;; see also: https://github.com/Detegr/cbqn-sys
 
 ;;; Code:
-(defsystem "bqn"
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require :sb-grovel))
+
+(defpackage :bqn.sys
+  (:use :cl :asdf :sb-grovel :sb-alien))
+
+(in-package :bqn.sys)
+
+(defsystem :bqn
   :description "CBQN FFI"
-  :defsystem-depends-on (:asdf-package-system)
-  :class :package-inferred-system
-  :depends-on (:std :bqn/pkg)
-  :in-order-to ((test-op (test-op "bqn/tests")))
+  :depends-on (:sb-grovel :std)
+  :components ((:file "pkg")
+               (grovel-constants-file "constants"
+                                      :package :bqn))
+  :in-order-to ((test-op (test-op "bqn/tests"))))
+
+(defsystem :bqn/tests
+  :depends-on (:std/rt :bqn)
+  :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :bqn)))

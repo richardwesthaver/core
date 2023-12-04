@@ -1,12 +1,16 @@
 use clap::Parser;
-use std::path::Path;
-use logger::{Logger, info, trace};
-use util::{Result, Url};
-use util::{cli::log_level_str_from_cli};
 use dl::{download_to_path_with_backend, Backend, TlsBackend};
-use std::env;
+use logger::{info, trace, Logger};
+use std::{env, path::Path};
+use util::{cli::log_level_str_from_cli, Result, Url};
 
-pub const ABOUT: &str = concat!("cc-init ", env!("CORE_VERSION"), " (", env!("CORE_TARGET"), ")");
+pub const ABOUT: &str = concat!(
+  "cc-init ",
+  env!("CORE_VERSION"),
+  " (",
+  env!("CORE_TARGET"),
+  ")"
+);
 
 #[derive(Debug, Parser)]
 #[command(name="cc-init",author, version=env!("CORE_VERSION"), about=ABOUT)]
@@ -19,7 +23,7 @@ struct Cli {
   level: u8,
 }
 
-fn dl<P:AsRef<Path> + std::fmt::Debug>(url:&str,dst:P) -> Result<()> {
+fn dl<P: AsRef<Path> + std::fmt::Debug>(url: &str, dst: P) -> Result<()> {
   info!("downloading {url} -> {dst:?}");
   let url = Url::parse(url)?;
   download_to_path_with_backend(
@@ -27,7 +31,8 @@ fn dl<P:AsRef<Path> + std::fmt::Debug>(url:&str,dst:P) -> Result<()> {
     &url,
     dst.as_ref(),
     true,
-    None)
+    None,
+  )
 }
 
 fn main() -> Result<()> {

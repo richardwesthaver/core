@@ -3,8 +3,7 @@ use krypt::{keyutils::keytypes, ks, ss, KryptConfig};
 use logger::{debug, info, trace, warn, Logger};
 use obj::Objective;
 use std::path::PathBuf;
-use util::Result;
-use util::cli::log_level_str_from_cli;
+use util::{cli::log_level_str_from_cli, Result};
 #[derive(Debug, Parser)]
 #[command(name="krypt",author, version, about, long_about = None)]
 struct Cli {

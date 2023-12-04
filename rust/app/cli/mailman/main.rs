@@ -1,9 +1,8 @@
 use clap::{Parser, Subcommand};
-use logger::{Logger,trace};
+use logger::{trace, Logger};
 // use obj::Objective;
 use std::path::PathBuf;
-use util::Result;
-use util::cli::log_level_str_from_cli;
+use util::{cli::log_level_str_from_cli, Result};
 // use jmap_client::{client::Client, core::query::Filter, email, mailbox};
 
 #[derive(Debug, Parser)]
