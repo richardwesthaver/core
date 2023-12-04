@@ -149,7 +149,6 @@
 
 ;;; Desktop
 (setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
-(add-hook 'kill-emacs-hook #'desktop-save-in-desktop-dir)
 
 ;;; Multisession
 (setq multisession-storage 'sqlite)

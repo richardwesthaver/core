@@ -173,5 +173,11 @@ $ emacsclient -c
 
 (define-key special-event-map [sigusr1] 'kill-emacs-restart)
 
+(defun upgrade-emacs (&optional ask)
+  (interactive)
+  (package-refresh-contents)
+  (package-install-selected-packages (not ask))
+  (package-upgrade-all ask))
+
 (provide 'util)
 ;; util.el ends here
