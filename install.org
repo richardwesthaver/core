@@ -37,66 +37,69 @@ Options:
 ** Lisp
 *** cli/skel
 #+begin_src shell :results pp replace :exports code
-  sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/skel)' --eval "(asdf:operate 'asdf:program-op :app/cli/skel)"
+  sbcl --noinform  --non-interactive \
+    --eval '(ql:quickload :cli/skel)' \
+    --eval "(asdf:make :cli/skel)"
+  mv lisp/app/cli/skel ~/.local/bin/
 #+end_src
 
 #+RESULTS:
-: To load "app/cli/skel":
+: To load "cli/skel":
 :   Load 1 ASDF system:
-:     app/cli/skel
-: ; Loading "app/cli/skel"
-: ...
-: compressed 32768 bytes into 5093 at level 9
-: compressed 236388352 bytes into 9392491 at level 9
-: compressed 8355840 bytes into 2576707 at level 9
+:     cli/skel
+: ; Loading "cli/skel"
+: .....
+: compressed 32768 bytes into 5073 at level 9
+: compressed 236388352 bytes into 9360505 at level 9
+: compressed 8388608 bytes into 2580716 at level 9
 : compressed 0 bytes into 9 at level 9
 
 *** cli/organ
 #+begin_src shell :results pp replace :exports code
-sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/organ)' --eval "(asdf:operate 'asdf:program-op :app/cli/organ)"
+  sbcl --noinform  --non-interactive \
+    --eval '(ql:quickload :cli/organ)' \
+    --eval "(asdf:make :cli/organ)"
+  mv lisp/app/cli/organ ~/.local/bin/
 #+end_src
 
 #+RESULTS:
-: To load "app/cli/organ":
-:   Load 1 ASDF system:
-:     app/cli/organ
-: ; Loading "app/cli/organ"
-: ...
-: compressed 32768 bytes into 5097 at level 9
-: compressed 236388352 bytes into 9418771 at level 9
-: compressed 8421376 bytes into 2594963 at level 9
-: compressed 0 bytes into 9 at level 9
 
 *** cli/rdb
 #+begin_src shell :results pp replace :exports code
-sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/rdb)' --eval "(asdf:operate 'asdf:program-op :app/cli/rdb)"
+  sbcl --noinform  --non-interactive \
+    --eval '(ql:quickload :cli/rdb)' \
+    --eval "(asdf:make :cli/rdb)"
+  mv lisp/app/cli/rdb ~/.local/bin/
 #+end_src
 
 #+RESULTS:
-: To load "app/cli/rdb":
+: To load "cli/rdb":
 :   Load 1 ASDF system:
-:     app/cli/rdb
-: ; Loading "app/cli/rdb"
+:     cli/rdb
+: ; Loading "cli/rdb"
 : ..
-: compressed 32768 bytes into 5081 at level 9
-: compressed 236388352 bytes into 9329605 at level 9
-: compressed 8355840 bytes into 2575589 at level 9
+: compressed 32768 bytes into 5094 at level 9
+: compressed 236388352 bytes into 9175348 at level 9
+: compressed 8257536 bytes into 2543259 at level 9
 : compressed 0 bytes into 9 at level 9
 
 *** cli/homer
 #+begin_src shell :results pp replace :exports code
-sbcl --noinform  --non-interactive --eval '(ql:quickload :app/cli/homer)' --eval "(asdf:operate 'asdf:program-op :app/cli/homer)"
+  sbcl --noinform  --non-interactive \
+    --eval '(ql:quickload :cli/homer)' \
+    --eval "(asdf:make :cli/homer)"
+  mv lisp/app/cli/homer ~/.local/bin/
 #+end_src
 
 #+RESULTS:
-: To load "app/cli/homer":
+: To load "cli/homer":
 :   Load 1 ASDF system:
-:     app/cli/homer
-: ; Loading "app/cli/homer"
-: 
-: compressed 32768 bytes into 5085 at level 9
-: compressed 236388352 bytes into 8866898 at level 9
-: compressed 7864320 bytes into 2447886 at level 9
+:     cli/homer
+: ; Loading "cli/homer"
+: ...
+: compressed 32768 bytes into 5082 at level 9
+: compressed 236388352 bytes into 9367349 at level 9
+: compressed 8388608 bytes into 2578766 at level 9
 : compressed 0 bytes into 9 at level 9
 ** Rust
 *** cli/cc-init

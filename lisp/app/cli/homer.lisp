@@ -1,7 +1,9 @@
 ;;; homer.lisp --- homectl utility
 
 ;;; Code:
-(uiop:define-package :app/cli/homer
-  (:use :cl))
+(uiop:define-package :cli/homer
+  (:use :cl :std))
 
-(in-package :app/cli/homer)
+(in-package :cli/homer)
+
+(defmain ())

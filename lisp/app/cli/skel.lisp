@@ -1,9 +1,9 @@
 ;;; Code:
-(uiop:define-package :app/cli/skel
+(uiop:define-package :cli/skel
   (:use :cl :std :std/cli :skel/pkg :skel/core/vc :skel/core/virt :skel/comp/make)
   (:export :main))
 
-(in-package :app/cli/skel)
+(in-package :cli/skel)
 
 ;; HACK 2023-10-14: a bit too early to implement this, would rather
 ;; use the repl. they're useful for linking up with the debugger tho.
