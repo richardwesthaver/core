@@ -1,6 +1,6 @@
 ;;; Utils
 (defpackage :skel/core/util
-  (:use :cl :skel/core/obj :skel/core/proto :std/fu)
+  (:use :cl :skel/core/obj :skel/core/proto :std)
   (:export 
    :init-skelrc :load-skelrc
    :init-skel-user-config

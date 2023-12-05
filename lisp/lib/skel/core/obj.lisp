@@ -6,12 +6,17 @@
    ;; cfg
    :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-project-registry* 
    :*default-skelfile* :*default-skel-user* :*default-skel-cache* :*default-user-skel-config* 
-   :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
+   :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
+   :*default-skel-stash* :*default-skel-shed* :*default-system-skelrc*
+   ;; helpers
+   :file-read-forms :load-ast
    ;; obj
+   :sk-author :sk-path :sk-shed :sk-stash :sk-user
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 
    :sk-description :sk-kind :sk-rules :sk-id :sk-version :sk-name :sk-docs :sk-document 
-   :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev))
+   :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
+   :sk-user-config))
 
 (in-package :skel/core/obj)
 
@@ -188,7 +193,7 @@ via the special form stored in RECIPE."))
 	;; ast is valid, modify object, set ast nil
 	(progn
 	  (sb-int:doplist (k v) ast
-	    (setf (slot-value self (intern (symbol-name k) :skel)) v))
+	    (setf (slot-value self (intern (symbol-name k) :skel/core/obj)) v)) ;; needs to be the correct package
 	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
 	  (when (bound-string-p self 'shed) (setf (sk-shed self) (pathname (sk-shed self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
@@ -251,7 +256,7 @@ via the special form stored in RECIPE."))
 	;; ast is valid, modify object, set ast nil
 	(progn
 	  (sb-int:doplist (k v) ast
-	    (setf (slot-value self (intern (symbol-name k) :skel)) v))
+	    (setf (slot-value self (intern (symbol-name k) :skel/core/obj)) v)) ;; needs to be correct package
 	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
 	  (when (bound-string-p self 'shed) (setf (sk-shed self) (pathname (sk-shed self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
