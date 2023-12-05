@@ -25,7 +25,6 @@ Options:
   -h, --help      Print help
   -V, --version   Print version
 #+end_example
-
 * TODO Packages
 - State "TODO"       from              [2023-11-25 Sat 18:28]
 ** Crates                                                              :rust:
@@ -33,6 +32,16 @@ Options:
 ** Quicklisp                                                           :lisp:
 ** AUR                                                               :pacman:
 * Images
+We also ship FASL images for Lisp. These images can be downloaded and
+loaded using the =--core= option of your lisp compiler like so:
+
+#+begin_src shell
+sbcl --core std.core
+#+end_src
+
+See [[https://www.sbcl.org/manual/#FASL-Format][FASL Format]] for details. Keep in mind that the FASL format is not
+portable - they are tied to a specific version of the compiler and we
+don't keep old versions around for long.
 * Apps
 ** Lisp
 *** cli/skel
@@ -48,10 +57,10 @@ Options:
 :   Load 1 ASDF system:
 :     cli/skel
 : ; Loading "cli/skel"
-: .....
-: compressed 32768 bytes into 5073 at level 9
-: compressed 236388352 bytes into 9360505 at level 9
-: compressed 8388608 bytes into 2580716 at level 9
+: ....
+: compressed 32768 bytes into 5088 at level 9
+: compressed 236388352 bytes into 9411692 at level 9
+: compressed 8388608 bytes into 2588862 at level 9
 : compressed 0 bytes into 9 at level 9
 
 *** cli/organ
@@ -63,6 +72,18 @@ Options:
 #+end_src
 
 #+RESULTS:
+#+begin_example
+To load "cli/organ":
+  Load 1 ASDF system:
+    cli/organ
+; Loading "cli/organ"
+..................................................
+[package cli/organ].
+compressed 32768 bytes into 5082 at level 9
+compressed 236388352 bytes into 9296021 at level 9
+compressed 8355840 bytes into 2571330 at level 9
+compressed 0 bytes into 9 at level 9
+#+end_example
 
 *** cli/rdb
 #+begin_src shell :results pp replace :exports code
@@ -78,9 +99,9 @@ Options:
 :     cli/rdb
 : ; Loading "cli/rdb"
 : ..
-: compressed 32768 bytes into 5094 at level 9
-: compressed 236388352 bytes into 9175348 at level 9
-: compressed 8257536 bytes into 2543259 at level 9
+: compressed 32768 bytes into 5087 at level 9
+: compressed 236388352 bytes into 9214043 at level 9
+: compressed 8257536 bytes into 2554086 at level 9
 : compressed 0 bytes into 9 at level 9
 
 *** cli/homer
@@ -92,15 +113,18 @@ Options:
 #+end_src
 
 #+RESULTS:
-: To load "cli/homer":
-:   Load 1 ASDF system:
-:     cli/homer
-: ; Loading "cli/homer"
-: ...
-: compressed 32768 bytes into 5082 at level 9
-: compressed 236388352 bytes into 9367349 at level 9
-: compressed 8388608 bytes into 2578766 at level 9
-: compressed 0 bytes into 9 at level 9
+#+begin_example
+To load "cli/homer":
+  Load 1 ASDF system:
+    cli/homer
+; Loading "cli/homer"
+..................................................
+[package cli/homer]
+compressed 32768 bytes into 5074 at level 9
+compressed 236388352 bytes into 9388341 at level 9
+compressed 8388608 bytes into 2586302 at level 9
+compressed 0 bytes into 9 at level 9
+#+end_example
 
 ** Rust
 *** cli/cc-init
