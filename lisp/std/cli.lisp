@@ -35,6 +35,8 @@
    :*cli-opt-kinds*
    :global-opt-p
    :exec-path-list
+   :program-list
+   :find-exe
    :ld-library-path-list
    :argp
    :$val
@@ -113,19 +115,34 @@
 
 (in-package :std/cli)
 
+(defvar *argv*)
+
 (defun cli-arg0 () (car sb-ext:*posix-argv*))
 (defun cli-args () (cdr sb-ext:*posix-argv*))
 
 (declaim (inline exec-path-list))
 (defun exec-path-list ()
+  "Return a list of all members of PATH"
   (let ((var (sb-posix:getenv "PATH")))
     (let ((lst (loop for i = 0 then (1+ j)
-		  as j = (position #\: var :start i)
-		  collect (subseq var i j)
-		while j)))
+		     as j = (position #\: var :start i)
+                     when (uiop:directory-exists-p (probe-file (subseq var i j)))
+		       collect (probe-file (subseq var i j))
+		     while j)))
       (unless (null (car lst))
         (mapcar (lambda (x) (car (directory x)))
                 lst)))))
+
+(defun program-list ()
+  "Return a fresh list of all files in PATH directories."
+    (loop for p in (exec-path-list)
+          append (uiop:directory-files p)))
+
+(defun find-exe (name &optional programs)
+  "Find NAME in list of PROGRAMS, defaulting to the result of #'program-list."
+  (find name (or programs (program-list))
+        :test #'equalp
+        :key #'pathname-name))
 
 (declaim (inline ld-library-path-list))
 (defun ld-library-path-list ()
@@ -286,8 +303,6 @@ Note that this macro does not export the defined function and requires
 	     (progn ,@body ,ret))))))
 
 ;;; Utils
-(defvar *argv*)
-
 (defun make-cli (kind &rest slots)
   "Creates a new CLI object of the given kind."
   (declare (type (member :opt :cmd :cli t) kind))

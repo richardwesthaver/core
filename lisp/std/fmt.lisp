@@ -1,11 +1,11 @@
 ;;; std/fmt.lisp --- printer and format utils
 
 ;;; Code:
-(defpackage :std/fmt
+(uiop:define-package :std/fmt
   (:nicknames :fmt)
   (:use :cl :std/base :std/fu)
-  (:import-from :uiop :println)
-  (:export :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree))
+  (:shadowing-import-from :uiop :println)
+  (:export :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree :println))
 
 (in-package :std/fmt)
 
