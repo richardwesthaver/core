@@ -1,6 +1,7 @@
 ;;; Utils
 (defpackage :skel/core/util
   (:use :cl :skel/core/obj :skel/core/proto :std)
+  (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:export 
    :init-skelrc :load-skelrc
    :init-skel-user-config
