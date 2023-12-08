@@ -280,7 +280,7 @@ set *errptr to a malloc()ed error message.
 (load-rocksdb)
 
 ;;; Macros
-(defmacro with-errptr (name result-type &rest args)
+(defmacro def-with-errptr (name result-type &rest args)
   `(define-alien-routine ,name ,result-type ,@args (errptr rocksdb-errptr)))
 
 (defmacro define-opt (name &rest fields)
@@ -310,7 +310,7 @@ set *errptr to a malloc()ed error message.
 (defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symbolicate ty '-t))))
 
 ;;; Exported Types
-(define-alien-type rocksdb-errptr (* t))
+(define-alien-type rocksdb-errptr (* (* t)))
 
 (define-opaque rocksdb)
 (define-opaque rocksdb)
@@ -395,7 +395,7 @@ set *errptr to a malloc()ed error message.
 
 (define-alien-routine rocksdb-flushoptions-get-wait unsigned-char (* rocksdb-flushoptions))
 
-(with-errptr rocksdb-load-latest-options 
+(def-with-errptr rocksdb-load-latest-options 
   void
   (db-path c-string)
   (env (* rocksdb-env))
@@ -412,7 +412,7 @@ set *errptr to a malloc()ed error message.
   (list-column-family-options (* (* rocksdb-options)))
   (len size-t))
 
-(with-errptr
+(def-with-errptr
   rocksdb-set-options 
   void
   (db (* rocksdb))
@@ -420,7 +420,7 @@ set *errptr to a malloc()ed error message.
   (keys (array c-string))
   (values (array c-string)))
 
-(with-errptr rocksdb-set-options-cf 
+(def-with-errptr rocksdb-set-options-cf 
   void
   (db (* rocksdb))
   (handle (* rocksdb-column-family-handle))
@@ -429,7 +429,7 @@ set *errptr to a malloc()ed error message.
   (values (array c-string)))
 
 ;;; DB
-(with-errptr rocksdb-open (* rocksdb)
+(def-with-errptr rocksdb-open (* rocksdb)
   (opt (* rocksdb-options))
   (name c-string))
 
@@ -440,7 +440,7 @@ set *errptr to a malloc()ed error message.
   (db (* rocksdb))
   (wait boolean))
 
-(with-errptr rocksdb-put 
+(def-with-errptr rocksdb-put 
       void 
       (db (* rocksdb))
      (options (* rocksdb-writeoptions))
@@ -449,7 +449,7 @@ set *errptr to a malloc()ed error message.
      (val (* char))
      (vallen size-t))
 
-(with-errptr rocksdb-get 
+(def-with-errptr rocksdb-get 
   (* char)
   (db (* rocksdb))
   (options (* rocksdb-readoptions))
@@ -457,14 +457,14 @@ set *errptr to a malloc()ed error message.
   (keylen size-t) 
   (vallen (* size-t)))
 
-(with-errptr rocksdb-delete 
+(def-with-errptr rocksdb-delete 
   void
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
   (key (* char))
   (keylen size-t))
 
-(with-errptr rocksdb-merge 
+(def-with-errptr rocksdb-merge 
   void
   (db (* rocksdb))
   (opt (* rocksdb-writeoptions))
@@ -473,7 +473,7 @@ set *errptr to a malloc()ed error message.
   (val (* char))
   (vallen size-t))
 
-(with-errptr rocksdb-merge-cf 
+(def-with-errptr rocksdb-merge-cf 
   void
   (db (* rocksdb))
   (opt (* rocksdb-writeoptions))
@@ -483,13 +483,13 @@ set *errptr to a malloc()ed error message.
   (val (* char))
   (vallen size-t))
 
-(with-errptr rocksdb-write 
+(def-with-errptr rocksdb-write 
   void
   (db (* rocksdb))
   (opt (* rocksdb-writeoptions))
   (batch (* rocksdb-writebatch)))
 
-(with-errptr rocksdb-get-cf 
+(def-with-errptr rocksdb-get-cf 
   (* char)
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
@@ -520,18 +520,18 @@ set *errptr to a malloc()ed error message.
 
 (define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
 
-(with-errptr rocksdb-flush void 
+(def-with-errptr rocksdb-flush void 
   (db (* rocksdb))
   (options (* rocksdb-flushoptions)))
 
 ;;; CF
-(with-errptr rocksdb-create-column-family 
+(def-with-errptr rocksdb-create-column-family 
   (* rocksdb-column-family-handle)
   (db (* rocksdb))
   (column-family-options (* rocksdb-options))
   (column-family-name c-string))
 
-(with-errptr rocksdb-create-column-families 
+(def-with-errptr rocksdb-create-column-families 
   (array rocksdb-column-family-handle)
   (db (* rocksdb))
   (column-family-options (* rocksdb-options))
@@ -552,12 +552,12 @@ set *errptr to a malloc()ed error message.
   (handle (* rocksdb-column-family-handle))
   (name-len (* size-t)))
 
-(with-errptr rocksdb-drop-column-family 
+(def-with-errptr rocksdb-drop-column-family 
   void
   (db (* rocksdb))
   (handle (* rocksdb-column-family-handle)))
 
-(with-errptr rocksdb-open-column-families 
+(def-with-errptr rocksdb-open-column-families 
   (* rocksdb)
   (options (* rocksdb-options))
   (name c-string)
@@ -566,7 +566,7 @@ set *errptr to a malloc()ed error message.
   (column-family-options (array rocksdb-options))
   (column-family-handles (array rocksdb-column-family-handle)))
 
-(with-errptr rocksdb-list-column-families 
+(def-with-errptr rocksdb-list-column-families 
   (array c-string)
   (opt (* rocksdb-options))
   (name c-string)
@@ -576,7 +576,7 @@ set *errptr to a malloc()ed error message.
   (list (array c-string))
   (len size-t))
 
-(with-errptr rocksdb-put-cf 
+(def-with-errptr rocksdb-put-cf 
   void
   (db (* rocksdb))
   (opt (* rocksdb-writeoptions))
@@ -586,7 +586,7 @@ set *errptr to a malloc()ed error message.
   (val (* char))
   (vallen size-t))
 
-(with-errptr rocksdb-delete-cf 
+(def-with-errptr rocksdb-delete-cf 
   void
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
@@ -594,7 +594,7 @@ set *errptr to a malloc()ed error message.
   (key (* char))
   (keylen size-t))
 
-(with-errptr rocksdb-delete-range-cf 
+(def-with-errptr rocksdb-delete-range-cf 
   void
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
@@ -604,7 +604,7 @@ set *errptr to a malloc()ed error message.
   (end-key (* char))
   (end-key-len size-t))
 
-(with-errptr rocksdb-destroy-db void
+(def-with-errptr rocksdb-destroy-db void
   (opts (* rocksdb-options))
   (path c-string))
 

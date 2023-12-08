@@ -9,7 +9,7 @@
 ;; Code:
 (uiop:define-package :rdb/pkg
   (:nicknames :rdb)
-  (:use :cl :std/alien :std/fu :rocksdb)
+  (:use :cl :std/alien :std/fu :std/sym :rocksdb)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; opts
@@ -18,6 +18,9 @@
    ;; db
    :open-db :with-open-db 
    :close-db :destroy-db
+   ;; cfs
+   :rdb-cf :make-rdb-cf
+   :with-cf
    ;; ops
    :put-kv :put-kv-str
    :get-kv :get-kv-str
@@ -32,6 +35,10 @@
 
 (in-package :rdb/pkg)
 
+(defmacro with-errptr (e &body body)
+    `(with-alien ((,e rocksdb-errptr))
+       ,@body))
+
 (defstruct rdb-opts
   (create-if-missing nil :type boolean)
   (total-threads 1 :type integer) ;; numcpus is default
@@ -39,6 +46,17 @@
   (use-fsync nil :type boolean)
   (destroy nil :type boolean) ;; *
   (disable-auto-compactions nil :type boolean))
+
+(defstruct rdb-cf
+  (name "" :type string))
+
+(defun create-cf (db cf)
+  (with-errptr err
+    (rocksdb-create-column-family db (rocksdb-options-create) (rdb-cf-name cf) err)))
+
+(defmacro with-cf ((cf-var cf) &body body)
+  `(let ((,cf-var ,cf))
+    ,@body))
 
 ;; unsafe
 (defun bind-rocksdb-opts% (opts)
@@ -64,18 +82,18 @@
                           db-path))
              (db (rocksdb-open opts db-path e))
              (err e))
-	(unless err
+	(unless (null-alien err)
           (error 'open-db-error
                  :db-path db-path
-                 :error-message err))
+                 :error-message e))
         db))))
 
 (defun close-db (db)
   (rocksdb-close db))
 
 (defun destroy-db (path)
-  (with-alien ((e rocksdb-errptr))
-    (rocksdb-destroy-db (rocksdb-options-create) path e)))
+  (with-alien ((err rocksdb-errptr))
+    (rocksdb-destroy-db (rocksdb-options-create) path err)))
 
 (defmacro with-open-db ((db-var db-path &optional opt) &body body)
   `(let ((,db-var (open-db ,db-path ,opt)))
