@@ -101,7 +101,7 @@
 
 ;;; Vars
 (defvar *default-test-opts* '(optimize sb-c::instrument-consing))
-(defvar *compile-tests* nil
+(defvar *compile-tests* t
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
 compiler optimizations.")

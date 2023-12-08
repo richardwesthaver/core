@@ -277,27 +277,41 @@ set *errptr to a malloc()ed error message.
     (sb-alien:load-shared-object "librocksdb.so" :dont-save t)
     (push :rocksdb *features*)))
 
+(load-rocksdb)
+
 ;;; Macros
 (defmacro with-errptr (name result-type &rest args)
   `(define-alien-routine ,name ,result-type ,@args (errptr rocksdb-errptr)))
 
 (defmacro define-opt (name &rest fields)
   `(progn
-     (define-alien-type ,name (struct ,(symb name '-t)))
-     (define-alien-routine ,(symb name '-create) (* ,name))
-     (define-alien-routine ,(symb name '-destroy) void
+     (define-alien-type ,name (struct ,(symbolicate name '-t)))
+     (define-alien-routine ,(symbolicate name '-create) (* ,name))
+     (define-alien-routine ,(symbolicate name '-destroy) void
        (opt (* ,name)))
-     ,(loop for x in fields
-            do (cond
-                   ((consp x) 
-                    `(define-alien-routine ,(symb name '-set- (car x)) void (opt (* ,name)) ,@(cdr x)))
-                   (t 
-                    `(define-alien-routine ,(symb name '-set- x) void (opt (* ,name)) (val boolean)))))))
+  ,@(dolist (f fields)
+      (if (listp f)
+          (eval
+           (nconc
+            (list 
+             'define-alien-routine 
+             (symbolicate name '-set- (car f))
+             'void 
+             `(opt (* ,name)))
+            (cdr f)))
+          (eval
+           (list
+            'define-alien-routine 
+            (symbolicate name '-set- f) 
+            'void 
+            `(opt (* ,name)) 
+            '(val boolean)))))))
 
-(defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symb ty '-t))))
+(defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symbolicate ty '-t))))
 
 ;;; Exported Types
-(define-alien-type rocksdb-errptr (* (* t)))
+(define-alien-type rocksdb-errptr (* t))
+
 (define-opaque rocksdb)
 (define-opaque rocksdb)
 (define-opaque rocksdb-iterator)
@@ -354,18 +368,18 @@ set *errptr to a malloc()ed error message.
 (define-opaque rocksdb-statistics-histogram-data)
 
 ;;; Opts
+(define-opt rocksdb-block-based-options 
+    (block-cache 
+     (* rocksdb-cache))
+  (cache-index-and-filter-blocks
+   (val c-string)))
+
 (define-opt rocksdb-options
   create-if-missing
   (block-based-table-factory
    (table-options (* rocksdb-block-based-table-options)))
   (allow-ingest-behind (val unsigned-char))
   (merge-operator (comparator (* rocksdb-comparator))))
-
-(define-opt rocksdb-block-based-options 
-    (block-cache 
-     (* rocksdb-cache))
-  (cache-index-and-filter-blocks
-   (val c-string)))
 
 (define-opt rocksdb-writeoptions)
 (define-opt rocksdb-readoptions)

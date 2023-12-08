@@ -11,28 +11,24 @@
   (:nicknames :rdb)
   (:use :cl :std/alien :std/fu :rocksdb)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
-  (:reexport :rocksdb)
   (:export 
    ;; opts
-   :make-rdb-opts
-   :rdb-opts
+   :rdb-opts :make-rdb-opts
    :default-rdb-opts
    ;; db
-   :open-db
-   :with-open-db 
+   :open-db :with-open-db 
+   :close-db :destroy-db
    ;; ops
-   :put-kv
-   :put-kv-str
-   :get-kv
-   :get-kv-str
+   :put-kv :put-kv-str
+   :get-kv :get-kv-str
    ;; iter
    :create-iter :with-iter
    :iter-key :iter-key-str
    :iter-val :iter-val-str
    ;; err
-   :unable-to-open-db 
-   :unable-to-put-key-value-to-db 
-   :unable-to-get-value-to-db))
+   :open-db-error
+   :put-kv-error
+   :get-kv-error))
 
 (in-package :rdb/pkg)
 
@@ -60,13 +56,33 @@
 (defun default-rocksdb-options% ()
   (bind-rocksdb-opts% (default-rdb-opts)))
 
+(defun open-db (db-path &optional opts)
+  (let ((opts (if opts (bind-rocksdb-opts% opts) (default-rocksdb-options%))))
+    (with-alien ((e rocksdb-errptr))
+      (let* ((db-path (if (pathnamep db-path)
+                          (namestring db-path)
+                          db-path))
+             (db (rocksdb-open opts db-path e))
+             (err e))
+	(unless err
+          (error 'open-db-error
+                 :db-path db-path
+                 :error-message err))
+        db))))
+
+(defun close-db (db)
+  (rocksdb-close db))
+
+(defun destroy-db (path)
+  (with-alien ((e rocksdb-errptr))
+    (rocksdb-destroy-db (rocksdb-options-create) path e)))
+
 (defmacro with-open-db ((db-var db-path &optional opt) &body body)
   `(let ((,db-var (open-db ,db-path ,opt)))
      (unwind-protect (progn ,@body)
-       (rocksdb-close ,db-var)
-       (if (and ,opt (rdb-opts-destroy ,opt))
-           (with-alien ((err rocksdb-errptr nil))
-             (rocksdb-destroy-db (default-rocksdb-options%) ,db-path err))))))
+       (close-db ,db-var)
+       (when (and ,opt (rdb-opts-destroy ,opt))
+         (destroy-db ,db-path)))))
 
 (defmacro with-iter ((iter-var db &optional opt) &body body)
   `(let ((,iter-var (create-iter ,db ,opt)))
@@ -74,17 +90,17 @@
        (rocksdb-iter-destroy ,iter-var))))
 
 ;;; Conditions
-(define-condition unable-to-open-db (error)
+(define-condition open-db-error (error)
   ((db-path :initarg :db-path
             :reader db-path)
    (error-message :initarg :error-message
                   :reader error-message)))
 
-(defmethod print-object ((obj unable-to-open-db) stream)
+(defmethod print-object ((obj open-db-error) stream)
   (print-unreadable-object (obj stream :type t :identity t)
     (format stream "error-message=~A" (error-message obj))))
 
-(define-condition unable-to-put-key-value-to-db (error)
+(define-condition put-kv-error (error)
   ((db :initarg :db
        :reader db)
    (key :initarg :key
@@ -94,7 +110,7 @@
    (error-message :initarg :error-message
                   :reader error-message)))
 
-(define-condition unable-to-get-value-to-db (error)
+(define-condition get-kv-error (error)
   ((db :initarg :db
        :reader db)
    (key :initarg :key
@@ -102,29 +118,15 @@
    (error-message :initarg :error-message
                   :reader error-message)))
 
-;;; API
-(defun open-db (db-path &optional opts)
-  (let ((opts (if opts (bind-rocksdb-opts% opts) (default-rocksdb-options%))))
-    (with-alien ((e rocksdb-errptr))
-      (let* ((db-path (if (pathnamep db-path)
-                          (namestring db-path)
-                          db-path))
-             (db (rocksdb-open opts db-path e)))
-	(if (null-alien e)
-            db
-            (error 'unable-to-open-db
-                   :db-path db-path
-                   :error-message e))))))
-
 (defun put-kv (db key val &optional opts)
   (let ((opts (or opts (rocksdb-writeoptions-create)))
 	(klen (length key))
 	(vlen (length val)))
-    (with-alien ((errptr rocksdb-errptr nil)
-		 (k (* char) (make-alien char klen))
-		 (v (* char) (make-alien char vlen)))
-      (clone-octets-to-alien key k)
-      (clone-octets-to-alien val v)
+    (with-alien ((k (* char) (make-alien char klen))
+		 (v (* char) (make-alien char vlen))
+                 (errptr rocksdb-errptr nil))
+      (setfa k key)
+      (setfa v val)
       (rocksdb-put db
 		   opts
 		   k
@@ -133,7 +135,7 @@
 		   vlen
 		   errptr)
       (unless (null-alien errptr)
-        (error 'unable-to-put-key-value-to-db
+        (error 'put-kv-error
                 :db db
                 :key key
                 :val val
@@ -147,26 +149,25 @@
 (defun get-kv (db key &optional opt)
   (let ((opt (or opt (rocksdb-readoptions-create)))
 	(klen (length key)))
-    (with-alien ((vlen (* size-t))
+    (with-alien ((vlen (* size-t) (make-alien size-t 0))
 		 (errptr rocksdb-errptr nil)
 		 (k (* char) (make-alien char klen)))
-      (clone-octets-to-alien key k)
+      (setfa k key)
       (let* ((val (rocksdb-get db
 			       opt
 			       k
 			       klen
-			       vlen
-			       errptr))
-	     (vlen (deref vlen)))
+                               vlen
+			       errptr)))
 	(unless (null-alien errptr)
-          (error 'unable-to-get-value-to-db
+          (error 'get-kv-error
 		 :db db
 		 :key key
 		 :error-message (alien-sap errptr)))
 	;; helps if we know the vlen beforehand, would need a custom
 	;; C-side function probably.
-	(let ((v (make-array vlen :element-type 'unsigned-byte)))
-          (clone-octets-from-alien val v vlen)
+	(let ((v (make-array (deref vlen) :element-type 'unsigned-byte)))
+          (clone-octets-from-alien val v (deref vlen))
 	  v)))))
 
 (defun get-kv-str (db key &optional opt)
@@ -180,11 +181,11 @@
   (rocksdb-create-iterator db opt))
 
 (defun iter-key (iter)
-  (with-alien ((klen-ptr (* unsigned-int)))
+  (with-alien ((klen-ptr (* size-t) (make-alien size-t 0)))
     (let* ((key-ptr (rocksdb-iter-key iter klen-ptr))
            (klen (deref klen-ptr))
            (k (make-array klen :element-type '(unsigned-byte 8))))
-      (loop for i from 0 below klen with x = (deref key-ptr i) do (setf (aref k i) x))
+      (clone-octets-from-alien key-ptr k klen)
       k)))
 
 (defun iter-key-str (iter)
@@ -192,11 +193,11 @@
     (octets-to-string k)))
 
  (defun iter-val (iter)
-   (with-alien ((vlen-ptr (* unsigned-int)))
+   (with-alien ((vlen-ptr (* size-t) (make-alien size-t 0)))
      (let* ((val-ptr (rocksdb-iter-value iter vlen-ptr))
             (vlen (deref vlen-ptr))
             (v (make-array vlen :element-type '(unsigned-byte 8))))
-       (loop for i from 0 below vlen with x = (deref val-ptr i) do (setf (aref v i) x))
+       (clone-octets-from-alien val-ptr v vlen)
        v)))
 
  (defun iter-val-str (iter)
