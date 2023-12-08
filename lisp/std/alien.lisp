@@ -24,6 +24,7 @@
   (:use :cl :sb-vm :sb-ext :sb-c :std/base)
   (:use-reexport :sb-alien)
   (:export
+   :setfa
    :copy-c-string
    :clone-strings
    :clone-octets-to-alien
@@ -40,6 +41,11 @@
 ;; 	       :include
 ;; 	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
 ;; 		 :sanctify-for-execution))
+
+(defun setfa (place from) 
+  (loop for x across from
+	for i from 0 below (length from)
+	do (setf (deref place i) x)))
 
 (defun copy-c-string (src dest &aux (index 0))
   (loop (let ((b (sb-sys:sap-ref-8 src index)))
@@ -66,15 +72,17 @@
                              do (print (cast (deref x i) c-string))))))
       (free-alien x))))
 
-(defun clone-octets-to-alien (lispa aliena)
-  (loop for i from 0 below (length lispa)
-        do (setf (deref aliena i)
-                 (aref lispa i))))
+(defmacro clone-octets-to-alien (lispa aliena)
+  (with-gensyms (i)
+    `(loop for ,i from 0 below (length ,lispa)
+        do (setf (deref ,aliena ,i)
+                 (aref ,lispa ,i)))))
 
-(defun clone-octets-from-alien (aliena lispa len)
-  (loop for i from 0 below len
-        do (setf (aref lispa i)
-                 (deref aliena i))))
+(defmacro clone-octets-from-alien (aliena lispa len)
+  (with-gensyms (i)
+    `(loop for ,i from 0 below ,len
+           do (setf (aref ,lispa ,i)
+                 (deref ,aliena ,i)))))
 
 (defun foreign-int-to-integer (buffer size)
   "Check SIZE of int BUFFER. return BUFFER."

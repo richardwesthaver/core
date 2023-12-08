@@ -4,23 +4,12 @@
 
 ;;; Commentary:
 
-;; 
+;; inspired by Vee's cl-rocksdb: https://github.com/veer66/cl-rocksdb
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
-(defpackage :rocksdb.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :rocksdb.sys)
-
 (defsystem "rocksdb"
-  :description "based on Vee's cl-rocksdb: https://github.com/veer66/cl-rocksdb/tree/main"
-  :depends-on (:sb-grovel :std)
-  :components ((:file "pkg")
-               (grovel-constants-file "constants"
-                                      :package :rocksdb))
+  :depends-on (:std)
+  :components ((:file "pkg"))
   :in-order-to ((test-op (test-op "rocksdb/tests"))))
 
 (defsystem "rocksdb/tests"

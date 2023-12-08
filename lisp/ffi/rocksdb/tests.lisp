@@ -23,11 +23,6 @@
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
 (defun genval (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "val")))))
 
-(defun setfa (place from) 
-  (loop for x across from
-	for i from 0 below (length from)
-	do (setf (deref place i) x)))
-
 (defun random-array (dim &optional (limit 4096))
   (let ((r (make-array dim)))
     (dotimes (i (array-total-size r) r)
@@ -49,7 +44,7 @@
     (rocksdb-block-based-options-destroy bopts)))
 
 (deftest db-basic (:persist t)
-  "Test basic RocksDB functionality. Inserts a KV pair into a temporary
+  "Test basic RocksDB functionality. Inserts KV pair into a temporary
 DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
@@ -77,6 +72,7 @@ DB where K and V are both Lisp strings."
                      errptr)
 	(is (null-alien errptr))
         ;; get V from DB given K
+        (rocksdb:rocksdb-cancel-all-background-work db t)
         (rocksdb-get db ropts k klen (make-alien size-t vlen) errptr)
 	(is (null-alien errptr))
         ;; copy V to RVAL and validate
