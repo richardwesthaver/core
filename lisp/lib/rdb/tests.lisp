@@ -34,3 +34,9 @@
         (rocksdb:rocksdb-iter-next it)
         (is (not (rocksdb:rocksdb-iter-valid it)))
         ))))
+
+(deftest rdb-cf ()
+  "Test rdb-cf operations"
+  (with-open-db (db "/tmp/rdb-cf" (make-rdb-opts :create-if-missing t :destroy t))
+    (with-cf (cf (make-rdb-cf :name "foobar"))
+        (print "OK"))))
