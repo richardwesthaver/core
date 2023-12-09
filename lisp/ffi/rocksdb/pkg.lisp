@@ -101,6 +101,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-multi-get-cf-with-ts
    :rocksdb-batched-multi-get-cf
    :rocksdb-cancel-all-background-work
+   :rocksdb-disable-manual-compaction
+   :rocksdb-enable-manual-compaction
    ;; writebatch
    :rocksdb-writebatch-create
    :rocksdb-writebatch-create-from
@@ -149,6 +151,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-block-based-options-create
    :rocksdb-block-based-options-destroy
    :rocksdb-block-based-options-set-block-cache
+   :rocksdb-block-based-options-set-cache-index-and-filter-blocks
    ;; OPTIONS
    ;; opt-utils
    :rocksdb-load-latest-options
@@ -203,6 +206,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-options-set-compression-options-max-dict-buffer-bytes
    :rocksdb-options-get-compression-options-max-dict-buffer-bytes
    :rocksdb-options-set-block-based-table-factory
+   :rocksdb-options-set-dump-malloc-stats
+   :rocksdb-options-set-memtable-whole-key-filtering
    ;; blob
    :rocksdb-options-set-enable-blob-files
    :rocksdb-options-get-enable-blob-files
@@ -285,7 +290,37 @@ set *errptr to a malloc()ed error message.
    :rocksdb-optimistictransactiondb-options
    :rocksdb-transactiondb-open
    :rocksdb-transactiondb-close
-   :rocksdb-transaction-begin))
+   :rocksdb-transaction-begin
+   ;; mem
+   :rocksdb-free
+   :rocksdb-get-pinned
+   :rocksdb-get-pinned-cf
+   :rocksdb-pinnableslice-value
+   :rocksdb-pinnableslice-destroy
+   :rocksdb-pinnable
+   :rocksdb-memory-consumers
+   :rocksdb-memory-consumers-create
+   :rocksdb-memory-consumers-add-db
+   :rocksdb-memory-consumers-add-cache
+   :rocksdb-memory-consumers-destroy
+   :rocksdb-memory-usage
+   :rocksdb-approximate-memory-usage-get-mem-table-total
+   :rocksdb-approximate-memory-usage-get-mem-table-unflushed
+   :rocksdb-approximate-memory-usage-get-mem-table-readers-total
+   :rocksdb-approximate-memory-usage-get-cache-total
+   ;; stats
+   :rocksdb-statistics-histogram-data
+   :rocksdb-statistics-histogram-data-create
+   :rocksdb-statistics-histogram-data-destroy
+   :rocksdb-statistics-histogram-data-get-median
+   :rocksdb-statistics-histogram-data-get-p95
+   :rocksdb-statistics-histogram-data-get-p99
+   :rocksdb-statistics-histogram-data-get-average
+   :rocksdb-statistics-histogram-data-get-std-dev
+   :rocksdb-statistics-histogram-data-get-max
+   :rocksdb-statistics-histogram-data-get-count
+   :rocksdb-statistics-histogram-data-get-sum
+   :rocksdb-statistics-histogram-data-get-min))
 
 (in-package :rocksdb)
 
