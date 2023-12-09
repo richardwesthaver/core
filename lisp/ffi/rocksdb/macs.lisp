@@ -27,5 +27,3 @@
             'void 
             `(opt (* ,name)) 
             '(val boolean)))))))
-
-(defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symbolicate ty '-t))))

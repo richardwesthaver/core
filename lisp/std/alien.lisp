@@ -24,6 +24,7 @@
   (:use :cl :sb-vm :sb-ext :sb-c :std/base)
   (:use-reexport :sb-alien)
   (:export
+   :define-opaque
    :setfa
    :copy-c-string
    :clone-strings
@@ -41,6 +42,8 @@
 ;; 	       :include
 ;; 	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
 ;; 		 :sanctify-for-execution))
+
+(defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symbolicate ty '-t))))
 
 (defun setfa (place from) 
   (loop for x across from

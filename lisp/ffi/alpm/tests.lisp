@@ -10,3 +10,6 @@
 (in-suite :alpm)
 
 (load-alpm)
+
+(deftest alpm-version ()
+  (is (equal (alpm-version) "13.0.2")))

@@ -3,11 +3,11 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :alpm/pkg
-  (:nicknames :alpm)
-  (:use :cl :std)
+(defpackage :alpm
+  (:use :cl :std :std/alien)
   (:export 
-   :load-alpm))
+   :load-alpm
+   :alpm-version))
 
 (in-package :alpm)
 
@@ -15,3 +15,12 @@
   (unless (member :alpm *features*)
     (sb-alien:load-shared-object "libalpm.so" :dont-save t)
     (push :alpm *features*)))
+(load-alpm)
+
+(define-opaque alpm-handle)
+(define-opaque alpm-db)
+(define-opaque alpm-pkg)
+(define-opaque alpm-trans)
+(define-opaque alpm-time)
+
+(define-alien-routine alpm-version c-string)

@@ -3,7 +3,7 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :bqn/pkg
+(defpackage :bqn
   (:nicknames :bqn)
   (:use :cl :std)
   (:export 
