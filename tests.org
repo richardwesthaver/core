@@ -249,10 +249,10 @@ No tests failed.
 #+end_src
 #+RESULTS:
 : in suite rdb with 4/4 tests:
-: #<PASS WITH-CF-TEST2374> 
-: #<PASS WITH-ITER-TEST2373> 
-: #<PASS WITH-DB-TEST2372> 
-: #<PASS RDB-TEST2371> 
+: #<PASS WITH-CF-TEST829923> 
+: #<PASS WITH-ITER-TEST829922> 
+: #<PASS WITH-DB-TEST829921> 
+: #<PASS RDB-TEST829920> 
 : No tests failed.
 *** organ
 #+begin_src lisp :results output replace :exports results
@@ -332,7 +332,7 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 
 #+RESULTS:
 : in suite dot with 1/1 tests:
-: #<PASS DOT-TEST278208> 
+: ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#<PASS DOT-TEST278540> 
 : No tests failed.
 
 ** ffi
@@ -351,8 +351,8 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 #+end_src
 #+RESULTS:
 : in suite rocksdb with 2/2 tests:
-: #<PASS DB-BASIC-TEST276139> 
-: #<PASS SET-OPTS-TEST276138> 
+: #<PASS DB-BASIC-TEST1105626> 
+: #<PASS SET-OPTS-TEST1105625> 
 : No tests failed.
 *** uring
 #+begin_src lisp :results output replace :exports results
@@ -392,11 +392,4 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 : 1 unexpected failures: 
 :    #<FAIL ARITHMETIC ERROR FLOATING-POINT-INVALID-OPERATION SIGNALLED>.
 * emacs
-There are a few internal packages that link to system libraries at
-runtime - the following libraries need to be installed for a fully
-functioning editor:
-
-- libvoikko ::
-  =sudo pacman -Syu libvoikko=
-- librsvg ::
-- imagemagick ::
+=sudo pacman -Syu libvoikko librsvg imagemagick=

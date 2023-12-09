@@ -9,7 +9,11 @@
 ;;; Code:
 (defsystem "rocksdb"
   :depends-on (:std)
-  :components ((:file "pkg"))
+  :components ((:file "pkg")
+               (:file "macs")
+               (:file "types")
+               (:file "opts")
+               (:file "db"))
   :in-order-to ((test-op (test-op "rocksdb/tests"))))
 
 (defsystem "rocksdb/tests"

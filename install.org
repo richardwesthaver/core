@@ -113,10 +113,10 @@ compressed 0 bytes into 9 at level 9
 :   Load 1 ASDF system:
 :     cli/rdb
 : ; Loading "cli/rdb"
-: ..
-: compressed 32768 bytes into 5087 at level 9
-: compressed 236388352 bytes into 9214043 at level 9
-: compressed 8257536 bytes into 2554086 at level 9
+: ....
+: compressed 32768 bytes into 5089 at level 9
+: compressed 236388352 bytes into 9291488 at level 9
+: compressed 8355840 bytes into 2569637 at level 9
 : compressed 0 bytes into 9 at level 9
 
 *** cli/homer
