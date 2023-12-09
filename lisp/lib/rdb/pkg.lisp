@@ -12,6 +12,11 @@
   (:use :cl :std/alien :std/fu :std/sym :rocksdb)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
+   ;; rdb
+   :rdb :make-rdb :open-rdb :close-rdb :destroy-rdb
+   :rdb-db :rdb-name :rdb-cfs :rdb-opts
+   :push-cf :init-cfs
+   :insert-kv :insert-kv-str
    ;; opts
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
@@ -20,10 +25,13 @@
    :close-db :destroy-db
    ;; cfs
    :rdb-cf :make-rdb-cf
-   :with-cf
+   :rdb-cf-sap :rdb-cf-name
+   :with-cf :create-cf
    ;; ops
    :put-kv :put-kv-str
    :get-kv :get-kv-str
+   :put-cf :put-cf-str
+   :get-cf :get-cf-str
    ;; iter
    :create-iter :with-iter
    :iter-key :iter-key-str
@@ -48,11 +56,13 @@
   (disable-auto-compactions nil :type boolean))
 
 (defstruct rdb-cf
-  (name "" :type string))
+  (name "" :type string)
+  (sap nil :type (or null alien)))
 
 (defun create-cf (db cf)
-  (with-errptr err
-    (rocksdb-create-column-family db (rocksdb-options-create) (rdb-cf-name cf) err)))
+  (setf (rdb-cf-sap cf)
+        (with-errptr err
+          (rocksdb-create-column-family db (rocksdb-options-create) (rdb-cf-name cf) err))))
 
 (defmacro with-cf ((cf-var cf) &body body)
   `(let ((,cf-var ,cf))
@@ -164,6 +174,35 @@
         (val-octets (string-to-octets val)))
     (put-kv db key-octets val-octets opt)))
 
+(defun put-cf (db cf key val &optional opt)
+  (let ((opts (or opt (rocksdb-writeoptions-create)))
+	(klen (length key))
+	(vlen (length val)))
+    (with-alien ((k (* char) (make-alien char klen))
+		 (v (* char) (make-alien char vlen))
+                 (errptr rocksdb-errptr nil))
+      (setfa k key)
+      (setfa v val)
+      (rocksdb-put-cf db
+		      opts
+                      cf
+		      k
+		      klen
+		      v
+		      vlen
+		      errptr)
+      (unless (null-alien errptr)
+        (error 'put-kv-error
+                :db db
+                :key key
+                :val val
+                :error-message (alien-sap errptr))))))
+
+(defun put-cf-str (db cf key val &optional opt)
+  (let ((key-octets (string-to-octets key))
+        (val-octets (string-to-octets val)))
+    (put-cf db cf key-octets val-octets opt)))
+
 (defun get-kv (db key &optional opt)
   (let ((opt (or opt (rocksdb-readoptions-create)))
 	(klen (length key)))
@@ -191,6 +230,36 @@
 (defun get-kv-str (db key &optional opt)
    (let ((k (string-to-octets key)))
      (let ((v (get-kv db k opt)))
+       (when v (concatenate 'string (map 'vector #'code-char v))))))
+
+(defun get-cf (db cf key &optional opt)
+  (let ((opt (or opt (rocksdb-readoptions-create)))
+	(klen (length key)))
+    (with-alien ((vlen (* size-t) (make-alien size-t 0))
+		 (errptr rocksdb-errptr nil)
+		 (k (* char) (make-alien char klen)))
+      (setfa k key)
+      (let* ((val (rocksdb-get-cf db
+			          opt
+                                  cf
+			          k
+			          klen
+                                  vlen
+			          errptr)))
+	(unless (null-alien errptr)
+          (error 'get-kv-error
+		 :db db
+		 :key key
+		 :error-message (alien-sap errptr)))
+	;; helps if we know the vlen beforehand, would need a custom
+	;; C-side function probably.
+	(let ((v (make-array (deref vlen) :element-type 'unsigned-byte)))
+          (clone-octets-from-alien val v (deref vlen))
+	  v)))))
+
+(defun get-cf-str (db cf key &optional opt)
+   (let ((k (string-to-octets key)))
+     (let ((v (get-cf db cf k opt)))
        (when v (concatenate 'string (map 'vector #'code-char v))))))
 
 (defun create-iter (db &optional opt)
@@ -221,3 +290,44 @@
  (defun iter-val-str (iter)
    (when-let ((v (iter-val iter)))
      (octets-to-string v)))
+
+(defstruct rdb 
+  (name "" :type string)
+  (opts (default-rdb-opts) :type rdb-opts)
+  (db nil :type (or null alien))
+  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf)))
+
+(defmethod push-cf ((cf rdb-cf) (db rdb))
+  (vector-push cf (rdb-cfs db)))
+
+(defmethod open-rdb ((self rdb))
+  (setf (rdb-db self) 
+        (open-db (rdb-name self) (rdb-opts self))))
+
+(defmethod close-rdb ((self rdb))  
+  (close-db (rdb-db self))
+  (setf (rdb-db self) nil))
+
+(defmethod destroy-rdb ((self rdb))  
+  (when (rdb-db self) (close-rdb self))
+  (destroy-db (rdb-name self)))
+
+(defmethod init-cfs ((self rdb))
+  (loop for cf across (rdb-cfs self)
+        do (create-cf (rdb-db self) cf)))
+
+(defmethod insert-kv ((self rdb) key val &optional cf-name)
+  (if cf-name
+    (put-cf
+     (rdb-db self)
+     (rdb-cf-sap (find cf-name (rdb-cfs self) :key #'rdb-cf-name :test #'equal))
+     key
+     val)
+    (put-kv 
+     (rdb-db self)
+     key 
+     val)))
+  
+(defmethod insert-kv-str ((self rdb) key val &optional cf-name)
+  (insert-kv self (string-to-octets key) (string-to-octets val) cf-name))
+

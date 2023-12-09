@@ -493,6 +493,7 @@ set *errptr to a malloc()ed error message.
   (* char)
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
   (key (* char))
   (keylen size-t)
   (vallen (* size-t)))
