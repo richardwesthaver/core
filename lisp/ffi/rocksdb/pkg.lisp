@@ -58,8 +58,7 @@ set *errptr to a malloc()ed error message.
 (5) All of the pointer arguments must be non-NULL.|#
 
 ;;; Code:
-(defpackage :rocksdb/pkg
-  (:nicknames :rocksdb)
+(defpackage :rocksdb
   (:use :cl :std/base :std/alien :std/fu :std/sym)
   (:import-from :std/fu :symb)
   (:export
@@ -268,7 +267,25 @@ set *errptr to a malloc()ed error message.
    :rocksdb-wal-iter-valid
    :rocksdb-wal-iter-status
    :rocksdb-wal-iter-get-batch
-   :rocksdb-wal-iter-destroy))
+   :rocksdb-wal-iter-destroy
+   :rocksdb-backup-engine
+   :rocksdb-backup-engine-info
+   :rocksdb-backup-engine-options
+   :rocksdb-backup-engine-open
+   :rocksdb-backup-engine-create-new-backup
+   :rocksdb-backup-engine-restore-db-from-backup
+   :rocksdb-backup-engine-restore-db-from-latest-backup
+   :rocksdb-backup-engine-close
+   ;; transactions
+   :rocksdb-transaction
+   :rocksdb-transaction-options
+   :rocksdb-transactiondb
+   :rocksdb-transactiondb-options
+   :rocksdb-optimistictransactiondb
+   :rocksdb-optimistictransactiondb-options
+   :rocksdb-transactiondb-open
+   :rocksdb-transactiondb-close
+   :rocksdb-transaction-begin))
 
 (in-package :rocksdb)
 
@@ -368,18 +385,63 @@ set *errptr to a malloc()ed error message.
 (define-opaque rocksdb-statistics-histogram-data)
 
 ;;; Opts
-(define-opt rocksdb-block-based-options 
-    (block-cache 
-     (* rocksdb-cache))
-  (cache-index-and-filter-blocks
-   (val c-string)))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+          (define-opt rocksdb-block-based-options 
+              (block-cache 
+               (* rocksdb-cache))
+            (cache-index-and-filter-blocks
+             (val c-string))))
 
 (define-opt rocksdb-options
   create-if-missing
+  create-missing-column-families
+  error-if-exists
+  paranoid-checks
+  (info-log-level (val int))
+  (write-buffer-size (val size-t))
+  (db-write-buffer-size (val size-t))
+  (max-open-files (val int))
+  (max-file-opening-threads (val int))
+  (max-total-wal-size (n unsigned-long))
+  (compression-options (a int) (b int) (c int) (d int))
+  (compression-options-zstd-max-train-bytes (val int))
+  compression-options-use-zstd-dict-trainer
+  compression-options-parallel-threads
+  (compression-options-max-dict-buffer-bytes (val unsigned-long))
+  (num-levels (val int))
+  (level0-file-num-compaction-trigger (val int))
+  (level0-slowdown-writes-trigger (val int))
+  (level0-stop-writes-trigger (val int))
+  (target-file-size-base (val unsigned-long))
+  (target-file-size-multiplier (val int))
+  (max-bytes-for-level-base (val unsigned-long))
+  level-compaction-dynamic-level-bytes
+  (max-bytes-for-level-multiplier (val double))
   (block-based-table-factory
    (table-options (* rocksdb-block-based-table-options)))
   (allow-ingest-behind (val unsigned-char))
-  (merge-operator (comparator (* rocksdb-comparator))))
+  (merge-operator (comparator (* rocksdb-comparator)))
+  (statistics-level (level int))
+  (skip-stats-update-on-db-open (val unsigned-char))
+  (skip-checking-sst-filie-sizes-on-db-open (val unsigned-char))
+  (enable-blob-files (val unsigned-char))
+  (min-blob-size (val unsigned-long))
+  (blob-file-size (val unsigned-long))
+  (blob-compression-type (val int))
+  (enable-blob-gc (val unsigned-char))
+  (blob-gc-age-cutoff (val double))
+  (blob-gc-force-threshold (val double))
+  (blob-compaction-readahead-size (val unsigned-long))
+  (blob-file-starting-level (val int))
+  (prepopulate-blob-cache (val int)))
+
+(define-alien-routine rocksdb-options-enable-statistics void
+  (* rocksdb-options))
+;; (define-alien-routine rocksdb-options-set-db-paths void
+;;   (opt (* rocksdb-options)))
+
+(define-alien-routine rocksdb-options-set-blob-cache void
+  (opt (* rocksdb-options)) (blob-cache (* rocksdb-cache)))
 
 (define-opt rocksdb-writeoptions)
 (define-opt rocksdb-readoptions)
@@ -629,3 +691,49 @@ set *errptr to a malloc()ed error message.
 (define-alien-routine rocksdb-iter-value (* char) 
   (iter (* rocksdb-iterator)) 
   (vlen-ptr (* size-t)))
+
+;;; Backup
+(def-with-errptr rocksdb-backup-engine-open
+  (* rocksdb-backup-engine)
+  (opts (* rocksdb-options))
+  (path (* char)))
+
+(def-with-errptr rocksdb-backup-engine-create-new-backup
+  void
+  (be (* rocksdb-backup-engine))
+  (db (* rocksdb)))
+
+(def-with-errptr rocksdb-backup-engine-restore-db-from-latest-backup
+  void
+  (be (* rocksdb-backup-engine))
+  (db-dir (* char))
+  (wal-dir (* char))
+  (res-opts (* rocksdb-restore-options)))
+
+(def-with-errptr rocksdb-backup-engine-restore-db-from-backup
+  void
+  (be (* rocksdb-backup-engine))
+  (db-dir (* char))
+  (wal-dir (* char))
+  (res-opts (* rocksdb-restore-options))
+  (backup-id unsigned-int))
+
+(define-alien-routine rocksdb-backup-engine-close void
+  (be (* rocksdb-backup-engine)))
+
+;;; Transactions
+(define-alien-routine rocksdb-transaction-begin (* rocksdb-transaction)
+  (wopts (* rocksdb-writeoptions))
+  (topts (* rocksdb-transaction-options))
+  (told (* rocksdb-transaction)))
+
+(def-with-errptr rocksdb-transactiondb-open
+  (* rocksdb-transactiondb)
+  (opts (* rocksdb-options))
+  (topts (* rocksdb-transactiondb-options))
+  (name (* char)))
+
+(define-alien-routine rocksdb-transactiondb-close void
+  (tdb (* rocksdb-transactiondb)))
+
+;;; BlobDB

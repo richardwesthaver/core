@@ -43,7 +43,7 @@
     (rocksdb-readoptions-destroy ropts)
     (rocksdb-block-based-options-destroy bopts)))
 
-(deftest db-basic (:persist t)
+(deftest db-basic ()
   "Test basic RocksDB functionality. Inserts KV pair into a temporary
 DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
