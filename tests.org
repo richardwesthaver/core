@@ -200,7 +200,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
             "lisp/lib/packy/packy.asd" "lisp/lib/nlp/nlp.asd" "lisp/lib/dot/dot.asd"
             "lisp/ffi/rocksdb/rocksdb.asd" "lisp/ffi/btrfs/btrfs.asd" "lisp/ffi/uring/uring.asd"
             "lisp/ffi/k/k.asd" "lisp/ffi/bqn/bqn.asd" "lisp/ffi/tree-sitter/tree-sitter.asd" 
-            "lisp/ffi/blake3/blake3.asd")))
+            "lisp/ffi/blake3/blake3.asd" "lisp/ffi/alpm/alpm.asd")))
     (mapc (lambda (x) (asdf:load-asd (pathname x))) systems))
   (asdf:load-system :std)
   (asdf:load-system :std/rt)
@@ -341,49 +341,61 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
   (load "lisp/ffi/btrfs/tests.lisp")
   (asdf:test-system :btrfs)
 #+end_src
+
 #+RESULTS:
 : in suite btrfs with 0/0 tests:
 : No tests failed.
+
 *** rocksdb
 #+begin_src lisp :results output replace :exports results
   (load "lisp/ffi/rocksdb/tests.lisp")
   (asdf:test-system :rocksdb)
 #+end_src
+
 #+RESULTS:
 : in suite rocksdb with 2/2 tests:
 : #<PASS DB-BASIC-TEST1105626> 
 : #<PASS SET-OPTS-TEST1105625> 
 : No tests failed.
+
 *** uring
 #+begin_src lisp :results output replace :exports results
   (load "lisp/ffi/uring/tests.lisp")
   (asdf:test-system :uring)
 #+end_src
+
 #+RESULTS:
 : in suite uring with 0/0 tests:
 : No tests failed.
+
 *** tree-sitter
 #+begin_src lisp :results output replace :exports results
   (load "lisp/ffi/tree-sitter/tests.lisp")
   (asdf:test-system :tree-sitter)
 #+end_src
+
 #+RESULTS:
-: in suite tree-sitter with 0/0 tests:
+: in suite tree-sitter with 1/1 tests:
+: #<PASS TS-BASIC-TEST326> 
 : No tests failed.
+
 *** k
 #+begin_src lisp :results output replace :exports results
   (load "lisp/ffi/k/tests.lisp")
   (asdf:test-system :k)
 #+end_src
+
 #+RESULTS:
 : in suite k with 1/1 tests:
-: #<PASS K-TEST827560> 
+: #<PASS K-TEST283> 
 : No tests failed.
+
 *** bqn
 #+begin_src lisp :results output replace :exports results
   (load "lisp/ffi/bqn/tests.lisp")
   (asdf:test-system :bqn)
 #+end_src
+
 #+RESULTS:
 : in suite bqn with 1/1 tests:
 : #<FAIL ARITHMETIC ERROR FLOATING-POINT-INVALID-OPERATION SIGNALLED> 
@@ -391,5 +403,89 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 :    #<STD/RT:TEST BQN :FN BQN-TEST827575 :ARGS NIL :PERSIST NIL {1005F9FB73}>.
 : 1 unexpected failures: 
 :    #<FAIL ARITHMETIC ERROR FLOATING-POINT-INVALID-OPERATION SIGNALLED>.
+
+*** blake3
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/ffi/blake3/tests.lisp")
+  (asdf:test-system :blake3)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+in suite blake3 with 2/2 tests:
+
+#<sb-alien-internals:alien-value :sap #X7FED2C4E7888 :type (*
+                                                            (sb-alien:struct
+                                                             blake3/pkg:blake3-hasher
+                                                             (blake3/pkg::key
+                                                              (array
+                                                               (sb-alien:unsigned
+                                                                32)
+                                                               8)
+                                                              :offset 0)
+                                                             (blake3/pkg::chunk
+                                                              (sb-alien:struct
+                                                               blake3/pkg:blake3-chunk-state
+                                                               (blake3/pkg::key
+                                                                (array
+                                                                 (sb-alien:unsigned
+                                                                  32)
+                                                                 8)
+                                                                :offset 0)
+                                                               (blake3/pkg::chunk-counter
+                                                                (sb-alien:unsigned
+                                                                 64)
+                                                                :offset 256)
+                                                               (blake3/pkg::buf
+                                                                (array
+                                                                 (sb-alien:unsigned
+                                                                  8)
+                                                                 64)
+                                                                :offset 320)
+                                                               (blake3/pkg::buf-len
+                                                                (sb-alien:unsigned
+                                                                 8)
+                                                                :offset 832)
+                                                               (blake3/pkg::blocks-compressed
+                                                                (sb-alien:unsigned
+                                                                 8)
+                                                                :offset 840)
+                                                               (blake3/pkg::flags
+                                                                (sb-alien:unsigned
+                                                                 8)
+                                                                :offset 848))
+                                                              :offset 256)
+                                                             (blake3/pkg::cv-stack-len
+                                                              (sb-alien:unsigned
+                                                               8)
+                                                              :offset 1152)
+                                                             (blake3/pkg::cv-stack
+                                                              (array
+                                                               (sb-alien:unsigned
+                                                                8)
+                                                               1760)
+                                                              :offset 1160)))> 
+#<sb-alien-internals:alien-value :sap #X7FED2C4E7880 :type (*
+                                                            (*
+                                                             (sb-alien:unsigned
+                                                              8)))> 
+#<PASS HASHER-TEST1105695> 
+#<PASS VERSION-TEST1105694> 
+No tests failed.
+in suite blake3 with 0/2 tests:
+No tests failed.
+#+end_example
+
+*** alpm
+#+begin_src lisp :results output replace :exports results
+  (load "lisp/ffi/alpm/tests.lisp")
+  (asdf:test-system :alpm)
+#+end_src
+
+#+RESULTS:
+: in suite alpm with 1/1 tests:
+: #<PASS ALPM-VERSION-TEST337> 
+: No tests failed.
+
 * emacs
 =sudo pacman -Syu libvoikko librsvg imagemagick=

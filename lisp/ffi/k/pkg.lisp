@@ -3,8 +3,7 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :k/pkg
-  (:nicknames :k)
+(defpackage :k
   (:use :cl :std)
   (:export 
    :load-k

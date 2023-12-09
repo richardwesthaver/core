@@ -2,6 +2,11 @@
   (:nicknames :tree-sitter :ts)
   (:use :cl :alien)
   (:export 
+   :+tree-sitter-language-version+
+   :+tree-sitter-min-compatible-language-version+
+   :+ts-builtin-sym-error+
+   :+ts-builtin-sym-end+
+   :+tree-sitter-serialization-buffer-size+
    :load-tree-sitter
    :ts-state-id
    :ts-symbol
@@ -21,6 +26,7 @@
    :ts-parser-reset
    :ts-parser-logger
    :ts-parser-set-logger
+   :ts-parser-set-language
    :ts-parser-language
    :ts-parser-parse
    :ts-parser-parse-string
@@ -42,7 +48,9 @@
    :ts-node-string
    :ts-node-is-null
    :ts-node-eq
-   :ts-tree-cursor-new))
+   :ts-tree-cursor-new
+   :load-tree-sitter-json
+   :tree-sitter-json))
 
 (in-package :tree-sitter/pkg)
 
@@ -51,6 +59,12 @@
     (sb-alien:load-shared-object "libtree-sitter.so" :dont-save t)
     (push :tree-sitter *features*)))
 
+(defun load-tree-sitter-json () 
+  (unless (member :tree-sitter-json *features*)
+    (sb-alien:load-shared-object "/usr/local/lib/libtree-sitter-json.so" :dont-save t)
+    (push :tree-sitter-json *features*)))
+
+(define-alien-routine tree-sitter-json (* ts-language))
 ;;; Alien Types
 (define-alien-type ts-state-id unsigned-int)
 (define-alien-type ts-symbol unsigned-int)
@@ -86,6 +100,9 @@
 (define-alien-routine ts-parser-reset void (self (* ts-parser)))
 (define-alien-routine ts-parser-logger ts-logger (self (* ts-parser)))
 (define-alien-routine ts-parser-set-logger void (self (* ts-parser)) (logger ts-logger))
+
+(define-alien-routine ts-parser-set-language boolean (self (* ts-parser)) (language (* ts-language)))
+
 (define-alien-routine ts-parser-language (* ts-language) (self (* ts-parser)))
 (define-alien-routine ts-parser-parse (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (length unsigned-int))
 (define-alien-routine ts-parser-parse-string (* ts-tree) (self (* ts-parser)) (string c-string) (length unsigned-int))
@@ -115,3 +132,5 @@
 (define-alien-routine ts-node-eq boolean (self ts-node) (other ts-node))
 ;;; Tree Cursor
 (define-alien-routine ts-tree-cursor-new ts-tree-cursor (node ts-node))
+
+(define-alien-routine ts-language-version unsigned-int (v (* ts-language)))
