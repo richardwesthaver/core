@@ -1,4 +1,6 @@
 (defpackage :packy/tests
-  (:use :cl :std :sb-ext))
+  (:use :cl :std/rt :packy))
 
 (in-package :packy/tests)
+(defsuite :packy)
+(in-suite :packy)

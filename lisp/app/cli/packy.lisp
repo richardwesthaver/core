@@ -1,8 +1,8 @@
-(defpackage :packy/cli
+(defpackage :cli/packy
   (:use :cl :std :sb-ext)
   (:export :main))
 
-(in-package :packy/cli)
+(in-package :cli/packy)
 
 (defun run ())
 
