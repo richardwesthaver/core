@@ -205,6 +205,37 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
   (asdf:load-system :std)
   (asdf:load-system :std/rt)
 #+end_src
+
+#+begin_src lisp :results silent
+  (require :sb-cover)
+  (defun gen-report (system &optional (directory #P"/tmp/core/"))
+    (declaim (optimize sb-cover:store-coverage-data))
+    (asdf:oos 'asdf:load-op system :force t)
+    (asdf:test-system system)
+    (prog1
+        (sb-cover:report directory)
+      (declaim (optimize (sb-cover:store-coverage-data 0)))))
+
+  (gen-report :std)
+  (gen-report :std/sxp)
+  (gen-report :std/cli)
+  (gen-report :xkb)
+  (gen-report :alpm)
+  (gen-report :btrfs)
+  ;; (gen-report :bqn)
+  ;; (gen-report :k)
+  (gen-report :tree-sitter)
+  (gen-report :uring)
+  (gen-report :zstd)
+  (gen-report :blake3)
+  (gen-report :rocksdb)
+  (gen-report :rdb)
+  (gen-report :skel)
+  (gen-report :organ)
+  (gen-report :nlp)
+  (gen-report :dot)
+  (gen-report :packy)
+#+end_src
 ** std
 #+begin_src lisp :results output replace :exports both
   (load "lisp/std/tests.lisp")

@@ -1,10 +1,14 @@
 (in-package :rocksdb)
 
-(define-opt rocksdb-block-based-options 
-    (block-cache 
-     (* rocksdb-cache))
-  (cache-index-and-filter-blocks
-   (val c-string)))
+(define-opaque rocksdb-block-based-table-options)
+
+(define-alien-routine rocksdb-block-based-options-set-block-cache void
+  (opt (* rocksdb-block-based-table-options)) (block-cache (* rocksdb-cache)))
+
+(define-alien-routine rocksdb-block-based-options-set-cache-index-and-filter-blocks void
+  (opt (* rocksdb-block-based-table-options)) (cache-index-and-filter-blocks (val c-string)))
+
+   
 
 (define-opt rocksdb-options
   create-if-missing
