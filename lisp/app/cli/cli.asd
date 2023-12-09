@@ -36,8 +36,17 @@
 (defsystem :cli/skel
   :build-operation program-op
   :build-pathname "skel"
-  :entry-point "std/cli::main"
+  :entry-point "cli/skel::main"
   :components ((:file "skel"))
   :depends-on (:uiop :cl-ppcre :std/all :std/cli :skel)
+  :in-order-to ((test-op (test-op "app/tests")))
+  :perform (test-op (o c) (symbol-call :std/rt :do-tests :app)))
+
+(defsystem :cli/packy
+  :build-operation program-op
+  :build-pathname "packy"
+  :entry-point "cli/packy::main"
+  :components ((:file "packy"))
+  :depends-on (:uiop :cl-ppcre :std/all :std/cli :packy)
   :in-order-to ((test-op (test-op "app/tests")))
   :perform (test-op (o c) (symbol-call :std/rt :do-tests :app)))

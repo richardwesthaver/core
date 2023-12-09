@@ -141,6 +141,29 @@ compressed 8388608 bytes into 2586302 at level 9
 compressed 0 bytes into 9 at level 9
 #+end_example
 
+*** cli/packy
+#+begin_src shell :results pp replace :exports code
+  sbcl --noinform  --non-interactive \
+    --eval '(ql:quickload :cli/packy)' \
+    --eval "(asdf:make :cli/packy)"
+  mv lisp/app/cli/packy ~/.local/bin/
+#+end_src
+
+#+RESULTS:
+#+begin_example
+To load "cli/packy":
+  Load 1 ASDF system:
+    cli/packy
+; Loading "cli/packy"
+..................................................
+[package packy]...................................
+[package cli/packy].
+compressed 32768 bytes into 5077 at level 9
+compressed 236388352 bytes into 9223131 at level 9
+compressed 8257536 bytes into 2552556 at level 9
+compressed 0 bytes into 9 at level 9
+#+end_example
+
 ** Rust
 *** cli/cc-init
 #+begin_src shell :results output pp :exports code
