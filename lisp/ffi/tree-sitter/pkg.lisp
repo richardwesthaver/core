@@ -49,8 +49,11 @@
    :ts-node-is-null
    :ts-node-eq
    :ts-tree-cursor-new
+   :ts-language-version
    :load-tree-sitter-json
-   :tree-sitter-json))
+   :tree-sitter-json
+   :load-tree-sitter-rust
+   :tree-sitter-rust))
 
 (in-package :tree-sitter/pkg)
 
@@ -64,7 +67,11 @@
     (sb-alien:load-shared-object "/usr/local/lib/libtree-sitter-json.so" :dont-save t)
     (push :tree-sitter-json *features*)))
 
-(define-alien-routine tree-sitter-json (* ts-language))
+(defun load-tree-sitter-rust () 
+  (unless (member :tree-sitter-rust *features*)
+    (sb-alien:load-shared-object "/usr/local/lib/libtree-sitter-rust.so" :dont-save t)
+    (push :tree-sitter-rust *features*)))
+
 ;;; Alien Types
 (define-alien-type ts-state-id unsigned-int)
 (define-alien-type ts-symbol unsigned-int)
@@ -134,3 +141,6 @@
 (define-alien-routine ts-tree-cursor-new ts-tree-cursor (node ts-node))
 
 (define-alien-routine ts-language-version unsigned-int (v (* ts-language)))
+
+(define-alien-routine tree-sitter-json (* ts-language))
+(define-alien-routine tree-sitter-rust (* ts-language))
