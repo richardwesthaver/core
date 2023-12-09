@@ -1,48 +1,56 @@
-* TODO migrate to sb-grovel [0%]                                   :lisp:ffi:
+* TODO migrate to sb-grovel [88%]                                  :lisp:ffi:
 :PROPERTIES:
 :CUSTOM_ID: bb365025-e5e7-4407-acba-32e30d1a245a
 :END:
 - State "TODO"       from              [2023-11-27 Mon 23:42]
 [[file:lisp/ffi/]]
-** TODO blake3
+** DONE blake3
 :PROPERTIES:
 :CUSTOM_ID: 656c2683-8780-407c-b955-3defc4959595
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO bqn
+** DONE bqn
 :PROPERTIES:
 :CUSTOM_ID: b4757746-525b-49e4-b8ac-677375867d8f
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO btrfs
+** DONE btrfs
 :PROPERTIES:
 :CUSTOM_ID: b3b411fe-6b2d-4338-9e23-83536336a487
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO k
+** DONE k
 :PROPERTIES:
 :CUSTOM_ID: 8a463084-efa0-4535-8239-b1c4955bde4c
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO rocksdb
+** DONE rocksdb
 :PROPERTIES:
 :CUSTOM_ID: 2d4d70af-228f-424c-8374-9fc8ed5c6f92
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO tree-sitter
+** DONE tree-sitter
 :PROPERTIES:
 :CUSTOM_ID: 0cdf3412-cb00-4069-8e1b-b49c736377cf
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO uring
+** DONE uring
 :PROPERTIES:
 :CUSTOM_ID: 45a52407-ccaf-4ea1-99c4-d6f7ba0b2731
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO zstd
+** DONE zstd
 :PROPERTIES:
 :CUSTOM_ID: 6ade8dd8-83b1-470d-a0da-a352ce4c2d06
 :END:
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
 ** TODO xkb
 :PROPERTIES:
