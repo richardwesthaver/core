@@ -1,24 +1,5 @@
 ;;; Objects
-(defpackage :skel/core/obj
-  (:use :cl :std :skel/core/proto :skel/core/vc :skel/core/header :sb-unix)
-  (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
-  (:export
-   ;; cfg
-   :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-project-registry* 
-   :*default-skelfile* :*default-skel-user* :*default-skel-cache* :*default-user-skel-config* 
-   :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
-   :*default-skel-stash* :*default-skel-shed* :*default-system-skelrc*
-   ;; helpers
-   :file-read-forms :load-ast
-   ;; obj
-   :sk-author :sk-path :sk-shed :sk-stash :sk-user
-   :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
-   :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 
-   :sk-description :sk-kind :sk-rules :sk-id :sk-version :sk-name :sk-docs :sk-document 
-   :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
-   :sk-user-config))
-
-(in-package :skel/core/obj)
+(in-package :skel/core)
 
 ;;; Vars
 (declaim (type vc-designator *default-skel-vc-kind*))
@@ -42,7 +23,6 @@
 
 (declaim (type pathname *default-skel-stash* *default-skel-shed*
 	       *default-skel-cache* *default-user-skelrc* *default-system-skelrc*))
-	       
 
 (defparameter *default-skel-stash* (pathname (format nil "/home/~a/stash/" *default-skel-user*)))
 
@@ -52,7 +32,7 @@
 
 (defparameter *default-user-skelrc* (pathname (format nil "/home/~A/~A" *default-skel-user* *default-skelrc*)))
 
-(defparameter *default-system-skelrc* (pathname "/etc/skelrc"))
+(defparameter *default-system-skelrc* (pathname "/etc/skel/skelrc"))
 
 (defclass skel ()
   ((id :initarg :id :initform (sxhash nil) :accessor sk-id :type fixnum))

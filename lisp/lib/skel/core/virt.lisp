@@ -49,11 +49,7 @@
 ;; https://github.com/containers/common/blob/main/docs/containers.conf.5.md
 
 ;;; Code:
-(defpackage :skel/core/virt
-  (:use :cl :skel/core/obj :skel/core/proto)
-  (:export :containerfile))
-
-(in-package :skel/core/virt)
+(in-package :skel/core)
 
 (defparameter *default-containerfile* "containerfile")
 

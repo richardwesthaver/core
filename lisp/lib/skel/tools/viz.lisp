@@ -1,1 +1,2 @@
-(defpackage :skel/viz)
+(defpackage :skel/viz
+  (:use :std :dot))

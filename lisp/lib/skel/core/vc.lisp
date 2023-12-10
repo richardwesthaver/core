@@ -37,17 +37,7 @@
 ;; hg serve --no-profile --cmdserver chgunix --address @INITSOCKNAME --daemon-postexec chdir:/ @DIR
 
 ;;; Code:
-(defpackage :skel/core/vc
-  (:use :cl :sb-bsd-sockets)
-  (:import-from :sb-ext :run-program)
-  (:export
-   :*hg-program* :*git-program*
-   :run-hg-command :run-git-command
-   :repo :hg-repo :git-repo
-   :vc-meta :hg-meta :git-meta
-   :hg-client :make-hg-client))
-   
-(in-package :skel/core/vc)
+(in-package :skel/core)
 
 (defclass repo (skel sk-meta)
   ((head)

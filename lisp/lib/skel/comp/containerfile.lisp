@@ -1,4 +1,1 @@
-(defpackage :skel/comp/containerfile
-  (:use :cl :skel/core))
-
-(in-package :skel/comp/containerfile)
+(in-package :skel/comp)

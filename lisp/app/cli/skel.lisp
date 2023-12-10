@@ -1,6 +1,6 @@
 ;;; Code:
 (uiop:define-package :cli/skel
-  (:use :cl :std :std/cli :skel/pkg :skel/core/vc :skel/core/virt :skel/comp/make)
+  (:use :cl :std :std/cli :skel)
   (:export :main))
 
 (in-package :cli/skel)
