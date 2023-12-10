@@ -1,0 +1,4 @@
+
+https://man.archlinux.org/man/core/pacman/libalpm.3.en
+
+https://github.com/archlinux/alpm.rs/tree/382af70cdbff8e1f65c0bf8df79693786f44429c/alpm/examples
