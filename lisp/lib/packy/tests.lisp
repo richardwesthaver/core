@@ -4,3 +4,5 @@
 (in-package :packy/tests)
 (defsuite :packy)
 (in-suite :packy)
+
+(deftest packy-objects ())
