@@ -1,18 +1,5 @@
 ;;; Utils
-(defpackage :skel/core/util
-  (:use :cl :skel/core/obj :skel/core/proto :std)
-  (:import-from :uiop/pathname :pathname-parent-directory-pathname)
-  (:export 
-   :init-skelrc :load-skelrc
-   :init-skel-user-config
-   :init-skelfile
-   :load-skelfile
-   :find-skelfile
-   :find-project-root
-   :describe-skeleton
-   :describe-project))
-
-(in-package :skel/core/util)
+(in-package :skel/core)
 
 (defun init-skelrc (&optional file)
   "Initialize a skelrc configuration based on the currently active

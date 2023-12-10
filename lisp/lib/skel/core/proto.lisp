@@ -1,28 +1,5 @@
 ;;; Proto
-(defpackage :skel/core/proto
-  (:use :cl)
-  (:export
-   ;; proto
-   :sk-run
-   :sk-new
-   :sk-save
-   :sk-tangle
-   :sk-weave
-   :sk-call
-   :sk-print
-   :sk-load
-   :sk-compile
-   :rehash-object
-   :sk-transform
-   :sk-read-file
-   :sk-write
-   :sk-writeln
-   :sk-write-string
-   :sk-write-file
-   :sk-read-file
-   :sk-install-user-config))
-
-(in-package :skel/core/proto)
+(in-package :skel/core)
 
 (defgeneric sk-run (self))
 (defgeneric sk-new (self))

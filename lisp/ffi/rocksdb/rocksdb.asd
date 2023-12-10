@@ -9,6 +9,7 @@
 ;;; Code:
 (defsystem "rocksdb"
   :depends-on (:std)
+  :serial t
   :components ((:file "pkg")
                (:file "macs")
                (:file "types")

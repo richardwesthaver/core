@@ -11,7 +11,7 @@
 
 ;; - An ASDF plugin for integrating skel into ASDF system definitions
 
-;; - An ASDF system definition compiler - defined in the package :skel.comp.asd
+;; - An ASDF system definition compiler - defined in the package :skel/comp/asd
 
 ;; Refs: 
 

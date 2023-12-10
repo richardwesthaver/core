@@ -19,17 +19,7 @@
 ;; https://www.gnu.org/software/make/manual/html_node/Parsing-Makefiles.html
 
 ;;; Code:
-(defpackage :skel/comp/make
-  (:use :cl :skel/core/proto :std/fmt :std/sxp)
-  (:import-from :skel/core/obj :sk-rule :sk-command)
-  (:export 
-   :*default-makefile* :*makefile-extension* 
-   :*mk-magic-vars* :*mk-command-prefixes*
-   :mk-val-designator 
-   :mk-val :mk-var
-   :makefile :push-rule :push-directive :push-var))
-
-(in-package :skel/comp/make)
+(in-package :skel/comp)
 
 (defparameter *default-makefile* "makefile")
 (defparameter *makefile-extension* "mk")

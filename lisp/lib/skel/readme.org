@@ -24,7 +24,7 @@ sbcl --version
 #+end_src
 
 #+RESULTS:
-: SBCL 2.3.8.18.master.74-8cf7faf9a
+: SBCL 2.3.12+main
 
 Then compile the program. This command produces a binary called =skel=
 in the project root:
@@ -36,7 +36,7 @@ Run the binary without any args, which will print a skeleton of the
 current project directory (=*skel-project*=).
 
 #+begin_src shell :results output replace :exports both
-  ./skel -h
+  skel -h
 #+end_src
 
 #+RESULTS:
