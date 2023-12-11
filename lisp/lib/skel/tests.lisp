@@ -1,6 +1,6 @@
 ;;; tests.lisp --- skel tests
 (defpackage :skel/tests
-  (:use :cl :skel :std/rt :std/sxp :std/log)
+  (:use :cl :skel/core :skel/comp :std/rt :std/sxp :std/log)
   (:import-from :uiop :file-exists-p))
 
 (in-package :skel/tests)

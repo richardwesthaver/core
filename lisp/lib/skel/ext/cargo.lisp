@@ -1,1 +1,1 @@
-(defpackage :skel/ext/cargo)
+(defpackage :skel/cargo)

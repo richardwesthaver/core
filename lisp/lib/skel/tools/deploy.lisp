@@ -1,1 +1,1 @@
-(defpackage :skel/deploy)
+(in-package :skel/deploy)

@@ -20,7 +20,7 @@
 ;;; Code:
 (uiop:define-package :std/cli
   (:nicknames :cli)
-  (:use :cl :std/base :std/fu :std/ana :std/fmt :std/log)
+  (:use :cl :std/base :std/fu :std/ana :std/fmt :std/log :sb-ext)
   (:import-from :std/ana :alet)
   (:import-from :uiop :println)
   (:import-from :sb-ext :parse-native-namestring)
@@ -143,6 +143,10 @@
   (find name (or programs (program-list))
         :test #'equalp
         :key #'pathname-name))
+
+(defun open-with-editor (path &optional editor &key args)
+  (unless editor (setq editor (or (sb-posix:getenv "EDITOR") (find-exe "emacs"))))
+  (run-program editor (nconc args (list path))))
 
 (declaim (inline ld-library-path-list))
 (defun ld-library-path-list ()

@@ -1,1 +1,1 @@
-(defpackage :skel/ext/krypt)
+(defpackage :skel/krypt)

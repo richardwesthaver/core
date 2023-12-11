@@ -1,4 +1,5 @@
 (in-package :rocksdb)
+
 ;;; DB
 (def-with-errptr rocksdb-open (* rocksdb)
   (opt (* rocksdb-options))

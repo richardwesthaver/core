@@ -5,16 +5,13 @@
 ;;; Commentary:
 
 ;;; Code:
-
-(uiop:define-package :skel
-    (:use-reexport :skel/core :skel/comp))
-
-(uiop:define-package :skel/core
+(defpackage :skel/core
     (:use :cl :cl-ppcre :std :sb-mop :sb-bsd-sockets :sb-unix)
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :sb-ext :run-program)
-  (:shadowing-import-from :uiop :pathname-parent-directory-pathname :read-file-forms)
+  (:import-from :std/fu :when-let)
+  (:import-from :std/sxp :form)
   (:export 
    ;; err
    :skel-syntax-error
@@ -83,9 +80,13 @@
    :mk-val :mk-var
    :makefile :push-rule :push-directive :push-var))
 
-(defpackage :skel/tools
-  (:use :cl :std :dot :skel/core :skel/comp)
-  (:export
-   ;; deploy
-   ;; viz
-))
+(uiop:define-package :skel                
+    (:use-reexport :skel/core :skel/comp))
+
+(defpackage :skel/viz
+  (:use :cl :std :dot :skel)
+  (:export))
+
+(defpackage :skel/deploy
+  (:use :cl :std :skel)
+  (:export))
