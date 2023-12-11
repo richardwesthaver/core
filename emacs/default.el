@@ -586,13 +586,14 @@ buffer."
 ;; todos
 (setq org-todo-keywords
       '((type "TBD(0!)" "TODO(t!)" "|")
-    (sequence "FIND(q!)" "READ(R@!)" "WATCH(W@!)" "|")
-    (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
-    (sequence "OUTLINE(o!)" "RESEARCH(r!)" "DRAFT(m!)" "REVIEW(w!)" "|")
-    (sequence "FIX(i!)" "TEST(t!)" "|")
-    (type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
-    (type "KLUDGE(k@!)" "|")
-    (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
+        (type "WIP(w!)" "|")
+        (sequence "FIND(q!)" "READ(r@!)" "WATCH(W@!)" "|")
+        (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
+        (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(R!)" "|")
+        (sequence "FIX(i!)" "TEST(t!)" "|")
+        (type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
+        (type "KLUDGE(k@!)" "|")
+        (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
 ;; captures
 (setq org-capture-templates
       '(("t" "task" entry (file "inbox.org") "* %^{title}\n- %?" :prepend t)

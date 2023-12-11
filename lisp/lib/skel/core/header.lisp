@@ -1,12 +1,4 @@
 ;;; File Headers
-(defpackage :skel/core/header
-  (:use :cl :std :skel/core/proto)
-  (:export
-   :make-file-header :make-shebang-file-header :make-source-file-header :file-header-kind
-   :make-source-header-comment :make-shebang-comment))
-
-(in-package :skel/core/header)
-
 (deftype file-header-kind () '(member :source :shebang))
 
 (declaim (inline %make-file-header))
@@ -46,7 +38,7 @@
 
 (defun parse-stream-file-header (stream)
   "Parse a file-header from STREAM."
-  (when-let ((l (read-line stream :eof-error-p nil)))
+  (when-let (l (read-line stream :eof-error-p nil))
     l))
 
 (defun parse-source-file-header (file)

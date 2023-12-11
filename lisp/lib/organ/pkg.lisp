@@ -1,7 +1,6 @@
 ;;; organ.lisp --- Org parser
-(defpackage :organ/pkg
-  (:nicknames :organ)
-  (:use :cl :cl-ppcre :std/sym :std/fu :organ/lexer)
+(defpackage :organ
+  (:use :cl :cl-ppcre :std/sym :std/fu)
   (:shadowing-import-from :sb-gray :fundamental-stream)
   (:import-from :uiop :read-file-string)
   (:export
@@ -78,16 +77,17 @@
 associated value or nil if not found."
   `(gethash (intern ,kw) org-todo-keyword-map))
 
-(defvar org-headline-regexp (cl-ppcre:parse-string "^([*]+)\\s+(.*)$"))
-(defvar org-todo-keyword-regexp (cl-ppcre:parse-string "^(\\w+)\\s+(.*)$"))
-(defvar org-file-property-regexp (cl-ppcre:parse-string "^[#+](.*)[:]\\s+(.*)$"))
-(defvar org-property-regexp (cl-ppcre:parse-string "^[:](.*)[:]\\s+(.*)$"))
+(defvar org-headline-regexp "^([*]+)\\s+(.*)$")
+(defvar org-todo-keyword-regexp "^(\\w+)\\s+(.*)$")
+(defvar org-file-property-regexp "^[#+](.*)[:]\\s+(.*)$")
+(defvar org-property-regexp "^[:](.*)[:]\\s+(.*)$")
+
 ;; this doesn't consume leading whitespace. It could be useful in the
 ;; future to infer a value for org-tags-column but is contained in the
 ;; title slot of `org-headline' for now. The result of this scan is a
 ;; single string delimited by the ':' character. To get a list of tags
 ;; as strings, use `org-tag-split'.
-(defvar org-tag-regexp (cl-ppcre:parse-string "(:[\\w_@#%:]+:)$"))
+(defvar org-tag-regexp "(:[\\w_@#%:]+:)$")
 
 (defun org-tag-split (tags)
   (remove-if (lambda (s) (typep s '(string 0))) (cl-ppcre:split ":" tags)))

@@ -1,1 +1,1 @@
-(defpackage :skel/ext/packy)
+(defpackage :skel/packy)

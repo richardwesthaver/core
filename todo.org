@@ -52,10 +52,11 @@
 :END:
 - State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
 - State "TODO"       from              [2023-11-29 Wed 19:00]
-** TODO xkb
+** WIP xkb
 :PROPERTIES:
 :CUSTOM_ID: af778a5f-4834-4f0c-ae53-36d35cb98d8c
 :END:
+- State "WIP"        from "TODO"       [2023-12-10 Sun 22:47]
 - State "TODO"       from              [2023-11-29 Wed 19:27]
 * TODO parse                                                       :lisp:lib:
 :PROPERTIES:
@@ -65,6 +66,7 @@
 - State "TODO"       from              [2023-11-29 Wed 19:01]
 - lalr.lisp
 - lex.lisp
+- obj api
 * TBD wayland compositor                                          :rust:lisp:
 :PROPERTIES:
 :CUSTOM_ID: e18a90d7-10bc-44d3-8508-56483d29d385
@@ -87,4 +89,17 @@
 :CUSTOM_ID: 63774177-9730-4961-8535-414fac7a6f4f
 :END:
 - State "TODO"       from              [2023-11-29 Wed 21:26]
-
+* TODO rdb v0.2 [0%]                                               :lisp:rdb:
+** TODO error handling
+- State "TODO"       from              [2023-12-10 Sun 22:57]
+- need to unwrap the pointer (* (* t))
+- cast to string,int,bool
+- wrap segfault handlers
+- add restarts for common errors (bad path)
+- add cleanup routines
+** TODO client api
+- State "TODO"       from              [2023-12-10 Sun 22:59]
+- clients are fully dynamic
+- generated from RDB instances
+- compiles in CF/option/multithread/type info
+- clients implement custom Q language
