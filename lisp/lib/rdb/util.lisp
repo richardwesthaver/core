@@ -1,16 +1,16 @@
 (in-package :rdb)
 
 (defmacro with-errptr (e &body body)
-    `(with-alien ((,e rocksdb-errptr nil))
-       ,@body
-       (free-alien ,e)))
+    `(with-alien ((,e rocksdb-errptr (make-alien rocksdb-errptr)))
+       ,@body))
+
 
 (defun default-rocksdb-options ()
   (let ((opts (rocksdb-options-create)))
     (rocksdb-options-set-create-if-missing opts t)
     opts))
 
-(defun open-db-raw (db-path &optional (opts (default-rocksdb-options)))
+(defun open-db-raw (db-path opts)
   (with-errptr e
     (let* ((db-path (if (pathnamep db-path)
                         (namestring db-path)
@@ -32,7 +32,7 @@
       (rocksdb-destroy-db opt path err))
       (rocksdb-options-destroy opt)))
 
-(defmacro with-open-db-raw ((db-var db-path &optional (opt (rocksdb-options-create))) &body body)
+(defmacro with-open-db-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
   `(let ((,db-var (open-db-raw ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)

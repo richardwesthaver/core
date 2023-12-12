@@ -7,12 +7,12 @@
 (rocksdb:load-rocksdb)
 
 (defmacro with-test-db-raw ((db-var path) &body body)
-  `(let ((,db-var (open-db-raw ,path)))
+  `(let* ((opt (rdb::default-rocksdb-options))
+          (,db-var (open-db-raw ,path opt)))
      (unwind-protect (progn ,@body)
-       (rocksdb-close ,db-var)
-       (with-alien ((e rocksdb-errptr)
-                    (o rocksdb-options (rocksdb-options-create)))
-         (rocksdb-destroy-db o ,path e)))))
+       (with-errptr e
+         (rocksdb-close ,db-var)
+         (rocksdb-destroy-db opt ,path e)))))
 
 (deftest rdb ()
   "Test RDB struct and methods."

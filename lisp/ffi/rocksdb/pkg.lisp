@@ -146,6 +146,12 @@ set *errptr to a malloc()ed error message.
    ;; CACHE
    :rocksdb-cache
    :rocksdb-cache-create-lru
+   :rocksdb-lru-cache-options
+   :rocksdb-lru-cache-options-create
+   :rocksdb-lru-cache-options-destroy
+   :rocksdb-lru-cache-options-set-capacity
+   :rocksdb-lru-cache-options-set-num-shard-bits
+   :rocksdb-lru-cache-options-set-memory-allocator
    ;; BLOCK-BASED OPTIONS
    :rocksdb-block-based-table-options
    :rocksdb-block-based-options-create
@@ -153,6 +159,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-block-based-options-set-block-cache
    :rocksdb-block-based-options-set-cache-index-and-filter-blocks
    ;; OPTIONS
+   :*rocksdb-options*
    ;; opt-utils
    :rocksdb-load-latest-options
    :rocksdb-load-latest-options-destroy
@@ -160,6 +167,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-set-options-cf
    :rocksdb-options
    :rocksdb-options-create
+   :rocksdb-options-create-copy
    :rocksdb-options-destroy
    :rocksdb-options-increase-parallelism
    :rocksdb-options-optimize-for-point-lookup
@@ -308,6 +316,33 @@ set *errptr to a malloc()ed error message.
    :rocksdb-approximate-memory-usage-get-mem-table-unflushed
    :rocksdb-approximate-memory-usage-get-mem-table-readers-total
    :rocksdb-approximate-memory-usage-get-cache-total
+   ;; perfcontext
+   :rocksdb-set-perf-level
+   :rocksdb-perfcontext-create
+   :rocksdb-perfcontext-reset
+   :rocksdb-perfcontext-report
+   :rocksdb-perfcontext-metric
+   :rocksdb-perfcontext-destroy
+   ;; compactionfilter
+   :rocksdb-compactionfilter-create
+   :rocksdb-compactionfilter-set-ignore-snapshots
+   :rocksdb-compactionfilter-destroy
+   ;; compactionfiltercontext
+   :rocksdb-compactionfiltercontext-is-full-compaction
+   :rocksdb-compactionfiltercontext-is-manual-compaction
+   ;; comparator
+   :rocksdb-comparator-create
+   :rocksdb-comparator-destroy
+   :rocksdb-comparator-with-ts-create
+   ;; filterpolicy
+   :rocksdb-filterpolicy-destroy
+   :rocksdb-filterpolicy-create-bloom
+   :rocksdb-filterpolicy-create-bloom-full
+   :rocksdb-filterpolicy-create-ribbon
+   :rocksdb-filterpolicy-create-ribbon-hybrid
+   ;; mergeoperator
+   :rocksdb-mergeoperator-create
+   :rocksdb-mergeoperator-destroy
    ;; stats
    :rocksdb-statistics-histogram-data
    :rocksdb-statistics-histogram-data-create
@@ -328,3 +363,5 @@ set *errptr to a malloc()ed error message.
   (unless (member :rocksdb *features*)
     (sb-alien:load-shared-object "librocksdb.so" :dont-save t)
     (push :rocksdb *features*)))
+
+(load-rocksdb)

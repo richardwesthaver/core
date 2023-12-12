@@ -26,15 +26,18 @@
    :iter-key :iter-key-str
    :iter-val :iter-val-str
    ;; proto
-   :put-kv :put-kv-str
-   :get-kv :get-kv-str
-   :put-cf :put-cf-str
-   :get-cf :get-cf-str
+   :put-key :put-kv
+   :get-key :get-kv
+   :put-cf-key :get-cf-key
+   :push-sap :push-sap*
+   :get-opt :set-opt
+   :push-cf :init-db
+   :insert-kv :insert-key
+   :open-db :close-db :destroy-db
    ;; obj
-   :rdb :make-rdb :open-rdb :close-rdb :destroy-rdb
+   :rdb :make-rdb 
    :rdb-db :rdb-name :rdb-cfs :rdb-opts
-   :push-cf :init-cfs
-   :insert-kv :insert-kv-str
+   :make-rdb-key :rdb-kv :rdb-key :rdb-val :rdb-bytes
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf
