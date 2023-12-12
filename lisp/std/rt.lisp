@@ -100,7 +100,7 @@
 (in-readtable :std)
 
 ;;; Vars
-(defvar *default-test-opts* '(optimize sb-c::instrument-consing))
+(defvar *default-test-opts* '(optimize sb-c::instrument-consing (debug 3)))
 (defvar *compile-tests* t
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
