@@ -246,4 +246,88 @@
 (define-alien-routine rocksdb-transactiondb-close void
   (tdb (* rocksdb-transactiondb)))
 
+;;; Perfcontext
+(define-alien-routine rocksdb-set-perf-level void (val int))
+
+(define-alien-routine rocksdb-perfcontext-create (* rocksdb-perfcontext))
+
+(define-alien-routine rocksdb-perfcontext-reset void (* rocksdb-perfcontext))
+
+(define-alien-routine rocksdb-perfcontext-report (* char) 
+  (context (* rocksdb-perfcontext))
+  (exclude-zero-counters unsigned-char))
+
+(define-alien-routine rocksdb-perfcontext-metric unsigned-long
+  (context (* rocksdb-perfcontext)) (metric int))
+
+(define-alien-routine rocksdb-perfcontext-destroy void (* rocksdb-perfcontext))
+
+;;; Compaction Filter
+;; (define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
+;;   (state (* void))
+;;   (destructor (* void))
+;;   (filter (* unsigned-char))
+;;   (name (* char)))
+
+(define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
+  (self (* rocksdb-compactionfilter)) (val unsigned-char))
+
+(define-alien-routine rocksdb-compactionfilter-destroy void
+  (self (* rocksdb-compactionfilter)))
+
+;;; Compaction Filter Context
+(define-alien-routine rocksdb-compactionfiltercontext-is-full-compaction unsigned-char
+  (context (* rocksdb-compactionfiltercontext)))
+
+(define-alien-routine rocksdb-compactionfiltercontext-is-manual-compaction unsigned-char
+  (context (* rocksdb-compactionfiltercontext)))
+
+;;; Compaction Filter Factory
+
+;;; Comparator
+;; TODO 2023-12-11: 
+;; (define-alien-routine rocksdb-comparator-create (* rocksdb-comparator)
+;;   (state (* void))
+;;   (destructor (* void))
+;;   (compare (* int))
+;;   (name (* char)))
+
+(define-alien-routine rocksdb-comparator-destroy void (self (* rocksdb-comparator)))
+
+;; (define-alien-routine rocksdb-comparator-with-ts-create (* rocksdb-comparator)
+;;   (state (* void))
+;;   (destructor (* void))
+;;   (compare (* int))
+;;   (compare-ts (* int))
+;;   (compare-without-ts (* int))
+;;   (name (* char)))
+
+;;; Filter Policy
+(define-alien-routine rocksdb-filterpolicy-destroy void (self (* rocksdb-filterpolicy)))
+
+(define-alien-routine rocksdb-filterpolicy-create-bloom (* rocksdb-filterpolicy)
+  (bits-per-key double))
+
+(define-alien-routine rocksdb-filterpolicy-create-bloom-full (* rocksdb-filterpolicy)
+  (bits-per-key double))
+
+(define-alien-routine rocksdb-filterpolicy-create-ribbon (* rocksdb-filterpolicy)
+  (bloom-equivalent-bits-per-key double))
+
+(define-alien-routine rocksdb-filterpolicy-create-ribbon-hybrid (* rocksdb-filterpolicy)
+  (bloom-equivalent-bits-per-key double)
+  (bloom-before-level int))
+
+;;; Merge Operator
+;; TODO 2023-12-11: 
+;; (define-alien-routine rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
+;;   (state (* void))
+;;   (destructor (* void))
+;;   (full-merge (* char))
+;;   (partial-merge (* char))
+;;   (delete-value (* void))
+;;   (name (* char)))
+
+(define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
+
 ;;; BlobDB

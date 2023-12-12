@@ -103,3 +103,19 @@
 - generated from RDB instances
 - compiles in CF/option/multithread/type info
 - clients implement custom Q language
+** TODO sequence/iterator impl
+- State "TODO"       from              [2023-12-10 Sun 23:09]
+- use SBCL built-ins to extend the api - wrap the raw FFI iterator
+- define mixins
+** TODO comparator impl
+- State "TODO"       from              [2023-12-10 Sun 23:11]
+- supply custom comparators to rocksdb from lisp
+** TODO type system
+- State "TODO"       from              [2023-12-10 Sun 23:12]
+- capture types of: kv, cf
+- specs
+  - kv-spec = (kv-spec val-spec)
+    - must be serialized to/from vec<char>
+  - cf-spec
+    - used as superclass
+    - methods for abstracting CFs
