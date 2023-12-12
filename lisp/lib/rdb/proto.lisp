@@ -12,6 +12,7 @@
 
 (defgeneric push-cf (self cf))
 
+(defgeneric make-db (self &key &allow-other-keys))
 (defgeneric open-db (self))
 (defgeneric close-db (self))
 (defgeneric destroy-db (self))

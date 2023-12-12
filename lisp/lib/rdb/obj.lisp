@@ -133,6 +133,9 @@ rocksdb_cf_t handle."
 (defmethod push-cf ((cf rdb-cf) (db rdb))
   (vector-push cf (rdb-cfs db)))
 
+(defmethod make-db ((self rdb) &rest initargs)
+  (apply #'make-instance 'rdb initargs))
+
 (defmethod open-db ((self rdb))
   (setf (rdb-db self)
         (open-db-raw (rdb-name self) (rdb-opts-sap (rdb-opts self)))))

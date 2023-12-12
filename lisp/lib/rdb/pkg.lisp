@@ -33,11 +33,12 @@
    :get-opt :set-opt
    :push-cf :init-db
    :insert-kv :insert-key
-   :open-db :close-db :destroy-db
+   :make-db :open-db :close-db :destroy-db
    ;; obj
    :rdb :make-rdb 
    :rdb-db :rdb-name :rdb-cfs :rdb-opts
-   :make-rdb-key :rdb-kv :rdb-key :rdb-val :rdb-bytes
+   :rdb-bytes :rdb-bytes-buffer
+   :make-rdb-key :rdb-kv :rdb-key :rdb-val 
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf

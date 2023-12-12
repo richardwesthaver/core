@@ -74,3 +74,13 @@
 
 (deftest errors ()
   "Test rdb condition handlers.")
+
+(deftest rdb-bytes ()
+  "Test rdb-bytes methods - iterator protocol specifically."
+  (let ((bytes (make-instance 'rdb-bytes :buffer #(0 1 2 3))))
+    (is (= (sequence:length bytes) 4))
+    (is (= (sequence:elt bytes 0) 0))
+    (is (not (sequence:emptyp bytes)))
+    ;; NYI
+    (is (= (sequence:count 2 (rdb-bytes-buffer bytes)) 1))))
+  
