@@ -1,33 +1,7 @@
 ;;; err.lisp --- Conditions and other exception handlers
 
 ;;; Code:
-(defpackage :std/err
-  (:nicknames :err)
-  (:use :cl)
-  (:export
-   #:nyi!
-   #:required-argument
-   #:ignore-some-conditions
-   #:simple-style-warning
-   #:simple-reader-error
-   #:simple-parse-error
-   #:simple-program-error
-   #:circular-dependency
-   #:circular-dependency-items
-   #:unknown-argument
-   #:unknown-argument-name
-   #:unknown-argument-kind
-   #:unknown-argument-p
-   #:missing-argument
-   #:missing-argument-command
-   #:missing-argument-p
-   #:invalid-argument
-   #:invalid-argument-item
-   #:invalid-argument-reason
-   #:invalid-argument-p
-   #:unwind-protect-case))
-
-(in-package :std/err)
+(in-package :std)
 
 (defmacro nyi! (&optional comment)
   `(prog1

@@ -4,8 +4,7 @@
 
 ;;; Code:
 (defpackage :bqn
-  (:nicknames :bqn)
-  (:use :cl :std)
+  (:use :cl :std :sb-alien)
   (:export 
    :load-bqn
    :bqnv
@@ -36,6 +35,8 @@
   (unless (member :bqn *features*)
     (sb-alien:load-shared-object "libcbqn.so" :dont-save t)
     (push :bqn *features*)))
+
+(load-bqn)
 
 (define-alien-type bqnv unsigned-long)
 (define-alien-routine bqn-init void)

@@ -1,8 +1,8 @@
-(uiop:define-package :app/gui/skel
-    (:use :cl :std :std/gui :skel :skel/core/vc :skel/core/virt :skel/comp/make)
+(defpackage :gui/skel
+    (:use :cl :std :gui :skel)
   (:export :main))
 
-(in-package :app/gui/skel)
+(in-package :gui/skel)
 
 (defun run ()
   (print "OK"))

@@ -1,13 +1,13 @@
 ;;; web/index.lisp --- local user index
 
 ;;; Code:
-(uiop:define-package :app/web/index
+(uiop:define-package :web/index
     (:use :cl :std :hunchentoot :lass :spinneret)
   (:export 
    :main
    :*web-index-port*))
 
-(in-package :app/web/index)
+(in-package :web/index)
 
 (defparameter *last-update* (get-universal-time))
 

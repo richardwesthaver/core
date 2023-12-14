@@ -1,5 +1,5 @@
 (defpackage :tree-sitter/tests
-  (:use :cl :rt :tree-sitter))
+  (:use :cl :rt :tree-sitter :std))
 
 (in-package :tree-sitter/tests)
 

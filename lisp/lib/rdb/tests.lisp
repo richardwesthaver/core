@@ -1,6 +1,8 @@
 (defpackage :rdb/tests
-  (:use :cl :std :std/alien :std/rt :rdb :rocksdb))
+  (:use :cl :std :rt :rdb :rocksdb))
+
 (in-package :rdb/tests)
+
 (defsuite :rdb)
 (in-suite :rdb)
 

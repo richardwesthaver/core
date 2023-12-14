@@ -38,7 +38,7 @@
 
 (defun parse-stream-file-header (stream)
   "Parse a file-header from STREAM."
-  (when-let (l (read-line stream :eof-error-p nil))
+  (std:when-let ((l (read-line stream :eof-error-p nil)))
     l))
 
 (defun parse-source-file-header (file)

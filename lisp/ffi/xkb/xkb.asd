@@ -15,6 +15,6 @@
   :in-order-to ((test-op (test-op :xkb/tests))))
 
 (defsystem :xkb/tests
-  :depends-on (:std/rt :xkb)
+  :depends-on (:rt :xkb)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :xkb)))

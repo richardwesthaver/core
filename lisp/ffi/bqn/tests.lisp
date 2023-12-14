@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :bqn/tests
-  (:use :cl :std :std/rt :std/fu :bqn :std/alien :sb-ext))
+  (:use :cl :std :rt :bqn :sb-ext))
 
 (in-package :bqn/tests)
 

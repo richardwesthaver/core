@@ -7,13 +7,7 @@
 ;; mostly yoinked from sb-thread and friends
 
 ;;; Code:
-(defpackage :std/thread
-  (:use :cl :std/base :std/alien :sb-thread)
-  (:nicknames :thread)
-  (:export
-   :print-thread-info :print-thread-message-top-level :thread-support-p))
-
-(in-package :std/thread)
+(in-package :std)
 
 ;; (reexport-from :sb-thread
 ;; 	       :include '(:main-thread

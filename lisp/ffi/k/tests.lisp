@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :k/tests
-  (:use :cl :std :std/rt :std/fu :k :std/alien :sb-ext))
+  (:use :cl :std :rt :k :sb-ext))
 
 (in-package :k/tests)
 

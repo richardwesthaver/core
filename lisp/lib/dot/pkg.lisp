@@ -3,8 +3,7 @@
 ;; https://graphviz.org/doc/info/lang.html
 
 ;;; Code:
-(defpackage :dot/pkg
-  (:nicknames :dot)
+(defpackage :dot
   (:use :cl :std :cl-ppcre)
   (:export
    ;; Variables

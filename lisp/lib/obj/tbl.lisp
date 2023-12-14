@@ -1,38 +1,7 @@
 ;;; tbl.lisp --- Simple table data structures.
 
 ;;; Code:
-
-(defpackage :std/tbl
-  (:use :cl :std/base)
-  (:import-from :uiop :split-string)
-  (:export 
-   :make-table
-   :make-row
-   :add-to-table
-   :add-to-row
-   :get-row
-   :get-row-column
-   :set-row-column
-   :num-rows
-   :num-cols
-   :num-col
-   :rectangular-table-p
-   :sequence->row
-   :row-sequence->table
-   :with-rows
-   :select
-   :distinct
-   :top
-   :order-by
-   :where
-   :where-filter
-   :where-or
-   :where-and
-   :read-csv
-   :read-tsv
-   :table-from-file))
-
-(in-package :std/tbl)
+(in-package :obj/tbl)
 
 ;;; Table
 (deftype row ()

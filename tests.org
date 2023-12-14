@@ -80,13 +80,14 @@ cargo test
 #+RESULTS:
 #+begin_example
 
-running 4 tests
+running 5 tests
+test tests::hex_hash ... ok
 test tests::id_hex ... ok
 test tests::id_state_hash ... ok
 test tests::rand_id ... ok
 test tests::random_demon_id_is_valid ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
 
 
 running 0 tests
@@ -140,8 +141,8 @@ running 5 tests
 test list_form ... ok
 test nil_form ... ok
 test num_form ... ok
-test str_form ... ok
 test sym_form ... ok
+test str_form ... ok
 
 test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
@@ -160,11 +161,11 @@ test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 
 running 5 tests
-test list_start_token ... ok
 test list_end_token ... ok
-test sym_token ... ok
-test str_token ... ok
+test list_start_token ... ok
 test num_token ... ok
+test str_token ... ok
+test sym_token ... ok
 
 test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
@@ -196,14 +197,16 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 * lisp
 #+begin_src lisp :results silent
   (let ((systems 
-          '("lisp/std/std.asd" "lisp/lib/rdb/rdb.asd" "lisp/lib/organ/organ.asd" "lisp/lib/skel/skel.asd"
+          '("lisp/std/std.asd" "lisp/lib/log/log.asd" "lisp/lib/sxp/sxp.asd"
+            "lisp/lib/rt/rt.asd" "lisp/lib/cli/cli.asd"
+            "lisp/lib/rdb/rdb.asd" "lisp/lib/organ/organ.asd" "lisp/lib/skel/skel.asd"
             "lisp/lib/packy/packy.asd" "lisp/lib/nlp/nlp.asd" "lisp/lib/dot/dot.asd"
             "lisp/ffi/rocksdb/rocksdb.asd" "lisp/ffi/btrfs/btrfs.asd" "lisp/ffi/uring/uring.asd"
             "lisp/ffi/k/k.asd" "lisp/ffi/bqn/bqn.asd" "lisp/ffi/tree-sitter/tree-sitter.asd" 
             "lisp/ffi/blake3/blake3.asd" "lisp/ffi/alpm/alpm.asd" "lisp/ffi/xkb/xkb.asd")))
     (mapc (lambda (x) (asdf:load-asd (pathname x))) systems))
   (asdf:load-system :std)
-  (asdf:load-system :std/rt)
+  (asdf:load-system :rt)
 #+end_src
 
 #+begin_src lisp :results silent
@@ -217,13 +220,13 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
       (declaim (optimize (sb-cover:store-coverage-data 0)))))
 
   (gen-report :std)
-  (gen-report :std/sxp)
-  (gen-report :std/cli)
+  (gen-report :sxp)
+  (gen-report :cli)
   (gen-report :xkb)
   (gen-report :alpm)
   (gen-report :btrfs)
-  ;; (gen-report :bqn)
-  ;; (gen-report :k)
+  (gen-report :bqn)
+  (gen-report :k)
   (gen-report :tree-sitter)
   (gen-report :uring)
   (gen-report :zstd)

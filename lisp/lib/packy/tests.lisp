@@ -1,5 +1,5 @@
 (defpackage :packy/tests
-  (:use :cl :std/rt :packy))
+  (:use :cl :rt :packy))
 
 (in-package :packy/tests)
 (defsuite :packy)

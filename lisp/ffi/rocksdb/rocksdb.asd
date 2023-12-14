@@ -18,6 +18,6 @@
   :in-order-to ((test-op (test-op "rocksdb/tests"))))
 
 (defsystem "rocksdb/tests"
-  :depends-on (:std/rt :rocksdb)
+  :depends-on (:rt :rocksdb)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :rocksdb)))

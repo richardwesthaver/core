@@ -1,7 +1,7 @@
 ;;; web/dash.lisp --- local user dashboard
 
 ;;; Code:
-(uiop:define-package :app/web/dash
+(uiop:define-package :web/dash
     (:use :cl :std :lack :lass :spinneret)
   (:import-from :clack :clackup)
   (:export 
@@ -9,7 +9,7 @@
    :serve-static-assets
    :*web-dash-port*))
 
-(in-package :app/web/dash)
+(in-package :web/dash)
 
 (defparameter *web-dash-port* 8800)
 (defparameter *web-dash-static-directory* #P"/tmp/web/dash/static/")

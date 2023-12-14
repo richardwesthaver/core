@@ -1,11 +1,11 @@
 ;;; rdb.lisp --- RocksDB client
 
 ;;; Code:
-(uiop:define-package :cli/rdb
-  (:use :cl :rdb :std)
+(uiop:define-package :bin/rdb
+  (:use :cl :rdb :std :cli)
   (:export :main))
 
-(in-package :cli/rdb)
+(in-package :bin/rdb)
 
 (defopt rdb-help (print-help $cli))
 (defopt rdb-version (print-version $cli))

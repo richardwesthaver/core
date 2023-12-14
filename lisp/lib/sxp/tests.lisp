@@ -1,14 +1,14 @@
 ;;; std/tests/sxp.lisp --- SXP tests
-(defpackage :std/tests/sxp
-    (:use :cl :sxp :std/base :std/fu :std/rt)
+(defpackage :sxp/tests
+    (:use :cl :sxp :std :rt)
   (:export :*sxp-test-file* :*sxp-test-string*))
 
-(in-package :std/tests/sxp)
+(in-package :sxp/tests)
 (in-readtable :std)
 (declaim
  (type (or string pathname) *sxp-test-file*)
  (type string *sxp-test-string*))
-(defvar *sxp-test-file* (merge-pathnames "tests.sxp" *load-truename*))
+(defvar *sxp-test-file* "tests.sxp")
 (defvar *sxp-test-string* "(FOO 'BAR `(\"test\" ,BAZ ,@QUX) 123 0.0123 1/3 `(,A1 ,A2))")
 
 (defsuite :sxp)

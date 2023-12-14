@@ -44,149 +44,133 @@ portable - they are tied to a specific version of the compiler and we
 don't keep old versions around for long.
 * Apps
 ** Lisp
-*** cli/skel
+*** skel
 #+begin_src shell :results pp replace :exports code
   sbcl --noinform  --non-interactive \
-    --eval '(ql:quickload :cli/skel)' \
-    --eval "(asdf:make :cli/skel)"
-  mv lisp/app/cli/skel ~/.local/bin/
+    --eval '(ql:quickload :bin/skel)' \
+    --eval "(asdf:make :bin/skel)"
+  mv lisp/app/bin/skel ~/.local/bin/
 #+end_src
 
 #+RESULTS:
-#+begin_example
-To load "cli/skel":
-  Load 1 ASDF system:
-    cli/skel
-; Loading "cli/skel"
-..................................................
-[package rocksdb/pkg].............................
-[package nlp/data]................................
-[package nlp/stem/porter].........................
-[package nlp/tokenize]............................
-[package nlp/doc].................................
-[package nlp/textrank]............................
-[package nlp/dbscan]..............................
-[package nlp/section].............................
-[package skel/core/virt]..........................
-[package skel/core/vm]............................
-[package skel/comp/make]..........................
-[package skel/comp/containerfile].................
-[package skel/comp/ignore]..
-compressed 32768 bytes into 5078 at level 9
-compressed 236388352 bytes into 9439837 at level 9
-compressed 8388608 bytes into 2587546 at level 9
-compressed 0 bytes into 9 at level 9
-#+end_example
-
-*** cli/organ
-#+begin_src shell :results pp replace :exports code
-  sbcl --noinform  --non-interactive \
-    --eval '(ql:quickload :cli/organ)' \
-    --eval "(asdf:make :cli/organ)"
-  mv lisp/app/cli/organ ~/.local/bin/
-#+end_src
-
-#+RESULTS:
-#+begin_example
-To load "cli/organ":
-  Load 1 ASDF system:
-    cli/organ
-; Loading "cli/organ"
-..................................................
-[package cli/organ].
-compressed 32768 bytes into 5082 at level 9
-compressed 236388352 bytes into 9296021 at level 9
-compressed 8355840 bytes into 2571330 at level 9
-compressed 0 bytes into 9 at level 9
-#+end_example
-
-*** cli/rdb
-#+begin_src shell :results pp replace :exports code
-  sbcl --noinform  --non-interactive \
-    --eval '(ql:quickload :cli/rdb)' \
-    --eval "(asdf:make :cli/rdb)"
-  mv lisp/app/cli/rdb ~/.local/bin/
-#+end_src
-
-#+RESULTS:
-: To load "cli/rdb":
+: To load "bin/skel":
 :   Load 1 ASDF system:
-:     cli/rdb
-: ; Loading "cli/rdb"
-: ....
-: compressed 32768 bytes into 5089 at level 9
-: compressed 236388352 bytes into 9291488 at level 9
-: compressed 8355840 bytes into 2569637 at level 9
+:     bin/skel
+: ; Loading "bin/skel"
+: .......
+: compressed 32768 bytes into 5079 at level 9
+: compressed 236388352 bytes into 9579898 at level 9
+: compressed 8552448 bytes into 2637947 at level 9
 : compressed 0 bytes into 9 at level 9
 
-*** cli/homer
+*** organ
 #+begin_src shell :results pp replace :exports code
   sbcl --noinform  --non-interactive \
-    --eval '(ql:quickload :cli/homer)' \
-    --eval "(asdf:make :cli/homer)"
-  mv lisp/app/cli/homer ~/.local/bin/
+    --eval '(ql:quickload :bin/organ)' \
+    --eval "(asdf:make :bin/organ)"
+  mv lisp/app/bin/organ ~/.local/bin/
 #+end_src
 
 #+RESULTS:
 #+begin_example
-To load "cli/homer":
+To load "bin/organ":
   Load 1 ASDF system:
-    cli/homer
-; Loading "cli/homer"
+    bin/organ
+; Loading "bin/organ"
 ..................................................
-[package cli/homer]
-compressed 32768 bytes into 5074 at level 9
-compressed 236388352 bytes into 9388341 at level 9
-compressed 8388608 bytes into 2586302 at level 9
+[package bin/organ].
+compressed 32768 bytes into 5088 at level 9
+compressed 236388352 bytes into 9364780 at level 9
+compressed 8355840 bytes into 2588308 at level 9
 compressed 0 bytes into 9 at level 9
 #+end_example
 
-*** cli/packy
+*** rdb
 #+begin_src shell :results pp replace :exports code
   sbcl --noinform  --non-interactive \
-    --eval '(ql:quickload :cli/packy)' \
-    --eval "(asdf:make :cli/packy)"
-  mv lisp/app/cli/packy ~/.local/bin/
+    --eval '(ql:quickload :bin/rdb)' \
+    --eval "(asdf:make :bin/rdb)"
+  mv lisp/app/bin/rdb ~/.local/bin/
+#+end_src
+
+#+RESULTS:
+: To load "bin/rdb":
+:   Load 1 ASDF system:
+:     bin/rdb
+: ; Loading "bin/rdb"
+: ....
+: compressed 32768 bytes into 5071 at level 9
+: compressed 236388352 bytes into 9386823 at level 9
+: compressed 8421376 bytes into 2593084 at level 9
+: compressed 0 bytes into 9 at level 9
+
+*** homer
+#+begin_src shell :results pp replace :exports code
+  sbcl --noinform  --non-interactive \
+    --eval '(ql:quickload :bin/homer)' \
+    --eval "(asdf:make :bin/homer)"
+  mv lisp/app/bin/homer ~/.local/bin/
 #+end_src
 
 #+RESULTS:
 #+begin_example
-To load "cli/packy":
+To load "bin/homer":
   Load 1 ASDF system:
-    cli/packy
-; Loading "cli/packy"
+    bin/homer
+; Loading "bin/homer"
+..................................................
+[package bin/homer].
+compressed 32768 bytes into 5094 at level 9
+compressed 236388352 bytes into 9586720 at level 9
+compressed 8552448 bytes into 2634135 at level 9
+compressed 0 bytes into 9 at level 9
+#+end_example
+
+*** packy
+#+begin_src shell :results pp replace :exports code
+  sbcl --noinform  --non-interactive \
+    --eval '(ql:quickload :bin/packy)' \
+    --eval "(asdf:make :bin/packy)"
+  mv lisp/app/bin/packy ~/.local/bin/
+#+end_src
+
+#+RESULTS:
+#+begin_example
+To load "bin/packy":
+  Load 1 ASDF system:
+    bin/packy
+; Loading "bin/packy"
 ..................................................
 [package packy]...................................
-[package cli/packy].
-compressed 32768 bytes into 5077 at level 9
-compressed 236388352 bytes into 9223131 at level 9
-compressed 8257536 bytes into 2552556 at level 9
+[package bin/packy].
+compressed 32768 bytes into 5086 at level 9
+compressed 236388352 bytes into 9303422 at level 9
+compressed 8323072 bytes into 2579589 at level 9
 compressed 0 bytes into 9 at level 9
 #+end_example
-
 ** Rust
-*** cli/cc-init
+*** cc-init
 #+begin_src shell :results output pp :exports code
   cd rust/app/cli/cc-init && cargo install --path .
 #+end_src
 
 #+RESULTS:
 
-*** cli/tz
+*** tz
 #+begin_src shell :results output pp :exports code
   cd rust/app/cli/tz && cargo install --path .
 #+end_src
 
 #+RESULTS:
 
-*** cli/mailman
+*** mailman
 #+begin_src shell :results output pp :exports code
   cd rust/app/cli/cc-install && cargo install --path .
 #+end_src
 
 #+RESULTS:
 
-*** cli/krypt
+*** krypt
 #+begin_src shell :results output pp :exports code
   cd rust/app/cli/krypt && cargo install --path .
 #+end_src

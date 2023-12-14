@@ -6,13 +6,13 @@
 
 ;;; Code:
 (defpackage :skel/core
-    (:use :cl :cl-ppcre :std :sb-mop :sb-bsd-sockets :sb-unix)
+    (:use :cl :cl-ppcre :std :sb-mop :sb-bsd-sockets :sb-unix :sxp :log :cli)
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :sb-ext :run-program)
-  (:import-from :std/fu :when-let)
-  (:import-from :std/sxp :form)
-  (:export 
+  (:import-from :std :when-let)
+  (:import-from :sxp :form)
+  (:export
    ;; err
    :skel-syntax-error
    :skel-fmt-error
@@ -67,7 +67,7 @@
    :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push))
 
 (defpackage :skel/comp
-  (:use :cl :std :skel/core)
+  (:use :cl :std :skel/core :sxp)
   (:export
    ;; asd
    :sk-asd
@@ -80,7 +80,8 @@
    :mk-val :mk-var
    :makefile :push-rule :push-directive :push-var))
 
-(uiop:define-package :skel                
+(uiop:define-package :skel
+    (:use :cl :std :skel/core :skel/comp)
     (:use-reexport :skel/core :skel/comp))
 
 (defpackage :skel/viz

@@ -59,8 +59,7 @@ set *errptr to a malloc()ed error message.
 
 ;;; Code:
 (defpackage :rocksdb
-  (:use :cl :std/base :std/alien :std/fu :std/sym)
-  (:import-from :std/fu :symb)
+  (:use :cl :std :sb-alien)
   (:export
    :load-rocksdb
    ;; ERR
@@ -359,9 +358,10 @@ set *errptr to a malloc()ed error message.
 
 (in-package :rocksdb)
 
-(defun load-rocksdb () 
-  (unless (member :rocksdb *features*)
-    (sb-alien:load-shared-object "librocksdb.so" :dont-save t)
-    (push :rocksdb *features*)))
+(eval-always
+  (defun load-rocksdb () 
+    (unless (member :rocksdb *features*)
+      (sb-alien:load-shared-object "librocksdb.so" :dont-save t)
+      (push :rocksdb *features*)))
 
-(load-rocksdb)
+  (load-rocksdb))

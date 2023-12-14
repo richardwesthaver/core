@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :k
-  (:use :cl :std)
+  (:use :cl :std :sb-alien)
   (:export 
    :load-k
    :K

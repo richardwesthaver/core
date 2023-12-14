@@ -1,7 +1,7 @@
 (defpackage :xkb
-  (:use :cl :std/alien)
+  (:use :cl :std :sb-alien)
   (:export 
-   :load-xkb
+   :load-xkbcommon
    :xkb-context :xkb-keymap
    :xkb-keycode :xkb-keysym
    :xkb-layout-index :xkb-layout-mask
@@ -13,7 +13,7 @@
 
 (in-package :xkb)
 
-(defun load-xkb ()
+(defun load-xkbcommon ()
   (unless (member :xkb *features*)
     (sb-alien:load-shared-object "libxkbcommon.so" :dont-save t)
     (push :xkb *features*)))

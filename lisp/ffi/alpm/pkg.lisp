@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :alpm
-  (:use :cl :std :std/alien)
+  (:use :cl :std :sb-alien)
   (:export 
    :load-alpm
    :alpm-version))

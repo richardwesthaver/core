@@ -1,27 +1,7 @@
 ;;; std/list.lisp --- List utils
 
 ;;; Code:
-(defpackage :std/list
-  (:use :cl)
-  (:shadowing-import-from
-   :sb-int 
-   :ensure-list :recons :memq :assq :ensure-list 
-   :proper-list-of-length-p :proper-list-p :singleton-p)
-  (:export
-   :ensure-car
-   :ensure-cons
-   :appendf
-   :nconcf
-   :unionf
-   :nunionf
-   :reversef
-   :nreversef
-   :let-binding-transform
-   ;; reexports
-   :ensure-list :recons :memq :assq :ensure-list 
-   :proper-list-of-length-p :proper-list-p :singleton-p))
-
-(in-package :std/list)
+(in-package :std)
 
 ;; (reexport-from :sb-int
 ;; 	       :include '(:recons :memq :assq :ensure-list :proper-list-of-length-p :proper-list-p

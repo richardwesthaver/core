@@ -628,20 +628,22 @@ buffer."
     ("C" . "comment")
     ("v" . "verse")))
 
-(setq org-preview-latex-image-directory "~/.emacs.d/.cache/ltximg"
-      org-latex-image-default-width "8cm")
+(setopt org-preview-latex-image-directory "~/.emacs.d/.cache/ltximg"
+        org-latex-image-default-width "8cm"
+        org-refile-use-cache t
+        org-refile-allow-creating-parent-nodes 'confirm
 
-(setq org-refile-use-cache t
-      org-refile-allow-creating-parent-nodes 'confirm
-      org-refile-targets '((nil :maxlevel . 3)
-               (org-agenda-files :maxlevel . 3)))
+        org-refile-targets '((nil :maxlevel . 3)
+                             (org-agenda-files :maxlevel . 3))
+        org-confirm-babel-evaluate nil
+        org-src-fontify-natively t
+        org-src-tabs-act-natively t
+        org-footnote-section nil
+        org-log-into-drawer t
+        org-log-states-order-reversed nil
+        org-clock-persist 'history)
 
-(setq org-confirm-babel-evaluate nil)
-
-(setq org-src-fontify-natively t
-      org-src-tabs-act-natively t)
-
-(setq org-footnote-section nil)
+(add-hook 'after-init-hook #'org-clock-persistence-insinuate)
 
 (defun org-todo-at-date (date)
   "create a todo entry for a given date."

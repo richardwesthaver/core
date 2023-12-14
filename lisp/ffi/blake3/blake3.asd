@@ -29,6 +29,6 @@
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :blake3)))
 
 (defsystem "blake3/tests"
-  :depends-on (:std/rt :blake3)
+  :depends-on (:rt :blake3)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :blake3)))

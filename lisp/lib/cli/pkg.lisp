@@ -18,10 +18,8 @@
 ;; install-ir, etc.
 
 ;;; Code:
-(uiop:define-package :std/cli
-  (:nicknames :cli)
-  (:use :cl :std/base :std/fu :std/ana :std/fmt :std/log :sb-ext)
-  (:import-from :std/ana :alet)
+(uiop:define-package :cli
+  (:use :cl :std :log :sb-ext)
   (:import-from :uiop :println)
   (:import-from :sb-ext :parse-native-namestring)
   (:shadowing-import-from :sb-ext :exit)
@@ -47,7 +45,7 @@
    :make-shorty
    :with-cli-handlers
    :completing-read
-   :make-prompt!
+   :defprompt
    :defmain
    :main
    :with-cli
@@ -113,7 +111,7 @@
    :cli-version
    :cli-usage))
 
-(in-package :std/cli)
+(in-package :cli)
 
 (defvar *argv*)
 
@@ -144,7 +142,7 @@
         :test #'equalp
         :key #'pathname-name))
 
-(defun open-with-editor (path &optional editor &key args)
+(defun open-with-editor (path &key editor args)
   (unless editor (setq editor (or (sb-posix:getenv "EDITOR") (find-exe "emacs"))))
   (run-program editor (nconc args (list path))))
 
@@ -217,7 +215,7 @@ The Emacs completion framework includes a function called
 `completing-read' which prompts the user for input from the
 mini-buffer. It is a very flexible interface which can be used to read
 user input programatically. This is incredibly useful for building
-data entry interfaces -- for example see the `make-prompt!' macro.
+data entry interfaces -- for example see the `defprompt' macro.
 
 Obviously writing a completion framework is out-of-scope, but we can
 simulate one by embedding a DSL in our prompters if we choose. For
@@ -234,7 +232,7 @@ user to list valid options while continue waiting for input."
 	r
     (setf (symbol-value history) (push r history)))))
 
-(defmacro make-prompt! (var &optional prompt)
+(defmacro defprompt (var &optional prompt)
   "Generate a 'prompter' from list or variable VAR and optional
 PROMPT string.
 

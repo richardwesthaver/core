@@ -3,7 +3,7 @@
 
 (in-package :organ/tests)
 
-(defvar *test-file* "readme.org")
+(defvar *test-file* "tests.org")
 
 (defsuite :organ)
 (in-suite :organ)

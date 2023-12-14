@@ -1,5 +1,5 @@
 (defpackage :dot/tests
-  (:use :cl :std :std/rt :dot))
+  (:use :cl :std :rt :dot))
 (in-package :dot/tests)
 
 (defsuite :dot)

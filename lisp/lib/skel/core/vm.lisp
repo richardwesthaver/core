@@ -8,7 +8,8 @@
 
 (defstruct stack-slot 
   (kind :nop :type stack-slot-kind) 
-  (spec nil :type form) (form nil :type form))
+  (spec nil :type sxp:form) 
+  (form nil :type sxp:form))
   
 (declaim (inline %make-sk-vm))
 (defstruct (sk-vm (:constructor %make-sk-vm))

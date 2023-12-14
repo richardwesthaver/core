@@ -3,9 +3,8 @@
 ;; sxp is a unified S-Expression data format
 
 ;;; Code:
-(defpackage :std/sxp
-  (:use :cl :sb-mop :std/sym :std/fu)
-  (:nicknames :sxp)
+(defpackage :sxp
+  (:use :cl :sb-mop :std)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
   ;; TODO: hot-patch readtables into sxp classes/parsers
   (:import-from :std/named-readtables :defreadtable :in-readtable)
@@ -19,7 +18,7 @@
    :make-sxp :sxp :formp :form
    :wrap-object :unwrap-object))
 
-(in-package :std/sxp)
+(in-package :sxp)
 
 (defun formp (form)
   (or (consp form) (atom form)))
@@ -135,7 +134,7 @@ output. If TAG is t, use the class-name symbol."
   (unless (or slots methods)
     (error "Required one missing key arg: SLOTS or METHODS"))
   (let* ((class (class-of obj))
-	(res (when tag (list (if (eq t tag) (class-name class) tag)))))
+	 (res (when tag (list (if (eq t tag) (class-name class) tag)))))
     (block unwrap
       (when-let ((slots (when slots
 			  (list-class-slots class slots exclude))))

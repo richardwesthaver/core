@@ -13,18 +13,7 @@
 ;;     decimal-value digit-value
 ;;     unicode< unicode> unicode= unicode-equal
 ;;     unicode<= unicode>=))
-
-(uiop:define-package :std/str
-  (:use :cl :uiop/driver :sb-unicode :cl-ppcre)
-  (:export
-   :*omit-nulls*
-   :*whitespaces*
-   :string-designator
-   :split
-   :trim
-   :collapse-whitespaces))
-
-(in-package :std/str)
+(in-package :std)
 
 ;; (mapc (lambda (s) (export s)) sb-unicode-syms)
 ;; (reexport-from 
@@ -52,7 +41,7 @@ or a character."
   (let* ((limit (or limit (1+ (length s))))
          (res (ppcre:split `(:sequence ,(string separator)) s :limit limit :start start :end end)))
     (if omit-nulls
-        (remove-if (lambda (it) (emptyp it)) res)
+        (remove-if (lambda (it) (sequence:emptyp it)) res)
         res)))
 
 (defun collapse-whitespaces (s)

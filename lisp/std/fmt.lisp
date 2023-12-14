@@ -1,13 +1,7 @@
 ;;; std/fmt.lisp --- printer and format utils
 
 ;;; Code:
-(uiop:define-package :std/fmt
-  (:nicknames :fmt)
-  (:use :cl :std/base :std/fu)
-  (:shadowing-import-from :uiop :println)
-  (:export :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree :println))
-
-(in-package :std/fmt)
+(in-package :std)
 
 (defun iprintln (x &optional (n 2) stream)
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))

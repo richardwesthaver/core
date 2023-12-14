@@ -1,21 +1,7 @@
 ;;; ana.lisp --- anaphoric macros
 
 ;;; Code:
-(uiop:define-package :std/ana
-  (:nicknames :ana)
-  (:use :cl :std/named-readtables :std/fu)
-  (:export
-   #:alambda
-   #:nlet-tail
-   #:alet%
-   #:alet
-   #:acond2
-   #:it
-   #:aif
-   #:this
-   #:self))
-
-(in-package :std/ana)
+(in-package :std)
 
 (in-readtable :std)
 
