@@ -1,9 +1,9 @@
 (in-package :rdb)
 
 (defmacro with-errptr (e &body body)
-    `(with-alien ((,e rocksdb-errptr (make-alien rocksdb-errptr)))
-       ,@body))
-
+  `(progn
+     (with-alien ((,e (* (* t)) (make-alien rocksdb-errptr)))
+       ,@body)))
 
 (defun default-rocksdb-options ()
   (let ((opts (rocksdb-options-create)))
@@ -11,16 +11,16 @@
     opts))
 
 (defun open-db-raw (db-path opts)
-  (with-errptr e
+  (with-errptr err
     (let* ((db-path (if (pathnamep db-path)
                         (namestring db-path)
                         db-path))
-           (db (rocksdb-open opts db-path e))
-           (err e))
+           (db (rocksdb-open opts db-path err))
+           (err (deref err)))
       (unless (null-alien err)
         (error 'open-db-error
                :db-path db-path
-               :error-message e))
+               :error-message (cast err c-string)))
       db)))
 
 (defun close-db-raw (db)
@@ -36,8 +36,8 @@
   `(let ((,db-var (open-db-raw ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
-         (with-errptr e
-           (rocksdb-destroy-db ,opt ,db-path e))
+       (with-errptr err
+         (rocksdb-destroy-db ,opt ,db-path err))
        (rocksdb-options-destroy ,opt))))
 
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
@@ -98,7 +98,7 @@
 (defun get-kv-raw (db key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
     (with-alien ((vlen (* size-t) (make-alien size-t 0))
-		 (errptr rocksdb-errptr nil)
+		 (errptr rocksdb-errptr)
 		 (k (* char) (make-alien char klen)))
       (setfa k key)
       (let* ((val (rocksdb-get db
@@ -111,7 +111,7 @@
           (error 'get-kv-error
 		 :db db
 		 :key key
-		 :error-message (alien-sap errptr)))
+		 :error-message errptr))
 	;; helps if we know the vlen beforehand, would need a custom
 	;; C-side function probably.
 	(let ((v (make-array (deref vlen) :element-type 'unsigned-byte)))

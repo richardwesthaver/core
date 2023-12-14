@@ -38,7 +38,7 @@
    :rdb :make-rdb 
    :rdb-db :rdb-name :rdb-cfs :rdb-opts
    :rdb-bytes :rdb-bytes-buffer
-   :make-rdb-key :rdb-kv :rdb-key :rdb-val 
+   :make-rdb-key :make-rdb-kv :make-rdb-val :rdb-kv :rdb-key :rdb-val 
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf

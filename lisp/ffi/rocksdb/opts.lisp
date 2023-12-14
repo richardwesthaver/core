@@ -85,7 +85,7 @@
 
 (define-opaque rocksdb-block-based-table-options)
 (define-alien-routine rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
-(define-alien-routine rocksdb-block-based-options-destroy void (* rocksdb-block-based-table-options))
+(define-alien-routine rocksdb-block-based-options-destroy void (self (* rocksdb-block-based-table-options)))
 
 (define-alien-routine rocksdb-block-based-options-set-checksum void
   (opt (* rocksdb-block-based-table-options)) (val char))

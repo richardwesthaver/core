@@ -1,5 +1,5 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rdb :rocksdb))
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien))
 
 (in-package :rdb/tests)
 
@@ -8,34 +8,33 @@
 
 (rocksdb:load-rocksdb)
 
-(defmacro with-test-db-raw ((db-var path) &body body)
-  `(let* ((opt (rdb::default-rocksdb-options))
-          (,db-var (open-db-raw ,path opt)))
-     (unwind-protect (progn ,@body)
-       (with-errptr e
-         (rocksdb-close ,db-var)
-         (rocksdb-destroy-db opt ,path e)))))
+(defvar *rdb-test-opts* (rdb::default-rocksdb-options))
+
+(defun test-cleanup (db opt path)
+  (with-errptr err
+    (rocksdb-close db)
+    (rocksdb-destroy-db opt path err)))
 
 (deftest rdb ()
   "Test RDB struct and methods."
   (let ((db (make-rdb :name "/tmp/rdb" :opts (make-rdb-opts :create-if-missing t))))
-    (open-rdb db)
+    (open-db db)
     (put-kv-str-raw (rdb-db db) "key" "val")
     (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
     (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
       (dolist (cf cfs)
         (push-cf cf db)))
-    (init-cfs db)
+    (init-db db)
     (loop for cf across (rdb-cfs db)
           do
              (progn
-               (insert-kv-str db "key" "val" :cf (rdb-cf-name cf))
+               (insert-kv db (make-rdb-kv "key" "val") :cf (rdb-cf-name cf))
                (is (equal (get-cf-str-raw (rdb-db db) (rdb-cf-sap cf) "key") "val"))))
     (rocksdb:rocksdb-cancel-all-background-work (rdb-db db) t)
-    (insert-kv-str db "test" "zaa")
+    ;; (insert-kv-str db "test" "zaa")
     ;; cleanup
-    (close-rdb db)
-    (destroy-rdb db)))
+    (close-db db)
+    (destroy-db db)))
 
 (deftest with-db-raw ()
   "Test the WITH-OPEN-DB macro and some basic functions."
@@ -68,7 +67,7 @@
 
 (deftest with-cf ()
   "Test rdb-cf operations"
-  (with-open-db-raw (db "/tmp/rdb-with-cf")
+  (with-test-db-raw (db "/tmp/rdb-with-cf")
     (with-cf (cf (make-rdb-cf :name "foobar"))
       (is (create-cf db cf))
       (is (null (put-cf-str-raw db (rdb-cf-sap cf) "key" "val")))
