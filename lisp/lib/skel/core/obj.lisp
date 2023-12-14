@@ -59,7 +59,7 @@
 (defclass sk-meta ()
   ((name :initarg :name :initform nil :type (or null string) :accessor sk-name)
    (path :initarg :path :initform nil :type (or null pathname) :accessor sk-path)
-   (author :initarg :author :type string :accessor sk-author)
+   (author :initform "" :initarg :author :type string :accessor sk-author)
    (version :initarg :version :type string :accessor sk-version)
    (tags :initarg :tags :accessor sk-tags)
    (description :initarg :description :initform nil :type (or null string) :accessor sk-description)
@@ -173,7 +173,8 @@ via the special form stored in RECIPE."))
 	;; ast is valid, modify object, set ast nil
 	(progn
 	  (sb-int:doplist (k v) ast
-	    (setf (slot-value self (intern (symbol-name k) :skel/core/obj)) v)) ;; needs to be the correct package
+            (when-let ((s (find-sk-symbol k)))
+	      (setf (slot-value self s) v))) ;; needs to be the correct package
 	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
 	  (when (bound-string-p self 'shed) (setf (sk-shed self) (pathname (sk-shed self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
@@ -228,6 +229,9 @@ via the special form stored in RECIPE."))
    (abbrevs :initarg :abbrevs :initform nil :accessor sk-abbrevs :type (or list (vector sk-abbrevs)))
    (imports :initarg :imports :initform nil :accessor sk-imports :type (or list (vector pathname)))))
 
+(defun find-sk-symbol (s)
+  (find-symbol* (symbol-name s) :skel/core nil))
+      
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))
   ;; internal ast is never tagged
@@ -236,7 +240,8 @@ via the special form stored in RECIPE."))
 	;; ast is valid, modify object, set ast nil
 	(progn
 	  (sb-int:doplist (k v) ast
-	    (setf (slot-value self (intern (symbol-name k) :skel/core/obj)) v)) ;; needs to be correct package
+            (when-let ((s (find-sk-symbol k)))
+	      (setf (slot-value self s) v))) ;; needs to be correct package
 	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
 	  (when (bound-string-p self 'shed) (setf (sk-shed self) (pathname (sk-shed self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
@@ -304,7 +309,7 @@ via the special form stored in RECIPE."))
 		       :cchar #\;
 			:timestamp t
 			:description (sk-description self)
-			:opts '("mode: skel;"))
+			:opts '("mode:skel;"))
 		       out))
 	(write-sxp-stream self out :fmt fmt))
     (setf (ast self) nil)))
@@ -312,7 +317,7 @@ via the special form stored in RECIPE."))
 (defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))
   (with-slots (vc shed stash license author) (debug! cfg) ;; log-level, custom, fmt
     (when vc (setf (sk-vc self) vc))
-    (when shed (setf (sk-stash self) stash))
+    (when stash (setf (sk-stash self) stash))
     (when shed (setf (sk-shed self) shed))
     (when license (setf (sk-license self) license))
     (when author (setf (sk-author self) author))))

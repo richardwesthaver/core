@@ -15,6 +15,6 @@
   :in-order-to ((test-op (test-op :zstd/tests))))
 
 (defsystem :zstd/tests
-  :depends-on (:std/rt :zstd)
+  :depends-on (:rt :zstd)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :zstd)))

@@ -1,21 +1,7 @@
 ;;; pan.lisp --- Pandoric macros
 
 ;;; Code:
-(defpackage :std/pan
-  (:nicknames :pan)
-  (:use :cl :std/named-readtables :std/fu :std/ana :std/base)
-  (:export
-   #:pandoriclet
-   #:pandoriclet-get
-   #:pandoriclet-set
-   #:get-pandoric
-   #:with-pandoric
-   #:pandoric-hotpatch
-   #:pandoric-recode
-   #:plambda
-   #:pandoric-eval))
-
-(in-package :std/pan)
+(in-package :std)
 (in-readtable :std)
 
 (defun pandoriclet-get (letargs)

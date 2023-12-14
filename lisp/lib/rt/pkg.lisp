@@ -29,11 +29,12 @@
 ;;; Code:
 #+x86-64
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (require 'sb-sprof))
+  (require 'sb-sprof)
+  (require 'sb-cover))
 
 (defpackage :std/rt
   (:use 
-   :cl :std/base :std/sxp :std/fu :std/fmt :std/log :std/ana :std/pan 
+   :cl :std :sxp :log
    :sb-aprof #+x86-64 :sb-sprof)
   (:import-from :sb-cover :store-coverage-data)
   (:nicknames :rt)
@@ -96,7 +97,7 @@
    :with-coverage
    :cover-report))
 
-(in-package :std/rt)
+(in-package :rt)
 (in-readtable :std)
 
 ;;; Vars

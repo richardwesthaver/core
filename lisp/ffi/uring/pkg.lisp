@@ -1,5 +1,5 @@
-(defpackage :uring/pkg
-  (:use :cl :std/alien)
-  (:nicknames :uring))
+(defpackage :uring
+  (:use :cl :std))
 
-(in-package :uring/pkg)
+
+(in-package :uring)

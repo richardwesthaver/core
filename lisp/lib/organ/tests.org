@@ -1,0 +1,9 @@
+* header1                                                         :tag1:tag2:
+:PROPERTIES:
+:ID: 1234
+:CUSTOM_ID: 5678
+:END:
+** TODO header2
+:LOGBOOK:
+- State "TODO"       from              [2023-12-13 Wed 18:14]
+:END:

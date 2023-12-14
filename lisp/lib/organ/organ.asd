@@ -6,6 +6,6 @@
   :in-order-to ((test-op (test-op :organ/tests))))
 
 (defsystem :organ/tests
-  :depends-on (:std/rt :organ)
+  :depends-on (:rt :organ)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :organ)))

@@ -1,5 +1,5 @@
-(defpackage :zstd/pkg
-  (:use :cl :std/alien)
+(defpackage :zstd
+  (:use :cl :std)
   (:nicknames :zstd))
 
-(in-package :zstd/pkg)
+(in-package :zstd)

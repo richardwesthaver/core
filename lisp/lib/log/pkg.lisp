@@ -17,13 +17,13 @@
 ;; for configuring logging. The DSL will be embedded in skelfiles.
 
 ;;; Code:
-(defpackage :std/log
-  (:use :cl :std/base :std/fu)
+(defpackage :log
+  (:use :cl :std)
   (:export :*log-level* :log-level-designator :log-timestamp-source 
    :log! :warn! :info! :debug! :trace!  :dbg!
    :debug-p))
 
-(in-package :std/log)
+(in-package :log)
 
 (deftype log-level-designator () '(member :warn :debug :info :trace))
 (declaim (type (or boolean log-level-designator) *log-level*))

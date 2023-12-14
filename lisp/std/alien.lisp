@@ -1,4 +1,4 @@
-;;; std/alien.lisp --- foreign alien friends
+;;; alien.lisp --- foreign alien friends
 
 ;;; Commentary:
 
@@ -19,29 +19,11 @@
 ;; represented by objects of type ALIEN-VALUE.
 
 ;;; Code:
-(uiop:define-package :std/alien
-  (:nicknames :alien)
-  (:use :cl :sb-vm :sb-ext :sb-c :std/base)
-  (:use-reexport :sb-alien)
-  (:export
-   :define-opaque
-   :setfa
-   :copy-c-string
-   :clone-strings
-   :clone-octets-to-alien
-   :clone-octets-from-alien
-   :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int
-   :defbytes
-   :u1 :u2 :u3 :u4 :u8 :u16 :u24 :u32 :u64 :u128
-   :i2 :i3 :i4 :i8 :i16 :i24 :i32 :i64 :i128
-   :f16 :f24 :f32 :f64 :f128))
-
-(in-package :std/alien)
-
+(in-package :std)
 ;; (reexport-from :sb-vm
-;; 	       :include
-;; 	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
-;; 		 :sanctify-for-execution))
+;;  	       :include
+;;  	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
+;;  		 :sanctify-for-execution))
 
 (defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symbolicate ty '-t))))
 
@@ -101,29 +83,29 @@
   (if val 1 0))
 
 ;;; Bytes
-(defmacro defbytes (&body bitsets)
-  "For each cons-cell in BITSETS, define a new CAR-byte type for each
-member of CDR."
-  `(loop for set in ',bitsets
-	 collect
-	 (let* ((ty (car set))
-		(pfx
-		  (cond
-		    ((eq 'signed-byte ty) "I")
-		    ((eq 'unsigned-byte ty) "U")
-		    ((eq 'float ty) "F")
-		    (t (subseq (symbol-name ty) 0 1))))
-		(nums (cdr set))
-		r) ;result
-	   (setf r
-		 (mapc
-		  (lambda (x)
-		    `(deftype ,(symbolicate pfx (format 'nil "~a" x)) ()
-		       (cons ,ty ,x)))
-		       nums))
-	   (cons ty r))))
+;; (defmacro defbytes (&body bitsets)
+;;   "For each cons-cell in BITSETS, define a new CAR-byte type for each
+;; member of CDR."
+;;   `(loop for set in ',bitsets
+;; 	 collect
+;; 	 (let* ((ty (car set))
+;; 		(pfx
+;; 		  (cond
+;; 		    ((eq 'signed-byte ty) "I")
+;; 		    ((eq 'unsigned-byte ty) "U")
+;; 		    ((eq 'float ty) "F")
+;; 		    (t (subseq (symbol-name ty) 0 1))))
+;; 		(nums (cdr set))
+;; 		r) ;result
+;; 	   (setf r
+;; 		 (mapc
+;; 		  (lambda (x)
+;; 		    `(deftype ,(symbolicate pfx (format 'nil "~a" x)) ()
+;; 		       (cons ,ty ,x)))
+;; 		       nums))
+;; 	   (cons ty r))))
 
-(defbytes
-  (unsigned-byte 1 2 3 4 8 16 24 32 64 128)
-  (signed-byte 2 3 4 8 16 24 32 64 128)
-  (float 16 24 32 64 128))
+;; (defbytes
+;;   (unsigned-byte 1 2 3 4 8 16 24 32 64 128)
+;;   (signed-byte 2 3 4 8 16 24 32 64 128)
+;;   (float 16 24 32 64 128))

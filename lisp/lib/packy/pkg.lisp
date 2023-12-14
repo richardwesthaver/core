@@ -17,6 +17,8 @@
    :pk-dependency
    :pk-registry
    :pk-db
+   :pk-config
+   :pk-user-config
    :list-packages
    :push-package
    :pull-package

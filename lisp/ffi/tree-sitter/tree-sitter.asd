@@ -19,6 +19,6 @@
   :in-order-to ((test-op (test-op :tree-sitter/tests))))
 
 (defsystem :tree-sitter/tests
-  :depends-on (:std/rt :tree-sitter)
+  :depends-on (:rt :tree-sitter)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :tree-sitter)))

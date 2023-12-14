@@ -1,6 +1,6 @@
 (defpackage :tree-sitter/pkg
   (:nicknames :tree-sitter :ts)
-  (:use :cl :alien)
+  (:use :cl :std :sb-alien)
   (:export 
    :+tree-sitter-language-version+
    :+tree-sitter-min-compatible-language-version+

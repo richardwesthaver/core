@@ -22,6 +22,6 @@
   :in-order-to ((test-op (test-op "alpm/tests"))))
 
 (defsystem :alpm/tests
-  :depends-on (:std/rt :alpm)
+  :depends-on (:rt :alpm)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :alpm)))

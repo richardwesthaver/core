@@ -1,6 +1,6 @@
-(uiop:define-package :std/gui
+(uiop:define-package :gui
   (:nicknames :gui)
-  (:use :cl :std/base :std/fu :std/fmt :std/log)
+  (:use :cl :std :log)
   (:export 
    :*gui-backend-list*
    :*gui-backend*
@@ -10,7 +10,7 @@
    :gui-main
    :def-gui))
 
-(in-package :std/gui)
+(in-package :gui)
 
 (defparameter *gui-backend-list* '(:gtk :tk :mcclim))
 

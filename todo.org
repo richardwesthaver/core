@@ -1,64 +1,87 @@
-* TODO migrate to sb-grovel [88%]                                  :lisp:ffi:
+* TODO migrate to sb-grovel [8/9]                                  :lisp:ffi:
+:LOGBOOK:
+- State "TODO"       from              [2023-11-27 Mon 23:42]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: bb365025-e5e7-4407-acba-32e30d1a245a
 :END:
-- State "TODO"       from              [2023-11-27 Mon 23:42]
 [[file:lisp/ffi/]]
 ** DONE blake3
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 656c2683-8780-407c-b955-3defc4959595
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** DONE bqn
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: b4757746-525b-49e4-b8ac-677375867d8f
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** DONE btrfs
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: b3b411fe-6b2d-4338-9e23-83536336a487
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** DONE k
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 8a463084-efa0-4535-8239-b1c4955bde4c
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** DONE rocksdb
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 2d4d70af-228f-424c-8374-9fc8ed5c6f92
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** DONE tree-sitter
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 0cdf3412-cb00-4069-8e1b-b49c736377cf
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** DONE uring
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 45a52407-ccaf-4ea1-99c4-d6f7ba0b2731
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** DONE zstd
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:00]
+- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 6ade8dd8-83b1-470d-a0da-a352ce4c2d06
 :END:
-- State "DONE"       from "TODO"       [2023-12-09 Sat 01:57]
-- State "TODO"       from              [2023-11-29 Wed 19:00]
 ** WIP xkb
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 19:27]
+- State "WIP"        from "TODO"       [2023-12-10 Sun 22:47]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: af778a5f-4834-4f0c-ae53-36d35cb98d8c
 :END:
-- State "WIP"        from "TODO"       [2023-12-10 Sun 22:47]
-- State "TODO"       from              [2023-11-29 Wed 19:27]
 * TODO parse                                                       :lisp:lib:
+:LOGBOOK:
+- State "TODO"       from "TODO"       [2023-12-13 Wed 18:24]
+:END:
 :PROPERTIES:
 :ID: parse
 :CUSTOM_ID: 8f54a69e-b256-4efd-98e8-75b4892f12b8
@@ -68,50 +91,107 @@
 - lex.lisp
 - obj api
 * TBD wayland compositor                                          :rust:lisp:
+:LOGBOOK:
+- State "TBD"        from "TODO"       [2023-11-29 Wed 21:25]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: e18a90d7-10bc-44d3-8508-56483d29d385
 :END:
-- State "TBD"        from "TODO"       [2023-11-29 Wed 21:25]
-* TODO organ v0.2 [0%]                                           :lisp:organ:
+* TODO organ 0.2 [0/2]                                           :lisp:organ:
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 21:25]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 4e7c55dc-e2fa-458f-ad3b-942b9aa336a4
 :END:
-- State "TODO"       from              [2023-11-29 Wed 21:25]
 ** TBD organ-export
+:LOGBOOK:
+- State "TBD"        from "TODO"       [2023-11-29 Wed 21:24]
+:END:
 :PROPERTIES:
 :CUSTOM_ID: 189584f5-fc22-4129-bd47-5d494a088684
 :END:
-- State "TBD"        from "TODO"       [2023-11-29 Wed 21:24]
 ** TODO org-parse
+:LOGBOOK:
+- State "TODO"       from              [2023-11-29 Wed 21:26]
+:END:
 :PROPERTIES:
 :DEPENDENCIES: parse
 :HOOKS: organ-export
 :CUSTOM_ID: 63774177-9730-4961-8535-414fac7a6f4f
 :END:
-- State "TODO"       from              [2023-11-29 Wed 21:26]
-* TODO rdb v0.2 [0%]                                               :lisp:rdb:
+** TBD parse org-elements as sxp                                        :sxp:
+:LOGBOOK:
+- State "TODO"       from              [2023-09-25 Mon 15:23]
+- State "TBD"        from "TODO"       [2023-12-13 Wed 18:10]
+:END:
+#+name: oe-init
+#+begin_src emacs-lisp :results silent
+  (slime-start)
+#+end_src
+
+#+begin_src lisp :results silent
+  (ql:quickload :organ)
+#+end_src
+
+#+name: oe-form
+#+begin_src emacs-lisp :results output replace
+  (macroexpand-1 (org-element-parse-buffer))
+#+end_src
+
+#+RESULTS: oe-form
+
+#+name: oe-sxp
+#+begin_src lisp :results output :var in=oe-form()
+  (let ((sxp (sxp:make-sxp)))
+    ;; SIMPLE-READER-ERROR #\) when using read
+    (sxp:wrap-from-string! sxp in)
+    (describe sxp))
+#+end_src
+
+#+RESULTS: oe-sxp
+: #<SXP:SXP {1001532593}>
+:   [standard-object]
+: 
+: Slots with :INSTANCE allocation:
+:   AST                            = NIL
+
+* TODO rdb 0.2 [0/5]                                               :lisp:rdb:
+:LOGBOOK:
+- State "TODO"       from "TODO"       [2023-12-13 Wed 18:26]
+:END:
 ** TODO error handling
+:LOGBOOK:
 - State "TODO"       from              [2023-12-10 Sun 22:57]
+:END:
 - need to unwrap the pointer (* (* t))
 - cast to string,int,bool
 - wrap segfault handlers
 - add restarts for common errors (bad path)
 - add cleanup routines
 ** TODO client api
+:LOGBOOK:
 - State "TODO"       from              [2023-12-10 Sun 22:59]
+:END:
 - clients are fully dynamic
 - generated from RDB instances
 - compiles in CF/option/multithread/type info
 - clients implement custom Q language
 ** TODO sequence/iterator impl
+:LOGBOOK:
 - State "TODO"       from              [2023-12-10 Sun 23:09]
+:END:
 - use SBCL built-ins to extend the api - wrap the raw FFI iterator
 - define mixins
 ** TODO comparator impl
+:LOGBOOK:
 - State "TODO"       from              [2023-12-10 Sun 23:11]
+:END:
 - supply custom comparators to rocksdb from lisp
 ** TODO type system
+:LOGBOOK:
 - State "TODO"       from              [2023-12-10 Sun 23:12]
+:END:
 - capture types of: kv, cf
 - specs
   - kv-spec = (kv-spec val-spec)
@@ -119,3 +199,35 @@
   - cf-spec
     - used as superclass
     - methods for abstracting CFs
+* TODO std 0.2 [1/2]                                               :lisp:std:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-12 Tue 19:49]
+:END:
+** DONE refactor system definition
+:LOGBOOK:
+- State "TODO"       from              [2023-12-13 Wed 15:17]
+- State "DONE"       from "TODO"       [2023-12-13 Wed 19:38]
+:END:
+- remove package-inferred
+- minimize number of systems
+- use pkg.lisp files
+** TODO cleanup fu
+:LOGBOOK:
+- State "TODO"       from              [2023-12-13 Wed 19:39]
+:END:
+* TODO sxp 0.2 [0/1]                                               :lisp:sxp:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-12 Tue 19:49]
+:END:
+** TODO WRAP-OBJECT                                                    :skel:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-12 Tue 19:49]
+:END:
+- use to replace LOAD-AST for sk-project and friends
+- requires mop
+- take a look at UNWRAP-OBJECT too, may need rewrite for a better API
+
+* TBD homer 0.1 [0/0]                                            :lisp:homer:
+:LOGBOOK:
+- State "TBD"        from "TODO"       [2023-12-12 Tue 19:53]
+:END:

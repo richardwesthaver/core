@@ -73,8 +73,8 @@
 
 (defvar *default-hg-client-buffer-size* 4096)
 
-(defvar *hg-program* #P"/usr/bin/hg")
-(defvar *git-program* #P"/usr/bin/git")
+(defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
+(defvar *git-program* (find-exe "git"))
 
 (declaim (inline %make-hg-client))
 (defstruct (hg-client (:constructor %make-hg-client))
@@ -98,6 +98,7 @@
   (run-program *hg-program* (push cmd args)))
 
 ;;; Git
+
 (defun run-git-command (cmd &rest args)
   (run-program *git-program* (push cmd args)))
 

@@ -3,23 +3,11 @@
 ;; inspired by alexandria/symbols.lisp
 
 ;;; Code:
-(uiop:define-package :std/sym
-  (:use :cl :std/str :sb-int)
-  (:export
-   #:ensure-symbol
-   #:format-symbol
-   #:make-keyword
-   #:make-slot-name
-   #:make-gensym
-   #:make-gensym-list
-   #:with-gensyms
-   #:with-unique-names
-   #:symbolicate))
+(in-package :std)
 
-(in-package :std/sym)
-
-;; (reexport-from :sb-int
-;; 	       :include '(:with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*))
+;;(std::reexport-from 
+;; :sb-int
+;; :include '(:with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*))
 
 ;; On SBCL, `with-unique-names' is defined under
 ;; src/code/primordial-extensions.lisp. We use that instead of

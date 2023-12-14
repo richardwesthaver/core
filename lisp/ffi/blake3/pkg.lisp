@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :blake3/pkg
   (:nicknames :blake3)
-  (:use :cl :std)
+  (:use :cl :std :sb-alien)
   (:export 
    :load-blake3
    :+blake3-version-string+

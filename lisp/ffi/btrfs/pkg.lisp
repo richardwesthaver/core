@@ -15,7 +15,7 @@
 
 ;;; Code:
 (defpackage btrfs/pkg
-  (:use :cl :std/alien)
+  (:use :cl :std :sb-alien)
   (:nicknames :btrfs)
   (:export
    :btrfs-shared-objects

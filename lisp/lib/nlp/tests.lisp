@@ -1,5 +1,5 @@
 (defpackage :nlp/tests
-  (:use :cl :std :std/rt :nlp))
+  (:use :cl :std :rt :nlp))
 
 (in-package :nlp/tests)
 

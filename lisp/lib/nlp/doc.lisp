@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :nlp/doc
-  (:use :cl :std/fu :std/list :nlp/data :nlp/tokenize)
+  (:use :cl :std :nlp/data :nlp/tokenize)
   (:export 
    :document
    :documents

@@ -1,5 +1,5 @@
 (defpackage :nlp/tokenize
-  (:use :cl :std :std/str :cl-ppcre :nlp/data :nlp/stem/porter)
+  (:use :cl :std :cl-ppcre :nlp/data :nlp/stem/porter)
   (:export :word-tokenize :sentence-tokenize))
 
 (in-package :nlp/tokenize)
@@ -25,4 +25,4 @@
   "Split a string into a list of sentences."
   ;; TODO: Use "\\p{Terminal_Punctuation}" regexp instead to catch all terminal
   ;; punctuation marks, including "," and ";"?
-  (remove "" (mapcar #'std/str:trim (cl-ppcre:split "[.!?]" string)) :test #'equal))
+  (remove "" (mapcar #'std:trim (cl-ppcre:split "[.!?]" string)) :test #'equal))

@@ -31,7 +31,7 @@
 
 (deftype mk-val-designator () '(member nil :simple :immediate :conditional :recursive :once :append :shell))
 
-(defstruct mk-val "" (kind nil :type mk-val-designator)  (val nil :type form))
+(defstruct mk-val "" (kind nil :type mk-val-designator)  (val nil :type sxp:form))
 
 (defstruct mk-var ""
 	   (key "" :type string)

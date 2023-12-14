@@ -1,11 +1,7 @@
-(defpackage :skel/core/mk
-  (:use :cl :std :std/named-readtables :skel/core/obj :skel/core/proto :skel/core/err)
-  (:export :$@ :$< :$^))
-
-(in-package :skel/core/mk)
+(in-package :skel/core)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defreadtable :skel/mk
+  (defreadtable :makefile
     (:merge :std)))
 
 ;;; Auto Vars

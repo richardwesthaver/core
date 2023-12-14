@@ -1,11 +1,11 @@
 ;;; organ.lisp --- Org-mode utility
 
 ;;; Code:
-(defpackage :cli/organ
-  (:use :cl :organ :std :std/fmt)
+(defpackage :bin/organ
+  (:use :cl :organ :std :cli)
   (:export :main))
 
-(in-package :cli/organ)
+(in-package :bin/organ)
 
 (defopt organ-help (print-help $cli))
 (defopt organ-version (print-version $cli))

@@ -24,5 +24,5 @@
   :in-order-to ((test-op (test-op "k/tests"))))
 
 (defsystem :k/tests
-  :depends-on (:std/rt :k)
+  :depends-on (:rt :k)
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :k)))

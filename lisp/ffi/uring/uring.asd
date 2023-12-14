@@ -15,6 +15,6 @@
   :in-order-to ((test-op (test-op :uring/tests))))
 
 (defsystem :uring/tests
-  :depends-on (:std/rt :uring)
+  :depends-on (:rt :uring)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :uring)))

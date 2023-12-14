@@ -1,16 +1,16 @@
 ;;; Code:
-(uiop:define-package :cli/skel
-  (:use :cl :std :std/cli :skel)
+(uiop:define-package :bin/skel
+  (:use :cl :std :cli :skel)
   (:export :main))
 
-(in-package :cli/skel)
+(in-package :bin/skel)
 
 ;; HACK 2023-10-14: a bit too early to implement this, would rather
 ;; use the repl. they're useful for linking up with the debugger tho.
 (defvar skc-file-prompt-history '(""))
-(make-prompt! skc-file "file")
+(defprompt skc-file "file")
 (defvar skc-name-prompt-history '(""))
-(make-prompt! skc-name "name")
+(defprompt skc-name "name")
 
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))

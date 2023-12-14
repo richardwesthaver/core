@@ -23,6 +23,6 @@
   :in-order-to ((test-op (test-op "btrfs/tests"))))
   
 (defsystem "btrfs/tests"
-  :depends-on (:std/rt :btrfs)
+  :depends-on (:rt :btrfs)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :btrfs)))

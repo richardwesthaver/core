@@ -27,6 +27,6 @@
   :in-order-to ((test-op (test-op "bqn/tests"))))
 
 (defsystem :bqn/tests
-  :depends-on (:std/rt :bqn)
+  :depends-on (:rt :bqn)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :bqn)))
