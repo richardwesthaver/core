@@ -358,10 +358,9 @@ set *errptr to a malloc()ed error message.
 
 (in-package :rocksdb)
 
-(eval-always
-  (defun load-rocksdb () 
-    (unless (member :rocksdb *features*)
-      (sb-alien:load-shared-object "librocksdb.so" :dont-save t)
-      (push :rocksdb *features*)))
+(defun load-rocksdb () 
+  (unless (member :rocksdb *features*)
+    (sb-alien:load-shared-object "librocksdb.so" :dont-save t)
+    (push :rocksdb *features*)))
 
-  (load-rocksdb))
+(load-rocksdb)

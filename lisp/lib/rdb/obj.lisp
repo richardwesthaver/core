@@ -58,11 +58,7 @@
     :total-threads 4
     :max-open-files 10000))
 
-;;; rdb-cf
-
-;; NOTE: read-sequence and write-sequence now accept user-extended
-;; sequences
-
+;;; bytes
 (defclass rdb-bytes (sequence)
     ((buffer :initarg :buffer :type (array unsigned-byte) :accessor rdb-bytes-buffer))
   (:documentation "RDB unsigned-byte array. Implements the iterator protocol."))
@@ -96,20 +92,31 @@
 
 Values must be able to be encoded to and from (array unsigned-byte)."))
 
+(defun make-rdb-val (val)
+  "Convert VAL to an object of type RDB-VAL."
+  (make-instance 'rdb-val :buffer val))
+
 (defclass rdb-key (rdb-bytes)
   ()
   (:documentation "RDB key protocol.
 
 Keys must be able to be encoded to and from (array unsigned-byte)."))
 
-(defclass rdb-kv (rdb-bytes)
-  ((key :initarg :key :type rdb-key)
-   (val :initarg :val :type rdb-val)))
-
 (defun make-rdb-key (key)
   "Convert KEY to an object of type RDB-KEY."
   (make-instance 'rdb-key :buffer key))
 
+(defclass rdb-kv (rdb-bytes)
+  ((key :initarg :key :type rdb-key)
+   (val :initarg :val :type rdb-val)))
+
+(defun make-rdb-kv (key val)
+  "Generate a new RDB-KV pair."
+  (make-instance 'rdb-kv 
+    :key (make-rdb-key key) 
+    :val (make-rdb-val val)))
+
+;;; rdb-cf
 (defstruct rdb-cf
   "RDB Column Family structure. Contains a name, a cons of (rdb-key-type
 . rdb-val-type), and a system-area-pointer to the underlying
@@ -145,7 +152,7 @@ rocksdb_cf_t handle."
   (setf (rdb-db self) nil))
 
 (defmethod destroy-db ((self rdb))  
-  (when (rdb-db self) (close-rdb self))
+  (when (rdb-db self) (close-db self))
   (destroy-db-raw (rdb-name self)))
 
 (defmethod init-db ((self rdb))
