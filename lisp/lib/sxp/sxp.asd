@@ -1,6 +1,6 @@
 ;;; sxp.asd --- S-eXPression data
 (defsystem :sxp
-  :depends-on (:named-readtables :std)
+  :depends-on (:std/named-readtables :std)
   :components ((:file "pkg"))
   :in-order-to ((test-op (test-op "sxp/tests"))))
 

@@ -19,12 +19,18 @@
 
 ;;; Commentary:
 
+;; This is The Compiler Company inbox system. The main interface is
+;; the inbox.org file which manages personal tasks.
+
+;; Users may use `org-capture' to insert tasks and notes into their
+;; own `org-inbox-file' and refactor them to a more sensible
+;; destination with `org-refile'.
+
 ;;; Code:
 (require 'org)
-
+(require 'default)
 (defgroup inbox nil
-  "RW Inbox"
-  :group 'rw)
+  "RW Inbox")
 
 (defcustom org-inbox-file
   (concat (file-name-as-directory org-directory) "inbox.org")

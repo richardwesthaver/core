@@ -13,10 +13,14 @@
   (:export 
    ;; err
    :with-errptr
-   :open-db-error
+   :rdb-error
+   :rocksdb-error
+   :rdb-user-error
    :put-kv-error
    :get-kv-error
+   :handle-errptr
    ;; util
+   :make-rocksdb-options :default-rocksdb-options
    :open-db-raw :with-open-db-raw
    :close-db-raw :destroy-db-raw
    :put-kv-raw :put-kv-str-raw
