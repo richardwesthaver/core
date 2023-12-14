@@ -8,7 +8,7 @@
 (declaim
  (type (or string pathname) *sxp-test-file*)
  (type string *sxp-test-string*))
-(defvar *sxp-test-file* "tests.sxp")
+(defvar *sxp-test-file* (merge-pathnames "tests.sxp" *load-truename*))
 (defvar *sxp-test-string* "(FOO 'BAR `(\"test\" ,BAZ ,@QUX) 123 0.0123 1/3 `(,A1 ,A2))")
 
 (defsuite :sxp)

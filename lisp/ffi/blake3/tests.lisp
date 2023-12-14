@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :blake3/tests
-  (:use :cl :std :rt :blake3 :sb-ext))
+  (:use :cl :std :rt :blake3 :sb-ext :sb-alien))
 
 (in-package :blake3/tests)
 
