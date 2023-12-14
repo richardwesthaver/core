@@ -31,6 +31,9 @@
                (set-opt self k v)))
     self))
 
+(defun make-rdb-opts (&rest values)
+  (apply #'make-instance 'rdb-opts values))
+
 (defmethod get-opt ((self rdb-opts) key)
   "Return the current value of KEY in SELF if found, else return nil."
   (gethash key (rdb-opts-table self)))
@@ -53,7 +56,7 @@
 
 (declaim (inline default-rdb-opts))
 (defun default-rdb-opts () 
-  (make-instance 'rdb-opts
+  (make-rdb-opts
     :create-if-missing t 
     :total-threads 4
     :max-open-files 10000))
@@ -131,17 +134,17 @@ rocksdb_cf_t handle."
           (rocksdb-create-column-family db (rocksdb-options-create) (rdb-cf-name cf) err))))
 
 ;;; rdb
-(defstruct rdb
+(defstruct (rdb (:constructor %make-rdb))
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
-  (db nil :type (or null alien))
+  (db (error 'rdb-error :message "DB slot must be supplied to RDB object"))
   (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf)))
+
+(defun make-rdb (name &optional opts db-ptr)
+  "Construct a new RDB instance from NAME and optional OPTS and DB-PTR.")
 
 (defmethod push-cf ((cf rdb-cf) (db rdb))
   (vector-push cf (rdb-cfs db)))
-
-(defmethod make-db ((self rdb) &rest initargs)
-  (apply #'make-instance 'rdb initargs))
 
 (defmethod open-db ((self rdb))
   (setf (rdb-db self)

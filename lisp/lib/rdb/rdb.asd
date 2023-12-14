@@ -7,14 +7,14 @@
   :serial t
   :components ((:file "pkg")
                (:file "err") 
-               (:file "proto")
                (:file "util")
+               (:file "proto")
                (:file "obj")
                (:file "macs"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests
-  :depends-on (:rt :rdb :rocksdb)
+  :depends-on (:rt :rocksdb :rdb)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :rdb)))
 

@@ -8,8 +8,6 @@
 
 (rocksdb:load-rocksdb)
 
-(defvar *rdb-test-opts* (rdb::default-rocksdb-options))
-
 (defun test-cleanup (db opt path)
   (with-errptr err
     (rocksdb-close db)
@@ -39,7 +37,7 @@
 (deftest with-db-raw ()
   "Test the WITH-OPEN-DB macro and some basic functions."
   (let ((path "/tmp/with-db-raw")
-        (opt *rdb-test-opts*))
+        (opt (default-rocksdb-options)))
     (with-open-db-raw (db path)
     (dotimes (i 10000)
       (let ((k (format nil "key~d" i))
@@ -50,7 +48,7 @@
 (deftest with-iter ()
   "Test the WITH-ITER macro."
   (let ((ro (rocksdb:rocksdb-readoptions-create)))
-    (with-test-db-raw (db "/tmp/rdb-with-iter")
+    (with-open-db-raw (db "/tmp/rdb-with-iter")
       (put-kv-str-raw db "ak" "av")
       (put-kv-str-raw db "bk" "bv")
       (rocksdb:rocksdb-cancel-all-background-work db t)
@@ -70,7 +68,7 @@
 
 (deftest with-cf ()
   "Test rdb-cf operations"
-  (with-test-db-raw (db "/tmp/rdb-with-cf")
+  (with-open-db-raw (db "/tmp/rdb-with-cf")
     (with-cf (cf (make-rdb-cf :name "foobar"))
       (is (create-cf db cf))
       (is (null (put-cf-str-raw db (rdb-cf-sap cf) "key" "val")))
