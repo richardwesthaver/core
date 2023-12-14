@@ -25,4 +25,5 @@
 
 (defsystem :k/tests
   :depends-on (:rt :k)
-  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :k)))
+  :components ((:file "tests"))
+  :perform (test-op (op c) (uiop:symbol-call :rt :do-tests :k)))

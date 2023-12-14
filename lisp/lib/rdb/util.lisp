@@ -43,24 +43,26 @@
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
 	(vlen (length val)))
+
     (with-alien ((k (* char) (make-alien char klen))
-		 (v (* char) (make-alien char vlen))
-                 (errptr rocksdb-errptr nil))
+		 (v (* char) (make-alien char vlen)))
       (setfa k key)
       (setfa v val)
-      (rocksdb-put db
-		   opts
-		   k
-		   klen
-		   v
-		   vlen
-		   errptr)
-      (unless (null-alien errptr)
-        (error 'put-kv-error
-                :db db
-                :key key
-                :val val
-                :error-message (alien-sap errptr))))))
+      (with-errptr err
+        (rocksdb-put db
+		     opts
+		     k
+		     klen
+		     v
+		     vlen
+		     err)
+        (let ((err (deref err)))
+          (unless (null-alien err)
+            (error 'put-kv-error
+                   :db db
+                   :key key
+                   :val val
+                   :error-message (cast err c-string))))))))
 
 (defun put-kv-str-raw (db key val &optional opt)
   (let ((key-octets (string-to-octets key))

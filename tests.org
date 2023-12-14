@@ -232,7 +232,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
   (gen-report :zstd)
   (gen-report :blake3)
   (gen-report :rocksdb)
-  (gen-report :rdb)
+  ;; (gen-report :rdb)
   (gen-report :skel)
   (gen-report :organ)
   (gen-report :nlp)
@@ -247,32 +247,31 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 #+RESULTS:
 #+begin_example
-in suite std with 10/10 tests:
-#<PASS PAN-TEST278115> 
-#<PASS ANA-TEST278114> 
-#<PASS FMT-TEST278113> 
-#<PASS ALIEN-TEST278112> 
-#<PASS THREAD-TEST278111> 
-#<PASS COND-TEST278110> 
-#<PASS LOG-TEST278109> 
-#<PASS LIST-TEST278108> 
-#<PASS STR-TEST278107> 
-#<PASS SYM-TEST278106> 
+in suite std with 9/9 tests:
+#<PASS ALIEN-TEST314483> 
+#<PASS PAN-TEST314482> 
+#<PASS ANA-TEST314481> 
+#<PASS FMT-TEST314480> 
+#<PASS THREAD-TEST314479> 
+#<PASS COND-TEST314478> 
+#<PASS LIST-TEST314477> 
+#<PASS STR-TEST314476> 
+#<PASS SYM-TEST314475> 
 No tests failed.
 #+end_example
 
 #+begin_src lisp :results output replace :exports both
-  (setq *sxp-test-file* "lisp/std/tests/tests.sxp")
-  (load "lisp/std/tests/sxp.lisp")
+  (load "lisp/lib/sxp/tests.lisp")
+  (setq *sxp-test-file* "lisp/lib/sxp/tests.sxp")
   (std/rt:do-tests :sxp)
 #+end_src
 
 #+RESULTS:
 : in suite sxp with 4/4 tests:
-: #<PASS SXP-STREAM-TEST278123> 
-: #<PASS SXP-STRING-TEST278122> 
-: #<PASS SXP-FILE-TEST278121> 
-: #<PASS FORMS-TEST278120> 
+: #<PASS SXP-STREAM-TEST311111> 
+: #<PASS SXP-STRING-TEST311110> 
+: #<PASS SXP-FILE-TEST311109> 
+: #<PASS FORMS-TEST311108> 
 : No tests failed.
 
 ** lib
@@ -281,13 +280,7 @@ No tests failed.
   (load "lisp/lib/rdb/tests.lisp")
   (asdf:test-system :rdb)
 #+end_src
-#+RESULTS:
-: in suite rdb with 4/4 tests:
-: #<PASS WITH-CF-TEST829923> 
-: #<PASS WITH-ITER-TEST829922> 
-: #<PASS WITH-DB-TEST829921> 
-: #<PASS RDB-TEST829920> 
-: No tests failed.
+
 *** organ
 #+begin_src lisp :results output replace :exports results
   (load "lisp/lib/organ/tests.lisp")
@@ -299,15 +292,15 @@ in suite organ with 3/3 tests:
 
 #<FAIL #<FUNCTION (LAMBDA (STRING CL-PPCRE::START CL-PPCRE::END)
                     :IN
-                    CL-PPCRE::CREATE-SCANNER-AUX) {100BDCE29B}> IS NOT A STRING DESIGNATOR.> 
-#<PASS ORG-LINES-TEST2339> 
-#<PASS ORG-FILE-TEST2338> 
+                    CL-PPCRE::CREATE-SCANNER-AUX) {100AC9C56B}> IS NOT A STRING DESIGNATOR.> 
+#<PASS ORG-LINES-TEST313189> 
+#<PASS ORG-FILE-TEST313188> 
 1 out of 3 total tests failed: 
-   #<STD/RT:TEST ORG-HEADLINE :FN ORG-HEADLINE-TEST2340 :ARGS NIL :PERSIST NIL {1009D95003}>.
+   #<STD/RT:TEST ORG-HEADLINE :FN ORG-HEADLINE-TEST313190 :ARGS NIL :PERSIST NIL {100AE3E723}>.
 1 unexpected failures: 
    #<FAIL #<FUNCTION (LAMBDA (STRING CL-PPCRE::START CL-PPCRE::END)
                     :IN
-                    CL-PPCRE::CREATE-SCANNER-AUX) {100BDCE29B}> IS NOT A STRING DESIGNATOR.>.
+                    CL-PPCRE::CREATE-SCANNER-AUX) {100AC9C56B}> IS NOT A STRING DESIGNATOR.>.
 #+end_example
 *** skel
 #+begin_src lisp :results output replace :exports results
@@ -317,23 +310,22 @@ in suite organ with 3/3 tests:
 #+RESULTS:
 #+begin_example
 in suite skel with 6/6 tests:
-#<PASS VM-TEST1314> 
-
-#<FAIL WHILE COMPUTING THE CLASS PRECEDENCE LIST OF THE CLASS NAMED SKEL/COMP/MAKE:MAKEFILE.
-THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A FORWARD REFERENCED CLASS.
-THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED SKEL/COMP/MAKE:MAKEFILE.> 
-#<PASS SKELRC-TEST1312> 
-#<FAIL THE FUNCTION SKEL/CORE/UTIL::GETCWD IS UNDEFINED.> 
-#<PASS HEADER-COMMENTS-TEST1310> 
-#<PASS SANITY-TEST1309> 
-2 out of 6 total tests failed: 
-   #<STD/RT:TEST MAKEFILE :FN MAKEFILE-TEST1313 :ARGS NIL :PERSIST NIL {100B217673}>, 
-   #<STD/RT:TEST SKELFILE :FN SKELFILE-TEST1311 :ARGS NIL :PERSIST NIL {100B2123F3}>.
-2 unexpected failures: 
-   #<FAIL THE FUNCTION SKEL/CORE/UTIL::GETCWD IS UNDEFINED.>, 
-   #<FAIL WHILE COMPUTING THE CLASS PRECEDENCE LIST OF THE CLASS NAMED SKEL/COMP/MAKE:MAKEFILE.
-THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A FORWARD REFERENCED CLASS.
-THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED SKEL/COMP/MAKE:MAKEFILE.>.
+#<FAIL THE FUNCTION SKEL/CORE:MAKE-SK-VM IS UNDEFINED.> 
+#<FAIL THE FUNCTION SKEL/CORE:MAKE-SOURCE-HEADER-COMMENT IS UNDEFINED.> 
+#<PASS SKELRC-TEST313206> 
+#<FAIL THE FUNCTION SKEL/CORE:MAKE-SOURCE-HEADER-COMMENT IS UNDEFINED.> 
+#<FAIL THE FUNCTION SKEL/CORE:MAKE-SHEBANG-COMMENT IS UNDEFINED.> 
+#<PASS SANITY-TEST313203> 
+4 out of 6 total tests failed: 
+   #<STD/RT:TEST VM :FN VM-TEST313208 :ARGS NIL :PERSIST NIL {100D0B1FE3}>, 
+   #<STD/RT:TEST MAKEFILE :FN MAKEFILE-TEST313207 :ARGS NIL :PERSIST NIL {100D0B1EF3}>, 
+   #<STD/RT:TEST SKELFILE :FN SKELFILE-TEST313205 :ARGS NIL :PERSIST NIL {100D0B1D13}>, 
+   #<STD/RT:TEST HEADER-COMMENTS :FN HEADER-COMMENTS-TEST313204 :ARGS NIL :PERSIST NIL {100D0B1C23}>.
+4 unexpected failures: 
+   #<FAIL THE FUNCTION SKEL/CORE:MAKE-SHEBANG-COMMENT IS UNDEFINED.>, 
+   #<FAIL THE FUNCTION SKEL/CORE:MAKE-SOURCE-HEADER-COMMENT IS UNDEFINED.>, 
+   #<FAIL THE FUNCTION SKEL/CORE:MAKE-SOURCE-HEADER-COMMENT IS UNDEFINED.>, 
+   #<FAIL THE FUNCTION SKEL/CORE:MAKE-SK-VM IS UNDEFINED.>.
 #+end_example
 *** packy
 #+begin_src lisp :results output replace :exports results
@@ -342,7 +334,8 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 #+end_src
 
 #+RESULTS:
-: in suite packy with 0/0 tests:
+: in suite packy with 1/1 tests:
+: #<PASS PACKY-OBJECTS-TEST314215> 
 : No tests failed.
 
 *** nlp
@@ -353,9 +346,9 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 
 #+RESULTS:
 : in suite nlp with 3/3 tests:
-: #<PASS TEXTRANK-TEST278176> 
-: #<PASS DBSCAN-TEST278175> 
-: #<PASS PORTER-STEM-TEST278174> 
+: #<PASS TEXTRANK-TEST314218> 
+: #<PASS DBSCAN-TEST314217> 
+: #<PASS PORTER-STEM-TEST314216> 
 : No tests failed.
 
 *** dot
@@ -366,7 +359,7 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 
 #+RESULTS:
 : in suite dot with 1/1 tests:
-: ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#<PASS DOT-TEST278540> 
+: ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#<PASS DOT-TEST314273> 
 : No tests failed.
 
 ** ffi
@@ -388,8 +381,8 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 
 #+RESULTS:
 : in suite rocksdb with 2/2 tests:
-: #<PASS DB-BASIC-TEST1105626> 
-: #<PASS SET-OPTS-TEST1105625> 
+: #<PASS DB-BASIC-TEST314349> 
+: #<PASS SET-OPTS-TEST314348> 
 : No tests failed.
 
 *** uring
@@ -409,9 +402,13 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 #+end_src
 
 #+RESULTS:
-: in suite tree-sitter with 1/1 tests:
-: #<PASS TS-BASIC-TEST326> 
-: No tests failed.
+: in suite tree-sitter with 2/2 tests:
+: #<FAIL THE ALIEN FUNCTION "TREE_SITTER_RUST" IS UNDEFINED.> 
+: #<PASS TS-JSON-TEST314396> 
+: 1 out of 2 total tests failed: 
+:    #<STD/RT:TEST TS-RUST :FN TS-RUST-TEST314397 :ARGS NIL :PERSIST NIL {100E081033}>.
+: 1 unexpected failures: 
+:    #<FAIL THE ALIEN FUNCTION "TREE_SITTER_RUST" IS UNDEFINED.>.
 
 *** k
 #+begin_src lisp :results output replace :exports results
@@ -421,7 +418,7 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 
 #+RESULTS:
 : in suite k with 1/1 tests:
-: #<PASS K-TEST283> 
+: #<PASS K-TEST314399> 
 : No tests failed.
 
 *** bqn
@@ -434,7 +431,7 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 : in suite bqn with 1/1 tests:
 : #<FAIL ARITHMETIC ERROR FLOATING-POINT-INVALID-OPERATION SIGNALLED> 
 : 1 out of 1 total tests failed: 
-:    #<STD/RT:TEST BQN :FN BQN-TEST827575 :ARGS NIL :PERSIST NIL {1005F9FB73}>.
+:    #<STD/RT:TEST BQN :FN BQN-TEST314401 :ARGS NIL :PERSIST NIL {100F4E8B43}>.
 : 1 unexpected failures: 
 :    #<FAIL ARITHMETIC ERROR FLOATING-POINT-INVALID-OPERATION SIGNALLED>.
 
@@ -448,7 +445,7 @@ THE CLASS NAMED SKEL/COMP/MAKE::SKEL IS A DIRECT SUPERCLASS OF THE CLASS NAMED S
 #+begin_example
 in suite blake3 with 2/2 tests:
 
-#<sb-alien-internals:alien-value :sap #X7FED2C4E7888 :type (*
+#<sb-alien-internals:alien-value :sap #X7F21E6B1F888 :type (*
                                                             (sb-alien:struct
                                                              blake3/pkg:blake3-hasher
                                                              (blake3/pkg::key
@@ -499,12 +496,12 @@ in suite blake3 with 2/2 tests:
                                                                 8)
                                                                1760)
                                                               :offset 1160)))> 
-#<sb-alien-internals:alien-value :sap #X7FED2C4E7880 :type (*
+#<sb-alien-internals:alien-value :sap #X7F21E6B1F880 :type (*
                                                             (*
                                                              (sb-alien:unsigned
                                                               8)))> 
-#<PASS HASHER-TEST1105695> 
-#<PASS VERSION-TEST1105694> 
+#<PASS HASHER-TEST314449> 
+#<PASS VERSION-TEST314448> 
 No tests failed.
 in suite blake3 with 0/2 tests:
 No tests failed.
@@ -518,7 +515,7 @@ No tests failed.
 
 #+RESULTS:
 : in suite alpm with 1/1 tests:
-: #<PASS ALPM-VERSION-TEST337> 
+: #<PASS ALPM-VERSION-TEST314451> 
 : No tests failed.
 
 *** xkb
@@ -529,7 +526,7 @@ No tests failed.
 
 #+RESULTS:
 : in suite xkb with 1/1 tests:
-: #<PASS XKB-BASIC-TEST378> 
+: #<PASS XKB-BASIC-TEST314453> 
 : No tests failed.
 
 * emacs

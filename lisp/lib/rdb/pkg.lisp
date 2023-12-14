@@ -12,6 +12,7 @@
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
+   :with-errptr
    :open-db-error
    :put-kv-error
    :get-kv-error

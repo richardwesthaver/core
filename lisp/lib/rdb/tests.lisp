@@ -38,11 +38,14 @@
 
 (deftest with-db-raw ()
   "Test the WITH-OPEN-DB macro and some basic functions."
-  (with-test-db-raw (db "/tmp/with-rdb")
+  (let ((path "/tmp/with-db-raw")
+        (opt *rdb-test-opts*))
+    (with-open-db-raw (db path)
     (dotimes (i 10000)
       (let ((k (format nil "key~d" i))
             (v (format nil "val~d" i)))
-        (put-kv-str-raw db k v)))))
+        (put-kv-str-raw db k v)))
+    (test-cleanup db opt path))))
 
 (deftest with-iter ()
   "Test the WITH-ITER macro."
