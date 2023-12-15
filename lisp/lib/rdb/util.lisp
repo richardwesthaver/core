@@ -17,8 +17,7 @@ to initialize the instance with custom configuration."
     (let* ((db-path (if (pathnamep db-path)
                         (namestring db-path)
                         db-path))
-           (db (rocksdb-open opts db-path err))
-           (err (deref err)))
+           (db (rocksdb-open opts db-path err)))
       (handle-errptr err 'open-db-error (list :db db-path))
       db)))
 

@@ -15,8 +15,9 @@
 
 (deftest rdb ()
   "Test RDB struct and methods."
-  (let ((db (make-rdb :name "/tmp/rdb" :opts (make-rdb-opts :create-if-missing t))))
+  (let ((db (make-rdb "/tmp/rdb/" (make-rdb-opts :create-if-missing t))))
     (open-db db)
+
     (put-kv-str-raw (rdb-db db) "key" "val")
     (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
     (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
