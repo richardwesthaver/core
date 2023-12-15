@@ -41,12 +41,12 @@ indicating a success or a pointer to a C-STRING.
 ERRTYP if present must be a condition which sub-classes RDB-ERROR. If
 an error is detected, the resulting string from ERRPTR and the
 additional PARAMS will be used to signal a lisp error condition."
-  (declare (type alien errptr))
   ;; first we dereference (* (* t)) -> (* t)
-  (let ((err (deref errptr)))
-    ;; if NULL, return nil
-    (unless (null-alien err)
-      ;; cast the non-NULL pointer to a string
-      (let ((msg (cast err c-string)))
-        (apply #'signal (or errtyp 'rdb-error)
-               (nconc `(:message ,msg) params))))))
+  (unless (null errptr)
+    (let ((err (deref errptr)))
+      ;; if NULL, return nil
+      (unless (null-alien err)
+        ;; cast the non-NULL pointer to a string
+        (let ((msg (cast err c-string)))
+          (apply #'signal (or errtyp 'rdb-error)
+                 (nconc `(:message ,msg) params)))))))

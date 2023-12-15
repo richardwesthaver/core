@@ -134,14 +134,19 @@ rocksdb_cf_t handle."
           (rocksdb-create-column-family db (rocksdb-options-create) (rdb-cf-name cf) err))))
 
 ;;; rdb
-(defstruct (rdb (:constructor %make-rdb))
+(defstruct (rdb (:constructor %make-rdb (name &optional opts cfs db)))
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
-  (db (error 'rdb-error :message "DB slot must be supplied to RDB object"))
-  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf)))
+  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf))
+  (db nil :type (or null alien)))
 
-(defun make-rdb (name &optional opts db-ptr)
-  "Construct a new RDB instance from NAME and optional OPTS and DB-PTR.")
+(defun make-rdb (name &optional opts cfs)
+  "Construct a new RDB instance from NAME and optional OPTS and DB-PTR."
+  (let ((db (%make-rdb name 
+                       (or opts (default-rdb-opts)) 
+                       (or cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0)))))
+    (open-db db)
+    db))
 
 (defmethod push-cf ((cf rdb-cf) (db rdb))
   (vector-push cf (rdb-cfs db)))
