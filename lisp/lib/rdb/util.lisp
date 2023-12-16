@@ -10,7 +10,7 @@ to initialize the instance with custom configuration."
 
 (defun default-rocksdb-options ()
   (make-rocksdb-options
-   (lambda (o) (rocksdb-options-set-create-if-missing o t))))
+   (lambda (o) (rocksdb-options-set-create-if-missing o 1))))
 
 (defun open-db-raw (db-path opts)
   (with-errptr err

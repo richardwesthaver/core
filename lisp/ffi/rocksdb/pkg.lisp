@@ -92,6 +92,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-merge-cf
    :rocksdb-write
    :rocksdb-delete
+   :rocksdb-delete-file
+   :rocksdb-livefiles
    :rocksdb-delete-cf
    :rocksdb-delete-range-cf
    :rocksdb-multi-get
@@ -142,6 +144,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-flush-cf
    :rocksdb-flush-cfs
    :rocksdb-flush-wal
+   :rocksdb-enable-file-deletions
+   :rocksdb-disable-file-deletions
    ;; CACHE
    :rocksdb-cache
    :rocksdb-cache-create-lru
@@ -215,6 +219,9 @@ set *errptr to a malloc()ed error message.
    :rocksdb-options-set-block-based-table-factory
    :rocksdb-options-set-dump-malloc-stats
    :rocksdb-options-set-memtable-whole-key-filtering
+   :rocksdb-options-statistics-get-string
+   :rocksdb-options-statistics-get-ticker-count
+   :rocksdb-options-statistics-get-histogram-data
    ;; blob
    :rocksdb-options-set-enable-blob-files
    :rocksdb-options-get-enable-blob-files

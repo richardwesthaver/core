@@ -16,7 +16,7 @@
 
 (defun test-opts () 
   (let ((default (rocksdb-options-create)))
-    (rocksdb-options-set-create-if-missing default t)
+    (rocksdb-options-set-create-if-missing default 1)
     default))
 
 ;; not thread safe (gensym-counter)
@@ -36,7 +36,7 @@
         (wopts (rocksdb-writeoptions-create))
         (ropts (rocksdb-readoptions-create))
         (bopts (rocksdb-block-based-options-create)))
-    (rocksdb-options-set-create-if-missing opts t)
+    (rocksdb-options-set-create-if-missing opts 1)
     ;; cleanup
     (rocksdb-options-destroy opts)
     (rocksdb-writeoptions-destroy wopts)
