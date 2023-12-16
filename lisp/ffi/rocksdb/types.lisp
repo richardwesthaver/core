@@ -1,6 +1,6 @@
 (in-package :rocksdb)
 
-(define-alien-type rocksdb-errptr (* (* t)))
+(define-alien-type rocksdb-errptr (* c-string))
 
 (define-opaque rocksdb)
 (define-opaque rocksdb-iterator)

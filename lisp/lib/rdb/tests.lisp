@@ -9,15 +9,23 @@
 (rocksdb:load-rocksdb)
 
 (defun test-cleanup (db opt path)
-  (with-errptr err
+  (with-errptr (err 'destroy-db-error (list :db path))
+    ;; (rocksdb-destroy-db opt path err)
     (rocksdb-close db)
-    (rocksdb-destroy-db opt path err)))
+    (rocksdb-destroy-db opt path err)
+    (rocksdb-options-destroy opt)))
+
+(deftest minimal ()
+  "Test minimal functionality (open/close)."
+  (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym)))
+        (opts (default-rocksdb-options)))
+    (with-db (db (with-errptr (e) (open-db-raw db-path opts)))
+      (test-cleanup db opts db-path))))
 
 (deftest rdb ()
   "Test RDB struct and methods."
-  (let ((db (make-rdb "/tmp/rdb/" (make-rdb-opts :create-if-missing t))))
+  (let ((db (make-rdb "/tmp/rdbk/" (make-rdb-opts :create-if-missing t))))
     (open-db db)
-
     (put-kv-str-raw (rdb-db db) "key" "val")
     (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
     (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
@@ -86,4 +94,3 @@
     (is (not (sequence:emptyp bytes)))
     ;; NYI
     (is (= (sequence:count 2 (rdb-bytes-buffer bytes)) 1))))
-  

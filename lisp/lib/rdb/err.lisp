@@ -1,10 +1,5 @@
 (in-package :rdb)
 
-(defmacro with-errptr (e &body body)
-  `(progn
-     (with-alien ((,e (* (* t)) (make-alien rocksdb-errptr)))
-       ,@body)))
-
 (define-condition rdb-error (error)
   ((message :initarg :message
             :reader rdb-error-message))
@@ -26,6 +21,9 @@
   ()
   (:documentation "Error signaled while destroying a database"))
 
+(define-condition cf-error (rocksdb-error)
+  ((cf :initarg :cf :reader rdb-error-cf)))
+
 (define-condition put-kv-error (rdb-error)
   ((kv :initarg :kv :reader rdb-error-kv))
   (:documentation "Error signaled while processing a PUT-KV request"))
@@ -41,12 +39,14 @@ indicating a success or a pointer to a C-STRING.
 ERRTYP if present must be a condition which sub-classes RDB-ERROR. If
 an error is detected, the resulting string from ERRPTR and the
 additional PARAMS will be used to signal a lisp error condition."
-  ;; first we dereference (* (* t)) -> (* t)
-  (unless (null errptr)
-    (let ((err (deref errptr)))
-      ;; if NULL, return nil
-      (unless (null-alien err)
-        ;; cast the non-NULL pointer to a string
-        (let ((msg (cast err c-string)))
-          (apply #'signal (or errtyp 'rdb-error)
-                 (nconc `(:message ,msg) params)))))))
+  ;; if NULL, return nil
+  (unless (null-alien errptr)
+    (apply #'signal (or errtyp 'rdb-error)
+           (nconc (list :message errptr) params))))
+
+(defmacro with-errptr ((e &optional errtyp params) &body body)
+  `(with-alien ((,e rocksdb-errptr nil))
+     (unwind-protect (progn ,@body)
+       (handle-errptr ,e ,errtyp ,params))))
+        
+          

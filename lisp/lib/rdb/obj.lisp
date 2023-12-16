@@ -8,8 +8,8 @@
                 collect (cons y (format nil "rocksdb-options-set-~x" y))))
     table))
 
-(defun rdb-opt-setter (key)
-  (find-symbol (format nil "rocksdb-options-set-~x" key) :rocksdb))
+(defmacro rdb-opt-setter (key)
+  `(symbolicate (format nil "rocksdb-options-set-~x" ,key)))
 
 (defun %set-rocksdb-option (opt key val)
   (funcall (rdb-opt-setter key) opt val))
@@ -17,17 +17,18 @@
 ;; (funcall (rdb-opt-setter "create-if-missing") (rocksdb-options-create) nil)
 
 (defclass rdb-opts ()
-  ((table :initform (make-hash-table :test #'equal) :type hash-table :accessor rdb-opts-table)
-   (sap :type (or null alien) :accessor rdb-opts-sap)))
+  ((table :initarg :table :type hash-table :accessor rdb-opts-table)
+   (sap :initarg :sap :type (or null alien) :accessor rdb-opts-sap)))
 
 (defmethod initialize-instance :after ((self rdb-opts) &rest initargs &key &allow-other-keys)
-  (with-slots (sap) self
+  (with-slots (sap table) self
+    (unless (getf initargs :table) (setf table (make-hash-table :test #'equal)))
     (unless (getf initargs :sap) (setf sap (rocksdb-options-create)))
     (loop for (k v) on initargs by #'cddr while v
           do (let ((k (typecase k
                         (string (string-downcase k))
                         (symbol (string-downcase (symbol-name k)))
-                        (t (string-downcase (format nil "~x" k))))))
+                        (t (string-downcase (format nil "~s" k))))))
                (set-opt self k v)))
     self))
 
@@ -46,7 +47,7 @@
 
 (defmethod push-sap ((self rdb-opts) key)
   "Push KEY from slot :TABLE to the instance :SAP."
-  (%set-rocksdb-option (rdb-opts-sap self)  key (get-opt self key)))
+  (%set-rocksdb-option (rdb-opts-sap self) key (get-opt self key)))
   
 (defmethod push-sap* ((self rdb-opts))
   "Initialized the SAP slot with values from TABLE."
@@ -130,7 +131,7 @@ rocksdb_cf_t handle."
 
 (defun create-cf (db cf)
   (setf (rdb-cf-sap cf)
-        (with-errptr err
+        (with-errptr (err 'rocksdb-cf-error (list :db db :cf (rdb-cf-name cf)))
           (rocksdb-create-column-family db (rocksdb-options-create) (rdb-cf-name cf) err))))
 
 ;;; rdb
