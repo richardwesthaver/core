@@ -66,6 +66,23 @@
          skip-stats-update-on-db-open skip-checking-sst-filie-sizes-on-db-open enable-blob-files
          min-blob-size blob-file-size blob-compression-type enable-blob-gc blob-gc-age-cutoff
          blob-gc-force-threshold blob-compaction-readahead-size blob-file-starting-level
+         max-write-buffer-number min-write-buffer-number-to-merge max-write-buffer-number-to-maintain
+         max-write-buffer-size-to-maintain enable-pipelined-write unordered-write max-subcompactions
+         max-background-jobs max-background-compactions max-background-flushes max-log-file-size
+         log-file-time-to-roll keep-log-file-num recycle-log-file-num soft-pending-compaction-bytes-limit
+         hard-pending-compaction-bytes-limit max-manifest-file-size table-cache-numshardbits arena-block-size
+         use-fsync db-log-dir wal-dir wal-ttl-seconds wal-size-limit-mb manifest-preallocation-size allow-mmap-reads
+         allow-mmap-write use-direct-reads use-direct-io-for-flush-compaction is-fd-close-on-exec
+         stats-dump-period-sec stas-persist-period-sec advise-random-on-open access-hint-on-compaction-start
+         use-adaptive-mutex bytes-per-sync wal-bytes-per-sync writable-file-max-buffer-size
+         allow-concurrent-memtable-write enable-write-thread-adaptive-yield max-sequential-skip-in-iterations
+         disable-auto-compactions optimize-filters-for-hits delete-obsolete-files-period-micros
+         prepare-for-bulk-load memtable-vector-rep memtable-prefix-bloom-size-ratio max-compaction-bytes
+         hash-skip-list-rep plain-table-factory min-level-to-compress memtable-huge-page-size
+         max-successive-merges bloom-locality inplace-update-support inplace-update-num-locks
+         report-bg-io-stats avoid-unnecessary-blocking-io experimental-mempurge-threshold
+         wal-recovery-mode compression bottommost-compression compaction-style universal-compaction-options
+         ratelimiter atomic-flush row-cache manual-wal-flush wal-compression
          prepopulate-blob-cache))
   "Provides early list of options for macros to populate.")
 
@@ -145,50 +162,122 @@
 
 (define-opaque rocksdb-cuckoo-table-options)
 
-(define-opt rocksdb-options
-  create-if-missing
-  create-missing-column-families
-  error-if-exists
-  paranoid-checks
-  (info-log-level (val int))
-  (write-buffer-size (val size-t))
-  (db-write-buffer-size (val size-t))
-  (max-open-files (val int))
-  (max-file-opening-threads (val int))
-  (max-total-wal-size (n unsigned-long))
-  (compression-options (a int) (b int) (c int) (d int))
-  (compression-options-zstd-max-train-bytes (val int))
-  compression-options-use-zstd-dict-trainer
-  compression-options-parallel-threads
-  (compression-options-max-dict-buffer-bytes (val unsigned-long))
-  (num-levels (val int))
-  (level0-file-num-compaction-trigger (val int))
-  (level0-slowdown-writes-trigger (val int))
-  (level0-stop-writes-trigger (val int))
-  (target-file-size-base (val unsigned-long))
-  (target-file-size-multiplier (val int))
-  (max-bytes-for-level-base (val unsigned-long))
-  level-compaction-dynamic-level-bytes
-  (max-bytes-for-level-multiplier (val double))
-  (block-based-table-factory
-   (table-options (* rocksdb-block-based-table-options)))
-  (allow-ingest-behind (val unsigned-char))
-  (comparator (val (* rocksdb-comparator)))
-  (merge-operator (val (* rocksdb-mergeoperator)))
-  (statistics-level (level int))
-  (skip-stats-update-on-db-open (val unsigned-char))
-  (skip-checking-sst-filie-sizes-on-db-open (val unsigned-char))
-  (enable-blob-files (val unsigned-char))
-  (min-blob-size (val unsigned-long))
-  (blob-file-size (val unsigned-long))
-  (blob-compression-type (val int))
-  (enable-blob-gc (val unsigned-char))
-  (blob-gc-age-cutoff (val double))
-  (blob-gc-force-threshold (val double))
-  (blob-compaction-readahead-size (val unsigned-long))
-  (blob-file-starting-level (val int))
-  (blob-cache (val (* rocksdb-cache)))
-  (prepopulate-blob-cache (val int)))
+(define-opt rocksdb-options)
+
+(define-opt-accessor rocksdb-options create-if-missing)
+(define-opt-accessor rocksdb-options create-missing-column-families)
+(define-opt-accessor rocksdb-options error-if-exists)
+(define-opt-accessor rocksdb-options paranoid-checks)
+(define-opt-accessor rocksdb-options compression-options-use-zstd-dict-trainer)
+(define-opt-accessor rocksdb-options compression-options-parallel-threads rocksdb-options)
+(define-opt-accessor rocksdb-options level-compaction-dynamic-level-bytes)
+(define-opt-accessor rocksdb-options enable-blob-gc)
+(define-opt-accessor rocksdb-options allow-ingest-behind)
+(define-opt-accessor rocksdb-options skip-stats-update-on-db-open)
+(define-opt-accessor rocksdb-options skip-checking-sst-filie-sizes-on-db-open)
+(define-opt-accessor rocksdb-options enable-blob-files)
+(define-opt-accessor rocksdb-options enable-pipelined-write)
+(define-opt-accessor rocksdb-options unordered-write)
+(define-opt-accessor rocksdb-options allow-mmap-reads)
+(define-opt-accessor rocksdb-options allow-mmap-writes)
+(define-opt-accessor rocksdb-options use-direct-reads)
+(define-opt-accessor rocksdb-options use-direct-io-for-flush-and-compaction)
+(define-opt-accessor rocksdb-options is-fd-close-on-exec)
+(define-opt-accessor rocksdb-options inplace-update-support)
+(define-opt-accessor rocksdb-options advise-random-on-open)
+(define-opt-accessor rocksdb-options atomic-flush)
+(define-opt-accessor rocksdb-options manual-wal-flush)
+(define-opt-accessor rocksdb-options avoid-unnecessary-blocking-io)
+
+(define-opt-accessor rocksdb-options info-log-level int)
+(define-opt-accessor rocksdb-options write-buffer-size size-t)
+(define-opt-accessor rocksdb-options db-write-buffer-size size-t)
+(define-opt-accessor rocksdb-options max-open-files int)
+(define-opt-accessor rocksdb-options max-file-opening-threads int)
+(define-opt-accessor rocksdb-options max-total-wal-size unsigned-long)
+;; (define-opt-accessor rocksdb-options compression-options (a int)(b int) (c int) (d int))
+(define-opt-accessor rocksdb-options compression-options-zstd-max-train-bytes int)
+(define-opt-accessor rocksdb-options compression-options-max-dict-buffer-bytes unsigned-long)
+(define-opt-accessor rocksdb-options num-levels int)
+(define-opt-accessor rocksdb-options level0-file-num-compaction-trigger int)
+(define-opt-accessor rocksdb-options level0-slowdown-writes-trigger int)
+(define-opt-accessor rocksdb-options level0-stop-writes-trigger int)
+(define-opt-accessor rocksdb-options target-file-size-base unsigned-long)
+(define-opt-accessor rocksdb-options target-file-size-multiplier int)
+(define-opt-accessor rocksdb-options max-bytes-for-level-base unsigned-long)
+(define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
+(define-opt-accessor rocksdb-options block-based-table-factory (* rocksdb-block-based-table-options))
+(define-opt-accessor rocksdb-options comparator (* rocksdb-comparator))
+(define-opt-accessor rocksdb-options merge-operator (* rocksdb-mergeoperator))
+(define-opt-accessor rocksdb-options statistics-level int)
+(define-opt-accessor rocksdb-options min-blob-size unsigned-long)
+(define-opt-accessor rocksdb-options blob-file-size unsigned-long)
+(define-opt-accessor rocksdb-options blob-compression-type int)
+
+(define-opt-accessor rocksdb-options blob-gc-age-cutoff double)
+(define-opt-accessor rocksdb-options blob-gc-force-threshold double)
+(define-opt-accessor rocksdb-options blob-compaction-readahead-size unsigned-long)
+(define-opt-accessor rocksdb-options blob-file-starting-level int)
+(define-opt-accessor rocksdb-options blob-cache (* rocksdb-cache))
+(define-opt-accessor rocksdb-options prepopulate-blob-cache int)
+(define-opt-accessor rocksdb-options max-write-buffer-number int)
+(define-opt-accessor rocksdb-options min-write-buffer-number-to-merge int)
+(define-opt-accessor rocksdb-options max-write-buffer-number-to-maintain int)
+(define-opt-accessor rocksdb-options max-write-buffer-size-to-maintain long)
+(define-opt-accessor rocksdb-options max-subcompactions unsigned-int)
+(define-opt-accessor rocksdb-options max-background-jobs int)
+(define-opt-accessor rocksdb-options max-background-compactions int)
+(define-opt-accessor rocksdb-options max-background-flushes int)
+(define-opt-accessor rocksdb-options max-log-file-size size-t)
+(define-opt-accessor rocksdb-options log-file-time-to-roll size-t)
+(define-opt-accessor rocksdb-options keep-log-file-num size-t)
+(define-opt-accessor rocksdb-options recycle-log-file-num size-t)
+(define-opt-accessor rocksdb-options soft-pending-compaction-bytes-limit size-t)
+(define-opt-accessor rocksdb-options hard-pending-compaction-bytes-limit size-t)
+(define-opt-accessor rocksdb-options max-manifest-file-size size-t)
+(define-opt-accessor rocksdb-options table-cache-numshardbits int)
+(define-opt-accessor rocksdb-options arena-block-size size-t)
+(define-opt-accessor rocksdb-options use-fsync int)
+(define-opt-accessor rocksdb-options db-log-dir c-string)
+(define-opt-accessor rocksdb-options wal-dir c-string)
+(define-opt-accessor rocksdb-options wal-ttl-seconds unsigned-long)
+(define-opt-accessor rocksdb-options wal-size-limit-mb unsigned-long)
+(define-opt-accessor rocksdb-options manifest-preallocation-size size-t)
+(define-opt-accessor rocksdb-options stats-dump-period-sec unsigned-int)
+(define-opt-accessor rocksdb-options stats-persist-period-sec unsigned-int)
+
+(define-opt-accessor rocksdb-options access-hint-on-compaction-start int)
+(define-opt-accessor rocksdb-options use-adaptive-mutex unsigned-char)
+(define-opt-accessor rocksdb-options bytes-per-sync unsigned-long)
+(define-opt-accessor rocksdb-options wal-bytes-per-sync unsigned-long)
+(define-opt-accessor rocksdb-options file-max-buffer-size unsigned-long)
+(define-opt-accessor rocksdb-options allow-concurrent-memtable-write)
+(define-opt-accessor rocksdb-options enable-write-thread-adaptive-yield)
+(define-opt-accessor rocksdb-options max-sequential-skip-in-iterations unsigned-long)
+(define-opt-accessor rocksdb-options disable-auto-compaction int)
+(define-opt-accessor rocksdb-options optimize-filters-for-hits int)
+(define-opt-accessor rocksdb-options delete-obsolete-files-period-micros unsigned-long)
+(define-opt-accessor rocksdb-options memtable-prefix-bloom-size-ration double)
+(define-opt-accessor rocksdb-options max-compaction-bytes unsigned-long)
+(define-opt-accessor rocksdb-options memtable-huge-page-size size-t)
+(define-opt-accessor rocksdb-options max-successive-merges size-t)
+(define-opt-accessor rocksdb-options bloom-locality unsigned-int)
+(define-opt-accessor rocksdb-options report-bg-io-stats int)
+(define-opt-accessor rocksdb-options experimental-mempurge-threshold double)
+(define-opt-accessor rocksdb-options wal-recovery-mode int)
+(define-opt-accessor rocksdb-options compression int)
+(define-opt-accessor rocksdb-options bottommost-compression int)
+(define-opt-accessor rocksdb-options compaction-style int)
+(define-opt-accessor rocksdb-options wal-compression int)
+
+;; (universal-compaction-options)
+;; (ratelimiter)
+;; (row-cache)
+;; (hash-link-list-rep)
+;; (plain-table-factory
+;; (hash-skip-list-rep)
+;; (prepare-for-bulk-load)
+;; (memtable-vector-rep)
 
 (define-alien-routine rocksdb-options-increase-parallelism void 
   (opt (* rocksdb-options)) (total-threads int))
@@ -200,6 +289,18 @@
 (define-alien-routine rocksdb-options-enable-statistics void
   (* rocksdb-options))
 
+(define-alien-routine rocksdb-options-statistics-get-string c-string
+  (opt (* rocksdb-options)))
+
+(define-alien-routine rocksdb-options-statistics-get-ticker-count unsigned-long
+  (opt (* rocksdb-options))
+  (ticker-type unsigned-int))
+
+(define-alien-routine rocksdb-options-statistics-get-histogram-data void
+  (opt (* rocksdb-options))
+  (histogram-type unsigned-int)
+  (data (* rocksdb-statistics-histogram-data)))
+
 ;; (define-alien-routine rocksdb-options-set-db-paths void
 ;;   (opt (* rocksdb-options)))
 
@@ -208,14 +309,15 @@
 
 (define-opt rocksdb-writeoptions)
 (define-opt rocksdb-readoptions)
-(define-opt rocksdb-flushoptions
-    (wait (val unsigned-char)))
 
-(define-opt rocksdb-compactoptions
-    (exclusive-manual-compaction (val unsigned-char))
-  (bottommost-level-compaction (val unsigned-char))
-  (change-level (val unsigned-char))
-  (target-level (val int)))
+(define-opt rocksdb-flushoptions)
+(define-opt-accessor rocksdb-flushoptions wait)
+
+(define-opt rocksdb-compactoptions)
+(define-opt-accessor rocksdb-compactoptions exclusive-manual-compaction)
+(define-opt-accessor rocksdb-compactoptions bottommost-level-compaction)
+(define-opt-accessor rocksdb-compactoptions change-level)
+(define-opt-accessor rocksdb-compactoptions target-level int)
 
 (define-opt rocksdb-lru-cache-options)
 

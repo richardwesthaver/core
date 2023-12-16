@@ -97,6 +97,51 @@
   (db (* rocksdb))
   (options (* rocksdb-flushoptions)))
 
+(def-with-errptr rocksdb-flush-cf void
+  (db (* rocksdb))
+  (opts (* rocksdb-flushoptions))
+  (cf (* rocksdb-column-family-handle))
+  (num-cf int))
+
+(def-with-errptr rocksdb-flush-cfs void
+  (db (* rocksdb))
+  (opts (* rocksdb-flushoptions))
+  (cf (* (* rocksdb-column-family-handle)))
+  (num-cf int))
+
+(def-with-errptr rocksdb-flush-wal void
+  (db (* rocksdb))
+  (sync unsigned-char))
+
+(define-alien-routine rocksdb-delete-file void
+  (db (* rocksdb))
+  (name c-string))
+
+(define-alien-routine rocksdb-livefile (* rocksdb-livefiles)
+  (db (* rocksdb))
+  (name c-string))
+
+;; return NULL if prop name is unknown, else return pointer to
+;; malloc-ed null-term value.
+(define-alien-routine rocksdb-property-value (* t)
+  (db (* rocksdb))
+  (propname (* c-string)))
+
+;; return 0 on success, else -1
+(define-alien-routine rocksdb-property-int int
+  (db (* rocksdb))
+  (propname (* c-string)))
+
+(define-alien-routine rocksdb-property-value-cf (* t)
+  (db (* rocksdb))
+  (cf (* rocksdb-column-family-handle))
+  (propname (* c-string)))
+
+(define-alien-routine rocksdb-property-int-cf int
+  (db (* rocksdb))
+  (cf (* rocksdb-column-family-handle))
+  (propname (* c-string)))
+    
 ;;; CF
 (def-with-errptr rocksdb-create-column-family 
   (* rocksdb-column-family-handle)
@@ -177,9 +222,19 @@
   (end-key (* char))
   (end-key-len size-t))
 
+(def-with-errptr rocksdb-disable-file-deletions void
+  (db (* rocksdb)))
+
+(def-with-errptr rocksdb-enable-file-deletions void
+  (db (* rocksdb)))
+  
 (def-with-errptr rocksdb-destroy-db void
   (opts (* rocksdb-options))
-  (path c-string))
+  (name c-string))
+
+(def-with-errptr rocksdb-repair-db void
+  (opts (* rocksdb-options))
+  (name c-string))
 
 ;;; Iterators
 (define-alien-routine rocksdb-create-iterator (* rocksdb-iterator)
@@ -329,5 +384,3 @@
 ;;   (name (* char)))
 
 (define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
-
-;;; BlobDB
