@@ -34,6 +34,7 @@
 
 (defparameter *default-system-skelrc* (pathname "/etc/skel/skelrc"))
 
+;;; Objects
 (defclass skel ()
   ((id :initarg :id :initform (sxhash nil) :accessor sk-id :type fixnum))
   (:documentation "Base class for skeleton objects. Inherits from `sxp'."))
@@ -56,6 +57,7 @@
   (setf (sk-id self) (sxhash self)))
 
 ;; note that the sk-meta class does not inherit from skel or sxp.
+;;;; Meta
 (defclass sk-meta ()
   ((name :initarg :name :initform nil :type (or null string) :accessor sk-name)
    (path :initarg :path :initform nil :type (or null pathname) :accessor sk-path)
@@ -81,6 +83,7 @@
        (setf (sk-path self) *default-skelfile*))
      self))
 
+;;;; Command
 (defclass sk-command (skel)
   ((body :initform nil :initarg :body :type form :accessor sk-body)))
 
@@ -97,6 +100,7 @@
 
 ;;  HACK 2023-09-27: (defstruct sk-url) ?
 
+;;;; Source
 (defclass sk-source (skel)
   ((path :initform "" :initarg :path :type string :accessor sk-path)))
 
@@ -107,6 +111,7 @@
   (with-output-to-string (s)
     (sk-write self s)))
 
+;;;; Rule
 (defclass sk-rule (skel)
   ;; if target is a symbol, treated as a PHONY.
   ((target :initarg :target :type (or string symbol) :accessor sk-rule-target)
@@ -129,6 +134,7 @@ via the special form stored in RECIPE."))
     (sk-write-string source)
     (sk-write-string recipe)))
 
+;;;; Document
 (deftype document-designator () '(member :org :txt :pdf :html :md))
 
 ;; TODO 2023-10-13: integrate organ for working with org document
@@ -141,9 +147,11 @@ via the special form stored in RECIPE."))
 	   :documentation "document attachments"))
   (:documentation "Document object."))
 
+;;;; Script
 (defclass sk-script (skel sk-meta sxp)
   ())
 
+;;;; Config
 (defclass sk-config (skel sxp) 
   ((imports :type list)))
 
@@ -185,14 +193,17 @@ via the special form stored in RECIPE."))
 	;; invalid ast, signal error
 	(error 'skel-syntax-error))))
 
+;;;; Snippet
 (defstruct sk-snippet
   (name "" :type string)
   (form "" :type form))
 
+;;;; Abbrev
 (defstruct sk-abbrev
   (match nil :type form) 
   (expansion nil :type form))
 
+;;;; Version Control
 (defstruct sk-vc-remote-meta
   (name :default :type keyword)
   (path nil :type (or symbol string)))
@@ -216,6 +227,18 @@ via the special form stored in RECIPE."))
 		 (write-sxp-stream x stream :pretty pretty :case case :fmt fmt))
 	(format stream ")"))))
   
+(defclass sk-repo (skel sk-meta)
+  ((head)
+   (ignore)
+   (branches)
+   (tags)
+   (revisions)
+   (subrepos)
+   (remotes)
+   (config))
+  (:documentation "generic Repository object backed by one of VC-DESIGNATOR."))
+
+;;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
    (vc :initarg :vc :initform (make-sk-vc-meta :kind *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)

@@ -10,10 +10,14 @@
                 :components 
                 ((:file "err")
                  (:file "proto")
-                 (:file "vc")
                  (:file "header")
                  (:file "virt")
                  (:file "obj")
+                 (:module "vc"
+                  :serial t
+                  :components
+                  ((:file "git")
+                   (:file "hg")))
                  (:file "util")
                  (:file "vm")))
                (:module "comp"

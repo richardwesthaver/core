@@ -1,7 +1,7 @@
-;;; vc.lisp --- Skel version control
+;;; skel/core/vc/hg.lisp --- Skel Mercurial Version Control
 
-;; This package holds the machinery for interacting with version
-;; control systems.
+;; This package holds the machinery for interacting with our primary
+;; version control system: Mercurial (hg).
 
 ;;; Commentary:
 
@@ -39,17 +39,8 @@
 ;;; Code:
 (in-package :skel/core)
 
-(defclass repo (skel sk-meta)
-  ((head)
-   ;; TODO 2023-09-23: consider a separate module 'ignore.lisp' - be
-   ;; aware of .containerignore
-   (ignore)
-   (branches)
-   (tags)
-   (revisions)
-   (subrepos)
-   (remotes)
-   (config)))
+(defvar *default-hg-client-buffer-size* 4096)
+(defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
 
 ;;; Mercurial
 (defstruct hg-nodeid
@@ -71,11 +62,6 @@
    (bookmarks)
    (requires)))
 
-(defvar *default-hg-client-buffer-size* 4096)
-
-(defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
-(defvar *git-program* (find-exe "git"))
-
 (declaim (inline %make-hg-client))
 (defstruct (hg-client (:constructor %make-hg-client))
   "hg-client structures contain the client connection state
@@ -96,11 +82,3 @@
 
 (defun run-hg-command (cmd &rest args)
   (run-program *hg-program* (push cmd args)))
-
-;;; Git
-
-(defun run-git-command (cmd &rest args)
-  (run-program *git-program* (push cmd args)))
-
-(defclass git-repo (repo)
-  ((index))) ;; working-directory
