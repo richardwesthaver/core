@@ -14,6 +14,8 @@
    ;; err
    :with-errptr
    :rdb-error
+   :open-db-error
+   :destroy-db-error
    :rocksdb-error
    :rdb-user-error
    :put-kv-error

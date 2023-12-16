@@ -156,7 +156,7 @@
 : Slots with :INSTANCE allocation:
 :   AST                            = NIL
 
-* TODO rdb 0.2 [0/5]                                               :lisp:rdb:
+* TODO rdb 0.2 [0/6]                                               :lisp:rdb:
 :LOGBOOK:
 - State "TODO"       from "TODO"       [2023-12-13 Wed 18:26]
 :END:
@@ -199,6 +199,16 @@
   - cf-spec
     - used as superclass
     - methods for abstracting CFs
+** TODO set-opt/get-opt
+:LOGBOOK:
+- State "TODO"       from              [2023-12-16 Sat 00:49]
+:END:
+- need better api
+- may just want to use the generic C fn that takes string as input
+- I feel this may be less efficient but haven't benched it (requires additional arg)
+- separate packages are a pain to query symbols with
+
+
 * TODO std 0.2 [1/2]                                               :lisp:std:
 :LOGBOOK:
 - State "TODO"       from              [2023-12-12 Tue 19:49]
