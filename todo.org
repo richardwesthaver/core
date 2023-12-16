@@ -208,7 +208,24 @@
 - I feel this may be less efficient but haven't benched it (requires additional arg)
 - separate packages are a pain to query symbols with
 
-
+* TODO skel 0.2 [0/3]                                             :lisp:skel:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-16 Sat 00:55]
+:END:
+** TODO git                                                              :vc:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-16 Sat 00:55]
+:END:
+** TODO hg                                                               :vc:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-16 Sat 00:56]
+:END:
+** TODO eval rules from CLI
+:LOGBOOK:
+- State "TODO"       from              [2023-12-16 Sat 00:56]
+:END:
+- need new command or flag for rules
+- evaluate forms instead of looking in skelfile
 * TODO std 0.2 [1/2]                                               :lisp:std:
 :LOGBOOK:
 - State "TODO"       from              [2023-12-12 Tue 19:49]

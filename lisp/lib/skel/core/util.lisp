@@ -67,3 +67,6 @@ return nil. When LOAD is non-nil, load the skelfile if found."
   (let* ((cd (or path (getcwd))))
     (print cd stream)
     (terpri stream)))
+
+(defun edit-skelrc (&optional editor)
+  "Open the current user configuration in EDITOR.")

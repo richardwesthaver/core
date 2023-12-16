@@ -49,6 +49,8 @@
    :*default-skel-stash* :*default-skel-shed* :*default-system-skelrc*
    :file-read-forms :load-ast
    :sk-author :sk-path :sk-shed :sk-stash :sk-user
+   :sk-push :sk-pull
+   :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 
    :sk-description :sk-kind :sk-rules :sk-id :sk-version :sk-name :sk-docs :sk-document 
