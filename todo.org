@@ -305,6 +305,14 @@
 :LOGBOOK:
 - State "TODO"       from              [2023-12-17 Sun 01:04]
 :END:
+* TODO gui 0.1 [0/1]                                               :lisp:gui:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 03:40]
+:END:
+** TODO wayland protocol bindings
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 03:40]
+:END:
 
 * TBD homer 0.1 [0/0]                                            :lisp:homer:
 :LOGBOOK:

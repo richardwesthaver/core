@@ -17,3 +17,7 @@
 (defclass iterator ()
   ()
   (:documentation "Iterator superclass inherited by objects implementing the iterator protocol."))
+
+(defclass ring ()
+  ()
+  (:documentation "Ring buffer protocol."))
