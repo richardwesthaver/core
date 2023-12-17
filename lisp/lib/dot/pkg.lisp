@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :dot
-  (:use :cl :std :cl-ppcre)
+  (:use :cl :std :cl-ppcre :obj/id)
   (:export
    ;; Variables
    #:*dot-path*
@@ -18,7 +18,6 @@
    #:graph
 
    ;; Accessors
-   #:id-of
    #:attributes-of
    #:nodes-of
    #:edges-of
@@ -387,8 +386,8 @@ from OBJECT, using the GRAPH-OBJECT- protocol.")
 
 (defvar *id*)
 
-(defclass id-mixin ()
-  ((id :initform (incf *id*) :initarg :id :accessor id-of)))
+;; (defclass id-mixin ()
+;;   ((id :initform (incf *id*) :initarg :id :accessor id-of)))
 
 (defclass attributes-mixin ()
   ((attributes :initform nil :initarg :attributes :accessor attributes-of)))
@@ -404,7 +403,7 @@ from OBJECT, using the GRAPH-OBJECT- protocol.")
     :initarg :cluster-nodes
     :accessor cluster-nodes-of)))
 
-(defclass node (id-mixin
+(defclass node (id
                 attributes-mixin)
   ()
   (:documentation "A graph node with `dot` attributes (a plist, initarg
@@ -430,7 +429,7 @@ information (a plist, initarg :ATTRIBUTES)"))
   ((source :initform nil :initarg :source :accessor source-of)
    (target :initform nil :initarg :target :accessor target-of)))
 
-(defclass cluster (id-mixin
+(defclass cluster (id
                    attributes-mixin)
   ()
   (:documentation "A cluster with `dot` attributes (a plist, initarg

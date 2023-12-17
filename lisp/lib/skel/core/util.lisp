@@ -32,7 +32,7 @@ defaults. Defaults to ~/.skelrc."
   (defun init-skelfile (&optional file name cfg)
     "Initialize a skelfile."
     (let ((sk (make-instance 'sk-project 
-		:name (or name (pathname-name (getcwd)))))
+		:name (or name (pathname-name (sb-posix:getcwd)))))
 	  (path (or file *default-skelfile*))
 	  (fmt :collapsed))
       (when cfg (setf sk (sk-install-user-config sk cfg)))
@@ -64,7 +64,7 @@ return nil. When LOAD is non-nil, load the skelfile if found."
 (defun describe-project (&optional path (stream t))
   "Describe the project responsible for the pathname PATH. Defaults to
 `sb-posix:getcwd'."
-  (let* ((cd (or path (getcwd))))
+  (let* ((cd (or path (sb-posix:getcwd))))
     (print cd stream)
     (terpri stream)))
 

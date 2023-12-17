@@ -34,14 +34,15 @@
 
 (defparameter *default-system-skelrc* (pathname "/etc/skel/skelrc"))
 
+
 ;;; Objects
-(defclass skel ()
-  ((id :initarg :id :initform (sxhash nil) :accessor sk-id :type fixnum))
+(defclass skel (id)
+  ()
   (:documentation "Base class for skeleton objects. Inherits from `sxp'."))
 
 (defmethod print-object ((self skel) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~S ~A" :id (fmt-sxhash (sk-id self)))))
+    (format stream "~S ~A" :id (fmt-sxhash (id-of self)))))
 
 (defmethod initialize-instance :before ((self skel) &rest initargs &key &allow-other-keys)
   (unless (getf initargs :id)
@@ -53,9 +54,6 @@
 
 ;; TODO 2023-09-11: research other hashing strategies - maybe use the
 ;; sxhash as a nonce for UUID
-(defmethod rehash-object ((self skel))
-  (setf (sk-id self) (sxhash self)))
-
 ;; note that the sk-meta class does not inherit from skel or sxp.
 ;;;; Meta
 (defclass sk-meta ()
@@ -74,7 +72,7 @@
 (defmacro sk-init-dir (class &rest initargs)
   `(let ((self (sk-init ',class ,@initargs)))
      (unless (getf ',initargs :path)
-       (setf (sk-path self) (getcwd)))
+       (setf (sk-path self) (sb-posix:getcwd)))
      self))
 
 (defmacro sk-init-file (class &rest initargs)

@@ -4,6 +4,7 @@
 ;; which can be output to a stream using a specialized function.
 
 ;;; Code:
+(in-package :skel)
 (deftype stack-slot-kind () '(member :shell :lisp :comment :var :rule :directive :nop))
 
 (defstruct stack-slot 

@@ -1,4 +1,4 @@
-;;; tbl.lisp --- Simple table data structures.
+;;; lib/obj/tbl.lisp --- Simple table data structures.
 
 ;;; Code:
 (in-package :obj/tbl)

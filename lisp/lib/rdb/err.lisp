@@ -46,7 +46,21 @@ additional PARAMS will be used to signal a lisp error condition."
 
 (defmacro with-errptr ((e &optional errtyp params) &body body)
   `(with-alien ((,e rocksdb-errptr nil))
-     (unwind-protect (progn ,@body)
+     (unwind-protect 
+          (handler-bind ((sb-sys:memory-fault-error 
+                           (lambda (condition)
+                             (error 'rdb-error
+                                    :message
+                                    (format nil
+                                            "exception: ~a" condition))))
+                         (error 
+                           (lambda (condition)
+                             (error 'rdb-error 
+                                    :message 
+                                    (format nil 
+                                            "unhandled exception: ~x" 
+                                            condition)))))
+            (progn ,@body))
        (handle-errptr ,e ,errtyp ,params))))
         
           

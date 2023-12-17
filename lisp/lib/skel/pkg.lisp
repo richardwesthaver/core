@@ -6,7 +6,7 @@
 
 ;;; Code:
 (defpackage :skel/core
-    (:use :cl :cl-ppcre :std :sb-mop :sb-bsd-sockets :sb-unix :sxp :log :cli)
+    (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli)
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :sb-ext :run-program)
@@ -18,7 +18,6 @@
    :skel-fmt-error
    :skel-compile-error
    ;; proto
-   :rehash-object
    :sk-run :sk-new :sk-save
    :sk-tangle :sk-weave
    :sk-call :sk-print :sk-load
@@ -53,7 +52,7 @@
    :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 
-   :sk-description :sk-kind :sk-rules :sk-id :sk-version :sk-name :sk-docs :sk-document 
+   :sk-description :sk-kind :sk-rules :sk-version :sk-name :sk-docs :sk-document 
    :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config
    ;; util

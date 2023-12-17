@@ -111,6 +111,19 @@
    :cli-version
    :cli-usage))
 
+(defpackage :cli/progress
+  (:use :cl :std :cli)
+  (:export
+   :update-progress
+   :with-progress-bar
+   :*progress-bar*
+   :*progress-bar-enabled*
+   :start-progress-display
+   :finish-progress-display
+   :progress-mutex
+   :uncertain-size-progress-bar
+   :progress-bar))
+
 (in-package :cli)
 
 (defvar *argv*)
