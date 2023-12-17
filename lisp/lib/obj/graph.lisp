@@ -16,9 +16,11 @@ that a vertex always carries an ID slot."))
   ()
   (:documentation "generic edge mixin. Compatible with the NODE and ID protocols."))
 
-(defclass directed-edge (edge))
+(defclass directed-edge (edge)
+  ())
 
-(defclass undirected-edge (edge))
+(defclass undirected-edge (edge)
+  ())
 
 (defclass weighted-edge (edge)
   ((weight :initform 1d0 :initarg :weight :accessor weight-of)))

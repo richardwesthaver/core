@@ -36,4 +36,4 @@
 (defsystem :skel/tests
   :depends-on (:rt :skel)
   :components ((:file "tests"))
-  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests)))
+  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :skel)))
