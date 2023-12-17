@@ -58,6 +58,7 @@
    :nunionf
    :reversef
    :nreversef
+   :deletef
    :let-binding-transform
    :ensure-list :recons :memq :assq :ensure-list 
    :proper-list-of-length-p :proper-list-p :singleton-p

@@ -45,6 +45,15 @@ place and saves back the result into the place.")
   "Modify-macro for NREVERSE. Reverses the list stored in the given place by
 destructively modifying it and saves back the result into the place.")
 
+(declaim (inline delete/swapped-arguments))
+(defun delete/swapped-arguments (sequence item &rest keyword-arguments)
+  (apply #'delete item sequence keyword-arguments))
+
+(define-modify-macro deletef (item &rest keyword-arguments)
+  delete/swapped-arguments
+  "Modify-macro for DELETE. Sets place designated by the first argument to
+the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
+
 (defun let-binding-transform (bs)
   (if bs
     (cons

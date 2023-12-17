@@ -1,7 +1,10 @@
 ;;; std.asd --- standard library
 (defsystem :rt
   :depends-on (:std :sxp :log)
-  :components ((:file "pkg"))
+  :components ((:file "pkg")
+               (:file "bench")
+               (:file "trace")
+               (:file "flamegraph"))
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (defsystem :rt/tests
