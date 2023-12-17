@@ -673,3 +673,15 @@ order) from the end of SEQ."
 	      (cond ((not (string-equal lookat "elseif"))
 		     (error "if*: missing elseif clause ")))
 	      (setq state :init)))))
+
+(defun tmpfile (size)
+  "Create an anonymous temporary file of the given size. Returns a file descriptor."
+  (let (done fd pathname)
+    (unwind-protect
+         (progn
+           (setf (values fd pathname) (sb-posix:mkstemp "/dev/shm/tmp.XXXXXXXX"))
+           (sb-posix:unlink pathname)
+           (sb-posix:ftruncate fd size)
+           (setf done t))
+      (when (and fd (not done)) (sb-posix:close fd)))
+    fd))

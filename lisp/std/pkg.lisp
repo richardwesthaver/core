@@ -153,6 +153,7 @@
    :maphash-values
    :hash-table-values
    :my-lisp-implementation
+   :tmpfile
    ;; alien
    ;; :defbytes
    ;; :u1 :u2 :u3 :u4 :u8 :u16 :u24 :u32 :u64 :u128
@@ -165,4 +166,3 @@
    :clone-octets-to-alien
    :clone-octets-from-alien
    :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int))
-

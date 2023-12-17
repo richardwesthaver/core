@@ -13,7 +13,7 @@
 (defpackage :obj/seq
   (:nicknames :seq)
   (:use :cl :std)
-  (:export :iterator))
+  (:export :iterator :ring))
 
 (defpackage :obj/tree
   (:nicknames :tree)
