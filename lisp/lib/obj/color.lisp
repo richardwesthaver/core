@@ -1,3 +1,5 @@
+;;; lib/obj/colors.lisp --- Colors
+
 ;; from https://github.com/tpapp/cl-colors/blob/master/colors.lisp
 (in-package :obj/color)
 

@@ -1,6 +1,6 @@
 ;;; tests.lisp --- skel tests
 (defpackage :skel/tests
-  (:use :cl :skel/core :skel/comp :rt :sxp :log)
+  (:use :cl :skel/core :skel/comp :rt :sxp :log :obj/id)
   (:import-from :uiop :file-exists-p))
 
 (in-package :skel/tests)
@@ -19,7 +19,7 @@
 (defun skels (c)
   (let ((s))
     (loop for i from 1 to c
-	  do (push (sk-id (make-instance 'sk-project :name (gensym))) s))
+	  do (push (id-of (make-instance 'sk-project :name (gensym))) s))
     s))
 
 (deftest sanity ()

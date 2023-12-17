@@ -19,8 +19,6 @@
   (:documentation "load or reload object SELF."))
 (defgeneric sk-compile (self stream &key &allow-other-keys)
   (:documentation "compile object SELF to output STREAM"))
-(defgeneric rehash-object (self)
-  (:documentation "rehash object SELF, generating a new hash dynamically."))
 (defgeneric sk-transform (self other &key &allow-other-keys)
   (:documentation "transform SELF to object of type OTHER"))
 (defgeneric sk-read-file (self path)
@@ -35,9 +33,7 @@
   (:documentation "write from SELF to file PATH."))
 (defgeneric sk-install-user-config (self cfg)
   (:documentation "populate SELF with configuration object CFG."))
-
 (defgeneric sk-vc-push (self &key remote &allow-other-keys)
   (:documentation "push object SELF upstream using vc."))
-
 (defgeneric sk-vc-pull (self &key remote &allow-other-keys)
   (:documentation "pull object SELF from upstream using vc."))

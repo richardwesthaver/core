@@ -1,3 +1,32 @@
+(defpackage :obj/hash
+  (:nicknames :hash)
+  (:use :cl :std)
+  (:export 
+   :hash-object))
+
+(defpackage :obj/id
+  (:nicknames :id)
+  (:use :cl :std :obj/hash)
+  (:export 
+   :id :id-of :reset-id :update-id :make-id))
+
+(defpackage :obj/seq
+  (:nicknames :seq)
+  (:use :cl :std)
+  (:export :iterator))
+
+(defpackage :obj/tree
+  (:nicknames :tree)
+  (:use :cl :std :obj/id :obj/seq)
+  (:export :node :binary-node :unary-node))
+
+(defpackage :obj/graph
+  (:nicknames :graph)
+  (:use :cl :std :obj/id :obj/seq :obj/tree)
+  (:export 
+   :vertex :edge :graph
+   :weighted-edge :directed-edge :undirected-edge))
+
 (defpackage :obj/color
   (:nicknames :color)
   (:use :cl :std)
@@ -41,6 +70,4 @@
 
 (uiop:define-package :obj
   (:use :cl :std)
-  (:use-reexport :obj/color :obj/tbl))
-
-
+  (:use-reexport :obj/color :obj/tbl :obj/id))

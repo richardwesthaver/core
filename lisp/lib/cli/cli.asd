@@ -1,7 +1,9 @@
 ;;; cli.asd --- CLI library
 (defsystem :cli
   :depends-on (:std :log)
-  :components ((:file "pkg"))
+  :components ((:file "pkg")
+               (:file "progress")
+               (:file "repl"))
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (defsystem :cli/tests

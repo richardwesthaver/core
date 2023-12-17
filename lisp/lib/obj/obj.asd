@@ -1,6 +1,9 @@
 (defsystem :obj
+  :description "Lisp object library"
   :depends-on (:std)
   :components ((:file "pkg")
+               (:file "id")
+               (:file "seq")
                (:file "color")
                (:file "tbl"))
   :in-order-to ((test-op (test-op "obj/tests"))))

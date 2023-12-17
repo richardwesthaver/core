@@ -82,12 +82,10 @@ DB where K and V are both Lisp strings."
 	(let ((rval (make-array vlen :element-type 'unsigned-byte)))
 	  (loop for i from 0 below vlen do (let ((x (deref v i))) (setf (aref rval i) x)))
 	  (is (string= (octets-to-string val) (concatenate 'string (map 'vector #'code-char rval)))))
-        ;; cleanup
         (rocksdb-delete db wopts k klen errptr)
 	(is (null-alien errptr))
         (rocksdb-writeoptions-destroy wopts)
         (rocksdb-readoptions-destroy ropts)
-        ;; final cleanup
         (rocksdb-cancel-all-background-work db nil)
         (rocksdb-close db)
         (rocksdb-destroy-db opts path errptr)

@@ -8,3 +8,7 @@
   :depends-on (:rt :sxp)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :sxp)))
+
+(defsystem :sxp/bench
+  :depends-on (:rt :sxp)
+  :components ((:file "bench")))

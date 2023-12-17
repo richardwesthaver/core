@@ -1,7 +1,7 @@
 (defsystem :dot
   :version "0.1.0"
   :description "GraphViz dot compiler"
-  :depends-on (:cl-ppcre :std :nlp)
+  :depends-on (:cl-ppcre :std :obj)
   :components ((:file "pkg"))
   :in-order-to ((test-op (test-op :dot/tests))))
 
