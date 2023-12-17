@@ -110,14 +110,6 @@
    #:o!-symbol-to-g!-symbol
    #:defmacro!
    #:defun!
-   #:|#"-reader|
-   #:|#`-reader|
-   #:|#f-reader|
-   #:|#$-reader|
-   #:segment-reader
-   #:match-mode-ppcre-lambda-form
-   #:subst-mode-ppcre-lambda-form
-   #:|#~-reader|
    #:dlambda
    #:make-tlist
    #:tlist-left
@@ -154,6 +146,15 @@
    :hash-table-values
    :my-lisp-implementation
    :tmpfile
+   :ensure-function
+   :ensure-functionf
+   :disjoin
+   :conjoin
+   :compose
+   :multiple-value-compose
+   :curry
+   :rcurry
+   :named-lambda
    ;; alien
    ;; :defbytes
    ;; :u1 :u2 :u3 :u4 :u8 :u16 :u24 :u32 :u64 :u128
@@ -165,4 +166,14 @@
    :clone-strings
    :clone-octets-to-alien
    :clone-octets-from-alien
-   :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int))
+   :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int
+   ;; readtable
+   #:|#"-reader|
+   #:|#`-reader|
+   #:|#f-reader|
+   #:|#$-reader|
+   #:segment-reader
+   #:match-mode-ppcre-lambda-form
+   #:subst-mode-ppcre-lambda-form
+   #:|#~-reader|
+   :_))
