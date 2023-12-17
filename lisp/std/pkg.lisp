@@ -140,6 +140,7 @@
    #:when-let*
    #:if-let
    #:if-let*
+   :if*
    :define-constant
    :def!
    :eval-always

@@ -253,6 +253,58 @@
 - use to replace LOAD-AST for sk-project and friends
 - requires mop
 - take a look at UNWRAP-OBJECT too, may need rewrite for a better API
+* TODO obj 0.1 [0/1]                                               :lisp:obj:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 00:59]
+:END:
+** TODO uri
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:00]
+:END:
+- mostly just need the tests and to finish porting the Franz implementation
+* TODO net 0.1 [0/7]                                               :lisp:net:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:00]
+:END:
+** TODO tcp                                                            :core:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:01]
+:END:
+** TODO udp                                                            :core:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:01]
+:END:
+** TODO crew                                                          :proto:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:01]
+:END:
+
+** TODO http                                                          :proto:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:01]
+:END:
+** TODO dns                                                           :proto:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:01]
+:END:
+
+** TODO tlv                                                           :codec:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:01]
+:END:
+
+** TODO osc                                                           :codec:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:03]
+:END:
+* TODO pwn 0.1 [0/1]                                               :lisp:pwn:
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:04]
+:END:
+** TODO diz
+:LOGBOOK:
+- State "TODO"       from              [2023-12-17 Sun 01:04]
+:END:
 
 * TBD homer 0.1 [0/0]                                            :lisp:homer:
 :LOGBOOK:

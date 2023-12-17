@@ -1,8 +1,6 @@
 ;;; rust/rust.sk --- core/rust skelfile -*- mode: skel; -*-
 :name "core/rust"
-:author "ellis"
 :version "0.1.0"
-:description "The Compiler Company Rust Core"
-:license "MPL"
-:vc :hg
+:description "Rust Core"
 :tags ("rust")
+:rules ()

@@ -1,5 +1,5 @@
 (defpackage :obj/tests
-  (:use :cl :std :rt :obj/id :obj/color :obj/tbl))
+  (:use :cl :std :rt :obj))
 
 (in-package :obj/tests)
 
@@ -17,3 +17,8 @@
 (deftest def-iter ())
 
 (deftest def-seq ())
+
+(deftest uris ()
+  "Tests for different types of URIs. Attempts to conform with RFCs and test suites."
+  (uri-host (parse-uri-string-rfc3986 "https://localhost"))
+)

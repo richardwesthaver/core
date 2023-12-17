@@ -68,6 +68,68 @@
    :read-tsv
    :table-from-file))
 
+(defpackage :obj/uri
+  (:nicknames :uri)
+  (:use :cl :std :cl-ppcre)
+  (:export
+   #:uri				; class
+   #:uri-p
+   #:iri				; subclass of uri
+   #:iri-p
+   #:copy-uri
+   
+   #:uri-parse-error
+   #:uri-parse-error-string
+
+   #:uri-scheme
+   #:uri-userinfo
+   #:uri-port
+   #:uri-path
+   #:uri-query
+   #:uri-fragment
+   #:generic-uri-scheme
+   #:generic-uri-userinfo
+   #:generic-uri-port
+   #:generic-uri-path
+   #:generic-uri-query
+   #:generic-uri-fragment
+
+   #:uri-host
+   #:uri-ipv6
+   #:uri-zone-id
+   #:uri-plist
+   #:uri-authority			; pseudo-slot accessor
+
+   #:urn				; class
+   #:urn-nid
+   #:urn-nss
+   #:urn-q-component			; RFC 8141
+   #:urn-f-component			; RFC 8141
+   #:urn-r-component			; RFC 8141
+   
+   #:*strict-parse*
+   #:parse-uri
+   #:merge-uris
+   #:enough-uri
+   #:uri-parsed-path
+   #:render-uri
+   #:string-to-uri
+   #:uri-to-string
+   #:string-to-iri
+   #:iri-to-string
+   #:parse-uri-string-rfc3986
+   #:parse-iri-string-rfc3987
+   
+   #:make-uri-space			; interning...
+   #:uri-space
+   #:uri=
+   #:intern-uri
+   #:unintern-uri
+   #:do-all-uris
+   
+   #:uri-to-pathname
+   #:pathname-to-uri))
+
 (uiop:define-package :obj
   (:use :cl :std)
-  (:use-reexport :obj/color :obj/tbl :obj/id))
+  (:use-reexport :obj/color :obj/tbl :obj/id :obj/uri))
