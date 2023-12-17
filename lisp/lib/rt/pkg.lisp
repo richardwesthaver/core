@@ -32,12 +32,11 @@
   (require 'sb-sprof)
   (require 'sb-cover))
 
-(defpackage :std/rt
+(defpackage :rt
   (:use 
    :cl :std :sxp :log
    :sb-aprof #+x86-64 :sb-sprof)
   (:import-from :sb-cover :store-coverage-data)
-  (:nicknames :rt)
   (:export
    :*default-test-opts*
    :*compile-tests*
@@ -59,6 +58,9 @@
    :reset-tests
    :continue-testing
    :with-test-env
+   :%test-bail
+   :%test-result
+   :make-test-result
    :ensure-suite
    :test-fixture
    :fixture-prototype
@@ -66,6 +68,7 @@
    :make-fixture
    :with-fixture
    :test-result
+   :test-fn
    :test-pass-p
    :test-fail-p
    :test-skip-p
@@ -97,6 +100,31 @@
    :with-coverage
    :cover-report))
 
+(defpackage :rt/bench
+  (:nicknames :bench)
+  (:use :cl :std :log :rt)
+  (:export
+   :*bench-count*
+   :defbench
+   :do-bench))
+
+(defpackage :rt/trace
+  (:nicknames :trace)
+  (:use :cl :std :log :rt)
+  (:export
+   :start-tracing
+   :stop-tracing
+   :with-tracing
+   :save-report
+   ;; Extra utility
+   :package-symbols-except))
+
+(defpackage :rt/flamegraph
+  (:nicknames :flamegraph)
+  (:use :cl :std :log :rt :sb-sprof)
+  (:export
+   :save-flamegraph))
+
 (in-package :rt)
 (in-readtable :std)
 
@@ -115,8 +143,6 @@ compiler optimizations.")
   (defvar *default-test-suite-name* "default"))
 (declaim (type (or stream boolean string) *test-input*))
 (defvar *test-input* nil "When non-nil, specifies an input stream or buffer for `*testing*'.")
-(defvar *default-bench-count* 100 "Default number of iterations to repeat a bench test for. This value is
-used when the slot value of :BENCH is t.")
 (defvar *testing* nil "Testing state var.")
 
 ;;; Utils
@@ -309,7 +335,7 @@ from TESTS."))
 
 (defclass test (test-object)
   ((fn :type symbol :accessor test-fn)
-   (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
+   ;; (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
    (profile :type list :accessor test-profile :initform nil :initarg :profile)
    (args :type list :accessor test-args :initform nil :initarg :args)
    (decl :type list :accessor test-decl :initform nil :initarg :decl)
@@ -319,17 +345,6 @@ from TESTS."))
    (persist :initarg :persist :initform nil :type boolean :accessor test-persist-p)
    (results :initarg :results :type (array test-result) :accessor test-results))
   (:documentation "Test class typically made with `deftest'."))
-
-(defmethod test-bench-p ((self test))
-  (when (test-bench self) t))
-
-(defmethod get-bench-count ((self test))
-  (when-let ((v (test-bench self)))
-    (cond
-      ((typep v 'fixnum) v)
-      ((eq v t) *default-bench-count*)
-      ;; unknown value
-      (t nil))))
 
 (defmethod initialize-instance ((self test) &key name)
   ;; (debug! "building test" name)
@@ -381,12 +396,12 @@ from TESTS."))
   `(catch '%in-test
      (setf (test-lock-p ,self) t)
      (let* ((*testing* ,self)
-	    (bail nil)
-	    r)
-       (block bail
+	    (%test-bail nil)
+	    %test-result)
+       (block %test-bail
 	 ,@body
-	 (setf (test-lock-p ,self) bail))
-       r)))
+	 (setf (test-lock-p ,self) %test-bail))
+       %test-result)))
 
 (defmethod do-test ((self test) &optional fx)
   (declare (ignorable fx))
@@ -401,47 +416,18 @@ from TESTS."))
                      (setq opt (push *default-test-opts* opt)))
 		 ;; TODO 2023-09-21: handle failures here
 		 (funcall (compile-test self :declare opt))
-		 (setf r (make-test-result :pass (test-fn self))))
+		 (setf %test-result (make-test-result :pass (test-fn self))))
 	       (progn
 		 (eval-test self)
-		 (setf r (make-test-result :pass (test-name self)))))))
+		 (setf %test-result (make-test-result :pass (test-name self)))))))
       (if *catch-test-errors*
 	  (handler-bind
 	      ((style-warning #'muffle-warning)
 	       (error 
 		 #'(lambda (c)
-		     (setf bail t)
-		     (setf r (make-test-result :fail c))
-		     (return-from bail r))))
-	    (%do))
-	  (%do)))))
-
-(defmacro bench (iter &body body)
-  `(loop for i from 1 to ,iter
-	 do ,@body))
-
-(defmethod do-bench ((self test) &optional fx)
-  (declare (ignorable fx))
-  (with-test-env self
-    (flet ((%do ()
-	     (if-let ((opt *compile-tests*))
-	       (progn 
-		 (when (eq opt t) (setq opt *default-test-opts*))
-		 ;; TODO 2023-09-21: handle failures here
-		 (let ((fn (compile-test self :declare opt)))
-		   (bench (test-bench self) (funcall fn)))
-		 (setf r (make-test-result :pass (test-fn self))))
-	       (progn
-		 (bench (test-bench self) (eval-test self))
-		 (setf r (make-test-result :pass (test-name self)))))))
-      (if *catch-test-errors*
-	  (handler-bind
-	      ((style-warning #'muffle-warning)
-	       (error 
-		 #'(lambda (c)
-		     (setf bail t)
-		     (setf r (make-test-result :fail c))
-		     (return-from bail r))))
+		     (setf %test-bail t)
+		     (setf %test-result (make-test-result :fail c))
+		     (return-from %test-bail %test-result))))
 	    (%do))
 	  (%do)))))
 
@@ -485,10 +471,9 @@ from TESTS."))
 
 (defmethod print-object ((self test-suite) stream)
   (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~A [~d+~d:~d:~d:~d]"
+    (format stream "~A [~d:~d:~d:~d]"
 	    (test-name self)
-	    (count t (map-tests self (lambda (x) (not (test-bench-p x)))))
-	    (count t (map-tests self #'test-bench-p))
+	    (length (tests self))
 	    (count t (map-tests self #'test-lock-p))
 	    (count t (map-tests self #'test-persist-p))
 	    (length (test-results self)))))
@@ -654,7 +639,7 @@ is not evaluated."
 		 :form ,fn
 		 ,@(when-let ((v (getf pr :persist))) `(:persist ,v))
 		 ,@(when-let ((v (getf pr :args))) `(:args ,v))
-		 ,@(when-let ((v (getf pr :bench))) `(:bench ,v))
+		 ;; ,@(when-let ((v (getf pr :bench))) `(:bench ,v))
 		 ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
 		 ,@(when doc `(:doc ,doc))
 		 ,@(when dec `(:decl ,dec)))))
