@@ -1,5 +1,5 @@
 ;;; Git
-(defvar *git-program* (find-exe "git"))
+(defvar *git-program* (cli:find-exe "git"))
 (defun run-git-command (cmd &rest args)
   (run-program *git-program* (push cmd args)))
 

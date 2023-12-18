@@ -69,7 +69,7 @@
    :table-from-file))
 
 (defpackage :obj/uri
-  (:nicknames :uri)
+  ;;  (:nicknames :uri)
   (:use :cl :std :cl-ppcre)
   (:export
    #:uri				; class

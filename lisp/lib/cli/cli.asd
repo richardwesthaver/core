@@ -4,7 +4,7 @@
   :components ((:file "pkg")
                (:file "progress")
                (:file "repl"))
-  :in-order-to ((test-op (test-op "std/tests"))))
+  :in-order-to ((test-op (test-op "cli/tests"))))
 
 (defsystem :cli/tests
   :depends-on (:rt :cli)

@@ -2,20 +2,25 @@
   (:use :cl :std :rt :cli))
 
 (in-package :cli/tests)
-(def-suite :cli)
+(defsuite :cli)
 (in-suite :cli)
 
+
+;; TODO: needs to be compiled outside scope of test - contender for
+;; fixture API
+(defprompt tpfoo "testing: ")
+
 (deftest cli-prompt ()
-  "Test MACS.CLI prompts"
-  (defprompt tpfoo "testing: ")
+  "Test CLI prompts"
+
   (defvar tcoll nil)
   (defvar thist nil)
-  (let ((*standard-input* (make-string-input-stream 
-			   (format nil "~A~%~A~%" "foobar" "foobar"))))
+  (setf *standard-input* (make-string-input-stream 
+			    (format nil "~A~%~A~%~%" "foobar" "foobar")))
     ;; prompts 
-    (is (string= (tpfoo-prompt) "foobar"))
-    (is (string= "foobar"
-		 (cli:completing-read "nothing: " tcoll :history thist :default "foobar")))))
+  (is (string= (tpfoo-prompt) "foobar"))
+  (is (string= "foobar"
+               (cli:completing-read "nothing: " tcoll :history thist :default "foobar"))))
 
 (defparameter *opts* (cli:make-opts (:name foo :global t :description "bar")
 		       (:name bar :description "foo")))

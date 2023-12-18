@@ -38,19 +38,14 @@
 ;;;
 ;;;
 ;;;  There is a sample at the end of this file.
-
-(defpackage :de.bauhh.lalr
-  (:use :cl)
-  (:export #:make-parser #:define-grammar))
-
-(in-package :de.bauhh.lalr)
+(in-package :parse/lalr)
 
 (eval-when (:compile-toplevel)
   (declaim (optimize (speed 1) (safety 3))))
 
 ;;; definitions of constants and global variables used
 
-(defconstant *topcat* '$Start)
+(defconstant +topcat+ '$Start)
 (defvar      *end-marker*)
 (defvar      *lex*)
 (defvar      *lex-index*)
@@ -376,7 +371,7 @@
   (setq *state-hash* (make-hash-table :test 'equal))
   (setq *next-state-no* -1)
   (get-state-name (list (make-citem :rule (make-rule :no 0
-                                                     :mother *topcat*
+                                                     :mother +topcat+
                                                      :daughters (list *start*))
                                     :pos 0
                                     :la (list *end-marker*))))
@@ -735,7 +730,7 @@
                     (PUSH (POP VAL-LA) VAL-STACK)
                     (SETF CUR-STATE NEW-STATE))
                   (REDUCE-CAT (NAME CAT NDAUGHTERS ACTION)
-                    (IF (EQ CAT ',*topcat*)
+                    (IF (EQ CAT ',+topcat+)
                         (RETURN-FROM ,name (POP VAL-STACK))
                         (LET ((DAUGHTER-VALUES '())
                               (STATE NAME))
@@ -753,7 +748,7 @@
                                  (FUNCALL PARSE-ERROR
                                           (LET ((*PRINT-LEVEL* 5)
                                                 (*PRINT-LENGTH* 99))
-                                            (FORMAT-ERROR (MAPCAR #'CAR P) (CAR CAT-LA)))))))))
+                                            (error (list (MAPCAR #'CAR P) (CAR CAT-LA))))))))))
                (ECASE (FIRST Q)
                  ((:SHIFT) (SHIFT-FROM (CADR Q)))
                  ((:REDUCE) (APPLY #'REDUCE-CAT CUR-STATE (REST Q)))))))))))
@@ -785,7 +780,7 @@
              (PUSH (POP VAL-LA) VAL-STACK)
              (SETF CUR-STATE (SHIFT-ACTION-GOTO ACTION)))
             (REDUCE-ACTION
-             (IF (EQL (REDUCE-ACTION-GOTO ACTION) *TOPCAT*)     ;hmm
+             (IF (EQL (REDUCE-ACTION-GOTO ACTION) +TOPCAT+)     ;hmm
                  (RETURN-FROM LALR-PARSE (POP VAL-STACK))
                  (LET ((DAUGHTER-VALUES '()))
                    (DOTIMES (I (REDUCE-ACTION-NPOP ACTION))

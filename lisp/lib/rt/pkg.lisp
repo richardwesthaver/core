@@ -680,5 +680,3 @@ NAME. Return the `test-suite'."
 (defun coverage-report ()
   "Generate a coverage report."
   (sb-cover:report *coverage-directory*))
-
-(provide :rt)

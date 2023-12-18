@@ -3,14 +3,14 @@
   :depends-on (:std)
   :serial t
   :components ((:file "pkg")
+               (:file "uri")
                (:file "hash")
                (:file "id")
                (:file "seq")
                (:file "tree")
                (:file "graph")
                (:file "color")
-               (:file "tbl")
-               (:file "uri"))
+               (:file "tbl"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests
