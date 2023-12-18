@@ -19,7 +19,7 @@
 
 ;;; Code:
 (uiop:define-package :cli
-  (:use :cl :std :log :sb-ext)
+    (:use :cl :std :log :sb-ext)
   (:import-from :uiop :println)
   (:import-from :sb-ext :parse-native-namestring)
   (:shadowing-import-from :sb-ext :exit)
@@ -59,7 +59,6 @@
    :parse-sym-opt
    :parse-key-opt
    :parse-num-opt
-   :parse-str-opt
    :parse-file-opt
    :parse-dir-opt
    :make-opts
@@ -146,8 +145,8 @@
 
 (defun program-list ()
   "Return a fresh list of all files in PATH directories."
-    (loop for p in (exec-path-list)
-          append (uiop:directory-files p)))
+  (loop for p in (exec-path-list)
+        append (uiop:directory-files p)))
 
 (defun find-exe (name &optional programs)
   "Find NAME in list of PROGRAMS, defaulting to the result of #'program-list."
@@ -163,9 +162,9 @@
 (defun ld-library-path-list ()
   (let ((var (sb-posix:getenv "LD_LIBRARY_PATH")))
     (let ((lst (loop for i = 0 then (1+ j)
-		  as j = (position #\: var :start i)
-		  collect (subseq var i j)
-		while j)))
+		     as j = (position #\: var :start i)
+		     collect (subseq var i j)
+		     while j)))
       (unless (null (car lst))
         (mapcar (lambda (x) (car (directory x))) lst)))))
 
@@ -220,7 +219,7 @@ evaluation of FORM."
 (declaim (inline completing-read))
 (defun completing-read (prompt collection
 			&key (history nil) (default nil)
-			(key nil) (test nil))
+			  (key nil) (test nil))
 
   "A simplified COMPLETING-READ for common-lisp.
 
@@ -237,13 +236,16 @@ user to list valid options while continue waiting for input."
   (princ prompt)
   ;; ensure we empty internal buffer
   (finish-output)
-  (let* ((coll (symbol-value collection))
+  (let* ((coll collection)
+         (input (let ((%i (read-line)))
+                  (if (> (length %i) 0)
+                      %i default)))
 	 (r (if coll
-		(find (read-line) coll :key key :test test)
-		(or (read-line) default))))
+		(find input coll :key key :test test)
+		input)))
     (prog1
 	r
-    (setf (symbol-value history) (push r history)))))
+      (setq history (push r history)))))
 
 (defmacro defprompt (var &optional prompt)
   "Generate a 'prompter' from list or variable VAR and optional
@@ -256,12 +258,12 @@ closure."
   (with-gensyms (s p h)
     `(let ((,s (if (boundp ',var) (symbol-value ',var) 
 		   (progn 
-		     (defvar ,(symb var) nil)
-		     ',(symb var))))
+		     (defvar ,(symbolicate var) nil)
+		     ',(symbolicate var))))
            (,p (when (stringp ,prompt) ,prompt)) ;; prompt string
-           (,h ',(symb var '-prompt-history))) ;; history symbol
-       (defvar ,(symb var '-prompt-history) nil)
-       (defun ,(symb var '-prompt) ()
+           (,h ',(symbolicate var '-prompt-history))) ;; history symbol
+       (defvar ,(symbolicate var '-prompt-history) nil)
+       (defun ,(symbolicate var '-prompt) ()
 	 ,(format nil "Prompt for a value from `~A', use DEFAULT if non-nil
 and no value is provided by user, otherwise fallback to the `car'
 of `~A-PROMPT-HISTORY'." var var)
@@ -297,12 +299,12 @@ keys."
 	when (eql :thunk (car kv))
 	  return (let ((th (cdr kv)))
 		   (if (or (functionp th) (symbolp th)) (funcall th) (compile nil (lambda () th)))))
-	cli)
+  cli)
 
 (defmacro define-cli (name &body body)
   "Define a symbol NAME bound to a top-level CLI object."
   (declare (type symbol name))
-      `(,*default-cli-def* ,name (apply #'make-cli t (walk-cli-slots ',body))))
+  `(,*default-cli-def* ,name (apply #'make-cli t (walk-cli-slots ',body))))
 
 (defmacro defmain (ret &body body)
   "Define a CLI main function in the current package which returns RET.
@@ -322,12 +324,12 @@ Note that this macro does not export the defined function and requires
   "Creates a new CLI object of the given kind."
   (declare (type (member :opt :cmd :cli t) kind))
   (apply #'make-instance
-   (cond
-     ((eql kind :cli) 'cli)
-     ((eql kind :opt) 'cli-opt)
-     ((eql kind :cmd) 'cli-cmd)
-     (t 'cli))
-    slots))
+         (cond
+           ((eql kind :cli) 'cli)
+           ((eql kind :opt) 'cli-opt)
+           ((eql kind :cmd) 'cli-cmd)
+           (t 'cli))
+         slots))
 
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
@@ -438,41 +440,43 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
   (declare (type symbol s))
   (find s *cli-opt-kinds*))
 
-(defmacro make-opt-parser (kind-spec &body body)
-  "Return a KIND-opt-parser function based on KIND-SPEC which is either a
+
+(eval-always
+  (defmacro make-opt-parser (kind-spec &body body)
+    "Return a KIND-opt-parser function based on KIND-SPEC which is either a
 symbol from *cli-opt-kinds* or a list, and optional BODY which
 is a list of handlers for the opt-val."
-  (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
-	 (super (when (consp kind-spec) (cadr kind-spec)))
-	 (fn-name (symb 'parse- kind '-opt)))
-    ;; thread em
-    (let ((fn1 (when (not (eql 'nil super)) (symb 'parse- super '-opt))))
-      `(progn
-	 (defun ,fn-name ($val)
-	   "Parse the cli-opt-val $VAL."
-	   ;; do stuff
-	   (when (not (eql ',fn1 'nil)) (setq $val (funcall ',fn1 $val)))
-	   ,@body)))))
+    (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
+	   (super (when (consp kind-spec) (cadr kind-spec)))
+	   (fn-name (symbolicate 'parse- kind '-opt)))
+      ;; thread em
+      (let ((fn1 (when (not (eql 'nil super)) (symbolicate 'parse- super '-opt))))
+        `(progn
+	   (defun ,fn-name ($val)
+	     "Parse the cli-opt-val $VAL."
+	     ;; do stuff
+	     (when (not (eql ',fn1 'nil)) (setq $val (funcall ',fn1 $val)))
+	     ,@body)))))
 
-(make-opt-parser bool $val)
+  (make-opt-parser bool $val)
 
-(make-opt-parser (str bool) (when (stringp $val) $val))
+  (make-opt-parser (str bool) (when (stringp $val) $val))
 
-(make-opt-parser (form str) (read-from-string $val))
+  (make-opt-parser (form str) (read-from-string $val))
 
-(make-opt-parser (list form) (when (listp $val) $val))
+  (make-opt-parser (list form) (when (listp $val) $val))
 
-(make-opt-parser (sym form) (when (symbolp $val) $val))
+  (make-opt-parser (sym form) (when (symbolp $val) $val))
 
-(make-opt-parser (key form) (when (keywordp $val) $val))
+  (make-opt-parser (key form) (when (keywordp $val) $val))
 
-(make-opt-parser (num form) (when (numberp $val) $val))
+  (make-opt-parser (num form) (when (numberp $val) $val))
 
-(make-opt-parser (file str) 
-  (when $val (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil)))
+  (make-opt-parser (file str) 
+    (when $val (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil)))
 
-(make-opt-parser (dir str) 
-  (when $val (sb-ext:parse-native-namestring $val nil *default-pathname-defaults* :as-directory t)))
+  (make-opt-parser (dir str) 
+    (when $val (sb-ext:parse-native-namestring $val nil *default-pathname-defaults* :as-directory t))))
 
 ;;; Objects
 (defclass cli-opt ()
@@ -556,10 +560,10 @@ is a list of handlers for the opt-val."
 (defmethod print-object ((self cli-cmd) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A :opts ~A :cmds ~A :args ~A"
-	  (cli-name self)
-          (length (cli-opts self))
-	  (length (cli-cmds self))
-	  (length (cli-cmd-args self)))))
+	    (cli-name self)
+            (length (cli-opts self))
+	    (length (cli-cmds self))
+	    (length (cli-cmd-args self)))))
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
@@ -668,13 +672,13 @@ should be."
    (loop 
      for a in args
      if (= (length a) 1) collect (make-cli-node 'arg a)
-     ;; SHORT OPT
-     else if (short-opt-p a)
-	    collect (if-let ((o (find-short-opt self (aref a 1))))
-		      (progn
-			(setf (cli-val o) t)
-			(make-cli-node 'opt o))
-		      (make-cli-node 'arg a))
+       ;; SHORT OPT
+       else if (short-opt-p a)
+	      collect (if-let ((o (find-short-opt self (aref a 1))))
+		        (progn
+			  (setf (cli-val o) t)
+			  (make-cli-node 'opt o))
+		        (make-cli-node 'arg a))
 
      ;; LONG OPT
      else if (long-opt-p a)

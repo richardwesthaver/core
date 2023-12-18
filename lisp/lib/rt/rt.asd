@@ -5,7 +5,7 @@
                (:file "bench")
                (:file "trace")
                (:file "flamegraph"))
-  :in-order-to ((test-op (test-op "std/tests"))))
+  :in-order-to ((test-op (test-op "rt/tests"))))
 
 (defsystem :rt/tests
   :depends-on (:rt)

@@ -10,7 +10,7 @@
  (type string *bench-input-string*)
  (type sxp *bench-input-object*)
  (type integer *bench-iterations*))
-(defparameter *bench-input-file* "tests.sxp")
+(defvar *bench-input-file* "lisp/lib/sxp/tests.sxp")
 (defparameter *bench-input-string* (uiop:read-file-string *bench-input-file*))
 (defparameter *bench-input-object* (make-instance 'sxp))
 (read-sxp-string *bench-input-object* *bench-input-string*)

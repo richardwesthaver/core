@@ -1,32 +1,10 @@
-;; https://github.com/Shinmera/plump/blob/master/lexer.lisp
-(defpackage :organ/lexer
-  (:use :cl :cl-ppcre :std/base)
-  (:export
-   #:*string*
-   #:*length*
-   #:*index*
-   #:with-lexer-environment
-   #:consume
-   #:advance
-   #:unread
-   #:peek
-   #:advance-n
-   #:unread-n
-   #:consume-until
-   #:matcher-character
-   #:matcher-string
-   #:matcher-range
-   #:matcher-find
-   #:matcher-or
-   #:matcher-and
-   #:matcher-not
-   #:matcher-next
-   #:matcher-prev
-   #:matcher-any
-   #:make-matcher
-   #:define-matcher))
+;;; lib/parse/lex.lisp --- Lexer Tools
 
-(in-package :organ/lexer)
+;; https://github.com/Shinmera/plump/blob/master/lexer.lisp
+
+;;; Code:
+(in-package :parse/lex)
+
 (defvar *string*)
 (defvar *length*)
 (defvar *index*)
@@ -53,7 +31,7 @@
   (declare (optimize (speed 3) (safety 0)))
   (when (< *index* *length*)
     (prog1 (aref *string* *index*)
-      #+plump-debug-lexer (format T "~a +~%" *index*)
+      #+debug (format T "~a +~%" *index*)
       (incf *index*))))
 
 (declaim (ftype (function () (or fixnum null)) advance)
@@ -61,7 +39,7 @@
 (defun advance ()
   (declare (optimize (speed 3) (safety 0)))
   (when (< *index* *length*)
-    #+plump-debug-lexer (format T "~a +~%" *index*)
+    #+debug (format T "~a +~%" *index*)
     (incf *index*)))
 
 (declaim (ftype (function () fixnum) unread)
@@ -69,7 +47,7 @@
 (defun unread ()
   (declare (optimize (speed 3) (safety 0)))
   (when (< 0 *index*)
-    #+plump-debug-lexer (format T "~a -~%" *index*)
+    #+debug (format T "~a -~%" *index*)
     (decf *index*))
   *index*)
 
@@ -78,7 +56,7 @@
 (defun peek ()
   (declare (optimize (speed 3) (safety 0)))
   (when (< *index* *length*)
-    #+plump-debug-lexer (format T "~a ?~%" *index*)
+    #+debug (format T "~a ?~%" *index*)
     (aref *string* *index*)))
 
 (declaim (ftype (function (fixnum) fixnum) advance-n)
@@ -86,7 +64,7 @@
 (defun advance-n (n)
   (declare (optimize (speed 3) (safety 0)))
   (declare (fixnum n))
-  #+plump-debug-lexer (format T "~a +~d~%" *index* n)
+  #+debug (format T "~a +~d~%" *index* n)
   (incf *index* n)
   (when (<= *length* *index*)
     (setf *index* *length*))
@@ -97,7 +75,7 @@
 (defun unread-n (n)
   (declare (optimize (speed 3) (safety 0)))
   (declare (fixnum n))
-  #+plump-debug-lexer (format T "~a -~d~%" *index* n)
+  #+debug (format T "~a -~d~%" *index* n)
   (decf *index* n)
   (when (< *index* 0)
     (setf *index* 0))
@@ -193,7 +171,7 @@
                (atom form)
                (T
                 (cons
-                 (case (find-symbol (string (car form)) "PLUMP-LEXER")
+                 (case (find-symbol (string (car form)) "PARSE/LEX")
                    (not 'matcher-not)
                    (and 'matcher-and)
                    (or 'matcher-or)

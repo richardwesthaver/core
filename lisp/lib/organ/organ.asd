@@ -1,7 +1,7 @@
 (defsystem :organ
   :version "0.1.0"
   :description "org-mode utils"
-  :depends-on (:cl-ppcre :std :nlp)
+  :depends-on (:cl-ppcre :std :nlp :parse)
   :components ((:file "pkg"))
   :in-order-to ((test-op (test-op :organ/tests))))
 

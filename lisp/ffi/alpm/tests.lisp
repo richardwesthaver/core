@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :alpm/tests
-  (:use :cl :std :std/rt :alpm))
+  (:use :cl :std :rt :alpm))
 
 (in-package :alpm/tests)
 

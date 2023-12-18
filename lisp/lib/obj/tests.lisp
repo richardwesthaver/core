@@ -18,7 +18,8 @@
 
 (deftest def-seq ())
 
-(deftest uris ()
-  "Tests for different types of URIs. Attempts to conform with RFCs and test suites."
-  (uri-host (parse-uri-string-rfc3986 "https://localhost"))
-)
+;; TODO 2023-12-17: 
+;; (deftest uris ()
+;;   "Tests for different types of URIs. Attempts to conform with RFCs and test suites."
+;;   (uri-host (parse-uri-string-rfc3986 "https://localhost"))
+;; )

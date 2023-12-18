@@ -17,7 +17,7 @@
                (:module "proto" ;; https://wayland.app/protocols/
                 :components ((:file "crew")
                              (:file "dns"))))
-  :in-order-to (test-op (o c) (symbol-call :rt :do-tests :net)))
+  :in-order-to ((test-op (test-op :net/tests))))
 
 (defsystem :net/tests
   :depends-on (:rt :net)
