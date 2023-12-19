@@ -25,7 +25,10 @@
 ;;  	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
 ;;  		 :sanctify-for-execution))
 
-(defmacro define-opaque (ty) `(define-alien-type ,ty (struct ,(symbolicate ty '-t))))
+(defmacro define-opaque (ty &optional no-export)
+  `(prog1
+       (define-alien-type ,ty (struct ,(symbolicate ty '-t)))
+     ,(unless no-export `(export '(,ty)))))
 
 (defun setfa (place from) 
   (loop for x across from

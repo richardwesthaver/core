@@ -123,6 +123,16 @@
    :uncertain-size-progress-bar
    :progress-bar))
 
+(defpackage :cli/spark
+  (:use :cl :std :cli)
+  (:export
+   :spark :*ticks*
+   :vspark :*vticks*))
+
+(defpackage :cli/repl
+  (:use :cl :std :cli :cli/progress :cli/spark)
+  (:export))
+
 (in-package :cli)
 
 (defvar *argv*)
@@ -219,7 +229,9 @@ evaluation of FORM."
 (declaim (inline completing-read))
 (defun completing-read (prompt collection
 			&key (history nil) (default nil)
-			  (key nil) (test nil))
+			  (key nil) (test nil) 
+                          (input *standard-input*)
+                          (output *standard-output*))
 
   "A simplified COMPLETING-READ for common-lisp.
 
@@ -233,19 +245,19 @@ Obviously writing a completion framework is out-of-scope, but we can
 simulate one by embedding a DSL in our prompters if we choose. For
 example, perhaps we treat a single '?' character as a request from the
 user to list valid options while continue waiting for input."
-  (princ prompt)
+  (princ prompt output)
   ;; ensure we empty internal buffer
-  (finish-output)
+  (finish-output output)
   (let* ((coll collection)
-         (input (let ((%i (read-line)))
-                  (if (> (length %i) 0)
-                      %i default)))
+         (res (let ((%i (read-line input)))
+                (if (> (length %i) 0)
+                    %i default)))
 	 (r (if coll
-		(find input coll :key key :test test)
-		input)))
+		(find res coll :key key :test test)
+		res)))
     (prog1
 	r
-      (setq history (push r history)))))
+      (setf history (push r history)))))
 
 (defmacro defprompt (var &optional prompt)
   "Generate a 'prompter' from list or variable VAR and optional

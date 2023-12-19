@@ -29,6 +29,7 @@
    :get-kv-raw :get-kv-str-raw
    :put-cf-raw :put-cf-str-raw
    :get-cf-raw :get-cf-str-raw
+   :create-cf-raw
    :create-iter :with-iter
    :iter-key :iter-key-str
    :iter-val :iter-val-str

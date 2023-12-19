@@ -12,14 +12,16 @@
   (db (* rocksdb))
   (wait boolean))
 
+(export '(rocksdb-close rocksdb-cancel-all-background-work))
+
 (def-with-errptr rocksdb-put 
-      void 
-      (db (* rocksdb))
-     (options (* rocksdb-writeoptions))
-     (key (* char))
-     (keylen size-t) 
-     (val (* char))
-     (vallen size-t))
+  void 
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (key (* char))
+  (keylen size-t) 
+  (val (* char))
+  (vallen size-t))
 
 (def-with-errptr rocksdb-get 
   (* char)
@@ -91,7 +93,11 @@
   (values-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
+(export '(rocksdb-multi-get rocksdb-multi-get-cf))
+
 (define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
+
+(export '(rocksdb-cache-create-lru))
 
 (def-with-errptr rocksdb-flush void 
   (db (* rocksdb))
@@ -121,6 +127,8 @@
   (db (* rocksdb))
   (name c-string))
 
+(export '(rocksdb-delete-file rocksdb-livefile))
+
 ;; return NULL if prop name is unknown, else return pointer to
 ;; malloc-ed null-term value.
 (define-alien-routine rocksdb-property-value (* t)
@@ -141,7 +149,9 @@
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
   (propname (* c-string)))
-    
+
+(export '(rocksdb-property-value rocksdb-property-value-cf rocksdb-property-int rocksdb-property-int-cf))    
+
 ;;; CF
 (def-with-errptr rocksdb-create-column-family 
   (* rocksdb-column-family-handle)
@@ -170,6 +180,9 @@
   (handle (* rocksdb-column-family-handle))
   (name-len (* size-t)))
 
+(export '(rocksdb-create-column-families-destroy rocksdb-create-column-family-handle-destroy
+          rocksdb-column-family-handle-get-id rocksdb-column-family-handle-get-name))
+
 (def-with-errptr rocksdb-drop-column-family 
   void
   (db (* rocksdb))
@@ -193,6 +206,8 @@
 (define-alien-routine rocksdb-list-column-families-destroy void
   (list (array c-string))
   (len size-t))
+
+(export '(rocksdb-list-column-families-destroy))
 
 (def-with-errptr rocksdb-put-cf 
   void
@@ -257,6 +272,9 @@
   (iter (* rocksdb-iterator)) 
   (vlen-ptr (* size-t)))
 
+(export '(rocksdb-create-iterator rocksdb-iter-destroy rocksdb-iter-seek-to-first rocksdb-iter-valid
+          rocksdb-iter-next rocksdb-iter-prev rocksdb-iter-key rocksdb-iter-value))
+
 ;;; Backup
 (def-with-errptr rocksdb-backup-engine-open
   (* rocksdb-backup-engine)
@@ -286,6 +304,8 @@
 (define-alien-routine rocksdb-backup-engine-close void
   (be (* rocksdb-backup-engine)))
 
+(export '(rocksdb-backup-engine-close))
+
 ;;; Transactions
 (define-alien-routine rocksdb-transaction-begin (* rocksdb-transaction)
   (wopts (* rocksdb-writeoptions))
@@ -300,6 +320,8 @@
 
 (define-alien-routine rocksdb-transactiondb-close void
   (tdb (* rocksdb-transactiondb)))
+
+(export '(rocksdb-transaction-begin rocksdb-transaction-close))
 
 ;;; Perfcontext
 (define-alien-routine rocksdb-set-perf-level void (val int))
@@ -316,6 +338,9 @@
   (context (* rocksdb-perfcontext)) (metric int))
 
 (define-alien-routine rocksdb-perfcontext-destroy void (* rocksdb-perfcontext))
+
+(export '(rocksdb-perfcontext-reset rocksdb-perfcontext-report 
+          rocksdb-perfcontext-metric rocksdb-perfcontext-destroy))
 
 ;;; Compaction Filter
 ;; (define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
@@ -337,6 +362,9 @@
 (define-alien-routine rocksdb-compactionfiltercontext-is-manual-compaction unsigned-char
   (context (* rocksdb-compactionfiltercontext)))
 
+(export '(rocksdb-compactionfilter-set-ignore-snapshots rocksdb-compactionfilter-destroy
+          rocksdb-compactionfiltercontext-is-full-compaction rocksdb-compactionfiltercontext-is-manual-compaction))
+
 ;;; Compaction Filter Factory
 
 ;;; Comparator
@@ -357,6 +385,8 @@
 ;;   (compare-without-ts (* int))
 ;;   (name (* char)))
 
+(export '(rocksdb-comparator-destroy))
+
 ;;; Filter Policy
 (define-alien-routine rocksdb-filterpolicy-destroy void (self (* rocksdb-filterpolicy)))
 
@@ -373,6 +403,9 @@
   (bloom-equivalent-bits-per-key double)
   (bloom-before-level int))
 
+(export '(rocksdb-filterpolicy-destroy rocksdb-filterpolicy-create-bloom rocksdb-filterpolicy-create-bloom-full
+          rocksdb-filterpolicy-create-ribbon rocksdb-filterpolicy-create-ribbon-hybrid))
+
 ;;; Merge Operator
 ;; TODO 2023-12-11: 
 ;; (define-alien-routine rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
@@ -384,3 +417,5 @@
 ;;   (name (* char)))
 
 (define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
+
+(export '(rocksdb-mergeoperator-destroy))

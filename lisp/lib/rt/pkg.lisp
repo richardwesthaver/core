@@ -38,7 +38,7 @@
    :sb-aprof #+x86-64 :sb-sprof)
   (:import-from :sb-cover :store-coverage-data)
   (:export
-   :*default-test-opts*
+   :*test-opts*
    :*compile-tests*
    :*coverage-directory*
    :*catch-test-errors*
@@ -108,6 +108,11 @@
    :defbench
    :do-bench))
 
+(defpackage :rt/cover
+  (:nicknames :cover)
+  (:use :cl :std :log :rt)
+  (:export))
+
 (defpackage :rt/trace
   (:nicknames :trace)
   (:use :cl :std :log :rt)
@@ -129,7 +134,7 @@
 (in-readtable :std)
 
 ;;; Vars
-(defvar *default-test-opts* '(optimize sb-c::instrument-consing (debug 3)))
+(defvar *test-opts* '(optimize sb-c::instrument-consing (debug 3)))
 (defvar *compile-tests* t
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
@@ -412,8 +417,8 @@ from TESTS."))
 	       ;; RESEARCH 2023-08-31: with-compilation-unit?
 	       (progn
 		 (if (eq opt t) 
-                     (setq opt *default-test-opts*)
-                     (setq opt (push *default-test-opts* opt)))
+                     (setq opt *test-opts*)
+                     (setq opt (push *test-opts* opt)))
 		 ;; TODO 2023-09-21: handle failures here
 		 (funcall (compile-test self :declare opt))
 		 (setf %test-result (make-test-result :pass (test-fn self))))
@@ -624,7 +629,21 @@ is not evaluated."
 
 ;;; Macros
 (defmacro deftest (name props &body body)
-  "Build a test with NAME, parameterized by LAMBDA-LIST and with a test form of BODY."
+  "Build a test with NAME, parameterized by PROPS and with a test form of BODY.
+
+PROPS is a plist which currently accepts the following parameters:
+
+:PERSIST - re-run this test even if it passes
+
+:ARGS - nyi
+
+:PROFILE - enable profiling of this test
+
+:DISABLED - don't push this test to the current *TEST-SUITE*
+
+BODY is parsed with SB-INT:PARSE-BODY and will fill in documentation
+and declarations for the test body.
+"
   (destructuring-bind (pr doc dec fn)
       (multiple-value-bind (forms dec doc)
 	  ;; parse body with docstring allowed
@@ -643,12 +662,12 @@ is not evaluated."
 		 ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
 		 ,@(when doc `(:doc ,doc))
 		 ,@(when dec `(:decl ,dec)))))
-       (push-test obj *test-suite*)
+       ,(unless (getf pr :disabled) '(push-test obj *test-suite*))
        obj)))
 
 (defmacro defsuite (suite-name &rest props)
-  "Define a `test-suite' with provided keys. The object returned can be
-enabled using the `in-suite' macro, similiar to the `defpackage' API."
+  "Define a TEST-SUITE with provided keys. The object returned can be
+enabled using the IN-SUITE macro, similiar to the DEFPACKAGE API."
   (check-type suite-name (or symbol string))
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (let ((obj (make-suite
@@ -658,8 +677,8 @@ enabled using the `in-suite' macro, similiar to the `defpackage' API."
        obj)))
 
 (defmacro in-suite (name)
-  "Set `*test-suite*' to the `test-suite' referred to by symbol
-NAME. Return the `test-suite'."
+  "Set *TEST-SUITE* to the TEST-SUITE object referred to by symbol
+NAME. Return the object."
   (assert-suite name)
   `(progn
      (setq *test-suite* (ensure-suite ,name))))

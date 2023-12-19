@@ -129,6 +129,7 @@ rocksdb_cf_t handle."
   (kv (make-instance 'rdb-kv) :type rdb-kv)
   (sap nil :type (or null alien)))
 
+;; TODO: fix
 (defun create-cf (db cf)
   (setf (rdb-cf-sap cf)
         (with-errptr (err 'rocksdb-cf-error (list :db db :cf (rdb-cf-name cf)))

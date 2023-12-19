@@ -108,6 +108,7 @@ slot. The :ast slot is always ignored."))
 
 (deftype sxp-fmt-designator () '(member :canonical :collapsed)) 
 
+(declaim (inline unwrap-object)) ;; inline -200
 (defun unwrap-object (obj &key (slots t) (methods nil)
 			    (indirect nil) (tag nil)
 			    (unboundp nil) (nullp nil)

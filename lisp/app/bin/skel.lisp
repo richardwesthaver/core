@@ -1,6 +1,6 @@
 ;;; Code:
 (uiop:define-package :bin/skel
-  (:use :cl :std :cli :skel)
+  (:use :cl :std :cli :skel :log)
   (:export :main))
 
 (in-package :bin/skel)

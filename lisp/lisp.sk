@@ -3,3 +3,5 @@
 :author "Richard Westhaver <ellis@rwest.io>"
 :version "0.1.0"
 :description "The Compiler Company Lisp Core"
+:rules 
+(("clean" () #rm -rf */*.fasl#))

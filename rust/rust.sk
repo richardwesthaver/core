@@ -3,4 +3,5 @@
 :version "0.1.0"
 :description "Rust Core"
 :tags ("rust")
-:rules ()
+:rules 
+(("clean" () #$cargo clean$#))
