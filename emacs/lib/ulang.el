@@ -45,7 +45,7 @@
 #+EMAIL: $3
 #+DESCRIPTION: $4
 #+SUBTITLE: $4
-#+OPTIONS: ^:nil toc:nil num:nil html-postamble:nil
+#+OPTIONS: ^:nil toc:nil num:nil
 #+HTML_HEAD: <link href='https://fonts.googleapis.com/css?family=Inria Serif' rel='stylesheet'>
 #+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/font/inter.css\"/>
 #+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/font/commit-mono.css\"/>

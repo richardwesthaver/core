@@ -3,6 +3,7 @@
   :depends-on (:std :log)
   :components ((:file "pkg")
                (:file "progress")
+               (:file "spark")
                (:file "repl"))
   :in-order-to ((test-op (test-op "cli/tests"))))
 

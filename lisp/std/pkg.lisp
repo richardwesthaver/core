@@ -78,6 +78,8 @@
    #:rename-package-away #:package-definition-form #:parse-defpkg-form
    #:ensure-package
    ;; ana
+   :awhen
+   :acond
    #:alambda
    #:nlet-tail
    #:alet%

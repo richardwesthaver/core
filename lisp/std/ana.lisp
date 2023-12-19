@@ -16,7 +16,23 @@
      (if it ,then ,else)))
 
 ;; ;; TODO 2023-09-05: wrap, document, optimize, hack
-;; (reexport-from :sb-int :include '(:awhen :acond))
+;; re-exported from SB-INT
+(defmacro awhen (test &body body)
+  `(let ((it ,test))
+     (when it ,@body)))
+
+(defmacro acond (&rest clauses)
+  (if (null clauses)
+      `()
+      (destructuring-bind ((test &body body) &rest rest) clauses
+        (let ((it (copy-symbol 'it)))
+          `(let ((,it ,test))
+             (if ,it
+                 ;; Just like COND - no body means return the tested value.
+                 ,(if body
+                      `(let ((it ,it)) (declare (ignorable it)) ,@body)
+                      it)
+                 (acond ,@rest)))))))
 
 (defmacro! nlet-tail (n letargs &body body)
   (let ((gs (loop for i in letargs

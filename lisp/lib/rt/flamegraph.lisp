@@ -2,7 +2,6 @@
 
 (defparameter *frame-where-profiling-was-started* nil)
 
-
 (defclass flamegraph-node ()
   ((func :initarg :func
          :initform nil
@@ -89,7 +88,6 @@
      sb-sprof::*samples*)
     root))
 
-
 (defun remove-nodes-up-to-frame (nodes frame)
   (let ((func (slot-value frame 'sb-di::debug-fun)))
     (loop for rest on nodes
@@ -97,7 +95,6 @@
           when (eql (get-func node)
                     func)
             do (return (cdr rest)))))
-
 
 (defun print-graph (root &key (stream t) (max-depth most-positive-fixnum))
   (let* ((roots (get-calls root)))
@@ -122,7 +119,6 @@
       (mapcar #'print-node
               roots)
       (values))))
-
 
 (defmacro save-flamegraph ((filename &rest sb-sprof-opts) &body body)
   (with-gensyms (result-var)

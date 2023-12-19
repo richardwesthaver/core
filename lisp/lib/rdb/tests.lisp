@@ -8,23 +8,27 @@
 
 (rocksdb:load-rocksdb)
 
-(defun test-cleanup (db opt path)
+(defun test-cleanup (db path)
   (with-errptr (err 'destroy-db-error (list :db path))
-    ;; (rocksdb-destroy-db opt path err)
-    (rocksdb-close db)
-    (rocksdb-destroy-db opt path err)
-    (rocksdb-options-destroy opt)))
+    (let ((opt (rocksdb-options-create)))
+      (rocksdb-close db)
+      (rocksdb-destroy-db opt path err)
+      (rocksdb-options-destroy opt))))
 
 (deftest minimal ()
-  "Test minimal functionality (open/close)."
-  (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym)))
-        (opts (default-rocksdb-options)))
-    (with-db (db (with-errptr (e) (open-db-raw db-path opts)))
-      (test-cleanup db opts db-path))))
+  "Test minimal functionality (open/close/put/get)."
+  (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
+    (with-db (db (open-db-raw db-path))
+      (put-kv-str-raw db "foo" "bar")
+      (is (string= (get-kv-str-raw db "foo") "bar"))
+      (let ((cf (create-cf-raw db "cf1")))
+        (put-cf-str-raw db cf "bow" "wow")
+        (is (string= (get-cf-str-raw db cf "bow") "wow")))
+      (test-cleanup db db-path))))
 
 (deftest rdb ()
   "Test RDB struct and methods."
-  (let ((db (make-rdb "/tmp/rdbk/" (make-rdb-opts :create-if-missing t))))
+  (let ((db (make-rdb "/tmp/rdb/" (make-rdb-opts :create-if-missing t))))
     (open-db db)
     (put-kv-str-raw (rdb-db db) "key" "val")
     (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
