@@ -52,13 +52,13 @@ additional PARAMS will be used to signal a lisp error condition."
                              (error 'rdb-error
                                     :message
                                     (format nil
-                                            "exception: ~a" condition))))
+                                            "~a" condition))))
                          (error 
                            (lambda (condition)
                              (error 'rdb-error 
                                     :message 
                                     (format nil 
-                                            "unhandled exception: ~x" 
+                                            "unhandled exception in body of WITH-ERRPTR: ~a"
                                             condition)))))
             (progn ,@body))
        (handle-errptr ,e ,errtyp ,params))))

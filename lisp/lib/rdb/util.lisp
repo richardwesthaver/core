@@ -35,7 +35,7 @@ to initialize the instance with custom configuration."
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
        (with-errptr (err 'rocksdb-error)
-         (rocksdb-destroy-db ,opt ,db-path err)
+         ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
          (rocksdb-options-destroy ,opt)))))
 
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
@@ -161,3 +161,28 @@ to initialize the instance with custom configuration."
   `(let ((,iter-var (create-iter-raw ,db ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-iter-destroy ,iter-var))))
+
+;;; Backup Engine
+(defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
+  (with-errptr (err 'open-backup-engine-error (list :db be-path))
+    (let ((be-path (if (pathnamep be-path)
+                       (namestring be-path)
+                       be-path)))
+      (rocksdb-backup-engine-open opts be-path err))))
+
+(defun close-backup-engine-raw (be)
+  (rocksdb-backup-engine-close be))
+
+(defun create-new-backup-raw (be db)
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-backup-engine-create-new-backup be db err)))
+
+(defun restore-from-latest-backup-raw (be db-path be-path &optional (opt (rocksdb-restore-options-create)))
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-backup-engine-restore-db-from-latest-backup be db-path be-path opt err)))
+
+(defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
+                                       &body body)
+  `(let ((,be-var (open-backup-engine-raw ,be-path ,opt)))
+     (unwind-protect (progn ,@body)
+       (rocksdb-backup-engine-close ,be-var))))

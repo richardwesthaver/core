@@ -7,6 +7,8 @@
 ;; Commentary:
 
 ;; Code:
+(rocksdb:load-rocksdb :save t)
+
 (defpackage :rdb
   (:use :cl :std :rocksdb :sb-alien)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
@@ -33,6 +35,11 @@
    :create-iter :with-iter-raw
    :iter-key-raw :iter-key-str-raw
    :iter-val-raw :iter-val-str-raw
+   :open-backup-engine-raw
+   :close-backup-engine-raw
+   :create-new-backup-raw
+   :restore-from-latest-backup-raw
+   :with-open-backup-engine-raw
    ;; proto
    :put-key :put-kv
    :get-key :get-kv
