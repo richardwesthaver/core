@@ -22,11 +22,10 @@ to initialize the instance with custom configuration."
 (defun close-db-raw (db)
   (rocksdb-close db))
 
-(defun destroy-db-raw (path)
+(defun destroy-db-raw (path &optional (opt (rocksdb-options-create)))
   (with-errptr (err 'destroy-db-error (list :db path))
-    (let ((opt (rocksdb-options-create)))
-      (rocksdb-destroy-db opt path err)
-      (rocksdb-options-destroy opt))))
+    (rocksdb-destroy-db opt path err)
+    (rocksdb-options-destroy opt)))
 
 ;; (with-open-db-raw (db "/tmp/tmp-db") (print db))
 ;; (destroy-db-raw "/tmp/with-db-raw")
@@ -131,10 +130,10 @@ to initialize the instance with custom configuration."
     (rocksdb-create-column-family db opt name err)))
 
 ;;; Iterators
-(defun create-iter (db &optional (opt (rocksdb-readoptions-create)))
+(defun create-iter-raw (db &optional (opt (rocksdb-readoptions-create)))
   (rocksdb-create-iterator db opt))
 
-(defun iter-key (iter)
+(defun iter-key-raw (iter)
   (with-alien ((klen-ptr (* size-t) (make-alien size-t 0)))
     (let* ((key-ptr (rocksdb-iter-key iter klen-ptr))
            (klen (deref klen-ptr))
@@ -142,11 +141,11 @@ to initialize the instance with custom configuration."
       (clone-octets-from-alien key-ptr k klen)
       k)))
 
-(defun iter-key-str (iter)
-  (when-let ((k (iter-key iter)))
+(defun iter-key-str-raw (iter)
+  (when-let ((k (iter-key-raw iter)))
     (octets-to-string k)))
 
-(defun iter-val (iter)
+(defun iter-val-raw (iter)
   (with-alien ((vlen-ptr (* size-t) (make-alien size-t 0)))
     (let* ((val-ptr (rocksdb-iter-value iter vlen-ptr))
            (vlen (deref vlen-ptr))
@@ -154,6 +153,11 @@ to initialize the instance with custom configuration."
       (clone-octets-from-alien val-ptr v vlen)
       v)))
 
-(defun iter-val-str (iter)
-  (when-let ((v (iter-val iter)))
+(defun iter-val-str-raw (iter)
+  (when-let ((v (iter-val-raw iter)))
     (octets-to-string v)))
+
+(defmacro with-iter-raw ((iter-var db &optional (opt (rocksdb-readoptions-create))) &body body)
+  `(let ((,iter-var (create-iter-raw ,db ,opt)))
+     (unwind-protect (progn ,@body)
+       (rocksdb-iter-destroy ,iter-var))))

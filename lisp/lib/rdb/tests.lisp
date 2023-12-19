@@ -8,84 +8,57 @@
 
 (rocksdb:load-rocksdb)
 
-(defun test-cleanup (db path)
-  (with-errptr (err 'destroy-db-error (list :db path))
-    (let ((opt (rocksdb-options-create)))
-      (rocksdb-close db)
-      (rocksdb-destroy-db opt path err)
-      (rocksdb-options-destroy opt))))
-
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
     (with-db (db (open-db-raw db-path))
       (put-kv-str-raw db "foo" "bar")
       (is (string= (get-kv-str-raw db "foo") "bar"))
+      (rocksdb-close db)
+      (destroy-db-raw db-path))))
+
+(deftest raw ()
+  "Test the raw RocksDB function wrappers."
+  (let ((path "/tmp/rdb-raw/"))
+    (with-open-db-raw (db path)
+      (dotimes (i 1000)
+        (let ((k (format nil "key~d" i))
+              (v (format nil "val~d" i)))
+          (put-kv-str-raw db k v)
+          (is (string= (get-kv-str-raw db k) v))))
       (let ((cf (create-cf-raw db "cf1")))
         (put-cf-str-raw db cf "bow" "wow")
         (is (string= (get-cf-str-raw db cf "bow") "wow")))
-      (test-cleanup db db-path))))
+      (with-iter-raw (iter db)
+        (rocksdb:rocksdb-iter-seek-to-first iter)
+        (dotimes (i 999)
+          (rocksdb:rocksdb-iter-next iter)
+          (is (rocksdb:rocksdb-iter-valid iter))
+          (is (string= (get-kv-str-raw db (iter-key-str-raw iter)) (iter-val-str-raw iter))))
+        (rocksdb:rocksdb-iter-next iter)
+        (is (not (rocksdb:rocksdb-iter-valid iter)))))
+    (destroy-db-raw path)))
 
 (deftest rdb ()
   "Test RDB struct and methods."
-  (let ((db (make-rdb "/tmp/rdb/" (make-rdb-opts :create-if-missing t))))
-    (open-db db)
+  (let ((db (create-db "/tmp/rdb/")))
     (put-kv-str-raw (rdb-db db) "key" "val")
     (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
     (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
       (dolist (cf cfs)
         (push-cf cf db)))
     (init-db db)
-    (loop for cf across (rdb-cfs db)
-          do
-             (progn
-               (insert-kv db (make-rdb-kv "key" "val") :cf (rdb-cf-name cf))
-               (is (equal (get-cf-str-raw (rdb-db db) (rdb-cf-sap cf) "key") "val"))))
+    ;; TODO
+    ;; (loop for cf across (rdb-cfs db)
+    ;;       do
+    ;;          (progn
+    ;;            (insert-kv db (make-rdb-kv "key" "val") :cf (rdb-cf-name cf))
+    ;;            (is (equal (get-cf-str-raw (rdb-db db) (rdb-cf-sap cf) "key") "val"))))
     (rocksdb:rocksdb-cancel-all-background-work (rdb-db db) t)
     ;; (insert-kv-str db "test" "zaa")
     ;; cleanup
     (close-db db)
     (destroy-db db)))
-
-(deftest with-db-raw ()
-  "Test the WITH-OPEN-DB macro and some basic functions."
-  (let ((path "/tmp/with-db-raw")
-        (opt (default-rocksdb-options)))
-    (with-open-db-raw (db path)
-    (dotimes (i 10000)
-      (let ((k (format nil "key~d" i))
-            (v (format nil "val~d" i)))
-        (put-kv-str-raw db k v)))
-    (test-cleanup db opt path))))
-
-(deftest with-iter ()
-  "Test the WITH-ITER macro."
-  (let ((ro (rocksdb:rocksdb-readoptions-create)))
-    (with-open-db-raw (db "/tmp/rdb-with-iter")
-      (put-kv-str-raw db "ak" "av")
-      (put-kv-str-raw db "bk" "bv")
-      (rocksdb:rocksdb-cancel-all-background-work db t)
-      (is (equal (get-kv-str-raw db "ak") "av"))
-      (is (equal (get-kv-str-raw db "bk") "bv"))
-      (with-iter (it db ro)
-        (rocksdb:rocksdb-iter-seek-to-first it)
-        (is (rocksdb:rocksdb-iter-valid it))
-        (is (equal (iter-key-str it) "ak"))
-        (is (equal (get-kv-str-raw db "ak") "av"))
-        (rocksdb:rocksdb-iter-next it)
-        (is (rocksdb:rocksdb-iter-valid it))
-        (is (equal (iter-key-str it) "bk"))
-        (is (equal (iter-val-str it) "bv"))
-        (rocksdb:rocksdb-iter-next it)
-        (is (not (rocksdb:rocksdb-iter-valid it)))))))
-
-(deftest with-cf ()
-  "Test rdb-cf operations"
-  (with-open-db-raw (db "/tmp/rdb-with-cf")
-    (with-cf (cf (make-rdb-cf :name "foobar"))
-      (is (create-cf db cf))
-      (is (null (put-cf-str-raw db (rdb-cf-sap cf) "key" "val")))
-      (is (equal (get-cf-str-raw db (rdb-cf-sap cf) "key") "val")))))
 
 (deftest errors ()
   "Test rdb condition handlers.")

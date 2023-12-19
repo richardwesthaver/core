@@ -30,9 +30,9 @@
    :put-cf-raw :put-cf-str-raw
    :get-cf-raw :get-cf-str-raw
    :create-cf-raw
-   :create-iter :with-iter
-   :iter-key :iter-key-str
-   :iter-val :iter-val-str
+   :create-iter :with-iter-raw
+   :iter-key-raw :iter-key-str-raw
+   :iter-val-raw :iter-val-str-raw
    ;; proto
    :put-key :put-kv
    :get-key :get-kv
@@ -43,9 +43,9 @@
    :insert-kv :insert-key
    :make-db :open-db :close-db :destroy-db
    ;; obj
-   :rdb :make-rdb 
+   :rdb :make-rdb :create-db
    :rdb-db :rdb-name :rdb-cfs :rdb-opts
-   :rdb-bytes :rdb-bytes-buffer
+   :rdb-bytes :rdb-bytes-buffer :rdb-opts-sap
    :make-rdb-key :make-rdb-kv :make-rdb-val :rdb-kv :rdb-key :rdb-val 
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
