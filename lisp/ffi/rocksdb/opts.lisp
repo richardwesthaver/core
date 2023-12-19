@@ -103,7 +103,9 @@
 (export '(rocksdb-wal-readoptions))
 
 ;;; Block based Table Options
-(define-opaque rocksdb-block-based-table-options)
+(eval-always
+  (define-opaque rocksdb-block-based-table-options))
+
 (define-alien-routine rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
 (define-alien-routine rocksdb-block-based-options-destroy void (self (* rocksdb-block-based-table-options)))
 (define-alien-routine rocksdb-block-based-options-set-checksum void

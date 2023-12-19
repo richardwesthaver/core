@@ -20,7 +20,7 @@
   ((table :initarg :table :type hash-table :accessor rdb-opts-table)
    (sap :initarg :sap :type (or null alien) :accessor rdb-opts-sap)))
 
-(defmethod initialize-instance :after ((self rdb-opts) &rest initargs &key &allow-other-keys)
+(defmethod initialize-instance ((self rdb-opts) &rest initargs &key &allow-other-keys)
   (with-slots (sap table) self
     (unless (getf initargs :table) (setf table (make-hash-table :test #'equal)))
     (unless (getf initargs :sap) (setf sap (rocksdb-options-create)))
@@ -55,12 +55,8 @@
     (loop for k across (hash-table-keys table)
           do (push-sap self k))))
 
-(declaim (inline default-rdb-opts))
 (defun default-rdb-opts () 
-  (make-rdb-opts
-    :create-if-missing t 
-    :total-threads 4
-    :max-open-files 10000))
+  (make-rdb-opts :create-if-missing t))
 
 ;;; bytes
 (defclass rdb-bytes (sequence)
@@ -141,13 +137,12 @@ rocksdb_cf_t handle."
   (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf))
   (db nil :type (or null alien)))
 
-(defun create-db (name &optional (opts (default-rdb-opts) cfs))
+(defun create-db (name &key opts cfs)
   "Construct a new RDB instance from NAME and optional OPTS and DB-PTR."
-  (let ((db (make-rdb :name name 
-                      :opts (or opts (default-rdb-opts)) 
-                      :cfs (or cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0)))))
-    (setf (rdb-db db) (open-db-raw name (rdb-opts-sap (rdb-opts db))))
-    db))
+  (make-rdb :name name 
+            :opts (or opts (default-rdb-opts))
+            :cfs (or cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0))
+            :db (open-db-raw name (if opts (rdb-opts-sap opts) (default-rocksdb-options)))))
 
 (defmethod push-cf ((cf rdb-cf) (db rdb))
   (vector-push cf (rdb-cfs db)))
@@ -156,8 +151,9 @@ rocksdb_cf_t handle."
 ;;   (open-db-raw (rdb-name self) (rdb-opts-sap opts)))
 
 (defmethod close-db ((self rdb))  
-  (close-db-raw (rdb-db self))
-  (setf (rdb-db self) nil))
+  (with-slots (db) self
+    (close-db-raw db)
+    (setf db nil)))
 
 (defmethod destroy-db ((self rdb))  
   (when (rdb-db self) (close-db self))

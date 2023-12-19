@@ -279,7 +279,7 @@
 (def-with-errptr rocksdb-backup-engine-open
   (* rocksdb-backup-engine)
   (opts (* rocksdb-options))
-  (path (* char)))
+  (path c-string))
 
 (def-with-errptr rocksdb-backup-engine-create-new-backup
   void
@@ -289,15 +289,15 @@
 (def-with-errptr rocksdb-backup-engine-restore-db-from-latest-backup
   void
   (be (* rocksdb-backup-engine))
-  (db-dir (* char))
-  (wal-dir (* char))
+  (db-dir c-string)
+  (wal-dir c-string)
   (res-opts (* rocksdb-restore-options)))
 
 (def-with-errptr rocksdb-backup-engine-restore-db-from-backup
   void
   (be (* rocksdb-backup-engine))
-  (db-dir (* char))
-  (wal-dir (* char))
+  (db-dir c-string)
+  (wal-dir c-string)
   (res-opts (* rocksdb-restore-options))
   (backup-id unsigned-int))
 
@@ -316,7 +316,7 @@
   (* rocksdb-transactiondb)
   (opts (* rocksdb-options))
   (topts (* rocksdb-transactiondb-options))
-  (name (* char)))
+  (name c-string))
 
 (define-alien-routine rocksdb-transactiondb-close void
   (tdb (* rocksdb-transactiondb)))

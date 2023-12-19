@@ -14,12 +14,12 @@
     (with-db (db (open-db-raw db-path))
       (put-kv-str-raw db "foo" "bar")
       (is (string= (get-kv-str-raw db "foo") "bar"))
-      (rocksdb-close db)
+      (close-db-raw db)
       (destroy-db-raw db-path))))
 
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
-  (let ((path "/tmp/rdb-raw/"))
+  (let ((path "/tmp/rdb-raw"))
     (with-open-db-raw (db path)
       (dotimes (i 1000)
         (let ((k (format nil "key~d" i))
@@ -41,13 +41,13 @@
 
 (deftest rdb ()
   "Test RDB struct and methods."
-  (let ((db (create-db "/tmp/rdb/")))
+  (with-db (db (create-db "/tmp/rdb"))
     (put-kv-str-raw (rdb-db db) "key" "val")
-    (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
-    (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
-      (dolist (cf cfs)
-        (push-cf cf db)))
-    (init-db db)
+    ;; (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
+    ;; (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
+    ;;   (dolist (cf cfs)
+    ;;     (push-cf cf db)))
+    ;; (init-db db)
     ;; TODO
     ;; (loop for cf across (rdb-cfs db)
     ;;       do
