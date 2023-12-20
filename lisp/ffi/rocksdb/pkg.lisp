@@ -62,6 +62,7 @@ set *errptr to a malloc()ed error message.
   (:use :cl :std :sb-alien)
   (:export
    :load-rocksdb
+   ;; vars
    :*rocksdb-options*
    :*rocksdb-compaction-levels*
    :*rocksdb-compression-backends*

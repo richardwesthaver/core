@@ -17,13 +17,15 @@
    :with-errptr
    :rdb-error
    :open-db-error
+   :open-backup-engine-error
    :destroy-db-error
+   :destroy-backup-engine-error
    :rocksdb-error
    :rdb-user-error
    :put-kv-error
    :get-kv-error
    :handle-errptr
-   ;; util
+   ;; raw
    :make-rocksdb-options :default-rocksdb-options
    :open-db-raw :with-open-db-raw
    :close-db-raw :destroy-db-raw
@@ -48,7 +50,10 @@
    :get-opt :set-opt
    :push-cf :init-db
    :insert-kv :insert-key
-   :make-db :open-db :close-db :destroy-db
+   :open-db :close-db :destroy-db
+   ;; sst
+   :sst-file
+   :sst-stream
    ;; obj
    :rdb :make-rdb :create-db
    :rdb-db :rdb-name :rdb-cfs :rdb-opts

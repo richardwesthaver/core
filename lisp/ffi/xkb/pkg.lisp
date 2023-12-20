@@ -1,3 +1,14 @@
+;;; ffi/xkb/pkg.lisp --- XKBCommon bindings
+
+;; We use the X Keyboard Configuration Database for keymaps.
+
+;; ref: https://xkbcommon.org/doc/current/
+;; https://www.freedesktop.org/wiki/Software/XKeyboardConfig/
+;; https://www.x.org/releases/X11R7.6/doc/xorg-docs/input/XKB-Config.html
+;; https://people.uleth.ca/~daniel.odonnell/Blog/custom-keyboard-in-linuxx11
+;; 
+
+;;; Code:
 (defpackage :xkb
   (:use :cl :std :sb-alien)
   (:export 

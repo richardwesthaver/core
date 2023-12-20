@@ -72,6 +72,9 @@
   (keylen size-t)
   (vallen (* size-t)))
 
+;; NOTE 2023-12-19: only the VOID-returning functions in the multi-
+;; family perform parallel IO:
+;; https://github.com/facebook/rocksdb/wiki/MultiGet-Performance
 (define-alien-routine rocksdb-multi-get void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
@@ -312,8 +315,7 @@
   (topts (* rocksdb-transaction-options))
   (told (* rocksdb-transaction)))
 
-(def-with-errptr rocksdb-transactiondb-open
-  (* rocksdb-transactiondb)
+(def-with-errptr rocksdb-transactiondb-open (* rocksdb-transactiondb)
   (opts (* rocksdb-options))
   (topts (* rocksdb-transactiondb-options))
   (name c-string))

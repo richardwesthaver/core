@@ -14,7 +14,9 @@
                (:file "macs")
                (:file "types")
                (:file "opts")
-               (:file "db"))
+               (:file "sst")
+               (:file "db")
+               (:file "vars"))
   :in-order-to ((test-op (test-op "rocksdb/tests"))))
 
 (defsystem "rocksdb/tests"
