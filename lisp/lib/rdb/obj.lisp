@@ -147,13 +147,16 @@ rocksdb_cf_t handle."
 (defmethod push-cf ((cf rdb-cf) (db rdb))
   (vector-push cf (rdb-cfs db)))
 
-;; (defmethod open-db ((self rdb) (opts rdb-opts))
-;;   (open-db-raw (rdb-name self) (rdb-opts-sap opts)))
+(defmethod open-db ((self rdb))
+  (with-slots (db) self
+    (unless (null db) (close-db self))
+    (setf db (open-db-raw (rdb-name self) (rdb-opts-sap (rdb-opts self))))))
 
 (defmethod close-db ((self rdb))  
   (with-slots (db) self
-    (close-db-raw db)
-    (setf db nil)))
+    (unless (null db)
+      (close-db-raw db)
+      (setf db nil))))
 
 (defmethod destroy-db ((self rdb))  
   (when (rdb-db self) (close-db self))

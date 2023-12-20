@@ -7,7 +7,7 @@
   :serial t
   :components ((:file "pkg")
                (:file "err") 
-               (:file "util")
+               (:file "raw")
                (:file "proto")
                (:file "obj")
                (:file "macs"))

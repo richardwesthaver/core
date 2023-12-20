@@ -10,7 +10,8 @@
                (:file "tree")
                (:file "graph")
                (:file "color")
-               (:file "tbl"))
+               (:file "tbl")
+               (:file "db"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests

@@ -1,5 +1,5 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien))
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :uri))
 
 (in-package :rdb/tests)
 
@@ -41,7 +41,7 @@
 
 (deftest rdb ()
   "Test RDB struct and methods."
-  (with-db (db (create-db "/tmp/rdb"))
+  (with-db (db (create-db "/tmp/rdb/"))
     (put-kv-str-raw (rdb-db db) "key" "val")
     ;; (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
     ;; (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
@@ -59,9 +59,6 @@
     ;; cleanup
     (close-db db)
     (destroy-db db)))
-
-(deftest errors ()
-  "Test rdb condition handlers.")
 
 (deftest rdb-bytes ()
   "Test rdb-bytes methods - iterator protocol specifically."

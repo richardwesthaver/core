@@ -17,9 +17,17 @@
   ()
   (:documentation "Error signaled while opening a database"))
 
+(define-condition open-backup-engine-error (rocksdb-error)
+  ()
+  (:documentation "Error signaled while opening a backup engine"))
+
 (define-condition destroy-db-error (rocksdb-error)
   ()
   (:documentation "Error signaled while destroying a database"))
+
+(define-condition destroy-backup-engine-error (rocksdb-error)
+  ()
+  (:documentation "Error signaled while destroying a backup engine"))
 
 (define-condition cf-error (rocksdb-error)
   ((cf :initarg :cf :reader rdb-error-cf)))
