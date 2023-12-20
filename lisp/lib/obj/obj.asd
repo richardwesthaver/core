@@ -3,7 +3,6 @@
   :depends-on (:std)
   :serial t
   :components ((:file "pkg")
-               (:file "uri")
                (:file "hash")
                (:file "id")
                (:file "seq")
