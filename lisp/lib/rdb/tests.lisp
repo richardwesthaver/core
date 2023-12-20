@@ -1,5 +1,5 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :uri))
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien))
 
 (in-package :rdb/tests)
 
