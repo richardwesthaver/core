@@ -64,3 +64,37 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
             (t
               (error "Bad let bindings")))
       (let-binding-transform (cdr bs)))))
+
+(defun circular-list (&rest elements)
+  "Creates a circular list of ELEMENTS."
+  (let ((cycle (copy-list elements)))
+    (nconc cycle cycle)))
+
+(defun circular-list-p (object)
+  "Returns true if OBJECT is a circular list, NIL otherwise."
+  (and (listp object)
+       (do ((fast object (cddr fast))
+            (slow (cons (car object) (cdr object)) (cdr slow)))
+           (nil)
+         (unless (and (consp fast) (listp (cdr fast)))
+           (return nil))
+         (when (eq fast slow)
+           (return t)))))
+
+(defun circular-tree-p (object)
+  "Returns true if OBJECT is a circular tree, NIL otherwise."
+  (labels ((circularp (object seen)
+             (and (consp object)
+                  (do ((fast (cons (car object) (cdr object)) (cddr fast))
+                       (slow object (cdr slow)))
+                      (nil)
+                    (when (or (eq fast slow) (member slow seen))
+                      (return-from circular-tree-p t))
+                    (when (or (not (consp fast)) (not (consp (cdr slow))))
+                      (return
+                        (do ((tail object (cdr tail)))
+                            ((not (consp tail))
+                             nil)
+                          (let ((elt (car tail)))
+                            (circularp elt (cons object seen))))))))))
+    (circularp object nil)))

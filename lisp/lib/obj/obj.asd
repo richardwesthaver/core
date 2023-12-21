@@ -10,7 +10,12 @@
                (:file "graph")
                (:file "color")
                (:file "tbl")
-               (:file "db"))
+               (:module "db"
+                :components ((:file "mop")
+                             (:file "proto")
+                             (:file "io")
+                             (:file "document")
+                             (:file "disk"))))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests
