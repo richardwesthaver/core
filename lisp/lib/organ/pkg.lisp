@@ -1,7 +1,7 @@
 ;;; organ.lisp --- Org parser
 (defpackage :organ
   (:use :cl :cl-ppcre :std)
-  (:shadowing-import-from :sb-gray :fundamental-stream)
+  (:import-from :sb-gray :fundamental-stream)
   (:import-from :uiop :read-file-string)
   (:export
    ;; params
@@ -89,8 +89,11 @@ associated value or nil if not found."
 ;; as strings, use `org-tag-split'.
 (defvar org-tag-regexp "(:[\\w_@#%:]+:)$")
 
+;; TODO 2023-12-21: for some reason CL-PPCRE:SPLIT isn't working as expected here.
 (defun org-tag-split (tags)
-  (remove-if (lambda (s) (typep s '(string 0))) (cl-ppcre:split ":" tags)))
+  (loop for tag in (uiop:split-string tags :separator ":")
+        unless (sequence:emptyp tag)
+          collect tag))
 
 (defvar org-element-types
   '(babel-call center-block clock comment comment-block diary-sexp drawer
@@ -196,14 +199,14 @@ associated value or nil if not found."
 				   (let ((k (svref subs 0)))
 				     (if (org-todo-keyword-p k)
 					 (setf (state self) (make-org-todo-keyword k)
-					       (title self) (svref subs 1))
+					       (title self) (trim (svref subs 1)))
 					 (setf (title self) match)))
 				   (setf (title self) sub))))))))
 	;; scan for tags, modifies title slot
 	(let ((tag-str (cl-ppcre:scan-to-strings org-tag-regexp (title self))))
 	  (when tag-str
 	    (setf (tags self) (apply #'vector (mapcar #'make-org-tag (org-tag-split tag-str)))
-		  (title self) (subseq (title self) 0 (- (length (title self)) (length tag-str))))))))
+		  (title self) (subseq (title self) 0 (- (length (title self)) 1 (length tag-str))))))))
   ;; TODO 2023-07-24: cookies,priority
   self))
 

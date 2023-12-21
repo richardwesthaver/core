@@ -8,7 +8,7 @@
   (:nicknames :id)
   (:use :cl :std :obj/hash)
   (:export 
-   :id :id-of :reset-id :update-id :make-id))
+   :id :reset-id :update-id :make-id))
 
 (defpackage :obj/seq
   (:nicknames :seq)

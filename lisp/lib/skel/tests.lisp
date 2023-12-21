@@ -19,7 +19,7 @@
 (defun skels (c)
   (let ((s))
     (loop for i from 1 to c
-	  do (push (id-of (make-instance 'sk-project :name (gensym))) s))
+	  do (push (id (make-instance 'sk-project :name (gensym))) s))
     s))
 
 (deftest sanity ()

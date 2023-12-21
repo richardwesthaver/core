@@ -1,5 +1,5 @@
 (defpackage :cli/tests
-  (:use :cl :std :rt :cli :cli/progress :cli/spark :cli/repl :cli/ansi))
+  (:use :cl :std :rt :cli :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt))
 
 (in-package :cli/tests)
 (defsuite :cli)
@@ -21,7 +21,7 @@
     ;; prompts 
     (is (string= (tpfoo-prompt) "foobar"))
     (is (string= "foobar"
-                 (cli:completing-read "nothing: " tcoll :history thist :default "foobar")))))
+                 (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
 (defparameter *opts* (cli:make-opts (:name foo :global t :description "bar")
 		       (:name bar :description "foo")))
