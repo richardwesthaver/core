@@ -1,5 +1,5 @@
 (defpackage :cli/tests
-  (:use :cl :std :rt :cli :cli/progress :cli/spark :cli/repl))
+  (:use :cl :std :rt :cli :cli/progress :cli/spark :cli/repl :cli/ansi))
 
 (in-package :cli/tests)
 (defsuite :cli)
@@ -11,6 +11,8 @@
 (defprompt tpfoo "testing: ")
 (defvar tcoll nil)
 (defvar thist nil)
+
+(deftest ansi () )
 
 (deftest cli-prompt (:disabled t) ;; FIXME: hijacks io in slime
   "Test CLI prompts"
