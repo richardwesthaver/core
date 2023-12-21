@@ -42,7 +42,7 @@
 
 (defmethod print-object ((self skel) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~S ~A" :id (fmt-sxhash (id-of self)))))
+    (format stream "~S ~A" :id (fmt-sxhash (id self)))))
 
 (defmethod initialize-instance :before ((self skel) &rest initargs &key &allow-other-keys)
   (unless (getf initargs :id)

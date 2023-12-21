@@ -18,6 +18,7 @@
 
 (deftest org-headline ()
   (let ((s "** DONE testing stuff :test:test:"))
+    (describe (org-parse (make-org-headline s)))
     (is (= (level (org-parse (make-org-headline s))) 2))
     ;; weird bug going on here with class slots
     ;; (is (string= (text (state (org-parse (make-org-headline s)))) "TODO"))

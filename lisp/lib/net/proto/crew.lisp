@@ -30,7 +30,7 @@
 
 (defmethod initialize-instance :after ((self crew-worker-pool) &key)
   (with-mutex (*crew-worker-pools-lock*)
-    (setf (gethash (id-of self) *crew-worker-pools*) self)))
+    (setf (gethash (id self) *crew-worker-pools*) self)))
 
 (defgeneric connect-worker (info hook)
   (:documentation
