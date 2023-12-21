@@ -70,8 +70,43 @@
 
 (defpackage :obj/db
   (:nicknames :db)
-  (:use :cl :std :hash :id :seq :graph)
-  (:export))
+  (:use :cl :std :id :seq :sb-mop)
+  (:export
+   :xdb
+   :collection
+   :collection-aware
+   :map-docs
+   :duplicate-doc-p
+   :find-duplicate-doc
+   :store-doc
+   :serialize-doc
+   :serialize-docs
+   :load-from-file
+   :get-collection
+   :add-collection
+   :snapshot
+   :load-db
+   :get-docs
+   :get-doc
+   :get-val
+   :set-val
+   :sum
+   :max-val
+   :document
+   :doc-type
+   :key
+   :find-doc
+   :find-docs
+   :sort-collection
+   :docs
+   :*fsync-data*
+   :storable-class
+   :dbs
+   :get-db
+   :add-db
+   :enable-sequences
+   :next-sequence
+   :sort-docs))
 
 (uiop:define-package :obj
   (:use-reexport :hash :color :seq :tree :graph :tbl :id :db))

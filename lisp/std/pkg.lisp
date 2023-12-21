@@ -30,6 +30,12 @@
    #:invalid-argument-reason
    #:invalid-argument-p
    #:unwind-protect-case
+   ;; num/float
+   :make-float-converters
+   :encode-float32
+   :decode-float32
+   :encode-float64
+   :decode-float64
    ;; str
    :*omit-nulls*
    :*whitespaces*
@@ -60,8 +66,9 @@
    :nreversef
    :deletef
    :let-binding-transform
-   :ensure-list :recons :memq :assq :ensure-list 
-   :proper-list-of-length-p :proper-list-p :singleton-p
+   :ensure-list :recons :memq :assq
+   :circular-list :circular-list-p :circular-tree-p
+   ;; :proper-list-of-length-p :proper-list-p :singleton-p
    ;; thread
    :print-thread-info :print-thread-message-top-level :thread-support-p
 :defpkg
@@ -100,6 +107,7 @@
    #:plambda
    #:pandoric-eval
    ;; fu
+   :copy-array
    :until
    #:mkstr
    #:symb
