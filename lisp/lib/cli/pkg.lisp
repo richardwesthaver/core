@@ -110,8 +110,45 @@
    :cli-version
    :cli-usage))
 
+(defpackage :cli/ansi
+  (:use :cl :std)
+  (:shadow :ed)
+  (:nicknames :ansi)
+  (:export
+   ;; ESC sequences
+   :ris :reset-to-initial-state
+   ;; CSI sequences
+   ;; Cursor control
+   :cuu :cursor-up
+   :cud :cursor-down
+   :cuf :cursor-forward
+   :cub :cursor-backward
+   :cnl :cursor-next-line
+   :cpl :cursor-preceding-line
+   :cha :cursor-horizontal-absolute
+   :cup :cursor-position
+   :vpa :vertical-position-absolute
+   :vpr :vertical-position-relative
+   :vpb :vertical-position-backward
+   :scosc :save-cursor-position
+   :scorc :restore-cursor-position
+   :ed :erase-in-display :erase-below :erase-above :erase :erase-saved-lines
+   :el :erase-in-line :erase-right :erase-left :erase-line
+   :sgr :select-graphic-rendition
+   :dsr :device-status-report
+   ;; DEC private mode set and reset
+   :decset :dec-private-mode-set
+   :decrst :dec-private-mode-reset
+   :show-cursor :hide-cursor
+   :use-alternate-screen-buffer :use-normal-screen-buffer
+   ;; common
+   :clear
+   :home
+   ;; stty
+   :set-tty-mode))
+
 (defpackage :cli/progress
-  (:use :cl :std :cli)
+  (:use :cl :std)
   (:export
    :update-progress
    :with-progress-bar
@@ -124,7 +161,7 @@
    :progress-bar))
 
 (defpackage :cli/spark
-  (:use :cl :std :cli)
+  (:use :cl :std)
   (:export
    :spark :*ticks*
    :vspark :*vticks*))
