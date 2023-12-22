@@ -36,7 +36,6 @@
 ;; similar to Redblack Tree but generally faster for lookup-intensive
 ;; workloads. https://en.wikipedia.org/wiki/AVL_tree
 
-
 (defclass avlnode (binary-node)
   (data))
 

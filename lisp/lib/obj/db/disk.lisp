@@ -24,7 +24,6 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *codes*
     #(ascii-string
-      id
       identifiable
       cons
       string
@@ -175,7 +174,7 @@
   (loop for i below (length *packages*)
         for (stored-package . symbols) = (aref *packages* i)
         when (eq package stored-package)
-        return (values i symbols)
+          return (values i symbols)
         finally (return (make-s-package package))))
 
 (defun s-intern (symbol)
@@ -192,7 +191,8 @@
 
 (defmethod write-object ((symbol symbol) stream)
   (multiple-value-bind (package-id symbol-id
-                        new-package new-symbol) (s-intern symbol)
+                        new-package new-symbol) 
+      (s-intern symbol)
     (cond ((and new-package new-symbol)
            (write-n-bytes #.(type-code 'intern-package-and-symbol) 1 stream)
            (write-object (package-name (symbol-package symbol)) stream)
@@ -259,8 +259,8 @@
     (write-n-bytes size 1 stream)
     (loop for position by fixnum-bits below (* size fixnum-bits)
           do
-          (write-n-bytes (ldb (byte fixnum-bits position) n)
-                         +fixnum-length+ stream))))
+             (write-n-bytes (ldb (byte fixnum-bits position) n)
+                            +fixnum-length+ stream))))
 
 (defmethod write-object ((object integer) stream)
   (typecase object
@@ -281,8 +281,8 @@
         (integer 0))
     (loop for position by fixnum-bits below (* size fixnum-bits)
           do
-          (setf (ldb (byte fixnum-bits position) integer)
-                (read-n-bytes +fixnum-length+ stream)))
+             (setf (ldb (byte fixnum-bits position) integer)
+                   (read-n-bytes +fixnum-length+ stream)))
     (* sign integer)))
 
 (defreader fixnum (stream)
@@ -377,7 +377,7 @@
 (declaim (inline read-ascii-string))
 (defun read-ascii-string (length stream)
   (let ((string (make-string length :element-type 'base-char)))
-    ;#-sbcl
+                                        ;#-sbcl
     (loop for i below length
           do (setf (schar string i)
                    (code-char (read-n-bytes 1 stream))))
@@ -423,12 +423,12 @@
          (write-n-bytes #.(type-code 'cons) 1 stream)
          (loop for cdr = list then (cdr cdr)
                do
-               (cond ((consp cdr)
-                      (write-object (car cdr) stream))
-                     (t
-                      (write-n-bytes +end+ 1 stream)
-                      (write-object cdr stream)
-                      (return)))))))
+                  (cond ((consp cdr)
+                         (write-object (car cdr) stream))
+                        (t
+                         (write-n-bytes +end+ 1 stream)
+                         (write-object cdr stream)
+                         (return)))))))
 
 (defreader cons (stream)
   (let ((first-cons (list (read-next-object stream))))
@@ -506,9 +506,9 @@
 (defun check-hash-table-test (hash-table)
   (let* ((test (hash-table-test hash-table))
          (test-id (position test *hash-table-tests*)))
-   (unless test-id
-     (error "Only standard hashtable tests are supported, ~a has ~a"
-            hash-table test))
+    (unless test-id
+      (error "Only standard hashtable tests are supported, ~a has ~a"
+             hash-table test))
     test-id))
 
 (defmethod write-object ((hash-table hash-table) stream)
@@ -516,10 +516,10 @@
   (write-n-bytes (check-hash-table-test hash-table) 1 stream)
   (write-n-bytes (hash-table-size hash-table) +hash-table-length+ stream)
   (loop for key being the hash-keys of hash-table
-        using (hash-value value)
+          using (hash-value value)
         do
-        (write-object key stream)
-        (write-object value stream))
+           (write-object key stream)
+           (write-object value stream))
   (write-n-bytes +end+ 1 stream))
 
 (defreader hash-table (stream)
@@ -567,11 +567,11 @@
            (vector (make-array length)))
       (loop for i below length
             for slot-d =
-            (slot-effective-definition class (read-next-object stream))
+                       (slot-effective-definition class (read-next-object stream))
             when slot-d
-            do (setf (aref vector i)
-                     (cons (slot-definition-location slot-d)
-                           (slot-definition-initform slot-d))))
+              do (setf (aref vector i)
+                       (cons (slot-definition-location slot-d)
+                             (slot-definition-initform slot-d))))
       (setf (slot-locations-and-initforms class) vector))
     (read-next-object stream)))
 
@@ -605,7 +605,6 @@
                 (read-n-bytes +id-length+ stream)))
 
 ;;; storable-object
-
 ;; Can't use write-object method, because it would conflict with
 ;; writing a pointer to a standard object
 (defun write-storable-object (object stream)
@@ -624,11 +623,11 @@
           for (location . initform) = (aref slots id)
           for value = (standard-instance-access object location)
           unless (eql value initform)
-          do
-          (write-n-bytes id 1 stream)
-          (if (eq value 'sb-pcl::..slot-unbound..)
-              (write-n-bytes +unbound-slot+ 1 stream)
-              (write-object value stream)))
+            do
+               (write-n-bytes id 1 stream)
+               (if (eq value '..slot-unbound..)
+                   (write-n-bytes +unbound-slot+ 1 stream)
+                   (write-object value stream)))
     (write-n-bytes +end+ 1 stream)))
 
 (defreader storable-object (stream)
@@ -644,12 +643,12 @@
     (loop for slot-id = (read-n-bytes 1 stream)
           until (= slot-id +end+)
           do
-          (setf (standard-instance-access instance
-                                          (car (aref slots slot-id)))
-                (let ((code (read-n-bytes 1 stream)))
-                  (if (= code +unbound-slot+)
-                      'sb-pcl::..slot-unbound..
-                      (call-reader code stream)))))
+             (setf (standard-instance-access instance
+                                             (car (aref slots slot-id)))
+                   (let ((code (read-n-bytes 1 stream)))
+                     (if (= code +unbound-slot+)
+                         '..slot-unbound..
+                         (call-reader code stream)))))
     instance))
 
 ;;; standard-class
@@ -679,9 +678,9 @@
     (let ((length (read-n-bytes +sequence-length+ stream)))
       (loop for i below length
             do (slot-effective-definition class (read-next-object stream))
-            ;;do  (setf (aref vector i)
-            ;;       (cons (slot-definition-location slot-d)
-            ;;             (slot-definition-initform slot-d)))
+               ;;do  (setf (aref vector i)
+               ;;       (cons (slot-definition-location slot-d)
+               ;;             (slot-definition-initform slot-d)))
             ))
     (read-next-object stream)))
 
@@ -724,10 +723,10 @@
               for initform = (slot-definition-initform slot)
               for value = (standard-instance-access object location)
               do
-              (write-n-bytes id 1 stream)
-              (if (eq value 'sb-pcl::..slot-unbound..)
-                  (write-n-bytes +unbound-slot+ 1 stream)
-                  (write-object value stream)))
+                 (write-n-bytes id 1 stream)
+                 (if (eq value '..slot-unbound..)
+                     (write-n-bytes +unbound-slot+ 1 stream)
+                     (write-object value stream)))
         (write-n-bytes +end+ 1 stream))))
 
 (defreader standard-object (stream)
@@ -739,17 +738,17 @@
     (flet ((read-slot ()
              (let ((code (read-n-bytes 1 stream)))
                (if (= code +unbound-slot+)
-                   'sb-pcl::..slot-unbound..
+                   '..slot-unbound..
                    (call-reader code stream)))))
-     (loop for slot-id = (read-n-bytes 1 stream)
-           until (= slot-id +end+)
-           do
-           (let ((slot (nth slot-id slots)))
-             (if slot
-                 (setf (standard-instance-access instance
-                                                 (slot-definition-location slot))
-                       (read-slot))
-                 (read-slot)))))
+      (loop for slot-id = (read-n-bytes 1 stream)
+            until (= slot-id +end+)
+            do
+               (let ((slot (nth slot-id slots)))
+                 (if slot
+                     (setf (standard-instance-access instance
+                                                     (slot-definition-location slot))
+                           (read-slot))
+                     (read-slot)))))
     instance))
 
 ;;; collection

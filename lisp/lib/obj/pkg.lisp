@@ -2,6 +2,7 @@
   (:nicknames :hash)
   (:use :cl :std)
   (:export 
+   :djb
    :hash-object))
 
 (defpackage :obj/id
@@ -26,6 +27,11 @@
   (:export 
    :vertex :edge :graph
    :weighted-edge :directed-edge :undirected-edge))
+
+(defpackage :obj/graph/dot
+  (:nicknames :dot)
+  (:use :cl :std :obj/graph :obj/id :cli)
+  (:export))
 
 (defpackage :obj/color
   (:nicknames :color)
@@ -70,7 +76,7 @@
 
 (defpackage :obj/db
   (:nicknames :db)
-  (:use :cl :std :id :seq :sb-mop)
+  (:use :cl :std :id :seq :sb-mop :sb-pcl)
   (:export
    :xdb
    :collection

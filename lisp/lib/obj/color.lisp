@@ -1,6 +1,8 @@
 ;;; lib/obj/colors.lisp --- Colors
 
 ;; from https://github.com/tpapp/cl-colors/blob/master/colors.lisp
+
+;;; Code:
 (in-package :obj/color)
 
 (deftype unit-real ()
@@ -36,7 +38,6 @@
   (mod hue 360))
 
 ;;; conversions
-
 (defun rgb-to-hsv (rgb &optional (undefined-hue 0))
   "Convert RGB to HSV representation.  When hue is undefined (saturation is
 zero), UNDEFINED-HUE will be assigned."
@@ -97,10 +98,7 @@ ignored."
                 max)))
       (rgb (parse 0) (parse 1) (parse 2)))))
 
-
-
 ;;; conversion with generic functions
-
 (defgeneric as-hsv (color &optional undefined-hue)
   (:method ((color rgb) &optional (undefined-hue 0))
     (rgb-to-hsv color undefined-hue))
@@ -118,7 +116,6 @@ ignored."
     (hex-to-rgb string)))
 
 ;;; internal functions
-
 (declaim (inline cc))
 (defun cc (a b alpha)
   "Convex combination (1-ALPHA)*A+ALPHA*B, ie  ALPHA is the weight of A."
@@ -126,7 +123,6 @@ ignored."
   (+ (* (- 1 alpha) a) (* alpha b)))
 
 ;;; macros used by color generator scripts
-
 (defmacro define-rgb-color (name red green blue)
   "Macro for defining color constants."
   (let ((constant-name (symbolicate #\+ name #\+)))
