@@ -9,28 +9,9 @@
 ;;; Code:
 (in-package :std)
 
-;; (reexport-from :sb-thread
-;; 	       :include '(:main-thread
-;; 			  :*current-thread*
-;; 			  :list-all-threads
-;; 			  :thread
-;; 			  :thread-alive-p
-;; 			  :thread-name
-;; 			  :thread-error
-;; 			  :thread-yield
-;; 			  :make-thread
-;; 			  :join-thread
-;; 			  :destroy-thread
-;; 			  :interrupt-thread
-;; 			  :semaphore
-;; 			  :get-semaphore
-;; 			  :make-semaphore
-;; 			  :mutex
-;; 			  :get-mutex
-;; 			  :make-mutex
-;; 			  :spinlock
-;; 			  :get-spinlock
-;; 			  :make-spinlock))
+(defvar *thread-id-map-lock* (make-mutex :name "thread-id-map"))
+
+(defvar *thread-id-map* (make-hash-table))
 
 (defun thread-support-p () (member :thread-support *features*))
 
@@ -48,3 +29,40 @@
      (lambda ()
        (format #.*standard-output* msg)))
     nil))
+
+;; this is all very unsafe. don't touch the finalizer thread plz.
+(defun find-thread (id)
+  "Search for thread by ID which must be an u64. On success returns the thread itself or nil."
+  (sb-thread::avlnode-data (sb-thread::avl-find id sb-thread::*all-threads*)))
+
+(defun thread-id-list ()
+  (sb-thread::avltree-filter #'sb-thread::avlnode-key sb-thread::*all-threads*))
+
+(defun thread-count ()
+  (sb-thread::avl-count sb-thread::*all-threads*))
+
+(defmacro def-thread (name)
+  `(progn
+     (defstruct (,name
+                 (:copier nil)
+                 (:include thread (%name ,(string-downcase (symbol-name name))))
+                 (:constructor ,(symbolicate 'make- name))
+                 (:conc-name "THREAD-")))))
+
+(defun make-threads (n name fn)
+  (loop for i from 1 to n
+        collect (make-thread fn :name (format nil "~A-~D" name i))))
+
+(defun timed-join-thread (thread &optional (timeout +timeout+))
+  (handler-case (sb-sys:with-deadline (:seconds timeout)
+                  (join-thread thread :default :aborted))
+    (sb-ext:timeout ()
+      :timeout)))
+
+(defun hang ()
+  (join-thread *current-thread*))
+
+(defun kill-thread (thread)
+  (when (thread-alive-p thread)
+    (ignore-errors
+      (terminate-thread thread))))

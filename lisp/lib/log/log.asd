@@ -1,7 +1,12 @@
 ;;; log.asd --- logging system
 (defsystem :log
   :depends-on (:std)
-  :components ((:file "pkg"))
+  :serial t
+  :components ((:file "pkg")
+               (:file "err")
+               (:file "log")
+               (:file "source")
+               (:file "sink"))
   :in-order-to ((test-op (test-op "log/tests"))))
 
 (defsystem :log/tests

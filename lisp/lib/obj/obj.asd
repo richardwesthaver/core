@@ -1,13 +1,18 @@
 (defsystem :obj
   :description "Lisp object library"
-  :depends-on (:std)
+  :depends-on (:std :cli)
   :serial t
   :components ((:file "pkg")
-               (:file "hash")
+               (:module "hash"
+                :components ((:file "hasher")
+                             (:file "map")
+                             (:file "set")
+                             (:file "chash")))
                (:file "id")
                (:file "seq")
                (:file "tree")
-               (:file "graph")
+               (:module "graph"
+                :components ((:file "pkg")))
                (:file "color")
                (:file "tbl")
                (:module "db"

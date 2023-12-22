@@ -1,5 +1,6 @@
+(require :sb-concurrency)
 (uiop:define-package :std
-    (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
+    (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-concurrency)
   (:use-reexport :std/named-readtables)
   (:shadowing-import-from :uiop :println)
   (:shadowing-import-from
@@ -71,7 +72,7 @@
    ;; :proper-list-of-length-p :proper-list-p :singleton-p
    ;; thread
    :print-thread-info :print-thread-message-top-level :thread-support-p
-:defpkg
+   :*global-mailbox*
    ;; util
    #:find-package* #:find-symbol* #:symbol-call
    #:intern* #:export* #:import* #:shadowing-import* 
