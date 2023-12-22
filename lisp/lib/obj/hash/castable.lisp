@@ -1,0 +1,829 @@
+;;; lib/obj/hash/castable.lisp --- CAS Table
+
+;; This implementation was written by Shinmera:
+;; https://github.com/Shinmera/luckless/blob/master/cat.lisp
+
+;; It is based on the JVM implementation of some concurrent data
+;; structures.
+
+;;; Code:
+(in-package :obj/hash)
+
+;;; Cat
+(defstruct (cat
+            (:constructor %make-cat (next table))
+            (:conc-name %cat-))
+  (resizers 0 :type fixnum)
+  (next nil :type t)
+  (sum-cache most-negative-fixnum :type fixnum)
+  (fuzzy-sum-cache 0 :type fixnum)
+  (fuzzy-time 0 :type fixnum)
+  (table nil :type simple-vector))
+
+(defun make-cat (next size initial-element)
+  (declare (type fixnum initial-element))
+  (declare (type fixnum size))
+  (let ((table (make-array size :initial-element 0)))
+    (setf (aref table 0) initial-element)
+    (%make-cat next table)))
+
+(declaim (ftype (function (cat fixnum) fixnum) cat-sum))
+;; L199 long sum(long)
+(defun cat-sum (cat mask)
+  (declare (type fixnum mask))
+  (declare (optimize speed))
+  (let ((sum (%cat-sum-cache cat)))
+    (cond ((/= most-negative-fixnum sum)
+           sum)
+          (T
+           (setf sum (if (null (%cat-next cat))
+                         0
+                         (cat-sum (%cat-next cat) mask)))
+           (let ((%t (%cat-table cat)))
+             (dotimes (i (length %t))
+               (incf sum (logand (the fixnum (svref %t i)) (lognot mask))))
+             (setf (%cat-sum-cache cat) sum)
+             sum)))))
+
+(declaim (ftype (function (cat fixnum) fixnum) cat-sum~))
+;; L212 long estimate_sum(long)
+(defun cat-sum~ (cat mask)
+  (declare (type fixnum mask))
+  (declare (optimize speed))
+  (cond ((<= (length (%cat-table cat)) 64)
+         (cat-sum cat mask))
+        (T
+         (let ((millis (get-internal-real-time)))
+           (when (/= millis (%cat-fuzzy-time cat))
+             (setf (%cat-fuzzy-sum-cache cat) (cat-sum cat mask))
+             (setf (%cat-fuzzy-time cat) millis))
+           (%cat-fuzzy-sum-cache cat)))))
+
+;;; Counter
+(defstruct (counter (:constructor make-counter ())
+                    (:conc-name %counter-))
+  ;; Why is this slot at L97, after all the methods? I almost missed it, reading
+  ;; the source code.
+  (cat (make-cat NIL 4 0) :type cat))
+
+(declaim (inline decf-counter))
+;; L41 decrement(), but with a delta argument.
+(defun decf-counter (counter &optional (delta 1))
+  (declare (type fixnum delta))
+  (counter-add-if-mask counter (- delta) 0))
+
+(declaim (inline incf-counter))
+;; L43 increment(), but with a delta increment.
+(defun incf-counter (counter &optional (delta 1))
+  (declare (type fixnum delta))
+  (counter-add-if-mask counter delta 0))
+
+;; L48 set(long)
+(defun (setf counter-value) (x counter)
+  (declare (optimize speed))
+  (declare (type fixnum x))
+  (loop with new = (make-cat NIL 4 x)
+        until (sb-ext:cas (%counter-cat counter) (%counter-cat counter) new)))
+
+(declaim (inline counter-value))
+;; L59 get()
+(defun counter-value (counter)
+  (cat-sum (%counter-cat counter) 0))
+
+(declaim (inline counter-value~))
+;; L69 estimate_get()
+(defun counter-value~ (counter)
+  (cat-sum~ (%counter-cat counter) 0))
+
+;; L150 add_if_mask(long, long, int, ConcurrentAutoTable)
+;; This is a method in the CAT in the Java implementation, but here the
+;; ConcurrentAutoTable (counter) is the object being acted upon.
+(defun counter-add-if-mask (counter x mask)
+  (declare (type fixnum x mask))
+  (declare (optimize speed))
+  (let* ((cat (%counter-cat counter))
+         (%t (%cat-table cat))
+         (idx (logand +global-hash+ (1- (length %t))))
+         (old (the fixnum (svref %t idx)))
+         ;; Try once quickly
+         (ok (sb-ext:cas (svref %t idx) (logand old (lognot mask)) (+ old x))))
+    (flet ((fail () (return-from counter-add-if-mask old)))
+      ;; Clear the cache
+      (when (/= (%cat-sum-cache cat) most-negative-fixnum)
+        (setf (%cat-sum-cache cat) most-negative-fixnum))
+      (when ok (fail))
+      (when (/= 0 (logand old mask)) (fail))
+      ;; Try some more
+      (let ((cnt 0))
+        (declare (type fixnum cnt))
+        (loop (setf old (the fixnum (svref %t idx)))
+              (when (/= 0 (logand old mask)) (fail))
+              (when (sb-ext:cas (svref %t idx) old (+ old x)) (return))
+              (incf cnt))
+        ;; Make sure we don't spin too long
+        (when (< cnt MAX-SPIN) (fail))
+        ;; Or grow too big
+        (when (<= (* 1024 1024) (length %t)) (fail))
+        ;; We are contending too much, increase the size in hopes it'll help
+        (let ((r (%cat-resizers cat))
+              (newbytes (ash (ash (length %t) 1) 4)))
+          (declare (type fixnum r newbytes))
+          (loop while (not (sb-ext:cas (%cat-resizers cat) r (+ r newbytes)))
+                do (setf r (%cat-resizers cat)))
+          (incf r newbytes)
+          ;; Already doubled up, don't bother
+          (unless (eql cat (%counter-cat counter))
+            (fail))
+          ;; Did we try to allocate too often already?
+          (when (/= 0 (ash r -17))
+            (sleep (/ (ash r -17) 1000))
+            (unless (eql cat (%counter-cat counter))
+              (fail)))
+          ;; Try to extend the CAT once, if it fails another thread
+          ;; already did it for us so we don't have to retry.
+          (let ((new (make-cat cat (* (length %t) 2) 0)))
+            (sb-ext:cas (%counter-cat counter) cat new)
+            (fail)))))))
+
+;;; CAS Table
+(eval-always
+  (defstruct (prime (:constructor prime (value)))
+    (value nil :type t))
+
+  (defmethod make-load-form ((self prime) &optional environment)
+    (declare (ignore environment))
+    `(prime 'prime)))
+
+(defconstant max-spin 2)
+(defconstant reprobe-limit 10)
+(defconstant min-size-log 3)
+(defconstant min-size (ash 1 min-size-log))
+(defconstant no-match-old 'no-match-old)
+(defconstant match-any 'match-any)
+(defconstant tombstone 'tombstone)
+(defconstant tombprime (if (boundp 'tombprime) tombprime (prime tombstone)))
+(defconstant no-value 'no-value)
+
+(declaim (ftype (function (unsigned-byte) fixnum) rehash)
+         (inline rehash))
+
+(defun rehash (h)
+  "Spread bits of the hash H around."
+  (declare (optimize speed))
+  (declare (type (integer 0) h))
+  (let ((h (logand h most-positive-fixnum)))
+    (declare (type (unsigned-byte 64) h))
+    (incf h (logior (logand most-positive-fixnum (ash h 15)) #xffffcd7d))
+    (setf h (logior h (ash h -10)))
+    (incf h (logand most-positive-fixnum (ash h 3)))
+    (setf h (logior h (ash h -6)))
+    (incf h (logand most-positive-fixnum (+ (ash h 2) (ash h 14))))
+    (setf h (logior h (ash h -16)))
+    (logand h most-positive-fixnum)))
+
+(declaim (inline reprobe-limit))
+(defun reprobe-limit (len)
+  (+ reprobe-limit (ash len -2)))
+
+;; L713, private class CHM
+;; "The control structure for the NonBlockingHashMap"
+(defstruct (chm
+            (:constructor make-chm (size))
+            (:conc-name %chm-))
+  (size (error "no size?") :type counter)
+  (slots (make-counter) :type counter)
+  (newkvs NIL :type (or null simple-vector))
+  (resizers 0 :type fixnum)
+  (copy-idx 0 :type fixnum)
+  (copy-done 0 :type fixnum))
+(declaim (ftype (function (chm) fixnum)
+                %chm-resizers %chm-copy-idx %chm-copy-done))
+
+;; L716, int size()
+(declaim (inline chm-size))
+(defun chm-size (chm)
+  (counter-value (%chm-size chm)))
+
+;; L729, int slots()
+(declaim (inline chm-slots))
+(defun chm-slots (chm)
+  (counter-value (%chm-slots chm)))
+
+(declaim (inline cas-newkvs))
+;; L742, boolean CAS_newkvs(Object[])
+(defun cas-newkvs (chm newkvs)
+  (loop while (null (%chm-newkvs chm))
+        do (when (sb-ext:cas (%chm-newkvs chm) NIL newkvs)
+             (return T))
+        finally (return NIL)))
+
+;; Heuristic to test if the table is too full and we should make a new one.
+(declaim (inline table-full-p))
+;; L780, boolean tableFull(int, int)
+(defun table-full-p (chm reprobe-cnt len)
+  (and (<= REPROBE-LIMIT reprobe-cnt)
+       (<= (reprobe-limit len) (counter-value~ (%chm-slots chm)))))
+
+(defstruct (castable
+            (:constructor %make-castable (kvs last-resize test hasher))
+            (:conc-name %castable-))
+  (kvs (error "no KVS?") :type simple-vector)
+  (last-resize (error "no LAST-RESIZE?") :type fixnum)
+  (reprobes (make-counter) :type counter)
+  (test (error "no TEST?") :type (function (T T) boolean))
+  (hasher (error "no HASHER?") :type (function (T) fixnum)))
+
+(declaim (inline chm))
+(declaim (ftype (function (simple-vector) chm) chm))
+;; L138, static CHM chm(Object[])
+(defun chm (kvs)
+  (svref kvs 0))
+
+(declaim (inline hashes))
+(declaim (ftype (function (simple-vector) (simple-array fixnum)) hashes))
+;; L139, static int[] hashes(Object[]) 
+(defun hashes (kvs)
+  (svref kvs 1))
+
+(declaim (inline len))
+(declaim (ftype (function (simple-vector) (unsigned-byte 32)) len))
+;; L140, static int len(Object[])
+(defun len (kvs)
+  (the (unsigned-byte 32) (ash (- (length kvs) 2) -1)))
+
+(declaim (inline key))
+(declaim (ftype (function (simple-vector (unsigned-byte 32)) T) key))
+;; L175 static Object key(Object[], int)
+(defun key (kvs idx)
+  (svref kvs (+ 2 (ash idx 1))))
+
+(declaim (inline val))
+(declaim (ftype (function (simple-vector (unsigned-byte 32)) T) val))
+;; L176 static Object val(Object[], int)
+(defun val (kvs idx)
+  (svref kvs (+ 3 (ash idx 1))))
+
+(declaim (inline cas-key))
+;; L177 static boolean CAS_key(Object[], int, Object, Object)
+(defun cas-key (kvs idx old key)
+  (declare (simple-vector kvs))
+  (sb-ext:cas (svref kvs (+ 2 (ash idx 1))) old key))
+
+(declaim (inline cas-val))
+;; L180 static boolean CAS_val(Object[], int, Object, Object)
+(defun cas-val (kvs idx old val)
+  (declare (simple-vector kvs))
+  (sb-ext:cas (svref kvs (+ 3 (ash idx 1))) old val))
+
+;; L237 long reprobes()
+(defun reprobes (table)
+  (prog1 (counter-value (%castable-reprobes table))
+    (setf (%castable-reprobes table) (make-counter))))
+
+(defun determine-hasher (test)
+  (or (cond ((eq test #'eq) #'sb-impl::eq-hash)
+            ((eq test #'eql) #'sb-impl::eql-hash)
+            ((eq test #'equal) #'sb-impl::equal-hash)
+            ((eq test #'equalp) #'sb-impl::equalp-hash)
+             ;; FIXME: implement own equalp hash
+            (t (third (find test sb-impl::*user-hash-table-tests* :key #'second))))
+      (error "Don't know a hasher for ~a." test)))
+
+(defvar *maximum-size* (* 8 1024 1024))
+(defun make-castable (&key test size hash-function)
+  (let* ((size (min *maximum-size* (max MIN-SIZE (or size 0))))
+         (test (etypecase test
+                 (null #'eql)
+                 (function test)
+                 (symbol (fdefinition test))))
+         (hash-function (etypecase hash-function
+                          (null (determine-hasher test))
+                          (function hash-function)
+                          (symbol (fdefinition hash-function)))))
+    (let ((power-of-two (expt 2 (integer-length size))))
+      (let ((kvs (make-array (+ 2 (ash power-of-two 1)) :initial-element NO-VALUE)))
+        (setf (svref kvs 0) (make-chm (make-counter)))
+        (setf (svref kvs 1) (make-array power-of-two :element-type 'fixnum :initial-element 0))
+        (%make-castable kvs (get-internal-real-time) test hash-function)))))
+
+(declaim (inline hash))
+(defun hash (table thing)
+  (rehash (funcall (%castable-hasher table) thing)))
+
+;; Not `int size()` from the original! This is more like HASH-TABLE-SIZE, as
+;; it is the number of mappings that can be held right now.
+(defun castable-size (table)
+  (/ (- (length (%castable-kvs table)) 2) 2))
+
+;; L281 int size()
+(defun castable-count (table)
+  (chm-size (chm (%castable-kvs table))))
+
+(defun castable-test (table)
+  (%castable-test table))
+
+(defun castable-hasher (table)
+  (%castable-hasher table))
+
+;; L321 TypeV putIfAbsent(TypeK, TypeV)
+(defun cput-if-absent (table key value)
+  (multiple-value-bind (out present?)
+      (cput-if-match table key value TOMBSTONE)
+    (declare (ignore out))
+    (not present?)))
+;; Missing: containsValue
+;; L342 boolean replace(TypeK, TypeV)
+(defun cput-if-present (table key value)
+  (multiple-value-bind (out present?)
+      (cput-if-match table key value MATCH-ANY)
+    (if present?
+        (funcall (%castable-test table) out value)
+        nil)))
+;; L347 boolean replace(TypeK, TypeV, TypeV)
+(defun cput-if-equal (table key new-value old-value)
+  (multiple-value-bind (out present?)
+      (cput-if-match table key new-value old-value)
+    (if present?
+        (funcall (%castable-test table) old-value out)
+        nil)))
+;; Missing: clone
+
+;; L313 put(TypeK, TypeV)
+(defun (setf cgethash) (value key table &key (if-exists :overwrite) (if-does-not-exist :overwrite))
+  (ecase if-exists
+    (:overwrite
+     (ecase if-does-not-exist
+       (:overwrite
+        (cput-if-match table key value NO-MATCH-OLD))
+       (:error
+        (unless (cput-if-present table key value)
+          (error "Key does not exist in table.")))
+       ((NIL)
+        (cput-if-present table key value))))
+    (:error
+     (ecase if-does-not-exist
+       (:overwrite
+        (unless (cput-if-absent table key value)
+          (error "Key already exists in table.")))
+       (:error
+        (error "Key either does or does not exist in table."))
+       ((NIL)
+        (when (nth-value 1 (cgethash key table))
+          (error "Key already exists in table.")))))
+    ((NIL)
+     (ecase if-does-not-exist
+       (:overwrite
+        (cput-if-absent table key value))
+       (:error
+        (unless (nth-value 1 (cgethash key table))
+          (error "Key does not exist in table.")))
+       ((NIL)
+        NIL))))
+  value)
+
+(define-compiler-macro (setf cgethash) (value key table &key (if-exists :overwrite) (if-does-not-exist :create))
+  (let ((v (gensym "VALUE")))
+    `(let ((,v ,value))
+       ,(ecase if-exists
+          (:overwrite
+           (ecase if-does-not-exist
+             (:create
+              `(cput-if-match ,table ,key ,v NO-MATCH-OLD))
+             (:error
+              `(unless (cput-if-present ,table ,key ,v)
+                 (error "Key does not exist in table.")))
+             ((NIL)
+              `(cput-if-present ,table ,key ,v))))
+          (:error
+           (ecase if-does-not-exist
+             (:create
+              `(unless (cput-if-absent ,table ,key ,v)
+                 (error "Key already exists in table.")))
+             (:error
+              `(error "Key either does or does not exist in table."))
+             ((NIL)
+              `(when (nth-value 1 (cgethash ,key ,table))
+                 (error "Key already exists in table.")))))
+          ((NIL)
+           (ecase if-does-not-exist
+             (:create
+              `(cput-if-absent ,table ,key ,v))
+             (:error
+              `(unless (nth-value 1 (cgethash ,key ,table))
+                 (error "Key does not exist in table.")))
+             ((NIL)
+              NIL))))
+       ,v)))
+
+;; Close to L329 TypeV remove(Object)
+;; REMHASH returns true if there was a mapping and false otherwise, but
+;; remove() returns `null` or the old value.
+(defun cremhash (key table)
+  (if (eq TOMBSTONE (%cput-if-match table (%castable-kvs table) key TOMBSTONE NO-MATCH-OLD))
+      NIL
+      T))
+
+;; Close to L334 boolean remove(Object, Object)
+(defun try-cremhash (table key val)
+  (multiple-value-bind (out present?)
+      (cput-if-match table key TOMBSTONE val)
+    (if present?
+        (funcall (%castable-test table) out val)
+        nil)))
+;; L352 TypeV putIfMatch(Object, Object, Object)
+(defun cput-if-match (table key new old)
+  (let ((res (%cput-if-match table (%castable-kvs table) key new old)))
+    (assert (not (prime-p res)))
+    (assert (not (eq res NO-VALUE)))
+    (if (eq res TOMBSTONE)
+        (values NIL NIL)
+        (values res T))))
+;; L372 void clear()
+(defun cclrhash (table)
+  (let ((new (%castable-kvs (make-castable))))
+    (loop until (sb-ext:cas (%castable-kvs table) (%castable-kvs table) new))))
+
+(declaim (inline keyeq))
+;; L467 boolean keyeq(Object, Object, int[], int, int)
+(defun keyeq (k key hashes hash fullhash test)
+  (declare (type fixnum hash fullhash))
+  (declare (type (function (T T) boolean) test))
+  (declare (type (simple-array fixnum (*)) hashes))
+  (declare (optimize speed))
+  (or (eq k key)
+      ;; Key does not match exactly, so try more expensive comparison.
+      (and ;; If the hash exists, does it match?
+           (or (= (aref hashes hash) 0)
+               (= (aref hashes hash) fullhash))
+           ;; Avoid testing tombstones
+           (not (eq k TOMBSTONE))
+           ;; Call test function for real comparison
+           (funcall test key k))))
+;; L502 Object get_impl(NonBlockingHashMap, Object[], Object, int)
+(defun %cgethash (table kvs key fullhash)
+  (declare (type castable table))
+  (declare (type simple-vector kvs))
+  (declare (type fixnum fullhash))
+  (declare (optimize speed))
+  (let* ((len (len kvs))
+         (chm (chm kvs))
+         (hashes (hashes kvs))
+         (idx (logand fullhash (1- len)))
+         (test (%castable-test table))
+         (reprobe-cnt 0))
+    (declare (fixnum reprobe-cnt))
+    ;; Spin for a hit
+    (loop (let ((k (key kvs idx))
+                (v (val kvs idx)))
+            ;; Early table miss
+            (when (eq k NO-VALUE) (return NO-VALUE))
+            (let ((newkvs (%chm-newkvs chm)))
+              ;; Compare the keys
+              (when (keyeq k key hashes idx fullhash test)
+                ;; If we are not copying at the moment, we're done.
+                (unless (prime-p v)
+                  (return (if (eq v TOMBSTONE)
+                              NO-VALUE
+                              v)))
+                ;; Copy in progress, help with copying and retry.
+                (return (%cgethash table
+                                   (copy-slot-and-check chm table kvs idx key)
+                                   key
+                                   fullhash)))
+              ;; If we exceed reprobes, help resizing.
+              (when (or (<= (reprobe-limit len) (incf reprobe-cnt))
+                        (eq key TOMBSTONE))
+                (if (null newkvs)
+                    ;; Nothing here.
+                    (return NO-VALUE)
+                    ;; Retry in a new table copy
+                    (return (%cgethash table (help-copy table newkvs) key fullhash))))
+              ;; Reprobe.
+              (setf idx (logand (1+ idx) (1- len))))))))
+
+;; L495 TypeV get(Object)
+(defun cgethash (key table &optional default)
+  (declare (optimize speed))
+  (let* ((fullhash (hash table key))
+         (value (%cgethash table (%castable-kvs table) key fullhash)))
+    ;; Make sure we never return primes
+    (check-type value (not prime))
+    (if (eql value NO-VALUE)
+        (values default NIL)
+        (values value T))))
+
+;; L555 Object putIfMatch(NonBlockingHashMap, Object[], Object, Object, Object)
+(defun %cput-if-match (table kvs key put exp)
+  (declare (type castable table))
+  (declare (type simple-vector kvs))
+  (declare (optimize speed))
+  (assert (and (not (prime-p put))
+               (not (prime-p exp))))
+  (let* ((fullhash (hash table key))
+         (len (len kvs))
+         (chm (chm kvs))
+         (hashes (hashes kvs))
+         (test (%castable-test table))
+         (idx (logand fullhash (1- len)))
+         (reprobe-cnt 0)
+         (k NO-VALUE) (v NO-VALUE)
+         (newkvs NIL))
+    (declare (type fixnum idx reprobe-cnt))
+    ;; Spin for a hit
+    (loop (setf v (val kvs idx))
+          (setf k (key kvs idx))
+          ;; Is the slot free?
+          (when (eq k NO-VALUE)
+            ;; No need to put a tombstone in an empty field
+            (when (eq put TOMBSTONE)
+              (return-from %cput-if-match put))
+            ;; Claim the spot
+            (when (cas-key kvs idx NO-VALUE key)
+              (incf-counter (%chm-slots chm))
+              (setf (aref hashes idx) fullhash)
+              (return))
+            ;; We failed, update the key
+            (setf k (key kvs idx))
+            (assert (not (eq k NO-VALUE))))
+          ;; Okey, we have a key there
+          (setf newkvs (%chm-newkvs chm))
+          ;; Test if this is our key
+          (when (keyeq k key hashes idx fullhash test)
+            (return))
+          ;; If we exceed reprobes, start resizing
+          (when (or (<= (reprobe-limit len) (incf reprobe-cnt))
+                    (eq key TOMBSTONE))
+            (setf newkvs (resize chm table kvs))
+            (unless (eq exp NO-VALUE) (help-copy table newkvs))
+            (return-from %cput-if-match
+              (%cput-if-match table newkvs key put exp)))
+          ;; Reprobe.
+          (setf idx (logand (1+ idx) (1- len))))
+    ;; We found a key slot, time to update it
+    ;; Fast-path
+    (when (eq put v) (return-from %cput-if-match v))
+    ;; Check if we want to move to a new table
+    (when (and ;; Do we have a new table already?
+               (null newkvs)
+               ;; Check the value
+               (or (and (eq v NO-VALUE) (table-full-p chm reprobe-cnt len))
+                   (prime-p v)))
+      (setf newkvs (resize chm table kvs)))
+    ;; Check if we are indeed moving and retry
+    (unless (null newkvs)
+      (return-from %cput-if-match
+        (%cput-if-match table (copy-slot-and-check chm table kvs idx exp) key put exp)))
+    ;; Finally we can do the update
+    (loop (check-type v (not prime))
+          ;; If we don't match the old, bail out
+          (when (and (not (eq exp NO-MATCH-OLD))
+                     (not (eq v exp))
+                     (or (not (eq exp MATCH-ANY))
+                         (eq v TOMBSTONE)
+                         (eq v NO-VALUE))
+                     (not (and (eq v NO-VALUE) (eq exp TOMBSTONE)))
+                     (or (eq exp NO-VALUE) (not (funcall test exp v))))
+            (return v))
+          ;; Perform the change
+          (when (cas-val kvs idx v put)
+            ;; Okey, we got it, update the size
+            (unless (eq exp NO-VALUE)
+              (when (and (or (eq v NO-VALUE) (eq v TOMBSTONE))
+                         (not (eq put TOMBSTONE)))
+                (incf-counter (%chm-size chm)))
+              (when (and (not (or (eq v NO-VALUE) (eq v TOMBSTONE)))
+                         (eq put TOMBSTONE))
+                (decf-counter (%chm-size chm))))
+            (return (if (and (eq v NO-VALUE) (not (eq exp NO-VALUE)))
+                        TOMBSTONE
+                        v)))
+          ;; CAS failed, retry
+          (setf v (val kvs idx))
+          ;; If we got a prime we need to restart from the beginning
+          (when (prime-p v)
+            (return (%cput-if-match table (copy-slot-and-check chm table kvs idx exp) key put exp))))))
+
+;; L699 Object[] help_copy(Object[])
+(declaim (inline help-copy))
+(defun help-copy (table helper)
+  (declare (type castable table))
+  (declare (optimize speed))
+  (let* ((topkvs (%castable-kvs table))
+         (topchm (chm topkvs)))
+    (unless (null (%chm-newkvs topchm))
+      (%help-copy topchm table topkvs NIL))
+    helper))
+
+;; L794 Object[] resize(NonBlockingHashMap, Object[])
+(defun resize (chm table kvs)
+  (declare (type chm chm))
+  (declare (type castable table))
+  (declare (type simple-array kvs))
+  (declare (optimize speed))
+  (assert (eq chm (chm kvs)))
+  ;; Check for resize in progress
+  (let ((newkvs (%chm-newkvs chm)))
+    (unless (null newkvs)
+      ;; Use the new table already
+      (return-from resize newkvs))
+    (let* ((oldlen (len kvs))
+           (sz (chm-size chm))
+           (newsz sz))
+      (declare (type fixnum oldlen sz newsz))
+      ;; Heuristic for new size
+      (when (<= (ash oldlen -2) sz)
+        (setf newsz (ash oldlen 1))
+        (when (<= sz (ash oldlen -1))
+          (setf newsz (ash oldlen 2))))
+      ;; Much denser table with more reprobes
+      #+(or)
+      (when (<= (ash oldlen -1) sz)
+        (setf newsz (ash oldlen 1)))
+      ;; Was the last resize recent? If so, double again
+      ;; to accommodate tables with lots of inserts at the moment.
+      (let ((tm (get-internal-real-time)))
+        (when (and (<= newsz oldlen)
+                   ;; If we resized less than a second ago
+                   (<= tm (+ (%castable-last-resize table)
+                             INTERNAL-TIME-UNITS-PER-SECOND))
+                   ;; And we have plenty of dead keys
+                   (<= (ash sz 1) (counter-value~ (%chm-slots chm))))
+          (setf newsz (ash oldlen 1))))
+      ;; Don't shrink
+      (when (< newsz oldlen) (setf newsz oldlen))
+      (let ((size MIN-SIZE)
+            (r (%chm-resizers chm)))
+        (declare (type fixnum size))
+        ;; Convert to power of two
+        (loop while (< size newsz)
+              do (setf size (ash size 1)))
+        ;; Limit the number of threads resizing things
+        (loop until (sb-ext:cas (%chm-resizers chm) r (1+ r))
+              do (setf r (%chm-resizers chm)))
+        ;; Size calculation: 2 words per table + extra
+        ;; NOTE: The original assumes 32 bit pointers, we conditionalise
+        (let ((megs (ash (ash (+ (* size 2) 4)
+                              #+64-BIT 4 #-64-BIT 3)
+                         -20)))
+          (declare (type fixnum megs))
+          (when (and (<= 2 r) (< 0 megs))
+            (setf newkvs (%chm-newkvs chm))
+            (unless (null newkvs)
+              (return-from resize newkvs))
+            ;; We already have two threads trying a resize, wait
+            (sleep (/ (* 8 megs) 1000))))
+        ;; Last check
+        (setf newkvs (%chm-newkvs chm))
+        (unless (null newkvs)
+          (return-from resize newkvs))
+        ;; Allocate the array
+        (setf newkvs (make-array (+ 2 (* 2 size)) :initial-element NO-VALUE))
+        (setf (svref newkvs 0) (make-chm (%chm-size chm)))
+        (setf (svref newkvs 1) (make-array size :element-type 'fixnum :initial-element 0))
+        ;; Check again after the allocation
+        (unless (null (%chm-newkvs chm))
+          (return-from resize (%chm-newkvs chm)))
+        ;; CAS the table in. We can let the GC handle deallocation. Thanks, GC!
+        (if (cas-newkvs chm newkvs)
+            newkvs
+            (%chm-newkvs chm))))))
+
+;; L906 help_copy_impl(NonBlockingHashMap, Object[], boolean)
+(defun %help-copy (chm table oldkvs copy-all)
+  (declare (type chm chm))
+  (declare (type castable table))
+  (declare (type simple-array oldkvs))
+  (declare (optimize speed))
+  (assert (eq chm (chm oldkvs)))
+  (let* ((newkvs (%chm-newkvs chm))
+         (oldlen (len oldkvs))
+         (min-copy-work (min oldlen 1024))
+         (panic-start -1)
+         (copy-idx -9999))
+    (declare (type fixnum oldlen min-copy-work copy-idx panic-start))
+    (assert (not (null newkvs)))
+    ;; Loop while there's work to be done
+    (loop while (< (%chm-copy-done chm) oldlen)
+          do ;; We panic if we tried to copy twice and it failed.
+          (when (= -1 panic-start)
+            (setf copy-idx (%chm-copy-idx chm))
+            (loop while (and (< copy-idx (ash oldlen 1))
+                             (not (sb-ext:cas (%chm-copy-idx chm) copy-idx (+ copy-idx min-copy-work))))
+                  do (setf copy-idx (%chm-copy-idx chm)))
+            (unless (< copy-idx (ash oldlen 1))
+              (setf panic-start copy-idx)))
+          ;; Okey, now perform the copy.
+          (let ((workdone 0))
+            (declare (type fixnum workdone))
+            (dotimes (i min-copy-work)
+              (when (copy-slot table (logand (+ copy-idx i) (1- oldlen))
+                               oldkvs newkvs)
+                (incf workdone)))
+            ;; Promote our work
+            (when (plusp workdone)
+              (copy-check-and-promote chm table oldkvs workdone))
+            (incf copy-idx min-copy-work)
+            ;; End early if we shouldn't copy everything.
+            (when (and (not copy-all) (= -1 panic-start))
+              (return-from %help-copy))))
+    ;; Promote again in case we race on end of copy
+    (copy-check-and-promote chm table oldkvs 0)))
+
+;; Copy the slot and check that we have done so successfully.
+;; L970 Object[] copy_slot_and_check(NonBlockingHashMap, Object[], int, Object)
+(defun copy-slot-and-check (chm table oldkvs idx should-help)
+  (declare (type chm chm))
+  (declare (type castable table))
+  (declare (type simple-array oldkvs))
+  (declare (optimize speed))
+  (assert (eq chm (chm oldkvs)))
+  (let ((newkvs (%chm-newkvs chm)))
+    (assert (not (null newkvs)))
+    (when (copy-slot table idx oldkvs (%chm-newkvs chm))
+      (copy-check-and-promote chm table oldkvs 1))
+    (if should-help
+        (help-copy table newkvs)
+        newkvs)))
+
+;; L983 copy_check_and_promote(NonBlockingHashMap, Object[], int)
+(defun copy-check-and-promote (chm table oldkvs work-done)
+  (declare (type chm chm))
+  (declare (type castable table))
+  (declare (type simple-array oldkvs))
+  (declare (type fixnum work-done))
+  (declare (optimize speed))
+  (assert (eq chm (chm oldkvs)))
+  (let ((oldlen (len oldkvs))
+        (copy-done (%chm-copy-done chm)))
+    (assert (<= (+ copy-done work-done) oldlen))
+    (when (< 0 work-done)
+      (loop until (sb-ext:cas (%chm-copy-done chm) copy-done (+ copy-done work-done))
+            do (setf copy-done (%chm-copy-done chm))
+               (assert (<= (+ copy-done work-done) oldlen))))
+    ;; Check for copy being completely done and promote
+    (when (and (= (+ copy-done work-done) oldlen)
+               (eq (%castable-kvs table) oldkvs)
+               (sb-ext:cas (%castable-kvs table) oldkvs (%chm-newkvs chm)))
+      (setf (%castable-last-resize table) (get-internal-real-time)))))
+
+;; Copy one slot into the new table,
+;; returns true if we are sure that the new table has a value.
+;; L1023 boolean copy_slot(NonBlockingHashMap, int, Object[], Object[])
+(defun copy-slot (table idx oldkvs newkvs)
+  (declare (type castable table))
+  (declare (type fixnum idx))
+  (declare (type simple-array oldkvs newkvs))
+  (declare (optimize speed))
+  ;; First tombstone the key blindly.
+  (let (key)
+    (loop while (eq (setf key (key oldkvs idx)) NO-VALUE)
+          do (cas-key oldkvs idx NO-VALUE TOMBSTONE))
+    ;; Prevent new values from showing up in the old table
+    (let ((oldval (val oldkvs idx)))
+      (loop until (prime-p oldval)
+            for box = (if (or (eq oldval NO-VALUE)
+                              (eq oldval TOMBSTONE))
+                          TOMBPRIME
+                          (prime oldval))
+            do (when (cas-val oldkvs idx oldval box)
+                 ;; We made sure to prime the value to prevent updates.
+                 (when (eq box TOMBPRIME)
+                   (return-from copy-slot T))
+                 (setf oldval box)
+                 (return))
+               ;; Retry on CAS failure
+               (setf oldval (val oldkvs idx)))
+      (when (eq oldval TOMBPRIME)
+        ;; We already completed the copy
+        (return-from copy-slot NIL))
+      ;; Finally do the actual copy, but only if we would write into
+      ;; a null. Otherwise, someone else already copied.
+      (let ((old-unboxed (prime-value oldval)))
+        (assert (not (eq old-unboxed TOMBSTONE)))
+        (prog1 (eq NO-VALUE (%cput-if-match table newkvs key old-unboxed NO-VALUE))
+          ;; Now that the copy is done, we can stub out the old key completely.
+          (loop until (cas-val oldkvs idx oldval TOMBPRIME)
+                do (setf oldval (val oldkvs idx))))))))
+
+(defun cmaphash (function table)
+  (let (snapshot-kvs)
+    (loop for top-kvs = (%castable-kvs table)
+          for top-chm = (chm top-kvs)
+          for newkvs  = (%chm-newkvs top-chm)
+          until (null newkvs)
+          do (help-copy table newkvs)
+          finally (setf snapshot-kvs top-kvs))
+    (loop for position from 2 below (length snapshot-kvs) by 2
+          for key   = (aref snapshot-kvs position)
+          for value = (aref snapshot-kvs (1+ position))
+          unless (or (eq key   NO-VALUE)
+                     (eq key   TOMBSTONE)
+                     (eq value NO-VALUE))
+            do (funcall function key value))))
+
+(defmethod print-object ((table castable) stream)
+  (print-unreadable-object (table stream :type t :identity t)
+    (format stream ":test ~s :count ~s :size ~s"
+            (castable-test table)
+            (castable-count table)
+            (castable-size table))))

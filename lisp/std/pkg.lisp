@@ -1,6 +1,5 @@
-(require :sb-concurrency)
 (uiop:define-package :std
-    (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-concurrency)
+    (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
   (:use-reexport :std/named-readtables)
   (:shadowing-import-from :uiop :println)
   (:shadowing-import-from
@@ -72,7 +71,10 @@
    ;; :proper-list-of-length-p :proper-list-p :singleton-p
    ;; thread
    :print-thread-info :print-thread-message-top-level :thread-support-p
-   :*global-mailbox*
+   :find-thread-by-id :thread-id-list :def-thread 
+   :make-threads :with-threads :finish-threads
+   :timed-join-thread :kill-thread :hang
+   :thread-count :dump-thread
    ;; util
    #:find-package* #:find-symbol* #:symbol-call
    #:intern* #:export* #:import* #:shadowing-import* 
@@ -168,6 +170,7 @@
    :rcurry
    :named-lambda
    ;; alien
+   :make-bits
    ;; :defbytes
    ;; :u1 :u2 :u3 :u4 :u8 :u16 :u24 :u32 :u64 :u128
    ;; :i2 :i3 :i4 :i8 :i16 :i24 :i32 :i64 :i128
