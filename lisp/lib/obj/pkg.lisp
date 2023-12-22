@@ -2,8 +2,28 @@
   (:nicknames :hash)
   (:use :cl :std)
   (:export 
+   :*global-hasher*
+   :+global-hash+
    :djb
-   :hash-object))
+   :hash-object
+   :hash-object-address
+   ;; castable
+   :castable
+   :make-castable
+   :castable-p
+   :rehash
+   :castable-size
+   :castable-count
+   :castable-test
+   :castable-hasher
+   :cgethash
+   :cremhash
+   :try-cremhash
+   :cput-if-absent
+   :cput-if-equal
+   :cput-if-present
+   :cclrhash
+   :cmaphash))
 
 (defpackage :obj/id
   (:nicknames :id)

@@ -85,6 +85,10 @@
 (defun bool-to-foreign-int (val)
   (if val 1 0))
 
+;;; Bits
+(defun make-bits (length &rest args)
+  (apply #'make-array length (nconc '(:element-type bit) args)))
+
 ;;; Bytes
 ;; (defmacro defbytes (&body bitsets)
 ;;   "For each cons-cell in BITSETS, define a new CAR-byte type for each

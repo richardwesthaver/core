@@ -52,7 +52,7 @@
   (is (equal (mapcar ‹unless 'evenp {+ 4}› '(1 2 3 4)) (list 5 nil 7 nil))))
 
 (deftest sym ()
-  "Test STD.SYM"
+  "Test standard symbol utils"
   ;; gensyms
   (is (not (equalp (make-gensym 'a) (make-gensym 'a))))
   (is (eq 'std/tests::foo (format-symbol :std/tests "~A" 'foo)))
@@ -60,14 +60,14 @@
 
 ;;;; TODO
 (deftest str ()
-  "Test STD.STR"
+  "Test standard string utils"
   (is (typep "test" 'string-designator))
   (is (typep 'test 'string-designator))
   (is (typep #\C 'string-designator))
   (is (not (typep 0 'string-designator))))
 
 (deftest list ()
-  "Test STD.LIST"
+  "Test standard list utils"
   ;; same object - a literal
   (is (eq (ensure-car '(0)) (ensure-car 0)))
   (is (eq (ensure-car '(nil)) (ensure-car nil)))
@@ -75,15 +75,23 @@
   (is (not (eq (ensure-cons 0) (ensure-cons 0))))
   (is (equal (ensure-cons 0) (ensure-cons 0))))
 
-(deftest cond ()
-  "Test STD.COND")
+(deftest err ()
+  "Test standard error handlers")
 
 (deftest thread ()
-  "Test STD.THREAD"
-  (is (stringp (print-thread-info nil))))
+  "Test standard threads"
+  (is (stringp (print-thread-info nil)))
+  (is (find-thread-by-id (car (thread-id-list))))
+  (is (thread-count))
+  (let ((threads
+          (make-threads 16 "threads" (lambda () (is (= 42 (1+ 41)))))))
+    (loop for th in threads
+          do (sb-thread:join-thread th))
+    (loop for th in threads
+          collect (is (not (sb-thread:thread-alive-p th))))))
 
 (deftest fmt ()
-  "Test STD.FMT"
+  "Test standard formatters"
   (is (string= (format nil "| 1 | 2 | 3 |~%") (fmt-row '(1 2 3))))
   (is (string= (fmt-sxhash (sxhash t)) (fmt-sxhash (sxhash t))))
   (is (string= 
@@ -108,13 +116,19 @@
 "#)))
 
 (deftest ana ()
-  "Test STD.ANA"
+  "Test standard anaphoric macros"
   (is (= 8 
 	 (aif (+ 2 2)
-	      (+ it it)))))
+	      (+ it it))))
+  (is (= 42 (awhen 42 it)))
+  (is (= 3 (acond ((1+ 1) (1+ it)))))
+  (loop for x in '(1 2 3)
+        for y in (funcall (alet ((a 1) (b 2) (c 3))
+                                    (lambda () (mapc #'1+ (list a b c)))))
+        collect (is (= x y))))
 
 (deftest pan ()
-  "Test STD.PAN"
+  "Test standard pandoric macros"
   (let ((p
 	  (plambda (a) (b c)
 		   (if (not a)
@@ -127,7 +141,7 @@
       (is (= 1 b c)))))
 
 (deftest alien ()
-  "Test alien utils."
+  "Test standard alien utils"
   (is (= 0 (foreign-int-to-integer 0 4)))
   (is (= 1 (bool-to-foreign-int t))))
 
