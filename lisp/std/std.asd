@@ -6,7 +6,7 @@
 (register-system-packages "std/named-readtables" '(:std))
 
 (defsystem :std
-  :depends-on (:std/named-readtables :cl-ppcre)
+  :depends-on (:std/named-readtables :cl-ppcre :sb-concurrency)
   :serial t
   :components ((:file "pkg")
                (:file "err")

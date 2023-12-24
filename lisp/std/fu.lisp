@@ -858,3 +858,13 @@ corresponding function."
           do (setf (row-major-aref new-array i)
                    (row-major-aref array i)))
     new-array))
+
+;;; hash-table utils
+(defun hash-table-alist (table)
+  "Returns an association list containing the keys and values of hash table
+TABLE."
+  (let ((alist nil))
+    (maphash (lambda (k v)
+               (push (cons k v) alist))
+             table)
+    alist))

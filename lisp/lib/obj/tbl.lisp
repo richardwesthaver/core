@@ -151,10 +151,10 @@
           until (null line)
           collect (sequence->row (funcall filter line)))))))
 
-(defun read-csv (filename &optional parse-elements)
+(defun table-from-csv (filename &optional parse-elements)
   "Creates a table from a comma-separated values file."
   (table-from-file filename :separator '(#\,) :parse-elements parse-elements))
 
-(defun read-tsv (filename &optional parse-elements)
+(defun table-from-tsv (filename &optional parse-elements)
   "Creates a table from a tab-separated values file."
   (table-from-file filename :separator #\tab :parse-elements parse-elements))

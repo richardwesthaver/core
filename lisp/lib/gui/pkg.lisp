@@ -11,6 +11,10 @@
   (:use :cl :std :gui/core :gui/wm)
   (:export))
 
+(defpackage :gui/proto/xdg-shell
+  (:use :cl :std :gui/core :gui/wm)
+  (:export))
+
 (defpackage :gui/ext
   (:use :cl :std :log :gui/core)
   (:export 

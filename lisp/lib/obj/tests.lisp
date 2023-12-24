@@ -168,3 +168,18 @@
           (loop for i from idx below tries by threads
                 do (loop until (cremhash i table))))))
       (is = 0 (castable-count table)))))
+
+(deftest ring ())
+
+(deftest generic-tree ()
+  (let ((dag 
+          (make-binary-node 0 
+                            (make-binary-node 1 (make-node 0) (make-node 1))
+                            (make-binary-node 2 (make-node 2) (make-node 3)))))))
+(deftest bro-tree ())
+
+(deftest rb-tree ())
+
+(deftest avl-tree ())
+
+(deftest graph ())

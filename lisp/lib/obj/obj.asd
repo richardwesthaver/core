@@ -11,7 +11,11 @@
                              (:file "castable")))
                (:file "id")
                (:file "seq")
-               (:file "tree")
+               (:module "tree"
+                :components ((:file "node")
+                             (:file "avl")
+                             (:file "rb")
+                             (:file "bro")))
                (:module "graph"
                 :components ((:file "pkg")))
                (:module "color"
@@ -19,6 +23,8 @@
                              (:file "palette")
                              (:file "util")
                              (:file "x11-colors")))
+               (:module "time"
+                :components ((:file "local")))
                (:file "tbl")
                (:module "db"
                 :components ((:file "mop")
