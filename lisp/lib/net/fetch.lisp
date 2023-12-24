@@ -1,3 +1,5 @@
+(in-package :net/fetch)
+
 (define-condition invalid-path-error (error)
   ((text :initarg :text :reader text)))
 
@@ -43,20 +45,8 @@
                  :text (format nil "Invalid path: ~A" path)))))
 
 (defun %fetch (url-or-path &key (cache t)
-                            (dir (namestring (asdf:system-relative-pathname 'clml "sample/")))
+                            (dir "vega/")
                             (flush nil))
-  "-return: path to file or nil if unable to fetch
--arguments:
-  -url-or-path: <string> pathname or url string identifying file to be fetched.
-  -cache: <T|NIL> if T looks for file in -dir and uses that as source if NIL then the a fresh copy of the file is fetched
-  -dir: location to store fetched file, default location is in the sample directory in the top level of the clml source tree.
-  -flush: if T fetch does not download the file it deletes the existing file.
-
-Fetch file from ~url-or-location~ if not cached in ~dir~
-stores the file in the location specified by dir if url or file is url the file
-is stored in ~dir~/~uri-host~/~uri-path~.
-
-Note that it is important to ensure that dir and subdir if used end in a /"
   (cond
     ((is-file (condition-path url-or-path)) (condition-path url-or-path))
     ((is-file (condition-path (concatenate 'string  dir url-or-path)))
@@ -78,7 +68,7 @@ Note that it is important to ensure that dir and subdir if used end in a /"
 
 (defun fetch (url-or-path
               &key
-                (dir (namestring (asdf:system-relative-pathname 'clml "sample/")))
+                (dir "vega/")
                 (external-format :utf-8)
                 (cache t)
                 (stream nil)

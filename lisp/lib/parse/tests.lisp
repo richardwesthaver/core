@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :parse/tests
-  (:use :cl :rt :std :cl-ppcre :parse))
+  (:use :cl :rt :std :parse))
 
 (in-package :parse/tests)
 
