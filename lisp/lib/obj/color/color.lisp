@@ -1,6 +1,8 @@
-;;; lib/obj/colors.lisp --- Colors
+;;; lib/obj/color/colors.lisp --- Color Types
 
 ;; from https://github.com/tpapp/cl-colors/blob/master/colors.lisp
+
+;; this file includes RGB, HSV, and HEX color definitions.
 
 ;;; Code:
 (in-package :obj/color)
@@ -10,7 +12,6 @@
   '(real 0 1))
 
 (defstruct (rgb (:constructor rgb (red green blue)))
-  "RGB color object."
   (red nil :type unit-real :read-only t)
   (green nil :type unit-real :read-only t)
   (blue nil :type unit-real :read-only t))
@@ -25,7 +26,7 @@
 
 (defstruct (hsv (:constructor hsv (hue saturation value)))
   "HSV color object."
-  (hue nil :type (real 0 360) :read-only t)
+  (hue nil :type (real 0 360))
   (saturation nil :type unit-real :read-only t)
   (value nil :type unit-real :read-only t))
 
@@ -34,7 +35,7 @@
   (make-load-form-saving-slots self))
 
 (defun normalize-hue (hue)
-  "Normalize hue to the interval [0,360]."
+  "Normalize hue to the interval [0,360)."
   (mod hue 360))
 
 ;;; conversions
@@ -69,26 +70,24 @@ ignored."
       (return-from hsv-to-rgb (gray value)))
     ;; nonzero saturation: normalize hue to [0,6)
     (let ((h (/ (normalize-hue hue) 60)))
-      (destructuring-bind (quotient remainder) (floor h)
+      (multiple-value-bind (quotient remainder) (floor h)
         (let ((p (* value (- 1 saturation)))
               (q (* value (- 1 (* saturation remainder))))
               (r (* value (- 1 (* saturation (- 1 remainder))))))
-          (destructuring-bind (red green blue)
-              (case quotient
-                (0 (values value r p))
-                (1 (values q value p))
-                (2 (values p value r))
-                (3 (values p q value))
-                (4 (values r p value))
-                (t (values value p q)))
-            (rgb red green blue)))))))
+          (case quotient
+            (0 (rgb value r p))
+            (1 (rgb q value p))
+            (2 (rgb p value r))
+            (3 (rgb p q value))
+            (4 (rgb r p value))
+            (t (rgb value p q))))))))
 
 (defun hex-to-rgb (string)
   "Parse hexadecimal notation (eg ff0000 or f00 for red) into an RGB color."
   (destructuring-bind (width max)
       (case (length string)
-        (3 (values 1 15))
-        (6 (values 2 255))
+        (3 (list 1 15))
+        (6 (list 2 255))
         (t (error "string ~A doesn't have length 3 or 6, can't parse as ~
                        RGB specification" string)))
     (flet ((parse (index)
@@ -129,3 +128,70 @@ ignored."
     `(progn
        (define-constant ,constant-name (rgb ,red ,green ,blue)
          :test #'equalp :documentation ,(format nil "X11 color ~A." name)))))
+
+;;; parsing and printing of CSS-like colors
+(defun print-hex-rgb (color &key short (hash T) alpha destination)
+  "Converts a COLOR to its hexadecimal RGB string representation.  If
+SHORT is specified each component gets just one character.
+
+A hash character (#) is prepended if HASH is true (default).
+
+If ALPHA is set it is included as an ALPHA component.
+
+DESTINATION is the first argument to FORMAT, by default NIL."
+  (let ((rgb (as-rgb color))
+        (factor (if short 15 255)))
+    (flet ((c (x) (round (* x factor))))
+      (format destination (if short
+                              "~@[~C~]~X~X~X~@[~X~]"
+                              "~@[~C~]~2,'0X~2,'0X~2,'0X~@[~X~]")
+              (and hash #\#)
+              (c (rgb-red rgb)) (c (rgb-green rgb)) (c (rgb-blue rgb))
+              (and alpha (c alpha))))))
+
+;; TODO: a JUNK-ALLOWED parameter, like for PARSE-INTEGER, would be nice
+(defun parse-hex-rgb (string &key (start 0) end)
+  "Parses a hexadecimal RGB(A) color string.  Returns a new RGB color value
+and an alpha component if present."
+  (let* ((length (length string))
+         (end (or end length))
+         (sub-length (- end start)))
+    (cond
+      ;; check for valid range, we need at least three and accept at most
+      ;; nine characters
+      ((and (<= #.(length "fff") sub-length)
+            (<= sub-length #.(length "#ffffff00")))
+       (when (char= (char string start) #\#)
+         (incf start)
+         (decf sub-length))
+       (labels ((parse (string index offset)
+                  (parse-integer string :start index :end (+ offset index)
+                                        :radix 16))
+                (short (string index)
+                  (/ (parse string index 1) 15))
+                (long (string index)
+                  (/ (parse string index 2) 255)))
+         ;; recognize possible combinations of alpha component and length
+         ;; of the rest of the encoded color
+         (multiple-value-bind (shortp alphap)
+             (case sub-length
+               (#.(length "fff") (values T NIL))
+               (#.(length "fff0") (values T T))
+               (#.(length "ffffff") (values NIL NIL))
+               (#.(length "ffffff00") (values NIL T)))
+           (if shortp
+               (values
+                (rgb
+                 (short string start)
+                 (short string (+ 1 start))
+                 (short string (+ 2 start)))
+                (and alphap (short string (+ 3 start))))
+               (values
+                (rgb
+                 (long string start)
+                 (long string (+ 2 start))
+                 (long string (+ 4 start)))
+                (and alphap (long string (+ 6 start))))))))
+      (t
+       (error "not enough or too many characters in indicated sequence: ~A"
+              (subseq string start end))))))
