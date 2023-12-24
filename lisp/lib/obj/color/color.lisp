@@ -121,14 +121,6 @@ ignored."
   (declare (type (real 0 1) alpha))
   (+ (* (- 1 alpha) a) (* alpha b)))
 
-;;; macros used by color generator scripts
-(defmacro define-rgb-color (name red green blue)
-  "Macro for defining color constants."
-  (let ((constant-name (symbolicate #\+ name #\+)))
-    `(progn
-       (define-constant ,constant-name (rgb ,red ,green ,blue)
-         :test #'equalp :documentation ,(format nil "X11 color ~A." name)))))
-
 ;;; parsing and printing of CSS-like colors
 (defun print-hex-rgb (color &key short (hash T) alpha destination)
   "Converts a COLOR to its hexadecimal RGB string representation.  If
