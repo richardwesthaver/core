@@ -14,7 +14,10 @@
                (:file "tree")
                (:module "graph"
                 :components ((:file "pkg")))
-               (:file "color")
+               (:module "color"
+                :components ((:file "color")
+                             (:file "palette")
+                             (:file "util")))
                (:file "tbl")
                (:module "db"
                 :components ((:file "mop")

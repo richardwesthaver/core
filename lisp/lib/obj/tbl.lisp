@@ -14,7 +14,7 @@
 
 (defun make-table ()
   "Creates a table."
-  (make-array 1 :element-type 'row :fill-pointer 0 :adjustable t))
+  (make-array 0 :element-type 'row :adjustable t :fill-pointer 0))
 
 (defun make-row ()
   "Create a row."
@@ -136,14 +136,14 @@
                        filters)))
 
 ;;; Importers
-(defun table-from-file (filename &key (separator #\tab) parse-elements)
+(defun table-from-file (filename &key (separator '(#\tab)) parse-elements)
   "Reads the tabular data file and returns the contents. Separator is TAB by default.
    If parse-elements is other than NIL elements from the table will be READ into Lisp objects,
    otherwise only strings will be created."
   (let ((filter (if parse-elements
                     (lambda (ln) (mapcar (lambda (el) (read-from-string el nil))
-                                         (split-string separator ln)))
-                    (lambda (ln) (split-string separator ln)))))
+                                         (split-string ln :separator separator)))
+                    (lambda (ln) (split-string ln :separator separator)))))
     (with-open-file (s filename :if-does-not-exist nil)
       (row-sequence->table
        (loop
@@ -153,7 +153,7 @@
 
 (defun read-csv (filename &optional parse-elements)
   "Creates a table from a comma-separated values file."
-  (table-from-file filename :separator #\, :parse-elements parse-elements))
+  (table-from-file filename :separator '(#\,) :parse-elements parse-elements))
 
 (defun read-tsv (filename &optional parse-elements)
   "Creates a table from a tab-separated values file."

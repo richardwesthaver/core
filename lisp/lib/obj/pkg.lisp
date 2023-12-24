@@ -61,13 +61,16 @@
    #:hsv #:hsv-hue #:hsv-saturation #:hsv-value #:&hsv
    #:rgb-to-hsv #:hsv-to-rgb #:hex-to-rgb #:as-hsv #:as-rgb
    #:rgb-combination #:hsv-combination
-   #:parse-hex-rgb #:print-hex-rgb))
+   #:parse-hex-rgb #:print-hex-rgb
+   :color-palette :parse-and-write-color-definitions))
 
 (defpackage :obj/tbl
   (:nicknames :tbl)
   (:use :cl :std)
   (:import-from :uiop :split-string)
   (:export 
+   :table
+   :row
    :make-table
    :make-row
    :add-to-table
