@@ -1,6 +1,9 @@
-;;; lib/obj/hash/chash.lisp --- Concurrent Hashing
+;;; lib/obj/hash/chash.lisp --- Concurrent Hash Tables
 
-;; chash-tables
+;; concurrent hash-tables
+
+;; API compatible with:
+;; https://github.com/no-defun-allowed/concurrent-hash-tables
 
 ;;; Resources:
 
@@ -9,6 +12,8 @@
 ;; https://github.com/TooBiased/growt - folklore = linear-probing, non growing hash-table
 
 ;; https://github.com/Shinmera/luckless
+
+;; https://github.com/no-defun-allowed/luckless
 
 ;; https://github.com/telekons/42nd-at-threadmill - based on NBHM (JVM)
 

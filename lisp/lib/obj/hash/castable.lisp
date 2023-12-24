@@ -9,6 +9,24 @@
 ;;; Code:
 (in-package :obj/hash)
 
+(eval-always
+  (defstruct (prime (:constructor prime (value)))
+    (value nil :type t))
+
+  (defmethod make-load-form ((self prime) &optional environment)
+    (declare (ignore environment))
+    `(prime 'prime)))
+
+(defconstant max-spin 2)
+(defconstant reprobe-limit 10)
+(defconstant min-size-log 3)
+(defconstant min-size (ash 1 min-size-log))
+(defconstant no-match-old 'no-match-old)
+(defconstant match-any 'match-any)
+(defconstant tombstone 'tombstone)
+(defconstant tombprime (if (boundp 'tombprime) tombprime (prime tombstone)))
+(defconstant no-value 'no-value)
+
 ;;; Cat
 (defstruct (cat
             (:constructor %make-cat (next table))
@@ -146,24 +164,6 @@
             (fail)))))))
 
 ;;; CAS Table
-(eval-always
-  (defstruct (prime (:constructor prime (value)))
-    (value nil :type t))
-
-  (defmethod make-load-form ((self prime) &optional environment)
-    (declare (ignore environment))
-    `(prime 'prime)))
-
-(defconstant max-spin 2)
-(defconstant reprobe-limit 10)
-(defconstant min-size-log 3)
-(defconstant min-size (ash 1 min-size-log))
-(defconstant no-match-old 'no-match-old)
-(defconstant match-any 'match-any)
-(defconstant tombstone 'tombstone)
-(defconstant tombprime (if (boundp 'tombprime) tombprime (prime tombstone)))
-(defconstant no-value 'no-value)
-
 (declaim (ftype (function (unsigned-byte) fixnum) rehash)
          (inline rehash))
 

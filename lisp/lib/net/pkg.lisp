@@ -127,5 +127,10 @@
    :response-code-name
    :with-dns-error-handling))
 
+(defpackage :net/fetch
+  (:nicknames :fetch)
+  (:use :cl :std :drakma)
+  (:export :fetch))
+
 (uiop:define-package :net
   (:use-reexport :net/core :net/dns :net/crew :net/tcp :net/udp :codec/dns :codec/osc :codec/tlv))

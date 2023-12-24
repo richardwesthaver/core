@@ -9,27 +9,34 @@
    :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*)
   (:export
    ;; err
-   #:nyi!
-   #:required-argument
-   #:ignore-some-conditions
-   #:simple-style-warning
-   #:simple-reader-error
-   #:simple-parse-error
-   #:simple-program-error
-   #:circular-dependency
-   #:circular-dependency-items
-   #:unknown-argument
-   #:unknown-argument-name
-   #:unknown-argument-kind
-   #:unknown-argument-p
-   #:missing-argument
-   #:missing-argument-command
-   #:missing-argument-p
-   #:invalid-argument
-   #:invalid-argument-item
-   #:invalid-argument-reason
-   #:invalid-argument-p
-   #:unwind-protect-case
+   :nyi!
+   :required-argument
+   :ignore-some-conditions
+   :simple-style-warning
+   :simple-reader-error
+   :simple-parse-error
+   :simple-program-error
+   :circular-dependency
+   :circular-dependency-items
+   :unknown-argument
+   :unknown-argument-name
+   :unknown-argument-kind
+   :unknown-argument-p
+   :missing-argument
+   :missing-argument-command
+   :missing-argument-p
+   :invalid-argument
+   :invalid-argument-item
+   :invalid-argument-reason
+   :invalid-argument-p
+   :unwind-protect-case
+   ;; num/parse
+   :parse-number
+   :parse-real-number
+   :parse-positive-real-number
+   :invalid-number
+   :invalid-number-value
+   :invalid-number-reason
    ;; num/float
    :make-float-converters
    :encode-float32
@@ -46,15 +53,15 @@
    ;; fmt
    :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree :println
    ;; sym
-   #:ensure-symbol
-   #:format-symbol
-   #:make-keyword
-   #:make-slot-name
-   #:make-gensym
-   #:make-gensym-list
-   #:with-gensyms
-   #:with-unique-names
-   #:symbolicate
+   :ensure-symbol
+   :format-symbol
+   :make-keyword
+   :make-slot-name
+   :make-gensym
+   :make-gensym-list
+   :with-gensyms
+   :with-unique-names
+   :symbolicate
    ;; list
    :ensure-car
    :ensure-cons
@@ -76,76 +83,77 @@
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
    ;; util
-   #:find-package* #:find-symbol* #:symbol-call
-   #:intern* #:export* #:import* #:shadowing-import* 
-   #:shadow* #:make-symbol* #:unintern*
-   #:symbol-shadowing-p #:home-package-p
-   #:symbol-package-name #:standard-common-lisp-symbol-p
-   #:reify-package #:unreify-package #:reify-symbol #:unreify-symbol
-   #:nuke-symbol-in-package #:nuke-symbol #:rehome-symbol
-   #:ensure-package-unused #:delete-package*
-   #:package-names #:packages-from-names #:fresh-package-name 
-   #:rename-package-away #:package-definition-form #:parse-defpkg-form
-   #:ensure-package
+   :find-package* #:find-symbol* #:symbol-call
+   :intern* #:export* #:import* #:shadowing-import* 
+   :shadow* #:make-symbol* #:unintern*
+   :symbol-shadowing-p #:home-package-p
+   :symbol-package-name #:standard-common-lisp-symbol-p
+   :reify-package #:unreify-package #:reify-symbol #:unreify-symbol
+   :nuke-symbol-in-package #:nuke-symbol #:rehome-symbol
+   :ensure-package-unused #:delete-package*
+   :package-names #:packages-from-names #:fresh-package-name 
+   :rename-package-away #:package-definition-form #:parse-defpkg-form
+   :ensure-package
    ;; ana
    :awhen
    :acond
-   #:alambda
-   #:nlet-tail
-   #:alet%
-   #:alet
-   #:acond2
-   #:it
-   #:aif
-   #:this
-   #:self
+   :alambda
+   :nlet-tail
+   :alet%
+   :alet
+   :acond2
+   :it
+   :aif
+   :this
+   :self
    ;; pan
-   #:pandoriclet
-   #:pandoriclet-get
-   #:pandoriclet-set
-   #:get-pandoric
-   #:with-pandoric
-   #:pandoric-hotpatch
-   #:pandoric-recode
-   #:plambda
-   #:pandoric-eval
+   :pandoriclet
+   :pandoriclet-get
+   :pandoriclet-set
+   :get-pandoric
+   :with-pandoric
+   :pandoric-hotpatch
+   :pandoric-recode
+   :plambda
+   :pandoric-eval
    ;; fu
    :copy-array
+   :hash-table-alist
    :until
-   #:mkstr
-   #:symb
-   #:group
-   #:flatten
-   #:fact
-   #:choose
-   #:g!-symbol-p
-   #:defmacro/g!
-   #:o!-symbol-p
-   #:o!-symbol-to-g!-symbol
-   #:defmacro!
-   #:defun!
-   #:dlambda
-   #:make-tlist
-   #:tlist-left
-   #:tlist-right
-   #:tlist-empty-p
-   #:tlist-add-left
-   #:tlist-add-right
-   #:tlist-rem-left
-   #:tlist-update
-   #:build-batcher-sn
-   #:sortf
-   #:dollar-symbol-p
-   #:if-match
-   #:when-match
-   #:once-only
-   #:destructuring-case
-   #:destructuring-ccase
-   #:destructuring-ecase
-   #:when-let
-   #:when-let*
-   #:if-let
-   #:if-let*
+   :mkstr
+   :symb
+   :group
+   :flatten
+   :fact
+   :choose
+   :g!-symbol-p
+   :defmacro/g!
+   :o!-symbol-p
+   :o!-symbol-to-g!-symbol
+   :defmacro!
+   :defun!
+   :dlambda
+   :make-tlist
+   :tlist-left
+   :tlist-right
+   :tlist-empty-p
+   :tlist-add-left
+   :tlist-add-right
+   :tlist-rem-left
+   :tlist-update
+   :build-batcher-sn
+   :sortf
+   :dollar-symbol-p
+   :if-match
+   :when-match
+   :once-only
+   :destructuring-case
+   :destructuring-ccase
+   :destructuring-ecase
+   :when-let
+   :when-let*
+   :if-let
+   :if-let*
    :if*
    :define-constant
    :def!
@@ -183,12 +191,12 @@
    :clone-octets-from-alien
    :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int
    ;; readtable
-   #:|#"-reader|
-   #:|#`-reader|
-   #:|#f-reader|
-   #:|#$-reader|
-   #:segment-reader
-   #:match-mode-ppcre-lambda-form
-   #:subst-mode-ppcre-lambda-form
-   #:|#~-reader|
+   :|#"-reader|
+   :|#`-reader|
+   :|#f-reader|
+   :|#$-reader|
+   :segment-reader
+   :match-mode-ppcre-lambda-form
+   :subst-mode-ppcre-lambda-form
+   :|#~-reader|
    :_))

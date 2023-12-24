@@ -6,13 +6,13 @@
 (in-package :obj/graph)
 
 ;;; Vertex
-(defclass vertex (node id)
+(defclass vertex (id)
   ()
   (:documentation "generic vertex mixin. The difference between this class and NODE is
 that a vertex always carries an ID slot."))
 
 ;;; Edge
-(defclass edge (node id)
+(defclass edge (id)
   ()
   (:documentation "generic edge mixin. Compatible with the NODE and ID protocols."))
 

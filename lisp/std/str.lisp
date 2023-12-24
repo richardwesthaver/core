@@ -32,17 +32,17 @@
 or a character."
   `(or symbol string character))
 
-(defun split (separator s &key (omit-nulls *omit-nulls*) limit (start 0) end)
-  "Split s into substring by separator (cl-ppcre takes a regex, we do not).
+;; (defun split (separator s &key (omit-nulls *omit-nulls*) limit (start 0) end)
+;;   "Split s into substring by separator (cl-ppcre takes a regex, we do not).
 
-  `limit' limits the number of elements returned (i.e. the string is
-  split at most `limit' - 1 times)."
-  ;; cl-ppcre:split doesn't return a null string if the separator appears at the end of s.
-  (let* ((limit (or limit (1+ (length s))))
-         (res (ppcre:split `(:sequence ,(string separator)) s :limit limit :start start :end end)))
-    (if omit-nulls
-        (remove-if (lambda (it) (sequence:emptyp it)) res)
-        res)))
+;;   `limit' limits the number of elements returned (i.e. the string is
+;;   split at most `limit' - 1 times)."
+;;   ;; cl-ppcre:split doesn't return a null string if the separator appears at the end of s.
+;;   (let* ((limit (or limit (1+ (length s))))
+;;          (res (cl-ppcre:split separator s :limit limit :start start :end end)))
+;;     (if omit-nulls
+;;         (remove-if (lambda (it) (sequence:emptyp it)) res)
+;;         res)))
 
 (defun collapse-whitespaces (s)
   "Ensure there is only one space character between words.
