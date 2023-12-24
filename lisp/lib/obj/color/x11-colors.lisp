@@ -1,4 +1,4 @@
-;;; x11-colors.lisp --- X11 Colors -*- view-mode:t -*-
+;;; x11-colors.lisp --- X11 Colors -*- buffer-read-only:t -*-
 
 ;; input = /mnt/y/data/etc/rgb.txt
 

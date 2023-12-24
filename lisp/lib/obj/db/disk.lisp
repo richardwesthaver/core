@@ -625,7 +625,7 @@
           unless (eql value initform)
             do
                (write-n-bytes id 1 stream)
-               (if (eq value '..slot-unbound..)
+               (if (eq value '+slot-unbound+)
                    (write-n-bytes +unbound-slot+ 1 stream)
                    (write-object value stream)))
     (write-n-bytes +end+ 1 stream)))
@@ -647,7 +647,7 @@
                                              (car (aref slots slot-id)))
                    (let ((code (read-n-bytes 1 stream)))
                      (if (= code +unbound-slot+)
-                         '..slot-unbound..
+                         '+slot-unbound+
                          (call-reader code stream)))))
     instance))
 
@@ -724,7 +724,7 @@
               for value = (standard-instance-access object location)
               do
                  (write-n-bytes id 1 stream)
-                 (if (eq value '..slot-unbound..)
+                 (if (eq value '+slot-unbound+)
                      (write-n-bytes +unbound-slot+ 1 stream)
                      (write-object value stream)))
         (write-n-bytes +end+ 1 stream))))
@@ -738,7 +738,7 @@
     (flet ((read-slot ()
              (let ((code (read-n-bytes 1 stream)))
                (if (= code +unbound-slot+)
-                   '..slot-unbound..
+                   '+slot-unbound+
                    (call-reader code stream)))))
       (loop for slot-id = (read-n-bytes 1 stream)
             until (= slot-id +end+)

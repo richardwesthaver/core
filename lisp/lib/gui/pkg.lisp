@@ -25,3 +25,6 @@
    :with-gui-handlers
    :gui-main
    :def-gui))
+
+(uiop:define-package :gui
+  (:use-reexport :gui/core :gui/wm :gui/ext))

@@ -30,9 +30,14 @@
   (:nicknames :lalr)
   (:use :cl :std)
   (:export 
-   :make-parser :define-grammar
-   :*lalr-debug* :lalr-parse))
+   :make-parser :define-grammar :lalr-parser
+   :print-table
+   :*lalr-debug* :grammar :lexforms))
 
+(defpackage :parse/esrap
+  (:use :cl :std)
+  (:export
+   
 (uiop:define-package :parse
     (:use :cl :std)
   (:use-reexport :parse/lex :parse/lalr))

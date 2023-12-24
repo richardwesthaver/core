@@ -9,7 +9,9 @@
                (:file "xml")
                (:file "toml")
                (:file "arff")
-               #+nil (:file "bencode"))
+               #+nil (:file "bencode")
+               (:file "ical")
+               (:file "vcard"))
   :in-order-to ((test-op (test-op "dat/tests"))))
 
 (defsystem :dat/tests

@@ -36,7 +36,7 @@ with a quick google search."
                                  :direction :output
                                  :if-exists :supersede
                                  :if-does-not-exist :create)
-        (format colordefs ";;; ~a --- X11 Colors -*- view-mode:t -*-
+        (format colordefs ";;; ~a --- X11 Colors -*- buffer-read-only:t -*-
 
 ;; input = ~a
 
