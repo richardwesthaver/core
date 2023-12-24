@@ -17,7 +17,8 @@
                (:module "color"
                 :components ((:file "color")
                              (:file "palette")
-                             (:file "util")))
+                             (:file "util")
+                             (:file "x11-colors")))
                (:file "tbl")
                (:module "db"
                 :components ((:file "mop")

@@ -6,27 +6,48 @@
 ;;; Code:
 (in-package :obj/color)
 
-(defun parse-and-write-color-definitions (&key
-                                          (source-path "/usr/share/X11/rgb.txt")
-                                          (destination-path "colornames.lisp"))
-  "Parse color definitions and write them into a file. Return the list of colors (for exporting)."
-  (let ((color-scanner                  ; will only take names w/o spaces
+;;; macros used by color generator scripts
+(defmacro define-rgb-color (name red green blue)
+  "Macro for defining color constants."
+  (let ((constant-name (symbolicate #\+ name #\+)))
+    `(progn
+       (define-constant ,constant-name (rgb ,red ,green ,blue)
+         :test #'equalp :documentation ,(format nil "X11 color ~A." name)))))
+
+(defun parse-x11-color-definitions (&key
+                                      (input "/mnt/y/data/etc/rgb.txt")
+                                      (output "x11-colors.lisp"))
+  "Parse X11 color definitions and write them into a file. Return the
+list of colors (for exporting).
+
+Note that the input file we expect called rgb.txt is no longer
+distributed with X11 by default (AFAIK). You should be able to find it
+with a quick google search."
+  (let ((color-scanner ;will only take names w/o spaces
           (cl-ppcre:create-scanner
            "^\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+([\\s\\w]+\?)\\s*$"
            :extended-mode t))
         (comment-scanner (cl-ppcre:create-scanner "^\\s*!"))
         colornames)
-    (with-open-file (source source-path
+    (with-open-file (source input
                        :direction :input
                        :if-does-not-exist :error)
-      (with-open-file (colordefs destination-path
+      (with-open-file (colordefs output
                                  :direction :output
                                  :if-exists :supersede
                                  :if-does-not-exist :create)
-        (format colordefs ";;;; This file was generated automatically ~
-by parse-x11.lisp~%~
-;;;; Please do not edit directly, just run make if necessary (but should not be).~2%~
- (in-package #:cl-colors)~2%")
+        (format colordefs ";;; ~a --- X11 Colors -*- view-mode:t -*-
+
+;; input = ~a
+
+;; This file was generated automatically by
+;; OBJ/COLOR:PARSE-X11-COLOR-DEFINITIONS.
+
+;; Do not modify.
+
+;;; Code:
+(in-package :obj/color)" output input)
+        (format colordefs "~2%")
         (labels ((parse-channel (string)
                    (let ((i (read-from-string string)))
                      (assert (and (typep i 'integer) (<= i 255)))
@@ -39,7 +60,7 @@ by parse-x11.lisp~%~
                 (if (and match (not (find #\space (aref registers 3))))
                     (let ((colorname (string-downcase (aref registers 3))))
                       (format colordefs
-                              "(define-rgb-color ~A ~A ~A ~A)~%"
+                              "(export (define-rgb-color ~A ~A ~A ~A))~%"
                               colorname
                               (parse-channel (aref registers 0))
                               (parse-channel (aref registers 1))
