@@ -16,14 +16,14 @@
    :castable-count
    :castable-test
    :castable-hasher
-   :cgethash
-   :cremhash
-   :try-cremhash
-   :cput-if-absent
-   :cput-if-equal
-   :cput-if-present
-   :cclrhash
-   :cmaphash))
+   :getchash
+   :remchash
+   :try-remchash
+   :put-if-absent
+   :put-if-equal
+   :put-if-present
+   :clrchash
+   :mapchash))
 
 (defpackage :obj/id
   (:nicknames :id)
@@ -194,9 +194,8 @@
    :where-filter
    :where-or
    :where-and
-   :read-csv
-   :read-tsv
-   :table-from-file))
+   :table-from-csv
+   :table-from-tvs))
 
 (defpackage :obj/db
   (:nicknames :db)
