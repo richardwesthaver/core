@@ -34,10 +34,6 @@
    :print-table
    :*lalr-debug* :grammar :lexforms))
 
-(defpackage :parse/esrap
-  (:use :cl :std)
-  (:export
-   
 (uiop:define-package :parse
     (:use :cl :std)
   (:use-reexport :parse/lex :parse/lalr))
