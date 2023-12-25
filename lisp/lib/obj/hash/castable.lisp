@@ -326,90 +326,90 @@
   (%castable-hasher table))
 
 ;; L321 TypeV putIfAbsent(TypeK, TypeV)
-(defun cput-if-absent (table key value)
+(defun put-if-absent (table key value)
   (multiple-value-bind (out present?)
-      (cput-if-match table key value TOMBSTONE)
+      (put-if-match table key value TOMBSTONE)
     (declare (ignore out))
     (not present?)))
 ;; Missing: containsValue
 ;; L342 boolean replace(TypeK, TypeV)
-(defun cput-if-present (table key value)
+(defun put-if-present (table key value)
   (multiple-value-bind (out present?)
-      (cput-if-match table key value MATCH-ANY)
+      (put-if-match table key value MATCH-ANY)
     (if present?
         (funcall (%castable-test table) out value)
         nil)))
 ;; L347 boolean replace(TypeK, TypeV, TypeV)
-(defun cput-if-equal (table key new-value old-value)
+(defun put-if-equal (table key new-value old-value)
   (multiple-value-bind (out present?)
-      (cput-if-match table key new-value old-value)
+      (put-if-match table key new-value old-value)
     (if present?
         (funcall (%castable-test table) old-value out)
         nil)))
 ;; Missing: clone
 
 ;; L313 put(TypeK, TypeV)
-(defun (setf cgethash) (value key table &key (if-exists :overwrite) (if-does-not-exist :overwrite))
+(defun (setf getchash) (value key table &key (if-exists :overwrite) (if-does-not-exist :overwrite))
   (ecase if-exists
     (:overwrite
      (ecase if-does-not-exist
        (:overwrite
-        (cput-if-match table key value NO-MATCH-OLD))
+        (put-if-match table key value NO-MATCH-OLD))
        (:error
-        (unless (cput-if-present table key value)
+        (unless (put-if-present table key value)
           (error "Key does not exist in table.")))
        ((NIL)
-        (cput-if-present table key value))))
+        (put-if-present table key value))))
     (:error
      (ecase if-does-not-exist
        (:overwrite
-        (unless (cput-if-absent table key value)
+        (unless (put-if-absent table key value)
           (error "Key already exists in table.")))
        (:error
         (error "Key either does or does not exist in table."))
        ((NIL)
-        (when (nth-value 1 (cgethash key table))
+        (when (nth-value 1 (getchash key table))
           (error "Key already exists in table.")))))
     ((NIL)
      (ecase if-does-not-exist
        (:overwrite
-        (cput-if-absent table key value))
+        (put-if-absent table key value))
        (:error
-        (unless (nth-value 1 (cgethash key table))
+        (unless (nth-value 1 (getchash key table))
           (error "Key does not exist in table.")))
        ((NIL)
         NIL))))
   value)
 
-(define-compiler-macro (setf cgethash) (value key table &key (if-exists :overwrite) (if-does-not-exist :create))
+(define-compiler-macro (setf getchash) (value key table &key (if-exists :overwrite) (if-does-not-exist :create))
   (let ((v (gensym "VALUE")))
     `(let ((,v ,value))
        ,(ecase if-exists
           (:overwrite
            (ecase if-does-not-exist
              (:create
-              `(cput-if-match ,table ,key ,v NO-MATCH-OLD))
+              `(put-if-match ,table ,key ,v NO-MATCH-OLD))
              (:error
-              `(unless (cput-if-present ,table ,key ,v)
+              `(unless (put-if-present ,table ,key ,v)
                  (error "Key does not exist in table.")))
              ((NIL)
-              `(cput-if-present ,table ,key ,v))))
+              `(put-if-present ,table ,key ,v))))
           (:error
            (ecase if-does-not-exist
              (:create
-              `(unless (cput-if-absent ,table ,key ,v)
+              `(unless (put-if-absent ,table ,key ,v)
                  (error "Key already exists in table.")))
              (:error
               `(error "Key either does or does not exist in table."))
              ((NIL)
-              `(when (nth-value 1 (cgethash ,key ,table))
+              `(when (nth-value 1 (getchash ,key ,table))
                  (error "Key already exists in table.")))))
           ((NIL)
            (ecase if-does-not-exist
              (:create
-              `(cput-if-absent ,table ,key ,v))
+              `(put-if-absent ,table ,key ,v))
              (:error
-              `(unless (nth-value 1 (cgethash ,key ,table))
+              `(unless (nth-value 1 (getchash ,key ,table))
                  (error "Key does not exist in table.")))
              ((NIL)
               NIL))))
@@ -418,28 +418,28 @@
 ;; Close to L329 TypeV remove(Object)
 ;; REMHASH returns true if there was a mapping and false otherwise, but
 ;; remove() returns `null` or the old value.
-(defun cremhash (key table)
-  (if (eq TOMBSTONE (%cput-if-match table (%castable-kvs table) key TOMBSTONE NO-MATCH-OLD))
+(defun remchash (key table)
+  (if (eq TOMBSTONE (%put-if-match table (%castable-kvs table) key TOMBSTONE NO-MATCH-OLD))
       NIL
       T))
 
 ;; Close to L334 boolean remove(Object, Object)
-(defun try-cremhash (table key val)
+(defun try-remchash (table key val)
   (multiple-value-bind (out present?)
-      (cput-if-match table key TOMBSTONE val)
+      (put-if-match table key TOMBSTONE val)
     (if present?
         (funcall (%castable-test table) out val)
         nil)))
 ;; L352 TypeV putIfMatch(Object, Object, Object)
-(defun cput-if-match (table key new old)
-  (let ((res (%cput-if-match table (%castable-kvs table) key new old)))
+(defun put-if-match (table key new old)
+  (let ((res (%put-if-match table (%castable-kvs table) key new old)))
     (assert (not (prime-p res)))
     (assert (not (eq res NO-VALUE)))
     (if (eq res TOMBSTONE)
         (values NIL NIL)
         (values res T))))
 ;; L372 void clear()
-(defun cclrhash (table)
+(defun clrchash (table)
   (let ((new (%castable-kvs (make-castable))))
     (loop until (sb-ext:cas (%castable-kvs table) (%castable-kvs table) new))))
 
@@ -460,7 +460,7 @@
            ;; Call test function for real comparison
            (funcall test key k))))
 ;; L502 Object get_impl(NonBlockingHashMap, Object[], Object, int)
-(defun %cgethash (table kvs key fullhash)
+(defun %getchash (table kvs key fullhash)
   (declare (type castable table))
   (declare (type simple-vector kvs))
   (declare (type fixnum fullhash))
@@ -486,7 +486,7 @@
                               NO-VALUE
                               v)))
                 ;; Copy in progress, help with copying and retry.
-                (return (%cgethash table
+                (return (%getchash table
                                    (copy-slot-and-check chm table kvs idx key)
                                    key
                                    fullhash)))
@@ -497,15 +497,15 @@
                     ;; Nothing here.
                     (return NO-VALUE)
                     ;; Retry in a new table copy
-                    (return (%cgethash table (help-copy table newkvs) key fullhash))))
+                    (return (%getchash table (help-copy table newkvs) key fullhash))))
               ;; Reprobe.
               (setf idx (logand (1+ idx) (1- len))))))))
 
 ;; L495 TypeV get(Object)
-(defun cgethash (key table &optional default)
+(defun getchash (key table &optional default)
   (declare (optimize speed))
   (let* ((fullhash (hash table key))
-         (value (%cgethash table (%castable-kvs table) key fullhash)))
+         (value (%getchash table (%castable-kvs table) key fullhash)))
     ;; Make sure we never return primes
     (check-type value (not prime))
     (if (eql value NO-VALUE)
@@ -513,7 +513,7 @@
         (values value T))))
 
 ;; L555 Object putIfMatch(NonBlockingHashMap, Object[], Object, Object, Object)
-(defun %cput-if-match (table kvs key put exp)
+(defun %put-if-match (table kvs key put exp)
   (declare (type castable table))
   (declare (type simple-vector kvs))
   (declare (optimize speed))
@@ -536,7 +536,7 @@
           (when (eq k NO-VALUE)
             ;; No need to put a tombstone in an empty field
             (when (eq put TOMBSTONE)
-              (return-from %cput-if-match put))
+              (return-from %put-if-match put))
             ;; Claim the spot
             (when (cas-key kvs idx NO-VALUE key)
               (incf-counter (%chm-slots chm))
@@ -555,13 +555,13 @@
                     (eq key TOMBSTONE))
             (setf newkvs (resize chm table kvs))
             (unless (eq exp NO-VALUE) (help-copy table newkvs))
-            (return-from %cput-if-match
-              (%cput-if-match table newkvs key put exp)))
+            (return-from %put-if-match
+              (%put-if-match table newkvs key put exp)))
           ;; Reprobe.
           (setf idx (logand (1+ idx) (1- len))))
     ;; We found a key slot, time to update it
     ;; Fast-path
-    (when (eq put v) (return-from %cput-if-match v))
+    (when (eq put v) (return-from %put-if-match v))
     ;; Check if we want to move to a new table
     (when (and ;; Do we have a new table already?
                (null newkvs)
@@ -571,8 +571,8 @@
       (setf newkvs (resize chm table kvs)))
     ;; Check if we are indeed moving and retry
     (unless (null newkvs)
-      (return-from %cput-if-match
-        (%cput-if-match table (copy-slot-and-check chm table kvs idx exp) key put exp)))
+      (return-from %put-if-match
+        (%put-if-match table (copy-slot-and-check chm table kvs idx exp) key put exp)))
     ;; Finally we can do the update
     (loop (check-type v (not prime))
           ;; If we don't match the old, bail out
@@ -601,7 +601,7 @@
           (setf v (val kvs idx))
           ;; If we got a prime we need to restart from the beginning
           (when (prime-p v)
-            (return (%cput-if-match table (copy-slot-and-check chm table kvs idx exp) key put exp))))))
+            (return (%put-if-match table (copy-slot-and-check chm table kvs idx exp) key put exp))))))
 
 ;; L699 Object[] help_copy(Object[])
 (declaim (inline help-copy))
@@ -800,12 +800,12 @@
       ;; a null. Otherwise, someone else already copied.
       (let ((old-unboxed (prime-value oldval)))
         (assert (not (eq old-unboxed TOMBSTONE)))
-        (prog1 (eq NO-VALUE (%cput-if-match table newkvs key old-unboxed NO-VALUE))
+        (prog1 (eq NO-VALUE (%put-if-match table newkvs key old-unboxed NO-VALUE))
           ;; Now that the copy is done, we can stub out the old key completely.
           (loop until (cas-val oldkvs idx oldval TOMBPRIME)
                 do (setf oldval (val oldkvs idx))))))))
 
-(defun cmaphash (function table)
+(defun mapchash (function table)
   (let (snapshot-kvs)
     (loop for top-kvs = (%castable-kvs table)
           for top-chm = (chm top-kvs)
