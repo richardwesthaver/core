@@ -84,7 +84,7 @@
   (is (find-thread-by-id (car (thread-id-list))))
   (is (thread-count))
   (let ((threads
-          (make-threads 16 "threads" (lambda () (is (= 42 (1+ 41)))))))
+          (make-threads 16 (lambda () (is (= 42 (1+ 41)))) :name "threads")))
     (loop for th in threads
           do (sb-thread:join-thread th))
     (loop for th in threads
