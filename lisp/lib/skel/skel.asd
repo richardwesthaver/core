@@ -16,7 +16,8 @@
                  (:module "vc"
                   :serial t
                   :components
-                  ((:file "git")
+                  ((:file "proto")
+                   (:file "git")
                    (:file "hg")))
                  (:file "util")
                  (:file "vm")))

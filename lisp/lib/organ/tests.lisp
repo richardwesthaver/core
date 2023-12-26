@@ -4,18 +4,22 @@
 
 (in-package :organ/tests)
 
-(defparameter *test-org-file* "lisp/lib/organ/tests.org")
+(defparameter *test-org-heading* 
+  "* header1                                                         :tag1:tag2:
+:PROPERTIES:
+:ID: 1234
+:CUSTOM_ID: 5678
+:END:
+")
 
 (defsuite :organ)
 (in-suite :organ)
 
 (deftest org-file () 
-  (is (read-org-file *test-org-file*)))
+  (is (read-org-string *test-org-heading*)))
 
 (deftest org-lines ()
-  (is (read-org-lines (open *test-org-file*)))
-  (let ((s (text (read-org-file *test-org-file*))))
-    (is (read-org-lines-from-string s))))
+  (is (read-org-lines-from-string *test-org-heading*)))
 
 (deftest org-headline ()
   (let ((s "** DONE testing stuff :test:test:"))
