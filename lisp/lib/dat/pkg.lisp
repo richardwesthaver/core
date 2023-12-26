@@ -87,11 +87,5 @@
    :bencode-decode
    :*bencode-binary-key-p*))
 
-(defpackage :dat/ical
-  (:use :cl :std :dat/xml))
-
-(defpackage :dat/vcard
-  (:use :cl :std :dat/xml))
-
 (uiop:define-package :dat
     (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/xml :dat/bencode))

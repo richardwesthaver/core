@@ -12,13 +12,25 @@
 :END:
 ")
 
+(defparameter *test-org-paragraph*
+  "Plain text.
+/Italics/ plain
+*bold* plain
+=verbatim= plain
+~code~ plain
+_underline_ plain
++strike-through+ plain")
+
 (defsuite :organ)
 (in-suite :organ)
 
-(deftest org-file () 
-  (is (read-org-string *test-org-heading*)))
+(deftest org-markup ()
+  "Test org markup in a paragraph."
+  (is (read-org-lines-from-string *test-org-paragraph*))
+  (is (org-create :paragraph *test-org-paragraph*)))
 
-(deftest org-lines ()
+(deftest org-read () 
+  (is (read-org-string *test-org-heading*))
   (is (read-org-lines-from-string *test-org-heading*)))
 
 (deftest org-headline ()
