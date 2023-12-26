@@ -82,7 +82,7 @@
    all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
    corfu orderless cape ;; completion
    slime ;; common lisp server
-   slime-company
+   ;; slime-company
    which-key ;; key helper
    ;; langs
    rust-mode)
@@ -166,7 +166,7 @@
 (use-package lisp-mode
   :ensure nil
   :custom
-  inferior-lisp-program "sbcl"
+  inferior-lisp-program "sbcl --dynamic-space-size=8G"
   scheme-program-name "gsi"
   guile-program "guile"
   cmulisp-program "lisp"
@@ -185,7 +185,7 @@
     "toggle between lisp file and slime-repl"
     (interactive)
     (if (eq major-mode 'slime-repl-mode)
-    (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
+        (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
       (progn
         (setq slime-toggle (current-buffer))
         (slime-repl))))

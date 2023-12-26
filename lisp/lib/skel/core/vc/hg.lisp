@@ -39,8 +39,25 @@
 ;;; Code:
 (in-package :skel/core)
 
+(define-condition hg-error (vc-error)
+  ((description :initarg :description :initform nil :reader description))
+  (:report (lambda (condition stream)
+             (format stream "Mercurial failed: ~a" (description condition)))))
+
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
+
+(defun hg-url-p (url)
+  "Return nil if URL does not look like a URL to a hg valid remote."
+  (let ((url-str (if (typep url 'pathname)
+                     (namestring url)
+                     url)))
+    (scan '(:alternation
+            (:regex "\\.hg$")
+            (:regex "^hg://")
+            (:regex "^https://hg\\.")
+            (:regex "^hg@"))
+          url-str)))
 
 ;;; Mercurial
 (defstruct hg-nodeid
@@ -81,4 +98,10 @@
 		       :adjustable nil)))
 
 (defun run-hg-command (cmd &rest args)
-  (run-program *hg-program* (push cmd args)))
+  (run-program *hg-program* (push cmd args) :output :stream))
+
+;; (with-open-stream (s (sb-ext:process-output (run-hg-command "status")))
+;;   (with-output-to-string (str)
+;;     (loop for l = (read-line s nil nil)
+;;           while l
+;;           do (write-line l))))
