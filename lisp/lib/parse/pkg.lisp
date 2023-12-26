@@ -26,13 +26,13 @@
    #:make-matcher
    #:define-matcher))
 
-(defpackage :parse/lalr
-  (:nicknames :lalr)
-  (:use :cl :std)
-  (:export 
-   :make-parser :define-grammar :lalr-parser
-   :print-table
-   :*lalr-debug* :grammar :lexforms))
+(defpackage :parse/yacc
+  (:use :common-lisp)
+  (:export :make-production :make-grammar :make-parser :parse-with-lexer
+           :define-grammar :define-parser
+           :yacc-compile-warning :conflict-warning :conflict-summary-warning
+           :yacc-runtime-error :yacc-parse-error :yacc-parse-error-terminal
+           :yacc-parse-error-value :yacc-parse-error-expected-terminals))
 
 (uiop:define-package :parse
     (:use :cl :std)

@@ -8,40 +8,24 @@
 (defclass org-stream (fundamental-stream)
   ((stream :initarg :stream :reader stream-of)))
 
-(defclass org-file (org-element org-stream)
-  ((path :initarg :path :accessor path)))
+(defclass org-element () ())
 
-(defclass org-lines (org-element)
-  ((lines :initarg :lines :type vector :accessor o-lines)))
+(defclass org-lesser-element (org-element) ())
 
-;;; Helpers
-(defun read-org-file (path)
-  (make-instance 'org-file :path path :text (read-file-string path)))
+(defclass org-greater-element (org-element)
+  ((contents :initarg :contents :type (vector org-element))))
 
-(defun read-org-lines (&optional stream)
-  (let ((slice (make-instance 'org-lines)))
-    (setf (o-lines slice)
-	  (apply #'vector
-		 (loop for l = (read-line stream nil :eof)
-		       until (eq l :eof)
-		       collect l)))
-    slice))
+(defclass org-object () ())
 
-(defun read-org-lines-from-string (str)
-  (with-input-from-string (s str) (read-org-lines s)))
+(defgeneric org-parse (type input)
+  (:documentation "Parse string INPUT as an org element of type TYPE."))
 
-(defclass org-element ()
-  ((text :initarg :text :accessor text :type string)))
-
-(defgeneric org-parse (self)
-  (:documentation "Parse the text slot from ORG-ELEMENT."))
-
-(defgeneric org-parse-lines (self)
-  (:documentation "Parse the text slot from ORG-ELEMENT as a vector of lines, returning
-it. Each line object is a cons cell where car is a keyword and cdr is
-the raw text parsed.")
-  (:method ((self org-element))
-    (let ((lines (o-lines (read-org-lines-from-string (slot-value self 'text)))))
+(defgeneric org-parse-lines (type input)
+  (:documentation "Convenience method. Parse INPUT as a vector
+of lines, returning it. Each line object is a cons cell where car is a
+keyword and cdr is the raw text parsed.")
+  (:method ((type (eql t)) (input string))
+    (let ((lines (read-org-lines-from-string input)))
       (remove-if-not 
        #'consp
        (loop for x across lines
@@ -58,13 +42,10 @@ the raw text parsed.")
   "Convert keyword KW to a symbol which could designate an ORG- object type."
   (symbolicate 'org- kw))
   
-(defun %make-it (type text &rest slots)
-  (apply #'make-instance (kw->class type) (nconc (list :text text) slots)))
-
-(defgeneric org-create (elt text &key &allow-other-keys)
+(defgeneric org-create (type &rest initargs)
   (:documentation "Create a new org-element of type TYPE.")
-  (:method (elt (text string) &key &allow-other-keys)
-    (org-parse-lines (%make-it elt text))))
+  (:method ((type t) &rest initargs)
+    (apply #'make-instance (kw->class type) initargs)))
 
 (defgeneric org-push (elt place)
   (:documentation "Add org-element ELT to object PLACE.")
@@ -78,8 +59,8 @@ the raw text parsed.")
 (defgeneric org-contents (elt)
   (:documentation "Extract contents from org-element ELT."))
 
-(defgeneric (setf org-contents) (elt text)
-  (:documentation "Set ELT's contents (text) to CONTENT. Return ELT."))
+(defgeneric (setf org-contents) (elt contents)
+  (:documentation "Set ELT's contents to CONTENTS. Return ELT."))
 
 (defgeneric org-property (elt prop)
   (:documentation "Extract the value from property PROP of org-element ELT."))

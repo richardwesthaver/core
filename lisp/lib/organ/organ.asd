@@ -5,7 +5,30 @@
   :components ((:file "pkg")
                (:file "vars")
                (:file "proto")
-               (:file "element")
+               (:module "object"
+                :components
+                ((:file "entity")
+                 (:file "citation")
+                 (:file "footnote-ref")
+                 (:file "inline-babel-call")
+                 (:file "inline-source-block")
+                 (:file "line-break")
+                 (:file "link")
+                 (:file "macro")
+                 (:file "markup")
+                 (:file "snippet")
+                 (:file "sscript")
+                 (:file "stat-cookie")
+                 (:file "table-cell")
+                 (:file "target")
+                 (:file "timestamp")))
+               (:module "element"
+                :components 
+                ((:file "lesser/paragraph")
+                 (:file "headline")
+                 (:file "plain-list")))
+               (:file "section")
+               (:file "heading")
                (:file "util"))
   :in-order-to ((test-op (test-op :organ/tests))))
 

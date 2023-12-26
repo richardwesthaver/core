@@ -5,7 +5,7 @@
   :depends-on (:cl-ppcre :std)
   :components ((:file "pkg")
                (:file "lex")
-               (:file "lalr"))
+               (:file "yacc"))
   :in-order-to ((test-op (test-op :parse/tests))))
 
 (defsystem :parse/tests
