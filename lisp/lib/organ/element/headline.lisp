@@ -4,20 +4,19 @@
 
 ;;; Code:
 
-;;; Todo Keyword
 (in-package :organ)
 
-(define-org-element todo-keyword
-    ((todo-type :accessor todo-type :initarg :type :initform nil :type symbol)))
+(eval-always
+  (define-org-element todo-keyword
+      ((todo-type :accessor todo-type :initarg :type :initform nil :type symbol)))
 
-(defmethod org-parse ((type (eql :todo-keyword)) (input string))
-  (org-create :todo-keyword :todo-type (gethash (intern input) org-todo-keyword-map nil)))
+  (defmethod org-parse ((type (eql :todo-keyword)) (input string))
+    (org-create :todo-keyword :todo-type (gethash (intern input) org-todo-keyword-map nil)))
 
-;;; Tag
-(define-org-element org-tag
-    ((name :initform "" :initarg :name :type string)))
+  (define-org-element tag
+      ((name :initform "" :initarg :name :type string)))
 
-(defmethod org-parse ((type (eql :tag)) input) (org-create type :name input))
+  (defmethod org-parse ((type (eql :tag)) input) (org-create type :name input)))
 
 ;;; Headline
 ;; when level=0, headline is uninitialized
@@ -58,7 +57,7 @@
 			       (if match
 				   (let ((k (svref subs 0)))
 				     (if (org-todo-keyword-p k)
-					 (setf (hl-kw res) (org-create :todo-keyword :todo-type k)
+					 (setf (hl-kw res) (org-create :todo-keyword :type k)
 					       (hl-title res) (trim (svref subs 1)))
 					 (setf (hl-title res) match)))
 				   (setf (hl-title res) sub))))))))

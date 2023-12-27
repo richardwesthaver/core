@@ -3,11 +3,7 @@
 ;;
 
 ;;; Code:
-(defun read-org-file (path)
-  (make-instance 'org-file :path path :text (read-file-string path)))
-
-(defun read-org-string (str)
-  (org-create :element str))
+(in-package :organ)
 
 (defun read-org-lines (&optional stream)
   (apply #'vector

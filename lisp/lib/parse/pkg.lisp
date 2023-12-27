@@ -36,4 +36,4 @@
 
 (uiop:define-package :parse
     (:use :cl :std)
-  (:use-reexport :parse/lex :parse/lalr))
+  (:use-reexport :parse/lex :parse/yacc))
