@@ -5,4 +5,6 @@
 ;;; Code:
 (in-package :organ)
 
-(defclass org-heading () ())
+(defclass org-heading () 
+  ((headline :initarg :headline :initform (org-create :headline) :type org-headline)
+   (contents :initarg :contents :initform #() :type (vector (or org-section org-heading)))))

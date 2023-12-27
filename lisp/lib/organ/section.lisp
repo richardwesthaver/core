@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :organ)
 
-(defclass org-section () ())
+(defclass org-section () 
+  ((contents :initform #() :initarg :contents :type (vector org-object))))
 
 (defclass org-zeroth-section (org-section) ())
