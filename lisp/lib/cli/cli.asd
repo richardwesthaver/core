@@ -6,7 +6,8 @@
                (:file "progress" :depends-on ("pkg"))
                (:file "spark" :depends-on ("pkg"))
                (:file "repl" :depends-on ("pkg"))
-               (:file "prompt" :depends-on ("pkg")))
+               (:file "prompt" :depends-on ("pkg"))
+               (:file "ed" :depends-on ("pkg")))
   :in-order-to ((test-op (test-op "cli/tests"))))
 
 (defsystem :cli/tests

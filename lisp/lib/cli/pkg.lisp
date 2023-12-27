@@ -173,3 +173,6 @@
 (defpackage :cli/repl
   (:use :cl :std :cli :cli/progress :cli/spark)
   (:export))
+
+(defpackage :cli/ed
+  (:use :cl :std :cli))

@@ -39,9 +39,7 @@ keyword and cdr is the raw text parsed.")
                (t x)))))))
 
 (defgeneric org-create (type &rest initargs)
-  (:documentation "Create a new org-element of type TYPE.")
-  (:method ((type t) &rest initargs)
-    (apply #'make-instance (kw->class type) initargs)))
+  (:documentation "Create a new org-element of type TYPE."))
 
 (defgeneric org-push (elt place)
   (:documentation "Add org-element ELT to object PLACE.")
