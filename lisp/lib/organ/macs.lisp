@@ -24,6 +24,8 @@
         (obj (sym-to-org-class-name name)))
     `(progn
        (defstruct (,obj ,@(when include (list `(:include ,(sym-to-org-class-name include))))) ,docstring ,@slots)
+       (defmethod org-create ((type (eql ,(sb-int:keywordicate name))) &rest initargs)
+         (funcall ,(intern (format nil "~:@(make-~a~)" obj) :organ) initargs))
        (export '(,obj) :organ))))
 
 ;; (macroexpand '(define-org-parser (headline) (print headline)))
