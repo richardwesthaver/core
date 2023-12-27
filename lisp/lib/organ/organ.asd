@@ -26,8 +26,10 @@
                  (:file "timestamp")))
                (:module "element"
                 :components 
-                ((:file "lesser/paragraph")
-                 (:file "greater/plain-list")
+                ((:module "lesser"
+                  :components ((:file "paragraph")))
+                 (:module "greater"
+                  :components ((:file "plain-list")))
                  (:file "headline")))
                (:file "section")
                (:file "heading")
