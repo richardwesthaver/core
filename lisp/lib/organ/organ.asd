@@ -27,9 +27,25 @@
                (:module "element"
                 :components 
                 ((:module "lesser"
-                  :components ((:file "paragraph")))
+                  :components ((:file "paragraph")
+                               (:file "block")
+                               (:file "clock")
+                               (:file "diary-sexp")
+                               (:file "latex-env")
+                               (:file "comment")
+                               (:file "fixed-width")
+                               (:file "horizontal-rule")
+                               (:file "keyword")
+                               (:file "planning")
+                               (:file "table-row")
+                               (:file "node-property")))
                  (:module "greater"
-                  :components ((:file "plain-list")))
+                  :components ((:file "plain-list")
+                               (:file "block")
+                               (:file "drawer")
+                               (:file "footnote-def")
+                               (:file "item")
+                               (:file "table")))
                  (:file "headline")))
                (:file "section")
                (:file "heading")
