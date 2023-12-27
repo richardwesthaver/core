@@ -11,7 +11,8 @@
   :components ((:file "pkg")
                (:file "err")
                (:module "num"
-                :components ((:file "float")))
+                :components ((:file "float")
+                             (:file "parse")))
                (:file "str")
                (:file "fmt")
                (:file "sym")

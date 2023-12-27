@@ -14,20 +14,28 @@
 
 (defparameter *test-org-paragraph*
   "Plain text.
-/Italics/ plain
-*bold* plain
-=verbatim= plain
-~code~ plain
-_underline_ plain
-+strike-through+ plain")
+/Italics/
+*bold*
+=verbatim=
+~code~
+_underline_
++strike-through+")
 
 (defsuite :organ)
 (in-suite :organ)
 
 (deftest org-markup ()
   "Test org markup in a paragraph."
-  (is (read-org-lines-from-string *test-org-paragraph*))
-  (is (org-create :paragraph :contents *test-org-paragraph*)))
+  (let ((lines (read-org-lines-from-string *test-org-paragraph*)))
+    (is (org-parse :plain-text (aref lines 0)))
+    (is (org-parse :italic (aref lines 1)))
+    (is (org-parse :bold (aref lines 2)))
+    (is (org-parse :verbatim (aref lines 3)))
+    (is (org-parse :code (aref lines 4)))
+    (is (org-parse :underline (aref lines 5)))
+    (is (org-parse :strike-through (aref lines 6))))
+  ;; should return vector of ORG-OBJECTs
+  (is (typep (org-contents (org-parse :paragraph *test-org-paragraph*)) 'vector)))
 
 (deftest org-lines () 
   (is (read-org-lines-from-string *test-org-heading*)))

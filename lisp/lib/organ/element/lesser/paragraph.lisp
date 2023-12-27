@@ -5,8 +5,11 @@
 ;;; Code:
 (in-package :organ)
 
-(define-org-element paragraph ((contents :initarg :contents :type (or list string) :accessor org-contents)) :lesser t)
+(define-org-element paragraph 
+    ((contents :initarg :contents :type vector :accessor org-contents))
+  :lesser t)
 
 (define-org-parser (paragraph :from string)
-  (setf (org-contents paragraph) input)
-  paragraph)
+  (let ((res (org-create :paragraph)))
+    (setf (org-contents res) input)
+    res))
