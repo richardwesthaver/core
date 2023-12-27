@@ -25,14 +25,15 @@
     `(progn
        (defstruct (,obj ,@(when include (list `(:include ,(sym-to-org-class-name include))))) ,docstring ,@slots)
        (defmethod org-create ((type (eql ,(sb-int:keywordicate name))) &rest initargs)
-         (funcall ,(intern (format nil "~:@(make-~a~)" obj) :organ) initargs))
+           (apply #'make-instance (sym-to-org-class-name type) initargs))
        (export '(,obj) :organ))))
 
 ;; (macroexpand '(define-org-parser (headline) (print headline)))
 (defmacro define-org-parser ((name &key (from 'string)) &body body)
   "Define an ORG-PARSE method specializer for org type specifier NAME with body BODY."
-  (let ((nvar (sb-int:keywordicate name)))
-    `(defmethod org-parse ((type (eql ,nvar)) (input ,from))
-       (let ((,name (org-create ,nvar)))
-         ,@body))))
-
+  `(defmethod org-parse ((type (eql ,(sb-int:keywordicate name))) (input ,from))
+     ;;  NOTE 2023-12-27: (,name (org-create ,nvar)) == bad idea.
+     ;; need parser to be fallible so shouldn't create an object
+     ;; upfront. We should delay initialization until the last moment
+     ;; -- match up front.
+     ,@body))

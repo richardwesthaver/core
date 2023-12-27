@@ -6,17 +6,16 @@
 
 (in-package :organ)
 
-(eval-always
-  (define-org-element todo-keyword
-      ((todo-type :accessor todo-type :initarg :type :initform nil :type symbol)))
+(define-org-element todo-keyword
+    ((todo-type :accessor todo-type :initarg :type :initform nil :type symbol)))
 
-  (defmethod org-parse ((type (eql :todo-keyword)) (input string))
-    (org-create :todo-keyword :todo-type (gethash (intern input) org-todo-keyword-map nil)))
+(defmethod org-parse ((type (eql :todo-keyword)) (input string))
+  (org-create :todo-keyword :todo-type (gethash (intern input) org-todo-keyword-map nil)))
 
-  (define-org-element tag
-      ((name :initform "" :initarg :name :type string)))
+(define-org-element tag
+    ((name :initform "" :initarg :name :type string)))
 
-  (defmethod org-parse ((type (eql :tag)) input) (org-create type :name input)))
+(defmethod org-parse ((type (eql :tag)) input) (org-create type :name input))
 
 ;;; Headline
 ;; when level=0, headline is uninitialized
