@@ -8,15 +8,16 @@
 (defmacro define-org-element (name slots &key documentation greater lesser)
   (let ((docstring (or documentation (format nil "Org ~a element class." name)))
         (sname (sym-to-org-class-name name)))
-    `(progn
-       (defclass ,sname (,(or (when greater 'org-greater-element) 
-                              (when lesser 'org-lesser-element) 
-                              'org-element))
-         ,slots
-         (:documentation ,docstring))
-       (defmethod org-create ((type (eql ',(sb-int:keywordicate name))) &rest initargs)
-         (apply #'make-instance (sym-to-org-class-name type) initargs))
-       (export '(,sname) :organ))))
+    (eval-always
+      `(progn
+         (defclass ,sname (,(or (when greater 'org-greater-element) 
+                                (when lesser 'org-lesser-element) 
+                                'org-element))
+           ,slots
+           (:documentation ,docstring))
+         (defmethod org-create ((type (eql ,(sb-int:keywordicate name))) &rest initargs)
+           (apply #'make-instance (sym-to-org-class-name type) initargs))
+         (export '(,sname) :organ)))))
 
 (defmacro define-org-object (name slots &key include documentation)
   (let ((docstring (or documentation (format nil "Org ~a object structure." name)))
