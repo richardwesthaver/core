@@ -38,10 +38,6 @@ keyword and cdr is the raw text parsed.")
                ((scan org-end-rx x) (continue))
                (t x)))))))
 
-(defun kw->class (kw) 
-  "Convert keyword KW to a symbol which could designate an ORG- object type."
-  (symbolicate 'org- kw))
-  
 (defgeneric org-create (type &rest initargs)
   (:documentation "Create a new org-element of type TYPE.")
   (:method ((type t) &rest initargs)
@@ -77,3 +73,13 @@ keyword and cdr is the raw text parsed.")
 (defgeneric org-insert-before (elt location place)
   (:documentation "Insert org-element ELT before LOCATION in sequence PLACE. Modify PLACE
 by side-effect."))
+
+(defgeneric org-parse-minimal (input)
+  (:documentation "Parse the minimal set of objects as defined by Org syntax.
+
+The minimal set includes the symbols defined in +ORG-MINIMAL-OBJECTS+."))
+
+(defgeneric org-parse-standard (input)
+  (:documentation "Parse the standard set of object as define by Org syntax.
+
+The standard set includes the symbols defined in +ORG-STANDARD-OBJECTS+."))

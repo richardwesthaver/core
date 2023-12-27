@@ -5,7 +5,9 @@
 ;;; Code:
 (in-package :organ)
 
-(defclass org-paragraph (org-element) ())
+(define-org-element paragraph ((contents :initarg :contents :type (or list string))) :lesser t)
 
-(defmethod org-parse (input (type (eql :paragraph)))
-  (%make-org type input))
+(define-org-parser (paragraph :from string)
+  (with-slots (contents) paragraph
+      (setf contents input)
+    paragraph))

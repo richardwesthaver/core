@@ -5,9 +5,11 @@
   :components ((:file "pkg")
                (:file "vars")
                (:file "proto")
+               (:file "macs")
                (:module "object"
                 :components
-                ((:file "entity")
+                ((:file "markup")
+                 (:file "entity")
                  (:file "citation")
                  (:file "footnote-ref")
                  (:file "inline-babel-call")
@@ -15,8 +17,7 @@
                  (:file "line-break")
                  (:file "link")
                  (:file "macro")
-                 (:file "markup")
-                 (:file "snippet")
+                 (:file "export-snippet")
                  (:file "sscript")
                  (:file "stat-cookie")
                  (:file "table-cell")
@@ -25,10 +26,11 @@
                (:module "element"
                 :components 
                 ((:file "lesser/paragraph")
-                 (:file "headline")
-                 (:file "plain-list")))
+                 (:file "greater/plain-list")
+                 (:file "headline")))
                (:file "section")
                (:file "heading")
+               (:file "document")
                (:file "util"))
   :in-order-to ((test-op (test-op :organ/tests))))
 
