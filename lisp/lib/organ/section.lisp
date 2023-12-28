@@ -8,13 +8,19 @@
 (defclass org-section () 
   ((contents :initform #() :initarg :contents :type (vector org-object)
              :accessor org-contents)))
-;; TODO
-(defmethod org-parse ((type (eql :section)) (input stream))
-  (let ((res (org-create :section)))
-    (setf (org-contents res) (with-output-to-string (s) s))))
+
+(defmethod org-create ((type (eql :section)) &rest initargs)
+  (apply #'make-instance (sym-to-org-class-name type) initargs))
+
+(defmethod org-parse ((type (eql :section)) (input string))
+  (unless (sequence:emptyp input)
+    (org-create :section :contents input)))
 
 (defclass org-zeroth-section (org-section) ())
-;; TODO
-(defmethod org-parse ((type (eql :meta)) (input stream))
-  (let ((res (org-create :meta)))
-    (setf (org-contents res) (with-output-to-string (s) s))))
+
+(defmethod org-create ((type (eql :meta)) &rest initargs)
+  (apply #'make-instance (sym-to-org-class-name type) initargs))
+
+(defmethod org-parse ((type (eql :meta)) (input string))
+  (unless (sequence:emptyp input)
+    (org-create :meta :contents input)))

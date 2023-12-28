@@ -7,15 +7,36 @@
 (in-package :organ)
 
 (define-org-element todo-keyword
-    ((todo-type :accessor todo-type :initarg :type :initform nil :type symbol)))
+    ((todo-type :accessor todo-keyword-type :initarg :type :initform "" :type string)))
 
-(defmethod org-parse ((type (eql :todo-keyword)) (input string))
-  (org-create :todo-keyword :todo-type (gethash (intern input) org-todo-keyword-map nil)))
+(define-org-parser (todo-keyword :from string)
+  (when-let ((kw (org-todo-keyword-p input)))
+    (org-create :todo-keyword :type kw)))
+
+(define-org-element priority
+  ((level :accessor org-priority-level :initarg :level :type character)))
+
+(define-org-parser (priority :from string)
+  (with-lexer-environment (input)
+    (when (char= #\[ (consume))
+      (when (char= #\# (consume))
+        (unless (char= #\] (peek))
+          (when-let ((c (consume)))
+            (when (and (characterp (peek)) 
+                       (char= #\] (peek))) ;; kludge
+              (org-create :priority :level c))))))))
+
+(defun org-parse-todo-keyword-or-priority (input)
+  "Parse INPUT returning the following values: 
+
+(TODO-KEYWORD PRIORITY REST)"
+  (values nil nil nil))
 
 (define-org-element tag
     ((name :initform "" :initarg :name :type string)))
 
-(defmethod org-parse ((type (eql :tag)) input) (org-create type :name input))
+(define-org-parser (tag :from string)
+  (org-create type :name input))
 
 ;;; Headline
 ;; when level=0, headline is uninitialized
@@ -54,16 +75,18 @@
 			         ;; scan for todo-keyword
 			         (cl-ppcre:scan-to-strings org-todo-keyword-rx sub)
 			       (if match
-				   (let ((k (svref subs 0)))
-				     (if (org-todo-keyword-p k)
-					 (setf (hl-kw res) (org-create :todo-keyword :type k)
-					       (hl-title res) (trim (svref subs 1)))
-					 (setf (hl-title res) match)))
-				   (setf (hl-title res) sub))))))))
+				   (let ((k (aref subs 0)))
+                                     (if-let ((kw (org-parse :todo-keyword k)))
+				       (progn (setf (hl-kw res) kw)
+                                              (setf (hl-title res) (aref subs 1)))
+				       (setf (hl-title res) (trim match))))
+                                   ;; no todo-keyword, check for priority
+				   (setf (hl-title res) (trim sub)))))))))
 	  ;; scan for tags, modifies title slot
 	  (let ((tag-str (cl-ppcre:scan-to-strings org-tag-rx (hl-title res))))
 	    (when tag-str
 	      (setf (hl-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
+                    ;;  Q 2023-12-27: should we preserve whitespace here?
 		    (hl-title res) (subseq (hl-title res) 0 (- (length (hl-title res)) 1 (length tag-str))))))))
       ;; TODO 2023-07-24: cookies,priority,comment,footnote,archive
       res)))

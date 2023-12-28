@@ -17,3 +17,7 @@
 (defun org-file-missing (path)
   (error 'org-file-error :message "Org file does not exist"
                          :path path))
+
+(define-condition org-parse-error (parse-error organ-error) ())
+
+(define-condition org-write-error (stream-error organ-error) ())

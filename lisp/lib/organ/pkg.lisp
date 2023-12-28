@@ -25,8 +25,7 @@
 
 ;;; Code:
 (defpackage :organ
-  (:use :cl :cl-ppcre :std :parse/lex)
-  (:import-from :sb-gray :fundamental-stream)
+  (:use :cl :cl-ppcre :std :parse/lex :sb-gray)
   (:import-from :uiop :read-file-string)
   (:export
    ;; vars
