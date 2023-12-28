@@ -37,13 +37,15 @@ _underline_
   ;; should return vector of ORG-OBJECTs
   (is (typep (org-contents (org-parse :paragraph *test-org-paragraph*)) 'vector)))
 
-(deftest org-lines ()
-  (is (read-org-lines-from-string *test-org-heading*)))
-
 (deftest org-headline ()
-  (let* ((s "** DONE testing stuff :test:test:")
+  (let* ((s "** DONE [#A] testing stuff :foo:bar:")
          (hl (org-parse :headline s)))
     (is (= (organ::hl-stars hl) 2))
-    (is (string= (organ::hl-title hl) "DONE testing stuff"))
-    (is (= (length (organ::hl-tags hl)) 2))
-    (describe hl)))
+    (is (organ::hl-kw hl))
+    (is (organ::hl-priority hl))
+    (is (string= (organ::hl-title hl) "testing stuff"))
+    (is (= (length (organ::hl-tags hl)) 2))))
+
+(deftest org-lines ()
+  (is (vectorp (read-org-lines-from-string *test-org-heading*))))
+

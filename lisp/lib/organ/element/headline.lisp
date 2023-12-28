@@ -26,11 +26,30 @@
                        (char= #\] (peek))) ;; kludge
               (org-create :priority :level c))))))))
 
-(defun org-parse-todo-keyword-or-priority (input)
+(defun org-parse-todo-keyword-and-priority (input)
   "Parse INPUT returning the following values: 
 
 (TODO-KEYWORD PRIORITY REST)"
-  (values nil nil nil))
+  (let (kw prio rest)
+    (multiple-value-bind (match subs)
+        ;; scan for todo-keyword
+        (scan-to-strings org-todo-keyword-rx input)
+      (if match
+	  (let ((k (aref subs 0)))
+            (if-let ((%kw (org-parse :todo-keyword k)))
+              (let* ((next (aref subs 1))
+                     (prio? (org-parse :priority next)))
+	        (setq kw %kw
+                      prio prio?
+                      rest (if prio? (trim (subseq next 4)) next)))
+	      (setq rest (trim match))))
+          ;; no kw found
+          (let* ((next (trim input))
+                 (prio? (org-parse :priority next)))
+	    (setq kw nil ;; kw always comes before priority.
+                  prio (org-parse :priority next)
+                  rest (if prio? (subseq next 4) next)))))
+    (values kw prio rest)))
 
 (define-org-element tag
     ((name :initform "" :initarg :name :type string)))
@@ -70,23 +89,18 @@
 		    do
 		       (if (= i 0)
 			   (setf (hl-stars res) (- re rs))
-			   (let ((sub (subseq line rs)))
-			     (multiple-value-bind (match subs)
-			         ;; scan for todo-keyword
-			         (cl-ppcre:scan-to-strings org-todo-keyword-rx sub)
-			       (if match
-				   (let ((k (aref subs 0)))
-                                     (if-let ((kw (org-parse :todo-keyword k)))
-				       (progn (setf (hl-kw res) kw)
-                                              (setf (hl-title res) (aref subs 1)))
-				       (setf (hl-title res) (trim match))))
-                                   ;; no todo-keyword, check for priority
-				   (setf (hl-title res) (trim sub)))))))))
+                           (multiple-value-bind (kw prio title) 
+                               (org-parse-todo-keyword-and-priority (subseq line rs))
+                             (setf (hl-kw res) kw
+                                   (hl-priority res) prio
+                                   (hl-title res) title))))))
 	  ;; scan for tags, modifies title slot
 	  (let ((tag-str (cl-ppcre:scan-to-strings org-tag-rx (hl-title res))))
 	    (when tag-str
 	      (setf (hl-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
                     ;;  Q 2023-12-27: should we preserve whitespace here?
-		    (hl-title res) (subseq (hl-title res) 0 (- (length (hl-title res)) 1 (length tag-str))))))))
+		    (hl-title res) (string-right-trim 
+                                    *whitespaces* 
+                                    (subseq (hl-title res) 0 (- (length (hl-title res)) 1 (length tag-str)))))))))
       ;; TODO 2023-07-24: cookies,priority,comment,footnote,archive
       res)))
