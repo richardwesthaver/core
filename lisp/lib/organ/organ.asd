@@ -47,10 +47,10 @@
                                (:file "item")
                                (:file "table")))
                  (:file "headline")))
+               (:file "util")
                (:file "section")
                (:file "heading")
-               (:file "document")
-               (:file "util"))
+               (:file "document"))
   :in-order-to ((test-op (test-op :organ/tests))))
 
 (defsystem :organ/tests

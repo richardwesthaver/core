@@ -18,13 +18,13 @@
 
 (define-org-parser (priority :from string)
   (with-lexer-environment (input)
-    (when (char= #\[ (consume))
-      (when (char= #\# (consume))
-        (unless (char= #\] (peek))
-          (when-let ((c (consume)))
-            (when (and (characterp (peek)) 
-                       (char= #\] (peek))) ;; kludge
-              (org-create :priority :level c))))))))
+    (when (and (char= #\[ (consume))
+               (char= #\# (consume))
+               (not (char= #\] (peek))))
+      (when-let ((c (consume)))
+        (when (and (characterp (peek)) 
+                   (char= #\] (peek))) ;; kludge
+          (org-create :priority :level c))))))
 
 (defun org-parse-todo-keyword-and-priority (input)
   "Parse INPUT returning the following values: 
