@@ -12,4 +12,13 @@
 ;;; Code:
 (in-package :organ)
 
-(define-org-element node-property (name value) :lesser t)
+(define-org-element node-property ((name :initarg :name) (value :initarg :value)) :lesser t)
+
+;; assumes caller is org-property-drawer = single line
+(define-org-parser (node-property :from string)
+  (multiple-value-bind (match subs)
+      (scan-to-strings org-property-rx input)
+    (when match
+      (let ((name (aref subs 0))
+            (value (aref subs 1)))
+        (org-create :node-property :name name :value value)))))

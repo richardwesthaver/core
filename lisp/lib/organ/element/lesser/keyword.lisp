@@ -17,4 +17,8 @@
 
 (define-org-element keyword (key value) :lesser t)
 
+(define-org-parser (keyword :from string))
+
 (define-org-element affiliated-keyword (key opt value) :lesser t)
+
+(define-org-parser (affiliated-keyword :from string))
