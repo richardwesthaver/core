@@ -49,4 +49,6 @@ PLANNING
             do (vector-push-extend pl (org-contents p)))
       p)))
                                    
-
+(define-org-parser (planning :from string)
+  (with-input-from-string (s input)
+    (org-parse :planning s)))

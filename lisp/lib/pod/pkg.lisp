@@ -12,13 +12,14 @@
 
 ;;; Code:
 (defpackage :pod
-  (:use :cl :std :cli :net :dat/json)
+  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json)
   (:export
    :*podman-api-version* :*podman-exe* :*buildah-exe*
+   :*podman-user-socket*
    :pod-error :podman-error :handle-podman-error
    :decode-podman-response :encode-podman-request
-   :podman-server :podman-client :podman-request :podman-response
-   :podman-connection))
+   :podman-request :podman-response
+   :start-podman-service :podman-client))
 
 (in-package :pod)
 
@@ -27,3 +28,5 @@
 (defvar *podman-exe* (find-exe "podman"))
 
 (defvar *buildah-exe* (find-exe "buildah"))
+
+(defvar *podman-local-user-socket* (format nil "/run/user/~a/podman/podman.sock" (sb-posix:getuid)))
