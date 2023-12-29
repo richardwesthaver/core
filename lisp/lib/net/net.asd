@@ -21,7 +21,8 @@
                              (:file "osc")))
                (:module "proto" ;; https://wayland.app/protocols/
                 :components ((:file "crew")
-                             (:file "dns"))))
+                             (:file "dns")
+                             (:file "ssh"))))
   :in-order-to ((test-op (test-op :net/tests))))
 
 (defsystem :net/tests
