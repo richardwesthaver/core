@@ -1,13 +1,29 @@
-(defpackage :tree-sitter/pkg
-  (:nicknames :tree-sitter :ts)
+;;; ffi/tree-sitter/pkg.lisp --- Tree-sitter FFI
+
+;; Tree-sitter FFI for Lisp
+
+;; Tree-sitter consists of the base library, which you can load using
+;; the LOAD-TREE-SITTER function, and the language parsers.
+
+;; The language parser shared libraries should ALWAYS be located in
+;; /usr/local/lib/ and be prefixed with 'lib' like so:
+;; '/usr/local/lib/libtree-sitter-json.so'. Static libraries are not
+;; supported.
+
+;; The language parsers have associated json files which should ALWAYS
+;; be stored in subdirectories of /usr/local/share/tree-sitter/ like
+;; so: '/usr/local/share/tree-sitter/json/grammar.json'.
+
+;;; Code:
+(defpackage :tree-sitter
+  (:nicknames :ts)
   (:use :cl :std :sb-alien)
   (:export 
-   :+tree-sitter-language-version+
-   :+tree-sitter-min-compatible-language-version+
-   :+ts-builtin-sym-error+
-   :+ts-builtin-sym-end+
-   :+tree-sitter-serialization-buffer-size+
    :load-tree-sitter
+   :tree-sitter-language-files
+   :*ts-langs*
+   :list-ts-langs
+   :*tree-sitter-language-directory*
    :ts-state-id
    :ts-symbol
    :ts-field-id
@@ -49,28 +65,14 @@
    :ts-node-is-null
    :ts-node-eq
    :ts-tree-cursor-new
-   :ts-language-version
-   :load-tree-sitter-json
-   :tree-sitter-json
-   :load-tree-sitter-rust
-   :tree-sitter-rust))
+   :ts-language-version))
 
-(in-package :tree-sitter/pkg)
+(in-package :tree-sitter)
 
 (defun load-tree-sitter () 
   (unless (member :tree-sitter *features*)
     (sb-alien:load-shared-object "libtree-sitter.so" :dont-save t)
     (push :tree-sitter *features*)))
-
-(defun load-tree-sitter-json () 
-  (unless (member :tree-sitter-json *features*)
-    (sb-alien:load-shared-object "/usr/local/lib/libtree-sitter-json.so" :dont-save t)
-    (push :tree-sitter-json *features*)))
-
-(defun load-tree-sitter-rust () 
-  (unless (member :tree-sitter-rust *features*)
-    (sb-alien:load-shared-object "/usr/local/lib/libtree-sitter-rust.so" :dont-save t)
-    (push :tree-sitter-rust *features*)))
 
 ;;; Alien Types
 (define-alien-type ts-state-id unsigned-int)
@@ -142,5 +144,3 @@
 
 (define-alien-routine ts-language-version unsigned-int (v (* ts-language)))
 
-(define-alien-routine tree-sitter-json (* ts-language))
-(define-alien-routine tree-sitter-rust (* ts-language))
