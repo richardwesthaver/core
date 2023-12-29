@@ -1,7 +1,7 @@
 ;;; lib/doc/pkg.lisp --- CL Documentation
 
 ;; This package is designed to help us navigate our Lisp systems,
-;; packages, and files and extract information relevant to
+;; packages, symbols, and files to extract information relevant to
 ;; documentation. This is a rather broad category. Here are some of
 ;; the categories of information we're interested in:
 
@@ -20,8 +20,42 @@
 
 ;;; Commentary:
 
-;; Documentation is a tricky craft, good thingwe have a
+;; Documentation is a tricky craft, good thing we have a
 ;; self-documenting language :).
+
+;; The API consists of extractors for the above categories of
+;; information and a compiler (in comp.lisp) which can be used to
+;; generate output.
+
+;; This is an SBCL library, so we use the SB-INTROSPECT project for
+;; most of the heavy lifting related to inspecting Lisp objects. This
+;; covers most symbols and informs the next category of extractor
+;; which is the file extractor in file.lisp.
+
+;; The package extractor in package.lisp wraps SB-INTROSPECT functions
+;; and populates internal data structures with relevant information
+;; based on exported symbols.
+
+;; The file extractor is a parser which supports lisp source files as
+;; well as system definitions (ASD) and possibly other inputs. You can
+;; use it as a standalone document extractor for files, but it is
+;; intended to be called with source-location information from
+;; SB-INTROSPECT. The file extractor retrieves additional information
+;; from the source file where a symbol is defined such as comments and
+;; neighboring definitions.
+
+;; The final static extractor is in system.lisp which of course is
+;; intended for entire Lisp systems, combining the extractors defined
+;; thus far.
+
+;; The compiler in comp.lisp contains the high-level functions which
+;; take system, package, file, or symbol names and generate
+;; documentation output.
+
+;; This library DOES NOT implement export/publishing per se. We use
+;; the ORGAN system to generate ORG-DOCUMENT objects, which themselves
+;; implement the functionality needed to generate *.org files and
+;; translate to html,pdf,txt and other formats.
 
 ;;; Code:
 (defpackage :doc
