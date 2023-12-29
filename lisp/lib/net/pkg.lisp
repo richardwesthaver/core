@@ -127,9 +127,9 @@
    :response-code-name
    :with-dns-error-handling))
 
-(defpackage :net/fetch
+(uiop:define-package :net/fetch
   (:nicknames :fetch)
-  (:use :cl :std :drakma)
+  (:use :cl :std)
   (:export :fetch :download))
 
 (uiop:define-package :net
