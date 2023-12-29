@@ -34,7 +34,7 @@
   ())
 
 ;; util
-(defmacro with-ts-node-pointer ((var node) &body forms)
+(defmacro with-ts-node ((var node) &body forms)
   `(let ((,var ,node))
      (when (sb-alien:null-alien ,var)
        (error 'null-node-pointer))
@@ -42,9 +42,9 @@
           (progn ,@forms)
        (sb-alien:free-alien ,var))))
 
-(defmacro with-tree-cursor-pointer ((var tree) &body forms &aux (node (gensym)))
-  `(with-ts-node-pointer (,node (ts-tree-root-node-pointer ,tree))
-     (let ((,var (ts-tree-cursor-new-pointer ,node)))
+(defmacro with-tree-cursor ((var tree) &body forms &aux (node (gensym)))
+  `(with-ts-node (,node (ts-tree-root-node ,tree))
+     (let ((,var (ts-tree-cursor-new ,node)))
        (when (sb-alien:null-alien ,var)
          (error 'null-tree-cursor-pointer))
        (unwind-protect
@@ -93,13 +93,13 @@ desired name for use in lisp."
 
 (defun convert-foreign-tree-to-list (tree &key produce-cst name-generator
                                      &aux did-visit-children parse-stack)
-  (with-tree-cursor-pointer (cursor tree)
+  (with-tree-cursor (cursor tree)
     ;; Closely follows tree-sitter-cli parse
     ;; implementation with a modification to
     ;; allow for production of the full CST.
     (loop
-      (with-ts-node-pointer (node (ts-tree-cursor-current-node-pointer cursor))
-        (let ((is-named (or produce-cst (ts-node-is-named-pointer node))))
+      (with-ts-node (node (ts-tree-cursor-current-node cursor))
+        (let ((is-named (or produce-cst (ts-node-is-named node))))
           (cond (did-visit-children
                  (when (and is-named (second parse-stack))
                    (let ((item (pop parse-stack)))
@@ -117,9 +117,9 @@ desired name for use in lisp."
                           (return root)))))
                 (t
                  (when is-named
-                   (let ((start-point (ts-node-start-point-pointer node))
-                         (end-point (ts-node-end-point-pointer node))
-                         (type (funcall name-generator (ts-node-type-pointer node)))
+                   (let ((start-point (ts-node-start-point node))
+                         (end-point (ts-node-end-point node))
+                         (type (funcall name-generator (ts-node-type node)))
                          (field-name-ptr (ts-tree-cursor-current-field-name cursor)))
                      (unless (sb-alien:null-alien field-name-ptr)
                        ;; TODO
