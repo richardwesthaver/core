@@ -8,6 +8,8 @@
 (in-suite :tree-sitter)
 
 (load-tree-sitter)
+(load-tree-sitter-json)
+(load-tree-sitter-rust)
 
 (deftest ts-json ()
   (load-tree-sitter-json)
@@ -19,7 +21,8 @@
 (deftest ts-rust ()
   (load-tree-sitter-rust)
   (let ((parser (ts-parser-new))
-        (lang (tree-sitter-rust)))
+        (lang (tree-sitter-json)))
+    ;; TODO: tree-sitter-rust, tree-sitter-commonlisp
     ;; (is (= (ts-language-version lang) 14))
     (is (ts-parser-set-language parser lang))))
 
