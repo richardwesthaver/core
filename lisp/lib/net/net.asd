@@ -5,7 +5,8 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre 
-   :swank-client :drakma 
+   :obj
+   :swank-client :dexador
    :hunchentoot :std :log)
   :serial t
   :components ((:file "pkg")

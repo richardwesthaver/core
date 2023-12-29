@@ -23,4 +23,4 @@
 (defsystem :tree-sitter/tests
   :depends-on (:rt :tree-sitter)
   :components ((:file "tests"))
-  :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :tree-sitter)))
+  :perform (test-op (o c) (symbol-call :rt :do-tests :tree-sitter)))
