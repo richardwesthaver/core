@@ -7,6 +7,10 @@
 
 ;; Q 2023-12-28: generic compiler functions? hmm..
 
+(defun compile-symbol-documentation (sym))
+
+(defun compile-package-documentation (pkg))
+
 (defun compile-file-documentation (file)
   (with-compilation-unit (:policy '(optimize))
     (sb-ext:restrict-compiler-policy 'debug 3)
@@ -14,7 +18,3 @@
     (load file :verbose t)))
 
 (defun compile-system-documentation (sys))
-
-(defun compile-symbol-documentation (sym))
-
-(defun compile-package-documentation (pkg))
