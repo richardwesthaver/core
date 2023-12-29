@@ -2,9 +2,9 @@
   :depends-on (:std :cli :obj :dat :net)
   :components ((:file "pkg")
                (:file "err")
-               (:file "podman")
+               (:file "api")
                (:file "util")
-               (:file "api"))
+               (:file "obj"))
   :in-order-to ((test-op (test-op :pod/tests))))
 
 (defsystem :pod/tests
