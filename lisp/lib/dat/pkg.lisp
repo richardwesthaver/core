@@ -1,6 +1,24 @@
 (defpackage :dat/proto
   (:use :cl :std)
-  (:export :serialize :deserialize))
+  (:export :serialize :deserialize
+           :serializer-error :deserializer-error
+           :dat-error))
+
+(defpackage :dat/sxp
+  (:nicknames :sxp)
+  (:use :cl :sb-mop :std)
+  (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
+  ;; TODO: hot-patch readtables into sxp classes/parsers
+  (:import-from :std/named-readtables :defreadtable :in-readtable)
+  (:export
+   :sxp-fmt-designator
+   :form :formp :sxp-error :sxp-fmt-error :sxp-syntax-error :reader :writer :fmt
+   :wrap :wrap! :wrap-from-string! :unwrap :unwrap! :unwrap-or
+   :sxpp :build-ast :load-ast :ast
+   :define-macro :define-fmt :read-sxp-file :write-sxp-file
+   :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream
+   :make-sxp :sxp :formp :form
+   :wrap-object :unwrap-object))
 
 (defpackage :dat/csv
   (:use :cl :std :dat/proto)
@@ -88,4 +106,4 @@
    :*bencode-binary-key-p*))
 
 (uiop:define-package :dat
-    (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/xml :dat/bencode))
+    (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode))

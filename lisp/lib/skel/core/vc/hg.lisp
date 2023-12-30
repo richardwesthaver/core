@@ -131,6 +131,7 @@
           str)))))
 
 ;;; Client
+;; ref: https://wiki.mercurial-scm.org/CommandServer
 (declaim (inline %make-hg-client))
 (defstruct (hg-client (:constructor %make-hg-client))
   "hg-client structures contain the client connection state
@@ -149,6 +150,30 @@
 		       :element-type 'unsigned-byte
 		       :adjustable nil)))
 
+;;;; Client Protocol
+;; all communication with the mercurial cmdserver is done over a
+;; socket. byte order is big-endian.
+
+;; data from server is channel-based - (channel length pair sent before data) - 5 byte header total
+
+;; on init, the server will send hello message on channel #\o. the
+;; message is a signel chunk consisting of a #\Newline-separated list
+;; of lines of the form:
+#|
+<field name>: <field data>
+|#
+
+;; fields include: capabilities, encoding, pid
+
+#|
+o
+1234
+<data: 1234 bytes>
+|#
+
+;; TODO 2023-12-29: 
+(defmethod vc-run ((self hg-client) cmd &rest args))
+
 ;;; Low-level
 (defstruct hg-nodeid id)
 
@@ -157,3 +182,30 @@
 (defstruct hg-manifest)
 
 (defstruct hg-changeset id)
+
+;;;; Dirstate
+
+;; see also: https://wiki.mercurial-scm.org/DirstateFormatImprovementsPlan
+
+#|
+.hg/dirstate:
+<p1 binhash><p2 binhash>
+<list of dirstate entries>
+|#
+
+#| entry
+8bit: status
+32bit: mode
+32bit: size
+32bit: mtime
+32bit: length
+variable length entry (length given by the previous length field) with:
+"<filename>" followed if it's a copy by: "\0<source if copy>"
+|#
+
+(defstruct dirstate-entry status mode size mtime length filename)
+
+;; (defmethod read-dirstate-file ((self hg-repo)))
+
+(defstruct dirstate 
+  (entries (make-array 0 :element-type 'dirstate-entry :fill-pointer 0 :adjustable t) :type (vector dirstate-entry)))

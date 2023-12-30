@@ -3,6 +3,14 @@
 ;;; Code:
 (in-package :std)
 
+(define-condition std-error (error)
+  ((message :initarg :message
+            :reader std-error-message))
+  (:documentation "Standard Error"))
+  
+;; TODO
+;; (defmacro deferror (name (&rest parent-types) (&rest slot-specs) &body body))
+
 (defmacro nyi! (&optional comment)
   `(prog1
        (error "Not Yet Implemented!")
