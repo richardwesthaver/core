@@ -32,12 +32,16 @@
  shr-discard-aria-hidden t
  bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
  project-list-file (expand-file-name "projects" user-emacs-directory)
+ project-mode-line t
+ project-file-history-behavior 'relativize
  emms-directory (expand-file-name "emms" user-emacs-directory)
  gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
  url-cache-directory (expand-file-name "url" user-emacs-directory)
  tab-always-indent 'complete
  shr-cookie-policy nil
  ;; NOTE 2023-11-04: EXPERIMENTAL
+ ediff-floating-control-frame t
+ register-use-preview nil
  shr-use-xwidgets-for-media t
  browse-url-browser-function 'browse-url-default-browser
  eww-auto-rename-buffer 'title
@@ -127,11 +131,11 @@
   ;; used by `completion-at-point'.  The order of the functions matters, the
   ;; first function returning a result wins.  Note that the list of buffer-local
   ;; completion functions takes precedence over the global list.
-  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-abbrev)
   ;; (add-to-list 'completion-at-point-functions #'cape-history)
   ;; (add-to-list 'completion-at-point-functions #'cape-keyword)
-  ;; (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-file)
   ;; (add-to-list 'completion-at-point-functions #'cape-line)
   ;; (add-to-list 'completion-at-point-functions #'cape-elisp-block)
   ;; (add-to-list 'completion-at-point-functions #'cape-tex)
@@ -152,6 +156,9 @@
 
 ;;; Multisession
 (setq multisession-storage 'sqlite)
+
+;;; Kill Ring
+(kill-ring-deindent-mode)
 
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc

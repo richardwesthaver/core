@@ -3,7 +3,7 @@
 //! net is used for building client/server programs on any platform.
 mod err;
 pub use err::{Error, Result};
-
+pub mod stream;
 // mod codec;
 pub mod client;
 pub use client::Client;
