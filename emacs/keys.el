@@ -41,8 +41,9 @@
   :prefix 'toggle-map
   "v" #'global-visual-line-mode
   "h" #'global-hl-line-mode
-  "l" #'global-line-numbers-mode
-  "L" #'global-display-line-numbers-mode
+  "l" #'imenu-list-noselect
+  "C-l" #'imenu-list
+  "N" #'global-display-line-numbers-mode
   "c" #'corfu-mode
   "a" #'gpm-mouse-mode
   "r" #'refill-mode
@@ -107,6 +108,7 @@
   "r" review-map
   "q" server-map
   "(" parens-map
+  "M-l" #'duplicate-dwim  
   "d i" #'image-dired
   "<tab>" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
