@@ -39,13 +39,13 @@
 ;;; Code:
 (in-package :skel/core)
 
-(define-condition hg-error (vc-error)
-  ((description :initarg :description :initform nil :reader description))
-  (:report (lambda (condition stream)
-             (format stream "Mercurial failed: ~a" (description condition)))))
+(define-condition hg-error (vc-error) ())
 
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
+
+(defun run-hg-command (cmd &rest args)
+  (run-program *hg-program* (push cmd args) :output :stream))
 
 (defun hg-url-p (url)
   "Return nil if URL does not look like a URL to a hg valid remote."
@@ -59,26 +59,78 @@
             (:regex "^hg@"))
           url-str)))
 
-;;; Mercurial
-(defstruct hg-nodeid
-  ""
-  (id))
-
-(defstruct hg-revlog
-  "")
-
-(defstruct hg-manifest
-  "")
-
-(defstruct hg-changeset
-  ""
-  (id))
-
-(defclass hg-repo (repo)
+;; (describe (make-instance 'hg-repo))
+(defclass hg-repo (vc-repo)
   ((dirstate) ;; working-directory
    (bookmarks)
    (requires)))
 
+(defmethod vc-run ((self hg-repo) (cmd string) &rest args)
+  (with-slots (path) self
+    (with-current-directory (path)
+      (with-open-stream (s (sb-ext:process-output (apply #'run-hg-command cmd args)))
+        (with-output-to-string (str)
+          (loop for l = (read-line s nil nil)
+                while l
+                do (write-line l)))))))
+
+(defmethod vc-init ((self hg-repo))
+  (with-slots (path) self
+    ;; could throw error here but w/e
+    (sb-ext:process-exit-code (run-hg-command "init" path))))
+
+(defmethod vc-clone ((self hg-repo) remote &key &allow-other-keys)
+  (with-slots (path) self
+    (sb-ext:process-exit-code (run-hg-command "clone" remote path))))
+
+(defmethod vc-pull ((self hg-repo) remote &key &allow-other-keys)
+  (with-slots (path) self
+    (with-current-directory (path)
+      (sb-ext:process-exit-code (run-hg-command "pull" remote)))))
+
+(defmethod vc-push ((self hg-repo) remote &key &allow-other-keys)
+  (with-slots (path) self
+    (with-current-directory (path)
+      (sb-ext:process-exit-code (run-hg-command "push" remote)))))
+
+(defmethod vc-commit ((self hg-repo) msg &key &allow-other-keys)
+  (with-slots (path) self
+    (with-current-directory (path)
+      (sb-ext:process-exit-code (run-hg-command "commit" "-m" msg)))))
+
+(defmethod vc-add ((self hg-repo) &rest files)
+  (with-slots (path) self
+    (with-current-directory (path)
+      (sb-ext:process-exit-code (apply #'run-hg-command "add" files)))))
+
+(defmethod vc-remove ((self hg-repo) &rest files)
+  (with-slots (path) self
+    (with-current-directory (path)
+      (sb-ext:process-exit-code (apply #'run-hg-command "remove" files)))))
+
+(defmethod vc-addremove ((self hg-repo) &rest files)
+  (with-slots (path) self
+    (with-current-directory (path)
+      (sb-ext:process-exit-code (apply #'run-hg-command "addremove" files)))))
+
+(defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
+
+(defmethod vc-branch ((self hg-repo) &key cmd branch &allow-other-keys) (vc-run self "branch" cmd branch))
+
+(defmethod vc-diff ((a hg-repo) (b hg-repo) &key ediff &allow-other-keys) 
+  (vc-run a "diff" (vc-repo-head a) (vc-repo-head b)))
+
+(defmethod vc-id ((self hg-repo))
+  (with-slots (path) self
+    (with-current-directory (path)
+      (with-open-stream (s (sb-ext:process-output (run-hg-command "id")))
+        (with-output-to-string (str)
+          (loop for c = (read-char s nil nil)
+                while c
+                do (write-char c str))
+          str)))))
+
+;;; Client
 (declaim (inline %make-hg-client))
 (defstruct (hg-client (:constructor %make-hg-client))
   "hg-client structures contain the client connection state
@@ -86,7 +138,7 @@
   server."
   (pid 0 :type fixnum :read-only t)
   (pgid 0 :type fixnum)
-  (cwd "." :type string)
+  (cwd (sb-posix:getcwd) :type string)
   (buffer (make-array *default-hg-client-buffer-size* :element-type 'unsigned-byte :adjustable nil))
   (socket nil :type (or local-socket null))
   (caps 0 :type fixnum))
@@ -97,11 +149,11 @@
 		       :element-type 'unsigned-byte
 		       :adjustable nil)))
 
-(defun run-hg-command (cmd &rest args)
-  (run-program *hg-program* (push cmd args) :output :stream))
+;;; Low-level
+(defstruct hg-nodeid id)
 
-;; (with-open-stream (s (sb-ext:process-output (run-hg-command "status")))
-;;   (with-output-to-string (str)
-;;     (loop for l = (read-line s nil nil)
-;;           while l
-;;           do (write-line l))))
+(defstruct hg-revlog)
+
+(defstruct hg-manifest)
+
+(defstruct hg-changeset id)

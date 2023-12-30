@@ -10,6 +10,7 @@
   (:import-from :cli :find-exe)
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
+  (:import-from :uiop :with-current-directory)
   (:import-from :sb-ext :run-program)
   (:import-from :std :when-let)
   (:import-from :sxp :form)

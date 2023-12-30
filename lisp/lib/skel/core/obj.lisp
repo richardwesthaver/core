@@ -208,7 +208,7 @@ via the special form stored in RECIPE."))
 (defmethod write-sxp-stream ((self sk-vc-remote-meta) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sk-vc-remote-meta-name self) ,(sk-vc-remote-meta-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
-(defstruct sk-vc-meta 
+(defstruct sk-vc-meta
   (kind *default-skel-vc-kind* :type vc-designator)
   (remotes nil :type list))
 
