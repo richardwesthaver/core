@@ -1,6 +1,6 @@
 ;;; std.asd --- standard library
 (defsystem :rt
-  :depends-on (:std :sxp :log)
+  :depends-on (:std :log :dat)
   :components ((:file "pkg")
                (:file "bench")
                (:file "trace")

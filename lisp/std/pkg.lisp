@@ -9,6 +9,7 @@
    :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*)
   (:export
    ;; err
+   :std-error :std-error-message :deferror
    :nyi!
    :required-argument
    :ignore-some-conditions

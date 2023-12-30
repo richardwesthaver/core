@@ -1,24 +1,9 @@
-;;; sxp.lisp --- S-eXPressions
+;;; lib/dat/sxp.lisp --- S-eXPressions
 
 ;; sxp is a unified S-Expression data format
 
 ;;; Code:
-(defpackage :sxp
-  (:use :cl :sb-mop :std)
-  (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
-  ;; TODO: hot-patch readtables into sxp classes/parsers
-  (:import-from :std/named-readtables :defreadtable :in-readtable)
-  (:export
-   :sxp-fmt-designator
-   :form :formp :sxp-error :sxp-fmt-error :sxp-syntax-error :reader :writer :fmt
-   :wrap :wrap! :wrap-from-string! :unwrap :unwrap! :unwrap-or
-   :sxpp :build-ast :load-ast :ast
-   :define-macro :define-fmt :read-sxp-file :write-sxp-file
-   :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream
-   :make-sxp :sxp :formp :form
-   :wrap-object :unwrap-object))
-
-(in-package :sxp)
+(in-package :dat/sxp)
 
 (defun formp (form)
   (or (consp form) (atom form)))
