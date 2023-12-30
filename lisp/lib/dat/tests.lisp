@@ -5,6 +5,7 @@
 
 (defsuite :dat)
 (in-suite :dat)
+(in-readtable :std)
 
 (deftest csv ())
 
