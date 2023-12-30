@@ -58,6 +58,8 @@
 ;; translate to html,pdf,txt and other formats.
 
 ;;; Code:
+(eval-when (:compile-toplevel :load-toplevel) (require :sb-introspect))
+
 (defpackage :doc
   (:use :cl :std :organ :sb-mop :sb-introspect)
   (:export

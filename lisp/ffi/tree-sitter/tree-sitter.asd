@@ -14,6 +14,7 @@
 (defsystem :tree-sitter
   :depends-on (:sb-grovel :std)
   :components ((:file "pkg")
+               (:file "ffi")
                (:file "lang")
                (:file "api")
                (grovel-constants-file "constants"
