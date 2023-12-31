@@ -30,7 +30,7 @@
   :build-operation "program-op"
   :build-pathname "rdb"
   :entry-point "bin/rdb::main"
-  :depends-on (:uiop :cl-ppcre :std :rdb :dot :cli)
+  :depends-on (:uiop :cl-ppcre :std :rdb :cli)
   :components ((:file "rdb"))
   :in-order-to ((test-op (test-op "app/tests")))
   :perform (test-op (o c) (symbol-call :rt :do-tests :app)))
