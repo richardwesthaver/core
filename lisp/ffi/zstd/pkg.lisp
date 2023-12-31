@@ -41,4 +41,4 @@
 
 (in-package :zstd)
 
-(define-alien-loader zstd t)
+(define-alien-loader "zstd" t)

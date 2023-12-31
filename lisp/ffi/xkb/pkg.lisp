@@ -27,7 +27,7 @@
 
 (in-package :xkb)
 
-(define-alien-loader xkbcommon t)
+(define-alien-loader "xkbcommon" t)
 
 (define-alien-type xkb-context (struct xkb-context))
 (define-alien-type xkb-keymap (struct xkb-keymap))

@@ -3,4 +3,4 @@
 
 (in-package :uring)
 
-(define-alien-loader uring t)
+(define-alien-loader "uring" t)
