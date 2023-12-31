@@ -38,7 +38,7 @@ quinn = { version = "0.10", features = ["tls-rustls"], optional = true }
 hyper = { version = "1.1", optional = true }
 hyper-rustls = {version = "0.24", optional = true}
 urlencoding = { version = "2.1", optional = true}
-reqwest = {version = "0.11", features = ["json", "socks", "rustls-tls"], optional = true}
+reqwest = {version = "0.11", features = ["json", "socks", "rustls-tls", "stream"], optional = true}
 axum = {version = "0.7.3", optional = true, features = ["tracing", "macros"] }
 headers = {version = "0.4", optional = true}
 mime = {version = "0.3.17", optional = true}

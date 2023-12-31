@@ -3,23 +3,22 @@
 //// Code:
 use net::axum::http::{HeaderMap, StatusCode};
 use net::axum::{
-    body::{Body, Bytes},
+    body::Body,
   extract::State,
     http::{HeaderName, HeaderValue},
     response::{IntoResponse,Response},
-  // routing::get,
-    Router,
 };
 use logger::log;
 use net::reqwest::Client;
 use net::stream::StreamExt;
 use clap::{Parser, Subcommand};
-use krypt::{keyutils::keytypes, ks, ss, KryptConfig};
-use logger::{debug, info, trace, warn, Logger};
-use obj::Objective;
+
+use logger::{trace, Logger};
+
 use std::path::PathBuf;
 use std::{convert::Infallible, time::Duration};
 use util::{cli::log_level_str_from_cli, Result};
+
 //// Server
 async fn proxy_via_reqwest(State(client): State<Client>) -> Response {
     let reqwest_response = match client.get("http://127.0.0.1:3000/stream").send().await {
@@ -63,9 +62,6 @@ struct Cli {
   /// Set the default config file
   #[arg(short, long, env = "ALIK_CONFIG_FILE")]
   cfg: Option<PathBuf>,
-  /// Set a user for this command
-  #[arg(short, long, env = "USER")]
-  user: Option<String>,
   /// Set log level
   #[arg(short, long, action = clap::ArgAction::Count)]
   level: u8,
@@ -107,7 +103,7 @@ async fn main() -> Result<()> {
   if let Some(cmd) = args.cmd {
     match cmd {
       Cmd::Start {} => Ok(()),
-      Cmd::Show { kind } => Ok(()),
+      Cmd::Show { kind: _ } => Ok(()),
     }
   }else {
     Ok(())

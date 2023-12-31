@@ -7,8 +7,6 @@
 ;; Commentary:
 
 ;; Code:
-(rocksdb:load-rocksdb :save t)
-
 (defpackage :rdb
   (:use :cl :std :rocksdb :sb-alien)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
@@ -66,3 +64,6 @@
    ;; macs
    :with-db
    :with-cf))
+
+(in-package :rdb)
+(rocksdb:load-rocksdb t)

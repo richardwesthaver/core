@@ -12,6 +12,8 @@ pub const ABOUT: &str = concat!(
   ")"
 );
 
+pub const PACKY_ROOT: &str = "https://packy.compiler.company/";
+
 #[derive(Debug, Parser)]
 #[command(name="cc-init",author, version=env!("CORE_VERSION"), about=ABOUT)]
 struct Cli {
@@ -43,6 +45,6 @@ fn main() -> Result<()> {
   println!("Welcome to The Compiler Company.");
   // dl("http://google.com", "dl")?;
   info!("detecting system...");
-
+  
   Ok(())
 }
