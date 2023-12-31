@@ -28,7 +28,8 @@
 (defun shared-object-name (name)
   "Return a filename with the correct extension for a shared library
 on Linux and Darwin."
-  (format nil "lib~a.~a" name #+darwin "dylib" #-darwin "so"))
+  #+darwin (format nil "/usr/local/lib~a.dylib" name)
+  #-darwin (format nil "lib~a.so" name))
 
 (defmacro define-alien-loader (name &optional export)
   "Define a default loader function named load-NAME which calls
