@@ -25,8 +25,8 @@ async fn proxy_via_reqwest(State(client): State<Client>) -> Response {
     let reqwest_response = match client.get("http://127.0.0.1:3000/stream").send().await {
         Ok(res) => res,
         Err(err) => {
-            log::error!(%err, "request failed");
-            return (StatusCode::BAD_REQUEST, Body::empty()).into_response();
+          log::error!("{} {}", &err, "request failed");
+          return (StatusCode::BAD_REQUEST, Body::empty()).into_response();
         }
     };
 
@@ -41,7 +41,7 @@ async fn proxy_via_reqwest(State(client): State<Client>) -> Response {
     }));
 
     response_builder
-        .body(Body::wrap_stream(reqwest_response.bytes_stream()))
+        .body(Body::from_stream(reqwest_response.bytes_stream()))
         // This unwrap is fine because the body is empty here
         .unwrap()
 }
@@ -51,7 +51,7 @@ async fn stream_some_data() -> Body {
         .throttle(Duration::from_secs(1))
         .map(|n| n.to_string())
         .map(Ok::<_, Infallible>);
-    Body::wrap_stream(stream)
+    Body::from_stream(stream)
 }
 
 #[derive(Debug, Parser)]

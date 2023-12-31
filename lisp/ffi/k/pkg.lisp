@@ -6,7 +6,6 @@
 (defpackage :k
   (:use :cl :std :sb-alien)
   (:export 
-   :load-k
    :K
    :kinit
    :unref
@@ -17,10 +16,7 @@
 
 (in-package :k)
 
-(defun load-k () 
-  (unless (member :k *features*)
-    (sb-alien:load-shared-object "libk.so" :dont-save t)
-    (push :k *features*)))
+(define-alien-loader k t)
 
 (define-alien-type K (* t))
 (define-alien-routine kinit void)

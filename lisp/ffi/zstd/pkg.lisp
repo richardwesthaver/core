@@ -41,7 +41,4 @@
 
 (in-package :zstd)
 
-(defun load-zstd (&key save)
-  (prog1 (sb-alien:load-shared-object "libzstd.so" :dont-save (not save))
-    (unless (member :zstd *features*)
-      (push :zstd *features*))))
+(define-alien-loader zstd t)

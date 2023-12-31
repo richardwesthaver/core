@@ -4,7 +4,7 @@
 (defsuite :xkb)
 (in-suite :xkb)
 
-(load-xkb)
+(load-xkbcommon)
 
 (deftest xkb-basic ()
   (is (= xkb:xkb-keysym-max 536870911)))

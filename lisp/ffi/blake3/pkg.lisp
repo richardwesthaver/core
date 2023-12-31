@@ -7,8 +7,6 @@
   (:nicknames :blake3)
   (:use :cl :std :sb-alien)
   (:export 
-   :load-blake3
-   :+blake3-version-string+
    :+blake3-key-len+
    :+blake3-out-len+
    :+blake3-block-len+
@@ -28,18 +26,13 @@
 
 (in-package :blake3)
 
-(defvar +blake3-version-string+)
 (defvar +blake3-key-len+ 32)
 (defvar +blake3-out-len+ 32)
 (defvar +blake3-block-len+ 64)
 (defvar +blake3-chunk-len+ 1024)
 (defvar +blake3-max-depth+ 54)
 
-(defun load-blake3 () 
-  (unless (member :blake3 *features*)
-    (sb-alien:load-shared-object "libblake3.so" :dont-save t)
-    (push :blake3 *features*)
-    (setq +blake3-version-string+ (blake3-version))))
+(define-alien-loader blake3 t)
 
 (define-alien-routine blake3-version c-string)
 

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Helper of Man"
 [[bin]]
-name = "krypt"
+name = "alik"
 path = "main.rs"
 [dependencies]
 krypt = { path = "../../../lib/krypt" }

@@ -6,7 +6,6 @@
 (defpackage :bqn
   (:use :cl :std :sb-alien)
   (:export 
-   :load-bqn
    :bqnv
    :bqn-init
    :bqn-free
@@ -31,12 +30,7 @@
 
 (in-package :bqn)
 
-(defun load-bqn () 
-  (unless (member :bqn *features*)
-    (sb-alien:load-shared-object "libcbqn.so" :dont-save t)
-    (push :bqn *features*)))
-
-(load-bqn)
+(define-alien-loader bqn t)
 
 (define-alien-type bqnv unsigned-long)
 (define-alien-routine bqn-init void)

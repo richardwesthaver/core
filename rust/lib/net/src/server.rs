@@ -1,12 +1,11 @@
 //! network server primitives
-use async_trait::async_trait;
 pub use hyper;
 use obj::NetworkConfig;
 pub struct Server {
   pub cfg: NetworkConfig,
 }
 
-#[async_trait]
-pub trait Serve {
+#[trait_variant::make(Serve: Send)]
+pub trait LocalServe {
   async fn run(&self);
 }
