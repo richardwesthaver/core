@@ -10,7 +10,7 @@
 
 (in-package :ssh2)
 
-(define-alien-loader ssh2 t)
+(define-alien-loader "ssh2" t)
 
 (define-alien-routine libssh2-init int (flags int))
 

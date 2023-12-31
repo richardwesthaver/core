@@ -32,7 +32,7 @@
 (defvar +blake3-chunk-len+ 1024)
 (defvar +blake3-max-depth+ 54)
 
-(define-alien-loader blake3 t)
+(define-alien-loader "blake3" t)
 
 (define-alien-routine blake3-version c-string)
 

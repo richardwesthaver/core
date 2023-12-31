@@ -22,8 +22,8 @@
 
 (in-package :btrfs/pkg)
 
-(define-alien-loader btrfs t)
+(define-alien-loader "btrfs" t)
 
-(define-alien-loader btrfsutil t)
+(define-alien-loader "btrfsutil" t)
 
 (defmacro define-btrfs-ioctl () "Define a wrapper for IOCTLs exposed by BTRFS.")

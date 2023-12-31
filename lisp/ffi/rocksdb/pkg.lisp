@@ -70,4 +70,4 @@ set *errptr to a malloc()ed error message.
 
 (in-package :rocksdb)
 
-(define-alien-loader rocksdb t)
+(define-alien-loader "rocksdb" t)
