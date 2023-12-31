@@ -5,13 +5,6 @@
 
 (in-package :bin/skel)
 
-;; HACK 2023-10-14: a bit too early to implement this, would rather
-;; use the repl. they're useful for linking up with the debugger tho.
-(defvar skc-file-prompt-history '(""))
-(defprompt skc-file "file")
-(defvar skc-name-prompt-history '(""))
-(defprompt skc-name "name")
-
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))
 (defopt skc-debug (setq *log-level* (if $val :debug nil)))
@@ -25,7 +18,7 @@
 	  ((sb-ext:file-exists 
 	     #'(lambda (s)
 		 (uiop:println (format nil "file already exists: ~A" (or file *default-skelfile*)))
-		 (let ((f2 (skc-file-prompt)))
+		 (let ((f2 (read-line)))
 		   (if (string= f2 "") 
 		       (error s)
 		       (use-value f2 s))))))
