@@ -11,43 +11,42 @@ publish = ["crater"]
 [features]
 default = ["client", "server"]
 full = ["client", "server", "quic", "http", "dns", "wss", "tun", "tls"]
-client = ["reqwest", "async-trait"]
-server = ["hyper", "async-trait", "axum", "tower-http"]
-http = ["hyper","axum","tower-http","reqwest","oauth2","urlencoding","headers","http-rs"]
+client = ["reqwest"]
+server = ["hyper", "axum", "tower-http"]
+http = ["hyper","axum","tower-http","reqwest","oauth2","urlencoding","headers"]
 tls = ["hyper-rustls", "http"]
 quic = ["quinn"]
 dns = ["trust-dns-resolver"]
 tun = ["tokio-tun"]
 ws = ["tokio-tungstenite"]
-wss = ["tokio-tungstenite/rustls-tls", "ws"]
+wss = ["tokio-tungstenite/rustls", "ws"]
 
 [dependencies]
 # rlib
 obj = { path = "../obj", features = ["oauth"] }
 # contrib
-futures = "0.3.16"
-bytes = "1.0.1"
+futures = "0.3"
+bytes = "1.5"
 logger = { path = "../logger" }
-url = "2.2.2"
-serde_json = "1.0.68"
-tokio-util = { version = "0.6.7", features = ["full"] }
-async-trait = { version = "0.1.51", optional = true }
+url = "2.5"
+serde_json = "1"
+tokio-util = { version = "0.7", features = ["full"] }
 tokio = { version = "1.35.1", default-features = false, features = ["net", "io-util"] }
 tokio-stream = { version = "0.1.14", features = ["net"] }
 ## runtimes
-quinn = { version = "0.7.2", features = ["tls-rustls"], optional = true }
-hyper = { version = "0.14.11", optional = true }
-hyper-rustls = {version = "0.22.1", optional = true}
-http-rs = { version = "0.2.4", package = "http", optional = true }
-urlencoding = { version = "2.1.0", optional = true}
-reqwest = {version = "0.11.4", features = ["json", "socks", "rustls-tls"], optional = true}
-axum = {version = "0.7.3", optional = true}
-headers = {version = "0.3", optional = true}
-mime = {version = "0.3.16", optional = true}
+quinn = { version = "0.10", features = ["tls-rustls"], optional = true }
+hyper = { version = "1.1", optional = true }
+hyper-rustls = {version = "0.24", optional = true}
+urlencoding = { version = "2.1", optional = true}
+reqwest = {version = "0.11", features = ["json", "socks", "rustls-tls"], optional = true}
+axum = {version = "0.7.3", optional = true, features = ["tracing", "macros"] }
+headers = {version = "0.4", optional = true}
+mime = {version = "0.3.17", optional = true}
 async-session = {version = "3.0.0", optional = true}
-oauth2 = {version = "4.1.0", optional = true}
-tower-http = {version = "0.1", features = ["fs", "trace"], optional = true}
-trust-dns-resolver = {version = "0.20.3", features = [], optional = true}
-tokio-tun = {version = "0.3.15", optional = true}
-ipnetwork = "0.18.0"
-tokio-tungstenite = {version = "0.15.0", optional = true}
+oauth2 = {version = "4.4.2", optional = true}
+tower-http = {version = "0.5", features = ["fs", "trace"], optional = true}
+trust-dns-resolver = {version = "0.23.2", features = [], optional = true}
+tokio-tun = {version = "0.11.2", optional = true}
+ipnetwork = "0.20"
+tokio-tungstenite = {version = "0.21.0", optional = true}
+trait-variant = "0.1.0"

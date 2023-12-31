@@ -2,14 +2,12 @@ use crate::Result;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 
-use async_trait::async_trait;
 use trust_dns_resolver::{
   config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
   error::ResolveErrorKind,
   TokioAsyncResolver,
 };
 
-#[async_trait]
 pub trait Lookup {
   async fn lookup(&self, ip: IpAddr) -> Option<String>;
 }
@@ -39,7 +37,6 @@ impl Resolver {
   }
 }
 
-#[async_trait]
 impl Lookup for Resolver {
   async fn lookup(&self, ip: IpAddr) -> Option<String> {
     let lookup_future = self.0.reverse_lookup(ip);

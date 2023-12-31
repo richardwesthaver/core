@@ -78,7 +78,7 @@
 
 (defun load-tree-sitter () 
   (unless (member :tree-sitter *features*)
-    (sb-alien:load-shared-object "libtree-sitter.so" :dont-save t)
+    (sb-alien:load-shared-object (shared-object-name "tree-sitter") :dont-save t)
     (load-tree-sitter-wrapper)
     (push :tree-sitter *features*)))
 

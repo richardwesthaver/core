@@ -86,7 +86,8 @@
    all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
    corfu orderless cape ;; completion
    slime ;; common lisp server
-   ;; slime-company
+   bbdb
+   slime-company
    which-key ;; key helper
    ;; langs
    rust-mode)

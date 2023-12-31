@@ -6,16 +6,11 @@
 (defpackage :alpm
   (:use :cl :std :sb-alien)
   (:export 
-   :load-alpm
    :alpm-version))
 
 (in-package :alpm)
 
-(defun load-alpm () 
-  (unless (member :alpm *features*)
-    (sb-alien:load-shared-object "libalpm.so" :dont-save t)
-    (push :alpm *features*)))
-(load-alpm)
+(define-alien-loader alpm t)
 
 (define-opaque alpm-handle)
 (define-opaque alpm-db)

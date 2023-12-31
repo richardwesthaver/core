@@ -25,6 +25,21 @@
 ;;  	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
 ;;  		 :sanctify-for-execution))
 
+(defun shared-object-name (name)
+  "Return a filename with the correct extension for a shared library
+on Linux and Darwin."
+  (format nil "lib~a.~a" name #+darwin "dylib" #-darwin "so"))
+
+(defmacro define-alien-loader (name &optional export)
+  "Define a default loader function named load-NAME which calls
+SB-ALIEN:LOAD-SHARED-OBJECT."
+  (let ((fname (sb-int:symbolicate 'load- name)))
+    `(prog1
+       (defun ,fname (&optional save)
+         (prog1 (sb-alien:load-shared-object (shared-object-name ',name) :dont-save (not save))
+           (pushnew ,(sb-int:keywordicate name) *features*)))
+       ,@(when export (list `(export '(,fname)))))))
+       
 (defmacro define-opaque (ty &optional no-export)
   `(prog1
        (define-alien-type ,ty (struct ,(symbolicate ty '-t)))

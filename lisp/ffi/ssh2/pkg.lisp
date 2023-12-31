@@ -6,13 +6,11 @@
 (defpackage :ssh2
   (:use :cl :std :sb-alien)
   (:export 
-   :load-ssh2))
+   :libssh2-init :libssh2-exit :libssh2-free))
 
 (in-package :ssh2)
 
-(defun load-ssh2 (&optional save) 
-  (sb-alien:load-shared-object "libssh2.so" :dont-save (not save))
-  (pushnew :ssh2 *features*))
+(define-alien-loader ssh2 t)
 
 (define-alien-routine libssh2-init int (flags int))
 

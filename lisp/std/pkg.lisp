@@ -179,6 +179,8 @@
    :rcurry
    :named-lambda
    ;; alien
+   :shared-object-name
+   :define-alien-loader
    :make-bits
    ;; :defbytes
    ;; :u1 :u2 :u3 :u4 :u8 :u16 :u24 :u32 :u64 :u128
