@@ -17,6 +17,14 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
 ;;; Code:
 (in-package :pod)
 
-(defstruct podman-request)
+(defstruct podman-request path method params body)
 
-(defstruct podman-response)
+(defstruct podman-response status body)
+
+(defstruct podman-query-param name val)
+
+;; (defmacro define-podman-req/res (name))
+
+(defmethod attach-query-param (req))
+(defmethod send-request (req client callback))
+(defmethod receive-response (req client callback))
