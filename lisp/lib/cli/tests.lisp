@@ -5,17 +5,15 @@
 (defsuite :cli)
 (in-suite :cli)
 
-
-;; TODO: needs to be compiled outside scope of test - contender for
-;; fixture API
-(defprompt tpfoo "testing: ")
-(defvar tcoll nil)
-(defvar thist nil)
-
 (deftest ansi () )
 
 (deftest cli-prompt (:disabled t) ;; FIXME: hijacks io in slime
   "Test CLI prompts"
+  ;; TODO: needs to be compiled outside scope of test - contender for
+  ;; fixture API
+  (defprompt tpfoo "testing: ")
+  (defvar tcoll nil)
+  (defvar thist nil)
   (let ((*standard-input* (make-string-input-stream 
 			   (format nil "~A~%~A~%~%" "foobar" "foobar"))))
     ;; prompts 
@@ -465,3 +463,8 @@ Eastern Mediterranean ████████████████▊
 ")))))
 
 (deftest repl ())
+
+(deftest env ()
+  (is (ld-library-path-list))
+  (is (exec-path-list))
+  (is (find-exe "sbcl")))

@@ -95,7 +95,7 @@ A reset is useful after a program crashes and leaves the terminal in
 an undefined, unusable state."
   (esc "c"))
 
-(setf (fdefinition 'ris) #'reset-to-initial-state)
+(setf (fdefinition '.ris) #'reset-to-initial-state)
 
 ;;; CSI sequences ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -113,7 +113,7 @@ an undefined, unusable state."
   "Move the cursor m lines up."
   (csi "A" m))
 
-(setf (fdefinition 'cuu) #'cursor-up)
+(setf (fdefinition '.cuu) #'cursor-up)
 
 ;; Name:       Cursor down
 ;; Mnemonic:   CUD
@@ -127,7 +127,7 @@ an undefined, unusable state."
   "Move the cursor m lines down."
   (csi "B" m))
 
-(setf (fdefinition 'cud) #'cursor-down)
+(setf (fdefinition '.cud) #'cursor-down)
 
 ;; Name:       Cursor forward
 ;; Mnemonic:   CUF
@@ -142,7 +142,7 @@ an undefined, unusable state."
   "Move the cursor n columns in the forward direction (to the right)."
   (csi "C" n))
 
-(setf (fdefinition 'cuf) #'cursor-forward)
+(setf (fdefinition '.cuf) #'cursor-forward)
 
 ;; Name:       Cursor backward
 ;; Mnemonic:   CUB
@@ -157,7 +157,7 @@ an undefined, unusable state."
   "Move the cursor n columns in the backward direction (to the left)."
   (csi "D" n))
 
-(setf (fdefinition 'cub) #'cursor-backward)
+(setf (fdefinition '.cub) #'cursor-backward)
 
 ;; Name:       Cursor next line
 ;; Mnemonic:   CNL
@@ -171,7 +171,7 @@ an undefined, unusable state."
   "Move the cursor m columns down to column 1."
   (csi "E" m))
 
-(setf (fdefinition 'cnl) #'cursor-next-line)
+(setf (fdefinition '.cnl) #'cursor-next-line)
 
 ;; Name:       Cursor preceding line
 ;; Mnemonic:   CPL
@@ -185,7 +185,7 @@ an undefined, unusable state."
   "Move the cursor m columns up to column 1."
   (csi "F" m))
 
-(setf (fdefinition 'cpl) #'cursor-preceding-line)
+(setf (fdefinition '.cpl) #'cursor-preceding-line)
 
 ;; Name:       Cursor horizontal absolute
 ;; Mnemonic:   CHA
@@ -200,7 +200,7 @@ an undefined, unusable state."
   "Set the cursor horizontal position to the n-th column in the current line."
   (csi "G" n))
 
-(setf (fdefinition 'cha) #'cursor-horizontal-absolute)
+(setf (fdefinition '.cha) #'cursor-horizontal-absolute)
 
 ;; Name:       Cursor position
 ;; Mnemonic:   CUP
@@ -219,7 +219,7 @@ Without arguments, the cursor is placed in the home position (1 1),
 the top left corner."
   (csi "H" line column))
 
-(setf (fdefinition 'cup) #'cursor-position)
+(setf (fdefinition '.cup) #'cursor-position)
 
 ;; Name:       Vertical position absolute
 ;; Mnemonic:   VPA
@@ -234,7 +234,7 @@ the top left corner."
   "Set the cursor vertical position to the m-th line in the current column."
   (csi "d" m))
 
-(setf (fdefinition 'vpa) #'vertical-position-absolute)
+(setf (fdefinition '.vpa) #'vertical-position-absolute)
 
 ;; Name:       Vertical position relative
 ;; Mnemonic:   VPR
@@ -251,7 +251,7 @@ the top left corner."
 This has the same effect as cursor-down (cud)."
   (csi "e" m))
 
-(setf (fdefinition 'vpr) #'vertical-position-relative)
+(setf (fdefinition '.vpr) #'vertical-position-relative)
 
 ;; Name:       Vertical position backward
 ;; Mnemonic:   VPB
@@ -268,19 +268,19 @@ This has the same effect as cursor-down (cud)."
 This has the same effect as cursor-up (cuu)."
   (csi "k" m))
 
-(setf (fdefinition 'vpb) #'vertical-position-backward)
+(setf (fdefinition '.vpb) #'vertical-position-backward)
 
 (defun save-cursor-position ()
   "Save cursor position. Move cursor to the saved position using restore-cursor-position."
   (csi "s"))
 
-(setf (fdefinition 'scosc) #'save-cursor-position)
+(setf (fdefinition '.scosc) #'save-cursor-position)
 
 (defun restore-cursor-position ()
   "Move cursor to the position saved using save-cursor-position."
   (csi "u"))
 
-(setf (fdefinition 'scorc) #'restore-cursor-position)
+(setf (fdefinition '.scorc) #'restore-cursor-position)
 
 ;; Name:       Erase in display
 ;; Mnemonic:   ED
@@ -306,7 +306,7 @@ Mode 3 (erase-saved-lines, xterm) erases all characters on the screen
 including the scrollback buffer."
   (csi "J" mode))
 
-(setf (fdefinition 'ed) #'erase-in-display)
+(setf (fdefinition '.ed) #'erase-in-display)
 
 (defun erase-below ()
   "Erases all characters from the cursor to the end of the screen."
@@ -344,7 +344,7 @@ line to the cursor.
 Mode 2 (erase-line) erases all characters on the line."
   (csi "K" mode))
 
-(setf (fdefinition 'el) #'erase-in-line)
+(setf (fdefinition '.el) #'erase-in-line)
 
 (defun erase-right ()
   "Erases all characters from the cursor to the end of the line."
@@ -421,7 +421,7 @@ Background colors:
 48 2 r g b  set the color by directly giving its RGB components"
   (apply #'csi "m" params))
 
-(setf (fdefinition 'sgr) #'select-graphic-rendition)
+(setf (fdefinition '.sgr) #'select-graphic-rendition)
 
 ;; Name:        Device Status Report
 ;; Mnemonic:    DSR
@@ -436,7 +436,7 @@ Background colors:
 as if we read it through read-line from the user."
   (csi "n" n))
 
-(setf (fdefinition 'dsr) #'device-status-report)
+(setf (fdefinition '.dsr) #'device-status-report)
 
 ;; Name:        Cursor Position Report
 ;; Mnemonic:    CPR
@@ -462,7 +462,7 @@ Implemented modes:
 1047 alternate or normal screen buffer"
   (csi "h" "?" mode))
 
-(setf (fdefinition 'decset) #'dec-private-mode-set)
+(setf (fdefinition '.decset) #'dec-private-mode-set)
 
 (defun show-cursor ()
   (dec-private-mode-set 25))
@@ -476,7 +476,7 @@ Implemented modes:
   "Reset (turn off, disable) a DEC private mode."
   (csi "l" "?" mode))
 
-(setf (fdefinition 'decrst) #'dec-private-mode-reset)
+(setf (fdefinition '.decrst) #'dec-private-mode-reset)
 
 (defun hide-cursor ()
   (dec-private-mode-reset 25))

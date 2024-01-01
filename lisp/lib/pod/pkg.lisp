@@ -29,4 +29,4 @@
 
 (defvar *buildah-exe* (find-exe "buildah"))
 
-(defvar *podman-local-user-socket* (format nil "/run/user/~a/podman/podman.sock" (sb-posix:getuid)))
+(defvar *podman-local-user-socket* (format nil "/run/user/~a/podman.sock" (sb-posix:getuid)))

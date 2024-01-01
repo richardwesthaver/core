@@ -2,6 +2,7 @@
 (defsystem :cli
   :depends-on (:std :log)
   :components ((:file "pkg")
+               (:file "env" :depends-on ("pkg"))
                (:file "api" :depends-on ("pkg"))
                (:file "progress" :depends-on ("pkg"))
                (:file "spark" :depends-on ("pkg"))
