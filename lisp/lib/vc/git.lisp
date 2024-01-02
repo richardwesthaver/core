@@ -1,7 +1,4 @@
-;;; Git
-(in-package :skel/core)
-
-(define-condition git-error (vc-error) ())
+(in-package :vc)
 
 (defvar *git-program* (find-exe "git"))
 

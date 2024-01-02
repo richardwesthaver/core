@@ -1,8 +1,3 @@
-;;; skel/core/vc/hg.lisp --- Skel Mercurial Version Control
-
-;; This package holds the machinery for interacting with our primary
-;; version control system: Mercurial (hg).
-
 ;;; Commentary:
 
 ;; Mercurial is our primary VCS - but we blur the lines by mirroring
@@ -37,9 +32,7 @@
 ;; hg serve --no-profile --cmdserver chgunix --address @INITSOCKNAME --daemon-postexec chdir:/ @DIR
 
 ;;; Code:
-(in-package :skel/core)
-
-(define-condition hg-error (vc-error) ())
+(in-package :vc)
 
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
