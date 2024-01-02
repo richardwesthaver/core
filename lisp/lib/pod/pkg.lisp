@@ -15,18 +15,20 @@
   (:use :cl :std :cli :sb-bsd-sockets :net :dat/json)
   (:export
    :*podman-api-version* :*podman-exe* :*buildah-exe*
-   :*podman-user-socket*
-   :pod-error :podman-error :handle-podman-error
+   :*podman-local-user-socket*
+   :pod-error :podman-error :libpod-error
    :decode-podman-response :encode-podman-request
    :podman-request :podman-response
-   :start-podman-service :podman-client))
+   :libpod-request :libpod-request-json
+   :start-podman-service :libpod-client))
 
 (in-package :pod)
-
-(defvar *podman-api-version* "v4.4.0")
 
 (defvar *podman-exe* (find-exe "podman"))
 
 (defvar *buildah-exe* (find-exe "buildah"))
 
-(defvar *podman-local-user-socket* (format nil "/run/user/~a/podman.sock" (sb-posix:getuid)))
+(defvar *podman-local-user-socket* (format nil "/var/run/user/~a/podman.sock" (sb-posix:getuid)))
+
+(defvar *libpod-api-version* "4.8.2")
+
