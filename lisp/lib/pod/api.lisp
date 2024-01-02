@@ -25,6 +25,6 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
 
 ;; (defmacro define-podman-req/res (name))
 
-(defmethod attach-query-param (req))
-(defmethod send-request (req client callback))
-(defmethod receive-response (req client callback))
+(defgeneric attach-query-param (req))
+(defgeneric send-request (req client callback))
+(defgeneric receive-response (req client callback))
