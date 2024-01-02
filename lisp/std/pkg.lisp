@@ -51,6 +51,7 @@
    :split
    :trim
    :collapse-whitespaces
+   :make-template-parser
    ;; fmt
    :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree :println
    ;; sym

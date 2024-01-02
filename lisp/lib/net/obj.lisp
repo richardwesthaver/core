@@ -32,3 +32,7 @@
 
 (defclass tunnel ()
   ())
+
+(defgeneric connect (self &key &allow-other-keys))
+
+(defgeneric disconnect (self &key &allow-other-keys))
