@@ -38,7 +38,7 @@
 (defsystem :bin/skel
   :build-operation program-op
   :build-pathname "skel"
-  :entry-point "bin/skel::main"
+  :entry-point "bin/skel:main"
   :components ((:file "skel"))
   :depends-on (:uiop :cl-ppcre :std :cli :skel)
   :in-order-to ((test-op (test-op "app/tests")))

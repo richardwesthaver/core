@@ -45,7 +45,6 @@
    :make-shorty
    :with-cli-handlers
    :defmain
-   :main
    :with-cli
    :make-cli
    ;; opt-parsers
@@ -170,8 +169,10 @@
    :vspark :*vticks*))
 
 (defpackage :cli/repl
-  (:use :cl :std :cli :cli/progress :cli/spark)
-  (:export))
+  (:use :cl :std :cli :cli/progress :cli/spark :cl-readline)
+  (:export :load-acl-repl :start-rl-repl))
 
 (defpackage :cli/ed
-  (:use :cl :std :cli))
+  (:use :cl :std :cli)
+  (:export :run-emacs :run-emacsclient
+           :org-store-link))
