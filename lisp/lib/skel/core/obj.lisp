@@ -4,14 +4,18 @@
 ;;; Vars
 (declaim (type vc-designator *default-skel-vc-kind*))
 (deftype vc-designator () '(member :hg :git nil))
-(defparameter *default-skel-vc-kind* :hg)
 
+;; ref: https://spdx.org/licenses/
+(deftype license-designator () '(or string pathname (member :mpl2 :wtfpl :lgpg :llgpl :gpl :mit :mit0)))
+
+(defparameter *default-skel-vc-kind* :hg)
+(defparameter *default-skel-license-kind* :mpl2)
 (declaim (type sk-project *skel-project*))
 (defvar *skel-project*)
 (declaim (type sk-user-config *skel-user-config*))
+(declaim (type sk-system-config *skel-system-config*))
 (defvar *skel-user-config*)
-
-;; TODO (defparameter *skel-project-registry* nil)
+(defvar *skel-system-config*)
 ;; TODO (defvar *skelfile-boundary* nil "Set an upper bounds on how
 ;; many times and how far to walk an arbitrary file directory.")
 
@@ -29,6 +33,8 @@
 (defparameter *skel-shed* (pathname (format nil "/home/~a/shed/" *default-skel-user*)))
 
 (defparameter *skel-cache* (pathname (format nil "/home/~a/.cache/skel/" *default-skel-user*)))
+
+(defparameter *skel-registry* (pathname (format nil "/home/~a/.data/skel/registry" *default-skel-user*)))
 
 (defparameter *user-skelrc* (pathname (format nil "/home/~A/~A" *default-skel-user* *default-skelrc*)))
 
@@ -150,28 +156,24 @@ via the special form stored in RECIPE."))
 
 ;;;; Config
 (defclass sk-config (skel sxp) 
-  ((imports :type list)))
-
-(defclass sk-user-config (sk-config sk-meta)
-  ((fmt :type symbol)
-   ;; TODO 2023-09-26: can change type to vc-meta, use as a base
-   ;; template for stuff like pre-defined remote URLs.
+  ((imports :type list)
    (vc :type vc-designator :accessor sk-vc)
    (shed :type pathname :accessor sk-shed)
    (stash :type pathname :accessor sk-stash)
+   (cache :type pathname :accessor sk-cache)
+   (registry :type pathname :accessor sk-registry)
    (scripts :type (or pathname list) :accessor sk-scripts)
-   (license :type string :accessor sk-license)
+   (license :type license-designator :accessor sk-license)
    (log-level :type log-level-designator)
-   (user :type form :accessor sk-user)
+   (fmt :type symbol)
    (alias-list :type (or list vector)
 	       :documentation "alist of aliases. currently used as a special cli-opt-parser by the skel binary.")
    (auto-insert :type form))
-  (:documentation "User configuration object, typically written to ~/.skelrc."))
+  (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
 
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
 
-;; ast -> obj
-(defmethod load-ast ((self sk-user-config))
+(defmethod load-ast ((self sk-config))
   ;; internal ast is never tagged
   (with-slots (ast) self
     (if (formp ast)
@@ -182,6 +184,8 @@ via the special form stored in RECIPE."))
 	      (setf (slot-value self s) v))) ;; needs to be the correct package
 	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
 	  (when (bound-string-p self 'shed) (setf (sk-shed self) (pathname (sk-shed self))))
+	  (when (bound-string-p self 'cache) (setf (sk-cache self) (pathname (sk-cache self))))
+	  (when (bound-string-p self 'registry) (setf (sk-registry self) (pathname (sk-registry self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
 					       ;; TODO 2023-10-14: convert into list of script names
 					       (pathname (sk-scripts self))))
@@ -189,6 +193,13 @@ via the special form stored in RECIPE."))
 	  self)
 	;; invalid ast, signal error
 	(error 'skel-syntax-error))))
+
+(defclass sk-system-config (sk-config sk-meta) ())
+
+(defclass sk-user-config (sk-config sk-meta)
+  ((user :type form :accessor sk-user)
+   (name :type form :accessor sk-name))
+  (:documentation "User configuration object, typically written to ~/.skelrc."))
 
 ;;;; Snippet
 (defstruct sk-snippet

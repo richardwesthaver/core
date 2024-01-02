@@ -1,4 +1,4 @@
-;;; rust/rust.sk --- core/rust skelfile -*- mode: skel; -*-
+;;; rust.sk --- core/rust skelfile -*- mode: skel; -*-
 :name "core/rust"
 :version "0.1.0"
 :description "Rust Core"

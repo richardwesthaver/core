@@ -1,6 +1,6 @@
 ;;; gui.asd --- GUI subsystem
 (defsystem :gui
-  :depends-on (:std :log :obj :wayflan)
+  :depends-on (:std :log :obj :wayflan :wayflan-client)
   :components ((:file "pkg")
                (:file "err")
                (:file "wm")

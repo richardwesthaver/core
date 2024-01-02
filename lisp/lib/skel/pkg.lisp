@@ -6,7 +6,7 @@
 
 ;;; Code:
 (defpackage :skel/core
-  (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli)
+  (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli :obj)
   (:import-from :cli :find-exe)
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
@@ -16,6 +16,7 @@
   (:import-from :sxp :form)
   (:export
    ;; err
+   :skel-error
    :skel-syntax-error
    :skel-fmt-error
    :skel-compile-error
@@ -48,12 +49,14 @@
    :containerfile
    :*default-containerfile*
    ;; obj
-   :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-project-registry* 
+   :*user-skelrc* :*system-skelrc*
+   :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-registry* :*skel-cache*
    :*default-skelfile* :*default-skel-user* :*default-skel-cache* :*default-user-skel-config* 
    :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
-   :*default-skel-stash* :*default-skel-shed* :*default-system-skelrc*
+   :*default-skel-stash* :*default-skel-shed* 
+   :*default-system-skelrc*
    :file-read-forms :load-ast
-   :sk-author :sk-path :sk-shed :sk-stash :sk-user
+   :sk-author :sk-path :sk-shed :sk-stash :sk-cache :sk-registry :sk-user
    :sk-push :sk-pull
    :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
@@ -61,8 +64,11 @@
    :sk-description :sk-kind :sk-rules :sk-version :sk-name :sk-docs :sk-document 
    :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config
+   :sk-system-config
    ;; util
-   :init-skelrc :load-skelrc
+   :init-skel-vars
+   :init-user-skelrc :load-skelrc
+   :init-system-skelrc
    :init-skel-user-config
    :init-skelfile
    :load-skelfile

@@ -7,7 +7,7 @@
 
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))
-(defopt skc-debug (setq *log-level* (if $val :debug nil)))
+(defopt skc-log (setq *log-level* (if $val :debug nil)))
 ;; TODO 2023-10-13: almost there
 (defopt skc-config (init-skel-user-config (parse-file-opt $val)))
 
@@ -39,10 +39,9 @@
       :load t)))
 
 (defcmd skc-show
-    (find-skelfile
-     (if $args (pathname (car $args))
-	 #P".")
-     :load t))
+     (if $args 
+         (find-skelfile (pathname (car $args)) :load t)
+         (find-skelfile #P"." :load t)))
 
 (defcmd skc-push
   (case
@@ -68,8 +67,8 @@
 	   :thunk skc-help)
 	  (:name version :global t :description "print version" 
 	   :thunk skc-version)
-	  (:name debug :global t :description "set log level (debug,info,trace,warn)"
-	   :thunk skc-debug)
+	  (:name log :global t :description "set log level (debug,info,trace,warn)"
+	   :thunk skc-log)
 	  (:name config :global t :description "set a custom skel user config" :kind file
 	   :thunk skc-config) ;; :kind?
 	  (:name input :description "input source" :kind string)
@@ -81,7 +80,10 @@
 	   :thunk skc-init)
 	  (:name show
 	   :description "describe the project skelfile"
-	   :opts (make-opts (:name file :description "path to skelfile" :kind file))
+	   :opts (make-opts 
+                   (:name file :description "path to skelfile" :kind file)
+                   (:name user :description "print user configuration")
+                   (:name system :description "print system configuration"))
 	   :thunk skc-describe)
 	  (:name inspect
 	   :description "inspect the project skelfile"
@@ -110,11 +112,12 @@
 (defun run ()
   (let ((*log-level* nil)
 	(*skel-user-config* (init-skel-user-config)))
-    (in-readtable :std) ;; should be in sxp
+    (in-readtable :std)
     (with-cli () $cli
+      (init-skel-vars)
+      ;; TODO 2024-01-01: need to parse out CMD opts from args slot - they still there
       (do-cmd $cli)
-      (debug-opts $cli)
-      (dbg! *skel-user-config*))))
+      (debug-opts $cli))))
 
 (defmain ()
   (run)

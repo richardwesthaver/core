@@ -17,4 +17,4 @@
 (define-alien-routine libssh2-exit void)
 
 ;; TODO
-(define-alien-routine libssh2-free void (session (* )) (ptr (* void)))
+(define-alien-routine libssh2-free void (session (* t)) (ptr (* t)))
