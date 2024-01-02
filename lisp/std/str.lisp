@@ -60,3 +60,42 @@ or a character."
     (string-trim char-bag s)))
 
 ;;;  TODO 2023-08-27: camel snake kebab
+
+(defun make-template-parser (start-delimiter end-delimiter &key (ignore-case nil))
+  "Returns a closure than can substitute variables
+  delimited by \"start-delimiter\" and \"end-delimiter\"
+  in a string, by the provided values."
+  (check-type start-delimiter string)
+  (check-type end-delimiter string)
+  (when (or (string= start-delimiter "")
+            (string= end-delimiter ""))
+      (error 'simple-type-error
+              :format-control "The empty string is not a valid delimiter."))
+  (let ((start-len (length start-delimiter))
+        (end-len (length end-delimiter))
+        (test (if ignore-case
+                  #'string-equal
+                  #'string=)))
+
+    (lambda (string values)
+      (check-type string string)
+      (unless (listp values)
+        (error 'simple-type-error
+               :format-control "values should be an association list"))
+
+      (with-output-to-string (stream)
+        (loop for prev = 0 then (+ j end-len)
+              for i = (search start-delimiter string)
+                      then (search start-delimiter string :start2 j)
+              for j = (if i (search end-delimiter string :start2 i))
+                      then (if i (search end-delimiter string :start2 i))
+              while (and i j)
+          do (write-string (subseq string prev i) stream)
+             (let ((instance (rest (assoc (subseq string (+ i start-len) j)
+                                          values
+                                          :test test))))
+               (if instance
+                (princ instance stream)
+                (write-string (subseq string i (+ j end-len)) stream)))
+
+          finally (write-string (subseq string prev) stream))))))

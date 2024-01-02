@@ -1,6 +1,6 @@
 (in-package :net/core)
 
-(define-condition net-error (error) ())
+(define-condition net-error (std-error) ())
 
 (define-condition codec-error (net-error) ())
 (define-condition protocol-error (net-error) ())
