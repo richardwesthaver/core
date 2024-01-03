@@ -3,3 +3,4 @@
 ;; SSH and SCP client support via libssh2
 
 ;;; Code:
+(in-package :net/proto/ssh)

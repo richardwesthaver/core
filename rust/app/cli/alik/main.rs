@@ -76,6 +76,7 @@ enum Cmd {
     /// What to show
     kind: Option<String>,
   },
+  Heartbeat {},
 }
 
 #[tokio::main]

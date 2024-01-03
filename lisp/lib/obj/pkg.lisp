@@ -233,6 +233,12 @@
    :dbs
    :get-db
    :add-db
+   :make-db
+   :connect-db
+   :query-db
+   :db-get
+   :close-db
+   :database
    :enable-sequences
    :next-sequence
    :sort-docs))

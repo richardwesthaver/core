@@ -42,7 +42,7 @@
 ;;; Objects
 
 ;; should be parsed from .hgrc and .gitconfig
-(defclass vc-config (skel sxp) ())
+(defclass vc-config (sxp) ())
 
 (defstruct vc-branch name rev)
 

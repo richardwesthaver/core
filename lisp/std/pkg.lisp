@@ -84,6 +84,8 @@
    :make-threads :with-threads :finish-threads
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
+   :task :job :task-queue :*task-queue*
+   :job-stack :task-object
    ;; util
    :find-package* #:find-symbol* #:symbol-call
    :intern* #:export* #:import* #:shadowing-import* 

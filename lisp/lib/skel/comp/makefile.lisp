@@ -98,4 +98,7 @@
 		   out))
     (sk-compile self out)))
 
-(defmethod sk-read-file ((self makefile) path))
+(defmethod sk-read-file ((self makefile) path)
+  (with-open-file (in path :direction :input)
+    
+)

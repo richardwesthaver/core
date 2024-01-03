@@ -19,8 +19,6 @@
    (:module "comp"
     :components
     ((:file "asd")
-     (:file "containerfile")
-     (:file "ignore")
      (:file "makefile")
      (:file "pkgbuild")))
    (:module "tools"

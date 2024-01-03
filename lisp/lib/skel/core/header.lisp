@@ -1,3 +1,8 @@
+;;; lib/skel/core/header.lisp --- Header comment parser-generator API
+
+;;
+
+;;; Code:
 (in-package :skel)
 ;;; File Headers
 (deftype file-header-kind () '(member :source :shebang))
@@ -39,7 +44,7 @@
 
 (defun parse-stream-file-header (stream)
   "Parse a file-header from STREAM."
-  (std:when-let ((l (read-line stream :eof-error-p nil)))
+  (std:when-let ((l (read-line stream nil nil)))
     l))
 
 (defun parse-source-file-header (file)
@@ -50,6 +55,7 @@
 (defun extract-source-file-header (str)
   "Extract a FILE-HEADER from STR, returning two values: the extracted object, and the modified string."
   (with-input-from-string (s str)
+
     (values
      (make-file-header :source (parse-stream-file-header s))
      str)))

@@ -1,4 +1,4 @@
-(defsystem :core
+(defsystem :prelude
   :depends-on (:std :cli :dat :doc
                :gui :log :net :nlp
                :obj :organ :packy
@@ -8,4 +8,4 @@
                :tree-sitter :xkb :ssh2
                :zstd :uring :blake3)
   :build-operation monolithic-compile-bundle-op
-  :build-pathname "core")
+  :build-pathname "prelude")
