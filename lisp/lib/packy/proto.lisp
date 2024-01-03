@@ -1,4 +1,6 @@
 (in-package :packy)
+(defclass abstract-package (id) ())
+
 (defgeneric pk-pack (self &key &allow-other-keys))
 (defgeneric pk-unpack (self &key &allow-other-keys))
 (defgeneric pk-install (self &key &allow-other-keys))

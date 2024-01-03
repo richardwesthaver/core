@@ -5,6 +5,21 @@
 ;;; Code:
 (in-package :obj/db)
 
+;;; V0.2
+(defclass database () ())
+
+(defgeneric make-db (type &rest initargs &key &allow-other-keys))
+
+(defgeneric connect-db (db &rest initargs &key &allow-other-keys))
+
+(defgeneric query-db (db query &key &allow-other-keys))
+
+(defgeneric db-get (db key &key &allow-other-keys))
+
+(defgeneric (setf db-get) (db key val &key &allow-other-keys))
+
+(defgeneric close-db (db &key &allow-other-keys))
+
 ;;; Common
 (defun slot-val (instance slot-name)
   (if (and instance
@@ -56,10 +71,10 @@
 
 ;;; DB
 (defgeneric get-db (dbs name)
-    (:documentation "Returns the xdb by name."))
+    (:documentation "Returns the db by name."))
 
 (defgeneric add-db (dbs name &key base-path load-from-file-p)
-  (:documentation "Adds a xdb to the dbs hashtable. A base-path can be
+  (:documentation "Adds a db to the dbs hashtable. A base-path can be
 supplied here that is independatn of the dbs base-path so that a
 database collection can be build that spans multiple disks etc."))
 
@@ -94,19 +109,19 @@ sort-collection, sort-collection-temporary and union-collection. "))
 (defgeneric load-from-file (collection file)
   (:documentation "Load collection from a file."))
 
-(defgeneric get-collection (xdb name)
+(defgeneric get-collection (db name)
     (:documentation "Returns the collection by name."))
 
-(defgeneric add-collection (xdb name &key load-from-file-p)
+(defgeneric add-collection (db name &key load-from-file-p)
   (:documentation "Adds a collection to the db."))
 
 (defgeneric snapshot (collection)
   (:documentation "Write out a snapshot."))
 
-(defgeneric load-db (xdb &key load-from-file-p)
+(defgeneric load-db (db &key load-from-file-p)
   (:documentation "Loads all the collections in a location."))
 
-(defgeneric get-docs (xdb collection-name &key return-type &allow-other-keys)
+(defgeneric get-docs (db collection-name &key return-type &allow-other-keys)
   (:documentation "Returns the docs that belong to a collection."))
 
 (defgeneric get-doc (collection value  &key element test)
@@ -134,10 +149,6 @@ sort-collection, sort-collection-temporary and union-collection. "))
 (defgeneric sort-collection-temporary (collection &key sort-value-func sort-test-func)
   (:documentation "This does not sort the actual collection but returns an array
 of sorted docs."))
-
-(defgeneric enable-sequences (xdb))
-
-(defgeneric next-sequence (xdb key))
 
 (defgeneric sum (collection &key function &allow-other-keys)
   (:documentation "Applies the function to all the docs in the collection and returns the sum of

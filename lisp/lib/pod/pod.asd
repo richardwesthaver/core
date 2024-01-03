@@ -4,7 +4,8 @@
                (:file "err")
                (:file "api")
                (:file "util")
-               (:file "obj"))
+               (:file "obj")
+               (:file "containerfile"))
   :in-order-to ((test-op (test-op :pod/tests))))
 
 (defsystem :pod/tests

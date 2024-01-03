@@ -2,6 +2,7 @@
   :depends-on (:std :cli :obj :net :log)
   :components ((:file "pkg")
                (:file "err")
+               (:file "ignore")
                (:file "proto")
                (:file "hg")
                (:file "git"))

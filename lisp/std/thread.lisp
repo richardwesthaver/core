@@ -126,3 +126,22 @@
                      #-sb-thread (sb-vm::sap-ref-lispobj from sb-vm:n-word-bytes)))
             (show sym val))
           (setq from (sb-vm::sap+ from (* sb-vm:binding-size sb-vm:n-word-bytes))))))))
+
+;;; Tasks
+(defstruct task-queue
+  (jobs (sb-concurrency:make-queue :name "jobs"))
+  (workers (sb-concurrency:make-mailbox :name "workers"))
+  (results (sb-concurrency:make-queue :name "results"))
+  (completed-jobs 0 :type fixnum) ;;atomic
+  (completed-tasks 0 :type fixnum))
+
+(defparameter *task-queue* nil)
+
+(defclass task ()
+  ((object :initarg :object :accessor task-object)))
+
+(defclass job ()
+  ((stack :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
+          :initarg :stack
+          :accessor :job-stack
+          :type (vector task))))

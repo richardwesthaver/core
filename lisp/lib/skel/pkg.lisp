@@ -88,7 +88,7 @@
     (:use-reexport :skel/core :skel/comp))
 
 (defpackage :skel/viz
-  (:use :cl :std :dot :skel)
+  (:use :cl :std :skel)
   (:export))
 
 (defpackage :skel/deploy
