@@ -17,15 +17,13 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
 ;;; Code:
 (in-package :pod)
 
-(defvar *libpod-params* (make-hash-table :test #'equal))
-
-(defvar *libpod-paths* (make-hash-table :test #'equal))
-
-(defun register-libpod-param (name prototype)
-  (setf (gethash name *libpod-params*) prototype))
-
-(defun register-libpod-path (name prototype)
-  (setf (gethash name *libpod-params*) prototype))
+(eval-always
+ (defvar *libpod-params* (make-hash-table :test #'equal))
+ (defvar *libpod-paths* (make-hash-table :test #'equal))
+ (defun register-libpod-param (name prototype)
+   (setf (gethash name *libpod-params*) prototype))
+ (defun register-libpod-path (name prototype)
+   (setf (gethash name *libpod-params*) prototype)))
 
 (defmacro register-libpod-params (&rest forms)
   (dolist (f forms)
