@@ -1,0 +1,19 @@
+build-lisp:
+  stage: build
+  script:
+    - echo "building lisp..."
+
+build-rust:
+  stage: build
+  script:
+    - echo "building rust..."
+
+test-lisp:
+  stage: test
+  script:
+    - echo "testing lisp..."
+
+test-rust:
+  stage: test
+  script:
+    - echo "testing rust..."
