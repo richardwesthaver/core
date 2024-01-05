@@ -1,4 +1,4 @@
-;;; lib/pod/api.lisp --- Podman API model
+;;; lib/pod/api.lisp --- Libpod API model
 
 ;;
 #|

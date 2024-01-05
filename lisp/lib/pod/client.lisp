@@ -1,4 +1,4 @@
-;;; lib/pod/obj.lisp --- Pod Objects
+;;; lib/pod/client.lisp --- Libpod API client
 
 ;;
 

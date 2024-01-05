@@ -2,10 +2,19 @@
   :depends-on (:std :cli :obj :dat :net :flexi-streams :dexador)
   :components ((:file "pkg")
                (:file "err")
+               (:module "obj"
+                :components 
+                ((:file "system")
+                 (:file "secret")
+                 (:file "network")
+                 (:file "exec")
+                 (:file "volume")
+                 (:file "image")
+                 (:file "container")
+                 (:file "pod")))
                (:file "api")
                (:file "util")
-               (:file "obj")
-               (:file "containerfile"))
+               (:file "client"))
   :in-order-to ((test-op (test-op :pod/tests))))
 
 (defsystem :pod/tests
