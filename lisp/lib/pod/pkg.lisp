@@ -21,14 +21,3 @@
    :podman-request :podman-response
    :libpod-request :libpod-request-json
    :start-podman-service :libpod-client))
-
-(in-package :pod)
-
-(defvar *podman-exe* (find-exe "podman"))
-
-(defvar *buildah-exe* (find-exe "buildah"))
-
-(defvar *podman-local-user-socket* (format nil "/var/run/user/~a/podman.sock" (sb-posix:getuid)))
-
-(defvar *libpod-api-version* "4.8.2")
-

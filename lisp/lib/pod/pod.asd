@@ -13,6 +13,8 @@
                  (:file "container")
                  (:file "pod")))
                (:file "api")
+               (:file "buildah")
+               (:file "podman")
                (:file "util")
                (:file "client"))
   :in-order-to ((test-op (test-op :pod/tests))))

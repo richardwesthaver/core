@@ -5,6 +5,15 @@
 ;;; Code:
 (in-package :pod)
 
+(defvar *podman-local-user-socket* (format nil "/var/run/user/~a/podman.sock" (sb-posix:getuid)))
+
+(defvar *libpod-api-version* "4.8.2")
+
+;;; TODO Socket
+(defclass libpod-unix-socket (local-socket) ())
+
+(defclass libpod-tcp-socket (inet-socket) ())
+
 ;;; Client
 (defclass libpod-client (client)
   ((socket :initarg :socket 
