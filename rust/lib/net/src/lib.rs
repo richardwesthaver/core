@@ -1,6 +1,7 @@
 //! net client/server library
 //!
 //! net is used for building client/server programs on any platform.
+#![feature(associated_type_defaults)]
 mod err;
 pub use err::{Error, Result};
 pub mod stream;

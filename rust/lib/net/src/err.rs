@@ -12,7 +12,7 @@ pub enum Error {
   #[cfg(feature = "server")]
   Axum(axum::Error),
   #[cfg(feature = "dns")]
-  Dns(trust_dns_resolver::error::ResolveError),
+  Dns(hickory_resolver::error::ResolveError),
   #[cfg(feature = "ssh")]
   Ssh(thrussh::Error),
   Json(serde_json::Error),
@@ -40,8 +40,8 @@ impl From<axum::Error> for Error {
 }
 
 #[cfg(feature = "dns")]
-impl From<trust_dns_resolver::error::ResolveError> for Error {
-  fn from(e: trust_dns_resolver::error::ResolveError) -> Self {
+impl From<hickory_resolver::error::ResolveError> for Error {
+  fn from(e: hickory_resolver::error::ResolveError) -> Self {
     Error::Dns(e)
   }
 }

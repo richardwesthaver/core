@@ -47,9 +47,9 @@ impl Client {
                 let resolver = resolver.clone();
                 let cache = cache.clone();
                 let pending = pending.clone();
-
                 async move {
-                  if let Some(name) = resolver.lookup(ip).await {
+                  if let Some(n) = resolver.lookup(ip).await {
+                    let name: String = n.to_owned();
                     cache.lock().unwrap().insert(ip, name);
                   }
                   pending.lock().unwrap().remove(&ip);

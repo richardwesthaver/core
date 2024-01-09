@@ -1,20 +1,20 @@
 use crate::Result;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
-
-use trust_dns_resolver::{
+use std::future::Future;
+use hickory_resolver::{
   config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
   error::ResolveErrorKind,
   TokioAsyncResolver,
 };
 
-pub trait Lookup {
-  async fn lookup(&self, ip: IpAddr) -> Option<String>;
+pub trait Lookup: Send + 'static {
+  fn lookup(&self, ip: IpAddr) -> impl Future<Output=Option<String>> + Send + '_;
 }
 
 #[repr(transparent)]
 pub struct Resolver(pub TokioAsyncResolver);
-
+unsafe impl Send for Resolver {}
 impl Resolver {
   pub async fn new(dns_server: &Option<Ipv4Addr>) -> Result<Self> {
     let resolver = match dns_server {
@@ -26,12 +26,13 @@ impl Resolver {
           socket_addr: socket,
           protocol: Protocol::Udp,
           tls_dns_name: None,
-          trust_nx_responses: false,
+          trust_negative_responses: false,
+          bind_addr: None,
         };
         config.add_name_server(nameserver_config);
-        TokioAsyncResolver::tokio(config, options)?
+        TokioAsyncResolver::tokio(config, options)
       }
-      None => TokioAsyncResolver::tokio_from_system_conf()?,
+      None => TokioAsyncResolver::tokio_from_system_conf().unwrap(),
     };
     Ok(Self(resolver))
   }
@@ -43,13 +44,13 @@ impl Lookup for Resolver {
     match lookup_future.await {
       Ok(names) => {
         // Take the first result and convert it to a string
-        names.into_iter().next().map(|name| name.to_string())
+        names.into_iter().next().map(|x| x.to_string())
       }
       Err(e) => match e.kind() {
         // If the IP is not associated with a hostname, store the IP
         // so that we don't retry indefinitely
         ResolveErrorKind::NoRecordsFound { .. } => Some(ip.to_string()),
-        _ => None,
+        _ => None
       },
     }
   }

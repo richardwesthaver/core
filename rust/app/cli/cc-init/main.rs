@@ -1,9 +1,10 @@
 use clap::Parser;
-use dl::{download_to_path_with_backend, Backend, TlsBackend};
+// use dl::{download_to_path_with_backend, Backend, TlsBackend};
 use logger::{info, trace, Logger};
-use std::{env, path::Path};
-use util::{cli::log_level_str_from_cli, Result, Url};
-
+use std::env;
+// use std::path::PathBuf;
+use util::{cli::log_level_str_from_cli, Result};
+// use util::Url;
 pub const ABOUT: &str = concat!(
   "cc-init ",
   env!("CORE_VERSION"),
@@ -23,18 +24,6 @@ struct Cli {
   /// Set the log level
   #[arg(short, long, action = clap::ArgAction::Count)]
   level: u8,
-}
-
-fn dl<P: AsRef<Path> + std::fmt::Debug>(url: &str, dst: P) -> Result<()> {
-  info!("downloading {url} -> {dst:?}");
-  let url = Url::parse(url)?;
-  download_to_path_with_backend(
-    Backend::Reqwest(TlsBackend::Default),
-    &url,
-    dst.as_ref(),
-    true,
-    None,
-  )
 }
 
 fn main() -> Result<()> {

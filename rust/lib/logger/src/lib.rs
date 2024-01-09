@@ -8,6 +8,9 @@ pub use log::{
   self, debug, info, trace, warn, Level, LevelFilter, Metadata, Record,
 };
 
+pub use tracing;
+pub use tracing_subscriber;
+
 mod err;
 pub use err::{Error, Result};
 
