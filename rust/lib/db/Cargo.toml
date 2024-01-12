@@ -6,9 +6,12 @@ edition = "2021"
 description = "Database System"
 documentation = "https://docs.compiler.company/core/rust/lib/db"
 repository = "https://vc.compiler.company/comp/core"
+
 [dependencies]
 # rlib
 obj = { version = "0.1.0", path = "../obj" }
-rocksdb = { version = "0.21", default-features = false, features = ["zstd", "multi-threaded-cf"] }
+# make sure to use our custom branch (default)
+rocksdb = { version = "0.21", default-features = false, features = ["zstd", "multi-threaded-cf","rtti"], git = "https://vc.compiler.company/packy/rust-rocksdb.git", branch = "default", optional = true }
+
 [dev-dependencies]
 tempfile = "3.2.0"

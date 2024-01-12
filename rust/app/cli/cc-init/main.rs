@@ -34,6 +34,6 @@ fn main() -> Result<()> {
   println!("Welcome to The Compiler Company.");
   // dl("http://google.com", "dl")?;
   info!("detecting system...");
-  
+
   Ok(())
 }
