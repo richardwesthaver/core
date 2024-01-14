@@ -8,7 +8,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
   Io(io::Error),
   #[cfg(feature="rocksdb")]
-  Rdb(rocksdb::Error),
+  Rocksdb(rocksdb::Error),
 }
 
 impl From<io::Error> for Error {
@@ -20,7 +20,7 @@ impl From<io::Error> for Error {
 #[cfg(feature="rocksdb")]
 impl From<rocksdb::Error> for Error {
   fn from(e: rocksdb::Error) -> Self {
-    Error::Rdb(e)
+    Error::Rocksdb(e)
   }
 }
 
@@ -29,7 +29,7 @@ impl fmt::Display for Error {
     match *self {
       Error::Io(ref err) => write!(f, "IO error: {}", err),
       #[cfg(feature="rocksdb")]
-      Error::Rdb(ref err) => write!(f, "RocksDB error: {}", err),
+      Error::Rocksdb(ref err) => write!(f, "RocksDB error: {}", err),
     }
   }
 }
@@ -39,7 +39,7 @@ impl fmt::Debug for Error {
     match *self {
       Error::Io(ref err) => write!(f, "IO error: {}", err),
       #[cfg(feature="rocksdb")]
-      Error::Rdb(ref err) => write!(f, "RocksDB error: {}", err),
+      Error::Rocksdb(ref err) => write!(f, "RocksDB error: {}", err),
     }
   }
 }
