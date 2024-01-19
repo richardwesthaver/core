@@ -1,19 +1,30 @@
-build-lisp:
-  stage: build
-  script:
-    - echo "building lisp..."
+stages:
+  - build
+  - test
 
 build-rust:
   stage: build
   script:
     - echo "building rust..."
-
-test-lisp:
-  stage: test
-  script:
-    - echo "testing lisp..."
-
+    - cd rust && cargo build
 test-rust:
   stage: test
   script:
     - echo "testing rust..."
+    - cd rust && cargo test
+build-lisp:
+  stage: build
+  script:
+    - echo "building lisp..."
+    - cd lisp && skel build
+test-lisp:
+  stage: test
+  script:
+    - echo "testing lisp..."
+    - cd lisp && skel test
+
+release:
+  script:
+    - echo "creating core release..."
+  release:
+    name: 'latest'
