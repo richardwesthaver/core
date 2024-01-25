@@ -6,7 +6,7 @@ use std::env;
 use util::{cli::log_level_str_from_cli, Result};
 // use util::Url;
 pub const ABOUT: &str = concat!(
-  "cc-init ",
+  "cc-install ",
   env!("CORE_VERSION"),
   " (",
   env!("CORE_TARGET"),
@@ -16,7 +16,7 @@ pub const ABOUT: &str = concat!(
 pub const PACKY_ROOT: &str = "https://packy.compiler.company/";
 
 #[derive(Debug, Parser)]
-#[command(name="cc-init",author, version=env!("CORE_VERSION"), about=ABOUT)]
+#[command(name="cc-install",author, version=env!("CORE_VERSION"), about=ABOUT)]
 struct Cli {
   /// Disable confirmation prompts
   #[arg(short)]
