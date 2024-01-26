@@ -9,7 +9,7 @@
 (defopt skc-version (print-version $cli))
 (defopt skc-log (setq *log-level* (if $val :debug nil)))
 ;; TODO 2023-10-13: almost there
-(defopt skc-config (init-skel-user-config (parse-file-opt $val)))
+(defopt skc-config (when $val (init-skel-user-config (parse-file-opt $val))))
 
 (defcmd skc-init
     (let ((file (when $args (pop $args)))

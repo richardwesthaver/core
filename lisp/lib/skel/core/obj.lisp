@@ -12,10 +12,6 @@
 (defparameter *default-skel-license-kind* :mpl2)
 (declaim (type sk-project *skel-project*))
 (defvar *skel-project*)
-(declaim (type sk-user-config *skel-user-config*))
-(declaim (type sk-system-config *skel-system-config*))
-(defvar *skel-user-config* nil)
-(defvar *skel-system-config* nil)
 ;; TODO (defvar *skelfile-boundary* nil "Set an upper bounds on how
 ;; many times and how far to walk an arbitrary file directory.")
 
@@ -200,6 +196,11 @@ via the special form stored in RECIPE."))
   ((user :type form :accessor sk-user)
    (name :type form :accessor sk-name))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
+
+(declaim (type sk-user-config *skel-user-config*))
+(declaim (type sk-system-config *skel-system-config*))
+(defvar *skel-user-config* (make-instance 'sk-user-config))
+(defvar *skel-system-config* (make-instance 'sk-system-config))
 
 ;;;; Snippet
 (defstruct sk-snippet

@@ -1,3 +1,3 @@
 FROM registry.compiler.company/comp/infra/box:latest
-WORKDIR /usr/local/src/core
-RUN hg pull -u
+RUN hg clone https://vc.compiler.company/comp/core
+WORKDIR core
