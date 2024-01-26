@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "This program is used to bootstrap a complete and compliant system."
 [[bin]]
-name = "cc-init"
+name = "cc-install"
 path = "main.rs"
 [dependencies]
 util = { path = "../../../lib/util", features = ["full"] }
