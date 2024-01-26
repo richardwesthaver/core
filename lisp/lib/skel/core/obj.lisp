@@ -14,8 +14,8 @@
 (defvar *skel-project*)
 (declaim (type sk-user-config *skel-user-config*))
 (declaim (type sk-system-config *skel-system-config*))
-(defvar *skel-user-config*)
-(defvar *skel-system-config*)
+(defvar *skel-user-config* nil)
+(defvar *skel-system-config* nil)
 ;; TODO (defvar *skelfile-boundary* nil "Set an upper bounds on how
 ;; many times and how far to walk an arbitrary file directory.")
 

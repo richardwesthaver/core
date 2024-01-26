@@ -110,8 +110,7 @@
 	   :description "open the sk-shell interpreter")))
 
 (defun run ()
-  (let ((*log-level* nil)
-	(*skel-user-config* (init-skel-user-config)))
+  (let ((*log-level* nil))
     (in-readtable :std)
     (with-cli () $cli
       (init-skel-vars)

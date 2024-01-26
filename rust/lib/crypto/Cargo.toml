@@ -14,3 +14,4 @@ hex = "*"
 # ed25519 = "*"
 ed25519-dalek = "1.0.1"
 hash = { version = "0.1.0", path = "../hash" }
+totp-rs = "5.5.1"
