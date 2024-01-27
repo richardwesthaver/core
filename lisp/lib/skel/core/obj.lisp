@@ -192,10 +192,16 @@ via the special form stored in RECIPE."))
 
 (defclass sk-system-config (sk-config sk-meta) ())
 
+(defun default-sk-system-config ()
+  (make-instance 'sk-system-config))
+
 (defclass sk-user-config (sk-config sk-meta)
   ((user :type form :accessor sk-user)
    (name :type form :accessor sk-name))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
+
+(defun default-sk-user-config ()
+  (make-instance 'sk-system-config))
 
 (declaim (type sk-user-config *skel-user-config*))
 (declaim (type sk-system-config *skel-system-config*))
@@ -299,13 +305,12 @@ via the special form stored in RECIPE."))
 		    (format stream "~%"))
 	 (error 'sxp-fmt-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
-
 (declaim (inline file-read-forms))
 (defun file-read-forms (file)
-  (let ((form (read-file-forms file)))
-    (if (cdr form)
-	form
-	(car form))))
+  (aif (read-file-forms file)
+       (if (> (length it) 1)
+	it
+	(car it))))
 
 ;; file -> ast
 (defmethod sk-read-file ((self sk-project) path)
