@@ -28,15 +28,16 @@
 ;; migrating them to `early-init.el`.
 ;; 
 ;;; Code:
-(setq inhibit-startup-buffer-menu nil
-      initial-buffer-choice t
-      use-dialog-box t
-      use-file-dialog nil
-      tool-bar-mode nil
-      menu-bar-mode nil)
-(scroll-bar-mode 0)
+(setopt inhibit-startup-buffer-menu nil
+        initial-buffer-choice t
+        use-dialog-box t
+        use-file-dialog nil
+        tool-bar-mode nil
+        menu-bar-mode nil
+        scroll-bar-mode nil)
+
 (when (and (fboundp 'native-comp-available-p)
            (native-comp-available-p))
-  (setq native-comp-async-report-warnings-errors nil
+  (setopt native-comp-async-report-warnings-errors nil
 	comp-deferred-compilation t
 	package-native-compile t))
