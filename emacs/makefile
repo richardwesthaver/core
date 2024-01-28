@@ -1,8 +1,6 @@
 DOTEMACS:=$(HOME)/.emacs.d
-
+install:$(wildcard *.el) $(DOTEMACS)
+	cp -rf $< lib $(DOTEMACS)/
+$(DOTEMACS):;mkdir -p $(DOTEMACS)
 .PHONY: c
-
-install:$(wildcard *.el) lib
-	cp -rf $^ $(DOTEMACS)/
-
 clean:;rm -rf $(DOTEMACS)/{*.el,lisp,site-lisp}
