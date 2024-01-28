@@ -24,15 +24,15 @@
 (declaim (type pathname *skel-stash* *skel-store*
 	       *skel-cache* *user-skelrc* *system-skelrc*))
 
-(defparameter *skel-stash* (pathname (format nil "/home/~a/.skel/stash/" *default-skel-user*)))
+(defparameter *skel-stash* #P"~/.skel/stash/")
 
-(defparameter *skel-store* (pathname (format nil "/home/~a/.skel/store/" *default-skel-user*)))
+(defparameter *skel-store* #P"~/.skel/store/")
 
-(defparameter *skel-cache* (pathname (format nil "/home/~a/.skel/cache/" *default-skel-user*)))
+(defparameter *skel-cache* #P"~/.skel/cache/")
 
-(defparameter *skel-registry* (pathname (format nil "/home/~a/.skel/registry/" *default-skel-user*)))
+(defparameter *skel-registry* #P"~/.skel/registry/")
 
-(defparameter *user-skelrc* (pathname (format nil "/home/~A/~A" *default-skel-user* *default-skelrc*)))
+(defparameter *user-skelrc* (pathname (format nil "~~/~A" *default-skelrc*)))
 
 (defparameter *system-skelrc* (pathname "/etc/skel/skelrc"))
 
@@ -152,19 +152,20 @@ via the special form stored in RECIPE."))
 
 ;;;; Config
 (defclass sk-config (skel sxp) 
-  ((imports :type list)
-   (vc :type vc-designator :accessor sk-vc)
-   (shed :type pathname :accessor sk-shed)
-   (stash :type pathname :accessor sk-stash)
-   (cache :type pathname :accessor sk-cache)
-   (registry :type pathname :accessor sk-registry)
-   (scripts :type (or pathname list) :accessor sk-scripts)
-   (license :type license-designator :accessor sk-license)
-   (log-level :type log-level-designator)
-   (fmt :type symbol)
-   (alias-list :type (or list vector)
+  ((imports :initarg :imports :type list)
+   (vc :initform *default-skel-vc-kind* :initarg :vc :type vc-designator :accessor sk-vc)
+   (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
+   (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
+   (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
+   (registry :initform *skel-registry* :initarg :registry :type pathname :accessor sk-registry)
+   (scripts :initarg :scripts :type (or pathname list) :accessor sk-scripts)
+   (license :initarg :license :type license-designator :accessor sk-license)
+   (log-level :initarg :log-level :type log-level-designator)
+   (fmt :initarg :fmt :type symbol)
+   (alias-list :initarg :alias-list
+               :type (or list vector)
 	       :documentation "alist of aliases. currently used as a special cli-opt-parser by the skel binary.")
-   (auto-insert :type form))
+   (auto-insert :initform nil :initarg :auto-insert :type form))
   (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
 
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
@@ -179,7 +180,7 @@ via the special form stored in RECIPE."))
             (when-let ((s (find-sk-symbol k)))
 	      (setf (slot-value self s) v))) ;; needs to be the correct package
 	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
-	  (when (bound-string-p self 'shed) (setf (sk-shed self) (pathname (sk-shed self))))
+	  (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
 	  (when (bound-string-p self 'cache) (setf (sk-cache self) (pathname (sk-cache self))))
 	  (when (bound-string-p self 'registry) (setf (sk-registry self) (pathname (sk-registry self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
@@ -196,17 +197,16 @@ via the special form stored in RECIPE."))
   (make-instance 'sk-system-config))
 
 (defclass sk-user-config (sk-config sk-meta)
-  ((user :type form :accessor sk-user)
-   (name :type form :accessor sk-name))
+  ((user :initarg :user :type form :accessor sk-user)
+   (name :initarg :name :type form :accessor sk-name))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
 
-(defun default-sk-user-config ()
-  (make-instance 'sk-system-config))
+(defun default-sk-user-config () (make-instance 'sk-user-config))
 
 (declaim (type sk-user-config *skel-user-config*))
 (declaim (type sk-system-config *skel-system-config*))
-(defvar *skel-user-config* (make-instance 'sk-user-config))
-(defvar *skel-system-config* (make-instance 'sk-system-config))
+(defvar *skel-user-config* (default-sk-user-config))
+(defvar *skel-system-config* (default-sk-system-config))
 
 ;;;; Snippet
 (defstruct sk-snippet
@@ -252,7 +252,7 @@ via the special form stored in RECIPE."))
    (scripts :initarg :scripts :initform nil :accessor sk-scripts :type (or list (vector sk-script)))
    (snippets :initarg :snippets :initform nil :accessor sk-snippets :type (or list (vector sk-snippet)))
    (stash :initarg :stash :accessor sk-stash :type pathname)
-   (shed :initarg :shed :accessor sk-shed :type pathname)
+   (store :initarg :store :accessor sk-store :type pathname)
    (abbrevs :initarg :abbrevs :initform nil :accessor sk-abbrevs :type (or list (vector sk-abbrevs)))
    (imports :initarg :imports :initform nil :accessor sk-imports :type (or list (vector pathname)))))
 
@@ -270,7 +270,7 @@ via the special form stored in RECIPE."))
             (when-let ((s (find-sk-symbol k)))
 	      (setf (slot-value self s) v))) ;; needs to be correct package
 	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
-	  (when (bound-string-p self 'shed) (setf (sk-shed self) (pathname (sk-shed self))))
+	  (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
 					       ;; TODO 2023-10-14: convert into list of script names
 					       (pathname (sk-scripts self))))
