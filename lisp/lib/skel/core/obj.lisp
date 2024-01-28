@@ -21,16 +21,16 @@
 (defparameter *default-skel-extension* "sk")
 (defparameter *default-skelrc* ".skelrc")
 
-(declaim (type pathname *skel-stash* *skel-shed*
+(declaim (type pathname *skel-stash* *skel-store*
 	       *skel-cache* *user-skelrc* *system-skelrc*))
 
-(defparameter *skel-stash* (pathname (format nil "/home/~a/stash/" *default-skel-user*)))
+(defparameter *skel-stash* (pathname (format nil "/home/~a/.skel/stash/" *default-skel-user*)))
 
-(defparameter *skel-shed* (pathname (format nil "/home/~a/shed/" *default-skel-user*)))
+(defparameter *skel-store* (pathname (format nil "/home/~a/.skel/store/" *default-skel-user*)))
 
-(defparameter *skel-cache* (pathname (format nil "/home/~a/.cache/skel/" *default-skel-user*)))
+(defparameter *skel-cache* (pathname (format nil "/home/~a/.skel/cache/" *default-skel-user*)))
 
-(defparameter *skel-registry* (pathname (format nil "/home/~a/.data/skel/registry" *default-skel-user*)))
+(defparameter *skel-registry* (pathname (format nil "/home/~a/.skel/registry/" *default-skel-user*)))
 
 (defparameter *user-skelrc* (pathname (format nil "/home/~A/~A" *default-skel-user* *default-skelrc*)))
 
@@ -341,9 +341,9 @@ via the special form stored in RECIPE."))
     (setf (ast self) nil)))
 
 (defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))
-  (with-slots (vc shed stash license author) (debug! cfg) ;; log-level, custom, fmt
+  (with-slots (vc store stash license author) (debug! cfg) ;; log-level, custom, fmt
     (when vc (setf (sk-vc self) vc))
     (when stash (setf (sk-stash self) stash))
-    (when shed (setf (sk-shed self) shed))
+    (when store (setf (sk-store self) store))
     (when license (setf (sk-license self) license))
     (when author (setf (sk-author self) author))))
