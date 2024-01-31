@@ -132,9 +132,7 @@
 
 (defclass oracle () ((thread :initform (make-generic-oracle) :initarg :thread :accessor oracle-thread)))
   
-(defgeneric designate-oracle (self guest)
-  (:method ((self task-pool) guest)
-    (setf (task-pool-oracle self) guest)))
+(defgeneric designate-oracle (self guest))
 
 (defstruct task-pool
   (oracle nil :type (or null oracle))
@@ -144,6 +142,9 @@
   (results (sb-concurrency:make-queue :name "results"))
   (completed-jobs 0 :type fixnum) ;;atomic
   (completed-tasks 0 :type fixnum))
+
+(defmethod designate-oracle ((self task-pool) guest)
+  (setf (task-pool-oracle self) guest))
 
 (defclass task ()
   ((object :initarg :object :accessor task-object)))
