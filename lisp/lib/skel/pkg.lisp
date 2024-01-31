@@ -43,10 +43,10 @@
    :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-registry* :*skel-cache*
    :*default-skelfile* :*default-skel-user* :*default-skel-cache* :*default-user-skel-config* 
    :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
-   :*default-skel-stash* :*default-skel-shed* 
+   :*default-skel-stash*
    :*default-system-skelrc*
    :file-read-forms :load-ast
-   :sk-author :sk-path :sk-shed :sk-stash :sk-cache :sk-registry :sk-user
+   :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user
    :sk-push :sk-pull
    :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc

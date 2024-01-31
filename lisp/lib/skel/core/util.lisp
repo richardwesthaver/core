@@ -117,6 +117,5 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   "Initialize the global SKEL variables based on the active
 *SKEL-USER-CONFIG*."
   (setq *skel-cache* (sk-cache *skel-user-config*)
-        *skel-shed* (sk-shed *skel-user-config*)
         *skel-stash* (sk-stash *skel-user-config*)
         *skel-registry* (sk-registry *skel-user-config*)))
