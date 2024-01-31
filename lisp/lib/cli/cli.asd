@@ -3,6 +3,7 @@
   :depends-on (:std :log :cl-readline)
   :components ((:file "pkg")
                (:file "env" :depends-on ("pkg"))
+               (:file "shell" :depends-on ("env"))
                (:file "api" :depends-on ("pkg"))
                (:file "progress" :depends-on ("pkg"))
                (:file "spark" :depends-on ("pkg"))

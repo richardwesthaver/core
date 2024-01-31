@@ -58,7 +58,7 @@
          (mapc #'join-thread threads)
       (dolist (thread threads)
         (when (thread-alive-p thread)
-          (destroy-thread thread))))))
+          (terminate-thread thread))))))
 
 (defun timed-join-thread (thread timeout)
   (handler-case (sb-sys:with-deadline (:seconds timeout)
@@ -128,20 +128,34 @@
           (setq from (sb-vm::sap+ from (* sb-vm:binding-size sb-vm:n-word-bytes))))))))
 
 ;;; Tasks
-(defstruct task-queue
+(def-thread generic-oracle)
+
+(defclass oracle () ((thread :initform (make-generic-oracle) :initarg :thread :accessor oracle-thread)))
+  
+(defgeneric designate-oracle (self guest)
+  (:method ((self task-pool) guest)
+    (setf (task-pool-oracle self) guest)))
+
+(defstruct task-pool
+  (oracle nil :type (or null oracle))
   (jobs (sb-concurrency:make-queue :name "jobs"))
+  (stages nil :type sequence)
   (workers (sb-concurrency:make-mailbox :name "workers"))
   (results (sb-concurrency:make-queue :name "results"))
   (completed-jobs 0 :type fixnum) ;;atomic
   (completed-tasks 0 :type fixnum))
 
-(defparameter *task-queue* nil)
-
 (defclass task ()
   ((object :initarg :object :accessor task-object)))
 
 (defclass job ()
-  ((stack :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
-          :initarg :stack
-          :accessor :job-stack
+  ((tasks :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
+          :initarg :tasks
+          :accessor :tasks
           :type (vector task))))
+
+(defclass stage ()
+  ((jobs  :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
+          :initarg :jobs
+          :accessor :jobs
+          :type (vector job))))

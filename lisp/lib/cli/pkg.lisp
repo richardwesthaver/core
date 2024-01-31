@@ -107,6 +107,10 @@
    :cli-version
    :cli-usage))
 
+(defpackage :cli/shell
+  (:use :cl :std)
+  (:nicknames :shell))
+
 (defpackage :cli/ansi
   (:use :cl :std)
   (:nicknames :ansi)
