@@ -1,7 +1,5 @@
 # ci.nu --- Nushell CI config file
-use nu/lib/vc.nu
-use nu/lib/wg.nu
-
+$env.LISP = "/usr/local/bin/sbcl --core /usr/local/lib/sbcl/prelude.core"
 $env.config = {
   # true or false to enable or disable the welcome banner at startup
   show_banner: false

@@ -7,6 +7,7 @@ export-env {
   $env.VC_REGISTRY = [[name url];
     ["infra" $"($env.VC_URL)/comp/infra"]
     ["core" $"($env.VC_URL)/comp/core"]]
+  $env.VC_PACKY = $env.VC_URL + "/packy/"
 }
 
 export def call [
@@ -18,7 +19,7 @@ export def call [
 }
 
 # Search files on your GitLab server
-export def query-file [
+export def "query-file" [
   --file: string # file (or path to file if in a subfolder) you want to scan
   --phrase: string # phrase you want to search for
   --branch: string # branch to scan
