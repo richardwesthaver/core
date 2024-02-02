@@ -69,6 +69,10 @@ Concat ARGS and return a newly interned symbol."
   "add list of packages PKGS to `package-selected-packages'"
   `(mapc (lambda (x) (add-to-list 'package-selected-packages x)) ',pkgs))
 
+(defun load-keys (&optional custom)
+  (let ((keydefs (or custom (concat user-emacs-directory "keys.el"))))
+    (load keydefs nil t)))
+
 ;;; OS
 (defmacro when-sys= (name body)
   "(when (string= (system-name) NAME) BODY)"

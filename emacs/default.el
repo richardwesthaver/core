@@ -184,15 +184,15 @@
 (use-package slime
   :ensure t
   :config
-  (setq slime-contribs '(slime-fancy slime-quicklisp))
-
+  (setq slime-contribs '(slime-fancy slime-quicklisp slime-repl))
   (put 'make-instance 'common-lisp-indent-function 1)
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
-
+  (add-hook 'after-init-hook #'slime-setup)
   (defvar slime-toggle nil)
   (defun slime-toggle ()
     "toggle between lisp file and slime-repl"
     (interactive)
+    (unless (slime-connected-p) (slime))
     (if (eq major-mode 'slime-repl-mode)
         (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp file: "))))
       (progn

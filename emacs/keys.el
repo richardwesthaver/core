@@ -20,17 +20,6 @@
   "b" #'backward-sexp
   "d" #'down-list
   "k" #'kill-sexp
-  "n" #'paredit-forward
-  "p" #'paredit-backward
-  "K" #'paredit-kill
-  "]" #'paredit-forward-slurp-sexp
-  "[" #'paredit-backward-slurp-sexp
-  "}" #'paredit-forward-barf-sexp
-  "{" #'paredit-backward-barf-sexp
-  "C" #'paredit-convolute-sexp
-  "J" #'paredit-join-sexps
-  "S" #'paredit-split-sexp
-  "R" #'paredit-raise-sexp
   "\\" #'indent-region
   "/" #'undo
   "t" #'transpose-sexps
