@@ -3,7 +3,7 @@
 # Lisp compatibility layer for Nushell. Typically targets SBCL compiler.
 
 export-env {
-  $env.LISP = `/usr/local/bin/sbcl`
+  $env.LISP = sbcl
 }
 
 export def version [] { 

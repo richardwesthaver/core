@@ -1,3 +1,3 @@
-FROM infra/box
-RUN hg clone https://vc.compiler.company/comp/core
+FROM registry.compiler.company/comp/infra/box:latest
+COPY --chown=${DEV} . core
 WORKDIR core
