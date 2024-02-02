@@ -27,7 +27,7 @@ struct Cli {
 }
 
 #[derive(Debug)]
-enum CcPack {
+pub enum CcPack {
   Core,
   RocksDb,
   Emacs,

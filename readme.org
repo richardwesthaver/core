@@ -7,11 +7,7 @@ across all of our products and projects.
   Rust. See details here.
 
 To bootstrap the core you will need recent versions of [[https://www.gnu.org/software/emacs/][GNU Emacs]],
-[[https://www.rust-lang.org/][Rust]], and [[http://www.sbcl.org/][SBCL]]. For SBCL you will need to build from source with
+[[https://www.rust-lang.org/][Rust]], [[https://github.com/nushell/nushell][Nushell]], and [[http://www.sbcl.org/][SBCL]]. For SBCL you will need to build from source with
 =:sb-core-compression= enabled[fn:1].
-
-We have a strong preference for vendoring our dependencies. The
-'super-repos' [[https://lab.rwest.io/comp/shed][shed]] and [[https://lab.rwest.io/comp/stash][stash]] contain all relevant source trees which
-we build via CI and ship to production as well as use internally.
 
 [fn:1] [[http://www.sbcl.org/manual/#Saving-a-Core-Image][SBCL Manual - Saving a Core Image]] 
