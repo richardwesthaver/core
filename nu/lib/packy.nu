@@ -35,3 +35,9 @@ export def clone [name: string] {
   git pull $origin $name
   stor update -t packy -w $"name = ($name)" -u {path: ($env.STASH + $name)}
 }
+
+export def "get index" [name:string] {
+  http get $"https://packy.compiler.company/($name).json"
+  | dfr into-df
+  | table -e -i false
+}
