@@ -114,13 +114,13 @@ pub fn decompress<P: AsRef<Path>>(source: P) -> io::Result<()> {
 fn pack_test() {
   let dir_path = Path::new("pack_test");
 
-  std::fs::create_dir(&dir_path).unwrap();
+  std::fs::create_dir(dir_path).unwrap();
 
   for i in 0..10 {
     std::fs::File::create(&dir_path.join(format!("{}.test", i))).unwrap();
   }
 
-  pack(&dir_path, "pack_test.tar.zst", None);
+  pack(dir_path, "pack_test.tar.zst", None);
   unpack("pack_test.tar.zst", "pack_test");
   unpack_replace("pack_test.tar.zst", "pack_test");
 

@@ -23,7 +23,7 @@ pub fn gen_keypair<S: AsRef<[u8]>, P: AsRef<[u8]>>(
     PublicKey::from_bytes(&pub_bytes[..PUBLIC_KEY_LENGTH]).unwrap();
 
   Keypair {
-    secret: secret,
-    public: public,
+    secret,
+    public,
   }
 }

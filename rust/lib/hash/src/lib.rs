@@ -53,6 +53,7 @@ impl Id {
 ///
 /// identifies a unique Peer
 #[derive(Clone, Eq, Hash, Ord, PartialEq, PartialOrd, Debug)]
+#[derive(Default)]
 pub struct PeerId {
   id: [u8; 32],
 }
@@ -74,8 +75,4 @@ impl PeerId {
   }
 }
 
-impl Default for PeerId {
-  fn default() -> Self {
-    PeerId { id: [0; 32] }
-  }
-}
+

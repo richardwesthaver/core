@@ -6,7 +6,7 @@ pub fn new_region(region: Option<String>) -> RegionProviderChain {
     .or_else(Region::new("us-east-2"))
 }
 
-//// Route53
+/// Route53
 pub async fn show_host_info(
   client: &aws_sdk_route53::Client,
 ) -> Result<(), aws_sdk_route53::Error> {

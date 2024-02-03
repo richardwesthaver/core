@@ -1,15 +1,20 @@
 use crate::Result;
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::future::Future;
 use hickory_resolver::{
   config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
   error::ResolveErrorKind,
   TokioAsyncResolver,
 };
+use std::{
+  future::Future,
+  net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4},
+};
 
 pub trait Lookup: Send + 'static {
-  fn lookup(&self, ip: IpAddr) -> impl Future<Output=Option<String>> + Send + '_;
+  fn lookup(
+    &self,
+    ip: IpAddr,
+  ) -> impl Future<Output = Option<String>> + Send + '_;
 }
 
 #[repr(transparent)]
@@ -50,7 +55,7 @@ impl Lookup for Resolver {
         // If the IP is not associated with a hostname, store the IP
         // so that we don't retry indefinitely
         ResolveErrorKind::NoRecordsFound { .. } => Some(ip.to_string()),
-        _ => None
+        _ => None,
       },
     }
   }

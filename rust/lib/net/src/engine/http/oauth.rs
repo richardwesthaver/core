@@ -23,7 +23,7 @@ pub fn client(cfg: Oauth2Config) -> BasicClient {
   let client_id = env::var("CLIENT_ID").unwrap_or(cfg.client_id);
   let client_secret = env::var("CLIENT_SECRET").unwrap_or(cfg.client_secret);
   let redirect_url = env::var("REDIRECT_URL")
-    .unwrap_or(cfg.redirect_uris.get(0).unwrap().to_string());
+    .unwrap_or(cfg.redirect_uris.first().unwrap().to_string());
   let auth_url = env::var("AUTH_URL").unwrap_or(cfg.auth_uri);
   let token_url = env::var("TOKEN_URL").unwrap_or(cfg.token_uri);
 

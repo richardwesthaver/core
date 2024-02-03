@@ -14,7 +14,7 @@ pub struct Point {
 impl Point {
   /// Create a new Point from (f32, f32)
   pub fn new(lat: f32, lng: f32) -> Self {
-    Point { lat: lat, lng: lng }
+    Point { lat, lng }
   }
 }
 /// City object
@@ -223,7 +223,7 @@ pub async fn weather_report(lat: f32, lng: f32) -> Result<(), Error> {
 
   let res = get_point(&point, &client).await?;
   let resf = get_forecast_hourly(&res, &client).await?;
-  for i in resf.properties.periods[0..10].into_iter() {
+  for i in resf.properties.periods[0..10].iter() {
     println!(
       "{:#?}-{:#?} = {:#?}°F :: {:#?}",
       &i.start_time.time(),

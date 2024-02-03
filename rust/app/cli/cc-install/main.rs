@@ -1,10 +1,11 @@
 use clap::Parser;
 // use dl::{download_to_path_with_backend, Backend, TlsBackend};
 use logger::{info, trace, Logger};
-use std::env;
-use std::path::{Path,PathBuf};
-use util::{cli::log_level_str_from_cli, Result};
-use util::Url;
+use std::{
+  env,
+  path::{Path, PathBuf},
+};
+use util::{cli::log_level_str_from_cli, Result, Url};
 pub const ABOUT: &str = concat!(
   "cc-install ",
   env!("CORE_VERSION"),
@@ -13,7 +14,7 @@ pub const ABOUT: &str = concat!(
   ")"
 );
 
-pub const PACKY_URL: &str= "https://packy.compiler.company/";
+pub const PACKY_URL: &str = "https://packy.compiler.company/";
 
 #[derive(Debug, Parser)]
 #[command(name="cc-install",author, version=env!("CORE_VERSION"), about=ABOUT)]
@@ -64,23 +65,21 @@ struct CcPacks(Vec<CcPack>);
 
 impl std::fmt::Display for CcPacks {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f,"{:?}",self.0)
+    write!(f, "{:?}", self.0)
   }
 }
-  
 
 impl Default for CcPacks {
   fn default() -> CcPacks {
-    CcPacks(
-      vec![
-        CcPack::Core,
-        CcPack::RocksDb,
-        CcPack::Emacs,
-        CcPack::Sbcl,
-        CcPack::Rust,
-        CcPack::Nushell,
-        CcPack::Tools,
-      ])
+    CcPacks(vec![
+      CcPack::Core,
+      CcPack::RocksDb,
+      CcPack::Emacs,
+      CcPack::Sbcl,
+      CcPack::Rust,
+      CcPack::Nushell,
+      CcPack::Tools,
+    ])
   }
 }
 
@@ -95,14 +94,22 @@ struct Installer {
 impl Default for Installer {
   fn default() -> Installer {
     trace!("using default installer");
-    Installer::new("/usr/local/",Url::parse(PACKY_URL).unwrap(),CcPacks::default())
+    Installer::new(
+      "/usr/local/",
+      Url::parse(PACKY_URL).unwrap(),
+      CcPacks::default(),
+    )
   }
 }
 
 impl Installer {
-  fn new<P:AsRef<Path>>(root:P,packy_url:Url,packs:CcPacks) -> Installer { 
+  fn new<P: AsRef<Path>>(root: P, packy_url: Url, packs: CcPacks) -> Installer {
     let root = root.as_ref().to_path_buf();
-    Installer {root,packy_url,packs}
+    Installer {
+      root,
+      packy_url,
+      packs,
+    }
   }
 }
 
@@ -116,9 +123,9 @@ fn main() -> Result<()> {
 
   let installer = Installer::default();
   println!("Installing...");
-  println!("root path: {:?}",installer.root);
-  println!("packy url: {}",installer.packy_url);
-  println!("packs: {}",installer.packs);
+  println!("root path: {:?}", installer.root);
+  println!("packy url: {}", installer.packy_url);
+  println!("packs: {}", installer.packs);
   for i in installer.packs.0.iter() {
     // dl("http://google.com", "dl")?;
     info!("downloading {}", installer.packy_url.join(i.slug())?);

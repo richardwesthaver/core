@@ -1,12 +1,12 @@
 //! app/cli/alik/main.rs --- Alik
 
-//// Code:
+/// Code:
 // use logger::log;
+use alik::*;
 use clap::{Parser, Subcommand};
 use logger::{trace, Logger};
 use std::path::PathBuf;
 use util::{cli::log_level_str_from_cli, Result};
-use alik::*;
 
 #[derive(Debug, Parser)]
 #[command(name="alik",author, version, about, long_about = None)]
@@ -62,14 +62,11 @@ async fn main() -> Result<()> {
         // start_service().await;
         start_graph_service().await;
         Ok(())
-      },
-      Cmd::Heartbeat {} => {
-        Ok(())
-      },
+      }
+      Cmd::Heartbeat {} => Ok(()),
       Cmd::Show { kind: _ } => Ok(()),
     }
   } else {
     Ok(())
   }
 }
-

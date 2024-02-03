@@ -10,7 +10,7 @@ fn main() {
       "pack" => {
         let path = args.next().ok_or("expected a path").unwrap();
         let path = Path::new(&path);
-        pack(&path, &path.with_extension("tar.zst").as_path(), None);
+        pack(path, path.with_extension("tar.zst").as_path(), None);
       }
       "unpack" => {
         let path = args.next().ok_or("expected a path").unwrap();
@@ -18,7 +18,7 @@ fn main() {
         if !&path.exists() {
           println!("file does not exist");
         } else {
-          unpack(&path, &Path::new("."));
+          unpack(path, Path::new("."));
         }
       }
       "unpackd" => {
@@ -27,7 +27,7 @@ fn main() {
         if !&path.exists() {
           println!("file does not exist");
         } else {
-          unpack_replace(&path, &Path::new("."));
+          unpack_replace(path, Path::new("."));
         }
       }
       _ => {

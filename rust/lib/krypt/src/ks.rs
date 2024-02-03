@@ -1,4 +1,4 @@
-//// Keyutils
+/// Keyutils
 pub use crate::keyutils::{Key, KeyType, Keyring, Permission, SpecialKeyring};
 /// Return the default 'special' session for the current thread
 

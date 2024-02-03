@@ -51,7 +51,7 @@ fn main() {
   let mut peer = None;
   let mut rx = [0u8; 1024];
   let mut tx = Packet::new();
-  while let Some(x) = args.next() {
+  for x in args {
     if let Ok(x) = x.parse::<u16>() {
       peer = Some(SocketAddr::new("127.0.0.1".parse().unwrap(), x));
       socket.connect(peer.unwrap()).unwrap();

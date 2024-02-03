@@ -10,7 +10,7 @@ pub fn open_browser(url: &str) {
   if cfg!(target_os = "windows") {
     // https://stackoverflow.com/a/49115945
     std::process::Command::new("rundll32.exe")
-      .args(&["url.dll,FileProtocolHandler", url])
+      .args(["url.dll,FileProtocolHandler", url])
       .status()
       .expect("failed to open file");
   } else if cfg!(target_os = "macos") || cfg!(target_os = "linux") {

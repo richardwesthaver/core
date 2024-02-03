@@ -19,7 +19,7 @@ pub struct KryptConfig {
 
 impl KryptConfig {
   pub fn load_file(path: PathBuf) -> Result<KryptConfig> {
-    match fs::read_to_string(&path) {
+    match fs::read_to_string(path) {
       Ok(cfg) => KryptConfig::from_json_str(&cfg),
       Err(e) => Err(e.into()),
     }

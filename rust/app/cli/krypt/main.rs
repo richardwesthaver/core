@@ -115,20 +115,17 @@ async fn main() -> Result<()> {
         // check keyctl
         if key {
           check_ks()?
-        } else {
-        };
+        } ;
         // check secret service
         if secret {
           check_ss().await?
-        } else {
-        };
+        } ;
         // print the current config
         if config {
           check_config(cfg.clone())?
-        } else {
-        }; // FIXME
+        } ; // FIXME
            // check all
-        if key || secret || config == false {
+        if key || secret || !config {
           check_ks()?;
           check_ss().await?;
           check_config(cfg)

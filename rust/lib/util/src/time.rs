@@ -237,8 +237,10 @@ impl Default for Time {
 
 /// A stopwatch which accurately measures elapsed time.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Default)]
 pub enum Stopwatch {
   /// Initial state with an elapsed time value of 0 seconds.
+  #[default]
   Waiting,
   /// Stopwatch has started counting the elapsed time since this `Instant`
   /// and accumuluated time from previous start/stop cycles `Duration`.
@@ -247,11 +249,7 @@ pub enum Stopwatch {
   Ended(Duration),
 }
 
-impl Default for Stopwatch {
-  fn default() -> Stopwatch {
-    Stopwatch::Waiting
-  }
-}
+
 
 impl Stopwatch {
   /// Creates a new stopwatch.
@@ -301,6 +299,31 @@ impl Stopwatch {
   pub fn reset(&mut self) {
     *self = Stopwatch::Waiting;
   }
+}
+
+/// Converts a Duration to the time in seconds.
+pub fn duration_to_secs(duration: Duration) -> f32 {
+  duration.as_secs() as f32 + (duration.subsec_nanos() as f32 / 1.0e9)
+}
+
+/// Converts a Duration to the time in seconds in an f64.
+pub fn duration_to_secs_f64(duration: Duration) -> f64 {
+  duration.as_secs() as f64 + (f64::from(duration.subsec_nanos()) / 1.0e9)
+}
+
+/// Converts a time in seconds to a duration
+pub fn secs_to_duration(secs: f32) -> Duration {
+  Duration::new(secs as u64, ((secs % 1.0) * 1.0e9) as u32)
+}
+
+/// Converts a Duration to nanoseconds
+pub fn duration_to_nanos(duration: Duration) -> u64 {
+  (duration.as_secs() * 1_000_000_000) + u64::from(duration.subsec_nanos())
+}
+
+/// Converts nanoseconds to a Duration
+pub fn nanos_to_duration(nanos: u64) -> Duration {
+  Duration::new(nanos / 1_000_000_000, (nanos % 1_000_000_000) as u32)
 }
 
 // Unit tests
@@ -467,29 +490,4 @@ mod tests {
     }
     assert_eq!(fixed_count, 2);
   }
-}
-
-/// Converts a Duration to the time in seconds.
-pub fn duration_to_secs(duration: Duration) -> f32 {
-  duration.as_secs() as f32 + (duration.subsec_nanos() as f32 / 1.0e9)
-}
-
-/// Converts a Duration to the time in seconds in an f64.
-pub fn duration_to_secs_f64(duration: Duration) -> f64 {
-  duration.as_secs() as f64 + (f64::from(duration.subsec_nanos()) / 1.0e9)
-}
-
-/// Converts a time in seconds to a duration
-pub fn secs_to_duration(secs: f32) -> Duration {
-  Duration::new(secs as u64, ((secs % 1.0) * 1.0e9) as u32)
-}
-
-/// Converts a Duration to nanoseconds
-pub fn duration_to_nanos(duration: Duration) -> u64 {
-  (duration.as_secs() * 1_000_000_000) + u64::from(duration.subsec_nanos())
-}
-
-/// Converts nanoseconds to a Duration
-pub fn nanos_to_duration(nanos: u64) -> Duration {
-  Duration::new(nanos / 1_000_000_000, (nanos % 1_000_000_000) as u32)
 }

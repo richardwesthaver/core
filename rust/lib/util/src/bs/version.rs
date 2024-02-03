@@ -4,7 +4,7 @@ use platforms::*;
 
 /// Generate the `cargo:` key output
 pub fn generate_cargo_keys() {
-  let output = Command::new("hg").args(&["identify", "-i"]).output();
+  let output = Command::new("hg").args(["identify", "-i"]).output();
 
   let commit = match output {
     Ok(o) if o.status.success() => {

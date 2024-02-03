@@ -21,11 +21,11 @@ pub use engine::dns;
 pub use engine::http;
 #[cfg(feature = "quic")]
 pub use engine::quic;
-#[cfg(all(feature = "uds", unix))]
+#[cfg(feature = "uds")]
 pub use engine::uds;
 #[cfg(feature = "reqwest")]
 pub use reqwest;
-#[cfg(all(feature = "tun", linux))]
+#[cfg(feature = "tun")]
 pub use tokio_tun as tun;
 #[cfg(test)]
 mod tests;

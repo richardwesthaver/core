@@ -244,6 +244,9 @@ function: '(ql:quickload :clouseau)'."
 (setq python-indent-offset 2)
 (add-hook 'python-mode-hook 'eglot-ensure)
 
+;;; Javascript
+(setq js-indent-level 2)
+
 ;;; Bash
 (setq sh-basic-offset 2)
 
