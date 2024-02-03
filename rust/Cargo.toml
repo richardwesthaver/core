@@ -19,7 +19,8 @@ members = ["sys/btrfs",
            "app/cli/tz",
            "app/cli/mailman",
            "app/cli/krypt",
-           "app/cli/alik"]
+           "app/cli/alik",
+           "app/cli/nu_plugin_rocksdb"]
 
 [profile.release]
 lto = true
