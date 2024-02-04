@@ -58,7 +58,7 @@ export def projects [
 }
 
 export def ssh-url-for [url: string] {
-  #  BUG 2024-01-29: 
+  #  BUG 2024-01-29: patched in next release
   # $"$env.VC_URL/($repo)" | url parse | update scheme ssh | update username git | url join ## 
   $url | url parse | update scheme 'ssh' | 
   url join | str replace 'ssh://' 'ssh://git@'
@@ -66,14 +66,10 @@ export def ssh-url-for [url: string] {
 
 export def url-for [
   repo:string
-  --ssh (-s)
+  --ssh(-s)
 ] {
   let url = $"($env.VC_URL)/($repo)"
-  if $ssh == null { 
-    $url
-  } else {
-    ssh-url-for $url
-  }
+  $url | if $ssh { ssh-url-for $url } else { $in }
 }
 
 export def "project update" [repo?:string] {
