@@ -84,6 +84,19 @@ export def root [] {
   }
 }
 
+# Print the VC of the current directory.
+export def type [path:string="."] {
+  do {
+    do { hg root } | complete
+    | if $in.stdout != "" { "hg" } else {
+      do { git rev-parse } | complete
+      | if $in.stdout != "" { "git" } else {
+        "none"
+      }
+    }
+  }
+}
+
 export def status [] {
   if ('.git/' | path exists) == true {
     git pull origin HEAD
