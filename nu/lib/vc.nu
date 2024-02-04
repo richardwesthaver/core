@@ -72,13 +72,33 @@ export def url-for [
   $url | if $ssh { ssh-url-for $url } else { $in }
 }
 
+export def root [] {
+  do {
+    do { hg root } | complete 
+    | if $in.stdout != "" { $in.stdout } else {
+      do { git rev-parse --show-toplevel } | complete
+      | if $in.stdout != "" { $in.stdout } else {
+        error make { msg: $"directory (pwd) not tracked by VC" }
+      }
+    }
+  }
+}
+
+export def status [] {
+  if ('.git/' | path exists) == true {
+    git pull origin HEAD
+  } else if ('.hg/' | path exists) == true {
+    hg pull -u
+  } else { error make {msg: $"directory (pwd) not tracked by VC"} }
+}
+
 export def "project update" [repo?:string] {
   if $repo != null { cd $repo }
   if ('.git/' | path exists) == true {
     git pull origin HEAD
   } else if ('.hg/' | path exists) == true {
     hg pull -u
-  } else { error make {msg: $"directory $(pwd) not tracked by VC"} }
+  } else { error make {msg: $"directory (pwd) not tracked by VC"} }
 }
 
 export def "projects update" [dir?:string] {
@@ -97,7 +117,7 @@ export def "mirror update" [repo?:string] {
   } else if ('.hg/' | path exists) == true {
     hg pull -u
     hg push default
-  } else { error make {msg: $"directory $(pwd) not tracked by VC"} }
+  } else { error make {msg: $"directory (pwd) not tracked by VC"} }
 }
 
 export def "mirrors update" [dir?:string] {
