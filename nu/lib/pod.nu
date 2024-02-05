@@ -1,4 +1,16 @@
 # pod.nu
+
+# By default we run podman rootless:
+# - https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md
+# - https://github.com/containers/podman/blob/main/rootless.md
+
+# - install slirp4netns
+# - /etc/subuid and /etc/subgid config
+
+export def "enable user" [user?:string] {
+  if ($user != null) {su $user}
+  systemctl enable --user --now podman
+}
 export def "machine upgrade" [] {
   podman machine ssh 'sudo rpm-ostree upgrade'
 }

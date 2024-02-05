@@ -14,7 +14,12 @@ rust:;
   cd $@; cargo build $(CARGO_FLAGS)
 lisp:;
   overlay use $@; version
-  cd $@; lisp build prelude
+  cd $@; lisp build prelude; mv -f prelude.fasl ../prelude.core
+  # cd $@/std; lisp build std; mv std.fasl ../../std.core
+  cd $@/app/bin; lisp build bin/skel; mv -f skel ../../../skel
+  cd $@/app/bin; lisp build bin/homer; mv -f homer ../../../homer
+  cd $@/app/bin; lisp build bin/rdb; mv -f rdb ../../../rdb
+  cd $@/app/bin; lisp build bin/organ; mv -f organ ../../../organ
 box:Containerfile;
   overlay use pod
   pod build -t comp/core
