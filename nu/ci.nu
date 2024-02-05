@@ -1,6 +1,5 @@
 # ci.nu --- Nushell CI config file
 use nu/lib/ *
-# default LISP command used inside boxes
 $env.LISP = /usr/local/bin/sbcl
 alias cl = ^$env.LISP --core /usr/local/lib/sbcl/prelude.core
 $env.config = {
