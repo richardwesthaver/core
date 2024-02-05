@@ -1,28 +1,53 @@
 # lisp.nu
-
+use std log
 # Lisp compatibility layer for Nushell. Typically targets SBCL compiler.
 
 export-env {
   $env.LISP = sbcl
-  $env.QUICKLISP_DIST_VERSION = "quicklisp/latest"
-  $env.QUICKLISP_CLIENT_VERSION = nil
+  $env.LISP_VERSION = null
 }
 
-export def version [] { 
-  ^$env.LISP --version | split row ' ' | get 1
+# export extern sbcl [] {}
+
+export def --env version [] { 
+  $env.LISP_VERSION = (^$env.LISP --version | split row ' ' | get 1)
+  print $env.LISP_VERSION
 }
 
-export def load-asd [system?:string] {
-  let asd = (if ($system == null) {ls | where name ends-with .asd | first | $in.name} else {$"($system).asd"})
-  let form = $"\(asdf:load-asd \(merge-pathnames \"($asd)\" \(sb-posix:getcwd\)\)\)"
-  print $asd $form
+export def "find asd" [name?:string] {
+  if ($name == null) {
+    ls | where name ends-with .asd | first | $in.name 
+  } else {
+    $"($name).asd"
+  }
+}
+
+export def "load asd" [...body:string, --system(-s):string] {
+  let asd = (find asd $system)
+  let _form = [$"\(progn \(asdf:load-asd \(merge-pathnames \"($asd)\" \(sb-posix:getcwd\)\)\) "]
+  let form = (if ($body | is-empty) {
+    $_form | first | $in + ')'
+  } else {
+    ($_form | append $body | append ')'
+      | reverse 
+      | reduce {|a,b| $a + ' ' + $b})
+  })
+  log info $"loading (if $system != null {$system} else {'?'}) from ($asd)"
   ^$env.LISP --eval $form
 }
 
-export def "build core" [] {
+# Build a Lisp system
+export def build [system?:string] {
+  log info $"building ($system)"
+  load asd $"\(asdf:make :($system)\)" -s $system
+}
+
+# Check if Quicklisp is installed
+export def "quicklisp check" [] {
 
 }
 
+# Install Quicklisp
 export def "quicklisp install" [path:string="/usr/local/share/quicklisp/", --dist(-d)="quicklisp/latest", --client(-c)="nil"] {
   let file = (mktemp --suffix .lisp)
   http get https://beta.quicklisp.org/quicklisp.lisp | save $file -f

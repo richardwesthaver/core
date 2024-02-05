@@ -1,56 +1,60 @@
 # ts.nu
-export def "ts-lang install" [lang:string] {
-
+use std log
+export-env {
+  $env.TREE_SITTER_LANGS = [
+  commonlisp bash c cpp css 
+  go html java javascript 
+  jsdoc json python regex 
+  rust yaml nu
+  ];
+  $env.TREE_SITTER_REPOS = [[name url];
+    [nu "https://github.com/LhKipp/tree-sitter-nu.git"]
+    [commonlisp "https://github.com/theHamsta/tree-sitter-commonlisp.git"]
+    [yaml "https://github.com/ikatyang/tree-sitter-yaml.git"]
+    [cpp "https://github.com/ruricolist/tree-sitter-cpp.git"]
+  ];
 }
 
-declare -ar default_langs=(
-  commonlisp bash c cpp css go html java javascript jsdoc json python regex rust
-  typescript/tsx typescript/typescript yaml
-) 
-# see https://tree-sitter.github.io/tree-sitter/#parsers for a
-# complete list of parsers available
-TARGETDIR="${1:-build/src/tree-sitter-langs}"
-PREFIX=${PREFIX:-/usr/local}
-CC=${CC:-clang}
-CXX=${CXX:-clang++}
-if [ $(uname) == "Darwin" ];then
-   EXT=dylib;
-else
-   EXT=so
-fi
-
-declare -A repos
-repos[commonlisp]=https://github.com/theHamsta/tree-sitter-commonlisp.git
-repos[yaml]=https://github.com/ikatyang/tree-sitter-yaml.git
-repos[cpp]=https://github.com/ruricolist/tree-sitter-cpp.git
-
-declare -a langs
-if [ -z "${2:-}" ]; then
-  langs=(${default_langs[@]})
-else
-  langs=($@)
-fi
-
-mkdir -pv $TARGETDIR
-pushd $TARGETDIR
-for lang in "${langs[@]}";do
-  [ -d "tree-sitter-${lang%/*}" ] || git clone ${repos[$lang]:-https://github.com/tree-sitter/tree-sitter-${lang%/*}};
-  # subshell
-  (
-    cd "tree-sitter-${lang}/src";
-    if test -f "scanner.cc"; then
-      ${CXX} -I. -fPIC scanner.cc -c -lstdc++;
-      ${CC} -I. -std=c99 -fPIC parser.c -c;
-      ${CXX} -shared scanner.o parser.o -o ${PREFIX}/lib/libtree-sitter-"${lang//\//-}.${EXT}";
-    elif test -f "scanner.c"; then
-      ${CC} -I. -std=c99 -fPIC scanner.c -c;
-      ${CC} -I. -std=c99 -fPIC parser.c -c;
-      ${CC} -shared scanner.o parser.o -o ${PREFIX}/lib/libtree-sitter-"${lang//\//-}.${EXT}";
-    else
-      ${CC} -I. -std=c99 -fPIC parser.c -c;
-      ${CC} -shared parser.o -o ${PREFIX}/lib/libtree-sitter-"${lang//\//-}.${EXT}";
-    fi;
-    mkdir -p "${PREFIX}/share/tree-sitter/${lang}/";
-    cp grammar.json node-types.json "${PREFIX}/share/tree-sitter/${lang}";
-  )
-done
+export def "lang install" [
+  ...langs:string
+  --output(-o):string
+  --prefix(-p):string = "/usr/local"
+  --cc:string = "clang"
+  --cxx:string = "clang++"
+] {
+  let out = (if ($output == null) {mktemp -d} else {$output})
+  let ext = (if ((uname) == "Darwin") {"dylib"} else {"so"})
+  let langs = (if ($langs | is-empty) { $env.TREE_SITTER_LANGS } else { $langs })
+  log info "Installing tree-sitter languages..."
+  print ($langs | table -i false)
+  mkdir $out
+  cd $out
+  for lang in $langs {
+    log info $"installing ($lang) parser"
+    let url = (if ($env.TREE_SITTER_REPOS | where name == $lang | is-empty) {
+      $"https://github.com/tree-sitter/tree-sitter-($lang)"
+    } else { 
+      $env.TREE_SITTER_REPOS | where name == $lang | first | $in.url 
+    });
+    git clone $url $lang
+    cd $"($lang)/src"
+    if ("scanner.cc" | path exists) {
+      log info "found C++ scanner"
+      ^$cxx -I. -fPIC scanner.cc -c -lstdc++
+      ^$cc -I. -std=c99 -fPIC parser.c -c
+      ^$cxx -shared scanner.o parser.o -o $"($prefix)/lib/libtree-sitter-($lang).($ext)"
+    } else if ("scanner.c" | path exists) {
+      log info "found C scanner"
+      ^$cc -I. -std=c99 -fPIC scanner.c -c
+      ^$cc -I. -std=c99 -fPIC parser.c -c
+      ^$cc -shared scanner.o parser.o -o $"($prefix)/lib/libtree-sitter-($lang).($ext)"
+    } else {
+      log info "no scanner found, installing parser only"
+      ^$cc -I. -std=c99 -fPIC parser.c -c
+      ^$cc -shared parser.o -o $"($prefix)/lib/libtree-sitter-($lang).($ext)"
+    }
+    mkdir $"($prefix)/share/tree-sitter/($lang)"
+    cp grammar.json node-types.json $"($prefix)/share/tree-sitter/($lang)"
+    log info $"successfully installed ($lang)"
+  }
+}

@@ -1,4 +1,4 @@
-;;; tests.lisp --- macs system tests
+;;; tests.lisp --- std system tests
 
 ;;; Commentary:
 
