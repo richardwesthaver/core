@@ -26,9 +26,15 @@ export def run [
   --interactive(-i)
   --tty(-t)
   --publish(-p)
+  --replace(-r)
   --publish-all(-P)
   --pod
   --rm
 ] {
-  ^podman run $image --name $name
+  let replace = (if ($replace == true) {"--replace"})
+  let volume = (if ($volume != null) {$"--volume ($volume)"})
+  let interactive = (if ($interactive == true) {"--interactive"})
+  let tty = (if ($tty == true) {"--tty"})
+  let args = [$replace --name $name $volume $interactive $tty $image] | filter {$in != null}
+  ^podman run ...$args
 }
