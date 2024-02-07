@@ -25,7 +25,7 @@ $env.config = {
 
   use_grid_icons: false
   float_precision: 2 # the precision for displaying floats in tables
-  use_ansi_coloring: false
+  ansi_coloring: auto
   edit_mode: emacs # emacs, vi
   shell_integration: true # enables terminal markers and a workaround to arrow keys stop working issue
   hooks: {

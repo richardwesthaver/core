@@ -5,13 +5,16 @@ export-env {
   commonlisp bash c cpp css 
   go html java javascript 
   jsdoc json python regex 
-  rust yaml nu
+  rust yaml nu typescript
+  kdl
   ];
   $env.TREE_SITTER_REPOS = [[name url];
     [nu "https://github.com/LhKipp/tree-sitter-nu.git"]
     [commonlisp "https://github.com/theHamsta/tree-sitter-commonlisp.git"]
     [yaml "https://github.com/ikatyang/tree-sitter-yaml.git"]
     [cpp "https://github.com/ruricolist/tree-sitter-cpp.git"]
+    [kdl "https://github.com/amaanq/tree-sitter-kdl"]
+    [bqn "https://github.com/shnarazk/tree-sitter-bqn"]
   ];
 }
 

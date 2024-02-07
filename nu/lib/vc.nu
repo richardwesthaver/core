@@ -88,9 +88,9 @@ export def root [] {
 export def type [path:string="."] {
   do {
     do { hg root } | complete
-    | if $in.stdout != "" { "hg" } else {
+    | if $in.exit_code == 0 { "hg" } else {
       do { git rev-parse } | complete
-      | if $in.stdout != "" { "git" } else {
+      | if $in.exit_code == 0 { "git" } else {
         "none"
       }
     }

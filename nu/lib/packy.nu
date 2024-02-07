@@ -9,9 +9,10 @@ export def "db init" [] {
   stor create -t packy -c { name: str, path: str, origin: str, upstream: str, timestamp: datetime }
 }
 
-export def "db insert" [name: string, origin: string, upstream: string] {
+export def "db insert" [name: string, path: directory, origin: string, upstream: string] {
   stor insert -t packy -d {
     name: $name, 
+    path: $path,
     origin: $origin, 
     upstream: $upstream, 
   }
@@ -19,6 +20,23 @@ export def "db insert" [name: string, origin: string, upstream: string] {
 
 export def "db clear" [] {
   stor delete -t packy
+}
+
+# export the internal packy db as a JSON document
+export def "db export" [] {
+
+}
+
+export def "db import" [dir?:directory=.] {
+  cd $dir
+  let $dir = ($dir | path expand)
+  let vc_type = (vc type)
+  if $vc_type == 'git' {
+    print OK
+    db insert ($dir | path basename) $dir (git remote get-url origin) (git remote get-url upstream)
+  } else if $vc_type == 'hg' {
+    db insert ($dir | path basename) $dir (hg path default) (hg path upstream)
+  }
 }
 
 export def list [] {
