@@ -4,7 +4,7 @@
   :components ((:file "pkg")
                (:file "env" :depends-on ("pkg"))
                (:file "shell" :depends-on ("env"))
-               (:file "api" :depends-on ("pkg"))
+               (:file "clap" :depends-on ("pkg"))
                (:file "progress" :depends-on ("pkg"))
                (:file "spark" :depends-on ("pkg"))
                (:file "repl" :depends-on ("pkg"))

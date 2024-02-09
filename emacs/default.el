@@ -71,8 +71,6 @@
 (add-hook 'after-init-hook #'load-default-theme)
 
 ;;; Packages
-(package-initialize)
-
 (with-eval-after-load 'package
   (setq package-archives
     '(("gnu" . "https://elpa.gnu.org/packages/")

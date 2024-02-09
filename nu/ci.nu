@@ -3,7 +3,7 @@ use nu/lib/ *
 $env.LISP = /usr/local/bin/sbcl
 alias cl = ^$env.LISP --core /usr/local/lib/sbcl/prelude.core
 $env.config = {
-  # true or false to enable or disable the welcome banner at startup
+# true or false to enable or disable the welcome banner at startup
   show_banner: false
   ls: {
     use_ls_colors: false # use the LS_COLORS environment variable to colorize output
@@ -25,7 +25,7 @@ $env.config = {
 
   use_grid_icons: false
   float_precision: 2 # the precision for displaying floats in tables
-  ansi_coloring: auto
+  # ansi_coloring: auto
   edit_mode: emacs # emacs, vi
   shell_integration: true # enables terminal markers and a workaround to arrow keys stop working issue
   hooks: {

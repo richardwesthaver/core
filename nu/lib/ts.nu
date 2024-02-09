@@ -1,5 +1,5 @@
 # ts.nu
-use std log
+use std log;
 export-env {
   $env.TREE_SITTER_LANGS = [
   commonlisp bash c cpp css 

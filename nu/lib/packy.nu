@@ -28,19 +28,18 @@ export def "db export" [] {
 }
 
 export def "db import" [dir?:directory=.] {
-  cd $dir
   let $dir = ($dir | path expand)
+  cd $dir
   let vc_type = (vc type)
   if $vc_type == 'git' {
-    print OK
     db insert ($dir | path basename) $dir (git remote get-url origin) (git remote get-url upstream)
   } else if $vc_type == 'hg' {
     db insert ($dir | path basename) $dir (hg path default) (hg path upstream)
-  }
+  } else { error make {msg: $"directory (pwd) not tracked by VC"} }
 }
 
 export def list [] {
-  stor open | query db "select * from packy" | table -i false
+  stor open | query db "select * from packy"
 }
 
 export def clone [name: string] {

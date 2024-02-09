@@ -1,4 +1,4 @@
-;;; lib/cli/env.lisp --- CLI Environment
+;;; lib/cli/env.lisp --- Shell Environments
 
 ;;
 

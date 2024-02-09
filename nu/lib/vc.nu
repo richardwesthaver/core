@@ -85,7 +85,8 @@ export def root [] {
 }
 
 # Print the VC of the current directory.
-export def type [path:string="."] {
+export def type [path:directory=.] {
+  cd $path
   do {
     do { hg root } | complete
     | if $in.exit_code == 0 { "hg" } else {

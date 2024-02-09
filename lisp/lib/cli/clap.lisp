@@ -1,4 +1,4 @@
-;;; lib/cli/api.lisp --- CLI API
+;;; lib/cli/api.lisp --- Command Line Argument Parser
 
 ;;
 
