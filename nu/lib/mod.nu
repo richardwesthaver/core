@@ -1,8 +1,10 @@
 export use vc.nu
 export use wg.nu
 export use ts.nu
+export use fs.nu
 export use aws.nu
 export use em.nu
+export use net.nu
 export use packy.nu
 export use rust.nu
 export use lisp.nu

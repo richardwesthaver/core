@@ -1,5 +1,5 @@
 # ci.nu --- Nushell CI config file
-use nu/lib/ *
+use nu/lib *
 $env.LISP = /usr/local/bin/sbcl
 alias cl = ^$env.LISP --core /usr/local/lib/sbcl/prelude.core
 $env.config = {

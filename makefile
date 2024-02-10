@@ -6,20 +6,20 @@
 
 # We explicitly set a new configuration file `nu/ci.nu` and load core
 # modules so they are available inside rules.
-SHELL=/usr/local/bin/nu -I nu/lib/ --config nu/ci.nu 
+SHELL=/usr/local/bin/nu -I nu/lib/ --config nu/config.nu --env-config nu/env.nu
 CARGO_FLAGS?=--release
 .PHONY:rust lisp clean test
-rust:;
+.stash:;mkdir $@
+rust:.stash;
   overlay use $@; version
   cd $@; cargo build $(CARGO_FLAGS)
-lisp:;
+lisp:.stash;
   overlay use $@; version
-  cd $@; lisp build prelude; mv -f prelude.fasl ../prelude.core
-  # cd $@/std; lisp build std; mv std.fasl ../../std.core
-  cd $@/app/bin; lisp build bin/skel; mv -f skel ../../../skel
-  cd $@/app/bin; lisp build bin/homer; mv -f homer ../../../homer
-  cd $@/app/bin; lisp build bin/rdb; mv -f rdb ../../../rdb
-  cd $@/app/bin; lisp build bin/organ; mv -f organ ../../../organ
+  cd $@; lisp build prelude; mv -f prelude.fasl ../$</prelude.core
+  cd $@/app/bin; lisp build bin/skel; mv -f skel ../../../$</skel
+  cd $@/app/bin; lisp build bin/homer; mv -f homer ../../../$</homer
+  cd $@/app/bin; lisp build bin/rdb; mv -f rdb ../../../$</rdb
+  cd $@/app/bin; lisp build bin/organ; mv -f organ ../../../$</organ
 box:Containerfile;
   overlay use pod
   pod build -t comp/core
@@ -30,4 +30,5 @@ run:;
 clean:;
   cd rust; cargo clean
   cd lisp; rm -rf **/*.fasl
+  rm -rf .stash/*
 prune:clean;hg clean
