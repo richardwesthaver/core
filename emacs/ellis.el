@@ -47,8 +47,8 @@
 
 (keymap-set user-map "e c" #'edit-emacs-config)
 
-(add-hook 'common-lisp-mode-hook #'enable-paredit-mode)
-(add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
+;; (add-hook 'common-lisp-mode-hook #'enable-paredit-mode)
+;; (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
 
 (repeat-mode)
 
@@ -259,6 +259,10 @@
 ~/dev/comp/core/emacs/*.el \\
 ~/dev/comp/core/emacs/lib/*.el \\
 -o TAGS")))
+
+(unless (string-equal "hyde"  system-name)
+  (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
+  (add-hook 'ibuffer-mode-hook #'all-the-icons-ibuffer-mode))
 
 (provide 'ellis)
 ;;; ellis.el ends here

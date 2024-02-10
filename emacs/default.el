@@ -166,8 +166,6 @@
     (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
-(add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
-(add-hook 'ibuffer-mode-hook #'all-the-icons-ibuffer-mode)
 
 ;;; Lisp
 (use-package lisp-mode

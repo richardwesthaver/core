@@ -36,6 +36,9 @@
         menu-bar-mode nil
         scroll-bar-mode nil)
 
+(setq explicit-shell-file-name "/usr/bin/bash"
+      shell-file-name "/usr/bin/bash")
+
 (when (and (fboundp 'native-comp-available-p)
            (native-comp-available-p))
   (setopt native-comp-async-report-warnings-errors nil
