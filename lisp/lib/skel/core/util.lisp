@@ -1,6 +1,14 @@
 ;;; Utils
 (in-package :skel/core)
 
+;;; Configs
+
+;; init-*,load-*
+(defun load-skelrc (&optional (usr *user-skelrc*) (sys *system-skelrc*))
+  (values
+   (load-system-skelrc sys)
+   (load-user-skelrc usr)))
+
 (defun init-user-skelrc (&optional (file *user-skelrc*))
   "Initialize a skelrc configuration based on the currently active
 *SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
@@ -16,22 +24,26 @@
                  :fmt :collapsed))
 
 (defun load-user-skelrc (&optional (file *user-skelrc*))
-  "Load a skelrc configuration from FILE. Defaults to ~/.skelrc."
-  (let ((form (file-read-forms file)))
-    (load-ast (make-instance 'sk-user-config :ast form :id (sxhash form)))))
+  "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
 
-(defun init-skel-user-config (&optional (file *user-skelrc*))
-  "Initialize the *SKEL-USER-CONFIG* var."
-  (setq *skel-user-config* (load-user-skelrc file)))
+If FILE does not exists, it is created with a default configuration."
+  (if-let ((f (probe-file file)))
+      (setq *skel-user-config* (load-ast 
+                                (make-instance 'sk-user-config 
+                                  :ast #1=(file-read-forms f) :id (sxhash #1#)
+                                  :path f)))
+      (init-user-skelrc)))
 
-(defun load-system-skelrc (&optional (file *system-skelrc*))
-  "Load a skelrc configuration from FILE. Defaults to /etc/skel/skelrc."
-  (let ((form (file-read-forms file)))
-    (load-ast (make-instance 'sk-system-config :ast form :id (sxhash form)))))
+(defun load-system-skelrc (&optional (file *system-skelrc*) auto)
+  "Load a skelrc configuration from FILE. Defaults to /etc/skel/skelrc.
 
-(defun init-skel-system-config (&optional (file *system-skelrc*))
-  "Initialize the *SKEL-SYSTEM-CONFIG* var."
-  (setq *skel-system-config* (load-system-skelrc file)))
+Unlike LOAD-USER-SKELRC we don't generate a default file if one
+doesn't exist, since it is assumed to be write-protected. This can be
+overwritten with the AUTO flag."
+  (if-let ((f (probe-file file)))
+    (setq *skel-system-config*
+          (load-ast (make-instance 'sk-system-config :ast #1=(file-read-forms f) :id (sxhash #1#) :path f)))
+    (when auto (init-system-skelrc))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun load-skelfile (file)

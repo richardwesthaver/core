@@ -5,7 +5,7 @@
 ;;; Commentary:
 
 ;; ASDF is the defacto system management facility for Common Lisp
-;; implementations and we intend to fully support interop with it. 
+;; implementations and we intend to fully interop with it. 
 
 ;; Our design consists of two modules:
 

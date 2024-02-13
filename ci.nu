@@ -1,6 +1,17 @@
 # ci.nu --- Nushell CI config file
 use nu/lib *
-$env.LISP = /usr/local/bin/sbcl
+
+$env.PREFIX = /usr/local
+
+$env.CORE_ROOT = (pwd | path expand)
+$env.STASHDIR = $"($env.CORE_ROOT)/.stash"
+$env.STOREDIR = $"($env.CORE_ROOT)/.store"
+$env.BINDIR = $"($env.PREFIX)/bin"
+$env.LIBDIR = $"($env.PREFIX)/lib"
+$env.DATADIR = $"($env.PREFIX)/share"
+$env.CARGO_TARGET_DIR = $"($env.STASHDIR)/target"
+$env.LISP = $"($env.BINDIR)/sbcl"
+
 alias cl = ^$env.LISP --core /usr/local/lib/sbcl/prelude.core
 $env.config = {
 # true or false to enable or disable the welcome banner at startup

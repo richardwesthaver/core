@@ -6,7 +6,7 @@
 
 # We explicitly set a new configuration file `nu/ci.nu` and load core
 # modules so they are available inside rules.
-SHELL=/usr/local/bin/nu -I nu/lib/ --config nu/config.nu --env-config nu/env.nu
+SHELL=/usr/local/bin/nu -I nu/lib/ --config ci.nu
 CARGO_FLAGS?=--release
 .PHONY:rust lisp clean test
 .stash:;mkdir $@

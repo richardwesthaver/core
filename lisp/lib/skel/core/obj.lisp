@@ -24,17 +24,17 @@
 (declaim (type pathname *skel-stash* *skel-store*
 	       *skel-cache* *user-skelrc* *system-skelrc*))
 
-(defparameter *skel-stash* #P"~/.skel/stash/")
+(defparameter *skel-stash* #P"/usr/local/share/skel/stash/")
 
-(defparameter *skel-store* #P"~/.skel/store/")
+(defparameter *skel-store* #P"/usr/local/share/skel/store/")
 
-(defparameter *skel-cache* #P"~/.skel/cache/")
+(defparameter *skel-cache* #P"/usr/local/share/skel/cache/")
 
-(defparameter *skel-registry* #P"~/.skel/registry/")
+(defparameter *skel-registry* #P"/usr/local/share/skel/registry/")
 
 (defparameter *user-skelrc* (pathname (format nil "~~/~A" *default-skelrc*)))
 
-(defparameter *system-skelrc* (pathname "/etc/skel/skelrc"))
+(defparameter *system-skelrc* (pathname "/etc/skelrc"))
 
 ;;; Objects
 (defclass skel (id)
@@ -191,6 +191,37 @@ via the special form stored in RECIPE."))
 	;; invalid ast, signal error
 	(error 'skel-syntax-error))))
 
+(defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id)))
+  (setf (ast self) 
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude)))
+
+(defmethod sk-write-file ((self sk-config) 
+                          &key (path *default-skelfile*) 
+                            (nullp nil) 
+                            (header t) 
+                            (fmt :canonical)
+                            (if-exists :error))
+  (build-ast self :nullp nullp)
+  (prog1 
+      (with-open-file (out path
+                           :direction :output
+                           :if-exists if-exists
+                           :if-does-not-exist :create)
+        (when header (princ
+                      (make-source-header-comment
+                       (sk-name self)
+                       :cchar #\;
+                        :timestamp t
+                        :description (sk-description self)
+                        :opts '("mode:skel;"))
+                       out))
+        (write-sxp-stream self out :fmt fmt))
+    (setf (ast self) nil)))
+
 (defclass sk-system-config (sk-config sk-meta) ())
 
 (defun default-sk-system-config ()
@@ -264,29 +295,29 @@ via the special form stored in RECIPE."))
   ;; internal ast is never tagged
   (with-slots (ast) self
     (if (formp ast)
-	;; ast is valid, modify object, set ast nil
-	(progn
-	  (sb-int:doplist (k v) ast
+        ;; ast is valid, modify object, set ast nil
+        (progn
+          (sb-int:doplist (k v) ast
             (when-let ((s (find-sk-symbol k)))
-	      (setf (slot-value self s) v))) ;; needs to be correct package
-	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
-	  (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
-	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
-					       ;; TODO 2023-10-14: convert into list of script names
-					       (pathname (sk-scripts self))))
-	  (setf (ast self) nil)
-	  self)
-	;; invalid ast, signal error
-	(error 'skel-syntax-error))))
+              (setf (slot-value self s) v))) ;; needs to be correct package
+          (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
+          (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
+          (when (bound-string-p self 'scripts) (setf (sk-scripts self)
+                                               ;; TODO 2023-10-14: convert into list of script names
+                                               (pathname (sk-scripts self))))
+          (setf (ast self) nil)
+          self)
+        ;; invalid ast, signal error
+        (error 'skel-syntax-error))))
 
 ;; obj -> ast
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
-	 (unwrap-object self
-			:slots t
-			:methods nil
-			:nullp nullp
-			:exclude exclude)))
+         (unwrap-object self
+                        :slots t
+                        :methods nil
+                        :nullp nullp
+                        :exclude exclude)))
 
 ;; TODO 2023-09-26: This belongs in sxp
 (defmethod write-sxp-stream ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :collapsed))
@@ -321,23 +352,23 @@ via the special form stored in RECIPE."))
 ;; ast -> file
 (defmethod sk-write-file ((self sk-project) 
 			  &key 
-			    (path *default-skelfile*) (nullp nil) (header t) (fmt :canonical)
-			    (if-exists :error))
+                            (path *default-skelfile*) (nullp nil) (header t) (fmt :canonical)
+                            (if-exists :error))
     (build-ast self :nullp nullp)
   (prog1 
       (with-open-file (out path
-			   :direction :output
-			   :if-exists if-exists
-			   :if-does-not-exist :create)
-	(when header (princ
-		      (make-source-header-comment
-		       (sk-name self)
-		       :cchar #\;
-			:timestamp t
-			:description (sk-description self)
-			:opts '("mode:skel;"))
-		       out))
-	(write-sxp-stream self out :fmt fmt))
+                           :direction :output
+                           :if-exists if-exists
+                           :if-does-not-exist :create)
+        (when header (princ
+                      (make-source-header-comment
+                       (sk-name self)
+                       :cchar #\;
+                        :timestamp t
+                        :description (sk-description self)
+                        :opts '("mode:skel;"))
+                       out))
+        (write-sxp-stream self out :fmt fmt))
     (setf (ast self) nil)))
 
 (defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))

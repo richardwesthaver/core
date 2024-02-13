@@ -217,7 +217,7 @@ function: '(ql:quickload :clouseau)'."
             ;; Return nothing.
             (cl:values)))))
 
-  (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
+  ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
   (setq slime-threads-update-interval 1))
 
 ;;; Eglot

@@ -24,7 +24,10 @@
    (:module "tools"
     :components
     ((:file "deploy")
-     (:file "viz"))))
+     (:file "viz")))
+   (:module "ext"
+    :components
+    ((:file "asdf"))))
   :in-order-to ((test-op (test-op "skel/tests"))))
 
 (defsystem :skel/tests

@@ -35,6 +35,8 @@
         user-lab-directory (join-paths user-home-directory "dev")
         company-source-directory (join-paths user-lab-directory "comp"))
 
+(when (linux-p) (setq dired-listing-switches "-alsh"))
+
 (defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
 
 ;;;###autoload

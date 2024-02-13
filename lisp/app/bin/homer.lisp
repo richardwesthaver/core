@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :bin/homer
   (:nicknames :homer)
-  (:use :cl :std :log :sxp :rdb :skel :packy :cli)
+  (:use :cl :std :log :sxp :rdb :skel :packy :cli :obj/id)
   (:export :main :home-config))
 
 (in-package :bin/homer)
@@ -12,9 +12,10 @@
 (defvar *user-homedir* (user-homedir-pathname))
 (defvar *default-user-homerc* (merge-pathnames ".homerc" *user-homedir*))
 
-(defclass home-config (sk-project)
-  ((user :initform (sb-posix:getenv "USER") :initarg :user :type string)
-   (skel :initform (load-skelrc) :initarg :skel :type (or pathname sk-user-config))
+(defclass home-config (sxp id)
+  ((user :initform *user* :initarg :user :type string)
+   (path :initform nil :initarg :path :type (or pathname null))
+   (skel :initform (load-user-skelrc) :initarg :skel :type (or pathname sk-user-config))
    (krypt :initarg :krypt)
    (packy :initarg :packy :type (or pathname pk-user-config))
    (mail :initarg :mail)
@@ -24,20 +25,44 @@
    (browser :initarg :browser :type (or pathname browser-user-config))
    (paths :initarg :paths :type list)))
 
-(defun load-homerc (&optional file)
+(defun find-homer-symbol (s)
+  (find-symbol* (symbol-name s) :homer nil))
+
+(defmethod load-ast ((self home-config))
+  (with-slots (ast) self
+    (if (formp ast)
+        ;; ast is valid, modify object, set ast nil
+        (progn
+          (sb-int:doplist (k v) ast
+            (when-let ((s (find-homer-symbol k)))
+              (setf (slot-value self s) v))) ;; needs to be correct package
+          (setf (ast self) nil)
+          self)
+        ;; invalid ast, signal error
+        (error 'sxp-syntax-error))))
+
+;; obj -> ast
+(defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))
+  (setf (ast self)
+         (unwrap-object self
+                        :slots t
+                        :methods nil
+                        :nullp nullp
+                        :exclude exclude)))
+
+        
+(defun load-homerc (&optional (file *default-user-homerc*))
   "Load a homerc configuration from FILE. Defaults to ~/.homerc."
-  (let ((form (file-read-forms (or file *default-user-homerc*))))
-    (load-ast (make-instance 'home-config :ast form :id (sxhash form)))))
+  (let ((form (file-read-forms file)))
+    (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form)))))
 
 (defopt homer-help (print-help $cli))
 (defopt homer-version (print-version $cli))
 (defopt homer-log-level (setq *log-level* (when $val :debug)))
 
 (defcmd homer-show
-  (find-skelfile
-   (user-homedir-pathname)
-   :load t
-   :name ".homerc"))
+  (describe (load-homerc)))
+
 
 (define-cli $cli
   :name "homer"
@@ -56,5 +81,6 @@
     (debug-opts $cli)))
 
 (defmain ()
-  (run)
-  (sb-ext:exit :code 0))
+  (let ((*print-readably* t))
+    (run)
+    (sb-ext:exit :code 0)))

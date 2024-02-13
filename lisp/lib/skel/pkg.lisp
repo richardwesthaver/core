@@ -1,8 +1,33 @@
-;;; skel.lisp --- skeleton library
+;;; skel/pkg.lisp --- skeletons
 
-;; A hacker's project compiler.
+;; Project composition library.
 
 ;;; Commentary:
+
+;; The SKEL system consists of a core package and a compiler package -
+;; SKEL/CORE and SKEL/COMP respectively. The core contains all of the
+;; low-level bits and a CLOS API for interacting with SKEL
+;; objects. The compiler package depends on the core and provides
+;; primitive compilers for translating SKEL objects into foreign
+;; formats. For example, SK-RULE objects may be translated into a
+;; corresponding GNU Make Rule. The compiler packages implement the
+;; CLOS API defined in the core and may serve as a useful guide for
+;; further extending the system yourself.
+
+;; There are some built-in extensions available in addition to the
+;; core and compiler - SKEL/VIZ provides an API for generating
+;; visualizations of SKEL objects, and SKEL/DEPLOY introduces CI,
+;; Release and packaging features.
+
+;;; TODO: 
+
+;;  IMPL 2024-02-12: viz
+
+;;  IMPL 2024-02-12: deploy
+
+;;  IMPL 2024-02-12: ext api
+
+;; 
 
 ;;; Code:
 (defpackage :skel/core
@@ -56,10 +81,9 @@
    :sk-user-config
    :sk-system-config
    ;; util
-   :init-skel-vars
-   :init-user-skelrc :load-skelrc
-   :init-system-skelrc
-   :init-skel-user-config
+   :init-skelrc :load-skelrc
+   :init-user-skelrc :load-user-skelrc
+   :init-system-skelrc :load-system-skelrc
    :init-skelfile
    :load-skelfile
    :find-skelfile
@@ -87,10 +111,17 @@
     (:use :cl :std :skel/core :skel/comp)
     (:use-reexport :skel/core :skel/comp))
 
+;;; Tools
 (defpackage :skel/viz
   (:use :cl :std :skel)
   (:export))
 
 (defpackage :skel/deploy
   (:use :cl :std :skel)
+  (:export))
+
+;;; Extensions
+(defpackage :skel/asdf
+  (:use :cl :std :skel :asdf)
+  (:shadowing-import-from :asdf :circular-dependency)
   (:export))

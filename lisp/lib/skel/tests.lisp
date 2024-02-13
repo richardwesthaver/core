@@ -1,4 +1,4 @@
-;;; tests.lisp --- skel tests
+;;; skel/tests.lisp --- skel tests
 (defpackage :skel/tests
   (:use :cl :skel/core :skel/comp :rt :sxp :log :obj/id)
   (:import-from :uiop :file-exists-p))
