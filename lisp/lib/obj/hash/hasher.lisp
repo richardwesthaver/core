@@ -38,6 +38,20 @@
 (defun object-address-hash-equalp (a b)
   (= (hash-object-address a) (hash-object-address b)))
 
+;; from quicklisp
+(defun dumb-string-hash (string)
+  "Produce a six-character hash of STRING."
+  (let ((hash #xD13CCD13))
+    (loop for char across string
+          for value = (char-code char)
+          do
+          (setf hash (logand #xFFFFFFFF
+                             (logxor (ash hash 5)
+                                     (ash hash -27)
+                                     value))))
+    (subseq (format nil "~(~36,6,'0R~)" (mod hash 88888901))
+            0 6)))
+
 (sb-ext:define-hash-table-test object-address-hash-equalp hash-object-address)
 
 (defgeneric hash-object (obj))

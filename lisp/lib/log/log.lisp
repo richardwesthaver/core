@@ -35,7 +35,11 @@ function in which case it is used as the function value of
   (active nil :type boolean)
   (timestamp *log-timestamp* :type (or boolean function))
   (router *default-log-router* :type log-router))
-   
+
+;; TODO: (defmacro generate-log-profile)
+;; (defmacro with-log-profile)
+;; (defmacro with-logger)
+
 (defmacro info! (opts &rest args))
 
 (defmacro trace! (opts &rest args))
@@ -45,9 +49,9 @@ function in which case it is used as the function value of
 (defun debug-p () (eq *log-level* :debug))
 
 (defun debug-log-line ()
-  (format t ":DEBUG~A~%"
+  (format t ":DEBUG:~A~%"
 	  (if *log-timestamp*
-	      (format nil " @ ~A ~t" (log-timestamp-source))
+	      (format nil "~A ~t" (log-timestamp-source))
 	      "")))
 
 ;; TODO 2023-08-31: single format control string
@@ -55,10 +59,9 @@ function in which case it is used as the function value of
   (when (debug-p)
     (debug-log-line)
     ;; RESEARCH 2023-08-31: what's better here.. loop, do, mapc+nil?
-    (map nil (lambda (x) (format t "; ~X~%" x)) args))
+    (map nil (lambda (x) (format t "~X~%" x)) args))
   args)
 
-(defun dbg! (&rest args)
-  (when (debug-p)
-    (debug-log-line)
-    (apply #'describe args)))
+(defun debug-describe (&rest args)
+  (debug! (apply #'describe args)))
+    

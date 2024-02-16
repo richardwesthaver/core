@@ -5,9 +5,9 @@
 
 ;;; Commentary:
 
-;; Use `*log-level*' to set the current level of logging. Value is
-;; either a bool or one of the following keywords: :warn :debug :info
-;; :trace.
+;; Use *LOG-LEVEL* to set the current level of logging. Value is
+;; either a boolean or one of the following keywords: :warn :info
+;; :debug :trace.
 
 ;; top-level macros: info! trace! warn! debug!
 
@@ -15,6 +15,12 @@
 
 ;; I intend to keep things simple for a while and then work out a DSL
 ;; for configuring logging. The DSL will be embedded in skelfiles.
+
+;; the following shell environment variables may be queried by this
+;; package:
+
+;; - LOG_LEVEL : corresponds to a value for *LOG-LEVEL*. value may be
+;; - empty or one of the following string values: WARN INFO DEBUG TRACE
 
 ;;; Code:
 (defpackage :log

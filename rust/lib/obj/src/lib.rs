@@ -1,5 +1,4 @@
 //! lib.rs --- Objective types
-#![feature(map_try_insert)]
 pub use ron;
 
 mod err;

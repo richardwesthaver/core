@@ -7,6 +7,7 @@
    :djb
    :hash-object
    :hash-object-address
+   :dumb-string-hash
    ;; castable
    :castable
    :make-castable

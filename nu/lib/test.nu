@@ -8,16 +8,19 @@ export const WORKLOADS = [
   "1brc", "1trc"
 ]
 
-export def "get bundle" [workload?:string] {
-  http get "https://packy.compiler.company/bundle/core-test-data.tar.zst"
-  # unpack..
+export def get [pack:string="100mrc",out:directory="."] {
+  cd $out
+  http get $"https://packy.compiler.company/data/($pack).tar.zst" 
+  | tar -xvf -
+}
 
+export def 
+## TODO
   # decode taobench workload defs
   # let taobench_a = (open --raw "workload_a.json" | from json -o)
   # let taobench_o = (open --raw "workload_o.json" | from json -o)
 
   # prepare dataframe benchmarks
-}
 
 # Generate a N*10M row data bundle by sampling randomly from the
 # 1TRC dataset.
