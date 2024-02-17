@@ -1,5 +1,6 @@
 (defpackage :vc
-  (:use :cl :std :cli :log :obj :sb-bsd-sockets :uiop :cl-ppcre)
+  (:use :cl :std :cli :log :obj :sb-bsd-sockets :cl-ppcre)
+  (:import-from :uiop :with-current-directory)
   (:export 
    :vc-error :git-error :hg-error :vc-status
    :vc-clone :vc-push :vc-pull :vc-commit :vc-branch

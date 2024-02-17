@@ -137,7 +137,7 @@
   (pid 0 :type fixnum :read-only t)
   (pgid 0 :type fixnum)
   (cwd (sb-posix:getcwd) :type string)
-  (buffer #.(make-array *default-hg-client-buffer-size* :element-type 'unsigned-byte :adjustable nil))
+  (buffer (make-array *default-hg-client-buffer-size* :element-type 'unsigned-byte :adjustable nil))
   (socket nil :type (or local-socket null))
   (caps 0 :type fixnum))
 
