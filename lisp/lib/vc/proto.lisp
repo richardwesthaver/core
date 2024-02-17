@@ -5,12 +5,12 @@
 ;;; Code:
 (in-package :vc)
 
-;;; Functions 
+;;; Functions
 (defgeneric vc-init (self)
   (:documentation "Initialize a vc-repo - calls either 'git init' or 'hg init'"))
 
 (defgeneric vc-run (self cmd &rest args)
-  (:documentation "Run a vc COMMAND with REPO and ARGS."))
+  (:documentation "Run a vc CMD with ARGS."))
 
 (defgeneric vc-id (self)
   (:documentation "Get the ID of a vc object."))
@@ -65,3 +65,6 @@
    (remotes :initform (make-array 0 :element-type 'vc-remote :fill-pointer 0) :type (vector vc-remote))
    (config :initform nil :type (or null vc-config)))
   (:documentation "generic Repository object backed by one of VC-DESIGNATOR."))
+
+(defmethod vc-init ((self (eql t)))
+  (make-instance 'vc-repo))

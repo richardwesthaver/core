@@ -10,6 +10,7 @@
   :serial t
   :components ((:file "pkg")
                (:file "err")
+               (:file "bits")
                (:module "num"
                 :components ((:file "float")
                              (:file "parse")))

@@ -82,8 +82,9 @@
 (keymap-set skt-mode-map "C-c M-f" #'tempo-forward-mark)
 (keymap-set skt-mode-map "C-c M-a" #'tempo-complete-tag)
 
-(use-package ol-notmuch
-  :ensure t)
+(use-package markdown-mode :ensure t)
+
+(use-package ol-notmuch :ensure t)
 
 (use-package notmuch 
   :ensure t

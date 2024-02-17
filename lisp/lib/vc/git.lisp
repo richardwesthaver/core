@@ -77,7 +77,7 @@
 
 (defmethod vc-branch ((self git-repo) &key cmd branch &allow-other-keys) (vc-run self "branch" cmd branch))
 
-(defmethod vc-diff ((a git-repo) (b git-repo) &key ediff &allow-other-keys) 
+(defmethod vc-diff ((a git-repo) (b git-repo) &key &allow-other-keys)
   (vc-run a "diff" (vc-repo-head a) (vc-repo-head b)))
 
 (defmethod vc-id ((self git-repo))

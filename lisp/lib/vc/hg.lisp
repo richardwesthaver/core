@@ -53,6 +53,7 @@
           url-str)))
 
 ;; (describe (make-instance 'hg-repo))
+;; https://repo.mercurial-scm.org/hg/file/tip/mercurial/interfaces/repository.py
 (defclass hg-repo (vc-repo)
   ((dirstate) ;; working-directory
    (bookmarks)
@@ -66,6 +67,9 @@
           (loop for l = (read-line s nil nil)
                 while l
                 do (write-line l)))))))
+
+(defmethod vc-init ((self (eql :hg)))
+  (make-instance 'hg-repo))
 
 (defmethod vc-init ((self hg-repo))
   (with-slots (path) self
@@ -110,7 +114,7 @@
 
 (defmethod vc-branch ((self hg-repo) &key cmd branch &allow-other-keys) (vc-run self "branch" cmd branch))
 
-(defmethod vc-diff ((a hg-repo) (b hg-repo) &key ediff &allow-other-keys) 
+(defmethod vc-diff ((a hg-repo) (b hg-repo) &key &allow-other-keys) 
   (vc-run a "diff" (vc-repo-head a) (vc-repo-head b)))
 
 (defmethod vc-id ((self hg-repo))
@@ -133,7 +137,7 @@
   (pid 0 :type fixnum :read-only t)
   (pgid 0 :type fixnum)
   (cwd (sb-posix:getcwd) :type string)
-  (buffer (make-array *default-hg-client-buffer-size* :element-type 'unsigned-byte :adjustable nil))
+  (buffer #.(make-array *default-hg-client-buffer-size* :element-type 'unsigned-byte :adjustable nil))
   (socket nil :type (or local-socket null))
   (caps 0 :type fixnum))
 
@@ -147,7 +151,8 @@
 ;; all communication with the mercurial cmdserver is done over a
 ;; socket. byte order is big-endian.
 
-;; data from server is channel-based - (channel length pair sent before data) - 5 byte header total
+;; data from server is channel-based - (channel length pair sent
+;; before data) - 5 byte header total
 
 ;; on init, the server will send hello message on channel #\o. the
 ;; message is a signel chunk consisting of a #\Newline-separated list
@@ -164,8 +169,16 @@ o
 <data: 1234 bytes>
 |#
 
+(defmethod vc-init ((self hg-client))
+  "Initialize the hg commandserver client. This method initializes the
+appropriate process IDs and a socket for communicating with the
+commandserver."
+  (with-slots (pid pgid socket caps) self
+    (format nil "pid: ~A, pgid: ~A, socket: ~A, caps: ~A" pid pgid socket caps)))
+
 ;; TODO 2023-12-29: 
-(defmethod vc-run ((self hg-client) cmd &rest args))
+(defmethod vc-run ((self hg-client) cmd &rest args)
+  (declare (ignorable args)))
 
 ;;; Low-level
 (defstruct hg-nodeid id)
