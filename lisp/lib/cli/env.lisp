@@ -5,6 +5,11 @@
 ;;; Code:
 (in-package :cli)
 
+(defvar *std-global-env-var-names* 
+  '("LOG_LEVEL" "CORE_ROOT" "PACKY_ROOT" "INFRA_ROOT" "KRYPT_ROOT" "SKEL_ROOT" "LISP" "ESHELL" "ORGANIZATION" "TERM"))
+(defvar *std-local-env-var-names* 
+  '("PREFIX" "STASHDIR" "STOREDIR" "BINDIR" "LIBDIR" "DATADIR" "CARGO_TARGET_DIR"))
+
 (declaim (inline exec-path-list))
 (defun exec-path-list ()
   "Return a list of all members of PATH"

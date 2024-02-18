@@ -6,7 +6,7 @@
 (defsuite :rt)
 (in-suite :rt)
 
-(deftest rt (:bench 100 :profile t :persist nil)
+(deftest rt (:bench 100 :profile t :persist t)
   (is (typep (make-fixture-prototype :empty nil) 'fixture-prototype))
   (with-fixture (fx (make-fixture ((a 1) (b 2)) 
 		      (:+ () (+ (incf a) (incf b)))

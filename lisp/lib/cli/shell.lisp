@@ -10,8 +10,8 @@
 
 (defun |#$-reader| (stream sub-char numarg)
   "Switch on the shell reader, parsing STREAM and returning a
-POSIX-compliant shell program as a string. In other words, this is an
-implementation of the lazy version of SHCL's #$-reader.
+shell program as a string. In other words, this is an implementation
+of the lazy version of SHCL's #$-reader.
 
 Similar to shcl, we add some reader extensions to enable embedding
 lisp forms and other goodies.
@@ -38,5 +38,6 @@ $#
       (coerce (nreverse chars) 'string)))
 
 (defreadtable :shell
+  "The shell readtable"
   (:merge :std)
   (:dispatch-macro-char #\# #\$ #'|#$-reader|))

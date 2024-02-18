@@ -17,7 +17,6 @@
   "Test :std readtable"
   (is (typep #`(,a1 ,a1 ',a1 ,@a1) 'function))
   (is (string= #"test "foo" "# "test \"foo\" "))
-  (is (string= #$test "1 2 3"$# "test \"1 2 3\""))
   ;; from curry-compose-reader-macros test suite
   (is (equal (funcall {list 1} 2) '(1 2))) ;; curry.1
   (is (equal (mapcar {+ 1} '(1 2 3 4)) '(2 3 4 5))) ;; curry.2

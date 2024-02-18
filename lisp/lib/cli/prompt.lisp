@@ -1,6 +1,6 @@
 ;;; lib/cli/prompt.lisp --- Basic CLI Prompts
 
-;; the interface needs some work to work correctly with SBCL streams
+;; TODO
 
 ;;; Code:
 (in-package :cli/prompt)

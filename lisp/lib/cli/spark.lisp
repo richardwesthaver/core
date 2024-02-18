@@ -20,7 +20,7 @@
          (every #'characterp x))))
 
 (deftype %ticks ()
-  `(and simple-vector (satisfies at-least-two-chars-p)))
+  '(and simple-vector (satisfies at-least-two-chars-p)))
 
 (declaim (type %ticks *ticks* *vticks*))
 

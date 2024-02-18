@@ -32,6 +32,8 @@
    :*cli-group-separator*
    :*cli-opt-kinds*
    :global-opt-p
+   :*std-local-env-var-names*
+   :*std-global-env-var-names*
    :exec-path-list
    :program-list
    :find-exe

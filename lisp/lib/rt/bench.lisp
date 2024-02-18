@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :rt/bench)
 
-(defvar *bench-count* 100 "Default number of iterations to repeat a bench test for. This value is
+(defvar *bench-count* 10 "Default number of iterations to repeat a bench test for. This value is
 used when the slot value of :BENCH is t.")
 
 (defmacro bench (iter &body body)

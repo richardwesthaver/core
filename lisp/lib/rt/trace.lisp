@@ -324,7 +324,6 @@ and the stacks containing unclosed duration entries, keyed by thread."
 
 
 
-;;; FIXME: this still has an SBCL dependency -- Jacek Złydach, 2019-10-18
 (defun function-name->name-and-category (function-name)
   (etypecase function-name
     (symbol
@@ -333,6 +332,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
      (ecase (first function-name)
        (setf
         (values (format nil "~S" function-name) (package-name (symbol-package (second function-name)))))
+       ;; TODO investigate
        ((method sb-pcl::combined-method)
         (values (remove #\Newline (format nil "~S" function-name))
                 (if (consp (second function-name))

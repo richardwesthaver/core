@@ -563,6 +563,15 @@ from TESTS."))
       ;; return values (PASS? LOCKED)
       (values (not fails) locked))))
 
+(defmethod do-suite ((self string) &key stream)
+  (do-suite (ensure-suite self) :stream stream))
+
+(defmethod do-suite ((self symbol) &key stream)
+  (do-suite (ensure-suite self) :stream stream))
+
+(defmethod do-suite ((self null) &key stream)
+  (do-suite *test-suite* :stream stream))
+
 ;;; Checks
 (flet ((%test (val form)
 	 (let ((r 
@@ -574,7 +583,7 @@ from TESTS."))
   (defmacro is (test &rest args)
     "The DWIM Check.
 
-(is (= 1 1) :test 100) ;=> #S(TEST-RESULT :TAG :PASS :FORM (= 1 1))
+(is (= 1 1)) ;=> #S(TEST-RESULT :TAG :PASS :FORM (= 1 1))
 If TEST returns a truthy value, return a PASS test-result, else return
 a FAIL. The TEST is parameterized by ARGS which is a plist or nil.
 
@@ -647,12 +656,11 @@ and declarations for the test body.
   (destructuring-bind (pr doc dec fn)
       (multiple-value-bind (forms dec doc)
 	  ;; parse body with docstring allowed
-	  (sb-int:parse-body
-	   (or body) t)
+	  (sb-int:parse-body (or body) t)
 	`(,props ',doc ',dec ',forms))
     ;; TODO 2023-09-21: parse plist
     `(let ((obj (make-test
-		 :name ',(format nil "~A" name)
+		 :name ,(format nil "~A" name)
 		 ;; note: we could leave these unbound if we want,
 		 ;; personal preference
 		 :form ,fn
@@ -682,20 +690,3 @@ NAME. Return the object."
   (assert-suite name)
   `(progn
      (setq *test-suite* (ensure-suite ,name))))
-
-;;; Coverage
-(defmacro enable-coverage ()
-  `(declaim (optimize store-coverage-data)))
-
-(defun disable-coverage ()
-  `(declaim (optimize (sb-cover:store-coverage-data 0))))
-
-(defmacro with-coverage (&body body)
-  `(progn
-     (enable-coverage)
-     ,@body
-     (disable-coverage)))
-
-(defun coverage-report ()
-  "Generate a coverage report."
-  (sb-cover:report *coverage-directory*))
