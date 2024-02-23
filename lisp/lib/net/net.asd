@@ -12,6 +12,7 @@
   :components ((:file "pkg")
                (:file "err")
                (:file "obj")
+               (:file "sans-io")
                (:file "udp")
                (:file "tcp")
                (:module "codec"

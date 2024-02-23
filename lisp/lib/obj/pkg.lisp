@@ -30,7 +30,8 @@
   (:nicknames :id)
   (:use :cl :std :obj/hash)
   (:export 
-   :id :reset-id :update-id :make-id))
+   :id :reset-id :update-id :make-id
+   :id-factory))
 
 (defpackage :obj/seq
   (:nicknames :seq)

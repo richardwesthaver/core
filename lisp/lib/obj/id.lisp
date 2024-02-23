@@ -17,3 +17,5 @@
 (defgeneric make-id (&optional obj)
   (:documentation "Make a new ID object of a specified KIND.")
   (:method (&optional (obj t)) (make-instance 'id :id (or obj 0))))
+
+(defclass id-factory () ())

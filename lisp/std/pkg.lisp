@@ -186,6 +186,14 @@
    :define-alien-loader
    ;; bits
    :make-bits
+   :sign-bit
+   :different-signs-p
+   :mortify-bits
+   :int-list-bits
+   :octet-vector
+   :aref-bit
+   :make-bit-vector
+   :logbit
    :define-opaque
    :setfa
    :copy-c-string

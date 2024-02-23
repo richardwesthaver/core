@@ -15,6 +15,10 @@
    :peer
    :proxy
    :tunnel))
+
+(defpackage :net/sans-io
+  (:use :cl :obj :dat :std :net/core :sb-bsd-sockets)
+  (:export))
   
 (defpackage :net/udp
   (:nicknames :udp)
