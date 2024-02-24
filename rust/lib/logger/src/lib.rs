@@ -5,7 +5,7 @@ pub use flexi_logger::{
 };
 
 pub use log::{
-  self, debug, info, trace, warn, Level, LevelFilter, Metadata, Record,
+  self, debug, error, info, trace, warn, Level, LevelFilter, Metadata, Record,
 };
 
 pub use tracing;

@@ -56,8 +56,8 @@ use std::io;
 macro_rules! impl_config {
   ($($t:ident),*) => {
     $(
-    impl Objective for $t {}
-    impl Configure for $t {}
+      impl Objective for $t {}
+      impl Configure for $t {}
     )*
   };
 }

@@ -3,10 +3,10 @@
 //! This library provides types and builder functions for working with
 //! databases. Currently the only backend supported is RocksDB.
 #![feature(associated_type_defaults)]
-use std::path::PathBuf;
-
+use obj::Configure;
 #[cfg(feature = "rocksdb")]
 pub use rocksdb;
+use std::path::PathBuf;
 
 mod err;
 pub use err::{Error, Result};
@@ -24,13 +24,11 @@ pub trait Db {
   fn db_close(&self) -> Result<()>;
   fn db_query(&self) -> Result<()>;
   fn db_transaction(&self) -> Result<()>;
-  fn db_set_config<C:DbConfigExt>(&self, cfg: C) -> Self;
-  fn db_get_config<C:DbConfigExt>(&self) -> C;
 }
 
-pub trait DbConfigExt {
-  fn db_path(&self) -> Option<PathBuf>;
-  fn db_user(&self) -> Option<String>;
-  fn set_db_config_value<T>(&self, key: &str, val: T) -> Self;
-  fn get_db_config_value<T>(&self, key: &str) -> T;
+pub trait DbConfigExt: Configure {
+  fn db_path(self) -> Option<PathBuf>;
+  fn db_user(self) -> Option<String>;
+  fn set_db_config_value(&mut self, key: &str, val: &str) -> Option<String>;
+  fn get_db_config_value(self, key: &str) -> Option<String>;
 }

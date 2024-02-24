@@ -147,10 +147,7 @@ fn gen_keypair() {
     SecretKey::from_bytes(&sec_bytes[..SECRET_KEY_LENGTH]).unwrap();
   let public: PublicKey =
     PublicKey::from_bytes(&pub_bytes[..PUBLIC_KEY_LENGTH]).unwrap();
-  let keypair: Keypair = Keypair {
-    secret,
-    public,
-  };
+  let keypair: Keypair = Keypair { secret, public };
   let sig1: Signature = Signature::from_bytes(&sig_bytes[..]).unwrap();
   let mut prehash_for_signing: Sha512 = Sha512::default();
   let mut prehash_for_verifying: Sha512 = Sha512::default();

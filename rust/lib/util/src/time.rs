@@ -236,8 +236,7 @@ impl Default for Time {
 }
 
 /// A stopwatch which accurately measures elapsed time.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[derive(Default)]
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub enum Stopwatch {
   /// Initial state with an elapsed time value of 0 seconds.
   #[default]
@@ -248,8 +247,6 @@ pub enum Stopwatch {
   /// Stopwatch has been stopped and reports the elapsed time `Duration`.
   Ended(Duration),
 }
-
-
 
 impl Stopwatch {
   /// Creates a new stopwatch.
