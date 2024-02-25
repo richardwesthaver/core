@@ -6,11 +6,12 @@
 (in-package :obj/db)
 
 ;;; V0.2
-(defclass database () ())
+(defclass database ()
+  ((db :initarg :db)))
 
-(defgeneric make-db (type &rest initargs &key &allow-other-keys))
+(defgeneric make-db (engine &rest initargs &key &allow-other-keys))
 
-(defgeneric connect-db (db &rest initargs &key &allow-other-keys))
+(defgeneric connect-db (db &key &allow-other-keys))
 
 (defgeneric query-db (db query &key &allow-other-keys))
 
@@ -19,6 +20,11 @@
 (defgeneric (setf db-get) (db key val &key &allow-other-keys))
 
 (defgeneric close-db (db &key &allow-other-keys))
+
+;; additional generics from RDB
+(defgeneric open-db (self))
+
+(defgeneric destroy-db (self))
 
 ;;; Common
 (defun slot-val (instance slot-name)
@@ -64,14 +70,14 @@
                 ;;TODO: Implement this properly.
                 (get object element ))
                (t
-              (error "Does not handle this type of object. Implement your own get-val method.")))
+                (error "Does not handle this type of object. Implement your own get-val method.")))
          (if (listp object)
-              (replace object (list (list element new-value)))
-              (error "Does not handle this type of object. Implement your own get-val method."))))))
+             (replace object (list (list element new-value)))
+             (error "Does not handle this type of object. Implement your own get-val method."))))))
 
 ;;; DB
 (defgeneric get-db (dbs name)
-    (:documentation "Returns the db by name."))
+  (:documentation "Returns the db by name."))
 
 (defgeneric add-db (dbs name &key base-path load-from-file-p)
   (:documentation "Adds a db to the dbs hashtable. A base-path can be
@@ -110,7 +116,7 @@ sort-collection, sort-collection-temporary and union-collection. "))
   (:documentation "Load collection from a file."))
 
 (defgeneric get-collection (db name)
-    (:documentation "Returns the collection by name."))
+  (:documentation "Returns the collection by name."))
 
 (defgeneric add-collection (db name &key load-from-file-p)
   (:documentation "Adds a collection to the db."))

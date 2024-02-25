@@ -6,8 +6,8 @@
    (key :initarg :key
         :accessor key)
    (doc-type :initarg :doc-type
-         :initform nil
-         :accessor doc-type)))
+             :initform nil
+             :accessor doc-type)))
 
 (defmethod duplicate-doc-p ((doc document) test-doc)
   (or (eq doc test-doc)
@@ -17,7 +17,7 @@
   (when doc
     (if (slot-boundp doc 'collection)
         (add-doc (or (collection doc) collection) (or duplicate-doc-p-func  #'duplicate-doc-p))
-      (error "Must specify collection to add document to."))))
+        (error "Must specify collection to add document to."))))
 
 (defmethod get-val ((doc document) element &key data-type)
   (declare (ignore data-type))
@@ -45,11 +45,11 @@
 
 (defmethod get-doc ((collection document-join) value &key (element 'key) (test #'equal))
   (map-docs
-         nil
-         (lambda (doc)
-           (when (apply test (get-val doc element) value)
-             (return-from get-doc doc)))
-         collection))
+   nil
+   (lambda (doc)
+     (when (apply test (get-val doc element) value)
+       (return-from get-doc doc)))
+   collection))
 
 
 (defmethod find-doc ((collection document-join) &key test)

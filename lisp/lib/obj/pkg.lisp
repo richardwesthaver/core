@@ -236,6 +236,8 @@
    :get-db
    :add-db
    :make-db
+   :close-db
+   :destroy-db
    :connect-db
    :query-db
    :db-get

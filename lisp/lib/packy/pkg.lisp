@@ -1,5 +1,5 @@
-(defpackage :packy
-  (:use :cl :std :rdb)
+(defpackage :packy/core
+  (:use :cl :std :rdb :obj :net :dat)
   (:export
    :pk-pack
    :pk-unpack
@@ -27,3 +27,11 @@
    :update-package
    :build-package))
 
+(defpackage :packy/client
+  (:use :cl :std :packy/core))
+
+(defpackage :packy/server
+  (:use :cl :std :packy/core))
+
+(defpackage :packy
+  (:use :cl :std :packy/client :packy/server :packy/core))

@@ -244,11 +244,25 @@
 			     (lua . t)
 			     (lilypond . t)))
 
-
 (add-to-list 'slime-contribs 'slime-cape)
 ;; (add-hook 'slime-mode-hook #'company-mode)
 ;; (add-hook 'slime-repl-mode-hook #'company-mode)
 
+;;; IRC
+(setq erc-format-nick-function 'erc-format-@nick)
+
+(defun start-erc ()
+  "Connect to IRC."
+  (interactive)
+  (erc-tls :server "irc.libera.chat" :port 6697
+           :client-certificate '("/mnt/y/data/private/krypt/libera.pem"))
+  (setq erc-autojoin-channels-alist '(("irc.libera.chat" "#emacs")
+                                      ("irc.libera.chat" "#linux")
+                                      ("irc.libera.chat" "#rust")
+                                      ("irc.libera.chat" "#btrfs")
+                                      ("irc.libera.chat" "#lisp")
+                                      ("irc.libera.chat" "#sbcl")
+                                      ("irc.oftc.net" "#llvm"))))
 ;;; Tags
 ;;;###autoload
 (defun refresh-tags ()

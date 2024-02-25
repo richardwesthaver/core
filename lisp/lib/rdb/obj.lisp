@@ -152,7 +152,7 @@ rocksdb_cf_t handle."
     (unless (null db) (close-db self))
     (setf db (open-db-raw (rdb-name self) (rdb-opts-sap (rdb-opts self))))))
 
-(defmethod close-db ((self rdb))  
+(defmethod close-db ((self rdb) &key &allow-other-keys)
   (with-slots (db) self
     (unless (null db)
       (close-db-raw db)
@@ -162,7 +162,7 @@ rocksdb_cf_t handle."
   (when (rdb-db self) (close-db self))
   (destroy-db-raw (rdb-name self)))
 
-(defmethod init-db ((self rdb))
+(defmethod make-db ((self rdb) &key &allow-other-keys)
   (loop for cf across (rdb-cfs self)
         do (create-cf (rdb-db self) cf)))
 

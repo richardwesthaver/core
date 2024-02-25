@@ -83,6 +83,7 @@
    org-web-tools ;; web parsing
    citeproc ;; citations
    all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
+   hide-mode-line ;; ui
    corfu orderless cape ;; completion
    slime ;; common lisp server
    bbdb

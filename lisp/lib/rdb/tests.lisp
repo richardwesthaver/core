@@ -47,7 +47,7 @@
     ;; (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
     ;;   (dolist (cf cfs)
     ;;     (push-cf cf db)))
-    ;; (init-db db)
+    ;; (make-db db)
     ;; TODO
     ;; (loop for cf across (rdb-cfs db)
     ;;       do

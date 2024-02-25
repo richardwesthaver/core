@@ -3,7 +3,7 @@
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :rocksdb)
+  :depends-on (:std :rocksdb :obj)
   :serial t
   :components ((:file "pkg")
                (:file "err") 

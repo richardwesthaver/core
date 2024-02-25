@@ -5,4 +5,6 @@
 (defsuite :packy)
 (in-suite :packy)
 
+(deftest packy-db ())
+
 (deftest packy-objects ())
