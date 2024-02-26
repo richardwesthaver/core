@@ -2,6 +2,39 @@
 
 (defparameter *frame-where-profiling-was-started* nil)
 
+(defmacro with-open-file* ((stream filespec &key direction element-type
+                                   if-exists if-does-not-exist external-format)
+                           &body body)
+  "Just like WITH-OPEN-FILE, but NIL values in the keyword arguments
+mean to use the default value specified for OPEN."
+  (once-only (direction element-type if-exists if-does-not-exist external-format)
+    `(with-open-stream
+         (,stream (apply #'open ,filespec
+                         (append
+                          (when ,direction
+                            (list :direction ,direction))
+                          (list :element-type ,(or element-type '(unsigned-byte 8)))
+                          (when ,if-exists
+                            (list :if-exists ,if-exists))
+                          (when ,if-does-not-exist
+                            (list :if-does-not-exist ,if-does-not-exist))
+                          (when ,external-format
+                            (list :external-format ,external-format)))))
+       ,@body)))
+
+(defmacro with-output-to-file ((stream-name file-name &rest args
+                                            &key (direction nil direction-p)
+                                            &allow-other-keys)
+                               &body body)
+  "Evaluate BODY with STREAM-NAME to an output stream on the file
+FILE-NAME. ARGS is sent as is to the call to OPEN except EXTERNAL-FORMAT,
+which is only sent to WITH-OPEN-FILE when it's not NIL."
+  (declare (ignore direction))
+  (when direction-p
+    (error "Can't specify :DIRECTION for WITH-OUTPUT-TO-FILE."))
+  `(with-open-file* (,stream-name ,file-name :direction :output ,@args)
+     ,@body))
+
 (defclass flamegraph-node ()
   ((func :initarg :func
          :initform nil

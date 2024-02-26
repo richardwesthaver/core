@@ -7,6 +7,7 @@
 ;; quick primer: https://cp-algorithms.com/algebra/bit-manipulation.html
 
 ;;; Code:
+(in-package :std)
 (defun make-bits (length &rest args)
   (apply #'make-array length (nconc '(:element-type bit) args)))
 

@@ -113,8 +113,8 @@
   (:use :cl :std :log :rt)
   (:export))
 
-(defpackage :rt/trace
-  (:nicknames :trace)
+(defpackage :rt/tracing
+  (:nicknames :tracing)
   (:use :cl :std :log :rt)
   (:export
    :start-tracing
@@ -127,8 +127,7 @@
 (defpackage :rt/flamegraph
   (:nicknames :flamegraph)
   (:use :cl :std :log :rt :sb-sprof)
-  (:export
-   :save-flamegraph))
+  (:export :save-flamegraph))
 
 (in-package :rt)
 (in-readtable :std)
@@ -202,9 +201,9 @@ compiler optimizations.")
 (defun normalize-test-name (a)
   "Return the normalized `test-suite-designator' of A."
   (etypecase a
-    (string a)
-    (symbol (string-downcase (symbol-name a)))
-    (test-object (test-name a))
+    (string (string-upcase a))
+    (symbol (symbol-name a))
+    (test-object (normalize-test-name (test-name a)))
     (t (format nil "~A" a))))
 
 (defun test-name= (a b)

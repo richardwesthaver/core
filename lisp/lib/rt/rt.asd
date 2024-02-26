@@ -3,7 +3,7 @@
   :depends-on (:std :log :dat)
   :components ((:file "pkg")
                (:file "bench")
-               (:file "trace")
+               (:file "tracing")
                (:file "flamegraph"))
   :in-order-to ((test-op (test-op "rt/tests"))))
 

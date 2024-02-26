@@ -1,4 +1,4 @@
-;;; lib/rt/trace.lisp --- Tracing Framework
+;;; lib/rt/tracing.lisp --- Tracing Framework
 
 ;; This package provides utilities for tracing Lisp code and
 ;; displaying traces to the user. In addition to extending the
@@ -15,7 +15,7 @@
 ;; - sb-debug notes: https://gist.github.com/nikodemus/659495
 
 ;;; Code:
-(in-package :rt/trace)
+(in-package :rt/tracing)
 
 (defmacro traced-flet (functions &body body)
   (flet ((add-traces (function) 
@@ -45,7 +45,7 @@
 
 (defvar *trace-event-default-pid* 1 "The default value for PID for the trace events. This library is currently intended for use within a single process only.")
 
-(defvar +arg-converter-ignore-all+ (constantly 'skipped) "A converter that rejects all parameters.")
+(defvar +arg-converter-ignore-all+ (constantly nil) "A converter that rejects all parameters.")
 (defvar +arg-converter-passthrough+ (lambda (&rest args) args) "A converter that remembers all args as is, without modifying them.")
 (defvar +arg-converter-store-only-simple-objects+ (lambda (&rest args)
                                                     (mapcar (lambda (arg)
@@ -263,7 +263,6 @@ and the stacks containing unclosed duration entries, keyed by thread."
         (symbol-function 'sb-debug::trace-end-breakpoint-fun) *original-trace-end-breakpoint-fun*)
   (sb-ext:lock-package (find-package 'sb-debug)))
 
-;;; FIXME: This should not be a macro. -- Jacek Złydach, 2019-10-18
 (defun start-tracing (&rest specs)
   (install-tracing-overrides)
   `(progn
@@ -355,7 +354,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
 ;;; FIXME: Something breaks if not collecting args, and :skip-args is NIL. Probably the getf in printing. -- Jacek Złydach, 2019-11-05
 (defun trace-event->json (trace-event &key (skip-args nil))
   (flet ((sanitize-and-format-args-list (argslist)
-           (if skip-args "\"skipped\""
+           (if skip-args "\"_\""
                (substitute #\Space #\Newline (format nil "[~{~S~^, ~}]" (mapcar #'post-process-arg argslist))))))
     (ecase (trace-event-phase trace-event)
       (:enter

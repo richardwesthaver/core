@@ -87,7 +87,7 @@
    corfu orderless cape ;; completion
    slime ;; common lisp server
    bbdb
-   slime-company
+   ;; slime-company
    which-key ;; key helper
    ;; langs
    rust-mode)
@@ -132,11 +132,11 @@
   ;; used by `completion-at-point'.  The order of the functions matters, the
   ;; first function returning a result wins.  Note that the list of buffer-local
   ;; completion functions takes precedence over the global list.
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
   ;; (add-to-list 'completion-at-point-functions #'cape-history)
   ;; (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; (add-to-list 'completion-at-point-functions #'cape-file)
   ;; (add-to-list 'completion-at-point-functions #'cape-line)
   ;; (add-to-list 'completion-at-point-functions #'cape-elisp-block)
   ;; (add-to-list 'completion-at-point-functions #'cape-tex)
@@ -149,7 +149,7 @@
 
 (use-package orderless
   :custom
-  (completion-styles '(orderless basic))
+  (completion-styles '(orderless basic partial-completion shorthand flex))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
 ;;; Desktop
@@ -181,10 +181,25 @@
 (use-package slime
   :ensure t
   :config
-  (setq slime-contribs '(slime-fancy slime-quicklisp slime-repl))
+  (require 'slime-autoloads)
+  (setq slime-contribs '(slime-fancy
+                         slime-quicklisp
+                         slime-hyperdoc
+                         slime-listener-hooks
+                         slime-enclosing-context
+                         slime-media
+                         slime-mrepl
+                         slime-sbcl-exts
+                         ;; slime-snapshot
+                         slime-sprof
+                         slime-tramp
+                         ;; slime-typeout-frame
+                         slime-xref-browser
+                         ;; slime-highlight-edits
+                         slime-asdf))
   (put 'make-instance 'common-lisp-indent-function 1)
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
-  (add-hook 'after-init-hook #'slime-setup)
+  (slime-setup)
   (defvar slime-toggle nil)
   (defun slime-toggle ()
     "toggle between lisp file and slime-repl"

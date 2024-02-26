@@ -244,7 +244,7 @@
 			     (lua . t)
 			     (lilypond . t)))
 
-(add-to-list 'slime-contribs 'slime-cape)
+;; (add-to-list 'slime-contribs 'slime-cape)
 ;; (add-hook 'slime-mode-hook #'company-mode)
 ;; (add-hook 'slime-repl-mode-hook #'company-mode)
 
