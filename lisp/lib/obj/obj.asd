@@ -23,6 +23,8 @@
                              (:file "palette")
                              (:file "util")
                              (:file "x11-colors")))
+               (:module "music"
+                :components ((:file "music")))
                (:module "time"
                 :components ((:file "local")))
                (:file "tbl")

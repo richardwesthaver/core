@@ -167,6 +167,13 @@
    :encode-universal-time-with-tz
    :decode-universal-time-with-tz))
 
+(defpackage :obj/music
+  (:nicknames :music)
+  (:use :cl :std)
+  (:export
+   :*bpm* :*key-signature* :*time-signature*
+   :*chord-table* :*key-table* :*tone-table*))
+
 (defpackage :obj/tbl
   (:nicknames :tbl)
   (:use :cl :std)

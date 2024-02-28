@@ -5,7 +5,9 @@
 
 (defpackage :gui/wm
   (:use :cl :std :log :gui/core :wayflan-client)
-  (:export))
+  (:export
+   :*default-wm*
+   :wm-package))
 
 (defpackage :gui/proto/keyboard
   (:use :cl :std :gui/core :gui/wm)

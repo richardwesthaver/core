@@ -1,11 +1,19 @@
 ;;; gui.asd --- GUI subsystem
 (defsystem :gui
-  :depends-on (:std :log :obj :wayflan :wayflan-client)
+  :depends-on (:std 
+               :log :obj
+               :wayflan :wayflan-client ;;#+wl
+               :clx) ;; #+x11
   :components ((:file "pkg")
                (:file "err")
-               (:file "wm")
-               (:module "proto"
-                :components ((:file "keyboard")))
+               (:module "wm"
+                :components ((:file "pkg")
+                             (:module "wl"
+                              :components ((:file "pkg")
+                                           (:file "kbd")
+                                           (:file "shell")))
+                             (:module "x11"
+                              :components ((:file "pkg")))))
                (:file "ext"))
   :in-order-to ((test-op (test-op "gui/tests"))))
 

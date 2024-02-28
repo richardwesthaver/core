@@ -43,3 +43,6 @@
       (save-report f))
     (is (probe-file f))
     (delete-file f)))
+
+(deftest cover (:profile t)
+  

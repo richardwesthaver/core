@@ -87,7 +87,7 @@
    corfu orderless cape ;; completion
    slime ;; common lisp server
    bbdb
-   ;; slime-company
+   slime-company
    which-key ;; key helper
    ;; langs
    rust-mode)
@@ -180,8 +180,9 @@
 
 (use-package slime
   :ensure t
-  :config
+  :init
   (require 'slime-autoloads)
+  (require 'slime-cape)
   (setq slime-contribs '(slime-fancy
                          slime-quicklisp
                          slime-hyperdoc
@@ -190,6 +191,7 @@
                          slime-media
                          slime-mrepl
                          slime-sbcl-exts
+                         slime-cape ;; ext
                          ;; slime-snapshot
                          slime-sprof
                          slime-tramp
@@ -199,6 +201,8 @@
                          slime-asdf))
   (put 'make-instance 'common-lisp-indent-function 1)
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
+  (add-hook 'slime-mode-hook #'slime-cape-maybe-enable)
+  (add-hook 'slime-repl-mode-hook #'slime-cape-maybe-enable)
   (slime-setup)
   (defvar slime-toggle nil)
   (defun slime-toggle ()
@@ -211,6 +215,7 @@
         (setq slime-toggle (current-buffer))
         (slime-repl))))
 
+  ;; X11-only (mcclim requires clx)
   (defun clouseau-inspect (string)
     "Inspect a lisp value with Clouseau. make sure to load clouseau
 with a custom core or in your init file before using this

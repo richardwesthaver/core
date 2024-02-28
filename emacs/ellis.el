@@ -25,7 +25,7 @@
 ;;; Code:
 (require 'inbox)
 (require 'sk)
-;; (require 'slime-cape)
+(require 'slime-cape)
 (require 'sxp)
 (require 'ulang)
 
@@ -243,11 +243,6 @@
 			     (python . t)
 			     (lua . t)
 			     (lilypond . t)))
-
-;; (add-to-list 'slime-contribs 'slime-cape)
-;; (add-hook 'slime-mode-hook #'company-mode)
-;; (add-hook 'slime-repl-mode-hook #'company-mode)
-
 ;;; IRC
 (setq erc-format-nick-function 'erc-format-@nick)
 
