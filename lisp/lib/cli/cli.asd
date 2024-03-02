@@ -1,6 +1,6 @@
 ;;; cli.asd --- CLI library
 (defsystem :cli
-  :depends-on (:std :log :cl-readline)
+  :depends-on (:std :log #+readline :cl-readline)
   :components ((:file "pkg")
                (:file "env" :depends-on ("pkg"))
                (:file "shell" :depends-on ("env"))

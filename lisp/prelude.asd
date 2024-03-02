@@ -1,5 +1,5 @@
 (defsystem :prelude
-  :depends-on (:std :cli :dat :doc
+  :depends-on (:std :dat :cli :doc
                :gui :log :net :nlp
                :obj :organ :packy
                :parse :pod :rdb :rt

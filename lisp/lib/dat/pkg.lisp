@@ -42,11 +42,11 @@
   (:export
    #:parse
    #:parse-toml-blocks
-   #:collection
+   #:toml-collection
    #:children
-   #:table
-   #:inline-table
-   #:table-array
+   #:toml-table
+   #:inline-toml-table
+   #:toml-table-array
    #:toml-redefine-table-error
    #:toml-redefine-property-error
    #:toml-modify-inline-table-error

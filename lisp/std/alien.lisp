@@ -34,11 +34,11 @@ on Linux and Darwin."
 (defmacro define-alien-loader (name &optional export)
   "Define a default loader function named load-NAME which calls
 SB-ALIEN:LOAD-SHARED-OBJECT."
-  (let ((fname (sb-int:symbolicate (format nil "~@:(load-~a~)" name))))
+  (let* ((fname (sb-int:symbolicate (format nil "~@:(load-~a~)" name))))
     `(prog1
        (defun ,fname (&optional save)
          (prog1 (sb-alien:load-shared-object (shared-object-name ',name) :dont-save (not save))
-           (pushnew ,(sb-int:keywordicate name) *features*)))
+           (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))
        ,@(when export (list `(export '(,fname)))))))
        
 (defmacro define-opaque (ty &optional no-export)

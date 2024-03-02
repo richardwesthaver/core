@@ -4,7 +4,8 @@
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
   (:sb-concurrency :sb-posix 
-   :sb-bsd-sockets :cl-ppcre 
+   :sb-bsd-sockets :cl-ppcre
+   :dat
    :obj
    :swank-client :dexador
    :hunchentoot :std :log)

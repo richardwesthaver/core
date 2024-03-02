@@ -422,7 +422,7 @@ Example:
                     :report "Try to redefine the constant."
                     new)))))))
 
-(defmacro define-constant (name initial-value &key (test ''eql) documentation)
+(defmacro define-constant (name initial-value &key (test #'eql) documentation)
   "Ensures that the global variable named by NAME is a constant with a value
 that is equal under TEST to the result of evaluating INITIAL-VALUE. TEST is a
 /function designator/ that defaults to EQL. If DOCUMENTATION is given, it

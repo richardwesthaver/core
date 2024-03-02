@@ -1,11 +1,13 @@
 ;;; std.asd --- standard library
 (defsystem :std/named-readtables
+  :version "0.1.0"
   :components ((:file "named-readtables"))
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (register-system-packages "std/named-readtables" '(:std))
 
 (defsystem :std
+  :version "0.1.0"
   :depends-on (:std/named-readtables :cl-ppcre :sb-concurrency)
   :serial t
   :components ((:file "pkg")

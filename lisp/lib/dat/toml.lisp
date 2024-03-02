@@ -100,12 +100,12 @@
   (format stream "#toml-array-table (~a)" (names table)))
 
 ;;; Model
-(defclass collection ()
+(defclass toml-collection ()
   ((children :accessor children
              :initform (make-hash-table :test #'equal)
              :documentation "A table of any kind. Note that for a table, its own name is not stored as a property of itself, but as a hash key in children property of its parent collection. The parsed result is a table representing root table.")))
 
-(defclass table (collection)
+(defclass toml-table (toml-collection)
   ((definition-context :type boolean
                        :accessor definition-context
                        :initarg :definition-context
@@ -123,20 +123,20 @@ Its value can be:
 - T means defined via [Table] header.
 - A table instance means defined under corresponding table section.")))
 
-(defclass inline-table (collection) ())
+(defclass inline-toml-table (toml-collection) ())
 
-(defclass table-array (collection)
+(defclass toml-table-array (toml-collection)
   ((children :initform (list))))
 
-(defmethod print-object ((table table) stream)
+(defmethod print-object ((table toml-table) stream)
   (format stream "#Table(~{ ~S~})"
           (hash-table-alist (children table))))
 
-(defmethod print-object ((table inline-table) stream)
+(defmethod print-object ((table inline-toml-table) stream)
   (format stream "#InlineTable(~{ ~S~})"
           (hash-table-alist (children table))))
 
-(defmethod print-object ((table table-array) stream)
+(defmethod print-object ((table toml-table-array) stream)
   (format stream "#ArrayTable(~{ ~S~})"
           (children table)))
 
@@ -167,19 +167,19 @@ Its value can be:
                (get-child current-table name)
              (if table-found-p
                  (case (type-of table)
-                   (table (if last-name-p
+                   (toml-table (if last-name-p
                               (progn (if (definition-context table)
                                          (error 'toml-redefine-table-error
                                                 :names names)
                                          (setf (definition-context table) t))
                                      (setf (current-table context) table))
                               (setf current-table table)))
-                   (table-array (if last-name-p
+                   (toml-table-array (if last-name-p
                                     (error 'toml-redefine-table-error
                                            :names names)
                                     (setf current-table (last-child table))))
                    (t (error 'toml-redefine-table-error :names names)))
-                 (let ((table (make-instance 'table)))
+                 (let ((table (make-instance 'toml-table)))
                    (when last-name-p
                      (setf (definition-context table) t)
                      (setf (current-table context) table))
@@ -197,24 +197,24 @@ Its value can be:
                (get-child current-table name)
              (if table-found-p
                  (case (type-of table)
-                   (table (if last-name-p
+                   (toml-table (if last-name-p
                               (error 'toml-redefine-table-error :names names)
                               (setf current-table table)))
-                   (table-array (if last-name-p
-                                    (let ((new-table (make-instance 'table)))
+                   (toml-table-array (if last-name-p
+                                    (let ((new-table (make-instance 'toml-table)))
                                       (append-child table new-table)
                                       (setf (current-table context) new-table))
                                     (setf current-table (last-child table))))
                    (t (error 'toml-redefine-table-error :names names)))
                  (if last-name-p
                      ;; For last part of names, create table array.
-                     (let ((table (make-instance 'table))
-                           (table-array (make-instance 'table-array)))
+                     (let ((table (make-instance 'toml-table))
+                           (table-array (make-instance 'toml-table-array)))
                        (set-child current-table name table-array)
                        (append-child table-array table)
                        (setf (current-table context) table))
                      ;; For middle part of names, create normal table.
-                     (let ((table (make-instance 'table)))
+                     (let ((table (make-instance 'toml-table)))
                        (set-child current-table name table)
                        (setf current-table table)))))))
 
@@ -233,7 +233,7 @@ Its value can be:
             do (if last-name-p
                    (setf key-to-add key)
                    (let ((new-table (make-instance
-                                     'table
+                                     'toml-table
                                      :definition-context current-table)))
                      (set-child table key new-table)
                      (setf table new-table)))
@@ -241,14 +241,14 @@ Its value can be:
             do (if last-name-p
                    (error 'toml-redefine-property-error :names keys)
                    (case (type-of value)
-                     (table (if (equal (definition-context value)
+                     (toml-table (if (equal (definition-context value)
                                        current-table)
                                 (setf table value)
                                 (error 'toml-dotted-key-redefine-table-error
                                        :names keys)))
-                     (inline-table (error 'toml-modify-inline-table-error
+                     (inline-toml-table (error 'toml-modify-inline-table-error
                                           :names keys))
-                     (table-array (error 'toml-dotted-key-open-table-array-error
+                     (toml-table-array (error 'toml-dotted-key-open-table-array-error
                                          :names keys))
                      (t (error 'toml-redefine-property-error
                                :names keys)))))
@@ -266,7 +266,7 @@ Its value can be:
 (defun parse-pair-value (value context)
   (cond
     ((typep value 'toml-inline-table)
-     (let ((inline-table (make-instance 'inline-table))
+     (let ((inline-table (make-instance 'toml-inline-table))
            (current-table (current-table context)))
        (setf (current-table context) inline-table)
        (parse-toml-block value context)
@@ -347,17 +347,17 @@ Its value can be:
 ;;   (let* ((parsed (esrap:parse 'toml text)))
 ;;     (serialize parsed style)))
 
-(defmethod serialize ((table table) (format (eql :toml)) &key (style :alist))
+(defmethod serialize ((table toml-table) (format (eql :toml)) &key (style :alist))
   (loop with children = (children table)
         for key being the hash-keys of children
         collect (cons key (serialize (gethash key children) format :style style))))
 
-(defmethod serialize ((table inline-table) (format (eql :toml)) &key (style :alist))
+(defmethod serialize ((table inline-toml-table) (format (eql :toml)) &key (style :alist))
   (loop with children = (children table)
         for key being the hash-keys of children
         collect (cons key (serialize (gethash key children) format :style style))))
 
-(defmethod serialize ((table table-array) (format (eql :toml)) &key style)
+(defmethod serialize ((table toml-table-array) (format (eql :toml)) &key style)
   (mapcar (lambda (it) (serialize it format :style style))
           (children table)))
 

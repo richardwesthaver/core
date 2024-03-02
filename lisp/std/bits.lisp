@@ -9,7 +9,7 @@
 ;;; Code:
 (in-package :std)
 (defun make-bits (length &rest args)
-  (apply #'make-array length (nconc '(:element-type bit) args)))
+  (apply #'make-array length (nconc (list :element-type 'bit) args)))
 
 ;; https://graphics.stanford.edu/~seander/bithacks.html
 ;; http://www.azillionmonkeys.com/qed/asmexample.html
@@ -39,7 +39,8 @@
 ;; TODO 2024-02-23: 
 (defun mortify-bits (x y)
   "Interleave the bits of two numbers (Mortan numbers)."
-  (declare (fixnum x y))
+  (declare (fixnum x y)
+           (ignore x y))
   ;; (loop for i across (integer-length)
   ;;       with z = 0
   ;;       ;; z |= (x & 1U << i) << i | (y & 1U << i) << (i + 1);

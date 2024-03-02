@@ -175,7 +175,7 @@
    :vspark :*vticks*))
 
 (defpackage :cli/repl
-  (:use :cl :std :cli :cli/progress :cli/spark :cl-readline)
+  (:use :cl :std :cli :cli/progress :cli/spark #+readline :cl-readline)
   (:export :load-acl-repl :start-rl-repl))
 
 (defpackage :cli/ed

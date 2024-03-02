@@ -17,7 +17,7 @@
    :tunnel))
 
 (defpackage :net/sans-io
-  (:use :cl :obj :dat :std :net/core :sb-bsd-sockets)
+  (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
   (:export))
   
 (defpackage :net/udp
@@ -67,7 +67,7 @@
    :bundle
    :format-osc-data
    :command
-   :args
+   ;; :args ;; conflict
    :timetag
    :elements
    :encode-message

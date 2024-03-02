@@ -1,5 +1,5 @@
 (uiop:define-package :std
-    (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
+    (:use :cl :sb-unicode #+cl-ppcre :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
   (:use-reexport :std/named-readtables)
   (:shadowing-import-from :uiop :println)
   (:shadowing-import-from

@@ -29,6 +29,7 @@ REPL."
 
 (defun start-rl-repl ()
   "Start a GNU Readline REPL."
+  #+readline
   (do ((i 0 (1+ i))
        (input ""))
       ((string= "quit" (trim input)))
