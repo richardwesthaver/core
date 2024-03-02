@@ -11,6 +11,6 @@
 ;; consume.
 
 ;;; Usage: 
-(ql
+#|
 |#
 ;;; Code:

@@ -27,13 +27,17 @@
                 :components ((:file "music")))
                (:module "time"
                 :components ((:file "local")))
+               (:file "temperature")
+               (:file "direction")
+               (:file "shape")
                (:file "tbl")
                (:module "db"
                 :components ((:file "mop")
                              (:file "proto")
                              (:file "io")
                              (:file "document")
-                             (:file "disk"))))
+                             (:file "disk")))
+               (:file "cfg"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests
