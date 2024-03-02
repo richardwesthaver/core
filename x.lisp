@@ -133,7 +133,7 @@ x.lisp
   (println :ok)
   (rocksdb:load-rocksdb t)
   (in-package :user)
-  (sb-ext:save-lisp-and-die "prelude" :compression t))
+  (sb-ext:save-lisp-and-die "prelude" :compression 19))
 
 (sb-alien:define-alien-callable compile-prelude sb-alien:void () (compile-prelude))
 (sb-alien:define-alien-callable compile-std sb-alien:void () (compile-std))
