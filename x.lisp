@@ -75,7 +75,7 @@ x.lisp
 (defvar *lib-path* (merge-pathnames "lib/" *lisp-path*))
 (defvar *std-path* (merge-pathnames "std/" *lisp-path*))
 (defvar *ffi-path* (merge-pathnames "ffi/" *lisp-path*))
-(push *lisp-path* asdf:*central-registry*)
+(push *core-path* asdf:*central-registry*)
 
 #-quicklisp
 (let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname))))
@@ -112,13 +112,11 @@ x.lisp
 (asdf:load-system :rocksdb)
 (println *features*)
 
-(export '(compile-std compile-prelude))
 (defun compile-std ()
   (let ((v (getflag "VERSION")))
-    (asdf:load-asd (merge-pathnames "std/std.asd" *lisp-path*))
+    (asdf:load-system :std :force t :version v)
     (asdf:compile-system :std :force t :version v)
-    (asdf:load-system :std :force t :version v))
-  (sb-ext:save-lisp-and-die "std" :compression nil))
+  (sb-ext:save-lisp-and-die "std" :compression nil)))
 
 (defun compile-prelude () 
   (push (pathname *lisp-path*) ql:*local-project-directories*)
@@ -127,8 +125,6 @@ x.lisp
           :nlp :rdb :organ :packy :skel
           :obj :net :parse :pod :dat
           :rt :syn :xdb :doc :vc))
-  (asdf:load-asd (merge-pathnames "prelude.asd" *lisp-path*))
-  (in-package :std-user)
   (use-package :std)
   (use-package :log)
   (use-package :dat)
@@ -136,9 +132,12 @@ x.lisp
   (asdf:make :prelude)
   (println :ok)
   (rocksdb:load-rocksdb t)
+  (in-package :user)
   (sb-ext:save-lisp-and-die "prelude" :compression t))
+
 (sb-alien:define-alien-callable compile-prelude sb-alien:void () (compile-prelude))
 (sb-alien:define-alien-callable compile-std sb-alien:void () (compile-std))
+
 (sb-ext:save-lisp-and-die "x"
                           :toplevel #'compile-prelude
                           ;; :callable-exports '("compile_std" "compile_prelude")
