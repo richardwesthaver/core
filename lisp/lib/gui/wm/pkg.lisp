@@ -25,12 +25,13 @@
 (in-package :gui/wm)
 
 (defpackage :gui/wm/wl
+  (:use :cl :std :gui/core :wayflan)
   (:nicknames :wl)
   (:export))
 
 (defpackage :gui/wm/x11
   (:nicknames :x11)
-  (:use :xlib)
+  (:use :cl :std :gui/core :xlib)
   (:export))
 
 (defconstant *default-wm* :x11)

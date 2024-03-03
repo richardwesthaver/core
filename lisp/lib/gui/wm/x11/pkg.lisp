@@ -1,5 +1,7 @@
-(in-package :x11)
+(in-package :gui/wm/x11)
 
 (defpackage :x11/stumpwm
-  (:use :cl :std :stumpwm-system)
+  (:use :cl :std)
+  (:shadowing-import-from :std :group)
+  (:use :stumpwm)
   (:export))

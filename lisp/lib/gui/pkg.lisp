@@ -4,18 +4,10 @@
    :gui-error))
 
 (defpackage :gui/wm
-  (:use :cl :std :log :gui/core :wayflan-client)
+  (:use :cl :std :log :gui/core :wayflan)
   (:export
    :*default-wm*
    :wm-package))
-
-(defpackage :gui/proto/keyboard
-  (:use :cl :std :gui/core :gui/wm)
-  (:export))
-
-(defpackage :gui/proto/xdg-shell
-  (:use :cl :std :gui/core :gui/wm)
-  (:export))
 
 (defpackage :gui/ext
   (:use :cl :std :log :gui/core)

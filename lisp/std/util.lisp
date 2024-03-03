@@ -19,10 +19,10 @@
              (let ((rest (nthcdr n source)))
                (if (consp rest)
                    (rec rest (cons
-                               (subseq source 0 n)
-                               acc))
+                              (subseq source 0 n)
+                              acc))
                    (nreverse
-                     (cons source acc))))))
+                    (cons source acc))))))
     (if source (rec source nil) nil)))
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
@@ -35,13 +35,13 @@
 
   (defun flatten (x)
     (labels ((rec (x acc)
-                  (cond ((null x) acc)
-                        #+sbcl
-                        ((typep x 'sb-impl::comma) (rec (sb-impl::comma-expr x) acc))
-                        ((atom x) (cons x acc))
-                        (t (rec
-                             (car x)
-                             (rec (cdr x) acc))))))
+               (cond ((null x) acc)
+                     #+sbcl
+                     ((typep x 'sb-impl::comma) (rec (sb-impl::comma-expr x) acc))
+                     ((atom x) (cons x acc))
+                     (t (rec
+                         (car x)
+                         (rec (cdr x) acc))))))
       (rec x nil)))
 
   (defun g!-symbol-p (s)
@@ -89,7 +89,7 @@
         (parse-body body :documentation t)
       `(defmacro/g! ,name ,args
          ,@(when docstring
-            (list docstring))
+             (list docstring))
          ,@declarations
          `(let ,(mapcar #'list (list ,@gs) (list ,@os))
             ,(progn ,@body))))))
@@ -107,7 +107,7 @@
          (let ,(mapcar (lambda (s)
                          `(,s (gensym ,(subseq (symbol-name s)
                                                2))))
-                       syms)
+                syms)
            ,@body)))))
 
 (defmacro! dlambda (&rest ds)
@@ -115,15 +115,15 @@
   `(lambda (&rest ,g!args)
      (case (car ,g!args)
        ,@(mapcar
-           (lambda (d)
-             `(,(if (eq t (car d))
-                  t
-                  (list (car d)))
-               (apply (lambda ,@(cdr d))
-                      ,(if (eq t (car d))
-                         g!args
-                         `(cdr ,g!args)))))
-           ds))))
+          (lambda (d)
+            `(,(if (eq t (car d))
+                   t
+                   (list (car d)))
+              (apply (lambda ,@(cdr d))
+                     ,(if (eq t (car d))
+                          g!args
+                          `(cdr ,g!args)))))
+          ds))))
 
 (declaim (inline make-tlist tlist-left
                  tlist-right tlist-empty-p))
@@ -139,26 +139,26 @@
 (defun tlist-add-left (tl it)
   (let ((x (cons it (car tl))))
     (if (tlist-empty-p tl)
-      (setf (cdr tl) x))
+        (setf (cdr tl) x))
     (setf (car tl) x)))
 
 (defun tlist-add-right (tl it)
   (let ((x (cons it nil)))
     (if (tlist-empty-p tl)
-      (setf (car tl) x)
-      (setf (cddr tl) x))
+        (setf (car tl) x)
+        (setf (cddr tl) x))
     (setf (cdr tl) x)))
 
 (declaim (inline tlist-rem-left))
 
 (defun tlist-rem-left (tl)
   (if (tlist-empty-p tl)
-    (error "Remove from empty tlist")
-    (let ((x (car tl)))
-      (setf (car tl) (cdar tl))
-      (if (tlist-empty-p tl)
-        (setf (cdr tl) nil)) ;; For gc
-      (car x))))
+      (error "Remove from empty tlist")
+      (let ((x (car tl)))
+        (setf (car tl) (cdar tl))
+        (if (tlist-empty-p tl)
+            (setf (cdr tl) nil)) ;; For gc
+        (car x))))
 
 (declaim (inline tlist-update))
 
@@ -176,8 +176,8 @@
         (loop while (> d 0) do
           (loop for i from 0 to (- n d 1) do
             (if (= (logand i p) r)
-              (push (list i (+ i d))
-                    network)))
+                (push (list i (+ i d))
+                      network)))
           (setf d (- q p)
                 q (ash q -1)
                 r p)))
@@ -422,7 +422,7 @@ or when loading the package is optional."
                                (index (random most-positive-fixnum)))
     (loop :for i :from index
           :for n = (format nil "~A~@[~A~D~]" prefix (and (plusp i) (or separator "")) i)
-          :thereis (and (not (find-package n)) n)))
+            :thereis (and (not (find-package n)) n)))
   (defun rename-package-away (p &rest keys &key prefix &allow-other-keys)
     (let ((new-name
             (apply 'fresh-package-name
@@ -835,24 +835,24 @@ or when loading the package is optional."
       :with documentation = nil
       :for (kw . args) :in clauses
       :when (eq kw :nicknames) :append args :into nicknames :else
-      :when (eq kw :documentation)
-        :do (cond
-              (documentation (error "defpkg: can't define documentation twice"))
-              ((or (atom args) (cdr args)) (error "defpkg: bad documentation"))
-              (t (setf documentation (car args)))) :else
+        :when (eq kw :documentation)
+          :do (cond
+                (documentation (error "defpkg: can't define documentation twice"))
+                ((or (atom args) (cdr args)) (error "defpkg: bad documentation"))
+                (t (setf documentation (car args)))) :else
       :when (eq kw :use) :append args :into use :and :do (setf use-p t) :else
-      :when (eq kw :shadow) :append args :into shadow :else
-      :when (eq kw :shadowing-import-from) :collect args :into shadowing-import-from :else
-      :when (eq kw :import-from) :collect args :into import-from :else
-      :when (eq kw :export) :append args :into export :else
-      :when (eq kw :intern) :append args :into intern :else
-      :when (eq kw :recycle) :append args :into recycle :and :do (setf recycle-p t) :else
-      :when (eq kw :mix) :append args :into mix :else
-      :when (eq kw :reexport) :append args :into reexport :else
-      :when (eq kw :use-reexport) :append args :into use :and :append args :into reexport
-        :and :do (setf use-p t) :else
+        :when (eq kw :shadow) :append args :into shadow :else
+          :when (eq kw :shadowing-import-from) :collect args :into shadowing-import-from :else
+            :when (eq kw :import-from) :collect args :into import-from :else
+              :when (eq kw :export) :append args :into export :else
+                :when (eq kw :intern) :append args :into intern :else
+                  :when (eq kw :recycle) :append args :into recycle :and :do (setf recycle-p t) :else
+                    :when (eq kw :mix) :append args :into mix :else
+                      :when (eq kw :reexport) :append args :into reexport :else
+                        :when (eq kw :use-reexport) :append args :into use :and :append args :into reexport
+                        :and :do (setf use-p t) :else
       :when (eq kw :mix-reexport) :append args :into mix :and :append args :into reexport
-        :and :do (setf use-p t) :else
+      :and :do (setf use-p t) :else
       :when (eq kw :unintern) :append args :into unintern :else
         :do (error "unrecognized defpkg keyword ~S" kw)
       :finally (return `(,package
@@ -883,5 +883,31 @@ that package. In the case of shadowing, etc. They may not be EQL."
        #+(or clasp ecl gcl mkcl) (defpackage ,package (:use))
        (eval-when (:compile-toplevel :load-toplevel :execute)
          ,ensure-form))))
+
+(defun save-lisp-and-live (filename completion-function &rest args)
+  (flet ((restart-sbcl ()
+           (sb-debug::enable-debugger)
+           (setf sb-impl::*descriptor-handlers* nil)
+           (funcall (get args :restart-function #'sb-impl::toplevel-init))))
+    ;; fork it - assumes only one thread is running
+    (multiple-value-bind (pipe-in pipe-out) (sb-posix:pipe)
+      (let ((pid (sb-posix:fork)))
+        (cond ((= pid 0) ;; make simple-restart core
+               (sb-posix:close pipe-in)
+               (sb-debug::disable-debugger)
+               (apply #'sb-ext:save-lisp-and-die filename
+                      args))
+              (t
+               (sb-posix:close pipe-out)
+               (sb-sys:add-fd-handler
+                pipe-in :input
+                (lambda (fd)
+                  (sb-sys:invalidate-descriptor fd)
+                  (sb-posix:close fd)
+                  (multiple-value-bind (rpid status) (sb-posix:waitpid pid 0) ;; wait for master
+                    (assert (= pid rpid))
+                    (assert (sb-posix:wifexited status))
+                    (funcall completion-function
+                             (zerop (sb-posix:wexitstatus status))))))))))))
 
 (provide :pkg)

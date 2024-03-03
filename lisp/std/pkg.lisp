@@ -97,7 +97,8 @@
    :ensure-package-unused #:delete-package*
    :package-names #:packages-from-names #:fresh-package-name 
    :rename-package-away #:package-definition-form #:parse-defpkg-form
-   :ensure-package
+   :ensure-package :defpkg
+   :save-lisp-and-live
    ;; ana
    :awhen
    :acond

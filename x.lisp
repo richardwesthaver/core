@@ -1,5 +1,5 @@
 #!/usr/local/bin/sbcl --script
-;;; lisp build tool
+;;; core build tool
 
 ;; 
 #|
@@ -25,11 +25,18 @@ x.lisp
 (defvar *args* (cdr sb-ext:*posix-argv*))
 (defvar *flags*
   '((version "0.1.0")
-    (help "x.lisp [OPTS] [ARGS...]
+    (help "x --- core build tool
+
+x.lisp [OPT] [CMD] [ARGS...]
+OPTS:
 --version/v
 --help/h
---prelude/p
+--level/l
 --jobs/j
+CMDS:
+build
+run
+test
 ")
     (quicklisp t)
     (prelude t)
@@ -42,7 +49,6 @@ x.lisp
                 (case (char-downcase (character k))
                   (#\v "VERSION")
                   (#\h "HELP")
-                  (#\p "PRELUDE")
                   (#\l "LEVEL")
                   (#\j "JOBS"))
                 (string-upcase k)))
@@ -75,6 +81,8 @@ x.lisp
 (defvar *lib-path* (merge-pathnames "lib/" *lisp-path*))
 (defvar *std-path* (merge-pathnames "std/" *lisp-path*))
 (defvar *ffi-path* (merge-pathnames "ffi/" *lisp-path*))
+(defvar *core-stash* (merge-pathnames ".stash/" *core-path*))
+
 (push *core-path* asdf:*central-registry*)
 
 #-quicklisp
@@ -86,29 +94,37 @@ x.lisp
   (ql:quickload :cl-ppcre)
   ;; (asdf:load-asd (probe-file #P"ext/cl-ppcre.asd"))
   )
+
 (unless (asdf:find-system :std nil)
   (asdf:load-asd (probe-file (merge-pathnames "std.asd" *std-path*))))
 
 (asdf:load-system :std)
 (use-package :std)
 (in-readtable :std)
+
 (println (std:list-all-named-readtables))
 (println (sb-thread:list-all-threads))
 
 (unless (asdf:find-system :log nil)
   (asdf:load-asd (probe-file (merge-pathnames "log/log.asd" *lib-path*))))
+
 (asdf:load-system :log)
+(use-package :log)
+
 ;; (unless (asdf:find-system :cl-readline nil)
 ;;   (ql:quickload :cl-readline)
 ;;   ;; (asdf:load-asd (probe-file (merge-pathnames "lib/log/log.asd")))
 ;;   )
+
 (unless (asdf:find-system :cli nil)
   (asdf:load-asd (probe-file (merge-pathnames "cli/cli.asd" *lib-path*))))
+
 (asdf:load-system :cli)
 (use-package :cli)
 
 (unless (asdf:find-system :rocksdb nil)
   (asdf:load-asd (probe-file (merge-pathnames "rocksdb/rocksdb.asd" *ffi-path*))))
+
 (asdf:load-system :rocksdb)
 (println *features*)
 
@@ -116,7 +132,7 @@ x.lisp
   (let ((v (getflag "VERSION")))
     (asdf:load-system :std :force t :version v)
     (asdf:compile-system :std :force t :version v)
-  (sb-ext:save-lisp-and-die "std" :compression nil)))
+    (sb-ext:save-lisp-and-die "std" :compression nil)))
 
 (defun compile-prelude () 
   (push (pathname *lisp-path*) ql:*local-project-directories*)
