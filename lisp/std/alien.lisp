@@ -20,6 +20,8 @@
 
 ;;; Code:
 (in-package :std)
+(shadowing-import '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)
+
 ;; (reexport-from :sb-vm
 ;;  	       :include
 ;;  	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
@@ -30,6 +32,9 @@
 on Linux and Darwin."
   #+darwin (format nil "/usr/local/lib/lib~a.dylib" name)
   #-darwin (format nil "lib~a.so" name))
+
+(defun list-all-shared-objects ()
+  sb-alien::*shared-objects*)
 
 (defmacro define-alien-loader (name &optional export)
   "Define a default loader function named load-NAME which calls
@@ -75,6 +80,16 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
                        (loop for i below (length list)
                              do (print (cast (deref x i) c-string))))))
       (free-alien x))))
+
+(defun c-strings-to-string-list (c-strings)
+  (declare (type (alien (* c-string)) c-strings))
+  (let ((reversed-result nil))
+    (dotimes (i most-positive-fixnum)
+      (declare (type index i))
+      (let ((c-string (deref c-strings i)))
+        (if c-string
+            (push c-string reversed-result)
+            (return (nreverse reversed-result)))))))
 
 (defmacro clone-octets-to-alien (lispa aliena)
   (with-gensyms (i)

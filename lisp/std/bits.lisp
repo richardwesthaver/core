@@ -54,6 +54,12 @@
     (dotimes (position (integer-length n) bits)
       (push (ldb (byte 1 position) n) bits))))
 
+(defun int-bit-vector (n)
+  (declare (fixnum n))
+  (let ((bits (make-array 0 :element-type 'bit :adjustable t :fill-pointer t)))
+    (dotimes (position (integer-length n) bits)
+      (vector-push-extend (ldb (byte 1 position) n) bits))))
+
 (deftype octet-vector (&optional length)
   `(simple-array (unsigned-byte 8) (,length)))
 

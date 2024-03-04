@@ -153,7 +153,7 @@
   ((tasks :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
           :initarg :tasks
           :accessor :tasks
-          :type '(vector task))))
+          :type (vector task))))
 (defclass stage ()
   ((jobs  :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
           :initarg :jobs

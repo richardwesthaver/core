@@ -884,11 +884,12 @@ that package. In the case of shadowing, etc. They may not be EQL."
        (eval-when (:compile-toplevel :load-toplevel :execute)
          ,ensure-form))))
 
-(defun save-lisp-and-live (filename completion-function &rest args)
+;; TODO
+(defun save-lisp-and-live (filename completion-function restart &rest args)
   (flet ((restart-sbcl ()
            (sb-debug::enable-debugger)
            (setf sb-impl::*descriptor-handlers* nil)
-           (funcall (get args :restart-function #'sb-impl::toplevel-init))))
+           (funcall restart)))
     ;; fork it - assumes only one thread is running
     (multiple-value-bind (pipe-in pipe-out) (sb-posix:pipe)
       (let ((pid (sb-posix:fork)))
@@ -896,7 +897,9 @@ that package. In the case of shadowing, etc. They may not be EQL."
                (sb-posix:close pipe-in)
                (sb-debug::disable-debugger)
                (apply #'sb-ext:save-lisp-and-die filename
-                      args))
+                      (append
+                       (list :toplevel #'restart-sbcl)
+                       args)))
               (t
                (sb-posix:close pipe-out)
                (sb-sys:add-fd-handler

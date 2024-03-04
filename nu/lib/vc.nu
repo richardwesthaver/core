@@ -134,9 +134,13 @@ export def "mirror update" [repo?:string] {
   } else { error make {msg: $"directory (pwd) not tracked by VC"} }
 }
 
-export def "mirrors update" [dir?:string] {
+export def mirrors [dir?:string] {
   if $dir != null {cd $dir}
-  ls | where type == dir | par-each { |it|
+  ls | where type == dir
+}
+
+export def "mirrors update" [dir?:string] {
+  mirrors | par-each { |it|
     mirror update $it.name
   }
 }

@@ -185,6 +185,11 @@
    ;; alien
    :shared-object-name
    :define-alien-loader
+   :c-string-to-string-list
+   :list-all-shared-objects
+   ;; os
+   :list-all-users
+   :list-all-groups
    ;; bits
    :make-bits
    :sign-bit
