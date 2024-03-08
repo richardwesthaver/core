@@ -5,8 +5,7 @@
   :components ((:file "pkg")
                (:file "err")
                (:file "log")
-               (:file "source")
-               (:file "sink"))
+               (:file "stream"))
   :in-order-to ((test-op (test-op "log/tests"))))
 
 (defsystem :log/tests

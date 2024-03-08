@@ -2,11 +2,11 @@
 
 (deftype log-level-designator () '(member :warn :debug :info :trace))
 (declaim (type (or boolean log-level-designator) *log-level*))
-(defparameter *log-level* nil)
-(defparameter *logger* nil)
-(defparameter *log-router* nil)
+(defvar *log-level* nil)
+(defvar *logger* nil)
+(defvar *log-router* nil)
 (declaim (type (or boolean function) *log-timestamp*))
-(defparameter *log-timestamp* t 
+(defvar *log-timestamp* t 
   "If non-nil, print a timestamp with log output. The value may be a
 function in which case it is used as the function value of
 `log-timestamp-source'.")
@@ -39,6 +39,30 @@ function in which case it is used as the function value of
 ;; TODO: (defmacro generate-log-profile)
 ;; (defmacro with-log-profile)
 ;; (defmacro with-logger)
+(defmacro define-log-level (name)
+  (let ((%name (string-upcase name)))
+    `(progn
+       (defun ,(intern (concatenate 'string %name "!")) (&rest args)
+         (format t ":~A:~A~%"
+                 ',name
+                 (if *log-timestamp*
+                     (format nil "~A ~t" (log-timestamp-source))
+                     ""))
+         (map nil (lambda (x) (format t "~X~%" x)) args)
+         (if (= 1 (length args))
+             (car args)
+             args))
+       (defun ,(intern (concatenate 'string %name "-P")) ()
+         (eql *log-level* ,(sb-int:keywordicate name)))
+       (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (&rest args)
+         (,(intern (concatenate 'string %name "!")) (apply #'describe args))))))
+
+(define-log-level info)
+(define-log-level trace)
+(define-log-level warn)
+(define-log-level debug)
+
+#+nil (test! "foo")
 
 (defmacro info! (opts &rest args))
 
@@ -64,4 +88,4 @@ function in which case it is used as the function value of
 
 (defun debug-describe (&rest args)
   (debug! (apply #'describe args)))
-    
+

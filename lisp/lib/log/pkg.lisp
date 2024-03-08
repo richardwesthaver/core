@@ -25,6 +25,8 @@
 ;;; Code:
 (defpackage :log
   (:use :cl :std)
-  (:export :*log-level* :log-level-designator :log-timestamp-source 
-   :log! :warn! :info! :debug! :trace!  :dbg!
-   :debug-p))
+  (:export :*log-level* :*log-router* :*logger*
+   :*log-timestmap* :log-level-designator :log-timestamp-source  :logger
+   :define-log-level :log! :warn! :info! :debug! :trace!
+   :log-p :warn-p :info-p :debug-p :trace-p
+   :log-describe :warn-describe :info-describe :debug-describe :trace-describe))
