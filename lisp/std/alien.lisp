@@ -115,3 +115,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 
 (defun bool-to-foreign-int (val)
   (if val 1 0))
+
+(defun num-cpus ()
+  "Return the number of CPU threads online."
+  (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln))

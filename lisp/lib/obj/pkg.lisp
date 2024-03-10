@@ -206,6 +206,24 @@
    :table-from-csv
    :table-from-tvs))
 
+(defpackage :obj/temperature
+  (:nicknames :temperature)
+  (:use :cl :std)
+  (:export :fahrenheit :celsius :kelvin :rankine))
+
+(defpackage :obj/direction
+  (:nicknames :direction)
+  (:use :cl :std)
+  (:export :up :down :left
+   :right :east :west :north
+   :north-east :north-west :south-east :south-west
+   :direction :angle))
+
+(defpackage :obj/shape
+  (:nicknames :shape)
+  (:use :cl :std)
+  (:export :circle :square :cube :sphere :triangle :pyramid))
+
 (defpackage :obj/db
   (:nicknames :db)
   (:use :cl :std :id :seq :sb-mop :sb-pcl)

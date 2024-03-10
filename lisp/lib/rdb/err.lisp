@@ -1,8 +1,9 @@
 (in-package :rdb)
 
-(define-condition rdb-error (error)
+(deferror rdb-error ()
   ((message :initarg :message
             :reader rdb-error-message))
+  (:auto t)
   (:documentation "Error signaled by the RDB system"))
 
 (define-condition rocksdb-error (rdb-error)
@@ -70,5 +71,3 @@ additional PARAMS will be used to signal a lisp error condition."
                                             condition)))))
             (progn ,@body))
        (handle-errptr ,e ,errtyp ,params))))
-        
-          

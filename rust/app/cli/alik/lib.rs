@@ -26,7 +26,7 @@ use tokio::net::TcpListener;
 pub use krypt::KryptConfig;
 use logger::{
   log,
-  tracing::{self, Span},
+  tracing::Span,
 };
 use net::{http::tower::trace::TraceLayer, reqwest::Client};
 use obj::{Configure, Objective};
@@ -148,7 +148,7 @@ pub async fn start_http_proxy(addr: &str) {
     .route("/", get(proxy_via_reqwest))
     .layer(TraceLayer::new_for_http().on_body_chunk(
       |chunk: &Bytes, _latency: Duration, _span: &Span| {
-        tracing::debug!("streaming {} bytes", chunk.len());
+        log::debug!("streaming {} bytes", chunk.len());
       },
     ))
     .with_state(client);

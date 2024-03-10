@@ -75,7 +75,8 @@
   (is (equal (ensure-cons 0) (ensure-cons 0))))
 
 (deftest err ()
-  "Test standard error handlers")
+  "Test standard error handlers"
+  (deferror testing-err nil nil (:auto t) (:documentation "testing")))
 
 (deftest thread ()
   "Test standard threads"

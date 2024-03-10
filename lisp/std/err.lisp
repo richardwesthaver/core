@@ -3,13 +3,40 @@
 ;;; Code:
 (in-package :std)
 
+(defvar *std-error-message* "An error occured")
+
 (define-condition std-error (error)
   ((message :initarg :message
+            :initform *std-error-message*
             :reader std-error-message))
-  (:documentation "Standard Error"))
-  
-;; TODO
-;; (defmacro deferror (name (&rest parent-types) (&rest slot-specs) &body body))
+  (:documentation "Std Error")
+  (:report (lambda (condition stream)
+             (format stream "~X" (std-error-message condition)))))
+
+(defun std-error (&rest args)
+  (cerror
+   "Ignore and continue"
+   'std-error
+   :message (format nil "~A: ~A" *std-error-message* args)))
+
+(defun car-eql (a cons)
+  (eql a (car cons)))
+
+(defmacro deferror (name (&rest parent-types) (&rest slot-specs) &rest options)
+  "Define an error condition."
+  (let ((fun (member :auto options :test #'car-eql)))
+    (when fun (setq options (remove (car fun) options)))
+    `(progn
+       (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
+       (when ',fun (def-error-reporter ,name)))))
+
+(defmacro def-error-reporter (err)
+    `(defun ,err (&rest args)
+       ,(format nil "Signal an error of type ~A with ARGS." err)
+       (cerror
+        "Ignore and continue"
+        ',err
+        :message (format nil "~A: ~A" *std-error-message* args))))
 
 (defmacro nyi! (&optional comment)
   `(prog1

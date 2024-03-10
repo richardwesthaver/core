@@ -27,8 +27,7 @@
 (defun fmt-row (data)
   (format nil "| ~{~A~^ | ~} |~%" data))
 
-;;; IDs
-(defun fmt-sxhash (code)
+(defun format-sxhash (code)
   "Turn the fixnum value CODE into a human-friendly string. CODE should
 be produced by `sxhash'."
   (let (r)

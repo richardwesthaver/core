@@ -59,7 +59,7 @@
   (make-rdb-opts :create-if-missing t))
 
 ;;; bytes
-(defclass rdb-bytes (sequence)
+(defclass rdb-bytes ()
     ((buffer :initarg :buffer :type (array unsigned-byte) :accessor rdb-bytes-buffer))
   (:documentation "RDB unsigned-byte array. Implements the iterator protocol."))
 
@@ -116,13 +116,15 @@ Keys must be able to be encoded to and from (array unsigned-byte)."))
     :key (make-rdb-key key) 
     :val (make-rdb-val val)))
 
+(defvar *default-rdb-kv* (make-rdb-kv #() #()))
+
 ;;; rdb-cf
-(defstruct rdb-cf
+(defstruct (rdb-cf (:constructor make-rdb-cf (name &key kv sap)))
   "RDB Column Family structure. Contains a name, a cons of (rdb-key-type
 . rdb-val-type), and a system-area-pointer to the underlying
 rocksdb_cf_t handle."
   (name "" :type string)
-  (kv (make-instance 'rdb-kv) :type rdb-kv)
+  (kv *default-rdb-kv* :type rdb-kv)
   (sap nil :type (or null alien)))
 
 ;; TODO: fix
@@ -139,9 +141,20 @@ rocksdb_cf_t handle."
 
 (defun create-db (name &key opts cfs)
   "Construct a new RDB instance from NAME and optional OPTS and DB-PTR."
-  (make-rdb :name name 
+  (when (probe-file name) (log:warn! "directory already exists: " name))
+  (make-rdb :name (typecase name
+                    (pathname (namestring name))
+                    (string name)
+                    (t (error "invalid NAME: ~S" name)))
             :opts (or opts (default-rdb-opts))
-            :cfs (or cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0))
+            :cfs (or
+                  (when cfs
+                    (typecase cfs
+                      (list (coerce cfs 'vector))
+                      (vector cfs)
+                      (rdb-cf (vector cfs))
+                      (t (log:warn! "invalid CF passed to create-db"))))
+                  (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0))
             :db (open-db-raw name (if opts (rdb-opts-sap opts) (default-rocksdb-options)))))
 
 (defmethod push-cf ((cf rdb-cf) (db rdb))

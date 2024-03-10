@@ -9,7 +9,9 @@
    :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*)
   (:export
    ;; err
-   :std-error :std-error-message :deferror
+   :std-error :std-error-message
+   :define-error-reporter
+   :deferror
    :nyi!
    :required-argument
    :ignore-some-conditions
@@ -187,6 +189,7 @@
    :define-alien-loader
    :c-string-to-string-list
    :list-all-shared-objects
+   :num-cpus
    ;; os
    :list-all-users
    :list-all-groups
