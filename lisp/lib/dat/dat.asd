@@ -8,7 +8,11 @@
                (:file "sxp")
                (:file "csv")
                (:file "json")
-               (:file "xml")
+               (:module "xml"
+                :components
+                ((:file "xml")
+                 (:file "pkg")
+                 (:file "fixml")))
                (:file "toml")
                (:file "arff")
                #+nil (:file "bencode"))

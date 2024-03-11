@@ -5,11 +5,11 @@
   (let ((table (make-hash-table :test #'equal)))
     (mapc (lambda (x) (setf (gethash (car x) table) (cdr x)))
           (loop for y across *rocksdb-options*
-                collect (cons y (format nil "rocksdb-options-set-~x" y))))
+                collect (cons y (format nil "~:@(rocksdb-options-set-~x~)" y))))
     table))
 
 (defmacro rdb-opt-setter (key)
-  `(symbolicate (format nil "rocksdb-options-set-~x" ,key)))
+  `(find-symbol (format nil "~:@(rocksdb-options-set-~x~)" ,key) :rocksdb))
 
 (defun %set-rocksdb-option (opt key val)
   (funcall (rdb-opt-setter key) opt val))
@@ -33,7 +33,9 @@
     self))
 
 (defun make-rdb-opts (&rest values)
-  (apply #'make-instance 'rdb-opts values))
+  (let ((opts (apply #'make-instance 'rdb-opts values)))
+    (push-sap* opts)
+    opts))
 
 (defmethod get-opt ((self rdb-opts) key)
   "Return the current value of KEY in SELF if found, else return nil."
@@ -52,11 +54,12 @@
 (defmethod push-sap* ((self rdb-opts))
   "Initialized the SAP slot with values from TABLE."
   (with-slots (table) self
-    (loop for k across (hash-table-keys table)
+    (loop for k in (hash-table-keys table)
           do (push-sap self k))))
 
 (defun default-rdb-opts () 
-  (make-rdb-opts :create-if-missing t))
+  ;; TODO 2024-03-10: handle lisp->C types
+  (make-rdb-opts :create-if-missing 1))
 
 ;;; bytes
 (defclass rdb-bytes ()
@@ -107,8 +110,8 @@ Keys must be able to be encoded to and from (array unsigned-byte)."))
   (make-instance 'rdb-key :buffer key))
 
 (defclass rdb-kv (rdb-bytes)
-  ((key :initarg :key :type rdb-key)
-   (val :initarg :val :type rdb-val)))
+  ((key :initarg :key :type rdb-key :accessor rdb-key)
+   (val :initarg :val :type rdb-val :accessor rdb-val)))
 
 (defun make-rdb-kv (key val)
   "Generate a new RDB-KV pair."
@@ -126,58 +129,77 @@ rocksdb_cf_t handle."
   (name "" :type string)
   (kv *default-rdb-kv* :type rdb-kv)
   (sap nil :type (or null alien)))
-
-;; TODO: fix
-(defun create-cf (db cf)
-  (setf (rdb-cf-sap cf)
-        (create-cf-raw db (rdb-cf-name cf))))
-
+  
 ;;; rdb
-(defstruct rdb
+(defstruct (rdb (:constructor make-rdb (name opts cfs &optional db)))
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
   (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf))
   (db nil :type (or null alien)))
 
-(defun create-db (name &key opts cfs)
+;; (defvar *default-rdb-opts* (default-rdb-opts))
+
+(defun create-db (name &key opts cfs open)
   "Construct a new RDB instance from NAME and optional OPTS and DB-PTR."
   (when (probe-file name) (log:warn! "directory already exists: " name))
-  (make-rdb :name (typecase name
-                    (pathname (namestring name))
-                    (string name)
-                    (t (error "invalid NAME: ~S" name)))
-            :opts (or opts (default-rdb-opts))
-            :cfs (or
-                  (when cfs
-                    (typecase cfs
-                      (list (coerce cfs 'vector))
-                      (vector cfs)
-                      (rdb-cf (vector cfs))
-                      (t (log:warn! "invalid CF passed to create-db"))))
-                  (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0))
-            :db (open-db-raw name (if opts (rdb-opts-sap opts) (default-rocksdb-options)))))
+  (let* ((opts (or opts (default-rdb-opts)))
+         (obj
+          (make-rdb (typecase name
+                      (pathname (namestring name))
+                      (string name)
+                      (t (error "invalid NAME: ~S" name)))
+                    opts
+                    (or (when cfs
+                          (typecase cfs
+                            (list (coerce cfs 'vector))
+                            (vector cfs)
+                            (rdb-cf (vector cfs))
+                            (t (log:warn! "invalid CF passed to create-db"))))
+                        (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0)))))
+    (when open
+      (open-db obj)
+      (create-cfs obj))
+    obj))
 
 (defmethod push-cf ((cf rdb-cf) (db rdb))
   (vector-push cf (rdb-cfs db)))
 
-(defmethod open-db ((self rdb))
-  (with-slots (db) self
-    (unless (null db) (close-db self))
-    (setf db (open-db-raw (rdb-name self) (rdb-opts-sap (rdb-opts self))))))
+;; TODO: fix
+(defmethod create-cf ((db rdb) (cf rdb-cf))
+  (setf (rdb-cf-sap cf)
+        (create-cf-raw db (rdb-cf-name cf))))
 
-(defmethod close-db ((self rdb) &key &allow-other-keys)
-  (with-slots (db) self
-    (unless (null db)
-      (close-db-raw db)
-      (setf db nil))))
+(defmethod close-cf ((cf rdb-cf))
+  (with-slots (sap) cf
+    (free-alien sap)))
+
+(defmethod open-db ((self rdb))
+  (with-slots (name db opts) self
+    (or
+     db 
+     (setf db (open-db-raw name (rdb-opts-sap opts))))))
 
 (defmethod destroy-db ((self rdb))  
   (when (rdb-db self) (close-db self))
   (destroy-db-raw (rdb-name self)))
 
-(defmethod make-db ((self rdb) &key &allow-other-keys)
+(defmethod create-cfs ((self rdb) &key &allow-other-keys)
   (loop for cf across (rdb-cfs self)
         do (create-cf (rdb-db self) cf)))
+
+(defmethod close-cfs ((self rdb) &key &allow-other-keys)
+  (loop for cf across (rdb-cfs self)
+        do (progn
+             (close-cf cf)
+             (free-alien (rdb-cf-sap cf)))))
+
+(defmethod close-db ((self rdb) &key &allow-other-keys)
+  (with-slots (db cfs) self
+    (unless (null db)
+      (close-cfs self)
+      (close-db-raw db)
+      (free-alien db))))
+
 
 (defmethod insert-key ((self rdb) key val &key cf)
   (if cf
@@ -190,3 +212,6 @@ rocksdb_cf_t handle."
      (rdb-db self)
      key 
      val)))
+
+(defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf)
+  (insert-key self (rdb-bytes-buffer (rdb-key kv)) (rdb-bytes-buffer (rdb-val kv)) :cf cf))

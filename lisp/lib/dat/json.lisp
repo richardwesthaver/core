@@ -72,7 +72,11 @@
 
 (defmethod serialize (obj (format (eql :json)) &key stream)
   (declare (ignore format))
-  (json-encode obj stream))
+  (if stream
+      (json-encode obj stream)
+      (with-output-to-string (s)
+        (json-encode obj s)
+        s)))
 
 ;;; ----------------------------------------------------
 

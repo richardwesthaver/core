@@ -30,13 +30,6 @@
    :read-csv-file-and-sort
    :parse-csv-string))
 
-(defpackage :dat/arff
-  (:use :cl :std :dat/proto :dat/csv)
-  (:export
-   :arff :arff-relation :arff-attributes :arff-data :arff-path 
-   :parse-arff :parse-arff-string :parse-arff-stream
-   :remove-attribute-by-name))
-
 (defpackage :dat/toml
   (:use :cl :std :dat/proto :obj/time)
   (:export
@@ -52,6 +45,13 @@
    #:toml-modify-inline-table-error
    #:toml-dotted-key-redefine-table-error
    #:toml-dotted-key-open-table-array-error))
+
+(defpackage :dat/arff
+  (:use :cl :std :dat/proto :dat/csv)
+  (:export
+   :arff :arff-relation :arff-attributes :arff-data :arff-path 
+   :parse-arff :parse-arff-string :parse-arff-stream
+   :remove-attribute-by-name))
 
 (defpackage :dat/json
   (:use :cl :std :dat/proto)

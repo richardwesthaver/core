@@ -1197,6 +1197,12 @@ The currently supported values in obj/time are:
   "Returns a timestamp representing the present day."
   (clock-today *clock*))
 
+(defun format-date-simple (&optional dest timestamp)
+  "Return a simple date string for today."
+  (unless timestamp (setq timestamp (today)))
+  (format-timestring dest timestamp
+                     :format '(:year #\- (:month 2) #\- (:day 2))))
+
 (defgeneric clock-now (clock)
   (:documentation "Returns a timestamp for the current time given a clock."))
 

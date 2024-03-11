@@ -137,6 +137,7 @@
    :reread-timezone-repository
    :now
    :today
+   :format-date-simple
    :enable-read-macros
    :+utc-zone+
    :+gmt-zone+

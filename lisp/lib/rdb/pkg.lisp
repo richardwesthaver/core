@@ -46,7 +46,8 @@
    :put-cf-key :get-cf-key
    :push-sap :push-sap*
    :get-opt :set-opt
-   :push-cf :init-db
+   :push-cf :open-cfs
+   :create-cf :create-cfs
    :insert-kv :insert-key
    :open-db :close-db :destroy-db
    ;; sst
