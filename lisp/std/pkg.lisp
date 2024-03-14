@@ -199,6 +199,7 @@
    :different-signs-p
    :mortify-bits
    :int-list-bits
+   :octet
    :octet-vector
    :aref-bit
    :make-bit-vector

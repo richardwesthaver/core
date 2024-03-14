@@ -1,3 +1,6 @@
+;;; rdb/raw.lisp --- Raw wrappers for ROCKSDB alien interface
+
+;;; Code:
 (in-package :rdb)
 
 (defun make-rocksdb-options (&optional init-fn)

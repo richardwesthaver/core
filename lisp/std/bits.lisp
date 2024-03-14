@@ -8,6 +8,20 @@
 
 ;;; Code:
 (in-package :std)
+
+;;; TYPES
+;; Bytes aren't necessarily 8 bits wide in Lisp. OCTET is always 8
+;; bits.
+(deftype octet () '(unsigned-byte 8))
+(deftype octet-vector (&optional length)
+  `(simple-array octet (,length)))
+
+(deftype foo () %u8)
+(typep 0 %u8) ;; t
+(typep 0 'foo) ;; t
+(typep 256 %u8) ;; nil
+
+;;; BITS
 (defun make-bits (length &rest args)
   (apply #'make-array length (nconc (list :element-type 'bit) args)))
 
@@ -17,8 +31,8 @@
   (declare (fixnum n count))
   (let ((x (abs n)))
     (if (minusp count) 
-        (ldb (byte (- count) 0) x) 
-        (ldb (byte count (max 0 (- (integer-length x) count))) 
+        (ldb (byte (- count) 0) x)
+        (ldb (byte count (max 0 (- (integer-length x) count)))
              x))))
 
 ;; minusp = 38 bytes
@@ -60,9 +74,6 @@
     (dotimes (position (integer-length n) bits)
       (vector-push-extend (ldb (byte 1 position) n) bits))))
 
-(deftype octet-vector (&optional length)
-  `(simple-array (unsigned-byte 8) (,length)))
-
 (defun aref-bit (octets idx)
   (declare (octet-vector octets) (fixnum idx))
   (multiple-value-bind (octet-idx bit-idx)
@@ -71,7 +82,12 @@
          (aref octets octet-idx))))
 
 (defun make-bit-vector (size &optional (fill 0))
-  "Make a BIT-VECTOR with SIZE and initial-element FILL which must be a BIT 0|1."
+  "Make a BIT-VECTOR with SIZE and initial-element FILL which must be a
+BIT 0|1. Note that this representation is not as useful as you might
+think - bit-vectors don't have a direct mapping to integers/fixnums --
+they are vectors (AKA arrays) first, and bits second. Attempting to
+perform bitwise-ops ends up being very inefficient so whenever
+possible, stick with fixnums and use LOG* functions."
   (declare (bit fill))
   (make-array size :initial-element fill :adjustable nil :element-type 'bit))
 
@@ -94,8 +110,3 @@
 (defun logbit (idx n)
   (declare (fixnum idx n))
   (ldb (byte 1 idx) n))
-
-;; (defbytes (float 16))
-;;  (unsigned-byte 1 2 3 4 8 16 24 32 64 128)
-;;  (signed-byte 2 3 4 8 16 24 32 64 128)
-;;  (float 16 24 32 64 128))

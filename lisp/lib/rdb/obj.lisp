@@ -63,7 +63,7 @@
 
 ;;; bytes
 (defclass rdb-bytes ()
-    ((buffer :initarg :buffer :type (array unsigned-byte) :accessor rdb-bytes-buffer))
+    ((buffer :initarg :buffer :type octet-vector :accessor rdb-bytes-buffer))
   (:documentation "RDB unsigned-byte array. Implements the iterator protocol."))
 
 (defmethod sequence:length ((self rdb-bytes))
@@ -89,6 +89,7 @@
 ;; (defmethod sequence:subseq ((self rdb-bytes) start &optional end))
 ;; (defmethod sequence:concatenate ((self rdb-bytes) &rest sequences))
 
+;;; keyval
 (defclass rdb-val (rdb-bytes)
   ()
   (:documentation "RDB value protocol.
@@ -121,7 +122,7 @@ Keys must be able to be encoded to and from (array unsigned-byte)."))
 
 (defvar *default-rdb-kv* (make-rdb-kv #() #()))
 
-;;; rdb-cf
+;;; column family
 (defstruct (rdb-cf (:constructor make-rdb-cf (name &key kv sap)))
   "RDB Column Family structure. Contains a name, a cons of (rdb-key-type
 . rdb-val-type), and a system-area-pointer to the underlying
@@ -140,7 +141,14 @@ rocksdb_cf_t handle."
 ;; (defvar *default-rdb-opts* (default-rdb-opts))
 
 (defun create-db (name &key opts cfs open)
-  "Construct a new RDB instance from NAME and optional OPTS and DB-PTR."
+  "Construct a new RDB instance from NAME.
+
+OPTS = rdb-opts
+CFS = (sequence rdb-cf)
+OPEN = boolean
+
+When OPEN is non-nil, the database and all column families are opened
+and internal sap slots are initialized."
   (when (probe-file name) (log:warn! "directory already exists: " name))
   (let* ((opts (or opts (default-rdb-opts)))
          (obj
@@ -167,7 +175,7 @@ rocksdb_cf_t handle."
 ;; TODO: fix
 (defmethod create-cf ((db rdb) (cf rdb-cf))
   (setf (rdb-cf-sap cf)
-        (create-cf-raw db (rdb-cf-name cf))))
+        (create-cf-raw (rdb-db db) (rdb-cf-name cf))))
 
 (defmethod close-cf ((cf rdb-cf))
   (with-slots (sap) cf
@@ -185,13 +193,15 @@ rocksdb_cf_t handle."
 
 (defmethod create-cfs ((self rdb) &key &allow-other-keys)
   (loop for cf across (rdb-cfs self)
-        do (create-cf (rdb-db self) cf)))
+        do (create-cf self cf)))
 
 (defmethod close-cfs ((self rdb) &key &allow-other-keys)
-  (loop for cf across (rdb-cfs self)
-        do (progn
-             (close-cf cf)
-             (free-alien (rdb-cf-sap cf)))))
+  (with-slots (cfs) self
+    (declare (type (array rdb-cf) cfs))
+    (loop for cf across cfs
+          do (progn
+               (close-cf cf)
+               (free-alien (rdb-cf-sap cf))))))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
   (with-slots (db cfs) self
@@ -201,6 +211,18 @@ rocksdb_cf_t handle."
       (free-alien db))))
 
 
+(defmethod put-key ((self rdb) key val)
+  (put-kv-raw
+   (rdb-db self)
+   key 
+   val))
+
+(defmethod put-kv ((self rdb) (kv rdb-kv))
+  (put-kv-raw
+   (rdb-db self)
+   (rdb-key kv)
+   (rdb-val kv)))
+
 (defmethod insert-key ((self rdb) key val &key cf)
   (if cf
     (put-cf-raw
@@ -208,10 +230,15 @@ rocksdb_cf_t handle."
      (rdb-cf-sap (find cf (rdb-cfs self) :key #'rdb-cf-name :test #'equal))
      key
      val)
-    (put-kv-raw
-     (rdb-db self)
-     key 
-     val)))
+    (put-key self key val)))
 
 (defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf)
-  (insert-key self (rdb-bytes-buffer (rdb-key kv)) (rdb-bytes-buffer (rdb-val kv)) :cf cf))
+  (if cf
+      (put-cf-raw (rdb-db self)
+                  (rdb-cf-sap
+                   (find cf (rdb-cfs self)
+                         :key #'rdb-cf-name
+                         :test #'equal))
+                  (rdb-bytes-buffer (rdb-key kv))
+                  (rdb-bytes-buffer (rdb-val kv)))
+      (put-kv self kv)))

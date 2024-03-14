@@ -4,11 +4,11 @@
   ((message :initarg :message
             :reader rdb-error-message))
   (:auto t)
-  (:documentation "Error signaled by the RDB system"))
+  (:documentation "Error signaled by the RDB system."))
 
 (define-condition rocksdb-error (rdb-error)
   ((db :initarg :db :reader rdb-error-db))
-  (:documentation "Error signaled by RocksDB subsystem"))
+  (:documentation "Error signaled by RocksDB subsystem."))
 
 (defmethod print-object ((obj rdb-error) stream)
   (print-unreadable-object (obj stream :type t :identity t)
@@ -16,22 +16,23 @@
 
 (define-condition open-db-error (rocksdb-error)
   ()
-  (:documentation "Error signaled while opening a database"))
+  (:documentation "Error signaled while opening a database."))
 
 (define-condition open-backup-engine-error (rocksdb-error)
   ()
-  (:documentation "Error signaled while opening a backup engine"))
+  (:documentation "Error signaled while opening a backup engine."))
 
 (define-condition destroy-db-error (rocksdb-error)
   ()
-  (:documentation "Error signaled while destroying a database"))
+  (:documentation "Error signaled while destroying a database."))
 
 (define-condition destroy-backup-engine-error (rocksdb-error)
   ()
-  (:documentation "Error signaled while destroying a backup engine"))
+  (:documentation "Error signaled while destroying a backup engine."))
 
 (define-condition cf-error (rocksdb-error)
-  ((cf :initarg :cf :reader rdb-error-cf)))
+  ((cf :initarg :cf :reader rdb-error-cf))
+  (:documentation "Error signaled in the context of a Column Family."))
 
 (define-condition put-kv-error (rdb-error)
   ((kv :initarg :kv :reader rdb-error-kv))
@@ -52,22 +53,3 @@ additional PARAMS will be used to signal a lisp error condition."
   (unless (null-alien errptr)
     (apply #'signal (or errtyp 'rdb-error)
            (nconc (list :message errptr) params))))
-
-(defmacro with-errptr ((e &optional errtyp params) &body body)
-  `(with-alien ((,e rocksdb-errptr nil))
-     (unwind-protect 
-          (handler-bind ((sb-sys:memory-fault-error 
-                           (lambda (condition)
-                             (error 'rdb-error
-                                    :message
-                                    (format nil
-                                            "~a" condition))))
-                         (error 
-                           (lambda (condition)
-                             (error 'rdb-error 
-                                    :message 
-                                    (format nil 
-                                            "unhandled exception in body of WITH-ERRPTR: ~a"
-                                            condition)))))
-            (progn ,@body))
-       (handle-errptr ,e ,errtyp ,params))))

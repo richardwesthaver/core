@@ -1,4 +1,4 @@
-;;; lib/rdb/sst.lisp --- Sorted Sequence Tables
+;;; rdb/sst.lisp --- Sorted Sequence Tables
 
 ;; SST is the on-disk format for RocksDB data. Keys are (usually)
 ;; sorted. An SST-FILE can be generated independently of a database
