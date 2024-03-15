@@ -93,7 +93,6 @@
 (deftest fmt ()
   "Test standard formatters"
   (is (string= (format nil "| 1 | 2 | 3 |~%") (fmt-row '(1 2 3))))
-  (is (string= (fmt-sxhash (sxhash t)) (fmt-sxhash (sxhash t))))
   (is (string= 
        ;; note the read-time-eval..
        #.(fmt-tree nil '(foobar (:a) (:b) (c) (d)) :layout :down)

@@ -30,6 +30,8 @@
                                (char-code (schar string n)))))))
       hash)))
 
+(defgeneric hash-object (obj))
+
 (defun hash-object-address (obj &optional (test *global-hasher*))
   "Given some object OBJ, lookup the address with
   SB-KERNEL:GET-LISP-OBJ-ADDRESS and return a hash."
@@ -38,11 +40,13 @@
 (defun object-address-hash-equalp (a b)
   (= (hash-object-address a) (hash-object-address b)))
 
-;; from quicklisp
-(defun dumb-string-hash (string)
+(sb-ext:define-hash-table-test object-address-hash-equalp hash-object-address)
+
+;; from quicklisp src
+(defun dumb-string-hash (str)
   "Produce a six-character hash of STRING."
   (let ((hash #xD13CCD13))
-    (loop for char across string
+    (loop for char across str
           for value = (char-code char)
           do
           (setf hash (logand #xFFFFFFFF
@@ -52,6 +56,4 @@
     (subseq (format nil "~(~36,6,'0R~)" (mod hash 88888901))
             0 6)))
 
-(sb-ext:define-hash-table-test object-address-hash-equalp hash-object-address)
-
-(defgeneric hash-object (obj))
+;; sb-lockless::multiplicative-hash

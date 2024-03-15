@@ -1,5 +1,5 @@
 (uiop:define-package :std
-    (:use :cl :sb-unicode #+cl-ppcre :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
+    (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
   (:use-reexport :std/named-readtables)
   (:shadowing-import-from :uiop :println)
   (:shadowing-import-from
@@ -81,8 +81,8 @@
    :circular-list :circular-list-p :circular-tree-p
    ;; :proper-list-of-length-p :proper-list-p :singleton-p
    ;; thread
-   :print-thread-info :print-thread-message-top-level :thread-support-p
-   :find-thread-by-id :thread-id-list :def-thread 
+   :print-thread-message-top-level :thread-support-p
+   :find-thread-by-id :thread-id-list
    :make-threads :with-threads :finish-threads
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread

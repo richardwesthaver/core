@@ -1,3 +1,8 @@
+(defpackage :obj/list
+  (:nicknames :list)
+  (:use :cl :std)
+  (:export :clist))
+
 (defpackage :obj/hash
   (:nicknames :hash)
   (:use :cl :std)

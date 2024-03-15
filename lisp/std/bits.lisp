@@ -16,11 +16,6 @@
 (deftype octet-vector (&optional length)
   `(simple-array octet (,length)))
 
-(deftype foo () %u8)
-(typep 0 %u8) ;; t
-(typep 0 'foo) ;; t
-(typep 256 %u8) ;; nil
-
 ;;; BITS
 (defun make-bits (length &rest args)
   (apply #'make-array length (nconc (list :element-type 'bit) args)))

@@ -11,14 +11,6 @@
 
 (defun thread-support-p () (member :thread-support *features*))
 
-(defun print-thread-info (&optional (stream *standard-output*))
-  (let* ((curr-thread sb-thread:*current-thread*)
-         (curr-thread-name (sb-thread:thread-name curr-thread))
-         (all-threads (sb-thread:list-all-threads)))
-	(format stream "Current thread: ~a~%~%" curr-thread)
-	(format stream "Current thread name: ~a~%~%" curr-thread-name)
-	(format stream "All threads:~% ~{~a~%~}~%" all-threads)))
-
 (eval-when (:compile-toplevel)
   (defun print-thread-message-top-level (msg)
     (sb-thread:make-thread
@@ -37,16 +29,9 @@
 (defun thread-count ()
   (sb-thread::avl-count sb-thread::*all-threads*))
 
-(defmacro def-thread (name)
-  `(progn
-     (defstruct (,name
-                 (:copier nil)
-                 (:include thread (%name ,(string-downcase (symbol-name name))))
-                 (:constructor ,(symbolicate 'make- name))
-                 (:conc-name "THREAD-")))))
-
 (defun make-threads (n fn &key (name "thread"))
-  (loop for i from 1 to n
+  (declare (type fixnum n))
+  (loop for i below n
         collect (make-thread fn :name (format nil "~A-~D" name i))))
 
 (defmacro with-threads ((idx n) &body body)
@@ -61,6 +46,7 @@
           (terminate-thread thread))))))
 
 (defun timed-join-thread (thread timeout)
+  (declare (type thread thread) (type float timeout))
   (handler-case (sb-sys:with-deadline (:seconds timeout)
                   (join-thread thread :default :aborted))
     (sb-ext:timeout ()
@@ -74,12 +60,13 @@
     (ignore-errors
       (terminate-thread thread))))
 
+;; (sb-vm::primitive-object-slots (sb-vm::primitive-object 'sb-vm::thread))
+
 ;; from sb-thread
 (defun dump-thread ()
-  (let* ((primobj (sb-vm::primitive-object 'sb-vm::thread))
-         (slots (sb-vm::primitive-object-slots primobj))
+  (let* ((slots (sb-vm::primitive-object-slots #1=(sb-vm::primitive-object 'sb-vm::thread)))
          (sap (current-thread-sap))
-         (thread-obj-len (sb-vm::primitive-object-length primobj))
+         (thread-obj-len (sb-vm::primitive-object-length #1#))
          (names (make-array thread-obj-len :initial-element "")))
     (loop for slot across slots
           do
@@ -89,6 +76,7 @@
                    ((eql (logand bits sb-vm:widetag-mask) sb-vm:unbound-marker-widetag) :unbound)
                    (t (sb-vm::sap-ref-lispobj sap offset))))
            (show (sym val)
+             (declare (type fixnum sym))
              (let ((*print-right-margin* 128)
                    (*print-lines* 4))
                (format t " ~3d ~30a : ~s~%"
@@ -128,11 +116,9 @@
           (setq from (sb-vm::sap+ from (* sb-vm:binding-size sb-vm:n-word-bytes))))))))
 
 ;;; Tasks
-(def-thread generic-oracle)
+(defclass oracle () ((thread :initform *current-thread* :initarg :thread :accessor oracle-thread)))
 
-(defclass oracle () ((thread :initform (make-generic-oracle) :initarg :thread :accessor oracle-thread)))
-  
-(defgeneric designate-oracle (self guest))
+(defgeneric designate-oracle (host guest))
 
 (defstruct task-pool
   (oracle nil :type (or null oracle))
