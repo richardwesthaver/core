@@ -70,7 +70,9 @@ function in which case it is used as the function value of
 
 (defmacro warn! (opts &rest args))
 
-(defun debug-p () (eq *log-level* :debug))
+(defun debug-p ()
+  (or (eq *log-level* t)
+      (eq *log-level* :debug)))
 
 (defun debug-log-line ()
   (format t ":DEBUG:~A~%"

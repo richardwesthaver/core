@@ -5,8 +5,6 @@
 ;;; Code:
 (in-package :cli)
 
-(defvar *argv*)
-
 (defun cli-arg0 () (car sb-ext:*posix-argv*))
 (defun cli-args () (cdr sb-ext:*posix-argv*))
 
@@ -45,16 +43,13 @@ evaluation of FORM."
        (format *error-output* "~&~A~&" c)
        (exit :code 1))))
 
-(defun init-args () (setq *argv* (cons (cli-arg0) (cli-args))))
-
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings."
   ;; (with-gensyms (cli-body)
   ;;  (let ((cli-body (mapcar (lambda (x) ()) cli-body)
   `(progn
-     (init-args)
      (setf (cli-cwd ,cli) (sb-posix:getcwd))
-     (with-slots ,slots (parse-args ,cli *argv* :compile t)
+     (with-slots ,slots (parse-args ,cli sb-ext:*posix-argv* :compile t)
        ,@body)))
 
 (defvar *default-cli-def* 'defparameter)
@@ -221,6 +216,7 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
   (find s *cli-opt-kinds*))
 
 
+;;  TODO 2024-03-16: this should map directly to Lisp types (fixnum, boolean, etc)
 (eval-always
   (defmacro make-opt-parser (kind-spec &body body)
     "Return a KIND-opt-parser function based on KIND-SPEC which is either a
@@ -238,7 +234,7 @@ is a list of handlers for the opt-val."
 	     (when (not (eql ',fn1 'nil)) (setq $val (funcall ',fn1 $val)))
 	     ,@body)))))
 
-  (make-opt-parser bool $val)
+  (make-opt-parser boolean $val)
 
   (make-opt-parser (str bool) (when (stringp $val) $val))
 
