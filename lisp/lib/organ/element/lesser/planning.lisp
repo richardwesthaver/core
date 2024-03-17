@@ -38,7 +38,7 @@ PLANNING
   :lesser t)
 
 (define-org-parser (planning :from stream)
-  (let ((first (read-line input nil :eof))
+  (let ((first (read-line input nil))
         (p (org-create :planning)))
     (when-let ((pl1 (org-parse :planning-line first)))
       (vector-push-extend pl1 (org-contents p))

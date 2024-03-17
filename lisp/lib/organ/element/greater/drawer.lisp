@@ -24,12 +24,12 @@ CONTENTS
   ORG-DOCUMENT, and ORG-INLINETASK objects.")
 
 (define-org-parser (property-drawer :from stream)
-  (let ((l (read-line input nil :eof)))
-    (unless (or (eq l :eof) (not (typep l 'string)))
+  (let ((l (read-line input nil)))
+    (unless (or (not l) (not (typep l 'string)))
       (if (scan org-property-start-rx l)
           (let ((drawer (org-create :property-drawer)))
-            (loop for p = (read-line input nil :eof)
-                  until (or (eq p :eof) (scan org-end-rx p))
+            (loop for p = (read-line input nil)
+                  until (or (not p) (scan org-end-rx p))
                   do (vector-push-extend (org-parse :node-property p) (org-contents drawer)))
             drawer)))))
 

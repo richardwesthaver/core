@@ -158,11 +158,11 @@ compiler optimizations.")
 
 ;; TODO 2023-09-04: optimize
 (declaim (inline do-tests))
-(defun do-tests (&optional (suite *test-suite*) (output *standard-output*))
+(defun do-tests (&optional (suite *test-suite*) force (output *standard-output*))
   (if (pathnamep output)
       (with-open-file (stream output :direction :output)
-	(do-suite (ensure-suite suite) :stream stream))
-      (do-suite (ensure-suite suite) :stream output)))
+	(do-suite (ensure-suite suite) :stream stream :force force))
+      (do-suite (ensure-suite suite) :stream output :force force)))
 
 (defun reset-tests ()
   (setq *testing* nil
@@ -518,7 +518,7 @@ from TESTS."))
 
 ;; HACK 2023-09-01: find better method of declaring failures from
 ;; within the body of `deftest'.
-(defmethod do-suite ((self test-suite) &key stream)
+(defmethod do-suite ((self test-suite) &key stream force)
   (when stream (setf (test-stream self) stream))
   (with-slots (name stream) self
     (format stream "in suite ~x with ~A/~A tests:~%"
@@ -526,10 +526,12 @@ from TESTS."))
 	    (count t (tests self)
 		   :key (lambda (x) (or (test-lock-p x) (test-persist-p x))))
 	    (length (tests self)))
-    ;; loop over each test, calling `do-test' if locked or persistent
+    ;; loop over each test, calling `do-test'. if locked or
+    ;; persistent, test is performed. if FORCE is non-nil all tests
+    ;; are performed.
     (map-tests self 
 	       (lambda (x)
-		 (when (or (test-lock-p x) (test-persist-p x))
+		 (when (or force (test-lock-p x) (test-persist-p x))
 		   (let ((res (do-test x)))
 		     (push-result res self)
 		     (format stream "~@[~<~%~:;~:@(~S~) ~>~]~%" res)))))

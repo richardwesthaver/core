@@ -31,9 +31,11 @@
 ;; (macroexpand '(define-org-parser (headline) (print headline)))
 (defmacro define-org-parser ((name &key (from 'string)) &body body)
   "Define an ORG-PARSE method specializer for org type specifier NAME with body BODY."
-  `(defmethod org-parse ((type (eql ,(sb-int:keywordicate name))) (input ,from))
-     ;;  NOTE 2023-12-27: (,name (org-create ,nvar)) == bad idea.
-     ;; need parser to be fallible so shouldn't create an object
-     ;; upfront. We should delay initialization until the last moment
-     ;; -- match up front.
-     ,@body))
+  (let ((elt (sb-int:keywordicate name)))
+    `(progn
+       (defmethod org-parse ((type (eql ,elt)) (input ,from))
+         ;;  NOTE 2023-12-27: (,name (org-create ,nvar)) == bad idea.
+         ;; need parser to be fallible so shouldn't create an object
+         ;; upfront. We should delay initialization until the last moment
+         ;; -- match up front.
+         ,@body))))

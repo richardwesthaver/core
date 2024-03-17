@@ -279,4 +279,7 @@
    :sort-docs))
 
 (uiop:define-package :obj
-    (:use-reexport :hash :color :seq :tree :graph :tbl :id :db))
+    (:use-reexport :list :hash :color
+     :seq :tree :graph :tbl
+     :id :db :dot :time
+     :music :temperature :direction :shape))

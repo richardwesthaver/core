@@ -3,14 +3,14 @@
   (:export *test-org-file*))
 
 (in-package :organ/tests)
-
+(in-readtable :std)
 (defparameter *test-org-heading* 
-  "* TODO [#A] header1                       :tag1:tag2:
+  #"* TODO [#A] header1                       :tag1:tag2:
 :PROPERTIES:
 :ID: 1234
 :CUSTOM_ID: 5678
 :END:
-")
+"#)
 
 (defparameter *test-org-section*
   "Paragraph with /italics/ *bold* =verbatim= ~code~ _underline_ +strike-through+.
@@ -49,21 +49,20 @@ _underline_
 
 (deftest org-standard ())
 
-(defmacro headline-ok (hl)
-  `(progn 
-     (is (> (organ::hl-stars ,hl) 0))
-     (is (organ::hl-kw ,hl))
-     (is (organ::hl-priority ,hl))
-     (is (organ::hl-title ,hl))
-     (is (> (length (organ::hl-tags ,hl)) 0))))
+(defun headline-ok (hl)
+  (and
+   (> (organ::hl-stars hl) 0)
+   (organ::hl-kw hl)
+   (organ::hl-priority hl)
+   (organ::hl-title hl)
+   (> (length (organ::hl-tags hl)) 0)))
 
 ;;; Elements
-(deftest org-headline () (headline-ok (org-parse :headline "** DONE [#A] testing stuff :foo:bar:")))
+(deftest org-headline () (is (headline-ok (org-parse :headline "** DONE [#A] testing stuff :foo:bar:"))))
 
 ;;; API
 (deftest org-heading ()
-  (let ((heading (org-parse :heading *test-org-heading*)))
-    (headline-ok (org-headline heading))))
+  (is (headline-ok (org-headline (org-parse :heading *test-org-heading*)))))
 
 (deftest org-section ())
 

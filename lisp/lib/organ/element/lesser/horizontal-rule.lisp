@@ -12,7 +12,7 @@
     (with-input-from-string (in input)
       (catch 'bail
         (loop repeat *org-horizontal-rule-min*
-              for c = (read-char in nil :eof)
+              for c = (read-char in nil)
               when (not (char-equal c *org-horizontal-rule-char*))
                 do (throw 'bail nil))
-        horizontal-rule))))
+        (org-create :horizontal-rule)))))

@@ -8,20 +8,20 @@
 (defun peek-line (stream)
   (concatenate 
    'string 
-   (loop for c = (peek-char nil stream nil :eof)
-         until (char= c #\newline)
+   (loop for c = (peek-char nil stream nil)
+         until (or (not c) (char= c #\newline))
          collect c)))
 
 (defun read-until-end (stream)
   (with-output-to-string (s)
-    (loop for c = (read-char stream nil :eof)
-          until (eql c :eof)
+    (loop for c = (read-char stream nil)
+          until (not c)
           do (write-char c s))))
 
 (defun read-org-lines (&optional stream)
   (apply #'vector
-	 (loop for l = (read-line stream nil :eof)
-	       until (eq l :eof)
+	 (loop for l = (read-line stream nil)
+	       until (not l)
 	       collect l)))
 
 (defun read-org-lines-from-string (str)

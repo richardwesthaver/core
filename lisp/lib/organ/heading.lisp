@@ -14,10 +14,10 @@
   (let ((planning) properties)
     (loop for l = (peek-line input)
           until (not l)
-          when (is-planning-line l)
+          when (planning-line-p l)
             do (push (org-parse :planning-line (read-line input)) planning)
-          when (is-property-start l)
-            do (setq properties (org-parse :property-drawer input)))
+          when (property-start-p l)
+            do (setf properties (org-parse :property-drawer input)))
     (values planning properties (read-until-end input))))
   
 (defclass org-heading () 
@@ -30,15 +30,17 @@
 (defmethod org-create ((type (eql :header)) &rest initargs &key &allow-other-keys)
   (apply #'make-instance (sym-to-org-class-name type) initargs))
 
+;; TODO 2024-03-17: fix org-parse-planning-properties -- hangs
 (define-org-parser (heading :from stream)
     (let ((headline (org-parse :headline (read-line input))))
-      (multiple-value-bind (planning properties rest)
-          (org-parse-planning-and-properties input)
-        (make-instance 'org-heading 
-          :headline headline 
-          :planning planning
-          :properties properties
-          :contents (org-parse :section (read-until-end rest))))))
+      ;; (multiple-value-bind (planning properties rest)
+      ;; (org-parse-planning-and-properties input)
+      (make-instance 'org-heading 
+        :headline headline 
+        ;; :planning planning
+        ;; :properties properties
+        ;; :contents (org-parse :section (read-until-end rest)))
+        )))
 
 (define-org-parser (heading :from string)
   (with-input-from-string (s input)

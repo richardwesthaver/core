@@ -35,7 +35,7 @@
 (defgeneric stream-direction ())
 ;;; Events
 (defclass event-id (id) ())
-(defmethod make-id (&optional (self (eql :event)))
+(defmethod make-id ((self (eql :event)))
   (declare (ignorable self))
   (make-instance 'event-id))
 (defmethod reset-id ((self event-id)) (setf (id self) 0))
@@ -46,7 +46,7 @@
 ;;; Connections
 (defclass connection-id (id) ())
 (defclass connection-id-generator () ())
-(defmethod make-id (&optional (self (eql :connection))) 
+(defmethod make-id ((self (eql :connection)))
   (declare (ignorable self))
   (make-instance 'connection-id))
 (defmethod reset-id ((self connection-id)) (setf (id self) 0))
@@ -54,10 +54,10 @@
 (defclass connection (connection-id) ())
 (defclass connection-idle-timeout ()
   ((timeout :initform 10000 ;; 10 seconds
-            :type (integer 0 most-positive-fixnum))))
+            :type (integer 0 *))))
 ;;; Peers
 (defclass peer-id (id) ())
-(defmethod make-id (&optional (self (eql :peer)))
+(defmethod make-id ((self (eql :peer)))
   (declare (ignorable self))
   (make-instance 'peer-id))
 (defmethod reset-id ((self peer-id)) (setf (id self) 0))

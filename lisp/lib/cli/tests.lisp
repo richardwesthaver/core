@@ -468,3 +468,5 @@ Eastern Mediterranean ████████████████▊
   (is (ld-library-path-list))
   (is (exec-path-list))
   (is (find-exe "sbcl")))
+
+(deftest clap-ast ())

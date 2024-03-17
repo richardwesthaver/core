@@ -26,7 +26,7 @@
                (let ((fname (symbolicate 'load- name)))
                  `(prog1
                       (defun ,fname (&optional save)
-                        (prog1 (sb-alien:load-shared-object ,(format nil "/usr/local/lib/libtree-sitter-~a.so" lang)
+                        (prog1 (sb-alien:load-shared-object ,(format nil "/usr/local/lib/libtree-sitter-~(~a~).so" lang)
                                                             :dont-save (not save))
                           (pushnew ,(sb-int:keywordicate name) *features*)))
                     (define-alien-routine ,name (* ts-language))

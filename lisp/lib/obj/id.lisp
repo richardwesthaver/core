@@ -14,8 +14,10 @@
   (:method ((obj standard-object)) (setf (id obj) (hash-object obj)))
   (:method ((obj t)) (hash-object obj)))
 
-(defgeneric make-id (&optional obj)
-  (:documentation "Make a new ID object of a specified KIND.")
-  (:method (&optional (obj t)) (make-instance 'id :id (or obj 0))))
+(defgeneric make-id (kind)
+  (:documentation "Allocate a new ID object of a specified KIND.")
+  (:method ((kind (eql nil)))
+    (declare (ignorable kind))
+    (make-instance 'id)))
 
 (defclass id-factory () ())

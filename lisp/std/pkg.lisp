@@ -221,3 +221,6 @@
    :subst-mode-ppcre-lambda-form
    :|#~-reader|
    :_))
+
+(defpackage :std-user
+  (:use :std))
