@@ -18,6 +18,7 @@
                              (:file "bro")))
                (:module "graph"
                 :components ((:file "pkg")))
+               (:file "equiv")
                (:module "color"
                 :components ((:file "color")
                              (:file "palette")

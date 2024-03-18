@@ -112,7 +112,7 @@
 (defun run ()
   (let ((*log-level* nil))
     (in-readtable :shell)
-    (with-cli () $cli
+    (with-cli (opts cmds) $cli
       (init-skel-vars)
       ;; TODO 2024-01-01: need to parse out CMD opts from args slot - they still there
       (do-cmd $cli)

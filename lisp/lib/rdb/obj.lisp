@@ -67,7 +67,10 @@
   (:documentation "RDB unsigned-byte array. Implements the iterator protocol."))
 
 (defmethod sequence:length ((self rdb-bytes))
-  (length (rdb-bytes-buffer self)))
+  (sequence:length (rdb-bytes-buffer self)))
+
+(defmethod sequence:emptyp ((self rdb-bytes))
+  (sequence:emptyp (rdb-bytes-buffer self)))
 
 (defmethod sequence:elt ((self rdb-bytes) index)
   (elt (rdb-bytes-buffer self) index))

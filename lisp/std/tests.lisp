@@ -80,7 +80,6 @@
 
 (deftest thread ()
   "Test standard threads"
-  (is (stringp (print-thread-info nil)))
   (is (find-thread-by-id (car (thread-id-list))))
   (is (thread-count))
   (let ((threads

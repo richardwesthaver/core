@@ -68,7 +68,7 @@
 
 (deftest ids ()
   (is (= (reset-id t) (reset-id '(1 2 3))))
-  (is (not (equalp (make-id) (make-id)))))
+  (is (not (equalp (make-id nil) (make-id nil)))))
 
 (deftest def-iter ())
 

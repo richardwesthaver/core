@@ -38,6 +38,10 @@
    :id :reset-id :update-id :make-id
    :id-factory))
 
+(defpackage :obj/equiv
+  (:use :cl :std)
+  (:export :equiv :eqv :nequiv :neqv :equivalence))
+
 (defpackage :obj/seq
   (:nicknames :seq)
   (:use :cl :std)

@@ -161,7 +161,8 @@
   (:use-reexport 
    :net/core 
    :net/tcp 
-   :net/udp 
+   :net/udp
+   :net/sans-io
    :net/codec/dns 
    :net/codec/osc 
    :net/codec/tlv

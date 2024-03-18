@@ -9,7 +9,7 @@
 (deftest sanity ())
 
 (deftest sans-io ()
-  (defclass mock-transport-config (sans-io::transport-config)
+  (defclass mock-transport-config (transport-config)
     (max-bidi-streams
      max-uni-streams
      max-idle-timeout
@@ -22,15 +22,15 @@
      min-mtu
      (datagram-rx-buffer-size :initform 1250000)
      (datagram-tx-buffer-size :initform (* 1024 1024))))
-  (defclass mock-server-config (sans-io::server-config)
+  (defclass mock-server-config (server-config)
     ((port :initarg :port :initform 0))
     (:default-initargs
      :transport (make-instance 'mock-transport-config)))
-  (defclass mock-client-config (sans-io::client-config)
+  (defclass mock-client-config (client-config)
     ((port :initarg :port :initform 0))
     (:default-initargs
      :transport (make-instance 'mock-transport-config)))
-  (defclass mock-endpoint (sans-io::endpoint)
+  (defclass mock-endpoint (endpoint)
     ((tx :initarg :tx)
      (rx :initarg :rx))
     (:default-initargs

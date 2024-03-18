@@ -49,7 +49,7 @@ evaluation of FORM."
   ;;  (let ((cli-body (mapcar (lambda (x) ()) cli-body)
   `(progn
      (setf (cli-cwd ,cli) (sb-posix:getcwd))
-     (with-slots ,slots (parse-args ,cli sb-ext:*posix-argv* :compile t)
+     (with-slots ,slots (parse-args ,cli (cli-args) :compile t)
        ,@body)))
 
 (defvar *default-cli-def* 'defparameter)
@@ -215,7 +215,6 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
   (declare (type symbol s))
   (find s *cli-opt-kinds*))
 
-
 ;;  TODO 2024-03-16: this should map directly to Lisp types (fixnum, boolean, etc)
 (eval-always
   (defmacro make-opt-parser (kind-spec &body body)
@@ -234,9 +233,9 @@ is a list of handlers for the opt-val."
 	     (when (not (eql ',fn1 'nil)) (setq $val (funcall ',fn1 $val)))
 	     ,@body)))))
 
-  (make-opt-parser boolean $val)
+  (make-opt-parser bool $val)
 
-  (make-opt-parser (str bool) (when (stringp $val) $val))
+  (make-opt-parser str (when (stringp $val) $val))
 
   (make-opt-parser (form str) (read-from-string $val))
 
@@ -436,6 +435,16 @@ is a list of handlers for the opt-val."
 (defmethod find-short-opt ((self cli-cmd) ch)
   (find ch (cli-opts self) :key #'cli-name :test #'opt-prefix-eq))
 
+(defun %compose-opt (o args)
+  (pop args) ; -1
+  (progn
+    (case (cli-opt-kind o)
+      (bool (setf (cli-val o) t))
+      (str (setf (cli-val o) (pop args))) ; -1
+      (file (setf (cli-val o) (pop args)))
+      (dir (setf (cli-val o) (pop args))))
+    (make-cli-node 'opt o)))
+  
 (defmethod proc-args ((self cli-cmd) args)
   "process ARGS into an ast. Each element of the ast is a node with a
 :kind slot, indicating the type of node and a :form slot which stores
@@ -447,22 +456,19 @@ should be."
   (make-cli-ast
    (loop 
      for a in args
-     if (= (length a) 1) collect (make-cli-node 'arg a)
+     if (= (length a) 1) collect (make-cli-node 'arg (print (pop args))) ; -1
        ;; SHORT OPT
        else if (short-opt-p a)
 	      collect (if-let ((o (find-short-opt self (aref a 1))))
-		        (progn
-			  (setf (cli-val o) t)
-			  (make-cli-node 'opt o))
+                        (%compose-opt o args)
 		        (make-cli-node 'arg a))
 
      ;; LONG OPT
      else if (long-opt-p a)
-	    ;; what we actually want to do is consume the next sequence of args - TBD
+            ;; TODO 2024-03-17: what we actually want to do is consume
+	    ;; the next sequence of args
 	    collect (if-let ((o (find-opt self (string-trim "-" a))))
-		      (progn
-			(setf (cli-val o) (string-trim "-" a))
-			(make-cli-node 'opt o))
+                      (%compose-opt o args)
 		      (make-cli-node 'arg a))
      ;; OPT GROUP
      else if (opt-group-p a)
@@ -481,7 +487,7 @@ should be."
     ;; itself is consumed. validation is performed in proc-args.
 
     ;; before doing anything else we lock SELF, which should remain
-    ;; locked for the full runtime duration.
+    ;; locked for the full runtime duration or until GC.
     (setf (cli-lock-p self) t)
     (loop named install
 	  for (node . tail) on (cli-ast-ast ast)

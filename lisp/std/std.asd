@@ -11,6 +11,7 @@
   :depends-on (:std/named-readtables :cl-ppcre :sb-concurrency)
   :serial t
   :components ((:file "pkg")
+               (:file "defpkg")
                (:file "err")
                (:file "bits")
                (:module "num"
