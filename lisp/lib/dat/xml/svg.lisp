@@ -523,7 +523,7 @@
                                     (list (+ x w) (+ y h))
                                     (list x (+ y h)))))))
     (polygon
-      (let* ((pairs (split-sequence:split-sequence #\space (getf obj :points)))
+      (let* ((pairs (uiop:split-string (getf obj :points)))
              (points (loop for pair in pairs
                            if (find #\, pair) collect (progn (setf (aref pair (search "," pair)) #\space)
                                                              (read-from-string (format nil "(~a)" pair))))))
