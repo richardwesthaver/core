@@ -87,7 +87,7 @@
    corfu orderless cape ;; completion
    slime ;; common lisp server
    bbdb
-   slime-company
+   ;; slime-company
    which-key ;; key helper
    ;; langs
    rust-mode)

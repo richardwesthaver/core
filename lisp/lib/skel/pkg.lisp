@@ -122,6 +122,5 @@
 
 ;;; Extensions
 (defpackage :skel/asdf
-  (:use :cl :std :skel :asdf/interface)
-  (:shadow :circular-dependency)
+  (:use :cl :std :skel)
   (:export))

@@ -3,7 +3,7 @@
 //! primitive ID types.
 
 pub use hash::Id;
-pub use rusty_ulid::{self, Ulid};
+pub use rusty_ulid::Ulid;
 use std::{fmt, str::FromStr};
 pub use uuid::Uuid;
 /// Identity trait

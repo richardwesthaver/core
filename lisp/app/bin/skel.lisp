@@ -1,6 +1,6 @@
 ;;; Code:
 (uiop:define-package :bin/skel
-  (:use :cl :std :cli :skel :log)
+    (:use :cl :std :cli :skel :log :vc)
   (:export :main))
 
 (in-package :bin/skel)
@@ -9,7 +9,7 @@
 (defopt skc-version (print-version $cli))
 (defopt skc-log (setq *log-level* (if $val :debug nil)))
 ;; TODO 2023-10-13: almost there
-(defopt skc-config (when $val (init-skel-user-config (parse-file-opt $val))))
+(defopt skc-config (when $val (init-user-skelrc (parse-file-opt $val))))
 
 (defcmd skc-init
     (let ((file (when $args (pop $args)))
@@ -113,7 +113,7 @@
   (let ((*log-level* nil))
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
-      (init-skel-vars)
+      (load-skelrc)
       ;; TODO 2024-01-01: need to parse out CMD opts from args slot - they still there
       (do-cmd $cli)
       (debug-opts $cli))))

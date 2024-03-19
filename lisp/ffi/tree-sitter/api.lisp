@@ -80,7 +80,7 @@ desired name for use in lisp."
          (string-to-pass (if (plusp string-start)
                              (subseq string string-start string-end)
                              string))
-         (tree (ts-parser-parse-string parser string-to-pass string-length)))
+         (tree (ts-parser-parse-string parser string string-to-pass string-length)))
     (when (sb-alien:null-alien tree)
       (error 'cant-parse-string
              :string string

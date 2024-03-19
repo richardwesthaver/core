@@ -9,19 +9,19 @@
 
 (defopt organ-help (print-help $cli))
 (defopt organ-version (print-version $cli))
-(defopt organ-log-level (setq *log-level* (if $val :debug nil)))
+(defopt organ-log-level (setq log:*log-level* (if $val :debug nil)))
 
-(defcmd organ-inspect (inspect (read-org-file (car $args))))
+(defcmd organ-inspect (inspect (org-parse :document (car $args))))
 
 (defcmd organ-show
-(fmt-tree t 
-	  (mapcar (lambda (x) `(,(car x) ,(cddr x)))
-		  (remove-if-not (lambda (x) (equal (cadr x) (symb 'headline))) 
-				 (org-parse-lines (read-org-file (open (car $args))))))
-	  :layout :down))
+  (fmt-tree t 
+	    (mapcar (lambda (x) `(,(car x) ,(cddr x)))
+		    (remove-if-not (lambda (x) (equal (cadr x) (symb 'headline))) 
+				   (org-parse-lines :document (open (car $args)))))
+	    :layout :down))
 
 (defcmd organ-parse
-  (fmt-tree t (remove-if #'null (org-parse-lines (read-org-file (open (car $args))))) :layout :down))
+  (fmt-tree t (remove-if #'null (org-parse-lines :document (open (car $args)))) :layout :down))
 
 (define-cli $cli
   :name "organ"

@@ -1,6 +1,6 @@
 (defsystem :dat
   :description "Data formats"
-  :depends-on (:std :obj)
+  :depends-on (:cl-ppcre :std :obj)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
@@ -12,6 +12,7 @@
                 :components
                 ((:file "xml")
                  (:file "pkg")
+                 (:file "svg")
                  (:file "fixml")))
                (:file "toml")
                (:file "arff")
