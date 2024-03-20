@@ -14,11 +14,6 @@ x.lisp
 (require 'sb-introspect)
 (require 'sb-grovel)
 (require 'sb-cltl2)
-
-(unless (find-package :std-user)
-  (make-package :std-user :use '(cl) :nicknames '(user)))
-(in-package :std-user)
-
 (defvar *core-path* (directory-namestring #.(or *load-truename* *compile-file-truename* (error "run me as an executable!"))))
 (defvar *lisp-path* (merge-pathnames "lisp/" *core-path*))
 (defvar *lib-path* (merge-pathnames "lib/" *lisp-path*))
@@ -41,7 +36,6 @@ x.lisp
 
 (asdf:load-asd (probe-file (merge-pathnames "std.asd" *std-path*)))
 (asdf:load-system :std)
-
 (use-package :std)
 (in-readtable :std)
 
@@ -62,7 +56,7 @@ x.lisp
 (use-package :cli)
 
 (defun compile-std (&optional save)
-  (in-package :user)
+  (cl:in-package :user)
   (let ((v (getflag "VERSION")))
     (asdf:compile-system :std :force t :version v)
     (asdf:load-system :std :force t :version v)
@@ -178,12 +172,13 @@ test
 
 ;; (save-lisp-and-live "x"  #'respawn #'respawn :executable t :save-runtime-options t)
 (defun x-save ()
-  (sb-ext:save-lisp-and-die "x"
+  (save-lisp-tree-shake-and-die "x"
                             :toplevel #'x-respawn
                             ;; :callable-exports '("compile_std" "compile_prelude")
+                            :purify t
                             :executable t
                             :save-runtime-options t))
 
 (x-parse-args)
 (x-save)
-(x-repl)
+;; (x-repl)

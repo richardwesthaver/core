@@ -64,15 +64,15 @@ function in which case it is used as the function value of
 
 #+nil (test! "foo")
 
-(defmacro info! (opts &rest args))
+;; (defmacro info! (opts &rest args))
 
-(defmacro trace! (opts &rest args))
+;; (defmacro trace! (opts &rest args))
 
-(defmacro warn! (opts &rest args))
+;; (defmacro warn! (opts &rest args))
 
-(defun debug-p ()
-  (or (eq *log-level* t)
-      (eq *log-level* :debug)))
+;; (defun debug-p ()
+;;   (or (eq *log-level* t)
+;;       (eq *log-level* :debug)))
 
 (defun debug-log-line ()
   (format t ":DEBUG:~A~%"
@@ -81,13 +81,13 @@ function in which case it is used as the function value of
 	      "")))
 
 ;; TODO 2023-08-31: single format control string
-(defun debug! (&rest args)
-  (when (debug-p)
-    (debug-log-line)
-    ;; RESEARCH 2023-08-31: what's better here.. loop, do, mapc+nil?
-    (map nil (lambda (x) (format t "~X~%" x)) args))
-  args)
+;; (defun debug! (&rest args)
+;;   (when (debug-p)
+;;     (debug-log-line)
+;;     ;; RESEARCH 2023-08-31: what's better here.. loop, do, mapc+nil?
+;;     (map nil (lambda (x) (format t "~X~%" x)) args))
+;;   args)
 
-(defun debug-describe (&rest args)
-  (debug! (apply #'describe args)))
+;; (defun debug-describe (&rest args)
+;;   (debug! (apply #'describe args)))
 

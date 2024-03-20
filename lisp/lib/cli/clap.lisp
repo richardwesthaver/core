@@ -88,11 +88,11 @@ keys."
     `(progn
        (declaim (type stream output))
        (defun ,main (&key (output *standard-output*))
-           "Run the top-level function and print to OUTPUT."
-           (let ((*standard-output* output))
-	     (with-cli-handlers
-	         (progn ,@body ,ret))))
-         (export '(,main)))))
+         "Run the top-level function and print to OUTPUT."
+         (let ((*standard-output* output))
+	   (with-cli-handlers
+	       (progn ,@body ,ret))))
+       (export '(,main)))))
 
 ;;; Utils
 (defun make-cli (kind &rest slots)
@@ -383,8 +383,8 @@ is a list of handlers for the opt-val."
 					 collect (cli-equal ca cb)))
 		 t))))))
 
-;; typically when starting from a top-level `cli', the global
-;; `cli-opts' will be parsed first, followed by the first command
+;; typically when starting from a top-level CLI, the global
+;; CLI-OPTS will be parsed first, followed by the first command
 ;; found. If a command is found, the tail of the list is passed as
 ;; arguments to this function, which can pass additonal arguments to
 ;; nested commands.
@@ -392,17 +392,9 @@ is a list of handlers for the opt-val."
 ;;  TODO 2023-09-12: Parsing restarts at the `*cli-group-separator*'
 ;; if present, or stops at EOI.
 
-(declaim (inline %make-cli-node))
-(defstruct (cli-node (:constructor %make-cli-node)) kind form)
+(defstruct (cli-node (:constructor make-cli-node (kind form))) kind form)
 
-(defun make-cli-node (kind form)
-  (%make-cli-node :kind kind :form form))
-
-(declaim (inline %make-cli-ast))
-(defstruct (cli-ast (:constructor %make-cli-ast)) ast)
-
-(defun make-cli-ast (nodes)  
-  (%make-cli-ast :ast nodes))
+(defstruct (cli-ast (:constructor make-cli-ast (ast))) ast)
 
 (defmethod find-cmd ((self cli-cmd) name &optional active)
   (when-let ((c (find name (cli-cmds self) :key #'cli-name :test #'string=)))
@@ -444,7 +436,7 @@ is a list of handlers for the opt-val."
       (file (setf (cli-val o) (pop args)))
       (dir (setf (cli-val o) (pop args))))
     (make-cli-node 'opt o)))
-  
+
 (defmethod proc-args ((self cli-cmd) args)
   "process ARGS into an ast. Each element of the ast is a node with a
 :kind slot, indicating the type of node and a :form slot which stores
@@ -457,7 +449,7 @@ should be."
    (loop 
      for a in args
      if (= (length a) 1) collect (make-cli-node 'arg (print (pop args))) ; -1
-       ;; SHORT OPT
+                                                                         ;; SHORT OPT
        else if (short-opt-p a)
 	      collect (if-let ((o (find-short-opt self (aref a 1))))
                         (%compose-opt o args)
@@ -606,3 +598,68 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 	      do (do-opt o))
 	(loop for c across (active-cmds self)
 	      do (do-cmd c)))))
+
+;;; SIMPLE-CLI
+
+;; this is intended to be a simplified functional argument parser
+;; which is completely compatible with the toplevel SBCL options.
+
+;; Instead of consuming the args into an AST, we loop over command
+;; line options in a lexical context, binding individual symbols.
+
+(defun namestring-to-opt (str) (sb-int:symbolicate (string-upcase (trim str :char-bag '(#\-)))))
+
+(defvar *default-opt-handlers*
+  (map 'list
+       (lambda (o) (cons (namestring-to-opt o) #'set))
+       sb-impl::+runtime-options+))
+
+;; TODO 2024-03-19: need a way to terminate the loop early. (throw/catch)
+(defvar *opt-handlers* *default-opt-handlers*)
+
+(defun find-opt-handler (str)
+  (find (namestring-to-opt str) *opt-handlers* :key #'car))
+
+(defmacro with-opts-handled (&body body)
+  (let* ((syms (mapcar #'car *opt-handlers*)))
+    `(let ((opts (cdr *posix-argv*))
+           ,@(mapcar #'list syms))
+       (declare (type list opts))
+       (flet (($pop ()
+                (if opts
+                    (pop opts)
+                    (sb-impl::startup-error "unexpected end of cli opts"))))
+         (loop while opts do
+           (if-let ((opt (find-opt-handler (car opts))))
+             (apply (cdr opt) (car opt) ($pop))))
+         (when *posix-argv*
+           (setf (cdr *posix-argv*) opts))
+         ,@body))))
+
+(defun default-toplevel-init ()
+  (let ((opts (cdr *posix-argv*))
+        (sysinit))
+    (declare (type list opts))
+    (flet (($pop ()
+             (if opts
+                 (pop opts)
+                 (sb-impl::startup-error "unexpected end of cli opts"))))
+      (loop while opts do
+        (let ((opt (car opts)))
+          (cond
+            ((string= opt "--sysinit")
+             ($pop)
+             (if sysinit
+                 (sb-impl::startup-error "multiple --sysinit opts")
+                 (setf sysinit ($pop))))
+            (t
+             (if (find "--end-toplevel-options" opts
+                       :test #'string=)
+                 (sb-impl::startup-error "bad toplevel opt: ~S"
+                                         (car opts))
+                 (return))))))
+      (when *posix-argv*
+        (setf (cdr *posix-argv*) opts)))))
+
+(defmacro define-toplevel-init (name (props opts) &body body))
+(defmacro define-toplevel-repl (name (props opts) &body body))

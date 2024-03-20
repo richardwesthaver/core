@@ -185,6 +185,11 @@
     (nreverse network)))
 
 ;; TODO
+(defun save-lisp-tree-shake-and-die (path &rest args)
+  "A naive tree-shaker for lisp."
+  (sb-ext:gc :full t)
+  (apply #'sb-ext:save-lisp-and-die path args))
+
 (defun save-lisp-and-live (filename completion-function restart &rest args)
   (flet ((restart-sbcl ()
            (sb-debug::enable-debugger)
@@ -212,5 +217,3 @@
                     (assert (sb-posix:wifexited status))
                     (funcall completion-function
                              (zerop (sb-posix:wexitstatus status))))))))))))
-
-(provide :pkg)

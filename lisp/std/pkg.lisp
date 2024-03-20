@@ -100,6 +100,7 @@
    :package-names #:packages-from-names #:fresh-package-name 
    :rename-package-away #:package-definition-form #:parse-defpkg-form
    :ensure-package :defpkg
+   :save-lisp-tree-shake-and-die
    :save-lisp-and-live
    ;; ana
    :awhen
@@ -223,4 +224,4 @@
    :_))
 
 (defpackage :std-user
-  (:use :std))
+  (:use :cl :std))
