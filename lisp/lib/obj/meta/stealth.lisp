@@ -1,6 +1,6 @@
 ;;; obj/meta/stealth.lisp --- Stealth Mixin
 
-;;
+;; see https://github.com/robert-strandh/Stealth-mixin
 
 ;;; Code:
 (in-package :obj/meta/stealth)
