@@ -212,6 +212,22 @@
    :clone-octets-to-alien
    :clone-octets-from-alien
    :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int
+   :bitfield
+   :bitfield-slot-name
+   :bitfield-slot-start
+   :bitfield-slot-end
+   :bitfield-slot-size
+   :bitfield-slot-reader
+   :bitfield-slot-initform
+   :bitfield-slot-pack
+   :bitfield-slot-unpack
+   :parse-atomic-bitfield-slot-specifier
+   :parse-compound-bitfield-slot-specifier
+   :bitfield-slot
+   :bitfield-boolean-slot
+   :bitfield-integer-slot
+   :bitfield-member-slot
+   :define-bitfield
    ;; readtable
    :|#"-reader|
    :|#`-reader|

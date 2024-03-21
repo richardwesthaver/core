@@ -1,3 +1,10 @@
+(defpackage :obj/meta
+  (:nicknames :meta)
+  (:use :cl :std)
+  (:export
+   :class-equalp
+   :*standard-metaobjects*))
+
 (defpackage :obj/list
   (:nicknames :list)
   (:use :cl :std)
@@ -42,6 +49,14 @@
   (:use :cl :std)
   (:export :equiv :eqv :nequiv :neqv :equivalence))
 
+(defpackage :obj/uri
+  (:nicknames :uri)
+  (:use :cl :std :obj/id))
+
+(defpackage :obj/url
+  (:nicknames :url)
+  (:use :cl :std :obj/uri))
+
 (defpackage :obj/seq
   (:nicknames :seq)
   (:use :cl :std)
@@ -50,20 +65,15 @@
 (defpackage :obj/tree
   (:nicknames :tree)
   (:use :cl :std :obj/id :obj/seq)
-  (:export :keytype :node :binary-node :unary-node :ternary-node :avl-node
-           :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
+  (:export :keytype :node :tree-node :binary-node :unary-node :ternary-node :avl-node
+           :make-tree-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
 (defpackage :obj/graph
   (:nicknames :graph)
-  (:use :cl :std :obj/id :obj/seq :obj/tree)
+  (:use :cl :std :obj/id :obj/seq)
   (:export 
    :vertex :edge :graph
    :weighted-edge :directed-edge :undirected-edge))
-
-(defpackage :obj/graph/dot
-  (:nicknames :dot)
-  (:use :cl :std :obj/graph :obj/id :cli)
-  (:export))
 
 (defpackage :obj/color
   (:nicknames :color)
@@ -234,6 +244,11 @@
   (:use :cl :std)
   (:export :circle :square :cube :sphere :triangle :pyramid))
 
+(defpackage :obj/cfg
+  (:nicknames :cfg)
+  (:use :cl :std)
+  (:export :cfg :make-cfg :find-cfg :cfg-find :cfg-get))
+
 (defpackage :obj/db
   (:nicknames :db)
   (:use :cl :std :id :seq :sb-mop :sb-pcl)
@@ -285,5 +300,5 @@
 (uiop:define-package :obj
     (:use-reexport :list :hash :color
      :seq :tree :graph :tbl
-     :id :db :dot :time
+     :id :db :time :uri :url :cfg
      :music :temperature :direction :shape))

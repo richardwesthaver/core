@@ -3,6 +3,14 @@
   :depends-on (:std :cli)
   :serial t
   :components ((:file "pkg")
+               (:module "meta"
+                :components ((:file "pkg")
+                             (:file "stealth")
+                             (:file "typed")
+                             (:file "filtered")
+                             (:file "sealed")
+                             (:file "fast")
+                             (:file "lazy")))
                (:module "hash"
                 :components ((:file "hasher")
                              (:file "map")
@@ -10,6 +18,9 @@
                              (:file "chash")
                              (:file "castable")))
                (:file "id")
+               (:module "uri"
+                :components ((:file "pkg")))
+               (:file "url")
                (:file "seq")
                (:module "tree"
                 :components ((:file "node")

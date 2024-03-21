@@ -174,8 +174,8 @@
 (deftest generic-tree ()
   (let ((dag (make-binary-node 
               0 
-              (make-binary-node 1 (make-node 0) (make-node 1))
-              (make-binary-node 2 (make-node 2) (make-node 3)))))))
+              (make-binary-node 1 (make-tree-node 0) (make-tree-node 1))
+              (make-binary-node 2 (make-tree-node 2) (make-tree-node 3)))))))
 
 (deftest bro-tree ())
 

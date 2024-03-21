@@ -1,5 +1,7 @@
 (in-package :packy/core)
 
+(defvar *packy-dbs* nil)
+
 (defclass packy-database (database) ()
   (:default-initargs 
    :db (make-rdb "packy" (default-rdb-opts) #())))

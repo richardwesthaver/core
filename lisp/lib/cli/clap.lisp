@@ -615,6 +615,10 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
        sb-impl::+runtime-options+))
 
 ;; TODO 2024-03-19: need a way to terminate the loop early. (throw/catch)
+
+;; do handlers need to be able to set multiple symbols?
+
+;; should we define opts as special symbols in their own package? (defpackage :OPTS)
 (defvar *opt-handlers* *default-opt-handlers*)
 
 (defun find-opt-handler (str)

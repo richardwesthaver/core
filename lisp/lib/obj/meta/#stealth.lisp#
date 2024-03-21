@@ -1,3 +1,10 @@
+;;; obj/meta/stealth.lisp --- Stealth Mixin
+
+;; see 
+
+;;; Code:
+(in-package :obj/meta/stealth)
+
 ;;;; The following hack is due to Gilbert Baumann.  It allows us to
 ;;;; dynamically mix in classes into a class without the latter being
 ;;;; aware of it.
@@ -13,21 +20,12 @@
 (defmacro class-stealth-mixins (class)
   `(gethash ,class *stealth-mixins*))
 
-;;; The 'direct-superclasses' argument to ensure-class is a list of
-;;; either classes or their names. Since we want to avoid duplicates,
-;;; we need an appropriate equivalence predicate:
-
-(defun class-equalp (c1 c2)
-  (when (symbolp c1) (setf c1 (find-class c1)))
-  (when (symbolp c2) (setf c2 (find-class c2)))
-  (eq c1 c2))
-
 (defun add-mixin (mixin-name victim-class)
   "Add the mixin to the superclasses of the victim"
-  (sb-mop:ensure-class victim-class
+  (ensure-class victim-class
 			   :direct-superclasses (adjoin mixin-name
 							(and (find-class victim-class nil)
-							     (sb-mop:class-direct-superclasses
+							     (class-direct-superclasses
 							      (find-class victim-class)))
 							:test #'class-equalp)
 			   :metaclass (class-of (find-class victim-class)))
@@ -37,7 +35,7 @@
 
   ;; When one wants to [re]define the victim class the new mixin
   ;; should be present too. We do this by 'patching' ensure-class:
-  (defmethod sb-mop:ensure-class-using-class :around
+  (defmethod ensure-class-using-class :around
       (class (name (eql victim-class))
        &rest arguments
        &key (direct-superclasses nil direct-superclasses-p)
