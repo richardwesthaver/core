@@ -41,7 +41,10 @@
   (:use :cl :std))
 
 (defpackage :obj/meta/filtered
-  (:use :cl :std))
+  (:use :cl :std)
+  (:export
+   :define-filtered-function :filtered :filtered-function :filtered-method
+   :generic-function-filter-expression :generic-function-filters :method-filter :simple-filtered-function))
 
 (defpackage :obj/meta/sealed
   (:use :cl :std :obj/meta)
@@ -103,7 +106,18 @@
    :potentially-sealable-standard-method))
 
 (defpackage :obj/meta/fast
-  (:use :cl :std :obj/meta/sealed))
+  (:use :cl :std)
+  (:import-from :sb-int :gensymify)
+  (:import-from :sb-walker :macroexpand-all)
+  (:import-from :obj/meta/sealed
+   :method-properties :validate-method-property :seal-domain :domain
+   :sealed-domains :compute-static-call-signatures :static-call-signature :static-call-signature-types
+   :static-call-signature-prototypes :externalizable-object-p :sealable-class :sealable-generic-function
+   :sealable-standard-generic-function :potentially-sealable-method :potentially-sealable-standard-method)
+  (:export :fast-generic-function :fast-method :inlineable))
 
 (defpackage :obj/meta/lazy
+  (:use :cl :std))
+
+(defpackage :obj/meta/overloaded
   (:use :cl :std))

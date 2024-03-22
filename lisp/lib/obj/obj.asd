@@ -10,7 +10,8 @@
                              (:file "filtered")
                              (:file "sealed")
                              (:file "fast")
-                             (:file "lazy")))
+                             (:file "lazy")
+                             (:file "overloaded")))
                (:module "hash"
                 :components ((:file "hasher")
                              (:file "map")

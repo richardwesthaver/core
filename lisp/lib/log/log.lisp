@@ -37,6 +37,7 @@ function in which case it is used as the function value of
   (router *default-log-router* :type log-router))
 
 ;; TODO: (defmacro generate-log-profile)
+;; (defmacro deflogger) ;; yalog
 ;; (defmacro with-log-profile)
 ;; (defmacro with-logger)
 (defmacro define-log-level (name)

@@ -2,6 +2,14 @@
 
 ;; from https://github.com/dlowe-net/local-time
 
+;;; Commentary:
+
+;; This file encodes 'human-readable' types into CLOS objects. Objects
+;; include timestamps, timezones and dates.
+
+;; This file doesn't explicitly encode durations (difference between
+;; time objects).
+
 ;;; Code:
 (in-package :obj/time)
 
