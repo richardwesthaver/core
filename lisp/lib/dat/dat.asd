@@ -16,6 +16,7 @@
                  (:file "fixml")))
                (:file "toml")
                (:file "arff")
+               (:file "midi")
                #+nil (:file "bencode"))
   :in-order-to ((test-op (test-op "dat/tests"))))
 

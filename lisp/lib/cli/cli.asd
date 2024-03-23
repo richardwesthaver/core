@@ -5,12 +5,12 @@
                (:file "ansi" :depends-on ("pkg"))
                (:file "env" :depends-on ("pkg"))
                (:file "shell" :depends-on ("env"))
-               (:file "clap" :depends-on ("pkg" "shell" "ansi"))
                (:file "progress" :depends-on ("pkg"))
                (:file "spark" :depends-on ("pkg"))
                (:file "repl" :depends-on ("pkg"))
-               (:file "prompt" :depends-on ("pkg" "env" "ansi"))
-               (:file "ed" :depends-on ("pkg" "env")))
+               (:file "prompt" :depends-on ("env" "ansi"))
+               (:file "ed" :depends-on ("env"))
+               (:file "clap" :depends-on ("shell" "progress" "spark" "repl" "prompt" "ed")))
   :in-order-to ((test-op (test-op "cli/tests"))))
 
 (defsystem :cli/tests

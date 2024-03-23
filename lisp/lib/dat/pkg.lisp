@@ -105,5 +105,23 @@
    :bencode-decode
    :*bencode-binary-key-p*))
 
+(defpackage :dat/midi
+  (:nicknames :midi)
+  (:use :cl :std :dat/proto)
+  (:export #:read-midi-file #:write-midi-file
+           #:midifile
+           #:midifile-format #:midifile-tracks #:midifile-division
+           #:message #:note-off-message #:note-on-message #:tempo-message
+           #:program-change-message #:pitch-bend-message
+           #:key-signature-message #:time-signature-message
+           #:smpte-offset-message
+           #:sequence/track-name-message
+           #:message-channel #:message-key #:message-time
+           #:message-velocity #:message-numerator #:message-denominator
+           #:message-sf #:message-mi #:message-tempo #:message-program
+           #:message-value
+           #:header #:header-type
+           #:unknown-event #:status #:data-byte #:dd #:bb #:cc #:nn))
+
 (uiop:define-package :dat
     (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode))
