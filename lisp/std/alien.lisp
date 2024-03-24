@@ -20,7 +20,9 @@
 
 ;;; Code:
 (in-package :std)
-(shadowing-import '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)
+(shadowing-import
+ '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall
+   sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)
 
 ;; (reexport-from :sb-vm
 ;;  	       :include
@@ -36,13 +38,13 @@
 (defun list-all-shared-objects ()
   sb-alien::*shared-objects*)
 
-(defmacro define-alien-loader (name &optional export (root "/usr/local/lib/"))
+(defmacro define-alien-loader (name &optional export (root "/usr/local/lib/") path)
   "Define a default loader function named load-NAME which calls
 SB-ALIEN:LOAD-SHARED-OBJECT."
   (let* ((fname (sb-int:symbolicate (format nil "~@:(load-~a~)" name))))
     `(prog1
        (defun ,fname (&optional save)
-         (prog1 (sb-alien:load-shared-object (shared-object-name ',name ,root) :dont-save (not save))
+         (prog1 (sb-alien:load-shared-object (shared-object-name ',(or path name) ,root) :dont-save (not save))
            (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))
        ,@(when export (list `(export '(,fname)))))))
        
@@ -57,6 +59,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 	do (setf (deref place i) x)))
 
 (defun copy-c-string (src dest &aux (index 0))
+  (declare (type sb-int:index index))
   (loop (let ((b (sb-sys:sap-ref-8 src index)))
           (when (= b 0)
             (setf (fill-pointer dest) index)
@@ -69,6 +72,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
                   (make-alien (* char) (length list))))
     (unwind-protect
          (labels ((populate (list index function)
+                    (declare (type sb-int:index index))
                     (if list
                         (let ((array (sb-ext:string-to-octets (car list) :null-terminate t)))
                           (sb-sys:with-pinned-objects (array)
@@ -85,7 +89,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
   (declare (type (alien (* c-string)) c-strings))
   (let ((reversed-result nil))
     (dotimes (i most-positive-fixnum)
-      (declare (type index i))
+      (declare (type sb-int:index i))
       (let ((c-string (deref c-strings i)))
         (if c-string
             (push c-string reversed-result)
@@ -119,3 +123,9 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 (defun num-cpus ()
   "Return the number of CPU threads online."
   (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln))
+;;; C Standard
+
+;; types
+(define-alien-type loff-t long-long)
+
+(define-alien-routine memset void (ptr (* t)) (constant int) (size size-t))

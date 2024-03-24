@@ -191,6 +191,8 @@
    :c-string-to-string-list
    :list-all-shared-objects
    :num-cpus
+   :loff-t
+   :memset
    ;; os
    :list-all-users
    :list-all-groups

@@ -24,10 +24,7 @@ use tokio::net::TcpListener;
 // use net::http::graphql::http::{EmptyMutation, EmptySubscription, Schema};
 // use net::http::graphql_axum::GraphQL;
 pub use krypt::KryptConfig;
-use logger::{
-  log,
-  tracing::Span,
-};
+use logger::{log, tracing::Span};
 use net::{http::tower::trace::TraceLayer, reqwest::Client};
 use obj::{Configure, Objective};
 use std::time::Duration;
