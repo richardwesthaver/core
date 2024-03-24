@@ -123,5 +123,21 @@
            #:header #:header-type
            #:unknown-event #:status #:data-byte #:dd #:bb #:cc #:nn))
 
+(defpackage :dat/qrcode
+  (:nicknames :qrcode)
+  (:use :cl :std :dat/proto)
+  (:export
+   :encode-symbol
+   ;; QR code representation
+   ;; this should be enough to write another backend for QR symbol
+   :qr-symbol
+   :matrix
+   :modules
+   :dark-module-p
+   :read-file-content))
+
+(defpackage :dat/png
+  (:use :cl :std :dat/proto :dat/qrcode :png))
+
 (uiop:define-package :dat
     (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode))

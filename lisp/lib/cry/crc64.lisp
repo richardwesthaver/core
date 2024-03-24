@@ -36,12 +36,14 @@
 ;; Lookup tables. 
 ;; We store high and low order bytes separately to benefit from 
 ;; 32 bit arithmentic performance.
+
 (declaim (type (array (unsigned-byte 32) (256)) *crc-table-h* *crc-table-l*))
 (defvar *crc-table-h* (make-array 256 :element-type '(unsigned-byte 32)))
 (defvar *crc-table-l* (make-array 256 :element-type '(unsigned-byte 32)))
 
 (defun init-crc64 (polynomial)
-  "Computes lookup tables of CRC values for byte values 0 thru 255"
+  "Computes lookup tables of CRC values for byte values 0 thru 255. Don't
+forget to call this before calling the library functions."
   (dotimes (i 256)
     (let ((part i))
       (dotimes (j 8)

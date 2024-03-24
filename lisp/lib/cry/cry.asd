@@ -1,4 +1,4 @@
-(defsystem :crypto
+(defsystem :cry
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"

@@ -10,11 +10,17 @@
 
 (defpackage :cry/hotp
   (:nicknames :hotp)
-  (:use :cl :std :cry))
+  (:use :cl :std :cry)
+  (:export *digits*
+           *hmac-sha-mode*
+           hotp))
 
 (defpackage :cry/totp
   (:nicknames :totp)
-  (:use :cl :std :cry))
+  (:use :cl :std :cry/hotp)
+  (:export *time-zero*
+           *time-step-in-seconds* 
+           totp))
 
 (defpackage :cry/crc64
   (:use :cl)
@@ -54,6 +60,8 @@
 (defclass password () ())
 (defclass password-db (database) ())
 (defclass password-store () ())
+
+;;; Proto
 (defgeneric register-user (user &key store password deadline)
   (:documentation "Register user identified by TOKEN in store specified by STORE. Returns
 the user object and an optionally a confirmation token."))

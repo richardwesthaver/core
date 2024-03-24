@@ -1,6 +1,6 @@
 (defsystem :dat
   :description "Data formats"
-  :depends-on (:cl-ppcre :std :obj)
+  :depends-on (:cl-ppcre :std :obj :png)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
