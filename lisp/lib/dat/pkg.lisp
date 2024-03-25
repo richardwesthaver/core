@@ -65,6 +65,41 @@
    #:json-getf
    #:json-setf))
 
+(defpackage :dat/html
+  (:use :cl :std :dat/proto)
+  (:import-from :sb-ext :defglobal)
+  (:export
+   :parse-html5
+   :parse-html5-fragment
+   :transform-html5-dom
+   :xml-escape-name
+   :xml-unescape-name
+   ;; A simple DOM
+   :make-document
+   :make-fragment
+   :make-doctype
+   :make-comment
+   :make-element
+   :make-text-node
+   :node-type
+   :node-name
+   :node-namespace
+   :node-value
+   :node-public-id
+   :node-system-id
+   :element-attribute
+   :node-append-child
+   :node-insert-before
+   :node-remove-child
+   :node-parent
+   :node-first-child
+   :node-last-child
+   :node-previous-sibling
+   :node-next-sibling
+   :element-map-attributes
+   :element-map-attributes*
+   :element-map-children))
+
 (defpackage :dat/xml
   (:use :cl :std :dat/proto)
   (:shadow :read-char :unread-char)

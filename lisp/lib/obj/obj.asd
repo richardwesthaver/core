@@ -40,6 +40,7 @@
                 :components ((:file "music")))
                (:module "time"
                 :components ((:file "local")))
+               (:file "uuid")
                (:file "temperature")
                (:file "direction")
                (:file "shape")

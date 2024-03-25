@@ -434,3 +434,89 @@ PARSE-COMPOUND-BITFIELD-SLOT-SPECIFIER.
                   `(ash ,(bitfield-slot-pack slot (bitfield-slot-name slot))
                         ,(bitfield-slot-start slot)))))
        ',name)))
+
+;;; From bit-smasher
+(declaim (type (simple-array (simple-bit-vector 4) (16)) *bit-map*))
+(defvar *bit-map* #(#*0000
+                    #*0001
+                    #*0010
+                    #*0011
+                    #*0100
+                    #*0101
+                    #*0110
+                    #*0111
+                    #*1000
+                    #*1001
+                    #*1010
+                    #*1011
+                    #*1100
+                    #*1101
+                    #*1110
+                    #*1111))
+
+(deftype hex-char ()
+  `(member #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9
+           #\a #\b #\c #\d #\e #\f
+           #\A #\B #\C #\D #\E #\F))
+
+(declaim (ftype (function (hex-char) (integer 0 16)) hexchar->int)
+         (inline hexchar->int))
+(defun hexchar-to-int (char)
+  "Return the bit vector associated with a hex-value character CHAR from *bit-map*."
+  (declare (optimize (speed 2) (safety 0)))
+  (cond ((char<= #\0 char #\9) (- (char-code char) #.(char-code #\0)))
+        ((char<= #\a char #\f) (- (char-code char) #.(- (char-code #\a) 10)))
+        (t                     (- (char-code char) #.(- (char-code #\A) 10))
+         ;; always return these results
+         #+nil (char<= #\A char #\F))))
+
+;;; From Ironclad
+(defun hex-string-to-octet-vector (string &aux (start 0) (end (length string)))
+  "Parses a substring of STRING delimited by START and END of
+hexadecimal digits into a byte array."
+  (declare (type string string))
+  (let* ((length
+          (ash (- end start) -1)
+           #+nil (/ (- end start) 2))
+         (key (make-array length :element-type '(unsigned-byte 8))))
+    (declare (type (simple-array (unsigned-byte 8)) key))
+    (loop for i from 0
+          for j from start below end by 2
+          do (setf (aref key i)
+                   (+ (* (hexchar-to-int (char string j)) 16)
+                      (hexchar-to-int (char string (1+ j)))))
+          finally (return key))))
+
+(defun octet-vector-to-hex-string (vector)
+  "Return a string containing the hexadecimal representation of the
+subsequence of VECTOR between START and END.  ELEMENT-TYPE controls
+the element-type of the returned string."
+  (declare (type (vector (unsigned-byte 8)) vector))
+  (let* ((length (length vector))
+         (hexdigits #.(coerce "0123456789abcdef" 'simple-base-string)))
+    (loop with string = (make-string (* length 2) :element-type 'base-char)
+       for i from 0 below length
+       for j from 0 by 2
+       do (let ((byte (aref vector i)))
+            (declare (optimize (safety 0)))
+            (setf (aref string j)
+                  (aref hexdigits (ldb (byte 4 4) byte))
+                  (aref string (1+ j))
+                  (aref hexdigits (ldb (byte 4 0) byte))))
+       finally (return string))))
+
+(defun octets-to-integer (octet-vec &aux (end (length octet-vec)))
+  (declare (type (simple-array (unsigned-byte 8)) octet-vec))
+  (do ((j 0 (1+ j))
+       (sum 0))
+      ((>= j end) sum)
+    (setf sum (+ (aref octet-vec j) (ash sum 8)))))
+
+(defun integer-to-octets (bignum &aux (n-bits (integer-length bignum)))
+  (let* ((n-bytes (ceiling n-bits 8))
+         (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
+    (declare (type (simple-array (unsigned-byte 8)) octet-vec))
+    (loop for i from (1- n-bytes) downto 0
+          for index from 0
+          do (setf (aref octet-vec index) (ldb (byte 8 (* i 8)) bignum))
+          finally (return octet-vec))))

@@ -54,6 +54,7 @@
    :trim
    :collapse-whitespaces
    :make-template-parser
+   :string-case
    ;; fmt
    :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree :println
    ;; sym
@@ -230,6 +231,11 @@
    :bitfield-integer-slot
    :bitfield-member-slot
    :define-bitfield
+   :hex-string-to-octet-vector
+   :octet-vector-to-hex-string
+   :octets-to-integer
+   :integer-to-octets
+   :hexchar-to-int
    ;; readtable
    :|#"-reader|
    :|#`-reader|

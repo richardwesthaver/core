@@ -17,7 +17,14 @@
 (defgeneric make-id (kind)
   (:documentation "Allocate a new ID object of a specified KIND.")
   (:method ((kind (eql nil)))
-    (declare (ignorable kind))
-    (make-instance 'id)))
+    (declare (ignore kind))
+    (make-instance 'id))
+  (:method ((kind (eql t)))
+    (declare (ignore kind))
+    (make-instance 'id :id most-positive-fixnum)))
+
+(defmethod print-object ((obj id) stream)
+  (print-unreadable-object (obj stream :type "ID")
+    (format stream "~A" (id obj))))
 
 (defclass id-factory () ())

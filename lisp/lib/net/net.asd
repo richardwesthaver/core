@@ -21,8 +21,9 @@
                              (:file "dns")
                              (:file "tlv")
                              (:file "osc")))
-               (:module "proto" ;; https://wayland.app/protocols/
+               (:module "proto"
                 :components ((:file "crew")
+                             ;; (:file "http")
                              (:file "dns")
                              (:file "ssh"))))
   :in-order-to ((test-op (test-op :net/tests))))

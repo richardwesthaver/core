@@ -187,6 +187,15 @@
    :encode-universal-time-with-tz
    :decode-universal-time-with-tz))
 
+(defpackage :obj/uuid
+  (:nicknames :uuid)
+  (:use :cl :std :obj/id :obj/time)
+  (:export
+   :uuid :*ticks-per-count* :format-as-urn :make-null-uuid
+   :make-uuid-from-string :make-v1-uuid :make-v3-uuid :make-v4-uuid
+   :make-v5-uuid :uuid= :+namespace-dns+ :+namespace-oid+ :+namespace-x500+
+   :uuid-to-octet-vector :octet-vector-to-uuid))
+
 (defpackage :obj/music
   (:nicknames :music)
   (:use :cl :std)
@@ -292,6 +301,7 @@
    :query-db
    :db-get
    :close-db
+   :db
    :database
    :enable-sequences
    :next-sequence

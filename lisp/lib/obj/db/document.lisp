@@ -19,12 +19,12 @@
         (add-doc (or (collection doc) collection) (or duplicate-doc-p-func  #'duplicate-doc-p))
         (error "Must specify collection to add document to."))))
 
-(defmethod get-val ((doc document) element &key data-type)
+(defmethod get-val ((doc document) element &optional data-type)
   (declare (ignore data-type))
   (if (slot-boundp doc element)
       (slot-val doc element)))
 
-(defmethod (setf get-val) (new-value (doc document) element &key data-type)
+(defmethod (setf get-val) (new-value (doc document) element &optional data-type)
   (declare (ignore data-type))
   (if doc
       (setf (slot-value doc element) new-value)))
@@ -35,7 +35,7 @@
 (defclass document-join-result (join-result)
   ())
 
-(defmethod get-val ((composite-doc document-join-result) element &key data-type)
+(defmethod get-val ((composite-doc document-join-result) element &optional data-type)
   (declare (ignore data-type))
   (map 'list
        (lambda (doc)

@@ -1,6 +1,6 @@
 (defsystem :dat
   :description "Data formats"
-  :depends-on (:cl-ppcre :std :obj :png)
+  :depends-on (:cl-ppcre :std :obj :png :flexi-streams)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
@@ -14,6 +14,11 @@
                  (:file "pkg")
                  (:file "svg")
                  (:file "fixml")))
+               (:module "html"
+                :components
+                ((:file "const")
+                 (:file "entity")
+                 (:file "html")))
                (:file "toml")
                (:file "arff")
                (:file "midi")
