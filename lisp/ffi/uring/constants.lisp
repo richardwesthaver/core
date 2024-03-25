@@ -1,9 +1,10 @@
 ("sys/socket.h" "sys/stat.h" "sys/uio.h" "errno.h" "signal.h" "stdbool.h" "stdatomic.h" "linux/openat2.h"
                 "inttypes.h" "linux/time_types.h" "time.h" "fcntl.h" "sched.h" "linux/swab.h" "liburing/compat.h"
-                "linux/fs.h" "liburing/io_uring.h" "liburing/io_uring_version.h" "liburing/barrier.h"
-                "linux/types.h")
+                "linux/fs.h" "liburing/io_uring_version.h" "liburing/barrier.h"
+                "linux/types.h" "liburing/io_uring.h")
 
 ( ;; liburing/io_uring.h
+ (:integer %nr-io-uring-setup "__NR_io_uring_setup" t)
  (:structure io-uring-sqe ("struct io_uring_sqe"
                            (char opcode "__u8" "opcode")
                            (char flags "__u8" "flags")
@@ -100,7 +101,8 @@
          (ioring-op-uring-cmd "IORING_OP_URING_CMD")
          (ioring-op-send-zc "IORING_OP_SEND_ZC")
          (ioring-op-sendmsg-zc "IORING_OP_SENDMSG_ZC")
-         (ioring-op-last "IORING_OP_LAST")))
+         (ioring-op-last "IORING_OP_LAST"))
+        t)
  (:integer ioring-uring-cmd-fixed "IORING_URING_CMD_FIXED")
  (:integer ioring-fsync-datasync "IORING_FSYNC_DATASYNC")
  (:integer ioring-timeout-abs "IORING_TIMEOUT_ABS")
@@ -176,18 +178,18 @@
  (:integer ioring-enter-sq-wait "IORING_ENTER_SQ_WAIT")
  (:integer ioring-enter-ext-arg "IORING_ENTER_EXT_ARG")
  (:integer ioring-enter-registered-ring "IORING_ENTER_REGISTERED_RING")
- ;; (:structure io-uring-params ("struct io_uring_params"
- ;;                              ((unsigned-int sq-entries "__u32" "sq_entries")
- ;;                               (unsigned-int cq-entries "__u32" "cq_entries")
- ;;                               (unsigned-int flags "__u32" "flags")
- ;;                               (unsigned-int sq-thread-cpu "__u32" "sq_thread_cpu")
- ;;                               (unsigned-int sq-thread-idle "__u32" "sq_thread_idle")
- ;;                               (unsigned-int features "__u32" "features")
- ;;                               (unsigned-int wq-fd "__u32" "wq_fd")
- ;;                               ((array unsigned-int 3) "__u32" "resv[3]")
- ;;                               ;; (io-sqring-offsets "struct io_sqring_offsets" "sq_off")
- ;;                               ;; (io-cqring-offsets "struct io_cqring_offsets" "cq_off")
- ;;                               )))
+ (:structure io-uring-params ("struct io_uring_params"
+                              (unsigned-int sq-entries "__u32" "sq_entries")
+                              (unsigned-int cq-entries "__u32" "cq_entries")
+                              (unsigned-int flags "__u32" "flags")
+                              (unsigned-int sq-thread-cpu "__u32" "sq_thread_cpu")
+                              (unsigned-int sq-thread-idle "__u32" "sq_thread_idle")
+                              (unsigned-int features "__u32" "features")
+                              (unsigned-int wq-fd "__u32" "wq_fd")
+                              ((array unsigned-int) resv "__u32" "resv[3]")
+                              ((struct io-sqring-offsets) sq-off "struct io_sqring_offsets" "sq_off" :distrust-length t)
+                              ((struct io-cqring-offsets) cq-off "struct io_cqring_offsets" "cq_off" :distrust-length t)
+                              ))
  (:integer ioring-feat-single-mmap "IORING_FEAT_SINGLE_MMAP")
  (:integer ioring-feat-nodrop "IORING_FEAT_NODROP")
  (:integer ioring-feat-submit-stable "IORING_FEAT_SUBMIT_STABLE")
@@ -204,12 +206,38 @@
  (:integer ioring-feat-reg-reg-ring "IORING_FEAT_REG_REG_RING")
 
  (:integer ioring-rsrc-register-sparse "IORING_RSRC_REGISTER_SPARSE")
-
+ (:structure io-uring-rsrc-register ("struct io_uring_rsrc_register"
+                                     (unsigned-int nr "__u32" "nr")
+                                     (unsigned-int flags "__u32" "flags")
+                                     (unsigned-int resv2 "__u32" "resv2")
+                                     (unsigned-long data "__aligned_u64" "data")
+                                     (unsigned-long tags "__aligned_u64" "tags")))
+ (:structure io-uring-rsrc-update ("struct io_uring_rsrc_update"
+                                   (unsigned-int offset "__u32" "offset")
+                                   (unsigned-int resv "__u32" "resv")
+                                   (unsigned-int data "__aligned_u64" "data")))
+ (:structure io-uring-rsrc-update2 ("struct io_uring_rsrc_update2"
+                                    (unsigned-int offset "__u32" "offset")
+                                    (unsigned-int resv "__u32" "resv")
+                                    (unsigned-int data "__aligned_u64" "data")
+                                    (unsigned-int tags "__aligned_u64" "tags")
+                                    (unsigned-int nr "__u32" "nr")
+                                    (unsigned-int resv2 "__u32" "resv2")))
  (:integer ioring-register-files-skip "IORING_REGISTER_FILES_SKIP")
-
  (:integer io-uring-op-supported "IO_URING_OP_SUPPORTED")
+ (:structure io-uring-probe-op ("struct io_uring_probe_op"
+                                (char op "__u8" "op")
+                                (char resv "__u8" "resv")
+                                (unsigned-short flags "__u16" "flags")
+                                (unsigned-int resv2 "__u32" "resv2")))
+ (:structure io-uring-probe ("struct io_uring_probe"
+                             (char last-op "__u8" "last_op")
+                             (char ops-len "__u8" "ops_len")
+                             ;; (unsigned-short resv "__u16" "resv")
+                             ;; ((array unsigned-int 3) resv2 "__u32" "resv2[3]")
+                             ((array (struct io-uring-probe-op)) ops "struct io_uring_probe_op" "ops[1]")))
  ;; TODO
  ;; io_uring_register
-                           
+ 
  ;; liburing.h -- public API
  (:integer +nr-io-uring-setup+ "__NR_io_uring_setup"))

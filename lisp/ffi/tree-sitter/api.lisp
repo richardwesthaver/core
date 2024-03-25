@@ -125,9 +125,7 @@ desired name for use in lisp."
                        ;; TODO
                        (let ((field-name (deref field-name-ptr)))
                          (setf type (list (funcall name-generator field-name) type))))
-                     (push (make-node :type type
-                                      :range (list (list (second start-point) (fourth start-point))
-                                                   (list (second end-point) (fourth end-point))))
+                     (push (make-node :type type :range (list start-point end-point))
                            parse-stack)))
                  (setf did-visit-children
                        (not (ts-tree-cursor-goto-first-child cursor))))))))))
