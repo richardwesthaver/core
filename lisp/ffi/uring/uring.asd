@@ -11,7 +11,13 @@
   :depends-on (:sb-grovel :std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
-                                      :package :uring))
+                                      :package :uring)
+               (:file "macs")
+               (:file "types")
+               (:file "opcode")
+               (:file "sq")
+               (:file "cq")
+               (:file "uring"))
   :in-order-to ((test-op (test-op :uring/tests))))
 
 (defsystem :uring/tests

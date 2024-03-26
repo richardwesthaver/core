@@ -3,8 +3,17 @@
                 "linux/fs.h" "liburing/io_uring_version.h" "liburing/barrier.h"
                 "linux/types.h" "liburing/io_uring.h")
 
-( ;; liburing/io_uring.h
- (:integer %nr-io-uring-setup "__NR_io_uring_setup" t)
+( 
+ ;; sys/uio.h
+ (:structure iovec ("struct iovec"
+                    (unsigned-long iov-base "ptr_t" "iov_base")
+                    (sb-unix:size-t iov-len "size_t" "iov_len")))
+ ;; linux/time.h
+ (:structure kernel-timespec ("struct __kernel_timespec"
+                              (long tv-sec "__kernel_time64_t" "tv_sec")
+                              (long tv-nsec "__s64" "tv_nsec")))
+ ;; liburing/io_uring.h
+ (:integer %nr-io-uring-setup "__NR_io_uring_setup" nil t)
  (:structure io-uring-sqe ("struct io_uring_sqe"
                            (char opcode "__u8" "opcode")
                            (char flags "__u8" "flags")
@@ -20,12 +29,12 @@
                            (unsigned-int file-index "__u32" "file_index")
                            ((array char) cmd "__u8" "cmd[0]")))
  (:integer ioring-file-index-alloc "IORING_FILE_INDEX_ALLOC")
- ;; (:enum iosqe ((iosqe-fixed-file-bit "IOSQE_FIXED_FILE_BIT")
- ;;             (iosqe-io-drain-bit "IOSQE_IO_DRAIN_BIT")
- ;;             (iosqe-io-link-bit "IOSQE_IO_LINK_BIT")
- ;;             (iosqe-io-hardlink-bit "IOSQE_IO_HARDLINK_BIT")
- ;;             (iosqe-async-bit "IOSQE_ASYNC_BIT")
- ;;             (iosqe-cqe-skip-success-bit "IOSQE_SKIP_SUCCESS_BIT")))
+ (:enum iosqe ((iosqe-fixed-file-bit "IOSQE_FIXED_FILE_BIT")
+               (iosqe-io-drain-bit "IOSQE_IO_DRAIN_BIT")
+               (iosqe-io-link-bit "IOSQE_IO_LINK_BIT")
+               (iosqe-io-hardlink-bit "IOSQE_IO_HARDLINK_BIT")
+               (iosqe-async-bit "IOSQE_ASYNC_BIT")
+               (iosqe-cqe-skip-success-bit "IOSQE_CQE_SKIP_SUCCESS_BIT")))
  (:integer iosqe-fixed-file "IOSQE_FIXED_FILE")
  (:integer iosqe-io-drain "IOSQE_IO_DRAIN")
  (:integer iosqe-io-link "IOSQE_IO_LINK")
@@ -236,8 +245,54 @@
                              ;; (unsigned-short resv "__u16" "resv")
                              ;; ((array unsigned-int 3) resv2 "__u32" "resv2[3]")
                              ((array (struct io-uring-probe-op)) ops "struct io_uring_probe_op" "ops[1]")))
- ;; TODO
- ;; io_uring_register
- 
- ;; liburing.h -- public API
- (:integer +nr-io-uring-setup+ "__NR_io_uring_setup"))
+ (:structure io-uring-restriction ("struct io_uring_restriction"
+                                   (unsigned-short opcode "__u16" "opcode")
+                                   (char register "__u8" "register_op")
+                                   (char resv "__u8" "resv")
+                                   ((array unsigned-int 3) resv2 "__u32" "resv2[3]")))
+ (:structure io-uring-buf ("struct io_uring_buf"
+                           (unsigned-long addr "__u64" "addr")
+                           (unsigned-int len "__u32" "len")
+                           (unsigned-short bid "__u16" "bid")
+                           (unsigned-short resv "__u16" "resv")))
+ (:structure io-uring-buf-ring ("struct io_uring_buf_ring"
+                                (unsigned-long resv1 "__u64" "resv1")
+                                (unsigned-int resv2 "__u32" "resv2")
+                                (unsigned-short resv3 "__u16" "resv3")
+                                (unsigned-short resv4 "__u16" "tail")))
+                           
+ ;; why is this defined as enum in io_uring.h?
+ (:enum iou-pbuf ((iou-pbuf-ring-mmap "IOU_PBUF_RING_MMAP")))
+ (:structure io-uring-buf-reg ("struct io_uring_buf_reg"
+                               (unsigned-long ring-addr "__u64" "ring_addr")
+                               (unsigned-int ring-entries "__u32" "ring_entries")
+                               (unsigned-short bgid "__u16" "bgid")
+                               (unsigned-short flags "__u16" "flags")
+                               ((array unsigned-long 3) resv "__u64" "resv[3]")))
+ (:enum io-uring-restriction-opcode ((ioring-restriction-register-op "IORING_RESTRICTION_REGISTER_OP")
+                                     (ioring-restriction-sqe-op "IORING_RESTRICTION_SQE_OP")
+                                     (ioring-restriction-sqe-flags-allowed "IORING_RESTRICTION_SQE_FLAGS_ALLOWED")
+                                     (ioring-restriction-sqe-flags-required "IORING_RESTRICTION_SQE_FLAGS_REQUIRED")
+                                     (ioring-restriction-last "IORING_RESTRICTION_LAST")))
+ (:structure io-uring-getevents-arg ("struct io_uring_getevents_arg"
+                                     (unsigned-long sigmask "__u64" "sigmask")
+                                     (unsigned-int sigmask-sz "__u32" "sigmask_sz")
+                                     (unsigned-int pad "__u32" "pad")
+                                     (unsigned-long ts "__u64" "ts")))
+ (:structure io-uring-sync-cancel-reg ("struct io_uring_sync_cancel_reg"
+                                       (unsigned-long addr "__u64" "addr")
+                                       (int fd "__s32" "fd")
+                                       (unsigned-int flags "__u32" "flags")
+                                       ((struct kernel-timespec) timeout "struct __kernel_timespec" "timeout")
+                                       ((array unsigned-long 4) pad "__u64" "pad[4]")))
+ (:structure io-uring-file-index-range ("struct io_uring_file_index_range"
+                                        (unsigned-int off "__u32" "off")
+                                        (unsigned-int len "__u32" "len")
+                                        (unsigned-long resv "__u64" "resv")))
+ (:structure io-uring-recvmsg-out ("struct io_uring_recvmsg_out"
+                                   (unsigned-int namelen "__u32" "namelen")
+                                   (unsigned-int controllen "__u32" "controllen")
+                                   (unsigned-int payloadlen "__u32" "payloadlen")
+                                   (unsigned-int flags "__u32" "flags")))
+ (:enum socket-uring-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
+                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ"))))
