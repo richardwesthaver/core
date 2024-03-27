@@ -57,39 +57,6 @@ queue (CQ), and form the foundation of the new interface.
   `(define-alien-routine ,name int ,@args))
 
 (define-alien-type nil
-  (struct io-uring-sq
-          (khead (* unsigned-int))
-          (ktail (* unsigned-int))          
-          (kring-mask (* unsigned-int))
-          (kring-entries (* unsigned-int))
-          (kflags (* unsigned-int))
-          (kdropped (* unsigned-int))
-          (array (* unsigned-int))
-          (sqes (* (struct io-uring-sqe)))
-          (sqe-head unsigned-int)
-          (sqe-tail unsigned-int)
-          (ring-sz sb-unix:size-t)
-          (ring-ptr (* t))
-          (ring-mask unsigned-int)
-          (ring-entries unsigned-int)
-          (pad (array unsigned-int 2))))
-
-(define-alien-type nil
-  (struct io-uring-cq
-          (khead (* unsigned-int))
-          (ktail (* unsigned-int))
-          (kring-mask (* unsigned-int))
-          (kring-entries (* unsigned-int))
-          (kflags (* unsigned-int))
-          (koverflow (* unsigned-int))
-          (cqes (* (struct io-uring-cqe)))
-          (ring-sz sb-unix:size-t)
-          (ring-ptr (* t))
-          (ring-mask unsigned-int)
-          (ring-entries unsigned-int)
-          (pad (array unsigned-int 2))))
-
-(define-alien-type nil
     (struct io-uring
             (sq (struct io-uring-sq))
             (cq (struct io-uring-cq))
@@ -113,6 +80,12 @@ queue (CQ), and form the foundation of the new interface.
 
 (defalien-int io-uring-submit (ring (* (struct io-uring))))
 
+(defalien-int io-uring-register
+  (fd int)
+  (opcode unsigned-int)
+  (args (* t))
+  (nr-args unsigned-int))
+
 ;;...
 (defalien-int io-uring-register-buffers
   (ring (* (struct io-uring)))
@@ -125,6 +98,18 @@ queue (CQ), and form the foundation of the new interface.
 (defalien-int io-uring-sqring-wait (ring (* (struct io-uring))))
 
 ;;...
+(defalien-int io-uring-setup
+  (entries unsigned-int)
+  (p (* (struct io-uring-params))))
+
+(defalien-int io-uring-enter
+  (fd int)
+  (to-submit unsigned-int)
+  (min-complete unsigned-int)
+  (flags unsigned-int)
+  (arg (* t))
+  (size unsigned-long))
+
 (define-alien-routine io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
   (ring (* (struct io-uring)))
   (nentries unsigned-int)

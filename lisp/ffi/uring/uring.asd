@@ -13,8 +13,10 @@
                (grovel-constants-file "constants"
                                       :package :uring)
                (:file "macs")
-               (:file "types")
+               (:file "util")
                (:file "opcode")
+               (:file "register")
+               (:file "submit")
                (:file "sq")
                (:file "cq")
                (:file "uring"))

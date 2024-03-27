@@ -8,12 +8,23 @@
  (:structure iovec ("struct iovec"
                     (unsigned-long iov-base "ptr_t" "iov_base")
                     (sb-unix:size-t iov-len "size_t" "iov_len")))
+ ;; sys/socet.h
+ (:structure msghdr ("struct msghdr"
+                     (int msg-name "void" "msg_name") ;; *
+                     (unsigned-int msg-namelen "socklen_t" "msg_namelen")
+                     (int msg-iov "struct iovec" "msg_iov") ;; *
+                     (sb-unix:size-t msg-iovlen "size_t" "msg_iovlen")
+                     (int msg-control "void" "msg_control") ;; *
+                     (sb-unix:size-t msg-controllen "size_t" "msg_controllen")
+                     (int msg-flags "int" "msg_flags")))
  ;; linux/time.h
  (:structure kernel-timespec ("struct __kernel_timespec"
-                              (long tv-sec "__kernel_time64_t" "tv_sec")
-                              (long tv-nsec "__s64" "tv_nsec")))
+                              (long-long tv-sec "__kernel_time64_t" "tv_sec")
+                              (long-long tv-nsec "__s64" "tv_nsec")))
  ;; liburing/io_uring.h
- (:integer %nr-io-uring-setup "__NR_io_uring_setup" nil t)
+ (:integer nr-io-uring-setup "__NR_io_uring_setup") ;; not workin - C macro trouble?
+ (:integer nr-io-uring-register "__NR_io_uring_register")
+ (:integer nr-io-uring-enter "__NR_io_uring_enter")
  (:structure io-uring-sqe ("struct io_uring_sqe"
                            (char opcode "__u8" "opcode")
                            (char flags "__u8" "flags")
