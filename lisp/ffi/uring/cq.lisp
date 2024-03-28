@@ -34,18 +34,51 @@
   ;; resv1
   (user-addr 0 :type fixnum))
 
+(defmethod build ((self completion-queue-offsets) &key &allow-other-keys)
+  (with-slots (head tail ring-mask ring-entries overflow cqes flags user-addr) self
+      (with-io-cqring-offsets res
+          ((head head) (tail tail) (ring-mask ring-mask) (ring-entries ring-entries)
+           (overflow overflow) (cqes cqes) (flags flags) (user-addr user-addr))
+        res)))
+
 (defstruct completion-queue
   (head 0 :type fixnum)
   (tail 0 :type fixnum)
-  (queue nil :type io-uring-cq*))
+  (queue nil :type system-area-pointer)) ;; io-uring-cq*
 
 ;; (define-alien-type io-uring-cqe* (* (struct io-uring-cqe)))
 
 ;; 16-byte CQE
-(defstruct completion-queue-entry (entry nil :type io-uring-cqe))
+(defstruct completion-queue-entry 
+  (user-data 0 :type fixnum)
+  (res 0 :type fixnum)
+  (flags 0 :type fixnum))
+
+(defmethod build ((self completion-queue-entry) &key &allow-other-keys)
+  (with-slots (user-data res flags) self
+      (with-io-uring-cqe ret
+          ((user-data user-data) (res res) (flags flags))
+        ret)))
+
+(defmethod build ((self completion-queue-entry) &key &allow-other-keys)
+  (build (make-completion-queue-entry-32 :entry self))
+  (with-slots (user-data res flags) self
+    (with-io-uring-cqe ret
+        ((user-data user-data) (res res) (flags flags))
+      ret)))
+
 ;; 32-byte CQE
-(defstruct completion-queue-entry-32 (entry nil :type io-uring-cqe)
-           (ext #(0 0) :type (array fixnum 2)))
+(defstruct completion-queue-entry-32
+  (entry (make-completion-queue-entry) :type completion-queue-entry))
+  ;; big-cqe = 16 bytes of padding u64*2
+
+(defmethod build ((self completion-queue-entry-32) &key &allow-other-keys)
+  (with-slots (entry) self
+    (with-slots (user-data res flags) entry
+      (with-alien ((big-cqe (array unsigned-long 2)))
+        (with-io-uring-cqe ret
+            ((user-data user-data) (res res) (flags flags) (big-cqe big-cqe))
+          ret)))))
 
 ;; sync, fill, pop
 ;; check-overflow

@@ -104,7 +104,7 @@ which accepts a boolean value and automatically adjust the slot."
   (params *default-io-params* :type io-params)
   (dontfork nil :type boolean))
 
-(defmethod build ((self uring-builder) &key (entries 256) &allow-other-keys))
+(defmethod build ((self uring-builder) &key (entries 256) &allow-other-keys) self)
 
 (defun setup-queue (fd p)
   "Setup a URING struct given a reference to a FILE-DESCRIPTOR and IO-PARAMS.")
@@ -114,6 +114,7 @@ which accepts a boolean value and automatically adjust the slot."
 queue, which must be a power of two."
   (build (make-uring-builder) :entries entries))
 
+#+nil (make-queue 2)
 (defmethod build-submitter ((self uring)))
 
 ;;; Syscalls
