@@ -36,30 +36,41 @@
 (defmacro define-io-param-flag (name const)
   "Create a predicate method with NAME which checks for presence of flag
 CONST in FLAGS slot of IO-PARAMS. A SETF expansion is also defined
-which accepts a boolean value and automatically adjusts the slot.")
+which accepts a boolean value and automatically adjusts the slot."
+  `(progn
+     (defmethod ,name ((self io-params))
+       (not (= 0 (logand (io-params-flags self) ,const))))
+     (defmethod (setf ,name) (val (self io-params))
+       (with-slots (flags) self
+         (setf flags (logior flags ,const))))))
 
 (defmacro define-io-param-feature (name const)
   "Create a predicate method with NAME which checks for presence of flag
 CONST in FEATURES slot of IO-PARAMS. A SETF expansion is also defined
-which accepts a boolean value and automatically adjust the slot.")
+which accepts a boolean value and automatically adjust the slot."
+  `(progn
+     (defmethod ,name ((self io-params))
+       (not (= 0 (logand (io-params-features self) ,const))))
+     (defmethod (setf ,name) (val (self io-params))
+       (with-slots (features) self
+         (setf features (logior features ,const))))))
 
-;; (define-io-param-flag setup-sqpoll-p ioring-setup-sqpoll)
-;; (define-io-param-flag setup-iopoll-p ioring-setup-iopoll)
-;; (define-io-param-flag setup-single-issuer-p ioring-setup-single-issuer)
-;; (define-io-param-flag setup-iopoll-p ioring-setup-iopoll)
-;; (define-io-param-feature feat-single-mmap-p ioring-feat-single-mmap)
-;; (define-io-param-feature feat-nodrop-p ioring-feat-nodrop)
-;; (define-io-param-feature feat-submit-stable-p ioring-feat-submit-stable)
-;; (define-io-param-feature feat-rw-cur-pos-p ioring-feat-rw-cur-pos)
-;; (define-io-param-feature feat-cur-personality-p ioring-feat-cur-personality)
-;; (define-io-param-feature feat-fast-poll-p ioring-feat-fast-poll-p)
-;; (define-io-param-feature feat-poll-32bits-p ioring-feat-poll-32bits-p)
-;; (define-io-param-feature feat-sqpoll-nonfixed-p ioring-feat-sqpoll-nonfixed)
-;; (define-io-param-feature feat-ext-arg-p ioring-feat-ext-arg)
-;; (define-io-param-feature feat-native-workers-p ioring-feat-native-workers)
-;; (define-io-param-feature feat-rsrc-tags-p ioring-feat-rsrc-tags)
-;; (define-io-param-feature feat-cqe-skip-p ioring-feat-cqe-skip)
-;; (define-io-param-feature feat-linked-file-p ioring-feat-linked-file)
+(define-io-param-flag setup-sqpoll-p ioring-setup-sqpoll)
+(define-io-param-flag setup-iopoll-p ioring-setup-iopoll)
+(define-io-param-flag setup-single-issuer-p ioring-setup-single-issuer)
+(define-io-param-feature feat-single-mmap-p ioring-feat-single-mmap)
+(define-io-param-feature feat-nodrop-p ioring-feat-nodrop)
+(define-io-param-feature feat-submit-stable-p ioring-feat-submit-stable)
+(define-io-param-feature feat-rw-cur-pos-p ioring-feat-rw-cur-pos)
+(define-io-param-feature feat-cur-personality-p ioring-feat-cur-personality)
+(define-io-param-feature feat-fast-poll-p ioring-feat-fast-poll)
+(define-io-param-feature feat-poll-32bits-p ioring-feat-poll-32bits)
+(define-io-param-feature feat-sqpoll-nonfixed-p ioring-feat-sqpoll-nonfixed)
+(define-io-param-feature feat-ext-arg-p ioring-feat-ext-arg)
+(define-io-param-feature feat-native-workers-p ioring-feat-native-workers)
+(define-io-param-feature feat-rsrc-tags-p ioring-feat-rsrc-tags)
+(define-io-param-feature feat-cqe-skip-p ioring-feat-cqe-skip)
+(define-io-param-feature feat-linked-file-p ioring-feat-linked-file)
 
 (defmethod build ((self io-params) &key &allow-other-keys)
   (with-slots (sq-entries cq-entries flags sq-thread-cpu sq-thread-idle features wq-fd sq-off cq-off) self
