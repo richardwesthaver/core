@@ -8,7 +8,8 @@
 (in-package :uring.sys)
 
 (defsystem :uring
-  :depends-on (:sb-grovel :std)
+  :depends-on (:sb-grovel :std :dat)
+  :serial t
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :uring)

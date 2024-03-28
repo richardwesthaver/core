@@ -23,6 +23,17 @@
 
 (define-alien-type io-uring-cq* (* (struct io-uring-cq)))
 
+(defstruct completion-queue-offsets
+  (head 0 :type fixnum)
+  (tail 0 :type fixnum)
+  (ring-mask 0 :type fixnum)
+  (ring-entries 0 :type fixnum)
+  (overflow 0 :type fixnum)
+  (cqes 0 :type fixnum)
+  (flags 0 :type fixnum)
+  ;; resv1
+  (user-addr 0 :type fixnum))
+
 (defstruct completion-queue
   (head 0 :type fixnum)
   (tail 0 :type fixnum)

@@ -25,6 +25,17 @@
 
 (define-alien-type io-uring-sq* (* (struct io-uring-sq)))
 
+(defstruct submission-queue-offsets
+  (head 0 :type fixnum)
+  (tail 0 :type fixnum)
+  (ring-mask 0 :type fixnum)
+  (ring-entries 0 :type fixnum)
+  (flags 0 :type fixnum)
+  (dropped 0 :type fixnum)
+  (array 0 :type fixnum)
+  ;; resv1
+  (user-addr 0 :type fixnum))
+
 ;; used to send IO requests to the kernel
 (defstruct submission-queue
   (head 0 :type fixnum)

@@ -1,6 +1,6 @@
 (defsystem :io
-  :description "Data formats"
-  :depends-on (:cl-ppcre :std :obj :uring)
+  :description "Lisp IO Interface"
+  :depends-on (:cl-ppcre :std :obj :uring :sb-bsd-sockets)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg"))
