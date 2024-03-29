@@ -18,6 +18,43 @@
 (defalien-int io-uring-check-version (major int) (minor int))
 
 (define-alien-type nil
+  (struct io-uring-sq
+          (khead (* unsigned-int))
+          (ktail (* unsigned-int))          
+          (kring-mask (* unsigned-int))
+          (kring-entries (* unsigned-int))
+          (kflags (* unsigned-int))
+          (kdropped (* unsigned-int))
+          (array (* unsigned-int))
+          (sqes (* (struct io-uring-sqe)))
+          (sqe-head unsigned-int)
+          (sqe-tail unsigned-int)
+          (ring-sz sb-unix:size-t)
+          (ring-ptr (* t))
+          (ring-mask unsigned-int)
+          (ring-entries unsigned-int)
+          (pad (array unsigned-int 2))))
+
+(define-alien-type io-uring-sq* (* (struct io-uring-sq)))
+
+(define-alien-type nil
+  (struct io-uring-cq
+          (khead (* unsigned-int))
+          (ktail (* unsigned-int))
+          (kring-mask (* unsigned-int))
+          (kring-entries (* unsigned-int))
+          (kflags (* unsigned-int))
+          (koverflow (* unsigned-int))
+          (cqes (* (struct io-uring-cqe)))
+          (ring-sz sb-unix:size-t)
+          (ring-ptr (* t))
+          (ring-mask unsigned-int)
+          (ring-entries unsigned-int)
+          (pad (array unsigned-int 2))))
+
+(define-alien-type io-uring-cq* (* (struct io-uring-cq)))
+
+(define-alien-type nil
     (struct io-uring
             (sq (struct io-uring-sq))
             (cq (struct io-uring-cq))

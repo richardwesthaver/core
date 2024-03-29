@@ -5,26 +5,6 @@
 ;;; Code:
 (in-package :uring)
 
-(define-alien-type nil
-  (struct io-uring-sq
-          (khead (* unsigned-int))
-          (ktail (* unsigned-int))          
-          (kring-mask (* unsigned-int))
-          (kring-entries (* unsigned-int))
-          (kflags (* unsigned-int))
-          (kdropped (* unsigned-int))
-          (array (* unsigned-int))
-          (sqes (* (struct io-uring-sqe)))
-          (sqe-head unsigned-int)
-          (sqe-tail unsigned-int)
-          (ring-sz sb-unix:size-t)
-          (ring-ptr (* t))
-          (ring-mask unsigned-int)
-          (ring-entries unsigned-int)
-          (pad (array unsigned-int 2))))
-
-(define-alien-type io-uring-sq* (* (struct io-uring-sq)))
-
 (defstruct submission-queue-offsets
   (head 0 :type fixnum)
   (tail 0 :type fixnum)
@@ -51,7 +31,7 @@
 
 ;; 64-byte SQE
 (defstruct submission-queue-entry
-  (opcode 0 :type io-opcode)
+  (opcode 0 :type octet)
   (flags 0 :type octet)
   (ioprio 0 :type (unsigned-byte 16))
   (fd 0 :type sb-posix:file-descriptor)
@@ -75,12 +55,14 @@
   (with-slots (opcode flags ioprio fd off addr len flags2 user-data buf-index personality file-index addr2) self
     (with-alien ((a (array unsigned-char 80)))
       (clone-octets-to-alien (u64-bytes addr2) a)
-      (with-io-uring-sqe res
-          ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
-           (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
-           (file-index file-index)
-           (addr2 a))
-        res))))
+      ;; TODO
+      ;; (with-io-uring-sqe res
+      ;;     ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
+      ;;      (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
+      ;;      (file-index file-index)
+      ;;      (addr2 a))
+      ;;   res)
+      )))
 
 ;; 128-byte SQE
 (defstruct submission-queue-entry-128
@@ -105,11 +87,12 @@
   (with-slots (opcode flags ioprio fd off addr len flags2 user-data buf-index personality file-index cmd) self
     (with-alien ((a (array unsigned-char 80)))
       (clone-octets-to-alien cmd a)
-      (with-io-uring-sqe res
-          ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
-           (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
-           (file-index file-index) (addr2 a))
-        res))))
+      ;; (with-io-uring-sqe res
+      ;;     ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
+      ;;      (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
+      ;;      (file-index file-index) (addr2 a))
+      ;;   res)
+      )))
 ;;; Flags
 
 ;; sync, needs-wakeup-p, dropped, overflowp, taskrunp, push,

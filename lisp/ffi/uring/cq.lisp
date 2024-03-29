@@ -5,24 +5,6 @@
 ;;; Code:
 (in-package :uring)
 
-;; Raw completion-queue
-(define-alien-type nil
-  (struct io-uring-cq
-          (khead (* unsigned-int))
-          (ktail (* unsigned-int))
-          (kring-mask (* unsigned-int))
-          (kring-entries (* unsigned-int))
-          (kflags (* unsigned-int))
-          (koverflow (* unsigned-int))
-          (cqes (* (struct io-uring-cqe)))
-          (ring-sz sb-unix:size-t)
-          (ring-ptr (* t))
-          (ring-mask unsigned-int)
-          (ring-entries unsigned-int)
-          (pad (array unsigned-int 2))))
-
-(define-alien-type io-uring-cq* (* (struct io-uring-cq)))
-
 (defstruct completion-queue-offsets
   (head 0 :type fixnum)
   (tail 0 :type fixnum)
@@ -76,6 +58,7 @@
   (with-slots (entry) self
     (with-slots (user-data res flags) entry
       (with-alien ((big-cqe (array unsigned-long 2)))
+        ;; TODO this may need to change to align with new version of WITH-IO-URING-SQE
         (with-io-uring-cqe ret
             ((user-data user-data) (res res) (flags flags) (big-cqe big-cqe))
           ret)))))

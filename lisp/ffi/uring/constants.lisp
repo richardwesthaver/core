@@ -3,8 +3,7 @@
                 "linux/fs.h" "liburing/io_uring_version.h" "liburing/barrier.h"
                 "linux/types.h" "liburing/io_uring.h")
 
-(
- ;; sched.h
+( ;; sched.h
  (:integer cpu-setsize "__CPU_SETSIZE")
  (:integer ncpu-bits "__NCPUBITS")
  (:integer sigset-nwords "_SIGSET_NWORDS")
@@ -29,20 +28,6 @@
  (:integer nr-io-uring-setup "__NR_io_uring_setup") ;; not workin - C macro trouble?
  (:integer nr-io-uring-register "__NR_io_uring_register")
  (:integer nr-io-uring-enter "__NR_io_uring_enter")
- (:structure io-uring-sqe ("struct io_uring_sqe"
-                           (unsigned-char opcode "__u8" "opcode")
-                           (unsigned-char flags "__u8" "flags")
-                           (unsigned-short ioprio "__u16" "ioprio")
-                           (int fd "__s32" "fd")
-                           (unsigned-long off "__u64" "off")
-                           (unsigned-long addr "__u64" "addr")
-                           (unsigned-int len "__u32" "len")
-                           (unsigned-int flags2 "__u32" "xattr_flags")
-                           (unsigned-long user-data "__u64" "user_data")
-                           (unsigned-short buf-index "__u16" "buf_index")
-                           (unsigned-short personality "__u16" "personality")
-                           (unsigned-int file-index "__u32" "file_index")
-                           ((array unsigned-char 80) addr2 "__u8" "cmd[0]")))
  (:integer ioring-file-index-alloc "IORING_FILE_INDEX_ALLOC")
  (:enum iosqe ((iosqe-fixed-file-bit "IOSQE_FIXED_FILE_BIT")
                (iosqe-io-drain-bit "IOSQE_IO_DRAIN_BIT")
@@ -260,22 +245,11 @@
                              ;; (unsigned-short resv "__u16" "resv")
                              ;; ((array unsigned-int 3) resv2 "__u32" "resv2[3]")
                              ((array (struct io-uring-probe-op)) ops "struct io_uring_probe_op" "ops[1]")))
- (:structure io-uring-restriction ("struct io_uring_restriction"
-                                   (unsigned-short opcode "__u16" "opcode")
-                                   (unsigned-char register "__u8" "register_op")
-                                   (unsigned-char resv "__u8" "resv")
-                                   ((array unsigned-int 3) resv2 "__u32" "resv2[3]")))
  (:structure io-uring-buf ("struct io_uring_buf"
                            (unsigned-long addr "__u64" "addr")
                            (unsigned-int len "__u32" "len")
                            (unsigned-short bid "__u16" "bid")
                            (unsigned-short resv "__u16" "resv")))
- (:structure io-uring-buf-ring ("struct io_uring_buf_ring"
-                                (unsigned-long resv1 "__u64" "resv1")
-                                (unsigned-int resv2 "__u32" "resv2")
-                                (unsigned-short resv3 "__u16" "resv3")
-                                (unsigned-short resv4 "__u16" "tail")))
-                           
  ;; why is this defined as enum in io_uring.h?
  (:enum iou-pbuf ((iou-pbuf-ring-mmap "IOU_PBUF_RING_MMAP")))
  (:structure io-uring-buf-reg ("struct io_uring_buf_reg"

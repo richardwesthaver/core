@@ -17,6 +17,8 @@
 
 ;; ref: https://kernel.dk/io_uring.pdf
 
+;; guide: https://unixism.net/loti/low_level.html
+
 ;; tokio/io-uring: https://github.com/tokio-rs/io-uring
 
 #|
@@ -53,3 +55,115 @@ queue (CQ), and form the foundation of the new interface.
 
 (in-package :uring)
 (define-alien-loader "uring" t "/usr/lib/")
+
+(define-alien-type kernel-rwf-t int)
+
+(define-alien-type io-uring-restriction-slot2
+  (union io-uring-restriction-slot2
+         (register-op unsigned-char)
+         (sqe-op unsigned-char)
+         (sqe-flags unsigned-char)))
+
+(define-alien-type io-uring-restriction
+  (struct io-uring-restriction
+          (opcode unsigned-short)
+          (op-or-flags (union io-uring-restriction-slot2))
+          (resv unsigned-char)
+          (resv2 (array unsigned-int 3))))
+
+(define-alien-type io-uring-buf-ring-resv-and-tail
+  (struct io-uring-buf-ring-resv-and-tail
+          (resv1 unsigned-long)
+          (resv2 unsigned-int)
+          (resv3 unsigned-short)
+          (tail unsigned-short)))
+
+(define-alien-type io-uring-buf-ring-slot1
+  (union io-uring-buf-ring-slot1
+         (resv-and-tail io-uring-buf-ring-resv-and-tail)
+         (bufs (array (struct io-uring-buf) 0))))
+
+(define-alien-type io-uring-buf-ring
+  (struct io-uring-buf-ring
+          (tail-or-bufs (union io-uring-buf-ring-slot1))))
+
+(define-alien-type io-uring-sqe-cmd-op-and-pad
+  (struct io-uring-sqe-cmd-op-and-pad
+          (cmd-op unsigned-int)
+          (pad unsigned-int)))
+
+(define-alien-type io-uring-sqe-slot5
+  (union io-uring-sqe-slot5
+         (off unsigned-long)
+         (addr2 unsigned-long)
+         (cmd-op-and-pad (struct io-uring-sqe-cmd-op-and-pad))))
+
+(define-alien-type io-uring-sqe-slot6
+  (union io-uring-sqe-slot6
+         (addr unsigned-long)
+         (splice-off-in unsigned-long)))
+
+(define-alien-type io-uring-sqe-slot8
+  (union io-uring-sqe-slot8
+         (rw-flags kernel-rwf-t)
+         (fsync-flags unsigned-int)
+         (poll-events unsigned-short)
+         (poll32-events unsigned-int)
+         (sync-range-flags unsigned-int)
+         (msg-flags unsigned-int)
+         (timeout-flags unsigned-int)
+         (accept-flags unsigned-int)
+         (cancel-flags unsigned-int)
+         (open-flags unsigned-int)
+         (statx-flags unsigned-int)
+         (fadvise-advice unsigned-int)
+         (splice-flags unsigned-int)
+         (rename-flags unsigned-int)
+         (unlink-flags unsigned-int)
+         (hardlink-flags unsigned-int)
+         (xattr-flags unsigned-int)
+         (msg-ring-flags unsigned-int)
+         (uring-cmd-flags unsigned-int)))
+         
+(define-alien-type io-uring-sqe-slot10
+  (union io-uring-sqe-slot10
+         (buf-index unsigned-short)
+         (buf-group unsigned-short)))
+
+(define-alien-type io-uring-sqe-addr-len-and-pad
+  (struct io-uring-sqe-addr-len-and-pad
+          (addr-len unsigned-short)
+          (pad3 (array unsigned-short 1))))
+
+(define-alien-type io-uring-sqe-slot12
+  (union io-uring-sqe-slot12
+         (splice-fd-in int)
+         (file-index unsigned-int)
+         (addr-len-and-pad (struct io-uring-sqe-addr-len-and-pad))))
+
+(define-alien-type io-uring-sqe-addr3-and-pad
+  (struct io-uring-sqe-addr3-and-pad
+          (addr3 unsigned-long)
+          (pad2 (array unsigned-long 1))))
+
+(define-alien-type io-uring-sqe-slot13
+  (union io-uring-sqe-slot13
+         (addr3-and-pad (struct io-uring-sqe-addr3-and-pad))
+         (cmd (array unsigned-char 0))))
+
+(define-alien-type io-uring-sqe
+  (struct io-uring-sqe
+          (opcode unsigned-char)
+          (flags unsigned-char)
+          (ioprio unsigned-short)
+          (fd int)
+          (off-addr-cmd (union io-uring-sqe-slot5))
+          (addr-or-splice-off-in (union io-uring-sqe-slot6))
+          (len unsigned-int)
+          (flags2 (union io-uring-sqe-slot8))
+          (user-data unsigned-long)
+          (buf-opt (union io-uring-sqe-slot10))
+          (personality unsigned-short)
+          (splice-index-addr (union io-uring-sqe-slot12))
+          (addr-or-cmd (union io-uring-sqe-slot13))))
+          
