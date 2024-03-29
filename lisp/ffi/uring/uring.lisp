@@ -79,18 +79,6 @@ which accepts a boolean value and automatically adjust the slot."
                                (wq-fd wq-fd) (sq-off sq-off) (cq-off cq-off))
       res)))
 
-(define-alien-type nil
-    (struct io-uring
-            (sq (struct io-uring-sq))
-            (cq (struct io-uring-cq))
-            (flags unsigned-int)
-            (ring-fd int)
-            (features unsigned-int)
-            (enter-ring-fd int)
-            (int-flags char)
-            (pad (array char 3))
-            (pad2 unsigned-int)))
-
 ;; io-uring instance
 (defstruct uring
   (sq nil :type submission-queue)

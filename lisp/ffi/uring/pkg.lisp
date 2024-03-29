@@ -40,8 +40,16 @@ queue (CQ), and form the foundation of the new interface.
 ;;; Code:
 (defpackage :uring
   (:use :cl :std :sb-alien :dat/proto)
-  (:export :load-uring))
+  (:export :load-uring :io-uring-cq :io-uring-cq*
+   :completion-queue-offsets :completion-queue
+   :completion-queue-entry :completion-queue-entry-32
+   :io-uring-sq :io-uring-sq* :submission-queue-offsets :submission-queue 
+   :submission-queue-entry :submission-queue-entry-128
+   :io-memory-map :parse-io-uring-params :io-params :io-uring
+   :uring :*default-io-params* :uring-builder :setup-queue
+   :make-queue :build-submitter :sigset-t :cpu-set-t
+   :cpu-mask-t :recv-msg-out :cancel-builder :mmapped-region))
+   
 
 (in-package :uring)
 (define-alien-loader "uring" t "/usr/lib/")
-(load-uring)

@@ -1,4 +1,4 @@
-;;; uring/alien.lisp --- URING alien routines
+;;; uring/alien.lisp --- supplementary alien types
 
 ;;
 
@@ -17,14 +17,23 @@
 (defalien-int io-uring-minor-version)
 (defalien-int io-uring-check-version (major int) (minor int))
 
-;;; Syscalls
-;; register, setup, enter
+(define-alien-type nil
+    (struct io-uring
+            (sq (struct io-uring-sq))
+            (cq (struct io-uring-cq))
+            (flags unsigned-int)
+            (ring-fd int)
+            (features unsigned-int)
+            (enter-ring-fd int)
+            (int-flags char)
+            (pad (array char 3))
+            (pad2 unsigned-int)))
 
 (define-alien-routine io-uring-get-probe-ring (* io-uring-probe) (ring (* (struct io-uring))))
 (define-alien-routine io-uring-get-probe (* io-uring-probe))
-(define-alien-routine io-uring-free-probe void (* io-uring-probe))
+(define-alien-routine io-uring-free-probe void (p (* (struct io-uring-probe))))
 
-(defalien-int io-uring-opcode-supported (p (* (struct io-uring-probe))) (op int))
+;; (defalien-int io-uring-opcode-supported (p (* (struct io-uring-probe))) (op int))
 (defalien-int io-uring-queue-init-mem
   (entries unsigned)
   (ring (* (struct io-uring)))
@@ -36,93 +45,107 @@
   (p (* (struct io-uring-params))))
 (defalien-int io-uring-queue-init (entries int) (ring (* (struct io-uring))) (flags unsigned))
 (defalien-int io-uring-queue-mmap (fd int) (p (* (struct io-uring-params))) (ring (* (struct io-uring))))
-(defalien-int io-uring-ring-dontfork (ring (* (struct io-uring))))
-(defalien-int io-uring-queue-exit (ring (* (struct io-uring))))
-(defalien-int io-uring-peek-batch-cqe (ring (* (struct io-uring))) (cqes (array (* (struct io-uring-cqe)))) (count unsigned))
-(defalien-int io-uring-wait-cqes
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-ring-dontfork)
+(def-with-ring io-uring-queue-exit)
+(def-with-ring io-uring-peek-batch-cqe (cqes (array (* (struct io-uring-cqe)))) (count unsigned))
+(def-with-ring io-uring-wait-cqes
   (cqe-ptr (* (* (struct io-uring-cqe))))
   (wait-nr unsigned)
   (ts (* (struct kernel-timespec)))
   (sigmask (* (struct sigset-t)))) ;; maybe should be (* t)?
-(defalien-int io-uring-wait-cqe-timeout
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-wait-cqe-timeout
   (cqe-ptr (* (* (struct io-uring-cqe))))
   (ts (* (struct kernel-timespec))))
-(defalien-int io-uring-submit (ring (* (struct io-uring))))
-(defalien-int io-uring-submit-and-wait 
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-submit)
+(def-with-ring io-uring-submit-and-wait 
   (wait-nr unsigned))
-(defalien-int io-uring-submit-and-wait-timeout
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-submit-and-wait-timeout
   (cqe-ptr (* (* (struct io-uring-cqe))))
   (ts (* (struct kernel-timespec))))
-(defalien-int io-uring-register-buffers
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-register-buffers
   (iovecs (* (struct iovec)))
   (nr-iovecs unsigned))
-(defalien-int io-uring-register-buffer-tags
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-register-buffer-tags
   (iovecs (* (struct iovec)))
   (tags (array unsigned-long))
   (nr unsigned))
-(defalien-int io-uring-register-buffer-sparse
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-register-buffer-sparse
   (nr unsigned))
-(defalien-int io-uring-register-buffer-update-tag
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-register-buffer-update-tag
   (off unsigned)
   (iovecs (* (struct iovec)))
   (tags (array unsigned-long))
   (nr unsigned))
-(defalien-int io-uring-unregister-buffers (ring (* (struct io-uring))))
-  
-(defalien-int io-uring-register-files
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-unregister-buffers)
+(def-with-ring io-uring-register-files
   (files (array int))
   (nr-files unsigned))
-
-(defalien-int io-uring-register-files-tags
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-register-files-tags
   (files (array int))
   (tags (array unsigned-long))
   (nr unsigned))
-
-(defalien-int io-uring-register-files-sparse
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-register-files-sparse
   (nr unsigned))
-
-(defalien-int io-uring-register-files-update-tags
-  (ring (* (struct io-uring)))
+(def-with-ring io-uring-register-files-update-tag
   (off unsigned)
   (files (array int))
   (tags (array unsigned-long))
   (nr-files unsigned))
-(defalien-int io-uring-unregister-files (ring (* (struct io-uring))))
+(def-with-ring io-uring-unregister-files)
+(def-with-ring io-uring-register-files-update
+  (off unsigned)
+  (files (array int))
+  (tags (array unsigned-long))
+  (nr-files unsigned))
+(def-with-ring io-uring-register-eventfd (fd int))
+(def-with-ring io-uring-register-eventfd-async (fd int))
+(def-with-ring io-uring-unregister-eventfd)
+(def-with-ring io-uring-register-probe
+  (p (* (struct io-uring-probe)))
+  (nr unsigned))
+(def-with-ring io-uring-register-personality)
+(def-with-ring io-uring-unregister-personality (fd int))
+(def-with-ring io-uring-register-restrictions (res (array (struct io-uring-restriction))) (nr-res unsigned-int))
+;; (defalien-int io-uring-register
+;;   (fd int)
+;;   (opcode unsigned-int)
+;;   (args (* t))
+;;   (nr-args unsigned-int))
+(def-with-ring io-uring-enable-rings)
+(def-with-ring __io-uring-sqring-wait) ;;fixme
+(def-with-ring io-uring-register-iowq-aff (cpusz size-t) (mask (* (struct cpu-set-t))))
+(def-with-ring io-uring-unregister-iowq-aff)
+(def-with-ring io-uring-register-iowq-max-workers (values (array unsigned-int)))
+(def-with-ring io-uring-register-ring-fd)
+(def-with-ring io-uring-unregister-ring-fd)
+(def-with-ring io-uring-close-ring-fd)
+(def-with-ring io-uring-register-buf-ring
+  (reg (* (struct io-uring-buf-reg))) (flags unsigned-int))
+(def-with-ring io-uring-unregister-buf-ring (bgid int))
+(def-with-ring io-uring-register-sync-cancel (reg (* (struct io-uring-sync-cancel-reg))))
+(def-with-ring io-uring-register-file-alloc-range (off unsigned) (len unsigned))
+(def-with-ring io-uring-get-events)
+(def-with-ring io-uring-submit-and-get-events)
 
-(defalien-int io-uring-register
-  (fd int)
-  (opcode unsigned-int)
-  (args (* t))
-  (nr-args unsigned-int))
-
-;;...
-
-(defalien-int io-uring-enable-rings (ring (* (struct io-uring))))
-(defalien-int io-uring-sqring-wait (ring (* (struct io-uring))))
-
-;;...
-(defalien-int io-uring-setup
-  (entries unsigned-int)
-  (p (* (struct io-uring-params))))
-
+;;; Syscalls
 (defalien-int io-uring-enter
   (fd int)
   (to-submit unsigned-int)
   (min-complete unsigned-int)
   (flags unsigned-int)
-  (arg (* t))
-  (size unsigned-long))
+  (sig (* (struct sigset-t))))
+
+(defalien-int io-uring-enter2
+  (fd int)
+  (to-submit unsigned-int)
+  (min-complete unsigned-int)
+  (flags unsigned-int)
+  (sig (* (struct sigset-t)))
+  (sz size-t))
+(defalien-int io-uring-setup
+  (entries unsigned-int)
+  (p (* (struct io-uring-params))))
+(defalien-int io-uring-register (fd unsigned-int) (opcode unsigned-int) (arg (* t)) (nr-args unsigned-int))
 
 (define-alien-routine io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
   (ring (* (struct io-uring)))
@@ -135,7 +158,11 @@
   (br (* (struct io-uring-buf-ring)))
   (nentries unsigned-int)
   (bgid int))
-;;...
+;; __io_uring_get_cqe
 
 ;; peek-cqe wait-cqe get-sqe
 ;; io-uring-buf-ring-init
+
+;;..
+(define-alien-routine io-uring-mlock-size ssize-t (entries unsigned) (flags unsigned))
+(define-alien-routine io-uring-mlock-size-params ssize-t (entries unsigned) (p (* (struct io-uring-params))))

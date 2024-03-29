@@ -4,6 +4,9 @@
                 "linux/types.h" "liburing/io_uring.h")
 
 (
+ ;; sched.h
+ (:integer cpu-setsize "__CPU_SETSIZE")
+ (:integer ncpu-bits "__NCPUBITS")
  (:integer sigset-nwords "_SIGSET_NWORDS")
  ;; sys/uio.h
  (:structure iovec ("struct iovec"
@@ -307,4 +310,5 @@
                                    (unsigned-int payloadlen "__u32" "payloadlen")
                                    (unsigned-int flags "__u32" "flags")))
  (:enum socket-uring-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
-                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ"))))
+                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ")))
+ (:integer liburing-udata-timeout "LIBURING_UDATA_TIMEOUT"))

@@ -10,6 +10,12 @@
   (struct sigset-t
           (val (array unsigned-long #.sigset-nwords))))
 
+(define-alien-type cpu-mask-t unsigned-long)
+
+(define-alien-type nil
+  (struct cpu-set-t
+          (bits (array cpu-mask-t #.(/ cpu-setsize ncpu-bits)))))
+
 ;; statx epoll-event __kernel_rwf_t
 
 ;; target fd/u32
@@ -36,9 +42,7 @@
   (control-data #() :type octet-vector)
   (payload-data #() :type octet-vector))
 
-
 ;; (defun parse-recv-msg-out (buf header) msghdr..)
-
 
 ;;; Cancel
 (define-alien-type async-cancel-flags int)
