@@ -6,6 +6,10 @@
 
 (in-package :uring)
 
+(define-alien-type nil
+  (struct sigset-t
+          (val (array unsigned-long #.sigset-nwords))))
+
 ;; statx epoll-event __kernel_rwf_t
 
 ;; target fd/u32
@@ -21,7 +25,6 @@
 ;; flags may contain ABS to indicate absolute time. When using
 ;; absolute time, the kernel uses its monotonic clock unless flags
 ;; contain BOOTTIME/REALTIME
-(load-uring)
 
 ;; ioring-msg -- enum
 

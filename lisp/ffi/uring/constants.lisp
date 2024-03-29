@@ -3,7 +3,9 @@
                 "linux/fs.h" "liburing/io_uring_version.h" "liburing/barrier.h"
                 "linux/types.h" "liburing/io_uring.h")
 
-( ;; sys/uio.h
+(
+ (:integer sigset-nwords "_SIGSET_NWORDS")
+ ;; sys/uio.h
  (:structure iovec ("struct iovec"
                     (unsigned-long iov-base "ptr_t" "iov_base")
                     (sb-unix:size-t iov-len "size_t" "iov_len")))

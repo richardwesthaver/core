@@ -45,17 +45,3 @@ queue (CQ), and form the foundation of the new interface.
 (in-package :uring)
 (define-alien-loader "uring" t "/usr/lib/")
 (load-uring)
-;;; barrier.h
-;; (defun io-uring-write-once (var val))
-;; (defun io-uring-read-once (var))
-;; (defun io-uring-smp-store-release (p v))
-;; (defun io-uring-smp-load-acquire (p))
-;; (defun io-uring-smp-mb ())
-
-;;; liburing.h
-(defmacro defalien-int (name &rest args)
-  `(define-alien-routine ,name int ,@args))
-
-(defalien-int io-uring-major-version)
-(defalien-int io-uring-minor-version)
-(defalien-int io-uring-check-version (major int) (minor int))

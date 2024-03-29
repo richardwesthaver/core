@@ -84,7 +84,7 @@
 
 ;; 128-byte SQE
 (defstruct submission-queue-entry-128
-  (opcode 0 :type io-opcode)
+  (opcode 0 :type octet)
   (flags 0 :type octet)
   (ioprio 0 :type (unsigned-byte 16))
   (fd 0 :type sb-posix:file-descriptor)
