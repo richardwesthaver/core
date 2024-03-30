@@ -51,7 +51,8 @@
                              (:file "io")
                              (:file "document")
                              (:file "disk")))
-               (:file "cfg"))
+               (:file "cfg")
+               (:file "build"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests

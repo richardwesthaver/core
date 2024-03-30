@@ -307,6 +307,10 @@
    :next-sequence
    :sort-docs))
 
+(defpackage :obj/build
+  (:use :cl :std)
+  (:export :build :build-from))
+
 (uiop:define-package :obj
     (:use-reexport :list :hash :color
      :seq :tree :graph :tbl

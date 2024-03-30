@@ -15,6 +15,38 @@
 
 (defvar *io-opcodes* nil)
 
+(defmacro with-io-sqe ((var val) &body body)
+  `(with-alien ((,var io-uring-sqe ,val))
+     ,@body))
+
+(defmacro with-new-io-sqe (var &body body)
+  `(with-alien ((,var io-uring-sqe))
+     ,@body))
+
+(defmacro with-io-sqe-op ((var op val) &body body)
+  `(with-io-sqe (,var ,val)
+     (setf (slot ,var 'opcode) ,op)
+     ,@body
+     ,var))
+
+(defmacro with-new-io-sqe-op ((var op) &body body)
+  `(with-new-io-sqe ,var
+     (setf (slot ,var 'opcode) ,op)
+     ,@body
+     ,var))
+
+(defmacro with-io-cqe (var &body body)
+  `(with-alien ((,var io-uring-cqe))
+     ,@body))
+
+(defmacro with-io-uring ((var &optional val) &body body)
+  `(let ((,var ,(or val (make-alien io-uring))))
+     ,@body))
+
+(defmacro with-new-io-uring (var &body body)
+  `(with-alien ((,var io-uring))
+     ,@body))
+
 ;; io_uring_prep_*
 (defmacro def-io-op (val name slots &body builder)
   "Define a wrapper for an io-uring opcode. This macro will create a
@@ -27,19 +59,10 @@ method for this struct, with CONST bound to VAR."
        (defconstant ,const-name ,val)
        (defstruct ,struct-name ,@slots)
        (defmethod build ((self ,struct-name) &key &allow-other-keys)
-         ,@builder)
-       (pushnew ',alien-name *io-opcodes*))))
-
-(defmacro with-io-sqe (var &body body)
-  `(with-alien ((,var io-uring-sqe))
-     ,@body))
-
-(defmacro with-io-sqe-op ((var op) &body body)
-  `(with-io-sqe ,var
-     (setf (slot ,var 'opcode) ,op)
-     ,@body
-     ,var))
-
-(defmacro with-io-cqe (var &body body)
-  `(with-alien ((,var io-uring-cqe))
-     ,@body))
+         (with-new-io-sqe-op (sqe ,const-name)
+           ,@builder))
+       (defmethod build-from ((self ,struct-name) from &key &allow-other-keys)
+         (with-io-sqe-op (sqe ,const-name from)
+           ,@builder))
+       (pushnew ',alien-name *io-opcodes*)
+       (export '(,struct-name ,(symbolicate "MAKE-" struct-name) ,const-name ,alien-name)))))

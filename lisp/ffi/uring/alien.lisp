@@ -17,59 +17,6 @@
 (defalien-int io-uring-minor-version)
 (defalien-int io-uring-check-version (major int) (minor int))
 
-(defconstant +nr-io-uring-setup+ 425)
-(defconstant +nr-io-uring-enter+ 426)
-(defconstant +nr-io-uring-register+ 427)
-
-(define-alien-type nil
-  (struct io-uring-sq
-          (khead (* unsigned-int))
-          (ktail (* unsigned-int))          
-          (kring-mask (* unsigned-int))
-          (kring-entries (* unsigned-int))
-          (kflags (* unsigned-int))
-          (kdropped (* unsigned-int))
-          (array (* unsigned-int))
-          (sqes (* (struct io-uring-sqe)))
-          (sqe-head unsigned-int)
-          (sqe-tail unsigned-int)
-          (ring-sz sb-unix:size-t)
-          (ring-ptr (* t))
-          (ring-mask unsigned-int)
-          (ring-entries unsigned-int)
-          (pad (array unsigned-int 2))))
-
-(define-alien-type io-uring-sq* (* (struct io-uring-sq)))
-
-(define-alien-type nil
-  (struct io-uring-cq
-          (khead (* unsigned-int))
-          (ktail (* unsigned-int))
-          (kring-mask (* unsigned-int))
-          (kring-entries (* unsigned-int))
-          (kflags (* unsigned-int))
-          (koverflow (* unsigned-int))
-          (cqes (* (struct io-uring-cqe)))
-          (ring-sz sb-unix:size-t)
-          (ring-ptr (* t))
-          (ring-mask unsigned-int)
-          (ring-entries unsigned-int)
-          (pad (array unsigned-int 2))))
-
-(define-alien-type io-uring-cq* (* (struct io-uring-cq)))
-
-(define-alien-type nil
-    (struct io-uring
-            (sq (struct io-uring-sq))
-            (cq (struct io-uring-cq))
-            (flags unsigned-int)
-            (ring-fd int)
-            (features unsigned-int)
-            (enter-ring-fd int)
-            (int-flags char)
-            (pad (array char 3))
-            (pad2 unsigned-int)))
-
 (define-alien-routine io-uring-get-probe-ring (* io-uring-probe) (ring (* (struct io-uring))))
 (define-alien-routine io-uring-get-probe (* io-uring-probe))
 (define-alien-routine io-uring-free-probe void (p (* (struct io-uring-probe))))
@@ -199,10 +146,6 @@
   (br (* (struct io-uring-buf-ring)))
   (nentries unsigned-int)
   (bgid int))
-;; __io_uring_get_cqe
-
-;; peek-cqe wait-cqe get-sqe
-;; io-uring-buf-ring-init
 
 ;;..
 (define-alien-routine io-uring-mlock-size ssize-t (entries unsigned) (flags unsigned))
