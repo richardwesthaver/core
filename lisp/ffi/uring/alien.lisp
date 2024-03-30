@@ -17,6 +17,10 @@
 (defalien-int io-uring-minor-version)
 (defalien-int io-uring-check-version (major int) (minor int))
 
+(defconstant +nr-io-uring-setup+ 425)
+(defconstant +nr-io-uring-enter+ 426)
+(defconstant +nr-io-uring-register+ 427)
+
 (define-alien-type nil
   (struct io-uring-sq
           (khead (* unsigned-int))

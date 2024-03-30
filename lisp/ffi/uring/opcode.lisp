@@ -9,12 +9,82 @@
 ;;; Code:
 (in-package :uring)
 
-(def-io-op 0 nop nil)
-(def-io-op 1 ready nil)
-(def-io-op 2 writev nil)
-(def-io-op 3 fsync nil)
-(def-io-op 4 read-fixed nil)
-(def-io-op 5 write-fixed nil)
+(defun io-uring-setup-rw ())
+
+(def-io-op 0 nop ()
+  (with-io-sqe-op (s +io-nop+)
+    (setf (slot s 'fd) -1)))
+
+;; preadv2(2)
+(def-io-op 1 readv
+    ((fd -1 :type file-descriptor)
+     (iovec #() :type (array octet-vector))
+     (len 0 :type fixnum)
+     (ioprio 0 :type (unsigned-byte 16))
+     (offset 0 :type (unsigned-byte 64))
+     (rw-flags 0 :type fixnum)
+     (buf-group 0 :type (unsigned-byte 16)))
+  (with-slots (fd iovec len ioprio offset rw-flags buf-group) self
+    (with-io-sqe-op (s +io-readv+)
+      (setf (slot s 'fd) fd)
+      (setf (slot s 'ioprio) ioprio)
+      (setf (slot s 'len) len)
+      ;; (setf slot s 'iovecs) iovecs)
+      ;; (setf (slot s 'rw-flags) rw-flags)
+      ;; (setf (slot s 'buf-group) buf-group)
+      )))
+
+;; pwritev2(2)
+(def-io-op 2 writev
+    ((fd -1 :type file-descriptor)
+     (iovec #() :type (array octet-vector))
+     (len 0 :type fixnum)
+     (ioprio 0 :type (unsigned-byte 16))
+     (offset 0 :type (unsigned-byte 64))
+     (rw-flags 0 :type fixnum))
+  (with-slots (fd iovec len ioprio offset rw-flags) self
+    (with-io-sqe-op (s +io-writev+)
+      (setf (slot s 'fd) fd)
+      (setf (slot s 'ioprio) ioprio)
+      (setf (slot s 'len) len))))
+;; fsync(2)     
+(def-io-op 3 fsync
+    ((fd -1 :type file-descriptor)
+     (flags 0 :type fixnum))
+  (with-slots (fd flags) self
+    (with-io-sqe-op (s +io-fsync+)
+      (setf (slot s 'fd) fd))))      
+
+;; read from pre-registered buffers
+(def-io-op 4 read-fixed
+    ((fd -1 :type file-descriptor)
+     (buf #() :type octet-vector)
+     (len 0 :type (unsigned-byte 32))
+     (buf-index 0 :type (unsigned-byte 16))
+     (offset 0 :type (unsigned-byte 64))
+     (ioprio 0 :type (unsigned-byte 16))
+     (rw-flags 0 :type fixnum))
+  (with-slots (fd buf len buf-index offset ioprio rw-flags) self
+    (with-io-sqe-op (s +io-read-fixed+)
+      (setf (slot s 'fd) fd)
+      (setf (slot s 'ioprio) ioprio)
+      (setf (slot s 'len) len))))
+
+(def-io-op 5 write-fixed
+    ((fd -1 :type file-descriptor)
+     (buf #() :type octet-vector)
+     (len 0 :type (unsigned-byte 32))
+     (buf-index 0 :type (unsigned-byte 16))
+     (ioprio 0 :type (unsigned-byte 16))
+     (offset 0 :type (unsigned-byte 64))
+     (rw-flags 0 :type fixnum))
+  (with-slots (fd buf len buf-index ioprio offset rw-flags) self
+    (with-io-sqe-op (s +io-write-fixed+)
+      (setf (slot s 'fd) fd)
+      (setf (slot s 'ioprio) ioprio)
+      (setf (slot s 'len) len))))
+
+;; poll the specified fd
 (def-io-op 6 poll-add nil)
 (def-io-op 7 poll-remove nil)
 (def-io-op 8 sync-file-range nil)
@@ -59,8 +129,6 @@
 (def-io-op 47 sendmsg-zc nil)
 (def-io-op 48 last nil)
 
-(def-alien-enum-with io-uring-op *io-opcodes*)
-
 (defun opcode-supported-p (op &optional probe)
   (declare (type octet op))
   (let ((p (or probe (io-uring-get-probe))))
@@ -70,5 +138,3 @@
             (logand
              (io-uring-probe-op-flags (addr (deref (io-uring-probe-ops p) op)))
              io-uring-op-supported)))))
-
-

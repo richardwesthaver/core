@@ -41,7 +41,8 @@ queue (CQ), and form the foundation of the new interface.
 |#
 ;;; Code:
 (defpackage :uring
-  (:use :cl :std :sb-alien :dat/proto)
+  (:use :cl :std :sb-alien)
+  (:import-from :sb-posix :file-descriptor)
   (:export :load-uring :io-uring-cq :io-uring-cq*
    :completion-queue-offsets :completion-queue
    :completion-queue-entry :completion-queue-entry-32
@@ -52,11 +53,12 @@ queue (CQ), and form the foundation of the new interface.
    :make-queue :build-submitter :sigset-t :cpu-set-t
    :cpu-mask-t :recv-msg-out :cancel-builder :mmapped-region))
    
-
 (in-package :uring)
 (define-alien-loader "uring" t "/usr/lib/")
 
 (define-alien-type kernel-rwf-t int)
+
+(define-alien-type io-uring-op unsigned-int)
 
 (define-alien-type io-uring-restriction-slot2
   (union io-uring-restriction-slot2
@@ -81,7 +83,7 @@ queue (CQ), and form the foundation of the new interface.
 (define-alien-type io-uring-buf-ring-slot1
   (union io-uring-buf-ring-slot1
          (resv-and-tail io-uring-buf-ring-resv-and-tail)
-         (bufs (array (struct io-uring-buf) 0))))
+         (bufs (* (struct io-uring-buf)))))
 
 (define-alien-type io-uring-buf-ring
   (struct io-uring-buf-ring

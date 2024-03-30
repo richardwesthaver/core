@@ -30,7 +30,16 @@ method for this struct, with CONST bound to VAR."
          ,@builder)
        (pushnew ',alien-name *io-opcodes*))))
 
-(defmacro def-alien-enum-with (name list)
-  `(define-alien-type ,name
-       (enum ,name
-             ,@(symbol-value list))))
+(defmacro with-io-sqe (var &body body)
+  `(with-alien ((,var io-uring-sqe))
+     ,@body))
+
+(defmacro with-io-sqe-op ((var op) &body body)
+  `(with-io-sqe ,var
+     (setf (slot ,var 'opcode) ,op)
+     ,@body
+     ,var))
+
+(defmacro with-io-cqe (var &body body)
+  `(with-alien ((,var io-uring-cqe))
+     ,@body))
