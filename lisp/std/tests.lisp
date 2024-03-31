@@ -183,3 +183,18 @@ These tests are copied directly from the Alexandria test suite."
                (funcall curried 7) ;; 42
                x) ;; 2
          '(42 42 2)))))
+
+(deftest bits ()
+  (define-bitfield testbits
+    (a boolean)
+    (b (signed-byte 2))
+    (c (unsigned-byte 3) :initform 1)
+    (d (integer -100 100))
+    (e (member foo bar baz)))
+  (let ((bits (make-testbits)))
+    (is (not (testbits-a bits)))
+    (is (= 0 (testbits-b bits)))
+    (is (= 1 (testbits-c bits)))
+    (is (= -100 (testbits-d bits)))
+    (is (eql 'foo (testbits-e bits)))))
+    

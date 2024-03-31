@@ -76,7 +76,7 @@ which accepts a boolean value and automatically adjust the slot."
   (with-slots (sq-entries cq-entries flags sq-thread-cpu sq-thread-idle features wq-fd sq-off cq-off) self
     (with-io-uring-params res ((sq-entries sq-entries) (cq-entries cq-entries) (flags flags)
                                (sq-thread-cpu sq-thread-cpu) (sq-thread-idle sq-thread-idle) (features features)
-                               (wq-fd wq-fd) (sq-off sq-off) (cq-off cq-off))
+                               (wq-fd wq-fd) (sq-off (deref (build sq-off))) (cq-off (deref (build cq-off))))
       res)))
 
 ;; io-uring instance

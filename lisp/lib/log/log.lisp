@@ -44,12 +44,12 @@ function in which case it is used as the function value of
   (let ((%name (string-upcase name)))
     `(progn
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
-         (format t ":~A:~A~%"
+         (format t "#:~(~A~) ~A~%"
                  ',name
                  (if *log-timestamp*
-                     (format nil "~A ~t" (log-timestamp-source))
+                     (log-timestamp-source)
                      ""))
-         (map nil (lambda (x) (format t "~X~%" x)) args)
+         (mapc (lambda (x) (format t "~t; ~X~%" x)) args)
          (if (= 1 (length args))
              (car args)
              args))
@@ -75,16 +75,10 @@ function in which case it is used as the function value of
 ;;   (or (eq *log-level* t)
 ;;       (eq *log-level* :debug)))
 
-(defun debug-log-line ()
-  (format t ":DEBUG:~A~%"
-	  (if *log-timestamp*
-	      (format nil "~A ~t" (log-timestamp-source))
-	      "")))
-
 ;; TODO 2023-08-31: single format control string
 ;; (defun debug! (&rest args)
 ;;   (when (debug-p)
-;;     (debug-log-line)
+;;     ;...
 ;;     ;; RESEARCH 2023-08-31: what's better here.. loop, do, mapc+nil?
 ;;     (map nil (lambda (x) (format t "~X~%" x)) args))
 ;;   args)

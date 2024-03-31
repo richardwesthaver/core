@@ -28,7 +28,7 @@
   (with-new-io-uring r1
     (io-uring-queue-init 8 (alien-sap r1) 0)
     (is (typep r1 '(alien io-uring)))
-    (log::debug! (slot (slot r1 'uring::sq) 'uring::ring-entries))
+    (log::trace! (slot (slot r1 'uring::sq) 'uring::ring-entries))
     (with-io-uring (r2 (addr r1))
       (io-uring-queue-init-params 16 (alien-sap r2) (uring::allocate-io-uring-params))
       (is (typep r2 '(alien (* io-uring))))
