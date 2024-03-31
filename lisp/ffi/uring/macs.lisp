@@ -58,11 +58,8 @@ method for this struct, with CONST bound to VAR."
     `(progn
        (defconstant ,const-name ,val)
        (defstruct ,struct-name ,@slots)
-       (defmethod build ((self ,struct-name) &key &allow-other-keys)
-         (with-new-io-sqe-op (sqe ,const-name)
-           ,@builder))
-       (defmethod build-from ((self ,struct-name) from &key &allow-other-keys)
-         (with-io-sqe-op (sqe ,const-name from)
+       (defmethod build-from ((self ,struct-name) (from system-area-pointer) &key &allow-other-keys)
+         (with-io-sqe-op (sqe ,const-name (sap-alien from (struct io-uring-sqe)))
            ,@builder))
        (pushnew ',alien-name *io-opcodes*)
        (export '(,struct-name ,(symbolicate "MAKE-" struct-name) ,const-name ,alien-name)))))
