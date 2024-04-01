@@ -52,9 +52,9 @@
 
 (defpackage :net/codec/tlv
   (:nicknames :codec/tlv)
-  (:use :cl :std :net/core)
+  (:use :cl :std :net/core :dat/proto)
   (:export
-   :tlv :make-tlv))
+   :tlv :tlv-type :tlv-length :tlv-value :make-tlv))
 
 (defpackage :net/codec/osc
   (:nicknames :codec/osc)
