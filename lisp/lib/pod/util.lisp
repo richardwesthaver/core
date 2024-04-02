@@ -16,10 +16,11 @@
 
 (defun libpod-request (client path &optional (method :get))
   (let ((stream (socket-make-stream client
-                                    :element-type '(unsigned-byte 8)
+                                    :element-type 'octet
                                     :input t
                                     :output t
                                     :buffering :none)))
+    ;; TODO 2024-04-01: remove dependencies
     (let ((wrapped-stream (flexi-streams:make-flexi-stream (dex.usocket::make-chunked-stream stream)
                                                            :external-format :utf8)))
       (dex:request (format-libpod-api-local path) :method method :stream wrapped-stream))))

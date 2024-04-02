@@ -18,7 +18,8 @@
   (:import-from :uring :build))
 
 (in-package :io)
-(load-uring)
+
+#+uring (load-uring)
 
 (defun init-io-uring (&optional (entries 256) (flags 0))
   "Initialize the *IO* variable to an io-uring alien-value type using a
@@ -27,8 +28,6 @@ queue size of ENTRIES and settings FLAGS."
     (if (= 0 (io-uring-queue-init entries (addr r) flags))
         r
         (error "failed to initialize io-uring"))))
-
-(defvar *io* (init-io-uring))
 
 (defun enter-io-uring (ring))
 (defun exit-io-uring (ring))

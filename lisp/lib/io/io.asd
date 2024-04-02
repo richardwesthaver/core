@@ -7,5 +7,5 @@
   :in-order-to ((test-op (test-op "io/tests"))))
 
 (defsystem :io/tests
-  :depends-on (:rt :io)
+  :depends-on (:rt :io :uring :sb-bsd-sockets)
   :perform (test-op (o c) (symbol-call :rt :do-tests :io)))

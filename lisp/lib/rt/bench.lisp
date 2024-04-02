@@ -37,5 +37,11 @@ used when the slot value of :BENCH is t.")
 	    (%do))
 	  (%do)))))
 
+(defclass benchmark (test-object) ())
 
-(defmacro defbench ())
+(defmacro defbench (name props &body body)
+  "Define a BENCHMARK with NAME modulo PROPS with a benchmark-form of BODY.
+
+PROPS is a plist which accepts the following keywords:
+
+tbd")

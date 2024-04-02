@@ -9,7 +9,9 @@
 ;;;; dynamically mix in classes into a class without the latter being
 ;;;; aware of it.
 
-;;; Mixins are not intended to be directly instantiated, and instead are used as superclasses to "normal" classes in order to capture common things between several "normal" classes.
+;;; Mixins are not intended to be directly instantiated, and instead
+;;; are used as superclasses to "normal" classes in order to capture
+;;; common things between several "normal" classes.
 
 ;;; First of all we need to keep track of added mixins, we use a hash
 ;;; table here. Better would be to stick this information to the
