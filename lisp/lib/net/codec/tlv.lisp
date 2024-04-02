@@ -18,11 +18,12 @@ VALUE which is an OCTET-VECTOR of length LENGTH."))
 (defmethod serialize ((obj tlv) (format (eql :bytes)) &key stream)
   (declare (ignore format))
   (with-slots (type length value) obj
-    (let ((buf (make-array (+ 3 length) :element-type 'octet)))
+    (let* ((end (+ 3 length))
+           (buf (make-array end :element-type 'octet)))
       (setf (aref buf 0) type)
       (setf (subseq buf 1 2) (integer-to-octets length 16))
       (unless (= 0 length)
-        (setf (subseq buf 4) value))
+        (setf (subseq buf 3 (+ 3 length)) value))
       (if stream
           (write buf :stream stream)
           buf))))
@@ -47,7 +48,7 @@ VALUE which is an OCTET-VECTOR of length LENGTH."))
   (let ((type (read-byte from))
         (l (make-array 2 :element-type 'octet :adjustable t)))
     (read-sequence l from)
-    (let ((length (octets-to-integer (coerce l 'octet-vector) 2)))
+    (let ((length (octets-to-integer (coerce l 'octet-vector))))
       (if (= 0 length)
           (make-tlv type length nil)
           (let ((value (make-array length :element-type 'octet)))
@@ -62,6 +63,15 @@ VALUE which is an OCTET-VECTOR of length LENGTH."))
       (replace to value :start1 3 :end1 (+ 3 length)))
     to))
 
+(defmethod serde ((from simple-array) (to tlv))
+  (if (> 3 (length from))
+      (error 'serde-error :message "array length is < 3")
+      (let ((type (aref from 0))
+            (length (octets-to-integer (subseq from 1 2))))
+        (setf (tlv-type to) type
+              (tlv-length to) length
+              (tlv-value to) (subseq from 3 (+ 3 length)))
+        to)))
 #+nil
 (describe
  (deserialize

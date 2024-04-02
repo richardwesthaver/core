@@ -10,7 +10,7 @@
 
 (define-condition serializer-error (dat-error) ())
 (define-condition deserializer-error (dat-error) ())
-
+(define-condition serde-error (dat-error) ())
 ;;; Serialize
 (defvar *serializable*
   '(string simple-string octet-vector octet
@@ -54,7 +54,7 @@
 DESERIALIZABLE-TYPE-DESIGNATOR."))
 
 ;;; Serde
-(defgeneric serde (from to &key)
+(defgeneric serde (from to)
   (:documentation "Point-to-point serialization.
 
 FROM and TO should both specialize on object instances.

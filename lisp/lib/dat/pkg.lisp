@@ -2,7 +2,7 @@
   (:use :cl :std)
   (:export :serialize :deserialize
            :serializer-error :deserializer-error
-           :dat-error))
+           :serde :serde-error :dat-error))
 
 (defpackage :dat/sxp
   (:nicknames :sxp)
