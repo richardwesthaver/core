@@ -36,11 +36,10 @@
   (:use 
    :cl :std :sxp :log
    :sb-aprof #+x86-64 :sb-sprof)
-  (:import-from :sb-cover :store-coverage-data)
   (:export
+   :test-error
    :*test-opts*
    :*compile-tests*
-   :*coverage-directory*
    :*catch-test-errors*
    :*test-suffix*
    :*default-test-suite-name*
@@ -108,10 +107,12 @@
    :defbench
    :do-bench))
 
-(defpackage :rt/cover
+(uiop:define-package :rt/cover
   (:nicknames :cover)
-  (:use :cl :std :log :rt)
-  (:export))
+  (:use :cl :std :log :rt :sb-cover)
+  (:reexport :sb-cover)
+  (:export :with-coverage :start-coverage :stop-coverage
+   :coverage-report :*coverage-directory*))
 
 (defpackage :rt/tracing
   (:nicknames :tracing)
@@ -138,7 +139,6 @@
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
 compiler optimizations.")
-(defvar *coverage-directory* #P"/tmp/rt/")
 (defvar *catch-test-errors* t "When non-nil, cause errors in a test to be caught.")
 (defvar *test-suffix* "-test" "A suffix to append to every `test' defined with `deftest'.")
 (defvar *test-suite-list* nil "List of available `test-suite' objects.")

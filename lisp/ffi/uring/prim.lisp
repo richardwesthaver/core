@@ -35,13 +35,37 @@
 
 ;; io-uring-cqe-shift
 ;; io-uring-cqe-index
-;; io-uring-for-each-cqe
-;; (defun io-uring-cq-advance (ring nr))
-;; io-uring-cqe-seen
-;; io-uring-sqe-set-data
-;; io-uring-sqe-get-data
-;; io-uring-sqe-set-data64
-;; io-uring-sqe-get-data64
+
+(defmacro io-uring-for-each-cqe (ring head cqe)
+  ;; todo
+  )
+
+(defun io-uring-cq-advance (ring nr)
+  (when (< 0 nr)
+    (let* ((cq (addr (slot ring 'cq)))
+          (head (slot cq 'khead)))
+      ;; smp-store-release
+      (setf head (+ nr (deref head))))))
+
+(defun io-uring-cqe-seen (ring cqe)
+  (unless (null-alien cqe)
+    (io-uring-cq-advance ring 1)))
+
+(defun io-uring-sqe-set-data (sqe data) ;; the C function returns (* void)
+  (setf (slot sqe 'user-data) data))
+
+(defun io-uring-cqe-get-data (cqe)
+  (slot cqe 'user-data))
+
+(defun io-uring-sqe-set-data64 (sqe data)
+  "Assign a 64-bit value to this sqe which can be retrieved with io-uring-cqe-get-data64 instead of a pointer."
+  (declare (type (unsigned-byte 64) data))
+  (setf (slot sqe 'user-data) data))
+
+(defun io-uring-cqe-get-data64 (cqe)
+  "Same as IO-URING-CQE-GET-DATA but return value is (unsigned-byte 64) value instead of a pointer."
+  (slot cqe 'user-data))
+
 (defun io-uring-sqe-set-flags (sqe flags)
   (setf (slot sqe 'flags) flags))
 
@@ -53,14 +77,34 @@
         (slot sqe 'off-addr-cmd) offset
         (slot sqe 'addr-or-splice-off-in) addr
         (slot sqe 'len) len
-        (slot sqe 'flags2) (deref (make-alien (union io-uring-sqe-slot8)))
-        (slot sqe 'buf-opt) (deref (make-alien (union io-uring-sqe-slot10)))
+        (slot sqe 'flags2) (deref (make-alien io-uring-sqe-slot8))
+        (slot sqe 'buf-opt) (deref (make-alien io-uring-sqe-slot10))
         (slot sqe 'personality) 0
-        (slot sqe 'splice-index-addr) (deref (make-alien (union io-uring-sqe-slot12)))
-        (slot sqe 'addr-or-cmd) (deref (make-alien (union io-uring-sqe-slot13))))
+        (slot sqe 'splice-index-addr) (deref (make-alien io-uring-sqe-slot12))
+        (slot sqe 'addr-or-cmd) (deref (make-alien io-uring-sqe-slot13)))
   sqe)
 
-;; io-uring-prep-splice
+(defun io-uring-prep-splice (sqe fd-in off-in fd-out off-out nbytes splice-flags)
+  (io-uring-prep-rw +io-splice+ sqe fd-out nil nbytes off-out))
+
+(defun io-uring-prep-tee (sqe fd-in fd-out nbytes splice-flags)
+  (io-uring-prep-rw +io-tee+ sqe fd-out nil nbytes 0)
+  (setf (slot sqe 'splice-off-in) 0)
+  (setf (slot sqe 'splice-fd-in) fd-in)
+  (setf (slot sqe 'splice-flags) splice-flags))
+
+(defun io-uring-prep-readv (sqe fd iovecs nr-vecs offset)
+  (io-uring-prep-rw +io-readv+ sqe fd iovecs nr-vecs offset))
+
+(defun io-uring-prep-readv2 (sqe fd iovecs nr-vecs offset flags)
+  (io-uring-prep-rw +io-readv+ sqe fd iovecs nr-vecs offset)
+  (setf (slot sqe 'rw-flags) flags))
+
+;; ...
+
+(defun io-uring-prep-nop (sqe)
+  (io-uring-prep-rw +io-nop+ sqe -1 nil 0 0))
+
 ;; (with-io-uring (ring)
-;;   (io-uring-queue-init 16 ring 1)
+;;   (io-uring-queue-init 160 ring 1)
 ;;   (io-uring-get-sqe ring))

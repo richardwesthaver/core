@@ -36,7 +36,7 @@
 
 ;; helper for parsing the result of a multishot
 (defstruct recv-msg-out
-  (header nil :type io-uring-recvmsg-out)
+  (header (allocate-io-uring-recvmsg-out) :type (alien io-uring-recvmsg-out))
   (msghdr-name-len 0 :type fixnum)
   (name-data #() :type octet-vector)
   (control-data #() :type octet-vector)
@@ -49,13 +49,13 @@
 (define-alien-type user-data unsigned-long)
 
 (defstruct cancel-builder
-  (flags 0 :type async-cancel-flags)
-  (user-data nil :type user-data))
+  (flags 0 :type (alien async-cancel-flags))
+  (user-data (deref (make-alien user-data)) :type (alien user-data)))
 
 ;; any, user_data, fd, all
 
 (defstruct mmapped-region
-  (addr nil :type system-area-pointer)
+  (addr (deref (make-alien (* t))) :type (alien (* t))) ;; (sb-impl::dynamic-space-free-pointer) ;?
   (len 0 :type fixnum))
 
 ;; do-mmap

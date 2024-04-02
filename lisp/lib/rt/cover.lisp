@@ -3,13 +3,17 @@
 ;; wraps SB-COVER package
 
 ;;; Code:
-(in-package :rt)
+(in-package :rt/cover)
 
-(defmacro enable-coverage ()
-  `(declaim (optimize store-coverage-data)))
+(defvar *coverage-directory* #P"/tmp/rt/")
 
-(defun disable-coverage ()
-  `(declaim (optimize (sb-cover:store-coverage-data 0))))
+(defun start-coverage ()
+  (progn
+    (declaim (optimize store-coverage-data))))
+
+(defun stop-coverage ()
+  (progn
+    (declaim (optimize (store-coverage-data 0)))))
 
 (defmacro with-coverage (&body body)
   `(progn

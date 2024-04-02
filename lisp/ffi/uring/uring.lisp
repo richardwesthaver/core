@@ -5,14 +5,19 @@
 ;;; Code:
 (in-package :uring)
 
+(defvar *default-io-entry-count* 256)
+
 ;; (defconstant +io-syscall-setup+ nr-io-uring-setup) ;425
 ;; (defconstant +io-syscall-register+ nr-io-uring-register) ;426
 ;; (defconstant +io-syscall-enter+ nr-io-uring-enter) ;427
 
+;; TODO 2024-04-02: tlab? dynamic-space hacks? there's almost
+;; certainly a better way to do this than mmapping regions in
+;; package-local structs.
 (defstruct io-memory-map
-  (sq-mmap nil :type mmapped-region)
-  (sqe-mmap nil :type mmapped-region)
-  (cq-mmap nil :type mmapped-region))
+  (sq-mmap (make-mmapped-region) :type mmapped-region)
+  (sqe-mmap (make-mmapped-region) :type mmapped-region)
+  (cq-mmap (make-mmapped-region) :type mmapped-region))
 
 (defun parse-io-uring-params (params)
   "Parse IO-URING-PARAMS foreign struct, return an IO-PARAMS struct."
@@ -22,8 +27,8 @@
     res))
 
 (defstruct io-params
-  (sq-entries 0 :type fixnum)
-  (cq-entries 0 :type fixnum)
+  (sq-entries *default-io-entry-count* :type fixnum)
+  (cq-entries *default-io-entry-count* :type fixnum)
   (flags 0 :type fixnum)
   (sq-thread-cpu 0 :type fixnum)
   (sq-thread-idle 0 :type fixnum)
@@ -83,24 +88,27 @@ which accepts a boolean value and automatically adjust the slot."
 (defstruct uring
   (sq nil :type submission-queue)
   (cq nil :type completion-queue)
-  (fd nil :type sb-posix:file-descriptor) ;; owned fd
-  (params nil :type io-params)
+  (fd -1 :type sb-posix:file-descriptor) ;; owned fd
+  (params *default-io-params* :type io-params)
   (memory nil :type io-memory-map))
 
 (defvar *default-io-params* (make-io-params))
+
 (defstruct uring-builder
   (params *default-io-params* :type io-params)
   (dontfork nil :type boolean))
 
-(defmethod build ((self uring-builder) &key (entries 256) &allow-other-keys) self)
+(defmethod build ((self uring-builder) &key (entries *default-io-entry-count*))
+  (make-uring :sq (make-submission-queue) :cq (make-completion-queue) :memory (make-io-memory-map)))
 
 (defun setup-queue (fd p)
   "Setup a URING struct given a reference to a FILE-DESCRIPTOR and IO-PARAMS.")
 
-(defun make-queue (entries)
+(defun make-queue (&optional (entries *default-io-entry-count*))
   "Create a new URING instance with default params. N is the size of the
 queue, which must be a power of two."
   (build (make-uring-builder) :entries entries))
 
 #+nil (make-queue 2)
-(defmethod build-submitter ((self uring)))
+(defmethod build-submitter ((self uring-builder))
+  (make-io-submitter))

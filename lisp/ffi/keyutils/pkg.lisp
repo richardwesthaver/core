@@ -33,13 +33,30 @@
           (len2 keyctl-pkey-params-len2)
           (spare (array unsigned-int 7))))
 
+(define-alien-type key-serial-t int)
+
+(define-alien-routine add-key key-serial-t (type c-string)
+  (description c-string) (payload c-string) (plen size-t) (ringid key-serial-t))
+
+(define-alien-routine request-key key-serial-t
+  (type c-string) (description c-string) (callout-info (c-string :not-null nil)) (destringid key-serial-t))
+
 #|
+#-keyutils (and (load-shared-object "/usr/lib/libkeyutils.so" :dont-save t) (push :keyutils *features*))
+(let* ((kring key-spec-user-keyring) ; = -4
+       (k1 (add-key "user" "test" "test" 5 kring))
+       (k2 (request-key "user" "test" nil kring)))
+  (print (cons k1 k2))
+  (= k1 k2)) ; => T
+
 (defvar *test-key-id*
   (let ((payload "password"))
     (alien-funcall
      (extern-alien "add_key" (function key-serial-t c-string c-string c-string size-t key-serial-t))
      "user" "test" payload (length payload) key-spec-thread-keyring)))
 |#
+
+;; may want a syscall interface too..
 
 ;; (sb-unix::strerror
 ;;  (alien-funcall

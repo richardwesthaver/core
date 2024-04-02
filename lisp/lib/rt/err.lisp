@@ -5,3 +5,5 @@
 ;;; Code:
 
 (in-package :rt)
+
+(deferror test-error () ())

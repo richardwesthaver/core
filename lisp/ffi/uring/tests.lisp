@@ -9,12 +9,18 @@
 (deftest sanity ()
   (is (= 1 (io-uring-check-version (io-uring-major-version) (io-uring-minor-version)))))
 
+(deftest params ()
+
+  )
+(deftest setup ()
+  ;; (io-uring-setup
+  )
+
 (deftest nop-sqe ()
   (with-new-io-sqe sqe
     (let ((op (uring::build-from (uring::make-io-op-nop) (alien-sap sqe))))
       (is (typep op '(alien uring::io-uring-sqe)))
       (is (= (slot op 'uring::fd) -1)))))
-
 
 (deftest simple-vectored ()
   (with-new-io-sqe rop
@@ -43,4 +49,6 @@
       (uring::build-from (make-io-op-nop) (alien-sap (deref sqe)))
       (is (= 0 (io-uring-queue-exit (alien-sap r1)))))))
 
-(deftest register ())
+(deftest register ()
+  (is (io-restriction-p (make-io-restriction))))
+

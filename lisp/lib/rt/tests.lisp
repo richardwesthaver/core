@@ -1,5 +1,5 @@
 (defpackage :rt/tests
-  (:use :cl :std :rt :sb-sprof :rt/flamegraph :rt/tracing))
+  (:use :cl :std :rt :sb-sprof :rt/flamegraph :rt/tracing :rt/cover))
 
 (in-package :rt/tests)
 
@@ -45,4 +45,6 @@
     (delete-file f)))
 
 (deftest cover (:profile t)
-  
+  (reset-coverage)
+  (start-coverage)
+  (stop-coverage))
