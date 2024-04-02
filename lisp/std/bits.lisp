@@ -505,14 +505,14 @@ the element-type of the returned string."
                   (aref hexdigits (ldb (byte 4 0) byte))))
        finally (return string))))
 
-(defun octets-to-integer (octet-vec &aux (end (length octet-vec)))
+(defun octets-to-integer (octet-vec &optional (end (length octet-vec)))
   (declare (type (simple-array (unsigned-byte 8)) octet-vec))
   (do ((j 0 (1+ j))
        (sum 0))
       ((>= j end) sum)
     (setf sum (+ (aref octet-vec j) (ash sum 8)))))
 
-(defun integer-to-octets (bignum &aux (n-bits (integer-length bignum)))
+(defun integer-to-octets (bignum &optional (n-bits (integer-length bignum)))
   (let* ((n-bytes (ceiling n-bits 8))
          (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
     (declare (type (simple-array (unsigned-byte 8)) octet-vec))
