@@ -9,6 +9,9 @@
 ;;; Code:
 (in-package :std)
 
+;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
+;; sb-thread:interrupt-thread
+
 (defun thread-support-p () (member :thread-support *features*))
 
 (eval-when (:compile-toplevel)
@@ -61,6 +64,15 @@
       (terminate-thread thread))))
 
 ;; (sb-vm::primitive-object-slots (sb-vm::primitive-object 'sb-vm::thread))
+(defun init-session (&optional (thread *current-thread*)) (sb-thread::new-session thread))
+
+;; (sb-thread::with-progressive-timeout (timet :seconds 4) (dotimes (i 4000) (print (timet))))
+
+;; (describe sb-thread::*session*)
+
+;; make-listener-thread 
+
+;; with-progressive-timeout
 
 ;; from sb-thread
 (defun dump-thread ()
@@ -116,7 +128,8 @@
           (setq from (sb-vm::sap+ from (* sb-vm:binding-size sb-vm:n-word-bytes))))))))
 
 ;;; Tasks
-(defclass oracle () ((thread :initform *current-thread* :initarg :thread :accessor oracle-thread)))
+(defclass oracle ()
+  ((thread :initform *current-thread* :initarg :thread :accessor oracle-thread)))
 
 (defgeneric designate-oracle (host guest))
 

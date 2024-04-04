@@ -8,3 +8,9 @@
 
 (deftest sanity ()
   (uring::io-uring-major-version))
+
+(deftest serve-event ()
+  "See 'tests/serve-event.pure.lisp'."
+  nil)
+compute-pollfds
+(make-handler :output 1030 #'car)

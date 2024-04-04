@@ -8,4 +8,5 @@
 
 (defsystem :io/tests
   :depends-on (:rt :io :uring :sb-bsd-sockets)
+  :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :io)))

@@ -26,11 +26,6 @@
 ;;; Code:
 (in-package #:parse/yacc)
 
-(declaim (inline memq))
-(defun memq (item list)
-  "MEMBER :TEST #'EQ"
-  (member item list :test #'eq))
-
 (deftype index () '(unsigned-byte 14))
 (deftype signed-index () '(signed-byte 15))
 
@@ -75,8 +70,8 @@
   (derives-first '() :type list)
   (derives-first-terminal '() :type list))
 
-(defun make-grammar(&key name (start-symbol (required-argument))
-                    terminals precedence productions)
+(defun make-grammar (&key name (start-symbol (required-argument))
+                       terminals precedence productions)
   (declare (symbol name start-symbol) (list terminals productions))
   (setq productions
         (cons (make-production 's-prime (list start-symbol)
@@ -1089,8 +1084,7 @@ Handle YACC-PARSE-ERROR to provide custom error reporting."
                                    (if (eq (car e) 'yacc-eof-symbol)
                                        nil
                                        (car e)))))
-                         (aref action-array state)))))
-               ))))))))
+                         (aref action-array state)))))))))))))
 
 ;;; User interface
 

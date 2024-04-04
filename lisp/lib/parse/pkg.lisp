@@ -27,7 +27,7 @@
    #:define-matcher))
 
 (defpackage :parse/yacc
-  (:use :common-lisp)
+  (:use :cl :std)
   (:export :make-production :make-grammar :make-parser :parse-with-lexer
            :define-grammar :define-parser
            :yacc-compile-warning :conflict-warning :conflict-summary-warning

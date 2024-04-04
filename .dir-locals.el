@@ -3,4 +3,5 @@
                 . (:rust-analyzer (:cargo (:buildScripts (:enable t) (:features "all")))))))
  (nushell-mode . ((nushell-indent-offset . 2)))
  (nushell-ts-mode . ((nushell-indent-offset . 2)))
- (makefile-mode . ((indent-tabs-mode . t))))
+ (makefile-mode . ((indent-tabs-mode . t)))
+ (slint-mode . ((slint-indent-level . 2))))

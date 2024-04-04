@@ -1,0 +1,34 @@
+import { SpinBox, Button, CheckBox, Slider, LineEdit, ScrollView, ListView,
+  HorizontalBox, VerticalBox, GridBox, StandardButton, Palette } from "std-widgets.slint";
+
+// @rust-attr(derive(serde::Serialize, serde::Deserialize))
+// export struct TodoItem  {
+//   title: string,
+//   checked: bool,
+// }
+
+export component TextInput inherits Window {
+    width: 200px;
+    height: 25px;
+    LineEdit {
+        font-size: 14px;
+        width: 120px;
+        height: 16px;
+        placeholder-text: "Input";
+    }
+}
+
+export component MainWindow inherits Window {
+  in property <bool> full-screen: false;
+  in-out property <bool> is-sort-by-name: false;
+  in-out property <bool> hide-done-items: false;
+  callback rx();
+  callback tx();
+  preferred-width: 400px;
+  preferred-height: 600px;
+  VerticalBox {
+    HorizontalBox {
+      TextInput {}
+      }
+    }
+}

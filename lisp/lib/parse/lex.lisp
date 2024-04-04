@@ -2,6 +2,11 @@
 
 ;; https://github.com/Shinmera/plump/blob/master/lexer.lisp
 
+;;; Commentary:
+
+;; TODO: make less dynamic, compile lexer functions for compatibility
+;; with PARSE/YACC.
+
 ;;; Code:
 (in-package :parse/lex)
 

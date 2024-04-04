@@ -12,7 +12,8 @@ assumed to be a path to a shared library.")
   (case backend
     (:gtk (nyi!))
     (:tk (nyi!))
-    (:mcclim (nyi!))))
+    (:mcclim (nyi!))
+    (:slint (nyi!))))
 
 (defmacro with-gui-handlers (&body body)
   `(progn
@@ -22,7 +23,7 @@ assumed to be a path to a shared library.")
   "Define a CLI main function in the current package which returns RET.
 
 Note that this macro does not export the defined function and requires
-`gui:main' to be an external symbol."
+GUI-MAIN to be an external symbol."
   `(progn
      (declaim (type stream output))
      (defun gui-main (&key (output *standard-output*))

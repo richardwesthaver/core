@@ -1,11 +1,13 @@
 ;;; gui.asd --- GUI subsystem
 (defsystem :gui
   :depends-on (:std 
-               :log :obj :xkb
+               :log :obj :xkb :parse
                :wayflan :wayflan-client ;;#+wl
                :clx :stumpwm) ;; #+x11
   :components ((:file "pkg")
                (:file "err")
+               (:file "server")
+               (:file "client")
                (:module "wm"
                 :components 
                 ((:file "pkg")
