@@ -1,3 +1,6 @@
+;;; dat/pkg.lisp --- Data
+
+;;; Code:
 (defpackage :dat/proto
   (:use :cl :std)
   (:export :serialize :deserialize

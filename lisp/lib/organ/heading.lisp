@@ -12,7 +12,7 @@
 
 (PLANNING PROPERTIES REST)"
   (let ((planning) properties)
-    (loop for l = (peek-line input)
+    (loop for l = (read-line input) ;; FIXME: peek-line
           until (not l)
           when (planning-line-p l)
             do (push (org-parse :planning-line (read-line input)) planning)

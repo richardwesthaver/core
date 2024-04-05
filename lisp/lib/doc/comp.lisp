@@ -13,11 +13,11 @@
 
 (defun compile-file-documentation (file &key path)
   (with-compilation-unit (:policy '(optimize))
-    (sb-ext:restrict-compiler-policy 'debug 3)
-    (sb-ext:restrict-compiler-policy 'safety 3)
+    (restrict-compiler-policy 'debug 3)
+    (restrict-compiler-policy 'safety 3)
     (load file :verbose t)))
 
 (defun compile-system-documentation (sys &key path)
-  (unless (typep sys 'asdf:system)
-    (setf sys (asdf:find-system sys)))
-  (let ((sys-desc (asdf:system-description sys)))
+  (unless (typep sys 'system)
+    (setf sys (find-system sys)))
+  (let ((sys-desc (system-description sys)))))

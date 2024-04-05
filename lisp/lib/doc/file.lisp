@@ -66,28 +66,120 @@ CODE
 ;; 'Headings' of level 2, inside a subheading of level 1, inside a
 ;; heading named 'Commentary'.
 
+;;; Notes:
+
+;; NOTE 2024-04-05: sb-impl::read-comment takes an 'ignore' second
+;; arg, but the return value is always ignored anyways?
+
 ;;; Code:
 (in-package :doc)
 
 ;; asdf:source-file-type asdf:source-file-explicit-type
-(defvar *source-file-types* '(common-lisp emacs-lisp rust sh nu))
+(defvar *source-file-types* nil)
+
+(defmacro define-source-file* (type ext &optional opts shebangp &body body)
+  (with-gensyms (f)
+    (let ((rname (symbolicate "READ-" type "-SOURCE-FILE"))
+          (wname (symbolicate "WRITE-" type "-SOURCE-FILE"))
+          #+nil (kw (sb-int:keywordicate type)))
+      `(progn
+         (pushnew ',type *source-file-types*)
+         (defun ,rname (path)
+           (with-open-file (,f path)
+             (read ,f)))
+         (defun ,wname (source path)
+           (with-open-file (,f path)
+             (write source :stream ,f)))))))
+
+(define-source-file* rust "rs")
+(define-source-file* shell "sh")
+(define-source-file* nushell "nu")
+(define-source-file* common-lisp "lisp")
+(define-source-file* emacs-lisp "el")
 
 (defconstant +max-file-heading-level+ 8)
+(defconstant +min-file-heading-level+ 3)
 
 (defclass file-heading ()
   ((name :initarg :name :type string)
-   (level :initform 0 :initarg :level :type (integer 0 #.+max-file-heading-level+))))
+   (level :initform 0 :initarg :level :type (integer 0 #.+max-file-heading-level+))
+   (contents :initarg :contents :type string)))
+
+(defun heading-line-p (string)
+  (uiop:string-prefix-p ";;;" string))
+
+(defun read-comment-line (stream)
+  "Read a comment line from STREAM. Returns two values: the uncommented
+string and a 'level' indicating how many comment characters were
+stripped. Note that this level is NOT the same as the heading level."
+  (let ((level 0) (contents (organ::read-line stream)))
+    (loop for c = (char contents level)
+          until (not (char= c #\;))
+          do (incf level))
+    (values
+     (if (zerop level) contents (subseq contents (1+ level)))
+     level)))
+
+(defun read-file-heading (stream)
+  (destructuring-bind (name level) (read-comment-line stream)
+    (make-instance 'file-heading :name name :level level :contents "")))
 
 (defclass file-headline (file-heading)
   ((summary :initarg :summary :type string)
-   (opts :initform nil :initarg :opts :type list)
-   (description :initarg :description :type string))) ;; should be comment-block etc
+   (opts :initform nil :initarg :opts :type list)))
+
+(defun read-file-headline-description (stream)
+  "Read a headline description returning a string. Second value is the
+next heading line found or nil if EOF."
+  (apply #'concatenate 'string
+         (loop for l = (read-line stream)
+               until (heading-line-p l)
+               collect l)))
+
+(defun headline-values-p (string)
+  (let ((found (search " --- " string)))
+    (values (subseq string 0 found) (when found (subseq string (+ found 5))))))
+
+(defun split-headline-values (string)
+  "Split the headline in STRING into individual values."
+  (multiple-value-bind (name rest) (headline-values-p string)
+    (if rest
+        (multiple-value-bind (summary opts) (headline-values-p rest)
+          (values name summary opts))
+        (values name nil nil))))
+
+(defun read-file-headline (stream)
+  (let ((line (read-comment-line stream))) ;; throw out second value
+    (multiple-value-bind (name summary opts) (split-headline-values line)
+      (make-instance 'file-headline
+        :name name
+        :summary summary
+        :opts opts
+        :level 0
+        :contents (read-file-headline-description stream)))))
 
 (defclass file-header ()
   ((headline :initarg :headline :type file-headline)
    (headings :initarg :headings :type (array file-heading)))
   (:documentation "A source-file header object containing a FILE-HEADLINE and array of
 optional top-level FILE-HEADINGs."))
+
+(defun read-file-header (path)
+  "Read a FILE-HEADER from PATH which should be an INPUT-FILE-STREAM.
+
+File headers always appear at the very start of a file so the stream
+position is always assumed to be 0."
+  (with-open-file (f path :if-does-not-exist :error)
+    (let ((hl (read-file-headline f)))
+      (loop for l = (read-line f nil)
+            while l
+            until (uiop:string-prefix-p ";;; Code:" l)
+            collect l into contents)
+      (make-instance 'file-header
+        :headline hl
+        :headings #()
+        ))))
+
 
 ;; (defmacro define-file-heading (type slots))
 
@@ -109,6 +201,7 @@ optional top-level FILE-HEADINGs."))
 (defun file-documentation (path)
   "Return the FILE-DOCUMENTATION for PATH."
   (make-instance 'file-documentation
-    :path path))
+    :path path
+    :header (read-file-header path)))
 
 ;; asdf:source-file

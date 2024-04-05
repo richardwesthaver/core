@@ -62,13 +62,40 @@
 
 (defpackage :doc
   (:use :cl :std :organ :sb-mop :sb-introspect :obj/id :log)
+  (:import-from :uiop :string-prefix-p)
+  (:import-from :asdf :component-name :component-children
+   :system :component-pathname :find-system :system-description)
+  (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)
+  (:import-from :sb-kernel :symbol-package-id)
+  (:import-from :sb-ext :restrict-compiler-policy)
+  (:import-from :ql-dist :dist :find-dist :provided-systems :installed-systems)
+  (:import-from :sb-impl :describe-block :print-standard-describe-header :describe-object)
+  (:import-from :sb-int :condition)
+  (:import-from :sb-alien :alien-type-p)
   (:export
    :definition-specifier
    :find-definitions
    ;; err
-   :doc-error
+   :doc-error 
+   ;; methods
+   :doc-file :doc-files :doc-symbol :doc-symbols :doc-package :doc-packages :doc-dist
+   :doc-pathnames :doc-directories :doc-parse
    ;; symbol
-   :do-symbol* :classify-symbol :symbol-classification-string))
+   :do-symbol* :classify-symbol :symbol-classification-string
+   :symbol-documentation
+   ;; package
+   :package-documentation
+   ;; file
+   :define-source-file* :*source-file-types*
+   :file-heading :file-headline :file-header :read-file-header
+   :+max-heading-level+ :+min-heading-level+
+   :file-documentation
+   ;; system
+   :system-documentation
+   ;; dist
+   :dist-documentation
+   ;; image
+   :image-documentation))
 
 (in-package :doc)
 

@@ -1,5 +1,7 @@
 ;;; fu.lisp --- Function utilities
 
+;; 
+
 ;;; Code:
 (in-package :std)
 

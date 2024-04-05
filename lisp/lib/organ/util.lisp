@@ -8,7 +8,7 @@
 (defun peek-line (stream)
   (concatenate 
    'string 
-   (loop for c = (peek-char nil stream nil)
+   (loop for c = (peek-char nil stream nil nil)
          until (or (not c) (char= c #\newline))
          collect c)))
 

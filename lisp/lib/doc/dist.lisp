@@ -11,13 +11,13 @@
 (in-package :doc)
 
 (defclass dist-documentation ()
-  ((dist :initarg :dist :type ql-dist:dist :accessor doc-dist)
+  ((dist :initarg :dist :type dist :accessor doc-dist)
    (systems :initarg :systems :type list :accessor doc-systems)))
 
 (defun dist-documentation (dist &optional all)
   "Return the DIST-DOCUMENTATION for a specified DIST."
-  (unless (typep dist 'ql-dist:dist)
-    (setf dist (ql-dist:find-dist (format nil "~(~A~)" dist))))
+  (unless (typep dist 'dist)
+    (setf dist (find-dist (format nil "~(~A~)" dist))))
   (make-instance 'dist-documentation
     :dist dist
     :systems
@@ -27,23 +27,30 @@
                   ;; may need (ignore-errors-if (error-p) body)
                   (ignore-errors
                    ;; can do better here anyway
-                   (when-let ((found (asdf:find-system (ql-dist:name s) nil)))
+                   (when-let ((found (find-system (name s) nil)))
                      (system-documentation found))))
                 (if all 
-                    (ql-dist:provided-systems dist)
-                    (ql-dist:installed-systems dist))))))
+                    (provided-systems dist)
+                    (installed-systems dist))))))
 
 (defmethod print-object ((self dist-documentation) stream)
   (with-slots (dist systems) self
     (print-unreadable-object (self stream :type t)
-      (format stream "~S :systems ~A" (ql-dist:name dist) (length systems)))))
+      (format stream "~S :systems ~A" (name dist) (length systems)))))
 
 ;; maybe except an additional key for specific file types and maybe
 ;; include system def files..
-(defmethod doc-files ((self dist-documentation)) 
-  "Return a list of source file components from SELF."
+(defmethod doc-pathnames ((self dist-documentation)) 
+  "Return a list of source pathnames from SELF. Includes files and directories."
   (remove-duplicates
    (apply #'append 
           (mapcar #'doc-files
                   (doc-systems self)))))
 
+(defmethod doc-directories ((self dist-documentation))
+  "Return a list of source directories from SELF."
+  (remove-if #'uiop:file-pathname-p (doc-pathnames self)))
+
+(defmethod doc-files ((self dist-documentation))
+  "Return a list of source files from SELF."
+  (remove-if #'uiop:directory-pathname-p (doc-pathnames self)))

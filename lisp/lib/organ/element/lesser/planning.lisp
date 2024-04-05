@@ -42,7 +42,7 @@ PLANNING
         (p (org-create :planning)))
     (when-let ((pl1 (org-parse :planning-line first)))
       (vector-push-extend pl1 (org-contents p))
-      (loop for l = (peek-line input)
+      (loop for l = (read-line input) ;; FIXME: peek-line no work
             until (not l)
             with pl = (org-parse :planning-line (read-line input))
             until (not pl)
