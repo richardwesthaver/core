@@ -8,4 +8,4 @@
 ;;; Code:
 (in-package :doc)
 
-(define-condition doc-error (error) ())
+(deferror doc-error () ())

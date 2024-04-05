@@ -5,9 +5,11 @@
   :components ((:file "pkg")
                (:file "err")
                (:file "symbol")
+               (:file "file")
                (:file "package")
                (:file "system")
-               (:file "file"))
+               (:file "dist")
+               (:file "image"))
   :in-order-to ((test-op (test-op :doc/tests))))
 
 (defsystem :doc/tests

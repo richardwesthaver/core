@@ -61,7 +61,7 @@
 (eval-when (:compile-toplevel :load-toplevel) (require :sb-introspect))
 
 (defpackage :doc
-  (:use :cl :std :organ :sb-mop :sb-introspect)
+  (:use :cl :std :organ :sb-mop :sb-introspect :obj/id :log)
   (:export
    :definition-specifier
    :find-definitions
@@ -107,8 +107,11 @@
          (sb-introspect::definition-source-description source-location)))
 
 (defun find-definitions (name)
-  (loop for type in *definition-types* by #'cddr
-        for defsrcs = (sb-introspect:find-definition-sources-by-name name type)
-        append (loop for defsrc in defsrcs 
-                     collect (list (make-dspec type name defsrc)
-                                   (sb-introspect:find-definition-sources-by-name name type)))))
+  "Iterate over all type definitions returning two lists, DSPECs and DEFINITION-SOURCEs."
+  (let ((dspecs) (defs))
+    (loop for type in *definition-types* by #'cddr
+          for defsrcs = (sb-introspect:find-definition-sources-by-name name type)
+          do (loop for defsrc in defsrcs
+                   do (push (make-dspec type name defsrc) dspecs)
+                      (dolist (d (sb-introspect:find-definition-sources-by-name name type)) (push d defs))))
+    (values defs dspecs)))

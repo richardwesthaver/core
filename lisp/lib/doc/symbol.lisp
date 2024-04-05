@@ -15,6 +15,33 @@
            (setf (gethash ,var ,seen-ht) t)
            (tagbody ,@body))))))
 
+#|
+(Public)
+:CLASS
+:COMPILER-MACRO
+:CONDITION
+:CONSTANT
+:FUNCTION
+:GENERIC-FUNCTION
+:MACRO
+:METHOD
+:METHOD-COMBINATION
+:PACKAGE
+:SETF-EXPANDER
+:STRUCTURE
+:SYMBOL-MACRO
+:TYPE
+:ALIEN-TYPE
+:VARIABLE
+:DECLARATION
+
+(Internal)
+:OPTIMIZER
+:SOURCE-TRANSFORM
+:TRANSFORM
+:VOP
+:IR1-CONVERT
+|#
 (defun classify-symbol (symbol)
   "Returns a list of classifiers that classify SYMBOL according to its
 underneath objects (e.g. :BOUNDP if SYMBOL constitutes a special
@@ -28,12 +55,18 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
     (let (result)
       (when (boundp symbol)             (push (if (constantp symbol)
                                                   :constant :boundp) result))
-      (when (fboundp symbol)            (push :fboundp result))
-      (when (type-specifier-p symbol)   (push :typespec result))
+      (when (fboundp symbol)            (push :function result))
+      (when (type-specifier-p symbol)   (push :type result))
       (when (find-class symbol nil)     (push :class result))
+      (when (typep symbol 'sb-int::condition) (push :condition result))
+      (when (typep symbol 'structure-class) (push :structure result))
+      (when (sb-alien::alien-type-p symbol) (push :alien-type result))
+      (when (sb-c::vop-p symbol) (push :vop result))
       (when (macro-function symbol)     (push :macro result))
       (when (special-operator-p symbol) (push :special-operator result))
       (when (find-package symbol)       (push :package result))
+      (when (compiler-macro-function symbol) (push :compiler-macro result))
+      (when (compiled-function-p symbol) (push :compiled result))
       (when (and (fboundp symbol)
                  (typep (ignore-errors (fdefinition symbol))
                         'generic-function))
@@ -60,3 +93,39 @@ boundp fboundp generic-function class macro special-operator package"
       (when (special-operator-p symbol) (flip #\s))
       (when (find-package symbol)       (flip #\p))
       result)))
+
+(defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
+  ((symbol :initarg :symbol :type symbol :accessor doc-symbol)
+   (class :initarg :class :type list :accessor doc-class)
+   (definitions :initform nil :initarg :definitions :type list :accessor doc-definitions)
+   (specs :initform nil :initarg :specs :type list :accessor doc-specs)
+   (info :initarg :info :type (or null sb-c::packed-info) :accessor doc-info)
+   (alloc :initarg :alloc :type list :accessor doc-alloc)))
+
+#|
+(setq *defs* 
+ (loop for x across (doc-symbols (package-documentation)) collect (doc-definitions x)))
+
+|#
+
+(defun symbol-documentation (s)
+  "Return the SYMBOL-DOCUMENTATION object of S, a symbol."
+  (let ((class (classify-symbol s)))
+    (multiple-value-bind (defs specs) (find-definitions s)
+      (make-instance 'symbol-documentation
+        :id (sb-c::symbol-hash s)
+        :symbol s
+        :class class
+        :definitions defs
+        :specs specs
+        :info (sb-c::symbol-dbinfo s)
+        :alloc (multiple-value-list (allocation-information s))))))
+
+(defmethod print-object ((self symbol-documentation) stream)
+  (with-slots (symbol class) self
+    (print-unreadable-object (self stream :type t)
+      (format stream "~S ~A"  symbol class))))
+
+(defun symbol-doc-files (self)
+  (remove-duplicates
+   (mapcar #'definition-source-pathname (doc-definitions self))))
