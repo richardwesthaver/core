@@ -3,6 +3,7 @@
   :description "Common Lisp Documentation System"
   :depends-on (:std :organ :parse)
   :components ((:file "pkg")
+               (:file "proto")
                (:file "err")
                (:file "symbol")
                (:file "file")
@@ -13,7 +14,7 @@
   :in-order-to ((test-op (test-op :doc/tests))))
 
 (defsystem :doc/tests
-  :depends-on (:rt :doc)
+  :depends-on (:rt :doc :rdb)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :doc)))
 

@@ -64,7 +64,8 @@
   (:use :cl :std :organ :sb-mop :sb-introspect :obj/id :log)
   (:import-from :uiop :string-prefix-p)
   (:import-from :asdf :component-name :component-children
-   :system :component-pathname :find-system :system-description)
+   :system :component-pathname :find-system :system-description
+   :system-depends-on)
   (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)
   (:import-from :sb-kernel :symbol-package-id)
   (:import-from :sb-ext :restrict-compiler-policy)
@@ -79,7 +80,7 @@
    :doc-error 
    ;; methods
    :doc-file :doc-files :doc-symbol :doc-symbols :doc-package :doc-packages :doc-dist
-   :doc-pathnames :doc-directories :doc-parse
+   :doc-pathnames :doc-directories :doc-parse :doc-system :doc-dependencies :doc-dependents
    ;; symbol
    :do-symbol* :classify-symbol :symbol-classification-string
    :symbol-documentation

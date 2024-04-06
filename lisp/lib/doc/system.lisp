@@ -41,3 +41,24 @@ SELF."
                    (when (and (packagep p) (string-prefix-p (string-upcase s) (package-name p)))
                      p))
                  (list-all-packages))))))
+
+(defmethod doc-dependencies ((self system-documentation))
+  (mapcar #'system-documentation (system-depends-on (doc-system self))))
+
+(defun find-system-dependents (system)
+  "Return a list of systems which depend on SYSTEM by iterating over ASDF:REGISTER-SYSTEMS."
+  (let ((r))
+  (dolist (s (asdf:registered-systems))
+    (setf s (find-system s))
+    (when (and s (member (component-name system)
+                         (mapcar
+                          (lambda (dep)
+                            (when (atom dep)
+                              (string-downcase (format nil "~A" dep))))
+                          (asdf:system-depends-on s))
+                         :test #'equalp))
+      (push s r)))
+  r))
+
+(defmethod doc-dependents ((self system-documentation))
+  (mapcar #'system-documentation (find-system-dependents (doc-system self))))
