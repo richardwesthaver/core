@@ -13,7 +13,8 @@
 ;;   starting with DEF.
 
 ;; - Object Structure :: for functions - their declared type, for
-;;   objects their slots, methods, sub/superclasses, etc (MOP).
+;;   objects their slots, methods, sub/superclasses, allocation info,
+;;   etc.
 
 ;; - Source :: the source code which defines a symbol and its
 ;;   file/line location.
