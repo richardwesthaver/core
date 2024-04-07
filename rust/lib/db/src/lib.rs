@@ -19,9 +19,11 @@ pub trait Db {
   type DB = rocksdb::DB;
   #[cfg(not(feature = "rocksdb"))]
   type DB;
-  fn db_init(&self) -> Result<()>;
+  fn db_init(&self) -> Result<Self::DB>;
+  fn db_init_mut(&mut self) -> Result<()>;
   fn db_open(&self) -> Result<()>;
   fn db_close(&self) -> Result<()>;
+  fn db_close_mut(&mut self) -> Result<()>;
   fn db_query(&self) -> Result<()>;
   fn db_transaction(&self) -> Result<()>;
 }

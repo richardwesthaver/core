@@ -54,7 +54,10 @@ async fn main() -> Result<()> {
   } else {
     AlikConfig::default()
   };
+  // initialize
+  let alik = Alik::with_config(&cfg);
   debug!("{:?}", cfg);
+  debug!("{:?}", alik);
   // run cmd
   if let Some(cmd) = args.cmd {
     match cmd {
@@ -63,7 +66,7 @@ async fn main() -> Result<()> {
         if let Some(s) = srv {
           match s.as_str() {
             "graphiql" => {
-              start_graphiql("127.0.0.1:0").await;
+              graphql::start_graphiql("127.0.0.1:0").await;
               Ok(())
             }
             "http-proxy" => {
@@ -79,7 +82,7 @@ async fn main() -> Result<()> {
           let http_proxy =
             tokio::spawn(async move { start_http_proxy("127.0.0.1:0").await });
           let graphiql =
-            tokio::spawn(async move { start_graphiql("127.0.0.1:0").await });
+            tokio::spawn(async move { graphql::start_graphiql("127.0.0.1:0").await });
 
           tokio::try_join!(graphiql, http_proxy)?;
           Ok(())

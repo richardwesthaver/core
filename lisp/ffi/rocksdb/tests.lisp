@@ -150,8 +150,8 @@ DB where K and V are both Lisp strings."
 	 (vlen (length val))
          (wopts (rocksdb-writeoptions-create))
          (ropts (rocksdb-readoptions-create)))
-    (with-alien ((k (* char) (make-alien char klen))
-                 (v (* char) (make-alien char vlen))
+    (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
+                 (v (* unsigned-char) (make-alien unsigned-char vlen))
                  (errptr rocksdb-errptr nil))
       ;; copy KEY to K
       (setfa k key)

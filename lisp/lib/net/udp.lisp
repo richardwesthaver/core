@@ -1,3 +1,8 @@
+;;; net/udp.lisp --- UDP utilities
+
+;;
+
+;;; Code:
 (in-package :net/udp)
 
 (defun udp-server (port)

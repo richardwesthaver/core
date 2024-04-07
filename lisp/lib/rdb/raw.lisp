@@ -27,7 +27,7 @@ to initialize the instance with custom configuration."
 
 (defun destroy-db-raw (path &optional (opt (rocksdb-options-create)))
   (with-errptr (err 'destroy-db-error (list :db path))
-    (rocksdb-destroy-db opt path err)
+    (rocksdb-destroy-db opt (namestring (uiop:ensure-directory-pathname path)) err)
     (rocksdb-options-destroy opt)))
 
 ;; (with-open-db-raw (db "/tmp/tmp-db") (print db))
@@ -44,8 +44,8 @@ to initialize the instance with custom configuration."
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
 	(vlen (length val)))
-    (with-alien ((k (* char) (make-alien char klen))
-		 (v (* char) (make-alien char vlen)))
+    (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
+		 (v (* unsigned-char) (make-alien unsigned-char vlen)))
       (setfa k key)
       (setfa v val)
       (with-errptr (err 'put-kv-error (list :db db :kv (cons key val)))
@@ -66,8 +66,8 @@ to initialize the instance with custom configuration."
   (let ((klen (length key))
 	(vlen (length val)))
     (with-errptr (err 'put-kv-error (list :db db :kv (cons key val)))
-      (with-alien ((k (* char) (make-alien char klen))
-		   (v (* char) (make-alien char vlen)))
+      (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
+		   (v (* unsigned-char) (make-alien unsigned-char vlen)))
         (setfa k key)
         (setfa v val)
         (rocksdb-put-cf db
@@ -86,7 +86,7 @@ to initialize the instance with custom configuration."
   (let ((klen (length key)))
     (with-errptr (err 'get-kv-error (list :db db :key key))
       (with-alien ((vlen (* size-t) (make-alien size-t 0))
-		   (k (* char) (make-alien char klen)))
+		   (k (* unsigned-char) (make-alien unsigned-char klen)))
         (setfa k key)
         (let* ((val (rocksdb-get db
 			         opt
@@ -108,7 +108,7 @@ to initialize the instance with custom configuration."
   (let ((klen (length key)))
     (with-errptr (err 'get-kv-error (list :db db :key key))
       (with-alien ((vlen (* size-t) (make-alien size-t 0))
-		   (k (* char) (make-alien char klen)))
+		   (k (* unsigned-char) (make-alien unsigned-char klen)))
         (setfa k key)
         (let* ((val (rocksdb-get-cf db
 			            opt

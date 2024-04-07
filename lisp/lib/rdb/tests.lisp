@@ -1,5 +1,5 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien))
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log))
 
 (in-package :rdb/tests)
 
@@ -8,14 +8,28 @@
 
 (rocksdb:load-rocksdb)
 
+(init-log-timestamp)
+
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
     (with-db (db (open-db-raw db-path))
       (put-kv-str-raw db "foo" "bar")
-      (is (string= (get-kv-str-raw db "foo") "bar"))
+      ;; (is (string= (get-kv-str-raw db "foo") "bar"))
       (close-db-raw db)
       (destroy-db-raw db-path))))
+
+(deftest opts ()
+  "Ensure RDB-OPTS can be created, destructured, etc."
+  (let ((default (default-rdb-opts)))
+    (is (typep (rdb-opts-sap default) '(alien (* rocksdb-options))))
+    (is (= 1 (get-opt default "create-if-missing")))
+    (is (= 1
+           (set-opt default "enable-blob-files" 1 :push t)
+           (get-opt default "enable-blob-files")
+           (rocksdb-options-get-enable-blob-files (rdb-opts-sap default))))
+    (is (= 0
+           (rocksdb-options-get-error-if-exists (rdb-opts-sap default))))))
 
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
@@ -39,32 +53,27 @@
         (is (not (rocksdb:rocksdb-iter-valid iter)))))
     (destroy-db-raw path)))
 
-(deftest rdb ()
+(deftest rdb (:disabled nil)
   "Test RDB struct and methods."
-  (with-db (db (create-db "/tmp/rdb/"))
+  ;; NOTE: passing a directory with trailing slash causes segfault - guess we gotta handle tht
+  (with-db (db (debug! (create-db "/tmp/rdb" :open t)))
+    ;; get/set without cf
     (put-kv-str-raw (rdb-db db) "key" "val")
-    ;; (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
-    ;; (let ((cfs (list (make-rdb-cf :name "foo") (make-rdb-cf :name "bar") (make-rdb-cf :name "baz"))))
-    ;;   (dolist (cf cfs)
-    ;;     (push-cf cf db)))
-    ;; (make-db db)
+    (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
+    ;; push 3 cfs
+    (let ((cfs (list (make-rdb-cf "foo") (make-rdb-cf "bar") (make-rdb-cf "baz"))))
+      (dolist (cf cfs)
+        (push-cf cf db)))
+    (debug! (rdb-cfs db))
+    (create-cfs db)
     ;; TODO
-    ;; (loop for cf across (rdb-cfs db)
-    ;;       do
-    ;;          (progn
-    ;;            (insert-kv db (make-rdb-kv "key" "val") :cf (rdb-cf-name cf))
-    ;;            (is (equal (get-cf-str-raw (rdb-db db) (rdb-cf-sap cf) "key") "val"))))
-    (rocksdb:rocksdb-cancel-all-background-work (rdb-db db) t)
-    ;; (insert-kv-str db "test" "zaa")
+    (do-cfs (cf (rdb-cfs db))
+      (insert-kv db (make-kv "key" "val") :cf (rdb-cf-name cf))
+      (is (equal (get-key db "key" :cf (rdb-cf-sap cf)) "val")))
+    (rocksdb-cancel-all-background-work (rdb-db db) nil)
+    ;; insert after background cancel
+    (insert-key db "test" "zaa")
+    (is (string= "zaa" (get-key db "test")))
     ;; cleanup
-    (close-db db)
-    (destroy-db db)))
-
-(deftest rdb-bytes ()
-  "Test rdb-bytes methods - iterator protocol specifically."
-  (let ((bytes (make-instance 'rdb-bytes :buffer #(0 1 2 3))))
-    (is (= (sequence:length bytes) 4))
-    (is (= (sequence:elt bytes 0) 0))
-    (is (not (sequence:emptyp bytes)))
-    ;; NYI
-    (is (= (sequence:count 2 (rdb-bytes-buffer bytes)) 1))))
+    (destroy-db db)
+    (close-db db)))

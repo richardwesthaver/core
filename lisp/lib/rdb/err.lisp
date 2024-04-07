@@ -1,3 +1,8 @@
+;;; rdb/err.lisp --- RDB errors
+
+;;
+
+;;; Code:
 (in-package :rdb)
 
 (deferror rdb-error ()

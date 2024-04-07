@@ -57,14 +57,15 @@
    :rdb :make-rdb :create-db
    :rdb-db :rdb-name :rdb-cfs :rdb-opts
    :rdb-bytes :rdb-bytes-buffer :rdb-opts-sap
-   :make-rdb-key :make-rdb-kv :make-rdb-val :rdb-kv :rdb-key :rdb-val 
+   :make-key :make-kv :make-val :rdb-kv :rdb-key :rdb-val 
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf
    :rdb-cf-sap :rdb-cf-name
    ;; macs
    :with-db
-   :with-cf))
+   :with-cf
+   :do-cfs))
 
 (in-package :rdb)
 ;; (rocksdb:load-rocksdb t)

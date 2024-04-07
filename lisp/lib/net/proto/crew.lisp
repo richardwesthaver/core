@@ -1,3 +1,8 @@
+;;; net/proto/crew.lisp --- Swank Crew Protocol
+
+;;
+
+;;; Code:
 (in-package :net/proto/crew)
 
 (defclass crew-connection-info ()

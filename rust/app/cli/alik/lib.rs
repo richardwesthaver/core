@@ -1,45 +1,61 @@
-//! app/cli/alik/lib.rs --- Alik Lib
+/// app/cli/alik/lib.rs --- Alik Lib
 
-use db::{Db, DbConfigExt};
+// Helper of man
+
 /// Code:
-// use net::axum::Router;
+pub mod graphql;
+pub mod ping;
+pub mod http;
+pub mod udp;
+
+use db::{Db, DbConfigExt, rocksdb};
 use net::{
+  http::tower::trace::TraceLayer,
+  reqwest::Client,
   axum::{
     body::{Body, Bytes},
     extract::State,
     http::{HeaderMap, HeaderName, HeaderValue, StatusCode},
-    response::{self, IntoResponse, Response},
+    response::{IntoResponse, Response},
     routing::get,
     Router,
   },
-  http::graphql::http::GraphiQLSource,
 };
+
 use serde::{Deserialize, Serialize};
+
 use std::{
+  sync::Arc,
   collections::HashMap,
   fs,
   path::{Path, PathBuf},
 };
-use tokio::net::TcpListener;
-// use net::http::graphql::http::{EmptyMutation, EmptySubscription, Schema};
-// use net::http::graphql_axum::GraphQL;
+
 pub use krypt::KryptConfig;
-use logger::{log, tracing::Span};
-use net::{http::tower::trace::TraceLayer, reqwest::Client};
-use obj::{Configure, Objective};
+
+use logger::{info, log, tracing::Span};
+
+use obj::{Configure, NetworkConfig, Objective};
+
 use std::time::Duration;
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AlikConfig {
   krypt: KryptConfig,
   db_path: Option<PathBuf>,
   db_opts: HashMap<String, String>,
+  net: NetworkConfig,
 }
 impl AlikConfig {
+  pub fn new() -> Self {
+    AlikConfig::default()
+  }
   pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, obj::Error> {
     let s = fs::read_to_string(path)?;
     AlikConfig::from_json_str(&s)
   }
 }
+
 obj::impl_config!(AlikConfig);
 
 impl DbConfigExt for AlikConfig {
@@ -57,26 +73,64 @@ impl DbConfigExt for AlikConfig {
   }
 }
 
+pub trait AlikService {}
+
 #[derive(Debug)]
-pub struct Alik {}
+pub struct Alik {
+  db: Option<rocksdb::DB>,
+  config: Arc<AlikConfig>,
+  router: Option<Router>,
+}
 
 impl Alik {
   pub fn new() -> Alik {
-    Alik {}
+    Alik {
+      db: None,
+      config: Arc::new(AlikConfig::new()),
+      router: None,
+    }
   }
-  pub fn with_config(_cfg: AlikConfig) -> Alik {
-    Alik {}
+  pub fn with_config(cfg: &AlikConfig) -> Alik {
+    Alik {
+      db: None,
+      config: Arc::new(cfg.to_owned()),
+      router: None,
+    }
+  }
+  pub fn network_init(&mut self) -> Result<(), net::Error> {
+    let socket = &self.config.net.socket;
+    let peers = self.config.net.peers.as_ref();
+    info!("initializing on socket {:?}", socket);
+    info!("initializing with peers {:?}", peers.unwrap());
+    self.router = Some(Router::new().route("/", get("")));
+    Ok(())
   }
 }
 
 impl Db for Alik {
-  fn db_init(&self) -> Result<(), db::Error> {
+  fn db_init(&self) -> Result<rocksdb::DB, db::Error> {
+    let path = self.config.db_path.as_ref();
+    let opts = &self.config.db_opts;
+    info!("{:?}",opts);
+    rocksdb::DB::open(&rocksdb::Options::default(),path.unwrap()).unwrap();
+    Ok(rocksdb::DB::open_default("").unwrap())
+  }
+  fn db_init_mut(&mut self) -> Result<(), db::Error> {
+    self.db = Some(self.db_init().unwrap());
     Ok(())
   }
   fn db_open(&self) -> Result<(), db::Error> {
     Ok(())
   }
   fn db_close(&self) -> Result<(), db::Error> {
+    if let Some(db) = &self.db {
+      db.cancel_all_background_work(true)
+    };
+    Ok(())
+  }
+  fn db_close_mut(&mut self) -> Result<(), db::Error> {
+    self.db_close().unwrap();
+    self.db = None;
     Ok(())
   }
   fn db_query(&self) -> Result<(), db::Error> {
@@ -85,28 +139,6 @@ impl Db for Alik {
   fn db_transaction(&self) -> Result<(), db::Error> {
     Ok(())
   }
-}
-
-pub async fn graphiql() -> impl IntoResponse {
-  response::Html(GraphiQLSource::build().endpoint("/").finish())
-}
-
-pub async fn start_graphiql(addr: &str) {
-  // let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
-  //     .data(Vec::new())
-  //     .finish();
-
-  let app = Router::new().route("/", get(graphiql));
-  // .post_service(GraphQL::new(schema)));
-
-  let listener = TcpListener::bind(addr).await.unwrap();
-  println!(
-    "graphiql running on: http://{}",
-    listener.local_addr().unwrap()
-  );
-  net::axum::serve(TcpListener::bind(addr).await.unwrap(), app)
-    .await
-    .unwrap();
 }
 
 /// Server

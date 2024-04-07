@@ -86,6 +86,7 @@
    hide-mode-line ;; ui
    corfu orderless cape ;; completion
    slime ;; common lisp server
+   graphviz-dot-mode
    bbdb
    ;; slime-company
    which-key ;; key helper
@@ -267,6 +268,10 @@ function: '(ql:quickload :clouseau)'."
 ;;; Bash
 (setq sh-basic-offset 2)
 
+;;; Graphviz
+(use-package graphviz-dot-mode
+  :config
+  (setq graphviz-dot-indent-width 2))
 ;;; Comments
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")

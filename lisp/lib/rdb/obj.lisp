@@ -50,7 +50,7 @@
 (defmethod push-sap ((self rdb-opts) key)
   "Push KEY from slot :TABLE to the instance :SAP."
   (%set-rocksdb-option (rdb-opts-sap self) key (get-opt self key)))
-  
+
 (defmethod push-sap* ((self rdb-opts))
   "Initialized the SAP slot with values from TABLE."
   (with-slots (table) self
@@ -61,69 +61,16 @@
   ;; TODO 2024-03-10: handle lisp->C types
   (make-rdb-opts :create-if-missing 1))
 
-;;; bytes
-(defclass rdb-bytes ()
-    ((buffer :initarg :buffer :type octet-vector :accessor rdb-bytes-buffer))
-  (:documentation "RDB unsigned-byte array. Implements the iterator protocol."))
+(defclass rdb-kv ()
+  ((key :initarg :key :type octet-vector :accessor rdb-key)
+   (val :initarg :val :type octet-vector :accessor rdb-val)))
 
-(defmethod sequence:length ((self rdb-bytes))
-  (sequence:length (rdb-bytes-buffer self)))
-
-(defmethod sequence:emptyp ((self rdb-bytes))
-  (sequence:emptyp (rdb-bytes-buffer self)))
-
-(defmethod sequence:elt ((self rdb-bytes) index)
-  (elt (rdb-bytes-buffer self) index))
-
-(defmethod sequence:make-sequence-like ((self rdb-bytes) length &key initial-element initial-contents)
-  (let ((res (make-instance 'rdb-bytes)))
-    (cond 
-      ((and initial-element initial-contents) (error "supplied both ~S and ~S to ~S" :initial-element :initial-contents 'make-sequence-like))
-      (initial-element (setf (rdb-bytes-buffer res) (make-array length :element-type (array-element-type self)
-                                                                       :initial-element initial-element)))
-      (initial-contents (setf (rdb-bytes-buffer res) (make-array length :element-type (array-element-type self)
-                                                                       :initial-contents initial-contents)))
-      (t (setf (rdb-bytes-buffer res) (make-array length :element-type (array-element-type self)))))))
-
-;; (sequence:make-sequence-iterator (make-instance 'rdb-bytes :buffer (vector 1 2 3)))
-(defmethod sequence:make-sequence-iterator ((self rdb-bytes) &key from-end start end)
-  (sequence:make-sequence-iterator (rdb-bytes-buffer self) :from-end from-end :start start :end end))
-
-;; (defmethod sequence:subseq ((self rdb-bytes) start &optional end))
-;; (defmethod sequence:concatenate ((self rdb-bytes) &rest sequences))
-
-;;; keyval
-(defclass rdb-val (rdb-bytes)
-  ()
-  (:documentation "RDB value protocol.
-
-Values must be able to be encoded to and from (array unsigned-byte)."))
-
-(defun make-rdb-val (val)
-  "Convert VAL to an object of type RDB-VAL."
-  (make-instance 'rdb-val :buffer val))
-
-(defclass rdb-key (rdb-bytes)
-  ()
-  (:documentation "RDB key protocol.
-
-Keys must be able to be encoded to and from (array unsigned-byte)."))
-
-(defun make-rdb-key (key)
-  "Convert KEY to an object of type RDB-KEY."
-  (make-instance 'rdb-key :buffer key))
-
-(defclass rdb-kv (rdb-bytes)
-  ((key :initarg :key :type rdb-key :accessor rdb-key)
-   (val :initarg :val :type rdb-val :accessor rdb-val)))
-
-(defun make-rdb-kv (key val)
-  "Generate a new RDB-KV pair."
+(defmethod make-kv (key val)
   (make-instance 'rdb-kv 
-    :key (make-rdb-key key) 
-    :val (make-rdb-val val)))
+    :key (make-key key) 
+    :val (make-val val)))
 
-(defvar *default-rdb-kv* (make-rdb-kv #() #()))
+(defvar *default-rdb-kv* (make-kv #() #()))
 
 ;;; column family
 (defstruct (rdb-cf (:constructor make-rdb-cf (name &key kv sap)))
@@ -133,9 +80,9 @@ rocksdb_cf_t handle."
   (name "" :type string)
   (kv *default-rdb-kv* :type rdb-kv)
   (sap nil :type (or null alien)))
-  
+
 ;;; rdb
-(defstruct (rdb (:constructor make-rdb (name opts cfs &optional db)))
+(defstruct (rdb (:constructor make-rdb (name opts &optional cfs db)))
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
   (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf))
@@ -143,6 +90,10 @@ rocksdb_cf_t handle."
 
 ;; (defvar *default-rdb-opts* (default-rdb-opts))
 
+(defmethod print-object ((self rdb) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream ":cfs ~A" (length (rdb-cfs self)))))
+  
 (defun create-db (name &key opts cfs open)
   "Construct a new RDB instance from NAME.
 
@@ -155,18 +106,19 @@ and internal sap slots are initialized."
   (when (probe-file name) (log:warn! "directory already exists: " name))
   (let* ((opts (or opts (default-rdb-opts)))
          (obj
-          (make-rdb (typecase name
-                      (pathname (namestring name))
-                      (string name)
-                      (t (error "invalid NAME: ~S" name)))
-                    opts
-                    (or (when cfs
-                          (typecase cfs
-                            (list (coerce cfs 'vector))
-                            (vector cfs)
-                            (rdb-cf (vector cfs))
-                            (t (log:warn! "invalid CF passed to create-db"))))
-                        (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0)))))
+           (make-rdb (string-right-trim '(#\/)
+                                        (typecase name
+                                          (pathname (namestring name))
+                                          (string name)
+                                          (t (error "invalid NAME: ~S" name))))
+                     opts
+                     (or (when cfs
+                           (typecase cfs
+                             (list (coerce cfs 'vector))
+                             (vector cfs)
+                             (rdb-cf (vector cfs))
+                             (t (log:warn! "invalid CF passed to create-db"))))
+                         (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
     (when open
       (open-db obj)
       (create-cfs obj))
@@ -182,17 +134,12 @@ and internal sap slots are initialized."
 
 (defmethod close-cf ((cf rdb-cf))
   (with-slots (sap) cf
-    (free-alien sap)))
+    (unless (null sap)
+      (free-alien sap))))
 
 (defmethod open-db ((self rdb))
   (with-slots (name db opts) self
-    (or
-     db 
-     (setf db (open-db-raw name (rdb-opts-sap opts))))))
-
-(defmethod destroy-db ((self rdb))  
-  (when (rdb-db self) (close-db self))
-  (destroy-db-raw (rdb-name self)))
+    (setq db (open-db-raw name (rdb-opts-sap opts)))))
 
 (defmethod create-cfs ((self rdb) &key &allow-other-keys)
   (loop for cf across (rdb-cfs self)
@@ -202,17 +149,16 @@ and internal sap slots are initialized."
   (with-slots (cfs) self
     (declare (type (array rdb-cf) cfs))
     (loop for cf across cfs
-          do (progn
-               (close-cf cf)
-               (free-alien (rdb-cf-sap cf))))))
+          do (setf cf (close-cf cf)))))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
   (with-slots (db cfs) self
     (unless (null db)
       (close-cfs self)
-      (close-db-raw db)
-      (free-alien db))))
+      (setf db (close-db-raw db)))))
 
+(defmethod destroy-db ((self rdb))
+  (destroy-db-raw (rdb-name self)))
 
 (defmethod put-key ((self rdb) key val)
   (put-kv-raw
@@ -228,12 +174,21 @@ and internal sap slots are initialized."
 
 (defmethod insert-key ((self rdb) key val &key cf)
   (if cf
-    (put-cf-raw
-     (rdb-db self)
-     (rdb-cf-sap (find cf (rdb-cfs self) :key #'rdb-cf-name :test #'equal))
-     key
-     val)
-    (put-key self key val)))
+      (put-cf-raw
+       (rdb-db self)
+       (rdb-cf-sap (find cf (rdb-cfs self) :key #'rdb-cf-name :test #'equal))
+       key
+       val)
+      (put-key self key val)))
+
+(defmethod insert-key ((self rdb) (key string) (val string) &key cf)
+  (insert-key self (string-to-octets key) (string-to-octets val) :cf cf))
+
+(defmethod insert-key ((self rdb) (key string) val &key cf)
+  (insert-key self (string-to-octets key) val :cf cf))
+
+(defmethod insert-key ((self rdb) key (val string) &key cf)
+  (insert-key self key (string-to-octets val) :cf cf))
 
 (defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf)
   (if cf
@@ -241,7 +196,13 @@ and internal sap slots are initialized."
                   (rdb-cf-sap
                    (find cf (rdb-cfs self)
                          :key #'rdb-cf-name
-                         :test #'equal))
-                  (rdb-bytes-buffer (rdb-key kv))
-                  (rdb-bytes-buffer (rdb-val kv)))
+                         :test #'string=))
+                  (rdb-key kv)
+                  (rdb-val kv))
       (put-kv self kv)))
+
+(defmethod get-key ((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
+  (with-slots (db) self
+    (when cf
+      (get-cf-str-raw db cf key opts)
+      (get-kv-str-raw db key opts))))

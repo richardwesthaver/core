@@ -18,16 +18,16 @@
   void 
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t) 
-  (val (* char))
+  (val (* unsigned-char))
   (vallen size-t))
 
 (def-with-errptr rocksdb-get 
-  (* char)
+  (* unsigned-char)
   (db (* rocksdb))
   (options (* rocksdb-readoptions))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t) 
   (vallen (* size-t)))
 
@@ -35,16 +35,16 @@
   void
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t))
 
 (def-with-errptr rocksdb-merge 
   void
   (db (* rocksdb))
   (opt (* rocksdb-writeoptions))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t)
-  (val (* char))
+  (val (* unsigned-char))
   (vallen size-t))
 
 (def-with-errptr rocksdb-merge-cf 
@@ -52,9 +52,9 @@
   (db (* rocksdb))
   (opt (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t)
-  (val (* char))
+  (val (* unsigned-char))
   (vallen size-t))
 
 (def-with-errptr rocksdb-write 
@@ -64,11 +64,11 @@
   (batch (* rocksdb-writebatch)))
 
 (def-with-errptr rocksdb-get-cf 
-  (* char)
+  (* unsigned-char)
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t)
   (vallen (* size-t)))
 
@@ -217,9 +217,9 @@
   (db (* rocksdb))
   (opt (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t)
-  (val (* char))
+  (val (* unsigned-char))
   (vallen size-t))
 
 (def-with-errptr rocksdb-delete-cf 
@@ -227,7 +227,7 @@
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t))
 
 (def-with-errptr rocksdb-delete-range-cf 
@@ -235,9 +235,9 @@
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
-  (start-key (* char))
+  (start-key (* unsigned-char))
   (start-key-len size-t)
-  (end-key (* char))
+  (end-key (* unsigned-char))
   (end-key-len size-t))
 
 (def-with-errptr rocksdb-disable-file-deletions void
@@ -268,10 +268,10 @@
       (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-prev void 
       (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-key (* char)
+(define-alien-routine rocksdb-iter-key (* unsigned-char)
   (iter (* rocksdb-iterator))
   (klen-ptr (* size-t)))
-(define-alien-routine rocksdb-iter-value (* char) 
+(define-alien-routine rocksdb-iter-value (* unsigned-char) 
   (iter (* rocksdb-iterator)) 
   (vlen-ptr (* size-t)))
 
@@ -332,7 +332,7 @@
 
 (define-alien-routine rocksdb-perfcontext-reset void (* rocksdb-perfcontext))
 
-(define-alien-routine rocksdb-perfcontext-report (* char) 
+(define-alien-routine rocksdb-perfcontext-report (* unsigned-char) 
   (context (* rocksdb-perfcontext))
   (exclude-zero-counters unsigned-char))
 
@@ -349,7 +349,7 @@
 ;;   (state (* void))
 ;;   (destructor (* void))
 ;;   (filter (* unsigned-char))
-;;   (name (* char)))
+;;   (name (* unsigned-char)))
 
 (define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
   (self (* rocksdb-compactionfilter)) (val unsigned-char))
@@ -375,7 +375,7 @@
 ;;   (state (* void))
 ;;   (destructor (* void))
 ;;   (compare (* int))
-;;   (name (* char)))
+;;   (name (* unsigned-char)))
 
 (define-alien-routine rocksdb-comparator-destroy void (self (* rocksdb-comparator)))
 
@@ -385,7 +385,7 @@
 ;;   (compare (* int))
 ;;   (compare-ts (* int))
 ;;   (compare-without-ts (* int))
-;;   (name (* char)))
+;;   (name (* unsigned-char)))
 
 (export '(rocksdb-comparator-destroy))
 
@@ -416,7 +416,7 @@
 ;;   (full-merge (* char))
 ;;   (partial-merge (* char))
 ;;   (delete-value (* void))
-;;   (name (* char)))
+;;   (name (* unsigned-char)))
 
 (define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
 

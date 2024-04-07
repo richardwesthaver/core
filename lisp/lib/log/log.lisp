@@ -5,18 +5,26 @@
 (defvar *log-level* nil)
 (defvar *logger* nil)
 (defvar *log-router* nil)
-(declaim (type (or boolean function) *log-timestamp*))
+(declaim (type (or boolean function number) *log-timestamp*))
 (defvar *log-timestamp* t 
   "If non-nil, print a timestamp with log output. The value may be a
 function in which case it is used as the function value of
 `log-timestamp-source'.")
 
+(defun get-real-time-since (n)
+  "Return the numbers of seconds since a relative value offset N."
+  (- (get-internal-real-time) n))
+
+(defun init-log-timestamp ()
+  (setq *log-timestamp* (get-internal-real-time)))
+
 ;; TODO 2023-09-20: (declaim (inline log-timestamp-source)) ;; this
 ;; probably shouldn't be inlined.. bench it
 (defun log-timestamp-source ()
-  (if (functionp *log-timestamp*)
-      (funcall *log-timestamp*)
-      (format nil "~f" (/ (get-internal-real-time) internal-time-units-per-second))))
+  (typecase *log-timestamp*
+    (function (funcall *log-timestamp*))
+    (number (format nil "~f" (/ (get-real-time-since *log-timestamp*) #.internal-time-units-per-second)))
+    (t (format nil "~f" (/ (get-internal-real-time) #.internal-time-units-per-second)))))
 
 ;; the purpose of this struct is to route log messages to the
 ;; appropriate output stream. It should be configured and bound to

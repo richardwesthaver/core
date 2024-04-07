@@ -1,3 +1,8 @@
+;;; obj/pkg.lisp --- Object System
+
+;;
+
+;;; Code:
 (defpackage :obj/meta
   (:nicknames :meta)
   (:use :cl :std)

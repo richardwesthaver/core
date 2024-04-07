@@ -1,3 +1,8 @@
+;;; net/tcp.lisp --- TCP utilities
+
+;;
+
+;;; Code:
 (in-package :net/tcp)
 
 (defun tcp-server (port)

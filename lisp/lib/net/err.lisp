@@ -1,3 +1,8 @@
+;;; net/err.lisp --- Network Errors
+
+;;
+
+;;; Code:
 (in-package :net/core)
 
 (define-condition net-error (std-error) ())

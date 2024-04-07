@@ -33,3 +33,9 @@
 (defmacro with-cf ((cf-var cf) &body body)
   `(let ((,cf-var ,cf))
      ,@body))
+
+(defmacro do-cfs ((cf cfs) &body body)
+  (with-gensyms (%cf)
+    `(loop for ,%cf across ,cfs
+           do (with-cf (,cf ,%cf) ,@body))))
+              
