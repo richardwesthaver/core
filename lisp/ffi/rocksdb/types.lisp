@@ -24,6 +24,7 @@
 (define-opaque rocksdb-snapshot)
 (define-opaque rocksdb-writeablefile)
 (define-opaque rocksdb-writebatch)
+(define-opaque rocksdb-writebatch-wi)
 (define-opaque rocksdb-livefiles)
 (define-opaque rocksdb-column-family-handle)
 (define-opaque rocksdb-column-family-metadata)

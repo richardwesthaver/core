@@ -4,14 +4,12 @@
 
 /// Code:
 pub mod graphql;
-pub mod ping;
 pub mod http;
+pub mod ping;
 pub mod udp;
 
-use db::{Db, DbConfigExt, rocksdb};
+use db::{rocksdb, Db, DbConfigExt};
 use net::{
-  http::tower::trace::TraceLayer,
-  reqwest::Client,
   axum::{
     body::{Body, Bytes},
     extract::State,
@@ -20,15 +18,17 @@ use net::{
     routing::get,
     Router,
   },
+  http::tower::trace::TraceLayer,
+  reqwest::Client,
 };
 
 use serde::{Deserialize, Serialize};
 
 use std::{
-  sync::Arc,
   collections::HashMap,
   fs,
   path::{Path, PathBuf},
+  sync::Arc,
 };
 
 pub use krypt::KryptConfig;
@@ -111,8 +111,8 @@ impl Db for Alik {
   fn db_init(&self) -> Result<rocksdb::DB, db::Error> {
     let path = self.config.db_path.as_ref();
     let opts = &self.config.db_opts;
-    info!("{:?}",opts);
-    rocksdb::DB::open(&rocksdb::Options::default(),path.unwrap()).unwrap();
+    info!("{:?}", opts);
+    rocksdb::DB::open(&rocksdb::Options::default(), path.unwrap()).unwrap();
     Ok(rocksdb::DB::open_default("").unwrap())
   }
   fn db_init_mut(&mut self) -> Result<(), db::Error> {

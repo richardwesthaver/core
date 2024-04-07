@@ -1,5 +1,5 @@
 use ui::*;
 
-fn main () {
+fn main() {
   MainWindow::new().unwrap().run().unwrap();
 }

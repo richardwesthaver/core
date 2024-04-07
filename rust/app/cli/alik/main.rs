@@ -81,8 +81,9 @@ async fn main() -> Result<()> {
         } else {
           let http_proxy =
             tokio::spawn(async move { start_http_proxy("127.0.0.1:0").await });
-          let graphiql =
-            tokio::spawn(async move { graphql::start_graphiql("127.0.0.1:0").await });
+          let graphiql = tokio::spawn(async move {
+            graphql::start_graphiql("127.0.0.1:0").await
+          });
 
           tokio::try_join!(graphiql, http_proxy)?;
           Ok(())

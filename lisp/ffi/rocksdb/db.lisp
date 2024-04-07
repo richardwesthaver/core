@@ -310,20 +310,95 @@
 (export '(rocksdb-backup-engine-close))
 
 ;;; Transactions
-(define-alien-routine rocksdb-transaction-begin (* rocksdb-transaction)
-  (wopts (* rocksdb-writeoptions))
-  (topts (* rocksdb-transaction-options))
-  (told (* rocksdb-transaction)))
+(def-with-errptr rocksdb-transactiondb-create-column-family (* rocksdb-column-family-handle)
+  (txn-db (* rocksdb-transactiondb))
+  (cf-options (* rocksdb-options))
+  (cf-name c-string))
 
 (def-with-errptr rocksdb-transactiondb-open (* rocksdb-transactiondb)
   (opts (* rocksdb-options))
   (topts (* rocksdb-transactiondb-options))
   (name c-string))
 
+(def-with-errptr rocksdb-transactiondb-open-column-families (* rocksdb-transactiondb)
+  (opts (* rocksdb-options))
+  (txn-db-opts (* rocksdb-transactiondb-options))
+  (name c-string)
+  (num-cfs int)
+  (cf-names (array c-string))
+  (cf-opfs (* rocksdb-options))
+  (cf-handles (array (* rocksdb-column-family-handle))))
+
+(define-alien-routine rocksdb-transactiondb-create-snapshot (* rocksdb-snapshot)
+  (txn-db (* rocksdb-transactiondb))
+  (snapshot (* rocksdb-snapshot)))
+
+(define-alien-routine rocksdb-transactiondb-release-snapshot void
+  (txn-db (* rocksdb-transactiondb))
+  (snapshot (* rocksdb-snapshot)))
+
+(define-alien-routine rocksdb-transactiondb-property-value c-string
+  (db (* rocksdb-transactiondb))
+  (propname c-string))
+
+(define-alien-routine rocksdb-transactiondb-property-int int
+  (db (* rocksdb-transactiondb))
+  (propname c-string)
+  (out-val (unsigned 64)))
+
+(define-alien-routine rocksdb-transactiondb-get-base-db (* rocksdb)
+  (txn-db (* rocksdb-transactiondb)))
+
+(define-alien-routine rocksdb-transactiondb-get-close-db void
+  (base-db (* rocksdb)))
+
+(define-alien-routine rocksdb-transaction-begin (* rocksdb-transaction)
+  (wopts (* rocksdb-writeoptions))
+  (topts (* rocksdb-transaction-options))
+  (told (* rocksdb-transaction)))
+
+(define-alien-routine rocksdb-transactiondb-get-prepared-transactions (array (* rocksdb-transaction))
+  (txn-db (* rocksdb-transactiondb))
+  (cnt (* size-t)))
+
+(def-with-errptr rocksdb-transaction-set-name void
+  (txn (* rocksdb-transaction))
+  (name c-string)
+  (name-len size-t))
+
+(define-alien-routine rocksdb-transaction-get-name c-string
+  (txn (* rocksdb-transaction))
+  (name-len (* size-t)))
+
+(def-with-errptr rocksdb-transaction-prepare void
+  (txn (* rocksdb-transaction)))
+
+(def-with-errptr rocksdb-transaction-commit void
+  (txn (* rocksdb-transaction)))
+
+(def-with-errptr rocksdb-transaction-rollback void
+  (txn (* rocksdb-transaction)))
+
+(define-alien-routine rocksdb-transaction-set-savepoint void
+  (txn (* rocksdb-transaction)))
+
+(def-with-errptr rocksdb-transaction-rollback-to-savepoint void
+  (txn (* rocksdb-transaction)))
+
+(define-alien-routine rocksdb-transaction-destroy void
+  (txn (* rocksdb-transaction)))
+
+(define-alien-routine rocksdb-transaction-get-writebach-wi (* rocksdb-writebatch-wi)
+  (txn (* rocksdb-transaction)))
+
 (define-alien-routine rocksdb-transactiondb-close void
   (tdb (* rocksdb-transactiondb)))
 
-(export '(rocksdb-transaction-begin rocksdb-transaction-close))
+(export '(rocksdb-transaction-begin rocksdb-transaction-close rocksdb-transactiondb-create-snapshot
+          rocksdb-transactiondb-release-snapshot rocksdb-transactiondb-property-value
+          rocksdb-transactiondb-property-int rocksdb-transactiondb-get-base-db
+          rocksdb-transactiondb-get-close-db rocksdb-transaction-get-name
+          rocksdb-transaction-set-savepoint rocksdb-transaction-destroy))
 
 ;;; Perfcontext
 (define-alien-routine rocksdb-set-perf-level void (val int))
