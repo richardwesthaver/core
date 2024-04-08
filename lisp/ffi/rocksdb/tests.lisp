@@ -27,13 +27,15 @@
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
 (defun genval (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "val")))))
 
-(defun random-array (dim &optional (limit 4096))
+(defun random-chars (dim)
   (let ((r (make-array dim :element-type 'octet)))
     (dotimes (i (array-total-size r) r)
-      (setf (row-major-aref r i) (random limit)))))
+      (setf (row-major-aref r i) (random 128)))))
 
 (defun random-bytes (dim)
-  (random-array dim 256))
+  (let ((r (make-array dim :element-type 'octet)))
+    (dotimes (i (array-total-size r) r)
+      (setf (row-major-aref r i) (random 255)))))
 
 (defmacro with-opt ((var create destroy) &body body)
   `(let ((,var ,create))
@@ -284,8 +286,8 @@ DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
          db
-         (key (random-bytes 100))
-         (val (random-bytes 999999))
+         (key (random-bytes 8))
+         (val (make-array 9999 :initial-element 36))
          (klen (length key))
          (vlen (length val))
          (wopts (rocksdb-writeoptions-create))
@@ -318,6 +320,15 @@ DB where K and V are both Lisp strings."
       (is (null-alien errptr))
       (rocksdb:rocksdb-flush db (rocksdb-flushoptions-create) errptr)
       (is (null-alien errptr))
+      (is (stringp
+           (cast
+            (rocksdb-get db
+                         ropts
+                         k
+                         klen
+                         (make-alien size-t vlen)
+                         errptr)
+            c-string)))
       (rocksdb-writeoptions-destroy wopts)
       (rocksdb-readoptions-destroy ropts)
       (rocksdb-close db)
