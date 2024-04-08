@@ -45,6 +45,8 @@
    :get-key :get-kv
    :put-cf-key :get-cf-key
    :push-sap :push-sap*
+   :pull-sap :pull-sap*
+   :backfill-opts
    :get-opt :set-opt
    :push-cf :open-cfs
    :create-cf :create-cfs
@@ -64,7 +66,10 @@
    :rdb-cf-sap :rdb-cf-name
    ;; macs
    :with-db
+   :do-db
    :with-cf
+   :do-cf
+   :with-iter ;; generic
    :do-cfs))
 
 (in-package :rdb)

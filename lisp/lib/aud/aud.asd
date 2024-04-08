@@ -8,4 +8,5 @@
 
 (defsystem :aud/tests
   :depends-on (:rt :aud)
+  :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :aud)))

@@ -1,3 +1,12 @@
+;;; rocksdb/sst.lisp --- SST Files
+
+;; Functions for writing and ingesting SST Files directly.
+
+;;; Refs:
+
+;; https://github.com/facebook/rocksdb/wiki/Creating-and-Ingesting-SST-files
+
+;;; Code:
 (in-package :rocksdb)
 
 (define-alien-routine rocksdb-sstfilewriter-create (* rocksdb-sstfilewriter)
@@ -20,16 +29,16 @@
 
 (def-with-errptr rocksdb-sstfilewriter-add void
   (writer (* rocksdb-sstfilewriter))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t)
-  (val (* char))
+  (val (* unsigned-char))
   (vallen size-t))
 
 (def-with-errptr rocksdb-sstfilewriter-put void
   (writer (* rocksdb-sstfilewriter))
-  (key (* char))
+  (key (* unsigned-char))
   (keylen size-t)
-  (val (* char))
+  (val (* unsigned-char))
   (vallen size-t))
 
 (def-with-errptr rocksdb-sstfilewriter-put-with-ts void
@@ -73,3 +82,19 @@
 (def-with-errptr rocksdb-sstfilewriter-file-size void
   (writer (* rocksdb-sstfilewriter))
   (file-size (* unsigned-long)))
+
+(def-with-errptr rocksdb-ingest-external-file void
+  (db (* rocksdb))
+  (file-list (* c-string))
+  (list-len size-t)
+  (opt (* rocksdb-ingestexternalfileoptions)))
+
+(def-with-errptr rocksdb-ingest-external-file-cf void
+  (db (* rocksdb))
+  (handle (* rocksdb-column-family-handle))
+  (file-list (array c-string))
+  (list-len size-t)
+  (opt (* rocksdb-ingestexternalfileoptions)))
+
+(def-with-errptr rocksdb-try-catch-up-with-primary void
+  (db (* rocksdb)))

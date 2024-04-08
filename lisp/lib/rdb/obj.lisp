@@ -11,10 +11,35 @@
 (defmacro rdb-opt-setter (key)
   `(find-symbol (format nil "~:@(rocksdb-options-set-~x~)" ,key) :rocksdb))
 
+(defmacro rdb-opt-getter (key)
+  `(find-symbol (format nil "~:@(rocksdb-options-get-~x~)" ,key) :rocksdb))
+
 (defun %set-rocksdb-option (opt key val)
   (funcall (rdb-opt-setter key) opt val))
 
-;; (funcall (rdb-opt-setter "create-if-missing") (rocksdb-options-create) nil)
+#| special cases
+WARNING: #<OPT-HANDLER-MISSING compression-options {101A423693}>
+WARNING: #<OPT-HANDLER-MISSING allow-mmap-write {101A5F0C93}>
+WARNING: #<OPT-HANDLER-MISSING use-direct-io-for-flush-compaction {101A5F1913}>
+WARNING: #<OPT-HANDLER-MISSING stas-persist-period-sec {101A5F32C3}>
+WARNING: #<OPT-HANDLER-MISSING writable-file-max-buffer-size {101A5F4523}>
+WARNING: #<OPT-HANDLER-MISSING disable-auto-compactions {101A5F54E3}>
+WARNING: #<OPT-HANDLER-MISSING prepare-for-bulk-load {101A5F62E3}>
+WARNING: #<OPT-HANDLER-MISSING memtable-vector-rep {101A5F6DB3}>
+WARNING: #<OPT-HANDLER-MISSING memtable-prefix-bloom-size-ratio {101A5F78B3}>
+WARNING: #<OPT-HANDLER-MISSING hash-skip-list-rep {101A620573}>
+WARNING: #<OPT-HANDLER-MISSING plain-table-factory {101A621083}>
+WARNING: #<OPT-HANDLER-MISSING min-level-to-compress {101A621B53}>
+WARNING: #<OPT-HANDLER-MISSING inplace-update-num-locks {101A6230F3}>
+WARNING: #<OPT-HANDLER-MISSING universal-compaction-options {101A624CD3}>
+WARNING: #<OPT-HANDLER-MISSING ratelimiter {101A625723}>
+WARNING: #<OPT-HANDLER-MISSING row-cache {101A6262E3}>
+|#
+
+(defun %get-rocksdb-option (opt key)
+  (if-let ((g (rdb-opt-getter key)))
+    (funcall g opt)
+    (warn 'opt-handler-missing :message key)))
 
 (defclass rdb-opts ()
   ((table :initarg :table :type hash-table :accessor rdb-opts-table)
@@ -57,6 +82,26 @@
     (loop for k in (hash-table-keys table)
           do (push-sap self k))))
 
+(defmethod pull-sap ((self rdb-opts) key)
+  (setf (gethash key (rdb-opts-table self)) (%get-rocksdb-option (rdb-opts-sap self) key)))
+
+(defmethod pull-sap* ((self rdb-opts))
+  (with-slots (table) self
+    (loop for k in (hash-table-keys table)
+          do (pull-sap self k))
+    table))
+
+(defmethod backfill-opts ((self rdb-opts) &key full)
+  "Backfill the TABLE slot with values from SAP.
+
+When FULL is non-nil, retrieve the full set of options available, not
+just the keys currently present in TABLE."
+  (if full
+      (loop for k across *rocksdb-options*
+            do (pull-sap self k))
+      (pull-sap* self))
+  (rdb-opts-table self))
+    
 (defun default-rdb-opts () 
   ;; TODO 2024-03-10: handle lisp->C types
   (make-rdb-opts :create-if-missing 1))

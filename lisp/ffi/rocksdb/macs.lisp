@@ -1,3 +1,8 @@
+;;; rocksdb/macs.lisp --- RocksDB FFI Macros
+
+;;
+
+;;; Code:
 (in-package :rocksdb)
 
 ;;; Macros

@@ -6,7 +6,8 @@
                :skel :syn :xdb :alsa
                :app :rocksdb :btrfs :uring
                :tree-sitter :xkb :ssh2 :sndfile ;; magick
-               :zstd :uring :blake3 :ublk :nuklear)
+               :zstd :uring :blake3 :ublk
+               :nuklear :aud)
                
   :build-operation monolithic-compile-bundle-op
   :build-pathname "prelude")

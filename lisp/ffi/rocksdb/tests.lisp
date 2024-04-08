@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :rocksdb/tests
-  (:use :cl :std :rt :rocksdb :sb-ext :sb-alien))
+  (:use :cl :std :rt :rocksdb :sb-ext :sb-alien :log))
 
 (in-package :rocksdb/tests)
 
@@ -10,9 +10,13 @@
 (in-suite :rocksdb)
 
 (load-rocksdb)
+(init-log-timestamp)
 
 (defun rocksdb-test-dir ()
   (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
+
+(defun rocksdb-test-file ()
+  (format nil "/tmp/~A" (gensym "rocksdb-test-")))
 
 (defun test-opts () 
   (let ((default (rocksdb-options-create)))
@@ -24,7 +28,7 @@
 (defun genval (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "val")))))
 
 (defun random-array (dim &optional (limit 4096))
-  (let ((r (make-array dim)))
+  (let ((r (make-array dim :element-type 'octet)))
     (dotimes (i (array-total-size r) r)
       (setf (row-major-aref r i) (random limit)))))
 
@@ -183,3 +187,166 @@ DB where K and V are both Lisp strings."
       (rocksdb-destroy-db opts path errptr)
       (is (null-alien errptr))
       (rocksdb-options-destroy opts))))
+
+(deftest sstfiles ()
+  "Test SST file write/ingest functionality."
+  (let* ((opts (test-opts))
+         (path (rocksdb-test-dir))
+         (file (rocksdb-test-file))
+         (db (rocksdb-open opts path nil))
+         (key (genkey))
+         (val (genval))
+         (klen (length key))
+         (vlen (length val))
+         (eopts (rocksdb-envoptions-create))
+         (iopts (rocksdb-ingestexternalfileoptions-create))
+         (ropts (rocksdb-readoptions-create))
+         (writer (rocksdb-sstfilewriter-create eopts opts)))
+    (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
+                 (v (* unsigned-char) (make-alien unsigned-char vlen))
+                 (flist (array c-string 1))
+                 (errptr rocksdb-errptr nil))
+      ;; copy KEY to K
+      (setfa k key)
+      ;; copy VAL to V
+      (setfa v val)
+      (setf (deref flist 0) file)
+      ;; create writer
+      (rocksdb-sstfilewriter-open writer file errptr)
+      ;; insert rows into sst file
+      (rocksdb-sstfilewriter-put writer k klen v vlen errptr)
+      (is (null-alien errptr))
+      (rocksdb-sstfilewriter-finish writer errptr)
+      (is (null-alien errptr))
+      ;; ingest sst file
+      (rocksdb-ingest-external-file db (cast flist (* c-string)) 1 iopts errptr)
+      (is (null-alien errptr))
+      (let ((vres (make-array vlen :element-type 'octet :fill-pointer 0)))
+        (is (string= (octets-to-string val) (cast (rocksdb-get db ropts k klen (make-alien size-t vlen) errptr) c-string))))
+      
+      ;; rocksdb-sstfilewriter-file-size
+      (rocksdb-sstfilewriter-destroy writer)
+      (rocksdb-close db)
+      (rocksdb-destroy-db opts path errptr)
+      (rocksdb-options-destroy opts)
+      (rocksdb-envoptions-destroy eopts)
+      (delete-file file)
+      (is (null-alien errptr)))))
+
+(deftest logger ()
+  "Test logging functionality.")
+
+(deftest stats ()
+  "Test statistics and performance-context related functionality."
+  (rocksdb-set-perf-level (rocksdb-perf-level "enable-time-except-for-mutex"))
+  (let* ((opts (test-opts))
+         (path (rocksdb-test-dir))
+         (db (rocksdb-open opts path nil))
+         (key (random-bytes 100))
+         (val (random-bytes 100000))
+         (klen (length key))
+         (vlen (length val))
+         (wopts (rocksdb-writeoptions-create))
+         (ropts (rocksdb-readoptions-create))
+         (ctx (rocksdb::rocksdb-perfcontext-create))
+         (hist (rocksdb-statistics-histogram-data-create)))
+    (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
+                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
+                 (errptr rocksdb-errptr nil))
+      ;; copy KEY to K
+      (setfa k key)
+      ;; copy VAL to V
+      (setfa v val)
+      ;; put K:V in DB
+      (rocksdb-put db 
+                   wopts
+                   k
+                   klen
+                   v
+                   vlen
+                   errptr)
+      
+      (debug! "stats:" (rocksdb-options-statistics-get-string opts))
+      (rocksdb-options-statistics-get-histogram-data opts 5 hist) ;; histogram data types? uint64 somewhere
+      (debug! "count:" (rocksdb-statistics-histogram-data-get-count hist))
+      (rocksdb-perfcontext-reset ctx)
+      ;; ...
+      (rocksdb-set-perf-level (rocksdb-perf-level "disable"))
+      (rocksdb-statistics-histogram-data-destroy hist)
+      (rocksdb-close db)
+      (rocksdb-destroy-db opts path errptr)
+      (rocksdb-options-destroy opts))))
+
+;; stats-dump-period-sec
+
+(deftest blob ()
+  "Test BlobDB functionality."
+  (let* ((opts (test-opts))
+         (path (rocksdb-test-dir))
+         db
+         (key (random-bytes 100))
+         (val (random-bytes 999999))
+         (klen (length key))
+         (vlen (length val))
+         (wopts (rocksdb-writeoptions-create))
+         (ropts (rocksdb-readoptions-create))
+         (bcache (rocksdb-cache-create-lru 128)))
+    (rocksdb-options-set-enable-blob-files opts 1)
+    (rocksdb-options-set-enable-blob-gc opts 1)
+    (rocksdb-options-set-blob-compression-type opts (rocksdb-compression-backend "zstd"))
+    (rocksdb-options-set-blob-cache opts bcache)
+    (setf db (rocksdb-open opts path nil))
+
+    (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
+                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
+                 (errptr rocksdb-errptr nil))
+      (debug! "min blob file size: " (rocksdb-options-get-min-blob-size opts))
+      (debug! "max blob file size: " (rocksdb-options-get-blob-file-size opts))
+
+      ;; copy KEY to K
+      (setfa k key)
+      ;; copy VAL to V
+      (setfa v val)
+      ;; put K:V in DB - 
+      (rocksdb-put db 
+                   wopts
+                   k
+                   klen
+                   v
+                   vlen
+                   errptr)
+      (is (null-alien errptr))
+      (rocksdb:rocksdb-flush db (rocksdb-flushoptions-create) errptr)
+      (is (null-alien errptr))
+      (rocksdb-writeoptions-destroy wopts)
+      (rocksdb-readoptions-destroy ropts)
+      (rocksdb-close db)
+      (rocksdb-destroy-db opts path errptr)
+      (is (null-alien errptr))
+      (rocksdb-options-destroy opts))))
+
+(deftest transaction ()
+  "Test simple transactions using both TransactionDB and OptimisticTransactionDB."
+  (let* ((opts (test-opts))
+         (path (rocksdb-test-dir))
+         (db (rocksdb-open opts path nil))
+         (key (genkey))
+         (val (genval))
+         (klen (length key))
+         (vlen (length val))
+         (wopts (rocksdb-writeoptions-create))
+         (ropts (rocksdb-readoptions-create)))
+    (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
+                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
+                 (errptr rocksdb-errptr nil))
+      ;; copy KEY to K
+      (setfa k key)
+      ;; copy VAL to V
+      (setfa v val)
+      ;; put K:V in DB - 
+      (rocksdb-writeoptions-destroy wopts)
+      (rocksdb-readoptions-destroy ropts)
+      (rocksdb-close db)
+      (rocksdb-destroy-db opts path errptr)
+      (rocksdb-options-destroy opts)
+      (is (null-alien errptr)))))

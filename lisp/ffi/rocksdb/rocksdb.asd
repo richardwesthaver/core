@@ -15,7 +15,9 @@
                (:file "types")
                (:file "opts")
                (:file "sst")
+               (:file "slice")
                (:file "db")
+               (:file "stats")
                (:file "vars"))
   :in-order-to ((test-op (test-op "rocksdb/tests"))))
 

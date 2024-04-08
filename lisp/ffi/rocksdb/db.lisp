@@ -31,6 +31,15 @@
   (keylen size-t) 
   (vallen (* size-t)))
 
+(def-with-errptr rocksdb-get-with-ts c-string
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (key c-string)
+  (keylen size-t)
+  (vallen (* size-t))
+  (ts (* c-string))
+  (tslen (* size-t)))
+
 (def-with-errptr rocksdb-delete 
   void
   (db (* rocksdb))
@@ -72,6 +81,16 @@
   (keylen size-t)
   (vallen (* size-t)))
 
+(def-with-errptr rocksdb-get-cf-with-ts c-string
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))  
+  (key c-string)
+  (keylen size-t)
+  (vallen (* size-t))
+  (ts (* c-string))
+  (tslen (* size-t)))
+
 ;; NOTE 2023-12-19: only the VOID-returning functions in the multi-
 ;; family perform parallel IO:
 ;; https://github.com/facebook/rocksdb/wiki/MultiGet-Performance
@@ -85,6 +104,18 @@
   (values-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
+(define-alien-routine rocksdb-multi-get-with-ts void
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions))
+  (num-keys size-t)
+  (keys-list (array c-string))
+  (keys-list-sizes (array size-t))
+  (values-list (array c-string))
+  (values-list-sizes (array size-t))
+  (ts-list (array c-string))
+  (ts-list-sizes (array size-t))
+  (errs (array rocksdb-errptr)))
+
 (define-alien-routine rocksdb-multi-get-cf void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
@@ -96,9 +127,23 @@
   (values-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
-(export '(rocksdb-multi-get rocksdb-multi-get-cf))
+(define-alien-routine rocksdb-multi-get-cf-with-ts void
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions))
+  (cfs (array rocksdb-column-family-handle))
+  (num-keys size-t)
+  (keys-list (array c-string))
+  (keys-list-sizes (array size-t))
+  (values-list (array c-string))
+  (values-list-sizes (array size-t))
+  (ts-list (array c-string))
+  (ts-list-sizes (array size-t))
+  (errs (array rocksdb-errptr)))
 
-(define-alien-routine rocksdb-cache-create-lru (* rocksdb) (capacity unsigned-int))
+(export '(rocksdb-multi-get rocksdb-multi-get-cf
+          rocksdb-multi-get-with-ts rocksdb-multi-get-cf-with-ts))
+
+(define-alien-routine rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
 
 (export '(rocksdb-cache-create-lru))
 
@@ -134,7 +179,7 @@
 
 ;; return NULL if prop name is unknown, else return pointer to
 ;; malloc-ed null-term value.
-(define-alien-routine rocksdb-property-value (* t)
+(define-alien-routine rocksdb-property-value c-string
   (db (* rocksdb))
   (propname (* c-string)))
 
@@ -143,7 +188,7 @@
   (db (* rocksdb))
   (propname (* c-string)))
 
-(define-alien-routine rocksdb-property-value-cf (* t)
+(define-alien-routine rocksdb-property-value-cf c-string
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
   (propname (* c-string)))
@@ -391,21 +436,124 @@
 (define-alien-routine rocksdb-transaction-get-writebach-wi (* rocksdb-writebatch-wi)
   (txn (* rocksdb-transaction)))
 
+(def-with-errptr rocksdb-transaction-delete void
+  (txn (* rocksdb-transaction))
+  (key c-string)
+  (klen size-t))
+
+(def-with-errptr rocksdb-transaction-delete-cf void
+  (txn (* rocksdb-transaction))
+  (cf (* rocksdb-column-family-handle))
+  (key c-string)
+  (klen size-t))
+
+(def-with-errptr rocksdb-transactiondb-delete void
+  (txndb (* rocksdb-transactiondb))
+  (opts (* rocksdb-writeoptions))
+  (key c-string)
+  (klen size-t))
+
+(def-with-errptr rocksdb-transaction-delete-cf void
+  (txndb (* rocksdb-transactiondb))
+  (opts (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key c-string)
+  (klen size-t))
+
+(define-alien-routine rocksdb-transaction-create-iterator (* rocksdb-iterator)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions)))
+
+(define-alien-routine rocksdb-transaction-create-iterator-cf (* rocksdb-iterator)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle)))
+
+(define-alien-routine rocksdb-transactiondb-create-iterator (* rocksdb-iterator)
+  (txndb (* rocksdb-transactiondb))
+  (opts (* rocksdb-readoptions)))
+
+(define-alien-routine rocksdb-transactiondb-create-iterator-cf (* rocksdb-iterator)
+  (txndb (* rocksdb-transactiondb))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle)))
+
 (define-alien-routine rocksdb-transactiondb-close void
   (tdb (* rocksdb-transactiondb)))
+
+(def-with-errptr rocksdb-transactiondb-flush void
+  (txndb (* rocksdb-transactiondb))
+  (opts (* rocksdb-flushoptions)))
+
+(def-with-errptr rocksdb-transactiondb-flush-cf void
+  (txndb (* rocksdb-transactiondb))
+  (opts (* rocksdb-flushoptions))
+  (cf (* rocksdb-column-family-handle)))
+
+(def-with-errptr rocksdb-transactiondb-flush-cfs void
+  (txndb (* rocksdb-transactiondb))
+  (opts (* rocksdb-flushoptions))
+  (cfs (array (* rocksdb-column-family-handle)))
+  (ncfs int))
+
+(def-with-errptr rocksdb-transactiondb-flush-cf void
+  (txndb (* rocksdb-transactiondb))
+  (sync unsigned-char))
+
+(def-with-errptr rocksdb-transactiondb-checkpoint-object-create (* rocksdb-checkpoint)
+  (txn-db (* rocksdb-transactiondb)))
+
+(def-with-errptr rocksdb-optimistictransactiondb-open (* rocksdb-optimistictransactiondb)
+  (opts (* rocksdb-options))
+  (name c-string))
+
+(def-with-errptr rocksdb-optimistictransactiondb-open-column-families (* rocksdb-optimistictransactiondb)
+  (opts (* rocksdb-options))
+  (name c-string)
+  (ncfs int)
+  (cf-names (array c-string))
+  (cf-opts (array (* rocksdb-options)))
+  (cf-handles (array (* rocksdb-column-family-handle))))
+
+(define-alien-routine rocksdb-optimistictransactiondb-get-base-db (* rocksdb)
+  (otxn-db (* rocksdb-optimistictransactiondb)))
+
+(define-alien-routine rocksdb-optimistictransactiondb-close-base-db void
+  (base-db (* rocksdb)))
+
+(define-alien-routine rocksdb-optimistictransaction-begin (* rocksdb-transaction)
+  (otxn-db (* rocksdb-optimistictransactiondb))
+  (wopts (* rocksdb-writeoptions))
+  (otxn-opts (* rocksdb-optimistictransaction-options))
+  (old-txn (* rocksdb-transaction)))
+
+(def-with-errptr rocksdb-optimistictransactiondb-write void
+  (otxn-db (* rocksdb-optimistictransactiondb))
+  (wopts (* rocksdb-writeoptions))
+  (batch (* rocksdb-writebatch)))
+
+(define-alien-routine rocksdb-optimistictransactiondb-close void
+  (otxn-db (* rocksdb-optimistictransactiondb)))
+
+(def-with-errptr rocksdb-optimistictransactiondb-checkpoint-object-create (* rocksdb-checkpoint)
+  (otxn-db (* rocksdb-optimistictransactiondb)))
 
 (export '(rocksdb-transaction-begin rocksdb-transaction-close rocksdb-transactiondb-create-snapshot
           rocksdb-transactiondb-release-snapshot rocksdb-transactiondb-property-value
           rocksdb-transactiondb-property-int rocksdb-transactiondb-get-base-db
           rocksdb-transactiondb-get-close-db rocksdb-transaction-get-name
-          rocksdb-transaction-set-savepoint rocksdb-transaction-destroy))
+          rocksdb-transaction-set-savepoint rocksdb-transaction-destroy
+          rocksdb-transaction-create-iterator rocksdb-transaction-create-iterator-cf
+          rocksdb-transactiondb-create-iterator rocksdb-transactiondb-create-iterator-cf
+          rocksdb-optimistictransactiondb-get-base-db rocksdb-optimistictransactiondb-close-base-db
+          rocksdb-optimistictransaction-begin rocksdb-optimistictransactiondb-close))
 
 ;;; Perfcontext
 (define-alien-routine rocksdb-set-perf-level void (val int))
 
 (define-alien-routine rocksdb-perfcontext-create (* rocksdb-perfcontext))
 
-(define-alien-routine rocksdb-perfcontext-reset void (* rocksdb-perfcontext))
+(define-alien-routine rocksdb-perfcontext-reset void (ctx (* rocksdb-perfcontext)))
 
 (define-alien-routine rocksdb-perfcontext-report (* unsigned-char) 
   (context (* rocksdb-perfcontext))
@@ -416,8 +564,8 @@
 
 (define-alien-routine rocksdb-perfcontext-destroy void (* rocksdb-perfcontext))
 
-(export '(rocksdb-perfcontext-reset rocksdb-perfcontext-report 
-          rocksdb-perfcontext-metric rocksdb-perfcontext-destroy))
+(export '(rocksdb-perfcontext-reset rocksdb-perfcontext-report
+          rocksdb-perfcontext-metric rocksdb-perfcontext-destroy rocksdb-set-perf-level))
 
 ;;; Compaction Filter
 ;; (define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
@@ -484,14 +632,17 @@
           rocksdb-filterpolicy-create-ribbon rocksdb-filterpolicy-create-ribbon-hybrid))
 
 ;;; Merge Operator
+
 ;; TODO 2023-12-11: 
-;; (define-alien-routine rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
-;;   (state (* void))
-;;   (destructor (* void))
-;;   (full-merge (* char))
-;;   (partial-merge (* char))
-;;   (delete-value (* void))
-;;   (name (* unsigned-char)))
+(define-alien-routine rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
+  (state (* t))
+  (destructor (* t))
+  (full-merge (* char))
+  (partial-merge (* char))
+  (delete-value (* t))
+  (name (* unsigned-char)))
+
+#| [[file:~/dev/comp/core/c/rocksdb.h::/* Merge Operator */]] |#
 
 (define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
 

@@ -22,6 +22,8 @@
 (deftest opts ()
   "Ensure RDB-OPTS can be created, destructured, etc."
   (let ((default (default-rdb-opts)))
+    ;; check defaults
+    (is (< 100 (hash-table-size (backfill-opts default))))
     (is (typep (rdb-opts-sap default) '(alien (* rocksdb-options))))
     (is (= 1 (get-opt default "create-if-missing")))
     (is (= 1

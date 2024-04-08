@@ -47,6 +47,9 @@
   ((key :initarg :key :reader key))
   (:documentation "Error signaled while processing a GET-KV request"))
 
+(define-condition opt-handler-missing (warning rdb-error)
+  ())
+
 (defun handle-errptr (errptr &optional errtyp params)
   "Handle ERRPTR, a ROCKSDB-ERRPTR type which is a pointer to NULL,
 indicating a success or a pointer to a C-STRING.

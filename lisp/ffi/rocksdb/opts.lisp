@@ -1,3 +1,8 @@
+;;; rocksdb/opts.lisp --- Rocksdb Options FFI
+
+;; 
+
+;;; Code:
 (in-package :rocksdb)
 
 (define-opt rocksdb-ingestexternalfileoptions)
@@ -21,14 +26,50 @@
           rocksdb-ingestexternalfileoptions-set-fail-if-not-bottommost-level))
 
 (define-opt rocksdb-backup-engine-options)
+(define-alien-routine rocksdb-backup-engine-options-set-backup-dir void
+  (opts (* rocksdb-backup-engine-options)) (backup-dir c-string))
+(define-alien-routine rocksdb-backup-engine-options-set-env void
+  (opts (* rocksdb-backup-engine-options)) (val unsigned-char))
+(define-opt-accessor rocksdb-backup-engine-options share-table-files)
+(define-opt-accessor rocksdb-backup-engine-options sync)
+(define-opt-accessor rocksdb-backup-engine-options destroy-old-data)
+(define-opt-accessor rocksdb-backup-engine-options backup-log-files)
+(define-opt-accessor rocksdb-backup-engine-options backup-rate-limit (unsigned 64))
+(define-opt-accessor rocksdb-backup-engine-options restore-rate-limit (unsigned 64))
+(define-opt-accessor rocksdb-backup-engine-options callback-trigger-interval-size (unsigned 64))
+(define-opt-accessor rocksdb-backup-engine-options max-valid-backups-to-open int)
+(define-opt-accessor rocksdb-backup-engine-options shared-files-with-checksum-naming int)
+
 (define-opt rocksdb-restore-options)
+(define-alien-routine rocksdb-restore-options-set-keep-log-files void
+  (opts (* rocksdb-restore-options))
+  (v int))
+
 (define-opt rocksdb-hyper-clock-cache-options)
+(define-alien-routine rocksdb-hyper-clock-cache-options-set-capacity void
+  (opts (* rocksdb-hyper-clock-cache-options))
+  (v size-t))
+(define-alien-routine rocksdb-hyper-clock-cache-options-set-estimated-entry-charge void
+  (opts (* rocksdb-hyper-clock-cache-options))
+  (v size-t))
+(define-alien-routine rocksdb-hyper-clock-cache-options-set-num-shard-bits void
+  (opts (* rocksdb-hyper-clock-cache-options))
+  (v int))
+(define-alien-routine rocksdb-hyper-clock-cache-options-set-memory-allocator void
+  (opts (* rocksdb-hyper-clock-cache-options))
+  (malloc (* rocksdb-memory-allocator)))
+
 (define-opt rocksdb-fifo-compaction-options)
 (define-opt rocksdb-transactiondb-options)
 (define-opt rocksdb-transaction-options)
 (define-opt rocksdb-optimistictransaction-options)
 (define-opt rocksdb-envoptions)
 (define-opt rocksdb-universal-compaction-options)
+
+(export '(rocksdb-backup-engine-options-set-backup-dir rocksdb-backup-engine-options-set-env
+          rocksdb-restore-options-set-keep-log-files rocksdb-hyper-clock-cache-options-set-capacity
+          rocksdb-hyper-clock-cache-options-set-estimated-entry-charge rocksdb-hyper-clock-cache-options-set-num-shard-bits
+          rocksdb-hyper-clock-cache-options-set-memory-allocator))
 
 ;;; WAL Read Options
 (define-opaque rocksdb-wal-readoptions)
@@ -147,7 +188,11 @@
 (define-opt-accessor rocksdb-options target-file-size-multiplier int)
 (define-opt-accessor rocksdb-options max-bytes-for-level-base unsigned-long)
 (define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
-(define-opt-accessor rocksdb-options block-based-table-factory (* rocksdb-block-based-table-options))
+;; note: there is no rocksdb-options-get-block-based-table-factory
+;; (define-opt-accessor rocksdb-options block-based-table-factory (* rocksdb-block-based-table-options))
+(define-alien-routine rocksdb-option-set-block-based-table-factory void
+  (opt (* rocksdb-options)) (table-opts (* rocksdb-block-based-table-options)))
+
 (define-opt-accessor rocksdb-options comparator (* rocksdb-comparator))
 (define-opt-accessor rocksdb-options merge-operator (* rocksdb-mergeoperator))
 (define-opt-accessor rocksdb-options statistics-level int)
@@ -229,7 +274,7 @@
   (memtable-memory-budget unsigned-long))
 
 (define-alien-routine rocksdb-options-enable-statistics void
-  (* rocksdb-options))
+  (opt (* rocksdb-options)))
 
 (define-alien-routine rocksdb-options-statistics-get-string c-string
   (opt (* rocksdb-options)))
@@ -322,4 +367,5 @@
 
 (define-alien-routine rocksdb-options-create-copy (* rocksdb-options)
   (src (* rocksdb-options)))
+
 (export '(rocksdb-options-create-copy))

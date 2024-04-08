@@ -1,3 +1,8 @@
+;;; rocksdb/types.lisp --- Rocksdb FFI Types
+
+;;
+
+;;; Code:
 (in-package :rocksdb)
 
 (define-alien-type rocksdb-errptr (* c-string))
