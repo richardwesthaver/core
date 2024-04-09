@@ -69,7 +69,11 @@ set *errptr to a malloc()ed error message.
    :*rocksdb-perf-metrics*
    :*rocksdb-perf-levels*
    :*rocksdb-statistics-levels*
-   :rocksdb-perf-level))
+   :rocksdb-perf-level
+   :*rocksdb-properties*
+   :rocksdb-num-files-at-level
+   :rocksdb-compression-ratio-at-level
+   :rocksdb-aggregated-table-properties-at-level))
 
 (in-package :rocksdb)
 

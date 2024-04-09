@@ -3,6 +3,7 @@
 ;;; Code:
 (in-package :rdb)
 
+;;; Options
 (defun make-rocksdb-options (&optional init-fn)
   "Make and return RDB-OPTS. INIT-FN is an optional argument which must be a
 lambda which takes a single parameter (the RDB-OPTS sap). It is used
@@ -15,6 +16,10 @@ to initialize the instance with custom configuration."
   (make-rocksdb-options
    (lambda (o) (rocksdb-options-set-create-if-missing o 1))))
 
+(defun get-stats-raw (opt htype)
+  (rocksdb-options-statistics-get-histogram-data opt htype (rocksdb-statistics-histogram-data-create)))
+
+;;; DB
 (defun open-db-raw (db-path &optional (opts (default-rocksdb-options)))
   (with-errptr (err 'open-db-error (list :db db-path))
     (let* ((db-path (if (pathnamep db-path)
@@ -41,6 +46,15 @@ to initialize the instance with custom configuration."
          ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
          (rocksdb-options-destroy ,opt)))))
 
+(defun get-property-raw (db str)
+  (rocksdb-property-value db (make-alien-string str)))
+
+(defun get-metadata-raw (db &optional cf)
+  (if cf
+      (rocksdb-get-column-family-metadata-cf db cf)
+      (rocksdb-get-column-family-metadata db)))
+
+;;; KVs
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
 	(vlen (length val)))
@@ -61,26 +75,6 @@ to initialize the instance with custom configuration."
   (let ((key-octets (string-to-octets key :null-terminate nil))
         (val-octets (string-to-octets val :null-terminate nil)))
     (put-kv-raw db key-octets val-octets opts)))
-
-(defun put-cf-raw (db cf key val &optional (opts (rocksdb-writeoptions-create)))
-  (let ((klen (length key))
-	(vlen (length val)))
-    (with-errptr (err 'put-kv-error (list :db db :kv (cons key val)))
-      (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
-		   (v (* unsigned-char) (make-alien unsigned-char vlen)))
-        (setfa k key)
-        (setfa v val)
-        (rocksdb-put-cf db
-		        opts
-                        cf
-		        k klen
-		        v vlen
-		        err)))))
-
-(defun put-cf-str-raw (db cf key val &optional (opt (rocksdb-writeoptions-create)))
-  (let ((key-octets (string-to-octets key :null-terminate nil))
-        (val-octets (string-to-octets val :null-terminate nil)))
-    (put-cf-raw db cf key-octets val-octets opt)))
 
 (defun get-kv-raw (db key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
@@ -103,6 +97,11 @@ to initialize the instance with custom configuration."
   (let ((k (string-to-octets key :null-terminate nil)))
     (let ((v (get-kv-raw db k opt)))
       (when v (concatenate 'string (map 'vector #'code-char v))))))
+
+;;; Column Family
+(defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
+  (with-errptr (err 'rocksdb-cf-error (list :db db :cf name)) 
+    (rocksdb-create-column-family db opt name err)))
 
 (defun get-cf-raw (db cf key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
@@ -127,10 +126,25 @@ to initialize the instance with custom configuration."
     (let ((v (get-cf-raw db cf k opt)))
       (when v (concatenate 'string (map 'vector #'code-char v))))))
 
-;;; Column Family
-(defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
-  (with-errptr (err 'rocksdb-cf-error (list :db db :cf name)) 
-    (rocksdb-create-column-family db opt name err)))
+(defun put-cf-raw (db cf key val &optional (opts (rocksdb-writeoptions-create)))
+  (let ((klen (length key))
+        (vlen (length val)))
+    (with-errptr (err 'put-kv-error (list :db db :kv (cons key val)))
+      (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
+                   (v (* unsigned-char) (make-alien unsigned-char vlen)))
+        (setfa k key)
+        (setfa v val)
+        (rocksdb-put-cf db
+                        opts
+                        cf
+                        k klen
+                        v vlen
+                        err)))))
+
+(defun put-cf-str-raw (db cf key val &optional (opt (rocksdb-writeoptions-create)))
+  (let ((key-octets (string-to-octets key :null-terminate nil))
+        (val-octets (string-to-octets val :null-terminate nil)))
+    (put-cf-raw db cf key-octets val-octets opt)))
 
 ;;; Iterators
 (defun create-iter-raw (db &optional (opt (rocksdb-readoptions-create)))

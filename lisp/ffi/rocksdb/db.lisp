@@ -181,22 +181,22 @@
 ;; malloc-ed null-term value.
 (define-alien-routine rocksdb-property-value c-string
   (db (* rocksdb))
-  (propname (* c-string)))
+  (propname c-string))
 
 ;; return 0 on success, else -1
 (define-alien-routine rocksdb-property-int int
   (db (* rocksdb))
-  (propname (* c-string)))
+  (propname c-string))
 
 (define-alien-routine rocksdb-property-value-cf c-string
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
-  (propname (* c-string)))
+  (propname c-string))
 
 (define-alien-routine rocksdb-property-int-cf int
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
-  (propname (* c-string)))
+  (propname c-string))
 
 (export '(rocksdb-property-value rocksdb-property-value-cf rocksdb-property-int rocksdb-property-int-cf))    
 
@@ -630,20 +630,3 @@
 
 (export '(rocksdb-filterpolicy-destroy rocksdb-filterpolicy-create-bloom rocksdb-filterpolicy-create-bloom-full
           rocksdb-filterpolicy-create-ribbon rocksdb-filterpolicy-create-ribbon-hybrid))
-
-;;; Merge Operator
-
-;; TODO 2023-12-11: 
-(define-alien-routine rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
-  (state (* t))
-  (destructor (* t))
-  (full-merge (* char))
-  (partial-merge (* char))
-  (delete-value (* t))
-  (name (* unsigned-char)))
-
-#| [[file:~/dev/comp/core/c/rocksdb.h::/* Merge Operator */]] |#
-
-(define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
-
-(export '(rocksdb-mergeoperator-destroy))

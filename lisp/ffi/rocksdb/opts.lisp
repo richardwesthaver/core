@@ -349,9 +349,7 @@
   (len size-t))
 (export '(rocksdb-load-latest-options-destroy))
 
-(def-with-errptr
-    rocksdb-set-options 
-  void
+(def-with-errptr rocksdb-set-options void
   (db (* rocksdb))
   (count int)
   (keys (array c-string))
@@ -362,8 +360,8 @@
   (db (* rocksdb))
   (handle (* rocksdb-column-family-handle))
   (count int)
-  (keys (array c-string))
-  (values (array c-string)))
+  (keys (array (array unsigned-char)))
+  (values (array (array unsigned-char))))
 
 (define-alien-routine rocksdb-options-create-copy (* rocksdb-options)
   (src (* rocksdb-options)))

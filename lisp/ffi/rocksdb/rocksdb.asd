@@ -17,6 +17,8 @@
                (:file "sst")
                (:file "slice")
                (:file "db")
+               (:file "metadata")
+               (:file "merge")
                (:file "stats")
                (:file "vars"))
   :in-order-to ((test-op (test-op "rocksdb/tests"))))

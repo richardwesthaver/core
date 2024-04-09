@@ -48,3 +48,6 @@
                                   ',(symbolicate opt '-get- n)
                                   ',(symbolicate opt '-set- n)) :rocksdb))))
     `(progn ,@forms)))
+
+;; (defmacro define-merge-operator-callbacks (name full partial operands)
+

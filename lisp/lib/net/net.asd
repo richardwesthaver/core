@@ -8,6 +8,7 @@
    :dat
    :obj
    :swank-client :dexador
+   :puri ;; fetch
    :hunchentoot :std :log)
   :serial t
   :components ((:file "pkg")

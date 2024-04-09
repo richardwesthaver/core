@@ -50,6 +50,10 @@
 (define-condition opt-handler-missing (warning rdb-error)
   ())
 
+(define-condition invalid-propname (rdb-error)
+  ()
+  (:documentation "Error signaled when an invalid ROCKSDB-PROPERTY value is detected."))
+
 (defun handle-errptr (errptr &optional errtyp params)
   "Handle ERRPTR, a ROCKSDB-ERRPTR type which is a pointer to NULL,
 indicating a success or a pointer to a C-STRING.

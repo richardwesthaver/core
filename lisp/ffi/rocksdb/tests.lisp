@@ -361,3 +361,26 @@ DB where K and V are both Lisp strings."
       (rocksdb-destroy-db opts path errptr)
       (rocksdb-options-destroy opts)
       (is (null-alien errptr)))))
+
+(deftest metadata ()
+  "Test metadata functionality :: cf-meta -> level-meta -> sst-file-meta"
+  nil)
+
+(deftest properties ()
+  "Test the ROCKSDB-GET-PROPERTY-* functions."
+  ;; *rocksdb-properties*
+  (let* ((opts (test-opts))
+         (path (rocksdb-test-dir))
+         (db (rocksdb-open opts path nil))
+         (key (genkey))
+         (val (genval))
+         (klen (length key))
+         (vlen (length val))
+         (wopts (rocksdb-writeoptions-create))
+         (ropts (rocksdb-readoptions-create)))
+    (is (stringp (debug! (rocksdb-property-value db (make-alien-string "rocksdb.stats")))))
+    (is (zerop (parse-integer (rocksdb-property-value db (make-alien-string "rocksdb.num-files-at-level3")))))))
+
+(deftest merge ()
+  "Test low-level merge-operator functionality using ALIEN-CALLBACKs."
+  nil)
