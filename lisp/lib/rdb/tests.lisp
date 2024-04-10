@@ -8,8 +8,6 @@
 
 (rocksdb:load-rocksdb)
 
-(init-log-timestamp)
-
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
@@ -55,7 +53,7 @@
         (is (not (rocksdb:rocksdb-iter-valid iter)))))
     (destroy-db-raw path)))
 
-(deftest rdb (:disabled nil)
+(deftest rdb ()
   "Test RDB struct and methods."
   ;; NOTE: passing a directory with trailing slash causes segfault - guess we gotta handle tht
   (with-db (db (debug! (create-db "/tmp/rdb" :open t)))
@@ -79,3 +77,18 @@
     ;; cleanup
     (destroy-db db)
     (close-db db)))
+
+(deftest temp-db ()
+  "Test WITH-TEMP-DB macro."
+  (time
+   (with-temp-db (tmp (cf1 cf2 cf3 cf4) :destroy t)
+     (open-db tmp)
+     (rocksdb-options-increase-parallelism (rdb-opts-sap (rdb-opts tmp)) 4)
+     (dotimes (i 10000)
+       (insert-key tmp (format nil "foo~A" i) (format nil "bar~A" i)))
+     (flush-db tmp)
+     (dotimes (i 10000)
+       (debug! (get-key tmp (format nil "foo~A" i))))
+     (debug! ;; some info about our db
+      (rdb-name tmp)
+      (get-prop tmp "rocksdb.dbstats")))))

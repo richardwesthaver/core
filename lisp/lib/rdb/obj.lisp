@@ -131,7 +131,9 @@ rocksdb_cf_t handle."
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
   (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf))
-  (db nil :type (or null alien)))
+  (db nil :type (or null alien))
+  (backup nil :type (or null alien))
+  (snapshots #() :type (array alien)))
 
 ;; (defvar *default-rdb-opts* (default-rdb-opts))
 
@@ -160,7 +162,7 @@ and internal sap slots are initialized."
                      (or (when cfs
                            (typecase cfs
                              (list (coerce cfs 'vector))
-                             (vector cfs)
+                             ((array rdb-cf) cfs)
                              (rdb-cf (vector cfs))
                              (t (log:warn! "invalid CF passed to create-db"))))
                          (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
@@ -175,34 +177,98 @@ and internal sap slots are initialized."
 ;; TODO: fix
 (defmethod create-cf ((db rdb) (cf rdb-cf))
   (setf (rdb-cf-sap cf)
-        (create-cf-raw (rdb-db db) (rdb-cf-name cf))))
+        (create-cf-raw (rdb-db db) (rdb-cf-name cf) (rdb-opts-sap (rdb-opts db)))))
 
-(defmethod close-cf ((cf rdb-cf))
+(defmacro unless-null-db (slots self &body body)
+  `(with-slots (db ,@slots) ,self
+     (unless (null db)
+       ,@body)))
+
+(defmethod destroy-cf ((cf rdb-cf))
   (with-slots (sap) cf
     (unless (null sap)
-      (free-alien sap))))
+      (setf sap (destroy-cf-raw sap)))))
 
 (defmethod open-db ((self rdb))
   (with-slots (name db opts) self
-    (setq db (open-db-raw name (rdb-opts-sap opts)))))
+    (if db
+        (rdb-error "DB already opened - close before re-opening")
+        (setf db (open-db-raw name (rdb-opts-sap opts))))))
+
+(defmethod get-prop ((self rdb) (propname string))
+  (unless-null-db () self
+    (get-property-raw db propname)))
+
+(defmethod repair-db ((self rdb) &key)
+  (repair-db-raw (rdb-name self)))
+
+(defmethod open-backup-db ((self rdb) &key path)
+  (with-slots (opts) self
+    (setf (rdb-backup self) (open-backup-engine-raw path (rdb-opts-sap opts)))))
+
+(defmethod close-backup-db ((self rdb))
+  (with-slots (backup) self
+    (unless (null backup)
+      (close-backup-engine-raw backup))))
+
+(defmethod backup-db ((self rdb) &key path)
+  (unless-null-db (opts backup) self
+    (when (null backup)
+      (if (null path)
+          (error 'open-backup-engine-error :db db)
+          (open-backup-db self :path path)))
+    (create-new-backup-raw backup db)))
+
+(defmethod restore-db ((self rdb) (from string) &key id opts)
+  (unless-null-db (name backup) self
+    (when (null backup)
+      (open-backup-db self :path from))
+    (restore-from-backup-raw backup name from id opts)))
+
+(defmethod snapshot-db ((self rdb))
+  (unless-null-db (snapshots) self
+    (vector-push-extend (create-snapshot-raw db) snapshots)))
+
+(defmethod get-metadata ((self rdb) &optional cf)
+  (get-metadata-raw (rdb-db self) cf))
+
+(defmethod get-stats ((self rdb) &optional (htype 0))
+  (get-stats-raw (rdb-db self) htype))
+
+(defmethod flush-db ((self rdb) &key) ;; todo flushopts
+  (flush-db-raw (rdb-db self)))
+
+(defmethod sync-db ((self rdb) (other null) &key)
+  (flush-db self))
+
+(defmethod shutdown-db ((self rdb) &key wait)
+  (log:debug! "shutting down database" (rdb-name self))
+  (when-let ((db (rdb-db self)))
+    (rocksdb-cancel-all-background-work db wait)
+    (close-db self)))
 
 (defmethod create-cfs ((self rdb) &key &allow-other-keys)
   (loop for cf across (rdb-cfs self)
         do (create-cf self cf)))
 
-(defmethod close-cfs ((self rdb) &key &allow-other-keys)
+(defmethod destroy-cfs ((self rdb) &key &allow-other-keys)
   (with-slots (cfs) self
     (declare (type (array rdb-cf) cfs))
     (loop for cf across cfs
-          do (setf cf (close-cf cf)))))
+          do (setf cf (destroy-cf cf)))))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
-  (with-slots (db cfs) self
+  (with-slots (db cfs backup snapshots) self
+    (close-backup-db self)
+    (unless (zerop (length snapshots))
+      (loop for s across snapshots do (release-snapshot-raw db s)))
+    (destroy-cfs self)
     (unless (null db)
-      (close-cfs self)
-      (setf db (close-db-raw db)))))
+      (close-db-raw db))))
 
 (defmethod destroy-db ((self rdb))
+  ;; close all handles before destruction ensues
+  (close-db self)
   (destroy-db-raw (rdb-name self)))
 
 (defmethod put-key ((self rdb) key val)

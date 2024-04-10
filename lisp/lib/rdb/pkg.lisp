@@ -52,6 +52,14 @@
    :create-cf :create-cfs
    :insert-kv :insert-key
    :open-db :close-db :destroy-db
+   :get-prop :get-metadata
+   :multi-get :delete-key
+   :make-transaction :commit-transaction
+   :flush-db :flush-cf
+   :repair-db :write-db
+   :backup-db :restore-db
+   :get-stats :snapshot-db
+   :shutdown-db
    ;; sst
    :sst-file
    :sst-stream
@@ -65,7 +73,9 @@
    :rdb-cf :make-rdb-cf :create-cf
    :rdb-cf-sap :rdb-cf-name
    ;; macs
+   :with-errptr
    :with-db
+   :with-temp-db
    :do-db
    :with-cf
    :do-cf

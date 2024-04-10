@@ -219,16 +219,16 @@
   (list (array rocksdb-column-family-handle)))
 
 (define-alien-routine rocksdb-column-family-handle-destroy void
-  (* rocksdb-column-family-handle))
+  (cf (* rocksdb-column-family-handle)))
 
 (define-alien-routine rocksdb-column-family-handle-get-id unsigned-int
-  (* rocksdb-column-family-handle))
+  (cf (* rocksdb-column-family-handle)))
 
 (define-alien-routine rocksdb-column-family-handle-get-name c-string
   (handle (* rocksdb-column-family-handle))
   (name-len (* size-t)))
 
-(export '(rocksdb-create-column-families-destroy rocksdb-create-column-family-handle-destroy
+(export '(rocksdb-create-column-families-destroy rocksdb-column-family-handle-destroy
           rocksdb-column-family-handle-get-id rocksdb-column-family-handle-get-name))
 
 (def-with-errptr rocksdb-drop-column-family 
@@ -567,51 +567,6 @@
 (export '(rocksdb-perfcontext-reset rocksdb-perfcontext-report
           rocksdb-perfcontext-metric rocksdb-perfcontext-destroy rocksdb-set-perf-level))
 
-;;; Compaction Filter
-;; (define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
-;;   (state (* void))
-;;   (destructor (* void))
-;;   (filter (* unsigned-char))
-;;   (name (* unsigned-char)))
-
-(define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
-  (self (* rocksdb-compactionfilter)) (val unsigned-char))
-
-(define-alien-routine rocksdb-compactionfilter-destroy void
-  (self (* rocksdb-compactionfilter)))
-
-;;; Compaction Filter Context
-(define-alien-routine rocksdb-compactionfiltercontext-is-full-compaction unsigned-char
-  (context (* rocksdb-compactionfiltercontext)))
-
-(define-alien-routine rocksdb-compactionfiltercontext-is-manual-compaction unsigned-char
-  (context (* rocksdb-compactionfiltercontext)))
-
-(export '(rocksdb-compactionfilter-set-ignore-snapshots rocksdb-compactionfilter-destroy
-          rocksdb-compactionfiltercontext-is-full-compaction rocksdb-compactionfiltercontext-is-manual-compaction))
-
-;;; Compaction Filter Factory
-
-;;; Comparator
-;; TODO 2023-12-11: 
-;; (define-alien-routine rocksdb-comparator-create (* rocksdb-comparator)
-;;   (state (* void))
-;;   (destructor (* void))
-;;   (compare (* int))
-;;   (name (* unsigned-char)))
-
-(define-alien-routine rocksdb-comparator-destroy void (self (* rocksdb-comparator)))
-
-;; (define-alien-routine rocksdb-comparator-with-ts-create (* rocksdb-comparator)
-;;   (state (* void))
-;;   (destructor (* void))
-;;   (compare (* int))
-;;   (compare-ts (* int))
-;;   (compare-without-ts (* int))
-;;   (name (* unsigned-char)))
-
-(export '(rocksdb-comparator-destroy))
-
 ;;; Filter Policy
 (define-alien-routine rocksdb-filterpolicy-destroy void (self (* rocksdb-filterpolicy)))
 
@@ -630,3 +585,13 @@
 
 (export '(rocksdb-filterpolicy-destroy rocksdb-filterpolicy-create-bloom rocksdb-filterpolicy-create-bloom-full
           rocksdb-filterpolicy-create-ribbon rocksdb-filterpolicy-create-ribbon-hybrid))
+
+;;; Snapshot
+(define-alien-routine rocksdb-create-snapshot (* rocksdb-snapshot)
+  (db (* rocksdb)))
+
+(define-alien-routine rocksdb-release-snapshot void
+  (db (* rocksdb))
+  (snapshot (* rocksdb-snapshot)))
+
+(export '(rocksdb-create-snapshot rocksdb-release-snapshot))

@@ -54,6 +54,14 @@ to initialize the instance with custom configuration."
       (rocksdb-get-column-family-metadata-cf db cf)
       (rocksdb-get-column-family-metadata db)))
 
+(defun flush-db-raw (db &optional (opts (rocksdb-flushoptions-create)))
+  (with-errptr (err 'flush-db-error (list :db db))
+    (rocksdb-flush db opts err)))
+
+(defun repair-db-raw (name &optional (opts (rocksdb-options-create)))
+  (with-errptr (err 'repair-db-error (list :name name))
+    (rocksdb-repair-db opts name err)))
+
 ;;; KVs
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
@@ -103,6 +111,9 @@ to initialize the instance with custom configuration."
   (with-errptr (err 'rocksdb-cf-error (list :db db :cf name)) 
     (rocksdb-create-column-family db opt name err)))
 
+(defun destroy-cf-raw (cf)
+  (rocksdb-column-family-handle-destroy cf))
+
 (defun get-cf-raw (db cf key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
     (with-errptr (err 'get-kv-error (list :db db :key key))
@@ -150,6 +161,9 @@ to initialize the instance with custom configuration."
 (defun create-iter-raw (db &optional (opt (rocksdb-readoptions-create)))
   (rocksdb-create-iterator db opt))
 
+(defun destroy-iter-raw (iter)
+  (rocksdb-iter-destroy iter))
+
 (defun iter-key-raw (iter)
   (with-alien ((klen-ptr (* size-t) (make-alien size-t 0)))
     (let* ((key-ptr (rocksdb-iter-key iter klen-ptr))
@@ -177,7 +191,7 @@ to initialize the instance with custom configuration."
 (defmacro with-iter-raw ((iter-var db &optional (opt (rocksdb-readoptions-create))) &body body)
   `(let ((,iter-var (create-iter-raw ,db ,opt)))
      (unwind-protect (progn ,@body)
-       (rocksdb-iter-destroy ,iter-var))))
+       (destroy-iter-raw ,iter-var))))
 
 ;;; Backup Engine
 (defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
@@ -194,12 +208,23 @@ to initialize the instance with custom configuration."
   (with-errptr (err 'rocksdb-error)
     (rocksdb-backup-engine-create-new-backup be db err)))
 
-(defun restore-from-latest-backup-raw (be db-path be-path &optional (opt (rocksdb-restore-options-create)))
+(defun restore-from-latest-backup-raw (be db-path backup-path &optional (opt (rocksdb-restore-options-create)))
   (with-errptr (err 'rocksdb-error)
-    (rocksdb-backup-engine-restore-db-from-latest-backup be db-path be-path opt err)))
+    (rocksdb-backup-engine-restore-db-from-latest-backup be db-path backup-path opt err)))
+
+(defun restore-from-backup-raw (be db-path backup-path backup-id &optional (opt (rocksdb-restore-options-create)))
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-backup-engine-restore-db-from-backup be db-path backup-path opt backup-id err)))
 
 (defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
                                        &body body)
   `(let ((,be-var (open-backup-engine-raw ,be-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-backup-engine-close ,be-var))))
+
+;;; Snapshot
+(defun create-snapshot-raw (db)
+  (rocksdb-create-snapshot db))
+
+(defun release-snapshot-raw (db snapshot)
+  (rocksdb-release-snapshot db snapshot))

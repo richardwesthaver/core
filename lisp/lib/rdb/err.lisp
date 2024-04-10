@@ -31,6 +31,14 @@
   ()
   (:documentation "Error signaled while destroying a database."))
 
+(define-condition flush-db-error (rocksdb-error)
+  ()
+  (:documentation "Error signaled while flushing a database."))
+
+(define-condition repair-db-error (rocksdb-error)
+  ()
+  (:documentation "Error signaled while repairing a database."))
+
 (define-condition destroy-backup-engine-error (rocksdb-error)
   ()
   (:documentation "Error signaled while destroying a backup engine."))

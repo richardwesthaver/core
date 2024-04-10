@@ -18,6 +18,8 @@
                (:file "slice")
                (:file "db")
                (:file "metadata")
+               (:file "compaction")
+               (:file "comparator")
                (:file "merge")
                (:file "stats")
                (:file "vars"))

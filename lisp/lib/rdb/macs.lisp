@@ -31,6 +31,25 @@
                                     (format nil "WITH-DB signaled: ~A" condition)))))
        ,@body)))
 
+(defvar *temp-db-path-generator*
+  (lambda (&optional (name "temp-db"))
+    (make-pathname :directory "tmp" :name (symbol-name (gensym name))))
+  "A single arg function returning the absolute path to a temp-db path.")
+
+(defmacro with-temp-db ((db-var (&rest cf-vars) &key destroy) &body body)
+  "Bind DB-VAR to a temporary RDB object, arranging for CF-VARS to be
+created as column-families and destroying the database after executing
+the forms in BODY."
+  (with-gensyms (cf-names)
+    (log:debug! (setf cf-names (mapcar #'symbol-name cf-vars)))
+    `(with-db (,db-var (make-rdb (namestring (funcall ,*temp-db-path-generator* ,(symbol-name db-var))) (default-rdb-opts)))
+       (prog1
+           (progn ,@body)
+         ,(if destroy
+              `(destroy-db ,db-var)
+              `(shutdown-db ,db-var))))))
+
+
 (defmacro with-cf ((cf-var cf) &body body)
   "Bind CF to CF-VAR for the lifetime of BODY."
   `(let ((,cf-var ,cf))
