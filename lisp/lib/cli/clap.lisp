@@ -38,10 +38,10 @@ evaluation of FORM."
   `(handler-case ,form
      (sb-sys:interactive-interrupt ()
        (format *error-output* "~&(:SIGINT)~&")
-       (exit :code 130))
+       (sb-ext:exit :code 130))
      (error (c)
        (format *error-output* "~&~A~&" c)
-       (exit :code 1))))
+       (sb-ext:exit :code 1))))
 
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings."
@@ -584,7 +584,7 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
   (let ((o (active-opts cli))
 	(a (cli-cmd-args cli))
 	(c (active-cmds cli)))
-    (debug! (cli-cwd cli) o a c)))
+    (log:debug! (cli-cwd cli) o a c)))
 
 (declaim (inline solop))
 (defun solop (self)

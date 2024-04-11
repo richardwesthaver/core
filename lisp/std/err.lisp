@@ -26,8 +26,8 @@
   "Define an error condition."
   (let ((fun (member :auto options :test #'car-eql)))
     (when fun (setq options (remove (car fun) options)))
-    `(progn
-       (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
+    `(prog1
+         (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
        (when ',fun (def-error-reporter ,name)))))
 
 (defmacro def-error-reporter (err)

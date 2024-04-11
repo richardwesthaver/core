@@ -7,10 +7,10 @@
   :serial t
   :components ((:file "pkg")
                (:file "err") 
+               (:file "macs")
                (:file "raw")
                (:file "proto")
-               (:file "obj")
-               (:file "macs"))
+               (:file "obj"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests

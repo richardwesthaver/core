@@ -104,9 +104,9 @@ handle will not be freed on exit."
     (make-pathname :directory "tmp" :name (symbol-name (gensym name))))
   "A single arg function returning the absolute path to a temp-db path.")
 
-(defvar *temp-db-destroy-default* t)
+(defvar *temp-db-destroy* nil)
 
-(defmacro with-temp-db ((db-var (&rest cfs) &key (destroy *temp-db-destroy-default*)) &body body)
+(defmacro with-temp-db ((db-var (&rest cfs) &key (destroy *temp-db-destroy*) open) &body body)
   "Bind DB-VAR to a temporary RDB object, arranging for CF-VARS to be
 created as column-families and destroying the database after executing
 the forms in BODY."
@@ -119,6 +119,8 @@ the forms in BODY."
                       (namestring (funcall ,*temp-db-path-generator* ,(symbol-name db-var)))
                       (default-rdb-opts)
                       (make-array ,(length cfs) :element-type 'rdb-cf :initial-contents ',cfs)))
+     ,@(when open `((open-db ,db-var)
+                    (create-cfs ,db-var)))
        (prog1
            (progn ,@body)
          ,(if destroy

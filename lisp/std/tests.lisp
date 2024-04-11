@@ -6,13 +6,17 @@
 
 ;;; Code:
 (defpackage :std/tests
-  (:use :cl :std :rt))
+  (:use :cl :std :rt :sb-thread))
    
 (in-package :std/tests)
 
 (defsuite :std)
 (in-suite :std)
 (in-readtable :std)
+
+;; prevent threadlocks
+(setf sb-unix::*on-dangerous-wait* :error)
+
 (deftest readtables ()
   "Test :std readtable"
   (is (typep #`(,a1 ,a1 ',a1 ,@a1) 'function))
@@ -23,12 +27,12 @@
   (is (equal (funcall {1 list 1} 2) '(1 2))) ;; curry.fixed-arity
   (is (equal (funcall {2 list _ 2} 3 4) '(3 4 2))) ;; curry.fixed-arity.2
   (is (locally (declare (optimize safety))
-        (let ((fn {1 list 1}))
-          (handler-case (progn (funcall fn) nil)
+        (let ((f {1 list 1}))
+          (handler-case (progn (funcall f) nil)
             (error () t))))) ;; curry.fixed-arity.1
   (is (locally (declare (optimize safety))
-        (let ((fn {1 list 1}))
-          (handler-case (progn (funcall fn 'a 'b) nil)
+        (let ((f {1 list 1}))
+          (handler-case (progn (funcall f 'a 'b) nil)
             (error () t))))) ;; curry.fixed-arity-error.2
   (is (equal (funcall {list _ 1} 2) '(2 1))) ;; rcurry.1
   (is (equal (mapcar {- _ 1} '(1 2 3 4)) '(0 1 2 3))) ;; rcurry.2
@@ -76,19 +80,69 @@
 
 (deftest err ()
   "Test standard error handlers"
-  (deferror testing-err nil nil (:auto t) (:documentation "testing")))
+  (is (eql 'testing-err (deferror testing-err (std-error) nil (:auto t) (:documentation "testing")))))
 
-(deftest thread ()
-  "Test standard threads"
+(deftest threads ()
+  "Test standard thread functionality."
+  (is (eq *current-thread*
+          (find (thread-name *current-thread*) (list-all-threads)
+                  :key #'thread-name :test #'equal)))
   (is (find-thread-by-id (car (thread-id-list))))
-  (is (thread-count))
+  (is (not (zerop (thread-count))))
   (let ((threads
-          (make-threads 16 (lambda () (is (= 42 (1+ 41)))) :name "threads")))
+          (make-threads 4 (lambda () (is (= 42 (1+ 41)))) :name "threads")))
     (loop for th in threads
           do (sb-thread:join-thread th))
     (loop for th in threads
-          collect (is (not (sb-thread:thread-alive-p th))))))
+          collect (is (not (sb-thread:thread-alive-p th)))))
+  (let ((m (make-mutex :name "mutex-test")))
+    (is
+     (and (not
+           (with-mutex (m)
+             (join-thread
+              (make-thread (lambda ()
+                             (with-mutex (m :timeout 0.1)
+                               t))))))
+          (join-thread
+           (make-thread (lambda ()
+                          (with-mutex (m :timeout 0.1)
+                            t)))))))
+  (let* ((sym (gensym))
+         (s (make-semaphore :name "semaphore-test"))
+        (th (make-thread (lambda () (wait-on-semaphore s)))))
+    (is (equal (multiple-value-list (join-thread th :timeout .001 :default sym))
+               (list sym :timeout)))
+    (signal-semaphore s)
+    (is (join-thread th)))
+  (signals join-thread-error (join-thread *current-thread*))
+  (is
+   (let ((m (make-mutex :name "rlock-test")))
+     (is (not (with-mutex (m) (join-thread (make-thread (lambda () (with-recursive-lock (m :wait-p nil) t)))))))
+     (join-thread (make-thread (lambda () (with-recursive-lock (m :wait-p nil) t))))))
+  (let ((queue (make-waitqueue :name "queue-test"))
+        (lock (make-mutex :name "lock-test"))
+        (n 0)
+        th)
+    (labels ((in-new-thread ()
+               (with-mutex (lock)
+                 (assert (eql (mutex-owner lock) *current-thread*))
+                 (log:info! (condition-wait queue lock))
+                 (assert (eql (mutex-owner lock) *current-thread*))
+                 (is (= n 1))
+                 (decf n))))
+      (setf th (make-thread #'in-new-thread))
+      (sleep 1)
+      (is (null (mutex-owner lock)))
+      (with-mutex (lock)
+        (incf n)
+        (condition-notify queue))
+      (is (= 0 (join-thread th))))))
 
+(deftest timers ()
+  "Test various timer functionality."
+  (sb-int:with-progressive-timeout (ttl :seconds 2)
+    (sleep 0.1)
+    (is (/= (ttl) 2.0))))
 (deftest fmt ()
   "Test standard formatters"
   (is (string= (format nil "| 1 | 2 | 3 |~%") (fmt-row '(1 2 3))))
@@ -197,4 +251,3 @@ These tests are copied directly from the Alexandria test suite."
     (is (= 1 (testbits-c bits)))
     (is (= -100 (testbits-d bits)))
     (is (eql 'foo (testbits-e bits)))))
-    

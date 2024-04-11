@@ -7,6 +7,7 @@
 (in-suite :rdb)
 
 (rocksdb:load-rocksdb)
+(setq *temp-db-destroy* t)
 
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
@@ -101,15 +102,14 @@
      (is (= 10000 (parse-integer (get-prop tmp "rocksdb.estimate-num-keys"))))
      (debug! ;; some info about our db
       (rdb-name tmp)
-      ;; (get-prop tmp "rocksdb.dbstats")
-      ;; (get-prop tmp "rocksdb.levelstats")
-      ;; (print-stats tmp)
+      (get-prop tmp "rocksdb.dbstats")
+      (get-prop tmp "rocksdb.levelstats")
+      (print-stats tmp)
       )))
 
 (deftest metadata ()
   "Test metadata types: CF -> LEVEL -> SST-FILE."
-  (with-temp-db (tmp ())
-    (open-db tmp)
+  (with-temp-db (tmp () :open t)
     (insert-key tmp "foo" "bar")
     (flush-db tmp)
     (let ((cf-meta (get-metadata tmp)))

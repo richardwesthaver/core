@@ -308,7 +308,7 @@ and internal sap slots are initialized."
 (defmethod close-backup-db ((self rdb))
   (with-slots (backup) self
     (unless (null backup)
-      (close-backup-engine-raw backup))))
+      (setf backup (close-backup-engine-raw backup)))))
 
 (defmethod backup-db ((self rdb) &key path)
   (unless-null-db (opts backup) self
@@ -374,7 +374,7 @@ and internal sap slots are initialized."
       (loop for s across snapshots do (release-snapshot-raw db s)))
     (destroy-cfs self)
     (unless (null db)
-      (close-db-raw db))))
+      (setf db (close-db-raw db)))))
 
 (defmethod destroy-db ((self rdb))
   ;; close all handles before destruction ensues

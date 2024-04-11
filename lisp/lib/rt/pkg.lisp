@@ -134,7 +134,7 @@
 (in-readtable :std)
 
 ;;; Vars
-(defvar *test-opts* '(optimize sb-c::instrument-consing (debug 3)))
+(defvar *test-opts* '(optimize sb-c::instrument-consing (debug 1)))
 (defvar *compile-tests* t
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
@@ -157,12 +157,22 @@ compiler optimizations.")
     (apply #'make-instance 'test-suite slots)))
 
 ;; TODO 2023-09-04: optimize
-(declaim (inline do-tests))
+;;(declaim (inline do-tests))
 (defun do-tests (&optional (suite *test-suite*) force (output *standard-output*))
   (if (pathnamep output)
       (with-open-file (stream output :direction :output)
 	(do-suite (ensure-suite suite) :stream stream :force force))
       (do-suite (ensure-suite suite) :stream output :force force)))
+
+(defvar *test-output-mutex* (sb-thread:make-mutex :name "tests-output"))
+
+;; TODO
+(defun do-tests-concurrently (&optional (suite *test-suite*) force (output *standard-output*))
+  (sb-thread:with-mutex (*test-output-mutex*)
+    (let ((stream (make-synonym-stream output)))
+      (let ((*standard-output* stream)
+            (*error-output* stream))
+        (nyi!)))))
 
 (defun reset-tests ()
   (setq *testing* nil
@@ -388,7 +398,7 @@ from TESTS."))
   (compile
    (test-fn self)
    `(lambda ()
-      ,@(when declare `((declare ,declare)))
+      ,(when declare `(declare ,declare))
       ,@(test-form self))))
 
 (defun fail! (form &optional fmt &rest args)

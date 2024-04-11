@@ -281,7 +281,7 @@ or a character."
                    (incf /=)))))
          (uniquify-chars (chars)
            "Only keep one copy of each char in the list"
-           (mapcar 'first (split (sort chars 'char<)))))
+           (mapcar 'first (split (sort chars 'char<) :test #'eql))))
     (let ((best-split 0)            ; maximise size of smallest branch
           (best-posn  nil)
           (best-char  nil))
@@ -330,17 +330,18 @@ or a character."
 ;;; restore genericity to the macro, while keeping the 
 ;;; speed-up.
 
-#- (and sbcl (or x86 x86-64))
+#+nil
 (declaim (inline numeric-char=)
          (ftype (function (character character)
                           (values (and unsigned-byte fixnum)))
                 numeric-char=))
+;; FIXME 2024-04-11: 
+;; #+ (and sbcl (or x86 x86-64))
 (defun numeric-char= (x y)
   (declare (type character x y))
   (logxor (char-code x)
           (char-code y)))
 
-#+ (and sbcl (or x86 x86-64))
 (progn
   (defknown numeric-char= (character character)
       (unsigned-byte #. (1- sb-vm:n-machine-word-bits))
@@ -359,8 +360,8 @@ or a character."
     (:policy :fast-safe)
     (:note "inline constant numeric-char=")
     (:generator 1
-       (move r x)
-       (sb-vm::inst #:xor r (char-code y)))))
+      (move r x)
+      (sb-vm::inst #:xor r (char-code y)))))
 
 ;;; At each step, we may be able to find positions for which
 ;;; there can only be one character. If we emit the check for

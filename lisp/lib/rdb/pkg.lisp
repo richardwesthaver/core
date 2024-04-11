@@ -89,6 +89,7 @@
    ;; macs
    :with-errptr
    :with-db
+   :*temp-db-destroy*
    :with-temp-db
    :do-db
    :with-cf
