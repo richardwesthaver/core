@@ -8,12 +8,6 @@
                 collect (cons y (format nil "~:@(rocksdb-options-set-~x~)" y))))
     table))
 
-(defmacro rdb-opt-setter (key)
-  `(find-symbol (format nil "~:@(rocksdb-options-set-~x~)" ,key) :rocksdb))
-
-(defmacro rdb-opt-getter (key)
-  `(find-symbol (format nil "~:@(rocksdb-options-get-~x~)" ,key) :rocksdb))
-
 (defun %set-rocksdb-option (opt key val)
   (funcall (rdb-opt-setter key) opt val))
 
@@ -117,6 +111,10 @@ just the keys currently present in TABLE."
 
 (defvar *default-rdb-kv* (make-kv #() #()))
 
+;;; iterator
+(defstruct (rdb-iter (:constructor make-rdb-iter (&optional sap)))
+  (sap nil :type (or null alien)))
+
 ;;; column family
 (defstruct (rdb-cf (:constructor make-rdb-cf (name &key kv sap)))
   "RDB Column Family structure. Contains a name, a cons of (rdb-key-type
@@ -125,6 +123,96 @@ rocksdb_cf_t handle."
   (name "" :type string)
   (kv *default-rdb-kv* :type rdb-kv)
   (sap nil :type (or null alien)))
+
+;;; rdb-stats
+(defstruct (rdb-stats (:constructor make-rdb-stats (&optional sap)))
+  (sap nil :type (or null alien)))
+
+;;; metadata
+(defstruct rdb-cf-metadata
+  (name "default" :type string)
+  (size 0 :type fixnum)
+  (level-count 7 :type fixnum)
+  (file-count 0 :type fixnum)
+  (sap nil :type (or null alien)))
+
+(defmethod get-metadata ((self rdb-cf-metadata) &optional (level 0))
+  (with-slots (sap) self
+    (if (null sap)
+        (warn 'metadata-missing :message "ignoring attempt to pull fields from null sap.")
+        (make-rdb-level-metadata :sap (rocksdb-column-family-metadata-get-level-metadata sap level)))))
+
+(defmethod print-object ((self rdb-cf-metadata) stream)
+  (print-unreadable-object (self stream :type t)
+    (with-slots (name size level-count file-count) self
+      (format stream "~A :size ~A :levels ~A :files ~A" name size level-count file-count))))
+  
+(defmethod pull-sap* ((self rdb-cf-metadata))
+  (with-slots (name size level-count file-count sap) self
+    (if (null sap)
+        (warn 'metadata-missing :message "ignoring attempt to pull fields from null sap.")
+        (setf name (rocksdb-column-family-metadata-get-name sap)
+              size (rocksdb-column-family-metadata-get-size sap)
+              level-count (rocksdb-column-family-metadata-get-level-count sap)
+              file-count (rocksdb-column-family-metadata-get-file-count sap)))
+    self))
+
+(defstruct rdb-level-metadata
+  (level 0 :type fixnum)
+  (size 0 :type fixnum)
+  (file-count 0 :type fixnum)
+  (sap nil :type (or null alien)))
+
+(defmethod get-metadata ((self rdb-level-metadata) &optional (file 0))
+  (with-slots (sap) self
+    (if (null sap)
+        (warn 'metadata-missing :message "ignoring attempt to pull fields from null sap.")
+        (make-rdb-sst-file-metadata :sap (rocksdb-level-metadata-get-sst-file-metadata sap file)))))
+
+(defmethod print-object ((self rdb-level-metadata) stream)
+  (print-unreadable-object (self stream :type t)
+    (with-slots (level size file-count) self
+      (format stream "~A :size ~A :files ~A" level size file-count))))
+
+(defmethod pull-sap* ((self rdb-level-metadata))
+  (with-slots (level size file-count sap) self
+    (if (null sap)
+        (warn 'metadata-missing :message "ignoring attempt to pull fields from null sap.")
+        (setf level (rocksdb-level-metadata-get-level sap)
+              size (rocksdb-level-metadata-get-size sap)
+              file-count (rocksdb-level-metadata-get-file-count sap)))
+    self))
+
+;; NOTE: we only store the sizes of largest and smallest key, not the
+;; keys themselves. This may change in the future.
+(defstruct rdb-sst-file-metadata
+  (relative-filename "" :type string)
+  (directory "" :type string)
+  (size 0 :type fixnum)
+  (smallestkey 0 :type fixnum)
+  (largestkey 0 :type fixnum)
+  (sap nil :type (or null alien)))
+
+(defmethod print-object ((self rdb-sst-file-metadata) stream)
+  (print-unreadable-object (self stream :type t)
+    (with-slots (relative-filename directory size smallestkey largestkey) self
+      (format stream "~A :dir ~A :size ~A :smallest ~A :largest ~A"
+              relative-filename directory size smallestkey largestkey))))
+
+(defmethod pull-sap* ((self rdb-sst-file-metadata))
+  (with-slots (relative-filename directory size smallestkey largestkey sap) self
+    (if (null sap)
+        (warn 'metadata-missing :message "ignoring attempt to pull fields from null sap.")
+        (with-alien ((ssize size-t 0)
+                     (lsize size-t 0))
+          (rocksdb-sst-file-metadata-get-largestkey sap (addr lsize))
+          (rocksdb-sst-file-metadata-get-smallestkey sap (addr ssize))
+          (setf relative-filename (rocksdb-sst-file-metadata-get-relative-filename sap)
+                directory (rocksdb-sst-file-metadata-get-directory sap)
+                size (rocksdb-sst-file-metadata-get-size sap)
+                largestkey lsize
+                smallestkey ssize)))
+    self))
 
 ;;; rdb
 (defstruct (rdb (:constructor make-rdb (name opts &optional cfs db)))
@@ -167,8 +255,7 @@ and internal sap slots are initialized."
                              (t (log:warn! "invalid CF passed to create-db"))))
                          (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
     (when open
-      (open-db obj)
-      (create-cfs obj))
+      (open-db obj))
     obj))
 
 (defmethod push-cf ((cf rdb-cf) (db rdb))
@@ -188,6 +275,18 @@ and internal sap slots are initialized."
   (with-slots (sap) cf
     (unless (null sap)
       (setf sap (destroy-cf-raw sap)))))
+
+(defmethod set-opt ((self rdb) key val &key push)
+  (with-slots (opts) self
+    (set-opt opts key val :push push)))
+
+(defmethod get-opt ((self rdb) key)
+  (with-slots (opts) self
+    (get-opt opts key)))
+
+(defmethod push-opts ((self rdb))
+  (with-slots (opts) self
+      (push-sap* opts)))
 
 (defmethod open-db ((self rdb))
   (with-slots (name db opts) self
@@ -230,10 +329,19 @@ and internal sap slots are initialized."
     (vector-push-extend (create-snapshot-raw db) snapshots)))
 
 (defmethod get-metadata ((self rdb) &optional cf)
-  (get-metadata-raw (rdb-db self) cf))
+  (make-rdb-cf-metadata :sap (get-metadata-raw (rdb-db self) cf)))
 
-(defmethod get-stats ((self rdb) &optional (htype 0))
-  (get-stats-raw (rdb-db self) htype))
+(defmethod get-stats ((self rdb) &optional (htype (rocksdb-statistics-level "all")))
+  (make-rdb-stats (get-stats-raw (rdb-opts-sap (rdb-opts self)) htype)))
+
+(defmethod create-iter ((self rdb) &optional cf (opts (rocksdb-readoptions-create)))
+  (unless-null-db () self
+    (make-rdb-iter (if cf
+                       (create-cf-iter-raw db cf opts)
+                       (create-iter-raw db opts)))))
+
+(defmethod print-stats ((self rdb) &optional stream)
+  (print (rocksdb-options-statistics-get-string (rdb-opts-sap (rdb-opts self))) stream))
 
 (defmethod flush-db ((self rdb) &key) ;; todo flushopts
   (flush-db-raw (rdb-db self)))
@@ -248,8 +356,10 @@ and internal sap slots are initialized."
     (close-db self)))
 
 (defmethod create-cfs ((self rdb) &key &allow-other-keys)
-  (loop for cf across (rdb-cfs self)
-        do (create-cf self cf)))
+  (if (null (rdb-db self))
+      (warn 'db-missing :message "ignoring attempt to create column-families before opening")
+      (loop for cf across (rdb-cfs self)
+            do (create-cf self cf))))
 
 (defmethod destroy-cfs ((self rdb) &key &allow-other-keys)
   (with-slots (cfs) self
@@ -314,6 +424,12 @@ and internal sap slots are initialized."
 
 (defmethod get-key ((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
   (with-slots (db) self
-    (when cf
-      (get-cf-str-raw db cf key opts)
-      (get-kv-str-raw db key opts))))
+    (if cf
+        (get-cf-str-raw db cf key opts)
+        (get-kv-str-raw db key opts))))
+
+(defmethod get-key ((self rdb) key &key (opts (rocksdb-readoptions-create)) cf)
+  (with-slots (db) self
+    (if cf
+        (get-cf-raw db cf key opts)
+        (get-kv-raw db key opts))))

@@ -122,6 +122,15 @@
 (defvar *rocksdb-compactoptions*)
 (defvar *rocksdb-backup-engine-options*)
 
+(defvar *rocksdb-column-family-metadata*
+  #("size" "file-count" "name" "level-count" "level-metadata"))
+
+(defvar *rocksdb-level-metadata*
+  #("level" "size" "file-count" "sst-file-metadata"))
+
+(defvar *rocksdb-sst-file-metadata*
+  #("relative-filename" "directory" "size" "smallestkey" "largestkey"))
+
 (defvar *rocksdb-properties*
   #("rocksdb.num-files-at-level0"
     "rocksdb.compression-ration-at-level0"

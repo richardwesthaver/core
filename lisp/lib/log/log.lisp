@@ -57,7 +57,7 @@ function in which case it is used as the function value of
                  (if *log-timestamp*
                      (log-timestamp-source)
                      ""))
-         (mapc (lambda (x) (format t "~t; ~X~%" x)) args)
+         (mapc (lambda (x) (format t "~t; ~A~%" x)) args)
          (if (= 1 (length args))
              (car args)
              args))

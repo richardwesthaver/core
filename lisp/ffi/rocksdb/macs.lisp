@@ -50,4 +50,3 @@
     `(progn ,@forms)))
 
 ;; (defmacro define-merge-operator-callbacks (name full partial operands)
-

@@ -46,7 +46,7 @@
    :put-cf-key :get-cf-key
    :push-sap :push-sap*
    :pull-sap :pull-sap*
-   :backfill-opts
+   :backfill-opts :push-opts
    :get-opt :set-opt
    :push-cf :open-cfs
    :create-cf :create-cfs
@@ -55,23 +55,37 @@
    :get-prop :get-metadata
    :multi-get :delete-key
    :make-transaction :commit-transaction
+   :begin-transaction :prepare-transaction
+   :rollback-transaction :delete-transaction
    :flush-db :flush-cf
    :repair-db :write-db
    :backup-db :restore-db
    :get-stats :snapshot-db
-   :shutdown-db
+   :shutdown-db :print-stats
+   :create-iter :iter-next
+   :iter-prev :iter-seek
+   :iter-key :iter-val
+   :iter-timestamp
    ;; sst
    :sst-file
    :sst-stream
    ;; obj
    :rdb :make-rdb :create-db
    :rdb-db :rdb-name :rdb-cfs :rdb-opts
+   :rdb-cf-metadata :make-rdb-cf-metadata
+   :rdb-cf-metadata-name :rdb-cf-metadata-size
+   :rdb-level-metadata :make-rdb-level-metadata
+   :rdb-sst-file-metadata :make-rdb-sst-file-metadata
+   :rdb-sst-file-metadata-p :rdb-cf-metadata-p
+   :rdb-level-metadata-p
    :rdb-bytes :rdb-bytes-buffer :rdb-opts-sap
    :make-key :make-kv :make-val :rdb-kv :rdb-key :rdb-val 
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf
    :rdb-cf-sap :rdb-cf-name
+   :rdb-iter :make-rdb-iter :rdb-iter-p
+   :rdb-iter-sap
    ;; macs
    :with-errptr
    :with-db

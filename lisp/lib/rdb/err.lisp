@@ -58,6 +58,12 @@
 (define-condition opt-handler-missing (warning rdb-error)
   ())
 
+(define-condition db-missing (warning rdb-error)
+  ())
+
+(define-condition metadata-missing (warning rdb-error)
+  ())
+
 (define-condition invalid-propname (rdb-error)
   ()
   (:documentation "Error signaled when an invalid ROCKSDB-PROPERTY value is detected."))

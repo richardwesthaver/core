@@ -13,7 +13,7 @@
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
     (with-db (db (open-db-raw db-path))
       (put-kv-str-raw db "foo" "bar")
-      ;; (is (string= (get-kv-str-raw db "foo") "bar"))
+      (is (string= (get-kv-str-raw db "foo") "bar"))
       (close-db-raw db)
       (destroy-db-raw db-path))))
 
@@ -33,7 +33,7 @@
 
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
-  (let ((path "/tmp/rdb-raw"))
+  (let ((path (merge-pathnames (symbol-name (gensym "rdb-raw")) "/tmp/")))
     (with-open-db-raw (db path)
       (dotimes (i 1000)
         (let ((k (format nil "key~d" i))
@@ -75,20 +75,46 @@
     (insert-key db "test" "zaa")
     (is (string= "zaa" (get-key db "test")))
     ;; cleanup
-    (destroy-db db)
-    (close-db db)))
+    (destroy-db db)))
 
 (deftest temp-db ()
   "Test WITH-TEMP-DB macro."
-  (time
    (with-temp-db (tmp (cf1 cf2 cf3 cf4) :destroy t)
+     (set-opt tmp :parallelism (num-cpus))
+     ;; https://github.com/facebook/rocksdb/wiki/unordered_write
+     (set-opt tmp :unordered-write 1)
+     (set-opt tmp :enable-statistics 1)
+     (set-opt tmp :statistics-level (rocksdb-statistics-level "all"))
+     (push-opts tmp)
      (open-db tmp)
-     (rocksdb-options-increase-parallelism (rdb-opts-sap (rdb-opts tmp)) 4)
+     (create-cfs tmp)
+     (with-iter (it (create-iter tmp))
+       (print it)
+       (rocksdb-iter-destroy (rdb-iter-sap it)))
      (dotimes (i 10000)
        (insert-key tmp (format nil "foo~A" i) (format nil "bar~A" i)))
+     (loop for i below 100
+           with n = (* i i)
+           do (is (string= (get-key tmp (format nil "foo~A" n)) (format nil "bar~A" n))))
      (flush-db tmp)
-     (dotimes (i 10000)
-       (debug! (get-key tmp (format nil "foo~A" i))))
+     ;; TODO: auto handle return type (get-prop-int)
+     (is (= 10000 (parse-integer (get-prop tmp "rocksdb.estimate-num-keys"))))
      (debug! ;; some info about our db
       (rdb-name tmp)
-      (get-prop tmp "rocksdb.dbstats")))))
+      ;; (get-prop tmp "rocksdb.dbstats")
+      ;; (get-prop tmp "rocksdb.levelstats")
+      ;; (print-stats tmp)
+      )))
+
+(deftest metadata ()
+  "Test metadata types: CF -> LEVEL -> SST-FILE."
+  (with-temp-db (tmp ())
+    (open-db tmp)
+    (insert-key tmp "foo" "bar")
+    (flush-db tmp)
+    (let ((cf-meta (get-metadata tmp)))
+      (is (rdb-cf-metadata-p (pull-sap* cf-meta)))
+      (let ((level-meta (get-metadata cf-meta)))
+        (is (rdb-level-metadata-p (pull-sap* level-meta)))
+        (is (rdb-sst-file-metadata-p
+             (pull-sap* (get-metadata level-meta))))))))

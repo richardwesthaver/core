@@ -12,7 +12,14 @@
   (db (* rocksdb))
   (wait boolean))
 
-(export '(rocksdb-close rocksdb-cancel-all-background-work))
+(define-alien-routine rocksdb-disable-manual-compaction void
+  (db (* rocksdb)))
+
+(define-alien-routine rocksdb-enable-manual-compaction void
+  (db (* rocksdb)))
+
+(export '(rocksdb-close rocksdb-cancel-all-background-work
+          rocksdb-enable-manual-compaction rocksdb-disable-manual-compaction))
 
 (def-with-errptr rocksdb-put 
   void 
@@ -301,12 +308,28 @@
 
 ;;; Iterators
 (define-alien-routine rocksdb-create-iterator (* rocksdb-iterator)
-      (db (* rocksdb))
-      (opt (* rocksdb-readoptions)))
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions)))
+
+(define-alien-routine rocksdb-create-iterator-cf (* rocksdb-iterator)
+  (db (* rocksdb))
+  (opt (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle)))
+
 (define-alien-routine rocksdb-iter-destroy void 
       (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-seek-to-first void 
       (iter (* rocksdb-iterator)))
+(define-alien-routine rocksdb-iter-seek-to-last void 
+      (iter (* rocksdb-iterator)))
+(define-alien-routine rocksdb-iter-seek void 
+  (iter (* rocksdb-iterator))
+  (k (* unsigned-char))
+  (klen size-t))
+(define-alien-routine rocksdb-iter-seek-for-prev void 
+  (iter (* rocksdb-iterator))
+  (k (* unsigned-char))
+  (klen size-t))
 (define-alien-routine rocksdb-iter-valid boolean 
       (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-next void 
@@ -319,9 +342,26 @@
 (define-alien-routine rocksdb-iter-value (* unsigned-char) 
   (iter (* rocksdb-iterator)) 
   (vlen-ptr (* size-t)))
+(define-alien-routine rocksdb-iter-timestamp (* unsigned-char) 
+  (iter (* rocksdb-iterator))
+  (tslen (* size-t)))
+(def-with-errptr rocksdb-iter-get-error void (iter (* rocksdb-iterator)))
+(define-alien-routine rocksdb-wal-iter-next void (iter (* rocksdb-wal-iterator)))
+(define-alien-routine rocksdb-wal-iter-valid unsigned-char (iter (* rocksdb-wal-iterator)))
+(def-with-errptr rocksdb-wal-iter-status unsigned-char (iter (* rocksdb-wal-iterator)))
+(define-alien-routine rocksdb-wal-iter-get-batch (* rocksdb-writebatch)
+  (iter (* rocksdb-wal-iterator))
+  (seq (* (unsigned 64))))
+(define-alien-routine rockdsb-get-latest-sequence-number (unsigned 64) (db (* rocksdb)))
+(define-alien-routine rocksdb-wal-iter-destroy void
+  (iter (* rocksdb-wal-iterator)))
 
 (export '(rocksdb-create-iterator rocksdb-iter-destroy rocksdb-iter-seek-to-first rocksdb-iter-valid
-          rocksdb-iter-next rocksdb-iter-prev rocksdb-iter-key rocksdb-iter-value))
+          rocksdb-iter-seek-to-last rocksdb-iter-seek rocksdb-iter-seek-for-prev
+          rocksdb-iter-next rocksdb-iter-prev rocksdb-iter-key rocksdb-iter-value rocksdb-create-iterator-cf
+          rocksdb-iter-timestamp rocksdb-iter-get-error rocksdb-wal-iter-next rocksdb-wal-iter-valid
+          rocksdb-wal-iter-get-batch rocksdb-get-latest-sequence-number rocksdb-wal-iter-destroy))
+
 
 ;;; Backup
 (def-with-errptr rocksdb-backup-engine-open
@@ -453,7 +493,7 @@
   (key c-string)
   (klen size-t))
 
-(def-with-errptr rocksdb-transaction-delete-cf void
+(def-with-errptr rocksdb-transactiondb-delete-cf void
   (txndb (* rocksdb-transactiondb))
   (opts (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
@@ -496,7 +536,7 @@
   (cfs (array (* rocksdb-column-family-handle)))
   (ncfs int))
 
-(def-with-errptr rocksdb-transactiondb-flush-cf void
+(def-with-errptr rocksdb-transactiondb-flush-wal void
   (txndb (* rocksdb-transactiondb))
   (sync unsigned-char))
 
@@ -546,7 +586,8 @@
           rocksdb-transaction-create-iterator rocksdb-transaction-create-iterator-cf
           rocksdb-transactiondb-create-iterator rocksdb-transactiondb-create-iterator-cf
           rocksdb-optimistictransactiondb-get-base-db rocksdb-optimistictransactiondb-close-base-db
-          rocksdb-optimistictransaction-begin rocksdb-optimistictransactiondb-close))
+          rocksdb-optimistictransaction-begin rocksdb-optimistictransactiondb-close
+          rocksdb-transactiondb-flush-wal))
 
 ;;; Perfcontext
 (define-alien-routine rocksdb-set-perf-level void (val int))

@@ -266,6 +266,9 @@
 ;; (prepare-for-bulk-load)
 ;; (memtable-vector-rep)
 
+(define-alien-routine rocksdb-options-prepare-for-bulk-load void
+  (opts (* rocksdb-options)))
+
 (define-alien-routine rocksdb-options-increase-parallelism void 
   (opt (* rocksdb-options)) (total-threads int))
 
@@ -288,15 +291,39 @@
   (histogram-type unsigned-int)
   (data (* rocksdb-statistics-histogram-data)))
 
-;; (define-alien-routine rocksdb-options-set-db-paths void
-;;   (opt (* rocksdb-options)))
+(define-alien-routine rocksdb-options-set-db-paths void
+  (opt (* rocksdb-options))
+  (paths (array (* rocksdb-dbpath)))
+  (num-paths size-t))
 
-;; (define-alien-routine rocksdb-options-set-uint64add-merge-operator void
-;;   (opt (* rocksdb-options)))
+(define-alien-routine rocksdb-options-set-cf-paths void
+  (opt (* rocksdb-options))
+  (paths (array (* rocksdb-dbpath)))
+  (num-paths size-t))
 
+(define-alien-routine rocksdb-options-set-env void
+  (opts (* rocksdb-options))
+  (env (* rocksdb-env)))
+
+(define-alien-routine rocksdb-options-set-info-log void
+  (opts (* rocksdb-options))
+  (logger (* rocksdb-logger)))
+
+(define-alien-routine rocksdb-options-set-uint64add-merge-operator void
+  (opt (* rocksdb-options)))
+
+(define-alien-routine rocksdb-options-set-compression-per-level void
+  (opt (* rocksdb-options))
+  (levels (array int))
+  (num-levels size-t))
+          
 (export '(rocksdb-options-increase-parallelism rocksdb-options-optimize-level-style-compaction
+          rocksdb-options-set-uint64add-merge-operator rocksdb-options-set-compression-per-level
           rocksdb-options-enable-statistics rocksdb-options-statistics-get-string
-          rocksdb-options-statistics-get-ticker-count rocksdb-options-statistics-get-histogram-data))
+          rocksdb-options-set-db-paths rocksdb-options-set-cf-paths
+          rocksdb-options-set-env rocksdb-options-set-info-log
+          rocksdb-options-statistics-get-ticker-count rocksdb-options-statistics-get-histogram-data
+          rocksdb-options-prepare-for-bulk-load))
 
 ;;; RocksDB Write Options
 (define-opt rocksdb-writeoptions)
@@ -367,3 +394,21 @@
   (src (* rocksdb-options)))
 
 (export '(rocksdb-options-create-copy))
+;;; Aliases
+;; some of the RocksDB options don't follow the standard naming
+;; convention of 'rocksdb-*-set-*' and 'rocksdb-*-get-*'. In order to
+;; remove the need for special-case handling in the high-level
+;; interface we define them as aliases
+(setf (symbol-function 'rocksdb-options-set-parallelism) #'rocksdb-options-increase-parallelism)
+
+(declaim (inline rocksdb-options-set-enable-statistics rocksdb-options-set-prepare-for-bulk-load))
+(defun rocksdb-options-set-enable-statistics (opt x)
+  (when x
+    (rocksdb-options-enable-statistics opt)))
+
+(defun rocksdb-options-set-prepare-for-bulk-load (opt x)
+  (when x
+    (rocksdb-options-prepare-for-bulk-load opt)))
+
+(export '(rocksdb-options-set-parallelism rocksdb-options-set-enable-statistics
+          rocksdb-options-set-prepare-for-bulk-load))

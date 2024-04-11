@@ -17,7 +17,9 @@ to initialize the instance with custom configuration."
    (lambda (o) (rocksdb-options-set-create-if-missing o 1))))
 
 (defun get-stats-raw (opt htype)
-  (rocksdb-options-statistics-get-histogram-data opt htype (rocksdb-statistics-histogram-data-create)))
+  (with-alien ((hist (* rocksdb-statistics-histogram-data) (rocksdb-statistics-histogram-data-create)))
+    (rocksdb-options-statistics-get-histogram-data opt htype hist)
+    (deref hist)))
 
 ;;; DB
 (defun open-db-raw (db-path &optional (opts (default-rocksdb-options)))
@@ -34,17 +36,6 @@ to initialize the instance with custom configuration."
   (with-errptr (err 'destroy-db-error (list :db path))
     (rocksdb-destroy-db opt (namestring (uiop:ensure-directory-pathname path)) err)
     (rocksdb-options-destroy opt)))
-
-;; (with-open-db-raw (db "/tmp/tmp-db") (print db))
-;; (destroy-db-raw "/tmp/with-db-raw")
-
-(defmacro with-open-db-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
-  `(let ((,db-var (open-db-raw ,db-path ,opt)))
-     (unwind-protect (progn ,@body)
-       (rocksdb-close ,db-var)
-       (with-errptr (err 'rocksdb-error)
-         ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
-         (rocksdb-options-destroy ,opt)))))
 
 (defun get-property-raw (db str)
   (rocksdb-property-value db (make-alien-string str)))
@@ -87,24 +78,24 @@ to initialize the instance with custom configuration."
 (defun get-kv-raw (db key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
     (with-errptr (err 'get-kv-error (list :db db :key key))
-      (with-alien ((vlen (* size-t) (make-alien size-t 0))
+      (with-alien ((vlen size-t)
 		   (k (* unsigned-char) (make-alien unsigned-char klen)))
         (setfa k key)
         (let* ((val (rocksdb-get db
 			         opt
 			         k klen
-                                 vlen
+                                 (addr vlen)
 			         err)))
 	  ;; helps if we know the vlen beforehand, would need a custom
 	  ;; C-side function probably.
-	  (let ((v (make-array (deref vlen) :element-type 'unsigned-byte)))
-            (clone-octets-from-alien val v (deref vlen))
-	    v))))))
+          (let ((v (make-array vlen :element-type 'octet)))
+            (clone-octets-from-alien val v vlen)
+            (coerce v 'octet-vector)))))))
 
 (defun get-kv-str-raw (db key &optional (opt (rocksdb-readoptions-create)))
-  (let ((k (string-to-octets key :null-terminate nil)))
+  (let ((k (string-to-octets key)))
     (let ((v (get-kv-raw db k opt)))
-      (when v (concatenate 'string (map 'vector #'code-char v))))))
+      (when v (octets-to-string v)))))
 
 ;;; Column Family
 (defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
@@ -161,6 +152,9 @@ to initialize the instance with custom configuration."
 (defun create-iter-raw (db &optional (opt (rocksdb-readoptions-create)))
   (rocksdb-create-iterator db opt))
 
+(defun create-cf-iter-raw (db cf &optional (opt (rocksdb-readoptions-create)))
+  (rocksdb-create-iterator-cf db opt cf))
+
 (defun destroy-iter-raw (iter)
   (rocksdb-iter-destroy iter))
 
@@ -188,11 +182,6 @@ to initialize the instance with custom configuration."
   (when-let ((v (iter-val-raw iter)))
     (octets-to-string v)))
 
-(defmacro with-iter-raw ((iter-var db &optional (opt (rocksdb-readoptions-create))) &body body)
-  `(let ((,iter-var (create-iter-raw ,db ,opt)))
-     (unwind-protect (progn ,@body)
-       (destroy-iter-raw ,iter-var))))
-
 ;;; Backup Engine
 (defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
   (with-errptr (err 'open-backup-engine-error (list :db be-path))
@@ -215,12 +204,6 @@ to initialize the instance with custom configuration."
 (defun restore-from-backup-raw (be db-path backup-path backup-id &optional (opt (rocksdb-restore-options-create)))
   (with-errptr (err 'rocksdb-error)
     (rocksdb-backup-engine-restore-db-from-backup be db-path backup-path opt backup-id err)))
-
-(defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
-                                       &body body)
-  `(let ((,be-var (open-backup-engine-raw ,be-path ,opt)))
-     (unwind-protect (progn ,@body)
-       (rocksdb-backup-engine-close ,be-var))))
 
 ;;; Snapshot
 (defun create-snapshot-raw (db)
