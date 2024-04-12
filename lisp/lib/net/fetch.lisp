@@ -56,15 +56,12 @@
              (when (is-file file-pathname) (delete-file file-pathname))
              (if (and cache (probe-file file-pathname))
                  (values file-pathname 200 "OK")
-                 (handler-case  (download url-or-path file-pathname)
-                   (drakma:parameter-error ()
-                     (values nil 404 "Parameter Error")
-                     ))))))
+                 (download url-or-path file-pathname)))))
       (t (values nil 404 "Not file of url"))))
 
   (defun fetch (url-or-path
                 &key
-                  (dir "vega/")
+                  (dir)
                   (external-format :utf-8)
                   (cache t)
                   (stream nil)
@@ -80,7 +77,7 @@ Note that it is important to ensure that dir and subdir if used end in a /
   - url-or-path: <string> pathname or url string identifying file to be fetched.
   - stream: resuests that fetch returns a stream
   - cache: <T|NIL> if T looks for file in -dir and uses that as source if NIL then the a fresh copy of the file is fetched
-  - dir: location to store fetched file, default location is in the sample directory in the top level of the clml source tree.
+  - dir: location to store fetched file.
   - flush: if T fetch does not download the file it deletes the existing file.
 "
     (let ((fetched-path (%fetch url-or-path :dir dir :cache cache :flush flush)))

@@ -26,7 +26,8 @@
                 :components ((:file "crew")
                              ;; (:file "http")
                              (:file "dns")
-                             (:file "ssh"))))
+                             (:file "ssh")))
+               (:file "fetch"))
   :in-order-to ((test-op (test-op :net/tests))))
 
 (defsystem :net/tests

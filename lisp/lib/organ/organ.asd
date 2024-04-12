@@ -6,6 +6,7 @@
                (:file "vars")
                (:file "err")
                (:file "proto")
+               (:file "util")
                (:file "macs")
                (:module "object"
                 :components
@@ -47,7 +48,6 @@
                                (:file "item")
                                (:file "table")))
                  (:file "headline")))
-               (:file "util")
                (:file "section")
                (:file "heading")
                (:file "document"))

@@ -12,11 +12,12 @@
 (define-condition deserializer-error (dat-error) ())
 (define-condition serde-error (dat-error) ())
 ;;; Serialize
+(eval-always
 (defvar *serializable*
   '(string simple-string octet-vector octet
     char simple-array simple-vector array
     vector)
-  "List of types which can be serialized to.")
+  "List of types which can be serialized to."))
 
 (deftype serializable-type-designator ()
   `(or (member ,@*serializable*)
@@ -34,8 +35,9 @@
   (:documentation "Serialize OBJ to FORMAT, which is a SERIALIZABLE-TYPE-DESIGNATOR."))
 
 ;;; Deserialize
+(eval-always
 (defvar *deserializable* nil
-  "List of types which are DESERIALIZABLE-P")
+  "List of types which are DESERIALIZABLE-P"))
   
 (deftype deserializable-type-designator ()
   `(or (member ,@*deserializable*)

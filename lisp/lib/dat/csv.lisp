@@ -1,6 +1,6 @@
 ;;; lib/dat/csv.lisp --- CSV Data Format
 
-;;
+;; Character Separated Values
 
 ;;; Code:
 (in-package :dat/csv)

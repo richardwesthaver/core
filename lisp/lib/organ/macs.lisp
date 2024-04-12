@@ -1,10 +1,5 @@
 (in-package :organ)
 
-;; (sym-to-org-class-name 'headline)
-(defun sym-to-org-class-name (sym) 
-  "Convert keyword or symbol SYM to a symbol which could designate an ORG- object type."
-  (intern (format nil "~:@(~a~a~)" "org-" sym) :organ))
-
 (defmacro define-org-element (name slots &key documentation greater lesser)
   (let ((docstring (or documentation (format nil "Org ~a element class." name)))
         (sname (sym-to-org-class-name name)))

@@ -74,12 +74,6 @@
 
 (deftest def-seq ())
 
-;; TODO 2023-12-17: 
-;; (deftest uris ()
-;;   "Tests for different types of URIs. Attempts to conform with RFCs and test suites."
-;;   (uri-host (parse-uri-string-rfc3986 "https://localhost"))
-;; )
-
 (deftest castable-solo ()
   (is (typep (make-castable) 'castable))
   (is (null (clrchash (make-castable))))
@@ -172,10 +166,11 @@
 (deftest ring ())
 
 (deftest generic-tree ()
-  (let ((dag (make-binary-node 
+  (let ((tree (make-binary-node 
               0 
-              (make-binary-node 1 (make-tree-node 0) (make-tree-node 1))
-              (make-binary-node 2 (make-tree-node 2) (make-tree-node 3)))))))
+              (make-binary-node 1 (make-node 0) (make-node 1))
+              (make-binary-node 2 (make-node 2) (make-node 3)))))
+    (is (typep tree 'binary-node))))
 
 (deftest bro-tree ())
 
@@ -184,3 +179,48 @@
 (deftest avl-tree ())
 
 (deftest graph ())
+
+;; TODO 2023-12-17: 
+(deftest uris ()
+  "Tests for different types of URIs. Attempts to conform with RFCs and test suites."
+  (let ((local #.(parse-uri "https://localhost/stash/index.json"))
+        (local2 (parse-uri "https://localhost/stash/index.json"))
+        (ftp (parse-uri "ftp://ftp.is.co.za/rfc/rfc1808.txt")))
+    (is (equal "localhost" (uri-host local)))
+    (is (eql :ftp (uri-scheme ftp)))
+    (is (= (obj/uri::uri-hash local) (obj/uri::uri-hash local2)))
+    (is (equal "foo%25bar" (uri-path (parse-uri "foo%25bar"))))
+    (is (equal "/test/foo%25bar.lisp"
+	       (uri-to-string (string-to-uri "/test/foo%25bar.lisp"))))
+    (is (equal
+         "/test/foo%25bar.lisp"
+	 (render-uri (parse-uri "/test/foo%25bar.lisp") nil)))
+    (is (equal "http://franz.com/foo?val=a%2b%3d%26b+is+c"
+               (render-uri (parse-uri "http://franz.com/foo?val=a%2b%3d%26b+is+c") nil)))
+
+    (dolist (xx ;; (list user-info ipaddr port)
+	     '((nil "192.132.95.22" nil)
+	       (nil "192.132.95.22" 81)
+	       ("layer" "192.132.95.22" nil)
+	       ("layer" "192.132.95.22" 81)
+		("layer:pass" "192.132.95.22" nil)
+		("layer:pass" "192.132.95.22" 81)
+		(nil "fe80::230:48ff:feb9:bbea" nil)
+		(nil "fe80::230:48ff:feb9:bbea" 81)
+		(nil "2001:470:1f05:548:230:48ff:feb9:bbea" nil)
+		(nil "2001:470:1f05:548:230:48ff:feb9:bbea" 81)
+		(nil "::1" nil)
+		(nil "::1" 81)))
+      (destructuring-bind (user-info host port) xx
+        (let* ((h (if (and (stringp host) (find #\: host))
+                      (format nil "[~a]" host)
+                      host))
+	     (s (format nil "https://~@[~a@~]~a~a/foo.html"
+			user-info h (or (when port (format nil ":~d" port)) "")))
+	     (u (parse-uri s)))
+	(format t ";; ~a~%" s)
+	  (is (string= s (princ-to-string u)))
+	  (is (string= host (uri-host u)))
+	  (when user-info
+	    (is (string= user-info (uri-userinfo u))))
+	  (is (equal port (uri-port u))))))))

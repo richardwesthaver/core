@@ -20,7 +20,14 @@
                              (:file "castable")))
                (:file "id")
                (:module "uri"
-                :components ((:file "pkg")))
+                :components ((:file "pkg")
+                             (:file "uri")
+                             (:file "mask")
+                             (:file "state")
+                             (:file "parse")
+                             (:file "print")
+                             (:file "path")
+                             (:file "intern")))
                (:file "url")
                (:file "seq")
                (:module "tree"
