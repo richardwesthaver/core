@@ -32,17 +32,17 @@
 or a character."
   `(or symbol string character))
 
-;; (defun split (separator s &key (omit-nulls *omit-nulls*) limit (start 0) end)
-;;   "Split s into substring by separator (cl-ppcre takes a regex, we do not).
+(defun ssplit (separator s &key (omit-nulls *omit-nulls*) limit (start 0) end)
+  "Split s into substring by separator (cl-ppcre takes a regex, we do not).
 
-;;   `limit' limits the number of elements returned (i.e. the string is
-;;   split at most `limit' - 1 times)."
-;;   ;; cl-ppcre:split doesn't return a null string if the separator appears at the end of s.
-;;   (let* ((limit (or limit (1+ (length s))))
-;;          (res (cl-ppcre:split separator s :limit limit :start start :end end)))
-;;     (if omit-nulls
-;;         (remove-if (lambda (it) (sequence:emptyp it)) res)
-;;         res)))
+   `limit' limits the number of elements returned (i.e. the string is
+   split at most `limit' - 1 times)."
+  ;; cl-ppcre:split doesn't return a null string if the separator appears at the end of s.
+  (let* ((limit (or limit (1+ (length s))))
+         (res (cl-ppcre:split separator s :limit limit :start start :end end)))
+    (if omit-nulls
+        (remove-if (lambda (it) (sequence:emptyp it)) res)
+        res)))
 
 (defun collapse-whitespaces (s)
   "Ensure there is only one space character between words.
@@ -141,7 +141,7 @@ or a character."
 
 ;;;# Some utility code
 
-(defun split (list &key (test 'eql) (key 'identity))
+(defun split-tree (list &key (test 'eql) (key 'identity))
   "Splits input list into sublists of elements
    whose elements are all such that (key element)
    are all test.
@@ -281,7 +281,7 @@ or a character."
                    (incf /=)))))
          (uniquify-chars (chars)
            "Only keep one copy of each char in the list"
-           (mapcar 'first (split (sort chars 'char<) :test #'eql))))
+           (mapcar 'first (split-tree (sort chars 'char<) :test #'eql))))
     (let ((best-split 0)            ; maximise size of smallest branch
           (best-posn  nil)
           (best-char  nil))
@@ -342,6 +342,7 @@ or a character."
   (logxor (char-code x)
           (char-code y)))
 
+(eval-when (:load-toplevel :compile-toplevel)
 (progn
   (defknown numeric-char= (character character)
       (unsigned-byte #. (1- sb-vm:n-machine-word-bits))
@@ -361,7 +362,7 @@ or a character."
     (:note "inline constant numeric-char=")
     (:generator 1
       (move r x)
-      (sb-vm::inst #:xor r (char-code y)))))
+      (sb-vm::inst #:xor r (char-code y))))))
 
 ;;; At each step, we may be able to find positions for which
 ;;; there can only be one character. If we emit the check for
@@ -468,7 +469,7 @@ or a character."
            (length (first x))))
     (let ((*input-string*  input-var)
           (*no-match-form* no-match)
-          (cases-lists     (split (sort cases '<
+          (cases-lists     (split-tree (sort cases '<
                                         :key #'case-string-length)
                                   :key #'case-string-length)))
       `(locally (declare (type vector ,input-var))

@@ -474,7 +474,7 @@ Can parse all but specialized lambda lists.
                                     :initial-element (find-class 't))
            :qualifiers '()
            :function #'values
-           '.lambda.
+           'lambda
            `(lambda ,lambda-list
               (declare (ignorable ,@(lambda-list-variables lambda-list)))
               ,(second method))))
@@ -865,7 +865,7 @@ Can parse all but specialized lambda lists.
   (let ((name (sb-mop:generic-function-name fast-generic-function)))
     ;; Ensure that the function is known.
     (unless (sb-c::info :function :info name)
-      (eval `(sb-c:defknown ,name * * ())))
+      (compile nil (eval `(sb-c:defknown ,name * * ()))))
     ;; Create an IR1-transform for each static call signature.
     (dolist (static-call-signature (compute-static-call-signatures fast-generic-function domain))
       (with-accessors ((types static-call-signature-types)

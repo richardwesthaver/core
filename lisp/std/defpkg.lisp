@@ -687,7 +687,7 @@ or when loading the package is optional."
                          :mix ,mix :reexport ,reexport :unintern ,unintern)))))
 
 (defmacro defpkg (package &rest clauses)
-  "Richard's Robust DEFPACKAGE macro. Based on UIOP:DEFINE-PACKAGE. ymmv.
+  "Richard's Robust DEFPACKAGE macro. Based on UIOP:DEFINE-PACKAGE ymmv.
 
 DEFPKG takes a PACKAGE and a number of CLAUSES, of the form (KEYWORD . ARGS).
 

@@ -178,4 +178,6 @@
   (:use :cl :std :dat/proto :dat/qrcode :png))
 
 (uiop:define-package :dat
-    (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode))
+    (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode
+                   ;; :dat/qrcode
+                   ))

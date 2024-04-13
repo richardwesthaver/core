@@ -105,16 +105,12 @@
    :potentially-sealable-method
    :potentially-sealable-standard-method))
 
-(defpackage :obj/meta/fast
-  (:use :cl :std)
+(std:defpkg :obj/meta/fast
+  (:use :cl :std :obj/meta/sealed)
   (:import-from :sb-int :gensymify)
   (:import-from :sb-walker :macroexpand-all)
-  (:import-from :obj/meta/sealed
-   :method-properties :validate-method-property :seal-domain :domain
-   :sealed-domains :compute-static-call-signatures :static-call-signature :static-call-signature-types
-   :static-call-signature-prototypes :externalizable-object-p :sealable-class :sealable-generic-function
-   :sealable-standard-generic-function :potentially-sealable-method :potentially-sealable-standard-method)
-  (:export :fast-generic-function :fast-method :inlineable))
+  (:export :fast-generic-function :fast-method :inlineable)
+  (:use-reexport :obj/meta/sealed))
 
 (defpackage :obj/meta/lazy
   (:use :cl :std))
