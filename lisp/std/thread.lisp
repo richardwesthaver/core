@@ -165,6 +165,9 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric push-result (task pool))
 (defgeneric push-worker (thread pool))
 (defgeneric push-stage (stage pool))
+(defgeneric start-task-pool (pool))
+(defgeneric pause-task-pool (pool))
+(defgeneric stop-task-pool (pool))
 
 (defstruct task-pool
   (oracle nil :type (or null oracle))
@@ -184,7 +187,7 @@ lifetime of SCOPE, but never before and never after."))
   (oracle-thread (task-pool-oracle self)))
 
 (defmethod push-worker ((worker thread) (pool task-pool))
-  (vector-push-extend worker (task-pool-workers pool)))
+  (vector-push worker (task-pool-workers pool)))
 
 (defclass task ()
   ((object :initarg :object :accessor task-object)))

@@ -4,23 +4,14 @@
   ((text :initarg :text :reader text)))
 
 (defun download (url &optional output)
-  (let ((output (if output output (file-namestring (quri:uri-path (quri:uri url))))))
-    (multiple-value-bind (body status header uri)
-        (dex:get url)
-      (values
-       (let ((val
-               (if (= status 200)
-                   (with-open-file (file output
-                                         :direction :output
-                                         :if-does-not-exist :create
-                                         :if-exists :supersede)
-                     (write-string body file)
-                     output
-                     )
-                   nil)))
-         (or body uri header)
-         val)
-       status))))
+  (let ((output (if output
+                    output
+                    (file-namestring (obj/uri:uri-path (obj/uri:uri url))))))
+      (multiple-value-bind (stream status header uri)
+          (dex:get url :want-stream t)
+        (when (= status 200) (write-stream-into-file stream (pathname output)))
+        (values (or stream uri header)
+                status))))
 
   (defun split-file-path (path)
     (let ((pos-last-slash (1+ (position #\/ path :from-end t))))
@@ -28,12 +19,12 @@
             (subseq path pos-last-slash))))
 
   (defun split-uri-string (uri-string)
-    (let ((pu (puri:parse-uri uri-string)))
-      (cons (puri:uri-host pu) (split-file-path (puri:uri-path pu)))))
+    (let ((pu (parse-uri uri-string)))
+      (cons (uri-host pu) (split-file-path (uri-path pu)))))
 
   (defun condition-path (path)
-    "Abuse puri:parse-uri to strip possible get args from path"
-    (let ((p (puri:parse-uri path))) (puri:uri-path p)))
+    "Abuse parse-uri to strip possible get args from path"
+    (let ((p (parse-uri path))) (uri-path p)))
 
   (defun is-file (path)
     (handler-case (probe-file path)
@@ -47,7 +38,7 @@
       ((is-file (condition-path url-or-path)) (condition-path url-or-path))
       ((is-file (condition-path (concatenate 'string  dir url-or-path)))
        (condition-path (concatenate 'string  dir url-or-path)))
-      ((puri:parse-uri url-or-path)
+      ((parse-uri url-or-path)
        (let* ((tmp-pathname (split-uri-string url-or-path))
               (file-pathstring (format nil "~{~A~^~}" (if dir (cons dir tmp-pathname) tmp-pathname)))
               (file-pathname (ensure-directories-exist

@@ -125,6 +125,9 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 (defun num-cpus ()
   "Return the number of CPU threads online."
   (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln))
+
+(defvar *cpus* (num-cpus))
+
 ;;; C Standard
 
 ;; types

@@ -8,6 +8,7 @@
    :proper-list-of-length-p :proper-list-p :singleton-p
    :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*)
   (:export
+   ;; types
    ;; err
    :std-error :std-error-message
    :define-error-reporter
@@ -46,7 +47,23 @@
    :decode-float32
    :encode-float64
    :decode-float64
-   ;; str
+   ;; stream
+   #:wild-pathname
+   #:non-wild-pathname
+   #:absolute-pathname
+   #:relative-pathname
+   #:directory-pathname
+   #:absolute-directory-pathname
+   #:file-pathname
+   #:with-open-files
+   #:write-stream-into-file
+   #:write-file-into-stream
+   #:file=
+   #:file-size
+   :file-size-in-octets
+   :+pathsep+
+   :octet-vector=
+   ;; string
    :*omit-nulls*
    :*whitespaces*
    :string-designator
@@ -87,8 +104,13 @@
    :make-threads :with-threads :finish-threads
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
-   :task :job :task-queue :*task-queue*
-   :job-stack :task-object
+   :make-oracle :make-supervisor
+   :push-job :push-task :push-worker :push-result
+   :start-task-pool :pause-task-pool :shutdown-task-pool
+   :push-stage :designate-oracle :make-task-pool
+   :task :job :task-pool :stage :task-pool-p
+   :job-tasks :make-job :job-p :task-object
+   :make-task :task-p :task
    ;; util
    :find-package* #:find-symbol* #:symbol-call
    :intern* #:export* #:import* #:shadowing-import* 
@@ -192,6 +214,7 @@
    :c-string-to-string-list
    :list-all-shared-objects
    :num-cpus
+   :*cpus*
    :loff-t
    :memset
    ;; os

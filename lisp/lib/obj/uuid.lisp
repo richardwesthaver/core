@@ -95,29 +95,7 @@ characters.~@:>" string (length string)))
 	      (with-open-file (address (make-pathname :directory
                                                       `(:absolute "sys" "class" "net" ,interface)
 						      :name "address"))
-		(parse-integer (remove #\: (read-line address)) :radix 16))))
-
-	  #+(and :windows :clisp)
-	  (let ((output (ext:run-program "ipconfig"
-					 :arguments (list "/all")
-					 :input nil
-					 :output :stream
-					 :wait t)))
-	    (loop for line = (read-line output nil) while line
-	       when (search "Physical" line :test #'string-equal)
-	       return (parse-integer (remove #\- (subseq line 37)) :radix 16)))
-
-	  #+(and :macosx :lispworks)
-	  (with-open-stream (stream
-			     (sys:run-shell-command "/sbin/ifconfig en0 ether"
-						    :output :stream
-						    :if-error-output-exists t
-						    :wait nil))
-	    (loop for line = (read-line stream nil)
-	       while line
-	       when (search "ether" line :test #'string-equal)
-	       return (parse-integer (remove #\: (subseq line 7))
-				     :radix 16)))))
+		(parse-integer (remove #\: (read-line address)) :radix 16))))))
     (unless node
       (unless *uuid-random-state*
 	(setf *uuid-random-state* (make-random-state t)))

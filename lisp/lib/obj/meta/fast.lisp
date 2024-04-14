@@ -717,24 +717,6 @@ Can parse all but specialized lambda lists.
 ;;;
 ;;; Computing the Effective Method Lambda List
 
-(defun compute-effective-method-lambda-list (generic-function applicable-methods)
-  (multiple-value-bind (required optional rest-var keyword allow-other-keys)
-      (parse-ordinary-lambda-list (sb-mop:generic-function-lambda-list generic-function))
-    (let ((method-parses
-            (mapcar
-             (lambda (method)
-               (multiple-value-list
-                (parse-ordinary-lambda-list
-                 (sb-mop:method-lambda-list method))))
-             applicable-methods)))
-      (unparse-ordinary-lambda-list
-       (merge-required-infos required (mapcar #'first method-parses))
-       (merge-optional-infos optional (mapcar #'second method-parses))
-       rest-var
-       (merge-keyword-infos keyword (mapcar #'fourth method-parses))
-       (merge-allow-other-keys allow-other-keys (mapcar #'fifth method-parses))
-       '()))))
-
 (defun merge-required-infos (g-required m-requireds)
   (dolist (m-required m-requireds g-required)
     (assert (= (length m-required)
@@ -823,6 +805,24 @@ Can parse all but specialized lambda lists.
    (lambda (a b) (or a b))
    m-allow-other-keys-list
    :initial-value g-allow-other-keys))
+
+(defun compute-effective-method-lambda-list (generic-function applicable-methods)
+  (multiple-value-bind (required optional rest-var keyword allow-other-keys)
+      (parse-ordinary-lambda-list (sb-mop:generic-function-lambda-list generic-function))
+    (let ((method-parses
+            (mapcar
+             (lambda (method)
+               (multiple-value-list
+                (parse-ordinary-lambda-list
+                 (sb-mop:method-lambda-list method))))
+             applicable-methods)))
+      (unparse-ordinary-lambda-list
+       (merge-required-infos required (mapcar #'first method-parses))
+       (merge-optional-infos optional (mapcar #'second method-parses))
+       rest-var
+       (merge-keyword-infos keyword (mapcar #'fourth method-parses))
+       (merge-allow-other-keys allow-other-keys (mapcar #'fifth method-parses))
+       '()))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

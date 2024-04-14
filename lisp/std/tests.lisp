@@ -62,7 +62,7 @@
   (is (eq (make-keyword 'fizz) :fizz)))
 
 ;;;; TODO
-(deftest str ()
+(deftest string ()
   "Test standard string utils"
   (is (typep "test" 'string-designator))
   (is (typep 'test 'string-designator))

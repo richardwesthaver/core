@@ -722,83 +722,6 @@ Examples:
 (loop for char in '(#\backspace #\tab #\newline #\linefeed #\page #\return #\space #\rubout) do
   (register-class-prototype char))
 
-;;; In this file, we compute the static call signatures of a given, sealed
-;;; generic function. A static call signature consists of a list of types,
-;;; and a list of prototypes.  The list of types is guaranteed to be
-;;; non-overlapping with the types of any other call signature.  The list
-;;; of prototypes is chosen such that the list of applicable methods of
-;;; these prototypes is representative for all arguments of the types of
-;;; the call signature.
-
-(defclass static-call-signature ()
-  ((%types
-    :initarg :types
-    :reader static-call-signature-types)
-   (%prototypes
-    :initarg :prototypes
-    :reader static-call-signature-prototypes)))
-
-(defmethod print-object ((scs static-call-signature) stream)
-  (print-unreadable-object (scs stream :type t :identity t)
-    (format stream "~S ~S"
-            (static-call-signature-types scs)
-            (static-call-signature-prototypes scs))))
-
-(defmethod make-load-form
-    ((static-call-signature static-call-signature) &optional environment)
-  (make-load-form-saving-slots
-   static-call-signature
-   :slot-names '(%types %prototypes)
-   :environment environment))
-
-(defmethod externalizable-object-p
-    ((static-call-signature static-call-signature))
-  (and
-   (every #'externalizable-object-p
-          (static-call-signature-types static-call-signature))
-   (every #'externalizable-object-p
-          (static-call-signature-prototypes static-call-signature))))
-
-(defmethod compute-static-call-signatures
-    ((sgf sealable-generic-function)
-     (domain domain))
-  (let* ((sealed-methods
-           (remove-if-not
-            (lambda (method)
-              (domain-intersectionp (method-domain method) domain))
-            (generic-function-methods sgf)))
-         (list-of-specializers
-           (mapcar #'method-specializers sealed-methods))
-         (static-call-signatures '()))
-    (unless (null list-of-specializers)
-      (map-types-and-prototypes
-       (lambda (types prototypes)
-         (push (make-instance 'static-call-signature
-                 :types types
-                 :prototypes prototypes)
-               static-call-signatures))
-       ;; Transpose the list of specializers so that we operate on each
-       ;; argument instead of on each method.
-       (apply #'mapcar #'list list-of-specializers)
-       domain))
-    static-call-signatures))
-
-(defun map-types-and-prototypes (fn specializers-list domain)
-  (assert (= (length specializers-list)
-             (domain-arity domain)))
-  (labels ((rec (sl specializers types prototypes)
-             (if (null sl)
-                 (funcall fn (reverse types) (reverse prototypes))
-                 (loop for (type prototype)
-                         in (type-prototype-pairs
-                             (first sl)
-                             (first specializers))
-                       do (rec (rest sl)
-                               (rest specializers)
-                               (cons type types)
-                               (cons prototype prototypes))))))
-    (rec specializers-list (domain-specializers domain) '() '())))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Reasoning About Specializer Specificity
@@ -880,3 +803,80 @@ Examples:
               (push (list (snode-type snode) prototype)
                     pairs)))))
       pairs)))
+
+;;; In this file, we compute the static call signatures of a given, sealed
+;;; generic function. A static call signature consists of a list of types,
+;;; and a list of prototypes.  The list of types is guaranteed to be
+;;; non-overlapping with the types of any other call signature.  The list
+;;; of prototypes is chosen such that the list of applicable methods of
+;;; these prototypes is representative for all arguments of the types of
+;;; the call signature.
+
+(defclass static-call-signature ()
+  ((%types
+    :initarg :types
+    :reader static-call-signature-types)
+   (%prototypes
+    :initarg :prototypes
+    :reader static-call-signature-prototypes)))
+
+(defmethod print-object ((scs static-call-signature) stream)
+  (print-unreadable-object (scs stream :type t :identity t)
+    (format stream "~S ~S"
+            (static-call-signature-types scs)
+            (static-call-signature-prototypes scs))))
+
+(defmethod make-load-form
+    ((static-call-signature static-call-signature) &optional environment)
+  (make-load-form-saving-slots
+   static-call-signature
+   :slot-names '(%types %prototypes)
+   :environment environment))
+
+(defmethod externalizable-object-p
+    ((static-call-signature static-call-signature))
+  (and
+   (every #'externalizable-object-p
+          (static-call-signature-types static-call-signature))
+   (every #'externalizable-object-p
+          (static-call-signature-prototypes static-call-signature))))
+
+(defmethod compute-static-call-signatures
+    ((sgf sealable-generic-function)
+     (domain domain))
+  (let* ((sealed-methods
+           (remove-if-not
+            (lambda (method)
+              (domain-intersectionp (method-domain method) domain))
+            (generic-function-methods sgf)))
+         (list-of-specializers
+           (mapcar #'method-specializers sealed-methods))
+         (static-call-signatures '()))
+    (unless (null list-of-specializers)
+      (map-types-and-prototypes
+       (lambda (types prototypes)
+         (push (make-instance 'static-call-signature
+                 :types types
+                 :prototypes prototypes)
+               static-call-signatures))
+       ;; Transpose the list of specializers so that we operate on each
+       ;; argument instead of on each method.
+       (apply #'mapcar #'list list-of-specializers)
+       domain))
+    static-call-signatures))
+
+(defun map-types-and-prototypes (fn specializers-list domain)
+  (assert (= (length specializers-list)
+             (domain-arity domain)))
+  (labels ((rec (sl specializers types prototypes)
+             (if (null sl)
+                 (funcall fn (reverse types) (reverse prototypes))
+                 (loop for (type prototype)
+                         in (type-prototype-pairs
+                             (first sl)
+                             (first specializers))
+                       do (rec (rest sl)
+                               (rest specializers)
+                               (cons type types)
+                               (cons prototype prototypes))))))
+    (rec specializers-list (domain-specializers domain) '() '())))

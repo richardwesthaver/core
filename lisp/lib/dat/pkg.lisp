@@ -27,6 +27,7 @@
   (:use :cl :std :dat/proto)
   (:export
    :read-csv-file
+   :*csv-separator*
    #:read-csv-stream
    :write-csv-file
    :write-csv-stream

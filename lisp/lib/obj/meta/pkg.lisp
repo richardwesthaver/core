@@ -61,7 +61,6 @@
    :specializer-direct-superspecializers
    :specializer-intersectionp
    :specializer-subsetp
-
    :domain
    :ensure-domain
    :method-domain
@@ -105,12 +104,11 @@
    :potentially-sealable-method
    :potentially-sealable-standard-method))
 
-(std:defpkg :obj/meta/fast
+(defpackage :obj/meta/fast
   (:use :cl :std :obj/meta/sealed)
   (:import-from :sb-int :gensymify)
   (:import-from :sb-walker :macroexpand-all)
-  (:export :fast-generic-function :fast-method :inlineable)
-  (:use-reexport :obj/meta/sealed))
+  (:export :fast-generic-function :fast-method :inlineable))
 
 (defpackage :obj/meta/lazy
   (:use :cl :std))

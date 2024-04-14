@@ -116,12 +116,12 @@ just the keys currently present in TABLE."
   (sap nil :type (or null alien)))
 
 ;;; column family
-(defstruct (rdb-cf (:constructor make-rdb-cf (name &key kv sap)))
+(defstruct (rdb-cf (:constructor make-rdb-cf (name &key #+nil kv sap)))
   "RDB Column Family structure. Contains a name, a cons of (rdb-key-type
 . rdb-val-type), and a system-area-pointer to the underlying
 rocksdb_cf_t handle."
   (name "" :type string)
-  (kv *default-rdb-kv* :type rdb-kv)
+  ;; (kv *default-rdb-kv* :type rdb-kv)
   (sap nil :type (or null alien)))
 
 ;;; rdb-stats
@@ -223,7 +223,7 @@ rocksdb_cf_t handle."
   (backup nil :type (or null alien))
   (snapshots #() :type (array alien)))
 
-;; (defvar *default-rdb-opts* (default-rdb-opts))
+(defvar *default-rdb-opts* (default-rdb-opts))
 
 (defmethod print-object ((self rdb) stream)
   (print-unreadable-object (self stream :type t :identity t)

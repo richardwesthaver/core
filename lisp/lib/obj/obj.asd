@@ -5,10 +5,10 @@
   :components ((:file "pkg")
                (:module "meta"
                 :components ((:file "pkg")
+                             (:file "sealed")
                              (:file "stealth")
                              (:file "typed")
                              (:file "filtered")
-                             (:file "sealed")
                              (:file "fast")
                              (:file "lazy")
                              (:file "overloaded")))

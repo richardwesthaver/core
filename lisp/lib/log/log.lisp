@@ -52,12 +52,12 @@ function in which case it is used as the function value of
   (let ((%name (string-upcase name)))
     `(progn
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
-         (format t "#:~(~A~) ~A~%"
+         (format t "#:~(~A~) ~A "
                  ',name
                  (if *log-timestamp*
                      (log-timestamp-source)
                      ""))
-         (mapc (lambda (x) (format t "~t; ~A~%" x)) args)
+         (mapc (lambda (x) (format t "; ~A~%" x)) args)
          (if (= 1 (length args))
              (car args)
              args))

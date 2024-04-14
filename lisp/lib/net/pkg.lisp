@@ -154,7 +154,7 @@
 
 (uiop:define-package :net/fetch
   (:nicknames :fetch)
-  (:use :cl :std)
+  (:use :cl :std :obj/uri)
   (:export :fetch :download))
 
 (uiop:define-package :net

@@ -1,7 +1,9 @@
 ;;; TODO
 ;;; lib/net/proto/http.lisp --- HTTP Support
 
-;;
+;; based on https://github.com/fukamachi/fast-http (maybe)
+
+;; see also: https://github.com/orthecreedence/http-parse
 
 ;;; Code:
 (in-package :net/proto/http)
