@@ -98,4 +98,4 @@
    :do-cfs))
 
 (in-package :rdb)
-;; (rocksdb:load-rocksdb t)
+(rocksdb:load-rocksdb t)

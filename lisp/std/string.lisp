@@ -32,14 +32,13 @@
 or a character."
   `(or symbol string character))
 
-(defun ssplit (separator s &key (omit-nulls *omit-nulls*) limit (start 0) end)
+(defun ssplit (separator s &key (omit-nulls *omit-nulls*))
   "Split s into substring by separator (cl-ppcre takes a regex, we do not).
 
    `limit' limits the number of elements returned (i.e. the string is
    split at most `limit' - 1 times)."
   ;; cl-ppcre:split doesn't return a null string if the separator appears at the end of s.
-  (let* ((limit (or limit (1+ (length s))))
-         (res (cl-ppcre:split separator s :limit limit :start start :end end)))
+  (let* ((res (cl-ppcre:split separator s)))
     (if omit-nulls
         (remove-if (lambda (it) (sequence:emptyp it)) res)
         res)))
@@ -330,39 +329,32 @@ or a character."
 ;;; restore genericity to the macro, while keeping the 
 ;;; speed-up.
 
-#+nil
-(declaim (inline numeric-char=)
-         (ftype (function (character character)
-                          (values (and unsigned-byte fixnum)))
-                numeric-char=))
-;; FIXME 2024-04-11: 
-;; #+ (and sbcl (or x86 x86-64))
+;; (progn
+;;   (defknown numeric-char= (character character)
+;;       (unsigned-byte #. (1- sb-vm:n-machine-word-bits))
+;;       (movable foldable flushable))
+
+;;   (define-vop (numeric-char=)
+;;     (:args (x :scs (sb-vm::character-reg sb-vm::character-stack)
+;;               :target r
+;;               :load-if (not (location= x r))))
+;;     (:info y)
+;;     (:arg-types (:constant character) character)
+;;     (:results (r :scs (sb-vm::unsigned-reg)
+;;                  :load-if (not (location= x r))))
+;;     (:result-types sb-vm::unsigned-num)
+;;     (:translate numeric-char=)
+;;     (:policy :fast-safe)
+;;     (:note "inline constant numeric-char=")
+;;     (:generator 1
+;;       (move r x)
+;;       (sb-vm::inst #:xor r (char-code y)))))
+
+#+ (and sbcl (or x86 x86-64))
 (defun numeric-char= (x y)
   (declare (type character x y))
   (logxor (char-code x)
           (char-code y)))
-
-(eval-when (:load-toplevel :compile-toplevel)
-(progn
-  (defknown numeric-char= (character character)
-      (unsigned-byte #. (1- sb-vm:n-machine-word-bits))
-      (movable foldable flushable))
-
-  (define-vop (numeric-char=)
-    (:args (x :scs (sb-vm::character-reg sb-vm::character-stack)
-              :target r
-              :load-if (not (location= x r))))
-    (:info y)
-    (:arg-types (:constant character) character)
-    (:results (r :scs (sb-vm::unsigned-reg)
-                 :load-if (not (location= x r))))
-    (:result-types sb-vm::unsigned-num)
-    (:translate numeric-char=)
-    (:policy :fast-safe)
-    (:note "inline constant numeric-char=")
-    (:generator 1
-      (move r x)
-      (sb-vm::inst #:xor r (char-code y))))))
 
 ;;; At each step, we may be able to find positions for which
 ;;; there can only be one character. If we emit the check for

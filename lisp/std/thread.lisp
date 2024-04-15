@@ -128,8 +128,9 @@
           (setq from (sb-vm::sap+ from (* sb-vm:binding-size sb-vm:n-word-bytes))))))))
 
 (defun wait-for-threads (threads)
-  (mapc (lambda (thread) (sb-thread:join-thread thread :default nil)) threads)
+  (map 'list (lambda (thread) (sb-thread:join-thread thread :default nil)) threads)
   (not (some #'sb-thread:thread-alive-p threads)))
+
 (defun process-all-interrupts (&optional (thread sb-thread:*current-thread*))
   (sb-ext:wait-for (null (sb-thread::thread-interruptions thread))))
 
@@ -168,12 +169,13 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric start-task-pool (pool))
 (defgeneric pause-task-pool (pool))
 (defgeneric stop-task-pool (pool))
+(defgeneric make-task (&rest args &key))
 
 (defstruct task-pool
   (oracle nil :type (or null oracle))
   (jobs (sb-concurrency:make-queue :name "jobs"))
   (stages #() :type (vector stage))
-  (workers #() :type (vector thread))
+  (workers (make-array 0 :element-type 'thread :adjustable t :fill-pointer 0) :type (vector thread))
   (results (sb-concurrency:make-queue :name "results")))
 
 (defmethod designate-oracle ((self task-pool) (guest oracle))
@@ -199,8 +201,11 @@ lifetime of SCOPE, but never before and never after."))
   (tasks (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
    :type (vector task)))
 
+(defmethod push-task ((task task) (job job))
+  (vector-push task (job-tasks job)))
+
 (defmethod push-task ((task task) (pool task-pool))
-  (make-job :tasks (vector task)))
+  (push-job (make-job :tasks (vector task)) pool))
 
 (defmethod push-job ((job job) (pool task-pool))
   (sb-concurrency:enqueue job (task-pool-jobs pool)))

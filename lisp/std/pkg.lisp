@@ -104,13 +104,15 @@
    :make-threads :with-threads :finish-threads
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
-   :make-oracle :make-supervisor
+   :make-oracle :make-supervisor :oracle
    :push-job :push-task :push-worker :push-result
    :start-task-pool :pause-task-pool :shutdown-task-pool
    :push-stage :designate-oracle :make-task-pool
    :task :job :task-pool :stage :task-pool-p
    :job-tasks :make-job :job-p :task-object
-   :make-task :task-p :task
+   :make-task :task-p :task :wait-for-threads
+   :task-pool-oracle :task-pool-jobs :task-pool-stages
+   :task-pool-workers :task-pool-results
    ;; util
    :find-package* #:find-symbol* #:symbol-call
    :intern* #:export* #:import* #:shadowing-import* 

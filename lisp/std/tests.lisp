@@ -143,6 +143,7 @@
   (sb-int:with-progressive-timeout (ttl :seconds 2)
     (sleep 0.1)
     (is (/= (ttl) 2.0))))
+
 (deftest fmt ()
   "Test standard formatters"
   (is (string= (format nil "| 1 | 2 | 3 |~%") (fmt-row '(1 2 3))))
