@@ -16,6 +16,10 @@
    :proxy
    :tunnel))
 
+(defpackage :net/util
+  (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
+  (:export :get-address-by-name))
+
 (defpackage :net/sans-io
   (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
   (:export))

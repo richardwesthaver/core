@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :cli)
+(in-package :cli/clap)
 
 (defun cli-arg0 () (car sb-ext:*posix-argv*))
 (defun cli-args () (cdr sb-ext:*posix-argv*))
@@ -32,16 +32,20 @@ ARGS starting from the position of ARG."
 ;;   "A handler which can be used to invoke the `discard-argument' restart"
 ;;   (invoke-restart (find-restart 'discard-argument condition)))
 
+(defvar *no-exit* nil
+  "Indicate whether the WITH-CLI-HANDLERS form should exit on completion.")
+
 (defmacro with-cli-handlers (form)
   "A wrapper which handles common cli errors that may occur during
 evaluation of FORM."
   `(handler-case ,form
      (sb-sys:interactive-interrupt ()
        (format *error-output* "~&(:SIGINT)~&")
-       (sb-ext:exit :code 130))
+       (unless *no-exit* (sb-ext:exit :code 130)))
      (error (c)
        (format *error-output* "~&~A~&" c)
-       (sb-ext:exit :code 1))))
+       (error c)
+       (unless *no-exit* (sb-ext:exit :code 1)))))
 
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings."

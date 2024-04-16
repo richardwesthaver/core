@@ -48,12 +48,15 @@
    :encode-float64
    :decode-float64
    ;; stream
+   :copy-stream
+   ;; path
    #:wild-pathname
    #:non-wild-pathname
    #:absolute-pathname
    #:relative-pathname
    #:directory-pathname
    #:absolute-directory-pathname
+   ;; file
    #:file-pathname
    #:with-open-files
    #:write-stream-into-file
@@ -63,6 +66,7 @@
    :file-size-in-octets
    :+pathsep+
    :octet-vector=
+   :file-date
    ;; string
    :*omit-nulls*
    :*whitespaces*
@@ -106,6 +110,7 @@
    :thread-count :dump-thread
    :make-oracle :make-supervisor :oracle
    :push-job :push-task :push-worker :push-result
+   :pop-job :pop-task :pop-worker :pop-result
    :start-task-pool :pause-task-pool :shutdown-task-pool
    :push-stage :designate-oracle :make-task-pool
    :task :job :task-pool :stage :task-pool-p

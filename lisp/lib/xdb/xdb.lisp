@@ -8,7 +8,7 @@
 (defclass xdb ()
   ((location :initarg :location
              :accessor location
-             :initform (error "Location is required"))
+             :initform (required-argument "Location is required"))
    (collections :initarg :collections
                 :accessor collections
                 :initform (make-hash-table :test 'equal))))
@@ -140,12 +140,6 @@
                       (make-pathname :defaults (db::path collection)
                                      :type "log")))
     collection))
-
-(defun file-date ()
-  "Returns current date as a string."
-  (multiple-value-bind (sec min hr day mon yr)
-                       (get-decoded-time)
-    (format nil "~A~A~A_~A~A~A" yr mon day hr min sec)))
 
 (defun append-date (name)
   (format nil "~a-~a" name (file-date)))

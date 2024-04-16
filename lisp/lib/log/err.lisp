@@ -3,5 +3,5 @@
 ;;; Code:
 (in-package :log)
 
-(define-condition log-error (std-error simple-error program-error) ()
-  (:documentation "Base class for all LOG errors"))
+(deferror log-error (std-error simple-error program-error) ()
+  (:documentation "Base class for all LOG-related errors."))

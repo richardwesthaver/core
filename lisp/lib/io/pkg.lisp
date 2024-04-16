@@ -15,19 +15,24 @@
 (defpackage :io
   (:use :cl :std :obj/id :uring :sb-bsd-sockets)
   (:import-from :sb-alien :addr)
-  (:import-from :uring :build))
+  (:import-from :uring :build)
+  (:shadowing-import-from :uring :load-uring)
+  (:export :load-uring :*io*
+   :init-io :enter-io :exit-io))
 
 (in-package :io)
 
-#+uring (load-uring)
+(load-uring)
 
-(defun init-io-uring (&optional (entries 256) (flags 0))
+(defvar *io* nil)
+
+(defun init-io (&optional (entries 256) (flags 0))
   "Initialize the *IO* variable to an io-uring alien-value type using a
 queue size of ENTRIES and settings FLAGS."
   (with-new-io-uring r
     (if (= 0 (io-uring-queue-init entries (addr r) flags))
-        r
+        (setf *io* r)
         (error "failed to initialize io-uring"))))
 
-(defun enter-io-uring (ring))
-(defun exit-io-uring (ring))
+(defun enter-io (ring))
+(defun exit-io (ring))

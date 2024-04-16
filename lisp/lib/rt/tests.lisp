@@ -14,7 +14,7 @@
 		      (t () 0)))
     (is (= 5 (funcall fx :+)))
     (is (= 7 (funcall fx :+)))
-    (is (= 5 (funcall fx :-)))
+    (is (= -1 (funcall fx :-)))
     (is (= 0 (funcall fx))))
   (signals (error t) (test-form (make-instance 'test-result))))
 

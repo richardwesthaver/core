@@ -1,6 +1,25 @@
+;;; obj/meta/store.lisp --- Storable MOPs
+
+;; The storable-class can be assigned to the :metaclass option of a
+;; class to allow persistent storage of an object on disk. The
+;; storable-slot-mixin is a custom slot option which can be used to
+;; selectively enable slot serialization.
+
+;;; Commentary:
+
+;; This code is derived from XDB.
+
+;; Note that this is not a general purpose de/serializer. It is
+;; specifically designed to decode/encode objects as single
+;; octet-vectors from/to an open stream with minimal overhead. There
+;; is a separate interface for general-purpose data encoding which can
+;; be found in the DAT system.
+
+;;; Code:
 (in-package :obj/db)
 
 (sb-ext:unlock-package :sb-pcl)
+
 ;;; MOP
 (defclass storable-class (standard-class)
   ((class-id :initform nil
@@ -18,6 +37,7 @@
              :initform (make-hash-table :size 1000)
              :accessor id-cache)))
 
+;;; Initialize
 (defun initialize-storable-class (next-method class &rest args
                                   &key direct-superclasses &allow-other-keys)
   (apply next-method class
@@ -34,8 +54,7 @@
                                           &rest args)
   (apply #'initialize-storable-class #'call-next-method class args))
 
-;;;
-
+;;; Validate
 (defmethod validate-superclass
     ((class standard-class)
      (superclass storable-class))
@@ -46,6 +65,7 @@
      (superclass standard-class))
   t)
 
+;;; Slot mixin
 (defclass storable-slot-mixin ()
   ((storep :initarg :storep
            :initform t
@@ -101,8 +121,7 @@
     (initialize-class-slots class slots)
     slots))
 
-;;;
-
+;;; Identifiable
 (defclass identifiable (id)
   ((id :initform nil :accessor id :storep nil)
    (written :initform nil

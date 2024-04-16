@@ -4,6 +4,9 @@
 
 ;;; Code:
 (in-package :std)
+
+(defconstant +default-element-type+ 'character)
+
 (deftype array-index (&optional (length (1- array-dimension-limit)))
   "Type designator for an index into array of LENGTH: an integer between
 0 (inclusive) and LENGTH (exclusive). LENGTH defaults to one less than

@@ -100,6 +100,7 @@
   (:shadowing-import-from :sb-ext :exit)
   (:export
    :*argv*
+   :*no-exit*
    :init-args
    :cli-arg0
    :cli-args

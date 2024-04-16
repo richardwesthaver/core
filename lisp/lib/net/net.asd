@@ -15,6 +15,7 @@
                (:file "err")
                (:file "obj")
                (:file "sans-io")
+               (:file "util")
                (:file "udp")
                (:file "tcp")
                (:module "codec"

@@ -3,7 +3,8 @@
   :depends-on (:cl-ppcre :std :obj :dat :alsa :sndfile)
   :version "0.1.0"
   :serial t
-  :components ((:file "pkg"))
+  :components ((:file "pkg")
+               (:file "mpd"))
   :in-order-to ((test-op (test-op "aud/tests"))))
 
 (defsystem :aud/tests
