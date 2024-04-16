@@ -10,11 +10,11 @@
    :connect
    :disconnect
    :password
-   :with-mpd
+   :with-mpc
    :disable-output
    :enable-output
    :outputs
-
+   :ensure-mpd
    :ping
    :kill
    :status
@@ -119,3 +119,6 @@
    :db-update))
 
 (in-package :aud)
+(ignore-errors
+ (load-asound)
+ (load-sndfile))

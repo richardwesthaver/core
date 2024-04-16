@@ -38,7 +38,7 @@
 (defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
 
 (defun run-hg-command (cmd &rest args)
-  (run-program *hg-program* (push cmd args) :output :stream))
+  (sb-ext:run-program *hg-program* (push cmd args) :output :stream))
 
 (defun hg-url-p (url)
   "Return nil if URL does not look like a URL to a hg valid remote."

@@ -6,7 +6,7 @@
   (:export :main))
 
 (in-package :bin/rdb)
-
+(rocksdb:load-rocksdb t)
 (defopt rdb-help (print-help $cli))
 (defopt rdb-version (print-version $cli))
 (defopt rdb-log-level (setq log:*log-level* (if $val :debug nil)))
@@ -26,5 +26,4 @@
     (debug-opts $cli)))
 
 (defmain ()
-  (rocksdb:load-rocksdb t)
   (run))

@@ -2,7 +2,7 @@
 
 ;;; Code:
 (uiop:define-package :web/dash
-    (:use :cl :std :lack :lass :spinneret)
+    (:use :cl :std :lack :lass :spinneret :cli/clap)
   (:import-from :clack :clackup)
   (:export 
    :main

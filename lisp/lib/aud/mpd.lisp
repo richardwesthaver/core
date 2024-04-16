@@ -173,6 +173,11 @@
       (format stream "~A - ~A (~A)" artist title album))))
 
 ;;; MPD
+(defun ensure-mpd ()
+  (handler-case
+      (with-mpc (c) t)
+    (not-exist () (sb-ext:run-program "mpd" nil :search t :directory (user-homedir-pathname) :wait nil))))
+
 (defvar *default-host* "localhost")
 (defvar *default-port* 6600)
 
@@ -198,7 +203,7 @@
          (condition (cdr (assoc error-id *error-ids-alist*))))
     (error condition :text (subseq text (+ delimiter 2)))))
 
-(defmacro with-mpd ((var &rest options) &body body)
+(defmacro with-mpc ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
      (unwind-protect
           (progn ,@body)
