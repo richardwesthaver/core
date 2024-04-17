@@ -4,7 +4,7 @@
   (:export :main))
 
 (in-package :bin/skel)
-
+(in-readtable :shell)
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))
 (defopt skc-log (setq *log-level* (if $val :debug nil)))

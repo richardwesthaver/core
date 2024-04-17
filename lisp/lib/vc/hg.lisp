@@ -37,8 +37,10 @@
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
 
-(defun run-hg-command (cmd &rest args)
-  (sb-ext:run-program *hg-program* (push cmd args) :output :stream))
+(defun run-hg-command (cmd &optional args (wait t))
+  "Run an hg command."
+  (unless (listp args) (setf args (list args)))
+  (sb-ext:run-program *hg-program* (push cmd args) :output :stream :wait wait))
 
 (defun hg-url-p (url)
   "Return nil if URL does not look like a URL to a hg valid remote."
@@ -55,60 +57,54 @@
 ;; (describe (make-instance 'hg-repo))
 ;; https://repo.mercurial-scm.org/hg/file/tip/mercurial/interfaces/repository.py
 (defclass hg-repo (vc-repo)
-  ((dirstate) ;; working-directory
-   (bookmarks)
-   (requires)))
+  ((dirstate :accessor vc-dirstate) ;; working-directory
+   (bookmarks :accessor vc-bookmarks)
+   (requires :accessor vc-requires)))
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
   (with-slots (path) self
     (with-current-directory (path)
-      (with-open-stream (s (sb-ext:process-output (apply #'run-hg-command cmd args)))
-        (with-output-to-string (str)
-          (loop for l = (read-line s nil nil)
-                while l
-                do (write-line l)))))))
+      (let ((proc (apply #'run-hg-command cmd args)))
+        (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
+              (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))
+          (with-open-stream (s (if ok
+                                   (sb-ext:process-output proc)
+                                   (sb-ext:process-error proc)))
+            (with-output-to-string (str res)
+              (loop for l = (read-line s nil nil)
+                    while l
+                    do (write-line l str)))
+            (if ok res (error 'hg-error :message res))))))))
 
 (defmethod vc-init ((self (eql :hg)))
-  (make-instance 'hg-repo))
+  (make-instance 'hg-repo :path (pathname (sb-posix:getcwd))))
 
 (defmethod vc-init ((self hg-repo))
   (with-slots (path) self
     ;; could throw error here but w/e
-    (sb-ext:process-exit-code (run-hg-command "init" path))))
+    (vc-run self "init" path)))
 
 (defmethod vc-clone ((self hg-repo) remote &key &allow-other-keys)
   (with-slots (path) self
-    (sb-ext:process-exit-code (run-hg-command "clone" remote path))))
+    (sb-ext:process-exit-code (run-hg-command "clone" (list remote path)))))
 
 (defmethod vc-pull ((self hg-repo) remote &key &allow-other-keys)
-  (with-slots (path) self
-    (with-current-directory (path)
-      (sb-ext:process-exit-code (run-hg-command "pull" remote)))))
+  (vc-run self "pull" remote))
 
 (defmethod vc-push ((self hg-repo) remote &key &allow-other-keys)
-  (with-slots (path) self
-    (with-current-directory (path)
-      (sb-ext:process-exit-code (run-hg-command "push" remote)))))
+  (vc-run self "push" remote))
 
 (defmethod vc-commit ((self hg-repo) msg &key &allow-other-keys)
-  (with-slots (path) self
-    (with-current-directory (path)
-      (sb-ext:process-exit-code (run-hg-command "commit" "-m" msg)))))
+  (vc-run self "commit" (list "-m" msg)))
 
 (defmethod vc-add ((self hg-repo) &rest files)
-  (with-slots (path) self
-    (with-current-directory (path)
-      (sb-ext:process-exit-code (apply #'run-hg-command "add" files)))))
+  (vc-run self "add" files))
 
 (defmethod vc-remove ((self hg-repo) &rest files)
-  (with-slots (path) self
-    (with-current-directory (path)
-      (sb-ext:process-exit-code (apply #'run-hg-command "remove" files)))))
+  (vc-run self "remove" files))
 
 (defmethod vc-addremove ((self hg-repo) &rest files)
-  (with-slots (path) self
-    (with-current-directory (path)
-      (sb-ext:process-exit-code (apply #'run-hg-command "addremove" files)))))
+  (vc-run self "addremove" files))
 
 (defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
 
@@ -120,12 +116,17 @@
 (defmethod vc-id ((self hg-repo))
   (with-slots (path) self
     (with-current-directory (path)
-      (with-open-stream (s (sb-ext:process-output (run-hg-command "id")))
-        (with-output-to-string (str)
-          (loop for c = (read-char s nil nil)
-                while c
-                do (write-char c str))
-          str)))))
+      (let ((proc (apply #'run-hg-command '("id"))))
+        (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
+              (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))
+          (with-open-stream (s (if ok
+                                   (sb-ext:process-output proc)
+                                   (sb-ext:process-error proc)))
+            (with-output-to-string (str res)
+              (loop for c = (read-char s nil)
+                    until (char= c #\space)
+                    do (write-char c str)))
+            (if ok res (error 'hg-error :message res))))))))
 
 ;;; Client
 ;; ref: https://wiki.mercurial-scm.org/CommandServer

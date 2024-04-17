@@ -7,4 +7,5 @@
 
 (deftest git ())
 
-(deftest hg ())
+(deftest hg ()
+  (is (stringp (run-hg-command "status"))))

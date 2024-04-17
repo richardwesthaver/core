@@ -1,7 +1,7 @@
 (in-package :vc)
 
-(define-condition vc-error (std-error) ())
+(deferror vc-error (std-error) ())
 
-(define-condition git-error (vc-error) ())
+(deferror git-error (vc-error) ())
 
-(define-condition hg-error (vc-error) ())
+(deferror hg-error (vc-error) ())
