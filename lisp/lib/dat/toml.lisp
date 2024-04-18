@@ -370,6 +370,5 @@ Its value can be:
       (mapcar (lambda (it) (serialize it style)) thing)
       thing))
 
-(defmethod serialize (thing (format (eql :toml)) &key (style :raw))
-  (declare (ignore style))
+(defmethod serialize (thing (format (eql :toml)) &key)
   thing)

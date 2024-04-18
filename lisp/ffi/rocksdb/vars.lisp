@@ -83,14 +83,23 @@
        (lambda (x) (string-downcase (symbol-name x)))
        '(create-if-missing create-missing-column-families error-if-exists
          paranoid-checks info-log-level write-buffer-size db-write-buffer-size
-         max-open-files max-file-opening-threads max-total-wal-size compression-options
+         max-open-files max-file-opening-threads max-total-wal-size
          compression-options-zstd-max-train-bytes compression-options-max-dict-buffer-bytes
          compression-options-parallel-threads compression-options-use-zstd-dict-trainer
          num-levels level0-file-num-compaction-trigger level0-slowdown-writes-trigger
          level0-stop-writes-trigger target-file-size-base target-file-size-multiplier 
          max-bytes-for-level-base level-compaction-dynamic-level-bytes max-bytes-for-level-multiplier
          ;; block-based-table-factory ;; set-only
+         ;; parallelism
+         ;; compression-options
          ;; merge-operator db-log-dir wal-dir wal-ttl-seconds wal-size-limit-mb
+         ;; memtable-vector-rep prepare-for-bulk-load
+         ;; hash-skip-list-rep
+         ;; plain-table-factory
+         ;; min-level-to-compress
+         ;; universal-compaction-options
+         ;; ratelimiter
+         ;; row-cache
          allow-ingest-behind statistics-level
          skip-stats-update-on-db-open skip-checking-sst-file-sizes-on-db-open enable-blob-files
          min-blob-size blob-file-size blob-compression-type enable-blob-gc blob-gc-age-cutoff
@@ -101,17 +110,17 @@
          log-file-time-to-roll keep-log-file-num recycle-log-file-num soft-pending-compaction-bytes-limit
          hard-pending-compaction-bytes-limit max-manifest-file-size table-cache-numshardbits arena-block-size
          use-fsync manifest-preallocation-size allow-mmap-reads
-         allow-mmap-write use-direct-reads use-direct-io-for-flush-compaction is-fd-close-on-exec
-         stats-dump-period-sec stas-persist-period-sec advise-random-on-open access-hint-on-compaction-start
+         allow-mmap-writes use-direct-reads use-direct-io-for-flush-and-compaction is-fd-close-on-exec
+         stats-dump-period-sec stats-persist-period-sec advise-random-on-open access-hint-on-compaction-start
          use-adaptive-mutex bytes-per-sync wal-bytes-per-sync writable-file-max-buffer-size
          allow-concurrent-memtable-write enable-write-thread-adaptive-yield max-sequential-skip-in-iterations
          disable-auto-compactions optimize-filters-for-hits delete-obsolete-files-period-micros
-         prepare-for-bulk-load memtable-vector-rep memtable-prefix-bloom-size-ratio max-compaction-bytes
-         hash-skip-list-rep plain-table-factory min-level-to-compress memtable-huge-page-size
+         memtable-prefix-bloom-size-ratio max-compaction-bytes
+         memtable-huge-page-size
          max-successive-merges bloom-locality inplace-update-support inplace-update-num-locks
          report-bg-io-stats avoid-unnecessary-blocking-io experimental-mempurge-threshold
-         wal-recovery-mode compression bottommost-compression compaction-style universal-compaction-options
-         ratelimiter atomic-flush row-cache manual-wal-flush wal-compression
+         wal-recovery-mode compression bottommost-compression compaction-style 
+         atomic-flush manual-wal-flush wal-compression
          prepopulate-blob-cache))
   "Provides early list of options for macros to populate.")
 

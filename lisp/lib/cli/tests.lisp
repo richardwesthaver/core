@@ -194,7 +194,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
   ;;(ansi-t05)
 )
 
-(deftest cli-prompt (:disabled t) ;; FIXME: hijacks io in slime
+(deftest cli-prompt (:disabled nil) ;; FIXME: hijacks io in slime
   "Test CLI prompts"
   ;; TODO: needs to be compiled outside scope of test - contender for
   ;; fixture API

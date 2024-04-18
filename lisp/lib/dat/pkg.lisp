@@ -175,8 +175,12 @@
    :dark-module-p
    :read-file-content))
 
+(defpackage :dat/gif
+  (:nicknames :gif)
+  (:use :cl :std :dat/proto))
+
 (defpackage :dat/png
-  (:use :cl :std :dat/proto :dat/qrcode :png))
+  (:use :cl :std :dat/proto :png))
 
 (uiop:define-package :dat
     (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode

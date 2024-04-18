@@ -48,6 +48,8 @@
     (find-file file)))
 
 (keymap-set user-map "e c" #'edit-emacs-config)
+(keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
+(keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
 
 ;; (add-hook 'common-lisp-mode-hook #'enable-paredit-mode)
 ;; (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
@@ -227,6 +229,8 @@
                            "#+end_src" n>)
                          "org:src"))
 ;;; Org Config
+(keymap-set user-map "t" #'org-todo)
+
 ;; populate org-babel
 (org-babel-do-load-languages
  ;; TODO 2021-10-24: bqn, apl, k

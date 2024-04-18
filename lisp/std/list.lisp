@@ -98,3 +98,27 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                           (let ((elt (car tail)))
                             (circularp elt (cons object seen))))))))))
     (circularp object nil)))
+
+(defun group (source n)
+  (when (zerop n) (error "zero length"))
+  (labels ((rec (source acc)
+             (let ((rest (nthcdr n source)))
+               (if (consp rest)
+                   (rec rest (cons
+                              (subseq source 0 n)
+                              acc))
+                   (nreverse
+                    (cons source acc))))))
+    (if source (rec source nil) nil)))
+
+(eval-when (:compile-toplevel :execute :load-toplevel)
+  (defun flatten (x)
+    (labels ((rec (x acc)
+               (cond ((null x) acc)
+                     #+sbcl
+                     ((typep x 'sb-impl::comma) (rec (sb-impl::comma-expr x) acc))
+                     ((atom x) (cons x acc))
+                     (t (rec
+                         (car x)
+                         (rec (cdr x) acc))))))
+      (rec x nil))))

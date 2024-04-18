@@ -106,9 +106,6 @@
       (if (equal (mod i 100000) 0)
           (sb-ext:gc :full t))))
 
-
-
-
   (defun test-store-doc-storable-object (collection times)
     (dotimes (i times)
       (store-doc collection  
@@ -146,7 +143,6 @@
       
       (if (equal (mod i 100000) 0)
           (sb-ext:gc :full t))))
-
 
   (defun test-store-doc-hash (collection times)
     (dotimes (i times)

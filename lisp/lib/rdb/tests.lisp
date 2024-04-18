@@ -24,13 +24,11 @@
     ;; check defaults
     (is (< 100 (hash-table-size (backfill-opts default))))
     (is (typep (rdb-opts-sap default) '(alien (* rocksdb-options))))
-    (is (= 1 (get-opt default "create-if-missing")))
-    (is (= 1
-           (set-opt default "enable-blob-files" 1 :push t)
-           (get-opt default "enable-blob-files")
-           (rocksdb-options-get-enable-blob-files (rdb-opts-sap default))))
-    (is (= 0
-           (rocksdb-options-get-error-if-exists (rdb-opts-sap default))))))
+    (is (eql t (get-opt default "create-if-missing")))
+    (is (eql t (set-opt default "enable-blob-files" t :push t)))
+    (is (eql t (get-opt default "enable-blob-files")))
+    (is (eql t (rocksdb-options-get-enable-blob-files (rdb-opts-sap default))))
+    (is (null (rocksdb-options-get-error-if-exists (rdb-opts-sap default))))))
 
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
@@ -58,6 +56,7 @@
   "Test RDB struct and methods."
   ;; NOTE: passing a directory with trailing slash causes segfault - guess we gotta handle tht
   (with-db (db (debug! (create-db "/tmp/rdb" :open t)))
+    (info! (hash-table-alist (backfill-opts db :full t)))
     ;; get/set without cf
     (put-kv-str-raw (rdb-db db) "key" "val")
     (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
@@ -69,7 +68,7 @@
     (create-cfs db)
     ;; TODO
     (do-cfs (cf (rdb-cfs db))
-      (insert-kv db (make-kv "key" "val") :cf (rdb-cf-name cf))
+      (insert-kv db (make-kv "key" "val") :cf cf)
       (is (equal (get-key db "key" :cf (rdb-cf-sap cf)) "val")))
     (rocksdb-cancel-all-background-work (rdb-db db) nil)
     ;; insert after background cancel
@@ -83,14 +82,22 @@
    (with-temp-db (tmp (cf1 cf2 cf3 cf4) :destroy t)
      (set-opt tmp :parallelism (num-cpus))
      ;; https://github.com/facebook/rocksdb/wiki/unordered_write
-     (set-opt tmp :unordered-write 1)
-     (set-opt tmp :enable-statistics 1)
+     (set-opt tmp :unordered-write t)
+     (set-opt tmp :enable-statistics t)
      (set-opt tmp :statistics-level (rocksdb-statistics-level "all"))
      (push-opts tmp)
      (open-db tmp)
      (create-cfs tmp)
      (with-iter (it (create-iter tmp))
-       (print it)
+       (iter-seek-to-first it)
+       (is (sequence:emptyp (iter-key it)))
+       (is (sequence:emptyp (iter-val it)))
+       (is (iter-valid-p it))
+       (iter-seek-to-last it)
+       (is (typep (iter-kv it) 'rdb-kv))
+       (is (sequence:emptyp (iter-key it)))
+       (is (sequence:emptyp (iter-val it)))
+       ;; (info! (iter-next it))
        (rocksdb-iter-destroy (rdb-iter-sap it)))
      (dotimes (i 10000)
        (insert-key tmp (format nil "foo~A" i) (format nil "bar~A" i)))

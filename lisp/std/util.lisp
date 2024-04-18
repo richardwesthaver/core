@@ -11,59 +11,6 @@
 	     (return-from ,block-name nil)
 	     (progn ,@body))))))
 
-;;; From LOL
-
-(defun group (source n)
-  (when (zerop n) (error "zero length"))
-  (labels ((rec (source acc)
-             (let ((rest (nthcdr n source)))
-               (if (consp rest)
-                   (rec rest (cons
-                              (subseq source 0 n)
-                              acc))
-                   (nreverse
-                    (cons source acc))))))
-    (if source (rec source nil) nil)))
-
-(eval-when (:compile-toplevel :execute :load-toplevel)
-  (defun mkstr (&rest args)
-    (with-output-to-string (s)
-      (dolist (a args) (princ a s))))
-
-  (defun symb (&rest args)
-    (values (intern (apply #'mkstr args))))
-
-  (defun flatten (x)
-    (labels ((rec (x acc)
-               (cond ((null x) acc)
-                     #+sbcl
-                     ((typep x 'sb-impl::comma) (rec (sb-impl::comma-expr x) acc))
-                     ((atom x) (cons x acc))
-                     (t (rec
-                         (car x)
-                         (rec (cdr x) acc))))))
-      (rec x nil)))
-
-  (defun g!-symbol-p (s)
-    (and (symbolp s)
-         (> (length (symbol-name s)) 2)
-         (string= (symbol-name s)
-                  "G!"
-                  :start1 0
-                  :end1 2)))
-
-  (defun o!-symbol-p (s)
-    (and (symbolp s)
-         (> (length (symbol-name s)) 2)
-         (string= (symbol-name s)
-                  "O!"
-                  :start1 0
-                  :end1 2)))
-
-  (defun o!-symbol-to-g!-symbol (s)
-    (symb "G!"
-          (subseq (symbol-name s) 2))))
-
 (defmacro defmacro/g! (name args &rest body)
   (let ((syms (remove-duplicates
                (remove-if-not #'g!-symbol-p
@@ -125,45 +72,46 @@
                           `(cdr ,g!args)))))
           ds))))
 
-(declaim (inline make-tlist tlist-left
-                 tlist-right tlist-empty-p))
+;; LoL tlist
+;; (declaim (inline make-tlist tlist-left
+;;                  tlist-right tlist-empty-p))
 
-(defun make-tlist () (cons nil nil))
-(defun tlist-left (tl) (caar tl))
-(defun tlist-right (tl) (cadr tl))
-(defun tlist-empty-p (tl) (null (car tl)))
+;; (defun make-tlist () (cons nil nil))
+;; (defun tlist-left (tl) (caar tl))
+;; (defun tlist-right (tl) (cadr tl))
+;; (defun tlist-empty-p (tl) (null (car tl)))
 
-(declaim (inline tlist-add-left
-                 tlist-add-right))
+;; (declaim (inline tlist-add-left
+;;                  tlist-add-right))
 
-(defun tlist-add-left (tl it)
-  (let ((x (cons it (car tl))))
-    (if (tlist-empty-p tl)
-        (setf (cdr tl) x))
-    (setf (car tl) x)))
+;; (defun tlist-add-left (tl it)
+;;   (let ((x (cons it (car tl))))
+;;     (if (tlist-empty-p tl)
+;;         (setf (cdr tl) x))
+;;     (setf (car tl) x)))
 
-(defun tlist-add-right (tl it)
-  (let ((x (cons it nil)))
-    (if (tlist-empty-p tl)
-        (setf (car tl) x)
-        (setf (cddr tl) x))
-    (setf (cdr tl) x)))
+;; (defun tlist-add-right (tl it)
+;;   (let ((x (cons it nil)))
+;;     (if (tlist-empty-p tl)
+;;         (setf (car tl) x)
+;;         (setf (cddr tl) x))
+;;     (setf (cdr tl) x)))
 
-(declaim (inline tlist-rem-left))
+;; (declaim (inline tlist-rem-left))
 
-(defun tlist-rem-left (tl)
-  (if (tlist-empty-p tl)
-      (error "Remove from empty tlist")
-      (let ((x (car tl)))
-        (setf (car tl) (cdar tl))
-        (if (tlist-empty-p tl)
-            (setf (cdr tl) nil)) ;; For gc
-        (car x))))
+;; (defun tlist-rem-left (tl)
+;;   (if (tlist-empty-p tl)
+;;       (error "Remove from empty tlist")
+;;       (let ((x (car tl)))
+;;         (setf (car tl) (cdar tl))
+;;         (if (tlist-empty-p tl)
+;;             (setf (cdr tl) nil)) ;; For gc
+;;         (car x))))
 
-(declaim (inline tlist-update))
+;; (declaim (inline tlist-update))
 
-(defun tlist-update (tl)
-  (setf (cdr tl) (last (car tl))))
+;; (defun tlist-update (tl)
+;;   (setf (cdr tl) (last (car tl))))
 
 (defun build-batcher-sn (n)
   (let* (network

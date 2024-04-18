@@ -246,8 +246,7 @@
 (defun sort-key (doc)
   (get-val doc 'key))
 
-;;TODO: How to update log if collection is sorted? Make a snapshot?
-
+;; TODO: How to update log if collection is sorted? Make a snapshot?
 (defmethod sort-collection ((collection collection)
                             &key return-sort
                             (sort-value-func #'sort-key) (sort-test-func  #'>))

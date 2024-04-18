@@ -615,7 +615,7 @@ order) from the end of SEQ."
                     table)
     values))
 
-(defun my-lisp-implementation ()
+(defun current-lisp-implementation ()
   "Return the current lisp implemenation as a cons: (TYPE VERSION)"
   (list 
    (lisp-implementation-type) 

@@ -11,29 +11,18 @@
 (defun %set-rocksdb-option (opt key val)
   (funcall (rdb-opt-setter key) opt val))
 
-#| special cases
-WARNING: #<OPT-HANDLER-MISSING compression-options {101A423693}>
-WARNING: #<OPT-HANDLER-MISSING allow-mmap-write {101A5F0C93}>
-WARNING: #<OPT-HANDLER-MISSING use-direct-io-for-flush-compaction {101A5F1913}>
-WARNING: #<OPT-HANDLER-MISSING stas-persist-period-sec {101A5F32C3}>
-WARNING: #<OPT-HANDLER-MISSING writable-file-max-buffer-size {101A5F4523}>
-WARNING: #<OPT-HANDLER-MISSING disable-auto-compactions {101A5F54E3}>
-WARNING: #<OPT-HANDLER-MISSING prepare-for-bulk-load {101A5F62E3}>
-WARNING: #<OPT-HANDLER-MISSING memtable-vector-rep {101A5F6DB3}>
-WARNING: #<OPT-HANDLER-MISSING memtable-prefix-bloom-size-ratio {101A5F78B3}>
-WARNING: #<OPT-HANDLER-MISSING hash-skip-list-rep {101A620573}>
-WARNING: #<OPT-HANDLER-MISSING plain-table-factory {101A621083}>
-WARNING: #<OPT-HANDLER-MISSING min-level-to-compress {101A621B53}>
-WARNING: #<OPT-HANDLER-MISSING inplace-update-num-locks {101A6230F3}>
-WARNING: #<OPT-HANDLER-MISSING universal-compaction-options {101A624CD3}>
-WARNING: #<OPT-HANDLER-MISSING ratelimiter {101A625723}>
-WARNING: #<OPT-HANDLER-MISSING row-cache {101A6262E3}>
-|#
-
 (defun %get-rocksdb-option (opt key)
   (if-let ((g (rdb-opt-getter key)))
     (funcall g opt)
     (warn 'opt-handler-missing :message key)))
+
+(defun opt-no-setter-p (k)
+  (let ((k (typecase k
+             (string (string-downcase k))
+             (symbol (string-downcase (symbol-name k)))
+             (t (string-downcase (format nil "~s" k))))))
+    (member t
+            (mapcar (lambda (x) (equal k x)) (list "parallelism" "enable-statistics")))))
 
 (defclass rdb-opts ()
   ((table :initarg :table :type hash-table :accessor rdb-opts-table)
@@ -41,6 +30,8 @@ WARNING: #<OPT-HANDLER-MISSING row-cache {101A6262E3}>
 
 (defmethod initialize-instance ((self rdb-opts) &rest initargs &key &allow-other-keys)
   (with-slots (sap table) self
+    ;; initialize slots - remember, initargs doesn't refer to slot
+    ;; names, they're opt names.
     (unless (getf initargs :table) (setf table (make-hash-table :test #'equal)))
     (unless (getf initargs :sap) (setf sap (rocksdb-options-create)))
     (loop for (k v) on initargs by #'cddr while v
@@ -74,6 +65,8 @@ WARNING: #<OPT-HANDLER-MISSING row-cache {101A6262E3}>
   "Initialized the SAP slot with values from TABLE."
   (with-slots (table) self
     (loop for k in (hash-table-keys table)
+          ;; note how we don't handle any special cases here - we can
+          ;; always set an opt but sometimes we can't get it.
           do (push-sap self k))))
 
 (defmethod pull-sap ((self rdb-opts) key)
@@ -82,7 +75,8 @@ WARNING: #<OPT-HANDLER-MISSING row-cache {101A6262E3}>
 (defmethod pull-sap* ((self rdb-opts))
   (with-slots (table) self
     (loop for k in (hash-table-keys table)
-          do (pull-sap self k))
+          unless (opt-no-setter-p k)
+            do (pull-sap self k))
     table))
 
 (defmethod backfill-opts ((self rdb-opts) &key full)
@@ -92,13 +86,14 @@ When FULL is non-nil, retrieve the full set of options available, not
 just the keys currently present in TABLE."
   (if full
       (loop for k across *rocksdb-options*
+            unless (opt-no-setter-p k)
             do (pull-sap self k))
       (pull-sap* self))
   (rdb-opts-table self))
     
 (defun default-rdb-opts () 
-  ;; TODO 2024-03-10: handle lisp->C types
-  (make-rdb-opts :create-if-missing 1))
+  (make-rdb-opts :create-if-missing t :create-missing-column-families t
+                 :parallelism (num-cpus)))
 
 (defclass rdb-kv ()
   ((key :initarg :key :type octet-vector :accessor rdb-key)
@@ -112,8 +107,56 @@ just the keys currently present in TABLE."
 (defvar *default-rdb-kv* (make-kv #() #()))
 
 ;;; iterator
-(defstruct (rdb-iter (:constructor make-rdb-iter (&optional sap)))
-  (sap nil :type (or null alien)))
+(defclass rdb-iter (sequence)
+  ((sap :initform nil :initarg :sap :type (or null alien) :accessor rdb-iter-sap)))
+
+(defmethod iter-valid-p ((self rdb-iter))
+  (rocksdb-iter-valid (rdb-iter-sap self)))
+
+(defmethod iter-seek-to-first ((self rdb-iter))
+  (rocksdb-iter-seek-to-first (rdb-iter-sap self))) 
+
+(defmethod iter-seek-to-last ((self rdb-iter))
+  (rocksdb-iter-seek-to-last (rdb-iter-sap self)))
+
+(defmethod iter-seek-for-prev ((self rdb-iter) (key vector) &key)
+  (rocksdb-iter-seek-for-prev (rdb-iter-sap self) key (length key)))
+
+(defmethod iter-seek ((self rdb-iter) (key simple-vector) &key)
+  (rocksdb-iter-seek (rdb-iter-sap self) key (length key)))
+
+(defmethod iter-next ((self rdb-iter))
+  (rocksdb-iter-next (log:info! (rdb-iter-sap self))))
+
+(defmethod iter-prev ((self rdb-iter))
+  (rocksdb-iter-prev (rdb-iter-sap self)))
+
+(defmethod iter-key ((self rdb-iter))
+  (with-alien ((klen size-t))
+    (let ((key (rocksdb-iter-key (rdb-iter-sap self) (addr klen))))
+      (let ((k (make-array klen :element-type 'octet)))
+        (clone-octets-from-alien key k klen)
+        (values
+         k
+         klen)))))
+
+(defmethod iter-val ((self rdb-iter))
+  (with-alien ((vlen size-t))     
+    (let ((val (rocksdb-iter-value (rdb-iter-sap self) (addr vlen))))
+      (let ((v (make-array vlen :element-type 'octet)))
+        (clone-octets-from-alien val v vlen)
+        (values
+         v
+         vlen)))))
+
+(defmethod iter-kv ((self rdb-iter))
+  (make-kv (iter-key self) (iter-val self)))
+
+(defmethod iter-timestamp ((self rdb-iter))
+  (with-alien ((tslen size-t))
+    (values
+     (rocksdb-iter-timestamp (rdb-iter-sap self) (addr tslen))
+     tslen)))
 
 ;;; column family
 (defstruct (rdb-cf (:constructor make-rdb-cf (name &key #+nil kv sap)))
@@ -258,6 +301,15 @@ and internal sap slots are initialized."
       (open-db obj))
     obj))
 
+(defmethod backfill-opts ((self rdb) &key full)
+  (with-slots (opts) self
+    (if full
+        (loop for k across *rocksdb-options*
+              unless (opt-no-setter-p k)
+              do (pull-sap opts k))
+        (pull-sap* opts))
+    (rdb-opts-table opts)))
+
 (defmethod push-cf ((cf rdb-cf) (db rdb))
   (vector-push cf (rdb-cfs db)))
 
@@ -336,9 +388,9 @@ and internal sap slots are initialized."
 
 (defmethod create-iter ((self rdb) &optional cf (opts (rocksdb-readoptions-create)))
   (unless-null-db () self
-    (make-rdb-iter (if cf
-                       (create-cf-iter-raw db cf opts)
-                       (create-iter-raw db opts)))))
+    (make-instance 'rdb-iter :sap (if cf
+                                      (create-cf-iter-raw db cf opts)
+                                      (create-iter-raw db opts)))))
 
 (defmethod print-stats ((self rdb) &optional stream)
   (print (rocksdb-options-statistics-get-string (rdb-opts-sap (rdb-opts self))) stream))
@@ -411,15 +463,18 @@ and internal sap slots are initialized."
 (defmethod insert-key ((self rdb) key (val string) &key cf)
   (insert-key self key (string-to-octets val) :cf cf))
 
-(defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf)
+(defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf opts)
   (if cf
-      (put-cf-raw (rdb-db self)
-                  (rdb-cf-sap
-                   (find cf (rdb-cfs self)
-                         :key #'rdb-cf-name
-                         :test #'string=))
-                  (rdb-key kv)
-                  (rdb-val kv))
+      (let ((cf (etypecase cf
+                  (rdb-cf cf)
+                  (t (find cf (rdb-cfs self)
+                           :key #'rdb-cf-name
+                           :test #'string=)))))
+        (put-cf-raw (rdb-db self)
+                    (rdb-cf-sap cf)
+                    (rdb-key kv)
+                    (rdb-val kv)
+                    opts))
       (put-kv self kv)))
 
 (defmethod get-key ((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)

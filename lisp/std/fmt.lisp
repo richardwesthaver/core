@@ -23,7 +23,6 @@
   (format t ";;        *print-readably* = ~a~%" *print-readably*)
   (format t ";;    *print-right-margin* = ~a~%" *print-right-margin*))
 
-;;; Tables
 (defun fmt-row (data)
   (format nil "| ~{~A~^ | ~} |~%" data))
 
@@ -40,9 +39,7 @@ be produced by `sxhash'."
       (lambda (x) (format nil "~{~(~2,'0x~)~}" x))
       (group r 2)))))
 
-;;; ASCII
-
-;;;; Trees
+;;; Trees
 
 ;; from https://gist.github.com/WetHat/9682b8f70f0241c37cd5d732784d1577
 

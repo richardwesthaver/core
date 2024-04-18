@@ -90,8 +90,6 @@
   ;; (collect-stats code)
   (funcall (aref *readers* code) stream))
 
-;;;
-
 (defconstant +sequence-length+ 2)
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defconstant +fixnum-length+ 4))

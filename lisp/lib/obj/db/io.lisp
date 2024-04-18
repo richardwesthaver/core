@@ -227,7 +227,7 @@
 (declaim (inline read-ascii-string-optimized))
 (defun read-ascii-string-optimized (length string stream)
   (declare (type fixnum length)
-           ;; (optimize speed)
+           (optimize (speed 3))
            )
   (sb-sys:with-pinned-objects (string)
     (let ((sap (advance-input-stream length stream))

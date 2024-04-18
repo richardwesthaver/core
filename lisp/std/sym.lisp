@@ -62,6 +62,33 @@ string as the argument."
               name
               (string name))))
 
+(defun mkstr (&rest args)
+  (with-output-to-string (s)
+    (dolist (a args) (princ a s))))
+
+(defun symb (&rest args)
+  (values (intern (apply #'mkstr args))))
+
+(defun g!-symbol-p (s)
+  (and (symbolp s)
+       (> (length (symbol-name s)) 2)
+       (string= (symbol-name s)
+                "G!"
+                :start1 0
+                :end1 2)))
+
+(defun o!-symbol-p (s)
+  (and (symbolp s)
+       (> (length (symbol-name s)) 2)
+       (string= (symbol-name s)
+                "O!"
+                :start1 0
+                :end1 2)))
+
+(defun o!-symbol-to-g!-symbol (s)
+  (symb "G!"
+        (subseq (symbol-name s) 2)))
+
 (sb-ext:with-unlocked-packages (:sb-int)
   (handler-bind
       ((sb-kernel:redefinition-warning #'muffle-warning))

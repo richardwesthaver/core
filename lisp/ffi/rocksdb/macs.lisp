@@ -36,8 +36,8 @@
         `(progn
            (define-alien-routine ,s-fn void
              (opt (* ,opt)) 
-             (val unsigned-char))
-           (define-alien-routine ,g-fn unsigned-char
+             (val boolean))
+           (define-alien-routine ,g-fn boolean
              (opt (* ,opt)))
            (export '(,g-fn ,s-fn) :rocksdb)))))
 

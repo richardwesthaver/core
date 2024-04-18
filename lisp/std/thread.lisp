@@ -220,6 +220,9 @@ indicating in the state slot the result of the computation."))
 (defmethod push-result ((task task) (pool task-pool))
   (sb-concurrency:enqueue task (task-pool-results pool)))
 
+(defmethod run-task ((self thread) (task task))
+  )
+
 (defstruct (job (:constructor %make-job (tasks)))
   "A collection of tasks to be performed by worker threads."
   (tasks (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
@@ -247,6 +250,9 @@ indicating in the state slot the result of the computation."))
 (defmethod push-job ((job job) (pool task-pool))
   (sb-concurrency:enqueue job (task-pool-jobs pool)))
 
+(defmethod run-job ((self thread) (job job))
+  )
+
 (defclass stage ()
   ((jobs  :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
           :initarg :jobs
@@ -259,3 +265,5 @@ indicating in the state slot the result of the computation."))
 
 (defmethod push-stage ((stage stage) (pool task-pool))
   (vector-push stage (task-pool-stages pool)))
+
+(defmethod run-stage ((self thread) (stage stage)))

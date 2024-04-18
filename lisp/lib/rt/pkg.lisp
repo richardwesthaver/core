@@ -85,6 +85,7 @@
    :pop-test
    :delete-test
    :find-test
+   :find-suite
    :do-suite
    :test-object
    :test
@@ -93,11 +94,7 @@
    :test-name
    :tests
    :test-form
-   :test-results
-   :enable-coverage
-   :disable-coverage
-   :with-coverage
-   :cover-report))
+   :test-results))
 
 (defpackage :rt/bench
   (:nicknames :bench)
@@ -111,8 +108,11 @@
   (:nicknames :cover)
   (:use :cl :std :log :rt :sb-cover)
   (:reexport :sb-cover)
-  (:export :with-coverage :start-coverage :stop-coverage
-   :coverage-report :*coverage-directory*))
+  (:reexport :sb-sprof)
+  (:export
+   :with-coverage :start-coverage :stop-coverage
+   :*coverage-directory*
+   :cover-report))
 
 (defpackage :rt/tracing
   (:nicknames :tracing)
@@ -134,7 +134,7 @@
 (in-readtable :std)
 
 ;;; Vars
-(defvar *test-opts* '(optimize sb-c::instrument-consing (debug 1)))
+(defvar *test-opts* '(optimize sb-c::instrument-consing))
 (defvar *compile-tests* t
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
@@ -168,6 +168,7 @@ compiler optimizations.")
 
 ;; TODO
 (defun do-tests-concurrently (&optional (suite *test-suite*) force (output *standard-output*))
+  (declare (ignore suite force))
   (sb-thread:with-mutex (*test-output-mutex*)
     (let ((stream (make-synonym-stream output)))
       (let ((*standard-output* stream)
@@ -381,9 +382,6 @@ from TESTS."))
 	    (test-args self)
 	    (test-persist-p self))))
 
-;; TODO 2023-09-01: use sxp?
-;; (defun validate-form (form))
-
 (defmethod push-result ((self test-result) (place test))
   (with-slots (results) place
     (push self results)))
@@ -392,7 +390,7 @@ from TESTS."))
   (pop (test-results self)))
 
 (defmethod eval-test ((self test))
-  `(progn ,@(test-form self)))
+  (eval `(progn ,@(test-form self))))
 
 (defmethod compile-test ((self test) &key declare &allow-other-keys)
   (compile
@@ -425,14 +423,14 @@ from TESTS."))
 	     (if-let ((opt *compile-tests*))
 	       ;; RESEARCH 2023-08-31: with-compilation-unit?
 	       (progn
-		 (if (eq opt t) 
+		 (if (eq opt t)
                      (setq opt *test-opts*)
                      (setq opt (push *test-opts* opt)))
 		 ;; TODO 2023-09-21: handle failures here
-		 (funcall (compile-test self :declare opt))
+		 (ignore-some-conditions (style-warning) (funcall (compile-test self :declare opt)))
 		 (setf %test-result (make-test-result :pass (test-fn self))))
 	       (progn
-		 (eval-test self)
+		 (ignore-some-conditions (style-warning) (eval-test self))
 		 (setf %test-result (make-test-result :pass (test-name self)))))))
       (if *catch-test-errors*
 	  (handler-bind
@@ -496,7 +494,11 @@ from TESTS."))
 
 (deftype test-suite-designator ()
   "Either nil, a symbol, a string, or a `test-suite' object."
-  '(or null symbol string test-suite test keyword))
+  '(or null symbol string test-suite keyword))
+
+(defun find-suite (name)
+  (declare (test-suite-designator name))
+  (find name *test-suite-list* :test #'test-name=))
 
 (defmethod map-tests ((self test-suite) function)
   (mapcar function (tests self)))
@@ -522,9 +524,20 @@ from TESTS."))
 (defmethod do-test ((self test-suite) &optional test)
   (push-result 
    (if test
-       (do-test (find-test self (test-name test)))
+       (do-test
+           (etypecase test
+             (test test)
+             (string (find-test self test))
+             (symbol (find-test self (symbol-name test)))))
        (do-test (pop-test self)))
    self))
+
+(defmethod do-test ((self simple-string) &optional test)
+  (let ((suite (find-suite self)))
+    (do-test suite test)))
+
+(defmethod do-test ((self symbol) &optional test)
+  (do-test (symbol-name self) test))
 
 ;; HACK 2023-09-01: find better method of declaring failures from
 ;; within the body of `deftest'.

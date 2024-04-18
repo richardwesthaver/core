@@ -7,17 +7,17 @@
 
 (define-opt rocksdb-ingestexternalfileoptions)
 (define-alien-routine rocksdb-ingestexternalfileoptions-set-move-files void
-  (val unsigned-char))
+  (val boolean))
 (define-alien-routine rocksdb-ingestexternalfileoptions-set-snapshot-consistency void
-  (val unsigned-char))
+  (val boolean))
 (define-alien-routine rocksdb-ingestexternalfileoptions-set-allow-global-seqno void
-  (val unsigned-char))
+  (val boolean))
 (define-alien-routine rocksdb-ingestexternalfileoptions-set-allow-blocking-flush void
-  (val unsigned-char))
+  (val boolean))
 (define-alien-routine rocksdb-ingestexternalfileoptions-set-ingest-behind void
-  (val unsigned-char))
+  (val boolean))
 (define-alien-routine rocksdb-ingestexternalfileoptions-set-fail-if-not-bottommost-level void
-  (val unsigned-char))
+  (val boolean))
 (export '(rocksdb-ingestexternalfileoptions-set-move-files 
           rocksdb-ingestexternalfileoptions-set-snapshot-consistency
           rocksdb-ingestexternalfileoptions-set-allow-global-seqno 
@@ -29,7 +29,7 @@
 (define-alien-routine rocksdb-backup-engine-options-set-backup-dir void
   (opts (* rocksdb-backup-engine-options)) (backup-dir c-string))
 (define-alien-routine rocksdb-backup-engine-options-set-env void
-  (opts (* rocksdb-backup-engine-options)) (val unsigned-char))
+  (opts (* rocksdb-backup-engine-options)) (val boolean))
 (define-opt-accessor rocksdb-backup-engine-options share-table-files)
 (define-opt-accessor rocksdb-backup-engine-options sync)
 (define-opt-accessor rocksdb-backup-engine-options destroy-old-data)
@@ -165,19 +165,19 @@
 (define-opt-accessor rocksdb-options use-direct-reads)
 (define-opt-accessor rocksdb-options use-direct-io-for-flush-and-compaction)
 (define-opt-accessor rocksdb-options is-fd-close-on-exec)
+(define-opt-accessor rocksdb-options inplace-update-num-locks size-t)
 (define-opt-accessor rocksdb-options inplace-update-support)
 (define-opt-accessor rocksdb-options advise-random-on-open)
 (define-opt-accessor rocksdb-options atomic-flush)
 (define-opt-accessor rocksdb-options manual-wal-flush)
 (define-opt-accessor rocksdb-options avoid-unnecessary-blocking-io)
-
+(define-opt-accessor rocksdb-options writable-file-max-buffer-size (unsigned 64))
 (define-opt-accessor rocksdb-options info-log-level int)
 (define-opt-accessor rocksdb-options write-buffer-size size-t)
 (define-opt-accessor rocksdb-options db-write-buffer-size size-t)
 (define-opt-accessor rocksdb-options max-open-files int)
 (define-opt-accessor rocksdb-options max-file-opening-threads int)
 (define-opt-accessor rocksdb-options max-total-wal-size unsigned-long)
-;; (define-opt-accessor rocksdb-options compression-options (a int)(b int) (c int) (d int))
 (define-opt-accessor rocksdb-options compression-options-zstd-max-train-bytes int)
 (define-opt-accessor rocksdb-options compression-options-max-dict-buffer-bytes unsigned-long)
 (define-opt-accessor rocksdb-options num-levels int)
@@ -188,8 +188,11 @@
 (define-opt-accessor rocksdb-options target-file-size-multiplier int)
 (define-opt-accessor rocksdb-options max-bytes-for-level-base unsigned-long)
 (define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
-;; note: there is no rocksdb-options-get-block-based-table-factory
-;; (define-opt-accessor rocksdb-options block-based-table-factory (* rocksdb-block-based-table-options))
+
+(define-alien-routine rocksdb-options-set-compression-options void
+  (opt (* rocksdb-options))
+  (a int) (b int) (c int) (d int))
+
 (define-alien-routine rocksdb-option-set-block-based-table-factory void
   (opt (* rocksdb-options)) (table-opts (* rocksdb-block-based-table-options)))
 
@@ -223,7 +226,9 @@
 (define-opt-accessor rocksdb-options max-manifest-file-size size-t)
 (define-opt-accessor rocksdb-options table-cache-numshardbits int)
 (define-opt-accessor rocksdb-options arena-block-size size-t)
-(define-opt-accessor rocksdb-options use-fsync int)
+;; TODO 2024-04-17: 
+;; may need to be an int -- check src
+(define-opt-accessor rocksdb-options use-fsync boolean)
 (define-opt-accessor rocksdb-options db-log-dir c-string)
 (define-opt-accessor rocksdb-options wal-dir c-string)
 (define-opt-accessor rocksdb-options wal-ttl-seconds unsigned-long)
@@ -233,22 +238,22 @@
 (define-opt-accessor rocksdb-options stats-persist-period-sec unsigned-int)
 
 (define-opt-accessor rocksdb-options access-hint-on-compaction-start int)
-(define-opt-accessor rocksdb-options use-adaptive-mutex unsigned-char)
+(define-opt-accessor rocksdb-options use-adaptive-mutex)
 (define-opt-accessor rocksdb-options bytes-per-sync unsigned-long)
 (define-opt-accessor rocksdb-options wal-bytes-per-sync unsigned-long)
 (define-opt-accessor rocksdb-options file-max-buffer-size unsigned-long)
 (define-opt-accessor rocksdb-options allow-concurrent-memtable-write)
 (define-opt-accessor rocksdb-options enable-write-thread-adaptive-yield)
 (define-opt-accessor rocksdb-options max-sequential-skip-in-iterations unsigned-long)
-(define-opt-accessor rocksdb-options disable-auto-compaction int)
-(define-opt-accessor rocksdb-options optimize-filters-for-hits int)
+(define-opt-accessor rocksdb-options disable-auto-compactions)
+(define-opt-accessor rocksdb-options optimize-filters-for-hits)
 (define-opt-accessor rocksdb-options delete-obsolete-files-period-micros unsigned-long)
-(define-opt-accessor rocksdb-options memtable-prefix-bloom-size-ration double)
+(define-opt-accessor rocksdb-options memtable-prefix-bloom-size-ratio double)
 (define-opt-accessor rocksdb-options max-compaction-bytes unsigned-long)
 (define-opt-accessor rocksdb-options memtable-huge-page-size size-t)
 (define-opt-accessor rocksdb-options max-successive-merges size-t)
 (define-opt-accessor rocksdb-options bloom-locality unsigned-int)
-(define-opt-accessor rocksdb-options report-bg-io-stats int)
+(define-opt-accessor rocksdb-options report-bg-io-stats)
 (define-opt-accessor rocksdb-options experimental-mempurge-threshold double)
 (define-opt-accessor rocksdb-options wal-recovery-mode int)
 (define-opt-accessor rocksdb-options compression-options-parallel-threads int)
@@ -257,14 +262,35 @@
 (define-opt-accessor rocksdb-options compaction-style int)
 (define-opt-accessor rocksdb-options wal-compression int)
 
-;; (universal-compaction-options)
-;; (ratelimiter)
-;; (row-cache)
 ;; (hash-link-list-rep)
-;; (plain-table-factory
 ;; (hash-skip-list-rep)
-;; (prepare-for-bulk-load)
 ;; (memtable-vector-rep)
+
+(define-alien-routine rocksdb-options-set-row-cache void
+  (opt (* rocksdb-options))
+  (cache (* rocksdb-cache)))
+
+(define-alien-routine rocksdb-options-set-ratelimiter void
+  (opt (* rocksdb-options))
+  (limiter (* rocksdb-ratelimiter)))
+
+(define-alien-routine rocksdb-options-set-universal-compaction-options void
+  (opt (* rocksdb-options))
+  (opts (* rocksdb-universal-compaction-options)))
+
+(define-alien-routine rocksdb-options-set-min-level-to-compress void
+  (opt (* rocksdb-options))
+  (level int))
+
+(define-alien-routine rocksdb-options-set-plain-table-factory void
+  (opt (* rocksdb-options))
+  (i int)
+  (d double)
+  (s1 size-t)
+  (s2 size-t)
+  (c char)
+  (f1 unsigned-char)
+  (f2 unsigned-char))
 
 (define-alien-routine rocksdb-options-prepare-for-bulk-load void
   (opts (* rocksdb-options)))
@@ -323,7 +349,9 @@
           rocksdb-options-set-db-paths rocksdb-options-set-cf-paths
           rocksdb-options-set-env rocksdb-options-set-info-log
           rocksdb-options-statistics-get-ticker-count rocksdb-options-statistics-get-histogram-data
-          rocksdb-options-prepare-for-bulk-load))
+          rocksdb-options-set-plain-table-factory rocksdb-options-set-min-level-to-compress
+          rocksdb-options-prepare-for-bulk-load rocksdb-options-set-universal-compaction-options
+          rocksdb-options-set-ratelimiter rocksdb-options-set-row-cache))
 
 ;;; RocksDB Write Options
 (define-opt rocksdb-writeoptions)
@@ -394,6 +422,7 @@
   (src (* rocksdb-options)))
 
 (export '(rocksdb-options-create-copy))
+
 ;;; Aliases
 ;; some of the RocksDB options don't follow the standard naming
 ;; convention of 'rocksdb-*-set-*' and 'rocksdb-*-get-*'. In order to

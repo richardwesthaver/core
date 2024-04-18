@@ -65,7 +65,11 @@
    :create-iter :iter-next
    :iter-prev :iter-seek
    :iter-key :iter-val
-   :iter-timestamp
+   :iter-timestamp :iter-kv
+   :iter-seek-to-first
+   :iter-seek-to-last
+   :iter-seek-for-prev
+   :iter-valid-p
    ;; sst
    :sst-file
    :sst-stream
@@ -80,6 +84,7 @@
    :rdb-level-metadata-p
    :rdb-bytes :rdb-bytes-buffer :rdb-opts-sap
    :make-key :make-kv :make-val :rdb-kv :rdb-key :rdb-val 
+   :rdb-kv
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf

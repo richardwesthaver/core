@@ -108,8 +108,9 @@
    :make-threads :with-threads :finish-threads
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
-   :make-oracle :make-supervisor :oracle
+   :make-oracle :make-supervisor :oracle :run-task
    :push-job :push-task :push-worker :push-result
+   :run-job :run-stage
    :pop-job :pop-task :pop-worker :pop-result
    :start-task-pool :pause-task-pool :shutdown-task-pool
    :push-stage :designate-oracle :make-task-pool
@@ -204,7 +205,7 @@
    :hash-table-keys
    :maphash-values
    :hash-table-values
-   :my-lisp-implementation
+   :current-lisp-implementation
    :tmpfile
    :ensure-function
    :ensure-functionf
@@ -278,4 +279,4 @@
    :_))
 
 (defpackage :std-user
-  (:use :cl :std))
+  (:use :cl :cl-user :std))

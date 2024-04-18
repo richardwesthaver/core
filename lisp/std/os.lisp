@@ -1,6 +1,6 @@
 ;;; std/os.lisp --- OS interop definitions
 
-;; mostly POSIX stuff. Windows is not supported.
+;; UNIX only.
 
 ;;; Code:
 (in-package :std)
