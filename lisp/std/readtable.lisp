@@ -92,7 +92,7 @@
             (nthcdr (length pattern) output))
            'string))))))
 
-                                        ; (set-dispatch-macro-character #\# #\> #'|#>-reader|)
+;; (set-dispatch-macro-character #\# #\> #'|#>-reader|)
 
 (defun segment-reader (stream ch n)
   (if (> n 0)

@@ -5,9 +5,11 @@
 
 (in-package :bin/skel)
 (in-readtable :shell)
+(setq *log-level* :info)
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))
-(defopt skc-log (setq *log-level* (if $val :debug nil)))
+(defopt skc-log (setq *log-level* (when $val :debug)))
+
 ;; TODO 2023-10-13: almost there
 (defopt skc-config (when $val (init-user-skelrc (parse-file-opt $val))))
 
@@ -54,7 +56,7 @@
 
 (defcmd skc-make
   (if $args
-      (debug! (sk-rules (find-skelfile (car $args) :load t)))
+      (debug! (sk-find-rule (car $args) (find-skelfile #P"." :load t)))
       (debug! (sk-rules (find-skelfile #P"." :load t)))))
 
 (define-cli $cli
@@ -110,13 +112,13 @@
 	   :description "open the sk-shell interpreter")))
 
 (defun run ()
-  (let ((*log-level* nil))
+  (let ((*log-level* :info))
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
       (load-skelrc)
       ;; TODO 2024-01-01: need to parse out CMD opts from args slot - they still there
       (do-cmd $cli)
-      (debug-opts $cli))))
+      (when (debug-p) (debug-opts $cli)))))
 
 (defmain ()
   (run)

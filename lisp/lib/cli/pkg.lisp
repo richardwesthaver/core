@@ -20,7 +20,8 @@
 ;;; Code:
 (defpackage :cli/shell
   (:use :cl :std)
-  (:nicknames :shell))
+  (:nicknames :shell)
+  (:export :*shell* :*shell-directory*))
 
 (defpackage :cli/ansi
   (:use :cl :std)

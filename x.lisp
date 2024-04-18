@@ -35,8 +35,6 @@ x.lisp
 
 (defvar *core-path* (directory-namestring #.(or *load-truename* *compile-file-truename* (error "run me as an executable!"))))
 
-(push *core-path* asdf:*central-registry*)
-
 (defvar *lisp-path* (merge-pathnames "lisp/" *core-path*))
 (defvar *app-path* (merge-pathnames "app/" *lisp-path*))
 (defvar *bin-path* (merge-pathnames "bin/" *app-path*))
@@ -44,6 +42,13 @@ x.lisp
 (defvar *std-path* (merge-pathnames "std/" *lisp-path*))
 (defvar *ffi-path* (merge-pathnames "ffi/" *lisp-path*))
 (defvar *stash-path* (merge-pathnames ".stash/" *core-path*))
+
+(push *core-path* asdf:*central-registry*)
+(push *lisp-path* ql:*local-project-directories*)
+(push *lib-path* ql:*local-project-directories*)
+(push *bin-path* ql:*local-project-directories*)
+(push *ffi-path* ql:*local-project-directories*)
+(ql:register-local-projects)
 
 (unless (asdf:find-system :log nil)
   (asdf:load-asd (probe-file (merge-pathnames "log/log.asd" *lib-path*))))
@@ -67,17 +72,14 @@ x.lisp
   (uiop:dump-image (merge-pathnames (car (last (std::ssplit #\/ (asdf:component-name c)))) *stash-path*) :executable t :compression t))
 
 (defun compile-std (&optional force save)
-  (let ((v (getflag "VERSION")))
-    (asdf:compile-system :std :force force :version v)
-    (asdf:load-system :std :force force :version v)
-    (when save (sb-ext:save-lisp-and-die (merge-pathnames "std.core" *stash-path*) :compression nil))))
+  (asdf:compile-system :std :force force)
+  (asdf:load-system :std :force force)
+  (when save (sb-ext:save-lisp-and-die (merge-pathnames "std.core" *stash-path*) :compression nil)))
 
 (defun compile-prelude (&optional force save)
   ;; (compile-std)
-  (push (pathname *lisp-path*) ql:*local-project-directories*)
-  (ql:quickload :prelude)
   (asdf:compile-system :prelude :force force)
-  (rocksdb:load-rocksdb save)
+  ;; (rocksdb:load-rocksdb save)
   (when save (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression 19)))
 
 (defun save-foreign (name exports &rest args)
@@ -86,8 +88,7 @@ x.lisp
 (sb-alien:define-alien-callable compile-prelude sb-alien:void () (compile-prelude))
 (sb-alien:define-alien-callable compile-std sb-alien:void () (compile-std))
 
-(defvar *x-thunk* nil)
-(defvar *x-args* nil)
+(defvar *thunk* nil)
 #-(or sbcl cl) (error "unsupported Lisp compiler")
 (setq *print-level* 32
       *print-length* 64)
@@ -137,12 +138,11 @@ OPTS:
 ;; (defun parse-arg (arg))
 
 (defun x-build (&optional args)
-  (ensure-directories-exist *stash-path*)
-  (compile-prelude nil nil)
   (let ((name (car args)))
+    (ensure-directories-exist *stash-path*)
     (info! "saving executable to:" (merge-pathnames name *stash-path*))
     (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
-      (asdf:load-asd (merge-pathnames "bin.asd" *bin-path*))
+      (ql:quickload sys)
       (asdf:make sys))))
 
 (defun x-run (&optional args))
@@ -150,7 +150,8 @@ OPTS:
 (defun x-test (&optional args)
   (if args
       (let ((name (car args)))
-        (compile-prelude nil nil)
+        (ql:quickload name)
+        (ql:quickload (format nil "~A/TESTS" name))
         (ignore-some-conditions (warning) (asdf:test-system name)))))
 
 (defun x-parse-args ()
@@ -158,23 +159,21 @@ OPTS:
       (progn
         (println "Welcome to CORE/X")
         (in-package :std-user)
-        (sb-impl::toplevel-repl nil)
-        (sb-ext:exit :code 0))
+        (sb-impl::toplevel-repl nil))
       (let ((cmd (pop *args*)))
         (cond
-          ((equal cmd "build") (setq *x-thunk* #'x-build))
-          ((equal cmd "run") (setq *x-thunk* #'x-run))
-          ((equal cmd "test") (setq *x-thunk* #'x-test))
-          ((equal cmd "save") (setq *x-thunk* #'x-save))
+          ((equal cmd "build") (setq *thunk* #'x-build))
+          ((equal cmd "run") (setq *thunk* #'x-run))
+          ((equal cmd "test") (setq *thunk* #'x-test))
+          ((equal cmd "save") (setq *thunk* #'x-save))
           (t (princ (getflag (parse-flag cmd))) (terpri) (sb-ext:exit :code 0))))))
 
 (defun x-init ()
   (in-package :x)
   (let ((*args* (cdr sb-ext:*posix-argv*)))
     (x-parse-args)
-    (compile-prelude nil nil)
-    (log:info! "running command" *x-thunk* *args*)
-    (funcall *x-thunk* *args*)))
+    (log:info! "running command" *thunk* *args*)
+    (funcall *thunk* *args*)))
 
 (defun x-save (&optional args)
   (if args

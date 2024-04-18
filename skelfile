@@ -3,6 +3,7 @@
 :author "Richard Westhaver <ellis@rwest.io>"
 :version "0.1.0"
 :license "MPL"
+:stash ".stash"
 :description "The Compiler Company Core"
 :vc :hg
 :tags ("core")

@@ -77,7 +77,7 @@
    :make-template-parser
    :string-case
    ;; fmt
-   :printer-status :fmt-row :fmt-sxhash :iprintln :fmt-tree :println
+   :printer-status :fmt-row :format-sxhash :iprintln :fmt-tree :println
    ;; sym
    :ensure-symbol
    :format-symbol

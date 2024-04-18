@@ -37,3 +37,5 @@
   (:documentation "push object SELF upstream using vc."))
 (defgeneric sk-vc-pull (self &key remote &allow-other-keys)
   (:documentation "pull object SELF from upstream using vc."))
+(defgeneric sk-find-rule (name self)
+  (:documentation "Find a rule with the given NAME in SELF."))

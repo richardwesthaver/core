@@ -152,7 +152,7 @@
 (define-opt-accessor rocksdb-options error-if-exists)
 (define-opt-accessor rocksdb-options paranoid-checks)
 (define-opt-accessor rocksdb-options compression-options-use-zstd-dict-trainer)
-(define-opt-accessor rocksdb-options level-compaction-dynamic-level-bytes)
+(define-opt-accessor rocksdb-options level-compaction-dynamic-level-bytes (unsigned 8))
 (define-opt-accessor rocksdb-options enable-blob-gc)
 (define-opt-accessor rocksdb-options allow-ingest-behind)
 (define-opt-accessor rocksdb-options skip-stats-update-on-db-open)

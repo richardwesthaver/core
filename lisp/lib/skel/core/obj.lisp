@@ -43,15 +43,14 @@
 
 (defmethod print-object ((self skel) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~S ~A" :id (fmt-sxhash (id self)))))
+    (format stream "~S ~A" :id (format-sxhash (id self)))))
 
-(defmethod initialize-instance :before ((self skel) &rest initargs &key &allow-other-keys)
+(defmethod initialize-instance :around ((self skel) &rest initargs &key &allow-other-keys)
+  ;; TODO 2023-09-10: make fast 
   (unless (getf initargs :id)
-    ;; TODO 2023-09-10: make fast 
-    (with-slots (id) self
-      (setf id (sxhash self)))
+    (setf (id self) (sxhash self)))
   (when (next-method-p)
-    (call-next-method))))
+    (call-next-method)))
 
 ;; TODO 2023-09-11: research other hashing strategies - maybe use the
 ;; sxhash as a nonce for UUID
@@ -113,7 +112,7 @@
 ;;;; Rule
 (defclass sk-rule (skel)
   ;; if target is a symbol, treated as a PHONY.
-  ((target :initarg :target :type (or string symbol) :accessor sk-rule-target)
+  ((target :initarg :target :type string :accessor sk-rule-target)
    (source :initarg :source :type (or sk-source null) :accessor sk-rule-source)
    (recipe :initform (make-instance 'sk-command) :initarg :recipe :type sk-command :accessor sk-rule-recipe))
   (:documentation "Skel rules. Maps a SOURCE to a corresponding TARGET
@@ -122,10 +121,10 @@ via the special form stored in RECIPE."))
 (defmethod write-sxp-stream ((self sk-rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sk-rule-target self) ,(sk-rule-source self) ,@(sk-body (sk-rule-recipe self))) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
-(defmacro make-sk-rule (target source &body recipe)
+(defun make-sk-rule (target source recipe)
   "Make a new SK-RULE."
-  `(let ((r (make-instance 'sk-command :body ,recipe)))
-     (make-instance 'sk-rule :target ,target :source ,source :recipe r)))
+  (let ((r (make-instance 'sk-command :body recipe)))
+    (make-instance 'sk-rule :target (format nil "~(~a~)" target) :source source :recipe r)))
 
 (defmethod sk-write ((self sk-rule) stream)
   (with-slots (target source recipe) self
@@ -277,7 +276,7 @@ via the special form stored in RECIPE."))
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
    (vc :initarg :vc :initform (make-sk-vc-meta :kind *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
-   (rules :initarg :rules :initform nil :accessor sk-rules :type (or list (vector sk-rule)))
+   (rules :initarg :rules :initform nil :accessor sk-rules :type (or null (vector sk-rule)))
    (docs :initarg :documents :initform nil :accessor sk-docs :type (or list (vector sk-document)))
    (components :initarg :components :initform nil :accessor sk-components :type list)
    (scripts :initarg :scripts :initform nil :accessor sk-scripts :type (or list (vector sk-script)))
@@ -305,7 +304,14 @@ via the special form stored in RECIPE."))
           (when (bound-string-p self 'scripts) (setf (sk-scripts self)
                                                ;; TODO 2023-10-14: convert into list of script names
                                                (pathname (sk-scripts self))))
+          (when-let ((rules (sk-rules self)))
+            (setf (sk-rules self) (map 'vector
+                                       (lambda (x)
+                                         (destructuring-bind (target source &rest recipe) x
+                                           (make-sk-rule target source recipe)))
+                                       rules)))
           (setf (ast self) nil)
+          (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
           self)
         ;; invalid ast, signal error
         (error 'skel-syntax-error))))
@@ -336,6 +342,7 @@ via the special form stored in RECIPE."))
 		    (format stream "~%"))
 	 (error 'sxp-fmt-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
+
 (declaim (inline file-read-forms))
 (defun file-read-forms (file)
   (aif (read-file-forms file)
@@ -347,6 +354,7 @@ via the special form stored in RECIPE."))
 (defmethod sk-read-file ((self sk-project) path)
   (wrap self (file-read-forms path))
   (setf (sk-path self) (ensure-absolute-pathname path *default-pathname-defaults*))
+  ;; TODO 2024-04-18: make generic
   self)
 
 ;; ast -> file
@@ -378,3 +386,6 @@ via the special form stored in RECIPE."))
     (when store (setf (sk-store self) store))
     (when license (setf (sk-license self) license))
     (when author (setf (sk-author self) author))))
+
+(defmethod sk-find-rule (name self)
+  (find name (sk-rules self) :test 'equal :key #'sk-rule-target))
