@@ -27,6 +27,7 @@ x.lisp
 
 (asdf:load-asd (probe-file (merge-pathnames "std.asd" "lisp/std/std.asd")))
 (asdf:load-system :std)
+
 (defpackage :x
   (:use :cl :std :std/named-readtables)
   (:export :*core-path* :*lisp-path* :*lib-path* :*std-path* :*ffi-path* :*stash-path* :*app-path* :*bin-path*))
@@ -48,6 +49,7 @@ x.lisp
 (push *lib-path* ql:*local-project-directories*)
 (push *bin-path* ql:*local-project-directories*)
 (push *ffi-path* ql:*local-project-directories*)
+
 (ql:register-local-projects)
 
 (unless (asdf:find-system :log nil)
@@ -116,11 +118,6 @@ OPTS:
     :test #'string=
     :key #'car)))
 
-(defun setflag (k v)
-  (setf
-   (getflag k)
-   v))
-
 (defun parse-flag (arg)
   (flet ((f (k)
            (if (or (characterp k) (= (length k) 1))
@@ -145,7 +142,13 @@ OPTS:
       (ql:quickload sys)
       (asdf:make sys))))
 
-(defun x-run (&optional args))
+(defun x-run (&optional args)
+  (if args
+      (let* ((name (car args))
+             (path (merge-pathnames name *stash-path*)))
+        (unless (probe-file path)
+          (sb-ext:run-program "x" (list "build" name) :wait t))
+        (sb-ext:run-program path (cdr args) :output t))))
 
 (defun x-test (&optional args)
   (if args
@@ -158,7 +161,9 @@ OPTS:
   (if (null *args*)
       (progn
         (println "Welcome to CORE/X")
-        (in-package :std-user)
+        (use-package :cl-user)
+        (use-package :sb-ext)
+        (use-package :std-user)
         (sb-impl::toplevel-repl nil))
       (let ((cmd (pop *args*)))
         (cond
@@ -182,9 +187,17 @@ OPTS:
         (string-case (name)
           ("prelude" (compile-prelude t))
           ("std" (compile-std t))))
-        ;; self save
+      ;; self save
       (progn
         (info! "saving self to ./x")
+        (eval
+         (read-from-string
+          (with-open-file (f (merge-pathnames "x.lisp" *core-path*))
+            ;; skip shebang
+            (read-line f t)
+            (with-output-to-string (s)
+              (copy-stream f s)))
+          nil))
         (sb-ext:save-lisp-and-die "x"
                                   :toplevel #'x-init
                                   ;; :callable-exports '("compile_std" "compile_prelude")
@@ -193,4 +206,3 @@ OPTS:
                                   :save-runtime-options t))))
 
 (x-save)
-;; (x-repl)

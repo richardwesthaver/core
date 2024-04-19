@@ -1,6 +1,7 @@
 ;;; Code:
 (uiop:define-package :bin/skel
-    (:use :cl :std :cli :skel :log :vc)
+    (:use :cl :std :cli :vc :sb-ext)
+  (:use-reexport :skel :log)
   (:export :main))
 
 (in-package :bin/skel)
@@ -34,11 +35,11 @@
       :load t)))
 
 (defcmd skc-inspect
-    (inspect
-     (find-skelfile
-      (if $args (pathname (car $args))
-	  #P".")
-      :load t)))
+  (inspect
+   (find-skelfile
+    (if $args (pathname (car $args))
+	#P".")
+    :load t)))
 
 (defcmd skc-show
      (if $args 
@@ -113,6 +114,9 @@
 
 (defun run ()
   (let ((*log-level* :info))
+    (in-package :std-user)
+    (in-package :skel)
+    (use-package :sb-ext)
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
       (load-skelrc)
