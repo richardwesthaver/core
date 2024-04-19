@@ -35,7 +35,7 @@
 (defpackage :rt
   (:use 
    :cl :std :sxp :log
-   :sb-aprof #+x86-64 :sb-sprof)
+   :sb-aprof)
   (:export
    :test-error
    :*test-opts*
@@ -107,12 +107,10 @@
 (uiop:define-package :rt/cover
   (:nicknames :cover)
   (:use :cl :std :log :rt :sb-cover)
-  (:reexport :sb-cover)
-  (:reexport :sb-sprof)
   (:export
    :with-coverage :start-coverage :stop-coverage
    :*coverage-directory*
-   :cover-report))
+   :coverage-report))
 
 (defpackage :rt/tracing
   (:nicknames :tracing)
@@ -418,7 +416,7 @@ from TESTS."))
 (defmethod do-test ((self test) &optional fx)
   (declare (ignorable fx))
   (with-test-env self
-    (debug! "running test: " *testing*)
+    (info! "running test: " *testing*)
     (flet ((%do ()
 	     (if-let ((opt *compile-tests*))
 	       ;; RESEARCH 2023-08-31: with-compilation-unit?
@@ -602,7 +600,7 @@ from TESTS."))
 		 (if val 
 		     (make-test-result :pass form)
 		     (make-test-result :fail form))))
-	   (debug! r)
+	   (info! r)
 	   r)))
   (defmacro is (test &rest args)
     "The DWIM Check.

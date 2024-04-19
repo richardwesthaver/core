@@ -9,11 +9,11 @@
 
 (defun start-coverage ()
   (progn
-    (declaim (optimize store-coverage-data))))
+    (declaim (optimize sb-c:store-coverage-data))))
 
 (defun stop-coverage ()
   (progn
-    (declaim (optimize (store-coverage-data 0)))))
+    (declaim (optimize (sb-c:store-coverage-data 0)))))
 
 (defmacro with-coverage (&body body)
   `(progn

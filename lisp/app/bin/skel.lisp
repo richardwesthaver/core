@@ -57,7 +57,7 @@
 
 (defcmd skc-make
   (if $args
-      (debug! (sk-find-rule (car $args) (find-skelfile #P"." :load t)))
+      (debug! (sk-run (sk-find-rule (car $args) (find-skelfile #P"." :load t))))
       (debug! (sk-rules (find-skelfile #P"." :load t)))))
 
 (define-cli $cli

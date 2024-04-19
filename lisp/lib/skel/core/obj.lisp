@@ -65,7 +65,7 @@
    (description :initarg :description :initform nil :type (or null string) :accessor sk-description)
    (license :initarg :license :type :string :accessor sk-license))
   (:documentation "Skel Meta class."))
- 
+
 (defun sk-init (class &rest initargs)
   (apply #'make-instance class initargs))
 
@@ -83,7 +83,7 @@
 
 ;;;; Command
 (defclass sk-command (skel)
-  ((body :initform nil :initarg :body :type form :accessor sk-body)))
+  ((body :initform nil :initarg :body :type (or form function) :accessor sk-body)))
 
 (defmethod sk-write ((self sk-command) stream)
   (if (stringp (sk-body self)) (format stream "~A" (sk-body self))))
@@ -91,7 +91,7 @@
 (defmethod sk-write-string ((self sk-command))
   (with-output-to-string (s)
     (sk-write self s)))
-    
+
 (defmethod sk-writeln ((self sk-command) stream) 
   (sk-write self stream)
   (format stream "~%"))
@@ -125,6 +125,10 @@ via the special form stored in RECIPE."))
   "Make a new SK-RULE."
   (let ((r (make-instance 'sk-command :body recipe)))
     (make-instance 'sk-rule :target (format nil "~(~a~)" target) :source source :recipe r)))
+
+(defmethod sk-run ((self sk-rule))
+  (mapcar (lambda (x) (funcall x :output t))
+          (sk-body (sk-rule-recipe self))))
 
 (defmethod sk-write ((self sk-rule) stream)
   (with-slots (target source recipe) self
@@ -183,8 +187,8 @@ via the special form stored in RECIPE."))
 	  (when (bound-string-p self 'cache) (setf (sk-cache self) (pathname (sk-cache self))))
 	  (when (bound-string-p self 'registry) (setf (sk-registry self) (pathname (sk-registry self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
-					       ;; TODO 2023-10-14: convert into list of script names
-					       (pathname (sk-scripts self))))
+					             ;; TODO 2023-10-14: convert into list of script names
+					             (pathname (sk-scripts self))))
 	  (setf (ast self) nil)
 	  self)
 	;; invalid ast, signal error
@@ -214,10 +218,10 @@ via the special form stored in RECIPE."))
                       (make-source-header-comment
                        (sk-name self)
                        :cchar #\;
-                        :timestamp t
-                        :description (sk-description self)
-                        :opts '("mode:skel;"))
-                       out))
+                       :timestamp t
+                       :description (sk-description self)
+                       :opts '("mode:skel;"))
+                      out))
         (write-sxp-stream self out :fmt fmt))
     (setf (ast self) nil)))
 
@@ -271,7 +275,7 @@ via the special form stored in RECIPE."))
 	      do 
 		 (write-sxp-stream x stream :pretty pretty :case case :fmt fmt))
 	(format stream ")"))))
-  
+
 ;;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
@@ -288,7 +292,7 @@ via the special form stored in RECIPE."))
 
 (defun find-sk-symbol (s)
   (find-symbol* (symbol-name s) :skel/core nil))
-      
+
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))
   ;; internal ast is never tagged
@@ -302,8 +306,8 @@ via the special form stored in RECIPE."))
           (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
           (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
           (when (bound-string-p self 'scripts) (setf (sk-scripts self)
-                                               ;; TODO 2023-10-14: convert into list of script names
-                                               (pathname (sk-scripts self))))
+                                                     ;; TODO 2023-10-14: convert into list of script names
+                                                     (pathname (sk-scripts self))))
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self) (map 'vector
                                        (lambda (x)
@@ -319,11 +323,11 @@ via the special form stored in RECIPE."))
 ;; obj -> ast
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
-         (unwrap-object self
-                        :slots t
-                        :methods nil
-                        :nullp nullp
-                        :exclude exclude)))
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude)))
 
 ;; TODO 2023-09-26: This belongs in sxp
 (defmethod write-sxp-stream ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :collapsed))
@@ -347,8 +351,8 @@ via the special form stored in RECIPE."))
 (defun file-read-forms (file)
   (aif (read-file-forms file)
        (if (> (length it) 1)
-	it
-	(car it))))
+	   it
+	   (car it))))
 
 ;; file -> ast
 (defmethod sk-read-file ((self sk-project) path)
@@ -362,7 +366,7 @@ via the special form stored in RECIPE."))
 			  &key 
                             (path *default-skelfile*) (nullp nil) (header t) (fmt :canonical)
                             (if-exists :error))
-    (build-ast self :nullp nullp)
+  (build-ast self :nullp nullp)
   (prog1 
       (with-open-file (out path
                            :direction :output
@@ -372,10 +376,10 @@ via the special form stored in RECIPE."))
                       (make-source-header-comment
                        (sk-name self)
                        :cchar #\;
-                        :timestamp t
-                        :description (sk-description self)
-                        :opts '("mode:skel;"))
-                       out))
+                       :timestamp t
+                       :description (sk-description self)
+                       :opts '("mode:skel;"))
+                      out))
         (write-sxp-stream self out :fmt fmt))
     (setf (ast self) nil)))
 

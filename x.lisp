@@ -175,7 +175,8 @@ OPTS:
 
 (defun x-init ()
   (in-package :x)
-  (let ((*args* (cdr sb-ext:*posix-argv*)))
+  (let ((*args* (cdr sb-ext:*posix-argv*))
+        (*log-level* :info))
     (x-parse-args)
     (log:info! "running command" *thunk* *args*)
     (funcall *thunk* *args*)))

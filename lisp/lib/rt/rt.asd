@@ -4,7 +4,8 @@
   :components ((:file "pkg")
                (:file "bench")
                (:file "tracing")
-               (:file "flamegraph"))
+               (:file "flamegraph")
+               (:file "cover"))
   :in-order-to ((test-op (test-op "rt/tests"))))
 
 (defsystem :rt/tests

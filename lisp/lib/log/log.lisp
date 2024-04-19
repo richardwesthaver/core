@@ -78,16 +78,17 @@ binding."
 (defmacro define-log-level (name)
   (let ((%name (string-upcase name)))
     `(progn
+       (defun ,(intern (concatenate 'string %name "-P")) ()
+         (eql *log-level* ,(sb-int:keywordicate name)))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
+         (when (,(symbolicate (concatenate 'string %name "-P")))
          (format t "#:~(~A~) ~@[~f~]"
                  ',name
                  (when *log-timestamp* (log-timestamp-source)))
-         (mapc (lambda (x) (format t "; ~A~%" x)) args)
+         (mapc (lambda (x) (format t "; ~A~%" x)) args))
          (if (= 1 (length args))
              (car args)
              args))
-       (defun ,(intern (concatenate 'string %name "-P")) ()
-         (eql *log-level* ,(sb-int:keywordicate name)))
        (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (&rest args)
          (,(intern (concatenate 'string %name "!")) (apply #'describe args))))))
 
