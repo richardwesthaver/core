@@ -9,10 +9,19 @@
 (setq *log-level* :info)
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))
-(defopt skc-log (setq *log-level* (when $val :debug)))
+(defopt skc-log (setq *log-level* (when $val :debug :info)))
 
 ;; TODO 2023-10-13: almost there
-(defopt skc-config (when $val (init-user-skelrc (parse-file-opt $val))))
+(defopt skc-cfg
+  (when $val
+    (init-user-skelrc (parse-file-opt (car $args)))))
+      
+(defcmd skc-config
+  (if $args
+      (describe (init-user-skelrc (parse-file-opt (car $args))))
+      (if-let ((cfg (probe-file *user-skelrc*)))
+        (describe (load-user-skelrc))
+        (describe (init-user-skelrc)))))
 
 (defcmd skc-init
     (let ((file (when $args (pop $args)))
@@ -35,6 +44,7 @@
       :load t)))
 
 (defcmd skc-inspect
+  (sb-ext:enable-debugger)
   (inspect
    (find-skelfile
     (if $args (pathname (car $args))
@@ -58,7 +68,19 @@
 (defcmd skc-make
   (if $args
       (debug! (sk-run (sk-find-rule (car $args) (find-skelfile #P"." :load t))))
-      (debug! (sk-rules (find-skelfile #P"." :load t)))))
+      (debug! (sk-run (aref (sk-rules (find-skelfile #P"." :load t)) 0)))))
+
+(defcmd skc-shell
+  (if $args
+      (nyi!)
+      (progn
+        (use-package :cl-user)
+        (use-package :sb-ext)
+        (use-package :std-user)
+        (in-package :skel)
+        (sb-ext:enable-debugger)
+        (init-skel-vars)
+        (sb-impl::toplevel-repl nil))))
 
 (define-cli $cli
   :name "skel"
@@ -73,7 +95,7 @@
 	  (:name log :global t :description "set log level (debug,info,trace,warn)"
 	   :thunk skc-log)
 	  (:name config :global t :description "set a custom skel user config" :kind file
-	   :thunk skc-config) ;; :kind?
+	   :thunk skc-cfg)
 	  (:name input :description "input source" :kind string)
 	  (:name output :description "output target" :kind string))
   :cmds (make-cmds
@@ -81,6 +103,9 @@
 	   :description "initialize a skelfile in the current directory"
 	   :opts (make-opts (:name name :description "project name" :kind string))
 	   :thunk skc-init)
+          (:name config
+           :opts (make-opts (:name file :description "skelrc file" :kind file))
+           :thunk skc-config)
 	  (:name show
 	   :description "describe the project skelfile"
 	   :opts (make-opts 
@@ -110,7 +135,8 @@
 	  (:name edit
 	   :description "edit a project file")
 	  (:name shell
-	   :description "open the sk-shell interpreter")))
+	   :description "open the sk-shell interpreter"
+           :thunk skc-shell)))
 
 (defun run ()
   (let ((*log-level* :info))

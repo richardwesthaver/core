@@ -83,6 +83,7 @@
    :sk-system-config
    ;; util
    :init-skelrc :load-skelrc
+   :init-skel-vars
    :init-user-skelrc :load-user-skelrc
    :init-system-skelrc :load-system-skelrc
    :init-skelfile

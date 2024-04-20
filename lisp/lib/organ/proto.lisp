@@ -26,17 +26,15 @@ of lines, returning it. Each line object is a cons cell where car is a
 keyword and cdr is the raw text parsed.")
   (:method ((type (eql t)) (input string))
     (let ((lines (read-org-lines-from-string input)))
-      (remove-if-not 
-       #'consp
-       (loop for x across lines
-	     collect
-             (cond 
-               ((scan org-headline-rx x) (cons :headline x))
-               ((scan org-file-property-rx x) (cons :file-property x))
-               ((scan org-property-start-rx x) (continue))
-               ((scan org-property-rx x) (cons :node-property x))
-               ((scan org-end-rx x) (continue))
-               (t x)))))))
+      (loop for x across lines
+	    collect
+            (cond
+              ((scan org-headline-rx x) (cons :headline x))
+              ((scan org-file-property-rx x) (cons :file-property x))
+              ((scan org-property-start-rx x) (continue))
+              ((scan org-property-rx x) (cons :node-property x))
+              ((scan org-end-rx x) (continue))
+              (t (cons :text x)))))))
 
 (defgeneric org-create (type &rest initargs)
   (:documentation "Create a new org-element of type TYPE."))

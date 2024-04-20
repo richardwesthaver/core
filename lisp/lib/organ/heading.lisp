@@ -35,8 +35,8 @@
     (let ((headline (org-parse :headline (read-line input))))
       ;; (multiple-value-bind (planning properties rest)
       ;; (org-parse-planning-and-properties input)
-      (make-instance 'org-heading 
-        :headline headline 
+      (make-instance 'org-heading
+        :headline headline
         ;; :planning planning
         ;; :properties properties
         ;; :contents (org-parse :section (read-until-end rest)))

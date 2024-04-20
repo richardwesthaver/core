@@ -7,7 +7,7 @@
 ;;; Code:
 (defpackage :std/tests
   (:use :cl :std :rt :sb-thread))
-   
+
 (in-package :std/tests)
 
 (defsuite :std)
@@ -26,14 +26,14 @@
   (is (equal (mapcar {+ 1} '(1 2 3 4)) '(2 3 4 5))) ;; curry.2
   (is (equal (funcall {1 list 1} 2) '(1 2))) ;; curry.fixed-arity
   (is (equal (funcall {2 list _ 2} 3 4) '(3 4 2))) ;; curry.fixed-arity.2
-  (is (locally (declare (optimize safety))
-        (let ((f {1 list 1}))
-          (handler-case (progn (funcall f) nil)
-            (error () t))))) ;; curry.fixed-arity.1
-  (is (locally (declare (optimize safety))
-        (let ((f {1 list 1}))
-          (handler-case (progn (funcall f 'a 'b) nil)
-            (error () t))))) ;; curry.fixed-arity-error.2
+  (signals error
+    (locally (declare (optimize safety))
+      (let ((f {1 list 1}))
+        (progn (funcall f) nil)))) ;; curry.fixed-arity.1
+  (signals error
+    (locally (declare (optimize safety))
+      (let ((f {1 list 1}))
+        (progn (funcall f 'a 'b) nil)))) ;; curry.fixed-arity-error.2
   (is (equal (funcall {list _ 1} 2) '(2 1))) ;; rcurry.1
   (is (equal (mapcar {- _ 1} '(1 2 3 4)) '(0 1 2 3))) ;; rcurry.2
   (is (equal (funcall [{* 3} #'1+] 1) 6)) ;; compose.1
@@ -86,7 +86,7 @@
   "Test standard thread functionality."
   (is (eq *current-thread*
           (find (thread-name *current-thread*) (list-all-threads)
-                  :key #'thread-name :test #'equal)))
+                :key #'thread-name :test #'equal)))
   (is (find-thread-by-id (car (thread-id-list))))
   (is (not (zerop (thread-count))))
   (let ((threads
@@ -109,7 +109,7 @@
                             t)))))))
   (let* ((sym (gensym))
          (s (make-semaphore :name "semaphore-test"))
-        (th (make-thread (lambda () (wait-on-semaphore s)))))
+         (th (make-thread (lambda () (wait-on-semaphore s)))))
     (is (equal (multiple-value-list (join-thread th :timeout .001 :default sym))
                (list sym :timeout)))
     (signal-semaphore s)
@@ -156,7 +156,7 @@
  ├─  C
  ╰─  D
 "#))
-;; with plist option
+  ;; with plist option
   (is (string= 
        #.(std:fmt-tree nil '(sk-project :name "foobar" :path "/a/b/c.asd" :vc :hg) :layout :down :plist t)
        #"SK-PROJECT
@@ -177,7 +177,7 @@
   (is (= 3 (acond ((1+ 1) (1+ it)))))
   (loop for x in '(1 2 3)
         for y in (funcall (alet ((a 1) (b 2) (c 3))
-                                    (lambda () (mapc #'1+ (list a b c)))))
+                                (lambda () (mapc #'1+ (list a b c)))))
         collect (is (= x y))))
 
 (deftest pan ()
@@ -221,9 +221,9 @@ These tests are copied directly from the Alexandria test suite."
                            (lambda (y z) (* x y z)))
                          3)))
     (is (equal (list (funcall curried 7)
-                 (funcall curried 7)
-                 x)
-           '(42 42 2))))
+                     (funcall curried 7)
+                     x)
+               '(42 42 2))))
   ;; rcurry.1
   (let ((r (rcurry '/ 2)))
     (is (= (funcall r 8) 4)))
@@ -239,13 +239,15 @@ These tests are copied directly from the Alexandria test suite."
                x) ;; 2
          '(42 42 2)))))
 
-(deftest bits ()
+(eval-always
   (define-bitfield testbits
     (a boolean)
     (b (signed-byte 2))
     (c (unsigned-byte 3) :initform 1)
     (d (integer -100 100))
-    (e (member foo bar baz)))
+    (e (member foo bar baz))))
+
+(deftest bits ()
   (let ((bits (make-testbits)))
     (is (not (testbits-a bits)))
     (is (= 0 (testbits-b bits)))

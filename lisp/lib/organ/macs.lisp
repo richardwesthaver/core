@@ -34,3 +34,7 @@
          ;; upfront. We should delay initialization until the last moment
          ;; -- match up front.
          ,@body))))
+
+;; It's super helpful to have our objects printed with their contents
+;; when reasonable
+(defmacro define-org-printer ())

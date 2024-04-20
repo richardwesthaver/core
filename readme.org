@@ -1,4 +1,6 @@
-{{{header(core,Richard Westhaver,ellis@rwest.io,The Compiler Company Core)}}}
+#+title: core
+#+author: Richard Westhaver <ellis@rwest.io>
+#+description: The Compiler Company Core
 This repository contains a collection of software libraries shared
 across all of our products and projects.
 
@@ -7,7 +9,106 @@ across all of our products and projects.
   Rust. See details here.
 
 To bootstrap the core you will need recent versions of [[https://www.gnu.org/software/emacs/][GNU Emacs]],
-[[https://www.rust-lang.org/][Rust]], [[https://github.com/nushell/nushell][Nushell]], and [[http://www.sbcl.org/][SBCL]]. For SBCL you will need to build from source with
-=:sb-core-compression= enabled[fn:1].
+[[https://www.rust-lang.org/][Rust]], and [[http://www.sbcl.org/][SBCL]].
 
-[fn:1] [[http://www.sbcl.org/manual/#Saving-a-Core-Image][SBCL Manual - Saving a Core Image]] 
+
+* Quickstart
+#+name: x-save-self
+#+begin_src shell
+# bootstrap the core build tool
+./x.lisp
+#+end_src
+
+#+RESULTS: x-save-self
+: saving self to ./x
+
+#+begin_src shell :results output
+./x --help
+#+end_src
+
+#+RESULTS:
+: x --- core build tool
+: x.lisp [CMD]
+: CMDS:
+: build
+: run
+: test
+: save
+: install
+
+#+begin_src shell :results none
+# save cores
+./x save std
+# ./x save prelude
+#+end_src
+
+#+begin_src shell :results silent
+# test a system
+./x test std
+#+end_src
+
+#+begin_src shell :results output
+# build binaries
+./x build skel
+# install binaries
+# ./x install skel
+#+end_src
+
+#+RESULTS:
+#+begin_example
+saving executable to: /home/ellis/dev/comp/core/.stash/skel
+To load "bin/skel":
+  Load 1 ASDF system:
+    bin/skel
+; Loading "bin/skel"
+....................
+compressed 32768 bytes into 5224 at level 9
+compressed 368902144 bytes into 13399410 at level 9
+compressed 13991936 bytes into 4472299 at level 9
+compressed 0 bytes into 9 at level 9
+#+end_example
+** binaries
+*** skel
+#+begin_src shell :results output
+./x run skel
+#+end_src
+
+#+RESULTS:
+#+begin_example
+#<SK-PROJECT :ID 33cf-3485-bc1a-9528>
+  [standard-object]
+
+Slots with :INSTANCE allocation:
+  NAME                           = "core"
+  PATH                           = #P"/home/ellis/dev/comp/core/skelfile"
+  AUTHOR                         = "Richard Westhaver <ellis@rwest.io>"
+  VERSION                        = "0.1.0"
+  TAGS                           = ("core")
+  DESCRIPTION                    = "The Compiler Company Core"
+  LICENSE                        = "MPL"
+  AST                            = NIL
+  ID                             = 3733260365104583976
+  VC                             = :HG
+  RULES                          = #(#<SK-RULE :ID 05b0-0201-ab05-f17d> #<SK-RULE :ID 20c4-3005-bae0-0616>)
+  DOCS                           = ((:ORG "readme") (:ORG "install") (:ORG "tests") (:ORG "todo"))
+  COMPONENTS                     = NIL
+  SCRIPTS                        = NIL
+  SNIPPETS                       = NIL
+  STASH                          = #P".stash"
+  STORE                          = #<unbound slot>
+  ABBREVS                        = NIL
+  IMPORTS                        = ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
+#+end_example
+*** organ
+#+begin_src shell :results output
+./x run organ
+#+end_src
+
+#+RESULTS:
+: #<ORGAN::ORG-DOCUMENT {1003D5C313}>
+:   [standard-object]
+: 
+: Slots with :INSTANCE allocation:
+:   META                           = #<ORGAN::ORG-META-SECTION {1003D5F1B3}>
+:   TREE                           = #(#<ORGAN:ORG-HEADING {1003E40B53}>)
+

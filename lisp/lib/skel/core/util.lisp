@@ -14,14 +14,14 @@
 *SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
   (sk-write-file *skel-user-config* 
                  :path file
-                 :fmt :collapsed))
+                 :fmt :pretty))
 
 (defun init-system-skelrc (&optional (file *system-skelrc*))
   "Initialize a system skelrc configuration based on the currently active
 *SKEL-SYSTEM-CONFIG*."
   (sk-write-file *skel-system-config*
                  :path file
-                 :fmt :collapsed))
+                 :fmt :pretty))
 
 (defun load-user-skelrc (&optional (file *user-skelrc*))
   "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
@@ -56,7 +56,8 @@ overwritten with the AUTO flag."
     (if (probe-file (merge-pathnames name path))
         path
         (let ((next (pathname-parent-directory-pathname path)))
-	  (find-sk-project-root next name))))
+          (unless (uiop:pathname-equal next path)
+	    (find-sk-project-root next name)))))
 
   (defun find-sk-file (path ext)
     "Return the next SK-FILE at PATH matching the extension EXT."
@@ -72,7 +73,7 @@ overwritten with the AUTO flag."
     (let ((sk (make-instance 'sk-project 
 		:name (or name (pathname-name (sb-posix:getcwd)))))
 	  (path (or file *default-skelfile*))
-	  (fmt :collapsed))
+	  (fmt :pretty))
       (when cfg (setf sk (sk-install-user-config sk cfg)))
       (sk-write-file sk :path path :fmt fmt))))
 
@@ -82,17 +83,17 @@ return nil. When LOAD is non-nil, load the skelfile if found."
   ;; Check the current path, if no skelfile found, walk up a level and
   ;; continue until the `*skelfile-boundary*' is triggered.
   (if walk 
-      (let ((root (find-sk-project-root (make-pathname :directory (pathname-directory start)) filename)))
+      (let ((root (find-sk-project-root (car (directory start)) filename)))
 	(if root
 	    (if load
 		(load-skelfile (merge-pathnames filename root))
 		(merge-pathnames filename root))
-	    (warn "failed to find root skelfile")))
+	    (error "failed to find root skelfile")))
       (if-let ((sk (probe-file (merge-pathnames filename start))))
 	(if load 
 	    (load-skelfile sk)
 	    sk)
-	(warn "failed to find root skelfile"))))
+	(error "failed to find root skelfile"))))
 
 (defun describe-skeleton (skel &optional (stream t))
   "Describe the object SKEL which should inherit from the `skel' superclass."

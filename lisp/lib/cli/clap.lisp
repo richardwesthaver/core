@@ -252,7 +252,7 @@ is a list of handlers for the opt-val."
   (make-opt-parser (num form) (when (numberp $val) $val))
 
   (make-opt-parser (file str) 
-    (when $val (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil)))
+    (when $val (pathname (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil))))
 
   (make-opt-parser (dir str) 
     (when $val (sb-ext:parse-native-namestring $val nil *default-pathname-defaults* :as-directory t))))

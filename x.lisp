@@ -74,12 +74,14 @@ x.lisp
   (uiop:dump-image (merge-pathnames (car (last (std::ssplit #\/ (asdf:component-name c)))) *stash-path*) :executable t :compression t))
 
 (defun compile-std (&optional force save)
+  (sb-ext:enable-debugger)
   (asdf:compile-system :std :force force)
   (asdf:load-system :std :force force)
   (when save (sb-ext:save-lisp-and-die (merge-pathnames "std.core" *stash-path*) :compression nil)))
 
 (defun compile-prelude (&optional force save)
   ;; (compile-std)
+  (sb-ext:enable-debugger)
   (asdf:compile-system :prelude :force force)
   ;; (rocksdb:load-rocksdb save)
   (when save (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression 19)))
@@ -99,16 +101,13 @@ x.lisp
 (defvar *flags*
   '((version "0.1.0")
     (help "x --- core build tool
-x.lisp [CMD] [OPTS...]
+x.lisp [CMD]
 CMDS:
 build
 run
 test
 save
-OPTS:
---version/v
---help/h
-")))
+install")))
 
 (defun getflag (k)
   (cadar
@@ -117,6 +116,9 @@ OPTS:
     *flags*
     :test #'string=
     :key #'car)))
+
+(defun bail (msg)
+  (log::fatal! msg))
 
 (defun parse-flag (arg)
   (flet ((f (k)
@@ -130,32 +132,50 @@ OPTS:
             (f (aref arg 1))
             (if (char-equal (aref arg 1) #\-) ;; long
                 (f (subseq arg 2))
-                (error "invalid flag"))))))
+                (bail "invalid flag"))))))
 
 ;; (defun parse-arg (arg))
 
-(defun x-build (&optional args)
-  (let ((name (car args)))
-    (ensure-directories-exist *stash-path*)
-    (info! "saving executable to:" (merge-pathnames name *stash-path*))
-    (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
-      (ql:quickload sys)
-      (asdf:make sys))))
-
-(defun x-run (&optional args)
+(defun x-build (args)
   (if args
-      (let* ((name (car args))
-             (path (merge-pathnames name *stash-path*)))
-        (unless (probe-file path)
-          (sb-ext:run-program "x" (list "build" name) :wait t))
-        (sb-ext:run-program path (cdr args) :output t))))
+      (let ((name (car args)))
+        (ensure-directories-exist *stash-path*)
+        (format t "saving executable to: ~A~%" (merge-pathnames name *stash-path*))
+        (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
+          (ql:quickload sys)
+          (asdf:make sys)))
+      (bail "missing arg")))
 
-(defun x-test (&optional args)
+(defun x-test (args)
   (if args
       (let ((name (car args)))
         (ql:quickload name)
         (ql:quickload (format nil "~A/TESTS" name))
-        (ignore-some-conditions (warning) (asdf:test-system name)))))
+        (ignore-some-conditions (warning) (asdf:test-system name)))
+      (bail "missing arg")))
+
+(defun x-run (args)
+  (if args
+      (let* ((name (car args))
+             (path (merge-pathnames name *stash-path*)))
+        (unless (probe-file path)
+          (sb-ext:run-program "x" (list "build" name) :wait t :output t))
+        (sb-ext:run-program path (cdr args) :output t))
+      (bail "missing arg")))
+
+(defun x-install (args)
+  (if args
+      (let* ((name (car args))
+             (path (merge-pathnames name *stash-path*)))
+        (unless (probe-file path)
+          (sb-ext:run-program "x" (list "build" name) :wait t :output t))
+        (sb-ext:run-program "/bin/sudo"
+                            (list "install" "-C" "-m" "755" (namestring path) "/usr/local/bin/")
+                            :input t
+                            :wait t
+                            :output t)
+        (format t "installed ~A to ~A~%" name (merge-pathnames name "/usr/local/bin/")))
+      (bail "missing arg")))
 
 (defun x-parse-args ()
   (if (null *args*)
@@ -171,6 +191,7 @@ OPTS:
           ((equal cmd "run") (setq *thunk* #'x-run))
           ((equal cmd "test") (setq *thunk* #'x-test))
           ((equal cmd "save") (setq *thunk* #'x-save))
+          ((equal cmd "install") (setq *thunk* #'x-install))
           (t (princ (getflag (parse-flag cmd))) (terpri) (sb-ext:exit :code 0))))))
 
 (defun x-init ()
@@ -178,19 +199,19 @@ OPTS:
   (let ((*args* (cdr sb-ext:*posix-argv*))
         (*log-level* :info))
     (x-parse-args)
-    (log:info! "running command" *thunk* *args*)
+    (log:debug! "running command" *thunk* *args*)
     (funcall *thunk* *args*)))
 
 (defun x-save (&optional args)
   (if args
       (let ((name (car args)))
-        (info! "saving core to:" (merge-pathnames name *stash-path*))
+        (format t "saving core to: ~A~%" (merge-pathnames name *stash-path*))
         (string-case (name)
-          ("prelude" (compile-prelude t))
-          ("std" (compile-std t))))
+          ("prelude" (compile-prelude t t))
+          ("std" (compile-std t t))))
       ;; self save
       (progn
-        (info! "saving self to ./x")
+        (format t "saving self to ./x~%")
         (eval
          (read-from-string
           (with-open-file (f (merge-pathnames "x.lisp" *core-path*))

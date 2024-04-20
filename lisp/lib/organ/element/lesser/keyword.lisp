@@ -15,9 +15,18 @@
 ;;; Code:
 (in-package :organ)
 
-(define-org-element keyword (key value) :lesser t)
+(define-org-element keyword
+    ((key :accessor keyword-key :initarg :key :type string)
+     (val :accessor keyword-val :initarg :val))
+  :lesser t)
 
-(define-org-parser (keyword :from string))
+(define-org-parser (keyword :from string)
+  (multiple-value-bind (match-start match-end start end) (scan org-file-property-rx input)
+    (declare (ignore match-end))
+    (when match-start
+      (let ((key (subseq input (aref start 0) (aref end 0)))
+            (val (subseq input (aref start 1) (aref end 1))))
+        (org-create :keyword :key key :val val)))))
 
 (define-org-element affiliated-keyword (key opt value) :lesser t)
 

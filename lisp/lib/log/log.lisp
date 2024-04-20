@@ -75,11 +75,13 @@ binding."
   `(let ((*logger* ,logger))
      ,@body))
 
-(defmacro define-log-level (name)
+(defmacro define-log-level (name &body pred)
+  "Define a log-level of NAME with PRED being the body of the predicate
+function 'NAME-P'."
   (let ((%name (string-upcase name)))
     `(progn
        (defun ,(intern (concatenate 'string %name "-P")) ()
-         (eql *log-level* ,(sb-int:keywordicate name)))
+         ,@(or pred `((eql *log-level* ,(sb-int:keywordicate name)))))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
          (when (,(symbolicate (concatenate 'string %name "-P")))
          (format t "#:~(~A~) ~@[~f~]"
@@ -92,11 +94,12 @@ binding."
        (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (&rest args)
          (,(intern (concatenate 'string %name "!")) (apply #'describe args))))))
 
-(define-log-level fatal)
-(define-log-level info)
-(define-log-level trace)
-(define-log-level warn)
-(define-log-level debug)
+(define-log-level trace (or (eql *log-level* :trace) (eql *log-level* t)))
+(define-log-level debug (or (trace-p) (eql *log-level* :debug)))
+(define-log-level info (or (debug-p) (eql *log-level* :info)))
+(define-log-level warn (or (info-p) (eql *log-level* :warn)))
+(define-log-level error (or (warn-p) (eql *log-level* :error)))
+(define-log-level fatal t) ;; probably needs to be a special case
 
 ;; TODO 2023-08-31: single format control string
 ;; (defun debug! (&rest args)
