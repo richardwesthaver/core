@@ -14,7 +14,7 @@ To bootstrap the core you will need recent versions of [[https://www.gnu.org/sof
 
 * Quickstart
 #+name: x-save-self
-#+begin_src shell
+#+begin_src shell :exports both
 # bootstrap the core build tool
 ./x.lisp
 #+end_src
@@ -22,7 +22,7 @@ To bootstrap the core you will need recent versions of [[https://www.gnu.org/sof
 #+RESULTS: x-save-self
 : saving self to ./x
 
-#+begin_src shell :results output
+#+begin_src shell :results output :exports both
 ./x --help
 #+end_src
 
@@ -36,40 +36,34 @@ To bootstrap the core you will need recent versions of [[https://www.gnu.org/sof
 : save
 : install
 
-#+begin_src shell :results none
-# save cores
-./x save std
-# ./x save prelude
+#+begin_src shell :results none :noeval t
+# start a repl
+./x
 #+end_src
 
-#+begin_src shell :results silent
-# test a system
+#+begin_src shell :results none :noeval t
+# test systems
 ./x test std
 #+end_src
 
-#+begin_src shell :results output
-# build binaries
-./x build skel
-# install binaries
-# ./x install skel
+#+begin_src shell :results none :noeval t
+# save cores
+./x save prelude
 #+end_src
 
-#+RESULTS:
-#+begin_example
-saving executable to: /home/ellis/dev/comp/core/.stash/skel
-To load "bin/skel":
-  Load 1 ASDF system:
-    bin/skel
-; Loading "bin/skel"
-....................
-compressed 32768 bytes into 5224 at level 9
-compressed 368902144 bytes into 13399410 at level 9
-compressed 13991936 bytes into 4472299 at level 9
-compressed 0 bytes into 9 at level 9
-#+end_example
+#+begin_src shell :results none :noeval t
+# build binaries
+./x build skel
+#+end_src
+
+#+begin_src shell :results none :noeval t
+# install binaries
+./x install skel
+#+end_src
+
 ** binaries
 *** skel
-#+begin_src shell :results output
+#+begin_src shell :results output :exports both
 ./x run skel
 #+end_src
 
@@ -100,7 +94,7 @@ Slots with :INSTANCE allocation:
   IMPORTS                        = ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
 #+end_example
 *** organ
-#+begin_src shell :results output
+#+begin_src shell :results output :exports both
 ./x run organ
 #+end_src
 
