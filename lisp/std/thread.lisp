@@ -151,13 +151,20 @@ lifetime of SCOPE, but never before and never after."))
 ;; 0,-1,-2
 ;; (multiple-value-list (sb-unix:unix-getrusage 0))
 ;; (setf sb-unix::*on-dangerous-wait* :error)
+(defvar *oracle-threads* nil)
 
-(defclass oracle ()
-  ((thread :initarg :thread :accessor oracle-thread)))
+(defun find-oracle (id)
+  (declare ((unsigned-byte 32) id))
+  (find id *oracle-threads* :test '= :key 'oracle-id))
 
-(defgeneric make-oracle (thread)
-  (:method ((thread thread))
-    (make-instance 'oracle :thread thread)))
+(defstruct (oracle (:constructor %make-oracle (id thread)))
+  (id 0 :type (unsigned-byte 32) :read-only t)
+  (thread *current-thread* :read-only t))
+
+(defun make-oracle (thread)
+  (let ((orc (%make-oracle (sb-thread:thread-os-tid thread) thread)))
+    (prog1 orc
+      (pushnew orc *oracle-threads* :test '= :key #'oracle-id))))
 
 (defgeneric designate-oracle (host guest))
 
@@ -166,11 +173,13 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric push-result (task pool))
 (defgeneric push-worker (thread pool))
 (defgeneric push-stage (stage pool))
+
 (defgeneric pop-job (pool))
 (defgeneric pop-task (pool))
 (defgeneric pop-result (pool))
 (defgeneric pop-worker (pool))
 (defgeneric pop-stage (pool))
+
 (defgeneric start-task-pool (pool))
 (defgeneric pause-task-pool (pool))
 (defgeneric stop-task-pool (pool))
@@ -180,21 +189,21 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric run-task (self task))
 
 (defstruct task-pool
-  (oracle nil :type (or null oracle))
+  (oracle-id nil :type (or null (unsigned-byte 32)))
   (jobs (sb-concurrency:make-queue :name "jobs"))
   (stages (make-array 0 :element-type 'stage :fill-pointer 0) :type (array stage *))
   (workers (make-array 0 :element-type 'thread :fill-pointer 0) :type (array thread *))
   (results (sb-concurrency:make-queue :name "results")))
 
-(defmethod designate-oracle ((self task-pool) (guest oracle))
-  (setf (task-pool-oracle self) guest)
+(defmethod designate-oracle ((self task-pool) (guest integer))
+  (setf (task-pool-oracle-id self) guest)
   self)
 
 (defmethod designate-oracle ((self task-pool) (guest thread))
   (designate-oracle self (make-oracle guest)))
 
-(defmethod oracle-thread ((self task-pool))
-  (oracle-thread (task-pool-oracle self)))
+(defmethod task-pool-oracle ((self task-pool))
+  (oracle-thread (find-oracle (slot-value self 'oracle))))
 
 (defmethod push-worker ((worker thread) (pool task-pool))
   (vector-push worker (task-pool-workers pool)))

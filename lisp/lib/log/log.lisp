@@ -3,7 +3,7 @@
 (deftype log-level-designator () '(member nil :fatal :error :warn :info :debug :trace t))
 
 (declaim (log-level-designator *log-level*))
-(defvar *log-level* :debug
+(defparameter *log-level* :debug
   "Logging is performed dynamically based on this variable. When NIL,
 logging is disabled, which is equivalent to a level of :FATAL. When T,
 Logging is enabled for all levels, which is equivalent to :TRACE.")

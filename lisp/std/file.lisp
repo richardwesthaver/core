@@ -361,8 +361,15 @@ metadata, consider `trivial-file-size:file-size-in-octets' instead."
   (with-input-from-file (in file :element-type element-type)
     (file-length in)))
 
+(defun file-timestamp ()
+  "Returns current timestamp as a string suitable as the name of a timestamped-file."
+  (multiple-value-bind (sec min hr day mon yr)
+                       (get-decoded-time)
+    (format nil "~4d~2,'0d~2,'0d_~2,'0d~2,'0d~2,'0d" yr mon day hr min sec)))
+
 (defun file-date ()
   "Returns current date as a string suitable as the name of a timestamped-file."
   (multiple-value-bind (sec min hr day mon yr)
                        (get-decoded-time)
-    (format nil "~4d~2d~2d_~2d~2d~2d" yr mon day hr min sec)))
+    (declare (ignore sec min hr))
+    (format nil "~4d~2,'0d~2,'0d" yr mon day)))

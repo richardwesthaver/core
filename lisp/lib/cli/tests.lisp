@@ -198,7 +198,8 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
   "Test CLI prompts"
   ;; TODO: needs to be compiled outside scope of test - contender for
   ;; fixture API
-  (defprompt tpfoo "testing: ")
+  (compile
+   (defprompt tpfoo "testing: "))
   (defvar tcoll nil)
   (defvar thist nil)
   (let ((*standard-input* (make-string-input-stream 
@@ -658,3 +659,13 @@ Eastern Mediterranean ████████████████▊
   (is (find-exe "sbcl")))
 
 (deftest clap-ast ())
+
+(defvar *test-target* nil)
+
+(deftest main-output ()
+  (defmain (*test-target*)
+    (let ((*test-target* t))
+      *test-target*))
+  (compile 'main)
+  (is (main))
+  (is (null *test-target*)))

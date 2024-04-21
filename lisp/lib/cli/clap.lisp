@@ -86,17 +86,19 @@ keys."
   (declare (type symbol name))
   `(,*default-cli-def* ,name (apply #'make-cli t (walk-cli-slots ',body))))
 
-(defmacro defmain (ret &body body)
+(defmacro defmain ((&optional ret) &body body)
   "Define a CLI main function in the current package which returns RET."
-  (let ((main (symbolicate 'main)))
-    `(progn
-       (declaim (type stream output))
+  (with-gensyms (retval)
+    (let ((main (symbolicate 'main)))
+      (info! (when ret (setf retval ret)))
+    `(prog1
        (defun ,main (&key (output *standard-output*))
          "Run the top-level function and print to OUTPUT."
+         (declare (stream output))
          (let ((*standard-output* output))
 	   (with-cli-handlers
-	       (progn ,@body ,ret))))
-       (export '(,main)))))
+	       (progn ,@body ,@(unless (not (boundp 'retval)) (list retval))))))
+       (export '(,main))))))
 
 ;;; Utils
 (defun make-cli (kind &rest slots)

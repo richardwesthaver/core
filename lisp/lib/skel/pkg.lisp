@@ -71,7 +71,7 @@
    :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
    :*default-skel-stash*
    :*default-system-skelrc*
-   :file-read-forms :load-ast
+   :load-ast
    :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user
    :sk-push :sk-pull
    :edit-skelrc

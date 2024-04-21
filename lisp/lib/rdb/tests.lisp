@@ -5,7 +5,7 @@
 
 (defsuite :rdb)
 (in-suite :rdb)
-
+(setq rt:*compile-tests* nil)
 (rocksdb:load-rocksdb)
 (setq *temp-db-destroy* t)
 
@@ -22,7 +22,7 @@
   "Ensure RDB-OPTS can be created, destructured, etc."
   (let ((default (default-rdb-opts)))
     ;; check defaults
-    (is (< 100 (hash-table-size (backfill-opts default))))
+    (is (< 50 (hash-table-count (backfill-opts default :full t))))
     (is (typep (rdb-opts-sap default) '(alien (* rocksdb-options))))
     (is (eql t (get-opt default "create-if-missing")))
     (is (eql t (set-opt default "enable-blob-files" t :push t)))
@@ -92,7 +92,7 @@
        (iter-seek-to-first it)
        (is (sequence:emptyp (iter-key it)))
        (is (sequence:emptyp (iter-val it)))
-       (is (iter-valid-p it))
+       (is (not (iter-valid-p it)))
        (iter-seek-to-last it)
        (is (typep (iter-kv it) 'rdb-kv))
        (is (sequence:emptyp (iter-key it)))

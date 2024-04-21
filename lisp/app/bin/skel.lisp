@@ -1,47 +1,46 @@
 ;;; Code:
 (uiop:define-package :bin/skel
-    (:use :cl :std :cli :vc :sb-ext)
+    (:use :cl :std :cli/clap :vc :sb-ext)
   (:use-reexport :skel :log)
   (:export :main))
 
 (in-package :bin/skel)
 (in-readtable :shell)
-(setq *log-level* :info)
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))
-(defopt skc-log (setq *log-level* (when $val :debug :info)))
+(defopt skc-log *log-level* (when $val (setq *log-level* :debug)))
 
 ;; TODO 2023-10-13: almost there
 (defopt skc-cfg
   (when $val
-    (init-user-skelrc (parse-file-opt (car $args)))))
-      
+    (init-user-skelrc (parse-file-opt $val))))
+
 (defcmd skc-config
   (if $args
       (describe (init-user-skelrc (parse-file-opt (car $args))))
-      (if-let ((cfg (probe-file *user-skelrc*)))
-        (describe (load-user-skelrc))
-        (describe (init-user-skelrc)))))
+      (if (probe-file *user-skelrc*)
+          (describe (load-user-skelrc))
+          (describe (init-user-skelrc)))))
 
 (defcmd skc-init
-    (let ((file (when $args (pop $args)))
-	  (name (if (> $argc 1) (pop $args))))
-      (handler-bind
-	  ((sb-ext:file-exists 
-	     #'(lambda (s)
-		 (uiop:println (format nil "file already exists: ~A" (or file *default-skelfile*)))
-		 (let ((f2 (read-line)))
-		   (if (string= f2 "") 
-		       (error s)
-		       (use-value f2 s))))))
-	(init-skelfile file name))))
+  (let ((file (when $args (pop $args)))
+	(name (if (> $argc 1) (pop $args))))
+    (handler-bind
+	((sb-ext:file-exists 
+	   #'(lambda (s)
+	       (uiop:println (format nil "file already exists: ~A" (or file *default-skelfile*)))
+	       (let ((f2 (read-line)))
+		 (if (string= f2 "") 
+		     (error s)
+		     (use-value f2 s))))))
+      (init-skelfile file name))))
 
 (defcmd skc-describe
-    (describe 
-     (find-skelfile 
-      (if $args (pathname (car $args))
-	  #P".")
-      :load t)))
+  (describe 
+   (find-skelfile 
+    (if $args (pathname (car $args))
+	#P".")
+    :load t)))
 
 (defcmd skc-inspect
   (sb-ext:enable-debugger)
@@ -52,9 +51,9 @@
     :load t)))
 
 (defcmd skc-show
-     (if $args 
-         (find-skelfile (pathname (car $args)) :load t)
-         (find-skelfile #P"." :load t)))
+  (if $args 
+      (find-skelfile (pathname (car $args)) :load t)
+      (find-skelfile #P"." :load t)))
 
 (defcmd skc-push
   (case
@@ -140,15 +139,12 @@
 
 (defun run ()
   (let ((*log-level* :info))
-    (in-package :std-user)
-    (in-package :skel)
-    (use-package :sb-ext)
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
       (load-skelrc)
       ;; TODO 2024-01-01: need to parse out CMD opts from args slot - they still there
       (do-cmd $cli)
-      (when (debug-p) (debug-opts $cli)))))
+      (debug-opts $cli))))
 
 (defmain ()
   (run)

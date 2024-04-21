@@ -73,11 +73,11 @@
 ;;; Packages
 (with-eval-after-load 'package
   (setq package-archives
-    '(("gnu" . "https://elpa.gnu.org/packages/")
-      ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-      ("melpa" . "https://melpa.org/packages/"))
-    use-package-always-ensure t
-    use-package-expand-minimally t)
+        '(("gnu" . "https://elpa.gnu.org/packages/")
+          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+          ("melpa" . "https://melpa.org/packages/"))
+        use-package-always-ensure t
+        use-package-expand-minimally t)
   (add-packages
    eglot-x ;; LSP extensions
    org-web-tools ;; web parsing
@@ -170,15 +170,6 @@
 ;;; Dired
 
 ;;; Lisp
-(use-package lisp-mode
-  :ensure nil
-  :custom
-  inferior-lisp-program "sbcl --dynamic-space-size=8G"
-  scheme-program-name "gsi"
-  guile-program "guile"
-  cmulisp-program "lisp"
-  scsh-program "scsh")
-
 (use-package slime
   :ensure t
   :init
@@ -193,6 +184,7 @@
                          slime-mrepl
                          slime-sbcl-exts
                          slime-cape ;; ext
+                         slime-cl-indent
                          ;; slime-snapshot
                          slime-sprof
                          slime-tramp
@@ -204,6 +196,12 @@
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
   (add-hook 'slime-mode-hook #'slime-cape-maybe-enable)
   (add-hook 'slime-repl-mode-hook #'slime-cape-maybe-enable)
+  (define-common-lisp-style "core" "Core Common Lisp Indentation Style"
+                            (:inherit "sbcl")
+                            (:indentation
+                             (defpkg (as defpackage))
+                             (define-package (as defpackage))))
+                            
   (slime-setup)
   (defvar slime-toggle nil)
   (defun slime-toggle ()
@@ -241,6 +239,16 @@ function: '(ql:quickload :clouseau)'."
 
   ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
   (setq slime-threads-update-interval 1))
+
+(use-package lisp-mode
+  :ensure nil
+  :custom
+  inferior-lisp-program "sbcl --dynamic-space-size=8G"
+  scheme-program-name "gsi"
+  guile-program "guile"
+  cmulisp-program "lisp"
+  common-lisp-stype-default "core"
+  scsh-program "scsh")
 
 ;;; Eglot
 (with-eval-after-load 'eglot
@@ -357,8 +365,8 @@ specified by `prog-comment-timestamp-format-verbose'."
     current-prefix-arg))
   (let* ((date (if verbose
                    comment-timestamp-format-verbose
-         prog-comment-timestamp-format-concise))
-     (string (format "%s %s: " keyword (format-time-string date)))
+                 prog-comment-timestamp-format-concise))
+         (string (format "%s %s: " keyword (format-time-string date)))
          (beg (point)))
     (cond
      ((or (eq beg (point-at-bol))
@@ -413,7 +421,7 @@ Interactively, NUMBER is the prefix arg."
   "Copy register A to B."
   (interactive
    (list (register-read-with-preview "From register: ")
-     (register-read-with-preview "To register: ")))
+         (register-read-with-preview "To register: ")))
   (set-register b (get-register a)))
 
 (defun buffer-to-register (register &optional delete)
@@ -456,19 +464,19 @@ Interactively, NUMBER is the prefix arg."
   `(mapc (lambda (x) (add-outline-hook (car x) (cadr x))) ',pairs))
 
 (outline-hooks (asm-mode ";;;+")
-           (nasm-mode ";;;+")
-           (rust-mode "\\(//!\\|////+\\)")
-           (sh-mode "###+")
-           (sh-script-mode "###+")
-           (makefile-mode "###+")
-           (conf-mode "###+")
-           (common-lisp-mode)
-           (emacs-lisp-mode)
-           (lisp-data-mode)
-           (org-mode)
-           (css-mode)
-           (html-mode)
-           (skel-mode))
+               (nasm-mode ";;;+")
+               (rust-mode "\\(//!\\|////+\\)")
+               (sh-mode "###+")
+               (sh-script-mode "###+")
+               (makefile-mode "###+")
+               (conf-mode "###+")
+               (common-lisp-mode)
+               (emacs-lisp-mode)
+               (lisp-data-mode)
+               (org-mode)
+               (css-mode)
+               (html-mode)
+               (skel-mode))
 
 ;;; Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode
@@ -543,7 +551,7 @@ buffer."
         bufname)
     (while (progn
              (setq bufname
-           (concat "*scratch"
+                   (concat "*scratch"
                            (if (= n 0) "" (int-to-string n))
                            "*"))
              (setq n (1+ n))
@@ -574,10 +582,10 @@ buffer."
       eshell-destroy-buffer-when-process-dies t)
 
 (add-hook 'eshell-mode-hook
-      (lambda ()
-        (eshell/alias "d" "dired $1")
-        (eshell/alias "ff" "find-file $1")
-        (eshell/alias "hgfe" "hg-fast-export.sh")))
+          (lambda ()
+            (eshell/alias "d" "dired $1")
+            (eshell/alias "ff" "find-file $1")
+            (eshell/alias "hgfe" "hg-fast-export.sh")))
 
 (defun eshell/clear ()
   "Clear the eshell buffer."
@@ -640,16 +648,16 @@ buffer."
 ;; captures
 (setq org-capture-templates
       '(("t" "task" entry (file "inbox.org") "* %^{title}\n- %?" :prepend t)
-    ("1" "current-task-item" item (clock) "%i%?")
-    ("2" "current-task-checkbox" checkitem (clock) "%i%?")
-    ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
-    ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
-    ("l" "log" item (file+headline "log.org" "log") "%U %?" :prepend t)
-    ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)
-    ("n" "note" plain (file+function "notes.org" org-ask-location) "%?")
-    ("i" "idea" entry (file "inbox.org") "* OUTLINE %?\n:notes:\n:end:\n- _outline_ [/]\n  - [ ] \n  - [ ] \n- _refs_" :prepend t)
-    ("b" "bug" entry (file "inbox.org") "* FIX %?\n- _review_\n- _fix_\n- _test_" :prepend t)
-    ("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
+        ("1" "current-task-item" item (clock) "%i%?")
+        ("2" "current-task-checkbox" checkitem (clock) "%i%?")
+        ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
+        ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
+        ("l" "log" item (file+headline "log.org" "log") "%U %?" :prepend t)
+        ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)
+        ("n" "note" plain (file+function "notes.org" org-ask-location) "%?")
+        ("i" "idea" entry (file "inbox.org") "* OUTLINE %?\n:notes:\n:end:\n- _outline_ [/]\n  - [ ] \n  - [ ] \n- _refs_" :prepend t)
+        ("b" "bug" entry (file "inbox.org") "* FIX %?\n- _review_\n- _fix_\n- _test_" :prepend t)
+        ("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil
       ;; comp2 default
@@ -659,17 +667,17 @@ buffer."
 
 (setq org-structure-template-alist
       '(("s" . "src")
-    ("e" . "src emacs-lisp")
-    ("x" . "src shell")
-    ("l" . "src lisp")
-    ("h" . "export html")
-    ("p" . "src python")
-    ("r" . "src rust")
-    ("E" . "example")
-    ("q" . "quote")
-    ("c" . "center")
-    ("C" . "comment")
-    ("v" . "verse")))
+        ("e" . "src emacs-lisp")
+        ("x" . "src shell")
+        ("l" . "src lisp")
+        ("h" . "export html")
+        ("p" . "src python")
+        ("r" . "src rust")
+        ("E" . "example")
+        ("q" . "quote")
+        ("c" . "center")
+        ("C" . "comment")
+        ("v" . "verse")))
 
 (setopt org-preview-latex-image-directory "~/.emacs.d/.cache/ltximg"
         org-latex-image-default-width "8cm"
@@ -782,7 +790,7 @@ buffer."
             (command-execute 'outline-next-visible-heading)
             ;; disable (message) that org-set-tags generates
             (flet ((message (&rest ignored) nil))
-          (org-set-tags 1 t))
+                  (org-set-tags 1 t))
             (set-buffer-modified-p b-m-p))
         (error nil)))))
 
@@ -821,7 +829,7 @@ inherited by a parent headline."
 (defun org-agenda-reschedule-to-today ()
   (interactive)
   (flet ((org-read-date (&rest rest) (current-time)))
-    (call-interactively 'org-agenda-schedule)))
+        (call-interactively 'org-agenda-schedule)))
 
 ;; Patch org-mode to use vertical splitting
 (defadvice org-prepare-agenda (after org-fix-split)

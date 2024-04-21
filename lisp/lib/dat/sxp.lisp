@@ -141,5 +141,12 @@ example."
   (declare (type class class)
 	   (type form form)))
 
+(declaim (inline file-read-forms))
+(defun file-read-forms (file)
+  (aif (read-file-forms file)
+       (if (> (length it) 1)
+           it
+           (car it))))
+
 ;; (defmacro define-fmt ())
 ;; (defmacro define-macro ())

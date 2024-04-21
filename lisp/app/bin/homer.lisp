@@ -7,7 +7,6 @@
   (:export :main :home-config))
 
 (in-package :bin/homer)
-
 (defvar *user* (sb-posix:getenv "USER"))
 (defvar *user-homedir* (user-homedir-pathname))
 (defvar *default-user-homerc* (merge-pathnames ".homerc" *user-homedir*))
@@ -24,6 +23,10 @@
    (wm :initarg :wm :type (or pathname wm-user-config))
    (browser :initarg :browser :type (or pathname browser-user-config))
    (paths :initarg :paths :type list)))
+
+(defmethod print-object ((self home-config) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~S ~A" :id (format-sxhash (id self)))))
 
 (defun find-homer-symbol (s)
   (find-symbol* (symbol-name s) :homer nil))
@@ -42,14 +45,13 @@
         (error 'sxp-syntax-error))))
 
 ;; obj -> ast
-(defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))
+(defmethod build-ast ((self home-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
          (unwrap-object self
                         :slots t
                         :methods nil
                         :nullp nullp
                         :exclude exclude)))
-
         
 (defun load-homerc (&optional (file *default-user-homerc*))
   "Load a homerc configuration from FILE. Defaults to ~/.homerc."
@@ -58,16 +60,16 @@
 
 (defopt homer-help (print-help $cli))
 (defopt homer-version (print-version $cli))
-(defopt homer-log-level (setq *log-level* (when $val :debug)))
+(defopt homer-log-level (when $val (setq *log-level* :debug)))
 
 (defcmd homer-show
   (describe (load-homerc)))
 
-
 (define-cli $cli
   :name "homer"
   :version "0.1.0"
-  :description "home manager"
+  :description "user home manager"
+  :thunk homer-show
   :opts (make-opts
           (:name level :global t :description "set the log level" :thunk homer-log-level)
           (:name help :global t :description "print help" :thunk homer-help)
@@ -76,9 +78,10 @@
           (:name show :thunk homer-show)))
 
 (defun run ()
-  (with-cli (opts cmds args) $cli
-    (do-cmd $cli)
-    (debug-opts $cli)))
+  (let ((*log-level* :info))
+    (with-cli (opts cmds args) $cli
+      (do-cmd $cli)
+      (debug-opts $cli))))
 
 (defmain ()
   (let ((*print-readably* t))

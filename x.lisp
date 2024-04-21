@@ -15,6 +15,9 @@ x.lisp
 (require 'sb-grovel)
 (require 'sb-cltl2)
 
+#-(or sbcl cl) (error "unsupported Lisp compiler")
+(sb-ext:enable-debugger)
+
 #-quicklisp
 (let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname))))
   (when (probe-file quicklisp-init)
@@ -30,7 +33,8 @@ x.lisp
 
 (defpackage :x
   (:use :cl :std :std/named-readtables)
-  (:export :*core-path* :*lisp-path* :*lib-path* :*std-path* :*ffi-path* :*stash-path* :*app-path* :*bin-path*))
+  (:export :*core-path* :*lisp-path* :*lib-path* :*std-path* :*ffi-path* :*stash-path* :*app-path* :*bin-path*
+           :*compression-level*))
 
 (in-package :x)
 
@@ -43,6 +47,8 @@ x.lisp
 (defvar *std-path* (merge-pathnames "std/" *lisp-path*))
 (defvar *ffi-path* (merge-pathnames "ffi/" *lisp-path*))
 (defvar *stash-path* (merge-pathnames ".stash/" *core-path*))
+
+(defvar *compression-level* nil)
 
 (push *core-path* asdf:*central-registry*)
 (push *lisp-path* ql:*local-project-directories*)
@@ -71,20 +77,18 @@ x.lisp
 (defun done () (print :OK))
 
 (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
-  (uiop:dump-image (merge-pathnames (car (last (std::ssplit #\/ (asdf:component-name c)))) *stash-path*) :executable t :compression t))
+  (uiop:dump-image (merge-pathnames (car (last (std::ssplit #\/ (asdf:component-name c)))) *stash-path*) :executable t :compression *compression-level*))
 
 (defun compile-std (&optional force save)
-  (sb-ext:enable-debugger)
   (asdf:compile-system :std :force force)
   (asdf:load-system :std :force force)
-  (when save (sb-ext:save-lisp-and-die (merge-pathnames "std.core" *stash-path*) :compression nil)))
+  (when save (sb-ext:save-lisp-and-die (merge-pathnames "std.core" *stash-path*) :compression *compression-level*)))
 
 (defun compile-prelude (&optional force save)
   ;; (compile-std)
-  (sb-ext:enable-debugger)
   (asdf:compile-system :prelude :force force)
   ;; (rocksdb:load-rocksdb save)
-  (when save (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression 19)))
+  (when save (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression *compression-level*)))
 
 (defun save-foreign (name exports &rest args)
   (apply #'sb-ext:save-lisp-and-die name (append `(:executable nil :callable-exports ,exports) args)))
@@ -93,7 +97,7 @@ x.lisp
 (sb-alien:define-alien-callable compile-std sb-alien:void () (compile-std))
 
 (defvar *thunk* nil)
-#-(or sbcl cl) (error "unsupported Lisp compiler")
+
 (setq *print-level* 32
       *print-length* 64)
 ;; collect args from shell
@@ -103,9 +107,10 @@ x.lisp
     (help "x --- core build tool
 x.lisp [CMD]
 CMDS:
+test
+compile
 build
 run
-test
 save
 install")))
 
@@ -136,6 +141,13 @@ install")))
 
 ;; (defun parse-arg (arg))
 
+(defun x-compile (args)
+  (if args
+      (let ((name (car args)))
+        (ql:quickload name)
+        (asdf:compile-system name :force t))
+      (compile-prelude t nil)))
+
 (defun x-build (args)
   (if args
       (let ((name (car args)))
@@ -145,6 +157,16 @@ install")))
           (ql:quickload sys)
           (asdf:make sys)))
       (bail "missing arg")))
+
+(defun x-save (args)
+  (if args
+      (let ((name (car args)))
+        (format t "saving core to: ~A~%" (merge-pathnames name *stash-path*))
+        (string-case (name)
+          ("prelude" (compile-prelude t t))
+          ("std" (compile-std t t))))
+      ;; self save
+      (sb-ext:run-program "x.lisp" nil :input t :output t)))
 
 (defun x-test (args)
   (if args
@@ -187,6 +209,7 @@ install")))
         (sb-impl::toplevel-repl nil))
       (let ((cmd (pop *args*)))
         (cond
+          ((equal cmd "compile") (setq *thunk* #'x-compile))
           ((equal cmd "build") (setq *thunk* #'x-build))
           ((equal cmd "run") (setq *thunk* #'x-run))
           ((equal cmd "test") (setq *thunk* #'x-test))
@@ -202,29 +225,11 @@ install")))
     (log:debug! "running command" *thunk* *args*)
     (funcall *thunk* *args*)))
 
-(defun x-save (&optional args)
-  (if args
-      (let ((name (car args)))
-        (format t "saving core to: ~A~%" (merge-pathnames name *stash-path*))
-        (string-case (name)
-          ("prelude" (compile-prelude t t))
-          ("std" (compile-std t t))))
-      ;; self save
-      (progn
-        (format t "saving self to ./x~%")
-        (eval
-         (read-from-string
-          (with-open-file (f (merge-pathnames "x.lisp" *core-path*))
-            ;; skip shebang
-            (read-line f t)
-            (with-output-to-string (s)
-              (copy-stream f s)))
-          nil))
-        (sb-ext:save-lisp-and-die "x"
-                                  :toplevel #'x-init
-                                  ;; :callable-exports '("compile_std" "compile_prelude")
-                                  :purify t
-                                  :executable t
-                                  :save-runtime-options t))))
-
-(x-save)
+(format t "saving self to ./x~%")
+(sb-ext:save-lisp-and-die
+ "x"
+ :toplevel #'x-init
+ ;; :callable-exports '("compile_std" "compile_prelude")
+ :purify t
+ :executable t
+ :save-runtime-options t)

@@ -21,6 +21,7 @@
    :define-macro :define-fmt :read-sxp-file :write-sxp-file
    :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream
    :make-sxp :sxp :formp :form
+   :file-read-forms
    :wrap-object :unwrap-object))
 
 (defpackage :dat/csv

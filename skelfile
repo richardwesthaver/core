@@ -14,4 +14,4 @@
  (clean () #$rm -rf .stash$#
         #$cd rust && cargo clean$#
         #$cd emacs && rm -rf */*.elc$#
-        #$cd lisp && rm -rf */*.fasl$#))
+        #$find lisp -name '*.fasl' -type f -delete$#))

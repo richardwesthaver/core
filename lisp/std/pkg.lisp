@@ -1,3 +1,5 @@
+(pushnew :std *features*)
+(pushnew "STD" *modules* :test 'equal)
 (uiop:define-package :std
     (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
   (:use-reexport :std/named-readtables)
@@ -49,6 +51,14 @@
    :decode-float64
    ;; stream
    :copy-stream
+   :wrapped-stream
+   :wrapped-character-input-stream
+   :wrapped-character-output-stream
+   :counting-character-input-stream
+   :prefixed-character-output-stream
+   :stream-of :char-count-of :line-count-of :col-count-of
+   :prev-col-count-of :col-index-of :write-prefix
+   :prefix-of
    ;; path
    #:wild-pathname
    #:non-wild-pathname
@@ -67,6 +77,7 @@
    :+pathsep+
    :octet-vector=
    :file-date
+   :file-timestamp
    ;; string
    :*omit-nulls*
    :*whitespaces*
@@ -109,9 +120,11 @@
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
    :make-oracle :make-supervisor :oracle :run-task
+   :oracle-id
    :push-job :push-task :push-worker :push-result
    :run-job :run-stage
    :pop-job :pop-task :pop-worker :pop-result
+   :make-task-pool
    :start-task-pool :pause-task-pool :shutdown-task-pool
    :push-stage :designate-oracle :make-task-pool
    :task :job :task-pool :stage :task-pool-p

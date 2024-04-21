@@ -347,13 +347,6 @@ via the special form stored in RECIPE."))
 	 (error 'sxp-fmt-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
-(declaim (inline file-read-forms))
-(defun file-read-forms (file)
-  (aif (read-file-forms file)
-       (if (> (length it) 1)
-	   it
-	   (car it))))
-
 ;; file -> ast
 (defmethod sk-read-file ((self sk-project) path)
   (wrap self (file-read-forms path))

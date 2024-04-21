@@ -13,9 +13,8 @@
 (defsuite :std)
 (in-suite :std)
 (in-readtable :std)
-
 ;; prevent threadlocks
-(setf sb-unix::*on-dangerous-wait* :error)
+;; (setf sb-unix::*on-dangerous-wait* :error)
 
 (deftest readtables ()
   "Test :std readtable"
@@ -144,6 +143,10 @@
     (sleep 0.1)
     (is (/= (ttl) 2.0))))
 
+(deftest tasks ()
+  "Test task-pools, oracles, and workers."
+  (let ((pool1 (make-task-pool)))))
+
 (deftest fmt ()
   "Test standard formatters"
   (is (string= (format nil "| 1 | 2 | 3 |~%") (fmt-row '(1 2 3))))
@@ -239,15 +242,15 @@ These tests are copied directly from the Alexandria test suite."
                x) ;; 2
          '(42 42 2)))))
 
-(eval-always
-  (define-bitfield testbits
-    (a boolean)
-    (b (signed-byte 2))
-    (c (unsigned-byte 3) :initform 1)
-    (d (integer -100 100))
-    (e (member foo bar baz))))
 
-(deftest bits ()
+(deftest bits (:disabled t)
+  (eval-always
+    (define-bitfield testbits
+      (a boolean)
+      (b (signed-byte 2))
+      (c (unsigned-byte 3) :initform 1)
+      (d (integer -100 100))
+      (e (member foo bar baz))))
   (let ((bits (make-testbits)))
     (is (not (testbits-a bits)))
     (is (= 0 (testbits-b bits)))

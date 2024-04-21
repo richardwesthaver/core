@@ -133,7 +133,7 @@
 
 ;;; Vars
 (defvar *test-opts* '(optimize sb-c::instrument-consing))
-(defvar *compile-tests* t
+(defvar *compile-tests* nil
   "When nil do not compile tests. With a value of t, tests are compiled
 with default optimizations else the value is used to configure
 compiler optimizations.")
@@ -351,8 +351,8 @@ from TESTS."))
    ;; (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
    (profile :type list :accessor test-profile :initform nil :initarg :profile)
    (args :type list :accessor test-args :initform nil :initarg :args)
-   (decl :type list :accessor test-decl :initform nil :initarg :decl)
-   (form :initarg :form :initform nil :type function-lambda-expression :accessor test-form)
+   (declaration :type list :accessor test-declaration :initform nil :initarg :declaration)
+   (form :initarg :form :initform nil :accessor test-form)
    (doc :initarg :doc :type string :accessor test-doc)
    (lock :initarg :lock :type boolean :accessor test-lock-p)
    (persist :initarg :persist :initform nil :type boolean :accessor test-persist-p)
@@ -374,11 +374,9 @@ from TESTS."))
 
 (defmethod print-object ((self test) stream)
   (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~A :fn ~A :args ~A :persist ~A"
+    (format stream "~A :fn ~A"
 	    (test-name self)
-	    (test-fn self)
-	    (test-args self)
-	    (test-persist-p self))))
+	    (test-fn self))))
 
 (defmethod push-result ((self test-result) (place test))
   (with-slots (results) place
@@ -389,6 +387,14 @@ from TESTS."))
 
 (defmethod eval-test ((self test))
   (eval `(progn ,@(test-form self))))
+
+(defmethod funcall-test ((self test) &key declare)
+  (unless (functionp (test-fn self))
+    (trace! (setf (symbol-function (test-fn self))
+                 (eval `(lambda ()
+                          ,(when declare `(declare ,declare))
+                          ,@(test-form self))))))
+  (funcall (test-fn self)))
 
 (defmethod compile-test ((self test) &key declare &allow-other-keys)
   (compile
@@ -425,15 +431,14 @@ from TESTS."))
                      (setq opt *test-opts*)
                      (setq opt (push *test-opts* opt)))
 		 ;; TODO 2023-09-21: handle failures here
-		 (ignore-some-conditions (style-warning) (funcall (compile-test self :declare opt)))
+		 (funcall (compile-test self :declare opt))
 		 (setf %test-result (make-test-result :pass (test-fn self))))
 	       (progn
-		 (ignore-some-conditions (style-warning) (eval-test self))
+                 (funcall-test self)
 		 (setf %test-result (make-test-result :pass (test-name self)))))))
       (if *catch-test-errors*
 	  (handler-bind
-	      ((style-warning #'muffle-warning)
-	       (error 
+	      ((error 
 		 #'(lambda (c)
 		     (setf %test-bail t)
 		     (setf %test-result (make-test-result :fail c))
@@ -691,7 +696,7 @@ and declarations for the test body.
 		 ;; ,@(when-let ((v (getf pr :bench))) `(:bench ,v))
 		 ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
 		 ,@(when doc `(:doc ,doc))
-		 ,@(when dec `(:decl ,dec)))))
+		 ,@(when dec `(:declaration ,dec)))))
        ,(unless (getf pr :disabled) '(push-test obj *test-suite*))
        obj)))
 
