@@ -90,15 +90,15 @@ keys."
   "Define a CLI main function in the current package which returns RET."
   (with-gensyms (retval)
     (let ((main (symbolicate 'main)))
-      (info! (when ret (setf retval ret)))
-    `(prog1
-       (defun ,main (&key (output *standard-output*))
-         "Run the top-level function and print to OUTPUT."
-         (declare (stream output))
-         (let ((*standard-output* output))
-	   (with-cli-handlers
-	       (progn ,@body ,@(unless (not (boundp 'retval)) (list retval))))))
-       (export '(,main))))))
+      (when ret (setf retval ret))
+      `(prog1
+           (defun ,main (&key (output *standard-output*))
+             "Run the top-level function and print to OUTPUT."
+             (declare (stream output))
+             (let ((*standard-output* output))
+	       (with-cli-handlers
+	           (progn ,@body ,@(unless (not (boundp 'retval)) (list retval))))))
+         (export '(,main))))))
 
 ;;; Utils
 (defun make-cli (kind &rest slots)

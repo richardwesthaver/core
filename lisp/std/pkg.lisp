@@ -1,7 +1,7 @@
 (pushnew :std *features*)
 (pushnew "STD" *modules* :test 'equal)
 (uiop:define-package :std
-    (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien)
+  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
   (:use-reexport :std/named-readtables)
   (:shadowing-import-from :uiop :println)
   (:shadowing-import-from
@@ -78,6 +78,10 @@
    :octet-vector=
    :file-date
    :file-timestamp
+   :directory-path-p
+   :hidden-path-p
+   :directory-path :find-files
+   :count-file-lines
    ;; string
    :*omit-nulls*
    :*whitespaces*

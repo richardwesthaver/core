@@ -373,3 +373,67 @@ metadata, consider `trivial-file-size:file-size-in-octets' instead."
                        (get-decoded-time)
     (declare (ignore sec min hr))
     (format nil "~4d~2,'0d~2,'0d" yr mon day)))
+
+;; see https://www.n16f.net/blog/counting-lines-with-common-lisp/
+
+(defun directory-path-p (path)
+  "Return T if PATH is a directory or NIL else."
+  (declare (type (or pathname string) path))
+  (and (not (pathname-name path))
+       (not (pathname-type path))))
+
+(defun hidden-path-p (path)
+  "Return T if PATH is a hidden file or directory or NIL else."
+  (declare (type pathname path))
+  (let ((name (if (directory-path-p path)
+                  (car (last (pathname-directory path)))
+                  (file-namestring path))))
+    (and (plusp (length name))
+         (eq (char name 0) #\.))))
+
+(defun directory-path (path)
+  "If PATH is a directory pathname, return it as it is. If it is a file
+pathname or a string, transform it into a directory pathname."
+  (declare (type (or pathname string) path))
+  (if (directory-path-p path)
+      path
+      (make-pathname :directory (append (or (pathname-directory path)
+                                            (list :relative))
+                                        (list (file-namestring path)))
+                     :name nil :type nil :defaults path)))
+
+(defun find-files (path)
+  "Return a list of all files contained in the directory at PATH or any of its
+subdirectories."
+  (declare (type (or pathname string) path))
+  (flet ((list-directory (path)
+           (directory
+            (make-pathname :defaults (directory-path path)
+                           :type :wild :name :wild))))
+    (let ((paths nil)
+          (children (list-directory (directory-path path))))
+      (dolist (child children paths)
+        (unless (hidden-path-p child)
+          (if (directory-path-p child)
+              (setf paths (append paths (find-files child)))
+              (push child paths)))))))
+
+(defun count-file-lines (path)
+  "Count the number of non-empty lines in the file at PATH. A line is empty if
+it only contains space or tabulation characters."
+  (declare (type pathname path))
+  (with-open-file (stream path :element-type '(unsigned-byte 8))
+    (do ((nb-lines 0)
+         (blank-line t))
+        (nil)
+      (let ((octet (read-byte stream nil)))
+        (cond
+          ((or (null octet) (eq octet #.(char-code #\Newline)))
+           (unless blank-line
+             (incf nb-lines))
+           (when (null octet)
+             (return-from count-file-lines nb-lines))
+           (setf blank-line t))
+          ((and (/= octet #.(char-code #\Space))
+                (/= octet #.(char-code #\Tab)))
+           (setf blank-line nil)))))))

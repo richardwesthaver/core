@@ -146,7 +146,7 @@ performed in other threads, such as WORKERS in TASK-POOL.
 Before using this object you should ensure the SCOPE is fully
 initialized. Supervisors should be created at any point during the
 lifetime of SCOPE, but never before and never after."))
-
+(thread-id-list)
 ;; unix-getrusage  
 ;; 0,-1,-2
 ;; (multiple-value-list (sb-unix:unix-getrusage 0))
@@ -172,8 +172,11 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric push-task (task pool))
 (defgeneric push-result (task pool))
 (defgeneric push-worker (thread pool))
+(defgeneric push-workers (threads pool))
 (defgeneric push-stage (stage pool))
+(defgeneric find-job (job pool &key &allow-other-keys))
 
+(defgeneric delete-job (job pool &key &allow-other-keys))
 (defgeneric pop-job (pool))
 (defgeneric pop-task (pool))
 (defgeneric pop-result (pool))
@@ -188,12 +191,51 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric run-stage (self stage))
 (defgeneric run-task (self task))
 
+(defgeneric make-worker-for (pool function &rest args)
+  (:method ((pool null) (function function) &rest args)
+    (declare (ignore pool))
+    (make-thread function :arguments args)))
+
+(defvar *default-worker-name* "worker")
+
+(defgeneric make-workers-for (pool count function)
+  (:method ((pool null) (count fixnum) (function function))
+    (declare (ignore pool))
+    (make-threads count function :name *default-worker-name*)))
+
+(defmacro define-task-kernel (name (&rest opts) &body body)
+  "Define a kernel function for tasks."
+  `(defun ,name (,@opts) 
+     ,@body))
+
+(define-task-kernel default-task-kernel ()
+  "The default task kernel used to initialize the KERNEL slot of
+task-pools. Currently, the kernel is used to initialize every worker
+in the pool when it is spawned starts running immediately."
+  nil)
+
+(defgeneric spawn-worker (pool)
+  (:method ((pool null))
+    (declare (ignore pool))
+    (make-thread *default-task-kernel*)))
+
+(defgeneric spawn-workers (pool count)
+  (:method ((pool null) (count fixnum))
+    (declare (ignore pool))
+    (make-threads count *default-task-kernel* :name *default-worker-name*)))
+
 (defstruct task-pool
   (oracle-id nil :type (or null (unsigned-byte 32)))
-  (jobs (sb-concurrency:make-queue :name "jobs"))
+  (kernel #'default-task-kernel :type function)
+  (jobs (make-queue :name "jobs"))
   (stages (make-array 0 :element-type 'stage :fill-pointer 0) :type (array stage *))
-  (workers (make-array 0 :element-type 'thread :fill-pointer 0) :type (array thread *))
-  (results (sb-concurrency:make-queue :name "results")))
+   ;; When open, indicates that the pool is fully initialized and workers
+   ;; may make progress.
+  (online (make-gate :name "online" :open nil)
+   :type gate)
+  ;; TODO: test weak-vector here
+  (workers (make-array 0 :element-type '(unsigned-byte 32) :fill-pointer 0) :type (vector (unsigned-byte 32) *))
+  (results (make-mailbox :name "results")))
 
 (defmethod designate-oracle ((self task-pool) (guest integer))
   (setf (task-pool-oracle-id self) guest)
@@ -206,7 +248,25 @@ lifetime of SCOPE, but never before and never after."))
   (oracle-thread (find-oracle (slot-value self 'oracle))))
 
 (defmethod push-worker ((worker thread) (pool task-pool))
-  (vector-push worker (task-pool-workers pool)))
+  (vector-push (thread-os-tid worker) (task-pool-workers pool)))
+
+(defmethod push-workers ((threads list) (pool task-pool))
+  (with-slots (workers) pool
+    (dolist (w threads)
+      (vector-push (thread-os-tid w) workers))))
+
+(defmethod make-worker-for ((pool task-pool) function &rest args)
+  (make-thread function :name *default-worker-name* :arguments args))
+
+(defmethod make-workers-for ((pool task-pool) (count fixnum) function)
+  (make-threads count function :name *default-worker-name*))
+
+(defmethod spawn-worker ((pool task-pool))
+  ;; (with-recursive-lock
+  (push-worker (make-worker-for pool (task-pool-kernel pool)) pool))
+
+(defmethod spawn-workers ((pool task-pool) (count fixnum))
+  (push-workers (make-workers-for pool count (task-pool-kernel pool)) pool))
 
 (defclass task ()
   ((state :initarg :state :accessor task-state)
@@ -227,7 +287,7 @@ indicating in the state slot the result of the computation."))
     (format stream "~A" (task-object self))))
 
 (defmethod push-result ((task task) (pool task-pool))
-  (sb-concurrency:enqueue task (task-pool-results pool)))
+  (send-message (task-pool-results pool) task))
 
 (defmethod run-task ((self thread) (task task))
   )
@@ -235,16 +295,20 @@ indicating in the state slot the result of the computation."))
 (defstruct (job (:constructor %make-job (tasks)))
   "A collection of tasks to be performed by worker threads."
   (tasks (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
-   :type (array task *)))
+   :type (array task *))
+  (lock (make-mutex :name "job") :type mutex))
 
-(defmethod make-job ((self task))
-  (%make-job (vector self)))
+(defgeneric make-job (self &key &allow-other-keys))
 
-(defmethod make-job ((self vector))
+(defmethod make-job ((self task) &key (size 1))
+  (%make-job (make-array size :element-type 'task
+                              :initial-element self)))
+
+(defmethod make-job ((self vector) &key)
   (%make-job self))
 
-(defmethod make-job ((self t))
-  (%make-job (vector self)))
+(defmethod make-job ((self null) &key (size 1))
+  (%make-job (make-array size :element-type 'task :fill-pointer 0 :adjustable t)))
 
 (defmethod print-object ((self job) stream)
   (print-unreadable-object (self stream :type t)
@@ -257,16 +321,19 @@ indicating in the state slot the result of the computation."))
   (push-job (make-job task) pool))
 
 (defmethod push-job ((job job) (pool task-pool))
-  (sb-concurrency:enqueue job (task-pool-jobs pool)))
+  (enqueue job (task-pool-jobs pool)))
 
-(defmethod run-job ((self thread) (job job))
-  )
+;; TODO..
+(defmethod run-job ((self task-pool) (job job))
+  (log:trace! "running remote job...")
+  (push-job job self))
 
 (defclass stage ()
   ((jobs  :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
           :initarg :jobs
           :accessor jobs
-          :type (vector job))))
+          :type (vector job))
+   (lock :initform (make-mutex :name "stage") :initarg :lock :accessor stage-lock :type mutex)))
 
 (defmethod print-object ((self stage) stream)
   (print-unreadable-object (self stream :type t)

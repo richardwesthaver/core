@@ -196,12 +196,7 @@
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
   (add-hook 'slime-mode-hook #'slime-cape-maybe-enable)
   (add-hook 'slime-repl-mode-hook #'slime-cape-maybe-enable)
-  (define-common-lisp-style "core" "Core Common Lisp Indentation Style"
-                            (:inherit "sbcl")
-                            (:indentation
-                             (defpkg (as defpackage))
-                             (define-package (as defpackage))))
-                            
+  
   (slime-setup)
   (defvar slime-toggle nil)
   (defun slime-toggle ()
@@ -237,6 +232,13 @@ function: '(ql:quickload :clouseau)'."
             ;; Return nothing.
             (cl:values)))))
 
+  (define-common-lisp-style "core" "Core Common Lisp Indentation Style"
+                            (:inherit "sbcl")
+                            (:indentation
+                             (defpkg (as defpackage))
+                             (define-package (as defpackage))))
+  ;; (common-lisp-set-style "core")
+  (setq common-lisp-style-default "core")
   ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
   (setq slime-threads-update-interval 1))
 
@@ -247,7 +249,6 @@ function: '(ql:quickload :clouseau)'."
   scheme-program-name "gsi"
   guile-program "guile"
   cmulisp-program "lisp"
-  common-lisp-stype-default "core"
   scsh-program "scsh")
 
 ;;; Eglot
