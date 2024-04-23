@@ -53,6 +53,15 @@ to initialize the instance with custom configuration."
   (with-errptr (err 'repair-db-error (list :name name))
     (rocksdb-repair-db opts name err)))
 
+(defun ingest-db-raw (db files &optional (opts (rocksdb-ingestexternalfileoptions-create)))
+  (let ((flen (length files)))
+    (with-errptr (err 'ingest-db-error)
+      (with-alien ((flist (* c-string) (make-alien c-string flen)))
+        (loop for f in files
+              for i from 0 to flen
+              do (setf (deref flist i) (make-alien-string f :null-terminate nil)))
+        (rocksdb-ingest-external-file db flist flen opts err)))))
+
 ;;; KVs
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
@@ -211,3 +220,62 @@ to initialize the instance with custom configuration."
 
 (defun release-snapshot-raw (db snapshot)
   (rocksdb-release-snapshot db snapshot))
+
+;;; SST
+(defun create-sst-writer-raw ()
+  (rocksdb-sstfilewriter-create (rocksdb-envoptions-create) (rocksdb-options-create)))
+
+(defun finish-sst-writer-raw (writer)
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-sstfilewriter-finish writer err)))
+
+(defun destroy-sst-writer-raw (writer)
+  (rocksdb-sstfilewriter-destroy writer))
+
+(defun open-sst-writer-raw (writer name)
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-sstfilewriter-open writer name err)))
+
+;; this function is deprecated in the Java API:
+;; https://javadoc.io/doc/org.rocksdb/rocksdbjni/6.6.4/org/rocksdb/SstFileWriter.html
+
+;; (defun sst-add-raw (writer key val)
+;;   (with-errptr (err 'rocksdb-error)
+;;     (rocksdb-sstfilewriter-add writer key (length key) val (length val) err)))
+
+(defun sst-put-raw (writer key val)
+  (let ((klen (length key))
+        (vlen (length val)))
+    (with-errptr (err 'rocksdb-error)
+      (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
+                   (v (* unsigned-char) (make-alien unsigned-char vlen)))
+        (setfa k key)
+        (setfa v val)
+        (rocksdb-sstfilewriter-put writer k klen v vlen err)))))
+
+(defun sst-put-str-raw (writer key val)
+  (let ((key-octets (string-to-octets key :null-terminate nil))
+        (val-octets (string-to-octets val :null-terminate nil)))
+    (sst-put-raw writer key-octets val-octets)))
+  
+(defun sst-put-ts-raw (writer key val ts)
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-sstfilewriter-put-with-ts writer key (length key) val (length val) ts (length ts) err)))
+
+(defun sst-delete-raw (writer key)
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-sstfilewriter-delete writer key (length key) err)))
+
+(defun sst-delete-ts-raw (writer key ts)
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-sstfilewriter-delete-with-ts writer key (length key) ts (length ts) err)))
+
+(defun sst-delete-range-raw (writer start-key end-key)
+  (with-errptr (err 'rocksdb-error)
+    (rocksdb-sstfilewriter-delete-range writer start-key (length start-key) end-key (length end-key) err)))
+
+(defun sst-file-size-raw (writer)
+  (with-errptr (err 'rocksdb-error)
+    (with-alien ((ret unsigned-long))
+      (rocksdb-sstfilewriter-file-size writer (addr ret) err)
+      ret)))

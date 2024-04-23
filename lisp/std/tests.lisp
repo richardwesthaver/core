@@ -5,11 +5,10 @@
 ;; TODO: fix false positives when using (eval-test)
 
 ;;; Code:
-(defpackage :std/tests
+(in-package :std-user)
+(defpkg :std/tests
   (:use :cl :std :rt :sb-thread))
-
 (in-package :std/tests)
-
 (defsuite :std)
 (in-suite :std)
 (in-readtable :std)
@@ -180,7 +179,7 @@
   (is (= 3 (acond ((1+ 1) (1+ it)))))
   (loop for x in '(1 2 3)
         for y in (funcall (alet ((a 1) (b 2) (c 3))
-                                (lambda () (mapc #'1+ (list a b c)))))
+                            (lambda () (mapc #'1+ (list a b c)))))
         collect (is (= x y))))
 
 (deftest pan ()
@@ -242,8 +241,7 @@ These tests are copied directly from the Alexandria test suite."
                x) ;; 2
          '(42 42 2)))))
 
-
-(deftest bits (:disabled t)
+(deftest bits (:disabled nil)
   (eval-always
     (define-bitfield testbits
       (a boolean)

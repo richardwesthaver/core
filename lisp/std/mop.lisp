@@ -5,6 +5,9 @@
 ;;; Code:
 (in-package :std/mop)
 
+;; make-specializer-form-using-class
+;; make-method-lambda-using-specializers
+
 (defun list-indirect-class-methods (class)
   "List all indirect methods of CLASS."
   (remove-duplicates (mapcan #'specializer-direct-generic-functions (compute-class-precedence-list class))))

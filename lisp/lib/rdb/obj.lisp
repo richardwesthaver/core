@@ -413,6 +413,9 @@ and internal sap slots are initialized."
       (loop for cf across (rdb-cfs self)
             do (create-cf self cf))))
 
+(defmethod ingest-db ((self rdb) (files list) &key)
+  (ingest-db-raw (rdb-db self) files))
+
 (defmethod destroy-cfs ((self rdb) &key &allow-other-keys)
   (with-slots (cfs) self
     (declare (type (array rdb-cf) cfs))

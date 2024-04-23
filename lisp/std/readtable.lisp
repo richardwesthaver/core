@@ -208,23 +208,22 @@
                                    (cadr clause))))
                           (cdr contents)))))))))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defreadtable :std
-    (:merge :modern)
-    ;; curry
-    (:macro-char #\{ #'std::lcurly-brace-reader)
-    (:macro-char #\} (get-macro-character #\) ))
-    (:macro-char #\[ #'std::lsquare-brace-reader)
-    (:macro-char #\] (get-macro-character #\) ))
-    (:macro-char #\« #'std::langle-quotation-reader)
-    (:macro-char #\» (get-macro-character #\) ))
-    (:macro-char #\‹ #'std::lsingle-pointing-angle-quotation-mark-reader)
-    (:macro-char #\› (get-macro-character #\) ))
-    ;; strings
-    (:dispatch-macro-char #\# #\" #'|#"-reader|)
-    (:dispatch-macro-char #\# #\> #'|#>-reader|)
-    ;; regex
-    (:dispatch-macro-char #\# #\~ #'|#~-reader|)
-    ;; lambdas
-    (:dispatch-macro-char #\# #\` #'|#`-reader|)
-    (:dispatch-macro-char #\# #\f #'|#f-reader|)))
+(defreadtable :std
+  (:merge :modern)
+  ;; curry
+  (:macro-char #\{ #'lcurly-brace-reader)
+  (:macro-char #\} (get-macro-character #\) ))
+  (:macro-char #\[ #'lsquare-brace-reader)
+  (:macro-char #\] (get-macro-character #\) ))
+  (:macro-char #\« #'langle-quotation-reader)
+  (:macro-char #\» (get-macro-character #\) ))
+  (:macro-char #\‹ #'lsingle-pointing-angle-quotation-mark-reader)
+  (:macro-char #\› (get-macro-character #\) ))
+  ;; strings
+  (:dispatch-macro-char #\# #\" #'|#"-reader|)
+  (:dispatch-macro-char #\# #\> #'|#>-reader|)
+  ;; regex
+  (:dispatch-macro-char #\# #\~ #'|#~-reader|)
+  ;; lambdas
+  (:dispatch-macro-char #\# #\` #'|#`-reader|)
+  (:dispatch-macro-char #\# #\f #'|#f-reader|))

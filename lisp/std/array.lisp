@@ -3,6 +3,7 @@
 ;;
 
 ;;; Code:
+;; sb-kernel:with-array-data
 (in-package :std/array)
 
 (defun copy-array (array)
@@ -21,4 +22,3 @@
   "A (possibly negated) array length."
   '#.(let ((limit (1- array-dimension-limit)))
        `(integer ,(- limit) ,limit)))
-

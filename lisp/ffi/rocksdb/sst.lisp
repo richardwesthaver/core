@@ -10,11 +10,11 @@
 (in-package :rocksdb)
 
 (define-alien-routine rocksdb-sstfilewriter-create (* rocksdb-sstfilewriter)
-  (env (* rocksdb-envoptions))
+  (env-opts (* rocksdb-envoptions))
   (io-options (* rocksdb-options)))
 
 (define-alien-routine rocksdb-sstfilewriter-create-with-comparator (* rocksdb-sstfilewriter)
-  (env (* rocksdb-envoptions))
+  (env-opts (* rocksdb-envoptions))
   (io-options (* rocksdb-options))
   (comparator (* rocksdb-comparator)))
 

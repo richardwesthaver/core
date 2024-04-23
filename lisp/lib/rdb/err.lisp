@@ -36,6 +36,10 @@
   ()
   (:documentation "Error signaled while flushing a database."))
 
+(define-condition ingest-db-error (rocksdb-error)
+  ()
+  (:documentation "Error signaled while flushing a database."))
+
 (define-condition repair-db-error (rocksdb-error)
   ()
   (:documentation "Error signaled while repairing a database."))

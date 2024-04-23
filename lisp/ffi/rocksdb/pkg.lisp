@@ -59,7 +59,7 @@ set *errptr to a malloc()ed error message.
 
 ;;; Code:
 (defpackage :rocksdb
-  (:use :cl :std :sb-alien)
+  (:use :cl :std/alien :std/sym :std/macs :sb-alien)
   (:export
    ;; vars
    :*rocksdb-options*

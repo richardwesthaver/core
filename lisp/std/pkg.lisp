@@ -1,46 +1,6 @@
 (pushnew :std *features*)
 (pushnew "STD" *modules* :test 'equal)
 
-(defpackage :std/named-readtables
-  (:use :cl)
-  (:export
-   :defreadtable
-   :in-readtable
-   :make-readtable
-   :merge-readtables-into
-   :find-readtable
-   :ensure-readtable
-   :rename-readtable
-   :readtable-name
-   :register-readtable
-   :unregister-readtable
-   :copy-named-readtable
-   :list-all-named-readtables
-   ;; Types
-   :named-readtable-designator
-   ;; Conditions
-   :readtable-error
-   :reader-macro-conflict
-   :readtable-does-already-exist
-   :readtable-does-not-exist
-   :parse-body))
-
-(defpackage :std/defpkg
-  (:use :cl)
-  (:nicknames :pkg)
-  (:export :defpkg
-   :find-package* :find-symbol* :symbol-call
-           :intern* :export* :import* :shadowing-import* 
-           :shadow* :make-symbol* :unintern*
-   :symbol-shadowing-p :home-package-p
-   :symbol-package-name :standard-common-lisp-symbol-p
-   :reify-package :unreify-package :reify-symbol :unreify-symbol
-   :nuke-symbol-in-package :nuke-symbol :rehome-symbol
-           :ensure-package-unused :delete-package*
-           :package-names :packages-from-names :fresh-package-name 
-   :rename-package-away :package-definition-form :parse-defpkg-form
-           :ensure-package))
-
 (defpackage :std-user
   (:use :cl :std/named-readtables :std/defpkg)
   (:shadowing-import-from :std/defpkg :defpkg)
@@ -100,6 +60,8 @@
   (:shadowing-import-from :sb-int 
    :ensure-list :recons :memq :assq
    :ensure-list :proper-list-of-length-p :proper-list-p :singleton-p)
+  (:import-from :std/sym :symb)
+  (:import-from :std/named-readtables :parse-body)
   (:export
    :ensure-car
    :ensure-cons
@@ -157,18 +119,6 @@
    :prev-col-count-of :col-index-of :write-prefix
    :prefix-of))
 
-(defpkg :std/fu
-  (:use :cl)
-  (:export
-   :ensure-function
-   :ensure-functionf
-   :disjoin
-   :conjoin
-   :compose
-   :multiple-value-compose
-   :curry
-   :rcurry))
-
 (defpkg :std/array
   (:use :cl)
   (:export :copy-array :signed-array-length))
@@ -182,8 +132,17 @@
 
 (defpkg :std/alien
   (:use :cl :sb-alien)
-  (:import-from :std/sym :symbolicate)
+  (:import-from :std/sym :symbolicate :with-gensyms)
   (:export
+   :setfa
+   :copy-c-string
+   :clone-strings
+   :clone-octets-to-alien
+   :clone-octets-from-alien
+   :foreign-int-to-integer
+   :foreign-int-to-bool
+   :bool-to-foreign-int
+   :define-opaque
    :shared-object-name
    :define-alien-loader
    :c-string-to-string-list
@@ -194,7 +153,8 @@
    :memset))
 
 (defpkg :std/mop
-  (:use :cl)
+  (:use :cl :sb-mop :sb-pcl)
+  (:import-from :std/sym :symb :make-keyword)
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :list-indirect-slot-methods))
    
@@ -221,11 +181,28 @@
    :task-pool-oracle :task-pool-jobs :task-pool-stages
    :task-pool-workers :task-pool-results))
 
+(defpkg :std/readtable
+  (:use :cl)
+  (:import-from :std/named-readtables :defreadtable)
+  (:import-from :std/sym :symb)
+  (:import-from :std/list :defmacro!) ;; kludge
+  (:export
+   ;; readtable
+   :|#"-reader|
+   :|#`-reader|
+   :|#f-reader|
+   :|#$-reader|
+   :segment-reader
+   :match-mode-ppcre-lambda-form
+   :subst-mode-ppcre-lambda-form
+   :|#~-reader|
+   :_))
+
 (defpkg :std/macs
   (:use :cl)
-  (:import-from :std/sym :symb :mkstr :make-gensym-list :once-only)
+  (:import-from :std/sym :symb :mkstr :make-gensym-list :once-only :with-gensyms)
   (:import-from :std/named-readtables :in-readtable :parse-body)
-  (:import-from :std/list :flatten)
+  (:import-from :std/list :flatten :defmacro!)
   (:export
    :named-lambda
    :g!-symbol-p
@@ -286,6 +263,19 @@
    :plambda
    :pandoric-eval))
 
+(defpkg :std/fu
+  (:use :cl)
+  (:import-from :std/macs :make-gensym-list)
+  (:export
+   :ensure-function
+   :ensure-functionf
+   :disjoin
+   :conjoin
+   :compose
+   :multiple-value-compose
+   :curry
+   :rcurry))
+
 (defpkg :std/bit
   (:use :cl)
   (:export
@@ -299,15 +289,6 @@
    :aref-bit
    :make-bit-vector
    :logbit
-   :define-opaque
-   :setfa
-   :copy-c-string
-   :clone-strings
-   :clone-octets-to-alien
-   :clone-octets-from-alien
-   :foreign-int-to-integer
-   :foreign-int-to-bool
-   :bool-to-foreign-int
    :bitfield
    :bitfield-slot-name
    :bitfield-slot-start
@@ -354,6 +335,7 @@
 
 (defpkg :std/file
   (:use :cl)
+  (:import-from :std/macs :define-constant :once-only :eval-always)
   (:export
    :tmpfile
    :file-pathname
@@ -396,23 +378,6 @@
    :current-lisp-implementation
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live))
-
-(defpkg :std/readtable
-  (:use :cl)
-  (:import-from :std/named-readtables :defreadtable)
-  (:import-from :std/sym :symb)
-  (:import-from :std/macs :defmacro!)
-  (:export
-   ;; readtable
-   :|#"-reader|
-   :|#`-reader|
-   :|#f-reader|
-   :|#$-reader|
-   :segment-reader
-   :match-mode-ppcre-lambda-form
-   :subst-mode-ppcre-lambda-form
-   :|#~-reader|
-   :_))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)

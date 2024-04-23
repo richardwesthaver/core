@@ -31,6 +31,7 @@
 
 (defpackage :gui/wm/x11
   (:nicknames :x11)
+  (:shadowing-import-from :std/type :array-index)
   (:use :cl :std :gui/core :xlib)
   (:export))
 

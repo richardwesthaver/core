@@ -1,7 +1,9 @@
 ;;; std.asd --- standard library
+
+;; TODO: move into std system?
 (defsystem :std/named-readtables
   :version "0.1.0"
-  :components ((:file "pkg") (:file "named-readtables"))
+  :components ((:file "named-readtables"))
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (register-system-packages "std/named-readtables" '(:std))
@@ -10,8 +12,8 @@
   :version "0.1.0"
   :depends-on (:std/named-readtables :cl-ppcre :sb-concurrency)
   :serial t
-  :components ((:file "pkg")
-               (:file "defpkg")
+  :components ((:file "defpkg")
+               (:file "pkg")
                (:file "err")
                (:file "sym")
                (:file "list")
@@ -29,6 +31,7 @@
                (:file "alien")
                (:file "mop")
                (:file "thread")
+               (:file "readtable")
                (:module "macs"
                 :components
                 ((:file "ana")
@@ -41,8 +44,7 @@
                (:file "file")
                (:file "string")
                (:file "seq")
-               (:file "sys")
-               (:file "readtable"))
+               (:file "sys"))
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (register-system-packages "std" '(:std))

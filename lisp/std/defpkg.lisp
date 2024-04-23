@@ -5,6 +5,22 @@
 ;;
 
 ;;; Code:
+(defpackage :std/defpkg
+  (:use :cl)
+  (:nicknames :pkg)
+  (:export :defpkg
+   :find-package* :find-symbol* :symbol-call
+           :intern* :export* :import* :shadowing-import* 
+           :shadow* :make-symbol* :unintern*
+   :symbol-shadowing-p :home-package-p
+   :symbol-package-name :standard-common-lisp-symbol-p
+   :reify-package :unreify-package :reify-symbol :unreify-symbol
+   :nuke-symbol-in-package :nuke-symbol :rehome-symbol
+           :ensure-package-unused :delete-package*
+           :package-names :packages-from-names :fresh-package-name 
+   :rename-package-away :package-definition-form :parse-defpkg-form
+           :ensure-package))
+
 (in-package :std/defpkg)
 
 (eval-when (:load-toplevel :compile-toplevel :execute)

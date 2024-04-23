@@ -40,6 +40,12 @@
    :create-new-backup-raw
    :restore-from-latest-backup-raw
    :with-open-backup-engine-raw
+   :create-snapshot-raw :release-snapshot-raw
+   :create-sst-writer-raw :finish-sst-writer-raw
+   :destroy-sst-writer-raw :open-sst-writer-raw
+   :sst-put-raw :sst-delete-raw :sst-delete-range-raw :sst-file-size-raw
+   :sst-put-str-raw
+   :open-sst-file :close-sst-file
    ;; proto
    :put-key :put-kv
    :get-key :get-kv
@@ -54,6 +60,8 @@
    :open-db :close-db :destroy-db
    :get-prop :get-metadata
    :multi-get :delete-key
+   :delete-key-ts :put-key-ts
+   :delete-key-range
    :make-transaction :commit-transaction
    :begin-transaction :prepare-transaction
    :rollback-transaction :delete-transaction
@@ -70,9 +78,11 @@
    :iter-seek-to-last
    :iter-seek-for-prev
    :iter-valid-p
+   :ingest-db
    ;; sst
-   :sst-file
-   :sst-stream
+   :sst-file-writer :make-sst-file-writer
+   :open-sst :finish-sst
+   :destroy-sst :sst-file-size
    ;; obj
    :rdb :make-rdb :create-db
    :rdb-db :rdb-name :rdb-cfs :rdb-opts

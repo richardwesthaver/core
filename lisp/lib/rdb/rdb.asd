@@ -10,7 +10,8 @@
                (:file "macs")
                (:file "raw")
                (:file "proto")
-               (:file "obj"))
+               (:file "obj")
+               (:file "sst"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests

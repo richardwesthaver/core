@@ -14,6 +14,10 @@
 ;; 			  :who-specializes-directly :who-specializes-generally
 ;; 			  :find-function-callees :find-function-callers))
 
+;; sys
+;; sb-sys:*linkage-info* *machine-version* *runtime-dlhandle* *periodic-polling-function*
+;; *periodic-polling-period* io-timeout nlx-protect serve-event os-deinit os-exit with-deadline dlopen-or-lose deallocate-system-memory
+
 (defun current-lisp-implementation ()
   "Return the current lisp implemenation as a cons: (TYPE VERSION)"
   (list 

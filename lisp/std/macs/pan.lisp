@@ -6,7 +6,7 @@
 
 (defun pandoriclet-get (letargs)
   `(case sym
-     ,@(mapcar #`(((car a1)) (car a1))
+     ,@(mapcar #`(((car ,a1)) (car ,a1))
         letargs)
      (t (error
          "Unknown pandoric get: ~a"
@@ -14,8 +14,8 @@
 
 (defun pandoriclet-set (letargs)
   `(case sym
-     ,@(mapcar #`(((car a1))
-                  (setq (car a1) val))
+     ,@(mapcar #`(((car ,a1))
+                  (setq (car ,a1) val))
         letargs)
      (t (error
          "Unknown pandoric set: ~a"
@@ -49,7 +49,7 @@
 
 (defmacro! with-pandoric (syms o!box &rest body)
   `(symbol-macrolet
-       (,@(mapcar #`(a1 (get-pandoric ,g!box a1))
+       (,@(mapcar #`(,a1 (get-pandoric ,g!box ,a1))
                   syms))
      ,@body))
 
