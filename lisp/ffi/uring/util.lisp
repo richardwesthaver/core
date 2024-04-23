@@ -60,3 +60,10 @@
 
 ;; do-mmap
 ;; map len bytes starting from offset from file-descriptor in mmapped-region
+
+;;; CPU Affinity
+;; it appears this actually crashes SBCL, receiving sig6 from foreign thread
+;; (define-alien-routine sched-setaffinity int (pid int) (cpusetsize size-t) (set (* (struct cpu-set-t))))
+;; (define-alien-routine sched-getaffinity int (pid int) (cpusetsize size-t) (set (* (struct cpu-set-t))))
+;; (sched-getaffinity 0 cpu-setsize (make-alien (struct cpu-set-t)))
+;; (sched-setaffinity 0 cpu-setsize (make-alien (struct cpu-set-t)))

@@ -7,34 +7,34 @@
 (defun pandoriclet-get (letargs)
   `(case sym
      ,@(mapcar #`(((car a1)) (car a1))
-               letargs)
+        letargs)
      (t (error
-          "Unknown pandoric get: ~a"
-          sym))))
+         "Unknown pandoric get: ~a"
+         sym))))
 
 (defun pandoriclet-set (letargs)
   `(case sym
      ,@(mapcar #`(((car a1))
-                   (setq (car a1) val))
-               letargs)
+                  (setq (car a1) val))
+        letargs)
      (t (error
-          "Unknown pandoric set: ~a"
-          sym))))
+         "Unknown pandoric set: ~a"
+         sym))))
 
 (defmacro pandoriclet (letargs &rest body)
   (let ((letargs (cons
-                   '(this)
-                   (let-binding-transform
-                     letargs))))
+                  '(this)
+                  (let-binding-transform
+                   letargs))))
     `(let (,@letargs)
        (setq this ,@(last body))
        ,@(butlast body)
        (dlambda
-         (:pandoric-get (sym)
-           ,(pandoriclet-get letargs))
-         (:pandoric-set (sym val)
-           ,(pandoriclet-set letargs))
-         (t (&rest args)
+        (:pandoric-get (sym)
+                       ,(pandoriclet-get letargs))
+        (:pandoric-set (sym val)
+                       ,(pandoriclet-set letargs))
+        (t (&rest args)
            (apply this args))))))
 
 (declaim (inline get-pandoric))
@@ -48,10 +48,10 @@
      ,val))
 
 (defmacro! with-pandoric (syms o!box &rest body)
-       `(symbol-macrolet
-         (,@(mapcar #`(a1 (get-pandoric ,g!box a1))
-                    syms))
-         ,@body))
+  `(symbol-macrolet
+       (,@(mapcar #`(a1 (get-pandoric ,g!box a1))
+                  syms))
+     ,@body))
 
 ;; (defun pandoric-hotpatch (box new)
 ;;   (with-pandoric (this) box
@@ -65,14 +65,14 @@
   (let ((pargs (mapcar #'list pargs)))
     `(let (this self)
        (setq
-         this (lambda ,largs ,@body)
-         self (dlambda
-                (:pandoric-get (sym)
-                  ,(pandoriclet-get pargs))
-                (:pandoric-set (sym val)
-                  ,(pandoriclet-set pargs))
-                (t (&rest args)
-                  (apply this args)))))))
+        this (lambda ,largs ,@body)
+        self (dlambda
+              (:pandoric-get (sym)
+                             ,(pandoriclet-get pargs))
+              (:pandoric-set (sym val)
+                             ,(pandoriclet-set pargs))
+              (t (&rest args)
+                 (apply this args)))))))
 
 (defvar pandoric-eval-tunnel)
 

@@ -1,7 +1,7 @@
 ;;; std/list.lisp --- List utils
 
 ;;; Code:
-(in-package :std)
+(in-package :std/list)
 
 ;; (reexport-from :sb-int
 ;; 	       :include '(:recons :memq :assq :ensure-list :proper-list-of-length-p :proper-list-p
@@ -122,3 +122,60 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                          (car x)
                          (rec (cdr x) acc))))))
       (rec x nil))))
+
+;;; cl-bench utils
+;; Destructive merge of two sorted lists.
+;; From Hansen's MS thesis.
+(defun merge! (a b predicate)
+  (labels ((merge-loop (r a b)
+             (cond ((funcall predicate (car b) (car a))
+                    (setf (cdr r) b)
+                    (if (null (cdr b))
+                        (setf (cdr b) a)
+                        (merge-loop b a (cdr b))))
+                   (t ; (car a) <= (car b)
+                    (setf (cdr r) a)
+                    (if (null (cdr a))
+                        (setf (cdr a) b)
+                        (merge-loop a (cdr a) b))))))
+    (cond ((null a) b)
+          ((null b) a)
+          ((funcall predicate (car b) (car a))
+           (if (null (cdr b))
+               (setf (cdr b) a)
+               (merge-loop b a (cdr b)))
+           b)
+          (t                           ; (car a) <= (car b)
+           (if (null (cdr a))
+               (setf (cdr a) b)
+               (merge-loop a (cdr a) b))
+           a))))
+
+;; Stable sort procedure which copies the input list and then sorts
+;; the new list imperatively. Due to Richard O'Keefe; algorithm
+;; attributed to D.H.D. Warren.
+(defun sort! (seq predicate)
+  (labels ((astep (n)
+             (cond ((> n 2)
+                    (let* ((j (truncate n 2))
+                           (a (astep j))
+                           (k (- n j))
+                           (b (astep k)))
+                      (merge! a b predicate)))
+                   ((= n 2)
+                    (let ((x (car seq))
+                          (y (cadr seq))
+                          (p seq))
+                      (setf seq (cddr seq))
+                      (when (funcall predicate y x)
+                        (setf (car p) y)
+                        (setf (cadr p) x))
+                      (setf (cddr p) nil)
+                      p))
+                   ((= n 1)
+                    (let ((p seq))
+                      (setf seq (cdr seq))
+                      (setf (cdr p) nil)
+                      p))
+                   (t nil))))
+    (astep (length seq))))

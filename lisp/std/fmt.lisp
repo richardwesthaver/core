@@ -1,7 +1,7 @@
 ;;; std/fmt.lisp --- printer and format utils
 
 ;;; Code:
-(in-package :std)
+(in-package :std/fmt)
 
 (defun iprintln (x &optional (n 2) stream)
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))

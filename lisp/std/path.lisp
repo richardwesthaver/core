@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :std)
+(in-package :std/path)
 
 (deftype wild-pathname ()
   "A pathname with wild components."

@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :std)
+(in-package :std/stream)
 
 (defun copy-stream (input output &key (element-type (stream-element-type input))
                     (buffer-size 4096)

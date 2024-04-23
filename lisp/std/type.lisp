@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :std)
+(in-package :std/type)
 
 (defconstant +default-element-type+ 'character)
 

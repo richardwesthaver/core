@@ -1,7 +1,7 @@
 ;;; std.asd --- standard library
 (defsystem :std/named-readtables
   :version "0.1.0"
-  :components ((:file "named-readtables"))
+  :components ((:file "pkg") (:file "named-readtables"))
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (register-system-packages "std/named-readtables" '(:std))
@@ -11,27 +11,38 @@
   :depends-on (:std/named-readtables :cl-ppcre :sb-concurrency)
   :serial t
   :components ((:file "pkg")
+               (:file "defpkg")
                (:file "err")
-               (:file "bits")
-               (:module "num"
-                :components ((:file "float")
-                             (:file "parse")))
-               (:file "string")
-               (:file "fmt")
                (:file "sym")
                (:file "list")
-               (:file "util")
-               (:file "readtable")
-               (:file "ana")
-               (:file "pan")
-               (:file "fu")
-               (:file "types")
-               (:file "path")
+               (:file "type")
+               (:module "num"
+                :components
+                ((:file "float")
+                 (:file "parse")))
                (:file "stream")
-               (:file "file")
+               (:module "fu"
+                :components
+                ((:file "curry")))
+               (:file "array")
+               (:file "hash-table")
+               (:file "alien")
+               (:file "mop")
                (:file "thread")
-               (:file "defpkg")               
-               (:file "alien"))
+               (:module "macs"
+                :components
+                ((:file "ana")
+                 (:file "pan")
+                 (:file "const")))
+               (:file "bit")
+               (:file "fmt")
+               (:file "path")
+               (:file "os")
+               (:file "file")
+               (:file "string")
+               (:file "seq")
+               (:file "sys")
+               (:file "readtable"))
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (register-system-packages "std" '(:std))

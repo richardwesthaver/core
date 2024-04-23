@@ -3,7 +3,22 @@
 ;;
 
 ;;; Code:
-(in-package :std)
+(in-package :std/file)
+
+;;; Sexp utils
+;; (reexport-from :uiop :include '(read-file-form read-file-forms slurp-stream-forms))
+
+(defun tmpfile (size)
+  "Create an anonymous temporary file of the given size. Returns a file descriptor."
+  (let (done fd pathname)
+    (unwind-protect
+         (progn
+           (setf (values fd pathname) (sb-posix:mkstemp "/dev/shm/tmp.XXXXXXXX"))
+           (sb-posix:unlink pathname)
+           (sb-posix:ftruncate fd size)
+           (setf done t))
+      (when (and fd (not done)) (sb-posix:close fd)))
+    fd))
 
 (declaim (inline octet-vector=/unsafe))
 (defun octet-vector=/unsafe (v1 v2 start1 end1 start2 end2)

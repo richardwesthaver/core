@@ -1,4 +1,4 @@
-;;; bits.lisp --- Bit manipulation
+;;; std/bit.lisp --- Bit manipulation
 
 ;;; Commentary:
 
@@ -7,7 +7,7 @@
 ;; quick primer: https://cp-algorithms.com/algebra/bit-manipulation.html
 
 ;;; Code:
-(in-package :std)
+(in-package :std/bit)
 
 ;;; Types
 ;; Bytes aren't necessarily 8 bits wide in Lisp. OCTET is always 8

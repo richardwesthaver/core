@@ -21,7 +21,7 @@
 ;; represented by objects of type ALIEN-VALUE.
 
 ;;; Code:
-(in-package :std)
+(in-package :std/alien)
 (shadowing-import
  '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall
    sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)

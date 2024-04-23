@@ -6,7 +6,7 @@
 ;;; Usage: (in-readtable :std)
 
 ;;; Code:
-(in-package :std)
+(in-package :std/readtable)
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defun |#`-reader| (stream sub-char numarg)

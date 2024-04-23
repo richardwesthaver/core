@@ -13,7 +13,7 @@
 ;;     decimal-value digit-value
 ;;     unicode< unicode> unicode= unicode-equal
 ;;     unicode<= unicode>=))
-(in-package :std)
+(in-package :std/string)
 
 ;; (mapc (lambda (s) (export s)) sb-unicode-syms)
 ;; (reexport-from 

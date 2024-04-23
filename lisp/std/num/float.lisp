@@ -9,7 +9,7 @@
 ;;;
 ;;; See http://common-lisp.net/project/ieee-floats/
 
-(in-package :std)
+(in-package :std/num)
 
 ;; The following macro may look a bit overcomplicated to the casual
 ;; reader. The main culprit is the fact that NaN and infinity can be

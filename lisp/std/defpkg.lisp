@@ -5,7 +5,7 @@
 ;;
 
 ;;; Code:
-(in-package :std)
+(in-package :std/defpkg)
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun find-package* (package-designator &optional (error t))

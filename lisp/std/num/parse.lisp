@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :std)
+(in-package :std/num)
 
 (define-condition invalid-number (parse-error)
   ((value :reader invalid-number-value

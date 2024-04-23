@@ -3,7 +3,7 @@
 ;; UNIX only.
 
 ;;; Code:
-(in-package :std)
+(in-package :std/os)
 (require 'sb-posix)
 
 (defun list-all-users ()

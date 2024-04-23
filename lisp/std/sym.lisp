@@ -3,7 +3,7 @@
 ;; inspired by alexandria/symbols.lisp
 
 ;;; Code:
-(in-package :std)
+(in-package :std/sym)
 
 ;;(std::reexport-from 
 ;; :sb-int
@@ -12,7 +12,8 @@
 ;; On SBCL, `with-unique-names' is defined under
 ;; src/code/primordial-extensions.lisp. We use that instead of
 ;; defining our own.
-(setf (macro-function 'with-gensyms) (macro-function 'with-unique-names))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (macro-function 'with-gensyms) (macro-function 'with-unique-names)))
 
 (declaim (inline ensure-symbol))
 (defun ensure-symbol (name &optional (package *package*))
@@ -68,26 +69,6 @@ string as the argument."
 
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
-
-(defun g!-symbol-p (s)
-  (and (symbolp s)
-       (> (length (symbol-name s)) 2)
-       (string= (symbol-name s)
-                "G!"
-                :start1 0
-                :end1 2)))
-
-(defun o!-symbol-p (s)
-  (and (symbolp s)
-       (> (length (symbol-name s)) 2)
-       (string= (symbol-name s)
-                "O!"
-                :start1 0
-                :end1 2)))
-
-(defun o!-symbol-to-g!-symbol (s)
-  (symb "G!"
-        (subseq (symbol-name s) 2)))
 
 (sb-ext:with-unlocked-packages (:sb-int)
   (handler-bind

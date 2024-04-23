@@ -1,17 +1,56 @@
 (pushnew :std *features*)
 (pushnew "STD" *modules* :test 'equal)
-(uiop:define-package :std
-  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
-  (:use-reexport :std/named-readtables)
-  (:shadowing-import-from :uiop :println)
-  (:shadowing-import-from
-   :sb-int 
-   :ensure-list :recons :memq :assq :ensure-list 
-   :proper-list-of-length-p :proper-list-p :singleton-p
-   :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*)
+
+(defpackage :std/named-readtables
+  (:use :cl)
   (:export
-   ;; types
-   ;; err
+   :defreadtable
+   :in-readtable
+   :make-readtable
+   :merge-readtables-into
+   :find-readtable
+   :ensure-readtable
+   :rename-readtable
+   :readtable-name
+   :register-readtable
+   :unregister-readtable
+   :copy-named-readtable
+   :list-all-named-readtables
+   ;; Types
+   :named-readtable-designator
+   ;; Conditions
+   :readtable-error
+   :reader-macro-conflict
+   :readtable-does-already-exist
+   :readtable-does-not-exist
+   :parse-body))
+
+(defpackage :std/defpkg
+  (:use :cl)
+  (:nicknames :pkg)
+  (:export :defpkg
+   :find-package* :find-symbol* :symbol-call
+           :intern* :export* :import* :shadowing-import* 
+           :shadow* :make-symbol* :unintern*
+   :symbol-shadowing-p :home-package-p
+   :symbol-package-name :standard-common-lisp-symbol-p
+   :reify-package :unreify-package :reify-symbol :unreify-symbol
+   :nuke-symbol-in-package :nuke-symbol :rehome-symbol
+           :ensure-package-unused :delete-package*
+           :package-names :packages-from-names :fresh-package-name 
+   :rename-package-away :package-definition-form :parse-defpkg-form
+           :ensure-package))
+
+(defpackage :std-user
+  (:use :cl :std/named-readtables :std/defpkg)
+  (:shadowing-import-from :std/defpkg :defpkg)
+  (:export :defpkg :in-readtable))
+
+(in-package :std-user)
+
+(defpkg :std/err
+  (:use :cl)
+  (:export    ;; err
    :std-error :std-error-message
    :define-error-reporter
    :deferror
@@ -35,7 +74,60 @@
    :invalid-argument-item
    :invalid-argument-reason
    :invalid-argument-p
-   :unwind-protect-case
+   :unwind-protect-case))
+
+(defpkg :std/sym
+  (:use :cl)
+  (:shadowing-import-from :sb-int
+   :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*
+   :gensymify)
+  (:export
+   :ensure-symbol
+   :format-symbol
+   :make-keyword
+   :make-slot-name
+   :make-gensym
+   :make-gensym-list
+   :with-gensyms
+   :with-unique-names
+   :symbolicate
+   :keywordicate
+   :gensymify
+   :gensymify*))
+
+(defpkg :std/list
+  (:use :cl)
+  (:shadowing-import-from :sb-int 
+   :ensure-list :recons :memq :assq
+   :ensure-list :proper-list-of-length-p :proper-list-p :singleton-p)
+  (:export
+   :ensure-car
+   :ensure-cons
+   :appendf
+   :nconcf
+   :unionf
+   :nunionf
+   :reversef
+   :nreversef
+   :deletef
+   :flatten
+   :group
+   :let-binding-transform
+   :ensure-list :recons :memq :assq
+   :circular-list :circular-list-p :circular-tree-p :merge!
+   :sort!))
+
+(defpkg :std/type
+  (:use :cl)
+  (:import-from :std/sym :format-symbol)
+  (:import-from :std/list :ensure-car)
+  (:export :+default-element-type+
+   :array-index :array-length
+   :negative-integer :non-negative-integer :positive-integer))
+
+(defpkg :std/num
+  (:use :cl)
+  (:export
    ;; num/parse
    :parse-number
    :parse-real-number
@@ -48,7 +140,12 @@
    :encode-float32
    :decode-float32
    :encode-float64
-   :decode-float64
+   :decode-float64))
+
+(defpkg :std/stream
+  (:use :cl)
+  (:import-from :std/type :non-negative-integer :positive-integer)
+  (:export
    ;; stream
    :copy-stream
    :wrapped-stream
@@ -58,66 +155,53 @@
    :prefixed-character-output-stream
    :stream-of :char-count-of :line-count-of :col-count-of
    :prev-col-count-of :col-index-of :write-prefix
-   :prefix-of
-   ;; path
-   #:wild-pathname
-   #:non-wild-pathname
-   #:absolute-pathname
-   #:relative-pathname
-   #:directory-pathname
-   #:absolute-directory-pathname
-   ;; file
-   #:file-pathname
-   #:with-open-files
-   #:write-stream-into-file
-   #:write-file-into-stream
-   #:file=
-   #:file-size
-   :file-size-in-octets
-   :+pathsep+
-   :octet-vector=
-   :file-date
-   :file-timestamp
-   :directory-path-p
-   :hidden-path-p
-   :directory-path :find-files
-   :count-file-lines
-   ;; string
-   :*omit-nulls*
-   :*whitespaces*
-   :string-designator
-   :split
-   :trim
-   :collapse-whitespaces
-   :make-template-parser
-   :string-case
-   ;; fmt
-   :printer-status :fmt-row :format-sxhash :iprintln :fmt-tree :println
-   ;; sym
-   :ensure-symbol
-   :format-symbol
-   :make-keyword
-   :make-slot-name
-   :make-gensym
-   :make-gensym-list
-   :with-gensyms
-   :with-unique-names
-   :symbolicate
-   ;; list
-   :ensure-car
-   :ensure-cons
-   :appendf
-   :nconcf
-   :unionf
-   :nunionf
-   :reversef
-   :nreversef
-   :deletef
-   :let-binding-transform
-   :ensure-list :recons :memq :assq
-   :circular-list :circular-list-p :circular-tree-p
-   ;; :proper-list-of-length-p :proper-list-p :singleton-p
-   ;; thread
+   :prefix-of))
+
+(defpkg :std/fu
+  (:use :cl)
+  (:export
+   :ensure-function
+   :ensure-functionf
+   :disjoin
+   :conjoin
+   :compose
+   :multiple-value-compose
+   :curry
+   :rcurry))
+
+(defpkg :std/array
+  (:use :cl)
+  (:export :copy-array :signed-array-length))
+
+(defpkg :std/hash-table
+  (:use :cl)
+  (:nicknames :std/ht)
+  (:export :hash-table-alist
+   :maphash-keys :hash-table-keys
+   :maphash-values :hash-table-values))
+
+(defpkg :std/alien
+  (:use :cl :sb-alien)
+  (:import-from :std/sym :symbolicate)
+  (:export
+   :shared-object-name
+   :define-alien-loader
+   :c-string-to-string-list
+   :list-all-shared-objects
+   :num-cpus
+   :*cpus*
+   :loff-t
+   :memset))
+
+(defpkg :std/mop
+  (:use :cl)
+  (:export :list-slot-values-using-class
+   :list-class-methods :list-class-slots :list-indirect-slot-methods))
+   
+(defpkg :std/thread
+  (:use :cl :sb-thread :sb-concurrency)
+  (:import-from :std/list :flatten)
+  (:export
    :print-thread-message-top-level :thread-support-p
    :find-thread-by-id :thread-id-list
    :make-threads :with-threads :finish-threads
@@ -135,53 +219,15 @@
    :job-tasks :make-job :job-p :task-object
    :make-task :task-p :task :wait-for-threads
    :task-pool-oracle :task-pool-jobs :task-pool-stages
-   :task-pool-workers :task-pool-results
-   ;; util
-   :find-package* #:find-symbol* #:symbol-call
-   :intern* #:export* #:import* #:shadowing-import* 
-   :shadow* #:make-symbol* #:unintern*
-   :symbol-shadowing-p #:home-package-p
-   :symbol-package-name #:standard-common-lisp-symbol-p
-   :reify-package #:unreify-package #:reify-symbol #:unreify-symbol
-   :nuke-symbol-in-package #:nuke-symbol #:rehome-symbol
-   :ensure-package-unused #:delete-package*
-   :package-names #:packages-from-names #:fresh-package-name 
-   :rename-package-away #:package-definition-form #:parse-defpkg-form
-   :ensure-package :defpkg
-   :save-lisp-tree-shake-and-die
-   :save-lisp-and-live
-   ;; ana
-   :awhen
-   :acond
-   :alambda
-   :nlet-tail
-   :alet%
-   :alet
-   :acond2
-   :it
-   :aif
-   :this
-   :self
-   ;; pan
-   :pandoriclet
-   :pandoriclet-get
-   :pandoriclet-set
-   :get-pandoric
-   :with-pandoric
-   :pandoric-hotpatch
-   :pandoric-recode
-   :plambda
-   :pandoric-eval
-   ;; fu
-   :copy-array
-   :hash-table-alist
-   :until
-   :mkstr
-   :symb
-   :group
-   :flatten
-   :fact
-   :choose
+   :task-pool-workers :task-pool-results))
+
+(defpkg :std/macs
+  (:use :cl)
+  (:import-from :std/sym :symb :mkstr :make-gensym-list :once-only)
+  (:import-from :std/named-readtables :in-readtable :parse-body)
+  (:import-from :std/list :flatten)
+  (:export
+   :named-lambda
    :g!-symbol-p
    :defmacro/g!
    :o!-symbol-p
@@ -189,6 +235,9 @@
    :defmacro!
    :defun!
    :dlambda
+   :until
+   :fact
+   :choose
    :make-tlist
    :tlist-left
    :tlist-right
@@ -214,38 +263,32 @@
    :define-constant
    :def!
    :eval-always
-   :merge! :sort!
-   :list-slot-values-using-class :list-class-methods :list-class-slots :list-indirect-slot-methods
-   :signed-array-length
-   :take
-   :maphash-keys
-   :hash-table-keys
-   :maphash-values
-   :hash-table-values
-   :current-lisp-implementation
-   :tmpfile
-   :ensure-function
-   :ensure-functionf
-   :disjoin
-   :conjoin
-   :compose
-   :multiple-value-compose
-   :curry
-   :rcurry
-   :named-lambda
-   ;; alien
-   :shared-object-name
-   :define-alien-loader
-   :c-string-to-string-list
-   :list-all-shared-objects
-   :num-cpus
-   :*cpus*
-   :loff-t
-   :memset
-   ;; os
-   :list-all-users
-   :list-all-groups
-   ;; bits
+   ;; ana
+   :awhen
+   :acond
+   :alambda
+   :nlet-tail
+   :alet%
+   :alet
+   :acond2
+   :it
+   :aif
+   :this
+   :self
+   ;; pan
+   :pandoriclet
+   :pandoriclet-get
+   :pandoriclet-set
+   :get-pandoric
+   :with-pandoric
+   :pandoric-hotpatch
+   :pandoric-recode
+   :plambda
+   :pandoric-eval))
+
+(defpkg :std/bit
+  (:use :cl)
+  (:export
    :make-bits
    :sign-bit
    :different-signs-p
@@ -262,7 +305,9 @@
    :clone-strings
    :clone-octets-to-alien
    :clone-octets-from-alien
-   :foreign-int-to-integer :foreign-int-to-bool :bool-to-foreign-int
+   :foreign-int-to-integer
+   :foreign-int-to-bool
+   :bool-to-foreign-int
    :bitfield
    :bitfield-slot-name
    :bitfield-slot-start
@@ -283,7 +328,81 @@
    :octet-vector-to-hex-string
    :octets-to-integer
    :integer-to-octets
-   :hexchar-to-int
+   :hexchar-to-int))
+
+(defpkg :std/fmt
+  (:use :cl)
+  (:import-from :std/list :group :ensure-cons)
+  (:shadowing-import-from :uiop :println)
+  (:export :printer-status :fmt-row :format-sxhash :iprintln :fmt-tree :println))
+
+(defpkg :std/path
+  (:use :cl)
+  (:export
+   :wild-pathname
+   :non-wild-pathname
+   :absolute-pathname
+   :relative-pathname
+   :directory-pathname
+   :absolute-directory-pathname))
+
+(defpkg :std/os
+  (:use :cl)
+  (:export
+   :list-all-users
+   :list-all-groups))
+
+(defpkg :std/file
+  (:use :cl)
+  (:export
+   :tmpfile
+   :file-pathname
+   :with-open-files
+   :write-stream-into-file
+   :write-file-into-stream
+   :file=
+   :file-size
+   :file-size-in-octets
+   :+pathsep+
+   :octet-vector=
+   :file-date
+   :file-timestamp
+   :directory-path-p
+   :hidden-path-p
+   :directory-path
+   :find-files
+   :count-file-lines))
+
+(defpkg :std/string
+  (:use :cl)
+  (:export
+   :*omit-nulls*
+   :*whitespaces*
+   :string-designator
+   :ssplit
+   :trim
+   :collapse-whitespaces
+   :make-template-parser
+   :string-case))
+
+(defpkg :std/seq
+  (:use :cl)
+  (:import-from :std/array :signed-array-length)
+  (:export :take))
+
+(defpkg :std/sys
+  (:use :cl)
+  (:export
+   :current-lisp-implementation
+   :save-lisp-tree-shake-and-die
+   :save-lisp-and-live))
+
+(defpkg :std/readtable
+  (:use :cl)
+  (:import-from :std/named-readtables :defreadtable)
+  (:import-from :std/sym :symb)
+  (:import-from :std/macs :defmacro!)
+  (:export
    ;; readtable
    :|#"-reader|
    :|#`-reader|
@@ -295,5 +414,8 @@
    :|#~-reader|
    :_))
 
-(defpackage :std-user
-  (:use :cl :cl-user :std))
+(defpkg :std
+  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
+  (:use-reexport :std/named-readtables :std/defpkg :std/err :std/sym :std/list :std/type :std/num
+   :std/stream :std/fu :std/array :std/hash-table :std/alien :std/mop :std/thread
+   :std/macs :std/bit :std/fmt :std/path :std/os :std/file :std/string :std/seq :std/sys :std/readtable))

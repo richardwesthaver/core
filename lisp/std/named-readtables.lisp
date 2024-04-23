@@ -12,30 +12,6 @@
 ;; behavior (using standard) versus your source code (custom).
 
 ;;; Code:
-(uiop:define-package :std/named-readtables
-  (:use :cl)
-  (:export
-   #:defreadtable
-   #:in-readtable
-   #:make-readtable
-   #:merge-readtables-into
-   #:find-readtable
-   #:ensure-readtable
-   #:rename-readtable
-   #:readtable-name
-   #:register-readtable
-   #:unregister-readtable
-   #:copy-named-readtable
-   #:list-all-named-readtables
-   ;; Types
-   #:named-readtable-designator
-   ;; Conditions
-   #:readtable-error
-   #:reader-macro-conflict
-   #:readtable-does-already-exist
-   #:readtable-does-not-exist
-   #:parse-body))
-
 (in-package :std/named-readtables)
 (pushnew :named-readtables *features*)
 

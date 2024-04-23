@@ -7,7 +7,7 @@
 ;; mostly yoinked from sb-thread and friends
 
 ;;; Code:
-(in-package :std)
+(in-package :std/thread)
 
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
@@ -203,26 +203,41 @@ lifetime of SCOPE, but never before and never after."))
     (declare (ignore pool))
     (make-threads count function :name *default-worker-name*)))
 
-(defmacro define-task-kernel (name (&rest opts) &body body)
-  "Define a kernel function for tasks."
-  `(defun ,name (,@opts) 
+(defmacro define-task-kernel (name (&key args accessors) &body body)
+  "Define a task kernel.
+
+(define-task-kernel NAME (&key ARGS MAX MIN ACCESSORS)
+
+The kernel should process all options and return a function - the
+'kernel function'.
+
+The kernel function is installed in worker threads by passing it to
+SB-THREAD:MAKE-THREAD. It may accept a varying number of arguments
+specified by ARGS.
+
+ACCESSORS is a list of pandoric accessors which can be called on the
+kernel via an ORACLE. 
+
+This interface is experimental and subject to change."
+  `(defun ,name (,@args) 
      ,@body))
 
-(define-task-kernel default-task-kernel ()
+(define-task-kernel default-task-kernel (:args () )
   "The default task kernel used to initialize the KERNEL slot of
-task-pools. Currently, the kernel is used to initialize every worker
-in the pool when it is spawned starts running immediately."
+task-pools.
+
+"
   nil)
 
 (defgeneric spawn-worker (pool)
   (:method ((pool null))
     (declare (ignore pool))
-    (make-thread *default-task-kernel*)))
+    (make-thread (default-task-kernel))))
 
 (defgeneric spawn-workers (pool count)
   (:method ((pool null) (count fixnum))
     (declare (ignore pool))
-    (make-threads count *default-task-kernel* :name *default-worker-name*)))
+    (make-threads count (default-task-kernel) :name *default-worker-name*)))
 
 (defstruct task-pool
   (oracle-id nil :type (or null (unsigned-byte 32)))
@@ -325,7 +340,7 @@ indicating in the state slot the result of the computation."))
 
 ;; TODO..
 (defmethod run-job ((self task-pool) (job job))
-  (log:trace! "running remote job...")
+  #+log (log:trace! "running remote job...")
   (push-job job self))
 
 (defclass stage ()
