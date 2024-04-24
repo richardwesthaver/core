@@ -91,7 +91,7 @@ slot. The :ast slot is always ignored."))
 
 (defun make-sxp (&rest form) (make-instance 'sxp :ast form))
 
-(deftype sxp-fmt-designator () '(member :canonical :collapsed)) 
+(deftype sxp-fmt-designator () '(member :canonical :collapsed :pretty)) 
 
 (declaim (inline unwrap-object)) ;; inline -200
 (defun unwrap-object (obj &key (slots t) (methods nil)

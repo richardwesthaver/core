@@ -19,7 +19,7 @@ x.lisp
 (sb-ext:enable-debugger)
 
 #-quicklisp
-(let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname))))
+(let ((quicklisp-init "/usr/local/share/quicklisp/setup.lisp"))
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 

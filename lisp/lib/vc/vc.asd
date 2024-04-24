@@ -5,8 +5,7 @@
                (:file "ignore")
                (:file "proto")
                (:file "hg")
-               (:file "git")
-               (:file "vc"))
+               (:file "git"))
   :in-order-to ((test-op (test-op :vc/tests))))
 
 (defsystem :vc/tests

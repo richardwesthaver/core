@@ -164,7 +164,7 @@ via the special form stored in RECIPE."))
    (scripts :initarg :scripts :type (or pathname list) :accessor sk-scripts)
    (license :initarg :license :type license-designator :accessor sk-license)
    (log-level :initarg :log-level :type log-level-designator)
-   (fmt :initarg :fmt :type symbol)
+   (fmt :initform :pretty :initarg :fmt :type symbol)
    (alias-list :initarg :alias-list
                :type (or list vector)
 	       :documentation "alist of aliases. currently used as a special cli-opt-parser by the skel binary.")
@@ -330,9 +330,9 @@ via the special form stored in RECIPE."))
                        :exclude exclude)))
 
 ;; TODO 2023-09-26: This belongs in sxp
-(defmethod write-sxp-stream ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :collapsed))
+(defmethod write-sxp-stream ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :pretty))
   (case fmt
-    (:collapsed
+    (:pretty
      (if (listp (ast self))
 	 (loop for (k v . rest) on (ast self)
 	       by #'cddr
