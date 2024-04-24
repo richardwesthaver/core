@@ -9,13 +9,6 @@
 ;;; Code:
 (in-package :std/bit)
 
-;;; Types
-;; Bytes aren't necessarily 8 bits wide in Lisp. OCTET is always 8
-;; bits.
-(deftype octet () '(unsigned-byte 8))
-(deftype octet-vector (&optional length)
-  `(simple-array octet (,length)))
-
 ;;; Bits
 (defun make-bits (length &rest args)
   (apply #'make-array length (nconc (list :element-type 'bit) args)))

@@ -48,11 +48,15 @@
 
 (defpackage :net/codec/dns
   (:nicknames :codec/dns)
-  (:use :cl :std :net/core)
+  (:use :cl :std :net/core :net/codec/punycode)
   (:export
    :*record-type-table*
    :record-type-id
-   :id-record-type))
+   :id-record-type
+   :decode-record :decode-response
+   :encode-host :decode-host :encode-header :decode-header
+   :encode-query :decode-query
+   :decode-data))
 
 (defpackage :net/codec/tlv
   (:nicknames :codec/tlv)

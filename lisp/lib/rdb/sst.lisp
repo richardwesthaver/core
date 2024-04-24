@@ -17,10 +17,13 @@
 (defstruct (sst-file-writer (:constructor %make-sst-file-writer (sap)))
   (sap nil :type (or null alien)))
 
-(defun make-sst-file-writer (&optional sap)
+(defun make-sst-file-writer (&optional comparator
+                               (env-opts (rocksdb-envoptions-create))
+                               (io-opts (rocksdb-options-create)))
   (%make-sst-file-writer
-   (or sap
-       (create-sst-writer-raw))))
+   (if comparator
+       (create-sst-writer-with-comparator-raw comparator env-opts io-opts)
+       (create-sst-writer-raw env-opts io-opts))))
 
 (defun sst-file-size (writer)
   (declare (sst-file-writer writer))

@@ -62,6 +62,15 @@ to initialize the instance with custom configuration."
               do (setf (deref flist i) (make-alien-string f :null-terminate nil)))
         (rocksdb-ingest-external-file db flist flen opts err)))))
 
+(defun ingest-db-cf-raw (db cf files &optional (opts (rocksdb-ingestexternalfileoptions-create)))
+  (let ((flen (length files)))
+    (with-errptr (err 'ingest-db-error)
+      (with-alien ((flist (* c-string) (make-alien c-string flen)))
+        (loop for f in files
+              for i from 0 to flen
+              do (setf (deref flist i) (make-alien-string f :null-terminate nil)))
+        (rocksdb-ingest-external-file-cf db cf flist flen opts err)))))
+  
 ;;; KVs
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
@@ -222,8 +231,14 @@ to initialize the instance with custom configuration."
   (rocksdb-release-snapshot db snapshot))
 
 ;;; SST
-(defun create-sst-writer-raw ()
-  (rocksdb-sstfilewriter-create (rocksdb-envoptions-create) (rocksdb-options-create)))
+(defun create-sst-writer-raw (&optional (env-opts (rocksdb-envoptions-create)) (io-opts (rocksdb-options-create)))
+  (rocksdb-sstfilewriter-create env-opts io-opts))
+
+(defun create-sst-writer-with-comparator-raw (comparator
+                                              &optional
+                                                (env-opts (rocksdb-envoptions-create))
+                                                (io-opts (rocksdb-options-create)))
+  (rocksdb-sstfilewriter-create-with-comparator env-opts io-opts comparator))
 
 (defun finish-sst-writer-raw (writer)
   (with-errptr (err 'rocksdb-error)
@@ -257,7 +272,7 @@ to initialize the instance with custom configuration."
   (let ((key-octets (string-to-octets key :null-terminate nil))
         (val-octets (string-to-octets val :null-terminate nil)))
     (sst-put-raw writer key-octets val-octets)))
-  
+
 (defun sst-put-ts-raw (writer key val ts)
   (with-errptr (err 'rocksdb-error)
     (rocksdb-sstfilewriter-put-with-ts writer key (length key) val (length val) ts (length ts) err)))

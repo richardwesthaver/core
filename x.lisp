@@ -161,6 +161,7 @@ install")))
 (defun x-save (args)
   (if args
       (let ((name (car args)))
+        (ensure-directories-exist *stash-path*)
         (format t "saving core to: ~A~%" (merge-pathnames name *stash-path*))
         (string-case (name)
           ("prelude" (compile-prelude t t))

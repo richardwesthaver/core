@@ -126,3 +126,20 @@ the forms in BODY."
          ,(if destroy
               `(destroy-db ,db-var)
               `(shutdown-db ,db-var)))))
+;;; sst
+(defmacro with-sst ((sst &key file comparator destroy) &body body)
+  "Do BODY with SST bound to a SST-FILE-WRITER. When FILE is supplied
+the writer will automatically open that file.
+
+When COMPARATOR is supplied it is used as the comparator function for
+the writer. Every key inserted MUST be in ascending order, according
+to the comparator. By default the ordering is binary
+lexicographically.
+
+It is up to the developer to ensure that the comparator used by a
+writer is exactly the same as the comparator used when ingesting the
+file by a RDB instance."
+  `(let ((,sst (make-sst-file-writer ,comparator)))
+     ,@(when file `((open-sst ,sst ,file)))
+     ,@body
+     ,@(when destroy `((destroy-sst ,sst)))))

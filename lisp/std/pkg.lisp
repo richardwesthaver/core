@@ -81,11 +81,13 @@
 
 (defpkg :std/type
   (:use :cl)
-  (:import-from :std/sym :format-symbol)
+  (:import-from :std/sym :format-symbol :with-gensyms)
   (:import-from :std/list :ensure-car)
   (:export :+default-element-type+
    :array-index :array-length
-   :negative-integer :non-negative-integer :positive-integer))
+   :negative-integer :non-negative-integer
+   :positive-integer :octet
+   :octet-vector))
 
 (defpkg :std/num
   (:use :cl)
@@ -278,14 +280,13 @@
 
 (defpkg :std/bit
   (:use :cl)
+  (:import-from :std/type :octet :octet-vector)
   (:export
    :make-bits
    :sign-bit
    :different-signs-p
    :mortify-bits
    :int-list-bits
-   :octet
-   :octet-vector
    :aref-bit
    :make-bit-vector
    :logbit
@@ -336,6 +337,7 @@
 (defpkg :std/file
   (:use :cl)
   (:import-from :std/macs :define-constant :once-only :eval-always)
+  (:import-from :std/type :octet :octet-vector :array-index :array-length)
   (:export
    :tmpfile
    :file-pathname

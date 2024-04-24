@@ -1,4 +1,4 @@
-./x$
+^x$
 .*Cargo.lock$
 .*target/.*
 .*system-index.txt$

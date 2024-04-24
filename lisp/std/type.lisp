@@ -5,6 +5,12 @@
 ;;; Code:
 (in-package :std/type)
 
+;; Bytes aren't necessarily 8 bits wide in Lisp. OCTET is always 8
+;; bits.
+(deftype octet () '(unsigned-byte 8))
+(deftype octet-vector (&optional length)
+  `(simple-array octet (,length)))
+
 (defconstant +default-element-type+ 'character)
 
 (deftype array-index (&optional (length (1- array-dimension-limit)))

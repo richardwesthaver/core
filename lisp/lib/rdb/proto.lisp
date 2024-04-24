@@ -64,6 +64,8 @@ handle stored in another slot of the same object."))
   (:documentation "Flush the database SELF."))
 (defgeneric sync-db (self other &key) ;;nyi
   (:documentation "Perform a synchronization on SELF using OTHER."))
+(defgeneric find-cf (cf self &key)
+  (:documentation "Find the column-familiy CF in SELF."))
 (defgeneric flush-cf (self cf &key)
   (:documentation "Flush the column-family CF in SELF."))
 (defgeneric repair-db (self &key)

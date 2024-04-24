@@ -47,6 +47,7 @@
    :sst-put-str-raw
    :open-sst-file :close-sst-file
    ;; proto
+   :find-cf
    :put-key :put-kv
    :get-key :get-kv
    :put-cf-key :get-cf-key
@@ -110,7 +111,8 @@
    :with-cf
    :do-cf
    :with-iter ;; generic
-   :do-cfs))
+   :do-cfs
+   :with-sst))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb t)

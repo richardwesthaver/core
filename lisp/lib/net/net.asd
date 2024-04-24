@@ -5,10 +5,9 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
-   :dat
-   :obj
-   :swank-client :dexador
-   :puri ;; fetch
+   :dat :obj
+   :swank :swank-client
+   :dexador :puri ;; fetch
    :hunchentoot :std :log)
   :serial t
   :components ((:file "pkg")

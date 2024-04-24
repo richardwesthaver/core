@@ -38,7 +38,11 @@
 
 (define-condition ingest-db-error (rocksdb-error)
   ()
-  (:documentation "Error signaled while flushing a database."))
+  (:documentation "Error signaled while ingesting a database."))
+
+(define-condition sst-writer-error (rocksdb-error)
+  ()
+  (:documentation "Error signaled while writing a SST file."))
 
 (define-condition repair-db-error (rocksdb-error)
   ()

@@ -413,8 +413,14 @@ and internal sap slots are initialized."
       (loop for cf across (rdb-cfs self)
             do (create-cf self cf))))
 
-(defmethod ingest-db ((self rdb) (files list) &key)
-  (ingest-db-raw (rdb-db self) files))
+(defmethod find-cf ((cf string) (self rdb) &key)
+  "Find a CF by name."
+  (find cf (rdb-cfs self) :key 'rdb-cf-name :test 'equal))
+
+(defmethod ingest-db ((self rdb) (files list) &key cf (opts (rocksdb-ingestexternalfileoptions-create)))
+  (if cf
+      (ingest-db-cf-raw (rdb-db self) (find-cf cf self) files opts)
+      (ingest-db-raw (rdb-db self) files opts)))
 
 (defmethod destroy-cfs ((self rdb) &key &allow-other-keys)
   (with-slots (cfs) self

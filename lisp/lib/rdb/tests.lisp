@@ -46,6 +46,9 @@
         (rocksdb:rocksdb-iter-seek-to-first iter)
         (dotimes (i 999)
           (rocksdb:rocksdb-iter-next iter)
+          (with-alien ((tslen size-t))
+            (rocksdb-iter-timestamp iter (addr tslen))
+            (is (zerop tslen)))
           (is (rocksdb:rocksdb-iter-valid iter))
           (is (string= (get-kv-str-raw db (iter-key-str-raw iter)) (iter-val-str-raw iter))))
         (rocksdb:rocksdb-iter-next iter)
@@ -55,7 +58,7 @@
 (deftest rdb ()
   "Test RDB struct and methods."
   ;; NOTE: passing a directory with trailing slash causes segfault - guess we gotta handle tht
-  (with-db (db (debug! (create-db "/tmp/rdb" :open t)))
+  (with-db (db (create-db "/tmp/rdb" :open t))
     (info! (hash-table-alist (backfill-opts db :full t)))
     ;; get/set without cf
     (put-kv-str-raw (rdb-db db) "key" "val")
@@ -92,6 +95,7 @@
       (iter-seek-to-first it)
       (is (sequence:emptyp (iter-key it)))
       (is (sequence:emptyp (iter-val it)))
+      (is (zerop (nth 1 (multiple-value-list (iter-timestamp it)))))
       (is (not (iter-valid-p it)))
       (iter-seek-to-last it)
       (is (typep (iter-kv it) 'rdb-kv))
@@ -111,12 +115,12 @@
      (rdb-name tmp)
      (get-prop tmp "rocksdb.dbstats")
      (get-prop tmp "rocksdb.levelstats")
-     (print-stats tmp)
-     )))
+     (print-stats tmp))))
+
 
 (deftest metadata ()
   "Test metadata types: CF -> LEVEL -> SST-FILE."
-  (with-temp-db (tmp () :open t)
+  (with-temp-db (tmp () :open t :destroy t)
     (insert-key tmp "foo" "bar")
     (flush-db tmp)
     (let ((cf-meta (get-metadata tmp)))
@@ -129,13 +133,17 @@
 (deftest sst ()
   "Test SST-FILE-WRITER and INGEST-DB."
   (with-temp-db (tmp () :open t :destroy t)
+    ;; without macro
     (let ((writer (make-sst-file-writer))
           (path (namestring (merge-pathnames (format nil "~A" (gensym "sst"))))))
       (open-sst writer path)
       (dotimes (i 10000)
         (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
       (finish-sst writer) ;; will fail on empty writer
-      (ingest-db tmp (list path))
       (destroy-sst writer)
-      (delete-file path))))
+      (ingest-db tmp (list path))
+      (delete-file path)
+      ;; with macro
+      (with-sst (s :file path :destroy t)
+        (put-kv s (make-kv "nil" "nil"))))))
 
