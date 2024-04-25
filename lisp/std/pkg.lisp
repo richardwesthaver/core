@@ -371,11 +371,14 @@
 
 (defpkg :std/seq
   (:use :cl)
+  (:import-from :sb-int :collect)
   (:import-from :std/array :signed-array-length)
   (:export :take))
 
 (defpkg :std/sys
   (:use :cl)
+  (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
+  (:shadowing-import-from :sb-vm :list-allocated-objects)
   (:export
    :current-lisp-implementation
    :save-lisp-tree-shake-and-die

@@ -10,7 +10,7 @@
 :docs ((:org "readme") (:org "install") (:org "tests") (:org "todo"))
 :imports ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
 :rules
-((box () #$podman build .$#)
+((box () #$podman build . --build-arg IMAGE=localhost/box -t core$#)
  (clean () #$rm -rf .stash$#
         #$cd rust && cargo clean$#
         #$cd emacs && rm -rf */*.elc$#

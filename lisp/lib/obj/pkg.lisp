@@ -13,11 +13,26 @@
 (defpackage :obj/list
   (:nicknames :list)
   (:use :cl :std)
+  (:import-from :sb-lockless
+   :make-ordered-list :lfl-insert
+   :lfl-delete :lfl-find
+   :lfl-insert*/t :lfl-delete*/t :lfl-find*/t
+   :do-lockfree-list :lfl-keys :make-marked-ref)
   (:export :clist))
 
 (defpackage :obj/hash
   (:nicknames :hash)
   (:use :cl :std)
+  (:import-from :sb-lockless
+   :make-so-map/fixnum :+hash-nbits+
+   :get-next :node-hash
+   :so-head :so-bins
+   :so-key :so-data
+   :so-count :so-key-node-p
+   :so-insert :so-delete
+   :so-find :so-find/string
+   :so-maplist :make-so-map/string
+   :make-so-set/string :make-so-map/addr :make-marked-ref)
   (:export 
    :*global-hasher*
    :+global-hash+

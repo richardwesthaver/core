@@ -629,11 +629,13 @@ buffer."
   (insert (ido-completing-read "Eshell history: "
                                (delete-dups
                                 (ring-elements eshell-history-ring)))))
-;;; Tramp
 
+;;; Tramp
 (setopt tramp-default-method "ssh"
         tramp-default-user user-login-name
         tramp-default-host "localhost")
+(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+
 ;;; Org
 ;; todos
 (setq org-todo-keywords
