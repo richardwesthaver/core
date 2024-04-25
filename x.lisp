@@ -231,6 +231,6 @@ install")))
  "x"
  :toplevel #'x-init
  ;; :callable-exports '("compile_std" "compile_prelude")
- :purify t
+ :purify nil
  :executable t
  :save-runtime-options t)

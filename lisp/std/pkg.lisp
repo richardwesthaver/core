@@ -337,7 +337,7 @@
 (defpkg :std/file
   (:use :cl)
   (:import-from :std/macs :define-constant :once-only :eval-always)
-  (:import-from :std/type :octet :octet-vector :array-index :array-length)
+  (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
   (:export
    :tmpfile
    :file-pathname
