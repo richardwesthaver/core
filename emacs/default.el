@@ -88,7 +88,7 @@
    slime ;; common lisp server
    graphviz-dot-mode
    bbdb
-   ;; slime-company
+   slime-company
    which-key ;; key helper
    ;; langs
    rust-mode)
@@ -178,16 +178,16 @@
   (setq slime-contribs '(slime-fancy
                          slime-quicklisp
                          slime-hyperdoc
-                         slime-listener-hooks
-                         slime-enclosing-context
-                         slime-media
-                         slime-mrepl
-                         slime-sbcl-exts
+                         ;; slime-listener-hooks
+                         ;; slime-enclosing-context
+                         ;; slime-media
+                         ;; slime-mrepl
+                         ;; slime-sbcl-exts
                          slime-cape ;; ext
-                         slime-cl-indent
+                         ;; slime-cl-indent
                          ;; slime-snapshot
-                         slime-sprof
-                         slime-tramp
+                         ;; slime-sprof
+                         ;; slime-tramp
                          ;; slime-typeout-frame
                          slime-xref-browser
                          ;; slime-highlight-edits
@@ -634,7 +634,8 @@ buffer."
 (setopt tramp-default-method "ssh"
         tramp-default-user user-login-name
         tramp-default-host "localhost")
-(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+(with-eval-after-load "tramp"
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 ;;; Org
 ;; todos

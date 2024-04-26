@@ -18,10 +18,11 @@
 
 (defmethod build ((self submission-queue-offsets) &key &allow-other-keys)
   (with-slots (head tail ring-mask ring-entries flags dropped array user-addr) self
-      (with-io-sqring-offsets res
-          ((head head) (tail tail) (ring-mask ring-mask) (ring-entries ring-entries) (flags flags)
-           (dropped dropped) (array array) (user-addr user-addr))
-        res)))
+;;      (with-io-sqring-offsets res
+;;          ((head head) (tail tail) (ring-mask ring-mask) (ring-entries ring-entries) (flags flags)
+;;           (dropped dropped) (array array) (user-addr user-addr))
+;;            res)))
+    ))
 
 ;; used to send IO requests to the kernel
 (defstruct submission-queue
