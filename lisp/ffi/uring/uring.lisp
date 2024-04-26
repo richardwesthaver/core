@@ -77,12 +77,12 @@ which accepts a boolean value and automatically adjust the slot."
 (define-io-param-feature feat-cqe-skip-p ioring-feat-cqe-skip)
 (define-io-param-feature feat-linked-file-p ioring-feat-linked-file)
 
-(defmethod build ((self io-params) &key &allow-other-keys)
-  (with-slots (sq-entries cq-entries flags sq-thread-cpu sq-thread-idle features wq-fd sq-off cq-off) self
-    (with-io-uring-params res ((sq-entries sq-entries) (cq-entries cq-entries) (flags flags)
-                               (sq-thread-cpu sq-thread-cpu) (sq-thread-idle sq-thread-idle) (features features)
-                               (wq-fd wq-fd) (sq-off (deref (build sq-off))) (cq-off (deref (build cq-off))))
-      res)))
+;; (defmethod build ((self io-params) &key &allow-other-keys)
+;;   (with-slots (sq-entries cq-entries flags sq-thread-cpu sq-thread-idle features wq-fd sq-off cq-off) self
+;;     (with-io-uring-params res ((sq-entries sq-entries) (cq-entries cq-entries) (flags flags)
+;;                                (sq-thread-cpu sq-thread-cpu) (sq-thread-idle sq-thread-idle) (features features)
+;;                                (wq-fd wq-fd) (sq-off (deref (build sq-off))) (cq-off (deref (build cq-off))))
+;;       res)))
 
 ;; io-uring instance
 (defstruct uring

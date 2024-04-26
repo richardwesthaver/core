@@ -16,13 +16,13 @@
   ;; resv1
   (user-addr 0 :type fixnum))
 
-(defmethod build ((self submission-queue-offsets) &key &allow-other-keys)
-  (with-slots (head tail ring-mask ring-entries flags dropped array user-addr) self
-;;      (with-io-sqring-offsets res
-;;          ((head head) (tail tail) (ring-mask ring-mask) (ring-entries ring-entries) (flags flags)
-;;           (dropped dropped) (array array) (user-addr user-addr))
-;;            res)))
-    ))
+;; (defmethod build ((self submission-queue-offsets) &key &allow-other-keys)
+;;   (with-slots (head tail ring-mask ring-entries flags dropped array user-addr) self
+;; ;;      (with-io-sqring-offsets res
+;; ;;          ((head head) (tail tail) (ring-mask ring-mask) (ring-entries ring-entries) (flags flags)
+;; ;;           (dropped dropped) (array array) (user-addr user-addr))
+;; ;;            res)))
+;;     ))
 
 ;; used to send IO requests to the kernel
 (defstruct submission-queue
@@ -52,18 +52,18 @@
                 (loop for i from 0 below 8
                       collect (ldb (byte 8 (* i 8)) int))))
 
-(defmethod build ((self submission-queue-entry) &key &allow-other-keys)
-  (with-slots (opcode flags ioprio fd off addr len flags2 user-data buf-index personality file-index addr2) self
-    (with-alien ((a (array unsigned-char 80)))
-      (clone-octets-to-alien (u64-bytes addr2) a)
-      ;; TODO
-      ;; (with-io-uring-sqe res
-      ;;     ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
-      ;;      (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
-      ;;      (file-index file-index)
-      ;;      (addr2 a))
-      ;;   res)
-      )))
+;; (defmethod build ((self submission-queue-entry) &key &allow-other-keys)
+;;   (with-slots (opcode flags ioprio fd off addr len flags2 user-data buf-index personality file-index addr2) self
+;;     (with-alien ((a (array unsigned-char 80)))
+;;       (clone-octets-to-alien (u64-bytes addr2) a)
+;;       ;; TODO
+;;       ;; (with-io-uring-sqe res
+;;       ;;     ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
+;;       ;;      (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
+;;       ;;      (file-index file-index)
+;;       ;;      (addr2 a))
+;;       ;;   res)
+;;       )))
 
 ;; 128-byte SQE
 (defstruct submission-queue-entry-128
@@ -84,16 +84,16 @@
   ;; slot of ENTRY.
   (cmd (make-array 80 :element-type 'octet) :type (octet-vector 80)))
 
-(defmethod build ((self submission-queue-entry-128) &key &allow-other-keys)
-  (with-slots (opcode flags ioprio fd off addr len flags2 user-data buf-index personality file-index cmd) self
-    (with-alien ((a (array unsigned-char 80)))
-      (clone-octets-to-alien cmd a)
-      ;; (with-io-uring-sqe res
-      ;;     ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
-      ;;      (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
-      ;;      (file-index file-index) (addr2 a))
-      ;;   res)
-      )))
+;; (defmethod build ((self submission-queue-entry-128) &key &allow-other-keys)
+;;   (with-slots (opcode flags ioprio fd off addr len flags2 user-data buf-index personality file-index cmd) self
+;;     (with-alien ((a (array unsigned-char 80)))
+;;       (clone-octets-to-alien cmd a)
+;;       ;; (with-io-uring-sqe res
+;;       ;;     ((opcode opcode) (flags flags) (ioprio ioprio) (fd fd) (off off) (addr addr) (len len)
+;;       ;;      (flags2 flags2) (user-data user-data) (buf-index buf-index) (personality personality)
+;;       ;;      (file-index file-index) (addr2 a))
+;;       ;;   res)
+;;       )))
 ;;; Flags
 
 ;; sync, needs-wakeup-p, dropped, overflowp, taskrunp, push,
