@@ -18,10 +18,11 @@
 
 (defmethod build ((self completion-queue-offsets) &key &allow-other-keys)
   (with-slots (head tail ring-mask ring-entries overflow cqes flags user-addr) self
-      (with-io-cqring-offsets res
-          ((head head) (tail tail) (ring-mask ring-mask) (ring-entries ring-entries)
-           (overflow overflow) (cqes cqes) (flags flags) (user-addr user-addr))
-        res)))
+;;      (with-io-cqring-offsets res
+;;          ((head head) (tail tail) (ring-mask ring-mask) (ring-entries ring-entries)
+;;           (overflow overflow) (cqes cqes) (flags flags) (user-addr user-addr))
+;;        res)))
+    ))
 
 (defstruct completion-queue
   (head 0 :type fixnum)
