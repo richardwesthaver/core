@@ -1,6 +1,9 @@
 #+title: core
 #+author: Richard Westhaver <ellis@rwest.io>
 #+description: The Compiler Company Core
+The Compiler Company (=CC=) is a software research laboratory
+concerned with the future of Mechanical Freedom.
+
 This repository contains a collection of software libraries shared
 across all of our products and projects.
 
