@@ -19,7 +19,7 @@ x.lisp
 (sb-ext:enable-debugger)
 
 #-quicklisp
-(let ((quicklisp-init "/usr/local/share/quicklisp/setup.lisp"))
+(let ((quicklisp-init "/usr/local/share/lisp/quicklisp/setup.lisp"))
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 
