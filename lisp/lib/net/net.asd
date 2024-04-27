@@ -7,7 +7,7 @@
    :sb-bsd-sockets :cl-ppcre
    :dat :obj
    :swank :swank-client
-   :dexador :puri ;; fetch
+   :dexador ;; fetch
    :hunchentoot :std :log)
   :serial t
   :components ((:file "pkg")
