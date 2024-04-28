@@ -70,6 +70,33 @@
    #:json-getf
    #:json-setf))
 
+(defpackage :dat/base64
+  (:use :cl :std :dat/proto)
+  (:export #:base64-stream-to-integer
+           #:base64-stream-to-string
+           #:base64-stream-to-stream
+           #:base64-stream-to-usb8-array
+           #:base64-string-to-integer
+           #:base64-string-to-string
+           #:base64-string-to-stream
+           #:base64-string-to-usb8-array
+           #:string-to-base64-string
+           #:string-to-base64-stream
+           #:usb8-array-to-base64-string
+           #:usb8-array-to-base64-stream
+           #:stream-to-base64-string
+           #:stream-to-base64-stream
+           #:integer-to-base64-string
+           #:integer-to-base64-stream
+           ;; Conditions.
+           #:base64-error
+           #:bad-base64-character
+           #:incomplete-base64-data
+           ;; For creating custom encode/decode tables.
+           #:make-decode-table
+           #:+decode-table+
+           #:+uri-decode-table+))
+
 (defpackage :dat/html
   (:use :cl :std :dat/proto)
   (:import-from :sb-ext :defglobal)
