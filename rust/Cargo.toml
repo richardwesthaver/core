@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["sys/*","lib/*","app/cli/*"]
+members = ["sys/*","lib/*","app/bin/*"]
 default-members = ["app/cli/alik"]
 [workspace.package]
 version = "0.1.0"

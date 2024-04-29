@@ -16,7 +16,7 @@ x.lisp
 (require 'sb-cltl2)
 
 #-(or sbcl cl) (error "unsupported Lisp compiler")
-(sb-ext:enable-debugger)
+;; (sb-ext:enable-debugger)
 
 #-quicklisp
 (let ((quicklisp-init "/usr/local/share/lisp/quicklisp/setup.lisp"))
