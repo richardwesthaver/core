@@ -15,4 +15,4 @@ obj = { version = "0.1.0", path = "../obj" }
 rocksdb = { version = "0.21", default-features = false, features = ["zstd", "multi-threaded-cf","rtti"], git = "https://vc.compiler.company/packy/rust-rocksdb.git", branch = "default", optional = true }
 
 [dev-dependencies]
-tempfile = "3.2.0"
+tempfile = "3.10.1"

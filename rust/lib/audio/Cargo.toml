@@ -10,5 +10,5 @@ publish = ["crater"]
 
 [dependencies]
 dsp = { path = "dsp" }
-cpal = { version = "0.13.4" }
-hound = { version = "3.4.0" }
+cpal = { version = "0.13.5" }
+hound = { version = "3.5.1" }

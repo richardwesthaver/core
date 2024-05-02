@@ -17,7 +17,7 @@ net = { path = "../../../lib/net", features = ["client", "server", "quic", "dns"
 db = { path = "../../../lib/db", features = ["rocksdb"] }
 tenex = { path = "../../../lib/tenex" }
 tokio = { workspace = true, features = ["full"] }
-clap = { version = "4.5.2", features = ["derive","env","string"] }
+clap = { version = "4.5.4", features = ["derive","env","string"] }
 serde = { workspace = true, features = ["derive"] }
 [build-dependencies]
 util = { path = "../../../lib/util", features = ["bs"] }

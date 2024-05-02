@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["sys/*","lib/*","app/bin/*"]
-default-members = ["app/cli/alik"]
+# default-members = ["app/bin/alik"]
 [workspace.package]
 version = "0.1.0"
 authors = ["Richard Westhaver <ellis@rwest.io>"]
@@ -10,9 +10,9 @@ edition = "2021"
 lto = true
 panic = "abort"
 [workspace.dependencies]
-tokio = "1.36"
+tokio = "1.37"
 tokio-util = "0.7.10"
-tokio-stream = "0.1.14"
-serde = "1.0.197"
-log = "0.4.20"
+tokio-stream = "0.1.15"
+serde = "1.0.200"
+log = "0.4.21"
 bindgen = "0.66.1"
