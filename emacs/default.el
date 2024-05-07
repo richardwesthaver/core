@@ -690,6 +690,7 @@ buffer."
 
         org-refile-targets '((nil :maxlevel . 3)
                              (org-agenda-files :maxlevel . 3))
+        org-agenda-files (list "inbox.org")
         org-confirm-babel-evaluate nil
         org-src-fontify-natively t
         org-src-tabs-act-natively t
@@ -698,8 +699,12 @@ buffer."
         org-log-states-order-reversed nil
         org-clock-persist 'history)
 
+(setq org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
+
 (add-hook 'after-init-hook #'org-clock-persistence-insinuate)
 
+;; archive
+(setq org-archive-location "archive.org::")
 (defun org-todo-at-date (date)
   "create a todo entry for a given date."
   (interactive (list (org-time-string-to-time (org-read-date))))
@@ -822,6 +827,7 @@ inherited by a parent headline."
            (dolist (tag local)
              (if (member tag inherited) (org-toggle-tag tag 'off)))))
        t nil))))
+
 ;;;; Agenda
 (defvar org-agenda-overriding-header)
 (defvar org-agenda-sorting-strategy)

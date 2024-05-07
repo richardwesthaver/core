@@ -16,7 +16,6 @@ x.lisp
 (require 'sb-cltl2)
 
 #-(or sbcl cl) (error "unsupported Lisp compiler")
-;; (sb-ext:enable-debugger)
 
 #-quicklisp
 (let ((quicklisp-init "/usr/local/share/lisp/quicklisp/setup.lisp"))
@@ -37,7 +36,7 @@ x.lisp
            :*compression-level*))
 
 (in-package :x)
-
+(sb-ext:enable-debugger)
 (defvar *core-path* (directory-namestring #.(or *load-truename* *compile-file-truename* (error "run me as an executable!"))))
 
 (defvar *lisp-path* (merge-pathnames "lisp/" *core-path*))

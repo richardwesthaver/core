@@ -77,8 +77,8 @@ evaluation of FORM."
 keys."
   (loop for kv in (group cli 2)
 	when (eql :thunk (car kv))
-	  return (let ((th (cdr kv)))
-		   (if (or (functionp th) (symbolp th)) (funcall th) (compile nil (lambda () th)))))
+	return (let ((th (cdr kv)))
+		 (if (or (functionp th) (symbolp th)) (funcall th) (compile nil (lambda () th)))))
   cli)
 
 (defmacro define-cli (name &body body)
@@ -148,6 +148,8 @@ keys."
 (defun opt-prefix-eq (ch str)
   (char= (aref str 0) ch))
 
+
+;; currently not in use
 (defun gen-thunk-ll (origin args)
   (let ((a0 (list (symb '$a 0) origin)))
     (group 
@@ -213,7 +215,8 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
 
 (defgeneric cli-equal (a b))
 
-(defun default-thunk (cli) (lambda (x) (declare (ignore x)) (print-help cli)))
+(defun default-thunk (args opts)
+  (declare (ignore args opts)))
 
 (defvar *cli-opt-kinds* '(bool str form list sym key num file dir))
 
@@ -454,20 +457,19 @@ should be."
   (make-cli-ast
    (loop 
      for a in args
-     if (= (length a) 1) collect (make-cli-node 'arg (print (pop args))) ; -1
-                                                                         ;; SHORT OPT
-       else if (short-opt-p a)
-	      collect (if-let ((o (find-short-opt self (aref a 1))))
-                        (%compose-opt o args)
-		        (make-cli-node 'arg a))
-
-     ;; LONG OPT
-     else if (long-opt-p a)
-            ;; TODO 2024-03-17: what we actually want to do is consume
-	    ;; the next sequence of args
-	    collect (if-let ((o (find-opt self (string-trim "-" a))))
-                      (%compose-opt o args)
-		      (make-cli-node 'arg a))
+     do (trace! a)
+     if (= (length a) 1)
+     collect (make-cli-node 'arg (print (pop args))) ; -1
+     else if (short-opt-p a) ;; SHORT OPT
+     collect (if-let ((o (find-short-opt self (aref a 1))))
+               (%compose-opt o args)
+	       (make-cli-node 'arg a))
+     else if (long-opt-p a) ;; LONG OPT
+                            ;; TODO 2024-03-17: what we actually want to do is consume
+	                    ;; the next sequence of args
+     collect (if-let ((o (find-opt self (string-trim "-" a))))
+               (%compose-opt o args)
+	       (make-cli-node 'arg a))
      ;; OPT GROUP
      else if (opt-group-p a)
 	    collect nil
@@ -503,6 +505,7 @@ should be."
 		   ;; when we encounter a command we recurse over the tail
 		   (cmd 
 		    (when-let ((c (find-cmd self (cli-name form))))
+                      (println (format nil "command found: ~A" c))
 		      (setf (cli-lock-p c) t)
 		      ;; handle the rest of the AST
 		      (install-ast c (make-cli-ast tail))
@@ -594,7 +597,8 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 
 (declaim (inline solop))
 (defun solop (self)
-  (and (= 0 (length (active-opts self t)) (length (active-cmds self)))))
+  (prog1 (and (= 0 (length (active-opts self t)) (length (active-cmds self))))
+    (trace! (format nil "running ~A without args" (cli-name self)))))
 
 (defmethod do-cmd ((self cli))
   (if (solop self)
@@ -607,7 +611,7 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 
 ;;; SIMPLE-CLI
 
-;; this is intended to be a simplified functional argument parser
+;; TODO this is intended to be a simplified functional argument parser
 ;; which is completely compatible with the toplevel SBCL options.
 
 ;; Instead of consuming the args into an AST, we loop over command
@@ -671,5 +675,10 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
       (when *posix-argv*
         (setf (cdr *posix-argv*) opts)))))
 
+;;; TOPLEVEL
+
+;; These macros help with defining a toplevel initialization
+;; function. Initialization functions are responsible for parsing runtime
+;; options and starting a REPL if needed.
 (defmacro define-toplevel-init (name (props opts) &body body))
 (defmacro define-toplevel-repl (name (props opts) &body body))

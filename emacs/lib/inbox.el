@@ -47,17 +47,14 @@
 ;; `org-archive-all-done' doesn't work the way we want. This function
 ;; will archive all done tasks in the current subtree, or the whole file
 ;; if prefix arg is given.
-(defun org-archive-done (&optional arg)
-  "archive all tasks with todo-state of 'DONE' or 'NOPE' in the
-current subtree. If prefix arg is given, operate on the entire
-file."
+(defun org-archive-done (&optional scope)
+  "archive all tasks with todo-state of 'DONE' or 'NOPE'."
   (interactive "P")
-  (let ((scope (if arg 'file 'tree)))
   (org-map-entries
    (lambda ()
      (org-archive-subtree)
      (setq org-map-continue-from (org-element-property :begin (org-element-at-point))))
-   "/+DONE|NOPE" scope)))
+   "/+DONE|NOPE" scope))
 
 (defun org-children-done ()
   "Mark all sub-tasks in this heading as 'DONE'."
@@ -198,7 +195,7 @@ Format:
      ((> (cdr a) (cdr b)) nil)
      ;; nil ommitted since cond defaults to it
      ))))
-(defun org-inbox-sort-week ()
+(defun org-inbox-sort ()
   "Sort the current heading by todo order followed by priority."
   (interactive)
   (org-sort-entries nil ?f #'org-sort-todo-priority #'org-sort-compare-todo-priority))

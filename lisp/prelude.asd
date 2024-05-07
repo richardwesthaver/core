@@ -6,7 +6,7 @@
                :nlp :obj :organ :packy
                :parse :pod :rdb :rt
                :skel :syn :xdb :alsa
-               :app :rocksdb :btrfs :uring
+               :rocksdb :btrfs :uring
                :tree-sitter :xkb :ssh2 :sndfile ;; magick
                :zstd :uring :blake3 :ublk
                :nuklear :aud :cry :krypt)
