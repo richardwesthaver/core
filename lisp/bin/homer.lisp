@@ -71,9 +71,9 @@
   :description "user home manager"
   :thunk homer-show
   :opts (make-opts
-          (:name level :global t :description "set the log level" :thunk homer-log-level)
-          (:name help :global t :description "print help" :thunk homer-help)
-          (:name version :global t :description "print version" :thunk homer-version))
+          (:name "level" :global t :description "set the log level" :thunk homer-log-level)
+          (:name "help" :global t :description "print help" :thunk homer-help)
+          (:name "version" :global t :description "print version" :thunk homer-version))
   :cmds (make-cmds
           (:name show :thunk homer-show)))
 

@@ -147,3 +147,7 @@
       (with-sst (s :file path :destroy t)
         (put-kv s (make-kv "nil" "nil"))))))
 
+(deftest errors ()
+  "Test basic error handling."
+  (with-temp-db (errs () :open t :destroy t)
+    (signals 'rocksdb-error (open-db-raw "errs"))))

@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :rocksdb)
 
-(define-alien-type rocksdb-errptr (* c-string))
+(define-alien-type rocksdb-errptr (* t))
 (export '(rocksdb-errptr))
 (define-opaque rocksdb)
 (define-opaque rocksdb-iterator)

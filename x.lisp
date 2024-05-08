@@ -32,7 +32,7 @@ x.lisp
 
 (defpackage :x
   (:use :cl :std :std/named-readtables)
-  (:export :*core-path* :*lisp-path* :*lib-path* :*std-path* :*ffi-path* :*stash-path* :*app-path* :*bin-path*
+  (:export :*core-path* :*lisp-path* :*lib-path* :*std-path* :*ffi-path* :*stash-path* :*web-path* :*bin-path*
            :*compression-level*))
 
 (in-package :x)
@@ -40,8 +40,8 @@ x.lisp
 (defvar *core-path* (directory-namestring #.(or *load-truename* *compile-file-truename* (error "run me as an executable!"))))
 
 (defvar *lisp-path* (merge-pathnames "lisp/" *core-path*))
-(defvar *app-path* (merge-pathnames "app/" *lisp-path*))
-(defvar *bin-path* (merge-pathnames "bin/" *app-path*))
+(defvar *bin-path* (merge-pathnames "bin/" *lisp-path*))
+(defvar *web-path* (merge-pathnames "web/" *lisp-path*))
 (defvar *lib-path* (merge-pathnames "lib/" *lisp-path*))
 (defvar *std-path* (merge-pathnames "std/" *lisp-path*))
 (defvar *ffi-path* (merge-pathnames "ffi/" *lisp-path*))
@@ -147,15 +147,24 @@ install")))
         (asdf:compile-system name :force t))
       (compile-prelude t nil)))
 
+(defun %build (name)
+  (format t "saving executable to: ~A~%" (merge-pathnames name *stash-path*))
+  (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
+    (ql:quickload sys)
+    (asdf:make sys)))
+
 (defun x-build (args)
   (if args
       (let ((name (car args)))
         (ensure-directories-exist *stash-path*)
-        (format t "saving executable to: ~A~%" (merge-pathnames name *stash-path*))
-        (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
-          (ql:quickload sys)
-          (asdf:make sys)))
-      (bail "missing arg")))
+        (%build name))
+      (time (std:wait-for-threads (mapcar
+                             (lambda (x)
+                               (sb-thread:make-thread
+                                (lambda ()
+                                  (sb-ext:run-program "x" (list "build" x) :wait t :output t))
+                                :name x))
+            (list "skel" "rdb" "organ" "homer" "packy"))))))
 
 (defun x-save (args)
   (if args
@@ -185,19 +194,21 @@ install")))
         (sb-ext:run-program path (cdr args) :output t))
       (bail "missing arg")))
 
+(defun %install (name)
+  (let ((path (merge-pathnames name *stash-path*)))
+    (unless (probe-file path)
+      (sb-ext:run-program "x" (list "build" name) :wait t :output t))
+    (sb-ext:run-program "/bin/sudo"
+                        (list "install" "-C" "-m" "755" (namestring path) "/usr/local/bin/")
+                        :input t
+                        :wait t
+                        :output t)
+    (format t "installed ~A to ~A~%" name (merge-pathnames name "/usr/local/bin/"))))
+
 (defun x-install (args)
-  (if args
-      (let* ((name (car args))
-             (path (merge-pathnames name *stash-path*)))
-        (unless (probe-file path)
-          (sb-ext:run-program "x" (list "build" name) :wait t :output t))
-        (sb-ext:run-program "/bin/sudo"
-                            (list "install" "-C" "-m" "755" (namestring path) "/usr/local/bin/")
-                            :input t
-                            :wait t
-                            :output t)
-        (format t "installed ~A to ~A~%" name (merge-pathnames name "/usr/local/bin/")))
-      (bail "missing arg")))
+  (mapc #'%install
+        (or args
+            (list "skel" "rdb" "organ" "homer" "packy"))))
 
 (defun x-parse-args ()
   (if (null *args*)

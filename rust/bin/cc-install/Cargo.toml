@@ -7,13 +7,13 @@ description = "This program is used to bootstrap a complete and compliant system
 name = "cc-install"
 path = "main.rs"
 [dependencies]
-util = { path = "../../../lib/util", features = ["full"] }
-flate = { path = "../../../lib/flate" }
-logger = { path = "../../../lib/logger" }
-obj = { path = "../../../lib/obj" }
+util = { path = "../../lib/util", features = ["full"] }
+flate = { path = "../../lib/flate" }
+logger = { path = "../../lib/logger" }
+obj = { path = "../../lib/obj" }
 clap = { version = "4.5.4", features = ["derive","env","string"] }
-net = { path = "../../../lib/net" }
-dl = { path = "../../../lib/dl" }
+net = { path = "../../lib/net" }
+dl = { path = "../../lib/dl" }
 tokio = { version = "1.37.0", features = ["full"] }
 [build-dependencies]
-util = { path = "../../../lib/util", features = ["bs"] }
+util = { path = "../../lib/util", features = ["bs"] }

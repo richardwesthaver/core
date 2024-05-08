@@ -7,10 +7,10 @@ description = "Mail client util"
 name = "mailman"
 path = "main.rs"
 [dependencies]
-krypt = { path = "../../../lib/krypt" }
-util = { path = "../../../lib/util", features = ["cli"] }
-logger = { path = "../../../lib/logger" }
-obj = { path = "../../../lib/obj" }
+krypt = { path = "../../lib/krypt" }
+util = { path = "../../lib/util", features = ["cli"] }
+logger = { path = "../../lib/logger" }
+obj = { path = "../../lib/obj" }
 tokio = { version = "1.37.0", features = ["full"] }
 clap = { version = "4.5.4", features = ["derive","env","string"] }
 jmap-client = { version = "0.3.2", features = ["async","tokio","rustls","websockets"] }

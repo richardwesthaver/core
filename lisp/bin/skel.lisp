@@ -87,38 +87,38 @@
   :description "A hacker's project compiler and build tool."
   :thunk skc-describe
   :opts (make-opts 
-	  (:name help :global t :description "print this message" 
+	  (:name "help" :global t :description "print this message" 
 	   :thunk skc-help)
-	  (:name version :global t :description "print version" 
+	  (:name "version" :global t :description "print version" 
 	   :thunk skc-version)
-	  (:name log :global t :description "set log level (debug,info,trace,warn)"
+	  (:name "log" :global t :description "set log level (debug,info,trace,warn)"
 	   :thunk skc-log)
-	  (:name config :global t :description "set a custom skel user config" :kind file
+	  (:name "config" :global t :description "set a custom skel user config" :kind file
 	   :thunk skc-cfg)
-	  (:name input :description "input source" :kind string)
-	  (:name output :description "output target" :kind string))
+	  (:name "input" :description "input source" :kind string)
+	  (:name "output" :description "output target" :kind string))
   :cmds (make-cmds
 	  (:name init
 	   :description "initialize a skelfile in the current directory"
-	   :opts (make-opts (:name name :description "project name" :kind string))
+	   :opts (make-opts (:name "name" :description "project name" :kind string))
 	   :thunk skc-init)
           (:name config
-           :opts (make-opts (:name file :description "skelrc file" :kind file))
+           :opts (make-opts (:name "file" :description "skelrc file" :kind file))
            :thunk skc-config)
 	  (:name show
 	   :description "describe the project skelfile"
 	   :opts (make-opts 
-                   (:name file :description "path to skelfile" :kind file)
-                   (:name user :description "print user configuration")
-                   (:name system :description "print system configuration"))
+                   (:name "file" :description "path to skelfile" :kind file)
+                   (:name "user" :description "print user configuration")
+                   (:name "system" :description "print system configuration"))
 	   :thunk skc-describe)
 	  (:name inspect
 	   :description "inspect the project skelfile"
-	   :opts (make-opts (:name file :description "path to skelfile" :kind file))
+	   :opts (make-opts (:name "file" :description "path to skelfile" :kind file))
 	   :thunk skc-inspect)
 	  (:name make
 	   :description "build project targets"
-	   :opts (make-opts (:name target :description "target to build" :kind string))
+	   :opts (make-opts (:name "target" :description "target to build" :kind string))
 	   :thunk skc-make)
 	  (:name run
 	   :description "run a script or command")

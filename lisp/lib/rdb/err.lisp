@@ -86,5 +86,5 @@ an error is detected, the resulting string from ERRPTR and the
 additional PARAMS will be used to signal a lisp error condition."
   ;; if NULL, return nil
   (unless (null-alien errptr)
-    (apply #'signal (or errtyp 'rdb-error)
-           (nconc (list :message errptr) params))))
+    (apply #'signal (or errtyp 'rocksdb-error)
+           (nconc (list :message (sb-unix::strerror)) params))))

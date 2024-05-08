@@ -7,21 +7,16 @@
 (defmacro with-errptr ((e &optional errtyp params) &body body)
   `(with-alien ((,e rocksdb-errptr nil))
      (unwind-protect 
-          (handler-bind ((sb-sys:memory-fault-error 
-                           (lambda (condition)
-                             (error 'rdb-error
-                                    :message
-                                    (format nil
-                                            "~a" condition))))
-                         (error 
-                           (lambda (condition)
-                             (error 'rdb-error 
-                                    :message 
-                                    (format nil 
-                                            "WITH-ERRPTR signaled: ~A"
-                                            condition)))))
+          (handler-bind ((sb-sys:memory-fault-error
+                           (lambda (c)
+                             (handle-errptr ,e ,errtyp ,params)))
+                         (error
+                           (lambda (c)
+                             (handle-errptr ,e ,errtyp ,params))))
             (progn ,@body))
-       (handle-errptr ,e ,errtyp ,params))))
+       (handle-errptr ,e ,errtyp ,params)
+       )))
+     
 
 ;;; opts
 (defmacro rdb-opt-setter (key)
@@ -46,7 +41,7 @@
                              (error 'rdb-error
                                     :message
                                     (format nil "WITH-DB signaled: ~A" condition)))))
-       ,@body)))
+     ,@body)))
 
 ;;; cf
 (defmacro with-cf ((cf-var cf) &body body)

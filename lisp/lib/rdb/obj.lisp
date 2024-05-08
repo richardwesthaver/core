@@ -76,7 +76,7 @@
   (with-slots (table) self
     (loop for k in (hash-table-keys table)
           unless (opt-no-setter-p k)
-            do (pull-sap self k))
+          do (pull-sap self k))
     table))
 
 (defmethod backfill-opts ((self rdb-opts) &key full)
@@ -90,7 +90,7 @@ just the keys currently present in TABLE."
             do (pull-sap self k))
       (pull-sap* self))
   (rdb-opts-table self))
-    
+
 (defun default-rdb-opts () 
   (make-rdb-opts :create-if-missing t :create-missing-column-families t
                  :parallelism (num-cpus)))
@@ -189,7 +189,7 @@ rocksdb_cf_t handle."
   (print-unreadable-object (self stream :type t)
     (with-slots (name size level-count file-count) self
       (format stream "~A :size ~A :levels ~A :files ~A" name size level-count file-count))))
-  
+
 (defmethod pull-sap* ((self rdb-cf-metadata))
   (with-slots (name size level-count file-count sap) self
     (if (null sap)
@@ -271,7 +271,7 @@ rocksdb_cf_t handle."
 (defmethod print-object ((self rdb) stream)
   (print-unreadable-object (self stream :type t :identity t)
     (format stream ":cfs ~A" (length (rdb-cfs self)))))
-  
+
 (defun create-db (name &key opts cfs open)
   "Construct a new RDB instance from NAME.
 
@@ -281,22 +281,23 @@ OPEN = boolean
 
 When OPEN is non-nil, the database and all column families are opened
 and internal sap slots are initialized."
-  (when (probe-file name) (log:warn! "directory already exists: " name))
+  ;; (when (probe-file name) (log:trace! "db exists: " name))
   (let* ((opts (or opts (default-rdb-opts)))
          (obj
-           (make-rdb (string-right-trim '(#\/)
-                                        (typecase name
-                                          (pathname (namestring name))
-                                          (string name)
-                                          (t (error "invalid NAME: ~S" name))))
-                     opts
-                     (or (when cfs
-                           (typecase cfs
-                             (list (coerce cfs 'vector))
-                             ((array rdb-cf) cfs)
-                             (rdb-cf (vector cfs))
-                             (t (log:warn! "invalid CF passed to create-db"))))
-                         (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
+           (make-rdb
+            (string-right-trim '(#\/)
+                               (typecase name
+                                 (pathname (namestring name))
+                                 (string name)
+                                 (t (error "invalid NAME: ~S" name))))
+            opts
+            (or (when cfs
+                  (typecase cfs
+                    (list (coerce cfs 'vector))
+                    ((array rdb-cf) cfs)
+                    (rdb-cf (vector cfs))
+                    (t (log:warn! "invalid CF passed to create-db"))))
+                (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
     (when open
       (open-db obj))
     obj))
@@ -338,7 +339,7 @@ and internal sap slots are initialized."
 
 (defmethod push-opts ((self rdb))
   (with-slots (opts) self
-      (push-sap* opts)))
+    (push-sap* opts)))
 
 (defmethod open-db ((self rdb))
   (with-slots (name db opts) self
@@ -402,7 +403,7 @@ and internal sap slots are initialized."
   (flush-db self))
 
 (defmethod shutdown-db ((self rdb) &key wait)
-  (log:debug! "shutting down database" (rdb-name self))
+  (log:trace! "shutting down database" (rdb-name self))
   (when-let ((db (rdb-db self)))
     (rocksdb-cancel-all-background-work db wait)
     (close-db self)))
