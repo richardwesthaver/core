@@ -237,7 +237,6 @@
 (define-opt-accessor rocksdb-options stats-dump-period-sec unsigned-int)
 (define-opt-accessor rocksdb-options stats-persist-period-sec unsigned-int)
 
-(define-opt-accessor rocksdb-options access-hint-on-compaction-start int)
 (define-opt-accessor rocksdb-options use-adaptive-mutex)
 (define-opt-accessor rocksdb-options bytes-per-sync unsigned-long)
 (define-opt-accessor rocksdb-options wal-bytes-per-sync unsigned-long)

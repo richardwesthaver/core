@@ -111,7 +111,8 @@
          hard-pending-compaction-bytes-limit max-manifest-file-size table-cache-numshardbits arena-block-size
          use-fsync manifest-preallocation-size allow-mmap-reads
          allow-mmap-writes use-direct-reads use-direct-io-for-flush-and-compaction is-fd-close-on-exec
-         stats-dump-period-sec stats-persist-period-sec advise-random-on-open access-hint-on-compaction-start
+         stats-dump-period-sec stats-persist-period-sec advise-random-on-open
+         ;; deprecated: access-hint-on-compaction-start 
          use-adaptive-mutex bytes-per-sync wal-bytes-per-sync writable-file-max-buffer-size
          allow-concurrent-memtable-write enable-write-thread-adaptive-yield max-sequential-skip-in-iterations
          disable-auto-compactions optimize-filters-for-hits delete-obsolete-files-period-micros
