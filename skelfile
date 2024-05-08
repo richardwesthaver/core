@@ -7,12 +7,14 @@
 :description "The Compiler Company Core"
 :vc :hg
 :tags ("core")
-:docs ((:org "readme") (:org "install") (:org "tests") (:org "todo"))
+:docs ((:org "readme"))
 :imports ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
+:scripts "x.lisp"
 :rules
 ((box () #$podman build . --build-arg IMAGE=localhost/box -t core$#)
- (clean () #$rm -rf .stash$#
-        #$cd rust && cargo clean$#
-        #$cd emacs && rm -rf */*.elc$#
-        #$find lisp -name '*.fasl' -type f -delete$#)
+ (clean ()
+        #$rm -vrf .stash$#
+        #$find emacs -name '*.elc' -type f -delete$#
+        #$find lisp -name '*.fasl' -type f -delete$#
+        #$echo 'cargo clean:' && cd rust && cargo clean$#)
  (deploy () #$mv .stash/{prelude.core,std.core} $PACKY_DIR$#))

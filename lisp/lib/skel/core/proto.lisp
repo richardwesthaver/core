@@ -39,3 +39,6 @@
   (:documentation "pull object SELF from upstream using vc."))
 (defgeneric sk-find-rule (name self)
   (:documentation "Find a rule with the given NAME in SELF."))
+(defgeneric sk-find-script (name self &key &allow-other-keys)
+  (:documentation "Find a script with the given NAME in SELF."))
+;; TODO 2024-05-08: sk-find, sk-find*

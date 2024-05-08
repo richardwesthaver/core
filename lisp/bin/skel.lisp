@@ -90,6 +90,11 @@
       (mapc (lambda (rule) (debug! (sk-run (sk-find-rule rule (find-skelfile #P"." :load t))))) $args)
       (debug! (sk-run (aref (sk-rules (find-skelfile #P"." :load t)) 0)))))
 
+(defcmd skc-run
+  (if $args
+      (mapc (lambda (script) (debug! (sk-run (sk-find-script script (find-skelfile #P"." :load t))))) $args)
+      (required-argument :script)))
+
 (defcmd skc-shell
   (if $args
       (nyi!)
@@ -112,7 +117,7 @@
 	   :thunk skc-help)
 	  (:name "version" :global t :description "print version" 
 	   :thunk skc-version)
-	  (:name "log" :global t :description "set log level (debug,info,trace,warn)"
+	  (:name "level" :global t :description "set log level (debug,info,trace,warn)"
 	   :thunk skc-log)
 	  (:name "config" :global t :description "set a custom skel user config" :kind file
 	   :thunk skc-cfg)
@@ -123,11 +128,14 @@
 	   :description "initialize a skelfile in the current directory"
 	   :opts (make-opts (:name "name" :description "project name" :kind string))
 	   :thunk skc-init)
+          (:name describe
+           :description "describe a skelfile"
+           :thunk skc-describe)
           (:name config
            :opts (make-opts (:name "file" :description "skelrc file" :kind file))
            :thunk skc-config)
 	  (:name show
-	   :description "describe the project skelfile"
+	   :description "show project slots"
 	   :opts (make-opts 
                    (:name "file" :description "path to skelfile" :kind file)
                    (:name "user" :description "print user configuration")
@@ -145,7 +153,8 @@
 	   :opts (make-opts (:name "target" :description "target to build" :kind string))
 	   :thunk skc-make)
 	  (:name run
-	   :description "run a script or command")
+	   :description "run a script or command"
+           :thunk skc-run)
           (:name status
            :description "print the vc status"
            :thunk skc-status)
@@ -172,6 +181,7 @@
     (with-cli (opts cmds) $cli
       (load-skelrc)
       ;; TODO 2024-01-01: need to parse out CMD opts from args slot - they still there
+      (do-opt (find-opt $cli "level"))
       (do-cmd $cli)
       (debug-opts $cli))))
 

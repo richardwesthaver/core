@@ -54,6 +54,7 @@
    :sk-write-string :sk-write-file
    :sk-read-file :sk-install-user-config
    :sk-find-rule
+   :sk-find-script
    ;; header
    :make-file-header 
    :make-shebang-file-header 

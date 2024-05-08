@@ -96,6 +96,13 @@
   (sk-write self stream)
   (format stream "~%"))
 
+(defmethod write-sxp-stream ((self sk-command) stream &key (pretty t) (case :downcase) &allow-other-keys)
+  (write `(,@(sk-body self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+
+(defmethod sk-run ((self sk-command))
+  (mapcar (lambda (x) (funcall x :output t))
+          (sk-body self)))
+
 ;;  HACK 2023-09-27: (defstruct sk-url) ?
 
 ;;;; Source
@@ -153,6 +160,20 @@ via the special form stored in RECIPE."))
 (defclass sk-script (skel sk-meta sxp)
   ())
 
+(defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
+  (write `(,(sk-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+
+(defun make-sk-script (path)
+  "Make a new SK-SCRIPT."
+  (make-instance 'sk-script :path path :name (pathname-name path)))
+
+(defmethod sk-run ((self sk-script))
+  (sb-ext:run-program (sk-path self) nil :output t))
+
+(defmethod sk-write ((self sk-script) stream)
+  (with-slots (path) self
+    (write-string path)))
+
 ;;;; Config
 (defclass sk-config (skel sxp) 
   ((imports :initarg :imports :type list)
@@ -161,7 +182,7 @@ via the special form stored in RECIPE."))
    (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
    (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
    (registry :initform *skel-registry* :initarg :registry :type pathname :accessor sk-registry)
-   (scripts :initarg :scripts :type (or pathname list) :accessor sk-scripts)
+   (scripts :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
    (license :initarg :license :type license-designator :accessor sk-license)
    (log-level :initarg :log-level :type log-level-designator)
    (fmt :initform :pretty :initarg :fmt :type symbol)
@@ -192,7 +213,7 @@ via the special form stored in RECIPE."))
 	  (setf (ast self) nil)
 	  self)
 	;; invalid ast, signal error
-	(error 'skel-syntax-error))))
+	(skel-syntax-error ast))))
 
 (defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self) 
@@ -305,9 +326,15 @@ via the special form stored in RECIPE."))
               (setf (slot-value self s) v))) ;; needs to be correct package
           (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
           (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
-          (when (bound-string-p self 'scripts) (setf (sk-scripts self)
-                                                     ;; TODO 2023-10-14: convert into list of script names
-                                                     (pathname (sk-scripts self))))
+          (if (bound-string-p self 'scripts)
+              (if-let ((path (probe-file (pathname (sk-scripts self)))))
+                (setf (sk-scripts self)
+                      (if (directory-path-p path)
+                          (find-files path)
+                          (list path)))
+                (debug! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
+          (when-let ((scripts (sk-scripts self)))
+            (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self) (map 'vector
                                        (lambda (x)
@@ -318,7 +345,7 @@ via the special form stored in RECIPE."))
           (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
           self)
         ;; invalid ast, signal error
-        (error 'skel-syntax-error))))
+        (skel-syntax-error ast))))
 
 ;; obj -> ast
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))
@@ -386,3 +413,6 @@ via the special form stored in RECIPE."))
 
 (defmethod sk-find-rule (name self)
   (find name (sk-rules self) :test 'equal :key #'sk-rule-target))
+
+(defmethod sk-find-script ((name string) (self skel) &key)
+  (find name (sk-scripts self) :test 'equal :key #'sk-name))

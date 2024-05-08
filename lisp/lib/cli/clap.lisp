@@ -460,7 +460,7 @@ should be."
        if (member i holes)
        do (continue) ;; skip args which have been consumed already
        else if (= (length a) 1)
-       collect (make-cli-node 'arg (pop args)) ; always treat single-char as arg
+       collect (make-cli-node 'arg a) ; always treat single-char as arg
        else if (short-opt-p a) ;; SHORT OPT
        collect (if-let ((o (find-short-opt self (aref a 1))))
                  (%compose-short-opt o a)
