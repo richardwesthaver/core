@@ -6,10 +6,10 @@
 (in-package :cli/ed)
 
 (defun run-emacs (&optional x)
-  (run-program (cli:find-exe "emacs") `(,x) :wait nil :output nil))
+  (sb-ext:run-program (cli:find-exe "emacs") (list x) :wait nil :output nil))
 
-(defun run-emacsclient (&optional x)
-  (run-program (cli:find-exe "emacsclient") `(,x) :wait nil :output nil))
+(defun run-emacsclient (&optional (x "."))
+  (sb-ext:run-program (cli:find-exe "emacsclient") (list x "-c" "-a=") :wait nil :output nil))
 
 (push #'run-emacs sb-ext:*ed-functions*)
 (push #'run-emacsclient sb-ext:*ed-functions*)

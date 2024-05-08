@@ -37,10 +37,10 @@
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
 
-(defun run-hg-command (cmd &optional args (wait t))
+(defun run-hg-command (cmd &optional args output (wait t))
   "Run an hg command."
   (unless (listp args) (setf args (list args)))
-  (sb-ext:run-program *hg-program* (push cmd args) :output :stream :wait wait))
+  (sb-ext:run-program *hg-program* (push cmd args) :output output :wait wait :input nil))
 
 (defun hg-url-p (url)
   "Return nil if URL does not look like a URL to a hg valid remote."
