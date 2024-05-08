@@ -159,6 +159,7 @@
    :handle-missing-argument
    :handle-invalid-argument
    :cli-opt
+   :cli-opt-val
    :cli-val
    :cli-cmd-args
    :cli-cmd

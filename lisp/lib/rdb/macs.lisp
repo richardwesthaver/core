@@ -76,6 +76,7 @@ handle will not be freed on exit."
   (let ((%iter-var (symbolicate '% (symbol-name iter-var))))
     `(let ((,iter-var ,iter))
        (let ((,%iter-var (rdb-iter-sap ,iter-var)))
+         (declare (ignorable ,%iter-var))
          ,@body))))
 
 ;; TODO: sb-ext:with-current-source-form ?

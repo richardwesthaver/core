@@ -126,7 +126,7 @@ just the keys currently present in TABLE."
   (rocksdb-iter-seek (rdb-iter-sap self) key (length key)))
 
 (defmethod iter-next ((self rdb-iter))
-  (rocksdb-iter-next (log:info! (rdb-iter-sap self))))
+  (rocksdb-iter-next (rdb-iter-sap self)))
 
 (defmethod iter-prev ((self rdb-iter))
   (rocksdb-iter-prev (rdb-iter-sap self)))

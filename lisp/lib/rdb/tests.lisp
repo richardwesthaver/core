@@ -150,4 +150,4 @@
 (deftest errors ()
   "Test basic error handling."
   (with-temp-db (errs () :open t :destroy t)
-    (signals 'rocksdb-error (open-db-raw "errs"))))
+    (signals rdb-error (open-db errs))))

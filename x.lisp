@@ -148,7 +148,7 @@ install")))
       (compile-prelude t nil)))
 
 (defun %build (name)
-  (format t "saving executable to: ~A~%" (merge-pathnames name *stash-path*))
+  (format t "saving ~A to: ~A~%" name (merge-pathnames name *stash-path*))
   (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
     (ql:quickload sys)
     (asdf:make sys)))
@@ -158,13 +158,13 @@ install")))
       (let ((name (car args)))
         (ensure-directories-exist *stash-path*)
         (%build name))
-      (time (std:wait-for-threads (mapcar
+      (std:wait-for-threads (mapcar
                              (lambda (x)
                                (sb-thread:make-thread
                                 (lambda ()
                                   (sb-ext:run-program "x" (list "build" x) :wait t :output t))
                                 :name x))
-            (list "skel" "rdb" "organ" "homer" "packy"))))))
+                             (list "skel" "rdb" "organ" "homer" "packy")))))
 
 (defun x-save (args)
   (if args

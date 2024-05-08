@@ -15,48 +15,87 @@
 
 ;; (defopt rdb-config (init-rdb-user-config (parse-file-opt $val)))
 
-(defcmd help (print-help $cli))
+(defopt rdb-help (print-help $cli))
 
-(defcmd new
+(defcmd rdb-new
   (set-opt *rdb* :error-if-exists t)
   (open-db *rdb*)
   (println (rdb-name *rdb*)))
 
-(defcmd show
-  (let ((db-path (find-opt $cli "db" t)))
-    (if (and (null db-path)
-             (or (zerop $argc) (equal (car $args) "opts")))
+(defcmd rdb-show
+  (let ((db-path (cli-opt-val (find-opt $cli "db"))))
+    (if (and (null db-path) (zerop $argc))
         (mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
               (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
-        (with-db (db (create-db (cli/clap::cli-opt-val db-path) :open t))
-          (println (hash-table-alist (backfill-opts db)))))))
+        (with-db (db (create-db db-path :open t))
+          (println (hash-table-alist (backfill-opts db)))
+          (with-iter (it (create-iter db))
+            (iter-seek-to-first it)
+            (loop while (iter-valid-p it)
+                  do (progn
+                       (format t "~A : ~A~%"
+                               (sb-ext:octets-to-string (iter-key it) :external-format '(:ascii :replacement #\_))
+                               (iter-val it))
+                       (iter-next it))
+                  finally (rocksdb::rocksdb-iter-destroy %it)))))))
 
-(defcmd insert
+(defcmd rdb-set
   (if (> 2 $argc)
       (rdb-error "missing args: KEY VAL")
       (with-db (db *rdb*)
         (open-db db)
         (insert-key  db (pop $args) (pop $args)))))
 
+(defcmd rdb-get
+  (if (> 1 $argc)
+      (rdb-error "missing arg: KEY")
+      (with-db (db *rdb*)
+        (open-db db)
+        (when-let ((val (get-key db (car $args))))
+          (println val)))))
+
+(defcmd rdb-destroy
+  (destroy-db *rdb*))
+
+(defcmd rdb-fuzz
+  (with-db (db *rdb*)
+    (open-db db)
+    (let ((val (make-array 32 :element-type 'octet)))
+      (dotimes (i (if (zerop $argc) 1000 (parse-integer (car $args))))
+        (nreversef val)
+        (let ((seed (random 32)))
+          (dotimes (ii seed)
+            (setf (aref val ii) (random 256))))
+          (nreversef val)
+          (put-key db
+                   (sb-ext:string-to-octets (string (gensym "foo")))
+                   val)))))
+
 (define-cli $cli
   :name "rdb"
   :version "0.1.0"
-  :thunk help
-  :description "richard's database"
+  :thunk rdb-show
+  :description "A simple helper for RocksDB."
   :opts (make-opts
           (:name "level" :global t :description "set the log level" :thunk rdb-log-level)
           (:name "help" :global t :description "print help" :thunk rdb-help)
           (:name "version" :global t :description "print version" :thunk rdb-version)
           (:name "db" :global t :description "target db" :thunk rdb-target-db :kind dir))
   :cmds (make-cmds
-          (:name new :thunk new)
-          (:name show :thunk show)
-          (:name insert :thunk insert)))
+          (:name new :thunk rdb-new)
+          (:name show :thunk rdb-show)
+          (:name set :thunk rdb-set)
+          (:name get :thunk rdb-get)
+          (:name fuzz :thunk rdb-fuzz)
+          (:name destroy :thunk rdb-destroy)))
 
 (defmain ()
   (let ((*log-level* :info))
     (with-cli (opts cmds args) $cli
-      ;; FIXME 2024-05-07: 
-      (do-opt (find-opt $cli "db"))
-      (prog1 (do-cmd $cli)
-        (close-db *rdb*)))))
+      ;; FIXME 2024-05-07: needs to be triggered explicitly - need to support
+      ;; running global opt thunks even when no arg present - macro key
+      (if (active-cmds $cli)
+          (prog2 (do-opt (find-opt $cli "db"))
+              (do-cmd $cli)
+            (close-db *rdb*))
+          (print-help $cli)))))
