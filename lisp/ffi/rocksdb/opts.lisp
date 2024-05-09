@@ -260,7 +260,7 @@
 (define-opt-accessor rocksdb-options bottommost-compression int)
 (define-opt-accessor rocksdb-options compaction-style int)
 (define-opt-accessor rocksdb-options wal-compression int)
-
+(define-opt-accessor rocksdb-options compaction-pri int)
 ;; (hash-link-list-rep)
 ;; (hash-skip-list-rep)
 ;; (memtable-vector-rep)

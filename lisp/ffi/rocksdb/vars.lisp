@@ -89,6 +89,7 @@
          num-levels level0-file-num-compaction-trigger level0-slowdown-writes-trigger
          level0-stop-writes-trigger target-file-size-base target-file-size-multiplier 
          max-bytes-for-level-base level-compaction-dynamic-level-bytes max-bytes-for-level-multiplier
+         compaction-pri
          ;; block-based-table-factory ;; set-only
          ;; parallelism
          ;; compression-options

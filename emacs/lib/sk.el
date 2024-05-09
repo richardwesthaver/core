@@ -32,10 +32,11 @@
 		  (defvar skel-debug nil)
 		  (when skel-debug (require 'ede)))
 
-(defconst skel-version "0.1.0")
+(defvar skel-version "0.1.0")
 
 (defgroup skel nil
-  "skel customization group.")
+  "skel customization group."
+  :group 'local)
 
 (defcustom skel-keymap-prefix "C-c C-."
   "Prefix for `skel-mode' keymap."
@@ -45,11 +46,11 @@
 (defcustom skel-triggers nil
   "Association of symbols to a specific condition which can be used
 to trigger `skel-actions' based on the `skel-behavior' value."
-  :type 'cons
+  :type '(list function)
   :group 'skel)
 
 (defcustom skel-actions nil
-  "Array of 'actions' which may be performed on skeletons."
+  "Array of actions which may be performed on skeletons."
   :type 'obarray
   :group 'skel)
 
@@ -80,16 +81,18 @@ be enabled. This function is added as a hook to
 (defvar skel-stack nil "Internal stack of skeletons.")
 
 (defcustom skel-state 'passive
-  "State toggle for the `skel' system. Base states are 'passive' and
-'active'."
+  "State toggle for the `skel' system. Base states are passive and
+active."
   :type 'symbol
   :group 'skel)
 
 (defvar skel-active-map nil
-  "List of cons cells of the form '(SYM . BODY...)' where SYM is a member of `skel-triggers'.")
+  "List of cons cells of the form (SYM . BODY...) where SYM is a member of
+`skel-triggers'.")
 
 (defvar skel-passive-map nil
-  "list of cons cells of the form '(SYM . BODY...)' where SYM is a member of `skel-triggers'.")
+  "list of cons cells of the form (SYM . BODY...) where SYM is a member of
+`skel-triggers'.")
 
 (defmacro make-id (&optional pre)
   `(let ((pre ,(if-let (pre) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
@@ -452,8 +455,8 @@ and add it on non-nil."
   :type '(boolean :tag "Enable tempo elements?")
   :set (lambda (variable value)
          (if value
-             (add-hook 'tempo-user-elements #'skt-tempo-user-elements)
-           (remove-hook 'tempo-user-elements #'skt-tempo-user-elements))
+             (add-hook 'tempo-user-functions #'skt-tempo-user-elements)
+           (remove-hook 'tempo-user-functions #'skt-tempo-user-elements))
          (set-default variable value))
   :group 'skel)
 

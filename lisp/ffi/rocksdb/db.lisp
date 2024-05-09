@@ -631,8 +631,11 @@
 (define-alien-routine rocksdb-create-snapshot (* rocksdb-snapshot)
   (db (* rocksdb)))
 
+(define-alien-routine rocksdb-snapshot-get-sequence-number (unsigned 64)
+  (snapshot (* rocksdb-snapshot)))
+
 (define-alien-routine rocksdb-release-snapshot void
   (db (* rocksdb))
   (snapshot (* rocksdb-snapshot)))
 
-(export '(rocksdb-create-snapshot rocksdb-release-snapshot))
+(export '(rocksdb-create-snapshot rocksdb-snapshot-get-sequence-number rocksdb-release-snapshot))
