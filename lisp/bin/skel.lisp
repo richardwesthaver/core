@@ -9,19 +9,11 @@
 
 (defopt skc-help (print-help $cli))
 (defopt skc-version (print-version $cli))
-(defopt skc-log *log-level* (when $val (setq *log-level* :debug)))
+(defopt skc-level *log-level* (setq *log-level* (or $val :info)))
 
 ;; TODO 2023-10-13: almost there
-(defopt skc-cfg
-  (when $val
-    (init-user-skelrc (parse-file-opt $val))))
-
-(defcmd skc-config
-  (if $args
-      (describe (init-user-skelrc (parse-file-opt (car $args))))
-      (if (probe-file *user-skelrc*)
-          (describe (load-user-skelrc))
-          (describe (init-user-skelrc)))))
+(defopt skc-config
+  (init-user-skelrc (when $val (parse-file-opt $val))))
 
 (defcmd skc-edit
   (let ((file (or (when $args (pop $args)) (find-skelfile #P"."))))
@@ -58,13 +50,30 @@
 (defcmd skc-id
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
+(defun skc-show-case (sel)
+  (std/string:string-case (sel :default (nyi!))
+    (":id" (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t))))
+    (":config" (if (probe-file *user-skelrc*)
+                   (describe (load-user-skelrc) t)
+                   (describe *skel-user-config* nil)))
+    (":vc" (sk-vc (find-skelfile #P"." :load t)))
+    (":author" (sk-author (find-skelfile #P"." :load t)))
+    (":scripts" (sk-scripts (find-skelfile #P"." :load t)))
+    (":rules" (sk-rules (find-skelfile #P"." :load t)))
+    (":description" (sk-description (find-skelfile #P"." :load t)))
+    (":tags" (sk-tags (find-skelfile #P"." :load t)))
+    (":docs" (sk-docs (find-skelfile #P"." :load t)))
+    (":version" (sk-docs (find-skelfile #P"." :load t)))
+    (":imports" (sk-imports (find-skelfile #P"." :load t)))
+    (":license" (sk-license (find-skelfile #P"." :load t)))
+    (":stash" (sk-stash (find-skelfile #P"." :load t)))
+    (":store" (sk-store (find-skelfile #P"." :load t)))
+    (":cache" (sk-cache (find-skelfile #P"." :load t)))))
+
 (defcmd skc-show
-  (println
-   (if $args 
-       (let ((sel (trace! (pop $args))))
-         (std/string:string-case (sel :default (nyi!))
-           ("id" (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t))))))
-       (find-skelfile #P"." :load t))))
+  (if $args 
+      (mapc (lambda (x) (when-let ((ret (skc-show-case x))) (println ret))) $args)
+      (describe (find-skelfile #P"." :load t))))
 
 (defcmd skc-push
   (case (sk-vc (find-skelfile #P"." :load t))
@@ -117,9 +126,9 @@
 	  (:name "version" :global t :description "print version" 
 	   :thunk skc-version)
 	  (:name "level" :global t :description "set log level (debug,info,trace,warn)"
-	   :thunk skc-log)
+	   :thunk skc-level)
 	  (:name "config" :global t :description "set a custom skel user config" :kind file
-	   :thunk skc-cfg)
+	   :thunk skc-config)
 	  (:name "input" :global t :description "input source" :kind string)
 	  (:name "output" :global t :description "output target" :kind string))
   :cmds (make-cmds
@@ -130,9 +139,6 @@
           (:name describe
            :description "describe a skelfile"
            :thunk skc-describe)
-          (:name config
-           :opts (make-opts (:name "file" :description "skelrc file" :kind file))
-           :thunk skc-config)
 	  (:name show
 	   :description "show project slots"
 	   :opts (make-opts 

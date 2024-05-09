@@ -72,9 +72,10 @@
    :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
    :*default-skel-stash*
    :*default-system-skelrc*
-   :load-ast
-   :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user
+   :load-ast :sk-license
+   :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user :sk-store
    :sk-push :sk-pull
+   :sk-tags :sk-imports
    :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 

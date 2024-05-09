@@ -145,7 +145,7 @@ via the special form stored in RECIPE."))
 
 ;;;; Document
 (deftype document-designator () '(member :org :txt :pdf :html :md))
-
+(deftype script-designator () '(member :bin :sh :bash :zsh :nu :lisp :python))
 ;; TODO 2023-10-13: integrate organ for working with org document
 ;; types - mixins and such
 (defclass sk-document (skel sk-meta sxp)
@@ -158,14 +158,25 @@ via the special form stored in RECIPE."))
 
 ;;;; Script
 (defclass sk-script (skel sk-meta sxp)
-  ())
+  ((kind :initform nil :initarg :kind :type (or null script-designator))))
 
 (defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sk-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
-(defun make-sk-script (path)
+(defun make-sk-script (script)
   "Make a new SK-SCRIPT."
-  (make-instance 'sk-script :path path :name (pathname-name path)))
+  (apply #'make-instance 'sk-script
+         (if (listp script)
+             (let ((kind (first script))
+                   (path (second script)))
+               (list :path path
+                     :name (pathname-name path)
+                     :kind kind))
+             (list :path script
+                   :name (pathname-name script)
+                   :kind (when-let ((ext (pathname-type script)))
+                           (keywordicate ext))))))
+                               
 
 (defmethod sk-run ((self sk-script))
   (sb-ext:run-program (sk-path self) nil :output t))
