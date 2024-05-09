@@ -63,7 +63,7 @@
     (":description" (sk-description (find-skelfile #P"." :load t)))
     (":tags" (sk-tags (find-skelfile #P"." :load t)))
     (":docs" (sk-docs (find-skelfile #P"." :load t)))
-    (":version" (sk-docs (find-skelfile #P"." :load t)))
+    (":version" (sk-version (find-skelfile #P"." :load t)))
     (":imports" (sk-imports (find-skelfile #P"." :load t)))
     (":license" (sk-license (find-skelfile #P"." :load t)))
     (":stash" (sk-stash (find-skelfile #P"." :load t)))
