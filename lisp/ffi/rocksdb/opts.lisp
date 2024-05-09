@@ -119,8 +119,20 @@
   (opt (* rocksdb-block-based-table-options)) (val unsigned-char))
 (define-alien-routine rocksdb-block-based-options-set-pin-top-level-index-and-filter void
   (opt (* rocksdb-block-based-table-options)) (val unsigned-char))
+(define-alien-routine rocksdb-block-based-options-set-top-level-index-pinning-tier void
+  (opt (* rocksdb-block-based-table-options))
+  (i int))
+(define-alien-routine rocksdb-block-based-options-set-partition-pinning-tier void
+  (opt (* rocksdb-block-based-table-options))
+  (i int))
+(define-alien-routine rocksdb-block-based-options-set-unpartition-pinning-tier void
+  (opt (* rocksdb-block-based-table-options))
+  (i int))
 
 (export '(rocksdb-block-based-options-create rocksdb-block-based-options-destroy))
+(export '(rocksdb-block-based-options-set-top-level-index-pinning-tier
+          rocksdb-block-based-options-set-partition-pinning-tier
+          rocksdb-block-based-options-set-unpartition-pinning-tier))
 (export-opt-accessors rocksdb-block-based-options
                       checksum
                       block-size
@@ -260,6 +272,13 @@
 (define-opt-accessor rocksdb-options bottommost-compression int)
 (define-opt-accessor rocksdb-options compaction-style int)
 (define-opt-accessor rocksdb-options wal-compression int)
+#|
+  rocksdb_k_by_compensated_size_compaction_pri = 0,
+  rocksdb_k_oldest_largest_seq_first_compaction_pri = 1,
+  rocksdb_k_oldest_smallest_seq_first_compaction_pri = 2,
+  rocksdb_k_min_overlapping_ratio_compaction_pri = 3,
+  rocksdb_k_round_robin_compaction_pri = 4
+|#
 (define-opt-accessor rocksdb-options compaction-pri int)
 ;; (hash-link-list-rep)
 ;; (hash-skip-list-rep)

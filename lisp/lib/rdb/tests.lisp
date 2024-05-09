@@ -135,17 +135,20 @@
   (with-temp-db (tmp () :open t :destroy t)
     ;; without macro
     (let ((writer (make-sst-file-writer))
-          (path (namestring (merge-pathnames (format nil "~A" (gensym "sst"))))))
+          (path (namestring (merge-pathnames (format nil "/tmp/~A" (gensym "sst"))))))
       (open-sst writer path)
       (dotimes (i 10000)
         (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
       (finish-sst writer) ;; will fail on empty writer
-      (destroy-sst writer)
+      (destroy-sst writer)              ; TODO 2024-05-08: investigate -
+                                        ; doesn't seem to actually delete the
+                                        ; file, jst the writer?
       (ingest-db tmp (list path))
       (delete-file path)
       ;; with macro
       (with-sst (s :file path :destroy t)
-        (put-kv s (make-kv "nil" "nil"))))))
+        (put-kv s (make-kv "nil" "nil")))
+      (delete-file path))))
 
 (deftest errors ()
   "Test basic error handling."
