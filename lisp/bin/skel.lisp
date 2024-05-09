@@ -98,13 +98,11 @@
 (defcmd skc-shell
   (if $args
       (nyi!)
-      (progn
-        (use-package :cl-user)
-        (use-package :sb-ext)
-        (use-package :std-user)
+      (let ((*no-exit* t))
         (in-package :skel)
-        (sb-ext:enable-debugger)
-        (require 'sb-aclrepl)
+        (use-package :std-user)
+        ;; (sb-ext:enable-debugger)
+        (require :sb-aclrepl)
         (init-skel-vars)
         (sb-impl::toplevel-repl nil))))
 
