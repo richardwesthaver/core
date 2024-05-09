@@ -104,6 +104,7 @@
         (use-package :std-user)
         (in-package :skel)
         (sb-ext:enable-debugger)
+        (require 'sb-aclrepl)
         (init-skel-vars)
         (sb-impl::toplevel-repl nil))))
 

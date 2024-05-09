@@ -7,13 +7,7 @@ x.lisp
 |#
 (require 'asdf)
 (require 'sb-posix)
-(require 'sb-cover)
-(require 'sb-sprof)
 (require 'sb-concurrency)
-(require 'sb-rotate-byte)
-(require 'sb-introspect)
-(require 'sb-grovel)
-(require 'sb-cltl2)
 
 #-(or sbcl cl) (error "unsupported Lisp compiler")
 
@@ -36,6 +30,14 @@ x.lisp
            :*compression-level*))
 
 (in-package :x)
+(require 'sb-rotate-byte)
+(require 'sb-introspect)
+(require 'sb-grovel)
+(require 'sb-cltl2)
+(require 'sb-cover)
+(require 'sb-sprof)
+
+(require 'sb-aclrepl)
 (sb-ext:enable-debugger)
 (defvar *core-path* (directory-namestring #.(or *load-truename* *compile-file-truename* (error "run me as an executable!"))))
 
