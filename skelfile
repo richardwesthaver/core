@@ -12,9 +12,19 @@
 :scripts "x.lisp"
 :rules
 ((box () #$podman build . --build-arg IMAGE=localhost/box -t core$#)
+ (x () #$./x.lisp$#)
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#
         #$find lisp -name '*.fasl' -type f -delete$#
         #$echo 'cargo clean:' && cd rust && cargo clean$#)
+ (rdb (x) #$./x build rdb$#)
+ (skel (x) #$./x build skel$#)
+ (organ (x) #$./x build organ$#)
+ (homer (x) #$./x build homer$#)
+ (packy (x) #$./x build packy$#)
+ (build (x) #$./x build$#)
+ (install (x) #$./x install$#)
+ (std (x) #$./x save std$#)
+ (prelude (x) #$./x save prelude$#)
  (deploy () #$mv .stash/{prelude.core,std.core} $PACKY_DIR$#))
