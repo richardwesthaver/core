@@ -4,10 +4,11 @@
 
 ;;; Code:
 (in-package :cli/clap)
-
+(declaim (optimize (speed 3)))
 (defun cli-arg0 () (car sb-ext:*posix-argv*))
 (defun cli-args () (cdr sb-ext:*posix-argv*))
 
+(declaim (simple-string *cli-group-separator*))
 (defparameter *cli-group-separator*
   "--"
   "A marker specifying the end of a unique group of CLI args.")
@@ -18,7 +19,7 @@
 (defmacro argp (arg &optional (args (cli-args)))
   "Test for presence of ARG in ARGS. Return the tail of
 ARGS starting from the position of ARG."
-  `(member ,arg ,args :test #'string=))
+  `(member ,arg ,args :test 'equal))
 
 (defmacro make-shorty (name)
   "Return the first char of symbol or string NAME."
@@ -132,25 +133,29 @@ keys."
 	(walk-cli-slots ',opts)))
 
 (defun long-opt-p (str)
+  (declare (simple-string str))
   (and (char= (aref str 0) (aref str 1) #\-)
        (> (length str) 2)))
 
 (defun short-opt-p (str)
+  (declare (simple-string str))
   (and (char= (aref str 0) #\-)
        (not (char= (aref str 1) #\-))
        (> (length str) 1)))
 
 (defun opt-group-p (str)
-  (string= str *cli-group-separator*))
+  (declare (simple-string str))
+  (equalp str *cli-group-separator*))
 
 (defun opt-string-prefix-eq (ch str)
+  (declare (simple-string str) (character ch))
   (char= ch (aref str 0)))
 
 ;; currently not in use
 (defun gen-thunk-ll (origin args)
   (let ((a0 (list (symbolicate '$a 0) origin)))
     (group 
-     (nconc (loop for i from 1 for a in args nconc (list (symbolicate '$a i) a)) a0 )
+     (nconc (loop for i from 1 for a in args nconc (list (symbolicate '$a (the fixnum i)) a)) a0)
      2)))
 
 ;; TODO 2023-10-06: 
@@ -215,7 +220,10 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
 (defun default-thunk (args opts)
   (declare (ignore args opts)))
 
-(defvar *cli-opt-kinds* '(bool str form list sym key num file dir))
+(declaim ((vector symbol) *cli-opt-kinds*))
+(defvar *cli-opt-kinds*
+  (let ((kinds '(bool str form list sym key num file dir)))
+    (make-array (length kinds) :element-type 'symbol :initial-contents kinds)))
 
 (defun cli-opt-kind-p (s)
   (declare (type symbol s))
@@ -254,7 +262,7 @@ is a list of handlers for the opt-val."
   (make-opt-parser (num form) (when (numberp $val) $val))
 
   (make-opt-parser (file str) 
-    (when $val (pathname (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil))))
+    (when $val (pathname (the simple-string (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil)))))
 
   (make-opt-parser (dir str) 
     (when $val (sb-ext:parse-native-namestring $val nil *default-pathname-defaults* :as-directory t))))
@@ -296,10 +304,11 @@ is a list of handlers for the opt-val."
 (defmethod print-usage ((self cli-opt) &optional stream)
   (format stream " -~(~{~A~^/--~}~)~A~A"
 	  (let ((n (cli-opt-name self)))
+            (declare (simple-string n))
 	    (list (make-shorty n) n))
 	  (if (cli-opt-global self) "* " "  ")
 	  (if-let ((d (and (slot-boundp self 'description) (cli-opt-description self))))
-	    (format stream ":  ~A" d)
+	    (format stream ":  ~A" (the simple-string d))
 	    "")))
 
 (defmethod cli-equal ((a cli-opt) (b cli-opt))
@@ -556,20 +565,19 @@ COMPILE is t, in which case a list of strings is assumed."
   (println (cli-version self) stream))
 
 (defmethod print-help ((self cli) &optional stream) 
-  (println (format nil "~A v~A" (cli-name self) (cli-version self)) stream)
+  (println (format nil "~A v~A --- ~A~%" (cli-name self) (cli-version self) (cli-description self)) stream)
   (print-usage self stream)
-  (iprintln (cli-description self) 2 stream)
   ;; (terpri stream)
-  (iprintln "options:" 2 stream)
+  (println "options:" stream)
   (with-slots (opts cmds) self
     (unless (null opts)
       (loop for o across opts
-	    do (iprintln (print-usage o) 4 stream)))
-    ;; (terpri stream)
-    (iprintln "commands:" 2 stream)
+	    do (iprintln (print-usage o) 2 stream)))
+    (terpri stream)
+    (println "commands:" stream)
     (unless (null cmds)
       (loop for c across cmds
-	    do (iprintln (print-usage c) 4 stream)))))
+	    do (iprintln (print-usage c) 2 stream)))))
 
 (defmethod cli-equal :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.
@@ -678,5 +686,5 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 ;; These macros help with defining a toplevel initialization
 ;; function. Initialization functions are responsible for parsing runtime
 ;; options and starting a REPL if needed.
-(defmacro define-toplevel-init (name (props opts) &body body))
-(defmacro define-toplevel-repl (name (props opts) &body body))
+;; (defmacro define-toplevel-init (name (props opts) &body body))
+;; (defmacro define-toplevel-repl (name (props opts) &body body))

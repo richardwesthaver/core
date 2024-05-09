@@ -100,6 +100,7 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
     (circularp object nil)))
 
 (defun group (source n)
+  (declare (fixnum n))
   (when (zerop n) (error "zero length"))
   (labels ((rec (source acc)
              (let ((rest (nthcdr n source)))

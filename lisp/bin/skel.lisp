@@ -50,6 +50,17 @@
 (defcmd skc-id
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
+(defcmd skc-rev
+  (case (sk-vc (find-skelfile #P"." :load t))
+    (:hg (progn
+           (let ((proc (run-hg-command "id" (list "-i") :stream)))
+             (copy-stream (process-output proc) *standard-output*)
+             (finish-output))))
+    (t (progn
+         (let ((proc (run-git-command "rev-parse" (list "HEAD") :stream)))
+           (copy-stream (process-output proc) *standard-output*)
+           (finish-output))))))
+
 (defun skc-show-case (sel)
   (std/string:string-case (sel :default (nyi!))
     (":id" (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t))))
@@ -150,6 +161,9 @@
           (:name id
            :description "print the project id"
            :thunk skc-id)
+          (:name rev
+           :description "print the current vc revision id"
+           :thunk skc-rev)
 	  (:name inspect
 	   :description "inspect the project skelfile"
 	   :opts (make-opts (:name "file" :description "path to skelfile" :kind file))
