@@ -1,6 +1,6 @@
 ;;; Code:
 (uiop:define-package :bin/skel
-    (:use :cl :std :cli/clap :vc :sb-ext)
+  (:use :cl :std :cli/clap :vc :sb-ext)
   (:use-reexport :skel :log)
   (:export :main))
 
@@ -18,7 +18,7 @@
 (defcmd skc-edit
   (let ((file (or (when $args (pop $args)) (find-skelfile #P"."))))
     (cli/ed:run-emacsclient (namestring file))))
-      
+
 (defcmd skc-init
   (let ((file (when $args (pop $args)))
 	(name (if (> $argc 1) (pop $args))))
@@ -90,9 +90,9 @@
              (copy-stream (process-output proc) *standard-output*)
              (finish-output))))
     (t (progn
-            (let ((proc (run-git-command "status" nil :stream)))
-              (copy-stream (process-output proc) *standard-output*)
-              (finish-output))))))
+         (let ((proc (run-git-command "status" nil :stream)))
+           (copy-stream (process-output proc) *standard-output*)
+           (finish-output))))))
 
 (defcmd skc-make
   (if $args
@@ -105,13 +105,14 @@
       (required-argument :script)))
 
 (defcmd skc-shell
-  (if $args
-      (nyi!)
-      (let ((*no-exit* t))
-        (in-package :skel)
+  (setq *no-exit* t)
+  (sb-ext:enable-debugger)
+  (cli/clap::with-cli-handlers
+      (progn
+        (use-package :cl-user)
+        (use-package :sb-ext)
         (use-package :std-user)
-        ;; (sb-ext:enable-debugger)
-        (require :sb-aclrepl)
+        ;; (require :sb-aclrepl)
         (init-skel-vars)
         (sb-impl::toplevel-repl nil))))
 
@@ -180,8 +181,9 @@
 	   :description "open the sk-shell interpreter"
            :thunk skc-shell)))
 
-(defun run ()
-  (let ((*log-level* :info))
+(defmain ()
+  (let ((*log-level* :info)
+        (*no-exit* nil))
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
       (load-skelrc)
@@ -189,7 +191,3 @@
       (do-opt (find-opt $cli "level"))
       (do-cmd $cli)
       (debug-opts $cli))))
-
-(defmain ()
-  (run)
-  (sb-ext:exit :code 0))

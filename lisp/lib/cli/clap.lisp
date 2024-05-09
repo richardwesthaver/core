@@ -39,14 +39,14 @@ ARGS starting from the position of ARG."
 (defmacro with-cli-handlers (form)
   "A wrapper which handles common cli errors that may occur during
 evaluation of FORM."
-  `(handler-case ,form
-     (sb-sys:interactive-interrupt ()
-       (format *error-output* "~&(:SIGINT)~&")
-       (unless *no-exit* (sb-ext:exit :code 130)))
-     (error (c)
-       (format *error-output* "~&~A~&" c)
-       (error c)
-       (unless *no-exit* (sb-ext:exit :code 1)))))
+  `(progn
+     (if *no-exit*
+         (sb-ext:enable-debugger)
+         (sb-ext:disable-debugger))
+     (handler-case ,form
+       (sb-sys:interactive-interrupt ()
+         (format *error-output* "~&(:SIGINT)~&")
+         (unless *no-exit* (sb-ext:exit :code 130))))))
 
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings."
@@ -93,12 +93,11 @@ keys."
     (let ((main (symbolicate 'main)))
       (when ret (setf retval ret))
       `(prog1
-           (defun ,main (&key (output *standard-output*))
-             "Run the top-level function and print to OUTPUT."
-             (declare (stream output))
-             (let ((*standard-output* output))
-	       (with-cli-handlers
-	           (progn ,@body ,@(unless (not (boundp 'retval)) (list retval))))))
+           (defun ,main ()
+             "Run the top-level function and print to *STDOUT*."
+	     (with-cli-handlers
+	         (progn ,@body ,@(unless (not (boundp 'retval)) (list retval)))
+               ))
          (export '(,main))))))
 
 ;;; Utils
