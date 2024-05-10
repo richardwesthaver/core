@@ -55,7 +55,7 @@
 (defstruct vc-rev num id)
 
 (defclass vc-repo ()
-  ((path :initform nil :type (or null string) :accessor vc-repo-path
+  ((path :initform nil :type (or null string pathname) :accessor vc-repo-path
          :initarg :path
          :documentation "AKA working-directory or working-copy")
    (head :initform nil :initarg :head :type (or null vc-rev) :accessor vc-repo-head)

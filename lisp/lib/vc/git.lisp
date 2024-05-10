@@ -2,8 +2,10 @@
 
 (defvar *git-program* (find-exe "git"))
 
-(defun run-git-command (cmd &rest args)
-  (run-program *git-program* (push cmd args) :output :stream))
+(defun run-git-command (cmd &optional args output (wait t))
+  (unless (listp args) (setf args (list args)))
+  (setf args (mapcar #'namestring-or args)) ;;  TODO 2024-05-10: slow
+  (sb-ext:run-program *git-program* (push cmd args) :output output :wait wait :input nil))
 
 (defun git-url-p (url)
   "Return nil if URL does not look like a URL to a git valid remote."
@@ -17,12 +19,18 @@
             (:regex "^git@"))
           url-str)))
 
-(defclass git-repo (repo)
+(defclass git-repo (vc-repo)
   ((index))) ;; working-directory
+
+(defmethod vc-init ((self (eql :git)))
+  (make-instance 'git-repo :path (pathname *default-pathname-defaults*)))
 
 (defmethod vc-init ((self git-repo))
   (with-slots (path) self
-    (sb-ext:process-exit-code (run-git-command "init" path))))
+    (let ((existed (probe-file path)))
+      (if (zerop (sb-ext:process-exit-code (run-git-command "init" path)))
+          (not existed)
+          (git-error "git init failed:" path)))))
 
 (defmethod vc-run ((self git-repo) (cmd string) &rest args)
   (with-slots (path) self

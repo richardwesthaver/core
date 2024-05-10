@@ -1,6 +1,7 @@
 (defsystem :vc
   :depends-on (:std :cli :obj :net :log)
   :components ((:file "pkg")
+               (:file "util")
                (:file "err")
                (:file "ignore")
                (:file "proto")

@@ -67,23 +67,25 @@
            (finish-output))))))
 
 (defun skc-show-case (sel)
-  (std/string:string-case (sel :default (nyi!))
+  (std/string:string-case (sel :default (skel-error))
     (":id" (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t))))
+    (":name" (std:format-sxhash (sk-name (find-skelfile #P"." :load t))))
+    (":author" (sk-author (find-skelfile #P"." :load t)))
+    (":version" (sk-version (find-skelfile #P"." :load t)))
+    (":description" (sk-description (find-skelfile #P"." :load t)))
+    (":tags" (sk-tags (find-skelfile #P"." :load t)))
+    (":license" (sk-license (find-skelfile #P"." :load t)))
+    (":vc" (sk-vc (find-skelfile #P"." :load t)))
+    (":docs" (sk-docs (find-skelfile #P"." :load t)))
+    (":scripts" (sk-scripts (find-skelfile #P"." :load t)))
+    (":snippets" (sk-snippets (find-skelfile #P"." :load t)))
+    (":rules" (sk-rules (find-skelfile #P"." :load t)))
+    (":imports" (sk-imports (find-skelfile #P"." :load t)))
+    (":stash" (sk-stash (find-skelfile #P"." :load t)))
+    (":store" (sk-store (find-skelfile #P"." :load t)))
     (":config" (if (probe-file *user-skelrc*)
                    (describe (load-user-skelrc) t)
                    (describe *skel-user-config* nil)))
-    (":vc" (sk-vc (find-skelfile #P"." :load t)))
-    (":author" (sk-author (find-skelfile #P"." :load t)))
-    (":scripts" (sk-scripts (find-skelfile #P"." :load t)))
-    (":rules" (sk-rules (find-skelfile #P"." :load t)))
-    (":description" (sk-description (find-skelfile #P"." :load t)))
-    (":tags" (sk-tags (find-skelfile #P"." :load t)))
-    (":docs" (sk-docs (find-skelfile #P"." :load t)))
-    (":version" (sk-version (find-skelfile #P"." :load t)))
-    (":imports" (sk-imports (find-skelfile #P"." :load t)))
-    (":license" (sk-license (find-skelfile #P"." :load t)))
-    (":stash" (sk-stash (find-skelfile #P"." :load t)))
-    (":store" (sk-store (find-skelfile #P"." :load t)))
     (":cache" (sk-cache (find-skelfile #P"." :load t)))))
 
 (defcmd skc-show
@@ -122,11 +124,15 @@
 
 (defcmd skc-run
   (if $args
-      (mapc (lambda (script) (debug! (sk-run (sk-find-script script (find-skelfile #P"." :load t))))) $args)
+      (mapc (lambda (script)
+              (debug!
+               (sk-run
+                (sk-find-script
+                 (pathname-name script)
+                 (find-skelfile #P"." :load t))))) $args)
       (required-argument :script)))
 
 (defcmd skc-shell
-  (setq *no-exit* t)
   (sb-ext:enable-debugger)
   (cli/clap::with-cli-handlers
       (progn
@@ -206,8 +212,7 @@
            :thunk skc-shell)))
 
 (defmain ()
-  (let ((*log-level* :info)
-        (*no-exit* nil))
+  (let ((*log-level* :info))
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
       (load-skelrc)

@@ -1,4 +1,4 @@
-;;; skelfile --- core skelfile -*- mode: skel; -*-
+;;; skelfile --- CC/core skelfile -*- mode: skel; -*-
 :name "core"
 :author "Richard Westhaver <ellis@rwest.io>"
 :version "0.1.0"
@@ -6,13 +6,13 @@
 :stash ".stash"
 :store ".store"
 :description "The Compiler Company Core"
-:vc :hg
 :tags ("core" "lisp" "rust" "emacs" "c")
-:docs ((:org "readme"))
 :imports ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
+:vc :hg
+:docs ((:org "readme"))
 :scripts "x.lisp"
 :rules
-((box () #$podman build . --build-arg IMAGE=localhost/box -t core$#)
+((all (x compile std prelude build))
  (x () #$if [ ! -f x ];
     then ./x.lisp
     fi$#)
@@ -28,9 +28,11 @@
  (homer (x) #$./x build homer$#)
  (packy (x) #$./x build packy$#)
  (build (x) #$./x build$#)
- ;; x does the same thing, having issues with passing the shell input
- ;; to SKEL though.
- (install (x) #$./x install$#) 
+ (compile (x) #$./x compile$#)
  (std (x) #$./x save std$#)
  (prelude (x) #$./x save prelude$#)
+ (box () #$podman build . --build-arg IMAGE=box -t core$#)
+ ;; x does the same thing, having issues with passing the shell input
+ ;; to SKEL though.
+ (install (x) #$./x install$#)
  (deploy (std prelude) #$mv .stash/{prelude.core,std.core} $PACKY_DIR$#))

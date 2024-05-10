@@ -14,6 +14,7 @@
 #|
 |#
 ;;; Code:
+(in-package :obj/cfg)
 (defclass cfg ()
   ())
 

@@ -40,6 +40,7 @@
 (defun run-hg-command (cmd &optional args output (wait t))
   "Run an hg command."
   (unless (listp args) (setf args (list args)))
+  (setf args (mapcar #'namestring-or args)) ;;  TODO 2024-05-10: slow
   (sb-ext:run-program *hg-program* (push cmd args) :output output :wait wait :input nil))
 
 (defun hg-url-p (url)
@@ -77,12 +78,14 @@
             (if ok res (error 'hg-error :message res))))))))
 
 (defmethod vc-init ((self (eql :hg)))
-  (make-instance 'hg-repo :path (pathname (sb-posix:getcwd))))
+  (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
 
 (defmethod vc-init ((self hg-repo))
   (with-slots (path) self
-    ;; could throw error here but w/e
-    (vc-run self "init" path)))
+    (let ((existed (probe-file path)))
+      (if (zerop (sb-ext:process-exit-code (run-hg-command "init" path)))
+          (not existed)
+          (hg-error "hg init failed:" path)))))
 
 (defmethod vc-clone ((self hg-repo) remote &key &allow-other-keys)
   (with-slots (path) self

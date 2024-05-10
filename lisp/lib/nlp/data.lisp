@@ -6,6 +6,8 @@
    :stop-words-lookup
    :stop-words))
 
+(in-package :nlp/data)
+
 (defclass language-data ()
   ((stop-words
     :initarg :stop-words
