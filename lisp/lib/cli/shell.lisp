@@ -21,25 +21,26 @@
 
 (defparameter *shell* "/bin/bash")
 (defparameter *shell-directory* nil)
+(defparameter *shell-input* nil)
 
 (defun plain-shell-reader (stream)
   (let (chars (state 'sh))
     (loop do
-      (let ((c (read-char stream)))
-        (cond
-          ((eq state 'sh)
-           (when (char= c #\$) (setq state 'dolla))
-           (push c chars))
-          ((eq state 'dolla)
-           (cond
-             ((char= c #\#)
-              ;; remove trailing '$'
-              (pop chars)
-              (return))
-             (t (setq state 'sh) (push c chars)))))))
+             (let ((c (read-char stream)))
+               (cond
+                 ((eq state 'sh)
+                  (when (char= c #\$) (setq state 'dolla))
+                  (push c chars))
+                 ((eq state 'dolla)
+                  (cond
+                    ((char= c #\#)
+                     ;; remove trailing '$'
+                     (pop chars)
+                     (return))
+                    (t (setq state 'sh) (push c chars)))))))
     (coerce (nreverse chars) 'string)))
 
-(defun lisp-shell-reader (stream numarg))
+;; (defun lisp-shell-reader (stream numarg))
 
 (defmacro define-process-output-handler (type &body body)
   "Define a new function which handles the result of a SB-EXT:PROCESS in
@@ -63,35 +64,46 @@ lisp forms and other goodies.
 echo $x
 $#
 ;; => 4"
-  (declare (ignore sub-char))
+  (declare (ignore sub-char) ((or (integer 0 9) null) numarg))
   (let ((str (plain-shell-reader stream)))
     (if numarg
-        (cond
-          ((= numarg 0)
-           (string-right-trim '(#\Newline)
-                              (with-output-to-string (s)
-                                (sb-ext:run-program *shell*
-                                                    (list "-c" (format nil "~a" str))
-                                                    :directory (or *shell-directory* *default-pathname-defaults*)
-                                                    :output s))))
-          (t (nyi!)))
+        (progn
+          (cond
+            ((= numarg 0)
+             (string-right-trim '(#\Newline)
+                                (with-output-to-string (s)
+                                  (sb-ext:run-program *shell*
+                                                      (list "-c" (format nil "~a" str))
+                                                      :directory (or *shell-directory* *default-pathname-defaults*)
+                                                      :output s
+                                                      :input *shell-input*))))
+            (t (nyi!))))
         (let ((args (list "-c" (format nil "~a" str)))
               (directory (or *shell-directory* *default-pathname-defaults*)))
-          (lambda (&key (output) (wait t))
+          (lambda (&key (output *standard-output*) (wait t))
             (case output
               (:string (string-right-trim
                         '(#\Newline)
                         (with-output-to-string (s)
-                          (sb-ext:run-program *shell* args :directory directory :output s :wait wait))))
+                          (sb-ext:run-program *shell* args
+                                              :directory directory
+                                              :output s
+                                              :input *shell-input*
+                                              :wait wait))))
               (:integer (parse-integer
                          (string-right-trim
                           '(#\Newline)
                           (with-output-to-string (s)
-                            (sb-ext:run-program *shell* args :directory directory :output s :wait wait)))))
+                            (sb-ext:run-program *shell* args
+                                                :directory directory
+                                                :output s
+                                                :input *shell-input*
+                                                :wait wait)))))
               (t (sb-ext:run-program *shell*
                                      args
                                      :directory directory
                                      :output output
+                                     :input *shell-input*
                                      :wait wait))))))))
 
 (defreadtable :shell

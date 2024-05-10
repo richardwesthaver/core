@@ -78,7 +78,8 @@
    :sk-tags :sk-imports
    :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
-   :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule 
+   :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule
+   :sk-make
    :sk-description :sk-kind :sk-rules :sk-version :sk-name :sk-docs :sk-document 
    :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config

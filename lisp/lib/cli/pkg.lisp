@@ -21,7 +21,7 @@
 (defpackage :cli/shell
   (:use :cl :std)
   (:nicknames :shell)
-  (:export :*shell* :*shell-directory*))
+  (:export :*shell* :*shell-directory* :*shell-input*))
 
 (defpackage :cli/ansi
   (:use :cl :std)

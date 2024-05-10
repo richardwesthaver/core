@@ -120,7 +120,7 @@
 (defclass sk-rule (skel)
   ;; if target is a symbol, treated as a PHONY.
   ((target :initarg :target :type string :accessor sk-rule-target)
-   (source :initarg :source :type (or sk-source null) :accessor sk-rule-source)
+   (source :initform nil :initarg :source :accessor sk-rule-source)
    (recipe :initform (make-instance 'sk-command) :initarg :recipe :type sk-command :accessor sk-rule-recipe))
   (:documentation "Skel rules. Maps a SOURCE to a corresponding TARGET
 via the special form stored in RECIPE."))
@@ -133,15 +133,31 @@ via the special form stored in RECIPE."))
   (let ((r (make-instance 'sk-command :body recipe)))
     (make-instance 'sk-rule :target (format nil "~(~a~)" target) :source source :recipe r)))
 
+;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
-  (mapcar (lambda (x) (funcall x :output t))
-          (sk-body (sk-rule-recipe self))))
+  (with-slots (recipe) self
+    (mapcar (lambda (x) (funcall x :output t))
+            (sk-body recipe))))
 
 (defmethod sk-write ((self sk-rule) stream)
   (with-slots (target source recipe) self
     (write-string target) ;; target isn't typep SK-OBJECT
     (sk-write-string source)
     (sk-write-string recipe)))
+
+(defun sk-make (obj &rest rules)
+  (when rules
+    (mapcar
+     (lambda (rule)
+       (when-let ((sources (and rule (sk-rule-source rule))))
+         (mapcar
+          (lambda (src)
+            (if-let ((sr (sk-find-rule src obj)))
+              (sk-run sr)
+              (warn! "unhandled source:" src "for rule:" rule)))
+          sources))
+       (sk-run rule))
+     rules)))
 
 ;;;; Document
 (deftype document-designator () '(member :org :txt :pdf :html :md))
@@ -176,7 +192,7 @@ via the special form stored in RECIPE."))
                    :name (pathname-name script)
                    :kind (when-let ((ext (pathname-type script)))
                            (keywordicate ext))))))
-                               
+
 
 (defmethod sk-run ((self sk-script))
   (sb-ext:run-program (sk-path self) nil :output t))
@@ -236,10 +252,10 @@ via the special form stored in RECIPE."))
 
 (defmethod sk-write-file ((self sk-config) 
                           &key (path *default-skelfile*) 
-                            (nullp nil) 
-                            (header t) 
-                            (fmt :canonical)
-                            (if-exists :error))
+                               (nullp nil) 
+                               (header t) 
+                               (fmt :canonical)
+                               (if-exists :error))
   (build-ast self :nullp nullp)
   (prog1 
       (with-open-file (out path
@@ -312,7 +328,7 @@ via the special form stored in RECIPE."))
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
    (vc :initarg :vc :initform (make-sk-vc-meta :kind *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
-   (rules :initarg :rules :initform nil :accessor sk-rules :type (or null (vector sk-rule)))
+   (rules :initarg :rules :initform nil :accessor sk-rules :type (or list (vector sk-rule)))
    (docs :initarg :documents :initform nil :accessor sk-docs :type (or list (vector sk-document)))
    (components :initarg :components :initform nil :accessor sk-components :type list)
    (scripts :initarg :scripts :initform nil :accessor sk-scripts :type (or list (vector sk-script)))
@@ -375,13 +391,13 @@ via the special form stored in RECIPE."))
 	 (loop for (k v . rest) on (ast self)
 	       by #'cddr
 	       unless (or (null v) (null k))
-		 do 
-		    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
-		    (format stream " ")
-		    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
-			(write-sxp-stream v stream :pretty pretty :case case)
-			(write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
-		    (format stream "~%"))
+	       do 
+		  (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
+		  (format stream " ")
+		  (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
+		      (write-sxp-stream v stream :pretty pretty :case case)
+		      (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
+		  (format stream "~%"))
 	 (error 'sxp-fmt-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
@@ -395,8 +411,8 @@ via the special form stored in RECIPE."))
 ;; ast -> file
 (defmethod sk-write-file ((self sk-project) 
 			  &key 
-                            (path *default-skelfile*) (nullp nil) (header t) (fmt :canonical)
-                            (if-exists :error))
+                          (path *default-skelfile*) (nullp nil) (header t) (fmt :canonical)
+                          (if-exists :error))
   (build-ast self :nullp nullp)
   (prog1 
       (with-open-file (out path
@@ -423,7 +439,7 @@ via the special form stored in RECIPE."))
     (when author (setf (sk-author self) author))))
 
 (defmethod sk-find-rule (name self)
-  (find name (sk-rules self) :test 'equal :key #'sk-rule-target))
+  (find (string-upcase name) (sk-rules self) :test 'equalp :key #'sk-rule-target))
 
 (defmethod sk-find-script ((name string) (self skel) &key)
   (find name (sk-scripts self) :test 'equal :key #'sk-name))

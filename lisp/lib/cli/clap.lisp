@@ -327,9 +327,9 @@ is a list of handlers for the opt-val."
 (defclass cli-cmd ()
   ;; name slot is required and must be a string
   ((name :initarg :name :initform (required-argument :name) :accessor cli-name :type string)
-   (opts :initarg :opts :initform (make-array 0 :element-type 'cli-opt)
+   (opts :initarg :opts :initform (make-array 0 :element-type 'cli-opt :adjustable t)
 	 :accessor cli-opts :type (vector cli-opt))
-   (cmds :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd)
+   (cmds :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd :adjustable t)
 	 :accessor cli-cmds :type (vector cli-cmd))
    (thunk :initform #'default-thunk :initarg :thunk :accessor cli-thunk :type function-lambda-expression)
    (lock :initform nil :initarg :lock :accessor cli-lock-p :type boolean)

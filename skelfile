@@ -7,14 +7,17 @@
 :store ".store"
 :description "The Compiler Company Core"
 :vc :hg
-:tags ("core")
+:tags ("core" "lisp" "rust" "emacs" "c")
 :docs ((:org "readme"))
 :imports ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
 :scripts "x.lisp"
 :rules
 ((box () #$podman build . --build-arg IMAGE=localhost/box -t core$#)
- (x () #$./x.lisp$#)
+ (x () #$if [ ! -f x ];
+    then ./x.lisp
+    fi$#)
  (clean ()
+        #$rm -vf x$#
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#
         #$find lisp -name '*.fasl' -type f -delete$#

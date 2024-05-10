@@ -1,6 +1,11 @@
 ;;; Code:
+
+;;  TODO 2024-05-09: add shell configurables to rules - maybe at sk-command
+;;  level. :INPUT :WAIT :OUTPUT
+
 (uiop:define-package :bin/skel
   (:use :cl :std :cli/clap :vc :sb-ext)
+  (:import-from :cli/shell :*shell-input*)
   (:use-reexport :skel :log)
   (:export :main))
 
@@ -106,9 +111,14 @@
            (finish-output))))))
 
 (defcmd skc-make
-  (if $args
-      (mapc (lambda (rule) (debug! (sk-run (sk-find-rule rule (find-skelfile #P"." :load t))))) $args)
-      (debug! (sk-run (aref (sk-rules (find-skelfile #P"." :load t)) 0)))))
+  (let ((sk (find-skelfile #P"." :load t)))
+    (sb-ext:enable-debugger)
+    (if $args
+        (loop for a in $args
+              do (debug!
+                  (when-let ((rule (sk-find-rule a sk)))
+                    (sk-make sk rule))))
+        (debug! (sk-make sk (aref (sk-rules sk) 0))))))
 
 (defcmd skc-run
   (if $args
@@ -137,7 +147,7 @@
 	   :thunk skc-help)
 	  (:name "version" :global t :description "print version" 
 	   :thunk skc-version)
-	  (:name "level" :global t :description "set log level (debug,info,trace,warn)"
+	  (:name "level" :global t :description "set log level (warn,info,debug,trace)"
 	   :thunk skc-level)
 	  (:name "config" :global t :description "set a custom skel user config" :kind file
 	   :thunk skc-config)
