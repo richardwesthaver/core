@@ -41,9 +41,10 @@
 (define-alien-type xkb-mod-mask unsigned-int)
 (define-alien-type xkb-led-index unsigned-int)
 (define-alien-type xkb-led-mask unsigned-int)
-(define-alien-type xkb-keysym-flags boolean)
-(define-alien-type xkb-context-flags unsigned-char)
-(define-alien-type xkb-keymap-compile-flags boolean)
+;; TODO 2024-05-09: 
+;; (define-alien-type xkb-keysym-flags boolean)
+;; (define-alien-type xkb-context-flags unsigned-char)
+;; (define-alien-type xkb-keymap-compile-flags boolean)
 (define-alien-type xkb-keymap-format boolean)
 
 (define-alien-type xkb-rule-names
@@ -54,14 +55,15 @@
             (variant c-string)
             (options c-string)))
 
-(define-alien-routine xkb-keysym-get-name int
-  (keysym xkb-keysym-flags)
-  (buffer c-string)
-  (size size-t))
+;; TODO 2024-05-09: 
+;; (define-alien-routine xkb-keysym-get-name int
+;;   (keysym xkb-keysym-flags)
+;;   (buffer c-string)
+;;   (size size-t))
 
-(define-alien-routine xkb-keysym-from-name xkb-keysym
-  (name c-string)
-  (flags xkb-keysym-flags))
+;; (define-alien-routine xkb-keysym-from-name xkb-keysym
+;;   (name c-string)
+;;   (flags xkb-keysym-flags))
 
 (define-alien-routine xkb-keysym-to-utf8 int
   (keysym xkb-keysym)
@@ -80,15 +82,15 @@
 (define-alien-routine xkb-keysym-to-lower xkb-keysym
   (ks xkb-keysym))
 
-(define-alien-routine xkb-context-new (* xkb-context)
-  (flags xkb-context-flags))
+;; (define-alien-routine xkb-context-new (* xkb-context)
+;;   (flags xkb-context-flags))
 
 (define-alien-routine xkb-context-set-user-data void
   (context (* xkb-context))
   (user-data (* t)))
 
-(define-alien-routine xkb-context-get-user-data (* t)
-  (context (* xkb-context)))
+;; (define-alien-routine xkb-context-get-user-data (* t)
+;;   (context (* xkb-context)))
 
 (define-alien-routine xkb-context-include-path-append int
   (context (* xkb-context))
@@ -114,29 +116,31 @@
 ;; https://xkbcommon.org/doc/current/group__logging.html
 
 ;;; Keymap Init
-(define-alien-routine xkb-keymap-new-from-names (* xkb-keymap)
-  (context (* xkb-context))
-  (names (* xkb-rule-names))
-  (flags xkb-keymap-compile-flags))
 
-(define-alien-routine xkb-keymap-new-from-file (* xkb-keymap)
-  (context (* xkb-context))
-  (file (* t))
-  (fmt xkb-keymap-format)
-  (flags xkb-keymap-compile-flags))
+;; TODO 2024-05-09: 
+;; (define-alien-routine xkb-keymap-new-from-names (* xkb-keymap)
+;;   (context (* xkb-context))
+;;   (names (* xkb-rule-names))
+;;   (flags xkb-keymap-compile-flags))
 
-(define-alien-routine xkb-keymap-new-from-string (* xkb-keymap)
-  (context (* xkb-context))
-  (str c-string)
-  (fmt xkb-keymap-format)
-  (flags xkb-keymap-compile-flags))
+;; (define-alien-routine xkb-keymap-new-from-file (* xkb-keymap)
+;;   (context (* xkb-context))
+;;   (file (* t))
+;;   (fmt xkb-keymap-format)
+;;   (flags xkb-keymap-compile-flags))
 
-(define-alien-routine xkb-keymap-new-from-buffer (* xkb-keymap)
-  (context (* xkb-context))
-  (buffer c-string)
-  (length size-t)
-  (fmt xkb-keymap-format)
-  (flags xkb-keymap-compile-flags))
+;; (define-alien-routine xkb-keymap-new-from-string (* xkb-keymap)
+;;   (context (* xkb-context))
+;;   (str c-string)
+;;   (fmt xkb-keymap-format)
+;;   (flags xkb-keymap-compile-flags))
+
+;; (define-alien-routine xkb-keymap-new-from-buffer (* xkb-keymap)
+;;   (context (* xkb-context))
+;;   (buffer c-string)
+;;   (length size-t)
+;;   (fmt xkb-keymap-format)
+;;   (flags xkb-keymap-compile-flags))
 
 ;;; Keymap Components
 

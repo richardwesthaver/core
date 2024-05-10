@@ -375,7 +375,7 @@ pair in the buffer."
                         result)
                   (setf acc (subseq acc 8)))
                  ((eq x (char-code #\f))
-                  (push (decode-float32 (subseq acc 0 4))
+                  (push (dec-float32 (subseq acc 0 4))
                         result)
                   (setf acc (subseq acc 4)))
                  ((eq x (char-code #\s))
@@ -451,11 +451,11 @@ with the current time use (encode-timetag :time)."
 ;; floats are encoded using implementation specific 'internals' which is not
 ;; particulaly portable, but 'works for now'.
 
-(defun encode-float32 (f)
+(defun enc-float32 (f)
   "encode an ieee754 float as a 4 byte vector. currently sbcl/cmucl specific"
   (encode-int32 (sb-kernel:single-float-bits f)))
 
-(defun decode-float32 (s)
+(defun dec-float32 (s)
   "ieee754 float from a vector of 4 bytes in network byte order"
   (sb-kernel:make-single-float (decode-int32 s)))
 

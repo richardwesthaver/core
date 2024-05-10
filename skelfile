@@ -28,7 +28,9 @@
  (homer (x) #$./x build homer$#)
  (packy (x) #$./x build packy$#)
  (build (x) #$./x build$#)
- (install (x) #$./x install$#)
+ ;; x does the same thing, having issues with passing the shell input
+ ;; to SKEL though.
+ (install (x) #$./x install$#) 
  (std (x) #$./x save std$#)
  (prelude (x) #$./x save prelude$#)
- (deploy () #$mv .stash/{prelude.core,std.core} $PACKY_DIR$#))
+ (deploy (std prelude) #$mv .stash/{prelude.core,std.core} $PACKY_DIR$#))

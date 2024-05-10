@@ -146,18 +146,23 @@ via the special form stored in RECIPE."))
     (sk-write-string recipe)))
 
 (defun sk-make (obj &rest rules)
-  (when rules
-    (mapcar
-     (lambda (rule)
-       (when-let ((sources (and rule (sk-rule-source rule))))
-         (mapcar
-          (lambda (src)
-            (if-let ((sr (sk-find-rule src obj)))
-              (sk-run sr)
-              (warn! "unhandled source:" src "for rule:" rule)))
-          sources))
-       (sk-run rule))
-     rules)))
+  (if rules
+      (mapc
+       (lambda (rule)
+         (when-let ((sources (sk-rule-source rule)))
+           (mapcar
+            (lambda (src)
+              (if-let ((sr (sk-find-rule src obj)))
+                (sk-make obj sr)
+                (warn! "unhandled source:" src "for rule:" rule)))
+            sources))
+         (sk-run rule))
+       rules)
+      (unless (sequence:emptyp (sk-rules obj))
+        (let ((rule (aref (sk-rules obj) 0)))
+          (if (sk-rule-source rule)
+              (sk-make obj rule)
+              (sk-run rule))))))
 
 ;;;; Document
 (deftype document-designator () '(member :org :txt :pdf :html :md))
@@ -328,15 +333,32 @@ via the special form stored in RECIPE."))
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
    (vc :initarg :vc :initform (make-sk-vc-meta :kind *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
-   (rules :initarg :rules :initform nil :accessor sk-rules :type (or list (vector sk-rule)))
-   (docs :initarg :documents :initform nil :accessor sk-docs :type (or list (vector sk-document)))
+   (rules :initarg :rules
+          :initform (make-array 0 :element-type 'sk-rule :adjustable t)
+          :accessor sk-rules
+          :type (vector sk-rule))
+   (docs :initarg :documents
+         :initform (make-array 0 :element-type 'sk-document :adjustable t)
+         :accessor sk-docs :type (vector sk-document))
    (components :initarg :components :initform nil :accessor sk-components :type list)
-   (scripts :initarg :scripts :initform nil :accessor sk-scripts :type (or list (vector sk-script)))
-   (snippets :initarg :snippets :initform nil :accessor sk-snippets :type (or list (vector sk-snippet)))
+   (scripts :initarg :scripts
+            :initform (make-array 0 :element-type 'sk-script :adjustable t)
+            :accessor sk-scripts
+            :type (vector sk-script))
+   (snippets :initarg :snippets
+             :initform (make-array 0 :element-type 'sk-snippet :adjustable t)
+             :accessor sk-snippets
+             :type (vector sk-snippet))
    (stash :initarg :stash :accessor sk-stash :type pathname)
    (store :initarg :store :accessor sk-store :type pathname)
-   (abbrevs :initarg :abbrevs :initform nil :accessor sk-abbrevs :type (or list (vector sk-abbrevs)))
-   (imports :initarg :imports :initform nil :accessor sk-imports :type (or list (vector pathname)))))
+   (abbrevs :initarg :abbrevs
+            :initform (make-array 0 :element-type 'sk-abbrev :adjustable t)
+            :accessor sk-abbrevs
+            :type (vector sk-abbrevs))
+   (imports :initarg :imports
+            :initform (make-array 0 :element-type 'pathname :adjustable t)
+            :accessor sk-imports
+            :type (vector pathname))))
 
 (defun find-sk-symbol (s)
   (find-symbol* (symbol-name s) :skel/core nil))
@@ -351,18 +373,18 @@ via the special form stored in RECIPE."))
           (sb-int:doplist (k v) ast
             (when-let ((s (find-sk-symbol k)))
               (setf (slot-value self s) v))) ;; needs to be correct package
-          (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
-          (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
+          (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the string (sk-stash self)))))
+          (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the string (sk-store self)))))
           (if (bound-string-p self 'scripts)
-              (if-let ((path (probe-file (pathname (sk-scripts self)))))
+              (if-let ((path (probe-file (pathname (the string (sk-scripts self))))))
                 (setf (sk-scripts self)
                       (if (directory-path-p path)
                           (find-files path)
                           (list path)))
                 (debug! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
-          (when-let ((scripts (sk-scripts self)))
+          (when-let ((scripts (the list (sk-scripts self))))
             (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
-          (when-let ((rules (sk-rules self)))
+          (when-let ((rules (the list (sk-rules self))))
             (setf (sk-rules self) (map 'vector
                                        (lambda (x)
                                          (destructuring-bind (target source &rest recipe) x
@@ -388,16 +410,17 @@ via the special form stored in RECIPE."))
   (case fmt
     (:pretty
      (if (listp (ast self))
-	 (loop for (k v . rest) on (ast self)
+         (with-open-stream (st stream)
+	   (loop for (k v . rest) on (ast self)
 	       by #'cddr
 	       unless (or (null v) (null k))
 	       do 
 		  (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
-		  (format stream " ")
+		  (write-char #\space st)
 		  (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
 		      (write-sxp-stream v stream :pretty pretty :case case)
 		      (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
-		  (format stream "~%"))
+		  (write-char #\newline st)))
 	 (error 'sxp-fmt-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 

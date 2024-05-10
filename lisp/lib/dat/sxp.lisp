@@ -56,7 +56,7 @@ slot. The :ast slot is always ignored."))
 
 (defmethod unwrap! ((self sxp)) (ignore-errors (slot-value self 'ast)))
 
-(defmethod unwrap-or ((self sxp) else-fn)
+(defmethod unwrap-or ((self sxp) (else-fn function))
   (if (slot-unbound 'sxp self 'ast)
       (slot-value self 'ast)
       (if (null (slot-value self 'ast))
@@ -85,6 +85,7 @@ slot. The :ast slot is always ignored."))
 
 (defun write-sxp-string (sxp) 
   (let ((ast (ast sxp)))
+    (declare (list ast))
     (if (> (length ast) 1)
 	(write-to-string ast)
 	(write-to-string (car ast)))))
@@ -141,12 +142,12 @@ example."
   (declare (type class class)
 	   (type form form)))
 
-(declaim (inline file-read-forms))
 (defun file-read-forms (file)
-  (aif (read-file-forms file)
-       (if (> (length it) 1)
-           it
-           (car it))))
+  (declare (sb-kernel:pathname-designator file))
+  (awhen (the list (read-file-forms file))
+    (if (> (length it) 1)
+        it
+        (car it))))
 
 ;; (defmacro define-fmt ())
 ;; (defmacro define-macro ())

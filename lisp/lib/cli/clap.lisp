@@ -46,8 +46,10 @@ evaluation of FORM."
          (sb-ext:disable-debugger))
      (handler-case ,form
        (sb-sys:interactive-interrupt ()
-         (format *error-output* "~&(:SIGINT)~&")
-         (unless *no-exit* (sb-ext:exit :code 130))))))
+         (println "(:SIGINT)")
+         (unless *no-exit* (sb-ext:exit :code 130)))
+       ;; ,@(when *no-exit* '()))
+       )))
 
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings."
@@ -314,9 +316,9 @@ is a list of handlers for the opt-val."
 (defmethod cli-equal ((a cli-opt) (b cli-opt))
   (with-slots (name global kind) a
     (with-slots ((bn name) (bg global) (bk kind)) b
-      (and (string= name bn)
-	   (eql global bg)
-	   (eql kind bk)))))
+      (and (equal name bn)
+	   (eq global bg)
+	   (equal kind bk)))))
 
 (defmethod call-opt ((self cli-opt) arg)
   (funcall (cli-opt-thunk self) arg))
