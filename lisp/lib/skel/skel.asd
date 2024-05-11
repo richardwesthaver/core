@@ -31,7 +31,7 @@
    (:module "ext"
     :components
     ((:file "asdf")
-     (#+inspect :file "inspect")
+     #+inspect (:file "inspect")
      (:file "net"))))
   :in-order-to ((test-op (test-op "skel/tests"))))
 
