@@ -14,8 +14,8 @@
 (defclass transport ()
   ())
 
-(defclass connection ()
-  ())
+;; (defclass connection ()
+;;   ())
 
 (defclass codec ()
   ())

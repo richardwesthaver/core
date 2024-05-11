@@ -69,7 +69,7 @@
 (defun skc-show-case (sel)
   (std/string:string-case (sel :default (skel-error))
     (":id" (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t))))
-    (":name" (std:format-sxhash (sk-name (find-skelfile #P"." :load t))))
+    (":name" (sk-name (find-skelfile #P"." :load t)))
     (":author" (sk-author (find-skelfile #P"." :load t)))
     (":version" (sk-version (find-skelfile #P"." :load t)))
     (":description" (sk-description (find-skelfile #P"." :load t)))
@@ -211,7 +211,11 @@
 	   :description "open the sk-shell interpreter"
            :thunk skc-shell)))
 
+(defpackage :sk-user
+  (:use :cl :std :skel))
+
 (defmain ()
+  (in-package :sk-user)
   (let ((*log-level* :info))
     (in-readtable :shell)
     (with-cli (opts cmds) $cli

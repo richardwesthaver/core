@@ -1,8 +1,11 @@
+;; (push :inspect *features*)
 (defsystem :skel
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std :obj :dat :cli :organ :doc :vc)
+  :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std
+                     :obj :dat :cli :organ :doc :vc
+                     (:feature :inspect :clouseau))
   :serial t
   :components 
   ((:file "pkg")
@@ -27,7 +30,9 @@
      (:file "viz")))
    (:module "ext"
     :components
-    ((:file "asdf"))))
+    ((:file "asdf")
+     (:file "inspect")
+     (:file "net"))))
   :in-order-to ((test-op (test-op "skel/tests"))))
 
 (defsystem :skel/tests

@@ -3,7 +3,7 @@
 
 ;;; Vars
 (declaim (type vc-designator *default-skel-vc-kind*))
-(deftype vc-designator () '(member :hg :git nil))
+(deftype vc-designator () '(member :hg :git list))
 
 ;; ref: https://spdx.org/licenses/
 (deftype license-designator () '(or string pathname (member :mpl2 :wtfpl :lgpg :llgpl :gpl :mit :mit0)))
@@ -234,7 +234,7 @@ via the special form stored in RECIPE."))
 ;;;; Config
 (defclass sk-config (skel sxp) 
   ((imports :initarg :imports :type list)
-   (vc :initform *default-skel-vc-kind* :initarg :vc :type vc-designator :accessor sk-vc)
+   (vc :initform *default-skel-vc-kind* :initarg :vc :type (or vc-designator sk-vc-meta) :accessor sk-vc)
    (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
    (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
    (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
@@ -338,9 +338,9 @@ via the special form stored in RECIPE."))
 (defmethod write-sxp-stream ((self sk-vc-remote-meta) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sk-vc-remote-meta-name self) ,(sk-vc-remote-meta-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
-(defstruct sk-vc-meta
+(defstruct (sk-vc-meta (:constructor make-sk-vc-meta (kind &optional remotes)))
   (kind *default-skel-vc-kind* :type vc-designator)
-  (remotes nil :type list))
+  (remotes nil :type (or string list)))
 
 (defmethod write-sxp-stream ((self sk-vc-meta) stream &key (pretty t) (case :downcase) (fmt :collapsed))
   (if (= 0 (length (sk-vc-meta-remotes self)))
@@ -357,7 +357,7 @@ via the special form stored in RECIPE."))
 ;;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
-   (vc :initarg :vc :initform (make-sk-vc-meta :kind *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
+   (vc :initarg :vc :initform (make-sk-vc-meta *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
    (rules :initarg :rules
           :initform (make-array 0 :element-type 'sk-rule :adjustable t)
           :accessor sk-rules
@@ -417,6 +417,10 @@ via the special form stored in RECIPE."))
                                          (destructuring-bind (target source &rest recipe) x
                                            (make-sk-rule target source recipe)))
                                        rules)))
+          (when-let ((vc (sk-vc self)))
+            (if (typep vc 'vc-designator)
+                (setf (sk-vc self) (make-sk-vc-meta vc))
+                (setf (sk-vc self) (apply #'make-sk-vc-meta vc))))
           (setf (ast self) nil)
           (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
           self)
@@ -482,11 +486,12 @@ via the special form stored in RECIPE."))
 
 (defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))
   (with-slots (vc store stash license author) (debug! cfg) ;; log-level, custom, fmt
-    (when vc (setf (sk-vc self) vc))
-    (when stash (setf (sk-stash self) stash))
-    (when store (setf (sk-store self) store))
-    (when license (setf (sk-license self) license))
-    (when author (setf (sk-author self) author))))
+    ;; (trace! "sk-user-config VC:" vc)
+    (cas (sk-vc self) nil vc)
+    (cas (sk-stash self) nil stash)
+    (cas (sk-store self) nil store)
+    (cas (sk-license self) nil license)
+    (cas (sk-author self) nil author)))
 
 (defmethod sk-find-rule (name self)
   (find (string-upcase name) (sk-rules self) :test 'equalp :key #'sk-rule-target))

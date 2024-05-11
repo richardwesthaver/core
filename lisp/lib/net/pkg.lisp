@@ -6,7 +6,6 @@
    :codec-error
    :protocol-error
    ;; obj
-   :connection
    :transport
    :codec
    :protocol

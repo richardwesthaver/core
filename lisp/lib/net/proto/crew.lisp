@@ -24,7 +24,7 @@
                :initform #'identity
                :documentation "Function called to record which worker is evaluating a form.")
    (connection :type (or null swank-connection)
-               :initform nil :accessor connection))
+               :initform nil :accessor %connection))
   (:documentation "A remote Lisp running a Swank server."))
 
 (defclass crew-worker-pool (id)
@@ -63,7 +63,7 @@ inconsistent information."
       (loop for worker across (workers worker-pool) do
         ;; We call (CONNECTION WORKER) without holding the worker's lock, so we may get stale data
         ;; here as well.
-        (cond ((null (connection worker)) (incf disconnected))
+        (cond ((null (%connection worker)) (incf disconnected))
               ((gethash worker idle-hash) (incf idle))
               (t (incf busy))))
       (values idle busy disconnected))))
@@ -97,7 +97,7 @@ WORKER-POOL, so it may output inconsistent information."
            (loop for connect-info in connect-infos
                  for worker = (make-instance 'crew-worker :connection-info connect-info)
                  do (let ((worker worker))
-                      (setf (connection worker)
+                      (setf (%connection worker)
                             (funcall connect-worker
                                      connect-info
                                      (lambda () (handle-connection-closed worker worker-pool)))))
@@ -137,8 +137,8 @@ that workers can use to return results to the master."
     (setf (idle-workers worker-pool) '()))
   (flet ((disconnect (worker)
            (with-mutex ((lock worker))
-             (when (connection worker)
-               (slime-close (connection worker))))))
+             (when (%connection worker)
+               (slime-close (%connection worker))))))
     ;; Disconnect all workers.
     (loop for worker across (workers worker-pool) do (disconnect worker)))
   (values))
@@ -164,9 +164,9 @@ the connection closes."))
     (loop for worker across (workers worker-pool) do
       (let ((worker worker))
         (when (with-mutex ((lock worker))
-                (unless (connection worker)
+                (unless (%connection worker)
                   (let ((close-handler (lambda () (handle-connection-closed worker worker-pool))))
-                    (setf (connection worker)
+                    (setf (%connection worker)
                           (reconnect-worker (connection-info worker) close-handler)))))
           (with-mutex ((lock worker-pool))
             (when (member worker (idle-workers worker-pool))
@@ -183,7 +183,7 @@ WORKER-POOL is being shut down, then NIL is returned."
       (let ((idle-worker (find-if (lambda (worker)
                                     (unless (eql worker worker-to-avoid)
                                       (with-mutex ((lock worker))
-                                        (connection worker))))
+                                        (%connection worker))))
                                   (idle-workers worker-pool))))
         (when idle-worker
           (setf (idle-workers worker-pool) (remove idle-worker (idle-workers worker-pool)))
@@ -195,7 +195,7 @@ WORKER-POOL is being shut down, then NIL is returned."
   (with-mutex ((lock worker-pool))
     (unless (disconnecting worker-pool)
       (push worker (idle-workers worker-pool))
-      (when (connection worker)
+      (when (%connection worker)
         ;; The free worker is connected, so notify the pool that a worker is available.
         (condition-notify (worker-ready worker-pool))))))
 
@@ -211,7 +211,7 @@ continuation what worker is evaluating FORM."
       (unless worker (return-from allocate-worker-and-evaluate nil))
       (with-mutex ((lock worker))
         ;; Has the connected idle worker we allocated just disconnected?
-        (let ((connection (connection worker)))
+        (let ((connection (%connection worker)))
           (if connection
               (progn
                 (setf (set-worker worker) set-worker)
@@ -234,7 +234,7 @@ is closed because of a call to SLIME-CLOSE, the death of the worker, or because
 of a communications error.  Moves all uncompleted work intended for
 DISCONNECTED-WORKER to another idle connected worker in WORKER-POOL."
   (with-mutex ((lock disconnected-worker))
-    (let ((old-connection (connection disconnected-worker))
+    (let ((old-connection (%connection disconnected-worker))
           (disconnected-idle-workers '()))
       (when (slime-pending-evals-p old-connection)
         (loop do
@@ -242,7 +242,7 @@ DISCONNECTED-WORKER to another idle connected worker in WORKER-POOL."
             (unless worker (return-from handle-connection-closed))
             (with-mutex ((lock worker))
               ;; Has the connected idle worker we allocated just disconnected?
-              (let ((connection (connection worker)))
+              (let ((connection (%connection worker)))
                 (if connection
                     (let ((old-set-worker (set-worker disconnected-worker)))
                       ;; Migrate all pending work from DISCONNECTED-WORKER to WORKER.
@@ -259,7 +259,7 @@ DISCONNECTED-WORKER to another idle connected worker in WORKER-POOL."
         ;; Place any disconnected workers we found back on the idle workers list.
         (dolist (w disconnected-idle-workers) (free-worker w worker-pool))))
     ;; Allow the reconnector to see that DISCONNECTED-WORKER is dead.
-    (setf (connection disconnected-worker) nil)))
+    (setf (%connection disconnected-worker) nil)))
 
 
 (defun no-workers-p (worker-pool)

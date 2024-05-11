@@ -33,9 +33,10 @@ To bootstrap the core you will need recent versions of [[https://www.gnu.org/sof
 : x --- core build tool
 : x.lisp [CMD]
 : CMDS:
+: test
+: compile
 : build
 : run
-: test
 : save
 : install
 
@@ -67,45 +68,26 @@ To bootstrap the core you will need recent versions of [[https://www.gnu.org/sof
 ** binaries
 *** skel
 #+begin_src shell :results output :exports both
-./x run skel
+./x run skel show :name :id :version :author :description :tags
 #+end_src
 
 #+RESULTS:
-#+begin_example
-#<SK-PROJECT :ID 33cf-3485-bc1a-9528>
-  [standard-object]
-
-Slots with :INSTANCE allocation:
-  NAME                           = "core"
-  PATH                           = #P"/home/ellis/dev/comp/core/skelfile"
-  AUTHOR                         = "Richard Westhaver <ellis@rwest.io>"
-  VERSION                        = "0.1.0"
-  TAGS                           = ("core")
-  DESCRIPTION                    = "The Compiler Company Core"
-  LICENSE                        = "MPL"
-  AST                            = NIL
-  ID                             = 3733260365104583976
-  VC                             = :HG
-  RULES                          = #(#<SK-RULE :ID 05b0-0201-ab05-f17d> #<SK-RULE :ID 20c4-3005-bae0-0616>)
-  DOCS                           = ((:ORG "readme") (:ORG "install") (:ORG "tests") (:ORG "todo"))
-  COMPONENTS                     = NIL
-  SCRIPTS                        = NIL
-  SNIPPETS                       = NIL
-  STASH                          = #P".stash"
-  STORE                          = #<unbound slot>
-  ABBREVS                        = NIL
-  IMPORTS                        = ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
-#+end_example
+: core
+: 33cf-3485-bc1a-9528
+: 0.1.0
+: Richard Westhaver <ellis@rwest.io>
+: The Compiler Company Core
+: (core lisp rust emacs c)
 *** organ
 #+begin_src shell :results output :exports both
 ./x run organ
 #+end_src
 
 #+RESULTS:
-: #<ORGAN::ORG-DOCUMENT {1003D5C313}>
+: #<ORGAN::ORG-DOCUMENT {100384A4E3}>
 :   [standard-object]
 : 
 : Slots with :INSTANCE allocation:
-:   META                           = #<ORGAN::ORG-META-SECTION {1003D5F1B3}>
-:   TREE                           = #(#<ORGAN:ORG-HEADING {1003E40B53}>)
+:   META                           = #<ORGAN::ORG-META-SECTION {100384CF63}>
+:   TREE                           = #(#<ORGAN:ORG-HEADING {1003920C43}>)
 

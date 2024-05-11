@@ -80,6 +80,12 @@
 (defmethod vc-init ((self (eql :hg)))
   (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
 
+(defmethod vc-init ((self list))
+  (when-let ((form self))
+    (make-instance 'hg-repo
+      :path (pathname (pop form))
+      :remotes (or (getf form :remotes) #()))))
+    
 (defmethod vc-init ((self hg-repo))
   (with-slots (path) self
     (let ((existed (probe-file path)))

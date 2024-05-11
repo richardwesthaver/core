@@ -31,7 +31,7 @@
 
 ;;; Code:
 (defpackage :skel/core
-  (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli :obj)
+  (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli :obj :vc)
   (:import-from :cli :find-exe)
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
@@ -129,3 +129,8 @@
 (defpackage :skel/asdf
   (:use :cl :std :skel)
   (:export))
+
+;; requires clouseau
+(defpackage :skel/inspect
+  (:use :cl :std :skel)
+  (:export :sk-inspect))
