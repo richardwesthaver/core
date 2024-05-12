@@ -66,7 +66,7 @@
    :containerfile
    :*default-containerfile*
    ;; obj
-   :*user-skelrc* :*system-skelrc*
+   :*user-skelrc* :*system-skelrc* :*keep-ast*
    :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-registry* :*skel-cache*
    :*default-skelfile* :*default-skel-user* :*default-skel-cache* :*default-user-skel-config* 
    :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*

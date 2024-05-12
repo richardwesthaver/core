@@ -47,7 +47,7 @@ evaluation of FORM."
      (handler-case ,form
        (sb-sys:interactive-interrupt ()
          (println "(:SIGINT)")
-         (unless *no-exit* (sb-ext:exit :code 130)))
+         (sb-ext:exit :code 130))
        ;; ,@(when *no-exit* '()))
        )))
 
@@ -90,17 +90,17 @@ keys."
   (declare (type symbol name))
   `(,*default-cli-def* ,name (apply #'make-cli t (walk-cli-slots ',body))))
 
-(defmacro defmain ((&optional ret) &body body)
-  "Define a CLI main function in the current package which returns RET."
+(defmacro defmain ((&key return (exit t)) &body body)
+  "Define a CLI main function in the current package."
   (with-gensyms (retval)
     (let ((main (symbolicate 'main)))
-      (when ret (setf retval ret))
+      (when return (setf retval return))
       `(prog1
            (defun ,main ()
              "Run the top-level function and print to *STDOUT*."
-	     (with-cli-handlers
-	         (progn ,@body ,@(unless (not (boundp 'retval)) (list retval)))
-               ))
+             (let ((*no-exit* ,(not exit)))
+	       (with-cli-handlers
+	           (progn ,@body ,@(unless (not (boundp 'retval)) (list retval))))))
          (export '(,main))))))
 
 ;;; Utils

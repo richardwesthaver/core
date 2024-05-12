@@ -36,6 +36,10 @@
 
 (defparameter *system-skelrc* (pathname "/etc/skelrc"))
 
+(defparameter *keep-ast* nil
+  "Whether to keep the :ast slot stored with an sk object, or set it to nil so
+that it can be GC'd.")
+
 ;;; Objects
 (defclass skel (id)
   ()
@@ -118,9 +122,9 @@
 
 ;;;; Rule
 (defclass sk-rule (skel)
-  ;; if target is a symbol, treated as a PHONY.
+  ;; RESEARCH 2024-05-11: consider more options for extending target slot
   ((target :initarg :target :type string :accessor sk-rule-target)
-   (source :initform nil :initarg :source :accessor sk-rule-source)
+   (source :initform nil :initarg :source :type list :accessor sk-rule-source)
    (recipe :initform (make-instance 'sk-command) :initarg :recipe :type sk-command :accessor sk-rule-recipe))
   (:documentation "Skel rules. Maps a SOURCE to a corresponding TARGET
 via the special form stored in RECIPE."))
@@ -166,7 +170,7 @@ via the special form stored in RECIPE."))
 
 ;;;; Document
 (deftype document-designator () '(member :org :txt :pdf :html :md))
-(deftype script-designator () '(member :bin :sh :bash :zsh :nu :lisp :python))
+
 ;; TODO 2023-10-13: integrate organ for working with org document
 ;; types - mixins and such
 (defclass sk-document (skel sk-meta sxp)
@@ -203,8 +207,10 @@ via the special form stored in RECIPE."))
   (sk-write-string (sk-path self)))
 
 ;;;; Script
+(deftype script-designator () '(member :bin :sh :bash :zsh :nu :lisp :python))
+
 (defclass sk-script (skel sk-meta sxp)
-  ((kind :initform nil :initarg :kind :type (or null script-designator))))
+  ((kind :initform nil :initarg :kind :type (or null script-designator) :accessor sk-kind)))
 
 (defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sk-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
@@ -230,6 +236,10 @@ via the special form stored in RECIPE."))
 (defmethod sk-write ((self sk-script) stream)
   (with-slots (path) self
     (write-string path)))
+
+(defmethod print-object ((self sk-script) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A :~A ~A" (format-sxhash (id self)) (sk-kind self) (sk-name self))))
 
 ;;;; Config
 (defclass sk-config (skel sxp) 
@@ -267,7 +277,7 @@ via the special form stored in RECIPE."))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
 					             ;; TODO 2023-10-14: convert into list of script names
 					             (pathname (sk-scripts self))))
-	  (setf (ast self) nil)
+	  (unless *keep-ast* (setf (ast self) nil))
 	  self)
 	;; invalid ast, signal error
 	(skel-syntax-error ast))))
@@ -301,7 +311,7 @@ via the special form stored in RECIPE."))
                        :opts '("mode:skel;"))
                       out))
         (write-sxp-stream self out :fmt fmt))
-    (setf (ast self) nil)))
+    (unless *keep-ast* (setf (ast self) nil))))
 
 (defclass sk-system-config (sk-config sk-meta) ())
 
@@ -353,6 +363,16 @@ via the special form stored in RECIPE."))
 	      do 
 		 (write-sxp-stream x stream :pretty pretty :case case :fmt fmt))
 	(format stream ")"))))
+
+(defmethod print-object ((self sk-script) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A :~A ~A" (format-sxhash (id self)) (sk-kind self) (sk-name self))))
+
+(defmethod print-object ((self sk-vc-meta) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~S" (sk-vc-meta-kind self))
+    (when-let ((remotes (sk-vc-meta-remotes self)))
+      (format stream " ~A" remotes))))
 
 ;;;; Project
 (defclass sk-project (skel sxp sk-meta)
@@ -421,7 +441,7 @@ via the special form stored in RECIPE."))
             (if (typep vc 'vc-designator)
                 (setf (sk-vc self) (make-sk-vc-meta vc))
                 (setf (sk-vc self) (apply #'make-sk-vc-meta vc))))
-          (setf (ast self) nil)
+          (unless *keep-ast* (setf (ast self) nil))
           (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
           self)
         ;; invalid ast, signal error
@@ -482,7 +502,7 @@ via the special form stored in RECIPE."))
                        :opts '("mode:skel;"))
                       out))
         (write-sxp-stream self out :fmt fmt))
-    (setf (ast self) nil)))
+    (unless *keep-ast* (setf (ast self) nil))))
 
 (defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))
   (with-slots (vc store stash license author) (debug! cfg) ;; log-level, custom, fmt

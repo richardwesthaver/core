@@ -46,6 +46,7 @@
 
 (defcmd skc-inspect
   (sb-ext:enable-debugger)
+  (setq *no-exit* t)
   (inspect
    (find-skelfile
     (if $args (pathname (car $args))
@@ -134,12 +135,12 @@
 
 (defcmd skc-shell
   (sb-ext:enable-debugger)
+  (setq *no-exit* t)
   (cli/clap::with-cli-handlers
       (progn
         (use-package :cl-user)
         (use-package :sb-ext)
         (use-package :std-user)
-        ;; (require :sb-aclrepl)
         (init-skel-vars)
         (sb-impl::toplevel-repl nil))))
 
