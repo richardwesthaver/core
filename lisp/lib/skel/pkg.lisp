@@ -36,7 +36,7 @@
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :uiop :with-current-directory)
-  (:import-from :sb-ext :run-program)
+  (:import-from :sb-ext :run-program :cas)
   (:import-from :std :when-let)
   (:import-from :sxp :form)
   (:export
@@ -78,6 +78,7 @@
    :sk-tags :sk-imports
    :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
+   :sk-vc-meta :sk-vc-meta-kind :sk-vc-meta-remotes
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule
    :sk-make
    :sk-description :sk-kind :sk-rules :sk-version :sk-name :sk-docs :sk-document 

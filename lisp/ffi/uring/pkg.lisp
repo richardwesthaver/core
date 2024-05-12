@@ -179,6 +179,7 @@ queue (CQ), and form the foundation of the new interface.
 (define-alien-type io-uring-sqe* (* (struct io-uring-sqe)))
 (define-alien-type io-uring-cqe* (* (struct io-uring-cqe)))
 
+;; NOTE 2024-05-12: alpha and mips use 535,536,537
 (defconstant +nr-io-uring-setup+ 425)
 (defconstant +nr-io-uring-enter+ 426)
 (defconstant +nr-io-uring-register+ 427)

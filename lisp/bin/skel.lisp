@@ -102,16 +102,22 @@
   (case (sk-vc (find-skelfile #P"." :load t))
     (:hg (run-hg-command "pull" (push "-u" $args) t))))
 
+(defun hg-status ()
+  (let ((proc (run-hg-command "status" nil :stream)))
+    (copy-stream (process-output proc) *standard-output*)
+    (finish-output)))
+
+(defun git-status ()
+  (let ((proc (run-git-command "status" nil :stream)))
+    (copy-stream (process-output proc) *standard-output*)
+    (finish-output)))
+
 (defcmd skc-status
-  (case (sk-vc (find-skelfile #P"." :load t))
-    (:hg (progn
-           (let ((proc (run-hg-command "status" nil :stream)))
-             (copy-stream (process-output proc) *standard-output*)
-             (finish-output))))
-    (t (progn
-         (let ((proc (run-git-command "status" nil :stream)))
-           (copy-stream (process-output proc) *standard-output*)
-           (finish-output))))))
+  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+    (:git (git-status))
+    (:hg (hg-status))
+    (t (hg-status))))
+         
 
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))

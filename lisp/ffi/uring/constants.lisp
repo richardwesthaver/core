@@ -25,9 +25,9 @@
                               (long-long tv-sec "__kernel_time64_t" "tv_sec")
                               (long-long tv-nsec "__s64" "tv_nsec")))
  ;; liburing/io_uring.h
- (:integer nr-io-uring-setup "__NR_io_uring_setup") ;; not workin - C macro trouble?
- (:integer nr-io-uring-register "__NR_io_uring_register")
- (:integer nr-io-uring-enter "__NR_io_uring_enter")
+ ;; (:integer nr-io-uring-setup "__NR_io_uring_setup") ;; not workin - C macro trouble?
+ ;; (:integer nr-io-uring-register "__NR_io_uring_register")
+ ;; (:integer nr-io-uring-enter "__NR_io_uring_enter")
  (:integer ioring-file-index-alloc "IORING_FILE_INDEX_ALLOC")
  (:enum iosqe ((iosqe-fixed-file-bit "IOSQE_FIXED_FILE_BIT")
                (iosqe-io-drain-bit "IOSQE_IO_DRAIN_BIT")
@@ -98,7 +98,7 @@
  (:integer ioring-cqe-f-more "IORING_CQE_F_MORE")
  (:integer ioring-cqe-f-sock-nonempty "IORING_CQE_F_SOCK_NONEMPTY")
  (:integer ioring-cqe-f-notif "IORING_CQE_F_NOTIF")
- (:integer ioring-cqe-buffer-shift "IORING_CQE_BUFFER_SHIFT")
+ ;; (:integer ioring-cqe-buffer-shift "IORING_CQE_BUFFER_SHIFT")
  (:integer ioring-off-sq-ring "IORING_OFF_SQ_RING")
  (:integer ioring-off-cq-ring "IORING_OFF_CQ_RING")
  (:integer ioring-off-sqes "IORING_OFF_SQES")
@@ -232,4 +232,5 @@
                                    (unsigned-int flags "__u32" "flags")))
  (:enum socket-uring-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
                          (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ")))
- (:integer liburing-udata-timeout "LIBURING_UDATA_TIMEOUT"))
+ ;; (:integer liburing-udata-timeout "LIBURING_UDATA_TIMEOUT") ;; c macro trouble
+ )

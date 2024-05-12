@@ -9,7 +9,7 @@
                (:file "krypt"))
   :in-order-to ((test-op (test-op :cry/tests))))
 
-(defsystem :cry/tests
-  :depends-on (:rt :cry)
+(defsystem :krypt/tests
+  :depends-on (:rt :krypt)
   :components ((:file "tests"))
-  :perform (test-op (o c) (symbol-call :rt :do-tests :cry)))
+  :perform (test-op (o c) (symbol-call :rt :do-tests :krypt)))
