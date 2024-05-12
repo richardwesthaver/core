@@ -34,5 +34,17 @@
  (box () #$podman build . --build-arg IMAGE=box -t core$#)
  ;; x does the same thing, having issues with passing the shell input
  ;; to SKEL though.
- (install (x) #$./x install$#)
- (deploy (std prelude) #$mv .stash/{prelude.core,std.core} $PACKY_DIR$#))
+ (install () #$d=/usr/local/bin
+          cd .stash
+          for f in $(find . -type f ! -name "*.*")
+          do echo "$(basename $f) -> $d"
+          install -C -m 755 $f $d
+          done
+          d=/usr/local/share/lisp
+          if [ -d $d ];
+          then
+          for f in $(find . -type f -name "*.core")
+          do echo "$(basename $f) -> $d"
+          install -C -m 755 $f $d
+          done fi$#)
+ (deploy (std prelude) #$mv -v .stash/{prelude.core,std.core} $PACKY_DIR$#))

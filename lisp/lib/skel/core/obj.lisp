@@ -137,6 +137,12 @@ via the special form stored in RECIPE."))
   (let ((r (make-instance 'sk-command :body recipe)))
     (make-instance 'sk-rule :target (format nil "~(~a~)" target) :source source :recipe r)))
 
+(defmethod print-object ((self sk-rule) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A" (sk-rule-target self))
+    (when-let ((source (sk-rule-source self)))
+              (format stream " :source ~A" source))))
+
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
   (with-slots (recipe) self
@@ -363,10 +369,6 @@ via the special form stored in RECIPE."))
 	      do 
 		 (write-sxp-stream x stream :pretty pretty :case case :fmt fmt))
 	(format stream ")"))))
-
-(defmethod print-object ((self sk-script) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A :~A ~A" (format-sxhash (id self)) (sk-kind self) (sk-name self))))
 
 (defmethod print-object ((self sk-vc-meta) stream)
   (print-unreadable-object (self stream :type t)
