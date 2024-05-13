@@ -10,7 +10,7 @@
 ;;; See http://common-lisp.net/project/ieee-floats/
 
 (in-package :std/num)
-
+(declaim (optimize (speed 3)))
 ;; The following macro may look a bit overcomplicated to the casual
 ;; reader. The main culprit is the fact that NaN and infinity can be
 ;; optionally included, which adds a bunch of conditional parts.
@@ -56,6 +56,8 @@ is represented as :not-a-number, and the infinities as
 :positive-infinity and :negative-infinity. Note that this means
 that the in- or output of these functions is not just floating
 point numbers anymore, but also keywords."
+  (declare (boolean support-nan-and-infinity-p)
+           (fixnum exponent-bits significand-bits))
   (let* ((total-bits (+ 1 exponent-bits significand-bits))
 	 (exponent-offset (1- (expt 2 (1- exponent-bits)))) ; (A)
 	 (sign-part `(ldb (byte 1 ,(1- total-bits)) bits))

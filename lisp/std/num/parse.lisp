@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :std/num)
-
+(declaim (optimize (speed 3) (safety 3)))
 (define-condition invalid-number (parse-error)
   ((value :reader invalid-number-value
           :initarg :value
@@ -17,9 +17,9 @@
                      (invalid-number-value c)
                      (invalid-number-reason c)))))
 
-(declaim (type cons *white-space-characters*))
+(declaim (type (cons character) *white-space-characters*))
 (defparameter *white-space-characters*
-  '(#\Space #\Tab #\Return #\Linefeed)
+  (list #\Space #\Tab #\Return #\Linefeed)
   "A list of all of the whitespace characters.")
 
 (declaim (inline white-space-p))
@@ -36,8 +36,8 @@
    number-value and whose length can be accessed with the function
    place."
   (declare (optimize (speed 3) (safety 1))
-           (type string string)
-           (type fixnum start end radix))
+           (type simple-string string)
+           (fixnum start end radix))
   (multiple-value-bind (integer end-pos)
       (if (= start end)
           (values 0 0)
@@ -45,14 +45,16 @@
                          :start start
                          :end end
                          :radix radix))
+    (declare (fixnum integer end-pos))
     ;; cl:parse-integer will consume trailing whitespace, thus end-pos may be
     ;; larger than the number of digits. Instead of trimming whitespace
     ;; beforehand we count it here
-    (let ((relevant-digits (- end-pos start
-                              (loop :for pos :from (- end-pos 1) :downto start
-                                 :while (member (char string pos)
-                                                *white-space-characters*)
-                                 :count 1))))
+    (let* ((count (loop for pos from (- end-pos 1) downto start
+                        while (member (char string pos)
+                                      *white-space-characters*
+                                      :test 'char=)
+                        :count 1))
+           (relevant-digits (the fixnum (- end-pos start count))))
       (cons integer relevant-digits))))
 
 (defun parse-integers (string start end splitting-points &key (radix 10))
@@ -61,8 +63,9 @@
    consecutive integers. This will return a list of parsed-integers.
    The last parsed-integer will have a negative value for its length."
   (declare (optimize (speed 3) (safety 1))
-           (type string string)
-           (type fixnum start end radix))
+           (type simple-string string)
+           (fixnum start end radix)
+           (list splitting-points))
   (values-list (loop for left = start then (1+ right)
                      for point in splitting-points
                      for right = point
@@ -91,16 +94,17 @@
 ;; Numbers which CL doesn't parse, but this does:
 ;; #10r3.2
 ;; #2r  11
-
 (defun parse-number (string &key (start 0) (end nil) (radix 10)
                                  ((:float-format *read-default-float-format*)
                                   *read-default-float-format*))
   "Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec."
+  (declare (type simple-string string))
   (flet ((invalid-number (reason)
            (error 'invalid-number
                   :value (subseq string start end)
                   :reason reason)))
     (let ((end (or end (length string))))
+      (declare (fixnum start end radix))
       (if (and (eql (char string start) #\#)
                (member (char string (1+ start)) '(#\C #\c)))
           (let ((\(-pos (position #\( string :start start :end end))
@@ -110,6 +114,7 @@
                       (position #\( string :start (1+ \(-pos) :end end)
                       (position #\) string :start (1+ \)-pos) :end end))
               (invalid-number "Mismatched/missing parenthesis"))
+            
             (let ((real-pos (position-if-not #'white-space-p string
                                              :start (1+ \(-pos) :end \)-pos)))
               (unless real-pos
@@ -142,13 +147,14 @@
                                       ((:float-format *read-default-float-format*)
                                        *read-default-float-format*))
   "Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec -- except for complex numbers."
+  (declare (simple-string string))
   (let ((end (or end (length string))))
     (case (char string start)
       ((#\-)
-       (* -1 (parse-positive-real-number string
+       (* -1 (the fixnum (parse-positive-real-number string
                                          :start (1+ start)
                                          :end end
-                                         :radix radix)))
+                                         :radix radix))))
       ((#\+)
        (parse-positive-real-number string
                                    :start (1+ start)
@@ -209,8 +215,9 @@
   "Create a float using EXP-MARKER as the exponent-marker and the
    parsed-integers WHOLE-PLACE, FRAC-PLACE, and EXP-PLACE as the
    integer part, fractional part, and exponent respectively."
+  (declare (fixnum radix))
   (let* ((base (base-for-exponent-marker exp-marker))
-         (exp (expt base (number-value exp-place))))
+         (exp  (expt base (number-value exp-place))))
     (+ (* exp (number-value whole-place))
        (/ (* exp (number-value frac-place))
           (expt (float radix base)
@@ -228,6 +235,8 @@
                                                ((:float-format *read-default-float-format*)
                                                 *read-default-float-format*))
   "Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec -- except for complex numbers and negative numbers."
+  (declare (simple-string string)
+           (fixnum radix))
   (let ((end (or end (length string)))
         (first-char (char string start)))
     (flet ((invalid-number (reason)

@@ -1,7 +1,5 @@
 ;;; lisp.sk --- lisp skelfile -*- mode: skel; -*-
 :name "core/lisp"
-:author "Richard Westhaver <ellis@rwest.io>"
-:version "0.1.0"
-:description "The Compiler Company Lisp Core"
-:rules (("clean" () #$rm -rf */*.fasl$#)
-        ("x" () #$./x.lisp$#))
+:description "The CC Lisp Core"
+:components ((:file "prelude.asd"))
+

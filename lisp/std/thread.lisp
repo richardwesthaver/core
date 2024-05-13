@@ -219,6 +219,7 @@ ACCESSORS is a list of pandoric accessors which can be called on the
 kernel via an ORACLE. 
 
 This interface is experimental and subject to change."
+  (declare (ignorable accessors))
   `(defun ,name (,@args) 
      ,@body))
 
