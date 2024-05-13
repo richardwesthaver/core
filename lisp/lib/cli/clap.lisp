@@ -107,11 +107,11 @@ keys."
 (defun make-cli (kind &rest slots)
   "Creates a new CLI object of the given kind."
   (declare (type (member :opt :cmd :cli t) kind))
-         (cond
-           ((eql kind :cli) (apply #'make-instance 'cli slots))
-           ((eql kind :opt) (apply #'make-cli-opt slots))
-           ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
-           (t (apply #'make-instance 'cli slots))))
+  (cond
+    ((eql kind :cli) (apply #'make-instance 'cli slots))
+    ((eql kind :opt) (apply #'make-cli-opt slots))
+    ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
+    (t (apply #'make-instance 'cli slots))))
 
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
@@ -176,13 +176,13 @@ keys."
 
 (defgeneric find-cmd (self name &optional active))
 
-(defgeneric find-opt (self name &optional active))
+(defgeneric find-opts (self name &key active recurse))
 
 (defgeneric active-cmds (self))
 
 (defgeneric active-opts (self &optional global))
 
-(defgeneric find-short-opt (self ch))
+(defgeneric find-short-opts (self ch &key))
 
 (defgeneric call-opt (self arg))
 
@@ -321,7 +321,7 @@ is a list of handlers for the opt-val."
 	   (equal kind bk)))))
 
 (defmethod call-opt ((self cli-opt) arg)
-  (funcall (cli-opt-thunk self) arg))
+  (setf (cli-opt-val self) (funcall (cli-opt-thunk self) arg)))
 
 (defmethod do-opt ((self cli-opt))
   (call-opt self (cli-opt-val self)))
@@ -423,11 +423,18 @@ is a list of handlers for the opt-val."
 (defmethod active-cmds ((self cli-cmd))
   (remove-if-not #'cli-lock-p (cli-cmds self)))
 
-(defmethod find-opt ((self cli-cmd) name &optional active)
-  (when-let ((o (find name (cli-opts self) :key #'cli-opt-name :test 'equal)))
-    (if active 
-	(when (cli-opt-lock o) o)
-	o)))
+(defmethod find-opts ((self cli-cmd) name &key active recurse)
+  (let ((ret))
+    (flet ((%find (o obj)
+             (when-let ((found (find o (cli-opts obj) :key #'cli-opt-name :test 'equal)))
+               (push found ret))))
+      (when (and recurse (cli-cmds self))
+        (loop for c across (cli-cmds self)
+              do (%find name c)))
+      (%find name self)
+      (when active
+        (setf ret (remove-if-not #'cli-lock-p ret)))
+      ret)))
 
 (defun active-global-opt-p (opt)
   "Return non-nil if OPT is active at runtime and global."
@@ -440,8 +447,16 @@ is a list of handlers for the opt-val."
        #'cli-opt-lock)
    (cli-opts self)))
 
-(defmethod find-short-opt ((self cli-cmd) ch)
-  (find ch (cli-opts self) :key #'cli-opt-name :test #'opt-string-prefix-eq))
+(defmethod find-short-opts ((self cli-cmd) ch &key recurse)
+  (let ((ret))
+    (flet ((%find (ch obj)
+             (when-let ((found (find ch (cli-opts obj) :key #'cli-opt-name :test #'opt-string-prefix-eq)))
+               (push found ret))))
+      (when (and recurse (cli-cmds self))
+        (loop for c across (cli-cmds self)
+              do (%find ch c)))
+      (%find ch self)
+      ret)))
 
 (defun %compose-short-opt (o arg)
   (declare (ignorable arg))
@@ -454,7 +469,7 @@ is a list of handlers for the opt-val."
   (make-cli-node 'opt o))
 
 (defmethod proc-args ((self cli-cmd) args)
-  "process ARGS into an ast. Each element of the ast is a node with a
+  "Process ARGS into an ast. Each element of the ast is a node with a
 :kind slot, indicating the type of node and a :form slot which stores
 a value.
 
@@ -463,7 +478,7 @@ this will likely change to generating a new branch in the ast as it
 should be."
   (make-cli-ast
    (let ((holes)) ;; list of arg indexes which can be skipped since they're
-                  ;; consumed by an opt
+     ;; consumed by an opt
      (loop 
        for i below (length args)
        for (a . args) on args
@@ -472,14 +487,14 @@ should be."
        else if (= (length a) 1)
        collect (make-cli-node 'arg a) ; always treat single-char as arg
        else if (short-opt-p a) ;; SHORT OPT
-       collect (if-let ((o (find-short-opt self (aref a 1))))
-                 (%compose-short-opt o a)
-	         (make-cli-node 'opt a))
+       collect (if-let ((o (find-short-opts self (aref a 1) :recurse t)))
+                 (%compose-short-opt (car o) a)
+	         (make-cli-node 'arg a))
        else if (long-opt-p a) ;; LONG OPT
-       collect (if-let ((o (find-opt self (string-left-trim "-" a))))
-                 (prog1 (%compose-long-opt o args)
+       collect (if-let ((o (find-opts self (string-left-trim "-" a) :recurse t)))
+                 (prog1 (%compose-long-opt (car o) args)
                    (push (1+ i) holes))
-	         (make-cli-node 'opt a))
+	         (make-cli-node 'arg a))
        ;; OPT GROUP
        else if (opt-group-p a)
        collect nil
@@ -492,6 +507,10 @@ should be."
                      ;; ARG
                      (make-cli-node 'arg a)))))))
 
+(declaim (inline solop))
+(defun solop (self)
+  (and (= 0 (length (active-cmds self)) (length (active-opts self)))))
+
 (defmethod install-ast ((self cli-cmd) (ast cli-ast))
   "Install the given AST, recursively filling in value slots."
   (with-slots (cmds opts) self
@@ -502,25 +521,24 @@ should be."
     ;; locked for the full runtime duration or until GC.
     (setf (cli-lock-p self) t)
     (loop named install
-	  for (node . tail) on (cli-ast-ast ast)
-	  unless (null node)
-	    do 
-	       (with-slots (kind form) node
-		 (case kind
-		   ;; opts 
-		   (opt
-		    (let ((name (cli-opt-name form)))
-		      (when-let ((o (find-opt self name)))
-			(setf o form)
-			(setf (cli-opt-lock o) t))))
-		   ;; when we encounter a command we recurse over the tail
-		   (cmd 
-		    (when-let ((c (find-cmd self (cli-name form))))
-		      (setf (cli-lock-p c) t)
-		      ;; handle the rest of the AST
-		      (install-ast c (make-cli-ast tail))
-		      (return-from install)))
-		   (arg (push-arg form self)))))
+	  for (node . tail) on (debug! (cli-ast-ast ast))
+	  until (null node)
+	  do 
+	     (with-slots (kind form) node
+	       (case kind
+		 ;; opts 
+		 (opt
+		  (let ((name (cli-opt-name form)))
+		    (when-let ((o (car (find-opts self name))))
+		      (setf o form)
+		      (setf (cli-opt-lock o) t))))
+		 ;; when we encounter a command we recurse over the tail
+		 (cmd 
+		  (when-let ((c (find-cmd self (cli-name form))))
+		    ;; handle the rest of the AST
+		    (setf c (install-ast c (make-cli-ast tail)))
+		    (return-from install)))
+		 (arg (push-arg form self)))))
     (setf (cli-cmd-args self) (nreverse (cli-cmd-args self)))
     self))
 
@@ -533,7 +551,7 @@ should be."
 (defmethod push-arg (arg (self cli-cmd))
   (push arg (cli-cmd-args self)))
 
-(defmethod parse-args ((self cli-cmd) args &key (compile nil))
+(defmethod parse-args ((self cli-cmd) args &key (compile t))
   "Parse ARGS and return the updated object SELF.
 
 ARGS is assumed to be a valid cli-ast (list of cli-nodes), unless
@@ -545,11 +563,17 @@ COMPILE is t, in which case a list of strings is assumed."
 ;; warning: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before doing a command.
 (defmethod call-cmd ((self cli-cmd) args opts)
-  ;; TODO 2023-09-12: handle args/env
+  (trace! args opts)
   (funcall (cli-thunk self) args opts))
 
 (defmethod do-cmd ((self cli-cmd))
-  (call-cmd self (cli-cmd-args self) (cli-opts self)))
+  (if (solop self)
+      (call-cmd self (cli-cmd-args self) (active-opts self))
+      (progn
+        (loop for o across (active-opts self)
+              do (do-opt o))
+        (loop for c across (active-cmds self)
+              do (do-cmd c)))))
 
 (defclass cli (cli-cmd)
   ;; name slot defaults to *package*, must be string
@@ -590,32 +614,12 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
     (with-slots ((bv version)) b
       (string= version bv))))
 
-;; same as cli-cmd method, default is to compile though
-(defmethod parse-args ((self cli) (args list) &key (compile t))
-  "Parse list of string arguments ARGS and return the updated object SELF."
-  (with-slots (opts cmds) self
-    (let ((args (if compile (proc-args self args) args)))
-      (trace! (install-ast self args)))))
-
 (declaim (inline debug-opts))
 (defun debug-opts (cli)
   (let ((o (active-opts cli))
 	(a (cli-cmd-args cli))
 	(c (active-cmds cli)))
     (log:debug! (cli-cwd cli) o a c)))
-
-(declaim (inline solop))
-(defun solop (self)
-  (and (= 0 (length (active-cmds self)) (length (active-opts self)))))
-
-(defmethod do-cmd ((self cli))
-  (if (solop self)
-      (call-cmd self (cli-cmd-args self) (cli-opts self))
-      (progn
-	(loop for o across (active-opts self)
-	      do (do-opt o))
-	(loop for c across (active-cmds self)
-	      do (do-cmd c)))))
 
 ;;; SIMPLE-CLI
 
@@ -652,8 +656,8 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
                     (pop opts)
                     (sb-impl::startup-error "unexpected end of cli opts"))))
          (loop while opts do
-           (if-let ((opt (find-opt-handler (car opts))))
-             (apply (cdr opt) (car opt) ($pop))))
+                  (if-let ((opt (find-opt-handler (car opts))))
+                    (apply (cdr opt) (car opt) ($pop))))
          (when *posix-argv*
            (setf (cdr *posix-argv*) opts))
          ,@body))))
@@ -667,19 +671,19 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
                  (pop opts)
                  (sb-impl::startup-error "unexpected end of cli opts"))))
       (loop while opts do
-        (let ((opt (car opts)))
-          (cond
-            ((string= opt "--sysinit")
-             ($pop)
-             (if sysinit
-                 (sb-impl::startup-error "multiple --sysinit opts")
-                 (setf sysinit ($pop))))
-            (t
-             (if (find "--end-toplevel-options" opts
-                       :test #'string=)
-                 (sb-impl::startup-error "bad toplevel opt: ~S"
-                                         (car opts))
-                 (return))))))
+               (let ((opt (car opts)))
+                 (cond
+                   ((string= opt "--sysinit")
+                    ($pop)
+                    (if sysinit
+                        (sb-impl::startup-error "multiple --sysinit opts")
+                        (setf sysinit ($pop))))
+                   (t
+                    (if (find "--end-toplevel-options" opts
+                              :test #'string=)
+                        (sb-impl::startup-error "bad toplevel opt: ~S"
+                                                (car opts))
+                        (return))))))
       (when *posix-argv*
         (setf (cdr *posix-argv*) opts)))))
 

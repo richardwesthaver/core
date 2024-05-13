@@ -12,9 +12,12 @@
 (in-package :bin/skel)
 (in-readtable :shell)
 
-(defopt skc-help (print-help $cli))
+(defopt skc-help (print-help $cli) $val)
 (defopt skc-version (print-version $cli))
-(defopt skc-level *log-level* (setq *log-level* (or $val :info)))
+(defopt skc-level *log-level* (setq *log-level* (if $val (if (stringp $val)
+                                                             (sb-int:keywordicate (string-upcase $val))
+                                                             $val)
+                                                    :info)))
 
 ;; TODO 2023-10-13: almost there
 (defopt skc-config
@@ -95,12 +98,16 @@
       (describe (find-skelfile #P"." :load t))))
 
 (defcmd skc-push
-  (case (sk-vc (find-skelfile #P"." :load t))
-    (:hg (run-hg-command "push" $args t))))
+  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "push" $args t))
+    (:hg (run-hg-command "push" $args t))
+    (t (skel-error "unknown VC type"))))
 
 (defcmd skc-pull
-  (case (sk-vc (find-skelfile #P"." :load t))
-    (:hg (run-hg-command "pull" (push "-u" $args) t))))
+  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "pull" $args t))
+    (:hg (run-hg-command "pull" (push "-u" $args) t))
+    (t (skel-error "unknown VC type"))))
 
 (defun hg-status ()
   (let ((proc (run-hg-command "status" nil :stream)))
@@ -117,7 +124,19 @@
     (:git (git-status))
     (:hg (hg-status))
     (t (hg-status))))
-         
+
+(defcmd skc-clone
+  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "clone" $args t))
+    (:hg (run-hg-command "clone" $args t))
+    (t (skel-error "unknown VC type"))))
+
+(defcmd skc-commit
+  (debug! $optc $argc)
+  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "commit" $args t))
+    (:hg (run-hg-command "commit" $args t))
+    (t (skel-error "unknown VC type"))))
 
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
@@ -208,9 +227,12 @@
 	   :description "pull the current project from remote"
            :thunk skc-pull)
 	  (:name clone
-	   :description "clone a remote project")
+	   :description "clone a remote project"
+           :thunk skc-clone)
 	  (:name commit
-	   :description "commit changes to the project vc")
+	   :description "commit changes to the project vc"
+           :opts (make-opts (:name "message" :description "commit message" :kind string :thunk identity))
+           :thunk skc-commit)
 	  (:name edit
 	   :description "edit a project file in emacs."
            :thunk skc-edit)
