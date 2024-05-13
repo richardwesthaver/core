@@ -132,7 +132,7 @@
     (t (skel-error "unknown VC type"))))
 
 (defcmd skc-commit
-  (debug! $optc $argc)
+  ;; (debug! $optc $argc)
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "commit" $args t))
     (:hg (run-hg-command "commit" $args t))
@@ -231,7 +231,6 @@
            :thunk skc-clone)
 	  (:name commit
 	   :description "commit changes to the project vc"
-           :opts (make-opts (:name "message" :description "commit message" :kind string :thunk identity))
            :thunk skc-commit)
 	  (:name edit
 	   :description "edit a project file in emacs."
