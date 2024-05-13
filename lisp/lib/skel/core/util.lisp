@@ -77,7 +77,7 @@ overwritten with the AUTO flag."
       (when cfg (setf sk (sk-install-user-config sk cfg)))
       (sk-write-file sk :path path :fmt fmt))))
 
-(defun find-skelfile (start &key (load nil) (filename *default-skelfile*) (walk t))
+(defun find-skelfile (start &key (load nil) (filename *default-skelfile*) (walk t) error)
   "Walk up the current directory returning the path to a 'skelfile', else
 return nil. When LOAD is non-nil, load the skelfile if found."
   ;; Check the current path, if no skelfile found, walk up a level and
@@ -88,24 +88,12 @@ return nil. When LOAD is non-nil, load the skelfile if found."
 	    (if load
 		(load-skelfile (merge-pathnames filename root))
 		(merge-pathnames filename root))
-	    (error "failed to find root skelfile")))
+	    (when error (error "failed to find root skelfile"))))
       (if-let ((sk (probe-file (merge-pathnames filename start))))
 	(if load 
 	    (load-skelfile sk)
 	    sk)
-	(error "failed to find root skelfile"))))
-
-(defun describe-skeleton (skel &optional (stream t))
-  "Describe the object SKEL which should inherit from the `skel' superclass."
-  (print-object skel stream)
-  (terpri stream))
-
-(defun describe-project (&optional path (stream t))
-  "Describe the project responsible for the pathname PATH. Defaults to
-`sb-posix:getcwd'."
-  (let* ((cd (or path (sb-posix:getcwd))))
-    (print cd stream)
-    (terpri stream)))
+	(when error (error "failed to find root skelfile")))))
 
 (defun edit-skelrc ()
   "Open the current user configuration using ED."

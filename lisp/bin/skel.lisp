@@ -24,7 +24,7 @@
 ;;   (init-user-skelrc (when $val (parse-file-opt $val))))
 
 (defcmd skc-edit
-  (let ((file (or (when $args (pop $args)) (find-skelfile #P"."))))
+  (let ((file (or (when $args (pop $args)) (sk-path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
 
 (defcmd skc-init
@@ -60,40 +60,45 @@
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
 (defcmd skc-rev
-  (case (sk-vc (find-skelfile #P"." :load t))
+  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:hg (progn
            (let ((proc (run-hg-command "id" (list "-i") :stream)))
              (copy-stream (process-output proc) *standard-output*)
              (finish-output))))
-    (t (progn
-         (let ((proc (run-git-command "rev-parse" (list "HEAD") :stream)))
-           (copy-stream (process-output proc) *standard-output*)
-           (finish-output))))))
+    (:git (progn
+            (let ((proc (run-git-command "rev-parse" (list "HEAD") :stream)))
+              (copy-stream (process-output proc) *standard-output*)
+              (finish-output))))
+    (t (skel-error "unknown VC type"))))
 
 (defun skc-show-case (sel)
   (std/string:string-case (sel :default (skel-error))
-    (":id" (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t))))
-    (":name" (sk-name (find-skelfile #P"." :load t)))
-    (":author" (sk-author (find-skelfile #P"." :load t)))
-    (":version" (sk-version (find-skelfile #P"." :load t)))
-    (":description" (sk-description (find-skelfile #P"." :load t)))
-    (":tags" (sk-tags (find-skelfile #P"." :load t)))
-    (":license" (sk-license (find-skelfile #P"." :load t)))
-    (":vc" (sk-vc (find-skelfile #P"." :load t)))
-    (":docs" (sk-docs (find-skelfile #P"." :load t)))
-    (":scripts" (sk-scripts (find-skelfile #P"." :load t)))
-    (":snippets" (sk-snippets (find-skelfile #P"." :load t)))
-    (":rules" (sk-rules (find-skelfile #P"." :load t)))
-    (":imports" (sk-imports (find-skelfile #P"." :load t)))
-    (":stash" (sk-stash (find-skelfile #P"." :load t)))
-    (":store" (sk-store (find-skelfile #P"." :load t)))
-    (":config" (describe *skel-user-config* nil))
+    (":id" (std:format-sxhash (obj/id:id *skel-project*)))
+    (":name" (sk-name *skel-project*))
+    (":author" (sk-author *skel-project*))
+    (":version" (sk-version *skel-project*))
+    (":description" (sk-description *skel-project*))
+    (":tags" (sk-tags *skel-project*))
+    (":license" (sk-license *skel-project*))
+    (":vc" (sk-vc *skel-project*))
+    (":docs" (sk-docs *skel-project*))
+    (":scripts" (sk-scripts *skel-project*))
+    (":snippets" (sk-snippets *skel-project*))
+    (":rules" (sk-rules *skel-project*))
+    (":imports" (sk-imports *skel-project*))
+    (":stash" (sk-stash *skel-project*))
+    (":store" (sk-store *skel-project*))
+    (":config" (describe *skel-user-config*))
+    (":sys" (describe *skel-system-config*))
     (":cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show
   (if $args 
       (mapc (lambda (x) (when-let ((ret (skc-show-case x))) (println ret))) $args)
-      (describe (find-skelfile #P"." :load t))))
+      (describe (if (boundp '*skel-project*) *skel-project*
+                    (if (boundp '*skel-user-config*) *skel-user-config*
+                        (if (boundp '*skel-system-config*) *skel-system-config*
+                            (skel-error "skel config files not installed")))))))
 
 (defcmd skc-push
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
@@ -248,5 +253,7 @@
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
       (load-skelrc)
+      (when-let ((project (find-skelfile #P".")))
+        (setq *skel-project* (load-skelfile project)))
       (do-cmd $cli)
       (debug-opts $cli))))
