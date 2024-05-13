@@ -6,7 +6,8 @@
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
    :dat :obj
-   :swank :swank-client
+   ;; :swank  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
+   :swank-client
    :dexador ;; fetch
    :hunchentoot :std :log)
   :serial t
