@@ -19,9 +19,9 @@
   (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
   (:export :get-address-by-name))
 
-(defpackage :net/sans-io
-  (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
-  (:export))
+;; (defpackage :net/sans-io
+;;   (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
+;;   (:export))
   
 (defpackage :net/udp
   (:nicknames :udp)
@@ -94,42 +94,42 @@
    :print-as-double))
 
 ;; sb-thread::make-condition
-(defpackage :net/proto/crew
-  (:nicknames :net/crew)
-  (:use :cl :sb-bsd-sockets :std :net/core :obj/id)
-  (:import-from #:sb-thread
-                #:condition-notify
-                #:condition-wait
-                ;; #:make-condition-variable
-                #:make-mutex ;; make-lock
-                #:make-thread
-                #:with-mutex)
-  (:import-from :sb-concurrency
-                :make-gate)
-  (:import-from #:swank-client
-                #:slime-close
-                #:slime-connect
-                #:slime-eval
-                #:slime-eval-async
-                #:slime-migrate-evals
-                #:slime-network-error
-                #:slime-pending-evals-p
-                #:swank-connection
-                #:with-slime-connection)
-  (:export 
-   :crew-connection-info
-   :make-worker-pool
-   :crew-worker :crew-worker-pool
-   :*crew-worker-pools-lock*
-   :*crew-worker-pools*
-   :connect-worker
-   :disconnect-worker
-   :parallel-mapcar :parallel-reduce
-   :eval-form-all-workers
-   :eval-form-repeatedly
-   :eval-repeatedly-async-state   
-   :worker-count
-   :reconnect-worker))
+;; (defpackage :net/proto/crew
+;;   (:nicknames :net/crew)
+;;   (:use :cl :sb-bsd-sockets :std :net/core :obj/id)
+;;   (:import-from #:sb-thread
+;;                 #:condition-notify
+;;                 #:condition-wait
+;;                 ;; #:make-condition-variable
+;;                 #:make-mutex ;; make-lock
+;;                 #:make-thread
+;;                 #:with-mutex)
+;;   (:import-from :sb-concurrency
+;;                 :make-gate)
+;;   (:import-from #:swank-client
+;;                 #:slime-close
+;;                 #:slime-connect
+;;                 #:slime-eval
+;;                 #:slime-eval-async
+;;                 #:slime-migrate-evals
+;;                 #:slime-network-error
+;;                 #:slime-pending-evals-p
+;;                 #:swank-connection
+;;                 #:with-slime-connection)
+;;   (:export 
+;;    :crew-connection-info
+;;    :make-worker-pool
+;;    :crew-worker :crew-worker-pool
+;;    :*crew-worker-pools-lock*
+;;    :*crew-worker-pools*
+;;    :connect-worker
+;;    :disconnect-worker
+;;    :parallel-mapcar :parallel-reduce
+;;    :eval-form-all-workers
+;;    :eval-form-repeatedly
+;;    :eval-repeatedly-async-state   
+;;    :worker-count
+;;    :reconnect-worker))
 
 (defpackage :net/proto/dns
   (:nicknames :net/dns)
@@ -169,11 +169,11 @@
    :net/core 
    :net/tcp 
    :net/udp
-   :net/sans-io
+   ;; :net/sans-io
    :net/codec/dns 
    :net/codec/osc 
    :net/codec/tlv
    :net/proto/dns 
-   :net/proto/crew 
+   ;; :net/proto/crew 
    :net/proto/ssh
    :net/proto/http))

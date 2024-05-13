@@ -7,14 +7,14 @@
    :sb-bsd-sockets :cl-ppcre
    :dat :obj
    ;; :swank  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
-   :swank-client
+   ;; :swank-client
    :dexador ;; fetch
    :hunchentoot :std :log)
   :serial t
   :components ((:file "pkg")
                (:file "err")
                (:file "obj")
-               (:file "sans-io")
+               ;; (:file "sans-io")
                (:file "util")
                (:file "udp")
                (:file "tcp")
@@ -24,7 +24,7 @@
                              (:file "tlv")
                              (:file "osc")))
                (:module "proto"
-                :components ((:file "crew")
+                :components (;; (:file "crew") ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
                              ;; (:file "http")
                              (:file "dns")
                              (:file "ssh")))
