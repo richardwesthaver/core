@@ -20,8 +20,8 @@
                                                     :info)))
 
 ;; TODO 2023-10-13: almost there
-(defopt skc-config
-  (init-user-skelrc (when $val (parse-file-opt $val))))
+;; (defopt skc-config
+;;   (init-user-skelrc (when $val (parse-file-opt $val))))
 
 (defcmd skc-edit
   (let ((file (or (when $args (pop $args)) (find-skelfile #P"."))))
@@ -87,10 +87,8 @@
     (":imports" (sk-imports (find-skelfile #P"." :load t)))
     (":stash" (sk-stash (find-skelfile #P"." :load t)))
     (":store" (sk-store (find-skelfile #P"." :load t)))
-    (":config" (if (probe-file *user-skelrc*)
-                   (describe (load-user-skelrc) t)
-                   (describe *skel-user-config* nil)))
-    (":cache" (sk-cache (find-skelfile #P"." :load t)))))
+    (":config" (describe *skel-user-config* nil))
+    (":cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show
   (if $args 
@@ -160,13 +158,16 @@
 
 (defcmd skc-shell
   (sb-ext:enable-debugger)
+  (trace! "starting skel shell")
   (setq *no-exit* t)
   (cli/clap::with-cli-handlers
       (progn
+        (in-package :sk-user)
         (use-package :cl-user)
         (use-package :sb-ext)
         (use-package :std-user)
         (init-skel-vars)
+        (println "Welcome to SKEL")
         (sb-impl::toplevel-repl nil))))
 
 (define-cli $cli
@@ -181,8 +182,7 @@
 	   :thunk skc-version)
 	  (:name "level" :global t :description "set log level (warn,info,debug,trace)"
 	   :thunk skc-level)
-	  (:name "config" :global t :description "set a custom skel user config" :kind file
-	   :thunk skc-config)
+	  (:name "config" :global t :description "set a custom skel user config" :kind file)
 	  (:name "input" :global t :description "input source" :kind string)
 	  (:name "output" :global t :description "output target" :kind string))
   :cmds (make-cmds
@@ -248,7 +248,5 @@
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
       (load-skelrc)
-      ;; TODO 2024-01-01: need to parse out CMD opts from args slot - they still there
-      (do-opt (find-opt $cli "level"))
       (do-cmd $cli)
       (debug-opts $cli))))

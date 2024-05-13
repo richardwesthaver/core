@@ -274,7 +274,7 @@ is a list of handlers for the opt-val."
   ;; note that cli-opts can have a nil or unbound name slot
   (name "" :type string)
   (kind 'bool :type symbol)
-  (thunk #'default-thunk :type (or function symbol))
+  (thunk nil :type (or null function symbol))
   (val nil)
   (global nil :type boolean)
   (description nil :type (or null string))
@@ -304,11 +304,11 @@ is a list of handlers for the opt-val."
 	    (cli-opt-val self))))
 
 (defmethod print-usage ((self cli-opt) &optional stream)
-  (format stream " -~(~{~A~^/--~}~)~A~A"
+  (format stream "-~(~{~A~^/--~}~)~A~A"
 	  (let ((n (cli-opt-name self)))
             (declare (simple-string n))
 	    (list (make-shorty n) n))
-	  (if (cli-opt-global self) "* " "  ")
+	  (if (cli-opt-global self) "* " " ")
 	  (if-let ((d (and (slot-boundp self 'description) (cli-opt-description self))))
 	    (format stream ":  ~A" (the simple-string d))
 	    "")))
@@ -321,7 +321,8 @@ is a list of handlers for the opt-val."
 	   (equal kind bk)))))
 
 (defmethod call-opt ((self cli-opt) arg)
-  (setf (cli-opt-val self) (funcall (cli-opt-thunk self) arg)))
+  (when-let ((thunk (cli-opt-thunk self)))
+    (setf (cli-opt-val self) (funcall thunk arg))))
 
 (defmethod do-opt ((self cli-opt))
   (call-opt self (cli-opt-val self)))
@@ -357,17 +358,17 @@ is a list of handlers for the opt-val."
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
-    (format stream "~(~A~)  ~A~A~A"
+    (format stream "~(~A~) ~A~A~A"
 	    (cli-name self)
 	    (if-let ((d (and (slot-boundp self 'description) (cli-description self))))
-	      (format nil ":  ~A" d)
+	      (format nil ": ~A" d)
 	      "")
 	    (if (null opts)
 		""
 		(format nil "~{~%    ~A~^~}" (loop for o across opts collect (print-usage o nil))))
 	    (if (null cmds)
 		""
-		(format nil "~%    ~{!  ~A~}" (loop for c across cmds collect (print-usage c nil)))))))
+		(format nil "~{!~A~}" (loop for c across cmds collect (print-usage c nil)))))))
 
 (defmethod push-cmd ((self cli-cmd) (place cli-cmd))
   (vector-push self (cli-cmds place)))
