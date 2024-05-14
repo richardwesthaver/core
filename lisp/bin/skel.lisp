@@ -71,8 +71,8 @@
               (finish-output))))
     (t (skel-error "unknown VC type"))))
 
-(defun skc-show-case (sel)
-  (std/string:string-case (sel :default (skel-error))
+(defun sk-slot-case (sel)
+  (std/string:string-case (sel :default (skel-error "invalid slot"))
     (":id" (std:format-sxhash (obj/id:id *skel-project*)))
     (":name" (sk-name *skel-project*))
     (":author" (sk-author *skel-project*))
@@ -85,6 +85,8 @@
     (":scripts" (sk-scripts *skel-project*))
     (":snippets" (sk-snippets *skel-project*))
     (":rules" (sk-rules *skel-project*))
+    (":env" (sk-env *skel-project*))
+    (":vars" (sk-vars *skel-project*))
     (":imports" (sk-imports *skel-project*))
     (":stash" (sk-stash *skel-project*))
     (":store" (sk-store *skel-project*))
@@ -94,7 +96,7 @@
 
 (defcmd skc-show
   (if $args 
-      (mapc (lambda (x) (when-let ((ret (skc-show-case x))) (println ret))) $args)
+      (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) $args)
       (describe (if (boundp '*skel-project*) *skel-project*
                     (if (boundp '*skel-user-config*) *skel-user-config*
                         (if (boundp '*skel-system-config*) *skel-system-config*

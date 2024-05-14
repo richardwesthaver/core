@@ -397,14 +397,18 @@ metadata, consider `trivial-file-size:file-size-in-octets' instead."
   (and (not (pathname-name path))
        (not (pathname-type path))))
 
-(defun hidden-path-p (path)
-  "Return T if PATH is a hidden file or directory or NIL else."
+(defvar *hidden-paths* (list ".hg" ".git"))
+
+(defun hidden-path-p (path &optional strict)
+  "Return T if PATH is strictly a hidden file or directory or NIL else."
   (declare (type pathname path))
   (let ((name (if (directory-path-p path)
                   (car (last (pathname-directory path)))
                   (file-namestring path))))
     (and (plusp (length name))
-         (eq (char name 0) #\.))))
+         (if strict
+             (eq (char name 0) #\.)
+             (member name *hidden-paths* :test 'equal)))))
 
 (defun directory-path (path)
   "If PATH is a directory pathname, return it as it is. If it is a file
@@ -417,7 +421,7 @@ pathname or a string, transform it into a directory pathname."
                                         (list (file-namestring path)))
                      :name nil :type nil :defaults path)))
 
-(defun find-files (path)
+(defun find-files (path &optional (hide *hidden-paths*))
   "Return a list of all files contained in the directory at PATH or any of its
 subdirectories."
   (declare (type (or pathname string) path))
@@ -428,7 +432,7 @@ subdirectories."
     (let ((paths nil)
           (children (list-directory (directory-path path))))
       (dolist (child children paths)
-        (unless (hidden-path-p child)
+        (unless (and hide (hidden-path-p child (eq t hide)))
           (if (directory-path-p child)
               (setf paths (append paths (find-files child)))
               (push child paths)))))))

@@ -11,6 +11,7 @@
 :vc :hg
 :docs ((:org "readme"))
 :scripts "x.lisp"
+:env (home (cc "clang") shell term)
 :rules
 ((all (x compile std prelude build))
  (x () #$if [ ! -f x ];

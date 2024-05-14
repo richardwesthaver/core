@@ -141,7 +141,7 @@ via the special form stored in RECIPE."))
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (sk-rule-target self))
     (when-let ((source (sk-rule-source self)))
-              (format stream " :source ~A" source))))
+      (format stream " :source ~A" source))))
 
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
@@ -392,6 +392,8 @@ via the special form stored in RECIPE."))
          :initform (make-array 0 :element-type 'sk-document :adjustable t)
          :accessor sk-docs :type (vector sk-document))
    (components :initarg :components :initform nil :accessor sk-components :type list)
+   (vars :initarg :vars :initform nil :accessor sk-vars :type list)
+   (env :initarg :env :initform nil :accessor sk-env :type list)
    (scripts :initarg :scripts
             :initform (make-array 0 :element-type 'sk-script :adjustable t)
             :accessor sk-scripts
@@ -437,6 +439,20 @@ via the special form stored in RECIPE."))
             (setf (sk-docs self) (map 'vector (lambda (d) (apply #'make-sk-document d)) docs)))
           (when-let ((scripts (sk-scripts self)))
             (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
+          (when-let ((env (sk-env self)))
+            (setf (sk-env self) (mapcar
+                                 (lambda (e)
+                                   (etypecase e
+                                     (symbol (cons
+                                              (sb-int:keywordicate e)
+                                              (sb-posix:getenv (format nil "~a" (symbol-name e)))))
+                                     (string (cons
+                                              (sb-int:keywordicate e)
+                                              (sb-posix:getenv (format nil "~a" (symbol-name e)))))
+                                     (list
+                                      (cons (sb-int:keywordicate (car e)) (cdr e)))))
+                                 
+                                 env)))
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self) (map 'vector
                                        (lambda (x)
@@ -470,15 +486,15 @@ via the special form stored in RECIPE."))
      (if (listp (ast self))
          (with-open-stream (st stream)
 	   (loop for (k v . rest) on (ast self)
-	       by #'cddr
-	       unless (or (null v) (null k))
-	       do 
-		  (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
-		  (write-char #\space st)
-		  (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
-		      (write-sxp-stream v stream :pretty pretty :case case)
-		      (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
-		  (write-char #\newline st)))
+	         by #'cddr
+	         unless (or (null v) (null k))
+	         do 
+		    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
+		    (write-char #\space st)
+		    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
+		        (write-sxp-stream v stream :pretty pretty :case case)
+		        (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
+		    (write-char #\newline st)))
 	 (error 'sxp-fmt-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
@@ -513,7 +529,6 @@ via the special form stored in RECIPE."))
 
 (defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))
   (with-slots (vc store stash license author) (debug! cfg) ;; log-level, custom, fmt
-    ;; (trace! "sk-user-config VC:" vc)
     (cas (sk-vc self) nil vc)
     (cas (sk-stash self) nil stash)
     (cas (sk-store self) nil store)

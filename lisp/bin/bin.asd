@@ -17,7 +17,7 @@
   :build-pathname "homer"
   :entry-point "bin/homer::main"
   :depends-on (:uiop :cl-ppcre :std :cli
-               :organ :skel :nlp :rdb :packy)
+               :organ :skel :nlp :rdb :packy :krypt)
   :components ((:file "homer"))
   :in-order-to ((test-op (test-op "app/tests")))
   :perform (test-op (o c) (symbol-call :rt :do-tests :app)))

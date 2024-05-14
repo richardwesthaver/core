@@ -353,6 +353,7 @@
    :file-date
    :file-timestamp
    :directory-path-p
+   :*hidden-paths*
    :hidden-path-p
    :directory-path
    :find-files

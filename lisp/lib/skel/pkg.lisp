@@ -79,6 +79,7 @@
    :edit-skelrc
    :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
    :sk-vc-meta :sk-vc-meta-kind :sk-vc-meta-remotes
+   :sk-vars :sk-env
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule
    :sk-make
    :sk-description :sk-kind :sk-rules :sk-version :sk-name :sk-docs :sk-document 
