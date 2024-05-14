@@ -111,12 +111,16 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
                  *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
+(defun homer-copy (input output)
+  (ensure-directories-exist output :verbose t)
+  (uiop:copy-file input output))
+
 (defun homer-maybe-push (file)
   (let ((form (compare-home-file file)))
     (case (car form)
       (:push (progn
                (println (format nil ":PUSH ~A" (cddr form)))
-               (uiop:copy-file (cddr form) (cadr form))))
+               (homer-copy (cddr form) (cadr form))))
       (t nil))))
 
 (defun homer-maybe-pull (file)
@@ -124,7 +128,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
     (case (car form)
       (:pull (progn
                (println (format nil ":PULL ~A" (cddr form)))
-               (uiop:copy-file (cadr form) (cddr form))))
+               (homer-copy (cadr form) (cddr form))))
       (t nil))))
 
 (defun homer-maybe-install (file)
@@ -132,10 +136,10 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
     (case (car form)
       (:pull (progn
                (println (format nil ":PULL ~A" (cddr form)))
-               (uiop:copy-file (cadr form) (cddr form))))
+               (homer-copy (cadr form) (cddr form))))
       (:new (progn
               (println (format nil ":NEW ~A" (cddr form)))
-              (uiop:copy-file (cadr form) (cddr form))))
+              (homer-copy (cadr form) (cddr form))))
       (:push (warn! "skipping file:" (cddr form)))
       (t nil))))
 
