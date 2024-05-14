@@ -58,12 +58,13 @@
         
 (defun load-homerc (&optional (file *default-user-homerc*))
   "Load a homerc configuration from FILE. Defaults to ~/.homerc."
-  (let ((form (file-read-forms file)))
-    (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
-    (with-slots (src) *home-config*
-      (if src
-          (setf src (pathname src))
-          (setf src (pathname (sb-posix:getenv "HOMER")))))))
+  (unless (null (probe-file file))
+    (let ((form (file-read-forms file)))
+      (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
+      (with-slots (src) *home-config*
+        (if src
+            (setf src (pathname src))
+            (setf src (pathname (sb-posix:getenv "HOMER"))))))))
 
 ;;; CLI
 (defopt homer-help (print-help $cli))
