@@ -97,7 +97,9 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
         (let ((*default-pathname-defaults* src))
           (debug!
            (mapcar #'compare-to-home
-                   (std/file:find-files *default-pathname-defaults* (push "readme.org" *hidden-paths*)))))
+                   (std/file:find-files
+                    *default-pathname-defaults*
+                    (nconc std/file:*hidden-paths* (list "stash" "store" "readme.org"))))))
         (error 'file-error :pathname src)))))
 
 (defcmd homer-push)
