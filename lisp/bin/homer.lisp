@@ -62,9 +62,11 @@
     (let ((form (file-read-forms file)))
       (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
       (with-slots (src) *home-config*
-        (if (info! src)
+        (if src
             (setf src (pathname src))
-            (setf src (pathname (sb-posix:getenv "HOMER"))))))))
+            (if-let ((homer (sb-posix:getenv "HOMER")))
+              (setf src (pathname homer))
+              (error "missing HOMER directory")))))))
 
 ;;; CLI
 (defopt homer-help (print-help $cli))
