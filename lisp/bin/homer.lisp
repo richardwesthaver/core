@@ -74,16 +74,28 @@
 (defcmd homer-show
   (describe *home-config*))
 
+(defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))
+
 (defun compare-to-home (src)
   "Compare a SRC path to what is stored in the user's home. Return a cons with
 the last modified timestamp of each file (SRC . HOME) or NIL."
-  (info! src))
+  (let* ((name (enough-namestring src))
+         (home (merge-pathnames name (user-homedir-pathname)))
+         (m1 (mtime src))
+         (m2 (when (probe-file home) (mtime home)))
+         (status (if (null m2) :new
+                     (if (< m2 m1) :pull
+                         :push))))
+    (cons name (list status m1 m2))))
 
 (defcmd homer-check
   (let ((cfg *home-config*))
     (with-slots (src) cfg
       (if-let ((src (probe-file src)))
-        (mapcar #'compare-to-home (std/file:find-files src (push "readme.org" *hidden-paths*)))
+        (let ((*default-pathname-defaults* src))
+          (debug!
+           (mapcar #'compare-to-home
+                   (std/file:find-files *default-pathname-defaults* (push "readme.org" *hidden-paths*)))))
         (error 'file-error :pathname src)))))
 
 (defcmd homer-push)
