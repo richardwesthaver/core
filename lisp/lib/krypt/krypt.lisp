@@ -40,5 +40,6 @@
 
 (defun load-kryptrc (&optional (file *default-user-kryptrc*))
   "Load a homerc configuration from FILE. Defaults to ~/.homerc."
-  (let ((form (file-read-forms file)))
-    (load-ast (make-instance 'krypt-config :ast form :path file :id (sxhash form)))))
+  (unless (not (probe-file file))
+    (let ((form (file-read-forms file)))
+      (load-ast (make-instance 'krypt-config :ast form :path file :id (sxhash form))))))
