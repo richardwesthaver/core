@@ -448,7 +448,7 @@ via the special form stored in RECIPE."))
                                               (sb-posix:getenv (format nil "~a" (symbol-name e)))))
                                      (string (cons
                                               (sb-int:keywordicate e)
-                                              (sb-posix:getenv (format nil "~a" (symbol-name e)))))
+                                              (sb-posix:getenv (string-upcase e))))
                                      (list
                                       (cons (sb-int:keywordicate (car e)) (cdr e)))))
                                  
