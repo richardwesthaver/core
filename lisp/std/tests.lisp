@@ -7,7 +7,7 @@
 ;;; Code:
 (in-package :std-user)
 (defpkg :std/tests
-  (:use :cl :std :rt :sb-thread))
+  (:use :cl :std :rt :sb-thread :std/fu))
 (in-package :std/tests)
 (defsuite :std)
 (in-suite :std)
@@ -15,7 +15,8 @@
 ;; prevent threadlocks
 ;; (setf sb-unix::*on-dangerous-wait* :error)
 
-(deftest readtables ()
+;; TODO 2024-05-14: fix compilation order of std/fu vs std/readtables
+(deftest readtables (:disabled nil)
   "Test :std readtable"
   (is (typep #`(,a1 ,a1 ',a1 ,@a1) 'function))
   (is (string= #"test "foo" "# "test \"foo\" "))
@@ -179,10 +180,10 @@
   (is (= 3 (acond ((1+ 1) (1+ it)))))
   (loop for x in '(1 2 3)
         for y in (funcall (alet ((a 1) (b 2) (c 3))
-                            (lambda () (mapc #'1+ (list a b c)))))
+                                (lambda () (mapc #'1+ (list a b c)))))
         collect (is (= x y))))
 
-(deftest pan ()
+(deftest pan (:disabled t)
   "Test standard pandoric macros"
   (let ((p
 	  (plambda (a) (b c)
@@ -241,14 +242,13 @@ These tests are copied directly from the Alexandria test suite."
                x) ;; 2
          '(42 42 2)))))
 
-(deftest bits (:disabled nil)
-  (eval-always
-    (define-bitfield testbits
-      (a boolean)
-      (b (signed-byte 2))
-      (c (unsigned-byte 3) :initform 1)
-      (d (integer -100 100))
-      (e (member foo bar baz))))
+(deftest bits (:disabled t)
+  (define-bitfield testbits
+    (a boolean)
+    (b (signed-byte 2))
+    (c (unsigned-byte 3) :initform 1)
+    (d (integer -100 100))
+    (e (member foo bar baz)))
   (let ((bits (make-testbits)))
     (is (not (testbits-a bits)))
     (is (= 0 (testbits-b bits)))

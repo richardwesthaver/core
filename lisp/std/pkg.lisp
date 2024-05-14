@@ -183,23 +183,6 @@
    :task-pool-oracle :task-pool-jobs :task-pool-stages
    :task-pool-workers :task-pool-results))
 
-(defpkg :std/readtable
-  (:use :cl)
-  (:import-from :std/named-readtables :defreadtable)
-  (:import-from :std/sym :symb)
-  (:import-from :std/list :defmacro!) ;; kludge
-  (:export
-   ;; readtable
-   :|#"-reader|
-   :|#`-reader|
-   :|#f-reader|
-   :|#$-reader|
-   :segment-reader
-   :match-mode-ppcre-lambda-form
-   :subst-mode-ppcre-lambda-form
-   :|#~-reader|
-   :_))
-
 (defpkg :std/macs
   (:use :cl)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :once-only :with-gensyms)
@@ -277,6 +260,24 @@
    :multiple-value-compose
    :curry
    :rcurry))
+
+(defpkg :std/readtable
+  (:use :cl)
+  (:import-from :std/named-readtables :defreadtable)
+  (:import-from :std/fu :curry :rcurry :compose)
+  (:import-from :std/sym :symb)
+  (:import-from :std/list :defmacro!) ;; kludge
+  (:export
+   ;; readtable
+   :|#"-reader|
+   :|#`-reader|
+   :|#f-reader|
+   :|#$-reader|
+   :segment-reader
+   :match-mode-ppcre-lambda-form
+   :subst-mode-ppcre-lambda-form
+   :|#~-reader|
+   :_))
 
 (defpkg :std/bit
   (:use :cl)

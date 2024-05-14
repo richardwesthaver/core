@@ -21,7 +21,7 @@ x.lisp
   ;; (asdf:load-asd (probe-file #P"ext/cl-ppcre.asd"))
   )
 
-(asdf:load-asd (probe-file (merge-pathnames "std.asd" "lisp/std/std.asd")))
+(asdf:load-asd (probe-file (merge-pathnames "std.asd" "lisp/std/")))
 (asdf:load-system :std)
 
 (defpackage :x
@@ -111,6 +111,7 @@ CMDS:
 test
 compile
 build
+test
 run
 save
 install")))
@@ -178,12 +179,17 @@ install")))
       ;; self save
       (sb-ext:run-program "x.lisp" nil :input t :output t)))
 
+(asdf:load-asd (probe-file (merge-pathnames "log.asd" "lisp/lib/log/")))
+(asdf:load-asd (probe-file (merge-pathnames "rt.asd" "lisp/lib/rt/")))
+(asdf:load-system :log)
+(asdf:load-system :rt)
+(ql:quickload :rt)
+
 (defun x-test (args)
   (if args
       (let ((name (car args)))
-        (ql:quickload name)
-        (ql:quickload (format nil "~A/TESTS" name))
-        (ignore-some-conditions (warning) (asdf:test-system name)))
+        (ql:quickload (string-upcase (format nil "~A/tests" name)))
+        (rt:do-tests (string-upcase name) t))
       (bail "missing arg")))
 
 (defun x-run (args)

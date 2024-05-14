@@ -13,7 +13,7 @@
 (declaim (type home-config *home-config*))
 (defvar *home-config*)
 (defvar *home-hidden-paths* (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))
-
+(defvar *homer-force* nil)
 (defclass home-config (sxp id)
   ((user :initform *user* :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
@@ -72,11 +72,13 @@
 (defopt homer-help (print-help $cli))
 (defopt homer-version (print-version $cli))
 (defopt homer-log-level (when $val (setq *log-level* :debug)))
+(defopt homer-force (when $val (setq *homer-force* t)))
 
 (defcmd homer-show
   (describe *home-config*))
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))
+(defun ctime (path) (sb-posix:stat-ctime (sb-posix:stat path)))
 
 (defun compare-home-file (src)
   "Compare a SRC path to what is stored in the user's home. Return a cons with
@@ -88,7 +90,8 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
          (status (cond
                    ((null m2) :new)
                    ((> m1 m2) :pull)
-                   ((< m1 m2) :push)
+                   ((< m1 m2) (unless (= (ctime home) m2)
+                                :push))
                    (t))))
     (cons status (cons src home))))
 
@@ -140,7 +143,11 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
       (:new (progn
               (println (format nil ":NEW ~A" (cddr form)))
               (homer-copy (cadr form) (cddr form))))
-      (:push (warn! "skipping file:" (cddr form)))
+      (:push (if *homer-force*
+                 (progn
+                   (println (format nil ":OVERWRITE ~A" (cddr form)))
+                   (homer-copy (cadr form) (cddr form)))
+                 (trace! "skipping file:" (cddr form))))
       (t nil))))
 
 (defcmd homer-push
@@ -171,11 +178,12 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
   :name "homer"
   :version "0.1.0"
   :description "user home manager"
-  :thunk homer-show
+  :thunk homer-check
   :opts (make-opts
           (:name "level" :global t :description "set the log level" :thunk homer-log-level)
           (:name "help" :global t :description "print help" :thunk homer-help)
-          (:name "version" :global t :description "print version" :thunk homer-version))
+          (:name "version" :global t :description "print version" :thunk homer-version)
+          (:name "force" :global t :description "use force" :thunk homer-force))
   :cmds (make-cmds
          (:name show :thunk homer-show)
          (:name check :thunk homer-check)
