@@ -370,8 +370,8 @@ of BUFFER-SIZE."
 The size is computed by opening the file and getting the length of the
 resulting stream.
 
-If all you want is to read the file's size in octets from its
-metadata, consider `trivial-file-size:file-size-in-octets' instead."
+If all you want is to read the file's size in octets from its metadata,
+consider FILE-SIZE-IN-OCTETS instead."
   (check-type file (or string pathname))
   (with-input-from-file (in file :element-type element-type)
     (file-length in)))

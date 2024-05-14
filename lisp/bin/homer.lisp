@@ -50,12 +50,12 @@
 ;; obj -> ast
 (defmethod build-ast ((self home-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
-         (unwrap-object self
-                        :slots t
-                        :methods nil
-                        :nullp nullp
-                        :exclude exclude)))
-        
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude)))
+
 (defun load-homerc (&optional (file *default-user-homerc*))
   "Load a homerc configuration from FILE. Defaults to ~/.homerc."
   (unless (null (probe-file file))
@@ -85,25 +85,75 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
          (home (merge-pathnames name (user-homedir-pathname)))
          (m1 (mtime src))
          (m2 (when (probe-file home) (mtime home)))
-         (status (if (null m2) :new
-                     (if (< m2 m1) :pull
-                         :push))))
-    (cons name (list status m1 m2))))
+         (status (cond
+                   ((null m2) :new)
+                   ((> m1 m2) :pull)
+                   ((< m1 m2) :push)
+                   (t))))
+    (cons status (cons src home))))
+
+(defprompt homer-check "install file? [y/n]: ")
+
+(defun homer-ask (form)
+  (let ((home (cddr form))
+      (src (cadr form)))
+  (let ((input (homer-check-prompt)))
+    (unless (or (zerop (length input))
+                (not (char= (aref input 0) #\y)))
+      (uiop:copy-file src home)))))
+
+(defun homer-status (file)
+  (let ((form (compare-to-home file)))
+    (case (car form)
+      ;; confirm with user
+      (:new (println (format nil ":NEW ~A" (cdr form))))
+      (:pull (println (format nil ":PULL ~A" (cadr form))))
+      (:push (println (format nil ":PUSH ~A" (cddr form))))
+      (t nil))))
 
 (defcmd homer-check
-  (let ((cfg *home-config*))
-    (with-slots (src) cfg
-      (if-let ((src (probe-file src)))
-        (let ((*default-pathname-defaults* src))
-          (debug!
-           (mapcar #'compare-to-home
-                   (std/file:find-files
-                    *default-pathname-defaults*
-                    (nconc std/file:*hidden-paths* (list "stash" "store" "readme.org"))))))
-        (error 'file-error :pathname src)))))
+  (with-slots (src) *home-config*
+    (if-let ((src (probe-file src)))
+      (let ((*default-pathname-defaults* src))
+        (mapcar #'homer-status
+                (find-files
+                 *default-pathname-defaults*
+                 (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))))
+      (error 'file-error :pathname src))))
 
-(defcmd homer-push)
-(defcmd homer-pull)
+(defun homer-maybe-push (file)
+  (let ((form (compare-to-home file)))
+    (case (car form)
+      (:push (progn
+               (println (format nil ":PUSH ~A" (cddr form)))
+               (uiop:copy-file (cddr form) (cadr form))))
+      (t nil))))
+
+(defun homer-maybe-pull (file)
+  (let ((form (compare-to-home file)))
+    (case (car form)
+      (:pull (progn
+               (println (format nil ":PUSH ~A" (cddr form)))
+               (uiop:copy-file (cadr form) (cddr form))))
+      (t nil))))
+
+(defcmd homer-push
+  (with-slots (src) *home-config*
+    (if-let ((src (probe-file src)))
+      (let ((*default-pathname-defaults* src))
+        (mapc #'homer-maybe-push
+              (find-files src (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))))
+      (error 'file-error :pathname src))))
+
+(defcmd homer-pull
+  (with-slots (src) *home-config*
+    (if-let ((src (probe-file src)))
+      (let ((*default-pathname-defaults* src))
+        (mapc #'homer-maybe-pull
+              (find-files src (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))))
+      (error 'file-error :pathname src))))
+
+(defcmd homer-install)
 (defcmd homer-clean)
 
 (define-cli $cli
@@ -117,7 +167,9 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
           (:name "version" :global t :description "print version" :thunk homer-version))
   :cmds (make-cmds
           (:name show :thunk homer-show)
-          (:name check :thunk homer-check)))
+          (:name check :thunk homer-check)
+          (:name push :thunk homer-push)
+          (:name pull :thunk homer-pull)))
 
 (defun run ()
   (let ((*log-level* :info))
