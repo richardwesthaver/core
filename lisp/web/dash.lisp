@@ -19,9 +19,9 @@
 (defun main (&key  (output *standard-output*) (port *web-dash-port*))
   (let ((*standard-output* output))
     (print "starting dash server on ~A" port)
-    (handler-case (bt:join-thread (find-if (lambda (th)
-                                             (search "hunchentoot" (bt:thread-name th)))
-                                           (bt:all-threads)))
+    (handler-case (sb-thread:join-thread (find-if (lambda (th)
+                                                    (search "hunchentoot" (sb-thread:thread-name th)))
+                                                  (sb-thread:all-threads)))
       ;; Catch a user's C-c
       (#+sbcl sb-sys:interactive-interrupt
        #+ccl  ccl:interrupt-signal-condition

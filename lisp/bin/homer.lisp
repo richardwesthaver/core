@@ -4,7 +4,7 @@
 (defpackage :bin/homer
   (:nicknames :homer)
   (:use :cl :std :log :sxp :rdb :skel :packy :cli :obj/id :krypt :vc)
-  (:export :main :home-config))
+  (:export :main :*home-config*))
 
 (in-package :bin/homer)
 (defvar *user* (sb-posix:getenv "USER"))
@@ -166,8 +166,6 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
         (mapc #'homer-maybe-install
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
-
-(defcmd homer-clean)
 
 (define-cli $cli
   :name "homer"
