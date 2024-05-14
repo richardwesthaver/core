@@ -12,6 +12,7 @@
 (defvar *default-user-homerc* (merge-pathnames ".homerc" *user-homedir*))
 (declaim (type home-config *home-config*))
 (defvar *home-config*)
+(defvar *home-hidden-paths* (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))
 
 (defclass home-config (sxp id)
   ((user :initform *user* :initarg :user :type string)
@@ -25,7 +26,6 @@
    (editor :initarg :editor :type (or pathname editor-user-config))
    (wm :initarg :wm :type (or pathname wm-user-config))
    (browser :initarg :browser :type (or pathname browser-user-config))))
-
 
 (defmethod print-object ((self home-config) stream)
   (print-unreadable-object (self stream :type t)
@@ -78,7 +78,7 @@
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))
 
-(defun compare-to-home (src)
+(defun compare-home-file (src)
   "Compare a SRC path to what is stored in the user's home. Return a cons with
 the last modified timestamp of each file (SRC . HOME) or NIL."
   (let* ((name (enough-namestring src))
@@ -92,18 +92,8 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
                    (t))))
     (cons status (cons src home))))
 
-(defprompt homer-check "install file? [y/n]: ")
-
-(defun homer-ask (form)
-  (let ((home (cddr form))
-      (src (cadr form)))
-  (let ((input (homer-check-prompt)))
-    (unless (or (zerop (length input))
-                (not (char= (aref input 0) #\y)))
-      (uiop:copy-file src home)))))
-
 (defun homer-status (file)
-  (let ((form (compare-to-home file)))
+  (let ((form (compare-home-file file)))
     (case (car form)
       ;; confirm with user
       (:new (println (format nil ":NEW ~A" (cdr form))))
@@ -118,11 +108,11 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
         (mapcar #'homer-status
                 (find-files
                  *default-pathname-defaults*
-                 (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))))
+                 *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
 (defun homer-maybe-push (file)
-  (let ((form (compare-to-home file)))
+  (let ((form (compare-home-file file)))
     (case (car form)
       (:push (progn
                (println (format nil ":PUSH ~A" (cddr form)))
@@ -130,11 +120,23 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
       (t nil))))
 
 (defun homer-maybe-pull (file)
-  (let ((form (compare-to-home file)))
+  (let ((form (compare-home-file file)))
     (case (car form)
       (:pull (progn
-               (println (format nil ":PUSH ~A" (cddr form)))
+               (println (format nil ":PULL ~A" (cddr form)))
                (uiop:copy-file (cadr form) (cddr form))))
+      (t nil))))
+
+(defun homer-maybe-install (file)
+  (let ((form (compare-home-file file)))
+    (case (car form)
+      (:pull (progn
+               (println (format nil ":PULL ~A" (cddr form)))
+               (uiop:copy-file (cadr form) (cddr form))))
+      (:new (progn
+              (println (format nil ":NEW ~A" (cddr form)))
+              (uiop:copy-file (cadr form) (cddr form))))
+      (:push (warn! "skipping file:" (cddr form)))
       (t nil))))
 
 (defcmd homer-push
@@ -142,7 +144,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
         (mapc #'homer-maybe-push
-              (find-files src (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))))
+              (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
 (defcmd homer-pull
@@ -150,10 +152,17 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
         (mapc #'homer-maybe-pull
-              (find-files src (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))))
+              (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(defcmd homer-install)
+(defcmd homer-install
+  (with-slots (src) *home-config*
+    (if-let ((src (probe-file src)))
+      (let ((*default-pathname-defaults* src))
+        (mapc #'homer-maybe-install
+              (find-files src *home-hidden-paths*)))
+      (error 'file-error :pathname src))))
+
 (defcmd homer-clean)
 
 (define-cli $cli
@@ -166,10 +175,11 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
           (:name "help" :global t :description "print help" :thunk homer-help)
           (:name "version" :global t :description "print version" :thunk homer-version))
   :cmds (make-cmds
-          (:name show :thunk homer-show)
-          (:name check :thunk homer-check)
-          (:name push :thunk homer-push)
-          (:name pull :thunk homer-pull)))
+         (:name show :thunk homer-show)
+         (:name check :thunk homer-check)
+         (:name push :thunk homer-push)
+         (:name pull :thunk homer-pull)
+         (:name install :thunk homer-install)))
 
 (defun run ()
   (let ((*log-level* :info))
