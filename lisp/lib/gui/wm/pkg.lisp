@@ -24,18 +24,20 @@
 ;;; Code:
 (in-package :gui/wm)
 
+#+wl
 (defpackage :gui/wm/wl
   (:use :cl :std :gui/core :wayflan)
   (:nicknames :wl)
   (:export))
 
+#+x11
 (defpackage :gui/wm/x11
   (:nicknames :x11)
   (:shadowing-import-from :std/type :array-index)
   (:use :cl :std :gui/core :xlib)
   (:export))
 
-(defconstant *default-wm* :x11)
+(defvar *default-wm* :x11)
 
 (defun wm-package (&optional wm)
   "Return the WM package, either ':x11' for X11 or ':wl' for

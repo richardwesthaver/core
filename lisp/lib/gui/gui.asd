@@ -2,8 +2,8 @@
 (defsystem :gui
   :depends-on (:std 
                :log :obj :xkb :parse
-               :wayflan :wayflan-client ;;#+wl
-               :clx :stumpwm) ;; #+x11
+               (:feature :wl :wayflan) (:feature :wl :wayflan-client)
+               (:feature :x11 :clx) (:feature :x11 :stumpwm))
   :components ((:file "pkg")
                (:file "err")
                (:file "server")
@@ -11,11 +11,13 @@
                (:module "wm"
                 :components 
                 ((:file "pkg")
+                 #+wl 
                  (:module "wl"
                   :components 
                   ((:file "pkg")
                    (:file "kbd")
                    (:file "shell")))
+                 #+x11
                  (:module "x11"
                   :components ((:file "pkg")))))
                (:file "ext"))

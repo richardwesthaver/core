@@ -5,7 +5,7 @@
    :gui-client-p :gui-server-p))
 
 (defpackage :gui/wm
-  (:use :cl :std :log :gui/core :wayflan)
+  (:use :cl :std :log :gui/core #+wl :wayflan)
   (:export
    :*default-wm*
    :wm-package))

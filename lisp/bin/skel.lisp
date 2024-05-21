@@ -146,6 +146,7 @@
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
     (sb-ext:enable-debugger)
+    (setq *no-exit* t)
     (if $args
         (loop for a in $args
               do (debug!

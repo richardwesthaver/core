@@ -532,27 +532,27 @@ character translation."
                          (0
                           (case char
                             (#\]
-                             (dbg :cdata "State 0 Match #\], go to state {0,1} = 4.")
+                             (trace! :cdata "State 0 Match #\], go to state {0,1} = 4.")
                              (setf state 4))
                             (otherwise
-                             (dbg :cdata "State 0 Non-], go to (remain in) state 0."))))
+                             (trace! :cdata "State 0 Non-], go to (remain in) state 0."))))
                          (4 ; {0, 1}
                           (case char
                             (#\]
-                             (dbg :cdata "State 4 {0, 1}, match ], go to state {0,1,2} = 5")
+                             (trace! :cdata "State 4 {0, 1}, match ], go to state {0,1,2} = 5")
                              (setf state 5))
                             (otherwise
-                             (dbg :cdata "State 4 {0, 1}, Non-], go to state 0.")
+                             (trace! :cdata "State 4 {0, 1}, Non-], go to state 0.")
                              (setf state 0))))
                          (5 ; {0, 1, 2}
                           (case char
                             (#\]
-                             (dbg :cdata "State 5 {0, 1, 2}, match ], stay in state 5."))
+                             (trace! :cdata "State 5 {0, 1, 2}, match ], stay in state 5."))
                             (#\>
-                             (dbg :cdata "State 5 {0, 1, 2}, match >, finish match and go to state 3.")
+                             (trace! :cdata "State 5 {0, 1, 2}, match >, finish match and go to state 3.")
                              (setf state 3))
                             (otherwise
-                             (dbg :cdata "State 5 {0, 1, 2}, find neither ] nor >; go to state 0.")
+                             (trace! :cdata "State 5 {0, 1, 2}, find neither ] nor >; go to state 0.")
                              (setf state 0))))
                          )
                     until (eql state 3)
@@ -635,17 +635,17 @@ character translation."
               (0
                (case char
                  (#\?
-                  (dbg :pi-contents "State 0 Match #\?, go to state 1.")
+                  (trace! :pi-contents "State 0 Match #\?, go to state 1.")
                   (setf state 1))
                  (otherwise
-                  (dbg :pi-contents "State 0 ~c, go to (remain in) state 0." char))))
+                  (trace! :pi-contents "State 0 ~c, go to (remain in) state 0." char))))
               (1
                (case char
                  (#\>
-                  (dbg :pi-contents "State 1 Match #\>, done.")
+                  (trace! :pi-contents "State 1 Match #\>, done.")
                   (setf state 2))
                  (otherwise
-                  (dbg :pi-contents "State 1, ~c, do not match #\>, return to 0." char)
+                  (trace! :pi-contents "State 1, ~c, do not match #\>, return to 0." char)
                   (setf state 0)))))
          until (eql state 2)
          finally (return (coerce

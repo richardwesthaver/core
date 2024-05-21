@@ -3,16 +3,14 @@
 ;;
 
 ;;; Code:
-(in-package :obj/meta)
-
 (defpackage :obj/meta/stealth
-  (:use :cl :std))
+  (:use :cl :std :obj/meta :sb-mop))
 
 (defpackage :obj/meta/typed
-  (:use :cl :std))
+  (:use :cl :std :obj/meta :sb-mop))
 
 (defpackage :obj/meta/filtered
-  (:use :cl :std)
+  (:use :cl :std :obj/meta :sb-mop)
   (:export
    :define-filtered-function :filtered :filtered-function :filtered-method
    :generic-function-filter-expression :generic-function-filters :method-filter :simple-filtered-function))
@@ -76,16 +74,18 @@
    :potentially-sealable-standard-method))
 
 (defpackage :obj/meta/fast
-  (:use :cl :std :obj/meta/sealed)
+  (:use :cl :std :obj/meta/sealed :obj/meta)
   (:import-from :sb-int :gensymify)
   (:import-from :sb-walker :macroexpand-all)
   (:export :fast-generic-function :fast-method :inlineable))
 
 (defpackage :obj/meta/lazy
-  (:use :cl :std))
+  (:use :cl :std :obj/meta))
 
 (defpackage :obj/meta/overloaded
-  (:use :cl :std))
+  (:use :cl :std :obj/meta))
+
+(in-package :obj/meta)
 
 (defun class-equalp (c1 c2)
   (when (symbolp c1) (setf c1 (find-class c1)))

@@ -18,7 +18,7 @@ used when the slot value of :BENCH is t.")
     (flet ((%do ()
 	     (if-let ((opt *compile-tests*))
 	       (progn 
-		 (when (eq opt t) (setq opt *default-test-opts*))
+		 (when (eq opt t) (setq opt *test-opts*))
 		 ;; TODO 2023-09-21: handle failures here
 		 (let ((fn (compile-test self :declare opt)))
 		   (bench *bench-count* (funcall fn)))

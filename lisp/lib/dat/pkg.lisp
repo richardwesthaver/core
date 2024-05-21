@@ -133,7 +133,7 @@
    :element-map-children))
 
 (defpackage :dat/xml
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :log)
   (:shadow :read-char :unread-char)
   (:export
    :xml-node-name 

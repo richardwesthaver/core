@@ -5,13 +5,25 @@
 ;;; Code:
 (in-package :net/udp)
 
-(defun udp-server (port)
+(defvar *udp-ping-size* 512)
+
+(defun udp-ping-server (port &key (count 16))
   (let ((s (make-instance 'inet-socket :type :datagram :protocol :udp)))
     (socket-bind s #(0 0 0 0) port)
-    (loop
-      (multiple-value-bind (buf len address port) (socket-receive s nil 500)
-        (format t "Received ~A bytes from ~A:~A - ~A ~%"
-                len address port (subseq buf 0 (min 10 len)))))))
+    (loop for i from 0 upto count
+          do (multiple-value-bind (buf len address port) (socket-receive s nil *udp-ping-size*)
+               (format t "(~A) Received ~A bytes from ~A:~A - ~A ~%"
+                       i len address port (subseq buf 0 (min 10 len))))
+          finally (socket-close s))))
+
+(defmacro with-udp-client ((socket-var &key (addr #(0 0 0 0)) (port 0) peer) &body body)
+  `(let ((,socket-var (make-instance 'inet-socket :type :datagram :protocol :udp)))
+     (unwind-protect
+          (progn
+            (socket-bind ,socket-var ,addr ,port)
+            ,(when peer `(apply #'socket-connect ,socket-var ,peer))
+            ,@body)
+       (socket-close ,socket-var))))
 
 (defmacro with-udp-client-and-server (((socket-class &rest common-initargs)
                                        (listen-socket-var &rest listen-address)
