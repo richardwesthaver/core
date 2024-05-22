@@ -14,7 +14,7 @@
 (define-cli $cli
   :name "packy"
   :version "0.1.0"
-  :description "user home manager"
+  :description "Universal Package Manager"
   :thunk pk-show
   :opts (make-opts
           (:name "level" :global t :description "set the log level" :thunk pk-log-level)

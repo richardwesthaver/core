@@ -36,7 +36,8 @@
                 :components
                 ((:file "ana")
                  (:file "pan")
-                 (:file "const")))
+                 (:file "const")
+                 (:file "collecting")))
                (:file "bit")
                (:file "fmt")
                (:file "path")

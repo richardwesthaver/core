@@ -156,7 +156,7 @@
   (:export))
 
 (defpackage :net/proto/http
-  (:use :cl :std :net/core :sb-bsd-sockets)
+  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes)
   (:export))
 
 (uiop:define-package :net/fetch

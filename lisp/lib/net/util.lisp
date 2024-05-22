@@ -4,6 +4,7 @@
 
 ;; from usocket
 (defun get-address-by-name (name)
+  "Return the address of a host by NAME."
   (multiple-value-bind (host4 host6)
       (get-host-by-name name)
     (let ((addr4 (when host4
@@ -14,7 +15,7 @@
 
 ;; from https://github.com/eudoxia0/find-port
 (defun port-open-p (port &key (host *localhost*))
-  "Determine if the port is open."
+  "Determine if a PORT is open on the given HOST."
   (handler-case
       (let ((socket (make-instance 'inet-socket :type :stream)))
         (setf (sockopt-reuse-address socket) t)

@@ -4,6 +4,7 @@
   :bug-tracker "https://lab.rwest.io/ellis/packy/issues"
   :depends-on (:cl-ppcre :std)
   :components ((:file "pkg")
+               (:file "bytes")
                (:file "lex")
                (:file "yacc"))
   :in-order-to ((test-op (test-op :parse/tests))))

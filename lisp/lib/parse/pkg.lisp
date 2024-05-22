@@ -34,6 +34,39 @@
            :yacc-runtime-error :yacc-parse-error :yacc-parse-error-terminal
            :yacc-parse-error-value :yacc-parse-error-expected-terminals))
 
+(defpackage parse/bytes
+  (:use :cl)
+  (:import-from :sb-cltl2
+   :variable-information)
+  (:import-from :std :with-gensyms :once-only
+   :ensure-cons :ignore-some-conditions)
+  (:export :with-vector-parsing
+           :with-string-parsing
+           :with-octets-parsing
+           :eofp
+           :current
+           :peek
+           :eof-value
+           :pos
+           :advance
+           :advance*
+           :advance-to
+           :advance-to*
+           :skip
+           :skip*
+           :skip+
+           :skip?
+           :skip-until
+           :skip-while
+           :bind
+           :match
+           :match-i
+           :match?
+           :match-case
+           :match-i-case
+           :match-failed))
+
+
 (uiop:define-package :parse
     (:use :cl :std)
-  (:use-reexport :parse/lex :parse/yacc))
+  (:use-reexport :parse/lex :parse/yacc :parse/bytes))

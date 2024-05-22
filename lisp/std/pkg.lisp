@@ -183,9 +183,23 @@
    :task-pool-oracle :task-pool-jobs :task-pool-stages
    :task-pool-workers :task-pool-results))
 
+(defpkg :std/fu
+  (:use :cl)
+  (:import-from :std/sym :make-gensym-list)
+  (:export
+   :ensure-function
+   :ensure-functionf
+   :disjoin
+   :conjoin
+   :compose
+   :multiple-value-compose
+   :curry
+   :rcurry))
+
 (defpkg :std/macs
   (:use :cl)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :once-only :with-gensyms)
+  (:import-from :std/fu :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :defmacro!)
   (:export
@@ -246,20 +260,9 @@
    :pandoric-hotpatch
    :pandoric-recode
    :plambda
-   :pandoric-eval))
-
-(defpkg :std/fu
-  (:use :cl)
-  (:import-from :std/macs :make-gensym-list)
-  (:export
-   :ensure-function
-   :ensure-functionf
-   :disjoin
-   :conjoin
-   :compose
-   :multiple-value-compose
-   :curry
-   :rcurry))
+   :pandoric-eval
+   :with-collectors
+   :collecting))
 
 (defpkg :std/readtable
   (:use :cl)

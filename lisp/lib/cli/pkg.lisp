@@ -163,7 +163,7 @@
    :cli-val
    :cli-cmd-args
    :cli-cmd
-   :cli-cwd
+   :cli-cd
    :find-cmd
    :find-opt
    :find-short-opt
