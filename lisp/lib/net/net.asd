@@ -5,7 +5,7 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
-   :dat :obj
+   :dat :obj :io :parse
    ;; :swank  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
    ;; :swank-client
    :dexador ;; fetch
@@ -25,7 +25,7 @@
                              (:file "osc")))
                (:module "proto"
                 :components (;; (:file "crew") ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
-                             ;; (:file "http")
+                             (:file "http")
                              (:file "dns")
                              (:file "ssh")))
                (:file "fetch"))

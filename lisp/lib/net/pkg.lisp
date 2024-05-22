@@ -22,7 +22,7 @@
 ;; (defpackage :net/sans-io
 ;;   (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
 ;;   (:export))
-  
+
 (defpackage :net/udp
   (:nicknames :udp)
   (:use :cl :std :net/core :sb-bsd-sockets)
@@ -156,8 +156,82 @@
   (:export))
 
 (defpackage :net/proto/http
-  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes)
-  (:export))
+  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer)
+  (:export
+   :make-parser
+   :http-request
+   :http-response
+   :make-http-request
+   :make-http-response
+   :http-request-p
+   :http-response-p
+   :make-callbacks
+   :http-version
+   :http-major-version
+   :http-minor-version
+   :http-method
+   :http-resource
+   :http-status
+   :http-status-text
+   :http-content-length
+   :http-chunked-p
+   :http-upgrade-p
+   :http-headers
+   ;; multipart parser
+   :make-multipart-parser
+   ;; Low-level parser API
+   :http
+   :http-p
+   :make-http
+   :parse-request
+   :parse-response
+   :http-multipart-parse
+   :ll-multipart-parser
+   :make-ll-multipart-parser
+   ;; Error
+   :http-error
+   :callback-error
+   :cb-message-begin
+   :cb-url
+   :cb-first-line
+   :cb-header-field
+   :cb-header-value
+   :cb-headers-complete
+   :cb-body
+   :cb-message-complete
+   :cb-status
+
+   :parsing-error
+   :invalid-eof-state
+   :header-overflow
+   :closed-connection
+   :invalid-version
+   :invalid-status
+   :invalid-method
+   :invalid-url
+   :invalid-host
+   :invalid-port
+   :invalid-path
+   :invalid-query-string
+   :invalid-fragment
+   :lf-expected
+   :invalid-header-token
+   :invalid-content-length
+   :invalid-chunk-size
+   :invalid-constant
+   :invalid-internal-state
+   :strict-error
+   :paused-error
+   :unknown-error
+
+   :multipart-parsing-error
+   :invalid-multipart-body
+   :invalid-boundary
+
+   :header-value-parsing-error
+   :invalid-header-value
+   :invalid-parameter-key
+   :invalid-parameter-value))
 
 (uiop:define-package :net/fetch
   (:nicknames :fetch)

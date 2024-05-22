@@ -5,7 +5,7 @@
 
 (defsuite :net)
 (in-suite :net)
-
+(in-readtable :std)
 (deftest sanity ())
 
 (deftest sans-io ()
@@ -120,3 +120,22 @@
 ;;       (eval-repeatedly-async-state pool work-form 10 #'update-state))))
 
 (deftest crew ())
+
+(deftest http ()
+  (let ((req (make-http-request))
+      (cb (make-callbacks)))
+  (parse-request
+   req cb
+   (sb-ext:string-to-octets #"GET /cookies HTTP/1.1
+Host: 127.0.0.1:8080
+Connection: keep-alive
+Cache-Control: max-age=0Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17
+Accept-Encoding: gzip,deflate,sdch
+Accept-Language: en-US,en;q=0.8
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3
+Cookie: name=wookie
+
+"#))
+  (is req)
+  (is cb)))

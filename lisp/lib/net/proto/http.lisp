@@ -1,9 +1,15 @@
-;;; TODO
 ;;; lib/net/proto/http.lisp --- HTTP Support
 
-;; based on https://github.com/fukamachi/fast-http (maybe)
+;; based on https://github.com/fukamachi/fast-http
 
 ;; see also: https://github.com/orthecreedence/http-parse
+
+;;; Commentary:
+
+;; Fukamachi has implemented the current state-of-the-art HTTP libraries
+;; (fast-http, dexador, etc). For the time being we'll be using these with
+;; minimal changes. At some point in the future it would be ideal to
+;; re-implement this in a sans-io style.
 
 ;;; Code:
 (in-package :net/proto/http)
@@ -147,7 +153,7 @@
 
 (declaim (inline number-string-p))
 (defun number-string-p (string)
-  (declare (type #+ecl string #-ecl simple-string string)
+  (declare (type simple-string string)
            (optimize (speed 3) (safety 2)))
   ;; empty string
   (when (zerop (length string))
@@ -196,9 +202,9 @@
              (when header-value-buffer
                (let ((header-value
                        (locally (declare (optimize (speed 3) (safety 0)))
-                         (coerce
-                          header-value-buffer
-                          'string))))
+                         (coerce-to-string
+                          (the (or octet-concatenated-xsubseqs octet-xsubseq) header-value-buffer)))))
+
                  (if (string= parsing-header-field "set-cookie")
                      (push header-value (gethash "set-cookie" headers))
                      (multiple-value-bind (previous-value existp)
@@ -235,14 +241,14 @@
                                       (type simple-byte-vector data)
                                       (type pointer start end))
                              (collect-prev-header-value)
-                             ;; (setq header-value-buffer (make-concatenated-xsubseqs))
+                             (setq header-value-buffer (make-concatenated-xsubseqs))
                              (setq parsing-header-field
                                    (ascii-octets-to-lower-string data :start start :end end)))
              :header-value (lambda (http data start end)
                              (declare (ignore http)
                                       (type simple-byte-vector data)
                                       (type pointer start end))
-                             (nconcf header-value-buffer
+                             (xnconcf header-value-buffer
                                       (subseq (subseq (the simple-byte-vector data) start end) 0)))
              :headers-complete (lambda (http)
                                  (collect-prev-header-value)
@@ -285,8 +291,8 @@
            (when data-buffer
              (setq data
                    (coerce 'list
-                    (nconc (subseq data-buffer 0)
-                            (subseq (the simple-byte-vector data) start (or end (length data))))))
+                    (xnconc (xsubseq data-buffer 0)
+                            (xsubseq (the simple-byte-vector data) start (or end (length data))))))
              (setq data-buffer nil
                    start 0
                    end nil))
@@ -316,6 +322,125 @@
                                    (lambda (data start end)
                                      (when parsing-boundary
                                        (return-from find-boundary (subseq data start end)))))))
+
+;;; byte-vector
+(defconstant +cr+ (char-code #\Return))
+(defconstant +lf+ (char-code #\Newline))
+(defconstant +space+ (char-code #\Space))
+(defconstant +tab+ (char-code #\Tab))
+(defconstant +page+ (char-code #\Page))
+(defconstant +dash+ #.(char-code #\-))
+
+(define-constant +crlf+
+  (make-array 2 :element-type '(unsigned-byte 8)
+                :initial-contents (list +cr+ +lf+))
+  :test 'equalp)
+
+(deftype simple-byte-vector (&optional (len '*))
+  `(simple-array (unsigned-byte 8) (,len)))
+
+(declaim (inline digit-byte-char-p
+                 digit-byte-char-to-integer
+                 alpha-byte-char-p
+                 alpha-byte-char-to-lower-char
+                 alphanumeric-byte-char-p
+                 mark-byte-char-p))
+
+(defun digit-byte-char-p (byte)
+  (declare (type (unsigned-byte 8) byte)
+           (optimize (speed 3) (safety 0)))
+  (<= #.(char-code #\0) byte #.(char-code #\9)))
+
+(declaim (ftype (function ((unsigned-byte 8)) fixnum) digit-byte-char-to-integer))
+(defun digit-byte-char-to-integer (byte)
+  (declare (type (unsigned-byte 8) byte)
+           (optimize (speed 3) (safety 0)))
+  (the fixnum (- byte #.(char-code #\0))))
+
+(defun alpha-byte-char-p (byte)
+  (declare (type (unsigned-byte 8) byte)
+           (optimize (speed 3) (safety 0)))
+  (or (<= #.(char-code #\A) byte #.(char-code #\Z))
+      (<= #.(char-code #\a) byte #.(char-code #\z))))
+
+(defun alpha-byte-char-to-lower-char (byte)
+  (declare (type (unsigned-byte 8) byte)
+           (optimize (speed 3) (safety 0)))
+  (the character
+       (cond
+         ((<= #.(char-code #\A) byte #.(char-code #\Z))
+          (code-char (+ byte #x20)))
+         (T #+nil(<= #.(char-code #\a) byte #.(char-code #\z))
+            (code-char byte)))))
+
+(defun alphanumeric-byte-char-p (byte)
+  (declare (type (unsigned-byte 8) byte))
+  (or (alpha-byte-char-p byte)
+      (digit-byte-char-p byte)))
+
+(defun mark-byte-char-p (byte)
+  (declare (type (unsigned-byte 8) byte)
+           (optimize (speed 3) (safety 0)))
+  (or (= byte #.(char-code #\-))
+      (= byte #.(char-code #\_))
+      (= byte #.(char-code #\.))
+      (= byte #.(char-code #\!))
+      (= byte #.(char-code #\~))
+      (= byte #.(char-code #\*))
+      (= byte #.(char-code #\'))
+      (= byte #.(char-code #\())
+      (= byte #.(char-code #\)))))
+
+(declaim (ftype (function ((unsigned-byte 8)) (unsigned-byte 8)) byte-to-ascii-lower)
+         (inline byte-to-ascii-lower))
+(defun byte-to-ascii-lower (x)
+  (declare (type (unsigned-byte 8) x)
+           (optimize (speed 3) (safety 0)))
+  (if (<= #.(char-code #\A) x #.(char-code #\Z))
+      (- x #.(- (char-code #\A) (char-code #\a)))
+      x))
+
+(declaim (inline ascii-octets-to-string))
+(defun ascii-octets-to-string (octets &key (start 0) (end (length octets)))
+  (declare (type simple-byte-vector octets)
+           (type (unsigned-byte 64) start end)
+           (optimize (speed 3) (safety 0)))
+  (let* ((len (the (unsigned-byte 64) (- end start)))
+         (string (make-string len :element-type 'character)))
+    (declare (type (unsigned-byte 64) len)
+             (type simple-string string))
+    (do ((i 0 (1+ i))
+         (j start (1+ j)))
+        ((= j end) string)
+      (setf (aref string i)
+            (code-char (aref octets j))))))
+
+(declaim (inline ascii-octets-to-lower-string))
+(defun ascii-octets-to-lower-string (octets &key (start 0) (end (length octets)))
+  (declare (type simple-byte-vector octets)
+           (type (unsigned-byte 64) start end)
+           (optimize (speed 3) (safety 0)))
+  (let* ((len (the (unsigned-byte 64) (- end start)))
+         (string (make-string len :element-type 'character)))
+    (declare (type (unsigned-byte 64) len)
+             (type simple-string string))
+    (do ((i 0 (1+ i))
+         (j start (1+ j)))
+        ((= j end) string)
+      (setf (aref string i)
+            (code-char (byte-to-ascii-lower (aref octets j)))))))
+
+(defun append-byte-vectors (vec1 vec2)
+  (declare (type simple-byte-vector vec1 vec2)
+           (optimize (speed 3) (safety 0)))
+  (let* ((vec1-len (length vec1))
+         (vec2-len (length vec2))
+         (result (make-array (+ vec1-len vec2-len)
+                             :element-type '(unsigned-byte 8))))
+    (declare (type simple-byte-vector result))
+    (replace result vec1 :start1 0)
+    (replace result vec2 :start1 vec1-len)
+    result))
 
 ;;; multipart-parser
 (defstruct (ll-multipart-parser (:constructor make-ll-multipart-parser
@@ -386,7 +511,7 @@
                       (setf (ll-multipart-parser-boundary-buffer parser) nil)))))
       (let* ((p start)
              (byte (aref data p)))
-        #+fast-http-debug
+        #+http-debug
         (log:debug (code-char byte))
         (tagbody
            (macrolet ((go-state (tag &optional (advance 1))
@@ -396,13 +521,13 @@
                                 (1 '(incf p))
                                 (otherwise `(incf p ,advance)))
                              (setf (ll-multipart-parser-state parser) ,tag)
-                             #+fast-http-debug
+                             #+http-debug
                              (log:debug ,(princ-to-string tag))
                              ,@(and (not (eql advance 0))
                                     `((when (= p end)
                                         (go exit-loop))
                                       (setq byte (aref data p))
-                                      #+fast-http-debug
+                                      #+http-debug
                                       (log:debug (code-char byte))))
                              (go ,tag))))
              (tagcasev (ll-multipart-parser-state parser)
@@ -608,7 +733,7 @@
                :header-field (lambda (parser data start end)
                                (declare (ignore parser))
                                (collect-prev-header-value)
-                               ;; (setq header-value-buffer (make-concatenated-xsubseqs))
+                               (setq header-value-buffer (make-concatenated-xsubseqs))
 
                                (let ((header-name
                                        (ascii-octets-to-lower-string data :start start :end end)))
@@ -617,7 +742,7 @@
                                  (setq parsing-header-field header-name)))
                :header-value (lambda (parser data start end)
                                (declare (ignore parser))
-                               (nconcf header-value-buffer
+                               (xnconcf header-value-buffer
                                         (subseq (subseq data start end) 0)))
                :headers-complete (lambda (parser)
                                    (declare (ignore parser))
@@ -818,125 +943,6 @@
   ((description :initform "invalid parameter key")))
 (define-condition invalid-parameter-value (header-value-parsing-error)
   ((description :initform "invalid parameter value")))
-
-;;; byte-vector
-(defconstant +cr+ (char-code #\Return))
-(defconstant +lf+ (char-code #\Newline))
-(defconstant +space+ (char-code #\Space))
-(defconstant +tab+ (char-code #\Tab))
-(defconstant +page+ (char-code #\Page))
-(defconstant +dash+ #.(char-code #\-))
-
-(define-constant +crlf+
-  (make-array 2 :element-type '(unsigned-byte 8)
-                :initial-contents (list +cr+ +lf+))
-  :test 'equalp)
-
-(deftype simple-byte-vector (&optional (len '*))
-  `(simple-array (unsigned-byte 8) (,len)))
-
-(declaim (inline digit-byte-char-p
-                 digit-byte-char-to-integer
-                 alpha-byte-char-p
-                 alpha-byte-char-to-lower-char
-                 alphanumeric-byte-char-p
-                 mark-byte-char-p))
-
-(defun digit-byte-char-p (byte)
-  (declare (type (unsigned-byte 8) byte)
-           (optimize (speed 3) (safety 0)))
-  (<= #.(char-code #\0) byte #.(char-code #\9)))
-
-(declaim (ftype (function ((unsigned-byte 8)) fixnum) digit-byte-char-to-integer))
-(defun digit-byte-char-to-integer (byte)
-  (declare (type (unsigned-byte 8) byte)
-           (optimize (speed 3) (safety 0)))
-  (the fixnum (- byte #.(char-code #\0))))
-
-(defun alpha-byte-char-p (byte)
-  (declare (type (unsigned-byte 8) byte)
-           (optimize (speed 3) (safety 0)))
-  (or (<= #.(char-code #\A) byte #.(char-code #\Z))
-      (<= #.(char-code #\a) byte #.(char-code #\z))))
-
-(defun alpha-byte-char-to-lower-char (byte)
-  (declare (type (unsigned-byte 8) byte)
-           (optimize (speed 3) (safety 0)))
-  (the character
-       (cond
-         ((<= #.(char-code #\A) byte #.(char-code #\Z))
-          (code-char (+ byte #x20)))
-         (T #+nil(<= #.(char-code #\a) byte #.(char-code #\z))
-            (code-char byte)))))
-
-(defun alphanumeric-byte-char-p (byte)
-  (declare (type (unsigned-byte 8) byte))
-  (or (alpha-byte-char-p byte)
-      (digit-byte-char-p byte)))
-
-(defun mark-byte-char-p (byte)
-  (declare (type (unsigned-byte 8) byte)
-           (optimize (speed 3) (safety 0)))
-  (or (= byte #.(char-code #\-))
-      (= byte #.(char-code #\_))
-      (= byte #.(char-code #\.))
-      (= byte #.(char-code #\!))
-      (= byte #.(char-code #\~))
-      (= byte #.(char-code #\*))
-      (= byte #.(char-code #\'))
-      (= byte #.(char-code #\())
-      (= byte #.(char-code #\)))))
-
-(declaim (ftype (function ((unsigned-byte 8)) (unsigned-byte 8)) byte-to-ascii-lower)
-         (inline byte-to-ascii-lower))
-(defun byte-to-ascii-lower (x)
-  (declare (type (unsigned-byte 8) x)
-           (optimize (speed 3) (safety 0)))
-  (if (<= #.(char-code #\A) x #.(char-code #\Z))
-      (- x #.(- (char-code #\A) (char-code #\a)))
-      x))
-
-(declaim (inline ascii-octets-to-string))
-(defun ascii-octets-to-string (octets &key (start 0) (end (length octets)))
-  (declare (type simple-byte-vector octets)
-           (type (unsigned-byte 64) start end)
-           (optimize (speed 3) (safety 0)))
-  (let* ((len (the (unsigned-byte 64) (- end start)))
-         (string (make-string len :element-type 'character)))
-    (declare (type (unsigned-byte 64) len)
-             (type simple-string string))
-    (do ((i 0 (1+ i))
-         (j start (1+ j)))
-        ((= j end) string)
-      (setf (aref string i)
-            (code-char (aref octets j))))))
-
-(declaim (inline ascii-octets-to-lower-string))
-(defun ascii-octets-to-lower-string (octets &key (start 0) (end (length octets)))
-  (declare (type simple-byte-vector octets)
-           (type (unsigned-byte 64) start end)
-           (optimize (speed 3) (safety 0)))
-  (let* ((len (the (unsigned-byte 64) (- end start)))
-         (string (make-string len :element-type 'character)))
-    (declare (type (unsigned-byte 64) len)
-             (type simple-string string))
-    (do ((i 0 (1+ i))
-         (j start (1+ j)))
-        ((= j end) string)
-      (setf (aref string i)
-            (code-char (byte-to-ascii-lower (aref octets j)))))))
-
-(defun append-byte-vectors (vec1 vec2)
-  (declare (type simple-byte-vector vec1 vec2)
-           (optimize (speed 3) (safety 0)))
-  (let* ((vec1-len (length vec1))
-         (vec2-len (length vec2))
-         (result (make-array (+ vec1-len vec2-len)
-                             :element-type '(unsigned-byte 8))))
-    (declare (type simple-byte-vector result))
-    (replace result vec1 :start1 0)
-    (replace result vec2 :start1 vec1-len)
-    result))
 
 ;;; parser
 ;;
@@ -1530,7 +1536,7 @@ us a never-ending header that the application keeps buffering.")
 (defun parse-request (http callbacks data &key (start 0) end (head-request nil))
   (declare (type http http)
            (type simple-byte-vector data)
-	   (ignore head-request))
+	   (ignorable head-request))
   (let ((end (or end (length data))))
     (declare (type pointer start end))
     (handler-bind ((match-failed

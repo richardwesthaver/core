@@ -66,7 +66,6 @@
            :match-i-case
            :match-failed))
 
-
 (uiop:define-package :parse
     (:use :cl :std)
-  (:use-reexport :parse/lex :parse/yacc :parse/bytes))
+  (:use-reexport :parse/lex :parse/yacc))
