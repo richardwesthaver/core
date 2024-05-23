@@ -214,7 +214,7 @@
               (aref types 2)))))
 
 (defun charset-to-encoding (charset &optional
-                                    (default *default-external-format*))
+                                    (default sb-ext:*default-external-format*))
   (cond
     ((null charset)
      default)
@@ -347,17 +347,22 @@ keep-alive-stream), and should handle clean-up of it"
                 byte))
           (or (maybe-close stream t) :eof))))
 
-(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional start end)
-  (declare (optimize speed))
-  (if (null (keep-alive-stream-stream stream)) ;; we already closed it
-      start
-      (let* ((to-read (min (- end start) (keep-alive-stream-end stream)))
-             (n (read-sequence sequence (keep-alive-stream-stream stream)
-                               :start start
-                               :end (+ start to-read))))
-        (decf (keep-alive-stream-end stream) (- n start))
-        (maybe-close stream (<= (keep-alive-stream-end stream) 0))
-        n)))
+(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional (start 0) (end 0))
+  (declare (optimize speed)
+           (fixnum start end))
+  (let ((%stream (keep-alive-stream-stream stream)))
+    (if (null %stream) ;; we already closed it
+        start
+        (let* ((%end (keep-alive-stream-end stream))
+               (to-read (if %end
+                            (min (- end start) (the fixnum %end))
+                            (- end start)))
+               (n (read-sequence sequence %stream
+                                 :start start
+                                 :end (the fixnum (+ start to-read)))))
+          (when %end (decf (the fixnum (keep-alive-stream-end stream)) (- n start)))
+          (maybe-close stream (keep-alive-stream-end stream))
+          n))))
 
 (defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional start end)
   (declare (optimize speed))
@@ -843,7 +848,7 @@ keep-alive-stream), and should handle clean-up of it"
 ;;; backend
 (with-compilation-unit ()
 (defparameter *ca-bundle*
-  (uiop:native-namestring #P"/etc/ssl/cacert.pem")
+  (uiop:native-namestring #P"/etc/ca-certificates/extracted/ca-bundle.trust.crt")
   "The default public root certificates used in requests.")
    
 
@@ -1124,9 +1129,8 @@ keep-alive-stream), and should handle clean-up of it"
            (fail 'socks5-proxy-request-failed :reason "Unknown address")))))))
 
 (defun make-ssl-stream (stream ca-path ssl-key-file ssl-cert-file ssl-key-password hostname insecure)
-  #+(not ssl) (declare (ignore stream ca-path ssl-key-file ssl-cert-file ssl-key-password hostname insecure))
-  #+(not ssl) (error "SSL not supported. Remove :dexador-no-ssl from *features* to enable SSL.")
-  #+ssl
+  #+nil (declare (ignore stream ca-path ssl-key-file ssl-cert-file ssl-key-password hostname insecure))
+  #+nil (error "SSL not supported. Remove :dexador-no-ssl from *features* to enable SSL.")
   (progn
     (cl+ssl:ensure-initialized)
     (let ((ctx (cl+ssl:make-context :verify-mode
@@ -1141,7 +1145,7 @@ keep-alive-stream), and should handle clean-up of it"
                                       ;; In executable environment, perhaps *ca-bundle* doesn't exist.
                                       (t :default))))
           (ssl-cert-pem-p (and ssl-cert-file
-                               (std/seq:ends-with-subseq ".pem" ssl-cert-file))))
+                               (std/seq:ends-with-subseq ".crt" ssl-cert-file))))
       (cl+ssl:with-global-context (ctx :auto-free-p t)
         (when ssl-cert-pem-p
           (cl+ssl:use-certificate-chain-file ssl-cert-file))
@@ -1195,8 +1199,8 @@ keep-alive-stream), and should handle clean-up of it"
              (restart-case
                  (let* ((con-uri (uri (or proxy uri)))
                         (connection (usocket:socket-connect (uri-host con-uri)
-                                                            (or (uri-port con-uri) 80)
-                                                            #-(or ecl clasp clisp allegro) :timeout #-(or ecl clasp clisp allegro) connect-timeout
+                                                            (or (uri-port con-uri) (when insecure 80) 443)
+                                                            :timeout connect-timeout
                                                             :element-type '(unsigned-byte 8)))
                         (stream
                           (usocket:socket-stream connection))
@@ -1207,7 +1211,7 @@ keep-alive-stream), and should handle clean-up of it"
                      #-lispworks(setf (usocket:socket-option connection :receive-timeout) read-timeout))
                    (when (socks5-proxy-p proxy-uri)
                      (ensure-socks5-connected stream stream uri method))
-                   (if (string= (symbol-name scheme) "https")
+                   (if (string= (symbol-name scheme) "HTTPS")
                        (make-ssl-stream (if (http-proxy-p proxy-uri)
                                                (make-connect-stream uri version stream (make-proxy-authorization con-uri))
                                                stream) ca-path ssl-key-file ssl-cert-file ssl-key-password (uri-host uri) insecure)

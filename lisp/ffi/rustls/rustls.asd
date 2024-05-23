@@ -7,19 +7,11 @@
 ;; 
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
-(defpackage :rustls.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :rustls.sys)
-
 (defsystem :rustls
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
-                                      :package :rustls))
+               (:file "macs")
+               (:file "types"))
   :in-order-to ((test-op (test-op "rustls/tests"))))
 
 (defsystem :rustls/tests

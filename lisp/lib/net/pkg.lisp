@@ -159,7 +159,7 @@
   (:nicknames :http)
   (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer)
   (:export
-   :make-parser
+   :make-http-parser
    :http-request
    :http-response
    :make-http-request
@@ -292,7 +292,7 @@
    :*default-read-timeout*
    :*default-proxy*
    :*verbose*
-   :*not-verify-ssl*
+   :*no-ssl*
    :*connection-pool*
    :*use-connection-pool*
    :make-connection-pool

@@ -37,7 +37,7 @@
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :uiop :with-current-directory)
   (:import-from :sb-ext :run-program :cas)
-  (:import-from :std :when-let)
+  (:import-from :std :when-let :if-let :if-let*)
   (:import-from :sxp :form)
   (:export
    ;; err

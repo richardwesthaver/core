@@ -1,8 +1,6 @@
 (defpackage :cry
-  ;; very unfortunate that ironclad takes the nickname 'crypto'
-  ;; (:nicknames :crypto)
   (:nicknames :cryptography)
-  (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer)
+  (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
   (:use :cl :std :sb-thread :sb-concurrency :ironclad :obj/db :obj/id)
   (:export :crypto-error :crypto-token-expired :crypto-token-invalid
    :crypto-key :token :crypto-token :password

@@ -8,6 +8,7 @@
    :dat :obj :io :parse
    ;; :swank  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
    ;; :swank-client
+   :cl+ssl
    :dexador ;; fetch
    :chipz :babel :chunga
    :hunchentoot :std :log)

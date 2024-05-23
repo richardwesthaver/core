@@ -138,7 +138,7 @@
 
 (declaim (inline position-not-whitespace))
 (defun position-not-whitespace (string &key from-end)
-  (declare (type #+ecl string #-ecl simple-string string)
+  (declare (type simple-string string)
            (optimize (speed 3) (safety 0)))
   (let* ((len (length string))
          (start (if from-end (1- len) 0))
@@ -161,8 +161,8 @@
   (let ((end (position-not-whitespace string :from-end t))
         (dot-read-p nil))
     ;; spaces string
-    (when (null end)
-      (return-from number-string-p nil))
+    ;; (when (null end)
+    ;;  (return-from number-string-p))
     (locally (declare (type integer end)
                       (optimize (safety 0)))
       (incf end)
@@ -182,7 +182,7 @@
             (T (return-from number-string-p nil))))))))
 
 ;;; http
-(defun make-parser (http &key first-line-callback header-callback body-callback finish-callback (head-request nil))
+(defun make-http-parser (http &key first-line-callback header-callback body-callback finish-callback (head-request nil))
   (declare (type http http))
   (let (callbacks
 
@@ -1403,7 +1403,7 @@ us a never-ending header that the application keeps buffering.")
       (return-from http-message-needs-eof-p nil))
     T))
 
-(defun parse-body (http callbacks data start end requestp)
+(defun parse-http-body (http callbacks data start end requestp)
   (declare (type http http)
            (type octet-vector data)
            (type pointer start end))
@@ -1634,7 +1634,7 @@ us a never-ending header that the application keeps buffering.")
            (if (http-chunked-p http)
                (advance-to* (parse-chunked-body http callbacks data (pos) end))
                (progn
-                 (and (advance-to* (parse-body http callbacks data (pos) end t))
+                 (and (advance-to* (parse-http-body http callbacks data (pos) end t))
                       (go first-line))))
            (return-from parse-request (pos)))))
     (error 'eof)))
@@ -1706,7 +1706,7 @@ us a never-ending header that the application keeps buffering.")
            (if (http-chunked-p http)
                (advance-to* (parse-chunked-body http callbacks data (pos) end))
                (progn
-                 (advance-to* (parse-body http callbacks data (pos) end nil))
+                 (advance-to* (parse-http-body http callbacks data (pos) end nil))
                  (unless (eofp)
                    (go first-line))))
            (return-from parse-response (pos)))))

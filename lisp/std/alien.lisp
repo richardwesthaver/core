@@ -50,9 +50,9 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
            (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))
        ,@(when export (list `(export '(,fname)))))))
        
-(defmacro define-opaque (ty &optional no-export)
+(defmacro define-opaque (ty &optional no-export foreign-type)
   `(prog1
-       (define-alien-type ,ty (struct ,(symbolicate ty '-t)))
+       (define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))
      ,(unless no-export `(export '(,ty)))))
 
 (defun setfa (place from) 
