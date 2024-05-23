@@ -92,7 +92,7 @@ keys."
   (with-gensyms (%name %class)
     (if (atom name)
         (setq %name name
-              %class nil)
+              %class :cli)
         (setq %name (car name)
               %class (cdr name)))
     `(,*default-cli-def* ,%name (apply #'make-cli ,%class (walk-cli-slots ',body)))))

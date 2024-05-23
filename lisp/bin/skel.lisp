@@ -181,7 +181,7 @@
 (define-cli $cli
   :name "skel"
   :version "0.1.1"
-  :description "A hacker's project compiler and build tool."
+  :description "A hacker's project compiler."
   :thunk skc-show
   :opts (make-opts 
 	  (:name "help" :global t :description "print this message" 
