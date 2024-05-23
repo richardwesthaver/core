@@ -262,7 +262,8 @@
    :plambda
    :pandoric-eval
    :with-collectors
-   :collecting))
+   :collecting
+   :xor))
 
 (defpkg :std/readtable
   (:use :cl)
@@ -379,7 +380,8 @@
   (:use :cl)
   (:import-from :sb-int :collect)
   (:import-from :std/array :signed-array-length)
-  (:export :take))
+  (:export :take :starts-with-subseq :ends-with-subseq
+   :split-sequence :split-sequence-if :split-sequence-if-not))
 
 (defpkg :std/sys
   (:use :cl)

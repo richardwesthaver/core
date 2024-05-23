@@ -9,6 +9,7 @@
 ;;; Code:
 (in-package :dat/base64)
 
+;;; encode
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *encode-table*
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
@@ -66,18 +67,18 @@
   `(defun ,(intern (concatenate 'string (symbol-name input-type)
                                 (symbol-name :-to-base64-)
                                 (symbol-name output-type)))
-    (input
+       (input
         ,@(when (eq output-type :stream)
-                '(output))
+            '(output))
         &key (uri nil) (columns 0))
      "Encode a string array to base64. If columns is > 0, designates
 maximum number of columns in a line and the string will be terminated
 with a #\Newline."
      (declare ,@(case input-type
-                      (:string
-                       '((string input)))
-                      (:usb8-array
-                       '((type (array (unsigned-byte 8) (*)) input))))
+                  (:string
+                   '((string input)))
+                  (:usb8-array
+                   '((type (array (unsigned-byte 8) (*)) input))))
               (fixnum columns)
               (optimize (speed 3) (safety 1) (space 0)))
      (let ((pad (if uri *uri-pad-char* *pad-char*))
@@ -89,140 +90,140 @@ with a #\Newline."
               (remainder (nth-value 1 (truncate string-length 3)))
               (padded-length (* 4 (truncate (+ string-length 2) 3)))
               ,@(when (eq output-type :string)
-                      '((num-lines (if (plusp columns)
-                                       (truncate (+ padded-length (1- columns)) columns)
-                                       0))
-                        (num-breaks (if (plusp num-lines)
-                                        (1- num-lines)
-                                        0))
-                        (strlen (+ padded-length num-breaks))
-                        (result (make-string strlen))
-                        (ioutput 0)))
+                  '((num-lines (if (plusp columns)
+                                   (truncate (+ padded-length (1- columns)) columns)
+                                   0))
+                    (num-breaks (if (plusp num-lines)
+                                    (1- num-lines)
+                                    0))
+                    (strlen (+ padded-length num-breaks))
+                    (result (make-string strlen))
+                    (ioutput 0)))
               (col (if (plusp columns)
                        0
                        (the fixnum (1+ padded-length)))))
          (declare (fixnum string-length padded-length col
                           ,@(when (eq output-type :string)
-                                  '(ioutput)))
+                              '(ioutput)))
                   ,@(when (eq output-type :string)
-                          '((simple-string result))))
+                      '((simple-string result))))
          (labels ((output-char (ch)
                     (if (= col columns)
                         (progn
                           ,@(case output-type
-                                  (:stream
-                                   '((write-char #\Newline output)))
-                                 (:string
-                                  '((setf (schar result ioutput) #\Newline)
-                                    (incf ioutput))))
+                              (:stream
+                               '((write-char #\Newline output)))
+                              (:string
+                               '((setf (schar result ioutput) #\Newline)
+                                 (incf ioutput))))
                           (setq col 1))
-                     (incf col))
-                 ,@(case output-type
-                         (:stream
-                          '((write-char ch output)))
-                         (:string
-                          '((setf (schar result ioutput) ch)
-                            (incf ioutput)))))
-               (output-group (svalue chars)
-                 (declare (fixnum svalue chars))
-                 (output-char
-                  (schar encode-table
-                         (the fixnum
-                           (logand #x3f
-                                   (the fixnum (ash svalue -18))))))
-                 (output-char
-                  (schar encode-table
-                         (the fixnum
-                           (logand #x3f
-                                        (the fixnum (ash svalue -12))))))
-                 (if (> chars 2)
-                     (output-char
-                      (schar encode-table
-                             (the fixnum
-                               (logand #x3f
-                                       (the fixnum (ash svalue -6))))))
-                     (output-char pad))
-                   (if (> chars 3)
-                       (output-char
-                        (schar encode-table
-                               (the fixnum
-                                 (logand #x3f svalue))))
-                       (output-char pad))))
-        (do ((igroup 0 (the fixnum (1+ igroup)))
-             (isource 0 (the fixnum (+ isource 3))))
-            ((= igroup complete-group-count)
-             (cond
-               ((= remainder 2)
-                (output-group
-                 (the fixnum
-                     (+
-                      (the fixnum
-                        (ash
-                         ,(case input-type
-                                (:string
-                                 '(char-code (the character (char input isource))))
-                                (:usb8-array
-                                 '(the fixnum (aref input isource))))
-                         16))
-                      (the fixnum
-                        (ash
-                         ,(case input-type
-                                (:string
-                                 '(char-code (the character (char input
-                                                                  (the fixnum (1+ isource))))))
-                                (:usb8-array
-                                 '(the fixnum (aref input (the fixnum
-                                                            (1+ isource))))))
-                         8))))
-                 3))
-               ((= remainder 1)
-                (output-group
-                 (the fixnum
-                   (ash
-                    ,(case input-type
-                           (:string
-                            '(char-code (the character (char input isource))))
-                           (:usb8-array
-                            '(the fixnum (aref input isource))))
-                    16))
-                 2)))
-             ,(case output-type
-                    (:string
-                     'result)
-                    (:stream
-                     'output)))
-          (declare (fixnum igroup isource))
-          (output-group
-           (the fixnum
-             (+
-              (the fixnum
-                (ash
-                 (the fixnum
-                 ,(case input-type
+                        (incf col))
+                    ,@(case output-type
+                        (:stream
+                         '((write-char ch output)))
                         (:string
-                         '(char-code (the character (char input isource))))
-                        (:usb8-array
-                         '(aref input isource))))
-                 16))
+                         '((setf (schar result ioutput) ch)
+                           (incf ioutput)))))
+                  (output-group (svalue chars)
+                    (declare (fixnum svalue chars))
+                    (output-char
+                     (schar encode-table
+                            (the fixnum
+                                 (logand #x3f
+                                         (the fixnum (ash svalue -18))))))
+                    (output-char
+                     (schar encode-table
+                            (the fixnum
+                                 (logand #x3f
+                                         (the fixnum (ash svalue -12))))))
+                    (if (> chars 2)
+                        (output-char
+                         (schar encode-table
+                                (the fixnum
+                                     (logand #x3f
+                                             (the fixnum (ash svalue -6))))))
+                        (output-char pad))
+                    (if (> chars 3)
+                        (output-char
+                         (schar encode-table
+                                (the fixnum
+                                     (logand #x3f svalue))))
+                        (output-char pad))))
+           (do ((igroup 0 (the fixnum (1+ igroup)))
+                (isource 0 (the fixnum (+ isource 3))))
+               ((= igroup complete-group-count)
+                (cond
+                  ((= remainder 2)
+                   (output-group
+                    (the fixnum
+                         (+
+                          (the fixnum
+                               (ash
+                                ,(case input-type
+                                   (:string
+                                    '(char-code (the character (char input isource))))
+                                   (:usb8-array
+                                    '(the fixnum (aref input isource))))
+                                16))
+                          (the fixnum
+                               (ash
+                                ,(case input-type
+                                   (:string
+                                    '(char-code (the character (char input
+                                                                (the fixnum (1+ isource))))))
+                                   (:usb8-array
+                                    '(the fixnum (aref input (the fixnum
+                                                              (1+ isource))))))
+                                8))))
+                    3))
+                  ((= remainder 1)
+                   (output-group
+                    (the fixnum
+                         (ash
+                          ,(case input-type
+                             (:string
+                              '(char-code (the character (char input isource))))
+                             (:usb8-array
+                              '(the fixnum (aref input isource))))
+                          16))
+                    2)))
+                ,(case output-type
+                   (:string
+                    'result)
+                   (:stream
+                    'output)))
+             (declare (fixnum igroup isource))
+             (output-group
               (the fixnum
-                (ash
-                 (the fixnum
-                   ,(case input-type
-                          (:string
-                           '(char-code (the character (char input
-                                                            (the fixnum (1+ isource))))))
-                        (:usb8-array
-                         '(aref input (1+ isource)))))
-                 8))
-              (the fixnum
-                ,(case input-type
-                       (:string
-                        '(char-code (the character (char input
+                   (+
+                    (the fixnum
+                         (ash
+                          (the fixnum
+                               ,(case input-type
+                                  (:string
+                                   '(char-code (the character (char input isource))))
+                                  (:usb8-array
+                                   '(aref input isource))))
+                          16))
+                    (the fixnum
+                         (ash
+                          (the fixnum
+                               ,(case input-type
+                                  (:string
+                                   '(char-code (the character (char input
+                                                               (the fixnum (1+ isource))))))
+                                  (:usb8-array
+                                   '(aref input (1+ isource)))))
+                          8))
+                    (the fixnum
+                         ,(case input-type
+                            (:string
+                             '(char-code (the character (char input
                                                          (the fixnum (+ 2 isource))))))
-                       (:usb8-array
-                        '(aref input (+ 2 isource))))
-                )))
-           4)))))))
+                            (:usb8-array
+                             '(aref input (+ 2 isource))))
+                         )))
+              4)))))))
 
 (def-*-to-base64-* :string :string)
 (def-*-to-base64-* :string :stream)
@@ -263,7 +264,7 @@ with a #\Newline."
            (last-char (1- strlen))
            (str (make-string strlen))
            (col (if (zerop last-line-len)
-                     columns
+                    columns
                     last-line-len)))
       (declare (fixnum padded-length num-lines col last-char
                        padding-chars last-line-len))
@@ -388,7 +389,7 @@ with a #\Newline."
                collect (list var value))
      (declare ,@(loop for (var nil type) in vars
                       when type
-                        collect (list 'type type var)))
+                      collect (list 'type type var)))
      ,@body))
 
 (defmacro define-base64-decoder (hose sink)
@@ -428,7 +429,7 @@ WHITESPACE can be one of:
                       (ecase hose
                         (:stream
                          `((result (make-array 1024
-                                 :element-type '(unsigned-byte 8)
+                                               :element-type '(unsigned-byte 8)
                                                :adjustable t
                                                :fill-pointer 0)
                                    (array (unsigned-byte 8) (*)))))
@@ -437,9 +438,9 @@ WHITESPACE can be one of:
                                                :element-type '(unsigned-byte 8))
                                    (simple-array (unsigned-byte 8) (*)))
                            (rpos 0 array-index)))))
-                          (:string
+                     (:string
                       (case hose
-                      (:stream
+                        (:stream
                          `((result (make-array 1024
                                                :element-type 'character
                                                :adjustable t
@@ -474,83 +475,83 @@ WHITESPACE can be one of:
                                (padchar 0 (integer 0 3))
                                (code 0 fixnum))
                      (loop
-                       ,@(ecase hose
-                           (:string
-                            `((if (< ipos length)
-                                  (setq code (char-code (aref input ipos)))
-                                  (return))))
-                           (:stream
-                            `((let ((char (read-char input nil nil)))
-                                (if char
-                                    (setq code (char-code char))
-                                    (return))))))
-             (cond
-                           ((or (< 127 code)
-                                (= -1 (setq svalue (aref decode-table code))))
-                            (bad-char ipos code))
-                           ((= -2 svalue)
-                            (cond ((<= (incf padchar) 2)
-                                   (unless (<= 2 bitcount)
-                                     (bad-char ipos code))
-                                   (decf bitcount 2))
-                                  (t
-                                   (bad-char ipos code))))
-                           ((= -3 svalue)
-                            (ecase whitespace
-                              (:ignore
-                               ;; Do nothing.
-                               )
-                              (:error
-                               (bad-char ipos code :error))
-                              (:signal
-                               (bad-char ipos code :signal))))
-                           ((not (zerop padchar))
-                            (bad-char ipos code))
-                           (t
-                            (setf bitstore (logior (the (unsigned-byte 24)
-                                                        (ash bitstore 6))
-                                svalue))
-                (incf bitcount 6)
-                (when (>= bitcount 8)
-                  (decf bitcount 8)
-                              (let ((byte (logand (the (unsigned-byte 24)
-                                                       (ash bitstore (- bitcount)))
-                                                  #xFF)))
-                                (declare (type (unsigned-byte 8) byte))
-                                ,@(ecase sink
-                           (:usb8-array
-                                     (ecase hose
-                                       (:string
-                                        `((setf (aref result rpos) byte)
-                                          (incf rpos)))
-                           (:stream
-                                        `((vector-push-extend byte result)))))
-                     (:string
-                                     (ecase hose
-                          (:string
-                                        `((setf (schar result rpos)
-                                                (code-char byte))
-                                          (incf rpos)))
-                                       (:stream
-                                        `((vector-push-extend (code-char byte)
-                                                              result)))))
-                                    (:integer
-                                     `((setq result
-                                             (logior (ash result 8) byte))))
-                                    (:stream
-                                     '((write-char (code-char byte) stream)))))
-                              (setf bitstore (logand bitstore #xFF)))))
-                         (incf ipos))
+                          ,@(ecase hose
+                              (:string
+                               `((if (< ipos length)
+                                     (setq code (char-code (aref input ipos)))
+                                     (return))))
+                              (:stream
+                               `((let ((char (read-char input nil nil)))
+                                   (if char
+                                       (setq code (char-code char))
+                                       (return))))))
+                          (cond
+                            ((or (< 127 code)
+                                 (= -1 (setq svalue (aref decode-table code))))
+                             (bad-char ipos code))
+                            ((= -2 svalue)
+                             (cond ((<= (incf padchar) 2)
+                                    (unless (<= 2 bitcount)
+                                      (bad-char ipos code))
+                                    (decf bitcount 2))
+                                   (t
+                                    (bad-char ipos code))))
+                            ((= -3 svalue)
+                             (ecase whitespace
+                               (:ignore
+                                ;; Do nothing.
+                                )
+                               (:error
+                                (bad-char ipos code :error))
+                               (:signal
+                                (bad-char ipos code :signal))))
+                            ((not (zerop padchar))
+                             (bad-char ipos code))
+                            (t
+                             (setf bitstore (logior (the (unsigned-byte 24)
+                                                         (ash bitstore 6))
+                                                    svalue))
+                             (incf bitcount 6)
+                             (when (>= bitcount 8)
+                               (decf bitcount 8)
+                               (let ((byte (logand (the (unsigned-byte 24)
+                                                        (ash bitstore (- bitcount)))
+                                                   #xFF)))
+                                 (declare (type (unsigned-byte 8) byte))
+                                 ,@(ecase sink
+                                     (:usb8-array
+                                      (ecase hose
+                                        (:string
+                                         `((setf (aref result rpos) byte)
+                                           (incf rpos)))
+                                        (:stream
+                                         `((vector-push-extend byte result)))))
+                                     (:string
+                                      (ecase hose
+                                        (:string
+                                         `((setf (schar result rpos)
+                                                 (code-char byte))
+                                           (incf rpos)))
+                                        (:stream
+                                         `((vector-push-extend (code-char byte)
+                                                               result)))))
+                                     (:integer
+                                      `((setq result
+                                              (logior (ash result 8) byte))))
+                                     (:stream
+                                      '((write-char (code-char byte) stream)))))
+                               (setf bitstore (logand bitstore #xFF)))))
+                          (incf ipos))
                      (unless (zerop bitcount)
                        (incomplete-input ipos))
                      ,(ecase sink
                         ((:string :usb8-array)
                          (ecase hose
-                            (:string
+                           (:string
                             `(if (= rpos (length result))
                                  result
                                  (subseq result 0 rpos)))
-                            (:stream
+                           (:stream
                             `(copy-seq result))))
                         (:integer
                          'result)

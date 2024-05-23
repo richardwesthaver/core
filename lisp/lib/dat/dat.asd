@@ -22,6 +22,7 @@
                (:file "toml")
                (:file "arff")
                (:file "midi")
+               (:file "base64")
                #+nil (:file "bencode"))
   :in-order-to ((test-op (test-op "dat/tests"))))
 

@@ -233,6 +233,73 @@
    :invalid-parameter-key
    :invalid-parameter-value))
 
+(defpackage net/cookie
+  (:use :cl :parse/bytes)
+  (:import-from :obj/time
+   :today
+                :timestamp-century
+   :timestamp-to-universal
+                :universal-to-timestamp
+   :format-timestring
+                :encode-timestamp
+   :*abbreviated-subzone-name->timezone-list*
+                :reread-timezone-repository
+   :timezone-subzones
+                :subzone-abbrev
+   :subzone-offset
+                :+gmt-zone+)
+  (:export :parse-set-cookie-header
+   :write-cookie-header
+           :write-set-cookie-header
+   :cookie
+           :make-cookie
+   :cookie=
+           :cookie-equal
+   :cookie-name
+           :cookie-value
+   :cookie-expires
+           :cookie-path
+   :cookie-domain
+           :cookie-same-site
+   :cookie-max-age
+           :cookie-partitioned
+   :cookie-secure-p
+           :cookie-httponly-p
+   :cookie-origin-host
+           :cookie-jar
+   :make-cookie-jar
+           :cookie-jar-cookies
+   :cookie-jar-host-cookies
+           :merge-cookies))
+
+(defpackage :net/req
+  (:nicknames :req)
+  (:shadowing-import-from :babel :string-to-octets)
+  (:shadowing-import-from :std/type :octet :octet-vector)
+  (:shadow :get :delete)
+  (:use :cl :std :obj/uri :net/proto/http :sb-ext :babel :net/cookie :fast-io :dat/base64)
+  (:export
+   :request
+   :get
+   :post
+   :head
+   :put
+   :patch
+   :delete
+   :fetch
+   :*default-connect-timeout*
+   :*default-read-timeout*
+   :*default-proxy*
+   :*verbose*
+   :*not-verify-ssl*
+   :*connection-pool*
+   :*use-connection-pool*
+   :make-connection-pool
+   :clear-connection-pool
+   ;; Restarts
+   :retry-request
+   :ignore-and-continue))
+
 (uiop:define-package :net/fetch
   (:nicknames :fetch)
   (:use :cl :std :obj/uri)

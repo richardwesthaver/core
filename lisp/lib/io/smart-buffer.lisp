@@ -20,7 +20,7 @@
            #:delete-temporary-files
 
            #:buffer-limit-exceeded))
-(in-package :smart-buffer)
+(in-package :io/smart-buffer)
 
 (defvar *default-memory-limit* (expt 2 20))
 (defvar *default-disk-limit* (expt 2 30))

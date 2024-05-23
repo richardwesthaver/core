@@ -249,7 +249,7 @@
                                       (type simple-byte-vector data)
                                       (type pointer start end))
                              (xnconcf header-value-buffer
-                                      (subseq (subseq (the simple-byte-vector data) start end) 0)))
+                                      (xsubseq (subseq (the octet-vector data) start end) 0)))
              :headers-complete (lambda (http)
                                  (collect-prev-header-value)
                                  (setq header-value-buffer nil)
@@ -810,7 +810,7 @@
   status-text)
 
 ;;; Errors
-(define-condition http-error (simple-error)
+(define-condition http-error (net-error)
   (description)
   (:report
    (lambda (condition stream)

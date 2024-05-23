@@ -118,7 +118,15 @@
    :unintern-uri
    :do-all-uris
    :uri-to-pathname
-   :pathname-to-uri))
+   :pathname-to-uri
+   ;; domains
+   :parse-domain
+   :ipv4-addr-p
+   :ipv6-addr-p
+   :ip-addr-p
+   :ip-addr=
+   :uri-tld
+   :uri-domain))
 
 (defpackage :obj/url
   (:nicknames :url)

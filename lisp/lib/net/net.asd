@@ -9,6 +9,7 @@
    ;; :swank  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
    ;; :swank-client
    :dexador ;; fetch
+   :chipz :babel :chunga
    :hunchentoot :std :log)
   :serial t
   :components ((:file "pkg")
@@ -28,6 +29,8 @@
                              (:file "http")
                              (:file "dns")
                              (:file "ssh")))
+               (:file "cookie")
+               (:file "req")
                (:file "fetch"))
   :in-order-to ((test-op (test-op :net/tests))))
 
