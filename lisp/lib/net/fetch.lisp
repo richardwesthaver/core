@@ -8,7 +8,7 @@
                     output
                     (file-namestring (obj/uri:uri-path (obj/uri:uri url))))))
     (multiple-value-bind (stream status header uri)
-        (dex:get url :want-stream t)
+        (req:get url :want-stream t)
       (when (= status 200) (write-stream-into-file stream (pathname output)))
       (values (or stream uri header)
               status))))

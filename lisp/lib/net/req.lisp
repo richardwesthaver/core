@@ -280,7 +280,7 @@
     (main 0)))
 
 ;;; keep-alive-stream
-(defclass keep-alive-stream (fundamental-input-stream)
+(defclass keep-alive-stream (sb-gray:fundamental-input-stream)
   ((stream :type (or null stream)
            :initarg :stream
            :initform (error ":stream is required")
@@ -347,7 +347,7 @@ keep-alive-stream), and should handle clean-up of it"
                 byte))
           (or (maybe-close stream t) :eof))))
 
-(defmethod stream-read-sequence ((stream keep-alive-stream) sequence start end &key)
+(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional start end)
   (declare (optimize speed))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
       start
@@ -359,7 +359,7 @@ keep-alive-stream), and should handle clean-up of it"
         (maybe-close stream (<= (keep-alive-stream-end stream) 0))
         n)))
 
-(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence start end &key)
+(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional start end)
   (declare (optimize speed))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
       start
@@ -616,7 +616,7 @@ keep-alive-stream), and should handle clean-up of it"
     ((array (unsigned-byte 8) (*)) (write-sequence val stream))
     (pathname
      (with-open-file (in val :element-type '(unsigned-byte 8))
-       (copy-stream in stream)))
+       (std/stream:copy-stream in stream)))
     (string
      (write-sequence (convert-to-octets val) stream))
     (cons (write-as-octets stream (first val)))
@@ -1678,7 +1678,7 @@ keep-alive-stream), and should handle clean-up of it"
                          :if-exists if-exists
                          :if-does-not-exist :create)
       (remf args :if-exists)
-      (let ((body (apply #'dex:get uri :want-stream t :force-binary t
+      (let ((body (apply #'req:get uri :want-stream t :force-binary t
                          args)))
         (alexandria:copy-stream body out)
         ;; Nominally the body gets closed, but if keep-alive is nil we need to explicitly do it.

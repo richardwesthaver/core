@@ -177,15 +177,12 @@
           (eq (car var) 'the)
           (cadr var)))))
 
-(deftype octets (&optional (len '*))
-  `(simple-array (unsigned-byte 8) (,len)))
-
 (defun variable-type* (var &optional env)
   (let ((type (variable-type var env)))
     (cond
       ((null type) nil)
       ((subtypep type 'string) 'string)
-      ((subtypep type 'octets) 'octets))))
+      ((subtypep type 'octet-vector) 'octet-vector))))
 
 (defun check-skip-elems (elems)
   (or (every (lambda (elem)
@@ -406,7 +403,7 @@
              (,g-end ,(if end
                           `(or ,end (length ,data))
                           `(length ,data))))
-         (declare (type octets ,data)
+         (declare (type octet-vector ,data)
                   (type fixnum ,p ,g-end)
                   (type (unsigned-byte 8) ,elem))
          (parsing-macrolet (,elem ,data ,p ,g-end)
@@ -469,14 +466,14 @@
   (let ((data-type (variable-type* data env)))
     (case data-type
       (string `(with-string-parsing (,data :start ,start :end ,end) ,@body))
-      (octets `(macrolet ((get-elem (form) `(code-char ,form))
+      (octet-vector `(macrolet ((get-elem (form) `(code-char ,form))
                           (subseq* (data start &optional end)
                             `(babel:octets-to-string ,data :start ,start :end ,end)))
                  (with-octets-parsing (,data :start ,start :end ,end) ,@body)))
       (otherwise (once-only (data)
                    `(etypecase ,data
                       (string (with-string-parsing (,data :start ,start :end ,end) ,@body))
-                      (octets (macrolet ((get-elem (form) `(code-char ,form))
+                      (octet-vector (macrolet ((get-elem (form) `(code-char ,form))
                                          (subseq* (data start &optional end)
                                            `(babel:octets-to-string ,data :start ,start :end ,end)))
                                 (with-octets-parsing (,data :start ,start :end ,end) ,@body)))))))))

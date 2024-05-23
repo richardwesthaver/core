@@ -39,7 +39,7 @@
   (:import-from :sb-cltl2
    :variable-information)
   (:import-from :std :with-gensyms :once-only
-   :ensure-cons :ignore-some-conditions)
+   :ensure-cons :ignore-some-conditions :octet-vector :octet)
   (:export :with-vector-parsing
            :with-string-parsing
            :with-octets-parsing

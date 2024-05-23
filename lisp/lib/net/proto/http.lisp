@@ -181,7 +181,7 @@
              (setq dot-read-p t))
             (T (return-from number-string-p nil))))))))
 
-;;; fast-http
+;;; http
 (defun make-parser (http &key first-line-callback header-callback body-callback finish-callback (head-request nil))
   (declare (type http http))
   (let (callbacks
@@ -223,12 +223,12 @@
                                     header-complete-p nil
                                     completedp nil))
              :url (lambda (http data start end)
-                    (declare (type simple-byte-vector data)
+                    (declare (type octet-vector data)
                              (type pointer start end))
                     (setf (http-resource http)
                           (ascii-octets-to-string data :start start :end end)))
              :status (lambda (http data start end)
-                       (declare (type simple-byte-vector data)
+                       (declare (type octet-vector data)
                                 (type pointer start end))
                        (setf (http-status-text http)
                              (ascii-octets-to-string data :start start :end end)))
@@ -238,7 +238,7 @@
                                 (funcall (the function first-line-callback))))
              :header-field (lambda (http data start end)
                              (declare (ignore http)
-                                      (type simple-byte-vector data)
+                                      (type octet-vector data)
                                       (type pointer start end))
                              (collect-prev-header-value)
                              (setq header-value-buffer (make-concatenated-xsubseqs))
@@ -246,7 +246,7 @@
                                    (ascii-octets-to-lower-string data :start start :end end)))
              :header-value (lambda (http data start end)
                              (declare (ignore http)
-                                      (type simple-byte-vector data)
+                                      (type octet-vector data)
                                       (type pointer start end))
                              (xnconcf header-value-buffer
                                       (xsubseq (subseq (the octet-vector data) start end) 0)))
@@ -266,7 +266,7 @@
              :body (and body-callback
                         (lambda (http data start end)
                           (declare (ignore http)
-                                   (type simple-byte-vector data)
+                                   (type octet-vector data)
                                    (type pointer start end))
                           (funcall (the function body-callback)
                                    data start end)))
@@ -285,20 +285,20 @@
          (when finish-callback
            (funcall (the function finish-callback))))
         (T
-         (locally (declare (type simple-byte-vector data)
+         (locally (declare (type octet-vector data)
                            (type pointer start))
            (check-type end (or null pointer))
            (when data-buffer
              (setq data
                    (coerce 'list
                     (xnconc (xsubseq data-buffer 0)
-                            (xsubseq (the simple-byte-vector data) start (or end (length data))))))
+                            (xsubseq (the octet-vector data) start (or end (length data))))))
              (setq data-buffer nil
                    start 0
                    end nil))
            (setf (http-mark http) start)
            (handler-case
-               (funcall parse-fn http callbacks (the simple-byte-vector data) :start start :end end :head-request head-request)
+               (funcall parse-fn http callbacks (the octet-vector data) :start start :end end :head-request head-request)
              (eof ()
                (setq data-buffer
                      (subseq data (http-mark http) (or end (length data)))))))))
@@ -336,7 +336,7 @@
                 :initial-contents (list +cr+ +lf+))
   :test 'equalp)
 
-(deftype simple-byte-vector (&optional (len '*))
+(deftype octet-vector (&optional (len '*))
   `(simple-array (unsigned-byte 8) (,len)))
 
 (declaim (inline digit-byte-char-p
@@ -402,7 +402,7 @@
 
 (declaim (inline ascii-octets-to-string))
 (defun ascii-octets-to-string (octets &key (start 0) (end (length octets)))
-  (declare (type simple-byte-vector octets)
+  (declare (type octet-vector octets)
            (type (unsigned-byte 64) start end)
            (optimize (speed 3) (safety 0)))
   (let* ((len (the (unsigned-byte 64) (- end start)))
@@ -417,7 +417,7 @@
 
 (declaim (inline ascii-octets-to-lower-string))
 (defun ascii-octets-to-lower-string (octets &key (start 0) (end (length octets)))
-  (declare (type simple-byte-vector octets)
+  (declare (type octet-vector octets)
            (type (unsigned-byte 64) start end)
            (optimize (speed 3) (safety 0)))
   (let* ((len (the (unsigned-byte 64) (- end start)))
@@ -431,13 +431,13 @@
             (code-char (byte-to-ascii-lower (aref octets j)))))))
 
 (defun append-byte-vectors (vec1 vec2)
-  (declare (type simple-byte-vector vec1 vec2)
+  (declare (type octet-vector vec1 vec2)
            (optimize (speed 3) (safety 0)))
   (let* ((vec1-len (length vec1))
          (vec2-len (length vec2))
          (result (make-array (+ vec1-len vec2-len)
                              :element-type '(unsigned-byte 8))))
-    (declare (type simple-byte-vector result))
+    (declare (type octet-vector result))
     (replace result vec1 :start1 0)
     (replace result vec2 :start1 vec1-len)
     result))
@@ -476,12 +476,12 @@
              collect `(defconstant ,(format-symbol t "+~A+" state) ,i)))
 
 (defun http-multipart-parse (parser callbacks data &key (start 0) end)
-  (declare (type simple-byte-vector data))
+  (declare (type octet-vector data))
   (let* ((end (or end (length data)))
          (boundary (map '(simple-array (unsigned-byte 8) (*)) #'char-code (ll-multipart-parser-boundary parser)))
          (boundary-length (length boundary))
          (header-parser (ll-multipart-parser-header-parser parser)))
-    (declare (type simple-byte-vector boundary))
+    (declare (type octet-vector boundary))
     (when (= start end)
       (return-from http-multipart-parse start))
 
@@ -547,7 +547,7 @@
                     ((ll-multipart-parser-boundary-buffer parser)
                      (when (< (+ end (length (ll-multipart-parser-boundary-buffer parser)) -3) end2)
                        (setf (ll-multipart-parser-boundary-buffer parser)
-                             (concatenate 'simple-byte-vector
+                             (concatenate 'octet-vector
                                           (ll-multipart-parser-boundary-buffer parser)
                                           data))
                        (go exit-loop))
@@ -569,7 +569,7 @@
                      ;; EOF
                      (setf (ll-multipart-parser-boundary-buffer parser)
                            (if (ll-multipart-parser-boundary-buffer parser)
-                               (concatenate 'simple-byte-vector
+                               (concatenate 'octet-vector
                                             (ll-multipart-parser-boundary-buffer parser)
                                             (subseq data (max 0 (- p 2))))
                                (subseq data (max 0 (- p 2)))))
@@ -684,7 +684,7 @@
           (when (ll-multipart-parser-boundary-mark parser)
             (setf (ll-multipart-parser-body-buffer parser)
                   (if (ll-multipart-parser-body-buffer parser)
-                      (concatenate 'simple-byte-vector
+                      (concatenate 'octet-vector
                                    (ll-multipart-parser-body-buffer parser)
                                    (subseq data (ll-multipart-parser-boundary-mark parser)))
                       (subseq data (ll-multipart-parser-boundary-mark parser)))))
@@ -1055,7 +1055,7 @@ us a never-ending header that the application keeps buffering.")
 ;; Main
 
 (defun parse-method (data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (with-octets-parsing (data :start start :end end)
     (return-from parse-method
@@ -1096,7 +1096,7 @@ us a never-ending header that the application keeps buffering.")
   (error 'eof))
 
 (defun parse-url (data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (flet ((url-char-byte-p (byte)
            (or (<= (char-code #\!) byte (char-code #\~))
@@ -1107,7 +1107,7 @@ us a never-ending header that the application keeps buffering.")
     (error 'eof)))
 
 (defun parse-http-version (data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (let (major minor)
     (with-octets-parsing (data :start start :end end)
@@ -1127,7 +1127,7 @@ us a never-ending header that the application keeps buffering.")
     (error 'eof)))
 
 (defun parse-status-code (http callbacks data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (or (with-octets-parsing (data :start start :end end)
         (if (digit-byte-char-p (current))
@@ -1161,7 +1161,7 @@ us a never-ending header that the application keeps buffering.")
       (error 'eof)))
 
 (defun parse-header-field-and-value (http callbacks data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (or
    (with-octets-parsing (data :start start :end end)
@@ -1262,7 +1262,7 @@ us a never-ending header that the application keeps buffering.")
       (error 'eof)))
 
 (defun parse-header-value-transfer-encoding (data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (with-octets-parsing (data :start start :end end)
     (match-i-case
@@ -1288,7 +1288,7 @@ us a never-ending header that the application keeps buffering.")
   (error 'eof))
 
 (defun parse-header-value-content-length (data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (let ((content-length 0))
     (declare (type integer content-length))
@@ -1315,7 +1315,7 @@ us a never-ending header that the application keeps buffering.")
     (error 'eof)))
 
 (defun parse-header-line (http callbacks data start end)
-  (declare (type simple-byte-vector data)
+  (declare (type octet-vector data)
            (type pointer start end))
   (when (<= end start)
     (error 'eof))
@@ -1338,7 +1338,7 @@ us a never-ending header that the application keeps buffering.")
 
 (defun parse-headers (http callbacks data start end)
   (declare (type http http)
-           (type simple-byte-vector data)
+           (type octet-vector data)
            (type pointer start end))
   (or (with-octets-parsing (data :start start :end end)
         ;; empty headers
@@ -1368,7 +1368,7 @@ us a never-ending header that the application keeps buffering.")
 
 (defun read-body-data (http callbacks data start end)
   (declare (type http http)
-           (type simple-byte-vector data)
+           (type octet-vector data)
            (type pointer start end))
   (let ((readable-count (the pointer (- end start))))
     (declare (dynamic-extent readable-count)
@@ -1405,7 +1405,7 @@ us a never-ending header that the application keeps buffering.")
 
 (defun parse-body (http callbacks data start end requestp)
   (declare (type http http)
-           (type simple-byte-vector data)
+           (type octet-vector data)
            (type pointer start end))
   (macrolet ((message-complete ()
                `(progn
@@ -1444,7 +1444,7 @@ us a never-ending header that the application keeps buffering.")
 
 (defun parse-chunked-body (http callbacks data start end)
   (declare (type http http)
-           (type simple-byte-vector data)
+           (type octet-vector data)
            (type pointer start end))
 
   (when (= start end)
@@ -1535,7 +1535,7 @@ us a never-ending header that the application keeps buffering.")
 
 (defun parse-request (http callbacks data &key (start 0) end (head-request nil))
   (declare (type http http)
-           (type simple-byte-vector data)
+           (type octet-vector data)
 	   (ignorable head-request))
   (let ((end (or end (length data))))
     (declare (type pointer start end))
@@ -1641,7 +1641,7 @@ us a never-ending header that the application keeps buffering.")
 
 (defun parse-response (http callbacks data &key (start 0) end (head-request nil))
   (declare (type http http)
-           (type simple-byte-vector data))
+           (type octet-vector data))
   (let ((end (or end
                  (length data))))
     (declare (type pointer start end))

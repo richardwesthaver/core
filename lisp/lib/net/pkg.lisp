@@ -156,6 +156,7 @@
   (:export))
 
 (defpackage :net/proto/http
+  (:nicknames :http)
   (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer)
   (:export
    :make-parser
@@ -274,10 +275,10 @@
 
 (defpackage :net/req
   (:nicknames :req)
-  (:shadowing-import-from :babel :string-to-octets)
   (:shadowing-import-from :std/type :octet :octet-vector)
   (:shadow :get :delete)
-  (:use :cl :std :obj/uri :net/proto/http :sb-ext :babel :net/cookie :fast-io :dat/base64)
+  (:use :cl :std :obj/uri :net/proto/http :babel :net/cookie :fast-io :dat/base64 :cl+ssl :sb-gray)
+  (:shadowing-import-from :babel :octets-to-string)
   (:export
    :request
    :get
