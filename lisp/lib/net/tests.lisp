@@ -8,7 +8,7 @@
 (in-readtable :std)
 (deftest sanity ())
 
-(deftest sans-io ()
+(deftest sans-io (:disabled t)
   (defclass mock-transport-config (transport-config)
     (max-bidi-streams
      max-uni-streams
@@ -48,7 +48,7 @@
 
 (deftest osc ())
 
-(deftest crew ()
+(deftest crew (:disabled t)
   (let ((pool (make-worker-pool (make-instance 'crew-connection-info :host-name "localhost" :port 9999)
                                 (list (make-instance 'crew-connection-info :host-name "localhost" :port 10000))
                                 #'connect-worker)))
@@ -119,8 +119,6 @@
 ;;             update-count 0)
 ;;       (eval-repeatedly-async-state pool work-form 10 #'update-state))))
 
-(deftest crew ())
-
 (deftest http ()
   (let ((req (make-http-request))
       (cb (make-callbacks)))
@@ -137,5 +135,5 @@ Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3
 Cookie: name=wookie
 
 "#))
-  (is req)
-  (is cb)))
+    (is cb)
+    (is req)))

@@ -16,7 +16,7 @@
   :components ((:file "pkg")
                (:file "err")
                (:file "obj")
-               ;; (:file "sans-io")
+               (:file "sans-io")
                (:file "util")
                (:file "udp")
                (:file "tcp")

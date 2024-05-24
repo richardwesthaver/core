@@ -19,9 +19,9 @@
   (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
   (:export :get-address-by-name))
 
-;; (defpackage :net/sans-io
-;;   (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
-;;   (:export))
+(defpackage :net/sans-io
+  (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
+  (:export))
 
 (defpackage :net/udp
   (:nicknames :udp)
@@ -311,7 +311,7 @@
    :net/core 
    :net/tcp 
    :net/udp
-   ;; :net/sans-io
+   :net/sans-io
    :net/codec/dns 
    :net/codec/osc 
    :net/codec/tlv

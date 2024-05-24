@@ -290,9 +290,8 @@ compiler optimizations.")
 (defgeneric find-test (self name &key &allow-other-keys)
   (:documentation "Find `test' object specified by name and optional keys."))
 
-(defgeneric do-test (self &optional test)
-  (:documentation
-   "Run `test' SELF, printing results to `*standard-output*'. The second
+(defgeneric do-test (self &optional context)
+  (:documentation "Run test SELF, printing results to *standard-output*. The second
 argument is an optional fixture.
 
 SELF can also be a `test-suite', in which case the TESTS slot is
@@ -391,17 +390,18 @@ from TESTS."))
 (defmethod funcall-test ((self test) &key declare)
   (unless (functionp (test-fn self))
     (trace! (setf (symbol-function (test-fn self))
-                 (eval `(lambda ()
-                          ,(when declare `(declare ,declare))
-                          ,@(test-form self))))))
+                  (eval `(lambda ()
+                           ,(when declare `(declare ,declare))
+                           ,@(test-form self))))))
   (funcall (test-fn self)))
 
 (defmethod compile-test ((self test) &key declare &allow-other-keys)
-  (compile
-   (test-fn self)
-   `(lambda ()
-      ,(when declare `(declare ,declare))
-      ,@(test-form self))))
+  (with-compilation-unit (:policy '(optimize debug))
+    (compile
+     (test-fn self)
+     `(lambda ()
+        ,(when declare `(declare ,declare))
+        ,@(test-form self)))))
 
 (defun fail! (form &optional fmt &rest args)
   (let ((reason (and fmt (apply #'format nil fmt args))))
@@ -422,7 +422,7 @@ from TESTS."))
 (defmethod do-test ((self test) &optional fx)
   (declare (ignorable fx))
   (with-test-env self
-    (info! "running test: " *testing*)
+    (trace! "running test: " *testing*)
     (flet ((%do ()
 	     (if-let ((opt *compile-tests*))
 	       ;; RESEARCH 2023-08-31: with-compilation-unit?
@@ -434,7 +434,7 @@ from TESTS."))
 		 (funcall (compile-test self :declare opt))
 		 (setf %test-result (make-test-result :pass (test-fn self))))
 	       (progn
-                 (funcall-test self)
+                 (funcall-test self :declare '(optimize (debug 3) (safety 0)))
 		 (setf %test-result (make-test-result :pass (test-name self)))))))
       (if *catch-test-errors*
 	  (handler-bind
@@ -445,6 +445,12 @@ from TESTS."))
 		     (return-from %test-bail %test-result))))
 	    (%do))
 	  (%do)))))
+
+(defmethod do-test ((self simple-string) &optional fixture)
+  (do-test (find-test *test-suite* self) fixture))
+
+(defmethod do-test ((self symbol) &optional fixture)
+  (do-test (find-test *test-suite* (symbol-name self)) fixture))
 
 ;;;; Fixtures
 
@@ -535,23 +541,20 @@ from TESTS."))
        (do-test (pop-test self)))
    self))
 
-(defmethod do-test ((self simple-string) &optional test)
-  (let ((suite (find-suite self)))
-    (do-test suite test)))
-
-(defmethod do-test ((self symbol) &optional test)
-  (do-test (symbol-name self) test))
-
 ;; HACK 2023-09-01: find better method of declaring failures from
 ;; within the body of `deftest'.
 (defmethod do-suite ((self test-suite) &key stream force)
   (when stream (setf (test-stream self) stream))
   (with-slots (name stream) self
-    (format stream "in suite ~x with ~A/~A tests:~%"
-	    name
-	    (count t (tests self)
-		   :key (lambda (x) (or (test-lock-p x) (test-persist-p x))))
-	    (length (tests self)))
+    (format stream "in suite ~x:~%"
+	    name)
+    (format stream "; with ~A~A tests~%"
+            (if force
+                ""
+                (format nil "~A/"
+                        (count t (tests self)
+                               :key (lambda (x) (or (test-lock-p x) (test-persist-p x))))))
+            (length (tests self)))
     ;; loop over each test, calling `do-test'. if locked or
     ;; persistent, test is performed. if FORCE is non-nil all tests
     ;; are performed.
@@ -567,7 +570,7 @@ from TESTS."))
 	    ;; collect if locked test not expected
 	    (loop for r in (test-results self)
 		  unless (test-pass-p r)
-		    collect r)))
+		  collect r)))
       (if (null locked)
 	  (format stream "~&No tests failed.~%")
 	  (progn
@@ -600,15 +603,17 @@ from TESTS."))
   (do-suite *test-suite* :stream stream))
 
 ;;; Checks
-(flet ((%test (val form)
-	 (let ((r 
-		 (if val 
-		     (make-test-result :pass form)
-		     (make-test-result :fail form))))
-	   (info! r)
-	   r)))
-  (defmacro is (test &rest args)
-    "The DWIM Check.
+(eval-when (:compile-toplevel)
+  (defun %test (val &optional form)
+    (let ((r
+	    (if val 
+	        (make-test-result :pass form)
+	        (make-test-result :fail form))))
+      ;; (print r *standard-output*)
+      r)))
+
+(defmacro is (test &rest args)
+  "The DWIM Check.
 
 (is (= 1 1)) ;=> #S(TEST-RESULT :TAG :PASS :FORM (= 1 1))
 If TEST returns a truthy value, return a PASS test-result, else return
@@ -631,14 +636,14 @@ All other values are treated as let bindings.
 "
     (with-gensyms (form)
       `(if ,(null args)
-	   (if *testing* 
-	       (push-result (funcall ,#'%test ,test ',test) *testing*)
-	       (funcall ,#'%test ,test ',test))
-	   (macrolet ((,form (test) `(let ,,(group args 2) ,,test)))
+	   (if *testing*
+	       (push-result (funcall 'rt::%test ,test ',test) *testing*)
+	       (funcall #'rt::%test ,test ',test))
+	   (macrolet ((,form (test) `(let ,,(group args 2) ,test)))
 	     ;; TODO 2023-09-21: does this work...
 	     (if *testing*
-		 (push-result (funcall ,#'%test (,form ,test) ',test) *testing*)
-		 (funcall ,#'%test (,form ,test) ',test)))))))
+		 (push-result (funcall #'rt::%test (,form ,test) ',test) *testing*)
+		 (funcall #'rt::%test (,form ,test) ',test))))))
 
 (defmacro signals (condition-spec &body body)
   "Generates a passing TEST-RESULT if body signals a condition of type
@@ -677,23 +682,23 @@ PROPS is a plist which currently accepts the following parameters:
 
 :DISABLED - don't push this test to the current *TEST-SUITE*
 
+:BENCH - enable benchmarking of this test
+
 BODY is parsed with SB-INT:PARSE-BODY and will fill in documentation
 and declarations for the test body.
 "
   (destructuring-bind (pr doc dec fn)
       (multiple-value-bind (forms dec doc)
 	  ;; parse body with docstring allowed
-	  (sb-int:parse-body (or body) t)
-	`(,props ',doc ',dec ',forms))
+	  (parse-body (or body) :documentation t :whole t)
+	`(,props ,doc ,dec ',forms))
     ;; TODO 2023-09-21: parse plist
     `(let ((obj (make-test
 		 :name ,(format nil "~A" name)
-		 ;; note: we could leave these unbound if we want,
-		 ;; personal preference
 		 :form ,fn
 		 ,@(when-let ((v (getf pr :persist))) `(:persist ,v))
 		 ,@(when-let ((v (getf pr :args))) `(:args ,v))
-		 ;; ,@(when-let ((v (getf pr :bench))) `(:bench ,v))
+		 ,@(when-let ((v (getf pr :bench))) `(:bench ,v))
 		 ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
 		 ,@(when doc `(:doc ,doc))
 		 ,@(when dec `(:declaration ,dec)))))
