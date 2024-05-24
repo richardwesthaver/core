@@ -121,7 +121,7 @@
   (declare (optimize speed))
   (let* ((cat (%counter-cat counter))
          (%t (%cat-table cat))
-         (idx (logand +global-hash+ (1- (length %t))))
+         (idx (logand *global-hash* (1- (length %t))))
          (old (the fixnum (svref %t idx)))
          ;; Try once quickly
          (ok (sb-ext:cas (svref %t idx) (logand old (lognot mask)) (+ old x))))

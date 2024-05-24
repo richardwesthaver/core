@@ -35,7 +35,7 @@
    :make-so-set/string :make-so-map/addr :make-marked-ref)
   (:export 
    :*global-hasher*
-   :+global-hash+
+   :*global-hash*
    :djb
    :hash-object
    :hash-object-address

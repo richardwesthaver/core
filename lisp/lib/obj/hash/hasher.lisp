@@ -8,7 +8,7 @@
   (defvar *global-hasher* #'sxhash))
 
 ;; TODO 2024-05-24: do better
-(define-constant +global-hash+ (funcall *global-hasher* (get-universal-time)) :test #'/=)
+(sb-ext:define-load-time-global *global-hash* (funcall *global-hasher* (get-universal-time)))
 
 (macrolet ((specialize (str body)       ; TODO 2023-12-21: test if this actually compiles to fastpath
              `(if (typep ,str '(simple-array character 1))
