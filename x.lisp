@@ -36,7 +36,7 @@ x.lisp
 (require 'sb-cltl2)
 (require 'sb-cover)
 (require 'sb-sprof)
-
+(use-package :sb-gray)
 ;; (require 'sb-aclrepl)
 (sb-ext:enable-debugger)
 (defvar *core-path* (directory-namestring #.(or *load-truename* *compile-file-truename* (error "run me as an executable!"))))

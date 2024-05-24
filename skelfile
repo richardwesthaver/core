@@ -24,7 +24,7 @@
         #$find emacs -name '*.elc' -type f -delete$#
         #$find lisp -name '*.fasl' -type f -delete$#
         #$echo 'cargo clean:' && cd rust && cargo clean$#)
- (psl.dat ()
+ (psl.dat () ;; req:fetch works in slime and sk-shell but not here? hmm..
           (with-open-file (st ".stash/psl.dat" :direction :output :element-type 'octet)
             (loop for x across (req:get "https://publicsuffix.org/list/public_suffix_list.dat" :force-binary t)
                   do (write-byte x st))))
@@ -38,8 +38,8 @@
  (std (x) #$./x save std$#)
  (prelude (x) #$./x save prelude$#)
  (box () #$podman build . --build-arg IMAGE=box -t core$#)
- ;; x does the same thing, having issues with passing the shell input
- ;; to SKEL though.
+ ;; x does the same thing, but prompts for sudo -- having issues with
+ ;; passing the shell input to SKEL though.
  (install () #$d=/usr/local/bin
           cd .stash
           for f in $(find . -type f ! -name "*.*")
