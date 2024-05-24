@@ -17,7 +17,7 @@
 ;;; Code:
 (defpackage :tree-sitter
   (:nicknames :ts)
-  (:use :cl :std :sb-alien)
+  (:use :cl :std :sb-alien :std/alien)
   (:export 
    :load-tree-sitter
    :load-tree-sitter-wrapper

@@ -15,8 +15,8 @@
                (:file "api")
                (:file "buildah")
                (:file "podman")
-               (:file "util")
-               (:file "client"))
+               (:file "client")
+               (:file "util"))
   :in-order-to ((test-op (test-op :pod/tests))))
 
 (defsystem :pod/tests

@@ -280,7 +280,7 @@
     (main 0)))
 
 ;;; keep-alive-stream
-(defclass keep-alive-stream (sb-gray:fundamental-input-stream)
+(defclass keep-alive-stream (fundamental-input-stream)
   ((stream :type (or null stream)
            :initarg :stream
            :initform (error ":stream is required")
@@ -309,7 +309,7 @@ keep-alive-stream), and should handle clean-up of it"
       (make-instance 'keep-alive-chunked-stream :stream stream :chunga-stream chunked-stream :on-close-or-eof on-close-or-eof)
       (make-instance 'keep-alive-stream :stream stream :end end :on-close-or-eof on-close-or-eof)))
 
-(defun maybe-close (stream &optional (close-if nil))
+(defun maybe-close (stream &optional close-if)
   "Will close the underlying stream if close-if is T (unless it is already closed).
    If the stream is already closed or we closed it returns :EOF otherwise NIL."
   (let ((underlying-stream (keep-alive-stream-stream stream)))
@@ -347,26 +347,21 @@ keep-alive-stream), and should handle clean-up of it"
                 byte))
           (or (maybe-close stream t) :eof))))
 
-(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional (start 0) (end 0))
-  (declare (optimize speed)
-           (fixnum start end))
-  (let ((%stream (keep-alive-stream-stream stream)))
-    (if (null %stream) ;; we already closed it
-        start
-        (let* ((%end (keep-alive-stream-end stream))
-               (to-read (if %end
-                            (min (- end start) (the fixnum %end))
-                            (- end start)))
-               (n (read-sequence sequence %stream
-                                 :start start
-                                 :end (the fixnum (+ start to-read)))))
-          (when %end (decf (the fixnum (keep-alive-stream-end stream)) (- n start)))
-          (maybe-close stream (keep-alive-stream-end stream))
-          n))))
-
-(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional start end)
+(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional (start 0) end)
   (declare (optimize speed))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
+      start
+      (let* ((to-read (min (print (- end start)) (keep-alive-stream-end stream)))
+             (n (read-sequence sequence (keep-alive-stream-stream stream)
+                               :start start
+                               :end (+ start to-read))))
+        (decf (keep-alive-stream-end stream) (print (- n start)))
+        (maybe-close stream (<= (keep-alive-stream-end stream) 0))
+        n)))
+
+(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional (start 0) end)
+  (declare (optimize speed))
+  (if (null (print (keep-alive-stream-stream stream))) ;; we already closed it
       start
       (if (chunga:chunked-stream-input-chunking-p (chunga-stream stream))
           (prog1
@@ -502,22 +497,6 @@ keep-alive-stream), and should handle clean-up of it"
             last-char-size 0))
     nil))
 
-#+(or abcl clasp ecl)
-(defmethod stream-read-sequence ((stream decoding-stream) sequence start end &key)
-  (loop for i from start to end
-        for char = (stream-read-char stream)
-        if (eq char :eof)
-          do (return i)
-        else do (setf (aref sequence i) char)
-        finally (return end)))
-
-#+(or clasp ecl)
-(defmethod stream-read-byte ((stream decoding-stream))
-  (with-slots (last-char last-char-size) stream
-    (setf last-char #\Nul
-          last-char-size 0))
-  (read-byte (decoding-stream-stream stream) nil :eof))
-
 (defmethod open-stream-p ((stream decoding-stream))
   (open-stream-p (decoding-stream-stream stream)))
 
@@ -621,7 +600,7 @@ keep-alive-stream), and should handle clean-up of it"
     ((array (unsigned-byte 8) (*)) (write-sequence val stream))
     (pathname
      (with-open-file (in val :element-type '(unsigned-byte 8))
-       (std/stream:copy-stream in stream)))
+       (alexandria:copy-stream in stream)))
     (string
      (write-sequence (convert-to-octets val) stream))
     (cons (write-as-octets stream (first val)))
@@ -922,7 +901,7 @@ keep-alive-stream), and should handle clean-up of it"
          (finishedp nil)
          (content-length nil)
          (transfer-encoding-p)
-         (parser (make-parser http
+         (parser (make-http-parser http
                               :header-callback
                               (lambda (headers)
                                 (setq header-finished-p t
@@ -1668,10 +1647,10 @@ keep-alive-stream), and should handle clean-up of it"
   (apply #'request uri :method :delete args))
 
 (defun fetch (uri destination &rest args
-                  &key (if-exists :error)
-                    version headers basic-auth bearer-auth cookie-jar keep-alive use-connection-pool
-		    connect-timeout read-timeout max-redirects
-                    ssl-key-file ssl-cert-file ssl-key-password stream verbose proxy insecure ca-path)
+                              &key (if-exists :error)
+                                   version headers basic-auth bearer-auth cookie-jar keep-alive use-connection-pool
+		                   connect-timeout read-timeout max-redirects
+                                   ssl-key-file ssl-cert-file ssl-key-password stream verbose proxy insecure ca-path)
   (declare (ignore version headers basic-auth bearer-auth cookie-jar keep-alive use-connection-pool
 		   connect-timeout read-timeout max-redirects ssl-key-file ssl-cert-file
 		   ssl-key-password stream verbose proxy insecure ca-path))

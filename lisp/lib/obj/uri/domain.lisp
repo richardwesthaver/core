@@ -5,6 +5,33 @@
 ;;; Code:
 (in-package :obj/uri)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *default-etld-names*
+    (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/psl.dat")))
+
+  (defun load-etld-data (&optional (etld-names-file *default-etld-names*))
+    (when etld-names-file
+      (with-open-file (in etld-names-file
+                          :element-type #+lispworks :default #-lispworks 'character
+                          :external-format #+clisp charset:utf-8 #-clisp :utf-8)
+        (loop with special-tlds = nil
+              with normal-tlds = (make-hash-table :test 'equal)
+              with wildcard-tlds = (make-hash-table :test 'equal)
+              for line = (read-line in nil nil)
+              while line
+              unless (or (= 0 (length line))
+                         (starts-with-subseq "//" line))
+              do (cond
+                   ((starts-with-subseq "*" line)
+                    (setf (gethash (subseq line 2) wildcard-tlds) t))
+                   ((starts-with-subseq "!" line)
+                    (push (subseq line 1) special-tlds))
+                   (t
+                    (setf (gethash line normal-tlds) t)))
+              finally (return (list normal-tlds wildcard-tlds special-tlds)))))))
+
+(defvar *etlds* (load-etld-data))
+
 (defun next-subdomain (hostname &optional (start 0))
   (let ((pos (position #\. hostname :start start)))
     (when pos
@@ -26,39 +53,38 @@
             (setf current-pos pos)
             subdomain))))))
 
-(defvar *etlds* nil)
-
 (defun parse-domain (hostname)
-  (dolist (tld (third *etlds*))
-    (when (ends-with-subseq tld hostname)
-      (if (= (length tld) (length hostname))
-          (return-from parse-domain hostname)
-          (when (char= (aref hostname (- (length hostname) (length tld) 1))
-                       #\.)
-            (return-from parse-domain
-              (subseq hostname
-                      (- (length hostname) (length tld))))))))
-  (loop with iter = (make-subdomain-iter hostname)
-        with pre-prev-subdomain = nil
-        with prev-subdomain = nil
-        for subdomain = (funcall iter)
-        while subdomain
-        if (gethash subdomain (second *etlds*)) do
-          (return pre-prev-subdomain)
-        else if (gethash subdomain (first *etlds*)) do
-          (return (if (string= subdomain hostname)
-                      nil
-                      prev-subdomain))
-        do (setf pre-prev-subdomain prev-subdomain
-                 prev-subdomain subdomain)
-        finally
-           (let* ((pos (position #\. hostname :from-end t))
-                  (pos (and pos
-                            (position #\. hostname :from-end t :end pos))))
-             (return
-               (if pos
-                   (subseq hostname (1+ pos))
-                   hostname)))))
+  (when *etlds*
+    (dolist (tld (third *etlds*))
+      (when (ends-with-subseq tld hostname)
+        (if (= (length tld) (length hostname))
+            (return-from parse-domain hostname)
+            (when (char= (aref hostname (- (length hostname) (length tld) 1))
+                         #\.)
+              (return-from parse-domain
+                (subseq hostname
+                        (- (length hostname) (length tld))))))))
+    (loop with iter = (make-subdomain-iter hostname)
+          with pre-prev-subdomain = nil
+          with prev-subdomain = nil
+          for subdomain = (funcall iter)
+          while subdomain
+          if (gethash subdomain (second *etlds*)) do
+             (return pre-prev-subdomain)
+          else if (gethash subdomain (first *etlds*)) do
+             (return (if (string= subdomain hostname)
+                         nil
+                         prev-subdomain))
+          do (setf pre-prev-subdomain prev-subdomain
+                   prev-subdomain subdomain)
+          finally
+             (let* ((pos (position #\. hostname :from-end t))
+                    (pos (and pos
+                              (position #\. hostname :from-end t :end pos))))
+               (return
+                 (if pos
+                     (subseq hostname (1+ pos))
+                     hostname))))))
 
 (defun uri-tld (uri)
   (let ((host (uri-host uri)))
@@ -207,9 +233,9 @@
                   (len (length ip-parsed)))
              (loop for section in ip-parsed
                    if (string= section "")
-                     append (make-list (- 9 len) :initial-element 0)
+                   append (make-list (- 9 len) :initial-element 0)
                    else
-                     collect (parse-integer section :radix 16)))))
+                   collect (parse-integer section :radix 16)))))
     (cond
       ((ipv4-addr-p ip1)
        (string= ip1 ip2))

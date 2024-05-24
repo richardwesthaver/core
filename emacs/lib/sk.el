@@ -67,7 +67,7 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :version skel-version)
 
 ;; TODO 2023-09-06: 
-(define-derived-mode skel-mode lisp-data-mode "SKEL"
+(define-derived-mode skel-mode lisp-mode "SKEL"
   "skel-mode")
 
 (defun maybe-skel-minor-mode ()

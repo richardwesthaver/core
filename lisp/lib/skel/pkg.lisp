@@ -31,7 +31,7 @@
 
 ;;; Code:
 (defpackage :skel/core
-  (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli :obj :vc)
+  (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli :obj :vc :sb-ext)
   (:import-from :cli :find-exe)
   (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)

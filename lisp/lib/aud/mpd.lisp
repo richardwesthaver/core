@@ -203,11 +203,12 @@
          (condition (cdr (assoc error-id *error-ids-alist*))))
     (error condition :text (subseq text (+ delimiter 2)))))
 
-(defmacro with-mpc ((var &rest options) &body body)
-  `(let ((,var (connect ,@options)))
-     (unwind-protect
-          (progn ,@body)
-       (disconnect ,var))))
+(eval-always
+  (defmacro with-mpc ((var &rest options) &body body)
+    `(let ((,var (connect ,@options)))
+       (unwind-protect
+            (progn ,@body)
+         (disconnect ,var)))))
 
 (defun send-command (connection command)
   "Send command to MPD."

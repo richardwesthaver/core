@@ -21,6 +21,7 @@
                (:file "id")
                (:module "uri"
                 :components ((:file "pkg")
+                             (:file "domain")
                              (:file "uri")
                              (:file "mask")
                              (:file "state")

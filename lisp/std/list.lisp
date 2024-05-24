@@ -99,6 +99,7 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                             (circularp elt (cons object seen))))))))))
     (circularp object nil)))
 
+;;; On Lisp
 (defun group (source n)
   (declare (fixnum n))
   (when (zerop n) (error "zero length"))

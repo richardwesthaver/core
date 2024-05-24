@@ -146,7 +146,10 @@ via the special form stored in RECIPE."))
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
   (with-slots (recipe) self
-    (mapcar (lambda (x) (funcall x :output t))
+    (mapcar (lambda (x)
+              (etypecase x
+                ((or symbol function) (funcall x :output t))
+                (t (eval x))))
             (sk-body recipe))))
 
 (defmethod sk-write ((self sk-rule) stream)

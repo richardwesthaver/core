@@ -188,6 +188,7 @@ install")))
 (defun x-test (args)
   (if args
       (let ((name (car args)))
+        (ql:quickload :rt)
         (ql:quickload (string-upcase (format nil "~A/tests" name)))
         (rt:do-tests (string-upcase name) t))
       (bail "missing arg")))

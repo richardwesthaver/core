@@ -439,10 +439,10 @@ from TESTS."))
       (if *catch-test-errors*
 	  (handler-bind
 	      ((error 
-		 #'(lambda (c)
-		     (setf %test-bail t)
-		     (setf %test-result (make-test-result :fail c))
-		     (return-from %test-bail %test-result))))
+		 (lambda (c)
+		   (setf %test-bail t)
+		   (setf %test-result (make-test-result :fail c))
+		   (return-from %test-bail %test-result))))
 	    (%do))
 	  (%do)))))
 
@@ -637,7 +637,7 @@ All other values are treated as let bindings.
     (with-gensyms (form)
       `(if ,(null args)
 	   (if *testing*
-	       (push-result (funcall 'rt::%test ,test ',test) *testing*)
+	       (push-result (funcall #'rt::%test ,test ',test) *testing*)
 	       (funcall #'rt::%test ,test ',test))
 	   (macrolet ((,form (test) `(let ,,(group args 2) ,test)))
 	     ;; TODO 2023-09-21: does this work...
@@ -654,13 +654,15 @@ is not evaluated."
         (ensure-list condition-spec)
       `(block ,block-name
          (handler-bind ((,condition (lambda (c)
+                                      (declare (ignore c))
                                       ;; ok, body threw condition
 				      ;; TODO 2023-09-05: result collectors
                                       ;; (add-result 'test-passed
                                       ;;            :test-expr ',condition)
                                       (return-from ,block-name (make-test-result :pass ',body)))))
            (block nil
-             ,@body))
+             (locally (declare (sb-ext:muffle-conditions warning))
+               ,@body)))
          (fail!
           ',condition
           ,@(if reason-control

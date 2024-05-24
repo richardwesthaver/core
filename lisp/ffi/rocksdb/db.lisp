@@ -603,7 +603,8 @@
 (define-alien-routine rocksdb-perfcontext-metric unsigned-long
   (context (* rocksdb-perfcontext)) (metric int))
 
-(define-alien-routine rocksdb-perfcontext-destroy void (* rocksdb-perfcontext))
+;; TODO 2024-05-24: causes compile error - pass-by-struct not supported
+;; (define-alien-routine rocksdb-perfcontext-destroy void (* rocksdb-perfcontext))
 
 (export '(rocksdb-perfcontext-reset rocksdb-perfcontext-report
           rocksdb-perfcontext-metric rocksdb-perfcontext-destroy rocksdb-set-perf-level))

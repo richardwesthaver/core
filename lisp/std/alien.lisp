@@ -31,11 +31,13 @@
 ;;  	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
 ;;  		 :sanctify-for-execution))
 
-(defun shared-object-name (name path)
+(defun shared-object-name (name &optional path)
   "Return a filename with the correct extension for a shared library."
-  (merge-pathnames 
-   #+darwin (format nil "lib~a.dylib" name)
-   #-darwin (format nil "lib~a.so" name) path))
+  (let ((name #+darwin (format nil "lib~a.dylib" name)
+              #-darwin (format nil "lib~a.so" name)))
+    (if path
+      (merge-pathnames name path)
+      (pathname name))))
 
 (defun list-all-shared-objects ()
   sb-alien::*shared-objects*)

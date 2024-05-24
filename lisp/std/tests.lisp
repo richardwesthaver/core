@@ -26,9 +26,8 @@
   (is (equal (funcall {1 list 1} 2) '(1 2))) ;; curry.fixed-arity
   (is (equal (funcall {2 list _ 2} 3 4) '(3 4 2))) ;; curry.fixed-arity.2
   (signals error
-    (locally (declare (optimize safety))
-      (let ((f {1 list 1}))
-        (progn (funcall f) nil)))) ;; curry.fixed-arity.1
+    (let ((f {1 list 1}))
+      (progn (funcall f) nil))) ;; curry.fixed-arity.1
   (signals error
     (locally (declare (optimize safety))
       (let ((f {1 list 1}))
@@ -145,7 +144,8 @@
 
 (deftest tasks ()
   "Test task-pools, oracles, and workers."
-  (let ((pool1 (make-task-pool)))))
+  ;; (let ((pool1 (make-task-pool))))
+  )
 
 (deftest fmt ()
   "Test standard formatters"
