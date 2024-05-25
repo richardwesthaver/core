@@ -12,6 +12,7 @@
 (defparameter *default-skel-license-kind* :mpl2)
 (declaim (type sk-project *skel-project*))
 (defvar *skel-project*)
+(defvar *skel-env*)
 ;; TODO (defvar *skelfile-boundary* nil "Set an upper bounds on how
 ;; many times and how far to walk an arbitrary file directory.")
 
@@ -453,8 +454,7 @@ via the special form stored in RECIPE."))
                                               (sb-int:keywordicate e)
                                               (sb-posix:getenv (string-upcase e))))
                                      (list
-                                      (cons (sb-int:keywordicate (car e)) (cdr e)))))
-                                 
+                                      (cons (sb-int:keywordicate (car e)) (cadr e)))))
                                  env)))
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self) (map 'vector

@@ -11,7 +11,7 @@
 :vc :hg
 :docs ((:org "readme"))
 :scripts "x.lisp"
-:env (home (cc "clang") shell term)
+:env ((cc "clang") shell term (psl-url "https://publicsuffix.org/lisp/public_suffix_list.dat"))
 :rules
 ((all (x compile std prelude build))
  (x ()
