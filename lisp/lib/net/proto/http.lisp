@@ -325,7 +325,7 @@
 
 ;;; byte-vector
 (defconstant +cr+ (char-code #\Return))
-(defconstant +lf+ (char-code #\Newline))
+(defconstant +lf+ (char-code #\Linefeed))
 (defconstant +space+ (char-code #\Space))
 (defconstant +tab+ (char-code #\Tab))
 (defconstant +page+ (char-code #\Page))

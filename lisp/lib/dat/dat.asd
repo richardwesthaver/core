@@ -1,6 +1,6 @@
 (defsystem :dat
   :description "Data formats"
-  :depends-on (:cl-ppcre :std :obj :png :flexi-streams)
+  :depends-on (:cl-ppcre :std :obj #+png :png :flexi-streams)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
@@ -22,8 +22,9 @@
                (:file "toml")
                (:file "arff")
                (:file "midi")
+               #+png (:file "png")
                (:file "base64")
-               #+nil (:file "bencode"))
+               #+bencode (:file "bencode"))
   :in-order-to ((test-op (test-op "dat/tests"))))
 
 (defsystem :dat/tests

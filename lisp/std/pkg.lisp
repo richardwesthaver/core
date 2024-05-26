@@ -237,6 +237,7 @@
    :if-let*
    :if*
    :define-constant
+   :defvar-unbound
    :def!
    :eval-always
    ;; ana

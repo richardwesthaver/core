@@ -208,7 +208,7 @@
   (:use :cl :std :dat/proto))
 
 (defpackage :dat/png
-  (:use :cl :std :dat/proto :png))
+  (:use :cl :std :dat/proto #+png :png))
 
 (uiop:define-package :dat
     (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode

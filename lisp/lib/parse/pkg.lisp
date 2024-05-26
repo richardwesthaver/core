@@ -35,7 +35,7 @@
            :yacc-parse-error-value :yacc-parse-error-expected-terminals))
 
 (defpackage parse/bytes
-  (:use :cl)
+  (:use :cl :babel)
   (:import-from :sb-cltl2
    :variable-information)
   (:import-from :std :with-gensyms :once-only
