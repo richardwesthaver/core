@@ -115,4 +115,4 @@
    :with-sst))
 
 (in-package :rdb)
-(rocksdb:load-rocksdb t)
+(rocksdb:load-rocksdb nil)
