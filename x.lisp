@@ -49,7 +49,7 @@ x.lisp
 (defvar *ffi-path* (merge-pathnames "ffi/" *lisp-path*))
 (defvar *stash-path* (merge-pathnames ".stash/" *core-path*))
 
-(defvar *compression-level* nil)
+(defvar *compression-level* t)
 
 (push *core-path* asdf:*central-registry*)
 (push *lisp-path* ql:*local-project-directories*)
