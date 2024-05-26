@@ -12,16 +12,16 @@
 (defun init-user-skelrc (&optional (file *user-skelrc*))
   "Initialize a skelrc configuration based on the currently active
 *SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
-  (sk-write-file *skel-user-config* 
+  (sk-write-file *skel-user-config*
                  :path file
-                 :fmt :pretty))
+                 :pretty t))
 
 (defun init-system-skelrc (&optional (file *system-skelrc*))
   "Initialize a system skelrc configuration based on the currently active
 *SKEL-SYSTEM-CONFIG*."
   (sk-write-file *skel-system-config*
                  :path file
-                 :fmt :pretty))
+                 :pretty t))
 
 (defun load-user-skelrc (&optional (file *user-skelrc*))
   "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.

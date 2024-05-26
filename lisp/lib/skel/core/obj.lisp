@@ -327,6 +327,24 @@ via the special form stored in RECIPE."))
         (write-sxp-stream self out :fmt fmt))
     (unless *keep-ast* (setf (ast self) nil))))
 
+(defmethod write-sxp-stream ((self sk-config) stream &key (pretty t) (case :downcase) (fmt :pretty))
+  (case fmt
+    (:pretty
+     (if (listp (ast self))
+         (with-open-stream (st stream)
+           (loop for (k v . rest) on (ast self)
+                 by #'cddr
+                 unless (or (null v) (null k))
+                 do 
+                    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
+                    (write-char #\space st)
+                    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
+                        (write-sxp-stream v stream :fmt fmt)
+                        (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
+                    (write-char #\newline st)))
+         (error 'sxp-fmt-error)))
+    (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
+
 (defclass sk-system-config (sk-config sk-meta) ())
 
 (defun default-sk-system-config ()
