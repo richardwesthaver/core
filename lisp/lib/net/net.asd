@@ -5,13 +5,13 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
+   :trivial-mimes
+   :fast-io
    :dat :obj :io :parse
-   ;; :swank  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
-   ;; :swank-client
+   ;; #+swank :swank-client  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
    :cl+ssl
-   :dexador ;; fetch
    :chipz :babel :chunga
-   :hunchentoot :std :log)
+   :std :log)
   :serial t
   :components ((:file "pkg")
                (:file "err")
@@ -27,6 +27,7 @@
                              (:file "osc")))
                (:module "proto"
                 :components (;; (:file "crew") ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
+                             (:file "swank")
                              (:file "http")
                              (:file "dns")
                              (:file "ssh")))

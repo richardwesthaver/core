@@ -3,7 +3,7 @@
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
-  (:ironclad :sb-concurrency :sb-posix 
+  (#+crypto :ironclad :sb-concurrency :sb-posix 
              :sb-bsd-sockets :cl-ppcre
              :std :log :obj)
   :serial t

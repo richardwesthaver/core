@@ -6,7 +6,7 @@
 x.lisp
 |#
 (require 'asdf)
-(require 'sb-posix)
+;; (require 'sb-posix)
 (require 'sb-concurrency)
 
 #-(or sbcl cl) (error "unsupported Lisp compiler")
@@ -153,6 +153,8 @@ install")))
   (format t "saving ~A to: ~A~%" name (merge-pathnames name *stash-path*))
   (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
     (ql:quickload sys)
+    (push :ssl *features*)
+    (std/sys:forget-shared-objects)
     (asdf:make sys)))
 
 (defun x-build (args)

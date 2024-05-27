@@ -141,7 +141,7 @@
   (labels ((format-cookie-date (universal-time s)
              (when universal-time
                (format-timestring s (universal-to-timestamp universal-time)
-                                  :format +set-cookie-date-format+ :timezone local-time:+gmt-zone+))))
+                                  :format +set-cookie-date-format+ :timezone obj/time:+gmt-zone+))))
     (format stream
             "~A=~A~@[; Expires=~A~]~@[; Max-age=~A~]~@[; Path=~A~]~@[; Domain=~A~]~@[; SameSite=~A~]~:[~;; Partitioned~]~:[~;; Secure~]~:[~;; HttpOnly~]"
             (cookie-name cookie)
@@ -178,18 +178,18 @@
   (char<= #\0 char #\9))
 
 (defun get-tz-offset (tz-abbrev)
-  (symbol-macrolet ((timezones local-time::*abbreviated-subzone-name->timezone-list*))
+  (symbol-macrolet ((timezones obj/time::*abbreviated-subzone-name->timezone-list*))
     (let* ((tz (gethash tz-abbrev timezones nil))
            (tz (if tz
                    (car tz)
                    (when (zerop (hash-table-count timezones))
-                     (local-time::reread-timezone-repository
+                     (obj/time::reread-timezone-repository
                        :timezone-repository (asdf:system-relative-pathname :local-time #P"zoneinfo/"))
                      (first (gethash tz-abbrev timezones nil))))))
       (when tz
-        (loop for sub across (local-time::timezone-subzones tz)
-              when (equal tz-abbrev (local-time::subzone-abbrev sub))
-                do (return (local-time::subzone-offset sub)))))))
+        (loop for sub across (obj/time::timezone-subzones tz)
+              when (equal tz-abbrev (obj/time::subzone-abbrev sub))
+                do (return (obj/time::subzone-offset sub)))))))
 
 (defparameter *current-century-offset*
   (* (1- (timestamp-century (today)))
@@ -262,8 +262,8 @@
               (when (< year 100)
                 (incf year *current-century-offset*))
               (return-from parse-cookie-date
-                (local-time:timestamp-to-universal
-                 (local-time:encode-timestamp 0 sec min hour day month year :timezone local-time:+gmt-zone+
+                (obj/time:timestamp-to-universal
+                 (obj/time:encode-timestamp 0 sec min hour day month year :timezone obj/time:+gmt-zone+
                                                                             :offset offset))))))
       (error ()
         (error 'invalid-expires-date

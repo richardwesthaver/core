@@ -131,6 +131,10 @@
 ;;    :worker-count
 ;;    :reconnect-worker))
 
+(defpackage :net/proto/swank
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
+  (:export))
+
 (defpackage :net/proto/dns
   (:nicknames :net/dns)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/dns)

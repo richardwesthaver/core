@@ -1032,10 +1032,10 @@ keep-alive-stream), and should handle clean-up of it"
     stream))
 
 (defun make-proxy-authorization (uri)
-  (let ((proxy-auth (quri:uri-userinfo uri)))
+  (let ((proxy-auth (obj/uri:uri-userinfo uri)))
     (when proxy-auth
       (format nil "Basic ~A"
-              (cl-base64:string-to-base64-string proxy-auth)))))
+              (dat/base64:string-to-base64-string proxy-auth)))))
 
 (defconstant +socks5-version+ 5)
 (defconstant +socks5-reserved+ 0)
@@ -1166,7 +1166,7 @@ keep-alive-stream), and should handle clean-up of it"
                             (insecure *no-ssl*)
                             ca-path
                             &aux
-                            (proxy-uri (and proxy (quri:uri proxy)))
+                            (proxy-uri (and proxy (obj/uri:uri proxy)))
                             (original-user-supplied-stream stream)
                             (user-supplied-stream (if (usocket-wrapped-stream-p stream) (usocket-wrapped-stream-stream stream) stream)))
   (declare (ignorable ssl-key-file ssl-cert-file ssl-key-password
@@ -1255,7 +1255,7 @@ keep-alive-stream), and should handle clean-up of it"
            (boundary (and multipart-p
                           (make-random-string 12)))
            (content (if (and form-urlencoded-p (not (stringp content))) ;; user can provide already encoded content, trust them.
-                        (quri:url-encode-params content)
+                        (obj/uri::url-encode-params content)
                         content))
            (stream (or user-supplied-stream
                        (and use-connection-pool

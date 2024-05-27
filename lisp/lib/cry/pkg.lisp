@@ -1,7 +1,7 @@
 (defpackage :cry
   (:nicknames :cryptography)
-  (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
-  (:use :cl :std :sb-thread :sb-concurrency :ironclad :obj/db :obj/id)
+  #+crypto (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
+  (:use :cl :std :sb-thread :sb-concurrency #+crypto :ironclad :obj/db :obj/id)
   (:export :crypto-error :crypto-token-expired :crypto-token-invalid
    :crypto-key :token :crypto-token :password
    :*default-password-db* :*default-password-hasher* :*default-password-store* :*default-password-pepper*

@@ -71,3 +71,7 @@
 ;;               (sb-di::debug-fun-lambda-list
 ;;                (sb-di::make-compiled-debug-fun cdf code))))))
 ;;       (print info))))
+
+(defun forget-shared-objects ()
+  "Set the DONT-SAVE slot of all objects in SB-SYS:*SHARED-OBJECTS* to T."
+  (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) t)) sb-sys:*shared-objects*))
