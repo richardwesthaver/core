@@ -278,38 +278,6 @@
    :*bpm* :*key-signature* :*time-signature*
    :*chord-table* :*key-table* :*tone-table*))
 
-(defpackage :obj/tbl
-  (:nicknames :tbl)
-  (:use :cl :std)
-  (:import-from :uiop :split-string)
-  (:export 
-   :table
-   :row
-   :make-table
-   :make-row
-   :add-to-table
-   :add-to-row
-   :get-row
-   :get-row-column
-   :set-row-column
-   :num-rows
-   :num-cols
-   :num-col
-   :rectangular-table-p
-   :sequence->row
-   :row-sequence->table
-   :with-rows
-   :select
-   :distinct
-   :top
-   :order-by
-   :where
-   :where-filter
-   :where-or
-   :where-and
-   :table-from-csv
-   :table-from-tvs))
-
 (defpackage :obj/temperature
   (:nicknames :temperature)
   (:use :cl :std)
@@ -337,35 +305,9 @@
   (:nicknames :db)
   (:use :cl :std :id :seq :sb-mop :sb-pcl)
   (:export
-   :xdb
-   :collection
-   :collection-aware
-   :map-docs
-   :duplicate-doc-p
-   :find-duplicate-doc
-   :store-doc
-   :serialize-doc
-   :serialize-docs
-   :load-from-file
-   :get-collection
-   :add-collection
-   :snapshot
    :load-db
-   :get-docs
-   :get-doc
    :get-val
    :set-val
-   :sum
-   :max-val
-   :document
-   :doc-type
-   :key
-   :find-doc
-   :find-docs
-   :sort-collection
-   :docs
-   :*fsync-data*
-   :storable-class
    :dbs
    :get-db
    :add-db
@@ -375,19 +317,14 @@
    :connect-db
    :query-db
    :db-get
-   :close-db
    :db
-   :database
-   :enable-sequences
-   :next-sequence
-   :sort-docs))
+   :database))
 
 (defpackage :obj/build
   (:use :cl :std)
   (:export :build :build-from))
 
 (uiop:define-package :obj
-    (:use-reexport :list :hash :color
-     :seq :tree :graph :tbl
-     :id :db :time :uri :url :cfg
-     :music :temperature :direction :shape))
+  (:use-reexport :list :hash :color
+   :seq :tree :graph :id :db :time :uri :url :cfg :music :temperature :direction :shape))
+                   

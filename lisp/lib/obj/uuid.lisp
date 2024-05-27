@@ -168,7 +168,7 @@ characters.~@:>" string (length string)))
   "Generates a version 1 (time-based) uuid."
   (unless *uuid-random-state*
     (setf *uuid-random-state* (make-random-state t)))
-  (let ((timestamp (obj/time:make-timestamp)))
+  (let ((timestamp (get-timestamp)))
     (when (zerop *clock-seq*)
       (setf *clock-seq* (random 10000 *uuid-random-state*)))
     (unless *node*

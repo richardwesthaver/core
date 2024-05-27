@@ -1,7 +1,11 @@
 (defsystem :xdb
   :depends-on (:std :obj)
   :serial t
-  :components ((:file "xdb"))
+  :components ((:file "pkg")
+               (:file "io")
+               (:file "disk")
+               (:file "document")
+               (:file "xdb"))
   :in-order-to ((test-op (test-op "xdb/tests"))))
 
 (defsystem :xdb/tests

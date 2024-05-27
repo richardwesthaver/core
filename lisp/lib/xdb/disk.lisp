@@ -1,4 +1,4 @@
-(in-package :obj/db)
+(in-package :xdb)
 ;;; Disk
 (defclass collection ()
   ((name :initarg :name

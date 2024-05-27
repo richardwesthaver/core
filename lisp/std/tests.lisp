@@ -124,7 +124,7 @@
     (labels ((in-new-thread ()
                (with-mutex (lock)
                  (assert (eql (mutex-owner lock) *current-thread*))
-                 (log:info! (condition-wait queue lock))
+                 (condition-wait queue lock)
                  (assert (eql (mutex-owner lock) *current-thread*))
                  (is (= n 1))
                  (decf n))))

@@ -85,6 +85,13 @@
 (defpackage :obj/meta/overloaded
   (:use :cl :std :obj/meta))
 
+(defpackage :obj/meta/storable
+  (:use :cl :std :obj/meta :obj/id)
+  (:export
+   :storable-class :initialize-storable-class
+   :storable-slot-mixin :storable-direct-slot-definition
+   :storable-effective-slot-definition))
+  
 (in-package :obj/meta)
 
 (defun class-equalp (c1 c2)

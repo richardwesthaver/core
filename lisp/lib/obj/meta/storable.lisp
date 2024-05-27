@@ -1,4 +1,4 @@
-;;; obj/meta/store.lisp --- Storable MOPs
+;;; obj/meta/storable.lisp --- Storable Objects
 
 ;; The storable-class can be assigned to the :metaclass option of a
 ;; class to allow persistent storage of an object on disk. The
@@ -9,14 +9,13 @@
 
 ;; This code is derived from XDB.
 
-;; Note that this is not a general purpose de/serializer. It is
-;; specifically designed to decode/encode objects as single
-;; octet-vectors from/to an open stream with minimal overhead. There
-;; is a separate interface for general-purpose data encoding which can
-;; be found in the DAT system.
+;; Note that this is not a general purpose SerDe. It is specifically designed
+;; to decode/encode objects as single octet-vectors from/to an open stream
+;; with minimal overhead. There is a separate interface for general-purpose
+;; data encoding which can be found in the DAT system.
 
 ;;; Code:
-(in-package :obj/db)
+(in-package :obj/meta/storable)
 
 (sb-ext:unlock-package :sb-pcl)
 
@@ -37,13 +36,14 @@
              :initform (make-hash-table :size 1000)
              :accessor id-cache)))
 
+
 ;;; Initialize
 (defun initialize-storable-class (next-method class &rest args
                                   &key direct-superclasses &allow-other-keys)
   (apply next-method class
          (if direct-superclasses
              args
-             (list* :direct-superclasses (list (find-class 'identifiable))
+             (list* :direct-superclasses (list (find-class 'storable-class))
                     args))))
 
 (defmethod initialize-instance :around ((class storable-class)
@@ -100,8 +100,8 @@
 (defun make-slots-cache (slot-definitions)
   (map 'vector
        (lambda (slot-definition)
-	 (cons (slot-definition-location slot-definition)
-	       (slot-definition-initform slot-definition)))
+	 (cons (sb-mop:slot-definition-location slot-definition)
+	       (sb-mop:slot-definition-initform slot-definition)))
        slot-definitions))
 
 (defun initialize-class-slots (class slots)
@@ -114,19 +114,12 @@
     (setf (all-slot-locations-and-initforms class)
           (make-slots-cache slots))
     (setf (class-initforms class)
-          (map 'vector #'slot-definition-initform slots))))
+          (map 'vector #'sb-mop:slot-definition-initform slots))))
 
 (defmethod compute-slots :around ((class storable-class))
   (let ((slots (call-next-method)))
     (initialize-class-slots class slots)
     slots))
 
-;;; Identifiable
-(defclass identifiable (id)
-  ((id :initform nil :accessor id :storep nil)
-   (written :initform nil
-            :accessor written
-            :storep nil))
-  (:metaclass storable-class))
 
 (sb-ext:lock-package :sb-pcl)

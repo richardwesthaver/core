@@ -1066,98 +1066,8 @@ elements."
   (declare (type timestamp timestamp))
   (timestamp-values-to-unix (sec-of timestamp) (day-of timestamp)))
 
-#+(and allegro (not os-windows))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  ;; Allegro common lisp requires some toplevel hoops through which to
-  ;; jump in order to call unix's gettimeofday properly.
-  (ff:def-foreign-type timeval
-      (:struct (tv_sec :long)
-               (tv_usec :long)))
-
-  (ff:def-foreign-call
-      (allegro-ffi-gettimeofday "gettimeofday")
-      ((timeval (* timeval))
-       ;; and do this to allow a 0 for NULL
-       (timezone :foreign-address))
-    :returning (:int fixnum)))
-
-#+(and allegro os-windows)
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  ;; Allegro common lisp requires some toplevel hoops through which to
-  ;; jump in order to call unix's gettimeofday properly.
-  (ff:def-foreign-type filetime
-      (:struct (|dwLowDateTime| :int)
-               (|dwHighDateTime| :int)))
-
-  (ff:def-foreign-call
-      (allegro-ffi-get-system-time-as-file-time "GetSystemTimeAsFileTime")
-      ((filetime (* filetime)))
-    :returning :void))
-
-#+(or (and allegro os-windows)
-      (and ccl windows))
-(defun filetime-to-current-time (low high)
-  "Convert a Windows time into (values sec nano-sec)."
-  (let* ((unix-epoch-filetime 116444736000000000)
-         (filetime (logior low (ash high 32)))
-         (filetime (- filetime unix-epoch-filetime)))
-    (multiple-value-bind (secs 100ns-periods)
-        (floor filetime #.(round 1e7))
-      (values secs (* 100ns-periods 100)))))
-
-#+(and lispworks (or linux darwin))
-(progn
-  (fli:define-c-typedef time-t :long)
-  (fli:define-c-typedef suseconds-t #+linux :long
-                                    #+darwin :int)
-
-  (fli:define-c-struct timeval
-    (tv-sec time-t)
-    (tv-usec suseconds-t))
-
-  (fli:define-foreign-function (gettimeofday/ffi "gettimeofday")
-      ((tv (:pointer (:struct timeval)))
-       (tz :pointer))
-    :result-type :int)
-
-  (defun lispworks-gettimeofday ()
-    (declare (optimize speed (safety 1)))
-    (fli:with-dynamic-foreign-objects ((tv (:struct timeval)))
-      (let ((ret (gettimeofday/ffi tv fli:*null-pointer*)))
-        (assert (zerop ret) nil "gettimeofday failed")
-        (let ((secs
-                (fli:foreign-slot-value tv 'tv-sec
-                                        :type 'time-t
-                                        :object-type '(:struct timeval)))
-              (usecs
-                (fli:foreign-slot-value tv 'tv-usec
-                                        :type 'suseconds-t
-                                        :object-type '(:struct timeval))))
-          (values secs (* 1000 usecs)))))))
-
 (defun %get-current-time ()
   "Cross-implementation abstraction to get the current time measured from the unix epoch (1/1/1970). Should return (values sec nano-sec)."
-  #+(and allegro (not os-windows))
-  (flet ((allegro-gettimeofday ()
-           (let ((tv (ff:allocate-fobject 'timeval :c)))
-             (allegro-ffi-gettimeofday tv 0)
-             (let ((sec (ff:fslot-value-typed 'timeval :c tv 'tv_sec))
-                   (usec (ff:fslot-value-typed 'timeval :c tv 'tv_usec)))
-               (ff:free-fobject tv)
-               (values sec usec)))))
-    (multiple-value-bind (sec usec) (allegro-gettimeofday)
-      (values sec (* 1000 usec))))
-  #+(and allegro os-windows)
-  (let* ((ft (ff:allocate-fobject 'filetime :c)))
-    (allegro-ffi-get-system-time-as-file-time ft)
-    (let* ((low (ff:fslot-value-typed 'filetime :c ft '|dwLowDateTime|))
-           (high (ff:fslot-value-typed 'filetime :c ft '|dwHighDateTime|)))
-      (filetime-to-current-time low high)))
-  #+cmu
-  (multiple-value-bind (success? sec usec) (unix:unix-gettimeofday)
-    (assert success? () "unix:unix-gettimeofday reported failure?!")
-    (values sec (* 1000 usec)))
-  #+sbcl
   (progn
     #+#.(obj/time::package-with-symbol? "SB-EXT" "GET-TIME-OF-DAY") ; available from sbcl 1.0.28.66
     (multiple-value-bind (sec nsec) (sb-ext:get-time-of-day)
@@ -1165,29 +1075,7 @@ elements."
     #-#.(obj/time::package-with-symbol? "SB-EXT" "GET-TIME-OF-DAY") ; obsolete, scheduled to be deleted at the end of 2009
     (multiple-value-bind (success? sec nsec) (sb-unix:unix-gettimeofday)
       (assert success? () "sb-unix:unix-gettimeofday reported failure?!")
-      (values sec (* 1000 nsec))))
-  #+(and ccl (not windows))
-  (ccl:rlet ((tv :timeval))
-    (let ((err (ccl:external-call "gettimeofday" :address tv :address (ccl:%null-ptr) :int)))
-      (assert (zerop err) nil "gettimeofday failed")
-      (values (ccl:pref tv :timeval.tv_sec) (* 1000 (ccl:pref tv :timeval.tv_usec)))))
-  #+(and ccl windows)
-  (ccl:rlet ((time :<lpfiletime>))
-    (ccl:external-call "GetSystemTimeAsFileTime" :<lpfiletime> time :void)
-    (let* ((low (ccl:%get-unsigned-long time (/ 0 8)))
-           (high (ccl:%get-unsigned-long time (/ 32 8))))
-      (filetime-to-current-time low high)))
-  #+abcl
-  (multiple-value-bind (sec millis)
-      (truncate (java:jstatic "currentTimeMillis" "java.lang.System") 1000)
-    (values sec (* millis 1000000)))
-  #+(and lispworks (or linux darwin))
-  (lispworks-gettimeofday)
-  #-(or allegro cmu sbcl abcl ccl (and lispworks (or linux darwin)))
-  (values (- (get-universal-time)
-             ;; CL's get-universal-time uses an epoch of 1/1/1900, so adjust the result to the Unix epoch
-             #.(encode-universal-time 0 0 0 1 1 1970 0))
-          0))
+      (values sec (* 1000 nsec)))))
 
 (defvar *clock* t
   "Use the `*clock*' special variable if you need to define your own idea of the current time.

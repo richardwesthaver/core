@@ -1,4 +1,9 @@
-(in-package :obj/db)
+;;; obj/db/document.lisp --- Database Document Objects
+
+;; Spliced from XDB, currently not in use outside of it
+
+;;; Code:
+(in-package :xdb)
 ;;; Document
 (defclass document ()
   ((collection :initarg :collection

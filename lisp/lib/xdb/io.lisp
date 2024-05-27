@@ -1,11 +1,16 @@
-(in-package :obj/db)
+;;; io/blob.lisp --- Blob Database IO
+
+;;
+
+;;; Code:
+(in-package :xdb)
 
 ;;; IO
 (defvar *fsync-data* nil)
 
 (defconstant +buffer-size+ 8192)
 
-(deftype word () 'sb-vm:word)
+(deftype word () 'sb-ext:word)
 
 (defstruct (input-stream
             (:predicate nil))

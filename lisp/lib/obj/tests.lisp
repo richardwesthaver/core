@@ -1,5 +1,5 @@
 (defpackage :obj/tests
-  (:use :cl :std :rt :obj))
+  (:use :cl :std :rt :obj :uuid))
 
 (in-package :obj/tests)
 
@@ -56,19 +56,14 @@
                            (print-hex-rgb rgb :destination t))))
     (is (rgb= rgb (parse-hex-rgb "foo#123456zzz" :start 3 :end 10) 0.001))))
 
-(defun random-csv-file (&optional (name (symbol-name (gensym))) (n 1000))
-  (let ((path (merge-pathnames (format nil "~a.csv" name) "/tmp/")))
-    (with-open-file (f path :direction :output)
-      (dotimes (i n) (format f "~a,test~a,~x,~%" i (+ n i) (random 8d0))))
-    path))
-
-(deftest tables ()
-  (let ((csv (random-csv-file)))
-    (is (typep (table-from-csv csv) 'table))))
-
 (deftest ids ()
   (is (= (reset-id t) (reset-id '(1 2 3))))
   (is (not (equalp (make-id nil) (make-id nil)))))
+
+(deftest uuids ()
+  (macrolet ((is-uuid (obj) `(is (typep ,obj 'uuid))))
+    (is-uuid (make-v1-uuid))
+    (is-uuid (make-v4-uuid))))
 
 (deftest def-iter ())
 
