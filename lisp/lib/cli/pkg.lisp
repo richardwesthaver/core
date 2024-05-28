@@ -187,6 +187,10 @@
    :cli-version
    :cli-usage))
 
+(defpackage :cli/tmux
+  (:use :cl :std)
+  (:export))
+
 (uiop:define-package :cli
     (:use :cl :std)
   (:use-reexport :cli/shell :cli/ansi :cli/prompt

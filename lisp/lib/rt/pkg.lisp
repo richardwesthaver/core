@@ -603,7 +603,7 @@ from TESTS."))
   (do-suite *test-suite* :stream stream))
 
 ;;; Checks
-(eval-when (:compile-toplevel)
+(eval-always
   (defun %test (val &optional form)
     (let ((r
 	    (if val 

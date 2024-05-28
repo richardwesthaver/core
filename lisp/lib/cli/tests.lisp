@@ -198,8 +198,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
   "Test CLI prompts"
   ;; TODO: needs to be compiled outside scope of test - contender for
   ;; fixture API
-  (compile
-   (defprompt tpfoo "testing: "))
+  (defprompt tpfoo "testing: ")
   (defvar tcoll nil)
   (defvar thist nil)
   (let ((*standard-input* (make-string-input-stream 
@@ -210,14 +209,14 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
                  (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
 (defparameter *opts* (cli:make-opts
-                       (:name foo :global t :description "bar")
-		       (:name bar :description "foo")))
+                       (:name "foo" :global t :description "bar")
+		       (:name "bar" :description "foo")))
 
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
 (defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds #(*cmd1*) :opts *opts* :description "cmd1 description"))
 (defparameter *cmds* (cli:make-cmds (:name "baz" :description "baz" :opts *opts*)))
 
-(defparameter *cli* (make-cli t :opts *opts* :cmds *cmds* :description "test cli"))
+(defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
 (deftest cli ()
   "test MACS.CLI OOS."
@@ -663,7 +662,7 @@ Eastern Mediterranean ████████████████▊
 (defvar *test-target* nil)
 
 (deftest main-output ()
-  (defmain (*test-target*)
+  (defmain (:return *test-target* :exit nil)
     (let ((*test-target* t))
       *test-target*))
   (compile 'main)

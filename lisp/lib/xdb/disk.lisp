@@ -24,7 +24,7 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *codes*
     #(ascii-string
-      identifiable
+      id
       cons
       string
       null
@@ -140,7 +140,7 @@
    *collection*))
 
 (defun write-top-level-object (object stream)
-  (if (typep object 'identifiable)
+  (if (typep object 'id)
       (write-storable-object object stream)
       (write-object object stream)))
 
@@ -573,13 +573,13 @@
       (setf (slot-locations-and-initforms class) vector))
     (read-next-object stream)))
 
-;;; identifiable
+;;; Storable ID
 
-(defmethod write-object ((object identifiable) stream)
+(defmethod write-object ((object id) stream)
   (cond ((written object)
          (let* ((class (class-of object))
                 (class-id (write-object class stream)))
-           (write-n-bytes #.(type-code 'identifiable) 1 stream)
+           (write-n-bytes #.(type-code 'id) 1 stream)
            (write-n-bytes class-id +class-id-length+ stream)
            (write-n-bytes (id object) +id-length+ stream)))
         (t
@@ -598,7 +598,7 @@
         (setf (gethash id index)
               (fast-allocate-instance class)))))
 
-(defreader identifiable (stream)
+(defreader id (stream)
   (get-instance (read-n-bytes +class-id-length+ stream)
                 (read-n-bytes +id-length+ stream)))
 
