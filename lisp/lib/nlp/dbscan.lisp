@@ -2,10 +2,11 @@
 
 ;;; Code:
 (defpackage :nlp/dbscan
-  (:use :cl :std :nlp/doc)
+  (:use :cl :std :nlp/doc :nlp/textrank :nlp/tokenize)
   (:export 
    :document-cluster :clusters :get-cluster :distance
-   :generate-document-distance-vectors 
+   :generate-document-distance-vectors
+   :cluster :neighbors :clusters
    :dbscan))
 
 (in-package :nlp/dbscan)

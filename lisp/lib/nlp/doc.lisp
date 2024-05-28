@@ -9,6 +9,15 @@
    :add-document
    :document-collection
    :keywords
+   :dictionary
+   :term-count
+   :document-frequency
+   :inverse-document-frequency
+   :tf-idf-vectorize-documents
+   :termp
+   :string-contents
+   :rank
+   :term-frequency
    :extract-keywords
    :tf-vectorize-documents
    :vector-data))

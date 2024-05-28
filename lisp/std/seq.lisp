@@ -5,6 +5,11 @@
 ;;; Code:
 (in-package :std/seq)
 
+;; from serapeum
+(declaim (inline firstn))
+(defun firstn (n list)
+  (loop repeat n for x in list collect x))
+
 (defun take (n seq)
   "Return, at most, the first N elements of SEQ, as a *new* sequence
 of the same type as SEQ.
@@ -13,9 +18,8 @@ If N is longer than SEQ, SEQ is simply copied.
 
 If N is negative, then |N| elements are taken (in their original
 order) from the end of SEQ."
-  #+sbcl (declare (sb-ext:muffle-conditions style-warning))
   (declare (type signed-array-length n))
-  (seq-dispatch seq
+  (sb-impl::seq-dispatch seq
     (if (minusp n)
         (last seq (abs n))
         (firstn n seq))

@@ -4,9 +4,9 @@
 
 ;;; Code:
 (defpackage :nlp/textrank
-  (:use :cl :std :nlp/doc)
+  (:use :cl :std :nlp/doc :nlp/tokenize)
   (:export 
-   :summarize-text))
+   :summarize-text :edges :document-vertex))
 
 (in-package :nlp/textrank)
 
