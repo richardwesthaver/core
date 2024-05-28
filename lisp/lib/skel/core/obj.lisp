@@ -243,7 +243,6 @@ via the special form stored in RECIPE."))
                    :kind (when-let ((ext (pathname-type script)))
                            (keywordicate ext))))))
 
-
 (defmethod sk-run ((self sk-script))
   (sb-ext:run-program (sk-path self) nil :output t))
 
@@ -420,16 +419,8 @@ via the special form stored in RECIPE."))
             :initform (make-array 0 :element-type 'sk-script :adjustable t)
             :accessor sk-scripts
             :type (vector sk-script))
-   (snippets :initarg :snippets
-             :initform (make-array 0 :element-type 'sk-snippet :adjustable t)
-             :accessor sk-snippets
-             :type (vector sk-snippet))
    (stash :initarg :stash :accessor sk-stash :type pathname)
    (store :initarg :store :accessor sk-store :type pathname)
-   (abbrevs :initarg :abbrevs
-            :initform (make-array 0 :element-type 'sk-abbrev :adjustable t)
-            :accessor sk-abbrevs
-            :type (vector sk-abbrevs))
    (imports :initarg :imports
             :initform (make-array 0 :element-type 'pathname :adjustable t)
             :accessor sk-imports
@@ -550,11 +541,11 @@ via the special form stored in RECIPE."))
 
 (defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))
   (with-slots (vc store stash license author) (debug! cfg) ;; log-level, custom, fmt
-    (cas (sk-vc self) nil vc)
-    (cas (sk-stash self) nil stash)
-    (cas (sk-store self) nil store)
-    (cas (sk-license self) nil license)
-    (cas (sk-author self) nil author)))
+    (setf (sk-vc self) vc)
+    (setf (sk-stash self) stash)
+    (setf (sk-store self) store)
+    (setf (sk-license self) license)
+    (setf (sk-author self) author)))
 
 (defmethod sk-find-rule (name self)
   (find (string-upcase name) (sk-rules self) :test 'equalp :key #'sk-rule-target))

@@ -111,7 +111,7 @@
 (defcmd skc-pull
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "pull" $args t))
-    (:hg (run-hg-command "pull" (push "-u" $args) t))
+    (:hg (run-hg-command "pull" (append "-u" $args) t))
     (t (skel-error "unknown VC type"))))
 
 (defun hg-status ()

@@ -67,11 +67,9 @@
    :*default-containerfile*
    ;; obj
    :*user-skelrc* :*system-skelrc* :*keep-ast*
-   :*skel-project* :*skel-user-config* :*default-skelrc* :*skel-registry* :*skel-cache*
-   :*default-skelfile* :*default-skel-user* :*default-skel-cache* :*default-user-skel-config* 
-   :*default-user-skelrc* :*default-system-skel-config* :*skelfile-extension* :*skelfile-boundary*
-   :*default-skel-stash*
-   :*default-system-skelrc*
+   :*skel-project* :*skel-user-config* :*skel-system-config* :*default-skelrc* :*skel-registry* :*skel-cache*
+   :*default-skelfile* :*default-skel-user* :*default-skel-cache*
+   :*skelfile-extension* :*skelfile-boundary*
    :load-ast :sk-license
    :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user :sk-store
    :sk-push :sk-pull

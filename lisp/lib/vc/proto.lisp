@@ -41,8 +41,33 @@
 
 ;;; Objects
 
+;;;; Config
 ;; should be parsed from .hgrc and .gitconfig
-(defclass vc-config (sxp) ())
+(defclass vc-config (sxp cfg) ())
+
+;;;; Ignorefile
+
+;; Basically we treat HG and GIT ignore files the same - just lines of string
+;; patterns. HG uses regexp and GIT is globs - an IGNOREFILE has a line parser
+;; slot for selecting the appropriate function.
+
+(defun map-lines (fn path)
+  "Call FN on each line of file PATH and collect the result."
+  (with-open-file (file path)
+    (loop for line = (read-line file nil)
+          while line
+          unless (or (= (length line) 0) (char= (aref line 0) #\#))
+          collect (funcall fn line))))
+
+(defstruct vc-ignore path patterns)
+
+(defgeneric vc-path-ignored-p (obj path)
+  (:documentation "Check PATH against the patterns in OBJ. If there is a match, return non-nil.")
+  (:method ((obj vc-ignore) (path t))
+    (let ((len (length path)))
+      (loop for pat in (vc-ignore-patterns obj)
+            when (funcall pat path 0 len)
+            return (values path pat)))))
 
 (defstruct vc-branch name rev)
 

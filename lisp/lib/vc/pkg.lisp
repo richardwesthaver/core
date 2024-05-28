@@ -1,5 +1,5 @@
 (defpackage :vc
-  (:use :cl :std :cli :log :obj :sb-bsd-sockets :cl-ppcre)
+  (:use :cl :std :cli :log :obj :sb-bsd-sockets :cl-ppcre :parse/lex)
   (:import-from :uiop :with-current-directory)
   (:export :*default-vc*
    :vc-error :git-error :hg-error :vc-status
@@ -10,8 +10,9 @@
    :run-hg-command :repo :hg-repo :git-repo
    :vc-meta :hg-meta :git-meta :make-hg-client
    :hg-client :*repo-roots* :*repo-registry* :find-repo
-   :make-repo :register-repo))
+   :make-repo :register-repo
+   :vc-ignore :hgignore :gitignore))
 
 (in-package :vc)
 
-(defvar *default-vc* :hg)
+(defparameter *default-vc* :hg)

@@ -3,5 +3,6 @@
 :version "0.1.0"
 :description "Rust Core"
 :tags ("rust")
+:components ((:toml "Cargo"))
 :rules 
 (("clean" () #$cargo clean$#))

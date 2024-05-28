@@ -34,3 +34,5 @@
 (defconstant +pathsep+
   #+windows #\; #+unix #\:
   "Path separator for this OS.")
+
+(defconstant +wildfile+ (make-pathname :name :wild :type :wild :version :wild))

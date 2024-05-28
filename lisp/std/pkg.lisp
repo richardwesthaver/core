@@ -332,7 +332,8 @@
    :absolute-pathname
    :relative-pathname
    :directory-pathname
-   :absolute-directory-pathname))
+   :absolute-directory-pathname
+   :+wildfile+ :+pathsep+))
 
 (defpkg :std/os
   (:use :cl)
@@ -354,7 +355,6 @@
    :file=
    :file-size
    :file-size-in-octets
-   :+pathsep+
    :octet-vector=
    :file-date
    :file-timestamp

@@ -19,6 +19,9 @@
             (:regex "^git@"))
           url-str)))
 
+(defun gitignore (&optional (path ".gitignore"))
+  (make-vc-ignore :path path :patterns (map-lines #'glob-path-match path)))
+
 (defclass git-repo (vc-repo)
   ((index))) ;; working-directory
 

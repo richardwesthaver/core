@@ -55,6 +55,9 @@
             (:regex "^hg@"))
           url-str)))
 
+(defun hgignore (&optional (path ".hgignore"))
+  (make-vc-ignore :path path :patterns (map-lines #'ppcre:create-scanner path)))
+
 ;; (describe (make-instance 'hg-repo))
 ;; https://repo.mercurial-scm.org/hg/file/tip/mercurial/interfaces/repository.py
 (defclass hg-repo (vc-repo)
