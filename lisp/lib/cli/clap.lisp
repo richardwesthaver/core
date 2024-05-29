@@ -50,7 +50,7 @@ evaluation of BODY."
               (println "(:SIGINT)")
               (sb-ext:exit :code 130)))
        ;; reset terminal state
-       (.ris))))
+       #+nil (.ris))))
 
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings."

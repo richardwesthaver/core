@@ -166,9 +166,6 @@
       (required-argument 'name)))
 
 (defcmd skc-vc
-  (print $args)
-  (print $opts)
-  (print $cli)
   (if $args
       (std/string:string-case ((car $args) :default (skel-error "invalid command"))
         ("status" (skc-status nil nil)))
