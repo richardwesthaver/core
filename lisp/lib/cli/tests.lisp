@@ -7,18 +7,19 @@
 
 (defun ansi-t01 ()
   (erase)
-  (cursor-position 0 0)
-  (princ "0")
-  (cursor-position 2 2)
-  (princ "1")
-  (cursor-position 5 15)
-  (princ "test")
-  (cursor-position 10 15)
-  (force-output)
-  (let ((a (read-line)))
-    (cursor-position 12 15)
-    (princ a)
-    (force-output)))
+    (cursor-position 0 0)
+    (princ "0")
+    (cursor-position 2 2)
+    (princ "1")
+    (cursor-position 5 15)
+    (princ "test")
+    (cursor-position 10 15)
+    (force-output)
+  (with-input-from-string (in (format nil "test~%~%"))
+    (let ((a (read-line in)))
+      (cursor-position 12 15)
+      (princ a)
+      (force-output))))
 
 (defun ansi-t02 ()
   (print "normal")
@@ -44,13 +45,13 @@
   "Display the 256 color palette."
   (clear)
   (loop for i from 0 to 255 do
-    (.sgr 48 5 i)
-    (princ #\space))
+           (.sgr 48 5 i)
+           (princ #\space))
   (terpri)
   (.sgr 0)
   (loop for i from 0 to 255 do
-    (.sgr 38 5 i)
-    (princ "X"))
+           (.sgr 38 5 i)
+           (princ "X"))
   (.sgr 0)
   (force-output)
   (sleep 3)
@@ -187,18 +188,19 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (nreverse chars)))
 
 (deftest ansi ()
-  ;; (ansi-t01)
-  (ansi-t02)
-  (ansi-t03)
-  (ansi-t04)
-  ;;(ansi-t05)
-)
+  (with-input-from-string (in (format nil "~%~%"))
+    (ansi-t01)
+    (ansi-t02)
+    (ansi-t03)
+    (ansi-t04)
+    (ansi-t05)))
 
-(deftest cli-prompt (:disabled nil) ;; FIXME: hijacks io in slime
+;; TODO: needs to be compiled outside scope of test - contender for
+;; fixture API
+(defprompt tpfoo "testing: ")
+
+(deftest cli-prompt ()
   "Test CLI prompts"
-  ;; TODO: needs to be compiled outside scope of test - contender for
-  ;; fixture API
-  (defprompt tpfoo "testing: ")
   (defvar tcoll nil)
   (defvar thist nil)
   (let ((*standard-input* (make-string-input-stream 
@@ -218,15 +220,15 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 
 (defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
-(deftest cli ()
-  "test MACS.CLI OOS."
+(deftest clap-basic ()
+  "test basic CLAP functionality."
   (let ((cli *cli*))
     (is (eq (make-shorty "test") #\t))
     (is (equalp (proc-args cli '("-f" "baz" "--bar" "fax")) ;; not eql
 		(make-cli-ast 
-		 (list (make-cli-node 'opt (find-short-opt cli #\f))
+		 (list (make-cli-node 'opt (find-short-opts cli #\f))
 		       (make-cli-node 'cmd (find-cmd cli "baz"))
-		       (make-cli-node 'opt (find-opt cli "bar"))
+		       (make-cli-node 'opt (find-opts cli "bar"))
 		       (make-cli-node 'arg "fax")))))
     (is (parse-args cli '("--bar" "baz" "-f" "yaks")))
     (is (stringp
@@ -235,6 +237,14 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 	   (print-usage cli s)
 	   (print-help cli s))))
     (is (string= "foobar" (parse-str-opt "foobar")))))
+
+(deftest clap-opts ()
+  "CLAP opt tests."
+  (is (reduce (lambda (x y) (when x (when y t)))
+              (loop for k across *cli-opt-kinds* collect (cli-opt-kind-p k))))
+  (make-opt-parser thing $val)
+  (is (parse-thing-opt t))
+  (is (null (parse-thing-opt nil))))
 
 (deftest progress ()
   (flet ((%step () (cli/progress::update 1)))
@@ -659,12 +669,11 @@ Eastern Mediterranean ████████████████▊
 
 (deftest clap-ast ())
 
-(defvar *test-target* nil)
-
 (deftest main-output ()
-  (defmain (:return *test-target* :exit nil)
-    (let ((*test-target* t))
-      *test-target*))
-  (compile 'main)
-  (is (main))
-  (is (null *test-target*)))
+  (let ((*test-target*))
+    (defmain (:return *test-target* :exit nil :export nil)
+      (let ((*test-target* t))
+        *test-target*))
+    (compile 'main)
+    (is (main))
+    (is (null *test-target*))))

@@ -37,19 +37,20 @@ ARGS starting from the position of ARG."
 (defvar *no-exit* nil
   "Indicate whether the WITH-CLI-HANDLERS form should exit on completion.")
 
-(defmacro with-cli-handlers (form)
+(defmacro with-cli-handlers (&body body)
   "A wrapper which handles common cli errors that may occur during
-evaluation of FORM."
+evaluation of BODY."
   `(progn
      (if *no-exit*
          (sb-ext:enable-debugger)
          (sb-ext:disable-debugger))
-     (handler-case ,form
-       (sb-sys:interactive-interrupt ()
-         (println "(:SIGINT)")
-         (sb-ext:exit :code 130))
-       ;; ,@(when *no-exit* '()))
-       )))
+     (unwind-protect
+          (handler-case (progn ,@body)
+            (sb-sys:interactive-interrupt ()
+              (println "(:SIGINT)")
+              (sb-ext:exit :code 130)))
+       ;; reset terminal state
+       (.ris))))
 
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings."
@@ -97,18 +98,17 @@ keys."
               %class (cdr name)))
     `(,*default-cli-def* ,%name (apply #'make-cli ,%class (walk-cli-slots ',body)))))
 
-(defmacro defmain ((&key return (exit t)) &body body)
+(defmacro defmain ((&key return (exit t) (export t)) &body body)
   "Define a CLI main function in the current package."
   (with-gensyms (retval)
-    (let ((main (symbolicate 'main)))
+    (let ((main (symbolicate "MAIN")))
       (when return (setf retval return))
-      `(prog1
-           (defun ,main ()
-             "Run the top-level function and print to *STDOUT*."
-             (let ((*no-exit* ,(not exit)))
-	       (with-cli-handlers
-	           (progn ,@body ,@(unless (not (boundp 'retval)) (list retval))))))
-         (export '(,main))))))
+      `(let ((*no-exit* ,(not exit)))
+         (defun ,main ()
+           "Run the top-level function and print to *STDOUT*."
+	   (with-cli-handlers
+	       (progn ,@body ,@(unless (not (boundp 'retval)) (list retval)))))
+         ,@(when export `((export ',main)))))))
 
 ;;; Utils
 (defun make-cli (kind &rest slots)
@@ -238,7 +238,7 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
 
 (defun cli-opt-kind-p (s)
   (declare (type symbol s))
-  (find s *cli-opt-kinds*))
+  (find s *cli-opt-kinds* :test 'string-equal))
 
 ;;  TODO 2024-03-16: this should map directly to Lisp types (fixnum, boolean, etc)
 (eval-always
@@ -250,13 +250,11 @@ is a list of handlers for the opt-val."
 	   (super (when (consp kind-spec) (cadr kind-spec)))
 	   (fn-name (symbolicate 'parse- kind '-opt)))
       ;; thread em
-      (let ((fn1 (when (not (eql 'nil super)) (symbolicate 'parse- super '-opt))))
-        `(progn
-	   (defun ,fn-name ($val)
-	     "Parse the cli-opt-val $VAL."
-	     ;; do stuff
-	     (when (not (eql ',fn1 'nil)) (setq $val (funcall ',fn1 $val)))
-	     ,@body)))))
+      (let ((fn1 (unless (null super) (symbolicate 'parse- super '-opt))))
+        `(defun ,fn-name ($val)
+	   "Parse the cli-opt-val $VAL."
+	   ,@(when fn1 `((setq $val (funcall #',fn1 $val))))
+	   ,@body))))
 
   (make-opt-parser bool $val)
 

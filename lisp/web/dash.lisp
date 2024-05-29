@@ -2,8 +2,8 @@
 
 ;;; Code:
 (uiop:define-package :web/dash
-    (:use :cl :std :lack :lass :spinneret :cli/clap)
-  (:import-from :clack :clackup)
+  (:use :cl :std #+nil :lass #+nil :spinneret :cli/clap)
+  ;; (:import-from :clack :clackup)
   (:export 
    :main
    :serve-static-assets
@@ -21,15 +21,11 @@
     (print "starting dash server on ~A" port)
     (handler-case (sb-thread:join-thread (find-if (lambda (th)
                                                     (search "hunchentoot" (sb-thread:thread-name th)))
-                                                  (sb-thread:all-threads)))
+                                                  (sb-thread:list-all-threads)))
       ;; Catch a user's C-c
       (#+sbcl sb-sys:interactive-interrupt
-       #+ccl  ccl:interrupt-signal-condition
-       #+clisp system::simple-interrupt-condition
-       #+ecl ext:interactive-interrupt
-       #+allegro excl:interrupt-signal
        () (progn
             (format *error-output* "Aborting.~&")
-            (clack:stop *server*)
+            ;; (clack:stop *server*)
             (uiop:quit)))
       (error (c) (format t "Woops, an unknown error occured:~&~a~&" c)))))

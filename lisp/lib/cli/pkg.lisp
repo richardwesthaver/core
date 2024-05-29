@@ -85,7 +85,7 @@
    :vspark :*vticks*))
 
 (defpackage :cli/repl
-  (:use :cl :std :cli/progress :cli/spark #+readline :cl-readline)
+  (:use :cl :std :cli/progress :cli/spark)
   (:export :load-acl-repl :start-rl-repl))
 
 (defpackage :cli/ed
@@ -96,6 +96,7 @@
 (defpackage :cli/clap
   (:nicknames :clap)
   (:use :cl :std :log :sb-ext)
+  (:import-from :cli/ansi :.ris)
   (:import-from :uiop :println)
   (:import-from :sb-ext :parse-native-namestring)
   (:shadowing-import-from :sb-ext :exit)
@@ -108,6 +109,7 @@
    :command-line-args
    :*cli-group-separator*
    :*cli-opt-kinds*
+   :cli-opt-kind-p
    :global-opt-p
    :*std-local-env-var-names*
    :*std-global-env-var-names*
@@ -165,8 +167,8 @@
    :cli-cmd
    :cli-cd
    :find-cmd
-   :find-opt
-   :find-short-opt
+   :find-opts
+   :find-short-opts
    :install-ast
    ;; :gen-cli-thunk
    :install-thunk
@@ -191,11 +193,13 @@
   (:use :cl :std)
   (:export))
 
-(uiop:define-package :cli
-    (:use :cl :std)
+(in-package :std-user)
+
+(defpkg :cli
+  (:use :cl :std)
   (:use-reexport :cli/shell :cli/ansi :cli/prompt
    :cli/progress :cli/spark :cli/prompt :cli/ed
    :cli/repl :cli/clap))
 
-(defpackage :cli-user
-  (:use :cl :std :cli))
+(defpkg :cli-user (:use :cl :std :cli))
+  

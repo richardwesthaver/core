@@ -1,5 +1,5 @@
 (defpackage :net/tests
-  (:use :rt :std :cl :net :sb-concurrency :sb-thread))
+  (:use :rt :std :cl :net :sb-concurrency :sb-thread :dat/proto))
 
 (in-package :net/tests)
 
@@ -8,7 +8,12 @@
 (in-readtable :std)
 (deftest sanity ())
 
-(deftest sans-io (:disabled t)
+(deftest sans-io ()
+  (define-protocol mockz () (data) :version 2 :features (list :foo :bar :baz))
+  (is (eql 'mockz (protocol-name (make-instance 'mockz))))
+  (is (null (protocol-features (make-instance 'sans-io-protocol :features nil))))
+  (is (= 3 (length (protocol-features (make-instance 'mockz)))))
+  (is (= 2 (protocol-version (make-instance 'mockz))))
   (defclass mock-transport-config (transport-config)
     (max-bidi-streams
      max-uni-streams
@@ -23,13 +28,9 @@
      (datagram-rx-buffer-size :initform 1250000)
      (datagram-tx-buffer-size :initform (* 1024 1024))))
   (defclass mock-server-config (server-config)
-    ((port :initarg :port :initform 0))
-    (:default-initargs
-     :transport (make-instance 'mock-transport-config)))
+    ((port :initarg :port :initform 0)))
   (defclass mock-client-config (client-config)
-    ((port :initarg :port :initform 0))
-    (:default-initargs
-     :transport (make-instance 'mock-transport-config)))
+    ((port :initarg :port :initform 0)))
   (defclass mock-endpoint (endpoint)
     ((tx :initarg :tx)
      (rx :initarg :rx))
@@ -40,11 +41,16 @@
 
 (deftest dns ())
 
-(deftest tcp ())
+(deftest tcp ()
+  (with-tcp-client (client)
+    (is (typep client 'sb-bsd-sockets:inet-socket))))
 
-(deftest udp ())
+(deftest udp ()
+  (with-udp-client (client)
+    (is (typep client 'sb-bsd-sockets:inet-socket))))
 
-(deftest tlv ())
+(deftest tlv ()
+  (is (= 4 (length (serialize (make-instance 'tlv :type 0 :length 1 :value #(1)) :bytes)))))
 
 (deftest osc ())
 
@@ -137,3 +143,9 @@ Cookie: name=wookie
 "#))
     (is cb)
     (is req)))
+
+(deftest req ())
+
+(deftest fetch ())
+
+(deftest cookies ())

@@ -20,6 +20,6 @@
 
 
 (defsystem :nlp/tests
-  :depends-on (:nlp :std :rt)
+  :depends-on (:rt :log :nlp)
   :components ((:file "tests"))
-  :in-order-to ((test-op (rt:do-tests :nlp))))
+  :in-order-to ((test-op (uiop:symbol-call :rt :do-tests :nlp))))

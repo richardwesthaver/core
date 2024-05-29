@@ -21,20 +21,36 @@
 
 (defpackage :net/sans-io
   (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
-  (:export))
+  (:export :sans-io-protocol :protocol-version :protocol-name :protocol-features
+   :*max-connection-id* :*initial-mtu* :*max-stream-count* :*max-udp-payload*
+   :*word-length* :sans-io-error :packet-serializer-error :packet-deserializer-error
+   :packet-header-serializer-error :packet-header-deserializer-error :frame-serializer-error :frame-deserializer-error
+   :stream-id :stream-direction :event-id :event
+   :endpoint-event :connection-event :connection-id :connection-id-generator
+   :connection :connection-idle-timeout :peer-id :peer-address
+   :peer :clientp :serverp :endpoint-config
+   :transport-config :server-config :client-config :endpoint
+   :handle-event :handle :connect :default-client-config
+   :packet-number :packet-header :packet-payload :packet
+   :frame :size-bound :frame-type :with-endpoint
+   :with-client :define-protocol :define-endpoint :define-event
+   :define-handler))
 
 (defpackage :net/udp
   (:nicknames :udp)
   (:use :cl :std :net/core :sb-bsd-sockets)
   (:export
    :udp-server
+   :with-udp-client
+   :with-udp-server
    :with-udp-client-and-server))
 
 (defpackage :net/tcp
   (:nicknames :tcp)
   (:use :cl :std :net/core :sb-bsd-sockets)
   (:export
-   :tcp-server))
+   :tcp-server
+   :with-tcp-client))
 
 (defpackage :net/codec/punycode
   (:nicknames :codec/punycode)
@@ -305,12 +321,19 @@
    :retry-request
    :ignore-and-continue))
 
-(uiop:define-package :net/fetch
+(defpackage :net/fetch
   (:nicknames :fetch)
   (:use :cl :std :obj/uri)
   (:export :fetch :download))
 
-(uiop:define-package :net
+(defpackage :net/srv
+  (:nicknames :srv)
+  (:use :cl :std :obj/uri :net/core :net/proto/http :net/sans-io :net/cookie :dat/base64 :sb-gray)
+  (:export))
+
+(in-package :std-user)
+
+(defpkg :net
   (:use-reexport 
    :net/core 
    :net/tcp 

@@ -55,8 +55,6 @@ VALUE which is an OCTET-VECTOR of length LENGTH."))
             (read-sequence value from)
             (make-tlv type length value))))))
 
-
-
 (defmethod serde ((from tlv) (to simple-array))
   (with-slots (type length value) from
     (setf (aref to 0) type)

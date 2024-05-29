@@ -810,7 +810,7 @@
   status-text)
 
 ;;; Errors
-(define-condition http-error (net-error)
+(define-condition http-error (protocol-error)
   (description)
   (:report
    (lambda (condition stream)
@@ -847,7 +847,6 @@
   ((description :initform "the message-complete callback failed")))
 (define-condition cb-status (callback-error)
   ((description :initform "the status callback failed")))
-
 
 ;;
 ;; Parsing-related errors

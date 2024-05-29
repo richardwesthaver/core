@@ -29,11 +29,13 @@
 
 (defcmd skc-init
   (let ((file (when $args (pop $args)))
-	(name (if (> $argc 1) (pop $args))))
+	(name (when (> $argc 1) (pop $args)))) ;; TODO: test, may need to be
+                                               ;; sequential for side-effect
+                                               ;; of pop
     (handler-bind
-	((sb-ext:file-exists 
+	((sb-ext:file-exists
 	   #'(lambda (s)
-	       (uiop:println (format nil "file already exists: ~A" (or file *default-skelfile*)))
+	       (std:println (format nil "file already exists: ~A" (or file *default-skelfile*)))
 	       (let ((f2 (read-line)))
 		 (if (string= f2 "") 
 		     (error s)
@@ -83,7 +85,6 @@
     (":vc" (sk-vc *skel-project*))
     (":docs" (sk-docs *skel-project*))
     (":scripts" (sk-scripts *skel-project*))
-    (":snippets" (sk-snippets *skel-project*))
     (":rules" (sk-rules *skel-project*))
     (":env" (sk-env *skel-project*))
     (":vars" (sk-vars *skel-project*))
@@ -111,7 +112,7 @@
 (defcmd skc-pull
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "pull" $args t))
-    (:hg (run-hg-command "pull" (append "-u" $args) t))
+    (:hg (run-hg-command "pull" (append '("-u") $args) t))
     (t (skel-error "unknown VC type"))))
 
 (defun hg-status ()
@@ -162,7 +163,16 @@
                 (sk-find-script
                  (pathname-name script)
                  (find-skelfile #P"." :load t))))) $args)
-      (required-argument :script)))
+      (required-argument 'name)))
+
+(defcmd skc-vc
+  (print $args)
+  (print $opts)
+  (print $cli)
+  (if $args
+      (std/string:string-case ((car $args) :default (skel-error "invalid command"))
+        ("status" (skc-status nil nil)))
+      (skc-status nil $opts)))
 
 (defcmd skc-shell
   (sb-ext:enable-debugger)
@@ -208,6 +218,11 @@
                    (:name "user" :description "print user configuration")
                    (:name "system" :description "print system configuration"))
 	   :thunk skc-show)
+          (:name vc
+           :description "version control"
+           :thunk skc-vc
+           :opts (make-opts
+                   (:name "root" :description "repository path" :kind directory)))
           (:name id
            :description "print the project id"
            :thunk skc-id)
