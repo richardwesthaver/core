@@ -23,49 +23,48 @@
     (unless (<= numarg 3)
       (error "Bad value for #f: ~a" numarg))
     `(declare (optimize (speed ,numarg)
-                        (safety ,(- 3 numarg))))))
+                        (safety ,(- 3 numarg)))))
 
-;; Nestable suggestion from Daniel Herring
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun |#"-reader| (stream sub-char numarg)
-    (declare (ignore sub-char numarg))
-    (let (chars (state 'normal) (depth 1))
-      (loop do
-        (let ((curr (read-char stream)))
-          (cond ((eq state 'normal)
-                 (cond ((char= curr #\#)
-                        (push #\# chars)
-                        (setq state 'read-sharp))
-                       ((char= curr #\")
-                        (setq state 'read-quote))
-                       (t
-                        (push curr chars))))
-                ((eq state 'read-sharp)
-                 (cond ((char= curr #\")
-                        (push #\" chars)
-                        (incf depth)
-                        (setq state 'normal))
-                       (t
-                        (push curr chars)
-                        (setq state 'normal))))
-                ((eq state 'read-quote)
-                 (cond ((char= curr #\#)
-                        (decf depth)
-                        (if (zerop depth) (return))
-                        (push #\" chars)
-                        (push #\# chars)
-                        (setq state 'normal))
-                       (t
-                        (push #\" chars)
-                        (if (char= curr #\")
-                            (setq state 'read-quote)
-                            (progn
-                              (push curr chars)
-                              (setq state 'normal)))))))))
-      (coerce (nreverse chars) 'string))))
+  ;; Nestable suggestion from Daniel Herring
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun |#"-reader| (stream sub-char numarg)
+      (declare (ignore sub-char numarg))
+      (let (chars (state 'normal) (depth 1))
+        (loop do
+                 (let ((curr (read-char stream)))
+                   (cond ((eq state 'normal)
+                          (cond ((char= curr #\#)
+                                 (push #\# chars)
+                                 (setq state 'read-sharp))
+                                ((char= curr #\")
+                                 (setq state 'read-quote))
+                                (t
+                                 (push curr chars))))
+                         ((eq state 'read-sharp)
+                          (cond ((char= curr #\")
+                                 (push #\" chars)
+                                 (incf depth)
+                                 (setq state 'normal))
+                                (t
+                                 (push curr chars)
+                                 (setq state 'normal))))
+                         ((eq state 'read-quote)
+                          (cond ((char= curr #\#)
+                                 (decf depth)
+                                 (if (zerop depth) (return))
+                                 (push #\" chars)
+                                 (push #\# chars)
+                                 (setq state 'normal))
+                                (t
+                                 (push #\" chars)
+                                 (if (char= curr #\")
+                                     (setq state 'read-quote)
+                                     (progn
+                                       (push curr chars)
+                                       (setq state 'normal)))))))))
+        (coerce (nreverse chars) 'string))))
 
-                                        ; This version is from Martin Dirichs
-(eval-when (:compile-toplevel :load-toplevel :execute)
+  ;; This version is from Martin Dirichs
   (defun |#>-reader| (stream sub-char numarg)
     (declare (ignore sub-char numarg))
     (let (chars)
@@ -92,8 +91,6 @@
             (nthcdr (length pattern) output))
            'string))))))
 
-;; (set-dispatch-macro-character #\# #\> #'|#>-reader|)
-
 (defun segment-reader (stream ch n)
   (if (> n 0)
       (let ((chars))
@@ -104,7 +101,6 @@
         (cons (coerce (nreverse chars) 'string)
               (segment-reader stream ch (- n 1))))))
 
-#+cl-ppcre
 (defmacro! match-mode-ppcre-lambda-form (o!args o!mods)
   ``(lambda (,',g!str)
       (cl-ppcre:scan-to-strings
@@ -113,7 +109,6 @@
             (format nil "(?~a)~a" ,g!mods (car ,g!args)))
        ,',g!str)))
 
-#+cl-ppcre
 (defmacro! subst-mode-ppcre-lambda-form (o!args)
   ``(lambda (,',g!str)
       (cl-ppcre:regex-replace-all
@@ -121,7 +116,6 @@
        ,',g!str
        ,(cadr ,g!args))))
 
-#+cl-ppcre
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun |#~-reader| (stream sub-char numarg)
     (declare (ignore sub-char numarg))

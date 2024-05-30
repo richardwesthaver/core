@@ -23,28 +23,34 @@
 (defparameter *shell-directory* nil)
 (defparameter *shell-input* nil)
 
+(deftype %shell-state () '(member :sh :dolla))
+
 (defun plain-shell-reader (stream)
-  (let (chars (state 'sh))
+  (let (chars (state :sh))
+    (declare (type %shell-state state))
     (loop do
              (let ((c (read-char stream)))
                (cond
-                 ((eq state 'sh)
-                  (when (char= c #\$) (setq state 'dolla))
+                 ((eq state :sh)
+                  (when (char= c #\$) (setq state :dolla))
                   (push c chars))
-                 ((eq state 'dolla)
+                 ((eq state :dolla)
                   (cond
                     ((char= c #\#)
                      ;; remove trailing '$'
                      (pop chars)
                      (return))
-                    (t (setq state 'sh) (push c chars)))))))
+                    (t (setq state :sh) (push c chars)))))))
     (coerce (nreverse chars) 'string)))
 
-;; (defun lisp-shell-reader (stream numarg))
+(defun lisp-shell-reader (stream numarg)
+  (declare (ignore numarg))
+  (read stream nil))
 
 (defmacro define-process-output-handler (type &body body)
   "Define a new function which handles the result of a SB-EXT:PROCESS in
-the context of the $#-reader macro.")
+the context of the $#-reader macro."
+  (declare (ignore type body)))
 
 (defun |#/-reader| (stream sub-char numarg)
   "parse STREAM using the LISP-SHELL-READER, expanding 'unquoted' lisp
