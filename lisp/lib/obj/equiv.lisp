@@ -67,3 +67,5 @@
 (defgeneric nequiv (a b))
 
 (defgeneric neqv (a b))
+
+(defgeneric equals (a b &rest args))

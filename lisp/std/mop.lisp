@@ -1,4 +1,4 @@
-;;; std/mop.lisp --- Standard MOP
+;;; std/mop.lisp --- Standard MOP Utilities
 
 ;;
 

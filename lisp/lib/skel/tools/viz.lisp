@@ -16,4 +16,4 @@
 ;; - wl  :: wayland backend - look into widgets, mcclim, gtk4
 
 ;;; Code:
-(in-package :skel/viz)
+(in-package :skel/tools/viz)

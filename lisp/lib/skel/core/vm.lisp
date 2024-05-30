@@ -1,10 +1,10 @@
-;;; VM
+;;; skel/core/vm.lisp --- The Skel Virtual Machine
 
 ;; Stack slots refer to objects. a Stack is a sequence of objects
 ;; which can be output to a stream using a specialized function.
 
 ;;; Code:
-(in-package :skel)
+(in-package :skel/core/vm)
 (deftype stack-slot-kind () '(member :shell :lisp :comment :var :rule :directive :nop))
 
 (defstruct stack-slot 

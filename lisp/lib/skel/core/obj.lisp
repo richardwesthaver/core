@@ -1,47 +1,8 @@
-;;; Objects
-(in-package :skel/core)
+;;; skel/core/obj.lisp --- Skel Objects
 
-;;; Vars
-(declaim (type vc-designator *default-skel-vc-kind*))
-(deftype vc-designator () '(member :hg :git list))
+;;; Code:
+(in-package :skel/core/obj)
 
-;; ref: https://spdx.org/licenses/
-(deftype license-designator () '(or string pathname (member :mpl2 :wtfpl :lgpg :llgpl :gpl :mit :mit0)))
-
-(defparameter *default-skel-vc-kind* :hg)
-(defparameter *default-skel-license-kind* :mpl2)
-(declaim (type sk-project *skel-project*))
-(defvar *skel-project*)
-(defvar *skel-env*)
-;; TODO (defvar *skelfile-boundary* nil "Set an upper bounds on how
-;; many times and how far to walk an arbitrary file directory.")
-
-(declaim (type string *default-skel-user* *default-skelfile* *default-skel-extension*))
-(defparameter *default-skel-user* (uid-username (unix-getuid)))
-(defparameter *default-skelfile* "skelfile")
-(defparameter *default-skel-extension* "sk")
-(defparameter *default-skelrc* ".skelrc")
-
-(declaim (type pathname *skel-stash* *skel-store*
-	       *skel-cache* *user-skelrc* *system-skelrc*))
-
-(defparameter *skel-stash* #P"/usr/local/share/skel/stash/")
-
-(defparameter *skel-store* #P"/usr/local/share/skel/store/")
-
-(defparameter *skel-cache* #P"/usr/local/share/skel/cache/")
-
-(defparameter *skel-registry* #P"/usr/local/share/skel/registry/")
-
-(defparameter *user-skelrc* (pathname (format nil "~~/~A" *default-skelrc*)))
-
-(defparameter *system-skelrc* (pathname "/etc/skelrc"))
-
-(defparameter *keep-ast* nil
-  "Whether to keep the :ast slot stored with an sk object, or set it to nil so
-that it can be GC'd.")
-
-;;; Objects
 (defclass skel (id)
   ()
   (:documentation "Base class for skeleton objects. Inherits from `sxp'."))
@@ -201,9 +162,9 @@ via the special form stored in RECIPE."))
     :export export
     :attach attach))
 
-(defmethod print-object ((self sk-document) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~S ~A" (sb-int:keywordicate (sk-kind self)) (sk-path self))))
+;; (defmethod print-object ((self sk-document) (stream t))
+;;   (print-unreadable-object (self stream :type t)
+;;     (format stream "~S ~A" (sk-kind self) (sk-path self))))
 
 (defmethod write-sxp-stream ((self sk-document) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(keywordicate (sk-kind self)) ,(sk-path self)
@@ -221,8 +182,6 @@ via the special form stored in RECIPE."))
   (sk-write-string (sk-path self)))
 
 ;;;; Script
-(deftype script-designator () '(member :bin :sh :bash :zsh :nu :lisp :python))
-
 (defclass sk-script (skel sk-meta sxp)
   ((kind :initform nil :initarg :kind :type (or null script-designator) :accessor sk-kind)))
 
@@ -358,8 +317,8 @@ via the special form stored in RECIPE."))
 
 (declaim (type sk-user-config *skel-user-config*))
 (declaim (type sk-system-config *skel-system-config*))
-(defvar *skel-user-config* (default-sk-user-config))
-(defvar *skel-system-config* (default-sk-system-config))
+(defvar *sk-user-config* (default-sk-user-config))
+(defvar *sk-system-config* (default-sk-system-config))
 
 ;;;; Snippet
 (defstruct sk-snippet
@@ -383,7 +342,7 @@ via the special form stored in RECIPE."))
   (kind *default-skel-vc-kind* :type vc-designator)
   (remotes nil :type (or string list)))
 
-(defmethod write-sxp-stream ((self sk-vc-meta) stream &key (pretty t) (case :downcase) (fmt :collapsed))
+(defmethod write-sxp-stream ((self sk-vc-meta) stream &key (pretty t) (case :downcase) (fmt :pretty))
   (if (= 0 (length (sk-vc-meta-remotes self)))
       (write (sk-vc-meta-kind self) :stream stream :pretty pretty :case case :readably t :array t :escape t)
       (progn
@@ -426,8 +385,11 @@ via the special form stored in RECIPE."))
             :accessor sk-imports
             :type (vector pathname))))
 
+
 (defun find-sk-symbol (s)
-  (find-symbol* (symbol-name s) :skel/core nil))
+  (handler-bind ((error #'(lambda (con)
+                          (funcall #'skel-error con))))
+    (find-symbol* (symbol-name s) :skel/core/obj t)))
 
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))

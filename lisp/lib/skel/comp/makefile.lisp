@@ -19,7 +19,7 @@
 ;; https://www.gnu.org/software/make/manual/html_node/Parsing-Makefiles.html
 
 ;;; Code:
-(in-package :skel/comp)
+(in-package :skel/comp/makefile)
 
 (defparameter *default-makefile* "makefile")
 (defparameter *makefile-extension* "mk")
@@ -31,11 +31,11 @@
 
 (deftype mk-val-designator () '(member nil :simple :immediate :conditional :recursive :once :append :shell))
 
-(defstruct mk-val "" (kind nil :type mk-val-designator)  (val nil :type sxp:form))
+(defstruct mk-val (kind nil :type mk-val-designator)  (val nil :type sxp:form))
 
-(defstruct mk-var ""
-	   (key "" :type string)
-	   (val (make-mk-val) :type mk-val))
+(defstruct mk-var
+  (key "" :type string)
+  (val (make-mk-val) :type mk-val))
 
 ;; https://www.gnu.org/software/make/manual/html_node/Makefile-Contents.html
 (defclass makefile (skel sk-meta)
@@ -49,15 +49,15 @@
 	     :type (vector sk-rule) :accessor mk-irules))
   (:documentation "A virtual GNU Makefile."))
 
-(defmethod push-rule ((self sk-rule) (place makefile) &optional implicit)
+(defmethod push-mk-rule ((self sk-rule) (place makefile) &optional implicit)
   (if implicit
       (vector-push-extend self (mk-irules place))
       (vector-push-extend self (mk-erules place))))
 
-(defmethod push-directive ((self sk-command) (place makefile))
+(defmethod push-mk-directive ((self sk-command) (place makefile))
   (vector-push-extend self (mk-directives place)))
 
-(defmethod push-var ((self cons) (place makefile))
+(defmethod push-mk-var ((self cons) (place makefile))
   (destructuring-bind (k v) self
     (setf (gethash k (mk-vars place)) v)))
 
@@ -100,3 +100,20 @@
 
 (defmethod sk-read-file ((self makefile) path)
   (with-open-file (in path :direction :input)))
+
+;;; Readtable
+(defreadtable :makefile
+  (:merge :std))
+
+;;; Auto Vars
+
+;; simplified version of GNU Make Automatic Variables
+
+;; don't need these: $% $? $+ $*
+
+(defmacro def-mk-auto (sym ll &body body))
+
+(def-mk-auto $@ (rule) (sk-rule-target rule))
+(def-mk-auto $< (rule) (car (sk-rule-source rule)))
+(def-mk-auto $^ (rule) (sk-rule-source rule))
+

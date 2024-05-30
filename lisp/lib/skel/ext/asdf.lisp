@@ -18,4 +18,4 @@
 ;; - https://github.com/atlas-engineer/nyxt/tree/master/libraries/nasdf
 
 ;;; Code:
-(defpackage :skel/asdf)
+(in-package :skel/ext/asdf)

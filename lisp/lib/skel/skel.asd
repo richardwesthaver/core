@@ -5,34 +5,48 @@
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std
                      :obj :dat :cli :organ :doc :vc
-                     (:feature :inspect :clouseau))
+                     (:feature :ext :pod)
+                     (:feature :ext :box)
+                     (:feature :ext :krypt)
+                     (:feature :ext :packy)
+                     (:feature :ext :net)
+                     (:feature (:and :ext :clouseau) :clouseau))
   :serial t
   :components 
-  ((:file "pkg")
-   (:module "core"
+  ((:module "core"
     :serial t
     :components 
-    ((:file "err")
+    ((:file "pkg")
+     (:file "err")
+     (:file "types")
      (:file "proto")
      (:file "header")
-     (:file "virt")
+     (:file "vars")
      (:file "obj")
      (:file "util")
      (:file "vm")))
    (:module "comp"
     :components
-    ((:file "asd")
+    ((:file "pkg")
+     (:file "asd")
      (:file "makefile")
      (:file "pkgbuild")))
+   (:file "pkg")
    (:module "tools"
     :components
-    ((:file "deploy")
-     (:file "viz")))
+    ((:file "pkg")
+     (:file "deploy")
+     (:file "viz"))
+    :if-feature :tools)
    (:module "ext"
     :components
-    ((:file "asdf")
-     #+inspect (:file "inspect")
-     (:file "net"))))
+    ((:file "pkg")
+     (:file "asdf")
+     (:file "inspect" :if-feature :clouseau)
+     (:file "krypt")
+     (:file "packy")
+     (:file "net"))
+    :if-feature :ext))
   :in-order-to ((test-op (test-op "skel/tests"))))
 
 (defsystem :skel/tests

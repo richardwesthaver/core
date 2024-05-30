@@ -1,4 +1,4 @@
-;;; std/sys.lisp @ 2023-10-14.03:28:40 -*- mode: lisp; -*-
+;;; std/sys.lisp --- Lisp System Utilities
 
 ;;
 
@@ -60,17 +60,14 @@
                              (zerop (sb-posix:wexitstatus status))))))))))))
 
 ;; TODO 2024-05-09: 
-;; (defun decode-all-debug-data ()
-;;   (dolist (code (sb-vm:list-allocated-objects :all :type sb-vm:code-header-widetag))
-;;     (let ((info (sb-kernel:%code-debug-info code)))
-;;       (when (typep info 'sb-c::compiled-debug-info)
-;;         (let ((fun-map (sb-di::get-debug-info-fun-map
-;;                         (sb-kernel:%code-debug-info code))))
-;;           (loop for i from 0 below (length fun-map) by 2 do
-;;             (let ((cdf (aref fun-map i)))
-;;               (sb-di::debug-fun-lambda-list
-;;                (sb-di::make-compiled-debug-fun cdf code))))))
-;;       (print info))))
+(setq *test* (the integer 1))
+
+(defparameter *gc-logfile* #P"gc.log")
+
+(defun enable-gc-logfile (&optional (file *gc-logfile*))
+  (setf (sb-ext:gc-logfile) file))
+
+(length (sb-di::list-allocated-objects :dynamic :test #'stringp))
 
 (defun forget-shared-objects ()
   "Set the DONT-SAVE slot of all objects in SB-SYS:*SHARED-OBJECTS* to T."

@@ -10,7 +10,7 @@
 ;; will end up violating all that is DRY and holy.
 
 ;;; Code:
-(in-package :skel/comp)
+(in-package :skel/comp/asd)
 
 ;; (describe (asdf:find-system :skel))
 

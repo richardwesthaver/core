@@ -30,107 +30,20 @@
 ;; 
 
 ;;; Code:
-(defpackage :skel/core
-  (:use :cl :cl-ppcre :std :sb-mop :obj/id :sb-bsd-sockets :sb-unix :sxp :log :cli :obj :vc :sb-ext)
-  (:import-from :cli :find-exe)
-  (:import-from :uiop :read-file-forms :ensure-absolute-pathname)
-  (:import-from :uiop/pathname :pathname-parent-directory-pathname)
-  (:import-from :uiop :with-current-directory)
-  (:import-from :sb-ext :run-program :cas)
-  (:import-from :std :when-let :if-let :if-let*)
-  (:import-from :sxp :form)
-  (:export
-   ;; err
-   :skel-error
-   :skel-syntax-error
-   :skel-fmt-error
-   :skel-compile-error
-   ;; proto
-   :sk-run :sk-new :sk-save
-   :sk-tangle :sk-weave
-   :sk-call :sk-print :sk-load
-   :sk-compile :sk-transform
-   :sk-write :sk-writeln
-   :sk-write-string :sk-write-file
-   :sk-read-file :sk-install-user-config
-   :sk-find-rule
-   :sk-find-script
-   ;; header
-   :make-file-header 
-   :make-shebang-file-header 
-   :make-source-file-header 
-   :file-header-kind
-   :make-source-header-comment 
-   :make-shebang-comment
-   ;; virt
-   :containerfile
-   :*default-containerfile*
-   ;; obj
-   :*user-skelrc* :*system-skelrc* :*keep-ast*
-   :*skel-project* :*skel-user-config* :*skel-system-config* :*default-skelrc* :*skel-registry* :*skel-cache*
-   :*default-skelfile* :*default-skel-user* :*default-skel-cache*
-   :*skelfile-extension* :*skelfile-boundary*
-   :load-ast :sk-license
-   :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user :sk-store
-   :sk-push :sk-pull
-   :sk-tags :sk-imports
-   :edit-skelrc
-   :skel :sk-meta :def-sk-class :sk-project :sk-target :sk-source :sk-vc
-   :sk-vc-meta :sk-vc-meta-kind :sk-vc-meta-remotes
-   :sk-vars :sk-env
-   :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe :make-sk-rule
-   :sk-make
-   :sk-description :sk-kind :sk-rules :sk-version :sk-name :sk-docs :sk-document 
-   :sk-command :sk-scripts :sk-script :sk-config :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
-   :sk-user-config
-   :sk-system-config
-   ;; util
-   :init-skelrc :load-skelrc
-   :init-skel-vars
-   :init-user-skelrc :load-user-skelrc
-   :init-system-skelrc :load-system-skelrc
-   :init-skelfile
-   :load-skelfile
-   :find-skelfile
-   :find-project-root
-   :describe-skeleton
-   :describe-project
-   ;; vm
-   :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push))
+(pkg:defpkg :skel/core
+  (:use :cl :std)
+  (:use-reexport :skel/core/err :skel/core/types :skel/core/proto :skel/core/vars :skel/core/header :skel/core/obj
+                 :skel/core/util :skel/core/vm :dat/sxp))
 
-(defpackage :skel/comp
-  (:use :cl :std :skel/core :sxp)
-  (:export
-   ;; asd
-   :sk-asd
-   ;; ignore
-   ;; containerfile
-   ;; makefile
-   :*default-makefile* :*makefile-extension* 
-   :*mk-magic-vars* :*mk-command-prefixes*
-   :mk-val-designator 
-   :mk-val :mk-var
-   :makefile :push-rule :push-directive :push-var))
+(pkg:defpkg :skel/comp
+  (:use :cl :std)
+  (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile :skel/comp/pkgbuild))
 
-(uiop:define-package :skel
-    (:use :cl :std :skel/core :skel/comp)
-    (:use-reexport :skel/core :skel/comp))
+(pkg:defpkg :skel
+  (:nicknames :sk)
+  (:use :cl :std)
+  (:use-reexport :skel/core :skel/comp))
 
-;;; Tools
-(defpackage :skel/viz
-  (:use :cl :std :skel)
-  (:export))
-
-(defpackage :skel/deploy
-  (:use :cl :std :skel)
-  (:export))
-
-;;; Extensions
-(defpackage :skel/asdf
-  (:use :cl :std :skel)
-  (:export))
-
-;; requires clouseau
-(defpackage :skel/inspect
-  (:use :cl :std :skel)
-  (:export :sk-inspect))
+(pkg:defpkg :sk-user
+  (:use :cl :std)
+  (:use-reexport :skel))

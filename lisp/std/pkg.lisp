@@ -4,7 +4,7 @@
 (defpackage :std-user
   (:use :cl :std/named-readtables :std/defpkg)
   (:shadowing-import-from :std/defpkg :defpkg)
-  (:export :defpkg :in-readtable))
+  (:export :defpkg :in-readtable :define-lisp-package))
 
 (in-package :std-user)
 

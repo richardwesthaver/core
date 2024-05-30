@@ -1,1 +1,0 @@
-(defpackage :skel/cargo)

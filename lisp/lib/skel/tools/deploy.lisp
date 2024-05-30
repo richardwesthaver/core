@@ -11,4 +11,4 @@
 ;; multiple project pipelines this package will have the superior DX.
 
 ;;; Code:
-(in-package :skel/deploy)
+(in-package :skel/tools/deploy)

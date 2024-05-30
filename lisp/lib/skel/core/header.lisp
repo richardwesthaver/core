@@ -3,7 +3,8 @@
 ;;
 
 ;;; Code:
-(in-package :skel)
+(in-package :skel/core/header)
+
 ;;; File Headers
 (deftype file-header-kind () '(member :source :shebang))
 

@@ -2,11 +2,10 @@
 
 ;;  TODO 2024-05-09: add shell configurables to rules - maybe at sk-command
 ;;  level. :INPUT :WAIT :OUTPUT
-
-(uiop:define-package :bin/skel
-  (:use :cl :std :cli/clap :vc :sb-ext)
+(in-package :sk-user)
+(defpkg :bin/skel
+  (:use :cl :std :cli/clap :vc :sb-ext :skel :log :dat/sxp)
   (:import-from :cli/shell :*shell-input*)
-  (:use-reexport :skel :log)
   (:export :main))
 
 (in-package :bin/skel)
@@ -14,10 +13,11 @@
 
 (defopt skc-help (print-help $cli) $val)
 (defopt skc-version (print-version $cli))
-(defopt skc-level *log-level* (setq *log-level* (if $val (if (stringp $val)
-                                                             (sb-int:keywordicate (string-upcase $val))
-                                                             $val)
-                                                    :info)))
+(defopt skc-level *log-level*
+  (setq *log-level* (if $val (if (stringp $val)
+                                 (sb-int:keywordicate (string-upcase $val))
+                                 $val)
+                        :info)))
 
 ;; TODO 2023-10-13: almost there
 ;; (defopt skc-config
@@ -30,8 +30,8 @@
 (defcmd skc-init
   (let ((file (when $args (pop $args)))
 	(name (when (> $argc 1) (pop $args)))) ;; TODO: test, may need to be
-                                               ;; sequential for side-effect
-                                               ;; of pop
+    ;; sequential for side-effect
+    ;; of pop
     (handler-bind
 	((sb-ext:file-exists
 	   #'(lambda (s)
@@ -176,14 +176,14 @@
   (trace! "starting skel shell")
   (setq *no-exit* t)
   (cli/clap::with-cli-handlers
-      (progn
-        (in-package :sk-user)
-        (use-package :cl-user)
-        (use-package :sb-ext)
-        (use-package :std-user)
-        (init-skel-vars)
-        (println "Welcome to SKEL")
-        (sb-impl::toplevel-repl nil))))
+    (progn
+      (in-package :sk-user)
+      (use-package :cl-user)
+      (use-package :sb-ext)
+      (use-package :std-user)
+      (init-skel-vars)
+      (println "Welcome to SKEL")
+      (sb-impl::toplevel-repl nil))))
 
 (define-cli $cli
   :name "skel"
@@ -258,9 +258,6 @@
 	  (:name shell
 	   :description "open the sk-shell interpreter"
            :thunk skc-shell)))
-
-(defpackage :sk-user
-  (:use :cl :std :skel))
 
 (defmain ()
   (in-package :sk-user)

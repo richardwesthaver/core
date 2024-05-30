@@ -1,5 +1,5 @@
 ;;; Proto
-(in-package :skel/core)
+(in-package :skel/core/proto)
 
 (defgeneric sk-run (self)
   (:documentation "run the object SELF."))
@@ -21,6 +21,8 @@
   (:documentation "compile object SELF to output STREAM"))
 (defgeneric sk-transform (self other &key &allow-other-keys)
   (:documentation "transform SELF to object of type OTHER"))
+(defgeneric sk-read (self stream)
+  (:documentation "read and fill SELF with an object from STREAM."))
 (defgeneric sk-read-file (self path)
   (:documentation "read a PATH from the filesystem with SELF."))
 (defgeneric sk-write (self stream)

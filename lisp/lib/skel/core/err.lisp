@@ -1,5 +1,8 @@
-;;; Conditions
-(in-package :skel/core)
+;;; skel/core/err.lisp --- Skel Errors
+
+;;; Code:
+(in-package :skel/core/err)
+
 (eval-always
   (deferror skel-error (std-error) () (:auto t)))
 
