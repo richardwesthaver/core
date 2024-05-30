@@ -13,7 +13,7 @@
 ;; - web :: interactive 3d/2d graph, probably based on d3.js, prefer wasm
 ;; - svg :: configurable vector graphic backend
 ;; - txt :: text-based, simplified output -- utf-8 or ascii
-;; - wl  :: wayland backend - look into widgets, mcclim, gtk4
+;; - native  :: native backend - look into widgets, mcclim, gtk4
 
 ;;; Code:
 (in-package :skel/tools/viz)
