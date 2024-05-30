@@ -59,9 +59,6 @@
                     (funcall completion-function
                              (zerop (sb-posix:wexitstatus status))))))))))))
 
-;; TODO 2024-05-09: 
-(setq *test* (the integer 1))
-
 (defparameter *gc-logfile* #P"gc.log")
 
 (defun enable-gc-logfile (&optional (file *gc-logfile*))
