@@ -35,7 +35,7 @@
 (in-package :vc)
 
 (defvar *default-hg-client-buffer-size* 4096)
-(defvar *hg-program* (or (find-exe "rhg") (find-exe "hg")))
+(defvar *hg-program* (or (cli:find-exe "rhg") (cli:find-exe "hg")))
 
 (defun run-hg-command (cmd &optional args output (wait t))
   "Run an hg command."
@@ -120,7 +120,7 @@
 
 (defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
 
-(defmethod vc-branch ((self hg-repo) &key cmd branch &allow-other-keys) (vc-run self "branch" cmd branch))
+(defmethod vc-branch ((self hg-repo)) (vc-run self "branch"))
 
 (defmethod vc-diff ((a hg-repo) (b hg-repo) &key &allow-other-keys) 
   (vc-run a "diff" (vc-repo-head a) (vc-repo-head b)))

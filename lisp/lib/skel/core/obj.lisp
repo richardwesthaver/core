@@ -231,7 +231,9 @@ via the special form stored in RECIPE."))
    (auto-insert :initform nil :initarg :auto-insert :type form))
   (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
 
+(declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
+(defun sk-dir (o) (directory-namestring (sk-path o)))
 
 (defmethod load-ast ((self sk-config))
   ;; internal ast is never tagged
@@ -242,13 +244,13 @@ via the special form stored in RECIPE."))
 	  (sb-int:doplist (k v) ast
             (when-let ((s (find-sk-symbol k)))
 	      (setf (slot-value self s) v))) ;; needs to be the correct package
-	  (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (sk-stash self))))
-	  (when (bound-string-p self 'store) (setf (sk-store self) (pathname (sk-store self))))
-	  (when (bound-string-p self 'cache) (setf (sk-cache self) (pathname (sk-cache self))))
-	  (when (bound-string-p self 'registry) (setf (sk-registry self) (pathname (sk-registry self))))
+	  (when (bound-string-p self 'stash) (setf (sk-stash self) (merge-pathnames (sk-stash self) (sk-dir self))))
+	  (when (bound-string-p self 'store) (setf (sk-store self) (merge-pathnames (sk-store self) (sk-dir self))))
+	  (when (bound-string-p self 'cache) (setf (sk-cache self) (merge-pathnames (sk-cache self) (sk-dir self))))
+	  (when (bound-string-p self 'registry) (setf (sk-registry self) (merge-pathnames (sk-registry self) (sk-dir self))))
 	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
 					             ;; TODO 2023-10-14: convert into list of script names
-					             (pathname (sk-scripts self))))
+					             (merge-pathnames (sk-scripts self) (sk-dir self))))
 	  (unless *keep-ast* (setf (ast self) nil))
 	  self)
 	;; invalid ast, signal error

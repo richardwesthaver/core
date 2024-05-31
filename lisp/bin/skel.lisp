@@ -91,16 +91,16 @@
     (":imports" (sk-imports *skel-project*))
     (":stash" (sk-stash *skel-project*))
     (":store" (sk-store *skel-project*))
-    (":config" (describe *skel-user-config*))
-    (":sys" (describe *skel-system-config*))
-    (":cache" (sk-cache *skel-user-config*))))
+    (":config" (describe *sk-user-config*))
+    (":sys" (describe *sk-system-config*))
+    (":cache" (sk-cache *sk-user-config*))))
 
 (defcmd skc-show
   (if $args 
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) $args)
       (describe (if (boundp '*skel-project*) *skel-project*
-                    (if (boundp '*skel-user-config*) *skel-user-config*
-                        (if (boundp '*skel-system-config*) *skel-system-config*
+                    (if (boundp '*sk-user-config*) *sk-user-config*
+                        (if (boundp '*sk-system-config*) *sk-system-config*
                             (skel-error "skel config files not installed")))))))
 
 (defcmd skc-push
@@ -185,6 +185,9 @@
       (println "Welcome to SKEL")
       (sb-impl::toplevel-repl nil))))
 
+(defcmd skc-new
+  (trace! $args $opts))
+  
 (define-cli $cli
   :name "skel"
   :version "0.1.1"
@@ -203,8 +206,12 @@
   :cmds (make-cmds
 	  (:name init
 	   :description "initialize a skelfile in the current directory"
-	   :opts (make-opts (:name "name" :description "project name" :kind string))
-	   :thunk skc-init)
+           :opts (make-opts (:name "name" :description "project name" :kind string))
+           :thunk skc-init)
+          (:name new
+           :description "make a new skel project"
+           :opts (make-opts (:name "name" :description "project name" :kind string))
+           :thunk skc-new)
           (:name describe
            :description "describe a skelfile"
            :thunk skc-describe)

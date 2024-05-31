@@ -1,6 +1,6 @@
 (in-package :vc)
 
-(defvar *git-program* (find-exe "git"))
+(defvar *git-program* (cli:find-exe "git"))
 
 (defun run-git-command (cmd &optional args output (wait t))
   (unless (listp args) (setf args (list args)))
@@ -86,7 +86,7 @@
 
 (defmethod vc-status ((self git-repo) &key &allow-other-keys) (vc-run self "status"))
 
-(defmethod vc-branch ((self git-repo) &key cmd branch &allow-other-keys) (vc-run self "branch" cmd branch))
+(defmethod vc-branch ((self git-repo)) (vc-run self "branch"))
 
 (defmethod vc-diff ((a git-repo) (b git-repo) &key &allow-other-keys)
   (vc-run a "diff" (vc-repo-head a) (vc-repo-head b)))

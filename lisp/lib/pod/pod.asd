@@ -1,5 +1,5 @@
 (defsystem :pod
-  :depends-on (:std :cli :obj :dat :net :flexi-streams :dexador)
+  :depends-on (:std :cli :obj :dat :net :flexi-streams)
   :components ((:file "pkg")
                (:file "err")
                (:module "obj"

@@ -10,7 +10,11 @@
                (:file "repl" :depends-on ("pkg"))
                (:file "prompt" :depends-on ("env" "ansi"))
                (:file "ed" :depends-on ("env"))
-               (:file "tmux" :depends-on ("pkg"))
+               (:module
+                "tools"
+                :components
+                ((:file "tmux")
+                 (:file "pacman")))
                (:file "clap" :depends-on ("shell" "progress" "spark" "repl" "prompt" "ed")))
   :in-order-to ((test-op (test-op "cli/tests"))))
 

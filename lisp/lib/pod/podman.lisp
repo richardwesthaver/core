@@ -11,8 +11,10 @@
 ;; podman system service --time=0 tcp://localhost:8888 (inet-socket :stream :tcp)
 (defun podman-run-command ())
 
-(defun start-podman-service (addr &optional (time 0))
-  "Start the Libpod API on ADDR which should be a valid uri beginning
-with tcp:// or unix://."
-  (sb-ext:run-program *podman-exe* `("system" "service" ,addr ,(format nil "--time=~a" time))))
-
+(defun start-podman-service (addr &optional (protocol :unix) (time 0))
+  "Start the Libpod API on ADDR over PROTO which is either :TCP or :UNIX."
+  (declare ((member :unix :tcp) protocol))
+  (sb-ext:run-program *podman-exe* `("system"
+                                     "service"
+                                     ,(format nil "~(~a~)://~a" protocol addr)
+                                     ,(format nil "--time=~a" time))))

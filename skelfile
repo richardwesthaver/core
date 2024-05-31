@@ -10,7 +10,7 @@
 :imports ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
 :vc :hg
 :docs ((:org "readme"))
-:scripts "x.lisp"
+:scripts ((:lisp "x"))
 :env ((cc "clang"))
 :rules
 ((all (x compile std prelude build))

@@ -3,3 +3,5 @@
 (in-package :zstd/tests)
 (defsuite :zstd)
 (in-suite :zstd)
+
+(deftest sanity () )

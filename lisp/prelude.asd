@@ -1,6 +1,4 @@
 (pushnew :prelude *features*)
-(pushnew "PRELUDE" *modules* :test 'equal)
-
 (defsystem :prelude
   :depends-on (:std :cli
                :rocksdb :btrfs :uring
@@ -14,7 +12,6 @@
                :parse :pod :rdb :rt
                :nuklear :aud :cry :krypt
                :io :gui :log :dat :net)
+  :components ((:file "prelude"))
   :build-operation monolithic-compile-bundle-op
   :build-pathname "prelude")
-
-

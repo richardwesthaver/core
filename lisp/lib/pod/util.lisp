@@ -23,7 +23,7 @@
     ;; TODO 2024-04-01: remove dependencies
     (let ((wrapped-stream (flexi-streams:make-flexi-stream (chunga::make-chunked-stream stream)
                                                            :external-format :utf8)))
-      (dex:request (format-libpod-api-local path) :method method :stream wrapped-stream))))
+      (req:request (format-libpod-api-local path) :method method :stream wrapped-stream))))
 
 (defun libpod-request-json (client path &optional (method :get))
   (dat/json:json-decode (libpod-request client path method)))

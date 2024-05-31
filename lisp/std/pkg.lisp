@@ -1,9 +1,12 @@
-(pushnew :std *features*)
-(pushnew "STD" *modules* :test 'equal)
+;;; std/pkg.lisp --- Standard Packages
 
+;;
+
+;;; Code:
+(pushnew :std *features*)
 (defpackage :std-user
-  (:use :cl :std/named-readtables :std/defpkg)
-  (:shadowing-import-from :std/defpkg :defpkg)
+  (:use :cl :std)
+  (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package)
   (:export :defpkg :in-readtable :define-lisp-package))
 
 (in-package :std-user)

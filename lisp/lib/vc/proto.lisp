@@ -18,21 +18,30 @@
 (defgeneric (setf vc-id) (self id)
   (:documentation "Set the ID of a vc object."))
 
-(defgeneric vc-clone (self remote &key &allow-other-keys))
+(defgeneric vc-clone (self remote &key &allow-other-keys)
+  (:documentation "Clone repo REMOTE into spec SELF."))
 
-(defgeneric vc-push (self remote &key &allow-other-keys))
+(defgeneric vc-push (self remote &key &allow-other-keys)
+  (:documentation "Push repo SELF to REMOTE."))
 
-(defgeneric vc-pull (self remote &key &allow-other-keys))
+(defgeneric vc-pull (self remote &key &allow-other-keys)
+  (:documentation "Pull repo REMOTE into spec SELF."))
 
-(defgeneric vc-commit (self msg &key &allow-other-keys))
+(defgeneric vc-commit (self msg &key &allow-other-keys)
+  (:documentation "Commit repo object SELF, supplied with message MSG."))
 
-(defgeneric vc-add (self &rest files))
+(defgeneric vc-add (self &rest files)
+  (:documentation "Add FILES to repo SELF."))
 
-(defgeneric vc-remove (self &rest files))
+(defgeneric vc-remove (self &rest files)
+  (:documentation "Remove FILES from repo SELF."))
 
-(defgeneric vc-addremove (self &rest files))
+(defgeneric vc-addremove (self &rest files)
+  (:documentation "Add any untracked files in the current directory and delete tracked files that
+are missing."))
 
-(defgeneric vc-branch (self &key cmd branch &allow-other-keys))
+(defgeneric vc-branch (self)
+  (:documentation "Return the name of the current branch."))
 
 (defgeneric vc-status (self &key &allow-other-keys))
 

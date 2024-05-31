@@ -4,8 +4,10 @@
 
 ;;; Commentary:
 
-;; The server is responsible for provisioning downstream clients with
-;; packages from a registry.
+;; The server is responsible for provisioning connected clients with a package
+;; registry API.
+
+;; The server is HTTP/S compatible and based on NET/SRV protocol.
 
 ;;; Code:
 
