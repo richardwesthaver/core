@@ -245,7 +245,9 @@ Inspired by the function of the same name in Emacs."
      :space space)))
 
 (defmacro with-open-files ((&rest args) &body body)
-  "A simple macro to open one or more files providing the streams for the BODY. The ARGS is a list of `(stream filespec options*)` as supplied to WITH-OPEN-FILE."
+  "A simple macro to open one or more files providing the streams for the
+BODY. The ARGS is a list of `(stream filespec options*)` as supplied to
+WITH-OPEN-FILE."
   (case (length args)
     ((0)
      `(progn ,@body))

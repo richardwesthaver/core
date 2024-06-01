@@ -50,6 +50,7 @@ compatible element-types."
     output-position))
 
 ;; from SBCL manual
+;;; Wrapped Streams
 (defclass wrapped-stream (fundamental-stream)
   ((stream :initarg :stream :reader stream-of)))
 

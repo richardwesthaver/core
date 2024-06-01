@@ -87,15 +87,10 @@
   (src (* t)) (src-size size-t))
 
 ;;; Streaming API
-(define-alien-type zstd-inbuffer (struct zstd-inbuffer-s
-                                         (src (* t))
-                                         (size size-t)
-                                         (pos size-t)))
+(define-alien-type zstd-inbuffer (struct zstd-inbuffer-s))
 
-(define-alien-type zstd-outbuffer (struct zstd-outbuffer-s
-                                         (dst (* t))
-                                         (size size-t)
-                                         (pos size-t)))
+
+(define-alien-type zstd-outbuffer (struct zstd-outbuffer-s))
 
 (define-alien-type zstd-cstream zstd-cctx)
 
@@ -103,6 +98,10 @@
 (define-alien-routine "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
 
 (define-alien-type zstd-enddirective int)
+;; (enum nil
+;;       (zstd-e-continue 0)
+;;       (zstd-e-flush 1)
+;;       (zstd-e-end 2))
 
 (define-alien-routine "ZSTD_compressStream2" size-t
   (cctx (* zstd-cctx))
@@ -112,6 +111,11 @@
 
 (define-alien-routine "ZSTD_CStreamInSize" size-t)
 (define-alien-routine "ZSTD_CStreamOutSize" size-t)
+(define-alien-routine "ZSTD_initCStream" size-t (zcs (* zstd-cstream)) (compression-level int))
+
+(define-alien-routine "ZSTD_compressStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)) (input (* zstd-inbuffer)))
+(define-alien-routine "ZSTD_flushStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
+(define-alien-routine "ZSTD_endStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
 
 (define-alien-type zstd-dstream zstd-dctx)
 

@@ -1,16 +1,15 @@
 ("stddef.h" "zstd_errors.h" "zstd.h")
 
 ((:integer zstd-version-number "ZSTD_VERSION_NUMBER" nil t)
-(:integer zstd-clevel-default "ZSTD_CLEVEL_DEFAULT" nil t)
-(:integer zstd-magicnumber "ZSTD_MAGICNUMBER" nil t)
-(:integer zstd-magic-dictionary "ZSTD_MAGIC_DICTIONARY" nil t)
+ (:integer zstd-clevel-default "ZSTD_CLEVEL_DEFAULT" nil t)
+ (:integer zstd-magicnumber "ZSTD_MAGICNUMBER" nil t)
+ (:integer zstd-magic-dictionary "ZSTD_MAGIC_DICTIONARY" nil t)
  (:integer zstd-magic-skippable-start "ZSTD_MAGIC_SKIPPABLE_START" nil t)
  (:integer zstd-blocksizelog-max "ZSTD_BLOCKSIZELOG_MAX" nil t)
  (:integer zstd-blocksize-max "ZSTD_BLOCKSIZE_MAX" nil t)
  (:integer zstd-contentsize-unknown "ZSTD_CONTENTSIZE_UNKNOWN" nil t)
  (:integer zstd-contentsize-error "ZSTD_CONTENTSIZE_ERROR" nil t)
  (:integer zstd-max-input-size "ZSTD_MAX_INPUT_SIZE" nil t)
-
  (:enum zstd-strategy
         ((zstd-fast "ZSTD_fast")
          (zstd-dfast "ZSTD_dfast")
@@ -21,9 +20,7 @@
          (zstd_btopt "ZSTD_btopt")
          (zstd_btultra "ZSTD_btultra")
          (zstd_btultra2 "ZSTD_btultra2")))
-
  ;; (:enum zstd-cparameter)
-
  (:enum zstd-errorcode
         ((zstd-error-no-error "ZSTD_error_no_error")
          (zstd-error-generic "ZSTD_error_GENERIC")
@@ -61,4 +58,12 @@
          (zstd-error-sequenceproducer-failed "ZSTD_error_sequenceProducer_failed")
          (zstd-error-externalsequences-invalid "ZSTD_error_externalSequences_invalid")
          (zstd-error-maxcode "ZSTD_error_maxCode")) 
-        nil t))
+        nil t)
+ (:structure zstd-inbuffer-s ("struct ZSTD_inBuffer_s"
+                              ((* t) src "const void*" "src")
+                              (size-t size "size_t" "size")
+                              (size-t pos "size-t" "pos")))
+ (:structure zstd-outbuffer-s ("struct ZSTD_outBuffer_s"
+                              ((* t) src "void*" "dst")
+                              (size-t size "size_t" "size")
+                              (size-t pos "size-t" "pos"))))
