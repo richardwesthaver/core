@@ -36,9 +36,20 @@
 
 ;;; Code:
 (defpackage :zstd
-  (:use :cl :std)
+  (:use :cl :std :sb-alien)
   (:nicknames :zstd))
 
 (in-package :zstd)
 
-(define-alien-loader "zstd" t)
+(define-alien-loader "zstd" t "/usr/lib/")
+
+;;; Simple API
+(define-alien-routine zstd-compress size-t
+  (dst (* t)) (dst-capacity size-t)
+  (src (* t)) (src-size size-t)
+  (compression int))
+
+(define-alien-routine zstd-decompress size-t
+  (dst (* t)) (dst-capacity size-t)
+  (src (* t)) (compressed-size size-t))
+  

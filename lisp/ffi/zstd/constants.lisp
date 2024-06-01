@@ -1,7 +1,9 @@
 ("stddef.h" "zstd_errors.h" "zstd.h")
 
-((:integer zstd-clevel-default "ZSTD_CLEVEL_DEFAULT" nil t)
- (:integer zstd-magicnumber "ZSTD_MAGICNUMBER" nil t)
+((:integer zstd-version-number "ZSTD_VERSION_NUMBER" nil t)
+(:integer zstd-clevel-default "ZSTD_CLEVEL_DEFAULT" nil t)
+(:integer zstd-magicnumber "ZSTD_MAGICNUMBER" nil t)
+(:integer zstd-magic-dictionary "ZSTD_MAGIC_DICTIONARY" nil t)
  (:integer zstd-magic-skippable-start "ZSTD_MAGIC_SKIPPABLE_START" nil t)
  (:integer zstd-blocksizelog-max "ZSTD_BLOCKSIZELOG_MAX" nil t)
  (:integer zstd-blocksize-max "ZSTD_BLOCKSIZE_MAX" nil t)
