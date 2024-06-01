@@ -2,7 +2,8 @@
   (:use :cl :std :log :obj :cl-ppcre :parse/lex)
   (:import-from :uiop :with-current-directory)
   (:export 
-   :vc-error  :vc-status
+   :vc-repo
+   :vc-error :vc-status
    :vc-clone :vc-push :vc-pull :vc-commit
    :vc-init :vc-id :vc-add :vc-remove
    :vc-addremove :vc-diff

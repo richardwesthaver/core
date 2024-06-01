@@ -49,7 +49,7 @@ x.lisp
 (defvar *ffi-path* (merge-pathnames "ffi/" *lisp-path*))
 (defvar *stash-path* (merge-pathnames ".stash/" *core-path*))
 
-(defvar *compression-level* t)
+(defvar *compression-level* nil)
 
 (push *core-path* asdf:*central-registry*)
 (push *lisp-path* ql:*local-project-directories*)
@@ -88,14 +88,21 @@ x.lisp
 (defun compile-prelude (&optional force save)
   ;; (compile-std)
   (asdf:compile-system :prelude :force force)
+  (asdf:load-system :prelude :force force)
   ;; (rocksdb:load-rocksdb save)
   (when save (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression *compression-level*)))
+
+(defun compile-user (&optional force save)
+  (asdf:compile-system :user :force force)
+  (asdf:load-system :user :force force)
+  (when save (sb-ext:save-lisp-and-die (merge-pathnames "user.core" *stash-path*) :compression *compression-level*)))
 
 (defun save-foreign (name exports &rest args)
   (apply #'sb-ext:save-lisp-and-die name (append `(:executable nil :callable-exports ,exports) args)))
 
 (sb-alien:define-alien-callable compile-prelude sb-alien:void () (compile-prelude))
 (sb-alien:define-alien-callable compile-std sb-alien:void () (compile-std))
+(sb-alien:define-alien-callable compile-user sb-alien:void () (compile-user))
 
 (defvar *thunk* nil)
 
@@ -177,7 +184,8 @@ install")))
         (format t "saving core to: ~A~%" (merge-pathnames name *stash-path*))
         (string-case (name)
           ("prelude" (compile-prelude t t))
-          ("std" (compile-std t t))))
+          ("std" (compile-std t t))
+          ("user" (compile-user t t))))
       ;; self save
       (sb-ext:run-program "x.lisp" nil :input t :output t)))
 

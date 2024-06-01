@@ -38,6 +38,7 @@
  (compile (x) #$./x compile$#)
  (std (x) #$./x save std$#)
  (prelude (x) #$./x save prelude$#)
+ (prelude (x) #$./x save user$#)
  (box () #$podman build . --build-arg IMAGE=box -t core$#)
  ;; x does the same thing, but prompts for sudo -- having issues with
  ;; passing the shell input to SKEL though.
@@ -54,4 +55,4 @@
           do echo "$(basename $f) -> $d"
           install -C -m 755 $f $d
           done fi$#)
- (deploy (std prelude) #$mv -v .stash/{prelude.core,std.core} $PACKY_DIR$#))
+ (deploy (std prelude user) #$mv -v .stash/{prelude.core,std.core} $PACKY_DIR$#))

@@ -3,15 +3,14 @@
 ;;
 
 ;;; Code:
-(pushnew :std *features*)
 (defpackage :std-user
-  (:use :cl :std)
+  (:use :cl :std/named-readtables)
   (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package)
   (:export :defpkg :define-lisp-package))
-
 (in-package :std-user)
+(pushnew :std *features*)
 
-(defpkg :std/err
+(defpackage :std/err
   (:use :cl)
   (:export    ;; err
    :std-error :std-error-message
@@ -39,7 +38,7 @@
    :invalid-argument-p
    :unwind-protect-case))
 
-(defpkg :std/sym
+(defpackage :std/sym
   (:use :cl)
   (:shadowing-import-from :sb-int
    :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*
