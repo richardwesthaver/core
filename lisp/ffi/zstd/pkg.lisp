@@ -43,13 +43,155 @@
 
 (define-alien-loader "zstd" t "/usr/lib/")
 
+;;; Utils
+(define-alien-routine "ZSTD_versionNumber"
+  unsigned)
+
+(define-alien-routine "ZSTD_versionString" c-string)
+
+(define-alien-routine "ZSTD_compressBound" size-t (src-size size-t))
+(define-alien-routine "ZSTD_isError" unsigned (code size-t))
+(define-alien-routine "ZSTD_getErrorName" c-string (code size-t))
+(define-alien-routine "ZSTD_minCLevel" int)
+(define-alien-routine "ZSTD_maxCLevel" int)
+(define-alien-routine "ZSTD_defaultCLevel" int)
+
 ;;; Simple API
-(define-alien-routine zstd-compress size-t
+(define-alien-routine "ZSTD_compress" size-t
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (src-size size-t)
   (compression int))
 
-(define-alien-routine zstd-decompress size-t
+(define-alien-routine "ZSTD_decompress" size-t
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (compressed-size size-t))
-  
+
+;;; Explicit Context API
+(define-alien-type zstd-cctx (struct zstd-cctx-s))
+
+(define-alien-routine "ZSTD_createCCtx" (* zstd-cctx))
+(define-alien-routine "ZSTD_freeCCtx" void (cctx (* zstd-cctx)))
+(define-alien-routine "ZSTD_compressCCtx" size-t
+  (cctx (* zstd-cctx))
+  (dst (* t)) (dst-capacity size-t)
+  (src (* t)) (src-size size-t)
+  (compression-level int))
+
+(define-alien-type zstd-dctx (struct zstd-dctx-s))
+
+(define-alien-routine "ZSTD_createDCtx" (* zstd-dctx))
+(define-alien-routine "ZSTD_freeDCtx" void (dctx (* zstd-dctx)))
+(define-alien-routine "ZSTD_decompressDCtx" size-t
+  (dctx (* zstd-dctx))
+  (dst (* t)) (dst-capacity size-t)
+  (src (* t)) (src-size size-t))
+
+;;; Streaming API
+(define-alien-type zstd-inbuffer (struct zstd-inbuffer-s
+                                         (src (* t))
+                                         (size size-t)
+                                         (pos size-t)))
+
+(define-alien-type zstd-outbuffer (struct zstd-outbuffer-s
+                                         (dst (* t))
+                                         (size size-t)
+                                         (pos size-t)))
+
+(define-alien-type zstd-cstream zstd-cctx)
+
+(define-alien-routine "ZSTD_createCStream" (* zstd-cstream))
+(define-alien-routine "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
+
+(define-alien-type zstd-enddirective int)
+
+(define-alien-routine "ZSTD_compressStream2" size-t
+  (cctx (* zstd-cctx))
+  (output (* zstd-outbuffer))
+  (input (* zstd-inbuffer))
+  (end-op zstd-enddirective))
+
+(define-alien-routine "ZSTD_CStreamInSize" size-t)
+(define-alien-routine "ZSTD_CStreamOutSize" size-t)
+
+(define-alien-type zstd-dstream zstd-dctx)
+
+(define-alien-routine "ZSTD_createDStream" (* zstd-dstream))
+(define-alien-routine "ZSTD_freeDStream" void (zds (* zstd-dstream)))
+(define-alien-routine "ZSTD_initDStream" size-t (zds (* zstd-dstream)))
+
+(define-alien-routine "ZSTD_decompressStream" size-t
+  (zds (* zstd-dstream))
+  (output (* zstd-outbuffer))
+  (input (* zstd-inbuffer)))
+
+(define-alien-routine "ZSTD_DStreamInSize" size-t)
+(define-alien-routine "ZSTD_DStreamOutSize" size-t)
+
+;;; Simple Dictionary API
+(define-alien-routine "ZSTD_compress_usingDict" size-t
+  (cctx (* zstd-cctx))
+  (dst (* t))
+  (dst-capacity size-t)
+  (src (* t))
+  (src-size size-t)
+  (dict (* t))
+  (dict-size size-t)
+  (compression-level int))
+
+(define-alien-routine "ZSTD_decompress_usingDict" size-t
+  (dctx (* zstd-dctx))
+  (dst (* t))
+  (dst-capacity size-t)
+  (src (* t))
+  (src-size size-t)
+  (dict (* t))
+  (dict-size size-t))
+
+;;; Bulk-processing Dictionary API
+(define-alien-type zstd-cdict (struct zstd-cdict-s))
+
+(define-alien-routine "ZSTD_createCDict" (* zstd-cdict)
+  (dict-buffer (* t))
+  (dict-size size-t)
+  (compression-level int))
+
+(define-alien-routine "ZSTD_freeCDict" size-t (cdict (* zstd-cdict)))
+
+(define-alien-routine "ZSTD_compress_usingCDict" size-t
+  (cctx (* zstd-cctx))
+  (dst (* t))
+  (dst-capacity size-t)
+  (src (* t))
+  (src-size size-t)
+  (cdict (* zstd-cdict)))
+
+(define-alien-type zstd-ddict (struct zstd-ddict-s))
+
+(define-alien-routine "ZSTD_createDDict" (* zstd-ddict)
+  (dict-buffer (* t))
+  (dict-size size-t))
+
+(define-alien-routine "ZSTD_freeDDict" size-t (ddict (* zstd-ddict)))
+
+(define-alien-routine "ZSTD_compress_usingDDict" size-t
+  (dctx (* zstd-dctx))
+  (dst (* t))
+  (dst-capacity size-t)
+  (src (* t))
+  (src-size size-t)
+  (ddict (* zstd-ddict)))
+
+;; dictionary utils
+(define-alien-routine "ZSTD_getDictID_fromDict" unsigned
+  (dict (* t))
+  (dict-size size-t))
+
+(define-alien-routine "ZSTD_getDictID_fromCDict" unsigned
+  (cdict (* zstd-cdict)))
+
+(define-alien-routine "ZSTD_getDictID_fromDDict" unsigned
+  (cdict (* zstd-ddict)))
+
+(define-alien-routine "ZSTD_getDictID_fromFrame" unsigned
+  (src (* t))
+  (src-size size-t))
