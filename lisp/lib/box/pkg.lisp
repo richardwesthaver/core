@@ -20,3 +20,8 @@
   (:nicknames :archiso)
   (:use :cl :std :cli/shell :dat/json :obj/cfg)
   (:export :*archiso-config* :*archiso-creds*))
+
+(defpackage :box/qmp
+  (:nicknames :qmp)
+  (:use :cl :std :dat/json :net/sans-io)
+  (:export :*archiso-config* :*archiso-creds*))

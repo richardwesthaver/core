@@ -1,8 +1,16 @@
+;;; zstd/tests.lisp --- Zstd FFI tests
+
+;;
+
+;;; Code:
 (defpackage :zstd/tests 
-    (:use :cl :rt :zstd))
+    (:use :cl :std :rt :zstd))
+
 (in-package :zstd/tests)
+
 (defsuite :zstd)
 (in-suite :zstd)
+
 (load-zstd)
 
 (deftest sanity ()
@@ -33,6 +41,3 @@
     (is (= 0 (zstd::zstd-iserror ret)))
     (zstd::zstd-compressstream cst out in)
     (is (= 0 (zstd::zstd-compressstream2 cst out in 0)))))
-
-
-    

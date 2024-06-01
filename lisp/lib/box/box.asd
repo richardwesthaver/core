@@ -1,7 +1,9 @@
 (defsystem :box
   :description "Kernel virtualization support for Lisp - wraps QEMU,archiso,etc."
   :depends-on (:std :cli :obj :dat :net :log)
-  :components ((:file "pkg"))
+  :components ((:file "pkg")
+               (:file "archiso")
+               (:file "qmp"))
   :in-order-to ((test-op (test-op :box/tests))))
 
 (defsystem :box/tests
