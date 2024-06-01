@@ -7,7 +7,7 @@
 (defpackage :std-user
   (:use :cl :std)
   (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package)
-  (:export :defpkg :in-readtable :define-lisp-package))
+  (:export :defpkg :define-lisp-package))
 
 (in-package :std-user)
 

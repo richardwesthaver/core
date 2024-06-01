@@ -299,7 +299,8 @@
 (defpackage :obj/cfg
   (:nicknames :cfg)
   (:use :cl :std)
-  (:export :cfg :make-cfg :find-cfg :cfg-find :cfg-get))
+  (:export :cfg :make-cfg :find-cfg
+   :cfg-find :cfg-get :defcfg))
 
 (defpackage :obj/db
   (:nicknames :db)
@@ -327,4 +328,3 @@
 (uiop:define-package :obj
   (:use-reexport :list :hash :color
    :seq :tree :graph :id :db :time :uri :url :cfg :music :temperature :direction :shape))
-                   

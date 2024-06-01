@@ -2,10 +2,9 @@
 (defsystem :prelude
   :depends-on (:std :cli
                :rocksdb :btrfs :uring
-               :doc
+               :doc :alsa
                :nlp :obj
                :skel :syn
-               :xdb :alsa
                :organ :packy
                :tree-sitter :xkb :ssh2 :sndfile ;; magick
                :zstd :uring :blake3 :ublk

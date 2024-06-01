@@ -1,10 +1,10 @@
 ;;; obj/uri/intern.lisp --- Support for URI interning
 
-;;
+;; support for interning URIs
 
 ;;; Code:
 (in-package :obj/uri)
-;; support for interning URIs
+
 (defmethod uri= ((uri1 uri) (uri2 uri))
   (when (not (eq (uri-scheme uri1) (uri-scheme uri2)))
     (return-from uri= nil))

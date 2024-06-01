@@ -32,7 +32,9 @@
 ;; hg serve --no-profile --cmdserver chgunix --address @INITSOCKNAME --daemon-postexec chdir:/ @DIR
 
 ;;; Code:
-(in-package :vc)
+(in-package :vc/hg)
+
+(deferror hg-error (vc-error) () (:auto t))
 
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (cli:find-exe "rhg") (cli:find-exe "hg")))
@@ -40,7 +42,7 @@
 (defun run-hg-command (cmd &optional args output (wait t))
   "Run an hg command."
   (unless (listp args) (setf args (list args)))
-  (setf args (mapcar #'namestring-or args)) ;;  TODO 2024-05-10: slow
+  (setf args (mapcar #'vc/proto::namestring-or args)) ;;  TODO 2024-05-10: slow
   (sb-ext:run-program *hg-program* (push cmd args) :output output :wait wait :input nil))
 
 (defun hg-url-p (url)
@@ -48,15 +50,15 @@
   (let ((url-str (if (typep url 'pathname)
                      (namestring url)
                      url)))
-    (scan '(:alternation
-            (:regex "\\.hg$")
-            (:regex "^hg://")
-            (:regex "^https://hg\\.")
-            (:regex "^hg@"))
-          url-str)))
+    (ppcre:scan '(:alternation
+                  (:regex "\\.hg$")
+                  (:regex "^hg://")
+                  (:regex "^https://hg\\.")
+                  (:regex "^hg@"))
+                url-str)))
 
 (defun hgignore (&optional (path ".hgignore"))
-  (make-vc-ignore :path path :patterns (map-lines #'ppcre:create-scanner path)))
+  (vc/proto::make-vc-ignore :path path :patterns (vc/proto::map-lines #'ppcre:create-scanner path)))
 
 ;; (describe (make-instance 'hg-repo))
 ;; https://repo.mercurial-scm.org/hg/file/tip/mercurial/interfaces/repository.py
@@ -67,7 +69,7 @@
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
   (with-slots (path) self
-    (with-current-directory (path)
+    (uiop:with-current-directory (path)
       (let ((proc (apply #'run-hg-command cmd args)))
         (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
               (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))
@@ -123,11 +125,11 @@
 (defmethod vc-branch ((self hg-repo)) (vc-run self "branch"))
 
 (defmethod vc-diff ((a hg-repo) (b hg-repo) &key &allow-other-keys) 
-  (vc-run a "diff" (vc-repo-head a) (vc-repo-head b)))
+  (vc-run a "diff" (vc/proto::vc-repo-head a) (vc/proto::vc-repo-head b)))
 
 (defmethod vc-id ((self hg-repo))
   (with-slots (path) self
-    (with-current-directory (path)
+    (uiop:with-current-directory (path)
       (let ((proc (apply #'run-hg-command '("id"))))
         (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
               (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))

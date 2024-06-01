@@ -1,18 +1,25 @@
-(defpackage :vc
-  (:use :cl :std :cli :log :obj :sb-bsd-sockets :cl-ppcre :parse/lex)
+(defpackage :vc/proto
+  (:use :cl :std :log :obj :cl-ppcre :parse/lex)
   (:import-from :uiop :with-current-directory)
-  (:export :*default-vc*
-   :vc-error :git-error :hg-error :vc-status
+  (:export 
+   :vc-error  :vc-status
    :vc-clone :vc-push :vc-pull :vc-commit
    :vc-init :vc-id :vc-add :vc-remove
    :vc-addremove :vc-diff
-   :vc-branch :*hg-program* :*git-program* :run-git-command
-   :run-hg-command :repo :hg-repo :git-repo
-   :vc-meta :hg-meta :git-meta :make-hg-client
-   :hg-client :*repo-roots* :*repo-registry* :find-repo
+   :vc-branch :repo
+   :vc-meta :find-repo
    :make-repo :register-repo
-   :vc-ignore :hgignore :gitignore))
+   :vc-ignore))
 
-(in-package :vc)
+(pkg:defpkg :vc/hg
+  (:use :cl :std :cli :sb-bsd-sockets :vc/proto)
+  (:export :*hg-program* :hg-repo :hg-error :run-hg-command :hg-meta :make-hg-client :hg-client :hgignore))
 
-(defparameter *default-vc* :hg)
+(defpackage :vc/git
+  (:use :cl :std :cli :vc/proto)
+  (:export :*git-program* :git-repo :git-error :run-git-command :git-meta :gitignore))
+
+(pkg:defpkg :vc
+  (:use :cl :std)
+  (:use-reexport :vc/proto :vc/hg :vc/git)
+  (:export :*default-vc-kind* :*repo-roots* :*repo-registry*))

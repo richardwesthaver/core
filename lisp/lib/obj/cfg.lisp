@@ -23,3 +23,8 @@
 (defgeneric cfg-find (obj key &key &allow-other-keys))
 (defgeneric cfg-get (obj key))
 (defgeneric (setf cfg-get) (obj key val))
+
+(defmacro defcfg (name direct-superclasses direct-slots &rest options)
+  `(defclass ,name ,(append direct-superclasses '(obj/cfg::cfg))
+     ,direct-slots
+     ,@options))

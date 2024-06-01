@@ -17,3 +17,7 @@
 (defpackage :skel/comp/asd
   (:use :cl :std :skel/core/obj)
   (:export :sk-asd))
+
+(defpackage :skel/comp/dir-locals
+  (:use :cl :std :skel/core/obj :skel/core/proto)
+  (:export :*dir-locals-file* :dir-local-var-designator))

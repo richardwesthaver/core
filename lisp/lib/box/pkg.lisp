@@ -15,3 +15,8 @@
   (:use :cl :std :cli :sb-bsd-sockets :net :dat/json)
   (:export
    :*lxc-version*))
+
+(defpackage :box/archiso
+  (:nicknames :archiso)
+  (:use :cl :std :cli/shell :dat/json :obj/cfg)
+  (:export :*archiso-config* :*archiso-creds*))
