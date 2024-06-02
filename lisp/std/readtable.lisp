@@ -220,5 +220,3 @@
   ;; lambdas
   (:dispatch-macro-char #\# #\` #'|#`-reader|)
   (:dispatch-macro-char #\# #\f #'|#f-reader|))
-
-(std::in-readtable :std)

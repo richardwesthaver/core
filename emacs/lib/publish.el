@@ -15,6 +15,13 @@
 
 (defvar html-foot "<footer><p>updated %C</p></footer>")
 
+;; (setq org-protocol-project-alist
+;;       '(("comp"
+;;          :base-url url
+;;          :working-directory project-dir
+;;          :online-suffix ".html"
+;;          :working-suffix ".org")))
+
 (setq org-html-style-default ""
       org-html-scripts ""
       org-html-htmlize-output-type 'css
