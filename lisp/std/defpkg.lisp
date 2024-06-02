@@ -9,17 +9,16 @@
   (:use :cl)
   (:nicknames :pkg)
   (:export :defpkg
-   :find-package* :find-symbol* :symbol-call
-           :intern* :export* :import* :shadowing-import* 
-           :shadow* :make-symbol* :unintern*
-   :symbol-shadowing-p :home-package-p
+   :find-package* :find-symbol* :symbol-call :intern*
+   :export* :import* :shadowing-import* :shadow* 
+   :symbol-shadowing-p :home-package-p :make-symbol* :unintern*
    :symbol-package-name :standard-common-lisp-symbol-p
    :reify-package :unreify-package :reify-symbol :unreify-symbol
    :nuke-symbol-in-package :nuke-symbol :rehome-symbol
            :ensure-package-unused :delete-package*
            :package-names :packages-from-names :fresh-package-name 
    :rename-package-away :package-definition-form :parse-defpkg-form
-           :ensure-package))
+           :ensure-package :with-package))
 
 (in-package :std/defpkg)
 
@@ -738,3 +737,11 @@ that package. In the case of shadowing, etc. They may not be EQL."
          (:import-from ,pkg-name ,@(set-difference pkg-externs pkg-shadows))
          (:export ,@cl-externs)
          (:export ,@pkg-externs)))))
+
+
+(defmacro with-package ((pkg) &body body)
+  "Execute BODY within the package PKG."
+  `(let ((current (package-name *package*)))
+     (unwind-protect (progn (in-package ,pkg) ,@body)
+       (eval-when (:compile-toplevel :load-toplevel :execute)
+         (setq *package* (find-package current))))))

@@ -93,9 +93,13 @@ CODE
 
 (define-source-file* rust "rs")
 (define-source-file* shell "sh")
+(define-source-file* makefile "mk")
 (define-source-file* nushell "nu")
 (define-source-file* common-lisp "lisp")
 (define-source-file* emacs-lisp "el")
+(define-source-file* scheme "scm")
+(define-source-file* skel "sk")
+(define-source-file* sxp "sxp")
 
 (defconstant +max-file-heading-level+ 8)
 (defconstant +min-file-heading-level+ 3)
@@ -179,7 +183,6 @@ position is always assumed to be 0."
         :headline hl
         :headings #()
         ))))
-
 
 ;; (defmacro define-file-heading (type slots))
 

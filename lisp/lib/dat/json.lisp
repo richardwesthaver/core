@@ -18,15 +18,11 @@
             :accessor json-object-members))
   (:documentation "An associative list of key/value pairs."))
 
-;;; ----------------------------------------------------
-
 (defmethod print-object ((obj json-object) stream)
   "Output a JSON object to a stream in readable form."
   (print-unreadable-object (obj stream :type t)
     (let ((*print-level* 1))
       (json-encode obj stream))))
-
-;;; ----------------------------------------------------
 
 (defun json-getf (object key &optional value)
   "Find an member's value in a JSON object."
@@ -34,8 +30,6 @@
     (if (null place)
         value
       (values (second place) t))))
-
-;;; ----------------------------------------------------
 
 (defun json-setf (object key value)
   "Assign a value to a key in a JSON object."
@@ -48,11 +42,7 @@
             (push (list k value) (json-object-members object)))
         (rplacd place (list value))))))
 
-;;; ----------------------------------------------------
-
 (defsetf json-getf json-setf)
-
-;;; ----------------------------------------------------
 
 (defun json-decode (string &key (start 0) end)
   "Convert a JSON string into a Lisp object."
@@ -63,8 +53,6 @@
 (defmethod deserialize ((obj string) (format (eql :json)) &key (start 0) end)
   (declare (ignore format))
   (json-decode obj :start start :end end))
-
-;;; ----------------------------------------------------
 
 (defun json-encode (value &optional stream)
   "Encodes a Lisp value into a stream."
@@ -77,8 +65,6 @@
       (with-output-to-string (s)
         (json-encode obj s)
         s)))
-
-;;; ----------------------------------------------------
 
 (defun json-enable-reader-macro ()
   "Set the #{ dispatch macro character for reading JSON objects."
@@ -112,19 +98,14 @@
       (#\{ (json-read-object stream))
       (#\[ (json-read-list stream))
       (#\" (json-read-string stream))
-
       ;; must be a number
       (otherwise (json-read-number stream)))))
-
-;;; ----------------------------------------------------
 
 (defun json-peek-char (stream expected &key skip-ws)
   "Peek at the next character or token and optionally error if unexpected."
   (declare (optimize (speed 3) (debug 0)))
   (when (equal (peek-char skip-ws stream) expected)
     (read-char stream)))
-
-;;; ----------------------------------------------------
 
 (defun json-read-char (stream expected &key skip-ws)
   "Read the next, expected character in the stream."
@@ -133,16 +114,12 @@
       t
     (error "JSON error: unexpected ~s" (read-char stream))))
 
-;;; ----------------------------------------------------
-
 (defun json-read-true (stream)
   "Read true from a JSON stream."
   (json-read-char stream #\t :skip-ws t)
   (json-read-char stream #\r)
   (json-read-char stream #\u)
   (json-read-char stream #\e))
-
-;;; ----------------------------------------------------
 
 (defun json-read-false (stream)
   "Read false from a JSON stream."
@@ -153,8 +130,6 @@
     (json-read-char stream #\s)
     (json-read-char stream #\e)))
 
-;;; ----------------------------------------------------
-
 (defun json-read-null (stream)
   "Read null from a JSON stream."
   (prog1 nil
@@ -162,8 +137,6 @@
     (json-read-char stream #\u)
     (json-read-char stream #\l)
     (json-read-char stream #\l)))
-
-;;; ----------------------------------------------------
 
 (defun json-read-number (stream)
   "Read a number from a JSON stream."
@@ -218,8 +191,6 @@
     (prog1
       (read-from-string s))))
 
-;;; ----------------------------------------------------
-
 (defun json-read-string (stream)
   "Read a string from a JSON stream."
   (declare (optimize (speed 3) (debug 0)))
@@ -259,8 +230,6 @@
                        (otherwise c))))
               (write-char c s))))))
 
-;;; ----------------------------------------------------
-
 (defun json-read-list (stream)
   "Read a list of JSON values."
   (declare (optimize (speed 3) (debug 0)))
@@ -282,8 +251,6 @@
        ;; return the final list
        finally (return (prog1 xs
                          (json-read-char stream #\] :skip-ws t))))))
-
-;;; ----------------------------------------------------
 
 (defun json-read-object (stream)
   "Read an associative list of key/value pairs into a JSON object."
@@ -317,32 +284,22 @@
   (declare (ignore value))
   (format stream "~<true~>"))
 
-;;; ----------------------------------------------------
-
 (defmethod json-write ((value (eql nil)) &optional stream)
   "Encode the null constant."
   (declare (ignore value))
   (format stream "~<null~>"))
 
-;;; ----------------------------------------------------
-
 (defmethod json-write ((value symbol) &optional stream)
   "Encode a symbol to a stream."
   (json-write (symbol-name value) stream))
-
-;;; ----------------------------------------------------
 
 (defmethod json-write ((value number) &optional stream)
   "Encode a number to a stream."
   (format stream "~<~a~>" value))
 
-;;; ----------------------------------------------------
-
 (defmethod json-write ((value ratio) &optional stream)
   "Encode a ratio to a stream."
   (format stream "~<~a~>" (float value)))
-
-;;; ----------------------------------------------------
 
 (defmethod json-write ((value string) &optional stream)
   "Encode a string as a stream."
@@ -361,13 +318,9 @@
              (string c)))))
     (format stream "~<\"~{~a~}\"~>" (map 'list #'encode-char value))))
 
-;;; ----------------------------------------------------
-
 (defmethod json-write ((value pathname) &optional stream)
   "Encode a pathname as a stream."
   (json-write (namestring value) stream))
-
-;;; ----------------------------------------------------
 
 (defmethod json-write ((value vector) &optional stream)
   "Encode an array to a stream."
@@ -386,8 +339,6 @@
               (pprint-indent :block 0)
               (json-write (aref value i) stream))))))
 
-;;; ----------------------------------------------------
-
 (defmethod json-write ((value list) &optional stream)
   "Encode a list to a stream."
   (let ((*print-pretty* t)
@@ -402,8 +353,6 @@
          (write-char #\, stream)
          (pprint-newline :fill)
          (pprint-indent :block 0)))))
-
-;;; ----------------------------------------------------
 
 (defmethod json-write ((value hash-table) &optional stream)
   "Encode a hash-table to a stream."
@@ -428,8 +377,6 @@
                  (write-char #\, stream)
                  (pprint-newline :mandatory)
                  (pprint-indent :current 0)))))))))
-
-;;; ----------------------------------------------------
 
 (defmethod json-write ((value json-object) &optional stream)
   "Encode a JSON object with an associative list of members to a stream."

@@ -47,7 +47,7 @@
  eww-auto-rename-buffer 'title
  eww-search-prefix "https://duckduckgo.com/html?q="
  view-read-only t)
-
+(browse-url-default-browser "")
 ;;; Variables
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))

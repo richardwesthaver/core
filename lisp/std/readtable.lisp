@@ -201,7 +201,6 @@
                                    `(funcall ,(cadr clause) ,arg)
                                    (cadr clause))))
                           (cdr contents)))))))))
-
 (defreadtable :std
   (:merge :modern)
   ;; curry
@@ -221,3 +220,5 @@
   ;; lambdas
   (:dispatch-macro-char #\# #\` #'|#`-reader|)
   (:dispatch-macro-char #\# #\f #'|#f-reader|))
+
+(std::in-readtable :std)

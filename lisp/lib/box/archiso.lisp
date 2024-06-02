@@ -191,4 +191,30 @@
 
 ;; TODO 2024-05-31: 
 (defcfg archiso-cfg ()
-  ())
+  ((config-version :initform "2.6.0" :type string)
+   (hostname :type string)
+   (kernels :initform '("linux") :type list)
+   locale-config
+   mirror-config
+   network-config
+   (no-pkg-lookups :initform nil :type boolean)
+   (ntp :initform t :type boolean)
+   network
+   (offline :initform nil :type boolean)
+   packages
+   (archinstall-language :initform "English" :type string)
+   (bootloader :initform "Systemd-boot" :type string)
+   (debug :initform nil :type boolean)
+   parallel-downloads
+   disk-config
+   disk-encryption
+   profile-config
+   save-config
+   audio-config
+   (additional-repositories :initform nil :type list)
+   script
+   silent
+   (swap :initform t :type boolean)
+   timezone
+   (version :initform "2.6.0" :type string)))
+

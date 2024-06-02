@@ -1,7 +1,16 @@
 ;;; ffi/zstd/pkg.lisp --- ZSTD FFI
 
-;; from zstd.h:
-#|
+;; Zstd compression support for Lisp
+
+;;; Commentary:
+
+;; The following programs have compile-time flags which can be used to enable
+;; internal Zstd support:
+
+;; SBCL
+;; QEMU
+ 
+#| from zstd.h:
   Introduction
 
   zstd, short for Zstandard, is a fast lossless compression algorithm, targeting

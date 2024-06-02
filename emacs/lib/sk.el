@@ -139,7 +139,7 @@ DOC, and NAME."
   (add-to-list 'auto-mode-alist '("\\.sk\\'" . skel-mode)))
 
 ;;; Autotype
-;; From: https://github.com/xFA25E/skempo/blob/master/skempo.el
+;; ref: https://raw.githubusercontent.com/xFA25E/skempo/master/skempo.el
 
 ;; (defun modify-lisp-syntax-tables ()
 ;;   (modify-syntax-entry ?* "w" (syntax-table))

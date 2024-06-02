@@ -7,8 +7,8 @@
 (require 'org-id)
 ;; vendored
 (require 'htmlize)
-(defvar project-dir "~/dev/comp/org")
-(defvar publish-dir "/mnt/w/compiler.company")
+(defvar project-dir "~/comp/org")
+(defvar publish-dir "/mnt/y/stash/compiler.company")
 (defvar html-theme nil)
 (defvar url "https://compiler.company")
 (defvar html-nav "<div class=\"nav\"> (<a href = \"https://compiler.company\">~</a> (<a href = \"https://compiler.company/blog\">blog</a> <a href = \"https://compiler.company/docs\">docs</a>) (<a href = \"https://vc.compiler.company/comp\">vc</a> <a href = \"https://packy.compiler.company\">packy</a>))</div>")

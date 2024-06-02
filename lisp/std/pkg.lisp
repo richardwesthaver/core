@@ -5,8 +5,8 @@
 ;;; Code:
 (defpackage :std-user
   (:use :cl :std/named-readtables)
-  (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package)
-  (:export :defpkg :define-lisp-package))
+  (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package :with-package)
+  (:export :defpkg :define-lisp-package :with-package))
 (in-package :std-user)
 (pushnew :std *features*)
 
