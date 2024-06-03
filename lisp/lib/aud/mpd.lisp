@@ -173,11 +173,6 @@
       (format stream "~A - ~A (~A)" artist title album))))
 
 ;;; MPD
-(defun ensure-mpd ()
-  (handler-case
-      (with-mpc (c) t)
-    (not-exist () (sb-ext:run-program "mpd" nil :search t :directory (user-homedir-pathname) :wait nil))))
-
 (defvar *default-host* "localhost")
 (defvar *default-port* 6600)
 
@@ -209,6 +204,11 @@
        (unwind-protect
             (progn ,@body)
          (disconnect ,var)))))
+
+(defun ensure-mpd ()
+  (handler-case
+      (with-mpc (c) t)
+    (not-exist () (sb-ext:run-program "mpd" nil :search t :directory (user-homedir-pathname) :wait nil))))
 
 (defun send-command (connection command)
   "Send command to MPD."
