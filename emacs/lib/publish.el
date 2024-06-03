@@ -92,6 +92,12 @@
 
 ;;;###autoload
 (defun org-id-add-to-headlines-in-file ()
+  "Add ID properties to all headlines in the
+   current file which do not already have one."
+  (interactive)
+  (org-map-entries (lambda () (org-id-get (point) 'create))))
+
+(defun org-custom-id-add-to-headlines-in-file ()
   "Add CUSTOM_ID properties to all headlines in the
    current file which do not already have one."
   (interactive)
