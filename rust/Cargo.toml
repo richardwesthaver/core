@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["sys/*","lib/*","bin/*","web/*"]
+members = ["sys/*","lib/*","bin/*","ui/*"]
 [workspace.package]
 version = "0.1.0"
 authors = ["Richard Westhaver <ellis@rwest.io>"]

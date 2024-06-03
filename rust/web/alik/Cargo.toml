@@ -1,7 +1,0 @@
-[package]
-name = "alik-web"
-version.workspace = true
-authors.workspace = true
-edition.workspace = true
-[dependencies]
-egui = "0.27.2"
