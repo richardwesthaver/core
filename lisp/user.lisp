@@ -4,5 +4,4 @@
 
 ;;; Code:
 (in-package :std-user)
-(define-lisp-package :std)
 (defpkg :user (:use :std-lisp :std-user))

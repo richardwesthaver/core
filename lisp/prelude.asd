@@ -9,6 +9,5 @@
                :parse :pod :rdb :rt
                :aud :cry :krypt :io
                :gui)
-  :components ((:file "prelude"))
   :build-operation monolithic-compile-bundle-op
   :build-pathname "prelude")

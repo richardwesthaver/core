@@ -7,7 +7,9 @@
   (:use :cl :std/named-readtables)
   (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package :with-package)
   (:export :defpkg :define-lisp-package :with-package))
+
 (in-package :std-user)
+
 (pushnew :std *features*)
 
 (defpackage :std/err
@@ -401,3 +403,5 @@
   (:use-reexport :std/named-readtables :std/defpkg :std/err :std/sym :std/list :std/type :std/num
    :std/stream :std/fu :std/array :std/hash-table :std/alien :std/mop :std/thread
    :std/macs :std/bit :std/fmt :std/path :std/os :std/file :std/string :std/seq :std/sys :std/readtable))
+
+(define-lisp-package :std)

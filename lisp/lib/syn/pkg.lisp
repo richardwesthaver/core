@@ -1,6 +1,8 @@
 ;;; lib/syn/pkg.lisp --- Syn Packages
 
-;; Syntax traversal
+;; Syntax Processors
+
+;;; Commentary:
 
 ;;; Code:
 (defpackage :syn
