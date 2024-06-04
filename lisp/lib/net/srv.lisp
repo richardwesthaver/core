@@ -14,7 +14,7 @@
 #|
 (srv:start (srv:file-server)) ;; start a simple HTTP file server in current directory with all default values
 
-(srv:define-web-service my-homepage :port 8080 :auth (auth settings ...) :routes (routes ...) &more ...)
+(srv:define-service my-homepage :port 8080 :auth (auth settings ...) :routes (routes ...) &more ...)
 (with-ws (ws 'my-homepage)
   (srv:start ws))
 |#
@@ -26,3 +26,18 @@
 ;;; Code:
 (in-package :net/srv)
 
+(defmacro define-service (name &rest initargs)
+  "Define a subclass of NET/SRV:SERVICE."
+  `(defclass ,name ,@initargs))
+
+(defgeneric start-service (self)
+  (:documentation "Start a service."))
+
+(defgeneric stop-service (self)
+  (:documentation "Stop a service."))
+
+(defgeneric restart-service (self)
+  (:documentation "Restart a service.")
+  (:method ((self t))
+    (stop-service self)
+    (start-service self)))

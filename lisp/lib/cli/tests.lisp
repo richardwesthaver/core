@@ -1,7 +1,7 @@
 (defpackage :cli/tests
   (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt))
-
 (in-package :cli/tests)
+(declaim (optimize (debug 3) (safety 3)))
 (defsuite :cli)
 (in-suite :cli)
 
@@ -197,7 +197,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 
 ;; TODO: needs to be compiled outside scope of test - contender for
 ;; fixture API
-(defprompt tpfoo "testing: ")
+(defprompt tpfoo :prompt "testing:")
 
 (deftest cli-prompt ()
   "Test CLI prompts"

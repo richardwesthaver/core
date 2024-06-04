@@ -1,6 +1,6 @@
 ;;; sk.el --- skel Emacs Mode -*- lexical-binding: t; -*-
 
-;; skel-mode, skt-mode, sk-classes
+;; skel-mode, skel-minor-mode,skt-minor-mode, sk-classes
 
 ;; Copyright (C) 2023  The Compiler Company
 
@@ -29,6 +29,7 @@
 		  (require 'sxp (expand-file-name "sxp.el" (join-paths user-emacs-directory "lib/")))
                   (require 'skeleton)
                   (require 'tempo)
+                  (require 'autoinsert)
 		  (defvar skel-debug nil)
 		  (when skel-debug (require 'ede)))
 
@@ -38,8 +39,8 @@
   "skel customization group."
   :group 'local)
 
-(defcustom skel-keymap-prefix "C-c C-."
-  "Prefix for `skel-mode' keymap."
+(defcustom skel-minor-mode-map-prefix "C-c C-."
+  "Prefix for `skel-minor-mode' keymap."
   :type 'string
   :group 'skel)
 
@@ -59,16 +60,24 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :type 'string
   :group 'skel)
 
+(defvar-keymap skel-minor-mode-map
+  :doc "skel-minor-mode keymap."
+  :repeat (:enter)
+  :prefix 'skel-minor-mode-map)
+
 (define-minor-mode skel-minor-mode
-  "skel-minor-mode."
+  "skel-minor-mode"
   :global t
-  :lighter " sk"
+  :lighter " Sk"
   :group 'skel
-  :version skel-version)
+  :keymap skel-minor-mode-map
+  :version skel-version
+  (keymap-local-set skel-minor-mode-map-prefix skt-minor-mode-map))
 
 ;; TODO 2023-09-06: 
 (define-derived-mode skel-mode lisp-mode "SKEL"
-  "skel-mode")
+  :group 'skel
+  (skel-minor-mode 1))
 
 (defun maybe-skel-minor-mode ()
   "Check the current environment and determine if `skel-minor-mode' should
@@ -190,7 +199,7 @@ down Emacs."
           (when (markerp (cadr markers)) (set-marker (cadr markers) nil))
           (setcdr markers (cddr markers)))))))
 
-(defun skt--add-tag (tag template &optional tag-list)
+(defun skt-add-tag (tag template &optional tag-list)
   "Add a TEMPLATE TAG to TAG-LIST or to `tempo-tags'.
 It is an :override function for `tempo-add-tag'.  The original
 function does not update identical tags."
@@ -213,24 +222,29 @@ function does not update identical tags."
     (nreverse modes)))
 
 ;;; Commands
+(defvar-keymap skt-minor-mode-map
+  :doc "skt-minor-mode keymap."
+  :repeat (:enter)
+  :prefix 'skt-minor-mode-map
+  "a" #'edit-abbrevs)
 
-(defvar-keymap skt-mode-map
-  :doc "skt-mode keymap."
-  :repeat (:enter))
-
-(define-minor-mode skt-mode
+(define-minor-mode skt-minor-mode
   "Minor mode for skt-templates."
   :init-value nil
   :lighter " Skt"
-  :keymap skt-mode-map
+  :keymap skt-minor-mode-map
   (let* ((modes (skt--list-derived-modes major-mode))
          (tag-vars (mapcar #'skt--tags-variable modes))
          (bound-tag-vars (cl-delete-if-not #'boundp tag-vars)))
-    (if skt-mode
+    (if skt-minor-mode
         (mapc #'tempo-use-tag-list bound-tag-vars)
       (mapc #'skt--remove-tag-list bound-tag-vars))))
 
-(defun skt--define-tempo (function-symbol body &optional docstring)
+(defun skt-register-auto-insert (rx template)
+  "Associate a template with a file regexp and insert into `auto-insert-alist'."
+  (cl-pushnew (cons rx template) auto-insert-alist))
+
+(defun skt--define-template (function-symbol body &optional docstring)
   "Define a tempo template with BODY.
 This will generate a function with FUNCTION-SYMBOL and
 DOCSTRING.
@@ -303,7 +317,7 @@ names."
         ((symbolp mode) (list mode))))
 
 ;;;###autoload
-(defun skt-define (define-function name modes tag abbrev docstring body)
+(defun skt--define (define-function name modes tag abbrev docstring body)
   "Define a skt template.
 
 DEFINE-FUNCTION is a function that takes a function symbol, BODY
@@ -331,7 +345,7 @@ BODY is an arbitrary argument passed to DEFINE-FUNCTION."
 
     (when tag
       (let ((tag-symbol (gensym (symbol-name function-symbol))))
-        (if (eq #'skt--define-tempo define-function)
+        (if (eq #'skt--define-template define-function)
             (set tag-symbol body)
           (set tag-symbol `((ignore (,function-symbol)))))
         (dolist (mode modes)
@@ -342,9 +356,9 @@ BODY is an arbitrary argument passed to DEFINE-FUNCTION."
         (dolist (buffer (buffer-list))
           (with-current-buffer buffer
             (when (and (or (equal '(nil) modes) (apply #'derived-mode-p modes))
-                       skt-mode)
-              (skt-mode -1)
-              (skt-mode 1))))))
+                       skt-minor-mode)
+              (skt-minor-mode -1)
+              (skt-minor-mode 1))))))
 
     (when abbrev
       (dolist (mode modes)
@@ -366,7 +380,7 @@ BODY is an arbitrary argument passed to DEFINE-FUNCTION."
     function-symbol))
 
 ;;;###autoload
-(cl-defmacro skt-define-tempo (name (&key mode tag abbrev docstring) &rest body)
+(cl-defmacro skt-define-template (name (&key mode tag abbrev docstring) &body body)
   "Define a tempo template.
 This macro defines a new tempo template or updates the old one.
 NAME is a symbol.  ARGS is a list of the form ([KEY VALUE]...)
@@ -390,35 +404,35 @@ BODY is a sequence of tempo elements that will be passed as a
 list directly to `tempo-define-template's second argument.
 
 Example:
-\(skt-define-tempo defvar (:mode `emacs-lisp-mode' :tag t :abbrev t
+\(skt-define-template defvar (:mode emacs-lisp-mode :tag t :abbrev t
                              :docstring \"defvar template\")
   \"(defvar \" (string-trim-right (buffer-name) (rx \".el\" eos)) \"-\" p n>
   r> \")\")"
-  `(skt-define #'skt--define-tempo ,(symbol-name name)
-                  ',(skt--modes mode) ,tag ,abbrev ,docstring ',body))
+  `(skt--define 'skt--define-template ,(symbol-name name)
+               ',(skt--modes mode) ,tag ,abbrev ,docstring ',body))
 
 ;;;###autoload
 (cl-defmacro skt-define-skeleton (name (&key mode tag abbrev docstring) &rest body)
   "Define skeleton template.
-See `skt-define-tempo' for explanation of NAME, MODE, TAG,
+See `skt-define-template' for explanation of NAME, MODE, TAG,
 ABBREV and DOCSTRING.
 
 BODY is a sequence of skeleton elements that will be passed
 directly to `define-skeleton'.
 
 Example:
-\(skt-define-skeleton defun (:mode (emacs-lisp-mode `lisp-interaction-mode')
+\(skt-define-skeleton defun (:mode (emacs-lisp-mode lisp-interaction-mode)
                                :tag t :abbrev t
                                :docstring \"defun template\")
   \"(defun \" str \" (\" @ - \")\" \n
   @ _ \")\" \n)"
-  `(skt-define #'skt--define-skeleton ,(symbol-name name)
+  `(skt--define #'skt--define-skeleton ,(symbol-name name)
                   ',(skt--modes mode) ,tag ,abbrev ,docstring ',body))
 
 ;;;###autoload
 (cl-defmacro skt-define-function (name (&key mode tag abbrev docstring) function)
   "Define FUNCTION template.
-See `skt-define-tempo' for explanation of NAME, MODE, TAG,
+See `skt-define-template' for explanation of NAME, MODE, TAG,
 ABBREV and DOCSTRING.
 
 The main purpose of this macro, is to create tempo tags and
@@ -426,7 +440,7 @@ abbrevs for existing skeleton templates, such as `sh-case'.
 
 Example:
 \(skt-define-function shcase (:tag t :abbrev t :mode `sh-mode') `sh-case')"
-  `(skt-define #'skt--define-function ,(symbol-name name)
+  `(skt--define #'skt--define-function ,(symbol-name name)
                   ',(skt--modes mode) ,tag ,abbrev ,docstring ',function))
 
 (defun skt--complete-template (string tag-list)
@@ -464,7 +478,7 @@ and add it on non-nil."
   "Override default `tempo-display-completions'.
 By default it uses a completion buffer to show completions.  This
 option overrides this function to use `completing-read' to select
-partial skempo tag or complete tag on region.
+partial skt tag or complete tag on region.
 
 If you wish to set this variable from ELisp code, you have to
 remove `skt--complete-template' advice from
@@ -478,7 +492,7 @@ advice on non-nil."
          (set-default variable value))
   :group 'skel)
 
-(defcustom skempo-delete-duplicate-marks nil
+(defcustom skt-delete-duplicate-marks nil
   "Override default `tempo-insert-mark'.
 Marks are used to jump on points of interest in a template.  By
 default `tempo-insert-mark' does not remove duplicate marks.
@@ -500,7 +514,8 @@ add it as on :override advice on non-nil."
   :group 'skel)
 
 (progn
-  (put 'skt-define-tempo 'lisp-indent-function 2)
+  (put 'tempo-define-template 'lisp-indent-function 1)
+  (put 'skt-define-template 'lisp-indent-function 2)
   (put 'skt-define-skeleton 'lisp-indent-function 2)
   (put 'skt-define-function 'lisp-indent-function 2))
 

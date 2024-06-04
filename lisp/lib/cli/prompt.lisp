@@ -50,7 +50,7 @@ user to list valid options while continue waiting for input."
           (find res collection :test test)
           res))))
 
-(defmacro defprompt (var &key (prompt ">") collection default)
+(defmacro defprompt (var &key (prompt ">") collection default input output)
   "Generate a 'prompter' from list or variable VAR and optional
 PROMPT string.
 
@@ -69,4 +69,8 @@ of `~A-PROMPT-HISTORY'." var var)
           (format nil "~A [~A]: "
                   ,prompt
 		  (or ,default (car (symbol-value ,h))))
-	  ,collection :history ,h :default ,default)))))
+	  ,collection
+          :history ,h
+          :default ,default
+          ,@(when input (list :input input))
+          ,@(when output (list :output output)))))))
