@@ -4,9 +4,10 @@
 
 ;;; Code:
 (in-package :cli/clap)
-(declaim (optimize (speed 3)))
-(defun cli-arg0 () (car sb-ext:*posix-argv*))
-(defun cli-args () (cdr sb-ext:*posix-argv*))
+;; (declaim (optimize (speed 3) (debug 1)))
+
+(defun arg0 () (car sb-ext:*posix-argv*))
+(defun args () (cdr sb-ext:*posix-argv*))
 
 (declaim (simple-string *cli-group-separator*))
 (defparameter *cli-group-separator*
@@ -16,7 +17,7 @@
 ;; uiop:command-line-arguments
 
 ;;; Macros
-(defmacro argp (arg &optional (args (cli-args)))
+(defmacro argp (arg &optional (args (args)))
   "Test for presence of ARG in ARGS. Return the tail of
 ARGS starting from the position of ARG."
   `(member ,arg ,args :test 'equal))
@@ -34,7 +35,7 @@ ARGS starting from the position of ARG."
 ;;   (invoke-restart (find-restart 'discard-argument condition)))
 (deferror clap-error (std-error) () (:auto t))
 
-(defvar *no-exit* nil
+(defparameter *no-exit* nil
   "Indicate whether the WITH-CLI-HANDLERS form should exit on completion.")
 
 (defmacro with-cli-handlers (&body body)
@@ -56,7 +57,7 @@ evaluation of BODY."
   "Like with-slots with some extra bindings."
   `(progn
      (setf (cli-cd ,cli) (sb-posix:getcwd))
-     (with-slots ,slots (parse-args ,cli (cli-args) :compile t)
+     (with-slots ,slots (parse-args ,cli (args) :compile t)
        ,@body)))
 
 (defvar *default-cli-def* 'defparameter)
@@ -317,7 +318,7 @@ is a list of handlers for the opt-val."
 	    (list (make-shorty n) n))
 	  (if (cli-opt-global self) "* " " ")
 	  (if-let ((d (and (slot-boundp self 'description) (cli-opt-description self))))
-	    (format stream ":  ~A" (the simple-string d))
+	    (format stream ":  ~A" d)
 	    "")))
 
 (defmethod cli-equal ((a cli-opt) (b cli-opt))

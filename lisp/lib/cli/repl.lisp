@@ -2,6 +2,7 @@
 
 ;;; Code:
 (in-package :cli/repl)
+
 ;; *command-char* alias make-repl-fun
 
 ;;; Allegro-style REPL
@@ -22,9 +23,9 @@ REPL."
   (string/= (trim x)
             (trim y)))
 
+#+readline
 (defun start-rl-repl ()
   "Start a GNU Readline REPL."
-  #+readline
   (do ((i 0 (1+ i))
        (input ""))
       ((string= "quit" (trim input)))
