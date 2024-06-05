@@ -10,7 +10,7 @@ x.lisp
 (require 'sb-concurrency)
 
 #-(or sbcl cl) (error "unsupported Lisp compiler")
-
+(in-package :cl-user)
 #-quicklisp
 (let ((quicklisp-init "/usr/local/share/lisp/quicklisp/setup.lisp"))
   (when (probe-file quicklisp-init)
@@ -81,21 +81,28 @@ x.lisp
   (uiop:dump-image (merge-pathnames (car (last (std::ssplit #\/ (asdf:component-name c)))) *stash-path*) :executable t :compression *compression-level*))
 
 (defun compile-std (&optional force save)
-  (asdf:compile-system :std :force force)
-  (asdf:load-system :std :force force)
-  (when save (sb-ext:save-lisp-and-die (merge-pathnames "std.core" *stash-path*) :compression *compression-level*)))
+  (ql:quickload :std)
+  (when save
+    (in-package :std-user)
+    (sb-ext:save-lisp-and-die (merge-pathnames "std.core" *stash-path*) :compression *compression-level*)))
 
 (defun compile-prelude (&optional force save)
   ;; (compile-std)
   (asdf:compile-system :prelude :force force)
   (asdf:load-system :prelude :force force)
   ;; (rocksdb:load-rocksdb save)
-  (when save (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression *compression-level*)))
+  (when save
+    (in-package :std-user)
+    (use-package :cl-user)
+    (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression *compression-level*)))
 
 (defun compile-user (&optional force save)
   (asdf:compile-system :user :force force)
   (asdf:load-system :user :force force)
-  (when save (sb-ext:save-lisp-and-die (merge-pathnames "user.core" *stash-path*) :compression *compression-level*)))
+  (when save
+    (in-package :user)
+    (use-package :cl-user)
+    (sb-ext:save-lisp-and-die (merge-pathnames "user.core" *stash-path*) :compression *compression-level*)))
 
 (defun save-foreign (name exports &rest args)
   (apply #'sb-ext:save-lisp-and-die name (append `(:executable nil :callable-exports ,exports) args)))

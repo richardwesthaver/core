@@ -5,7 +5,7 @@
 ;; TODO: fix false positives when using (eval-test)
 
 ;;; Code:
-(in-package :std-user)
+(in-package :std-int)
 (defpkg :std/tests
   (:use :cl :std :rt :sb-thread :std/fu))
 (in-package :std/tests)

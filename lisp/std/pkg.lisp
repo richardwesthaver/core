@@ -3,12 +3,12 @@
 ;;
 
 ;;; Code:
-(defpackage :std-user
+(defpackage :std-int
   (:use :cl :std/named-readtables)
   (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package :with-package)
   (:export :defpkg :define-lisp-package :with-package))
 
-(in-package :std-user)
+(in-package :std-int)
 
 (pushnew :std *features*)
 
@@ -405,3 +405,8 @@
    :std/macs :std/bit :std/fmt :std/path :std/os :std/file :std/string :std/seq :std/sys :std/readtable))
 
 (define-lisp-package :std)
+
+(defpkg :std-user
+  (:use :std-lisp :cl-user :sb-ext
+   :sb-alien :sb-thread :sb-bsd-sockets :sb-gray
+   :sb-concurrency :sb-mop :sb-debug))
