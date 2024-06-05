@@ -543,9 +543,7 @@ variable symbol.  Its value can be read with s, as usual.  BODY,
 THEN and ELSE are tempo elements.  To abort the execution of
 these elements, user must press `skt-tempo-else-key'.
 
-The main purpose of this extension is to mimic skeleton
-conditionals and iterative templats.  Skeleton becomes pretty
-much obsolete with this extension."
+The main purpose of this extension is to mimic skeleton conditionals."
   (pcase element
     (`(:if (,(and (pred stringp) prompt) ,(and (pred symbolp) var)) ,then ,else)
      (let ((prompt (skt-tempo--prompt prompt))

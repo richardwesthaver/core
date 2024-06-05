@@ -1,7 +1,7 @@
-
 #+title: core
-#+author: Richard Westhaver <ellis@rwest.io>
 #+description: The Compiler Company Core
+#+author: Richard Westhaver
+#+email: richard.westhaver@gmail.com
 The Compiler Company (=CC=) is a software research laboratory
 concerned with the future of Mechanical Freedom.
 

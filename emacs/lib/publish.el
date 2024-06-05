@@ -11,7 +11,10 @@
 (defvar publish-dir "/mnt/y/stash/compiler.company")
 (defvar html-theme nil)
 (defvar url "https://compiler.company")
-(defvar html-nav "<div class=\"nav\"> (<a href = \"https://compiler.company\">~</a> (<a href = \"https://compiler.company/blog\">blog</a> <a href = \"https://compiler.company/docs\">docs</a>) (<a href = \"https://vc.compiler.company/comp\">vc</a> <a href = \"https://packy.compiler.company\">packy</a>))</div>")
+(defvar vc-url "https://vc.compiler.company")
+(defvar packy-url "https://packy.compiler.company")
+(defvar html-nav (format "<div class=\"nav\"> (<a href = \"%s\">~</a> (<a href = \"%s/blog\">blog</a> <a href = \"%s/docs\">docs</a>) (<a href = \"%s\">vc</a> <a href = \"%s\">packy</a>))</div>"
+                         url url url vc-url packy-url))
 
 (defvar html-foot "<footer><p>updated %C</p></footer>")
 

@@ -34,6 +34,7 @@
  project-list-file (expand-file-name "projects" user-emacs-directory)
  project-mode-line t
  project-file-history-behavior 'relativize
+ tempo-interactive t
  emms-directory (expand-file-name "emms" user-emacs-directory)
  gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
  url-cache-directory (expand-file-name "url" user-emacs-directory)
@@ -49,6 +50,7 @@
  view-read-only t)
 (browse-url-default-browser "")
 ;;; Variables
+(defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
 (defvar user-lab-directory (expand-file-name "lab" user-home-directory))
@@ -132,13 +134,13 @@
          ("C-c p ^" . cape-tex)
          ("C-c p &" . cape-sgml)
          ("C-c p r" . cape-rfc1345))
-  :init
+  :config
   ;; Add to the global default value of `completion-at-point-functions' which is
   ;; used by `completion-at-point'.  The order of the functions matters, the
   ;; first function returning a result wins.  Note that the list of buffer-local
   ;; completion functions takes precedence over the global list.
   ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  (add-to-list 'completion-at-point-functions #'cape-abbrev)
   ;; (add-to-list 'completion-at-point-functions #'cape-history)
   ;; (add-to-list 'completion-at-point-functions #'cape-keyword)
   ;; (add-to-list 'completion-at-point-functions #'cape-file)
@@ -915,9 +917,6 @@ inherited by a parent headline."
         (org-search-view (if only-todos t nil) "*"))
       (org-agenda-remove-restriction-lock t)
       (message nil))))
-
-;;; Tempo
-(setq tempo-interactive t)
 
 (provide 'default)
 ;; default.el ends here
