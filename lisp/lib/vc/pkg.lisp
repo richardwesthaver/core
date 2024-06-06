@@ -3,6 +3,8 @@
   (:import-from :uiop :with-current-directory)
   (:export 
    :vc-repo
+   :vc-path
+   :vc-head
    :vc-error :vc-status
    :vc-clone :vc-push :vc-pull :vc-commit
    :vc-init :vc-id :vc-add :vc-remove

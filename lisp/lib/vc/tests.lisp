@@ -8,13 +8,13 @@
 (defmacro with-temp-repo ((kind &rest opts) &body body)
   (declare (ignore opts)) ;; TODO 2024-06-01: 
   `(let ((repo ,(make-repo ".")))
-     (setf (vc-repo-path repo) (merge-pathnames (format nil "~A" (gensym "repo")) "/tmp/"))
+     (setf (vc-path repo) (merge-pathnames (format nil "~A" (gensym "repo")) "/tmp/"))
      (case ,kind
        (:hg (sb-mop::change-class repo 'hg-repo))
        (:git (sb-mop::change-class repo 'git-repo))
        (t nil))
      (vc-init repo)
-     (let ((*default-pathname-defaults* (vc-repo-path repo)))
+     (let ((*default-pathname-defaults* (vc-path repo)))
        ,@body)))
 
 (deftest git ()

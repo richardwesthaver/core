@@ -61,6 +61,15 @@ are missing."))
 
 (defgeneric vc-status (self &key &allow-other-keys))
 
+;;; Accessors
+(defgeneric vc-path (self))
+(defgeneric vc-head (self))
+(defgeneric vc-tags (self))
+(defgeneric vc-revs (self))
+(defgeneric vc-branches (self))
+(defgeneric vc-remotes (self))
+(defgeneric vc-config (self))
+
 ;;  IDEA 2023-12-29: :ediff t
 (defgeneric vc-diff (a b &key &allow-other-keys))
 
@@ -105,15 +114,18 @@ are missing."))
 (defstruct vc-rev num id)
 
 (defclass vc-repo ()
-  ((path :initform nil :type (or null string pathname) :accessor vc-repo-path
+  ((path :initform nil :type (or null string pathname) :accessor vc-path
          :initarg :path
          :documentation "AKA working-directory or working-copy")
-   (head :initform nil :initarg :head :type (or null vc-rev) :accessor vc-repo-head)
-   (branches :initform (make-array 0 :element-type 'vc-branch :fill-pointer 0) :type (vector vc-branch))
-   (tags :initform (make-array 0 :element-type 'vc-tag :fill-pointer 0) :type (vector vc-tag))
-   (revisions :initform (make-array 0 :element-type 'vc-rev :fill-pointer 0) :type (vector vc-rev))
-   (remotes :initform (make-array 0 :element-type 'vc-remote :fill-pointer 0) :type (vector vc-remote))
-   (config :initform nil :type (or null vc-config)))
+   (head :initform nil :initarg :head :type (or null vc-rev) :accessor vc-head)
+   (branches :initform (make-array 0 :element-type 'vc-branch :fill-pointer 0)
+             :type (vector vc-branch) :accessor vc-branches)
+   (tags :initform (make-array 0 :element-type 'vc-tag :fill-pointer 0) :type (vector vc-tag) :accessor vc-tags)
+   (revisions :initform (make-array 0 :element-type 'vc-rev :fill-pointer 0)
+              :type (vector vc-rev) :accessor vc-revs)
+   (remotes :initform (make-array 0 :element-type 'vc-remote :fill-pointer 0)
+            :type (vector vc-remote) :accessor vc-remotes)
+   (config :initform nil :type (or null vc-config) :accessor vc-config))
   (:documentation "generic Repository object backed by one of VC-DESIGNATOR."))
 
 (defmethod vc-init ((self (eql t)))

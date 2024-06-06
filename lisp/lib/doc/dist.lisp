@@ -27,7 +27,7 @@
                   ;; may need (ignore-errors-if (error-p) body)
                   (ignore-errors
                    ;; can do better here anyway
-                   (when-let ((found (find-system (name s) nil)))
+                   (when-let ((found (find-system (doc-system s) nil)))
                      (system-documentation found))))
                 (if all 
                     (provided-systems dist)
@@ -36,7 +36,7 @@
 (defmethod print-object ((self dist-documentation) stream)
   (with-slots (dist systems) self
     (print-unreadable-object (self stream :type t)
-      (format stream "~S :systems ~A" (name dist) (length systems)))))
+      (format stream "~S :systems ~A" (ql-dist:name dist) (length systems)))))
 
 ;; maybe except an additional key for specific file types and maybe
 ;; include system def files..

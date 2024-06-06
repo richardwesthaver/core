@@ -44,4 +44,5 @@ used when the slot value of :BENCH is t.")
 
 PROPS is a plist which accepts the following keywords:
 
-tbd")
+tbd"
+  nil)

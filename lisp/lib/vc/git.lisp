@@ -31,25 +31,18 @@
   (make-instance 'git-repo :path (pathname *default-pathname-defaults*)))
 
 (defmethod vc-init ((self git-repo))
-  (with-slots (path) self
-    (let ((existed (probe-file path)))
-      (if (zerop (sb-ext:process-exit-code (run-git-command "init" path)))
-          (not existed)
-          (git-error "git init failed:" path)))))
+  (let ((path (vc-path self)))
+    (if (zerop (sb-ext:process-exit-code (run-git-command "init" path)))
+        (not (probe-file path))
+        (git-error "git init failed:" path))))
 
 (defmethod vc-run ((self git-repo) (cmd string) &rest args)
-  (with-slots (path) self
-    (uiop:with-current-directory (path)
-      (with-open-stream (s (sb-ext:process-output (apply #'run-git-command cmd args)))
-        (with-output-to-string (str)
-          (loop for l = (read-line s nil nil)
-                while l
-                do (write-line l)))))))
-
-(defmethod vc-init ((self git-repo))
-  (with-slots (path) self
-    ;; could throw error here but w/e
-    (sb-ext:process-exit-code (run-git-command "init" path))))
+  (uiop:with-current-directory ((vc-path self))
+    (with-open-stream (s (sb-ext:process-output (apply #'run-git-command cmd args)))
+      (with-output-to-string (str)
+        (loop for l = (read-line s nil nil)
+              while l
+              do (write-line l))))))
 
 (defmethod vc-clone ((self git-repo) remote &key &allow-other-keys)
   (with-slots (path) self
@@ -91,7 +84,7 @@
 (defmethod vc-branch ((self git-repo)) (vc-run self "branch"))
 
 (defmethod vc-diff ((a git-repo) (b git-repo) &key &allow-other-keys)
-  (vc-run a "diff" (vc/proto::vc-repo-head a) (vc/proto::vc-repo-head b)))
+  (vc-run a "diff" (vc-head a) (vc-head b)))
 
 (defmethod vc-id ((self git-repo))
   (with-slots (path) self

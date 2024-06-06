@@ -6,9 +6,8 @@
 (in-package :std-user)
 
 (defpkg :core/tests
-  (:nicknames :tests)
   (:use :std-lisp :rt :log))
 
-(in-package :tests)
+(in-package :core/tests)
 
 (defsuite :core)

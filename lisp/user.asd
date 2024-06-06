@@ -5,4 +5,5 @@
                :packy :parse :pod :rdb 
                :krypt :gui)
   :components ((:file "user"))
+  :build-operation monolithic-compile-bundle-op
   :build-pathname "user")

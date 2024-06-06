@@ -25,4 +25,4 @@
 (defsystem :ssh2/tests
   :depends-on (:rt :ssh2)
   :components ((:file "tests"))
-  :perform (test-op (op c) (symbol-call :rt :do-tests :ssh2)))
+  :perform (test-op (op c) (uiop:symbol-call :rt :do-tests :ssh2)))

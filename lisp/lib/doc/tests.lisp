@@ -29,25 +29,26 @@
 
 (defvar *bad-heading* #";;;Foobar:"#)
 
-(defmacro is-doc-typep (type arg)
-  `(is (typep ,arg ',(symbolicate type "-DOCUMENTATION"))))
+(eval-always
+  (defmacro is-doc-typep (type arg)
+    `(is (typep ,arg ',type))))
 
 (deftest doc-symbol ()
-  (is-doc-typep :symbol (symbol-documentation 'car)))
+  (is-doc-typep symbol-documentation (symbol-documentation 'car)))
 
 
 (deftest doc-package ()
-  (is-doc-typep :package (package-documentation)))
+  (is-doc-typep package-documentation (package-documentation)))
 
 (deftest doc-system ()
-  (is-doc-typep :system (system-documentation :std)))
+  (is-doc-typep system-documentation (system-documentation :std)))
 
 (deftest doc-file ()
   (let ((file (or *compile-file-pathname* (asdf:system-relative-pathname :doc "tests.lisp"))))
-    (is-doc-typep :file (file-documentation file))))
+    (is-doc-typep file-documentation (file-documentation file))))
 
 (deftest doc-dist ()
-  (is-doc-typep :dist (dist-documentation :quicklisp)))
+  (is-doc-typep dist-documentation (dist-documentation :quicklisp)))
 
 (deftest image-documentation ()
   (is t))

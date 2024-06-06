@@ -68,35 +68,33 @@
    (requires :accessor vc-requires)))
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
-  (with-slots (path) self
-    (uiop:with-current-directory (path)
-      (let ((proc (apply #'run-hg-command cmd args)))
-        (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
-              (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))
-          (with-open-stream (s (if ok
-                                   (sb-ext:process-output proc)
-                                   (sb-ext:process-error proc)))
-            (with-output-to-string (str res)
-              (loop for l = (read-line s nil nil)
-                    while l
-                    do (write-line l str)))
-            (if ok res (error 'hg-error :message res))))))))
+  (uiop:with-current-directory ((vc-path self))
+    (let ((proc (apply #'run-hg-command cmd args)))
+      (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
+            (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))
+        (with-open-stream (s (if ok
+                                 (sb-ext:process-output proc)
+                                 (sb-ext:process-error proc)))
+          (with-output-to-string (str res)
+            (loop for l = (read-line s nil nil)
+                  while l
+                  do (write-line l str)))
+          (if ok res (error 'hg-error :message res)))))))
 
 (defmethod vc-init ((self (eql :hg)))
   (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
 
-(defmethod vc-init ((self list))
-  (when-let ((form self))
-    (make-instance 'hg-repo
-      :path (pathname (pop form))
-      :remotes (or (getf form :remotes) #()))))
+;; (defmethod vc-init ((self list))
+;;   (when-let ((form self))
+;;     (make-instance 'hg-repo
+;;       :path (pathname (pop form))
+;;       :remotes (or (getf form :remotes) #()))))
     
 (defmethod vc-init ((self hg-repo))
-  (with-slots (path) self
-    (let ((existed (probe-file path)))
-      (if (zerop (sb-ext:process-exit-code (run-hg-command "init" path)))
-          (not existed)
-          (hg-error "hg init failed:" path)))))
+  (let ((path (vc-path self)))
+    (if (zerop (sb-ext:process-exit-code (run-hg-command "init" path)))
+        path
+        (hg-error "hg init failed:" path))))
 
 (defmethod vc-clone ((self hg-repo) remote &key &allow-other-keys)
   (with-slots (path) self
@@ -125,7 +123,7 @@
 (defmethod vc-branch ((self hg-repo)) (vc-run self "branch"))
 
 (defmethod vc-diff ((a hg-repo) (b hg-repo) &key &allow-other-keys) 
-  (vc-run a "diff" (vc/proto::vc-repo-head a) (vc/proto::vc-repo-head b)))
+  (vc-run a "diff" (vc-head a) (vc-head b)))
 
 (defmethod vc-id ((self hg-repo))
   (with-slots (path) self
