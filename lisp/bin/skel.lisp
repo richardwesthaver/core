@@ -2,7 +2,7 @@
 
 ;;  TODO 2024-05-09: add shell configurables to rules - maybe at sk-command
 ;;  level. :INPUT :WAIT :OUTPUT
-(in-package :sk-user)
+(in-package :std-user)
 (defpkg :bin/skel
   (:use :cl :std :cli/clap :vc :sb-ext :skel :log :dat/sxp)
   (:import-from :cli/shell :*shell-input*)

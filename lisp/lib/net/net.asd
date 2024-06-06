@@ -1,3 +1,4 @@
+(push :ssl *features*)
 (defsystem :net
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
