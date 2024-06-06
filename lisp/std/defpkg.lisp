@@ -14,11 +14,10 @@
    :symbol-shadowing-p :home-package-p :make-symbol* :unintern*
    :symbol-package-name :standard-common-lisp-symbol-p
    :reify-package :unreify-package :reify-symbol :unreify-symbol
-   :nuke-symbol-in-package :nuke-symbol :rehome-symbol
-           :ensure-package-unused :delete-package*
-           :package-names :packages-from-names :fresh-package-name 
-   :rename-package-away :package-definition-form :parse-defpkg-form
-           :ensure-package :with-package))
+   :nuke-symbol-in-package :nuke-symbol :rehome-symbol :ensure-package-unused
+   :delete-package* :package-names :packages-from-names :fresh-package-name 
+   :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
+   :with-package :define-lisp-package))
 
 (in-package :std/defpkg)
 

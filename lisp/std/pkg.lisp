@@ -3,14 +3,11 @@
 ;;
 
 ;;; Code:
-(defpackage :std-int
-  (:use :cl :std/named-readtables)
-  (:shadowing-import-from :std/defpkg :defpkg :define-lisp-package :with-package)
-  (:export :defpkg :define-lisp-package :with-package))
+(pkg:defpkg :std-int
+  (:use :cl)
+  (:use-reexport :std/named-readtables :std/defpkg))
 
 (in-package :std-int)
-
-(pushnew :std *features*)
 
 (defpackage :std/err
   (:use :cl)
@@ -404,9 +401,9 @@
    :std/stream :std/fu :std/array :std/hash-table :std/alien :std/mop :std/thread
    :std/macs :std/bit :std/fmt :std/path :std/os :std/file :std/string :std/seq :std/sys :std/readtable))
 
-(define-lisp-package :std)
-
 (defpkg :std-user
-  (:use :std-lisp :cl-user :sb-ext
-   :sb-alien :sb-thread :sb-bsd-sockets :sb-gray
-   :sb-concurrency :sb-mop :sb-debug))
+  (:use :cl :cl-user :sb-ext :std
+   :std-int :sb-alien :sb-thread :sb-bsd-sockets
+   :sb-gray :sb-concurrency :sb-mop :sb-debug))
+
+(pkg:define-lisp-package :std)

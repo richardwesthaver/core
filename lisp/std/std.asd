@@ -1,6 +1,6 @@
 ;;; std.asd --- standard library
+(pushnew :std *features*)
 
-;; TODO: move into std system?
 (defsystem :std/named-readtables
   :version "0.1.0"
   :components ((:file "named-readtables"))
