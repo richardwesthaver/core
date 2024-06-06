@@ -27,8 +27,8 @@
  (tree-sitter-alien ()
                     #$ cd lisp/ffi/tree-sitter &&
                     clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
-                    alien.c -o /usr/local/lib/libtree-sitter-alien.so
-                    echo installed /usr/local/lib/libtree-sitter-alien.so$#)
+                    alien.c -o /usr/local/lib/libtree-sitter-alien.so$#
+                    (info! "installed /usr/local/lib/libtree-sitter-alien.so"))
  (psl.dat () ;; req:fetch works in slime and sk-shell but not here? hmm..
           (with-open-file
            (st ".stash/psl.dat" :direction :output :element-type 'octet)
