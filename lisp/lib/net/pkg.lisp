@@ -351,3 +351,6 @@
    ;; :net/proto/crew 
    :net/proto/ssh
    :net/proto/http))
+
+(defpkg :net-user
+  (:use :cl :std :std-user :net :obj))

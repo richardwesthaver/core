@@ -182,7 +182,7 @@ install")))
   (let ((sys (sb-int:keywordicate (format nil "BIN/~A" (string-upcase name)))))
     (ql:quickload sys)
     (push :ssl *features*)
-    (std/sys:forget-shared-objects)
+    ;; (std/sys:forget-shared-objects)
     (asdf:make sys)))
 
 (defun x-build (args)
