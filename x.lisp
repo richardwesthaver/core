@@ -104,6 +104,20 @@ x.lisp
     (use-package :cl-user)
     (sb-ext:save-lisp-and-die (merge-pathnames "user.core" *stash-path*) :compression *compression-level*)))
 
+(defun compile-tests (&optional force save)
+  (asdf:compile-system :core/tests :force force)
+  (asdf:load-system :core/tests :force force)
+  (when save
+    (in-package :tests)
+    (sb-ext:save-lisp-and-die (merge-pathnames "tests.core" *stash-path*) :compression *compression-level*)))
+
+(defun compile-core (&optional force save)
+  (asdf:compile-system :core :force force)
+  (asdf:load-system :core :force force)
+  (when save
+    (in-package :core)
+    (sb-ext:save-lisp-and-die (merge-pathnames "core.core" *stash-path*) :compression *compression-level*)))
+
 (defun save-foreign (name exports &rest args)
   (apply #'sb-ext:save-lisp-and-die name (append `(:executable nil :callable-exports ,exports) args)))
 
@@ -191,8 +205,10 @@ install")))
         (format t "saving core to: ~A~%" (merge-pathnames name *stash-path*))
         (string-case (name)
           ("prelude" (compile-prelude t t))
+          ("core" (compile-core t t))
           ("std" (compile-std t t))
-          ("user" (compile-user t t))))
+          ("user" (compile-user t t))
+          ("tests" (compile-tests t t))))
       ;; self save
       (sb-ext:run-program "x.lisp" nil :input t :output t)))
 

@@ -1,12 +1,12 @@
 (defpackage :rt/tests
-  (:use :cl :std :rt :sb-sprof :rt/flamegraph :rt/tracing :rt/cover))
+  (:use :cl :std :rt :sb-sprof :rt/flamegraph :rt/tracing :rt/cover :rt/bench))
 
 (in-package :rt/tests)
 
 (defsuite :rt)
 (in-suite :rt)
 
-(deftest rt (:bench 100 :profile t :persist t)
+(deftest rt (:profile t :persist t)
   (is (typep (make-fixture-prototype :empty nil) 'fixture-prototype))
   (with-fixture (fx (make-fixture ((a 1) (b 2))
 		      (:+ () (+ (incf a) (incf b)))

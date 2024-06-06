@@ -11,7 +11,6 @@
 (in-package :alsa)
 
 (define-alien-loader "asound" t "/usr/lib/")
-;; (load-asound)
 
 (defconstant %seek-set 0)
 (defconstant %seek-cur 1)

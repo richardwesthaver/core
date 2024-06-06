@@ -2,7 +2,7 @@
 
 ;; This package provides a simple compiler for .slint files.
 
-;; see also: core/rust/lib/ui/readme.txt
+;; see also: core/rust/lib/ui and core/rust/ui
 
 ;;; Commentary:
 

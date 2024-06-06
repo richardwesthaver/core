@@ -9,6 +9,6 @@
 (defsuite :alsa)
 (in-suite :alsa)
 
-(load-alsa)
+(load-asound)
 
 (deftest sanity ())
