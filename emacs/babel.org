@@ -1,0 +1,5 @@
+#+title: babel
+#+author: Richard Westhaver
+#+description: Core Library of Babel
+#+setupfile: clean.theme
+#+PROPERTY: header-args :eval never-export
