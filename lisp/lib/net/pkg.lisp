@@ -255,7 +255,7 @@
    :invalid-parameter-value))
 
 (defpackage net/cookie
-  (:use :cl :std :parse/bytes)
+  (:use :cl :std :parse/bytes :obj/uri)
   (:shadowing-import-from :alexandria :when-let :if-let)
   (:import-from :obj/time
    :today
