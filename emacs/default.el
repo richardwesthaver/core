@@ -918,5 +918,10 @@ inherited by a parent headline."
       (org-agenda-remove-restriction-lock t)
       (message nil))))
 
+;;; Skel
+(add-to-load-path user-emacs-lib-directory)
+(require 'sk)
+(require 'skt)
+
 (provide 'default)
 ;; default.el ends here
