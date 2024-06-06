@@ -50,14 +50,17 @@ overwritten with the AUTO flag."
     "Load the 'skelfile' FILE."
     (load-ast (sk-read-file (make-instance 'sk-project) file)))
 
-  (defun find-sk-project-root (path name)
+  (defun probe-merge-file (name path)
+    (probe-file (merge-pathnames name path)))
+
+  (defun find-sk-project-root (path &optional (name *default-skelfile*))
     "Return the root location of a `skel-project' by checking for
   NAME."
-    (if (probe-file (merge-pathnames name path))
-        path
-        (let ((next (pathname-parent-directory-pathname path)))
-          (unless (uiop:pathname-equal next path)
-	    (find-sk-project-root next name)))))
+      (if (probe-merge-file path name)
+          path
+          (let ((next (pathname-parent-directory-pathname path)))
+            (unless (uiop:pathname-equal next path)
+	      (find-sk-project-root next name)))))
 
   (defun find-sk-file (path ext)
     "Return the next SK-FILE at PATH matching the extension EXT."
@@ -77,23 +80,31 @@ overwritten with the AUTO flag."
       (when cfg (setf sk (sk-install-user-config sk cfg)))
       (sk-write-file sk :path path :fmt fmt))))
 
-(defun find-skelfile (start &key (load nil) (filename *default-skelfile*) (walk t) error)
-  "Walk up the current directory returning the path to a 'skelfile', else
-return nil. When LOAD is non-nil, load the skelfile if found."
+(defun find-skelfile (start &key (load nil) (name *default-skelfile*) (ext "sk") (walk t) error)
+  "Walk up the current directory returning the path to a 'skelfile' by NAME or a
+filename with extension EXT, else return nil. When LOAD is non-nil, load the
+skelfile if found."
   ;; Check the current path, if no skelfile found, walk up a level and
   ;; continue until the `*skelfile-boundary*' is triggered.
-  (if walk 
-      (let ((root (find-sk-project-root (car (directory start)) filename)))
-	(if root
-	    (if load
-		(load-skelfile (merge-pathnames filename root))
-		(merge-pathnames filename root))
-	    (when error (error "failed to find root skelfile"))))
-      (if-let ((sk (probe-file (merge-pathnames filename start))))
-	(if load 
-	    (load-skelfile sk)
-	    sk)
-	(when error (error "failed to find root skelfile")))))
+  (labels ((%check (dir)
+             (or (probe-merge-file name dir)
+                 (when-let ((match (directory (merge-pathnames dir (format nil "*.~a" ext)))))
+                   (probe-file (car match)))
+                 (probe-merge-file (make-pathname :name name :type ext) dir)))
+           (%walk (dir)
+             (or (%check dir)
+                 (let ((next (pathname-parent-directory-pathname dir)))
+                   (if (uiop:pathname-equal next dir)
+                       (when error (error "failed to find root skelfile"))
+                       (%walk next)))))
+           (%load? (file) (if load (load-skelfile file) file)))
+    (setf start (car (directory start)))
+    (if-let ((match (%check start)))
+      (%load? match)
+      (if walk
+          (when-let ((match (%walk start)))
+            (%load? match))
+	  (when error (error "failed to find root skelfile"))))))
 
 (defun edit-skelrc ()
   "Open the current user configuration using ED."
