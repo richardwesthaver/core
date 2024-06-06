@@ -130,7 +130,8 @@
 
 (defpackage :obj/url
   (:nicknames :url)
-  (:use :cl :std :obj/uri))
+  (:use :cl :std :obj/uri)
+  (:import-from :quri :url-encode :url-decode :url-encode-params :url-decode-params))
 
 (defpackage :obj/seq
   (:nicknames :seq)

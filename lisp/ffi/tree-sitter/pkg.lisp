@@ -20,7 +20,7 @@
   (:use :cl :std :sb-alien :std/alien)
   (:export 
    :load-tree-sitter
-   :load-tree-sitter-wrapper
+   :load-tree-sitter-alien
    :tree-sitter-language-files
    :*ts-langs*
    :list-ts-langs
@@ -79,11 +79,11 @@
 (defun load-tree-sitter () 
   (unless (member :tree-sitter *features*)
     (sb-alien:load-shared-object (shared-object-name "tree-sitter") :dont-save t)
-    (load-tree-sitter-wrapper)
+    (load-tree-sitter-alien)
     (push :tree-sitter *features*)))
 
-(defun load-tree-sitter-wrapper ()
+(defun load-tree-sitter-alien ()
   (handler-bind ((simple-error
                    (lambda (condition)
-                     (warn "failed to load libtree-sitter-wrapper.so --- make sure to follow the install instructions in ffi/tree-sitter/wrapper.c! ~a" condition))))
-    (sb-alien:load-shared-object "/usr/local/lib/libtree-sitter-wrapper.so" :dont-save t)))
+                     (warn "failed to load libtree-sitter-alien.so --- make sure to follow the install instructions in lis/lib/ffi/tree-sitter/alien.c! ~a" condition))))
+    (sb-alien:load-shared-object "/usr/local/lib/libtree-sitter-alien.so" :dont-save nil)))

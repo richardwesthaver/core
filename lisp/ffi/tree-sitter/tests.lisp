@@ -8,7 +8,7 @@
 (in-suite :tree-sitter)
 
 (load-tree-sitter)
-(load-tree-sitter-wrapper)
+;; (load-tree-sitter-alien)
 (load-tree-sitter-json)
 (load-tree-sitter-rust)
 

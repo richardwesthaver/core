@@ -298,7 +298,9 @@
   (:nicknames :req)
   (:shadowing-import-from :std/type :octet :octet-vector)
   (:shadow :get :delete)
-  (:use :cl :std :obj/uri :net/proto/http :babel :net/cookie :fast-io :dat/base64 :cl+ssl :sb-gray)
+  (:use :cl :std :obj/uri
+   :obj/url :net/proto/http :babel :net/cookie
+   :fast-io :dat/base64 :cl+ssl :sb-gray)
   (:shadowing-import-from :babel :octets-to-string)
   (:export
    :request
@@ -314,6 +316,8 @@
    :*default-proxy*
    :*verbose*
    :*no-ssl*
+   :*ca-bundle*
+   :+socks5-version+
    :*connection-pool*
    :*use-connection-pool*
    :make-connection-pool

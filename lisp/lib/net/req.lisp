@@ -386,9 +386,8 @@ keep-alive-stream), and should handle clean-up of it"
 
 ;;; decoding-stream
 (declaim (type fixnum +buffer-size+))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defconstant +buffer-size+ 128))
-
+(eval-always (defconstant +buffer-size+ 128))
+  
 (defclass decoding-stream (fundamental-character-input-stream)
   ((stream :type stream
            :initarg :stream
@@ -826,9 +825,10 @@ keep-alive-stream), and should handle clean-up of it"
 
 ;;; backend
 (with-compilation-unit ()
-(defparameter *ca-bundle*
-  (uiop:native-namestring #P"/etc/ca-certificates/extracted/ca-bundle.trust.crt")
-  "The default public root certificates used in requests.")
+(eval-always
+  (defparameter *ca-bundle*
+    #.(uiop:native-namestring #P"/etc/ca-certificates/extracted/ca-bundle.trust.crt")
+    "The default public root certificates used in requests."))
    
 
 (defun read-until-crlf*2 (stream)
@@ -1036,15 +1036,14 @@ keep-alive-stream), and should handle clean-up of it"
     (when proxy-auth
       (format nil "Basic ~A"
               (dat/base64:string-to-base64-string proxy-auth)))))
-
-(defconstant +socks5-version+ 5)
-(defconstant +socks5-reserved+ 0)
-(defconstant +socks5-no-auth+ 0)
-(defconstant +socks5-connect+ 1)
-(defconstant +socks5-domainname+ 3)
-(defconstant +socks5-succeeded+ 0)
-(defconstant +socks5-ipv4+ 1)
-(defconstant +socks5-ipv6+ 4)
+(eval-always
+  (defconstant +socks5-reserved+ 0)
+  (defconstant +socks5-no-auth+ 0)
+  (defconstant +socks5-connect+ 1)
+  (defconstant +socks5-domainname+ 3)
+  (defconstant +socks5-succeeded+ 0)
+  (defconstant +socks5-ipv4+ 1)
+  (defconstant +socks5-ipv6+ 4))
 
 (defun ensure-socks5-connected (input output uri http-method)
   (labels ((fail (condition &key reason)
@@ -1255,7 +1254,7 @@ keep-alive-stream), and should handle clean-up of it"
            (boundary (and multipart-p
                           (make-random-string 12)))
            (content (if (and form-urlencoded-p (not (stringp content))) ;; user can provide already encoded content, trust them.
-                        (obj/uri::url-encode-params content)
+                        (obj/url::url-encode-params content)
                         content))
            (stream (or user-supplied-stream
                        (and use-connection-pool
