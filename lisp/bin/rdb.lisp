@@ -15,8 +15,6 @@
 
 ;; (defopt rdb-config (init-rdb-user-config (parse-file-opt $val)))
 
-(defopt rdb-help (print-help $cli))
-
 (defcmd rdb-new
   (set-opt *rdb* :error-if-exists t)
   (open-db *rdb*)
