@@ -995,23 +995,6 @@ keep-alive-stream), and should handle clean-up of it"
                                           babel:*default-character-encoding*
                                           nil)))))
 
-(defun content-disposition (key val)
-  (if (pathnamep val)
-      (let* ((filename (file-namestring val))
-             (utf8-filename-p (find-if (lambda (char)
-                                         (< 127 (char-code char)))
-                                       filename)))
-        (format nil "Content-Disposition: form-data; name=\"~A\"; ~:[filename=\"~A\"~;filename*=UTF-8''~A~]~C~C"
-                key
-                utf8-filename-p
-                (if utf8-filename-p
-                    (obj/uri:parse-uri filename)
-                    filename)
-                #\Return #\Newline))
-      (format nil "Content-Disposition: form-data; name=\"~A\"~C~C"
-              key
-              #\Return #\Newline)))
-
 (defun build-cookie-headers (uri cookie-jar)
   (with-header-output (buffer)
     (let ((cookies (cookie-jar-host-cookies cookie-jar (uri-host uri) (or (uri-path uri) "/")

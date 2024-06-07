@@ -11,7 +11,7 @@
 (defun register-repo (repo)
   "Register a repo, collecting information from the filesystem and
 creating a repo object which is stored in *REPO-REGISTRY*."
-  (setf (gethash (vc/proto::vc-repo-path repo) *repo-registry*) repo))
+  (setf (gethash (vc/proto:vc-path repo) *repo-registry*) repo))
 
 (defun find-repo (name)
   "Find a repo in *REPO-REGISTRY*."

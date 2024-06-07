@@ -29,7 +29,7 @@
    (version :initform "" :initarg :version :type string :accessor sk-version)
    (tags :initform nil :initarg :tags :accessor sk-tags)
    (description :initarg :description :initform nil :type (or null string) :accessor sk-description)
-   (license :initform nil :initarg :license :type :string :accessor sk-license))
+   (license :initarg :license :type license-designator :accessor sk-license))
   (:documentation "Skel Meta class."))
 
 (defun sk-init (class &rest initargs)

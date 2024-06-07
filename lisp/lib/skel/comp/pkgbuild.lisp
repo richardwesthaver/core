@@ -15,6 +15,7 @@
 
 (defmethod sk-compile ((self sk-pkgbuild-system) stream &key &allow-other-keys))
 
-(defmethod sk-write-file ((self sk-pkgbuild-system) &key path))
+(defmethod sk-write-file ((self sk-pkgbuild-system) &key path)
+  (declare (ignore path)))
 
 (defmethod sk-read-file ((self sk-pkgbuild-system) path))

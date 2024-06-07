@@ -108,7 +108,7 @@ x.lisp
   (asdf:compile-system :core/tests :force force)
   (asdf:load-system :core/tests :force force)
   (when save
-    (in-package :tests)
+    (in-package :core/tests)
     (sb-ext:save-lisp-and-die (merge-pathnames "tests.core" *stash-path*) :compression *compression-level*)))
 
 (defun compile-core (&optional force save)
