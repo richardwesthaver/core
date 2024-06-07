@@ -50,7 +50,7 @@
 ;; (define-alien-routine ts-parser-logger ts-logger (self ts-parser))
 ;; (define-alien-routine ts-parser-set-logger void (self ts-parser) (logger ts-logger))
 
-;; (define-alien-routine ts-parser-set-language boolean (self ts-parser) (language ts-language))
+(define-alien-routine ts-parser-set-language boolean (self ts-parser) (language ts-language))
 
 (define-alien-routine ts-parser-language ts-language (self ts-parser))
 (define-alien-routine ts-parser-parse ts-tree (self ts-parser) (old-tree ts-tree) (length unsigned-int))
@@ -94,20 +94,20 @@
 
 ;; (define-alien-routine ts-tree-cursor-current-node ts-node (cursor (* ts-tree-cursor)))
 
-;; (define-alien-routine ts-tree-cursor-current-field-name c-string (cursor (* ts-tree-cursor)))
+(define-alien-routine ts-tree-cursor-current-field-name c-string (cursor (* ts-tree-cursor)))
 
-;; (define-alien-routine ts-tree-cursor-goto-next-sibling boolean (self (* ts-tree-cursor)))
+(define-alien-routine ts-tree-cursor-goto-next-sibling boolean (self (* ts-tree-cursor)))
 
-;; (define-alien-routine ts-tree-cursor-goto-parent boolean (self (* ts-tree-cursor)))
+(define-alien-routine ts-tree-cursor-goto-parent boolean (self (* ts-tree-cursor)))
 
-;; (define-alien-routine ts-tree-cursor-goto-first-child boolean (self (* ts-tree-cursor)))
+(define-alien-routine ts-tree-cursor-goto-first-child boolean (self (* ts-tree-cursor)))
 
-;; (define-alien-routine ts-tree-cursor-delete void (cursor (* ts-tree-cursor)))
+(define-alien-routine ts-tree-cursor-delete void (cursor (* ts-tree-cursor)))
 
-;; (define-alien-routine ts-language-version unsigned-int (v ts-language))
-;; (define-alien-routine ts-language-symbol-count unsigned-int (v ts-language))
-;; (define-alien-routine ts-language-symbol-name c-string (v ts-language) (s ts-symbol))
-;; (define-alien-routine ts-language-field-count unsigned-int (v ts-language))
+(define-alien-routine ts-language-version unsigned-int (v ts-language))
+(define-alien-routine ts-language-symbol-count unsigned-int (v ts-language))
+(define-alien-routine ts-language-symbol-name c-string (v ts-language) (s ts-symbol))
+(define-alien-routine ts-language-field-count unsigned-int (v ts-language))
 
 ;;; Query
 (define-alien-routine ts-query-new (* ts-query)
@@ -119,7 +119,7 @@
 
 (define-alien-routine ts-query-delete void (query (* ts-query)))
 
-;;; WRAPPER.C
+;;; ALIEN.C
 (define-alien-routine ts-tree-root-node-pointer (* ts-node)
   (tree ts-tree))
 
