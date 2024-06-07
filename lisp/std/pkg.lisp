@@ -393,6 +393,7 @@
    :current-lisp-implementation
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live
+   :forget-shared-object
    :forget-shared-objects))
 
 (defpkg :std

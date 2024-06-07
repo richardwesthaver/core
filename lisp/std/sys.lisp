@@ -66,6 +66,13 @@
 
 (length (sb-di::list-allocated-objects :dynamic :test #'stringp))
 
+(defun forget-shared-object (name)
+  (setf (sb-alien::shared-object-dont-save
+         (find name sb-sys:*shared-objects*
+               :key 'sb-alien::shared-object-namestring
+               :test 'string-equal))
+        t))
+
 (defun forget-shared-objects ()
   "Set the DONT-SAVE slot of all objects in SB-SYS:*SHARED-OBJECTS* to T."
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) t)) sb-sys:*shared-objects*))
