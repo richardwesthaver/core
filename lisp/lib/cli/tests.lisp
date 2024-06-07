@@ -1,5 +1,6 @@
 (defpackage :cli/tests
-  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt))
+  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt :cli/clap))
+
 (in-package :cli/tests)
 (declaim (optimize (debug 3) (safety 3)))
 (defsuite :cli)
@@ -210,13 +211,13 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (is (string= "foobar"
                  (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
-(defparameter *opts* (cli:make-opts
+(defparameter *opts* (make-opts
                        (:name "foo" :global t :description "bar")
 		       (:name "bar" :description "foo")))
 
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
 (defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds #(*cmd1*) :opts *opts* :description "cmd1 description"))
-(defparameter *cmds* (cli:make-cmds (:name "baz" :description "baz" :opts *opts*)))
+(defparameter *cmds* (make-cmds (:name "baz" :description "baz" :opts *opts*)))
 
 (defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
@@ -238,11 +239,11 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 	   (print-help cli s))))
     (is (string= "foobar" (parse-str-opt "foobar")))))
 
+(make-opt-parser thing $val)
 (deftest clap-opts ()
   "CLAP opt tests."
   (is (reduce (lambda (x y) (when x (when y t)))
               (loop for k across *cli-opt-kinds* collect (cli-opt-kind-p k))))
-  (make-opt-parser thing $val)
   (is (parse-thing-opt t))
   (is (null (parse-thing-opt nil))))
 
@@ -255,7 +256,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 
 (deftest spark ()
   (is (string= 
-       (cli/spark:spark '(1 5 22 13 5))
+       (spark '(1 5 22 13 5))
        "▁▂█▅▂"))
   (is (string= 
        (spark '(5.5 20))
@@ -670,7 +671,7 @@ Eastern Mediterranean ████████████████▊
 (deftest clap-ast ())
 
 (deftest main-output ()
-  (let ((*test-target*))
+  (let ((*test-target* nil))
     (defmain (:return *test-target* :exit nil :export nil)
       (let ((*test-target* t))
         *test-target*))

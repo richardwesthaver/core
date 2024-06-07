@@ -3,6 +3,7 @@
 ;; Command Objects used to build CLI Applications.
 
 ;;; Code:
+(in-package :cli/clap/obj)
 
 (defclass cli-cmd ()
   ;; name slot is required and must be a string
@@ -124,6 +125,45 @@ a CLI is called without arguments, and all subcommands."))
 (defun solop (self)
   (and (= 0 (length (active-cmds self)) (length (active-opts self)))))
 
+(defmethod proc-args ((self cli-cmd) args)
+  "Process ARGS into an ast. Each element of the ast is a node with a
+:kind slot, indicating the type of node and a :form slot which stores
+a value.
+
+For now we parse group separators '--' and insert a nil into the tree,
+this will likely change to generating a new branch in the ast as it
+should be."
+  (make-cli-ast
+   (let ((holes)) ;; list of arg indexes which can be skipped since they're
+     ;; consumed by an opt
+     (loop 
+       for i below (length args)
+       for (a . args) on args
+       if (member i holes)
+       do (continue) ;; skip args which have been consumed already
+       else if (= (length a) 1)
+       collect (make-cli-node 'arg a) ; always treat single-char as arg
+       else if (short-opt-p a) ;; SHORT OPT
+       collect (if-let ((o (find-short-opts self (aref a 1) :recurse t)))
+                 (%compose-short-opt (car o) a)
+                 (make-cli-node 'arg a))
+       else if (long-opt-p a) ;; LONG OPT
+       collect (if-let ((o (find-opts self (string-left-trim "-" a) :recurse t)))
+                 (prog1 (%compose-long-opt (car o) args)
+                   (push (1+ i) holes))
+                 (make-cli-node 'arg a))
+       ;; OPT GROUP
+       else if (opt-group-p a)
+       collect nil
+       ;; CMD
+       else
+       collect (let ((cmd (find-cmd self a)))
+                 (if cmd
+                     ;; TBD
+                     (make-cli-node 'cmd (find-cmd self a))
+                     ;; ARG
+                     (make-cli-node 'arg a)))))))
+
 (defmethod install-ast ((self cli-cmd) (ast cli-ast))
   "Install the given AST, recursively filling in value slots."
   (with-slots (cmds opts) self
@@ -134,10 +174,10 @@ a CLI is called without arguments, and all subcommands."))
     ;; locked for the full runtime duration or until GC.
     (setf (cli-lock-p self) t)
     (loop named install
-          for (node . tail) on (debug! (cli-ast-ast ast))
+          for (node . tail) on (debug! (cli/clap/ast::cli-ast-ast ast))
           until (null node)
           do 
-             (with-slots (kind form) node
+             (let ((kind (cli-node-kind node)) (form (cli-node-form node)))
                (case kind
                  ;; opts 
                  (opt

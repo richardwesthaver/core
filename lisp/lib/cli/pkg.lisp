@@ -23,6 +23,11 @@
   (:nicknames :shell)
   (:export :*shell* :*shell-directory* :*shell-input*))
 
+(defpackage :cli/env
+  (:use :cl :std)
+  (:export :*default-global-env-var-names* :*default-local-env-var-names* :exec-path-list
+   :program-list :find-exe :ld-library-path-list))
+
 (defpackage :cli/ansi
   (:use :cl :std)
   (:nicknames :ansi)
@@ -89,114 +94,9 @@
   (:export :load-acl-repl :start-rl-repl))
 
 (defpackage :cli/ed
-  (:use :cl :std)
-  (:export :run-emacs :run-emacsclient
-           :org-store-link))
-
-(defpackage :cli/clap
-  (:nicknames :clap)
-  (:use :cl :std :log :sb-ext)
-  (:import-from :cli/ansi :.ris)
-  (:import-from :uiop :println)
-  (:import-from :sb-ext :parse-native-namestring)
-  (:shadowing-import-from :sb-ext :exit)
-  (:export
-   :*no-exit*
-   :arg0
-   :args
-   :*cli-group-separator*
-   :*cli-opt-kinds*
-   :cli-opt-kind-p
-   :global-opt-p
-   :*std-local-env-var-names*
-   :*std-global-env-var-names*
-   :exec-path-list
-   :program-list
-   :find-exe
-   :ld-library-path-list
-   :argp
-   :$val
-   :$args
-   :$argc
-   :$opts
-   :$optc
-   :make-shorty
-   :with-cli-handlers
-   :defmain
-   :with-cli
-   :make-cli
-   ;; opt-parsers
-   :make-opt-parser
-   :parse-bool-opt
-   :parse-str-opt
-   :parse-form-opt
-   :parse-list-opt
-   :parse-sym-opt
-   :parse-key-opt
-   :parse-num-opt
-   :parse-file-opt
-   :parse-dir-opt
-   :make-opts
-   :make-cmds
-   :active-opts
-   :active-cmds
-   :proc-args
-   :make-cli-node
-   :make-cli-ast
-   :proc-args
-   :parse-args
-   :debug-opts
-   :do-cmd
-   :do-opt
-   :call-opt
-   :call-cmd
-   :apply-cmd
-   :print-help
-   :print-version
-   :print-usage
-   :handle-unknown-argument
-   :handle-missing-argument
-   :handle-invalid-argument
-   :cli-opt
-   :cli-opt-val
-   :cli-val
-   :cli-cmd-args
-   :cli-cmd
-   :cli-cd
-   :find-cmd
-   :find-opts
-   :find-short-opts
-   :install-ast
-   ;; :gen-cli-thunk
-   :install-thunk
-   :cli
-   :cli-equal
-   :defopt
-   :defcmd
-   :define-cli
-   ;; ast types
-   :opt
-   :cmd
-   ;; :arg
-   :cli-name
-   :cli-opts
-   :cli-cmds
-   :cli-thunk
-   :cli-description
-   :cli-version
-   :cli-usage))
+  (:use :cl :std :cli/env)
+  (:export :run-emacs :run-emacsclient :org-store-link))
 
 (defpackage :cli/tmux
   (:use :cl :std)
-  (:export))
-
-(in-package :std-user)
-
-(defpkg :cli
-  (:use :cl :std)
-  (:use-reexport :cli/shell :cli/ansi :cli/prompt
-   :cli/progress :cli/spark :cli/prompt :cli/ed
-   :cli/repl :cli/clap))
-
-(defpkg :cli-user (:use :cl :std :cli))
-  
+  (:export))  

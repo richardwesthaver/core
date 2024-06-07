@@ -3,6 +3,7 @@
 ;; CLI Opt Objects
 
 ;;; Code:
+(in-package :cli/clap/obj)
 
 ;;; Parsers
 ;;  TODO 2024-03-16: this should map directly to Lisp types (fixnum, boolean, etc)
@@ -36,6 +37,16 @@
   (global nil :type boolean)
   (description nil :type (or null string))
   (lock nil :type boolean))
+
+(defun %compose-short-opt (o arg)
+  (declare (ignorable arg))
+  (setf (cli-opt-val o) t)
+  (make-cli-node 'opt o))
+
+(defun %compose-long-opt (o args)
+  (declare (ignorable args))
+  (setf (cli-opt-val o) (or (pop args) t))
+  (make-cli-node 'opt o))
 
 (defmethod handle-unknown-argument ((self cli-opt) arg))
 (defmethod handle-missing-argument ((self cli-opt) arg))

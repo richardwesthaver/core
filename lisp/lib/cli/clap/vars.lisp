@@ -3,6 +3,7 @@
 ;; 
 
 ;;; Code:
+(in-package :cli/clap/vars)
 
 (declaim (simple-string *cli-group-separator*))
 (defparameter *cli-group-separator*

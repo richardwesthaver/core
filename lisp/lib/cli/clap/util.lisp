@@ -1,20 +1,12 @@
-;;; util.lisp --- Clap Utilities
+;;; cli/clap/util.lisp --- Clap Utilities
 
 ;; 
 
 ;;; Code:
+(in-package :cli/clap/util)
 
 (defun arg0 () (car sb-ext:*posix-argv*))
 (defun args () (cdr sb-ext:*posix-argv*))
-
-(defun make-cli (kind &rest slots)
-  "Creates a new CLI object of the given kind."
-  (declare (type (member :opt :cmd :cli t) kind))
-  (cond
-    ((eql kind :cli) (apply #'make-instance 'cli slots))
-    ((eql kind :opt) (apply #'make-cli-opt slots))
-    ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
-    (t (apply #'make-instance kind slots))))
 
 (defun long-opt-p (str)
   (declare (simple-string str))

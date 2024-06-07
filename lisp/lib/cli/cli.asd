@@ -15,15 +15,19 @@
                 :components
                 ((:file "tmux")
                  (:file "pacman")))
-               (:file "clap" :depends-on ("shell" "prompt"))
-               ;; (:file "clap/pkg")
-               ;; (:file "clap/vars")
-               ;; (:file "clap/macs")
-               ;; (:file "clap/proto")
-               ;; (:file "clap/opt")
-               ;; (:file "clap/cmd")
-               ;; (:file "clap/cli")
-               )
+               ;; (:file "clap" :depends-on ("shell" "prompt"))
+               (:module "clap"
+                :components
+                ((:file "pkg")
+                 (:file "ast" :depends-on ("pkg"))
+                 (:file "vars" :depends-on ("pkg"))
+                 (:file "util" :depends-on ("vars"))
+                 (:file "macs" :depends-on ("util"))
+                 (:file "proto" :depends-on ("util"))
+                 (:file "opt" :depends-on ("macs" "proto" "ast"))
+                 (:file "cmd" :depends-on ("macs" "proto" "ast"))
+                 (:file "cli" :depends-on ("opt" "cmd"))))
+               (:file "cli"))
   :in-order-to ((test-op (test-op "cli/tests"))))
 
 (defsystem :cli/tests

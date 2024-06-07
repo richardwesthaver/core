@@ -1,9 +1,63 @@
-;;; cli.lisp --- Clap CLI Class
+;;; cli/clap/cli.lisp --- Clap CLI Class
 
 ;; Top-level command object of a CLI App
 
 ;;; Code:
-(in-package :cli/clap)
+(in-package :cli/clap/obj)
+
+(defun make-cli (kind &rest slots)
+  "Creates a new CLI object of the given kind."
+  (declare (type (member :opt :cmd :cli t) kind))
+  (cond
+    ((eql kind :cli) (apply #'make-instance 'cli slots))
+    ((eql kind :opt) (apply #'make-cli-opt slots))
+    ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
+    (t (apply #'make-instance kind slots))))
+
+(defmacro define-cli (name &body body)
+  "Define a symbol NAME bound to a top-level CLI object."
+  (with-gensyms (%name %class)
+    (if (atom name)
+        (setq %name name
+              %class :cli)
+        (setq %name (car name)
+              %class (cdr name)))
+    `(,*default-cli-def* ,%name (apply #'make-cli ,%class (walk-cli-slots ',body)))))
+
+(defmacro defmain ((&key return (exit t) (export t)) &body body)
+  "Define a CLI main function in the current package."
+  (with-gensyms (retval)
+    (let ((main (symbolicate "MAIN")))
+      (when return (setf retval return))
+      `(let ((*no-exit* ,(not exit)))
+         (defun ,main ()
+           "Run the top-level function and print to *STDOUT*."
+           (with-cli-handlers
+               (progn ,@body ,@(unless (not (boundp 'retval)) (list retval)))))
+         ,@(when export `((export ',main)))))))
+
+;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
+;; to avoid conflicts. if not, need something like a flag-function
+;; slot at class allocation.
+(defmacro make-opts (&body opts)
+  "Make a vector of CLI-OPTs based on OPTS."
+  `(map 'vector
+        (lambda (x)
+          (etypecase x
+            (string (make-cli-opt :name x))
+            (list (apply #'make-cli :opt x))
+            (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
+        (walk-cli-slots ',opts)))
+
+(defmacro make-cmds (&body cmds)
+  "Make a vector of CLI-CMDs based on CMDS."
+  `(map 'vector
+        (lambda (x)
+          (etypecase x
+            (string (make-cli :cmd :name x))
+            (list (apply #'make-cli :cmd x))
+            (t (make-cli :cmd :name (format nil "~(~A~)" x)))))
+        (walk-cli-slots ',cmds)))
 
 (defclass cli (cli-cmd)
   ;; name slot defaults to *package*, must be string
@@ -50,3 +104,10 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
         (a (cli-cmd-args cli))
         (c (active-cmds cli)))
     (log:debug! (cli-cd cli) o a c)))
+
+(defmacro with-cli (slots cli &body body)
+  "Like with-slots with some extra bindings."
+  `(progn
+     (setf (cli-cd ,cli) (sb-posix:getcwd))
+     (with-slots ,slots (parse-args ,cli (args) :compile t)
+       ,@body)))

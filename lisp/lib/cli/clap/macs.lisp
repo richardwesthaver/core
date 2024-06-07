@@ -3,6 +3,7 @@
 ;; 
 
 ;;; Code:
+(in-package :cli/clap/macs)
 
 (defmacro argp (arg &optional (args (args)))
   "Test for presence of ARG in ARGS. Return the tail of
@@ -28,13 +29,6 @@ evaluation of BODY."
        ;; reset terminal state
        #+nil (.ris))))
 
-(defmacro with-cli (slots cli &body body)
-  "Like with-slots with some extra bindings."
-  `(progn
-     (setf (cli-cd ,cli) (sb-posix:getcwd))
-     (with-slots ,slots (parse-args ,cli (args) :compile t)
-       ,@body)))
-
 (defmacro defcmd (name &body body)
   `(defun ,name ($args $opts) 
      (declare (ignorable $args $opts))
@@ -58,66 +52,21 @@ keys."
                  (if (or (functionp th) (symbolp th)) (funcall th) (compile nil (lambda () th)))))
   cli)
 
-(defmacro define-cli (name &body body)
-  "Define a symbol NAME bound to a top-level CLI object."
-  (with-gensyms (%name %class)
-    (if (atom name)
-        (setq %name name
-              %class :cli)
-        (setq %name (car name)
-              %class (cdr name)))
-    `(,*default-cli-def* ,%name (apply #'make-cli ,%class (walk-cli-slots ',body)))))
-
-(defmacro defmain ((&key return (exit t) (export t)) &body body)
-  "Define a CLI main function in the current package."
-  (with-gensyms (retval)
-    (let ((main (symbolicate "MAIN")))
-      (when return (setf retval return))
-      `(let ((*no-exit* ,(not exit)))
-         (defun ,main ()
-           "Run the top-level function and print to *STDOUT*."
-           (with-cli-handlers
-               (progn ,@body ,@(unless (not (boundp 'retval)) (list retval)))))
-         ,@(when export `((export ',main)))))))
-
-;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
-;; to avoid conflicts. if not, need something like a flag-function
-;; slot at class allocation.
-(defmacro make-opts (&body opts)
-  "Make a vector of CLI-OPTs based on OPTS."
-  `(map 'vector
-        (lambda (x)
-          (etypecase x
-            (string (make-cli-opt :name x))
-            (list (apply #'make-cli :opt x))
-            (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
-        (walk-cli-slots ',opts)))
-
-(defmacro make-cmds (&body cmds)
-  "Make a vector of CLI-CMDs based on CMDS."
-  `(map 'vector
-        (lambda (x)
-          (etypecase x
-            (string (make-cli :cmd :name x))
-            (list (apply #'make-cli :cmd x))
-            (t (make-cli :cmd :name (format nil "~(~A~)" x)))))
-        (walk-cli-slots ',cmds)))
-
 ;; TODO 2023-10-06: 
 ;; (defmacro gen-cli-thunk (pvars &rest thunk)
 ;;   "Generate and return a function based on THUNK suitable for the :thunk
 ;; slot of cli objects with pandoric bindings PVARS.")
-
-(defmacro make-opt-parser (kind-spec &body body)
-  "Return a KIND-opt-parser function based on KIND-SPEC which is either a
+(eval-always
+  (defmacro make-opt-parser (kind-spec &body body)
+    "Return a KIND-opt-parser function based on KIND-SPEC which is either a
 symbol from *cli-opt-kinds* or a list, and optional BODY which
 is a list of handlers for the opt-val."
-  (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
-         (super (when (consp kind-spec) (cadr kind-spec)))
-         (fn-name (symbolicate 'parse- kind '-opt)))
-    ;; thread em
-    (let ((fn1 (unless (null super) (symbolicate 'parse- super '-opt))))
+    (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
+           (super (when (consp kind-spec) (cadr kind-spec)))
+           (fn-name (symbolicate 'parse- kind '-opt)))
+      ;; thread em
+    (let ((fn1 (unless (null super) (symbolicate "PARSE-" super "-OPT"))))
       `(defun ,fn-name ($val)
          "Parse the cli-opt-val $VAL."
          ,@(when fn1 `((setq $val (funcall #',fn1 $val))))
-         ,@body))))
+         ,@body)))))

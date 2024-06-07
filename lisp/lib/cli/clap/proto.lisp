@@ -3,6 +3,7 @@
 ;; 
 
 ;;; Code:
+(in-package :cli/clap/proto)
 
 (deferror clap-error (std-error) () (:auto t))
 
@@ -66,3 +67,5 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
   (:documentation "Handle an invalid argument."))
 
 (defgeneric cli-equal (a b))
+
+(defgeneric proc-args (self args))

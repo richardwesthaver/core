@@ -1,8 +1,9 @@
-;;; simple.lisp --- Clap Simple
+;;; cli/clap/simple.lisp --- Clap Simple
 
 ;; 
 
 ;;; Code:
+(in-package :cli/clap/simple)
 
 ;; TODO this is intended to be a simplified functional argument parser
 ;; which is completely compatible with the toplevel SBCL options.
