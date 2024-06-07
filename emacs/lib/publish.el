@@ -13,8 +13,8 @@
 (defvar url "https://compiler.company")
 (defvar vc-url "https://vc.compiler.company")
 (defvar packy-url "https://packy.compiler.company")
-(defvar html-nav (format "<div class=\"nav\"> (<a href = \"%s\">~</a> (<a href = \"%s/blog\">blog</a> <a href = \"%s/docs\">docs</a>) (<a href = \"%s\">vc</a> <a href = \"%s\">packy</a>))</div>"
-                         url url url vc-url packy-url))
+(defvar html-nav (format "<div class=\"nav\"> (<a href = \"%s\">~</a> (<a href = \"%s/blog\">blog</a> <a href = \"%s/docs\">docs</a> <a href = \"%s/plan\">plan</a> <a href = \"%s/notes\">notes</a>) (<a href = \"%s\">vc</a> <a href = \"%s\">packy</a>))</div>"
+                         url url url url url vc-url packy-url))
 
 (defvar html-foot "<footer><p>updated %C</p></footer>")
 
@@ -38,7 +38,7 @@
       org-id-link-to-org-use-id t)
 
 (setq org-publish-project-alist
-      `(("compiler.company" :components ("index" "blog" "docs"))
+      `(("compiler.company" :components ("index" "blog" "docs" "notes" "plan"))
         ("index"
          :base-directory ,project-dir
          :base-extension "org"
@@ -60,6 +60,26 @@
 	 :htmlized-source t
 	 :html-preamble ,html-nav
 	 :html-postamble ,html-foot)
+        ("plan"
+         :base-directory ,(expand-file-name "plan" project-dir)
+         :base-extension "org"
+         :footnote-section-p t
+         :html-doctype "<!doctype html>"
+         :publishing-directory ,(expand-file-name "plan" publish-dir)
+         :publishing-function org-html-publish-to-html
+         :htmlized-source t
+         :html-preamble ,html-nav
+         :html-postamble ,html-foot)
+        ("notes"
+         :base-directory ,(expand-file-name "notes" project-dir)
+         :base-extension "org"
+         :footnote-section-p t
+         :html-doctype "<!doctype html>"
+         :publishing-directory ,(expand-file-name "notes" publish-dir)
+         :publishing-function org-html-publish-to-html
+         :htmlized-source t
+         :html-preamble ,html-nav
+         :html-postamble ,html-foot)
         ("docs"
          :base-directory ,(expand-file-name "docs" project-dir)
          :base-extension "org"

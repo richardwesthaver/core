@@ -54,11 +54,9 @@
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
 (defvar user-lab-directory (expand-file-name "lab" user-home-directory))
-(defvar user-stash-directory (expand-file-name "stash" user-home-directory))
-(defvar user-store-directory (expand-file-name "store" user-home-directory))
-(defvar user-shed-directory (expand-file-name "shed" user-home-directory))
+(defvar user-stash-directory (expand-file-name ".stash" user-home-directory))
+(defvar user-store-directory (expand-file-name ".store" user-home-directory))
 (defvar user-mail-directory (expand-file-name "mail" user-home-directory))
-(defvar user-media-directory (expand-file-name "media" user-home-directory))
 
 (defvar default-theme 'leuven-dark)
 (defvar company-source-directory (join-paths user-lab-directory "comp"))
@@ -711,6 +709,35 @@ buffer."
 
 ;; archive
 (setq org-archive-location "archive.org::")
+(defun extract-org-directory-titles-as-list (&optional dir)
+  (interactive "D")
+  (print
+   (delete nil
+           (let ((case-fold-search t))
+             (mapcar (lambda (f)
+                       (when (string-match "org$" f)
+                         (with-temp-buffer
+                           (insert-file-contents-literally
+                            (concat (file-name-as-directory dir) f))
+                           (while (and (not (looking-at-p "#\\+TITLE:"))
+                                       (not (eobp)))
+                             (forward-line))
+                           (when (not (eobp))
+                             (cons f (substring (thing-at-point 'line) 9 -1))))))
+                     (directory-files dir))))))
+
+(defun insert-directory-org-file-titles (&optional dir)
+  (interactive "D")
+  (let ((files-titles (extract-org-directory-titles-as-list dir)))
+    (dolist (ft files-titles)
+      (insert (concat "[[file:" (car ft)"][" (cdr ft) "]]\n")))))
+
+(defun insert-directory-org-files (&optional dir)
+  (interactive "D")
+  (let ((files (directory-files dir)))
+    (dolist (f files)
+      (insert (concat "[[file:" f "][" (file-name-base f) "]]\n")))))
+
 (defun org-todo-at-date (date)
   "create a todo entry for a given date."
   (interactive (list (org-time-string-to-time (org-read-date))))
