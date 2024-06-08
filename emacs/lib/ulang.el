@@ -39,6 +39,8 @@
 
 (org-dynamic-block-define "links" 'ulang-dblock-insert-links)
 
+(org-export-translate-to-lang (list '("Table of Contents" "☰")) "ulang")
+
 (cl-pushnew '("header" .
                 "#+TITLE: $1
 #+AUTHOR: $2

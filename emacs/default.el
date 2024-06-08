@@ -945,6 +945,25 @@ inherited by a parent headline."
       (org-agenda-remove-restriction-lock t)
       (message nil))))
 
+(defun org-export-translate-to-lang (term-translations &optional lang)
+  "Adds desired translations to `org-export-dictionary'.
+   TERM-TRANSLATIONS is alist consisted of term you want to translate
+   and its corresponding translation, first as :default then as :html and
+   :utf-8. LANG is language you want to translate to."
+  (dolist (term-translation term-translations)
+    (let* ((term (car term-translation))
+           (translation-default (nth 1 term-translation))
+           (translation-html (nth 2 term-translation))
+           (translation-utf-8 (nth 3 term-translation))
+           (term-list (assoc term org-export-dictionary))
+           (term-langs (cdr term-list)))
+      (setcdr term-list (append term-langs
+                                (list
+                                 (list lang
+                                       :default translation-default
+                                       :html translation-html
+                                       :utf-8 translation-utf-8)))))))
+
 ;;; Skel
 (add-to-load-path user-emacs-lib-directory)
 (require 'sk)
