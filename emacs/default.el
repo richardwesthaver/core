@@ -7,7 +7,8 @@
 (put 'list-timers 'disabled nil)
 (setq show-paren-context-when-offscreen 'overlay)
 (setopt
- ;; tabs = bad
+ org-safe-remote-resources '("\\`https://cdn\\.compiler\\.company/org/clean\\.theme\\'")
+ ;; tabs = bad (unless in makefile..)
  indent-tabs-mode nil
  make-backup-files nil
  auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
@@ -64,6 +65,7 @@
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
 (defvar company-home "the.compiler.company")
+(defvar company-cdn-url "https://cdn.compiler.company")
 
 ;;; Theme
 (defun load-default-theme () (interactive) (load-theme default-theme))
@@ -745,6 +747,8 @@ buffer."
             (org-today (&rest r) (time-to-days date)))
     (cond ((eq major-mode 'org-mode) (org-todo))
           ((eq major-mode 'org-agenda-mode) (org-agenda-todo)))))
+
+(defun org-agenda-show-week-all (&optional arg ) (interactive "P") (org-agenda arg "n"))
 
 (defun org-ask-location ()
   "prompt for a location\"\""

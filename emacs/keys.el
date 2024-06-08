@@ -87,6 +87,7 @@
   "f" #'load-file
   "u" #'compile
   "a" #'org-agenda
+  "A" #'org-agenda-show-week-all
   "<return>" #'shell
   "C-<return>" #'term
   "S-<return>" #'eshell-new

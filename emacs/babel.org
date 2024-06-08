@@ -1,5 +1,11 @@
 #+title: babel
 #+author: Richard Westhaver
 #+description: Core Library of Babel
-#+setupfile: clean.theme
+#+setupfile: https://cdn.compiler.company/org/clean.theme
 #+PROPERTY: header-args :eval never-export
+
+Welcome to the Core [[https://www.gnu.org/software/emacs/manual/html_node/org/Library-of-Babel.html][Library of Babel]]. This file contains a
+collection of code blocks used throughout our Org documents.
+
+To load the library use ~C-c C-v i~
+

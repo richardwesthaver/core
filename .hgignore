@@ -12,6 +12,7 @@
 .*[.]a$
 .*[.]core$
 .*[.]elc$
+emacs/.*[.]html$
 c/.*
 .*dist/.*
 [.]stash/.*
