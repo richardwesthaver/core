@@ -2,10 +2,247 @@
 #+author: Richard Westhaver
 #+description: Core Library of Babel
 #+setupfile: https://cdn.compiler.company/org/clean.theme
-#+PROPERTY: header-args :eval never-export
+#+property: header-args :eval never-export :exports both
 
 Welcome to the Core [[https://www.gnu.org/software/emacs/manual/html_node/org/Library-of-Babel.html][Library of Babel]]. This file contains a
 collection of code blocks used throughout our Org documents.
 
 To load the library use ~C-c C-v i~
+* os
+** systemd
+#+name: systemd-list-units
+#+begin_src sh :results replace
+systemctl list-units --state=running | grep -v systemd | awk '{print $1}' | grep service
+#+end_src
 
+* fs
+** wc-dir-lines
+#+name: wc-dir-lines
+#+begin_src shell :var dir="."
+cd $dir && cat * | wc -l
+#+end_src
+
+** wc-dir-words
+#+name: wc-dir-words
+#+begin_src shell :var dir="."
+cd $dir && cat * | wc -w
+#+end_src
+
+** tokei-dir-lines
+#+name: tokei-dir-lines
+#+begin_src shell :var src=(org-sbe org-current-heading-title) :results output replace
+  cd ~/comp/$src
+  input=`tokei -C -o json`
+  echo $input | jq -r '.["Total"] | .code, .comments, .blanks'
+#+end_src
+
+** tokei-dir-langs
+#+name: tokei-dir-langs
+#+begin_src shell :var src=(org-sbe org-current-heading-title) :results output replace
+  cd ~/comp/$src
+  input=`tokei -C -o json`
+  echo $input | jq -r '.["Total"].children | keys[]'
+#+end_src
+
+** sum-str-nums
+#+name: sum-str-nums
+#+begin_src emacs-lisp :var s=tokei-dir-lines
+  (let ((tot 0))
+    (cl-loop
+     with tot = 0
+     for i in (split-string s) do
+     (setf tot (+ tot (string-to-number i)))
+     finally return tot))
+#+end_src
+
+* org
+** org-task-tbl
+#+name: org-task-tbl
+#+begin_src emacs-lisp
+  (let* ((ast (org-element-parse-buffer)) ;; built up the abstract syntax tree of the org buffer
+         item-types ; all occuring item types. It could be that some task has more item types than another.
+         tasks ; accumulation list for the tasks
+         current-task ; name of the current task (header of level 1)
+         task-items) ; items of the current task
+    (org-element-map ast 'headline
+      (lambda (hl)
+        (cl-case (org-element-property :level hl)
+          (1 ; We assume here that headers of level 1 are tasks.
+           (when current-task ; registering the old task
+             (setq tasks (cons (cons current-task (nreverse task-items)) tasks)))
+           (setq current-task (org-element-property :raw-value hl) ; preparing the new task
+                 task-items nil))
+          (2 ; item
+           (let ((item-type (org-element-property :raw-value hl)))
+             (setq item-types (cons item-type item-types))
+             (setq task-items (cons (cons item-type (org-element-property :todo-keyword hl))
+                                    task-items)))))))
+    (setq tasks (nreverse (cons (cons current-task (nreverse task-items)) tasks)) ;add the last task
+          item-types (sort (cl-remove-duplicates (nreverse item-types) :test 'string-equal) ; list of unique item types
+                           #'string<)) ;;Sorting the items lexicographical. Other criteria could be applied.
+      ;;;;;;;;;;
+    ;; generating the output table:
+    (apply
+     #'list
+     (cons "Item" (mapcar #'car tasks)) ; header
+     'hline
+     ;; rows:
+     (mapcar
+      ;; mapping the items to the todo states associated to the tasks:
+      (lambda (item-type)
+        (cons item-type
+              (mapcar
+               (lambda (task)
+                 (let ((todo-status (cdr (assoc-string item-type task))))
+                   todo-status))
+               tasks)))
+      item-types)))
+#+end_src
+
+** org-headlines-map
+#+name: org-headlines-map
+#+begin_src elisp
+  (org-element-map (org-element-parse-buffer 'headline )
+      'headline
+    (lambda(hl)
+      (let ((parent (org-element-property :parent hl )))
+        (and (eq (org-element-type parent) 'headline)
+             (list (org-element-property :title parent) (org-element-property :title hl))))))
+
+#+end_src
+
+** make-info-tbl
+#+name: meta-make-info-tbl
+#+header: :var version="alpha-0.1"
+#+header: :var name=(org-sbe org-current-heading-title)
+#+header: :var dir="/home/ellis/comp/"
+#+begin_src emacs-lisp :results table replace :eval no-export 
+  (let* ((src (concat dir name))
+         (age (org-sbe hg-log-age ''(dir src)))
+         (rev (org-sbe hg-rev ''(dir src)))
+         (num (org-sbe hg-id-num ''(dir src)))
+         (cc1 (org-sbe "tokei-dir-lines" ''((dir src))))
+         (cc2 (org-sbe "tokei-dir-langs" ''((dir src))))
+         (nf (format "[[https://rwest.io/m#%s][%s]]" name name))
+         (rf (format "[[https://hg.rwest.io/%s/rev/%s][%s:%s]]" name rev num rev))
+         (gf (format "[[https://github.com/richardwesthaver/%s][github]]" name))
+         (vf (format "%s, %s" rf gf))
+         (lsum (org-sbe sum-str-nums ('s 'cc1)))
+         (l (split-string cc1))
+         (lang (split-string cc2))
+         (cf (format "%s = λ:%s #:%s _:%s" lsum (pop l) (pop l) (pop l))))
+    `(hline
+      (name ,nf)
+      (version ,version)
+      (vc ,vf)
+      (updated ,age)
+      (lines ,cf)
+      (langs ,lang)
+      hline))
+  #+end_src
+
+** make-includes
+#+name: meta-make-includes
+#+begin_src emacs-lisp :var i=()
+`((includes ,i))
+#+end_src
+
+** make-files-tbl
+#+name: meta-ls-files
+#+begin_src sh :results silent :var a=(expand-file-name "~/comp") b=(org-sbe org-current-heading-title)
+  ls -lh $a/$b --time-style=long-iso \
+    |awk '{if (NR!=1) print $8, $5, $6"-"$7}' \
+    |awk 'BEGIN{print "file size updated"}{print $0}'
+#+end_src
+
+#+name: meta-make-files-tbl
+#+begin_src python :var tab=meta-ls-files() :results table :colnames yes :hlines yes :exports results :eval no-export
+return tab
+#+end_src
+
+** org-current-h1-title
+#+name: org-current-heading-title
+#+begin_src emacs-lisp :results value
+  (org-element-property :title (save-excursion (org-up-heading-safe) (org-element-at-point)))
+#+end_src
+
+* emacs
+** get-emacs-version
+#+name: get-emacs-version
+#+begin_src elisp :results output
+  (princ (concat (format "%s\n" (emacs-version))
+		 (format "Org v%s" (org-version))))
+#+end_src
+
+* vc
+** hg-rev
+#+name: hg-rev
+#+begin_src sh :var src=(org-sbe org-current-heading-title)
+cd ~/comp/$src && hg log -l 1 --template '{node|short}'
+#+end_src
+
+** hg-id-num
+#+name: hg-id-num
+#+begin_src shell :var src=(org-sbe org-current-heading-title)
+cd ~/comp/$src && hg id -n
+#+end_src
+
+** hg-log-age
+#+name: hg-log-age
+#+begin_src shell :results output :var src=(org-sbe org-current-heading-title)
+  cd ~/comp/$src && hg log -l1 --template "{date|age}"
+#+end_src
+
+* sh
+** sh-ob-tangle
+#+name: sh-ob-tangle
+#+begin_src sh
+  emacs -Q --batch --eval "
+      (progn
+	(require 'ob-tangle)
+	(dolist (file command-line-args-left)
+	  (with-current-buffer (find-file-noselect file)
+	    (org-babel-tangle))))
+    " "$@"
+#+end_src
+
+* dot
+** make-dot-tree
+#+name: make-dot-tree
+#+begin_src emacs-lisp :var table=org-headlines-map :results output
+  (mapcar #'(lambda (x)
+		(princ (format "\"%s\" -> \"%s\";\n" (cl-first x) (cl-second x))))
+	  table)
+#+end_src
+
+** gen-dot-tree
+#+name: gen-dot-tree
+#+begin_src dot :file /tmp/tree.png :cmdline -Kdot -Tpng :var input=make-dot-tree
+digraph {
+   rankdir=TB;
+   splines=true;
+   node [shape=box];
+   $input
+  }
+#+end_src
+
+
+* rust
+** cargo-update-dir
+#+name: cargo-update-dir
+#+begin_src sh :var dir=()
+# update all crates in dir
+set -eu
+case $0 in
+   (/*) dir=${0%/*}/;;
+   (*/*) dir=./${0%/*};;
+   (*) dir=.;;
+esac
+
+find "$dir/.." -name Cargo.toml -execdir cargo update \;
+#+end_src
+** rust-target-triple
+ #+name: rust-target-triple
+ #+begin_src shell
+ rustc -vV | sed -n -e 's/^host: //p'
+ #+end_src
