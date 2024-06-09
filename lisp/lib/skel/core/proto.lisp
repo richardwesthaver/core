@@ -43,4 +43,5 @@
   (:documentation "Find a rule with the given NAME in SELF."))
 (defgeneric sk-find-script (name self &key &allow-other-keys)
   (:documentation "Find a script with the given NAME in SELF."))
-;; TODO 2024-05-08: sk-find, sk-find*
+(defgeneric sk-find (item self &key &allow-other-keys))
+(defgeneric sk-find* (items self &key &allow-other-keys))

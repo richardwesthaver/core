@@ -140,7 +140,6 @@ via the special form stored in RECIPE."))
               (sk-run rule))))))
 
 ;;;; Document
-(deftype document-designator () '(member :org :txt :pdf :html :md))
 
 ;; TODO 2023-10-13: integrate organ for working with org document
 ;; types - mixins and such

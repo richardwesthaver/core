@@ -24,3 +24,21 @@
   :components ((:file "bench"))
   :build-pathname "bench"
   :build-operation monolithic-compile-bundle-op)
+
+(pushnew :lib *features*)
+(defsystem :core/lib
+  :depends-on (:cli :log :dat :doc
+               :nlp :skel :syn :organ
+               :packy :obj :net :io
+               :parse :pod :rdb :rt
+               :aud :cry :krypt :gui)
+  :build-operation monolithic-compile-bundle-op
+  :build-pathname "lib")
+
+(defsystem :core/ffi
+  :depends-on (:alsa :blake3 :btrfs :keyutils
+               :keyutils :readline :rocksdb :rustls
+               :sndfile :ssh2 :tree-sitter :ublk
+               :uring :xkb :zstd)
+  :build-operation monolithic-compile-bundle-op
+  :build-pathname "ffi")

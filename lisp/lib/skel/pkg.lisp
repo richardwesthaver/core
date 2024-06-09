@@ -37,7 +37,7 @@
 
 (pkg:defpkg :skel/comp
   (:use :cl :std)
-  (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile :skel/comp/pkgbuild))
+  (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile))
 
 (pkg:defpkg :skel
   (:nicknames :sk)

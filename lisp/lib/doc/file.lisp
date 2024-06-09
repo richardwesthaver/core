@@ -22,27 +22,26 @@
 ;; In any case the idea is to do 'something' with comments instead of
 ;; getting rid of them at read-time.
 
-;;;;; Headers
+;;;; Headers
 
 ;; Special consideration is given to source-code 'header' blocks. In
 ;; our own code, we use them as much as possible but haven't been
 ;; using them to their full potential just yet.
 
 ;; You will find most code, including this file begins with a block of
-;; the following form, where CAPS is variable input from the
-;; developer:
+;; the following form:
 
 #|
-,;;; PATH --- SHORT-DESCRIPTION
+ ;;; PATH --- SHORT-DESCRIPTION
 
-;; LONG-DESCRIPTION
+ ;; LONG-DESCRIPTION
 
-,;;; Commentary:
+ ;;; Commentary:
 
-;; COMMENTARY
+ ;; COMMENTARY
 
-,;;; Code:
-CODE
+ ;;; Code:
+ CODE
 |#
 
 ;; Note the difference in comment characters used between the

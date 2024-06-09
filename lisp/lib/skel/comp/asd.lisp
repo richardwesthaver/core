@@ -12,8 +12,6 @@
 ;;; Code:
 (in-package :skel/comp/asd)
 
-;; (describe (asdf:find-system :skel))
-
 (defclass sk-lisp-system (skel sk-meta) 
   (build-pathname entry-point defsystem-depends-on depends-on weakly-depends-on in-order-to if-feature))
 

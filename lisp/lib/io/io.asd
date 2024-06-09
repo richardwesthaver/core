@@ -4,6 +4,13 @@
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
+               (:file "ring")
+               (:file "socket")
+               (:file "stream")
+               (:file "proto")
+               (:file "flate")
+               (:file "port")
+               (:file "zstd")
                (:file "xsubseq")
                (:file "smart-buffer"))
   :in-order-to ((test-op (test-op "io/tests"))))

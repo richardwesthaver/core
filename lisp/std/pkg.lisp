@@ -334,7 +334,8 @@
    :relative-pathname
    :directory-pathname
    :absolute-directory-pathname
-   :+wildfile+ :+pathsep+))
+   :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
+   :tmpize-pathname))
 
 (defpkg :std/os
   (:use :cl)

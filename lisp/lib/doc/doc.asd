@@ -1,6 +1,6 @@
 (defsystem :doc
   :version "0.1.0"
-  :description "Common Lisp Documentation System"
+  :description "Core Documentation System"
   :depends-on (:std :organ :parse)
   :components ((:file "pkg")
                (:file "proto")

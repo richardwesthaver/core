@@ -3,7 +3,13 @@
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :std :cl-ppcre :rdb :obj :net :cli :zstd)
-  :components ((:file "pkg") (:file "proto") (:file "db") (:file "client") (:file "server"))
+  :components
+  ((:file "pkg")
+   (:file "proto")
+   (:file "pkgbuild")
+   (:file "db")
+   (:file "client")
+   (:file "server"))
   :in-order-to ((test-op (test-op :packy/tests))))
 
 (defsystem :packy/tests

@@ -29,8 +29,7 @@
     :components
     ((:file "pkg")
      (:file "asd")
-     (:file "makefile")
-     (:file "pkgbuild")))
+     (:file "makefile")))
    (:file "pkg")
    (:module "tools"
     :components

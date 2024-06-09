@@ -12,27 +12,39 @@
 ;; class, something like IO-STREAM.
 
 ;;; Code:
-(defpackage :io
-  (:use :cl :std :obj/id :uring :sb-bsd-sockets)
+(defpackage :io/proto
+  (:use :cl :std/err)
+  (:export :io-error))
+
+(defpackage :io/ring
+  (:use :cl :uring :io/proto)
   (:import-from :sb-alien :addr)
-  (:import-from :uring :build)
-  (:shadowing-import-from :uring :load-uring)
-  (:export :load-uring :*io*
-   :init-io :enter-io :exit-io))
+  (:import-from :std/err :deferror))
 
-(in-package :io)
+(defpackage :io/stream
+  (:use :cl :io/proto)
+  (:import-from :std/err :deferror)
+  (:export :io-stream-error :io-stream))
 
-(load-uring)
+(defpackage :io/socket
+  (:use :cl :io/proto)
+  (:import-from :std/err :deferror)
+  (:export :io-socket-error :io-socket))
 
-(defvar *io* nil)
+(defpackage :io/flate
+  (:use :cl :io/proto)
+  (:import-from :std/err :deferror)
+  (:export :flate-error :compression-error :decompression-error
+   :*compression-buffer-size* :decompression-buffer-size* :finish-compression :finish-decompression
+   :reset-compressor :reset-decompressor :make-compressing-stream :make-decompressing-stream
+   :compress-object :decompress-object :compress :decompress
+   :compressor :compressing-stream :decompressor :decompressing-stream))
 
-(defun init-io (&optional (entries 256) (flags 0))
-  "Initialize the *IO* variable to an io-uring alien-value type using a
-queue size of ENTRIES and settings FLAGS."
-  (with-new-io-uring r
-    (if (= 0 (io-uring-queue-init entries (addr r) flags))
-        (setf *io* r)
-        (error "failed to initialize io-uring"))))
+(defpackage :io/zstd
+  (:use :cl :io/proto :io/flate)
+  (:import-from :std/err :deferror)
+  (:export :zstd-error :zstd-compressor :zstd-decompressor))
 
-(defun enter-io (ring))
-(defun exit-io (ring))
+(pkg:defpkg :io
+  (:use :cl)
+  (:use-reexport :io/proto :io/ring :io/flate :io/zstd :io/stream :io/socket))

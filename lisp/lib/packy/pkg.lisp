@@ -33,8 +33,11 @@
 (defpackage :packy/server
   (:use :cl :std :packy/core))
 
-(uiop:define-package :packy
-    (:nicknames :pk)
+(defpackage :packy/pkgbuild
+  (:use :cl :std))
+
+(pkg:defpkg :packy
+  (:nicknames :pk)
   (:use :cl :std)
   (:use-reexport :packy/client :packy/server :packy/core))
 

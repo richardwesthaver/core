@@ -205,12 +205,18 @@
 
 (defpackage :dat/gif
   (:nicknames :gif)
-  (:use :cl :std :dat/proto))
+  (:use :cl :std :dat/proto)
+  (:export))
 
 (defpackage :dat/png
-  (:use :cl :std :dat/proto #+png :png))
+  (:use :cl :std :dat/proto #+png :png)
+  (:export))
 
-(uiop:define-package :dat
-    (:use-reexport :dat/proto :dat/csv :dat/arff :dat/toml :dat/json :dat/sxp :dat/xml :dat/bencode
-                   ;; :dat/qrcode
-                   ))
+(defpackage :dat/tar
+  (:use :cl :std :dat/proto)
+  (:export))
+
+(pkg:defpkg :dat
+  (:use-reexport :dat/proto :dat/csv :dat/arff
+   :dat/toml :dat/json :dat/sxp :dat/xml
+   :dat/bencode :dat/qrcode))

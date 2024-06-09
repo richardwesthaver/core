@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/comp/pkgbuild)
+(in-package :packy/pkgbuild)
 
 (defparameter *default-pkgbuild* "PKGBUILD")
 

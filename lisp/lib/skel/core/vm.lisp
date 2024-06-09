@@ -5,7 +5,8 @@
 
 ;;; Code:
 (in-package :skel/core/vm)
-(deftype stack-slot-kind () '(member :shell :lisp :comment :var :rule :directive :nop))
+
+(deftype stack-slot-kind () `(member :nop))
 
 (defstruct stack-slot 
   (kind :nop :type stack-slot-kind) 

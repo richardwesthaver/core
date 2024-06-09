@@ -139,6 +139,7 @@ CMDS:
 test
 compile
 build
+make
 test
 run
 save
@@ -197,6 +198,39 @@ install")))
                                   (sb-ext:run-program "x" (list "build" x) :wait t :output t))
                                 :name x))
                              (list "skel" "rdb" "organ" "homer" "packy")))))
+
+(defun stash-output (name)
+  (let* ((sys (asdf:find-system name))
+         (fasl (make-pathname
+                :name (asdf/system:component-build-pathname sys)
+                :type (if (string-equal name "std")
+                          "lisp"
+                          "fasl"))))
+    (uiop:rename-file-overwriting-target
+     (merge-pathnames fasl (asdf:system-source-directory sys))
+     (merge-pathnames fasl *stash-path*))))
+
+(defun %make (name)
+  (let ((sys (sb-int:keywordicate (string-upcase name))))
+    (std/sys:forget-shared-objects)
+    (asdf:load-system sys)
+    (asdf:make sys)
+    ()
+    (stash-output sys)
+    (println :OK)))
+
+(defun x-make (args)
+  (if args
+      (let ((name (car args)))
+        (ensure-directories-exist *stash-path*)
+        (%make name))
+      (std:wait-for-threads (mapcar
+                             (lambda (x)
+                               (sb-thread:make-thread
+                                (lambda ()
+                                  (sb-ext:run-program "x" (list "make" x) :wait t :output t))
+                                :name x))
+                             (list "core" "user" "prelude" "core/tests" "core/bench" "core/lib" "core/ffi")))))
 
 (defun x-save (args)
   (if args
@@ -266,6 +300,7 @@ install")))
           ((equal cmd "run") (setq *thunk* #'x-run))
           ((equal cmd "test") (setq *thunk* #'x-test))
           ((equal cmd "save") (setq *thunk* #'x-save))
+          ((equal cmd "make") (setq *thunk* #'x-make))
           ((equal cmd "install") (setq *thunk* #'x-install))
           (t (princ (getflag (parse-flag cmd))) (terpri) (sb-ext:exit :code 0))))))
 

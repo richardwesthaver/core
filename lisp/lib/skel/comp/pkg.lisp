@@ -8,9 +8,6 @@
    :mk-val :mk-var
    :makefile))
 
-(defpackage :skel/comp/pkgbuild
-  (:use :cl :std :skel/core/obj :skel/core/proto))
-
 (defpackage :skel/comp/cargo
   (:use :cl :std :skel/core/obj))
 

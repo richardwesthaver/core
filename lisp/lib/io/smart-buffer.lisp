@@ -7,19 +7,18 @@
 (defpackage io/smart-buffer
   (:use #:cl
         #:io/xsubseq)
-  (:export #:*default-memory-limit*
-           #:*default-disk-limit*
+  (:export :*default-memory-limit*
+           :*default-disk-limit*
+           :smart-buffer
+           :make-smart-buffer
+           :write-to-buffer
+           :finalize-buffer
+           :with-smart-buffer
+           :buffer-on-memory-p
+           :delete-stream-file
+           :delete-temporary-files
+           :buffer-limit-exceeded))
 
-           #:smart-buffer
-           #:make-smart-buffer
-           #:write-to-buffer
-           #:finalize-buffer
-           #:with-smart-buffer
-           #:buffer-on-memory-p
-           #:delete-stream-file
-           #:delete-temporary-files
-
-           #:buffer-limit-exceeded))
 (in-package :io/smart-buffer)
 
 (defvar *default-memory-limit* (expt 2 20))
