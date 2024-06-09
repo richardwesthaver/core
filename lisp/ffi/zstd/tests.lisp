@@ -38,7 +38,7 @@
         (is (zerop (zstd-iserror (zstd-decompress src src-size dst csize))))))))
 
 (deftest streaming ()
-  "Test the Zstd Streaming API functions"
+  "Test the Zstd Streaming API functions."
   (is (< (zstd-cstreaminsize) (zstd-cstreamoutsize)))
   (with-alien ((in (* zstd-inbuffer) (zstd::allocate-zstd-inbuffer-s))
                (out (* zstd-outbuffer) (zstd::allocate-zstd-outbuffer-s))

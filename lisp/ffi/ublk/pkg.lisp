@@ -1,10 +1,9 @@
-;;; ublk.lisp --- low-level bindings to CUBLK
+;;; ublk.lisp --- low-level bindings to libulksrv
 
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :ublk/pkg
-  (:nicknames :ublk)
+(defpackage :ublk
   (:use :cl :std :sb-alien)
   (:export ))
 
