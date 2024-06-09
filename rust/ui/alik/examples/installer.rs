@@ -1,8 +1,8 @@
 //! installer.rs --- Alik Installer Example
 
-// 
+//
 
-//! Code: 
+//! Code:
 use std::future::Future;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .set_description("Description!")
     .set_buttons(rfd::MessageButtons::OkCancel)
     .show();
-  println!("{}", res);  
+  println!("{}", res);
   // async
   let task = rfd::AsyncFileDialog::new().pick_file();
 
@@ -37,8 +37,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       // on wasm just file.read().await;
     }
   });
-  eframe::run_native("alik_installer_example",
-                     eframe::NativeOptions::default(),
-                     Box::new(|cc| Box::new(alik_ui::AlikApp::new(cc)))).unwrap();
+  eframe::run_native(
+    "alik_installer_example",
+    eframe::NativeOptions::default(),
+    Box::new(|cc| Box::new(alik_ui::AlikApp::new(cc))),
+  )
+  .unwrap();
   Ok(())
 }
