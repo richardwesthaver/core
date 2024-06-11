@@ -45,10 +45,9 @@
                (cst (* zstd-cstream) (zstd::zstd-createcstream))
                (dst (* zstd-dstream) (zstd::zstd-createdstream)))
     (with-zstd-cstream (cs cst)
-    (is (zerop (zstd::zstd-initcstream cst (zstd-defaultclevel))))
+      (is (zerop (zstd::zstd-initcstream cst (zstd-defaultclevel))))
       (with-zstd-dstream (ds dst)
         (is (zerop (zstd::zstd-initdstream dst)))
-        ;; check
         (zstd-compressstream cst out in)
         (is (zerop (zstd-compressstream2 cst out in 0)))
         (is (zerop (zstd-iserror (zstd-decompressstream dst out in))))))))

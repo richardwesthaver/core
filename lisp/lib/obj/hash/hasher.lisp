@@ -28,7 +28,9 @@
                                (char-code (schar string n)))))))
       hash)))
 
-(defgeneric hash-object (obj))
+(defgeneric hash-object (obj)
+  (:method ((obj t))
+    (hash-object-address obj)))
 
 (defun hash-object-address (obj &optional (test *global-hasher*))
   "Given some object OBJ, lookup the address with

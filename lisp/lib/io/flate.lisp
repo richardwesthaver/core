@@ -31,7 +31,8 @@
 ;;; Utils
 
 ;;; Proto
-(deferror flate-error () () (:auto t))
+
+(eval-always (deferror flate-error () () (:auto t)))
 
 (deferror compression-error (flate-error) () (:auto t))
 (deferror decompression-error (flate-error) () (:auto t))

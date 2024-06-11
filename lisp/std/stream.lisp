@@ -42,9 +42,9 @@ compatible element-types."
                      (error "~@<Could not read enough bytes from the input to fulfill ~
                           the :END ~S requirement in ~S.~:@>" 'copy-stream end)
                      (return)))
-               (incf input-position n)
+               (print (incf input-position n))
                (write-sequence buffer output :end n)
-               (incf output-position n)))
+               (print (incf output-position n))))
     (when finish-output
       (finish-output output))
     output-position))

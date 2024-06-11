@@ -326,7 +326,7 @@ STREAM will be closed afterwards, so wrap it with
                                :element-type (stream-element-type output)
                                :if-does-not-exist if-does-not-exist
                                :external-format external-format)
-    (copy-stream input output)))
+    (copy-stream input output :end (file-size-in-octets pathname))))
 
 (defun file= (file1 file2 &key (buffer-size 4096))
   "Compare FILE1 and FILE2 octet by octet, \(possibly) using buffers

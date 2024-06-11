@@ -19,23 +19,6 @@
   (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
   (:export :get-address-by-name))
 
-(defpackage :net/sans-io
-  (:use :cl :obj :dat/proto :std :net/core :sb-bsd-sockets)
-  (:export :sans-io-protocol :protocol-version :protocol-name :protocol-features
-   :*max-connection-id* :*initial-mtu* :*max-stream-count* :*max-udp-payload*
-   :*word-length* :sans-io-error :packet-serializer-error :packet-deserializer-error
-   :packet-header-serializer-error :packet-header-deserializer-error :frame-serializer-error :frame-deserializer-error
-   :stream-id :stream-direction :event-id :event
-   :endpoint-event :connection-event :connection-id :connection-id-generator
-   :connection :connection-idle-timeout :peer-id :peer-address
-   :peer :clientp :serverp :endpoint-config
-   :transport-config :server-config :client-config :endpoint
-   :handle-event :handle :connect :default-client-config
-   :packet-number :packet-header :packet-payload :packet
-   :frame :size-bound :frame-type :with-endpoint
-   :with-client :define-protocol :define-endpoint :define-event
-   :define-handler))
-
 (defpackage :net/udp
   (:nicknames :udp)
   (:use :cl :std :net/core :sb-bsd-sockets)
@@ -297,6 +280,7 @@
 (defpackage :net/req
   (:nicknames :req)
   (:shadowing-import-from :std/type :octet :octet-vector)
+  (:import-from :dat/mime :mime)
   (:shadow :get :delete)
   (:use :cl :std :obj/uri
    :obj/url :net/proto/http :babel :net/cookie
@@ -333,7 +317,7 @@
 
 (defpackage :net/srv
   (:nicknames :srv)
-  (:use :cl :std :obj/uri :net/core :net/proto/http :net/sans-io :net/cookie :dat/base64 :sb-gray)
+  (:use :cl :std :obj/uri :net/core :net/proto/http :net/cookie :dat/base64 :sb-gray)
   (:export))
 
 (in-package :std-user)
@@ -343,7 +327,6 @@
    :net/core 
    :net/tcp 
    :net/udp
-   :net/sans-io
    :net/codec/dns 
    :net/codec/osc 
    :net/codec/tlv

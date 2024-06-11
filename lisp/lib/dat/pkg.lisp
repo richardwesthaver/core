@@ -145,8 +145,6 @@
    :to-xml 
    :write-xml
    :xml-node-p 
-   :nodelist->xml-node
-   :xml-node->nodelist
    :xml-node ; needed to support use in typep
    ;; processing instruction objects
    :proc-inst-p
@@ -164,6 +162,14 @@
    ;; tree searching from Daniel Eliason
    :extract-path-list
    :extract-path))
+
+(defpackage :dat/mime
+  (:use :cl :std :dat/proto :dat/xml)
+  (:export :*mime-database*
+   :load-mime-info :update-mime-database
+   :mime-magic :mime-magic-offset :mime-magic-type :mime-magic-value
+   :mime-type :mime-type-name :mime-type-superclasses :mime-type-glob
+   :mime-type-glob :mime-type-magic))
 
 (defpackage :dat/bencode
   (:use :cl :std :dat/proto :sb-gray)

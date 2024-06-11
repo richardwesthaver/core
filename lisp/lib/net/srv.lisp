@@ -19,17 +19,21 @@
   (srv:start ws))
 |#
 
-;;;; NET/SANS-IO
-;; This package contains the low-level base classes which are extended by this
-;; library.
-
 ;;; Code:
 (in-package :net/srv)
 
-(defmacro define-service (name &rest initargs)
-  "Define a subclass of NET/SRV:SERVICE."
-  `(defclass ,name ,@initargs))
+;;; Errors
+;; from hunchentoot
+(define-condition srv-error () ())
 
+(define-condition srv-simple-error (srv-error simple-condition) ())
+
+(defun srv-simple-error (format-control &rest format-arguments)
+  (error 'srv-simple-error
+         :format-control format-control
+         :format-arguments format-arguments))
+
+;;; Protocol
 (defgeneric start-service (self)
   (:documentation "Start a service."))
 
@@ -41,3 +45,13 @@
   (:method ((self t))
     (stop-service self)
     (start-service self)))
+
+(defgeneric add-route (self uri handler &key &allow-other-keys))
+
+(defvar *routes*)
+(defvar *dispatch-table*)
+
+;;; Macros
+(defmacro define-service (name &rest initargs)
+  "Define a subclass of NET/SRV:SERVICE."
+  `(defclass ,name ,@initargs))

@@ -230,7 +230,6 @@
                                    (unsigned-int controllen "__u32" "controllen")
                                    (unsigned-int payloadlen "__u32" "payloadlen")
                                    (unsigned-int flags "__u32" "flags")))
- (:enum socket-uring-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
-                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ")))
  ;; (:integer liburing-udata-timeout "LIBURING_UDATA_TIMEOUT") ;; c macro trouble
- )
+ (:enum socket-uring-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
+                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ"))))

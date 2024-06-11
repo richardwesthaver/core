@@ -19,21 +19,21 @@
 (defpackage :io/ring
   (:use :cl :uring :io/proto)
   (:import-from :sb-alien :addr)
-  (:import-from :std/err :deferror))
+  (:import-from :std :deferror :eval-always))
 
 (defpackage :io/stream
   (:use :cl :io/proto)
-  (:import-from :std/err :deferror)
+  (:import-from :std :deferror :eval-always)
   (:export :io-stream-error :io-stream))
 
 (defpackage :io/socket
   (:use :cl :io/proto)
-  (:import-from :std/err :deferror)
+  (:import-from :std :deferror :eval-always)
   (:export :io-socket-error :io-socket))
 
 (defpackage :io/flate
   (:use :cl :io/proto)
-  (:import-from :std/err :deferror)
+  (:import-from :std :deferror :eval-always)
   (:export :flate-error :compression-error :decompression-error
    :*compression-buffer-size* :decompression-buffer-size* :finish-compression :finish-decompression
    :reset-compressor :reset-decompressor :make-compressing-stream :make-decompressing-stream
@@ -42,7 +42,7 @@
 
 (defpackage :io/zstd
   (:use :cl :io/proto :io/flate)
-  (:import-from :std/err :deferror)
+  (:import-from :std :deferror :eval-always)
   (:export :zstd-error :zstd-compressor :zstd-decompressor))
 
 (pkg:defpkg :io

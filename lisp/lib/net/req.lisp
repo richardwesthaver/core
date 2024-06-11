@@ -573,7 +573,7 @@ keep-alive-stream), and should handle clean-up of it"
 (defun content-type (value)
   (typecase value
     (pathname (or (lookup-in-content-type-cache value)
-                  (setf (lookup-in-content-type-cache value) (mimes:mime value))))
+                  (setf (lookup-in-content-type-cache value) (mime value))))
     (otherwise nil)))
 
 (defun multipart-value-content-type (value)
@@ -1020,6 +1020,7 @@ keep-alive-stream), and should handle clean-up of it"
       (format nil "Basic ~A"
               (dat/base64:string-to-base64-string proxy-auth)))))
 (eval-always
+  (defconstant +socks5-version+ 5)
   (defconstant +socks5-reserved+ 0)
   (defconstant +socks5-no-auth+ 0)
   (defconstant +socks5-connect+ 1)

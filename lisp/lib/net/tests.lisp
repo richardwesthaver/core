@@ -6,38 +6,8 @@
 (defsuite :net)
 (in-suite :net)
 (in-readtable :std)
-(deftest sanity ())
 
-(deftest sans-io ()
-  (define-protocol mockz () (data) :version 2 :features (list :foo :bar :baz))
-  (is (eql 'mockz (protocol-name (make-instance 'mockz))))
-  (is (null (protocol-features (make-instance 'sans-io-protocol :features nil))))
-  (is (= 3 (length (protocol-features (make-instance 'mockz)))))
-  (is (= 2 (protocol-version (make-instance 'mockz))))
-  (defclass mock-transport-config (transport-config)
-    (max-bidi-streams
-     max-uni-streams
-     max-idle-timeout
-     rx-window
-     tx-window
-     (packet-threshold :initform 3)
-     (time-threshold :initform (/ 9 8))
-     (initial-rtt :initform 333)
-     initial-mtu
-     min-mtu
-     (datagram-rx-buffer-size :initform 1250000)
-     (datagram-tx-buffer-size :initform (* 1024 1024))))
-  (defclass mock-server-config (server-config)
-    ((port :initarg :port :initform 0)))
-  (defclass mock-client-config (client-config)
-    ((port :initarg :port :initform 0)))
-  (defclass mock-endpoint (endpoint)
-    ((tx :initarg :tx)
-     (rx :initarg :rx))
-    (:default-initargs
-     :server (make-instance 'mock-server-config)))
-  (let ((ent (make-instance 'mock-endpoint)))
-    (is (equal (class-name (class-of ent)) 'mock-endpoint))))
+(deftest sanity ())
 
 (deftest dns ())
 

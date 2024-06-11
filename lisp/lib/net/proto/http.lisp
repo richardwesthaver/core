@@ -8,8 +8,7 @@
 
 ;; Fukamachi has implemented the current state-of-the-art HTTP libraries
 ;; (fast-http, dexador, etc). For the time being we'll be using these with
-;; minimal changes. At some point in the future it would be ideal to
-;; re-implement this in a sans-io style.
+;; minimal changes.
 
 ;;; Code:
 (in-package :net/proto/http)

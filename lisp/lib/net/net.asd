@@ -6,7 +6,6 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
-   :trivial-mimes
    :fast-io
    :dat :obj :io :parse
    ;; #+swank :swank-client  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
@@ -17,7 +16,6 @@
   :components ((:file "pkg")
                (:file "err")
                (:file "obj")
-               (:file "sans-io")
                (:file "util")
                (:file "udp")
                (:file "tcp")
