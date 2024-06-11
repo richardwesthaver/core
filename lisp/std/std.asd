@@ -48,7 +48,7 @@
                (:file "seq")
                (:file "sys"))
   :build-pathname "std"
-  :build-operation monolithic-concatenate-source-op
+  :build-operation compile-bundle-op
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (register-system-packages "std" '(:std))

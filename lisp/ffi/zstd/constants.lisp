@@ -62,11 +62,14 @@
          (zstd-error-externalsequences-invalid "ZSTD_error_externalSequences_invalid")
          (zstd-error-maxcode "ZSTD_error_maxCode")) 
         nil t)
- (:structure zstd-inbuffer-s ("struct ZSTD_inBuffer_s"
+ (:structure zstd-inbuffer ("struct ZSTD_inBuffer_s"
                               ((* t) src "const void*" "src")
                               (size-t size "size_t" "size")
-                              (size-t pos "size-t" "pos")))
- (:structure zstd-outbuffer-s ("struct ZSTD_outBuffer_s"
-                              ((* t) src "void*" "dst")
-                              (size-t size "size_t" "size")
-                              (size-t pos "size-t" "pos"))))
+                              (size-t pos "size-t" "pos"))
+             nil t)
+
+ (:structure zstd-outbuffer ("struct ZSTD_outBuffer_s"
+                               ((* t) dst "void*" "dst")
+                               (size-t size "size_t" "size")
+                               (size-t pos "size-t" "pos"))
+             nil t))

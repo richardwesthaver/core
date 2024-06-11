@@ -147,18 +147,6 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
   (src (* t)) (src-size size-t))
 
 ;;; Streaming API
-(define-alien-type zstd-inbuffer
-    (struct zstd-inbuffer-s
-            (src (* t))
-            (size size-t)
-            (pos size-t)))
-
-(define-alien-type zstd-outbuffer
-    (struct zstd-outbuffer-s
-            (dst (* t))
-            (size size-t)
-            (pos size-t)))
-
 (define-alien-type zstd-cstream zstd-cctx)
 
 (define-alien-routine "ZSTD_createCStream" (* zstd-cstream))

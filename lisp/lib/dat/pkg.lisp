@@ -169,7 +169,8 @@
    :load-mime-info :update-mime-database
    :mime-magic :mime-magic-offset :mime-magic-type :mime-magic-value
    :mime-type :mime-type-name :mime-type-superclasses :mime-type-glob
-   :mime-type-glob :mime-type-magic))
+   :mime-type-glob :mime-type-magic
+   :mime :get-mime :get-mime*))
 
 (defpackage :dat/bencode
   (:use :cl :std :dat/proto :sb-gray)
