@@ -24,10 +24,13 @@
 ;; this is all very unsafe. don't touch the finalizer thread plz.
 (defun find-thread-by-id (id)
   "Search for thread by ID which must be an u64. On success returns the thread itself or nil."
-  (sb-thread::avlnode-data (sb-thread::avl-find id sb-thread::*all-threads*)))
+  (find id (sb-thread::list-all-threads) :test '= :key 'thread-os-tid))
+
+(defun thread-key-list ()
+  (sb-thread::avltree-filter #'sb-thread::avlnode-key sb-thread::*all-threads*))
 
 (defun thread-id-list ()
-  (sb-thread::avltree-filter #'sb-thread::avlnode-key sb-thread::*all-threads*))
+  (sb-thread::avltree-filter (lambda (th) (thread-os-tid (sb-thread::avlnode-data th))) sb-thread::*all-threads*))
 
 (defun thread-count ()
   (sb-thread::avl-count sb-thread::*all-threads*))
@@ -37,8 +40,17 @@
   (loop for i below n
         collect (make-thread fn :name (format nil "~A-~D" name i))))
 
-(defmacro with-threads ((idx n) &body body)
-  `(make-threads ,n (lambda (,idx) (declare (ignorable ,idx)) ,@body)))
+(defun parse-lambda-list-names (ll)
+  (multiple-value-bind (idx _ args) (sb-int:parse-lambda-list ll)
+    (declare (ignore idx _))
+    (loop for a in args
+          collect
+             (etypecase a
+               (atom a)
+               (cons (car a))))))
+
+(defmacro with-threads ((n &key args) &body body)
+  `(make-threads ,n (lambda (,@args) (declare (ignorable ,@(parse-lambda-list-names args))) ,@body)))
 
 (defun finish-threads (&rest threads)
   (let ((threads (flatten threads)))
@@ -146,28 +158,29 @@ performed in other threads, such as WORKERS in TASK-POOL.
 Before using this object you should ensure the SCOPE is fully
 initialized. Supervisors should be created at any point during the
 lifetime of SCOPE, but never before and never after."))
-(thread-id-list)
+
 ;; unix-getrusage  
 ;; 0,-1,-2
 ;; (multiple-value-list (sb-unix:unix-getrusage 0))
 ;; (setf sb-unix::*on-dangerous-wait* :error)
-(defvar *oracle-threads* nil)
-
-(defun find-oracle (id)
-  (declare ((unsigned-byte 32) id))
-  (find id *oracle-threads* :test '= :key 'oracle-id))
-
 (defstruct (oracle (:constructor %make-oracle (id thread)))
   (id 0 :type (unsigned-byte 32) :read-only t)
   (thread *current-thread* :read-only t))
 
+(defvar *oracle-threads* nil)
+
+(defun find-oracle (id)
+  (find id *oracle-threads* :test '= :key 'oracle-id))
+
 (defun make-oracle (thread)
-  (let ((orc (%make-oracle (sb-thread:thread-os-tid thread) thread)))
-    (prog1 orc
-      (pushnew orc *oracle-threads* :test '= :key #'oracle-id))))
+  (let* ((id (thread-os-tid thread)))
+    (if-let ((found (find-oracle id)))
+      (values id found)
+      (let ((orc (%make-oracle id thread)))
+        (push orc *oracle-threads*)
+        (values id orc)))))
 
 (defgeneric designate-oracle (host guest))
-
 (defgeneric push-job (job pool))
 (defgeneric push-task (task pool))
 (defgeneric push-result (task pool))
@@ -182,10 +195,10 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric pop-result (pool))
 (defgeneric pop-worker (pool))
 (defgeneric pop-stage (pool))
-
 (defgeneric start-task-pool (pool))
 (defgeneric pause-task-pool (pool))
 (defgeneric stop-task-pool (pool))
+(defgeneric restart-task-pool (pool))
 (defgeneric make-task (&rest args))
 (defgeneric run-job (self job))
 (defgeneric run-stage (self stage))
@@ -203,10 +216,15 @@ lifetime of SCOPE, but never before and never after."))
     (declare (ignore pool))
     (make-threads count function :name *default-worker-name*)))
 
-(defmacro define-task-kernel (name (&key args accessors) &body body)
+(defmacro parse-kernel-ops (op)
+  "Parse an op of the form (NAME ARGS &BODY BODY)"
+  (destructuring-bind (name args &body body) op
+    `(std/macs:plambda ,args ,@body)))
+
+(defmacro define-task-kernel (name ops accessors &body body)
   "Define a task kernel.
 
-(define-task-kernel NAME (&key ARGS MAX MIN ACCESSORS)
+(define-task-kernel NAME (&key ARGS ACCESSORS)
 
 The kernel should process all options and return a function - the
 'kernel function'.
@@ -219,11 +237,12 @@ ACCESSORS is a list of pandoric accessors which can be called on the
 kernel via an ORACLE. 
 
 This interface is experimental and subject to change."
-  (declare (ignorable accessors))
-  `(defun ,name (,@args) 
-     ,@body))
+  (declare (ignorable accessors ops))
+  `(defun ,name ()
+     ,@body
+     (values)))
 
-(define-task-kernel default-task-kernel (:args () )
+(define-task-kernel default-task-kernel () ()
   "The default task kernel used to initialize the KERNEL slot of
 task-pools.
 
@@ -250,11 +269,22 @@ task-pools.
   (online (make-gate :name "online" :open nil)
    :type gate)
   ;; TODO: test weak-vector here
-  (workers (make-array 0 :element-type '(unsigned-byte 32) :fill-pointer 0) :type (vector (unsigned-byte 32) *))
+  (workers nil :type list)
   (results (make-mailbox :name "results")))
 
+(defmethod print-object ((self task-pool) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A ~A :online ~A ~A:~A:~A ~A"
+            (task-pool-oracle-id self)
+            (task-pool-kernel self)
+            (gate-open-p (task-pool-online self))
+            (queue-count (task-pool-jobs self))
+            (length (task-pool-stages self))
+            (length (task-pool-workers self))
+            (mailbox-count (task-pool-results self)))))
+
 (defmethod designate-oracle ((self task-pool) (guest integer))
-  (setf (task-pool-oracle-id self) guest)
+  (setf (task-pool-oracle-id self) (make-oracle (find-thread-by-id guest)))
   self)
 
 (defmethod designate-oracle ((self task-pool) (guest thread))
@@ -264,12 +294,12 @@ task-pools.
   (oracle-thread (find-oracle (slot-value self 'oracle))))
 
 (defmethod push-worker ((worker thread) (pool task-pool))
-  (vector-push (thread-os-tid worker) (task-pool-workers pool)))
+  (pushnew worker (task-pool-workers pool)))
 
 (defmethod push-workers ((threads list) (pool task-pool))
   (with-slots (workers) pool
     (dolist (w threads)
-      (vector-push (thread-os-tid w) workers))))
+      (pushnew w workers))))
 
 (defmethod make-worker-for ((pool task-pool) function &rest args)
   (make-thread function :name *default-worker-name* :arguments args))

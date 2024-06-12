@@ -16,7 +16,7 @@
 ;; (setf sb-unix::*on-dangerous-wait* :error)
 
 ;; TODO 2024-05-14: fix compilation order of std/fu vs std/readtables
-(deftest readtables (:disabled nil)
+(deftest readtables (:skip nil)
   "Test :std readtable"
   (is (typep #`(,a1 ,a1 ',a1 ,@a1) 'function))
   (is (string= #"test "foo" "# "test \"foo\" "))
@@ -144,8 +144,15 @@
 
 (deftest tasks ()
   "Test task-pools, oracles, and workers."
-  ;; (let ((pool1 (make-task-pool))))
-  )
+  (let ((pool (designate-oracle (make-task-pool) (make-oracle *current-thread*))))
+    ;; pool is bound to a task pool, *ORACLE-THREADS* contains the *CURRENT-THREAD*.
+    (std/thread::spawn-workers pool 16)
+    ;; (with-threads (16 :args (&optional (a 0) (b 1) (c 2)))
+    ;;   (sb-thread:allocator-histogram)
+    ;;   (sb-concurrency:wait-on-gate (std/thread::task-pool-online pool))
+    ;;   (print (+ a b c)))
+    (is (= 16 (length (task-pool-workers pool))))
+    (is (sb-concurrency:open-gate (std/thread::task-pool-online pool)))))
 
 (deftest fmt ()
   "Test standard formatters"
@@ -183,7 +190,7 @@
                                 (lambda () (mapc #'1+ (list a b c)))))
         collect (is (= x y))))
 
-(deftest pan (:disabled t)
+(deftest pan ()
   "Test standard pandoric macros"
   (let ((p
 	  (plambda (a) (b c)
@@ -194,7 +201,9 @@
     (with-pandoric (b c) p
       (is (= 0 (funcall p nil)))
       (is (= 1 (funcall p 1)))
-      (is (= 1 b c)))))
+      (is (= 11 (funcall p 10)))
+      (is (= 0 (funcall p nil)))
+      )))
 
 (deftest alien ()
   "Test standard alien utils"
@@ -242,7 +251,7 @@ These tests are copied directly from the Alexandria test suite."
                x) ;; 2
          '(42 42 2)))))
 
-(deftest bits (:disabled t)
+(deftest bits (:skip t)
   (define-bitfield testbits
     (a boolean)
     (b (signed-byte 2))

@@ -1,7 +1,7 @@
 ;;; pan.lisp --- Pandoric macros
 
 ;;; Code:
-(in-package :std)
+(in-package :std/macs)
 (in-readtable :std)
 
 (defun pandoriclet-get (letargs)
@@ -24,7 +24,7 @@
 (defmacro pandoriclet (letargs &rest body)
   (let ((letargs (cons
                   '(this)
-                  (let-binding-transform
+                  (std/list:let-binding-transform
                    letargs))))
     `(let (,@letargs)
        (setq this ,@(last body))

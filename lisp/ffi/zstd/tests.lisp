@@ -38,7 +38,7 @@
         (is (zerop (zstd-iserror (zstd-decompress src src-size dst csize))))))))
 
 (deftest streaming ()
-  "Test the Zstd Streaming API functions."
+  "Test the Zstd v1 Streaming API."
   (is (< (zstd-cstreaminsize) (zstd-cstreamoutsize)))
   (with-alien ((in (* zstd-inbuffer) (zstd::allocate-zstd-inbuffer))
                (out (* zstd-outbuffer) (zstd::allocate-zstd-outbuffer))
@@ -68,5 +68,7 @@
                      c-string)
                str)))))))
 
+(deftest streaming2 ()
+  "Test the Zstd v2 Streaming API.")
 ;; simple-dictionary
 ;; builk-dictionary

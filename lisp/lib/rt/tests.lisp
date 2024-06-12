@@ -28,7 +28,7 @@
     (is (probe-file f))
     (delete-file f)))
 
-(deftest tracing (:profile t :disabled t) ;; fails in x 
+(deftest tracing (:profile t :skip t) ;; fails in x 
   (let ((f "/tmp/tracing.json")
         (*default-arg-converter* +arg-converter-store-only-simple-objects-and-strings+)) ;; open with chrome://tracing
     (flet ((foo (i)

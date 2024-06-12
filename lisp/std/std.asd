@@ -30,7 +30,6 @@
                (:file "hash-table")
                (:file "alien")
                (:file "mop")
-               (:file "thread")
                (:file "readtable")
                (:module "macs"
                 :components
@@ -40,6 +39,7 @@
                  (:file "collecting")
                  (:file "control")))
                (:file "bit")
+               (:file "thread")
                (:file "fmt")
                (:file "path")
                (:file "os")

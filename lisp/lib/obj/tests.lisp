@@ -106,7 +106,7 @@
     (is (setf (getchash #\a map) t))
     (is (getchash #\A map))))
 
-(deftest castable-multi (:disabled t)
+(deftest castable-multi (:skip t)
   (let ((tries 40000)
         (threads 4))
     (let ((table (make-castable)))

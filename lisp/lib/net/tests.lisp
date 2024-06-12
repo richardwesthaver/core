@@ -24,7 +24,7 @@
 
 (deftest osc ())
 
-(deftest crew (:disabled t)
+(deftest crew (:skip t)
   (let ((pool (make-worker-pool (make-instance 'crew-connection-info :host-name "localhost" :port 9999)
                                 (list (make-instance 'crew-connection-info :host-name "localhost" :port 10000))
                                 #'connect-worker)))

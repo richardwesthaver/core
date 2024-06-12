@@ -161,29 +161,6 @@
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :list-indirect-slot-methods))
    
-(defpkg :std/thread
-  (:use :cl :sb-thread :sb-concurrency)
-  (:import-from :std/list :flatten)
-  (:export
-   :print-thread-message-top-level :thread-support-p
-   :find-thread-by-id :thread-id-list
-   :make-threads :with-threads :finish-threads
-   :timed-join-thread :kill-thread :hang
-   :thread-count :dump-thread
-   :make-oracle :make-supervisor :oracle :run-task
-   :oracle-id
-   :push-job :push-task :push-worker :push-result
-   :run-job :run-stage
-   :pop-job :pop-task :pop-worker :pop-result
-   :make-task-pool
-   :start-task-pool :pause-task-pool :shutdown-task-pool
-   :push-stage :designate-oracle :make-task-pool
-   :task :job :task-pool :stage :task-pool-p
-   :job-tasks :make-job :job-p :task-object
-   :make-task :task-p :task :wait-for-threads
-   :task-pool-oracle :task-pool-jobs :task-pool-stages
-   :task-pool-workers :task-pool-results))
-
 (defpkg :std/fu
   (:use :cl)
   (:import-from :std/sym :make-gensym-list)
@@ -266,6 +243,30 @@
    :with-collectors
    :collecting
    :xor))
+
+(defpkg :std/thread
+  (:use :cl :sb-thread :sb-concurrency)
+  (:import-from :std/list :flatten)
+  (:import-from :std/macs :if-let)
+  (:export
+   :print-thread-message-top-level :thread-support-p
+   :find-thread-by-id :thread-id-list
+   :make-threads :with-threads :finish-threads
+   :timed-join-thread :kill-thread :hang
+   :thread-count :dump-thread
+   :make-oracle :make-supervisor :oracle :run-task
+   :oracle-id
+   :push-job :push-task :push-worker :push-result
+   :run-job :run-stage
+   :pop-job :pop-task :pop-worker :pop-result
+   :make-task-pool
+   :start-task-pool :pause-task-pool :shutdown-task-pool
+   :push-stage :designate-oracle :make-task-pool
+   :task :job :task-pool :stage :task-pool-p
+   :job-tasks :make-job :job-p :task-object
+   :make-task :task-p :task :wait-for-threads
+   :task-pool-oracle :task-pool-jobs :task-pool-stages
+   :task-pool-workers :task-pool-results))
 
 (defpkg :std/readtable
   (:use :cl)

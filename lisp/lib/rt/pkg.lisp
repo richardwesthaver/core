@@ -682,7 +682,7 @@ PROPS is a plist which currently accepts the following parameters:
 
 :PROFILE - enable profiling of this test
 
-:DISABLED - don't push this test to the current *TEST-SUITE*
+:SKIP - don't push this test to the current *TEST-SUITE*
 
 :BENCH - enable benchmarking of this test
 
@@ -704,7 +704,7 @@ and declarations for the test body.
 		 ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
 		 ,@(when doc `(:doc ,doc))
 		 ,@(when dec `(:declaration ,dec)))))
-       ,(unless (getf pr :disabled) '(push-test obj *test-suite*))
+       ,(unless (getf pr :skip) '(push-test obj *test-suite*))
        obj)))
 
 (defmacro defsuite (suite-name &rest props)

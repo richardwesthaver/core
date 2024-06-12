@@ -30,7 +30,7 @@
 
 (defun %mirror-update (path) (declare (ignore path)))
 
-(deftest mirror-network (:disabled t)
+(deftest mirror-network (:skip t)
   (macrolet ((with-job ((job &rest opts) &body body)
                `(let (()) ,@body)))
     (labels ((%m (name thunk args)))
