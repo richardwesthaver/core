@@ -99,11 +99,8 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 
 ;;; Utils
 (define-alien-routine "ZSTD_versionNumber" unsigned)
-
 (define-alien-routine "ZSTD_versionString" c-string)
-
 (define-alien-routine "ZSTD_compressBound" size-t (src-size size-t))
-
 (define-alien-routine "ZSTD_isError" unsigned (code size-t))
 (define-alien-routine "ZSTD_getErrorName" c-string (code size-t))
 ;; zstd_errors.h - does this work?
@@ -113,18 +110,6 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 (define-alien-routine "ZSTD_minCLevel" int)
 (define-alien-routine "ZSTD_maxCLevel" int)
 (define-alien-routine "ZSTD_defaultCLevel" int)
-
-;;; Simple API
-(define-alien-routine "ZSTD_compress" size-t
-  (dst (* t))
-  (dst-capacity size-t)
-  (src (* t))
-  (src-size size-t)
-  (compression int))
-
-(define-alien-routine "ZSTD_decompress" size-t
-  (dst (* t)) (dst-capacity size-t)
-  (src (* t)) (compressed-size size-t))
 
 ;;; Explicit Context API
 (define-alien-type zstd-cctx (struct zstd-cctx-s))
@@ -145,122 +130,3 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
   (dctx (* zstd-dctx))
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (src-size size-t))
-
-;;; Streaming API
-(define-alien-type zstd-cstream zstd-cctx)
-
-(define-alien-routine "ZSTD_createCStream" (* zstd-cstream))
-(define-alien-routine "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
-
-(define-alien-type zstd-enddirective int)
-;; (enum nil
-;;       (zstd-e-continue 0)
-;;       (zstd-e-flush 1)
-;;       (zstd-e-end 2))
-
-(define-alien-routine "ZSTD_compressStream2" size-t
-  (cctx (* zstd-cctx))
-  (output (* zstd-outbuffer))
-  (input (* zstd-inbuffer))
-  (end-op zstd-enddirective))
-
-(define-alien-routine "ZSTD_CStreamInSize" size-t)
-(define-alien-routine "ZSTD_CStreamOutSize" size-t)
-(define-alien-routine "ZSTD_initCStream" size-t (zcs (* zstd-cstream)) (compression-level int))
-
-(define-alien-routine "ZSTD_compressStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)) (input (* zstd-inbuffer)))
-(define-alien-routine "ZSTD_flushStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
-(define-alien-routine "ZSTD_endStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
-
-(define-alien-type zstd-dstream zstd-dctx)
-
-(define-alien-routine "ZSTD_createDStream" (* zstd-dstream))
-(define-alien-routine "ZSTD_freeDStream" void (zds (* zstd-dstream)))
-(define-alien-routine "ZSTD_initDStream" size-t (zds (* zstd-dstream)))
-
-(define-alien-routine "ZSTD_decompressStream" size-t
-  (zds (* zstd-dstream))
-  (output (* zstd-outbuffer))
-  (input (* zstd-inbuffer)))
-
-(define-alien-routine "ZSTD_DStreamInSize" size-t)
-(define-alien-routine "ZSTD_DStreamOutSize" size-t)
-
-;;; Simple Dictionary API
-(define-alien-routine "ZSTD_compress_usingDict" size-t
-  (cctx (* zstd-cctx))
-  (dst (* t))
-  (dst-capacity size-t)
-  (src (* t))
-  (src-size size-t)
-  (dict (* t))
-  (dict-size size-t)
-  (compression-level int))
-
-(define-alien-routine "ZSTD_decompress_usingDict" size-t
-  (dctx (* zstd-dctx))
-  (dst (* t))
-  (dst-capacity size-t)
-  (src (* t))
-  (src-size size-t)
-  (dict (* t))
-  (dict-size size-t))
-
-;;; Bulk-processing Dictionary API
-(define-alien-type zstd-cdict (struct zstd-cdict-s))
-
-(define-alien-routine "ZSTD_createCDict" (* zstd-cdict)
-  (dict-buffer (* t))
-  (dict-size size-t)
-  (compression-level int))
-
-(define-alien-routine "ZSTD_freeCDict" size-t (cdict (* zstd-cdict)))
-
-(define-alien-routine "ZSTD_compress_usingCDict" size-t
-  (cctx (* zstd-cctx))
-  (dst (* t))
-  (dst-capacity size-t)
-  (src (* t))
-  (src-size size-t)
-  (cdict (* zstd-cdict)))
-
-(define-alien-type zstd-ddict (struct zstd-ddict-s))
-
-(define-alien-routine "ZSTD_createDDict" (* zstd-ddict)
-  (dict-buffer (* t))
-  (dict-size size-t))
-
-(define-alien-routine "ZSTD_freeDDict" size-t (ddict (* zstd-ddict)))
-
-(define-alien-routine "ZSTD_compress_usingDDict" size-t
-  (dctx (* zstd-dctx))
-  (dst (* t))
-  (dst-capacity size-t)
-  (src (* t))
-  (src-size size-t)
-  (ddict (* zstd-ddict)))
-
-;; dictionary utils
-(define-alien-routine "ZSTD_getDictID_fromDict" unsigned
-  (dict (* t))
-  (dict-size size-t))
-
-(define-alien-routine "ZSTD_getDictID_fromCDict" unsigned
-  (cdict (* zstd-cdict)))
-
-(define-alien-routine "ZSTD_getDictID_fromDDict" unsigned
-  (cdict (* zstd-ddict)))
-
-(define-alien-routine "ZSTD_getDictID_fromFrame" unsigned
-  (src (* t))
-  (src-size size-t))
-
-(defmacro with-zstd-dstream ((dv dst &key (close t)) &body body)
-  `(let ((,dv ,dst))
-     (unwind-protect (progn ,@body)
-       ,@(when close `((zstd-freedstream ,dv))))))
-
-(defmacro with-zstd-cstream ((cv cst &key (close t)) &body body)
-  `(let ((,cv ,cst))
-     (unwind-protect (progn ,@body)
-       ,@(when close `((zstd-freecstream ,cv))))))

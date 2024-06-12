@@ -11,7 +11,10 @@
   :depends-on (:sb-grovel :std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
-                                      :package :zstd))
+                                      :package :zstd)
+               (:file "simple")
+               (:file "stream")
+               (:file "dict"))
   :in-order-to ((test-op (test-op :zstd/tests))))
 
 (defsystem :zstd/tests
