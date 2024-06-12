@@ -1,40 +1,45 @@
+;;; pkg.lisp --- Packy Packages
+
+;; 
+
+;;; Code:
 (defpackage :packy/core
-  (:use :cl :std :rdb :obj :net :dat)
+  (:use :cl :std :obj/id :dat/proto)
   (:export
-   :pk-pack
-   :pk-unpack
-   :pk-install
-   :pk-uninstall
-   :pk-update
-   :pk-push
-   :pk-pull
-   :pk-query
-   :pk-sync
-   :pk-build
-   :pk-source
-   :pk-package
-   :pk-bundle
-   :pk-dependency
-   :pk-registry
-   :pk-db
-   :pk-config
-   :pk-user-config
-   :list-packages
+   :pack
+   :unpack
+   :install-package
+   :uninstall-package
+   :update-package
    :push-package
    :pull-package
    :query-package
    :sync-package
-   :update-package
-   :build-package))
+   :build-package
+   :package-source
+   :bundle-package
+   :package-dependency
+   :package-registry
+   :packy-config
+   :packy-user-config
+   :list-packages
+   :prepare-package
+   :check-package
+   :package-version))
+
+(defpackage :packy/db
+  (:use :cl :std :packy/core :obj/db :rdb)
+  (:export :package-database))
 
 (defpackage :packy/client
-  (:use :cl :std :packy/core))
+  (:use :cl :std :packy/core :net/fetch))
 
 (defpackage :packy/server
-  (:use :cl :std :packy/core))
+  (:use :cl :std :packy/core :net/srv))
 
 (defpackage :packy/pkgbuild
-  (:use :cl :std))
+  (:use :cl :std)
+  (:export))
 
 (pkg:defpkg :packy
   (:nicknames :pk)

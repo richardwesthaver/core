@@ -2,7 +2,7 @@
 
 ;;; Code:
 (uiop:define-package :bin/rdb
-    (:use :cl :rdb :std :cli :log)
+    (:use :cl :rdb :std :cli/clap :log)
   (:export :main))
 
 (in-package :bin/rdb)
@@ -21,7 +21,7 @@
   (println (rdb-name *rdb*)))
 
 (defcmd rdb-show
-  (let ((db-path (cli-opt-val (find-opt $cli "db"))))
+  (let ((db-path (cli-opt-val (car (find-opts $cli "db")))))
     (if (and (null db-path) (zerop $argc))
         (mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
               (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
@@ -93,7 +93,7 @@
       ;; FIXME 2024-05-07: needs to be triggered explicitly - need to support
       ;; running global opt thunks even when no arg present - macro key
       (if (active-cmds $cli)
-          (prog2 (do-opt (find-opt $cli "db"))
+          (prog2 (do-opt (car (find-opts $cli "db")))
               (do-cmd $cli)
             (close-db *rdb*))
           (print-help $cli)))))

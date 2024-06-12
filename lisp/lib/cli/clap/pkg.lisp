@@ -41,8 +41,8 @@
    :make-opts :make-cmds :parse-bool-opt :parse-str-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op
    :pasre-num-op :parse-file-op :parse-dir-op :cli
-   :cli-cd :with-cli :opts :cmds
-   :debug-opts))
+   :cli-cd :with-cli :opts :cmds :debug-opts
+   :cli-opt :cli-cmd :cli-opt-val :cli-opt-lock :cli-opt-name))
 
 (defpackage :cli/clap/simple
   (:use :cl :std :log :sb-ext)

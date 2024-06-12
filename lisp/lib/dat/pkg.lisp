@@ -61,6 +61,8 @@
 (defpackage :dat/json
   (:use :cl :std :dat/proto)
   (:export
+   :*allow-json-trailing-commas*
+   :json-trailing-commas-p
    #:json-decode
    #:json-encode
    #:json-read

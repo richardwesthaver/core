@@ -5,6 +5,7 @@
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :std :cl-ppcre :rdb :obj :net :cli :zstd)
   :components
   ((:file "pkg")
+   (:file "vars")
    (:file "proto")
    (:file "pkgbuild")
    (:file "db")

@@ -1,21 +1,24 @@
-;;; lib/skel/comp/pkgbuild.lisp --- Archlinux PKGBUILD compiler
+;;; lib/skel/comp/pkgbuild.lisp --- Archlinux PKGBUILDs
 
-;; 
+;; Readers and Writers for PKBUILD files
+
+;;; Commentary:
+
+;; wiki: https://wiki.archlinux.org/title/PKGBUILD
+;; man: https://man.archlinux.org/man/PKGBUILD.5
+;; ref: https://wiki.archlinux.org/title/Creating_packages
 
 ;;; Code:
 (in-package :packy/pkgbuild)
 
-(defparameter *default-pkgbuild* "PKGBUILD")
+(defparameter *pkgbuild-filename* "PKGBUILD")
 
-(defclass sk-pkgbuild-system (skel sk-meta)
-  ())
+(defclass pkgbuild (package-id)
+  (srcdir
+   pkgdir))
 
-(defclass sk-pkgbuild-component (skel)
-  (type value))
-
-(defmethod sk-compile ((self sk-pkgbuild-system) stream &key &allow-other-keys))
-
-(defmethod sk-write-file ((self sk-pkgbuild-system) &key path)
-  (declare (ignore path)))
-
-(defmethod sk-read-file ((self sk-pkgbuild-system) path))
+(defmethod prepare-package ((self pkgbuild)))
+(defmethod build-package ((self pkgbuild)))
+(defmethod check-package ((self pkgbuild)))
+(defmethod package-version ((self pkgbuild)))
+(defmethod pack ((self pkgbuild)))

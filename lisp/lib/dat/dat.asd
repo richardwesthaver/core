@@ -19,6 +19,7 @@
                 ((:file "const")
                  (:file "entity")
                  (:file "html")))
+               (:file "mime")
                (:file "toml")
                (:file "arff")
                (:file "midi")

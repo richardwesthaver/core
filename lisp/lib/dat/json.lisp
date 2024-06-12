@@ -12,6 +12,20 @@
 ;;; Code:
 (in-package :dat/json)
 
+(defvar *allow-json-trailing-commas* nil
+  "When non-nil, arrange for our json readers to allow trailing
+commas. This binding does not affect writers.
+
+Trailing commas in json lists and objects is a common source of frustration
+since they're not allowed in the spec. This is easily forgotten when
+generating json from a scripting language without native json support."
+  )
+
+(defun json-trailing-commas-p () *allow-json-trailing-commas*)
+
+(defsetf json-trailing-commas-p () (val)
+  `(setq *allow-json-trailing-commas* ,val))
+
 (defclass json-object ()
   ((members :initform nil
             :initarg :members
@@ -241,13 +255,13 @@
   (if (json-peek-char stream #\] :skip-ws t)
       nil
     (loop
-       for x = (json-read stream)
-       collect x
-       into xs
-
-       ;; check for another element
-       while (json-peek-char stream #\, :skip-ws t)
-
+      for x = (json-read stream)
+      collect x
+      into xs
+      ;; check for another element
+      while (and (json-peek-char stream #\, :skip-ws t)
+                  (unless (and (json-trailing-commas-p) (equal #\] (peek-char t stream)))
+                   t))
        ;; return the final list
        finally (return (prog1 xs
                          (json-read-char stream #\] :skip-ws t))))))
@@ -273,11 +287,12 @@
        into xs
 
        ;; check for another element
-       while (json-peek-char stream #\, :skip-ws t)
-
-       ;; return the final list
-       finally (return (prog1 (make-instance 'json-object :members xs)
-                         (json-read-char stream #\} :skip-ws t))))))
+       while (and (json-peek-char stream #\, :skip-ws t)
+                  (unless (and (json-trailing-commas-p) (equal #\} (peek-char t stream)))
+                    t))
+      ;; return the final list
+      finally (return (prog1 (make-instance 'json-object :members xs)
+                        (json-read-char stream #\} :skip-ws t))))))
 
 (defmethod json-write ((value (eql t)) &optional stream)
   "Encode the true value."
