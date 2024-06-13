@@ -347,21 +347,23 @@ keep-alive-stream), and should handle clean-up of it"
                 byte))
           (or (maybe-close stream t) :eof))))
 
-(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional (start 0) end)
+(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional start end)
+  (declare (optimize speed))
+  (let ((%end (or end 0))
+        (%start (or start 0)))
+  (if (null (keep-alive-stream-stream stream)) ;; we already closed it
+      %start
+      (let* ((to-read (min (- %end %start) (keep-alive-stream-end stream)))
+             (n (read-sequence sequence (keep-alive-stream-stream stream)
+                               :start %start
+                               :end (+ %start to-read))))
+        (decf (keep-alive-stream-end stream) (- n %start))
+        (maybe-close stream (<= (keep-alive-stream-end stream) 0))
+        n))))
+
+(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional start end)
   (declare (optimize speed))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
-      start
-      (let* ((to-read (min (print (- end start)) (keep-alive-stream-end stream)))
-             (n (read-sequence sequence (keep-alive-stream-stream stream)
-                               :start start
-                               :end (+ start to-read))))
-        (decf (keep-alive-stream-end stream) (print (- n start)))
-        (maybe-close stream (<= (keep-alive-stream-end stream) 0))
-        n)))
-
-(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional (start 0) end)
-  (declare (optimize speed))
-  (if (null (print (keep-alive-stream-stream stream))) ;; we already closed it
       start
       (if (chunga:chunked-stream-input-chunking-p (chunga-stream stream))
           (prog1

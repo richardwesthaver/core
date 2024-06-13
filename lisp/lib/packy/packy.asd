@@ -2,7 +2,7 @@
 (defsystem "packy"
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
-  :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :std :cl-ppcre :rdb :obj :net :cli :zstd)
+  :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :std :cl-ppcre :rdb :obj :net :cli :io)
   :components
   ((:file "pkg")
    (:file "vars")

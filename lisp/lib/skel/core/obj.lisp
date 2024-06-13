@@ -386,7 +386,6 @@ via the special form stored in RECIPE."))
             :accessor sk-imports
             :type (vector pathname))))
 
-
 (defun find-sk-symbol (s)
   (handler-bind ((error #'(lambda (con)
                           (funcall #'skel-error con))))
@@ -515,3 +514,12 @@ via the special form stored in RECIPE."))
 
 (defmethod sk-find-script ((name string) (self skel) &key)
   (find name (sk-scripts self) :test 'equal :key #'sk-name))
+
+(defmethod sk-call ((self sk-project) (arg sk-rule))
+  (sk-make self arg))
+
+(defmethod sk-call ((self sk-project) (arg t))
+  (sk-make self (sk-find-rule arg self)))
+
+(defmethod sk-call* ((self sk-project) &rest args)
+  (mapcar (lambda (arg) (sk-call self arg)) args))

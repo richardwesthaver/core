@@ -13,9 +13,10 @@
 (defpackage :skel/core/proto
   (:use :cl :std)
   (:export
-   :sk-run :sk-new :sk-save
+   :sk-run :sk-new 
    :sk-tangle :sk-weave
-   :sk-call :sk-load
+   :sk-call :sk-call*
+   :sk-load :sk-save
    :sk-print :sk-read
    :sk-compile :sk-transform
    :sk-write :sk-writeln
@@ -23,7 +24,7 @@
    :sk-read-file :sk-install-user-config
    :sk-vc-push :sk-vc-pull
    :sk-find-rule :sk-find-script))
-   
+
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/err)
   (:export
