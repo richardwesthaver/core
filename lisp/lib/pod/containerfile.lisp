@@ -1,0 +1,110 @@
+;;; containerfile.lisp --- Containerfiles
+
+;; Containerfile read/write methods
+
+;;; Commentary:
+
+;; man: https://github.com/containers/common/blob/main/docs/Containerfile.5.md
+
+;;; Code:
+(in-package :pod)
+
+;;; Vars
+(defvar *containerfile-instructions*
+  '(from arg maintainer run cmd label expose env add copy entrypoint volume user workdir onbuild))
+
+(deftype containerfile-instruction () `(member ,*containerfile-instructions*))
+
+(defvar *containerfile-predefined-args* 
+  ;; lower-case version of these are also technically supported
+  (list "HTTP_PROXY"
+        "HTTPS_PROXY"
+        "FTP_PROXY"
+        "NO_PROXY"
+        "ALL_PROXY"))
+
+;;; Utils
+(defun write-containerfile-line (cons stream)
+  (write (car cons) :stream stream)
+  (write-char #\space stream)
+  (write-line (cdr cons) stream))
+
+(defun read-containerfile-line (str)
+  (let ((ws (position-if 'sb-unicode:whitespace-p str)))
+    (cons (symbolicate (string-upcase (subseq str 0 ws)))
+          (subseq str
+                  (1+ ws)
+                  (length str)))))
+
+(defun containerfile-comment-p (str)
+  (char= #\# (aref str 0)))
+
+(defun containerfile-from-p (str)
+  (starts-with-subseq "FROM" str))
+
+(defun read-containerfile-from (str)
+  (subseq str (1+ (position-if 'sb-unicode:whitespace-p str))))
+
+(defun containerfile-arg-p (str)
+  (starts-with-subseq "ARG" str))
+
+;; first instruction must be FROM or ARG
+(defun read-containerfile-start (stream)
+  (let ((args))
+    (loop for line = (trim (read-line stream nil nil))
+          while line
+          if (not (containerfile-from-p line))
+          do (push line args)
+          else if (containerfile-from-p line)
+          do (return (values (read-containerfile-from line) (nreverse args))))))
+
+;;; Obj
+(defclass containerfile ()
+  ((path :type pathname :initarg :path :accessor containerfile-path)
+   (base :type string :initarg :base :accessor containerfile-base)
+   (args :initform nil :type list :initarg :args :accessor containerfile-args)
+   (steps :type (vector cons) :initarg :steps :accessor containerfile-steps)))
+
+(defmethod dat/proto:serde ((from containerfile) (to pathname))
+  (with-open-file (file to :direction :output)
+    (loop for step across (containerfile-steps from)
+          do (write-containerfile-line step file))))
+
+(defmethod dat/proto:serde ((from stream) (to containerfile))
+  (multiple-value-bind (base args) (read-containerfile-start from)
+    (setf (containerfile-base to) base)
+    (setf (containerfile-args to) args))
+  (setf (containerfile-steps to)
+        (coerce
+         (loop for line = (trim (read-line from nil nil))
+               while line
+               unless (containerfile-comment-p line)
+               collect (read-containerfile-line line))
+         'simple-vector))
+    to)
+
+(defmethod dat/proto:serde ((from pathname) (to containerfile))
+  (with-open-file (file from)
+    (setf (containerfile-path to) from)
+    (dat/proto:serde file to)))
+
+(defmethod dat/proto:serde ((from string) (to containerfile))
+  (with-input-from-string (stream from)
+    (dat/proto:serde stream to)))
+
+(defmethod dat/proto:deserialize ((from pathname) (format (eql :containerfile)) &key)
+  (dat/proto:serde from (make-instance 'containerfile)))
+
+(defmethod dat/proto:serialize ((obj containerfile) (format (eql :string)) &key)
+  (with-output-to-string (str)
+    (loop for arg in (containerfile-args obj)
+          while arg
+          do (write-line arg str))
+    (princ "FROM " str)
+    (println (containerfile-base obj) str)
+    (loop for step across (containerfile-steps obj)
+          do (write-containerfile-line step str))
+    str))
+
+(defmethod dat/proto:serialize ((obj containerfile) (format (eql :bytes)) &key)
+  (sb-ext:string-to-octets (dat/proto:serialize obj :string)))

@@ -11,6 +11,3 @@
 
 (defclass build-image-item (id)
   (names digest created size readonly history))
-
-
-  

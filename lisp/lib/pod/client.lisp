@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :pod)
 
-(defvar *podman-local-user-socket* (format nil "/var/run/user/~a/podman.sock" (sb-posix:getuid)))
+(defvar *podman-local-user-socket* (format nil "/var/run/user/~a/podman/podman.sock" (sb-posix:getuid)))
 
 (defvar *libpod-api-version* "4.8.2")
 

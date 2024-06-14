@@ -42,8 +42,8 @@
 ;; TODO 2024-06-08: maybe move this to generic io/stream protocol - 'RESET'
 (defgeneric reset-compressor (self))
 (defgeneric reset-decompressor (self))
-(defgeneric make-compressing-stream (compressor stream))
-(defgeneric make-decompressing-stream (decompressor stream))
+(defgeneric make-compressed-stream (&optional stream))
+(defgeneric make-decompressed-stream (&optional stream))
 (defgeneric compress-object (self))
 (defgeneric decompress-object (self))
 
@@ -63,23 +63,12 @@
 ;; with-compressor
 ;; reset-compressor
 
-;; make-compressing-stream
+;; make-compressed-stream
 
-(defclass compressor ()
-  ((input
-    :initarg :input
-    :accessor compressor-input)
-   (start
-    :initarg :start
-    :accessor compressor-start)
-   (end
-    :initarg :end
-    :accessor compressor-end)))
+(defclass compressor () ())
 
-(defclass compressing-stream (fundamental-binary-output-stream)
-  ((compressor
-    :initarg :compressor
-    :accessor compressor)))
+(defclass compressed-stream (fundamental-binary-stream)
+  ())
 
 ;;; Decompression
 
@@ -103,16 +92,14 @@
 ;; INFLATE-STATE that we used, etc.  Application-specific logic will
 ;; have to handle those bits.
 
-;; make-decompressing-stream
+;; make-decompressed-stream
 ;; decompress-octet
 ;; decompress-octet-vector
 
 (defclass decompressor () ())
 
-(defclass decompressing-stream (fundamental-binary-input-stream)
-  ((decompressor
-    :initarg :compressor
-    :accessor decompressor)))
+(defclass decompressed-stream (fundamental-binary-stream)
+  ())
 
 ;;; API
 

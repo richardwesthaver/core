@@ -11,6 +11,7 @@
 ;; We have several visualization backends in mind:
 
 ;; - web :: interactive 3d/2d graph, probably based on d3.js, prefer wasm
+;; - emacs :: skv.el
 ;; - svg :: configurable vector graphic backend
 ;; - txt :: text-based, simplified output -- utf-8 or ascii
 ;; - native  :: native backend - look into widgets, mcclim, gtk4

@@ -59,7 +59,7 @@
                          (cat-sum (%cat-next cat) mask)))
            (let ((%t (%cat-table cat)))
              (dotimes (i (length %t))
-               (incf sum (logand (the fixnum (svref %t i)) (lognot mask))))
+               (incf sum (logand (svref %t i) (lognot mask))))
              (setf (%cat-sum-cache cat) sum)
              sum)))))
 

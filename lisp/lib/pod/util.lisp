@@ -14,7 +14,7 @@
 (defun format-libpod-api-local (path)
   (format nil "http://localhost/v~a/libpod/~a" *libpod-api-version* path))
 
-(defun libpod-request (client path &optional (method :get))
+(defun libpod-request (client path &optional (method :get) timeout)
   (let ((stream (socket-make-stream client
                                     :element-type 'octet
                                     :input t
@@ -23,10 +23,14 @@
     ;; TODO 2024-04-01: remove dependencies
     (let ((wrapped-stream (flexi-streams:make-flexi-stream (chunga::make-chunked-stream stream)
                                                            :external-format :utf8)))
-      (req:request (format-libpod-api-local path) :method method :stream wrapped-stream))))
+      (req:request (format-libpod-api-local path)
+                   :method method
+                   :stream wrapped-stream
+                   :connect-timeout #1=(or timeout t)
+                   :read-timeout #1#))))
 
-(defun libpod-request-json (client path &optional (method :get))
-  (dat/json:json-decode (libpod-request client path method)))
+(defun libpod-request-json (client path &optional (method :get) timeout)
+  (dat/json:json-decode (libpod-request client path method timeout)))
 
 ;; (libpod-request-json *client* "_ping")
 ;; (libpod-request-json *client* "info")

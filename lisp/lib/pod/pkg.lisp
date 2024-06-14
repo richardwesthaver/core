@@ -28,4 +28,6 @@
    :decode-podman-response :encode-podman-request
    :podman-request :podman-response
    :libpod-request :libpod-request-json
-   :start-podman-service :libpod-client))
+   :start-podman-service :libpod-client
+   :containerfile :*containerfile-predefined-args*
+   :containerfile-args :containerfile-path :containerfile-steps :containerfile-base))

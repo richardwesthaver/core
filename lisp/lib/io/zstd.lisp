@@ -13,6 +13,14 @@
 (deferror zstd-checksum-error (zstd-error) () (:auto t))
 (deferror zstd-dictionary-error (zstd-error) () (:auto t))
 
-(defclass zstd-compressor (compressor) ())
+(defclass zstd-input ()
+  ((input :initform (sb-alien:make-alien zstd:zstd-inbuffer) :type zstd:zstd-inbuffer)))
 
-(defclass zstd-decompressor (decompressor) ())
+(defclass zstd-output ()
+  ((output :initform (zstd::allocate-zstd-outbuffer) :type zstd:zstd-outbuffer)))
+
+(defclass zstd-compressor (compressor zstd-input zstd-output)
+  ((stream :initform nil :type (or null zstd:zstd-cstream))))
+
+(defclass zstd-decompressor (decompressor zstd-input zstd-output)
+  ((stream :initform nil :type (or null zstd::zstd-dstream))))
