@@ -108,7 +108,7 @@
    :decode-float64))
 
 (defpkg :std/stream
-  (:use :cl)
+  (:use :cl :sb-gray)
   (:import-from :std/type :non-negative-integer :positive-integer)
   (:export
    ;; stream

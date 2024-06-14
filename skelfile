@@ -13,7 +13,7 @@
 :scripts ((:lisp "x"))
 :env ((cc "clang"))
 :rules
-((all (x compile std prelude build))
+((all (x compile std prelude build)) ;; TODO: add keyword args -- (emacs :stage 'install) 
  (x ()
     #$if [ ! -f x ];
     then ./x.lisp
