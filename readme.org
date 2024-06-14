@@ -2,28 +2,84 @@
 #+description: The Compiler Company Core
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
-The Compiler Company (=CC=) is a software research laboratory
+#+setupfile: https://cdn.compiler.company/org/clean.theme
+The Compiler Company (aka CC) is a small software research laboratory
 concerned with the future of Mechanical Freedom.
 
-This repository contains a collection of software libraries shared
-across all of our products and projects.
+This repository contains the monolothic core of all our products and
+projects.
 
 - NOTE :: This is *not* a portable library. Starting in version =1.0=
   we will be depending on separately distributed forks of SBCL and
-  Rust. See details here.
+  Rust.
 
-To bootstrap the core you will need recent versions of [[https://www.gnu.org/software/emacs/][GNU Emacs]],
-[[https://www.rust-lang.org/][Rust]], and [[http://www.sbcl.org/][SBCL]].
+To bootstrap the core you will need recent versions of [[https://www.rust-lang.org/][Rust]], [[http://www.sbcl.org/][SBCL]], and
+a C compiler (clang or gcc). Only Unix systems are explicitly
+supported.
 
+Many parts of the core depend on additional libraries which may or may
+not be provided by your system's package manager. See the dependency
+matrix below for details.
 
-* Quickstart
+In any case, it is always preferred to make use of the [[https://vc.compiler.company/comp/infra][infra]] project
+to reliably provision the host either from source or pre-built
+platform-specific [[https://packy.compiler.company/dist][binary distributions]].
+
+#+NAME: Core Features
+| name    | dependencies     |
+|---------+------------------|
+| default | skel krypt emacs |
+| io      | zstd uring       |
+| rdb     | rocksdb io       |
+| syn     | tree-sitter      |
+| vc      | git hg           |
+| net     | openssl io       |
+| box     | qemu             |
+| pod     | podman           |
+| skel    | rdb vc net       |
+| krypt   | keyutils         |
+
+#+NAME: Optional Dependencies
+| dependency  | dependents             | src                                           | dist |
+|-------------+------------------------+-----------------------------------------------+------|
+| Blake3      | ffi/blake3             | https://vc.compiler.company/packy/blake3      |      |
+| Tree-sitter | ffi/tree-sitter        | https://vc.compiler.company/packy/tree-sitter |      |
+| Uring       | ffi/uring              | https://vc.compiler.company/packy/uring       |      |
+| Btrfs       | ffi/btrfs              | https://vc.compiler.company/packy/btrfs       |      |
+| Ublksrv     | ffi/ublk               | https://vc.compiler.company/packy/ublksrv     |      |
+| OpenSSL     | lib/net                |                                               |      |
+| RocksDB     | ffi/rocksdb            | https://vc.compiler.company/packy/rocksdb     |      |
+| Git         | lib/vc/git             | https://vc.compiler.company/packy/git         |      |
+| Hg          | lib/vc/hg              | https://vc.compiler.company/packy/hg          |      |
+| Zstd        | ffi/zstd               | https://vc.compiler.company/packy/zstd        |      |
+| Qemu        | lib/box                | https://vc.compiler.company/packy/qemu        |      |
+| Podman      | lib/pod                | https://vc.compiler.company/packy/podman      |      |
+| Emacs       | emacs                  | https://vc.compiler.company/packy/emacs       |      |
+| StumpWM     | lib/gui/wm/x11/stumpwm | https://vc.compiler.company/packy/stumpwm     |      |
+| Readline    | ffi/readline           |                                               |      |
+| Keyutils    | ffi/keyutils           |                                               |      |
+| Mpd         | lib/aud/mpd            | https://vc.compiler.company/packy/mpd         |      |
+
+* Building
+** From Source
+*** Common Lisp
+Starting from a standard Common Lisp environment with at least
+Quicklisp installed, you can execute =./x.lisp= which will generate
+the core build tool binary - =./x=. This tool is a convenience for
+building and testing different parts of the core.
+
 #+name: x-save-self
-#+begin_src shell :exports both
+#+begin_src shell :exports both :results output
 # bootstrap the core build tool
 ./x.lisp
 #+end_src
 
 #+RESULTS: x-save-self
+: To load "rt":
+:   Load 1 ASDF system:
+:     rt
+: ; Loading "rt"
+: 
 : saving self to ./x
 
 #+begin_src shell :results output :exports both
@@ -31,64 +87,292 @@ To bootstrap the core you will need recent versions of [[https://www.gnu.org/sof
 #+end_src
 
 #+RESULTS:
-: x --- core build tool
-: x.lisp [CMD]
-: CMDS:
-: test
-: compile
-: build
-: run
-: save
-: install
+#+begin_example
+x --- core build tool
+x.lisp [CMD]
+CMDS:
+test
+compile
+build
+make
+test
+run
+save
+install
+#+end_example
 
+Calling =x= with no arguments drops into a REPL:
 #+begin_src shell :results none :noeval t
 # start a repl
 ./x
 #+end_src
 
-#+begin_src shell :results none :noeval t
+To test the lisp standard library:
+#+begin_src shell :results output :noeval t :exports both
 # test systems
 ./x test std
 #+end_src
 
-#+begin_src shell :results none :noeval t
+#+RESULTS:
+#+begin_example
+To load "rt":
+  Load 1 ASDF system:
+    rt
+; Loading "rt"
+
+To load "std/tests":
+  Load 1 ASDF system:
+    std/tests
+; Loading "std/tests"
+
+in suite STD:
+; with 13 tests
+#<PASS CURRY> 
+#<PASS ALIEN> 
+#<PASS PAN> 
+#<PASS ANA> 
+#<PASS FMT> 
+#<PASS TASKS> 
+#<PASS TIMERS> 
+#<PASS THREADS> 
+#<PASS ERR> 
+#<PASS LIST> 
+#<PASS STRING> 
+#<PASS SYM> 
+#<PASS READTABLES> 
+No tests failed.
+#+end_example
+
+To save the prelude core to =.stash/prelude.core=:
+#+begin_src shell :results output :noeval t
 # save cores
 ./x save prelude
 #+end_src
 
+To build a CLI binary:
 #+begin_src shell :results none :noeval t
 # build binaries
 ./x build skel
 #+end_src
 
+And to install binaries (defaults to =/usr/local/bin/=):
 #+begin_src shell :results none :noeval t
 # install binaries
-./x install skel
+sudo ./x install
 #+end_src
 
-** binaries
-*** skel
+*** Rust
+#+begin_src shell :exports both :results output
+  cd rust && cargo build --release
+#+end_src
+
+* Binaries
+This section lists all program binaries provided by the core.
+** skel                                                                :lisp:
 #+begin_src shell :results output :exports both
-./x run skel show :name :id :version :author :description :tags
+  ./x run skel --help
 #+end_src
 
 #+RESULTS:
-: core
-: 33cf-3485-bc1a-9528
-: 0.1.0
-: Richard Westhaver <ellis@rwest.io>
-: The Compiler Company Core
-: (core lisp rust emacs c)
-*** organ
+#+begin_example
+skel v0.1.1 --- A hacker's project compiler.
+
+  usage: skel [global] <command> [<arg>]
+
+options:
+  -h/--help* :  print this message
+  -v/--version* :  print version
+  -l/--level* :  set log level (warn,info,debug,trace)
+  -c/--config* :  set a custom skel user config
+  -i/--input* :  input source
+  -o/--output* :  output target
+
+commands:
+  init : initialize a skelfile in the current directory
+    -n/--name :  project name
+  new : make a new skel project
+    -n/--name :  project name
+  describe : describe a skelfile
+  show : show project slots
+    -f/--file :  path to skelfile
+    -u/--user :  print user configuration
+    -s/--system :  print system configuration
+  vc : version control
+    -r/--root :  repository path
+  id : print the project id
+  rev : print the current vc revision id
+  inspect : inspect the project skelfile
+    -f/--file :  path to skelfile
+  make : build project targets
+    -t/--target :  target to build
+  run : run a script or command
+  status : print the vc status
+  push : push the current project upstream
+  pull : pull the current project from remote
+  clone : clone a remote project
+  commit : commit changes to the project vc
+  edit : edit a project file in emacs.
+  shell : open the sk-shell interpreter
+#+end_example
+** organ                                                               :lisp:
 #+begin_src shell :results output :exports both
-./x run organ
+./x run organ --help
 #+end_src
 
 #+RESULTS:
-: #<ORGAN::ORG-DOCUMENT {100384A4E3}>
-:   [standard-object]
-: 
-: Slots with :INSTANCE allocation:
-:   META                           = #<ORGAN::ORG-META-SECTION {100384CF63}>
-:   TREE                           = #(#<ORGAN:ORG-HEADING {1003920C43}>)
+#+begin_example
+organ v0.0.1 --- org-mode toolbox
 
+  usage: organ [global] <command> [<arg>]
+
+options:
+  -l/--level* :  set the log level
+  -h/--help* :  print help
+  -v/--version* :  print version
+
+commands:
+  inspect : inspect an org file
+  show : display local org info
+  describe : describe local org info
+  parse 
+#+end_example
+
+** packy                                                               :lisp:
+#+begin_src shell :results output :exports both
+./x run packy --help
+#+end_src
+
+#+RESULTS:
+#+begin_example
+#:debug 0.026666; (#S(CLI-NODE
+                      :KIND OPT
+                      :FORM #<CLI-OPT help :global T :val T>))
+packy v0.1.0 --- Universal Package Manager
+
+  usage: packy [global] <command> [<arg>]
+
+options:
+  -l/--level* :  set the log level
+  -h/--help* :  print help
+  -v/--version* :  print version
+
+commands:
+  show 
+#:debug 0.033333; /home/ellis/comp/core
+; #(#<CLI-OPT help :global T :val NIL>)
+; NIL
+; #()
+#+end_example
+
+** rdb                                                                 :lisp:
+#+begin_src shell :results output :exports both
+./x run rdb --help
+#+end_src
+
+#+RESULTS:
+#+begin_example
+rdb v0.1.0 --- A simple helper for RocksDB.
+
+  usage: rdb [global] <command> [<arg>]
+
+options:
+  -l/--level* :  set the log level
+  -h/--help* :  print help
+  -v/--version* :  print version
+  -d/--db* :  target db
+
+commands:
+  new 
+  show 
+  set 
+  get 
+  fuzz 
+  destroy 
+#+end_example
+
+** homer                                                               :lisp:
+#+begin_src shell :results output :exports both
+./x run homer --help
+#+end_src
+
+#+RESULTS:
+#+begin_example
+homer v0.1.0 --- user home manager
+
+  usage: homer [global] <command> [<arg>]
+
+options:
+  -l/--level* :  set the log level
+  -h/--help* :  print help
+  -v/--version* :  print version
+  -f/--force* :  use force
+
+commands:
+  show 
+  check 
+  push 
+  pull 
+  install 
+#+end_example
+
+** COMMENT alik                                                        :rust:
+#+begin_src shell :results output :exports both
+cd rust && cargo run --bin alik -- --help
+#+end_src
+
+#+RESULTS:
+
+** krypt                                                               :rust:
+#+begin_src shell :results output :exports both
+cd rust && cargo run --bin krypt -- --help
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Krypt CLI
+
+Usage: krypt [OPTIONS] [COMMAND]
+
+Commands:
+  check   check service providers and config
+  show    Show Krypt info
+  search  Query the Krypt
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --cfg <CFG>    Set the default config file [env: KRYPT_CONFIG_FILE=]
+  -u, --user <USER>  Set a user for this command [env: USER=ellis]
+  -l, --level...     Set log level
+  -h, --help         Print help
+  -V, --version      Print version
+#+end_example
+
+** mailman                                                             :rust:
+#+begin_src shell :results output :exports both
+cd rust && cargo run --bin mailman -- --help
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Mail client util
+
+Usage: mailman [OPTIONS] [COMMAND]
+
+Commands:
+  ping    Ping the server
+  search  Search for items
+  import  Import an account
+  export  Export an account
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --cfg <CFG>    Set the default config file [env: MAILMAN_CONFIG_FILE=]
+  -u, --user <USER>  Set a user for this command [env: USER=ellis]
+  -l, --level...     Set log level
+  -h, --help         Print help
+  -V, --version      Print version
+#+end_example
+
+* Emacs
+The core contains some Emacs Lisp libraries under =emacs= which may be
+installed for the current user using the corresponding Makefile.

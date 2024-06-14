@@ -8,7 +8,7 @@ x.lisp
 (require 'asdf)
 ;; (require 'sb-posix)
 (require 'sb-concurrency)
-
+(require 'sb-cltl2)
 #-(or sbcl cl) (error "unsupported Lisp compiler")
 (in-package :cl-user)
 #-quicklisp
