@@ -13,7 +13,7 @@
 :scripts ((:lisp "x"))
 :env ((cc "clang"))
 :rules
-((all (x compile std prelude build)) ;; TODO: add keyword args -- (emacs :stage 'install) 
+((all (x compile std prelude user core tests build)) ;; TODO: add keyword args -- (emacs :stage 'install) 
  (x ()
     #$if [ ! -f x ];
     then ./x.lisp
@@ -42,9 +42,10 @@
  (build (x) #$./x build$#)
  (compile (x) #$./x compile$#)
  (std (x) #$./x save std$#)
- (tests (x) #$./x save tests$#)
  (prelude (x) #$./x save prelude$#)
- (prelude (x) #$./x save user$#)
+ (user (x) #$./x save user$#)
+ (core (x) #$./x save core$#)
+ (tests (x) #$./x save tests$#)
  (box () #$podman build . --build-arg IMAGE=box -t core$#)
  ;; x does the same thing, but prompts for sudo -- having issues with
  ;; passing the shell input to SKEL though.
