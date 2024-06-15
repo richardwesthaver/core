@@ -111,14 +111,15 @@ Returns the representation of `ARGS' to store."
 ;;; I want to allow for injecting higher resolution clocks if available.
 ;;; -- Jacek Złydach, 2019-11-01
 
-(defun get-current-time-usec ()
+(defun get-current-time-usec* ()
   "Get current time with microsecond resolution."
   (sb-ext:atomic-incf *hack-clock-jitter*)
-  (+ (* (get-internal-real-time) 1000)
-     *hack-clock-jitter*))
+  (the (unsigned-byte 62)
+       (+ (* (get-internal-real-time) 1000)
+          *hack-clock-jitter*)))
 
-(declaim (ftype (function () (unsigned-byte 62)) get-current-time-usec)
-         (inline get-current-time-usec))
+(declaim (ftype (function () (unsigned-byte 62)) get-current-time-usec*)
+         (inline get-current-time-usec*))
 (defun get-current-time-usec-nojitter ()
   "Get current time with microsecond resolution. No extra jitter involved."
   (declare (optimize (speed 3)))

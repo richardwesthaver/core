@@ -5,16 +5,18 @@
 #|
 x.lisp
 |#
-(require 'asdf)
 ;; (require 'sb-posix)
-(require 'sb-concurrency)
-(require 'sb-cltl2)
 #-(or sbcl cl) (error "unsupported Lisp compiler")
-(in-package :cl-user)
 #-quicklisp
 (let ((quicklisp-init "/usr/local/share/lisp/quicklisp/setup.lisp"))
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
+(require 'sb-rotate-byte)
+(require 'sb-introspect)
+(require 'sb-grovel)
+(require 'sb-cltl2)
+(require 'sb-cover)
+;; (require 'sb-sprof)
 
 (unless (asdf:find-system :cl-ppcre nil)
   (ql:quickload :cl-ppcre)
@@ -25,17 +27,11 @@ x.lisp
 (asdf:load-system :std)
 
 (defpackage :x
-  (:use :cl :std :std/named-readtables)
+  (:use :cl :std :std/named-readtables :cl-user)
   (:export :*core-path* :*lisp-path* :*lib-path* :*std-path* :*ffi-path* :*stash-path* :*web-path* :*bin-path*
            :*compression-level*))
 
 (in-package :x)
-(require 'sb-rotate-byte)
-(require 'sb-introspect)
-(require 'sb-grovel)
-(require 'sb-cltl2)
-(require 'sb-cover)
-(require 'sb-sprof)
 (use-package :sb-gray)
 ;; (require 'sb-aclrepl)
 (sb-ext:enable-debugger)
@@ -214,6 +210,7 @@ install")))
   (let ((sys (sb-int:keywordicate (string-upcase name))))
     (std/sys:forget-shared-objects)
     (asdf:load-system sys)
+    (in-package :std-user)
     (asdf:make sys)
     ()
     (stash-output sys)

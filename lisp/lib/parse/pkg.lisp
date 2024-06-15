@@ -1,3 +1,5 @@
+(require :sb-cltl2)
+
 (defpackage :parse/lex
   (:nicknames :lex)
   (:use :cl :cl-ppcre :std)

@@ -27,11 +27,6 @@
 - [ ] profiling 
 |#
 ;;; Code:
-#+x86-64
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require 'sb-sprof)
-  (require 'sb-cover))
-
 (defpackage :rt
   (:use 
    :cl :std :sxp :log
@@ -106,7 +101,7 @@
 
 (uiop:define-package :rt/cover
   (:nicknames :cover)
-  (:use :cl :std :log :rt :sb-cover)
+  (:use :cl :std :log :rt)
   (:export
    :with-coverage :start-coverage :stop-coverage
    :*coverage-directory*

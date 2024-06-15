@@ -92,7 +92,7 @@
 
 (defun finalize-buffer (buffer)
   (if (buffer-on-memory-p buffer)
-      (flex:make-in-memory-input-stream
+      (flexi-streams:make-in-memory-input-stream
        (typecase (buffer-memory-buffer buffer)
          (null-concatenated-xsubseqs #())
          (t (coerce-to-sequence (buffer-memory-buffer buffer)))))

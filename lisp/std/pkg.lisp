@@ -256,9 +256,9 @@
    :thread-count :dump-thread
    :make-oracle :make-supervisor :oracle :run-task
    :oracle-id
-   :push-job :push-task :push-worker :push-result
+   :push-job :push-task :push-worker :push-task-result
    :run-job :run-stage
-   :pop-job :pop-task :pop-worker :pop-result
+   :pop-job :pop-task :pop-worker :pop-task-result
    :make-task-pool
    :start-task-pool :pause-task-pool :shutdown-task-pool
    :push-stage :designate-oracle :make-task-pool
@@ -407,6 +407,6 @@
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std
    :std-int :sb-alien :sb-thread :sb-bsd-sockets
-   :sb-gray :sb-concurrency :sb-mop :sb-debug))
+   :sb-gray :sb-mop :sb-debug))
 
 (pkg:define-lisp-package :std)

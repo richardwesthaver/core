@@ -1,5 +1,4 @@
 (in-package :rt/flamegraph)
-
 (defparameter *frame-where-profiling-was-started* nil)
 
 (defmacro with-open-file* ((stream filespec &key direction element-type

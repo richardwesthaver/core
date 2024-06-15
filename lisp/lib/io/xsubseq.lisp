@@ -3,6 +3,7 @@
 ;; This is ported from Fukamachi's XSUBSEQ
 
 ;;; Code:
+(require :sb-cltl2)
 (defpackage io/xsubseq
   (:use :cl)
   (:import-from :sb-cltl2 :variable-information)

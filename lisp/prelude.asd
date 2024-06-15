@@ -6,8 +6,7 @@
                :organ :packy :obj :net
                :tree-sitter :xkb :ssh2 :sndfile
                :zstd :uring :blake3 :ublk
-               :parse :pod :rdb :rt
-               :aud :cry :krypt :io
-               :gui)
+               :parse :pod :rdb :gui
+               :aud :cry :krypt :io)
   :build-operation monolithic-compile-bundle-op
   :build-pathname "prelude")

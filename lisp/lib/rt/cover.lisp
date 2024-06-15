@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :rt/cover)
-
+(require 'sb-cover)
 (defvar *coverage-directory* #P"/tmp/rt/")
 
 (defun start-coverage ()
