@@ -62,4 +62,11 @@
           do echo "$(basename $f) -> $d"
           install -C -m 755 $f $d
           done fi$#)
- (deploy (std prelude user) #$mv -v .stash/{prelude.core,std.core} $PACKY_DIR$#))
+ (dist (all) #$cd .stash
+       mkdir -pv bin share/lisp
+       mv *.core share/lisp/
+       mv $(find -maxdepth 1 -type f ! -name "*.*") bin/
+       tar -I 'zstd' -cf core.tar.zst bin/* share/*$#)
+ (clean-dist (clean) #$tar -I 'zstd' -cf core-source.tar.zst *
+             mkdir -pv .stash
+             mv core-source.tar.zst .stash/$#))
