@@ -740,6 +740,12 @@ buffer."
     (dolist (f files)
       (insert (concat "[[file:" f "][" (file-name-base f) "]]\n")))))
 
+(defun include-directory-org-files (&optional dir)
+  (interactive "D")
+  (let ((files (directory-files dir)))
+    (dolist (f files)
+      (insert (concat "#+INCLUDE: " f "\n")))))
+
 (defun org-todo-at-date (date)
   "create a todo entry for a given date."
   (interactive (list (org-time-string-to-time (org-read-date))))
