@@ -67,6 +67,6 @@
        mv *.core share/lisp/
        mv $(find -maxdepth 1 -type f ! -name "*.*") bin/
        tar -I 'zstd' -cf core.tar.zst bin/* share/*$#)
- (clean-dist (clean) #$tar -I 'zstd' -cf core-source.tar.zst *
+ (clean-dist (clean) #$cd .. && tar -I 'zstd' -cf core/core-source.tar.zst core/* && cd core
              mkdir -pv .stash
              mv core-source.tar.zst .stash/$#))
