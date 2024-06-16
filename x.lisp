@@ -6,9 +6,10 @@
 x.lisp
 |#
 ;; (require 'sb-posix)
+(in-package :cl-user)
 #-(or sbcl cl) (error "unsupported Lisp compiler")
 #-quicklisp
-(let ((quicklisp-init "/usr/local/share/lisp/quicklisp/setup.lisp"))
+(let ((quicklisp-init "~/.stash/quicklisp/setup.lisp"))
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 (require 'sb-rotate-byte)
@@ -20,6 +21,7 @@ x.lisp
 
 (unless (asdf:find-system :cl-ppcre nil)
   (ql:quickload :cl-ppcre)
+  (ql:quickload :cffi)
   ;; (asdf:load-asd (probe-file #P"ext/cl-ppcre.asd"))
   )
 

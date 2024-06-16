@@ -13,7 +13,7 @@
 :scripts ((:lisp "x"))
 :env ((cc "clang"))
 :rules
-((all (x compile std prelude user core tests build)) ;; TODO: add keyword args -- (emacs :stage 'install) 
+((all (x compile std prelude user core tests build fasl)) ;; TODO: add keyword args -- (emacs :stage 'install) 
  (x ()
     #$if [ ! -f x ];
     then ./x.lisp
@@ -46,6 +46,12 @@
  (user (x) #$./x save user$#)
  (core (x) #$./x save core$#)
  (tests (x) #$./x save tests$#)
+ (prelude-fasl (x) #$./x make prelude$#)
+ (user-fasl (x) #$./x make user$#)
+ (core-fasl (x) #$./x make core$#)
+ (tests-fasl (x) #$./x make core/tests$#)
+ (bench-fasl (x) #$./x make core/bench$#)
+ (fasl (core-fasl tests-fasl bench-fasl user-fasl prelude-fasl))
  (box () #$podman build . --build-arg IMAGE=box -t core$#)
  ;; x does the same thing, but prompts for sudo -- having issues with
  ;; passing the shell input to SKEL though.
@@ -63,10 +69,11 @@
           install -C -m 755 $f $d
           done fi$#)
  (dist (all) #$cd .stash
-       mkdir -pv bin share/lisp
-       mv *.core share/lisp/
-       mv $(find -maxdepth 1 -type f ! -name "*.*") bin/
-       tar -I 'zstd' -cf core.tar.zst bin/* share/*$#)
+       mkdir -pv core/bin core/share/lisp/fasl
+       mv *.core core/share/lisp/
+       mv *.fasl core/share/lisp/fasl/
+       mv $(find -maxdepth 1 -type f ! -name "*.*") core/bin/
+       tar -I 'zstd' -cf core.tar.zst core/*$#)
  (clean-dist (clean) #$cd .. && tar -I 'zstd' -cf core/core-source.tar.zst core/* && cd core
              mkdir -pv .stash
              mv core-source.tar.zst .stash/$#))

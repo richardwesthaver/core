@@ -27,6 +27,8 @@
 - [ ] profiling 
 |#
 ;;; Code:
+(in-package :std-user)
+(require 'sb-cover)
 (defpackage :rt
   (:use 
    :cl :std :sxp :log

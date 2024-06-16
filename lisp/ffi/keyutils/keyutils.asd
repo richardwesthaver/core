@@ -25,4 +25,4 @@
 (defsystem :keyutils/tests
   :depends-on (:rt :keyutils)
   :components ((:file "tests"))
-  :perform (test-op (op c) (symbol-call :rt :do-tests :keyutils)))
+  :perform (test-op (op c) (uiop:symbol-call :rt :do-tests :keyutils)))
