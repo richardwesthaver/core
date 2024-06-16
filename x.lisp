@@ -131,7 +131,7 @@ x.lisp
 (defvar *args* (cdr sb-ext:*posix-argv*))
 (defvar *flags*
   '((version "0.1.0")
-    (help "x --- core build tool
+    (help "x.lisp --- core build tool
 x.lisp [CMD]
 CMDS:
 test
@@ -193,7 +193,7 @@ install")))
                              (lambda (x)
                                (sb-thread:make-thread
                                 (lambda ()
-                                  (sb-ext:run-program "x" (list "build" x) :wait t :output t))
+                                  (sb-ext:run-program "x.lisp" (list "build" x) :wait t :output t))
                                 :name x))
                              (list "skel" "rdb" "organ" "homer" "packy")))))
 
@@ -227,7 +227,7 @@ install")))
                              (lambda (x)
                                (sb-thread:make-thread
                                 (lambda ()
-                                  (sb-ext:run-program "x" (list "make" x) :wait t :output t))
+                                  (sb-ext:run-program "x.lisp" (list "make" x) :wait t :output t))
                                 :name x))
                              (list "core" "user" "prelude" "core/tests" "core/bench" "core/lib" "core/ffi")))))
 
@@ -242,8 +242,8 @@ install")))
           ("std" (compile-std t t))
           ("user" (compile-user t t))
           ("tests" (compile-tests t t))))
-      ;; self save
-      (sb-ext:run-program "x.lisp" nil :input t :output t)))
+      ;; (sb-ext:run-program "x.lisp" nil :input t :output t)
+      ))
 
 (asdf:load-asd (probe-file (merge-pathnames "log.asd" "lisp/lib/log/")))
 (asdf:load-asd (probe-file (merge-pathnames "rt.asd" "lisp/lib/rt/")))
@@ -311,11 +311,13 @@ install")))
     (log:debug! "running command" *thunk* *args*)
     (funcall *thunk* *args*)))
 
-(format t "saving self to ./x~%")
-(sb-ext:save-lisp-and-die
- "x"
- :toplevel #'x-init
- ;; :callable-exports '("compile_std" "compile_prelude")
- :purify nil
- :executable t
- :save-runtime-options t)
+;; (format t "saving self to ./x~%")
+;; (sb-ext:save-lisp-and-die
+;;  "x"
+;;  :toplevel #'x-init
+;;  ;; :callable-exports '("compile_std" "compile_prelude")
+;;  :purify nil
+;;  :executable t
+;; :save-runtime-options t)
+
+(x-init)
