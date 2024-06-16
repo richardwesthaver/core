@@ -55,6 +55,7 @@
  (krypt () #$cd rust && cargo build -Z unstable-options --bin krypt --out-dir ../.stash/$#)
  (alik () #$cd rust && cargo build -Z unstable-options --bin alik --out-dir ../.stash/$#)
  (rust-bin (mailman krypt alik))
+ (alik-ui () #$trunk build --config rust/ui/alik/Trunk.toml$#)
  ;; install
  (install () #$d=/usr/local/bin
           cd .stash
