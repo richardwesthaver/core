@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 pub use sha2::Sha512;
 // hashbrown is now the default for the Rust stdlib. We only need to
 // re-export in no_std envs.
-#[cfg(no_std)]
 pub use hashbrown::{HashMap, HashSet};
 pub use std::hash::{Hash, Hasher};
 

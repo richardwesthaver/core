@@ -5,5 +5,5 @@ pub mod dns;
 pub mod http;
 #[cfg(feature = "quic")]
 pub mod quic;
-#[cfg(all(feature = "uds", unix))]
+#[cfg(unix)]
 pub mod uds;

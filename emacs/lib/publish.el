@@ -14,7 +14,7 @@
 (defvar vc-url "https://vc.compiler.company")
 (defvar packy-url "https://packy.compiler.company")
 (defvar html-nav (format "<div class=\"nav\" id=\"nav\"><h2 id=\"index\">*</h2><div id=\"text-index\"> (<a href = \"%s\">~</a><br> (<a href = \"%s/blog\">blog</a> <a href = \"%s/docs\">docs</a> <a href = \"%s/plan\">plan</a> <a href = \"%s/notes\">notes</a>)<br> (<a href = \"%s\">vc</a> <a href = \"%s\">packy</a>))</div></div>"
-                         url url url url url vc-url packy-url))
+                       url url url url url vc-url packy-url))
 
 (defvar html-foot "<footer><p>updated %C</p></footer>")
 
@@ -47,7 +47,7 @@
          :htmlized-source t
          :footnote-section-p t
          :html-doctype "<!doctype html>"
-	 :html-preamble ,html-nav
+	 ;; :html-preamble ,html-nav
 	 :html-postamble ,html-foot
          :publishing-directory ,publish-dir
          :publishing-function org-html-publish-to-html)

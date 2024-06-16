@@ -32,9 +32,6 @@
  shr-image-animate nil
  shr-discard-aria-hidden t
  bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
- project-list-file (expand-file-name "projects" user-emacs-directory)
- project-mode-line t
- project-file-history-behavior 'relativize
  tempo-interactive t
  emms-directory (expand-file-name "emms" user-emacs-directory)
  gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
@@ -45,11 +42,8 @@
  ediff-floating-control-frame t
  register-use-preview nil
  shr-use-xwidgets-for-media t
- browse-url-browser-function 'browse-url-default-browser
- eww-auto-rename-buffer 'title
- eww-search-prefix "https://duckduckgo.com/html?q="
  view-read-only t)
-(browse-url-default-browser "")
+
 ;;; Variables
 (defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
@@ -70,7 +64,7 @@
 ;;; Theme
 (defun load-default-theme () (interactive) (load-theme default-theme))
 
-(add-hook 'after-init-hook #'load-default-theme)
+;; (add-hook 'after-init-hook #'load-default-theme)
 
 ;;; Packages
 (with-eval-after-load 'package
@@ -81,19 +75,13 @@
         use-package-always-ensure t
         use-package-expand-minimally t)
   (add-packages
-   eglot-x ;; LSP extensions
+   ;; eglot-x ;; LSP extensions
    org-web-tools ;; web parsing
    citeproc ;; citations
    all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
    hide-mode-line ;; ui
-   corfu orderless cape ;; completion
-   slime ;; common lisp server
-   graphviz-dot-mode
-   bbdb
-   slime-company
-   which-key ;; key helper
-   ;; langs
-   rust-mode)
+   ;; bbdb
+   which-key)
   (package-install-selected-packages t))
 
 ;;; Env
@@ -111,12 +99,10 @@
 (add-to-list 'exec-path "/usr/local/sbin/")
 
 ;;; Completions
-(use-package corfu
-  :init (global-corfu-mode))
+;; (use-package corfu
+;;   :init (global-corfu-mode))
 
 (use-package cape
-  ;; Bind dedicated completion commands
-  ;; Alternative prefix keys: C-c p, M-p, M-+, ...
   :bind (("C-c p p" . completion-at-point) ;; capf
          ("C-c p t" . complete-tag)        ;; etags
          ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
@@ -140,7 +126,7 @@
   ;; first function returning a result wins.  Note that the list of buffer-local
   ;; completion functions takes precedence over the global list.
   ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
   ;; (add-to-list 'completion-at-point-functions #'cape-history)
   ;; (add-to-list 'completion-at-point-functions #'cape-keyword)
   ;; (add-to-list 'completion-at-point-functions #'cape-file)
@@ -155,6 +141,7 @@
   )
 
 (use-package orderless
+  :ensure t
   :custom
   (completion-styles '(orderless basic partial-completion shorthand flex))
   (completion-category-overrides '((file (styles basic partial-completion)))))
@@ -174,6 +161,13 @@
     (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
+;;; Projects
+(setopt  project-list-file (expand-file-name "projects" user-emacs-directory)
+         project-mode-line t
+         project-file-history-behavior 'relativize)
+
+;;; Tabs
+(add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
 ;;; Lisp
 (use-package slime
@@ -262,10 +256,11 @@ function: '(ql:quickload :clouseau)'."
   (unless (package-installed-p 'eglot-x)
     (package-vc-install '(eglot-x :url "https://vc.compiler.company/packy/eglot-x.git")))
   (require 'eglot-x)
-  (add-to-list 'eglot-server-programs
-               '((rust-ts-mode rust-mode) .
-                 ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
-  (eglot-x-setup))
+  (with-eval-after-load 'eglot-x
+    (add-to-list 'eglot-server-programs
+                 '((rust-ts-mode rust-mode) .
+                   ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
+    (eglot-x-setup)))
 
 ;;; Rust
 (add-hook 'rust-mode-hook 'eglot-ensure)
@@ -376,7 +371,7 @@ specified by `prog-comment-timestamp-format-verbose'."
          (string (format "%s %s: " keyword (format-time-string date)))
          (beg (point)))
     (cond
-     ((or (eq beg (point-at-bol))
+     ((or (eq beg (pos-bol))
           (default-line-regexp-p 'empty))
       (let* ((maybe-newline (unless (default-line-regexp-p 'empty 1) "\n")))
         ;; NOTE 2021-07-24: we use this `insert' instead of
@@ -517,7 +512,7 @@ MODE use that major mode instead."
       (save-excursion
         (insert text)
         (goto-char (point-min))
-        (comment-region (point-at-bol) (point-at-eol)))
+        (comment-region (pos-bol) (pos-eol)))
       (vertical-motion 2))
     (pop-to-buffer buf)))
 
@@ -636,12 +631,16 @@ buffer."
                                (delete-dups
                                 (ring-elements eshell-history-ring)))))
 
+;;; Eww
+(setopt
+ browse-url-browser-function 'eww
+ eww-auto-rename-buffer 'title
+ eww-search-prefix "https://google.com/search?q=")
+
 ;;; Tramp
 (setopt tramp-default-method "ssh"
         tramp-default-user user-login-name
         tramp-default-host "localhost")
-(with-eval-after-load "tramp"
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 ;;; Org
 ;; todos
@@ -655,7 +654,8 @@ buffer."
         (type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
         (type "KLUDGE(k@!)" "|")
         (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
-;; captures
+
+;; capture templates
 (setq org-capture-templates
       '(("t" "task" entry (file "inbox.org") "* %^{title}\n- %?" :prepend t)
         ("1" "current-task-item" item (clock) "%i%?")
@@ -670,7 +670,7 @@ buffer."
         ("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil
-      ;; comp2 default
+      ;; cc default
       org-ascii-text-width 80)
 
 (org-crypt-use-before-save-magic)
@@ -767,7 +767,7 @@ buffer."
     (if (re-search-forward
          (format org-complex-heading-regexp-format (regexp-quote hd))
          nil t)
-        (goto-char (point-at-bol))
+        (goto-char (line-beginning-position))
       (goto-char (point-max))
       (or (bolp) (insert "\n"))
       (insert "* " hd "\n")))
@@ -841,7 +841,7 @@ buffer."
             (goto-char (point-min))
             (command-execute 'outline-next-visible-heading)
             ;; disable (message) that org-set-tags generates
-            (flet ((message (&rest ignored) nil))
+            (cl-flet ((message (&rest ignored) nil))
                   (org-set-tags 1 t))
             (set-buffer-modified-p b-m-p))
         (error nil)))))
@@ -881,7 +881,7 @@ inherited by a parent headline."
 ;;;###autoload
 (defun org-agenda-reschedule-to-today ()
   (interactive)
-  (flet ((org-read-date (&rest rest) (current-time)))
+  (cl-flet ((org-read-date (&rest rest) (current-time)))
         (call-interactively 'org-agenda-schedule)))
 
 ;; Patch org-mode to use vertical splitting
@@ -905,11 +905,11 @@ inherited by a parent headline."
       (goto-char (point-min))
       (while (setq pos (next-single-property-change (point) 'duration))
         (goto-char pos)
-        (when (and (not (equal pos (point-at-eol)))
+        (when (and (not (equal pos (pos-bol)))
                    (setq duration (org-get-at-bol 'duration)))
           ;; larger duration bar height
           (let ((line-height (if (< duration 15) 1.0 (+ 0.5 (/ duration 30))))
-                (ov (make-overlay (point-at-bol) (1+ (point-at-eol)))))
+                (ov (make-overlay (pos-bol) (1+ (pos-eol)))))
             (overlay-put ov 'face `(:background ,(car colors) :foreground "black"))
             (setq colors (cdr colors))
             (overlay-put ov 'line-height line-height)

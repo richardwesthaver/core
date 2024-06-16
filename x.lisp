@@ -9,7 +9,9 @@ x.lisp
 (in-package :cl-user)
 #-(or sbcl cl) (error "unsupported Lisp compiler")
 #-quicklisp
-(let ((quicklisp-init "~/.stash/quicklisp/setup.lisp"))
+(let ((quicklisp-init (or (probe-file #p"~/.stash/quicklisp/setup.lisp")
+                          (probe-file #p"/usr/local/share/lisp/quicklisp/setup.lisp")
+                          (probe-file #p "~/quicklisp/setup.lisp"))))
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 (require 'sb-rotate-byte)

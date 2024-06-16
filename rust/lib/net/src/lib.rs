@@ -20,7 +20,7 @@ pub use engine::dns;
 pub use engine::http;
 #[cfg(feature = "quic")]
 pub use engine::quic;
-#[cfg(feature = "uds")]
+#[cfg(unix)]
 pub use engine::uds;
 #[cfg(feature = "reqwest")]
 pub use reqwest;

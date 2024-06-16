@@ -5,14 +5,14 @@
 
 ;;; Helpers
 (defun group (source n)
-  "This is Paul Graham's group utility from 'On Lisp'.
+  "This is Paul Graham's group utility from On Lisp.
 
 Group a list of arguments SOURCE by any provided grouping amount
 N.
 
 For example:
-(group '(foo 2 bar 4) 2) ;=> ((foo 2) (bar 4))
-(group '(a b c d e f) 3) ;=> ((a b c) (d e f))
+(group (quote (foo 2 bar 4)) 2) ;=> ((foo 2) (bar 4))
+(group (quote (a b c d e f)) 3) ;=> ((a b c) (d e f))
 "
   (when (zerop n) (error "zero length"))
   (cl-labels ((rec (source acc)
@@ -26,9 +26,9 @@ For example:
     (when source (rec source nil))))
 
 (defun flatten (x)
-  "Paul Graham's flatten utility from 'On Lisp'.
+  "Paul Graham's flatten utility from On Lisp.
 
-Given a tree X, return all the 'leaves' of the tree."
+Given a tree X, return all the leaves of the tree."
   (cl-labels ((rec (x acc)
                    (cond ((null x) acc)
                          ((atom x) (cons x acc))
@@ -38,7 +38,7 @@ Given a tree X, return all the 'leaves' of the tree."
     (rec x nil)))
 
 (defun mkstr (&rest args)
-  "Paul Graham's mkstr utility from 'On Lisp'.
+  "Paul Graham's mkstr utility from On Lisp.
 
 Coerce ARGS into a single string and return it."
   (let* ((s ""))
@@ -51,7 +51,7 @@ Coerce ARGS into a single string and return it."
     s))
 
 (defun symb (&rest args)
-  "Paul Graham's symb utility from 'On Lisp'.
+  "Paul Graham's symb utility from On Lisp.
 
 Concat ARGS and return a newly interned symbol."
   (intern (apply #'mkstr args)))
@@ -88,7 +88,7 @@ Concat ARGS and return a newly interned symbol."
              (setq result (concat (file-name-as-directory result) dir)))
     result))
 
-(defun wc (&optional start end)
+(defun wc ()
   "Return a 3-element list with lines, words and characters in
 region or whole buffer."
   (interactive)
@@ -116,7 +116,7 @@ TYPE is the car of a cons cell in
 expression.
 With optional N, search in the Nth line from point."
   (save-excursion
-    (goto-char (point-at-bol))
+    (goto-char (pos-bol))
     (and (not (bobp))
          (or (beginning-of-line n) t)
          (save-match-data
@@ -161,16 +161,7 @@ With optional N, search in the Nth line from point."
 
 ;;; Server
 ;;;###autoload
-(defun kill-emacs-restart (&optional arg)
-  "Handler for SIGUSR1 signal, to (re)start an emacs server.
-
-Can be tested from within emacs with:
-  (signal-process (emacs-pid) 'sigusr1)
-
-or from the command line with:
-$ kill -USR1 <emacs-pid>
-$ emacsclient -c
-"
+(defun kill-emacs-restart ()
   (interactive)
   (server-force-delete)
   (server-start))
