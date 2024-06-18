@@ -21,10 +21,13 @@
        (format #.*standard-output* msg)))
     nil))
 
-;; this is all very unsafe. don't touch the finalizer thread plz.
 (defun find-thread-by-id (id)
   "Search for thread by ID which must be an u64. On success returns the thread itself or nil."
   (find id (sb-thread::list-all-threads) :test '= :key 'thread-os-tid))
+
+(defun find-thread (name)
+  "Find a thread by name."
+  (find name (sb-thread::list-all-threads) :test 'equal :key 'thread-name))
 
 (defun thread-key-list ()
   (sb-thread::avltree-filter #'sb-thread::avlnode-key sb-thread::*all-threads*))

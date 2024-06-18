@@ -255,7 +255,7 @@
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
    :make-oracle :make-supervisor :oracle :run-task
-   :oracle-id
+   :oracle-id :find-thread
    :push-job :push-task :push-worker :push-task-result
    :run-job :run-stage
    :pop-job :pop-task :pop-worker :pop-task-result
