@@ -1,6 +1,6 @@
 ;;; std.asd --- standard library
 (pushnew :std *features*)
-(require 'sb-cltl2)
+
 (defsystem :std/named-readtables
   :version "0.1.0"
   :components ((:file "named-readtables"))
@@ -8,9 +8,16 @@
 
 (register-system-packages "std/named-readtables" '(:std))
 
+;; the build op on the STD system system concatenates all dependency systems -
+;; make sure CL-PPCRE is loaded first but not included in the build output.
+(asdf:load-system :asdf)
+
+(require 'sb-cltl2)
+(require 'sb-concurrency)
+
 (defsystem :std
   :version "0.1.0"
-  :depends-on (:std/named-readtables :cl-ppcre :sb-concurrency)
+  :depends-on (:std/named-readtables)
   :serial t
   :components ((:file "defpkg")
                (:file "pkg")
@@ -48,7 +55,7 @@
                (:file "seq")
                (:file "sys"))
   :build-pathname "std"
-  :build-operation compile-bundle-op
+  :build-operation monolithic-concatenate-source-op
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (register-system-packages "std" '(:std))

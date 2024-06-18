@@ -170,6 +170,9 @@
 (add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
 ;;; Lisp
+(use-package slime-company
+  :ensure t)
+
 (use-package slime
   :ensure t
   :init
@@ -194,9 +197,6 @@
                          slime-asdf))
   (put 'make-instance 'common-lisp-indent-function 1)
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
-  (add-hook 'slime-mode-hook #'slime-cape-maybe-enable)
-  (add-hook 'slime-repl-mode-hook #'slime-cape-maybe-enable)
-  
   (slime-setup)
   (defvar slime-toggle nil)
   (defun slime-toggle ()

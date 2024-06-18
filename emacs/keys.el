@@ -134,6 +134,7 @@
 (keymap-global-set "<XF86Paste>" parens-map)
 (keymap-global-set "C-c C-p" #'outline-previous-heading)
 (keymap-global-set "C-c C-n" #'outline-next-heading)
+(global-set-key [remap dabbrev-expand] 'hippie-expand)
 
 (provide 'keys)
 ;; keys.el ends here
