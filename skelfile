@@ -13,7 +13,7 @@
 :scripts ((:lisp "x"))
 :env ((cc "clang"))
 :rules
-((all (compile std prelude user core tests build fasl rust-bin)) ;; TODO: add keyword args -- (emacs :stage 'install) 
+((all (compile std prelude user infra core tests build fasl rust-bin)) ;; TODO: add keyword args -- (emacs :stage 'install) 
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#
@@ -42,6 +42,7 @@
  (std () #$./x.lisp save std$#)
  (prelude () #$./x.lisp save prelude$#)
  (user () #$./x.lisp save user$#)
+ (infra () #$./x.lisp save infra$#)
  (core () #$./x.lisp save core$#)
  (tests () #$./x.lisp save tests$#)
  (prelude-fasl () #$./x.lisp make prelude$#)

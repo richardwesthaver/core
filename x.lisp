@@ -89,13 +89,14 @@
     (use-package :cl-user)
     (sb-ext:save-lisp-and-die (merge-pathnames "prelude.core" *stash-path*) :compression *compression-level*)))
 
-(defun compile-user (&optional force save)
+(defun compile-user (&optional force save compression (name "user.core"))
   (asdf:compile-system :user :force force)
   (asdf:load-system :user :force force)
   (when save
     (in-package :user)
     (use-package :cl-user)
-    (sb-ext:save-lisp-and-die (merge-pathnames "user.core" *stash-path*) :compression *compression-level*)))
+    (sb-ext:save-lisp-and-die (merge-pathnames name *stash-path*) :compression (or compression *compression-level*))))
+
 
 (defun compile-tests (&optional force save)
   (asdf:compile-system :core/tests :force force)
@@ -236,6 +237,7 @@ install")))
           ("core" (compile-core t t))
           ("std" (compile-std t t))
           ("user" (compile-user t t))
+          ("infra" (compile-user t t 22 "infra.core"))
           ("tests" (compile-tests t t))))
       ;; (sb-ext:run-program "x.lisp" nil :input t :output t)
       ))
