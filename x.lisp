@@ -1,4 +1,4 @@
-#!/usr/bin/env -S sbcl --script
+#!/usr/bin/env -S sbcl --no-sysinit --no-userinit --script
 ;;; core build tool
 
 ;; 

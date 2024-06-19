@@ -71,7 +71,7 @@
           install -C -m 755 $f $d
           done fi$#)
  (emacs-user () #$make -C emacs$#)
- (dist (all) #$cd .stash
+ (dist () #$cd .stash
        mkdir -pv core/bin core/share/lisp/fasl
        mv *.core core/share/lisp/
        mv *.fasl core/share/lisp/fasl/

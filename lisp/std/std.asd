@@ -10,7 +10,7 @@
 
 ;; the build op on the STD system system concatenates all dependency systems -
 ;; make sure CL-PPCRE is loaded first but not included in the build output.
-(asdf:load-system :asdf)
+(asdf:load-system :cl-ppcre)
 
 (require 'sb-cltl2)
 (require 'sb-concurrency)
