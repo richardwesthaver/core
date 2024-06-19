@@ -120,7 +120,7 @@
         (setq res
           (concatenate 'string
            (when scheme
-             (case *print-case*
+             (case *uri-schema-print-case*
                ((:downcase)
                 (string-downcase (symbol-name scheme)))
                ((:upcase)

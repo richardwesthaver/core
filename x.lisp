@@ -21,12 +21,7 @@ x.lisp
 (require 'sb-cover)
 ;; (require 'sb-sprof)
 
-(unless (asdf:find-system :cl-ppcre nil)
-  (ql:quickload :cl-ppcre)
-  (ql:quickload :cffi)
-  ;; (asdf:load-asd (probe-file #P"ext/cl-ppcre.asd"))
-  )
-
+(asdf:load-system (asdf:find-system :cl-ppcre))
 (asdf:load-asd (probe-file (merge-pathnames "std.asd" "lisp/std/")))
 (asdf:load-system :std)
 

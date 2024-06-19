@@ -24,6 +24,13 @@
    :file-read-forms
    :wrap-object :unwrap-object))
 
+(defpackage :dat/dot
+  (:use :cl :std :dat/proto :obj/graph)
+  (:export
+   :read-dot-file :write-dot-file
+   :read-dot-stream :write-dot-stream
+   :parse-dot-string))
+
 (defpackage :dat/csv
   (:use :cl :std :dat/proto)
   (:export

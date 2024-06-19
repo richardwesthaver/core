@@ -1,6 +1,18 @@
 ;;; lib/obj/graph.lisp --- Graphs
 
-;;
+;; Graph objects and algorithms
+
+;;; Commentary:
+
+;; Mostly modeled off of eschulte's GRAPH library - see also DAT/DOT
+
+;; ref: https://eschulte.github.io/graph/
+
+;; Our goals are slightly different than the original library - we prioritize
+;; flexibility over speed or code size. To this end the base GRAPH class
+;; accepts NODE vectors in addition to hash-tables. We also make minimal
+;; assumptions about the underling node types - it is a blank class
+;; definition. Edges are a bit more complicated - they subclass ID which can be
 
 ;;; Code:
 (in-package :obj/graph)
@@ -14,12 +26,16 @@
 that a vertex always carries an ID slot."))
 
 ;;; Edge
-(defclass edge (id node)
+(defclass edge (node)
   (a b)
   (:documentation "generic edge mixin. Compatible with the NODE and ID protocols."))
 
+(defclass edgex (edge id)
+  ()
+  (:documentation "Edge compatible with the NODE and ID protocols."))
+
 (defclass directed-edge (edge)
-  (a b)
+  ()
   (:documentation "An edge with an implicit direction from node A to B."))
 
 (defclass weighted-edge (edge)
@@ -28,7 +44,336 @@ that a vertex always carries an ID slot."))
 (defgeneric edge-weight (edge &key &allow-other-keys)
   (:method ((edge t) &key &allow-other-keys) (values 1.0)))
 
+(defgeneric edge-value (graph edge)
+  (:method ((graph t) (edge t)) (values nil)))
+
+(defgeneric (setf edge-value) (new graph edge))
+
+(defgeneric delete-edge (graph edge)
+  (:documentation "Delete EDGE from GRAPH.
+Return the old value of EDGE."))
+
+(defgeneric node-edges (graph node)
+  (:documentation "Return the edges of NODE in GRAPH."))
+
+(defgeneric (setf node-edges) (new graph node)
+  (:documentation "Set the edges of NODE in GRAPH to NEW.
+Delete and return the old edges of NODE in GRAPH."))
+
+(defgeneric add-node (graph node))
+(defgeneric add-edge (graph edge &optional value))
+
 ;;; Graph
+(defun copy-hash (hash &optional test comb)
+  "Return a copy of HASH.
+Optional argument TEST specifies a new equality test to use for the
+copy.  Second optional argument COMB specifies a function to use to
+combine the values of elements of HASH which collide in the copy due
+to a new equality test specified with TEST."
+  (let ((comb (when comb (fdefinition comb)))
+        (copy (make-hash-table :test (or test (hash-table-test hash)))))
+    (maphash (lambda (k v) (setf (gethash k copy)
+                            (if (and (gethash k copy) comb)
+                                (funcall comb (gethash k copy) v)
+                                v)))
+             hash)
+    copy))
+
+(defun node-hash-equal (hash1 hash2)
+  "Test node hashes HASH1 and HASH2 for equality."
+  (set-equal (hash-table-alist hash1)
+             (hash-table-alist hash2)
+             :test (lambda (a b)
+                     (and (equalp (car a) (car b))
+                          (set-equal (cdr a) (cdr b) :test 'tree-equal)))))
+
+(defun edge-hash-equal (hash1 hash2)
+  "Test edge hashes HASH1 and HASH2 for equality."
+  (set-equal (hash-table-alist hash1)
+             (hash-table-alist hash2)
+             :test 'equalp))
+
+(defun edge-equalp (edge1 edge2)
+  (set-equal edge1 edge2))
+
+(defun directed-edge-equalp (edge1 edge2)
+  (tree-equal edge1 edge2))
+
+(defun sxhash-edge (edge)
+  (sxhash (sort (copy-tree edge)
+                (if (numberp (car edge))
+                    (lambda (a b)
+                      (or (< (imagpart a) (imagpart b))
+                          (and (= (imagpart a) (imagpart b))
+                               (< (realpart a) (realpart b)))))
+                    #'string<))))
+
+(sb-ext:define-hash-table-test edge-equalp sxhash-edge)
+
+(sb-ext:define-hash-table-test directed-edge-equalp sxhash)
+
+(defgeneric nodes (graph))
+(defgeneric (setf nodes) (graph nodes))
+(defgeneric edges (graph))
+(defgeneric (setf edges) (graph edges))
+
+(defgeneric graph-equal (graph1 graph2))
+
+(defgeneric subgraph (graph nodes)
+  (:documentation "Return the subgraph of GRAPH restricted to NODES."))
+
+(defgeneric delete-node (graph node)
+  (:documentation "Delete NODE from GRAPH.
+Delete and return the old edges of NODE in GRAPH."))
+
+(defgeneric has-edge-p (graph edge)
+  (:documentation "Return `true' if GRAPH has edge EDGE."))
+
 (defclass graph (node)
-  ()
-  (:documentation "generic graph mixin."))
+  ((nodes :initform (make-hash-table)
+          :type (or (vector node) hash-table)
+          :accessor nodes
+          :initarg :nodes)
+   (edges :initform (make-hash-table :test 'edge-equalp)
+          :type hash-table
+          :accessor edges
+          :initarg :edges))
+  (:documentation "generic graph object."))
+
+(defmethod copy-graph ((graph graph))
+  (make-instance (type-of graph) :nodes (copy-hash (nodes graph)) :edges (copy-hash (edges graph))))
+
+(defmethod subgraph ((graph graph) nodes)
+  (make-instance (type-of graph) :nodes nodes :edges (copy-hash (edges graph))))
+
+(defmethod has-edge-p ((graph graph) edge)
+  (multiple-value-bind (value included) (gethash edge (edges graph))
+    (declare (ignorable value)) included))
+
+(defmethod delete-node ((graph graph) node)
+  (prog1 (mapcar (lambda (edge) (cons edge (delete-edge graph edge)))
+                 (node-edges graph node))
+    (remhash node (nodes graph))))
+
+(defmethod delete-edge ((graph graph) edge)
+  (prog1 (edge-value graph edge)
+    (mapc (lambda (node) (setf (gethash node (nodes graph))
+                          (remove edge (gethash node (nodes graph))
+                                  :test 'edge-equalp)))
+          edge)
+    (remhash edge (edges graph))))
+
+(defmethod node-edges ((graph graph) node)
+  (multiple-value-bind (edges included) (gethash node (nodes graph))
+    (assert included (node graph) "~S doesn't include ~S" graph node)
+    (copy-tree edges)))
+
+(defmethod (setf node-edges) (new (graph graph) node)
+  (prog1 (mapc {delete-edge graph} (gethash node (nodes graph)))
+    (mapc {add-edge graph} new)))
+
+(defmethod add-edge ((graph graph) edge &optional value)
+  (mapc (lambda (node)
+          (add-node graph node)
+          (pushnew (case (type-of graph)
+                     (graph (remove-duplicates edge))
+                     (directed-graph edge))
+                   (gethash node (nodes graph))
+                   :test 'edge-equalp))
+        edge)
+  (setf (gethash edge (edges graph)) value)
+  edge)
+
+(defmethod edge-value ((graph graph) edge)
+  (multiple-value-bind (value included) (gethash edge (edges graph))
+    (assert included (edge graph) "~S doesn't include ~S" graph edge)
+    value))
+
+(defmethod (setf edge-value) (new (graph graph) edge)
+  (setf (gethash edge (edges graph)) new))
+
+(defgeneric merge-nodes (graph node1 node2 &key new)
+  (:documentation "Combine NODE1 and NODE2 in GRAPH into the node NEW.
+All edges of NODE1 and NODE2 in GRAPH will be combined into a new node
+of value NEW.  Edges between only NODE1 and NODE2 will be removed."))
+
+(defmethod merge-nodes ((graph graph) node1 node2 &key (new node1))
+  ;; replace all removed edges with NEW instead of NODE1 or NODE2
+  (mapcar
+   (lambda (l)
+     (destructuring-bind(edge . value) l
+       (let ((e (mapcar (lambda (n) (if (member n (list node1 node2)) new n)) edge)))
+         (if (has-edge-p graph e)
+             (when (and (edge-value graph e) value)
+               (setf (edge-value graph e) (+ (edge-value graph e) value)))
+             (add-edge graph e value)))))
+   ;; drop edges between only node1 and node2
+   (remove-if-not [{set-difference _ (list node1 node2)} #'car]
+                  ;; delete both nodes keeping their edges and values
+                  (prog1 (append (delete-node graph node1)
+                                 (delete-node graph node2))
+                    ;; add the new node
+                    (add-node graph new))))
+  graph)
+
+(defgeneric merge-edges (graph edge1 edge2 &key value)
+  (:documentation "Combine EDGE1 and EDGE2 in GRAPH into a new EDGE.
+Optionally provide a value for the new edge, the values of EDGE1 and
+EDGE2 will be combined."))
+
+(defmethod merge-edges ((graph graph) edge1 edge2 &key value)
+  (add-edge graph (remove-duplicates (append edge1 edge2))
+            (or value
+                (when (and (edge-value graph edge1) (edge-value graph edge2))
+                  (+ (edge-value graph edge1) (edge-value graph edge2)))))
+  (append (delete-edge graph edge1)
+          (delete-edge graph edge2)))
+
+(defgeneric degree (graph node)
+  (:documentation "Return the degree of NODE in GRAPH."))
+
+(defmethod degree ((graph graph) node)
+  (length (node-edges graph node)))
+
+;;; Directed Graph
+(defclass directed-graph (graph)
+  ((edges :initform (make-hash-table :test 'directed-edge-equalp)
+          :type (or (vector directed-edge) hash-table)
+          :accessor edges
+          :initarg :edges))
+  (:documentation "graph with only directed edges."))
+
+(defgeneric indegree (digraph node)
+  (:documentation "The number of edges directed to NODE in GRAPH."))
+
+(defmethod indegree ((digraph directed-graph) node)
+  (length (remove-if-not [{member node} #'cdr] (node-edges digraph node))))
+
+(defgeneric outdegree (digraph node)
+  (:documentation "The number of edges directed from NODE in DIGRAPH."))
+
+(defmethod outdegree ((digraph directed-graph) node)
+  (length (remove-if-not [{equal node} #'car] (node-edges digraph node))))
+
+;;; Shortest Path
+(defgeneric shortest-path (graph a b &optional heuristic)
+  (:documentation "Return the shortest path in GRAPH from A to B.
+Implemented using A* search.  Optional argument HEURISTIC may be a
+function which returns an estimated heuristic cost from an node to the
+target B.  The default value for HEURISTIC is the constant function of
+0, reducing this implementation to Dijkstra's algorithm.  The
+HEURISTIC function must satisfy HEURITIC(x)≤d(x,y)+HEURITIC(y) ∀ x,y
+in GRAPH allowing the more efficient monotonic or \"consistent\"
+implementation of A*.")
+  (:method ((graph graph) a b
+            &optional
+              (heuristic (constantly 0))
+            &aux
+              (from (make-hash-table))
+              (fringe (sb-concurrency:make-queue))
+              (open (make-hash-table))
+              (closed (make-hash-table))
+              (g (make-hash-table))
+              (f (make-hash-table)))
+    (when (equal a b) (return-from shortest-path nil))
+    (labels ((reconstruct-path (current)
+               (destructuring-bind (node . edge) (gethash current from)
+                 (cons edge (unless (member a edge) (reconstruct-path node))))))
+      (setf (gethash a g) 0
+            (gethash a f) (funcall heuristic a)
+            (gethash a open) t)
+
+      (sb-concurrency:enqueue fringe (gethash a f))
+
+      (do ((current (sb-concurrency:dequeue fringe) (sb-concurrency:dequeue fringe)))
+          ((zerop (hash-table-count open))
+           (multiple-value-bind (value present-p) (gethash b f)
+             (when present-p
+               (values (nreverse (reconstruct-path b)) value))))
+
+        (when (eql current b)
+          (return-from shortest-path
+            (values (nreverse (reconstruct-path current))
+                    (gethash current f))))
+
+        (remhash current open)
+        (setf (gethash current closed) t)
+
+        (mapc (lambda (edge)
+                (let ((weight (or (edge-value graph edge) 1)))
+                  (mapc (lambda (next)
+                          (unless (gethash next closed)
+                            (setf (gethash next open) t)
+                            (let ((tentative (+ (gethash current g) weight)))
+                              (multiple-value-bind (value present-p)
+                                  (gethash next g)
+                                (when (or (not present-p)
+                                          (< tentative value))
+                                  (setf (gethash next from) (cons current edge)
+                                        (gethash next g) tentative
+                                        (gethash next f)
+                                        (+ tentative (funcall heuristic next)))
+                                  (sb-concurrency:enqueue fringe (gethash next f)))))))
+                        (etypecase graph
+                          (directed-graph (cdr (member current edge)))
+                          (graph (remove current edge))))))
+              (node-edges graph current))))))
+
+;;; Min Cut
+;;
+;; Stoer, M. and Wagner, Frank. 1997. A Simple Min-Cut Algorithm.
+;; Journal of the ACM
+;;
+;; Theorem: Let s,t ∈ (nodes G), let G' be the result of merging s and
+;;          t in G.  Then (min-cut G) is equal to the minimum of the
+;;          min cut of s and t in G and (min-cut G').
+;;
+(defun weigh-cut (graph cut)
+  (reduce #'+ (mapcar {edge-value graph}
+                      (remove-if-not (lambda (edge)
+                                       (and (intersection edge (first cut))
+                                            (intersection edge (second cut))))
+                                     (edges graph)))))
+
+(defgeneric min-cut (graph)
+  (:documentation
+   "Return both the global min-cut of GRAPH and the weight of the cut."))
+
+(defmethod min-cut ((graph graph))
+  (let ((g (copy-graph graph))
+        (merged-nodes (mapcar (lambda (n) (list n n)) (nodes graph)))
+        cuts-of-phase)
+    (flet ((connection-weight (group node)
+             ;; return the weight of edges between GROUP and NODE
+             (reduce #'+ (mapcar {edge-value g}
+                                 (remove-if-not {intersection group}
+                                                (node-edges g node)))))
+           (my-merge (a b)
+             ;; merge in the graph
+             (merge-nodes g a b)
+             ;; update our merged nodes alist
+             (setf (cdr (assoc a merged-nodes))
+                   (append (cdr (assoc a merged-nodes))
+                           (cdr (assoc b merged-nodes))))
+             (setq merged-nodes
+                   (remove-if (lambda (it) (eql (car it) b)) merged-nodes))))
+      (loop :while (> (length (nodes g)) 1) :do
+         (let* ((a (list (random (nodes g))))
+                (rest (remove (car a) (nodes g))))
+           (loop :while rest :do
+              ;; grow A by adding the node most tightly connected to A
+              (let ((new (car (sort rest #'> :key {connection-weight a}))))
+                (setf rest (remove new rest))
+                (push new a)))
+           ;; store the cut-of-phase
+           (push (cons (connection-weight (cdr a) (car a))
+                       (cdr (assoc (car a) merged-nodes)))
+                 cuts-of-phase)
+           ;; merge two last added nodes
+           (my-merge (first a) (second a))))
+      ;; return the minimum cut-of-phase
+      (let* ((half (cdar (sort cuts-of-phase #'< :key #'car)))
+             (cut  (list half (set-difference (nodes graph) half))))
+        (values (sort cut #'< :key #'length) (weigh-cut graph cut))))))
+
+;; https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)

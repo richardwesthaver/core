@@ -6,6 +6,7 @@
   :components ((:file "pkg")
                (:file "proto")
                (:file "sxp")
+               (:file "dot")
                (:file "csv")
                (:file "json")
                (:module "xml"

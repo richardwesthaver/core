@@ -248,3 +248,16 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                                                2))))
                 syms)
            ,@body)))))
+
+;; from alexandria
+(defun set-equal (list1 list2 &key (test #'eql) (key nil keyp))
+  "Returns true if every element of LIST1 matches some element of LIST2 and
+every element of LIST2 matches some element of LIST1. Otherwise returns false."
+  (let ((keylist1 (if keyp (mapcar key list1) list1))
+        (keylist2 (if keyp (mapcar key list2) list2)))
+    (and (dolist (elt keylist1 t)
+           (or (member elt keylist2 :test test)
+               (return nil)))
+         (dolist (elt keylist2 t)
+           (or (member elt keylist1 :test test)
+               (return nil))))))

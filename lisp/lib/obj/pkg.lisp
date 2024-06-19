@@ -149,7 +149,9 @@
   (:use :cl :std :obj/id :obj/seq)
   (:export 
    :vertex :edge :graph :make-edge :make-graph
-   :weighted-edge :directed-edge :undirected-edge))
+   :nodes :edges :add-node :add-edge
+   :weighted-edge :directed-edge :undirected-edge :directed-graph
+   :edge-value :edge-weight))
 
 (defpackage :obj/color
   (:nicknames :color)

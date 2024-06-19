@@ -78,7 +78,8 @@
    :let-binding-transform
    :ensure-list :recons :memq :assq
    :circular-list :circular-list-p :circular-tree-p :merge!
-   :sort!))
+   :sort!
+   :set-equal))
 
 (defpkg :std/type
   (:use :cl)
