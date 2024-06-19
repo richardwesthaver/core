@@ -17,6 +17,8 @@
 ;;; Code:
 (in-package :obj/graph)
 
+(in-readtable :std)
+
 (defclass node () ())
 
 ;;; Vertex
