@@ -2,10 +2,8 @@
 ;;; core build tool
 
 ;; 
-#|
-x.lisp
-|#
-;; (require 'sb-posix)
+
+;;; Code:
 (in-package :cl-user)
 #-(or sbcl cl) (error "unsupported Lisp compiler")
 #-quicklisp
@@ -19,7 +17,7 @@ x.lisp
 (require 'sb-grovel)
 (require 'sb-cltl2)
 (require 'sb-cover)
-;; (require 'sb-sprof)
+(require 'sb-sprof)
 
 (asdf:load-system (asdf:find-system :cl-ppcre))
 (asdf:load-asd (probe-file (merge-pathnames "std.asd" "lisp/std/")))

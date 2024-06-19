@@ -1,0 +1,9 @@
+[package]
+name = "dash"
+version = "0.1.0"
+edition = "2021"
+[[bin]]
+name = "dash"
+path = "src/main.rs"
+[dependencies]
+rerun = "0.16.1"
