@@ -110,7 +110,7 @@ described at http://www.graphviz.org/doc/info/attrs.html. SUBGRAPHS is
 a list of SUBGRAPH structures.  RANKS is a list of RANK structures."))
 
 (defmethod to-dot ((graph graph)
-                   &key (stream t) attributes node-attrs edge-attrs
+                   &key stream attributes node-attrs edge-attrs
                         subgraphs ranks)
   ;; by default edges are labeled with their values
   (unless (assoc :label edge-attrs)

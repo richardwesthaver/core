@@ -444,10 +444,12 @@ from TESTS."))
 	  (%do)))))
 
 (defmethod do-test ((self simple-string) &optional fixture)
-  (do-test (find-test *test-suite* self) fixture))
+  (when-let ((test (find-test *test-suite* self)))
+    (do-test test fixture)))
 
 (defmethod do-test ((self symbol) &optional fixture)
-  (do-test (find-test *test-suite* (symbol-name self)) fixture))
+  (when-let ((test (find-test *test-suite* (symbol-name self))))
+    (do-test test fixture)))
 
 ;;;; Fixtures
 
@@ -525,7 +527,7 @@ from TESTS."))
 (defmethod find-test ((self test-suite) name &key (test #'test-name=))
   (declare (type (or string symbol) name)
 	   (type function test))
-  (find name (the list (tests self)) :test test))
+  (find name (tests self) :test test))
 
 (defmethod do-test ((self test-suite) &optional test)
   (push-result 

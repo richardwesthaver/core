@@ -87,10 +87,8 @@ to a new equality test specified with TEST."
                      (or (< (imagpart a) (imagpart b))
                          (and (= (imagpart a) (imagpart b))
                               (< (realpart a) (realpart b))))))
-                  ((numberp (car edge))
+                  ((or (numberp (car edge)) (numberp (second edge)))
                    (lambda (a b) (declare (ignore a b)) t))
-                  ((numberp (cdr edge))
-                   (lambda (a b) (declare (ignore a b)) nil))
                   (t #'string<)))))
 
 (sb-ext:define-hash-table-test edge-equalp sxhash-edge)
