@@ -70,7 +70,7 @@ SUBGRAPH structure."
       (format out "  }~%"))))
 
 (defun edge-to-dot (edge graph attrs &optional stream)
-  (format stream " \"~a\" ~a \"~a\" ~{~a~^ ~};~%"
+  (format stream "  \"~a\" ~a \"~a\" ~{~a~^ ~};~%"
           (first edge)
           (etypecase graph
             (directed-graph "->")
@@ -131,8 +131,8 @@ a list of SUBGRAPH structures.  RANKS is a list of RANK structures."))
                            (format nil "  ~a=~a;~%" a b)
                            (format nil "  ~(~a~)=~a;~%" a b))))
                    attributes)
-           (mapcar {node-to-dot _ node-attrs} (nodes graph))
-           (mapcar {edge-to-dot _ graph edge-attrs} (edges graph))
+           (mapcar {node-to-dot _ node-attrs} (hash-table-keys (nodes graph)))
+           (mapcar {edge-to-dot _ graph edge-attrs} (hash-table-keys (edges graph)))
            (mapcar #'subgraph-print subgraphs)
            (mapcar #'rank-print ranks))))
 
@@ -141,7 +141,7 @@ a list of SUBGRAPH structures.  RANKS is a list of RANK structures."))
   (:documentation "Write a dot representation of GRAPH to PATH."))
 
 (defmethod to-dot-file
-    ((object t) path &key attributes node-attrs edge-attrs
+    ((object graph) path &key attributes node-attrs edge-attrs
                           subgraphs ranks)
   (with-open-file (out path :direction :output :if-exists :supersede)
     (to-dot object :stream out :attributes attributes :node-attrs node-attrs

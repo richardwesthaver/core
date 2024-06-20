@@ -43,30 +43,7 @@ that a vertex always carries an ID slot."))
 (defclass weighted-edge (edge)
   ((weight :initform 1d0 :initarg :weight :accessor weight-of)))
 
-(defgeneric edge-weight (edge &key &allow-other-keys)
-  (:method ((edge t) &key &allow-other-keys) (values 1.0)))
-
-(defgeneric edge-value (graph edge)
-  (:method ((graph t) (edge t)) (values nil)))
-
-(defgeneric (setf edge-value) (new graph edge))
-
-(defgeneric delete-edge (graph edge)
-  (:documentation "Delete EDGE from GRAPH.
-Return the old value of EDGE."))
-
-(defgeneric node-edges (graph node)
-  (:documentation "Return the edges of NODE in GRAPH."))
-
-(defgeneric (setf node-edges) (new graph node)
-  (:documentation "Set the edges of NODE in GRAPH to NEW.
-Delete and return the old edges of NODE in GRAPH."))
-
-(defgeneric add-node (graph node))
-
-(defgeneric add-edge (graph edge &optional value))
-
-;;; Graph
+;;; Hashing
 (defun copy-hash (hash &optional test comb)
   "Return a copy of HASH.
 Optional argument TEST specifies a new equality test to use for the
@@ -97,24 +74,30 @@ to a new equality test specified with TEST."
              :test 'equalp))
 
 (defun edge-equalp (edge1 edge2)
-  (set-equal edge1 edge2))
+  (set-equal edge1 edge2 :test 'equal))
 
 (defun directed-edge-equalp (edge1 edge2)
   (tree-equal edge1 edge2))
 
 (defun sxhash-edge (edge)
   (sxhash (sort (copy-tree edge)
-                (if (numberp (car edge))
-                    (lambda (a b)
-                      (or (< (imagpart a) (imagpart b))
-                          (and (= (imagpart a) (imagpart b))
-                               (< (realpart a) (realpart b)))))
-                    #'string<))))
+                (cond
+                  ((and (numberp (car edge)) (numberp (cdr edge)))
+                   (lambda (a b)
+                     (or (< (imagpart a) (imagpart b))
+                         (and (= (imagpart a) (imagpart b))
+                              (< (realpart a) (realpart b))))))
+                  ((numberp (car edge))
+                   (lambda (a b) (declare (ignore a b)) t))
+                  ((numberp (cdr edge))
+                   (lambda (a b) (declare (ignore a b)) nil))
+                  (t #'string<)))))
 
 (sb-ext:define-hash-table-test edge-equalp sxhash-edge)
 
 (sb-ext:define-hash-table-test directed-edge-equalp sxhash)
 
+;;; Proto
 (defgeneric nodes (graph))
 (defgeneric (setf nodes) (graph nodes))
 (defgeneric edges (graph))
@@ -134,8 +117,32 @@ Delete and return the old edges of NODE in GRAPH."))
 (defgeneric has-edge-p (graph edge)
   (:documentation "Return `true' if GRAPH has edge EDGE."))
 
+(defgeneric edge-weight (edge &key &allow-other-keys)
+  (:method ((edge t) &key &allow-other-keys) (values 1.0)))
+
+(defgeneric edge-value (graph edge)
+  (:method ((graph t) (edge t)) (values nil)))
+
+(defgeneric (setf edge-value) (new graph edge))
+
+(defgeneric delete-edge (graph edge)
+  (:documentation "Delete EDGE from GRAPH.
+Return the old value of EDGE."))
+
+(defgeneric node-edges (graph node)
+  (:documentation "Return the edges of NODE in GRAPH."))
+
+(defgeneric (setf node-edges) (new graph node)
+  (:documentation "Set the edges of NODE in GRAPH to NEW.
+Delete and return the old edges of NODE in GRAPH."))
+
+(defgeneric add-node (graph node))
+
+(defgeneric add-edge (graph edge &optional value))
+
+;;; Graph
 (defclass graph (node)
-  ((nodes :initform (make-hash-table)
+  ((nodes :initform (make-hash-table :test 'equal)
           :type (or (vector node) hash-table)
           :accessor nodes
           :initarg :nodes)
@@ -158,6 +165,7 @@ Delete and return the old edges of NODE in GRAPH."))
 (defmethod has-node-p ((graph graph) node)
   (multiple-value-bind (value included) (gethash node (nodes graph))
     (declare (ignorable value)) included))
+
 (defmethod delete-node ((graph graph) node)
   (prog1 (mapcar (lambda (edge) (cons edge (delete-edge graph edge)))
                  (node-edges graph node))
@@ -244,17 +252,11 @@ EDGE2 will be combined."))
   (length (node-edges graph node)))
 
 (defmethod add-node ((graph graph) node)
-  ;; NOTE: This limitation on the types of node simplifies the
-  ;;       equality tests, and the use of nodes as hash keys
-  ;;       throughout the remainder of this library.  In fact the
-  ;;       addition of type-annotations around node quality operations
-  ;;       may improve performance.  The desire for more complex node
-  ;;       structures, may often be met by maintaining a hash table
-  ;;       outside of the graph which maps graph nodes to the more
-  ;;       complex object related to the node.
-  (assert (or (numberp node) (symbolp node)) (node)
+  ;; NOTE: This is where our implementation breaks character from Eschulte's
+  ;; implementation. We currently accept strings in addition to numbers and symbols.
+  (assert (or (numberp node) (symbolp node) (stringp node)) (node)
           "Nodes must be numbers, symbols or keywords, not ~S.~%Invalid node:~S"
-   (type-of node) node)
+          (type-of node) node)
   (unless (has-node-p graph node)
     (setf (gethash node (nodes graph)) nil)
     node))

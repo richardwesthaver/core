@@ -7,6 +7,21 @@
 (in-suite :dat)
 (in-readtable :std)
 
+(deftest bytes ())
+
+(deftest dot ()
+  (let ((g1 (make-instance 'graph:graph)))
+    (graph:add-node g1 "foo")
+    (graph:add-node g1 :bar)
+    (graph:add-node g1 42)
+    (graph:add-edge g1 '("foo" :bar) "a")
+    (graph:add-edge g1 '(:bar 42) "b")
+    (graph:add-edge g1 '(42 "foo") "c")
+    (is (stringp (dat/dot::to-dot g1)))
+    (dat/dot::to-dot-file g1 "/tmp/test")
+    (is (probe-file "/tmp/test"))
+    (is (delete-file "/tmp/test"))))
+
 (deftest csv ())
 
 (deftest json ()

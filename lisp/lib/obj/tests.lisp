@@ -173,15 +173,31 @@
 
 (deftest avl-tree ())
 
-(deftest graph ()
+(deftest basic-graph ()
+  "Test basic graph functionality."
   (let ((g1 (make-instance 'graph:graph)))
     (is (typep g1 'graph:graph))
     (graph:add-node g1 :foo)
     (graph:add-node g1 :bar)
     (graph:add-edge g1 '(:foo :bar))
+    ;; graph is undirected, so this is no-op
     (graph:add-edge g1 '(:bar :foo))
-    (is (= 1 (length (graph:node-edges g1 :foo))))))
-  
+    ;; and only 1 edge exists
+    (is (= 1 (length (hash-table-keys (graph:edges g1)))))
+    (let ((g2 (make-instance 'graph:directed-graph)))
+      (is (typep g2 'graph:directed-graph))
+      (graph:add-node g2 :baz)
+      (graph:add-node g2 :buz)
+      (graph:add-edge g2 '(:baz :buz))
+      ;; graph is directed, so this is a unique edge
+      (graph:add-edge g2 '(:buz :baz))
+      ;; 2 edges exist
+      (is (= 2 (length (hash-table-keys (graph:edges g2)))))
+      (graph:add-node g1 g2)
+      (is (graph::has-node-p g1 g2))
+      (graph::delete-node g1 g2)
+      (is (not (graph::has-node-p g1 g2))))))
+
 ;; TODO 2023-12-17: 
 (deftest uris ()
   "Tests for different types of URIs. Attempts to conform with RFCs and test suites."
@@ -220,7 +236,6 @@
 	     (s (format nil "https://~@[~a@~]~a~a/foo.html"
 			user-info h (or (when port (format nil ":~d" port)) "")))
 	     (u (parse-uri s)))
-	(format t ";; ~a~%" s)
 	  (is (string= s (princ-to-string u)))
 	  (is (string= host (uri-host u)))
 	  (when user-info
