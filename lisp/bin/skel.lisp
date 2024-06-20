@@ -61,16 +61,26 @@
 (defcmd skc-id
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
+(defcmd skc-compile)
+(defcmd skc-build)
+(defcmd skc-dist)
+(defcmd skc-install)
+(defcmd skc-pack)
+(defcmd skc-unpack)
+(defcmd skc-bundle)
+(defcmd skc-unbundle)
+(defcmd skc-clean)
+(defcmd skc-test)
+(defcmd skc-bench)
+
 (defcmd skc-rev
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:hg (progn
            (let ((proc (run-hg-command "id" (list "-i") :stream)))
-             (copy-stream (process-output proc) *standard-output*)
-             (finish-output))))
+             (println (read-line (process-output proc))))))
     (:git (progn
             (let ((proc (run-git-command "rev-parse" (list "HEAD") :stream)))
-              (copy-stream (process-output proc) *standard-output*)
-              (finish-output))))
+              (println (read-line (process-output proc))))))
     (t (skel-error "unknown VC type"))))
 
 (defun sk-slot-case (sel)
@@ -244,6 +254,39 @@
 	  (:name run
 	   :description "run a script or command"
            :thunk skc-run)
+          (:name compile
+           :description "compile source code"
+           :thunk skc-compile)
+          (:name build
+           :description "build programs and libraries"
+           :thunk skc-build)
+          (:name dist
+           :description "distribute build artifacts"
+           :thunk skc-dist)
+          (:name install
+           :description "install stuff"
+           :thunk skc-install)
+          (:name pack
+           :description "pack stuff"
+           :thunk skc-pack)
+          (:name unpack
+           :description "unpack stuff"
+           :thunk skc-unpack)
+          (:name bundle
+           :description "bundle source code"
+           :thunk skc-bundle)
+          (:name unbundle
+           :description "unbundle source code"
+           :thunk skc-unbundle)
+          (:name clean
+           :description "clean up the project"
+           :thunk skc-clean)
+          (:name test
+           :description "run tests"
+           :thunk skc-test)
+          (:name bench
+           :description "run benchmark"
+           :thunk skc-bench)
           (:name status
            :description "print the vc status"
            :thunk skc-status)
