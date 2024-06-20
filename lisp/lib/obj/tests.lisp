@@ -173,8 +173,15 @@
 
 (deftest avl-tree ())
 
-(deftest graph ())
-
+(deftest graph ()
+  (let ((g1 (make-instance 'graph:graph)))
+    (is (typep g1 'graph:graph))
+    (graph:add-node g1 :foo)
+    (graph:add-node g1 :bar)
+    (graph:add-edge g1 '(:foo :bar))
+    (graph:add-edge g1 '(:bar :foo))
+    (is (= 1 (length (graph:node-edges g1 :foo))))))
+  
 ;; TODO 2023-12-17: 
 (deftest uris ()
   "Tests for different types of URIs. Attempts to conform with RFCs and test suites."

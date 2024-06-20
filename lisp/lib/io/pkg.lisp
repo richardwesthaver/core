@@ -29,7 +29,7 @@
 (defpackage :io/socket
   (:use :cl :io/proto)
   (:import-from :std :deferror :eval-always)
-  (:export :io-socket-error :io-socket))
+  (:export :io-socket-error :io-socket :sockopt-receive-timeout))
 
 (defpackage :io/flate
   (:use :cl :io/proto)

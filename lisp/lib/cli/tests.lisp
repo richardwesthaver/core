@@ -672,9 +672,8 @@ Eastern Mediterranean ████████████████▊
 
 (deftest main-output ()
   (let ((*test-target* nil))
-    (defmain (:return *test-target* :exit nil :export nil)
-      (let ((*test-target* t))
-        *test-target*))
-    (compile 'main)
-    (is (main))
+    (compile (defmain (:return *test-target* :exit nil :export nil)
+               (let ((*test-target* t))
+                 *test-target*)))
+    (is (funcall 'main))
     (is (null *test-target*))))

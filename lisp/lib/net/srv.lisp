@@ -12,17 +12,25 @@
 ;; In other words we want to support both these use-cases in the least amount
 ;; of code:
 #|
-(srv:start (srv:file-server)) ;; start a simple HTTP file server in current directory with all default values
+(srv:start (srv:file-server)) ;; start a simple HTTP file server in current
+                              ;; directory with all default values
 
-(srv:define-service my-homepage :port 8080 :auth (auth settings ...) :routes (routes ...) &more ...)
-(with-ws (ws 'my-homepage)
-  (srv:start ws))
+(srv:define-service my-homepage (:port 8080
+                                 :auth (auth settings ...)
+                                 :routes (routes ...)
+                                 &more ...)
+ (with-ws (ws 'my-homepage)
+  (srv:start ws)))
 |#
 
 ;;; Code:
 (in-package :net/srv)
 
-;;; Errors
+;;; Vars
+(defvar *router*)
+(defvar *acceptor*)
+
+;;; Conditions
 ;; from hunchentoot
 (define-condition srv-error () ())
 
@@ -47,9 +55,9 @@
     (start-service self)))
 
 (defgeneric add-route (self uri handler &key &allow-other-keys))
+(defgeneric delete-route (self uri &key &allow-other-keys))
 
-(defvar *routes*)
-(defvar *dispatch-table*)
+;;; Router
 
 ;;; Macros
 (defmacro define-service (name &rest initargs)

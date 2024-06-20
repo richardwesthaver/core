@@ -1121,18 +1121,18 @@ keep-alive-stream), and should handle clean-up of it"
                                                          ssl-cert-file)
                                        :password ssl-key-password)))))
 
-(defstruct usocket-wrapped-stream
+(defstruct %wrapped-stream
   stream)
 
 ;; Forward methods the user might want to use on this.
 ;; User is not meant to interact with this object except
 ;; potentially to close it when they decide they don't
 ;; need the :keep-alive connection anymore.
-(defmethod close ((u usocket-wrapped-stream) &key abort)
-  (close (usocket-wrapped-stream-stream u) :abort abort))
+(defmethod close ((u %wrapped-stream) &key abort)
+  (close (%wrapped-stream-stream u) :abort abort))
 
-(defmethod open-stream-p ((u usocket-wrapped-stream))
-  (open-stream-p (usocket-wrapped-stream-stream u)))
+(defmethod open-stream-p ((u %wrapped-stream))
+  (open-stream-p (%wrapped-stream-stream u)))
 
 (defun request (uri &rest args
                             &key (method :get) (version 1.1)
@@ -1153,7 +1153,7 @@ keep-alive-stream), and should handle clean-up of it"
                             &aux
                             (proxy-uri (and proxy (obj/uri:uri proxy)))
                             (original-user-supplied-stream stream)
-                            (user-supplied-stream (if (usocket-wrapped-stream-p stream) (usocket-wrapped-stream-stream stream) stream)))
+                            (user-supplied-stream (if (%wrapped-stream-p stream) (%wrapped-stream-stream stream) stream)))
   (declare (ignorable ssl-key-file ssl-cert-file ssl-key-password
                       connect-timeout)
            (type real version)
@@ -1171,8 +1171,7 @@ keep-alive-stream), and should handle clean-up of it"
                         (scheme (uri-scheme uri)))
                    (declare (type keyword scheme))
                    (when read-timeout
-                     #+lispworks(setf (stream:stream-read-timeout stream) read-timeout)
-                     #-lispworks(setf (usocket:socket-option connection :receive-timeout) read-timeout))
+                     (setf (io/socket:sockopt-receive-timeout connection) read-timeout)) ;; TODO 2024-06-19: test
                    (when (socks5-proxy-p proxy-uri)
                      (ensure-socks5-connected stream stream uri method))
                    (if (string= (symbol-name scheme) "HTTPS")
@@ -1532,15 +1531,15 @@ keep-alive-stream), and should handle clean-up of it"
                                            (not (equalp (gethash "connection" response-headers) "close"))
                                            (or (not use-connection-pool) user-supplied-stream))
                                   (or (and original-user-supplied-stream ;; user provided a stream
-					   (if (usocket-wrapped-stream-p original-user-supplied-stream) ;; but, it came from us
-					       (eql (usocket-wrapped-stream-stream original-user-supplied-stream) stream) ;; and we used it
+					   (if (%wrapped-stream-p original-user-supplied-stream) ;; but, it came from us
+					       (eql (%wrapped-stream-stream original-user-supplied-stream) stream) ;; and we used it
 					       (eql original-user-supplied-stream stream)) ;; user provided a bare stream
 					   original-user-supplied-stream) ;; return what the user sent without wrapping it
                                       (if want-stream ;; add a finalizer to the body to close the stream
                                           (progn
                                             (trivial-garbage:finalize body (lambda () (close stream)))
                                             stream)
-                                          (let ((wrapped-stream (make-usocket-wrapped-stream :stream stream)))
+                                          (let ((wrapped-stream (make-%wrapped-stream :stream stream)))
                                             (trivial-garbage:finalize wrapped-stream (lambda () (close stream)))
                                             wrapped-stream)))))))
                  (finalize-connection stream (gethash "connection" response-headers) uri)))))))))))

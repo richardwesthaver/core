@@ -29,7 +29,7 @@ that a vertex always carries an ID slot."))
 
 ;;; Edge
 (defclass edge (node)
-  (a b)
+  ((a :initarg :in) (b :initarg :out))
   (:documentation "generic edge mixin. Compatible with the NODE and ID protocols."))
 
 (defclass edgex (edge id)
@@ -63,6 +63,7 @@ Return the old value of EDGE."))
 Delete and return the old edges of NODE in GRAPH."))
 
 (defgeneric add-node (graph node))
+
 (defgeneric add-edge (graph edge &optional value))
 
 ;;; Graph
@@ -128,6 +129,8 @@ to a new equality test specified with TEST."
   (:documentation "Delete NODE from GRAPH.
 Delete and return the old edges of NODE in GRAPH."))
 
+(defgeneric has-node-p (graph node)
+  (:documentation "Return non-nil if GRAPH has node NODE."))
 (defgeneric has-edge-p (graph edge)
   (:documentation "Return `true' if GRAPH has edge EDGE."))
 
@@ -152,6 +155,9 @@ Delete and return the old edges of NODE in GRAPH."))
   (multiple-value-bind (value included) (gethash edge (edges graph))
     (declare (ignorable value)) included))
 
+(defmethod has-node-p ((graph graph) node)
+  (multiple-value-bind (value included) (gethash node (nodes graph))
+    (declare (ignorable value)) included))
 (defmethod delete-node ((graph graph) node)
   (prog1 (mapcar (lambda (edge) (cons edge (delete-edge graph edge)))
                  (node-edges graph node))
@@ -168,7 +174,7 @@ Delete and return the old edges of NODE in GRAPH."))
 (defmethod node-edges ((graph graph) node)
   (multiple-value-bind (edges included) (gethash node (nodes graph))
     (assert included (node graph) "~S doesn't include ~S" graph node)
-    (copy-tree edges)))
+    edges))
 
 (defmethod (setf node-edges) (new (graph graph) node)
   (prog1 (mapc {delete-edge graph} (gethash node (nodes graph)))
@@ -236,6 +242,22 @@ EDGE2 will be combined."))
 
 (defmethod degree ((graph graph) node)
   (length (node-edges graph node)))
+
+(defmethod add-node ((graph graph) node)
+  ;; NOTE: This limitation on the types of node simplifies the
+  ;;       equality tests, and the use of nodes as hash keys
+  ;;       throughout the remainder of this library.  In fact the
+  ;;       addition of type-annotations around node quality operations
+  ;;       may improve performance.  The desire for more complex node
+  ;;       structures, may often be met by maintaining a hash table
+  ;;       outside of the graph which maps graph nodes to the more
+  ;;       complex object related to the node.
+  (assert (or (numberp node) (symbolp node)) (node)
+          "Nodes must be numbers, symbols or keywords, not ~S.~%Invalid node:~S"
+   (type-of node) node)
+  (unless (has-node-p graph node)
+    (setf (gethash node (nodes graph)) nil)
+    node))
 
 ;;; Directed Graph
 (defclass directed-graph (graph)
