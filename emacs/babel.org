@@ -30,7 +30,7 @@ cd $dir && cat * | wc -w
 
 ** tokei-dir-lines
 #+name: tokei-dir-lines
-#+begin_src shell :var src=(org-sbe org-current-heading-title) :results output replace
+#+begin_src shell :var src=(org-sbe org-current-h1-title) :results output replace
   cd ~/comp/$src
   input=`tokei -C -o json`
   echo $input | jq -r '.["Total"] | .code, .comments, .blanks'
@@ -38,7 +38,7 @@ cd $dir && cat * | wc -w
 
 ** tokei-dir-langs
 #+name: tokei-dir-langs
-#+begin_src shell :var src=(org-sbe org-current-heading-title) :results output replace
+#+begin_src shell :var src=(org-sbe org-current-h1-title) :results output replace
   cd ~/comp/$src
   input=`tokei -C -o json`
   echo $input | jq -r '.["Total"].children | keys[]'
@@ -114,17 +114,17 @@ cd $dir && cat * | wc -w
 ** make-info-tbl
 #+name: make-info-tbl
 #+header: :var version="0.1.0"
-#+header: :var name=(org-sbe org-current-heading-title)
+#+header: :var name=(org-sbe org-current-h1-title)
 #+header: :var dir="/home/ellis/comp/"
 #+begin_src emacs-lisp :results table replace :eval no-export 
   (let* ((src (concat dir name))
-         (age (org-sbe hg-log-age ''(dir src)))
-         (rev (org-sbe hg-rev ''(dir src)))
-         (num (org-sbe hg-id-num ''(dir src)))
+         (age (org-sbe "hg-log-age" ''(dir src)))
+         (rev (org-sbe "hg-rev" ''(dir src)))
+         (num (org-sbe "hg-id-num" ''(dir src)))
          (cc1 (org-sbe "tokei-dir-lines" ''((dir src))))
          (cc2 (org-sbe "tokei-dir-langs" ''((dir src))))
          (nf (format "[[comp:/docs/%s][%s]]" name name))
-         (rf (format "[[https://hg.rwest.io/%s/rev/%s][%s:%s]]" name rev num rev))
+         (rf (format "[[vc:comp/%s][%s:%s]]" name num rev))
          ;; (gf (format "[[https://github.com/richardwesthaver/%s][github]]" name))
          (vf (format "%s" rf))
          (lsum (org-sbe sum-str-nums ('s 'cc1)))
@@ -141,13 +141,13 @@ cd $dir && cat * | wc -w
       hline))
   #+end_src
 
-  #+RESULTS: meta-make-info-tbl
+  #+RESULTS: make-info-tbl
   |---------+---------------------------|
-  | name    | [[https://rwest.io/m#org][org]]                       |
-  | version | alpha-0.1                 |
-  | vc      | [[https://hg.rwest.io/org/rev/4de12ceca1c7][36+:4de12ceca1c7]]          |
-  | updated | 3 days ago                |
-  | lines   | 10218 = λ:9386 #:44 _:788 |
+  | name    | [[https://compiler.company//docs/org][org]]                       |
+  | version | 0.1.0                     |
+  | vc      | [[https://vc.compiler.company/comp/org][36+:4de12ceca1c7]]          |
+  | updated | 4 days ago                |
+  | lines   | 10242 = λ:9409 #:44 _:789 |
   | langs   | (Html Org Svg)            |
   |---------+---------------------------|
 
@@ -158,23 +158,26 @@ cd $dir && cat * | wc -w
 #+end_src
 
 ** make-files-tbl
-#+name: meta-ls-files
-#+begin_src sh :results silent :var a=(expand-file-name "~/comp") b=(org-sbe org-current-heading-title)
-  ls -lh $a/$b --time-style=long-iso \
+#+name: ls-files
+#+begin_src sh :results silent :var dir=(expand-file-name "~/comp") name=(org-sbe org-current-h1-title)
+  ls -lh $dir/$name --time-style=long-iso \
     |awk '{if (NR!=1) print $8, $5, $6"-"$7}' \
     |awk 'BEGIN{print "file size updated"}{print $0}'
 #+end_src
 
-#+name: meta-make-files-tbl
-#+begin_src python :var tab=meta-ls-files() :results table :colnames yes :hlines yes :exports results :eval no-export
+#+name: make-files-tbl
+#+begin_src python :var tab=ls-files() :results table :colnames yes :hlines yes :exports results :eval no-export
 return tab
 #+end_src
 
 ** org-current-h1-title
-#+name: org-current-heading-title
+#+name: org-current-h1-title
 #+begin_src emacs-lisp :results value
   (org-element-property :title (save-excursion (org-up-heading-safe) (org-element-at-point)))
 #+end_src
+
+#+RESULTS: org-current-h1-title
+: org
 
 * emacs
 ** get-emacs-version
@@ -187,21 +190,30 @@ return tab
 * vc
 ** hg-rev
 #+name: hg-rev
-#+begin_src sh :var src=(org-sbe org-current-heading-title)
+#+begin_src sh :var src=(org-sbe org-current-h1-title)
 cd ~/comp/$src && hg log -l 1 --template '{node|short}'
 #+end_src
 
+#+RESULTS: hg-rev
+: 4de12ceca1c7
+
 ** hg-id-num
 #+name: hg-id-num
-#+begin_src shell :var src=(org-sbe org-current-heading-title)
+#+begin_src shell :var src=(org-sbe org-current-h1-title)
 cd ~/comp/$src && hg id -n
 #+end_src
 
+#+RESULTS: hg-id-num
+: 36+
+
 ** hg-log-age
 #+name: hg-log-age
-#+begin_src shell :results output :var src=(org-sbe org-current-heading-title)
+#+begin_src shell :var src=(org-sbe org-current-h1-title)
   cd ~/comp/$src && hg log -l1 --template "{date|age}"
 #+end_src
+
+#+RESULTS: hg-log-age
+: 4 days ago
 
 * sh
 ** sh-ob-tangle
