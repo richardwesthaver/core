@@ -10,6 +10,7 @@
 (deftest bytes ())
 
 (deftest dot ()
+  "Test Graphviz DOT functionality."
   (let ((g1 (make-instance 'graph:graph)))
     (graph:add-node g1 "foo")
     (graph:add-node g1 :bar)
@@ -22,7 +23,15 @@
     (is (probe-file "/tmp/test"))
     (is (delete-file "/tmp/test"))))
 
-(deftest csv ())
+(deftest csv ()
+  "Test CSV functionality."
+  (is
+   (not
+    (sequence:emptyp 
+     (with-output-to-string (str)
+       (dat/csv:write-csv-stream
+        str
+        #(#(1 2 3 4) #(2 3 4 5) #(3 4 5 6))))))))
 
 (deftest json ()
   (let ((str (format nil "[~s,2,true,null]" "Hello, world!"))

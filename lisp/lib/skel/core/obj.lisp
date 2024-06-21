@@ -128,6 +128,7 @@ via the special form stored in RECIPE."))
            (mapcar
             (lambda (src)
               (if-let* ((sr (sk-find-rule src obj)))
+                 ;; check if we need to rerun sources
                 (sk-make obj sr)
                 (warn! "unhandled source:" src "for rule:" rule)))
             sources))

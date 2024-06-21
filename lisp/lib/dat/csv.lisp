@@ -52,7 +52,7 @@ Elements can be any types"
   (loop for l across table
         do (write-csv-line l :stream stream :delimiter delimiter))
   (write-char #\newline stream)
-  '(ok))
+  nil)
 
 (defun write-csv-file (filename table &key (external-format *csv-default-external-format*) (delimiter *csv-separator*))
   "Accept a filename and a table and output the table as csv form to the file.

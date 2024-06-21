@@ -17,12 +17,21 @@
 (defmethod print-object ((self system-documentation) stream)
   (with-slots (system) self
     (print-unreadable-object (self stream :type t)
-      (format stream "~S" (component-name system)))))
+      (format stream "~A" (component-name system)))))
 
 (defmethod doc-files ((self system-documentation))
   "Return a list of source file components from SELF."
-  (mapcar #'component-pathname (component-children (doc-system self))))
+  (flet ((%rec (s) (if (typep s 'asdf:module)
+                       (doc-files s)
+                       (component-pathname s))))
+    (flatten (mapcar #'%rec (component-children (doc-system self))))))
 
+(defmethod doc-files ((self asdf:module))
+  (flet ((%rec (s) (if (typep s 'asdf:module)
+                       (doc-files s)
+                       (component-pathname s))))
+    (mapcar #'%rec (component-children self))))
+  
 ;; TODO: to do this correctly we need to also check if SELF is a
 ;; prefix of a different system name. e.g. "DOC" and "DOC-UTILS"
 

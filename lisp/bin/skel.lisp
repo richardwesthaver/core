@@ -61,17 +61,28 @@
 (defcmd skc-id
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
-(defcmd skc-compile)
-(defcmd skc-build)
-(defcmd skc-dist)
-(defcmd skc-install)
-(defcmd skc-pack)
-(defcmd skc-unpack)
-(defcmd skc-bundle)
-(defcmd skc-unbundle)
-(defcmd skc-clean)
-(defcmd skc-test)
-(defcmd skc-bench)
+(defcmd skc-compile ()
+  (sk-call *skel-project* :compile))
+(defcmd skc-build ()
+  (sk-call *skel-project* :build))
+(defcmd skc-dist ()
+  (sk-call *skel-project* :dist))
+(defcmd skc-install ()
+  (sk-call *skel-project* :install))
+(defcmd skc-pack ()
+  (sk-call *skel-project* :pack))
+(defcmd skc-unpack ()
+  (sk-call *skel-project* :unpack))
+(defcmd skc-bundle ()
+  (sk-call *skel-project* :bundle))
+(defcmd skc-unbundle ()
+  (sk-call *skel-project* :unbundle))
+(defcmd skc-clean ()
+  (sk-call *skel-project* :clean))
+(defcmd skc-test ()
+  (sk-call *skel-project* :test))
+(defcmd skc-bench ()
+  (sk-call *skel-project* :bench))
 
 (defcmd skc-rev
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
@@ -157,7 +168,8 @@
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
     (sb-ext:enable-debugger)
-    (setq *no-exit* t)
+    (print $args)
+    ;; (setq *no-exit* t)
     (if $args
         (loop for a in $args
               do (debug!

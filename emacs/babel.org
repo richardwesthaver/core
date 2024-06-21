@@ -112,8 +112,8 @@ cd $dir && cat * | wc -w
 #+end_src
 
 ** make-info-tbl
-#+name: meta-make-info-tbl
-#+header: :var version="alpha-0.1"
+#+name: make-info-tbl
+#+header: :var version="0.1.0"
 #+header: :var name=(org-sbe org-current-heading-title)
 #+header: :var dir="/home/ellis/comp/"
 #+begin_src emacs-lisp :results table replace :eval no-export 
@@ -123,10 +123,10 @@ cd $dir && cat * | wc -w
          (num (org-sbe hg-id-num ''(dir src)))
          (cc1 (org-sbe "tokei-dir-lines" ''((dir src))))
          (cc2 (org-sbe "tokei-dir-langs" ''((dir src))))
-         (nf (format "[[https://rwest.io/m#%s][%s]]" name name))
+         (nf (format "[[comp:/docs/%s][%s]]" name name))
          (rf (format "[[https://hg.rwest.io/%s/rev/%s][%s:%s]]" name rev num rev))
-         (gf (format "[[https://github.com/richardwesthaver/%s][github]]" name))
-         (vf (format "%s, %s" rf gf))
+         ;; (gf (format "[[https://github.com/richardwesthaver/%s][github]]" name))
+         (vf (format "%s" rf))
          (lsum (org-sbe sum-str-nums ('s 'cc1)))
          (l (split-string cc1))
          (lang (split-string cc2))
@@ -140,6 +140,16 @@ cd $dir && cat * | wc -w
       (langs ,lang)
       hline))
   #+end_src
+
+  #+RESULTS: meta-make-info-tbl
+  |---------+---------------------------|
+  | name    | [[https://rwest.io/m#org][org]]                       |
+  | version | alpha-0.1                 |
+  | vc      | [[https://hg.rwest.io/org/rev/4de12ceca1c7][36+:4de12ceca1c7]]          |
+  | updated | 3 days ago                |
+  | lines   | 10218 = λ:9386 #:44 _:788 |
+  | langs   | (Html Org Svg)            |
+  |---------+---------------------------|
 
 ** make-includes
 #+name: meta-make-includes
@@ -226,6 +236,19 @@ digraph {
   }
 #+end_src
 
+* lisp
+** user-slime
+#+name: user-slime
+#+begin_src emacs-lisp :results silent
+  (unless (slime-connected-p) (slime))
+  (slime-eval '(ql:quickload :user))
+#+end_src
+** std-slime
+#+name: std-slime
+#+begin_src emacs-lisp :results silent
+  (slime)
+  (slime-eval '(ql:quickload :std))
+#+end_src
 
 * rust
 ** cargo-update-dir

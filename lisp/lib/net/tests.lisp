@@ -119,3 +119,5 @@ Cookie: name=wookie
 (deftest fetch ())
 
 (deftest cookies ())
+
+(deftest srv ())

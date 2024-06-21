@@ -29,17 +29,30 @@
 ;;; Vars
 (defvar *router*)
 (defvar *acceptor*)
+(defvar *handlers*)
 
 ;;; Conditions
 ;; from hunchentoot
-(define-condition srv-error () ())
+(define-condition srv-condition (condition) ())
+(deferror srv-error (srv-condition error) () (:auto t))
+(deferror srv-simple-error (srv-error simple-condition) () (:auto t))
 
-(define-condition srv-simple-error (srv-error simple-condition) ())
+(define-condition srv-warning (srv-condition warning) ())
+(define-condition srv-simple-warning-warning (srv-warning simple-condition) ())
 
-(defun srv-simple-error (format-control &rest format-arguments)
-  (error 'srv-simple-error
-         :format-control format-control
-         :format-arguments format-arguments))
+(deferror bad-request (srv-error))
+
+;;; Utils
+(eval-when (:load-toplevel :compile-toplevel :execute)
+  (defun default-web-directory (&optional sub-directory)
+    (let ((source-directory #.(or *compile-file-truename* *load-truename*)))
+      (merge-pathnames (make-pathname :directory (append (pathname-directory source-directory)
+                                                         (list "www")
+                                                         (when sub-directory
+                                                           (list sub-directory)))
+                                      :name nil
+                                      :type nil
+                                      :defaults source-directory)))))
 
 ;;; Protocol
 (defgeneric start-service (self)
@@ -58,6 +71,25 @@
 (defgeneric delete-route (self uri &key &allow-other-keys))
 
 ;;; Router
+
+;;; Service
+(defclass service (obj/id:id)
+  ((address)
+   (request-class)
+   (response-class)
+   (task-pool)
+   (read-timeout)
+   (write-timeout)
+   (home)
+   (connection-max)
+   (chunk-output-p)
+   (chunk-input-p)
+   (socket)
+   (request-count :initform 0)
+   (shutdown-lock :initform (sb-thread:make-mutex :name "shutdown-lock"))
+   (shutdown-queue :initform (sb-thread:make-waitqueue :name "shutdown-queue")))
+  (:default-initargs
+   :id (gensym "SRV")))
 
 ;;; Macros
 (defmacro define-service (name &rest initargs)
