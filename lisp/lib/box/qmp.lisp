@@ -5,6 +5,7 @@
 ;;; Commentary:
 
 ;; ref: https://www.qemu.org/docs/master/interop/qemu-qmp-ref.html
+;; wiki: https://wiki.qemu.org/Documentation/QMP
 
 ;; QEMU is a complex, surprisingly flexible, and at times difficult piece of
 ;; software which is often used via proxy with VirtualBox or Proxmox - as in
@@ -21,3 +22,4 @@
 
 ;;; Code:
 (in-package :box/qmp)
+

@@ -5,6 +5,47 @@
 ;;; Code:
 (in-package :zstd)
 
+(define-alien-enum (zstd-dict-content-type int)
+                   :auto 0
+                   :raw-content 1
+                   :full-dict 2)
+
+(define-alien-enum (zstd-dict-load-method int)
+                   :by-copy 0
+                   :by-ref 1)
+
+(define-alien-enum (zstd-force-ignore-checksum int)
+                   :validate-checksum 0
+                   :ignore-checksum 1)
+
+(define-alien-enum (zstd-ref-multiple-ddicts int)
+                   :ref-single-ddict 0
+                   :ref-multiple-ddicts 1)
+
+(define-alien-enum (zstd-dict-attach-pref int)
+                   :default-attach 0
+                   :force-attach 1
+                   :force-copy 2
+                   :force-load 3)
+
+(define-alien-enum (zstd-literal-compression-mode int)
+                   :auto 0
+                   :huffman 1
+                   :uncompressed 2)
+
+(define-alien-enum (zstd-param-switch int)
+                   :auto 0
+                   :enable 1
+                   :disable 2)
+
+(define-alien-enum (zstd-frame-type int)
+                   :frame 0
+                   :skippable-frame 1)
+
+(define-alien-enum (zstd-sequence-format int)
+                   :no-block-delimiters 0
+                   :explicit-block-delimiters 1)
+
 ;;; Simple Dictionary API
 (define-alien-routine "ZSTD_compress_usingDict" size-t
   (cctx (* zstd-cctx))

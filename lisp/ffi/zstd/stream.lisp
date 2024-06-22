@@ -10,12 +10,12 @@
 (define-alien-routine "ZSTD_createCStream" (* zstd-cstream))
 (define-alien-routine "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
 
-(define-alien-type zstd-enddirective int)
-;; (enum nil
-;;       (zstd-e-continue 0)
-;;       (zstd-e-flush 1)
-;;       (zstd-e-end 2))
+(define-alien-enum (zstd-enddirective int :default :error :test eq)
+                   :e-continue 0
+                   :e-flush 1
+                   :e-end 2)
 
+(define-alien-variable "ZSTD_frameParameters" int)
 (define-alien-routine "ZSTD_compressStream2" size-t
   (cctx (* zstd-cctx))
   (output (* zstd-outbuffer))

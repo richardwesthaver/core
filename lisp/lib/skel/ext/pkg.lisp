@@ -3,7 +3,10 @@
   (:export))
 
 (defpackage :skel/ext/net
-  (:use :cl :std :skel :net/sans-io :dat/proto :obj/id)
+  (:use :cl :std :skel
+   :dat/proto :obj/id :net/proto/dns :net/srv
+   :net/core :net/udp :net/tcp :net/codec/dns
+   :net/codec/tlv)
   (:export))
 
 ;; requires clouseau

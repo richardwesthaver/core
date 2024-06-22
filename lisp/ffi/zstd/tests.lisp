@@ -61,7 +61,7 @@
                                          (* (unsigned 8)))
                                    out-array
                                    (zstd::zstd-outbuffer-size out))
-          ;; (is (zerop (zstd-compressstream2 cst out in 0)))
+          ;; (is (zerop (zstd-compressstream2 cst out in (sb-alien::alien-value zstd::zstd-e-flush)))
           (zstd-decompressstream dst out in)
           (is (string-equal
                (cast (zstd::zstd-inbuffer-src in)

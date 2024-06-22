@@ -12,7 +12,8 @@
   (:use :cl :std :skel/core/obj :skel/core/proto))
 
 (defpackage :skel/comp/asd
-  (:use :cl :std :skel/core/obj :skel/core/proto)
+  (:use :cl :std :skel/core/obj :skel/core/proto :asdf)
+  (:shadow :circular-dependency)
   (:export :sk-asd))
 
 (defpackage :skel/comp/dir-locals

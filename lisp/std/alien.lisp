@@ -124,6 +124,57 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 (defun bool-to-foreign-int (val)
   (if val 1 0))
 
+
+(define-condition invalid-enum-variant (simple-error) ())
+(define-condition invalid-enum-value (simple-error) ())
+
+(defun invalid-enum-variant (var enum)
+  (error 'invalid-enum-variant
+         :format-control "~A is not a variant of enum ~A"
+         :format-arguments (list var enum)))
+
+(defun invalid-enum-value (var enum)
+  (error 'invalid-enum-value
+         :format-control "~A is not a value associated with a variant of enum ~A"
+         :format-arguments (list var enum)))
+
+
+(defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &rest forms)
+  "Define a pseudo-enum type, used to work-around difficulties working with
+SB-ALIEN, groveller, typedef enums, etc.
+
+NAME specified the name of the alien-type and keyword-based lookup
+function. Additionally a NAME* reverse-lookup function is provided.
+
+Two hash-tables are defined in the environment of the accessor functions
+containing the variants. These are technically exposed anaphors
+%lisp-enum-table and %lisp-enum-table*."
+  (setf forms (loop for (k . v) on forms by #'cddr
+                    collect (cons k v)))
+  (with-gensyms (val)
+    (let ((%lisp-enum-table (make-hash-table :test test :size (length forms)))
+          (%lisp-enum-table* (make-hash-table :test 'equal :size (length forms)))) ; TODO: may want this to be EQL,
+                                                                                   ; taking strings for now.
+      (mapc (lambda (x) (setf (gethash (car x) %lisp-enum-table) (cadr x))) forms)
+      (mapc (lambda (x) (setf (gethash (cadr x) %lisp-enum-table*) (car x))) forms)
+      `(progn
+         (define-alien-type ,name ,type)
+         (defun ,name (,val)
+           ,(format nil "Given a keyword naming a variant of ~A, return the associated value." name)
+           (let ((found (gethash ,val ,%lisp-enum-table ,default)))
+             ,@(when (eql default :error)
+                 `((when (eql found :error) (invalid-enum-variant ,val ',name))))
+             found))
+         (defun ,(symbolicate name '*) (,val)
+           ,(format nil "Given a ~A, check that it is equal to one of the variants of ~A and return
+it. This function returns a second value which indicates the name of the
+variant associated with this value." type name)
+           (std:when-let ((found (gethash ,val ,%lisp-enum-table*
+                                          ,default)))
+             ,@(when (eql default :error)
+                 `((when (eql found :error) (invalid-enum-value ,val ',name))))
+             (values ,val found)))))))
+
 (defun num-cpus ()
   "Return the number of CPU threads online."
   (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln))

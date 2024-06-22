@@ -404,6 +404,10 @@ via the special form stored in RECIPE."))
               (setf (slot-value self s) v))) ;; needs to be correct package
           (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
           (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
+          ;; DOCS
+          (when-let ((docs (sk-docs self)))
+            (setf (sk-docs self) (map 'vector (lambda (d) (apply #'make-sk-document d)) docs)))
+          ;; SCRIPTS
           (if (bound-string-p self 'scripts)
               (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
                 (setf (sk-scripts self)
@@ -411,10 +415,9 @@ via the special form stored in RECIPE."))
                           (find-files path)
                           (list path)))
                 (debug! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
-          (when-let ((docs (sk-docs self)))
-            (setf (sk-docs self) (map 'vector (lambda (d) (apply #'make-sk-document d)) docs)))
           (when-let ((scripts (sk-scripts self)))
             (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
+          ;; ENV
           (when-let ((env (sk-env self)))
             (setf (sk-env self) (mapcar
                                  (lambda (e)
@@ -428,17 +431,20 @@ via the special form stored in RECIPE."))
                                      (list
                                       (cons (sb-int:keywordicate (car e)) (cadr e)))))
                                  env)))
+          ;; RULES
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self) (map 'vector
                                        (lambda (x)
                                          (destructuring-bind (target source &rest recipe) x
                                            (make-sk-rule target source recipe)))
                                        rules)))
+          ;; VC
           (when-let ((vc (sk-vc self)))
             (etypecase vc
               ((or sk-vc-meta null) nil)
               (vc-designator (setf (sk-vc self) (make-sk-vc-meta vc)))
               (list (setf (sk-vc self) (apply #'make-sk-vc-meta vc)))))
+          
           (unless *keep-ast* (setf (ast self) nil))
           (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
           self)

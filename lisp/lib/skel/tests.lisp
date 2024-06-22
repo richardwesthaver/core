@@ -97,3 +97,6 @@ endif")
   (let ((vm (make-sk-vm 1)))
     (is (sks-pop vm))
     (signals simple-error (sks-pop vm))))
+
+(deftest asd ()
+  (let ((sk (make-instance 'sk-project :components '((:lisp "test")))))))

@@ -97,6 +97,45 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
     (:auto t)
     (:documentation "Error signaled from the Zstd C API."))
 
+;; found in zstd_errors.h
+(define-alien-enum (zstd-errorcode int)
+                   :no-error 0
+                   :generic 1
+                   :prefix-unknown 10
+                   :version-unsupported 12
+                   :frameparameter-unsupported 14
+                   :frameparameter-windowtoolarge 16
+                   :corruption-detected 20
+                   :checksum-wrong 22
+                   :literals-headerwrong 24
+                   :dictionary-corrupted 30
+                   :dictionary-wrong 32
+                   :dictionarycreation-failed 34
+                   :parameter-unsupported 40
+                   :parameter-combination-unsupported 41
+                   :parameter-outofbound 42
+                   :tablelog-toolarge 44
+                   :maxsymbolvalue-toolarge 46
+                   :maxsymbolvalue-toosmall 48
+                   :stabilitycondition-notrespected 50
+                   :stage-wrong 60
+                   :init-missing 62
+                   :memory-allocation 64
+                   :workspace-toosmall 66
+                   :dstsize-toosmall 70
+                   :srcsize-wrong 72
+                   :dstbuffer-null 74
+                   :noforwardprogress-destfull 80
+                   :noforwardprogress-inputempty 82
+                   ;; unstable
+                   :frameindex-toolarge 100
+                   :seekableio 102
+                   :dstbuffer-wrong 104
+                   :srcbuffer-wrong 105
+                   :sequenceproducer-failed 106
+                   :externalsequences-invalid 107
+                   :maxcode 120)
+
 ;;; Utils
 (define-alien-routine "ZSTD_versionNumber" unsigned)
 (define-alien-routine "ZSTD_versionString" c-string)
@@ -130,3 +169,69 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
   (dctx (* zstd-dctx))
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (src-size size-t))
+;;; Advanced API
+(define-alien-enum (zstd-strategy int)
+                   :fast 1
+                   :dfast 2
+                   :greedy 3
+                   :lazy 4
+                   :lazy2 5
+                   :btlazy2 6
+                   :btopt 7
+                   :btultra 8
+                   :btultra2 9)
+
+(define-alien-enum (zstd-cparameter int)
+                   :compression-level 100
+                   :window-log 101
+                   :hash-log 102
+                   :chain-log 103
+                   :search-log 104
+                   :min-match 105
+                   :target-length 106
+                   :strategy 107
+                   :target-c-block-size 130
+                   :enable-long-distance-matching 160
+                   :ldm-hash-log 161
+                   :ldm-min-match 162
+                   :ldm-bucket-size-log 163
+                   :ldm-hash-rate-log 164
+                   :content-size-flag 200
+                   :checksum-flag 201
+                   :dict-id-flag 202
+                   :nb-workers 400
+                   :job-size 401
+                   :overlap-log 402
+                   :expiremental1 500
+                   :expiremental2 10
+                   :expiremental3 1000
+                   :expiremental4 1001
+                   :expiremental5 1002
+                   ;; :expiremental6 1003 ;; is now target-c-block-size
+                   :expiremental7 1004
+                   :expiremental8 1005
+                   :expiremental9 1006
+                   :expiremental10 1007
+                   :expiremental11 1008
+                   :expiremental12 1009
+                   :expiremental13 1010
+                   :expiremental14 1011
+                   :expiremental15 1012
+                   :expiremental16 1013
+                   :expiremental17 1014
+                   :expiremental18 1015
+                   :expiremental19 1016)
+
+(define-alien-enum (zstd-reset-directive int)
+                   :session-only 1
+                   :parameters 2
+                   :session-and-parameters 3)
+
+(define-alien-enum (zstd-dparameter int)
+                   :window-log-max 100
+                   :experimental1 1000
+                   :experimental2 1001
+                   :experimental3 1002
+                   :experimental4 1003                   
+                   :experimental5 1004
+                   :experimental6 1005)

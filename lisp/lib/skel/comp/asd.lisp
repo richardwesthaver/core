@@ -12,7 +12,11 @@
 ;;; Code:
 (in-package :skel/comp/asd)
 
-(defclass sk-lisp-system (skel asdf:system) ())
+(defclass sk-lisp-system (skel asdf:system)
+  ;; these slots are inferred in ASDF:SYSTEM. Since we are primarily concerned
+  ;; with generating ASDF:SYSTEM definitions rather than parsing them we restore them here.
+  ((serial :initform nil :type boolean :accessor sk-lisp-system-serial)
+   (perform :initform nil :type list :accessor sk-lisp-system-perform)))
 
 (defun read-system-definitions (system)
   (with-open-file (file (asdf:system-source-file system))
@@ -22,6 +26,8 @@
 
 (defun to-sk-system (system)
   (let ((sys (change-class system 'sk-lisp-system)))
+    (setf (sk-lisp-system-serial sys) nil
+          (sk-lisp-system-perform sys) nil)
     (id:update-id sys)
     sys))
 
@@ -34,44 +40,60 @@
 (defmethod sk-load ((self sk-lisp-system) &key force force-not verbose version)
   (asdf:load-system self :force force :force-not force-not :verbose verbose :version version))
 
-(defmethod sk-compile ((self sk-lisp-system) stream &key &allow-other-keys))
+;; (defmethod sk-compile ((self sk-lisp-system) stream &key &allow-other-keys))
 
 (defun sk-write-asd-components (module)
   (etypecase module
     (asdf:file-component
-     (list (keywordicate (string-upcase (asdf:file-type module)))
-           (pathname-name (asdf:component-relative-pathname module))))
+     `(,(keywordicate (string-upcase (asdf:file-type module)))
+       ,(pathname-name (asdf:component-relative-pathname module))
+       ,@(when-let ((x (asdf::component-if-feature module)))
+           `(:if-feature ,x))
+       ,@(when-let ((x (asdf::component-depends-on nil module)))
+           `(:depends-on ,x))))
     (asdf:module
-     (list :module
-           (asdf:component-name module)
-           `(,@(when-let ((%c (asdf:module-components module)))
-                 `((:components ,(mapcar #'sk-write-asd-components %c)))))))))
+     `(:module
+       ,(asdf:component-name module)
+       ,@(when-let ((x (asdf::component-if-feature module)))
+           `(:if-feature ,x))
+       ,@(when-let ((x (asdf::component-depends-on nil module)))
+           `(:depends-on ,x))
+       ,@(when-let ((x (asdf:module-components module)))
+           `(:components ,(mapcar #'sk-write-asd-components x)))))))
 
 (defmethod sk-write-file ((self sk-lisp-system) &key path)
   (let ((name (asdf:component-name self)))
-  (with-open-file (s path
-                     :direction :output
-                     :if-does-not-exist :create)
-    (format s ";;; ASDF definition for system ~A~%" name)
-            
-    (format s ";;; Built for ~A ~A on a ~A/~A ~A~%"
-            (lisp-implementation-type)
-            (lisp-implementation-version)
-            (software-type)
-            (machine-type)
-            (software-version))
-    (let ((*package* (find-package :asdf-user))
-          (*print-case* :downcase))
-      (pprint `(defsystem ,name
-                 :class prebuilt-system
-                 :version ,(asdf:component-version self)
-                 :depends-on ,(asdf:system-depends-on self)
-                 :components ,(mapcar #'sk-write-asd-components
-                                      (cdr (asdf:module-components self))))
-              s)
-      (terpri s)))))
+    (with-open-file (s path
+                       :direction :output
+                       :if-does-not-exist :create)
+      (format s ";;; ASDF definition for system ~A" name)
+      (let ((*print-case* :downcase))
+        (pprint `(defsystem ,name
+                   :class sk-lisp-system
+                   ,@(when-let ((x (asdf:component-version self))) `(:version ,x))
+                   ,@(when-let ((x (asdf:system-depends-on self))) `(:depends-on ,x))
+                   ,@(when-let ((x (asdf:system-description self))) `(:description ,x))
+                   ,@(when-let ((x (asdf:system-long-description self))) `(:long-description ,x))
+                   ,@(when-let ((x (asdf:system-author self))) `(:author ,x))
+                   ,@(when-let ((x (asdf:system-maintainer self))) `(:maintainer ,x))
+                   ,@(when-let ((x (asdf:system-mailto self))) `(:mailto ,x))
+                   ,@(when-let ((x (asdf::system-license self))) `(:license ,x))
+                   ,@(when-let ((x (asdf:system-homepage self))) `(:homepage ,x))
+                   ,@(when-let ((x (asdf:system-bug-tracker self))) `(:bug-tracker ,x))
+                   ,@(when-let ((x (asdf:system-source-control self))) `(:source-control ,x))
+                   ,@(when-let ((x (asdf::component-in-order-to self))) `(:in-order-to ,x))
+                   ,@(when-let ((x (asdf::component-build-pathname self))) `(:build-pathname ,x))
+                   ,@(when-let ((x (asdf::component-build-operation self))) `(:build-operation ,x))
+                   ,@(when-let ((x (asdf::component-entry-point self))) `(:entry-point ,x))
+                   ,@(when-let ((x (sk-lisp-system-perform self))) `(:perform ,x))
+                   ,@(when-let ((x (sk-lisp-system-serial self))) `(:serial ,x))
+                   :components ,(mapcar #'sk-write-asd-components
+                                        (asdf:module-components self)))
+                s)
+        (terpri s)))))
 
-;; (sk-write-file (find-sk-system :skel) :path "test")
+;; (sk-write-file (find-sk-system :obj) :path "test")
+;; (describe (parse-sk-system "skel" "/home/ellis/comp/core/lisp/lib/"))
 
 (defmethod sk-read-file ((self sk-lisp-system) path)
   (parse-sk-system (pathname-name path) (pathname-directory path)))

@@ -23,5 +23,5 @@
 
 (defpackage :box/qmp
   (:nicknames :qmp)
-  (:use :cl :std :dat/json :net/sans-io)
+  (:use :cl :std :dat/json :net/srv)
   (:export :*archiso-config* :*archiso-creds*))

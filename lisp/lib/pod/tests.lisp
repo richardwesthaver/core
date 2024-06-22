@@ -12,12 +12,6 @@
 (defsuite :pod)
 (in-suite :pod)
 
-(defmacro with-libpod-client ((cvar &optional c) &body body)
-  `(let ((,cvar ,(or c (make-instance 'libpod-client))))
-     (socket-connect ,cvar)
-     (unwind-protect (progn ,@body)
-       (socket-close ,cvar))))
-
 (deftest podman-api ()
   "Test the podman API over a local unix socket."
   (unless (probe-file *podman-local-user-socket*)

@@ -99,3 +99,9 @@
                       :timeout timeout
                       :auto-close auto-close
                       :serve-events serve-events))
+
+(defmacro with-libpod-client ((cvar &optional c) &body body)
+  `(let ((,cvar ,(or c (make-instance 'libpod-client))))
+     (socket-connect ,cvar)
+     (unwind-protect (progn ,@body)
+       (socket-close ,cvar))))

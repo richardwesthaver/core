@@ -146,6 +146,7 @@
    :foreign-int-to-integer
    :foreign-int-to-bool
    :bool-to-foreign-int
+   :define-alien-enum
    :define-opaque
    :shared-object-name
    :define-alien-loader
