@@ -9,10 +9,10 @@
    :makefile))
 
 (defpackage :skel/comp/cargo
-  (:use :cl :std :skel/core/obj))
+  (:use :cl :std :skel/core/obj :skel/core/proto))
 
 (defpackage :skel/comp/asd
-  (:use :cl :std :skel/core/obj)
+  (:use :cl :std :skel/core/obj :skel/core/proto)
   (:export :sk-asd))
 
 (defpackage :skel/comp/dir-locals

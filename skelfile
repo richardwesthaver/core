@@ -8,7 +8,7 @@
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "rust" "emacs" "c")
 :imports ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
-:vc :hg
+:vc (:hg "https://vc.compiler.company/comp/core")
 :docs ((:org "readme"))
 :scripts ((:lisp "x"))
 :env ((cc "clang"))
