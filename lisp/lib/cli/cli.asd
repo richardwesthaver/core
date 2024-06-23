@@ -13,8 +13,11 @@
                (:module
                 "tools"
                 :components
-                ((:file "tmux")
-                 (:file "pacman")))
+                ((:file "pkg")
+                 (:file "term" :depends-on ("pkg"))
+                 (:file "tmux" :depends-on ("term"))
+                 (:file "pacman" :depends-on ("pkg"))
+                 (:file "cc" :depends-on ("pkg"))))
                ;; (:file "clap" :depends-on ("shell" "prompt"))
                (:module "clap"
                 :components

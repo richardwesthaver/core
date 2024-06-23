@@ -96,7 +96,3 @@
 (defpackage :cli/ed
   (:use :cl :std :cli/env)
   (:export :run-emacs :run-emacsclient :org-store-link))
-
-(defpackage :cli/tmux
-  (:use :cl :std)
-  (:export))  

@@ -31,8 +31,7 @@
            (loop for x across (req:get "https://publicsuffix.org/list/public_suffix_list.dat" :force-binary t)
                  do (write-byte x st))))
  ;; lisp
- (rdb ()
-      #$./x.lisp build rdb$#)
+ (rdb () #$./x.lisp build rdb$#)
  (skel () #$./x.lisp build skel$#)
  (organ () #$./x.lisp build organ$#)
  (homer () #$./x.lisp build homer$#)

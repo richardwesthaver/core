@@ -61,6 +61,9 @@ are missing."))
 
 (defgeneric vc-status (self &key &allow-other-keys))
 
+(defgeneric vc-bundle (self &key &allow-other-keys))
+(defgeneric vc-unbundle (self &key &allow-other-keys))
+
 ;;; Accessors
 (defgeneric vc-path (self))
 (defgeneric vc-head (self))
