@@ -27,16 +27,19 @@
 ;;; Vars
 (defparameter *compression-buffer-size* 4096)
 (defparameter *decompression-buffer-size* 4096)
+(defparameter *default-compression-level* (zstd:zstd-defaultclevel))
+
+(defvar *compression-level*)
 
 ;;; Utils
 
-;;; Proto
-
+;;; Errors
 (eval-always (deferror flate-error () () (:auto t)))
 
 (deferror compression-error (flate-error) () (:auto t))
 (deferror decompression-error (flate-error) () (:auto t))
 
+;;; Proto
 (defgeneric finish-compression (self))
 (defgeneric finish-decompression (self))
 ;; TODO 2024-06-08: maybe move this to generic io/stream protocol - 'RESET'
@@ -47,8 +50,8 @@
 (defgeneric compress-object (self))
 (defgeneric decompress-object (self))
 
-(defgeneric compress (input state output))
-(defgeneric decompress (input state output))
+(defgeneric compress (input output state))
+(defgeneric decompress (input output state))
 
 ;; decompress
 

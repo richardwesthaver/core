@@ -65,7 +65,8 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
    :zstd-versionnumber :zstd-cstreaminsize :zstd-cstreamoutsize :zstd-inbuffer
    :zstd-iserror :zstd-defaultclevel :zstd-compress :zstd-decompress
    :zstd-cstream :zstd-dstream :zstd-compressstream :zstd-decompressstream
-   :zstd-compressstream2 :zstd-outbuffer :zstd-geterrorname :zstd-geterrorcode))
+   :zstd-compressstream2 :zstd-outbuffer :zstd-geterrorname :zstd-geterrorcode
+   :zstdc :zstdd))
 
 (in-package :zstd)
 
@@ -149,6 +150,18 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 (define-alien-routine "ZSTD_minCLevel" int)
 (define-alien-routine "ZSTD_maxCLevel" int)
 (define-alien-routine "ZSTD_defaultCLevel" int)
+
+(define-alien-routine "ZSTD_findFrameCompressedSize" size-t
+  (src (* t))
+  (src-size size-t))
+
+(define-alien-routine "ZSTD_getFrameContentSize" unsigned-long-long
+  (src (* t))
+  (src-size size-t))
+
+(define-alien-routine "ZSTD_decompressBound" unsigned-long-long
+  (src (* t))
+  (src-size size-t))
 
 ;;; Explicit Context API
 (define-alien-type zstd-cctx (struct zstd-cctx-s))

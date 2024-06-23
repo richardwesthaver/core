@@ -35,7 +35,10 @@
                  (src (* (unsigned 8)) (make-alien (unsigned 8) src-size))
                  (clevel int (zstd-defaultclevel)))
       (let ((csize (zstd-compress dst dst-capacity src src-size clevel)))
-        (is (zerop (zstd-iserror (zstd-decompress src src-size dst csize))))))))
+        (is (zerop (zstd-iserror (zstd-decompress src src-size dst csize)))))))
+  (let* ((octets (make-array 4000 :initial-element (random 255)))
+         (compressed (zstd:zstdc octets)))
+    (is (equalp (zstdd compressed) octets))))
 
 (deftest streaming ()
   "Test the Zstd v1 Streaming API."

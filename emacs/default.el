@@ -237,7 +237,6 @@ function: '(ql:quickload :clouseau)'."
                             (:indentation
                              (defpkg (as defpackage))
                              (define-package (as defpackage))))
-  ;; (common-lisp-set-style "core")
   (setq common-lisp-style-default "core")
   ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
   (setq slime-threads-update-interval 1))

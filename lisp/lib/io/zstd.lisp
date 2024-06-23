@@ -24,3 +24,8 @@
 
 (defclass zstd-decompressor (decompressor zstd-input zstd-output)
   ((stream :initform nil :type (or null zstd::zstd-dstream))))
+
+;;; Simple API
+(defmacro with-zstd-output (sym buffer))
+
+(defmacro with-zstd-input ((sym buffer) &body body))
