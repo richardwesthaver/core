@@ -7,7 +7,7 @@
 :store ".store"
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "rust" "emacs" "c")
-:imports ("lisp/skelfile" "rust/skelfile" "emacs/skelfile" "c/skelfile")
+:include ("lisp.sk" "rust.sk" "emacs.sk")
 :vc (:hg "https://vc.compiler.company/comp/core")
 :docs ((:org "readme"))
 :scripts ((:lisp "x"))

@@ -8,7 +8,8 @@
 
 (defpackage :skel/core/types
   (:use :cl :std)
-  (:export :vc-designator :license-designator :script-designator))
+  (:export :vc-designator :license-designator :script-designator
+   :contact-designator))
 
 (defpackage :skel/core/proto
   (:use :cl :std)
@@ -52,7 +53,7 @@
    :dat/sxp :skel/core/header :vc :log)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user
-   :sk-store :sk-push :sk-pull :sk-imports
+   :sk-store :sk-push :sk-pull :sk-include
    :sk-tags :edit-skelrc :sk-target :skel
    :sk-meta :def-sk-class :sk-project :sk-source
    :sk-vc :sk-vars :sk-env :make-sk-rule

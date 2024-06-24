@@ -3,6 +3,12 @@
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
 #+setupfile: https://cdn.compiler.company/org/clean.theme
+- [[comp:docs/core][Docs]]
+  - [[comp:docs/core/install][Install]] :: Install Guide
+  - [[comp:docs/core/tests][Tests]] :: Testing Guide
+  - [[comp:docs/core/stats][Stats]] :: Project Statistics
+
+* Overview
 The Compiler Company (aka CC) is a small software research laboratory
 concerned with the future of Mechanical Freedom.
 
@@ -60,11 +66,19 @@ platform-specific [[https://packy.compiler.company/dist][binary distributions]].
 | Keyutils    | ffi/keyutils           |                                               |      |
 | Mpd         | lib/aud/mpd            | https://vc.compiler.company/packy/mpd         |      |
 
-* Building
+* Build
 The Core consists of two major system: the *lisp* system and the
 *rust* system. There is also an auxiliary *emacs* system containing a
 complete Emacs IDE configuration which serves as the base for user
 customizations.
+
+Building the core will produce its output to the =.stash= directory by
+default. You can then test, run, and install the resulting files or
+package them up to be shipped elsewhere.
+
+The core produces a collection of native program binaries, compiled
+lisp modules in FASL format, as well as web distributions containing
+the usual suspects (html, css, js) as well as wasm modules.
 
 ** From Source
 *** Lisp
@@ -185,6 +199,52 @@ The core contains a collection of Emacs Lisp libraries under =emacs=
 which may be installed for the current user using the corresponding
 Makefile.
 
+** TODO Bootstrap from packy                                   :experimental:
+The following can (maybe someday) be used to bootstrap the core without a full
+lisp compiler.
+#+begin_src shell :results output
+  curl --proto '=https' \
+       --tlsv1.3 \
+       -sSf \
+       https://packy.compiler.company/dist/x86_64-unknown-linux-gnu/bin/sk \
+       --output /tmp/sk
+  chmod +x /tmp/sk
+  /tmp/sk make skel
+#+end_src
+
+#+RESULTS:
+#+begin_example
+This is SBCL 2.4.5, an implementation of ANSI Common Lisp.
+More information about SBCL is available at <http://www.sbcl.org/>.
+
+SBCL is free software, provided as is, with absolutely no warranty.
+It is mostly in the public domain; some portions are provided under
+BSD-style licenses.  See the CREDITS and COPYING files in the
+distribution for more information.
+To load "rt":
+  Load 1 ASDF system:
+    rt
+; Loading "rt"
+
+saving skel to: /home/ellis/comp/core/.stash/skel
+To load "bin/skel":
+  Load 1 ASDF system:
+    bin/skel
+; Loading "bin/skel"
+.........
+[undoing binding stack and other enclosing state... done]
+[performing final GC... done]
+[saving current Lisp image into /home/ellis/comp/core/.stash/skel:
+writing 15984 bytes from the static space at 0x50100000
+writing 339476480 bytes from the dynamic space at 0x1000000000
+writing 12498752 bytes from the read-only space at 0x74232dc00000
+writing 0 bytes from the text space at (nil)
+done]
+#+end_example
+
+* Test
+* Install
+* Dist
 * Programs
 This section lists all program binaries provided by the core.
 ** skel                                                                :lisp:

@@ -1,0 +1,7 @@
+;;; core/lisp skel system
+:name "core/emacs"
+:path "lisp"
+:rules ()
+
+
+

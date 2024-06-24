@@ -1,0 +1,5 @@
+;;; lisp.sk --- core/lisp skelfile -*- mode: skel; -*-
+:name "core/lisp"
+:path "lisp"
+:description "CC Lisp Core"
+:systems ((:lisp "prelude.asd") (:lisp "user.asd") (:lisp "core.asd"))

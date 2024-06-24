@@ -21,11 +21,11 @@
 ;; TODO 2023-09-11: research other hashing strategies - maybe use the
 ;; sxhash as a nonce for UUID
 ;; note that the sk-meta class does not inherit from skel or sxp.
-;;;; Meta
+;;; Meta
 (defclass sk-meta ()
   ((name :initarg :name :initform nil :type (or null string) :accessor sk-name)
    (path :initarg :path :initform nil :type (or null pathname) :accessor sk-path)
-   (author :initform "" :initarg :author :type string :accessor sk-author)
+   (author :initform "" :initarg :author :type contact-designator :accessor sk-author)
    (version :initform "" :initarg :version :type string :accessor sk-version)
    (tags :initform nil :initarg :tags :accessor sk-tags)
    (description :initarg :description :initform nil :type (or null string) :accessor sk-description)
@@ -47,7 +47,156 @@
        (setf (sk-path self) *default-skelfile*))
      self))
 
-;;;; Command
+;;; Script
+(defclass sk-script (skel sk-meta sxp)
+  ((kind :initform nil :initarg :kind :type (or null script-designator) :accessor sk-kind)))
+
+(defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
+  (write `(,(sk-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+
+(defun make-sk-script (script)
+  "Make a new SK-SCRIPT."
+  (apply #'make-instance 'sk-script
+         (if (listp script)
+             (let ((kind (first script))
+                   (path (second script)))
+               (list :path path
+                     :name (pathname-name path)
+                     :kind kind))
+             (list :path script
+                   :name (pathname-name script)
+                   :kind (when-let ((ext (pathname-type script)))
+                           (keywordicate ext))))))
+
+(defmethod sk-run ((self sk-script))
+  (sb-ext:run-program (sk-path self) nil :output t))
+
+(defmethod sk-write ((self sk-script) stream)
+  (with-slots (path) self
+    (write-string path)))
+
+(defmethod print-object ((self sk-script) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A :~A ~A" (format-sxhash (id self)) (sk-kind self) (sk-name self))))
+
+;;; Snippet
+(defstruct sk-snippet
+  (name "" :type string)
+  (form "" :type form))
+;;; Abbrev
+(defstruct sk-abbrev
+  (match nil :type form) 
+  (expansion nil :type form))
+;;; Config
+(defclass sk-config (skel sxp) 
+  ((vc :initform *default-skel-vc-kind* :initarg :vc :type (or vc-designator sk-vc-meta) :accessor sk-vc)
+   (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
+   (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
+   (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
+   (registry :initform *skel-registry* :initarg :registry :type pathname :accessor sk-registry)
+   (scripts :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
+   (license :initarg :license :type license-designator :accessor sk-license)
+   (log-level :initarg :log-level :type log-level-designator)
+   (fmt :initform :pretty :initarg :fmt :type symbol)
+   (alias-list :initarg :alias-list
+               :type (or list vector)
+               :documentation "alist of aliases. currently used as a special cli-opt-parser by the skel binary.")
+   (auto-insert :initform nil :initarg :auto-insert :type form))
+  (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
+
+(declaim (inline bound-string-p sk-dir))
+(defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
+(defun sk-dir (o) (directory-namestring (sk-path o)))
+
+(defmethod load-ast ((self sk-config))
+  ;; internal ast is never tagged
+  (with-slots (ast) self
+    (if (formp ast)
+        ;; ast is valid, modify object, set ast nil
+        (progn
+          (sb-int:doplist (k v) ast
+            (when-let ((s (find-sk-symbol k)))
+              (setf (slot-value self s) v))) ;; needs to be the correct package
+          (when (bound-string-p self 'stash) (setf (sk-stash self) (merge-pathnames (sk-stash self) (sk-dir self))))
+          (when (bound-string-p self 'store) (setf (sk-store self) (merge-pathnames (sk-store self) (sk-dir self))))
+          (when (bound-string-p self 'cache) (setf (sk-cache self) (merge-pathnames (sk-cache self) (sk-dir self))))
+          (when (bound-string-p self 'registry) (setf (sk-registry self) (merge-pathnames (sk-registry self) (sk-dir self))))
+          (when (bound-string-p self 'scripts) (setf (sk-scripts self)
+                                                     ;; TODO 2023-10-14: convert into list of script names
+                                                     (merge-pathnames (sk-scripts self) (sk-dir self))))
+          (unless *keep-ast* (setf (ast self) nil))
+          self)
+        ;; invalid ast, signal error
+        (skel-syntax-error ast))))
+
+(defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id)))
+  (setf (ast self) 
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude)))
+
+(defmethod sk-write-file ((self sk-config) 
+                          &key (path *default-skelfile*) 
+                               (nullp nil) 
+                               (header t) 
+                               (fmt :canonical)
+                               (if-exists :error))
+  (build-ast self :nullp nullp)
+  (prog1 
+      (with-open-file (out path
+                           :direction :output
+                           :if-exists if-exists
+                           :if-does-not-exist :create)
+        (when header (princ
+                      (make-source-header-comment
+                       (sk-name self)
+                       :cchar #\;
+                       :timestamp t
+                       :description (sk-description self)
+                       :opts '("mode:skel;"))
+                      out))
+        (write-sxp-stream self out :fmt fmt))
+    (unless *keep-ast* (setf (ast self) nil))))
+
+(defmethod write-sxp-stream ((self sk-config) stream &key (pretty t) (case :downcase) (fmt :pretty))
+  (case fmt
+    (:pretty
+     (if (listp (ast self))
+         (with-open-stream (st stream)
+           (loop for (k v . rest) on (ast self)
+                 by #'cddr
+                 unless (or (null v) (null k))
+                 do 
+                    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
+                    (write-char #\space st)
+                    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
+                        (write-sxp-stream v stream :fmt fmt)
+                        (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
+                    (write-char #\newline st)))
+         (error 'sxp-fmt-error)))
+    (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
+
+(defclass sk-system-config (sk-config sk-meta) ())
+
+(defun default-sk-system-config ()
+  (make-instance 'sk-system-config))
+
+(defclass sk-user-config (sk-config sk-meta)
+  ((user :initarg :user :type string :accessor sk-user)
+   (name :initarg :name :type string :accessor sk-name)
+   (email :initarg :email :type string :accessor sk-email))
+  (:documentation "User configuration object, typically written to ~/.skelrc."))
+
+(defun default-sk-user-config () (make-instance 'sk-user-config))
+
+(declaim (type sk-user-config *skel-user-config*))
+(declaim (type sk-system-config *skel-system-config*))
+(defvar *sk-user-config* (default-sk-user-config))
+(defvar *sk-system-config* (default-sk-system-config))
+
+;;; Command
 (defclass sk-command (skel)
   ((body :initform nil :initarg :body :type (or form function) :accessor sk-body)))
 
@@ -69,20 +218,7 @@
   (mapcar (lambda (x) (funcall x :output t))
           (sk-body self)))
 
-;;  HACK 2023-09-27: (defstruct sk-url) ?
-
-;;;; Source
-(defclass sk-source (skel)
-  ((path :initform "" :initarg :path :type string :accessor sk-path)))
-
-(defmethod sk-write ((self sk-source) stream)
-  (if (stringp (sk-path self)) (format stream "~A" (sk-path self))))
-
-(defmethod sk-write-string ((self sk-source))
-  (with-output-to-string (s)
-    (sk-write self s)))
-
-;;;; Rule
+;;; Rule
 (defclass sk-rule (skel)
   ;; RESEARCH 2024-05-11: consider more options for extending target slot
   ((target :initarg :target :type string :accessor sk-rule-target)
@@ -181,158 +317,8 @@ via the special form stored in RECIPE."))
   (write-string (keywordicate (sk-kind self)))
   (sk-write-string (sk-path self)))
 
-;;;; Script
-(defclass sk-script (skel sk-meta sxp)
-  ((kind :initform nil :initarg :kind :type (or null script-designator) :accessor sk-kind)))
 
-(defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(sk-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
-
-(defun make-sk-script (script)
-  "Make a new SK-SCRIPT."
-  (apply #'make-instance 'sk-script
-         (if (listp script)
-             (let ((kind (first script))
-                   (path (second script)))
-               (list :path path
-                     :name (pathname-name path)
-                     :kind kind))
-             (list :path script
-                   :name (pathname-name script)
-                   :kind (when-let ((ext (pathname-type script)))
-                           (keywordicate ext))))))
-
-(defmethod sk-run ((self sk-script))
-  (sb-ext:run-program (sk-path self) nil :output t))
-
-(defmethod sk-write ((self sk-script) stream)
-  (with-slots (path) self
-    (write-string path)))
-
-(defmethod print-object ((self sk-script) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A :~A ~A" (format-sxhash (id self)) (sk-kind self) (sk-name self))))
-
-;;;; Config
-(defclass sk-config (skel sxp) 
-  ((imports :initarg :imports :type list)
-   (vc :initform *default-skel-vc-kind* :initarg :vc :type (or vc-designator sk-vc-meta) :accessor sk-vc)
-   (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
-   (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
-   (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
-   (registry :initform *skel-registry* :initarg :registry :type pathname :accessor sk-registry)
-   (scripts :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
-   (license :initarg :license :type license-designator :accessor sk-license)
-   (log-level :initarg :log-level :type log-level-designator)
-   (fmt :initform :pretty :initarg :fmt :type symbol)
-   (alias-list :initarg :alias-list
-               :type (or list vector)
-	       :documentation "alist of aliases. currently used as a special cli-opt-parser by the skel binary.")
-   (auto-insert :initform nil :initarg :auto-insert :type form))
-  (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
-
-(declaim (inline bound-string-p sk-dir))
-(defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
-(defun sk-dir (o) (directory-namestring (sk-path o)))
-
-(defmethod load-ast ((self sk-config))
-  ;; internal ast is never tagged
-  (with-slots (ast) self
-    (if (formp ast)
-	;; ast is valid, modify object, set ast nil
-	(progn
-	  (sb-int:doplist (k v) ast
-            (when-let ((s (find-sk-symbol k)))
-	      (setf (slot-value self s) v))) ;; needs to be the correct package
-	  (when (bound-string-p self 'stash) (setf (sk-stash self) (merge-pathnames (sk-stash self) (sk-dir self))))
-	  (when (bound-string-p self 'store) (setf (sk-store self) (merge-pathnames (sk-store self) (sk-dir self))))
-	  (when (bound-string-p self 'cache) (setf (sk-cache self) (merge-pathnames (sk-cache self) (sk-dir self))))
-	  (when (bound-string-p self 'registry) (setf (sk-registry self) (merge-pathnames (sk-registry self) (sk-dir self))))
-	  (when (bound-string-p self 'scripts) (setf (sk-scripts self)
-					             ;; TODO 2023-10-14: convert into list of script names
-					             (merge-pathnames (sk-scripts self) (sk-dir self))))
-	  (unless *keep-ast* (setf (ast self) nil))
-	  self)
-	;; invalid ast, signal error
-	(skel-syntax-error ast))))
-
-(defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id)))
-  (setf (ast self) 
-        (unwrap-object self
-                       :slots t
-                       :methods nil
-                       :nullp nullp
-                       :exclude exclude)))
-
-(defmethod sk-write-file ((self sk-config) 
-                          &key (path *default-skelfile*) 
-                               (nullp nil) 
-                               (header t) 
-                               (fmt :canonical)
-                               (if-exists :error))
-  (build-ast self :nullp nullp)
-  (prog1 
-      (with-open-file (out path
-                           :direction :output
-                           :if-exists if-exists
-                           :if-does-not-exist :create)
-        (when header (princ
-                      (make-source-header-comment
-                       (sk-name self)
-                       :cchar #\;
-                       :timestamp t
-                       :description (sk-description self)
-                       :opts '("mode:skel;"))
-                      out))
-        (write-sxp-stream self out :fmt fmt))
-    (unless *keep-ast* (setf (ast self) nil))))
-
-(defmethod write-sxp-stream ((self sk-config) stream &key (pretty t) (case :downcase) (fmt :pretty))
-  (case fmt
-    (:pretty
-     (if (listp (ast self))
-         (with-open-stream (st stream)
-           (loop for (k v . rest) on (ast self)
-                 by #'cddr
-                 unless (or (null v) (null k))
-                 do 
-                    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
-                    (write-char #\space st)
-                    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
-                        (write-sxp-stream v stream :fmt fmt)
-                        (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
-                    (write-char #\newline st)))
-         (error 'sxp-fmt-error)))
-    (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
-
-(defclass sk-system-config (sk-config sk-meta) ())
-
-(defun default-sk-system-config ()
-  (make-instance 'sk-system-config))
-
-(defclass sk-user-config (sk-config sk-meta)
-  ((user :initarg :user :type form :accessor sk-user)
-   (name :initarg :name :type form :accessor sk-name))
-  (:documentation "User configuration object, typically written to ~/.skelrc."))
-
-(defun default-sk-user-config () (make-instance 'sk-user-config))
-
-(declaim (type sk-user-config *skel-user-config*))
-(declaim (type sk-system-config *skel-system-config*))
-(defvar *sk-user-config* (default-sk-user-config))
-(defvar *sk-system-config* (default-sk-system-config))
-
-;;;; Snippet
-(defstruct sk-snippet
-  (name "" :type string)
-  (form "" :type form))
-
-;;;; Abbrev
-(defstruct sk-abbrev
-  (match nil :type form) 
-  (expansion nil :type form))
-
-;;;; Version Control
+;;; Version Control
 (defstruct sk-vc-remote-meta
   (name :default :type keyword)
   (path nil :type (or symbol string)))
@@ -348,21 +334,20 @@ via the special form stored in RECIPE."))
   (if (= 0 (length (sk-vc-meta-remotes self)))
       (write (sk-vc-meta-kind self) :stream stream :pretty pretty :case case :readably t :array t :escape t)
       (progn
-	(format stream "(")
-	(write (sk-vc-meta-kind self) :stream stream :pretty pretty :case case :readably t :array t :escape t)      
-	(format stream " ")
-	(loop for x in (sk-vc-meta-remotes self)
-	      do 
-		 (write-sxp-stream x stream :pretty pretty :case case :fmt fmt))
-	(format stream ")"))))
+        (format stream "(")
+        (write (sk-vc-meta-kind self) :stream stream :pretty pretty :case case :readably t :array t :escape t)      
+        (format stream " ")
+        (loop for x in (sk-vc-meta-remotes self)
+              do 
+                 (write-sxp-stream x stream :pretty pretty :case case :fmt fmt))
+        (format stream ")"))))
 
 (defmethod print-object ((self sk-vc-meta) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~S" (sk-vc-meta-kind self))
     (when-let ((remotes (sk-vc-meta-remotes self)))
       (format stream " ~A" remotes))))
-
-;;;; Project
+;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
    (vc :initarg :vc :initform (make-sk-vc-meta *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
@@ -382,9 +367,9 @@ via the special form stored in RECIPE."))
             :type (vector sk-script))
    (stash :initarg :stash :accessor sk-stash :type pathname)
    (store :initarg :store :accessor sk-store :type pathname)
-   (imports :initarg :imports
+   (include :initarg :include
             :initform (make-array 0 :element-type 'pathname :adjustable t)
-            :accessor sk-imports
+            :accessor sk-include
             :type (vector pathname))))
 
 (defun find-sk-symbol (s)
@@ -404,6 +389,11 @@ via the special form stored in RECIPE."))
               (setf (slot-value self s) v))) ;; needs to be correct package
           (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
           (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
+          ;; INCLUDE
+          (when-let ((include (sk-include self)))
+            (setf (sk-include self) (map 'vector
+                                         (lambda (i) (sk-read-file (make-instance 'sk-project) i))
+                                         include)))
           ;; DOCS
           (when-let ((docs (sk-docs self)))
             (setf (sk-docs self) (map 'vector (lambda (d) (apply #'make-sk-document d)) docs)))

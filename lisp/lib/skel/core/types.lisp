@@ -10,3 +10,5 @@
 (deftype document-designator () '(member :org :txt :pdf :html :md))
 
 (deftype stack-slot-kind () '(member :shell :lisp :comment :var :rule :directive :nop))
+
+(deftype contact-designator () '(or string (cons string string)))

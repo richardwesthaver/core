@@ -109,7 +109,7 @@
     (":rules" (sk-rules *skel-project*))
     (":env" (sk-env *skel-project*))
     (":vars" (sk-vars *skel-project*))
-    (":imports" (sk-imports *skel-project*))
+    (":include" (sk-include *skel-project*))
     (":stash" (sk-stash *skel-project*))
     (":store" (sk-store *skel-project*))
     (":config" (describe *sk-user-config*))
