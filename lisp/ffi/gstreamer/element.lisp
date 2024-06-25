@@ -12,11 +12,35 @@
                    :paused 3
                    :playing 4)
 
+(defun %state-change (state1 state2)
+  (logior (ash (gst-state state1) 3) (gst-state state2)))
+
+(define-alien-enum (gst-state-change int)
+                   :null-to-ready (%state-change :null :ready)
+                   :ready-to-paused (%state-change :ready :paused)
+                   :paused-to-playing (%state-change :paused :playing)
+                   :paused-to-ready (%state-change :paused :ready)
+                   :ready-to-null (%state-change :ready :null)
+                   :paused-to-paused (%state-change :paused :paused)
+                   :playing-to-playing (%state-change :playing :playing))
+
 (define-alien-enum (gst-state-change-return int)
                    :failure 0
                    :success 1
                    :async 2
                    :no-preroll 3)
+
+(defun %elt-flag (n)
+  (ash (gst-object-flags :last) n))
+
+(define-alien-enum (gst-element-flags int)
+                   :locked-state (%elt-flag 0)
+                   :sink (%elt-flag 1)
+                   :source (%elt-flag 2)
+                   :provide-clock (%elt-flag 3)
+                   :require-clock (%elt-flag 4)
+                   :indexable (%elt-flag 5)
+                   :last (%elt-flag 10))
 
 (define-opaque gst-element)
 
@@ -46,3 +70,36 @@
 
 
 (define-opaque gst-element-class)
+
+(define-alien-routine gst-element-get-type gtype)
+
+(macrolet ((gst-elt (name ret &rest args)
+             `(define-alien-routine ,(symbolicate "GST-ELEMENT-" name) ,ret (element (* gst-element)) ,@args)))
+  (gst-elt provide-clock (* gst-clock))
+  (gst-elt get-clock (* gst-clock))
+  (gst-elt set-clock boolean (clock (* gst-clock)))
+  (gst-elt set-base-time void (time gst-clock-time))
+  (gst-elt get-base-time gst-clock-time)
+  (gst-elt set-start-time void (time gst-clock-time))
+  (gst-elt get-current-running-time gst-clock-time)
+  (gst-elt get-current-clock-time gst-clock-time)
+  (gst-elt set-bus void (bus (* gst-bus)))
+  (gst-elt get-bus (* gst-bus))
+  (gst-elt set-context void (context (* gst-context)))
+  (gst-elt get-contexts (* glist))
+  (gst-elt get-context (* gst-context) (context-type c-string))
+  (gst-elt get-context-unlocked (* gst-context) (context-type c-string))
+  (gst-elt add-pad boolean (pad (* gst-pad)))
+  (gst-elt remove-pad boolean (pad (* gst-pad)))
+  (gst-elt no-more-pads void)
+  (gst-elt get-static-pad (* gst-pad) (name c-string))
+  ;; deprecated: gst-element-get-request-pad
+  ;; (gst-elt get-request-pad (* gst-pad) (name c-string))
+  (gst-elt request-pad-simple (* gst-pad) (name c-string))
+  ;; TODO
+  ;; (gst-elt request-pad (* gst-pad) (templ (* gst-pad-template)) (name c-string) (caps (* gst-caps)))
+  (gst-elt release-request-pad void (pad (* gst-pad)))
+  (gst-elt iterate-pads (* gst-iterator))
+  (gst-elt iterate-src-pads (* gst-iterator))
+  (gst-elt iterate-sink-pads (* gst-iterator)))
+  

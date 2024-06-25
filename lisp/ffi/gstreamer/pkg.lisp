@@ -9,7 +9,8 @@
   (:import-from :glib :gmainloop :gmaincontext
    :gerror :g-main-loop-new :goptiongroup :ginitially-unowned
    :gmutex :gpointer :glist :grec-mutex
-   :gtype :gquark :gtype-interface)
+   :gtype :gquark :gtype-interface :gcond
+   :gthread :gdestroy-notify :ghook-list)
   (:export :gst-version-string :gst-version :gst-init
    :gst-init-check :gst-deinit :gst-is-initialized))
 

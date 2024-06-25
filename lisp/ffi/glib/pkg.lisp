@@ -15,11 +15,22 @@
 
 (define-alien-type gtype-interface (* t))
 
+(define-alien-type gdestroy-notify (* t))
+
 (eval-always
   (define-opaque gmainloop)
   (define-opaque gmaincontext)
   (define-opaque gobjectgroup)
   (define-opaque glist))
+
+(define-alien-type gthread (* t))
+
+(define-alien-type ghook-list (* t))
+
+(define-alien-type gcond
+    (struct gcond
+            (p gpointer)
+            (i (array unsigned-int 2))))
 
 (define-alien-type ginitially-unowned (* t))
 (define-alien-type gmutex (* t))

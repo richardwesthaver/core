@@ -8,6 +8,11 @@
 (eval-always
   (define-opaque gst-object))
 
+(define-alien-enum (gst-object-flags int)
+                   :may-be-leaked (ash 1 0)
+                   :constructed (ash 1 1)
+                   :last (ash 1 4))
+
 (define-alien-type gst-object-t
   (struct gst-object
           (object ginitially-unowned)
@@ -21,4 +26,3 @@
           (%gst-reserved gpointer)))
 
 (define-opaque gst-object-class)
-

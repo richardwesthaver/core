@@ -155,8 +155,8 @@ containing the variants. These are technically exposed anaphors
     (let ((%lisp-enum-table (make-hash-table :test test :size (length forms)))
           (%lisp-enum-table* (make-hash-table :test 'equal :size (length forms)))) ; TODO: may want this to be EQL,
                                                                                    ; taking strings for now.
-      (mapc (lambda (x) (setf (gethash (car x) %lisp-enum-table) (cadr x))) forms)
-      (mapc (lambda (x) (setf (gethash (cadr x) %lisp-enum-table*) (car x))) forms)
+      (mapc (lambda (x) (setf (gethash (car x) %lisp-enum-table) (eval (cadr x)))) forms)
+      (mapc (lambda (x) (setf (gethash (eval (cadr x)) %lisp-enum-table*) (car x))) forms)
       `(progn
          (define-alien-type ,name ,type)
          (defun ,name (,val)
