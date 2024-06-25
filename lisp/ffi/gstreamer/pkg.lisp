@@ -8,8 +8,10 @@
   (:use :cl :std :sb-alien)
   (:import-from :glib :gmainloop :gmaincontext
    :gerror :g-main-loop-new :goptiongroup :ginitially-unowned
-   :gmutex :gpointer :glist :grec-mutex)
-  (:export :gst-version-string :gst-init :gst-init-check :gst-deinit :gst-is-initialized))
+   :gmutex :gpointer :glist :grec-mutex
+   :gtype :gquark :gtype-interface)
+  (:export :gst-version-string :gst-version :gst-init
+   :gst-init-check :gst-deinit :gst-is-initialized))
 
 (in-package :gstreamer)
 
@@ -44,19 +46,6 @@
 
 (defconstant +gst-padding+ 4)
 
-;;; Bins
-
 ;; (with-alien ((loop (* gmainloop)))
 ;;   (g-main-loop-new loop nil))
 
-;; (with-alien ((argv (array c-string))
-;;              (argc (* t))
-;;              (major unsigned)
-;;              (minor unsigned)
-;;              (micro unsigned)
-;;              (nano unsigned))
-;;   (gst-init nil argv)
-;;   (gst-version (addr major) (addr minor) (addr micro) (addr nano))
-;;   (format t "initialized GStreamer: ~A.~A.~A.~A~%" major minor micro nano)
-;;   (gst-deinit)
-;;   (println "Shutdown GStreamer"))

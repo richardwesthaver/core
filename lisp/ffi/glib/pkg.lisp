@@ -11,15 +11,20 @@
 
 (define-alien-loader glib t "/usr/lib/" "glib-2.0")
 
-(define-opaque gmainloop)
-(define-opaque gmaincontext)
-(define-opaque gobjectgroup)
+(define-alien-type gtype unsigned)
+
+(define-alien-type gtype-interface (* t))
+
+(eval-always
+  (define-opaque gmainloop)
+  (define-opaque gmaincontext)
+  (define-opaque gobjectgroup)
+  (define-opaque glist))
 
 (define-alien-type ginitially-unowned (* t))
 (define-alien-type gmutex (* t))
 (define-alien-type gpointer (* t))
 
-(define-opaque glist)
 (define-alien-type glist-t
   (struct glist
           (data gpointer)
