@@ -23,7 +23,13 @@
 (defparameter *skel-registry* #P"/usr/local/share/skel/registry/")
 
 (defvar *skel-project*)
-(defvar *skel-env*)
+(defvar *skel-env* (make-hash-table :test 'equal)
+  "A hash-table containing active SKEL environment variables. Keys and values are
+strings.
+
+The environment can be used for example in SB-EXT:RUN-PROGRAM by running the
+table through CLI/ENV:CONCAT-ENV-TABLE and passing it as the value of the
+:ENVIRONMENT keyword argument.")
 
 (defparameter *user-skelrc* (pathname (format nil "~~/~A" *default-skelrc*)))
 
@@ -33,3 +39,6 @@
   "Whether to keep the :ast slot stored with an sk object, or set it to nil so
 that it can be GC'd.")
 
+(defparameter *sk-load-recursive* t
+  "Whether to recursively load sk objects in the :include slot or store them
+uninitialized with non-nil :ast slots.")

@@ -1,6 +1,7 @@
 ;;; rust.sk --- core/rust skelfile -*- mode: skel; -*-
 :name "core/rust"
 :description "CC Rust Core"
-:components ((:rust "Cargo.toml"))
+:src "rust"
+:components ((:rust-system "Cargo.toml"))
 :rules 
 (("clean" () #$cargo clean$#))

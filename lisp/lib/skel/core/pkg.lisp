@@ -24,7 +24,9 @@
    :sk-write-string :sk-write-file
    :sk-read-file :sk-install-user-config
    :sk-vc-push :sk-vc-pull
-   :sk-find-rule :sk-find-script))
+   :sk-find-rule :sk-find-script
+   :sk-find :sk-find*
+   :sk-convert :sk-load-component))
 
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/err)
@@ -64,7 +66,9 @@
    :sk-command :sk-scripts :sk-script :sk-config
    :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config :sk-system-config
-   :*sk-user-config* :*sk-system-config*))
+   :*sk-user-config* :*sk-system-config*
+   :sk-src :sk-component :sk-components :sk-module
+   :sk-parent))
 
 (defpackage :skel/core/util
   (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/err)

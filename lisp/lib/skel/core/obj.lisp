@@ -47,8 +47,30 @@
        (setf (sk-path self) *default-skelfile*))
      self))
 
+;;; Component
+
+;; SK-COMPONENTs are similar in nature to ASDF/COMPONENT:COMPONENT objects but
+;; much more lightweight. We use this class with the assumption that whatever
+;; it's wrapping is contained within another SKEL object, such as in the
+;; :COMPONENTS slots of SK-PROJECTs.
+
+;; Container objects such as SK-PROJECT are NOT subclasses of SK-COMPONENT,
+;; unlike in ASDF where systems are subclasses of components.
+
+(defclass sk-component (skel)
+  ((parent :initarg :parent :accessor sk-parent)))
+
+;;; Module
+
+;; Again just like ASDF, we define a SK-MODULE class which subclasses
+;; SK-COMPONENT. The SK-MODULE class is used for components which have
+;; sub-components themselves.
+
+(defclass sk-module (sk-component sk-meta)
+  ((components :initarg :components :accessor sk-components)))
+
 ;;; Script
-(defclass sk-script (skel sk-meta sxp)
+(defclass sk-script (sk-component sk-meta sxp)
   ((kind :initform nil :initarg :kind :type (or null script-designator) :accessor sk-kind)))
 
 (defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
@@ -78,6 +100,47 @@
 (defmethod print-object ((self sk-script) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A :~A ~A" (format-sxhash (id self)) (sk-kind self) (sk-name self))))
+
+;;; Doc
+
+;; TODO 2023-10-13: integrate organ for working with org document
+;; types - mixins and such
+(defclass sk-document (sk-component sk-meta sxp)
+  ((kind :initarg :kind :type document-designator :accessor sk-kind)
+   (export :initarg :export :type form :accessor sk-export
+           :documentation "document export options")
+   (attach :initarg :attach :type form :accessor sk-attach
+           :documentation "document attachments"))
+  (:documentation "Document object."))
+
+(defun make-sk-document (kind path &key export attach)
+  "Make a new SK-RULE."
+  ;;  TODO 2024-05-10: component paths ala asdf
+  (make-instance 'sk-document
+    :name (pathname-name path)
+    :kind (sb-int:keywordicate (string-upcase (format nil "~a" kind)))
+    :path path
+    :export export
+    :attach attach))
+
+;; (defmethod print-object ((self sk-document) (stream t))
+;;   (print-unreadable-object (self stream :type t)
+;;     (format stream "~S ~A" (sk-kind self) (sk-path self))))
+
+(defmethod write-sxp-stream ((self sk-document) stream &key (pretty t) (case :downcase) &allow-other-keys)
+  (write `(,(keywordicate (sk-kind self)) ,(sk-path self)
+           ,@(when-let ((e (sk-export self))) (list :export e))
+           ,@(when-let ((a (sk-attach self))) (list :attach a)))
+         :stream stream
+         :pretty pretty
+         :case case
+         :readably t
+         :array t
+         :escape t))
+
+(defmethod sk-write ((self sk-document) stream)
+  (write-string (keywordicate (sk-kind self)))
+  (sk-write-string (sk-path self)))
 
 ;;; Snippet
 (defstruct sk-snippet
@@ -276,48 +339,6 @@ via the special form stored in RECIPE."))
               (sk-make obj rule)
               (sk-run rule))))))
 
-;;;; Document
-
-;; TODO 2023-10-13: integrate organ for working with org document
-;; types - mixins and such
-(defclass sk-document (skel sk-meta sxp)
-  ((kind :initarg :kind :type document-designator :accessor sk-kind)
-   (export :initarg :export :type form :accessor sk-export
-	   :documentation "document export options")
-   (attach :initarg :attach :type form :accessor sk-attach
-	   :documentation "document attachments"))
-  (:documentation "Document object."))
-
-(defun make-sk-document (kind path &key export attach)
-  "Make a new SK-RULE."
-  ;;  TODO 2024-05-10: component paths ala asdf
-  (make-instance 'sk-document
-    :name (pathname-name path)
-    :kind (sb-int:keywordicate (string-upcase (format nil "~a" kind)))
-    :path path
-    :export export
-    :attach attach))
-
-;; (defmethod print-object ((self sk-document) (stream t))
-;;   (print-unreadable-object (self stream :type t)
-;;     (format stream "~S ~A" (sk-kind self) (sk-path self))))
-
-(defmethod write-sxp-stream ((self sk-document) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(keywordicate (sk-kind self)) ,(sk-path self)
-           ,@(when-let ((e (sk-export self))) (list :export e))
-           ,@(when-let ((a (sk-attach self))) (list :attach a)))
-         :stream stream
-         :pretty pretty
-         :case case
-         :readably t
-         :array t
-         :escape t))
-
-(defmethod sk-write ((self sk-document) stream)
-  (write-string (keywordicate (sk-kind self)))
-  (sk-write-string (sk-path self)))
-
-
 ;;; Version Control
 (defstruct sk-vc-remote-meta
   (name :default :type keyword)
@@ -350,6 +371,7 @@ via the special form stored in RECIPE."))
 ;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
+   (src :initarg :src :type pathname :accessor sk-src)
    (vc :initarg :vc :initform (make-sk-vc-meta *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
    (rules :initarg :rules
           :initform (make-array 0 :element-type 'sk-rule :adjustable t)
@@ -358,7 +380,7 @@ via the special form stored in RECIPE."))
    (docs :initarg :documents
          :initform (make-array 0 :element-type 'sk-document :adjustable t)
          :accessor sk-docs :type (vector sk-document))
-   (components :initarg :components :initform nil :accessor sk-components :type list)
+   (components :initarg :components :accessor sk-components :type (vector (cons keyword pathname)))
    (vars :initarg :vars :initform nil :accessor sk-vars :type list)
    (env :initarg :env :initform nil :accessor sk-env :type list)
    (scripts :initarg :scripts
@@ -387,59 +409,74 @@ via the special form stored in RECIPE."))
           (sb-int:doplist (k v) ast
             (when-let ((s (find-sk-symbol k)))
               (setf (slot-value self s) v))) ;; needs to be correct package
-          (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
-          (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
-          ;; INCLUDE
-          (when-let ((include (sk-include self)))
-            (setf (sk-include self) (map 'vector
-                                         (lambda (i) (sk-read-file (make-instance 'sk-project) i))
-                                         include)))
-          ;; DOCS
-          (when-let ((docs (sk-docs self)))
-            (setf (sk-docs self) (map 'vector (lambda (d) (apply #'make-sk-document d)) docs)))
-          ;; SCRIPTS
-          (if (bound-string-p self 'scripts)
-              (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
-                (setf (sk-scripts self)
-                      (if (directory-path-p path)
-                          (find-files path)
-                          (list path)))
-                (debug! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
-          (when-let ((scripts (sk-scripts self)))
-            (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
-          ;; ENV
-          (when-let ((env (sk-env self)))
-            (setf (sk-env self) (mapcar
-                                 (lambda (e)
-                                   (etypecase e
-                                     (symbol (cons
-                                              (sb-int:keywordicate e)
-                                              (sb-posix:getenv (format nil "~a" (symbol-name e)))))
-                                     (string (cons
-                                              (sb-int:keywordicate e)
-                                              (sb-posix:getenv (string-upcase e))))
-                                     (list
-                                      (cons (sb-int:keywordicate (car e)) (cadr e)))))
-                                 env)))
-          ;; RULES
-          (when-let ((rules (sk-rules self)))
-            (setf (sk-rules self) (map 'vector
-                                       (lambda (x)
-                                         (destructuring-bind (target source &rest recipe) x
-                                           (make-sk-rule target source recipe)))
-                                       rules)))
-          ;; VC
-          (when-let ((vc (sk-vc self)))
-            (etypecase vc
-              ((or sk-vc-meta null) nil)
-              (vc-designator (setf (sk-vc self) (make-sk-vc-meta vc)))
-              (list (setf (sk-vc self) (apply #'make-sk-vc-meta vc)))))
-          
-          (unless *keep-ast* (setf (ast self) nil))
-          (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
-          self)
-        ;; invalid ast, signal error
-        (skel-syntax-error ast))))
+          ;;; SRC
+          (if (bound-string-p self 'src)
+              (setf (sk-src self) (probe-file (pathname (sk-src self))))
+              (setf (sk-src self) (pathname (sk-dir self))))
+          (let ((*default-pathname-defaults* (sk-src self)))
+            (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
+            (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
+            ;; INCLUDE
+            (when-let ((include (sk-include self)))
+              (setf (sk-include self) (map 'vector
+                                           ;; recursively load included projects
+                                           (lambda (i) (load-ast
+                                                        (sk-read-file
+                                                         (make-instance 'sk-project)
+                                                         i)))
+                                           include)))
+            ;; COMPONENTS
+            (when (slot-boundp self 'components)
+              (setf (sk-components self) (map 'vector
+                                              (lambda (c) (sk-load-component (car c) (pathname (cadr c))))
+                                              (sk-components self))))
+            ;; DOCS
+            (when-let ((docs (sk-docs self)))
+              (setf (sk-docs self) (map 'vector (lambda (d) (apply #'make-sk-document d)) docs)))
+            ;; SCRIPTS
+            (if (bound-string-p self 'scripts)
+                (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
+                         (setf (sk-scripts self)
+                               (if (directory-path-p path)
+                                   (find-files path)
+                                   (list path)))
+                         (warn! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
+            (when-let ((scripts (sk-scripts self)))
+              (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
+            ;; ENV
+            ;; TODO
+            (when-let ((env (sk-env self)))
+              (setf (sk-env self) (mapcar
+                                   (lambda (e)
+                                     (etypecase e
+                                       (symbol (cons
+                                                (sb-int:keywordicate e)
+                                                (sb-posix:getenv (format nil "~a" (symbol-name e)))))
+                                       (string (cons
+                                                (sb-int:keywordicate e)
+                                                (sb-posix:getenv (string-upcase e))))
+                                       (list
+                                        (cons (sb-int:keywordicate (car e)) (cadr e)))))
+                                   env)))
+            ;; RULES
+            (when-let ((rules (sk-rules self)))
+              (setf (sk-rules self) (map 'vector
+                                         (lambda (x)
+                                           (destructuring-bind (target source &rest recipe) x
+                                             (make-sk-rule target source recipe)))
+                                         rules)))
+            ;; VC
+            (when-let ((vc (sk-vc self)))
+              (etypecase vc
+                ((or sk-vc-meta null) nil)
+                (vc-designator (setf (sk-vc self) (make-sk-vc-meta vc)))
+                (list (setf (sk-vc self) (apply #'make-sk-vc-meta vc)))))
+            
+            (unless *keep-ast* (setf (ast self) nil))
+            (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
+            self))
+          ;; invalid ast, signal error
+          (skel-syntax-error ast))))
 
 ;; obj -> ast
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))

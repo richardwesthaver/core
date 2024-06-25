@@ -29,6 +29,7 @@
     :components
     ((:file "pkg")
      (:file "asd")
+     (:file "cargo")
      (:file "makefile")))
    (:file "pkg")
    (:module "tools"

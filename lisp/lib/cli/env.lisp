@@ -43,3 +43,15 @@
 		     while j)))
       (unless (null (car lst))
         (mapcar (lambda (x) (car (directory x))) lst)))))
+
+(defun make-env-var (k v)
+  (concatenate 'string k "=" v))
+
+(defun concat-env-table (table)
+  "Concatenate key val pairs in hash-table TABLE to strings of the form
+  'key=val'. Returns a list which can be passed directly to the :ENVIRONMENT
+  slot of SB-EXT:RUN-PROGRAM."
+  (let ((ret))
+    (flet ((%make (k v) (push (make-env-var k v) ret)))
+      (maphash #'%make table))
+    ret))

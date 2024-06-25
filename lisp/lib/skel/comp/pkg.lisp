@@ -9,12 +9,13 @@
    :makefile))
 
 (defpackage :skel/comp/cargo
-  (:use :cl :std :skel/core/obj :skel/core/proto))
+  (:use :cl :std :skel/core/obj :skel/core/proto)
+  (:export :sk-rust-system :parse-sk-rust-system))
 
 (defpackage :skel/comp/asd
   (:use :cl :std :skel/core/obj :skel/core/proto :asdf)
   (:shadow :circular-dependency)
-  (:export :sk-asd))
+  (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
 
 (defpackage :skel/comp/dir-locals
   (:use :cl :std :skel/core/obj :skel/core/proto)

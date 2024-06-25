@@ -12,7 +12,7 @@
 ;;; Code:
 (in-package :skel/comp/asd)
 
-(defclass sk-lisp-system (skel asdf:system)
+(defclass sk-lisp-system (sk-module asdf:system)
   ;; these slots are inferred in ASDF:SYSTEM. Since we are primarily concerned
   ;; with generating ASDF:SYSTEM definitions rather than parsing them we restore them here.
   ((serial :initform nil :type boolean :accessor sk-lisp-system-serial)
@@ -31,14 +31,21 @@
     (id:update-id sys)
     sys))
 
+(defmethod sk-convert ((self asdf:system))
+  (to-sk-system self))
+
 (defun find-sk-system (system)
   (to-sk-system (asdf:find-system system)))
 
-(defun parse-sk-system (name path &optional opts)
+(defun parse-sk-lisp-system (name path &optional opts)
   (to-sk-system (asdf::parse-component-form nil (list* :system name :pathname path opts))))
 
 (defmethod sk-load ((self sk-lisp-system) &key force force-not verbose version)
   (asdf:load-system self :force force :force-not force-not :verbose verbose :version version))
+
+(defmethod sk-load-component ((kind (eql :lisp-system)) (path pathname))
+  (declare (ignore kind))
+  (parse-sk-lisp-system (pathname-name path) path))
 
 ;; (defmethod sk-compile ((self sk-lisp-system) stream &key &allow-other-keys))
 
@@ -93,7 +100,7 @@
         (terpri s)))))
 
 ;; (sk-write-file (find-sk-system :obj) :path "test")
-;; (describe (parse-sk-system "skel" "/home/ellis/comp/core/lisp/lib/"))
+;; (describe (parse-sk-lisp-system "skel" "/home/ellis/comp/core/lisp/lib/"))
 
 (defmethod sk-read-file ((self sk-lisp-system) path)
-  (parse-sk-system (pathname-name path) (pathname-directory path)))
+  (parse-sk-lisp-system (pathname-name path) (pathname-directory path)))

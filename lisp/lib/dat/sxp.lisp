@@ -41,6 +41,9 @@ slot. The :ast slot is always ignored."))
 (defgeneric load-ast (self)
   (:documentation "load the object SELF from the :ast slot."))
 
+(defgeneric load-ast* (self context)
+  (:documentation "load the object SELF from the :ast slot with additional CONTEXT."))
+
 ;;; Objects
 (defclass sxp ()
   ((ast :initarg :ast :type form :accessor ast))

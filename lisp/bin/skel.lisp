@@ -4,7 +4,9 @@
 ;;  level. :INPUT :WAIT :OUTPUT
 (in-package :std-user)
 (defpkg :bin/skel
-  (:use :cl :std :cli/clap :vc :sb-ext :skel :log :dat/sxp)
+  (:use :cl :std :cli/clap
+   :vc :sb-ext :skel
+   :log :dat/sxp)
   (:import-from :cli/shell :*shell-input*)
   (:export :main))
 
