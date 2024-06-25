@@ -173,8 +173,8 @@
       (format stream "~A - ~A (~A)" artist title album))))
 
 ;;; MPD
-(defvar *default-host* "localhost")
-(defvar *default-port* 6600)
+(defvar *default-host* (or (sb-posix:getenv "MPD_HOST") "localhost"))
+(defvar *default-port* (or (when-let ((port (sb-posix:getenv "MPD_PORT"))) (parse-integer port)) 6600))
 
 (defun connect (&key (host *default-host*) (port *default-port*) password)
   "Connect to MPD."

@@ -1,6 +1,6 @@
 (defsystem :aud
   :description "High-level Audio API"
-  :depends-on (:cl-ppcre :std :obj :dat :alsa :sndfile)
+  :depends-on (:cl-ppcre :std :obj :dat :alsa :sndfile :net)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
