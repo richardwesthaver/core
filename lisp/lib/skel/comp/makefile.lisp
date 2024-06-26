@@ -1,12 +1,12 @@
-;;; makefile.lisp --- GNU Makefile compiler
+;;; makefile.lisp --- GNU Makefile Components
 
-;; GNU Makefile compiler.
+;; GNU Makefile skel components.
 
 ;;; Commentary:
 
-;; Makefiles are our 'portable' build medium. We can parse them using
-;; the same general strategy as GNU make and compile them from
-;; skelfiles (rule, source, target, command).
+;; Makefiles are a reasonably portable build medium. We can parse them using
+;; the same general strategy as GNU make and compile them from skelfiles
+;; (rule, source, target, command).
 
 ;;  HACK 2023-09-15: MVP
 

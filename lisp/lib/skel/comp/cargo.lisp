@@ -1,6 +1,10 @@
-;;; lib/skel/comp/cargo.lisp --- Cargo.toml Compiler
+;;; lib/skel/comp/cargo.lisp --- Cargo.toml Components
 
-;; 
+;; Cargo.toml skel components.
+
+;;; Commentary:
+
+;; (:sk-rust-system "Cargo.toml")
 
 ;;; Code:
 (in-package :skel/comp/cargo)

@@ -1,3 +1,15 @@
+;;; dat/toml.lisp --- TOML
+
+;; TOML de/serialization for Lisp.
+
+;;; Commentary:
+
+;; This code was originally based on https://github.com/sheepduke/clop which
+;; provides a TOML parser using the ESRAP package.
+
+;; ref: https://toml.io/en/v1.0.0
+
+;;; Code:
 (in-package :dat/toml)
 
 ;;; Errors
@@ -307,7 +319,7 @@ Its value can be:
 (defmethod parse-value ((type (eql :datetime-local)) value)
   "Return a plist with keys (:year :month :day :hour :minute :second)."
   (let* ((delimeter (sequence:elt value 10))
-         (splits (split delimeter value)))
+         (splits (split-sequence delimeter value)))
     (append (parse-value :date-local (car splits))
             (parse-value :time-local (cadr splits)))))
 
@@ -365,9 +377,9 @@ Its value can be:
   (declare (ignore style))
   thing)
 
-(defmethod serialize ((thing list) (format (eql :toml)) &key style)
+(defmethod serialize ((thing list) (format (eql :toml)) &key)
   (if (listp (cdr thing))
-      (mapcar (lambda (it) (serialize it style)) thing)
+      (mapcar (lambda (it) (serialize it :toml)) thing)
       thing))
 
 (defmethod serialize (thing (format (eql :toml)) &key)

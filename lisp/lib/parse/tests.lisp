@@ -120,7 +120,6 @@
   (:start-symbol expression)
   (:terminals (int id + - * / |(| |)|))
   (:precedence ((:nonassoc * /) (:nonassoc + -)))
-
   (expression
    (expression + expression)
    (expression - expression)

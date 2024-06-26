@@ -1,4 +1,4 @@
-;;; lib/skel/comp/asd.lisp --- ASDF System Definition Compiler
+;;; lib/skel/comp/asd.lisp --- ASDF Components
 
 ;; ASDF/PARSE-DEFSYSTEM may come in handy for testing.
 
