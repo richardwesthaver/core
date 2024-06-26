@@ -7,31 +7,41 @@
 
 ;;; Parsers
 ;;  TODO 2024-03-16: this should map directly to Lisp types (fixnum, boolean, etc)
-(make-opt-parser bool $val)
+(make-opt-parser string $val)
 
-(make-opt-parser str (when (stringp $val) $val))
+(make-opt-parser boolean (when $val t))
 
-(make-opt-parser (form str) (read-from-string $val))
+(make-opt-parser (form string) (read-from-string $val))
 
 (make-opt-parser (list form) (when (listp $val) $val))
 
-(make-opt-parser (sym form) (when (symbolp $val) $val))
+(make-opt-parser (symbol form) (when (symbolp $val) $val))
 
-(make-opt-parser (key form) (when (keywordp $val) $val))
+(make-opt-parser (keyword form) (when (keywordp $val) $val))
 
-(make-opt-parser (num form) (when (numberp $val) $val))
+(make-opt-parser number (when $val (parse-number $val)))
 
-(make-opt-parser (file str) 
-  (when $val (pathname (the simple-string (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil)))))
+(make-opt-parser integer (when $val (parse-integer $val)))
 
-(make-opt-parser (dir str) 
-  (when $val (sb-ext:parse-native-namestring $val nil *default-pathname-defaults* :as-directory t)))
+(make-opt-parser (file string) 
+  (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil))
+
+(make-opt-parser (directory string)
+  (sb-ext:parse-native-namestring $val nil *default-pathname-defaults* :as-directory t))
+
+(make-opt-parser (pathname string)
+  (pathname $val))
+
+(declaim ((vector symbol) *cli-opt-kinds*))
+(defvar *cli-opt-kinds* ;; make sure to keep this in sync with the list of parsers above
+  (let ((kinds '(boolean string form list symbol keyword number file directory pathname)))
+    (make-array (length kinds) :element-type 'symbol :initial-contents kinds)))
 
 ;;; Objects
 (defstruct cli-opt
   ;; note that cli-opts can have a nil or unbound name slot
   (name "" :type string)
-  (kind 'bool :type symbol)
+  (kind 'boolean :type symbol)
   (thunk nil :type (or null function symbol))
   (val nil)
   (global nil :type boolean)

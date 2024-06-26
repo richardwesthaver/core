@@ -7,6 +7,7 @@
                :tree-sitter :xkb :ssh2 :sndfile
                :zstd :uring :blake3 :ublk
                :parse :pod :rdb :gui
-               :aud :cry :krypt :io)
+               :aud :cry :krypt :io
+               :glib :gstreamer)
   :build-operation monolithic-compile-bundle-op
   :build-pathname "prelude")

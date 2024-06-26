@@ -240,6 +240,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (is (string= "foobar" (parse-str-opt "foobar")))))
 
 (make-opt-parser thing $val)
+
 (deftest clap-opts ()
   "CLAP opt tests."
   (is (reduce (lambda (x y) (when x (when y t)))

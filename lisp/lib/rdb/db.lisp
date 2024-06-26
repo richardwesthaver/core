@@ -11,7 +11,7 @@
 
 (defmethod connect-db ((db rdb) &key) db)
 
-(defmethod db-query ((db rdb) (query (eql :get)) &key key &allow-other-keys)
+(defmethod query-db ((db rdb) (query (eql :get)) &key key &allow-other-keys)
   (declare (ignore query))
   (get-key db key))
 

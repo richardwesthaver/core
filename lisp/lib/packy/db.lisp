@@ -15,7 +15,7 @@
 (defmethod connect-db ((db package-database) &key &allow-other-keys)
   (open-db (db db)))
 
-(defmethod db-query ((db package-database) query &key &allow-other-keys))
+(defmethod query-db ((db package-database) query &key &allow-other-keys))
   
 (defmethod db-get ((db package-database) (key simple-string) &key &allow-other-keys)
   ;; lol

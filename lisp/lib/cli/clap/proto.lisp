@@ -39,12 +39,6 @@
 
 (defgeneric call-cmd (self args opts))
 
-(defgeneric parse-args (self args &key &allow-other-keys)
-  (:documentation "Parse list of strings ARGS using SELF.
-
-A list of the same length as ARGS is returned containing 'cli-ast'
-objects: (OPT . (or char string)) (CMD . string) NIL"))
-
 (defgeneric do-cmd (self)
   (:documentation "Run the command SELF with args parsed at runtime."))
 
@@ -67,5 +61,3 @@ objects: (OPT . (or char string)) (CMD . string) NIL"))
   (:documentation "Handle an invalid argument."))
 
 (defgeneric cli-equal (a b))
-
-(defgeneric proc-args (self args))

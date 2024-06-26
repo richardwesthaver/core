@@ -16,3 +16,11 @@
 (defstruct (cli-node (:constructor make-cli-node (kind form))) kind form)
 
 (defstruct (cli-ast (:constructor make-cli-ast (ast))) ast)
+
+(defgeneric proc-args (self args))
+
+(defgeneric parse-args (self args &key &allow-other-keys)
+  (:documentation "Parse list of strings ARGS using SELF.
+
+A list of the same length as ARGS is returned containing 'cli-ast'
+objects: (OPT . (or char string)) (CMD . string) NIL"))

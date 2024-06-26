@@ -30,7 +30,7 @@
 (defgeneric connect-db (db &key &allow-other-keys)
   (:documentation "Connect the database DB."))
 
-(defgeneric db-query (db query &key &allow-other-keys)
+(defgeneric query-db (db query &key &allow-other-keys)
   (:documentation "Execute QUERY against DB."))
 
 (defgeneric db-get (db key &key &allow-other-keys)

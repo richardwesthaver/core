@@ -24,11 +24,12 @@ evaluation of BODY."
      (unwind-protect
           (handler-case (progn ,@body)
             (sb-sys:interactive-interrupt ()
-              (println "(:SIGINT)")
+              (println ":SIGINT")
               (sb-ext:exit :code 130)))
        ;; reset terminal state
        #+nil (.ris))))
 
+;; TODO fix these macros
 (defmacro defcmd (name &body body)
   `(defun ,name ($args $opts) 
      (declare (ignorable $args $opts))
