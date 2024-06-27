@@ -21,11 +21,12 @@
 (deferror zstd-simple-error () () (:auto t))
 
 (defun zstdc (octets &optional (level 3))
-  (let ((len (length octets)))
+  (let* ((len (length octets))
+         (clen (zstd-compressbound len)))
     (with-alien ((in (* (unsigned 8)) (make-alien (unsigned 8) len))
-                 (out (* (unsigned 8)) (make-alien (unsigned 8) (zstd-compressbound len))))
+                 (out (* (unsigned 8)) (make-alien (unsigned 8) clen)))
       (clone-octets-to-alien octets in)
-      (let ((csize (zstd-compress out len in len level)))
+      (let ((csize (zstd-compress out clen in len level)))
         (if (= 1 (zstd-iserror csize))
             (zstd-simple-error (zstd-geterrorname csize))
             (coerce

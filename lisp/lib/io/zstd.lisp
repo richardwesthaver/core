@@ -26,6 +26,12 @@
   ((stream :initform nil :type (or null zstd::zstd-dstream))))
 
 ;;; Simple API
-(defmacro with-zstd-output (sym buffer))
+(defmacro with-zstd-output ((sym &optional buffer (level #.zstd:+zstd-clevel-default+)) &body body)
+  `(let ((,sym ,(or buffer
+                    (make-array #.io/flate:*compression-buffer-size*
+                                :element-type 'std:octet
+                                :fill-pointer 0))))
+     ,@body
+     (zstd:zstdc ,sym ,level)))
 
 (defmacro with-zstd-input ((sym buffer) &body body))
