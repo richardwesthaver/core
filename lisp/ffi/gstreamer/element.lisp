@@ -5,15 +5,17 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-alien-enum (gst-state int)
-                   :void-pending 0
-                   :null 1
-                   :ready 2
-                   :paused 3
-                   :playing 4)
-
-(defun %state-change (state1 state2)
-  (logior (ash (gst-state state1) 3) (gst-state state2)))
+(eval-always
+  (define-alien-enum (gst-state int)
+                     :void-pending 0
+                     :null 1
+                     :ready 2
+                     :paused 3
+                     :playing 4)
+  (defun %state-change (state1 state2)
+    (logior (ash (gst-state state1) 3) (gst-state state2)))
+  (defun %elt-flag (n)
+    (ash (gst-object-flags :last) n)))
 
 (define-alien-enum (gst-state-change int)
                    :null-to-ready (%state-change :null :ready)
@@ -30,9 +32,6 @@
                    :async 2
                    :no-preroll 3)
 
-(defun %elt-flag (n)
-  (ash (gst-object-flags :last) n))
-
 (define-alien-enum (gst-element-flags int)
                    :locked-state (%elt-flag 0)
                    :sink (%elt-flag 1)
@@ -42,7 +41,8 @@
                    :indexable (%elt-flag 5)
                    :last (%elt-flag 10))
 
-(define-opaque gst-element)
+(eval-always
+  (define-opaque gst-element))
 
 (define-alien-type gst-element-t
   (struct gst-element

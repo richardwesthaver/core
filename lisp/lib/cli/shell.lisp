@@ -23,40 +23,40 @@
 (defparameter *shell-directory* nil)
 (defparameter *shell-input* nil)
 
-(deftype %shell-state () '(member :sh :dolla))
+(deftype %shell-state () '(member :sh :dolla :pound))
 
 (defun plain-shell-reader (stream)
-  (let (chars (state :sh))
+  (let (out (state :sh))
     (declare (type %shell-state state))
-    (loop do
-             (let ((c (read-char stream)))
-               (cond
-                 ((eq state :sh)
-                  (when (char= c #\$) (setq state :dolla))
-                  (push c chars))
-                 ((eq state :dolla)
-                  (cond
-                    ((char= c #\#)
-                     ;; remove trailing '$'
-                     (pop chars)
-                     (return))
-                    (t (setq state :sh) (push c chars)))))))
-    (coerce (nreverse chars) 'string)))
-
-(defun lisp-shell-reader (stream numarg)
-  (declare (ignore numarg))
-  (read stream nil))
+    (loop for c = (read-char stream)
+          do (cond
+               ((eq state :sh)
+                (case c
+                  (#\$ (setq state :dolla))
+                  (#\# (setq state :pound))
+                  (t (push c out))))
+               ((eq state :pound)
+                (if (char= c #\,)
+                    ;; slow
+                    (push (coerce (format nil "~A" (eval (read stream nil nil))) 'list) out)
+                    (progn 
+                      (push #\# out)
+                      (push c out)))
+                (setq state :sh))
+               ((eq state :dolla)
+                (if (char= c #\#)
+                    (return)
+                    (progn
+                      (setq state :sh)
+                      (push #\$ out)
+                      (push c out))))))
+    (concatenate 'string
+                 (flatten (nreverse out)))))
 
 (defmacro define-process-output-handler (type &body body)
   "Define a new function which handles the result of a SB-EXT:PROCESS in
 the context of the $#-reader macro."
   (declare (ignore type body)))
-
-(defun |#/-reader| (stream sub-char numarg)
-  "parse STREAM using the LISP-SHELL-READER, expanding 'unquoted' lisp
-forms and injecting them back in the string."
-  (declare (ignore sub-char))
-  (lisp-shell-reader stream numarg))
 
 (defun |#$-reader| (stream sub-char numarg)
   "Switch on the shell reader, parsing STREAM and returning a
@@ -66,7 +66,7 @@ implementation of the lazy version of SHCL's #$-reader.
 Similar to shcl, we add some reader extensions to enable embedding
 lisp forms and other goodies.
 
-#0$ x=,(* 2 2) 
+#0$ x=#,(* 2 2) 
 echo $x
 $#
 ;; => 4"
@@ -115,5 +115,5 @@ $#
 (defreadtable :shell
   "The shell readtable"
   (:merge :std)
-  (:dispatch-macro-char #\# #\$ #'|#$-reader|)
-  (:dispatch-macro-char #\# #\/ #'|#/-reader|))
+  (:dispatch-macro-char #\# #\$ #'|#$-reader|))
+

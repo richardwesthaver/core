@@ -9,148 +9,77 @@
 
 ;; ref: https://toml.io/en/v1.0.0
 
+;; grammar: https://raw.githubusercontent.com/toml-lang/toml/1.0.0/toml.abnf
+
+#|
+* TOML is case-sensitive.                                    
+* A TOML file must be a valid UTF-8 encoded Unicode document.
+* Whitespace means tab (0x09) or space (0x20).               
+* Newline means LF (0x0A) or CRLF (0x0D 0x0A).               
+|#
+
 ;;; Code:
 (in-package :dat/toml)
 
-;;; Errors
-(define-condition toml-parse-error (error) ())
-
-(define-condition toml-invalid-text-error (toml-parse-error)
-  ((text :accessor text :initarg :text))
-  (:report (lambda (condition stream)
-             (format stream
-                     "Invalid text ~a detected"
-                     (text condition)))))
-
-(define-condition toml-invalid-utf8-error (toml-invalid-text-error) ()
-  (:report (lambda (condition stream)
-             (format stream
-                     "Invalid utf8 ~a detected"
-                     (text condition)))))
-
-(define-condition toml-table-error (error)
-  ((names :accessor names :initarg :names)))
-
-(define-condition toml-redefine-table-error (toml-table-error) ()
-  (:report (lambda (condition stream)
-             (format stream
-                     "Table name ~a is already defined"
-                     (names condition)))))
-
-(define-condition toml-redefine-property-error (toml-table-error) ()
-  (:report (lambda (condition stream)
-             (format stream
-                     "Property name ~a is already defined"
-                     (names condition)))))
-
-(define-condition toml-modify-inline-table-error (toml-table-error) ()
-  (:report (lambda (condition stream)
-             (format stream
-                     "Inline table ~a cannot be modified once defined"
-                     (names condition)))))
-
-(define-condition toml-dotted-key-redefine-table-error (toml-table-error) ()
-  (:report (lambda (condition stream)
-             (format stream
-                     "Dotted key ~a cannot redefine table defined by [Table] header or dotted key from another section"
-                     (names condition)))))
-
-(define-condition toml-dotted-key-open-table-array-error (toml-table-error) ()
-  (:report (lambda (condition stream)
-             (format stream
-                     "Dotted key ~a cannot open table array"
-                     (names condition)))))
-
 ;;; Vars
-(defvar *toml-value-+inf* :+inf
+(defvar *+inf* :+inf
   "The value of +inf when decoding TOML.")
 
-(defvar *toml-value--inf* :-inf
+(defvar *-inf* :-inf
   "The value of -inf when decoding TOML.")
 
-(defvar *toml-value-+nan* :+nan
+(defvar *+nan* :+nan
   "The value of +nan when decoding TOML.")
 
-(defvar *toml-value--nan* :-nan
+(defvar *-nan* :-nan
   "The value of -nan when decoding TOML.")
 
-(defvar *toml-value-true* t
-  "The value of true when decoding TOML.")
+(defclass toml-object () ())
 
-(defvar *toml-value-false* nil
-  "The value of false when decoding TOML.")
+(defclass toml-table (toml-object)
+  ((table :initform (make-hash-table :test 'equal))))
 
-;;; Block
-(defclass toml-block () ())
+(defclass toml-inline-table (toml-table) ())
 
-(defclass toml-key-value-pair (toml-block)
-  ((keys :type list :initarg :keys :accessor keys)
-   (value :accessor value :initarg :value)))
+(defclass toml-array-table (toml-table) ())
 
-(defclass toml-table (toml-block) ())
+(defclass toml-value (toml-object) ())
 
-(defclass toml-named-table (toml-table)
-  ((names :type string :initarg :names :accessor names)))
+(defclass toml-pair ()
+  ((key :type (or symbol string) :initarg :key) (val :type toml-value :initarg :val)))
 
-(defclass toml-inline-table (toml-table)
-  ((pairs :type list :initarg :pairs :accessor pairs)))
-
-(defclass toml-array-table (toml-named-table) ())
-
-(defmethod print-object ((obj toml-key-value-pair) stream)
-  (format stream "#toml-key-value-pair (~a . ~a)"
-          (keys obj)
-          (value obj)))
-
-(defmethod print-object ((table toml-named-table) stream)
-  (format stream "#toml-named-table (~a)" (names table)))
-
-(defmethod print-object ((table toml-inline-table) stream)
-  (format stream "#toml-inline-table (~a)" (pairs table)))
-
-(defmethod print-object ((table toml-array-table) stream)
-  (format stream "#toml-array-table (~a)" (names table)))
-
-;;; Model
-(defclass toml-collection ()
+;;; Collections
+(defclass toml-document ()
   ((children :accessor children
-             :initform (make-hash-table :test #'equal)
-             :documentation "A table of any kind. Note that for a table, its own name is not stored as a property of itself, but as a hash key in children property of its parent collection. The parsed result is a table representing root table.")))
+             :type (or list (vector toml-object))
+             :documentation "A table of any kind. Note that for a table, its own name is not stored as a
+property of itself, but as a hash key in children property of its parent
+collection. The parsed result is a table representing root table.")))
 
-(defclass toml-table (toml-collection)
-  ((definition-context :type boolean
-                       :accessor definition-context
-                       :initarg :definition-context
-                       :initform nil
-                       :documentation "Internal use.
+;;; Read
+(defun toml-read (stream &optional (eof-error-p t) eof-value)
+  (let ((c (peek-char t stream eof-error-p :eof)))
+    (case c
+      (:eof eof-value)
+      (#\[ (read-char stream) (toml-read-header stream)) ;; arrays are values only
+      (t (toml-read-key stream)))))
 
-Indicates if the table is defined or not.
-A table is defined in the following ways:
-1. By [Table] header.
-2. By being a path of dotted.key.tables. In this case, all the tables along the
-way are created and defined.
+(defun toml-peek-char (stream expected &key skip-ws)
+  (when (equal (peek-char skip-ws stream) expected)
+    (read-char stream)))
 
-Its value can be:
-- NIL means table is opened but not defined.
-- T means defined via [Table] header.
-- A table instance means defined under corresponding table section.")))
+(defun toml-read-header (stream)
+  (let ((c (peek-char t stream nil nil)))
+    (case c
+      ;; array-table
+      (#\[ (read-char stream) (toml-read-key stream))
+      (t (toml-read-key stream)))))
 
-(defclass inline-toml-table (toml-collection) ())
+(defun toml-read-key (stream))
 
-(defclass toml-table-array (toml-collection)
-  ((children :initform (list))))
+(defun toml-read-value (stream))
 
-(defmethod print-object ((table toml-table) stream)
-  (format stream "#Table(~{ ~S~})"
-          (hash-table-alist (children table))))
-
-(defmethod print-object ((table inline-toml-table) stream)
-  (format stream "#InlineTable(~{ ~S~})"
-          (hash-table-alist (children table))))
-
-(defmethod print-object ((table toml-table-array) stream)
-  (format stream "#ArrayTable(~{ ~S~})"
-          (children table)))
+(defun toml-read-pair (stream))
 
 ;;; Parser
 (defclass parser-context ()
@@ -164,7 +93,7 @@ Its value can be:
   (let ((context (make-instance 'parser-context)))
     (setf (current-table context) (root-table context))
     (mapc (lambda (toml-block) (parse-toml-block toml-block context)) list)
-    (root-table context)))  
+    (root-table context)))
 
 (defgeneric parse-toml-block (toml-block context))
 
@@ -343,7 +272,7 @@ Its value can be:
 (defmethod parse-value (type value)
   value)
 
-;;; API
+;;; Serde
 
 ;; TODO 2023-12-23: 
 

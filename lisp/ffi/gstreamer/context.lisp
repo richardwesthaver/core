@@ -4,3 +4,5 @@
 
 ;;; Code:
 (in-package :gstreamer)
+
+(define-alien-type gst-context (* t))

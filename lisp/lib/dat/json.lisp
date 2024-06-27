@@ -104,7 +104,6 @@ generating json from a scripting language without native json support."
   (let ((c (peek-char t stream eof-error-p :eof)))
     (case c
       (:eof eof-value)
-
       ;; constants, objects, lists, and strings
       (#\t (json-read-true stream))
       (#\f (json-read-false stream))
@@ -158,7 +157,6 @@ generating json from a scripting language without native json support."
   (let ((s (with-output-to-string (s)
              (when (equal (peek-char t stream) #\-)
                (write-char (read-char stream) s))
-
              ;; read base-10 digits, fraction, and exponent
              (labels ((read-digits ()
                         (let ((c (read-char stream)))

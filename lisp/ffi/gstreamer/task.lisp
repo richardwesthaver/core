@@ -23,7 +23,7 @@
           (state gst-task-state)
           (cond gcond)
           (lock (* grec-mutex))
-          (func gst-task-function)
+          (func gst-task-thread-func)
           (user-data gpointer)
           (notify gdestroy-notify)
           (running boolean)

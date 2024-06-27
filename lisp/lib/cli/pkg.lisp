@@ -35,8 +35,7 @@
   (:export
    ;; ESC sequences
    :.ris :reset-to-initial-state
-   ;; CSI sequences
-   ;; Cursor control
+   ;; CSI sequences | cursor control
    :.cuu :cursor-up
    :.cud :cursor-down
    :.cuf :cursor-forward

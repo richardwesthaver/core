@@ -51,9 +51,9 @@
  (bench-fasl () #$./x.lisp make core/bench$#)
  (fasl (core-fasl tests-fasl bench-fasl user-fasl prelude-fasl))
  ;; rust
- (mailman () #$cd rust && cargo build -Z unstable-options --bin mailman --out-dir ../.stash/$#)
- (krypt () #$cd rust && cargo build -Z unstable-options --bin krypt --out-dir ../.stash/$#)
- (alik () #$cd rust && cargo build -Z unstable-options --bin alik --out-dir ../.stash/$#)
+ (mailman () #$cd rust && cargo build -Z unstable-options --bin mailman --artifact-dir ../.stash/$#)
+ (krypt () #$cd rust && cargo build -Z unstable-options --bin krypt --artifact-dir ../.stash/$#)
+ (alik () #$cd rust && cargo build -Z unstable-options --bin alik --artifact-dir ../.stash/$#)
  (rust-bin (mailman krypt alik))
  (alik-ui () #$trunk build --config rust/ui/alik/Trunk.toml$#)
  ;; install
