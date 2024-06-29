@@ -25,7 +25,8 @@
 
 ;; TODO 2024-05-30: maybe make into a macro?
 (defgeneric make-db (engine &rest initargs &key &allow-other-keys)
-  (:documentation "'make-instance' for databases. An ENGINE must be supplied, which is usually a key such as :ROCKSDB or :SQLITE."))
+  (:documentation "Dispatch initializer for databases. An ENGINE must be supplied, which is
+usually a key such as :ROCKSDB or :SQLITE."))
 
 (defgeneric connect-db (db &key &allow-other-keys)
   (:documentation "Connect the database DB."))

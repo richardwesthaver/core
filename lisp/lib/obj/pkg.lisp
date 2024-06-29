@@ -324,6 +324,64 @@
    :db
    :database))
 
+(defpackage :obj/query
+  (:nicknames :query)
+  (:use :cl :std)
+  (:export :query
+           :data-source
+           :query-expression
+           :logical-expression
+           :column-expression
+           :literal-expression
+           :field
+           :row-count
+           :column-count
+           :record-batch
+           :schema
+           :derive-schema
+           :load-schema
+           :make-schema
+           :field-vector
+           :*literal-value-types*
+           :literal-value-type
+           :literal-value-vector
+           :projection
+           :selection
+           :aggregate
+           :data-frame
+           :execution-context
+           :physical-expression
+           :physical-plan
+           :scan-exec
+           :scan
+           :execute-query
+           :aggregate-function
+           :aggregate-function-designator
+           :aggregate-expression
+           :binary-expression
+           :unary-expression
+           :alias-expression
+           :query-optimizer
+           :create-physical-plan
+           :create-physical-expression
+           :query-planner
+           :hash-aggregate-exec
+           :filter
+           :selection-exec
+           :projection-exec
+           :execute
+           :max-physical-expression
+           :aggregate-physical-expression
+           :accumulated
+           :accumulate
+           :accumulator
+           :math-physical-expression
+           :equiv-physical-expression
+           :binary-physical-expression
+           :literal-physical-expression
+           :column-physical-expression
+           :evaluate))
+
 (defpackage :obj/build
   (:use :cl :std)
   (:export :build :build-from))

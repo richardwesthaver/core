@@ -9,7 +9,7 @@
 
 ;;; Code:
 (in-package :parse/lex)
-
+(declaim (optimize (speed 3) (safety 1)))
 (defvar *string*)
 (defvar *length*)
 (defvar *index*)
@@ -115,7 +115,7 @@
   (flet ((normalize (in) (etypecase in
                            (fixnum in)
                            (character (char-code in))
-                           (string (char-code (aref in 0))))))
+                           (simple-string (char-code (char in 0))))))
     (let ((from (normalize from))
           (to (normalize to)))
       #'(lambda ()

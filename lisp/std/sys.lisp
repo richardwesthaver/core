@@ -19,11 +19,22 @@
 ;; *periodic-polling-period* io-timeout nlx-protect serve-event os-deinit os-exit with-deadline dlopen-or-lose deallocate-system-memory
 
 (defun current-lisp-implementation ()
-  "Return the current lisp implemenation as a cons: (TYPE VERSION)"
+  "Return the current lisp implemenation as a list: (TYPE VERSION FEATURES)"
   (list 
-   (lisp-implementation-type) 
+   (lisp-implementation-type)
    (lisp-implementation-version)
    *features*))
+
+(defun current-machine ()
+  "Return the current machine spec as a list: (HOST TYPE VERSION)"
+  (list
+   (machine-instance)
+   (machine-type)
+   (machine-version)))
+
+(defun list-package-symbols (&optional (pkg *package*))
+  (loop for s being the external-symbol of pkg
+        collect s))
 
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)

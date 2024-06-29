@@ -68,6 +68,10 @@
            :match-i-case
            :match-failed))
 
+(defpackage :parse/pratt
+  (:use :cl)
+  (:export :pratt-parser :parse :next-precedence :parse-prefix :parse-infix))
+
 (uiop:define-package :parse
     (:use :cl :std)
   (:use-reexport :parse/lex :parse/yacc))

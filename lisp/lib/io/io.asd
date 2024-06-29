@@ -1,6 +1,6 @@
 (defsystem :io
   :description "Lisp IO Interface"
-  :depends-on (:cl-ppcre :std :obj :uring :sb-bsd-sockets :zstd)
+  :depends-on (:cl-ppcre :std :obj :uring :sb-bsd-sockets :zstd :flexi-streams)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")

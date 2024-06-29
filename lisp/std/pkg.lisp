@@ -395,6 +395,8 @@
   (:shadowing-import-from :sb-vm :list-allocated-objects)
   (:export
    :current-lisp-implementation
+   :current-machine
+   :list-package-symbols
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live
    :forget-shared-object

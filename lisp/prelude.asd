@@ -8,6 +8,6 @@
                :zstd :uring :blake3 :ublk
                :parse :pod :rdb :gui
                :aud :cry :krypt :io
-               :glib :gstreamer)
+               :glib :gstreamer :q)
   :build-operation monolithic-compile-bundle-op
   :build-pathname "prelude")

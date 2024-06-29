@@ -6,7 +6,7 @@
   :build-operation monolithic-compile-bundle-op)
 
 (defsystem :core/tests
-  :depends-on (:std/tests :log/tests :rt/tests :cli/tests
+  :depends-on (:rt :std/tests :log/tests :rt/tests :cli/tests
                :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
                :doc/tests :alsa/tests :nlp/tests :skel/tests
                :syn/tests :organ/tests :packy/tests :obj/tests 
@@ -20,8 +20,10 @@
   :build-operation monolithic-compile-bundle-op)
 
 (defsystem :core/bench
-  :depends-on (:core/tests)
-  :components ((:file "bench"))
+  :depends-on (:std :core/tests :rt)
+  :components ((:module "bench"
+                :components ((:file "pkg")
+                             (:file "tpc-h"))))
   :build-pathname "bench"
   :build-operation monolithic-compile-bundle-op)
 

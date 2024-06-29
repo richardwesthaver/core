@@ -3,7 +3,7 @@
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :rocksdb :obj :log)
+  :depends-on (:std :rocksdb :obj :log :q)
   :serial t
   :components ((:file "pkg")
                (:file "err") 
@@ -11,7 +11,8 @@
                (:file "raw")
                (:file "proto")
                (:file "obj")
-               (:file "sst"))
+               (:file "sst")
+               (:file "query"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests
