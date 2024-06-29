@@ -6,6 +6,7 @@
   :components ((:file "pkg")
                (:file "bytes")
                (:file "lex")
+               (:file "pratt")
                (:file "yacc"))
   :in-order-to ((test-op (test-op :parse/tests))))
 

@@ -10,8 +10,8 @@
 (defpackage :q/sql
   (:use :cl :std :q/engine :parse/pratt :obj/query :obj/id)
   (:export
-   #:sql-tokens
-   #:sql-parser))
+   :sql-tokens
+   :sql-parser))
 
 (defpackage :q/lql
   (:use :cl :std :q/engine))
@@ -20,4 +20,4 @@
 
 (in-package :std-user)
 (defpkg :q
-  (:use-reexport :q/s :q/l))
+  (:use-reexport :q/sql :q/lql))
