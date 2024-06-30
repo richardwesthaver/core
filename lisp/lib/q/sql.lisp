@@ -4,10 +4,14 @@
 
 ;;; Commentary:
 
-;; Pratty TDOP-based parser: https://tdop.github.io/
+;; Parser derived from PARSE/PRATT:PRATT-PARSER
+
+;; ref: https://tdop.github.io/
 
 ;;; Code:
 (in-package :q/sql)
+
+(declaim (optimize (speed 3)))
 
 (define-condition sql-error (error) ())
 
@@ -285,15 +289,17 @@
           "REFERENCES"))
 
   (defvar *sql-keyword-start-chars*
-    (remove-duplicates (mapcar (lambda (k) (aref k 0)) *sql-keywords*)))
+    (remove-duplicates (mapcar
+                        (lambda (k)
+                          (declare (simple-string k))
+                          (char k 0))
+                        *sql-keywords*)))
 
   (defvar *sql-keyword-table*
     (let* ((pairs (mapcar (lambda (x) (cons (keywordicate x) x)) *sql-keywords*))
            (table (make-hash-table :size (length pairs))))
       (dolist (p pairs table)
         (setf (gethash (car p) table) (cdr p)))))
-
-  (defun get-sql-keyword (kw) (gethash kw *sql-keyword-table*))
 
   (defvar *sql-symbol-table*
     (let* ((pairs '((:LEFT-PAREN . "(")                  
@@ -340,11 +346,19 @@
       (dolist (p pairs table)
         (setf (gethash (car p) table) (cdr p)))))
 
+  (declaim (ftype (function (keyword) (values string boolean))
+                  get-sql-keyword
+                  get-sql-symbol))
+  (defun get-sql-keyword (kw) (gethash kw *sql-keyword-table*))
   (defun get-sql-symbol (kw) (gethash kw *sql-symbol-table*)))
 
 (defvar *sql-symbols* (hash-table-values *sql-symbol-table*))
 
-(defvar *sql-symbol-start-chars* (remove-duplicates (mapcar (lambda (x) (aref x 0)) *sql-symbols*)))
+(defvar *sql-symbol-start-chars* (remove-duplicates
+                                  (mapcar (lambda (x)
+                                            (declare (simple-string x))
+                                            (char x 0))
+                                          *sql-symbols*)))
 
 (defstruct sql-token
   (text "" :type string)
@@ -361,6 +375,7 @@
 ;; low-level token readers
 (defmacro def-sql-reader (name (&rest args) &body body)
   `(defun ,(symbolicate 'read-sql- name) (,@args)
+     (declare (optimize (safety 0)))
      ,@body))
 
 (defun peek-sql-char (expected stream &optional skip-ws)
@@ -426,14 +441,13 @@
     (setf (sql-token-end tok) (file-position stream))
     tok))
                       
-      
-
 (defun ambiguous-ident-p (text)
-  (or (string= #.(get-sql-keyword :ORDER) text)
-      (string= #.(get-sql-keyword :GROUP) text)))
+  (or (string-equal #.(get-sql-keyword :ORDER) text)
+      (string-equal #.(get-sql-keyword :GROUP) text)))
 
 (defun parse-ambiguous-ident (text &optional (start 0))
-  (if (equalp (subseq text start (+ start 2)) #.(get-sql-keyword :BY))
+  (declare (simple-string text) (fixnum  start))
+  (if (equalp (subseq text start (the fixnum (+ start 2))) #.(get-sql-keyword :BY))
       (make-sql-token :type :kw :text text)
       (make-sql-token :type :ident :text text)))
 
@@ -526,10 +540,10 @@
                    :lhs left
                    :op (sql-token-text token)
                    :rhs (parse self precedence)))
-                ((string= "(" (sql-token-text token))
+                ((string-equal "(" (sql-token-text token))
                  (pop tokens)
                  (let ((args (parse-expression-list self)))
-                   (assert (string= (sql-token-text (pop tokens)) ")"))
+                   (assert (string-equal (sql-token-text (pop tokens)) ")"))
                    (make-instance 'sql-function :id (id left) :args args)))
                 (t nil)))
         (:kw (string-case ((sql-token-text token))
@@ -560,17 +574,17 @@
                  (t nil))
                (push sort sort-list)
                (let ((next (car (sql-tokens self))))
-                 (when (and (eql (sql-token-type next) :sym) (string= (sql-token-text next) ","))
+                 (when (and (eql (sql-token-type next) :sym) (string-equal (sql-token-text next) ","))
                    (pop (sql-tokens self)))
                  (setf sort (parse-expression self))))
           finally (return sort-list))))
 
 (defmethod parse-cast ((self sql-parser))
   (let ((tokens (sql-tokens self)))
-    (assert (string= (sql-token-text (pop tokens)) "("))
+    (assert (string-equal (sql-token-text (pop tokens)) "("))
     (let* ((expr (parse-expression self))
            (alias (make-instance 'sql-alias :expr expr)))
-      (assert (string= (sql-token-text (pop tokens)) ")"))
+      (assert (string-equal (sql-token-text (pop tokens)) ")"))
       (make-instance 'sql-cast :expr expr :type (slot-value alias 'alias)))))
 
 (defmethod parse-select ((self sql-parser))
@@ -584,16 +598,16 @@
               ;; TODO 2024-06-29: 
               ;; parse optional WHERE
               (let ((next (car (sql-tokens self))))
-                (when (string= "WHERE" (sql-token-text next))
+                (when (string-equal "WHERE" (sql-token-text next))
                   (setf filter-expr (parse-expression self)))
                 (when (and
-                       (string= "GROUP" (sql-token-text next))
-                       (string= "BY" (sql-token-text (cadr (sql-tokens self)))))
+                       (string-equal "GROUP" (sql-token-text next))
+                       (string-equal "BY" (sql-token-text (cadr (sql-tokens self)))))
                   (setf group-by (parse-expression-list self)))
-                (when (string= "HAVING" (sql-token-text next))
+                (when (string-equal "HAVING" (sql-token-text next))
                   (setf having-expr (parse-expression self)))
-                (when (and (string= "ORDER" (sql-token-text next))
-                           (string= "BY" (sql-token-text next)))
+                (when (and (string-equal "ORDER" (sql-token-text next))
+                           (string-equal "BY" (sql-token-text next)))
                   (setf order-by (parse-order self)))))))
       (t (illegal-sql-state tok)))
     (make-instance 'sql-select

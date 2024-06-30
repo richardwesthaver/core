@@ -24,17 +24,16 @@
   (define-opaque glist))
 
 (define-alien-type gthread (* t))
-
 (define-alien-type ghook-list (* t))
+(define-alien-type ginitially-unowned (* t))
+(define-alien-type gmutex (* t))
+(define-alien-type gpointer (* t))
 
 (define-alien-type gcond
     (struct gcond
             (p gpointer)
             (i (array unsigned-int 2))))
 
-(define-alien-type ginitially-unowned (* t))
-(define-alien-type gmutex (* t))
-(define-alien-type gpointer (* t))
 
 (define-alien-type glist-t
   (struct glist
