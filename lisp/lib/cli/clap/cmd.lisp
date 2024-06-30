@@ -221,9 +221,10 @@ t, in which case a list of strings is assumed."
 
 (defmethod do-cmd ((self cli-cmd))
   "Perform the command, recursively calling child commands and opts if necessary."
-  (unless (solop self)
-        (loop for o across (active-opts self)
-              do (do-opt o))
-        (loop for c across (active-cmds self)
-              do (do-cmd c)))
-  (call-cmd self (cli-cmd-args self) (active-opts self)))
+  (loop for o across (active-opts self)
+        do (do-opt o))
+  (if (solop self)
+      (call-cmd self (cli-cmd-args self) (active-opts self))
+      (loop for c across (active-cmds self)
+            do (do-cmd c))))
+  
