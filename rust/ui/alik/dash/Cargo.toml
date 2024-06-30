@@ -6,4 +6,4 @@ edition = "2021"
 name = "dash"
 path = "src/main.rs"
 [dependencies]
-rerun = "0.16.1"
+rerun = "*"

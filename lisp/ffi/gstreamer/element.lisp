@@ -102,4 +102,3 @@
   (gst-elt iterate-pads (* gst-iterator))
   (gst-elt iterate-src-pads (* gst-iterator))
   (gst-elt iterate-sink-pads (* gst-iterator)))
-  
