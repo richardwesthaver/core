@@ -146,7 +146,7 @@
   "Test task-pools, oracles, and workers."
   (let ((pool (designate-oracle (make-task-pool) (make-oracle *current-thread*))))
     ;; pool is bound to a task pool, *ORACLE-THREADS* contains the *CURRENT-THREAD*.
-    (std/thread::spawn-workers pool 16)
+    (spawn-workers pool 16)
     ;; (with-threads (16 :args (&optional (a 0) (b 1) (c 2)))
     ;;   (sb-thread:allocator-histogram)
     ;;   (sb-concurrency:wait-on-gate (std/thread::task-pool-online pool))

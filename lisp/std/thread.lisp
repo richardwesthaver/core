@@ -12,10 +12,11 @@
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
 
+;;; Utils
 (defun thread-support-p () (member :thread-support *features*))
 
 (eval-when (:compile-toplevel)
-  (defun print-thread-message-top-level (msg)
+  (defun print-top-level (msg)
     (sb-thread:make-thread
      (lambda ()
        (format #.*standard-output* msg)))
@@ -166,6 +167,29 @@ lifetime of SCOPE, but never before and never after."))
 ;; 0,-1,-2
 ;; (multiple-value-list (sb-unix:unix-getrusage 0))
 ;; (setf sb-unix::*on-dangerous-wait* :error)
+(defvar *default-worker-name* "worker")
+
+(defclass worker ()
+  ((thread :initform (%make-thread #.#1=(symbol-name (gensym "w")) t (make-semaphore :name #.#1#))
+           :accessor worker-thread
+           :initarg :thread)
+   (function :type function :accessor worker-function :initarg :function)
+   (arguments :type list :accessor worker-arguments :initarg :arguments)))
+
+(defgeneric make-worker (self &rest initargs &key &allow-other-keys)
+  (:method ((self t) &key thread function arguments)
+    (declare (ignore self))
+    (apply #'make-instance 'worker
+           `(,@(when thread `(:thread ,thread))
+             ,@(when function `(:function ,function))
+             ,@(when arguments `(:arguments ,arguments))))))
+
+(defgeneric make-workers (self count &rest initargs &key &allow-other-keys)
+  (:method ((self t) (count t) &key thread function arguments)
+    (let ((ret))
+      (dotimes (i count ret)
+        (push (make-worker t :thread thread :function function :arguments arguments) ret)))))
+           
 (defstruct (oracle (:constructor %make-oracle (id thread)))
   (id 0 :type (unsigned-byte 32) :read-only t)
   (thread *current-thread* :read-only t))
@@ -189,6 +213,7 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric push-task-result (task pool))
 (defgeneric push-worker (thread pool))
 (defgeneric push-workers (threads pool))
+(defgeneric worker-count (self))
 (defgeneric push-stage (stage pool))
 (defgeneric find-job (job pool &key &allow-other-keys))
 
@@ -210,19 +235,17 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric make-worker-for (pool function &rest args)
   (:method ((pool null) (function function) &rest args)
     (declare (ignore pool))
-    (make-thread function :arguments args)))
-
-(defvar *default-worker-name* "worker")
+    (make-worker t :function function :arguments args)))
 
 (defgeneric make-workers-for (pool count function)
   (:method ((pool null) (count fixnum) (function function))
     (declare (ignore pool))
-    (make-threads count function :name *default-worker-name*)))
+    (make-workers t count :function function)))
 
 (defmacro parse-kernel-ops (op)
   "Parse an op of the form (NAME ARGS &BODY BODY)"
   (destructuring-bind (name args &body body) op
-    `(std/macs:plambda ,args ,@body)))
+    `(std/macs:named-lambda ,name ,args ,@body)))
 
 (defmacro define-task-kernel (name ops accessors &body body)
   "Define a task kernel.
@@ -255,12 +278,12 @@ task-pools.
 (defgeneric spawn-worker (pool)
   (:method ((pool null))
     (declare (ignore pool))
-    (make-thread (default-task-kernel))))
+    (make-worker t :function (default-task-kernel))))
 
 (defgeneric spawn-workers (pool count)
   (:method ((pool null) (count fixnum))
     (declare (ignore pool))
-    (make-threads count (default-task-kernel) :name *default-worker-name*)))
+    (make-workers t count :function (default-task-kernel))))
 
 (defstruct task-pool
   (oracle-id nil :type (or null (unsigned-byte 32)))
@@ -272,7 +295,7 @@ task-pools.
   (online (make-gate :name "online" :open nil)
    :type gate)
   ;; TODO: test weak-vector here
-  (workers nil :type list)
+  (workers #() :type (vector worker))
   (results (make-mailbox :name "results")))
 
 (defmethod print-object ((self task-pool) stream)
@@ -290,6 +313,9 @@ task-pools.
   (setf (task-pool-oracle-id self) (make-oracle (find-thread-by-id guest)))
   self)
 
+(defmethod worker-count ((self task-pool))
+  (length (task-pool-workers self)))
+
 (defmethod designate-oracle ((self task-pool) (guest thread))
   (designate-oracle self (make-oracle guest)))
 
@@ -297,12 +323,12 @@ task-pools.
   (oracle-thread (find-oracle (slot-value self 'oracle))))
 
 (defmethod push-worker ((worker thread) (pool task-pool))
-  (pushnew worker (task-pool-workers pool)))
+  (vector-push-extend worker (task-pool-workers pool)))
 
 (defmethod push-workers ((threads list) (pool task-pool))
   (with-slots (workers) pool
     (dolist (w threads)
-      (pushnew w workers))))
+      (vector-push-extend w workers))))
 
 (defmethod make-worker-for ((pool task-pool) function &rest args)
   (make-thread function :name *default-worker-name* :arguments args))
@@ -321,12 +347,12 @@ task-pools.
   ((state :initarg :state :accessor task-state)
    (object :initarg :object :accessor task-object))
   (:documentation "This object represents a single unit of work to be done by some
-worker. Tasks are typically generated by an oracle, but workers may
-also be granted the ability to create and distribute their own
-tasks. Once a task is assigned, the 'owner', i.e. the worker that is
-assigned this task, may modify the object and state. When the work
-associated with a task is complete, the owner is responsible for
-indicating in the state slot the result of the computation."))
+worker. Tasks are typically generated by an oracle, but workers may also be
+granted the ability to create and distribute their own tasks. Once a task is
+assigned, the 'owner', i.e. the worker that is assigned this task, may modify
+the object and state. When the work associated with a task is complete, the
+owner is responsible for indicating in the state slot the result of the
+computation."))
 
 (defmethod make-task (&rest args)
   (make-instance 'task :object args))

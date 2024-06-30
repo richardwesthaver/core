@@ -250,12 +250,14 @@
   (:use :cl :sb-thread :sb-concurrency)
   (:import-from :std/list :flatten)
   (:import-from :std/macs :if-let)
+  (:import-from :sb-thread :start-thread :%make-thread)
   (:export
-   :print-thread-message-top-level :thread-support-p
+   :print-top-level :thread-support-p
    :find-thread-by-id :thread-id-list
    :make-threads :with-threads :finish-threads
    :timed-join-thread :kill-thread :hang
    :thread-count :dump-thread
+   :spawn-workers
    :make-oracle :make-supervisor :oracle :run-task
    :oracle-id :find-thread
    :push-job :push-task :push-worker :push-task-result
