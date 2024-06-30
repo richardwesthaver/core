@@ -11,9 +11,26 @@
 
 (define-condition sql-error (error) ())
 
-(deferror simple-sql-error (sql-error simple-error) () (:auto t))
+(deferror simple-sql-error (sql-error simple-error) ())
 
-(deferror illegal-sql-state (sql-error) ((state :initarg :state)))
+(defun simple-sql-error (ctrl &rest args)
+  (error 'simple-sql-error :format-control ctrl :format-arguments args))
+
+(define-condition sql-token-error (sql-error)
+  ((token :initarg :token :reader bad-token))
+  (:report (lambda (c s)
+             (format s "Bad Token: ~A" (bad-token c)))))
+
+(defun sql-token-error (token)
+  (error 'sql-token-error :token token))
+
+(define-condition illegal-sql-state (sql-error)
+  ((state :initform nil :initarg :state :reader illegal-state))
+  (:report (lambda (c s)
+             (format s "Illegal SQL State: ~A" (illegal-state c)))))
+
+(defun illegal-sql-state (state)
+  (error 'illegal-sql-state :state state))
 
 (defclass sql-query (query) ())
 
@@ -62,268 +79,267 @@
 (defclass sql-optimizer (query-optimizer) ())
 
 ;;; Lexer
-(defvar *sql-token-types* (list :ident :str :num :kw :op :sym t))
-(deftype sql-token-type-designator () `(member ,@*sql-token-types*))
-
-(defvar *sql-keywords*
-  (list "SCHEMA"
-        "DATABASE"
-        "TABLE"
-        "COLUMN"
-        "VIEW"
-        "INDEX"
-        "TRIGGER"
-        "PROCEDURE"
-        "TABLESPACE"
-        "FUNCTION"
-        "SEQUENCE"
-        "CURSOR"
-        "FROM"
-        "TO"
-        "OF"
-        "IF"
-        "ON"
-        "FOR"
-        "WHILE"
-        "DO"
-        "NO"
-        "BY"
-        "WITH"
-        "WITHOUT"
-        "TRUE"
-        "FALSE"
-        "TEMPORARY"
-        "TEMP"
-        "COMMENT"
-        ;; create
-        "CREATE"
-        "REPLACE"
-        "BEFORE"
-        "AFTER"
-        "INSTEAD"
-        "EACH"
-        "ROW"
-        "STATEMENT"
-        "EXECUTE"
-        "BITMAP"
-        "NOSORT"
-        "REVERSE"
-        "COMPILE"    
-        ;; alter
-        "ALTER"
-        "ADD"
-        "MODIFY"
-        "RENAME"
-        "ENABLE"
-        "DISABLE"
-        "VALIDATE"
-        "USER"
-        "IDENTIFIED"
-        ;; truncate
-        "TRUNCATE"
-        ;; drop
-        "DROP"
-        "CASCADE"
-        ;; insert
-        "INSERT"
-        "INTO"
-        "VALUES"
-        ;; update
-        "UPDATE"
-        "SET"
-        ;; delete
-        "DELETE"
-        ;; select
-        "SELECT"
-        "DISTINCT"
-        "AS"
-        "CASE"
-        "WHEN"
-        "ELSE"
-        "THEN"
-        "END"
-        "LEFT"
-        "RIGHT"
-        "FULL"
-        "INNER"
-        "OUTER"
-        "CROSS"
-        "JOIN"
-        "USE"
-        "USING"
-        "NATURAL"
-        "WHERE"
-        "ORDER"
-        "ASC"
-        "DESC"
-        "GROUP"
-        "HAVING"
-        "UNION"
-        ;; others
-        "DECLARE"
-        "GRANT"
-        "FETCH"
-        "REVOKE"
-        "CLOSE"
-        "CAST"
-        "NEW"
-        "ESCAPE"
-        "LOCK"
-        "SOME"
-        "LEAVE"
-        "ITERATE"
-        "REPEAT"
-        "UNTIL"
-        "OPEN"
-        "OUT"
-        "INOUT"
-        "OVER"
-        "ADVISE"
-        "SIBLINGS"
-        "LOOP"
-        "EXPLAIN"
-        "DEFAULT"
-        "EXCEPT"
-        "INTERSECT"
-        "MINUS"
-        "PASSWORD"
-        "LOCAL"
-        "GLOBAL"
-        "STORAGE"
-        "DATA"
-        "COALESCE"
-        ;; Types
-        "CHAR"
-        "CHARACTER"
-        "VARYING"
-        "VARCHAR"
-        "VARCHAR2"
-        "INTEGER"
-        "INT"
-        "SMALLINT"
-        "DECIMAL"
-        "DEC"
-        "NUMERIC"
-        "FLOAT"
-        "REAL"
-        "DOUBLE"
-        "PRECISION"
-        "DATE"
-        "TIME"
-        "INTERVAL"
-        "BOOLEAN"
-        "BLOB"
-        ;; Conditionals
-        "AND"
-        "OR"
-        "XOR"
-        "IS"
-        "NOT"
-        "NULL"
-        "IN"
-        "BETWEEN"
-        "LIKE"
-        "ANY"
-        "ALL"
-        "EXISTS"
-        ;; Functions
-        "AVG"
-        "MAX"
-        "MIN"
-        "SUM"
-        "COUNT"
-        "GREATEST"
-        "LEAST"
-        "ROUND"
-        "TRUNC"
-        "POSITION"
-        "EXTRACT"
-        "LENGTH"
-        "CHAR_LENGTH"
-        "SUBSTRING"
-        "SUBSTR"
-        "INSTR"
-        "INITCAP"
-        "UPPER"
-        "LOWER"
-        "TRIM"
-        "LTRIM"
-        "RTRIM"
-        "BOTH"
-        "LEADING"
-        "TRAILING"
-        "TRANSLATE"
-        "CONVERT"
-        "LPAD"
-        "RPAD"
-        "DECODE"
-        "NVL"
-        ;; Constraints
-        "CONSTRAINT"
-        "UNIQUE"
-        "PRIMARY"
-        "FOREIGN"
-        "KEY"
-        "CHECK"
-        "REFERENCES"))
-
-(defvar *sql-keyword-start-chars*
-  (remove-duplicates (mapcar (lambda (k) (aref k 0)) *sql-keywords*)))
-
-(defvar *sql-keyword-table*
-  (let* ((pairs (mapcar (lambda (x) (cons (keywordicate x) x)) *sql-keywords*))
-         (table (make-hash-table :size (length pairs))))
-    (dolist (p pairs table)
-      (setf (gethash (car p) table) (cdr p)))))
-
-(defun get-sql-keyword (kw) (gethash kw *sql-keyword-table*))
-
-(defvar *sql-symbol-table*
-  (let* ((pairs '((:LEFT-PAREN . "(")                  
-                  (:RIGHT-PAREN . ")")
-                  (:LEFT-BRACE . "{")
-                  (:RIGHT-BRACE . "}")
-                  (:LEFT-BRACKET . "[")
-                  (:RIGHT-BRACKET . "]")
-                  (:SEMI . ";")
-                  (:COMMA . ",")
-                  (:DOT . ".")
-                  (:DOUBLE-DOT . "..")
-                  (:PLUS . "+")
-                  (:SUB . "-")
-                  (:STAR . "*")
-                  (:SLASH . "/")
-                  (:QUESTION . "?")
-                  (:EQ . "=")
-                  (:GT . ">")
-                  (:LT . "<")
-                  (:BANG . "!")
-                  (:TILDE . "~")
-                  (:CARET . "^")
-                  (:PERCENT . "%")
-                  (:COLON . ":")
-                  (:DOUBLE-COLON . "::")
-                  (:COLON-EQ . ":=")
-                  (:LT-EQ . "<=")
-                  (:GT-EQ . ">=")
-                  (:LT-EQ-GT . "<=>")
-                  (:LT-GT . "<>")
-                  (:BANG-EQ . "!=")
-                  (:BANG-GT . "!>")
-                  (:BANG-LT . "!<")
-                  (:AMP . "&")
-                  (:BAR . "|")
-                  (:DOUBLE-AMP . "&&")
-                  (:DOUBLE-BAR . "||")
-                  (:DOUBLE-LT . "<<")
-                  (:DOUBLE-GT . ">>")
-                  (:AT . "@")
-                  (:POUND . "#")))
-         (table (make-hash-table :size (length pairs))))
-    (dolist (p pairs table)
-      (setf (gethash (car p) table) (cdr p)))))
-
 (eval-always
+  (defvar *sql-token-types* (list :ident :str :num :kw :op :sym t))
+  (deftype sql-token-type-designator () `(member ,@*sql-token-types*))
+  (defvar *sql-keywords*
+    (list "SCHEMA"
+          "DATABASE"
+          "TABLE"
+          "COLUMN"
+          "VIEW"
+          "INDEX"
+          "TRIGGER"
+          "PROCEDURE"
+          "TABLESPACE"
+          "FUNCTION"
+          "SEQUENCE"
+          "CURSOR"
+          "FROM"
+          "TO"
+          "OF"
+          "IF"
+          "ON"
+          "FOR"
+          "WHILE"
+          "DO"
+          "NO"
+          "BY"
+          "WITH"
+          "WITHOUT"
+          "TRUE"
+          "FALSE"
+          "TEMPORARY"
+          "TEMP"
+          "COMMENT"
+          ;; create
+          "CREATE"
+          "REPLACE"
+          "BEFORE"
+          "AFTER"
+          "INSTEAD"
+          "EACH"
+          "ROW"
+          "STATEMENT"
+          "EXECUTE"
+          "BITMAP"
+          "NOSORT"
+          "REVERSE"
+          "COMPILE"    
+          ;; alter
+          "ALTER"
+          "ADD"
+          "MODIFY"
+          "RENAME"
+          "ENABLE"
+          "DISABLE"
+          "VALIDATE"
+          "USER"
+          "IDENTIFIED"
+          ;; truncate
+          "TRUNCATE"
+          ;; drop
+          "DROP"
+          "CASCADE"
+          ;; insert
+          "INSERT"
+          "INTO"
+          "VALUES"
+          ;; update
+          "UPDATE"
+          "SET"
+          ;; delete
+          "DELETE"
+          ;; select
+          "SELECT"
+          "DISTINCT"
+          "AS"
+          "CASE"
+          "WHEN"
+          "ELSE"
+          "THEN"
+          "END"
+          "LEFT"
+          "RIGHT"
+          "FULL"
+          "INNER"
+          "OUTER"
+          "CROSS"
+          "JOIN"
+          "USE"
+          "USING"
+          "NATURAL"
+          "WHERE"
+          "ORDER"
+          "ASC"
+          "DESC"
+          "GROUP"
+          "HAVING"
+          "UNION"
+          ;; others
+          "DECLARE"
+          "GRANT"
+          "FETCH"
+          "REVOKE"
+          "CLOSE"
+          "CAST"
+          "NEW"
+          "ESCAPE"
+          "LOCK"
+          "SOME"
+          "LEAVE"
+          "ITERATE"
+          "REPEAT"
+          "UNTIL"
+          "OPEN"
+          "OUT"
+          "INOUT"
+          "OVER"
+          "ADVISE"
+          "SIBLINGS"
+          "LOOP"
+          "EXPLAIN"
+          "DEFAULT"
+          "EXCEPT"
+          "INTERSECT"
+          "MINUS"
+          "PASSWORD"
+          "LOCAL"
+          "GLOBAL"
+          "STORAGE"
+          "DATA"
+          "COALESCE"
+          ;; Types
+          "CHAR"
+          "CHARACTER"
+          "VARYING"
+          "VARCHAR"
+          "VARCHAR2"
+          "INTEGER"
+          "INT"
+          "SMALLINT"
+          "DECIMAL"
+          "DEC"
+          "NUMERIC"
+          "FLOAT"
+          "REAL"
+          "DOUBLE"
+          "PRECISION"
+          "DATE"
+          "TIME"
+          "INTERVAL"
+          "BOOLEAN"
+          "BLOB"
+          ;; Conditionals
+          "AND"
+          "OR"
+          "XOR"
+          "IS"
+          "NOT"
+          "NULL"
+          "IN"
+          "BETWEEN"
+          "LIKE"
+          "ANY"
+          "ALL"
+          "EXISTS"
+          ;; Functions
+          "AVG"
+          "MAX"
+          "MIN"
+          "SUM"
+          "COUNT"
+          "GREATEST"
+          "LEAST"
+          "ROUND"
+          "TRUNC"
+          "POSITION"
+          "EXTRACT"
+          "LENGTH"
+          "CHAR_LENGTH"
+          "SUBSTRING"
+          "SUBSTR"
+          "INSTR"
+          "INITCAP"
+          "UPPER"
+          "LOWER"
+          "TRIM"
+          "LTRIM"
+          "RTRIM"
+          "BOTH"
+          "LEADING"
+          "TRAILING"
+          "TRANSLATE"
+          "CONVERT"
+          "LPAD"
+          "RPAD"
+          "DECODE"
+          "NVL"
+          ;; Constraints
+          "CONSTRAINT"
+          "UNIQUE"
+          "PRIMARY"
+          "FOREIGN"
+          "KEY"
+          "CHECK"
+          "REFERENCES"))
+
+  (defvar *sql-keyword-start-chars*
+    (remove-duplicates (mapcar (lambda (k) (aref k 0)) *sql-keywords*)))
+
+  (defvar *sql-keyword-table*
+    (let* ((pairs (mapcar (lambda (x) (cons (keywordicate x) x)) *sql-keywords*))
+           (table (make-hash-table :size (length pairs))))
+      (dolist (p pairs table)
+        (setf (gethash (car p) table) (cdr p)))))
+
+  (defun get-sql-keyword (kw) (gethash kw *sql-keyword-table*))
+
+  (defvar *sql-symbol-table*
+    (let* ((pairs '((:LEFT-PAREN . "(")                  
+                    (:RIGHT-PAREN . ")")
+                    (:LEFT-BRACE . "{")
+                    (:RIGHT-BRACE . "}")
+                    (:LEFT-BRACKET . "[")
+                    (:RIGHT-BRACKET . "]")
+                    (:SEMI . ";")
+                    (:COMMA . ",")
+                    (:DOT . ".")
+                    (:DOUBLE-DOT . "..")
+                    (:PLUS . "+")
+                    (:SUB . "-")
+                    (:STAR . "*")
+                    (:SLASH . "/")
+                    (:QUESTION . "?")
+                    (:EQ . "=")
+                    (:GT . ">")
+                    (:LT . "<")
+                    (:BANG . "!")
+                    (:TILDE . "~")
+                    (:CARET . "^")
+                    (:PERCENT . "%")
+                    (:COLON . ":")
+                    (:DOUBLE-COLON . "::")
+                    (:COLON-EQ . ":=")
+                    (:LT-EQ . "<=")
+                    (:GT-EQ . ">=")
+                    (:LT-EQ-GT . "<=>")
+                    (:LT-GT . "<>")
+                    (:BANG-EQ . "!=")
+                    (:BANG-GT . "!>")
+                    (:BANG-LT . "!<")
+                    (:AMP . "&")
+                    (:BAR . "|")
+                    (:DOUBLE-AMP . "&&")
+                    (:DOUBLE-BAR . "||")
+                    (:DOUBLE-LT . "<<")
+                    (:DOUBLE-GT . ">>")
+                    (:AT . "@")
+                    (:POUND . "#")))
+           (table (make-hash-table :size (length pairs))))
+      (dolist (p pairs table)
+        (setf (gethash (car p) table) (cdr p)))))
+
   (defun get-sql-symbol (kw) (gethash kw *sql-symbol-table*)))
 
 (defvar *sql-symbols* (hash-table-values *sql-symbol-table*))
@@ -342,6 +358,85 @@
 (defun kw-start-p (c) (member c *sql-keyword-start-chars* :test 'char=))
 (defun sym-start-p (c) (member c *sql-symbol-start-chars* :test 'char=))
 
+;; low-level token readers
+(defmacro def-sql-reader (name (&rest args) &body body)
+  `(defun ,(symbolicate 'read-sql- name) (,@args)
+     ,@body))
+
+(defun peek-sql-char (expected stream &optional skip-ws)
+  (char= (peek-char skip-ws stream) expected))
+
+(def-sql-reader char (stream expected &optional skip-ws)
+  (when (peek-sql-char expected stream skip-ws)
+    (read-char stream nil nil)))
+
+(def-sql-reader num-token (stream)
+  (make-sql-token
+   :text
+   (with-output-to-string (s)
+     (when (read-sql-char stream #\- nil)
+       (write-char #\-  s))
+     (loop for x = (peek-char nil stream nil nil)
+           while x
+           while (or (digit-char-p x) (char= #\. x))
+           do (write-char (read-char stream nil nil) s)
+           finally (return s)))
+   :type :num
+   :end (file-position stream)))
+
+(def-sql-reader str-token (stream)
+  (let ((tok (make-sql-token :type :str))
+        (terminator #\"))
+    (unless (read-sql-char stream terminator)
+      (setf terminator #\')
+      (unless (read-sql-char stream terminator)
+        (sql-token-error tok)))
+    (setf (sql-token-text tok)
+          (with-output-to-string (s)
+            (loop for x = (peek-char nil stream) ;; must not be EOF before terminator
+                  if (not (char= terminator x))
+                  do (write-char (read-char stream) s)
+                  else if (char= terminator x)
+                  do (return (read-char stream)))))
+    (setf (sql-token-end tok) (file-position stream))
+    tok))
+
+(def-sql-reader sym-token (stream)
+  (let ((tok (make-sql-token :type :sym)))
+    (setf (sql-token-text tok)
+          (with-output-to-string (s)
+            (write-char (read-char stream nil nil) s))
+          (sql-token-end tok) (file-position stream))
+    tok))
+
+(def-sql-reader ident-token (stream)
+  (let ((tok (make-sql-token :type :ident)))
+    (if (read-sql-char stream #\`)
+        (setf (sql-token-text tok)
+              (with-output-to-string (s)
+                (loop for x = (peek-char nil stream) ;; must not be EOF before terminator
+                      if (not (char= #\` x))
+                      do (write-char (read-char stream) s)
+                      else do (return (read-char stream)))))
+        (setf (sql-token-text tok)
+              (with-output-to-string (s)
+                (loop for x = (peek-char nil stream nil nil)
+                      while (and x (ident-part-p x))
+                      do (write-char (read-char stream) s)))))
+    (setf (sql-token-end tok) (file-position stream))
+    tok))
+                      
+      
+
+(defun ambiguous-ident-p (text)
+  (or (string= #.(get-sql-keyword :ORDER) text)
+      (string= #.(get-sql-keyword :GROUP) text)))
+
+(defun parse-ambiguous-ident (text &optional (start 0))
+  (if (equalp (subseq text start (+ start 2)) #.(get-sql-keyword :BY))
+      (make-sql-token :type :kw :text text)
+      (make-sql-token :type :ident :text text)))
+
 (defun next-sql-token (stream)
   "Parse the next sql token from input STREAM else return nil."
   (block :next
@@ -350,22 +445,13 @@
       (unless next
         (return-from :next tok))
       (cond
-        ((num-start-p next) (make-sql-token
-                             :text (format nil "~A" (read-preserving-whitespace stream))
-                             :type :num
-                             :end (file-position stream)))
+        ((num-start-p next) (read-sql-num-token stream))
         ((ident-start-p next) (make-sql-token
                                :text (format nil "~A" (read-preserving-whitespace stream))
                                :type :ident
                                :end (file-position stream)))
-        ((str-start-p next) (make-sql-token
-                             :text (format nil "~A" (read-preserving-whitespace stream))
-                             :type :str
-                             :end (file-position stream)))
-        ((sym-start-p next) (make-sql-token
-                             :text (format nil "~A" (read-preserving-whitespace stream))
-                             :type :sym
-                             :end (file-position stream)))
+        ((str-start-p next) (read-sql-str-token stream))
+        ((sym-start-p next) (read-sql-sym-token stream))
         (t (make-sql-token :end (file-position stream)))))))
 
 (defun read-sql-stream (stream)
@@ -430,10 +516,10 @@
     (unless (null token)
       (case (sql-token-type token)
         (:sym (cond
-                ((member (sql-token-text token) (list (get-sql-symbol :PLUS) (get-sql-symbol :SUB)
-                                                      (get-sql-symbol :STAR) (get-sql-symbol :SLASH)
-                                                      (get-sql-symbol :EQ) (get-sql-symbol :GT)
-                                                      (get-sql-symbol :LT))
+                ((member (sql-token-text token) (list #.(get-sql-symbol :PLUS) #.(get-sql-symbol :SUB)
+                                                      #.(get-sql-symbol :STAR) #.(get-sql-symbol :SLASH)
+                                                      #.(get-sql-symbol :EQ) #.(get-sql-symbol :GT)
+                                                      #.(get-sql-symbol :LT))
                          :test 'string=)
                  (pop tokens) ;; consume
                  (make-instance 'sql-binary-expr
@@ -469,9 +555,9 @@
         (sort (parse-expression self)))
     (loop while sort
           do (progn
-               (etypecase (sql-token-type sort)
-                 (sql-identifier (setf sort (make-instance 'sql-sort :expr sort :asc t)))
-                 (sql-sort nil))
+               (case (sql-token-type sort)
+                 (:ident (setf sort (make-instance 'sql-sort :expr sort :asc t)))
+                 (t nil))
                (push sort sort-list)
                (let ((next (car (sql-tokens self))))
                  (when (and (eql (sql-token-type next) :sym) (string= (sql-token-text next) ","))
@@ -491,11 +577,25 @@
   (let ((projection (parse-expression-list self))
         table filter-expr group-by having-expr order-by 
         (tok (pop (sql-tokens self))))
-    (ecase (sql-token-type tok)
+    (case (sql-token-type tok)
       (:kw (string-case ((sql-token-text tok))
-             ("FROM" (setf table (parse-expression self))
-                     ;; ...
-                     ))))
+             ("FROM"
+              (setf table (parse-expression self))
+              ;; TODO 2024-06-29: 
+              ;; parse optional WHERE
+              (let ((next (car (sql-tokens self))))
+                (when (string= "WHERE" (sql-token-text next))
+                  (setf filter-expr (parse-expression self)))
+                (when (and
+                       (string= "GROUP" (sql-token-text next))
+                       (string= "BY" (sql-token-text (cadr (sql-tokens self)))))
+                  (setf group-by (parse-expression-list self)))
+                (when (string= "HAVING" (sql-token-text next))
+                  (setf having-expr (parse-expression self)))
+                (when (and (string= "ORDER" (sql-token-text next))
+                           (string= "BY" (sql-token-text next)))
+                  (setf order-by (parse-order self)))))))
+      (t (illegal-sql-state tok)))
     (make-instance 'sql-select
       :projection projection
       :filter filter-expr
@@ -518,7 +618,7 @@
   (let ((expr (parse-expression self)))
     (if (typep expr 'sql-identifier)
         expr
-        (simple-sql-error))))
+        (simple-sql-error "Expected identifier, got ~A" expr))))
 
 (defmacro with-sql-parser ((sym &optional tokens) &body body)
   `(let ((,sym (make-instance 'sql-parser :tokens ,tokens)))

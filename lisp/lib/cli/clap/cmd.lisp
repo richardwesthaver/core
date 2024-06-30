@@ -171,10 +171,10 @@ should be."
     ;; itself is consumed. validation is performed in proc-args.
 
     ;; before doing anything else we lock SELF, which should remain
-    ;; locked for the full runtime duration or until GC.
+    ;; locked for the full runtime duration.
     (setf (cli-lock-p self) t)
     (loop named install
-          for (node . tail) on (debug! (cli/clap/ast::cli-ast-ast ast))
+          for (node . tail) on (debug! (cli-ast ast))
           until (null node)
           do 
              (let ((kind (cli-node-kind node)) (form (cli-node-form node)))
@@ -202,13 +202,13 @@ should be."
     self))
 
 (defmethod push-arg (arg (self cli-cmd))
+  "Push an ARG onto the corresponding slot of a CLI-CMD."
   (push arg (cli-cmd-args self)))
 
 (defmethod parse-args ((self cli-cmd) args &key (compile t))
   "Parse ARGS and return the updated object SELF.
-
-ARGS is assumed to be a valid cli-ast (list of cli-nodes), unless
-COMPILE is t, in which case a list of strings is assumed."
+ARGS is assumed to be a valid cli-ast (list of cli-nodes), unless COMPILE is
+t, in which case a list of strings is assumed."
   (with-slots (opts cmds) self
     (let ((args (if compile (proc-args self args) args)))
       (install-ast self args))))
@@ -216,14 +216,14 @@ COMPILE is t, in which case a list of strings is assumed."
 ;; warning: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.
 (defmethod call-cmd ((self cli-cmd) args opts)
-  (trace! args opts)
+  (trace! "calling command:" args opts)
   (funcall (cli-thunk self) args opts))
 
 (defmethod do-cmd ((self cli-cmd))
-  (if (solop self)
-      (call-cmd self (cli-cmd-args self) (active-opts self))
-      (progn
+  "Perform the command, recursively calling child commands and opts if necessary."
+  (unless (solop self)
         (loop for o across (active-opts self)
               do (do-opt o))
         (loop for c across (active-cmds self)
-              do (do-cmd c)))))
+              do (do-cmd c)))
+  (call-cmd self (cli-cmd-args self) (active-opts self)))
