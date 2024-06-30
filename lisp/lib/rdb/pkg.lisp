@@ -8,7 +8,7 @@
 
 ;; Code:
 (defpackage :rdb
-  (:use :cl :std :rocksdb :sb-alien :obj/db)
+  (:use :cl :std :rocksdb :sb-alien :obj/db :obj/query)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err

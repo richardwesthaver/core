@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :cli/clap/vars
   (:use :cl)
-  (:export :*cli-group-separator* :*no-exit* :*cli-opt-kinds* :*default-cli-def* :*default-cli-class*))
+  (:export :*cli-group-separator* :*no-exit* :*default-cli-def* :*default-cli-class* :*cli-opt-kinds*))
 
 (defpackage :cli/clap/util
   (:use :cl :std :log :sb-ext :cli/clap/vars)

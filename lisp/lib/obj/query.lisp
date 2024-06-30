@@ -37,7 +37,7 @@
 
 ;;; Schema
 (defclass schema ()
-  ((fields :type (vector field) :initarg :fields)))
+  ((fields :type (vector field) :initarg :fields :accessor fields)))
 
 (defclass schema-metadata ()
   ((metadata)))
@@ -49,8 +49,6 @@
 
 (defgeneric derive-schema (self))
 
-(defgeneric schema (self))
-
 ;;; Record Batch
 (defstruct record-batch
   (schema (make-schema) :type schema)
@@ -59,6 +57,13 @@
 (defgeneric field (self n)
   (:method ((self record-batch) (n fixnum))
     (svref (record-batch-fields self) n)))
+
+(defmethod fields ((self record-batch))
+  (record-batch-fields self))
+
+(defgeneric schema (self)
+  (:method ((self record-batch))
+    (record-batch-schema self)))
 
 (defgeneric row-count (self)
   (:method ((self record-batch))
@@ -240,5 +245,10 @@
 
 ;;; Query
 (defclass query () ())
+
+(defgeneric make-query (self &rest initargs &key &allow-other-keys)
+  (:method ((self t) &rest initargs)
+    (declare (ignore initargs))
+    (make-instance 'query)))
 
 (defgeneric execute-query (self q))

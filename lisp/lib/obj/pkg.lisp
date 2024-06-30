@@ -334,6 +334,7 @@
            :column-expression
            :literal-expression
            :field
+           :fields
            :row-count
            :column-count
            :record-batch
@@ -341,6 +342,7 @@
            :derive-schema
            :load-schema
            :make-schema
+           :make-query
            :field-vector
            :*literal-value-types*
            :literal-value-type

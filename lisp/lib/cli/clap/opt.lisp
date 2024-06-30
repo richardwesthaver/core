@@ -32,11 +32,6 @@
 (make-opt-parser (pathname string)
   (pathname $val))
 
-(declaim ((vector symbol) *cli-opt-kinds*))
-(defvar *cli-opt-kinds* ;; make sure to keep this in sync with the list of parsers above
-  (let ((kinds '(boolean string form list symbol keyword number file directory pathname)))
-    (make-array (length kinds) :element-type 'symbol :initial-contents kinds)))
-
 ;;; Objects
 (defstruct cli-opt
   ;; note that cli-opts can have a nil or unbound name slot
