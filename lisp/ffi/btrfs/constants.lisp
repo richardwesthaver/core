@@ -1,34 +1,6 @@
-("stdbool.h" "stddef.h" "stdint.h" "sys/time.h" "btrfsutil.h")
+("stdbool.h" "stddef.h" "stdint.h" "sys/time.h" "btrfsutil.h" "btrfs/version.h" "btrfs/ioctl.h")
 
-((:enum btrfs-util-error
-        ((btrfs-util-ok "BTRFS_UTIL_OK")
-	 (btrfs-util-error-stop-iteration "BTRFS_UTIL_ERROR_STOP_ITERATION")
-	 (btrfs-util-error-no-memory "BTRFS_UTIL_ERROR_NO_MEMORY")
-	 (btrfs-util-error-invalid-argument "BTRFS_UTIL_ERROR_INVALID_ARGUMENT")
-	 (btrfs-util-error-not-btrfs "BTRFS_UTIL_ERROR_NOT_BTRFS")
-	 (btrfs-util-error-not-subvolume "BTRFS_UTIL_ERROR_NOT_SUBVOLUME")
-	 (btrfs-util-error-subvolume-not-found "BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND")
-         (btrfs-util-error-open-failed "BTRFS_UTIL_ERROR_OPEN_FAILED")
-	 (btrfs-util-error-rmdir-failed "BTRFS_UTIL_ERROR_RMDIR_FAILED")
-	 (btrfs-util-error-unlink-failed "BTRFS_UTIL_ERROR_UNLINK_FAILED")
-         (btrfs-util-error-stat-failed "BTRFS_UTIL_ERROR_STAT_FAILED")
-	 (btrfs-util-error-statfs-failed "BTRFS_UTIL_ERROR_STATFS_FAILED")
-	 (btrfs-util-error-search-failed "BTRFS_UTIL_ERROR_SEARCH_FAILED")
-	 (btrfs-util-error-ino-lookup-failed "BTRFS_UTIL_ERROR_INO_LOOKUP_FAILED")
-	 (btrfs-util-error-subvol-getflags-failed "BTRFS_UTIL_ERROR_SUBVOL_GETFLAGS_FAILED")
-	 (btrfs-util-error-subvol-setflags-failed "BTRFS_UTIL_ERROR_SUBVOL_SETFLAGS_FAILED")
-	 (btrfs-util-error-subvol-create-failed "BTRFS_UTIL_ERROR_SUBVOL_CREATE_FAILED")
-	 (btrfs-util-error-snap-create-failed "BTRFS_UTIL_ERROR_SNAP_CREATE_FAILED")
-	 (btrfs-util-error-snap-destroy-failed "BTRFS_UTIL_ERROR_SNAP_DESTROY_FAILED")
-	 (btrfs-util-error-default-subvol-failed "BTRFS_UTIL_ERROR_DEFAULT_SUBVOL_FAILED")
-	 (btrfs-util-error-sync-failed "BTRFS_UTIL_ERROR_SYNC_FAILED")
-	 (btrfs-util-error-start-sync-failed "BTRFS_UTIL_ERROR_START_SYNC_FAILED")
-	 (btrfs-util-error-wait-sync-failed "BTRFS_UTIL_ERROR_WAIT_SYNC_FAILED")
-	 (btrfs-util-error-get-subvol-info-failed "BTRFS_UTIL_ERROR_GET_SUBVOL_INFO_FAILED")
-	 (btrfs-util-error-get-subvol-rootref-failed "BTRFS_UTIL_ERROR_GET_SUBVOL_ROOTREF_FAILED")
-	 (btrfs-util-error-ino-lookup-user-failed "BTRFS_UTIL_ERROR_INO_LOOKUP_USER_FAILED")
-	 (btrfs-util-error-fs-info-failed "BTRFS_UTIL_ERROR_FS_INFO_FAILED")))
-
+( ;; util
  (:structure btrfs-util-subvolume-info 
              ("struct btrfs_util_subvolume_info"
               (unsigned-long id "uint64_t" "id")
@@ -45,14 +17,27 @@
               ((* t) ctime "struct timespec" "ctime")
               ((* t) otime "struct timespec" "otime")
               ((* t) stime "struct timespec" "stime")
-              ((* t) rtime "struct timespec" "rtime"))))
-
-;; (:structure btrfs-qgroup-limit 
-;;             ("struct btrfs_qgroup_limit"
-;;              ((unsigned-int 64) flags "__u64" "flags")
-;;              ((unsigned-int 64) max-referenced "__u64" "max_referenced")
-;;              ((unsigned-int 64) max-exclusive "__u64" "max_exclusive")
-;;              ((unsigned-int 64) rsv-referenced "__u64" "rsv_referenced")
-;;              ((unsigned-int 64) rsv-exclusive "__u64" "rsv_exclusive")
-;;              ))
+              ((* t) rtime "struct timespec" "rtime"))
+             nil t)
+ (:integer btrfs-lib-major "BTRFS_LIB_MAJOR" t t)
+ (:integer btrfs-lib-minor "BTRFS_LIB_MINOR" t t)
+ (:integer btrfs-lib-patchlevel "BTRFS_LIB_PATCHLEVEL" t t)
+ (:integer btrfs-lib-version "BTRFS_LIB_VERSION" t t)
+ (:integer btrfs-subvol-rdonly "BTRFS_SUBVOL_RDONLY" t t)
+ (:integer btrfs-subvol-qgroup-inherit "BTRFS_SUBVOL_QGROUP_INHERIT" t t)
+ (:integer btrfs-device-spec-by-id "BTRFS_DEVICE_SPEC_BY_ID" t t)
+ (:integer btrfs-subvol-spec-by-id "BTRFS_SUBVOL_SPEC_BY_ID" t t)
+ (:integer btrfs-vol-arg-v2-flags-supported "BTRFS_VOL_ARG_V2_FLAGS_SUPPORTED" t t)
+ (:integer btrfs-fsize-size "BTRFS_FSIZE_SIZE" t t)
+ (:integer btrfs-fsize-size "BTRFS_UUID_SIZE" t t)
+ (:integer btrfs-qgroup-inherit-set-limits "BTRFS_QGROUP_INHERIT_SET_LIMITS" t t)
+ ;; ioctl
+ (:structure btrfs-qgroup-limit 
+             ("struct btrfs_qgroup_limit"
+              ((unsigned 64) flags "__u64" "flags")
+              ((unsigned 64) max-referenced "__u64" "max_referenced")
+              ((unsigned 64) max-exclusive "__u64" "max_exclusive")
+              ((unsigned 64) rsv-referenced "__u64" "rsv_referenced")
+              ((unsigned 64) rsv-exclusive "__u64" "rsv_exclusive"))
+             nil t))
 

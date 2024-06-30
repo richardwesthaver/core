@@ -7,3 +7,8 @@
 
 (defsuite :btrfs)
 (in-suite :btrfs)
+(load-btrfs)
+(load-btrfsutil)
+
+(deftest sanity ()
+  (is (typep btrfs-lib-version 'fixnum)))
