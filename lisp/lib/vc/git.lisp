@@ -48,12 +48,12 @@
   (with-slots (path) self
     (sb-ext:process-exit-code (run-git-command "clone" remote path))))
 
-(defmethod vc-pull ((self git-repo) remote &key &allow-other-keys)
+(defmethod vc-pull ((self git-repo) &optional (remote "main"))
   (with-slots (path) self
     (uiop:with-current-directory (path)
       (sb-ext:process-exit-code (run-git-command "pull" remote)))))
 
-(defmethod vc-push ((self git-repo) remote &key &allow-other-keys)
+(defmethod vc-push ((self git-repo) &optional (remote "main"))
   (with-slots (path) self
     (uiop:with-current-directory (path)
       (sb-ext:process-exit-code (run-git-command "push" remote)))))

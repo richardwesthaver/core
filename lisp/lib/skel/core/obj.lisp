@@ -7,6 +7,9 @@
   ()
   (:documentation "Base class for skeleton objects. Inherits from `sxp'."))
 
+(defmethod sk-new ((self t) &rest initargs)
+  (apply #'make-instance self initargs))
+
 (defmethod print-object ((self skel) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~S ~A" :id (format-sxhash (id self)))))
@@ -146,10 +149,20 @@
 (defstruct sk-snippet
   (name "" :type string)
   (form "" :type form))
+
+(defmethod sk-new ((self (eql :snippet)) &key name form)
+  (declare (ignore self))
+  (make-sk-snippet :name name :form form))
+
 ;;; Abbrev
 (defstruct sk-abbrev
   (match nil :type form) 
   (expansion nil :type form))
+
+(defmethod sk-new ((self (eql :abbrev)) &key match expansion)
+  (declare (ignore self))
+  (make-sk-abbrev :match match :expansion expansion))
+
 ;;; Config
 (defclass sk-config (skel sxp) 
   ((vc :initform *default-skel-vc-kind* :initarg :vc :type (or vc-designator sk-vc-meta) :accessor sk-vc)
@@ -166,6 +179,14 @@
                :documentation "alist of aliases. currently used as a special cli-opt-parser by the skel binary.")
    (auto-insert :initform nil :initarg :auto-insert :type form))
   (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
+
+(defmethod sk-new ((self (eql :config)) &rest args &key (type :user))
+  (setf self
+        (case type
+          (:user 'sk-user-config)
+          (:system 'sk-system-config)
+          (t 'sk-config)))
+  (apply #'sk-new self args))
 
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
@@ -263,6 +284,9 @@
 (defclass sk-command (skel)
   ((body :initform nil :initarg :body :type (or form function) :accessor sk-body)))
 
+(defmethod sk-new ((self (eql :command)) &key body)
+  (make-instance 'sk-command :body body))
+
 (defmethod sk-write ((self sk-command) stream)
   (if (stringp (sk-body self)) (format stream "~A" (sk-body self))))
 
@@ -289,6 +313,10 @@
    (recipe :initform (make-instance 'sk-command) :initarg :recipe :type sk-command :accessor sk-rule-recipe))
   (:documentation "Skel rules. Maps a SOURCE to a corresponding TARGET
 via the special form stored in RECIPE."))
+
+(defmethod sk-new ((self (eql :rule)) &rest args)
+  (declare (ignore self))
+  (apply #'sk-new 'sk-rule args))
 
 (defmethod write-sxp-stream ((self sk-rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sk-rule-target self) ,(sk-rule-source self) ,@(sk-body (sk-rule-recipe self))) :stream stream :pretty pretty :case case :readably t :array t :escape t))
@@ -393,6 +421,10 @@ via the special form stored in RECIPE."))
             :initform (make-array 0 :element-type 'pathname :adjustable t)
             :accessor sk-include
             :type (vector pathname))))
+
+(defmethod sk-new ((self (eql :project)) &rest args)
+  (declare (ignore self))
+  (apply #'sk-new 'sk-project args))
 
 (defun find-sk-symbol (s)
   (handler-bind ((error #'(lambda (con)

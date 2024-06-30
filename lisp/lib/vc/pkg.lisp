@@ -3,6 +3,7 @@
   (:import-from :uiop :with-current-directory)
   (:export 
    :vc-repo
+   :vc-run
    :vc-path
    :vc-head
    :vc-bundle :vc-unbundle
@@ -26,4 +27,6 @@
 (pkg:defpkg :vc
   (:use :cl :std)
   (:use-reexport :vc/proto :vc/hg :vc/git)
-  (:export :*default-vc-kind* :*repo-roots* :*repo-registry*))
+  (:export :*default-vc-kind* :*repo-roots* :*repo-registry*
+   :find-repo :register-repo :make-repo :make-hg-repo
+   :make-git-repo))

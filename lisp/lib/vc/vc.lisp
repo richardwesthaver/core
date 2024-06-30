@@ -19,16 +19,18 @@ creating a repo object which is stored in *REPO-REGISTRY*."
 
 (defun make-hg-repo (path &key init update register)
   (let ((repo (make-instance 'hg-repo :path path)))
-    (when register (register-repo repo))
     (when init (vc-init repo))
     (when update
-      (setf (vc/hg::vc-requires repo) (mapcar (lambda (s) (trim s)) (sb-unicode:lines (vc/proto::vc-run repo "debugrequires")))))
+      (setf (vc/hg::vc-requires repo)
+            (mapcar (lambda (s) (trim s))
+                    (sb-unicode:lines (vc-run repo "debugrequires")))))
+    (when register (register-repo repo))
     repo))
 
-(defun make-git-repo (path &key init register)
+(defun make-git-repo (path &key init update register)
   (let ((repo (make-instance 'git-repo :path path)))
-    (when register (register-repo repo))
     (when init (vc-init repo))
+    (when register (register-repo repo))
     repo))
 
 (defun make-repo (path &key (type *default-vc-kind*) init register)
@@ -42,4 +44,3 @@ creating a repo object which is stored in *REPO-REGISTRY*."
 ;; (defmacro with-git ((&rest vc-opts) &body body))
 
 ;; (defmacro with-repos ((&rest repo-defs) &body body))
-

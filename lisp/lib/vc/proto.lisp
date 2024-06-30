@@ -37,10 +37,10 @@
 (defgeneric vc-clone (self remote &key &allow-other-keys)
   (:documentation "Clone repo REMOTE into spec SELF."))
 
-(defgeneric vc-push (self remote &key &allow-other-keys)
+(defgeneric vc-push (self &optional remote)
   (:documentation "Push repo SELF to REMOTE."))
 
-(defgeneric vc-pull (self remote &key &allow-other-keys)
+(defgeneric vc-pull (self &optional remote)
   (:documentation "Pull repo REMOTE into spec SELF."))
 
 (defgeneric vc-commit (self msg &key &allow-other-keys)

@@ -42,8 +42,8 @@
 (defun run-hg-command (cmd &optional args output (wait t))
   "Run an hg command."
   (unless (listp args) (setf args (list args)))
-  (setf args (mapcar #'vc/proto::namestring-or args)) ;;  TODO 2024-05-10: slow
-  (sb-ext:run-program *hg-program* (push cmd args) :output output :wait wait :input nil))
+  (setf args (mapcar 'vc/proto::namestring-or args)) ;;  TODO 2024-05-10: slow
+  (sb-ext:run-program *hg-program* (push cmd args) :output output :wait wait))
 
 (defun hg-url-p (url)
   "Return nil if URL does not look like a URL to a hg valid remote."
@@ -69,17 +69,12 @@
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
   (uiop:with-current-directory ((vc-path self))
-    (let ((proc (apply #'run-hg-command cmd args)))
-      (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
-            (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))
-        (with-open-stream (s (if ok
-                                 (sb-ext:process-output proc)
-                                 (sb-ext:process-error proc)))
-          (with-output-to-string (str res)
-            (loop for l = (read-line s nil nil)
-                  while l
-                  do (write-line l str)))
-          (if ok res (error 'hg-error :message res)))))))
+    (let ((proc (run-hg-command cmd args :stream nil)))
+      (with-open-stream (s (sb-ext:process-output proc))
+        (loop for l = (read-line s nil nil)
+              while l
+              do (write-line l)))
+      (if (eq 0 (sb-ext:process-exit-code proc)) nil (error 'hg-error :message (format nil "hg command failed: ~A" cmd))))))
 
 (defmethod vc-init ((self (eql :hg)))
   (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
@@ -89,10 +84,10 @@
 ;;     (make-instance 'hg-repo
 ;;       :path (pathname (pop form))
 ;;       :remotes (or (getf form :remotes) #()))))
-    
+
 (defmethod vc-init ((self hg-repo))
   (let ((path (vc-path self)))
-    (if (zerop (sb-ext:process-exit-code (run-hg-command "init" path)))
+    (if (zerop (sb-ext:process-exit-code (run-hg-command "init" (list path))))
         path
         (hg-error "hg init failed:" path))))
 
@@ -100,14 +95,14 @@
   (with-slots (path) self
     (sb-ext:process-exit-code (run-hg-command "clone" (list remote path)))))
 
-(defmethod vc-pull ((self hg-repo) remote &key &allow-other-keys)
+(defmethod vc-pull ((self hg-repo) &optional (remote "default"))
   (vc-run self "pull" remote))
 
-(defmethod vc-push ((self hg-repo) remote &key &allow-other-keys)
+(defmethod vc-push ((self hg-repo) &optional (remote "default"))
   (vc-run self "push" remote))
 
 (defmethod vc-commit ((self hg-repo) msg &key &allow-other-keys)
-  (vc-run self "commit" (list "-m" msg)))
+  (vc-run self "commit" "-m" msg))
 
 (defmethod vc-add ((self hg-repo) &rest files)
   (vc-run self "add" files))
@@ -125,20 +120,21 @@
 (defmethod vc-diff ((a hg-repo) (b hg-repo) &key &allow-other-keys) 
   (vc-run a "diff" (vc-head a) (vc-head b)))
 
+(defmethod vc-log ((self hg-repo))
+  (vc-run self "log"))
+
 (defmethod vc-id ((self hg-repo))
-  (with-slots (path) self
-    (uiop:with-current-directory (path)
-      (let ((proc (apply #'run-hg-command '("id"))))
-        (let ((ok (eq 0 (sb-ext:process-exit-code proc)))
-              (res (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t)))
-          (with-open-stream (s (if ok
-                                   (sb-ext:process-output proc)
-                                   (sb-ext:process-error proc)))
-            (with-output-to-string (str res)
-              (loop for c = (read-char s nil)
-                    until (char= c #\space)
-                    do (write-char c str)))
-            (if ok res (error 'hg-error :message res))))))))
+  (uiop:with-current-directory ((vc-path self))
+    (let ((proc (run-hg-command "id" nil :stream)))
+      (with-open-stream (s (sb-ext:process-output proc))
+        (with-output-to-string (str)
+          (loop for c = (read-char s nil)
+                until (char= c #\space)
+                do (write-char c str))
+          (if (eq 0 (sb-ext:process-exit-code proc))
+              str
+              (error 'hg-error
+                     :message "hg command failed: id")))))))
 
 ;;; Client
 ;; ref: https://wiki.mercurial-scm.org/CommandServer

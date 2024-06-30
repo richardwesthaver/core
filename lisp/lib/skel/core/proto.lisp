@@ -3,7 +3,7 @@
 
 (defgeneric sk-run (self)
   (:documentation "run the object SELF."))
-(defgeneric sk-new (self &key &allow-other-keys)
+(defgeneric sk-new (self &rest args &key &allow-other-keys)
   (:documentation "create a fresh instance of object SELF."))
 (defgeneric sk-save (self)
   (:documentation "save object SELF."))
