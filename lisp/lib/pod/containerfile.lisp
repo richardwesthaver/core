@@ -10,6 +10,8 @@
 (in-package :pod)
 
 ;;; Vars
+(defparameter *default-containerfile* "Containerfile")
+
 (defvar *containerfile-instructions*
   '(from arg maintainer run cmd label expose env add copy entrypoint volume user workdir onbuild))
 

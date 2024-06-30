@@ -17,6 +17,14 @@
   (:shadow :circular-dependency)
   (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
 
+(defpackage :skel/comp/container
+  (:use :cl :std :pod :skel/core/obj :skel/core/proto :dat/proto :obj/id)
+  (:export :sk-containerfile))
+
 (defpackage :skel/comp/dir-locals
-  (:use :cl :std :skel/core/obj :skel/core/proto)
-  (:export :*dir-locals-file* :dir-local-var-designator))
+  (:use :cl :std :skel/core/obj :skel/core/proto :dat/sxp)
+  (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals))
+
+(defpackage :skel/comp/org
+  (:use :cl :std :skel/core/obj :skel/core/proto :organ :obj/id)
+  (:export :sk-org-file))

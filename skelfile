@@ -9,9 +9,10 @@
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp.sk" "rust.sk" "emacs.sk")
 :vc (:hg "https://vc.compiler.company/comp/core")
-:docs ((:org "readme"))
 :scripts ((:lisp "x"))
 :env ((cc "clang"))
+:components ((:dir-locals ".dir-locals")
+             (:org "readme"))
 :rules
 ((all (compile std prelude user infra core tests build fasl rust-bin)) ;; TODO: add keyword args -- (emacs :stage 'install) 
  (clean ()

@@ -74,7 +74,10 @@
    ;; classes
    :org-element
    :text
-   :org-file
+   :org-document
+   :doc-meta
+   :doc-tree
+   :org-zeroth-section
    :org-lines
    :o-lines
    :org-stream

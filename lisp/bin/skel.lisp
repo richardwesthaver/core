@@ -106,7 +106,7 @@
     (":tags" (sk-tags *skel-project*))
     (":license" (sk-license *skel-project*))
     (":vc" (sk-vc *skel-project*))
-    (":docs" (sk-docs *skel-project*))
+    (":components" (sk-components *skel-project*))
     (":scripts" (sk-scripts *skel-project*))
     (":rules" (sk-rules *skel-project*))
     (":env" (sk-env *skel-project*))

@@ -5,7 +5,7 @@
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std
                      :obj :dat :cli :organ :doc :vc
-                     (:feature :ext :pod)
+                     :pod
                      (:feature :ext :box)
                      (:feature :ext :krypt)
                      (:feature :ext :packy)
@@ -30,6 +30,9 @@
     ((:file "pkg")
      (:file "asd")
      (:file "cargo")
+     (:file "container")
+     (:file "org")
+     (:file "dir-locals")
      (:file "makefile")))
    (:file "pkg")
    (:module "tools"

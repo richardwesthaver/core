@@ -26,4 +26,3 @@
                  '(vector org-heading))))
         res)
       (org-file-missing input)))
-

@@ -62,7 +62,7 @@
    :make-sk-vc-meta :sk-vc-meta :sk-vc-meta-kind :sk-vc-meta-remotes
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
    :sk-make :sk-description :sk-kind :sk-rules
-   :sk-version :sk-name :sk-docs :sk-document 
+   :sk-version :sk-name
    :sk-command :sk-scripts :sk-script :sk-config
    :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config :sk-system-config

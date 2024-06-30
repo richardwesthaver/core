@@ -104,47 +104,6 @@
   (print-unreadable-object (self stream :type t)
     (format stream "~A :~A ~A" (format-sxhash (id self)) (sk-kind self) (sk-name self))))
 
-;;; Doc
-
-;; TODO 2023-10-13: integrate organ for working with org document
-;; types - mixins and such
-(defclass sk-document (sk-component sk-meta sxp)
-  ((kind :initarg :kind :type document-designator :accessor sk-kind)
-   (export :initarg :export :type form :accessor sk-export
-           :documentation "document export options")
-   (attach :initarg :attach :type form :accessor sk-attach
-           :documentation "document attachments"))
-  (:documentation "Document object."))
-
-(defun make-sk-document (kind path &key export attach)
-  "Make a new SK-RULE."
-  ;;  TODO 2024-05-10: component paths ala asdf
-  (make-instance 'sk-document
-    :name (pathname-name path)
-    :kind (sb-int:keywordicate (string-upcase (format nil "~a" kind)))
-    :path path
-    :export export
-    :attach attach))
-
-;; (defmethod print-object ((self sk-document) (stream t))
-;;   (print-unreadable-object (self stream :type t)
-;;     (format stream "~S ~A" (sk-kind self) (sk-path self))))
-
-(defmethod write-sxp-stream ((self sk-document) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(keywordicate (sk-kind self)) ,(sk-path self)
-           ,@(when-let ((e (sk-export self))) (list :export e))
-           ,@(when-let ((a (sk-attach self))) (list :attach a)))
-         :stream stream
-         :pretty pretty
-         :case case
-         :readably t
-         :array t
-         :escape t))
-
-(defmethod sk-write ((self sk-document) stream)
-  (write-string (keywordicate (sk-kind self)))
-  (sk-write-string (sk-path self)))
-
 ;;; Snippet
 (defstruct sk-snippet
   (name "" :type string)
@@ -405,9 +364,6 @@ via the special form stored in RECIPE."))
           :initform (make-array 0 :element-type 'sk-rule :adjustable t)
           :accessor sk-rules
           :type (vector sk-rule))
-   (docs :initarg :documents
-         :initform (make-array 0 :element-type 'sk-document :adjustable t)
-         :accessor sk-docs :type (vector sk-document))
    (components :initarg :components :accessor sk-components :type (vector (cons keyword pathname)))
    (vars :initarg :vars :initform nil :accessor sk-vars :type list)
    (env :initarg :env :initform nil :accessor sk-env :type list)
@@ -462,9 +418,6 @@ via the special form stored in RECIPE."))
               (setf (sk-components self) (map 'vector
                                               (lambda (c) (sk-load-component (car c) (pathname (cadr c))))
                                               (sk-components self))))
-            ;; DOCS
-            (when-let ((docs (sk-docs self)))
-              (setf (sk-docs self) (map 'vector (lambda (d) (apply #'make-sk-document d)) docs)))
             ;; SCRIPTS
             (if (bound-string-p self 'scripts)
                 (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
