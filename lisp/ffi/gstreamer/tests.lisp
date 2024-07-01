@@ -9,8 +9,10 @@
 (in-package :gstreamer/tests)
 (defsuite :gstreamer)
 (in-suite :gstreamer)
+
 (glib:load-glib)
 (load-gstreamer)
+
 (deftest sanity ()
   (with-alien ((argv (array c-string))
                (argc (* t))

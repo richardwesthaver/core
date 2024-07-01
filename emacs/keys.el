@@ -30,8 +30,7 @@
   :prefix 'toggle-map
   "v" #'global-visual-line-mode
   "h" #'global-hl-line-mode
-  "l" #'imenu-list-noselect
-  "C-l" #'imenu-list
+  "i" #'imenu-list-smart-toggle
   "N" #'global-display-line-numbers-mode
   "c" #'corfu-mode
   "a" #'gpm-mouse-mode
@@ -92,6 +91,7 @@
   "C-<return>" #'term
   "S-<return>" #'eshell-new
   "!" #'async-shell-command
+  "i" #'imenu
   "SPC" toggle-map
   "." status-map
   "s" search-map

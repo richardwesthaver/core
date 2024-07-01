@@ -7,20 +7,31 @@
   (:use :cl :std :cli/env)
   (:export
    :*terminal* :*alacritty-config-path*
-   :run-terminal :with-terminal))
+   :run-terminal :with-terminal
+   :terminal-error))
 
 (defpackage :cli/tools/tmux
   (:use :cl :std :cli/env :cli/tools/term)
   (:export
-   :*tmux-config-path*
-   :run-tmux :spawn-tmux))
+   :*tmux-user-config-path*
+   :*tmux-system-config-path*
+   :*default-tmux-socket*
+   :run-tmux :spawn-tmux
+   :tmux-format
+   :tmux-format-string
+   :*tmux-variables*
+   :*tmux-var-table*
+   :tmux-error))
 
 (defpackage :cli/tools/cc
   (:use :cl :std :cli/env)
   (:export
    :*cc*
-   :run-cc))
+   :*ld*
+   :run-cc
+   :run-ld
+   :cc-error))
 
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/env)
-  (:export))
+  (:export :*pacman* :run-pacman :pacman-error))

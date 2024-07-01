@@ -49,7 +49,7 @@
      (declare (dynamic-extent ,send))
      ,@body))
 
-(defun query (hostname &key (type T) (dns-servers *dns-servers*) (attempts 1) (timeout 1))
+(defun dns-query (hostname &key (type T) (dns-servers *dns-servers*) (attempts 1) (timeout 1))
   (with-simple-restart (abort "Abort the DNS query.")
     (let ((recv (make-array +dns-buffer-length+ :element-type '(unsigned-byte 8) :initial-element 0)))
       (declare (dynamic-extent recv))
@@ -64,7 +64,7 @@
 
 (defun query-data (hostname &rest args &key type dns-servers attempts timeout)
   (declare (ignore dns-servers attempts timeout))
-  (loop for record in (getf (apply #'query hostname args) :answers)
+  (loop for record in (getf (apply #'dns-query hostname args) :answers)
         when (eql type (getf record :type))
         collect (getf record :data)))
 

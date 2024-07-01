@@ -10,12 +10,17 @@
 ;;; Code:
 (in-package :cli/tools/term)
 
+(deferror terminal-error (simple-error error) ())
+
+(defun terminal-error (fmt &rest args)
+  (error 'terminal-error :format-arguments args :format-control fmt))
+
 (defparameter *terminal* (or (find-exe "alacritty") (find-exe "xterm")))
 
 (defparameter *alacritty-config-path* (merge-pathnames ".config/alacritty.toml" (user-homedir-pathname)))
 
 (defun run-terminal (&rest args)
-  (apply #'sb-ext:run-program *terminal* (or args (list nil))))
+  (apply #'sb-ext:run-program *terminal* args))
 
 (defmacro with-terminal ((sym &key args input output) &body body)
   `(let ((,sym (run-terminal ,args

@@ -145,7 +145,7 @@
    :*opendns-servers*
    :*quad9-servers*
    :*dns-servers*
-   :query
+   :dns-query
    :query-data
    :resolve
    :hostname

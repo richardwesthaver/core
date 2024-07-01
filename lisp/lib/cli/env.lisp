@@ -30,9 +30,11 @@
 
 (defun find-exe (name &optional programs)
   "Find NAME in list of PROGRAMS, defaulting to the result of #'program-list."
-  (find name (or programs (program-list))
-        :test #'equalp
-        :key #'pathname-name))
+  (let ((name (pathname name)))
+    (find name (or programs (program-list))
+          :test (lambda (x y)
+                  (and (equal (pathname-name x) (pathname-name y))
+                       (equal (pathname-type x) (pathname-type y)))))))
 
 (declaim (inline ld-library-path-list))
 (defun ld-library-path-list ()
