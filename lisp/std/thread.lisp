@@ -150,6 +150,8 @@
 (defun process-all-interrupts (&optional (thread sb-thread:*current-thread*))
   (sb-ext:wait-for (null (sb-thread::thread-interruptions thread))))
 
+;;; Vars
+(defvar *task-pool*)
 ;;; Tasks
 (defclass supervisor ()
   (scope)

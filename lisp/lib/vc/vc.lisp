@@ -27,7 +27,7 @@ creating a repo object which is stored in *REPO-REGISTRY*."
     (when register (register-repo repo))
     repo))
 
-(defun make-git-repo (path &key init update register)
+(defun make-git-repo (path &key init register)
   (let ((repo (make-instance 'git-repo :path path)))
     (when init (vc-init repo))
     (when register (register-repo repo))
@@ -44,3 +44,17 @@ creating a repo object which is stored in *REPO-REGISTRY*."
 ;; (defmacro with-git ((&rest vc-opts) &body body))
 
 ;; (defmacro with-repos ((&rest repo-defs) &body body))
+
+(defun directory-repos (path)
+  (let ((path (probe-file path)))
+    (assert (typep path 'directory-pathname))
+    (loop for p in (directory (merge-pathnames "*/" path))
+          collect (make-repo p))))
+
+(defun bundle-repo (path output)
+  (vc-bundle (make-repo path) output))
+
+(defun bundle-repos (path output)
+  (loop for repo in (directory-repos path)
+        do (let ((out (merge-pathnames output (vc-name repo))))
+             (vc-bundle repo out))))

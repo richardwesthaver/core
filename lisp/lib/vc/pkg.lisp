@@ -6,6 +6,7 @@
    :vc-run
    :vc-path
    :vc-head
+   :vc-name
    :vc-bundle :vc-unbundle
    :vc-error :vc-status
    :vc-clone :vc-push :vc-pull :vc-commit

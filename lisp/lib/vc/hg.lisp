@@ -123,6 +123,23 @@
 (defmethod vc-log ((self hg-repo))
   (vc-run self "log"))
 
+(defmethod vc-bundle ((self hg-repo) (output pathname) &key rev branch base type)
+  (let ((args))
+    (when rev
+      (appendf args `("--rev" ,rev)))
+    (when branch
+      (appendf args `("--branch" ,branch)))
+    (when base
+      (appendf args `("--base" ,base)))
+    (when type
+      (appendf args `("--type" ,type)))
+    (unless (or rev branch)
+      (push "--all" args))
+    (apply #'vc-run self (push "bundle" args))))
+
+(defmethod vc-unbundle ((self hg-repo) (input pathname) &key)
+  (vc-run self "unbundle" (namestring input)))
+
 (defmethod vc-id ((self hg-repo))
   (uiop:with-current-directory ((vc-path self))
     (let ((proc (run-hg-command "id" nil :stream)))

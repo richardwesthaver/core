@@ -61,10 +61,11 @@ are missing."))
 
 (defgeneric vc-status (self &key &allow-other-keys))
 
-(defgeneric vc-bundle (self &key &allow-other-keys))
-(defgeneric vc-unbundle (self &key &allow-other-keys))
+(defgeneric vc-bundle (self output &key &allow-other-keys))
+(defgeneric vc-unbundle (self input &key &allow-other-keys))
 
 ;;; Accessors
+(defgeneric vc-name (self))
 (defgeneric vc-path (self))
 (defgeneric vc-head (self))
 (defgeneric vc-tags (self))
@@ -133,3 +134,6 @@ are missing."))
 
 (defmethod vc-init ((self (eql t)))
   (make-instance 'vc-repo))
+
+(defmethod vc-name ((self vc-repo))
+  (car (last (pathname-directory (vc-path self)))))
