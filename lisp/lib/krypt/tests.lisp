@@ -11,4 +11,5 @@
 (defsuite :krypt)
 (in-suite :krypt)
 
-(deftest config ())
+(deftest config ()
+  (make-instance 'krypt-config))

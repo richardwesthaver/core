@@ -54,6 +54,7 @@
                (:file "direction")
                (:file "shape")
                (:file "query")
+               (:file "secret")
                (:file "db")
                (:file "cfg")
                (:file "build"))

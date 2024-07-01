@@ -12,7 +12,8 @@
    :gtype :gquark :gtype-interface :gcond
    :gthread :gdestroy-notify :ghook-list)
   (:export :gst-version-string :gst-version :gst-init
-   :gst-init-check :gst-deinit :gst-is-initialized))
+   :gst-init-check :gst-deinit :gst-is-initialized :gst-element-factory-make
+   :gst-element-set-state))
 
 (in-package :gstreamer)
 

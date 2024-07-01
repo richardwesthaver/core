@@ -15,7 +15,7 @@
     (format stream "~S ~A" :id (format-sxhash (id self)))))
 
 (defun find-krypt-symbol (s)
-  (find-symbol* (symbol-name s) :homer nil))
+  (find-symbol* (symbol-name s) :krypt nil))
 
 (defmethod load-ast ((self krypt-config))
   (with-slots (ast) self
@@ -39,7 +39,7 @@
                         :exclude exclude)))
 
 (defun load-kryptrc (&optional (file *default-user-kryptrc*))
-  "Load a homerc configuration from FILE. Defaults to ~/.homerc."
+  "Load a krypt configuration from FILE. Defaults to ~/.kryptrc."
   (unless (not (probe-file file))
     (let ((form (file-read-forms file)))
       (load-ast (make-instance 'krypt-config :ast form :path file :id (sxhash form))))))

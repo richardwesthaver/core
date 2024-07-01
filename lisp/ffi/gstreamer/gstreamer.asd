@@ -12,6 +12,7 @@
                (:file "bus" :depends-on ("object"))
                (:file "pad" :depends-on ("object"))
                (:file "element" :depends-on ("clock" "object" "iterator" "context"))
+               (:file "element-factory" :depends-on ("element"))
                (:file "bin" :depends-on ("element"))
                (:file "debug" :depends-on ("bin"))
                (:file "play" :depends-on ("element")))

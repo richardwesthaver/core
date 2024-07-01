@@ -9,7 +9,8 @@
 (in-package :gstreamer/tests)
 (defsuite :gstreamer)
 (in-suite :gstreamer)
-
+(glib:load-glib)
+(load-gstreamer)
 (deftest sanity ()
   (with-alien ((argv (array c-string))
                (argc (* t))
@@ -22,3 +23,6 @@
     (format t "initialized GStreamer: ~A.~A.~A.~A~%" major minor micro nano)
     (gst-deinit)
     (println "Shutdown GStreamer")))
+
+(deftest basic ()
+  )

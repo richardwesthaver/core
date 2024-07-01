@@ -17,3 +17,19 @@
 (define-alien-routine gst-debug-bin-to-dot-data c-string
   (bin (* gst-bin))
   (details gst-debug-graph-details))
+
+(define-alien-enum (gst-debug-level int)
+                   :none 0
+                   :error 1
+                   :warning 2
+                   :fixme 3
+                   :info 4
+                   :debug 5
+                   :log 6
+                   :trace 7
+                   :memdump 9
+                   :level-count 10)
+
+(defvar *gst-level-default* (gst-debug-level :none))
+
+(defvar *gst-level-max* (gst-debug-level :level-count))
