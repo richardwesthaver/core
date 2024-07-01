@@ -3,12 +3,16 @@
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
-  (#+crypto :ironclad :sb-concurrency :sb-posix 
+  (:ironclad :sb-concurrency :sb-posix 
              :sb-bsd-sockets :cl-ppcre
              :std :log :obj)
-  :serial t
   :components ((:file "pkg")
-               (:file "err"))
+               (:file "err" :depends-on ("pkg"))
+               (:file "crc64" :depends-on ("pkg"))
+               (:file "authinfo" :depends-on ("err"))
+               (:file "jwt" :depends-on ("err"))
+               (:file "hotp" :depends-on ("err"))
+               (:file "totp" :depends-on ("hotp")))
   :in-order-to ((test-op (test-op :cry/tests))))
 
 (defsystem :cry/tests

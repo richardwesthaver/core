@@ -387,7 +387,8 @@
 (defpackage :obj/secret
   (:nicknames :secret)
   (:use :cl :std)
-  (:export :secret-object :reveal-object :conceal-object :ensure-revealed :ensure-concealed))
+  (:export :secret-object :reveal-object :conceal-object
+   :ensure-revealed :ensure-concealed))
 
 (defpackage :obj/build
   (:use :cl :std)
@@ -395,4 +396,7 @@
 
 (uiop:define-package :obj
   (:use-reexport :list :hash :color
-   :seq :tree :graph :id :db :time :uri :url :cfg :music :temperature :direction :shape :secret :query))
+   :seq :tree :graph :id
+   :db :time :uri :url
+   :cfg :music :temperature :direction
+   :shape :secret :query))

@@ -9,10 +9,20 @@
 
 (defvar *digits* 6)
 
-(defvar *hmac-sha-mode* :sha1)
+(defvar *hmac-sha-mode* :sha3)
 
-(defun hotp (key-string counter)
-  (hotp-truncate (hmac-sha-n key-string counter)))
+(defun hmac-sha-n (key-string counter)
+  (loop
+    with counter-bytes = (make-array 8 :element-type '(unsigned-byte 8))
+    with hmac = (ironclad:make-hmac
+                 (ironclad:hex-string-to-byte-array key-string)
+                 *hmac-sha-mode*)
+    finally
+       (ironclad:update-hmac hmac counter-bytes)
+       (return (ironclad:hmac-digest hmac))
+    for i from 7 downto 0
+    for offset from 0 by 8
+    do (setf (aref counter-bytes i) (ldb (byte 8 offset) counter))))
 
 (defun hotp-truncate (20-bytes)
   (flet ((dt (ht)
@@ -29,15 +39,5 @@
            (svref #(1 10 100 1000 10000 100000 1000000 10000000 100000000)
                   *digits*)))))
 
-(defun hmac-sha-n (key-string counter)
-  (loop
-    with counter-bytes = (make-array 8 :element-type '(unsigned-byte 8))
-    with hmac = (ironclad:make-hmac
-                 (ironclad:hex-string-to-byte-array key-string)
-                 *hmac-sha-mode*)
-    finally
-       (ironclad:update-hmac hmac counter-bytes)
-       (return (ironclad:hmac-digest hmac))
-    for i from 7 downto 0
-    for offset from 0 by 8
-    do (setf (aref counter-bytes i) (ldb (byte 8 offset) counter))))
+(defun hotp (key-string counter)
+  (hotp-truncate (hmac-sha-n key-string counter)))

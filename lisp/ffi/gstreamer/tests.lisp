@@ -24,5 +24,4 @@
     (gst-deinit)
     (println "Shutdown GStreamer")))
 
-(deftest basic ()
-  )
+(deftest basic ())

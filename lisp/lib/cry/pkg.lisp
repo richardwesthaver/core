@@ -1,6 +1,6 @@
 (defpackage :cry
   (:nicknames :cryptography)
-  #+crypto (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
+  (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
   (:use :cl :std :sb-thread :sb-concurrency #+crypto :ironclad :obj/db :obj/id)
   (:export :crypto-error :crypto-token-expired :crypto-token-invalid
    :crypto-key :token :crypto-token :password
@@ -26,7 +26,15 @@
   (:export :+polynomial+ :+improved-polynomial+
            :init-crc64 :crc64-stream
            :crc64-file :crc64-sequence))
-   
+
+(defpackage :cry/jwt
+  (:use :cl :std :dat/json :dat/proto :cry)
+  (:export))
+
+(defpackage :cry/authinfo
+  (:use :cl :std :cry)
+  (:export))
+
 (in-package :cry)
 
 (defvar *password-db* nil
