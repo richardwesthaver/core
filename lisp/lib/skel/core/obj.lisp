@@ -170,7 +170,7 @@
           (unless *keep-ast* (setf (ast self) nil))
           self)
         ;; invalid ast, signal error
-        (skel-syntax-error ast))))
+        (invalid-skel-ast ast))))
 
 (defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self) 
@@ -218,7 +218,7 @@
                         (write-sxp-stream v stream :fmt fmt)
                         (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
                     (write-char #\newline st)))
-         (error 'sxp-fmt-error)))
+         (skel-io-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
 (defclass sk-system-config (sk-config sk-meta) ())
@@ -236,8 +236,8 @@
 
 (declaim (type sk-user-config *skel-user-config*))
 (declaim (type sk-system-config *skel-system-config*))
-(defvar *sk-user-config* (default-sk-user-config))
-(defvar *sk-system-config* (default-sk-system-config))
+(defvar *skel-user-config* (default-sk-user-config))
+(defvar *skel-system-config* (default-sk-system-config))
 
 ;;; Command
 (defclass sk-command (skel)
@@ -383,9 +383,7 @@ via the special form stored in RECIPE."))
   (apply #'sk-new 'sk-project args))
 
 (defun find-sk-symbol (s)
-  (handler-bind ((error #'(lambda (con)
-                          (funcall #'skel-error con))))
-    (find-symbol* (symbol-name s) :skel/core/obj t)))
+  (find-symbol* (symbol-name s) :skel/core/obj t))
 
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))
@@ -461,7 +459,7 @@ via the special form stored in RECIPE."))
             (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
             self))
           ;; invalid ast, signal error
-          (skel-syntax-error ast))))
+          (invalid-skel-ast ast))))
 
 ;; obj -> ast
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))
@@ -488,7 +486,7 @@ via the special form stored in RECIPE."))
 		        (write-sxp-stream v stream :pretty pretty :case case)
 		        (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
 		    (write-char #\newline st)))
-	 (error 'sxp-fmt-error)))
+	 (skel-io-error)))
     (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
 ;; file -> ast

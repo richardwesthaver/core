@@ -4,22 +4,22 @@
 ;;; Configs
 
 ;; init-*,load-*
-(defun load-skelrc (&optional (usr *user-skelrc*) (sys *system-skelrc*))
+(defun load-skelrc (&optional (usr-path *user-skelrc*) (sys-path *system-skelrc*))
   (values
-   (load-system-skelrc sys)
-   (load-user-skelrc usr)))
+   (load-system-skelrc sys-path)
+   (load-user-skelrc usr-path)))
 
 (defun init-user-skelrc (&optional (file *user-skelrc*))
   "Initialize a skelrc configuration based on the currently active
-*SK-USER-CONFIG*. Defaults to ~/.skelrc."
-  (sk-write-file *sk-user-config*
+*SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
+  (sk-write-file *skel-user-config*
                  :path file
                  :pretty t))
 
 (defun init-system-skelrc (&optional (file *system-skelrc*))
   "Initialize a system skelrc configuration based on the currently active
-*SK-SYSTEM-CONFIG*."
-  (sk-write-file *sk-system-config*
+*SKEL-SYSTEM-CONFIG*."
+  (sk-write-file *skel-system-config*
                  :path file
                  :pretty t))
 
@@ -28,11 +28,11 @@
 
 If FILE does not exists, it is created with a default configuration."
   (if-let ((f (probe-file file)))
-      (setq *sk-user-config* (load-ast 
-                                (make-instance 'sk-user-config 
-                                  :ast #1=(file-read-forms f) :id (sxhash #1#)
-                                  :path f)))
-      (init-user-skelrc)))
+    (setq *skel-user-config* (load-ast 
+                              (make-instance 'sk-user-config 
+                                :ast #1=(file-read-forms f) :id (sxhash #1#)
+                                :path f)))
+    (init-user-skelrc)))
 
 (defun load-system-skelrc (&optional (file *system-skelrc*) auto)
   "Load a skelrc configuration from FILE. Defaults to /etc/skel/skelrc.
@@ -41,9 +41,11 @@ Unlike LOAD-USER-SKELRC we don't generate a default file if one
 doesn't exist, since it is assumed to be write-protected. This can be
 overwritten with the AUTO flag."
   (if-let ((f (probe-file file)))
-    (setq *sk-system-config*
+    (setq *skel-system-config*
           (load-ast (make-instance 'sk-system-config :ast #1=(file-read-forms f) :id (sxhash #1#) :path f)))
-    (when auto (init-system-skelrc))))
+    (if auto
+        (init-system-skelrc)
+        *skel-system-config*)))
 
 (eval-always
   (defun load-skelfile (file)
@@ -95,7 +97,7 @@ skelfile if found."
              (or (%check dir)
                  (let ((next (pathname-parent-directory-pathname dir)))
                    (if (uiop:pathname-equal next dir)
-                       (when error (error "failed to find root skelfile"))
+                       (when error (skel-simple-error "failed to find root skelfile"))
                        (%walk next)))))
            (%load? (file) (if load (load-skelfile file) file)))
     (setf start (car (directory start)))
@@ -104,7 +106,7 @@ skelfile if found."
       (if walk
           (when-let ((match (%walk start)))
             (%load? match))
-	  (when error (error "failed to find root skelfile"))))))
+	  (when error (skel-simple-error "failed to find root skelfile"))))))
 
 (defun edit-skelrc ()
   "Open the current user configuration using ED."
@@ -115,19 +117,31 @@ skelfile if found."
   (ed *system-skelrc*))
 
 (defun get-config-slot* (slot)
-  "First check *SK-USER-CONFIG* for a slot value, and if a valid value
-isn't found check *SK-SYSTEM-CONFIG*."
-  (when (boundp '*sk-user-config*)
-    (if (slot-unbound 'sk-user-config *sk-user-config* slot)
-        (when (boundp '*sk-system-config*)
-          (if (slot-unbound 'sk-system-config *sk-system-config* slot)
-              (error 'skel-error :message (format nil "slot is unbound: ~a" slot))
-              (slot-value *sk-system-config* slot)))
-      (slot-value *sk-user-config* slot))))
+  "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
+isn't found check *SKEL-SYSTEM-CONFIG*."
+  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
+    (if (not (slot-boundp *skel-user-config* slot))
+        (if (not (slot-boundp *skel-system-config* slot))
+            (skel-simple-error (format nil "slot is unbound: ~a" slot))
+            (slot-value *skel-system-config* slot)))
+    (slot-value *skel-user-config* slot)))
 
 (defun init-skel-vars ()
-  "Initialize the global SKEL variables based on the active
-*SK-USER-CONFIG*."
-  (setq *skel-cache* (sk-cache *sk-user-config*)
-        *skel-stash* (sk-stash *sk-user-config*)
-        *skel-registry* (sk-registry *sk-user-config*)))
+  "Initialize the global SKEL variables:
+
+*SKEL-SYSTEM-CONFIG*
+*SKEL-USER-CONFIG*
+*SKEL-PROJECT*
+*SKEL-CACHE*
+*SKEL-STORE*
+*SKEL-STASH*
+*SKEL-REGISTRY*"
+  (in-readtable :shell)
+  (load-skelrc)
+  (when-let ((project (find-skelfile *default-pathname-defaults*)))
+    (setq *skel-project* (load-skelfile project)))
+  (setq *skel-cache* (get-config-slot* :cache)
+        *skel-store* (get-config-slot* :store)
+        *skel-stash* (get-config-slot* :stash)
+        *skel-registry* (get-config-slot* :registry))
+  (values))

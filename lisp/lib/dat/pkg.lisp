@@ -15,7 +15,7 @@
   (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:export
    :sxp-fmt-designator
-   :form :formp :sxp-error :sxp-fmt-error :sxp-syntax-error :reader :writer :fmt
+   :form :formp :sxp-error :sxp-syntax-error :reader :writer :fmt
    :wrap :wrap! :wrap-from-string! :unwrap :unwrap! :unwrap-or
    :sxpp :build-ast :load-ast :load-ast*
    :ast

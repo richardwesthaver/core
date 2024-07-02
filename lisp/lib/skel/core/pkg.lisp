@@ -1,9 +1,12 @@
 (defpackage :skel/core/err
   (:use :cl :std :dat/sxp)
   (:export
+   :skel-condition
    :skel-error
+   :skel-simple-error
    :skel-syntax-error
-   :skel-fmt-error
+   :invalid-skel-ast
+   :skel-io-error
    :skel-compile-error))
 
 (defpackage :skel/core/types
@@ -66,7 +69,7 @@
    :sk-command :sk-scripts :sk-script :sk-config
    :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config :sk-system-config
-   :*sk-user-config* :*sk-system-config*
+   :*skel-user-config* :*skel-system-config*
    :sk-src :sk-component :sk-components :sk-module
    :sk-parent))
 
@@ -83,6 +86,7 @@
    :load-skelfile
    :find-skelfile
    :find-sk-file
+   :get-config-slot*
    :find-project-root
    :describe-skeleton
    :describe-project))

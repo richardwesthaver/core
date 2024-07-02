@@ -42,7 +42,20 @@
  ediff-floating-control-frame t
  register-use-preview nil
  shr-use-xwidgets-for-media t
+ which-key-mode t
  view-read-only t)
+(add-to-list 'treesit-extra-load-path "/usr/local/lib/")
+
+;; (let ((grammar-dir "/usr/local/share/tree-sitter/"))
+;;   (when (file-exists-p grammar-dir)
+;;     (append
+;;      (flatten
+;;       (mapcar
+;;        (lambda (f)
+;;          (unless (or (string= "." f) (string= ".." f))
+;;            (concat grammar-dir f)))
+;;        (directory-files "/usr/local/share/tree-sitter")))
+;;      treesit-extra-load-path)))
 
 ;;; Variables
 (defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
@@ -79,9 +92,8 @@
    org-web-tools ;; web parsing
    citeproc ;; citations
    all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
-   hide-mode-line ;; ui
+   hide-mode-line) ;; ui
    ;; bbdb
-   which-key)
   (package-install-selected-packages t))
 
 ;;; Env
@@ -90,6 +102,9 @@
                                       "SSH_AUTH_SOCK"
                                       "PATH" 
                                       "CARGO_HOME"
+                                      "CC"
+                                      "LD"
+                                      "LD_LIBRARY_PATH"
                                       "SBCL_HOME"
                                       "LISP_HOME"))
 
@@ -97,6 +112,8 @@
 (add-to-list 'exec-path (expand-file-name "~/.local/bin/"))
 (add-to-list 'exec-path "/bin/")
 (add-to-list 'exec-path "/usr/local/sbin/")
+(add-to-list 'exec-path "/usr/local/bin/")
+(add-to-list 'exec-path "/usr/local/share/lisp/bin/")
 
 ;;; Completions
 ;; (use-package corfu

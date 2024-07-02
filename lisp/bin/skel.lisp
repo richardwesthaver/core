@@ -46,10 +46,11 @@
 
 (defcmd skc-describe
   (describe
-   (find-skelfile 
-    (if $args (pathname (car $args))
-	#P".")
-    :load t)))
+   (if (and $argc (pathname (car $args)))
+       (find-skelfile #P"." :load t)
+       (or *skel-project*
+           *skel-user-config*
+           *skel-system-config*))))
 
 (defcmd skc-inspect
   (sb-ext:enable-debugger)
@@ -114,16 +115,16 @@
     (":include" (sk-include *skel-project*))
     (":stash" (sk-stash *skel-project*))
     (":store" (sk-store *skel-project*))
-    (":config" (describe *sk-user-config*))
-    (":sys" (describe *sk-system-config*))
-    (":cache" (sk-cache *sk-user-config*))))
+    (":config" (describe *skel-user-config*))
+    (":sys" (describe *skel-system-config*))
+    (":cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show
   (if $args 
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) $args)
       (describe (if (boundp '*skel-project*) *skel-project*
-                    (if (boundp '*sk-user-config*) *sk-user-config*
-                        (if (boundp '*sk-system-config*) *sk-system-config*
+                    (if (boundp '*skel-user-config*) *skel-user-config*
+                        (if (boundp '*skel-system-config*) *skel-system-config*
                             (skel-error "skel config files not installed")))))))
 
 (defcmd skc-push
@@ -330,7 +331,7 @@
   (let ((*log-level* :info))
     (in-readtable :shell)
     (with-cli (opts cmds) $cli
-      (load-skelrc)
+      (init-skel-vars)
       (when-let ((project (find-skelfile #P".")))
         (setq *skel-project* (load-skelfile project)))
       (do-cmd $cli)

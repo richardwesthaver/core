@@ -14,12 +14,6 @@
 ;;; Conditions
 (define-condition sxp-error (error) ())
 
-(define-condition sxp-fmt-error (sxp-error)
-  ((format-control :initarg :format-control :reader format-control)
-   (format-arguments :initarg :format-arguments :reader format-arguments))
-  (:report (lambda (c s)
-             (apply 'format s (format-control c) (format-arguments c)))))
-
 (define-condition sxp-syntax-error (sxp-error) ())
 
  ;;; Protocol
