@@ -13,6 +13,7 @@
 
 (declaim (optimize (speed 3)))
 
+;;; Conditions
 (define-condition sql-error (error) ())
 
 (deferror simple-sql-error (sql-error simple-error) ())
@@ -36,6 +37,7 @@
 (defun illegal-sql-state (state)
   (error 'illegal-sql-state :state state))
 
+;;; Objects
 (defclass sql-query (query) ())
 
 (defclass sql-data-source (data-source) ()

@@ -4,7 +4,7 @@
   :depends-on (:std :obj :log :dat :parse)
   :components ((:file "pkg")
                (:file "sql" :depends-on ("pkg"))
-               (:file "lql" :depends-on ("pkg")))
+               (:file "dql" :depends-on ("pkg")))
   :in-order-to ((test-op (test-op "q/tests"))))
 
 (defsystem :q/tests

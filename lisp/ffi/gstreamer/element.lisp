@@ -68,7 +68,6 @@
           (contexts (* glist))
           (%gst-reserved (array gpointer #.(- +gst-padding+ 1)))))
 
-
 (define-opaque gst-element-class)
 
 (define-alien-routine gst-element-get-type gtype)

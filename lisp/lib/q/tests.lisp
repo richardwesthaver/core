@@ -17,7 +17,7 @@
 (deftest sql ())
 
 ;; https://www.cpp.edu/~jrfisher/www/prolog_tutorial/2_1.html
-(deftest lql ()
+(deftest dql ()
   (adjacent 1 2)
   (adjacent 2 1) 
   (adjacent 1 3)

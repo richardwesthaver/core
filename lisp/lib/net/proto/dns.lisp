@@ -26,27 +26,27 @@
   '("9.9.9.9" "149.112.112.112"))
 
 (defvar *dns-servers*
-  (list* "127.0.0.1"
-         (append *dnswatch-servers* *quad9-servers*
-                 *cloudflare-servers* *opendns-servers*
-                 *google-servers*)))
+  (cons "127.0.0.1"
+        (append *dnswatch-servers* *quad9-servers*
+                *cloudflare-servers* *opendns-servers*
+                *google-servers*)))
 
 (defun try-server (server send send-length recv recv-length &key (attempts 1) (timeout 1))
   (handler-case
       (let ((socket (sb-bsd-sockets:socket-connect
                      (make-instance 'inet-socket
                        :type :datagram :protocol :udp)
-                     (cons server +dns-port+))))
+                     (make-inet-address server) +dns-port+)))
         (unwind-protect
              (loop repeat attempts
-                   do (usocket:socket-send socket send send-length)
-                      (when (usocket:wait-for-input socket :timeout timeout :ready-only T)
-                        (let ((received (nth-value 1 (usocket:socket-receive socket recv recv-length))))
+                   do (sb-bsd-sockets:socket-send socket send send-length)
+                      (sb-ext:with-timeout timeout
+                        (let ((received (nth-value 1 (socket-receive socket recv recv-length))))
                           (when (and received (< 0 received))
                             (return received)))))
           (socket-close socket)))
     (socket-error (e)
-      (values NIL e))))
+      (values nil e))))
 
 (defmacro with-query-buffer ((send pos hostname type &rest header-args) &body body)
   `(let* ((,send (make-array 512 :element-type '(unsigned-byte 8) :initial-element 0))
