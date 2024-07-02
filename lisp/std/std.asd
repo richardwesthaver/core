@@ -47,6 +47,7 @@
                  (:file "control")))
                (:file "bit")
                (:file "thread")
+               (:file "task")
                (:file "fmt")
                (:file "path")
                (:file "os")

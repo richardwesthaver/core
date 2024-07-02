@@ -17,8 +17,8 @@
                  (:file "term" :depends-on ("pkg"))
                  (:file "tmux" :depends-on ("term"))
                  (:file "pacman" :depends-on ("pkg"))
-                 (:file "cc" :depends-on ("pkg"))))
-               ;; (:file "clap" :depends-on ("shell" "prompt"))
+                 (:file "cc" :depends-on ("pkg"))
+                 (:file "systemd" :depends-on ("pkg"))))
                (:module "clap"
                 :components
                 ((:file "pkg")

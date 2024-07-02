@@ -5,10 +5,14 @@
 ;;; Code:
 (in-package :net/core)
 
-(define-condition net-error (std-error) ())
+(define-condition net-condition () ())
+(define-condition codec-condition (net-condition) ())
+(define-condition protocol-condition (net-condition) ())
 
-(define-condition codec-error (net-error) ())
-(define-condition protocol-error (net-error) ())
+(define-condition net-error (net-condition std-error) ())
+
+(define-condition codec-error (codec-condition net-error) ())
+(define-condition protocol-error (protocol-condition net-error) ())
 
 ;; sb-bsd-sockets:socket-error
 ;; sb-thread:thread-error

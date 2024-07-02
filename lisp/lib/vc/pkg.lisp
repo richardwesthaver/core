@@ -1,5 +1,5 @@
 (defpackage :vc/proto
-  (:use :cl :std :log :obj :cl-ppcre :parse/lex)
+  (:use :cl :std :log :obj :parse/lex)
   (:import-from :uiop :with-current-directory)
   (:export 
    :vc-repo

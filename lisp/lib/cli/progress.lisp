@@ -41,7 +41,7 @@
     :documentation "How far in the progress are we?")
    (mutex
     :initarg :mutex
-    :reader mutex
+    :reader progress-mutex
     :documentation "Just a mutex, allows progress bar to be thread safe.")
    (pending
     :initarg :pending
@@ -177,7 +177,7 @@
   (check-type unit-count (integer 1 *))
   (check-type progress-bar (or null progress-bar))
   (unless (null progress-bar)
-    (sb-thread:with-mutex ((mutex progress-bar))
+    (sb-thread:with-mutex ((progress-mutex progress-bar))
       (update-progress progress-bar unit-count))))
 
 (defun make-progress-bar (total)

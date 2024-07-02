@@ -5,6 +5,12 @@
 ;;; Code:
 (in-package :net/proto/dns)
 
+(define-condition dns-error (dns-condition protocol-error) ())
+
+(define-condition dns-servers-exhausted (dns-error)
+  ()
+  (:report (lambda (c s) (declare (ignore c)) (format s "All DNS servers failed to provide an answer for the query."))))
+
 (defconstant +dns-port+ 53)
 (defconstant +dns-buffer-length+ 4096)
 
@@ -89,7 +95,7 @@
                           (loop for byte across (usocket:ipv6-host-to-vector ip)
                                 collect (format NIL "~x" (ldb (byte 4 4) byte))
                                 collect (format NIL "~x" (ldb (byte 4 0) byte)))
-                          (split #\. ip)))
+                          (ssplit #\. ip)))
                (list (apply #'query-data (format NIL "~{~a.~}~:[in-addr~;ip6~].arpa" (nreverse parts) ipv6-p) :type :PTR args)))
           (values (first list) list T)))
     (dns-condition ()

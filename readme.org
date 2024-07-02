@@ -3,10 +3,10 @@
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
 #+setupfile: https://cdn.compiler.company/org/clean.theme
-- [[comp:docs/core][Docs]]
-  - [[comp:docs/core/install][Install]] :: Install Guide
-  - [[comp:docs/core/tests][Tests]] :: Testing Guide
-  - [[comp:docs/core/stats][Stats]] :: Project Statistics
+- [[https://compiler.company/docs/core][Docs]]
+  - [[https://compiler.company/docs/core/install][Install]] :: Install Guide
+  - [[https://compiler.company/docs/core/tests][Tests]] :: Testing Guide
+  - [[https://compiler.company/docs/core/stats][Stats]] :: Project Statistics
 
 * Overview
 The Compiler Company (aka CC) is a small software research laboratory
@@ -30,20 +30,6 @@ matrix below for details.
 In any case, it is always preferred to make use of the [[https://vc.compiler.company/comp/infra][infra]] project
 to reliably provision the host either from source or pre-built
 platform-specific [[https://packy.compiler.company/dist][binary distributions]].
-
-#+NAME: Core Features
-| name    | dependencies     |
-|---------+------------------|
-| default | skel krypt emacs |
-| io      | zstd uring       |
-| rdb     | rocksdb io       |
-| syn     | tree-sitter      |
-| vc      | git hg           |
-| net     | openssl io       |
-| box     | qemu             |
-| pod     | podman           |
-| skel    | rdb vc net       |
-| krypt   | keyutils         |
 
 #+NAME: Optional Dependencies
 | dependency  | dependents             | src                                           | dist |

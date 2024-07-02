@@ -2,6 +2,9 @@
   (:use :cl :std :sb-bsd-sockets :sb-thread :sb-concurrency)
   (:export
    ;; err
+   :net-condition
+   :protocol-condition
+   :codec-condition
    :net-error
    :codec-error
    :protocol-error
@@ -48,6 +51,8 @@
   (:nicknames :codec/dns)
   (:use :cl :std :net/core :net/codec/punycode)
   (:export
+   :dns-condition
+   :dns-server-failure
    :*record-type-table*
    :record-type-id
    :id-record-type
@@ -138,6 +143,7 @@
   (:nicknames :net/dns)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/dns)
   (:export
+   :dns-servers-exhausted
    :dns-port
    :*cloudflare-servers*
    :*dnswatch-servers*

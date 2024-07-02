@@ -678,10 +678,6 @@ Add this function to appropriate major mode hooks such as
    imenu-prev-index-position-function #'shr-heading-previous
    imenu-extract-index-name-function  #'shr-heading--line-at-point))
 
-(add-hook 'eww-mode-hook 'shr-heading-setup-imenu)
-
-(define-key eww-mode-map "i" shr-heading-map)
-
 (defvar shr-heading-map
   (let ((map (make-sparse-keymap)))
     (define-key map "n" #'shr-heading-next)
@@ -689,6 +685,9 @@ Add this function to appropriate major mode hooks such as
     (define-key map "p" #'shr-heading-previous)
     (define-key map "\C-p" #'shr-heading-previous)
     map))
+
+(add-hook 'eww-mode-hook 'shr-heading-setup-imenu)
+(add-hook 'eww-mode-hook (lambda () (define-key eww-mode-map "i" shr-heading-map)))
 
 ;;; Tramp
 (setopt tramp-default-method "ssh"

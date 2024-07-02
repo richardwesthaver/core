@@ -35,3 +35,7 @@
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/env)
   (:export :*pacman* :run-pacman :pacman-error))
+
+(defpackage :cli/tools/systemd
+  (:use :cl :std :cli/env)
+  (:export :*systemctl* :run-systemd :run-systemctl))

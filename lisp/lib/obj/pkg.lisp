@@ -355,7 +355,7 @@
            :physical-expression
            :physical-plan
            :scan-exec
-           :scan
+           :scan-data
            :execute-query
            :aggregate-function
            :aggregate-function-designator

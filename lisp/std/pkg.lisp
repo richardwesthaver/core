@@ -249,28 +249,57 @@
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency)
   (:import-from :std/list :flatten)
-  (:import-from :std/macs :if-let)
-  (:import-from :sb-thread :start-thread :%make-thread)
+  (:use-reexport :sb-thread)
   (:export
    :print-top-level :thread-support-p
    :find-thread-by-id :thread-id-list
-   :make-threads :with-threads :finish-threads
-   :timed-join-thread :kill-thread :hang
-   :thread-count :dump-thread
+   :timed-join-thread :kill-thread
+   :wait-for-threads
+   :hang :finish-threads
+   :make-threads :with-threads 
+   :thread-count :dump-thread))
+
+(defpkg :std/task
+  (:use :cl :std/thread :sb-concurrency)
+  (:import-from :std/thread :%make-thread)
+  (:import-from :std/macs :if-let)
+  (:export
    :spawn-workers
-   :make-oracle :make-supervisor :oracle :run-task
+   :make-oracle :make-supervisor
+   :oracle :run-task
    :oracle-id :find-thread
-   :push-job :push-task :push-worker :push-task-result
+   :push-job :push-task
+   :push-worker :push-task-result
    :run-job :run-stage
-   :pop-job :pop-task :pop-worker :pop-task-result
+   :pop-job :pop-task
+   :pop-worker :pop-task-result
+   :*task-pool*
+   :*tasks*
+   :*oracles*
+   :*workers*
+   :*jobs*
+   :*stages*
+   :define-task-kernel
+   :*task-kernel*
+   :default-task-kernel
+   :make-worker
+   :make-workers
+   :worker-count
+   :init-task-pool
    :make-task-pool
-   :start-task-pool :pause-task-pool :shutdown-task-pool
-   :push-stage :designate-oracle :make-task-pool
-   :task :job :task-pool :stage :task-pool-p
-   :job-tasks :make-job :job-p :task-object
-   :make-task :task-p :task :wait-for-threads
-   :task-pool-oracle :task-pool-jobs :task-pool-stages
-   :task-pool-workers :task-pool-results))
+   :start-task-pool :pause-task-pool
+   :shutdown-task-pool
+   :push-stage :designate-oracle
+   :make-task-pool
+   :task :job :task-pool
+   :stage :task-pool-p
+   :job-tasks :make-job
+   :job-p :task-object
+   :make-task :task-p :task
+   :task-pool-oracle :task-pool-jobs
+   :task-pool-stages
+   :task-pool-workers :task-pool-results
+   :with-task-pool))
 
 (defpkg :std/readtable
   (:use :cl)
@@ -406,9 +435,13 @@
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
-  (:use-reexport :std/named-readtables :std/defpkg :std/err :std/sym :std/list :std/type :std/num
-   :std/stream :std/fu :std/array :std/hash-table :std/alien :std/mop :std/thread
-   :std/macs :std/bit :std/fmt :std/path :std/os :std/file :std/string :std/seq :std/sys :std/readtable))
+  (:use-reexport :std/named-readtables :std/defpkg :std/err
+   :std/sym :std/list :std/type :std/num
+   :std/stream :std/fu :std/array :std/hash-table
+   :std/alien :std/mop :std/thread :std/task
+   :std/macs :std/bit :std/fmt :std/path
+   :std/os :std/file :std/string :std/seq
+   :std/sys :std/readtable))
 
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std

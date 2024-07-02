@@ -6,6 +6,7 @@
 (defpackage :packy/core
   (:use :cl :std :obj/id :dat/proto)
   (:export
+   :*packy-url*
    :pack
    :unpack
    :install-package

@@ -16,10 +16,6 @@
   (:report (lambda (c s) (format s "DNS server ~%  ~a~%responded with failure code ~d~@[~%  ~a~]"
                                  (dns-server c) (response-code c) (response-code-name (response-code c))))))
 
-(define-condition dns-servers-exhausted (error dns-condition)
-  ()
-  (:report (lambda (c s) (declare (ignore c)) (format s "All DNS servers failed to provide an answer for the query."))))
-
 (defun response-code-name (code)
   (case code
     (0 :success)
@@ -383,7 +379,8 @@
     (setf (getf data :data) (decode-record-payload (getf data :type) octets pos (+ pos (getf data :length))))
     (values data (+ pos (getf data :length)))))
 
-(defun decode-response (server octets offset #+nil limit)
+(defun decode-response (server octets offset limit)
+  (declare (ignorable limit))
   ;; FIXME: Implement buffer limiting.
   (multiple-value-bind (header pos) (decode-header octets offset)
     (when (< 0 (getf header :response-code))

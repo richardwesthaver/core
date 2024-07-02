@@ -77,7 +77,7 @@
 (defclass data-source ()
   ((schema :type schema)))
 
-(defgeneric scan (self &optional projection)
+(defgeneric scan-data (self &optional projection)
   (:documentation "Scan the data source, selecting the specified columns."))
 
 ;;; Expression
@@ -132,7 +132,7 @@
   ((children :type (vector logical-plan) :accessor children :initarg :children)))
 
 ;;; Scan
-(defclass scan (logical-plan)
+(defclass scan-data (logical-plan)
   ((path :type string)
    (data-source :type data-source)
    (projection :type (vector string))))
