@@ -46,11 +46,10 @@
 
 (defcmd skc-describe
   (describe
-   (if (and $argc (pathname (car $args)))
-       (find-skelfile #P"." :load t)
-       (or *skel-project*
-           *skel-user-config*
-           *skel-system-config*))))
+   (if (> $argc 0)
+       (find-skelfile (pathname (car $args)) :load t)
+       (or *skel-project* *skel-user-config* *skel-system-config*))))
+
 
 (defcmd skc-inspect
   (sb-ext:enable-debugger)
@@ -217,7 +216,7 @@
   
 (define-cli $cli
   :name "skel"
-  :version "0.1.1"
+  :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "A hacker's project compiler."
   :thunk skc-show
   :opts (make-opts 

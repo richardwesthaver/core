@@ -234,10 +234,10 @@
 
 (defun default-sk-user-config () (make-instance 'sk-user-config))
 
-(declaim (type sk-user-config *skel-user-config*))
-(declaim (type sk-system-config *skel-system-config*))
-(defvar *skel-user-config* (default-sk-user-config))
-(defvar *skel-system-config* (default-sk-system-config))
+(declaim (type (or sk-user-config null) *skel-user-config*))
+(declaim (type (or sk-system-config null) *skel-system-config*))
+(defvar *skel-user-config* nil)
+(defvar *skel-system-config* nil)
 
 ;;; Command
 (defclass sk-command (skel)
