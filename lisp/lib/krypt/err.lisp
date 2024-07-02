@@ -9,7 +9,7 @@
   ()
   (:documentation "Error signaled by the KRYPT system."))
 
-(deferror krypt-simple-error (krypt-error simple-error) () (:auto t))
+(deferror krypt-simple-error (krypt-error simple-error) ())
 
 (defun krypt-simple-error (ctrl &rest args)
   (error 'simple-sql-error :format-control ctrl :format-arguments args))
