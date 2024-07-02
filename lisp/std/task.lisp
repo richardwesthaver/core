@@ -307,6 +307,6 @@ computation."))
 
 ;;; Macros
 (defmacro with-task-pool ((sym pool &key count) &body body)
-  `(let ((,sym ,(or pool std/thread::*task-pool*)))
+  `(let ((,sym ,(or pool std/task::*task-pool*)))
      ,@(when count `((spawn-workers ,sym ,count)))
      ,@body))
