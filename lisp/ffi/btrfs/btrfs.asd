@@ -19,7 +19,8 @@
   :depends-on (:sb-grovel :std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
-                                      :package :btrfs))
+                                      :package :btrfs)
+               (:file "util" :depends-on ("pkg" "constants")))
   :in-order-to ((test-op (test-op "btrfs/tests"))))
   
 (defsystem "btrfs/tests"
