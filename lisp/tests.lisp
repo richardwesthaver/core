@@ -11,3 +11,10 @@
 (in-package :core/tests)
 
 (defsuite :core)
+(in-suite :core)
+
+(defun run-all-tests (&optional force)
+  (mapcar (lambda (x) (do-tests x force)) (remove *test-suite* *test-suite-list*)))
+
+(deftest all ()
+  (run-all-tests t))

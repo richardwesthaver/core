@@ -509,7 +509,8 @@ from TESTS."))
   (find name *test-suite-list* :test #'test-name=))
 
 (defmethod map-tests ((self test-suite) function)
-  (mapcar function (tests self)))
+  ;; tests are stored in reverse order. run LIFO.
+  (mapcar function (reverse (tests self))))
 
 (defmethod push-test ((self test) (place test-suite))
   (push self (tests place)))

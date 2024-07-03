@@ -152,7 +152,7 @@
     ;;   (sb-concurrency:wait-on-gate (std/thread::task-pool-online pool))
     ;;   (print (+ a b c)))
     (is (= 16 (length (task-pool-workers pool))))
-    (is (sb-concurrency:open-gate (std/thread::task-pool-online pool)))))
+    (is (sb-thread:semaphore-count (std/task::task-pool-online pool)))))
 
 (deftest fmt ()
   "Test standard formatters"

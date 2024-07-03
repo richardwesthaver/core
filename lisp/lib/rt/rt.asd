@@ -2,10 +2,10 @@
 (defsystem :rt
   :depends-on (:std :log :dat :sb-sprof)
   :components ((:file "pkg")
-               (:file "bench")
-               (:file "tracing")
-               (:file "flamegraph")
-               (:file "cover"))
+               (:file "bench" :depends-on ("pkg"))
+               (:file "tracing" :depends-on ("pkg"))
+               (:file "flamegraph" :depends-on ("pkg"))
+               (:file "cover" :depends-on ("pkg")))
   :in-order-to ((test-op (test-op "rt/tests"))))
 
 (defsystem :rt/tests

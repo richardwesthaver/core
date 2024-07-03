@@ -16,9 +16,9 @@
 
 (defmacro with-coverage (&body body)
   `(progn
-     (enable-coverage)
+     (start-coverage)
      ,@body
-     (disable-coverage)))
+     (stop-coverage)))
 
 (defun coverage-report ()
   "Generate a coverage report."
