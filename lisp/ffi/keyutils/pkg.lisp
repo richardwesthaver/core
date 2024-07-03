@@ -12,56 +12,84 @@
 (defpackage :keyutils
   (:use :cl :std :sb-alien)
   (:export 
-   :libssh2-init :libssh2-exit :libssh2-free))
+   :keyutils-version-string
+   :keyutils-build-string))
 
 (in-package :keyutils)
 
-(define-alien-loader "keyutils" t "/usr/lib/")
+(define-alien-type iovec (struct nil))
 
-(define-alien-type key-serial-t int)
-(define-alien-type key-perm-t unsigned-int)
+(define-alien-type key-serial-t (integer 32))
+(define-alien-type key-perm-t (unsigned 32))
 
-(define-alien-type keyctl-pkey-params-len2
-  (union keyctl-pkey-params-len2
-         (out-len unsigned-int)
-         (in2-len unsigned-int)))
+(define-alien-variable keyutils-version-string (array char))
+(define-alien-variable keyutils-build-string (array char))
+;; (cast keyutils-version-string c-string) ;= "keyutils-1.6.3"
+;; (cast keyutils-build-string c-string) ;= nil
 
-(define-alien-type keyctl-pkey-params
-  (struct keyctl-pkey-params
-          (key-id key-serial-t)
-          (in-len unsigned-int)
-          (len2 keyctl-pkey-params-len2)
-          (spare (array unsigned-int 7))))
+;; TODO: recursive_key_scanner_t
 
-(define-alien-type key-serial-t int)
 
-(define-alien-routine add-key key-serial-t (type c-string)
-  (description c-string) (payload c-string) (plen size-t) (ringid key-serial-t))
-
-(define-alien-routine request-key key-serial-t
-  (type c-string) (description c-string) (callout-info (c-string :not-null nil)) (destringid key-serial-t))
-
-#|
-#-keyutils (and (load-shared-object "/usr/lib/libkeyutils.so" :dont-save t) (push :keyutils *features*))
-(let* ((kring key-spec-user-keyring) ; = -4
-       (k1 (add-key "user" "test" "test" 5 kring))
-       (k2 (request-key "user" "test" nil kring)))
-  (print (cons k1 k2))
-  (= k1 k2)) ; => T
-
-(defvar *test-key-id*
-  (let ((payload "password"))
-    (alien-funcall
-     (extern-alien "add_key" (function key-serial-t c-string c-string c-string size-t key-serial-t))
-     "user" "test" payload (length payload) key-spec-thread-keyring)))
-|#
-
-;; may want a syscall interface too..
-
-;; (sb-unix::strerror
-;;  (alien-funcall
-;;   (extern-alien "request_key" (function key-serial-t c-string c-string c-string key-serial-t))
-;;   "user" "test" "test" *test-key-id*))
-
-;; 
-;; (apropos "syscall")
+(macrolet ((def (name &rest args)
+               `(progn
+                  (define-alien-routine ,name key-serial-t ,@args)
+                  ,@(if (atom name)
+                        `((export ',name))
+                        `((export ',(cadr name))))))
+           (defint (name &rest args)
+             `(progn
+                (define-alien-routine ,name int ,@args)
+                (export ',name)))
+           (deflong (name &rest args)
+             `(progn
+                (define-alien-routine ,name long ,@args)
+                (export ',name))))
+  (def add-key (type c-string) (description c-string) (payload (* t)) (plen size-t) (ringid key-serial-t))
+  (def request-key (type c-string) (description c-string) (callout-info c-string) (destringid key-serial-t))
+  ;; variadic? ... prob not supported by sb-alien
+  (deflong keyctl (cmd int))
+  (def ("keyctl_get_keyring_ID" keyctl-get-keyring-id) (id key-serial-t) (create int))
+  (def keyctl-join-session-keyring (name c-string))
+  (deflong keyctl-update (id key-serial-t) (payload (* t)) (plen size-t))
+  (deflong keyctl-revoke (id key-serial-t))
+  (deflong keyctl-chown (id key-serial-t) (uid sb-unix:uid-t) (gid sb-unix:gid-t))
+  (deflong keyctl-setperm (id key-serial-t) (perm key-perm-t))
+  (deflong keyctl-describe (id key-serial-t) (buffer c-string) (buflen size-t))
+  (deflong keyctl-clear (ringid key-serial-t))
+  (deflong keyctl-link (id key-serial-t) (ringid key-serial-t))
+  (deflong keyctl-unlink (id key-serial-t) (ringid key-serial-t))
+  (deflong keyctl-search (ringid key-serial-t) (type c-string) (description c-string) (destringid key-serial-t))
+  (deflong keyctl-read (id key-serial-t) (buffer c-string) (buflen size-t))
+  (deflong keyctl-instantiate (id key-serial-t) (payload (* t)) (plen size-t) (ringid key-serial-t))
+  (deflong keyctl-negate (id key-serial-t) (timeout unsigned) (ringid key-serial-t))
+  (deflong keyctl-set-reqkey-keyring (reqkey-defl int))
+  (deflong keyctl-set-timeout (key key-serial-t) (timeout unsigned))
+  (deflong keyctl-assume-authority (key key-serial-t))
+  (deflong keyctl-get-security (key key-serial-t) (buffer c-string) (buflen size-t))
+  (deflong keyctl-session-to-parent)
+  (deflong keyctl-reject (id key-serial-t) (timeout unsigned) (error unsigned) (ringid key-serial-t))
+  (deflong keyctl-instantiate-iov (id key-serial-t) (payload-iov (* iovec)) (ioc unsigned) (ringid key-serial-t))
+  (deflong keyctl-invalidate (id key-serial-t))
+  (deflong keyctl-get-persistent (uid sb-unix:uid-t) (id key-serial-t))
+  (deflong keyctl-dh-compute (priv key-serial-t) (prime key-serial-t)
+    (base key-serial-t) (buffer c-string) (buflen size-t))
+  (deflong keyctl-dh-compute-kdf (priv key-serial-t) (prime key-serial-t) (base key-serial-t) (hashname c-string)
+    (otherinfo c-string) (otherinfolen size-t) (buffer c-string) (buflen size-t))
+  (deflong keyctl-pkey-query (key-id key-serial-t) (info c-string) (result (* keyctl-pkey-query)))
+  (deflong keyctl-pkey-encrypt (key-id key-serial-t) (info c-string) (data (* t)) (data-len size-t))
+  (deflong keyctl-pkey-decrypt (key-id key-serial-t) (info c-string) (enc (* t)) (enc-len size-t))
+  (deflong keyctl-pkey-sign (key-id key-serial-t) (info c-string) (data (* t)) (data-len size-t))
+  (deflong keyctl-pkey-verify (key-id key-serial-t) (info c-string) (data (* t)) (data-len size-t)
+    (sig (* t)) (sig-len size-t))
+  (deflong keyctl-move (id key-serial-t) (from-ringid key-serial-t) (to-ringid key-serial-t) (flags unsigned-int))
+  (deflong keyctl-capabilities (buffer c-string) (len size-t))
+  (deflong keyctl-watch-key (id key-serial-t) (watch-queue-fd int) (watch-id int))
+  ;; utils
+  (defint keyctl-describe-alloc (id key-serial-t) (buffer (* c-string)))
+  (defint keyctl-read-alloc (id key-serial-t) (%buffer (* (* t))))
+  (defint keyctl-get-security-alloc (id key-serial-t) (%buffer (* (* t))))
+  (defint keyctl-dh-compute-alloc (priv key-serial-t) (prime key-serial-t)
+    (base key-serial-t) (%buffer (* (* t))))
+  ;; (defint recursive-key-scan)
+  ;; (defint recursive-session-key-scan)
+  (def find-key-by-type-and-desc (type c-string) (desc c-string) (destringid key-serial-t)))

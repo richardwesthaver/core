@@ -53,9 +53,8 @@
  (fasl (core-fasl tests-fasl bench-fasl user-fasl prelude-fasl))
  ;; rust
  (mailman () #$cd rust && cargo build -Z unstable-options --bin mailman --artifact-dir ../.stash/$#)
- (krypt () #$cd rust && cargo build -Z unstable-options --bin krypt --artifact-dir ../.stash/$#)
  (alik () #$cd rust && cargo build -Z unstable-options --bin alik --artifact-dir ../.stash/$#)
- (rust-bin (mailman krypt alik))
+ (rust-bin (mailman alik))
  (alik-ui () #$trunk build --config rust/ui/alik/Trunk.toml$#)
  ;; install
  (install () #$d=/usr/local/bin

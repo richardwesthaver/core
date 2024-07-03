@@ -4,9 +4,9 @@
 #+email: richard.westhaver@gmail.com
 #+setupfile: https://cdn.compiler.company/org/clean.theme
 - [[https://compiler.company/docs/core][Docs]]
-  - [[https://compiler.company/docs/core/install][Install]] :: Install Guide
-  - [[https://compiler.company/docs/core/tests][Tests]] :: Testing Guide
-  - [[https://compiler.company/docs/core/stats][Stats]] :: Project Statistics
+  - [[https://compiler.company/docs/core/install.html][Install]] :: Install Guide
+  - [[https://compiler.company/docs/core/tests.html][Tests]] :: Testing Guide
+  - [[https://compiler.company/docs/core/stats.html][Stats]] :: Project Statistics
 
 * Overview
 The Compiler Company (aka CC) is a small software research laboratory

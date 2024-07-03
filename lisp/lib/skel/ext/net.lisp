@@ -25,3 +25,5 @@
 
 ;;; Code:
 (in-package :skel/ext/net)
+
+(defvar *skel-port-range* '(24000 . 25000))

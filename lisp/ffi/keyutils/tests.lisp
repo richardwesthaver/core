@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :keyutils/tests
-  (:use :cl :std :rt :keyutils))
+  (:use :cl :std :rt :keyutils :sb-alien))
 
 (in-package :keyutils/tests)
 
@@ -11,5 +11,9 @@
 
 (load-keyutils)
 
-(deftest keyutils ())
+(deftest sanity ()
+  (is (string= "keyutils" (car (ssplit #\- (cast keyutils-version-string c-string))))))
 
+(deftest keyutils ()
+  (let ((session-id (keyctl-join-session-keyring (symbol-name (gensym "test")))))
+    (is (integerp (keyctl-get-keyring-id session-id 1)))))
