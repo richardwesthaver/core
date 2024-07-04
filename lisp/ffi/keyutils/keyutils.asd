@@ -19,7 +19,8 @@
   :depends-on (:sb-grovel :std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
-                                      :package :keyutils))
+                                      :package :keyutils)
+               (:file "keyctl" :depends-on ("pkg" "constants")))
   :in-order-to ((test-op (test-op "keyutils/tests"))))
 
 (defsystem :keyutils/tests

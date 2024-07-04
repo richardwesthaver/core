@@ -240,7 +240,7 @@ This section lists all program binaries provided by the core.
 
 #+RESULTS:
 #+begin_example
-skel v0.1.1 --- A hacker's project compiler.
+skel v0.1.1:0e043dcda8f4+ --- A hacker's project compiler.
 
   usage: skel [global] <command> [<arg>]
 
@@ -320,9 +320,7 @@ packy --help
 
 #+RESULTS:
 #+begin_example
-#:debug 0.026666; (#S(CLI-NODE
-                      :KIND OPT
-                      :FORM #<CLI-OPT help :global T :val T>))
+#:debug 0.44; (#S(CLI-NODE :KIND OPT :FORM #<CLI-OPT help :global T :val T>))
 packy v0.1.0 --- Universal Package Manager
 
   usage: packy [global] <command> [<arg>]
@@ -334,7 +332,7 @@ options:
 
 commands:
   show 
-#:debug 0.033333; /home/ellis/comp/core
+#:debug 0.453333; /home/ellis/comp/core
 ; #(#<CLI-OPT help :global T :val NIL>)
 ; NIL
 ; #()
@@ -398,7 +396,7 @@ alik --help
 
 #+RESULTS:
 
-** krypt                                                               :rust:
+** COMMENT krypt                                                       :lisp:
 #+begin_src shell :results output :exports both
 krypt --help
 #+end_src
