@@ -5,6 +5,18 @@
 ;;; Code:
 (in-package :zstd)
 
+(deferror zstd-dstream-error (zstd-alien-error) ())
+(deferror zstd-cstream-error (zstd-alien-error)
+    ()
+    (:report (lambda (c s)
+               (format s "ZSTD CStream signalled error: ~A" (zstd-errorcode* (zstd-error-code c))))))
+
+(defun zstd-dstream-error (code)
+  (error 'zstd-dstream-error :code code))
+
+(defun zstd-cstream-error (code)
+  (error 'zstd-cstream-error :code code))
+
 (define-alien-type zstd-cstream zstd-cctx)
 
 (define-alien-routine "ZSTD_createCStream" (* zstd-cstream))
@@ -44,12 +56,22 @@
 (define-alien-routine "ZSTD_DStreamInSize" size-t)
 (define-alien-routine "ZSTD_DStreamOutSize" size-t)
 
-(defmacro with-zstd-dstream ((dv dst &key (close t)) &body body)
-  `(let ((,dv ,dst))
-     (unwind-protect (progn ,@body)
-       ,@(when close `((zstd-freedstream ,dv))))))
-
-(defmacro with-zstd-cstream ((cv cst &key (close t)) &body body)
-  `(let ((,cv ,cst))
-     (unwind-protect (progn ,@body)
+(defmacro with-zstd-cstream ((cv &key (init t) (close t) (level (zstd-defaultclevel)) ) &body body)
+  `(with-alien ((,cv (* zstd-cstream) (zstd-createcstream)))
+     (unwind-protect
+          (progn
+            ,@(when init `((let ((%cinit (zstd-initcstream ,cv ,level)))
+                             (unless (zerop (zstd-iserror %cinit))
+                               (zstd-cstream-error %cinit)))))
+            ,@body)
        ,@(when close `((zstd-freecstream ,cv))))))
+
+(defmacro with-zstd-dstream ((dv &key (init t) (close t)) &body body)
+  `(with-alien ((,dv (* zstd-dstream) (zstd-createdstream)))
+     (unwind-protect
+          (progn
+            ,@(when init `((let ((%dinit (zstd-initdstream ,dv)))
+                             (unless (zerop (zstd-iserror %dinit))
+                               (zstd-dstream-error %dinit)))))
+            ,@body)
+       ,@(when close `((zstd-freedstream ,dv))))))

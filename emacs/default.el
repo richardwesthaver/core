@@ -202,12 +202,12 @@
                          ;; slime-enclosing-context
                          ;; slime-media
                          ;; slime-mrepl
-                         ;; slime-sbcl-exts
+                         slime-sbcl-exts
                          slime-cape ;; ext
                          ;; slime-cl-indent
                          ;; slime-snapshot
-                         ;; slime-sprof
-                         ;; slime-tramp
+                         slime-sprof
+                         slime-tramp
                          ;; slime-typeout-frame
                          slime-xref-browser
                          ;; slime-highlight-edits

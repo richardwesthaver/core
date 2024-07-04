@@ -66,7 +66,8 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
    :zstd-iserror :zstd-defaultclevel :zstd-compress :zstd-decompress
    :zstd-cstream :zstd-dstream :zstd-compressstream :zstd-decompressstream
    :zstd-compressstream2 :zstd-outbuffer :zstd-geterrorname :zstd-geterrorcode
-   :zstdc :zstdd))
+   :zstdc :zstdd
+   :zstd-alien-error :zstd-dstream-error :zstd-cstream-error))
 
 (in-package :zstd)
 
@@ -93,11 +94,13 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
   `(or (integer 0 2) (member :continue :flus :end)))
 
 ;;; Errors
-(deferror zstd-alien-error ()
-    ((code :initarg :code))
-    (:auto t)
-    (:documentation "Error signaled from the Zstd C API."))
+(define-condition zstd-alien-condition () ()
+  (:documentation "Superclass of all conditions triggered by the ZSTD FFI."))
 
+(deferror zstd-alien-error (error)
+    ((code :initarg :code :accessor zstd-error-code))
+    (:documentation "Error signaled from Zstd Alien."))
+    
 ;; found in zstd_errors.h
 (define-alien-enum (zstd-errorcode int)
                    :no-error 0

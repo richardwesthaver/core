@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :zstd)
 
+(deferror zstd-alien-simple-error (zstd-alien-error std-error) () (:auto t))
+
 (define-alien-routine "ZSTD_compress" size-t
   (dst (* t))
   (dst-capacity size-t)
@@ -18,8 +20,6 @@
   (src (* t))
   (compressed-size size-t))
 
-(deferror zstd-simple-error () () (:auto t))
-
 (defun zstdc (octets &optional (level 3))
   (let* ((len (length octets))
          (clen (zstd-compressbound len)))
@@ -28,7 +28,7 @@
       (clone-octets-to-alien octets in)
       (let ((csize (zstd-compress out clen in len level)))
         (if (= 1 (zstd-iserror csize))
-            (zstd-simple-error (zstd-geterrorname csize))
+            (zstd-alien-simple-error (zstd-geterrorname csize))
             (coerce
              (loop for i from 0 below csize
                    collect (deref out i))
@@ -41,7 +41,7 @@
       (with-alien ((out (* (unsigned 8)) (make-alien (unsigned 8) capacity)))
         (let ((dsize (zstd-decompress out capacity in len)))
           (if (= 1 (zstd-iserror dsize))
-              (zstd-simple-error (zstd-geterrorname dsize))
+              (zstd-alien-simple-error (zstd-geterrorname dsize))
               (coerce
                (loop for i from 0 below dsize
                      collect (deref out i))
