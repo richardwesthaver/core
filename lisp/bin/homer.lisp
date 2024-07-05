@@ -22,6 +22,7 @@
    (krypt :initform (load-kryptrc) :initarg :krypt :type (or null pathname krypt-config))
    (packy :initform nil :initarg :packy :type (or null pathname pk-user-config))
    (mail :initarg :mail :type pathname)
+   (term :initform nil :type (or pathname null term-user-config))
    (shell :initarg :shell :type (or pathname shell-user-config))
    (editor :initarg :editor :type (or pathname editor-user-config))
    (wm :initarg :wm :type (or pathname wm-user-config))
