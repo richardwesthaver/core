@@ -12,7 +12,7 @@
 
 (defmethod print-object ((self skel) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~S ~A" :id (format-sxhash (id self)))))
+    (format stream ":ID ~A" (format-sxhash (id self)))))
 
 (defmethod initialize-instance :around ((self skel) &rest initargs &key &allow-other-keys)
   ;; TODO 2023-09-10: make fast 
@@ -364,7 +364,7 @@ via the special form stored in RECIPE."))
           :initform (make-array 0 :element-type 'sk-rule :adjustable t)
           :accessor sk-rules
           :type (vector sk-rule))
-   (components :initarg :components :accessor sk-components :type (vector (cons keyword pathname)))
+   (components :initform #() :initarg :components :accessor sk-components :type (vector (cons keyword pathname)))
    (bind :initarg :bind :initform nil :accessor sk-bind :type list)
    (env :initarg :env :initform nil :accessor sk-env :type list)
    (scripts :initarg :scripts
@@ -377,6 +377,16 @@ via the special form stored in RECIPE."))
             :initform (make-array 0 :element-type 'pathname :adjustable t)
             :accessor sk-include
             :type (vector pathname))))
+
+(defmethod print-object ((self sk-project) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A [c=~A;i=~A;r=~A;s=~A] :id ~A"
+            (sk-name self)
+            (length (sk-components self))
+            (length (sk-include self))
+            (length (sk-rules self))
+            (length (sk-scripts self))
+            (format-sxhash (id self)))))
 
 (defmethod sk-new ((self (eql :project)) &rest args)
   (declare (ignore self))

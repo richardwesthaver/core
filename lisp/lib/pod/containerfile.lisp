@@ -50,6 +50,18 @@
 (defun containerfile-arg-p (str)
   (starts-with-subseq "ARG" str))
 
+(defun format-containerfile-arg (arg)
+  (with-output-to-string (s)
+    (etypecase arg
+      (atom (write arg :stream s))
+      (cons (format s "~A=~A" (car arg) (cdr arg))))))
+      
+(defun write-containerfile-arg (arg stream)
+  (format stream "ARG ~A~%" (format-containerfile-arg arg)))
+
+(defun write-containerfile-from (base stream)
+  (format stream "FROM ~A~%" base))
+
 ;; first instruction must be FROM or ARG
 (defun read-containerfile-start (stream)
   (let ((args))
@@ -62,13 +74,17 @@
 
 ;;; Obj
 (defclass containerfile ()
-  ((path :type pathname :initarg :path :accessor containerfile-path)
+  ((path :initform (pathname *default-containerfile*) :type pathname :initarg :path :accessor containerfile-path)
    (base :type string :initarg :base :accessor containerfile-base)
    (args :initform nil :type list :initarg :args :accessor containerfile-args)
-   (steps :type (vector cons) :initarg :steps :accessor containerfile-steps)))
+   (steps :initform (make-array 0 :element-type 'cons :adjustable t) :type (vector cons) :initarg :steps :accessor containerfile-steps)))
 
 (defmethod dat/proto:serde ((from containerfile) (to pathname))
   (with-open-file (file to :direction :output)
+    (when-let ((base (containerfile-base from)))
+      (write-containerfile-from base file))
+    (loop for arg in (containerfile-args from)
+          do (write-containerfile-arg arg file))
     (loop for step across (containerfile-steps from)
           do (write-containerfile-line step file))))
 

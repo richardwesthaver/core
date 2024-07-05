@@ -15,8 +15,12 @@
 (defclass sk-rust-system (sk-module)
   ())
 
-(defclass sk-rust-component (skel)
+(defclass sk-rust-component (sk-component)
   (type value))
+
+(defmethod print-object ((object sk-rust-system) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream ":ID ~A" (format-sxhash (obj/id:id object)))))
 
 (defun parse-sk-rust-system (path)
   path)

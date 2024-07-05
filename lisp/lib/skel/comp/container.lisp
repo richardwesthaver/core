@@ -14,6 +14,10 @@
 (defclass sk-containerfile (sk-component containerfile)
   ())
 
+(defmethod print-object ((object sk-containerfile) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream "~A :ID ~A" (file-namestring (containerfile-path object)) (format-sxhash (id object)))))
+
 (defmethod sk-convert ((self containerfile))
   (let ((self (change-class self 'sk-containerfile)))
     (update-id self)
@@ -26,4 +30,4 @@
                :containerfile)))
 
 (defmethod sk-write-file ((self sk-containerfile) &key path)
-  (serde self path))
+  (serde self (pathname (or path (containerfile-path self)))))
