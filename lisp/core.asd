@@ -20,7 +20,7 @@
   :build-operation monolithic-compile-bundle-op)
 
 (defsystem :core/bench
-  :depends-on (:std :core/tests :rt)
+  :depends-on (:std :core/tests :rt :obj :dat)
   :components ((:module "bench"
                 :components ((:file "pkg")
                              (:file "tpc-h"))))

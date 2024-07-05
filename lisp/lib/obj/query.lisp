@@ -31,7 +31,11 @@
 ;;; Field
 (defstruct field
   (name (symbol-name (gensym "#")) :type simple-string)
-  (type t :type symbol))
+  (type t :type (or symbol list)))
+
+(defmethod make-load-form ((self field) &optional env)
+  (declare (ignore env))
+  `(make-field :name ,(field-name self) :type ,(field-type self)))
 
 (deftype field-vector () '(vector field))
 
