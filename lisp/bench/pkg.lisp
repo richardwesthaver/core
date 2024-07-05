@@ -13,7 +13,7 @@
 (defbench simple () "")
 
 (defun core-coverage ()
-  (cover:clear-coverage)
+  (sb-cover:clear-coverage)
   (cover:with-coverage
     (asdf:load-system :core/tests)
     (rt:do-tests :core))

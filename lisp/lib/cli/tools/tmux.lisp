@@ -32,9 +32,19 @@
 (defparameter *default-tmux-tmpdir* (pathname (format nil "/tmp/tmux-~A/" (sb-posix:getuid))))
 (defparameter *default-tmux-socket* (merge-pathnames "default" *default-tmux-tmpdir*))
 
-(defstruct tmux-session)
-(defstruct tmux-window)
-(defstruct tmux-pane)
+(defstruct tmux-session
+  (id 0 :type fixnum)
+  name
+  (windows nil :type list))
+(defstruct tmux-window
+  (id 0 :type fixnum)
+  name
+  (panes nil :type list)
+  layout)
+
+(defstruct tmux-pane
+  (id 0 :type fixnum)
+  name)
 
 (defun run-tmux (&rest args)
   (let ((proc (sb-ext:run-program *tmux* (or args nil) :output :stream)))
@@ -278,7 +288,6 @@
                        ,@(mapcar (lambda (a)
                                    (gethash (symbolicate a) *tmux-var-table* a))
                                  args)))
-
 
 (defstruct tmux-controller
   (input nil :type (or null sb-sys:fd-stream))
