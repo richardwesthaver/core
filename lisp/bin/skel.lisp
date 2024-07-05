@@ -5,8 +5,8 @@
 (in-package :std-user)
 (defpkg :bin/skel
   (:use :cl :std :cli/clap
-   :vc :sb-ext :skel
-   :log :dat/sxp)
+   :vc :sb-ext :skel :log
+   :dat/sxp #+tools :skel/tools/viz)
   (:import-from :cli/shell :*shell-input*)
   (:export :main))
 
@@ -60,6 +60,17 @@
 	#P".")
     :load t)))
 
+#+tools
+(defcmd skc-view
+  (if $args 
+      (let ((stuff (loop for a in $args
+                         collect (sk-slot-case a))))
+        (sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
+      (sk-view (if (boundp '*skel-project*) *skel-project*
+                    (if (boundp '*skel-user-config*) *skel-user-config*
+                        (if (boundp '*skel-system-config*) *skel-system-config*
+                            (skel-simple-error "skel config files not installed")))))))
+
 (defcmd skc-id
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
@@ -94,10 +105,10 @@
     (:git (progn
             (let ((proc (run-git-command "rev-parse" (list "HEAD") :stream)))
               (println (read-line (process-output proc))))))
-    (t (skel-error "unknown VC type"))))
+    (t (skel-simple-error "unknown VC type"))))
 
 (defun sk-slot-case (sel)
-  (std/string:string-case (sel :default (skel-error "invalid slot"))
+  (std/string:string-case (sel :default (skel-simple-error "invalid slot"))
     (":id" (std:format-sxhash (obj/id:id *skel-project*)))
     (":name" (sk-name *skel-project*))
     (":author" (sk-author *skel-project*))
@@ -110,12 +121,12 @@
     (":scripts" (sk-scripts *skel-project*))
     (":rules" (sk-rules *skel-project*))
     (":env" (sk-env *skel-project*))
-    (":vars" (sk-vars *skel-project*))
+    (":bind" (sk-bind *skel-project*))
     (":include" (sk-include *skel-project*))
     (":stash" (sk-stash *skel-project*))
     (":store" (sk-store *skel-project*))
-    (":config" (describe *skel-user-config*))
-    (":sys" (describe *skel-system-config*))
+    (":config" *skel-user-config*)
+    (":sys" *skel-system-config*)
     (":cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show
@@ -124,19 +135,19 @@
       (describe (if (boundp '*skel-project*) *skel-project*
                     (if (boundp '*skel-user-config*) *skel-user-config*
                         (if (boundp '*skel-system-config*) *skel-system-config*
-                            (skel-error "skel config files not installed")))))))
+                            (skel-simple-error "skel config files not installed")))))))
 
 (defcmd skc-push
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "push" $args t))
     (:hg (run-hg-command "push" $args t))
-    (t (skel-error "unknown VC type"))))
+    (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-pull
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "pull" $args t))
     (:hg (run-hg-command "pull" (append '("-u") $args) t))
-    (t (skel-error "unknown VC type"))))
+    (t (skel-simple-error "unknown VC type"))))
 
 (defun hg-status ()
   (with-open-stream (proc (process-output (run-hg-command "status" nil :stream)))
@@ -160,14 +171,14 @@
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "clone" $args t))
     (:hg (run-hg-command "clone" $args t))
-    (t (skel-error "unknown VC type"))))
+    (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-commit
   ;; (debug! $optc $argc)
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "commit" $args t))
     (:hg (run-hg-command "commit" $args t))
-    (t (skel-error "unknown VC type"))))
+    (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
@@ -193,7 +204,7 @@
 
 (defcmd skc-vc
   (if $args
-      (std/string:string-case ((car $args) :default (skel-error "invalid command"))
+      (std/string:string-case ((car $args) :default (skel-simple-error "invalid command"))
         ("status" (skc-status nil nil)))
       (skc-status nil $opts)))
 
@@ -263,6 +274,10 @@
 	   :description "inspect the project skelfile"
 	   :opts (make-opts (:name "file" :description "path to skelfile" :kind file))
 	   :thunk skc-inspect)
+          #+tools
+          (:name view
+           :description "view an object in a new GUI window"
+           :thunk skc-view)
 	  (:name make
 	   :description "build project targets"
 	   :opts (make-opts (:name "target" :description "target to build" :kind string))

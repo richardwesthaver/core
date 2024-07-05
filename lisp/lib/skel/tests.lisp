@@ -61,8 +61,8 @@ the appropriate restarts."
   "Make sure makefiles are making out ok."
     (do-tmp-path (tmp-path "mk")
       (flet ((mk (&optional path) (make-instance 'makefile :name (gensym)
-							   :path (or path %tmp) :description "barfood"))
-	     (src (path) (make-instance 'sk-source :path path))
+							   :path (or path (pathname %tmp)) :description "barfood"))
+	     (src (path) (list path))
 	     (cmd (body) (make-instance 'sk-command :body body))
 	     (rule (tr sr) (make-sk-rule tr sr nil)))
 	(is (null (sk-write-file (mk) :if-exists :supersede :path (tmp-path "mk"))))
@@ -85,7 +85,7 @@ endif")
 	  (is (push-mk-var '(a b) mk1))
 	  (is (push-mk-var '(b c) mk1))
 	  ;; FIXME
-	  ;; (is (null (sk-write-file mk1 :if-exists :supersede :path (tmp-path "mk"))))
+	  (is (null (sk-write-file mk1 :if-exists :supersede :path (pathname (tmp-path "mk")))))
 	  ))))
 
 (deftest vm ()
@@ -99,4 +99,6 @@ endif")
     (signals simple-error (sks-pop vm))))
 
 (deftest asd ()
-  (let ((sk (make-instance 'sk-project :components '((:lisp "test")))))))
+  (let ((sk (make-instance 'sk-project :components '((:lisp "test")
+                                                     (:lisp-system "test")))))
+    (is sk)))

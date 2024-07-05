@@ -25,5 +25,5 @@
                (make-pathname :name *default-containerfile* :type (namestring name))
                :containerfile)))
 
-(defmethod sk-read-file ((self sk-containerfile) (path pathname)))
-(defmethod sk-write-file ((self sk-containerfile) &key path))
+(defmethod sk-write-file ((self sk-containerfile) &key path)
+  (serde self path))

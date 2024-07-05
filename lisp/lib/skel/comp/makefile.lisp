@@ -73,14 +73,14 @@
       ;; explicit rules
       (loop for exp across explicit
 	    do (format s "~A:~A;~A~%" 
-		       (sk-write-string (sk-rule-target exp))
-		       (sk-write-string (sk-rule-source exp))
+		       (sk-rule-target exp)
+		       (sk-rule-source exp)
 		       (sk-write-string (sk-rule-recipe exp))))
       ;; TODO implicit rules
       (loop for imp across implicit
 	    do (format s "~A:~A;~A~%" 
-		       (sk-write-string (sk-rule-target imp))
-		       (sk-write-string (sk-rule-source imp))
+		       (sk-rule-target imp)
+		       (sk-rule-source imp)
 		       (sk-write-string (sk-rule-recipe imp)))))))
 
 (defmethod sk-write-file ((self makefile) &key (path *default-makefile*) (comment t) (if-exists :overwrite))

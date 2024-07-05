@@ -61,7 +61,7 @@
    :sk-store :sk-push :sk-pull :sk-include
    :sk-tags :edit-skelrc :sk-target :skel
    :sk-meta :def-sk-class :sk-project :sk-source
-   :sk-vc :sk-vars :sk-env :make-sk-rule
+   :sk-vc :sk-bind :sk-env :make-sk-rule
    :make-sk-vc-meta :sk-vc-meta :sk-vc-meta-kind :sk-vc-meta-remotes
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
    :sk-make :sk-description :sk-kind :sk-rules

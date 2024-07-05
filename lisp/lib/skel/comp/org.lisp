@@ -25,6 +25,3 @@
     comp))
 
 ;; (describe (sk-load-component :org #p"readme"))
-
-
-

@@ -18,3 +18,8 @@
 
 ;;; Code:
 (in-package :skel/tools/viz)
+
+(defgeneric sk-view (self &key new-process &allow-other-keys)
+  (:documentation "View a SKEL object.")
+  (:method ((self t) &key new-process)
+    (clouseau:inspect self :new-process new-process :handle-errors t)))

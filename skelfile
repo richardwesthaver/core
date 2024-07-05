@@ -9,7 +9,7 @@
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp.sk" "rust.sk" "emacs.sk")
 :vc (:hg "https://vc.compiler.company/comp/core")
-:scripts ((:lisp "x"))
+:scripts ((:lisp "x.lisp"))
 :env ((cc "clang"))
 :components ((:dir-locals ".dir-locals")
              (:org "readme"))
@@ -34,6 +34,8 @@
  ;; lisp
  (rdb () #$./x.lisp build rdb$#)
  (skel () #$./x.lisp build skel$#)
+ (skel-gui () #$sbcl --eval "(progn (push :tools *features*) (ql:quickload :bin/skel) (asdf:make :bin/skel))"
+           mv lisp/bin/skel .stash/$#)
  (organ () #$./x.lisp build organ$#)
  (homer () #$./x.lisp build homer$#)
  (packy () #$./x.lisp build packy$#)

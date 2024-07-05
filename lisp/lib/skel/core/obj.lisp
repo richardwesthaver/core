@@ -365,7 +365,7 @@ via the special form stored in RECIPE."))
           :accessor sk-rules
           :type (vector sk-rule))
    (components :initarg :components :accessor sk-components :type (vector (cons keyword pathname)))
-   (vars :initarg :vars :initform nil :accessor sk-vars :type list)
+   (bind :initarg :bind :initform nil :accessor sk-bind :type list)
    (env :initarg :env :initform nil :accessor sk-env :type list)
    (scripts :initarg :scripts
             :initform (make-array 0 :element-type 'sk-script :adjustable t)

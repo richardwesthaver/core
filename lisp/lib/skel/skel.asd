@@ -10,7 +10,7 @@
                      (:feature :ext :krypt)
                      (:feature :ext :packy)
                      (:feature :ext :net)
-                     (:feature (:and :ext :clouseau) :clouseau))
+                     (:feature :tools :clouseau))
   :serial t
   :components 
   ((:module "core"
