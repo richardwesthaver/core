@@ -44,6 +44,11 @@
    :*test-suite-list*
    ;;  TODO 2023-09-04: :*test-profiler-list* not yet
    :*testing*
+   :random-elt
+   :random-ref
+   :random-char
+   :random-chars
+   :random-bytes
    :test-suite-designator
    :check-suite-designator
    :make-test
@@ -145,6 +150,31 @@ compiler optimizations.")
 (defvar *testing* nil "Testing state var.")
 
 ;;; Utils
+
+;; random
+(defvar *simple-charset* "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+(defun random-elt (seq)
+  (elt seq (random (length seq))))
+
+(defun random-ref (vec)
+  (aref vec (random (length vec))))
+
+(defun random-char ()
+  (random-ref *simple-charset*))
+
+(defun random-chars (dim)
+  (let ((r (make-array dim :element-type 'character)))
+    (dotimes (i (array-total-size r) r)
+      (setf (row-major-aref r i) (random-char)))))
+
+(defun random-byte () (random 255))
+
+(defun random-bytes (dim)
+  (let ((r (make-array dim :element-type 'octet)))
+    (dotimes (i (array-total-size r) r)
+      (setf (row-major-aref r i) (random-byte)))))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-test (&rest slots)
     (apply #'make-instance 'test slots))

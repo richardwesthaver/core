@@ -23,12 +23,10 @@
 ;;; Code:
 (in-package :obj/query)
 
-;;; Literal
 (defvar *literal-value-types* '(boolean fixnum signed-byte unsigned-byte float double-float string))
 (deftype literal-value-type () `(or ,@*literal-value-types*))
 (deftype literal-value-vector () '(vector literal-value-type))
 
-;;; Field
 (defstruct field
   (name (symbol-name (gensym "#")) :type simple-string)
   (type t :type (or symbol list)))
@@ -39,24 +37,35 @@
 
 (deftype field-vector () '(vector field))
 
-;;; Schema
 (defclass schema ()
   ((fields :type (vector field) :initarg :fields :accessor fields)))
-
-(defclass schema-metadata ()
-  ((metadata)))
 
 (defun make-schema (&rest fields)
   (make-instance 'schema :fields (coerce fields 'field-vector)))
 
 (defgeneric load-schema (self &optional schema))
 
-(defgeneric derive-schema (self))
+(defmethod make-load-form ((self schema) &optional env)
+  (declare (ignore env))
+  `(make-instance ,(class-of self) :fields ,(fields self)))
 
-;;; Record Batch
+(defclass schema-metadata ()
+  ((metadata :initarg :metadata :accessor schema-metadata)))
+
+(defmethod make-load-form ((self schema-metadata) &optional env)
+  (declare (ignore env))
+  `(make-instance ,(class-of self) :metadata ,(schema-metadata self)))
+
 (defstruct record-batch
   (schema (make-schema) :type schema)
   (fields #() :type field-vector))
+
+(defclass data-source ()
+  ((schema :type schema)))
+
+(defmethod make-load-form ((self record-batch) &optional env)
+  (declare (ignore env))
+  `(make-record-batch :schema ,(record-batch-schema self) :fields ,(record-batch-fields self)))
 
 (defgeneric field (self n)
   (:method ((self record-batch) (n fixnum))
@@ -69,6 +78,8 @@
   (:method ((self record-batch))
     (record-batch-schema self)))
 
+(defgeneric derive-schema (self))
+
 (defgeneric row-count (self)
   (:method ((self record-batch))
     (sequence:length (svref (record-batch-fields self) 0))))
@@ -77,17 +88,17 @@
   (:method ((self record-batch))
     (length (record-batch-fields self))))
 
-;;; Data Source
-(defclass data-source ()
-  ((schema :type schema)))
-
 (defgeneric scan-data (self &optional projection)
   (:documentation "Scan the data source, selecting the specified columns."))
 
+;;; Data Frame
+(defclass data-frame () ())
+;;; Execution Context
+(defclass execution-context () ())
 ;;; Expression
 (defclass query-expression () ())
 
-;;; Logical Expressions
+;;;; Logical Expressions
 (defclass logical-expression (query-expression) ())
 
 (defclass column-expression (logical-expression)
@@ -95,27 +106,27 @@
 
 (defclass literal-expression (logical-expression) ())
 
-;;; Alias
+;;;;; Alias
 (defclass alias-expression (logical-expression)
   ((expr :type logical-expression :initarg :expr)
    (alias :type string :initarg :alias)))
 
-;;; Unary
+;;;;; Unary
 (defclass unary-expression (logical-expression)
   ((expr :type logical-expression)))
 
-;;; Binary
+;;;;; Binary
 (defclass binary-expression (logical-expression)
   ((lhs :type logical-expression :initarg :lhs)
    (rhs :type logical-expression :initarg :rhs)))
 
-;;; Equiv Expr
+;;;;; Equiv Expr
 
-;;; Bool Expr
+;;;;; Bool Expr
 
-;;; Math Expr
+;;;;; Math Expr
 
-;;; Agg Expr
+;;;;; Agg Expr
 (deftype aggregate-function () `(function ((input logical-expression)) query-expression))
 
 (deftype aggregate-function-designator () `(or aggregate-function symbol))
@@ -124,46 +135,7 @@
   ((agg :type aggregate-function-designator)
    (expr :type logical-expression)))
 
-;;; Query Plan
-
-;; Abstract superclass of schema-based query plans.
-(defclass query-plan ()
-  ((schema :type schema :accessor schema :initarg :schema)
-   (children :type (vector query-plan))))
-
-;;; Logical Plan
-(defclass logical-plan (query-plan)
-  ((children :type (vector logical-plan) :accessor children :initarg :children)))
-
-;;; Scan
-(defclass scan-data (logical-plan)
-  ((path :type string)
-   (data-source :type data-source)
-   (projection :type (vector string))))
-
-;;; Projection
-(defclass projection (logical-plan)
-  ((input :type logical-plan)
-   (expr :type (vector logical-expression))))
-
-;;; Selection
-(defclass selection (logical-plan)
-  ((input :type logical-plan)
-   (expr :type logical-expression)))
-
-;;; Aggregate
-(defclass aggregate (logical-plan)
-  ((input :type logical-plan)
-   (group-expr :type (vector logical-expression))
-   (ag-expr :type (vector aggregate-expression))))
-
-;;; Data Frame
-(defclass data-frame () ())
-
-;;; Execution Context
-(defclass execution-context () ())
-
-;;; Physical Expression
+;;;; Physical Expression
 
 ;; Subclasses of PHYSICAL-EXPRESSION have the suffix -EXPR
 (defclass physical-expression (query-expression) ())
@@ -198,9 +170,44 @@
 
 ;; max-accumulator
 
-;;; ...
+;; TODO
 
-;;; Physical Plan
+
+;;; Query Plan
+
+;; Abstract superclass of schema-based query plans.
+(defclass query-plan ()
+  ((schema :type schema :accessor schema :initarg :schema)
+   (children :type (vector query-plan))))
+
+;;;; Logical Plan
+(defclass logical-plan (query-plan)
+  ((children :type (vector logical-plan) :accessor children :initarg :children)))
+
+;;;;; Scan
+(defclass scan-data (logical-plan)
+  ((path :type string)
+   (data-source :type data-source)
+   (projection :type (vector string))))
+
+;;;;; Projection
+(defclass projection (logical-plan)
+  ((input :type logical-plan)
+   (expr :type (vector logical-expression))))
+
+;;;;; Selection
+(defclass selection (logical-plan)
+  ((input :type logical-plan)
+   (expr :type logical-expression)))
+
+;;;;; Aggregate
+(defclass aggregate (logical-plan)
+  ((input :type logical-plan)
+   (group-expr :type (vector logical-expression))
+   (ag-expr :type (vector aggregate-expression))))
+
+
+;;;; Physical Plan
 (defclass physical-plan (query-plan)
   ((children :type (vector physical-plan))))
 

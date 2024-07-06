@@ -27,16 +27,6 @@
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
 (defun genval (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "val")))))
 
-(defun random-chars (dim)
-  (let ((r (make-array dim :element-type 'octet)))
-    (dotimes (i (array-total-size r) r)
-      (setf (row-major-aref r i) (random 128)))))
-
-(defun random-bytes (dim)
-  (let ((r (make-array dim :element-type 'octet)))
-    (dotimes (i (array-total-size r) r)
-      (setf (row-major-aref r i) (random 255)))))
-
 (defmacro with-opt ((var create destroy) &body body)
   `(let ((,var ,create))
      (unwind-protect (progn ,@body)

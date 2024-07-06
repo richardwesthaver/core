@@ -382,7 +382,18 @@
            :binary-physical-expression
            :literal-physical-expression
            :column-physical-expression
-           :evaluate))
+           :evaluate
+           :schema-metadata
+           :make-record-batch
+           :record-batch-p
+           :copy-record-batch
+           :record-batch-schema
+           :record-batch-fields
+           :make-field
+           :field-p
+           :copy-field
+           :field-name
+           :field-type))
 
 (defpackage :obj/secret
   (:nicknames :secret)
