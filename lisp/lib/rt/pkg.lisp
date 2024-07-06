@@ -339,6 +339,10 @@ from TESTS."))
   (tag nil :type result-tag :read-only t)
   (form nil :type form))
 
+(defmethod print-object ((self test-result) stream)
+  (print-unreadable-object (self stream :identity t)
+    (format stream "~A ~A" (tr-tag self) (tr-form self))))
+
 (defun make-test-result (tag &optional form)
   (%make-test-result :tag tag :form form))
 
@@ -374,10 +378,10 @@ from TESTS."))
 
 (defclass test (test-object)
   ((fn :type symbol :accessor test-fn)
-   ;; (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
+   (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
    (profile :type list :accessor test-profile :initform nil :initarg :profile)
    (args :type list :accessor test-args :initform nil :initarg :args)
-   (declaration :type list :accessor test-declaration :initform nil :initarg :declaration)
+   (declare :type list :accessor test-declare :initform nil :initarg :declare)
    (form :initarg :form :initform nil :accessor test-form)
    (doc :initarg :doc :type string :accessor test-doc)
    (lock :initarg :lock :type boolean :accessor test-lock-p)
@@ -667,13 +671,13 @@ All other values are treated as let bindings.
     (with-gensyms (form)
       `(if ,(null args)
 	   (if *testing*
-	       (push-result (funcall #'rt::%test ,test ',test) *testing*)
-	       (funcall #'rt::%test ,test ',test))
+	       (push-result (trace! (funcall #'rt::%test ,test ',test)) *testing*)
+	       (trace! (funcall #'rt::%test ,test ',test)))
 	   (macrolet ((,form (test) `(let ,,(group args 2) ,test)))
 	     ;; TODO 2023-09-21: does this work...
 	     (if *testing*
-		 (push-result (funcall #'rt::%test (,form ,test) ',test) *testing*)
-		 (funcall #'rt::%test (,form ,test) ',test))))))
+		 (push-result (trace! (funcall #'rt::%test (,form ,test) ',test) *testing*))
+		 (trace! (funcall #'rt::%test (,form ,test) ',test)))))))
 
 (defmacro signals (condition-spec &body body)
   "Generates a passing TEST-RESULT if body signals a condition of type
@@ -729,11 +733,11 @@ and declarations for the test body.
 		 :name ,(format nil "~A" name)
 		 :form ,fn
 		 ,@(when-let ((v (getf pr :persist))) `(:persist ,v))
-		 ,@(when-let ((v (getf pr :args))) `(:args ,v))
+		 ,@(when-let ((v (getf pr :args))) `(:args ',v))
 		 ,@(when-let ((v (getf pr :bench))) `(:bench ,v))
 		 ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
 		 ,@(when doc `(:doc ,doc))
-		 ,@(when dec `(:declaration ,dec)))))
+		 ,@(when dec `(:declare ,dec)))))
        ,(unless (getf pr :skip) '(push-test obj *test-suite*))
        obj)))
 

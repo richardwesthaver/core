@@ -54,14 +54,16 @@ cons of two ints."
                                                            :type (xmlrep-attrib-value "type" match)))))
             mime-types)))))
 
-(defvar *mime-types* (load-mime-info))
+(defvar *mime-types* #+linux (load-mime-info))
 
 (defvar *mime-database*
+  #+linux
   (let ((tbl (make-hash-table :size (length *mime-types*) :test 'equal)))
     (dolist (mime *mime-types* tbl)
       (setf (gethash (mime-type mime) tbl) mime))))
 
 (defvar *mime-db*
+  #+linux
   (let ((tbl (make-hash-table :test 'equal))) ;; at least as large as *MIME-DATABASE*
     (dolist (mime *mime-types* tbl)
       (when-let ((patterns (mime-type-glob mime)))

@@ -1,7 +1,7 @@
 (pushnew :prelude *features*)
 (defsystem :prelude
   :depends-on (:std :cli :log :dat
-               :rocksdb :btrfs :uring :doc 
+               :rocksdb :btrfs :doc 
                :alsa :nlp :skel :syn
                :organ :packy :obj :net
                :tree-sitter :xkb :ssh2 :sndfile

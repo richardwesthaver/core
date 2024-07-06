@@ -18,10 +18,11 @@
   (:nicknames :bench/tpc-h :tpc-h)
   (:import-from :obj/query :make-field)
   (:import-from :obj/time :date)
-  (:use :cl :std :rt/bench :rt/cover :log :sql :parse/pratt :dat/csv :dat/proto :obj/query))
+  (:use :cl :std :rt :rt/bench :rt/cover :log :sql :parse/pratt :dat/csv :dat/proto :obj/query))
 
 (in-package :core/bench/tpc-h)
-
+(defsuite :tpc-h)
+(in-suite :tpc-h)
 (eval-always
   (declaim (pathname *tpc-h-data-directory*))
   (defvar *tpc-h-data-directory* (ensure-directories-exist #p"/tmp/tpc-h/")))
@@ -37,11 +38,11 @@
 
 (defgeneric gen-table (self count))
 
-(defun random-id32 () (octets-to-integer (rt:random-bytes 4)))
-(defun random-id64 () (octets-to-integer (rt:random-bytes 8)))
-(defun random-string (&optional (n 25)) (rt:random-chars n))
-(defun random-date ()
-  (obj/time:today))
+(defun random-id32 () (octets-to-integer (random-bytes 4)))
+(defun random-id64 () (octets-to-integer (random-bytes 8)))
+(defun random-string (&optional (n 25)) (random-chars n))
+(defun random-date () (obj/time:today))
+  
 (defun random-double () ;; [0,10000)
   (coerce (* (random 100.0) 100) 'double-float))
 
@@ -51,7 +52,7 @@
     ((equal '(unsigned-byte 64) type) (random-id64))
     ((eql 'double-float type) (random-double))
     ((eql 'date type) (random-date))
-    ((eql 'character type) (rt:random-char))
+    ((eql 'character type) (random-char))
     ((and (consp type) (eql (car type) 'string)) (random-string (cdr type)))
     (t (error 'invalid-argument :reason "Invalid TPC-H type designator" :item type))))
 
@@ -199,7 +200,12 @@
 (defconstant +tpc-h-region-count+ 5)
 (defconstant +tpc-h-nation-count+ 25)
 
-(defun dbgen (&optional (scale-factor 1))
+(defun dbgen-thread ()
+  (lambda (x y)
+    (gen-table x y)
+    (print-top-level (format nil "finished: ~A~%" x))))
+
+(defun dbgen (&optional (scale-factor 1)) ;; ~= 2.4G, 200s
   "Generate the TPC-H database in standardized format (|-delim ASCII). Files are
 written with a .tbl extension to *TPC-H-DATA-DIRECTORY*."
   (let ((region-count +tpc-h-region-count+)
@@ -222,10 +228,13 @@ written with a .tbl extension to *TPC-H-DATA-DIRECTORY*."
                           (:customer ,customer-count)
                           (:lineitem ,lineitem-count)
                           (:orders ,order-count))
-            collect (make-thread 'gen-table :arguments args))))))
+            collect (make-thread (dbgen-thread) :name (string-downcase (symbol-name (car args)))
+                                                :arguments args))))))
 
 
 ;; (length (read-orders-table))
 ;; (make-region-table-batch #(1 2 3))
 ;; (write-region-row :regionkey 0 :name "USA" :comment "OORAH")
 ;; (gen-table :orders 100000)
+
+;; (deftest dbgen (:profile t :bench t #+nil :args #+nil (&optional (scale 1))) (dbgen))
