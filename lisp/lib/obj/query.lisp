@@ -92,7 +92,17 @@
   (:documentation "Scan the data source, selecting the specified columns."))
 
 ;;; Data Frame
-(defclass data-frame () ())
+
+;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
+(defclass data-frame ()
+  ((plan :type logical-plan :accessor df-plan :initarg :plan)))
+
+(defmethod schema ((self data-frame)) (schema (df-plan self)))
+
+(defgeneric df-project (&rest expr &key &allow-other-keys))
+(defgeneric df-filter (expr))
+(defgeneric df-aggregate (group-by agg-expr))
+
 ;;; Execution Context
 (defclass execution-context () ())
 ;;; Expression
