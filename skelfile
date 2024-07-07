@@ -14,7 +14,7 @@
 :components ((:dir-locals ".dir-locals")
              (:org "readme"))
 :rules
-((all (compile std prelude user infra core tests build fasl rust-bin)) ;; TODO: add keyword args -- (emacs :stage 'install) 
+((all (compile std prelude user infra core tests build fasl rust-bin tree-sitter-alien)) ;; TODO: add keyword args -- (emacs :stage 'install) 
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#

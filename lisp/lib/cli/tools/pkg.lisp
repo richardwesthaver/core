@@ -39,3 +39,14 @@
 (defpackage :cli/tools/systemd
   (:use :cl :std :cli/env)
   (:export :*systemctl* :run-systemd :run-systemctl))
+
+(defpackage :cli/tools/cargo
+  (:use :cl :std :cli/env)
+  (:export))
+
+(defpackage :cli/tools/sbcl
+  (:use :cl :std :cli/env)
+  (:export
+   :*sbcl*
+   :run-sbcl
+   :sbcl-error))
