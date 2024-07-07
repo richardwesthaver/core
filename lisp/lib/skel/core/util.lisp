@@ -12,14 +12,14 @@
 (defun init-user-skelrc (&optional (file *user-skelrc*))
   "Initialize a skelrc configuration based on the currently active
 *SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
-  (sk-write-file *user-skelrc*
+  (sk-write-file (make-instance 'sk-user-config)
                  :path file
                  :pretty t))
 
 (defun init-system-skelrc (&optional (file *system-skelrc*))
   "Initialize a system skelrc configuration based on the currently active
 *SKEL-SYSTEM-CONFIG*."
-  (sk-write-file *system-skelrc*
+  (sk-write-file (make-instance 'sk-system-config)
                  :path file
                  :pretty t))
 
