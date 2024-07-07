@@ -129,13 +129,10 @@
    (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
    (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
    (registry :initform *skel-registry* :initarg :registry :type pathname :accessor sk-registry)
-   (scripts :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
-   (license :initarg :license :type license-designator :accessor sk-license)
-   (log-level :initarg :log-level :type log-level-designator)
+   (scripts :initform nil :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
+   (license :initform nil :initarg :license :type license-designator :accessor sk-license)
+   (log-level :initform *log-level* :initarg :log-level :type log-level-designator)
    (fmt :initform :pretty :initarg :fmt :type symbol)
-   (alias-list :initarg :alias-list
-               :type (or list vector)
-               :documentation "alist of aliases. currently used as a special cli-opt-parser by the skel binary.")
    (auto-insert :initform nil :initarg :auto-insert :type form))
   (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
 

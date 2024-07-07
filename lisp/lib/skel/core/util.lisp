@@ -116,15 +116,15 @@ skelfile if found."
   "Open the current system configuration using ED."
   (ed *system-skelrc*))
 
-(defun get-skelrc-slot* (slot)
+(defun get-skelrc-slot* (slot &optional (default (skel-simple-error "slot is unbound in skel config")))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
 isn't found check *SKEL-SYSTEM-CONFIG*."
   (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
-    (if (not (slot-boundp *skel-user-config* slot))
-        (if (not (slot-boundp *skel-system-config* slot))
-            (skel-simple-error (format nil "slot is unbound: ~a" slot))
-            (slot-value *skel-system-config* slot)))
-    (slot-value *skel-user-config* slot)))
+    (if (or (null *skel-user-config*) (not (slot-boundp *skel-user-config* slot)))
+        (if (or (null *skel-system-config*) (not (slot-boundp *skel-system-config* slot)))
+            default
+            (slot-value *skel-system-config* slot))
+        (slot-value *skel-user-config* slot))))
 
 (defun init-skel-vars ()
   "Initialize the global SKEL variables:
@@ -140,10 +140,15 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (load-skelrc)
   (when-let ((project (find-skelfile *default-pathname-defaults*)))
     (setq *skel-project* (load-skelfile project)))
-  (setq *skel-cache* (get-skelrc-slot* :cache)
-        *skel-store* (get-skelrc-slot* :store)
-        *skel-stash* (get-skelrc-slot* :stash)
-        *skel-registry* (get-skelrc-slot* :registry))
+  (when-let ((cache (get-skelrc-slot* :cache nil)))
+    (setq *skel-cache* cache))
+
+  (when-let ((store (get-skelrc-slot* :store nil)))
+    (setq *skel-store* store))
+  (when-let ((stash (get-skelrc-slot* :stash nil)))
+    (setq *skel-stash* stash))
+  (when-let ((registry (get-skelrc-slot* :registry nil)))
+    (setq *skel-registry* registry))
   (values))
 
 ;;; Paths
