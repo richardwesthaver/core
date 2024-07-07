@@ -74,7 +74,7 @@
           done fi$#)
  (emacs-user () #$make -C emacs$#)
  (dist () #$cd .stash
-       mkdir -pv core/bin core/share/lisp/fasl
+       mkdir -pv core/bin core/share/lisp/fasl core/lib
        mv *.core core/share/lisp/
        mv *.fasl core/share/lisp/fasl/
        mv *.so core/lib/
