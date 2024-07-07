@@ -86,10 +86,11 @@
    :load-skelfile
    :find-skelfile
    :find-sk-file
-   :get-config-slot*
+   :get-skelrc-slot*
    :find-project-root
    :describe-skeleton
-   :describe-project))
+   :describe-project
+   :parse-sk-path))
 
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/err)

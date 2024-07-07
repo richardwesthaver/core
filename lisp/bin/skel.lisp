@@ -76,6 +76,7 @@
 
 (defcmd skc-compile ()
   (sk-call *skel-project* :compile))
+
 (defcmd skc-build ()
   (sk-call *skel-project* :build))
 (defcmd skc-dist ()

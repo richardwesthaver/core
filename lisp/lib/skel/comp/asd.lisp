@@ -47,7 +47,8 @@
   (declare (ignore kind))
   (parse-sk-lisp-system (pathname-name path) path))
 
-;; (defmethod sk-compile ((self sk-lisp-system) stream &key &allow-other-keys))
+(defmethod sk-compile ((self sk-lisp-system) &key force force-not verbose version &allow-other-keys)
+  (asdf:compile-system self :force force :force-not force-not :verbose verbose :version version))
 
 (defun sk-write-asd-components (module)
   (etypecase module

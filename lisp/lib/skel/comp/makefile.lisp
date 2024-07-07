@@ -61,7 +61,7 @@
   (destructuring-bind (k v) self
     (setf (gethash k (mk-vars place)) v)))
 
-(defmethod sk-compile ((self makefile) stream &key &allow-other-keys)
+(defmethod sk-compile ((self makefile) &key stream &allow-other-keys)
   "Compile the makefile SELF to output STREAM."
   (with-open-stream (s stream)
     (with-slots (directives variables explicit implicit) self

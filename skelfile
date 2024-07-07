@@ -21,11 +21,11 @@
         #$find lisp -name '*.fasl' -type f -delete$#
         #$echo 'cargo clean:' && cd rust && cargo clean$#)
  (box () #$podman build . --build-arg IMAGE=box -t core$#)
- (tree-sitter-alien ()
-                    #$ cd lisp/ffi/tree-sitter &&
+ (tree-sitter-alien () #$cd lisp/ffi/tree-sitter &&
                     clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
-                    alien.c -o /usr/local/lib/libtree-sitter-alien.so$#
-                    (info! "installed /usr/local/lib/libtree-sitter-alien.so"))
+                    alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
+ (tree-sitter-alien-install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#)
+                            
  (psl.dat () ;; req:fetch works in slime and sk-shell but not here? hmm..
           (with-open-file
            (st ".stash/psl.dat" :direction :output :element-type 'octet)
@@ -77,6 +77,7 @@
        mkdir -pv core/bin core/share/lisp/fasl
        mv *.core core/share/lisp/
        mv *.fasl core/share/lisp/fasl/
+       mv *.so core/lib/
        mv $(find -maxdepth 1 -type f ! -name "*.*") core/bin/
        tar -I 'zstd' -cf core.tar.zst core/*$#)
  (dist-clean (clean) #$cd .. && tar -I 'zstd' -cf core/core-source.tar.zst core/* && cd core

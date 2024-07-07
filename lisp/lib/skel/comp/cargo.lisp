@@ -29,7 +29,7 @@
   (declare (ignore kind))
   (parse-sk-rust-system path))
 
-(defmethod sk-compile ((self sk-rust-system) stream &key &allow-other-keys))
+(defmethod sk-compile ((self sk-rust-system) &key &allow-other-keys))
 
 (defmethod sk-write-file ((self sk-rust-system) &key path))
 

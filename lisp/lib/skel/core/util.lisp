@@ -116,7 +116,7 @@ skelfile if found."
   "Open the current system configuration using ED."
   (ed *system-skelrc*))
 
-(defun get-config-slot* (slot)
+(defun get-skelrc-slot* (slot)
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
 isn't found check *SKEL-SYSTEM-CONFIG*."
   (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
@@ -140,8 +140,23 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (load-skelrc)
   (when-let ((project (find-skelfile *default-pathname-defaults*)))
     (setq *skel-project* (load-skelfile project)))
-  (setq *skel-cache* (get-config-slot* :cache)
-        *skel-store* (get-config-slot* :store)
-        *skel-stash* (get-config-slot* :stash)
-        *skel-registry* (get-config-slot* :registry))
+  (setq *skel-cache* (get-skelrc-slot* :cache)
+        *skel-store* (get-skelrc-slot* :store)
+        *skel-stash* (get-skelrc-slot* :stash)
+        *skel-registry* (get-skelrc-slot* :registry))
   (values))
+
+;;; Paths
+
+(defun parse-sk-path (input &optional (start 0) end)
+  "An 'sk-path' is a CLI argument which can be translated into a corresponding
+nested object."
+  (with-input-from-string (s input)
+    (loop for i from start below end
+          collect (read-char s))))
+
+;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
+
+(defun find-sk-path (path &optional skel)
+  "Find an sk-path string in a skel object, or attempt to match it against all
+active objects.")

@@ -79,6 +79,8 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :group 'skel
   (skel-minor-mode 1))
 
+(org-babel-make-language-alias "skel" "lisp")
+
 (defun maybe-skel-minor-mode ()
   "Check the current environment and determine if `skel-minor-mode' should
 be enabled. This function is added as a hook to
