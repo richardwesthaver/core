@@ -8,7 +8,7 @@
 
 (define-alien-type nil
   (struct sigset-t
-          (val (array unsigned-long #.sigset-nwords))))
+          (val (array unsigned-long #.+sigset-nwords+))))
 
 (define-alien-type cpu-mask-t unsigned-long)
 
