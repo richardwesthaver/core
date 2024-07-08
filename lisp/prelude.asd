@@ -5,7 +5,7 @@
                :alsa :nlp :skel :syn
                :organ :packy :obj :net
                :tree-sitter :xkb :ssh2 :sndfile
-               :zstd :uring :blake3 :ublk
+               :zstd :uring :blake3 ;; :ublk
                :parse :pod :rdb :gui
                :aud :cry :krypt :io
                :glib :gstreamer :q)
