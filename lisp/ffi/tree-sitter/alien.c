@@ -51,12 +51,12 @@ int ts_node_is_named_pointer(TSNode *node) {
     return ts_node_is_named(*node);
 }
 
-TSPoint *ts_node_start_point_pointer(TSNode *node) {
+TSPoint ts_node_start_point_pointer(TSNode *node) {
     return ts_node_start_point(*node);
 }
 
 
-TSPoint *ts_node_end_point_pointer(TSNode *node) {
+TSPoint ts_node_end_point_pointer(TSNode *node) {
     return ts_node_end_point(*node);
 }
 
