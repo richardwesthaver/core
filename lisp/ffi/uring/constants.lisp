@@ -6,7 +6,7 @@
 ( ;; sched.h
  (:integer cpu-setsize "__CPU_SETSIZE")
  (:integer ncpu-bits "__NCPUBITS")
- (:integer +sigset-nwords+ "_SIGSET_NWORDS" t t)
+ ;; (:integer +sigset-nwords+ "_SIGSET_NWORDS" t t) ;; not found on alpine
  ;; sys/uio.h
  (:structure iovec ("struct iovec"
                     (unsigned-long iov-base "ptr_t" "iov_base")
