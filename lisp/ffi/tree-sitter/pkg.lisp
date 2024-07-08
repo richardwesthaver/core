@@ -67,12 +67,25 @@
    :ts-node-is-null
    :ts-node-eq
    :ts-node-named-child
-   :ts-tree-cursor-new
+   :ts-tree-cursor-new-pointer
+   :ts-tree-cursor-delete
    :ts-tree-root-node
    :ts-language-version
    :ts-language-symbol-name
    :ts-language-symbol-count
-   :ts-language-field-count))
+   :ts-language-field-count
+   :ts-tree-cursor-current-field-name
+   :ts-tree-cursor-goto-next-sibling
+   :ts-tree-cursor-goto-parent
+   :ts-tree-cursor-goto-first-child
+   :ts-query-new
+   :ts-query-delete
+   :ts-tree-root-node-pointer
+   :ts-node-is-named-pointer
+   :ts-tree-cursor-current-node-pointer
+   :ts-node-start-point-pointer
+   :ts-node-end-point-pointer
+   :ts-node-type-pointer))
 
 (in-package :tree-sitter)
 

@@ -9,7 +9,7 @@
 
 // build with:
 /*
-  sudo clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared alien.c -o /usr/local/lib/libtree-sitter-alien.so
+  sudo cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared alien.c -o /usr/local/lib/libtree-sitter-alien.so
 */
 
 /// Code:
@@ -51,12 +51,12 @@ int ts_node_is_named_pointer(TSNode *node) {
     return ts_node_is_named(*node);
 }
 
-TSPoint ts_node_start_point_pointer(TSNode *node) {
+TSPoint *ts_node_start_point_pointer(TSNode *node) {
     return ts_node_start_point(*node);
 }
 
 
-TSPoint ts_node_end_point_pointer(TSNode *node) {
+TSPoint *ts_node_end_point_pointer(TSNode *node) {
     return ts_node_end_point(*node);
 }
 
