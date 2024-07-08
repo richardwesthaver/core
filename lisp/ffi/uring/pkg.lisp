@@ -62,8 +62,10 @@ queue (CQ), and form the foundation of the new interface.
    
 (in-package :uring)
 (define-alien-loader "uring" t "/usr/lib/")
-
-(defconstant +sigset-nwords+ 16) ;; default on x86_64
+;; defaults on x86_64
+(defconstant +cpu-setsize+ 16) 
+(defconstant +sigset-nwords+ 16)
+(defconstant +ncpu-bits+ 16)
 
 (define-alien-type kernel-rwf-t int)
 
