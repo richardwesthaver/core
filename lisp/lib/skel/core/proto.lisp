@@ -51,3 +51,7 @@
   (:documentation "Find a script with the given NAME in SELF."))
 (defgeneric sk-find (item self &key &allow-other-keys))
 (defgeneric sk-find* (items self &key &allow-other-keys))
+(defgeneric sk-path (self)
+  (:documentation "Return the canonical path to this object in the skel universe."))
+(defgeneric sk-path-merge (self root)
+  (:documentation "Merge path of SELF on ROOT."))

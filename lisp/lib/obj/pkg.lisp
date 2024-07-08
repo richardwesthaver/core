@@ -393,7 +393,12 @@
            :field-p
            :copy-field
            :field-name
-           :field-type))
+           :field-type
+           :column-size
+           :column-value
+           :column-type
+           :column-vector
+           :column-data))
 
 (defpackage :obj/secret
   (:nicknames :secret)

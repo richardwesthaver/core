@@ -29,7 +29,8 @@
    :sk-vc-push :sk-vc-pull
    :sk-find-rule :sk-find-script
    :sk-find :sk-find*
-   :sk-convert :sk-load-component))
+   :sk-convert :sk-load-component
+   :sk-path :sk-path-merge))
 
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/err)
@@ -57,7 +58,7 @@
    :skel/core/proto :skel/core/err :skel/core/types :skel/core/vars
    :dat/sxp :skel/core/header :vc :log)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
-  (:export :sk-license :sk-author :sk-path :sk-stash :sk-cache :sk-registry :sk-user
+  (:export :sk-license :sk-author :sk-stash :sk-cache :sk-registry :sk-user
    :sk-store :sk-push :sk-pull :sk-include
    :sk-tags :edit-skelrc :sk-target :skel
    :sk-meta :def-sk-class :sk-project :sk-source
@@ -90,7 +91,8 @@
    :find-project-root
    :describe-skeleton
    :describe-project
-   :parse-sk-path))
+   :parse-sk-path
+   :find-sk-path))
 
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/err)

@@ -25,7 +25,6 @@
 
 (defvar *literal-value-types* '(boolean fixnum signed-byte unsigned-byte float double-float string))
 (deftype literal-value-type () `(or ,@*literal-value-types*))
-(deftype literal-value-vector () '(vector literal-value-type))
 
 (defstruct field
   (name (symbol-name (gensym "#")) :type simple-string)
@@ -56,12 +55,33 @@
   (declare (ignore env))
   `(make-instance ,(class-of self) :metadata ,(schema-metadata self)))
 
+;; convenience interface for FIELD-VECTOR
+(defclass column-vector () ((data :type simple-vector :accessor column-data)))
+
+(defclass literal-value-vector ()
+  ((type :type literal-value-type :initarg :type)
+   (value :initarg :value :accessor column-type :accessor column-literal-value)
+   (size :type fixnum :initarg :size :accessor column-size)))
+   
+(defgeneric column-type (self)
+  (:method ((self column-vector))
+    (array-element-type (column-data self))))
+
+(defgeneric column-value (self i)
+  (:method ((self column-vector) (i fixnum))
+    (aref (column-data self) i))
+  (:method ((self literal-value-vector) (i fixnum))
+    (if (or (< i 0) (>= i (column-size self)))
+        (error 'simple-error :format-control "index out of bounds: ~A" :format-arguments i)
+        (column-literal-value self))))
+
+(defgeneric column-size (self)
+  (:method ((self column-vector))
+    (length (column-data self))))
+
 (defstruct record-batch
   (schema (make-schema) :type schema)
   (fields #() :type field-vector))
-
-(defclass data-source ()
-  ((schema :type schema)))
 
 (defmethod make-load-form ((self record-batch) &optional env)
   (declare (ignore env))
@@ -69,10 +89,11 @@
 
 (defgeneric field (self n)
   (:method ((self record-batch) (n fixnum))
-    (svref (record-batch-fields self) n)))
+    (aref (record-batch-fields self) n)))
 
-(defmethod fields ((self record-batch))
-  (record-batch-fields self))
+(defgeneric fields (self)
+  (:method ((self record-batch))
+    (record-batch-fields self)))
 
 (defgeneric schema (self)
   (:method ((self record-batch))
@@ -82,13 +103,17 @@
 
 (defgeneric row-count (self)
   (:method ((self record-batch))
-    (sequence:length (svref (record-batch-fields self) 0))))
+    (sequence:length (aref (record-batch-fields self) 0))))
 
 (defgeneric column-count (self)
   (:method ((self record-batch))
     (length (record-batch-fields self))))
 
-(defgeneric scan-data (self &optional projection)
+;;; Data Source
+(defclass data-source ()
+  ((schema :type schema :accessor schema)))
+
+(defgeneric scan-data-source (self projection)
   (:documentation "Scan the data source, selecting the specified columns."))
 
 ;;; Data Frame
