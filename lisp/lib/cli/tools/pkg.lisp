@@ -49,4 +49,7 @@
   (:export
    :*sbcl*
    :run-sbcl
-   :sbcl-error))
+   :sbcl-error
+   :with-sbcl
+   :*sbcl-runtime-options*
+   :*sbcl-toplevel-options*))

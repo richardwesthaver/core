@@ -52,10 +52,10 @@
    :org-table-any-border-rx
    :org-tblfm-rx
    :org-footnote-definition-rx
-   :org-duration-hmm-rx
-   :org-duration-hmmss-rx
-   :org-duration-full-rx
-   :org-duration-mixed-rx
+   :*org-duration-hmm-rx*
+   :*org-duration-hmmss-rx*
+   :*org-duration-full-rx*
+   :*org-duration-mixed-rx*
    :org-duration-units
    :org-list-full-item-rx
    :org-item-rx

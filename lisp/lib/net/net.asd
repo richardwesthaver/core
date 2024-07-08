@@ -6,9 +6,10 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
-   :fast-io
-   :dat :obj :io :parse
-   ;; #+swank :swank-client  ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
+   :fast-io :swank
+   :dat :obj
+   :io :parse
+   :swank-client
    :cl+ssl
    :chipz :babel :chunga
    :std :log)
@@ -25,7 +26,7 @@
                              (:file "tlv")
                              (:file "osc")))
                (:module "proto"
-                :components (;; (:file "crew") ;; HACK 2024-05-12: temporarily disable, incompatible with current upstream
+                :components ((:file "crew")
                              (:file "swank")
                              (:file "http")
                              (:file "dns")

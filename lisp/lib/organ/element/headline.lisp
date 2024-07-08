@@ -18,8 +18,10 @@
 
 (define-org-parser (priority :from string)
   (with-lexer-environment (input)
-    (when (and (char= #\[ (consume))
-               (char= #\# (consume))
+    (when (and (char= #\[ (peek))
+               (consume)
+               (char= #\# (peek))
+               (consume)
                (not (char= #\] (peek))))
       (when-let ((c (consume)))
         (when (and (characterp (peek)) 

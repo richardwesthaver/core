@@ -38,7 +38,7 @@
    :sb-ext :cli/clap/proto :cli/clap/macs :cli/clap/util
    :cli/clap/vars :cli/clap/ast :cli/clap/util)
   (:export :make-cli :define-cli :defmain
-   :make-opts :make-cmds :parse-bool-opt :parse-str-opt
+   :make-opts :make-cmds :parse-bool-opt :parse-string-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op
    :pasre-num-op :parse-file-op :parse-dir-op :cli
    :cli-cd :with-cli :opts :cmds :debug-opts

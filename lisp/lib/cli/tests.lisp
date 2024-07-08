@@ -1,5 +1,5 @@
 (defpackage :cli/tests
-  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt :cli/clap))
+  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt :cli/clap :cli/tools/sbcl))
 
 (in-package :cli/tests)
 (declaim (optimize (debug 3) (safety 3)))
@@ -237,7 +237,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 	   (print-version cli s)
 	   (print-usage cli s)
 	   (print-help cli s))))
-    (is (string= "foobar" (parse-str-opt "foobar")))))
+    (is (string= "foobar" (cli/clap::parse-string-opt "foobar")))))
 
 (make-opt-parser thing $val)
 
@@ -676,5 +676,9 @@ Eastern Mediterranean ████████████████▊
     (compile (defmain (:return *test-target* :exit nil :export nil)
                (let ((*test-target* t))
                  *test-target*)))
-    (is (funcall 'main))
+    (is (funcall #'main))
     (is (null *test-target*))))
+
+(deftest sbcl-tools ()
+  (with-sbcl (:noinform t :quit t)
+    (print 1)))

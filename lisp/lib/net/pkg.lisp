@@ -97,47 +97,46 @@
    :timetag->unix-time
    :print-as-double))
 
-;; sb-thread::make-condition
-;; (defpackage :net/proto/crew
-;;   (:nicknames :net/crew)
-;;   (:use :cl :sb-bsd-sockets :std :net/core :obj/id)
-;;   (:import-from #:sb-thread
-;;                 #:condition-notify
-;;                 #:condition-wait
-;;                 ;; #:make-condition-variable
-;;                 #:make-mutex ;; make-lock
-;;                 #:make-thread
-;;                 #:with-mutex)
-;;   (:import-from :sb-concurrency
-;;                 :make-gate)
-;;   (:import-from #:swank-client
-;;                 #:slime-close
-;;                 #:slime-connect
-;;                 #:slime-eval
-;;                 #:slime-eval-async
-;;                 #:slime-migrate-evals
-;;                 #:slime-network-error
-;;                 #:slime-pending-evals-p
-;;                 #:swank-connection
-;;                 #:with-slime-connection)
-;;   (:export 
-;;    :crew-connection-info
-;;    :make-worker-pool
-;;    :crew-worker :crew-worker-pool
-;;    :*crew-worker-pools-lock*
-;;    :*crew-worker-pools*
-;;    :connect-worker
-;;    :disconnect-worker
-;;    :parallel-mapcar :parallel-reduce
-;;    :eval-form-all-workers
-;;    :eval-form-repeatedly
-;;    :eval-repeatedly-async-state   
-;;    :worker-count
-;;    :reconnect-worker))
-
-(defpackage :net/proto/swank
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
+(std:defpkg :net/proto/swank
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :swank-client)
+  (:use-reexport :swank-client)
   (:export))
+
+(defpackage :net/proto/crew
+  (:nicknames :net/crew)
+  (:use :cl :sb-bsd-sockets :std :net/core :obj/id)
+  (:import-from #:sb-thread
+                #:condition-notify
+                #:condition-wait
+                ;; #:make-condition-variable
+                #:make-mutex
+                #:make-thread
+                #:with-mutex)
+  (:import-from :sb-concurrency
+                :make-gate)
+  (:import-from #:net/proto/swank
+                #:slime-close
+                #:slime-connect
+                #:slime-eval
+                #:slime-eval-async
+                #:slime-migrate-evals
+                #:slime-network-error
+                #:slime-pending-evals-p
+                #:swank-connection
+                #:with-slime-connection)
+  (:export 
+   :crew-connection-info
+   :make-worker-pool
+   :crew-worker :crew-worker-pool
+   :*crew-worker-pools-lock*
+   :*crew-worker-pools*
+   :connect-worker
+   :disconnect-worker
+   :parallel-mapcar :parallel-reduce
+   :eval-form-all-workers
+   :eval-form-repeatedly
+   :eval-repeatedly-async-state   
+   :reconnect-worker))
 
 (defpackage :net/proto/dns
   (:nicknames :net/dns)
@@ -281,7 +280,10 @@
    :make-cookie-jar
            :cookie-jar-cookies
    :cookie-jar-host-cookies
-           :merge-cookies))
+           :merge-cookies
+           :cookie-p
+           :copy-cookie
+           :cookie-creation-timestamp))
 
 (defpackage :net/req
   (:nicknames :req)
@@ -324,7 +326,18 @@
 (defpackage :net/srv
   (:nicknames :srv)
   (:use :cl :std :obj/uri :net/core :net/proto/http :net/cookie :dat/base64 :sb-gray)
-  (:export))
+  (:export
+   #:default-web-directory
+   #:start-service
+   #:stop-service
+   #:restart-service
+   #:add-route
+   #:delete-route
+   #:service
+   #:define-service
+   #:*router*
+   #:*acceptor*
+   #:*handlers*))
 
 (in-package :std-user)
 
@@ -336,8 +349,9 @@
    :net/codec/dns 
    :net/codec/osc 
    :net/codec/tlv
-   :net/proto/dns 
-   ;; :net/proto/crew 
+   :net/proto/dns
+   :net/proto/swank
+   :net/proto/crew 
    :net/proto/ssh
    :net/proto/http))
 

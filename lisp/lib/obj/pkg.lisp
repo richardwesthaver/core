@@ -128,10 +128,11 @@
    :uri-tld
    :uri-domain))
 
-(defpackage :obj/url
+(pkg:defpkg :obj/url
   (:nicknames :url)
   (:use :cl :std :obj/uri)
-  (:import-from :quri :url-encode :url-decode :url-encode-params :url-decode-params))
+  (:shadowing-import-from :quri :url-encode :url-decode :url-encode-params :url-decode-params)
+  (:export :url-encode :url-decode :url-encode-params :url-decode-params))
 
 (defpackage :obj/seq
   (:nicknames :seq)

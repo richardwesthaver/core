@@ -826,7 +826,6 @@ keep-alive-stream), and should handle clean-up of it"
 (make-new-connection-pool)
 
 ;;; backend
-(with-compilation-unit ()
 (eval-always
   (defparameter *ca-bundle*
     #.(uiop:native-namestring #P"/etc/ca-certificates/extracted/ca-bundle.trust.crt")
@@ -890,7 +889,7 @@ keep-alive-stream), and should handle clean-up of it"
 
      eof)))
 
-(defvar +empty-body+
+(defvar *empty-body*
   (make-array 0 :element-type '(unsigned-byte 8)))
 
 (defun read-response (stream has-body collect-headers read-body)
@@ -931,7 +930,7 @@ keep-alive-stream), and should handle clean-up of it"
       ((not read-body)
        (setq body stream))
       ((not has-body)
-       (setq body +empty-body+))
+       (setq body *empty-body*))
       ((and content-length (not transfer-encoding-p))
        (let ((buf (make-array (etypecase content-length
                                 (integer content-length)
@@ -944,7 +943,7 @@ keep-alive-stream), and should handle clean-up of it"
              (= status 101)    ;; Switching Protocols
              (= status 204)    ;; No Content
              (= status 304))) ;; Not Modified
-       (setq body +empty-body+))
+       (setq body *empty-body*))
       (T
        (setq body-data (fast-io:make-output-buffer))
        (loop for buf of-type octet-vector = (read-until-crlf*2 stream)
@@ -1021,15 +1020,15 @@ keep-alive-stream), and should handle clean-up of it"
     (when proxy-auth
       (format nil "Basic ~A"
               (dat/base64:string-to-base64-string proxy-auth)))))
-(eval-always
-  (defconstant +socks5-version+ 5)
-  (defconstant +socks5-reserved+ 0)
-  (defconstant +socks5-no-auth+ 0)
-  (defconstant +socks5-connect+ 1)
-  (defconstant +socks5-domainname+ 3)
-  (defconstant +socks5-succeeded+ 0)
-  (defconstant +socks5-ipv4+ 1)
-  (defconstant +socks5-ipv6+ 4))
+
+(defconstant +socks5-version+ 5)
+(defconstant +socks5-reserved+ 0)
+(defconstant +socks5-no-auth+ 0)
+(defconstant +socks5-connect+ 1)
+(defconstant +socks5-domainname+ 3)
+(defconstant +socks5-succeeded+ 0)
+(defconstant +socks5-ipv4+ 1)
+(defconstant +socks5-ipv6+ 4)
 
 (defun ensure-socks5-connected (input output uri http-method)
   (labels ((fail (condition &key reason)
@@ -1162,16 +1161,28 @@ keep-alive-stream), and should handle clean-up of it"
   (labels ((make-new-connection (uri)
              (restart-case
                  (let* ((con-uri (uri (or proxy uri)))
-                        (connection (usocket:socket-connect (uri-host con-uri)
-                                                            (or (uri-port con-uri) (when insecure 80) 443)
-                                                            :timeout connect-timeout
-                                                            :element-type '(unsigned-byte 8)))
-                        (stream
-                          (usocket:socket-stream connection))
+                        (socket (make-instance 'sb-bsd-sockets:inet-socket
+                                  :type :stream
+                                  :protocol :tcp))
+                        (connection (sb-bsd-sockets:socket-connect
+                                     socket
+                                     (sb-bsd-sockets:make-inet-address (net/proto/dns:resolve (uri-host con-uri)))
+                                     (or (uri-port con-uri) (when insecure 80) 443)
+                                     
+                                     ;; :timeout connect-timeout
+                                     ;;:element-type '(unsigned-byte 8)
+                                     ))
+                        (stream (sb-bsd-sockets:socket-make-stream connection
+                                                                   :input t
+                                                                   :output t
+                                                                   :timeout connect-timeout
+                                                                   :auto-close t
+                                                                   :element-type :default))
+                          
                         (scheme (uri-scheme uri)))
                    (declare (type keyword scheme))
-                   (when read-timeout
-                     (setf (io/socket:sockopt-receive-timeout connection) read-timeout)) ;; TODO 2024-06-19: test
+                   ;; (when read-timeout
+                   ;; (setf (io/socket:sockopt-receive-timeout connection) read-timeout)) ;; TODO 2024-06-19: test
                    (when (socks5-proxy-p proxy-uri)
                      (ensure-socks5-connected stream stream uri method))
                    (if (string= (symbol-name scheme) "HTTPS")
@@ -1542,7 +1553,7 @@ keep-alive-stream), and should handle clean-up of it"
                                           (let ((wrapped-stream (make-%wrapped-stream :stream stream)))
                                             (trivial-garbage:finalize wrapped-stream (lambda () (close stream)))
                                             wrapped-stream)))))))
-                 (finalize-connection stream (gethash "connection" response-headers) uri)))))))))))
+                 (finalize-connection stream (gethash "connection" response-headers) uri))))))))))
 
 ;;; API
 (defun get (uri &rest args

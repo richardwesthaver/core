@@ -22,25 +22,25 @@
 ;;; Code:
 (in-package :organ)
 
-(defvar org-duration-hmm-rx (create-scanner "\\`[ \t]*[0-9]+\\(?::[0-9]\\{2\\}\\)\\{1,2\\}[ \t]*\\'")
+(defvar *org-duration-hmm-rx* (create-scanner "\\`[ \t]*[0-9]+\\(?::[0-9]\\{2\\}\\)\\{1,2\\}[ \t]*\\'")
   "Regexp matching a duration expressed with H:MM or H:MM:SS format.
-See `org-duration-hmmss-rx' to only match the latter.  Hours
+See *org-duration-hmmss-rx* to only match the latter.  Hours
 can use any number of digits.")
 
-(defvar org-duration-hmmss-rx (create-scanner "\\`[ \t]*[0-9]+\\(?::[0-9]\\{2\\}\\)\\{2\\}[ \t]*\\'")
+(defvar *org-duration-hmmss-rx* (create-scanner "\\`[ \t]*[0-9]+\\(?::[0-9]\\{2\\}\\)\\{2\\}[ \t]*\\'")
   "Regexp matching a duration expressed H:MM:SS format.
-See `org-duration-hmm-rx' to also support H:MM format.  Hours
+See *org-duration-hmm-rx* to also support H:MM format.  Hours
 can use any number of digits.")
 
-(defvar org-duration-full-rx 
+(defvar *org-duration-full-rx*
   (create-scanner "\\`\\(?:[ 	]*\\([0-9]+\\(?:\\.[0-9]*\\)?\\)[ 	]*\\(min\\|[dhmwy]\\)\\)+[ 	]*\\'")
   "Regexp matching a duration expressed with units.")
 
-(defvar org-duration-mixed-rx
+(defvar *org-duration-mixed-rx*
   (create-scanner "\\`\\(?1:\\([ 	]*\\([0-9]+\\(?:\\.[0-9]*\\)?\\)[ 	]*\\(min\\|[dhmwy]\\)\\)+\\)[ 	]*\\(?2:[0-9]+\\(?::[0-9][0-9]\\)\\{1,2\\}\\)[ 	]*\\'")
   "Regexp matching a duration with units and H:MM or H:MM:SS format.")
 
-(defvar org-duration-units
+(defvar *org-duration-units*
   '(("min" . 1) ("h" . 60) ("d" . 1440) ("w" . 10080) ("m" . 43200)
     ("y" . 525960.0)))
 

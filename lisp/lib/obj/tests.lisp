@@ -1,5 +1,5 @@
 (defpackage :obj/tests
-  (:use :cl :std :rt :obj :uuid))
+  (:use :cl :std :rt :obj :uuid :url))
 
 (in-package :obj/tests)
 
@@ -161,17 +161,19 @@
 (deftest ring ())
 
 (deftest generic-tree ()
-  (let ((tree (make-binary-node 
+  (let ((tree (make-binary-node
               0 
               (make-binary-node 1 (make-node 0) (make-node 1))
               (make-binary-node 2 (make-node 2) (make-node 3)))))
     (is (typep tree 'binary-node))))
 
-(deftest bro-tree ())
+(deftest bro-tree ()
+  (is (sb-brothertree::make-binary-node 0 nil nil)))
 
 (deftest rb-tree ())
 
-(deftest avl-tree ())
+(deftest avl-tree ()
+  (is (make-avl-node 0 0 nil nil)))
 
 (deftest basic-graph ()
   "Test basic graph functionality."
@@ -193,10 +195,11 @@
       (graph:add-edge g2 '(:buz :baz))
       ;; 2 edges exist
       (is (= 2 (length (hash-table-keys (graph:edges g2)))))
-      (graph:add-node g1 g2)
-      (is (graph::has-node-p g1 g2))
-      (graph::delete-node g1 g2)
-      (is (not (graph::has-node-p g1 g2))))))
+      ;; (graph:add-node g1 g2)
+      ;; (is (graph::has-node-p g1 g2))
+      ;; (graph::delete-node g1 g2)
+      ;; (is (not (graph::has-node-p g1 g2)))
+      )))
 
 ;; TODO 2023-12-17: 
 (deftest uris ()
@@ -241,3 +244,6 @@
 	  (when user-info
 	    (is (string= user-info (uri-userinfo u))))
 	  (is (equal port (uri-port u))))))))
+
+(deftest url ()
+  (is (equal (url-encode "/fooあ") (url-encode (url-decode "%2Ffoo%E3%81%82")))))

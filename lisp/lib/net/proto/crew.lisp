@@ -36,7 +36,7 @@
    (workers :type vector :initform (vector) :accessor workers)
    (lock :initform (make-mutex :name "worker-pool") :accessor lock)
    (idle-workers :type list :initform nil :accessor idle-workers)
-   (worker-ready :initform (make-gate :name "worker-ready" :open nil) :accessor worker-ready)
+   (worker-ready :initform (make-waitqueue :name "worker-ready") :accessor worker-ready)
    (disconnecting :initform nil :accessor disconnecting)
    (replay-forms-lock :initform (make-mutex :name "replay-forms-lock") :accessor replay-forms-lock)
    (replay-forms :type list :initform nil :accessor replay-forms)))
@@ -68,9 +68,8 @@ inconsistent information."
               (t (incf busy))))
       (values idle busy disconnected))))
 
-(defun worker-count (worker-pool)
-  "Returns the total number of workers in WORKER-POOL."
-  (length (workers worker-pool)))
+(defmethod worker-count ((self crew-worker-pool) &key)
+  (length (workers self)))
 
 (defmethod print-object ((worker-pool crew-worker-pool) stream)
   "Prints WORKER-POOL to STREAM.  This function runs without locking

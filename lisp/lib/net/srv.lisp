@@ -38,9 +38,9 @@
 (deferror srv-simple-error (srv-error simple-condition) () (:auto t))
 
 (define-condition srv-warning (srv-condition warning) ())
-(define-condition srv-simple-warning-warning (srv-warning simple-condition) ())
+(define-condition srv-simple-warning (srv-warning simple-condition) ())
 
-(deferror bad-request (srv-error))
+(deferror bad-request (srv-error) ())
 
 ;;; Utils
 (eval-when (:load-toplevel :compile-toplevel :execute)
