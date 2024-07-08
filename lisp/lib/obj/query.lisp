@@ -22,8 +22,8 @@
 
 ;;; Code:
 (in-package :obj/query)
-
-(defvar *literal-value-types* '(boolean fixnum signed-byte unsigned-byte float double-float string))
+(eval-always
+  (defvar *literal-value-types* '(boolean fixnum signed-byte unsigned-byte float double-float string)))
 (deftype literal-value-type () `(or ,@*literal-value-types*))
 
 (defstruct field
