@@ -15,15 +15,18 @@
 
 ;; - Frontends :: The interface exposed to the user - SQL, Prolog, etc.
 
-;; - Backends :: The interface exposed to the underlying data sources - RocksDB, SQLite, etc.
+;; - Middleware :: interfaces which are used internally and exposed publicly -
+;;   query planners/optimizers/ast
 
-;; A 'complete' Data Management System can thus be created from combining a
-;; Frontend and Backend.
+;; - Backends :: The interface exposed to the underlying data sources -
+;;   RocksDB, SQLite, etc.
 
 ;;; Code:
 (in-package :obj/query)
+
 (eval-always
   (defvar *literal-value-types* '(boolean fixnum signed-byte unsigned-byte float double-float string)))
+
 (deftype literal-value-type () `(or ,@*literal-value-types*))
 
 (defstruct field

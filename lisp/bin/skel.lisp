@@ -8,6 +8,7 @@
    :vc :sb-ext :skel :log
    :dat/sxp #+tools :skel/tools/viz)
   (:import-from :cli/shell :*shell-input*)
+  (:use :cli/tools/sbcl)
   (:export :main))
 
 (in-package :bin/skel)

@@ -424,10 +424,12 @@
   (:use :cl)
   (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
   (:shadowing-import-from :sb-vm :list-allocated-objects)
+  (:import-from :sb-impl :*logical-hosts*)
   (:export
    :current-lisp-implementation
    :current-machine
    :list-package-symbols
+   :append-logical-hosts
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live
    :forget-shared-object

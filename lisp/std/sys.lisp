@@ -36,6 +36,12 @@
   (loop for s being the external-symbol of pkg
         collect s))
 
+(defun append-logical-hosts (&rest hosts)
+  "Reinitialize SB-IMPL::*LOGICAL-HOSTS* with a freshly allocated vector
+consisting of the old contents appended to the new."
+  (setq *logical-hosts*
+        (concatenate 'vector hosts *logical-hosts*)))
+
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)
   "A naive tree-shaker for lisp."

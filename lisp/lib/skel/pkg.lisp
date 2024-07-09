@@ -47,5 +47,5 @@
   (:use-reexport :skel/core :skel/comp))
 
 (pkg:defpkg :sk-user
-  (:use :cl :std :std-user :cl-user :log :net-user :sb-debug :sb-ext :net/proto/dns)
+  (:use :cl :std :std-user :cl-user :log :net-user :sb-debug :sb-ext :net/proto/dns :cli/tools/sbcl)
   (:use-reexport :skel))
