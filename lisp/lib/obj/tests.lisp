@@ -247,3 +247,9 @@
 
 (deftest url ()
   (is (equal (url-encode "/fooあ") (url-encode (url-decode "%2Ffoo%E3%81%82")))))
+
+(defclass bogus-data-source (data-source) ((db :initform nil :initarg :db)))
+
+(deftest query-simple-hard ()
+  "Test the simple query `SELECT * FROM employee WHERE state = 'CT'` by manually
+building a query-plan.")
