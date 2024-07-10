@@ -452,6 +452,8 @@
     (when val
       (setf (accumulator-value self) (+ val (accumulator-value self))))))
 
+(defgeneric make-accumulator (self))
+
 ;; max-accumulator
 (defclass max-accumulator (accumulator) ())
 
@@ -460,13 +462,12 @@
     (setf (accumulator-value self) val)))
 
 (defclass aggregate-physical-expression (physical-expression)
-  ((input :type physical-expression)
-   (accumulator :type (accumulator t))))
+  ((input :type physical-expression)))
 
 (defclass max-physical-expression (aggregate-physical-expression) ())
 
-;; TODO
-
+(defmethod make-accumulator ((self max-physical-expression))
+  (make-instance 'max-accumulator))
 
 ;;; Physical Plan
 (defgeneric execute (self))
@@ -475,13 +476,48 @@
   ((data-source :type data-source)
    (projection :type (vector string))))
 
+(defmethod schema ((self scan-exec))
+  (select (schema (slot-value self 'data-source)) (slot-value self 'projection)))
+
+(defmethod execute ((self scan-exec))
+  (scan-data-source (slot-value self 'data-source) (slot-value self 'projection)))
+
 (defclass projection-exec (physical-plan)
-  ((input :type physical-plan)))
+  ((input :type physical-plan)
+   (expr :type (vector physical-expression))))
+
+(defmethod execute ((self projection-exec))
+  (coerce
+   (loop for batch across (fields (execute (slot-value self 'input)))
+         collect (make-record-batch :schema (slot-value self 'schema)
+                                    :fields (coerce
+                                             (loop for e across (slot-value self 'expr)
+                                                   collect (evaluate e batch))
+                                             'field-vector)))
+   '(vector record-batch)))
+                                                 
 
 (defclass selection-exec (physical-plan)
-  ((input :type physical-plan)))
+  ((input :type physical-plan)
+   (expr :type physical-expression)))
 
-(defgeneric filter (self columns selection))
+(defmethod schema ((self selection-exec))
+  (schema (slot-value self 'input)))
+
+(defmethod execute ((self selection-exec))
+  (coerce
+   (loop for batch across (execute (slot-value self 'input))
+         with res = (coerce (evaluate (slot-value self 'expr) batch) 'bit-vector)
+         with schema = (schema batch)
+         with count = (column-count (fields (schema batch)))
+         with filtered = (loop for i from 0 below count
+                               collect (filter self (field batch i) res))
+         collect (make-record-batch :schema schema :fields (coerce filtered 'field-vector)))
+   '(vector record-batch)))
+
+(defgeneric filter (self columns selection)
+  (:method ((self selection-exec) (columns column-vector) (selection bit-vector))
+    ))
 
 (defclass hash-aggregate-exec (physical-plan)
   ((input :type physical-plan)
