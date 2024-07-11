@@ -24,11 +24,13 @@
 ;;; Code:
 (in-package :obj/query)
 
+;;; Types
 (eval-always
   (defvar *literal-value-types* '(boolean fixnum signed-byte unsigned-byte float double-float string)))
 
 (deftype literal-value-type () `(or ,@*literal-value-types*))
 
+;;; Field
 (defstruct field
   (name (symbol-name (gensym "#")) :type simple-string)
   (type t :type (or symbol list)))
@@ -37,26 +39,8 @@
   (declare (ignore env))
   `(make-field :name ,(field-name self) :type ,(field-type self)))
 
+;;; Field Vectors
 (deftype field-vector () '(vector field))
-
-(defclass schema ()
-  ((fields :type field-vector :initarg :fields :accessor fields)))
-
-(defun make-schema (&rest fields)
-  (make-instance 'schema :fields (coerce fields 'field-vector)))
-
-(defgeneric load-schema (self &optional schema))
-
-(defmethod make-load-form ((self schema) &optional env)
-  (declare (ignore env))
-  `(make-instance ,(class-of self) :fields ,(fields self)))
-
-(defclass schema-metadata ()
-  ((metadata :initarg :metadata :accessor schema-metadata)))
-
-(defmethod make-load-form ((self schema-metadata) &optional env)
-  (declare (ignore env))
-  `(make-instance ,(class-of self) :metadata ,(schema-metadata self)))
 
 ;; convenience interface for FIELD-VECTOR
 (defclass column-vector () ((data :type simple-vector :accessor column-data)))
@@ -82,10 +66,31 @@
         (error 'simple-error :format-control "index out of bounds: ~A" :format-arguments i)
         (column-literal-value self))))
 
+;;; Schema
+(defclass schema ()
+  ((fields :type field-vector :initarg :fields :accessor fields)))
+
+(defun make-schema (&rest fields)
+  (make-instance 'schema :fields (coerce fields 'field-vector)))
+
+(defgeneric load-schema (self &optional schema))
+
+(defmethod make-load-form ((self schema) &optional env)
+  (declare (ignore env))
+  `(make-instance ,(class-of self) :fields ,(fields self)))
+
+(defclass schema-metadata ()
+  ((metadata :initarg :metadata :accessor schema-metadata)))
+
+(defmethod make-load-form ((self schema-metadata) &optional env)
+  (declare (ignore env))
+  `(make-instance ,(class-of self) :metadata ,(schema-metadata self)))
+
 (defgeneric column-size (self)
   (:method ((self column-vector))
     (length (column-data self))))
 
+;;; Record Batch
 (defstruct record-batch
   (schema (make-schema) :type schema)
   (fields #() :type field-vector))
@@ -94,6 +99,7 @@
   (declare (ignore env))
   `(make-record-batch :schema ,(record-batch-schema self) :fields ,(record-batch-fields self)))
 
+;;; Proto
 (defgeneric field (self n)
   (:method ((self record-batch) (n fixnum))
     (aref (record-batch-fields self) n)))
@@ -148,12 +154,16 @@
   (:method ((self record-batch))
     (length (record-batch-fields self))))
 
+;;; Execution Context
+(defclass execution-context () ())
+
 (defclass data-source ()
   ((schema :type schema :accessor schema)))
 
 (defgeneric scan-data-source (self projection)
   (:documentation "Scan the data source, selecting the specified columns."))
 
+;;; Dataframes
 ;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
 (defclass data-frame ()
   ((plan :type logical-plan :accessor df-plan :initarg :plan)))
@@ -166,8 +176,7 @@
 (defgeneric df-filter (expr))
 (defgeneric df-aggregate (group-by agg-expr))
 
-(defclass execution-context () ())
-
+;;; Expressions
 (defclass query-expression () ())
 
 (defclass query-plan ()
@@ -406,14 +415,14 @@
     (make-instance 'literal-value-vector :size (row-count input) :type 'number :data self)))
 
 (defclass column-physical-expression (physical-expression)
-  ((val :type array-index)))
+  ((val :type array-index :initarg :val)))
 
 (defmethod evaluate ((self column-physical-expression) (input record-batch))
   (field input (slot-value self 'val)))
 
 (defclass binary-physical-expression (physical-expression)
-  ((lhs :type physical-expression :accessor lhs)
-   (rhs :type physical-expression :accessor rhs)))
+  ((lhs :type physical-expression :accessor lhs :initarg :lhs)
+   (rhs :type physical-expression :accessor rhs :initarg :rhs)))
 
 (defgeneric evaluate2 (self lhs rhs))
 
@@ -473,8 +482,8 @@
 (defgeneric execute (self))
 
 (defclass scan-exec (physical-plan)
-  ((data-source :type data-source)
-   (projection :type (vector string))))
+  ((data-source :type data-source :initarg :data-source)
+   (projection :type (vector string) :initarg :projection)))
 
 (defmethod schema ((self scan-exec))
   (select (schema (slot-value self 'data-source)) (slot-value self 'projection)))
@@ -483,8 +492,8 @@
   (scan-data-source (slot-value self 'data-source) (slot-value self 'projection)))
 
 (defclass projection-exec (physical-plan)
-  ((input :type physical-plan)
-   (expr :type (vector physical-expression))))
+  ((input :type physical-plan :initarg :input)
+   (expr :type (vector physical-expression) :initarg :expr)))
 
 (defmethod execute ((self projection-exec))
   (coerce
@@ -498,8 +507,8 @@
                                                  
 
 (defclass selection-exec (physical-plan)
-  ((input :type physical-plan)
-   (expr :type physical-expression)))
+  ((input :type physical-plan :initarg :input)
+   (expr :type physical-expression :initarg :expr)))
 
 (defmethod schema ((self selection-exec))
   (schema (slot-value self 'input)))
@@ -515,14 +524,64 @@
          collect (make-record-batch :schema schema :fields (coerce filtered 'field-vector)))
    '(vector record-batch)))
 
+;; NOTE 2024-07-10: 
 (defgeneric filter (self columns selection)
-  (:method ((self selection-exec) (columns column-vector) (selection bit-vector))
-    ))
+  (:method ((self selection-exec) (columns column-vector) (selection simple-bit-vector))
+    (coerce
+     (loop for i from 0 below (length selection)
+           unless (zerop (bit selection i))
+           collect (column-value columns i))
+     'field-vector)))
 
 (defclass hash-aggregate-exec (physical-plan)
   ((input :type physical-plan)
    (group-expr :type (vector physical-plan))
    (agg-expr :type (vector aggregate-physical-expression))))
+
+(defmethod execute ((self hash-aggregate-exec))
+  (coerce 
+   (loop for batch across (execute (slot-value self 'input))
+         with map = (make-hash-table :test 'equal)
+         with groupkeys = (map 'vector  (lambda (x) (evaluate x batch)) (slot-value self 'group-expr))
+         with aggr-inputs = (map 'vector (lambda (x) (evaluate (slot-value x 'input) batch))
+                                 (slot-value self 'agg-expr))
+         do (loop for row-idx from 0 below (row-count batch)
+                  with row-key = (map 'vector
+                                      (lambda (x)
+                                        (when-let ((val (column-value x row-idx)))
+                                          (typecase val
+                                            (octet-vector (sb-ext:octets-to-string val))
+                                            (t val))))
+                                      groupkeys)
+                  with accs = (if-let ((val (gethash row-key map)))
+                                val
+                                (setf
+                                 (gethash row-key map)
+                                 (map 'vector
+                                      #'make-accumulator
+                                      (slot-value self 'agg-expr))))
+                  ;; start accumulating
+                  do (loop for i from 0 below (length accs)
+                           for accum across accs
+                           with val = (column-value (aref aggr-inputs i) row-idx)
+                           return (accumulate accum val))
+                     ;; collect results in array
+                  with ret = (make-record-batch :schema (slot-value self 'schema)
+                                                :fields (make-array (hash-table-size map)
+                                                                    :element-type 'field
+                                                                    :initial-element (make-field)))
+                  do (loop for row-idx from 0 below (hash-table-size map)
+                           for gkey being the hash-keys of map
+                           using (hash-value accums)
+                           with glen = (length (slot-value self 'group-expr))
+                           do (loop for i from 0 below glen
+                                    do (setf (aref (aref (fields ret) i) row-idx)
+                                             (aref gkey i)))
+                           do (loop for i from 0 below (length (slot-value self 'agg-expr))
+                                    do (setf (aref (aref (fields ret) (+ i glen)) row-idx)
+                                             (accumulator-value (aref accums i)))))
+                  collect ret))
+   '(vector record-batch)))
 
 ;;; Planner
 
@@ -531,22 +590,72 @@
 
 (defclass query-planner () ())
 
-(defgeneric create-physical-expression (expr input)
+;; these generics 
+(defgeneric make-physical-expression (expr input)
   (:documentation "Translate logical expression EXPR and logical plan INPUT
-  into a physical expression."))
+  into a physical expression.")
+  (:method ((expr string) (input logical-plan))
+    (declare (ignore input))
+    expr)
+  (:method ((expr number) (input logical-plan))
+    (declare (ignore input))
+    expr)
+  (:method ((expr column-expression) (input logical-plan))
+    (let ((i (position (column-name expr) (fields (schema input)) :key 'field-name :test 'equal)))
+      (make-instance 'column-physical-expression :val i)))
+  (:method ((expr binary-expression) (input logical-plan))
+    (let ((l (make-physical-expression (lhs expr) input))
+          (r (make-physical-expression (rhs expr) input)))
+      (etypecase expr
+        (eq-expression (make-instance 'eq-physical-expression :lhs l :rhs r))
+        ;; (neq-expression (make-instance 'neq-physical-expression :lhs l :rhs r))
+        ;; (gt-expression)
+        ;; (gteq-expression)
+        ;; (lt-expression)
+        ;; (lteq-expression)
+        ;; (and-expression)
+        ;; (or-expression)
+        (add-expression (make-instance 'add-physical-expresion :lhs l :rhs r))
+        ;; (sub-expression)
+        ;; (mult-expression)
+        ;; (div-expression)
+        ))))
 
-(defgeneric create-physical-plan (plan)
-  (:documentation "Create a physical plan from logical PLAN."))
+(defgeneric make-physical-plan (plan)
+  (:documentation "Create a physical plan from logical PLAN.")
+  (:method ((plan logical-plan))
+    (etypecase plan
+      (scan-data (make-instance 'scan-exec
+                   :data-source (slot-value plan 'data-source)
+                   :projection (slot-value plan 'projection)))
+      (projection (make-instance 'projection-exec
+                    :schema (make-instance 'schema
+                              :fields
+                              (map 'field-vector
+                                   (lambda (x) (to-field x (slot-value plan 'input)))
+                                   (slot-value plan 'expr)))
+                    :input (make-physical-plan (slot-value plan 'input))
+                    :expr (map 'vector (lambda (x) (make-physical-expression x (slot-value plan 'input)))
+                               (slot-value plan 'expr))))
+      (selection (make-instance 'selection-exec
+                   :input (make-physical-plan (slot-value plan 'input))
+                   :expr (make-physical-expression (slot-value plan 'expr) (slot-value plan 'input))))
+      ;; TODO 2024-07-10: 
+      (aggregate (make-instance 'hash-aggregate-exec)))))
 
 ;;; Optimizer
 
-;; The Query Optimizer is responsible for walking a LOGICAL-PLAN and returning
-;; a modified version of the same object.
+;; The Query Optimizer is responsible for walking a QUERY-PLAN and returning a
+;; modified version of the same object. Usually we want to run optimization on
+;; LOGICAL-PLANs but we also support specializing on PHYSICAL-PLAN.
 
 ;; Rule-based Optimizers: projection/predicate push-down, sub-expr elim
 
-;; TODO: Cost-based optimizers
+;; TBD: Cost-based optimizers
+;; TODO 2024-07-10: 
 (defclass query-optimizer () ())
+
+(defgeneric optimize-query (self &key &allow-other-keys))
 
 ;;; Query
 (defclass query () ())
@@ -555,5 +664,3 @@
   (:method ((self t) &rest initargs)
     (declare (ignore initargs))
     (make-instance 'query)))
-
-(defgeneric execute-query (self q))

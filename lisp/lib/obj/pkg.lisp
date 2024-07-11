@@ -365,8 +365,8 @@
            :unary-expression
            :alias-expression
            :query-optimizer
-           :create-physical-plan
-           :create-physical-expression
+           :make-physical-plan
+           :make-physical-expression
            :query-planner
            :hash-aggregate-exec
            :filter
