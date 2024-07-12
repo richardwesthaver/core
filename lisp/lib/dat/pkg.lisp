@@ -233,6 +233,10 @@
   (:use :cl :std :dat/proto)
   (:export))
 
+(defpackage :dat/parquet
+  (:use :cl :std :dat/proto :dat/json)
+  (:export))
+
 (pkg:defpkg :dat
   (:use-reexport :dat/proto :dat/csv :dat/arff
    :dat/toml :dat/json :dat/sxp :dat/xml

@@ -29,6 +29,13 @@
               (st ".stash/psl.dat" :direction :output :element-type 'octet)
             (loop for x across (req:get "https://publicsuffix.org/list/public_suffix_list.dat" :force-binary t)
                   do (write-byte x st))))
+ (parquet.thrift () 
+          (with-open-file
+              (st ".stash/parquet.thrift" :direction :output :element-type 'octet)
+            (loop for x across (req:get "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift" :force-binary t)
+                  do (write-byte x st))))
+ (parquet.json ()
+               #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
  (rdb (%stash) (with-sbcl (:noinform t :quit t)

@@ -3,13 +3,13 @@
 (define-condition invalid-path-error (error)
   ((text :initarg :text :reader text)))
 
-(defun download (url &optional output)
+(defun download (url &key output (if-exists :error))
   (let ((output (if output
                     output
                     (file-namestring (obj/uri:uri-path (obj/uri:uri url))))))
     (multiple-value-bind (stream status header uri)
-        (req:get url :want-stream t :keep-alive nil :use-connection-pool t)
-      (when (= status 200) (write-stream-into-file stream (pathname output)))
+        (req:get url :want-stream t :keep-alive nil :use-connection-pool t :force-binary t)
+      (when (= status 200) (write-stream-into-file stream (pathname output) :if-exists if-exists))
       (values (or stream uri header)
               status))))
 
@@ -36,7 +36,7 @@
                                 (flush nil))
   (cond
     ((is-file (condition-path url-or-path)) (condition-path url-or-path))
-    ((is-file (condition-path (concatenate 'string  dir url-or-path)))
+    ((is-file (condition-path (concatenate 'string  dir (uri-path url-or-path))))
      (condition-path (concatenate 'string  dir url-or-path)))
     ((parse-uri url-or-path)
      (let* ((tmp-pathname (split-uri-string url-or-path))
