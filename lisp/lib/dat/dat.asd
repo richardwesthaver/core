@@ -9,6 +9,10 @@
                (:file "dot")
                (:file "csv")
                (:file "json")
+               (:module "parquet"
+                :components
+                ((:file "gen")
+                 (:file "parquet")))
                (:module "xml"
                 :components
                 ((:file "xml")

@@ -233,9 +233,20 @@
   (:use :cl :std :dat/proto)
   (:export))
 
+(defpackage :dat/parquet/gen
+  (:use :cl :std :dat/proto :dat/json))
+
 (defpackage :dat/parquet
   (:use :cl :std :dat/proto :dat/json)
-  (:export))
+  (:import-from :dat/parquet/gen :load-parquet)
+  (:export
+   :parquet-object
+   :parquet-enum-object
+   :parquet-struct-object
+   :parquet-read
+   :parquet-write
+   :parquet-encode
+   :parquet-decode))
 
 (pkg:defpkg :dat
   (:use-reexport :dat/proto :dat/csv :dat/arff
