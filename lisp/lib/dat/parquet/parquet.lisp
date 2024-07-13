@@ -66,6 +66,8 @@ https://thrift.apache.org/docs/types
 (defconstant +default-parquet-page-size+ (* 8 1024)) ;; 8kb
 (defconstant +default-parquet-row-group-size (expt 1024 3)) ;; 1gb
 
+(defvar *parquet-creator* "parquet-cl version 0.1.0")
+
 (defun parquet-write-magic (stream)
   (write-string +parquet-magic-number+ stream))
 

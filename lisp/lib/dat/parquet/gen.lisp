@@ -207,6 +207,13 @@
   (with-package (:dat/parquet)
     (define-parquet-class parquet-enum-object () ())
     (define-parquet-class parquet-struct-object () ())
-    (export (define-parquet-types))
+    (let ((types (define-parquet-types)))
+      (export types)
+      (deftype dat/parquet::parquet-type (&optional (designator octet-vector) optional)
+        (if optional
+            (if (eql designator 'list)
+                list
+                `(or null ,designator))
+            designator)))
     (export (mapcar 'class-name (define-parquet-structs)))
     (export *parquet-enums*)))

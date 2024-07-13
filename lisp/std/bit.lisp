@@ -505,6 +505,15 @@ the element-type of the returned string."
       ((>= j end) sum)
     (setf sum (+ (aref octet-vec j) (ash sum 8)))))
 
+(defun read-little-endian (s &optional (bytes 4))
+  "Read a number in little-endian format from an byte (octet) stream S,
+the number having BYTES octets (defaulting to 4)."
+  (loop for i from 0 below bytes
+        sum (ash (read-byte s) (* 8 i))))
+
+(defun write-little-endian (i s &optional (bytes 4))
+  (write-sequence (nreverse (integer-to-octets i (* 8 bytes))) s))
+
 (defun integer-to-octets (bignum &optional (n-bits (integer-length bignum)))
   (let* ((n-bytes (ceiling n-bits 8))
          (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
