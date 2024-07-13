@@ -498,21 +498,12 @@ the element-type of the returned string."
                   (aref hexdigits (ldb (byte 4 0) byte))))
        finally (return string))))
 
-(defun octets-to-integer (octet-vec &optional (end (length octet-vec)))
+(defun octets-to-integer (octet-vec &optional (bytes (length octet-vec)))
   (declare (type (simple-array (unsigned-byte 8)) octet-vec))
   (do ((j 0 (1+ j))
        (sum 0))
-      ((>= j end) sum)
+      ((>= j bytes) sum)
     (setf sum (+ (aref octet-vec j) (ash sum 8)))))
-
-(defun read-little-endian (s &optional (bytes 4))
-  "Read a number in little-endian format from an byte (octet) stream S,
-the number having BYTES octets (defaulting to 4)."
-  (loop for i from 0 below bytes
-        sum (ash (read-byte s) (* 8 i))))
-
-(defun write-little-endian (i s &optional (bytes 4))
-  (write-sequence (nreverse (integer-to-octets i (* 8 bytes))) s))
 
 (defun integer-to-octets (bignum &optional (n-bits (integer-length bignum)))
   (let* ((n-bytes (ceiling n-bits 8))
@@ -522,3 +513,25 @@ the number having BYTES octets (defaulting to 4)."
           for index from 0
           do (setf (aref octet-vec index) (ldb (byte 8 (* i 8)) bignum))
           finally (return octet-vec))))
+
+(defun octets-to-integer-le (octet-vec &optional (bytes (length octet-vec)))
+  (declare (type (simple-array (unsigned-byte 8)) octet-vec))
+  (loop for i from 0 below bytes
+        sum (ash (aref octet-vec i) (* 8 i))))
+
+(defun integer-to-octets-le (bignum &optional (n-bits (integer-length bignum)))
+  (let* ((n-bytes (ceiling n-bits 8))
+         (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
+    (declare (type (simple-array (unsigned-byte 8)) octet-vec))
+    (loop for i from 0 below n-bytes
+          do (setf (aref octet-vec i) (ldb (byte 8 (* i 8)) bignum))
+          finally (return octet-vec))))
+
+(defun read-little-endian (s &optional (bytes 4))
+  "Read a number in little-endian format from an byte (octet) stream S,
+the number having BYTES octets (defaulting to 4)."
+  (loop for i from 0 below bytes
+        sum (ash (read-byte s) (* 8 i))))
+
+(defun write-little-endian (i s &optional (bytes 4))
+  (write-sequence (integer-to-octets-le i bytes) s))

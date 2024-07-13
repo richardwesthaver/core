@@ -1,6 +1,16 @@
 ;;; std/num/float.lisp --- Floating Point Numbers
 
-;;
+;; IEEE 754 Floating Point encoding and decoding.
+
+;;; Commentary:
+
+;; This package provides default encoders for float32 and float64 as defined
+;; by IEEE 754.
+
+;; Note that the physical encoding is always represented as a fixnum.
+
+;; To read/write from a file you must pass through a fixnum repr to bytes,
+;; usually using octets-to-integer or integer-to-octets. There are also
 
 ;;; Code:
 
@@ -11,6 +21,7 @@
 
 (in-package :std/num)
 (declaim (optimize (speed 3)))
+
 ;; The following macro may look a bit overcomplicated to the casual
 ;; reader. The main culprit is the fact that NaN and infinity can be
 ;; optionally included, which adds a bunch of conditional parts.

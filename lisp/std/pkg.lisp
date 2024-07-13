@@ -351,6 +351,10 @@
    :octet-vector-to-hex-string
    :octets-to-integer
    :integer-to-octets
+   :octets-to-integer-le
+   :integer-to-octets-le
+   :read-little-endian
+   :write-little-endian
    :hexchar-to-int))
 
 (defpkg :std/fmt

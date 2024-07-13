@@ -11,9 +11,12 @@
                (:file "json")
                (:module "parquet"
                 :components
-                ((:file "pkg")
-                 (:file "gen")
-                 (:file "parquet")))
+                ((:file "gen")
+                 (:file "pkg")
+                 (:file "obj")
+                 (:file "io")
+                 (:file "rle")
+                 (:file "proto")))
                (:module "xml"
                 :components
                 ((:file "xml")

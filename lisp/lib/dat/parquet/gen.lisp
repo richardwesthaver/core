@@ -3,6 +3,10 @@
 ;; 
 
 ;;; Code:
+(defpackage :dat/parquet/gen ;; not public API
+  (:use :cl :std :dat/proto :dat/json)
+  (:export :load-parquet))
+
 (in-package :dat/parquet/gen)
 (defparameter *parquet-json-file*
   (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/parquet.json")))
@@ -24,7 +28,8 @@
 (defmacro def-parquet-enum (sym name)
   `(progn
      (defun ,(symbolicate "PARQUET-JSON-" sym) ()
-       (mapcar (lambda (x) (json-getf x "name")) (parquet-json-enum-getf ,name)))
+       (mapcar (lambda (x) (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
+               (parquet-json-enum-getf ,name)))
      (defparameter ,(intern
                      (concatenate 'string "*PARQUET-" (symbol-name sym) "*")
                      :dat/parquet)
@@ -205,7 +210,6 @@
 (defun load-parquet (&key (file *parquet-json-file*))
   (init-parquet-json file)
   (with-package (:dat/parquet)
-    (define-parquet-class parquet-enum-object () ())
     (define-parquet-class parquet-struct-object () ())
     (let ((types (define-parquet-types)))
       (export types)

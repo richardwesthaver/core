@@ -69,7 +69,7 @@ lifetime of SCOPE, but never before and never after."))
 (defvar *default-worker-name* "worker")
 
 (defclass worker ()
-  ((thread :initform (%make-thread #.#1=(symbol-name (gensym "w")) t (make-semaphore :name #.#1#))
+  ((thread :initform (sb-thread::%make-thread #.#1=(symbol-name (gensym "w")) t (make-semaphore :name #.#1#))
            :accessor worker-thread
            :initarg :thread)
    (function :type function :accessor worker-function :initarg :function)

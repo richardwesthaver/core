@@ -28,7 +28,8 @@
                (:module "num"
                 :components
                 ((:file "float")
-                 (:file "parse")))
+                 (:file "parse")
+                 (:file "leb128")))
                (:file "stream")
                (:module "fu"
                 :components
