@@ -11,7 +11,8 @@
                (:file "json")
                (:module "parquet"
                 :components
-                ((:file "gen")
+                ((:file "pkg")
+                 (:file "gen")
                  (:file "parquet")))
                (:module "xml"
                 :components

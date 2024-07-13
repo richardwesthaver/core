@@ -233,12 +233,8 @@
   (:use :cl :std :dat/proto)
   (:export))
 
-(defpackage :dat/parquet/gen
-  (:use :cl :std :dat/proto :dat/json))
-
 (defpackage :dat/parquet
   (:use :cl :std :dat/proto :dat/json)
-  (:import-from :dat/parquet/gen :load-parquet)
   (:export
    :parquet-object
    :parquet-enum-object

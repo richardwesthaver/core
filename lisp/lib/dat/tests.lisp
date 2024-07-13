@@ -145,3 +145,11 @@
       (read-sxp-stream f s))
     (with-output-to-string (s)
       (is (write-sxp-stream f s)))))
+
+(deftest parquet-basic ()
+  (is
+   (with-input-from-string
+       (s
+        (with-output-to-string (s)
+          (dat/parquet::parquet-write-magic s)))
+     (dat/parquet::parquet-read-magic s))))
