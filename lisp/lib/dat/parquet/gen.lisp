@@ -56,15 +56,17 @@
              ("binary" 'octet-vector)
              ("set" 'list)))
          (parse-type (o)
-           (intern
-            (concatenate 'string
+           (let ((name (string-case ((json-getf o "typeId"))
+                         ("union" (json-getf o "class"))
+                         ("struct" (json-getf o "class"))
+                         ("enum" (json-getf o "class")))))
+             (intern
+              (cond 
+                ((equal name "UUIDType") "PARQUET-UUID-TYPE")
+                (t (concatenate 'string
                          "PARQUET-"
-                         (camelcase-name-to-lisp-name
-                          (string-case ((json-getf o "typeId"))
-                            ("union" (json-getf o "class"))
-                            ("struct" (json-getf o "class"))
-                            ("enum" (json-getf o "class")))))
-            :dat/parquet)))
+                         (camelcase-name-to-lisp-name name))))
+              :dat/parquet))))
   (defun convert-parquet-struct-field-type (field) ;; technically part of thrift type system
     (let* ((type-id (parquet-struct-field-type-id field))
            (type (parquet-struct-field-type field))
