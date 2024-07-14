@@ -14,7 +14,12 @@
 :components ((:dir-locals ".dir-locals")
              (:org "readme"))
 :rules
-((all (compile std prelude user infra core tests rdb skel organ homer packy fasl rust-bin tree-sitter-alien))
+((all (%stash
+       psl.dat parquet.json
+       compile std prelude user
+       infra core tests rdb
+       skel organ homer packy
+       fasl rust-bin tree-sitter-alien))
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#
@@ -29,13 +34,17 @@
               (st ".stash/psl.dat" :direction :output :element-type 'octet)
             (loop for x across (req:get "https://publicsuffix.org/list/public_suffix_list.dat" :force-binary t)
                   do (write-byte x st))))
- (parquet.thrift () 
+ (parquet.thrift ()
           (with-open-file
               (st ".stash/parquet.thrift" :direction :output :element-type 'octet)
             (loop for x across (req:get "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift" :force-binary t)
-                  do (write-byte x st))))
+                  do (write-byte x st)))
+                 #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json ()
-               #$thrift --gen json -out .stash .stash/parquet.thrift$#)
+          (with-open-file
+              (st ".stash/parquet.json" :direction :output :element-type 'octet)
+            (loop for x across (req:get "https://packy.compiler.company/data/parquet.json" :force-binary t)
+                  do (write-byte x st))))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
  (rdb (%stash) (with-sbcl (:noinform t :quit t)
