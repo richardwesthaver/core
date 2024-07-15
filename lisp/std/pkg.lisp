@@ -106,7 +106,14 @@
    :encode-float32
    :decode-float32
    :encode-float64
-   :decode-float64))
+   :decode-float64
+   ;; num/leb128
+   :read-leb128
+   :encode-leb128
+   :decode-leb128
+   :read-uleb128
+   :encode-uleb128
+   :decode-uleb128))
 
 (defpkg :std/stream
   (:use :cl :sb-gray)
