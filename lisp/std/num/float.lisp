@@ -10,7 +10,7 @@
 ;; Note that the physical encoding is always represented as a fixnum.
 
 ;; To read/write from a file you must pass through a fixnum repr to bytes,
-;; usually using octets-to-integer or integer-to-octets. There are also
+;; usually using octets-to-integer or integer-to-octets.
 
 ;;; Code:
 

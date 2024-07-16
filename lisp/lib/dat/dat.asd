@@ -14,6 +14,7 @@
                 ((:file "gen")
                  (:file "pkg")
                  (:file "obj")
+                 (:file "tcompact")
                  (:file "io")
                  (:file "rle")
                  (:file "proto")))

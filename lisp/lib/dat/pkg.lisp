@@ -234,7 +234,7 @@
   (:export))
 
 (defpackage :dat/parquet
-  (:use :cl :std :dat/proto :dat/json)
+  (:use :cl :std :obj/id :dat/proto :dat/json)
   (:export
    :parquet-object
    :parquet-enum-object

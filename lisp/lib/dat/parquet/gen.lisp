@@ -100,21 +100,6 @@
             (:constructor make-parquet-struct-field (key name type-id type doc required)))
   key name type-id type doc required)
 
-(defun parquet-destruct-field (field)
-  (list (parquet-struct-field-name field)
-        (parquet-struct-field-key field)
-        (parquet-struct-field-doc field)
-        (parquet-struct-field-type-id field)
-        (parquet-struct-field-type field)
-        (parquet-struct-field-required field)))
-
-(defun parquet-destruct (struct)
-  (list (parquet-struct-name struct)
-        (parquet-struct-doc struct)
-        (parquet-struct-unionp struct)
-        (parquet-struct-exceptionp struct)
-        (mapcar #'parquet-destruct-field (parquet-struct-fields struct))))
-
 (defun parquet-json-structs () ;; name doc isException isUnion fields
   (mapcar
    (lambda (s)
@@ -212,12 +197,6 @@
   (with-package (:dat/parquet)
     (define-parquet-class parquet-struct-object () ())
     (let ((types (define-parquet-types)))
-      (export types)
-      (deftype dat/parquet::parquet-type (&optional (designator octet-vector) optional)
-        (if optional
-            (if (eql designator 'list)
-                list
-                `(or null ,designator))
-            designator)))
+      (export types))
     (export (mapcar 'class-name (define-parquet-structs)))
     (export *parquet-enums*)))

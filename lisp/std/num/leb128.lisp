@@ -17,7 +17,6 @@
   "Encode an integer of arbitrary length into a leb128 unsigned-8 buffer"
   (let ((more t) (curr) (in 0) (int (make-array
                                      4
-                                     :adjustable t
                                      :fill-pointer 0
                                      :element-type '(unsigned-byte 8)))) ;(neg (< i 0))
     (declare (fixnum i in))
@@ -68,14 +67,16 @@ num-bytes-consumed)"
                (return-from decode-leb128 (values (logior result (the fixnum (ash (lognot 0) shift))) counter))
                (return-from decode-leb128 (values result counter)))))))
 
-(declaim (ftype (function (fixnum) (simple-array (unsigned-byte 8))) encode-uleb128))
-(defun encode-uleb128 (int)
-  "Encode an integer INT as a ULEB128 byte array."
+(declaim (ftype (function (fixnum &optional (unsigned-byte 8)) (simple-array (unsigned-byte 8))) encode-uleb128))
+(defun encode-uleb128 (int &optional size)
+  "Encode an integer INT as a ULEB128 byte array with SIZE (in bytes)."
   (declare (fixnum int))
   (let ((more t) (curr) (in 0) (ret (make-array
-                                     (if (zerop int)
-                                         1
-                                         (ceiling  (/ (log (+ int 1) 2) 7)))
+                                     (if size
+                                         size
+                                         (if (zerop int)
+                                             1
+                                             (ceiling  (/ (log (+ int 1) 2) 7))))
                                      :element-type '(unsigned-byte 8)))) ;(neg (< int 0))
     (loop while more do
          (setf curr (logand int #x7f))
@@ -85,14 +86,13 @@ num-bytes-consumed)"
              (setf curr (logior curr #x80)))
          (setf (aref ret in) curr)
          (incf in))
-    (coerce ret 'simple-array)))
+    ret))
 
-(declaim (ftype (function ((array (unsigned-byte 8)) &optional t) fixnum) decode-uleb128))
+(declaim (ftype (function ((vector unsigned-byte) &optional fixnum) fixnum) decode-uleb128))
 (defun decode-uleb128 (bits &optional (start 0))
   "Decode an unsigned integer from ULEB128 byte array."
   (let ((result 0) (shift 0) (curr) (counter 0))
-    (declare (fixnum result shift counter start)
-             ((array (unsigned-byte 8)) bits))
+    (declare (fixnum result shift counter start))
     (loop do 
          (setf curr (aref bits start))
          (setf start (+ 1 start))

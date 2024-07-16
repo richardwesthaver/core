@@ -8,16 +8,17 @@
 (eval-always
   (dat/parquet/gen::load-parquet))
 
-(deftype parquet-compression-codec () `(member ,*parquet-compression-codecs*))
-
-(deftype parquet-boundary-order () `(member ,*parquet-boundary-orders*))
-
-(deftype parquet-encoding () `(member ,*parquet-encodings*))
-
-(deftype parquet-field-repetition () `(member ,*parquet-field-repetition-types*))
-
-(deftype parquet-type-designator () `(member ,*parquet-types*))
-
-(deftype parquet-converted-type-designator () `(member ,*parquet-converted-types*))
-
-(deftype parquet-page-type () `(member ,*parquet-page-types*))
+(macrolet ((def-parquet-type (name)
+             (let ((var-name (symbolicate "*" name "S*"))
+                   (name1 (symbolicate name "*")))
+               `(progn
+                  (deftype ,name () `(member ,,var-name))
+                  (defun ,name (d) (position d ,var-name :test 'eql))
+                  (defun ,name1 (n) (elt ,var-name n))))))
+  (def-parquet-type parquet-compression-codec)
+  (def-parquet-type parquet-boundary-order)
+  (def-parquet-type parquet-encoding)
+  (def-parquet-type parquet-field-repetition-type)
+  (def-parquet-type parquet-type)
+  (def-parquet-type parquet-converted-type)
+  (def-parquet-type parquet-page-type))
