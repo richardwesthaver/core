@@ -91,7 +91,8 @@
    (def-parquet-enum page-types "PageType")
    (def-parquet-enum boundary-orders "BoundaryOrder")))
 
-(defvar *parquet-structs* nil)
+(eval-always
+  (defvar *parquet-structs* nil))
 (defstruct (parquet-struct
             (:constructor make-parquet-struct (name doc exceptionp unionp fields)))
   name doc exceptionp unionp (fields nil :type list))

@@ -133,7 +133,7 @@ Compact protocol stop field:
 (defun tcompact-encode-field-header (field)
   (concatenate 'octet-vector
                (tcompact-encode-field-header-short 0 (tcompact-field-type-id field))
-               (tocmpact-encode-field-id (tcompact-field-id field))))
+               (tcompact-encode-field-id (tcompact-field-id field))))
 
 (defun tcompact-encode-field-value (field))
 

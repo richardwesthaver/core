@@ -310,13 +310,12 @@ which is only sent to WITH-OPEN-FILE when it's not NIL."
 STREAM will be closed afterwards, so wrap it with
 `make-concatenated-stream' if you want it left open."
   (check-type pathname pathname)
-  (with-open-stream (in stream)
-    (with-output-to-file (out pathname
-                              :element-type (stream-element-type in)
-                              :if-exists if-exists
-                              :if-does-not-exist if-does-not-exist)
-      (copy-stream in out)))
-  pathname)
+  (with-output-to-file (out pathname
+                            :element-type (stream-element-type stream)
+                            :if-exists if-exists
+                            :if-does-not-exist if-does-not-exist)
+    (copy-stream stream out))
+pathname)
 
 (defun write-file-into-stream (pathname output &key (if-does-not-exist :error)
                                                     (external-format :default))

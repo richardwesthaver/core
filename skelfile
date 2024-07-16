@@ -29,22 +29,16 @@
                     clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
                     alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
  (tree-sitter-alien-install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#)
- (psl.dat () ;; req:fetch works in slime and sk-shell but not here? hmm..
-          (with-open-file
-              (st ".stash/psl.dat" :direction :output :element-type 'octet)
-            (loop for x across (req:get "https://publicsuffix.org/list/public_suffix_list.dat" :force-binary t)
-                  do (write-byte x st))))
+ (psl.dat ()
+          (net/fetch:download "https://publicsuffix.org/list/public_suffix_list.dat" :output ".stash/psl.dat"))
  (parquet.thrift ()
-          (with-open-file
-              (st ".stash/parquet.thrift" :direction :output :element-type 'octet)
-            (loop for x across (req:get "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift" :force-binary t)
-                  do (write-byte x st)))
+                 (net/fetch:download
+                  "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"
+                  :output ".stash/parquet.thrift")
                  #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json ()
-          (with-open-file
-              (st ".stash/parquet.json" :direction :output :element-type 'octet)
-            (loop for x across (req:get "https://packy.compiler.company/data/parquet.json" :force-binary t)
-                  do (write-byte x st))))
+               (net/fetch:download "https://packy.compiler.company/data/parquet.json"
+                                   :output ".stash/parquet.json"))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
  (rdb (%stash) (with-sbcl (:noinform t :quit t)

@@ -146,12 +146,17 @@
     (with-output-to-string (s)
       (is (write-sxp-stream f s)))))
 
+(defparameter *parquet-test-file*
+  (probe-file
+   (merge-pathnames "../../../.stash/datapage_v1-uncompressed-checksum.parquet"
+                    #.(asdf:system-source-directory :dat/tests))))
 ;; see also: https://github.com/apache/parquet-testing/blob/master/data/README.md
 (deftest parquet-basic ()
-  (with-open-file (st "/home/ellis/comp/core/.stash/datapage_v1-uncompressed-checksum.parquet" :element-type '(unsigned-byte 8))
-    (let ((footer (dat/parquet::parquet-read-footer st)))
-      (is (typep footer
-                 'dat/parquet::parquet-file-meta-data))
-      (print (slot-value footer 'dat/parquet::schema))
-      (print (file-position st))
-      (print (file-length st)))))
+  (when *parquet-test-file*
+    (with-open-file (st *parquet-test-file* :element-type '(unsigned-byte 8))
+      (let ((footer (dat/parquet::parquet-read-footer st)))
+        (is (typep footer
+                   'dat/parquet::parquet-file-meta-data))
+        (print (slot-value footer 'dat/parquet::schema))
+        (print (file-position st))
+        (print (file-length st))))))

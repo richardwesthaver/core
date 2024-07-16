@@ -8,8 +8,12 @@
                     output
                     (file-namestring (obj/uri:uri-path (obj/uri:uri url))))))
     (multiple-value-bind (stream status header uri)
-        (req:get url :want-stream t :keep-alive nil :use-connection-pool t :force-binary t)
-      (when (= status 200) (write-stream-into-file stream (pathname output) :if-exists if-exists))
+        (req:get url :want-stream t :force-binary t)
+      (when (= status 200)
+        (with-open-file (out output :direction :output :element-type '(unsigned-byte 8) :if-exists if-exists)
+          (loop for c = (read-byte stream nil nil)
+                while c
+                do (write-byte c out))))
       (values (or stream uri header)
               status))))
 
@@ -47,7 +51,7 @@
            (when (is-file file-pathname) (delete-file file-pathname))
            (if (and cache (probe-file file-pathname))
                (values file-pathname 200 "OK")
-               (download url-or-path file-pathname)))))
+               (download url-or-path :output file-pathname)))))
     (t (values nil 404 "Not file of url"))))
 
 (defun fetch (url-or-path
