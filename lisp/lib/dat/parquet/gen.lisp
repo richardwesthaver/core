@@ -49,37 +49,55 @@
    (substitute #\- #\_ string)))
 
 (labels ((parse-type-id (type-id)
-           (string-case (type-id :default nil)
-             ("bool" 'boolean)
-             ("byte" 'signed-byte)
-             ("i16" '(signed-byte 16))
-             ("i32" '(signed-byte 32))
-             ("i64" '(signed-byte 64))
-             ("double" 'double-float)
-             ("string" 'string)
-             ("list" 'list)
-             ("binary" 'octet-vector)
-             ("set" 'list)))
+           (when type-id
+             (string-case (type-id :default nil)
+               ("bool" 'boolean)
+               ("byte" 'signed-byte)
+               ("i16" '(signed-byte 16))
+               ("i32" '(signed-byte 32))
+               ("i64" '(signed-byte 64))
+               ("double" 'double-float)
+               ("string" 'string)
+               ("list" 'vector)
+               ("binary" 'octet-vector)
+               ("set" 'vector)
+               ("enum" '(signed-byte 32))
+               ("union" 'union)
+               ("struct" 'struct))))
+         (%intern (name)
+           (if (stringp name)
+               (intern
+                (cond 
+                  ((equal name "UUIDType") "PARQUET-UUID-TYPE")
+                  (t (concatenate 'string
+                                  "PARQUET-"
+                                  (camelcase-name-to-lisp-name name))))
+                :dat/parquet)
+               name))
          (parse-type (o)
-           (let ((name (string-case ((json-getf o "typeId"))
-                         ("union" (json-getf o "class"))
-                         ("struct" (json-getf o "class"))
-                         ("enum" (json-getf o "class")))))
-             (intern
-              (cond 
-                ((equal name "UUIDType") "PARQUET-UUID-TYPE")
-                (t (concatenate 'string
-                         "PARQUET-"
-                         (camelcase-name-to-lisp-name name))))
-              :dat/parquet))))
+           (when o
+             (string-case ((json-getf o "typeId"))
+               ("union" (%intern (json-getf o "class")))
+               ("list"
+                (if-let ((elt (json-getf o "elemType" nil)))
+                  (%intern (parse-type elt))
+                  (parse-type-id (json-getf o "elemTypeId"))))
+               ("set"
+                (if-let ((elt (json-getf o "elemType" nil)))
+                  (%intern (parse-type elt))
+                  (parse-type-id (json-getf o "elemTypeId"))))
+               ("struct" (%intern (json-getf o "class")))
+               ("enum" (%intern (json-getf o "class")))))))
   (defun convert-parquet-struct-field-type (field) ;; technically part of thrift type system
-    (let* ((type-id (parquet-struct-field-type-id field))
-           (type (parquet-struct-field-type field))
-           (required (parquet-struct-field-required field))
-           (unit-type (or (when type-id (parse-type-id type-id)) (when type (parse-type type)))))
-      (if (and (equal "optional" required) (not (equal unit-type 'list))) ;; (listp nil) = t
-          `(or null ,unit-type)
-          unit-type))))
+    (let* ((type-id (parse-type-id (parquet-struct-field-type-id field)))
+           (type (parse-type (parquet-struct-field-type field)))
+           (required (parquet-struct-field-required field)))
+          (let ((ret (cond
+                       ((eql 'vector type-id) `(vector ,type))
+                       (t (or type type-id)))))
+            (if (equal "optional" required)
+                `(or null ,ret)
+                ret)))))
 
 (defun parquet-json-enums ()
   (list
@@ -130,7 +148,6 @@
   (setq *parquet-structs* (parquet-json-structs)))
 
 ;;; CLOS
-(defclass parquet-object () ())
 
 ;; (defmethod print-object ((obj parquet-object) stream)
 ;;   "Output a Parquet object to a stream."
@@ -138,7 +155,7 @@
 
 (defmacro define-parquet-class (name superclasses slots &rest options)
   "Define a new subclass of PARQUET-OBJECT with NAME."
-  `(defclass ,name ,@(if-let ((s superclasses)) (list s) `((parquet-object))) ,slots ,@options))
+  `(defclass ,name ,@(if-let ((s superclasses)) (list s) `((dat/parquet::parquet-object))) ,slots ,@options))
 
 ;;; Codegen
 
@@ -148,16 +165,18 @@
     "Define all known values in *PARQUET-STRUCTS* using DEFINE-PARQUET-CLASS (DEFCLASS)."
     (loop for struct in *parquet-structs*
           unless (null struct)
-          collect (let ((name (parquet-struct-name struct))
-                        (doc (parquet-struct-doc struct))
-                        (fields (parquet-struct-fields struct)))
-                    `(define-parquet-class ,(intern (cond
-                                                      ((equal name "UUIDType") "PARQUET-UUID-TYPE")
-                                                      (t (concatenate 'string
-                                                                      "PARQUET-"
-                                                                      (camelcase-name-to-lisp-name name))))
-                                                    :dat/parquet)
-                         (parquet-struct-object)
+          collect (let* ((name (parquet-struct-name struct))
+                         (doc (parquet-struct-doc struct))
+                         (fields (parquet-struct-fields struct))
+                         (class-name (intern (cond
+                                               ((equal name "UUIDType") "PARQUET-UUID-TYPE")
+                                               (t (concatenate 'string
+                                                               "PARQUET-"
+                                                               (camelcase-name-to-lisp-name name))))
+                                             :dat/parquet)))
+                    `(progn
+                       (define-parquet-class ,class-name
+                         (dat/parquet::parquet-struct-object)
                        (,@(mapcar (lambda (f)
                                     (let ((fdoc (parquet-struct-field-doc f))
                                           (fname (snakecase-name-to-lisp-name
@@ -171,7 +190,8 @@
                                         ,@(when-let ((ty (convert-parquet-struct-field-type f)))
                                             `(:type ,ty)))))
                                   fields))
-                       ,@(when doc `((:documentation ,doc))))))))
+                       ,@(when doc `((:documentation ,doc))))
+                       ',class-name)))))
 
 (defmacro define-parquet-structs ()
   `(list
@@ -196,8 +216,7 @@
 (defun load-parquet (&key (file *parquet-json-file*))
   (init-parquet-json file)
   (with-package (:dat/parquet)
-    (define-parquet-class parquet-struct-object () ())
     (let ((types (define-parquet-types)))
       (export types))
-    (export (mapcar 'class-name (define-parquet-structs)))
+    (export (define-parquet-structs))
     (export *parquet-enums*)))

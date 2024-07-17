@@ -39,6 +39,8 @@
  (parquet.json ()
                (net/fetch:download "https://packy.compiler.company/data/parquet.json"
                                    :output ".stash/parquet.json"))
+ (parquet-test-data () (net/fetch:download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
+                                           :output ".stash/alltypes_plain.parquet"))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
  (rdb (%stash) (with-sbcl (:noinform t :quit t)

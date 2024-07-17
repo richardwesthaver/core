@@ -5,6 +5,10 @@
 ;;; Code:
 (in-package :dat/parquet)
 
+(defclass parquet-object () ())
+
+(defclass parquet-struct-object (parquet-object) ())
+
 (eval-always
   (dat/parquet/gen::load-parquet))
 
@@ -22,3 +26,4 @@
   (def-parquet-type parquet-type)
   (def-parquet-type parquet-converted-type)
   (def-parquet-type parquet-page-type))
+

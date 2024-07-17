@@ -1,5 +1,5 @@
 (defpackage :dat/tests
-  (:use :cl :std :rt :dat))
+  (:use :cl :std :rt :dat :log))
 
 (in-package :dat/tests)
 
@@ -148,7 +148,7 @@
 
 (defparameter *parquet-test-file*
   (probe-file
-   (merge-pathnames "../../../.stash/datapage_v1-uncompressed-checksum.parquet"
+   (merge-pathnames "../../../.stash/alltypes_plain.parquet"
                     #.(asdf:system-source-directory :dat/tests))))
 ;; see also: https://github.com/apache/parquet-testing/blob/master/data/README.md
 (deftest parquet-basic ()
@@ -157,6 +157,6 @@
       (let ((footer (dat/parquet::parquet-read-footer st)))
         (is (typep footer
                    'dat/parquet::parquet-file-meta-data))
-        (print (slot-value footer 'dat/parquet::schema))
-        (print (file-position st))
-        (print (file-length st))))))
+        (trace! (slot-value footer 'dat/parquet::schema))
+        (trace! (file-position st))
+        (trace! (file-length st))))))

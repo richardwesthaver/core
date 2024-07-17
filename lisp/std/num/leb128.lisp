@@ -67,10 +67,10 @@ num-bytes-consumed)"
                (return-from decode-leb128 (values (logior result (the fixnum (ash (lognot 0) shift))) counter))
                (return-from decode-leb128 (values result counter)))))))
 
-(declaim (ftype (function (fixnum &optional (unsigned-byte 8)) (simple-array (unsigned-byte 8))) encode-uleb128))
+(declaim (ftype (function (integer &optional (unsigned-byte 8)) (array (unsigned-byte 8))) encode-uleb128))
 (defun encode-uleb128 (int &optional size)
   "Encode an integer INT as a ULEB128 byte array with SIZE (in bytes)."
-  (declare (fixnum int))
+  (declare (integer int))
   (let ((more t) (curr) (in 0) (ret (make-array
                                      (if size
                                          size
@@ -88,15 +88,15 @@ num-bytes-consumed)"
          (incf in))
     ret))
 
-(declaim (ftype (function ((vector unsigned-byte) &optional fixnum) fixnum) decode-uleb128))
+(declaim (ftype (function ((vector unsigned-byte) &optional t) integer) decode-uleb128))
 (defun decode-uleb128 (bits &optional (start 0))
   "Decode an unsigned integer from ULEB128 byte array."
   (let ((result 0) (shift 0) (curr) (counter 0))
-    (declare (fixnum result shift counter start))
+    (declare (fixnum shift counter))
     (loop do 
          (setf curr (aref bits start))
          (setf start (+ 1 start))
-         (setf result (logior result (the fixnum (ash (logand curr #x7f) shift))))
+         (setf result (logior result (ash (logand curr #x7f) shift)))
          (setf shift (+ 7 shift))
          (incf counter)
          (when (= 0 (logand curr #x80))
@@ -110,10 +110,10 @@ num-bytes-consumed)"
   (when (not (= start 0))
     (loop for i from 0 upto start do (read-byte s)))
   (let ((result 0) (shift 0) (curr) (counter 0))
-    (declare (fixnum result shift counter))
+    (declare (fixnum shift counter))
     (loop do 
          (setf curr (read-byte s))
-         (setf result (logior result (the fixnum (ash (logand curr #x7f) shift))))
+         (setf result (logior result (ash (logand curr #x7f) shift)))
          (setf shift (+ 7 shift))
          (incf counter)
          (when (= 0 (logand curr #x80))

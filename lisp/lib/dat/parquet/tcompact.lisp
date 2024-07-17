@@ -15,8 +15,12 @@
 
 ;;; Protocol
 
-(defgeneric tcompact-field-id (self))
-(defgeneric tcompact-element-id (self))
+(defclass thrift-object (id) ())
+
+(defgeneric thrift-element-type (self)
+  (:method ((self parquet-struct-object)) :struct))
+
+(defgeneric thrift-object-length (self))
 
 ;;; Integers
 
@@ -35,7 +39,7 @@
   (logxor (ash n 1) (ash n -63)))
 
 (defun zagzig (n)
-  (declare (fixnum n))
+  (declare (integer n))
   (logxor (ash n -1) (- (logand n 1))))
 
 (defun tcompact-encode-integer (n &optional (size 8))
@@ -43,8 +47,6 @@
   (if (<= (integer-length n) 8)
       (vector n)
       (encode-uleb128 (zigzag n) size)))
-
-;; (zagzig (zigzag -3)) ;=-3
 
 ;;; Enums
 
@@ -72,6 +74,15 @@ Binary protocol, binary data, 1+ bytes:
 ;; encoded as UTF-8 bytes without null-termination
 (defun tcompact-encode-string (string)
   (sb-ext:string-to-octets string :external-format :utf-8))
+
+;;; Double
+(defun tcompact-encode-double (float)
+  (tcompact-encode-integer (encode-float32 float)))
+
+;;; Boolean
+
+(defun tcompact-encode-boolean (bool)
+  (if bool 1 0))
 
 ;;; UUID
 
@@ -120,7 +131,8 @@ Compact protocol stop field:
 
 (defvar *tcompact-field-types*
   #(:true :false :i8 :i16 :i32 :i64 :double :binary :list :set :map :struct :uuid))
-(defun tcompact-field-type-id (n) (1+ (aref *tcompact-field-types* n)))
+(defun tcompact-field-type-id* (n) (1+ (aref *tcompact-field-types* n)))
+(defun tcompact-field-type-id (k) (1+ (position k *tcompact-field-types*)))
 
 ;; (ldb (byte 4 0) n)
 (defun tcompact-encode-field-header-short (id-delta type-id)
@@ -131,13 +143,17 @@ Compact protocol stop field:
   (tcompact-encode-integer id))
 
 (defun tcompact-encode-field-header (field)
-  (concatenate 'octet-vector
-               (tcompact-encode-field-header-short 0 (tcompact-field-type-id field))
-               (tcompact-encode-field-id (tcompact-field-id field))))
+  (let ((ret (make-array 5 :element-type '(unsigned-byte 8) :fill-pointer 0)))
+    (vector-push (tcompact-encode-field-header-short 0 (tcompact-field-type-id* field))
+                 ret)
+    (loop for x across (tcompact-encode-field-id (id field))
+          do (vector-push x ret)
+          finally (return ret))))
 
 (defun tcompact-encode-field-value (field))
 
 (defun tcompact-encode-struct (struct))
+
   ;; field-id-delta = current-field-id - previous-field-id
 
 ;;; List and Set
@@ -155,13 +171,26 @@ Compact protocol list header (2+ bytes, long form) and elements:
 |#
 
 (deftype tcompact-element-type-id () '(unsigned-byte 4))
+;; tcompact short size = [0,14]
 
 (defvar *tcompact-element-types*
   #(:bool :i8 :i16 :i32 :i64 :double :binary :list :set :map :struct :uuid))
 
-(defun tcompact-element-type-id (n) (+ (aref *tcompact-element-types* n) 2))
+(defun tcompact-element-type-id* (n) (+ (aref *tcompact-element-types* n) 2))
+(defun tcompact-element-type-id (k) (+ (position k *tcompact-element-types*) 2))
 
-(defun tcompact-encode-list ())
+(defun tcompact-encode-list-header-short (size elt-type)
+  (dpb elt-type (byte 4 4)
+       (dpb size (byte 4 0) 0)))
+
+(defun tcompact-encode-list-header (list)
+  (let ((ret (make-array 5 :element-type '(unsigned-byte 8) :fill-pointer 0)))
+    (vector-push (tcompact-encode-list-header-short #xf (id list)) ret)
+    (loop for x across (tcompact-encode-integer (thrift-object-length list) 4)
+          do (vector-push x ret)
+          finally (return ret))))
+
+(defun tcompact-encode-list-element (type value))
 
 ;;; Map
 
