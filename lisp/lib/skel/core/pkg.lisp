@@ -22,6 +22,7 @@
    :sk-call :sk-call*
    :sk-load :sk-save
    :sk-print :sk-read
+   :sk-build
    :sk-compile :sk-transform
    :sk-write :sk-writeln
    :sk-write-string :sk-write-file
