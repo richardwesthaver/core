@@ -18,7 +18,7 @@
 (defclass libpod-client (client)
   ((socket :initarg :socket 
            :initform (make-instance 'local-socket :type :stream) 
-           :type socket
+           :type (or local-socket null)
            :accessor client-socket)
    (addr :initarg :addr
          :initform nil
@@ -26,6 +26,10 @@
    (peer :initarg :peer
          :initform *podman-local-user-socket*
          :accessor client-peer)))
+
+(defmethod make-load-form ((self libpod-client) &optional env)
+  (declare (ignore env))
+  `(make-instance 'libpod-client :socket nil :addr ,(client-addr self) :peer ,(client-peer self)))
 
 ;;; Net Client protocol
 

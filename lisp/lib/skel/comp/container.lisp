@@ -16,7 +16,7 @@
 
 (defmethod print-object ((object sk-containerfile) stream)
   (print-unreadable-object (object stream :type t)
-    (format stream "~A :ID ~A" (file-namestring (containerfile-path object)) (format-sxhash (id object)))))
+    (format stream "~A" (file-namestring (containerfile-path object)))))
 
 (defmethod sk-convert ((self containerfile))
   (let ((self (change-class self 'sk-containerfile)))
@@ -31,3 +31,25 @@
 
 (defmethod sk-write-file ((self sk-containerfile) &key path)
   (serde self (pathname (or path (containerfile-path self)))))
+
+(defmethod sk-read-file ((self sk-containerfile) path)
+  (sk-load-component :containerfile path))
+
+(defmethod sk-path ((self sk-containerfile))
+  (containerfile-path self))
+
+(defmethod sk-build ((self sk-containerfile) &key with-client no-cache tag)
+  (typecase with-client
+    (null (apply 'pod::run-podman (flatten (concatenate 'list
+                                                        `("build" "-f"
+                                                                  ,(sk-path self)
+                                                                  ,@(when no-cache (list "--no-cache")))
+                                                        (when tag (list "-t" tag ))))))
+    ;; iff == t
+    (boolean
+     (with-libpod-client (c)
+       (libpod-request-json c "containers/json")
+       (nyi! "need to implement containerfile libpod request method")))
+    ;; else
+    (t (with-libpod-client (c with-client)
+         (nyi! "todo")))))
