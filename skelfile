@@ -30,17 +30,17 @@
                     alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
  (tree-sitter-alien-install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#)
  (psl.dat ()
-          (net/fetch:download "https://publicsuffix.org/list/public_suffix_list.dat" :output ".stash/psl.dat"))
+          (download "https://publicsuffix.org/list/public_suffix_list.dat" :output ".stash/psl.dat"))
  (parquet.thrift ()
-                 (net/fetch:download
+                 (download
                   "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"
                   :output ".stash/parquet.thrift")
                  #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json ()
-               (net/fetch:download "https://packy.compiler.company/data/parquet.json"
-                                   :output ".stash/parquet.json"))
- (parquet-test-data () (net/fetch:download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
-                                           :output ".stash/alltypes_plain.parquet"))
+               (download "https://packy.compiler.company/data/parquet.json"
+                         :output ".stash/parquet.json"))
+ (parquet-test-data () (download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
+                                 :output ".stash/alltypes_plain.parquet"))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
  (rdb (%stash) (with-sbcl (:noinform t :quit t)
