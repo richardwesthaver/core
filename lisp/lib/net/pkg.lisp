@@ -325,7 +325,9 @@
 
 (defpackage :net/srv
   (:nicknames :srv)
-  (:use :cl :std :obj/uri :net/core :net/proto/http :net/cookie :dat/base64 :sb-gray)
+  (:use :cl :std :obj/uri
+   :net/core :net/proto/http :net/cookie :dat/base64
+   :sb-gray :dat/mime :sb-bsd-sockets)
   (:export
    #:default-web-directory
    #:start-service
@@ -336,12 +338,13 @@
    #:service
    #:define-service
    #:*router*
-   #:*acceptor*
+   #:*service*
    #:*handlers*))
 
 (in-package :std-user)
 
 (defpkg :net
+  (:use :cl :std)
   (:use-reexport 
    :net/core 
    :net/tcp 

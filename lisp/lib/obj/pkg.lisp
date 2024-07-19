@@ -169,6 +169,8 @@
   (:nicknames :time)
   (:use :cl :std)
   (:export
+   :iso-time
+   :rfc-1123-date
    :timestamp
    :date
    :time-of-day

@@ -48,7 +48,8 @@
                (:module "music"
                 :components ((:file "music")))
                (:module "time"
-                :components ((:file "local")))
+                :components ((:file "local")
+                             (:file "util")))
                (:file "uuid")
                (:file "temperature")
                (:file "direction")
