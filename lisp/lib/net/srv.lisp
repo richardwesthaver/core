@@ -125,11 +125,13 @@
 ;;; Router
 (defclass router () ())
 
-;;; Task Pool
-;; Automatic Multithreading support for service objects
-
+;;; Engine
+;; Multithreaded runtime for services
 (define-task-kernel service-task-kernel () ()
   "Default task kernel for service-based tasks.")
+
+(defclass service-engine ()
+  ((task-pool :type task-pool)))
 
 ;; supervisor, worker, task, kernel
 ;;; Service
@@ -139,7 +141,7 @@
    ;; HACK 2024-07-18: will this only accept class names? are structures classes? (http-request, http-response)
    (request-class :type symbol)
    (response-class :type symbol)
-   (task-pool :type task-pool)
+   (engine :type service-engine)
    (read-timeout :type fixnum)
    (write-timeout :type fixnum)
    (connection-max :type fixnum)
