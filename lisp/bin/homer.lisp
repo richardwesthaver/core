@@ -14,6 +14,12 @@
 (defvar *home-config*)
 (defvar *home-hidden-paths* (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))
 (defvar *homer-force* nil)
+
+(defun init-homer-vars ()
+  (setq *user* (sb-posix:getenv "USER")
+        *user-homedir* (user-homedir-pathname)
+        *default-user-homerc* (merge-pathnames ".homerc" *user-homedir*)))
+  
 (defclass home-config (sxp id)
   ((user :initform *user* :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
@@ -195,6 +201,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
 (defun run ()
   (let ((*log-level* :info))
     (with-cli (opts cmds args) $cli
+      (init-homer-vars)
       (load-homerc)
       (do-cmd $cli)
       (debug-opts $cli))))
