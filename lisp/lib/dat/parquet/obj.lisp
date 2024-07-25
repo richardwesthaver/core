@@ -26,4 +26,3 @@
   (def-parquet-type parquet-type)
   (def-parquet-type parquet-converted-type)
   (def-parquet-type parquet-page-type))
-
