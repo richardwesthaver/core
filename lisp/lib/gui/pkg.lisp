@@ -20,11 +20,6 @@
    :with-gui-handlers
    :gui-main
    :def-gui))
-
-(defpackage :gui/slint
-  (:use :cl :std :log :gui/core :gui/ext :parse) ;; yacc or lex
-  (:export :compile-slint :compile-to-slint-file :compile-to-slint-string
-   :*slint-grammar* :with-slint))
   
 (uiop:define-package :gui
   (:use-reexport :gui/core :gui/wm :gui/ext))

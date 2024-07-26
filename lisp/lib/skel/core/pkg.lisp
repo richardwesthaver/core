@@ -52,7 +52,7 @@
    :*skel-env* :*skel-project*
    :*skel-registry* :*skel-cache* :*skel-store* :*skel-stash*
    :*skel-registry* :*default-skelfile* :*default-skel-user* :*default-skel-vc-kind*
-   :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*))
+   :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary* :*skel-path*))
 
 (defpackage :skel/core/obj
   (:use :cl :std :obj

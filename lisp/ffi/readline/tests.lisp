@@ -11,7 +11,6 @@
 
 (load-readline)
 
-(deftest readline ()
+(deftest sanity ()
   (is readline::*history-base*)
   (is readline::*history-length*))
-

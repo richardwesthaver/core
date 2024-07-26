@@ -16,4 +16,3 @@
 (defmethod sk-load-component ((kind (eql :dir-locals)) (name pathname))
   (declare (ignore kind))
   (sk-new :dir-locals :ast (read-sxp-file (make-pathname :name (namestring name) :type "el"))))
-  

@@ -22,6 +22,8 @@
 
 (defparameter *skel-registry* #P"/usr/local/share/skel/registry/")
 
+(defparameter *skel-path* *default-pathname-defaults*)
+
 (defvar *skel-project* nil)
 
 (defvar *skel-env* (make-hash-table :test 'equal)

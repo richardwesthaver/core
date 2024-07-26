@@ -404,9 +404,10 @@ via the special form stored in RECIPE."))
               (setf (slot-value self s) v))) ;; needs to be correct package
           ;;; SRC
           (if (bound-string-p self 'src)
-              (setf (sk-src self) (probe-file (pathname (sk-src self))))
+              (setf (sk-src self) (probe-file (sk-src self)))
               (setf (sk-src self) (pathname (sk-dir self))))
           (let ((*default-pathname-defaults* (sk-src self)))
+            (setq *skel-path* *default-pathname-defaults*)
             (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
             (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
             ;; INCLUDE
@@ -421,7 +422,8 @@ via the special form stored in RECIPE."))
             ;; COMPONENTS
             (when (slot-boundp self 'components)
               (setf (sk-components self) (map 'vector
-                                              (lambda (c) (sk-load-component (car c) (pathname (cadr c))))
+                                              (lambda (c)
+                                                (sk-load-component (car c) (merge-pathnames (cadr c) *skel-path*)))
                                               (sk-components self))))
             ;; SCRIPTS
             (if (bound-string-p self 'scripts)
