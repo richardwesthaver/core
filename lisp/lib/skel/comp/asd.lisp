@@ -43,9 +43,9 @@
 (defmethod sk-load ((self sk-lisp-system) &key force force-not verbose version)
   (asdf:load-system self :force force :force-not force-not :verbose verbose :version version))
 
-(defmethod sk-load-component ((kind (eql :lisp-system)) (path pathname))
+(defmethod sk-load-component ((kind (eql :lisp-system)) (form pathname) &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
-  (parse-sk-lisp-system (pathname-name path) path))
+  (parse-sk-lisp-system (pathname-name form) (merge-pathnames form path)))
 
 (defmethod sk-compile ((self sk-lisp-system) &key force force-not verbose version &allow-other-keys)
   (asdf:compile-system self :force force :force-not force-not :verbose verbose :version version))

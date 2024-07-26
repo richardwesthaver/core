@@ -25,9 +25,9 @@
 (defun parse-sk-rust-system (path)
   path)
 
-(defmethod sk-load-component ((kind (eql :rust-system)) (path pathname))
+(defmethod sk-load-component ((kind (eql :rust-system)) (form pathname) &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
-  (parse-sk-rust-system path))
+  (parse-sk-rust-system (merge-pathnames form path)))
 
 (defmethod sk-compile ((self sk-rust-system) &key &allow-other-keys))
 

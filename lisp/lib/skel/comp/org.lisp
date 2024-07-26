@@ -15,13 +15,13 @@
     (update-id self)
     self))
 
-(defmethod sk-load-component ((kind (eql :org)) (name pathname))
+(defmethod sk-load-component ((kind (eql :org)) (form pathname) &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
-  (let* ((name (namestring name))
-         (path (make-pathname :name name :type "org"))
-         (comp (sk-convert (org-parse :document path))))
+  (let* ((name (namestring form))
+         (p (make-pathname :name name :type "org" :directory path))
+         (comp (sk-convert (org-parse :document p))))
     (setf (sk-name comp) name)
-    (setf (sk-path comp) path)
+    (setf (sk-path comp) p)
     comp))
 
 ;; (describe (sk-load-component :org #p"readme"))

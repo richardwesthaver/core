@@ -19,9 +19,11 @@
   (:documentation "Print object SELF."))
 (defgeneric sk-load (self &key &allow-other-keys)
   (:documentation "Load or reload object SELF."))
-(defgeneric sk-load-component (kind form)
+(defgeneric sk-load-component (kind form &optional path)
   (:documentation "Load a component of type KIND from provided FORM, producing an SK-COMPONENT
-type. Usually calls SK-TRANSFORM or SK-CONVERT internally."))
+type. Usually calls SK-TRANSFORM or SK-CONVERT internally.
+
+PATH is an optional directory pathname which will be merged with a filename found in FORM. Defaults to *DEFAULT-PATHNAME-DEFAULTS*."))
 (defgeneric sk-compile (self &key &allow-other-keys)
   (:documentation "Compile object SELF."))
 (defgeneric sk-build (self &key &allow-other-keys)

@@ -13,6 +13,7 @@
 (defmethod sk-new ((self (eql :dir-locals)) &rest args)
   (apply #'make-instance 'sk-dir-locals args))
 
-(defmethod sk-load-component ((kind (eql :dir-locals)) (name pathname))
+(defmethod sk-load-component ((kind (eql :dir-locals)) (form pathname) &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
-  (sk-new :dir-locals :ast (read-sxp-file (make-pathname :name (namestring name) :type "el"))))
+  (sk-new :dir-locals :ast (read-sxp-file (make-pathname :name (namestring form) :type "el"
+                                                         :directory path))))

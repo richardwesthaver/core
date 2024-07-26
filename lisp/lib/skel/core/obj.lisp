@@ -146,7 +146,10 @@
 
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
-(defun sk-dir (o) (directory-namestring (sk-path o)))
+(defun sk-dir (o)
+  (let ((str (directory-namestring (sk-path o))))
+    (unless (sb-sequence:emptyp str)
+      str)))
 
 (defmethod load-ast ((self sk-config))
   ;; internal ast is never tagged
@@ -405,70 +408,69 @@ via the special form stored in RECIPE."))
           ;;; SRC
           (if (bound-string-p self 'src)
               (setf (sk-src self) (probe-file (sk-src self)))
-              (setf (sk-src self) (pathname (sk-dir self))))
-          (let ((*default-pathname-defaults* (sk-src self)))
-            (setq *skel-path* *default-pathname-defaults*)
-            (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
-            (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
-            ;; INCLUDE
-            (when-let ((include (sk-include self)))
-              (setf (sk-include self) (map 'vector
-                                           ;; recursively load included projects
-                                           (lambda (i) (load-ast
-                                                        (sk-read-file
-                                                         (make-instance 'sk-project)
-                                                         i)))
-                                           include)))
-            ;; COMPONENTS
-            (when (slot-boundp self 'components)
-              (setf (sk-components self) (map 'vector
-                                              (lambda (c)
-                                                (sk-load-component (car c) (merge-pathnames (cadr c) *skel-path*)))
-                                              (sk-components self))))
-            ;; SCRIPTS
-            (if (bound-string-p self 'scripts)
-                (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
-                         (setf (sk-scripts self)
-                               (if (directory-path-p path)
-                                   (find-files path)
-                                   (list path)))
-                         (warn! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
-            (when-let ((scripts (sk-scripts self)))
-              (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
-            ;; ENV
-            ;; TODO
-            (when-let ((env (sk-env self)))
-              (setf (sk-env self) (mapcar
-                                   (lambda (e)
-                                     (etypecase e
-                                       (symbol (cons
-                                                (sb-int:keywordicate e)
-                                                (sb-posix:getenv (format nil "~a" (symbol-name e)))))
-                                       (string (cons
-                                                (sb-int:keywordicate e)
-                                                (sb-posix:getenv (string-upcase e))))
-                                       (list
-                                        (cons (sb-int:keywordicate (car e)) (cadr e)))))
-                                   env)))
-            ;; RULES
-            (when-let ((rules (sk-rules self)))
-              (setf (sk-rules self) (map 'vector
-                                         (lambda (x)
-                                           (destructuring-bind (target source &rest recipe) x
-                                             (make-sk-rule target source recipe)))
-                                         rules)))
-            ;; VC
-            (when-let ((vc (sk-vc self)))
-              (etypecase vc
-                ((or sk-vc-meta null) nil)
-                (vc-designator (setf (sk-vc self) (make-sk-vc-meta vc)))
-                (list (setf (sk-vc self) (apply #'make-sk-vc-meta vc)))))
-            
-            (unless *keep-ast* (setf (ast self) nil))
-            (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
-            self))
-          ;; invalid ast, signal error
-          (invalid-skel-ast ast))))
+              (setf (sk-src self) (or (sk-dir self) *default-pathname-defaults*)))
+          (setq *skel-path* (sk-src self))
+          (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
+          (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
+          ;; INCLUDE
+          (when-let ((include (sk-include self)))
+            (setf (sk-include self) (map 'vector
+                                         ;; recursively load included projects
+                                         (lambda (i) (load-ast
+                                                      (sk-read-file
+                                                       (make-instance 'sk-project)
+                                                       i)))
+                                         include)))
+          ;; COMPONENTS
+          (when (slot-boundp self 'components)
+            (setf (sk-components self) (map 'vector
+                                            (lambda (c)
+                                              (sk-load-component (car c) (pathname (cadr c)) (namestring *skel-path*)))
+                                            (sk-components self))))
+          ;; SCRIPTS
+          (if (bound-string-p self 'scripts)
+              (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
+                       (setf (sk-scripts self)
+                             (if (directory-path-p path)
+                                 (find-files path)
+                                 (list path)))
+                       (warn! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
+          (when-let ((scripts (sk-scripts self)))
+            (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
+          ;; ENV
+          ;; TODO
+          (when-let ((env (sk-env self)))
+            (setf (sk-env self) (mapcar
+                                 (lambda (e)
+                                   (etypecase e
+                                     (symbol (cons
+                                              (sb-int:keywordicate e)
+                                              (sb-posix:getenv (format nil "~a" (symbol-name e)))))
+                                     (string (cons
+                                              (sb-int:keywordicate e)
+                                              (sb-posix:getenv (string-upcase e))))
+                                     (list
+                                      (cons (sb-int:keywordicate (car e)) (cadr e)))))
+                                 env)))
+          ;; RULES
+          (when-let ((rules (sk-rules self)))
+            (setf (sk-rules self) (map 'vector
+                                       (lambda (x)
+                                         (destructuring-bind (target source &rest recipe) x
+                                           (make-sk-rule target source recipe)))
+                                       rules)))
+          ;; VC
+          (when-let ((vc (sk-vc self)))
+            (etypecase vc
+              ((or sk-vc-meta null) nil)
+              (vc-designator (setf (sk-vc self) (make-sk-vc-meta vc)))
+              (list (setf (sk-vc self) (apply #'make-sk-vc-meta vc)))))
+          
+          (unless *keep-ast* (setf (ast self) nil))
+          (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
+          self)
+        ;; invalid ast, signal error
+        (invalid-skel-ast ast))))
 
 ;; obj -> ast
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))

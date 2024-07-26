@@ -23,10 +23,13 @@
     (update-id self)
     self))
 
-(defmethod sk-load-component ((kind (eql :containerfile)) (name pathname))
+(defmethod sk-load-component ((kind (eql :containerfile))
+                              (name pathname)
+                              &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
   (sk-convert (deserialize
-               (make-pathname :name *default-containerfile* :type (namestring name))
+               (make-pathname :name *default-containerfile* :type (namestring name)
+                              :directory path)
                :containerfile)))
 
 (defmethod sk-write-file ((self sk-containerfile) &key path)
