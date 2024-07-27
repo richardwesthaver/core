@@ -2,18 +2,18 @@
 
 ;;; Code:
 (uiop:define-package :bin/rdb
-    (:use :cl :rdb :std :cli/clap :log)
+    (:use :cl :rdb :std :cli/clap :log :clap)
   (:export :main))
 
 (in-package :bin/rdb)
 (rocksdb:load-rocksdb t)
-(defopt rdb-help (print-help $cli))
-(defopt rdb-version (print-version $cli))
-(defopt rdb-log-level (when $val (setq *log-level* :debug)))
+(defopt rdb-help (print-help *cli*))
+(defopt rdb-version (print-version *cli*))
+(defopt rdb-log-level (when *arg* (setq *log-level* :debug)))
 (defvar *rdb*)
-(defopt rdb-target-db (setq *rdb* (create-db (or $val "rdb") :open nil)))
+(defopt rdb-target-db (setq *rdb* (create-db (or *arg* "rdb") :open nil)))
 
-;; (defopt rdb-config (init-rdb-user-config (parse-file-opt $val)))
+;; (defopt rdb-config (init-rdb-user-config (parse-file-opt *arg*)))
 
 (defcmd rdb-new
   (set-opt *rdb* :error-if-exists t)
@@ -21,8 +21,8 @@
   (println (rdb-name *rdb*)))
 
 (defcmd rdb-show
-  (let ((db-path (cli-opt-val (car (find-opts $cli "db")))))
-    (if (and (null db-path) (zerop $argc))
+  (let ((db-path (cli-opt-val (car (find-opts *cli* "db")))))
+    (if (and (null db-path) (zerop *argc*))
         (mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
               (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
         (with-db (db (create-db db-path :open t))
@@ -38,18 +38,18 @@
                   finally (rocksdb::rocksdb-iter-destroy %it)))))))
 
 (defcmd rdb-set
-  (if (> 2 $argc)
+  (if (> 2 *argc*)
       (rdb-error "missing args: KEY VAL")
       (with-db (db *rdb*)
         (open-db db)
-        (insert-key  db (pop $args) (pop $args)))))
+        (insert-key  db (pop *args*) (pop *args*)))))
 
 (defcmd rdb-get
-  (if (> 1 $argc)
+  (if (> 1 *argc*)
       (rdb-error "missing arg: KEY")
       (with-db (db *rdb*)
         (open-db db)
-        (when-let ((val (get-key db (car $args))))
+        (when-let ((val (get-key db (car *args*))))
           (println val)))))
 
 (defcmd rdb-destroy
@@ -59,7 +59,7 @@
   (with-db (db *rdb*)
     (open-db db)
     (let ((val (make-array 32 :element-type 'octet)))
-      (dotimes (i (if (zerop $argc) 1000 (parse-integer (car $args))))
+      (dotimes (i (if (zerop *argc*) 1000 (parse-integer (car *args*))))
         (nreversef val)
         (let ((seed (random 32)))
           (dotimes (ii seed)
@@ -69,7 +69,7 @@
                    (sb-ext:string-to-octets (string (gensym "foo")))
                    val)))))
 
-(define-cli $cli
+(define-cli *cli*
   :name "rdb"
   :version "0.1.0"
   :thunk rdb-show
@@ -92,8 +92,8 @@
     (with-slots (opts cmds args) *cli*
       ;; FIXME 2024-05-07: needs to be triggered explicitly - need to support
       ;; running global opt thunks even when no arg present - macro key
-      (if (active-cmds $cli)
-          (prog2 (do-opt (car (find-opts $cli "db")))
-              (do-cmd $cli)
+      (if (active-cmds *cli*)
+          (prog2 (do-opt (car (find-opts *cli* "db")))
+              (do-cmd *cli*)
             (close-db *rdb*))
-          (print-help $cli)))))
+          (print-help *cli*)))))

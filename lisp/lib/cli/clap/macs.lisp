@@ -31,17 +31,17 @@ evaluation of BODY."
 
 ;; TODO fix these macros
 (defmacro defcmd (name &body body)
-  `(defun ,name (*args* *opts*) 
-     (declare (ignorable *args* *opts*))
-     (let ((*argc* (length *args*))
-           (*optc* (length *opts*)))
-       (declare (ignorable *argc* *optc*))
-       ,@body)))
+  `(defun ,name (args opts) 
+     (declare (ignorable args opts))
+     (setq *argc* (length args)
+           *optc* (length opts))
+     ,@body))
 
 (defmacro defopt (name &body body)
-  `(defun ,name (&optional *arg*)
-     (declare (ignorable *arg*))
-     ,@body))
+  `(defun ,name (&optional arg)
+     (declare (ignorable arg))
+     (setq *arg* arg)
+       ,@body))
 
 (declaim (inline walk-cli-slots))
 (defun walk-cli-slots (cli)

@@ -76,10 +76,10 @@
               (error "missing HOMER directory")))))))
 
 ;;; CLI
-(defopt homer-help (print-help $cli))
-(defopt homer-version (print-version $cli))
-(defopt homer-log-level (when $val (setq *log-level* :debug)))
-(defopt homer-force (when $val (setq *homer-force* t)))
+(defopt homer-help (print-help *cli*))
+(defopt homer-version (print-version *cli*))
+(defopt homer-log-level (when *arg* (setq *log-level* :debug)))
+(defopt homer-force (when *arg* (setq *homer-force* t)))
 
 (defcmd homer-show
   (describe *home-config*))
@@ -181,7 +181,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(define-cli $cli
+(define-cli *cli*
   :name "homer"
   :version "0.1.0"
   :description "user home manager"
@@ -200,11 +200,11 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
 
 (defun run ()
   (let ((*log-level* :info))
-    (with-cli (opts cmds args) $cli
+    (with-cli (opts cmds args) *cli*
       (init-homer-vars)
       (load-homerc)
-      (do-cmd $cli)
-      (debug-opts $cli))))
+      (do-cmd *cli*)
+      (debug-opts *cli*))))
 
 (defmain ()
   (let ((*print-readably* t))

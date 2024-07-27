@@ -14,25 +14,25 @@
 (in-package :bin/skel)
 (in-readtable :shell)
 
-(defopt skc-help (print-help $cli) $val)
-(defopt skc-version (print-version $cli))
+(defopt skc-help (print-help *cli*) *arg*)
+(defopt skc-version (print-version *cli*))
 (defopt skc-level *log-level*
-  (setq *log-level* (if $val (if (stringp $val)
-                                 (sb-int:keywordicate (string-upcase $val))
-                                 $val)
+  (setq *log-level* (if *arg* (if (stringp *arg*)
+                                 (sb-int:keywordicate (string-upcase *arg*))
+                                 *arg*)
                         :info)))
 
 ;; TODO 2023-10-13: almost there
 ;; (defopt skc-config
-;;   (init-user-skelrc (when $val (parse-file-opt $val))))
+;;   (init-user-skelrc (when *arg* (parse-file-opt *arg*))))
 
 (defcmd skc-edit
-  (let ((file (or (when $args (pop $args)) (sk-path *skel-project*))))
+  (let ((file (or (when *args* (pop *args*)) (sk-path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
 
 (defcmd skc-init
-  (let ((file (when $args (pop $args)))
-	(name (when (> $argc 1) (pop $args)))) ;; TODO: test, may need to be
+  (let ((file (when *args* (pop *args*)))
+	(name (when (> *argc* 1) (pop *args*)))) ;; TODO: test, may need to be
     ;; sequential for side-effect
     ;; of pop
     (handler-bind
@@ -47,8 +47,8 @@
 
 (defcmd skc-describe
   (describe
-   (if (> $argc 0)
-       (find-skelfile (pathname (car $args)) :load t)
+   (if (> *argc* 0)
+       (find-skelfile (pathname (car *args*)) :load t)
        (or *skel-project* *skel-user-config* *skel-system-config*))))
 
 
@@ -57,14 +57,14 @@
   (setq *no-exit* t)
   (inspect
    (find-skelfile
-    (if $args (pathname (car $args))
+    (if *args* (pathname (car *args*))
 	#P".")
     :load t)))
 
 #+tools
 (defcmd skc-view
-  (if $args 
-      (let ((stuff (loop for a in $args
+  (if *args* 
+      (let ((stuff (loop for a in *args*
                          collect (sk-slot-case a))))
         (sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
       (sk-view (if (boundp '*skel-project*) *skel-project*
@@ -132,8 +132,8 @@
     (":cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show
-  (if $args 
-      (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) $args)
+  (if *args* 
+      (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
       (describe (if (boundp '*skel-project*) *skel-project*
                     (if (boundp '*skel-user-config*) *skel-user-config*
                         (if (boundp '*skel-system-config*) *skel-system-config*
@@ -141,14 +141,14 @@
 
 (defcmd skc-push
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "push" $args t))
-    (:hg (run-hg-command "push" $args t))
+    (:git (run-git-command "push" *args* t))
+    (:hg (run-hg-command "push" *args* t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-pull
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "pull" $args t))
-    (:hg (run-hg-command "pull" (append '("-u") $args) t))
+    (:git (run-git-command "pull" *args* t))
+    (:hg (run-hg-command "pull" (append '("-u") *args*) t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defun hg-status ()
@@ -171,44 +171,44 @@
 
 (defcmd skc-clone
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "clone" $args t))
-    (:hg (run-hg-command "clone" $args t))
+    (:git (run-git-command "clone" *args* t))
+    (:hg (run-hg-command "clone" *args* t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-commit
-  ;; (debug! $optc $argc)
+  ;; (debug! *optc* *argc*)
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "commit" $args t))
-    (:hg (run-hg-command "commit" $args t))
+    (:git (run-git-command "commit" *args* t))
+    (:hg (run-hg-command "commit" *args* t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
     (sb-ext:enable-debugger)
-    (print $args)
+    (print *args*)
     ;; (setq *no-exit* t)
-    (if $args
-        (loop for a in $args
+    (if *args*
+        (loop for a in *args*
               do (debug!
                   (when-let ((rule (sk-find-rule a sk)))
                     (sk-make sk rule))))
         (debug! (sk-make sk (aref (sk-rules sk) 0))))))
 
 (defcmd skc-run
-  (if $args
+  (if *args*
       (mapc (lambda (script)
               (debug!
                (sk-run
                 (sk-find-script
                  (pathname-name script)
-                 (find-skelfile #P"." :load t))))) $args)
+                 (find-skelfile #P"." :load t))))) *args*)
       (required-argument 'name)))
 
 (defcmd skc-vc
-  (if $args
-      (std/string:string-case ((car $args) :default (skel-simple-error "invalid command"))
+  (if *args*
+      (std/string:string-case ((car *args*) :default (skel-simple-error "invalid command"))
         ("status" (skc-status nil nil)))
-      (skc-status nil $opts)))
+      (skc-status nil *opts*)))
 
 (defcmd skc-shell
   (sb-ext:enable-debugger)
@@ -225,9 +225,9 @@
       (sb-impl::toplevel-repl nil))))
 
 (defcmd skc-new
-  (trace! $args $opts))
+  (trace! *args* *opts*))
   
-(define-cli $cli
+(define-cli *cli*
   :name "skel"
   :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "A hacker's project compiler."
@@ -346,9 +346,9 @@
   (in-package :sk-user)
   (let ((*log-level* :info))
     (in-readtable :shell)
-    (with-cli (opts cmds) $cli
+    (with-cli (opts cmds) *cli*
       (init-skel-vars)
       (when-let ((project (find-skelfile #P".")))
         (setq *skel-project* (load-skelfile project)))
-      (do-cmd $cli)
-      (debug-opts $cli))))
+      (do-cmd *cli*)
+      (debug-opts *cli*))))

@@ -4,36 +4,36 @@
 
 ;;; Code:
 (defpackage :bin/organ
-  (:use :cl :organ :std :cli :log)
+  (:use :cl :organ :std :cli :log :clap)
   (:export :main))
 
 (in-package :bin/organ)
-(defopt organ-help (print-help $cli))
-(defopt organ-version (print-version $cli))
-(defopt organ-log-level (setq *log-level* (if $val t :info)))
-;; (defopt organ-output (when $val (trace! (or $val "output.organ"))))
+(defopt organ-help (print-help *cli*))
+(defopt organ-version (print-version *cli*))
+(defopt organ-log-level (setq *log-level* (if *arg* t :info)))
+;; (defopt organ-output (when *arg* (trace! (or *arg* "output.organ"))))
 (defcmd organ-describe
-  (if $args
+  (if *args*
       ;; TODO typed args
-      (describe (org-parse :document (pathname (car $args))))
+      (describe (org-parse :document (pathname (car *args*))))
       (describe (org-parse :document #P"readme.org"))))
 
 (defcmd organ-inspect
-  (if $args
+  (if *args*
       ;; TODO typed args
-      (inspect (org-parse :document (pathname (car $args))))
+      (inspect (org-parse :document (pathname (car *args*))))
       (inspect (org-parse :document #P"readme.org"))))
 
 (defcmd organ-show
-  (if $args
-      (print (org-parse-lines t (uiop:read-file-string (car $args))))
+  (if *args*
+      (print (org-parse-lines t (uiop:read-file-string (car *args*))))
       (error! "missing file arg")))
 
 (defcmd organ-parse
-  (let ((input (if $args (car $args) #P"readme.org")))
+  (let ((input (if *args* (car *args*) #P"readme.org")))
     (describe (org-parse :document input))))
 
-(define-cli $cli
+(define-cli *cli*
   :name "organ"
   :version "0.0.1"
   :description "org-mode toolbox"
@@ -59,9 +59,9 @@
 
 (defun run ()
   (let ((*log-level* :info))
-    (with-cli (opts cmds args) $cli
-      (do-cmd $cli)
-      (debug-opts $cli))))
+    (with-cli (opts cmds args) *cli*
+      (do-cmd *cli*)
+      (debug-opts *cli*))))
 
 (defmain ()
   (run)

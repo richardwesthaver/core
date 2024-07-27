@@ -7,7 +7,7 @@
   (:use :cl)
   (:export :*cli-group-separator* :*no-exit* :*default-cli-def*
    :*default-cli-class* :*cli-opt-kinds* :*cli* :*opts*
-   :*args* :*argc* :*arg*))
+   :*args* :*argc* :*arg* :*optc*))
 
 (defpackage :cli/clap/util
   (:use :cl :std :log :sb-ext :cli/clap/vars)
@@ -16,11 +16,9 @@
    :default-thunk))
 
 (defpackage :cli/clap/macs
-  (:use :cl :std :log :sb-ext :cli/clap/util)
-  (:import-from :cli/clap/vars :*no-exit*)
+  (:use :cl :std :log :sb-ext :cli/clap/util :cli/clap/vars)
   (:export :defopt :defcmd :walk-cli-slots
-   :$val :$args :$argc :$opts
-   :$optc :make-opt-parser :with-cli-handlers :make-shorty))
+   :make-opt-parser :with-cli-handlers :make-shorty))
 
 (defpackage :cli/clap/proto
   (:use :cl :std :log :sb-ext)
