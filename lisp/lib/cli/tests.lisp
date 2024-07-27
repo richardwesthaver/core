@@ -239,7 +239,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 	   (print-help cli s))))
     (is (string= "foobar" (cli/clap::parse-string-opt "foobar")))))
 
-(make-opt-parser thing $val)
+(make-opt-parser thing *arg*)
 
 (deftest clap-opts ()
   "CLAP opt tests."
@@ -672,12 +672,10 @@ Eastern Mediterranean ████████████████▊
 (deftest clap-ast ())
 
 (deftest main-output ()
-  (let ((*test-target* nil))
-    (compile (defmain (:return *test-target* :exit nil :export nil)
-               (let ((*test-target* t))
-                 *test-target*)))
-    (is (funcall #'main))
-    (is (null *test-target*))))
+  (compile (defmain (:exit nil :export nil)
+             (let ((test-target t))
+               test-target)))
+  (is (not (funcall #'main))))
 
 (deftest sbcl-tools ()
   (with-sbcl (:noinform t :quit t)

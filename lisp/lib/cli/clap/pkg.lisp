@@ -5,7 +5,9 @@
 ;;; Code:
 (defpackage :cli/clap/vars
   (:use :cl)
-  (:export :*cli-group-separator* :*no-exit* :*default-cli-def* :*default-cli-class* :*cli-opt-kinds*))
+  (:export :*cli-group-separator* :*no-exit* :*default-cli-def*
+   :*default-cli-class* :*cli-opt-kinds* :*cli* :*opts*
+   :*args* :*argc* :*arg*))
 
 (defpackage :cli/clap/util
   (:use :cl :std :log :sb-ext :cli/clap/vars)
@@ -29,14 +31,15 @@
    :push-cmd :push-opt :cli-equal))
 
 (defpackage :cli/clap/ast
-  (:use :cl :std :log)
-  (:export :cli-node :cli-ast :make-cli-node
+  (:use :cl :std :log :dat/sxp)
+  (:export :cli-node :make-cli-node :cli-ast
    :make-cli-ast :cli-node-kind :cli-node-form))
 
 (defpackage :cli/clap/obj
   (:use :cl :std :log
    :sb-ext :cli/clap/proto :cli/clap/macs :cli/clap/util
    :cli/clap/vars :cli/clap/ast :cli/clap/util)
+  (:import-from :dat/sxp :ast)
   (:export :make-cli :define-cli :defmain
    :make-opts :make-cmds :parse-bool-opt :parse-string-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op

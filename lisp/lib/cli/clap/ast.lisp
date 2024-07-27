@@ -17,9 +17,8 @@
 
 (defstruct (cli-ast (:constructor make-cli-ast (ast))) ast)
 
-(defgeneric cli-ast (self)
-  (:method ((self cli-ast))
-    (cli-ast-ast self)))
+(defmethod ast ((self cli-ast))
+  (cli-ast-ast self))
 
 (defgeneric proc-args (self args))
 

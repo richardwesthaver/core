@@ -31,16 +31,16 @@ evaluation of BODY."
 
 ;; TODO fix these macros
 (defmacro defcmd (name &body body)
-  `(defun ,name ($args $opts) 
-     (declare (ignorable $args $opts))
-     (let (($argc (length $args))
-           ($optc (length $opts)))
-       (declare (ignorable $argc $optc))
+  `(defun ,name (*args* *opts*) 
+     (declare (ignorable *args* *opts*))
+     (let ((*argc* (length *args*))
+           (*optc* (length *opts*)))
+       (declare (ignorable *argc* *optc*))
        ,@body)))
 
 (defmacro defopt (name &body body)
-  `(defun ,name (&optional $val)
-     (declare (ignorable $val))
+  `(defun ,name (&optional *arg*)
+     (declare (ignorable *arg*))
      ,@body))
 
 (declaim (inline walk-cli-slots))
@@ -67,7 +67,8 @@ is a list of handlers for the opt-val."
            (fn-name (symbolicate 'parse- kind '-opt)))
       ;; thread em
     (let ((fn1 (unless (null super) (symbolicate "PARSE-" super "-OPT"))))
-      `(defun ,fn-name ($val)
-         "Parse the cli-opt-val $VAL."
-         ,@(when fn1 `((setq $val (funcall #',fn1 $val))))
+      `(defun ,fn-name (&optional arg)
+         "Parse the cli-opt-val *ARG*."
+         (declare (ignorable arg))
+         ,@(when fn1 `((setf *arg* (funcall #',fn1 arg))))
          ,@body)))))

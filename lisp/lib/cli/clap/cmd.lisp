@@ -2,6 +2,10 @@
 
 ;; Command Objects used to build CLI Applications.
 
+;;; Commentary:
+
+;; 
+
 ;;; Code:
 (in-package :cli/clap/obj)
 
@@ -174,7 +178,7 @@ should be."
     ;; locked for the full runtime duration.
     (setf (cli-lock-p self) t)
     (loop named install
-          for (node . tail) on (debug! (cli-ast ast))
+          for (node . tail) on (debug! (ast ast))
           until (null node)
           do 
              (let ((kind (cli-node-kind node)) (form (cli-node-form node)))

@@ -89,7 +89,7 @@
 
 (defmain ()
   (let ((*log-level* :info))
-    (with-cli (opts cmds args) $cli
+    (with-slots (opts cmds args) *cli*
       ;; FIXME 2024-05-07: needs to be triggered explicitly - need to support
       ;; running global opt thunks even when no arg present - macro key
       (if (active-cmds $cli)

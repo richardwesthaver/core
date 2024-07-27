@@ -24,17 +24,16 @@
               %class (cdr name)))
     `(,*default-cli-def* ,%name (apply #'make-cli ,%class (walk-cli-slots ',body)))))
 
-(defmacro defmain ((&key return (exit t) (export t)) &body body)
+(defmacro defmain ((&key (exit t) (export t)) &body body)
   "Define a CLI main function in the current package."
-  (with-gensyms (retval)
-    (let ((main (symbolicate "MAIN")))
-      (when return (setf retval return))
-      `(let ((*no-exit* ,(not exit)))
-         (defun ,main ()
-           "Run the top-level function and print to *STDOUT*."
-           (with-cli-handlers
-               (progn ,@body ,@(unless (not (boundp 'retval)) (list retval)))))
-         ,@(when export `((export ',main)))))))
+  (let ((main (symbolicate "MAIN")))
+    `(let ((*no-exit* ,(not exit)))
+       (defun ,main ()
+         "Run the top-level function and print to *STDOUT*."
+         (with-cli-handlers
+           (progn
+             ,@body (values))))
+       ,@(when export `((export ',main))))))
 
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
@@ -106,8 +105,14 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
     (log:debug! (cli-cd cli) o a c)))
 
 (defmacro with-cli (slots cli &body body)
-  "Like with-slots with some extra bindings."
+  "Like with-slots with some extra bindings.
+
+SLOTS is a list passed to WITH-SLOTS.
+
+CLI is updated based on the current environment and dynamically bound to
+*CLI*."
   `(progn
+     (setq *cli* ,cli)
      (setf (cli-cd ,cli) (sb-posix:getcwd))
      (with-slots ,slots (parse-args ,cli (args) :compile t)
        ,@body)))
