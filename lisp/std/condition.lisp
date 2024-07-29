@@ -1,7 +1,7 @@
-;;; err.lisp --- Conditions and other exception handlers
+;;; condition.lisp --- Conditions and other exception handlers
 
 ;;; Code:
-(in-package :std/err)
+(in-package :std/condition)
 
 (defvar *std-error-message* "An error occured")
 

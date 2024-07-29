@@ -8,7 +8,7 @@
 ;; vendored
 (require 'htmlize)
 (defvar project-dir "~/comp/org")
-(defvar publish-dir "/mnt/y/stash/compiler.company")
+(defvar publish-dir "/tmp/www")
 (defvar html-theme nil)
 (defvar url "https://compiler.company")
 (defvar vc-url "https://vc.compiler.company")

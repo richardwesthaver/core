@@ -32,7 +32,8 @@
 
 (defcmd skc-init
   (let ((file (when *args* (pop *args*)))
-	(name (when (> *argc* 1) (pop *args*)))) ;; TODO: test, may need to be
+	(name (when (> *argc* 1) (pop *args*))))
+    ;; TODO: test, may need to be
     ;; sequential for side-effect
     ;; of pop
     (handler-bind

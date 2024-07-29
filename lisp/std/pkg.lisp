@@ -9,7 +9,7 @@
 
 (in-package :std-int)
 
-(defpackage :std/err
+(defpackage :std/condition
   (:use :cl)
   (:export    ;; err
    :std-error :std-error-message
@@ -448,7 +448,7 @@
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
-  (:use-reexport :std/named-readtables :std/defpkg :std/err
+  (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num
    :std/stream :std/fu :std/array :std/hash-table
    :std/alien :std/mop :std/thread :std/task

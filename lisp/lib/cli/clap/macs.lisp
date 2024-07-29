@@ -32,7 +32,8 @@ evaluation of BODY."
 ;; TODO fix these macros
 (defmacro defcmd (name &body body)
   `(defun ,name (args opts) 
-     (declare (ignorable args opts))
+     (declare (ignorable args opts)
+              (list args opts))
      (setq
       *argc* (length args)
       *optc* (length opts)
@@ -42,7 +43,7 @@ evaluation of BODY."
 
 (defmacro defopt (name &body body)
   `(defun ,name (&optional arg)
-     (declare (ignorable arg))
+     (declare (ignorable arg) (list arg))
      (setq *arg* arg)
        ,@body))
 

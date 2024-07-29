@@ -13,7 +13,7 @@
 
 ;;; Code:
 (defpackage :io/proto
-  (:use :cl :std/err)
+  (:use :cl :std/condition)
   (:export :io-error))
 
 (defpackage :io/ring

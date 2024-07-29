@@ -36,7 +36,7 @@ Bound for the lifetime of a DEFCMD function.")
   "Current command options.
 Bound for the lifetime of a DEFOPT function.")
 
-(declaim (integer *argc* *optc*))
+(declaim (unsigned-byte *argc* *optc*))
 (defvar *argc* 0
   "Current count of command arguments.
 This value may be updated throughout the lifetime of a function defined with

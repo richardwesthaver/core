@@ -88,7 +88,7 @@ num-bytes-consumed)"
          (incf in))
     ret))
 
-(declaim (ftype (function ((vector unsigned-byte) &optional t) integer) decode-uleb128))
+(declaim (ftype (function (vector &optional t) integer) decode-uleb128))
 (defun decode-uleb128 (bits &optional (start 0))
   "Decode an unsigned integer from ULEB128 byte array."
   (let ((result 0) (shift 0) (curr) (counter 0))

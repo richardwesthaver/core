@@ -21,7 +21,7 @@
   :serial t
   :components ((:file "defpkg")
                (:file "pkg")
-               (:file "err")
+               (:file "condition")
                (:file "sym")
                (:file "list")
                (:file "type")
@@ -65,5 +65,9 @@
 (defsystem :std/tests
   :depends-on (:std :rt)
   :serial t
-  :components ((:file "tests"))
+  :components ((:module "tests"
+                :components
+                ((:file "pkg")
+                 (:file "num")
+                 (:file "task"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :std)))

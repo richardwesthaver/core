@@ -142,18 +142,6 @@
     (sleep 0.1)
     (is (/= (ttl) 2.0))))
 
-(deftest tasks ()
-  "Test task-pools, oracles, and workers."
-  (let ((pool (designate-oracle (make-task-pool) (make-oracle *current-thread*))))
-    ;; pool is bound to a task pool, *ORACLE-THREADS* contains the *CURRENT-THREAD*.
-    (spawn-workers pool 16)
-    ;; (with-threads (16 :args (&optional (a 0) (b 1) (c 2)))
-    ;;   (sb-thread:allocator-histogram)
-    ;;   (sb-concurrency:wait-on-gate (std/thread::task-pool-online pool))
-    ;;   (print (+ a b c)))
-    (is (= 16 (length (task-pool-workers pool))))
-    (is (sb-thread:semaphore-count (std/task::task-pool-online pool)))))
-
 (deftest fmt ()
   "Test standard formatters"
   (is (string= (format nil "| 1 | 2 | 3 |~%") (fmt-row '(1 2 3))))
@@ -265,12 +253,3 @@ These tests are copied directly from the Alexandria test suite."
     (is (= 1 (testbits-c bits)))
     (is (= -100 (testbits-d bits)))
     (is (eql 'foo (testbits-e bits)))))
-
-(deftest leb128 ()
-  (loop for i from 0 below 1000
-        do (is (= i (decode-uleb128 (encode-uleb128 i)))))
-  (signals division-by-zero (decode-uleb128 (encode-uleb128 -1)))
-  (loop for i from -1000 below 0
-        do (is (= i (decode-leb128 (encode-leb128 i))))
-        do (is (= (* i i) (decode-leb128 (encode-leb128 (* i i)))))))
-

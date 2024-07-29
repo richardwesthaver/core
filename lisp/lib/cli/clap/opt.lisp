@@ -6,7 +6,6 @@
 (in-package :cli/clap/obj)
 
 ;;; Parsers
-;;  TODO 2024-03-16: this should map directly to Lisp types (fixnum, boolean, etc)
 (make-opt-parser string $val)
 
 (make-opt-parser boolean (when $val t))
