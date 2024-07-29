@@ -33,7 +33,7 @@ evaluation of BODY."
 (defmacro defcmd (name &body body)
   `(defun ,name (args opts) 
      (declare (ignorable args opts)
-              (vector args opts))
+              (sequence args opts))
      (setq
       *argc* (length args)
       *optc* (length opts)
