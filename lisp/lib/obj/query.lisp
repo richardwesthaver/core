@@ -166,9 +166,8 @@
 ;;; Dataframes
 ;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
 (defclass data-frame ()
-  ((plan :type logical-plan :accessor df-plan :initarg :plan)))
-
-(defmethod schema ((self data-frame)) (schema (df-plan self)))
+  ((fields :initform #() :initarg :fields :accessor df-fields)
+   (data :initform #() :initarg :data :accessor df-data)))
 
 (defgeneric df-col (self))
 
