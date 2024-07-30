@@ -16,31 +16,31 @@
 :rules
 ((all (%stash
        psl.dat parquet.json
-       compile std prelude user
-       infra core tests rdb
-       skel organ homer packy
-       fasl rust-bin tree-sitter-alien))
+       compile save-std save-prelude save-user
+       save-infra save-core save-tests build-rdb
+       build-skel build-organ build-homer build-packy
+       fasl rust-bin build-tree-sitter-alien))
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#
         #$find lisp -name '*.fasl' -type f -delete$#
         #$echo 'cargo clean:' && cd rust && cargo clean$#)
- (tree-sitter-alien () #$cd lisp/ffi/tree-sitter &&
-                    clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
-                    alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
- (tree-sitter-alien-install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#)
- (psl.dat ()
+ (build-tree-sitter-alien () #$cd lisp/ffi/tree-sitter &&
+                          clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
+                          alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
+ (install-tree-sitter-alien () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#)
+ (psl.dat (%stash)
           (download "https://publicsuffix.org/list/public_suffix_list.dat" :output ".stash/psl.dat"))
- (parquet.thrift ()
+ (parquet.thrift (%stash)
                  (download
                   "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"
                   :output ".stash/parquet.thrift")
                  #$thrift --gen json -out .stash .stash/parquet.thrift$#)
- (parquet.json ()
+ (parquet.json (%stash)
                (download "https://packy.compiler.company/data/parquet.json"
                          :output ".stash/parquet.json"))
- (parquet-test-data () (download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
-                                 :output ".stash/alltypes_plain.parquet"))
+ (parquet-test-data (%stash) (download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
+                                       :output ".stash/alltypes_plain.parquet"))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
  (rdb (%stash) (with-sbcl (:noinform t :quit t)
@@ -56,26 +56,26 @@
                       (ql:quickload :bin/skel)
                       (asdf:make :bin/skel))
            #$mv lisp/bin/skel .stash/skel$#)
- (organ (%stash) (with-sbcl (:noinform t :quit t)
+ (build-organ (%stash) (with-sbcl (:noinform t :quit t)
                      (ql:quickload :bin/organ)
                      (asdf:make :bin/organ))
         #$mv lisp/bin/organ .stash/organ$#)
- (homer (%stash) (with-sbcl (:noinform t :quit t)
+ (build-homer (%stash) (with-sbcl (:noinform t :quit t)
                    (ql:quickload :bin/homer)
                    (asdf:make :bin/homer))
         #$mv lisp/bin/homer .stash/homer$#)
- (packy (%stash) (with-sbcl (:noinform t :quit t)
+ (build-packy (%stash) (with-sbcl (:noinform t :quit t)
                    (ql:quickload :bin/packy)
                    (asdf:make :bin/packy))
         #$mv lisp/bin/packy .stash/packy$#)
- (build (rdb skel organ homer packy))
+ (build (build-rdb build-skel build-organ build-homer build-packy))
  (compile () #$./x.lisp compile$#)
- (std () #$./x.lisp save std$#)
- (prelude () #$./x.lisp save prelude$#)
- (user () #$./x.lisp save user$#)
- (infra () #$./x.lisp save infra$#)
- (core () #$./x.lisp save core$#)
- (tests () #$./x.lisp save tests$#)
+ (save-std () #$./x.lisp save std$#)
+ (save-prelude () #$./x.lisp save prelude$#)
+ (save-user () #$./x.lisp save user$#)
+ (save-infra () #$./x.lisp save infra$#)
+ (save-core () #$./x.lisp save core$#)
+ (save-tests () #$./x.lisp save tests$#)
  (prelude-fasl () #$./x.lisp make prelude$#)
  (user-fasl () #$./x.lisp make user$#)
  (core-fasl () #$./x.lisp make core$#)

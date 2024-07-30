@@ -14,12 +14,12 @@
 ;;; Code:
 (in-package :tree-sitter)
 
+(defvar *ts-langs* (make-hash-table))
+
 (defun language-module (name)
   (funcall 
    (or (gethash (sb-int:keywordicate name) *ts-langs*) ;; symbol -> keyword, string must be UPCASE
        (error "tree-sitter language module not found: ~s." name))))
-
-(defvar *ts-langs* (make-hash-table))
 
 (macrolet ((def-ts-lang-loader (lang)
              (let ((name (symbolicate 'tree-sitter- lang)))

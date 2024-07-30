@@ -47,16 +47,6 @@ evaluation of BODY."
      (setq *arg* arg)
        ,@body))
 
-(declaim (inline walk-cli-slots))
-(defun walk-cli-slots (cli)
-  "Walk the plist CLI, performing actions as necessary based on the slot
-keys."
-  (loop for kv in (group cli 2)
-        when (eql :thunk (car kv))
-        return (let ((th (cdr kv)))
-                 (if (or (functionp th) (symbolp th)) (funcall th) (compile nil (lambda () th)))))
-  cli)
-
 ;; TODO 2023-10-06: 
 ;; (defmacro gen-cli-thunk (pvars &rest thunk)
 ;;   "Generate and return a function based on THUNK suitable for the :thunk

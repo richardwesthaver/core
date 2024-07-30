@@ -24,10 +24,10 @@
 a CLI is called without arguments, and all subcommands."))
 
 (defmethod initialize-instance :after ((self cli-cmd) &key)
-  (with-slots (name cmds opts thunk) self
+  (with-slots (name thunk opts cmds) self
     (unless (stringp name) (setf name (format nil "~(~A~)" name)))
-    (unless (vectorp cmds) (setf cmds (funcall (compile nil `(lambda () ,cmds)))))
-    (unless (vectorp opts) (setf opts (funcall (compile nil `(lambda () ,opts)))))
+    (unless (vectorp cmds) (setf cmds (make-cmds cmds)))
+    (unless (vectorp opts) (setf opts (make-opts opts)))
     (when (symbolp thunk) (setf thunk (symbol-function thunk)))
     self))
 
@@ -139,7 +139,7 @@ this will likely change to generating a new branch in the ast as it
 should be."
   (make-cli-ast
    (let ((holes)) ;; list of arg indexes which can be skipped since they're
-     ;; consumed by an opt
+                  ;; consumed by an opt
      (loop 
        for i below (length args)
        for (a . args) on args

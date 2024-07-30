@@ -2,7 +2,7 @@
 
 ;;; Code:
 (uiop:define-package :bin/rdb
-    (:use :cl :rdb :std :cli/clap :log :clap)
+  (:use :cl :rdb :std :cli/clap :log :clap)
   (:export :main))
 
 (in-package :bin/rdb)
@@ -64,28 +64,26 @@
         (let ((seed (random 32)))
           (dotimes (ii seed)
             (setf (aref val ii) (random 256))))
-          (nreversef val)
-          (put-key db
-                   (sb-ext:string-to-octets (string (gensym "foo")))
-                   val)))))
+        (nreversef val)
+        (put-key db
+                 (sb-ext:string-to-octets (string (gensym "foo")))
+                 val)))))
 
 (define-cli *cli*
   :name "rdb"
   :version "0.1.0"
   :thunk rdb-show
   :description "A simple helper for RocksDB."
-  :opts (make-opts
-          (:name "level" :global t :description "set the log level" :thunk rdb-log-level)
-          (:name "help" :global t :description "print help" :thunk rdb-help)
-          (:name "version" :global t :description "print version" :thunk rdb-version)
-          (:name "db" :global t :description "target db" :thunk rdb-target-db :kind dir))
-  :cmds (make-cmds
-          (:name new :thunk rdb-new)
-          (:name show :thunk rdb-show)
-          (:name set :thunk rdb-set)
-          (:name get :thunk rdb-get)
-          (:name fuzz :thunk rdb-fuzz)
-          (:name destroy :thunk rdb-destroy)))
+  :opts ((:name "level" :global t :description "set the log level" :thunk rdb-log-level)
+         (:name "help" :global t :description "print help" :thunk rdb-help)
+         (:name "version" :global t :description "print version" :thunk rdb-version)
+         (:name "db" :global t :description "target db" :thunk rdb-target-db :kind dir))
+  :cmds ((:name new :thunk rdb-new)
+         (:name show :thunk rdb-show)
+         (:name set :thunk rdb-set)
+         (:name get :thunk rdb-get)
+         (:name fuzz :thunk rdb-fuzz)
+         (:name destroy :thunk rdb-destroy)))
 
 (defmain ()
   (let ((*log-level* :info))

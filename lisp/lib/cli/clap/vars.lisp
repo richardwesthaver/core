@@ -34,7 +34,7 @@ Bound for the lifetime of a DEFCMD function.")
 
 (defvar *opts* nil
   "Current command options.
-Bound for the lifetime of a DEFOPT function.")
+Bound for the lifetime of a DEFCMD function.")
 
 (declaim (unsigned-byte *argc* *optc*))
 (defvar *argc* 0
@@ -45,4 +45,8 @@ DEFCMD.")
 (defvar *optc* 0
   "Current count of command options.
 This value may be updated throughout the lifetime of a function defined with
-DEFOPT.")
+DEFCMD.")
+
+(defvar *arg* nil
+  "Current option argument.
+Bound for the lifetime of afunction defined with DEFCMD.")

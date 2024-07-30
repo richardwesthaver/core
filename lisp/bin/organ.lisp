@@ -38,24 +38,22 @@
   :version "0.0.1"
   :description "org-mode toolbox"
   :thunk organ-describe
-  :opts (make-opts 
-	  (:name "level" :global t :description "set the log level" :thunk organ-log-level)
-	  (:name "help" :global t :description "print help" :thunk organ-help)
-	  (:name "version" :global t :description "print version" :thunk organ-version)
-          ;; (:name "output" :description "output file" :kind file :thunk organ-output)
-          )
-  :cmds (make-cmds 
-	  (:name inspect 
-           :description "inspect an org file"
-           :thunk organ-inspect)
-          (:name show
-           :description "display local org info"
-           :thunk organ-show)
-          (:name describe
-           :description "describe local org info"
-           :thunk organ-describe)
-	  (:name parse
-	   :thunk organ-parse)))
+  :opts ((:name "level" :global t :description "set the log level" :thunk organ-log-level)
+	 (:name "help" :global t :description "print help" :thunk organ-help)
+	 (:name "version" :global t :description "print version" :thunk organ-version)
+         ;; (:name "output" :description "output file" :kind file :thunk organ-output)
+         )
+  :cmds ((:name inspect 
+          :description "inspect an org file"
+          :thunk organ-inspect)
+         (:name show
+          :description "display local org info"
+          :thunk organ-show)
+         (:name describe
+          :description "describe local org info"
+          :thunk organ-describe)
+	 (:name parse
+	  :thunk organ-parse)))
 
 (defun run ()
   (let ((*log-level* :info))

@@ -22,7 +22,7 @@
               %class :cli)
         (setq %name (car name)
               %class (cdr name)))
-    `(,*default-cli-def* ,%name (apply #'make-cli ,%class (walk-cli-slots ',body)))))
+    `(,*default-cli-def* ,%name (apply #'make-cli ,%class ',body))))
 
 (defmacro defmain ((&key (exit t) (export t)) &body body)
   "Define a CLI main function in the current package."
@@ -38,25 +38,25 @@
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
 ;; slot at class allocation.
-(defmacro make-opts (&body opts)
+(defun make-opts (opts)
   "Make a vector of CLI-OPTs based on OPTS."
-  `(map 'vector
-        (lambda (x)
-          (etypecase x
-            (string (make-cli-opt :name x))
-            (list (apply #'make-cli :opt x))
-            (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
-        (walk-cli-slots ',opts)))
+  (map 'vector
+       (lambda (x)
+         (etypecase x
+           (string (make-cli-opt :name x))
+           (list (apply #'make-cli :opt x))
+           (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
+       opts))
 
-(defmacro make-cmds (&body cmds)
+(defun make-cmds (cmds)
   "Make a vector of CLI-CMDs based on CMDS."
-  `(map 'vector
+  (map 'vector
         (lambda (x)
           (etypecase x
             (string (make-cli :cmd :name x))
             (list (apply #'make-cli :cmd x))
             (t (make-cli :cmd :name (format nil "~(~A~)" x)))))
-        (walk-cli-slots ',cmds)))
+        cmds))
 
 (defclass cli (cli-cmd)
   ;; name slot defaults to *package*, must be string

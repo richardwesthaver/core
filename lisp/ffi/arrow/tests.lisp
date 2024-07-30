@@ -9,4 +9,5 @@
 (defsuite :arrow)
 (in-suite :arrow)
 (load-arrow)
+
 (deftest sanity ())
