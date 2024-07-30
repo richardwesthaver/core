@@ -148,8 +148,9 @@
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
 (defun sk-dir (o)
   (let ((str (directory-namestring (sk-path o))))
-    (unless (sb-sequence:emptyp str)
-      str)))
+    (if (sb-sequence:emptyp str)
+        *default-pathname-defaults*
+        str)))
 
 (defmethod load-ast ((self sk-config))
   ;; internal ast is never tagged
@@ -407,26 +408,30 @@ via the special form stored in RECIPE."))
               (setf (slot-value self s) v))) ;; needs to be correct package
           ;;; SRC
           (if (bound-string-p self 'src)
-              (setf (sk-src self) (probe-file (sk-src self)))
+              (setf (sk-src self) (or (probe-file (sk-src self))
+                                      (probe-file (merge-pathnames (sk-src self) *skel-path*))
+                                      (error 'invalid-argument :reason "project source not found"
+                                                               :item (sk-src self))))
               (setf (sk-src self) (or (sk-dir self) *default-pathname-defaults*)))
-          (setq *skel-path* (sk-src self))
-          (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
-          (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
+          (setq *skel-path* (or (sk-src self) *default-pathname-defaults*))
+          (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
+            (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
+            (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
           ;; INCLUDE
-          (when-let ((include (sk-include self)))
+            (when-let ((include (sk-include self)))
             (setf (sk-include self) (map 'vector
-                                         ;; recursively load included projects
-                                         (lambda (i) (load-ast
-                                                      (sk-read-file
-                                                       (make-instance 'sk-project)
-                                                       i)))
+                                           ;; recursively load included projects
+                                           (lambda (i) (load-ast
+                                                        (sk-read-file
+                                                         (make-instance 'sk-project)
+                                                         i)))
                                          include)))
           ;; COMPONENTS
-          (when (slot-boundp self 'components)
+            (when (slot-boundp self 'components)
             (setf (sk-components self) (map 'vector
                                             (lambda (c)
-                                              (sk-load-component (car c) (pathname (cadr c)) (namestring *skel-path*)))
-                                            (sk-components self))))
+                                              (sk-load-component (car c) (pathname (cadr c)) (namestring *default-pathname-defaults*)))
+                                            (sk-components self)))))
           ;; SCRIPTS
           (if (bound-string-p self 'scripts)
               (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
