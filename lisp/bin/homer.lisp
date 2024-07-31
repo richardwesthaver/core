@@ -23,7 +23,7 @@
 (defclass home-config (sxp id)
   ((user :initform *user* :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
-   (src ::initform nil :initarg :src :type (or null pathname vc-repo))
+   (src :initform nil :initarg :src :type (or null pathname vc-repo))
    (skel :initform (load-user-skelrc) :initarg :skel :type (or null pathname sk-user-config))
    (krypt :initform (load-kryptrc) :initarg :krypt :type (or null pathname krypt-config))
    (packy :initform nil :initarg :packy :type (or null pathname pk-user-config))
