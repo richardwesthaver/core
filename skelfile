@@ -25,11 +25,11 @@
         #$find emacs -name '*.elc' -type f -delete$#
         #$find lisp -name '*.fasl' -type f -delete$#
         #$echo 'cargo clean:' && cd rust && cargo clean$#)
- (build-tree-sitter-alien () #$cd lisp/ffi/tree-sitter &&
-                          clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
-                          alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
  (tree-sitter-alien ()
-                    (:install #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#))
+                    (:build () #$cd lisp/ffi/tree-sitter &&
+                            clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
+                            alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
+                    (:install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#))
  (psl.dat (%stash)
           (download "https://publicsuffix.org/list/public_suffix_list.dat" :output ".stash/psl.dat"))
  (parquet.thrift (%stash)
@@ -78,7 +78,6 @@
                      (ql:quickload :bin/packy)
                      (asdf:make :bin/packy))
                 #$mv lisp/bin/packy .stash/packy$#))
- (build (build-rdb build-skel build-organ build-homer build-packy))
  (compile () #$./x.lisp compile$#)
  (std () (:save () #$./x.lisp save std$#))
  (prelude ()
