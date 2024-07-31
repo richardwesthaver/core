@@ -315,9 +315,9 @@ via the special form stored in RECIPE."))
            (mapcar
             (lambda (src)
               (if-let* ((sr (sk-find-rule src obj)))
-                 ;; check if we need to rerun sources
-                (sk-make obj sr)
-                (warn! "unhandled source:" src "for rule:" rule)))
+                       ;; check if we need to rerun sources
+                       (sk-make obj sr)
+                       (warn! "unhandled source:" src "for rule:" rule)))
             sources))
          (sk-run rule))
        rules)
@@ -359,21 +359,25 @@ via the special form stored in RECIPE."))
 ;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
-   (src :initarg :src :type pathname :accessor sk-src)
    (vc :initarg :vc :initform (make-sk-vc-meta *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
+   (src :initarg :src :type pathname :accessor sk-src)
+   (stash :initarg :stash :accessor sk-stash :type pathname)
+   (store :initarg :store :accessor sk-store :type pathname)
+   (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component))
+   (bind :initarg :bind :initform nil :accessor sk-bind :type list)
+   (env :initarg :env :initform nil :accessor sk-env :type list)
+   (phases :initarg :phases
+           :initform (make-hash-table)
+           :accessor sk-phases
+           :type hash-table)
    (rules :initarg :rules
           :initform (make-array 0 :element-type 'sk-rule :adjustable t)
           :accessor sk-rules
           :type (vector sk-rule))
-   (components :initform #() :initarg :components :accessor sk-components :type (vector (cons keyword pathname)))
-   (bind :initarg :bind :initform nil :accessor sk-bind :type list)
-   (env :initarg :env :initform nil :accessor sk-env :type list)
    (scripts :initarg :scripts
             :initform (make-array 0 :element-type 'sk-script :adjustable t)
             :accessor sk-scripts
             :type (vector sk-script))
-   (stash :initarg :stash :accessor sk-stash :type pathname)
-   (store :initarg :store :accessor sk-store :type pathname)
    (include :initarg :include
             :initform (make-array 0 :element-type 'pathname :adjustable t)
             :accessor sk-include
@@ -396,6 +400,15 @@ via the special form stored in RECIPE."))
 (defun find-sk-symbol (s)
   (find-symbol* (symbol-name s) :skel/core/obj t))
 
+(defun %recipe-phase-p (form)
+  "Return non-nil if FORM looks like (:PHASE &BODY BODY)."
+  (and (listp form) (>= (length form) 2) (keywordp (car form))))
+
+(defun sk-multi-recipe-p (recipe)
+  "Return T if RECIPE looks like a list of (:PHASE &BODY BODY)."
+  (when (consp recipe)
+    (every '%recipe-phase-p recipe)))
+
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))
   ;; internal ast is never tagged
@@ -417,21 +430,21 @@ via the special form stored in RECIPE."))
           (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
             (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
             (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
-          ;; INCLUDE
+            ;; INCLUDE
             (when-let ((include (sk-include self)))
-            (setf (sk-include self) (map 'vector
+              (setf (sk-include self) (map 'vector
                                            ;; recursively load included projects
                                            (lambda (i) (load-ast
                                                         (sk-read-file
                                                          (make-instance 'sk-project)
                                                          i)))
-                                         include)))
-          ;; COMPONENTS
+                                           include)))
+            ;; COMPONENTS
             (when (slot-boundp self 'components)
-            (setf (sk-components self) (map 'vector
-                                            (lambda (c)
-                                              (sk-load-component (car c) (pathname (cadr c)) (namestring *default-pathname-defaults*)))
-                                            (sk-components self)))))
+              (setf (sk-components self) (map 'vector
+                                              (lambda (c)
+                                                (sk-load-component (car c) (pathname (cadr c)) (namestring *default-pathname-defaults*)))
+                                              (sk-components self)))))
           ;; SCRIPTS
           (if (bound-string-p self 'scripts)
               (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
@@ -457,13 +470,29 @@ via the special form stored in RECIPE."))
                                      (list
                                       (cons (sb-int:keywordicate (car e)) (cadr e)))))
                                  env)))
+          ;; BIND
           ;; RULES
           (when-let ((rules (sk-rules self)))
-            (setf (sk-rules self) (map 'vector
-                                       (lambda (x)
-                                         (destructuring-bind (target source &rest recipe) x
-                                           (make-sk-rule target source recipe)))
-                                       rules)))
+            (setf (sk-rules self)
+                  (coerce
+                   (flatten
+                    (mapcar
+                     (lambda (x)
+                       (destructuring-bind (target source &rest recipe) x
+                         ;; TODO 2024-07-30: check for phases
+                         (if (sk-multi-recipe-p recipe)
+                             (flatten
+                              (mapcar
+                               (lambda (y)
+                                 (destructuring-bind (phase source &rest recipe) y
+                                   (let ((%target (keywordicate phase '- (string-upcase target))))
+                                     (let ((ph (gethash phase (sk-phases self))))
+                                       (setf (gethash phase (sk-phases self))
+                                             (push (make-sk-rule %target source recipe) ph))))))
+                               recipe))
+                             (make-sk-rule target source recipe))))
+                     (coerce rules 'list)))
+                   '(vector sk-rule))))
           ;; VC
           (when-let ((vc (sk-vc self)))
             (etypecase vc

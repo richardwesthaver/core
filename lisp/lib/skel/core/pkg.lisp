@@ -73,7 +73,8 @@
    :sk-user-config :sk-system-config
    :*skel-user-config* :*skel-system-config*
    :sk-src :sk-component :sk-components :sk-module
-   :sk-parent))
+   :sk-parent
+   :sk-phases))
 
 (defpackage :skel/core/util
   (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/err)

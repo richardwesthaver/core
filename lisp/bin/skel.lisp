@@ -76,37 +76,37 @@
 (defcmd skc-id
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
-(defun call-with-args (action)
-  (if (zerop *argc*)
+(defun call-with-args (action args)
+  (if (null args)
       (sk-call *skel-project* action)
-      (mapcar (lambda (x)
-                (sk-call *skel-project* (print (keywordicate action '- (string-upcase x)))))
-              *args*)))
+      (mapc (lambda (x)
+              (sk-call *skel-project* (keywordicate action '- (string-upcase x))))
+            args)))
 
 (defcmd skc-compile
-  (call-with-args :compile))
+  (call-with-args :compile *args*))
 (defcmd skc-build
-  (call-with-args :build))
+  (call-with-args :build *args*))
 (defcmd skc-dist
-  (call-with-args :dist))
+  (call-with-args :dist *args*))
 (defcmd skc-install
-  (call-with-args :install))
+  (call-with-args :install *args*))
 (defcmd skc-pack
-  (call-with-args :pack))
+  (call-with-args :pack *args*))
 (defcmd skc-unpack
-  (call-with-args :unpack))
+  (call-with-args :unpack *args*))
 (defcmd skc-bundle
-  (call-with-args :bundle))
+  (call-with-args :bundle *args*))
 (defcmd skc-unbundle
-  (call-with-args :unbundle))
+  (call-with-args :unbundle *args*))
 (defcmd skc-clean
-  (call-with-args :clean))
+  (call-with-args :clean *args*))
 (defcmd skc-test
-  (call-with-args :test))
+  (call-with-args :test *args*))
 (defcmd skc-bench
-  (call-with-args :bench))
+  (call-with-args :bench *args*))
 (defcmd skc-save
-  (call-with-args :save))
+  (call-with-args :save *args*))
 
 (defun sk-slot-case (sel)
   (std/string:string-case (sel :default (skel-simple-error "invalid slot"))
@@ -121,6 +121,7 @@
     (":components" (sk-components *skel-project*))
     (":scripts" (sk-scripts *skel-project*))
     (":rules" (sk-rules *skel-project*))
+    (":phases" (hash-table-alist (sk-phases *skel-project*)))
     (":env" (sk-env *skel-project*))
     (":bind" (sk-bind *skel-project*))
     (":include" (sk-include *skel-project*))
