@@ -31,10 +31,18 @@
    :sk-find-rule :sk-find-script
    :sk-find :sk-find*
    :sk-convert :sk-load-component
-   :sk-path :sk-path-merge))
+   :sk-path :sk-path-merge
+   :sk-install
+   :sk-test
+   :sk-deploy
+   :sk-fetch
+   :sk-pack
+   :sk-unpack
+   :sk-bundle
+   :sk-unbundle))
 
 (defpackage :skel/core/header
-  (:use :cl :std :skel/core/err)
+  (:use :cl :std :skel/core/err :doc)
   (:export
    :make-file-header 
    :make-shebang-file-header 
@@ -99,3 +107,8 @@
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/err)
   (:export :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push))
+
+(defpackage :skel/core/print
+  (:use :cl :std :skel/core/err :skel/core/obj :skel/core/types :skel/core/proto :skel/core/vars)
+  (:export
+   :*sk-print-dispatch-table*))

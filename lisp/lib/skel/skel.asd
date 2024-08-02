@@ -23,6 +23,7 @@
      (:file "header")
      (:file "vars")
      (:file "obj")
+     (:file "print")
      (:file "util")
      (:file "vm")))
    (:module "comp"

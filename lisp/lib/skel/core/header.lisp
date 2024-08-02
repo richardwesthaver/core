@@ -8,14 +8,11 @@
 ;;; File Headers
 (deftype file-header-kind () '(member :source :shebang))
 
-(declaim (inline %make-file-header))
-(defstruct (file-header (:constructor %make-file-header)
-			   (:conc-name sk-fh-))
-  (kind :source :type file-header-kind)
-  (str "" :type string))
+(defclass sk-file-header (file-header)
+  ((kind :initform :source :type file-header-kind :initarg :kind)))
 
-(defun make-file-header (kind string)
-  (%make-file-header :kind kind :str (or string "")))
+(defun make-file-header (kind hl)
+  (make-instance 'sk-file-header :kind kind :headline hl))
 
 (defun make-source-file-header (str)
   (make-file-header :source str))
@@ -56,7 +53,6 @@
 (defun extract-source-file-header (str)
   "Extract a FILE-HEADER from STR, returning two values: the extracted object, and the modified string."
   (with-input-from-string (s str)
-
     (values
      (make-file-header :source (parse-stream-file-header s))
      str)))

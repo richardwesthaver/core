@@ -22,12 +22,26 @@ evaluation of BODY."
          (sb-ext:enable-debugger)
          (sb-ext:disable-debugger))
      (unwind-protect
-          (handler-case (progn ,@body)
+          (restart-case
+              (progn ,@body)
             (sb-sys:interactive-interrupt ()
               (println ":SIGINT")
-              (sb-ext:exit :code 130)))
+              (sb-ext:exit :code 130))
+            (abort ()
+              :report (lambda (s)
+                        (write-string
+                         "Skip to toplevel READ/EVAL/PRINT loop."
+                         s)
+                        (log:debug! "CONTINUEing from pre-REPL RESTART-CASE")
+                        (values)))
+            (exit ()
+              :report "Exit SBCL (calling #'EXIT, killing the process)."
+              ;; :test (lambda (c) (declare (ignore c)) t)
+              (log:debug! "falling through to EXIT from pre-REPL RESTART-CASE")
+              (exit :code 1))))
+     (sb-impl::flush-standard-output-streams)
        ;; reset terminal state
-       #+nil (.ris))))
+       #+nil (.ris)))
 
 ;; TODO fix these macros
 (defmacro defcmd (name &body body)
