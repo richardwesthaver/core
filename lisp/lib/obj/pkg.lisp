@@ -23,8 +23,11 @@
 (defpackage :obj/hash
   (:nicknames :hash)
   (:use :cl :std)
+  (:shadowing-import-from :sb-lockless :endp)
   (:import-from :sb-lockless
    :make-so-map/fixnum :+hash-nbits+
+   :node-hash :%node-next
+   :unbound-marker-p
    :get-next :node-hash
    :so-head :so-bins
    :so-key :so-data
@@ -32,7 +35,8 @@
    :so-insert :so-delete
    :so-find :so-find/string
    :so-maplist :make-so-map/string
-   :make-so-set/string :make-so-map/addr :make-marked-ref)
+   :make-so-set/string :make-so-set/fixnum :make-so-map/addr :make-marked-ref
+   :make-so-set/addr)
   (:export 
    :*global-hasher*
    :*global-hash*

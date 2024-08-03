@@ -21,6 +21,14 @@
 ;; - Backends :: The interface exposed to the underlying data sources -
 ;;   RocksDB, SQLite, etc.
 
+;;;; Refs
+
+;; https://gist.github.com/twitu/221c8349887cec0a83b395e4cbb492a7
+
+;; https://www1.columbia.edu/sec/acis/db2/db2d0/db2d0103.htm
+
+;; https://howqueryengineswork.com/
+
 ;;; Code:
 (in-package :obj/query)
 
@@ -353,9 +361,9 @@
 
 ;;;;; Scan
 (defclass scan-data (logical-plan)
-  ((path :type string)
-   (data-source :type data-source)
-   (projection :type (vector string))))
+  ((path :type string :initarg :path)
+   (data-source :type data-source :initarg :data-source)
+   (projection :type (vector string) :initarg :projection)))
 
 (defmethod derive-schema ((self scan-data))
   (let ((proj (slot-value self 'projection)))
@@ -368,25 +376,25 @@
 
 ;;;;; Projection
 (defclass projection (logical-plan)
-  ((input :type logical-plan)
-   (expr :type (vector logical-expression))))
+  ((input :type logical-plan :initarg :input)
+   (expr :type (vector logical-expression) :initarg :expr)))
 
 (defmethod schema ((self projection))
   (schema (slot-value self 'input)))
 
 ;;;;; Selection
 (defclass selection (logical-plan)
-  ((input :type logical-plan)
-   (expr :type logical-expression)))
+  ((input :type logical-plan :initarg :input)
+   (expr :type logical-expression :initarg :expr)))
 
 (defmethod schema ((self selection))
   (schema (slot-value self 'input)))
 
 ;;;;; Aggregate
 (defclass aggregate (logical-plan)
-  ((input :type logical-plan)
-   (group-expr :type (vector logical-expression))
-   (agg-expr :type (vector aggregate-expression))))
+  ((input :type logical-plan :initarg :input)
+   (group-expr :type (vector logical-expression) :initarg :group-expr)
+   (agg-expr :type (vector aggregate-expression) :initarg :agg-expr)))
 
 (defmethod schema ((self aggregate))
   (let ((input (slot-value self 'input))
@@ -398,7 +406,6 @@
     (make-schema :fields (coerce ret 'field-vector))))
 
 ;;; Physical Expression
-
 (defclass physical-expression (query-expression) ())
 
 (defclass literal-physical-expression (physical-expression) ())
@@ -439,6 +446,24 @@
   (declare (ignore self))
   (equal lhs rhs))
 
+(defclass neq-physical-expression (binary-physical-expression) ())
+
+(defmethod evaluate2 ((self neq-physical-expression) lhs rhs)
+  (declare (ignore self))
+  (equal lhs rhs))
+
+(defclass lt-physical-expression (binary-physical-expression) ())
+
+(defclass gt-physical-expression (binary-physical-expression) ())
+
+(defclass lteq-physical-expression (binary-physical-expression) ())
+
+(defclass gteq-physical-expression (binary-physical-expression) ())
+
+(defclass and-physical-expression (binary-physical-expression) ())
+
+(defclass or-physical-expression (binary-physical-expression) ())
+
 (defclass math-physical-expression (binary-physical-expression) ())
 
 (defmethod evaluate2 ((self math-physical-expression) (lhs column-vector) (rhs column-vector))
@@ -451,6 +476,24 @@
 (defmethod evaluate2 ((self add-physical-expresion) lhs rhs)
   (declare (ignore self))
   (+ lhs rhs))
+
+(defclass sub-physical-expression (math-expression) ())
+
+(defmethod evaluate2 ((self sub-physical-expression) lhs rhs)
+  (declare (ignore self))
+  (- lhs rhs))
+
+(defclass mult-physical-expression (math-expression) ())
+
+(defmethod evaluate2 ((self mult-physical-expression) lhs rhs)
+  (declare (ignore self))
+  (* lhs rhs))
+
+(defclass div-physical-expression (math-expression) ())
+
+(defmethod evaluate2 ((self div-physical-expression) lhs rhs)
+  (declare (ignore self))
+  (/ lhs rhs))
 
 (defclass accumulator ()
   ((value :initarg :value :accessor accumulator-value)))
@@ -523,7 +566,6 @@
          collect (make-record-batch :schema schema :fields (coerce filtered 'field-vector)))
    '(vector record-batch)))
 
-;; NOTE 2024-07-10: 
 (defgeneric filter (self columns selection)
   (:method ((self selection-exec) (columns column-vector) (selection simple-bit-vector))
     (coerce
@@ -533,9 +575,9 @@
      'field-vector)))
 
 (defclass hash-aggregate-exec (physical-plan)
-  ((input :type physical-plan)
-   (group-expr :type (vector physical-plan))
-   (agg-expr :type (vector aggregate-physical-expression))))
+  ((input :type physical-plan :initarg :input)
+   (group-expr :type (vector physical-plan) :initarg :group-expr)
+   (agg-expr :type (vector aggregate-physical-expression) :initarg :agg-expr)))
 
 (defmethod execute ((self hash-aggregate-exec))
   (coerce 
@@ -589,7 +631,6 @@
 
 (defclass query-planner () ())
 
-;; these generics 
 (defgeneric make-physical-expression (expr input)
   (:documentation "Translate logical expression EXPR and logical plan INPUT
   into a physical expression.")
@@ -607,18 +648,17 @@
           (r (make-physical-expression (rhs expr) input)))
       (etypecase expr
         (eq-expression (make-instance 'eq-physical-expression :lhs l :rhs r))
-        ;; (neq-expression (make-instance 'neq-physical-expression :lhs l :rhs r))
-        ;; (gt-expression)
-        ;; (gteq-expression)
-        ;; (lt-expression)
-        ;; (lteq-expression)
-        ;; (and-expression)
-        ;; (or-expression)
+        (neq-expression (make-instance 'neq-physical-expression :lhs l :rhs r))
+        (gt-expression (make-instance 'gt-physical-expression :lhs l :rhs r))
+        (gteq-expression (make-instance 'gteq-physical-expression :lhs l :rhs r))
+        (lt-expression (make-instance 'lt-physical-expression :lhs l :rhs r))
+        (lteq-expression (make-instance 'lteq-physical-expression :lhs l :rhs r))
+        (and-expression (make-instance 'and-physical-expression :lhs l :rhs r))
+        (or-expression (make-instance 'or-physical-expression :lhs l :rhs r))
         (add-expression (make-instance 'add-physical-expresion :lhs l :rhs r))
-        ;; (sub-expression)
-        ;; (mult-expression)
-        ;; (div-expression)
-        ))))
+        (sub-expression (make-instance 'sub-physical-expression :lhs l :rhs r))
+        (mult-expression (make-instance 'mult-physical-expression :lhs l :rhs r))
+        (div-expression (make-instance 'div-physical-expression :lhs l :rhs r))))))
 
 (defgeneric make-physical-plan (plan)
   (:documentation "Create a physical plan from logical PLAN.")
@@ -639,8 +679,42 @@
       (selection (make-instance 'selection-exec
                    :input (make-physical-plan (slot-value plan 'input))
                    :expr (make-physical-expression (slot-value plan 'expr) (slot-value plan 'input))))
-      ;; TODO 2024-07-10: 
-      (aggregate (make-instance 'hash-aggregate-exec)))))
+      (aggregate (make-instance 'hash-aggregate-exec
+                   :input (make-physical-plan (slot-value plan 'input))
+                   :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
+                   :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input)))))))
+
+;;; Joins
+
+;;  TODO 2024-08-02: 
+
+;; inner-join
+
+;; outer-join left-outer-join right-outer-join
+
+;; semi-join
+
+;; anti-join
+
+;; cross-join
+
+;;; Subqueries
+
+;;  TODO 2024-08-02: 
+
+;; subquery
+
+;; correlated-subquery
+
+;; SELECT id, name, (SELECT count(*) FROM orders WHERE customer_id = customer.id) AS num_orders FROM customers
+
+;; uncorrelated-subquery
+
+;; scalar-subquery
+
+;; SELECT * FROM orders WHERE total > (SELECT avg(total) FROM sales WHERE customer_state = 'CA')
+
+;; NOTE 2024-08-02: EXISTS, IN, NOT EXISTS, and NOT IN are also subqueries
 
 ;;; Optimizer
 
@@ -654,7 +728,56 @@
 ;; TODO 2024-07-10: 
 (defclass query-optimizer () ())
 
-(defgeneric optimize-query (self &key &allow-other-keys))
+(defstruct (query-vop (:constructor make-query-vop (info)))
+  (info nil))
+
+(defgeneric optimize-query (self plan))
+
+;; Projection Pushdown
+(defun extract-columns (expr input &optional accum)
+  (etypecase expr
+    (array-index (accumulate accum (field (fields (schema input)) expr)))
+    (column-expression (accumulate accum (column-name expr)))
+    (binary-expression
+     (extract-columns (lhs expr) input accum)
+     (extract-columns (rhs expr) input accum))
+    (alias-expression (extract-columns (slot-value expr 'expr) input accum))
+    ;; cast-expression
+    (literal-expression nil)))
+
+(defun extract-columns* (exprs input &optional accum)
+  (mapcar (lambda (x) (extract-columns x input accum)) exprs))
+
+(defclass projection-pushdown-optimizer (query-optimizer) ())
+
+(defun %pushdown (plan &optional column-names)
+  (declare (logical-plan plan))
+  (etypecase plan
+    (projection
+     (extract-columns (slot-value plan 'expr) column-names)
+     (let ((input (%pushdown (slot-value plan 'input) column-names)))
+       (make-instance 'projection :input input :expr (slot-value plan 'expr))))
+    (selection
+     (extract-columns (slot-value plan 'expr) column-names)
+     (let ((input (%pushdown (slot-value plan 'input) column-names)))
+       (make-instance 'selection :input input :expr (slot-value plan 'expr))))
+    (aggregate
+     (extract-columns (slot-value plan 'group-expr) column-names)
+     (extract-columns*
+      (loop for x across (slot-value plan 'agg-expr) collect (slot-value x 'input))
+      column-names)
+     (let ((input (%pushdown (slot-value plan 'input) column-names)))
+       (make-instance 'aggregate
+         :input input
+         :group-expr (slot-value plan 'group-expr)
+         :agg-expr (slot-value plan 'agg-expr))))
+    (scan-data (make-instance 'scan-data
+                 :path (slot-value plan 'name)
+                 :data-source (slot-value plan 'data-source)
+                 :projection column-names)))) ;; maybe sort here?
+
+(defmethod optimize-query ((self projection-pushdown-optimizer) (plan logical-plan))
+  (%pushdown plan))
 
 ;;; Query
 (defclass query () ())

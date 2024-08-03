@@ -250,6 +250,9 @@
 
 (defclass bogus-data-source (data-source) ((db :initform nil :initarg :db)))
 
-(deftest query-simple-hard ()
+(defvar *basic-query* "SELECT * FROM employee WHERE state = 'CT'")
+
+(deftest query-basic ()
   "Test the simple query `SELECT * FROM employee WHERE state = 'CT'` by manually
-building a query-plan.")
+building a query-plan."
+  (make-query *basic-query*))
