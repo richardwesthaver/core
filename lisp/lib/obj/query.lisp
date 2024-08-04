@@ -171,18 +171,6 @@
 (defgeneric scan-data-source (self projection)
   (:documentation "Scan the data source, selecting the specified columns."))
 
-;;; Dataframes
-;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
-(defclass data-frame ()
-  ((fields :initform #() :initarg :fields :accessor df-fields)
-   (data :initform #() :initarg :data :accessor df-data)))
-
-(defgeneric df-col (self))
-
-(defgeneric df-project (&rest expr &key &allow-other-keys))
-(defgeneric df-filter (expr))
-(defgeneric df-aggregate (group-by agg-expr))
-
 ;;; Expressions
 (defclass query-expression () ())
 
@@ -221,12 +209,12 @@
 
 ;;;;; Alias
 (defclass alias-expression (logical-expression)
-  ((expr :type logical-expression :initarg :expr)
+  ((expr :type logical-expression :initarg :expr :accessor expr)
    (alias :type string :initarg :alias)))
 
 ;;;;; Unary
 (defclass unary-expression (logical-expression)
-  ((expr :type logical-expression)))
+  ((expr :type logical-expression :accessor expr)))
 
 ;;;;; Binary
 (defclass binary-expression (logical-expression)
@@ -294,7 +282,7 @@
 ;; TODO 2024-08-03: ???
 (defmethod to-field ((self math-expression) (input logical-plan))
   (declare (ignorable input))
-  (make-field :name "mult" :type (field-type (to-field (lhs self) input))))
+  (make-field :name "*" :type (field-type (to-field (lhs self) input))))
 
 (defclass add-expression (math-expression) ()
   (:default-initargs
@@ -328,7 +316,11 @@
 
 (defclass aggregate-expression (logical-expression)
   ((name :type string)
-   (expr :type logical-expression)))
+   (expr :type logical-expression :accessor expr)))
+
+(defgeneric aggregate-expression-p (self)
+  (:method ((self aggregate-expression)) t)
+  (:method ((self alias-expression)) (aggregate-expression-p (expr self))))
 
 (defmethod to-field ((self aggregate-expression) (input logical-plan))
   (declare (ignorable input))
@@ -405,6 +397,114 @@
     (loop for a across (slot-value self 'agg-expr)
           do (push (to-field a input) ret))
     (make-schema :fields (coerce ret 'field-vector))))
+
+;;;;; Limit
+(defclass limit (logical-plan)
+  ((input :type logical-plan :initarg :input)
+   (limit :type integer)))
+
+(defmethod schema ((self limit))
+  (setf (slot-value self 'schema)
+        (schema (slot-value self 'input))))
+
+(defmethod children ((self limit))
+  (setf (slot-value self 'children)
+        (children (slot-value self 'input))))
+
+;;;;; Joins
+(defclass join (logical-plan)
+  ((left :accessor lhs)
+   (right :accessor rhs)
+   (on :accessor join-on)))
+
+(defclass inner-join (join) ())
+;; (defclass outer-join (join))
+(defclass left-join (join) ())
+(defclass right-join (join) ())
+;; left-outer-join
+;; right-outer-join
+;; semi-join
+;; anti-join
+;; cross-join
+
+(defmethod schema ((self join))
+  ;; TODO 2024-08-04: test better dupe impl
+  (let ((dupes (mapcon #'(lambda (l) (when (eq (car l) (second l)) (list (car l))))
+                       (coerce (join-on self) 'list)))
+        (schema (make-instance 'schema)))
+    (setf (fields schema)
+          (typecase self
+            (right-join
+             (let ((l (remove-if (lambda (x) (member x dupes :test 'string-equal)) (fields (schema (lhs self)))))
+                   (r (fields (schema (rhs self)))))
+               (merge 'vector l r (lambda (x y) (declare (ignore y)) x))))
+            (inner-join
+             (let ((l (fields (schema (lhs self))))
+                   (r (remove-if (lambda (x) (member x dupes :test 'string-equal)) (fields (schema (rhs self))))))
+               (merge 'vector l r (lambda (x y) (declare (ignore y)) x))))))
+    schema))
+
+(defmethod children ((self join))
+  (vector (lhs self) (rhs self))) 
+
+;;; Subqueries
+
+;;  TODO 2024-08-02: 
+
+;; subquery
+
+;; correlated-subquery
+
+;; SELECT id, name, (SELECT count(*) FROM orders WHERE customer_id = customer.id) AS num_orders FROM customers
+
+;; uncorrelated-subquery
+
+;; scalar-subquery
+
+;; SELECT * FROM orders WHERE total > (SELECT avg(total) FROM sales WHERE customer_state = 'CA')
+
+;; NOTE 2024-08-02: EXISTS, IN, NOT EXISTS, and NOT IN are also subqueries
+
+;;; Dataframes
+;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
+(defstruct (data-frame (:constructor make-data-frame (&optional plan)))
+  (plan (make-instance 'logical-plan) :type logical-plan))
+
+(defgeneric df-col (self))
+(defgeneric df-project (df exprs)
+  (:method ((df data-frame) (expr list))
+    (df-project df (coerce expr 'vector)))
+  (:method ((df data-frame) (expr vector))
+    (setf (data-frame-plan df)
+          (make-instance 'projection
+            :input (data-frame-plan df)
+            :expr expr))
+    df))
+
+(defgeneric df-filter (df expr)
+  (:method ((df data-frame) (expr logical-expression))
+    (setf (data-frame-plan df)
+          (make-instance 'selection :input (data-frame-plan df) :expr expr))
+    df))
+
+(defgeneric df-aggregate (df group-by agg-expr)
+  (:method ((df data-frame) (group-by vector) (agg-expr vector))
+    (setf (data-frame-plan df)
+          (make-instance 'aggregate :input (data-frame-plan df)
+                         :group-expr group-by
+                         :agg-expr agg-expr))
+    df)
+  (:method ((df data-frame) (group-by list) (agg-expr list))
+    (df-aggregate df (coerce group-by 'vector) (coerce agg-expr 'vector))))
+
+(defgeneric make-df (&rest initargs &key &allow-other-keys))
+
+(defmethod schema ((df data-frame))
+  (schema (data-frame-plan df)))
+
+(defgeneric df-plan (df)
+  (:documentation "Return the logical plan associated with this data-frame.")
+  (:method ((df data-frame)) (data-frame-plan df)))
 
 ;;; Physical Expression
 (defclass physical-expression (query-expression) ())
@@ -684,38 +784,6 @@
                    :input (make-physical-plan (slot-value plan 'input))
                    :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
                    :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input)))))))
-
-;;; Joins
-
-;;  TODO 2024-08-02: 
-
-;; inner-join
-
-;; outer-join left-outer-join right-outer-join
-
-;; semi-join
-
-;; anti-join
-
-;; cross-join
-
-;;; Subqueries
-
-;;  TODO 2024-08-02: 
-
-;; subquery
-
-;; correlated-subquery
-
-;; SELECT id, name, (SELECT count(*) FROM orders WHERE customer_id = customer.id) AS num_orders FROM customers
-
-;; uncorrelated-subquery
-
-;; scalar-subquery
-
-;; SELECT * FROM orders WHERE total > (SELECT avg(total) FROM sales WHERE customer_state = 'CA')
-
-;; NOTE 2024-08-02: EXISTS, IN, NOT EXISTS, and NOT IN are also subqueries
 
 ;;; Optimizer
 

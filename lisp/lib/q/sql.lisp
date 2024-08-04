@@ -37,7 +37,7 @@
 (defun illegal-sql-state (state)
   (error 'illegal-sql-state :state state))
 
-;;; Objects
+;;; Logical Classes
 (defclass sql-query (query) ())
 
 (defclass sql-data-source (data-source) ()
@@ -82,10 +82,6 @@
    (order-by :type sql-expression-vector :initarg :order-by)
    (having :type (or null sql-expression) :initarg :having)
    (table-name :type string :initarg :table-name)))
-
-(defclass sql-planner (query-planner) ())
-
-(defclass sql-optimizer (query-optimizer) ())
 
 ;;; Lexer
 (eval-always
@@ -550,7 +546,7 @@
                                                       #.(get-sql-symbol :EQ) #.(get-sql-symbol :GT)
                                                       #.(get-sql-symbol :LT))
                          :test 'string=)
-                 ;; (pop tokens) ;; consume
+                 (pop (sql-tokens self)) ;; consume
                  (make-instance 'sql-math-expression
                    :lhs left
                    :op (sql-token-text token)
@@ -670,6 +666,46 @@
   `(with-sql-parser (,sym (read-sql-stream ,stream))
      ,@body))
 
+;;; Planner
+(defclass sql-logical-plan (logical-plan) ())
+(defclass sql-physical-plan (physical-plan) ())
+
+(defmethod make-physical-expression ((expr sql-expression) (input sql-logical-plan)))
+(defmethod make-physical-plan ((plan sql-logical-plan)))
+
+(defclass sql-planner (query-planner) ())
+
+(defun make-sql-logical-expression ())
+(defun get-ref-columns ())
+(defun get-selection-ref-columns ())
+(defun plan-non-aggregate-query ())
+(defun plan-aggregate-query ())
+
+(defun make-sql-data-frame (select tables)
+  (let* ((table (gethash (slot-value select 'table-name)
+                         tables
+                         (simple-sql-error "No table named ~A" (slot-value select 'table-name))))
+         (proj (map 'vector
+                    (lambda (x) (make-sql-logical-expression x table))
+                    (slot-value select 'projection)))
+         (cols-in-proj (get-ref-columns proj))
+         (agg-count (count-if 'aggregate-expression-p proj)))
+    (when (and (zerop agg-count) (not (sequence:emptyp (slot-value select 'group-by))))
+      (simple-sql-error "GROUP BY without aggregate expression is not supported"))
+    (let ((cols-in-sel (get-selection-ref-columns select table))
+          (plan table))
+      (if (zerop agg-count)
+          (plan-non-aggregate-query select plan proj cols-in-sel cols-in-proj)
+          (let ((pro)
+                (agg)
+                (n-group-cols 0)
+                (group-count 0))
+            plan)))))
+
+;;; Optimizer
+(defclass sql-optimizer (query-optimizer) ())
+
+;;; Top-level Macros
 (defmacro with-sql ((sym input &key (parse t) optimize execute) &body body)
   (declare (ignore optimize execute))
   `(with-sql-parser (,sym ,@(etypecase input

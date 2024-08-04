@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :q/tests
-  (:use :cl :std :rt :q :log :parse/pratt))
+  (:use :cl :std :rt :q :log :parse/pratt :obj/query))
 
 (in-package :q/tests)
 
@@ -15,16 +15,14 @@
 (deftest sanity ())
 
 (deftest sql-select ()
-  (is (typep
-       (with-sql-parser (expr (read-sql-string "SELECT a,b,c FROM FOO"))
-         (parse expr))
-       'sql-select)))
+  (with-sql-parser (expr (read-sql-string "SELECT * FROM FOO"))
+    (is (typep (parse expr) 'sql-select))))
 
 (deftest sql-math ()
-  (is (typep
-       (with-sql (expr "1 + 2 * 3")
-         expr)
-       'sql-math-expression)))
+  (with-sql (expr "1 + 2 * 3")
+    (is (typep expr 'sql-math-expression))
+    (is (typep (rhs expr) 'sql-math-expression))
+    (is (typep (lhs expr) 'sql-number))))
 
 ;; https://www.cpp.edu/~jrfisher/www/prolog_tutorial/2_1.html
 (deftest dql ()

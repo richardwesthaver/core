@@ -424,7 +424,20 @@
            :lt-expression
            :gt-expression
            :neq-expression
-           :eq-expression))
+           :eq-expression
+           :lhs
+           :rhs
+           :logical-plan
+           :aggregate-expression-p
+           :df-col
+           :df-project
+           :df-filter
+           :df-aggregate
+           :df-select
+           :df-fields
+           :df-data
+           :limit
+           :make-df))
 
 (defpackage :obj/secret
   (:nicknames :secret)
