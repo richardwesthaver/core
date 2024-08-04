@@ -6,7 +6,7 @@
 
 ;; Prolog, Datalog, etc.
 
-;;;; Why bother with this when we have SQL?
+;;;; SQL vs Prolog
 
 ;; My current understanding is that Prolog and SQL-derived langs share much in
 ;; common. You can certainly do deductive logic in SQL and you can do
@@ -85,3 +85,6 @@
 (defmacro ?- (&body clauses))
 
 (defmacro *- (head &body body))
+
+;;; Parser
+(defclass dql-parser (query-parser) ())

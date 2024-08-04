@@ -11,7 +11,7 @@
 ;;; Code:
 (in-package :q/sql)
 
-(declaim (optimize (speed 3)))
+(declaim (optimize (speed 3) (safety 2)))
 
 ;;; Conditions
 (define-condition sql-error (error) ())
@@ -49,7 +49,10 @@
 
 (defclass sql-identifier (id sql-expression) ())
 
-(defclass sql-binary-expr (binary-expression sql-expression) ())
+(defclass sql-binary-expression (binary-expression sql-expression) ())
+
+(defclass sql-math-expression (sql-binary-expression)
+  ((op :initarg :op :type symbol :accessor binary-expression-op)))
 
 (defclass sql-string (sql-expression literal-expression)
   ((value :type string :initarg :value)))
@@ -369,7 +372,7 @@
 
 (defun num-start-p (c) (or (digit-char-p c) (char= #\. c) (char= #\- c)))
 (defun ident-start-p (c) (alpha-char-p c))
-(defun ident-part-p (c) (or (alpha-char-p c) (digit-char-p c) (char= #\_)))
+(defun ident-part-p (c) (or (alpha-char-p c) (digit-char-p c) (char= #\_ c)))
 (defun str-start-p (c) (or (char= #\' c) (char= #\" c)))
 (defun kw-start-p (c) (member c *sql-keyword-start-chars* :test 'char=))
 (defun sym-start-p (c) (member c *sql-symbol-start-chars* :test 'char=))
@@ -426,33 +429,44 @@
           (sql-token-end tok) (file-position stream))
     tok))
 
+(defun ambiguous-ident-p (tok)
+  (let ((text (sql-token-text tok)))
+    (or (string-equal #.(get-sql-keyword :ORDER) text)
+        (string-equal #.(get-sql-keyword :GROUP) text))))
+
+(defun proc-ambiguous-ident (stream start)
+  (declare (stream stream) (fixnum start))
+  (if (equalp
+       (read-sequence (make-string 2) stream :start start :end (the fixnum (+ start 2)))
+       #.(get-sql-keyword :BY))
+      :kw
+      :ident))
+
 (def-sql-reader ident-token (stream)
-  (let ((tok (make-sql-token :type :ident)))
+  (let ((tok (make-sql-token)))
     (if (read-sql-char stream #\`)
         (setf (sql-token-text tok)
               (with-output-to-string (s)
                 (loop for x = (peek-char nil stream) ;; must not be EOF before terminator
                       if (not (char= #\` x))
                       do (write-char (read-char stream) s)
-                      else do (return (read-char stream)))))
+                      else do (return (read-char stream))))
+              (sql-token-type tok) :ident)
+        ;; may not actually be ident - we check for kw after we have a known end position
         (setf (sql-token-text tok)
               (with-output-to-string (s)
                 (loop for x = (peek-char nil stream nil nil)
                       while (and x (ident-part-p x))
                       do (write-char (read-char stream) s)))))
     (setf (sql-token-end tok) (file-position stream))
+    ;; resolve sql-token-type
+    (cond
+      ((ambiguous-ident-p tok)
+       (setf (sql-token-type tok) (proc-ambiguous-ident stream (sql-token-end tok))))
+      ((and (not (eql (sql-token-type tok) :ident)) (member (sql-token-text tok) *sql-keywords* :test 'string-equal))
+       (setf (sql-token-type tok) :kw)))
     tok))
                       
-(defun ambiguous-ident-p (text)
-  (or (string-equal #.(get-sql-keyword :ORDER) text)
-      (string-equal #.(get-sql-keyword :GROUP) text)))
-
-(defun parse-ambiguous-ident (text &optional (start 0))
-  (declare (simple-string text) (fixnum  start))
-  (if (equalp (subseq text start (the fixnum (+ start 2))) #.(get-sql-keyword :BY))
-      (make-sql-token :type :kw :text text)
-      (make-sql-token :type :ident :text text)))
-
 (defun next-sql-token (stream)
   "Parse the next sql token from input STREAM else return nil."
   (block :next
@@ -462,10 +476,7 @@
         (return-from :next tok))
       (cond
         ((num-start-p next) (read-sql-num-token stream))
-        ((ident-start-p next) (make-sql-token
-                               :text (format nil "~A" (read-preserving-whitespace stream))
-                               :type :ident
-                               :end (file-position stream)))
+        ((ident-start-p next) (read-sql-ident-token stream))
         ((str-start-p next) (read-sql-str-token stream))
         ((sym-start-p next) (read-sql-sym-token stream))
         (t (make-sql-token :end (file-position stream)))))))
@@ -484,7 +495,7 @@
 ;;; Parser
 
 ;; At this point we have a sequence (list) of tokens
-(defclass sql-parser (pratt-parser)
+(defclass sql-parser (pratt-parser query-parser)
   ((tokens :type list :initarg :tokens :accessor sql-tokens)))
 
 (defmethod next-precedence ((self sql-parser))
@@ -513,22 +524,24 @@
           (t 0)))))
 
 (defmethod parse-prefix ((self sql-parser))
-  (let ((token (car (sql-tokens self))))
+  (let ((token (pop (sql-tokens self))))
     (unless (null token)
       (case (sql-token-type token)
         (:kw (string-case ((sql-token-text token))
-               ("SELECT" nil)
-               ("CAST" nil)
+               ("SELECT" (parse-select self))
+               ("CAST" (parse-cast self))
                ("MAX" (make-instance 'sql-identifier :id "MAX"))
                ("INT" (make-instance 'sql-identifier :id "INT"))
                ("DOUBLE" (make-instance 'sql-identifier :id "DOUBLE"))))
         (:ident (make-instance 'sql-identifier :id (sql-token-text token)))
         (:str (make-instance 'sql-string :value (sql-token-text token)))
-        (:num (make-instance 'sql-number :value (parse-number (sql-token-text token))))))))
+        (:num (make-instance 'sql-number :value (parse-number (sql-token-text token))))
+        ;; unknown identifier
+        (t (make-instance 'sql-identifier :id (sql-token-text token)))))))
 
 (defmethod parse-infix ((self sql-parser) (left sql-expression) precedence)
   (let* ((tokens (sql-tokens self))
-         (token (car tokens)))
+         (token (pop tokens)))
     (unless (null token)
       (case (sql-token-type token)
         (:sym (cond
@@ -537,8 +550,8 @@
                                                       #.(get-sql-symbol :EQ) #.(get-sql-symbol :GT)
                                                       #.(get-sql-symbol :LT))
                          :test 'string=)
-                 (pop tokens) ;; consume
-                 (make-instance 'sql-binary-expr
+                 ;; (pop tokens) ;; consume
+                 (make-instance 'sql-math-expression
                    :lhs left
                    :op (sql-token-text token)
                    :rhs (parse self precedence)))
@@ -554,12 +567,12 @@
                        :expr left
                        :alias (parse-identifier self)))
                ("AND" (pop tokens)
-                      (make-instance 'sql-binary-expr
+                      (make-instance 'sql-binary-expression
                         :lhs left
                         :op "AND"
                         :rhs (parse self precedence)))
                ("OR" (pop tokens)
-                     (make-instance 'sql-binary-expr
+                     (make-instance 'sql-binary-expression
                        :lhs left
                        :op "OR"
                        :rhs (parse self precedence)))
@@ -600,32 +613,41 @@
               ;; TODO 2024-06-29: 
               ;; parse optional WHERE
               (let ((next (car (sql-tokens self))))
-                (when (string-equal "WHERE" (sql-token-text next))
-                  (setf filter-expr (parse-expression self)))
-                (when (and
-                       (string-equal "GROUP" (sql-token-text next))
-                       (string-equal "BY" (sql-token-text (cadr (sql-tokens self)))))
-                  (setf group-by (parse-expression-list self)))
-                (when (string-equal "HAVING" (sql-token-text next))
-                  (setf having-expr (parse-expression self)))
-                (when (and (string-equal "ORDER" (sql-token-text next))
-                           (string-equal "BY" (sql-token-text next)))
-                  (setf order-by (parse-order self)))))))
+                (when next
+                  (when (string-equal "WHERE" (sql-token-text next))
+                    (setf filter-expr (parse-expression self)))
+                  (when (and
+                         (string-equal "GROUP" (sql-token-text next))
+                         (string-equal "BY" (sql-token-text (cadr (sql-tokens self)))))
+                    (setf group-by (parse-expression-list self)))
+                  (when (string-equal "HAVING" (sql-token-text next))
+                    (setf having-expr (parse-expression self)))
+                  (when (and (string-equal "ORDER" (sql-token-text next))
+                             (string-equal "BY" (sql-token-text next)))
+                    (setf order-by (parse-order self))))))))
       (t (illegal-sql-state tok)))
     (make-instance 'sql-select
       :projection projection
-      :filter filter-expr
+      :selection filter-expr
       :group-by group-by
       :order-by order-by
       :having having-expr
       :table-name (id table))))
 
 (defmethod parse-expression-list ((self sql-parser))
-  (let ((lst)
-        (expr (parse-expression self)))
-    (loop while expr
-          do (push expr lst)
-          finally (return lst))))
+  (log:trace! "> parse-expression-list")
+  (let ((ret))
+    (loop for expr = (parse-expression self)
+          while expr
+          do (push expr ret)
+          if ;; check for comma and repeat, else return
+             (let ((peek (car (sql-tokens self))))
+               (and
+                (eql :sym (sql-token-type peek))
+                (string-equal (sql-token-text peek) #.(get-sql-symbol :comma))))
+          do (pop (sql-tokens self))
+          else return ret
+          finally (return ret))))
 
 (defmethod parse-expression ((self sql-parser))
   (parse self 0))
@@ -638,5 +660,21 @@
 
 (defmacro with-sql-parser ((sym &optional tokens) &body body)
   `(let ((,sym (make-instance 'sql-parser :tokens ,tokens)))
-     (print ,sym)
+     ,@body))
+
+(defmacro with-sql-string ((sym str) &body body)
+  `(with-sql-parser (,sym (read-sql-string ,str))
+     ,@body))
+
+(defmacro with-sql-stream ((sym stream) &body body)
+  `(with-sql-parser (,sym (read-sql-stream ,stream))
+     ,@body))
+
+(defmacro with-sql ((sym input &key (parse t) optimize execute) &body body)
+  (declare (ignore optimize execute))
+  `(with-sql-parser (,sym ,@(etypecase input
+                              (stream `((read-sql-stream ,input)))
+                              (string `((read-sql-string ,input)))))
+     ,@(when parse
+         `((setq ,sym (parse ,sym))))
      ,@body))

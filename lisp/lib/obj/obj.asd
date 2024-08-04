@@ -42,9 +42,9 @@
                (:file "equiv")
                (:module "color"
                 :components ((:file "color")
-                             (:file "palette")
                              (:file "util")
-                             (:file "x11-colors")))
+                             (:file "x11")
+                             (:file "palette")))
                (:module "music"
                 :components ((:file "music")))
                (:module "time"

@@ -15,7 +15,7 @@
              (:org "readme"))
 :rules
 ((all (%stash
-       psl.dat parquet.json
+       psl.dat parquet.json rgb.txt
        compile save-std save-prelude save-user
        save-infra save-core save-tests build-rdb
        build-skel build-organ build-homer build-packy
@@ -32,6 +32,8 @@
                     (:install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#))
  (psl.dat (%stash)
           (download "https://publicsuffix.org/list/public_suffix_list.dat" :output ".stash/psl.dat"))
+ (rgb.txt (%stash)
+          (download "https://packy.compiler.company/data/rgb.txt" :output ".stash/rgb.txt"))
  (parquet.thrift (%stash)
                  (download
                   "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"

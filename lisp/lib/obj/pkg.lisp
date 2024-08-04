@@ -167,7 +167,12 @@
    #:rgb-to-hsv #:hsv-to-rgb #:hex-to-rgb #:as-hsv #:as-rgb
    #:rgb-combination #:hsv-combination
    #:parse-hex-rgb #:print-hex-rgb
-   :color-palette :parse-and-write-color-definitions))
+   :color-palette :parse-and-write-color-definitions
+   :*x11-colors* :*x11-color-palette* :*default-color-palette* :color-palette
+   #:make-color-palette
+   #:color-palette-p
+   #:copy-color-palette
+   #:color-palette-table))
 
 (defpackage :obj/time
   (:nicknames :time)
@@ -405,7 +410,21 @@
            :column-value
            :column-type
            :column-vector
-           :column-data))
+           :column-data
+           :math-expression
+           :add-expression
+           :sub-expression
+           :mult-expression
+           :div-expression
+           :mod-expression
+           :and-expression
+           :or-expression
+           :lteq-expression
+           :gteq-expression
+           :lt-expression
+           :gt-expression
+           :neq-expression
+           :eq-expression))
 
 (defpackage :obj/secret
   (:nicknames :secret)

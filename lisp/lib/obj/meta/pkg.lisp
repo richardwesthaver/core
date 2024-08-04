@@ -2,6 +2,17 @@
 
 ;;
 
+;;; Commentary:
+
+
+;;;; Notes:
+
+;; ordered? https://www.reddit.com/r/lisp/comments/n88x59/metaclasses_using_structures_or_speeding_up_slot/
+
+;;;; Ref:
+
+;; https://franz.com/support/documentation/11.0/mop/concepts.html
+
 ;;; Code:
 (defpackage :obj/meta/stealth
   (:use :cl :std :obj/meta :sb-mop))

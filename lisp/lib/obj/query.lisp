@@ -291,6 +291,7 @@
   ((name :initarg :name :type string :accessor binary-expression-name)
    (op :initarg :op :type symbol :accessor binary-expression-op)))
 
+;; TODO 2024-08-03: ???
 (defmethod to-field ((self math-expression) (input logical-plan))
   (declare (ignorable input))
   (make-field :name "mult" :type (field-type (to-field (lhs self) input))))

@@ -6,17 +6,23 @@
 ;;; Code:
 (in-package :obj/color)
 
+(eval-always
+  (defparameter *rgb-colors-path*
+    (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/rgb.txt")))
+  (defvar *x11-colors* nil))
+
 ;;; macros used by color generator scripts
 (defmacro define-rgb-color (name red green blue)
   "Macro for defining color constants."
   (let ((constant-name (symbolicate #\+ name #\+)))
-    `(progn
-       (define-constant ,constant-name (rgb ,red ,green ,blue)
-         :test #'equalp :documentation ,(format nil "X11 color ~A." name)))))
+    `(prog1
+         (define-constant ,constant-name (rgb ,red ,green ,blue)
+           :test #'equalp :documentation ,(format nil "X11 color ~A." name))
+       (pushnew ',constant-name *x11-colors*))))
 
 (defun parse-x11-color-definitions (&key
-                                      (input "/mnt/y/data/etc/rgb.txt")
-                                      (output "x11-colors.lisp"))
+                                    (input *rgb-colors-path*)
+                                    (output "x11.lisp"))
   "Parse X11 color definitions and write them into a file. Return the
 list of colors (for exporting).
 
