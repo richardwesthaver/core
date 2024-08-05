@@ -15,9 +15,9 @@
                              (:file "storable")))
                (:module "hash"
                 :components ((:file "hasher")
+                             (:file "chash")
                              (:file "map")
                              (:file "set")
-                             (:file "chash")
                              (:file "castable")))
                (:file "id")
                (:module "uri"

@@ -11,8 +11,6 @@
   ((db :type rdb :initarg :db :accessor db)
    (schema :type rdb-schema :initarg :schema :accessor schema)))
 
-(defclass rdb-data-frame (data-frame) ())
-
 (defclass rdb-execution-context (execution-context) ())
 
 (defclass rdb-query-plan (query-plan) ())
