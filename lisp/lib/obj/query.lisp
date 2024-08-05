@@ -162,9 +162,7 @@
   (:method ((self record-batch))
     (length (record-batch-fields self))))
 
-;;; Execution Context
-(defclass execution-context () ())
-
+;;; Data Source
 (defclass data-source ()
   ((schema :type schema :accessor schema)))
 
@@ -211,6 +209,13 @@
 (defclass alias-expression (logical-expression)
   ((expr :type logical-expression :initarg :expr :accessor expr)
    (alias :type string :initarg :alias)))
+
+(defclass cast-expression (logical-expression)
+  ((expr :type logical-expression :initarg :expr :accessor expr)
+   (data-type :type form :initarg :data-type)))
+
+(defmethod to-field ((self cast-expression) (input logical-plan))
+  (make-field :name (field-name (to-field (expr self) input)) :type (slot-value self 'data-type)))
 
 ;;;;; Unary
 (defclass unary-expression (logical-expression)
@@ -502,9 +507,15 @@
 (defmethod schema ((df data-frame))
   (schema (data-frame-plan df)))
 
+(defmethod (setf schema) ((schema schema) (df data-frame))
+  (setf (schema df) schema))
+
 (defgeneric df-plan (df)
   (:documentation "Return the logical plan associated with this data-frame.")
   (:method ((df data-frame)) (data-frame-plan df)))
+
+(defmethod (setf df-plan) ((plan logical-plan) (df data-frame))
+  (setf (df-plan df) plan))
 
 ;;; Physical Expression
 (defclass physical-expression (query-expression) ())
@@ -602,7 +613,9 @@
 (defgeneric accumulate (self val)
   (:method ((self accumulator) val)
     (when val
-      (setf (accumulator-value self) (+ val (accumulator-value self))))))
+      (setf (accumulator-value self) (+ val (accumulator-value self)))))
+  (:method ((self list) val)
+    (push val self)))
 
 (defgeneric make-accumulator (self))
 
@@ -622,7 +635,10 @@
   (make-instance 'max-accumulator))
 
 ;;; Physical Plan
-(defgeneric execute (self))
+(defgeneric execute (self)
+  (:documentation "Execute the LOGICAL-PLAN represented by object SELF.")
+  (:method ((self data-frame))
+    (execute (df-plan self))))
 
 (defclass scan-exec (physical-plan)
   ((data-source :type data-source :initarg :data-source)
@@ -810,8 +826,8 @@
     (binary-expression
      (extract-columns (lhs expr) input accum)
      (extract-columns (rhs expr) input accum))
-    (alias-expression (extract-columns (slot-value expr 'expr) input accum))
-    ;; cast-expression
+    (alias-expression (extract-columns (expr expr) input accum))
+    (cast-expression (extract-columns (expr expr) input accum))
     (literal-expression nil)))
 
 (defun extract-columns* (exprs input &optional accum)
@@ -855,3 +871,26 @@
   (:method ((self t) &rest initargs)
     (declare (ignore initargs))
     (make-instance 'query)))
+
+;;; Execution Context
+(defclass execution-context () ())
+
+(defgeneric register-df (self name df)
+  (:documentation "Register a DATA-FRAME with an EXECUTION-CONTEXT."))
+
+(defgeneric register-data-source (self name source)
+  (:documentation "Register a DATA-SOURCE with an EXECUTION-CONTEXT."))
+
+(defgeneric register-file (self name path &key type &allow-other-keys)
+  (:documentation "Register a DATA-SOURCE contained in a file of type TYPE at PATH."))
+
+(defgeneric execute* (self df)
+  (:documentation "Execute the DATA-FRAME DF in CONTEXT.")
+  (:method ((self execution-context) (df data-frame))
+    (declare (ignore self))
+    (execute df)))
+
+(defmethod execute ((self logical-plan))
+  (execute
+   (make-physical-plan
+    (optimize-query (make-instance 'projection-pushdown-optimizer) self))))

@@ -130,6 +130,13 @@
   (:use :cl :std :log :rt :sb-sprof)
   (:export :save-flamegraph))
 
+(defpackage :rt/fuzz
+  (:nicknames :fuzz)
+  (:use :cl :std :log :rt)
+  (:export :fuzzer
+           :fuzz
+           :fuzz*))
+
 (in-package :rt)
 (in-readtable :std)
 

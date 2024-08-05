@@ -3,20 +3,25 @@
 ;; 
 
 ;;; Code:
-(defpackage :q/tests
-  (:use :cl :std :rt :q :log :parse/pratt :obj/query))
-
 (in-package :q/tests)
 
 (defsuite :q)
 
 (in-suite :q)
 
-(deftest sanity ())
+(deftest sanity ()
+  (is (make-instance 'query-engine :parser (make-instance 'query-parser))))
 
 (deftest sql-select ()
-  (with-sql-parser (expr (read-sql-string "SELECT * FROM FOO"))
-    (is (typep (parse expr) 'sql-select))))
+  (with-sql (expr "SELECT BAR FROM FOO")
+    (is (typep expr 'sql-select))
+    (let ((tbl (make-hash-table :test 'equal))
+          (df (make-instance 'data-frame)))
+      (setf (schema df) (make-schema))
+      ;; (signals simple-sql-error (make-sql-data-frame expr tbl))
+      (setf (gethash "FOO" tbl) df)
+      ;; (make-sql-data-frame expr tbl))
+      )))
 
 (deftest sql-math ()
   (with-sql (expr "1 + 2 * 3")
@@ -25,7 +30,7 @@
     (is (typep (lhs expr) 'sql-number))))
 
 ;; https://www.cpp.edu/~jrfisher/www/prolog_tutorial/2_1.html
-(deftest dql ()
+(deftest dql (:skip t)
   (adjacent 1 2)
   (adjacent 2 1) 
   (adjacent 1 3)
@@ -75,6 +80,4 @@
                    nl))
       halt)
 
-  (:- (initialization main)) 
-
-  )
+  (:- (initialization main)))

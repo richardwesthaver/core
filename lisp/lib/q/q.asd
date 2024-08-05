@@ -11,5 +11,8 @@
 
 (defsystem :q/tests
   :depends-on (:std :rt :q :log)
-  :components ((:file "tests"))
+  :components ((:module "tests"
+                :components ((:file "pkg")
+                             (:file "fuzz")
+                             (:file "suite"))))
   :in-order-to ((test-op (test-op "q/tests"))))

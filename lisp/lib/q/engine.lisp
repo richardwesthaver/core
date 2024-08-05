@@ -10,5 +10,16 @@
 ;;; Code:
 (in-package :q/proto)
 
-(defclass query-engine (query-planner query-optimizer execution-context)
-  ((data-sources)))
+;;; Vars
+(defvar *query-engine*)
+(deftype query-dialect-designator () `(member :sql :dql))
+(declaim (query-dialect-designator *query-dialect*))
+(defvar *query-dialect* :sql)
+
+;;; Engine
+;; NOTE 2024-08-04: only slot inherited should be :SCHEMA from DATA-SOURCE. A
+;; QUERY-ENGINE may always act as a source for another engine.
+(defclass query-engine (query-planner execution-context data-source)
+  ((sources :initarg :sources)
+   (parser :initarg :parser :type query-parser)
+   (optimizer :initarg :optimizer :type query-optimizer)))

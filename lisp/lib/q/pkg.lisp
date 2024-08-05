@@ -6,7 +6,10 @@
 (defpackage :q/proto
   (:use :cl :std :obj/query :obj/id)
   (:export
-   :query-engine :query-parser))
+   :query-engine :query-parser
+   :*query-engine*
+   :*query-dialect*
+   :query-dialect-designator))
            
 (defpackage :q/sql
   (:nicknames :sql)
@@ -51,7 +54,8 @@
    :sql-binary-expression
    :with-sql-stream
    :with-sql-string
-   :with-sql))
+   :with-sql
+   :make-sql-data-frame))
 
 (defpackage :q/dql
   (:nicknames :dql)

@@ -437,7 +437,23 @@
            :df-fields
            :df-data
            :limit
-           :make-df))
+           :make-df
+           :binary-expression-name
+           :binary-expression-op
+           :sum-expression
+           :min-expression
+           :max-expression
+           :avg-expression
+           :count-expression
+           :to-field
+           :column-name
+           :cast-expression
+           :df-plan
+           :df-exec
+           :execute*
+           :register-file
+           :register-data-source
+           :register-df))
 
 (defpackage :obj/secret
   (:nicknames :secret)

@@ -5,7 +5,8 @@
                (:file "bench" :depends-on ("pkg"))
                (:file "tracing" :depends-on ("pkg"))
                (:file "flamegraph" :depends-on ("pkg"))
-               (:file "cover" :depends-on ("pkg")))
+               (:file "cover" :depends-on ("pkg"))
+               (:file "fuzz" :depends-on ("pkg")))
   :in-order-to ((test-op (test-op "rt/tests"))))
 
 (defsystem :rt/tests

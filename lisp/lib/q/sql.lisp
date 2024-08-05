@@ -55,10 +55,10 @@
   ((op :initarg :op :type symbol :accessor binary-expression-op)))
 
 (defclass sql-string (sql-expression literal-expression)
-  ((value :type string :initarg :value)))
+  ((value :type string :initarg :value :accessor literal-value)))
 
 (defclass sql-number (sql-expression literal-expression)
-  ((value :type number :initarg :value)))
+  ((value :type number :initarg :value :accessor literal-value)))
 
 (defclass sql-function (id sql-expression)
   ((args :type sql-expression-vector :initarg :args)))
@@ -667,20 +667,139 @@
      ,@body))
 
 ;;; Planner
-(defclass sql-logical-plan (logical-plan) ())
-(defclass sql-physical-plan (physical-plan) ())
-
-(defmethod make-physical-expression ((expr sql-expression) (input sql-logical-plan)))
-(defmethod make-physical-plan ((plan sql-logical-plan)))
-
 (defclass sql-planner (query-planner) ())
 
-(defun make-sql-logical-expression ())
-(defun get-ref-columns ())
-(defun get-selection-ref-columns ())
-(defun plan-non-aggregate-query ())
-(defun plan-aggregate-query ())
+(defun make-sql-logical-expression (expr input)
+  (etypecase expr
+    (sql-identifier (make-instance 'column-expression :name (id expr)))
+    (sql-string (literal-value expr))
+    (sql-number (literal-value expr))
+    ;; TODO 2024-08-04: sql-unary-expression
+    (sql-binary-expression
+     (let ((l (make-sql-logical-expression (lhs expr) input))
+           (r (make-sql-logical-expression (rhs expr) input)))
+       (etypecase expr
+         (sql-math-expression
+          (string-case ((binary-expression-op expr))
+            ;; equiv ops
+            ("=" (make-instance 'eq-expression :lhs l :rhs r))
+            ("!=" (make-instance 'neq-expression :lhs l :rhs r))
+            (">" (make-instance 'gt-expression :lhs l :rhs r))
+            (">=" (make-instance 'gteq-expression :lhs l :rhs r))
+            ("<" (make-instance 'lt-expression :lhs l :rhs r))
+            ("<=" (make-instance 'lteq-expression :lhs l :rhs r))
+            ;; boolean ops
+            ("AND" (make-instance 'and-expression :lhs l :rhs r))
+            ("OR" (make-instance 'or-expression :lhs l :rhs r))
+            ;; math ops
+            ("+" (make-instance 'add-expression :lhs l :rhs r))
+            ("-" (make-instance 'sub-expression :lhs l :rhs r))
+            ("*" (make-instance 'mult-expression :lhs l :rhs r))
+            ("/" (make-instance 'div-expression :lhs l :rhs r))
+            ("%" (make-instance 'mod-expression :lhs l :rhs r)))))))
+    (sql-alias (make-instance 'alias-expression
+                 :expr (make-sql-logical-expression (slot-value expr 'expr) input)
+                 :alias (id (slot-value expr 'alias))))
+    ;; TODO 2024-08-04: requires cast-expression impl in obj/query
+    ;; (sql-cast (make-instance 'cast))
+    (sql-function
+     (when (id expr)
+       (string-case ((id expr))
+         ("MIN" (make-instance 'min-expression
+                  :expr (make-sql-logical-expression (car (slot-value expr 'args)) input)))
+         ("MAX" (make-instance 'max-expression
+                  :expr (make-sql-logical-expression (car (slot-value expr 'args)) input)))
+         ("SUM" (make-instance 'sum-expression
+                  :expr (make-sql-logical-expression (car (slot-value expr 'args)) input)))
+         ("AVG" (make-instance 'avg-expression
+                  :expr (make-sql-logical-expression (car (slot-value expr 'args)) input))))))))
+         
+(labels ((visit (expr accum)
+           (when expr
+             (typecase expr
+               (column-expression (accumulate accum (column-name expr)))
+               (alias-expression (visit (slot-value expr 'expr) accum))
+               (binary-expression
+                (visit (lhs expr) accum)
+                (visit (rhs expr) accum))
+               (aggregate-expression (visit (slot-value expr 'expr) accum))))))
+  (defun get-ref-columns (exprs)
+    (let ((accum))
+      (loop for expr across exprs
+            collect (visit expr accum))))
+  (defun get-selection-ref-columns (select table)
+    (let ((accum))
+      (when (slot-value select 'selection)
+        (let ((filter-expr (make-sql-logical-expression (slot-value select 'selection) table)))
+          (visit filter-expr accum)
+          (let ((valid-cols (map 'list (lambda (x) (field-name x)) (fields (schema table)))))
+            (remove-if (lambda (x) (not (member x valid-cols :test 'string-equal))) accum)))))))
 
+(defun plan-non-aggregate-query (select df projection-expr column-names-in-selection column-names-in-projection)
+  (let ((plan df))
+    (unless (slot-value select 'selection)
+      (return-from plan-non-aggregate-query (df-project plan projection-expr)))
+    (let ((missing (member-if-not
+                    (lambda (x) (member x column-names-in-projection :test 'string-equal))
+                    column-names-in-selection)))
+      (if (null missing)
+          (setq plan (df-filter 
+                      plan
+                      (make-sql-logical-expression
+                       (slot-value select 'selection)
+                       (setf plan (df-project plan projection-expr)))))
+          (let ((n (length projection-expr)))
+            (setq plan (df-filter plan
+                                  (make-sql-logical-expression
+                                   (slot-value select 'selection)
+                                   (setf plan
+                                         (df-project plan
+                                                     (merge 'vector
+                                                            projection-expr
+                                                            (mapcar
+                                                             (lambda (x) (make-instance 'column-expression :name x))
+                                                             missing)
+                                                            (lambda (x y) (declare (ignore y)) x)))))))
+            
+            (df-project plan
+                        (coerce
+                         (loop for i below n
+                               collect (make-instance 'column-expression
+                                         :name (field-name (field (schema plan) i))))
+                         'vector))))
+      plan)))
+
+(defun plan-aggregate-query (projection-expr select column-names-in-selection df aggregate-expr)
+  (let ((plan df)
+        (proj-no-agg (remove-if 'aggregate-expression-p projection-expr)))
+    (when (slot-value select 'selection)
+      (let* ((cols-in-proj-no-agg (get-ref-columns proj-no-agg))
+            (missing (member-if-not
+                      (lambda (x) (member x cols-in-proj-no-agg :test 'string-equal))
+                      column-names-in-selection)))
+        (if (null missing)
+            (setq plan (df-filter 
+                        plan
+                        (make-sql-logical-expression
+                         (slot-value select 'selection)
+                         (setf plan (df-project plan proj-no-agg)))))
+            (setq plan (df-filter
+                        plan
+                        (make-sql-logical-expression
+                         (slot-value select 'selection)
+                         (setf plan
+                               (df-project plan
+                                           (merge 'vector
+                                                  proj-no-agg
+                                                  (mapcar (lambda (x) (make-instance 'column-expression :name x))
+                                                          missing)
+                                                  (lambda (x y) (declare (ignore y)) x))))))))
+        (df-aggregate plan
+                      (map 'vector (lambda (x) (make-sql-logical-expression x plan))
+                           (slot-value select 'group-by))
+                      aggregate-expr)))))
+
+;; TODO 2024-08-04: fix deadlock
 (defun make-sql-data-frame (select tables)
   (let* ((table (gethash (slot-value select 'table-name)
                          tables
@@ -705,12 +824,19 @@
 ;;; Optimizer
 (defclass sql-optimizer (query-optimizer) ())
 
+;;; Engine
+(defclass sql-engine (query-engine) ()
+  (:default-initargs
+   :parser (make-instance 'sql-parser)))
+  
 ;;; Top-level Macros
 (defmacro with-sql ((sym input &key (parse t) optimize execute) &body body)
-  (declare (ignore optimize execute))
   `(with-sql-parser (,sym ,@(etypecase input
                               (stream `((read-sql-stream ,input)))
                               (string `((read-sql-string ,input)))))
-     ,@(when parse
-         `((setq ,sym (parse ,sym))))
+     ,@(cond
+         (optimize `((setq ,sym (optimize (parse ,sym)))))
+         (parse `((setq ,sym (parse ,sym)))))
+     ,@(when execute
+         `((execute (make-physical-plan ,sym))))
      ,@body))
