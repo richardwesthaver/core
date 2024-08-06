@@ -918,6 +918,22 @@ Add this function to appropriate major mode hooks such as
             (set-buffer-modified-p b-m-p))
         (error nil)))))
 
+;; TODO 2024-08-05: infer logbook column-titles/props
+(defun column-display-value-transformer (column-title value)
+  "Modifies the value to display in column view."
+  (let ((title (upcase column-title)))
+    (when (and (member title '("UPDATED" "NOTE")))
+      (org-back-to-heading)
+      (re-search-forward
+       "Note taken on \\[\\(.*\\)\\] \\\\\\\\\\\n +\\(.*\\) *$"
+       (org-entry-end-position) t))
+    (if (equal column-title "UPDATED")
+        (match-string-no-properties 1)
+      (match-string-no-properties 2))))
+
+(setq org-columns-modify-value-for-display-function
+      #'column-display-value-transformer)
+
 ;;;###autoload
 (defun org-align-all-tables ()
   "align all tables in current buffer"

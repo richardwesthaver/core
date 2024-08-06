@@ -29,6 +29,7 @@
 		  (require 'cl-lib)
 		  (require 'sxp (expand-file-name "sxp.el" (join-paths user-emacs-directory "lib/")))
                   (require 'skeleton)
+                  (require 'org)
                   (require 'tempo)
                   (require 'autoinsert)
 		  (defvar skel-debug nil)

@@ -49,4 +49,4 @@ DEFCMD.")
 
 (defvar *arg* nil
   "Current option argument.
-Bound for the lifetime of afunction defined with DEFCMD.")
+Bound for the lifetime of a function defined with DEFOPT.")

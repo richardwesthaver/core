@@ -45,6 +45,7 @@
                  (:file "pan")
                  (:file "const")
                  (:file "collecting")
+                 (:file "loop")
                  (:file "control")))
                (:file "bit")
                (:file "thread")

@@ -10,18 +10,24 @@
 (in-suite :q)
 
 (deftest sanity ()
-  (is (make-instance 'query-engine :parser (make-instance 'query-parser))))
+  (is (make-instance 'query-engine
+        :parser (make-instance 'query-parser)
+        :optimizer (make-instance 'sql-optimizer)
+        :sources nil)))
 
 (deftest sql-select ()
-  (with-sql (expr "SELECT BAR FROM FOO")
+  (with-sql (expr "SELECT * FROM FOO")
     (is (typep expr 'sql-select))
-    (let ((tbl (make-hash-table :test 'equal))
-          (df (make-instance 'data-frame)))
-      (setf (schema df) (make-schema))
-      ;; (signals simple-sql-error (make-sql-data-frame expr tbl))
-      (setf (gethash "FOO" tbl) df)
-      ;; (make-sql-data-frame expr tbl))
-      )))
+      (signals simple-sql-error (make-sql-data-frame expr tbl))))
+
+(deftest sql-df ()
+  (let ((tbl (make-hash-table :test 'equal))
+        (df (make-instance 'data-frame)))
+    (setf (schema df) (make-schema))
+    (is (setf (gethash "FOO" tbl) df))
+    (is (gethash "FOO" tbl))
+    ;; (is (make-sql-data-frame df tbl))
+    ))
 
 (deftest sql-math ()
   (with-sql (expr "1 + 2 * 3")

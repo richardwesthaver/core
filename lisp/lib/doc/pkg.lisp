@@ -72,7 +72,8 @@
    ;; dist
    :dist-documentation
    ;; image
-   :image-documentation))
+   :image-documentation
+   :explain))
 
 (in-package :doc)
 

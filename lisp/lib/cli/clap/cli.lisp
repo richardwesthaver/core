@@ -38,7 +38,7 @@
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
 ;; slot at class allocation.
-(defun make-opts (opts)
+(defun make-opts (&rest opts)
   "Make a vector of CLI-OPTs based on OPTS."
   (map 'vector
        (lambda (x)
@@ -48,7 +48,7 @@
            (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
        opts))
 
-(defun make-cmds (cmds)
+(defun make-cmds (&rest cmds)
   "Make a vector of CLI-CMDs based on CMDS."
   (map 'vector
         (lambda (x)

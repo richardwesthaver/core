@@ -1,6 +1,19 @@
 ;;; lib/dat/csv.lisp --- CSV Data Format
 
-;; Character Separated Values
+;; Comma Separated Values (or tabs or whatever)
+
+;;; Commentary:
+
+;; This package prioritizes flexibility. If you want speed, convert to
+;; parquet.
+
+;; Still, efficiency is worth pursuing here and there are some obvious gaps to
+;; remedy.
+
+;; - remove sequence functions
+;; - research optimized access patterns used in other langs/state of art
+;; - buffered reads
+;; - multithreading
 
 ;;; Code:
 (in-package :dat/csv)
@@ -223,8 +236,13 @@ If start or end is negative, it counts from the end. -1 is the last element.
                      (coerce result 'vector)
                      header)))))
 
-(defun read-csv-file (filename &key (header t) type-spec map-fns (delimiter *csv-separator*) (external-format *csv-default-external-format*)
-                                 (start 0) end)
+(defun read-csv-file (filename &key (header t)
+                                    type-spec
+                                    map-fns
+                                    (delimiter *csv-separator*)
+                                    (external-format *csv-default-external-format*)
+                                    (start 0)
+                                    end)
   "Read from stream until eof and return a csv table.
 
 A csv table is a vector of csv records.
@@ -239,10 +257,8 @@ map-fns is a list of functions of one argument and output one result.
 each function in it will be applied to the parsed element.
 If any function in the list is nil or t, it equals to #'identity.
 If map-fns is nil, then nothing will be applied.
-https://cgit.gentoo.org/proj/lisp.git/tree/dev-lisp/cl-rsm-finance/cl-rsm-finance-1.1.ebuild?h=old-portage&id=e9b71910b0d4f22aeb66f14e158a2451f9955b0d
-external-format (default is shift-jis) is a valid AllegroCL external-format type.
 
-OS is a set to eol-convention of the file stream.
+external-format (default is :UTF-8)
 
 start and end specifies how many elements per record will be included.
 If start or end is negative, it counts from the end. -1 is the last element.
@@ -266,3 +282,11 @@ If start or end is negative, it counts from the end. -1 is the last element.
                    (stable-sort table (ecase order (:ascend #'string<=) (:descend #'string>=))
                                 :key (lambda (rec) (aref rec i))))
           finally (return table))))
+
+(defclass csv-file-data (file-data-source) ())
+
+;; TODO 2024-08-05: 
+(defmethod scan-data ((self csv-file-data) (projection sequence))
+  (if (null projection)
+      (read-csv-file (file-data-path self))
+      (nyi!)))

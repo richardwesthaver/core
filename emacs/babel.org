@@ -2,7 +2,7 @@
 #+author: Richard Westhaver
 #+description: Core Library of Babel
 #+setupfile: https://cdn.compiler.company/org/clean.theme
-#+property: header-args :eval never-export :exports both
+#+property: header-args :exports both
 
 Welcome to the Core [[https://www.gnu.org/software/emacs/manual/html_node/org/Library-of-Babel.html][Library of Babel]]. This file contains a
 collection of code blocks used throughout our Org documents.
@@ -116,7 +116,7 @@ cd $dir && cat * | wc -w
 #+header: :var version="0.1.0"
 #+header: :var name=(org-sbe org-current-h1-title)
 #+header: :var dir="/home/ellis/comp/"
-#+begin_src emacs-lisp :results table replace :eval no-export 
+#+begin_src emacs-lisp :results table replace
   (let* ((src (concat dir name))
          (age (org-sbe "hg-log-age" ''(dir src)))
          (rev (org-sbe "hg-rev" ''(dir src)))

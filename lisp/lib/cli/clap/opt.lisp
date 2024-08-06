@@ -6,30 +6,30 @@
 (in-package :cli/clap/obj)
 
 ;;; Parsers
-(make-opt-parser string $val)
+(make-opt-parser string *arg*)
 
-(make-opt-parser boolean (when $val t))
+(make-opt-parser boolean (when *arg* t))
 
-(make-opt-parser (form string) (read-from-string $val))
+(make-opt-parser (form string) (read-from-string *arg*))
 
-(make-opt-parser (list form) (when (listp $val) $val))
+(make-opt-parser (list form) (when (listp *arg*) *arg*))
 
-(make-opt-parser (symbol form) (when (symbolp $val) $val))
+(make-opt-parser (symbol form) (when (symbolp *arg*) *arg*))
 
-(make-opt-parser (keyword form) (when (keywordp $val) $val))
+(make-opt-parser (keyword form) (when (keywordp *arg*) *arg*))
 
-(make-opt-parser number (when $val (parse-number $val)))
+(make-opt-parser number (when *arg* (parse-number *arg*)))
 
-(make-opt-parser integer (when $val (parse-integer $val)))
+(make-opt-parser integer (when *arg* (parse-integer *arg*)))
 
 (make-opt-parser (file string) 
-  (parse-native-namestring $val nil *default-pathname-defaults* :as-directory nil))
+  (parse-native-namestring *arg* nil *default-pathname-defaults* :as-directory nil))
 
 (make-opt-parser (directory string)
-  (sb-ext:parse-native-namestring $val nil *default-pathname-defaults* :as-directory t))
+  (sb-ext:parse-native-namestring *arg* nil *default-pathname-defaults* :as-directory t))
 
 (make-opt-parser (pathname string)
-  (pathname $val))
+  (pathname *arg*))
 
 ;;; Objects
 (defstruct cli-opt

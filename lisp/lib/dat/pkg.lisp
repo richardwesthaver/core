@@ -33,7 +33,7 @@
    :parse-dot-string))
 
 (defpackage :dat/csv
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :obj/query)
   (:export
    :read-csv-file
    :*csv-separator*

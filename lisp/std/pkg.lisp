@@ -191,6 +191,7 @@
   (:import-from :std/list :flatten :defmacro!)
   (:export
    :named-lambda
+   :nested-loop
    :g!-symbol-p
    :defmacro/g!
    :o!-symbol-p

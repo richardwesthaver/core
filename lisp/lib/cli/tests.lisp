@@ -1,3 +1,8 @@
+;;; cli/tests.lisp --- CLI Tests
+
+;;
+
+;;; Code:
 (defpackage :cli/tests
   (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt :cli/clap :cli/tools/sbcl))
 
@@ -212,12 +217,12 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
                  (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
 (defparameter *opts* (make-opts
-                       (:name "foo" :global t :description "bar")
-		       (:name "bar" :description "foo")))
+                      '(:name "foo" :global t :description "bar")
+		      '(:name "bar" :description "foo")))
 
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
 (defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds #(*cmd1*) :opts *opts* :description "cmd1 description"))
-(defparameter *cmds* (make-cmds (:name "baz" :description "baz" :opts *opts*)))
+(defparameter *cmds* (make-cmds '(:name "baz" :description "baz" :opts *opts*)))
 
 (defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
@@ -671,11 +676,12 @@ Eastern Mediterranean ████████████████▊
 
 (deftest clap-ast ())
 
+(compile (defmain (:exit nil :export nil)
+           (let ((test-target t))
+             test-target)))
+
 (deftest main-output ()
-  (compile (defmain (:exit nil :export nil)
-             (let ((test-target t))
-               test-target)))
-  (is (not (funcall #'main))))
+  (is (not (funcall 'main))))
 
 (deftest sbcl-tools ()
   (with-sbcl (:noinform t :quit t)

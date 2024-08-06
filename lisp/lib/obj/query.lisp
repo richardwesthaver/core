@@ -166,7 +166,10 @@
 (defclass data-source ()
   ((schema :type schema :accessor schema)))
 
-(defgeneric scan-data-source (self projection)
+(defclass file-data-source (data-source)
+  ((path :initarg :path :accessor file-data-path)))
+
+(defgeneric scan-data (self projection)
   (:documentation "Scan the data source, selecting the specified columns."))
 
 ;;; Expressions
@@ -508,7 +511,7 @@
   (schema (data-frame-plan df)))
 
 (defmethod (setf schema) ((schema schema) (df data-frame))
-  (setf (schema df) schema))
+  (setf (slot-value (data-frame-plan df) 'schema) schema))
 
 (defgeneric df-plan (df)
   (:documentation "Return the logical plan associated with this data-frame.")
@@ -648,7 +651,7 @@
   (select (schema (slot-value self 'data-source)) (slot-value self 'projection)))
 
 (defmethod execute ((self scan-exec))
-  (scan-data-source (slot-value self 'data-source) (slot-value self 'projection)))
+  (scan-data (slot-value self 'data-source) (slot-value self 'projection)))
 
 (defclass projection-exec (physical-plan)
   ((input :type physical-plan :initarg :input)

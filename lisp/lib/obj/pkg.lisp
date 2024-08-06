@@ -453,7 +453,9 @@
            :execute*
            :register-file
            :register-data-source
-           :register-df))
+           :register-df
+           :file-data-path
+           :file-data-source))
 
 (defpackage :obj/secret
   (:nicknames :secret)
