@@ -19,10 +19,10 @@
 ;;; Code:
 (in-package :cli/tools/tmux)
 
-(deferror tmux-error (simple-error error) ())
+(deferror simple-tmux-error (simple-error error) ())
 
-(defun tmux-error (fmt &rest args)
-  (error 'tmux-error :format-arguments args :format-control fmt))
+(defun simple-tmux-error (fmt &rest args)
+  (error 'simple-tmux-error :format-arguments args :format-control fmt))
 
 (defparameter *tmux-user-config-path* (merge-pathnames ".tmux.conf" (user-homedir-pathname)))
 (defparameter *tmux-system-config-path* (merge-pathnames "tmux.conf" "/etc/"))
@@ -32,10 +32,26 @@
 (defparameter *default-tmux-tmpdir* (pathname (format nil "/tmp/tmux-~A/" (sb-posix:getuid))))
 (defparameter *default-tmux-socket* (merge-pathnames "default" *default-tmux-tmpdir*))
 
+;;; Utils
+(defun run-tmux (&rest args)
+  (let ((proc (sb-ext:run-program *tmux* (or args nil) :output :stream)))
+    (with-open-stream (s (sb-ext:process-output proc))
+      (loop for l = (read-line s nil nil)
+            while l
+            do (write-line l)))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+        nil
+        (simple-tmux-error "tmux command failed: ~A ~A" args))))
+
+(defun spawn-tmux (&rest args)
+  (run-terminal (append (list "-e" "tmux") args)))
+
+;;; Session > Window > Pane
 (defstruct tmux-session
   (id 0 :type fixnum)
   name
   (windows nil :type list))
+
 (defstruct tmux-window
   (id 0 :type fixnum)
   name
@@ -46,249 +62,7 @@
   (id 0 :type fixnum)
   name)
 
-(defun run-tmux (&rest args)
-  (let ((proc (sb-ext:run-program *tmux* (or args nil) :output :stream)))
-    (with-open-stream (s (sb-ext:process-output proc))
-      (loop for l = (read-line s nil nil)
-            while l
-            do (write-line l)))
-    (if (eq 0 (sb-ext:process-exit-code proc))
-        nil
-        (tmux-error "tmux command failed: ~A ~A" args))))
-
-(defun spawn-tmux (&rest args)
-  (run-terminal (append (list "-e" "tmux") args)))
-
-;;; Format Strings
-(defun format-tmux-string (dst fmt &rest args)
-  (apply #'format dst fmt (mapcar (lambda (a) (format nil "#{~A}" a)) args)))
-
-(defvar *tmux-variables*
-  '(active_window_index ;; Index of active window in session
-    alternate_on ;; 1 if pane is in alternate screen
-    alternate_saved_x ;; Saved cursor X in alternate screen
-    alternate_saved_y ;; Saved cursor Y in alternate screen
-    buffer_created ;; Time buffer created
-    buffer_name ;; Name of buffer
-    buffer_sample ;; Sample of start of buffer
-    buffer_size ;; Size of the specified buffer in bytes
-    client_activity ;; Time client last had activity
-    client_cell_height ;; Height of each client cell in pixels
-    client_cell_width ;; Width of each client cell in pixels
-    client_control_mode ;; 1 if client is in control mode
-    client_created ;; Time client created
-    client_discarded ;; Bytes discarded when client behind
-    client_flags ;; List of client flags
-    client_height ;; Height of client
-    client_key_table ;; Current key table
-    client_last_session ;; Name of the client's last session
-    client_name ;; Name of client
-    client_pid ;; PID of client process
-    client_prefix ;; 1 if prefix key has been pressed
-    client_readonly ;; 1 if client is read-only
-    client_session ;; Name of the client's session
-    client_termfeatures ;; Terminal features of client, if any
-    client_termname ;; Terminal name of client
-    client_termtype ;; Terminal type of client, if available
-    client_tty ;; Pseudo terminal of client
-    client_uid ;; UID of client process
-    client_user ;; User of client process
-    client_utf8 ;; 1 if client supports UTF-8
-    client_width ;; Width of client
-    client_written ;; Bytes written to client
-    command ;; Name of command in use, if any
-    command_list_alias ;; Command alias if listing commands
-    command_list_name ;; Command name if listing commands
-    command_list_usage ;; Command usage if listing commands
-    config_files ;; List of configuration files loaded
-    copy_cursor_line ;; Line the cursor is on in copy mode
-    copy_cursor_word ;; Word under cursor in copy mode
-    copy_cursor_x ;; Cursor X position in copy mode
-    copy_cursor_y ;; Cursor Y position in copy mode
-    current_file ;; Current configuration file
-    cursor_character ;; Character at cursor in pane
-    cursor_flag ;; Pane cursor flag
-    cursor_x ;; Cursor X position in pane
-    cursor_y ;; Cursor Y position in pane
-    history_bytes ;; Number of bytes in window history
-    history_limit ;; Maximum window history lines
-    history_size ;; Size of history in lines
-    hook ;; Name of running hook, if any
-    hook_client ;; Name of client where hook was run, if any
-    hook_pane ;; ID of pane where hook was run, if any
-    hook_session ;; ID of session where hook was run, if any
-    hook_session_name ;; Name of session where hook was run, if any
-    hook_window ;; ID of window where hook was run, if any
-    hook_window_name ;; Name of window where hook was run, if any
-    host ;; H	Hostname of local host
-    host_short ;; h	Hostname of local host (no domain name)
-    insert_flag ;; Pane insert flag
-    keypad_cursor_flag ;; Pane keypad cursor flag
-    keypad_flag ;; Pane keypad flag
-    last_window_index ;; Index of last window in session
-    line ;; Line number in the list
-    mouse_all_flag ;; Pane mouse all flag
-    mouse_any_flag ;; Pane mouse any flag
-    mouse_button_flag ;; Pane mouse button flag
-    mouse_hyperlink ;; Hyperlink under mouse, if any
-    mouse_line ;; Line under mouse, if any
-    mouse_sgr_flag ;; Pane mouse SGR flag
-    mouse_standard_flag ;; Pane mouse standard flag
-    mouse_status_line ;; Status line on which mouse event took place
-    mouse_status_range ;; Range type or argument of mouse event on status line
-    mouse_utf8_flag ;; Pane mouse UTF-8 flag
-    mouse_word ;; Word under mouse, if any
-    mouse_x ;; Mouse X position, if any
-    mouse_y ;; Mouse Y position, if any
-    next_session_id ;; Unique session ID for next new session
-    origin_flag ;; Pane origin flag
-    pane_active ;; 1 if active pane
-    pane_at_bottom ;; 1 if pane is at the bottom of window
-    pane_at_left ;; 1 if pane is at the left of window
-    pane_at_right ;; 1 if pane is at the right of window
-    pane_at_top ;; 1 if pane is at the top of window
-    pane_bg ;; Pane background colour
-    pane_bottom ;; Bottom of pane
-    pane_current_command ;; Current command if available
-    pane_current_path ;; Current path if available
-    pane_dead ;; 1 if pane is dead
-    pane_dead_signal ;; Exit signal of process in dead pane
-    pane_dead_status ;; Exit status of process in dead pane
-    pane_dead_time ;; Exit time of process in dead pane
-    pane_fg ;; Pane foreground colour
-    pane_format ;; 1 if format is for a pane
-    pane_height ;; Height of pane
-    pane_id ;; D	Unique pane ID
-    pane_in_mode ;; 1 if pane is in a mode
-    pane_index ;; P	Index of pane
-    pane_input_off ;; 1 if input to pane is disabled
-    pane_last ;; 1 if last pane
-    pane_left ;; Left of pane
-    pane_marked ;; 1 if this is the marked pane
-    pane_marked_set ;; 1 if a marked pane is set
-    pane_mode ;; Name of pane mode, if any
-    pane_path ;; Path of pane (can be set by application)
-    pane_pid ;; PID of first process in pane
-    pane_pipe ;; 1 if pane is being piped
-    pane_right ;; Right of pane
-    pane_search_string ;; Last search string in copy mode
-    pane_start_command ;; Command pane started with
-    pane_start_path ;; Path pane started with
-    pane_synchronized ;; 1 if pane is synchronized
-    pane_tabs ;; Pane tab positions
-    pane_title ;; T	Title of pane (can be set by application)
-    pane_top ;; Top of pane
-    pane_tty ;; Pseudo terminal of pane
-    pane_unseen_changes ;; 1 if there were changes in pane while in mode
-    pane_width ;; Width of pane
-    pid ;; Server PID
-    rectangle_toggle ;; 1 if rectangle selection is activated
-    scroll_position ;; Scroll position in copy mode
-    scroll_region_lower ;; Bottom of scroll region in pane
-    scroll_region_upper ;; Top of scroll region in pane
-    search_match ;; Search match if any
-    search_present ;; 1 if search started in copy mode
-    selection_active ;; 1 if selection started and changes with the cursor in copy mode
-    selection_end_x ;; X position of the end of the selection
-    selection_end_y ;; Y position of the end of the selection
-    selection_present ;; 1 if selection started in copy mode
-    selection_start_x ;; X position of the start of the selection
-    selection_start_y ;; Y position of the start of the selection
-    server_sessions ;; Number of sessions
-    session_activity ;; Time of session last activity
-    session_alerts ;; List of window indexes with alerts
-    session_attached ;; Number of clients session is attached to
-    session_attached_list ;; List of clients session is attached to
-    session_created ;; Time session created
-    session_format ;; 1 if format is for a session
-    session_group ;; Name of session group
-    session_group_attached ;; Number of clients sessions in group are attached to
-    session_group_attached_list ;; List of clients sessions in group are attached to
-    session_group_list ;; List of sessions in group
-    session_group_many_attached ;; 1 if multiple clients attached to sessions in group
-    session_group_size ;; Size of session group
-    session_grouped ;; 1 if session in a group
-    session_id ;; Unique session ID
-    session_last_attached ;; Time session last attached
-    session_many_attached ;; 1 if multiple clients attached
-    session_marked ;; 1 if this session contains the marked pane
-    session_name ;; S	Name of session
-    session_path ;; Working directory of session
-    session_stack ;; Window indexes in most recent order
-    session_windows ;; Number of windows in session
-    socket_path ;; Server socket path
-    start_time ;; Server start time
-    uid ;; Server UID
-    user ;; Server user
-    version ;; Server version
-    window_active ;; 1 if window active
-    window_active_clients ;; Number of clients viewing this window
-    window_active_clients_list ;; List of clients viewing this window
-    window_active_sessions ;; Number of sessions on which this window is active
-    window_active_sessions_list ;; List of sessions on which this window is active
-    window_activity ;; Time of window last activity
-    window_activity_flag ;; 1 if window has activity
-    window_bell_flag ;; 1 if window has bell
-    window_bigger ;; 1 if window is larger than client
-    window_cell_height ;; Height of each cell in pixels
-    window_cell_width ;; Width of each cell in pixels
-    window_end_flag ;; 1 if window has the highest index
-    window_flags ;; F	Window flags with # escaped as ##
-    window_format ;; 1 if format is for a window
-    window_height ;; Height of window
-    window_id ;; Unique window ID
-    window_index ;; I	Index of window
-    window_last_flag ;; 1 if window is the last used
-    window_layout ;; Window layout description, ignoring zoomed window panes
-    window_linked ;; 1 if window is linked across sessions
-    window_linked_sessions ;; Number of sessions this window is linked to
-    window_linked_sessions_list ;; List of sessions this window is linked to
-    window_marked_flag ;; 1 if window contains the marked pane
-    window_name ;; W	Name of window
-    window_offset_x ;; X offset into window if larger than client
-    window_offset_y ;; Y offset into window if larger than client
-    window_panes ;; Number of panes in window
-    window_raw_flags ;; Window flags with nothing escaped
-    window_silence_flag ;; 1 if window has silence alert
-    window_stack_index ;; Index in session most recent stack
-    window_start_flag ;; 1 if window has the lowest index
-    window_visible_layout ;; Window layout description, respecting zoomed window panes
-    window_width ;; Width of window
-    window_zoomed_flag ;; 1 if window is zoomed
-    wrap_flag ;; Pane wrap flag
-    ;; display-menu vars
-    popup_centre_x	Centered in the client
-    popup_centre_y ;; entered in the client
-    popup_height ;; eight of menu or popup
-    popup_mouse_bottom ;; ottom of at the mouse
-    popup_mouse_centre_x ;; orizontal centre at the mouse
-    popup_mouse_centre_y ;; ertical centre at the mouse
-    popup_mouse_top ;; op at the mouse
-    popup_mouse_x ;; ouse X position
-    popup_mouse_y ;; ouse Y position
-    popup_pane_bottom ;; ottom of the pane
-    popup_pane_left ;; eft of the pane
-    popup_pane_right ;; ight of the pane
-    popup_pane_top ;; op of the pane
-    popup_status_line_y ;; bove or below the status line
-    popup_width ;; idth of menu or popup
-    popup_window_status_line_x ;; t the window position in status line
-    popup_window_status_line_y ;; t the status line showing the window
-    ))
-
-(defvar *tmux-var-table*
-  (let ((tbl (make-hash-table :test 'equal :size (length *tmux-variables*))))
-    (dolist (v *tmux-variables* tbl)
-      (setf (gethash v tbl) (string-downcase (symbol-name v))))))
-
-(defmacro tmux-format (dst fmt &rest args)
-  "Format a tmux string, replacing symbols in ARGS that match a member of
-*TMUX-VARIABLES* with their corresponding lower-case name."
-  `(format-tmux-string ,dst ,fmt
-                       ,@(mapcar (lambda (a)
-                                   (gethash (symbolicate a) *tmux-var-table* a))
-                                 args)))
-
+;;; Controller
 (defstruct tmux-controller
   (input nil :type (or null sb-sys:fd-stream))
   (output nil :type (or null sb-sys:fd-stream))
@@ -312,3 +86,281 @@
 (defun read-tmux-line (ctrl)
   (read-line (tmux-controller-output ctrl)))
 
+(defstruct tmux-command name flags args)
+
+(defun parse-tmux-command (str)
+  "Parse a single TMUX-COMMAND from a string."
+  (let ((words (split-sequence #\space str)))
+    ;; TODO 2024-08-06: parse for real
+    (make-tmux-command :name (car words) :args (cdr words))))
+
+(defcfg tmux-config ()
+  ((commands :initform nil)
+   (server-options :type hash-table)
+   (session-options :type hash-table)
+   (window-options :type hash-table)
+   (keys :type hash-table))
+  (:documentation "A CFG object containing the parsed content of a tmux configuration file."))
+
+(defmethod make-cfg ((obj (eql :tmux)) &key commands server session window keys)
+  (let ((cfg (make-instance 'tmux-config)))
+    (when commands (setf (slot-value cfg 'commands) commands))
+    (when server (setf (slot-value cfg 'server-options) server))
+    (when session (setf (slot-value cfg 'session-options) session))
+    (when window (setf (slot-value cfg 'window-options) window))
+    (when keys (setf (slot-value cfg 'keys) keys))
+    cfg))
+
+(defmethod find-cfg ((obj (eql :tmux)) &key system user)
+  "Find a tmux configuration and load it.
+
+When SYSTEM is non-nil, skip check for user config.
+
+When USER is non-nil it should be the name of a user whose cfg will be loaded
+from /home/USER/.tmux.conf."
+  (let ((path (cond
+                (system (probe-file *tmux-system-config-path*))
+                (user (probe-file (format nil "/home/~A/.tmux.conf" user)))
+                (t (or (probe-file *tmux-user-config-path*) (probe-file *tmux-system-config-path*)))))
+        (obj (make-cfg :tmux :commands nil)))
+    (with-open-file (file path)
+      (with-output-to-string (str)
+        (loop for l = (read-line file nil nil)
+              while l 
+              unless (or (zerop (length l)) (equal (char l 0) #\#))
+              do (push (parse-tmux-command l) (slot-value obj 'commands)))))
+    obj))
+
+;; (describe (find-cfg :tmux))
+
+;;; Format Strings
+(defun format-tmux-string (dst fmt &rest args)
+  (apply #'format dst fmt (mapcar (lambda (a) (format nil "#{~A}" a)) args)))
+
+(defmacro tmux-format (dst fmt &rest args)
+  "Format a tmux string, replacing symbols in ARGS that match a member of
+*TMUX-VARIABLES* with their corresponding lower-case name."
+  `(format-tmux-string ,dst ,fmt
+                       ,@(mapcar (lambda (a)
+                                   (gethash (symbolicate a) *tmux-var-table* a))
+                                 args)))
+
+(declaim ((vector symbol) *tmux-variables*))
+(defvar *tmux-variables*
+  #(active-window-index ;; Index of active window in session
+    alternate-on ;; 1 if pane is in alternate screen
+    alternate-saved-x ;; Saved cursor X in alternate screen
+    alternate-saved-y ;; Saved cursor Y in alternate screen
+    buffer-created ;; Time buffer created
+    buffer-name ;; Name of buffer
+    buffer-sample ;; Sample of start of buffer
+    buffer-size ;; Size of the specified buffer in bytes
+    client-activity ;; Time client last had activity
+    client-cell-height ;; Height of each client cell in pixels
+    client-cell-width ;; Width of each client cell in pixels
+    client-control-mode ;; 1 if client is in control mode
+    client-created ;; Time client created
+    client-discarded ;; Bytes discarded when client behind
+    client-flags ;; List of client flags
+    client-height ;; Height of client
+    client-key-table ;; Current key table
+    client-last-session ;; Name of the client's last session
+    client-name ;; Name of client
+    client-pid ;; PID of client process
+    client-prefix ;; 1 if prefix key has been pressed
+    client-readonly ;; 1 if client is read-only
+    client-session ;; Name of the client's session
+    client-termfeatures ;; Terminal features of client, if any
+    client-termname ;; Terminal name of client
+    client-termtype ;; Terminal type of client, if available
+    client-tty ;; Pseudo terminal of client
+    client-uid ;; UID of client process
+    client-user ;; User of client process
+    client-utf8 ;; 1 if client supports UTF-8
+    client-width ;; Width of client
+    client-written ;; Bytes written to client
+    command ;; Name of command in use, if any
+    command-list-alias ;; Command alias if listing commands
+    command-list-name ;; Command name if listing commands
+    command-list-usage ;; Command usage if listing commands
+    config-files ;; List of configuration files loaded
+    copy-cursor-line ;; Line the cursor is on in copy mode
+    copy-cursor-word ;; Word under cursor in copy mode
+    copy-cursor-x ;; Cursor X position in copy mode
+    copy-cursor-y ;; Cursor Y position in copy mode
+    current-file ;; Current configuration file
+    cursor-character ;; Character at cursor in pane
+    cursor-flag ;; Pane cursor flag
+    cursor-x ;; Cursor X position in pane
+    cursor-y ;; Cursor Y position in pane
+    history-bytes ;; Number of bytes in window history
+    history-limit ;; Maximum window history lines
+    history-size ;; Size of history in lines
+    hook ;; Name of running hook, if any
+    hook-client ;; Name of client where hook was run, if any
+    hook-pane ;; ID of pane where hook was run, if any
+    hook-session ;; ID of session where hook was run, if any
+    hook-session-name ;; Name of session where hook was run, if any
+    hook-window ;; ID of window where hook was run, if any
+    hook-window-name ;; Name of window where hook was run, if any
+    host ;; H	Hostname of local host
+    host-short ;; h	Hostname of local host (no domain name)
+    insert-flag ;; Pane insert flag
+    keypad-cursor-flag ;; Pane keypad cursor flag
+    keypad-flag ;; Pane keypad flag
+    last-window-index ;; Index of last window in session
+    line ;; Line number in the list
+    mouse-all-flag ;; Pane mouse all flag
+    mouse-any-flag ;; Pane mouse any flag
+    mouse-button-flag ;; Pane mouse button flag
+    mouse-hyperlink ;; Hyperlink under mouse, if any
+    mouse-line ;; Line under mouse, if any
+    mouse-sgr-flag ;; Pane mouse SGR flag
+    mouse-standard-flag ;; Pane mouse standard flag
+    mouse-status-line ;; Status line on which mouse event took place
+    mouse-status-range ;; Range type or argument of mouse event on status line
+    mouse-utf8-flag ;; Pane mouse UTF-8 flag
+    mouse-word ;; Word under mouse, if any
+    mouse-x ;; Mouse X position, if any
+    mouse-y ;; Mouse Y position, if any
+    next-session-id ;; Unique session ID for next new session
+    origin-flag ;; Pane origin flag
+    pane-active ;; 1 if active pane
+    pane-at-bottom ;; 1 if pane is at the bottom of window
+    pane-at-left ;; 1 if pane is at the left of window
+    pane-at-right ;; 1 if pane is at the right of window
+    pane-at-top ;; 1 if pane is at the top of window
+    pane-bg ;; Pane background colour
+    pane-bottom ;; Bottom of pane
+    pane-current-command ;; Current command if available
+    pane-current-path ;; Current path if available
+    pane-dead ;; 1 if pane is dead
+    pane-dead-signal ;; Exit signal of process in dead pane
+    pane-dead-status ;; Exit status of process in dead pane
+    pane-dead-time ;; Exit time of process in dead pane
+    pane-fg ;; Pane foreground colour
+    pane-format ;; 1 if format is for a pane
+    pane-height ;; Height of pane
+    pane-id ;; D	Unique pane ID
+    pane-in-mode ;; 1 if pane is in a mode
+    pane-index ;; P	Index of pane
+    pane-input-off ;; 1 if input to pane is disabled
+    pane-last ;; 1 if last pane
+    pane-left ;; Left of pane
+    pane-marked ;; 1 if this is the marked pane
+    pane-marked-set ;; 1 if a marked pane is set
+    pane-mode ;; Name of pane mode, if any
+    pane-path ;; Path of pane (can be set by application)
+    pane-pid ;; PID of first process in pane
+    pane-pipe ;; 1 if pane is being piped
+    pane-right ;; Right of pane
+    pane-search-string ;; Last search string in copy mode
+    pane-start-command ;; Command pane started with
+    pane-start-path ;; Path pane started with
+    pane-synchronized ;; 1 if pane is synchronized
+    pane-tabs ;; Pane tab positions
+    pane-title ;; T	Title of pane (can be set by application)
+    pane-top ;; Top of pane
+    pane-tty ;; Pseudo terminal of pane
+    pane-unseen-changes ;; 1 if there were changes in pane while in mode
+    pane-width ;; Width of pane
+    pid ;; Server PID
+    rectangle-toggle ;; 1 if rectangle selection is activated
+    scroll-position ;; Scroll position in copy mode
+    scroll-region-lower ;; Bottom of scroll region in pane
+    scroll-region-upper ;; Top of scroll region in pane
+    search-match ;; Search match if any
+    search-present ;; 1 if search started in copy mode
+    selection-active ;; 1 if selection started and changes with the cursor in copy mode
+    selection-end-x ;; X position of the end of the selection
+    selection-end-y ;; Y position of the end of the selection
+    selection-present ;; 1 if selection started in copy mode
+    selection-start-x ;; X position of the start of the selection
+    selection-start-y ;; Y position of the start of the selection
+    server-sessions ;; Number of sessions
+    session-activity ;; Time of session last activity
+    session-alerts ;; List of window indexes with alerts
+    session-attached ;; Number of clients session is attached to
+    session-attached-list ;; List of clients session is attached to
+    session-created ;; Time session created
+    session-format ;; 1 if format is for a session
+    session-group ;; Name of session group
+    session-group-attached ;; Number of clients sessions in group are attached to
+    session-group-attached-list ;; List of clients sessions in group are attached to
+    session-group-list ;; List of sessions in group
+    session-group-many-attached ;; 1 if multiple clients attached to sessions in group
+    session-group-size ;; Size of session group
+    session-grouped ;; 1 if session in a group
+    session-id ;; Unique session ID
+    session-last-attached ;; Time session last attached
+    session-many-attached ;; 1 if multiple clients attached
+    session-marked ;; 1 if this session contains the marked pane
+    session-name ;; S	Name of session
+    session-path ;; Working directory of session
+    session-stack ;; Window indexes in most recent order
+    session-windows ;; Number of windows in session
+    socket-path ;; Server socket path
+    start-time ;; Server start time
+    uid ;; Server UID
+    user ;; Server user
+    version ;; Server version
+    window-active ;; 1 if window active
+    window-active-clients ;; Number of clients viewing this window
+    window-active-clients-list ;; List of clients viewing this window
+    window-active-sessions ;; Number of sessions on which this window is active
+    window-active-sessions-list ;; List of sessions on which this window is active
+    window-activity ;; Time of window last activity
+    window-activity-flag ;; 1 if window has activity
+    window-bell-flag ;; 1 if window has bell
+    window-bigger ;; 1 if window is larger than client
+    window-cell-height ;; Height of each cell in pixels
+    window-cell-width ;; Width of each cell in pixels
+    window-end-flag ;; 1 if window has the highest index
+    window-flags ;; F	Window flags with # escaped as ##
+    window-format ;; 1 if format is for a window
+    window-height ;; Height of window
+    window-id ;; Unique window ID
+    window-index ;; I	Index of window
+    window-last-flag ;; 1 if window is the last used
+    window-layout ;; Window layout description, ignoring zoomed window panes
+    window-linked ;; 1 if window is linked across sessions
+    window-linked-sessions ;; Number of sessions this window is linked to
+    window-linked-sessions-list ;; List of sessions this window is linked to
+    window-marked-flag ;; 1 if window contains the marked pane
+    window-name ;; W	Name of window
+    window-offset-x ;; X offset into window if larger than client
+    window-offset-y ;; Y offset into window if larger than client
+    window-panes ;; Number of panes in window
+    window-raw-flags ;; Window flags with nothing escaped
+    window-silence-flag ;; 1 if window has silence alert
+    window-stack-index ;; Index in session most recent stack
+    window-start-flag ;; 1 if window has the lowest index
+    window-visible-layout ;; Window layout description, respecting zoomed window panes
+    window-width ;; Width of window
+    window-zoomed-flag ;; 1 if window is zoomed
+    wrap-flag ;; Pane wrap flag
+    ;; display-menu vars
+    popup-centre-x	Centered in the client
+    popup-centre-y ;; entered in the client
+    popup-height ;; eight of menu or popup
+    popup-mouse-bottom ;; ottom of at the mouse
+    popup-mouse-centre-x ;; orizontal centre at the mouse
+    popup-mouse-centre-y ;; ertical centre at the mouse
+    popup-mouse-top ;; op at the mouse
+    popup-mouse-x ;; ouse X position
+    popup-mouse-y ;; ouse Y position
+    popup-pane-bottom ;; ottom of the pane
+    popup-pane-left ;; eft of the pane
+    popup-pane-right ;; ight of the pane
+    popup-pane-top ;; op of the pane
+    popup-status-line-y ;; bove or below the status line
+    popup-width ;; idth of menu or popup
+    popup-window-status-line-x ;; t the window position in status line
+    popup-window-status-line-y ;; t the status line showing the window
+    ))
+
+(defvar *tmux-variable-names*
+  (coerce 
+   (loop for v across *tmux-variables*
+         collect (string-downcase (substitute #\_ #\- (symbol-name v))))
+   '(vector string)))

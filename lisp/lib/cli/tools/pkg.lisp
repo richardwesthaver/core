@@ -12,6 +12,8 @@
 
 (defpackage :cli/tools/tmux
   (:use :cl :std :cli/env :cli/tools/term)
+  (:import-from :obj/cfg
+   :defcfg :make-cfg :find-cfg)
   (:export
    :*tmux-user-config-path*
    :*tmux-system-config-path*
@@ -21,7 +23,7 @@
    :tmux-format-string
    :*tmux-variables*
    :*tmux-var-table*
-   :tmux-error))
+   :simple-tmux-error))
 
 (defpackage :cli/tools/cc
   (:use :cl :std :cli/env)

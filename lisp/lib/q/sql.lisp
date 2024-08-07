@@ -799,7 +799,6 @@
                            (slot-value select 'group-by))
                       aggregate-expr)))))
 
-;; TODO 2024-08-04: fix deadlock
 (defun make-sql-data-frame (select tables)
   (let* ((table (gethash (slot-value select 'table-name)
                          tables

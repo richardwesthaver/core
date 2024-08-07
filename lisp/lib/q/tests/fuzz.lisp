@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :q/tests/fuzz)
 
-(defclass query-fuzzer (fuzzer) ())
+(defclass query-fuzzer (fuzzer) (data-source))
 
 (defclass sql-fuzzer (query-fuzzer) ())
 

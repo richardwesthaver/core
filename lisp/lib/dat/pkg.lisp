@@ -41,7 +41,8 @@
    :write-csv-file
    :write-csv-stream
    :read-csv-file-and-sort
-   :parse-csv-string))
+   :parse-csv-string
+   #:write-csv-string))
 
 (defpackage :dat/toml
   (:use :cl :std :dat/proto :obj/time)

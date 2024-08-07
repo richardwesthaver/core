@@ -15,6 +15,8 @@
 ;; - buffered reads
 ;; - multithreading
 
+;; ref: https://datatracker.ietf.org/doc/html/rfc4180
+
 ;;; Code:
 (in-package :dat/csv)
 
@@ -77,6 +79,10 @@ Elements can be any types"
                               :if-exists :supersede
                               :external-format external-format)
     (write-csv-stream f table :delimiter delimiter)))
+
+(defun write-csv-string (table)
+  (with-output-to-string (str)
+    (write-csv-stream str table)))
 
 (defun parse-csv-string (str &key (delimiter *csv-separator*)) ;; refer RFC4180
   (coerce

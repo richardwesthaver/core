@@ -19,7 +19,7 @@
   ())
 
 (defgeneric make-cfg (obj &rest args &key &allow-other-keys))
-(defgeneric find-cfg (kind obj &rest args &key &allow-other-keys))
+(defgeneric find-cfg (obj &rest args &key &allow-other-keys))
 (defgeneric cfg-find (obj key &key &allow-other-keys))
 (defgeneric cfg-get (obj key))
 (defgeneric (setf cfg-get) (obj key val))

@@ -9,7 +9,8 @@
    :query-engine :query-parser
    :*query-engine*
    :*query-dialect*
-   :query-dialect-designator))
+   :query-dialect-designator
+   :sql :dql))
            
 (defpackage :q/sql
   (:nicknames :sql)

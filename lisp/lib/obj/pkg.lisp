@@ -315,7 +315,8 @@
   (:nicknames :cfg)
   (:use :cl :std)
   (:export :cfg :make-cfg :find-cfg
-   :cfg-find :cfg-get :defcfg))
+   :cfg-find :cfg-get :defcfg
+   :load-cfg))
 
 (defpackage :obj/db
   (:nicknames :db)
@@ -455,7 +456,12 @@
            :register-data-source
            :register-df
            :file-data-path
-           :file-data-source))
+           :file-data-source
+           :optimize-query
+           :projection-pushdown-optimizer
+           :extract-columns*
+           :extract-columns
+           :query-vop))
 
 (defpackage :obj/secret
   (:nicknames :secret)
