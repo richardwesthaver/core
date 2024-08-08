@@ -5,8 +5,27 @@
 ;;; Code:
 (in-package :q/tests/fuzz)
 
-(defclass query-fuzzer (fuzzer) (data-source))
+(defvar *fuzz-value-max-size* 32)
 
-(defclass sql-fuzzer (query-fuzzer) ())
+;; > schema, state, generator
+(defclass query-fuzzer (fuzzer data-source) ())
 
-(defclass dql-fuzzer (query-fuzzer) ())
+(defun generate-sql-type (state &optional (type :string))
+  (case type
+    (:integer (make-instance 'sql-number :value (random most-positive-fixnum)))
+    (:float (make-instance 'sql-number :value (random most-positive-single-float)))
+    (:double (make-instance 'sql-number :value (random most-positive-double-float)))
+    (:string (make-instance 'sql-string :value (rt:random-chars (random *fuzz-value-max-size* state))))))
+
+(defun generate-dql-type (state &optional (type :string)))
+
+(defclass sql-fuzzer (query-fuzzer) ()
+  (:default-initargs
+   :generator #'generate-sql-type))
+
+(defmethod fuzz ((self sql-fuzzer) &key type)
+  (funcall (fuzz-generator self) (fuzz-state self) type))
+
+(defclass dql-fuzzer (query-fuzzer) ()
+  (:default-initargs
+   :generator #'generate-dql-type))

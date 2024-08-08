@@ -461,7 +461,8 @@
            :projection-pushdown-optimizer
            :extract-columns*
            :extract-columns
-           :query-vop))
+           :query-vop
+           :expr))
 
 (defpackage :obj/secret
   (:nicknames :secret)

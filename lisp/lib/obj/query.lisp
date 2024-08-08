@@ -101,7 +101,10 @@
 ;;; Record Batch
 (defstruct record-batch
   (schema (make-schema) :type schema)
-  (fields #() :type field-vector))
+  (fields #() :type column-vector))
+
+(defmethod schema ((self record-batch))
+  (record-batch-schema self))
 
 (defmethod make-load-form ((self record-batch) &optional env)
   (declare (ignore env))
@@ -328,7 +331,8 @@
 
 (defgeneric aggregate-expression-p (self)
   (:method ((self aggregate-expression)) t)
-  (:method ((self alias-expression)) (aggregate-expression-p (expr self))))
+  (:method ((self alias-expression)) (aggregate-expression-p (expr self)))
+  (:method ((self t)) nil))
 
 (defmethod to-field ((self aggregate-expression) (input logical-plan))
   (declare (ignorable input))
@@ -479,6 +483,7 @@
   (plan (make-instance 'logical-plan) :type logical-plan))
 
 (defgeneric df-col (self))
+
 (defgeneric df-project (df exprs)
   (:method ((df data-frame) (expr list))
     (df-project df (coerce expr 'vector)))
@@ -505,7 +510,9 @@
   (:method ((df data-frame) (group-by list) (agg-expr list))
     (df-aggregate df (coerce group-by 'vector) (coerce agg-expr 'vector))))
 
-(defgeneric make-df (&rest initargs &key &allow-other-keys))
+(defgeneric make-df (self &key &allow-other-keys)
+  (:method ((self null) &key)
+    (make-data-frame)))
 
 (defmethod schema ((df data-frame))
   (schema (data-frame-plan df)))

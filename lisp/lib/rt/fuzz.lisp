@@ -17,21 +17,23 @@
 (defclass fuzzer ()
   ((state :initform (make-random-state t)
     :initarg :state
-          :accessor fuzzer-state)
+          :accessor fuzz-state)
    (generator :initform *default-fuzz-generator*
               :initarg :generator
-              :type (function (state))
+              :type function
               :accessor fuzz-generator))
   (:documentation "An object which provides invalid, unexpected or random data as inputs to some
 program."))
 
 (defgeneric fuzz (self &key &allow-other-keys)
+  (:method ((self fuzzer) &key &allow-other-keys)
+    (funcall (the function (fuzz-generator self)) (fuzz-state self)))
   (:method ((self fuzzer) &key count)
     (if count
         (let ((ret))
           (dotimes (i count ret)
-            (push (funcall (the function (fuzz-generator self)) (fuzzer-state self)) ret)))
-        (funcall (the function (fuzz-generator self)) (fuzzer-state self)))))
+            (push (funcall (the function (fuzz-generator self)) (fuzz-state self)) ret)))
+        (fuzz self))))
 
 (defgeneric fuzz* (state generator &key &allow-other-keys)
   (:method ((state list) (generator function) &key (count 1))

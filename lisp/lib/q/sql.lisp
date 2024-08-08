@@ -43,6 +43,8 @@
 (defclass sql-data-source (data-source) ()
   (:documentation "Data source which can be used within SQL expressions."))
 
+;; SQL-EXPRESSIONs are the output of a SQL-PARSER. These objects are further
+;; lowered to LOGICAL-EXPRESSIONs.
 (defclass sql-expression () ())
 
 (deftype sql-expression-vector () '(vector sql-expression))
@@ -667,8 +669,6 @@
      ,@body))
 
 ;;; Planner
-(defclass sql-planner (query-planner) ())
-
 (defun make-sql-logical-expression (expr input)
   (etypecase expr
     (sql-identifier (make-instance 'column-expression :name (id expr)))
@@ -800,9 +800,13 @@
                       aggregate-expr)))))
 
 (defun make-sql-data-frame (select tables)
-  (let* ((table (gethash (slot-value select 'table-name)
-                         tables
-                         (simple-sql-error "No table named ~A" (slot-value select 'table-name))))
+  "Process the given SELECT statement with the provided hash-table of
+string:data-frame. Returns a data-frame."
+  (let* ((table (or
+                 (gethash (slot-value select 'table-name)
+                          tables
+                          )
+                 (simple-sql-error "No table named ~A" (slot-value select 'table-name))))
          (proj (map 'vector
                     (lambda (x) (make-sql-logical-expression x table))
                     (slot-value select 'projection)))
@@ -818,7 +822,35 @@
                 (agg)
                 (n-group-cols 0)
                 (group-count 0))
-            plan)))))
+            (declare (fixnum n-group-cols group-count))
+            (loop for expr across proj
+                  do (typecase expr
+                       (aggregate-expression
+                        (progn
+                          (push (+ n-group-cols (length agg)) pro)
+                          (push expr agg)))
+                       (alias-expression
+                        (progn
+                          (push (make-instance 'alias-expression
+                                  :name (+ n-group-cols (length agg))
+                                  :expr (slot-value expr 'alias))
+                                pro)
+                          ;; TODO 2024-08-07: does this need to be cast to aggregate-expression?
+                          (push (expr expr) agg)))
+                       (t (progn
+                            (push group-count pro)
+                            (incf group-count)))))
+            (let ((plan
+                    (df-project
+                     (plan-aggregate-query proj select cols-in-sel plan agg)
+                     pro)))
+              (if-let ((having (slot-value select 'having)))
+                (df-filter plan (make-sql-logical-expression having plan))
+                plan)))))))
+
+(defmethod make-df ((self sql-select) &key tables &allow-other-keys)
+  (when tables
+    (make-sql-data-frame self tables)))
 
 ;;; Optimizer
 (defclass sql-optimizer (query-optimizer) ())

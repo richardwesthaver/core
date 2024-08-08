@@ -135,7 +135,9 @@
   (:use :cl :std :log :rt)
   (:export :fuzzer
            :fuzz
-           :fuzz*))
+           :fuzz*
+           :fuzz-generator
+           :fuzz-state))
 
 (in-package :rt)
 (in-readtable :std)
