@@ -25,10 +25,30 @@
 ;; this stage. The design of this package will be much simpler and optimized
 ;; for compatibility with Lisp Objects.
 
-;; I think we can get quite far, with a bit of clever hacking and some good
-;; macros.
+;; The design we're going for in this package is what I would consider the
+;; Lisper's version of Datalog. We want to implement just enough to be useful
+;; as a query language, and then use it to bootstrap a more elegant Prolog
+;; compiler, likely in SYN/PROLOG.
 
-;;;; Refs
+;;;;; Data Model
+
+;; compiled code + constants -> physical plan -> arena + hash-tables -> engine
+
+;;;;; Compiler
+
+;; Predicates
+
+;; Rules/Facts
+
+;;;;; Runtime
+
+;; Engine 
+
+;; Execution 
+
+;; Persistence
+
+;;;;; Refs
 
 ;; https://franz.com/support/documentation/11.0/prolog.html
 
@@ -37,6 +57,8 @@
 ;; https://norvig.com/paip/README.html
 
 ;; https://en.wikipedia.org/wiki/Negation_as_failure
+
+;; https://github.com/bobschrag/clolog/blob/main/architecture.md
 
 ;;; Code:
 (in-package :q/dql)
