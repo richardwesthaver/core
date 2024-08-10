@@ -10,7 +10,7 @@
    :dat :obj
    :io :parse
    :swank-client
-   :cl+ssl
+   :cl+ssl :cli
    :chipz :babel :chunga
    :std :log)
   :serial t

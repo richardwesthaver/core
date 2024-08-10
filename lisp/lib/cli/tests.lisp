@@ -216,9 +216,8 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (is (string= "foobar"
                  (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
-(defparameter *opts* (make-opts
-                      '(:name "foo" :global t :description "bar")
-		      '(:name "bar" :description "foo")))
+(defparameter *opts* '((:name "foo" :global t :description "bar")
+		       (:name "bar" :description "foo")))
 
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
 (defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds #(*cmd1*) :opts *opts* :description "cmd1 description"))

@@ -14,15 +14,20 @@
     ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
     (t (apply #'make-instance kind slots))))
 
-(defmacro define-cli (name &body body)
+(defmacro define-cli (sym &key name version description thunk opts cmds)
   "Define a symbol NAME bound to a top-level CLI object."
   (with-gensyms (%name %class)
-    (if (atom name)
-        (setq %name name
+    (if (atom sym)
+        (setq %name sym
               %class :cli)
-        (setq %name (car name)
-              %class (cdr name)))
-    `(,*default-cli-def* ,%name (apply #'make-cli ,%class ',body))))
+        (setq %name (car sym)
+              %class (cdr sym)))
+    `(,*default-cli-def* ,%name (make-cli ,%class :name ,name
+                                                  :version ,version
+                                                  :description ,description
+                                                  :thunk ,thunk
+                                                  :opts (make-opts ',opts)
+                                                  :cmds (make-cmds ',cmds)))))
 
 (defmacro defmain ((&key (exit t) (export t)) &body body)
   "Define a CLI main function in the current package."
@@ -38,7 +43,7 @@
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
 ;; slot at class allocation.
-(defun make-opts (&rest opts)
+(defun make-opts (opts)
   "Make a vector of CLI-OPTs based on OPTS."
   (map 'vector
        (lambda (x)
@@ -48,7 +53,7 @@
            (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
        opts))
 
-(defun make-cmds (&rest cmds)
+(defun make-cmds (cmds)
   "Make a vector of CLI-CMDs based on CMDS."
   (map 'vector
         (lambda (x)

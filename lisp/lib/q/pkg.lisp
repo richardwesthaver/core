@@ -65,7 +65,11 @@
    :dql-error
    :dql-data-source
    :dql-query
-   :dql-expression))
+   :dql-expression
+   :dql-variable-p
+   :dql-variable
+   :dql-anonymous
+   :dql-anonymous-p))
 
 ;; (defpackage :q/e)
 

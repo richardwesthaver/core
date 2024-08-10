@@ -42,6 +42,9 @@
  (parquet.json (%stash)
                (download "https://packy.compiler.company/data/parquet.json"
                          :output ".stash/parquet.json"))
+ (freedesktop.org.xml (%stash)
+                      (download "https://packy.compiler.company/data/freedesktop.org.xml"
+                                :output ".stash/freedesktop.org.xml"))
  (parquet-test-data (%stash) (download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
                                        :output ".stash/alltypes_plain.parquet"))
  ;; lisp

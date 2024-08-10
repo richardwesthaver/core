@@ -16,7 +16,7 @@
   :name "packy"
   :version "0.1.0"
   :description "Universal Package Manager"
-  :thunk pk-show
+  :thunk 'pk-show
   :opts ((:name "level" :global t :description "set the log level" :thunk pk-log-level)
          (:name "help" :global t :description "print help" :thunk pk-help)
          (:name "version" :global t :description "print version" :thunk pk-version))

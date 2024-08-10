@@ -15,7 +15,7 @@
 
 ;; (defopt rdb-config (init-rdb-user-config (parse-file-opt *arg*)))
 
-(defcmd rdb-new
+(defcmd rdb-new ()
   (set-opt *rdb* :error-if-exists t)
   (open-db *rdb*)
   (println (rdb-name *rdb*)))
@@ -72,14 +72,16 @@
 (define-cli *cli*
   :name "rdb"
   :version "0.1.0"
-  :thunk rdb-show
+  :thunk 'rdb-show
   :description "A simple helper for RocksDB."
   :opts ((:name "level" :global t :description "set the log level" :thunk rdb-log-level)
          (:name "help" :global t :description "print help" :thunk rdb-help)
          (:name "version" :global t :description "print version" :thunk rdb-version)
          (:name "db" :global t :description "target db" :thunk rdb-target-db :kind dir))
-  :cmds ((:name new :thunk rdb-new)
-         (:name show :thunk rdb-show)
+  :cmds ((:name new
+          :thunk rdb-new)
+         (:name show
+          :thunk rdb-show)
          (:name set :thunk rdb-set)
          (:name get :thunk rdb-get)
          (:name fuzz :thunk rdb-fuzz)

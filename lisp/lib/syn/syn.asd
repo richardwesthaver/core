@@ -1,6 +1,6 @@
 (defsystem :syn
   :version "0.1.0"
-  :maintainer "ellis <ellis@rwest.io>"
+  :maintainer "Richard Westhaver <richard.westhaver@gmail.com>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on (:std :obj :parse :tree-sitter)
   :serial t

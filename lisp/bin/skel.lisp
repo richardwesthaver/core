@@ -4,7 +4,7 @@
 ;;  level. :INPUT :WAIT :OUTPUT
 (in-package :std-user)
 (defpkg :bin/skel
-  (:use :cl :std :cli/clap
+  (:use :cl :std :cli/clap :cli/clap/vars
    :vc :sb-ext :skel :log
    :dat/sxp #+tools :skel/tools/viz)
   (:import-from :cli/shell :*shell-input*)
@@ -231,11 +231,11 @@
   :name "skel"
   :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "A hacker's project compiler."
-  :thunk skc-show
+  :thunk 'skc-show
   :opts ((:name "help" :global t :description "print this message" 
-	  :thunk skc-help)
-	 (:name "version" :global t :description "print version" 
-	  :thunk skc-version)
+	   :thunk skc-help)
+	  (:name "version" :global t :description "print version" 
+	   :thunk skc-version)
 	 (:name "level" :global t :description "set log level (warn,info,debug,trace)"
 	  :thunk skc-level)
 	 (:name "config" :global t :description "set a custom skel user config" :kind file)
@@ -243,7 +243,7 @@
 	 (:name "output" :global t :description "output target" :kind string))
   :cmds ((:name init
 	  :description "initialize a skelfile in the current directory"
-          :opts ((:name "name" :description "project name" :kind string))
+          :opts (:name "name" :description "project name" :kind string)
           :thunk skc-init)
          (:name new
           :description "make a new skel project"

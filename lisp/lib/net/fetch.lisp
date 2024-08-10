@@ -3,19 +3,26 @@
 (define-condition invalid-path-error (error)
   ((text :initarg :text :reader text)))
 
-(defun download (url &key output (if-exists :error))
-  (let ((output (if output
-                    output
-                    (file-namestring (obj/uri:uri-path (obj/uri:uri url))))))
+(defun download (url &key (output (obj/uri:uri-path (obj/uri:uri url)))
+                          (if-exists :error) (progress nil) (connect-timeout net/req:*default-connect-timeout*)
+                          cookies)
+  (let ((*progress-bar-enabled* progress))
     (multiple-value-bind (stream status header uri)
-        (req:get url :want-stream t :force-binary t)
+        (req:get url :want-stream t :force-binary t :connect-timeout connect-timeout :verbose (log:trace-p)
+                     :cookie-jar cookies)
       (when (= status 200)
-        (with-open-file (out output :direction :output :element-type '(unsigned-byte 8) :if-exists if-exists)
-          (loop for c = (read-byte stream nil nil)
-                while c
-                do (write-byte c out))))
-      (values (or stream uri header)
-              status))))
+        (log:debug! "download connect OK:" url)
+        (log:debug! "headers:" (hash-table-alist header))
+        (let ((len (gethash "content-length" header)))
+          (when len (setf len (parse-integer len)))
+          (with-progress-bar (len "downloading ~a to ~a..." url output)
+            (with-open-file (out output :direction :output :element-type '(unsigned-byte 8) :if-exists if-exists)
+              (loop for c = (read-byte stream nil nil)
+                    while c
+                    do (progn
+                         (update-progress *progress-bar* 1)
+                         (write-byte c out)))))
+          (values stream status uri header))))))
 
 (defun split-file-path (path)
   (let ((pos-last-slash (1+ (position #\/ path :from-end t))))

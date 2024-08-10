@@ -320,7 +320,7 @@
 
 (defpackage :net/fetch
   (:nicknames :fetch)
-  (:use :cl :std :obj/uri)
+  (:use :cl :std :obj/uri :cli/progress)
   (:export :fetch :download))
 
 (defpackage :net/srv
