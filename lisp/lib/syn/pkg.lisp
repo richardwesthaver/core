@@ -10,3 +10,17 @@
   (:export))
 
 (in-package :syn)
+
+(defvar *syntax-tree* nil)
+(defclass syntax () ())
+
+;; does not need tree-sitter lang loaded before use
+(defclass tree-sitter-syntax (syntax)
+  (path
+   info))
+
+;; needs tree-sitter lang loaded before use
+(defstruct tree-sitter-syntax-info
+  version
+  symbols
+  fields)

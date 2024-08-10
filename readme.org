@@ -9,15 +9,10 @@
   - [[https://compiler.company/docs/core/stats.html][Stats]] :: Project Statistics
 
 * Overview
-The Compiler Company (aka CC) is a small software research laboratory
+ is a small software research laboratory
 concerned with the future of Mechanical Freedom.
 
-This repository contains the monolothic core of all our products and
-projects.
-
-- NOTE :: This is *not* a portable library. Starting in version =1.0=
-  we will be depending on separately distributed forks of SBCL and
-  Rust.
+This repository contains the monolothic core of the Compiler Company.
 
 To bootstrap the core you will need recent versions of [[https://www.rust-lang.org/][Rust]], [[http://www.sbcl.org/][SBCL]], and
 a C compiler (clang or gcc). Only Unix systems are explicitly
@@ -32,25 +27,25 @@ to reliably provision the host either from source or pre-built
 platform-specific [[https://packy.compiler.company/dist][binary distributions]].
 
 #+NAME: Optional Dependencies
-| dependency  | dependents             | src                                           | dist |
-|-------------+------------------------+-----------------------------------------------+------|
-| Blake3      | ffi/blake3             | https://vc.compiler.company/packy/blake3      |      |
-| Tree-sitter | ffi/tree-sitter        | https://vc.compiler.company/packy/tree-sitter |      |
-| Uring       | ffi/uring              | https://vc.compiler.company/packy/uring       |      |
-| Btrfs       | ffi/btrfs              | https://vc.compiler.company/packy/btrfs       |      |
-| Ublksrv     | ffi/ublk               | https://vc.compiler.company/packy/ublksrv     |      |
-| OpenSSL     | lib/net                |                                               |      |
-| RocksDB     | ffi/rocksdb            | https://vc.compiler.company/packy/rocksdb     |      |
-| Git         | lib/vc/git             | https://vc.compiler.company/packy/git         |      |
-| Hg          | lib/vc/hg              | https://vc.compiler.company/packy/hg          |      |
-| Zstd        | ffi/zstd               | https://vc.compiler.company/packy/zstd        |      |
-| Qemu        | lib/box                | https://vc.compiler.company/packy/qemu        |      |
-| Podman      | lib/pod                | https://vc.compiler.company/packy/podman      |      |
-| Emacs       | emacs                  | https://vc.compiler.company/packy/emacs       |      |
-| StumpWM     | lib/gui/wm/x11/stumpwm | https://vc.compiler.company/packy/stumpwm     |      |
-| Readline    | ffi/readline           |                                               |      |
-| Keyutils    | ffi/keyutils           |                                               |      |
-| Mpd         | lib/aud/mpd            | https://vc.compiler.company/packy/mpd         |      |
+| dependency  | dependents             | src                                           | 
+|-------------+------------------------+-----------------------------------------------+
+| Blake3      | ffi/blake3             | https://vc.compiler.company/packy/blake3      | 
+| Tree-sitter | ffi/tree-sitter        | https://vc.compiler.company/packy/tree-sitter | 
+| Uring       | ffi/uring              | https://vc.compiler.company/packy/uring       | 
+| Btrfs       | ffi/btrfs              | https://vc.compiler.company/packy/btrfs       | 
+| Ublksrv     | ffi/ublk               | https://vc.compiler.company/packy/ublksrv     | 
+| OpenSSL     | lib/net                |                                               | 
+| RocksDB     | ffi/rocksdb            | https://vc.compiler.company/packy/rocksdb     | 
+| Git         | lib/vc/git             | https://vc.compiler.company/packy/git         | 
+| Hg          | lib/vc/hg              | https://vc.compiler.company/packy/hg          | 
+| Zstd        | ffi/zstd               | https://vc.compiler.company/packy/zstd        | 
+| Qemu        | lib/box                | https://vc.compiler.company/packy/qemu        | 
+| Podman      | lib/pod                | https://vc.compiler.company/packy/podman      | 
+| Emacs       | emacs                  | https://vc.compiler.company/packy/emacs       | 
+| StumpWM     | lib/gui/wm/x11/stumpwm | https://vc.compiler.company/packy/stumpwm     | 
+| Readline    | ffi/readline           |                                               | 
+| Keyutils    | ffi/keyutils           |                                               | 
+| Mpd         | lib/aud/mpd            | https://vc.compiler.company/packy/mpd         | 
 
 * Build
 The Core consists of two major system: the *lisp* system and the
@@ -86,7 +81,7 @@ a minimal dependency set.
 
 #+RESULTS: x-help
 #+begin_example
-This is SBCL 2.4.5, an implementation of ANSI Common Lisp.
+This is SBCL 2.4.7:dc890089a, an implementation of ANSI Common Lisp.
 More information about SBCL is available at <http://www.sbcl.org/>.
 
 SBCL is free software, provided as is, with absolutely no warranty.
@@ -119,7 +114,7 @@ To test the lisp standard library:
 
 #+RESULTS:
 #+begin_example
-This is SBCL 2.4.5, an implementation of ANSI Common Lisp.
+This is SBCL 2.4.7:dc890089a, an implementation of ANSI Common Lisp.
 More information about SBCL is available at <http://www.sbcl.org/>.
 
 SBCL is free software, provided as is, with absolutely no warranty.
@@ -142,20 +137,22 @@ To load "std/tests":
 ; Loading "std/tests"
 
 in suite STD:
-; with 13 tests
-#<PASS CURRY> 
-#<PASS ALIEN> 
-#<PASS PAN> 
-#<PASS ANA> 
-#<PASS FMT> 
-#<PASS TASKS> 
-#<PASS TIMERS> 
-#<PASS THREADS> 
-#<PASS ERR> 
-#<PASS LIST> 
-#<PASS STRING> 
-#<PASS SYM> 
+; with 15 tests
 #<PASS READTABLES> 
+#<PASS SYM> 
+#<PASS STRING> 
+#<PASS LIST> 
+#<PASS ERR> 
+#<PASS THREADS> 
+#<PASS TIMERS> 
+#<PASS FMT> 
+#<PASS ANA> 
+#<PASS PAN> 
+#<PASS ALIEN> 
+#<PASS CURRY> 
+#<PASS BITS> 
+#<PASS LEB128> 
+#<PASS TASKS> 
 No tests failed.
 #+end_example
 
@@ -240,7 +237,7 @@ This section lists all program binaries provided by the core.
 
 #+RESULTS:
 #+begin_example
-skel v0.1.1:0e043dcda8f4+ --- A hacker's project compiler.
+skel v0.1.1:ce91ffc6cc7a+ --- A hacker's project compiler.
 
   usage: skel [global] <command> [<arg>]
 
@@ -265,7 +262,6 @@ commands:
   vc : version control
     -r/--root :  repository path
   id : print the project id
-  rev : print the current vc revision id
   inspect : inspect the project skelfile
     -f/--file :  path to skelfile
   make : build project targets
@@ -289,6 +285,7 @@ commands:
   commit : commit changes to the project vc
   edit : edit a project file in emacs.
   shell : open the sk-shell interpreter
+
 #+end_example
 ** organ                                                               :lisp:
 #+begin_src shell :results output :exports both
@@ -320,7 +317,6 @@ packy --help
 
 #+RESULTS:
 #+begin_example
-#:debug 0.44; (#S(CLI-NODE :KIND OPT :FORM #<CLI-OPT help :global T :val T>))
 packy v0.1.0 --- Universal Package Manager
 
   usage: packy [global] <command> [<arg>]
@@ -332,10 +328,10 @@ options:
 
 commands:
   show 
-#:debug 0.453333; /home/ellis/comp/core
-; #(#<CLI-OPT help :global T :val NIL>)
-; NIL
-; #()
+    -n/--name* 
+    -t/--target 
+    -t/--thunk* 
+    -p/--pk-target* 
 #+end_example
 
 ** rdb                                                                 :lisp:
@@ -344,25 +340,6 @@ rdb --help
 #+end_src
 
 #+RESULTS:
-#+begin_example
-rdb v0.1.0 --- A simple helper for RocksDB.
-
-  usage: rdb [global] <command> [<arg>]
-
-options:
-  -l/--level* :  set the log level
-  -h/--help* :  print help
-  -v/--version* :  print version
-  -d/--db* :  target db
-
-commands:
-  new 
-  show 
-  set 
-  get 
-  fuzz 
-  destroy 
-#+end_example
 
 ** homer                                                               :lisp:
 #+begin_src shell :results output :exports both

@@ -46,16 +46,17 @@
  view-read-only t)
 (add-to-list 'treesit-extra-load-path "/usr/local/lib/")
 
-;; (let ((grammar-dir "/usr/local/share/tree-sitter/"))
-;;   (when (file-exists-p grammar-dir)
-;;     (append
-;;      (flatten
-;;       (mapcar
-;;        (lambda (f)
-;;          (unless (or (string= "." f) (string= ".." f))
-;;            (concat grammar-dir f)))
-;;        (directory-files "/usr/local/share/tree-sitter")))
-;;      treesit-extra-load-path)))
+(let ((grammar-dir "/usr/local/share/tree-sitter/"))
+  (when (file-exists-p grammar-dir)
+    (setq treesit-extra-load-path
+          (append
+           (flatten
+            (mapcar
+             (lambda (f)
+               (unless (or (string= "." f) (string= ".." f))
+                 (concat grammar-dir f)))
+             (directory-files "/usr/local/share/tree-sitter")))
+           treesit-extra-load-path))))
 
 ;;; Variables
 (defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
@@ -719,6 +720,7 @@ Add this function to appropriate major mode hooks such as
 (setq org-todo-keywords
       '((type "TBD(0!)" "TODO(t!)" "|")
         (type "WIP(w!)" "|")
+        (type "HOLD(H@!)" "WAIT(/j@!)" "|")
         (sequence "FIND(q!)" "READ(r@!)" "WATCH(W@!)" "|")
         (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
         (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(R!)" "|")

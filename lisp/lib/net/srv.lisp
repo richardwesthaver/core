@@ -47,7 +47,7 @@
 ;;; Conditions
 ;; from hunchentoot
 (define-condition srv-condition (condition) ())
-(deferror srv-error (srv-condition error) () (:auto t))
+(deferror srv-error (srv-condition error) () ())
 (deferror srv-simple-error (srv-error simple-condition) () (:auto t))
 
 (define-condition srv-warning (srv-condition warning) ())
