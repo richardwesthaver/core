@@ -255,6 +255,29 @@ function: '(ql:quickload :clouseau)'."
                             (:indentation
                              (defpkg (as defpackage))
                              (define-package (as defpackage))))
+
+  ;; lisp font-lock defaults: https://www.n16f.net/blog/custom-font-lock-configuration-in-emacs/
+  ;; (defface cl-character-face
+  ;;   '((default :inherit font-lock-constant-face))
+  ;;   "The face used to highlight Common Lisp character literals.")
+
+  ;; (defface cl-standard-function-face
+  ;;   '((default :inherit font-lock-keyword-face))
+  ;;   "The face used to highlight standard Common Lisp function symbols.")
+
+  ;; (defface cl-standard-value-face
+  ;;   '((default :inherit font-lock-variable-name-face))
+  ;;   "The face used to highlight standard Common Lisp value symbols.")
+
+  ;; (defvar cl-font-lock-keywords
+  ;;   (let* ((character-re (concat "#\\\\" lisp-mode-symbol-regexp "\\_>"))
+  ;;          (function-re (concat "(" (regexp-opt cl-function-names t) "\\_>"))
+  ;;          (value-re (regexp-opt cl-value-names 'symbols)))
+  ;;     `((,character-re . 'cl-character-face)
+  ;;       (,function-re
+  ;;        (1 'cl-standard-function-face))
+  ;;       (,value-re . 'cl-standard-value-face))))
+
   (setq common-lisp-style-default "core")
   ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
   (setq slime-threads-update-interval 1))

@@ -120,6 +120,10 @@
           install -C -m 755 $f $d
           done fi$#)
  (emacs () #$make -C emacs$#)
+ (core-syms.sxp ()
+                (with-open-file (f "emacs/core-syms.sxp")
+                  (write `(defvar lisp-standard-function-names ,(standard-symbol-names #'fboundp)) :stream f)
+                  (write `(defvar lisp-standard-value-names ,(standard-symbol-names #'boundp)) :stream f)))
  (dist () #$cd .stash
        mkdir -pv core/bin core/share/lisp/fasl core/lib
        mv *.core core/share/lisp/

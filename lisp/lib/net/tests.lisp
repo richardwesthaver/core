@@ -1,5 +1,5 @@
 (defpackage :net/tests
-  (:use :rt :std :cl :net :sb-concurrency :sb-thread :dat/proto))
+  (:use :rt :std :cl :net :sb-concurrency :sb-thread :dat/proto :sb-bsd-sockets))
 
 (in-package :net/tests)
 
@@ -14,11 +14,15 @@
 
 (deftest tcp ()
   (with-tcp-client (client)
-    (is (typep client 'sb-bsd-sockets:inet-socket))))
+    (is (typep client 'sb-bsd-sockets:inet-socket))
+    (is (= (get-protocol-by-name :tcp)
+           (socket-protocol client)))))
 
 (deftest udp ()
   (with-udp-client (client)
-    (is (typep client 'sb-bsd-sockets:inet-socket))))
+    (is (typep client 'sb-bsd-sockets:inet-socket))
+    (is (= (get-protocol-by-name :udp)
+           (socket-protocol client)))))
 
 (deftest tlv ()
   (is (= 4 (length (serialize (make-instance 'tlv :type 0 :length 1 :value #(1)) :bytes)))))
@@ -48,7 +52,7 @@ Cookie: name=wookie
   (is (req:get (uri:uri "https://compiler.company/index.html"))))
 
 (deftest fetch ()
-  (is (fetch:download "https://compiler.company/index.html" "/tmp/index.html"))
+  (is (fetch:download "https://compiler.company/index.html" :output "/tmp/index.html" :progress t))
   (is (delete-file "/tmp/index.html")))
 
 (deftest cookies ()
@@ -61,4 +65,4 @@ Cookie: name=wookie
 
 
 (deftest srv ()
-  (is (pathnamep (net/srv:default-web-directory))))
+  (is (pathnamep (default-web-directory))))

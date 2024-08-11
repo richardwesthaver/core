@@ -819,17 +819,30 @@
 
 ;; Rule-based Optimizers: projection/predicate push-down, sub-expr elim
 
+;; Lowerings: hdsl -> ldsl
+
+;; Extensibility principle - A low level DSL should have greater than or equal
+;; to expressiveness of a high level DSL
+
+;; Transformation cohesion principle - There should be a unique path lowering
+;; a high-level DSL to a low-level DSL. This also prevents loops between high
+;; and low level DSLs.
+
 ;; TBD: Cost-based optimizers
 ;; TODO 2024-07-10: 
 (defclass query-optimizer () ())
 
 (defstruct (query-vop (:constructor make-query-vop (info)))
+  "A virtual query operation available to query compilers."
   (info nil))
 
-(defgeneric optimize-query (self plan))
+(defgeneric optimize-query (self plan)
+  (:documentation "Optimize the query expressed by PLAN using the optimizer SELF."))
 
 ;; Projection Pushdown
 (defun extract-columns (expr input &optional accum)
+  "Recursively check an expression for field indicators and add the to an
+accumulator."
   (etypecase expr
     (array-index (accumulate accum (field (fields (schema input)) expr)))
     (column-expression (accumulate accum (column-name expr)))
@@ -878,6 +891,7 @@
 (defclass query () ())
 
 (defgeneric make-query (self &rest initargs &key &allow-other-keys)
+  (:documentation "Make a new QUERY object.")
   (:method ((self t) &rest initargs)
     (declare (ignore initargs))
     (make-instance 'query)))
@@ -895,7 +909,7 @@
   (:documentation "Register a DATA-SOURCE contained in a file of type TYPE at PATH."))
 
 (defgeneric execute* (self df)
-  (:documentation "Execute the DATA-FRAME DF in CONTEXT.")
+  (:documentation "Execute the DATA-FRAME DF in CONTEXT. This is the stateful version of EXECUTE.")
   (:method ((self execution-context) (df data-frame))
     (declare (ignore self))
     (execute df)))

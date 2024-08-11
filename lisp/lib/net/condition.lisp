@@ -1,6 +1,6 @@
-;;; net/err.lisp --- Network Errors
+;;; net/condition.lisp --- Network Conditions
 
-;;
+;; Generic network condition handling for Lisp.
 
 ;;; Code:
 (in-package :net/core)

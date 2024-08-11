@@ -47,40 +47,16 @@
   (adjacent 4 3) 
   (adjacent 4 5)
   (adjacent 5 4) 
-  (color 1 red a)    (color 1 red b) 
-  (color 2 blue a)   (color 2 blue b) 
-  (color 3 green a)  (color 3 green b) 
-  (color 4 yellow a) (color 4 blue b) 
-  (color 5 blue a)   (color 5 green b)
-
-  (:- (conflict ?coloring)
-      (adjacent ?x ?y)  
-      (color ?x ?color ?coloring)  
-      (color ?y ?color ?coloring))
-
-
-  (:- (conflict ?r1 ?r2 ?coloring)
-      (adjacent ?r1 ?r2)  
-      (color ?r1 ?color ?coloring)  
-      (color ?r2 ?color ?coloring))
-
-
-  ;; there are several infix operators.
-  ;; :- , >, <, -> etc.
-  ;; let's mark variables with ? prefix.
-  ;; 
-
-  (:- main
-      (forall (conflict ?coloring)
-              (writeln (conflict ?coloring)))
-      (forall (conflict ?r1 ?r2 ?coloring)
-              (writeln (conflict ?r1 ?r2 ?coloring)))
-      (forall (conflict ?r1 ?r2 ?coloring)
-              (and (print-sexp (conflict ?r1 ?r2 ?coloring))
-                   nl))
-      halt)
-
-  (:- (initialization main)))
+  (color 1 red a)
+  (color 1 red b) 
+  (color 2 blue a)
+  (color 2 blue b) 
+  (color 3 green a)
+  (color 3 green b) 
+  (color 4 yellow a)
+  (color 4 blue b) 
+  (color 5 blue a)
+  (color 5 green b))
 
 #| SL
 Exercise 2.9. Translate to clausal logic:

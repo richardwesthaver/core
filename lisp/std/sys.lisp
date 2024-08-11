@@ -36,6 +36,23 @@
   (loop for s being the external-symbol of pkg
         collect s))
 
+(defun package-symbols (&optional (package *package*) test)
+  (let ((symbols))
+    (do-external-symbols (symbol package)
+      (if test
+          (when (funcall test symbol)
+            (push symbol symbols))
+          (push symbol symbols)))
+    symbols))
+
+(defun package-symbol-names (&optional (package *package*) test)
+  (sort (mapcar (lambda (x) (string-downcase (symbol-name x)))
+                (package-symbols package test))
+        #'string<))
+
+(defun standard-symbol-names (test)
+  (package-symbol-names :common-lisp test))
+
 (defun append-logical-hosts (&rest hosts)
   "Reinitialize SB-IMPL::*LOGICAL-HOSTS* with a freshly allocated vector
 consisting of the old contents appended to the new."
@@ -80,8 +97,6 @@ consisting of the old contents appended to the new."
 
 (defun enable-gc-logfile (&optional (file *gc-logfile*))
   (setf (sb-ext:gc-logfile) file))
-
-(length (sb-di::list-allocated-objects :dynamic :test #'stringp))
 
 (defun forget-shared-object (name)
   (setf (sb-alien::shared-object-dont-save

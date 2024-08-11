@@ -349,6 +349,7 @@
    :net/core 
    :net/tcp 
    :net/udp
+   :net/srv
    :net/codec/dns 
    :net/codec/osc 
    :net/codec/tlv

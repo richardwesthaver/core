@@ -441,6 +441,8 @@
    :current-lisp-implementation
    :current-machine
    :list-package-symbols
+   :package-symbols
+   :package-symbol-names
    :append-logical-hosts
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live

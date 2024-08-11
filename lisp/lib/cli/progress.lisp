@@ -200,3 +200,9 @@
        (prog1 (progn ,@body)
          (unless (eq ,!old-bar *progress-bar*)
            (finish-progress-display *progress-bar*))))))
+
+(defmacro with-progress-maybe (enabled (steps-count description &rest desc-args) &body body)
+  (declare (ignorable steps-count description desc-args))
+  (if enabled
+      `(with-progress-bar (,steps-count ,description ,@desc-args) ,@body)
+      `(progn ,@body)))

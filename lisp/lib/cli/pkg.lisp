@@ -81,7 +81,8 @@
    :finish-progress-display
    :progress-mutex
    :uncertain-size-progress-bar
-   :progress-bar))
+   :progress-bar
+   :with-progress-maybe))
 
 (defpackage :cli/spark
   (:use :cl :std)

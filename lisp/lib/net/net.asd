@@ -15,7 +15,7 @@
    :std :log)
   :serial t
   :components ((:file "pkg")
-               (:file "err")
+               (:file "condition")
                (:file "obj")
                (:file "util")
                (:file "udp")

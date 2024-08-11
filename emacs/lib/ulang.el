@@ -26,8 +26,10 @@
 ;;; Code:
 (require 'org)
 (require 'ox)
+
 (defvar ulang-links-history nil)
 (defvar ulang-files-history nil)
+
 ;;;###autoload
 (defun ulang-dblock-insert-links (regexp)
   "Create dblock to insert links matching REGEXP."
@@ -39,26 +41,7 @@
 
 (org-dynamic-block-define "links" 'ulang-dblock-insert-links)
 
-(org-export-translate-to-lang (list '("Table of Contents" "☰")) "ulang")
-
-(cl-pushnew '("header" .
-                "#+TITLE: $1
-#+AUTHOR: $2
-#+EMAIL: $3
-#+DESCRIPTION: $4
-#+SUBTITLE: $4
-#+OPTIONS: ^:nil toc:nil num:nil
-#+HTML_HEAD: <link href='https://fonts.googleapis.com/css?family=Inria Serif' rel='stylesheet'>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/font/inter.css\"/>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/font/commit-mono.css\"/>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/css/new.min.css\"/>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.compiler.company/css/night.css\"/>
-")
-            org-export-global-macros)
-
-(cl-pushnew '("opts" . "#+OPTIONS: $1
-") 
-            org-export-global-macros)
+(org-export-translate-to-lang (list '("Table of Contents" "TOC")) "ulang")
 
 (setq org-link-abbrev-alist
       '(("vc" . "https://vc.compiler.company/%s")

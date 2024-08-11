@@ -1,10 +1,13 @@
 ;;; readline.asd --- GNU Readline FFI bindings
 
-;;
+;; GNU Readline for Lisp REPLs
 
 ;;; Commentary:
 
-;; 
+;; It is important to support a solid shell-in-shell experience in our user
+;; applications. While we always have the option to build a more interactive
+;; native Lisp REPL solution, GNU Readline is the defacto standard and
+;; designed to handle many of the tricky OS-specific bits for us.
 
 ;;; Code:
 (defsystem :readline
