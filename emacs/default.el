@@ -1084,8 +1084,8 @@ inherited by a parent headline."
 (setq switch-to-buffer-obey-display-actions t)
 (add-to-list 'display-buffer-alist
    '("^\\*Dictionary\\*" display-buffer-in-side-window
-     (side . left)
-     (window-width . 50)))
+     (side . right)))
+
 
 ;;; Skel
 (add-to-load-path user-emacs-lib-directory)
