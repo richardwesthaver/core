@@ -1,4 +1,4 @@
-;;; skt.el --- Skel Templates -*- lexical-binding: t; -*-
+;;; skt.el --- Skel Templates -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2024  The Compiler Company
 

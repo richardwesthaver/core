@@ -1,4 +1,4 @@
-;;; sk.el --- skel Emacs Mode -*- lexical-binding: t; -*-
+;;; sk.el --- skel Emacs Mode -*- lexical-binding:t -*-
 
 ;; skel-mode, skel-minor-mode,skt-minor-mode, sk-classes
 

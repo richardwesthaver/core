@@ -1,4 +1,4 @@
-;;; sxp.el --- S-Expression Mode -*- lexical-binding: t; -*-
+;;; sxp.el --- S-Expression Mode -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2023  ellis
 

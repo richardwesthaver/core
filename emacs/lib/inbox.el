@@ -1,4 +1,4 @@
-;;; lib/inbox.el --- Inbox API -*- lexical-binding: t; -*-
+;;; lib/inbox.el --- Inbox API -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2023  Richard Westhaver
 ;; Version: "0.2.0"

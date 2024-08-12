@@ -68,7 +68,7 @@
 (defvar user-mail-directory (expand-file-name "mail" user-home-directory))
 
 (defvar default-theme 'leuven-dark)
-(defvar company-source-directory (join-paths user-lab-directory "comp"))
+(defvar company-source-directory (join-paths user-home-directory "comp"))
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
@@ -739,19 +739,7 @@ Add this function to appropriate major mode hooks such as
 (use-package imenu-list :ensure t)
 
 ;;; Org
-;; todos
-(setq org-todo-keywords
-      '((type "TBD(0!)" "TODO(t!)" "|")
-        (type "WIP(w!)" "|")
-        (type "HOLD(H@!)" "WAIT(/j@!)" "|")
-        (sequence "FIND(q!)" "READ(r@!)" "WATCH(W@!)" "|")
-        (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
-        (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(R!)" "|")
-        (sequence "FIX(i!)" "TEST(t!)" "|")
-        (type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
-        (type "KLUDGE(k@!)" "|")
-        (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
-
+(setq org-id-link-to-org-use-id t)
 ;; capture templates
 (setq org-capture-templates
       '(("t" "task" entry (file "inbox.org") "* %^{title}\n- %?" :prepend t)
@@ -1086,6 +1074,18 @@ inherited by a parent headline."
                                        :default translation-default
                                        :html translation-html
                                        :utf-8 translation-utf-8)))))))
+
+;;; Glossary
+(use-package org-glossary
+  :vc (:url "https://github.com/tecosaur/org-glossary.git" :branch "master")
+  :after org)
+
+;;; Dictionary
+(setq switch-to-buffer-obey-display-actions t)
+(add-to-list 'display-buffer-alist
+   '("^\\*Dictionary\\*" display-buffer-in-side-window
+     (side . left)
+     (window-width . 50)))
 
 ;;; Skel
 (add-to-load-path user-emacs-lib-directory)

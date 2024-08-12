@@ -1,4 +1,4 @@
-;;; publish.el --- the.compiler.company publishing script  -*- lexical-binding: t; -*-
+;;; publish.el --- the.compiler.company publishing script  -*- lexical-binding:t -*-
 
 ;; emacsclient -e '(load-file "publish.el")' '(publish)'
 
@@ -39,7 +39,7 @@
       org-id-link-to-org-use-id t)
 
 (setq org-publish-project-alist
-      `(("compiler.company" :components ("index" "blog" "docs" "notes" "plan"))
+      `(("compiler.company" :components ("index" "meta" "blog" "docs" "notes" "plan"))
         ("index"
          :base-directory ,project-dir
          :base-extension "org"
@@ -51,6 +51,17 @@
 	 :html-postamble ,html-foot
          :publishing-directory ,publish-dir
          :publishing-function org-html-publish-to-html)
+        ("meta"
+         :base-directory ,(expand-file-name "meta" project-dir)
+         :base-extension "org"
+         :recursive t
+         :footnote-section-p t
+         :html-doctype "<!doctype html>"
+         :publishing-directory ,(expand-file-name "meta" publish-dir)
+         :publishing-function org-html-publish-to-html
+         :htmlized-source t
+         :html-preamble ,html-nav
+         :html-postamble ,html-foot)
         ("blog"
          :base-directory ,(expand-file-name "blog" project-dir)
          :recursive t
@@ -91,10 +102,10 @@
          :footnote-section-p t
          :html-doctype "<!doctype html>"
          :publishing-directory ,(expand-file-name "docs" publish-dir)
-	 :publishing-function org-html-publish-to-html
-	 :htmlized-source t
+         :publishing-function org-html-publish-to-html
+         :htmlized-source t
          :html-preamble ,html-nav
-	 :html-postamble ,html-foot)))
+         :html-postamble ,html-foot)))
 
 (defun org-custom-id-get (&optional pom create prefix)
   "Get the CUSTOM_ID property of the entry at point-or-marker POM.

@@ -1,4 +1,4 @@
-;;; ulang.el --- ulang compliance lib -*- lexical-binding: t; -*-
+;;; ulang.el --- ulang compliance lib -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2023  
 
@@ -42,6 +42,23 @@
 (org-dynamic-block-define "links" 'ulang-dblock-insert-links)
 
 (org-export-translate-to-lang (list '("Table of Contents" "TOC")) "ulang")
+
+(setq org-todo-keywords
+      '((type "TBD(0!)" "TODO(t!)" "|")
+        (type "WIP(w!)" "|")
+        (type "HOLD(H@!)" "WAIT(/j@!)" "|")
+        (sequence "FIND(q!)" "READ(r@!)" "WATCH(W@!)" "|")
+        (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
+        (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(R!)" "|")
+        (sequence "FIX(i!)" "TEST(t!)" "|")
+        (type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
+        (type "PROJECT(p!)" "|")
+        (type "KLUDGE(k@!)" "|")
+        (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
+
+(setq org-todo-keyword-faces
+      '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
+        ("NOTE" . (:foreground "lemonchiffon" :weight bold))))
 
 (setq org-link-abbrev-alist
       '(("vc" . "https://vc.compiler.company/%s")

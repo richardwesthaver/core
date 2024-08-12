@@ -1,4 +1,4 @@
-;;; c2.el --- remote execution of elisp -*- lexical-binding: t; -*-
+;;; c2.el --- remote execution of elisp -*- lexical-binding: t -*-
 ;; Copyright (C) 2021-2024  ellis
 ;; 
 ;; Author: ellis
