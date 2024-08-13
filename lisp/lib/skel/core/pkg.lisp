@@ -106,7 +106,21 @@
 
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/err)
-  (:export :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push))
+  (:export :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push
+           :skel-vm
+           :make-skel-vm
+           :skel-vm-p
+           :copy-skel-vm
+           :skel-vm-ip
+           :skel-vm-stack
+           :*stack-slot-types*
+           :stack-slot-type
+           :stack-slot
+           :*stack-op-types*
+           :stack-op-type
+           :*skel-op-types*
+           :skel-op-type
+           :new-skel-arena))
 
 (defpackage :skel/core/print
   (:use :cl :std :skel/core/err :skel/core/obj :skel/core/types :skel/core/proto :skel/core/vars)

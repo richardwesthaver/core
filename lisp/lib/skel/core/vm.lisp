@@ -6,28 +6,26 @@
 ;;; Code:
 (in-package :skel/core/vm)
 
-(deftype stack-slot-kind () `(member :nop))
+(defvar *skel-op-types*
+  (list :nop :eval :set :get :end :jump :pop :spawn :wait :print :let))
 
-(defstruct stack-slot 
-  (kind :nop :type stack-slot-kind) 
-  (spec nil :type sxp:form) 
-  (form nil :type sxp:form))
+(deftype skel-op-type () `(member ,@*skel-op-types*))
+
+(defstruct skel-op
+  (type :nop :type skel-op-type)
+  body)
   
-(declaim (inline %make-sk-vm))
-(defstruct (sk-vm (:constructor %make-sk-vm))
-  ;; TODO 2023-09-23: consider making this an open closure, call it in
-  ;; MAKE-SK-VM.
+(defstruct skel-vm
   (ip (make-stack-slot) :type stack-slot)
   (stack (make-array 0) :type (array stack-slot)))
 
-(defun make-sk-vm (size) 
-  (let ((vm (%make-sk-vm :stack (make-array size :fill-pointer t :initial-element (make-stack-slot)))))
-    (with-slots (ip stack) vm
-      (setf ip (aref stack 0))
-    vm)))
+(defvar *skel-arena-size* (ash 1 16))
+(defvar *skel-arenas* nil)
 
-(defmethod sks-ref ((vm sk-vm)) (setf (sk-vm-ip vm) (aref (sk-vm-stack vm) 0)))
+(defun new-skel-arena () (sb-vm:new-arena *skel-arena-size*))
 
-(defmethod sks-pop ((vm sk-vm)) (setf (sk-vm-ip vm) (vector-pop (sk-vm-stack vm))))
+(sb-ext:defglobal *skel-arena* (make-skel-arena))
 
-(defmethod sks-push ((slot stack-slot) (vm sk-vm)) (vector-push slot (sk-vm-stack vm)))
+;; (defmacro with-skel-arena (arena &body body))
+;; (defmacro with-skel-stack ((stack &key arena) &body body))
+;; (defmacro with-skel-vm ((vm &optional arena) &body body))
