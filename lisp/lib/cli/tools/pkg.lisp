@@ -40,7 +40,8 @@
 
 (defpackage :cli/tools/systemd
   (:use :cl :std :cli/env)
-  (:export :*systemctl* :run-systemd :run-systemctl))
+  (:export :*systemctl* :run-systemd :run-systemctl
+           :systemd-error))
 
 (defpackage :cli/tools/cargo
   (:use :cl :std :cli/env)
