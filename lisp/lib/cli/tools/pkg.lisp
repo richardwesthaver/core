@@ -45,7 +45,10 @@
 
 (defpackage :cli/tools/cargo
   (:use :cl :std :cli/env)
-  (:export))
+  (:export
+   #:cargo-error
+   #:*cargo*
+   #:run-cargo))
 
 (defpackage :cli/tools/sbcl
   (:use :cl :std :cli/env)
