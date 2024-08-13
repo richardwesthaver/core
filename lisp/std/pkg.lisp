@@ -385,9 +385,11 @@
 
 (defpkg :std/os
   (:use :cl)
+  (:import-from :std/macs :with-gensyms)
   (:export
    :list-all-users
-   :list-all-groups))
+   :list-all-groups
+   :with-umask))
 
 (defpkg :std/file
   (:use :cl)

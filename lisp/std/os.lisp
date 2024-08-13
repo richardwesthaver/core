@@ -26,3 +26,12 @@
                                         (sb-posix:group-name g)
                                         (sb-posix:group-mem g))
                                   r))))
+
+(defmacro with-umask (mask &body body)
+  "Temporarily set the system-wide umask for the extent of BODY."
+  (with-gensyms (umask)
+    `(let ((,umask (sb-posix:umask ,mask)))
+       (unwind-protect (progn ,@body)
+         (sb-posix:umask ,umask)))))
+
+;; (with-umask #o22 nil)

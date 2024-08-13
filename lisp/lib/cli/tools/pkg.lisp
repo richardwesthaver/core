@@ -55,3 +55,15 @@
    :with-sbcl
    :*sbcl-runtime-options*
    :*sbcl-toplevel-options*))
+
+(defpackage :cli/tools/wg
+  (:use :cl :std :cli/env)
+  (:import-from :std/os :with-umask)
+  (:export
+   :*wg*
+   :run-wg
+   :wg-error
+   :wg-generate-key-files
+   :wg-generate-keys
+   :wg-public-key
+   :wg-private-key))
