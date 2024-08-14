@@ -120,7 +120,23 @@
            :stack-op-type
            :*skel-op-types*
            :skel-op-type
-           :new-skel-arena))
+           :new-skel-arena
+           :with-skel-vm
+           :with-skel-scope
+           :skel-op
+           :make-skel-op
+           :skel-op-p
+           :copy-skel-op
+           :skel-op-scope
+           :skel-op-body
+           :*skel-stack-size*
+           :*skel-arena*
+           :*skel-scope*
+           :init-skel-op-scope
+           :*skel-arena-size*
+           :init-skel-scope
+           :init-skel-value-scope
+           :init-skel-function-scope))
 
 (defpackage :skel/core/print
   (:use :cl :std :skel/core/err :skel/core/obj :skel/core/types :skel/core/proto :skel/core/vars)

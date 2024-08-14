@@ -137,6 +137,8 @@ from /home/USER/.tmux.conf."
 (defun format-tmux-string (dst fmt &rest args)
   (apply #'format dst fmt (mapcar (lambda (a) (format nil "#{~A}" a)) args)))
 
+(defvar *tmux-var-table* (make-hash-table))
+
 (defmacro tmux-format (dst fmt &rest args)
   "Format a tmux string, replacing symbols in ARGS that match a member of
 *TMUX-VARIABLES* with their corresponding lower-case name."
