@@ -1,6 +1,14 @@
 ;;; rocksdb/compaction.lisp --- RocksDB Compaction
 
-;;
+;; RocksDB Lisp Compaction Filter API
+
+;;; Commentary:
+
+;; compaction filters are like custom GC rules for the database. compactions
+;; run in the background and can be configured via the column-family-options
+;; or compactionfilterfactory API.
+
+;; ref: https://github.com/facebook/rocksdb/wiki/Compaction-Filter
 
 ;;; Code:
 (in-package :rocksdb)

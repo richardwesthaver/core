@@ -2,6 +2,18 @@
 
 ;; RocksDB Lisp Comparator API
 
+;;; Commentary:
+
+;; ref: https://github.com/facebook/rocksdb/blob/main/include/rocksdb/comparator.h
+#|
+// Three-way comparison.  Returns value:
+//   < 0 iff "a" < "b",
+//   == 0 iff "a" == "b",
+//   > 0 iff "a" > "b"
+// Note that Compare(a, b) also compares timestamp if timestamp size is
+// non-zero. For the same user key with different timestamps, larger (newer)
+// timestamp comes first.
+|#
 ;;; Code:
 (in-package :rocksdb)
 
