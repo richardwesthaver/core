@@ -10,6 +10,7 @@
   (defvar *skel-op-types*
     (vector :nil :eval :set :get :end :jump :pop :spawn :wait :print :let))
   (defvar *skel-arena-size* (ash 1 16))
+  (defvar *skel-stack-size* 128)
   (defun new-skel-arena () (sb-vm:new-arena *skel-arena-size*))
   (defun init-skel-scope (&optional (map (sb-lockless:make-so-map/fixnum)))
     (sb-lockless:so-insert map 0)
@@ -28,8 +29,6 @@
    (apply #'vector functions)))
     
 (defvar *skel-arena* (new-skel-arena))
-
-(defvar *skel-stack-size* 128)
 
 (deftype skel-op-type () `(member ,@(coerce *skel-op-types* 'list)))
 

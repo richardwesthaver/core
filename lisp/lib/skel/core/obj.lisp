@@ -507,7 +507,7 @@ via the special form stored in RECIPE."))
         (invalid-skel-ast ast))))
 
 ;; obj -> ast
-(defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id)))
+(defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id phases)))
   (setf (ast self)
         (unwrap-object self
                        :slots t

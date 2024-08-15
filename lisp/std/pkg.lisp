@@ -236,11 +236,11 @@
    :alet%
    :alet
    :acond2
-   :it
    :aif
-   :this
-   :self
+   :it
+   :%a
    ;; pan
+   :%p
    :pandoriclet
    :pandoriclet-get
    :pandoriclet-set

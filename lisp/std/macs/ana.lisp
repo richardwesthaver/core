@@ -528,8 +528,8 @@ corresponding function."
 
 ;; Graham's alambda
 (defmacro alambda (parms &body body)
-  `(labels ((self ,parms ,@body))
-     #'self))
+  `(labels ((%a ,parms ,@body))
+     #'%a))
 
 ;; Graham's aif
 (defmacro aif (test then &optional else)
@@ -575,17 +575,17 @@ corresponding function."
                     ,g!b (progn ,@body))))))))
 
 (defmacro alet% (letargs &rest body)
-  `(let ((this) ,@letargs)
-     (setq this ,@(last body))
+  `(let ((%a) ,@letargs)
+     (setq %a ,@(last body))
      ,@(butlast body)
-     this))
+     %a))
 
 (defmacro alet (letargs &rest body)
-  `(let ((this) ,@letargs)
-     (setq this ,@(last body))
+  `(let ((%a) ,@letargs)
+     (setq %a ,@(last body))
      ,@(butlast body)
      (lambda (&rest params)
-       (apply this params))))
+       (apply %a params))))
 
 ;; swiped from fiveam. This is just like acond except it assumes that
 ;; the TEST in each element of CLAUSES returns two values as opposed

@@ -96,7 +96,7 @@
 		    :description (sk-description self)
 		    :opts '("mode: makefile-gmake;"))
 		   out))
-    (sk-compile self out)))
+    (sk-compile self :stream out)))
 
 (defmethod sk-read-file ((self makefile) path)
   (with-open-file (in path :direction :input)))

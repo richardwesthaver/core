@@ -18,10 +18,7 @@
 
  ;;; Protocol
 (defgeneric wrap (self form))
-(defgeneric wrap! (self form))
-(defgeneric wrap-from-string! (self str))
 (defgeneric unwrap (self))
-(defgeneric unwrap! (self))
 (defgeneric unwrap-or (self lambda))
 (defgeneric sxpp (self form))
 
@@ -43,15 +40,9 @@ slot. The :ast slot is always ignored."))
   ((ast :initarg :ast :type form :accessor ast))
   (:documentation "Dynamic class representing a SXP form."))
 
-(defmethod wrap! ((self sxp) form) (setf (slot-value self 'ast) (ignore-errors form)))
-
-(defmethod wrap-from-string! ((self sxp) str) (setf (slot-value self 'ast) (ignore-errors (read str))))
-
 (defmethod wrap ((self sxp) form) (setf (slot-value self 'ast) form))
 
 (defmethod unwrap ((self sxp)) (slot-value self 'ast))
-
-(defmethod unwrap! ((self sxp)) (ignore-errors (slot-value self 'ast)))
 
 (defmethod unwrap-or ((self sxp) (else-fn function))
   (if (slot-unbound 'sxp self 'ast)

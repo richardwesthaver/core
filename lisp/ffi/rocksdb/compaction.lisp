@@ -4,11 +4,6 @@
 
 ;;; Code:
 (in-package :rocksdb)
-;; (define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
-;;   (state (* void))
-;;   (destructor (* void))
-;;   (filter (* unsigned-char))
-;;   (name (* unsigned-char)))
 
 (define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
   (self (* rocksdb-compactionfilter)) (val unsigned-char))
@@ -27,3 +22,19 @@
           rocksdb-compactionfiltercontext-is-full-compaction rocksdb-compactionfiltercontext-is-manual-compaction))
 
 ;;; Compaction Filter Factory
+(define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
+  (state (* t))
+  (destructor (* t))
+  (create-compaction-filter (* unsigned-char))
+  (context (* rocksdb-compactionfiltercontext)))
+
+(define-alien-routine rocksdb-compacitonfilter-destroy void
+  (factory (* rocksdb-compactionfilterfactory)))
+
+(export '(rocksdb-compactionfilter-create rocksdb-compactionfilter-destroy))
+
+(define-alien-callable rocksdb-create-compaction-filter (* rocksdb-compactionfilter)
+    ((state (* t))
+     (context (* rocksdb-compactionfiltercontext)))
+  (declare (ignore state context))
+  nil)

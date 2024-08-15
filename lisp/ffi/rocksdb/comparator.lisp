@@ -1,11 +1,36 @@
 ;;; rocksdb/comparator.lisp --- RocksDB Comparators
 
-;;
+;; RocksDB Lisp Comparator API
 
 ;;; Code:
 (in-package :rocksdb)
 
-;; TODO 2023-12-11: 
+(define-alien-type rocksdb-compare-function
+  (function int
+            (* t)
+            c-string
+            size-t
+            c-string
+            size-t))
+
+(define-alien-type rocksdb-compare-ts-function
+  (function int
+            (* t)
+            c-string
+            size-t
+            c-string
+            size-t))
+
+(define-alien-type rocksdb-compare-without-ts-function
+  (function int
+            (* t)
+            c-string
+            size-t
+            unsigned-char
+            c-string
+            size-t
+            unsigned-char))
+
 (define-alien-routine rocksdb-comparator-create (* rocksdb-comparator)
   (state (* t))
   (destructor (* t))

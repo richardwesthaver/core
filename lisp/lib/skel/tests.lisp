@@ -46,7 +46,8 @@ make-shebang-comment, and make-shebang-file-header."
   "Ensure skelfiles are created and loaded correctly and that they signal
 the appropriate restarts."
   (do-tmp-path (tmp-path "sk")
-    (is (sk-write-file (make-instance 'sk-project :name "nada" :path "test" :vc :hg) :path %tmp :if-exists :supersede))
+    (is (sk-write-file
+         (make-instance 'sk-project :name "nada" :path "test" :vc :hg) :path %tmp :if-exists :supersede))
     (ignore-errors (delete-file %tmp))
     (setf %tmp (tmp-path "sk"))
     (is (init-skelfile %tmp))
@@ -90,13 +91,7 @@ endif")
 
 (deftest vm ()
   "EXPERIMENTAL"
-  (is (let ((vm (make-sk-vm 201)))
-	(dotimes (i 200)
-	  (sks-pop vm))
-	t))
-  (let ((vm (make-sk-vm 1)))
-    (is (sks-pop vm))
-    (signals simple-error (sks-pop vm))))
+  (is (make-skel-vm)))
 
 (deftest asd ()
   (let ((sk (make-instance 'sk-project :components '((:lisp "test")

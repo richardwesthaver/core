@@ -85,14 +85,14 @@ which accepts a boolean value and automatically adjust the slot."
 ;;       res)))
 
 ;; io-uring instance
+(defvar *default-io-params* (make-io-params))
+
 (defstruct uring
   (sq nil :type submission-queue)
   (cq nil :type completion-queue)
   (fd -1 :type sb-posix:file-descriptor) ;; owned fd
   (params *default-io-params* :type io-params)
   (memory nil :type io-memory-map))
-
-(defvar *default-io-params* (make-io-params))
 
 (defstruct uring-builder
   (params *default-io-params* :type io-params)

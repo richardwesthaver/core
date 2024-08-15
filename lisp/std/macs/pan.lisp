@@ -23,11 +23,11 @@
 
 (defmacro pandoriclet (letargs &rest body)
   (let ((letargs (cons
-                  '(this)
+                  '(%a)
                   (std/list:let-binding-transform
                    letargs))))
     `(let (,@letargs)
-       (setq this ,@(last body))
+       (setq %a ,@(last body))
        ,@(butlast body)
        (dlambda
         (:pandoric-get (sym)
@@ -35,7 +35,7 @@
         (:pandoric-set (sym val)
                        ,(pandoriclet-set letargs))
         (t (&rest args)
-           (apply this args))))))
+           (apply %a args))))))
 
 (declaim (inline get-pandoric))
 
@@ -54,25 +54,25 @@
      ,@body))
 
 ;; (defun pandoric-hotpatch (box new)
-;;   (with-pandoric (this) box
-;;     (setq this new)))
+;;   (with-pandoric (%a) box
+;;     (setq %a new)))
 
 (defmacro pandoric-recode (vars box new)
-  `(with-pandoric (this ,@vars) ,box
-     (setq this ,new)))
+  `(with-pandoric (%a ,@vars) ,box
+     (setq %a ,new)))
 
 (defmacro plambda (largs pargs &rest body)
   (let ((pargs (mapcar #'list pargs)))
-    `(let (this self)
+    `(let (%a %p)
        (setq
-        this (lambda ,largs ,@body)
-        self (dlambda
+        %a (lambda ,largs ,@body)
+        %p (dlambda
               (:pandoric-get (sym)
                              ,(pandoriclet-get pargs))
               (:pandoric-set (sym val)
                              ,(pandoriclet-set pargs))
               (t (&rest args)
-                 (apply this args)))))))
+                 (apply %a args)))))))
 
 (defvar pandoric-eval-tunnel)
 

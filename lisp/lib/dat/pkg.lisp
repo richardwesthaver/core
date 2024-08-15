@@ -16,7 +16,8 @@
   (:export
    :sxp-fmt-designator
    :form :formp :sxp-error :sxp-syntax-error :reader :writer :fmt
-   :wrap :wrap! :wrap-from-string! :unwrap :unwrap! :unwrap-or
+   :wrap :unwrap
+   :unwrap-or
    :sxpp :build-ast :load-ast :load-ast*
    :ast
    :define-macro :define-fmt :read-sxp-file :write-sxp-file
