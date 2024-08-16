@@ -41,7 +41,7 @@
 
 (org-dynamic-block-define "links" 'ulang-dblock-insert-links)
 
-(org-export-translate-to-lang (list '("Table of Contents" "TOC")) "ulang")
+(org-export-translate-to-lang (list '("Table of Contents" "Index")) "ulang")
 
 (setq org-todo-keywords
       '((type "TBD(0!)" "TODO(t!)" "|")
@@ -49,23 +49,37 @@
         (type "HOLD(H@!)" "WAIT(/j@!)" "|")
         (sequence "FIND(q!)" "READ(r@!)" "WATCH(W@!)" "|")
         (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
-        (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(R!)" "|")
-        (sequence "FIX(i!)" "TEST(t!)" "|")
-        (type "GOTO(g!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
-        (type "PROJECT(p!)" "|")
-        (type "KLUDGE(k@!)" "|")
-        (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)")))
+        (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(V!)" "|")
+        (type "FIXME(i!)" "TEST(t!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)" "LOG(L!)" "|")
+        (type "KLUDGE(k@!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
+        (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
+        (type "GOTO(g!)" "|")
+        (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)" "FIXED(F!)")))
 
 (setq org-todo-keyword-faces
       '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
-        ("NOTE" . (:foreground "lemonchiffon" :weight bold))))
+        ("PRODUCT" . (:foreground "olivedrab" :weight bold))
+        ("RELEASE" . (:foreground "maroon3" :weight bold))
+        ("RESEARCH" . (:foreground "maroon2" :weight bold))
+        ("HACK" . (:foreground "maroon3" :weight bold))
+        ("TBD" . (:foreground "darkred2" :weight bold))
+        ("NOTE" . (:foreground "tomato2" :weight bold))
+        ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
+        ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
+        ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
+        ("WIP" . (:foreground "darkorchid2" :weight bold))
+        ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen"))))
 
 (setq org-link-abbrev-alist
       '(("vc" . "https://vc.compiler.company/%s")
         ("comp" . "https://compiler.company/%s")
 	("cdn" . "https://cdn.compiler.company/%s")
         ("packy" . "https://packy.compiler.company/%s")
-        ("yt" . "https://youtube.com/watch?v=%s")))
+        ("yt" . "https://youtube.com/watch?v=%s")
+        ("wikipedia" . "https://en.wikipedia.org/wiki/%s")
+        ("reddit" . "https://reddit.com/%s")
+        ("hn" . "https://news.ycombinator.com/%s")
+        ("so" . "https://stackoverflow.com/%s")))
 
 ;;; IDs
 (defun org-custom-id-get (&optional pom create prefix)

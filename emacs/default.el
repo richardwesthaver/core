@@ -85,9 +85,10 @@
   (setq package-archives
         '(("gnu" . "https://elpa.gnu.org/packages/")
           ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-          ("melpa" . "https://melpa.org/packages/"))
-        use-package-always-ensure t
-        use-package-expand-minimally t)
+          ("melpa" . "https://melpa.org/packages/")))
+  (setopt
+   use-package-always-ensure t
+   use-package-expand-minimally t)
   (add-packages
    ;; eglot-x ;; LSP extensions
    org-web-tools ;; web parsing
@@ -106,6 +107,10 @@
                                       "CC"
                                       "LD"
                                       "LD_LIBRARY_PATH"
+                                      "RUSTUP_HOME"
+                                      "QUICKLISP_HOME"
+                                      "DEV" "DEV_ID" "DEV_HOME"
+                                      "WORKER" "WORKER_ID" "WORKER_HOME"
                                       "SBCL_HOME"
                                       "LISP_HOME"))
 
