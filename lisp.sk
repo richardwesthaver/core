@@ -2,4 +2,8 @@
 :name "core/lisp"
 :src "lisp"
 :description "CC Lisp Core"
-:components ((:lisp-system "prelude.asd") (:lisp-system "user.asd") (:lisp-system "core.asd"))
+:components
+((:lisp-system "prelude.asd")
+ (:lisp-system "user.asd")
+ (:lisp-system "core.asd")
+ (:lisp-system "std/std.asd"))

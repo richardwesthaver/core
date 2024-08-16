@@ -8,7 +8,7 @@
 
 ;;; Code:
 (defsystem "rocksdb"
-  :depends-on (:std)
+  :depends-on (:std :log)
   :serial t
   :components ((:file "pkg")
                (:file "macs")

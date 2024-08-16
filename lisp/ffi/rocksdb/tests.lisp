@@ -373,4 +373,26 @@ DB where K and V are both Lisp strings."
 
 (deftest merge ()
   "Test low-level merge-operator functionality using ALIEN-CALLBACKs."
-  nil)
+  (is (with-alien ((k (array unsigned-char))
+             (v (array unsigned-char))
+             (ops (array (array unsigned-char)))
+             (s (array unsigned-char)))
+  (alien-funcall
+   (alien-callable-function
+    'rocksdb-concat-full-merge)
+   k 0 v 0 ops (make-alien size-t 0) 0 s (make-alien size-t 0))))
+  (is
+   (not
+    (with-alien ((k (array unsigned-char))
+                 (ops (array (array unsigned-char)))
+                 (s (array unsigned-char)))
+      (alien-funcall
+       (alien-callable-function
+        'rocksdb-concat-partial-merge)
+       k 0 ops (make-alien size-t 0) 0 s (make-alien size-t 0)))))
+  (alien-callable-function 'rocksdb-concat-full-merge)
+  (alien-callable-function 'rocksdb-concat-partial-merge)
+  (is (integerp
+       (parse-integer
+        (string-trim "rocksdb:" (alien-funcall (alien-callable-function 'rocksdb-name)))))))
+
