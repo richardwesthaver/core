@@ -66,14 +66,8 @@
 (define-opt rocksdb-envoptions)
 (define-opt rocksdb-universal-compaction-options)
 
-(export '(rocksdb-backup-engine-options-set-backup-dir rocksdb-backup-engine-options-set-env
-          rocksdb-restore-options-set-keep-log-files rocksdb-hyper-clock-cache-options-set-capacity
-          rocksdb-hyper-clock-cache-options-set-estimated-entry-charge rocksdb-hyper-clock-cache-options-set-num-shard-bits
-          rocksdb-hyper-clock-cache-options-set-memory-allocator))
-
 ;;; WAL Read Options
 (define-opaque rocksdb-wal-readoptions)
-(export '(rocksdb-wal-readoptions))
 
 ;;; Block based Table Options
 (eval-always
@@ -129,10 +123,6 @@
   (opt (* rocksdb-block-based-table-options))
   (i int))
 
-(export '(rocksdb-block-based-options-create rocksdb-block-based-options-destroy))
-(export '(rocksdb-block-based-options-set-top-level-index-pinning-tier
-          rocksdb-block-based-options-set-partition-pinning-tier
-          rocksdb-block-based-options-set-unpartition-pinning-tier))
 (export-opt-accessors rocksdb-block-based-options
                       checksum
                       block-size
@@ -361,16 +351,6 @@
   (levels (array int))
   (num-levels size-t))
           
-(export '(rocksdb-options-increase-parallelism rocksdb-options-optimize-level-style-compaction
-          rocksdb-options-set-uint64add-merge-operator rocksdb-options-set-compression-per-level
-          rocksdb-options-enable-statistics rocksdb-options-statistics-get-string
-          rocksdb-options-set-db-paths rocksdb-options-set-cf-paths
-          rocksdb-options-set-env rocksdb-options-set-info-log
-          rocksdb-options-statistics-get-ticker-count rocksdb-options-statistics-get-histogram-data
-          rocksdb-options-set-plain-table-factory rocksdb-options-set-min-level-to-compress
-          rocksdb-options-prepare-for-bulk-load rocksdb-options-set-universal-compaction-options
-          rocksdb-options-set-ratelimiter rocksdb-options-set-row-cache))
-
 ;;; RocksDB Write Options
 (define-opt rocksdb-writeoptions)
 ;;; RocksDB Read Options
@@ -420,7 +400,6 @@
   (list-column-family-names (* c-string))
   (list-column-family-options (* (* rocksdb-options)))
   (len size-t))
-(export '(rocksdb-load-latest-options-destroy))
 
 (def-with-errptr rocksdb-set-options void
   (db (* rocksdb))
@@ -439,8 +418,6 @@
 (define-alien-routine rocksdb-options-create-copy (* rocksdb-options)
   (src (* rocksdb-options)))
 
-(export '(rocksdb-options-create-copy))
-
 ;;; Aliases
 ;; some of the RocksDB options don't follow the standard naming
 ;; convention of 'rocksdb-*-set-*' and 'rocksdb-*-get-*'. In order to
@@ -456,6 +433,3 @@
 (defun rocksdb-options-set-prepare-for-bulk-load (opt x)
   (when x
     (rocksdb-options-prepare-for-bulk-load opt)))
-
-(export '(rocksdb-options-set-parallelism rocksdb-options-set-enable-statistics
-          rocksdb-options-set-prepare-for-bulk-load))

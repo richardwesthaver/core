@@ -5,17 +5,6 @@
 ;;; Code:
 (in-package :rocksdb)
 
-(export '(rocksdb-get-column-family-metadata rocksdb-get-column-family-metadata-cf
-          rocksdb-column-family-metadata-destroy rocksdb-column-family-metadata-get-size
-          rocksdb-column-family-metadata-get-file-count rocksdb-column-family-metadata-get-name
-          rocksdb-column-family-metadata-get-level-count rocksdb-column-family-metadata-get-level-metadata
-          rocksdb-level-metadata-destroy rocksdb-level-metadata-get-level
-          rocksdb-level-metadata-get-size rocksdb-level-metadata-get-file-count
-          rocksdb-level-metadata-get-sst-file-metadata rocksdb-sst-file-metadata-destroy
-          rocksdb-sst-file-metadata-get-relative-filename rocksdb-sst-file-metadata-get-directory
-          rocksdb-sst-file-metadata-get-size rocksdb-sst-file-metadata-get-smallestkey
-          rocksdb-sst-file-metadata-get-largestkey))
-
 (define-alien-routine rocksdb-get-column-family-metadata (* rocksdb-column-family-metadata)
   (db (* rocksdb)))
 

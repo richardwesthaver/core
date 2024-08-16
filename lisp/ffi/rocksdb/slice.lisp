@@ -25,6 +25,3 @@
   (n size-t))
 
 (define-alien-routine rocksdb-slicetransform-destroy void (st (* rocksdb-slicetransform)))
-
-(export '(rocksdb-slicetransform-create rocksdb-slicetransform-create-noop
-          rocksdb-slicetransform-destroy rocksdb-slicetransform-create-fixed-prefix))

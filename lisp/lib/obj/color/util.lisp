@@ -22,7 +22,7 @@
 
 (defun parse-x11-color-definitions (&key
                                     (input *rgb-colors-path*)
-                                    (output "x11.lisp"))
+                                    (output "lisp/lib/obj/color/x11.lisp"))
   "Parse X11 color definitions and write them into a file. Return the
 list of colors (for exporting).
 
@@ -72,5 +72,5 @@ with a quick google search."
                               (parse-channel (aref registers 1))
                               (parse-channel (aref registers 2)))
                       (push colorname colornames))
-                    (format t "ignoring line ~A~%" line)))))))
+                    (log:trace! (format nil "ignoring line ~A~%" line))))))))
       (nreverse colornames))))

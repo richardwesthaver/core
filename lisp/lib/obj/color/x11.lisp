@@ -1,6 +1,6 @@
-;;; x11-colors.lisp --- X11 Colors -*- buffer-read-only:t -*-
+;;; color/x11.lisp --- X11 Colors -*- buffer-read-only:t -*-
 
-;; input = /mnt/y/data/etc/rgb.txt
+;; input = .stash/rgb.txt
 
 ;; This file was generated automatically by
 ;; OBJ/COLOR:PARSE-X11-COLOR-DEFINITIONS.

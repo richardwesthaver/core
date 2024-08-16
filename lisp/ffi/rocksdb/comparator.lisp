@@ -60,5 +60,3 @@
   (compare-ts (* int))
   (compare-without-ts (* int))
   (name (* unsigned-char)))
-
-(export '(rocksdb-comparator-destroy rocksdb-comparator-create rocksdb-comparator-with-ts-create))

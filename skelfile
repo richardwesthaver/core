@@ -34,6 +34,8 @@
           (download "https://publicsuffix.org/list/public_suffix_list.dat" :output ".stash/psl.dat"))
  (rgb.txt (%stash)
           (download "https://packy.compiler.company/data/rgb.txt" :output ".stash/rgb.txt"))
+ (x11.lisp (rgb.txt)
+           (color::parse-x11-color-definitions :input ".stash/rgb.txt" :output "color/x11.lisp"))
  (parquet.thrift (%stash)
                  (download
                   "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"

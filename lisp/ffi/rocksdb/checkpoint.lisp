@@ -5,8 +5,6 @@
 ;;; Code:
 (in-package :rocksdb)
 
-(export '(rocksdb-checkpoint-object-destroy))
-
 (def-with-errptr rocksdb-checkpoint-object-create (* rocksdb-checkpoint)
   (db (* rocksdb)))
 

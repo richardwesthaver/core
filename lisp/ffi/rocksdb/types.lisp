@@ -6,7 +6,6 @@
 (in-package :rocksdb)
 
 (define-alien-type rocksdb-errptr (* t))
-(export '(rocksdb-errptr))
 (define-opaque rocksdb)
 (define-opaque rocksdb-iterator)
 (define-opaque rocksdb-backup-engine)

@@ -13,6 +13,18 @@
 ;;; Code:
 (in-package :rocksdb)
 
+(define-alien-type rocksdb-filter-function
+  (function unsigned-char
+            (* t)
+            int
+            c-string
+            size-t
+            c-string
+            size-t
+            (* (array unsigned-char))
+            (* size-t)
+            (* unsigned-char)))
+            
 (define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
   (self (* rocksdb-compactionfilter)) (val unsigned-char))
 
@@ -26,9 +38,6 @@
 (define-alien-routine rocksdb-compactionfiltercontext-is-manual-compaction unsigned-char
   (context (* rocksdb-compactionfiltercontext)))
 
-(export '(rocksdb-compactionfilter-set-ignore-snapshots rocksdb-compactionfilter-destroy
-          rocksdb-compactionfiltercontext-is-full-compaction rocksdb-compactionfiltercontext-is-manual-compaction))
-
 ;;; Compaction Filter Factory
 (define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
   (state (* t))
@@ -39,10 +48,13 @@
 (define-alien-routine rocksdb-compacitonfilter-destroy void
   (factory (* rocksdb-compactionfilterfactory)))
 
-(export '(rocksdb-compactionfilter-create rocksdb-compactionfilter-destroy))
+(define-alien-type rocksdb-create-compaction-filter-function
+    (function (* rocksdb-compactionfilter)
+              (* t)
+              (* rocksdb-compactionfiltercontext)))
 
+;; maybe not possible? test
 (define-alien-callable rocksdb-create-compaction-filter (* rocksdb-compactionfilter)
     ((state (* t))
      (context (* rocksdb-compactionfiltercontext)))
-  (declare (ignore state context))
-  nil)
+  (declare (ignore state context)))

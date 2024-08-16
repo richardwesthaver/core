@@ -1,4 +1,4 @@
-;;; obj/pkg.lisp --- Object System
+x;;; obj/pkg.lisp --- Object System
 
 ;;
 

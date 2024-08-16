@@ -18,9 +18,6 @@
 (define-alien-routine rocksdb-enable-manual-compaction void
   (db (* rocksdb)))
 
-(export '(rocksdb-close rocksdb-cancel-all-background-work
-          rocksdb-enable-manual-compaction rocksdb-disable-manual-compaction))
-
 (def-with-errptr rocksdb-put 
   void 
   (db (* rocksdb))
@@ -147,12 +144,7 @@
   (ts-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
-(export '(rocksdb-multi-get rocksdb-multi-get-cf
-          rocksdb-multi-get-with-ts rocksdb-multi-get-cf-with-ts))
-
 (define-alien-routine rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
-
-(export '(rocksdb-cache-create-lru))
 
 (def-with-errptr rocksdb-flush void 
   (db (* rocksdb))
@@ -182,8 +174,6 @@
   (db (* rocksdb))
   (name c-string))
 
-(export '(rocksdb-delete-file rocksdb-livefile))
-
 ;; return NULL if prop name is unknown, else return pointer to
 ;; malloc-ed null-term value.
 (define-alien-routine rocksdb-property-value c-string
@@ -204,8 +194,6 @@
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
   (propname c-string))
-
-(export '(rocksdb-property-value rocksdb-property-value-cf rocksdb-property-int rocksdb-property-int-cf))    
 
 ;;; CF
 (def-with-errptr rocksdb-create-column-family 
@@ -235,9 +223,6 @@
   (handle (* rocksdb-column-family-handle))
   (name-len (* size-t)))
 
-(export '(rocksdb-create-column-families-destroy rocksdb-column-family-handle-destroy
-          rocksdb-column-family-handle-get-id rocksdb-column-family-handle-get-name))
-
 (def-with-errptr rocksdb-drop-column-family 
   void
   (db (* rocksdb))
@@ -261,8 +246,6 @@
 (define-alien-routine rocksdb-list-column-families-destroy void
   (list (array c-string))
   (len size-t))
-
-(export '(rocksdb-list-column-families-destroy))
 
 (def-with-errptr rocksdb-put-cf 
   void
@@ -356,13 +339,6 @@
 (define-alien-routine rocksdb-wal-iter-destroy void
   (iter (* rocksdb-wal-iterator)))
 
-(export '(rocksdb-create-iterator rocksdb-iter-destroy rocksdb-iter-seek-to-first rocksdb-iter-valid
-          rocksdb-iter-seek-to-last rocksdb-iter-seek rocksdb-iter-seek-for-prev
-          rocksdb-iter-next rocksdb-iter-prev rocksdb-iter-key rocksdb-iter-value rocksdb-create-iterator-cf
-          rocksdb-iter-timestamp rocksdb-iter-get-error rocksdb-wal-iter-next rocksdb-wal-iter-valid
-          rocksdb-wal-iter-get-batch rocksdb-get-latest-sequence-number rocksdb-wal-iter-destroy))
-
-
 ;;; Backup
 (def-with-errptr rocksdb-backup-engine-open
   (* rocksdb-backup-engine)
@@ -391,8 +367,6 @@
 
 (define-alien-routine rocksdb-backup-engine-close void
   (be (* rocksdb-backup-engine)))
-
-(export '(rocksdb-backup-engine-close))
 
 ;;; Transactions
 (def-with-errptr rocksdb-transactiondb-create-column-family (* rocksdb-column-family-handle)
@@ -578,17 +552,6 @@
 (def-with-errptr rocksdb-optimistictransactiondb-checkpoint-object-create (* rocksdb-checkpoint)
   (otxn-db (* rocksdb-optimistictransactiondb)))
 
-(export '(rocksdb-transaction-begin rocksdb-transaction-close rocksdb-transactiondb-create-snapshot
-          rocksdb-transactiondb-release-snapshot rocksdb-transactiondb-property-value
-          rocksdb-transactiondb-property-int rocksdb-transactiondb-get-base-db
-          rocksdb-transactiondb-get-close-db rocksdb-transaction-get-name
-          rocksdb-transaction-set-savepoint rocksdb-transaction-destroy
-          rocksdb-transaction-create-iterator rocksdb-transaction-create-iterator-cf
-          rocksdb-transactiondb-create-iterator rocksdb-transactiondb-create-iterator-cf
-          rocksdb-optimistictransactiondb-get-base-db rocksdb-optimistictransactiondb-close-base-db
-          rocksdb-optimistictransaction-begin rocksdb-optimistictransactiondb-close
-          rocksdb-transactiondb-flush-wal))
-
 ;;; Perfcontext
 (define-alien-routine rocksdb-set-perf-level void (val int))
 
@@ -606,9 +569,6 @@
 ;; TODO 2024-05-24: causes compile error - pass-by-struct not supported
 ;; (define-alien-routine rocksdb-perfcontext-destroy void (* rocksdb-perfcontext))
 
-(export '(rocksdb-perfcontext-reset rocksdb-perfcontext-report
-          rocksdb-perfcontext-metric rocksdb-perfcontext-destroy rocksdb-set-perf-level))
-
 ;;; Filter Policy
 (define-alien-routine rocksdb-filterpolicy-destroy void (self (* rocksdb-filterpolicy)))
 
@@ -625,9 +585,6 @@
   (bloom-equivalent-bits-per-key double)
   (bloom-before-level int))
 
-(export '(rocksdb-filterpolicy-destroy rocksdb-filterpolicy-create-bloom rocksdb-filterpolicy-create-bloom-full
-          rocksdb-filterpolicy-create-ribbon rocksdb-filterpolicy-create-ribbon-hybrid))
-
 ;;; Snapshot
 (define-alien-routine rocksdb-create-snapshot (* rocksdb-snapshot)
   (db (* rocksdb)))
@@ -638,5 +595,3 @@
 (define-alien-routine rocksdb-release-snapshot void
   (db (* rocksdb))
   (snapshot (* rocksdb-snapshot)))
-
-(export '(rocksdb-create-snapshot rocksdb-snapshot-get-sequence-number rocksdb-release-snapshot))

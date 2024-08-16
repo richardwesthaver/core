@@ -20,9 +20,6 @@
 
 (define-alien-routine rocksdb-sstfilewriter-destroy void (writer (* rocksdb-sstfilewriter)))
 
-(export '(rocksdb-sstfilewriter-create rocksdb-sstfilewriter-create-with-comparator
-          rocksdb-sstfilewriter-destroy))
-
 (def-with-errptr rocksdb-sstfilewriter-open void
   (writer (* rocksdb-sstfilewriter))
   (name c-string))
