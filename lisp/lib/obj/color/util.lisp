@@ -63,6 +63,9 @@ with a quick google search."
             (unless (cl-ppcre:scan-to-strings comment-scanner line)
               (multiple-value-bind (match registers)
                   (cl-ppcre:scan-to-strings color-scanner line)
+                ;; we don't ingest color names with spaces because they are
+                ;; duplicates - 'dark goldenrod' has the same value as
+                ;; 'darkgoldenrod' so just use that.
                 (if (and match (not (find #\space (aref registers 3))))
                     (let ((colorname (string-downcase (aref registers 3))))
                       (format colordefs

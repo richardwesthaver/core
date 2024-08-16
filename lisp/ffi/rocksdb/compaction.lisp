@@ -41,8 +41,8 @@
 ;;; Compaction Filter Factory
 (define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
   (state (* t))
-  (destructor (* t))
-  (create-compaction-filter (* unsigned-char))
+  (destructor (* rocksdb-destructor-function))
+  (generator (* rocksdb-create-compaction-filter-function))
   (context (* rocksdb-compactionfiltercontext)))
 
 (define-alien-routine rocksdb-compacitonfilter-destroy void
@@ -58,3 +58,4 @@
     ((state (* t))
      (context (* rocksdb-compactionfiltercontext)))
   (declare (ignore state context)))
+

@@ -249,7 +249,30 @@ set *errptr to a malloc()ed error message.
    :rocksdb-comparator-destroy
    :rocksdb-comparator-create
    :rocksdb-comparator-with-ts-create
-   :rocksdb-checkpoint-object-destroy))
+   :rocksdb-checkpoint-object-destroy
+   :rocksdb-name-function
+   :rocksdb-concat-merge-name
+   :rocksdb-compare-never-without-ts
+   :rocksdb-compare-never-with-ts
+   :rocksdb-compare-never-name
+   :rocksdb-compare-never
+   :rocksdb-compare-without-ts-function
+   :rocksdb-compare-with-ts-function
+   :rocksdb-compare-function
+   :rocksdb-create-compaction-filter
+   :rocksdb-create-compaction-filter-function
+   :rocksdb-get-default-column-family-handle
+   :rocksdb-get-db-identity
+   :rocksdb-batched-multi-get-cf
+   :rocksdb-key-may-exist
+   :rocksdb-key-may-exist-cf
+   :rocksdb-backup-engine-get-backup-info
+   :rocksdb-backup-engine-info-count
+   :rocksdb-backup-engine-info-timestamp
+   :rocksdb-backup-engine-info-backup-id
+   :rocksdb-backup-engine-info-size
+   :rocksdb-backup-engine-info-num-files
+   :rocksdb-backup-engine-info-destroy))
 
 (in-package :rocksdb)
 

@@ -49,4 +49,4 @@
                                   ',(symbolicate opt '-set- n)) :rocksdb))))
     `(progn ,@forms)))
 
-;; (defmacro define-merge-operator-callbacks (name full partial operands)
+(defmacro define-merge-operator-callbacks (name full partial state destructor delete-fn))

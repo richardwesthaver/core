@@ -27,6 +27,11 @@
   (val (* unsigned-char))
   (vallen size-t))
 
+(def-with-errptr rocksdb-write void
+  (db (* rocksdb))
+  (opts (* rocksdb-writeoptions))
+  (batch (* rocksdb-writebatch)))
+
 (def-with-errptr rocksdb-get 
   (* unsigned-char)
   (db (* rocksdb))
@@ -95,6 +100,8 @@
   (ts (* c-string))
   (tslen (* size-t)))
 
+(define-alien-routine rocksdb-get-db-identity c-string (db (* rocksdb)) (idlen (* size-t)))
+
 ;; NOTE 2023-12-19: only the VOID-returning functions in the multi-
 ;; family perform parallel IO:
 ;; https://github.com/facebook/rocksdb/wiki/MultiGet-Performance
@@ -144,6 +151,40 @@
   (ts-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
+(define-alien-routine rocksdb-batched-multi-get-cf void
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
+  (nkeys size-t)
+  (keys (array c-string))
+  (key-sizes (array size-t))
+  (values (array (* rocksdb-pinnableslice)))
+  (errs (array (* rocksdb-errptr)))
+  (sorted-input boolean))
+
+(define-alien-routine rocksdb-key-may-exist unsigned-char
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (key c-string)
+  (key-len size-t)
+  (value (* c-string))
+  (val-len (* size-t))
+  (timestamp c-string)
+  (timestamp-len size-t)
+  (value-found (* unsigned-char)))
+
+(define-alien-routine rocksdb-key-may-exist-cf unsigned-char
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key c-string)
+  (key-len size-t)
+  (value (* c-string))
+  (val-len (* size-t))
+  (timestamp c-string)
+  (timestamp-len size-t)
+  (value-found (* unsigned-char)))
+      
 (define-alien-routine rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
 
 (def-with-errptr rocksdb-flush void 
@@ -213,6 +254,12 @@
 (define-alien-routine rocksdb-create-column-families-destroy void
   (list (array rocksdb-column-family-handle)))
 
+(def-with-errptr rocksdb-create-column-family-with-ttl (* rocksdb-column-family-handle)
+  (db (* rocksdb))
+  (cf-opts (* rocksdb-options))
+  (cf-name c-string)
+  (ttl int))
+
 (define-alien-routine rocksdb-column-family-handle-destroy void
   (cf (* rocksdb-column-family-handle)))
 
@@ -228,14 +275,8 @@
   (db (* rocksdb))
   (handle (* rocksdb-column-family-handle)))
 
-(def-with-errptr rocksdb-open-column-families 
-  (* rocksdb)
-  (options (* rocksdb-options))
-  (name c-string)
-  (num-column-families int)
-  (column-family-names (array c-string))
-  (column-family-options (array rocksdb-options))
-  (column-family-handles (array rocksdb-column-family-handle)))
+(define-alien-routine rocksdb-get-default-column-family-handle (* rocksdb-column-family-handle)
+  (db (* rocksdb)))
 
 (def-with-errptr rocksdb-list-column-families 
   (array c-string)
@@ -257,6 +298,27 @@
   (val (* unsigned-char))
   (vallen size-t))
 
+(def-with-errptr rocksdb-put-with-ts void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (key (* unsigned-char))
+  (keylen size-t)
+  (ts c-string)
+  (tslen size-t)
+  (val (* unsigned-char))
+  (vallen size-t))
+
+(def-with-errptr rocksdb-put-cf-with-ts void
+  (db (* rocksdb))
+  (opt (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (keylen size-t)
+  (ts c-string)
+  (tslen size-t)
+  (val (* unsigned-char))
+  (vallen size-t))
+
 (def-with-errptr rocksdb-delete-cf 
   void
   (db (* rocksdb))
@@ -264,6 +326,66 @@
   (cf (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (keylen size-t))
+
+(def-with-errptr rocksdb-delete-with-ts
+  void
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (key (* unsigned-char))
+  (ts c-string)
+  (tslen size-t)
+  (keylen size-t))
+
+(def-with-errptr rocksdb-delete-cf-with-ts
+  void
+  (db (* rocksdb))
+  (options (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (ts c-string)
+  (tslen size-t)
+  (keylen size-t))
+
+(def-with-errptr rocksdb-singledelete void
+  (db (* rocksdb))
+  (opts (* rocksdb-writeoptions))
+  (key c-string)
+  (keylen size-t))
+
+(def-with-errptr rocksdb-singledelete-with-ts void
+  (db (* rocksdb))
+  (opts (* rocksdb-writeoptions))
+  (key c-string)
+  (keylen size-t)
+  (ts c-string)
+  (tslen size-t))
+
+(def-with-errptr rocksdb-singledelete-cf-with-ts void
+  (db (* rocksdb))
+  (opts (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key c-string)
+  (keylen size-t)
+  (ts c-string)
+  (tslen size-t))
+
+(def-with-errptr rocksdb-singledelete-cf void
+  (db (* rocksdb))
+  (opts (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key c-string)
+  (keylen size-t))
+
+(def-with-errptr rocksdb-increase-full-history-ts-low void
+  (db (* rocksdb))
+  (cf (* rocksdb-column-family-handle))
+  (ts-low c-string)
+  (ts-lowlen size-t))
+
+(def-with-errptr rocksdb-get-full-history-ts-low c-string
+  (db (* rocksdb))
+  (cf (* rocksdb-column-family-handle))
+  (ts-lowlen (* size-t)))
 
 (def-with-errptr rocksdb-delete-range-cf 
   void
@@ -340,6 +462,10 @@
   (iter (* rocksdb-wal-iterator)))
 
 ;;; Backup
+(def-with-errptr rocksdb-backup-engine-verify-backup void
+  (be (* rocksdb-backup-engine))
+  (backup-id (unsigned 32)))
+
 (def-with-errptr rocksdb-backup-engine-open
   (* rocksdb-backup-engine)
   (opts (* rocksdb-options))
@@ -367,6 +493,25 @@
 
 (define-alien-routine rocksdb-backup-engine-close void
   (be (* rocksdb-backup-engine)))
+
+(define-alien-routine rocksdb-backup-engine-get-backup-info (* rocksdb-backup-engine-info)
+  (be (* rocksdb-backup-engine)))
+(define-alien-routine rocksdb-backup-engine-info-count int
+  (info (* rocksdb-backup-engine-info)))
+(define-alien-routine rocksdb-backup-engine-info-timestamp (signed 64)
+  (info (* rocksdb-backup-engine-info))
+  (index int))
+(define-alien-routine rocksdb-backup-engine-info-backup-id (unsigned 64)
+  (info (* rocksdb-backup-engine-info))
+  (index int))
+(define-alien-routine rocksdb-backup-engine-info-size (unsigned 64)
+  (info (* rocksdb-backup-engine-info))
+  (index int))
+(define-alien-routine rocksdb-backup-engine-info-num-files (unsigned 32)
+  (info (* rocksdb-backup-engine-info))
+  (index int))
+(define-alien-routine rocksdb-backup-engine-info-destroy void
+  (info (* rocksdb-backup-engine-info)))
 
 ;;; Transactions
 (def-with-errptr rocksdb-transactiondb-create-column-family (* rocksdb-column-family-handle)

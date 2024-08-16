@@ -225,9 +225,6 @@ DB where K and V are both Lisp strings."
       (delete-file file)
       (is (null-alien errptr)))))
 
-(deftest logger ()
-  "Test logging functionality.")
-
 (deftest stats ()
   "Test statistics and performance-context related functionality."
   (rocksdb-set-perf-level (rocksdb-perf-level "enable-time-except-for-mutex"))
@@ -372,7 +369,7 @@ DB where K and V are both Lisp strings."
     (is (zerop (parse-integer (rocksdb-property-value db (make-alien-string "rocksdb.num-files-at-level3")))))))
 
 (deftest merge ()
-  "Test low-level merge-operator functionality using ALIEN-CALLBACKs."
+  "Test low-level merge-operator functionality using Alien Callbacks."
   (is (with-alien ((k (array unsigned-char))
                    (v (array unsigned-char))
                    (ops (array (array unsigned-char)))
@@ -397,8 +394,43 @@ DB where K and V are both Lisp strings."
         (string-trim "rocksdb:" (alien-funcall (alien-callable-function 'rocksdb-name))))))
   ;; returns No Value
   (is (null (alien-funcall (alien-callable-function 'rocksdb-concat-delete-value) nil "" 0)))
-  (is (null (alien-funcall (alien-callable-function 'rocksdb-destructor) (make-alien (* t))))))
+  (is (null (alien-funcall (alien-callable-function 'rocksdb-destructor) (make-alien (* t)))))
 
-(deftest comparator ())
+  ;; null merge op
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function))
+               (full-merge (* rocksdb-full-merge-function))
+               (partial-merge (* rocksdb-partial-merge-function))
+               (delete-value (* rocksdb-delete-value-function))
+               (name (* rocksdb-name-function)))
+    (is (typep (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)
+               '(alien (* rocksdb-mergeoperator)))))
 
-(deftest compaction ())
+  ;; concat merge op
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
+               (full-merge (* rocksdb-full-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-full-merge)))
+               (partial-merge (* rocksdb-partial-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-partial-merge)))
+               (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-concat-delete-value)))
+               (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
+    (is (typep (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)
+               '(alien (* rocksdb-mergeoperator))))))
+
+(deftest comparator ()
+  "Test low-level comparator API."
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function))
+               (compare (* rocksdb-compare-function))
+               (name (* rocksdb-name-function)))
+    (rocksdb-comparator-create state destructor compare name)))
+
+(deftest compaction ()
+  "Test low-level compactionfilter API."
+  (with-alien ((state (* t))
+               (context (* rocksdb-compactionfiltercontext))
+               (destructor (* rocksdb-destructor-function))
+               (generator (* rocksdb-create-compaction-filter-function)))
+    (alien-funcall (alien-callable-function 'rocksdb-create-compaction-filter) state context)))
+    
+(deftest logger ()
+  "Test logging functionality.")

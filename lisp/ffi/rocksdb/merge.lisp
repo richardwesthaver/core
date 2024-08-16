@@ -120,6 +120,8 @@ accessed using a different MergeOperator)
 
 (define-alien-callable rocksdb-name c-string () (make-alien-string (symbol-name (gensym "rocksdb:"))))
 
+(define-alien-callable rocksdb-concat-merge-name c-string () (make-alien-string "concat-merge"))
+
 (define-alien-callable rocksdb-concat-full-merge boolean
     ((key (array unsigned-char))
      (klen size-t)
