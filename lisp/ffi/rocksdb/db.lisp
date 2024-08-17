@@ -75,12 +75,6 @@
   (val (* unsigned-char))
   (vallen size-t))
 
-(def-with-errptr rocksdb-write 
-  void
-  (db (* rocksdb))
-  (opt (* rocksdb-writeoptions))
-  (batch (* rocksdb-writebatch)))
-
 (def-with-errptr rocksdb-get-cf 
   (* unsigned-char)
   (db (* rocksdb))
