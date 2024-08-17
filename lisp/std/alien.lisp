@@ -22,9 +22,9 @@
 
 ;;; Code:
 (in-package :std/alien)
-(shadowing-import
- '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall
-   sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)
+;; (shadowing-import
+;;  '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall
+;;    sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)
 
 ;; (reexport-from :sb-vm
 ;;  	       :include
