@@ -272,7 +272,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-backup-engine-info-backup-id
    :rocksdb-backup-engine-info-size
    :rocksdb-backup-engine-info-num-files
-   :rocksdb-backup-engine-info-destroy))
+   :rocksdb-backup-engine-info-destroy
+   :rocksdb-iter-key))
 
 (in-package :rocksdb)
 
