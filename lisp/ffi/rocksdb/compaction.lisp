@@ -24,6 +24,11 @@
             (* (array unsigned-char))
             (* size-t)
             (* unsigned-char)))
+
+(define-alien-type rocksdb-create-compaction-filter-function
+    (function (* rocksdb-compactionfilter)
+              (* t)
+              (* rocksdb-compactionfiltercontext)))
             
 (define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
   (self (* rocksdb-compactionfilter)) (val unsigned-char))
@@ -47,11 +52,6 @@
 
 (define-alien-routine rocksdb-compacitonfilter-destroy void
   (factory (* rocksdb-compactionfilterfactory)))
-
-(define-alien-type rocksdb-create-compaction-filter-function
-    (function (* rocksdb-compactionfilter)
-              (* t)
-              (* rocksdb-compactionfiltercontext)))
 
 ;; maybe not possible? test
 (define-alien-callable rocksdb-create-compaction-filter (* rocksdb-compactionfilter)
