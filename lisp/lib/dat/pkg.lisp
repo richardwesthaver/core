@@ -175,6 +175,10 @@
    :extract-path-list
    :extract-path))
 
+(defpackage :dat/handlebars
+  (:use :cl :std :dat/proto :dat/html)
+  (:export))
+  
 (defpackage :dat/mime
   (:use :cl :std :dat/proto :dat/xml)
   (:export :*mime-database*

@@ -19,8 +19,8 @@
 
 ;;; Commentary:
 
-;; This is The Compiler Company inbox system. The main interface is
-;; the inbox.org file which manages personal tasks.
+;; This is the elisp interface to the CC Inbox system. The main
+;; interface is the inbox.org file which manages personal tasks.
 
 ;; Users may use `org-capture' to insert tasks and notes into their
 ;; own `org-inbox-file' and refactor them to a more sensible
@@ -28,10 +28,16 @@
 
 ;;; Code:
 (require 'org)
+(require 'org-agenda)
 (require 'default)
-(defgroup inbox nil
-  "RW Inbox")
+(require 'uml-mode)
+(require 'eieio)
+(require 'org-expiry)
 
+(defgroup inbox nil
+  "CC Inbox")
+
+;;; Vars
 (defcustom org-inbox-file
   (concat (file-name-as-directory org-directory) "inbox.org")
   "Custom inbox file location."
@@ -44,6 +50,15 @@
   :type 'string
   :group 'inbox)
 
+(defvar org-inbox-buffer-name "*Inbox*"
+  "The name of the org-inbox buffer.")
+
+(defvar org-inbox-properties
+  '("NEXT" "PREV" "FROM" "TO" "OWNER" "PROJECT" "BLOCKER"))
+
+(defvar org-inbox-db-schema
+  '(id file node edge contents properties schedule))
+;;; Utils
 ;; `org-archive-all-done' doesn't work the way we want. This function
 ;; will archive all done tasks in the current subtree, or the whole file
 ;; if prefix arg is given.
@@ -199,6 +214,20 @@ Format:
   "Sort the current heading by todo order followed by priority."
   (interactive)
   (org-sort-entries nil ?f #'org-sort-todo-priority #'org-sort-compare-todo-priority))
+
+(defun org-inbox-open ()
+  "Open `org-inbox-file' or switch to its buffer if already open."
+  (interactive)
+  (if-let ((inbox (get-buffer org-inbox-buffer-name)))
+      (switch-to-buffer inbox)
+    (find-file org-inbox-file)
+    (rename-buffer org-inbox-buffer-name)))
+
+(defun org-inbox-close ()
+  "Close the org-inbox and associated buffers."
+  (interactive)
+  (when-let ((inbox (get-buffer org-inbox-buffer-name)))
+    (kill-buffer inbox)))
 
 (provide 'inbox)
 ;; inbox.el ends here

@@ -1,5 +1,5 @@
 (defsystem :dat
-  :description "Data formats"
+  :description "Data Systems"
   :depends-on (:cl-ppcre :std :obj #+png :png :flexi-streams :io :log)
   :version "0.1.0"
   :serial t
@@ -29,6 +29,7 @@
                 ((:file "const")
                  (:file "entity")
                  (:file "html")))
+               (:file "handlebars")
                (:file "mime")
                (:file "toml")
                (:file "arff")

@@ -69,6 +69,7 @@
 
 (defvar default-theme 'leuven-dark)
 (defvar company-source-directory (join-paths user-home-directory "comp"))
+(defvar company-org-directory (join-paths company-source-directory "org"))
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
@@ -747,7 +748,7 @@ Add this function to appropriate major mode hooks such as
 (setq org-id-link-to-org-use-id t)
 ;; capture templates
 (setq org-capture-templates
-      '(("t" "task" entry (file "inbox.org") "* %^{title}\n- %?" :prepend t)
+      '(("t" "task" entry (file "core.org") "* %^{title}\n- %?" :prepend t)
         ("1" "current-task-item" item (clock) "%i%?")
         ("2" "current-task-checkbox" checkitem (clock) "%i%?")
         ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
@@ -758,6 +759,10 @@ Add this function to appropriate major mode hooks such as
         ("i" "idea" entry (file "inbox.org") "* OUTLINE %?\n:notes:\n:end:\n- _outline_ [/]\n  - [ ] \n  - [ ] \n- _refs_" :prepend t)
         ("b" "bug" entry (file "inbox.org") "* FIX %?\n- _review_\n- _fix_\n- _test_" :prepend t)
         ("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
+
+(setq org-default-notes-file (join-paths org-directory "inbox.org")
+      org-capture-use-agenda-date t)
+
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil
       ;; cc default
@@ -786,21 +791,24 @@ Add this function to appropriate major mode hooks such as
 
         org-refile-targets '((nil :maxlevel . 3)
                              (org-agenda-files :maxlevel . 3))
-        org-agenda-files (list "inbox.org")
+        ;; org-agenda-files (list "inbox.org")
+        org-agenda-include-diary t
+        org-agenda-include-inactive-timestamps t
         org-confirm-babel-evaluate nil
         org-src-fontify-natively t
         org-src-tabs-act-natively t
         org-footnote-section nil
         org-log-into-drawer t
+        org-log-refile 'time
+        org-log-redeadline 'time
         org-log-states-order-reversed nil
         org-clock-persist 'history)
-
-(setq org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
 
 (add-hook 'after-init-hook #'org-clock-persistence-insinuate)
 
 ;; archive
 (setq org-archive-location "archive.org::")
+
 (defun extract-org-directory-titles-as-list (&optional dir)
   (interactive "D")
   (print
@@ -978,6 +986,9 @@ inherited by a parent headline."
        t nil))))
 
 ;;;; Agenda
+(require 'org-agenda)
+(cl-pushnew '("w" "Work in progress tasks" ((todo "WIP") (agenda))) org-agenda-custom-commands)
+
 (defvar org-agenda-overriding-header)
 (defvar org-agenda-sorting-strategy)
 (defvar org-agenda-restrict)
@@ -1080,17 +1091,14 @@ inherited by a parent headline."
                                        :html translation-html
                                        :utf-8 translation-utf-8)))))))
 
-;;; Glossary
-(use-package org-glossary
-  :vc (:url "https://github.com/tecosaur/org-glossary.git" :branch "master")
-  :after org)
-
 ;;; Dictionary
-(setq switch-to-buffer-obey-display-actions t)
-(add-to-list 'display-buffer-alist
-   '("^\\*Dictionary\\*" display-buffer-in-side-window
-     (side . right)))
+(setq dictionary-server "compiler.company"
+      switch-to-buffer-obey-display-actions t)
 
+;;; Ispell
+;; requires aspell and a hunspell dictionary (hunspell-en_us)
+(setq-default ispell-program-name "aspell")
+(add-hook 'mail-send-hook  #'ispell-message)
 
 ;;; Skel
 (add-to-load-path user-emacs-lib-directory)

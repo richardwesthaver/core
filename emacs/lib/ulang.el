@@ -26,7 +26,8 @@
 ;;; Code:
 (require 'org)
 (require 'ox)
-
+(require 'inbox)
+(require 'publish)
 (defvar ulang-links-history nil)
 (defvar ulang-files-history nil)
 
@@ -42,6 +43,9 @@
 (org-dynamic-block-define "links" 'ulang-dblock-insert-links)
 
 (org-export-translate-to-lang (list '("Table of Contents" "Index")) "ulang")
+
+;; todo keywords
+(setq org-stuck-projects '("+PROJECT+LEVEL=2|HOLD|WAIT|TEST|DRAFT|REVIEW|KLUDGE/-DONE" ("NEXT") nil ""))
 
 (setq org-todo-keywords
       '((type "TBD(0!)" "TODO(t!)" "|")
@@ -70,6 +74,7 @@
         ("WIP" . (:foreground "darkorchid2" :weight bold))
         ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen"))))
 
+;; link abbrevs
 (setq org-link-abbrev-alist
       '(("vc" . "https://vc.compiler.company/%s")
         ("comp" . "https://compiler.company/%s")

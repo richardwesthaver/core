@@ -3,16 +3,14 @@
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
 #+setupfile: https://cdn.compiler.company/org/clean.theme
+#+property: header-args :eval no-export
 - [[https://compiler.company/docs/core][Docs]]
   - [[https://compiler.company/docs/core/install.html][Install]] :: Install Guide
   - [[https://compiler.company/docs/core/tests.html][Tests]] :: Testing Guide
   - [[https://compiler.company/docs/core/stats.html][Stats]] :: Project Statistics
 
 * Overview
- is a small software research laboratory
-concerned with the future of Mechanical Freedom.
-
-This repository contains the monolothic core of the Compiler Company.
+This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
 To bootstrap the core you will need recent versions of [[https://www.rust-lang.org/][Rust]], [[http://www.sbcl.org/][SBCL]], and
 a C compiler (clang or gcc). Only Unix systems are explicitly
@@ -27,25 +25,25 @@ to reliably provision the host either from source or pre-built
 platform-specific [[https://packy.compiler.company/dist][binary distributions]].
 
 #+NAME: Optional Dependencies
-| dependency  | dependents             | src                                           | 
-|-------------+------------------------+-----------------------------------------------+
-| Blake3      | ffi/blake3             | https://vc.compiler.company/packy/blake3      | 
-| Tree-sitter | ffi/tree-sitter        | https://vc.compiler.company/packy/tree-sitter | 
-| Uring       | ffi/uring              | https://vc.compiler.company/packy/uring       | 
-| Btrfs       | ffi/btrfs              | https://vc.compiler.company/packy/btrfs       | 
-| Ublksrv     | ffi/ublk               | https://vc.compiler.company/packy/ublksrv     | 
-| OpenSSL     | lib/net                |                                               | 
-| RocksDB     | ffi/rocksdb            | https://vc.compiler.company/packy/rocksdb     | 
-| Git         | lib/vc/git             | https://vc.compiler.company/packy/git         | 
-| Hg          | lib/vc/hg              | https://vc.compiler.company/packy/hg          | 
-| Zstd        | ffi/zstd               | https://vc.compiler.company/packy/zstd        | 
-| Qemu        | lib/box                | https://vc.compiler.company/packy/qemu        | 
-| Podman      | lib/pod                | https://vc.compiler.company/packy/podman      | 
-| Emacs       | emacs                  | https://vc.compiler.company/packy/emacs       | 
-| StumpWM     | lib/gui/wm/x11/stumpwm | https://vc.compiler.company/packy/stumpwm     | 
-| Readline    | ffi/readline           |                                               | 
-| Keyutils    | ffi/keyutils           |                                               | 
-| Mpd         | lib/aud/mpd            | https://vc.compiler.company/packy/mpd         | 
+| dependency  | dependents             | src                                           |
+|-------------+------------------------+-----------------------------------------------|
+| Blake3      | ffi/blake3             | https://vc.compiler.company/packy/blake3      |
+| Tree-sitter | ffi/tree-sitter        | https://vc.compiler.company/packy/tree-sitter |
+| Uring       | ffi/uring              | https://vc.compiler.company/packy/uring       |
+| Btrfs       | ffi/btrfs              | https://vc.compiler.company/packy/btrfs       |
+| Ublksrv     | ffi/ublk               | https://vc.compiler.company/packy/ublksrv     |
+| OpenSSL     | lib/net                | [[https://vc.compiler.company/packy/openssl]]     |
+| RocksDB     | ffi/rocksdb            | https://vc.compiler.company/packy/rocksdb     |
+| Git         | lib/vc/git             | https://vc.compiler.company/packy/git         |
+| Hg          | lib/vc/hg              | https://vc.compiler.company/packy/hg          |
+| Zstd        | ffi/zstd               | https://vc.compiler.company/packy/zstd        |
+| Qemu        | lib/box                | https://vc.compiler.company/packy/qemu        |
+| Podman      | lib/pod                | https://vc.compiler.company/packy/podman      |
+| Emacs       | emacs                  | https://vc.compiler.company/packy/emacs       |
+| StumpWM     | lib/gui/wm/x11/stumpwm | https://vc.compiler.company/packy/stumpwm     |
+| Readline    | ffi/readline           | [[https://vc.compiler.company/packy/readline]]    |
+| Keyutils    | ffi/keyutils           | [[https://vc.compiler.company/packy/libkeyutils]] |
+| Mpd         | lib/aud/mpd            | https://vc.compiler.company/packy/mpd         |
 
 * Build
 The Core consists of two major system: the *lisp* system and the
@@ -81,7 +79,7 @@ a minimal dependency set.
 
 #+RESULTS: x-help
 #+begin_example
-This is SBCL 2.4.7:dc890089a, an implementation of ANSI Common Lisp.
+This is SBCL 2.4.7:76bbecb68, an implementation of ANSI Common Lisp.
 More information about SBCL is available at <http://www.sbcl.org/>.
 
 SBCL is free software, provided as is, with absolutely no warranty.
