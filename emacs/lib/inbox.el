@@ -53,6 +53,9 @@
 (defvar org-inbox-buffer-name "*Inbox*"
   "The name of the org-inbox buffer.")
 
+(defvar org-inbox-config-buffer-name "*Inbox Config*"
+  "Then name of the org-inbox configuration buffer.")
+
 (defvar org-inbox-properties
   '("NEXT" "PREV" "FROM" "TO" "OWNER" "PROJECT" "BLOCKER"))
 
@@ -210,6 +213,7 @@ Format:
      ((> (cdr a) (cdr b)) nil)
      ;; nil ommitted since cond defaults to it
      ))))
+
 (defun org-inbox-sort ()
   "Sort the current heading by todo order followed by priority."
   (interactive)
@@ -228,6 +232,39 @@ Format:
   (interactive)
   (when-let ((inbox (get-buffer org-inbox-buffer-name)))
     (kill-buffer inbox)))
+
+;;; dblocks
+(defun org-dblock-write:summary ())
+
+(defun org-inbox-show-config (&optional buffer position parameters)
+  (interactive)
+  (switch-to-buffer org-inbox-config-buffer-name)
+  (erase-buffer)
+  (remove-overlays)
+  (widget-insert "\n\n")
+    (widget-create 'push-button
+      :notify (lambda(_widget &rest _ignore)
+                (with-current-buffer buffer
+                  (goto-char position)
+                  )
+                (kill-buffer)
+                (org-ctrl-c-ctrl-c))
+      (propertize "Apply" 'face 'font-lock-comment-face))
+    (widget-insert " ")
+    (widget-create 'push-button
+      :notify (lambda (_widget &rest _ignore)
+                (kill-buffer))
+      (propertize "Cancel" 'face 'font-lock-string-face))
+  (use-local-map widget-keymap)
+  (widget-setup))
+
+(defun org-inbox-configure-dblock ()
+  "Configure the current org-inbox-dblock at point."
+  (interactive)
+  (with-demoted-errors "Error: %S"
+    (let* ((beginning (org-beginning-of-dblock))
+           (parameters (org-prepare-dblock)))
+      (org-inbox-show-config-buffer (current-buffer) beginning parameters))))
 
 (provide 'inbox)
 ;; inbox.el ends here
