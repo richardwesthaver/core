@@ -185,7 +185,7 @@
             (inc-suffixf ref)))
         ref)))
 
-(advice-add #'org-export-get-reference :override #'org-export-get-reference-title)
+;; (advice-add #'org-export-get-reference :override #'org-export-get-reference-title)
 
 ;;;###autoload
 (defun publish (&optional sitemap static force async)

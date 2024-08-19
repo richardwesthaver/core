@@ -15,7 +15,7 @@
                (:file "types")
                (:file "opts")
                (:file "sst")
-               (:file "slice")
+               (:file "slicetransform")
                (:file "db")
                (:file "metadata")
                (:file "merge")

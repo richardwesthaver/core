@@ -307,7 +307,14 @@ set *errptr to a malloc()ed error message.
    :rocksdb-writebatch-clear
    :rocksdb-writebatch-wi-create-with-params
    :rocksdb-writebatch-wi-create-from
-   :rocksdb-writebatch-wi-create))
+   :rocksdb-writebatch-wi-create
+   :rocksdb-transform-function
+   :rocksdb-in-domain-function
+   :rocksdb-in-range-function
+   :rocksdb-mergeoperator-function
+   :rocksdb-logger-function
+   :rocksdb-compactionfilter-function
+   :rocksdb-comparator-function))
 
 (in-package :rocksdb)
 

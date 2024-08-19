@@ -466,3 +466,7 @@ DB where K and V are both Lisp strings."
 (deftest writebatch ()
   "Test writebatch functionality."
   nil)
+
+(deftest slicetransform ()
+  "Test slicetransform functionality."
+  nil)

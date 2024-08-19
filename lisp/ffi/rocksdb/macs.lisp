@@ -5,6 +5,20 @@
 ;;; Code:
 (in-package :rocksdb)
 
+(deftype rocksdb-mergeoperator-function ()
+  '(function (octet-vector (or octet-vector null) &rest t) (or null octet-vector)))
+
+(deftype rocksdb-comparator-function ()
+  '(function (octet-vector octet-vector) (integer -1 1)))
+
+(deftype rocksdb-compactionfilter-function ()
+  ;;           level              key           val           new         changed
+  '(function ((unsigned-byte 32) octet-vector octet-vector octet-vector) boolean))
+
+(deftype rocksdb-logger-function ()
+  '(function (unsigned-byte string) (values)))
+
+;;; Merge Ops
 (defmacro define-full-merge-op (name &body body)
   `(define-alien-callable ,name (* t)
        ,*rocksdb-full-merge-lambda-list*
@@ -14,9 +28,6 @@
   `(define-alien-callable ,name (* t)
        ,*rocksdb-partial-merge-lambda-list*
      ,@body))
-
-(defvar *rocksdb-destructor-callback* (alien-callable-function 'rocksdb-destructor))
-(defvar *rocksdb-delete-callback* (alien-callable-function 'rocksdb-delete-value))
 
 (defmacro define-merge-operator (name state &key full
                                                  partial
@@ -38,5 +49,3 @@
                                          (alien-sap (alien-callable-function ',pmerge))
                                          (alien-sap (alien-callable-function ',delete))
                                          (alien-sap (alien-callable-function ',mname)))))))
-
-

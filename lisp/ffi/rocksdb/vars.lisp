@@ -5,6 +5,13 @@
 ;;; Code:
 (in-package :rocksdb)
 
+;;; Callbacks
+(defvar *rocksdb-destructor-callback* (alien-callable-function 'rocksdb-destructor))
+(defvar *rocksdb-delete-value-callback* (alien-callable-function 'rocksdb-delete-value))
+(defvar *rocksdb-name-callback* (alien-callable-function 'rocksdb-name))
+(defvar *rocksdb-log-callback* (alien-callable-function 'rocksdb-log-default))
+
+;;; Opts
 (defvar *rocksdb-compression-backends*
   (map 'vector (lambda (x) (string-downcase (symbol-name x)))
        '(none snappy zlib bz2 lz4 lz4hc xpress zstd)))

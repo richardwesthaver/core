@@ -122,10 +122,6 @@ accessed using a different MergeOperator)
 
 (define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
 
-;; TODO 2023-12-11: 
-(deftype rocksdb-mergeoperator-function ()
-  '(function (octet-vector (or octet-vector null) &rest t) (or null octet-vector)))
-
 (define-alien-callable rocksdb-destructor void ((self (* t)))
   (free-alien self)
   (values))
@@ -148,7 +144,7 @@ accessed using a different MergeOperator)
      (success (array unsigned-char))
      (new-vlen (* size-t)))
   (log:debug! (list key klen existing-val existing-vlen ops ops-length num-ops success new-vlen))
-  1)
+  t)
 
 (define-alien-callable rocksdb-concat-partial-merge boolean
     ((key (array unsigned-char))
@@ -159,7 +155,7 @@ accessed using a different MergeOperator)
      (success (array unsigned-char))
      (new-vlen (* size-t)))
   (log:debug! (list key klen ops ops-length num-ops success new-vlen))
-  0)
+  nil)
 
 (define-alien-callable rocksdb-delete-value void
     ((state (* t))

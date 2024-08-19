@@ -54,7 +54,7 @@
         (sequence "FIND(q!)" "READ(r@!)" "WATCH(W@!)" "|")
         (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
         (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(V!)" "|")
-        (type "FIXME(i!)" "TEST(t!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)" "LOG(L!)" "|")
+        (type "FIXME(i!)" "TEST(T!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)" "LOG(L!)" "|")
         (type "KLUDGE(k@!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
         (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
         (type "GOTO(g!)" "|")
