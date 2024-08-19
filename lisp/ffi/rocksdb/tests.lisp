@@ -393,7 +393,10 @@ DB where K and V are both Lisp strings."
        (parse-integer
         (string-trim "rocksdb:" (alien-funcall (alien-callable-function 'rocksdb-name))))))
   ;; returns No Value
-  (is (null (alien-funcall (alien-callable-function 'rocksdb-concat-delete-value) nil "" 0)))
+  (with-alien ((str c-string (make-alien-string ""))
+               (state (* t)))
+    (is (null (alien-funcall (alien-callable-function 'rocksdb-delete-value) state str 1))))
+
   (is (null (alien-funcall (alien-callable-function 'rocksdb-destructor) (make-alien (* t)))))
 
   ;; null merge op
@@ -419,18 +422,33 @@ DB where K and V are both Lisp strings."
 (deftest comparator ()
   "Test low-level comparator API."
   (with-alien ((state (* t))
-               (destructor (* rocksdb-destructor-function))
-               (compare (* rocksdb-compare-function))
-               (name (* rocksdb-name-function)))
-    (rocksdb-comparator-create state destructor compare name)))
+               (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
+               (compare (* rocksdb-compare-function) (alien-sap (alien-callable-function 'rocksdb-compare-never)))
+               (compare-with-ts (* rocksdb-compare-with-ts-function))
+               (compare-without-ts (* rocksdb-compare-without-ts-function))
+               (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-name))))
+    (is (typep (rocksdb-comparator-create state destructor compare name)
+               '(alien (* rocksdb-comparator))))
+    (is (typep (rocksdb-comparator-with-ts-create state destructor compare compare-with-ts compare-without-ts name)
+               '(alien (* rocksdb-comparator))))))
 
 (deftest compaction ()
   "Test low-level compactionfilter API."
   (with-alien ((state (* t))
-               (context (* rocksdb-compactionfiltercontext))
-               (destructor (* rocksdb-destructor-function))
-               (generator (* rocksdb-create-compaction-filter-function)))
-    (alien-funcall (alien-callable-function 'rocksdb-create-compaction-filter) state context)))
+               (context (* rocksdb-compactionfiltercontext)))
+    (is (typep
+         (rocksdb-compactionfilter-create state
+                                          (alien-sap (alien-callable-function 'rocksdb-destructor))
+(alien-sap (alien-callable-function 'rocksdb-filter-never))
+                                          (alien-sap (alien-callable-function 'rocksdb-name)))
+         '(alien (* rocksdb-compactionfilter))))
+    (is (typep
+         (rocksdb-compactionfilterfactory-create state
+                                                 (alien-sap (alien-callable-function 'rocksdb-destructor))
+                                                 (alien-sap (alien-callable-function
+                                                             'rocksdb-create-compaction-filter-never))
+                                                 (alien-sap (alien-callable-function 'rocksdb-name)))
+         '(alien (* rocksdb-compactionfilterfactory))))))
     
 (deftest logger ()
   "Test logging functionality.")

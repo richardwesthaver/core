@@ -745,23 +745,10 @@ Add this function to appropriate major mode hooks such as
 (use-package imenu-list :ensure t)
 
 ;;; Org
-(setq org-id-link-to-org-use-id t)
-;; capture templates
-(setq org-capture-templates
-      '(("t" "task" entry (file "core.org") "* %^{title}\n- %?" :prepend t)
-        ("1" "current-task-item" item (clock) "%i%?")
-        ("2" "current-task-checkbox" checkitem (clock) "%i%?")
-        ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
-        ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
-        ("l" "log" item (file+headline "log.org" "log") "%U %?" :prepend t)
-        ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)
-        ("n" "note" plain (file+function "notes.org" org-ask-location) "%?")
-        ("i" "idea" entry (file "inbox.org") "* OUTLINE %?\n:notes:\n:end:\n- _outline_ [/]\n  - [ ] \n  - [ ] \n- _refs_" :prepend t)
-        ("b" "bug" entry (file "inbox.org") "* FIX %?\n- _review_\n- _fix_\n- _test_" :prepend t)
-        ("r" "research" entry (file "inbox.org") "* RESEARCH %?\n:notes:\n:end:\n- _refs_" :prepend t)))
-
-(setq org-default-notes-file (join-paths org-directory "inbox.org")
-      org-capture-use-agenda-date t)
+(require 'org)
+(require 'org-agenda)
+(require 'org-id)
+(require 'org-protocol)
 
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil
@@ -855,7 +842,7 @@ Add this function to appropriate major mode hooks such as
 (defun org-agenda-show-week-all (&optional arg ) (interactive "P") (org-agenda arg "n"))
 
 (defun org-ask-location ()
-  "prompt for a location\"\""
+  "prompt for a location."
   (let* ((org-refile-targets '((nil :maxlevel . 9)))
          (hd (condition-case nil
                  (car (org-refile-get-location))
@@ -986,7 +973,6 @@ inherited by a parent headline."
        t nil))))
 
 ;;;; Agenda
-(require 'org-agenda)
 (cl-pushnew '("w" "Work in progress tasks" ((todo "WIP") (agenda))) org-agenda-custom-commands)
 
 (defvar org-agenda-overriding-header)

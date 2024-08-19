@@ -30,8 +30,7 @@
 (require 'org)
 (require 'org-agenda)
 (require 'default)
-(require 'uml-mode)
-(require 'eieio)
+;; (require 'uml-mode)
 (require 'org-expiry)
 
 (defgroup inbox nil
@@ -57,10 +56,53 @@
   "Then name of the org-inbox configuration buffer.")
 
 (defvar org-inbox-properties
-  '("NEXT" "PREV" "FROM" "TO" "OWNER" "PROJECT" "BLOCKER"))
+  '("NEXT" "PREV" "FROM" "TO" "OWNER" "PROJECT" "BLOCKER" "VERSION"))
 
 (defvar org-inbox-db-schema
   '(id file node edge contents properties schedule))
+
+;;; Capture
+(setq org-id-link-to-org-use-id t
+      org-protocol-default-template-key "L")
+
+;; capture templates
+(setq org-capture-templates
+      `(("i" "inbox-item" entry (file ,org-inbox-file)
+         "* %?\n%i"
+         :empty-lines 1)
+        ("t" "inbox-task" entry (file ,org-inbox-file) "* TODO %^{item}\n")
+        ("n" "inbox-note" entry (file ,org-inbox-file) "* NOTE %^{item}\n%a")
+        ("l" "inbox-link" entry (file ,org-inbox-file)
+         "* LINK %l")
+        ("L" "inbox-protocol-link" entry (file ,org-inbox-file)
+         "* LINK [[%:link][%:description]]\n%:initial" :empty-lines 1)
+        ("w" "inbox-web-link" entry (file ,org-inbox-file)
+         "* LINK %?"
+         :hook (lambda ()
+                 (goto-char (pos-eol))
+                 (org-web-tools-insert-link-for-url (org-web-tools--get-first-url))))
+        ("1" "current-task-item" item (clock) "%i%?")
+        ("2" "current-task-checkbox" checkitem (clock) "%i%?")
+        ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
+        ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
+        ("l" "log" item (file+headline "log.org" "log") "%U %?" :prepend t)
+        ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)
+        ("N" "note-item" plain (file+function "notes.org" org-ask-location) "%?")))
+
+(defun org-insert-logbook-drawer () (org-log-beginning t))
+
+;; (add-hook 'org-capture-mode-hook
+;;           #'org-insert-logbook-drawer)
+
+(add-hook 'org-capture-mode-hook
+  #'org-id-get-create)
+
+(add-hook 'org-capture-mode-hook
+          #'org-expiry-insert-created)
+
+(setq org-default-notes-file (join-paths org-directory "inbox.org")
+      org-capture-use-agenda-date t)
+
 ;;; Utils
 ;; `org-archive-all-done' doesn't work the way we want. This function
 ;; will archive all done tasks in the current subtree, or the whole file
@@ -236,6 +278,15 @@ Format:
 ;;; dblocks
 (defun org-dblock-write:summary ())
 
+(defun org-inbox-configure-dblock ()
+  "Configure the current org-inbox-dblock at point."
+  (interactive)
+  (with-demoted-errors "Error: %S"
+    (let* ((beginning (org-beginning-of-dblock))
+           (parameters (org-prepare-dblock)))
+      (org-inbox-show-config-buffer (current-buffer) beginning parameters))))
+
+;;; ui
 (defun org-inbox-show-config (&optional buffer position parameters)
   (interactive)
   (switch-to-buffer org-inbox-config-buffer-name)
@@ -257,14 +308,6 @@ Format:
       (propertize "Cancel" 'face 'font-lock-string-face))
   (use-local-map widget-keymap)
   (widget-setup))
-
-(defun org-inbox-configure-dblock ()
-  "Configure the current org-inbox-dblock at point."
-  (interactive)
-  (with-demoted-errors "Error: %S"
-    (let* ((beginning (org-beginning-of-dblock))
-           (parameters (org-prepare-dblock)))
-      (org-inbox-show-config-buffer (current-buffer) beginning parameters))))
 
 (provide 'inbox)
 ;; inbox.el ends here

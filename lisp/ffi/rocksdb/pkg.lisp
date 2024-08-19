@@ -273,7 +273,14 @@ set *errptr to a malloc()ed error message.
    :rocksdb-backup-engine-info-size
    :rocksdb-backup-engine-info-num-files
    :rocksdb-backup-engine-info-destroy
-   :rocksdb-iter-key))
+   :rocksdb-iter-key
+   :rocksdb-get-updates-since
+   :rocksdb-create-iterators
+   :rocksdb-create-compaction-filter-never
+   :rocksdb-compacitonfilterfactory-destroy
+   :rocksdb-compactionfilterfactory-create
+   :rocksdb-filter-never
+   :rocksdb-delete-value))
 
 (in-package :rocksdb)
 

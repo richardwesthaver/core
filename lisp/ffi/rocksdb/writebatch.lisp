@@ -1,4 +1,4 @@
-;;; batch.lisp --- RocksDB Writebatches
+;;; writebatch.lisp --- RocksDB Writebatches
 
 ;; RocksDB Writebatch Lisp FFI
 

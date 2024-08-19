@@ -83,6 +83,7 @@
   :prefix 'user-map
   "c" #'org-capture
   "l" #'org-store-link
+  "C-l" #'org-web-tools-insert-link-for-url
   "f" #'load-file
   "u" #'compile
   "a" #'org-agenda

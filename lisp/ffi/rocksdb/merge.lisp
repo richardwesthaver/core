@@ -88,8 +88,6 @@ accessed using a different MergeOperator)
 (define-alien-type rocksdb-name-function
     (function c-string))
 
-(deftype rocksdb-merge-operands () '(array (octet-vector)))
-
 ;; (sb-alien::define-alien-callable mangle int () 0)
 
 (define-alien-routine rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
@@ -108,19 +106,16 @@ accessed using a different MergeOperator)
 (deftype rocksdb-mergeoperator-function ()
   '(function (octet-vector (or octet-vector null) &rest t) (or null octet-vector)))
 
-(define-alien-callable rocksdb-delete-value (* t)
-    ((val (array unsigned-char))
-     (vlen size-t))
-  (declare (ignore val vlen))
-  nil)
- 
 (define-alien-callable rocksdb-destructor void ((self (* t)))
   (free-alien self)
   (values))
 
 (define-alien-callable rocksdb-name c-string () (make-alien-string (symbol-name (gensym "rocksdb:"))))
 
-(define-alien-callable rocksdb-concat-merge-name c-string () (make-alien-string "concat-merge"))
+;;; Associative Merge
+
+;;; Concat Merge
+(define-alien-callable rocksdb-concat-merge-name c-string () (make-alien-string "cc:concat"))
 
 (define-alien-callable rocksdb-concat-full-merge boolean
     ((key (array unsigned-char))
@@ -146,8 +141,13 @@ accessed using a different MergeOperator)
   (log:debug! (list key klen ops ops-length num-ops success new-vlen))
   0)
 
-(define-alien-callable rocksdb-concat-delete-value void
+(define-alien-callable rocksdb-delete-value void
     ((state (* t))
      (value c-string)
      (value-length size-t))
+  (declare (ignore state))
+  ;; TODO 2024-08-18: test if this is needed
+  (unless (zerop value-length)
+    (log:trace! "deleting value:" value)
+    (setf value nil))
   (values))

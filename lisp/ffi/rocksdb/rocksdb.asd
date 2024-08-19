@@ -11,7 +11,7 @@
   :depends-on (:std :log)
   :serial t
   :components ((:file "pkg")
-               (:file "macs")
+               (:file "prim")
                (:file "types")
                (:file "opts")
                (:file "sst")
@@ -21,8 +21,10 @@
                (:file "merge")
                (:file "compaction")
                (:file "comparator")
+               (:file "writebatch")
                (:file "stats")
-               (:file "vars"))
+               (:file "vars")
+               (:file "macs"))
   :in-order-to ((test-op (test-op "rocksdb/tests"))))
 
 (defsystem "rocksdb/tests"

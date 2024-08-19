@@ -10,6 +10,29 @@
 
 ;; ref: https://github.com/facebook/rocksdb/wiki/Compaction-Filter
 
+#|
+* RocksDB snapshots do not guarantee to preserve the state of the DB in the
+presence of CompactionFilter. Data seen from a snapshot might disappear after
+a table file created with a `CompactionFilter` is installed. If you use
+snapshots, think twice about whether you want to use `CompactionFilter` and
+whether you are using it in a safe way.
+
+* If multithreaded compaction is being used *and* a single CompactionFilter
+instance was supplied via Options::compaction_filter, CompactionFilter
+methods may be called from different threads concurrently.  The application
+must ensure that such calls are thread-safe. If the CompactionFilter was
+created by a factory, then it will only ever be used by a single thread that
+is doing the table file creation, and this call does not need to be
+thread-safe.  However, multiple filters may be in existence and operating
+concurrently.
+
+* The key passed to the filtering methods includes the timestamp if
+user-defined timestamps are enabled.
+
+* Exceptions MUST NOT propagate out of overridden functions into RocksDB,
+because RocksDB is not exception-safe. This could cause undefined behavior
+including data loss, unreported corruption, deadlocks, and more.
+|#
 ;;; Code:
 (in-package :rocksdb)
 
@@ -29,7 +52,13 @@
     (function (* rocksdb-compactionfilter)
               (* t)
               (* rocksdb-compactionfiltercontext)))
-            
+
+(define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
+  (state (* t))
+  (destructor (* rocksdb-destructor-function))
+  (filter (* rocksdb-filter-function))
+  (name (* rocksdb-name-function)))
+
 (define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
   (self (* rocksdb-compactionfilter)) (val unsigned-char))
 
@@ -44,18 +73,33 @@
   (context (* rocksdb-compactionfiltercontext)))
 
 ;;; Compaction Filter Factory
-(define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
+(define-alien-routine rocksdb-compactionfilterfactory-create (* rocksdb-compactionfilterfactory)
   (state (* t))
   (destructor (* rocksdb-destructor-function))
-  (generator (* rocksdb-create-compaction-filter-function))
-  (context (* rocksdb-compactionfiltercontext)))
+  (creator (* rocksdb-create-compaction-filter-function))
+  (name (* rocksdb-name-function)))
 
-(define-alien-routine rocksdb-compacitonfilter-destroy void
+(define-alien-routine rocksdb-compacitonfilterfactory-destroy void
   (factory (* rocksdb-compactionfilterfactory)))
 
-;; maybe not possible? test
-(define-alien-callable rocksdb-create-compaction-filter (* rocksdb-compactionfilter)
+(define-alien-callable rocksdb-filter-never unsigned-char
+    ((state (* t))
+     (level int)
+     (key (array unsigned-char))
+     (key-length size-t)
+     (existing-val (array unsigned-char))
+     (existing-val-length size-t)
+     (new-val (array unsigned-char))
+     (new-val-length size-t)
+     (value-changed (* unsigned-char)))
+  (declare (ignore state level key key-length existing-val existing-val-length new-val new-val-length value-changed))
+  0)
+
+(define-alien-callable rocksdb-create-compaction-filter-never (* rocksdb-compactionfilter)
     ((state (* t))
      (context (* rocksdb-compactionfiltercontext)))
-  (declare (ignore state context)))
-
+  (rocksdb-compactionfilter-create
+   state
+   (alien-sap (alien-callable-function 'rocksdb-destructor))
+   (alien-sap (alien-callable-function 'rocksdb-filter-never))
+   context))

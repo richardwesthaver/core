@@ -410,11 +410,21 @@
   (db (* rocksdb))
   (opt (* rocksdb-readoptions)))
 
+(define-alien-routine rocksdb-get-updates-since (* rocksdb-wal-iterator)
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions)))
+
 (define-alien-routine rocksdb-create-iterator-cf (* rocksdb-iterator)
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle)))
 
+(def-with-errptr rocksdb-create-iterators void
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (cfs (array (* rocksdb-column-family-handle)))
+  (iters (array (* rocksdb-iterator))))
+  
 (define-alien-routine rocksdb-iter-destroy void 
       (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-seek-to-first void 
