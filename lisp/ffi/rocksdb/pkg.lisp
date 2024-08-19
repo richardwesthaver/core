@@ -290,7 +290,24 @@ set *errptr to a malloc()ed error message.
    :rocksdb-log-function
    :rocksdb-logger-create-callback-logger
    :rocksdb-log-default
-   :rocksdb-logger-create-stderr-logger))
+   :rocksdb-logger-create-stderr-logger
+   :rocksdb-writebatch-create
+   :rocksdb-writebatch-create-from
+   :rocksdb-writebatch-create-with-params
+   :rocksdb-writebatch-destroy
+   :rocksdb-writebatch-delete-cf-with-ts
+   :rocksdb-writebatch-delete-cf
+   :rocksdb-writebatch-delete
+   :rocksdb-writebatch-putv-cf
+   :rocksdb-writebatch-putv
+   :rocksdb-writebatch-put-cf-with-ts
+   :rocksdb-writebatch-put-cf
+   :rocksdb-writebatch-put
+   :rocksdb-writebatch-count
+   :rocksdb-writebatch-clear
+   :rocksdb-writebatch-wi-create-with-params
+   :rocksdb-writebatch-wi-create-from
+   :rocksdb-writebatch-wi-create))
 
 (in-package :rocksdb)
 

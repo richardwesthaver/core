@@ -462,3 +462,7 @@ DB where K and V are both Lisp strings."
     (is (typep
          (rocksdb-logger-create-callback-logger lev log state)
          '(alien (* rocksdb-logger))))))
+
+(deftest writebatch ()
+  "Test writebatch functionality."
+  nil)
