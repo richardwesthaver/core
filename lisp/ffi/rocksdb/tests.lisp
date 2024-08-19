@@ -451,4 +451,14 @@ DB where K and V are both Lisp strings."
          '(alien (* rocksdb-compactionfilterfactory))))))
     
 (deftest logger ()
-  "Test logging functionality.")
+  "Test logging functionality."
+  (with-alien ((state (* t))
+               (lev unsigned 0)
+               (msg c-string)
+               (log (* rocksdb-log-function) (alien-sap (alien-callable-function 'rocksdb-log-default))))
+    (is (typep
+         (rocksdb-logger-create-stderr-logger lev msg)
+         '(alien (* rocksdb-logger))))
+    (is (typep
+         (rocksdb-logger-create-callback-logger lev log state)
+         '(alien (* rocksdb-logger))))))
