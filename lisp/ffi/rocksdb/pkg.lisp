@@ -280,7 +280,16 @@ set *errptr to a malloc()ed error message.
    :rocksdb-compacitonfilterfactory-destroy
    :rocksdb-compactionfilterfactory-create
    :rocksdb-filter-never
-   :rocksdb-delete-value))
+   :rocksdb-delete-value
+   :define-merge-operator
+   :*rocksdb-partial-merge-lambda-list*
+   :*rocksdb-full-merge-lambda-list*
+   :define-partial-merge-op
+   :define-full-merge-op
+   :rocksdb-logger-destroy
+   :rocksdb-log-function
+   :rocksdb-logger-create-callback-logger
+   :rocksdb-log-default))
 
 (in-package :rocksdb)
 

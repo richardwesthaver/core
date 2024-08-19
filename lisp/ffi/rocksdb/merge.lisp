@@ -34,6 +34,26 @@
 ;;; Code:
 (in-package :rocksdb)
 
+(defvar *rocksdb-partial-merge-lambda-list*
+  '((key (array unsigned-char))
+    (klen size-t)
+    (ops (array (array unsigned-char)))
+    (ops-length (* size-t))
+    (num-ops size-t)
+    (success (array unsigned-char))
+    (new-vlen (* size-t))))
+
+(defvar *rocksdb-full-merge-lambda-list*
+  '((key (array unsigned-char))
+    (klen size-t)
+    (existing-val (array unsigned-char))
+    (existing-vlen size-t)
+    (ops (array (array unsigned-char)))
+    (ops-length (* size-t))
+    (num-ops size-t)
+    (success (array unsigned-char))
+    (new-vlen (* size-t))))
+
 #|
 Gives the client a way to express the read -> modify -> write semantics
 key:         (IN) The key that's associated with this merge operation.
