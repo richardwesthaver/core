@@ -289,7 +289,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-logger-destroy
    :rocksdb-log-function
    :rocksdb-logger-create-callback-logger
-   :rocksdb-log-default))
+   :rocksdb-log-default
+   :rocksdb-logger-create-stderr-logger))
 
 (in-package :rocksdb)
 
