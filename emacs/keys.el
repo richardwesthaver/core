@@ -64,6 +64,7 @@
   :doc "User-specified keymap for review functions. Usually bound to 'C-c c r'."
   "s" #'flyspell-buffer
   "SPC" #'whitespace-cleanup
+  "C-s" #'org-schedule-effort
   "u" #'untabify
   "q" #'query-replace-regexp)
 
@@ -99,7 +100,7 @@
   "r" review-map
   "q" server-map
   "(" parens-map
-  "M-l" #'duplicate-dwim  
+  "M-l" #'duplicate-dwim
   "d i" #'image-dired
   "<tab>" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
