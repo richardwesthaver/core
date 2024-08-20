@@ -94,6 +94,7 @@
    ;; eglot-x ;; LSP extensions
    org-web-tools ;; web parsing
    citeproc ;; citations
+   htmlize ;; html export
    all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
    hide-mode-line) ;; ui
    ;; bbdb
@@ -194,12 +195,11 @@
 (add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
 ;;; Lisp
-(use-package slime-company
-  :ensure t)
-
 (use-package slime
   :ensure t
   :init
+  (use-package slime-company
+    :ensure t)
   (require 'slime-autoloads)
   (require 'slime-cape)
   (setq slime-contribs '(slime-fancy

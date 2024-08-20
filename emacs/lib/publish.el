@@ -185,8 +185,6 @@
 ;;           (inc-suffixf ref)))
 ;;       ref)))
 
-;; (advice-add #'org-export-get-reference :override #'org-export-get-reference-title)
-
 ;;;###autoload
 (defun publish (&optional sitemap static force async)
   "publish `rwest-io' content.
@@ -202,5 +200,6 @@ If given a prefix (C-u), set all args to t"
   (let ((default-directory project-dir))
     (message (format "publishing from %s" default-directory))    
     (org-publish "compiler.company" force async)))
+
 (provide 'publish)
 ;;; publish.el ends here
