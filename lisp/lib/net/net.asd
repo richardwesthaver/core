@@ -6,10 +6,9 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
-   :fast-io :swank
+   :fast-io ;; :swank :swank-client
    :dat :obj
    :io :parse
-   :swank-client
    :cl+ssl :cli
    :chipz :babel :chunga
    :std :log)
@@ -26,8 +25,8 @@
                              (:file "tlv")
                              (:file "osc")))
                (:module "proto"
-                :components ((:file "crew")
-                             (:file "swank")
+                :components ((:file "crew" :if-feature "swank")
+                             (:file "swank" :if-feature "swank")
                              (:file "http")
                              (:file "dns")
                              (:file "ssh")))

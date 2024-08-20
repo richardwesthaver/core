@@ -97,9 +97,11 @@
    :timetag->unix-time
    :print-as-double))
 
+;; TODO 2024-08-20: 
 (std:defpkg :net/proto/swank
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :swank-client)
-  (:use-reexport :swank-client)
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
+  ;; (:import-from :swank-client ...)
+  ;; (:use-reexport :swank-client)
   (:export))
 
 (defpackage :net/proto/crew
@@ -114,16 +116,16 @@
                 #:with-mutex)
   (:import-from :sb-concurrency
                 :make-gate)
-  (:import-from #:net/proto/swank
-                #:slime-close
-                #:slime-connect
-                #:slime-eval
-                #:slime-eval-async
-                #:slime-migrate-evals
-                #:slime-network-error
-                #:slime-pending-evals-p
-                #:swank-connection
-                #:with-slime-connection)
+  ;; (:import-from #:swank
+  ;;               #:slime-close
+  ;;               #:slime-connect
+  ;;               #:slime-eval
+  ;;               #:slime-eval-async
+  ;;               #:slime-migrate-evals
+  ;;               #:slime-network-error
+  ;;               #:slime-pending-evals-p
+  ;;               #:swank-connection
+  ;;               #:with-slime-connection)
   (:export 
    :crew-connection-info
    :make-worker-pool

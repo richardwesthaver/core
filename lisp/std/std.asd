@@ -10,7 +10,13 @@
 
 ;; the build op on the STD system system concatenates all dependency systems -
 ;; make sure CL-PPCRE is loaded first but not included in the build output.
-(asdf:load-system :cl-ppcre)
+#-cl-ppcre
+(handler-case
+    (or
+     #+quicklisp (ql:quickload :cl-ppcre)
+     (asdf:load-system :cl-ppcre))
+  (error () (error "unable to load system CL-PPCRE - make sure you have it installed in a path
+that ASDF can find, or have quicklisp installed.")))
 
 (require 'sb-cltl2)
 (require 'sb-concurrency)
