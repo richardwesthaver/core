@@ -248,6 +248,81 @@
 (define-alien-routine rocksdb-writebatch-wi-count void
   (batch (* rocksdb-writebatch-wi)))
 
+(define-alien-routine rocksdb-writebatch-wi-put-log-data void
+  (batch (* rocksdb-writebatch-wi))
+  (blob (array unsigned-char))
+  (len size-t))
+
+(define-alien-routine rocksdb-writebatch-wi-iterate void
+  (batch (* rocksdb-writebatch-wi))
+  (state (* t))
+  (put (* t)) ;; function
+  (deleted (* t)) ;; function
+  )
+
+(define-alien-routine rocksdb-writebatch-wi-data (array unsigned-char)
+  (batch (* rocksdb-writebatch-wi))
+  (size (* size-t)))
+
+(define-alien-routine rocksdb-writebatch-wi-set-save-point void
+  (batch (* rocksdb-writebatch-wi)))
+
+(def-with-errptr rocksdb-writebatch-wi-rollback-to-save-point void
+  (batch (* rocksdb-writebatch-wi)))
+
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch (array unsigned-char)
+  (batch (* rocksdb-writebatch-wi))
+  (opts (* rocksdb-options))
+  (key (array unsigned-char))
+  (keylen size-t)
+  (vallen (* size-t)))
+
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch-cf (array unsigned-char)
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (opts (* rocksdb-options))
+  (key (array unsigned-char))
+  (keylen size-t)
+  (vallen (* size-t)))
+
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db (array unsigned-char)
+  (batch (* rocksdb-writebatch-wi))
+  (db (* rocksdb))
+  (readopts (* rocksdb-readoptions))
+  (key (array unsigned-char))
+  (keylen size-t)
+  (vallen (* size-t)))
+
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db-cf (array unsigned-char)
+  (batch (* rocksdb-writebatch-wi))
+  (db (* rocksdb))
+  (readopts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (array unsigned-char))
+  (keylen size-t)
+  (vallen (* size-t)))
+
+(def-with-errptr rocksdb-write-writebatch-wi void
+  (db (* rocksdb))
+  (wopts (* rocksdb-writeoptions))
+  (wbwi (* rocksdb-writebatch-wi)))
+
+(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base (* rocksdb-iterator)
+  (wbwi (* rocksdb-writebatch-wi))
+  (base-iterator (* rocksdb-iterator)))
+
+(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base-cf (* rocksdb-iterator)
+  (wbwi (* rocksdb-writebatch-wi))
+  (base-iterator (* rocksdb-iterator))
+  (cf (* rocksdb-column-family-handle)))
+
+(def-with-errptr rocksdb-writebatch-wi-update-timestamps void
+  (wbwi (* rocksdb-writebatch-wi))
+  (ts (array unsigned-char))
+  (tslen size-t)
+  (state (* t))
+  (get-ts-size (* t))) ;; function
+
 (define-alien-routine rocksdb-writebatch-wi-put void
   (batch (* rocksdb-writebatch-wi))
   (key (array unsigned-char))
@@ -283,18 +358,101 @@
   (values-list-sizes (array size-t)))
 
 (define-alien-routine rocksdb-writebatch-wi-merge void
-  (batch (* rocksdb-writebatch))
+  (batch (* rocksdb-writebatch-wi))
   (key (array unsigned-char))
   (klen size-t)
   (val (array unsigned-char))
   (vlen size-t))
 
 (define-alien-routine rocksdb-writebatch-wi-merge-cf void
-  (batch (* rocksdb-writebatch))
+  (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
   (klen size-t)
   (val (array unsigned-char))
   (vlen size-t))
 
-;; TODO 2024-08-19: 
+(define-alien-routine rocksdb-writebatch-wi-mergev void
+  (batch (* rocksdb-writebatch-wi))
+  (num-keys int)
+  (keys-list (array (array unsigned-char)))
+  (keys-list-sizes (array size-t))
+  (num-values int)
+  (values-list (array (array unsigned-char)))
+  (values-list-sizes (array size-t)))
+
+(define-alien-routine rocksdb-writebatch-wi-mergev-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (num-keys int)
+  (keys-list (array (array unsigned-char)))
+  (keys-list-sizes (array size-t))
+  (num-values int)
+  (values-list (array (array unsigned-char)))
+  (values-list-sizes (array size-t)))
+
+(define-alien-routine rocksdb-writebatch-wi-delete void
+  (batch (* rocksdb-writebatch-wi))
+  (key (array unsigned-char))
+  (klen size-t))
+
+(define-alien-routine rocksdb-writebatch-wi-singledelete void
+  (batch (* rocksdb-writebatch-wi))
+  (key (array unsigned-char))
+  (klen size-t))
+
+(define-alien-routine rocksdb-writebatch-wi-delete-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (key (array unsigned-char))
+  (klen size-t))
+
+(define-alien-routine rocksdb-writebatch-wi-singledelete-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (key (array unsigned-char))
+  (klen size-t))
+
+(define-alien-routine rocksdb-writebatch-wi-deletev void
+  (batch (* rocksdb-writebatch-wi))
+  (num-keys int)
+  (keys-list (array (array unsigned-char)))
+  (keys-list-sizes (array size-t)))
+
+(define-alien-routine rocksdb-writebatch-wi-deletev-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (num-keys int)
+  (keys-list (array (array unsigned-char)))
+  (keys-list-sizes (array size-t)))
+
+;;; DO NOT USE
+(define-alien-routine rocksdb-writebatch-wi-delete-range void
+  (batch (* rocksdb-writebatch-wi))
+  (start-key (array unsigned-char))
+  (start-key-len size-t)
+  (end-key (array unsigned-char))
+  (end-key-len size-t))
+
+(define-alien-routine rocksdb-writebatch-wi-delete-range-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (start-key (array unsigned-char))
+  (start-key-len size-t)
+  (end-key (array unsigned-char))
+  (end-key-len size-t))
+
+(define-alien-routine rocksdb-writebatch-wi-delete-rangev void
+  (batch (* rocksdb-writebatch-wi))
+  (start-keys-list (array (array unsigned-char)))
+  (start-keys-list-sizes (array size-t))
+  (end-keys-list (array (array unsigned-char)))
+  (end-keys-list-sizes (array size-t)))
+
+(define-alien-routine rocksdb-writebatch-wi-delete-rangev-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (start-keys-list (array (array unsigned-char)))
+  (start-keys-list-sizes (array size-t))
+  (end-keys-list (array (array unsigned-char)))
+  (end-keys-list-sizes (array size-t)))
