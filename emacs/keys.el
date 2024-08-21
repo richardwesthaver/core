@@ -42,6 +42,7 @@
   "T" #'toggle-theme
   "d" #'toggle-debug-on-error
   "SPC" #'toggle-macro-recording
+  "x" #'org-clock-toggle-auto-clockout
   "s" #'slime-toggle
   "w" #'which-key-mode)
 
@@ -79,6 +80,17 @@
   "a" #'xref-find-apropos
   "SPC" #'whitespace-cleanup)
 
+(defvar-keymap clock-map
+  :doc "User-specified keymap for org-clock functions. Usually bound to 'C-c c t'."
+  "j" #'org-clock-goto
+  "i" #'org-clock-in
+  "o" #'org-clock-out
+  "d" #'org-clock-display
+  "x" #'org-clock-cancel
+  "l" #'org-clock-in-last
+  "e" #'org-clock-modify-effort-estimate
+  "m" #'org-clock-mark-default-task)
+
 (defvar-keymap user-map
   :doc "User-specified keymap usually bound to 'C-c c' and populated in 'custom.el'."
   :prefix 'user-map
@@ -107,6 +119,8 @@
   "z" #'scratch-buffer
   "C-z" #'scratch-new
   "Z" #'default-scratch-buffer
+  "t" #'org-todo
+  "C-t" clock-map
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
 

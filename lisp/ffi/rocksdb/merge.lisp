@@ -144,7 +144,7 @@ accessed using a different MergeOperator)
      (success (array unsigned-char))
      (new-vlen (* size-t)))
   (log:debug! (list key klen existing-val existing-vlen ops ops-length num-ops success new-vlen))
-  t)
+  1)
 
 (define-alien-callable rocksdb-concat-partial-merge boolean
     ((key (array unsigned-char))
@@ -155,7 +155,7 @@ accessed using a different MergeOperator)
      (success (array unsigned-char))
      (new-vlen (* size-t)))
   (log:debug! (list key klen ops ops-length num-ops success new-vlen))
-  nil)
+  0)
 
 (define-alien-callable rocksdb-delete-value void
     ((state (* t))

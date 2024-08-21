@@ -314,7 +314,13 @@ set *errptr to a malloc()ed error message.
    :rocksdb-mergeoperator-function
    :rocksdb-logger-function
    :rocksdb-compactionfilter-function
-   :rocksdb-comparator-function))
+   :rocksdb-comparator-function
+   :rocksdb-get-ts-size-function
+   :rocksdb-merge-cf-function
+   :rocksdb-deleted-cf-function
+   :rocksdb-put-cf-function
+   :rocksdb-deleted-function
+   :rocksdb-put-function))
 
 (in-package :rocksdb)
 

@@ -414,7 +414,7 @@ DB where K and V are both Lisp strings."
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
                (full-merge (* rocksdb-full-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-full-merge)))
                (partial-merge (* rocksdb-partial-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-partial-merge)))
-               (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-concat-delete-value)))
+               (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-delete-value)))
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
     (is (typep (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)
                '(alien (* rocksdb-mergeoperator))))))
@@ -465,8 +465,25 @@ DB where K and V are both Lisp strings."
 
 (deftest writebatch ()
   "Test writebatch functionality."
-  nil)
+  (with-alien ((fput (* rocksdb-put-function))
+               (fdeleted (* rocksdb-deleted-function))
+               (fdeleted-cf (* rocksdb-deleted-cf-function))
+               (fput-cf (* rocksdb-put-cf-function))
+               (fmerge-cf (* rocksdb-merge-cf-function))
+               (fget-ts (* rocksdb-get-ts-size-function)))
+    (is (typep
+         (rocksdb-writebatch-create)
+         '(alien (* rocksdb-writebatch))))
+    (is (typep
+         (rocksdb-writebatch-wi-create 0 0)
+         '(alien (* rocksdb-writebatch-wi))))))
 
-(deftest slicetransform ()
+(deftest slicetransform (:skip t)
   "Test slicetransform functionality."
-  nil)
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
+               (transform (* t) (* rocksdb-transform-function))
+               (in-domain (* rocksdb-in-domain-function))
+               (in-range (* rocksdb-in-range-function))
+               (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-name))))
+    (rocksdb-slicetransform-create state destructor transform in-domain in-range name)))

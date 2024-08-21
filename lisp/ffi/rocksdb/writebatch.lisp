@@ -5,6 +5,52 @@
 ;;; Code:
 (in-package :rocksdb)
 
+;;; Types
+(define-alien-type rocksdb-put-function
+  (function void
+            (* t)
+            (array unsigned-char)
+            size-t
+            (array unsigned-char)
+            size-t))
+
+(define-alien-type rocksdb-deleted-function
+  (function void
+            (* t)
+            (array unsigned-char)
+            size-t))
+
+(define-alien-type rocksdb-put-cf-function
+  (function void
+            (* t)
+            (unsigned 32)
+            (array unsigned-char)
+            size-t
+            (array unsigned-char)
+            size-t))
+
+(define-alien-type rocksdb-deleted-cf-function
+  (function void
+            (* t)
+            (unsigned 32)
+            (array unsigned-char)
+            size-t))
+            
+(define-alien-type rocksdb-merge-cf-function
+  (function void
+            (* t)
+            (unsigned 32)
+            (array unsigned-char)
+            size-t
+            (array unsigned-char)
+            size-t))
+
+(define-alien-type rocksdb-get-ts-size-function
+  (function size-t
+            (* t)
+            (unsigned 32)))
+
+;;; Alien Functions
 (define-alien-routine rocksdb-writebatch-create (* rocksdb-writebatch))
 (define-alien-routine rocksdb-writebatch-create-from (* rocksdb-writebatch)
   (rep c-string)
@@ -29,15 +75,15 @@
 (define-alien-routine rocksdb-writebatch-iterate void
   (batch (* rocksdb-writebatch))
   (state (* t))
-  (put (* t)) ;; function
-  (deleted (* t))) ;; function
+  (put (* rocksdb-put-function))
+  (deleted (* rocksdb-deleted-function)))
 
 (define-alien-routine rocksdb-writebatch-iterate-cf void
   (batch (* rocksdb-writebatch))
   (state (* t))
-  (put-cf (* t)) ;; function
-  (deleted-cf (* t)) ;; function
-  (merge-cf (* t))) ;; function
+  (put-cf (* rocksdb-put-cf-function))
+  (deleted-cf (* rocksdb-deleted-cf-function))
+  (merge-cf (* rocksdb-merge-cf-function)))
 
 (define-alien-routine rocksdb-writebatch-data (array unsigned-char)
   (batch (* rocksdb-writebatch))
@@ -57,7 +103,7 @@
   (ts (array unsigned-char))
   (tslen size-t)
   (state (* t))
-  (get-ts-size (* t))) ;; function
+  (get-ts-size (* rocksdb-get-ts-size-function)))
 
 ;; put
 (define-alien-routine rocksdb-writebatch-put void
@@ -256,9 +302,8 @@
 (define-alien-routine rocksdb-writebatch-wi-iterate void
   (batch (* rocksdb-writebatch-wi))
   (state (* t))
-  (put (* t)) ;; function
-  (deleted (* t)) ;; function
-  )
+  (put (* rocksdb-put-function))
+  (deleted (* rocksdb-deleted-function)))
 
 (define-alien-routine rocksdb-writebatch-wi-data (array unsigned-char)
   (batch (* rocksdb-writebatch-wi))
@@ -321,7 +366,7 @@
   (ts (array unsigned-char))
   (tslen size-t)
   (state (* t))
-  (get-ts-size (* t))) ;; function
+  (get-ts-size (* rocksdb-get-ts-size-function)))
 
 (define-alien-routine rocksdb-writebatch-wi-put void
   (batch (* rocksdb-writebatch-wi))
