@@ -45,7 +45,7 @@
 (org-export-translate-to-lang (list '("Table of Contents" "Index")) "ulang")
 
 ;; todo keywords
-(setq org-stuck-projects '("+PROJECT+LEVEL=2|HOLD|WAIT|TEST|DRAFT|REVIEW|KLUDGE/-DONE" ("NEXT") nil ""))
+(setq org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
 
 (setq org-todo-keywords
       '((type "TBD(0!)" "TODO(t!)" "|")
@@ -54,7 +54,7 @@
         (sequence "FIND(q!)" "READ(r@!)" "WATCH(W@!)" "|")
         (sequence "RESEARCH(s!)" "RECORD(e!)" "|")
         (sequence "OUTLINE(O!)" "RESEARCH(A!)" "DRAFT(M!)" "REVIEW(V!)" "|")
-        (type "FIXME(i!)" "TEST(T!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)" "LOG(L!)" "|")
+        (type "FIXME(i!)" "|" "TEST(T!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)" "LOG(L!)" "|")
         (type "KLUDGE(k@!)" "HACK(h!)" "NOTE(n!)" "CODE(c!)" "LINK(l!)" "|")
         (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
         (type "GOTO(g!)" "|")

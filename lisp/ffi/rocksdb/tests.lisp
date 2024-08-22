@@ -12,6 +12,9 @@
 (load-rocksdb)
 (init-log-timestamp)
 
+(defun make-errptr ()
+  (make-alien rocksdb-errptr))
+
 (defun rocksdb-test-dir ()
   (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
 
@@ -22,6 +25,19 @@
   (let ((default (rocksdb-options-create)))
     (rocksdb-options-set-create-if-missing default t)
     default))
+
+(defmacro with-errptr (sym &body body)
+  `(with-alien ((,sym rocksdb-errptr (make-errptr)))
+     ,@body))
+
+(defmacro with-temp-db (sym (&optional (opts (test-opts)) (path (rocksdb-test-dir))) &body body)
+  `(with-errptr err
+     (let* ((opts ,opts)
+            (path ,path)
+            (,sym (rocksdb-open opts path err)))
+       (unwind-protect
+            (progn ,@body)
+         (rocksdb-close ,sym)))))
 
 ;; not thread safe (gensym-counter)
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
@@ -130,9 +146,6 @@
     (rocksdb-writeoptions-destroy wopts)
     (rocksdb-readoptions-destroy ropts)
     (rocksdb-block-based-options-destroy bopts)))
-
-(defun make-errptr ()
-  (make-alien rocksdb-errptr))
 
 (deftest db-basic ()
   "Test basic RocksDB functionality. Inserts KV pair into a temporary
@@ -368,6 +381,10 @@ DB where K and V are both Lisp strings."
     (is (stringp (debug! (rocksdb-property-value db (make-alien-string "rocksdb.stats")))))
     (is (zerop (parse-integer (rocksdb-property-value db (make-alien-string "rocksdb.num-files-at-level3")))))))
 
+(define-merge-operator dummy nil
+  :full nil
+  :partial nil)
+
 (deftest merge ()
   "Test low-level merge-operator functionality using Alien Callbacks."
   (is (with-alien ((k (array unsigned-char))
@@ -398,7 +415,6 @@ DB where K and V are both Lisp strings."
     (is (null (alien-funcall (alien-callable-function 'rocksdb-delete-value) state str 1))))
 
   (is (null (alien-funcall (alien-callable-function 'rocksdb-destructor) (make-alien (* t)))))
-
   ;; null merge op
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function))
@@ -408,7 +424,6 @@ DB where K and V are both Lisp strings."
                (name (* rocksdb-name-function)))
     (is (typep (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)
                '(alien (* rocksdb-mergeoperator)))))
-
   ;; concat merge op
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
@@ -417,7 +432,13 @@ DB where K and V are both Lisp strings."
                (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-delete-value)))
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
     (is (typep (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)
-               '(alien (* rocksdb-mergeoperator))))))
+               '(alien (* rocksdb-mergeoperator)))))
+  (with-opt (o (test-opts) nil)
+    (rocksdb-options-set-merge-operator o (create-dummy-mergeoperator))
+    (with-temp-db db (o)
+      ;; merge_operator=DUMMY in OPTIONS file
+      )))
+     
 
 (deftest comparator ()
   "Test low-level comparator API."
@@ -430,7 +451,12 @@ DB where K and V are both Lisp strings."
     (is (typep (rocksdb-comparator-create state destructor compare name)
                '(alien (* rocksdb-comparator))))
     (is (typep (rocksdb-comparator-with-ts-create state destructor compare compare-with-ts compare-without-ts name)
-               '(alien (* rocksdb-comparator))))))
+               '(alien (* rocksdb-comparator))))
+    ;; TODO - need to test with column-family options
+    (with-opt (o (test-opts) nil)
+      (rocksdb-options-set-comparator
+       o
+       (rocksdb-comparator-create state destructor compare name)))))
 
 (deftest compaction ()
   "Test low-level compactionfilter API."
@@ -448,13 +474,18 @@ DB where K and V are both Lisp strings."
                                                  (alien-sap (alien-callable-function
                                                              'rocksdb-create-compaction-filter-never))
                                                  (alien-sap (alien-callable-function 'rocksdb-name)))
-         '(alien (* rocksdb-compactionfilterfactory))))))
+         '(alien (* rocksdb-compactionfilterfactory)))))
+
+  ;; TODO
+  (with-opt (o (test-opts) nil)
+    (with-temp-db db (o)
+      )))
     
 (deftest logger ()
   "Test logging functionality."
   (with-alien ((state (* t))
                (lev unsigned 0)
-               (msg c-string)
+               (msg c-string "")
                (log (* rocksdb-log-function) (alien-sap (alien-callable-function 'rocksdb-log-default))))
     (is (typep
          (rocksdb-logger-create-stderr-logger lev msg)

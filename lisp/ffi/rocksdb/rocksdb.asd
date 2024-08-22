@@ -22,6 +22,7 @@
                (:file "compaction")
                (:file "comparator")
                (:file "writebatch")
+               (:file "logger")
                (:file "stats")
                (:file "vars")
                (:file "macs"))

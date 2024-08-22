@@ -25,7 +25,6 @@
   (priv (* t)))
 
 ;; logger callback
-
 (define-alien-callable rocksdb-log-default void
     ((priv (* t))
      (lev unsigned)

@@ -41,7 +41,7 @@
       `(progn
          (define-full-merge-op ,fmerge ,@full)
          (define-partial-merge-op ,pmerge ,@partial)
-         (define-alien-callable ,mname c-string () ,name)
+         (define-alien-callable ,mname c-string () (string ',name))
          (defun ,mcreate ()
            (rocksdb-mergeoperator-create ,state
                                          (alien-sap (alien-callable-function ',destructor))

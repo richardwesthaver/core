@@ -55,7 +55,7 @@
         ("meta"
          :base-directory ,(expand-file-name "meta" project-dir)
          :base-extension "org"
-         :recursive t
+         :recursive nil
          :footnote-section-p t
          :html-doctype "<!doctype html>"
          :publishing-directory ,(expand-file-name "meta" publish-dir)
