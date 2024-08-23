@@ -94,6 +94,9 @@
 ;; (add-hook 'org-capture-mode-hook
 ;;           #'org-insert-logbook-drawer)
 
+(add-hook 'org-after-todo-state-change-hook #'org-id-get-create)
+(add-hook 'org-after-todo-state-change-hook #'org-expiry-insert-created)
+
 (add-hook 'org-capture-mode-hook
   #'org-id-get-create)
 

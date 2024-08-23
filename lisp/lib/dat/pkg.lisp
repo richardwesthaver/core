@@ -49,7 +49,7 @@
   (:use :cl :std :dat/proto)
   (:export
    :ini-encode
-   :ini-decode)
+   :ini-decode))
 
 (defpackage :dat/toml
   (:use :cl :std :dat/proto :obj/time)
