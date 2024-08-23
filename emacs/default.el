@@ -44,19 +44,22 @@
  shr-use-xwidgets-for-media t
  which-key-mode t
  view-read-only t)
-(add-to-list 'treesit-extra-load-path "/usr/local/lib/")
 
-(let ((grammar-dir "/usr/local/share/tree-sitter/"))
-  (when (file-exists-p grammar-dir)
-    (setq treesit-extra-load-path
-          (append
-           (flatten
-            (mapcar
-             (lambda (f)
-               (unless (or (string= "." f) (string= ".." f))
-                 (concat grammar-dir f)))
-             (directory-files "/usr/local/share/tree-sitter")))
-           treesit-extra-load-path))))
+;;; Treesitter
+
+;;(add-to-list 'treesit-extra-load-path "/usr/local/lib/")
+
+;; (let ((grammar-dir "/usr/local/share/tree-sitter/"))
+;;   (when (file-exists-p grammar-dir)
+;;     (setq treesit-extra-load-path
+;;           (append
+;;            (flatten
+;;             (mapcar
+;;              (lambda (f)
+;;                (unless (or (string= "." f) (string= ".." f))
+;;                  (concat grammar-dir f)))
+;;              (directory-files "/usr/local/share/tree-sitter")))
+;;            treesit-extra-load-path))))
 
 ;;; Variables
 (defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
@@ -124,7 +127,7 @@
 (add-to-list 'exec-path "/usr/local/share/lisp/bin/")
 
 ;;; Completions
-(use-package cape)
+(use-package cape :ensure t)
 (use-package orderless
   :ensure t
   :init
@@ -151,6 +154,7 @@
   (add-to-list 'completion-at-point-functions #'cape-abbrev t))
 
 (use-package vertico
+  :ensure t
   :config (vertico-mode)
   (keymap-set vertico-map "M-q" #'vertico-quick-insert)
   (keymap-set vertico-map "C-q" #'vertico-quick-exit))
@@ -181,8 +185,7 @@
 ;;; Lisp
 (use-package slime
   :ensure t
-  :hook ((slime-repl-mode . #'slime-cape-maybe-enable)
-         (slime-mode . #'slime-cape-maybe-enable)
+  :hook ((slime-mode . #'slime-cape-maybe-enable)
          (sldb . #'slime-cape-maybe-enable))
   :init
   (require 'slime-cape)
