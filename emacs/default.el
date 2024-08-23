@@ -185,11 +185,8 @@
 ;;; Lisp
 (use-package slime
   :ensure t
-  :hook ((slime-mode . #'slime-cape-maybe-enable)
-         (sldb . #'slime-cape-maybe-enable))
   :init
   (require 'slime-cape)
-  (require 'slime-autoloads)
   (setq slime-contribs '(slime-fancy
                          slime-quicklisp
                          slime-hyperdoc
@@ -278,7 +275,9 @@ function: '(ql:quickload :clouseau)'."
 
   (setq common-lisp-style-default "core")
   ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
-  (setq slime-threads-update-interval 1))
+  (setq slime-threads-update-interval 1)
+  (add-hook 'slime-mode-hook #'slime-cape-maybe-enable 100)
+  (add-hook 'slime-repl-mode-hook #'slime-cape-maybe-enable 100))
 
 (use-package lisp-mode
   :ensure nil
