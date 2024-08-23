@@ -5,11 +5,9 @@
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std
                      :obj :dat :cli :organ :doc :vc
-                     :pod
-                     (:feature :ext :box)
+                     :pod :net :box
                      (:feature :ext :krypt)
                      (:feature :ext :packy)
-                     (:feature :ext :net)
                      (:feature :tools :clouseau))
   :serial t
   :components 

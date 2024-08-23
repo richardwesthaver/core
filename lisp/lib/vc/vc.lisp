@@ -59,6 +59,12 @@ creating a repo object which is stored in *REPO-REGISTRY*."
         do (let ((out (merge-pathnames output (vc-name repo))))
              (vc-bundle repo out))))
 
-(defun update-repo (path &key push (pull t)))
+(defun update-repo (repo &optional push (pull t))
+  (when pull
+    (vc-pull repo (when (stringp pull) pull)))
+  (when push
+    (vc-push repo (when (stringp push) push))))
 
-(defun update-repos (path &optional push (pull t)))
+(defun update-repos (path &key push (pull t))
+  (loop for repo in (directory-repos path)
+        do (update-repo repo push pull)))

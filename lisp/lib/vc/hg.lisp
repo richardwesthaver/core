@@ -60,6 +60,9 @@
 (defun hgignore (&optional (path ".hgignore"))
   (vc/proto::make-vc-ignore :path path :patterns (vc/proto::map-lines #'ppcre:create-scanner path)))
 
+;; https://www.mercurial-scm.org/doc/hgrc.5.html
+(defclass hg-config (vc-config) ())
+
 ;; (describe (make-instance 'hg-repo))
 ;; https://repo.mercurial-scm.org/hg/file/tip/mercurial/interfaces/repository.py
 (defclass hg-repo (vc-repo)
@@ -97,6 +100,9 @@
 
 (defmethod vc-pull ((self hg-repo) &optional (remote "default"))
   (vc-run self "pull" remote))
+
+(defmethod vc-update ((self hg-repo) &optional branch)
+  (vc-run self "update" branch))
 
 (defmethod vc-push ((self hg-repo) &optional (remote "default"))
   (vc-run self "push" remote))

@@ -45,6 +45,12 @@
    :parse-csv-string
    #:write-csv-string))
 
+(defpackage :dat/ini
+  (:use :cl :std :dat/proto)
+  (:export
+   :ini-encode
+   :ini-decode)
+
 (defpackage :dat/toml
   (:use :cl :std :dat/proto :obj/time)
   (:export

@@ -1,3 +1,6 @@
+;;; vc/pkg.lisp --- Version Control Packages
+
+;;; Code:
 (defpackage :vc/proto
   (:use :cl :std :log :obj :parse/lex)
   (:import-from :uiop :with-current-directory)
@@ -15,6 +18,7 @@
    :vc-branch :repo
    :vc-meta :find-repo
    :make-repo :register-repo
+   :vc-update
    :vc-ignore))
 
 (pkg:defpkg :vc/hg

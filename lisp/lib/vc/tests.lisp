@@ -28,10 +28,8 @@
 (deftest vc ()
   (with-temp-repo (*default-vc-kind*) (is repo)))
 
-(defun %mirror-update (path) (declare (ignore path)))
-
-(deftest mirror-network (:skip t)
-  (macrolet ((with-job ((job &rest opts) &body body)
-               `(let (()) ,@body)))
-    (labels ((%m (name thunk args)))
-      (%m "test" #'vc-pull nil))))
+;; TODO 2024-08-22: 
+(deftest vc-mirror-update (:skip t)
+  "This test replicates a nushell script we've used for a very long time."
+  (with-temp-repo (:hg) 
+   (vc-id repo)))

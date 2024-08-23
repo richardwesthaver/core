@@ -43,6 +43,9 @@
 (defgeneric vc-pull (self &optional remote)
   (:documentation "Pull repo REMOTE into spec SELF."))
 
+(defgeneric vc-update (self &optional branch)
+  (:documentation "Update repo SELF with optional BRANCH."))
+
 (defgeneric vc-commit (self msg &key &allow-other-keys)
   (:documentation "Commit repo object SELF, supplied with message MSG."))
 
@@ -80,8 +83,9 @@ are missing."))
 ;;; Objects
 
 ;;;; Config
-;; should be parsed from .hgrc and .gitconfig
-(defclass vc-config (sxp cfg) ())
+
+;; usually parsed from .gitconfig or .hgrc
+(defclass vc-config (cfg) ())
 
 ;;;; Ignorefile
 

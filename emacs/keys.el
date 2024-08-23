@@ -119,8 +119,7 @@
   "z" #'scratch-buffer
   "C-z" #'scratch-new
   "Z" #'default-scratch-buffer
-  "t" #'org-todo
-  "C-t" clock-map
+  "t" clock-map
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
 
@@ -151,6 +150,8 @@
 (keymap-global-set "C-c C-p" #'outline-previous-heading)
 (keymap-global-set "C-c C-n" #'outline-next-heading)
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
+(keymap-global-set "C-c a" #'org-agenda)
+(keymap-global-set "C-c t" #'org-todo)
 
 (provide 'keys)
 ;; keys.el ends here

@@ -15,7 +15,7 @@
 (defclass libpod-tcp-socket (inet-socket) ())
 
 ;;; Client
-(defclass libpod-client (client)
+(defclass libpod-client ()
   ((socket :initarg :socket 
            :initform (make-instance 'local-socket :type :stream) 
            :type (or local-socket null)

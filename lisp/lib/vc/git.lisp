@@ -24,6 +24,16 @@
 (defun gitignore (&optional (path ".gitignore"))
   (vc/proto::make-vc-ignore :path path :patterns (vc/proto::map-lines #'vc/proto::glob-path-match path)))
 
+;; https://git-scm.com/docs/git-config
+(defclass git-config (vc-config) ())
+
+;; TODO 2024-08-22: read ini files
+(defmethod find-cfg ((obj (eql :git)) &rest args &key (directory (user-homedir-pathname)))
+  (declare (ignore args))
+  (let ((*default-pathname-defaults* directory))
+    (when-let ((cfg (directory ".gitconfig")))
+      (car cfg))))
+
 (defclass git-repo (vc-repo)
   ((index))) ;; working-directory
 
