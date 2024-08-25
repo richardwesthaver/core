@@ -21,18 +21,20 @@
 ;;; Commentary:
 
 ;; 
-;; (setq org-export-global-macros nil)
+
 
 ;;; Code:
 (require 'org)
 (require 'ox)
-(require 'inbox)
-(require 'publish)
-(defvar ulang-links-history nil)
-(defvar ulang-files-history nil)
+
+(defgroup ulang nil
+  "CC Universal Language.")
+
+(defvar ulang-link-history nil)
+(defvar ulang-file-history nil)
 
 ;;;###autoload
-(defun ulang-dblock-insert-links (regexp)
+(defun dblock-insert-links (regexp)
   "Create dblock to insert links matching REGEXP."
   (interactive (list (read-regexp "Insert links matching: " nil ulang-links-history)))
   (org-create-dblock (list :name "links"
@@ -40,9 +42,10 @@
                            :id-only nil))
   (org-update-dblock))
 
-(org-dynamic-block-define "links" 'ulang-dblock-insert-links)
+(org-dynamic-block-define "links" 'dblock-insert-links)
 
 (org-export-translate-to-lang (list '("Table of Contents" "Index")) "ulang")
+;; (setq org-export-global-macros nil)
 
 ;; todo keywords
 (setq org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
@@ -121,13 +124,19 @@
   (interactive)
   (org-map-entries (lambda () (org-custom-id-get (point) 'create))))
 
-(defun org-id-add-to-headlines-in-agenda-files ()
+(defun org-id-add-to-headlines-in-files (&optional files)
   (interactive)
   (with-temp-buffer
-    (dolist (f org-agenda-files)
+    (dolist (f (or files org-agenda-files))
       (find-file f)
       (org-id-add-to-headlines-in-file)
       (save-buffer))))
+
+(defun org-id-add-to-headlines-in-directory (&optional dir)
+  (interactive)
+  (let ((dir (or dir org-directory)))
+    (org-id-add-to-headlines-in-files
+     (directory-files-recursively dir "[.]org$"))))
 
 (message "Initialized ULANG.")
 

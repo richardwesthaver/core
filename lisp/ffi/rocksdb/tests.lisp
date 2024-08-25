@@ -226,8 +226,7 @@ DB where K and V are both Lisp strings."
       ;; ingest sst file
       (rocksdb-ingest-external-file db (cast flist (* c-string)) 1 iopts errptr)
       (is (null-alien errptr))
-      (let ((vres (make-array vlen :element-type 'octet :fill-pointer 0)))
-        (is (string= (octets-to-string val) (cast (rocksdb-get db ropts k klen (make-alien size-t vlen) errptr) c-string))))
+      (is (string= (octets-to-string val) (cast (rocksdb-get db ropts k klen (make-alien size-t vlen) errptr) c-string)))
       
       ;; rocksdb-sstfilewriter-file-size
       (rocksdb-sstfilewriter-destroy writer)
@@ -249,7 +248,6 @@ DB where K and V are both Lisp strings."
          (klen (length key))
          (vlen (length val))
          (wopts (rocksdb-writeoptions-create))
-         (ropts (rocksdb-readoptions-create))
          (ctx (rocksdb::rocksdb-perfcontext-create))
          (hist (rocksdb-statistics-histogram-data-create)))
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
@@ -509,12 +507,14 @@ DB where K and V are both Lisp strings."
          (rocksdb-writebatch-wi-create 0 0)
          '(alien (* rocksdb-writebatch-wi))))))
 
-(deftest slicetransform (:skip t)
+(deftest slicetransform ()
   "Test slicetransform functionality."
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
-               (transform (* t) (* rocksdb-transform-function))
+               (transform (* rocksdb-transform-function))
                (in-domain (* rocksdb-in-domain-function))
                (in-range (* rocksdb-in-range-function))
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-name))))
-    (rocksdb-slicetransform-create state destructor transform in-domain in-range name)))
+    (is (typep
+         (rocksdb-slicetransform-create state destructor transform in-domain in-range name)
+         '(alien (* rocksdb-slicetransform))))))

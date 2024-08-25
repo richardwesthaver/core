@@ -17,4 +17,4 @@
 (add-hook 'after-init-hook (if (and (boundp 'user-custom-file) (file-exists-p user-custom-file))
 	                       (load-file user-custom-file)))
 
-
+(add-hook 'after-init-hook 'load-default-theme)

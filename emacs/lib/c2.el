@@ -26,7 +26,7 @@
 (defgroup c2 nil
   "elisp server")
 
-(defcustom c2-dir "~/c2" "c2 directory."
+(defcustom c2-directory (join-paths user-stash-directory "c2") "c2 directory."
   :group 'c2)
 
 (defcustom c2-after-make-frame-hook nil

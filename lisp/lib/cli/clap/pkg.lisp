@@ -56,4 +56,5 @@
 (pkg:defpkg :cli/clap
   (:nicknames :clap)
   (:use-reexport :cli/clap/obj :cli/clap/vars :cli/clap/proto
-   :cli/clap/simple :cli/clap/util :cli/clap/macs :cli/clap/ast))
+   :cli/clap/simple :cli/clap/util :cli/clap/macs :cli/clap/ast
+   :cli/clap/vars))

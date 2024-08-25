@@ -69,7 +69,7 @@
 (defvar user-stash-directory (expand-file-name ".stash" user-home-directory))
 (defvar user-store-directory (expand-file-name ".store" user-home-directory))
 (defvar user-mail-directory (expand-file-name "mail" user-home-directory))
-
+(defvar user-org-stash-directory (expand-file-name "org" user-stash-directory))
 (defvar default-theme 'leuven-dark)
 (defvar company-source-directory (join-paths user-home-directory "comp"))
 (defvar company-org-directory (join-paths company-source-directory "org"))
@@ -80,9 +80,10 @@
 (defvar company-cdn-url "https://cdn.compiler.company")
 
 ;;; Theme
-(defun load-default-theme () (interactive) (load-theme default-theme))
-
-;; (add-hook 'after-init-hook #'load-default-theme)
+(defun load-default-theme (&optional theme)
+  (interactive)
+  (when theme (setq default-theme theme))
+  (load-theme default-theme))
 
 ;;; Packages
 (with-eval-after-load 'package
@@ -94,7 +95,7 @@
    use-package-always-ensure t
    use-package-expand-minimally t)
   (add-packages
-   ;; eglot-x ;; LSP extensions
+   eglot-x ;; LSP extensions
    org-web-tools ;; web parsing
    citeproc ;; citations
    htmlize ;; html export
@@ -138,7 +139,10 @@
 
 (use-package corfu
   :ensure t
-  :config (global-corfu-mode)
+  :config
+  (global-corfu-mode)
+  (corfu-popupinfo-mode)
+  (corfu-echo-mode)
   (dolist (c (list (cons "SPC" " ")
                  (cons "." ".")
                  (cons "," ",")
@@ -151,13 +155,44 @@
                                          (corfu-insert)
                                          (insert ,(cdr c)))))
   (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev t))
+  (add-to-list 'completion-at-point-functions #'cape-abbrev t)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (defun corfu-move-to-minibuffer ()
+    (interactive)
+    (pcase completion-in-region--data
+      (`(,beg ,end ,table ,pred ,extras)
+       (let ((completion-extra-properties extras)
+             completion-cycle-threshold completion-cycling)
+         (consult-completion-in-region beg end table pred)))))
+  (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
+  (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
+  (unless (package-installed-p 'corfu-terminal)
+    (package-vc-install '(corfu-terminal :url "https://codeberg.org/akib/emacs-corfu-terminal.git")))
+  (unless (display-graphic-p)
+    (corfu-terminal-mode 1)))
+
+(use-package kind-icon
+  :ensure t
+  :after corfu
+  ;:custom
+  ; (kind-icon-blend-background t)
+  ; (kind-icon-default-face 'corfu-default) ; only needed with blend-background
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
 
 (use-package vertico
   :ensure t
   :config (vertico-mode)
   (keymap-set vertico-map "M-q" #'vertico-quick-insert)
   (keymap-set vertico-map "C-q" #'vertico-quick-exit))
+
+(use-package marginalia :ensure t
+  :config (marginalia-mode))
+(use-package embark
+  :ensure t)
+(use-package embark-consult :ensure t)
+(use-package consult :ensure t)
 
 ;;; Desktop
 (setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))

@@ -107,7 +107,7 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
   (let ((o (active-opts cli))
         (a (cli-cmd-args cli))
         (c (active-cmds cli)))
-    (log:debug! (cli-cd cli) o a c)))
+    (log:debug! :pwd (cli-cd cli) :active-opts o :cmd-args a :active-cmds c)))
 
 (defmacro with-cli (slots cli &body body)
   "Like with-slots with some extra bindings.

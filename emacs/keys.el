@@ -101,9 +101,9 @@
   "u" #'compile
   "a" #'org-agenda
   "A" #'org-agenda-show-week-all
-  "<return>" #'eshell
-  "C-<return>" #'eshell-new
-  "s-<return>" #'term
+  "RET" #'eshell
+  "C-RET" #'eshell-new
+  "s-RET" #'term
   "!" #'async-shell-command
   "i" #'imenu
   "SPC" toggle-map
@@ -114,7 +114,7 @@
   "(" parens-map
   "M-l" #'duplicate-dwim
   "d i" #'image-dired
-  "<tab>" #'outline-cycle
+  "TAB" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
   "z" #'scratch-buffer
   "C-z" #'scratch-new

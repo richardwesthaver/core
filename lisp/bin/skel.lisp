@@ -14,7 +14,7 @@
 (in-package :bin/skel)
 (in-readtable :shell)
 
-(defopt skc-help (print-help *cli*) *arg*)
+(defopt skc-help (print-help *cli*))
 (defopt skc-version (print-version *cli*))
 (defopt skc-level *log-level*
         (setq *log-level* (if *arg* (if (stringp *arg*)
@@ -23,8 +23,10 @@
                               :info)))
 
 ;; TODO 2023-10-13: almost there
-;; (defopt skc-config
-;;   (init-user-skelrc (when *arg* (parse-file-opt *arg*))))
+(defopt skc-config
+  (load-user-skelrc (or
+                     *arg*
+                     *user-skelrc*)))
 
 (defcmd skc-edit
   (let ((file (or (when *args* (pop *args*)) (sk-path *skel-project*))))
@@ -185,23 +187,25 @@
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
     (sb-ext:enable-debugger)
-    (print *args*)
+    (log:debug! "cli args" *args*)
     ;; (setq *no-exit* t)
     (if *args*
         (loop for a in *args*
               do (debug!
-                  (when-let ((rule (sk-find-rule a sk)))
-                    (sk-make sk rule))))
+                  (if-let ((rule (sk-find-rule a sk)))
+                    (sk-make sk rule)
+                    ;;  TODO 2024-08-23: restart condition here
+                    (skel-simple-error "rule not found: ~A" a))))
         (debug! (sk-make sk (aref (sk-rules sk) 0))))))
 
 (defcmd skc-run
   (if *args*
       (mapc (lambda (script)
-              (debug!
-               (sk-run
-                (sk-find-script
-                 (pathname-name script)
-                 (find-skelfile #P"." :load t))))) *args*)
+              (when-let ((script (sk-find-script
+                                  (pathname-name script)
+                                  (find-skelfile #P"." :load t))))
+                (debug! (sk-run script))))
+            *args*)
       (required-argument 'name)))
 
 (defcmd skc-vc

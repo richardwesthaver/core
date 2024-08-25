@@ -53,6 +53,10 @@
 ;;; Code:
 (require 'ulang)
 (require 'uml-mode)
+
+(defgroup scrum nil
+  "CC Scrum Framework.")
+
 (defvar scrum-properties '("SPRINT" "RELEASE" "TASKID"))
 
 (provide 'scrum)
