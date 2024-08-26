@@ -112,7 +112,15 @@
    :do-cf
    :with-iter ;; generic
    :do-cfs
-   :with-sst))
+   :with-sst
+   :nil
+   :rdb-cf-p
+   :copy-rdb-cf
+   :rdb-cf-key-type
+   :rdb-cf-val-type
+   :close-cf
+   :open-cf
+   :close-cfs))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

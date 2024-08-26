@@ -114,7 +114,7 @@ the forms in BODY."
   `(with-db (,db-var (make-rdb
                       (namestring (funcall ,*temp-db-path-generator* ,(symbol-name db-var)))
                       (default-rdb-opts)
-                      (make-array ,(length cfs) :element-type 'rdb-cf :initial-contents ',cfs)))
+                      (make-array ,(length cfs) :element-type 'rdb-cf :initial-contents ',cfs :adjustable t :fill-pointer ,(length cfs))))
      ,@(when open `((open-db ,db-var)
                     (create-cfs ,db-var)))
        (prog1

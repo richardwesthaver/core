@@ -81,7 +81,9 @@
 (defun make-schema (&rest fields)
   (make-instance 'schema :fields (coerce fields 'field-vector)))
 
-(defgeneric load-schema (self &optional schema))
+(defmethod print-object ((self schema) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream ":fields ~A" (map 'list 'field-name (fields self)))))
 
 (defmethod make-load-form ((self schema) &optional env)
   (declare (ignore env))
@@ -124,7 +126,8 @@
     (record-batch-schema self)))
 
 (defgeneric derive-schema (self))
-
+(defgeneric load-schema (self schema))
+(defgeneric load-field (self field))
 (defgeneric select (self names)
   (:method ((self schema) (names list))
     (let* ((fields (fields self))
@@ -408,7 +411,7 @@
           do (push (to-field g input) ret))
     (loop for a across (slot-value self 'agg-expr)
           do (push (to-field a input) ret))
-    (make-schema :fields (coerce ret 'field-vector))))
+    (apply 'make-schema ret)))
 
 ;;;;; Limit
 (defclass limit (logical-plan)

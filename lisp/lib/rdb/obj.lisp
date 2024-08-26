@@ -159,13 +159,22 @@ just the keys currently present in TABLE."
      tslen)))
 
 ;;; column family
-(defstruct (rdb-cf (:constructor make-rdb-cf (name &key #+nil kv sap)))
-  "RDB Column Family structure. Contains a name, a cons of (rdb-key-type
-. rdb-val-type), and a system-area-pointer to the underlying
-rocksdb_cf_t handle."
+(defstruct (rdb-cf (:constructor make-rdb-cf (name &key key-type val-type sap)))
+  "RDB Column Family structure. Contains a name, key-type, val-type,
+and a system-area-pointer to the underlying rocksdb_cf_t handle.
+
+A NIL key-type or val-type indicates an unitialized value which defaults to
+'octet-vector. This is needed to distinguish the value 'octet-vector being
+supplied by the user from the default value."
   (name "" :type string)
-  ;; (kv *default-rdb-kv* :type rdb-kv)
+  (key-type nil :type (or list symbol))
+  (val-type nil :type (or list symbol))
   (sap nil :type (or null alien)))
+      
+(defmethod close-cf ((self rdb-cf) &optional error)
+  (if-let ((sap (rdb-cf-sap self)))
+    (setf (rdb-cf-sap self) (rocksdb:rocksdb-column-family-handle-destroy sap))
+    (when error (rdb-error "column family is already closed."))))
 
 ;;; rdb-stats
 (defstruct (rdb-stats (:constructor make-rdb-stats (&optional sap)))
@@ -261,7 +270,7 @@ rocksdb_cf_t handle."
 (defstruct (rdb (:constructor make-rdb (name opts &optional cfs db)))
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
-  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (array rdb-cf))
+  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (vector rdb-cf))
   (db nil :type (or null alien))
   (backup nil :type (or null alien))
   (snapshots #() :type (array alien)))
@@ -270,17 +279,69 @@ rocksdb_cf_t handle."
 
 (defmethod print-object ((self rdb) stream)
   (print-unreadable-object (self stream :type t :identity t)
-    (format stream ":cfs ~A" (length (rdb-cfs self)))))
+    (format stream ":cfs ~A :open ~A" (length (rdb-cfs self)) (db-open-p self))))
 
-(defun create-db (name &key opts cfs open)
+(defmethod db ((self rdb))
+  (rdb-db self))
+
+(defmethod db-open-p ((self rdb))
+  (when (db self) t))
+
+(defmethod db-closed-p ((self rdb))
+  (unless (db self) t))
+
+(defun translate-cf-to-field (cf)
+  (let ((vt (or (rdb-cf-val-type cf) 'octet-vector))
+        (kt (unless (rdb-cf-val-type cf) (or (rdb-cf-key-type cf) 'octet-vector))))
+    (make-field :name (rdb-cf-name cf)
+                :type (if kt
+                          (cons kt vt)
+                          vt))))
+
+(defmethod load-field ((self rdb-cf) (field field))
+  (let ((type (field-type field)))
+  (typecase type
+    ;; note that this means you can't use LOAD-SCHEMA to reset an
+    ;; rdb schema as you may expect.
+    (null nil)
+    (atom (setf (rdb-cf-val-type self) type))
+    (list (setf (rdb-cf-key-type self) (car type)
+                (rdb-cf-val-type self)
+                (if (and (listp (cdr type))
+                         (= 1 (length (cdr type))))
+                    (cadr type)
+                    (cdr type)))))
+    self))
+
+(defmethod load-schema ((self rdb) (schema schema))
+  "Load SCHEMA into rdb database object SELF. This will add any missing rdb-cfs
+and update existing key/value types for cfs with the same name. Existing cfs
+only get their their type slots updated on non-nil values."
+  (loop for field across (fields schema)
+        do (if-let ((cf (find-cf (field-name field) self)))
+             (load-field cf field)
+             (push-cf
+              (load-field (make-rdb-cf (field-name field)) field)
+              self)))
+  self)
+
+(defmethod derive-schema ((self rdb))
+  (apply 'make-schema
+         (loop for cf across (rdb-cfs self)
+               collect (translate-cf-to-field cf))))
+
+(defun create-db (name &key opts cfs schema open)
   "Construct a new RDB instance from NAME.
 
 OPTS = rdb-opts
 CFS = (sequence rdb-cf)
+SCHEMA = rdb-schema
 OPEN = boolean
 
-When OPEN is non-nil, the database and all column families are opened
-and internal sap slots are initialized."
+CFS are always added before the SCHEMA which is loaded with LOAD-SCHEMA.
+
+When OPEN is non-nil, the database and all column families are opened and
+internal sap slots are initialized."
   ;; (when (probe-file name) (log:trace! "db exists: " name))
   (let* ((opts (or opts (default-rdb-opts)))
          (obj
@@ -298,6 +359,8 @@ and internal sap slots are initialized."
                     (rdb-cf (vector cfs))
                     (t (log:warn! "invalid CF passed to create-db"))))
                 (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
+    (when schema
+      (load-schema obj schema))
     (when open
       (open-db obj))
     obj))
@@ -312,12 +375,32 @@ and internal sap slots are initialized."
     (rdb-opts-table opts)))
 
 (defmethod push-cf ((cf rdb-cf) (db rdb))
-  (vector-push cf (rdb-cfs db)))
+  (vector-push-extend cf (rdb-cfs db)))
 
-;; TODO: fix
 (defmethod create-cf ((db rdb) (cf rdb-cf))
-  (setf (rdb-cf-sap cf)
-        (create-cf-raw (rdb-db db) (rdb-cf-name cf) (rdb-opts-sap (rdb-opts db)))))
+  (create-cf-raw (rdb-db db) (rdb-cf-name cf) (rdb-opts-sap (rdb-opts db))))
+
+(defmethod open-cf ((db rdb) (cf rdb-cf) &optional error)
+  (unless (null (rdb-cf-sap cf))
+    (if error
+        (rdb-error "column family is already open - close before re-opening.")
+        cf)
+    (setf (rdb-cf-sap cf) (open-cf-raw (rdb-db db) (default-rocksdb-options) (rdb-cf-name cf)))))
+
+(defmethod open-cf ((db rdb) (cf string) &optional (error t))
+  (if-let ((cf (find-cf cf db)))
+    (or (rdb-cf-sap cf)
+        (setf (rdb-cf-sap cf) (create-cf db cf)))
+    (when error (rdb-error "unable to find column-family"))))
+        
+(defmethod open-cfs ((self rdb))
+  (loop for cf across (rdb-cfs self)
+        do (setf (rdb-cf-sap cf)
+                 (create-cf self cf))))
+
+(defmethod close-cfs ((self rdb))
+  (loop for cf across (rdb-cfs self)
+        do (close-cf cf)))
 
 (defmacro unless-null-db (slots self &body body)
   `(with-slots (db ,@slots) ,self
@@ -443,11 +526,17 @@ and internal sap slots are initialized."
   (close-db self)
   (destroy-db-raw (rdb-name self)))
 
-(defmethod put-key ((self rdb) key val)
+(defmethod put-key ((self rdb) (key t) (val t))
   (put-kv-raw
    (rdb-db self)
-   key 
+   key
    val))
+
+(defmethod put-key ((self rdb) (key string) (val string))
+  (put-kv-raw
+   (rdb-db self)
+   (sb-ext:string-to-octets key)
+   (sb-ext:string-to-octets val)))
 
 (defmethod put-kv ((self rdb) (kv rdb-kv))
   (put-kv-raw
@@ -456,12 +545,15 @@ and internal sap slots are initialized."
    (rdb-val kv)))
 
 (defmethod insert-key ((self rdb) key val &key cf)
-  (if cf
+  (if-let ((cf (and cf (find-cf cf self))))
+    (if-let ((sap (rdb-cf-sap cf)))
       (put-cf-raw
        (rdb-db self)
-       (rdb-cf-sap (find cf (rdb-cfs self) :key #'rdb-cf-name :test #'equal))
+       sap
        key
-       val)
+       val
+       (rocksdb-writeoptions-create))
+      (rdb-error "column-family is not open"))
       (put-key self key val)))
 
 (defmethod insert-key ((self rdb) (key string) (val string) &key cf)
@@ -473,13 +565,13 @@ and internal sap slots are initialized."
 (defmethod insert-key ((self rdb) key (val string) &key cf)
   (insert-key self key (string-to-octets val) :cf cf))
 
-(defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf opts)
+(defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf (opts (rocksdb-writeoptions-create)))
   (if cf
       (let ((cf (etypecase cf
                   (rdb-cf cf)
                   (t (find cf (rdb-cfs self)
                            :key #'rdb-cf-name
-                           :test #'string=)))))
+                           :test #'equal)))))
         (put-cf-raw (rdb-db self)
                     (rdb-cf-sap cf)
                     (rdb-key kv)
@@ -490,11 +582,11 @@ and internal sap slots are initialized."
 (defmethod get-key ((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
   (with-slots (db) self
     (if cf
-        (get-cf-str-raw db cf key opts)
+        (get-cf-str-raw db (rdb-cf-sap (find-cf cf self)) key opts)
         (get-kv-str-raw db key opts))))
 
 (defmethod get-key ((self rdb) key &key (opts (rocksdb-readoptions-create)) cf)
   (with-slots (db) self
     (if cf
-        (get-cf-raw db cf key opts)
+        (get-cf-raw db (rdb-cf-sap (find-cf cf self)) key opts)
         (get-kv-raw db key opts))))

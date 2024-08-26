@@ -335,7 +335,9 @@
    :query-db
    :db-get
    :db
-   :database))
+   :database
+   :db-closed-p
+   :db-open-p))
 
 (defpackage :obj/query
   (:nicknames :query)
@@ -462,7 +464,8 @@
            :extract-columns*
            :extract-columns
            :query-vop
-           :expr))
+           :expr
+           :load-field))
 
 (defpackage :obj/secret
   (:nicknames :secret)

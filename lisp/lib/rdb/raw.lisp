@@ -116,6 +116,10 @@ to initialize the instance with custom configuration."
       (when v (octets-to-string v)))))
 
 ;;; Column Family
+(defun open-cf-raw (db name &optional (opt (rocksdb-options-create)))
+  (with-errptr (err 'rocksdb-cf-error (list :db db :cf name))
+    (rocksdb-open-column-families opt name 1 nil nil nil err)))
+
 (defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
   (with-errptr (err 'rocksdb-cf-error (list :db db :cf name)) 
     (rocksdb-create-column-family db opt name err)))

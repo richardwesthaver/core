@@ -19,7 +19,7 @@
   (:documentation "Return the Database associated with SELF."))
 
 (defclass database ()
-  ((db :initarg :db :accessor db)))
+  ((db :initform nil :initarg :db :accessor db)))
 
 (defclass database-collection () ())
 
@@ -53,6 +53,16 @@ in-memory objects."))
 
 (defgeneric insert-db (dbs name &key &allow-other-keys)
   (:documentation "Inserts a database by NAME into the database-collection DBS."))
+
+(defgeneric db-open-p (self)
+  (:documentation "Return T when database SELF is open.")
+  (:method ((self t)) nil)
+  (:method ((self database)) (when (db self) t)))
+
+(defgeneric db-closed-p (self)
+  (:documentation "Return T when database SELF is closed.")
+  (:method ((self t)) t)
+  (:method ((self database)) (unless (db self) t)))
 
 ;;; Common
 (defun slot-val (instance slot-name)

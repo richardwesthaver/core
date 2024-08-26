@@ -320,7 +320,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-deleted-cf-function
    :rocksdb-put-cf-function
    :rocksdb-deleted-function
-   :rocksdb-put-function))
+   :rocksdb-put-function
+   :rocksdb-open-column-families))
 
 (in-package :rocksdb)
 

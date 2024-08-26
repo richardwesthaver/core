@@ -14,7 +14,7 @@
   (log-size-for-flush (unsigned 64)))
 
 (define-alien-routine rocksdb-checkpoint-object-destroy void
-  (* rocksdb-checkpoint))
+  (checkpoint (* rocksdb-checkpoint)))
 
 (def-with-errptr rocksdb-open-and-trim-history (* rocksdb)
   (opts (* rocksdb-options))

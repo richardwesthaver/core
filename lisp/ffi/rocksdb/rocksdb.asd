@@ -16,6 +16,7 @@
                (:file "opts")
                (:file "sst")
                (:file "db")
+               (:file "checkpoint")
                (:file "metadata")
                (:file "merge")
                (:file "compaction")
