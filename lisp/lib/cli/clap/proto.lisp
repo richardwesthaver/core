@@ -37,6 +37,8 @@
 
 (defgeneric do-opt (self))
 
+(defgeneric do-opts (self &optional global))
+
 (defgeneric call-cmd (self args opts))
 
 (defgeneric do-cmd (self)

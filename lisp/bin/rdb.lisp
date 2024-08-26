@@ -11,7 +11,7 @@
 (defopt rdb-version (print-version *cli*))
 (defopt rdb-log-level (when *arg* (setq *log-level* :debug)))
 (defvar *rdb*)
-(defopt rdb-target-db (setq *rdb* (create-db (or *arg* "rdb") :open nil)))
+(defopt rdb-target-db (or *arg* "rdb"))
 
 ;; (defopt rdb-config (init-rdb-user-config (parse-file-opt *arg*)))
 
@@ -21,7 +21,8 @@
   (println (rdb-name *rdb*)))
 
 (defcmd rdb-show
-  (let ((db-path (cli-opt-val (car (find-opts *cli* "db")))))
+  (let* ((db-path (cli-opt-val (car (find-opts *cli* "db"))))
+         (*rdb* (create-db db-path :open nil)))
     (if (and (null db-path) (zerop *argc*))
         (mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
               (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
@@ -90,10 +91,9 @@
 (defmain ()
   (let ((*log-level* :info))
     (with-slots (opts cmds args) *cli*
-      ;; FIXME 2024-05-07: needs to be triggered explicitly - need to support
-      ;; running global opt thunks even when no arg present - macro key
+      (do-opts (active-opts *cli* t))
       (if (active-cmds *cli*)
-          (prog2 (do-opt (car (find-opts *cli* "db")))
-              (do-cmd *cli*)
+          (let ((*rdb* (create-db (do-opt (car (find-opts *cli* "db"))))))
+            (do-cmd *cli*)
             (close-db *rdb*))
           (print-help *cli*)))))

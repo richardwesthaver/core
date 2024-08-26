@@ -12,7 +12,7 @@
    (:auto t)
    (:documentation "Error signaled by the RDB system.")))
 
-(define-condition rocksdb-error (rdb-error)
+(define-condition rocksdb-alien-error (rdb-error)
   ((db :initarg :db :reader rdb-error-db))
   (:documentation "Error signaled by RocksDB subsystem."))
 
@@ -20,39 +20,39 @@
   (print-unreadable-object (obj stream :type t :identity t)
     (format stream "~A" (rdb-error-message obj))))
 
-(define-condition open-db-error (rocksdb-error)
+(define-condition open-db-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while opening a database."))
 
-(define-condition open-backup-engine-error (rocksdb-error)
+(define-condition open-backup-engine-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while opening a backup engine."))
 
-(define-condition destroy-db-error (rocksdb-error)
+(define-condition destroy-db-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while destroying a database."))
 
-(define-condition flush-db-error (rocksdb-error)
+(define-condition flush-db-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while flushing a database."))
 
-(define-condition ingest-db-error (rocksdb-error)
+(define-condition ingest-db-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while ingesting a database."))
 
-(define-condition sst-writer-error (rocksdb-error)
+(define-condition sst-writer-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while writing a SST file."))
 
-(define-condition repair-db-error (rocksdb-error)
+(define-condition repair-db-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while repairing a database."))
 
-(define-condition destroy-backup-engine-error (rocksdb-error)
+(define-condition destroy-backup-engine-error (rocksdb-alien-error)
   ()
   (:documentation "Error signaled while destroying a backup engine."))
 
-(define-condition cf-error (rocksdb-error)
+(define-condition cf-error (rocksdb-alien-error)
   ((cf :initarg :cf :reader rdb-error-cf))
   (:documentation "Error signaled in the context of a Column Family."))
 
@@ -86,5 +86,5 @@ an error is detected, the resulting string from ERRPTR and the
 additional PARAMS will be used to signal a lisp error condition."
   ;; if NULL, return nil
   (unless (null-alien errptr)
-    (apply #'signal (or errtyp 'rocksdb-error)
+    (apply #'signal (or errtyp 'rocksdb-alien-error)
            (nconc (list :message (sb-unix::strerror)) params))))

@@ -26,7 +26,8 @@
    :find-cmd :find-opts :parse-args :print-help
    :print-usage :print-version :do-cmds :do-cmd
    :active-cmds :active-opts :call-opt :do-opt
-   :push-cmd :push-opt :cli-equal))
+   :push-cmd :push-opt :cli-equal
+   :do-opts))
 
 (defpackage :cli/clap/ast
   (:use :cl :std :log :dat/sxp)
