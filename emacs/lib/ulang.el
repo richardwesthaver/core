@@ -33,6 +33,16 @@
 (defvar ulang-link-history nil)
 (defvar ulang-file-history nil)
 
+(defvar ulang-categories
+  (list "note" "link" "code" "doc" "project" "data"))
+
+;;  FIX 2024-08-26: doesn't work
+(defun org-category-allowed-values (prop)
+  (when (string= (upcase prop) "CATEGORY")
+    (append ulang-categories (list ":ETC"))))
+
+(cl-pushnew #'org-category-allowed-values org-property-allowed-value-functions)
+
 ;;;###autoload
 (defun dblock-insert-links (regexp)
   "Create dblock to insert links matching REGEXP."
@@ -51,17 +61,18 @@
 (setq org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
 
 (setq org-todo-keywords
-      '((type "TBD(0!)" "TODO(t!)" "|")
-        (type "WIP(w!)" "|")
-        (type "HOLD(H@!)" "WAIT(/j@!)" "|")
-        (sequence "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "|")
-        (sequence "RESEARCH(s!)" "RECORD(e!)" "WRITE(W!)" "|")
+      '((sequence "TBD(0!)" "TODO(t!)" "NEXT(n!)" "WIP(i!)" "|" "DONE(d!)")
+        (sequence "HOLD(H@/!)" "WIP(!)" "|")
+        (sequence "WAIT(W@/!)" "WIP(!)" "|")
+        (sequence "RESEARCH(s!)" "REPORT(c!)" "|")
         (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
-        (type "FIXME(i!)" "TEST(T!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)" "LOG(L!)" "GOTO(g!)" "|")
-        (type "HACK(h!)" "CODE(c!)" "|")
-        (type "NOTE(n!)" "LINK(l!)")
+        (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
+              "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
+              "REFILE(w!)"
+              "LOG(L!)" "GOTO(g!)" "|")
+        (type "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
         (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
-        (sequence "|" "DONE(d!)" "NOPE(x@!)" "FOUND(f@!)" "FIXED(F!)")))
+        (sequence "|" "DONE(d!)" "NOPE(x@!)")))
 
 (setq org-todo-keyword-faces
       '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
@@ -70,7 +81,7 @@
         ("RESEARCH" . (:foreground "maroon2" :weight bold))
         ("HACK" . (:foreground "maroon3" :weight bold))
         ("TBD" . (:foreground "darkred2" :weight bold))
-        ("NOTE" . (:foreground "tomato2" :weight bold))
+        ;; ("NOTE" . (:foreground "tomato2" :weight bold))
         ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
         ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
         ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))

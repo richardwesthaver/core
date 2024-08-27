@@ -217,7 +217,7 @@ t, in which case a list of strings is assumed."
     (let ((args (if compile (proc-args self args) args)))
       (install-ast self args))))
 
-;; warning: make sure to fill in the opt and cmd slots with values
+;; WARNING: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.
 (defmethod call-cmd ((self cli-cmd) args opts)
   (trace! "calling command:" args opts)

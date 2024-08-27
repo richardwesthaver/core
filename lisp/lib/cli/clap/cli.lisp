@@ -37,7 +37,7 @@
          "Run the top-level function and print to *STDOUT*."
          (with-cli-handlers
            (progn
-             ,@body (terpri))))
+             ,@body)))
        ,@(when export `((export ',main))))))
 
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags

@@ -225,6 +225,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 
 (defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
+
 (deftest clap-basic ()
   "test basic CLAP functionality."
   (let ((cli *cli*))
@@ -247,7 +248,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 
 (deftest clap-opts ()
   "CLAP opt tests."
-  (is (reduce (lambda (x y) (when x (when y t)))
+  (is (reduce (lambda (x y) (and x y))
               (loop for k across *cli-opt-kinds* collect (cli-opt-kind-p k))))
   (is (parse-thing-opt t))
   (is (null (parse-thing-opt nil))))
@@ -673,14 +674,18 @@ Eastern Mediterranean ████████████████▊
   (is (exec-path-list))
   (is (find-exe "sbcl")))
 
-(deftest clap-ast ())
+(deftest cli-ast ()
+  "Validate the CLI/CLAP/AST parser."
+  (with-cli () *cli*))
 
-(compile (defmain (:exit nil :export nil)
-           (let ((test-target t))
-             test-target)))
+(defmain (:exit nil :export nil)
+  (proc-args *cli* '("--foo 1"))
+  (with-cli () *cli*
+    (log:trace! "defmain is OK")
+    t))
 
-(deftest main-output ()
-  (is (not (funcall 'main))))
+(deftest clap-main ()
+  (is (null (funcall #'main))))
 
 (deftest sbcl-tools ()
   (with-sbcl (:noinform t :quit t)
