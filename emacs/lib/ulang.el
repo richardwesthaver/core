@@ -33,15 +33,12 @@
 (defvar ulang-link-history nil)
 (defvar ulang-file-history nil)
 
-(defvar ulang-categories
-  (list "note" "link" "code" "doc" "project" "data"))
-
 ;;  FIX 2024-08-26: doesn't work
 (defun org-category-allowed-values (prop)
   (when (string= (upcase prop) "CATEGORY")
     (append ulang-categories (list ":ETC"))))
 
-(cl-pushnew #'org-category-allowed-values org-property-allowed-value-functions)
+(cl-pushnew 'org-category-allowed-values org-property-allowed-value-functions)
 
 ;;;###autoload
 (defun dblock-insert-links (regexp)
