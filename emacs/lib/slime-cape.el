@@ -27,7 +27,7 @@
 
 (defun slime-cape-maybe-enable ()
   (interactive)
-  (when (slime-company-active-p)
+  (when slime-mode
     (add-to-list 'completion-at-point-functions cape-slime-backend)))
 
 (provide 'slime-cape)

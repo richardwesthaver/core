@@ -102,8 +102,8 @@
   "a" #'org-agenda
   "A" #'org-agenda-show-week-all
   "RET" #'eshell
-  "C-RET" #'eshell-new
-  "s-RET" #'term
+  "C-<return>" #'eshell-new
+  "s-<return>" #'term
   "!" #'async-shell-command
   "i" #'imenu
   "SPC" toggle-map

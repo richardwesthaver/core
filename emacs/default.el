@@ -218,10 +218,14 @@
 (add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
 ;;; Lisp
+(use-package company :ensure t)
+(use-package slime-repl-ansi-color :ensure t)
+(use-package slime-cape :after (company slime) :load-path user-emacs-lib-directory)
+  
 (use-package slime
   :ensure t
+  :after (slime-cape slime-repl-ansi-color)
   :init
-  (require 'slime-cape)
   (setq slime-contribs '(slime-fancy
                          slime-quicklisp
                          slime-hyperdoc
@@ -231,12 +235,14 @@
                          ;; slime-mrepl
                          slime-sbcl-exts
                          slime-cape ;; ext
+                         slime-repl-ansi-color
                          ;; slime-cl-indent
                          ;; slime-snapshot
                          slime-sprof
                          slime-tramp
                          ;; slime-typeout-frame
                          slime-xref-browser
+                         slime-repl-ansi-color
                          ;; slime-highlight-edits
                          slime-asdf))
   (put 'make-instance 'common-lisp-indent-function 1)
@@ -316,6 +322,7 @@ function: '(ql:quickload :clouseau)'."
 
 (use-package lisp-mode
   :ensure nil
+  :after slime
   :custom
   inferior-lisp-program "sbcl --dynamic-space-size=8G"
   scheme-program-name "gsi"
@@ -854,8 +861,6 @@ Add this function to appropriate major mode hooks such as
 (add-hook 'after-init-hook #'org-clock-persistence-insinuate)
 
 ;; archive
-(setq org-archive-location "archive.org::")
-
 (defun extract-org-directory-titles-as-list (&optional dir)
   (interactive "D")
   (print

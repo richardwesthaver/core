@@ -14,9 +14,6 @@
 (defvar url "https://compiler.company")
 (defvar vc-url "https://vc.compiler.company")
 (defvar packy-url "https://packy.compiler.company")
-(defvar html-nav (format "<div class=\"nav\" id=\"nav\"><h2 id=\"index\">*</h2><div id=\"text-index\"> (<a href = \"%s\">~</a><br> (<a href = \"%s/blog\">blog</a> <a href = \"%s/docs\">docs</a> <a href = \"%s/plan\">plan</a> <a href = \"%s/notes\">notes</a>)<br> (<a href = \"%s\">vc</a> <a href = \"%s\">packy</a>))</div></div>"
-                         url url url url url vc-url packy-url))
-
 (defvar html-foot "<footer><p>updated %C</p></footer>")
 
 ;; (setq org-protocol-project-alist
@@ -27,18 +24,25 @@
 ;;          :working-suffix ".org")))
 
 (setq org-html-style-default ""
-      org-html-scripts ""
+      ;; org-html-scripts ""
       org-html-htmlize-output-type 'css
       org-export-htmlize-output-type 'css
       org-export-allow-bind-keywords t
       org-html-doctype "html5"
       org-html-html5-fancy t
-      org-html-validation-link nil
+      ;; org-html-validation-link nil
       org-src-fontify-natively t
       make-backup-files nil
       debug-on-error t
       org-id-link-to-org-use-id t)
 
+(setq org-html-link-up "")
+(setq org-html-link-home url)
+
+(setq org-html-home/up-format "<div id=\"org-div-home-and-up\"><a accesskey=\"H\" href=\"%s\"> HOME </a></div>")
+      
+
+      
 (setq org-publish-project-alist
       `(("compiler.company" :components ("index" "meta" "blog" "docs" "notes" "plan"))
         ("index"
@@ -48,7 +52,6 @@
          :htmlized-source t
          :footnote-section-p t
          :html-doctype "<!doctype html>"
-	 ;; :html-preamble ,html-nav
 	 :html-postamble ,html-foot
          :publishing-directory ,publish-dir
          :publishing-function org-html-publish-to-html)
@@ -61,7 +64,6 @@
          :publishing-directory ,(expand-file-name "meta" publish-dir)
          :publishing-function org-html-publish-to-html
          :htmlized-source t
-         :html-preamble ,html-nav
          :html-postamble ,html-foot)
         ("blog"
          :base-directory ,(expand-file-name "blog" project-dir)
@@ -72,7 +74,6 @@
 	 :publishing-directory ,(expand-file-name "blog" publish-dir)
 	 :publishing-function org-html-publish-to-html
 	 :htmlized-source t
-	 :html-preamble ,html-nav
 	 :html-postamble ,html-foot)
         ("plan"
          :base-directory ,(expand-file-name "plan" project-dir)
@@ -83,7 +84,6 @@
          :publishing-directory ,(expand-file-name "plan" publish-dir)
          :publishing-function org-html-publish-to-html
          :htmlized-source t
-         :html-preamble ,html-nav
          :html-postamble ,html-foot)
         ("notes"
          :base-directory ,(expand-file-name "notes" project-dir)
@@ -94,7 +94,6 @@
          :publishing-directory ,(expand-file-name "notes" publish-dir)
          :publishing-function org-html-publish-to-html
          :htmlized-source t
-         :html-preamble ,html-nav
          :html-postamble ,html-foot)
         ("docs"
          :base-directory ,(expand-file-name "docs" project-dir)
@@ -105,7 +104,6 @@
          :publishing-directory ,(expand-file-name "docs" publish-dir)
          :publishing-function org-html-publish-to-html
          :htmlized-source t
-         :html-preamble ,html-nav
          :html-postamble ,html-foot)))
 
 ;; (defun org-export-get-reference-title (datum info)
