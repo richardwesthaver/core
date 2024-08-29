@@ -16,16 +16,6 @@
   (prog1 body
     (when (file-exists-p file) (delete-file file))))
 
-(defun skels (c)
-  (let ((s))
-    (loop for i from 1 to c
-	  do (push (id (make-instance 'sk-project :name (gensym))) s))
-    s))
-
-(deftest sanity ()
-  "IDs should be reasonably unique."
-  (is (eq t (apply #'/= (skels 1000)))))
-
 (deftest header-comments ()
   "Make sure header comments are generated correctly. 
 
@@ -75,14 +65,10 @@ the appropriate restarts."
 	       (mk1 (mk "test.mk")))
 	  (is (push-mk-rule r1 mk1))
 	  (is (push-mk-rule r2 mk1))
-	  ;; NOTE: not really useful yet
-	  ;; (is (push-rule r2 mk1 t))
-	  ;; (is (push-rule r1 mk1 t))
 	  (is (push-mk-directive 
 	       (cmd "ifeq ($(DEBUG),1) echo foo 
 endif")
 	       mk1))
-	  ;; (is (push-directive (cmd "") mk1))
 	  (is (push-mk-var '(a b) mk1))
 	  (is (push-mk-var '(b c) mk1))
 	  ;; FIXME
@@ -91,7 +77,10 @@ endif")
 
 (deftest vm ()
   "EXPERIMENTAL"
-  (is (make-skel-vm)))
+  (with-skel-vm (vm)
+    (is (sb-lockless::split-ordered-list-p *skel-scope*))
+    (is (sb-vm:arena-p *skel-arena*))
+    (is (skel-vm-p vm))))
 
 (deftest asd ()
   (let ((sk (make-instance 'sk-project :components '((:lisp "test")

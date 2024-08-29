@@ -33,6 +33,9 @@
 (defvar ulang-link-history nil)
 (defvar ulang-file-history nil)
 
+(defvar ulang-extra-properties
+  '("VERSION"))
+
 ;;;###autoload
 (defun dblock-insert-links (regexp)
   "Create dblock to insert links matching REGEXP."
@@ -54,13 +57,12 @@
       '((sequence "TBD(0!)" "TODO(t!)" "NEXT(n!)" "WIP(i!)" "|" "DONE(d!)")
         (sequence "HOLD(H@/!)" "WIP(!)" "|")
         (sequence "WAIT(W@/!)" "WIP(!)" "|")
-        (sequence "RESEARCH(s!)" "REPORT(c!)" "|")
+        (sequence "RESEARCH(s!)" "WIP(!)" "REPORT(c!)" "|")
         (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
+        (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
         (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
               "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
-              "REFILE(w!)"
-              "LOG(L!)" "GOTO(g!)" "|")
-        (type "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
+              "REFILE(w!)" "LOG(L!)" "GOTO(g!)" "|")
         (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
         (sequence "|" "DONE(d!)" "NOPE(x@!)")))
 
@@ -70,8 +72,7 @@
         ("RELEASE" . (:foreground "maroon3" :weight bold))
         ("RESEARCH" . (:foreground "maroon2" :weight bold))
         ("HACK" . (:foreground "maroon3" :weight bold))
-        ("TBD" . (:foreground "darkred2" :weight bold))
-        ;; ("NOTE" . (:foreground "tomato2" :weight bold))
+        ("TBD" . (:foreground "brown" :weight bold))
         ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
         ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
         ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
