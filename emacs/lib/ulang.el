@@ -33,13 +33,14 @@
 (defvar ulang-link-history nil)
 (defvar ulang-file-history nil)
 
-(defvar ulang-extra-properties
+;; see org-special-properties
+(defvar ulang-special-properties
   '("VERSION"))
 
 ;;;###autoload
 (defun dblock-insert-links (regexp)
   "Create dblock to insert links matching REGEXP."
-  (interactive (list (read-regexp "Insert links matching: " nil ulang-links-history)))
+  (interactive (list (read-regexp "Insert links matching: " nil ulang-link-history)))
   (org-create-dblock (list :name "links"
                            :regexp regexp
                            :id-only nil))
@@ -143,4 +144,18 @@
 (message "Initialized ULANG.")
 
 (provide 'ulang)
+;;; Commands
+
+;; (org-property-inherit-p "LOCATION")
+(defun org-follow-location ()
+  "Open the location specified by the LOCATION property of the org heading
+or file at point."
+  (interactive)
+  (let ((loc (or (org-entry-get-with-inheritance "LOCATION")
+                 (caadar (org-collect-keywords '("LOCATION") nil '("LOCATION"))))))
+    (cond
+     ((string-match-p org-link-any-re loc) (org-link-open-from-string loc))
+     ;; TODO 2024-08-29: handle other location types (physical, etc)
+     (t (find-file loc t)))))
+
 ;;; ulang.el ends here
