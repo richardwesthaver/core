@@ -1,6 +1,6 @@
 ;;; skel/tests.lisp --- skel tests
 (defpackage :skel/tests
-  (:use :cl :skel :rt :log :obj :dat/sxp)
+  (:use :cl :skel :rt :log :obj :dat/sxp :std/path)
   (:import-from :uiop :file-exists-p))
 
 (in-package :skel/tests)
@@ -8,13 +8,7 @@
 (defsuite :skel)
 (in-suite :skel)
 
-(defvar %tmp)
-(defun tmp-path (ext)
-  (setq %tmp (format nil "/tmp/~A.~A" (gensym) ext)))
-
-(defun do-tmp-path (file &rest body)
-  (prog1 body
-    (when (file-exists-p file) (delete-file file))))
+(defun tmp-path (ext) (make-pathname :name (namestring (tmpize-pathname (string (gensym "g")))) :type ext))
 
 (deftest header-comments ()
   "Make sure header comments are generated correctly. 
@@ -35,24 +29,21 @@ make-shebang-comment, and make-shebang-file-header."
 (deftest skelfile ()
   "Ensure skelfiles are created and loaded correctly and that they signal
 the appropriate restarts."
-  (do-tmp-path (tmp-path "sk")
+  (with-tmp-file (f :type "sk")
     (is (sk-write-file
-         (make-instance 'sk-project :name "nada" :path "test" :vc :hg) :path %tmp :if-exists :supersede))
-    (ignore-errors (delete-file %tmp))
-    (setf %tmp (tmp-path "sk"))
-    (is (init-skelfile %tmp))
-    (is (load-skelfile %tmp))
-    (is (build-ast (sk-read-file (make-instance 'sk-project) %tmp)))))
+         (make-instance 'sk-project :name "nada" :path "test" :vc :hg) :path *tmp* :if-exists :supersede))
+    (is (load-skelfile *tmp*))
+    (is (build-ast (sk-read-file (make-instance 'sk-project) *tmp*)))))
 
 (deftest skelrc ()
   "Ensure skelrc files are created and loaded correctly."
-  (do-tmp-path (tmp-path "skrc")))
+  (with-tmp-file (f :name "" :type "skelrc")))
 
 (deftest makefile ()
   "Make sure makefiles are making out ok."
-    (do-tmp-path (tmp-path "mk")
+    (with-tmp-file (f :name "" :type "mk")
       (flet ((mk (&optional path) (make-instance 'makefile :name (gensym)
-							   :path (or path (pathname %tmp)) :description "barfood"))
+							   :path (or path (pathname *tmp*)) :description "barfood"))
 	     (src (path) (list path))
 	     (cmd (body) (make-instance 'sk-command :body body))
 	     (rule (tr sr) (make-sk-rule tr sr nil)))

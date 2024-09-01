@@ -57,7 +57,9 @@
 (defgroup scrum nil
   "CC Scrum Framework.")
 
-(defvar scrum-properties '("SPRINT" "RELEASE" "TASKID"))
+(defvar scrum-properties '("SPRINT" "EPIC" "RELEASE" "TASKID" "PROJECT" "COMMIT" "GOAL"))
+
+(defvar scrum-tags '("demo" "mvp" "release" "major-release" "ua" "qa"))
 
 (provide 'scrum)
 ;;; scrum.el ends here

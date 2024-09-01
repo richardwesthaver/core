@@ -7,15 +7,8 @@
 (in-suite :rt)
 
 (deftest rt (:profile t :persist t)
-  (is (typep (make-fixture-prototype :empty nil) 'fixture-prototype))
-  (with-fixture (fx (make-fixture ((a 1) (b 2))
-		      (:+ () (+ (incf a) (incf b)))
-		      (:- () (- (decf a) (decf b)))
-		      (t () 0)))
-    (is (= 5 (funcall fx :+)))
-    (is (= 7 (funcall fx :+)))
-    (is (= -1 (funcall fx :-)))
-    (is (= 0 (funcall fx))))
+  (with-fixture (fx (:tmp :directory "/tmp/"))
+    (is fx))
   (signals (error t) (test-form (make-instance 'test-result))))
 
 (deftest flamegraph (:profile t)
@@ -48,3 +41,15 @@
   (start-coverage)
   (stop-coverage)
   (coverage-report))
+
+(deftest tmp ()
+  (is (null (with-tmp-directory ())))
+  (is (null (with-tmp-file ())))
+  (is (with-tmp-file (f1 :name "temporary-file")
+        (is (probe-file *tmp*))
+        (write-string "1 2 3 4" f1)
+        (force-output f1)
+        (is (= 7 (file-length f1)))))
+  (is (with-tmp-directory ("foobar")
+        (is (directory-path-p (probe-file *tmp*))))))
+   
