@@ -14,6 +14,7 @@
                 ((:file "gen")
                  (:file "pkg")
                  (:file "obj")
+                 (:file "thrift")
                  (:file "tcompact")
                  (:file "io")
                  (:file "rle")

@@ -24,9 +24,6 @@
 ;; startup, such as UI elements that would otherwise be loaded for a
 ;; second and then disappear when the `init.el` file is loaded.
 ;;
-;; If any of the below settings are in your `init.el`, I suggest
-;; migrating them to `early-init.el`.
-;; 
 ;;; Code:
 (setopt inhibit-startup-buffer-menu nil
         initial-buffer-choice t

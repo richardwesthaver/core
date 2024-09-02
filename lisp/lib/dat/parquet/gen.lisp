@@ -8,15 +8,18 @@
   (:export :load-parquet))
 
 (in-package :dat/parquet/gen)
+
 (defparameter *parquet-json-file*
-  (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/parquet.json")))
+  (or (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/parquet.json"))
+      (warn "*PARQUET-JSON-FILE* not found")))
+
+(defparameter *parquet-output-file*
+  #.(asdf:system-relative-pathname :dat #P"parquet/thrift.lisp"))
+
 (defvar *parquet-json* nil)
-(defun load-parquet-json (&optional (json-file *parquet-json-file*))
-  (with-open-file (file json-file)
-    (setq *parquet-json* (json-read file))))
 
 (defun %parquet-json-enums ()
-  (json-getf *parquet-json* "enums"))  
+  (json-getf *parquet-json* "enums"))
 
 (defun parquet-json-enum-getf (name)
   (json-getf
@@ -25,7 +28,7 @@
 
 (defvar *parquet-enums* nil)
 
-(defmacro def-parquet-enum (sym name)
+(defmacro define-parquet-enum (sym name)
   `(progn
      (defun ,(symbolicate "PARQUET-JSON-" sym) ()
        (mapcar (lambda (x) (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
@@ -99,18 +102,8 @@
                 `(or null ,ret)
                 ret)))))
 
-(defun parquet-json-enums ()
-  (list
-   (def-parquet-enum types "Type")
-   (def-parquet-enum converted-types "ConvertedType")
-   (def-parquet-enum field-repetition-types "FieldRepetitionType")
-   (def-parquet-enum encodings "Encoding")
-   (def-parquet-enum compression-codecs "CompressionCodec")
-   (def-parquet-enum page-types "PageType")
-   (def-parquet-enum boundary-orders "BoundaryOrder")))
+(defparameter *parquet-structs* nil)
 
-(eval-always
-  (defvar *parquet-structs* nil))
 (defstruct (parquet-struct
             (:constructor make-parquet-struct (name doc exceptionp unionp fields)))
   name doc exceptionp unionp (fields nil :type list))
@@ -142,10 +135,12 @@
 (defun parquet-json-namespaces ()
   (json-getf *parquet-json* "namespaces"))
 
-(defun init-parquet-json (&optional (file *parquet-json-file*))
-  (load-parquet-json file)
-  (setq *parquet-enums* (parquet-json-enums))
-  (setq *parquet-structs* (parquet-json-structs)))
+(eval-always
+  (defun init-parquet-json (&optional (file *parquet-json-file*))
+    (with-open-file (file file)
+      (setq *parquet-json* (json-read file)))
+    (setq *parquet-enums* (parquet-json-enums))
+    (setq *parquet-structs* (parquet-json-structs))))
 
 ;;; CLOS
 
@@ -175,48 +170,68 @@
                                                                (camelcase-name-to-lisp-name name))))
                                              :dat/parquet)))
                     `(progn
-                       (define-parquet-class ,class-name
-                         (dat/parquet::parquet-struct-object)
-                       (,@(mapcar (lambda (f)
-                                    (let ((fdoc (parquet-struct-field-doc f))
-                                          (fname (snakecase-name-to-lisp-name
-                                                  (parquet-struct-field-name f))))
-                                      `(,(intern fname :dat/parquet)
-                                        ,@(when fdoc `(:documentation ,fdoc))
-                                        :initarg ,(keywordicate fname)
-                                        ;; TODO 2024-07-12: 
-                                        ,@(when (equal "optional" (parquet-struct-field-required f))
-                                            `(:initform nil))
-                                        ,@(when-let ((ty (convert-parquet-struct-field-type f)))
-                                            `(:type ,ty)))))
-                                  fields))
-                       ,@(when doc `((:documentation ,doc))))
-                       ',class-name)))))
-
-(defmacro define-parquet-structs ()
-  `(list
-    ,@(%define-parquet-structs)))
+                       (defclass ,class-name (dat/parquet::parquet-object)
+                                 (,@(mapcar (lambda (f)
+                                              (let ((fdoc (parquet-struct-field-doc f))
+                                                    (fname (snakecase-name-to-lisp-name
+                                                            (parquet-struct-field-name f))))
+                                                `(,(intern fname :dat/parquet)
+                                                  ,@(when fdoc `(:documentation ,fdoc))
+                                                  :initarg ,(keywordicate fname)
+                                                  ;; TODO 2024-07-12: 
+                                                  ,@(when (equal "optional" (parquet-struct-field-required f))
+                                                      `(:initform nil))
+                                                  ,@(when-let ((ty (convert-parquet-struct-field-type f)))
+                                                      `(:type ,ty)))))
+                                            fields))
+                                 ,@(when doc `((:documentation ,doc)))))))))
 
 (defmacro define-parquet-type (name opts &body body)
   "Define a parquet type with DEFTYPE which maps to LISP-TYPE."
   `(deftype ,(intern (concatenate 'string "PARQUET-" (substitute #\- #\_ name)) :dat/parquet) ,opts ,@body))
 
-(defun define-parquet-types ()
-  "Define all known values in *PARQUET-TYPES* using DEFINE-PARQUET-TYPE (DEFTYPE)."
-  (list
-   (define-parquet-type "BOOLEAN" () 'boolean)
-   (define-parquet-type "INT32" () '(signed-byte 32))
-   (define-parquet-type "INT64" () '(signed-byte 64))
-   (define-parquet-type "INT96" () '(signed-byte 96))
-   (define-parquet-type "FLOAT" () 'float)
-   (define-parquet-type "DOUBLE" () 'double-float)
-   (define-parquet-type "BYTE_ARRAY" (&optional size) `(octet-vector ,size))
-   (define-parquet-type "FIXED_LEN_BYTE_ARRAY" (size) `(octet-vector ,size))))
+(defun parse-parquet-thrift-definitions (&key (input *parquet-json-file*)
+                                           (output #.(asdf:system-relative-pathname :dat "parquet/thrift.lisp")))
+  (init-parquet-json input)
+  (with-open-file (defs output :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (format defs ";;; ~a --- Parquet Thrift Definitions -*- buffer-read-only:t -*-
 
-(defun load-parquet (&key (file *parquet-json-file*))
-  (init-parquet-json file)
-  (with-package (:dat/parquet)
-    (let ((types (define-parquet-types)))
-      (export types))
-    (export (define-parquet-structs))
-    (export *parquet-enums*)))
+;; input = ~a
+
+;; This file was generated automatically by
+;; DAT/PARQUET/GEN:PARSE-PARQUET-THRIFT-DEFINITIONS
+
+;; Do not modify.
+
+;;; Code:
+(in-package :dat/parquet)" output input)
+    (format defs "~2%")
+    (let ((enums   '((define-parquet-enum types "Type")
+                     (define-parquet-enum converted-types "ConvertedType")
+                     (define-parquet-enum field-repetition-types "FieldRepetitionType")
+                     (define-parquet-enum encodings "Encoding")
+                     (define-parquet-enum compression-codecs "CompressionCodec")
+                     (define-parquet-enum page-types "PageType")
+                     (define-parquet-enum boundary-orders "BoundaryOrder")))
+          (types '((define-parquet-type "BOOLEAN" () 'boolean)
+                   (define-parquet-type "INT32" () '(signed-byte 32))
+                   (define-parquet-type "INT64" () '(signed-byte 64))
+                   (define-parquet-type "INT96" () '(signed-byte 96))
+                   (define-parquet-type "FLOAT" () 'float)
+                   (define-parquet-type "DOUBLE" () 'double-float)
+                   (define-parquet-type "BYTE_ARRAY" (&optional size) `(octet-vector ,size))
+                   (define-parquet-type "FIXED_LEN_BYTE_ARRAY" (size) `(octet-vector ,size))))
+          (structs (mapcar #'macroexpand-1 (%define-parquet-structs))))
+      ;; expands to a progn, so we just take the cdr
+      (dolist (en enums)
+        (dolist (f (cdr (macroexpand en)))
+          (write f :stream defs :case :downcase :readably t)
+          (terpri defs)))
+      (dolist (ty types)
+        (dolist (f (cdr (macroexpand ty)))
+          (write f :stream defs :case :downcase :readably t)
+          (terpri defs)))
+      (dolist (st structs)
+        (dolist (f (cdr (macroexpand st)))
+          (write f :stream defs :case :downcase :readably t)
+          (terpri defs))))))

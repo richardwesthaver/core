@@ -2,6 +2,7 @@
 
 ;;; Code:
 ;;; Settings
+(require 'util)
 (put 'upcase-region 'disabled nil)
 (put 'list-threads 'disabled nil)
 (put 'list-timers 'disabled nil)
@@ -118,6 +119,8 @@
                                       "DEV" "DEV_ID" "DEV_HOME"
                                       "WORKER" "WORKER_ID" "WORKER_HOME"
                                       "SBCL_HOME"
+                                      "STASH"
+                                      "STORE"
                                       "LISP_HOME"))
 
 (add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))

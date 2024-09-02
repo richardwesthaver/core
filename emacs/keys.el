@@ -39,7 +39,7 @@
   "O" #'allout-mode
   "R" #'global-auto-revert-mode
   "t" #'toggle-frame-tab-bar
-  "T" #'toggle-theme
+  "T" #'load-theme
   "d" #'toggle-debug-on-error
   "SPC" #'toggle-macro-recording
   "x" #'org-clock-toggle-auto-clockout
@@ -95,6 +95,7 @@
   :doc "User-specified keymap usually bound to 'C-c c' and populated in 'custom.el'."
   :prefix 'user-map
   "c" #'org-capture
+  "1" #'org-inbox-open
   "l" #'org-store-link
   "C-l" #'org-web-tools-insert-link-for-url
   "f" #'load-file
