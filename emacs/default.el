@@ -166,9 +166,8 @@
          (consult-completion-in-region beg end table pred)))))
   (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
-  (unless (package-installed-p 'corfu-terminal)
-    (package-vc-install '(corfu-terminal :url "https://codeberg.org/akib/emacs-corfu-terminal.git")))
   (unless (display-graphic-p)
+    (require 'corfu-terminal)
     (corfu-terminal-mode 1)))
 
 (use-package kind-icon
@@ -220,12 +219,12 @@
 ;;; Lisp
 (use-package company :ensure t)
 (use-package slime-repl-ansi-color :ensure t)
-(use-package slime-cape :after (company slime) :load-path user-emacs-lib-directory)
-  
+
 (use-package slime
   :ensure t
   :after (slime-cape slime-repl-ansi-color)
   :init
+  (require 'slime-cape)
   (setq slime-contribs '(slime-fancy
                          slime-quicklisp
                          slime-hyperdoc
