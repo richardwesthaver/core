@@ -39,9 +39,8 @@
 (setq org-html-link-up "")
 (setq org-html-link-home url)
 
-(setq org-html-home/up-format "<div id=\"org-div-home-and-up\"><a accesskey=\"H\" href=\"%s\"> HOME </a></div>")
-      
-
+(setq org-html-home/up-format "<div id=\"org-div-home-and-up\"><a href=\"%s\" accesskey=\"h\"><button class=home>~</button></a>
+<button accesskey=\"s\" class=show onclick=open_all_sections()>show</button> <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></div>")
       
 (setq org-publish-project-alist
       `(("compiler.company" :components ("index" "meta" "blog" "docs" "notes" "plan"))

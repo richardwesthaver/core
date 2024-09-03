@@ -8,7 +8,7 @@
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp.sk" "rust.sk" "emacs.sk")
-:vc (:hg "https://vc.compiler.company/comp/core")
+:vc (:hg "https://vc.compiler.company/core")
 :scripts ((:lisp "x.lisp"))
 :env ((cc "clang"))
 :components ((:dir-locals ".dir-locals")
