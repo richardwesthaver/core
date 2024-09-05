@@ -4,10 +4,7 @@
 #+email: richard.westhaver@gmail.com
 #+setupfile: https://cdn.compiler.company/org/clean.theme
 #+property: header-args :eval no-export
-- [[https://compiler.company/docs/core][Docs]]
-  - [[https://compiler.company/docs/core/install.html][Install]] :: Install Guide
-  - [[https://compiler.company/docs/core/tests.html][Tests]] :: Testing Guide
-  - [[https://compiler.company/docs/core/stats.html][Stats]] :: Project Statistics
+- [[https://compiler.company/docs/core][Documentation]]
 
 * Overview
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
@@ -24,8 +21,8 @@ In any case, it is always preferred to make use of the [[https://vc.compiler.com
 to reliably provision the host either from source or pre-built
 platform-specific [[https://packy.compiler.company/dist][binary distributions]].
 
-#+NAME: Optional Dependencies
-| dependency  | dependents             | src                                           |
+#+NAME: Dependencies
+| dependency  | required by            | src                                           |
 |-------------+------------------------+-----------------------------------------------|
 | Blake3      | ffi/blake3             | https://vc.compiler.company/packy/blake3      |
 | Tree-sitter | ffi/tree-sitter        | https://vc.compiler.company/packy/tree-sitter |
@@ -223,9 +220,6 @@ writing 0 bytes from the text space at (nil)
 done]
 #+end_example
 
-* Test
-* Install
-* Dist
 * Programs
 This section lists all program binaries provided by the core.
 ** skel                                                                :lisp:

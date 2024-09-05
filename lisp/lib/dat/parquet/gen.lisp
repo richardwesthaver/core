@@ -21,24 +21,16 @@
 (defun %parquet-json-enums ()
   (json-getf *parquet-json* "enums"))
 
-(defun parquet-json-enum-getf (name)
+(defun dat/parquet::parquet-json-enum-getf (name)
   (json-getf
    (find-if (lambda (x) (equal name (json-getf x "name"))) (%parquet-json-enums))
    "members"))
 
-(defvar *parquet-enums* nil)
+(defun dat/parquet::snakecase-name-to-lisp-name (string)
+  (string-upcase
+   (substitute #\- #\_ string)))
 
-(defmacro define-parquet-enum (sym name)
-  `(progn
-     (defun ,(symbolicate "PARQUET-JSON-" sym) ()
-       (mapcar (lambda (x) (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-               (parquet-json-enum-getf ,name)))
-     (defparameter ,(intern
-                     (concatenate 'string "*PARQUET-" (symbol-name sym) "*")
-                     :dat/parquet)
-       (,(symbolicate "PARQUET-JSON-" sym)))))
-
-(defun camelcase-name-to-lisp-name (string)
+(defun dat/parquet::camelcase-name-to-lisp-name (string)
   (string-upcase
    (with-output-to-string (name)
      (loop for i from 0 below (length string)
@@ -47,9 +39,16 @@
            do (write-char #\- name)
            do (write-char c name)))))
 
-(defun snakecase-name-to-lisp-name (string)
-  (string-upcase
-   (substitute #\- #\_ string)))
+(defvar *parquet-enums* nil)
+
+(defmacro define-parquet-enum (sym name)
+  `(progn
+     (defun ,(symbolicate "PARQUET-JSON-" sym) ()
+       (mapcar (lambda (x) (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
+               (parquet-json-enum-getf ,name)))
+     (defparameter ,(symbolicate
+                     (concatenate 'string "*PARQUET-" (symbol-name sym) "*"))
+       (,(symbolicate "PARQUET-JSON-" sym)))))
 
 (labels ((parse-type-id (type-id)
            (when type-id
@@ -69,13 +68,12 @@
                ("struct" 'struct))))
          (%intern (name)
            (if (stringp name)
-               (intern
+               (symbolicate
                 (cond 
                   ((equal name "UUIDType") "PARQUET-UUID-TYPE")
                   (t (concatenate 'string
                                   "PARQUET-"
-                                  (camelcase-name-to-lisp-name name))))
-                :dat/parquet)
+                                  (camelcase-name-to-lisp-name name)))))
                name))
          (parse-type (o)
            (when o
@@ -139,7 +137,7 @@
   (defun init-parquet-json (&optional (file *parquet-json-file*))
     (with-open-file (file file)
       (setq *parquet-json* (json-read file)))
-    (setq *parquet-enums* (parquet-json-enums))
+    (setq *parquet-enums* (%parquet-json-enums))
     (setq *parquet-structs* (parquet-json-structs))))
 
 ;;; CLOS
@@ -163,19 +161,18 @@
           collect (let* ((name (parquet-struct-name struct))
                          (doc (parquet-struct-doc struct))
                          (fields (parquet-struct-fields struct))
-                         (class-name (intern (cond
+                         (class-name (symbolicate (cond
                                                ((equal name "UUIDType") "PARQUET-UUID-TYPE")
                                                (t (concatenate 'string
                                                                "PARQUET-"
-                                                               (camelcase-name-to-lisp-name name))))
-                                             :dat/parquet)))
+                                                               (camelcase-name-to-lisp-name name)))))))
                     `(progn
                        (defclass ,class-name (dat/parquet::parquet-object)
                                  (,@(mapcar (lambda (f)
                                               (let ((fdoc (parquet-struct-field-doc f))
                                                     (fname (snakecase-name-to-lisp-name
                                                             (parquet-struct-field-name f))))
-                                                `(,(intern fname :dat/parquet)
+                                                `(,(symbolicate fname)
                                                   ,@(when fdoc `(:documentation ,fdoc))
                                                   :initarg ,(keywordicate fname)
                                                   ;; TODO 2024-07-12: 
@@ -188,7 +185,7 @@
 
 (defmacro define-parquet-type (name opts &body body)
   "Define a parquet type with DEFTYPE which maps to LISP-TYPE."
-  `(deftype ,(intern (concatenate 'string "PARQUET-" (substitute #\- #\_ name)) :dat/parquet) ,opts ,@body))
+  `(deftype ,(symbolicate "PARQUET-" (substitute #\- #\_ name)) ,opts ,@body))
 
 (defun parse-parquet-thrift-definitions (&key (input *parquet-json-file*)
                                            (output #.(asdf:system-relative-pathname :dat "parquet/thrift.lisp")))

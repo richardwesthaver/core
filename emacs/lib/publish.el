@@ -6,6 +6,7 @@
 (require 'ox-publish)
 (require 'org-id)
 (require 'dash)
+(require 'ox-man)
 ;; vendored
 (require 'htmlize)
 (defvar project-dir "~/comp/org")
