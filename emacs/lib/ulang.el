@@ -143,19 +143,45 @@
 
 (message "Initialized ULANG.")
 
-(provide 'ulang)
 ;;; Commands
 
 ;; (org-property-inherit-p "LOCATION")
+
+;; currently does not support locations with spaces.. need to walk
+;; ancestors ourselves to do so. for now only URIs and pathnames are
+;; supported.
+(defun org-get-location (point)
+  "Get the value of property LOCATION at POINT."
+  (interactive "d")
+  (org-with-point-at point
+    (format "%s" (or (apply 'join-paths (string-split (org-entry-get-with-inheritance "LOCATION") " "))
+                     (caadar (org-collect-keywords '("LOCATION") nil '("LOCATION")))))))
+
+(defun org-set-location (value)
+  "Set the value of property LOCATION. If point is before first heading
+instead set or replace the location file keyword."
+  (interactive (list nil))
+  (let ((val (or value (org-read-property-value "LOCATION" nil nil))))
+    (if (org-before-first-heading-p)
+        (save-excursion
+          (beginning-of-buffer)
+          (let ((start (point)))
+            (when (re-search-forward (rx bol "#+LOCATION:" (+ space) (group (* (not space))) eol) nil t)
+              (setq start (match-beginning 0))
+              (goto-char start)
+              (delete-line))
+            (insert "#+LOCATION: " val "\n")))
+      (org-set-property "LOCATION" value))))
+
 (defun org-follow-location ()
   "Open the location specified by the LOCATION property of the org heading
 or file at point."
   (interactive)
-  (let ((loc (or (org-entry-get-with-inheritance "LOCATION")
-                 (caadar (org-collect-keywords '("LOCATION") nil '("LOCATION"))))))
+  (let ((loc ))
     (cond
      ((string-match-p org-link-any-re loc) (org-link-open-from-string loc))
      ;; TODO 2024-08-29: handle other location types (physical, etc)
      (t (find-file loc t)))))
 
+(provide 'ulang)
 ;;; ulang.el ends here
