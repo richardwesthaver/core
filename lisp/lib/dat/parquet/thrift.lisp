@@ -10,111 +10,34 @@
 ;;; Code:
 (in-package :dat/parquet)
 
-(defun parquet-json-types ()
-  (mapcar
-   (lambda (x)
-     (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-   (parquet-json-enum-getf "Type")))
-(defparameter *parquet-types* (parquet-json-types))
-(defun parquet-json-converted-types ()
-  (mapcar
-   (lambda (x)
-     (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-   (parquet-json-enum-getf "ConvertedType")))
-(defparameter *parquet-converted-types* (parquet-json-converted-types))
-(defun parquet-json-field-repetition-types ()
-  (mapcar
-   (lambda (x)
-     (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-   (parquet-json-enum-getf "FieldRepetitionType")))
-(defparameter *parquet-field-repetition-types*
-  (parquet-json-field-repetition-types))
-(defun parquet-json-encodings ()
-  (mapcar
-   (lambda (x)
-     (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-   (parquet-json-enum-getf "Encoding")))
-(defparameter *parquet-encodings* (parquet-json-encodings))
-(defun parquet-json-compression-codecs ()
-  (mapcar
-   (lambda (x)
-     (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-   (parquet-json-enum-getf "CompressionCodec")))
-(defparameter *parquet-compression-codecs* (parquet-json-compression-codecs))
-(defun parquet-json-page-types ()
-  (mapcar
-   (lambda (x)
-     (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-   (parquet-json-enum-getf "PageType")))
-(defparameter *parquet-page-types* (parquet-json-page-types))
-(defun parquet-json-boundary-orders ()
-  (mapcar
-   (lambda (x)
-     (keywordicate (snakecase-name-to-lisp-name (json-getf x "name"))))
-   (parquet-json-enum-getf "BoundaryOrder")))
-(defparameter *parquet-boundary-orders* (parquet-json-boundary-orders))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-boolean
-                     (sb-impl::constant-type-expander 'parquet-boolean
-                                                      (progn 'boolean))
-                     (sb-c:source-location)))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-int32
-                     (sb-impl::constant-type-expander 'parquet-int32
-                                                      (progn
-                                                       '(signed-byte 32)))
-                     (sb-c:source-location)))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-int64
-                     (sb-impl::constant-type-expander 'parquet-int64
-                                                      (progn
-                                                       '(signed-byte 64)))
-                     (sb-c:source-location)))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-int96
-                     (sb-impl::constant-type-expander 'parquet-int96
-                                                      (progn
-                                                       '(signed-byte 96)))
-                     (sb-c:source-location)))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-float
-                     (sb-impl::constant-type-expander 'parquet-float
-                                                      (progn 'float))
-                     (sb-c:source-location)))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-double
-                     (sb-impl::constant-type-expander 'parquet-double
-                                                      (progn 'double-float))
-                     (sb-c:source-location)))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-byte-array
-                     (sb-int:named-lambda (sb-impl::type-expander
-                                           parquet-byte-array)
-                         (#:expr)
-                       (declare (sb-c::lambda-list (&optional size)))
-                       (sb-int:named-ds-bind (:macro parquet-byte-array
-                                              . deftype)
-                           (&optional size)
-                           (cdr #:expr)
-                         (declare (sb-c::constant-value size))
-                         (block parquet-byte-array `(octet-vector ,size))))
-                     nil))
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-impl::%deftype 'parquet-fixed-len-byte-array
-                     (sb-int:named-lambda (sb-impl::type-expander
-                                           parquet-fixed-len-byte-array)
-                         (#:expr)
-                       (declare (sb-c::lambda-list (size)))
-                       (sb-int:named-ds-bind (:macro
-                                              parquet-fixed-len-byte-array
-                                              . deftype)
-                           (size)
-                           (cdr #:expr)
-                         (declare (sb-c::constant-value size))
-                         (block parquet-fixed-len-byte-array
-                           `(octet-vector ,size))))
-                     nil))
-(defclass parquet-size-statistics (dat/parquet:parquet-object)
+(defvar *parquet-json-types*
+  '(:boolean :int32 :int64 :int96 :float :double :byte-array
+    :fixed-len-byte-array))
+(defvar *parquet-json-converted-types*
+  '(:utf8 :map :map-key-value :list :enum :decimal :date :time-millis
+    :time-micros :timestamp-millis :timestamp-micros :uint-8 :uint-16 :uint-32
+    :uint-64 :int-8 :int-16 :int-32 :int-64 :json :bson :interval))
+(defvar *parquet-json-field-repetition-types* '(:required :optional :repeated))
+(defvar *parquet-json-encodings*
+  '(:plain :plain-dictionary :rle :bit-packed :delta-binary-packed
+    :delta-length-byte-array :delta-byte-array :rle-dictionary
+    :byte-stream-split))
+(defvar *parquet-json-compression-codecs*
+  '(:uncompressed :snappy :gzip :lzo :brotli :lz4 :zstd :lz4-raw))
+(defvar *parquet-json-page-types*
+  '(:data-page :index-page :dictionary-page :data-page-v2))
+(defvar *parquet-json-boundary-orders* '(:unordered :ascending :descending))
+(deftype parquet-boolean () 'boolean)
+(deftype parquet-int32 () '(signed-byte 32))
+(deftype parquet-int64 () '(signed-byte 64))
+(deftype parquet-int96 () '(signed-byte 96))
+(deftype parquet-float () 'float)
+(deftype parquet-double () 'double-float)
+(deftype parquet-byte-array (&optional dat/parquet/gen::size)
+  `(octet-vector ,dat/parquet/gen::size))
+(deftype parquet-fixed-len-byte-array (dat/parquet/gen::size)
+  `(octet-vector ,dat/parquet/gen::size))
+(defclass parquet-size-statistics (parquet-object)
           ((unencoded-byte-array-data-bytes :documentation
             "The number of physical bytes stored for BYTE_ARRAY data values assuming
 no encoding. This is exclusive of the bytes needed to store the length of
@@ -163,7 +86,7 @@ fine grained filter pushdown on nested structures (the histograms contained
 in this structure can help determine the number of nulls at a particular
 nesting level and maximum length of lists).
 "))
-(defclass parquet-statistics (dat/parquet:parquet-object)
+(defclass parquet-statistics (parquet-object)
           ((max :documentation
                 "DEPRECATED: min and max value of the column. Use min_value and max_value.
 
@@ -214,16 +137,16 @@ arrays do not include a length prefix.
           (:documentation "Statistics per row group and per page
 All fields are optional.
 "))
-(defclass parquet-string-type (dat/parquet:parquet-object) nil
+(defclass parquet-string-type (parquet-object) nil
           (:documentation "Empty structs to use as logical type annotations
 "))
-(defclass parquet-uuid-type (dat/parquet:parquet-object) nil)
-(defclass parquet-map-type (dat/parquet:parquet-object) nil)
-(defclass parquet-list-type (dat/parquet:parquet-object) nil)
-(defclass parquet-enum-type (dat/parquet:parquet-object) nil)
-(defclass parquet-date-type (dat/parquet:parquet-object) nil)
-(defclass parquet-float16-type (dat/parquet:parquet-object) nil)
-(defclass parquet-null-type (dat/parquet:parquet-object) nil
+(defclass parquet-uuid-type (parquet-object) nil)
+(defclass parquet-map-type (parquet-object) nil)
+(defclass parquet-list-type (parquet-object) nil)
+(defclass parquet-enum-type (parquet-object) nil)
+(defclass parquet-date-type (parquet-object) nil)
+(defclass parquet-float16-type (parquet-object) nil)
+(defclass parquet-null-type (parquet-object) nil
           (:documentation
            "Logical type to annotate a column that is always null.
 
@@ -231,7 +154,7 @@ Sometimes when discovering the schema of existing data, values are always
 null and the physical type can't be determined. This annotation signals
 the case where the physical type was guessed from all null values.
 "))
-(defclass parquet-decimal-type (dat/parquet:parquet-object)
+(defclass parquet-decimal-type (parquet-object)
           ((scale :initarg :scale :type (signed-byte 32))
            (precision :initarg :precision :type (signed-byte 32)))
           (:documentation "Decimal logical type annotation
@@ -244,33 +167,33 @@ type must also set scale and precision on the annotated SchemaElement.
 
 Allowed for physical types: INT32, INT64, FIXED_LEN_BYTE_ARRAY, and BYTE_ARRAY.
 "))
-(defclass parquet-milli-seconds (dat/parquet:parquet-object) nil
+(defclass parquet-milli-seconds (parquet-object) nil
           (:documentation "Time units for logical types
 "))
-(defclass parquet-micro-seconds (dat/parquet:parquet-object) nil)
-(defclass parquet-nano-seconds (dat/parquet:parquet-object) nil)
-(defclass parquet-time-unit (dat/parquet:parquet-object)
+(defclass parquet-micro-seconds (parquet-object) nil)
+(defclass parquet-nano-seconds (parquet-object) nil)
+(defclass parquet-time-unit (parquet-object)
           ((millis :initarg :millis :initform nil :type
             (or null parquet-milli-seconds))
            (micros :initarg :micros :initform nil :type
             (or null parquet-micro-seconds))
            (nanos :initarg :nanos :initform nil :type
             (or null parquet-nano-seconds))))
-(defclass parquet-timestamp-type (dat/parquet:parquet-object)
+(defclass parquet-timestamp-type (parquet-object)
           ((isadjustedtoutc :initarg :isadjustedtoutc :type boolean)
            (unit :initarg :unit :type parquet-time-unit))
           (:documentation "Timestamp logical type annotation
 
 Allowed for physical types: INT64
 "))
-(defclass parquet-time-type (dat/parquet:parquet-object)
+(defclass parquet-time-type (parquet-object)
           ((isadjustedtoutc :initarg :isadjustedtoutc :type boolean)
            (unit :initarg :unit :type parquet-time-unit))
           (:documentation "Time logical type annotation
 
 Allowed for physical types: INT32 (millis), INT64 (micros, nanos)
 "))
-(defclass parquet-int-type (dat/parquet:parquet-object)
+(defclass parquet-int-type (parquet-object)
           ((bitwidth :initarg :bitwidth)
            (issigned :initarg :issigned :type boolean))
           (:documentation "Integer logical type annotation
@@ -279,17 +202,17 @@ bitWidth must be 8, 16, 32, or 64.
 
 Allowed for physical types: INT32, INT64
 "))
-(defclass parquet-json-type (dat/parquet:parquet-object) nil
+(defclass parquet-json-type (parquet-object) nil
           (:documentation "Embedded JSON logical type annotation
 
 Allowed for physical types: BYTE_ARRAY
 "))
-(defclass parquet-bson-type (dat/parquet:parquet-object) nil
+(defclass parquet-bson-type (parquet-object) nil
           (:documentation "Embedded BSON logical type annotation
 
 Allowed for physical types: BYTE_ARRAY
 "))
-(defclass parquet-logical-type (dat/parquet:parquet-object)
+(defclass parquet-logical-type (parquet-object)
           ((string :initarg :string :initform nil :type
                    (or null parquet-string-type))
            (map :initarg :map :initform nil :type (or null parquet-map-type))
@@ -328,7 +251,7 @@ To maintain compatibility, implementations using LogicalType for a
 SchemaElement must also set the corresponding ConvertedType (if any)
 from the following table.
 "))
-(defclass parquet-schema-element (dat/parquet:parquet-object)
+(defclass parquet-schema-element (parquet-object)
           ((type :documentation
             "Data type for this field. Not set if the current element is a non-leaf node
 "
@@ -392,7 +315,7 @@ for some logical types to ensure forward-compatibility in format v1.
  - if it is a primitive type (leaf) then type is defined and num_children is undefined
 the nodes are listed in depth first traversal order.
 "))
-(defclass parquet-data-page-header (dat/parquet:parquet-object)
+(defclass parquet-data-page-header (parquet-object)
           ((num-values :documentation
             "Number of values, including NULLs, in this data page.
 
@@ -420,8 +343,8 @@ within a row (repetition_level > 0).
             (or null parquet-statistics)))
           (:documentation "Data page header
 "))
-(defclass parquet-index-page-header (dat/parquet:parquet-object) nil)
-(defclass parquet-dictionary-page-header (dat/parquet:parquet-object)
+(defclass parquet-index-page-header (parquet-object) nil)
+(defclass parquet-dictionary-page-header (parquet-object)
           ((num-values :documentation "Number of values in the dictionary *
 "
             :initarg :num-values :type (signed-byte 32))
@@ -438,7 +361,7 @@ if it is partly or completely dictionary encoded. At most one dictionary page
 can be placed in a column chunk.
 
 "))
-(defclass parquet-data-page-header-v2 (dat/parquet:parquet-object)
+(defclass parquet-data-page-header-v2 (parquet-object)
           ((num-values :documentation
             "Number of values, including NULLs, in this data page. *
 "
@@ -483,10 +406,10 @@ Repetition and definition levels are uncompressed
 The remaining section containing the data is compressed if is_compressed is true
 
 "))
-(defclass parquet-split-block-algorithm (dat/parquet:parquet-object) nil
+(defclass parquet-split-block-algorithm (parquet-object) nil
           (:documentation "Block-based algorithm type annotation. *
 "))
-(defclass parquet-bloom-filter-algorithm (dat/parquet:parquet-object)
+(defclass parquet-bloom-filter-algorithm (parquet-object)
           ((block :documentation
              "Block-based Bloom filter. *
 "
@@ -498,13 +421,13 @@ The remaining section containing the data is compressed if is_compressed is true
              (or null parquet-split-block-algorithm)))
           (:documentation "The algorithm used in Bloom filter. *
 "))
-(defclass parquet-xx-hash (dat/parquet:parquet-object) nil
+(defclass parquet-xx-hash (parquet-object) nil
           (:documentation
            "Hash strategy type annotation. xxHash is an extremely fast non-cryptographic hash
 algorithm. It uses 64 bits version of xxHash.
 
 "))
-(defclass parquet-bloom-filter-hash (dat/parquet:parquet-object)
+(defclass parquet-bloom-filter-hash (parquet-object)
           ((xxhash :documentation "xxHash Strategy. *
 "
             :initarg :xxhash :initform nil :type (or null parquet-xx-hash)))
@@ -513,14 +436,14 @@ algorithm. It uses 64 bits version of xxHash.
 using plain encoding.
 
 "))
-(defclass parquet-uncompressed (dat/parquet:parquet-object) nil
+(defclass parquet-uncompressed (parquet-object) nil
           (:documentation "The compression used in the Bloom filter.
 
 "))
-(defclass parquet-bloom-filter-compression (dat/parquet:parquet-object)
+(defclass parquet-bloom-filter-compression (parquet-object)
           ((uncompressed :initarg :uncompressed :initform nil :type
             (or null parquet-uncompressed))))
-(defclass parquet-bloom-filter-header (dat/parquet:parquet-object)
+(defclass parquet-bloom-filter-header (parquet-object)
           ((numbytes :documentation "The size of bitset in bytes *
 "
             :initarg :numbytes :type (signed-byte 32))
@@ -539,7 +462,7 @@ using plain encoding.
 and followed by its bitset.
 
 "))
-(defclass parquet-page-header (dat/parquet:parquet-object)
+(defclass parquet-page-header (parquet-object)
           ((type :documentation
             "the type of the page: indicates which of the *_header fields is set *
 "
@@ -579,12 +502,12 @@ pages need to be read.
             nil :type (or null parquet-dictionary-page-header))
            (data-page-header-v2 :initarg :data-page-header-v2 :initform nil
             :type (or null parquet-data-page-header-v2))))
-(defclass parquet-key-value (dat/parquet:parquet-object)
+(defclass parquet-key-value (parquet-object)
           ((key :initarg :key :type string)
            (value :initarg :value :initform nil :type (or null string)))
           (:documentation "Wrapper struct to store key values
 "))
-(defclass parquet-sorting-column (dat/parquet:parquet-object)
+(defclass parquet-sorting-column (parquet-object)
           ((column-idx :documentation
             "The ordinal position of the column (in this row group) *
 "
@@ -600,7 +523,7 @@ nulls go at the end.
             :initarg :nulls-first :type boolean))
           (:documentation "Sort order within a RowGroup of a leaf column
 "))
-(defclass parquet-page-encoding-stats (dat/parquet:parquet-object)
+(defclass parquet-page-encoding-stats (parquet-object)
           ((page-type :documentation "the page type (data\\dic\\...) *
 "
             :initarg :page-type :type parquet-page-type)
@@ -613,7 +536,7 @@ nulls go at the end.
                   :initarg :count :type (signed-byte 32)))
           (:documentation "statistics of a given page type and encoding
 "))
-(defclass parquet-column-meta-data (dat/parquet:parquet-object)
+(defclass parquet-column-meta-data (parquet-object)
           ((type :documentation "Type of this column *
 "
             :initarg :type :type parquet-type)
@@ -693,8 +616,8 @@ filter pushdown.
             (or null parquet-size-statistics)))
           (:documentation "Description for column metadata
 "))
-(defclass parquet-encryption-with-footer-key (dat/parquet:parquet-object) nil)
-(defclass parquet-encryption-with-column-key (dat/parquet:parquet-object)
+(defclass parquet-encryption-with-footer-key (parquet-object) nil)
+(defclass parquet-encryption-with-column-key (parquet-object)
           ((path-in-schema :documentation "Column path in schema *
 "
             :initarg :path-in-schema :type (vector string))
@@ -702,12 +625,12 @@ filter pushdown.
             "Retrieval metadata of column encryption key *
 "
             :initarg :key-metadata :initform nil :type (or null octet-vector))))
-(defclass parquet-column-crypto-meta-data (dat/parquet:parquet-object)
+(defclass parquet-column-crypto-meta-data (parquet-object)
           ((encryption-with-footer-key :initarg :encryption-with-footer-key
             :initform nil :type (or null parquet-encryption-with-footer-key))
            (encryption-with-column-key :initarg :encryption-with-column-key
             :initform nil :type (or null parquet-encryption-with-column-key))))
-(defclass parquet-column-chunk (dat/parquet:parquet-object)
+(defclass parquet-column-chunk (parquet-object)
           ((file-path :documentation
             "File where column data is stored.  If not set, assumed to be same file as
 metadata.  This path is relative to the current file.
@@ -764,7 +687,7 @@ Parquet implementations. As such, writers MUST populate this field.
 "
             :initarg :encrypted-column-metadata :initform nil :type
             (or null octet-vector))))
-(defclass parquet-row-group (dat/parquet:parquet-object)
+(defclass parquet-row-group (parquet-object)
           ((columns :documentation
             "Metadata for each column chunk in this row group.
 This list must have the same order as the SchemaElement list in FileMetaData.
@@ -799,11 +722,11 @@ in this row group *
            (ordinal :documentation "Row group ordinal in the file *
 "
             :initarg :ordinal :initform nil :type (or null (signed-byte 16)))))
-(defclass parquet-type-defined-order (dat/parquet:parquet-object) nil
+(defclass parquet-type-defined-order (parquet-object) nil
           (:documentation
            "Empty struct to signal the order defined by the physical or logical type
 "))
-(defclass parquet-column-order (dat/parquet:parquet-object)
+(defclass parquet-column-order (parquet-object)
           ((type-order :documentation "The sort orders for logical types are:
   UTF8 - unsigned byte-wise comparison
   INT8 - signed comparison
@@ -867,7 +790,7 @@ Possible values are:
 If the reader does not support the value of this union, min and max stats
 for this column should be ignored.
 "))
-(defclass parquet-page-location (dat/parquet:parquet-object)
+(defclass parquet-page-location (parquet-object)
           ((offset :documentation "Offset of the page in the file *
 "
             :initarg :offset :type (signed-byte 64))
@@ -882,7 +805,7 @@ OffsetIndex is present, pages must begin on row boundaries
 (repetition_level = 0).
 "
             :initarg :first-row-index :type (signed-byte 64))))
-(defclass parquet-offset-index (dat/parquet:parquet-object)
+(defclass parquet-offset-index (parquet-object)
           ((page-locations :documentation
             "PageLocations, ordered by increasing PageLocation.offset. It is required
 that page_locations[i].first_row_index < page_locations[i+1].first_row_index.
@@ -902,7 +825,7 @@ Forms part of the page index, along with ColumnIndex.
 
 OffsetIndex may be present even if ColumnIndex is not.
 "))
-(defclass parquet-column-index (dat/parquet:parquet-object)
+(defclass parquet-column-index (parquet-object)
           ((null-pages :documentation
             "A list of Boolean values to determine the validity of the corresponding
 min and max values. If true, a page contains only null values, and writers
@@ -966,7 +889,7 @@ If this structure is present, OffsetIndex must also be present.
 For each field in this structure, <field>[i] refers to the page at
 OffsetIndex.page_locations[i]
 "))
-(defclass parquet-aes-gcm-v1 (dat/parquet:parquet-object)
+(defclass parquet-aes-gcm-v1 (parquet-object)
           ((aad-prefix :documentation "AAD prefix *
 "
             :initarg :aad-prefix :initform nil :type (or null octet-vector))
@@ -980,7 +903,7 @@ OffsetIndex.page_locations[i]
 readers must supply the prefix *
 "
             :initarg :supply-aad-prefix :initform nil :type (or null boolean))))
-(defclass parquet-aes-gcm-ctr-v1 (dat/parquet:parquet-object)
+(defclass parquet-aes-gcm-ctr-v1 (parquet-object)
           ((aad-prefix :documentation "AAD prefix *
 "
             :initarg :aad-prefix :initform nil :type (or null octet-vector))
@@ -994,12 +917,12 @@ readers must supply the prefix *
 readers must supply the prefix *
 "
             :initarg :supply-aad-prefix :initform nil :type (or null boolean))))
-(defclass parquet-encryption-algorithm (dat/parquet:parquet-object)
+(defclass parquet-encryption-algorithm (parquet-object)
           ((aes-gcm-v1 :initarg :aes-gcm-v1 :initform nil :type
             (or null parquet-aes-gcm-v1))
            (aes-gcm-ctr-v1 :initarg :aes-gcm-ctr-v1 :initform nil :type
             (or null parquet-aes-gcm-ctr-v1))))
-(defclass parquet-file-meta-data (dat/parquet:parquet-object)
+(defclass parquet-file-meta-data (parquet-object)
           ((version :documentation "Version of this file *
 "
             :initarg :version :type (signed-byte 32))
@@ -1062,7 +985,7 @@ Used only in encrypted files with plaintext footer.
             (or null octet-vector)))
           (:documentation "Description for file metadata
 "))
-(defclass parquet-file-crypto-meta-data (dat/parquet:parquet-object)
+(defclass parquet-file-crypto-meta-data (parquet-object)
           ((encryption-algorithm :documentation
             "Encryption algorithm. This field is only used for files
 with encrypted footer. Files with plaintext footer store algorithm id

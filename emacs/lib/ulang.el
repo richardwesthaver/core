@@ -150,12 +150,24 @@
 ;; currently does not support locations with spaces.. need to walk
 ;; ancestors ourselves to do so. for now only URIs and pathnames are
 ;; supported.
+(defun org-get-with-inheritance (property &optional literal-nil epom)
+  "Like `org-entry-get-with-inheritance' but in additional to properties we
+also check file keywords (aka in-buffer settings).
+
+For example, a PROPERTY value of 'LOCATION' would check all property
+values in addition to the keyword '#+LOCATION:'."
+  (interactive (list nil nil))
+  (let ((property (or property (org-read-property-name))))
+    ;; most of the work passed through to the property handler
+    (org-entry-get-with-inheritance property literal-nil epom)))
+
 (defun org-get-location (point)
   "Get the value of property LOCATION at POINT."
   (interactive "d")
   (org-with-point-at point
-    (format "%s" (or (apply 'join-paths (string-split (org-entry-get-with-inheritance "LOCATION") " "))
-                     (caadar (org-collect-keywords '("LOCATION") nil '("LOCATION")))))))
+    (message "%s" (or (when-let ((prop (org-entry-get-with-inheritance "LOCATION")))
+                        (apply 'join-paths (string-split prop " ")))
+                      (caadar (org-collect-keywords '("LOCATION") nil '("LOCATION")))))))
 
 (defun org-set-location (value)
   "Set the value of property LOCATION. If point is before first heading
