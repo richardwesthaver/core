@@ -23,7 +23,7 @@
  display-time-format "%Y-%m-%d %H:%M"
  ring-bell-function 'ignore
  completion-ignore-case t
-;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
+ ;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
  ;; allow-emacs-pinentry
  ;; allow-loopback-pinentry
  epg-pinentry-mode 'loopback
@@ -102,7 +102,7 @@
    htmlize ;; html export
    all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
    hide-mode-line) ;; ui
-   ;; bbdb
+  ;; bbdb
   (package-install-selected-packages t))
 
 ;;; Env
@@ -147,16 +147,16 @@
   (corfu-popupinfo-mode)
   (corfu-echo-mode)
   (dolist (c (list (cons "SPC" " ")
-                 (cons "." ".")
-                 (cons "," ",")
-                 (cons ":" ":")
-                 (cons ")" ")")
-                 (cons "}" "}")
-                 (cons "]" "]")))
-  (define-key corfu-map (kbd (car c)) `(lambda ()
-                                         (interactive)
-                                         (corfu-insert)
-                                         (insert ,(cdr c)))))
+                   (cons "." ".")
+                   (cons "," ",")
+                   (cons ":" ":")
+                   (cons ")" ")")
+                   (cons "}" "}")
+                   (cons "]" "]")))
+    (define-key corfu-map (kbd (car c)) `(lambda ()
+                                           (interactive)
+                                           (corfu-insert)
+                                           (insert ,(cdr c)))))
   (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
   (add-to-list 'completion-at-point-functions #'cape-abbrev t)
   (add-to-list 'completion-at-point-functions #'cape-file)
@@ -176,9 +176,9 @@
 (use-package kind-icon
   :ensure t
   :after corfu
-  ;:custom
-  ; (kind-icon-blend-background t)
-  ; (kind-icon-default-face 'corfu-default) ; only needed with blend-background
+                                        ;:custom
+                                        ; (kind-icon-blend-background t)
+                                        ; (kind-icon-default-face 'corfu-default) ; only needed with blend-background
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
@@ -806,39 +806,66 @@ Add this function to appropriate major mode hooks such as
         ("C" . "comment")
         ("v" . "verse")))
 
+;; org-sbx [[https://list.orgmode.org/d429d29b-42fa-7d7b-6f3a-9fe692fd6dc7@grinta.net/T/]]
+(defun %org-sbx (name header args)
+  (let* ((args (mapconcat
+                (lambda (x)
+                  (format "%s=%S" (symbol-name (car x)) (cadr x)))
+                args ", "))
+         (ctx (list 'babel-call (list :call name
+                                      :name name
+                                      :inside-header header
+                                      :arguments args
+                                      :end-header ":results silent")))
+         (info (org-babel-lob-get-info ctx)))
+    (when info (org-babel-execute-src-block nil info))))
+
+(defmacro org-sbx (name &rest args)
+  (let* ((header (if (stringp (car args)) (car args) nil))
+	 (args (if (stringp (car args)) (cdr args) args)))
+    (unless (stringp name)
+      (setq name (symbol-name name)))
+    (let ((result (%org-sbx name header args)))
+       (org-trim (if (stringp result) result (format "%S" result))))))
+
+(defun org-babel-execute-region (beg end &optional arg)
+   (interactive "r")
+   (narrow-to-region beg end)
+   (org-babel-execute-buffer arg)
+   (widen))
+
 (defun org-schedule-effort ()
-(interactive)
+  (interactive)
   (save-excursion
     (org-back-to-heading t)
-    (let* (
-        (element (org-element-at-point))
-        (effort (org-element-property :EFFORT element))
-        (scheduled (org-element-property :scheduled element))
-        (ts-year-start (org-element-property :year-start scheduled))
-        (ts-month-start (org-element-property :month-start scheduled))
-        (ts-day-start (org-element-property :day-start scheduled))
-        (ts-hour-start (org-element-property :hour-start scheduled))
-        (ts-minute-start (org-element-property :minute-start scheduled)) )
+    (let* ((element (org-element-at-point))
+           (effort (org-element-property :EFFORT element))
+           (scheduled (org-element-property :scheduled element))
+           (ts-year-start (org-element-property :year-start scheduled))
+           (ts-month-start (org-element-property :month-start scheduled))
+           (ts-day-start (org-element-property :day-start scheduled))
+           (ts-hour-start (org-element-property :hour-start scheduled))
+           (ts-minute-start (org-element-property :minute-start scheduled)) )
       (org-schedule nil (concat
-        (format "%s" ts-year-start)
-        "-"
-        (if (< ts-month-start 10)
-          (concat "0" (format "%s" ts-month-start))
-          (format "%s" ts-month-start))
-        "-"
-        (if (< ts-day-start 10)
-          (concat "0" (format "%s" ts-day-start))
-          (format "%s" ts-day-start))
-        " "
-        (if (< ts-hour-start 10)
-          (concat "0" (format "%s" ts-hour-start))
-          (format "%s" ts-hour-start))
-        ":"
-        (if (< ts-minute-start 10)
-          (concat "0" (format "%s" ts-minute-start))
-          (format "%s" ts-minute-start))
-        "+"
-        effort)) )))
+                         (format "%s" ts-year-start)
+                         "-"
+                         (if (< ts-month-start 10)
+                             (concat "0" (format "%s" ts-month-start))
+                           (format "%s" ts-month-start))
+                         "-"
+                         (if (< ts-day-start 10)
+                             (concat "0" (format "%s" ts-day-start))
+                           (format "%s" ts-day-start))
+                         " "
+                         (if (< ts-hour-start 10)
+                             (concat "0" (format "%s" ts-hour-start))
+                           (format "%s" ts-hour-start))
+                         ":"
+                         (if (< ts-minute-start 10)
+                             (concat "0" (format "%s" ts-minute-start))
+                           (format "%s" ts-minute-start))
+                         "+"
+                         effort)) )))
 
 (setopt org-preview-latex-image-directory "~/.emacs.d/.cache/ltximg"
         org-latex-image-default-width "8cm"
@@ -994,7 +1021,7 @@ Add this function to appropriate major mode hooks such as
             (command-execute 'outline-next-visible-heading)
             ;; disable (message) that org-set-tags generates
             (cl-flet ((message (&rest ignored) nil))
-                  (org-set-tags 1 t))
+              (org-set-tags 1 t))
             (set-buffer-modified-p b-m-p))
         (error nil)))))
 
@@ -1052,7 +1079,7 @@ inherited by a parent headline."
 (defun org-agenda-reschedule-to-today ()
   (interactive)
   (cl-flet ((org-read-date (&rest rest) (current-time)))
-        (call-interactively 'org-agenda-schedule)))
+    (call-interactively 'org-agenda-schedule)))
 
 ;; Patch org-mode to use vertical splitting
 (defadvice org-prepare-agenda (after org-fix-split)

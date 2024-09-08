@@ -90,6 +90,7 @@
 (defun org-graph-from-id-locations ()
   "Populate the `org-graph' from `org-id-locations', filtering out any
 entries not under a member of `org-graph-locations'."
+  (interactive)
   (setq-local org-graph (copy-hash-table (org-id-locations-load)))
   (maphash
    (lambda (k v)
@@ -100,6 +101,11 @@ entries not under a member of `org-graph-locations'."
       org-graph-locations))
    org-graph))
 
+(defun org-dblock-write:links ()
+  "Generate a 'links' block for the designated node.")
+
+(defun org-dblock-write:graph ()
+  "Generate a 'graph' block for the designated set of nodes.")
+
 (provide 'graph)
 ;; graph.el ends here
-

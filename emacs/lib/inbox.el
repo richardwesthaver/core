@@ -115,8 +115,8 @@
   (org-map-entries
    (lambda ()
      (unless (= (org-current-level) 1)
-     (org-todo "DONE"))
-   nil 'tree)))
+       (org-todo "DONE"))
+     nil 'tree)))
 
 (defmacro with-inbox-buffer (&rest body)
   `(save-excursion
@@ -162,7 +162,7 @@
     (cond
      ((< (cdr a) (cdr b)) t)
      ((> (cdr a) (cdr b)) nil)))))
-     
+
 
 (defun org-inbox-sort ()
   "Sort the current heading by todo order followed by priority."
@@ -195,7 +195,86 @@
     (kill-buffer inbox)))
 
 ;;; dblocks
-(defun org-dblock-write:summary ())
+
+;; summary
+(defun org-dblock-write:summary (params)
+  "Generate a file or heading summary section.")
+
+(defun org-summary ()
+  "Insert or update a summary section.")
+
+;; project-info
+(defcustom org-project-info-order '(details status churn log files)
+  "Order in which sections of the 'project-info' dblock will appear."
+  :type 'list
+  :group 'inbox)
+
+(defun org-dblock-write:project-info (params)
+  "Generate a project-info section.
+
+The following keyword parameters can be passed to the info dynamic block:
+
+:location Set or override the project location which is inferred by
+          checking for a LOCATION property in the current tree, followed
+          by the value of the `project-current' function.
+
+:branch Set or override the project branch to display info for. Default
+        branch name is 'default'.
+
+:files When nil don't include the files table.
+:churn When nil don't include the vc churn report.
+:log when nil don't include the vc log.
+:status when nil don't include vc status.
+:details When nil don't include the project details section."
+  (let ((location (or (when-let ((param (plist-get params :location)))
+                        (cl-coerce param 'string))
+                      (org-entry-get (point) "LOCATION")
+                      (when-let ((kw (org-collect-keywords '("LOCATION"))))
+                        (cadar kw))
+                      (project-root (project-current))))
+        (point (point))
+        (files (if-let ((val (plist-member params :files)))
+                   (cadr val)
+                 t))
+        (churn (if-let ((val (plist-member params :churn)))
+                   (cadr val)
+                 t))
+        (status (if-let ((val (plist-member params :log)))
+                    (cadr val)
+                  t))
+        (log (if-let ((val (plist-member params :status)))
+                 (cadr val)
+               t))
+        (details (if-let ((val (plist-member params :details)))
+                     (cadr val)
+                   t)))
+    (message "Generating info for project: %s" location)
+    (let* ((project (project-current nil location))
+           (project-name (project-name project))
+           (project-root (project-root project)))
+      (dolist (i org-project-info-order)
+        (pcase i
+          ('details (when details
+                      (message "building project details...")
+                      (insert "#+CALL: project-details() :dir " project-root "\n")
+                      (org-babel-execute-maybe)
+                      (org-table-align)))
+          ('status (when status
+                     (message "building project status...")
+                     (insert "#+CALL: hg-status() :dir " project-root "\n")))
+          ('churn (when churn
+                    (message "building project vc churn...")
+                    (insert "#+CALL: hg-churn() :dir " project-root "\n")))
+          ('log (when log
+                  (message "building project vc log...")))
+          ('files (when files
+                    (message "building project file table...")
+                    (insert "#+CALL: files() :dir " project-root "\n")))))
+      (org-babel-execute-region point (point)))))
+
+(defun org-project-info ()
+  "Insert or update a project-info dblock."
+  (interactive))
 
 (defun org-inbox-configure-dblock ()
   "Configure the current org-inbox-dblock at point."
@@ -212,19 +291,19 @@
   (erase-buffer)
   (remove-overlays)
   (widget-insert "\n\n")
-    (widget-create 'push-button
-      :notify (lambda(_widget &rest _ignore)
-                (with-current-buffer buffer
-                  (goto-char position)
-                  )
-                (kill-buffer)
-                (org-ctrl-c-ctrl-c))
-      (propertize "Apply" 'face 'font-lock-comment-face))
-    (widget-insert " ")
-    (widget-create 'push-button
-      :notify (lambda (_widget &rest _ignore)
-                (kill-buffer))
-      (propertize "Cancel" 'face 'font-lock-string-face))
+  (widget-create 'push-button
+                 :notify (lambda(_widget &rest _ignore)
+                           (with-current-buffer buffer
+                             (goto-char position)
+                             )
+                           (kill-buffer)
+                           (org-ctrl-c-ctrl-c))
+                 (propertize "Apply" 'face 'font-lock-comment-face))
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (_widget &rest _ignore)
+                           (kill-buffer))
+                 (propertize "Cancel" 'face 'font-lock-string-face))
   (use-local-map widget-keymap)
   (widget-setup))
 

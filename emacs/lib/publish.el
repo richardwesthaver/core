@@ -37,10 +37,9 @@
       debug-on-error t
       org-id-link-to-org-use-id t)
 
-(setq org-html-link-up "")
 (setq org-html-link-home url)
 
-(setq org-html-home/up-format "<div id=\"org-div-home-and-up\"><a href=\"%s\" accesskey=\"h\"><button class=home>~</button></a>
+(setq org-html-home/up-format "<div id=\"org-div-home-and-up\"><a href=\"%s\" accesskey=\"h\"><button class=home>⌂</button></a><a href=\"%s\" accesskey=\"u\"><button class=up>▲</button></a>
 <button accesskey=\"s\" class=show onclick=open_all_sections()>show</button> <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></div>")
       
 (setq org-publish-project-alist
@@ -185,7 +184,7 @@
 
 ;;;###autoload
 (defun publish (&optional sitemap static force async)
-  "publish `rwest-io' content.
+  "publish `compiler.company' content.
 If STATIC is t, also publish media and static files.
 If FORCE is t, skip checking file mod date and just publish all files.
 If ASYNC is t, call `org-publish' asynchronously.

@@ -61,5 +61,12 @@
 
 (defvar scrum-tags '("demo" "mvp" "release" "major-release" "ua" "qa"))
 
+(defun org-dblock-write:scrumboard ()
+  "Generate a 'scrumboard'.")
+
+;; TODO 2024-09-06: eplot
+(defun org-dblock-write:burndown ()
+  "Generate a 'burndown' chart in the current buffer.")
+
 (provide 'scrum)
 ;;; scrum.el ends here

@@ -48,7 +48,7 @@
 
 (org-dynamic-block-define "links" 'dblock-insert-links)
 
-(org-export-translate-to-lang (list '("Table of Contents" "Index")) "ulang")
+;; (org-export-translate-to-lang (list '("Table of Contents" "Index")) "ulang")
 ;; (setq org-export-global-macros nil)
 
 ;; todo keywords
