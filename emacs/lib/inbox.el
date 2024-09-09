@@ -269,12 +269,20 @@ The following keyword parameters can be passed to the info dynamic block:
                   (message "building project vc log...")))
           ('files (when files
                     (message "building project file table...")
-                    (insert "#+CALL: files() :dir " project-root "\n")))))
+                    (insert "#+CALL: project-files() :dir " project-root "\n")))))
       (org-babel-execute-region point (point)))))
 
 (defun org-project-info ()
   "Insert or update a project-info dblock."
-  (interactive))
+  (interactive)
+  (if (re-search-forward (rx bol "#+BEGIN:" (+ space) "project-info") nil t)
+      (progn
+        (if (fboundp 'org-fold-show-entry)
+            (org-fold-show-entry)
+          (with-no-warnings (org-show-entry)))
+        (beginning-of-line))        
+    (org-create-dblock (list :name "project-info")))
+  (org-update-dblock))
 
 (defun org-inbox-configure-dblock ()
   "Configure the current org-inbox-dblock at point."

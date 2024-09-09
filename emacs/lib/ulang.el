@@ -157,17 +157,28 @@ also check file keywords (aka in-buffer settings).
 For example, a PROPERTY value of 'LOCATION' would check all property
 values in addition to the keyword '#+LOCATION:'."
   (interactive (list nil nil))
-  (let ((property (or property (org-read-property-name))))
-    ;; most of the work passed through to the property handler
-    (org-entry-get-with-inheritance property literal-nil epom)))
+  (let* ((property (or property (org-read-property-name)))
+         (kw (when-let ((val (org-collect-keywords '("LOCATION") nil)))
+               (cadar val)))
+         ;; most of the work passed through to the property handler
+         (props (org-entry-get-with-inheritance property literal-nil epom)))
+    (if kw
+        (append (list kw) (if (listp props) props (list props)))
+      props)))
 
 (defun org-get-location (point)
   "Get the value of property LOCATION at POINT."
   (interactive "d")
-  (org-with-point-at point
-    (message "%s" (or (when-let ((prop (org-entry-get-with-inheritance "LOCATION")))
-                        (apply 'join-paths (string-split prop " ")))
-                      (caadar (org-collect-keywords '("LOCATION") nil '("LOCATION")))))))
+  (let ((path (org-get-with-inheritance "LOCATION" nil point)))
+    ;; when the second path component is an absolute path, skip the first
+    (when (and (< 1 (length path)) (file-name-absolute-p (print (cadr path))))
+      (setq path (cdr path)))
+    (message "%s"
+             (apply 'join-paths
+                    (flatten
+                     (mapcar
+                      (lambda (x) (split-string x " "))
+                      path))))))
 
 (defun org-set-location (value)
   "Set the value of property LOCATION. If point is before first heading
