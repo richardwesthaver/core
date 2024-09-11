@@ -172,15 +172,11 @@ a default value for required keyword arguments."
   ((item
     :initarg :item
     :initform (error "Must specify argument item")
-    :reader missing-argument-item)
-   (command
-    :initarg :command
-    :initform (error "Must specify command")
-    :reader missing-argument-command))
-  (:report (lambda (condition stream)
-             (declare (ignore condition))
-             (format stream "Missing argument")))
-  (:documentation "A condition which is signalled when an option expects an argument, but none was provided"))
+    :reader missing-argument-item))
+   (:report (lambda (condition stream)
+              (declare (ignore condition))
+              (format stream "Missing argument")))
+   (:documentation "A condition which is signalled when an option expects an argument, but none was provided"))
 
 (defun missing-argument-p (value)
   (typep value 'missing-argument))

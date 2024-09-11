@@ -65,6 +65,16 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod pop-opt ((self cli-opt))
   (vector-pop (cli-opts self)))
 
+(defmethod handle-unknown-opt ((self cli-cmd) (opt string))
+  (with-opt-restart-case opt
+    (clap-unknown-argument opt 'cli-opt)))
+
+(defmethod handle-invalid-opt ((self cli-cmd) (opt string) &optional reason)
+  (clap-invalid-argument opt :kind 'cli-opt :reason reason))
+
+(defmethod handle-missing-opt ((self cli-cmd) (opt string))
+  (clap-missing-argument opt 'cli-opt))
+
 (defmethod cli-equal ((a cli-cmd) (b cli-cmd))
   (with-slots (name opts cmds) a
     (with-slots ((bn name) (bo opts) (bc cmds)) b

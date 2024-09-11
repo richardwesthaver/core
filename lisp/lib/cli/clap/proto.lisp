@@ -11,10 +11,19 @@
   (defwarning clap-warning (clap-condition) ())
   (deferror clap-simple-error (simple-error clap-error) () (:auto t))
   (deferror clap-unknown-argument (clap-error unknown-argument) ())
+  (deferror clap-missing-argument (clap-error missing-argument)
+      ((kind :initarg :kind :initform nil)))
+  (deferror clap-invalid-argument (clap-error invalid-argument) ())
   (defwarning clap-simple-warning (simple-warning clap-warning) () (:auto t)))
 
-(defun clap-unknown-argument (opt)
-  (error 'clap-unknown-argument :name opt :kind 'cli-opt))
+(defun clap-unknown-argument (arg &optional kind)
+  (error 'clap-unknown-argument :name arg :kind kind))
+
+(defun clap-missing-argument (arg &optional kind)
+  (error 'clap-missing-argument :item arg :kind kind))
+
+(defun clap-invalid-argument (arg &key reason kind)
+  (error 'clap-invalid-argument :name arg :kind kind :reason reason))
 
 (defgeneric push-cmd (cmd place))
 
@@ -54,13 +63,22 @@
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format cli SELF as a useful string."))
 
-(defgeneric handle-unknown-argument (self arg)
-  (:documentation "Handle an unknown argument."))
+(defgeneric handle-unknown-opt (self opt)
+  (:documentation "Handle an unknown cli-opt."))
 
-(defgeneric handle-missing-argument (self arg)
-  (:documentation "Handle a missing argument."))
+(defgeneric handle-missing-opt (self opt)
+  (:documentation "Handle a missing cli-opt."))
 
-(defgeneric handle-invalid-argument (self arg)
-  (:documentation "Handle an invalid argument."))
+(defgeneric handle-invalid-opt (self opt &optional reason)
+  (:documentation "Handle an invalid cli-opt."))
+
+(defgeneric handle-unknown-arg (self arg)
+  (:documentation "Handle an unknown cli-arg."))
+
+(defgeneric handle-missing-arg (self arg)
+  (:documentation "Handle a missing cli-arg."))
+
+(defgeneric handle-invalid-arg (self arg &optional reason)
+  (:documentation "Handle an invalid cli-arg."))
 
 (defgeneric cli-equal (a b))

@@ -33,7 +33,15 @@
    :clap-simple-error
    :clap-simple-warning
    :clap-warning
-   :clap-unknown-argument))
+   :clap-unknown-argument
+   :handle-unknown-opt
+   :handle-missing-opt
+   :handle-invalid-opt
+   :handle-unknown-arg
+   :handle-missing-arg
+   :handle-invalid-arg
+   :clap-missing-argument
+   :clap-invalid-argument))
 
 (defpackage :cli/clap/ast
   (:use :cl :std :log :dat/sxp)
