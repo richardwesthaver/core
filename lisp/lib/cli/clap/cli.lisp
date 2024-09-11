@@ -53,7 +53,7 @@
            (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
        opts))
 
-(defun make-cmds (&rest cmds)
+(defun make-cmds (cmds)
   "Make a vector of CLI-CMDs based on CMDS."
   (map 'vector
         (lambda (x)

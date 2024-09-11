@@ -223,7 +223,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
 (defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds (vector *cmd1*) :opts *opts* :description "cmd1 description"))
-(defparameter *cmds* (make-cmds `(:name "baz" :description "baz" :opts ,*opts*) *cmd1* *cmd2*))
+(defparameter *cmds* (make-cmds (list `(:name "baz" :description "baz" :opts ,*opts*) *cmd1* *cmd2*)))
 
 (defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
