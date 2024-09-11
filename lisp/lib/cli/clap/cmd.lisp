@@ -144,29 +144,48 @@ should be."
        for i below (length args)
        for (a . args) on args
        if (member i holes)
-       do (continue) ;; skip args which have been consumed already
-       else if (= (length a) 1)
-       collect (make-cli-node 'arg a) ; always treat single-char as arg
-       else if (short-opt-p a) ;; SHORT OPT
-       collect (if-let ((o (find-short-opts self (aref a 1) :recurse t)))
-                 (%compose-short-opt (car o) a)
-                 (make-cli-node 'arg a))
-       else if (long-opt-p a) ;; LONG OPT
-       collect (if-let ((o (find-opts self (string-left-trim "-" a) :recurse t)))
-                 (prog1 (%compose-long-opt (car o) args)
-                   (push (1+ i) holes))
-                 (make-cli-node 'arg a))
-       ;; OPT GROUP
-       else if (opt-group-p a)
-       collect nil
-       ;; CMD
+         do (continue) ;; skip args which have been consumed already
        else
-       collect (let ((cmd (find-cmd self a)))
-                 (if cmd
-                     ;; TBD
-                     (make-cli-node 'cmd (find-cmd self a))
-                     ;; ARG
-                     (make-cli-node 'arg a)))))))
+         if (= (length a) 1)
+           collect (make-cli-node 'arg a) ; always treat single-char as arg
+       else
+         if (short-opt-p a) ;; SHORT OPT
+           collect
+           (if-let ((o (find-short-opts self (aref a 1) :recurse t)))
+             (%compose-short-opt (car o) a)
+             (make-cli-node 'arg a))
+       else
+         if (long-opt-p a) ;; LONG OPT
+           collect
+           (let ((o (find-opts self (string-left-trim "-" a) :recurse t))
+                 (has-eq (long-opt-has-eq-p a)))
+             (cond
+               ((and has-eq o)
+                (setf (cli-opt-val o) (cdr has-eq))
+                (make-cli-node 'opt o))
+               ((and (not has-eq) o)
+                (prog1 (%compose-long-opt (car o) args)
+                  (push (1+ i) holes)))
+               ((and has-eq (not o))
+                (warn 'warning "opt not recognized" a)
+                (let ((val (cdr has-eq)))
+                  (make-cli-node 'opt (make-cli-opt :name (car has-eq) :kind (type-of val) :val val))))
+               (t ;; (not o) (not has-eq)
+                (warn 'warning "opt not recognized" a)
+                (make-cli-node 'arg a))))
+           ;; OPT GROUP
+       else 
+         if (opt-group-p a) 
+           collect nil
+       ;; CMD
+       else 
+         collect
+         (let ((cmd (find-cmd self a)))
+           (if cmd
+               ;; TBD
+               (make-cli-node 'cmd (find-cmd self a))
+               ;; ARG
+               (make-cli-node 'arg a)))))))
 
 (defmethod install-ast ((self cli-cmd) (ast cli-ast))
   "Install the given AST, recursively filling in value slots."

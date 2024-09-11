@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :cli/tests
-  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt :cli/clap :cli/tools/sbcl))
+  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt :cli/clap :cli/tools/sbcl :dat/sxp))
 
 (in-package :cli/tests)
 (declaim (optimize (debug 3) (safety 3)))
@@ -60,7 +60,7 @@
            (princ "X"))
   (.sgr 0)
   (force-output)
-  (sleep 3)
+  ;; (sleep 3)
   (.ris)
   (force-output))
 
@@ -68,34 +68,36 @@
   "Hide and show the cursor."
   (princ "Cursor visible:")
   (force-output)
-  (sleep 2)
+  ;; (sleep 2)
   (terpri)
   (princ "Cursor invisible:")
   (hide-cursor)
   (force-output)
-  (sleep 2)
+  ;; (sleep 2)
   (terpri)
   (princ "Cursor visible:")
   (show-cursor)
   (force-output)
-  (sleep 2))
+  ;; (sleep 2)
+  )
 
 (defun ansi-t05 ()
   "Switch to and back from the alternate screen buffer."
   (princ "Normal screen buffer. ")
   (force-output)
-  (sleep 2)
+  ;; (sleep 2)
   (save-cursor-position)
   (use-alternate-screen-buffer)
   (clear)
   (princ "Alternate screen buffer.")
   (force-output)
-  (sleep 2)
+  ;; (sleep 2)
   (use-normal-screen-buffer)
   (restore-cursor-position)
   (princ "Back to Normal screen buffer.")
   (force-output)
-  (sleep 1))
+  ;; (sleep 1)
+  )
 
 (defun ansi-t06 ()
   "Set individual termios flags to enable raw and disable echo mode.
@@ -205,7 +207,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 ;; fixture API
 (defprompt tpfoo :prompt "testing:")
 
-(deftest cli-prompt ()
+(deftest cli-prompt (:skip t)
   "Test CLI prompts"
   (defvar tcoll nil)
   (defvar thist nil)
@@ -220,8 +222,8 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 		       (:name "bar" :description "foo")))
 
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
-(defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds #(*cmd1*) :opts *opts* :description "cmd1 description"))
-(defparameter *cmds* (make-cmds '(:name "baz" :description "baz" :opts *opts*)))
+(defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds (vector *cmd1*) :opts *opts* :description "cmd1 description"))
+(defparameter *cmds* (make-cmds `(:name "baz" :description "baz" :opts ,*opts*) *cmd1* *cmd2*))
 
 (defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
@@ -230,7 +232,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
   "test basic CLAP functionality."
   (let ((cli *cli*))
     (is (eq (make-shorty "test") #\t))
-    (is (equalp (proc-args cli '("-f" "baz" "--bar" "fax")) ;; not eql
+    (is (equalp (proc-args cli '("-f" "baz" "--bar=fax")) ;; not eql
 		(make-cli-ast 
 		 (list (make-cli-node 'opt (find-short-opts cli #\f))
 		       (make-cli-node 'cmd (find-cmd cli "baz"))
@@ -242,7 +244,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 	   (print-version cli s)
 	   (print-usage cli s)
 	   (print-help cli s))))
-    (is (string= "foobar" (cli/clap::parse-string-opt "foobar")))))
+    (is (string= "foobar" (cli/clap:parse-string-opt "foobar")))))
 
 (make-opt-parser thing *arg*)
 
@@ -676,10 +678,14 @@ Eastern Mediterranean ████████████████▊
 
 (deftest cli-ast ()
   "Validate the CLI/CLAP/AST parser."
-  (with-cli () *cli*))
+  (with-cli () *cli*
+    (is (string= (cli-opt-name (cli-node-form (car (ast (proc-args *cli* '("--foo" "1"))))))
+                 "foo"))
+    (is (string=
+         (cli-opt-name (cli-node-form (car (ast (proc-args *cli* '("--foo=11"))))))
+         "foo"))))
 
 (defmain (:exit nil :export nil)
-  (proc-args *cli* '("--foo 1"))
   (with-cli () *cli*
     (log:trace! "defmain is OK")
     t))

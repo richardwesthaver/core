@@ -78,5 +78,7 @@ is a list of handlers for the opt-val."
       `(defun ,fn-name (&optional arg)
          "Parse the cli-opt-val *ARG*."
          (declare (ignorable arg))
-         ,@(when fn1 `((setf *arg* (funcall #',fn1 arg))))
+         ,@(if fn1
+               `((setf *arg* (print (funcall #',fn1 arg))))
+               `((setf *arg* arg)))
          ,@body)))))

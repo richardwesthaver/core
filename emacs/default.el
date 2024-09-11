@@ -223,6 +223,21 @@
 (use-package company :ensure t)
 (use-package slime-repl-ansi-color :ensure t)
 
+(defvar slime-toggle nil)
+(defun slime-toggle ()
+  "toggle between lisp file and slime-repl"
+  (interactive)
+  (cond
+   ((eq major-mode 'slime-repl-mode)
+    (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp buffer: ")))))
+   ((not (eq major-mode 'slime-repl-mode))
+    (if (slime-connected-p)
+        (progn
+          (setq slime-toggle (current-buffer))
+          (slime-switch-to-output-buffer))
+      (setq slime-toggle (current-buffer))
+      (slime)))))
+
 (use-package slime
   :ensure t
   :after (slime-cape slime-repl-ansi-color)
@@ -235,6 +250,7 @@
                          ;; slime-enclosing-context
                          ;; slime-media
                          ;; slime-mrepl
+                         slime-company
                          slime-sbcl-exts
                          slime-cape ;; ext
                          slime-repl-ansi-color
@@ -249,22 +265,8 @@
                          slime-asdf))
   (put 'make-instance 'common-lisp-indent-function 1)
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
+  (slime-company-init)
   (slime-setup)
-  (defvar slime-toggle nil)
-  (defun slime-toggle ()
-    "toggle between lisp file and slime-repl"
-    (interactive)
-    (cond
-     ((eq major-mode 'slime-repl-mode)
-      (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp buffer: ")))))
-     ((not (eq major-mode 'slime-repl-mode))
-      (if (slime-connected-p)
-          (progn
-            (setq slime-toggle (current-buffer))
-            (slime-switch-to-output-buffer))
-        (setq slime-toggle (current-buffer))
-        (slime)))))
-
   ;; X11-only (mcclim requires clx)
   (defun clouseau-inspect (string)
     "Inspect a lisp value with Clouseau. make sure to load clouseau

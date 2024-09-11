@@ -53,11 +53,12 @@
            (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
        opts))
 
-(defun make-cmds (cmds)
+(defun make-cmds (&rest cmds)
   "Make a vector of CLI-CMDs based on CMDS."
   (map 'vector
         (lambda (x)
           (etypecase x
+            (cli-cmd x)
             (string (make-cli :cmd :name x))
             (list (apply #'make-cli :cmd x))
             (t (make-cli :cmd :name (format nil "~(~A~)" x)))))
@@ -78,7 +79,7 @@
 (defmethod print-version ((self cli) &optional stream)
   (println (cli-version self) stream))
 
-(defmethod print-help ((self cli) &optional stream) 
+(defmethod print-help ((self cli) &optional (stream t)) 
   (println (format nil "~A v~A --- ~A~%" (cli-name self) (cli-version self) (cli-description self)) stream)
   (print-usage self stream)
   ;; (terpri stream)
@@ -86,12 +87,12 @@
   (with-slots (opts cmds) self
     (unless (null opts)
       (loop for o across opts
-            do (iprintln (print-usage o) 2 stream)))
+            do (iprintln (print-usage o nil) 2 stream)))
     (terpri stream)
     (println "commands:" stream)
     (unless (null cmds)
       (loop for c across cmds
-            do (iprintln (print-usage c) 2 stream)))))
+            do (iprintln (print-usage c nil) 2 stream)))))
 
 (defmethod cli-equal :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.

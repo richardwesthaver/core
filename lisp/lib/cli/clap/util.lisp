@@ -8,11 +8,22 @@
 (defun arg0 () (car sb-ext:*posix-argv*))
 (defun args () (cdr sb-ext:*posix-argv*))
 
+(declaim (inline long-opt-p long-opt-has-eq-p
+                 short-opt-p opt-group-p
+                 opt-string-prefix-eq))
+
 (defun long-opt-p (str)
   (declare (simple-string str))
   (and (char= (aref str 0) (aref str 1) #\-)
        (> (length str) 2)))
 
+(defun long-opt-has-eq-p (str)
+  "Return non-nil if STR is a long-opt which has an '=' somewhere,
+indicating a key/val pair without whitespace."
+  (declare (simple-string str))
+  (when-let ((pos (position #\= str :test 'char=)))
+    (cons (subseq str 2 pos) (subseq str (1+ pos)))))
+  
 (defun short-opt-p (str)
   (declare (simple-string str))
   (and (char= (aref str 0) #\-)
