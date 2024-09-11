@@ -5,15 +5,16 @@
 ;;; Code:
 (in-package :cli/clap/proto)
 
-(deferror clap-error (std-error) () (:auto t))
+(define-condition clap-condition () ())
+(eval-always
+  (deferror clap-error (clap-condition) ())
+  (defwarning clap-warning (clap-condition) ())
+  (deferror clap-simple-error (simple-error clap-error) () (:auto t))
+  (deferror clap-unknown-argument (clap-error unknown-argument) ())
+  (defwarning clap-simple-warning (simple-warning clap-warning) () (:auto t)))
 
-;; (defun treat-as-argument (condition)
-;;   "A handler which can be used to invoke the `treat-as-argument' restart"
-;;   (invoke-restart (find-restart 'treat-as-argument condition)))
-
-;; (defun discard-argument (condition)
-;;   "A handler which can be used to invoke the `discard-argument' restart"
-;;   (invoke-restart (find-restart 'discard-argument condition)))
+(defun clap-unknown-argument (opt)
+  (error 'clap-unknown-argument :name opt :kind 'cli-opt))
 
 (defgeneric push-cmd (cmd place))
 

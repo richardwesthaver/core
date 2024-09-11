@@ -19,7 +19,8 @@
 (defpackage :cli/clap/macs
   (:use :cl :std :log :sb-ext :cli/clap/util :cli/clap/vars)
   (:export :defopt :defcmd
-   :make-opt-parser :with-cli-handlers :make-shorty))
+   :make-opt-parser :with-cli-handlers :make-shorty
+   :with-opt-restart-case))
 
 (defpackage :cli/clap/proto
   (:use :cl :std :log :sb-ext)
@@ -28,7 +29,11 @@
    :print-usage :print-version :do-cmds :do-cmd
    :active-cmds :active-opts :call-opt :do-opt
    :push-cmd :push-opt :cli-equal
-   :do-opts))
+   :do-opts
+   :clap-simple-error
+   :clap-simple-warning
+   :clap-warning
+   :clap-unknown-argument))
 
 (defpackage :cli/clap/ast
   (:use :cl :std :log :dat/sxp)

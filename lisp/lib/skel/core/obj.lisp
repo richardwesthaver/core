@@ -150,7 +150,7 @@
   (let ((str (directory-namestring (sk-path o))))
     (if (sb-sequence:emptyp str)
         *default-pathname-defaults*
-        str)))
+        (pathname str))))
 
 (defmethod load-ast ((self sk-config))
   ;; internal ast is never tagged

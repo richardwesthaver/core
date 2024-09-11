@@ -7,7 +7,7 @@
   (:use :cl :std :cli/clap :cli/clap/vars
    :vc :sb-ext :skel :log
    :dat/sxp #+tools :skel/tools/viz)
-  (:import-from :cli/shell :*shell-input*)
+  (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl)
   (:export :main))
 
@@ -79,11 +79,12 @@
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
 (defun call-with-args (action args)
-  (if (null args)
-      (sk-call *skel-project* action)
-      (mapc (lambda (x)
-              (sk-call *skel-project* (keywordicate action '- (string-upcase x))))
-            args)))
+  (let* ((*default-pathname-defaults* *skel-path*))
+    (if (null args)
+        (sk-call *skel-project* action)
+        (mapc (lambda (x)
+                (sk-call *skel-project* (keywordicate action '- (string-upcase x))))
+              args))))
 
 (defcmd skc-compile
   (call-with-args :compile *args*))
@@ -347,5 +348,8 @@
       (debug-opts *cli*)
       (init-skel-vars)
       (when-let ((project (find-skelfile #P".")))
-        (setq *skel-project* (load-skelfile project)))
+        (let ((*default-pathname-defaults* (pathname (directory-namestring project))))
+          (setq *skel-project* (load-skelfile project))
+          (setq *skel-shell* (sk-src *skel-project*))
+          (setq *shell-directory* (sk-src *skel-project*))))
       (do-cmd *cli*))))

@@ -9,7 +9,7 @@
   ((message :initarg :message
             :initform *std-error-message*
             :reader std-error-message))
-  (:documentation "Std Error")
+  (:documentation "Standard Error")
   (:report (lambda (condition stream)
              (format stream "~X" (std-error-message condition)))))
 
@@ -19,6 +19,19 @@
    'std-error
    :message (format nil "~A: ~A" *std-error-message* args)))
 
+(define-condition std-warning (warning)
+  ((message :initarg :message
+            :initform nil
+            :reader std-warning-message))
+  (:documentation "Standard Warning")
+  (:report
+   (lambda (condition stream)
+     (when (std-warning-message condition)
+       (format stream "~X" (std-warning-message condition))))))
+
+(defun std-warning (&optional message)
+  (warn 'std-warning :message message))
+  
 (defun car-eql (a cons)
   (eql a (car cons)))
 
@@ -28,7 +41,10 @@
     (when fun (setq options (remove (car fun) options)))
     `(prog1
          (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
-       (when ',fun (def-error-reporter ,name)))))
+       (when ',fun
+         (if (member 'simple-error ',parent-types)
+             (def-simple-error-reporter ,name)
+             (def-error-reporter ,name))))))
 
 (defmacro def-error-reporter (err)
     `(defun ,err (&rest args)
@@ -36,7 +52,44 @@
        (cerror
         "Ignore and continue"
         ',err
-        :message (format nil "~A: ~A" *std-error-message* args))))
+        :message (format nil "~A: ~A" ,*std-error-message* args))))
+
+(defmacro def-simple-error-reporter (name)
+  `(progn
+     (defun ,name (fmt &rest args)
+       ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
+       (cerror
+        "Ignore and continue"
+        ',name
+        :format-control fmt
+        :format-arguments args))))
+
+(defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)
+  "Define an warning condition."
+  (let ((fun (member :auto options :test #'car-eql)))
+    (when fun (setq options (remove (car fun) options)))
+    `(prog1
+         (eval-when (:compile-toplevel :load-toplevel :execute)
+           (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))
+       (when ',fun
+         (if (member 'simple-warning ',parent-types)
+             (def-simple-warning-reporter ,name)
+             (def-warning-reporter ,name))))))
+
+(defmacro def-warning-reporter (name)
+  `(defun ,name (&optional message)
+       ,(format nil "Signal a warning of type ~A with optional MESSAGE." name)
+       (warn
+        ',name
+        :message message)))
+
+(defmacro def-simple-warning-reporter (name)
+  `(defun ,name (fmt &rest args)
+     ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
+     (warn
+      ',name
+      :format-control fmt
+      :format-arguments args)))
 
 (defmacro nyi! (&optional comment)
   `(prog1

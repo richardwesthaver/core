@@ -88,7 +88,7 @@ a CLI is called without arguments, and all subcommands."))
         ;; maybe issue warning here? report to user
         (if (cli-lock-p c)
             c
-            (clap-error c))
+            (clap-simple-error "inactive (unlocked) cmd: ~A" c))
         c)))
 
 (defmethod active-cmds ((self cli-cmd))
@@ -129,6 +129,12 @@ a CLI is called without arguments, and all subcommands."))
 (defun solop (self)
   (and (= 0 (length (active-cmds self)) (length (active-opts self)))))
 
+(defmacro with-opt-restart-case (arg condition)
+  "Bind restarts 'use-as-arg' and 'discard-arg' for duration of BODY."
+  `(restart-case ,condition
+     (use-as-arg () () (make-cli-node 'arg ,arg))
+     (discard-arg () () nil)))
+
 (defmethod proc-args ((self cli-cmd) args)
   "Process ARGS into an ast. Each element of the ast is a node with a
 :kind slot, indicating the type of node and a :form slot which stores
@@ -145,37 +151,35 @@ should be."
        for (a . args) on args
        if (member i holes)
          do (continue) ;; skip args which have been consumed already
-       else
-         if (= (length a) 1)
-           collect (make-cli-node 'arg a) ; always treat single-char as arg
+       ;; else
+       ;;   if (= (length a) 1)
+       ;;     collect (make-cli-node 'arg a) ; always treat single-char as arg
        else
          if (short-opt-p a) ;; SHORT OPT
            collect
            (if-let ((o (find-short-opts self (aref a 1) :recurse t)))
              (%compose-short-opt (car o) a)
-             (make-cli-node 'arg a))
+             ;;  TODO 2024-09-11: signal error?
+             (with-opt-restart-case a
+               (clap-unknown-argument a)))
        else
          if (long-opt-p a) ;; LONG OPT
-           collect
-           (let ((o (find-opts self (string-left-trim "-" a) :recurse t))
-                 (has-eq (long-opt-has-eq-p a)))
-             (cond
-               ((and has-eq o)
-                (setf (cli-opt-val o) (cdr has-eq))
-                (make-cli-node 'opt o))
-               ((and (not has-eq) o)
-                (prog1 (%compose-long-opt (car o) args)
-                  (push (1+ i) holes)))
-               ((and has-eq (not o))
-                (warn 'warning "opt not recognized" a)
-                (let ((val (cdr has-eq)))
-                  (make-cli-node 'opt (make-cli-opt :name (car has-eq) :kind (type-of val) :val val))))
-               (t ;; (not o) (not has-eq)
-                (warn 'warning "opt not recognized" a)
-                (make-cli-node 'arg a))))
+           collect           
+             (let ((o (find-opts self (string-left-trim "-" a) :recurse t))
+                   (has-eq (long-opt-has-eq-p a)))
+               (cond
+                 ((and has-eq o)
+                  (setf (cli-opt-val o) (cdr has-eq))
+                  (make-cli-node 'opt o))
+                 ((and (not has-eq) o)
+                  (prog1 (%compose-long-opt (car o) args)
+                    (push (1+ i) holes)))
+                 (t ;; (not o) (not has-eq)
+                  (with-opt-restart-case a
+                    (clap-unknown-argument a)))))
            ;; OPT GROUP
        else 
-         if (opt-group-p a) 
+         if (opt-group-p a)
            collect nil
        ;; CMD
        else 

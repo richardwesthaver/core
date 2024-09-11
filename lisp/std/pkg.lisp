@@ -35,7 +35,14 @@
    :invalid-argument-item
    :invalid-argument-reason
    :invalid-argument-p
-   :unwind-protect-case))
+   :unwind-protect-case
+   :define-simple-error
+   :define-simple-error-reporter
+   :def-simple-error-reporter
+   :std-warning
+   :defwarning
+   :def-simple-warning-reporter
+   :def-warning-reporter))
 
 (defpackage :std/sym
   (:use :cl)

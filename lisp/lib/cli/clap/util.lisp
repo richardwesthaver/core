@@ -23,7 +23,7 @@ indicating a key/val pair without whitespace."
   (declare (simple-string str))
   (when-let ((pos (position #\= str :test 'char=)))
     (cons (subseq str 2 pos) (subseq str (1+ pos)))))
-  
+
 (defun short-opt-p (str)
   (declare (simple-string str))
   (and (char= (aref str 0) #\-)
