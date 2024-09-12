@@ -96,9 +96,8 @@ a CLI is called without arguments, and all subcommands."))
   (when-let ((c (find name (cli-cmds self) :key #'cli-name :test #'string=)))
     (if active 
         ;; maybe issue warning here? report to user
-        (if (cli-lock-p c)
-            c
-            (clap-simple-error "inactive (unlocked) cmd: ~A" c))
+        (when (cli-lock-p c)
+          c)
         c)))
 
 (defmethod active-cmds ((self cli-cmd))
@@ -143,16 +142,12 @@ a CLI is called without arguments, and all subcommands."))
   "Bind restarts 'use-as-arg' and 'discard-arg' for duration of BODY."
   `(restart-case ,condition
      (use-as-arg () () (make-cli-node 'arg ,arg))
-     (discard-arg () () nil)))
+     (discard-arg () () (setf ,arg nil))))
 
 (defmethod proc-args ((self cli-cmd) args)
   "Process ARGS into an ast. Each element of the ast is a node with a
 :kind slot, indicating the type of node and a :form slot which stores
-a value.
-
-For now we parse group separators '--' and insert a nil into the tree,
-this will likely change to generating a new branch in the ast as it
-should be."
+a value."
   (make-cli-ast
    (let ((holes)) ;; list of arg indexes which can be skipped since they're
                   ;; consumed by an opt

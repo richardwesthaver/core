@@ -4,8 +4,8 @@
 ;;  level. :INPUT :WAIT :OUTPUT
 (in-package :std-user)
 (defpkg :bin/skel
-  (:use :cl :std :cli/clap :cli/clap/vars
-   :vc :sb-ext :skel :log
+  (:use :cl :std :cli
+   :vc :sb-ext :skel :log :cli/clap/util
    :dat/sxp #+tools :skel/tools/viz)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl)
@@ -344,12 +344,12 @@
   (in-package :sk-user)
   (let ((*log-level* :info))
     (in-readtable :shell)
-    (with-cli (opts cmds) *cli*
+    (with-cli (*cli* opts cmds) (cli:args)
       (debug-opts *cli*)
       (init-skel-vars)
       (when-let ((project (find-skelfile #P".")))
         (let ((*default-pathname-defaults* (pathname (directory-namestring project))))
           (setq *skel-project* (load-skelfile project))
-          (setq *skel-shell* (sk-src *skel-project*))
+          (setq *skel-path* (sk-src *skel-project*))
           (setq *shell-directory* (sk-src *skel-project*))))
       (do-cmd *cli*))))

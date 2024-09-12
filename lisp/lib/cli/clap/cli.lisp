@@ -56,13 +56,13 @@
 (defun make-cmds (cmds)
   "Make a vector of CLI-CMDs based on CMDS."
   (map 'vector
-        (lambda (x)
-          (etypecase x
-            (cli-cmd x)
-            (string (make-cli :cmd :name x))
-            (list (apply #'make-cli :cmd x))
-            (t (make-cli :cmd :name (format nil "~(~A~)" x)))))
-        cmds))
+       (lambda (x)
+         (etypecase x
+           (cli-cmd x)
+           (string (make-cli :cmd :name x))
+           (list (apply #'make-cli :cmd x))
+           (t (make-cli :cmd :name (format nil "~(~A~)" x)))))
+       cmds))
 
 (defclass cli (cli-cmd)
   ;; name slot defaults to *package*, must be string
@@ -70,7 +70,7 @@
    (version :initarg :version :initform "0.1.0" :accessor cli-version :type string)
    ;; TODO 2023-10-11: look into pushd popd - cd-stack?
    (cd :initarg :cd :initform (sb-posix:getcwd) :type string :accessor cli-cd
-        :documentation "working directory of the top-level CLI."))
+       :documentation "working directory of the top-level CLI."))
   (:documentation "CLI"))
 
 (defmethod print-usage ((self cli) &optional stream)
@@ -114,15 +114,16 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
   (loop for opt across (active-opts self global)
         do (do-opt opt)))
 
-(defmacro with-cli (slots cli &body body)
+(defmacro with-cli ((cli &rest slots) args &body body)
   "Like with-slots with some extra bindings.
 
 SLOTS is a list passed to WITH-SLOTS.
 
-CLI is updated based on the current environment and dynamically bound to
-*CLI*."
+CLI is updated based on the current environment and dynamically bound
+to *CLI*. ARGS is a list of CLI args, defaults to *POSIX-ARGV* at
+runtime if nil."
   `(progn
-     (setq *cli* ,cli)
-     (setf (cli-cd ,cli) (sb-posix:getcwd))
-     (with-slots ,slots (parse-args ,cli (args) :compile t)
-       ,@body)))
+     (let ((*cli* ,cli))
+       (setf (cli-cd *cli*) *default-pathname-defaults*)
+       (with-slots ,slots (parse-args *cli* ,args :compile t)
+         ,@body))))

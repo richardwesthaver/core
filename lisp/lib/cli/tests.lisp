@@ -218,7 +218,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (is (string= "foobar"
                  (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
-(defparameter *opts* '((:name "foo" :global t :description "bar")
+(defparameter *opts* '((:name "foo" :global t :description "bar" :kind string)
 		       (:name "bar" :description "foo" :kind string)))
 
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
@@ -683,13 +683,12 @@ Eastern Mediterranean ████████████████▊
     (proc-args *cli* '("--log" "default" "--foo=11"))))
 
 (defmain (:exit nil :export nil)
-  (with-cli () *cli*
+  (with-cli (*cli*) ()
     (log:trace! "defmain is OK")
     t))
 
 (deftest clap-main ()
-  (let ((sb-ext:*posix-argv* nil))
-    (is (null (funcall #'main)))))
+  (is (null (funcall #'main))))
 
 (deftest sbcl-tools ()
   (with-sbcl (:noinform t :quit t)

@@ -1,5 +1,5 @@
 (defpackage :rt/tests
-  (:use :cl :std :rt :sb-sprof :rt/flamegraph :rt/tracing :rt/cover :rt/bench))
+  (:use :cl :std :rt :sb-sprof :rt/flamegraph :rt/tracing :rt/cover :rt/bench :rt/fuzz))
 
 (in-package :rt/tests)
 
@@ -44,7 +44,7 @@
 
 (deftest tmp ()
   (is (null (with-tmp-directory ())))
-  (is (null (with-tmp-file ())))
+  (is (null (with-tmp-file (file))))
   (is (with-tmp-file (f1 :name "temporary-file")
         (is (probe-file *tmp*))
         (write-string "1 2 3 4" f1)
@@ -52,4 +52,9 @@
         (is (= 7 (file-length f1)))))
   (is (with-tmp-directory ("foobar")
         (is (directory-path-p (probe-file *tmp*))))))
-   
+
+(deftest fuzz ()
+  (defclass foo-fuzz (fuzzer) ())
+  (is (integerp
+       (fuzz (make-instance 'foo-fuzz))))
+  (is (= 100 (length (fuzz* (make-random-state) (fuzz-generator (make-instance 'foo-fuzz)) :count 100)))))
