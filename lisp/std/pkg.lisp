@@ -386,6 +386,8 @@
    :absolute-pathname
    :relative-pathname
    :directory-pathname
+   :symlink-pathname
+   :symlinkp
    :absolute-directory-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
    :tmpize-pathname))

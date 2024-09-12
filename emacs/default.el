@@ -80,6 +80,8 @@
 (defvar company-home "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
 
+(add-to-load-path user-emacs-lib-directory)
+
 ;;; Theme
 (defun load-default-theme (&optional theme)
   (interactive)
@@ -157,9 +159,9 @@
                                            (interactive)
                                            (corfu-insert)
                                            (insert ,(cdr c)))))
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev t)
-  (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
+  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev t)
+  ;; (add-to-list 'completion-at-point-functions #'cape-file)
   (defun corfu-move-to-minibuffer ()
     (interactive)
     (pcase completion-in-region--data
@@ -240,9 +242,10 @@
 
 (use-package slime
   :ensure t
-  :after (slime-cape slime-repl-ansi-color)
+  :after (slime-repl-ansi-color)
   :init
-  (require 'slime-cape)
+  (require 'slime-company "slime-company")
+  (require 'slime-cape "slime-cape")
   (setq slime-contribs '(slime-fancy
                          slime-quicklisp
                          slime-hyperdoc
@@ -250,7 +253,7 @@
                          ;; slime-enclosing-context
                          ;; slime-media
                          ;; slime-mrepl
-                         slime-company
+                         ;; slime-company
                          slime-sbcl-exts
                          slime-cape ;; ext
                          slime-repl-ansi-color
@@ -265,7 +268,8 @@
                          slime-asdf))
   (put 'make-instance 'common-lisp-indent-function 1)
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
-  (slime-company-init)
+  (slime-repl-ansi-color-init)
+  (slime-cape-init)
   (slime-setup)
   ;; X11-only (mcclim requires clx)
   (defun clouseau-inspect (string)
@@ -321,8 +325,9 @@ function: '(ql:quickload :clouseau)'."
   (setq common-lisp-style-default "core")
   ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
   (setq slime-threads-update-interval 1)
-  (add-hook 'slime-mode-hook #'slime-cape-maybe-enable 100)
-  (add-hook 'slime-repl-mode-hook #'slime-cape-maybe-enable 100))
+  ;; (add-hook 'slime-mode-hook 'slime-cape-maybe-enable)
+  ;; (add-hook 'slime-repl-mode-hook 'slime-cape-maybe-enable)
+  )
 
 (use-package lisp-mode
   :ensure nil
@@ -1183,7 +1188,6 @@ inherited by a parent headline."
 (add-hook 'mail-send-hook  #'ispell-message)
 
 ;;; Skel
-(add-to-load-path user-emacs-lib-directory)
 (require 'sk)
 (require 'skt)
 

@@ -196,11 +196,11 @@ instead set or replace the location file keyword."
             (insert "#+LOCATION: " val "\n")))
       (org-set-property "LOCATION" value))))
 
-(defun org-follow-location ()
+(defun org-follow-location (point)
   "Open the location specified by the LOCATION property of the org heading
 or file at point."
-  (interactive)
-  (let ((loc ))
+  (interactive "d")
+  (let ((loc (org-get-location point)))
     (cond
      ((string-match-p org-link-any-re loc) (org-link-open-from-string loc))
      ;; TODO 2024-08-29: handle other location types (physical, etc)

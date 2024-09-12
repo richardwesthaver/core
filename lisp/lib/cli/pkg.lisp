@@ -97,3 +97,9 @@
 (defpackage :cli/ed
   (:use :cl :std :cli/env)
   (:export :run-emacs :run-emacsclient :org-store-link))
+
+(defpackage :cli/multi
+  (:use :cl :std :cli/clap :cli/repl)
+  (:export
+   #:define-multi-main
+   #:make-symlinks))

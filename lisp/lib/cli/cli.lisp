@@ -9,6 +9,6 @@
   (:use :cl :std)
   (:use-reexport :cli/shell :cli/ansi :cli/prompt
    :cli/progress :cli/spark :cli/prompt :cli/ed
-   :cli/env :cli/repl :cli/clap))
+   :cli/env :cli/repl :cli/clap :cli/multi))
 
 (defpkg :cli-user (:use :cl :std :cli))

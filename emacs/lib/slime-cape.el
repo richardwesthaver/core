@@ -14,6 +14,7 @@
 ;; Package-Requires: ((slime-company "1.6"))
 
 (require 'slime)
+(require 'slime-repl)
 (require 'slime-company)
 (require 'cape)
 
@@ -22,13 +23,17 @@
 (define-slime-contrib slime-cape
   (:authors "ccQpein")
   (:swank-dependencies swank-arglists)
-  (:on-unload
-   (delete cape-slime-backend completion-at-point-functions)))
+  (:on-load
+   (dolist (h '(slime-mode-hook slime-repl-mode-hook sldb-mode-hook))
+     (add-hook h 'slime-cape-enable)))
+   (:on-unload
+    (dolist (h '(slime-mode-hook slime-repl-mode-hook sldb-mode-hook))
+      (remove-hook h 'slime-cape-enable))))
 
-(defun slime-cape-maybe-enable ()
+(defun slime-cape-enable ()
   (interactive)
-  (when slime-mode
-    (add-to-list 'completion-at-point-functions cape-slime-backend)))
+  (push cape-slime-backend completion-at-point-functions)
+  (push cape-slime-backend slime-completion-at-point-functions))
 
 (provide 'slime-cape)
 ;;; slime-cape.el ends here

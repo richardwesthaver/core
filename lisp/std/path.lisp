@@ -5,6 +5,9 @@
 ;;; Code:
 (in-package :std/path)
 
+(defun symlinkp (pathname)
+  (sb-posix:s-islnk (sb-posix:stat-mode (sb-posix:lstat pathname))))
+
 (deftype wild-pathname ()
   "A pathname with wild components."
   '(and pathname (satisfies wild-pathname-p)))
@@ -22,6 +25,9 @@
 
 (deftype directory-pathname ()
   '(and pathname (satisfies uiop:directory-pathname-p)))
+
+(deftype symlink-pathname ()
+  '(and pathname (satisfies symlinkp)))
 
 (deftype absolute-directory-pathname ()
   '(and absolute-pathname directory-pathname))
