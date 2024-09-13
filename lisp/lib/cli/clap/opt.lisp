@@ -42,14 +42,15 @@
   (description nil :type (or null string))
   (lock nil :type boolean))
 
-(defun %compose-short-opt (o arg)
-  (declare (ignorable arg))
+(defmethod activate-opt ((self cli-opt))
+  (setf (cli-lock-p self) t))
+
+(defun %compose-short-opt (o)
   (setf (cli-opt-val o) t)
   (make-cli-node 'opt o))
 
-(defun %compose-long-opt (o args)
-  (declare (ignorable args))
-  (setf (cli-opt-val o) (or (pop args) t))
+(defun %compose-long-opt (o &optional val)
+  (setf (cli-opt-val o) val)
   (make-cli-node 'opt o))
 
 (defmethod handle-unknown-argument ((self cli-opt) arg))

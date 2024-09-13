@@ -41,7 +41,9 @@
    :handle-missing-arg
    :handle-invalid-arg
    :clap-missing-argument
-   :clap-invalid-argument))
+   :clap-invalid-argument
+   :activate-cmd
+   :activate-opt))
 
 (defpackage :cli/clap/ast
   (:use :cl :std :log :dat/sxp)
@@ -58,7 +60,8 @@
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op
    :pasre-num-op :parse-file-op :parse-dir-op :cli
    :cli-cd :with-cli :opts :cmds :debug-opts
-   :cli-opt :cli-cmd :cli-opt-val :cli-opt-lock :cli-opt-name))
+   :cli-opt :cli-cmd :cli-opt-val :cli-opt-lock :cli-opt-name
+   :active-cmds))
 
 (defpackage :cli/clap/simple
   (:use :cl :std :log :sb-ext)

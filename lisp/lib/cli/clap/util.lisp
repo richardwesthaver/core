@@ -14,8 +14,8 @@
 
 (defun long-opt-p (str)
   (declare (simple-string str))
-  (and (char= (aref str 0) (aref str 1) #\-)
-       (> (length str) 2)))
+  (and (> (length str) 2)
+       (char= (aref str 0) (aref str 1) #\-)))
 
 (defun long-opt-has-eq-p (str)
   "Return non-nil if STR is a long-opt which has an '=' somewhere,
@@ -27,8 +27,8 @@ indicating a key/val pair without whitespace."
 (defun short-opt-p (str)
   (declare (simple-string str))
   (and (char= (aref str 0) #\-)
-       (not (char= (aref str 1) #\-))
-       (> (length str) 1)))
+       (> (length str) 1)
+       (not (char= (aref str 1) #\-))))
 
 (defun opt-group-p (str)
   (declare (simple-string str))

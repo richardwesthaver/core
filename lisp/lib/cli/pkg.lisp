@@ -99,7 +99,7 @@
   (:export :run-emacs :run-emacsclient :org-store-link))
 
 (defpackage :cli/multi
-  (:use :cl :std :cli/clap :cli/repl)
+  (:use :cl :std)
   (:export
    #:define-multi-main
    #:make-symlinks))

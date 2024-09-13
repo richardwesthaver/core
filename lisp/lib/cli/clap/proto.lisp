@@ -41,6 +41,10 @@
 
 (defgeneric active-opts (self &optional global))
 
+(defgeneric activate-opt (self))
+
+(defgeneric activate-cmd (self))
+
 (defgeneric find-short-opts (self ch &key))
 
 (defgeneric call-opt (self arg))

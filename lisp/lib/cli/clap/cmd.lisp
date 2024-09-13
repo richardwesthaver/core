@@ -103,6 +103,9 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod active-cmds ((self cli-cmd))
   (remove-if-not #'cli-lock-p (cli-cmds self)))
 
+(defmethod activate-cmd ((self cli-cmd))
+  (setf (cli-lock-p self) t))
+
 (defmethod find-opts ((self cli-cmd) name &key active recurse)
   (let ((ret))
     (flet ((%find (o obj)
@@ -149,52 +152,45 @@ a CLI is called without arguments, and all subcommands."))
 :kind slot, indicating the type of node and a :form slot which stores
 a value."
   (make-cli-ast
-   (let ((holes)) ;; list of arg indexes which can be skipped since they're
-                  ;; consumed by an opt
-     (loop 
-       for i below (length args)
-       for (a . args) on args
-       if (member i holes)
-         do (continue) ;; skip args which have been consumed already
-       ;; else
-       ;;   if (= (length a) 1)
-       ;;     collect (make-cli-node 'arg a) ; always treat single-char as arg
-       else
-         if (short-opt-p a) ;; SHORT OPT
-           collect
-           (if-let ((o (find-short-opts self (aref a 1) :recurse t)))
-             (%compose-short-opt (car o) a)
-             ;;  TODO 2024-09-11: signal error?
+   (loop
+     with skip
+     for i below (length args)
+     for (a . args) on args
+     if skip
+     do (setq skip nil)
+     else if (short-opt-p a) ;; SHORT OPT
+     collect
+        (if-let ((o (car (find-short-opts self (aref a 1) :recurse t))))
+          (%compose-short-opt o)
+          ;;  TODO 2024-09-11: signal error?
+          (with-opt-restart-case a
+            (clap-unknown-argument a)))
+     else if (long-opt-p a) ;; LONG OPT
+     collect           
+        (let ((o (car (find-opts self (string-left-trim "-" a) :recurse t)))
+              (has-eq (long-opt-has-eq-p a)))
+          (cond
+            ((and has-eq o)
+             (setf (cli-opt-val o) (cdr has-eq))
+             (make-cli-node 'opt o))
+            ((and (not has-eq) o)
+             (prog1
+                 (%compose-long-opt o (pop args))
+               (setq skip t)))
+            (t ;; (not o) (not has-eq)
              (with-opt-restart-case a
-               (clap-unknown-argument a)))
-       else
-         if (long-opt-p a) ;; LONG OPT
-           collect           
-             (let ((o (find-opts self (string-left-trim "-" a) :recurse t))
-                   (has-eq (long-opt-has-eq-p a)))
-               (cond
-                 ((and has-eq o)
-                  (setf (cli-opt-val o) (cdr has-eq))
-                  (make-cli-node 'opt o))
-                 ((and (not has-eq) o)
-                  (prog1 (%compose-long-opt (car o) args)
-                    (push (1+ i) holes)))
-                 (t ;; (not o) (not has-eq)
-                  (with-opt-restart-case a
-                    (clap-unknown-argument a)))))
-           ;; OPT GROUP
-       else 
-         if (opt-group-p a)
-           collect nil
-       ;; CMD
-       else 
-         collect
-         (let ((cmd (find-cmd self a)))
-           (if cmd
-               ;; TBD
-               (make-cli-node 'cmd (find-cmd self a))
-               ;; ARG
-               (make-cli-node 'arg a)))))))
+               (clap-unknown-argument a)))))
+     ;; OPT GROUP
+     else if (opt-group-p a)
+     collect (make-cli-node 'group nil)
+     else ;; CMD or ARG
+     collect
+        (let ((cmd (find-cmd self a)))
+          (if cmd
+              ;; CMD
+              (make-cli-node 'cmd cmd)
+              ;; ARG
+              (make-cli-node 'arg a))))))
 
 (defmethod install-ast ((self cli-cmd) (ast cli-ast))
   "Install the given AST, recursively filling in value slots."
@@ -203,10 +199,10 @@ a value."
     ;; itself is consumed. validation is performed in proc-args.
 
     ;; before doing anything else we lock SELF, which should remain
-    ;; locked for the full runtime duration.
-    (setf (cli-lock-p self) t)
+    ;; locked until all subcommands have completed
+    (activate-cmd self)
     (loop named install
-          for (node . tail) on (debug! (ast ast))
+          for (node . tail) on (ast ast)
           until (null node)
           do 
              (let ((kind (cli-node-kind node)) (form (cli-node-form node)))
@@ -259,4 +255,4 @@ t, in which case a list of strings is assumed."
       (call-cmd self (cli-cmd-args self) (active-opts self))
       (loop for c across (active-cmds self)
             do (do-cmd c))))
-  
+
