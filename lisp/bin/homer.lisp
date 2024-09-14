@@ -198,7 +198,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
 
 (defun run ()
   (let ((*log-level* :info))
-    (with-cli (opts cmds args) *cli*
+    (with-cli (*cli* opts cmds args) (cli:args)
       (init-homer-vars)
       (load-homerc)
       (do-cmd *cli*)
