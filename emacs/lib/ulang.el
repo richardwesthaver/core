@@ -25,6 +25,7 @@
 
 ;;; Code:
 (require 'org)
+(require 'org-element)
 (require 'ox)
 
 (defgroup ulang nil

@@ -44,11 +44,26 @@
 ;; patience to learn Org-mode. This package isn't for them. It's for
 ;; small groups of like-minded Lispers :).
 
-;; ref: https://www.scrum.org/resources/what-scrum-module
+;;;; Refs
+;; scrum: https://www.scrum.org/resources/what-scrum-module
 
 ;; roadmap: https://compiler.company/plan/roadmap.html
 
 ;; tasks: https://compiler.company/plan/tasks
+
+;;;; API
+
+;; The API is still very much a WIP. Assume everything below to be
+;; theoretical.
+
+;; - task dependencies
+;;   - refer to org-depend.el for implementation details
+;;   - org-trigger-hook and org-blocker-hook
+;;   - org-todo-state-tags-triggers
+
+;; - dynamic blocks
+;;   - scrumboard
+;;   - burndown
 
 ;;; Code:
 (require 'ulang)

@@ -105,6 +105,24 @@ consisting of the old contents appended to the new."
                :test 'string-equal))
         t))
 
-(defun forget-shared-objects ()
+(defun forget-shared-objects (&optional (objects sb-sys:*shared-objects*))
   "Set the DONT-SAVE slot of all objects in SB-SYS:*SHARED-OBJECTS* to T."
-  (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) t)) sb-sys:*shared-objects*))
+  (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) t)) objects))
+
+(defun compile-lisp (name &key force save make package compression verbose version callable-exports executable (toplevel #'sb-impl::toplevel-init) forget save-runtime-options root-structures (purify t))
+  (pkg:with-package (or package *package*)
+    (asdf:compile-system name :force force :verbose verbose :version version)
+    (when make
+      (apply 'asdf:make name (unless (eq t make) make)))
+    (when forget
+      (forget-shared-objects (unless (eq t forget) forget)))
+    (when save
+      (when (probe-file save)
+        (delete-file save))
+      (sb-ext:save-lisp-and-die save :executable executable
+                                     :toplevel toplevel
+                                     :callable-exports callable-exports
+                                     :save-runtime-options save-runtime-options
+                                     :root-structures root-structures
+                                     :purify purify
+                                     :compression compression))))

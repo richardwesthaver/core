@@ -18,6 +18,7 @@
        psl.dat parquet.json rgb.txt
        compile save-std save-prelude save-user
        save-infra save-core save-tests build-rdb
+       build-core
        build-skel build-organ build-homer build-packy
        fasl rust-bin build-tree-sitter-alien))
  (clean ()
@@ -95,7 +96,10 @@
                      (asdf:make :bin/packy))
                 #$mv lisp/bin/packy .stash/packy$#))
  (compile () #$./x.lisp compile$#)
- (std () (:save () #$./x.lisp save std$#))
+ (std () (:save () (with-sbcl (:noinform t :quit t)
+                     (ql:quickload :std)
+                     (in-package :std-user)
+                     (compile-lisp :std :save ".stash/std.core"))))
  (prelude ()
           (:save () #$./x.lisp save prelude$#)
           (:compile () #$./x.lisp make prelude$#))
@@ -104,8 +108,15 @@
        (:compile () #$./x.lisp make user$#))
  (infra () (:save () #$./x.lisp save infra$#))
  (core ()
-       (:save () #$./x.lisp save core$#)
-       (:compile () #$./x.lisp make core$#))
+       (:build () (with-sbcl (:noinform t :quit t)
+                    (ql:quickload :bin/core)
+                    (asdf:make :bin/core))
+               #$mv lisp/bin/core .stash/core$#)
+       (:save () (with-sbcl (:noinform t :quit t)
+                   (ql:quickload (list :std :core))
+                   (in-package :std-user)
+                   (compile-lisp :core :save ".stash/core.core")))
+       (:compile () (compile-lisp :core :force t :verbose t)))
  (tests ()
         (:save () #$./x.lisp save tests$#)
         (:compile () #$./x.lisp make core/tests$#))

@@ -738,9 +738,7 @@ that package. In the case of shadowing, etc. They may not be EQL."
          (:export ,@pkg-externs)))))
 
 
-(defmacro with-package ((pkg) &body body)
+(defmacro with-package (pkg &body body)
   "Execute BODY within the package PKG."
-  `(let ((current (package-name *package*)))
-     (unwind-protect (progn (in-package ,pkg) ,@body)
-       (eval-when (:compile-toplevel :load-toplevel :execute)
-         (setq *package* (find-package current))))))
+  `(let ((*package* ,@(when pkg `((find-package ,pkg)))))
+     ,@body))

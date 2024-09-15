@@ -4,7 +4,7 @@
 (defpackage :bin/homer
   (:nicknames :homer)
   (:use :cl :std :log :sxp :rdb :skel :packy :cli :obj/id :krypt :vc)
-  (:export :main :*home-config*))
+  (:export :*home-config*))
 
 (in-package :bin/homer)
 (defvar *user* (sb-posix:getenv "USER"))
@@ -181,7 +181,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(define-cli *cli*
+(define-cli *homer-cli*
   :name "homer"
   :version "0.1.0"
   :description "user home manager"
@@ -198,13 +198,13 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
 
 (defun run ()
   (let ((*log-level* :info))
-    (with-cli (*cli* opts cmds args) (cli:args)
+    (with-cli (*homer-cli* opts cmds args) (cli:args)
       (init-homer-vars)
       (load-homerc)
       (do-cmd *cli*)
       (debug-opts *cli*))))
 
-(defmain ()
+(defmain start-homer ()
   (let ((*print-readably* t))
     (run)
     (sb-ext:exit :code 0)))

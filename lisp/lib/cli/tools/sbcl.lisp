@@ -46,5 +46,6 @@ keys are the same as those listed in `sbcl --help` and the BODY is wrapped in
 a PROGN and passed to the --eval flag."
   `(run-sbcl ,@(when keys (parse-sbcl-option-keys keys))
              ,@(when body
-                 (list "--eval"
-                       (with-output-to-string (s) (pprint `(progn ,@body) s))))))
+                 (flatten
+                  (mapcar (lambda (x) (list "--eval" (with-output-to-string (s) (prin1 x s))))
+                          body)))))

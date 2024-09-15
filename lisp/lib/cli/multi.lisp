@@ -27,7 +27,7 @@
 ;;; Code:
 (in-package :cli/multi)
 
-(defmacro define-multi-main ((&key default (exit t) (export t)) &rest mains)
+(defmacro define-multi-main (name default &rest mains)
   "Define a MAIN function for the current package which dispatches
   based on the value of '(ARG0)' at runtime to one of the pairs in
   MAINS.
@@ -39,9 +39,10 @@ main FUNCTION.
 When you save an executable lisp image with this function you should
 arrange for symlinks for each handled value of (ARG0) to be generated
 ."
-  `(cli/clap::defmain (:exit ,exit :export ,export)
-       (string-case ((pathname-name (arg0)) :default ,default)
-         ,@mains)))
+  `(defun ,name ()
+     (case (keywordicate (string-upcase (pathname-name (clap:arg0))))
+       ,@mains
+       (t ,default))))
 
 (defun make-symlinks (src &optional directory &rest names)
   "Make a set of symlinks from SRC to NAMES.

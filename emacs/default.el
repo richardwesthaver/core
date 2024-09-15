@@ -102,7 +102,8 @@
    org-web-tools ;; web parsing
    citeproc ;; citations
    htmlize ;; html export
-   all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
+   ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
+   nerd-icons nerd-icons-dired nerd-icons-ibuffer nerd-icons-corfu nerd-icons-completion
    hide-mode-line) ;; ui
   ;; bbdb
   (package-install-selected-packages t))
@@ -1074,7 +1075,7 @@ inherited by a parent headline."
        t nil))))
 
 ;;;; Agenda
-(cl-pushnew '("w" "Work in progress tasks" ((todo "WIP") (agenda))) org-agenda-custom-commands)
+(cl-pushnew '("i" "Work in progress tasks" ((todo "WIP") (agenda))) org-agenda-custom-commands)
 
 (defvar org-agenda-overriding-header)
 (defvar org-agenda-sorting-strategy)

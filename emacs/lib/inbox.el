@@ -71,13 +71,9 @@
          "* %?\n%i"
          :empty-lines 1)
         ("t" "inbox-task" entry (file ,org-inbox-file) "* TODO %^{item}\n")
-        ("n" "inbox-note" entry (file ,org-inbox-file) "* NOTE %^{item}\n%a")
-        ("l" "inbox-link" entry (file ,org-inbox-file)
-         "* LINK %l")
-        ("L" "inbox-protocol-link" entry (file ,org-inbox-file)
-         "* LINK [[%:link][%:description]]\n%:initial" :empty-lines 1)
+        ("n" "inbox-note" entry (file ,org-inbox-file) "* %^{item}\n%a")
         ("w" "inbox-web-link" entry (file ,org-inbox-file)
-         "* LINK %?"
+         "* %?"
          :hook (lambda ()
                  (goto-char (pos-eol))
                  (org-web-tools-insert-link-for-url (org-web-tools--get-first-url))))

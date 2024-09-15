@@ -210,7 +210,6 @@ install")))
     (asdf:load-system sys)
     (in-package :std-user)
     (asdf:make sys)
-    ()
     (stash-output sys)
     (println :OK)))
 

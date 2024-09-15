@@ -2,8 +2,7 @@
 
 ;;; Code:
 (uiop:define-package :bin/rdb
-  (:use :cl :rdb :std :cli/clap :log :clap)
-  (:export :main))
+  (:use :cl :rdb :std :cli/clap :log :clap))
 
 (in-package :bin/rdb)
 (rocksdb:load-rocksdb t)
@@ -70,7 +69,7 @@
                  (sb-ext:string-to-octets (string (gensym "foo")))
                  val)))))
 
-(define-cli *cli*
+(define-cli *rdb-cli*
   :name "rdb"
   :version "0.1.0"
   :thunk 'rdb-show
@@ -88,9 +87,9 @@
          (:name fuzz :thunk rdb-fuzz)
          (:name destroy :thunk rdb-destroy)))
 
-(defmain ()
+(defmain start-rdb ()
   (let ((*log-level* :info))
-    (with-slots (opts cmds args) *cli*
+    (with-cli (*rdb-cli* opts cmds args) ()
       (do-opts (active-opts *cli* t))
       (if (active-cmds *cli*)
           (let ((*rdb* (create-db (do-opt (car (find-opts *cli* "db"))))))

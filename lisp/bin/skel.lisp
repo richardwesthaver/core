@@ -8,8 +8,7 @@
    :vc :sb-ext :skel :log :cli/clap/util
    :dat/sxp #+tools :skel/tools/viz)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
-  (:use :cli/tools/sbcl)
-  (:export :main))
+  (:use :cli/tools/sbcl))
 
 (in-package :bin/skel)
 (in-readtable :shell)
@@ -232,7 +231,7 @@
 (defcmd skc-new
   (trace! *args* *opts*))
 
-(define-cli *cli*
+(define-cli *skel-cli*
   :name "skel"
   :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "A hacker's project compiler."
@@ -340,16 +339,16 @@
 	  :description "open the sk-shell interpreter"
           :thunk skc-shell)))
 
-(defmain ()
+(defmain start-skel ()
   (in-package :sk-user)
   (let ((*log-level* :info))
     (in-readtable :shell)
-    (with-cli (*cli* opts cmds) (cli:args)
+    (with-cli (*skel-cli* opts cmds) (cli:args)
       (debug-opts *cli*)
       (init-skel-vars)
       (when-let ((project (find-skelfile #P".")))
         (let ((*default-pathname-defaults* (pathname (directory-namestring project))))
           (setq *skel-project* (load-skelfile project))
           (setq *skel-path* (sk-src *skel-project*))
-          (setq *shell-directory* (sk-src *skel-project*))))
+          (setq cli/shell:*shell-directory* (sk-src *skel-project*))))
       (do-cmd *cli*))))

@@ -682,13 +682,13 @@ Eastern Mediterranean ████████████████▊
   (signals clap-unknown-argument
     (proc-args *cli* '("--log" "default" "--foo=11"))))
 
-(defmain (:exit nil :export nil)
+(defmain foo-main (:exit nil :export nil)
   (with-cli (*cli*) ()
     (log:trace! "defmain is OK")
     t))
 
 (deftest clap-main ()
-  (is (null (funcall #'main))))
+  (is (null (funcall #'foo-main))))
 
 (deftest sbcl-tools ()
   (with-sbcl (:noinform t :quit t)

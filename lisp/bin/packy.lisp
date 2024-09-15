@@ -1,6 +1,5 @@
 (defpackage :bin/packy
-  (:use :cl :std :sb-ext :cli :packy :clap :log)
-  (:export :main))
+  (:use :cl :std :sb-ext :cli :packy :clap :log))
 
 (in-package :bin/packy)
 
@@ -12,7 +11,7 @@
 (defopt pk-target (setq *pk-targets* *arg*))
 (defcmd pk-show (print (list *optc* *argc* *opts* *args* *pk-targets*)))
 
-(define-cli *cli*
+(define-cli *packy-cli*
   :name "packy"
   :version "0.1.0"
   :description "Universal Package Manager"
@@ -26,11 +25,11 @@
 
 (defun run ()
   (let ((*log-level* :info))
-    (with-cli (*cli* opts cmds args) (cli:args)
+    (with-cli (*packy-cli* opts cmds args) (cli:args)
       (do-cmd *cli*)
       (debug-opts *cli*))))
 
-(defmain ()
+(defmain start-packy ()
   (let ((*print-readably* t))
     (run)
     (sb-ext:exit :code 0)))

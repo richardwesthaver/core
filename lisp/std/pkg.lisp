@@ -458,7 +458,8 @@
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live
    :forget-shared-object
-   :forget-shared-objects))
+   :forget-shared-objects
+   :compile-lisp))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)

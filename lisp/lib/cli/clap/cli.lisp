@@ -29,16 +29,14 @@
                                                   :opts (make-opts ',opts)
                                                   :cmds (make-cmds ',cmds)))))
 
-(defmacro defmain ((&key (exit t) (export t)) &body body)
+(defmacro defmain (name (&key (exit t)) &body body)
   "Define a CLI main function in the current package."
-  (let ((main (symbolicate "MAIN")))
-    `(let ((*no-exit* ,(not exit)))
-       (defun ,main ()
-         "Run the top-level function and print to *STDOUT*."
-         (with-cli-handlers
-           (progn
-             ,@body)))
-       ,@(when export `((export ',main))))))
+  `(let ((*no-exit* ,(not exit)))
+     (defun ,name ()
+       "Run the top-level function and print to *STDOUT*."
+       (with-cli-handlers
+         (progn
+           ,@body)))))
 
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function

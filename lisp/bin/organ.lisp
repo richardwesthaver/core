@@ -4,8 +4,7 @@
 
 ;;; Code:
 (defpackage :bin/organ
-  (:use :cl :organ :std :cli :log :clap)
-  (:export :main))
+  (:use :cl :organ :std :cli :log :clap))
 
 (in-package :bin/organ)
 (defopt organ-help (print-help *cli*))
@@ -33,7 +32,7 @@
   (let ((input (if *args* (car *args*) #P"readme.org")))
     (describe (org-parse :document input))))
 
-(define-cli *cli*
+(define-cli *organ-cli*
   :name "organ"
   :version "0.0.1"
   :description "org-mode toolbox"
@@ -57,10 +56,9 @@
 
 (defun run ()
   (let ((*log-level* :info))
-    (with-cli (*cli* opts cmds args) (cli:args)
+    (with-cli (*organ-cli* opts cmds args) (cli:args)
       (do-cmd *cli*)
       (debug-opts *cli*))))
 
-(defmain ()
-  (run)
-  (sb-ext:exit :code 0))
+(defmain start-organ ()
+  (run))
