@@ -36,14 +36,22 @@
 
 (defvar *skel-arena* (new-skel-arena))
 
+(defvar *skel-ops* nil)
+
+(defvar *skel-scope*
+  (let ((scope (sb-lockless:make-so-map/fixnum)))
+    (set-so-scope scope 0 *skel-ops*)
+    (set-so-scope scope 1 nil)
+    scope))
+
+(defvar *skel-stack*)
+
 (defstruct (skel-op (:constructor make-skel-op (scope function)))
   (scope nil :type list :read-only t)
   (function #'identity :type function :read-only t))
 
 (declaim (inline %sk-call))
 (defun %sk-call (op) (funcall (skel-op-function op)))
-
-(defvar *skel-ops* nil)
 
 ;; TODO 2024-08-28: do we need to store arity or can we get by without it
 ;; being stored here?
@@ -69,14 +77,6 @@ as the function slot."
 (defstruct skel-vm
   (ip 0 :type (integer 0 #.*skel-stack-size*)) ;; to be atomic type needs to be (unsigned-byte 64)
   (stack (make-skel-stack) :type (vector skel-op)))
-
-(defvar *skel-scope*
-  (let ((scope (sb-lockless:make-so-map/fixnum)))
-    (set-so-scope scope 0 *skel-ops*)
-    (set-so-scope scope 1 nil)
-    scope))
-
-(defvar *skel-stack*)
 
 (defmacro with-skel-vm ((vm-sym &optional (vm (make-skel-vm))
                                           (scope *skel-scope*)

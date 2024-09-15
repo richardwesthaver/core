@@ -9,18 +9,18 @@
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp.sk" "rust.sk" "emacs.sk")
 :vc (:hg "https://vc.compiler.company/core")
-:scripts ((:lisp "x.lisp"))
 :env ((cc "clang"))
 :components ((:dir-locals ".dir-locals")
              (:org "readme"))
 :rules
 ((all (%stash
        psl.dat parquet.json rgb.txt
-       compile save-std save-prelude save-user
-       save-infra save-core save-tests build-rdb
-       build-core
-       build-skel build-organ build-homer build-packy
-       fasl rust-bin build-tree-sitter-alien))
+       save-std save-prelude save-user
+       save-infra save-core save-tests
+       build-tree-sitter-alien build-core fasl
+       ;; build-skel build-organ build-homer build-packy build-rdb
+       ;; rust-bin
+       ))
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#
@@ -95,18 +95,26 @@
                      (ql:quickload :bin/packy)
                      (asdf:make :bin/packy))
                 #$mv lisp/bin/packy .stash/packy$#))
- (compile () #$./x.lisp compile$#)
  (std () (:save () (with-sbcl (:noinform t :quit t)
                      (ql:quickload :std)
                      (in-package :std-user)
                      (compile-lisp :std :save ".stash/std.core"))))
  (prelude ()
-          (:save () #$./x.lisp save prelude$#)
-          (:compile () #$./x.lisp make prelude$#))
+          (:save () (with-sbcl (:noinform t :quit t)
+                      (ql:quickload :prelude)
+                      (in-package :std-user)
+                      (compile-lisp :prelude :save ".stash/prelude.core")))
+          (:compile () (compile-lisp :prelude :force t :verbose t)))
  (user ()
-       (:save () #$./x.lisp save user$#)
-       (:compile () #$./x.lisp make user$#))
- (infra () (:save () #$./x.lisp save infra$#))
+       (:save () (with-sbcl (:noinform t :quit t)
+                   (ql:quickload :user)
+                   (in-package :user)
+                   (compile-lisp :user :save ".stash/user.core")))
+       (:compile () (compile-lisp :user :force t :verbose t)))
+ (infra () (:save () (with-sbcl (:noinform t :quit t)
+                       (ql:quickload :user)
+                       (in-package :user)
+                       (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
        (:build () (with-sbcl (:noinform t :quit t)
                     (ql:quickload :bin/core)
@@ -116,11 +124,21 @@
                    (ql:quickload (list :std :core))
                    (in-package :std-user)
                    (compile-lisp :core :save ".stash/core.core")))
-       (:compile () (compile-lisp :core :force t :verbose t)))
+       (:compile () (compile-lisp :core :force t :verbose t))
+       (:install () #$install -C -m 755 .stash/core /usr/local/bin/core
+                 echo "core -> /usr/local/bin/"
+                 links="skel homer packy rdb organ"
+                 for i in $links; do
+                 ln -sf /usr/local/bin/core /usr/local/bin/$i
+                 echo "$i -> core -> /usr/local/bin/"
+                 done$#))
  (tests ()
-        (:save () #$./x.lisp save tests$#)
-        (:compile () #$./x.lisp make core/tests$#))
- (bench () (:compile () #$./x.lisp make core/bench$#))
+        (:save () (with-sbcl (:noinform t :quit t)
+                    (ql:quickload :core/tests)
+                    (in-package :core/tests)
+                    (compile-lisp :core/tests :save ".stash/tests.core")))
+        (:compile () (compile-lisp :core/tests :force t :verbose t)))
+ (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
  (fasl (compile-core compile-tests compile-bench compile-user compile-prelude))
  ;; rust
  (mailman () #$cd rust && cargo build -Z unstable-options --bin mailman --artifact-dir ../.stash/$#)
@@ -128,13 +146,9 @@
  (rust-bin (mailman alik))
  (alik-ui () #$trunk build --config rust/ui/alik/Trunk.toml$#)
  ;; install
- (install () #$d=/usr/local/bin
+ (install (install-core) 
+          #$d=/usr/local/share/lisp/
           cd .stash
-          for f in $(find . -type f ! -name "*.*")
-          do echo "$(basename $f) -> $d"
-          install -C -m 755 $f $d
-          done
-          d=/usr/local/share/lisp
           if [ -d $d ];
           then
           for f in $(find . -type f -name "*.core")
@@ -142,12 +156,10 @@
           install -C -m 755 $f $d
           done fi$#)
  (emacs () #$make -C emacs$#)
- (core-syms.sxp ()
-                (with-open-file (f "emacs/core-syms.sxp")
-                  (write `(defvar lisp-standard-function-names ,(standard-symbol-names #'fboundp)) :stream f)
-                  (write `(defvar lisp-standard-value-names ,(standard-symbol-names #'boundp)) :stream f)))
+ ;; TODO 2024-09-15: 
+ (core-syms.sxp () (with-open-file (f ".stash/symbols.sxp" :direction :output)))
  (dist () #$cd .stash
-       mkdir -pv core/bin core/share/lisp/fasl core/lib
+       mkdir -pv core core/bin core/share/lisp/fasl core/lib
        mv *.core core/share/lisp/
        mv *.fasl core/share/lisp/fasl/
        mv *.so core/lib/

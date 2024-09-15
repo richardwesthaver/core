@@ -14,7 +14,8 @@
   (:export :args :arg0 :long-opt-p
    :short-opt-p :opt-group-p :opt-string-prefix-eq :cli-opt-kind-p
    :default-thunk
-   :long-opt-has-eq-p))
+   :long-opt-has-eq-p
+   :opt-keyword-p))
 
 (defpackage :cli/clap/macs
   (:use :cl :std :log :sb-ext :cli/clap/util :cli/clap/vars)
@@ -61,7 +62,8 @@
    :pasre-num-op :parse-file-op :parse-dir-op :cli
    :cli-cd :with-cli :opts :cmds :debug-opts
    :cli-opt :cli-cmd :cli-opt-val :cli-opt-lock :cli-opt-name
-   :active-cmds))
+   :active-cmds
+   :%compose-keyword-opt))
 
 (defpackage :cli/clap/simple
   (:use :cl :std :log :sb-ext)

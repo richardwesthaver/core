@@ -53,6 +53,10 @@
   (setf (cli-opt-val o) val)
   (make-cli-node 'opt o))
 
+(defun %compose-keyword-opt (o val)
+  (setf (cli-opt-val o) val)
+  (make-cli-node 'opt o))
+
 (defmethod handle-unknown-argument ((self cli-opt) arg))
 (defmethod handle-missing-argument ((self cli-opt) arg))
 (defmethod handle-invalid-argument ((self cli-opt) arg))

@@ -182,7 +182,14 @@ a value."
                (clap-unknown-argument a 'cli-opt)))))
      ;; OPT GROUP
      else if (opt-group-p a)
-     collect (make-cli-node 'group nil)
+     collect 
+        (make-cli-node 'group nil)
+     ;; OPT KEYWORD (experimental)
+     else if (opt-keyword-p a)
+     collect (if-let ((o (car (find-opts self (string-left-trim ":" a) :recurse t))))
+               (prog1 (%compose-keyword-opt o (pop args))
+                 (setq skip t))
+               (make-cli-node 'arg a))
      else ;; CMD or ARG
      collect
         (let ((cmd (find-cmd self a)))

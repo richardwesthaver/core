@@ -34,6 +34,10 @@ indicating a key/val pair without whitespace."
   (declare (simple-string str))
   (equalp str *cli-group-separator*))
 
+(defun opt-keyword-p (str)
+  (declare (simple-string str))
+  (char= (aref str 0) #\:))
+
 (defun opt-string-prefix-eq (ch str)
   (declare (simple-string str) (character ch))
   (char= ch (aref str 0)))
