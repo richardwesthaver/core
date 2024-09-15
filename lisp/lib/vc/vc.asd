@@ -1,16 +1,17 @@
 (defsystem :vc
   :depends-on (:std :cli :obj :net :log :parse)
-  :components ((:file "pkg")
-               (:file "proto")
-               (:file "hg")
-               ;; (:module "hg"
-               ;;  :components
-               ;;  ())
-               (:file "git")
-               ;; (:module "git"
-               ;;  :components
-               ;;  ())
-               (:file "vc"))
+  :components 
+  ((:file "pkg")
+   (:file "proto")
+   (:file "hg")
+   ;; (:module "hg"
+   ;;  :components
+   ;;  ())
+   (:file "git")
+   ;; (:module "git"
+   ;;  :components
+   ;;  ())
+   (:file "vc"))
   :in-order-to ((test-op (test-op :vc/tests))))
 
 (defsystem :vc/tests

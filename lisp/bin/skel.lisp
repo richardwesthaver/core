@@ -21,11 +21,7 @@
                                         *arg*)
                               :info)))
 
-;; TODO 2023-10-13: almost there
-(defopt skc-config
-  (load-user-skelrc (or
-                     *arg*
-                     *user-skelrc*)))
+(defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*)))
 
 (defcmd skc-edit
   (let ((file (or (when *args* (pop *args*)) (sk-path *skel-project*))))
@@ -82,7 +78,7 @@
     (if (null args)
         (sk-call *skel-project* action)
         (mapc (lambda (x)
-                (sk-call *skel-project* (keywordicate action '- (string-upcase x))))
+                (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
               args))))
 
 (defcmd skc-compile
@@ -134,7 +130,7 @@
     (":cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show
-  (if *args* 
+  (if *args*
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
       (describe (if (boundp '*skel-project*) *skel-project*
                     (if (boundp '*skel-user-config*) *skel-user-config*
@@ -201,10 +197,12 @@
 (defcmd skc-run
   (if *args*
       (mapc (lambda (script)
-              (when-let ((script (sk-find-script
-                                  (pathname-name script)
-                                  (find-skelfile #P"." :load t))))
-                (debug! (sk-run script))))
+              ;; first check if a script with the same name exists, else check for a rule definition
+              (if-let ((script (sk-find-script 
+                                (pathname-name script)
+                                (find-skelfile #P"." :load t))))
+                (sk-run script)
+                (call-with-args :run (list script))))
             *args*)
       (required-argument 'name)))
 
@@ -258,9 +256,7 @@
           :thunk skc-describe)
 	 (:name show
 	  :description "show project slots"
-	  :opts ((:name "file" :description "path to skelfile" :kind file)
-                 (:name "user" :description "print user configuration")
-                 (:name "system" :description "print system configuration"))
+	  :opts ((:name "file" :description "path to skelfile" :kind file))
 	  :thunk skc-show)
          (:name vc
           :description "version control"
@@ -290,6 +286,9 @@
          (:name build
           :description "build programs and libraries"
           :thunk skc-build)
+         (:name save
+          :description "save a file"
+          :thunk skc-save)
          (:name dist
           :description "distribute build artifacts"
           :thunk skc-dist)

@@ -111,24 +111,21 @@ entries not under a member of `org-graph-locations'."
 ;; See https://github.com/toshism/org-super-links/blob/develop/org-super-links.el
 (declare-function org-make-link-description-function "ext:org-mode")
 
-(defvar org-graph-edge-backlink-into-drawer "LINKS"
-  "Controls how/where to insert the backlinks.
-If non-nil a drawer will be created and backlinks inserted there.  The
-default is BACKLINKS.  If this is set to a string a drawer will be
-created using that string.  For example LINKS.  If nil backlinks will
-just be inserted under the heading.")
+(defvar org-graph-edge-drawer "LINKS"
+  "Controls how/where to insert edges. If nil edges will just be inserted
+under the heading.")
 
-(defvar org-graph-edge-backlink-prefix 'org-graph-edge-backlink-prefix-timestamp
-  "Prefix to insert before the backlink.
+(defvar org-graph-edge-prefix 'org-graph-edge-prefix-timestamp
+  "Prefix to insert before the edge.
 This can be a string, nil, or a function that takes no arguments and
 returns a string.
 
-Default is the function `org-graph-edge-backlink-prefix-timestamp'
+Default is the function `org-graph-edge-prefix-timestamp'
 which returns an inactive timestamp formatted according to the variable
 `org-time-stamp-formats' and a separator ' <- '.")
 
-(defvar org-graph-edge-backlink-postfix nil
-  "Postfix to insert after the backlink.
+(defvar org-graph-edge-postfix nil
+  "Postfix to insert after the edge.
 This can be a string, nil, or a function that takes no arguments and
 returns a string")
 
@@ -165,27 +162,12 @@ function will be called for every link.
 
 Default is the variable `org-make-link-desciption-function'.")
 
-(defvar org-graph-edge-search-function
-  (cond ((require 'helm-org-ql nil 'no-error) "helm-org-ql")
-        ((require 'helm-org-rifle nil 'no-error) "helm-org-rifle")
-        (t 'org-graph-edge-get-location))
-  "The interface to use for finding target links.
-This can be a string with one of the values 'helm-org-ql',
-'helm-org-rifle', or a function.  If you provide a custom
+(defvar org-graph-edge-search-function 'org-graph-edge-get-location
+  "The interface to use for finding target links. If you provide a custom
 function it will be called with the `point` at the location the link
 should be inserted.  The only other requirement is that it should call
-the function `org-graph-edge--insert-link' with a marker to the target link.
-AKA the place you want the backlink.
-
-Using 'helm-org-ql' or 'helm-org-rifle' will also add a new
-action to the respective action menu.
-
-See the function `org-graph-edge-link-search-interface-ql' or for an example.
-
-Default is set based on currently installed packages.  In order of priority:
-- 'helm-org-ql'
-- 'helm-org-rifle'
-- `org-graph-edge-get-location'
+the function `org-graph-edge--insert-link' with a marker to the target
+link. AKA the place you want the edge.
 
 `org-graph-edge-get-location' internally uses `org-refile-get-location'.")
 
@@ -197,36 +179,27 @@ This is called with point at the location where it was called.")
   "Hook called before storing the link on the backlink side.
 This is called with point in the heading of the backlink.")
 
-(declare-function org-graph-edge-org-ql-link-search-interface "ext:org-graph-edge-org-ql")
-(declare-function org-graph-edge-org-rifle-link-search-interface "ext:org-graph-edge-org-rifle")
-
 (defun org-graph-edge-get-location ()
   "Default for function `org-graph-edge-search-function' that reuses the `org-refile' machinery."
-  (let ((target (org-refile-get-location "Super Link")))
+  (let ((target (org-refile-get-location "Node")))
     (org-graph-edge--insert-link (set-marker (make-marker) (car (cdddr target))
                                  (get-file-buffer (car (cdr target)))))))
 
 (defun org-graph-edge-search-function ()
   "Call the search interface specified in variable `org-graph-edge-search-function'."
-  (cond ((string= org-graph-edge-search-function "helm-org-ql")
-         (require 'org-graph-edge-org-ql)
-         (org-graph-edge-org-ql-link-search-interface))
-        ((string= org-graph-edge-search-function "helm-org-rifle")
-         (require 'org-graph-edge-org-rifle)
-         (org-graph-edge-org-rifle-link-search-interface))
-        (t (funcall org-graph-edge-search-function))))
+  (funcall org-graph-edge-search-function))
 
-(defun org-graph-edge-backlink-prefix ()
-  "Return an appropriate string based on variable `org-graph-edge-backlink-prefix'."
-  (cond ((equal org-graph-edge-backlink-prefix nil) "")
-        ((stringp org-graph-edge-backlink-prefix) org-graph-edge-backlink-prefix)
-        (t (funcall org-graph-edge-backlink-prefix))))
+(defun org-graph-edge-prefix ()
+  "Return an appropriate string based on variable `org-graph-edge-prefix'."
+  (cond ((equal org-graph-edge-prefix nil) "")
+        ((stringp org-graph-edge-prefix) org-graph-edge-prefix)
+        (t (funcall org-graph-edge-prefix))))
 
-(defun org-graph-edge-backlink-postfix ()
-  "Return an appropriate string based on variable `org-graph-edge-backlink-postfix'."
-  (cond ((equal org-graph-edge-backlink-postfix nil) "\n")
-        ((stringp org-graph-edge-backlink-postfix) org-graph-edge-backlink-postfix)
-        (t (funcall org-graph-edge-backlink-postfix))))
+(defun org-graph-edge-postfix ()
+  "Return an appropriate string based on variable `org-graph-edge-postfix'."
+  (cond ((equal org-graph-edge-postfix nil) "\n")
+        ((stringp org-graph-edge-postfix) org-graph-edge-postfix)
+        (t (funcall org-graph-edge-postfix))))
 
 (defun org-graph-edge-link-prefix ()
   "Return an appropriate string based on variable `org-graph-edge-link-prefix'."
@@ -240,8 +213,8 @@ This is called with point in the heading of the backlink.")
         ((stringp org-graph-edge-link-postfix) org-graph-edge-link-postfix)
         (t (funcall org-graph-edge-link-postfix))))
 
-(defun org-graph-edge-backlink-prefix-timestamp ()
-  "Return the default prefix string for a backlink.
+(defun org-graph-edge-prefix-timestamp ()
+  "Return the default prefix string for an edge.
 Inactive timestamp formatted according to `org-time-stamp-formats' and
 a separator ' <- '."
   (concat (format-time-string (org-time-stamp-format t t) (current-time))
@@ -256,19 +229,19 @@ LINK is the link target.  DESC is the provided desc."
           ((fboundp p) (funcall p link desc))
           (t desc))))
 
-(defun org-graph-edge-backlink-into-drawer ()
-  "Name of the backlink drawer, as a string, or nil.
+(defun org-graph-edge-drawer ()
+  "Name of the edge drawer, as a string, or nil.
 This is the value of variable
-`org-graph-edge-backlink-into-drawer'.  However, if the current
-entry has or inherits a BACKLINK_INTO_DRAWER property, it will be
+`org-graph-edge-drawer'.  However, if the current
+entry has or inherits a EDGE_DRAWER property, it will be
 used instead of the default value."
-  (let ((p (org-entry-get nil "BACKLINK_INTO_DRAWER" 'inherit t)))
+  (let ((p (org-entry-get nil "EDGE_DRAWER" 'inherit t)))
     (cond ((equal p "nil") nil)
-          ((equal p "t") "BACKLINKS")
+          ((equal p "t") "LINKS")
           ((stringp p) p)
-          (p "BACKLINKS")
-          ((stringp org-graph-edge-backlink-into-drawer) org-graph-edge-backlink-into-drawer)
-          (org-graph-edge-backlink-into-drawer "BACKLINKS"))))
+          (p "LINKS")
+          ((stringp org-graph-edge-drawer) org-graph-edge-drawer)
+          (org-graph-edge-drawer "LINKS"))))
 
 ;; delete related functions
 (defun org-graph-edge--find-link (id)
@@ -348,7 +321,7 @@ used instead of the default value."
     (insert (org-graph-edge-link-postfix))))
 
 (defun org-graph-edge-link-prefix-timestamp ()
-  "Return the default prefix string for a backlink.
+  "Return the default prefix string for an edge.
 Inactive timestamp formatted according to `org-time-stamp-formats' and
 a separator ' -> '."
   (concat (format-time-string (org-time-stamp-format t t) (current-time))
@@ -374,16 +347,16 @@ a separator ' -> '."
 ;; /EXPERIMENTAL related into drawer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun org-graph-edge-insert-backlink (link desc)
-  "Insert backlink to LINK with DESC.
-Where the backlink is placed is determined by the variable `org-graph-edge-backlink-into-drawer'."
-  (let* ((org-log-into-drawer (org-graph-edge-backlink-into-drawer))
+(defun org-graph-edge-insert (link desc)
+  "Insert edge to LINK with DESC.
+Where the edge is placed is determined by the variable `org-graph-edge-drawer'."
+  (let* ((org-log-into-drawer (org-graph-edge-drawer))
          (description (org-graph-edge-default-description-formatter link desc))
          (beg (org-log-beginning t)))
     (goto-char beg)
-    (insert (org-graph-edge-backlink-prefix))
+    (insert (org-graph-edge-prefix))
     (insert (org-link-make-string link description))
-    (insert (org-graph-edge-backlink-postfix))
+    (insert (org-graph-edge-postfix))
     (org-indent-region beg (point))))
 
 (defun org-graph-edge-links-action (marker hooks)
@@ -405,8 +378,8 @@ Where the backlink is placed is determined by the variable `org-graph-edge-backl
     (cons link-ref description)))
 
 (defun org-graph-edge--insert-link (target &optional no-forward)
-  "Insert link to marker TARGET at current `point`, and create backlink to here.
-Only create backlinks in files in `org-mode' or a derived mode, otherwise just
+  "Insert link to marker TARGET at current `point`, and create edge to here.
+Only create edges in files in `org-mode' or a derived mode, otherwise just
 act like a normal link.
 
 If NO-FORWARD is non-nil skip creating the forward link.  Currently
@@ -422,7 +395,7 @@ only used when converting a link."
           (widen) ;; buffer could be narrowed
           (goto-char (marker-position target))
           (when (derived-mode-p 'org-mode)
-            (org-graph-edge-insert-backlink (car source-formatted-link) (cdr source-formatted-link))))))
+            (org-graph-edge-insert (car source-formatted-link) (cdr source-formatted-link))))))
     (unless no-forward
       (with-current-buffer (marker-buffer source)
         (save-excursion
@@ -468,7 +441,7 @@ This works from either side, and deletes both sides of a link."
           (let ((link-element (org-graph-edge--find-link id)))
             (if link-element
                 (org-graph-edge--delete-link link-element)
-              (message "No backlink found. Deleting active only.")))))))
+              (message "No edge found. Deleting active only.")))))))
   (org-graph-edge--delete-link (org-element-context)))
 
 ;;;###autoload
@@ -500,7 +473,7 @@ of links to/form org files.  GOTO and KEYS are unused."
 
 ;;;###autoload
 (defun org-graph-edge-insert-link ()
-  "Insert a super link from the register."
+  "Insert an edge link from the register."
   (interactive)
   (let* ((target (get-register ?^)))
     (if target

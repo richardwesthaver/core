@@ -682,7 +682,7 @@ Eastern Mediterranean ████████████████▊
   (signals clap-unknown-argument
     (proc-args *cli* '("--log" "default" "--foo=11"))))
 
-(defmain foo-main (:exit nil :export nil)
+(defmain foo-main (:exit nil)
   (with-cli (*cli*) ()
     (log:trace! "defmain is OK")
     t))

@@ -16,10 +16,10 @@
   (deferror clap-invalid-argument (clap-error invalid-argument) ())
   (defwarning clap-simple-warning (simple-warning clap-warning) () (:auto t)))
 
-(defun clap-unknown-argument (arg &optional kind)
+(defun clap-unknown-argument (arg kind)
   (error 'clap-unknown-argument :name arg :kind kind))
 
-(defun clap-missing-argument (arg &optional kind)
+(defun clap-missing-argument (arg kind)
   (error 'clap-missing-argument :item arg :kind kind))
 
 (defun clap-invalid-argument (arg &key reason kind)

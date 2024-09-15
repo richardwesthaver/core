@@ -164,7 +164,7 @@ a value."
           (%compose-short-opt o)
           ;;  TODO 2024-09-11: signal error?
           (with-opt-restart-case a
-            (clap-unknown-argument a)))
+            (clap-unknown-argument a 'cli-opt)))
      else if (long-opt-p a) ;; LONG OPT
      collect           
         (let ((o (car (find-opts self (string-left-trim "-" a) :recurse t)))
@@ -179,7 +179,7 @@ a value."
                (setq skip t)))
             (t ;; (not o) (not has-eq)
              (with-opt-restart-case a
-               (clap-unknown-argument a)))))
+               (clap-unknown-argument a 'cli-opt)))))
      ;; OPT GROUP
      else if (opt-group-p a)
      collect (make-cli-node 'group nil)

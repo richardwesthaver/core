@@ -5,8 +5,7 @@
 (defsuite :vc)
 (in-suite :vc)
 
-(defmacro with-temp-repo ((kind &rest opts) &body body)
-  (declare (ignore opts)) ;; TODO 2024-06-01: 
+(defmacro with-temp-repo (kind &body body)
   `(let ((repo ,(make-repo ".")))
      (setf (vc-path repo) (merge-pathnames (format nil "~A" (gensym "repo")) "/tmp/"))
      (case ,kind
@@ -18,11 +17,11 @@
        ,@body)))
 
 (deftest git ()
-  (with-temp-repo (:git)
+  (with-temp-repo :git
     (is (streamp (sb-ext:process-output (run-git-command "status" nil :stream))))))
 
 (deftest hg ()
-  (with-temp-repo (:hg)
+  (with-temp-repo :hg
     (is (streamp (sb-ext:process-output (run-hg-command "status" nil :stream))))))
 
 (deftest vc ()
@@ -30,6 +29,7 @@
 
 ;; TODO 2024-08-22: 
 (deftest vc-mirror-update (:skip t)
-  "This test replicates a nushell script we've used for a very long time."
-  (with-temp-repo (:hg) 
-   (vc-id repo)))
+  "This test replicates a nushell script we've used for a very long time - 'use
+vc.nu; vc mirrors update;'"
+  (with-temp-repo :hg
+    (vc-id repo)))
