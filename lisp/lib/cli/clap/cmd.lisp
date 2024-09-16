@@ -13,9 +13,9 @@
   ;; name slot is required and must be a string
   ((name :initarg :name :initform (required-argument :name) :accessor cli-name :type string)
    (opts :initarg :opts :initform (make-array 0 :element-type 'cli-opt :adjustable t)
-         :accessor cli-opts :type (vector cli-opt))
+         :accessor opts :type (vector cli-opt))
    (cmds :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd :adjustable t)
-         :accessor cli-cmds :type (vector cli-cmd))
+         :accessor cmds :type (vector cli-cmd))
    (thunk :initform #'default-thunk :initarg :thunk :accessor cli-thunk :type function-lambda-expression)
    (lock :initform nil :initarg :lock :accessor cli-lock-p :type boolean)
    (description :initarg :description :accessor cli-description :type string)
@@ -35,8 +35,8 @@ a CLI is called without arguments, and all subcommands."))
   (print-unreadable-object (self stream :type t)
     (format stream "~A :opts ~A :cmds ~A :args ~A"
             (cli-name self)
-            (length (cli-opts self))
-            (length (cli-cmds self))
+            (length (opts self))
+            (length (cmds self))
             (length (cli-cmd-args self)))))
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
@@ -54,16 +54,16 @@ a CLI is called without arguments, and all subcommands."))
                 (format nil "~{!~A~}" (loop for c across cmds collect (print-usage c nil)))))))
 
 (defmethod push-cmd ((self cli-cmd) (place cli-cmd))
-  (vector-push self (cli-cmds place)))
+  (vector-push self (cmds place)))
 
 (defmethod push-opt ((self cli-opt) (place cli-cmd))
-  (vector-push self (cli-opts place)))
+  (vector-push self (opts place)))
 
 (defmethod pop-cmd ((self cli-cmd))
-  (vector-pop (cli-cmds self)))
+  (vector-pop (cmds self)))
 
 (defmethod pop-opt ((self cli-opt))
-  (vector-pop (cli-opts self)))
+  (vector-pop (opts self)))
 
 (defmethod handle-unknown-opt ((self cli-cmd) (opt string))
   (with-opt-restart-case opt
@@ -93,7 +93,7 @@ a CLI is called without arguments, and all subcommands."))
                  t))))))
 
 (defmethod find-cmd ((self cli-cmd) name &optional active)
-  (when-let ((c (find name (cli-cmds self) :key #'cli-name :test #'string=)))
+  (when-let ((c (find name (cmds self) :key #'cli-name :test #'string=)))
     (if active 
         ;; maybe issue warning here? report to user
         (when (cli-lock-p c)
@@ -101,7 +101,7 @@ a CLI is called without arguments, and all subcommands."))
         c)))
 
 (defmethod active-cmds ((self cli-cmd))
-  (remove-if-not #'cli-lock-p (cli-cmds self)))
+  (remove-if-not #'cli-lock-p (cmds self)))
 
 (defmethod activate-cmd ((self cli-cmd))
   (setf (cli-lock-p self) t))
@@ -109,10 +109,10 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod find-opts ((self cli-cmd) name &key active recurse)
   (let ((ret))
     (flet ((%find (o obj)
-             (when-let ((found (find o (cli-opts obj) :key #'cli-opt-name :test 'equal)))
+             (when-let ((found (find o (opts obj) :key #'cli-opt-name :test 'equal)))
                (push found ret))))
-      (when (and recurse (cli-cmds self))
-        (loop for c across (cli-cmds self)
+      (when (and recurse (cmds self))
+        (loop for c across (cmds self)
               do (%find name c)))
       (%find name self)
       (when active
@@ -124,15 +124,15 @@ a CLI is called without arguments, and all subcommands."))
    (if global 
        #'active-global-opt-p
        #'cli-opt-lock)
-   (cli-opts self)))
+   (opts self)))
 
 (defmethod find-short-opts ((self cli-cmd) ch &key recurse)
   (let ((ret))
     (flet ((%find (ch obj)
-             (when-let ((found (find ch (cli-opts obj) :key #'cli-opt-name :test #'opt-string-prefix-eq)))
+             (when-let ((found (find ch (opts obj) :key #'cli-opt-name :test #'opt-string-prefix-eq)))
                (push found ret))))
-      (when (and recurse (cli-cmds self))
-        (loop for c across (cli-cmds self)
+      (when (and recurse (cmds self))
+        (loop for c across (cmds self)
               do (%find ch c)))
       (%find ch self)
       ret)))
@@ -158,17 +158,18 @@ a value."
      for (a . args) on args
      if skip
      do (setq skip nil)
+        ;; TODO 2024-09-15: handle flag groups -abcd
      else if (short-opt-p a) ;; SHORT OPT
      collect
         (if-let ((o (car (find-short-opts self (aref a 1) :recurse t))))
           (%compose-short-opt o)
-          ;;  TODO 2024-09-11: signal error?
           (with-opt-restart-case a
             (clap-unknown-argument a 'cli-opt)))
      else if (long-opt-p a) ;; LONG OPT
      collect           
-        (let ((o (car (find-opts self (string-left-trim "-" a) :recurse t)))
-              (has-eq (long-opt-has-eq-p a)))
+        (let* ((has-eq (long-opt-has-eq-p a))
+               (name (or (car has-eq) (string-left-trim "-" a)))
+               (o (car (find-opts self name :recurse t))))
           (cond
             ((and has-eq o)
              (setf (cli-opt-val o) (cdr has-eq))
@@ -210,19 +211,22 @@ a value."
     (activate-cmd self)
     (loop named install
           for (node . tail) on (ast ast)
-          until (null node)
+          while node
           do 
              (let ((kind (cli-node-kind node)) (form (cli-node-form node)))
                (case kind
                  ;; opts 
                  (opt
                   (let ((name (cli-opt-name form)))
+                    
                     (when-let ((o (car (find-opts self name))))
+                      (log:trace! (format nil "installing opt ~A" name))
                       (setf o form)
                       (setf (cli-opt-lock o) t))))
                  ;; when we encounter a command we recurse over the tail
                  (cmd 
                   (when-let ((c (find-cmd self (cli-name form))))
+                    (log:trace! (format nil "installing cmd ~A" c))
                     ;; handle the rest of the AST
                     (setf c (install-ast c (make-cli-ast tail)))
                     (return-from install)))

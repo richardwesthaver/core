@@ -105,9 +105,11 @@
   (call-opt self (cli-opt-val self)))
 
 (defmethod do-opts ((self vector) &optional global)
-  (declare (ignore global))
   (loop for opt across self
-        do (do-opt opt)))
+        do (if global 
+               (when (cli-opt-global opt)
+                 (do-opt opt))
+               (do-opt opt))))
 
 (defun active-global-opt-p (opt)
   "Return non-nil if OPT is active at runtime and global."

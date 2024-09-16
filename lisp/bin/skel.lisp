@@ -174,10 +174,9 @@
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-commit
-  ;; (debug! *optc* *argc*)
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "commit" *args* t))
-    (:hg (run-hg-command "commit" *args* t))
+    (:git (run-git-command "commit" (append '("-m") *args*) t))
+    (:hg (run-hg-command "commit" (when *opts* ) t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-make
@@ -227,7 +226,8 @@
       (sb-impl::toplevel-repl nil))))
 
 (defcmd skc-new
-  (trace! *args* *opts*))
+  (println *args*) 
+  (println *opts*))
 
 (define-cli *skel-cli*
   :name "skel"
@@ -275,7 +275,7 @@
           :thunk skc-view)
 	 (:name make
 	  :description "build project targets"
-	  :opts ((:name "target" :description "target to build" :kind string))
+          :opts ((:name "target" :description "target to build" :kind string))
 	  :thunk skc-make)
 	 (:name run
 	  :description "run a script or command"
@@ -330,7 +330,8 @@
           :thunk skc-clone)
 	 (:name commit
 	  :description "commit changes to the project vc"
-          :thunk skc-commit)
+          :thunk skc-commit
+          :opts ((:name "message" :description "commit message" :kind string)))
 	 (:name edit
 	  :description "edit a project file in emacs."
           :thunk skc-edit)

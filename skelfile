@@ -137,9 +137,10 @@
                     (ql:quickload :core/tests)
                     (in-package :core/tests)
                     (compile-lisp :core/tests :save ".stash/tests.core")))
-        (:compile () (compile-lisp :core/tests :force t :verbose t)))
+        (:compile () 
+                  (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
- (fasl (compile-core compile-tests compile-bench compile-user compile-prelude))
+ (fasl (compile-core #+nil compile-tests compile-bench compile-user compile-prelude))
  ;; rust
  (mailman () #$cd rust && cargo build -Z unstable-options --bin mailman --artifact-dir ../.stash/$#)
  (alik () #$cd rust && cargo build -Z unstable-options --bin alik --artifact-dir ../.stash/$#)
