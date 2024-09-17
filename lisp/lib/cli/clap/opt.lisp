@@ -36,14 +36,17 @@
   ;; note that cli-opts can have a nil or unbound name slot
   (name "" :type string)
   (kind 'boolean :type (or symbol list))
-  (thunk nil :type (or null function symbol))
+  (thunk #'identity :type (or function symbol))
   (val nil)
   (global nil :type boolean)
   (description nil :type (or null string))
   (lock nil :type boolean))
 
+(defmethod cli-name ((self cli-opt))
+  (cli-opt-name self))
+
 (defmethod activate-opt ((self cli-opt))
-  (setf (cli-lock-p self) t))
+  (setf (cli-opt-lock self) t))
 
 (defun %compose-short-opt (o)
   (setf (cli-opt-val o) t)
@@ -64,7 +67,8 @@
 (defmethod initialize-instance :after ((self cli-opt) &key)
   (with-slots (name thunk) self
     (unless (stringp name) (setf name (format nil "~(~A~)" name)))
-    (when (symbolp thunk) (setf thunk (funcall (compile nil `(lambda () ,(symbol-function thunk))))))
+    ;; REVIEW 2024-09-16: 
+    (when (symbolp thunk) (setf thunk (symbol-function thunk)))
     self))
 
 (defmethod install-thunk ((self cli-opt) (lambda function) &optional compile)
@@ -98,11 +102,10 @@
            (equal kind bk)))))
 
 (defmethod call-opt ((self cli-opt) arg)
-  (when-let ((thunk (cli-opt-thunk self)))
-    (setf (cli-opt-val self) (funcall thunk arg))))
+  (funcall (cli-opt-thunk self) arg))
 
 (defmethod do-opt ((self cli-opt))
-  (call-opt self (cli-opt-val self)))
+  (setf (cli-opt-val self) (call-opt self (cli-opt-val self))))
 
 (defmethod do-opts ((self vector) &optional global)
   (loop for opt across self

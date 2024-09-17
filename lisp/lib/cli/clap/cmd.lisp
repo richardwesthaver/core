@@ -100,6 +100,10 @@ a CLI is called without arguments, and all subcommands."))
           c)
         c)))
 
+(defmethod (setf find-cmd) ((new cli-cmd) (self cli-cmd) name &optional active)
+  (let ((match (find-cmd self name active) ))
+    (substitute new match (cmds self) :test 'cli-equal)))
+
 (defmethod active-cmds ((self cli-cmd))
   (remove-if-not #'cli-lock-p (cmds self)))
 
@@ -118,6 +122,16 @@ a CLI is called without arguments, and all subcommands."))
       (when active
         (setf ret (remove-if-not #'cli-lock-p ret)))
       ret)))
+
+(defmethod find-opt ((self cli-cmd) name &optional active)
+  (let ((ret (find name (opts self) :key #'cli-opt-name :test 'equal)))
+    (if active
+        (when (cli-opt-lock ret) ret)
+        ret)))
+
+(defmethod (setf find-opt) ((new cli-opt) (self cli-cmd) name &optional active)
+  (let ((match (find-opt self name active)))
+    (substitute new match (opts self) :test 'cli-equal)))
 
 (defmethod active-opts ((self cli-cmd) &optional global)
   (remove-if-not 
@@ -139,7 +153,7 @@ a CLI is called without arguments, and all subcommands."))
 
 (declaim (inline solop))
 (defun solop (self)
-  (and (= 0 (length (active-cmds self)) (length (active-opts self)))))
+  (= 0 (length (active-cmds self)) (length (active-opts self))))
 
 (defmacro with-opt-restart-case (arg condition)
   "Bind restarts 'use-as-arg' and 'discard-arg' for duration of BODY."
@@ -150,18 +164,20 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod proc-args ((self cli-cmd) args)
   "Process ARGS into an ast. Each element of the ast is a node with a
 :kind slot, indicating the type of node and a :form slot which stores
-a value."
+an object."
   (make-cli-ast
    (loop
      with skip
-     for i below (length args)
+     with exit
      for (a . args) on args
      if skip
      do (setq skip nil)
-        ;; TODO 2024-09-15: handle flag groups -abcd
+     else if exit
+     do (return)
+     ;; TODO 2024-09-15: handle flag groups -abcd
      else if (short-opt-p a) ;; SHORT OPT
      collect
-        (if-let ((o (car (find-short-opts self (aref a 1) :recurse t))))
+        (if-let ((o (car (find-short-opts self (aref a 1) :recurse nil))))
           (%compose-short-opt o)
           (with-opt-restart-case a
             (clap-unknown-argument a 'cli-opt)))
@@ -169,7 +185,7 @@ a value."
      collect           
         (let* ((has-eq (long-opt-has-eq-p a))
                (name (or (car has-eq) (string-left-trim "-" a)))
-               (o (car (find-opts self name :recurse t))))
+               (o (car (find-opts self name :recurse nil))))
           (cond
             ((and has-eq o)
              (setf (cli-opt-val o) (cdr has-eq))
@@ -187,18 +203,17 @@ a value."
         (make-cli-node 'group nil)
      ;; OPT KEYWORD (experimental)
      else if (opt-keyword-p a)
-     collect (if-let ((o (car (find-opts self (string-left-trim ":" a) :recurse t))))
+     collect (if-let ((o (car (find-opts self (string-left-trim ":" a) :recurse nil))))
                (prog1 (%compose-keyword-opt o (pop args))
-                 (setq skip t))
+                 (setq exit t))
                (make-cli-node 'arg a))
      else ;; CMD or ARG
      collect
-        (let ((cmd (find-cmd self a)))
-          (if cmd
-              ;; CMD
-              (make-cli-node 'cmd cmd)
-              ;; ARG
-              (make-cli-node 'arg a))))))
+        (if-let ((cmd (find-cmd self a)))
+          (prog1 (make-cli-node 'cmd (parse-args cmd args :compile t))
+            (setq exit t))
+          ;; just a plain arg - move to next
+          (make-cli-node 'arg a)))))
 
 (defmethod install-ast ((self cli-cmd) (ast cli-ast))
   "Install the given AST, recursively filling in value slots."
@@ -213,23 +228,17 @@ a value."
           for (node . tail) on (ast ast)
           while node
           do 
-             (let ((kind (cli-node-kind node)) (form (cli-node-form node)))
+             (let ((kind (cli-node-kind node)) 
+                   (form (cli-node-form node)))
                (case kind
                  ;; opts 
                  (opt
-                  (let ((name (cli-opt-name form)))
-                    
-                    (when-let ((o (car (find-opts self name))))
-                      (log:trace! (format nil "installing opt ~A" name))
-                      (setf o form)
-                      (setf (cli-opt-lock o) t))))
-                 ;; when we encounter a command we recurse over the tail
-                 (cmd 
-                  (when-let ((c (find-cmd self (cli-name form))))
-                    (log:trace! (format nil "installing cmd ~A" c))
-                    ;; handle the rest of the AST
-                    (setf c (install-ast c (make-cli-ast tail)))
-                    (return-from install)))
+                  (setf #1=(find-opt self (cli-name form)) form)
+                  (activate-opt #1#)
+                  (log:trace! (format nil "installing opt ~A" (cli-name form))))
+                 (cmd
+                  (setf (find-cmd self (cli-name form)) form)
+                  (log:trace! (format nil "installing cmd ~A" (cli-name form))))
                  (arg (push-arg form self)))))
     (setf (cli-cmd-args self) (nreverse (cli-cmd-args self)))
     self))
@@ -258,10 +267,14 @@ t, in which case a list of strings is assumed."
   (trace! "calling command:" args opts)
   (funcall (cli-thunk self) args opts))
 
+(defmethod do-opts ((self cli-cmd) &optional global)
+  (do-opts (active-opts self) global))
+
 (defmethod do-cmd ((self cli-cmd))
-  "Perform the command, recursively calling child commands and opts if necessary."
-  (loop for o across (active-opts self)
-        do (do-opt o))
+  "Perform the active command or subcommand, recursively calling DO-CMD on
+subcommands until a level is reached which satisfies SOLOP. active OPTS are
+evaluated with DO-OPTS along the way."
+  (do-opts self)
   (if (solop self)
       (call-cmd self (cli-cmd-args self) (active-opts self))
       (loop for c across (active-cmds self)

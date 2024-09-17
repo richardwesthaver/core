@@ -45,21 +45,19 @@ evaluation of BODY."
 
 ;; TODO fix these macros
 (defmacro defcmd (name &body body)
-  `(defun ,name (args opts) 
+  `(defun ,name (args opts)
      (declare (ignorable args opts)
               (sequence args opts))
-     (setq
-      *argc* (length args)
-      *optc* (length opts)
-      *args* args
-      *opts* opts)
-     ,@body))
+     (let ((*argc* (length args))
+           (*optc* (length opts))
+           (*args* args)
+           (*opts* opts))
+       ,@body)))
 
 (defmacro defopt (name &body body)
   `(defun ,name (&optional arg)
-     (declare (ignorable arg))
-     (setq *arg* arg)
-       ,@body))
+     (let ((*arg* arg))
+       ,@body)))
 
 ;; TODO 2023-10-06: 
 ;; (defmacro gen-cli-thunk (pvars &rest thunk)

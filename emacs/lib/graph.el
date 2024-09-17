@@ -111,10 +111,11 @@ entries not under a member of `org-graph-locations'."
 ;; See https://github.com/toshism/org-super-links/blob/develop/org-super-links.el
 (declare-function org-make-link-description-function "ext:org-mode")
 
-(defvar org-graph-edge-drawer "LINKS"
+(defvar org-graph-edge-drawer "EDGES"
   "Controls how/where to insert edges. If nil edges will just be inserted
 under the heading.")
 
+;; TODO 2024-09-16: edge properties
 (defvar org-graph-edge-prefix 'org-graph-edge-prefix-timestamp
   "Prefix to insert before the edge.
 This can be a string, nil, or a function that takes no arguments and
@@ -124,19 +125,22 @@ Default is the function `org-graph-edge-prefix-timestamp'
 which returns an inactive timestamp formatted according to the variable
 `org-time-stamp-formats' and a separator ' <- '.")
 
+;;  TODO 2024-09-16: do we need this? what sort of information for a
+;;  given edge would go in the postfix? this may be better suited as a
+;;  per-edge value rather than global - maybe use for comments.
 (defvar org-graph-edge-postfix nil
   "Postfix to insert after the edge.
 This can be a string, nil, or a function that takes no arguments and
 returns a string")
 
-(defvar org-graph-edge-related-into-drawer nil
+(defvar org-graph-edge-related-into-drawer t
     "Controls how/where to insert links.
 If non-nil a drawer will be created and links inserted there.  The
 default is `org-graph-edge-related-drawer-default-name'.  If this is set to a
 string a drawer will be created using that string.  For example LINKS.
 If nil links will just be inserted at point.")
 
-(defvar org-graph-edge-related-drawer-default-name "RELATED"
+(defvar org-graph-edge-related-drawer-default-name "EDGES"
   "Default name to use for link drawer.
 If variable `org-graph-edge-related-into-drawer' is 't' use this
 name for the drawer.  See variable `org-graph-edge-related-into-drawer' for more info.")
@@ -179,6 +183,16 @@ This is called with point at the location where it was called.")
   "Hook called before storing the link on the backlink side.
 This is called with point in the heading of the backlink.")
 
+(defvar org-graph-edge-indicator-alist
+  '((link . "->")
+    (backlink . "<-")
+    (sibling . "--")
+    (parent . ">>")
+    (child . "<<"))
+  "An alist of (EDGE-TYPE . INDICATOR) pairs. Each INDICATOR is a string
+which will be printed between the properties and backlink of the
+associated EDGE-TYPE.")
+
 (defun org-graph-edge-get-location ()
   "Default for function `org-graph-edge-search-function' that reuses the `org-refile' machinery."
   (let ((target (org-refile-get-location "Node")))
@@ -213,6 +227,7 @@ This is called with point in the heading of the backlink.")
         ((stringp org-graph-edge-link-postfix) org-graph-edge-link-postfix)
         (t (funcall org-graph-edge-link-postfix))))
 
+;; TODO 2024-09-16: edge-properties
 (defun org-graph-edge-prefix-timestamp ()
   "Return the default prefix string for an edge.
 Inactive timestamp formatted according to `org-time-stamp-formats' and
@@ -237,11 +252,8 @@ entry has or inherits a EDGE_DRAWER property, it will be
 used instead of the default value."
   (let ((p (org-entry-get nil "EDGE_DRAWER" 'inherit t)))
     (cond ((equal p "nil") nil)
-          ((equal p "t") "LINKS")
           ((stringp p) p)
-          (p "LINKS")
-          ((stringp org-graph-edge-drawer) org-graph-edge-drawer)
-          (org-graph-edge-drawer "LINKS"))))
+          (t org-graph-edge-drawer))))
 
 ;; delete related functions
 (defun org-graph-edge--find-link (id)
@@ -275,7 +287,6 @@ Return element at point is in a drawer."
       (setq element (org-element-property :parent element)))
     element))
 
-
 (defun org-graph-edge--delete-link (link)
   "Delete the LINK.
 If point is in drawer, delete the entire line."
@@ -287,11 +298,7 @@ If point is in drawer, delete the entire line."
           (org-remove-empty-drawer-at (point)))
       (delete-region (org-element-property :begin link) (org-element-property :end link)))))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; EXPERIMENTAL related into drawer
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;; EXPERIMENTAL 'related into drawer'
 (defun org-graph-edge-related-into-drawer ()
   "Name of the related drawer, as a string, or nil.
 This is the value of variable
@@ -306,26 +313,27 @@ used instead of the default value."
           ((stringp org-graph-edge-related-into-drawer) org-graph-edge-related-into-drawer)
           (org-graph-edge-related-into-drawer org-graph-edge-related-drawer-default-name))))
 
-(defun org-graph-edge-insert-relatedlink (link desc)
+(defun org-graph-edge-link-prefix-timestamp ()
+  "Return the default prefix string for an edge.
+Inactive timestamp formatted according to `org-time-stamp-formats' and
+a separator ' -> '."
+  (concat (format-time-string (org-time-stamp-format t t) (current-time))
+          (format " %s " (cdr (assoc 'link org-graph-edge-indicator-alist)))))
+
+(defun org-graph-edge-insert-related-link (link desc)
   "LINK DESC related experiment."
   (if (org-graph-edge-related-into-drawer)
       (let* ((org-log-into-drawer (org-graph-edge-related-into-drawer))
              (beg (org-log-beginning t)))
         (goto-char beg)
         (insert (org-graph-edge-link-prefix))
+        (insert (org-graph-edge-link-prefix-timestamp))
         (org-insert-link nil link desc)
         (insert (org-graph-edge-link-postfix) "\n")
         (org-indent-region beg (point)))
     (insert (org-graph-edge-link-prefix))
     (org-insert-link nil link desc)
     (insert (org-graph-edge-link-postfix))))
-
-(defun org-graph-edge-link-prefix-timestamp ()
-  "Return the default prefix string for an edge.
-Inactive timestamp formatted according to `org-time-stamp-formats' and
-a separator ' -> '."
-  (concat (format-time-string (org-time-stamp-format t t) (current-time))
-        " -> "))
 
 (defun org-graph-edge-quick-insert-drawer-link ()
   "Insert link into drawer regardless of variable `org-graph-edge-related-into-drawer' value."
@@ -343,9 +351,7 @@ a separator ' -> '."
         (org-graph-edge-link-prefix nil))
     (org-graph-edge-link)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; /EXPERIMENTAL related into drawer
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; end
 
 (defun org-graph-edge-insert (link desc)
   "Insert edge to LINK with DESC.
@@ -400,11 +406,10 @@ only used when converting a link."
       (with-current-buffer (marker-buffer source)
         (save-excursion
           (goto-char (marker-position source))
-          (org-graph-edge-insert-relatedlink (car target-formatted-link) (cdr target-formatted-link)))))))
-
+          (org-graph-edge-insert-related-link (car target-formatted-link) (cdr target-formatted-link)))))))
 
 ;;;###autoload
-(defun org-graph-edge-convert-link-to-edge (arg)
+(defun org-graph-edge-convert-link (arg)
   "Convert a normal `org-mode' link at `point' to a graph link, ARG prefix.
 If variable `org-graph-edge-related-into-drawer' is non-nil move
 the link into drawer.
@@ -428,7 +433,7 @@ do not modify existing link."
       (delete-region begin end))))
 
 ;;;###autoload
-(defun org-graph-edge-delete-link ()
+(defun org-graph-edge-delete ()
   "Delete the link at point, and the corresponding reverse link.
 If no reverse link exists, just delete link at point.
 This works from either side, and deletes both sides of a link."
@@ -467,10 +472,6 @@ of links to/form org files.  GOTO and KEYS are unused."
       (set-register ?^ c1)
       (message "Link copied"))))
 
-;; not sure if this should be autoloaded or left to config?
-;;;###autoload
-(advice-add 'org-capture :before #'org-graph-edge-store-link)
-
 ;;;###autoload
 (defun org-graph-edge-insert-link ()
   "Insert an edge link from the register."
@@ -484,7 +485,7 @@ of links to/form org files.  GOTO and KEYS are unused."
 
 ;;;###autoload
 (defun org-graph-edge-link ()
-  "Insert a link and add a backlink to the target heading."
+  "Insert a link edge and add a backlink edge to the target heading."
   (interactive)
   (org-graph-edge-search-function))
 

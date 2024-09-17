@@ -44,7 +44,8 @@
    :clap-missing-argument
    :clap-invalid-argument
    :activate-cmd
-   :activate-opt))
+   :activate-opt
+   :find-opt))
 
 (defpackage :cli/clap/ast
   (:use :cl :std :log :dat/sxp)

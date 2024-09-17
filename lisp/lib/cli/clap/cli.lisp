@@ -108,10 +108,6 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
         (c (active-cmds cli)))
     (log:debug! :pwd (cli-cd cli) :active-opts o :cmd-args a :active-cmds c)))
 
-(defmethod do-opts ((self cli) &optional global)
-  (loop for opt across (active-opts self global)
-        do (do-opt opt)))
-
 (defmacro with-cli ((cli &rest slots) args &body body)
   "Like with-slots with some extra bindings.
 
