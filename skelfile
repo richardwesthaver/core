@@ -17,7 +17,7 @@
        psl.dat parquet.json rgb.txt
        save-std save-prelude save-user
        save-infra save-core save-tests
-       build-tree-sitter-alien build-core fasl
+       build-tree-sitter-alien build-core fasls
        ;; build-skel build-organ build-homer build-packy build-rdb
        ;; rust-bin
        ))
@@ -140,7 +140,7 @@
         (:compile () 
                   (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
- (fasl (compile-core #+nil compile-tests compile-bench compile-user compile-prelude))
+ (fasls (compile-core #+nil compile-tests compile-bench compile-user compile-prelude))
  ;; rust
  (mailman () #$cd rust && cargo build -Z unstable-options --bin mailman --artifact-dir ../.stash/$#)
  (alik () #$cd rust && cargo build -Z unstable-options --bin alik --artifact-dir ../.stash/$#)

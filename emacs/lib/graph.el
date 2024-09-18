@@ -66,15 +66,13 @@
   :type 'hook
   :group 'graph)
 
-(defvar-local org-graph nil
-  "The currently active graph of org nodes.")
-
 (defcustom org-graph-db-init-script (join-paths company-source-directory "infra/scripts/org-db-init.lisp")
   "Path to a lisp script responsible for initializing the `org-graph-db-directory'.")
 
 (cl-defstruct org-graph-db-handle
   (type :rocksdb)
   (name "org-graph-db")
+  init
   get
   put
   delete
@@ -101,12 +99,70 @@ entries not under a member of `org-graph-locations'."
       org-graph-locations))
    org-graph))
 
-(defun org-dblock-write:links ()
-  "Generate a 'links' block for the designated node.")
+(defun org-graph-files ()
+  (org-list-files org-graph-locations org-agenda-extensions))
 
-(defun org-dblock-write:graph ()
-  "Generate a 'graph' block for the designated set of nodes.")
+(cl-defstruct org-graph
+  ;; TODO 2024-09-17: use integers instead of string
+  (nodes (make-hash-table :test 'equal))
+  (edges (make-hash-table :test 'equal)))
 
+(defvar org-graph (make-org-graph)
+  "The Emacs-native org-graph. Should be assigned to an `org-graph' instance.")
+
+(cl-defstruct org-graph-node id name file point)
+(cl-defstruct org-graph-edge (type 'link) in properties timestamp out)
+
+(defun org-graph--file-hash (file)
+  "Compute the hash of FILE."
+  (with-temp-buffer
+    (set-buffer-multibyte nil)
+    (insert-file-contents-literally file)
+    (secure-hash 'md5 (current-buffer))))
+
+(defun org-graph-node-at-point (&optional update)
+  "Return the `org-graph-node' at point. When UPDATE is non-nil insert or
+update the node into the currently active org-graph."
+  (let* ((file (buffer-file-name))
+         (node (make-org-graph-node :point (point) :file file)))
+    (if (derived-mode-p 'org-mode)
+        (progn
+          (if (org-before-first-heading-p)
+              (setf (org-graph-node-name node) (org-get-title)
+                    ;; use the filename, create a hash as id
+                    (org-graph-node-id node) (org-graph--file-hash file))
+            (setf (org-graph-node-id node) (org-id-get)
+                  (org-graph-node-name node) (cadddr (org-heading-components)))))
+          (setf (org-graph-node-id node) (org-graph--file-hash file)
+                (org-graph-node-name node) (file-name-nondirectory file)))
+    (when update
+      (puthash (org-graph-node-id node) node (org-graph-nodes org-graph)))
+    (message "%s" node)))
+
+;; TODO 2024-09-17: 
+(defun org-graph-edges-at-point (&optional update)
+  "Return a list of `org-graph-edge' instances associated with the node at
+point. When UPDATE is non-nil insert or update the edges into the
+currently active org-graph."
+  (interactive)
+  (let ((edges))
+    (if (derived-mode-p 'org-mode))
+    (when update
+      (dolist (edge edges)
+        (puthash (org-graph-edge-in edge) edge (org-graph-edges org-graph))))
+    (message "%s" edge)))
+
+(defun org-graph-buffer-update (&optional buffer)
+  "Map over an org buffer adding all nodes to the active org-graph."
+  (interactive)
+    (save-excursion
+      (with-current-buffer (or buffer (current-buffer))
+        ;; capture file node
+        (goto-char (point-min))
+        (org-graph-node-at-point t)
+        (when (derived-mode-p 'org-mode)
+          (org-map-entries (lambda () (org-graph-node-at-point t)))))))
+  
 ;;; Links
 ;; See https://github.com/toshism/org-super-links/blob/develop/org-super-links.el
 (declare-function org-make-link-description-function "ext:org-mode")
@@ -449,45 +505,43 @@ This works from either side, and deletes both sides of a link."
               (message "No edge found. Deleting active only.")))))))
   (org-graph-edge--delete-link (org-element-context)))
 
-;;;###autoload
-(defun org-graph-edge-store-link (&optional GOTO KEYS)
+(defvar org-graph-stored-mark nil
+  "mark stored with `org-graph-edge-store'.")
+
+(defun org-graph-edge-store ()
   "Store a point to register for use in function `org-graph-edge-insert-link'.
 This is primarily intended to be called before `org-capture', but
 could possibly even be used to replace `org-store-link' IF
 function `org-graph-edge-insert-link' is used to replace
 `org-insert-link'.  This has not been thoroughly tested outside
-of links to/form org files.  GOTO and KEYS are unused."
+of links to/form org files."
   (interactive "P")
-  (ignore GOTO)
-  (ignore KEYS)
-  (save-excursion
-    ;; this is a hack. if the point is at the first char of a heading
-    ;; the marker is not updated as expected when text is inserted
-    ;; above the heading. for example a capture template inserted
-    ;; above. that results in the link being to the heading above the
-    ;; expected heading.
-    (goto-char (line-end-position))
-    (let ((c1 (make-marker)))
-      (set-marker c1 (point) (current-buffer))
-      (set-register ?^ c1)
-      (message "Link copied"))))
+  (let ((c1 (make-marker)))
+    (set-marker c1 (point) (current-buffer))
+    (setq org-graph-stored-mark c1)
+    (message "Mark stored.")))
 
 ;;;###autoload
 (defun org-graph-edge-insert-link ()
-  "Insert an edge link from the register."
+  "Insert an edge from the list `org-graph-stored-marks'."
   (interactive)
-  (let* ((target (get-register ?^)))
-    (if target
-        (progn
-          (org-graph-edge--insert-link target)
-          (set-register ?^ nil))
-      (message "No link to insert!"))))
+  (if org-graph-stored-mark
+      (progn 
+        (org-graph-edge--insert-link org-graph-stored-mark)
+        (setq org-graph-stored-mark nil))
+    (org-graph-edge-link)))
 
 ;;;###autoload
 (defun org-graph-edge-link ()
   "Insert a link edge and add a backlink edge to the target heading."
   (interactive)
   (org-graph-edge-search-function))
+
+(defun org-dblock-write:links ()
+  "Generate a 'links' block for the designated node.")
+
+(defun org-dblock-write:graph ()
+  "Generate a 'graph' block for the designated set of nodes.")
 
 (provide 'graph)
 ;; graph.el ends here

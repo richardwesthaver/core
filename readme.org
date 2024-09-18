@@ -62,125 +62,30 @@ customizations.
 Building the core will produce its output to the =.stash= directory by
 default. You can then test, run, and install the resulting files or
 package them up to be shipped elsewhere.
-
-The core produces a collection of native program binaries, compiled
-lisp modules in FASL format, as well as web distributions containing
-the usual suspects (html, css, js) as well as wasm modules.
-
 ** From Source
 *** Lisp
 The Lisp Core can be found under the =lisp= directory. It is the
 largest system, most actively developed, and is intended to cover the
 complete surface of the user-facing APIs contained in the core.
 
-Starting from a standard Common Lisp environment with at least
-[[https://www.quicklisp.org/beta/][Quicklisp]] installed, you can execute =./x.lisp build skel= to build
-the project compiler and =./x.lisp run skel= to run it. This tool is a
-convenience for building and testing different parts of the core from
-a minimal dependency set.
-
-#+name: x-help
-#+begin_src shell :exports both :results output
-# bootstrap the core build tool
-./x.lisp --help
-#+end_src
-
-#+RESULTS: x-help
-#+begin_example
-This is SBCL 2.4.7:76bbecb68, an implementation of ANSI Common Lisp.
-More information about SBCL is available at <http://www.sbcl.org/>.
-
-SBCL is free software, provided as is, with absolutely no warranty.
-It is mostly in the public domain; some portions are provided under
-BSD-style licenses.  See the CREDITS and COPYING files in the
-distribution for more information.
-To load "rt":
-  Load 1 ASDF system:
-    rt
-; Loading "rt"
-
-x.lisp --- core build tool
-x.lisp [CMD]
-CMDS:
-test
-compile
-build
-make
-test
-run
-save
-install
-#+end_example
-
-To test the lisp standard library:
-#+begin_src shell :results output :exports both
-# test systems
-./x.lisp test std
-#+end_src
-
-#+RESULTS:
-#+begin_example
-This is SBCL 2.4.7:dc890089a, an implementation of ANSI Common Lisp.
-More information about SBCL is available at <http://www.sbcl.org/>.
-
-SBCL is free software, provided as is, with absolutely no warranty.
-It is mostly in the public domain; some portions are provided under
-BSD-style licenses.  See the CREDITS and COPYING files in the
-distribution for more information.
-To load "rt":
-  Load 1 ASDF system:
-    rt
-; Loading "rt"
-
-To load "rt":
-  Load 1 ASDF system:
-    rt
-; Loading "rt"
-
-To load "std/tests":
-  Load 1 ASDF system:
-    std/tests
-; Loading "std/tests"
-
-in suite STD:
-; with 15 tests
-#<PASS READTABLES> 
-#<PASS SYM> 
-#<PASS STRING> 
-#<PASS LIST> 
-#<PASS ERR> 
-#<PASS THREADS> 
-#<PASS TIMERS> 
-#<PASS FMT> 
-#<PASS ANA> 
-#<PASS PAN> 
-#<PASS ALIEN> 
-#<PASS CURRY> 
-#<PASS BITS> 
-#<PASS LEB128> 
-#<PASS TASKS> 
-No tests failed.
-#+end_example
-
-To save the prelude to =.stash/prelude.core=:
-#+begin_src shell :results output :noeval t
-# save cores
-./x save prelude
-#+end_src
-
-And to install binaries (defaults to =/usr/local/bin/=):
-#+begin_src shell :results none :noeval t
-# install binaries
-sudo ./x install
-#+end_src
-
+The core is self-hosted in the sense that it is intended to be built
+from one of its own programs - the =skel= project compiler. You may
+also load any part of the core individually as long as you have [[https://www.sbcl.org/][SBCL]]
+and [[https://www.quicklisp.org/beta/][Quicklisp]] installed.
 *** Rust
-The Core Rust system can be found under the =rust= directory.
+Today, the Rust components of the core are quite small and
+isolated. We like Rust right now for the reasonable memory safety
+guarantees, as an interface to (W)GPU, WASM, LLVM, etc, and because it
+has an industry-sponsored ecosystem (guaranteed future). 
+
+Our Rust code is far less concerned with being completely from
+scratch - dependencies are imported freely and at will - adapting to
+whatever FOTM is hot right now.
 
 A workspace is configured such that you can build all components with
 the following command (~NOTE~ - takes a long time):
 #+begin_src shell :exports both :results output
-  cd rust && cargo build --release
+  cd rust && cargo build
 #+end_src
 
 *** Emacs
