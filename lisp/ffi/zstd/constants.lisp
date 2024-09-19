@@ -1,4 +1,4 @@
-("stddef.h" "zstd_errors.h" "zstd.h")
+("stddef.h" "zstd_errors.h" "zstd.h" "zdict.h")
 ((:integer +zstd-version-major+ "ZSTD_VERSION_MAJOR" t t)
  (:integer +zstd-version-minor+ "ZSTD_VERSION_MINOR" t t)
  (:integer +zstd-version-release+ "ZSTD_VERSION_RELEASE" t t)

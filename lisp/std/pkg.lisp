@@ -156,6 +156,7 @@
    :copy-c-string
    :clone-strings
    :clone-octets-to-alien
+   :octets-to-alien
    :clone-octets-from-alien
    :foreign-int-to-integer
    :foreign-int-to-bool

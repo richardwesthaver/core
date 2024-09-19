@@ -56,6 +56,41 @@
 (define-alien-routine "ZSTD_DStreamInSize" size-t)
 (define-alien-routine "ZSTD_DStreamOutSize" size-t)
 
+(defmacro with-zstd-inbuffer ((iv &key src size pos) &body body)
+  `(with-alien ((,iv (* zstd-inbuffer) (allocate-zstd-inbuffer)))
+     (unwind-protect
+          (progn
+            ,@(when src `((setf (zstd-inbuffer-src ,iv) ,src)))
+            ,@(when size `((setf (zstd-inbuffer-size ,iv) ,size)))
+            ,@(when pos `((setf (zstd-inbuffer-pos ,iv) ,pos)))
+            ,@body)
+       (free-alien ,iv))))
+
+(defmacro with-zstd-outbuffer ((ov &key dst size pos) &body body)
+  `(with-alien ((,ov (* zstd-outbuffer) (allocate-zstd-outbuffer)))
+     (unwind-protect
+          (progn
+            ,@(when dst `((setf (zstd-outbuffer-dst ,ov) ,dst)))
+            ,@(when size `((setf (zstd-outbuffer-size ,ov) ,size)))
+            ,@(when pos `((setf (zstd-outbuffer-pos ,ov) ,pos)))
+            ,@body)
+       (free-alien ,ov))))
+  
+(defmacro with-zstd-buffers ((iv ov &key src src-size src-pos dst dst-size dst-pos) &body body)
+  `(with-alien ((,iv (* zstd-inbuffer) (allocate-zstd-inbuffer))
+                (,ov (* zstd-outbuffer) (allocate-zstd-outbuffer)))
+     (unwind-protect
+          (progn
+            ,@(when src `((setf (zstd-inbuffer-src ,iv) ,src)))
+            ,@(when src-size `((setf (zstd-inbuffer-size ,iv) ,src-size)))
+            ,@(when src-pos `((setf (zstd-inbuffer-pos ,iv) ,src-pos)))
+            ,@(when dst `((setf (zstd-outbuffer-dst ,ov) ,dst)))
+            ,@(when dst-size `((setf (zstd-outbuffer-size ,ov) ,dst-size)))
+            ,@(when dst-pos `((setf (zstd-outbuffer-pos ,ov) ,dst-pos)))
+            ,@body)
+       (free-alien ,iv)
+       (free-alien ,ov))))
+       
 (defmacro with-zstd-cstream ((cv &key (init t) (close t) (level (zstd-defaultclevel)) ) &body body)
   `(with-alien ((,cv (* zstd-cstream) (zstd-createcstream)))
      (unwind-protect
@@ -75,3 +110,19 @@
                                (zstd-dstream-error %dinit)))))
             ,@body)
        ,@(when close `((zstd-freedstream ,dv))))))
+
+(defmacro with-zstd-streams ((cv dv &key (init t) (close t) (level (zstd-defaultclevel))) &body body)
+  `(with-alien ((,cv (* zstd-cstream) (zstd-createcstream))
+                (,dv (* zstd-dstream) (zstd-createdstream)))
+     (unwind-protect
+          (progn
+            ,@(when init `((let ((%cinit (zstd-initcstream ,cv ,level))
+                                 (%dinit (zstd-initdstream ,dv)))
+                             ;; TODO 2024-09-18: 
+                             (unless (zerop (zstd-iserror %cinit))
+                               (zstd-cstream-error %cinit))
+                             (unless (zerop (zstd-iserror %cinit))
+                               (zstd-cstream-error %dinit)))))
+            ,@body)
+       ,@(when close `((zstd-freecstream ,cv)
+                       (zstd-freedstream ,dv))))))

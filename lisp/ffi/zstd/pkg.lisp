@@ -67,7 +67,13 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
    :zstd-cstream :zstd-dstream :zstd-compressstream :zstd-decompressstream
    :zstd-compressstream2 :zstd-outbuffer :zstd-geterrorname :zstd-geterrorcode
    :zstdc :zstdd
-   :zstd-alien-error :zstd-dstream-error :zstd-cstream-error))
+   :zstd-alien-error :zstd-dstream-error :zstd-cstream-error
+   :with-zstd-streams
+   :with-zstd-buffers
+   :with-zstd-outbuffer
+   :with-zstd-inbuffer
+   :with-zstd-cdict
+   :with-zstd-ddict))
 
 (in-package :zstd)
 

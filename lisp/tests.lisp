@@ -17,4 +17,4 @@
   (mapcar (lambda (x) (do-tests x force)) (remove *test-suite* *test-suite-list*)))
 
 (deftest all ()
-  (run-all-tests t))
+  (do-tests *test-suite-list*

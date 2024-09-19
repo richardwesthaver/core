@@ -45,14 +45,14 @@
   (is (< (zstd-cstreaminsize) (zstd-cstreamoutsize)))
   (with-alien ((in (* zstd-inbuffer) (zstd::allocate-zstd-inbuffer))
                (out (* zstd-outbuffer) (zstd::allocate-zstd-outbuffer)))
-    (let* ((str "this is a test yad ayd ay aya dayd ayd ada")
-           (len (length str)))
+    (let* ((str "this is a test yad ayd ay aya dayd ayd ada"))
       (setf (zstd::zstd-inbuffer-src in) (make-alien-string str)
-            (zstd::zstd-inbuffer-size in) len)
+            (zstd::zstd-inbuffer-size in) (zstd-cstreaminsize))
       (with-zstd-cstream (cs)
         (is (zerop (zstd::zstd-initcstream cs (zstd-defaultclevel))))
         (with-zstd-dstream (ds)
           ;; (setf (zstd::zstd-outbuffer-dst out) (make-alien-string str))
+          (setf (zstd::zstd-outbuffer-size out) (zstd-cstreamoutsize))
           (zstd-compressstream cs out in)
           (zstd::zstd-flushstream cs out)
           (zstd::zstd-endstream cs out)
@@ -62,10 +62,47 @@
                      c-string)
                str)))))))
 
-(deftest cstream ()
-  "Test streaming compression based on zstd.h HowTo guide.")
-  
 (deftest streaming2 ()
-  "Test the Zstd v2 Streaming API.")
-;; simple-dictionary
-;; builk-dictionary
+  "Test the Zstd v2 Streaming API."
+  (let ((test "test 1 2 3"))
+    (with-zstd-buffers (in out :src (make-alien-string test))
+      (with-zstd-streams (cs ds)
+        (zstd-compressstream2 cs out in 0)
+        (zstd-compressstream2 cs out in 1)
+        (is (zerop (zstd-iserror (zstd-compressstream2 cs out in 2))))
+        (zstd::zstd-flushstream cs out)
+        (is (zerop (zstd-iserror (zstd::zstd-endstream cs out))))
+        (zstd-decompressstream ds out in)
+        (is (string-equal 
+             (cast (zstd::zstd-inbuffer-src in) c-string)
+             test))))))
+
+(deftest simple-dictionary ()
+  (let ((test "test 1 2 3"))
+    (with-alien ((dict (* t))
+                 (dst (array (unsigned 8) 100)))
+      (with-zstd-buffers (in out :src (cast (make-alien-string test) (* t)) :dst (cast dst (* t)) :dst-size 100)
+        (is (= 100 (zstd::zstd-outbuffer-size out)))
+        (with-zstd-streams (cs ds)
+          (is 
+           (zerop
+            (zstd-iserror
+             (zstd::zstd-compress-usingdict 
+              cs 
+              (zstd::zstd-outbuffer-dst out) (zstd::zstd-outbuffer-size out) 
+              (zstd::zstd-inbuffer-src in) (zstd::zstd-inbuffer-size in)
+              dict (length test) (zstd-defaultclevel)))))
+          (is
+           (zerop
+            (zstd-iserror
+             (zstd::zstd-decompress-usingdict 
+              ds 
+              (zstd::zstd-outbuffer-dst out) (zstd::zstd-outbuffer-size out) 
+              (zstd::zstd-inbuffer-src in) (zstd::zstd-inbuffer-size in)
+              dict (length test))))))))))
+
+(deftest bulk-dictionary ()
+  (with-zstd-ddict (dd :buffer #(1 2 3))
+    (is (typep dd '(alien (* (struct zstd::zstd-ddict-s))))))
+  (with-zstd-cdict (cd :buffer #(4 5 6))
+    (is (typep cd '(alien (* (struct zstd::zstd-cdict-s)))))))

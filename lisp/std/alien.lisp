@@ -99,17 +99,26 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
             (push c-string reversed-result)
             (return (nreverse reversed-result)))))))
 
-(defmacro clone-octets-to-alien (lispa aliena)
-  (with-gensyms (i)
-    `(loop for ,i from 0 below (length ,lispa)
-        do (setf (deref ,aliena ,i)
-                 (aref ,lispa ,i)))))
+(defun clone-octets-to-alien (lispa aliena)
+  (declare (optimize (speed 3)))
+  (loop for i from 0 below (length lispa)
+        do (setf (deref aliena i)
+                 (aref lispa i)))
+  aliena)
 
-(defmacro clone-octets-from-alien (aliena lispa len)
-  (with-gensyms (i)
-    `(loop for ,i from 0 below ,len
-           do (setf (aref ,lispa ,i)
-                 (deref ,aliena ,i)))))
+(defmacro octets-to-alien (lispa)
+  (with-gensyms (a)
+    `(with-alien ((,a (array (unsigned 8) ,(length lispa))))
+       (clone-octets-to-alien ,lispa ,a))))
+
+(defun clone-octets-from-alien (aliena lispa &optional len)
+  (declare (optimize (speed 3))
+           (array lispa))
+  (unless len (setf len (length lispa)))
+  (loop for i from 0 below len
+        do (setf (aref lispa i)
+                 (deref aliena i)))
+  lispa)
 
 (defun foreign-int-to-integer (buffer size)
   "Check SIZE of int BUFFER. return BUFFER."
