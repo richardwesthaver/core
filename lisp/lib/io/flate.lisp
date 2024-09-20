@@ -14,7 +14,7 @@
 
 ;; The compression backends are themselves hand-coded in Common Lisp, making
 ;; them excellent reference material. However, we don't have much use for the
-;; compression backend offered.
+;; compression backends offered.
 
 ;; We intend to almost exclusively support Zstd compression and decompression
 ;; using our ZSTD FFI Lisp system, so we'll make a new library - FLATE - which

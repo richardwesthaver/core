@@ -155,6 +155,8 @@
    :setfa
    :copy-c-string
    :clone-strings
+   :octets-to-alien-array
+   :with-alien-slots
    :clone-octets-to-alien
    :octets-to-alien
    :clone-octets-from-alien

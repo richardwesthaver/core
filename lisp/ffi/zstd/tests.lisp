@@ -96,13 +96,29 @@
            (zerop
             (zstd-iserror
              (zstd::zstd-decompress-usingdict 
-              ds 
+              ds
               (zstd::zstd-outbuffer-dst out) (zstd::zstd-outbuffer-size out) 
               (zstd::zstd-inbuffer-src in) (zstd::zstd-inbuffer-size in)
               dict (length test))))))))))
 
 (deftest bulk-dictionary ()
-  (with-zstd-ddict (dd :buffer #(1 2 3))
-    (is (typep dd '(alien (* (struct zstd::zstd-ddict-s))))))
-  (with-zstd-cdict (cd :buffer #(4 5 6))
-    (is (typep cd '(alien (* (struct zstd::zstd-cdict-s)))))))
+  (let ((test #(1 2 3 4)))
+    (with-alien ((dict (* t))
+                 (dst (array (unsigned 8) 100)))
+      (with-zstd-buffers (in out :src (octets-to-alien test) :dst (cast dst (* t)) :dst-size 100)
+        (with-zstd-streams (cs ds)
+            (with-zstd-cdict (cd :buffer test :size (length test))
+              (is (typep cd '(alien (* (struct zstd::zstd-cdict-s)))))
+              (is (zerop
+                   (zstd-iserror
+                    (zstd::zstd-compress-usingcdict cs (zstd::zstd-outbuffer-dst out) (zstd::zstd-outbuffer-size out)
+                                                    (zstd::zstd-inbuffer-src in) (zstd::zstd-inbuffer-size in)
+                                                    cd)))))
+          (with-zstd-ddict (dd :buffer test :size (length test))
+            (is (typep dd '(alien (* (struct zstd::zstd-ddict-s)))))
+            (is (zerop
+                 (zstd-iserror
+                  (zstd::zstd-decompress-usingddict 
+                   ds (zstd::zstd-outbuffer-dst out) (zstd::zstd-outbuffer-size out)
+                   (zstd::zstd-inbuffer-src in) (zstd::zstd-inbuffer-size in) dd))))))))))
+                  

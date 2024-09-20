@@ -4,6 +4,11 @@
 
 ;;; Commentary:
 
+;; The CDict can be created once and shared across multiple threads since it's
+;; read-only.
+
+;; Unclear if DDict is also read-only.
+
 ;; From zdict.h:
 #|
  * Zstd dictionary builder
@@ -261,7 +266,7 @@
 
 (define-alien-routine "ZSTD_freeDDict" size-t (ddict (* zstd-ddict)))
 
-(define-alien-routine "ZSTD_compress_usingDDict" size-t
+(define-alien-routine "ZSTD_decompress_usingDDict" size-t
   (dctx (* zstd-dctx))
   (dst (* t))
   (dst-capacity size-t)
@@ -287,13 +292,26 @@
 (define-alien-routine "ZSTD_estimatedDictSize" size-t (dict-size size-t) (dict-load-method zstd-dict-load-method))
 
 (defmacro with-zstd-cdict ((cv &key buffer size (level (zstd-defaultclevel))) &body body)
-  (let ((size (or size (length buffer))))
-    `(with-alien ((,cv (* zstd-cdict) (zstd-createcdict (cast (octets-to-alien ,buffer) (* t)) ,size ,level)))
-       (unwind-protect (progn ,@body)
-         (zstd-freecdict ,cv)))))
+  `(with-alien ((,cv (* zstd-cdict) (zstd-createcdict (cast (octets-to-alien ,buffer) (* t))
+                                                      (or ,size (length ,buffer))
+                                                      ,level)))
+     (unwind-protect (progn ,@body)
+       (zstd-freecdict ,cv))))
 
 (defmacro with-zstd-ddict ((dv &key buffer size) &body body)
-  (let ((size (or size (length buffer))))
-    `(with-alien ((,dv (* zstd-ddict) (zstd-createddict (cast (octets-to-alien ,buffer) (* t)) ,size)))
-       (unwind-protect (progn ,@body)
-         (zstd-freeddict ,dv)))))
+  `(with-alien ((,dv (* zstd-ddict)
+                     (zstd-createddict (cast (octets-to-alien ,buffer) (* t)) (or ,size (length ,buffer)))))
+     (unwind-protect (progn ,@body)
+       (zstd-freeddict ,dv))))
+
+;;; zdict.h
+(define-alien-type zstd-cover-params 
+    (struct zdict-cover-params
+            (k unsigned)
+            (d unsigned)
+            (steps unsigned)
+            (nb-threads unsigned)
+            (split-point double)
+            (shrink-dict unsigned)
+            (shrink-dict-max-regression unsigned)
+            (zparams zdict-params)))

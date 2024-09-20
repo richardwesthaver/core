@@ -99,21 +99,26 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
             (push c-string reversed-result)
             (return (nreverse reversed-result)))))))
 
-(defun clone-octets-to-alien (lispa aliena)
-  (declare (optimize (speed 3)))
+(defun clone-octets-to-alien (lispa alien)
+  (declare (optimize (speed 3))
+           (simple-vector lispa))
+  ;; (setf aliena (cast aliena (array (unsigned 8))))
   (loop for i from 0 below (length lispa)
-        do (setf (deref aliena i)
+        do (setf (deref alien i)
                  (aref lispa i)))
-  aliena)
+  alien)
 
-(defmacro octets-to-alien (lispa)
-  (with-gensyms (a)
-    `(with-alien ((,a (array (unsigned 8) ,(length lispa))))
-       (clone-octets-to-alien ,lispa ,a))))
+(defun octets-to-alien (lispa)
+  (let ((a (make-alien (unsigned 8) (length lispa))))
+    (clone-octets-to-alien lispa a)))
+
+;; TODO 2024-09-19: maybe want to return values, second being the length?
+(defun octets-to-alien-array (lispa)
+  (cast (octets-to-alien lispa) (array (unsigned 8))))
 
 (defun clone-octets-from-alien (aliena lispa &optional len)
   (declare (optimize (speed 3))
-           (array lispa))
+           (simple-vector lispa))
   (unless len (setf len (length lispa)))
   (loop for i from 0 below len
         do (setf (aref lispa i)
@@ -133,7 +138,6 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 (defun bool-to-foreign-int (val)
   (if val 1 0))
 
-
 (define-condition invalid-enum-variant (simple-error) ())
 (define-condition invalid-enum-value (simple-error) ())
 
@@ -146,7 +150,6 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
   (error 'invalid-enum-value
          :format-control "~A is not a value associated with a variant of enum ~A"
          :format-arguments (list var enum)))
-
 
 (defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &rest forms)
   "Define a pseudo-enum type, used to work-around difficulties working with
@@ -183,6 +186,28 @@ variant associated with this value." type name)
              ,@(when (eql default :error)
                  `((when (eql found :error) (invalid-enum-value ,val ',name))))
              (values ,val found)))))))
+
+;; from CFFI
+(defmacro with-alien-slots (vars struct &body body)
+  "Create local symbol macros for each var in VARS to reference
+foreign slots in STRUCT. Similar to WITH-SLOTS.
+Each var can be of the form: 
+  name                       name bound to slot of same name              
+  (* name)            name bound to pointer to slot of same name
+  (name slot-name)           name bound to slot-name
+  (name :pointer slot-name)  name bound to pointer to slot-name"
+  `(symbol-macrolet
+       ,(loop for var in vars
+              collect
+                 (if (listp var)
+                     (let ((p1 (first var)) (p2 (second var)) (p3 (third var)))
+                       (if (eq (sb-int:keywordicate p1) :*)
+                           `(,p2 (addr (slot ,struct ',p2)))
+                           (if (eq (sb-int:keywordicate p2) :*)
+                               `(,p1 (addr (slot ,struct ',p3)))
+                               `(,p1 (slot ,struct ',p2)))))
+                     `(,var (slot ,struct ',var))))
+     ,@body))
 
 (defun num-cpus ()
   "Return the number of CPU threads online."
