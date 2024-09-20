@@ -94,26 +94,44 @@
         ("so" . "https://stackoverflow.com/%s")))
 
 ;;; IDs
-(defun org-custom-id-get (&optional pom create prefix)
-  "Get the CUSTOM_ID property of the entry at point-or-marker POM.
-   If POM is nil, refer to the entry at point. If the entry does
-   not have an CUSTOM_ID, the function returns nil. However, when
-   CREATE is non nil, create a CUSTOM_ID if none is present
-   already. PREFIX will be passed through to `org-id-new'. In any
-   case, the CUSTOM_ID of the entry is returned."
-  (interactive)
-(org-with-point-at pom
-  (let ((id (org-entry-get nil "CUSTOM_ID"))
-        ;; use CUSTOM_ID for links
-        (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id))
-      (cond
-       ((and id (stringp id) (string-match "\\S-" id))
-        id)
-       (create
-        (setq id (org-id-new prefix))
-        (org-entry-put pom "CUSTOM_ID" id)
-        (org-id-add-location id (buffer-file-name (buffer-base-buffer)))
-        id)))))
+
+(defun org-title-to-filename (title)
+  "Convert TITLE to a reasonable filename."
+  ;; Based on the slug logic in org-roam, but org-roam also uses a
+  ;; timestamp.
+  (setq title (downcase title))
+  (setq title (s-replace-regexp "[^a-zA-Z0-9]+" "-" title))
+  (setq title (s-replace-regexp "-+" "-" title))
+  (setq title (s-replace-regexp "^-" "" title))
+  (setq title (s-replace-regexp "-$" "" title))
+  title)
+
+(defun org-get-custom-id-list ()
+  (flatten
+   (org-map-entries
+    (lambda ()
+      (org-entry-get nil "CUSTOM_ID")))))
+
+(defun org-generate-custom-id (&optional id-list)
+  (let* ((custom-id (org-entry-get nil "CUSTOM_ID"))
+         (heading (org-heading-components))
+         (level (nth 0 heading))            
+         (todo (nth 2 heading))                       
+         (headline (nth 4 heading))
+         (slug (org-title-to-filename headline))
+         (duplicate-id (when id-list (member slug id-list))))
+    (when (not duplicate-id)
+      (message "Adding CUSTOM_ID %s to %s" slug headline)
+      (org-entry-put nil "CUSTOM_ID" slug))))
+
+(defun org-generate-custom-ids ()                              
+  "Generate CUSTOM_ID for any headings that are missing one"   
+    (save-excursion                                            
+      (org-with-wide-buffer                                    
+       (let ((existing-ids (org-get-custom-id-list)))          
+         (org-map-entries                                      
+          (lambda ()                                           
+            (org-generate-custom-id existing-ids)))))))
 
 ;;;###autoload
 (defun org-id-add-to-headlines-in-file ()
@@ -121,12 +139,6 @@
    current file which do not already have one."
   (interactive)
   (org-map-entries (lambda () (org-id-get (point) 'create))))
-
-(defun org-custom-id-add-to-headlines-in-file ()
-  "Add CUSTOM_ID properties to all headlines in the
-   current file which do not already have one."
-  (interactive)
-  (org-map-entries (lambda () (org-custom-id-get (point) 'create))))
 
 (defun org-id-add-to-headlines-in-files (&optional files)
   (interactive)
