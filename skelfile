@@ -9,9 +9,8 @@
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp.sk" "rust.sk" "emacs.sk")
 :vc (:hg "https://vc.compiler.company/core")
-:env ((cc "clang"))
-:def nil
-:bind nil
+:bind ((stash ".stash")
+       (cc :env "clang"))
 :components ((:dir-locals ".dir-locals")
              (:org "readme"))
 :rules

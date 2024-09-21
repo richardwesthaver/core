@@ -242,7 +242,7 @@
 
 ;;; Command
 (defclass sk-command (skel)
-  ((body :initform nil :initarg :body :type (or form function) :accessor sk-body)))
+  ((body :initform nil :initarg :body :accessor sk-body)))
 
 (defmethod sk-new ((self (eql :command)) &key body)
   (make-instance 'sk-command :body body))
@@ -254,7 +254,7 @@
   (with-output-to-string (s)
     (sk-write self s)))
 
-(defmethod sk-writeln ((self sk-command) stream) 
+(defmethod sk-writeln ((self sk-command) stream)
   (sk-write self stream)
   (format stream "~%"))
 
@@ -307,19 +307,21 @@ via the special form stored in RECIPE."))
     (sk-write-string source)
     (sk-write-string recipe)))
 
+(defun sk-run-with-sources (obj rule)
+  (when-let ((sources (sk-rule-source rule)))
+    (mapcar
+     (lambda (src)
+       (if-let* ((sr (sk-find-rule src obj)))
+                ;; check if we need to rerun sources
+                (sk-make obj sr)
+                (warn! "unhandled source:" src "for rule:" rule)))
+     sources))
+  (sk-run rule))
+
 (defun sk-make (obj &rest rules)
   (if rules
       (mapc
-       (lambda (rule)
-         (when-let ((sources (sk-rule-source rule)))
-           (mapcar
-            (lambda (src)
-              (if-let* ((sr (sk-find-rule src obj)))
-                       ;; check if we need to rerun sources
-                       (sk-make obj sr)
-                       (warn! "unhandled source:" src "for rule:" rule)))
-            sources))
-         (sk-run rule))
+       (lambda (r) (sk-run-with-sources obj r))
        rules)
       (unless (sequence:emptyp (sk-rules obj))
         (let ((rule (aref (sk-rules obj) 0)))
@@ -356,6 +358,7 @@ via the special form stored in RECIPE."))
     (format stream "~S" (sk-vc-meta-kind self))
     (when-let ((remotes (sk-vc-meta-remotes self)))
       (format stream " ~A" remotes))))
+
 ;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
@@ -365,8 +368,7 @@ via the special form stored in RECIPE."))
    (store :initarg :store :accessor sk-store :type pathname)
    (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component))
    (bind :initarg :bind :initform nil :accessor sk-bind :type list)
-   (def :initarg :def :initform nil :accessor sk-def :type list)
-   (env :initarg :env :initform nil :accessor sk-env :type list)
+   ;; (env :initarg :env :initform nil :accessor sk-env :type list)
    (phases :initarg :phases
            :initform (make-hash-table)
            :accessor sk-phases
@@ -456,29 +458,66 @@ via the special form stored in RECIPE."))
                        (warn! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
           (when-let ((scripts (sk-scripts self)))
             (setf (sk-scripts self) (map 'vector #'make-sk-script scripts)))
-          ;; ENV
-          ;; TODO
-          (when-let ((env (sk-env self)))
-            (setf (sk-env self) (mapcar
-                                 (lambda (e)
-                                   (etypecase e
-                                     (symbol (cons
-                                              (sb-int:keywordicate e)
-                                              (sb-posix:getenv (format nil "~a" (symbol-name e)))))
-                                     (string (cons
-                                              (sb-int:keywordicate e)
-                                              (sb-posix:getenv (string-upcase e))))
-                                     (list
-                                      (cons (sb-int:keywordicate (car e)) (cadr e)))))
-                                 env)))
-          ;; BIND is always just a list evaluated only in the body of a WITH-SK-BINDINGS form.
-
-          ;; DEF is a list of function definitions which are compiled.
-          (when-let ((defs (sk-def self)))
-            (let ((ret))
-              (setf (sk-def self)
-                    (dolist (def defs ret)
-                      (push (compile (car def) `(lambda ,(cadr def) ,@(cddr def))) ret)))))
+          ;; ;; ENV
+          ;; ;; TODO
+          ;; (when-let ((env (sk-env self)))
+          ;;   (setf (sk-env self) (mapcar
+          ;;                        (lambda (e)
+          ;;                          (etypecase e
+          ;;                            (symbol (cons
+          ;;                                     (sb-int:keywordicate e)
+          ;;                                     (sb-posix:getenv (format nil "~a" (symbol-name e)))))
+          ;;                            (string (cons
+          ;;                                     (sb-int:keywordicate e)
+          ;;                                     (sb-posix:getenv (string-upcase e))))
+          ;;                            (list
+          ;;                             (cons (sb-int:keywordicate (car e)) (cadr e)))))
+          ;;                        env)))
+          ;; BIND contains a list of forms which are bound dynamically based
+          ;; on the contents of the cdr
+          (when-let ((bind (sk-bind self)))
+            (setf (sk-bind self)
+                  (let ((ret))
+                    ;; TODO 2024-09-21: 
+                    (dolist (b bind ret)
+                      ;; if this is a list of length > 2 we parse the form as (sym props val)
+                      (let ((sym (car b))
+                            (form (cddr b)))
+                        (cond 
+                          ((> (length form) 0)
+                           (let ((key? (cadr b)))
+                             (if (keywordp key?)
+                                 (case key?
+                                   (:hook
+                                    ;; process the remainder of the form as specializer+body
+                                    (destructuring-bind (spec &rest body) form
+                                      (declare (ignore spec body))
+                                      (nyi!)))
+                                   (:cmd
+                                    ;; process the remainder as spec+defcmd-args+body
+                                    )
+                                   (:opt
+                                    ;; process the remainder as spec+defcmd-args+body
+                                    )
+                                   (:env
+                                    ;; process the remainder as a regular value but
+                                    ;; associate the name with a shell environment which
+                                    ;; is set to the value. If the cdr is of length 3
+                                    ;; then we simply remember the value and set it during
+                                    ;; any calls out from Lisp to the shell. When the form
+                                    ;; length is > 3 we parse the next value as a shell
+                                    ;; specification with additional options for checking
+                                    ;; for pre-existing values and 'exporting' the
+                                    ;; environment.
+                                    (if (= (length form) 1)
+                                        ;; TODO 2024-09-21: setenv
+                                        (push (list sym (car form)) ret)
+                                        ;; process additional shell opts
+                                        (nyi!))))
+                                 ;; else we assume that a function is being defined
+                                 (push `(,sym ,(compile sym `(lambda ,(cadr b) ,@(cddr b)))) ret))))
+                          (t
+                           (push b ret))))))))
           ;; RULES
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self)

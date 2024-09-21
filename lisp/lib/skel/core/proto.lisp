@@ -23,7 +23,8 @@
   (:documentation "Load a component of type KIND from provided FORM, producing an SK-COMPONENT
 type. Usually calls SK-TRANSFORM or SK-CONVERT internally.
 
-PATH is an optional directory pathname which will be merged with a filename found in FORM. Defaults to *DEFAULT-PATHNAME-DEFAULTS*."))
+PATH is an optional directory pathname which will be merged with a filename
+found in FORM. Defaults to *DEFAULT-PATHNAME-DEFAULTS*."))
 (defgeneric sk-compile (self &key &allow-other-keys)
   (:documentation "Compile object SELF."))
 (defgeneric sk-build (self &key &allow-other-keys)

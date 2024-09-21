@@ -120,7 +120,7 @@
     ("scripts" (sk-scripts *skel-project*))
     ("rules" (sk-rules *skel-project*))
     ("phases" (hash-table-alist (sk-phases *skel-project*)))
-    ("env" (sk-env *skel-project*))
+    ;; ("env" (sk-env *skel-project*))
     ("bind" (sk-bind *skel-project*))
     ("include" (sk-include *skel-project*))
     ("stash" (sk-stash *skel-project*))
@@ -176,7 +176,7 @@
 (defcmd skc-commit
   (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "commit" (append '("-m") *args*) t))
-    (:hg (run-hg-command "commit" (when *opts* ) t))
+    (:hg (run-hg-command "commit" (when *args* (append '("-m") *args*)) t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-make
