@@ -323,6 +323,10 @@
 (define-alien-routine "rl_filename_completion_function" c-string (name c-string) (i int))
 (define-alien-routine "rl_completion_mode" int (function (* rl-command-func)))
 
+;; state
+(define-alien-routine "rl_save_state" int (state (* readline-state)))
+(define-alien-routine "rl_restore_state" int (state (* readline-state)))
+
 ;; history.h
 (define-alien-routine "using_history" void)
 (define-alien-routine "add_history" void (line c-string))
@@ -331,25 +335,12 @@
 (define-alien-routine "unstifle_history" int)
 (define-alien-routine "history_is_stifled" int)
 (define-alien-routine "history_list" (array (* rl-hist-entry)))
-
-(define-alien-routine "rl_save_state" int (state (* readline-state)))
-(define-alien-routine "rl_restore_state" int (state (* readline-state)))
+(define-alien-routine "previous_history" (* rl-hist-entry))
+(define-alien-routine "next_history" (* rl-hist-entry))
 
 (defvar +c-buffer-size+ 256
   "How many bytes to allocate per Lisp string when converting list of
 Lisp strings into array of C strings.")
-
-(defun decode-version (version)
-  "Transform VERSION into two values representing major and minor numbers of
-Readline library version."
-  (values (ldb (byte 8 8) version)
-          (ldb (byte 8 0) version)))
-
-;;   (mapcan (lambda (index keyword)
-;;             (when (logbitp index state)
-;;               (list keyword)))
-;;           (iota (length +states+))
-;;           +states+))
 
 (defmacro produce-callback (function return-type &optional func-arg-list)
   "Return pointer to callback that calls FUNCTION. RETURN-TYPE specifies

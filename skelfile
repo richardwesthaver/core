@@ -10,6 +10,8 @@
 :include ("lisp.sk" "rust.sk" "emacs.sk")
 :vc (:hg "https://vc.compiler.company/core")
 :env ((cc "clang"))
+:def nil
+:bind nil
 :components ((:dir-locals ".dir-locals")
              (:org "readme"))
 :rules

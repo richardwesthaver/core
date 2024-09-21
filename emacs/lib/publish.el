@@ -26,6 +26,7 @@
 
 (setq org-html-style-default ""
       ;; org-html-scripts ""
+      
       org-html-htmlize-output-type 'css
       org-export-htmlize-output-type 'css
       org-export-allow-bind-keywords t
@@ -35,7 +36,17 @@
       org-src-fontify-natively t
       make-backup-files nil
       debug-on-error t
-      org-id-link-to-org-use-id t)
+      org-id-link-to-org-use-id t
+      org-html-klipsify-src nil)
+
+(setq org-html-klipse-selection-script
+      "window.klipse_settings = {selector_eval_html: '.src-html',
+                             selector_eval_js: '.src-js',
+                             selector_eval_python_client: '.src-python',
+                             selector_eval_scheme: '.src-scheme',
+                             selector: '.src-clojure',
+                             selector_eval_ruby: '.src-ruby',
+                             selector_eval_clisp: '.src-lisp'};")
 
 (setq org-html-link-home url)
 

@@ -365,6 +365,7 @@ via the special form stored in RECIPE."))
    (store :initarg :store :accessor sk-store :type pathname)
    (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component))
    (bind :initarg :bind :initform nil :accessor sk-bind :type list)
+   (def :initarg :def :initform nil :accessor sk-def :type list)
    (env :initarg :env :initform nil :accessor sk-env :type list)
    (phases :initarg :phases
            :initform (make-hash-table)
@@ -425,7 +426,7 @@ via the special form stored in RECIPE."))
                                       (probe-file (merge-pathnames (sk-src self) *skel-path*))
                                       (error 'invalid-argument :reason "project source not found"
                                                                :item (sk-src self))))
-              (setf (sk-src self) (or (sk-dir self) *default-pathname-defaults*)))
+              (setf (sk-src self) (sk-dir self)))
           (setq *skel-path* (or (sk-src self) *default-pathname-defaults*))
           (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
             (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
@@ -470,7 +471,14 @@ via the special form stored in RECIPE."))
                                      (list
                                       (cons (sb-int:keywordicate (car e)) (cadr e)))))
                                  env)))
-          ;; BIND
+          ;; BIND is always just a list evaluated only in the body of a WITH-SK-BINDINGS form.
+
+          ;; DEF is a list of function definitions which are compiled.
+          (when-let ((defs (sk-def self)))
+            (let ((ret))
+              (setf (sk-def self)
+                    (dolist (def defs ret)
+                      (push (compile (car def) `(lambda ,(cadr def) ,@(cddr def))) ret)))))
           ;; RULES
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self)
