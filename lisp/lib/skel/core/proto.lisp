@@ -15,7 +15,7 @@
   (:documentation "Call SELF with ARG."))
 (defgeneric sk-call* (self &rest args)
   (:documentation "Call SELF with ARGS."))
-(defgeneric sk-print (self)
+(defgeneric sk-print (self &key &allow-other-keys)
   (:documentation "Print object SELF."))
 (defgeneric sk-load (self &key &allow-other-keys)
   (:documentation "Load or reload object SELF."))

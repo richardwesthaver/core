@@ -3,7 +3,8 @@
 :src "lisp"
 :description "CC Lisp Core"
 :components
-((:lisp-system "prelude.asd")
- (:lisp-system "user.asd")
- (:lisp-system "core.asd")
- (:lisp-system "std/std.asd"))
+((:asd "prelude")
+ (:asd "user")
+ (:asd "core")
+ (:mod "std" (:asd "std")))
+       

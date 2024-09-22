@@ -18,7 +18,7 @@
 (defmethod sk-load-component ((kind (eql :org)) (form pathname) &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
   (let* ((name (namestring form))
-         (p (make-pathname :name name :type "org" :directory path))
+         (p (make-pathname :name name :type "org" :directory (namestring path)))
          (comp (sk-convert (org-parse :document p))))
     (setf (sk-name comp) name)
     (setf (sk-path comp) p)

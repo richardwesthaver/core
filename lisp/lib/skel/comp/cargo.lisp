@@ -12,7 +12,7 @@
 (defparameter *default-cargo-manifest* "Cargo.toml")
 (defparameter *cargo-manifest-extension* "toml")
 
-(defclass sk-rust-system (sk-module)
+(defclass sk-rust-system (sk-mod)
   ())
 
 (defclass sk-rust-component (sk-component)

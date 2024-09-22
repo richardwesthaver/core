@@ -12,7 +12,7 @@
 ;;; Code:
 (in-package :skel/comp/asd)
 
-(defclass sk-lisp-system (sk-module asdf:system)
+(defclass sk-lisp-system (sk-mod asdf:system)
   ;; these slots are inferred in ASDF:SYSTEM. Since we are primarily concerned
   ;; with generating ASDF:SYSTEM definitions rather than parsing them we restore them here.
   ((serial :initform nil :type boolean :accessor sk-lisp-system-serial)
@@ -43,9 +43,12 @@
 (defmethod sk-load ((self sk-lisp-system) &key force force-not verbose version)
   (asdf:load-system self :force force :force-not force-not :verbose verbose :version version))
 
-(defmethod sk-load-component ((kind (eql :lisp-system)) (form pathname) &optional (path *default-pathname-defaults*))
+(defmethod sk-load-component ((kind (eql :asd)) (form pathname) &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
-  (parse-sk-lisp-system (pathname-name form) (merge-pathnames form path)))
+  (let* ((type (pathname-type form))
+         (name (namestring (if type (pathname-name form) form)))
+         (fname (if type form (make-pathname :name name :type "asd"))))
+    (parse-sk-lisp-system name (merge-pathnames fname path))))
 
 (defmethod sk-compile ((self sk-lisp-system) &key force force-not verbose version &allow-other-keys)
   (asdf:compile-system self :force force :force-not force-not :verbose verbose :version version))

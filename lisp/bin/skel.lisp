@@ -59,7 +59,7 @@
 	#P".")
     :load t)))
 
-#+tools
+#+gui
 (defcmd skc-view
   (if *args* 
       (let ((stuff (loop for a in *args*
@@ -132,7 +132,7 @@
 (defcmd skc-show
   (if *args*
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
-      (describe (if (boundp '*skel-project*) *skel-project*
+      (sk-print (if (boundp '*skel-project*) *skel-project*
                     (if (boundp '*skel-user-config*) *skel-user-config*
                         (if (boundp '*skel-system-config*) *skel-system-config*
                             (skel-simple-error "skel config files not installed")))))))

@@ -2,4 +2,26 @@
 :name "core/emacs"
 :path "emacs"
 ;; :components ((:org "babel"))
-:rules ()
+:bind ((dotemacs (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
+       (config () (directory "emacs/*.el"))
+       (lib () (directory "emacs/lib/*.el")))
+:rules 
+((install ()
+          (mapcar
+           (lambda (el)
+             (std:with-open-files
+                 ((in el :direction :input)
+                  (out (merge-pathnames (file-namestring el) dotemacs) :direction :output))
+               (std:copy-stream in out :finish-output t)))
+           config)
+          (mapcar
+           (lambda (el)
+             (std:with-open-files
+                 ((in el :direction :input)
+                  (out (merge-pathnames (file-namestring el) 
+                                        (ensure-directories-exist 
+                                         (merge-pathnames "lib/" dotemacs))) 
+                       :direction :output))
+               (std:copy-stream in out :finish-output t)))
+           lib)))
+                 

@@ -43,16 +43,19 @@ the appropriate restarts."
   "Make sure makefiles are making out ok."
     (with-tmp-file (f :name "" :type "mk")
       (flet ((mk (&optional path) (make-instance 'makefile :name (gensym)
-							   :path (or path (pathname *tmp*)) :description "barfood"))
+							   :path (or 
+                                                                  (when path (merge-pathnames path *tmp*))
+                                                                  *tmp*)
+                                                           :description "barfood"))
 	     (src (path) (list path))
-	     (cmd (body) (make-instance 'sk-command :body body))
-	     (rule (tr sr) (make-sk-rule tr sr nil)))
+	     (cmd (&rest body) body)
+	     (rule (tr sr) (make-sk-rule (file-namestring tr) sr)))
 	(is (null (sk-write-file (mk) :if-exists :supersede :path (tmp-path "mk"))))
 	(let* ((tr1 (tmp-path "t1"))
 	       (tr2 (tmp-path "t2"))
 	       (sr (src (tmp-path "s1")))
 	       (r1 (rule tr1 sr))
-	       (r2 (rule sr tr2))
+	       (r2 (rule (car sr) (src tr2)))
 	       (mk1 (mk "test.mk")))
 	  (is (push-mk-rule r1 mk1))
 	  (is (push-mk-rule r2 mk1))
@@ -63,8 +66,9 @@ endif")
 	  (is (push-mk-var '(a b) mk1))
 	  (is (push-mk-var '(b c) mk1))
 	  ;; FIXME
-	  (is (null (sk-write-file mk1 :if-exists :supersede :path (pathname (tmp-path "mk")))))
-	  ))))
+	  (is 
+           (null 
+            (sk-write-file mk1 :if-exists :supersede :path (merge-pathnames (tmp-path "mk") *tmp*))))))))
 
 (deftest vm ()
   "EXPERIMENTAL"

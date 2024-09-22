@@ -80,7 +80,7 @@
    :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config :sk-system-config
    :*skel-user-config* :*skel-system-config*
-   :sk-src :sk-component :sk-components :sk-module
+   :sk-src :sk-component :sk-components :sk-mod
    :sk-parent
    :sk-phases))
 

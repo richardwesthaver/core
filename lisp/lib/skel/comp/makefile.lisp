@@ -39,9 +39,9 @@
 
 ;; https://www.gnu.org/software/make/manual/html_node/Makefile-Contents.html
 (defclass makefile (skel sk-meta)
-  ((directives :initform (make-array 0 :element-type 'sk-command :adjustable t :fill-pointer 0) 
-	       :type (vector sk-command) :accessor mk-directives)
-   (variables :initform (make-hash-table) 
+  ((directives :initform (make-array 0 :adjustable t :fill-pointer 0)
+	       :type (vector list) :accessor mk-directives)
+   (variables :initform (make-hash-table)
 	      :type (hash-table) :accessor mk-vars)
    (explicit :initform (make-array 0 :element-type 'sk-rule :adjustable t :fill-pointer 0)
 	     :type (vector sk-rule) :accessor mk-erules)
@@ -54,7 +54,7 @@
       (vector-push-extend self (mk-irules place))
       (vector-push-extend self (mk-erules place))))
 
-(defmethod push-mk-directive ((self sk-command) (place makefile))
+(defmethod push-mk-directive ((self list) (place makefile))
   (vector-push-extend self (mk-directives place)))
 
 (defmethod push-mk-var ((self cons) (place makefile))
@@ -67,7 +67,8 @@
     (with-slots (directives variables explicit implicit) self
       ;; directives
       (loop for d across directives
-	    do (sk-writeln d s))
+	    do (write d :stream s)
+            do (terpri s))
       ;; variables
       (maphash (lambda (x y) (format s "~A=~A~%" x y)) variables)
       ;; explicit rules
@@ -75,7 +76,8 @@
 	    do (format s "~A:~A;~A~%" 
 		       (sk-rule-target exp)
 		       (sk-rule-source exp)
-		       (sk-write-string (sk-rule-recipe exp))))
+                       (when-let ((recipe (sk-rule-recipe exp)))
+		         (sk-write-string recipe))))
       ;; TODO implicit rules
       (loop for imp across implicit
 	    do (format s "~A:~A;~A~%" 

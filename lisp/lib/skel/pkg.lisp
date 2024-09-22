@@ -41,6 +41,10 @@
   (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile
    :skel/comp/container :skel/comp/dir-locals :skel/comp/org))
 
+(pkg:defpkg :skel/net
+  (:use :cl :std)
+  (:use-reexport :skel/net/client :skel/net/server))
+  
 (pkg:defpkg :skel
   (:nicknames :sk)
   (:use :cl :std)
@@ -48,4 +52,4 @@
 
 (pkg:defpkg :sk-user
   (:use :cl :std :std-user :cl-user :log :sb-debug :sb-ext :net/proto/dns :net/fetch :cli/tools/sbcl :pod :cli/clap)
-  (:use :skel :skel/core :skel/comp))
+  (:use :skel :skel/core :skel/comp :skel/net))

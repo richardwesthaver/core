@@ -29,7 +29,7 @@
   (declare (ignore kind))
   (sk-convert (deserialize
                (make-pathname :name *default-containerfile* :type (namestring name)
-                              :directory path)
+                              :directory (namestring path))
                :containerfile)))
 
 (defmethod sk-write-file ((self sk-containerfile) &key path)

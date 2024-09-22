@@ -8,7 +8,7 @@
                      :pod :net :box
                      (:feature :ext :krypt)
                      (:feature :ext :packy)
-                     (:feature :tools :clouseau))
+                     (:feature :gui :clouseau))
   :serial t
   :components 
   ((:module "core"
@@ -33,21 +33,24 @@
      (:file "org")
      (:file "dir-locals")
      (:file "makefile")))
+   (:module "net"
+    :components
+    ((:file "pkg")
+     (:file "server")
+     (:file "client")))
    (:file "pkg")
    (:module "tools"
     :components
     ((:file "pkg")
-     (:file "deploy")
-     (:file "viz"))
-    :if-feature :tools)
+     (:file "deploy" :if-feature :deploy)
+     (:file "viz" :if-feature :gui)))
    (:module "ext"
     :components
     ((:file "pkg")
      (:file "asdf")
-     (:file "inspect" :if-feature :clouseau)
+     (:file "inspect" :if-feature :gui)
      (:file "krypt")
-     (:file "packy")
-     (:file "net"))
+     (:file "packy"))
     :if-feature :ext))
   :in-order-to ((test-op (test-op "skel/tests"))))
 
