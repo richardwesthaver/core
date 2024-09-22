@@ -206,10 +206,20 @@
       (required-argument 'name)))
 
 (defcmd skc-vc
-  (if *args*
-      (std/string:string-case ((car *args*) :default (skel-simple-error "invalid command"))
-        ("status" (skc-status nil nil)))
-      (skc-status nil *opts*)))
+  (let* ((sk (find-skelfile #P"." :load t))
+         (vc (sk-vc-meta-kind (sk-vc sk))))
+    (sb-ext:enable-debugger)
+    (with-open-stream (proc (process-output 
+                             (if-let ((cmd (pop *args*)))
+                               (ecase vc
+                                 (:hg (run-hg-command cmd *args* :stream))
+                                 (:git (run-git-command cmd *args* :stream)))
+                               (sb-ext:run-program (case vc (:hg *hg-program*) (:git *git-program*))
+                                                   nil 
+                                                   :output :stream))))
+    (loop for x = (read-line proc nil)
+          while x
+          do (println x)))))
 
 (defcmd skc-shell
   (sb-ext:enable-debugger)

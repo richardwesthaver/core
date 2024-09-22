@@ -16,7 +16,10 @@
    :server
    :peer
    :proxy
-   :tunnel))
+   :tunnel
+   :net-warning
+   :codec-warning
+   :protocol-warning))
 
 (defpackage :net/util
   (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)

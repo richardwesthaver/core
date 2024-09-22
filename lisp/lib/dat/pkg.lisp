@@ -115,6 +115,19 @@
            #:+decode-table+
            #:+uri-decode-table+))
 
+(defpackage :dat/css
+  (:use :cl :std :dat/proto)
+  (:export
+   :parse-css
+   :*minify-css*
+   :*css-indent-offset*
+   :parse-css-selector
+   :parse-css-fragment
+   :generate-css
+   :compile-css-selector
+   :compile-css
+   :compile-css-block))
+
 (defpackage :dat/html
   (:use :cl :std :dat/proto)
   (:import-from :sb-ext :defglobal)

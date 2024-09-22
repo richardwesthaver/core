@@ -12,6 +12,9 @@
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
 
+;;; Conditions
+(define-condition std-thread-error (thread-error) ())
+
 ;;; Utils
 (defun thread-support-p () (member :thread-support *features*))
 

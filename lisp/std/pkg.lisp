@@ -269,6 +269,7 @@
   (:import-from :std/list :flatten)
   (:use-reexport :sb-thread)
   (:export
+   :std-thread-error
    :print-top-level :thread-support-p
    :find-thread-by-id :thread-id-list
    :timed-join-thread :kill-thread

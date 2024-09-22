@@ -24,15 +24,21 @@
 
 (sb-ext:defglobal *sk-print-dispatch-table* (sb-pretty::make-pprint-dispatch-table #() nil nil))
 
-(defmethod sk-print ((self skel) &key (stream t) (id t) &allow-other-keys)
+(defmethod sk-print ((self skel) &key (stream t) (id t) exclude &allow-other-keys)
   (if id
       (format stream "~S ~A~%" (keywordicate (class-name (class-of self))) (format-sxhash (obj/id:id self)))
       (format stream "~S~%" (keywordicate (class-name (class-of self)))))
-  (mapcar 
+  (mapcar
    (lambda (slot)
      (let ((name (sb-mop:slot-definition-name slot)))
        (when (slot-boundp self name)
          (when-let ((val (slot-value self name)))
-           (format stream ":~A ~A~%" name val)))))
-   (sb-mop:class-direct-slots (class-of self)))
+           (typecase val
+             (sequence (unless (sequence:emptyp val) (format stream ":~A ~A~%" name val)))
+             (hash-table (unless (zerop (hash-table-count val))
+                           (format stream ":~A~%" name)
+                           (pprint-tabular stream (hash-table-alist val) nil nil 2)
+                           (terpri stream)))
+             (t (format stream ":~A ~A~%" name val)))))))
+   (remove-if (lambda (x) (member x exclude)) (sb-mop:class-direct-slots (class-of self))))
   self)

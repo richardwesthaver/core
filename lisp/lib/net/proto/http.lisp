@@ -60,7 +60,6 @@
    (lambda (condition stream)
      (format stream "~A: ~A" (type-of condition) (slot-value condition 'description)))))
 
-
 ;;
 ;; Callback-related errors
 
