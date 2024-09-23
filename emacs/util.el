@@ -159,6 +159,16 @@ With optional N, search in the Nth line from point."
          (dow (nth 6 datetime)))
     (time-subtract now (days-to-time dow))))
 
+;;; Hashtables
+(defun hash-table-alist (table)
+  "Returns an association list containing the keys and values of hash table
+TABLE."
+  (let ((alist nil))
+    (maphash (lambda (k v)
+               (push (cons k v) alist))
+             table)
+    (nreverse alist)))
+
 ;;; Server
 ;;;###autoload
 (defun kill-emacs-restart ()

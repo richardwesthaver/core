@@ -89,9 +89,9 @@
   "Populate the `org-graph' from `org-id-locations', filtering out any
 entries not under a member of `org-graph-locations'. When EDGES is
 non-nil visit each node and collect all edges found."
-  (interactive)
+  (interactive "P")
   (save-excursion
-    (let* ((node-ids (org-id-locations-load))
+    (let* ((node-ids (copy-hash-table (org-id-locations-load))) ;; don't overwrite `org-id-locations'
            (graph (make-org-graph :nodes node-ids)))
       (maphash
        (lambda (k v)
@@ -122,7 +122,7 @@ non-nil visit each node and collect all edges found."
   "The Emacs-native org-graph. Should be assigned to an `org-graph' instance.")
 
 (cl-defstruct org-graph-node id name file point)
-(cl-defstruct org-graph-edge (type 'link) in properties timestamp out)
+(cl-defstruct org-graph-edge (type 'link) in properties timestamp point out)
 
 (defun org-graph--file-hash (file)
   "Compute the hash of FILE."
@@ -151,40 +151,66 @@ currently active org-graph."
       (puthash (org-graph-node-id node) node (org-graph-nodes (if (eql t update) org-graph update))))
     node))
 
+;; TODO 2024-09-22: properties
 (defun org-graph-collect-edge ()
   "Collect the edge at point which should be a line created with `org-graph-edge--insert'."
   (org-with-point-at (beginning-of-line)
     (when (org-at-timestamp-p 'lax)
-      (let ((ts (match-string-no-properties 0))
+      (let ((ep (point))
+            (ts (match-string-no-properties 0))
             (end (match-end 0)))
         (goto-char (1+ end))
         ;; next 2 chars are the arrow
-        (let ((arrow (org-graph-edge-arrow* (buffer-substring-no-properties (point) (1+ (point))))))
+        (let ((arrow (org-graph-edge-arrow* (buffer-substring-no-properties (point) (+ 2 (point))))))
           (goto-char (+ (point) 4))
           (make-org-graph-edge :in (org-id-get)
                                :type arrow
+                               :point ep
                                :timestamp (org-parse-time-string ts t) 
                                :out (string-trim (org--link-at-point) "id:")))))))
+
+(defun org-graph-map-edges (function)
+  "Eval FUNCTION once for each edge in node at point with point at start of the edge."
+  (with-org-graph-edge-drawer (end)
+    (re-search-backward (rx bol ?: (literal (org-graph-edge-drawer)) ?: eol) nil t)
+    (goto-char (1+ (match-end 0)))
+    (cl-loop while (> (point-max) end (point))
+             collect (funcall function)
+             do (next-line))))
+
+(defun org-graph-reduce-edges (function)
+  "Same as `cl-reduce' where SEQ is the list of edges at point. FUNCTION
+takes two `org-graph-edge' objects as input."
+  (let ((edges (org-graph-map-edges 'org-graph-collect-edge)))
+    (cl-reduce function edges)))
 
 (defun org-graph-collect-edges-at-point (&optional update)
   "Collect the contents of the EDGES drawer from node at point. When UPDATE
 is non-nil insert or update the node into the org-graph object specified
 or when 't' use the currently active org-graph."
-  (with-org-graph-edge-drawer (end)
-    (re-search-backward (rx bol ?: (literal (org-graph-edge-drawer)) ?: eol) nil t)
-    (goto-char (1+ (match-end 0)))
-    (let ((edges
-           (cl-loop while (> (point-max) end (point))
-                    collect (org-graph-collect-edge)
-                    do (next-line))))
-      (when update
-        (mapc (lambda (e)
-                (puthash 
-                 (org-graph-edge-in e) 
-                 e 
-                 (org-graph-edges (if (eql t update) org-graph update))))
-              edges))
-      edges)))
+  (let ((edges (org-graph-map-edges 'org-graph-collect-edge)))
+    (when update
+      (mapc (lambda (e)
+              (puthash 
+               (org-graph-edge-in e) 
+               e 
+               (org-graph-edges (if (eql t update) org-graph update))))
+            edges))
+    edges))
+
+(defun org-graph-edge-equal (a b)
+  "Return non-nil if A and B are 'equal' org-graph-edge objects."
+  (equal (org-graph-edge-out a) (org-graph-edge-out b)))
+
+(defun org-graph-edge-remove-duplicates ()
+  "Remove duplicate edge entries from node at point."
+  (org-graph-reduce-edges 
+   (lambda (a b) 
+     (when (org-graph-edge-equal a b)
+       (let ((tsa (org-graph-edge-timestamp a))
+             (tsb (org-graph-edge-timestamp b)))
+         (goto-char (org-graph-edge-point (if (org-time> tsa tsb) b a)))
+         (delete-line))))))
 
 (defun org-graph-edges-at-point (&optional update)
   "Return a list of `org-graph-edge' instances associated with the node at
