@@ -36,7 +36,7 @@
   :type 'directory
   :group 'graph)
 
-(defcustom org-graph-locations (list (join-paths company-org-directory "notes"))
+(defcustom org-graph-locations (list (join-paths company-org-directory "notes/"))
   "List of directories to check for nodes."
   :type '(list directory)
   :group 'graph)
@@ -85,19 +85,30 @@
   :type 'org-graph-db-handle
   :group 'graph)
 
-(defun org-graph-from-id-locations ()
+(defun org-graph-from-id-locations (&optional edges local)
   "Populate the `org-graph' from `org-id-locations', filtering out any
-entries not under a member of `org-graph-locations'."
+entries not under a member of `org-graph-locations'. When EDGES is
+non-nil visit each node and collect all edges found."
   (interactive)
-  (setq-local org-graph (copy-hash-table (org-id-locations-load)))
-  (maphash
-   (lambda (k v)
-     (mapc
-      (lambda (x)
-        (unless (string-prefix-p x (file-truename v))
-          (remhash k org-graph)))
-      org-graph-locations))
-   org-graph))
+  (save-excursion
+    (let* ((node-ids (org-id-locations-load))
+           (graph (make-org-graph :nodes node-ids)))
+      (maphash
+       (lambda (k v)
+         (if-let ((ok (cl-loop for l in org-graph-locations
+                               when (string-prefix-p l (file-truename v))
+                               return t)))
+             (let ((pos (cdr (org-id-find-id-in-file k v))))
+               (message "%s %s" k v)
+               (org-with-file-buffer v
+                 (goto-char pos)
+                 (org-graph-node-at-point graph)
+                 (when edges (org-graph-edges-at-point graph))))
+           (remhash k (org-graph-nodes graph))))
+       (org-graph-nodes graph))
+      (if local
+          (setq-local org-graph graph)
+        (setq org-graph graph)))))
 
 (defun org-graph-files ()
   (org-list-files org-graph-locations org-agenda-extensions))
@@ -122,7 +133,8 @@ entries not under a member of `org-graph-locations'."
 
 (defun org-graph-node-at-point (&optional update)
   "Return the `org-graph-node' at point. When UPDATE is non-nil insert or
-update the node into the currently active org-graph."
+update the node into the org-graph object specified or when 't' use the
+currently active org-graph."
   (let* ((file (buffer-file-name))
          (node (make-org-graph-node :point (point) :file file)))
     (if (derived-mode-p 'org-mode)
@@ -132,38 +144,68 @@ update the node into the currently active org-graph."
                     ;; use the filename, create a hash as id
                     (org-graph-node-id node) (org-graph--file-hash file))
             (setf (org-graph-node-id node) (org-id-get)
-                  (org-graph-node-name node) (cadddr (org-heading-components)))))
-          (setf (org-graph-node-id node) (org-graph--file-hash file)
-                (org-graph-node-name node) (file-name-nondirectory file)))
+                  (org-graph-node-name node) (elt (org-heading-components) 4))))
+      (setf (org-graph-node-id node) (org-graph--file-hash file)
+            (org-graph-node-name node) (file-name-nondirectory file)))
     (when update
-      (puthash (org-graph-node-id node) node (org-graph-nodes org-graph)))
-    (message "%s" node)))
+      (puthash (org-graph-node-id node) node (org-graph-nodes (if (eql t update) org-graph update))))
+    node))
 
-;; TODO 2024-09-17: 
+(defun org-graph-collect-edge ()
+  "Collect the edge at point which should be a line created with `org-graph-edge--insert'."
+  (org-with-point-at (beginning-of-line)
+    (when (org-at-timestamp-p 'lax)
+      (let ((ts (match-string-no-properties 0))
+            (end (match-end 0)))
+        (goto-char (1+ end))
+        ;; next 2 chars are the arrow
+        (let ((arrow (org-graph-edge-arrow* (buffer-substring-no-properties (point) (1+ (point))))))
+          (goto-char (+ (point) 4))
+          (make-org-graph-edge :in (org-id-get)
+                               :type arrow
+                               :timestamp (org-parse-time-string ts t) 
+                               :out (string-trim (org--link-at-point) "id:")))))))
+
+(defun org-graph-collect-edges-at-point (&optional update)
+  "Collect the contents of the EDGES drawer from node at point. When UPDATE
+is non-nil insert or update the node into the org-graph object specified
+or when 't' use the currently active org-graph."
+  (with-org-graph-edge-drawer (end)
+    (re-search-backward (rx bol ?: (literal (org-graph-edge-drawer)) ?: eol) nil t)
+    (goto-char (1+ (match-end 0)))
+    (let ((edges
+           (cl-loop while (> (point-max) end (point))
+                    collect (org-graph-collect-edge)
+                    do (next-line))))
+      (when update
+        (mapc (lambda (e)
+                (puthash 
+                 (org-graph-edge-in e) 
+                 e 
+                 (org-graph-edges (if (eql t update) org-graph update))))
+              edges))
+      edges)))
+
 (defun org-graph-edges-at-point (&optional update)
   "Return a list of `org-graph-edge' instances associated with the node at
 point. When UPDATE is non-nil insert or update the edges into the
 currently active org-graph."
   (interactive)
-  (let ((edges))
-    (if (derived-mode-p 'org-mode))
-    (when update
-      (dolist (edge edges)
-        (puthash (org-graph-edge-in edge) edge (org-graph-edges org-graph))))
-    (message "%s" edge)))
+    (when (derived-mode-p 'org-mode)
+      (org-graph-collect-edges-at-point update)))
 
 (defun org-graph-buffer-update (&optional buffer)
   "Map over an org buffer adding all nodes to the active org-graph."
   (interactive)
-    (save-excursion
-      (with-current-buffer (or buffer (current-buffer))
-        ;; capture file node
-        (goto-char (point-min))
-        (org-graph-node-at-point t)
-        (when (derived-mode-p 'org-mode)
-          (org-map-entries (lambda () (org-graph-node-at-point t)))))))
-  
-;;; Links
+  (save-excursion
+    (with-current-buffer (or buffer (current-buffer))
+      ;; capture file node
+      (goto-char (point-min))
+      (org-graph-node-at-point t)
+      (when (derived-mode-p 'org-mode)
+        (org-map-entries (lambda () (org-graph-node-at-point t)))))))
+
+;;; Edges
 ;; See https://github.com/toshism/org-super-links/blob/develop/org-super-links.el
 (declare-function org-make-link-description-function "ext:org-mode")
 
@@ -179,7 +221,7 @@ returns a string.
 
 Default is the function `org-graph-edge-prefix-timestamp'
 which returns an inactive timestamp formatted according to the variable
-`org-time-stamp-formats' and a separator ' <- '.")
+`org-time-stamp-formats'.")
 
 ;;  TODO 2024-09-16: do we need this? what sort of information for a
 ;;  given edge would go in the postfix? this may be better suited as a
@@ -188,18 +230,6 @@ which returns an inactive timestamp formatted according to the variable
   "Postfix to insert after the edge.
 This can be a string, nil, or a function that takes no arguments and
 returns a string")
-
-(defvar org-graph-edge-related-into-drawer t
-    "Controls how/where to insert links.
-If non-nil a drawer will be created and links inserted there.  The
-default is `org-graph-edge-related-drawer-default-name'.  If this is set to a
-string a drawer will be created using that string.  For example LINKS.
-If nil links will just be inserted at point.")
-
-(defvar org-graph-edge-related-drawer-default-name "EDGES"
-  "Default name to use for link drawer.
-If variable `org-graph-edge-related-into-drawer' is 't' use this
-name for the drawer.  See variable `org-graph-edge-related-into-drawer' for more info.")
 
 (defvar org-graph-edge-link-prefix nil
   "Prefix to insert before the link.
@@ -242,18 +272,37 @@ This is called with point in the heading of the backlink.")
 (defvar org-graph-edge-indicator-alist
   '((link . "->")
     (backlink . "<-")
-    (sibling . "--")
+    (relation . "--")
     (parent . ">>")
     (child . "<<"))
   "An alist of (EDGE-TYPE . INDICATOR) pairs. Each INDICATOR is a string
 which will be printed between the properties and backlink of the
 associated EDGE-TYPE.")
 
+(defun org-graph-edge-arrow (sym)
+  (cdr (assoc sym org-graph-edge-indicator-alist)))
+
+(defun org-graph-edge-arrow* (str)
+  "Reverse lookup of edge arrow symbol."
+  (car (rassoc str org-graph-edge-indicator-alist)))
+
 (defun org-graph-edge-get-location ()
   "Default for function `org-graph-edge-search-function' that reuses the `org-refile' machinery."
   (let ((target (org-refile-get-location "Node")))
     (org-graph-edge--insert-link (set-marker (make-marker) (car (cdddr target))
-                                 (get-file-buffer (car (cdr target)))))))
+                                             (get-file-buffer (car (cdr target)))))))
+
+(cl-defmacro with-org-graph-edge-drawer ((start &optional create) &rest body)
+  "START is a symbol which is bound to the start of the edge drawer."
+  (declare (indent 1))
+  `(save-excursion
+     (org-with-wide-buffer
+      (let ((org-log-into-drawer (org-graph-edge-drawer)))
+        (org-graph-edge--org-narrow-to-here)
+        (let ((,start (org-log-beginning ,create)))
+          (when (re-search-forward (rx bol ?: "END" ?: eol) nil t)
+            (goto-char ,start)
+            ,@body))))))
 
 (defun org-graph-edge-search-function ()
   "Call the search interface specified in variable `org-graph-edge-search-function'."
@@ -286,10 +335,8 @@ associated EDGE-TYPE.")
 ;; TODO 2024-09-16: edge-properties
 (defun org-graph-edge-prefix-timestamp ()
   "Return the default prefix string for an edge.
-Inactive timestamp formatted according to `org-time-stamp-formats' and
-a separator ' <- '."
-  (concat (format-time-string (org-time-stamp-format t t) (current-time))
-        " <- "))
+Inactive timestamp formatted according to `org-time-stamp-formats'."
+  (format-time-string (org-time-stamp-format t t) (current-time)))
 
 (defun org-graph-edge-default-description-formatter (link desc)
   "Return a string to use as the link desciption.
@@ -311,21 +358,6 @@ used instead of the default value."
           ((stringp p) p)
           (t org-graph-edge-drawer))))
 
-;; delete related functions
-(defun org-graph-edge--find-link (id)
-  "Return link element for ID."
-  (save-restriction
-    (org-graph-edge--org-narrow-to-here)
-    (let ((link
-           (org-element-map (org-element-parse-buffer) 'link
-             (lambda (link)
-               (when (string= (org-element-property :path link) id)
-                 link)))))
-      (widen)
-      (if (> (length link) 1)
-          (error "Multiple links found.  Canceling delete")
-        (car link)))))
-
 (defun org-graph-edge--org-narrow-to-here ()
   "Narrow to current heading, excluding subheadings."
   (org-narrow-to-subtree)
@@ -333,10 +365,20 @@ used instead of the default value."
     (org-next-visible-heading 1)
     (narrow-to-region (point-min) (point))))
 
+;; delete related functions
+(defun org-graph-find-edges (id)
+  "Return link elements for ID."
+    (org-graph-edge--org-narrow-to-here)
+    (let ((links
+           (org-element-map (org-element-parse-buffer) 'link
+             (lambda (link)
+               (when (string= (org-element-property :path link) id)
+                 link)))))
+      (widen)
+      links))
 
-(defun org-graph-edge--in-drawer ()
-  "Return nil if point is not in a drawer.
-Return element at point is in a drawer."
+(defun org-graph-edge--in-drawer-p ()
+  "Return non-nil if point is in drawer. Value is element at point."
   (let ((element (org-element-at-point)))
     (while (and element
                 (not (memq (org-element-type element) '(drawer property-drawer))))
@@ -344,8 +386,7 @@ Return element at point is in a drawer."
     element))
 
 (defun org-graph-edge--delete-link (link)
-  "Delete the LINK.
-If point is in drawer, delete the entire line."
+  "Delete the LINK. If point is in edges drawer, delete the entire line."
   (save-excursion
     (goto-char (org-element-property :begin link))
     (if (org-graph-edge--in-drawer)
@@ -354,71 +395,34 @@ If point is in drawer, delete the entire line."
           (org-remove-empty-drawer-at (point)))
       (delete-region (org-element-property :begin link) (org-element-property :end link)))))
 
-;;; EXPERIMENTAL 'related into drawer'
-(defun org-graph-edge-related-into-drawer ()
-  "Name of the related drawer, as a string, or nil.
-This is the value of variable
-`org-graph-edge-related-into-drawer'.  However, if the current
-entry has or inherits a RELATED_INTO_DRAWER property, it will be
-used instead of the default value."
-  (let ((p (org-entry-get nil "RELATED_INTO_DRAWER" 'inherit t)))
-    (cond ((equal p "nil") nil)
-          ((equal p "t") org-graph-edge-related-drawer-default-name)
-          ((stringp p) p)
-          (p org-graph-edge-related-drawer-default-name)
-          ((stringp org-graph-edge-related-into-drawer) org-graph-edge-related-into-drawer)
-          (org-graph-edge-related-into-drawer org-graph-edge-related-drawer-default-name))))
+(defun org-graph-edge--insert (link desc arrow &rest props)
+  "Insert an edge at point. ARROW is a symbol representing the type of
+arrow to insert. The rest of the arguments are parsed as :KEY VAL pairs
+which are inserted with the edge."
+  (insert (format "%s %s " (org-graph-edge-prefix)
+                  (org-graph-edge-arrow arrow)))
+  (org-insert-link nil link desc)
+  (insert (org-graph-edge-link-postfix)) 
+  (newline))
 
-(defun org-graph-edge-link-prefix-timestamp ()
-  "Return the default prefix string for an edge.
-Inactive timestamp formatted according to `org-time-stamp-formats' and
-a separator ' -> '."
-  (concat (format-time-string (org-time-stamp-format t t) (current-time))
-          (format " %s " (cdr (assoc 'link org-graph-edge-indicator-alist)))))
+(defun org-graph-edge-insert-related (link desc)
+  "Insert a relation edge."
+  (with-org-graph-edge-drawer (beg t)
+    (org-graph-edge--insert link desc 'relation)                              
+    (org-indent-region beg (point))))
 
-(defun org-graph-edge-insert-related-link (link desc)
-  "LINK DESC related experiment."
-  (if (org-graph-edge-related-into-drawer)
-      (let* ((org-log-into-drawer (org-graph-edge-related-into-drawer))
-             (beg (org-log-beginning t)))
-        (goto-char beg)
-        (insert (org-graph-edge-link-prefix))
-        (insert (org-graph-edge-link-prefix-timestamp))
-        (org-insert-link nil link desc)
-        (insert (org-graph-edge-link-postfix) "\n")
-        (org-indent-region beg (point)))
-    (insert (org-graph-edge-link-prefix))
-    (org-insert-link nil link desc)
-    (insert (org-graph-edge-link-postfix))))
-
-(defun org-graph-edge-quick-insert-drawer-link ()
-  "Insert link into drawer regardless of variable `org-graph-edge-related-into-drawer' value."
-  (interactive)
-  ;; how to handle prefix here?
-  (let ((org-graph-edge-related-into-drawer (or org-graph-edge-related-into-drawer t))
-        (org-graph-edge-link-prefix 'org-graph-edge-link-prefix-timestamp))
-    (org-graph-edge-link)))
-
-(defun org-graph-edge-quick-insert-inline-link ()
-  "Insert inline link regardless of variable `org-graph-edge-related-into-drawer' value."
-  (interactive)
-  ;; how to handle prefix here?
-  (let ((org-graph-edge-related-into-drawer nil)
-        (org-graph-edge-link-prefix nil))
-    (org-graph-edge-link)))
-
-;; end
-
-(defun org-graph-edge-insert (link desc)
+(defun org-graph-edge-insert-backlink (link desc)
   "Insert edge to LINK with DESC.
 Where the edge is placed is determined by the variable `org-graph-edge-drawer'."
-  (let* ((org-log-into-drawer (org-graph-edge-drawer))
-         (description (org-graph-edge-default-description-formatter link desc))
-         (beg (org-log-beginning t)))
-    (goto-char beg)
-    (insert (org-graph-edge-prefix))
-    (insert (org-link-make-string link description))
-    (insert (org-graph-edge-postfix))
+  (with-org-graph-edge-drawer (beg t)
+    (let ((description (org-graph-edge-default-description-formatter link desc)))
+      (org-graph-edge--insert link description 'backlink)
+      (org-indent-region beg (point)))))
+
+(defun org-graph-edge-insert-link (link desc)
+  "insert a forward link edge."
+  (with-org-graph-edge-drawer (beg t)
+    (org-graph-edge--insert link desc 'link)                                  
     (org-indent-region beg (point))))
 
 (defun org-graph-edge-links-action (marker hooks)
@@ -440,7 +444,7 @@ Where the edge is placed is determined by the variable `org-graph-edge-drawer'."
     (cons link-ref description)))
 
 (defun org-graph-edge--insert-link (target &optional no-forward)
-  "Insert link to marker TARGET at current `point`, and create edge to here.
+  "Insert link to marker TARGET and create an edge.
 Only create edges in files in `org-mode' or a derived mode, otherwise just
 act like a normal link.
 
@@ -457,22 +461,17 @@ only used when converting a link."
           (widen) ;; buffer could be narrowed
           (goto-char (marker-position target))
           (when (derived-mode-p 'org-mode)
-            (org-graph-edge-insert (car source-formatted-link) (cdr source-formatted-link))))))
+            (org-graph-edge-insert-backlink (car source-formatted-link) (cdr source-formatted-link))))))
     (unless no-forward
       (with-current-buffer (marker-buffer source)
         (save-excursion
           (goto-char (marker-position source))
-          (org-graph-edge-insert-related-link (car target-formatted-link) (cdr target-formatted-link)))))))
+          (org-graph-edge-insert-link (car target-formatted-link) (cdr target-formatted-link)))))))
 
 ;;;###autoload
 (defun org-graph-edge-convert-link (arg)
   "Convert a normal `org-mode' link at `point' to a graph link, ARG prefix.
-If variable `org-graph-edge-related-into-drawer' is non-nil move
-the link into drawer.
-
-When called interactively with a `C-u' prefix argument ignore
-variable `org-graph-edge-related-into-drawer' configuration and
-do not modify existing link."
+When called interactively with a `C-u' prefix argument do not modify existing link."
   (interactive "P")
   (let ((from-m (point-marker))
         (target (save-window-excursion
@@ -480,10 +479,9 @@ do not modify existing link."
                     (save-excursion
                       (org-open-at-point)
                       (point-marker))))))
-    (org-graph-edge--insert-link target (or arg (not org-graph-edge-related-into-drawer)))
+    (org-graph-edge--insert-link target arg)
     (goto-char (marker-position from-m)))
-
-  (when (and (not arg) (org-graph-edge-related-into-drawer))
+  (when (not arg)
     (let ((begin (org-element-property :begin (org-element-context)))
           (end (org-element-property :end (org-element-context))))
       (delete-region begin end))))
@@ -499,36 +497,22 @@ This works from either side, and deletes both sides of a link."
       (save-excursion
         (let ((id (org-id-get (point))))
           (org-open-at-point)
-          (let ((link-element (org-graph-edge--find-link id)))
-            (if link-element
-                (org-graph-edge--delete-link link-element)
+          (let ((link-elements (org-graph-find-edges id)))
+            (if link-elements
+                (if (> (length link-elements) 1)
+                    (error "Multiple links found.")
+                  (org-graph-edge--delete-link (car link-elements)))
               (message "No edge found. Deleting active only.")))))))
   (org-graph-edge--delete-link (org-element-context)))
 
-(defvar org-graph-stored-mark nil
-  "mark stored with `org-graph-edge-store'.")
-
-(defun org-graph-edge-store ()
-  "Store a point to register for use in function `org-graph-edge-insert-link'.
-This is primarily intended to be called before `org-capture', but
-could possibly even be used to replace `org-store-link' IF
-function `org-graph-edge-insert-link' is used to replace
-`org-insert-link'.  This has not been thoroughly tested outside
-of links to/form org files."
-  (interactive "P")
-  (let ((c1 (make-marker)))
-    (set-marker c1 (point) (current-buffer))
-    (setq org-graph-stored-mark c1)
-    (message "Mark stored.")))
-
 ;;;###autoload
-(defun org-graph-edge-insert-link ()
-  "Insert an edge from the list `org-graph-stored-marks'."
+(defun org-graph-edge-insert ()
+  "Insert an edge from `org-stored-links')"
   (interactive)
-  (if org-graph-stored-mark
-      (progn 
-        (org-graph-edge--insert-link org-graph-stored-mark)
-        (setq org-graph-stored-mark nil))
+  (if org-stored-links
+      (progn
+        (org-link-open (pop org-stored-links))
+        (org-graph-edge--insert-link (set-marker (make-marker) (point))))
     (org-graph-edge-link)))
 
 ;;;###autoload

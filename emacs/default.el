@@ -33,6 +33,7 @@
  shr-image-animate nil
  shr-discard-aria-hidden t
  bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
+ set-mark-command-repeat-pop t
  tempo-interactive t
  emms-directory (expand-file-name "emms" user-emacs-directory)
  gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
