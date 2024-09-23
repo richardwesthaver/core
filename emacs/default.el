@@ -224,7 +224,6 @@
 
 ;;; Lisp
 (use-package company :ensure t)
-(use-package slime-repl-ansi-color :ensure t)
 
 (defvar slime-toggle nil)
 (defun slime-toggle ()
@@ -243,10 +242,10 @@
 
 (use-package slime
   :ensure t
-  :after (slime-repl-ansi-color)
-  :init
+  :config
   (require 'slime-company "slime-company")
   (require 'slime-cape "slime-cape")
+  (require 'slime-repl-ansi-color "slime-repl-ansi-color")
   (setq slime-contribs '(slime-fancy
                          slime-quicklisp
                          slime-hyperdoc
@@ -269,9 +268,7 @@
                          slime-asdf))
   (put 'make-instance 'common-lisp-indent-function 1)
   (put 'reinitialize-instance 'common-lisp-indent-function 1)
-  (slime-repl-ansi-color-init)
-  (slime-cape-init)
-  (slime-setup)
+  (slime-setup slime-contribs)
   ;; X11-only (mcclim requires clx)
   (defun clouseau-inspect (string)
     "Inspect a lisp value with Clouseau. make sure to load clouseau
