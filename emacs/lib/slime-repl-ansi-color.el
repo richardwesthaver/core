@@ -1,6 +1,6 @@
 ;;; lib/slime-repl-ansi-color.el --- https://github.com/deadtrickster/slime-repl-ansi-color -*- lexical-binding: t -*-
 (require 'ansi-color)
-
+(require 'slime)
 (define-slime-contrib slime-repl-ansi-color
   "Turn on ANSI colors in REPL output"
   (:authors "Max Mikhanosha")
