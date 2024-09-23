@@ -174,8 +174,7 @@
   (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
   (unless (display-graphic-p)
-    (require 'corfu-terminal)
-    (corfu-terminal-mode 1)))
+    (use-package corfu-terminal :ensure t :config (corfu-terminal-mode 1))))
 
 (use-package kind-icon
   :ensure t

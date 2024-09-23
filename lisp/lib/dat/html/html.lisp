@@ -293,43 +293,43 @@
     ,@(char-range #\u007F #\u009F)
     ;; The following are noncharacter as defined by Unicode.
     ;; Clozure Common Lisp doesn't like them.
-    #-(or abcl ccl mezzano) ,@`(
-    ,@(char-range #\uD800 #\uDFFF)
-    ,@(char-range #\uFDD0 #\uFDEF)
-    #\uFFFE
-    #\uFFFF
-    #\u0001FFFE
-    #\u0001FFFF
-    #\u0002FFFE
-    #\u0002FFFF
-    #\u0003FFFE
-    #\u0003FFFF
-    #\u0004FFFE
-    #\u0004FFFF
-    #\u0005FFFE
-    #\u0005FFFF
-    #\u0006FFFE
-    #\u0006FFFF
-    #\u0007FFFE
-    #\u0007FFFF
-    #\u0008FFFE
-    #\u0008FFFF
-    #\u0009FFFE
-    #\u0009FFFF
-    #\u000AFFFE
-    #\u000AFFFF
-    #\u000BFFFE
-    #\u000BFFFF
-    #\u000CFFFE
-    #\u000CFFFF
-    #\u000DFFFE
-    #\u000DFFFF
-    #\u000EFFFE
-    #\u000EFFFF
-    #\u000FFFFE
-    #\u000FFFFF
-    #\u0010FFFE
-    #\u0010FFFF)))
+    ,@`(
+        ,@(char-range #\uD800 #\uDFFF)
+        ,@(char-range #\uFDD0 #\uFDEF)
+        #\uFFFE
+        #\uFFFF
+        #\u0001FFFE
+        #\u0001FFFF
+        #\u0002FFFE
+        #\u0002FFFF
+        #\u0003FFFE
+        #\u0003FFFF
+        #\u0004FFFE
+        #\u0004FFFF
+        #\u0005FFFE
+        #\u0005FFFF
+        #\u0006FFFE
+        #\u0006FFFF
+        #\u0007FFFE
+        #\u0007FFFF
+        #\u0008FFFE
+        #\u0008FFFF
+        #\u0009FFFE
+        #\u0009FFFF
+        #\u000AFFFE
+        #\u000AFFFF
+        #\u000BFFFE
+        #\u000BFFFF
+        #\u000CFFFE
+        #\u000CFFFF
+        #\u000DFFFE
+        #\u000DFFFF
+        #\u000EFFFE
+        #\u000EFFFF
+        #\u000FFFFE
+        #\u000FFFFF
+        #\u0010FFFE
+        #\u0010FFFF)))
 
 (defparameter *invalid-unicode-hash* (make-hash-table))
 (dolist (char *invalid-unicode*)

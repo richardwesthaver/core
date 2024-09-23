@@ -178,6 +178,25 @@ currently active org-graph."
              collect (funcall function)
              do (next-line))))
 
+;; TODO 2024-09-23: 
+(defun org-link-info (link)
+  (let ((path (org-element-property :path link))
+        (type (org-element-property :type link))
+        (desc (substring-no-properties (nth 2 link))))
+    (list type path desc)))
+
+;; TODO 2024-09-22: 
+(defun org-graph-infer-edges ()
+  "Infer edges from the contents of the node at point. The result of this
+function is a list of org-graph-edge objects."
+  ;; collect links
+  (with-org-graph-edge-drawer (beg)
+    (org-element-map (org-element-parse-buffer) 'link
+      (lambda (link)
+        (print link)
+        ;; (org-graph-edge-link-builder (funcall 'org-element-create link))
+        ))))
+
 (defun org-graph-reduce-edges (function)
   "Same as `cl-reduce' where SEQ is the list of edges at point. FUNCTION
 takes two `org-graph-edge' objects as input."
