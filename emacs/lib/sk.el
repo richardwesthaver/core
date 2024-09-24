@@ -150,6 +150,12 @@ DOC, and NAME."
   (add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
   (add-to-list 'auto-mode-alist '("\\.sk" . skel-mode)))
 
+(defun skel-dir-local--get-variables ()
+  "Compute and return the list of :DIR-LOCAL bindings found in the current
+project's skelfile, if any. Typically added to
+`hack-dir-local--get-variables'."
+  )
+
 (provide 'skel)
 (provide 'sk)
 ;;; sk.el ends here
