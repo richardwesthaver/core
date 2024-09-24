@@ -7,12 +7,23 @@
 :store ".store"
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "rust" "emacs" "c")
-:include ("lisp.sk" "rust.sk" "emacs.sk")
+:include ("lisp/lisp.sk" "rust/rust.sk" "emacs/emacs.sk")
 :vc (:hg "https://vc.compiler.company/core")
 :bind ((stash ".stash")
-       (cc :env "clang"))
-:components ((:dir-locals ".dir-locals")
-             (:org "readme"))
+       ;; (cc :env "clang")
+       (emacs-locals :dir-locals
+        (nil . ((indent-tabs-mode . nil)))
+        (rust-mode . ((eglot-workspace-configuration
+                       . (:rust-analyzer (:cargo (:buildScripts (:enable t) (:features "all")))))))
+        (nushell-mode . ((nushell-indent-offset . 2)))
+        (nushell-ts-mode . ((nushell-indent-offset . 2)))
+        (sh-mode . (sh-indentation . 2))
+        (makefile-mode . ((indent-tabs-mode . t)))
+        (slint-mode . ((slint-indent-level . 2)))))
+:components ((:org "readme")
+             (:mod "emacs")
+             (:mod "lisp")
+             (:mod "rust"))
 :rules
 ((all (%stash
        psl.dat parquet.json rgb.txt

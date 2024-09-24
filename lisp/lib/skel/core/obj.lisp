@@ -402,6 +402,41 @@ via the special form stored in RECIPE."
   (when (consp recipe)
     (every '%recipe-phase-p recipe)))
 
+(defun sk-case-bind (key val &optional sym)
+  "Switch on keyword KEY, evaluating a skel binding."
+  (case key
+    (:dir-locals
+     ;; nothing actually needs to be done here, the value itself can be parsed
+     ;; directly from emacs via sk.el package. For convenience, when SYM is
+     ;; present we bind it to the list of variables.
+     (when sym (list sym val)))
+    (:hook
+     ;; process the remainder of the form as specializer+body
+     (destructuring-bind (spec &rest body) val
+       (declare (ignore spec body))
+       (nyi!)))
+    (:cmd
+     ;; process the remainder as spec+defcmd-args+body
+     )
+    (:opt
+     ;; process the remainder as spec+defcmd-args+body
+     )
+    (:env
+     ;; process the remainder as a regular value but
+     ;; associate the name with a shell environment which
+     ;; is set to the value. If the cdr is of length 3
+     ;; then we simply remember the value and set it during
+     ;; any calls out from Lisp to the shell. When the form
+     ;; length is > 3 we parse the next value as a shell
+     ;; specification with additional options for checking
+     ;; for pre-existing values and 'exporting' the
+     ;; environment.
+     (if (= (length val) 1)
+         ;; TODO 2024-09-21: setenv
+         (list sym val)
+         ;; process additional shell opts
+         (nyi!)))))
+
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))
   ;; internal ast is never tagged
@@ -470,44 +505,23 @@ via the special form stored in RECIPE."
                   (let ((ret))
                     ;; TODO 2024-09-21: 
                     (dolist (b bind ret)
-                      ;; if this is a list of length > 2 we parse the form as (sym props val)
+                      ;; if this is a list of length > 2 we parse the form as either
+                      ;; (key &rest val) or (var param &rest val)
                       (let ((sym (car b))
-                            (form (cddr b)))
-                        (cond 
-                          ((> (length form) 0)
-                           (let ((key? (cadr b)))
-                             (if (keywordp key?)
-                                 (case key?
-                                   (:hook
-                                    ;; process the remainder of the form as specializer+body
-                                    (destructuring-bind (spec &rest body) form
-                                      (declare (ignore spec body))
-                                      (nyi!)))
-                                   (:cmd
-                                    ;; process the remainder as spec+defcmd-args+body
-                                    )
-                                   (:opt
-                                    ;; process the remainder as spec+defcmd-args+body
-                                    )
-                                   (:env
-                                    ;; process the remainder as a regular value but
-                                    ;; associate the name with a shell environment which
-                                    ;; is set to the value. If the cdr is of length 3
-                                    ;; then we simply remember the value and set it during
-                                    ;; any calls out from Lisp to the shell. When the form
-                                    ;; length is > 3 we parse the next value as a shell
-                                    ;; specification with additional options for checking
-                                    ;; for pre-existing values and 'exporting' the
-                                    ;; environment.
-                                    (if (= (length form) 1)
-                                        ;; TODO 2024-09-21: setenv
-                                        (push (list sym (car form)) ret)
-                                        ;; process additional shell opts
-                                        (nyi!))))
-                                 ;; else we assume that a function is being defined
-                                 (push `(,sym ,(compile sym `(lambda ,(cadr b) ,@(cddr b)))) ret))))
-                          (t
-                           (push b ret))))))))
+                            (form (cdr b)))
+                            ;; (form (cddr b)))
+                        (if (keywordp sym)
+                            (sk-case-bind sym form)
+                            (cond 
+                              ;; (sym param &rest val) detected
+                              ((> (length (cdr form)) 0)
+                               (let ((key (cadr b)))
+                                 (if (keywordp key)
+                                     (sk-case-bind key form sym)
+                                     ;; if nothing else mube be a lambda
+                                     (push `(,sym ,(compile sym `(lambda ,(cadr b) ,@(cddr b)))) ret))))
+                              (t
+                               (push b ret)))))))))
           ;; RULES
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self)

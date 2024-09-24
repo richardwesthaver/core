@@ -148,7 +148,7 @@ DOC, and NAME."
   "Initialize the skel library."
   (interactive)
   (add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
-  (add-to-list 'auto-mode-alist '("\\.sk\\'" . skel-mode)))
+  (add-to-list 'auto-mode-alist '("\\.sk" . skel-mode)))
 
 (provide 'skel)
 (provide 'sk)

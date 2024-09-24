@@ -281,7 +281,8 @@
     (setf (%castable-reprobes table) (make-counter))))
 
 (defun determine-hasher (test)
-  (or (cond ((eq test #'eq) #'sb-impl::eq-hash)
+  ;; TODO 2024-09-23: 
+  (or (cond ;; ((eq test #'eq) #'sb-impl::eq-hash) ;; package-lock violation
             ((eq test #'eql) #'sb-impl::eql-hash)
             ((eq test #'equal) #'sb-impl::equal-hash)
             ((eq test #'equalp) #'sb-impl::equalp-hash)

@@ -1,0 +1,33 @@
+;;; core/lisp skel system
+:name "core/emacs"
+:path "emacs"
+;; :components ((:org "babel"))
+;; TODO 2024-09-23: 
+:bind ((dotemacs (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
+       (config (directory "emacs/*.el"))
+       (lib (directory "emacs/lib/*.el")))
+:rules 
+((install ()
+          (flet ((el-write (in out)
+                   (let* ((fn (file-namestring in)))
+                     (println (format nil "~A -> ~A" fn out))
+                     (std:with-open-files
+                         ((in in :direction :input)
+                          (out out :direction :output :if-exists :supersede))
+                       (std:copy-stream in out :finish-output t)))))
+          (let ((dotemacs (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
+                (config (directory "*.el"))
+                (lib (directory "lib/*.el")))
+            (mapcar
+             (lambda (el)
+               (el-write el (merge-pathnames (file-namestring el) dotemacs)))
+             config)
+            (mapcar
+             (lambda (el)
+               (el-write el 
+                         (merge-pathnames (file-namestring el)
+                                          (ensure-directories-exist 
+                                           (merge-pathnames "lib/" dotemacs)))))
+             lib))))
+ (clean () #$rm -rf ~/.emacs.d/{*.el,lisp,site-lisp,lib,elpa$#))
+                 
