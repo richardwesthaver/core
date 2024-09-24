@@ -28,7 +28,7 @@
  (:integer +btrfs-device-spec-by-id+ "BTRFS_DEVICE_SPEC_BY_ID" t t)
  (:integer +btrfs-subvol-spec-by-id+ "BTRFS_SUBVOL_SPEC_BY_ID" t t)
  (:integer +btrfs-vol-arg-v2-flags-supported+ "BTRFS_VOL_ARG_V2_FLAGS_SUPPORTED" t t)
- (:integer +btrfs-fsize-size+ "BTRFS_FSIZE_SIZE" t t)
+ ;; (:integer +btrfs-fsize-size+ "BTRFS_FSIZE_SIZE" t t) ;; grovel can't find
  (:integer +btrfs-fsize-size+ "BTRFS_UUID_SIZE" t t)
  (:integer +btrfs-qgroup-inherit-set-limits+ "BTRFS_QGROUP_INHERIT_SET_LIMITS" t t)
  ;; ioctl
