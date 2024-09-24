@@ -71,16 +71,15 @@
 (defmethod describe-object ((self package-documentation) stream)
   (with-slots (package files symbols) self
     (print-standard-describe-header self stream)
-    (describe-block (stream)
-      (describe package stream)
-      (format stream "~%Files: ~S"
-              (loop for f across files
-                    collect (doc-path f)))
-      (format stream "~%Symbol Docs: ")
-      (pprint-tabular
-       stream 
-       (loop for s across symbols
-             collect (doc-symbol s))))))
+    (describe package stream)
+    (format stream "~%Files: ~S"
+            (loop for f across files
+                  collect (doc-path f)))
+    (format stream "~%Symbol Docs: ")
+    (pprint-tabular
+     stream 
+     (loop for s across symbols
+           collect (doc-symbol s)))))
 
 ;; (sb-introspect:allocation-information (make-instance 'package-documentation))
 ;; sb-introspect:definition-source

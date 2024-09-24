@@ -46,7 +46,7 @@
   (:import-from :sb-kernel :symbol-package-id)
   (:import-from :sb-ext :restrict-compiler-policy)
   (:import-from :ql-dist :dist :find-dist :provided-systems :installed-systems)
-  (:import-from :sb-impl :describe-block :print-standard-describe-header :describe-object)
+  (:import-from :sb-impl :print-standard-describe-header :describe-object)
   (:import-from :sb-int :condition)
   (:import-from :sb-alien :alien-type-p)
   (:export
