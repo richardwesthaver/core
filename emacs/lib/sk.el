@@ -150,11 +150,59 @@ DOC, and NAME."
   (add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
   (add-to-list 'auto-mode-alist '("\\.sk" . skel-mode)))
 
+(defun project-skelfile-path (&optional project)
+  "Find skelfile associated with PROJECT. Defaults to current
+directory and returns name of skelfile. When PROJECT is T uses
+`project-current'."
+  (let* ((dir (unless (eql t project) (expand-file-name (or project default-directory))))
+         (project-root (project-root (project-current nil dir))))
+    (or
+     (when dir
+       (cl-find-if 
+        (lambda (x)
+          (when (string-match
+                 (rx (or "skelfile" (and (* any) ".sk")))
+                 (file-name-nondirectory x))
+            x))
+        (directory-files dir t)))
+     (when project
+       (cl-find-if (lambda (x)
+                     (when (string-match (rx (or "skelfile" (and (* any) ".sk")))
+                                         (file-name-nondirectory x))
+                       x))
+                   (directory-files project-root t))))))
+
+(defun read-skelfile-bind (&optional project)
+  (let ((buffer (find-file-noselect (project-skelfile-path project))))
+    (with-current-buffer buffer
+      (goto-char (point-min))
+      (goto-char (search-forward-regexp (rx bol ":bind" (* space))))
+      (read buffer))))
+
+(defun project-skelfile-dir-locals (&optional project)
+  "Return a list of dir-local bindings from a skelfile."
+  (let ((form (read-skelfile-bind project)))
+    (cl-loop for f in form
+             do (cond
+                 ((eql (car f) :dir-locals) (cl-return (cdr f)))
+                 ;; when used as second element, the first is the name
+                 ;; of the CL-local binding, here we discard it and
+                 ;; just take the CDDR.
+                 ((eql (cadr f) :dir-locals) (cl-return (cddr f)))))))
+
 (defun skel-dir-local--get-variables ()
   "Compute and return the list of :DIR-LOCAL bindings found in the current
 project's skelfile, if any. Typically added to
 `hack-dir-local--get-variables'."
-  )
+  (let ((root (project-root (project-current))))
+    (cons (expand-file-name root) (project-skelfile-dir-locals root))))
+
+(defun %skel-dir-local--get-variables ()
+  (let ((root (expand-file-name (project-root (project-current)))))
+    (unless (assoc-string root dir-locals-class-alist)
+      (push (skel-dir-local--get-variables) dir-locals-class-alist))))
+
+(add-hook 'skel-minor-mode-hook '%skel-dir-local--get-variables)
 
 (provide 'skel)
 (provide 'sk)

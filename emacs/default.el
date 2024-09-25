@@ -365,10 +365,10 @@ function: '(ql:quickload :clouseau)'."
 (setq sh-basic-offset 2)
 
 ;;; Graphviz
-(use-package graphviz-dot-mode
-  :ensure t
-  :config
-  (setq graphviz-dot-indent-width 2))
+;; (use-package graphviz-dot-mode
+;;   :ensure t
+;;   :config
+;;   (setq graphviz-dot-indent-width 2))
 ;;; Comments
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
@@ -783,7 +783,7 @@ Add this function to appropriate major mode hooks such as
         tramp-default-host "localhost")
 
 ;;; Imenu
-(use-package imenu-list :ensure t)
+;; (use-package imenu-list :ensure t)
 
 ;;; Org
 (require 'org)

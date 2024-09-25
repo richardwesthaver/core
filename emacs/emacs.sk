@@ -1,4 +1,3 @@
-;;; core/lisp skel system
 :name "core/emacs"
 :path "emacs"
 ;; :components ((:org "babel"))
