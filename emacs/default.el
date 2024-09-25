@@ -340,7 +340,7 @@ function: '(ql:quickload :clouseau)'."
 ;;; Eglot
 (with-eval-after-load 'eglot
   (unless (package-installed-p 'eglot-x)
-    (package-vc-install '(eglot-x :url "https://vc.compiler.company/packy/eglot-x.git")))
+    (package-vc-install '(eglot-x :url "https://vc.compiler.company/packy/eglot-x")))
   (require 'eglot-x)
   (with-eval-after-load 'eglot-x
     (add-to-list 'eglot-server-programs

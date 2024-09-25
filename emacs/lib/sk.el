@@ -29,6 +29,7 @@
 		  (require 'cl-lib)
 		  (require 'sxp (expand-file-name "sxp.el" (join-paths user-emacs-directory "lib/")))
                   (require 'skeleton)
+                  (require 'project)
                   (require 'org)
                   (require 'tempo)
                   (require 'autoinsert)
@@ -197,12 +198,12 @@ project's skelfile, if any. Typically added to
   (let ((root (project-root (project-current))))
     (cons (expand-file-name root) (project-skelfile-dir-locals root))))
 
-(defun %skel-dir-local--get-variables ()
+(defun skel-dir-local-get-variables ()
   (let ((root (expand-file-name (project-root (project-current)))))
     (unless (assoc-string root dir-locals-class-alist)
       (push (skel-dir-local--get-variables) dir-locals-class-alist))))
 
-(add-hook 'skel-minor-mode-hook '%skel-dir-local--get-variables)
+;; (add-hook 'skel-minor-mode-hook '%skel-dir-local--get-variables)
 
 (provide 'skel)
 (provide 'sk)

@@ -130,7 +130,7 @@
                  ("A" 1)
                  ("B" 2)
                  ("C" 3)
-                 (t 2)))
+                 (_ 2)))
          (res))
     ;; FIXME todo states shouldn't be hardcoded
     (cond
