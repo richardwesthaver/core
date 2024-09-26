@@ -101,7 +101,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 
 (defun clone-octets-to-alien (lispa alien)
   (declare (optimize (speed 3))
-           (simple-vector lispa))
+           ((vector (unsigned-byte 8)) lispa))
   ;; (setf aliena (cast aliena (array (unsigned 8))))
   (loop for i from 0 below (length lispa)
         do (setf (deref alien i)
@@ -118,7 +118,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 
 (defun clone-octets-from-alien (aliena lispa &optional len)
   (declare (optimize (speed 3))
-           (simple-vector lispa))
+           (vector lispa))
   (unless len (setf len (length lispa)))
   (loop for i from 0 below len
         do (setf (aref lispa i)

@@ -211,8 +211,8 @@ or when 't' use the currently active org-graph."
     (when update
       (mapc (lambda (e)
               (puthash 
-               (org-graph-edge-in e) 
-               e 
+               (org-graph-edge-in e)
+               e
                (org-graph-edges (if (eql t update) org-graph update))))
             edges))
     edges))
@@ -301,7 +301,7 @@ Default is the variable `org-make-link-desciption-function'.")
   "The interface to use for finding target links. If you provide a custom
 function it will be called with the `point` at the location the link
 should be inserted.  The only other requirement is that it should call
-the function `org-graph-edge--insert-link' with a marker to the target
+the function `org-graph-edge-insert-link-marker' with a marker to the target
 link. AKA the place you want the edge.
 
 `org-graph-edge-get-location' internally uses `org-refile-get-location'.")
@@ -333,9 +333,7 @@ associated EDGE-TYPE.")
 
 (defun org-graph-edge-get-location ()
   "Default for function `org-graph-edge-search-function' that reuses the `org-refile' machinery."
-  (let ((target (org-refile-get-location "Node")))
-    (org-graph-edge--insert-link (set-marker (make-marker) (car (cdddr target))
-                                             (get-file-buffer (car (cdr target)))))))
+  (org-refile-get-location "Node"))
 
 (cl-defmacro with-org-graph-edge-drawer ((start &optional create) &rest body)
   "START is a symbol which is bound to the start of the edge drawer."
@@ -343,9 +341,10 @@ associated EDGE-TYPE.")
   `(save-excursion
      (org-with-wide-buffer
       (let ((org-log-into-drawer (org-graph-edge-drawer)))
-        (org-graph-edge--org-narrow-to-here)
+        (org-graph-narrow-to-node)
         (let ((,start (org-log-beginning ,create)))
-          (when (re-search-forward (rx bol ?: "END" ?: eol) nil t)
+          (when (or (re-search-forward (rx bol ?: "END" ?: eol) nil t)
+                    (re-search-backward (rx bol ?: "END" ?: eol) nil t))
             (goto-char ,start)
             ,@body))))))
 
@@ -403,7 +402,7 @@ used instead of the default value."
           ((stringp p) p)
           (t org-graph-edge-drawer))))
 
-(defun org-graph-edge--org-narrow-to-here ()
+(defun org-graph-narrow-to-node ()
   "Narrow to current heading, excluding subheadings."
   (org-narrow-to-subtree)
   (save-excursion
@@ -411,9 +410,9 @@ used instead of the default value."
     (narrow-to-region (point-min) (point))))
 
 ;; delete related functions
-(defun org-graph-find-edges (id)
+(defun org-graph-find-links (id)
   "Return link elements for ID."
-    (org-graph-edge--org-narrow-to-here)
+    (org-graph-narrow-to-node)
     (let ((links
            (org-element-map (org-element-parse-buffer) 'link
              (lambda (link)
@@ -447,7 +446,7 @@ which are inserted with the edge."
   (insert (format "%s %s " (org-graph-edge-prefix)
                   (org-graph-edge-arrow arrow)))
   (org-insert-link nil link desc)
-  (insert (org-graph-edge-link-postfix)) 
+  (insert (org-graph-edge-link-postfix))
   (newline))
 
 (defun org-graph-edge-insert-related (link desc)
@@ -457,18 +456,20 @@ which are inserted with the edge."
     (org-indent-region beg (point))))
 
 (defun org-graph-edge-insert-backlink (link desc)
-  "Insert edge to LINK with DESC.
-Where the edge is placed is determined by the variable `org-graph-edge-drawer'."
+  "Insert a backlink edge."
   (with-org-graph-edge-drawer (beg t)
     (let ((description (org-graph-edge-default-description-formatter link desc)))
       (org-graph-edge--insert link description 'backlink)
       (org-indent-region beg (point)))))
 
 (defun org-graph-edge-insert-link (link desc)
-  "insert a forward link edge."
+  "insert a forward link edge. When BACKLINK is non-nil also create a
+backlink at the node specified in LINK."
+  (interactive)
   (with-org-graph-edge-drawer (beg t)
-    (org-graph-edge--insert link desc 'link)                                  
-    (org-indent-region beg (point))))
+    (let ((description (org-graph-edge-default-description-formatter link desc)))
+      (org-graph-edge--insert link desc 'link)
+      (org-indent-region beg (point)))))
 
 (defun org-graph-edge-links-action (marker hooks)
   "Go to MARKER, run HOOKS and store a link."
@@ -488,35 +489,38 @@ Where the edge is placed is determined by the variable `org-graph-edge-drawer'."
          (description (org-graph-edge-default-description-formatter link-ref pre-desc)))
     (cons link-ref description)))
 
-(defun org-graph-edge--insert-link (target &optional no-forward)
+(defun org-graph-edge-insert-link-marker (target &optional no-forward no-backward)
   "Insert link to marker TARGET and create an edge.
 Only create edges in files in `org-mode' or a derived mode, otherwise just
 act like a normal link.
 
-If NO-FORWARD is non-nil skip creating the forward link.  Currently
-only used when converting a link."
+If NO-FORWARD is non-nil skip creating the forward link. If NO-BACKWARD
+is non-nil skip creating the backlink."
   (let* ((source (point-marker))
          (source-link (org-graph-edge-links-action source 'org-graph-edge-pre-link-hook))
          (target-link (org-graph-edge-links-action target 'org-graph-edge-pre-backlink-hook))
          (source-formatted-link (org-graph-edge-link-builder source-link))
          (target-formatted-link (org-graph-edge-link-builder target-link)))
-    (with-current-buffer (marker-buffer target)
-      (save-excursion
-        (save-restriction
-          (widen) ;; buffer could be narrowed
-          (goto-char (marker-position target))
-          (when (derived-mode-p 'org-mode)
-            (org-graph-edge-insert-backlink (car source-formatted-link) (cdr source-formatted-link))))))
+    (unless no-backward
+      (with-current-buffer (marker-buffer target)
+        (save-excursion
+          (save-restriction
+            (widen) ;; buffer could be narrowed
+            (goto-char (marker-position target))
+            (when (derived-mode-p 'org-mode)
+              (org-graph-edge-insert-backlink (car source-formatted-link) (cdr source-formatted-link)))))))
     (unless no-forward
       (with-current-buffer (marker-buffer source)
         (save-excursion
           (goto-char (marker-position source))
+          (print target-formatted-link)
           (org-graph-edge-insert-link (car target-formatted-link) (cdr target-formatted-link)))))))
 
 ;;;###autoload
-(defun org-graph-edge-convert-link (arg)
+(defun org-graph-edge-convert-link (&optional arg)
   "Convert a normal `org-mode' link at `point' to a graph link, ARG prefix.
-When called interactively with a `C-u' prefix argument do not modify existing link."
+When called interactively with a `C-u' prefix argument do not modify
+existing link."
   (interactive "P")
   (let ((from-m (point-marker))
         (target (save-window-excursion
@@ -524,7 +528,7 @@ When called interactively with a `C-u' prefix argument do not modify existing li
                     (save-excursion
                       (org-open-at-point)
                       (point-marker))))))
-    (org-graph-edge--insert-link target arg)
+    (org-graph-edge-insert-link-marker target arg)
     (goto-char (marker-position from-m)))
   (when (not arg)
     (let ((begin (org-element-property :begin (org-element-context)))
@@ -533,9 +537,9 @@ When called interactively with a `C-u' prefix argument do not modify existing li
 
 ;;;###autoload
 (defun org-graph-edge-delete ()
-  "Delete the link at point, and the corresponding reverse link.
-If no reverse link exists, just delete link at point.
-This works from either side, and deletes both sides of a link."
+  "Delete the link at point, and the corresponding backlink.
+If no backlink exists, just delete link at point. This works from
+either side, and deletes both sides of a link."
   (interactive)
   (save-window-excursion
     (with-current-buffer (current-buffer)
@@ -552,19 +556,31 @@ This works from either side, and deletes both sides of a link."
 
 ;;;###autoload
 (defun org-graph-edge-insert ()
-  "Insert an edge from `org-stored-links')"
+  "Insert an edge from `org-stored-links'."
   (interactive)
   (if org-stored-links
       (progn
         (org-link-open (pop org-stored-links))
-        (org-graph-edge--insert-link (set-marker (make-marker) (point))))
+        (org-graph-edge-insert-link-marker (set-marker (make-marker) (point))))
     (org-graph-edge-link)))
 
 ;;;###autoload
-(defun org-graph-edge-link ()
-  "Insert a link edge and add a backlink edge to the target heading."
+(defun org-graph-edge-link (&optional no-backlink)
+  "Insert a link edge and add a backlink edge to the target heading. With
+'C-u' don't create a backlink to the target."
   (interactive)
-  (org-graph-edge-search-function))
+  (let ((target (org-graph-edge-search-function)))
+    (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
+                                                   (get-file-buffer (car (cdr target))))
+                                       nil no-backlink)))
+
+(defun org-graph-edge-backlink ()
+  "Insert a backlink edge to the target heading from the current one."
+  (interactive)
+  (let ((target (org-graph-edge-search-function)))
+    (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
+                                                   (get-file-buffer (car (cdr target)))) 
+                                       t)))
 
 (defun org-dblock-write:links ()
   "Generate a 'links' block for the designated node.")

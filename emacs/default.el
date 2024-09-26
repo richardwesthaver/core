@@ -99,7 +99,7 @@
    use-package-always-ensure t
    use-package-expand-minimally t)
   (add-packages
-   eglot-x ;; LSP extensions
+   ;; eglot-x ;; LSP extensions
    org-web-tools ;; web parsing
    citeproc ;; citations
    htmlize ;; html export
@@ -338,15 +338,15 @@ function: '(ql:quickload :clouseau)'."
   scsh-program "scsh")
 
 ;;; Eglot
-(with-eval-after-load 'eglot
-  (unless (package-installed-p 'eglot-x)
-    (package-vc-install '(eglot-x :url "https://vc.compiler.company/packy/eglot-x")))
-  (require 'eglot-x)
-  (with-eval-after-load 'eglot-x
-    (add-to-list 'eglot-server-programs
-                 '((rust-ts-mode rust-mode) .
-                   ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
-    (eglot-x-setup)))
+;; (with-eval-after-load 'eglot
+;;   (unless (package-installed-p 'eglot-x)
+;;     (package-vc-install '(eglot-x :url "https://vc.compiler.company/packy/eglot-x")))
+;;   (require 'eglot-x)
+;;   (with-eval-after-load 'eglot-x
+;;     (add-to-list 'eglot-server-programs
+;;                  '((rust-ts-mode rust-mode) .
+;;                    ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
+;;     (eglot-x-setup)))
 
 ;;; Rust
 (add-hook 'rust-mode-hook 'eglot-ensure)

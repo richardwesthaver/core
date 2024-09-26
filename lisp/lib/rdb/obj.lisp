@@ -471,6 +471,11 @@ internal sap slots are initialized."
   (make-rdb-stats (get-stats-raw (rdb-opts-sap (rdb-opts self)) htype)))
 
 (defmethod create-iter ((self rdb) &optional cf (opts (rocksdb-readoptions-create)))
+  (when cf
+    (setf cf (etypecase cf
+               (rdb-cf (rdb-cf-sap cf))
+               (string (rdb-cf-sap (find-cf cf self)))
+               (alien cf))))
   (unless-null-db () self
     (make-instance 'rdb-iter :sap (if cf
                                       (create-cf-iter-raw db cf opts)

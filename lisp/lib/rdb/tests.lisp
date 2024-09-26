@@ -119,7 +119,6 @@
      (get-prop tmp "rocksdb.levelstats")
      (print-stats tmp))))
 
-
 (deftest metadata ()
   "Test metadata types: CF -> LEVEL -> SST-FILE."
   (with-temp-db (tmp () :open t :destroy t)
