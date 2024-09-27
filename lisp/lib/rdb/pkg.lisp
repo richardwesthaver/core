@@ -120,7 +120,9 @@
    :rdb-cf-val-type
    :close-cf
    :open-cf
-   :close-cfs))
+   :close-cfs
+   :rdb-cf-opts
+   :with-latest-opts))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

@@ -321,7 +321,14 @@ set *errptr to a malloc()ed error message.
    :rocksdb-put-cf-function
    :rocksdb-deleted-function
    :rocksdb-put-function
-   :rocksdb-open-column-families))
+   :rocksdb-open-column-families
+   :rocksdb-create-default-env
+   :rocksdb-create-mem-env
+   :rocksdb-env-set-background-threads
+   :rocksdb-env-get-background-threads
+   :rocksdb-env-destroy
+   :rocksdb-create-dir-if-missing
+   :rocksdb-options-set-wal-dir))
 
 (in-package :rocksdb)
 

@@ -36,7 +36,7 @@ handle stored in another slot of the same object."))
   (:documentation "Implicitly pull foreign values from the sap associated with SELF."))
 (defgeneric push-cf (cf self)
   (:documentation "Push a column-family to a sap."))
-(defgeneric open-cf (self cf &optional error)
+(defgeneric open-cf (self cf &optional opts)
   (:documentation "Open column-family CF in SELF. When ERROR is non-nil signal an error if the
 column-family is already open."))
 (defgeneric open-cfs (self)

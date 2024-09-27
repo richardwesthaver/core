@@ -264,7 +264,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
         (symbol-function 'sb-debug::trace-end-breakpoint-fun) *original-trace-end-breakpoint-fun*)
   (sb-ext:lock-package (find-package 'sb-debug)))
 
-(defun start-tracing (&rest specs)
+(defun start-tracing (specs)
   (install-tracing-overrides)
   `(progn
      (trace :encapsulate t :methods t ,@specs)))
@@ -317,7 +317,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
   `(unwind-protect
         (progn
           (reset-tracing)
-          (start-tracing ,@specs)
+          (start-tracing ',specs)
           (progn
             ,@body))
      (stop-tracing)))

@@ -322,7 +322,6 @@
   (:nicknames :db)
   (:use :cl :std :id :seq :sb-mop :sb-pcl)
   (:export
-   :load-db
    :get-val
    :set-val
    :dbs

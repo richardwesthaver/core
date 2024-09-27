@@ -14,6 +14,7 @@
                (:file "prim")
                (:file "types")
                (:file "opts")
+               (:file "env")
                (:file "sst")
                (:file "db")
                (:file "checkpoint")

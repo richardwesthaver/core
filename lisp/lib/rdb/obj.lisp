@@ -159,7 +159,7 @@ just the keys currently present in TABLE."
      tslen)))
 
 ;;; column family
-(defstruct (rdb-cf (:constructor make-rdb-cf (name &key key-type val-type sap)))
+(defstruct (rdb-cf (:constructor make-rdb-cf (name &key opts key-type val-type sap)))
   "RDB Column Family structure. Contains a name, key-type, val-type,
 and a system-area-pointer to the underlying rocksdb_cf_t handle.
 
@@ -167,6 +167,7 @@ A NIL key-type or val-type indicates an unitialized value which defaults to
 'octet-vector. This is needed to distinguish the value 'octet-vector being
 supplied by the user from the default value."
   (name "" :type string)
+  (opts (default-rdb-opts) :type rdb-opts)
   (key-type nil :type (or list symbol))
   (val-type nil :type (or list symbol))
   (sap nil :type (or null alien)))
@@ -380,12 +381,12 @@ internal sap slots are initialized."
 (defmethod create-cf ((db rdb) (cf rdb-cf))
   (create-cf-raw (rdb-db db) (rdb-cf-name cf) (rdb-opts-sap (rdb-opts db))))
 
-(defmethod open-cf ((db rdb) (cf rdb-cf) &optional error)
+(defmethod open-cf ((db rdb) (cf rdb-cf) &optional (error t))
   (unless (null (rdb-cf-sap cf))
     (if error
         (rdb-error "column family is already open - close before re-opening.")
         cf)
-    (setf (rdb-cf-sap cf) (open-cf-raw (rdb-db db) (default-rocksdb-options) (rdb-cf-name cf)))))
+    (setf (rdb-cf-sap cf) (open-cf-raw (rdb-db db) (rdb-cf-opts cf) (rdb-cf-name cf)))))
 
 (defmethod open-cf ((db rdb) (cf string) &optional (error t))
   (if-let ((cf (find-cf cf db)))

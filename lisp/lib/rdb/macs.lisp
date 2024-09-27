@@ -14,9 +14,7 @@
                            (lambda (c)
                              (handle-errptr ,e ,errtyp ,params))))
             (progn ,@body))
-       (handle-errptr ,e ,errtyp ,params)
-       )))
-     
+       (handle-errptr ,e ,errtyp ,params))))
 
 ;;; opts
 (defmacro rdb-opt-setter (key)
@@ -88,11 +86,11 @@ handle will not be freed on exit."
        (rocksdb-backup-engine-close ,be-var))))
 
 ;;; top-level
+;; TODO 2024-09-26: 
 (defmacro do-db ((db opts) accessors &body body)
   "Database Iteration construct. OPTS are used to provide top-level
   options dynamically bound to DB. ACCESSORS is a list of database
-   accessors which are available to call in BODY."
-  )
+   accessors which are available to call in BODY.")
 
 ;;; temp-db
 (defvar *temp-db-path-generator*
@@ -139,3 +137,19 @@ file by a RDB instance."
      ,@(when file `((open-sst ,sst ,file)))
      ,@body
      ,@(when destroy `((destroy-sst ,sst)))))
+
+;;; opts
+(defmacro with-latest-opts ((db-var db-path) &body body)
+  `(rocksdb::with-latest-options ,(string db-path) (db-opts cf-names cf-opts)
+     (let ((opts (make-rdb-opts)))
+       (setf (rdb-opts-sap opts) db-opts)
+       (let ((cfs (coerce 
+                   (loop for name across cf-names
+                         for opt across cf-opts
+                         collect 
+                            (let ((cf-opts (make-rdb-opts)))
+                              (setf (rdb-opts-sap cf-opts) opt)
+                              (make-rdb-cf name :opts cf-opts)))
+                   'vector)))
+         (let ((,db-var (make-rdb ,db-path opts cfs)))
+           ,@body)))))

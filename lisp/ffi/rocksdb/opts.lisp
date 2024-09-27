@@ -231,8 +231,12 @@
 ;; TODO 2024-04-17: 
 ;; may need to be an int -- check src
 (define-opt-accessor rocksdb-options use-fsync boolean)
-(define-opt-accessor rocksdb-options db-log-dir c-string)
-(define-opt-accessor rocksdb-options wal-dir c-string)
+(define-alien-routine rocksdb-options-set-db-log-dir void
+  (opts (* rocksdb-options))
+  (dir c-string))
+(define-alien-routine rocksdb-options-set-wal-dir void
+  (opts (* rocksdb-options))
+  (dir c-string))
 (define-opt-accessor rocksdb-options wal-ttl-seconds unsigned-long)
 (define-opt-accessor rocksdb-options wal-size-limit-mb unsigned-long)
 (define-opt-accessor rocksdb-options manifest-preallocation-size size-t)
@@ -384,6 +388,18 @@
                       num-shard-bits
                       memory-allocator)
 
+#|
+Load the latest rocksdb options from the specified db_path.
+
+On success, num_column_families will be updated with a non-zero
+number indicating the number of column families.
+The returned db_options, column_family_names, and column_family_options
+should be released via rocksdb_load_latest_options_destroy().
+
+On error, a non-null errptr that includes the error message will be
+returned.  db_options, column_family_names, and column_family_options
+will be set to NULL.
+|#
 (def-with-errptr rocksdb-load-latest-options 
   void
   (db-path c-string)
@@ -396,7 +412,7 @@
   (column-family-options (* (* (* rocksdb-options)))))
 
 (define-alien-routine rocksdb-load-latest-options-destroy void
-  (db-options (* (* rocksdb-options)))
+  (db-options (* rocksdb-options))
   (list-column-family-names (* c-string))
   (list-column-family-options (* (* rocksdb-options)))
   (len size-t))

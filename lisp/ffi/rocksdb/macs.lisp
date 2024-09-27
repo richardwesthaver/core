@@ -18,6 +18,37 @@
 (deftype rocksdb-logger-function ()
   '(function (unsigned-byte string) (values)))
 
+;;; Options
+(defmacro with-latest-options (db-path (db-opts-var cf-names-var cf-opts-var) &body body)
+  ;;  TODO 2024-09-26: ignore unknown?
+  (with-gensyms (db-opts cf-names cf-opts)
+    `(with-alien ((,db-opts (* rocksdb-options))
+                  (,cf-names (* c-string))
+                  (,cf-opts (* (* rocksdb-options)))
+                  (ncols size-t)
+                  (errptr rocksdb-errptr))
+       (rocksdb-load-latest-options 
+        ,db-path 
+        (rocksdb-create-default-env) 
+        t
+        (rocksdb-cache-create-lru 1080)
+        (addr ,db-opts)
+        (addr ncols)
+        (addr ,cf-names)
+        (addr ,cf-opts)
+        errptr)
+       (let ((,db-opts-var ,db-opts)
+             (,cf-names-var (coerce
+                             (loop for i below ncols
+                                   collect (deref ,cf-names i))
+                             'vector))
+             (,cf-opts-var (coerce
+                            (loop for i below ncols
+                                  collect (deref ,cf-opts i))
+                            'vector)))
+         (unwind-protect ,@body
+           (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols))))))
+      
 ;;; Merge Ops
 (defmacro define-full-merge-op (name &body body)
   `(define-alien-callable ,name (* t)
