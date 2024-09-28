@@ -5,12 +5,11 @@
 ;;; Code:
 (in-package :rdb)
 
-(eval-always
- (deferror rdb-error ()
-   ((message :initarg :message
-             :reader rdb-error-message))
-   (:auto t)
-   (:documentation "Error signaled by the RDB system.")))
+(deferror rdb-error ()
+    ((message :initarg :message
+              :reader rdb-error-message))
+    (:auto t)
+    (:documentation "Error signaled by the RDB system."))
 
 (define-condition rocksdb-alien-error (rdb-error)
   ((db :initarg :db :reader rdb-error-db))

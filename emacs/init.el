@@ -6,9 +6,9 @@
 (add-to-list 'load-path (expand-file-name "lib" user-emacs-directory))
 
 (dolist (x '("util.el" "default.el" "keys.el"))
-  (let ((y (concat user-emacs-directory x))
-        (byte-compile-warnings nil)
-        (native-comp-async-warnings-errors-kind nil))
+  (let ((y (concat user-emacs-directory x)))
+    (setf byte-compile-warnings nil
+          native-comp-async-warnings-errors-kind nil)
     (if (and (native-comp-available-p) (not (eq system-type 'darwin)))
          (native-compile y)
          (byte-compile-file y))

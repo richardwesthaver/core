@@ -35,7 +35,7 @@
   :build-pathname "skc"
   :entry-point "bin/skc::start-skc"
   :components ((:file "skc"))
-  :depends-on (:std :cli))
+  :depends-on (:std :cli :vc))
 
 (defsystem :bin/packy
   :build-operation program-op

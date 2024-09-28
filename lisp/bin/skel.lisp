@@ -14,7 +14,7 @@
 (in-readtable :shell)
 
 (defopt skc-help (print-help *cli*))
-(defopt skc-version (print-version *cli*))
+(defopt skc-version (print-version *cli* t))
 (defopt skc-level *log-level*
         (setq *log-level* (if *arg* (if (stringp *arg*)
                                         (sb-int:keywordicate (string-upcase *arg*))
@@ -242,8 +242,9 @@
 (define-cli *skel-cli*
   :name "skel"
   :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
+  ;; :help t
   :description "A hacker's project compiler."
-  :thunk 'skc-show
+  :thunk skc-show
   :opts ((:name "help" :global t :description "print this message" 
 	   :thunk skc-help)
 	  (:name "version" :global t :description "print version" 
@@ -279,7 +280,7 @@
 	  :description "inspect the project skelfile"
 	  :opts ((:name "file" :description "path to skelfile" :kind file))
 	  :thunk skc-inspect)
-         #+tools
+         #+gui
          (:name view
           :description "view an object in a new GUI window"
           :thunk skc-view)

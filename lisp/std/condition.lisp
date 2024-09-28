@@ -39,12 +39,12 @@
   "Define an error condition."
   (let ((fun (member :auto options :test #'car-eql)))
     (when fun (setq options (remove (car fun) options)))
-    `(prog1
-         (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
-       (when ',fun
-         (if (member 'simple-error ',parent-types)
-             (def-simple-error-reporter ,name)
-             (def-error-reporter ,name))))))
+    `(eval-when (:compile-toplevel :load-toplevel :execute) (prog1
+                      (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
+                    (when ',fun
+                      (if (member 'simple-error ',parent-types)
+                          (def-simple-error-reporter ,name)
+                          (def-error-reporter ,name)))))))
 
 (defmacro def-error-reporter (err)
     `(defun ,err (&rest args)

@@ -9,10 +9,11 @@
   (:nicknames :skc))
 (in-package :bin/skc)
 
-(define-cli *skc-cli*
+(cli:define-cli *skc-cli*
   :name "skc"
-  :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream)))))
+  :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
+  :thunk 'cli:args)
 
-(defmain start-skc ()
-  (with-cli (*skc-cli* opts cmds) (cli:args)
-    (do-cmd *skc-cli*)))
+(cli:defmain start-skc ()
+  (cli:with-cli (*skc-cli* opts cmds) (cli:args)
+    (cli:do-cmd *skc-cli*)))

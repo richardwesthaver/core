@@ -14,7 +14,7 @@
     ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
     (t (apply #'make-instance kind slots))))
 
-(defmacro define-cli (sym &key name version description thunk opts cmds)
+(defmacro define-cli (sym &key name version #+nil (help t) description thunk opts cmds)
   "Define a symbol NAME bound to a top-level CLI object."
   (with-gensyms (%name %class)
     (if (atom sym)
@@ -22,6 +22,7 @@
               %class :cli)
         (setq %name (car sym)
               %class (cdr sym)))
+    ;; (when help)
     `(,*default-cli-def* ,%name (make-cli ,%class :name ,name
                                                   :version ,version
                                                   :description ,description
