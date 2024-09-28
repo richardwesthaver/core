@@ -26,9 +26,9 @@
     `(,*default-cli-def* ,%name (make-cli ,%class :name ,name
                                                   :version ,version
                                                   :description ,description
-                                                  :thunk ,thunk
-                                                  :opts (make-opts ',opts)
-                                                  :cmds (make-cmds ',cmds)))))
+                                                  :thunk ',thunk
+                                                  :opts ,(make-opts opts)
+                                                  :cmds ,(make-cmds cmds)))))
 
 (defmacro defmain (name (&key (exit t)) &body body)
   "Define a CLI main function in the current package."

@@ -36,7 +36,7 @@
   ;; note that cli-opts can have a nil or unbound name slot
   (name "" :type string)
   (kind 'boolean :type (or symbol list))
-  (thunk #'identity :type (or function symbol))
+  (thunk 'identity :type symbol)
   (val nil)
   (global nil :type boolean)
   (description nil :type (or null string))
@@ -67,9 +67,13 @@
 (defmethod initialize-instance :after ((self cli-opt) &key)
   (with-slots (name thunk) self
     (unless (stringp name) (setf name (format nil "~(~A~)" name)))
-    ;; REVIEW 2024-09-16: 
-    (when (symbolp thunk) (setf thunk (symbol-function thunk)))
     self))
+
+(defmethod make-load-form ((obj cli-opt) &optional env)
+  (make-load-form-saving-slots
+   obj
+   :slot-names '(name kind thunk val global description lock)
+   :environment env))
 
 (defmethod install-thunk ((self cli-opt) (lambda function) &optional compile)
   "Install THUNK into the corresponding slot in cli-cmd SELF."

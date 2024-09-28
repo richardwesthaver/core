@@ -16,7 +16,7 @@
          :accessor opts :type (vector cli-opt))
    (cmds :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd :adjustable t)
          :accessor cmds :type (vector cli-cmd))
-   (thunk :initform #'default-thunk :initarg :thunk :accessor cli-thunk :type function-lambda-expression)
+   (thunk :initform 'default-thunk :initarg :thunk :accessor cli-thunk :type symbol)
    (lock :initform nil :initarg :lock :accessor cli-lock-p :type boolean)
    (description :initarg :description :accessor cli-description :type string)
    (args :initform nil :initarg :args :accessor cli-cmd-args))
@@ -28,9 +28,14 @@ a CLI is called without arguments, and all subcommands."))
     (unless (stringp name) (setf name (format nil "~(~A~)" name)))
     (unless (vectorp cmds) (setf cmds (make-cmds cmds)))
     (unless (vectorp opts) (setf opts (make-opts opts)))
-    (when (symbolp thunk) (setf thunk (symbol-function thunk)))
     self))
 
+(defmethod make-load-form ((obj cli-cmd) &optional env)
+  (make-load-form-saving-slots 
+   obj 
+   :slot-names '(name opts cmds thunk lock description args)
+   :environment env))
+                               
 (defmethod print-object ((self cli-cmd) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A :opts ~A :cmds ~A :args ~A"
