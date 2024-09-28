@@ -26,14 +26,14 @@
 
 (defclass rdb-opts ()
   ((table :initarg :table :type hash-table :accessor rdb-opts-table)
-   (sap :initarg :sap :type (or null alien) :accessor rdb-opts-sap)))
+   (sap :initform nil :initarg :sap :type (or null alien) :accessor rdb-opts-sap)))
 
 (defmethod initialize-instance ((self rdb-opts) &rest initargs &key &allow-other-keys)
-  (with-slots (sap table) self
+  (with-slots ((%sap sap) (%table table)) self
     ;; initialize slots - remember, initargs doesn't refer to slot
     ;; names, they're opt names.
-    (unless (getf initargs :table) (setf table (make-hash-table :test #'equal)))
-    (unless (getf initargs :sap) (setf sap (rocksdb-options-create)))
+    (setf %table (or (cdr (remprop 'initargs :table)) (make-hash-table :test 'equal))
+          %sap (or (cdr (remprop 'initargs :sap)) (rocksdb-options-create)))
     (loop for (k v) on initargs by #'cddr while v
           do (let ((k (typecase k
                         (string (string-downcase k))
@@ -46,6 +46,11 @@
   (let ((opts (apply #'make-instance 'rdb-opts values)))
     (push-sap* opts)
     opts))
+
+(defun make-rdb-opts* (alien)
+  "Coerce ALIEN into an RDB-OPTS struct. This function doesn't populate the
+values in Lisp, just binds the sap."
+  (make-instance 'rdb-opts :sap alien))
 
 (defmethod get-opt ((self rdb-opts) key)
   "Return the current value of KEY in SELF if found, else return nil."
@@ -381,23 +386,23 @@ internal sap slots are initialized."
 (defmethod create-cf ((db rdb) (cf rdb-cf))
   (create-cf-raw (rdb-db db) (rdb-cf-name cf) (rdb-opts-sap (rdb-opts db))))
 
-(defmethod open-cf ((db rdb) (cf rdb-cf) &optional (error t))
-  (unless (null (rdb-cf-sap cf))
-    (if error
-        (rdb-error "column family is already open - close before re-opening.")
-        cf)
-    (setf (rdb-cf-sap cf) (open-cf-raw (rdb-db db) (rdb-cf-opts cf) (rdb-cf-name cf)))))
-
-(defmethod open-cf ((db rdb) (cf string) &optional (error t))
-  (if-let ((cf (find-cf cf db)))
-    (or (rdb-cf-sap cf)
-        (setf (rdb-cf-sap cf) (create-cf db cf)))
-    (when error (rdb-error "unable to find column-family"))))
-        
-(defmethod open-cfs ((self rdb))
-  (loop for cf across (rdb-cfs self)
-        do (setf (rdb-cf-sap cf)
-                 (create-cf self cf))))
+(defmethod open-cfs ((db rdb) &rest names)
+  (let ((cf-names) (cf-opts))
+    (loop for cf across (rdb-cfs db)
+          do (let ((name (rdb-cf-name cf)))
+               (when (or (not names) (member name names :test 'string=))
+                   (push name cf-names)
+                   (push (rdb-opts-sap (rdb-cf-opts cf)) cf-opts)))
+          finally 
+          (setf cf-names (nreverse cf-names) 
+                cf-opts (nreverse cf-opts)))
+    (multiple-value-bind (db-sap cfs) (open-cfs-raw (rdb-opts db) (rdb-name db) cf-names cf-opts)
+      (setf (rdb-db db) db-sap)
+      (loop for cf across (rdb-cfs db)
+            with i = 0
+            do (setf (rdb-cf-sap cf) (deref cfs i))
+            do (incf i))
+      db)))
 
 (defmethod close-cfs ((self rdb))
   (loop for cf across (rdb-cfs self)

@@ -30,6 +30,13 @@
   :components ((:file "skel"))
   :depends-on (:uiop :cl-ppcre :std :cli :skel))
 
+(defsystem :bin/skc
+  :build-operation program-op
+  :build-pathname "skc"
+  :entry-point "bin/skc::start-skc"
+  :components ((:file "skc"))
+  :depends-on (:std :cli))
+
 (defsystem :bin/packy
   :build-operation program-op
   :build-pathname "packy"

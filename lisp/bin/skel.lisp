@@ -360,5 +360,6 @@
           (setq *skel-project* (load-skelfile project))
           (setq *skel-path* (sk-src *skel-project*))
           (setq cli/shell:*shell-directory* (sk-src *skel-project*))))
+      (do-opts *cli* t)
       (do-cmd *cli*)
       (debug-opts *cli*))))

@@ -16,6 +16,10 @@ to initialize the instance with custom configuration."
   (make-rocksdb-options
    (lambda (o) (rocksdb-options-set-create-if-missing o t))))
 
+(defun load-opts-raw (dir)
+  (rocksdb::with-latest-options dir (db-opts names cf-opts)
+    (values db-opts names cf-opts)))
+    
 (defun get-stats-raw (opt htype)
   (with-alien ((hist (* rocksdb-statistics-histogram-data) (rocksdb-statistics-histogram-data-create)))
     (rocksdb-options-statistics-get-histogram-data opt htype hist)
@@ -116,9 +120,17 @@ to initialize the instance with custom configuration."
       (when v (octets-to-string v)))))
 
 ;;; Column Family
-(defun open-cf-raw (db name &optional (opt (rocksdb-options-create)))
-  (with-errptr (err 'rocksdb-cf-error (list :db db :cf name))
-    (rocksdb-open-column-families opt name 1 nil nil nil err)))
+(defun open-cfs-raw (db-opt name names opts)
+  (let ((n (length names)))
+    (with-alien ((cf-names (* c-string) (clone-strings names))
+                 (cf-opts (* (* rocksdb-options)))
+                 (cf-handles (* (* rocksdb-column-family-handle))))
+      (loop for opt in opts
+            for i below n
+            do (setf (deref cf-opts i) opt))
+      (with-errptr (err 'rocksdb-cf-error (list :cf name))
+        (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
+          (values db cf-handles))))))
 
 (defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
   (with-errptr (err 'rocksdb-cf-error (list :db db :cf name)) 
@@ -169,6 +181,12 @@ to initialize the instance with custom configuration."
   (let ((key-octets (string-to-octets key :null-terminate nil))
         (val-octets (string-to-octets val :null-terminate nil)))
     (put-cf-raw db cf key-octets val-octets opt)))
+
+(defun cf-name-raw (cf-handle)
+  (rocksdb-column-family-handle-get-name cf-handle (make-alien unsigned-long)))
+
+(defun cf-id-raw (cf-handle)
+  (rocksdb-column-family-handle-get-id cf-handle))
 
 ;;; Iterators
 (defun create-iter-raw (db &optional (opt (rocksdb-readoptions-create)))

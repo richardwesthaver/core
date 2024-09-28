@@ -30,9 +30,9 @@
   (options (* rocksdb-options))
   (name c-string)
   (num-column-families int)
-  (column-family-names (array c-string))
-  (column-family-options (array rocksdb-options))
-  (column-family-handles (array rocksdb-column-family-handle)))
+  (column-family-names (* c-string))
+  (column-family-options (* (* rocksdb-options)))
+  (column-family-handles (* (* rocksdb-column-family-handle))))
 
 (def-with-errptr rocksdb-open-column-families-with-ttl (* rocksdb)
   (opts (* rocksdb-options))
@@ -40,7 +40,7 @@
   (num-cfs int)
   (cf-names (array c-string))
   (cf-opts (array (* rocksdb-options)))
-  (cf-handles (array (* rocksdb-column-family-handle)))
+  (cf-handles (* (* rocksdb-column-family-handle)))
   (ttls (array int)))
 
 (def-with-errptr rocksdb-open-for-read-only-column-families (* rocksdb)

@@ -9,9 +9,11 @@
      (unwind-protect 
           (handler-bind ((sb-sys:memory-fault-error
                            (lambda (c)
+                             (declare (ignore c))
                              (handle-errptr ,e ,errtyp ,params)))
                          (error
                            (lambda (c)
+                             (declare (ignore c))
                              (handle-errptr ,e ,errtyp ,params))))
             (progn ,@body))
        (handle-errptr ,e ,errtyp ,params))))
@@ -139,17 +141,7 @@ file by a RDB instance."
      ,@(when destroy `((destroy-sst ,sst)))))
 
 ;;; opts
-(defmacro with-latest-opts ((db-var db-path) &body body)
-  `(rocksdb::with-latest-options ,(string db-path) (db-opts cf-names cf-opts)
-     (let ((opts (make-rdb-opts)))
-       (setf (rdb-opts-sap opts) db-opts)
-       (let ((cfs (coerce 
-                   (loop for name across cf-names
-                         for opt across cf-opts
-                         collect 
-                            (let ((cf-opts (make-rdb-opts)))
-                              (setf (rdb-opts-sap cf-opts) opt)
-                              (make-rdb-cf name :opts cf-opts)))
-                   'vector)))
-         (let ((,db-var (make-rdb ,db-path opts cfs)))
-           ,@body)))))
+(defmacro with-latest-opts (db &body body)
+  `(progn
+     (let ((,db (load-opts ,db)))
+       ,@body)))

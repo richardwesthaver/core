@@ -24,6 +24,9 @@
   (:documentation "Push all options to internal sap."))
 (defgeneric backfill-opts (self &key)
   (:documentation "Backfill opts from an alien."))
+(defgeneric load-opts (self)
+  (:documentation "Load existing database options. Assumes that the database has been opened and
+flushed to disk at least once."))
 (defgeneric push-sap (self key)
   (:documentation "Push a value associated with KEY to the sap associated
 with SELF. Typically used to send a value from one slot, to a foreign
@@ -36,11 +39,9 @@ handle stored in another slot of the same object."))
   (:documentation "Implicitly pull foreign values from the sap associated with SELF."))
 (defgeneric push-cf (cf self)
   (:documentation "Push a column-family to a sap."))
-(defgeneric open-cf (self cf &optional opts)
-  (:documentation "Open column-family CF in SELF. When ERROR is non-nil signal an error if the
-column-family is already open."))
-(defgeneric open-cfs (self)
-  (:documentation "Open all column-fmailies belonging to SELF."))
+(defgeneric open-cfs (self &rest names)
+  (:documentation "Open the column-families indicated by NAMES or all column-fmailies belonging
+to SELF."))
 (defgeneric close-cf (self &optional error)
   (:documentation "Close the column-family SELF. When ERROR is non-nil signal an error if the
 column-family is already closed."))

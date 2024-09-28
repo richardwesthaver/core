@@ -46,6 +46,7 @@
    :sst-put-raw :sst-delete-raw :sst-delete-range-raw :sst-file-size-raw
    :sst-put-str-raw
    :open-sst-file :close-sst-file
+   :cf-name-raw :cf-id-raw
    ;; proto
    :find-cf
    :put-key :put-kv
@@ -119,10 +120,11 @@
    :rdb-cf-key-type
    :rdb-cf-val-type
    :close-cf
-   :open-cf
    :close-cfs
    :rdb-cf-opts
-   :with-latest-opts))
+   :with-latest-opts
+   :make-rdb-opts*
+   :load-opts))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

@@ -72,22 +72,17 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
           (incf index))))
 
 (defun clone-strings (list)
-  (with-alien ((x (* (* char))
-                  (make-alien (* char) (length list))))
-    (unwind-protect
-         (labels ((populate (list index function)
-                    (declare (type sb-int:index index))
-                    (if list
-                        (let ((array (sb-ext:string-to-octets (car list) :null-terminate t)))
-                          (sb-sys:with-pinned-objects (array)
-                            (setf (deref x index) (sap-alien (sb-sys:vector-sap array) (* char)))
-                            (populate (cdr list) (1+ index) function)))
-                        (funcall function))))
-           (populate list 0
-                     (lambda ()
-                       (loop for i below (length list)
-                             do (print (cast (deref x i) c-string))))))
-      (free-alien x))))
+  (let ((len (length list)))
+    (with-alien ((x (* (* char)) (make-alien (* char) len)))
+      (labels ((populate (list index)
+                 (declare (type sb-int:index index))
+                 (if list
+                     (let ((array (sb-ext:string-to-octets (car list) :null-terminate t)))
+                       (sb-sys:with-pinned-objects (array)
+                         (setf (deref x index) (sap-alien (sb-sys:vector-sap array) (* char)))
+                         (populate (cdr list) (1+ index))))
+                     x)))
+        (cast (populate list 0) (* c-string))))))
 
 (defun c-strings-to-string-list (c-strings)
   (declare (type (alien (* c-string)) c-strings))
