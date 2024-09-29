@@ -41,9 +41,13 @@
    :compressor :compressing-stream :decompressor :decompressing-stream))
 
 (defpackage :io/zstd
-  (:use :cl :io/proto :io/flate)
+  (:use :cl :std :io/proto :io/flate)
   (:import-from :std :deferror :eval-always)
   (:export :zstd-error :zstd-compressor :zstd-decompressor))
+
+(defpackage :io/kbd
+  (:use :cl :std :io/proto :xkb)
+  (:export :kbd-error))
 
 (pkg:defpkg :io
   (:use :cl)

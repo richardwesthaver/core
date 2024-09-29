@@ -1,6 +1,11 @@
 (defsystem :io
   :description "Lisp IO Interface"
-  :depends-on (:cl-ppcre :std :obj (:feature :linux :uring) :sb-bsd-sockets :zstd :flexi-streams)
+  :depends-on (:cl-ppcre 
+               :std :obj 
+               (:feature :linux :uring) 
+               (:feature :linux :xkb) 
+               (:feature :linux :evdev)
+               :sb-bsd-sockets :zstd :flexi-streams)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
@@ -11,6 +16,7 @@
                (:file "flate")
                (:file "port")
                (:file "zstd")
+               (:file "kbd")
                (:file "xsubseq")
                (:file "smart-buffer"))
   :in-order-to ((test-op (test-op "io/tests"))))

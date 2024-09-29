@@ -6,8 +6,8 @@
 (in-package :cli/ed)
 
 (defun run-emacs (&optional file args)
-  (sb-ext:run-program (find-exe "emacs") `(,@(when file (list file)) ,@args :wait nil :output nil)))
-
+  (sb-ext:run-program (find-exe "emacs") `(,@(when file (list file)) ,@args)))
+  
 (defun run-emacsclient (&optional (file ".") (create-frame t))
   (sb-ext:run-program (find-exe "emacsclient")
                       `(,file ,@(when create-frame (list "-c")) "-a=")
