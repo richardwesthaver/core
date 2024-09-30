@@ -16,7 +16,11 @@
 
 (defpackage :evdev
   (:use :cl :std :sb-alien :evdev/input)
-  (:export))
+  (:export
+   #:libevdev-new
+   #:libevdev-new-from-fd
+   #:libevdev-free
+   #:libevdev-set-fd))
 
 (in-package :evdev)
 (define-alien-loader "evdev" t "/usr/lib/")

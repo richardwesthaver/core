@@ -25,4 +25,10 @@ if (err < 0)
 
 libevdev_free(dev);
 |#
-(deftest basic ())
+(deftest basic ()
+  (with-open-file (file "/dev/input/event4")
+    (let ((dev (libevdev-new))
+          (fd (sb-sys:fd-stream-fd file)))
+      (is (typep dev '(alien (* evdev::libevdev))))
+      (is (zerop (libevdev-set-fd dev fd)))
+      (is (null (libevdev-free dev))))))

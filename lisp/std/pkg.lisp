@@ -402,7 +402,8 @@
   (:export
    :list-all-users
    :list-all-groups
-   :with-umask))
+   :with-umask
+   :with-fd))
 
 (defpkg :std/file
   (:use :cl)

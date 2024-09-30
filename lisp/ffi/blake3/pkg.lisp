@@ -7,6 +7,7 @@
   (:nicknames :blake3)
   (:use :cl :std :sb-alien)
   (:export 
+   :load-blake3
    :+blake3-key-len+
    :+blake3-out-len+
    :+blake3-block-len+
@@ -26,13 +27,7 @@
 
 (in-package :blake3)
 
-(defvar +blake3-key-len+ 32)
-(defvar +blake3-out-len+ 32)
-(defvar +blake3-block-len+ 64)
-(defvar +blake3-chunk-len+ 1024)
-(defvar +blake3-max-depth+ 54)
-
-(define-alien-loader "blake3" t "/usr/local/lib/")
+(define-alien-loader "blake3")
 
 (define-alien-routine blake3-version c-string)
 

@@ -23,17 +23,17 @@
   (format t ";;        *print-readably* = ~a~%" *print-readably*)
   (format t ";;    *print-right-margin* = ~a~%" *print-right-margin*))
 
-(defun fmt-row (data)
-  (format nil "| ~{~A~^ | ~} |~%" data))
+(defun fmt-row (data &optional stream)
+  (format stream "| ~{~A~^ | ~} |~%" data))
 
-(defun format-sxhash (code)
+(defun format-sxhash (code &optional stream)
   "Turn the fixnum value CODE into a human-friendly string. CODE should
 be produced by `sxhash'."
   (let (r)
     (dotimes (i 8 r)
       (push (ldb (byte 8 (* i 8)) code) r))
     (format
-     nil
+     stream
      "~{~A~^-~}"
      (mapcar
       (lambda (x) (format nil "~{~(~2,'0x~)~}" x))

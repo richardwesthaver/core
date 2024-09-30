@@ -5,15 +5,13 @@
 ;;; Code:
 (in-package :evdev/input)
 
-;; from linux/time.h
-(define-alien-type timeval
-    (struct timeval
-            (tv-sec sb-unix:time-t)
-            (tv-nsec long)))
+;; (defun eviocgbit (ev len)
+;;   ;; ioctl read
+;;   (sb-posix::ioctl 8 2 "E" (+ #x20 ev) len))
 
 (define-alien-type input-event
     (struct input-event
-            (time timeval)
+            (time sb-posix::alien-timeval)
             (type (unsigned 16))
             (code (unsigned 16))
             (value (signed 32))))

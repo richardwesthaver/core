@@ -33,9 +33,9 @@
   (accepted (* rustls-accepted))
   (i size-t))
 
-(define-alien-routine rustls-accepted-alpn rustls-slice-bytes
-  (accepted (* rustls-accepted))
-  (i size-t))
+;; (define-alien-routine rustls-accepted-alpn rustls-slice-bytes
+;;   (accepted (* rustls-accepted))
+;;   (i size-t))
 
 (define-alien-routine rustls-accepted-into-connection rustls-result
   (accepted (* rustls-accepted))
@@ -232,7 +232,7 @@
   (count size-t)
   (out-n (* size-t)))
 
-(define-alien-routine rustl-connection-free void (* rustls-connection))
+(define-alien-routine rustl-connection-free void (conn (* rustls-connection)))
 
 (define-alien-routine rustls-error void (result rustls-result) (len size-t) (out-n (* size-t)))
 
@@ -243,9 +243,9 @@
 (define-alien-routine rustls-slice-slice-bytes-len size-t
   (input (* rustls-slice-slice-bytes)))
 
-(define-alien-routine rustls-slice-slice-bytes-get rustls-slice-bytes
-  (input (* rustls-slice-slice-bytes))
-  (n size-t))
+;; (define-alien-routine rustls-slice-slice-bytes-get rustls-slice-bytes
+;;   (input (* rustls-slice-slice-bytes))
+;;   (n size-t))
 
 (define-alien-routine rustls-slice-str-len size-t
   (input (* rustls-slice-str)))
@@ -259,10 +259,31 @@
 
 (define-alien-routine rustls-server-config-builder-free void (config (* rustls-server-config-builder)))
 
-(define-alien-routine rustls-server-config-builder-build (* rustls-server-config) (* rustls-server-config-builder))
+(define-alien-routine rustls-server-config-builder-build (* rustls-server-config) (builder (* rustls-server-config-builder)))
 
 (define-alien-routine rustls-server-config-free void (config (* rustls-server-config)))
 
 (define-alien-routine rustls-server-connection-new rustls-result
   (config (* rustls-server-config))
   (conn-out (* (* rustls-connection))))
+
+(define-alien-routine rustls-server-connection-get-server-name rustls-result
+  (conn (* rustls-connection))
+  (buf (* unsigned-char))
+  (count size-t)
+  (out-n (* size-t)))
+
+(define-alien-routine rustls-server-config-builder-set-hello-callback rustls-result
+  (builder (* rustls-server-config-builder))
+  (callback rustls-client-hello-callback))
+
+(define-alien-routine rustls-client-hello-select-certified-key rustls-result
+  (hello (* rustls-client-hello))
+  (certified-keys (* (* rustls-certified-key)))
+  (certified-keys-len size-t)
+  (out-key (* (* rustls-certified-key))))
+
+(define-alien-routine rustls-server-config-builder-set-persistence rustls-result
+  (builder (* rustls-server-config-builder))
+  (get-cb rustls-session-store-get-callback)
+  (put-cb rustls-session-store-put-callback))

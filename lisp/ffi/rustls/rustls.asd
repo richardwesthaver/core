@@ -10,8 +10,8 @@
 (defsystem :rustls
   :depends-on (:std)
   :components ((:file "pkg")
-               (:file "macs")
-               (:file "types"))
+               (:file "types")
+               (:file "rustls"))
   :in-order-to ((test-op (test-op "rustls/tests"))))
 
 (defsystem :rustls/tests

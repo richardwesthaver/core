@@ -35,3 +35,8 @@
          (sb-posix:umask ,umask)))))
 
 ;; (with-umask #o22 nil)
+
+(defmacro with-fd ((fvar fname &key (flags #.sb-posix:o-rdonly) (close t)) &body body)
+  `(let* ((,fvar (sb-posix:open ,fname ,flags)))
+     (unwind-protect (progn ,@body)
+       ,@(when close `(sb-posix:close ,fvar)))))

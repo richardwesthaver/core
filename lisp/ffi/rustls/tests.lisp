@@ -11,5 +11,7 @@
 
 (load-rustls)
 
-(deftest rustls ())
+(deftest sanity ()
+  (is (stringp (rustls::rustls-version))))
 
+(deftest basic ())
