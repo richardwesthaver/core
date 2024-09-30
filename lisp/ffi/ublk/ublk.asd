@@ -15,7 +15,9 @@
   :in-order-to ((test-op (test-op "ublk/tests")))
   :components ((:file "pkg")
                (grovel-constants-file "constants"
-                                      :package :ublk))
+                                      :package :ublk)
+               (:file "cmd")
+               (:file "srv"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :ublk)))
 
 (defsystem "ublk/tests"

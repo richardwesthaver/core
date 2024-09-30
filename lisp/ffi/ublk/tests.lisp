@@ -10,3 +10,5 @@
 (in-suite :ublk)
 
 (load-ublksrv)
+
+(deftest sanity ())
