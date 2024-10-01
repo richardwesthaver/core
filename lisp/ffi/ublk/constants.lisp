@@ -11,6 +11,7 @@
  (:integer +ublksrv-queue-idle+ "UBLKSRV_QUEUE_IDLE" nil t)
  (:integer +ublksrv-queue-ioctl-op+ "UBLKSRV_QUEUE_IOCTL_OP" nil t)
  (:integer +ublksrv-user-copy+ "UBLKSRV_USER_COPY" nil t)
+ (:integer +ublksrv-tgt-name-max-len+ "UBLKSRV_TGT_NAME_MAX_LEN" nil t)
  (:integer +ublksrv-tgt-max-fds+ "UBLKSRV_TGT_MAX_FDS" nil t)
  (:integer ublk-cmd-get-queue-affinity "UBLK_CMD_GET_QUEUE_AFFINITY" nil t)
  (:integer +ublk-cmd-get-dev-info+ "UBLK_CMD_GET_DEV_INFO" nil t)

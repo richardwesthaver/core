@@ -23,7 +23,8 @@
    :blake3-hasher-update
    :blake3-hasher-finalize
    :blake3-hasher-finalize-seek
-   :blake3-hasher-reset))
+   :blake3-hasher-reset
+   :with-blake3-hasher))
 
 (in-package :blake3)
 
@@ -55,7 +56,7 @@
 
 (define-alien-routine blake3-hasher-init-derive-key void 
   (self (* blake3-hasher))
-  (context (* char)))
+  (context c-string))
 
 (define-alien-routine blake3-hasher-init-derive-key-raw void 
   (self (* blake3-hasher))
@@ -75,7 +76,12 @@
 (define-alien-routine blake3-hasher-finalize-seek void 
   (self (* blake3-hasher)) 
   (seek (unsigned 64)) 
-  (out (* (unsigned 8))) 
+  (out (* unsigned-char))
   (out-len size-t))
 
 (define-alien-routine blake3-hasher-reset void (self (* blake3-hasher)))
+
+(defmacro with-blake3-hasher (hvar &body body)
+  `(with-alien ((,hvar blake3-hasher))
+     (blake3-hasher-init ,hvar)
+     ,@body))

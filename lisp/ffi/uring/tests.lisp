@@ -9,9 +9,8 @@
 (deftest sanity ()
   (is (= 1 (io-uring-check-version (io-uring-major-version) (io-uring-minor-version)))))
 
-(deftest params ()
+(deftest params ())
 
-  )
 (deftest setup ()
   ;; (io-uring-setup
   )
