@@ -25,6 +25,12 @@
 (defun clap-invalid-argument (arg &key reason kind)
   (error 'clap-invalid-argument :name arg :kind kind :reason reason))
 
+(defgeneric cmds (self))
+(defgeneric opts (self))
+
+(defgeneric cli-args (self)
+  (:method ((self null)) (args)))
+
 (defgeneric push-cmd (cmd place))
 
 (defgeneric push-opt (opt place))
@@ -45,7 +51,7 @@
 
 (defgeneric active-cmds (self))
 
-(defgeneric active-opts (self &optional global))
+(defgeneric active-opts (self))
 
 (defgeneric activate-opt (self))
 
@@ -57,7 +63,7 @@
 
 (defgeneric do-opt (self))
 
-(defgeneric do-opts (self &optional global))
+(defgeneric do-opts (self))
 
 (defgeneric call-cmd (self args opts))
 

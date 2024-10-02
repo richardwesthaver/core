@@ -19,7 +19,7 @@
    (thunk :initform 'default-thunk :initarg :thunk :accessor cli-thunk :type symbol)
    (lock :initform nil :initarg :lock :accessor cli-lock-p :type boolean)
    (description :initarg :description :accessor cli-description :type string)
-   (args :initform nil :initarg :args :accessor cli-cmd-args))
+   (args :initform nil :initarg :args :accessor cli-args))
   (:documentation "CLI command class inherited by both the 'main' command which is executed when
 a CLI is called without arguments, and all subcommands."))
 
@@ -38,11 +38,12 @@ a CLI is called without arguments, and all subcommands."))
                                
 (defmethod print-object ((self cli-cmd) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A :opts ~A :cmds ~A :args ~A"
+    (format stream "~A :active ~a :opts ~A :cmds ~A :args ~A"
             (cli-name self)
+            (cli-lock-p self)
             (length (opts self))
             (length (cmds self))
-            (length (cli-cmd-args self)))))
+            (length (cli-args self)))))
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
@@ -138,12 +139,8 @@ a CLI is called without arguments, and all subcommands."))
   (let ((match (find-opt self name active)))
     (substitute new match (opts self) :test 'cli-equal)))
 
-(defmethod active-opts ((self cli-cmd) &optional global)
-  (remove-if-not 
-   (if global 
-       #'active-global-opt-p
-       #'cli-opt-lock)
-   (opts self)))
+(defmethod active-opts ((self cli-cmd))
+  (remove-if-not 'cli-opt-lock (opts self)))
 
 (defmethod find-short-opts ((self cli-cmd) ch &key recurse)
   (let ((ret))
@@ -245,7 +242,7 @@ an object."
                   (setf (find-cmd self (cli-name form)) form)
                   (log:trace! (format nil "installing cmd ~A" (cli-name form))))
                  (arg (push-arg form self)))))
-    (setf (cli-cmd-args self) (nreverse (cli-cmd-args self)))
+    (setf (cli-args self) (nreverse (cli-args self)))
     self))
 
 (defmethod install-thunk ((self cli-cmd) (lambda function) &optional compile)
@@ -256,7 +253,7 @@ an object."
 
 (defmethod push-arg (arg (self cli-cmd))
   "Push an ARG onto the corresponding slot of a CLI-CMD."
-  (push arg (cli-cmd-args self)))
+  (push arg (cli-args self)))
 
 (defmethod parse-args ((self cli-cmd) args &key (compile t))
   "Parse ARGS and return the updated object SELF.
@@ -272,8 +269,8 @@ t, in which case a list of strings is assumed."
   (trace! "calling command:" args opts)
   (funcall (cli-thunk self) args opts))
 
-(defmethod do-opts ((self cli-cmd) &optional global)
-  (do-opts (active-opts self) global))
+(defmethod do-opts ((self cli-cmd))
+  (do-opts (active-opts self)))
 
 (defmethod do-cmd ((self cli-cmd))
   "Perform the active command or subcommand, recursively calling DO-CMD on
@@ -281,7 +278,11 @@ subcommands until a level is reached which satisfies SOLOP. active OPTS are
 evaluated with DO-OPTS along the way."
   (do-opts self)
   (if (solop self)
-      (call-cmd self (cli-cmd-args self) (active-opts self))
+      (prog1 (call-cmd self (cli-args self) (active-opts self))
+        ;; release opts
+        (loop for o across (active-opts self)
+              do (setf (cli-opt-lock o) nil)))
       (loop for c across (active-cmds self)
-            do (do-cmd c))))
+            do (do-cmd c)))
+  (setf (cli-lock-p self) nil))
 

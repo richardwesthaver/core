@@ -25,6 +25,7 @@
 
 (defpackage :cli/clap/proto
   (:use :cl :std :log :sb-ext)
+  (:import-from :cli/clap/util :args)
   (:export :proc-args :clap-error :find-short-opts
    :find-cmd :find-opts :parse-args :print-help
    :print-usage :print-version :do-cmds :do-cmd
@@ -45,7 +46,10 @@
    :clap-invalid-argument
    :activate-cmd
    :activate-opt
-   :find-opt))
+   :find-opt
+   :cli-args
+   :opts
+   :cmds))
 
 (defpackage :cli/clap/ast
   (:use :cl :std :log :dat/sxp)
@@ -61,10 +65,13 @@
    :make-opts :make-cmds :parse-bool-opt :parse-string-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op
    :pasre-num-op :parse-file-op :parse-dir-op :cli
-   :cli-cd :with-cli :opts :cmds :debug-opts
+   :cli-cd :with-cli :debug-opts
    :cli-opt :cli-cmd :cli-opt-val :cli-opt-lock :cli-opt-name
    :active-cmds
-   :%compose-keyword-opt))
+   :%compose-keyword-opt
+   :cli-cmd-args
+   :cli-lock-p
+   :cli-name))
 
 (defpackage :cli/clap/simple
   (:use :cl :std :log :sb-ext)

@@ -38,7 +38,6 @@
   (kind 'boolean :type (or symbol list))
   (thunk 'identity :type symbol)
   (val nil)
-  (global nil :type boolean)
   (description nil :type (or null string))
   (lock nil :type boolean))
 
@@ -47,6 +46,9 @@
 
 (defmethod activate-opt ((self cli-opt))
   (setf (cli-opt-lock self) t))
+
+(defmethod cli-lock-p ((self cli-opt))
+  (cli-opt-lock self))
 
 (defun %compose-short-opt (o)
   (setf (cli-opt-val o) t)
@@ -72,7 +74,7 @@
 (defmethod make-load-form ((obj cli-opt) &optional env)
   (make-load-form-saving-slots
    obj
-   :slot-names '(name kind thunk val global description lock)
+   :slot-names '(name kind thunk val description lock)
    :environment env))
 
 (defmethod install-thunk ((self cli-opt) (lambda function) &optional compile)
@@ -83,26 +85,24 @@
 
 (defmethod print-object ((self cli-opt) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A :global ~A :val ~A"
+    (format stream "~A :active ~A :val ~A"
             (cli-opt-name self)
-            (cli-opt-global self)
+            (cli-opt-lock self)
             (cli-opt-val self))))
 
 (defmethod print-usage ((self cli-opt) &optional stream)
-  (format stream "-~(~{~A~^/--~}~)~A~A"
+  (format stream "-~(~{~A~^/--~}~) ~A"
           (let ((n (cli-opt-name self)))
             (declare (simple-string n))
             (list (make-shorty n) n))
-          (if (cli-opt-global self) "* " " ")
           (if-let ((d (and (slot-boundp self 'description) (cli-opt-description self))))
             (format stream ":  ~A" d)
             "")))
 
 (defmethod cli-equal ((a cli-opt) (b cli-opt))
-  (with-slots (name global kind) a
-    (with-slots ((bn name) (bg global) (bk kind)) b
+  (with-slots (name kind) a
+    (with-slots ((bn name) (bk kind)) b
       (and (equal name bn)
-           (eq global bg)
            (equal kind bk)))))
 
 (defmethod call-opt ((self cli-opt) arg)
@@ -111,13 +111,6 @@
 (defmethod do-opt ((self cli-opt))
   (setf (cli-opt-val self) (call-opt self (cli-opt-val self))))
 
-(defmethod do-opts ((self vector) &optional global)
+(defmethod do-opts ((self vector))
   (loop for opt across self
-        do (if global 
-               (when (cli-opt-global opt)
-                 (do-opt opt))
-               (do-opt opt))))
-
-(defun active-global-opt-p (opt)
-  "Return non-nil if OPT is active at runtime and global."
-  (and (cli-opt-lock opt) (cli-opt-global opt)))
+        do (do-opt opt)))

@@ -48,8 +48,7 @@
        (lambda (x)
          (etypecase x
            (string (make-cli-opt :name x))
-           (list (apply #'make-cli :opt x))
-           (t (make-cli :opt :name (format nil "~(~A~)" x) :global t))))
+           (list (apply #'make-cli :opt x))))
        opts))
 
 (defun make-cmds (cmds)
@@ -73,7 +72,7 @@
   (:documentation "CLI"))
 
 (defmethod print-usage ((self cli) &optional stream)
-  (iprintln (format nil "usage: ~A [global] <command> [<arg>]~%" (cli-name self)) 2 stream))
+  (iprintln (format nil "usage: ~A [opts] <command> [<arg>]~%" (cli-name self)) 2 stream))
 
 (defmethod print-version ((self cli) &optional stream)
   (println (cli-version self) stream))
@@ -105,7 +104,7 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 (declaim (inline debug-opts))
 (defun debug-opts (cli)
   (let ((o (active-opts cli))
-        (a (cli-cmd-args cli))
+        (a (cli-args cli))
         (c (active-cmds cli)))
     (log:debug! :pwd (cli-cd cli) :active-opts o :cmd-args a :active-cmds c)))
 

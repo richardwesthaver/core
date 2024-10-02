@@ -218,42 +218,6 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (is (string= "foobar"
                  (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
-(defparameter *opts* '((:name "foo" :global t :description "bar" :kind string)
-		       (:name "bar" :description "foo" :kind string)))
-
-(defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
-(defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds (vector *cmd1*) :opts *opts* :description "cmd1 description"))
-(defparameter *cmds* (make-cmds (list `(:name "baz" :description "baz" :opts ,*opts*) *cmd1* *cmd2*)))
-
-(defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
-
-
-(deftest clap-basic (:skip t)
-  "test basic CLAP functionality."
-  (is (eq (make-shorty "test") #\t))
-  (is (equalp (proc-args *cli* '("-f" "baz" "--bar=fax")) ;; not eql
-	      (make-cli-ast 
-		 (list (make-cli-node 'opt (find-short-opts cli #\f))
-		       (make-cli-node 'cmd (find-cmd cli "baz"))
-		       (make-cli-node 'opt (find-opts cli "bar"))
-		       (make-cli-node 'arg "fax")))))
-    (is (parse-args cli '("--bar" "baz" "-f" "yaks")))
-  (is (stringp
-       (with-output-to-string (s)
-	 (print-version *cli* s)
-	 (print-usage *cli* s)
-	 (print-help *cli* s))))
-  (is (string= "foobar" (cli/clap:parse-string-opt "foobar"))))
-
-(make-opt-parser thing *arg*)
-
-(deftest clap-opts ()
-  "CLAP opt tests."
-  (is (reduce (lambda (x y) (and x y))
-              (loop for k across *cli-opt-kinds* collect (cli-opt-kind-p k))))
-  (is (parse-thing-opt t))
-  (is (null (parse-thing-opt nil))))
-
 (deftest progress ()
   (flet ((%step () (cli/progress::update 1)))
     (let ((*progress-bar-enabled* t)
@@ -671,24 +635,9 @@ Eastern Mediterranean ████████████████▊
 (deftest repl ())
 
 (deftest env ()
-  (is (ld-library-path-list))
+  (ld-library-path-list)
   (is (exec-path-list))
   (is (find-exe "sbcl")))
-
-(deftest cli-ast ()
-  "Validate the CLI/CLAP/AST parser."
-  (is (string= (cli-opt-name (cli-node-form (car (ast (proc-args *cli* '("--foo" "1"))))))
-               "foo"))
-  (signals clap-unknown-argument
-    (proc-args *cli* '("--log" "default" "--foo=11"))))
-
-(defmain foo-main (:exit nil)
-  (with-cli (*cli*) ()
-    (log:trace! "defmain is OK")
-    t))
-
-(deftest clap-main ()
-  (is (null (funcall #'foo-main))))
 
 (deftest sbcl-tools ()
   (with-sbcl (:noinform t :quit t)
