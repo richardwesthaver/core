@@ -9,14 +9,12 @@
    :skel-io-error
    :skel-compile-error))
 
-(defpackage :skel/core/types
-  (:use :cl :std)
-  (:export :vc-designator :license-designator :script-designator
-   :contact-designator))
-
 (defpackage :skel/core/proto
   (:use :cl :std)
   (:export
+   ;; types
+   :vc-designator :license-designator :script-designator :contact-designator
+   ;; generics
    :sk-run :sk-new 
    :sk-tangle :sk-weave
    :sk-call :sk-call*
@@ -53,7 +51,7 @@
    :make-shebang-comment))
 
 (defpackage :skel/core/vars
-  (:use :cl :std :skel/core/types)
+  (:use :cl :std :skel/core/proto)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:export :*user-skelrc* :*system-skelrc* :*keep-ast*
    :*skel-project* :*default-skelrc*
@@ -64,7 +62,7 @@
 
 (defpackage :skel/core/obj
   (:use :cl :std :obj
-   :skel/core/proto :skel/core/err :skel/core/types :skel/core/vars
+   :skel/core/proto :skel/core/err :skel/core/vars
    :dat/sxp :skel/core/header :vc :log)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-stash :sk-cache :sk-registry :sk-user
@@ -139,6 +137,6 @@
            :init-skel-function-scope))
 
 (defpackage :skel/core/print
-  (:use :cl :std :skel/core/err :skel/core/obj :skel/core/types :skel/core/proto :skel/core/vars)
+  (:use :cl :std :skel/core/err :skel/core/obj :skel/core/proto :skel/core/vars)
   (:export
    :*sk-print-dispatch-table*))

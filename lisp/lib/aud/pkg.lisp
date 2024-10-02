@@ -1,5 +1,8 @@
 (defpackage :aud
-  (:use :cl :std :dat/midi :obj/music :sndfile :alsa))
+  (:use :cl :std :dat/midi :sndfile :alsa))
+
+(defpackage :aud/music
+  (:use :cl :std :aud))
 
 (defpackage :aud/mpd
   (:use :cl :std :sb-bsd-sockets :net/core :net/util)

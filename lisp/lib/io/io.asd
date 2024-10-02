@@ -9,6 +9,7 @@
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
+               (:file "fast")
                (:file "ring" :if-feature :linux)
                (:file "socket")
                (:file "stream")

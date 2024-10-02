@@ -16,7 +16,6 @@
     :components 
     ((:file "pkg")
      (:file "err")
-     (:file "types")
      (:file "proto")
      (:file "header")
      (:file "vars")

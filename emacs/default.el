@@ -369,21 +369,25 @@ function: '(ql:quickload :clouseau)'."
 ;;   :ensure t
 ;;   :config
 ;;   (setq graphviz-dot-indent-width 2))
+
 ;;; Comments
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
   "List of strings with comment keywords."
-  :group 'default)
+  :group 'default
+  :type 'list)
 
 (defcustom prog-comment-timestamp-format-concise "%F"
   "Specifier for date in `prog-comment-timestamp-keyword'.
 Refer to the doc string of `format-time-string' for the available
 options."
-  :group 'default)
+  :group 'default
+  :type 'string)
 
 (defcustom prog-comment-timestamp-format-verbose "%F %T %z"
   "Like `prog-comment-timestamp-format-concise', but longer."
-  :group 'default)
+  :group 'default
+  :type 'string)
 
 ;;;###autoload
 (defun prog-comment-dwim (arg)
@@ -570,7 +574,8 @@ Interactively, NUMBER is the prefix arg."
 ;;; Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode
   "Default major mode for new scratch buffers"
-  :group 'default)
+  :group 'default
+  :type 'symbol)
 
 ;; Adapted from the `scratch.el' package by Ian Eure.
 (defun default-scratch-list-modes ()

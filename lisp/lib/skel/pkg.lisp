@@ -32,9 +32,8 @@
 ;;; Code:
 (pkg:defpkg :skel/core
   (:use :cl :std)
-  (:use-reexport :skel/core/err :skel/core/types :skel/core/proto
-   :skel/core/vars :skel/core/header :skel/core/obj :skel/core/util
-   :skel/core/vm :dat/sxp))
+  (:use-reexport :skel/core/err :skel/core/proto :skel/core/vars 
+   :skel/core/header :skel/core/obj :skel/core/util :skel/core/vm :dat/sxp))
 
 (pkg:defpkg :skel/comp
   (:use :cl :std)
