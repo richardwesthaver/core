@@ -245,15 +245,15 @@
   ;; :help t
   :description "A hacker's project compiler."
   :thunk skc-show
-  :opts ((:name "help" :global t :description "print this message" 
+  :opts ((:name "help" :description "print this message" 
 	   :thunk skc-help)
-	  (:name "version" :global t :description "print version" 
+	  (:name "version" :description "print version" 
 	   :thunk skc-version)
-	 (:name "level" :global t :description "set log level (warn,info,debug,trace)"
+	 (:name "level" :description "set log level (warn,info,debug,trace)"
 	  :thunk skc-level)
-	 (:name "config" :global t :description "set a custom skel user config" :kind file)
-	 (:name "input" :global t :description "input source" :kind string)
-	 (:name "output" :global t :description "output target" :kind string))
+	 (:name "config" :description "set a custom skel user config" :kind file)
+	 (:name "input" :description "input source" :kind string)
+	 (:name "output" :description "output target" :kind string))
   :cmds ((:name init
 	  :description "initialize a skelfile in the current directory"
           :opts (:name "name" :description "project name" :kind string)
@@ -361,6 +361,5 @@
           (setq *skel-project* (load-skelfile project))
           (setq *skel-path* (sk-src *skel-project*))
           (setq cli/shell:*shell-directory* (sk-src *skel-project*))))
-      (do-opts *cli* t)
       (do-cmd *cli*)
       (debug-opts *cli*))))

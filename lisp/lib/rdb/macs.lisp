@@ -34,14 +34,16 @@
          ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
          (rocksdb-options-destroy ,opt)))))
 
-(defmacro with-db ((db-var db) &body body)
+(defmacro with-db ((db-var db &key open close) &body body)
   "Bind DB-VAR to the database object DB for the lifetime of BODY."
   `(let ((,db-var ,db))
      (handler-bind ((error (lambda (condition)
                              (error 'rdb-error
                                     :message
                                     (format nil "WITH-DB signaled: ~A" condition)))))
-     ,@body)))
+       ,@(when open `(open-db ,db-var))
+       ,@(if close `(unwind-protect (progn ,@body) (close ,db-var))
+             body))))
 
 ;;; cf
 (defmacro with-cf ((cf-var cf) &body body)

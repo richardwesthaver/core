@@ -48,7 +48,8 @@
        (lambda (x)
          (etypecase x
            (string (make-cli-opt :name x))
-           (list (apply #'make-cli :opt x))))
+           (list (apply #'make-cli :opt x))
+           (symbol (make-cli-opt :name (string-downcase (symbol-name x ))))))
        opts))
 
 (defun make-cmds (cmds)

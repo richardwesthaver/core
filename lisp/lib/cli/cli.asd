@@ -42,5 +42,8 @@
   :components ((:module "tests"
                 :components
                 ((:file "pkg")
-                 (:file "clap"))))
+                 (:file "shell")
+                 (:file "ansi")
+                 (:file "clap")
+                 (:file "tools"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :cli)))

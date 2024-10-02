@@ -186,10 +186,10 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
   :version "0.1.0"
   :description "user home manager"
   :thunk 'homer-check
-  :opts ((:name "level" :global t :description "set the log level" :thunk homer-log-level)
-         (:name "help" :global t :description "print help" :thunk homer-help)
-         (:name "version" :global t :description "print version" :thunk homer-version)
-         (:name "force" :global t :description "use force" :thunk homer-force))
+  :opts ((:name "level" :description "set the log level" :thunk homer-log-level)
+         (:name "help" :description "print help" :thunk homer-help)
+         (:name "version" :description "print version" :thunk homer-version)
+         (:name "force" :description "use force" :thunk homer-force))
   :cmds ((:name show :thunk homer-show)
          (:name check :thunk homer-check)
          (:name push :thunk homer-push)

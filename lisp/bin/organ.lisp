@@ -37,9 +37,9 @@
   :version "0.0.1"
   :description "org-mode toolbox"
   :thunk 'organ-describe
-  :opts ((:name "level" :global t :description "set the log level" :thunk organ-log-level)
-	 (:name "help" :global t :description "print help" :thunk organ-help)
-	 (:name "version" :global t :description "print version" :thunk organ-version)
+  :opts ((:name "level" :description "set the log level" :thunk organ-log-level)
+	 (:name "help" :description "print help" :thunk organ-help)
+	 (:name "version" :description "print version" :thunk organ-version)
          ;; (:name "output" :description "output file" :kind file :thunk organ-output)
          )
   :cmds ((:name inspect 

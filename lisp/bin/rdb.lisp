@@ -74,10 +74,10 @@
   :version "0.1.0"
   :thunk 'rdb-show
   :description "A simple helper for RocksDB."
-  :opts ((:name "level" :global t :description "set the log level" :thunk rdb-log-level)
-         (:name "help" :global t :description "print help" :thunk rdb-help)
-         (:name "version" :global t :description "print version" :thunk rdb-version)
-         (:name "db" :global t :description "target db" :thunk rdb-target-db :kind dir))
+  :opts ((:name "level" :description "set the log level" :thunk rdb-log-level)
+         (:name "help" :description "print help" :thunk rdb-help)
+         (:name "version" :description "print version" :thunk rdb-version)
+         (:name "db" :description "target db" :thunk rdb-target-db :kind dir))
   :cmds ((:name new
           :thunk rdb-new)
          (:name show
@@ -90,9 +90,8 @@
 (defmain start-rdb ()
   (let ((*log-level* :info))
     (with-cli (*rdb-cli* opts cmds args) ()
-      (do-opts (active-opts *cli* t))
       (if (active-cmds *cli*)
-          (let ((*rdb* (create-db (do-opt (car (find-opts *cli* "db"))))))
+          (rdb:with-db (*rdb* (create-db (do-opt (car (find-opts *cli* "db")))))
             (do-cmd *cli*)
-            (close-db *rdb*))
+              (close-db *rdb*))
           (print-help *cli*)))))
