@@ -11,4 +11,8 @@
 
 (load-sndfile)
 
-(deftest sanity ())
+(deftest sanity ()
+  (is (stringp (sf-version-string))))
+
+(deftest list-formats ()
+  "List all available audio file formats.")

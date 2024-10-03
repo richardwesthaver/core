@@ -440,7 +440,7 @@ subdirectories."
 
 (defun count-file-lines (path)
   "Count the number of non-empty lines in the file at PATH. A line is empty if
-it only contains space or tabulation characters."
+it only contains spaces or tab characters."
   (declare (type pathname path))
   (with-open-file (stream path :element-type '(unsigned-byte 8))
     (do ((nb-lines 0)

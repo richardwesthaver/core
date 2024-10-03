@@ -2,85 +2,153 @@
 
 ;;; Commentary:
 
+;; see http://www.mega-nerd.com/libsndfile/api.html
+
 ;;; Code:
 (defpackage :sndfile
   (:use :cl :std :sb-alien)
-  (:export ))
+  (:export :sf-version-string))
 
 (in-package :sndfile)
 
 (define-alien-loader "sndfile" t "/usr/lib/")
-;; (load-sndfile)
 
-(defconstant %seek-set 0)
-(defconstant %seek-cur 1)
-(defconstant %seek-end 2)
+(define-alien-type sf-count long)
 
-(defvar *type-constants* nil)
-(defvar *subtype-constants* nil)
+(define-alien-type sf-info
+    (struct sf-info
+            (frames sf-count)
+            (samplerate int)
+            (channels int)
+            (format int)
+            (sections int)
+            (seekable int)))
 
-(defmacro define-format-type (name value)
-  `(progn
-     (defconstant ,name ,value)
-     (pushnew ',name *type-constants*)))
+(define-alien-type sf-format-info
+    (struct sf-format-info
+            (format int)
+            (name c-string)
+            (extension c-string)))
 
-(defmacro define-format-subtype (name value)
-  `(progn
-     (defconstant ,name ,value)
-     (pushnew ',name *subtype-constants*)))
+;; SF_SEEK_*
+(define-alien-enum (sf-seek-mode int)
+                   :set 0
+                   :cur 1
+                   :end 2)
 
-(define-format-type sf-format-wav #x010000)               ; Microsoft WAV format (little endian default). 
-(define-format-type sf-format-aiff #x020000)               ; Apple/SGI AIFF format (big endian). 
-(define-format-type sf-format-au #x030000)               ; Sun/NeXT AU format (big endian). 
-(define-format-type sf-format-raw #x040000)               ; RAW PCM data. 
-(define-format-type sf-format-paf #x050000)               ; Ensoniq PARIS file format. 
-(define-format-type sf-format-svx #x060000)               ; Amiga IFF / SVX8 / SV16 format. 
-(define-format-type sf-format-nist #x070000)               ; Sphere NIST format. 
-(define-format-type sf-format-voc #x080000)               ; VOC files. 
-(define-format-type sf-format-ircam #x0A0000)               ; Berkeley/IRCAM/CARL 
-(define-format-type sf-format-w64 #x0B0000)               ; Sonic Foundry's 64 bit RIFF/WAV 
-(define-format-type sf-format-mat4 #x0C0000)               ; Matlab (tm) V4.2 / GNU Octave 2.0 
-(define-format-type sf-format-mat5 #x0D0000)               ; Matlab (tm) V5.0 / GNU Octave 2.1 
-(define-format-type sf-format-pvf #x0E0000)               ; Portable Voice Format 
-(define-format-type sf-format-xi #x0F0000)               ; Fasttracker 2 Extended Instrument 
-(define-format-type sf-format-htk #x100000)               ; HMM Tool Kit format 
-(define-format-type sf-format-sds #x110000)               ; Midi Sample Dump Standard 
-(define-format-type sf-format-avr #x120000)               ; Audio Visual Research 
-(define-format-type sf-format-wavex #x130000)               ; MS WAVE with WAVEFORMATEX 
-(define-format-type sf-format-sd2 #x160000)               ; Sound Designer 2 
-(define-format-type sf-format-flac #x170000)               ; FLAC lossless file format 
-(define-format-type sf-format-caf #x180000)               ; Core Audio File format 
+;; SFD_*
+(define-alien-enum (sf-dither int)
+                   :default-level 0
+                   :custom-level #x40000000
+                   :no-dither 500
+                   :white 501
+                   :triangular-pdf 502)
 
-;;;; Subtypes from here on. 
+(define-alien-type sf-dither-info
+    (struct sf-dither-info
+            (type int)
+            (level double)
+            (name c-string)))
 
-(define-format-subtype sf-format-pcm-s8 #x0001)                 ; Signed 8 bit data 
-(define-format-subtype sf-format-pcm-16 #x0002)                 ; Signed 16 bit data 
-(define-format-subtype sf-format-pcm-24 #x0003)                 ; Signed 24 bit data 
-(define-format-subtype sf-format-pcm-32 #x0004)                 ; Signed 32 bit data 
-(define-format-subtype sf-format-pcm-u8 #x0005)                 ; Unsigned 8 bit data (WAV and RAW only) 
+(define-alien-type sf-embed-file-info
+    (struct sf-embed-file-info
+            (offset sf-count)
+            (length sf-count)))
 
-(define-format-subtype sf-format-float #x0006)                 ; 32 bit float data 
-(define-format-subtype sf-format-double #x0007)                 ; 64 bit float data 
+(define-alien-type sf-cue-point
+    (struct sf-cue-point
+            (indx int)
+            (position unsigned-int)
+            (fcc-chunk int)
+            (chunk-start int)
+            (block-start int)
+            (sample-offset unsigned-int)
+            (name (array char 256))))
 
-(define-format-subtype sf-format-ulaw #x0010)                 ; U-Law encoded. 
-(define-format-subtype sf-format-alaw #x0011)                 ; A-Law encoded. 
-(define-format-subtype sf-format-ima-adpcm #x0012)                 ; IMA ADPCM. 
-(define-format-subtype sf-format-ms-adpcm #x0013)                 ; Microsoft ADPCM. 
+(define-alien-enum (sf-loop int)
+                   :none 800
+                   :forward 801
+                   :backward 802
+                   :alternating 803)
 
-(define-format-subtype sf-format-gsm610 #x0020)                 ; GSM 6.10 encoding. 
-(define-format-subtype sf-format-vox-adpcm #x0021)                 ; OKI / Dialogix ADPCM 
+(define-alien-type sf-instrument
+    (struct sf-instrument
+            (gain int)
+            (detune char)
+            (basenote char)
+            (velocity-lo char)
+            (velocity-hi char)
+            (key-lo char)
+            (key-hi char)
+            (loop-count int)
+            (loops (array
+                    (struct nil
+                            (mode int)
+                            (start unsigned-int)
+                            (end unsigned-int)
+                            (count unsigned-int))
+                    16))))
 
-(define-format-subtype sf-format-g721-32 #x0030)                 ; 32kbs G721 ADPCM encoding. 
-(define-format-subtype sf-format-g723-24 #x0031)                 ; 24kbs G723 ADPCM encoding. 
-(define-format-subtype sf-format-g723-40 #x0032)                 ; 40kbs G723 ADPCM encoding. 
+(define-alien-type sf-loop-info
+    (struct sf-loop-info
+            (time-sig-num short)
+            (time-sig-den short)
+            (loop-mode int)
+            (num-beats int)
+            (bpm float)
+            (root-key int)
+            (future (array int 6))))
 
-(define-format-subtype sf-format-dwvw-12 #x0040)                 ; 12 bit Delta Width Variable Word encoding. 
-(define-format-subtype sf-format-dwvw-16 #x0041)                 ; 16 bit Delta Width Variable Word encoding. 
-(define-format-subtype sf-format-dwvw-24 #x0042)                 ; 24 bit Delta Width Variable Word encoding. 
-(define-format-subtype sf-format-dwvw-n #x0043)                 ; N bit Delta Width Variable Word encoding. 
+(define-alien-enum (sf-format int)
+                   :wav #x010000               ; Microsoft WAV format (little endian default). 
+                   :aiff #x020000               ; Apple/SGI AIFF format (big endian). 
+                   :au #x030000               ; Sun/NeXT AU format (big endian). 
+                   :raw #x040000               ; RAW PCM data. 
+                   :paf #x050000               ; Ensoniq PARIS file format. 
+                   :svx #x060000               ; Amiga IFF / SVX8 / SV16 format. 
+                   :nist #x070000               ; Sphere NIST format. 
+                   :voc #x080000               ; VOC files. 
+                   :ircam #x0A0000               ; Berkeley/IRCAM/CARL 
+                   :w64 #x0B0000               ; Sonic Foundry's 64 bit RIFF/WAV 
+                   :mat4 #x0C0000               ; Matlab (tm) V4.2 / GNU Octave 2.0 
+                   :mat5 #x0D0000               ; Matlab (tm) V5.0 / GNU Octave 2.1 
+                   :pvf #x0E0000               ; Portable Voice Format 
+                   :xi #x0F0000               ; Fasttracker 2 Extended Instrument 
+                   :htk #x100000               ; HMM Tool Kit format 
+                   :sds #x110000               ; Midi Sample Dump Standard 
+                   :avr #x120000               ; Audio Visual Research 
+                   :wavex #x130000               ; MS WAVE with WAVEFORMATEX 
+                   :sd2 #x160000               ; Sound Designer 2 
+                   :flac #x170000               ; FLAC lossless file format 
+                   :caf #x180000               ; Core Audio File format 
 
-(define-format-subtype sf-format-dpcm-8 #x0050)                 ; 8 bit differential PCM (XI only)
-(define-format-subtype sf-format-dpcm-16 #x0051)                 ; 16 bit differential PCM (XI only)
+                   :pcm-s8 #x0001                 ; Signed 8 bit data 
+                   :pcm-16 #x0002                 ; Signed 16 bit data 
+                   :pcm-24 #x0003                 ; Signed 24 bit data 
+                   :pcm-32 #x0004                 ; Signed 32 bit data 
+                   :pcm-u8 #x0005                 ; Unsigned 8 bit data (WAV and RAW only) 
+
+                   :float #x0006                 ; 32 bit float data 
+                   :double #x0007                 ; 64 bit float data 
+
+                   :ulaw #x0010                 ; U-Law encoded. 
+                   :alaw #x0011                 ; A-Law encoded. 
+                   :ima-adpcm #x0012                 ; IMA ADPCM. 
+                   :ms-adpcm #x0013                 ; Microsoft ADPCM. 
+
+                   :gsm610 #x0020                 ; GSM 6.10 encoding. 
+                   :vox-adpcm #x0021                 ; OKI / Dialogix ADPCM 
+
+                   :g721-32 #x0030                 ; 32kbs G721 ADPCM encoding. 
+                   :g723-24 #x0031                 ; 24kbs G723 ADPCM encoding. 
+                   :g723-40 #x0032                 ; 40kbs G723 ADPCM encoding. 
+                   :-dwvw-12 #x0040                 ; 12 bit Delta Width Variable Word encoding. 
+                   :dwvw-16 #x0041                 ; 16 bit Delta Width Variable Word encoding. 
+                   :dwvw-24 #x0042                 ; 24 bit Delta Width Variable Word encoding. 
+                   :dwvw-n #x0043                 ; N bit Delta Width Variable Word encoding. 
+
+                   :dpcm-8 #x0050                 ; 8 bit differential PCM (XI only)
+                   :dpcm-16 #x0051)                 ; 16 bit differential PCM (XI only)
 
 (defun decode-bitflags (value flag-names)
   (loop for symbol in flag-names
@@ -94,26 +162,164 @@
        return symbol))
 
 ;;;; Endian-ness options. 
+(define-alien-enum (sf-endian int)
+                   :file #x00000000     ; Default file endian-ness. 
+                   :little #x10000000     ; Force little endian-ness. 
+                   :big #x20000000     ; Force big endian-ness. 
+                   :cpu #x30000000)     ; Force CPU endian-ness. 
 
-(defconstant sf-endian-file #x00000000)     ; Default file endian-ness. 
-(defconstant sf-endian-little #x10000000)     ; Force little endian-ness. 
-(defconstant sf-endian-big #x20000000)     ; Force big endian-ness. 
-(defconstant sf-endian-cpu #x30000000)     ; Force CPU endian-ness. 
 
-(defconstant sf-format-submask #x0000FFFF)
-(defconstant sf-format-typemask #x0FFF0000)
-(defconstant sf-format-endmask #x30000000)
+(define-alien-enum (sf-format-mask int)
+                   :sub #x0000FFFF
+                   :type #x0FFF0000
+                   :end #x30000000)
 
-(defconstant sf-str-title 1)
-(defconstant sf-str-copyright 2)
-(defconstant sf-str-software 3)
-(defconstant sf-str-artist 4)
-(defconstant sf-str-comment 5)
-(defconstant sf-str-date 6)
+(define-alien-enum (sf-str int)
+                   :title 1
+                   :copyright 2
+                   :software 3
+                   :artist 4
+                   :comment 5
+                   :date 6)
 
 ;;;; Public error numbers
-(defconstant sf-err-no-error 0)
-(defconstant sf-err-unrecognized-format 1)
-(defconstant sf-err-system 2)
-(defconstant sf-err-malformed-file 3)
-(defconstant sf-err-unsupported-encoding 4)
+(define-alien-enum (sf-err int)
+                   :no-error 0
+                   :unrecognized-format 1
+                   :system 2
+                   :malformed-file 3
+                   :unsupported-encoding 4)
+
+;;;; SF commands
+(define-alien-enum (sf-command-op int)
+                   :get-lib-version #x1000
+                   :get-log-info #x1001
+                   :get-current-sf-info #x1002
+                   :get-norm-double #x1010
+                   :get-norm-float #x1011
+                   :set-norm-double #x1012
+                   :set-norm-float #x1013
+                   :set-scale-float-int-read #x1014
+                   :set-scale-int-float-write #x1015
+                   :get-simple-format-count #x1020
+                   :get-simple-format #x1021
+                   :get-format-info #x1028
+                   :get-format-major-count #x1030
+                   :get-format-major #x1031
+                   :get-format-subtype-count #x1032
+                   :get-format-subtype #x1033
+                   :calc-signal-max #x1040
+                   :calc-norm-signal-max #x1041
+                   :calc-max-all-channels #x1042
+                   :calc-norm-max-all-channels #x1043
+                   :get-signal-max #x1044
+                   :get-max-all-channels #x1045
+                   :set-add-peak-chunk #x1050
+                   :update-header-now #x1060
+                   :set-update-header-auto #x1061
+                   :file-truncate #x1080
+                   :set-raw-start-offset #x1090
+                   ;; /* Commands reserved for dithering, which is not implemented. */
+                   :set-dither-on-write #x10A0
+                   :set-dither-on-read #x10A1
+                   :get-dither-info-count #x10A2
+                   :get-dither-info #x10A3
+                   :get-embed-file-info #x10B0
+                   :set-clipping #x10C0
+                   :get-clipping #x10C1
+                   :get-cue-count #x10CD
+                   :get-cue #x10CE
+                   :set-cue #x10CF
+                   :get-instrument #x10D0
+                   :set-instrument #x10D1
+                   :get-loop-info #x10E0
+                   :get-broadcast-info #x10F0
+                   :set-broadcast-info #x10F1
+                   :get-channel-map-info #x1100
+                   :set-channel-map-info #x1101
+                   :raw-data-needs-endswap #x1110
+                   ;; /* Support for Wavex Ambisonics Format */
+                   :wavex-set-ambisonic #x1200
+                   :wavex-get-ambisonic #x1201
+                   ;; RF64 files can be set so that on-close, writable files
+                   ;; that have less than 4GB of data in them are converted to
+                   ;; RIFF/WAV, as per EBU recommendations.
+                   :rf64-auto-downgrade #x1210
+                   :set-vbr-encoding-quality #x1300
+                   :set-compression-level #x1301
+                   ;; /* Ogg format commands */
+                   :set-ogg-page-latency-ms #x1302
+                   :set-ogg-page-latency #x1303
+                   :get-ogg-stream-serialno #x1306
+                   :get-bitrate-mode #x1304
+                   :set-bitrate-mode #x1305
+                   ;; /* Cart Chunk support */
+                   :set-cart-info #x1400
+                   :get-cart-info #x1401
+                   ;; /* Opus files original samplerate metadata */
+                   :set-original-samplerate #x1500
+                   :get-original-samplerate #x1501
+                   ;; /* Following commands for testing only. */
+                   :test-ieee-float-replace #x6001
+                   ;; These SFC_SET_ADD_* values are deprecated and will
+                   ;; disappear at some time in the future. They are
+                   ;; guaranteed to be here up to and including version 1.0.8
+                   ;; to avoid breakage of existing software.  They currently
+                   ;; do nothing and will continue to do nothing.
+                   :set-add-header-pad-chunk #x1051
+                   :set-add-dither-on-write #x1070
+                   :set-add-dither-on-read #x1071)
+
+;;; Functions
+(define-opaque sndfile t)
+
+(define-alien-routine sf-open (* sndfile) (path c-string) (mode int) (sfinfo (* sf-info)))
+(define-alien-routine sf-open-fd (* sndfile) (fd int) (mode int) (sfinfo (* sf-info)))
+(define-alien-routine sf-error int (sndfile (* sndfile)))
+(define-alien-routine sf-strerror c-string (sndfile (* sndfile)))
+(define-alien-routine sf-error-number c-string (errnum int))
+(define-alien-routine sf-perror int (sndfile (* sndfile)))
+(define-alien-routine sf-error-str int (sndfile (* sndfile)) (str c-string) (len size-t))
+(define-alien-routine sf-command int (sndfile (* sndfile)) (command int) (data (* t)) (datasize int))
+(define-alien-routine sf-format-check int (info (* sf-info)))
+(define-alien-routine sf-seek sf-count (sndfile (* sndfile)) (frames sf-count) (whence int))
+
+(define-alien-routine sf-set-string int (sndfile (* sndfile)) (str-type int) (str c-string))
+(define-alien-routine sf-get-string c-string (sndfile (* sndfile)) (str-type int))
+(define-alien-routine sf-version-string c-string)
+(define-alien-routine sf-current-byterate int (sndfile (* sndfile)))
+(define-alien-routine sf-read-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
+(define-alien-routine sf-write-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
+;; ...
+(define-alien-routine sf-close int (sndfile (* sndfile)))
+
+(define-alien-routine sf-write-sync void
+  (sndfile (* sndfile)))
+
+(define-alien-type sf-chunk-info
+  (struct sf-chunk-info
+          (id (array char 64))
+          (id-size unsigned)
+          (datalen unsigned)
+          (data (* t))))
+
+(define-alien-routine sf-set-chunk int
+  (sndfile (* sndfile))
+  (chunk-info (* sf-chunk-info)))
+
+(define-opaque sf-chunk-iterator)
+
+(define-alien-routine sf-get-chunk-iterator (* sf-chunk-iterator)
+  (sndfile (* sndfile))
+  (chunk-info (* sf-chunk-info)))
+
+(define-alien-routine sf-next-chunk-iterator (* sf-chunk-iterator)
+  (iterator (* sf-chunk-iterator)))
+
+(define-alien-routine sf-get-chunk-size int
+  (it (* sf-chunk-iterator))
+  (chunk-info (* sf-chunk-info)))
+
+(define-alien-routine sf-get-chunk-data int
+  (it (* sf-chunk-iterator))
+  (chunk-info (* sf-chunk-info)))
