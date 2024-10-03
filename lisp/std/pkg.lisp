@@ -303,6 +303,8 @@
    :default-task-kernel
    :make-worker
    :make-workers
+   :run-tasks
+   :run-jobs
    :worker-count
    :init-task-pool
    :make-task-pool
@@ -454,6 +456,7 @@
   (:shadowing-import-from :sb-vm :list-allocated-objects)
   (:import-from :sb-impl :*logical-hosts*)
   (:export
+   :*default-arena-size*
    :current-lisp-implementation
    :current-machine
    :list-package-symbols

@@ -45,8 +45,6 @@
                              (:file "util")
                              (:file "x11")
                              (:file "palette")))
-               (:module "music"
-                :components ((:file "music")))
                (:module "time"
                 :components ((:file "local")
                              (:file "util")))

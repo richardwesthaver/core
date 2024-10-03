@@ -18,6 +18,8 @@
 ;; sb-sys:*linkage-info* *machine-version* *runtime-dlhandle* *periodic-polling-function*
 ;; *periodic-polling-period* io-timeout nlx-protect serve-event os-deinit os-exit with-deadline dlopen-or-lose deallocate-system-memory
 
+(defvar *default-arena-size* (* 10 1024 1024 1024))
+
 (defun current-lisp-implementation ()
   "Return the current lisp implemenation as a list: (TYPE VERSION FEATURES)"
   (list 

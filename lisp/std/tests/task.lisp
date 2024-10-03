@@ -8,12 +8,14 @@
 
 (deftest tasks ()
   "Test task-pools, oracles, and workers."
-  (let ((pool (designate-oracle (make-task-pool) (make-oracle *current-thread*))))
-    ;; pool is bound to a task pool, *ORACLE-THREADS* contains the *CURRENT-THREAD*.
-    (spawn-workers pool 16)
-    ;; (with-threads (16 :args (&optional (a 0) (b 1) (c 2)))
-    ;;   (sb-thread:allocator-histogram)
-    ;;   (sb-concurrency:wait-on-gate (std/thread::task-pool-online pool))
-    ;;   (print (+ a b c)))
-    (is (= 16 (length (task-pool-workers pool))))
-    (is (sb-thread:semaphore-count (std/task::task-pool-online pool)))))
+  (with-threads (4 :args (&optional (a 0) (b 1) (c 2)))
+    (is (= 3 (+ a b c))))
+  ;; *ORACLE-THREADS* contains the *CURRENT-THREAD*.
+  (std/task:with-task-pool (tp :count 10 :spawn 4)
+    (is (= 4 (length (task-pool-workers tp))))
+    (std/task::task-pool-lock tp)
+    (is (= 4 (std/task::mailbox-count (task-pool-results tp))))
+    (describe tp)
+    (dotimes (i 4)
+      (is (eql t (std/task::receive-message (task-pool-results tp)))))
+    (is (null (std/task::receive-message-no-hang (task-pool-results tp))))))
