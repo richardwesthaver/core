@@ -11,7 +11,7 @@
             :reader std-error-message))
   (:documentation "Standard Error")
   (:report (lambda (condition stream)
-             (format stream "~X" (std-error-message condition)))))
+             (format stream "~A" (std-error-message condition)))))
 
 (defun std-error (&rest args)
   (cerror

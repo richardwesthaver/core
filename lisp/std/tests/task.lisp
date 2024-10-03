@@ -6,16 +6,20 @@
 (in-package :std/tests)
 (in-suite :std)
 
-(deftest tasks ()
-  "Test task-pools, oracles, and workers."
-  (with-threads (4 :args (&optional (a 0) (b 1) (c 2)))
-    (is (= 3 (+ a b c))))
-  ;; *ORACLE-THREADS* contains the *CURRENT-THREAD*.
-  (std/task:with-task-pool (tp :count 10 :spawn 4)
+(deftest task-pool ()
+  "Task Pool tests."
+  (with-task-pool (tp :workers 4 :tasks 10 :start t)
     (is (= 4 (length (task-pool-workers tp))))
-    (std/task::task-pool-lock tp)
-    (is (= 4 (std/task::mailbox-count (task-pool-results tp))))
-    (describe tp)
+    (is (> (std/task::mailbox-count (task-pool-results tp)) 0))
     (dotimes (i 4)
-      (is (eql t (std/task::receive-message (task-pool-results tp)))))
-    (is (null (std/task::receive-message-no-hang (task-pool-results tp))))))
+      (is (null (std/task::receive-message (task-pool-results tp)))))
+    (is (null (std/task::receive-message-no-hang (task-pool-results tp))))
+    (kill-workers tp)
+    (is (zerop (worker-count tp))))
+  (with-task-pool (tp :workers 4 :tasks 4 :start nil)
+    (is (zerop (sb-concurrency:mailbox-count (results tp))))
+    (start-task-workers tp)
+    (loop for w across (workers tp)
+             do (join-worker w))
+    (is (= 4 (sb-concurrency:mailbox-count (results tp))))))
+

@@ -291,6 +291,15 @@
    :push-worker :push-task-result
    :run-job :run-stage
    :pop-job :pop-task
+   :workers
+   :tasks
+   :results
+   :kill-workers
+   :kill-worker
+   :join-worker
+   :worker-thread
+   :start-task-worker
+   :start-task-workers
    :pop-worker :pop-task-result
    :*task-pool*
    :*tasks*
@@ -298,6 +307,8 @@
    :*workers*
    :*jobs*
    :*stages*
+   :*task*
+   :*task-result*
    :define-task-kernel
    :*task-kernel*
    :default-task-kernel

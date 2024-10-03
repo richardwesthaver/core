@@ -76,5 +76,6 @@ that ASDF can find, or have quicklisp installed.")))
                 :components
                 ((:file "pkg")
                  (:file "num")
+                 (:file "thread")
                  (:file "task"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :std)))

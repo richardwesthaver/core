@@ -7,17 +7,34 @@
 
 ;;; Vars
 (defvar *task-pool*)
-(defvar *tasks*)
-(defvar *workers*)
+(defvar *tasks* (make-queue :name "tasks"))
 (defvar *jobs*)
 (defvar *stages*)
 (defvar *oracles* nil)
+(defvar *task-oracles* nil)
+(eval-when (:compile-toplevel)
+  (defvar *task*)
+  (defvar *task-result* nil))
+
+(define-condition task-error (thread-error) ()
+  (:report (lambda (condition stream)
+             (format stream "Unhandled task error in thread ~A" 
+                     (thread-error-thread condition)))))
+
+(defun task-error (thread)
+  (error 'task-error :thread thread))
 
 ;;; Kernel
-(defmacro parse-kernel-ops (op)
-  "Parse an op of the form (NAME ARGS &BODY BODY)"
-  (destructuring-bind (name args &body body) op
-    `(std/macs:named-lambda ,name ,args ,@body)))
+(defmacro gen-task-kernel (name args lock queue mailbox timeout &body body)
+  `(compile ,name 
+            (lambda ,args 
+              (wait-on-semaphore ,lock ,@(when timeout `((:timeout ,timeout))))
+              (let ((*task* (dequeue ,queue)))
+                (unwind-protect 
+                     (handler-case (setf *task-result* (progn ,@body))
+                       (error () (task-error *current-thread*)))
+                  (send-message ,mailbox *task-result*)
+                  (release-foreground))))))
 
 (defmacro define-task-kernel (name (&key lock timeout mailbox queue) args &body body)
   "Define a task kernel.
@@ -31,26 +48,12 @@ The kernel function is installed in worker threads by passing it to
 SB-THREAD:MAKE-THREAD. It may accept a varying number of arguments
 specified by ARGS.
 
-ACCESSORS is a list of pandoric accessors which can be called on the
-kernel via an ORACLE. 
+Within the BODY the variable *task* is bound to the result of (DEQUEUE QUEUE)
+and *task-result* is bound to the return value of BODY.
 
 This interface is experimental and subject to change."
   `(gen-task-kernel ,name ,args ,lock ,queue ,mailbox ,timeout
      ,@body))
-
-(defvar *task-queue*)
-(defvar *task-item*)
-(defvar *task-result*)
-(defvar *task-error*)
-
-(defmacro gen-task-kernel (name args lock queue mailbox timeout &body body)
-  `(compile ,name 
-            (lambda ,args 
-              (wait-on-semaphore ,lock ,@(when timeout `((:timeout ,timeout))))
-              (let* ((*task-queue* ,queue)
-                     (*task-item* (dequeue ,queue)))
-                ,@body
-                (send-message ,mailbox t)))))
 
 ;;; Supervisor
 (defclass supervisor ()
@@ -76,20 +79,28 @@ lifetime of SCOPE, but never before and never after."))
   ((thread :initform (sb-thread::%make-thread #.#1=(symbol-name (gensym "w")) t (make-semaphore :name #.#1#))
            :accessor worker-thread
            :initarg :thread)
-   (function :type function :accessor worker-function :initarg :function)
-   (arguments :type list :accessor worker-arguments :initarg :arguments)))
+   (kernel :type function :accessor worker-kernel :initarg :kernel)
+   (input :initform nil :accessor worker-input :initarg :input)))
+
+(defvar *workers* (make-array 0 :element-type 'worker :adjustable t))
+
+(declaim (inline kill-worker join-worker))
+(defun start-worker (worker) 
+  (sb-thread::start-thread (worker-thread worker) (worker-kernel worker) (worker-input worker)))
+(defun kill-worker (worker) (kill-thread (worker-thread worker)))
+(defun join-worker (worker) (join-thread (worker-thread worker)))
 
 ;;; Oracle           
 (defstruct (oracle (:constructor %make-oracle (id thread)))
   (id 0 :type (unsigned-byte 32) :read-only t)
   (thread *current-thread* :read-only t))
 
-(defun find-oracle (id)
+(defun oracle-of-id (id)
   (find id *oracles* :test '= :key 'oracle-id))
 
 (defun make-oracle (thread)
-  (let* ((id (thread-os-tid thread)))
-    (if-let ((found (find-oracle id)))
+  (let ((id (thread-os-tid thread)))
+    (if-let ((found (oracle-of-id id)))
       (values id found)
       (let ((orc (%make-oracle id thread)))
         (push orc *oracles*)
@@ -99,36 +110,20 @@ lifetime of SCOPE, but never before and never after."))
 ;; oracle
 (defgeneric designate-oracle (host guest))
 ;; worker
-(defgeneric make-worker (self &rest initargs &key &allow-other-keys)
-  (:method ((self t) &key thread function arguments)
-    (declare (ignore self))
-    (apply #'make-instance 'worker
-           `(,@(when thread `(:thread ,thread))
-             ,@(when function `(:function ,function))
-             ,@(when arguments `(:arguments ,arguments))))))
-(defgeneric make-workers (self count &rest initargs &key &allow-other-keys)
-  (:method ((self t) (count t) &key thread function arguments)
+(defun make-worker (&key thread kernel input)
+  (apply #'make-instance 'worker
+         `(,@(when thread `(:thread ,thread))
+           ,@(when kernel `(:kernel ,kernel))
+           ,@(when input `(:input ,input)))))
+
+(defgeneric make-workers (count &rest initargs &key &allow-other-keys)
+  (:method ((count number) &key thread kernel input)
     (let ((ret))
       (dotimes (i count ret)
-        (push (make-worker t :thread thread :function function :arguments arguments) ret)))))
+        (push (make-worker :thread thread :kernel kernel :input input) ret)))))
+
 (defgeneric delete-worker (worker pool &key &allow-other-keys))
-(defgeneric pop-worker (pool))
-(defgeneric make-worker-for (pool function &rest args)
-  (:method ((pool null) (function function) &rest args)
-    (declare (ignore pool))
-    (make-worker t :function function :arguments args)))
-(defgeneric make-workers-for (pool count function)
-  (:method ((pool null) (count fixnum) (function function))
-    (declare (ignore pool))
-    (make-workers t count :function function)))
-(defgeneric spawn-worker (pool)
-  (:method ((pool null))
-    (declare (ignore pool))
-    (make-worker t :function (default-task-kernel))))
-(defgeneric spawn-workers (pool count)
-  (:method ((pool null) (count fixnum))
-    (declare (ignore pool))
-    (make-workers t count :function (default-task-kernel))))
+(defgeneric spawn-worker (pool worker))
 
 ;; job
 (defgeneric make-job (self &key &allow-other-keys))
@@ -137,7 +132,6 @@ lifetime of SCOPE, but never before and never after."))
 (defgeneric run-jobs (self))
 ;; task
 (defgeneric tasks (self))
-(defgeneric make-task (&rest args &key &allow-other-keys))
 (defgeneric run-task (self task))
 (defgeneric run-tasks (self))
 (defgeneric results (self))
@@ -148,10 +142,10 @@ lifetime of SCOPE, but never before and never after."))
 ;;; Task Pool
 (defstruct task-pool
   (kernel 'identity :type symbol)
-  (tasks (make-queue :name "tasks"))
+  (tasks *tasks*)
   (lock (make-semaphore :name "online") :type semaphore)
   ;; TODO: test weak-vector here
-  (workers (make-array 0 :element-type 'worker :fill-pointer 0) :type (vector thread))
+  (workers (make-array 0 :element-type 'worker :fill-pointer 0) :type (vector worker))
   (results (make-mailbox :name "results")))
 
 (defmethod tasks ((self task-pool)) (task-pool-tasks self))
@@ -160,27 +154,25 @@ lifetime of SCOPE, but never before and never after."))
 
 (defmethod print-object ((self task-pool) (stream t))
   (print-unreadable-object (self stream :type t)
-    (format stream "~A ~A:~A:~A ~A"
+    (format stream "~A :workers ~A :tasks ~A/~A :results ~A"
             (task-pool-kernel self)
             (length (workers self))
-            (semaphore-count (task-pool-lock self))
             (queue-count (tasks self))
+            (semaphore-count (task-pool-lock self))
             (mailbox-count (task-pool-results self)))))
 
-(defmethod designate-oracle ((self task-pool) (guest integer))
-  (setf (task-pool-oracle-id self) (make-oracle (find-thread-by-id guest)))
-  self)
+(defun kill-workers (pool)
+  "Call FINISH-THREADS on task-pool's workers."
+  (dotimes (i (length (workers pool)))
+    (kill-worker (vector-pop (workers pool)))))
 
 (defun worker-count (task-pool &key online)
   (if online
-      (semaphore-count (task-pool-online task-pool))
+      (semaphore-count (task-pool-lock task-pool))
       (length (task-pool-workers task-pool))))
 
 (defmethod designate-oracle ((self task-pool) (guest thread))
   (designate-oracle self (make-oracle guest)))
-
-(defmethod task-pool-oracle ((self task-pool))
-  (oracle-thread (find-oracle (slot-value self 'oracle))))
 
 (declaim (inline push-worker push-workers pop-worker))
 (defun push-worker (worker pool)
@@ -194,22 +186,18 @@ lifetime of SCOPE, but never before and never after."))
 (defmethod pop-worker (pool)
   (vector-pop (task-pool-workers pool)))
 
-(defmethod make-worker-for ((pool task-pool) function &rest args)
-  (make-thread function :name *default-worker-name* :arguments args))
-
-(defmethod make-workers-for ((pool task-pool) (count fixnum) function)
-  (make-threads count function :name *default-worker-name*))
-
-(defmethod spawn-worker ((pool task-pool))
+(defun start-task-worker (pool index)
   ;; (with-recursive-lock
-  (push-worker (make-worker-for pool (task-pool-kernel pool)) pool))
+  (start-worker (aref (workers pool) index)))
 
-(defmethod spawn-workers ((pool task-pool) (count fixnum))
-  (push-workers (make-workers-for pool count (task-pool-kernel pool)) pool))
+(defun start-task-workers (pool)
+  "Start all workers in the given task POOL."
+  (loop for w across (workers pool)
+        do (start-worker w)))
 
 ;;; Task
 (defclass task ()
-  ((state :initarg :state :accessor task-state))
+  ((state :initform nil :initarg :state :accessor task-state))
   (:documentation "This object represents a single unit of work to be done by some
 worker. Tasks are typically generated by an oracle, but workers may also be
 granted the ability to create and distribute their own tasks. Once a task is
@@ -220,10 +208,7 @@ computation."))
 
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A" (task-object self))))
-
-(defmethod push-task-result ((task task) (pool task-pool))
-  (send-message (task-pool-results pool) task))
+    (format stream ":state ~A" (task-state self))))
 
 (defmethod run-task ((self thread) (task task)))
 
@@ -265,17 +250,25 @@ computation."))
 (defmethod run-stage ((self thread) (stage stage)))
 
 ;;; Macros
-(defmacro with-task-pool ((sym &key oracle lock (count 4) spawn kernel results) &body body)
-  (unless lock (setf lock (make-semaphore :name "online" :count count)))
+(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) start kernel results) &body body)
+  (unless lock (setf lock (make-semaphore :name "online" :count workers)))
   (unless results (setf results (make-mailbox :name "results")))
-  `(let ((,sym (make-task-pool :lock ,lock :results ,results)))
+  `(let ((,sym (make-task-pool :lock ,lock :results ,results 
+                               :tasks (make-queue 
+                                       :name "tasks"
+                                       :initial-contents
+                                       (make-array ,tasks 
+                                                   :element-type 'task 
+                                                   :initial-element (make-instance 'task))))))
      ,@(if kernel `((setf (task-pool-kernel ,sym) ,kernel))
            `((setf (task-pool-kernel ,sym)
-                   (gen-task-kernel '%kernel ()
+                   (gen-task-kernel (gensym "TASK-KERNEL") ()
                        (task-pool-lock ,sym) 
                        (tasks ,sym) 
                        (results ,sym)
                        nil))))
-     (designate-oracle ,sym ,@(if oracle (list oracle) `((make-oracle *current-thread*))))
-     ,@(when spawn `((spawn-workers ,sym ,spawn)))
+     (loop for i below ,workers
+           do (push-worker (make-worker :kernel (task-pool-kernel ,sym)) ,sym))
+     ,@(when oracle `((designate-oracle ,sym ,oracle)))
+     ,@(when start `((start-task-workers ,sym)))
      ,@body))
