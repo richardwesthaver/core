@@ -120,8 +120,10 @@
                    :wavex #x130000               ; MS WAVE with WAVEFORMATEX 
                    :sd2 #x160000               ; Sound Designer 2 
                    :flac #x170000               ; FLAC lossless file format 
-                   :caf #x180000               ; Core Audio File format 
+                   :caf #x180000)               ; Core Audio File format 
 
+(define-alien-enum (sf-format-subtype int)
+                   ;; subtypes
                    :pcm-s8 #x0001                 ; Signed 8 bit data 
                    :pcm-16 #x0002                 ; Signed 16 bit data 
                    :pcm-24 #x0003                 ; Signed 24 bit data 

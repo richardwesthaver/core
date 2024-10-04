@@ -178,7 +178,8 @@
   (:use :cl :sb-mop :sb-pcl)
   (:import-from :std/sym :symb :make-keyword)
   (:export :list-slot-values-using-class
-   :list-class-methods :list-class-slots :list-indirect-slot-methods))
+   :list-class-methods :list-class-slots :list-indirect-slot-methods
+   :ensure-finalized :subclassp))
    
 (defpkg :std/fu
   (:use :cl)
@@ -282,14 +283,16 @@
   (:use :cl :std/thread :sb-concurrency)
   (:import-from :std/thread :%make-thread)
   (:import-from :std/macs :if-let)
+  (:import-from :std/list :deletef)
   (:export
    :spawn-workers
    :make-oracle :make-supervisor
-   :oracle :run-task
+   :oracle 
    :oracle-id :find-thread
    :push-job :push-task
    :push-worker :push-task-result
-   :run-job :run-stage
+   :run :run-object 
+   :work
    :pop-job :pop-task
    :workers
    :tasks
@@ -304,7 +307,9 @@
    :*task-pool*
    :*tasks*
    :*oracles*
-   :*workers*
+   :*oracle-threads*
+   :*worker-threads*
+   :*supervisor-threads*
    :*jobs*
    :*stages*
    :*task*

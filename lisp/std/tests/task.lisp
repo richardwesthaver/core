@@ -20,6 +20,7 @@
     (is (zerop (sb-concurrency:mailbox-count (results tp))))
     (start-task-workers tp)
     (loop for w across (workers tp)
-             do (join-worker w))
+          do (join-worker w))
     (is (= 4 (sb-concurrency:mailbox-count (results tp))))))
+
 
