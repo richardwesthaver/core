@@ -16,8 +16,26 @@
   (:use :cl :std/condition)
   (:export :io-error))
 
+(defpackage :io/static-vector
+  (:use :cl :std :sb-alien)
+  (:shadow :constantp)
+  (:export
+   ;; Constructors and destructors
+   :make-static-vector
+   :free-static-vector
+   :with-static-vector
+   :with-static-vectors
+   ;; Accessors
+   :static-vector-pointer
+   ;; Alien wrapper type
+   :static-vector
+   ;; Foreign memory operations
+   :replace-foreign-memory
+   :fill-foreign-memory))
+
 (defpackage :io/fast
   (:use :cl :std :io/proto)
+  (:import-from :io/static-vector :make-static-vector)
   (:export
    #:fast-read-byte #:fast-write-byte
    #:fast-read-sequence #:fast-write-sequence

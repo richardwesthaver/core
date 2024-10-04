@@ -13,6 +13,10 @@
 
 (define-alien-loader "sndfile" t "/usr/lib/")
 
+(define-opaque sndfile t)
+
+(define-opaque sf-chunk-iterator)
+
 (define-alien-type sf-count long)
 
 (define-alien-type sf-info
@@ -273,8 +277,6 @@
                    :set-add-dither-on-read #x1071)
 
 ;;; Functions
-(define-opaque sndfile t)
-
 (define-alien-routine sf-open (* sndfile) (path c-string) (mode int) (sfinfo (* sf-info)))
 (define-alien-routine sf-open-fd (* sndfile) (fd int) (mode int) (sfinfo (* sf-info)))
 (define-alien-routine sf-error int (sndfile (* sndfile)))
@@ -308,8 +310,6 @@
 (define-alien-routine sf-set-chunk int
   (sndfile (* sndfile))
   (chunk-info (* sf-chunk-info)))
-
-(define-opaque sf-chunk-iterator)
 
 (define-alien-routine sf-get-chunk-iterator (* sf-chunk-iterator)
   (sndfile (* sndfile))

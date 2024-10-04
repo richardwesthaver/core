@@ -1,6 +1,5 @@
 ;;; lisp.sk --- core/lisp skelfile -*- mode: skel; -*-
 :name "core/lisp"
-:src "lisp"
 :description "CC Lisp Core"
 :components
 ((:asd "prelude")

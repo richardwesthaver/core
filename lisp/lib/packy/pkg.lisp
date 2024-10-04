@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :packy/core
-  (:use :cl :std :obj/id :dat/proto)
+  (:use :cl :std :obj/id :dat/proto :io/flate)
   (:export
    :*packy-url*
    :pack

@@ -19,4 +19,3 @@ queue size of ENTRIES and settings FLAGS."
 
 ;; (defun enter-io (ring))
 ;; (defun exit-io (ring))
-

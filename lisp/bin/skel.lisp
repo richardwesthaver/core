@@ -181,7 +181,7 @@
 
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
-    (sb-ext:enable-debugger)
+    ;; (sb-ext:enable-debugger)
     (log:debug! "cli args" *args*)
     ;; (setq *no-exit* t)
     (if *args*

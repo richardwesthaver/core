@@ -54,7 +54,8 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
        
 (defmacro define-opaque (ty &optional no-export foreign-type)
   `(prog1
-       (define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))
+       (eval-when (:compile-toplevel :load-toplevel :execute)
+         (define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t)))))
      ,(unless no-export `(export '(,ty)))))
 
 (defun setfa (place from) 
@@ -216,3 +217,5 @@ Each var can be of the form:
 (define-alien-type loff-t long-long)
 
 (define-alien-routine memset void (ptr (* t)) (constant int) (size size-t))
+(define-alien-routine memcpy void (dst (* t)) (src (* t)) (size size-t))
+(define-alien-routine posix-memalign int (box (* t)) (alignment size-t) (size size-t))

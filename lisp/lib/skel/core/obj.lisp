@@ -303,17 +303,6 @@ via the special form stored in RECIPE."
     (write (sk-rule-source self) :stream stream)
     (write (sk-rule-recipe self) :stream stream)))
 
-(defun sk-run-with-sources (obj rule)
-  (when-let ((sources (sk-rule-source rule)))
-    (mapcar
-     (lambda (src)
-       (if-let* ((sr (sk-find-rule src obj)))
-                ;; TODO: check if we need to rerun sources
-                (sk-make obj sr)
-                (warn! "unhandled source:" src "for rule:" rule)))
-     sources))
-  (sk-run rule))
-
 (defun sk-make (obj &rest rules)
   (if rules
       (mapc
@@ -324,6 +313,17 @@ via the special form stored in RECIPE."
           (if (sk-rule-source rule)
               (sk-make obj rule)
               (sk-run rule))))))
+
+(defun sk-run-with-sources (obj rule)
+  (when-let ((sources (sk-rule-source rule)))
+    (mapcar
+     (lambda (src)
+       (if-let* ((sr (sk-find-rule src obj)))
+                ;; TODO: check if we need to rerun sources
+                (sk-make obj sr)
+                (error "unhandled source: ~A for rule ~A" src rule)))
+     sources))
+  (sk-run rule))
 
 ;;; Version Control
 (defstruct sk-vc-remote-meta

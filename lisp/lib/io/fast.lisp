@@ -47,9 +47,10 @@
              (type octet-vector vec)
              (type non-negative-fixnum pos vec-len new-pos))
     ;; Only need to update if pos or new-pos is in stream range.
-    (when-let ((stream-update-needed? (or (> pos vec-len)
-                                          (> new-pos vec-len)))
-               (stream (input-buffer-stream buffer)))
+    (when-let ((stream (and
+                        (or (> pos vec-len)
+                            (> new-pos vec-len))
+                        (input-buffer-stream buffer))))
       (let* ((stream-file-pos (file-position stream))
              (pos-diff (- new-pos pos))
              (stream-diff (cond ((and (> pos vec-len)
@@ -78,12 +79,9 @@
 (defun concat-buffer (buffer)
   (let* ((len (output-buffer-len buffer))
          (array
-           #+fast-io-sv
            (if (eq :static (output-buffer-output buffer))
-               (static-vectors:make-static-vector (the array-index len))
-               (make-octet-vector len))
-           #-fast-io-sv
-           (make-octet-vector len)))
+               (make-static-vector (the array-index len))
+               (make-octet-vector len))))
     (loop as i = 0 then (+ i (length a))
           for a in (output-buffer-queue buffer) do
             (replace (the octet-vector array)
@@ -369,7 +367,7 @@ all data has been flushed to the stream."
 
 ;; fast-stream
 
-(defclass fast-io-stream (fundamental-stream)
+(defclass fast-io-stream (sb-gray:fundamental-stream)
   ((openp :type boolean :initform t)))
 
 (defmethod stream-file-position ((stream fast-io-stream))
@@ -381,7 +379,7 @@ all data has been flushed to the stream."
 
  ;; fast-output-stream
 
-(defclass fast-output-stream (fast-io-stream fundamental-output-stream)
+(defclass fast-output-stream (fast-io-stream sb-gray:fundamental-output-stream)
   ((buffer :type output-buffer)))
 
 (defmethod initialize-instance ((self fast-output-stream) &key stream
@@ -424,7 +422,7 @@ all data has been flushed to the stream."
 
  ;; fast-input-stream
 
-(defclass fast-input-stream (fast-io-stream fundamental-input-stream)
+(defclass fast-input-stream (fast-io-stream sb-gray:fundamental-input-stream)
   ((buffer :type input-buffer)))
 
 (defmethod initialize-instance ((self fast-input-stream) &key stream
