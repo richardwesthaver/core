@@ -78,6 +78,7 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 (in-package :zstd)
 
 (define-alien-loader "zstd" t "/usr/lib/")
+(define-alien-loader "zstd-alien" t "/usr/local/lib/")
 
 ;;; Types
 (deftype zstd-error-code ()

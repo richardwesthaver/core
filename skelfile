@@ -43,6 +43,11 @@
                             clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
                             alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
                     (:install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#))
+ (zstd-alien ()
+             (:build () #$cd lisp/ffi/zstd &&
+                     clang -g -O2 -Wall -Wno-unused-value -lzstd -shared \
+                     alien.c -o ../../../.stash/libzstd-alien.so$#)
+             (:install () #$cp .stash/libzstd-alien.so /usr/local/lib/$#))
  (psl.dat (%stash)
           (download "https://publicsuffix.org/list/public_suffix_list.dat"
                     :output (merge-pathnames

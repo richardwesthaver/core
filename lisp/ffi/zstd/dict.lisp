@@ -329,16 +329,18 @@
           (notification-level unsigned)
           (dict-id unsigned)))
 
-;; Requires returning struct by value
-;; (define-alien-routine ("ZDICT_finalizeDictionary" zdict-finalize-dictionary) size-t
-;;   (dst-dict-buffer (* t))
-;;   (max-dict-size size-t)
-;;   (dict-content (* t))
-;;   (dict-content-size size-t)
-;;   (samples-buffer (* t))
-;;   (samples-sizes (* size-t))
-;;   (nb-samples unsigned)
-;;   (parameters zdict-params))
+;; NOTE: Requires returning struct by value
+
+;; This is the ONLY function which used libzstd-alien.so right now.
+(define-alien-routine ("ZDICT_finalizeDictionaryWithParams" zdict-finalize-dictionary) size-t
+  (dst-dict-buffer (* t))
+  (max-dict-size size-t)
+  (dict-content (* t))
+  (dict-content-size size-t)
+  (samples-buffer (* t))
+  (samples-sizes (* size-t))
+  (nb-samples unsigned)
+  (parameters (* zdict-params)))
 
 (define-alien-routine ("ZDICT_getDictID" zdict-get-dict-id) unsigned
   (dict-buffer (* t))
