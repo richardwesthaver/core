@@ -6,28 +6,6 @@
 (in-package :ublk)
 
 (define-alien-type ublksrv-ctrl-dev (struct ublksrv-ctrl-dev))
-(define-alien-type ublksrv-tgt-type (struct ublksrv-tgt-type))
-;; TODO 2024-09-29: add all of these as callbacks :C
-;; (define-alien-type ublksrv-tgt-type 
-;;   (struct ublksrv-tgt-type
-;;           (handle-io-async (function int (* ublksrv-queue) (* ublk-io-data)))
-;;           (tgt-io-done (function void (* ublksrv-queue) (* ublk-io-data) (* io-uring-cqe)))
-;;           (handle-event (function void (* ublksrv-queue)))
-;;           (handle-io-background (function void (* ublksrv-queue) int))
-;;           (usage-for-add (function void))
-;;           (init-tgt (function int (* ublksrv-dev) int int (array c-string)))
-;;           (deinit-tgt (function void (* ublksrv-dev)))
-;;           (alloc-io-buf (function (* t) (* ublksrv-queue) (* t) int))
-;;           (idle-fn (function void (* ublksrv-queue) bool))
-;;           (type int)
-;;           (ublk-flags unsigned)
-;;           (ublksrv-flags unsigned)
-;;           (pad unsigned)
-;;           (name c-string)
-;;           (recovery-tgt (function int (* ublksrv-dev) int))
-;;           (init-queue (function int (* ublksrv-queue) (* (* t))))
-;;           (deinit-queue (function void (* ublksrv-queue)))
-;;           (reserved (array unsigned-long 5))))
 
 (define-alien-type ublksrv-dev-data
   (struct ublksrv-dev-data
@@ -44,6 +22,7 @@
           (ublksrv-flags unsigned-long)
           (reserved (array unsigned-long 7))))
 
+;; early def
 (define-alien-type ublksrv-tgt-info
   (struct ublksrv-tgt-info
           (dev-size unsigned-long-long)
@@ -53,7 +32,7 @@
           (tgt-data (* t))
           (extra-ios unsigned-int)
           (io-data-size unsigned-int)
-          (ops (* ublksrv-tgt-type))
+          (ops (* (struct nil)))
           (iowq-max-workers (array unsigned-int 2))
           (reserved (array unsigned-long 4))))
 
@@ -68,6 +47,41 @@
             (ring-ptr (* io-uring))
             (dev (* ublksrv-dev))
             (private-data (* t))))
+
+(define-alien-type ublksrv-handle-io-async-function (function int (* ublksrv-queue) (* ublk-io-data)))
+(define-alien-type ublksrv-tgt-io-done-function (function void (* ublksrv-queue) (* ublk-io-data) (* io-uring-cqe)))
+(define-alien-type ublksrv-handle-event-function (function void (* ublksrv-queue)))
+(define-alien-type ublksrv-handle-io-background-function (function void (* ublksrv-queue) int))
+(define-alien-type ublksrv-usage-for-add-function (function void))
+(define-alien-type ublksrv-init-tgt-function (function int (* ublksrv-dev) int int (array c-string)))
+(define-alien-type ublksrv-deinit-tgt-function (function void (* ublksrv-dev)))
+(define-alien-type ublksrv-alloc-io-buf-function (function (* t) (* ublksrv-queue) (* t) int))
+(define-alien-type ublksrv-idle-function (function void (* ublksrv-queue) boolean))
+(define-alien-type ublksrv-recovery-tgt-function (function int (* ublksrv-dev) int))
+(define-alien-type ublksrv-init-queue-function (function int (* ublksrv-dev) (* (* t))))
+(define-alien-type ublksrv-deinit-queue-function (function void (* ublksrv-queue)))
+
+;; TODO 2024-09-29: add all of these as callbacks :C
+(define-alien-type ublksrv-tgt-type 
+  (struct ublksrv-tgt-type
+          (handle-io-async (* ublksrv-handle-io-async-function))
+          (tgt-io-done (* ublksrv-tgt-io-done-function))
+          (handle-event (* ublksrv-handle-event-function))
+          (handle-io-background (* ublksrv-handle-io-background-function))
+          (usage-for-add (* ublksrv-usage-for-add-function))
+          (init-tgt (* ublksrv-init-tgt-function))
+          (deinit-tgt (* ublksrv-deinit-tgt-function))
+          (alloc-io-buf (* ublksrv-alloc-io-buf-function))
+          (idle-fn (* ublksrv-idle-function))
+          (type int)
+          (ublk-flags unsigned)
+          (ublksrv-flags unsigned)
+          (pad unsigned)
+          (name c-string)
+          (recovery-tgt (* ublksrv-recovery-tgt-function))
+          (init-queue (* ublksrv-init-queue-function))
+          (deinit-queue (* ublksrv-deinit-queue-function))
+          (reserved (array unsigned-long 5))))
 
 (define-alien-type ublk-io-data
   (struct ublk-io-data
