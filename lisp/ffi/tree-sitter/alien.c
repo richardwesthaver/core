@@ -9,13 +9,13 @@
 
 // build with:
 /*
-  sudo cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared alien.c -o /usr/local/lib/libtree-sitter-alien.so
+  cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared alien.c -o /usr/local/lib/libtree-sitter-alien.so
 */
 
 /// Code:
 #include <stdlib.h>
 
-#include "ts-api.h"
+#include "alien.h"
 
 TSNode *ts_tree_root_node_pointer(const TSTree *self) {
     TSNode *node = malloc(sizeof(TSNode));

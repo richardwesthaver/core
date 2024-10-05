@@ -13,9 +13,9 @@
 
 (define-alien-loader "sndfile" t "/usr/lib/")
 
-(define-opaque sndfile t)
-
-(define-opaque sf-chunk-iterator)
+(eval-always
+  (define-opaque sndfile t)
+  (define-opaque sf-chunk-iterator t))
 
 (define-alien-type sf-count long)
 

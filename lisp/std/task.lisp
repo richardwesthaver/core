@@ -15,7 +15,7 @@
 (sb-ext:defglobal *oracle-threads* nil)
 (sb-ext:defglobal *supervisor-threads* nil)
 
-(eval-when (:compile-toplevel)
+(eval-always
   (defvar *task*)
   (defvar *task-result* nil))
 
@@ -73,7 +73,6 @@ This interface is experimental and subject to change."
 
 (defgeneric tasks (self))
 (defgeneric results (self))
-(defgeneric run (self object &rest initargs &key &allow-other-keys))
 (defgeneric run-object (self))
 (defgeneric work (self &key &allow-other-keys))
 (defgeneric workers (self))
@@ -128,8 +127,8 @@ within their DOMAIN and SCOPE."))
 (defmethod run-object ((self worker))
   (run-worker self))
 
-(defmethod run ((self worker) (object t) &key wait &allow-other-keys)
-  (run-worker self :input object :wait wait))
+(defun run-with-worker (worker object &key wait)
+  (run-worker worker :input object :wait wait))
 
 (defun kill-worker (worker) 
   (declare (worker worker))

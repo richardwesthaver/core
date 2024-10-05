@@ -315,7 +315,7 @@ via the special form stored in RECIPE."
               (sk-run rule))))))
 
 (defun sk-run-with-sources (obj rule)
-  (when-let ((sources (sk-rule-source rule)))
+  (when-let ((sources (and rule (sk-rule-source rule))))
     (mapcar
      (lambda (src)
        (if-let* ((sr (sk-find-rule src obj)))

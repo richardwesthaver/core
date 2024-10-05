@@ -6,22 +6,7 @@
 (in-package :ublk)
 
 (define-alien-type ublksrv-ctrl-dev (struct ublksrv-ctrl-dev))
-
-(define-alien-type ublksrv-queue
-    (struct ublksrv-queue
-            (q-id int)
-            (q-depth int)
-            (ring-ptr (* io-uring))
-            (dev (* ublksrv-dev))
-            (private-data (* t))))
-
-(define-alien-type ublk-io-data
-  (struct ublk-io-data
-          (tag int)
-          (pad unsigned-int)
-          (iod (* ublksrv-io-desc))
-          (private-data (* t))))
-
+(define-alien-type ublksrv-tgt-type (struct ublksrv-tgt-type))
 ;; TODO 2024-09-29: add all of these as callbacks :C
 ;; (define-alien-type ublksrv-tgt-type 
 ;;   (struct ublksrv-tgt-type
@@ -75,6 +60,21 @@
 (define-alien-type ublksrv-dev
   (struct ublksrv-dev
           (tgt ublksrv-tgt-info)))
+
+(define-alien-type ublksrv-queue
+    (struct ublksrv-queue
+            (q-id int)
+            (q-depth int)
+            (ring-ptr (* io-uring))
+            (dev (* ublksrv-dev))
+            (private-data (* t))))
+
+(define-alien-type ublk-io-data
+  (struct ublk-io-data
+          (tag int)
+          (pad unsigned-int)
+          (iod (* ublksrv-io-desc))
+          (private-data (* t))))
 
 (define-alien-routine build-user-data (unsigned 64)
   (tag unsigned)

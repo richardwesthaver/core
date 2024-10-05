@@ -5,15 +5,15 @@
 ;;; Code:
 (in-package :rdb)
 
-(deferror rdb-error ()
-    ((message :initarg :message
-              :reader rdb-error-message))
-    (:auto t)
-    (:documentation "Error signaled by the RDB system."))
-
-(define-condition rocksdb-alien-error (rdb-error)
-  ((db :initarg :db :reader rdb-error-db))
-  (:documentation "Error signaled by RocksDB subsystem."))
+(eval-always
+  (deferror rdb-error ()
+      ((message :initarg :message
+                :reader rdb-error-message))
+      (:auto t)
+      (:documentation "Error signaled by the RDB system."))
+  (define-condition rocksdb-alien-error (rdb-error)
+    ((db :initarg :db :reader rdb-error-db))
+    (:documentation "Error signaled by RocksDB subsystem.")))
 
 (defmethod print-object ((obj rdb-error) stream)
   (print-unreadable-object (obj stream :type t :identity t)

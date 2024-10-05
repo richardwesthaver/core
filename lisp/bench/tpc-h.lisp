@@ -203,7 +203,7 @@
 (defun dbgen-thread ()
   (lambda (x y)
     (gen-table x y)
-    (print-top-level (format nil "finished: ~A~%" x))))
+    (std/thread:print-top-level (format nil "finished: ~A~%" x))))
 
 (defun dbgen (&optional (scale-factor 1)) ;; ~= 2.4G, 200s
   "Generate the TPC-H database in standardized format (|-delim ASCII). Files are

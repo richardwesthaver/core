@@ -315,3 +315,38 @@
             (shrink-dict unsigned)
             (shrink-dict-max-regression unsigned)
             (zparams zdict-params)))
+
+(define-alien-routine ("ZDICT_trainFromBuffer" zdict-train-from-buffer) size-t
+  (dict-buffer (* t))
+  (dict-buffer-capacity size-t)
+  (samples-buffer (* t))
+  (samples-sizes (* size-t))
+  (nb-samples unsigned))
+
+(define-alien-type zdict-params
+  (struct zdict-params-t
+          (compression-level int)
+          (notification-level unsigned)
+          (dict-id unsigned)))
+
+;; Requires returning struct by value
+;; (define-alien-routine ("ZDICT_finalizeDictionary" zdict-finalize-dictionary) size-t
+;;   (dst-dict-buffer (* t))
+;;   (max-dict-size size-t)
+;;   (dict-content (* t))
+;;   (dict-content-size size-t)
+;;   (samples-buffer (* t))
+;;   (samples-sizes (* size-t))
+;;   (nb-samples unsigned)
+;;   (parameters zdict-params))
+
+(define-alien-routine ("ZDICT_getDictID" zdict-get-dict-id) unsigned
+  (dict-buffer (* t))
+  (dict-size size-t))
+
+(define-alien-routine ("ZDICT_getDictHeaderSize" zdict-get-dict-header-size) size-t
+  (dict-buffer (* t))
+  (dict-size size-t))
+
+(define-alien-routine ("ZDICT_isError" zdict-is-error) unsigned
+  (error-code size-t))

@@ -225,6 +225,12 @@
 ;;; Lisp
 (use-package company :ensure t)
 
+(setq inferior-lisp-program "sbcl --dynamic-space-size=8G --control-stack-size 8"
+      scheme-program-name "gsi"
+      guile-program "guile"
+      cmulisp-program "lisp"
+      scsh-program "scsh")
+
 (defvar slime-toggle nil)
 (defun slime-toggle ()
   "toggle between lisp file and slime-repl"
@@ -326,16 +332,6 @@ function: '(ql:quickload :clouseau)'."
   ;; (add-hook 'slime-mode-hook 'slime-cape-maybe-enable)
   ;; (add-hook 'slime-repl-mode-hook 'slime-cape-maybe-enable)
   )
-
-(use-package lisp-mode
-  :ensure nil
-  :after slime
-  :custom
-  inferior-lisp-program "sbcl --dynamic-space-size=8G"
-  scheme-program-name "gsi"
-  guile-program "guile"
-  cmulisp-program "lisp"
-  scsh-program "scsh")
 
 ;;; Eglot
 ;; (with-eval-after-load 'eglot

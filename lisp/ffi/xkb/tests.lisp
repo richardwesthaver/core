@@ -7,7 +7,7 @@
 (load-xkbcommon)
 
 (deftest xkb-basic ()
-  (is (= xkb:xkb-keysym-max 536870911))
+  (is (= xkb::+xkb-keysym-max+ 536870911))
   (let* ((ctx (xkb:xkb-context-new (xkb-context-flags :no-flags)))
          (map (xkb::xkb-keymap-new-from-names ctx nil (xkb::xkb-keymap-compile-flags :no-flags)))
          (state (xkb::xkb-state-new map)))

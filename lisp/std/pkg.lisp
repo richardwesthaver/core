@@ -359,7 +359,7 @@
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency)
   (:import-from :std/thread :%make-thread)
-  (:import-from :std/macs :if-let)
+  (:import-from :std/macs :if-let :eval-always)
   (:import-from :std/list :deletef)
   (:export
    :spawn-workers
@@ -368,7 +368,7 @@
    :oracle-id :find-thread
    :push-job :push-task
    :push-worker :push-task-result
-   :run :run-object 
+   :run-object 
    :work
    :pop-job :pop-task
    :workers

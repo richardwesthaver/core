@@ -47,12 +47,14 @@
           (download "https://publicsuffix.org/list/public_suffix_list.dat"
                     :output (merge-pathnames
                              ".stash/psl.dat"
-                             *skel-path*)))
+                             *skel-path*)
+                    :if-exists :supersede))
  (rgb.txt (%stash)
           (download "https://packy.compiler.company/data/rgb.txt"
                     :output (merge-pathnames
                              ".stash/rgb.txt"
-                             *skel-path*)))
+                             *skel-path*)
+                    :if-exists :supersede))
  (x11.lisp (rgb.txt)
            (color::parse-x11-color-definitions
             :input ".stash/rgb.txt"
@@ -60,16 +62,19 @@
  (parquet.thrift (%stash)
                  (download
                   "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"
-                  :output (merge-pathnames ".stash/parquet.thrift" *skel-path*))
+                  :output (merge-pathnames ".stash/parquet.thrift" *skel-path*)
+                  :if-exists :supersede)
                  #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json (%stash)
                (download "https://packy.compiler.company/data/parquet.json"
-                         :output (merge-pathnames ".stash/parquet.json" *skel-path*)))
+                         :output (merge-pathnames ".stash/parquet.json" *skel-path*)
+                         :if-exists :supersede))
  (freedesktop.org.xml (%stash)
                       (download "https://packy.compiler.company/data/freedesktop.org.xml"
                                 :output (merge-pathnames ".stash/freedesktop.org.xml" *skel-path*)))
  (parquet-test-data (%stash) (download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
-                                       :output (merge-pathnames ".stash/alltypes_plain.parquet" *skel-path*)))
+                                       :output (merge-pathnames ".stash/alltypes_plain.parquet" *skel-path*)
+                                       :if-exists :supersede))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
  (rdb (%stash)
