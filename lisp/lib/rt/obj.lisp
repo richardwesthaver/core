@@ -7,7 +7,7 @@
 
 ;;; Result
 (deftype result-tag ()
-  '(or (member :pass :fail :skip) null))
+  '(or (member :pass :fail) null))
 
 (declaim (inline %make-test-result))
 (defstruct (test-result (:constructor %make-test-result)
@@ -28,9 +28,6 @@
 (defmethod test-fail-p ((res test-result))
   (when (eq :fail (tr-tag res)) t))
 
-(defmethod test-skip-p ((res test-result))
-  (when (eq :skip (tr-tag res)) t))
-
 (defmethod print-object ((self test-result) stream)
   (print-unreadable-object (self stream)
     (format stream "~A ~A"
@@ -44,7 +41,6 @@
   (:documentation "Super class for all test-related objects."))
 
 (defmethod print-object ((self test-object) stream)
-  "test"
   (print-unreadable-object (self stream :type t :identity t)
     (format stream "~A"
             (test-name self))))
@@ -54,10 +50,9 @@
   ((fn :type symbol :accessor test-fn)
    (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
    (profile :type list :accessor test-profile :initform nil :initarg :profile)
-   (args :type list :accessor test-args :initform nil :initarg :args)
    (declare :type list :accessor test-declare :initform nil :initarg :declare)
    (form :initarg :form :initform nil :accessor test-form)
-   (doc :initarg :doc :type string :accessor test-doc)
+   (documentaton :initarg :documentation :type string :accessor test-documentation)
    (lock :initarg :lock :type boolean :accessor test-lock-p)
    (persist :initarg :persist :initform nil :type boolean :accessor test-persist-p)
    (results :initarg :results :type (array test-result) :accessor test-results))

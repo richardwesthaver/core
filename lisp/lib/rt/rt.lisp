@@ -81,8 +81,6 @@ PROPS is a plist which currently accepts the following parameters:
 
 :PERSIST - re-run this test even if it passes
 
-:ARGS - nyi
-
 :PROFILE - enable profiling of this test
 
 :SKIP - don't push this test to the current *TEST-SUITE*
@@ -92,20 +90,19 @@ PROPS is a plist which currently accepts the following parameters:
 BODY is parsed with SB-INT:PARSE-BODY and will fill in documentation
 and declarations for the test body.
 "
-  (destructuring-bind (pr doc dec fn)
-      (multiple-value-bind (forms dec doc)
+  (destructuring-bind (pr documentation dec fn)
+      (multiple-value-bind (forms dec documentation)
           ;; parse body with docstring allowed
           (parse-body (or body) :documentation t :whole t)
-        `(,props ,doc ,dec ',forms))
+        `(,props ,documentation ,dec ',forms))
     ;; TODO 2023-09-21: parse plist
     `(let ((obj (make-test
                  :name ,(format nil "~A" name)
                  :form ,fn
                  ,@(when-let ((v (getf pr :persist))) `(:persist ,v))
-                 ,@(when-let ((v (getf pr :args))) `(:args ',v))
                  ,@(when-let ((v (getf pr :bench))) `(:bench ,v))
                  ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
-                 ,@(when doc `(:doc ,doc))
+                 ,@(when documentation `(:documentation ,documentation))
                  ,@(when dec `(:declare ,dec)))))
        ,(unless (getf pr :skip) '(push-test obj *test-suite*))
        obj)))

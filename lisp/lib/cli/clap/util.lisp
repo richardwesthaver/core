@@ -17,6 +17,13 @@
   (and (> (length str) 2)
        (char= (aref str 0) (aref str 1) #\-)))
 
+(defun short-opt-has-eq-p (str)
+  "Return non-nil if STR is a short-opt which has an '=' somewhere,
+indicating a key/val pair without whitespace."
+  (declare (simple-string str))
+  (when-let ((pos (position #\= str :test 'char=)))
+    (cons (subseq str 1 pos) (subseq str (1+ pos)))))
+
 (defun long-opt-has-eq-p (str)
   "Return non-nil if STR is a long-opt which has an '=' somewhere,
 indicating a key/val pair without whitespace."
@@ -39,7 +46,6 @@ indicating a key/val pair without whitespace."
   (char= (aref str 0) #\:))
 
 (defun opt-string-prefix-eq (ch str)
-  (declare (simple-string str) (character ch))
   (char= ch (aref str 0)))
 
 ;; currently not in use

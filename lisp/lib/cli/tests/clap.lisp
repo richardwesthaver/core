@@ -45,26 +45,27 @@
 
 (deftest clap-basic (:skip t)
   "test basic CLAP functionality."
-  (with-cli (*cli* opts cmds args) *args*
+  (with-cli ((make-cli :cli :opts *opts* :cmds *cmds* :description "test cli") opts cmds args) *args*
     (is (eq (make-shorty "test") #\t))
     (is (equalp (proc-args *cli* '("-f" "baz" "--bar=fax")) ;; not eql
                 (make-cli-ast 
-                 (list (make-cli-node 'opt (find-short-opts *cli* #\f))
+                 (list (make-cli-node 'opt (find-short-opts #\f *cli*))
                        (make-cli-node 'cmd (find-cmd *cli* "baz"))
                        (make-cli-node 'opt (find-opts *cli* "bar"))
                        (make-cli-node 'arg "fax")))))
-    (is (parse-args *cli* '("--bar" "baz" "-f" "yaks")))
+    (parse-args *cli* '("--bar" "baz" "-f" "yaks")))
     (is (stringp
-       (with-output-to-string (s)
-         (print-version *cli* s)
-         (print-usage *cli* s)
-         (print-help *cli* s))))
-  (is (string= "foobar" (cli/clap:parse-string-opt "foobar")))
-  (do-cmd *cli*)))
+         (with-output-to-string (s)
+           (print-version *cli* s)
+           (print-usage *cli* s)
+           (print-help *cli* s))))
+    (is (string= "foobar" (cli/clap:parse-string-opt "foobar")))
+  (do-cmd *cli*))
+
+(make-opt-parser trivial *arg*)
 
 (deftest clap-opts ()
   "CLAP opt tests."
-  (make-opt-parser trivial *arg*)
   (is (reduce (lambda (x y) (and x y))
               (loop for k across *cli-opt-kinds* collect (cli-opt-kind-p k))))
   (is (parse-trivial-opt t))

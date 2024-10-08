@@ -57,8 +57,6 @@
 
 (defgeneric activate-cmd (self))
 
-(defgeneric find-short-opts (self ch &key))
-
 (defgeneric call-opt (self arg))
 
 (defgeneric do-opt (self))

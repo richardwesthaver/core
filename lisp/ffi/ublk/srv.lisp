@@ -7,21 +7,6 @@
 
 (define-alien-type ublksrv-ctrl-dev (struct ublksrv-ctrl-dev))
 
-(define-alien-type ublksrv-dev-data
-  (struct ublksrv-dev-data
-          (dev-id int)
-          (max-io-buf-bytes unsigned)
-          (nr-hw-queues unsigned-short)
-          (queue-depth unsigned-short)
-          (tgt-type c-string)
-          (tgt-ops (* ublksrv-tgt-type))
-          (tgt-argc int)
-          (tgt-argv (* (c-string)))
-          (run-dir c-string)
-          (flags unsigned-long)
-          (ublksrv-flags unsigned-long)
-          (reserved (array unsigned-long 7))))
-
 ;; early def
 (define-alien-type ublksrv-tgt-info
   (struct ublksrv-tgt-info
@@ -82,6 +67,21 @@
           (init-queue (* ublksrv-init-queue-function))
           (deinit-queue (* ublksrv-deinit-queue-function))
           (reserved (array unsigned-long 5))))
+
+(define-alien-type ublksrv-dev-data
+  (struct ublksrv-dev-data
+          (dev-id int)
+          (max-io-buf-bytes unsigned)
+          (nr-hw-queues unsigned-short)
+          (queue-depth unsigned-short)
+          (tgt-type c-string)
+          (tgt-ops (* ublksrv-tgt-type))
+          (tgt-argc int)
+          (tgt-argv (* (c-string)))
+          (run-dir c-string)
+          (flags unsigned-long)
+          (ublksrv-flags unsigned-long)
+          (reserved (array unsigned-long 7))))
 
 (define-alien-type ublk-io-data
   (struct ublk-io-data

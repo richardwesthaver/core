@@ -184,7 +184,6 @@
           do echo "$(basename $f) -> $d"
           install -C -m 755 $f $d
           done fi$#)
- (emacs () #$make -C emacs$#)
  ;; TODO 2024-09-15: 
  (core-syms.sxp () (with-open-file (f ".stash/symbols.sxp" :direction :output)))
  (dist () #$mkdir -pv .stash/tmp/core/bin/ .stash/tmp/core/share/lisp/fasl/ .stash/tmp/core/lib/

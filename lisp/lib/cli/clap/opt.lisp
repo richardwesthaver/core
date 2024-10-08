@@ -50,11 +50,17 @@
 (defmethod cli-lock-p ((self cli-opt))
   (cli-opt-lock self))
 
-(defun %compose-short-opt (o)
+(defun %compose-flag-opt (o)
   (setf (cli-opt-val o) t)
   (make-cli-node 'opt o))
 
-(defun %compose-long-opt (o &optional val)
+(defun %compose-flag-opts (&rest os)
+  (let ((ret))
+    (dolist (o os ret)
+      (setf (cli-opt-val o) t)
+      (make-cli-node 'opt o))))
+
+(defun %compose-value-opt (o &optional val)
   (setf (cli-opt-val o) val)
   (make-cli-node 'opt o))
 

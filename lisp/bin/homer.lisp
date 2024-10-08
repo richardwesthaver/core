@@ -185,7 +185,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
   :name "homer"
   :version "0.1.0"
   :description "user home manager"
-  :thunk 'homer-check
+  :thunk homer-check
   :opts ((:name "level" :description "set the log level" :thunk homer-log-level)
          (:name "help" :description "print help" :thunk homer-help)
          (:name "version" :description "print version" :thunk homer-version)

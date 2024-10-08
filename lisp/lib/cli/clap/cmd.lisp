@@ -35,7 +35,7 @@ a CLI is called without arguments, and all subcommands."))
    obj 
    :slot-names '(name opts cmds thunk lock description args)
    :environment env))
-                               
+
 (defmethod print-object ((self cli-cmd) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A :active ~a :opts ~A :cmds ~A :args ~A"
@@ -142,16 +142,29 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod active-opts ((self cli-cmd))
   (remove-if-not 'cli-opt-lock (opts self)))
 
-(defmethod find-short-opts ((self cli-cmd) ch &key recurse)
+(defun find-short-opts (flag cmd &key recurse)
+  "Find and return all CLI-OPTs matching character or string FLAG in CMD.
+
+- recurse :: optionally check nested commands as well."
   (let ((ret))
     (flet ((%find (ch obj)
-             (when-let ((found (find ch (opts obj) :key #'cli-opt-name :test #'opt-string-prefix-eq)))
+             (when-let ((found (find (coerce ch 'character) obj :key #'cli-opt-name :test #'opt-string-prefix-eq)))
                (push found ret))))
-      (when (and recurse (cmds self))
-        (loop for c across (cmds self)
-              do (%find ch c)))
-      (%find ch self)
-      ret)))
+      (flet ((%recurse-ch (ch vec)
+               (loop for c across vec
+                     do (%find ch (opts c))))
+             (%recurse-str (str vec)
+               (loop for c across vec
+                     for ch across str
+                     do (%find ch (opts c)))))
+        (etypecase flag
+          (character
+           (when recurse (%recurse-ch flag (cmds cmd)))
+           (%find flag (opts cmd)))
+          (string
+           (when recurse (%recurse-str flag (cmds cmd)))
+           (%find flag (opts cmd))))
+        ret))))
 
 (declaim (inline solop))
 (defun solop (self)
@@ -168,54 +181,71 @@ a CLI is called without arguments, and all subcommands."))
 :kind slot, indicating the type of node and a :form slot which stores
 an object."
   (make-cli-ast
-   (loop
-     with skip
-     with exit
-     for (a . args) on args
-     if skip
-     do (setq skip nil)
-     else if exit
-     do (return)
-     ;; TODO 2024-09-15: handle flag groups -abcd
-     else if (short-opt-p a) ;; SHORT OPT
-     collect
-        (if-let ((o (car (find-short-opts self (aref a 1) :recurse nil))))
-          (%compose-short-opt o)
-          (with-opt-restart-case a
-            (clap-unknown-argument a 'cli-opt)))
-     else if (long-opt-p a) ;; LONG OPT
-     collect           
-        (let* ((has-eq (long-opt-has-eq-p a))
-               (name (or (car has-eq) (string-left-trim "-" a)))
-               (o (car (find-opts self name :recurse nil))))
-          (cond
-            ((and has-eq o)
-             (setf (cli-opt-val o) (cdr has-eq))
-             (make-cli-node 'opt o))
-            ((and (not has-eq) o)
-             (prog1
-                 (%compose-long-opt o (pop args))
-               (setq skip t)))
-            (t ;; (not o) (not has-eq)
-             (with-opt-restart-case a
-               (clap-unknown-argument a 'cli-opt)))))
-     ;; OPT GROUP
-     else if (opt-group-p a)
-     collect 
-        (make-cli-node 'group nil)
-     ;; OPT KEYWORD (experimental)
-     else if (opt-keyword-p a)
-     collect (if-let ((o (car (find-opts self (string-left-trim ":" a) :recurse nil))))
-               (prog1 (%compose-keyword-opt o (pop args))
-                 (setq exit t))
-               (make-cli-node 'arg a))
-     else ;; CMD or ARG
-     collect
-        (if-let ((cmd (find-cmd self a)))
-          (prog1 (make-cli-node 'cmd (parse-args cmd args :compile t))
-            (setq exit t))
-          ;; just a plain arg - move to next
-          (make-cli-node 'arg a)))))
+   (flatten
+    (loop
+      with skip
+      with exit
+      for (a . args) on args
+      if skip
+      do (setq skip nil)
+      else if exit
+      do (return)
+      else if (short-opt-p a) ;; SHORT OPT
+      collect
+         (let* ((has-eq (short-opt-has-eq-p a))
+                (names (or (car has-eq) (string-left-trim "-" a)))
+                (opts (find-short-opts names self :recurse nil)))
+           (cond
+             ((and (= (length opts) 1) (not has-eq))
+              (let ((o (car opts)))
+                (if (eql (cli-opt-kind o) 'boolean)
+                    (%compose-flag-opt o)
+                    (prog1
+                        (%compose-value-opt o (pop args))
+                      (setq skip t)))))
+             ((and has-eq opts)
+              (loop for o in opts
+                    do (setf (cli-opt-val o) (cdr has-eq))
+                    collect (make-cli-node 'opt o)))
+             ((and (not has-eq) opts)
+              (loop for o in opts
+                    collect (%compose-flag-opt o)))
+             (t
+              (with-opt-restart-case a
+                (clap-unknown-argument a 'cli-opt)))))
+      else if (long-opt-p a) ;; LONG OPT
+      collect           
+         (let* ((has-eq (long-opt-has-eq-p a))
+                (name (or (car has-eq) (string-left-trim "-" a)))
+                (o (car (find-opts self name :recurse nil))))
+           (cond
+             ((and has-eq o)
+              (setf (cli-opt-val o) (cdr has-eq))
+              (make-cli-node 'opt o))
+             ((and (not has-eq) o)
+              (prog1
+                  (%compose-value-opt o (pop args))
+                (setq skip t)))
+             (t ;; (not o) (not has-eq)
+              (with-opt-restart-case a
+                (clap-unknown-argument a 'cli-opt)))))
+      ;; OPT GROUP
+      else if (opt-group-p a)
+      collect 
+         (make-cli-node 'group nil)
+      ;; OPT KEYWORD (experimental)
+      else if (opt-keyword-p a)
+      collect (if-let ((o (car (find-opts self (string-left-trim ":" a) :recurse nil))))
+                (prog1 (%compose-keyword-opt o (pop args))
+                  (setq exit t))
+                (make-cli-node 'arg a))
+      else ;; CMD or ARG
+      collect
+         (if-let ((cmd (find-cmd self a)))
+           (prog1 (make-cli-node 'cmd (parse-args cmd args :compile t))
+             (setq exit t))
+           ;; just a plain arg - move to next
+           (make-cli-node 'arg a))))))
 
 (defmethod install-ast ((self cli-cmd) (ast cli-ast))
   "Install the given AST, recursively filling in value slots."
