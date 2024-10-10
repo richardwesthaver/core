@@ -4,91 +4,43 @@
 #+email: richard.westhaver@gmail.com
 #+setupfile: https://cdn.compiler.company/org/clean.theme
 #+property: header-args :eval no-export
+#+CALL: project-details()
+
+#+RESULTS:
+|-------------+--------------------------------------------------------------|
+| name        | core                                                         |
+| version     | 0.1.0                                                        |
+| description | The Compiler Company Core                                    |
+| skel-id     | 15bc-b763-ec92-1cf5                                          |
+| root        | ~/comp/core/                                                 |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/e02ed76e7ce3][e02ed76e7ce3:699+]]          |
+| tags        | core lisp rust emacs c                                       |
+| updated     | Mon Oct 07 22:03:24 2024 -0400                               |
+| langs       | c cheader elisp html javascript json lisp org rust text toml |
+| lines       | 99953 :λ 77833 :# 10073 :_ 12047                             |
+|-------------+--------------------------------------------------------------|
+
 - [[https://compiler.company/docs/core][Documentation]]
+- [[https://compiler.company/plan/tasks/core.html][Tasks]]
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
-* Overview
-The CC core is categorized into language-specific modules. Our
-languages at time of writing are Common Lisp, Rust, and Emacs Lisp.
+The core is primarily written from scratch in (non-portable) Lisp but
+also includes dedicated Emacs Lisp and Rust modules.
 
-The top-level modules are contained in the directories =lisp=, =rust=,
-and =emacs= respectively. At the root directory you will also find a
-=skelfile= and a =sk= file for each module. These files contain
-project definitions which are used by our =skel= program to perform a
-variety of actions on the core such as running tests and building
-binaries.
+The Lisp code is divided into separate folders under the top-level
+=lisp= folder. There is a standard library named =std=, =ffi= modules
+which provide C bindings, =lib= modules for high-level packages, and
+=bin= modules containing executable programs. Unit tests can be found
+in directories and lisp files starting with =tests= and benchmarks are
+contained in the dedicated =bench= directory.
 
-* Bootstrap
-To bootstrap the core you will need recent versions of [[https://www.rust-lang.org/][Rust]], [[http://www.sbcl.org/][SBCL]], and
-a C compiler (clang or gcc). Only Unix systems are explicitly
-supported.
+The =emacs= folder contains our core Emacs Lisp code. The contents are
+intended to be copied directly into the user's =.emacs.d= and paired
+with a user configuration file. The top-level files contain the usual
+suspects for a modern Emacs configuration and the =lib= folder
+contains various additional packages which enhance our IDE workflow.
 
-Many parts of the core depend on additional libraries which may or may
-not be provided by your system's package manager. See the dependency
-matrix below for details.
-
-In any case, it is always preferred to make use of the [[https://vc.compiler.company/comp/infra][infra]] project
-to reliably provision the host either from source or pre-built
-platform-specific [[https://packy.compiler.company/dist][binary distributions]].
-
-#+NAME: Dependencies
-| dependency  | required by            | src                                           |
-|-------------+------------------------+-----------------------------------------------|
-| Blake3      | ffi/blake3             | https://vc.compiler.company/packy/blake3      |
-| Tree-sitter | ffi/tree-sitter        | https://vc.compiler.company/packy/tree-sitter |
-| Uring       | ffi/uring              | https://vc.compiler.company/packy/uring       |
-| Btrfs       | ffi/btrfs              | https://vc.compiler.company/packy/btrfs       |
-| Ublksrv     | ffi/ublk               | https://vc.compiler.company/packy/ublksrv     |
-| OpenSSL     | lib/net                | [[https://vc.compiler.company/packy/openssl]]     |
-| RocksDB     | ffi/rocksdb            | https://vc.compiler.company/packy/rocksdb     |
-| Git         | lib/vc/git             | https://vc.compiler.company/packy/git         |
-| Hg          | lib/vc/hg              | https://vc.compiler.company/packy/hg          |
-| Zstd        | ffi/zstd               | https://vc.compiler.company/packy/zstd        |
-| Qemu        | lib/box                | https://vc.compiler.company/packy/qemu        |
-| Podman      | lib/pod                | https://vc.compiler.company/packy/podman      |
-| Emacs       | emacs                  | https://vc.compiler.company/packy/emacs       |
-| StumpWM     | lib/gui/wm/x11/stumpwm | https://vc.compiler.company/packy/stumpwm     |
-| Readline    | ffi/readline           | [[https://vc.compiler.company/packy/readline]]    |
-| Keyutils    | ffi/keyutils           | [[https://vc.compiler.company/packy/libkeyutils]] |
-| Mpd         | lib/aud/mpd            | https://vc.compiler.company/packy/mpd         |
-
-* Build
-The Core consists of two major system: the *lisp* system and the
-*rust* system. There is also an auxiliary *emacs* system containing a
-complete Emacs IDE configuration which serves as the base for user
-customizations.
-
-Building the core will produce its output to the =.stash= directory by
-default. You can then test, run, and install the resulting files or
-package them up to be shipped elsewhere.
-** From Source
-*** Lisp
-The Lisp Core can be found under the =lisp= directory. It is the
-largest system, most actively developed, and is intended to cover the
-complete surface of the user-facing APIs contained in the core.
-
-The core is self-hosted in the sense that it is intended to be built
-from one of its own programs - the =skel= project compiler. You may
-also load any part of the core individually as long as you have [[https://www.sbcl.org/][SBCL]]
-and [[https://www.quicklisp.org/beta/][Quicklisp]] installed.
-*** Rust
-Today, the Rust components of the core are quite small and
-isolated. We like Rust right now for the reasonable memory safety
-guarantees, as an interface to (W)GPU, WASM, LLVM, etc, and because it
-has an industry-sponsored ecosystem (guaranteed future). 
-
-Our Rust code is far less concerned with being completely from
-scratch - dependencies are imported freely and at will - adapting to
-whatever FOTM is hot right now.
-
-A workspace is configured such that you can build all components with
-the following command (~NOTE~ - takes a long time):
-#+begin_src shell :exports both :results output
-  cd rust && cargo build
-#+end_src
-
-*** Emacs
-The core contains a collection of Emacs Lisp libraries under =emacs=
-which may be installed for the current user using the corresponding
-Makefile.
+Last, we have our Rust code which lives under =rust=. There's =lib=
+and =bin= modules same as Lisp with =sys= being the Rusty term for
+=ffi=.

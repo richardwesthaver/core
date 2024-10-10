@@ -6,7 +6,6 @@
 ;; https://www.freedesktop.org/wiki/Software/XKeyboardConfig/
 ;; https://www.x.org/releases/X11R7.6/doc/xorg-docs/input/XKB-Config.html
 ;; https://people.uleth.ca/~daniel.odonnell/Blog/custom-keyboard-in-linuxx11
-;; 
 
 ;;; Code:
 (defpackage :xkb
@@ -53,7 +52,9 @@
 
 (define-alien-enum (xkb-keymap-compile-flags unsigned-char)
                    :no-flags 0)
-(define-alien-type xkb-keymap-format boolean)
+
+(define-alien-enum (xkb-keymap-format int)
+                   :text-v1 1)
 
 (define-alien-type xkb-rule-names
     (struct xkb-rule-names
@@ -122,6 +123,12 @@
 
 ;; https://xkbcommon.org/doc/current/group__logging.html
 
+(define-alien-enum (xkb-log-level int)
+                   :critical 10
+                   :error 20
+                   :warning 30
+                   :info 40
+                   :debug 50)
 ;;; Keymap Init
 
 (define-alien-routine xkb-keymap-new-from-names (* xkb-keymap)

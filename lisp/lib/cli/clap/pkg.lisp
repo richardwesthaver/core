@@ -61,7 +61,7 @@
   (:use :cl :std :log
    :sb-ext :cli/clap/proto :cli/clap/macs :cli/clap/util
    :cli/clap/vars :cli/clap/ast :cli/clap/util)
-  (:import-from :dat/sxp :ast)
+  (:import-from :dat/sxp :ast :*ast*)
   (:export :make-cli :define-cli :defmain
    :make-opts :make-cmds :parse-bool-opt :parse-string-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op

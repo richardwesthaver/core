@@ -70,6 +70,8 @@
    (bookmarks :accessor vc-bookmarks)
    (requires :accessor vc-requires)))
 
+(defmethod vc-type ((self hg-repo)) :hg)
+
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
   (uiop:with-current-directory ((vc-path self))
     (let ((proc (run-hg-command cmd args :stream nil)))

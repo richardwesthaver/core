@@ -19,7 +19,8 @@
    :vc-meta :find-repo
    :make-repo :register-repo
    :vc-update
-   :vc-ignore))
+   :vc-ignore
+   :vc-remotes))
 
 (pkg:defpkg :vc/hg
   (:use :cl :std :cli :sb-bsd-sockets :vc/proto)

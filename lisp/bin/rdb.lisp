@@ -89,7 +89,7 @@
 
 (defmain start-rdb ()
   (let ((*log-level* :info))
-    (with-cli (*rdb-cli* opts cmds args) ()
+    (with-cli (*rdb-cli* :args (cli:args))
       (if (active-cmds *cli*)
           (rdb:with-db (*rdb* (create-db (do-opt (car (find-opts *cli* "db")))))
             (do-cmd *cli*)

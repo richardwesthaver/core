@@ -15,5 +15,4 @@
   :thunk 'cli:args)
 
 (cli:defmain start-skc ()
-  (cli:with-cli (*skc-cli* opts cmds) (cli:args)
-    (cli:do-cmd *skc-cli*)))
+  (cli:with-cli (*skc-cli* :args (cli:args) :run t :exit t)))

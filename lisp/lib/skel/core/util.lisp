@@ -139,10 +139,11 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (in-readtable :shell)
   (load-skelrc)
   (when-let ((project (find-skelfile *default-pathname-defaults*)))
-    (setq *skel-project* (load-skelfile project)))
+    (setq *skel-project* (load-skelfile project)
+          *skel-path* #1=(sk-src *skel-project*)
+          cli/shell:*shell-directory* #1#))
   (when-let ((cache (get-skelrc-slot* :cache nil)))
     (setq *skel-cache* cache))
-
   (when-let ((store (get-skelrc-slot* :store nil)))
     (setq *skel-store* store))
   (when-let ((stash (get-skelrc-slot* :stash nil)))

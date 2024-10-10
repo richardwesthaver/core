@@ -11,6 +11,9 @@
 (deftype form ()
   '(satisfies formp))
 
+(defvar *ast* nil
+  "Currently active AST object.")
+
 ;;; Conditions
 (define-condition sxp-error (error) ())
 

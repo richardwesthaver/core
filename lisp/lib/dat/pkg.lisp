@@ -20,6 +20,7 @@
    :unwrap-or
    :sxpp :build-ast :load-ast :load-ast*
    :ast
+   :*ast*
    :define-macro :define-fmt :read-sxp-file :write-sxp-file
    :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream
    :make-sxp :sxp :formp :form

@@ -6,7 +6,7 @@
 
 ;;; Code:
 (defpackage :syn
-  (:use :cl :std :obj :parse :ts)
+  (:use :cl :std :obj :parse :tree-sitter)
   (:export))
 
 (in-package :syn)

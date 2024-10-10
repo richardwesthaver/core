@@ -21,7 +21,7 @@
           (setf (doc-tree res)
                 (coerce
                  (loop for c = (peek-char nil fstream nil nil)
-                       while (char= c #\*)
+                       while (and c (char= c #\*))
                        collect (org-parse :heading fstream))
                  '(vector org-heading))))
         res)

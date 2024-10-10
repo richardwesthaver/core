@@ -25,7 +25,7 @@
 
 (defun run ()
   (let ((*log-level* :info))
-    (with-cli (*packy-cli* opts cmds args) (cli:args)
+    (with-cli (*packy-cli* :args (cli:args))
       (do-cmd *cli*)
       (debug-opts *cli*))))
 

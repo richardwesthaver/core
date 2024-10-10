@@ -242,7 +242,7 @@ an object."
       else ;; CMD or ARG
       collect
          (if-let ((cmd (find-cmd self a)))
-           (prog1 (make-cli-node 'cmd (parse-args cmd args :compile t))
+           (prog1 (make-cli-node 'cmd (parse-args cmd args :install t))
              (setq exit t))
            ;; just a plain arg - move to next
            (make-cli-node 'arg a))))))
@@ -285,13 +285,14 @@ an object."
   "Push an ARG onto the corresponding slot of a CLI-CMD."
   (push arg (cli-args self)))
 
-(defmethod parse-args ((self cli-cmd) args &key (compile t))
+(defmethod parse-args ((self cli-cmd) args &key (install t))
   "Parse ARGS and return the updated object SELF.
 ARGS is assumed to be a valid cli-ast (list of cli-nodes), unless COMPILE is
-t, in which case a list of strings is assumed."
-  (with-slots (opts cmds) self
-    (let ((args (if compile (proc-args self args) args)))
-      (install-ast self args))))
+t, in which case a list of strings is assumed. INSTALL always implies COMPILE
+and calls INSTALL-AST on SELF with ARGS."
+  (let ((args (proc-args self args)))
+    (if install (install-ast self args)
+        args)))
 
 ;; WARNING: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.

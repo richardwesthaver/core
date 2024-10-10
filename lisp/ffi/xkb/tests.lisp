@@ -17,4 +17,3 @@
     (sb-alien:with-alien ((syms (* (* xkb-keysym)) (sb-alien:make-alien (* xkb-keysym) 20)))
       (is (= 1 (xkb::xkb-state-key-get-syms state 10 syms)))
       (is (= 49 (sb-alien:deref (sb-alien:deref syms 0)))))))
-                                

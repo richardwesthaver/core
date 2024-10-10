@@ -325,40 +325,10 @@ via the special form stored in RECIPE."
      sources))
   (sk-run rule))
 
-;;; Version Control
-(defstruct sk-vc-remote-meta
-  (name :default :type keyword)
-  (path nil :type (or symbol string)))
-
-(defmethod write-sxp-stream ((self sk-vc-remote-meta) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(sk-vc-remote-meta-name self) ,(sk-vc-remote-meta-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
-
-(defstruct (sk-vc-meta (:constructor make-sk-vc-meta (kind &optional remotes)))
-  (kind *default-skel-vc-kind* :type vc-designator)
-  (remotes nil :type (or string list)))
-
-(defmethod write-sxp-stream ((self sk-vc-meta) stream &key (pretty t) (case :downcase) (fmt :pretty))
-  (if (= 0 (length (sk-vc-meta-remotes self)))
-      (write (sk-vc-meta-kind self) :stream stream :pretty pretty :case case :readably t :array t :escape t)
-      (progn
-        (format stream "(")
-        (write (sk-vc-meta-kind self) :stream stream :pretty pretty :case case :readably t :array t :escape t)      
-        (format stream " ")
-        (loop for x in (sk-vc-meta-remotes self)
-              do 
-                 (write-sxp-stream x stream :pretty pretty :case case :fmt fmt))
-        (format stream ")"))))
-
-(defmethod print-object ((self sk-vc-meta) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~S" (sk-vc-meta-kind self))
-    (when-let ((remotes (sk-vc-meta-remotes self)))
-      (format stream " ~A" remotes))))
-
 ;;; Project
 (defclass sk-project (skel sxp sk-meta)
   ((name :initarg :name :initform "" :type string)
-   (vc :initarg :vc :initform (make-sk-vc-meta *default-skel-vc-kind*) :type sk-vc-meta :accessor sk-vc)
+   (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) :type vc-repo :accessor sk-vc)
    (src :initarg :src :type pathname :accessor sk-src)
    (stash :initarg :stash :accessor sk-stash :type pathname)
    (store :initarg :store :accessor sk-store :type pathname)
@@ -461,9 +431,12 @@ via the special form stored in RECIPE."
             ;; VC
             (when-let ((vc (sk-vc self)))
               (etypecase vc
-                ((or sk-vc-meta null) nil)
-                (vc-designator (setf (sk-vc self) (make-sk-vc-meta vc)))
-                (list (setf (sk-vc self) (apply #'make-sk-vc-meta vc)))))
+                ((or vc-repo null) nil)
+                (vc-designator (setf (sk-vc self) (vc-init vc)))
+                (list 
+                 (let ((repo (vc-init (car vc))))
+                   (setf (vc-remotes repo) (coerce (cdr vc) 'vector))
+                   (setf (sk-vc self) repo)))))
             ;; INCLUDE
             (when-let ((include (sk-include self)))
               (setf (sk-include self) (map 'vector

@@ -23,4 +23,3 @@
 
 (defun invalid-skel-ast (ast)
   (error 'invalid-skel-ast :ast ast))
-

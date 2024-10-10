@@ -1,4 +1,4 @@
-;;; lib/skel/core/header.lisp --- Header comment parser-generator API
+;;; lib/skel/core/header.lisp --- Skel file-header proto
 
 ;;
 

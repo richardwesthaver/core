@@ -109,16 +109,39 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
         (c (active-cmds cli)))
     (log:debug! :pwd (cli-cd cli) :active-opts o :cmd-args a :active-cmds c)))
 
-(defmacro with-cli ((cli &rest slots) args &body body)
+(deftype cli-hook-designator () '(or boolean :after))
+
+(defmacro with-cli ((cli &key slots (args *args*) (install t) run exit) &body body)
   "Like with-slots with some extra bindings.
 
-SLOTS is a list passed to WITH-SLOTS.
+- CLI is an instance of a CLI class.
 
-CLI is updated based on the current environment and dynamically bound
-to *CLI*. ARGS is a list of CLI args, defaults to *POSIX-ARGV* at
-runtime if nil."
+- SLOTS is a list passed directly to WITH-SLOTS with CLI.
+
+- ARGS is a list of arguments to parse with this cli object.
+
+- INSTALL defaults to T which implies that the AST will be consumed before
+  BODY. A nil value indicates that the AST will not be consumed and it is up
+  to the user to provide a binding for the AST slot so that they may call
+  INSTALL-AST manually. Alternatively a special value :AFTER may be supplied
+  which will delay installation until after BODY is evaluated.
+
+ - RUN with a non-nil value will call DO-CMD on the CLI after evaluating BODY.
+
+- EXIT with a non-nil value will exit the current process as the last hook
+  after evaluating BODY.
+
+CLI is updated based on the current environment and dynamically bound to
+*CLI*. ARGS is a list of CLI args, defaults to *ARGS* at runtime if nil. *AST* is bound to the parsed result of"
   `(progn
-     (let ((*cli* ,cli))
+     (let ((*cli* ,cli)
+           (*args* ,args)
+           (*ast* (proc-args ,cli ,args)))
        (setf (cli-cd *cli*) *default-pathname-defaults*)
-       (with-slots ,slots (parse-args *cli* ,args :compile t)
-         ,@body))))
+       ,@(when (eql install t)
+           `((install-ast *cli* *ast*)))
+       (with-slots ,slots *cli*
+         ,@body
+         ,@(when (eql install :after) '((install-ast *cli*)))
+         ,@(when run '((do-cmd *cli*)))
+         ,@(when exit '((sb-ext:exit)))))))

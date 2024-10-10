@@ -76,7 +76,7 @@ are missing."))
 (defgeneric vc-branches (self))
 (defgeneric vc-remotes (self))
 (defgeneric vc-config (self))
-
+(defgeneric vc-type (self))
 ;;  IDEA 2023-12-29: :ediff t
 (defgeneric vc-diff (a b &key &allow-other-keys))
 
@@ -141,3 +141,23 @@ are missing."))
 
 (defmethod vc-name ((self vc-repo))
   (car (last (pathname-directory (vc-path self)))))
+
+(defmethod vc-type ((self vc-repo)) t)
+
+(defmethod write-sxp-stream ((self vc-repo) stream &key (pretty t) (case :downcase))
+  (if (= 0 (length (vc-remotes self)))
+      (write (vc-type self) :stream stream :pretty pretty :case case :readably t :array t :escape t)
+      (progn
+        (format stream "(")
+        (write (vc-type self) :stream stream :pretty pretty :case case :readably t :array t :escape t)
+        (format stream " ")
+        (loop for x in (vc-remotes self)
+              do 
+                 (write `(,(vc-type self) ,(coerce (vc-remotes self) 'list)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+        (format stream ")"))))
+
+(defmethod print-object ((self vc-repo) stream)
+  (print-unreadable-object (self stream)
+    (format stream "~S" (vc-type self))
+    (when-let ((remotes (vc-remotes self)))
+      (format stream " ~A" remotes))))

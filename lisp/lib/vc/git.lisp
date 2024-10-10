@@ -37,6 +37,8 @@
 (defclass git-repo (vc-repo)
   ((index))) ;; working-directory
 
+(defmethod vc-type ((self git-repo)) :git)
+
 (defmethod vc-init ((self (eql :git)))
   (make-instance 'git-repo :path (pathname *default-pathname-defaults*)))
 

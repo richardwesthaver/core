@@ -25,7 +25,6 @@
    :sk-write :sk-writeln
    :sk-write-string :sk-write-file
    :sk-read-file :sk-install-user-config
-   :sk-vc-push :sk-vc-pull
    :sk-find-rule :sk-find-script
    :sk-find :sk-find*
    :sk-convert :sk-load-component
@@ -70,7 +69,6 @@
    :sk-tags :edit-skelrc :sk-target :skel
    :sk-meta :def-sk-class :sk-project :sk-source
    :sk-vc :sk-bind :sk-env :make-sk-rule
-   :make-sk-vc-meta :sk-vc-meta :sk-vc-meta-kind :sk-vc-meta-remotes
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
    :sk-make :sk-description :sk-kind :sk-rules
    :sk-version :sk-name
