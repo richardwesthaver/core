@@ -39,6 +39,12 @@
 
 (defmethod vc-type ((self git-repo)) :git)
 
+(defmethod print-object ((self git-repo) stream)
+  (print-unreadable-object (self stream)
+    (format stream "~S" (vc-type self))
+    (when-let ((remotes (vc-remotes self)))
+      (format stream " ~A" remotes))))
+
 (defmethod vc-init ((self (eql :git)))
   (make-instance 'git-repo :path (pathname *default-pathname-defaults*)))
 

@@ -5,10 +5,9 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-task)
-  (define-opaque gst-task-private)
-  (define-opaque gst-task-class))
+(define-opaque gst-task)
+(define-opaque gst-task-private)
+(define-opaque gst-task-class)
 
 (define-alien-enum (gst-task-state int)
                    :started 0

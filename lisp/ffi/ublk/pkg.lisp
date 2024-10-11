@@ -5,8 +5,8 @@
 ;;; Code:
 (defpackage :ublk
   (:use :cl :std :sb-alien :uring)
-  (:export ))
+  (:export :load-ublksrv))
 
 (in-package :ublk)
 
-(define-alien-loader "ublksrv" t)
+(define-alien-loader ublksrv)

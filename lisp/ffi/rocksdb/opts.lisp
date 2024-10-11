@@ -70,8 +70,7 @@
 (define-opaque rocksdb-wal-readoptions)
 
 ;;; Block based Table Options
-(eval-always
-  (define-opaque rocksdb-block-based-table-options))
+(define-opaque rocksdb-block-based-table-options)
 
 (define-alien-routine rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
 (define-alien-routine rocksdb-block-based-options-destroy void (self (* rocksdb-block-based-table-options)))

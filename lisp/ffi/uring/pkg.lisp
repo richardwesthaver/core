@@ -61,7 +61,7 @@ queue (CQ), and form the foundation of the new interface.
    :make-io-submitter))
    
 (in-package :uring)
-(define-alien-loader "uring" t "/usr/lib/")
+(define-alien-loader uring "/usr/lib/")
 ;; defaults on x86_64
 (defconstant +cpu-setsize+ 16) 
 (defconstant +sigset-nwords+ 16)

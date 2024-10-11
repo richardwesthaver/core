@@ -6,11 +6,11 @@
 (defpackage :alsa
   (:use :cl :std :sb-alien)
   (:import-from :sb-unix :off-t)
-  (:export ))
+  (:export :load-asound))
 
 (in-package :alsa)
 
-(define-alien-loader "asound" t "/usr/lib/")
+(define-alien-loader asound "/usr/lib/")
 
 (defconstant %seek-set 0)
 (defconstant %seek-cur 1)

@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-mini-object))
+(define-opaque gst-mini-object)
 
 (define-alien-type gst-mini-object-copy-function (* t))
 (define-alien-type gst-mini-object-dispose-function (* t))

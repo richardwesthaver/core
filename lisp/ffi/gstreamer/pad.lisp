@@ -5,9 +5,8 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-pad)
-  (define-opaque gst-pad-template))
+(define-opaque gst-pad)
+(define-opaque gst-pad-template)
 
 (define-alien-type gst-pad-private (* t))
 

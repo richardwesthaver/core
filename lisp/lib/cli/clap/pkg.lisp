@@ -37,12 +37,6 @@
    :clap-simple-warning
    :clap-warning
    :clap-unknown-argument
-   :handle-unknown-opt
-   :handle-missing-opt
-   :handle-invalid-opt
-   :handle-unknown-arg
-   :handle-missing-arg
-   :handle-invalid-arg
    :clap-missing-argument
    :clap-invalid-argument
    :activate-cmd

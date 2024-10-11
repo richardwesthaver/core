@@ -61,6 +61,7 @@ set *errptr to a malloc()ed error message.
 (defpackage :rocksdb
   (:use :cl :std/alien :std/sym :std/macs :sb-alien)
   (:export
+   :load-rocksdb
    ;; vars
    :*rocksdb-options*
    :*rocksdb-compaction-levels*
@@ -328,8 +329,50 @@ set *errptr to a malloc()ed error message.
    :rocksdb-env-get-background-threads
    :rocksdb-env-destroy
    :rocksdb-create-dir-if-missing
-   :rocksdb-options-set-wal-dir))
+   :rocksdb-options-set-wal-dir
+   :rocksdb
+   :rocksdb-iterator
+   :rocksdb-backup-engine
+   :rocksdb-backup-engine-info
+   :rocksdb-memory-allocator
+   :rocksdb-cache
+   :rocksdb-compactionfilter
+   :rocksdb-compactionfiltercontext
+   :rocksdb-compactionfilterfactory
+   :rocksdb-comparator
+   :rocksdb-dbpath
+   :rocksdb-env
+   :rocksdb-filelock
+   :rocksdb-filterpolicy
+   :rocksdb-logger
+   :rocksdb-mergeoperator
+   :rocksdb-randomfile
+   :rocksdb-seqfile
+   :rocksdb-slicetransform
+   :rocksdb-snapshot
+   :rocksdb-writeablefile
+   :rocksdb-writebatch
+   :rocksdb-writebatch-wi
+   :rocksdb-livefiles
+   :rocksdb-column-family-handle
+   :rocksdb-column-family-metadata
+   :rocksdb-level-metadata
+   :rocksdb-sst-file-metadata
+   :rocksdb-sstfilewriter
+   :rocksdb-ratelimiter
+   :rocksdb-perfcontext
+   :rocksdb-pinnableslice
+   :rocksdb-transactiondb
+   :rocksdb-optimistictransactiondb
+   :rocksdb-transaction
+   :rocksdb-checkpoint
+   :rocksdb-wal-iterator
+   :rocksdb-memory-comsumers
+   :rocksdb-memory-usage
+   :rocksdb-statistics-histogram-data
+   :rocksdb-block-based-table-options
+   :rocksdb-cuckoo-table-options))
 
 (in-package :rocksdb)
 
-(define-alien-loader "rocksdb" t)
+(define-alien-loader rocksdb)

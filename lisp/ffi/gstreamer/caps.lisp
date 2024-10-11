@@ -8,8 +8,7 @@
 (define-alien-enum (gst-caps-flags int)
                    :any (ash (gst-mini-object-flags :last) 0))
 
-(eval-always
-  (define-opaque gst-caps))
+(define-opaque gst-caps)
 
 (define-alien-type gst-caps-t
   (struct gst-caps

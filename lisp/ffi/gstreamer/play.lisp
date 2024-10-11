@@ -5,15 +5,14 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-alien-loader gst-play t "/usr/lib/" "gstplay-1.0")
+(define-alien-loader gst-play "/usr/lib/" "gstplay-1.0")
 
-(eval-always
-  (define-opaque gst-play)
-  (define-opaque gst-play-class)
-  (define-opaque gst-play-signal-adapter)
-  (define-opaque gst-play-signal-adapter-class)
-  (define-opaque gst-play-video-renderer)
-  (define-opaque gst-play-video-renderer-interface))
+(define-opaque gst-play)
+(define-opaque gst-play-class)
+(define-opaque gst-play-signal-adapter)
+(define-opaque gst-play-signal-adapter-class)
+(define-opaque gst-play-video-renderer)
+(define-opaque gst-play-video-renderer-interface)
 
 (define-alien-type gst-play-video-renderer-interface-t
   (struct gst-play-video-renderer-interface

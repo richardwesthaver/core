@@ -68,10 +68,6 @@
   (setf (cli-opt-val o) val)
   (make-cli-node 'opt o))
 
-(defmethod handle-unknown-argument ((self cli-opt) arg))
-(defmethod handle-missing-argument ((self cli-opt) arg))
-(defmethod handle-invalid-argument ((self cli-opt) arg))
-
 (defmethod initialize-instance :after ((self cli-opt) &key)
   (with-slots (name thunk) self
     (unless (stringp name) (setf name (format nil "~(~A~)" name)))
@@ -112,6 +108,7 @@
            (equal kind bk)))))
 
 (defmethod call-opt ((self cli-opt) arg)
+  (activate-opt self)
   (funcall (cli-opt-thunk self) arg))
 
 (defmethod do-opt ((self cli-opt))

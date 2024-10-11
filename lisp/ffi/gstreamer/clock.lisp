@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-clock-private))
+(define-opaque gst-clock-private)
 
 (define-alien-type gst-clock-time (unsigned 64))
 

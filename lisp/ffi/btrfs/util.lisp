@@ -5,9 +5,8 @@
 ;;; Code:
 (in-package :btrfs)
 
-(eval-always
-  (define-opaque btrfs-util-qgroup-inherit nil t)
-  (define-opaque btrfs-util-subvolume-iterator nil t))
+(define-opaque btrfs-util-qgroup-inherit t)
+(define-opaque btrfs-util-subvolume-iterator t)
 
 (define-alien-enum (btrfs-util-error int)
                    :ok 0

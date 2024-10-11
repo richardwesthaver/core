@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-object))
+(define-opaque gst-object)
 
 (define-alien-enum (gst-object-flags int)
                    :may-be-leaked (ash 1 0)

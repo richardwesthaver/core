@@ -77,22 +77,4 @@
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format cli SELF as a useful string."))
 
-(defgeneric handle-unknown-opt (self opt)
-  (:documentation "Handle an unknown cli-opt."))
-
-(defgeneric handle-missing-opt (self opt)
-  (:documentation "Handle a missing cli-opt."))
-
-(defgeneric handle-invalid-opt (self opt &optional reason)
-  (:documentation "Handle an invalid cli-opt."))
-
-(defgeneric handle-unknown-arg (self arg)
-  (:documentation "Handle an unknown cli-arg."))
-
-(defgeneric handle-missing-arg (self arg)
-  (:documentation "Handle a missing cli-arg."))
-
-(defgeneric handle-invalid-arg (self arg &optional reason)
-  (:documentation "Handle an invalid cli-arg."))
-
 (defgeneric cli-equal (a b))

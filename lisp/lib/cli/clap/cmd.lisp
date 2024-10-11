@@ -71,16 +71,6 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod pop-opt ((self cli-opt))
   (vector-pop (opts self)))
 
-(defmethod handle-unknown-opt ((self cli-cmd) (opt string))
-  (with-opt-restart-case opt
-    (clap-unknown-argument opt 'cli-opt)))
-
-(defmethod handle-invalid-opt ((self cli-cmd) (opt string) &optional reason)
-  (clap-invalid-argument opt :kind 'cli-opt :reason reason))
-
-(defmethod handle-missing-opt ((self cli-cmd) (opt string))
-  (clap-missing-argument opt 'cli-opt))
-
 (defmethod cli-equal ((a cli-cmd) (b cli-cmd))
   (with-slots (name opts cmds) a
     (with-slots ((bn name) (bo opts) (bc cmds)) b
@@ -148,7 +138,9 @@ a CLI is called without arguments, and all subcommands."))
 - recurse :: optionally check nested commands as well."
   (let ((ret))
     (flet ((%find (ch obj)
-             (when-let ((found (find (coerce ch 'character) obj :key #'cli-opt-name :test #'opt-string-prefix-eq)))
+             (when-let ((found (find (coerce ch 'character) obj 
+                                     :key #'cli-opt-name 
+                                     :test #'opt-string-prefix-eq)))
                (push found ret))))
       (flet ((%recurse-ch (ch vec)
                (loop for c across vec
@@ -265,8 +257,8 @@ an object."
                (case kind
                  ;; opts 
                  (opt
-                  (setf #1=(find-opt self (cli-name form)) form)
-                  (activate-opt #1#)
+                  (setf (find-opt self (cli-name form)) form)
+                  (activate-opt (find-opt self (cli-name form)))
                   (log:trace! (format nil "installing opt ~A" (cli-name form))))
                  (cmd
                   (setf (find-cmd self (cli-name form)) form)

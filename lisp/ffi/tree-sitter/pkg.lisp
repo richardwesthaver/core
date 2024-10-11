@@ -88,5 +88,5 @@
 
 (in-package :tree-sitter)
 
-(define-alien-loader "tree-sitter" t)
-(define-alien-loader "tree-sitter-alien" t)
+(define-alien-loader tree-sitter)
+(define-alien-loader tree-sitter-alien)

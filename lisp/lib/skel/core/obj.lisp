@@ -35,6 +35,13 @@
    (license :initarg :license :type license-designator :accessor sk-license))
   (:documentation "Skel Meta class."))
 
+(defmethod print-object ((self sk-meta) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A :path ~A" (sk-name self) (sk-path self))
+    ;; (unless (sequence:emptyp (sk-version self))
+    ;;   (format stream " :version ~A" (sk-version self)))
+    (format stream " :id ~A" (format-sxhash (id self)))))
+
 (defun sk-init (class &rest initargs)
   (apply #'make-instance class initargs))
 
@@ -139,7 +146,7 @@
 
 ;;; Config
 (defclass sk-config (skel sxp) 
-  ((vc :initform *default-skel-vc-kind* :initarg :vc :type (or vc-designator sk-vc-meta) :accessor sk-vc)
+  ((vc :initform *default-vc-kind* :initarg :vc :type (or vc-repo vc-designator) :accessor sk-vc)
    (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
    (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
    (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
@@ -270,7 +277,12 @@ via the special form stored in RECIPE."
 
 (declaim (inline make-sk-rule))
 (defun make-sk-rule (target &optional source recipe)
-  (%make-sk-rule (string target) source recipe))
+  (%make-sk-rule 
+   (etypecase target 
+     (string target)
+     (symbol (string-downcase target)))
+   source
+   recipe))
 
 (defmethod sk-new ((self (eql :rule)) &rest args)
   (declare (ignore self))

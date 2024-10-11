@@ -28,7 +28,7 @@
 
 (in-package :blake3)
 
-(define-alien-loader "blake3")
+(define-alien-loader blake3)
 
 (define-alien-routine blake3-version c-string)
 

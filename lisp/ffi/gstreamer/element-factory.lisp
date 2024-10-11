@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-element-factory))
+(define-opaque gst-element-factory)
 (define-alien-type gst-element-factory-t (struct gst-element-factory))
 
 (define-alien-routine gst-element-factory-get-type gtype)

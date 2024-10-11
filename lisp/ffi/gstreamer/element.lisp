@@ -41,8 +41,7 @@
                    :indexable (%elt-flag 5)
                    :last (%elt-flag 10))
 
-(eval-always
-  (define-opaque gst-element))
+(define-opaque gst-element)
 
 (define-alien-type gst-element-t
   (struct gst-element

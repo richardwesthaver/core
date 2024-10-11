@@ -9,4 +9,4 @@
 
 (in-package :rustls)
 
-(define-alien-loader "rustls" t "/usr/lib/")
+(define-alien-loader rustls "/usr/lib/")

@@ -18,6 +18,7 @@
   (:use :cl :std :sb-alien)
   (:nicknames :btrfs)
   (:export
+   :load-btrfs :load-btrfsutil
    :define-btrfs-ioctl
    :btrfs-util-error :btrfs-util-error*
    :btrfs-util-strerror
@@ -27,8 +28,8 @@
 
 (in-package :btrfs/pkg)
 
-(define-alien-loader "btrfs" t "/usr/lib/")
+(define-alien-loader btrfs "/usr/lib/")
 
-(define-alien-loader "btrfsutil" t "/usr/lib/")
+(define-alien-loader btrfsutil "/usr/lib/")
 
 (defmacro define-btrfs-ioctl () "Define a wrapper for IOCTLs exposed by BTRFS.")

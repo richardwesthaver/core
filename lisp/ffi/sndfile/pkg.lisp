@@ -7,15 +7,16 @@
 ;;; Code:
 (defpackage :sndfile
   (:use :cl :std :sb-alien)
-  (:export :sf-version-string))
+  (:export :sf-version-string :load-sndfile
+           :sndfile
+           :sf-chunk-iterator))
 
 (in-package :sndfile)
 
-(define-alien-loader "sndfile" t "/usr/lib/")
+(define-alien-loader sndfile "/usr/lib/")
 
-(eval-always
-  (define-opaque sndfile t)
-  (define-opaque sf-chunk-iterator t))
+(define-opaque sndfile)
+(define-opaque sf-chunk-iterator)
 
 (define-alien-type sf-count long)
 

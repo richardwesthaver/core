@@ -22,11 +22,12 @@
    :xkb-keysym-to-lower :xkb-context-new :xkb-context-set-user-data
    :xkb-context-get-user-data :xkb-context-include-path-append
    :xkb-context-include-path-append-default :xkb-context-include-path-reset-defaults
-   :xkb-context-include-path-clear :xkb-context-num-include-paths :xkb-context-include-path-get))
+   :xkb-context-include-path-clear :xkb-context-num-include-paths :xkb-context-include-path-get
+   :load-xkbcommon))
 
 (in-package :xkb)
 
-(define-alien-loader "xkbcommon" t "/usr/lib/")
+(define-alien-loader xkbcommon "/usr/lib/")
 
 (define-alien-type xkb-context (struct xkb-context))
 (define-alien-type xkb-keymap (struct xkb-keymap))

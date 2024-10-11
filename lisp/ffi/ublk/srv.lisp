@@ -33,18 +33,19 @@
             (dev (* ublksrv-dev))
             (private-data (* t))))
 
-(define-alien-type ublksrv-handle-io-async-function (function int (* ublksrv-queue) (* ublk-io-data)))
-(define-alien-type ublksrv-tgt-io-done-function (function void (* ublksrv-queue) (* ublk-io-data) (* io-uring-cqe)))
-(define-alien-type ublksrv-handle-event-function (function void (* ublksrv-queue)))
-(define-alien-type ublksrv-handle-io-background-function (function void (* ublksrv-queue) int))
-(define-alien-type ublksrv-usage-for-add-function (function void))
-(define-alien-type ublksrv-init-tgt-function (function int (* ublksrv-dev) int int (array c-string)))
-(define-alien-type ublksrv-deinit-tgt-function (function void (* ublksrv-dev)))
-(define-alien-type ublksrv-alloc-io-buf-function (function (* t) (* ublksrv-queue) (* t) int))
-(define-alien-type ublksrv-idle-function (function void (* ublksrv-queue) boolean))
-(define-alien-type ublksrv-recovery-tgt-function (function int (* ublksrv-dev) int))
-(define-alien-type ublksrv-init-queue-function (function int (* ublksrv-dev) (* (* t))))
-(define-alien-type ublksrv-deinit-queue-function (function void (* ublksrv-queue)))
+(std:eval-always
+  (define-alien-type ublksrv-handle-io-async-function (function int (* ublksrv-queue) (* ublk-io-data)))
+  (define-alien-type ublksrv-tgt-io-done-function (function void (* ublksrv-queue) (* ublk-io-data) (* io-uring-cqe)))
+  (define-alien-type ublksrv-handle-event-function (function void (* ublksrv-queue)))
+  (define-alien-type ublksrv-handle-io-background-function (function void (* ublksrv-queue) int))
+  (define-alien-type ublksrv-usage-for-add-function (function void))
+  (define-alien-type ublksrv-init-tgt-function (function int (* ublksrv-dev) int int (array c-string)))
+  (define-alien-type ublksrv-deinit-tgt-function (function void (* ublksrv-dev)))
+  (define-alien-type ublksrv-alloc-io-buf-function (function (* t) (* ublksrv-queue) (* t) int))
+  (define-alien-type ublksrv-idle-function (function void (* ublksrv-queue) boolean))
+  (define-alien-type ublksrv-recovery-tgt-function (function int (* ublksrv-dev) int))
+  (define-alien-type ublksrv-init-queue-function (function int (* ublksrv-dev) (* (* t))))
+  (define-alien-type ublksrv-deinit-queue-function (function void (* ublksrv-queue))))
 
 ;; TODO 2024-09-29: add all of these as callbacks :C
 (define-alien-type ublksrv-tgt-type 

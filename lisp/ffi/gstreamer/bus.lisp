@@ -5,9 +5,8 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-bus-private)
-  (define-opaque gst-bus))
+(define-opaque gst-bus-private)
+(define-opaque gst-bus)
 
 (define-alien-type gst-bus-t
   (struct gst-bus

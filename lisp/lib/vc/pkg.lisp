@@ -20,7 +20,8 @@
    :make-repo :register-repo
    :vc-update
    :vc-ignore
-   :vc-remotes))
+   :vc-remotes
+   :vc-designator))
 
 (pkg:defpkg :vc/hg
   (:use :cl :std :cli :sb-bsd-sockets :vc/proto)

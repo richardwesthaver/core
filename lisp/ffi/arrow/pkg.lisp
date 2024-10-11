@@ -5,11 +5,11 @@
 ;;; Code:
 (defpackage :arrow
   (:use :cl :std :sb-alien)
-  (:export))
+  (:export :load-arrow))
 
 (in-package :arrow)
 
-(define-alien-loader "arrow" t "/usr/lib/")
+(define-alien-loader arrow "/usr/lib/")
 
 (define-alien-type arrow-release-function (function void (* (struct nil))))
 

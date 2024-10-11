@@ -73,12 +73,13 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
    :with-zstd-outbuffer
    :with-zstd-inbuffer
    :with-zstd-cdict
-   :with-zstd-ddict))
+   :with-zstd-ddict
+   :load-zstd :load-zstd-alien))
 
 (in-package :zstd)
 
-(define-alien-loader "zstd" t "/usr/lib/")
-(define-alien-loader "zstd-alien" t "/usr/local/lib/")
+(define-alien-loader zstd "/usr/lib/")
+(define-alien-loader zstd-alien "/usr/local/lib/")
 
 ;;; Types
 (deftype zstd-error-code ()

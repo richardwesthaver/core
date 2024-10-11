@@ -11,4 +11,4 @@
 
 (in-package :readline)
 
-(define-alien-loader "readline" t "/usr/lib/")
+(define-alien-loader readline "/usr/lib/")

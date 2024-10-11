@@ -13,7 +13,7 @@
   (:use :cl :std)
   (:export
    ;; types
-   :vc-designator :license-designator :script-designator :contact-designator
+   :license-designator :script-designator :contact-designator
    ;; generics
    :sk-run :sk-new 
    :sk-tangle :sk-weave
@@ -52,6 +52,7 @@
 (defpackage :skel/core/vars
   (:use :cl :std :skel/core/proto)
   (:import-from :sb-unix :uid-username :unix-getuid)
+  (:import-from :vc :vc-designator)
   (:export :*user-skelrc* :*system-skelrc* :*keep-ast*
    :*skel-project* :*default-skelrc*
    :*skel-env* :*skel-project*

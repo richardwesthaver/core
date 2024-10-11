@@ -33,30 +33,30 @@
 
 (defun shared-object-name (name &optional path)
   "Return a filename with the correct extension for a shared library."
-  (let ((name #+darwin (format nil "lib~a.dylib" name)
-              #-darwin (format nil "lib~a.so" name)))
-    (if path
+  (unless (string= (subseq name 0 3) "lib") 
+    (setf name (format nil "lib~a" name)))
+  (unless (search #+darwin ".dylib" #-darwin ".so" name)
+    (setf name (format nil #+darwin "~a.dylib" #-darwin "~a.so" name)))
+  (if path
       (merge-pathnames name path)
-      (pathname name))))
+      (pathname name)))
 
 (defun list-all-shared-objects ()
   sb-alien::*shared-objects*)
 
-(defmacro define-alien-loader (name &optional export (root "/usr/local/lib/") path)
+(defmacro define-alien-loader (name &optional (root "/usr/local/lib/") path)
   "Define a default loader function named load-NAME which calls
 SB-ALIEN:LOAD-SHARED-OBJECT."
-  (let* ((fname (sb-int:symbolicate (format nil "~@:(load-~a~)" name))))
-    `(prog1
-       (defun ,fname (&optional save)
-         (prog1 (sb-alien:load-shared-object (shared-object-name ',(or path name) ,root) :dont-save (not save))
-           (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))
-       ,@(when export (list `(export '(,fname)))))))
+  (let ((fname (sb-int:symbolicate (format nil "~@:(LOAD-~a~)" name))))
+    (when (symbolp name)
+      (setf name (symbol-name name)))
+    `(defun ,fname (&optional save)
+       (prog1 (sb-alien:load-shared-object (shared-object-name ,(or path (string-downcase name)) ,root) :dont-save (not save))
+         (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))))
        
-(defmacro define-opaque (ty &optional no-export foreign-type)
-  `(prog1
-       (eval-when (:compile-toplevel :load-toplevel :execute)
-         (define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t)))))
-     ,(unless no-export `(export '(,ty)))))
+(defmacro define-opaque (ty &optional foreign-type)
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    `(define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))))
 
 (defun setfa (place from) 
   (loop for x across from

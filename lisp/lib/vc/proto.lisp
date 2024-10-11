@@ -121,6 +121,8 @@ are missing."))
 
 (defstruct vc-rev num id)
 
+(deftype vc-designator () `(member :hg :git list)) ;; maybe: :sp (sapling)
+
 (defclass vc-repo ()
   ((path :initform nil :type (or null string pathname) :accessor vc-path
          :initarg :path

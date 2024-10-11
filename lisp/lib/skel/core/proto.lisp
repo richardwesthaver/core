@@ -1,8 +1,6 @@
 ;;; Proto
 (in-package :skel/core/proto)
 
-(deftype vc-designator () `(member :hg :git list))
-
 ;; ref: https://spdx.org/licenses/
 (deftype license-designator () `(or null string pathname (member :mpl2 :wtfpl :lgpg :llgpl :gpl :mit :mit0)))
 

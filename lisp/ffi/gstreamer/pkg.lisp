@@ -12,14 +12,41 @@
    :gtype :gquark :gtype-interface :gcond
    :gthread :gdestroy-notify :ghook-list)
   (:export :gst-version-string :gst-version :gst-init
+           :load-gstreamer :load-gst-play
    :gst-init-check :gst-deinit :gst-is-initialized :gst-element-factory-make
-   :gst-element-set-state))
+   :gst-element-set-state
+   :gst-object-class
+   :gst-object
+   :gst-bus-private
+   :gst-bus
+   :gst-bus-class
+   :gst-element
+   :gst-element-class
+   :gst-bin-private
+   :gst-bin
+   :gst-bin-class
+   :gst-clock-private
+   :gst-pad
+   :gst-pad-template
+   :gst-play
+   :gst-play-class
+   :gst-play-signal-adapter
+   :gst-play-signal-adapter-class
+   :gst-play-video-renderer
+   :gst-play-video-renderer-interface
+   :gst-caps
+   :gst-mini-object
+   :gst-task
+   :gst-task-private
+   :gst-task-class
+   :gst-iterator
+   :gst-element-factory))
 
 (in-package :gstreamer)
 
 ;; (load-glib)
 
-(define-alien-loader gstreamer t "/usr/lib/" "gstreamer-1.0")
+(define-alien-loader gstreamer "/usr/lib/" "gstreamer-1.0")
 ;; (load-gstreamer)
 
 (define-alien-routine gst-version void (major (* unsigned)) (minor (* unsigned)) (micro (* unsigned)) (nano (* unsigned)))

@@ -19,7 +19,7 @@
 
 (in-package :keyutils)
 
-(define-alien-loader "keyutils" t "/usr/lib/")
+(define-alien-loader keyutils "/usr/lib/")
 
 (define-alien-type iovec (struct nil))
 

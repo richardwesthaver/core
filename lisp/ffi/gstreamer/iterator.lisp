@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(eval-always
-  (define-opaque gst-iterator))
+(define-opaque gst-iterator)
 
 (define-alien-type gst-iterator-t
   (struct gst-iterator

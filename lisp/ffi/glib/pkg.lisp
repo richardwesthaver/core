@@ -5,11 +5,18 @@
 ;;; Code:
 (defpackage :glib
   (:use :cl :std :sb-alien)
-  (:export))
+  (:export :load-glib
+           :gmainloop
+           :gmaincontext
+           :gobjectgroup
+           :glist
+           :goptioncontext
+           :goptiongroup
+           :goptionentry))
 
 (in-package :glib)
 
-(define-alien-loader glib t "/usr/lib/" "glib-2.0")
+(define-alien-loader glib "/usr/lib/" "glib-2.0")
 
 (define-alien-type gtype unsigned)
 
@@ -17,11 +24,10 @@
 
 (define-alien-type gdestroy-notify (* t))
 
-(eval-always
-  (define-opaque gmainloop)
-  (define-opaque gmaincontext)
-  (define-opaque gobjectgroup)
-  (define-opaque glist))
+(define-opaque gmainloop)
+(define-opaque gmaincontext)
+(define-opaque gobjectgroup)
+(define-opaque glist)
 
 (define-alien-type gthread (* t))
 (define-alien-type ghook-list (* t))
@@ -54,9 +60,9 @@
                                   (code int)
                                   (message c-string)))
 
-(define-opaque goptioncontext (* t))
-(define-opaque goptiongroup (* t))
-(define-opaque goptionentry (* t))
+(define-alien-type goptioncontext (* t))
+(define-alien-type goptiongroup (* t))
+(define-alien-type goptionentry (* t))
 
 (define-alien-enum (goption-flags int)
                    :none 0

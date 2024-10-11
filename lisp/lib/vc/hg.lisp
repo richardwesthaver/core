@@ -84,6 +84,12 @@
 (defmethod vc-init ((self (eql :hg)))
   (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
 
+(defmethod print-object ((self hg-repo) stream)
+  (print-unreadable-object (self stream)
+    (format stream "~S" (vc-type self))
+    (when-let ((remotes (vc-remotes self)))
+      (format stream " ~A" remotes))))
+
 ;; (defmethod vc-init ((self list))
 ;;   (when-let ((form self))
 ;;     (make-instance 'hg-repo
