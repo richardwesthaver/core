@@ -1,7 +1,6 @@
 (defsystem :krypt
   :version "0.1.0"
-  :maintainer "ellis <ellis@rwest.io>"
-  :bug-tracker "https://vc.compiler.company/comp/core/issues"
+  :maintainer "Richard Westhaver <richard.westhaver@gmail.com>"
   :depends-on (:std :log :obj :dat :rdb :cry)
   :serial t
   :components ((:file "pkg")

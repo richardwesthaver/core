@@ -5,11 +5,12 @@
 ;;; Code:
 (in-package :krypt)
 
-(define-condition krypt-error (error)
+(define-condition krypt-condition ()
   ()
-  (:documentation "Error signaled by the KRYPT system."))
+  (:documentation "Condition signaled in the KRYPT package."))
 
-(deferror krypt-simple-error (krypt-error simple-error) ())
+(define-condition krypt-error (error krypt-condition)
+  ()
+  (:documentation "Error signaled from the KRYPT package."))
 
-(defun krypt-simple-error (ctrl &rest args)
-  (error 'simple-sql-error :format-control ctrl :format-arguments args))
+(deferror simple-krypt-error (krypt-error simple-error) () (:auto t))

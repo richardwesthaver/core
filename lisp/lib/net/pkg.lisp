@@ -333,6 +333,7 @@
   (:use :cl :std :obj/uri
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets)
+  (:import-from :rt :random-chars)
   (:export
    #:default-web-directory
    #:start-service

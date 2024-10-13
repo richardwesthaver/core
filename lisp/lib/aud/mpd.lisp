@@ -9,7 +9,6 @@
 ;; dependency on usocket library and extended the functionality
 ;; slightly.
 
-
 ;;; Code:
 (in-package :aud/mpd)
 ;;; Classes

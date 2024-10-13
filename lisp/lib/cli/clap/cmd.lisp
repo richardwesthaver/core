@@ -181,7 +181,7 @@ an object."
       if skip
       do (setq skip nil)
       else if exit
-      do (return)
+      do (loop-finish)
       else if (short-opt-p a) ;; SHORT OPT
       collect
          (let* ((has-eq (short-opt-has-eq-p a))
@@ -255,7 +255,7 @@ an object."
              (let ((kind (cli-node-kind node)) 
                    (form (cli-node-form node)))
                (case kind
-                 ;; opts 
+                 ;; opts
                  (opt
                   (setf (find-opt self (cli-name form)) form)
                   (activate-opt (find-opt self (cli-name form)))

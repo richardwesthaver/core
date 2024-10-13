@@ -8,11 +8,13 @@
 
 ;; The goal of this system is to provide a secrets management tool accessible
 ;; to users and administrators. The MVP is a simple user-space CLI utility
-;; built on top of the CRY cryptography package and leveraging keyutils.
+;; built on top of the CRY cryptography package and leveraging keyutils for
+;; session-based visibility.
 
 ;;; Code:
 (defpackage :krypt
   (:use :cl :std :cry :dat/sxp :obj/id)
   (:export :krypt-error :*default-user-kryptrc*
            :krypt-config :load-kryptrc
-           :krypt-error :krypt-simple-error))
+           :krypt-condition
+           :krypt-error :simple-krypt-error))

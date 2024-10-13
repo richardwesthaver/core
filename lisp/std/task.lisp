@@ -29,7 +29,7 @@
 
 ;;; Kernel
 (defmacro gen-task-kernel (name args lock queue mailbox timeout &body body)
-  `(compile ,name 
+  `(compile ',name 
             (lambda ,args 
               (wait-on-semaphore ,lock ,@(when timeout `((:timeout ,timeout))))
               (let ((*task* (dequeue ,queue)))
@@ -55,7 +55,11 @@ Within the BODY the variable *task* is bound to the result of (DEQUEUE QUEUE)
 and *task-result* is bound to the return value of BODY.
 
 This interface is experimental and subject to change."
-  `(gen-task-kernel ,name ,args ,lock ,queue ,mailbox ,timeout
+  `(gen-task-kernel ,name ,args 
+       ,(if lock lock '(make-semaphore))
+       ,(if queue queue '(make-queue))
+       ,(if mailbox mailbox '(make-mailbox))
+       ,timeout
      ,@body))
 
 (defun make-ephemeral-thread (name)

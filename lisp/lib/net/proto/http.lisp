@@ -53,7 +53,7 @@
                           (:conc-name :http-))
   status-text)
 
-;;; Errors
+;;; Conditions
 (define-condition http-error (protocol-error)
   (description)
   (:report
@@ -935,8 +935,6 @@
       (lambda (data)
         (http-multipart-parse parser callbacks data)
         (= (ll-multipart-parser-state parser) +body-done+)))))
-
-;;; http
 
 ;;; parser
 ;;

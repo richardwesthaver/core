@@ -28,8 +28,8 @@
            :crc64-file :crc64-sequence))
 
 (defpackage :cry/jwt
-  (:use :cl :std :dat/json :dat/proto :cry)
-  (:export))
+  (:use :cl :std :dat/json :dat/base64 :dat/proto :cry)
+  (:export ))
 
 (defpackage :cry/authinfo
   (:use :cl :std :cry)

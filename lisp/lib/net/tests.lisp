@@ -66,3 +66,4 @@ Cookie: name=wookie
 
 (deftest srv ()
   (is (pathnamep (default-web-directory))))
+

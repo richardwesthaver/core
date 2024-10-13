@@ -219,9 +219,12 @@
 (defpkg :std/hash-table
   (:use :cl)
   (:nicknames :std/ht)
+  (:recycle :sb-int)
+  (:import-from :sb-int :ensure-gethash)
   (:export :hash-table-alist
    :maphash-keys :hash-table-keys
-   :maphash-values :hash-table-values))
+   :maphash-values :hash-table-values
+   :alist-hash-table :plist-hash-table :hash-table-plist :ensure-gethash))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)

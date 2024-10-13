@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :krypt)
 
-(defparameter *default-user-kryptrc* #P"~/.kryptrc")
+(defparameter *default-user-kryptrc* (merge-pathnames ".kryptrc" (user-homedir-pathname)))
 
 (defclass krypt-config (sxp id)
   ((path :initform nil :initarg :path :type (or pathname null))))
