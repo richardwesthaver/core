@@ -132,3 +132,90 @@ consisting of the old contents appended to the new."
 (defmacro without-fp-traps (() &body body)
   `(sb-int:with-float-traps-masked (:invalid :divide-by-zero)
      ,@body))
+
+
+;; https://www.intel.com/content/dam/develop/public/us/en/documents/10tb-24-breakthrough-aes-performance-with-intel-aes-new-instructions-final-secure.pdf
+
+;; ncycles=(tscend-tscstart/i)
+
+;; based on sb-simd-internals and https://kurohuku.blogspot.com/2009/11/sbclcpuid.html
+
+;; also see https://github.com/jdmccalpin/low-overhead-timers/blob/master/low_overhead_timers.c
+
+(defun cpuid (eax &optional (ecx 0))
+  "Call the CPUID instruction with supplied 32-bit values for EAX and ECX
+regs. Returns 4 values containing the regs RAX RBX RCX and RDX respectively."
+  (declare ((unsigned-byte 32) eax ecx))
+  (sb-vm::%cpu-identification eax ecx))
+
+(defun word-byte-list (n)
+  (list
+   (ldb (byte 8 0) n)
+   (ldb (byte 8 8) n)
+   (ldb (byte 8 16) n)
+   (ldb (byte 8 24) n)))
+
+(macrolet ((%with-cpuid (n &body body) 
+             `(multiple-value-bind (a b c d) (cpuid ,n) 
+                ,@body)))
+  (defun cpu-vendor ()
+    (%with-cpuid 0
+     (declare (ignore a))
+     (coerce
+      (mapcan
+       #'(lambda (n)
+	   (mapcar #'code-char (word-byte-list n)))
+       (list b d c))
+      'string)))
+  ;; this is the same as MACHINE-VERSION
+  (defun cpu-brand ()
+    (with-output-to-string (s)
+      (dolist (n '#.(mapcar #'(lambda (x)
+			       (coerce x '(unsigned-byte 32)))
+		           (list #x80000002 #x80000003 #x80000004)))
+        (declare ((unsigned-byte 32) n))
+        (%with-cpuid n
+	 (dolist (word (list a b c d))
+	   (dolist (code (word-byte-list word))
+	     (unless (zerop code)
+	       (write-char (code-char code) s)))))))))
+
+;; from stmx
+(declaim (ftype (function () boolean) transaction-supported-p lock-elision-supported-p))
+
+(defun lock-elision-supported-p ()
+  "Test for HLE, i.e. hardware lock elision.
+HLE is supported if (cpuid 7) returns ebx with bit 4 set.
+If a processor does not support HLE, it will ignore the
+new assembler instruction prefixes XACQUIRE and XRELEASE.
+
+As of June 2013, the only x86-64 CPUs supporting HLE are:
+* Intel Core i5 4570
+* Intel Core i5 4670
+* Intel Core i7 4770
+Beware: at the time of writing all the known K models, as for example
+Intel Core i7 4770K, do **NOT** support HLE."
+
+  (let ((max-cpuid (cpuid 0)))
+    (when (>= max-cpuid 7)
+      (let ((ebx (nth-value 1 (cpuid 7))))
+        (not (zerop (logand ebx #x10)))))))
+
+(defun transaction-supported-p ()
+  "Test for RTM, i.e. hardware memory transactions.
+RTM is supported if (cpuid 7) returns ebx with bit 11 set.
+If a processor does not support HLE, trying to execute
+the new assembler instructions XBEGIN, XEND, XABORT and XTEST
+will generate faults.
+
+As of June 2013, the only x86-64 CPUs supporting RTM are:
+* Intel Core i5 4570
+* Intel Core i5 4670
+* Intel Core i7 4770
+Beware: at the time of writing all the known K models, as for example
+Intel Core i7 4770K, do **NOT** support RTM."
+
+    (let ((max-cpuid (cpuid 0)))
+      (when (>= max-cpuid 7)
+        (let ((ebx (nth-value 1 (cpuid 7))))
+          (not (zerop (logand ebx #x800)))))))

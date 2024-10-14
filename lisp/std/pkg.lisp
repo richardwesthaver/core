@@ -579,7 +579,9 @@
    :forget-shared-object
    :forget-shared-objects
    :compile-lisp
-   :without-fp-traps))
+   :without-fp-traps
+   :cpuid
+   :cpu-vendor))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
