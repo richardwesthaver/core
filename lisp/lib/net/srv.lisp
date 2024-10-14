@@ -448,7 +448,7 @@ logging, etc."))
   (:default-initargs
    :id (symbol-name (gensym "service"))
    :port *default-service-port*
-   :engine (make-instance 'multi-threaded-engine)
+   :engine (make-instance 'thread-per-connection-engine)
    :address nil
    :request-class 'service-request
    :response-class 'service-response
@@ -485,7 +485,6 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   "Default method for access logging.  It logs the information to the
 destination determined by (ACCESS-LOG-DESTINATION SERVICE) in a format that
 can be parsed by most log analysis tools."
-
   (log:with-log-stream (stream (access-log-destination self) *access-log-lock*)
     (format stream "~:[-~@[ (~A)~]~;~:*~A~@[ (~A)~]~] ~:[-~;~:*~A~] [~A] \"~A ~A~@[?~A~] ~
                     ~A\" ~D ~:[-~;~:*~D~] \"~:[-~;~:*~A~]\" \"~:[-~;~:*~A~]\"~%"

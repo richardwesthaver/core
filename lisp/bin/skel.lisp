@@ -138,13 +138,13 @@
                             (skel-simple-error "skel config files not installed")))))))
 
 (defcmd skc-push
-  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "push" *args* t))
     (:hg (run-hg-command "push" *args* t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-pull
-  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "pull" *args* t))
     (:hg (run-hg-command "pull" (append '("-u") *args*) t))
     (t (skel-simple-error "unknown VC type"))))
@@ -162,19 +162,19 @@
           do (println x))))
 
 (defcmd skc-status
-  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (git-status))
     (:hg (hg-status))
     (t (hg-status))))
 
 (defcmd skc-clone
-  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "clone" *args* t))
     (:hg (run-hg-command "clone" *args* t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-commit
-  (case (sk-vc-meta-kind (sk-vc (find-skelfile #P"." :load t)))
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "commit" (append '("-m") *args*) t))
     (:hg (run-hg-command "commit" (when *args* (append '("-m") *args*)) t))
     (t (skel-simple-error "unknown VC type"))))
@@ -207,7 +207,7 @@
 
 (defcmd skc-vc
   (let* ((sk (find-skelfile #P"." :load t))
-         (vc (sk-vc-meta-kind (sk-vc sk))))
+         (vc (vc-type (sk-vc sk))))
     (sb-ext:enable-debugger)
     (with-open-stream (proc (process-output 
                              (if-let ((cmd (pop *args*)))

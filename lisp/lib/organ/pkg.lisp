@@ -82,7 +82,7 @@
    :o-lines
    :org-stream
    :org-headline
-   :level
+   :org-priority-level
    :props
    :tags
    :title

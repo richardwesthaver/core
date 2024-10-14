@@ -4,8 +4,9 @@
 (in-package :dat/xml)
 
 (defpackage :dat/fixml
-  (:use :cl :std :dat/xml :dat/proto))
+  (:use :cl :dat/xml :dat/proto))
 
 (defpackage :dat/svg
-  (:use :cl :cl-ppcre :std :dat/xml :dat/proto)
+  (:use :cl :cl-ppcre :dat/xml :dat/proto)
+  (:import-from :std/string :*whitespaces*)
   (:export :parse-svg-file :parse-svg-string))

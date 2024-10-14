@@ -48,6 +48,33 @@ All other values are treated as let bindings.
                  (push-result (trace! (funcall #'rt::%test (,form ,test) ',test) *testing*))
                  (trace! (funcall #'rt::%test (,form ,test) ',test)))))))
 
+;; convenience functions wrapping IS
+(macrolet ((defis (name op args)
+             `(defmacro ,name ,args
+                `(is (,',op ,,@args))))
+           (defis* (name op)
+             `(defmacro ,name (&rest args)
+                `(is (,',op ,@args))))
+           (defisn (name op)
+             `(defmacro ,name (n &rest args)
+                `(is (,',op ,n ,@args)))))
+  (defis isnt not (it))
+  (defisn is= =)
+  (defis iseq eq (a b))
+  (defis iseql eql (a b))
+  (defis isequal equal (a b))
+  (defis iszerop zerop (n))
+  (defis isemptyp sequence:emptyp (seq))
+  (defis* isand and)
+  (defis* isor or)
+  (defis* isevery every)
+  (defis* issome some)
+  (defisn is> >)
+  (defisn is< <)
+  (defisn is>= >=)
+  (defisn is<= <=)
+  (defis istypep typep (type obj)))
+
 (defmacro signals (condition-spec &body body)
   "Generates a passing TEST-RESULT if body signals a condition of type
 CONDITION-SPEC. BODY is evaluated in a block named NIL, CONDITION-SPEC

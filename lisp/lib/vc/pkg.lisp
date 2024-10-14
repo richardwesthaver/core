@@ -21,7 +21,8 @@
    :vc-update
    :vc-ignore
    :vc-remotes
-   :vc-designator))
+   :vc-designator
+   :vc-type))
 
 (pkg:defpkg :vc/hg
   (:use :cl :std :cli :sb-bsd-sockets :vc/proto)

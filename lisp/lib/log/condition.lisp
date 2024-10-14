@@ -3,8 +3,9 @@
 ;;; Code:
 (in-package :log)
 
-(define-condition log-condition () ()
-  (:documentation "Base class for all LOG-related conditions."))
+(eval-always
+  (define-condition log-condition () ()
+    (:documentation "Base class for all LOG-related conditions.")))
 
 (deferror log-error (log-condition error) ()
   (:documentation "Base class for all LOG-related errors.") 

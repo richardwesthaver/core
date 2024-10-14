@@ -35,4 +35,19 @@
    :log-p :warn-p :info-p :debug-p :trace-p :error-p :fatal-p
    :log-describe :warn-describe :info-describe :debug-describe :trace-describe :fatal-describe :error-describe
    :with-log-stream
-   :with-fast-log-stream))
+   :with-fast-log-stream
+   :*log-timestamp-format*
+   :*log-indent*
+   :log-message
+   :level
+   :simple-log-message
+   :message-thread
+   :*log-levels*
+   :%log-object
+   :log-object
+   :rotating-file-sink
+   :level-filter
+   :tag-filter
+   :tag-tree-filter
+   :*tag-separator*
+   :matching-tree-tag))

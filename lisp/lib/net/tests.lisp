@@ -65,5 +65,5 @@ Cookie: name=wookie
 
 
 (deftest srv ()
-  (is (pathnamep (default-web-directory))))
+  (istypep (make-instance 'service) 'service))
 

@@ -294,6 +294,7 @@
   (:nicknames :req)
   (:shadowing-import-from :std/type :octet :octet-vector)
   (:import-from :dat/mime :mime)
+  (:import-from :io/fast :make-output-buffer :finish-output-buffer)
   (:shadow :get :delete)
   (:use :cl :std :obj/uri
    :obj/url :net/proto/http :babel :net/cookie
@@ -331,10 +332,14 @@
 
 (defpackage :net/srv
   (:nicknames :srv)
-  (:use :cl :std :obj/uri
+  (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets)
+  (:import-from :std :defvar-unbound :once-only 
+   :deferror :defwarning :define-task-kernel :with-gensyms)
   (:import-from :rt :random-chars)
+  (:import-from :sb-thread :make-mutex :with-mutex)
+  (:import-from :std/thread :shutdown :start :stop :started-p)
   (:export
    #:default-web-directory
    #:start-service

@@ -159,7 +159,7 @@
      (fast-write-sequence +crlf+ ,buffer)))
 
 (defmacro with-header-output ((buffer &optional output) &body body)
-  `(fast-io:with-fast-output (,buffer ,output)
+  `(with-fast-output (,buffer ,output)
      (declare (ignorable ,buffer))
      (let ((*header-buffer* ,buffer))
        ,@body)))
@@ -833,12 +833,12 @@ keep-alive-stream), and should handle clean-up of it"
    
 
 (defun read-until-crlf*2 (stream)
-  (fast-io:with-fast-output (buf)
+  (with-fast-output (buf)
     (tagbody
      read-cr
        (loop for byte of-type (or (unsigned-byte 8) null) = (read-byte stream nil nil)
              if byte
-               do (fast-io:fast-write-byte byte buf)
+               do (fast-write-byte byte buf)
              else
                do (go eof)
              until (= byte (char-code #\Return)))
@@ -850,13 +850,13 @@ keep-alive-stream), and should handle clean-up of it"
          (locally (declare (type (unsigned-byte 8) next-byte))
            (cond
              ((= next-byte (char-code #\Newline))
-              (fast-io:fast-write-byte next-byte buf)
+              (fast-write-byte next-byte buf)
               (go read-cr2))
              ((= next-byte (char-code #\Return))
-              (fast-io:fast-write-byte next-byte buf)
+              (fast-write-byte next-byte buf)
               (go read-lf))
              (T
-              (fast-io:fast-write-byte next-byte buf)
+              (fast-write-byte next-byte buf)
               (go read-cr)))))
 
      read-cr2
@@ -866,10 +866,10 @@ keep-alive-stream), and should handle clean-up of it"
          (locally (declare (type (unsigned-byte 8) next-byte))
            (cond
              ((= next-byte (char-code #\Return))
-              (fast-io:fast-write-byte next-byte buf)
+              (fast-write-byte next-byte buf)
               (go read-lf2))
              (T
-              (fast-io:fast-write-byte next-byte buf)
+              (fast-write-byte next-byte buf)
               (go read-cr)))))
 
      read-lf2
@@ -879,12 +879,12 @@ keep-alive-stream), and should handle clean-up of it"
          (locally (declare (type (unsigned-byte 8) next-byte))
            (cond
              ((= next-byte (char-code #\Newline))
-              (fast-io:fast-write-byte next-byte buf))
+              (fast-write-byte next-byte buf))
              ((= next-byte (char-code #\Return))
-              (fast-io:fast-write-byte next-byte buf)
+              (fast-write-byte next-byte buf)
               (go read-lf))
              (T
-              (fast-io:fast-write-byte next-byte buf)
+              (fast-write-byte next-byte buf)
               (go read-cr)))))
 
      eof)))
@@ -897,7 +897,7 @@ keep-alive-stream), and should handle clean-up of it"
          body
          body-data
          (headers-data (and collect-headers
-                            (fast-io:make-output-buffer)))
+                            (make-output-buffer)))
          (header-finished-p nil)
          (finishedp nil)
          (content-length nil)
@@ -915,14 +915,14 @@ keep-alive-stream), and should handle clean-up of it"
                               :body-callback
                               (lambda (data start end)
                                 (when body-data
-                                  (fast-io:fast-write-sequence data body-data start end)))
+                                  (fast-write-sequence data body-data start end)))
                               :finish-callback
                               (lambda ()
                                 (setq finishedp t)))))
     (let ((buf (read-until-crlf*2 stream)))
       (declare (type octet-vector buf))
       (when collect-headers
-        (fast-io:fast-write-sequence buf headers-data))
+        (fast-write-sequence buf headers-data))
       (funcall parser buf))
     (unless header-finished-p
       (error "maybe invalid header"))
@@ -945,17 +945,17 @@ keep-alive-stream), and should handle clean-up of it"
              (= status 304))) ;; Not Modified
        (setq body *empty-body*))
       (T
-       (setq body-data (fast-io:make-output-buffer))
+       (setq body-data (make-output-buffer))
        (loop for buf of-type octet-vector = (read-until-crlf*2 stream)
              do (funcall parser buf)
              until (or finishedp
                        (zerop (length buf)))
              finally
-                (setq body (fast-io:finish-output-buffer body-data)))))
+                (setq body (finish-output-buffer body-data)))))
     (values http
             body
             (and collect-headers
-                 (fast-io:finish-output-buffer headers-data))
+                 (finish-output-buffer headers-data))
             transfer-encoding-p)))
 
 (defun print-verbose-data (direction &rest data)
@@ -1001,14 +1001,14 @@ keep-alive-stream), and should handle clean-up of it"
     (let ((cookies (cookie-jar-host-cookies cookie-jar (uri-host uri) (or (uri-path uri) "/")
                                             :securep (string= (uri-scheme uri) "https"))))
       (when cookies
-        (fast-io:fast-write-sequence (string-to-octets "Cookie: ") buffer)
-        (fast-io:fast-write-sequence
+        (fast-write-sequence (string-to-octets "Cookie: ") buffer)
+        (fast-write-sequence
          (string-to-octets (write-cookie-header cookies))
          buffer)
-        (fast-io:fast-write-sequence +crlf+ buffer)))))
+        (fast-write-sequence +crlf+ buffer)))))
 
 (defun make-connect-stream (uri version stream &optional proxy-auth)
-  (let ((header (fast-io:with-fast-output (buffer)
+  (let ((header (with-fast-output (buffer)
                   (write-connect-header uri version buffer proxy-auth))))
     (write-sequence header stream)
     (force-output stream)
@@ -1135,26 +1135,27 @@ keep-alive-stream), and should handle clean-up of it"
 
 (defun request (uri &rest args
                             &key (method :get) (version 1.1)
-                            content headers
-                            basic-auth bearer-auth
-                            cookie-jar
-                            (connect-timeout *default-connect-timeout*) (read-timeout *default-read-timeout*)
-                            (keep-alive t) (use-connection-pool t)
-                            (max-redirects 5)
-                            ssl-key-file ssl-cert-file ssl-key-password
-                            stream (verbose *verbose*)
-                            force-binary
-                            force-string
-                            want-stream
-                            (proxy *default-proxy*)
-                            (insecure *no-ssl*)
-                            ca-path
-                            &aux
-                            (proxy-uri (and proxy (obj/uri:uri proxy)))
-                            (original-user-supplied-stream stream)
-                            (user-supplied-stream (if (%wrapped-stream-p stream) (%wrapped-stream-stream stream) stream)))
+                                 content headers
+                                 basic-auth bearer-auth
+                                 cookie-jar
+                                 (connect-timeout *default-connect-timeout*)
+                                 (read-timeout *default-read-timeout*)
+                                 (keep-alive t) (use-connection-pool t)
+                                 (max-redirects 5)
+                                 ssl-key-file ssl-cert-file ssl-key-password
+                                 stream (verbose *verbose*)
+                                 force-binary
+                                 force-string
+                                 want-stream
+                                 (proxy *default-proxy*)
+                                 (insecure *no-ssl*)
+                                 ca-path
+                    &aux
+                    (proxy-uri (and proxy (obj/uri:uri proxy)))
+                    (original-user-supplied-stream stream)
+                    (user-supplied-stream (if (%wrapped-stream-p stream) (%wrapped-stream-stream stream) stream)))
   (declare (ignorable ssl-key-file ssl-cert-file ssl-key-password
-                      connect-timeout)
+                      connect-timeout read-timeout)
            (type real version)
            (type fixnum max-redirects))
   (with-content-caches
@@ -1167,11 +1168,7 @@ keep-alive-stream), and should handle clean-up of it"
                         (connection (sb-bsd-sockets:socket-connect
                                      socket
                                      (sb-bsd-sockets:make-inet-address (net/proto/dns:resolve (uri-host con-uri)))
-                                     (or (uri-port con-uri) (when insecure 80) 443)
-                                     
-                                     ;; :timeout connect-timeout
-                                     ;;:element-type '(unsigned-byte 8)
-                                     ))
+                                     (or (uri-port con-uri) (when insecure 80) 443)))
                         (stream (sb-bsd-sockets:socket-make-stream connection
                                                                    :input t
                                                                    :output t
@@ -1181,8 +1178,8 @@ keep-alive-stream), and should handle clean-up of it"
                           
                         (scheme (uri-scheme uri)))
                    (declare (type keyword scheme))
-                   ;; (when read-timeout
-                   ;; (setf (io/socket:sockopt-receive-timeout connection) read-timeout)) ;; TODO 2024-06-19: test
+                   ;; (when read-timeout ;; TODO 2024-06-19: test
+                   ;;   (setf (io/socket:sockopt-receive-timeout connection) read-timeout)) 
                    (when (socks5-proxy-p proxy-uri)
                      (ensure-socks5-connected stream stream uri method))
                    (if (string= (symbol-name scheme) "HTTPS")
@@ -1269,7 +1266,7 @@ keep-alive-stream), and should handle clean-up of it"
                          (and content-length
                               (null (cdr content-length)))))
            (first-line-data
-             (fast-io:with-fast-output (buffer)
+             (with-fast-output (buffer)
                (write-first-line method uri version buffer)))
            (headers-data
              (flet ((write-header* (name value)
@@ -1469,7 +1466,7 @@ keep-alive-stream), and should handle clean-up of it"
                        (progn ;; redirection to the same host
                          (setq uri (merge-uris location-uri uri))
                          (setq first-line-data
-                               (fast-io:with-fast-output (buffer)
+                               (with-fast-output (buffer)
                                  (write-first-line method uri version buffer)))
                          (when cookie-jar
                            ;; Rebuild cookie-headers.

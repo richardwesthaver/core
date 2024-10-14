@@ -1,6 +1,8 @@
 (in-package :log)
 
-(defvar *log-levels* (list nil :fatal :error :warn :info :debug :trace t))
+(eval-always
+  (defparameter *log-levels* (list nil :fatal :error :warn :info :debug :trace t)))
+
 (deftype log-level-designator () `(member ,@*log-levels*))
 
 (declaim (log-level-designator *log-level*))

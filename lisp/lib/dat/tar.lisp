@@ -12,6 +12,9 @@
 ;; USTAR is the widely-available POSIX standard - PAX never really took off
 ;; and CPIO is all but dead.
 
+;; impl: https://github.com/froydnj/archive
+;; impl: https://gitlab.common-lisp.net/cl-tar
+
 ;;; Code:
 (in-package :dat/tar)
 
@@ -24,7 +27,6 @@
 (deferror tar-error () () (:auto t))
 
 (defclass archive () ())
-
 (defclass tar-archive (archive) ())
 
 (defclass tar-entry () ())

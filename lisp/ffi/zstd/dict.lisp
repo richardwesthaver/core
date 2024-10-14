@@ -323,12 +323,6 @@
   (samples-sizes (* size-t))
   (nb-samples unsigned))
 
-(define-alien-type zdict-params
-  (struct zdict-params-t
-          (compression-level int)
-          (notification-level unsigned)
-          (dict-id unsigned)))
-
 ;; NOTE: Requires returning struct by value
 
 ;; This is the ONLY function which used libzstd-alien.so right now.

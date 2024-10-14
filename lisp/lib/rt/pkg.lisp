@@ -99,7 +99,18 @@
    :*tmp*
    :*default-tmp-directory*
    :with-tmp-directory
-   :with-tmp-file))
+   :with-tmp-file
+   :isnt
+   :is=
+   :iseq
+   :iseql
+   :isequal
+   :isand
+   :isemptyp
+   :istypep
+   :iszerop
+   :isevery
+   :issome))
 
 (defpackage :rt/bench
   (:nicknames :bench)

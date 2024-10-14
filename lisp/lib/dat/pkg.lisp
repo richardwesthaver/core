@@ -130,7 +130,7 @@
    :compile-css-block))
 
 (defpackage :dat/html
-  (:use :cl :std :dat/proto)
+  (:use :cl :dat/proto :std/macs :std/string)
   (:import-from :sb-ext :defglobal)
   (:export
    :parse-html5
@@ -165,7 +165,8 @@
    :element-map-children))
 
 (defpackage :dat/xml
-  (:use :cl :std :dat/proto :log)
+  (:use :cl :dat/proto)
+  (:import-from :log :trace!)
   (:shadow :read-char :unread-char)
   (:export
    :xml-node-name 
