@@ -151,3 +151,14 @@
   (not (some #'sb-thread:thread-alive-p threads)))
 (defun process-all-interrupts (&optional (thread sb-thread:*current-thread*))
   (sb-ext:wait-for (null (sb-thread::thread-interruptions thread))))
+
+(defgeneric workers (self))
+
+(defclass thread-pool ()
+  ((workers :initarg :workers :accessor workers)))
+
+(defgeneric start (self))
+(defgeneric started-p (self))
+(defgeneric stop (self &key &allow-other-keys))
+(defgeneric stopped-p (self))
+(defgeneric shutdown (self))

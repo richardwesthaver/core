@@ -75,5 +75,5 @@ with a quick google search."
                               (parse-channel (aref registers 1))
                               (parse-channel (aref registers 2)))
                       (push colorname colornames))
-                    (log:trace! (format nil "ignoring line ~A~%" line))))))))
+                    (warn "ignoring line ~A~%" line)))))))
       (nreverse colornames))))

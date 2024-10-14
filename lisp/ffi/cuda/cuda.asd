@@ -12,4 +12,4 @@
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :cuda)
-               (:file "api"))
+               (:file "cuda")))

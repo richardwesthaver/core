@@ -275,6 +275,6 @@ specialize it on specific condition classes for debugging purposes.")
 the \"current\" error."
   (handler-case
       (with-output-to-string (s)
-        (trivial-backtrace:print-backtrace-to-stream s))
+        (sb-debug:print-backtrace :stream s))
     (error (condition)
       (format nil "Could not generate backtrace: ~A." condition))))

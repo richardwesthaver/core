@@ -44,6 +44,7 @@ that ASDF can find, or have quicklisp installed.")))
                (:file "hash-table")
                (:file "alien")
                (:file "mop")
+               (:file "pipe")
                (:file "readtable")
                (:module "macs"
                 :components

@@ -1,7 +1,7 @@
 (defsystem :io
   :description "Lisp IO Interface"
   :depends-on (:cl-ppcre 
-               :std :obj 
+               :std :obj
                (:feature :linux :uring) 
                (:feature :linux :xkb) 
                (:feature :linux :evdev)

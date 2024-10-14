@@ -4,7 +4,8 @@
 (in-package :log)
 
 ;; from hunchentoot
-(defmacro with-log-stream ((stream-var destination &optional (lock (make-mutex :name "log-stream"))) &body body)
+(defmacro with-log-stream ((stream-var destination &optional (lock (make-mutex :name "log-stream")))
+                           &body body)
   "Bind STREAM-VAR to a regular logging stream for the duration of BODY.
 
 DESTINATION may be either a pathname-designator, a symbol bound to an open
@@ -27,7 +28,8 @@ LOCK refers to the lock that should be held during the logging operation."
               (with-open-stream (,stream-var ,destination)
                 ,@body))))))))
 
-(defmacro with-fast-log-stream ((stream-var destination &optional (lock (make-mutex :name "log-stream"))) &body body)
+(defmacro with-fast-log-stream ((stream-var destination &optional (lock (make-mutex :name "log-stream"))) 
+                                &body body)
   "Bind STREAM-VAR to a 'fast' logging stream for the duration of BODY.
 
 DESTINATION may be either a pathname-designator, a symbol bound to an open

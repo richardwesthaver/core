@@ -214,7 +214,8 @@
 
 (defpkg :std/array
   (:use :cl)
-  (:export :copy-array :signed-array-length))
+  (:export :copy-array :signed-array-length :array-shift 
+   :vector-push-extend-position :vector-pop-position))
 
 (defpkg :std/hash-table
   (:use :cl)
@@ -260,7 +261,17 @@
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :list-indirect-slot-methods
    :ensure-finalized :subclassp))
-   
+
+(defpkg :std/pipe
+  (:use :cl :std/array)
+  (:export :sink :source :element :pipeline :filter
+   :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
+   :element-stream :value :index :resolve-element
+   :find-element :find-parent-element :insert-element :withdraw-element
+   :remove-element :set-element-id :move-element :message
+   :event :buffer :bus :format-message
+   :stream-sink :stream-source :file-sink :file #+nil :file-source))
+
 (defpkg :std/fu
   (:use :cl)
   (:import-from :std/sym :make-gensym-list)
@@ -357,7 +368,9 @@
    :wait-for-threads
    :hang :finish-threads
    :make-threads :with-threads 
-   :thread-count :dump-thread))
+   :thread-count :dump-thread
+   :start :started-p :stop :stopped-p
+   :shutdown :thread-pool :workers))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency)
@@ -550,6 +563,8 @@
   (:use :cl)
   (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
   (:shadowing-import-from :sb-vm :list-allocated-objects)
+  (:recycle :sb-assem)
+  (:import-from :sb-assem :*backend-instruction-set-package*)
   (:import-from :sb-impl :*logical-hosts*)
   (:export
    :*default-arena-size*
@@ -563,7 +578,8 @@
    :save-lisp-and-live
    :forget-shared-object
    :forget-shared-objects
-   :compile-lisp))
+   :compile-lisp
+   :without-fp-traps))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
@@ -573,7 +589,7 @@
    :std/alien :std/mop :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/seq
-   :std/sys :std/readtable))
+   :std/sys :std/readtable :std/pipe))
 
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std

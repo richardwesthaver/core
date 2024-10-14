@@ -1,6 +1,6 @@
 (defsystem :obj
   :description "Lisp object library"
-  :depends-on (:std :log :quri)
+  :depends-on (:std :quri)
   :serial t
   :components ((:file "pkg")
                (:module "meta"

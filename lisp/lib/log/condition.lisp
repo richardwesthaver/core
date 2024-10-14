@@ -6,9 +6,9 @@
 (define-condition log-condition () ()
   (:documentation "Base class for all LOG-related conditions."))
 
-(deferror log-error (log-condition) ()
+(deferror log-error (log-condition error) ()
   (:documentation "Base class for all LOG-related errors.") 
   (:auto t))
 
-(deferror simple-log-error (log-error simple-error) () (:auto t))
+(deferror simple-log-error (log-condition simple-error) () (:auto t))
           

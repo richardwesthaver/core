@@ -128,3 +128,7 @@ consisting of the old contents appended to the new."
                                      :root-structures root-structures
                                      :purify purify
                                      :compression compression))))
+
+(defmacro without-fp-traps (() &body body)
+  `(sb-int:with-float-traps-masked (:invalid :divide-by-zero)
+     ,@body))

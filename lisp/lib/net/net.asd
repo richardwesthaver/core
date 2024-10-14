@@ -6,7 +6,6 @@
   :depends-on 
   (:sb-concurrency :sb-posix 
    :sb-bsd-sockets :cl-ppcre
-   :fast-io ;; :swank :swank-client
    :dat :obj
    :io :parse
    :cl+ssl :cli

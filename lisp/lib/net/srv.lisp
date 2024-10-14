@@ -81,13 +81,8 @@
                                       :defaults source-directory)))))
 
 ;;; Protocol
-(defgeneric started-p (self))
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
-(defgeneric start (self)
-  (:documentation "Start a service."))
-(defgeneric stop (self &optional graceful)
-  (:documentation "Stop a service."))
 (defgeneric restart-service (self)
   (:documentation "Restart a service.")
   (:method ((self t))
@@ -95,7 +90,6 @@
     (start self)))
 (defgeneric execute-service (self)
   (:documentation "A function that is called by a service once it has been initialized. Usually calls the 'accept-connections' method of the service."))
-(defgeneric shutdown (self))
 (defgeneric add-route (self uri handler &key &allow-other-keys))
 (defgeneric delete-route (self uri &key &allow-other-keys))
 (defgeneric handle-request (self request)
@@ -375,10 +369,12 @@ logging, etc."))
 ;;; Headers
 
 ;;; Router
+;; similar to HUNCHENTOOT:EASY-HANDLER
 (defclass router () ())
 
 ;;; Engine
 ;; Multithreaded runtime for services
+
 (define-task-kernel service-task-kernel () ()
   "Default task kernel for service-based tasks.")
 
@@ -554,7 +550,7 @@ can be parsed by most log analysis tools."
     (error (e)
       (service-log-message service :error "Wake-for-shutdown connect failed: ~A" e))))
                         
-(defmethod stop ((self service) &optional graceful)
+(defmethod stop ((self service) &key graceful)
   (with-mutex ((shutdown-lock self))
     (setf (shutdown-p self) t)
     (wake-service-for-shutdown self)

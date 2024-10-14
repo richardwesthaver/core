@@ -297,7 +297,8 @@
   (:shadow :get :delete)
   (:use :cl :std :obj/uri
    :obj/url :net/proto/http :babel :net/cookie
-   :fast-io :dat/base64 :cl+ssl :sb-gray)
+   :io/fast
+   :dat/base64 :cl+ssl :sb-gray)
   (:shadowing-import-from :babel :octets-to-string)
   (:export
    :request

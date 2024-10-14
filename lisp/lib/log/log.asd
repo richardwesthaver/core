@@ -1,9 +1,9 @@
 ;;; log.asd --- logging system
 (defsystem :log
-  :depends-on (:std)
+  :depends-on (:std :io)
   :serial t
   :components ((:file "pkg")
-               (:file "err")
+               (:file "condition")
                (:file "log")
                (:file "stream"))
   :in-order-to ((test-op (test-op "log/tests"))))
