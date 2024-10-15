@@ -110,7 +110,6 @@
            (equal kind bk)))))
 
 (defmethod call-opt ((self cli-opt) arg)
-  (activate-opt self)
   (funcall (cli-opt-thunk self) arg))
 
 (defmethod do-opt ((self cli-opt))
@@ -120,17 +119,25 @@
   (loop for opt across self
         do (do-opt opt)))
 
-(defmethod find-opt ((self list) (name t) &optional active)
+(defmethod find-opt ((name string) (self list) &optional active)
   (let ((found (find name self :key 'cli-opt-name :test 'equal)))
     (if active
         (when (cli-lock-p found)
           found)
         found)))
 
-(defmethod find-opt ((self vector) (name t) &optional active)
+(defmethod find-opt ((name string) (self vector) &optional active)
   (let ((found (find name self :key 'cli-opt-name :test 'equal)))
     (if active
         (when (cli-lock-p found)
           found)
         found)))
-          
+
+(defun getopt (name &optional (opts *opts*))
+  "Retrieve a CLI-OPT-VAL by name from a vector of CLI-OPTs."
+  (cli-opt-val (find-opt (string-downcase name) opts)))
+
+(defun setopt (name val &optional (opts *opts*))
+    (setf (cli-opt-val (find-opt (string-downcase name) opts)) val))
+
+(defsetf getopt setopt)

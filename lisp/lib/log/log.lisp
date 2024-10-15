@@ -55,7 +55,7 @@ function in which case it is used as the function value of
   ((fatal :initarg :fatal)
    (error :initarg :error)
    (warn :initarg :warn)
-   (info :initarg :info) 
+   (info :initarg :info)
    (debug :initarg :debug) 
    (trace :initarg :trace))
   (:default-initargs
@@ -75,10 +75,10 @@ function 'NAME-P'."
          ,@(or pred `((eql *log-level* ,(sb-int:keywordicate name)))))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
          (when (,(symbolicate (concatenate 'string %name "-P")))
-         (format t "#:~(~A~) ~@[~f~]"
+           (format *trace-output* "#:~(~A~) ~@[~f~]~&"
                  ',name
                  (when *log-timestamp* (log-timestamp-source)))
-         (mapc (lambda (x) (format t "; ~A~%" x)) args))
+           (mapc (lambda (x) (format *trace-output* "; ~A~&" x)) args))
          (if (= 1 (length args))
              (car args)
              args))

@@ -55,7 +55,7 @@
   (setq *no-exit* t)
   (inspect
    (find-skelfile
-    (if *args* (pathname (car *args*))
+    (if *opts* (cli-opt-val (aref *opts* 0))
 	#P".")
     :load t)))
 
@@ -174,9 +174,10 @@
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-commit
+  (println *opts*)
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "commit" (append '("-m") *args*) t))
-    (:hg (run-hg-command "commit" (append '("-m") *args*) t))
+    (:git (run-git-command "commit" (list "-m" (clap:getopt :message)) t))
+    (:hg (run-hg-command "commit" (list "-m" (clap:getopt :message)) t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-make
@@ -235,7 +236,7 @@
       (sb-impl::toplevel-repl nil))))
 
 (defcmd skc-new
-  (println *args*) 
+  (println *args*)
   (println *opts*))
 
 (define-cli *skel-cli*
@@ -255,7 +256,7 @@
 	 (:name "output" :description "output target" :kind string))
   :cmds ((:name init
 	  :description "initialize a skelfile in the current directory"
-          :opts (:name "name" :description "project name" :kind string)
+          :opts ((:name "name" :description "project name" :kind string))
           :thunk skc-init)
          (:name new
           :description "make a new skel project"

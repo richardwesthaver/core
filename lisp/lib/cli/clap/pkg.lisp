@@ -66,7 +66,9 @@
    :%compose-keyword-opt
    :cli-cmd-args
    :cli-lock-p
-   :cli-name))
+   :cli-name
+   :getopt
+   :setopt))
 
 (defpackage :cli/clap/simple
   (:use :cl :std :log :sb-ext)

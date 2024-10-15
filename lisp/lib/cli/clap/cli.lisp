@@ -134,14 +134,14 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 CLI is updated based on the current environment and dynamically bound to
 *CLI*. ARGS is a list of CLI args, defaults to *ARGS* at runtime if nil. *AST* is bound to the parsed result of"
   `(progn
-     (let ((*cli* ,cli)
-           (*args* ,args)
-           (*ast* (proc-args ,cli ,args)))
+     (let ((*cli* ,cli))
        (setf (cli-cd *cli*) *default-pathname-defaults*)
-       ,@(when (eql install t)
-           `((install-ast *cli* *ast*)))
-       (with-slots ,slots *cli*
-         ,@body
-         ,@(when (eql install :after) '((install-ast *cli*)))
-         ,@(when run '((do-cmd *cli*)))
-         ,@(when exit '((sb-ext:exit)))))))
+       (let ((*args* ,args)
+             (*ast* (proc-args ,cli ,args)))
+         ,@(when (eql install t)
+             `((install-ast *cli* *ast*)))
+         (with-slots ,slots *cli*
+           ,@body
+           ,@(when (eql install :after) '((install-ast *cli*)))
+           ,@(when run '((do-cmd *cli*)))
+           ,@(when exit '((sb-ext:exit))))))))

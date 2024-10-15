@@ -88,25 +88,27 @@ a CLI is called without arguments, and all subcommands."))
                                          collect (cli-equal ca cb)))
                  t))))))
 
-(defmethod find-cmd ((self cli-cmd) name &optional active)
-  (when-let ((c (find name (cmds self) :key #'cli-name :test #'string=)))
+(defmethod find-cmd (name (self cli-cmd) &optional active)
+  (when-let ((c (find name (cmds self) :test 'equal :key 'cli-name)))
     (if active 
         ;; maybe issue warning here? report to user
         (when (cli-lock-p c)
           c)
         c)))
 
-(defmethod (setf find-cmd) ((new cli-cmd) (self cli-cmd) name &optional active)
-  (let ((match (find-cmd self name active) ))
+(defmethod (setf find-cmd) ((new cli-cmd) name (self cli-cmd) &optional active)
+  (let ((match (find-cmd name self active)))
+    (activate-cmd new)
     (substitute new match (cmds self) :test 'cli-equal)))
 
 (defmethod active-cmds ((self cli-cmd))
   (remove-if-not #'cli-lock-p (cmds self)))
 
 (defmethod activate-cmd ((self cli-cmd))
-  (setf (cli-lock-p self) t))
+  (setf (cli-lock-p self) t)
+  self)
 
-(defmethod find-opts ((self cli-cmd) name &key active recurse)
+(defmethod find-opts (name (self cli-cmd) &key active recurse)
   (let ((ret))
     (flet ((%find (o obj)
              (when-let ((found (find o (opts obj) :key #'cli-opt-name :test 'equal)))
@@ -119,15 +121,20 @@ a CLI is called without arguments, and all subcommands."))
         (setf ret (remove-if-not #'cli-lock-p ret)))
       ret)))
 
-(defmethod find-opt ((self cli-cmd) name &optional active)
+(defmethod find-opt (name (self cli-cmd) &optional active)
   (let ((ret (find name (opts self) :key #'cli-opt-name :test 'equal)))
     (if active
         (when (cli-opt-lock ret) ret)
         ret)))
 
-(defmethod (setf find-opt) ((new cli-opt) (self cli-cmd) name &optional active)
-  (let ((match (find-opt self name active)))
-    (substitute new match (opts self) :test 'cli-equal)))
+(defun cli-name= (a b)
+  (equal (cli-name a) (cli-name b)))
+
+(defmethod (setf find-opt) ((new cli-opt) name (self cli-cmd) &optional active)
+  (let ((match (find-opt name self active)))
+    (activate-opt new)
+    (setf (opts self)
+          (substitute new match (opts self) :test 'cli-equal))))
 
 (defmethod active-opts ((self cli-cmd))
   (remove-if-not 'cli-opt-lock (opts self)))
@@ -158,7 +165,6 @@ a CLI is called without arguments, and all subcommands."))
            (%find flag (opts cmd))))
         ret))))
 
-(declaim (inline solop))
 (defun solop (self)
   (= 0 (length (active-cmds self)) (length (active-opts self))))
 
@@ -210,7 +216,7 @@ an object."
       collect           
          (let* ((has-eq (long-opt-has-eq-p a))
                 (name (or (car has-eq) (string-left-trim "-" a)))
-                (o (car (find-opts self name :recurse nil))))
+                (o (car (find-opts name self :recurse nil))))
            (cond
              ((and has-eq o)
               (activate-opt o)
@@ -229,22 +235,22 @@ an object."
          (make-cli-node 'group nil)
       ;; OPT KEYWORD (experimental)
       else if (opt-keyword-p a)
-      collect (if-let ((o (car (find-opts self (string-left-trim ":" a) :recurse nil))))
+      collect (if-let ((o (car (find-opts (string-left-trim ":" a) self :recurse t))))
                 (prog1 (%compose-keyword-opt o (pop args))
                   (setq exit t))
                 (make-cli-node 'arg a))
       else ;; CMD or ARG
       collect
-         (if-let ((cmd (find-cmd self a)))
-           (prog2 (activate-cmd cmd)
-               (make-cli-node 'cmd (parse-args cmd (copy-list args) :install t))
-             (setq exit t))
+         (if-let ((cmd (find-cmd a self)))
+           (progn (setq exit t)
+                  ;; command forms are another AST
+                  (setf cmd (parse-args cmd args))
+                  (make-cli-node 'cmd cmd))
            ;; just a plain arg - move to next
            (make-cli-node 'arg a))))))
 
 (defmethod install-ast ((self cli-cmd) (ast cli-ast))
   "Install the given AST, recursively filling in value slots."
-  (with-slots (cmds opts) self
     ;; we assume all nodes in the ast have been validated and the ast
     ;; itself is consumed. validation is performed in proc-args.
 
@@ -260,13 +266,12 @@ an object."
                (case kind
                  ;; opts
                  (opt
-                  (setf (find-opt self (cli-name form)) form)
-                  (activate-opt (find-opt self (cli-name form))))
+                  (setf (find-opt (cli-name form) self) form))
                  (cmd
-                  (setf (find-cmd self (cli-name form)) form))
+                  (setf (find-cmd (cli-name form) self) form))
                  (arg (push-arg form self)))))
-    (setf (cli-args self) (nreverse (cli-args self)))
-    self))
+  (setf (cli-args self) (nreverse (cli-args self)))
+  self)
 
 (defmethod install-thunk ((self cli-cmd) (lambda function) &optional compile)
   "Install THUNK into the corresponding slot in cli-cmd SELF."
@@ -283,13 +288,16 @@ an object."
 ARGS is assumed to be a valid cli-ast (list of cli-nodes), unless COMPILE is
 t, in which case a list of strings is assumed. INSTALL always implies COMPILE
 and calls INSTALL-AST on SELF with ARGS."
-  (let ((args (proc-args self args)))
-    (if install (install-ast self args)
-        args)))
+  (let ((ast (proc-args self args)))
+    (if install (install-ast self ast)
+        ast)))
 
 ;; WARNING: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.
 (defmethod call-cmd ((self cli-cmd) args opts)
+  (log:trace! "calling command" self 
+              "with args" args
+              "and opts" opts)
   (funcall (cli-thunk self) args opts))
 
 (defmethod do-opts ((self cli-cmd))
@@ -301,11 +309,13 @@ subcommands until a level is reached which satisfies SOLOP. active OPTS are
 evaluated with DO-OPTS along the way."
   (do-opts self)
   (if (solop self)
-      (prog1 (call-cmd self (cli-args self) (active-opts self))
-        ;; release opts
-        (loop for o across (active-opts self)
-              do (setf (cli-opt-lock o) nil)))
+      (call-cmd self (cli-args self) (active-opts self))
+      ;; release opts
+      ;; (loop for o across (active-opts self)
+      ;;       do (setf (cli-opt-lock o) nil)))
       (loop for c across (active-cmds self)
-            do (do-cmd c)))
+            do (do-opts c)
+            do (call-cmd c (cli-args c) (active-opts c))))
   (setf (cli-lock-p self) nil))
+
 

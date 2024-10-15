@@ -39,15 +39,15 @@
 
 (defgeneric pop-opt (place))
 
-(defgeneric find-cmd (self name &optional active))
+(defgeneric find-cmd (name self &optional active))
 
-(defgeneric (setf find-cmd) (new self name &optional active))
+(defgeneric (setf find-cmd) (new name self &optional active))
 
-(defgeneric find-opt (self name &optional active))
+(defgeneric find-opt (name self &optional active))
 
-(defgeneric (setf find-opt) (new self name &optional active))
+(defgeneric (setf find-opt) (new name self &optional active))
 
-(defgeneric find-opts (self name &key active recurse))
+(defgeneric find-opts (name self &key active recurse))
 
 (defgeneric active-cmds (self))
 
