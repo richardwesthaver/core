@@ -197,6 +197,7 @@ an object."
                       (setq skip t)))))
              ((and has-eq opts)
               (loop for o in opts
+                    do (activate-opt o)
                     do (setf (cli-opt-val o) (cdr has-eq))
                     collect (make-cli-node 'opt o)))
              ((and (not has-eq) opts)
@@ -212,6 +213,7 @@ an object."
                 (o (car (find-opts self name :recurse nil))))
            (cond
              ((and has-eq o)
+              (activate-opt o)
               (setf (cli-opt-val o) (cdr has-eq))
               (make-cli-node 'opt o))
              ((and (not has-eq) o)
@@ -234,7 +236,8 @@ an object."
       else ;; CMD or ARG
       collect
          (if-let ((cmd (find-cmd self a)))
-           (prog1 (make-cli-node 'cmd (parse-args cmd args :install t))
+           (prog2 (activate-cmd cmd)
+               (make-cli-node 'cmd (parse-args cmd (copy-list args) :install t))
              (setq exit t))
            ;; just a plain arg - move to next
            (make-cli-node 'arg a))))))
@@ -252,17 +255,15 @@ an object."
           for (node . tail) on (ast ast)
           while node
           do 
-             (let ((kind (cli-node-kind node)) 
+             (let ((kind (cli-node-kind node))
                    (form (cli-node-form node)))
                (case kind
                  ;; opts
                  (opt
                   (setf (find-opt self (cli-name form)) form)
-                  (activate-opt (find-opt self (cli-name form)))
-                  (log:trace! (format nil "installing opt ~A" (cli-name form))))
+                  (activate-opt (find-opt self (cli-name form))))
                  (cmd
-                  (setf (find-cmd self (cli-name form)) form)
-                  (log:trace! (format nil "installing cmd ~A" (cli-name form))))
+                  (setf (find-cmd self (cli-name form)) form))
                  (arg (push-arg form self)))))
     (setf (cli-args self) (nreverse (cli-args self)))
     self))
@@ -289,7 +290,6 @@ and calls INSTALL-AST on SELF with ARGS."
 ;; WARNING: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.
 (defmethod call-cmd ((self cli-cmd) args opts)
-  (trace! "calling command:" args opts)
   (funcall (cli-thunk self) args opts))
 
 (defmethod do-opts ((self cli-cmd))

@@ -176,7 +176,7 @@
 (defcmd skc-commit
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "commit" (append '("-m") *args*) t))
-    (:hg (run-hg-command "commit" (when *args* (append '("-m") *args*)) t))
+    (:hg (run-hg-command "commit" (append '("-m") *args*) t))
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-make
@@ -355,5 +355,5 @@
     (in-readtable :shell)
     (with-cli (*skel-cli* :args (cli:args))
       (init-skel-vars)
-      (do-cmd *cli*)
-      (debug-opts *cli*))))
+      (do-cmd *cli*))))
+

@@ -51,20 +51,22 @@
   (cli-opt-lock self))
 
 (defun %compose-flag-opt (o)
+  (activate-opt o)
   (setf (cli-opt-val o) t)
   (make-cli-node 'opt o))
 
 (defun %compose-flag-opts (&rest os)
   (let ((ret))
     (dolist (o os ret)
-      (setf (cli-opt-val o) t)
-      (make-cli-node 'opt o))))
+      (%compose-flag-opt o))))
 
 (defun %compose-value-opt (o &optional val)
+  (activate-opt o)
   (setf (cli-opt-val o) val)
   (make-cli-node 'opt o))
 
 (defun %compose-keyword-opt (o val)
+  (activate-opt o)
   (setf (cli-opt-val o) val)
   (make-cli-node 'opt o))
 
@@ -117,3 +119,18 @@
 (defmethod do-opts ((self vector))
   (loop for opt across self
         do (do-opt opt)))
+
+(defmethod find-opt ((self list) (name t) &optional active)
+  (let ((found (find name self :key 'cli-opt-name :test 'equal)))
+    (if active
+        (when (cli-lock-p found)
+          found)
+        found)))
+
+(defmethod find-opt ((self vector) (name t) &optional active)
+  (let ((found (find name self :key 'cli-opt-name :test 'equal)))
+    (if active
+        (when (cli-lock-p found)
+          found)
+        found)))
+          
