@@ -272,7 +272,7 @@
    :event :buffer :bus :format-message
    :stream-sink :stream-source :file-sink :file #+nil :file-source))
 
-(defpkg :std/fu
+(defpkg :std/curry
   (:use :cl)
   (:import-from :std/sym :make-gensym-list)
   (:export
@@ -288,7 +288,7 @@
 (defpkg :std/macs
   (:use :cl)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :once-only :with-gensyms)
-  (:import-from :std/fu :compose)
+  (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :defmacro!)
   (:export
@@ -434,7 +434,7 @@
 (defpkg :std/readtable
   (:use :cl)
   (:import-from :std/named-readtables :defreadtable)
-  (:import-from :std/fu :curry :rcurry :compose)
+  (:import-from :std/curry :curry :rcurry :compose)
   (:import-from :std/sym :symb)
   (:import-from :std/list :defmacro!) ;; kludge
   (:export
@@ -587,7 +587,7 @@
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num
-   :std/stream :std/fu :std/array :std/hash-table
+   :std/stream :std/curry :std/array :std/hash-table
    :std/alien :std/mop :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/seq

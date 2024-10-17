@@ -174,7 +174,6 @@
     (t (skel-simple-error "unknown VC type"))))
 
 (defcmd skc-commit
-  (println *opts*)
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "commit" (list "-m" (clap:getopt :message)) t))
     (:hg (run-hg-command "commit" (list "-m" (clap:getopt :message)) t))

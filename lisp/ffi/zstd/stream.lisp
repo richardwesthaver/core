@@ -23,9 +23,9 @@
 (define-alien-routine "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
 
 (define-alien-enum (zstd-enddirective int :default :error :test eq)
-                   :e-continue 0
-                   :e-flush 1
-                   :e-end 2)
+                   :continue 0
+                   :flush 1
+                   :end 2)
 
 (define-alien-variable "ZSTD_frameParameters" int)
 (define-alien-routine "ZSTD_compressStream2" size-t

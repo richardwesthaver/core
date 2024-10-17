@@ -16,6 +16,7 @@
   (:use :cl)
   (:export
    :defreadtable
+   :with-readtable
    :in-readtable
    :make-readtable
    :merge-readtables-into
@@ -1106,5 +1107,14 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 	  ((eq readtable *standard-readtable*) :common-lisp)
           ((eq readtable *case-preserving-standard-readtable*) :modern)
 	  (t nil))))
+
+(defmacro with-readtable (rt &body body)
+  (sb-int:with-unique-names (current)
+    (setf current *readtable*)
+      `(unwind-protect
+            (progn
+              (in-readtable ,rt)
+              ,@body)
+         (in-readtable ,(readtable-name current)))))
 
 (provide :readtables)

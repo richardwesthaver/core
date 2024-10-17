@@ -36,7 +36,7 @@
                  (clevel int (zstd-defaultclevel)))
       (let ((csize (zstd-compress dst dst-capacity src src-size clevel)))
         (is (zerop (zstd-iserror (zstd-decompress src src-size dst csize)))))))
-  (let* ((octets (make-array 4000 :initial-element (random 255)))
+  (let* ((octets (make-array 4000 :element-type '(unsigned-byte 8) :initial-element (random 255)))
          (compressed (zstd:zstdc octets)))
     (is (equalp (zstdd compressed) octets))))
 
@@ -73,7 +73,7 @@
         (zstd::zstd-flushstream cs out)
         (is (zerop (zstd-iserror (zstd::zstd-endstream cs out))))
         (zstd-decompressstream ds out in)
-        (is (string-equal 
+        (is (string-equal
              (cast (zstd::zstd-inbuffer-src in) c-string)
              test))))))
 
@@ -102,7 +102,7 @@
               dict (length test))))))))))
 
 (deftest bulk-dictionary ()
-  (let ((test #(1 2 3 4)))
+  (let ((test (make-array 4 :element-type '(unsigned-byte 8) :initial-contents #(1 2 3 4))))
     (with-alien ((dict (* t))
                  (dst (array (unsigned 8) 100)))
       (with-zstd-buffers (in out :src (octets-to-alien test) :dst (cast dst (* t)) :dst-size 100)
@@ -121,4 +121,3 @@
                   (zstd::zstd-decompress-usingddict 
                    ds (zstd::zstd-outbuffer-dst out) (zstd::zstd-outbuffer-size out)
                    (zstd::zstd-inbuffer-src in) (zstd::zstd-inbuffer-size in) dd))))))))))
-                  

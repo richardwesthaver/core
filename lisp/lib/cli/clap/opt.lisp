@@ -119,25 +119,32 @@
   (loop for opt across self
         do (do-opt opt)))
 
-(defmethod find-opt ((name string) (self list) &optional active)
+(defmethod find-opt ((name string) (self list) &key active)
   (let ((found (find name self :key 'cli-opt-name :test 'equal)))
     (if active
         (when (cli-lock-p found)
           found)
         found)))
 
-(defmethod find-opt ((name string) (self vector) &optional active)
-  (let ((found (find name self :key 'cli-opt-name :test 'equal)))
+(defmethod find-opt ((name string) (self vector) &key active default)
+  (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
     (if active
         (when (cli-lock-p found)
           found)
-        found)))
+        found)
+    default))
 
-(defun getopt (name &optional (opts *opts*))
+(defun getopt (name &optional (default (clap-unknown-argument name 'opt))  (opts *opts*))
   "Retrieve a CLI-OPT-VAL by name from a vector of CLI-OPTs."
-  (cli-opt-val (find-opt (string-downcase name) opts)))
+  (cli-opt-val (find-opt (string-downcase name) opts :default default)))
 
-(defun setopt (name val &optional (opts *opts*))
-    (setf (cli-opt-val (find-opt (string-downcase name) opts)) val))
+(defun setopt (name val &optional (default (clap-unknown-argument name 'opt)) (opts *opts*))
+    (setf (cli-opt-val (find-opt (string-downcase name) opts :default default)) val))
 
 (defsetf getopt setopt)
+
+(defmacro with-opt-restart-case (arg expression)
+  "Bind restarts 'use-as-arg' and 'discard-arg' for duration of EXPRESSION."
+  `(restart-case ,expression
+     (use-as-arg () () (make-cli-node 'arg ,arg))
+     (discard-arg () () (setf ,arg nil))))

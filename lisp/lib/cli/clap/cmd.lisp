@@ -4,7 +4,15 @@
 
 ;;; Commentary:
 
-;; 
+;; The main entry is PARSE-ARGS which is called with a CLI object and a list
+;; of args. This in turns calls PROC-ARGS which does all of the parsing and
+;; will recursively call PARSE-ARGS as needed on nested CLI objects. It also
+;; sets the :LOCK slot on resulting objects, and returns a CLI-AST object. The
+;; ast is installed into the CLI object at which point it can be executed with
+;; DO-CMD.
+
+;; DO-OPTS is called for each active (CLI-LOCK-P) CLI-OPT attached to a
+;; CLI-CMD followed by a DO-CMD call in turn on each active CLI-CMD.
 
 ;;; Code:
 (in-package :cli/clap/obj)
@@ -88,16 +96,17 @@ a CLI is called without arguments, and all subcommands."))
                                          collect (cli-equal ca cb)))
                  t))))))
 
-(defmethod find-cmd (name (self cli-cmd) &optional active)
-  (when-let ((c (find name (cmds self) :test 'equal :key 'cli-name)))
+(defmethod find-cmd (name (self cli-cmd) &key active default)
+  (if-let ((c (find name (cmds self) :test 'equal :key 'cli-name)))
     (if active 
         ;; maybe issue warning here? report to user
         (when (cli-lock-p c)
           c)
-        c)))
+        c)
+    default))
 
-(defmethod (setf find-cmd) ((new cli-cmd) name (self cli-cmd) &optional active)
-  (let ((match (find-cmd name self active)))
+(defmethod (setf find-cmd) ((new cli-cmd) name (self cli-cmd))
+  (let ((match (find-cmd name self)))
     (activate-cmd new)
     (substitute new match (cmds self) :test 'cli-equal)))
 
@@ -121,17 +130,18 @@ a CLI is called without arguments, and all subcommands."))
         (setf ret (remove-if-not #'cli-lock-p ret)))
       ret)))
 
-(defmethod find-opt (name (self cli-cmd) &optional active)
-  (let ((ret (find name (opts self) :key #'cli-opt-name :test 'equal)))
+(defmethod find-opt (name (self cli-cmd) &key active default)
+  (if-let ((ret (find name (opts self) :key #'cli-opt-name :test 'equal)))
     (if active
         (when (cli-opt-lock ret) ret)
-        ret)))
+        ret)
+    default))
 
 (defun cli-name= (a b)
   (equal (cli-name a) (cli-name b)))
 
-(defmethod (setf find-opt) ((new cli-opt) name (self cli-cmd) &optional active)
-  (let ((match (find-opt name self active)))
+(defmethod (setf find-opt) ((new cli-opt) name (self cli-cmd))
+  (let ((match (find-opt name self)))
     (activate-opt new)
     (setf (opts self)
           (substitute new match (opts self) :test 'cli-equal))))
@@ -166,13 +176,8 @@ a CLI is called without arguments, and all subcommands."))
         ret))))
 
 (defun solop (self)
-  (= 0 (length (active-cmds self)) (length (active-opts self))))
-
-(defmacro with-opt-restart-case (arg condition)
-  "Bind restarts 'use-as-arg' and 'discard-arg' for duration of BODY."
-  `(restart-case ,condition
-     (use-as-arg () () (make-cli-node 'arg ,arg))
-     (discard-arg () () (setf ,arg nil))))
+  (= 0 (length (active-cmds self))
+     (length (active-opts self))))
 
 (defmethod proc-args ((self cli-cmd) args)
   "Process ARGS into an ast. Each element of the ast is a node with a
@@ -317,5 +322,3 @@ evaluated with DO-OPTS along the way."
             do (do-opts c)
             do (call-cmd c (cli-args c) (active-opts c))))
   (setf (cli-lock-p self) nil))
-
-

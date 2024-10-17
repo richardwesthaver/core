@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["sys/*","lib/*","bin/*","ui/*", "ui/alik/dash"]
+members = ["ffi/*","lib/*","bin/*","ui/*", "ui/alik/dash"]
 [workspace.package]
 version = "0.1.0"
 authors = ["Richard Westhaver <ellis@rwest.io>"]
@@ -16,10 +16,8 @@ serde = "1.0.200"
 log = "0.4.21"
 bindgen = "0.66.1"
 
-# Optimize all dependencies even in debug builds:
-[profile.dev.package."*"]
-opt-level = 2
-
+# [profile.dev.package."*"]
+# opt-level = 2
 
 [patch.crates-io]
 egui = { git = "https://github.com/emilk/egui", branch = "emilk/release-0.27.2" }

@@ -14,15 +14,15 @@
 (declaim (type pathname *skel-stash* *skel-store*
                *skel-cache* *user-skelrc* *system-skelrc*))
 
-(defparameter *skel-stash* #P"/usr/local/share/skel/stash/")
+(defvar *skel-stash* #P"/usr/local/share/skel/stash/")
 
-(defparameter *skel-store* #P"/usr/local/share/skel/store/")
+(defvar *skel-store* #P"/usr/local/share/skel/store/")
 
-(defparameter *skel-cache* #P"/usr/local/share/skel/cache/")
+(defvar *skel-cache* #P"/usr/local/share/skel/cache/")
 
-(defparameter *skel-registry* #P"/usr/local/share/skel/registry/")
+(defvar *skel-registry* #P"/usr/local/share/skel/registry/")
 
-(defparameter *skel-path* *default-pathname-defaults*)
+(defvar *skel-path* *default-pathname-defaults*)
 
 (defvar *skel-project* nil)
 
@@ -34,14 +34,14 @@ The environment can be used for example in SB-EXT:RUN-PROGRAM by running the
 table through CLI/ENV:CONCAT-ENV-TABLE and passing it as the value of the
 :ENVIRONMENT keyword argument.")
 
-(defparameter *user-skelrc* (pathname (format nil "~~/~A" *default-skelrc*)))
+(defvar *user-skelrc* (pathname (format nil "~~/~A" *default-skelrc*)))
 
-(defparameter *system-skelrc* (pathname "/etc/skelrc"))
+(defvar *system-skelrc* (pathname "/etc/skelrc"))
 
-(defparameter *keep-ast* nil
+(defvar *keep-ast* nil
   "Whether to keep the :ast slot stored with an sk object, or set it to nil so
 that it can be GC'd.")
 
-(defparameter *sk-load-recursive* t
+(defvar *skel-load-recursive* t
   "Whether to recursively load sk objects in the :include slot or store them
 uninitialized with non-nil :ast slots.")

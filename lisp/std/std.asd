@@ -37,9 +37,7 @@ that ASDF can find, or have quicklisp installed.")))
                  (:file "parse")
                  (:file "leb128")))
                (:file "stream")
-               (:module "fu"
-                :components
-                ((:file "curry")))
+               (:file "curry")
                (:file "array")
                (:file "hash-table")
                (:file "alien")

@@ -96,10 +96,9 @@
    :find-sk-file
    :get-skelrc-slot*
    :find-project-root
-   :describe-skeleton
-   :describe-project
    :parse-sk-path
-   :find-sk-path))
+   :find-sk-path
+   :setf-skel-vars))
 
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/err)

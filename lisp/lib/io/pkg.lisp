@@ -73,16 +73,37 @@
 (defpackage :io/flate
   (:use :cl :io/proto)
   (:import-from :std :deferror :eval-always)
+  (:import-from :sb-gray 
+   :fundamental-binary-output-stream
+   :fundamental-binary-input-stream)
+  (:import-from :std/stream :wrapped-stream)
   (:export :flate-error :compression-error :decompression-error
    :*compression-buffer-size* :decompression-buffer-size* :finish-compression :finish-decompression
-   :reset-compressor :reset-decompressor :make-compressing-stream :make-decompressing-stream
+   :reset-compressor :reset-decompressor
    :compress-object :decompress-object :compress :decompress
-   :compressor :compressing-stream :decompressor :decompressing-stream))
+   :compressor :compressing-stream :decompressor :decompressing-stream
+   :*decompression-buffer-size*
+   :*compression-level*
+   :compress-with
+   :decompress-with
+   :compression-level))
 
 (defpackage :io/zstd
   (:use :cl :std :io/proto :io/flate)
+  (:import-from :zstd :zstd-createdstream :zstd-createcstream
+   :zstd-dstream :zstd-cstream :zstd-freecstream :zstd-freedstream
+   :with-zstd-dstream :with-zstd-cstream :zstd-initcstream :zstd-initdstream
+   :zstd-compressstream2 :zstd-decompressstream
+   :allocate-zstd-inbuffer :allocate-zstd-outbuffer :zstd-outbuffer :zstd-inbuffer
+   :zstd-inbuffer-src :zstd-inbuffer-size :zstd-outbuffer-dst :zstd-outbuffer-size
+   :zstd-enddirective :zstd-dstreaminsize :zstd-dstreamoutsize
+   :zstd-cstreaminsize :zstd-cstreamoutsize)
   (:import-from :std :deferror :eval-always)
-  (:export :zstd-error :zstd-compressor :zstd-decompressor))
+  (:import-from :sb-gray :stream-force-output :stream-finish-output)
+  (:export :zstd-error :zstd-compressor :zstd-decompressor
+           :with-zstd-output
+           :with-zstd-input
+           :with-zstd))
 
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb)

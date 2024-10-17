@@ -126,8 +126,25 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
             (slot-value *skel-system-config* slot))
         (slot-value *skel-user-config* slot))))
 
-(defun init-skel-vars ()
-  "Initialize the global SKEL variables:
+(macrolet 
+    ((%init (set)
+       `(with-readtable :shell
+          (load-skelrc)
+          (when-let ((project (find-skelfile *default-pathname-defaults*)))
+            (,set *skel-project* (load-skelfile project)
+                  *skel-path* #1=(sk-src *skel-project*)
+                  cli/shell:*shell-directory* #1#))
+          (when-let ((cache (get-skelrc-slot* :cache nil)))
+            (,set *skel-cache* cache))
+          (when-let ((store (get-skelrc-slot* :store nil)))
+            (,set *skel-store* store))
+          (when-let ((stash (get-skelrc-slot* :stash nil)))
+            (,set *skel-stash* stash))
+          (when-let ((registry (get-skelrc-slot* :registry nil)))
+            (,set *skel-registry* registry))
+          (values))))
+  (defun init-skel-vars ()
+    "Initialize the global SKEL variables:
 
 *SKEL-SYSTEM-CONFIG*
 *SKEL-USER-CONFIG*
@@ -136,21 +153,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 *SKEL-STORE*
 *SKEL-STASH*
 *SKEL-REGISTRY*"
-  (in-readtable :shell)
-  (load-skelrc)
-  (when-let ((project (find-skelfile *default-pathname-defaults*)))
-    (setq *skel-project* (load-skelfile project)
-          *skel-path* #1=(sk-src *skel-project*)
-          cli/shell:*shell-directory* #1#))
-  (when-let ((cache (get-skelrc-slot* :cache nil)))
-    (setq *skel-cache* cache))
-  (when-let ((store (get-skelrc-slot* :store nil)))
-    (setq *skel-store* store))
-  (when-let ((stash (get-skelrc-slot* :stash nil)))
-    (setq *skel-stash* stash))
-  (when-let ((registry (get-skelrc-slot* :registry nil)))
-    (setq *skel-registry* registry))
-  (values))
+    (%init setq))
+  (defun setf-skel-vars () (%init setf)))
 
 ;;; Paths
 

@@ -1,6 +1,10 @@
-;;; std/os.lisp --- OS interop definitions
+;;; std/os.lisp --- OS interop
 
-;; UNIX only.
+;; OS-specific bits.
+
+;;; Commentary:
+
+;; Unix only.
 
 ;;; Code:
 (in-package :std/os)
@@ -37,6 +41,9 @@
 ;; (with-umask #o22 nil)
 
 (defmacro with-fd ((fvar fname &key (flags #.sb-posix:o-rdonly) (close t)) &body body)
+  "Bind FVAR to an open file descriptor resulting from calling SB-POSIX:OPEN on
+FNAME with FLAGS for the duration of BODY. When CLOSE is non-nil (the default)
+arrange for FVAR to be closed after BODY."
   `(let* ((,fvar (sb-posix:open ,fname ,flags)))
      (unwind-protect (progn ,@body)
        ,@(when close `(sb-posix:close ,fvar)))))

@@ -42,4 +42,3 @@
 
 (defun toggle-mode-line-current ()
   (toggle-mode-line (current-screen) (current-head)))
-

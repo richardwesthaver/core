@@ -1,5 +1,4 @@
 :name "core/emacs"
-:path "emacs"
 ;; :components ((:org "babel"))
 ;; TODO 2024-09-23: 
 :bind ((dotemacs (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
@@ -28,5 +27,5 @@
                                           (ensure-directories-exist 
                                            (merge-pathnames "lib/" dotemacs)))))
              lib))))
- (clean () #$rm -rf ~/.emacs.d/{*.el,lisp,site-lisp,lib,elpa$#))
+ (purge () #$rm -rf ~/.emacs.d/{*.el,lisp,site-lisp,lib,elpa$#))
                  

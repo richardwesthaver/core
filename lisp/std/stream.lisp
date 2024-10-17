@@ -153,9 +153,9 @@ Non-number :FOO (line 2, column 5)
     (loop for string in '("abc" "def" "ghi") do
          (write-line string output)
          (sleep 1))))
-[ 0:30:05] abc
-[ 0:30:06] def
-[ 0:30:07] ghi
+[00:30:05] abc
+[00:30:06] def
+[00:30:07] ghi
 NIL
 |#
 (defclass prefixed-character-output-stream

@@ -6,13 +6,12 @@ edition = "2021"
 description = "Database System"
 repository = "https://vc.compiler.company/comp/core"
 
-[features]
-default = ["rocksdb"]
-
 [dependencies]
 obj = { version = "0.1.0", path = "../obj" }
 # make sure to use our custom branch (default)
-rocksdb = { version = "0.22", default-features = false, features = ["zstd", "multi-threaded-cf","rtti"], git = "https://vc.compiler.company/packy/rust-rocksdb.git", branch = "default", optional = true }
+# TODO 2024-10-15: fixme
+rocksdb = { version = "*", optional=true }
+# rocksdb = { version = "0.22", default-features = false, features = ["zstd", "multi-threaded-cf","rtti"], git = "https://vc.compiler.company/packy/rust-rocksdb.git", branch = "default", optional = true }
 
 [dev-dependencies]
 tempfile = "3.10.1"

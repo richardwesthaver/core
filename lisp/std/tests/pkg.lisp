@@ -7,7 +7,7 @@
 ;;; Code:
 (in-package :std-int)
 (defpkg :std/tests
-  (:use :cl :std :rt :sb-thread :std/fu))
+  (:use :cl :std :rt :sb-thread))
 (in-package :std/tests)
 (defsuite :std)
 (in-suite :std)

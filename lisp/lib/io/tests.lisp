@@ -13,9 +13,19 @@
   "See 'tests/serve-event.pure.lisp'."
   nil)
 
-(deftest compress ())
+(defparameter *data-size* (* 10 1024))
 
-(deftest decompress ())
+(deftest zstd-simple ()
+  (let ((data (make-array *data-size* :element-type '(unsigned-byte 8)
+                                      :initial-contents (random-bytes *data-size*)))
+        (round-trip-data (make-array *data-size* :element-type '(unsigned-byte 8)
+                                                 :initial-element 0))
+        compressed-data)
+    (setf compressed-data 
+          (io/zstd:with-zstd :output (out data1)))
+    (setf round-trip-data
+          (io/zstd:with-zstd :input (in compressed-data)))
+    (is (equalp round-trip-data data))))
 
 #| test from salza2
 (defparameter *data-size* (* 10 1024))
@@ -34,7 +44,7 @@ then chipz."
             (with-open-stream
                 (out-stream (salza2:make-compressing-stream 'salza2:gzip-compressor wrapped-stream))
               (write-sequence data out-stream))))
-    (flexi-streams:with-input-from-sequence (wrapped-stream compressed-data)
+  (flexi-streams:with-input-from-sequence (wrapped-stream compressed-data)
       (with-open-stream
           (in-stream (chipz:make-decompressing-stream 'chipz:gzip wrapped-stream))
         (read-sequence round-trip-data in-stream)

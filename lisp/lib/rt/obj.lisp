@@ -230,9 +230,8 @@
                         (count t (tests self)
                                :key (lambda (x) (or (test-lock-p x) (test-persist-p x))))))
             (length (tests self)))
-    ;; loop over each test, calling `do-test'. if locked or
-    ;; persistent, test is performed. if FORCE is non-nil all tests
-    ;; are performed.
+    ;; loop over each test, calling `do-test'. if locked or persistent, test
+    ;; is performed. if FORCE is non-nil all tests are performed.
     (map-tests self 
                (lambda (x)
                  (when (or force (test-lock-p x) (test-persist-p x))

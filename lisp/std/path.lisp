@@ -1,6 +1,9 @@
 ;;; std/path.lisp --- Standard Path Library
 
-;;
+;; Pathname support
+
+;;; Commentary:
+
 
 ;;; Code:
 (in-package :std/path)

@@ -13,11 +13,11 @@
 | description | The Compiler Company Core                                    |
 | skel-id     | 15bc-b763-ec92-1cf5                                          |
 | root        | ~/comp/core/                                                 |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/e02ed76e7ce3][e02ed76e7ce3:699+]]          |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/058ed5448bb3][058ed5448bb3:708+]]          |
 | tags        | core lisp rust emacs c                                       |
-| updated     | Mon Oct 07 22:03:24 2024 -0400                               |
+| updated     | Tue Oct 15 18:25:53 2024 -0400                               |
 | langs       | c cheader elisp html javascript json lisp org rust text toml |
-| lines       | 99953 :λ 77833 :# 10073 :_ 12047                             |
+| lines       | 102319 :λ 79397 :# 10566 :_ 12356                            |
 |-------------+--------------------------------------------------------------|
 
 - [[https://compiler.company/docs/core][Documentation]]
@@ -41,6 +41,5 @@ with a user configuration file. The top-level files contain the usual
 suspects for a modern Emacs configuration and the =lib= folder
 contains various additional packages which enhance our IDE workflow.
 
-Last, we have our Rust code which lives under =rust=. There's =lib=
-and =bin= modules same as Lisp with =sys= being the Rusty term for
-=ffi=.
+Last, we have our Rust code which lives under =rust=. There's =lib=,
+=bin=, =ffi= modules same as Lisp.

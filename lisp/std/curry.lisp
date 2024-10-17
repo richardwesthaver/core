@@ -1,9 +1,9 @@
-;;; std/fu/curry.lisp --- Standard Currying Functors
+;;; std/curry.lisp --- Standard Currying Functions
 
 ;;
 
 ;;; Code:
-(in-package :std/fu)
+(in-package :std/curry)
 
 ;;; Alexandria Functions
 (declaim (inline ensure-function))

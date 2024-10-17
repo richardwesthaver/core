@@ -29,7 +29,7 @@
 
 ;;; Kernel
 (defmacro gen-task-kernel (name args lock queue mailbox timeout &body body)
-  `(compile ',name 
+  `(compile ,name 
             (lambda ,args 
               (wait-on-semaphore ,lock ,@(when timeout `((:timeout ,timeout))))
               (let ((*task* (dequeue ,queue)))
