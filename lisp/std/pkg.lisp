@@ -485,7 +485,8 @@
    :integer-to-octets-le
    :read-little-endian
    :write-little-endian
-   :hexchar-to-int))
+   :hexchar-to-int
+   :make-octets))
 
 (defpkg :std/fmt
   (:use :cl)

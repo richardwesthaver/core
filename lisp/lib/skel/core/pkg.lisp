@@ -36,7 +36,8 @@
    :sk-pack
    :sk-unpack
    :sk-bundle
-   :sk-unbundle))
+   :sk-unbundle
+   :sk-register))
 
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/err :doc)
@@ -94,7 +95,8 @@
    :load-skelfile
    :find-skelfile
    :find-sk-file
-   :get-skelrc-slot*
+   :sk-config-slot
+   :sk-project-slot
    :find-project-root
    :parse-sk-path
    :find-sk-path

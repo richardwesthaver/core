@@ -535,3 +535,7 @@ the number having BYTES octets (defaulting to 4)."
 
 (defun write-little-endian (i s &optional (bytes 4))
   (write-sequence (integer-to-octets-le i bytes) s))
+
+(defun make-octets (dimensions &rest args)
+  "Like MAKE-ARRAY but with a hard-coded element-type of (unsigned-byte 8)."
+  (apply 'make-array dimensions args))

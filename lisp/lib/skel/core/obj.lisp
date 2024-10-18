@@ -626,3 +626,15 @@ via the special form stored in RECIPE."
 
 (defmethod sk-call* ((self sk-project) &rest args)
   (mapcar (lambda (arg) (sk-call self arg)) args))
+
+(defmethod sk-build ((self sk-project) &key)
+  (loop for c across (sk-components self)
+        collect (sk-build c)))
+
+(defmethod sk-compile ((self sk-project) &key)
+  (loop for c across (sk-components self)
+        collect (sk-compile c)))
+
+(defmethod sk-load ((self sk-project) &key)
+  (loop for c across (sk-components self)
+        collect (sk-load c)))

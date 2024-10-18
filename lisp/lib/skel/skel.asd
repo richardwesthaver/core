@@ -15,7 +15,7 @@
     :serial t
     :components 
     ((:file "pkg")
-     (:file "err")
+     (:file "condition")
      (:file "proto")
      (:file "header")
      (:file "vars")

@@ -1,11 +1,11 @@
 (defpackage :io/tests
-  (:use :cl :std :rt :io :uring))
+  (:use :cl :std :rt :io :uring :zstd))
 (in-package :io/tests)
 (defsuite :io)
 (in-suite :io)
 
 (load-uring)
-
+(load-zstd)
 (deftest sanity ()
   (uring::io-uring-major-version))
 
@@ -22,10 +22,37 @@
                                                  :initial-element 0))
         compressed-data)
     (setf compressed-data 
-          (io/zstd:with-zstd :output (out data1)))
+          (io/zstd:with-zstd-buffer :output (out data)))
     (setf round-trip-data
-          (io/zstd:with-zstd :input (in compressed-data)))
+          (io/zstd:with-zstd-buffer :input (in compressed-data)))
     (is (equalp round-trip-data data))))
+
+(deftest zstd-stream ()
+  (let* ((bsize 4096)
+         (ssize (* 20 bsize))
+         (data (make-octets ssize :initial-contents (random-bytes ssize)))
+         (compressor (make-instance 'zstd-compressor))
+         (decompressor (make-instance 'zstd-decompressor)))
+    (unwind-protect
+         (let ((outlen (reduce '+ 
+                               (loop for x below (/ ssize bsize)
+                                     with i = (* x bsize)
+                                     with v = (subseq data i (+ i bsize))
+                                     collect (compress-with compressor v)))))
+           (force-output compressor)
+           (finish-output compressor)
+           (log:info! (input-position compressor)
+                      (output-position compressor))
+           (let ((compressed (make-octets outlen :adjustable t))
+                 (decompressed (make-octets ssize)))
+             (clone-octets-from-alien (output-buffer compressor) compressed outlen)
+             (decompress-with decompressor compressed)
+             ;; (clone-octets-from-alien 
+             ;;  (output-buffer decompressor)
+             ;;  decompressed)
+             (is (equalp data decompressed))))
+      (close (stream-of decompressor))
+      (close (stream-of compressor)))))
 
 #| test from salza2
 (defparameter *data-size* (* 10 1024))

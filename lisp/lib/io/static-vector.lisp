@@ -17,33 +17,26 @@
        (= 2 (length form))
        (eql 'quote (car form))))
 
-(defun constantp (form &optional env)
+(defun qconstantp (form &optional env)
   (let ((form (if (symbolp form)
                   (macroexpand form env)
                   form)))
     (or (quotedp form)
-        (cl:constantp form))))
+        (constantp form))))
 
 (defun eval-constant (form &optional env)
   (declare (ignorable env))
-  (cond
-    ((quotedp form)
-     (second form))
-    (t
-     #+clozure
-     (ccl::eval-constant form)
-     #+sbcl
-     (sb-int:constant-form-value form env)
-     #-(or clozure sbcl)
-     (eval form))))
+  (if (quotedp form)
+      (second form)
+      (sb-int:constant-form-value form env)))
 
 (defun canonicalize-args (env element-type length)
-  (let* ((eltype-spec (or (and (constantp element-type)
+  (let* ((eltype-spec (or (and (qconstantp element-type)
                                (ignore-errors
                                 (upgraded-array-element-type
                                  (eval-constant element-type))))
                           '*))
-         (length-spec (if (constantp length env)
+         (length-spec (if (qconstantp length env)
                           `,(eval-constant length env)
                           '*))
          (type-decl (if (eql '* eltype-spec)

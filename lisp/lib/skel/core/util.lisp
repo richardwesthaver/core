@@ -116,15 +116,24 @@ skelfile if found."
   "Open the current system configuration using ED."
   (ed *system-skelrc*))
 
-(defun get-skelrc-slot* (slot &optional (default (skel-simple-error "slot is unbound in skel config")))
+(defun sk-config-slot (slot &optional (default :error))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
 isn't found check *SKEL-SYSTEM-CONFIG*."
   (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
     (if (or (null *skel-user-config*) (not (slot-boundp *skel-user-config* slot)))
         (if (or (null *skel-system-config*) (not (slot-boundp *skel-system-config* slot)))
-            default
+            (if (eql default :error)
+                (skel-simple-error "slot is unbound in skelrc")
+                default)
             (slot-value *skel-system-config* slot))
         (slot-value *skel-user-config* slot))))
+
+(defun sk-project-slot (slot &optional (default :error))
+  (let ((slot (print (find-symbol (string-upcase (string slot)) :skel/core/obj))))
+    (if (or (null *skel-project*) (not (slot-boundp *skel-project* slot)))
+        ;; Not found in project, search config files instead
+        (sk-config-slot slot default)
+        (slot-value *skel-project* slot))))
 
 (macrolet 
     ((%init (set)
@@ -134,13 +143,13 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
             (,set *skel-project* (load-skelfile project)
                   *skel-path* #1=(sk-src *skel-project*)
                   cli/shell:*shell-directory* #1#))
-          (when-let ((cache (get-skelrc-slot* :cache nil)))
+          (when-let ((cache (sk-config-slot :cache nil)))
             (,set *skel-cache* cache))
-          (when-let ((store (get-skelrc-slot* :store nil)))
+          (when-let ((store (sk-config-slot :store nil)))
             (,set *skel-store* store))
-          (when-let ((stash (get-skelrc-slot* :stash nil)))
+          (when-let ((stash (sk-config-slot :stash nil)))
             (,set *skel-stash* stash))
-          (when-let ((registry (get-skelrc-slot* :registry nil)))
+          (when-let ((registry (sk-config-slot :registry nil)))
             (,set *skel-registry* registry))
           (values))))
   (defun init-skel-vars ()
@@ -166,7 +175,3 @@ nested object."
           collect (read-char s))))
 
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
-
-(defun find-sk-path (path &optional skel)
-  "Find an sk-path string in a skel object, or attempt to match it against all
-active objects.")

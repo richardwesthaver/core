@@ -14,7 +14,15 @@
 ;;; Code:
 (defpackage :io/proto
   (:use :cl :std/condition)
-  (:export :io-error))
+  (:export :io-error
+           :output
+           :input
+           :output-size
+           :input-size
+           :output-buffer
+           :input-buffer
+           :input-position
+           :output-position))
 
 (defpackage :io/static-vector
   (:use :cl :std :sb-alien)
@@ -90,6 +98,7 @@
 
 (defpackage :io/zstd
   (:use :cl :std :io/proto :io/flate)
+  (:import-from :sb-alien :make-alien)
   (:import-from :zstd :zstd-createdstream :zstd-createcstream
    :zstd-dstream :zstd-cstream :zstd-freecstream :zstd-freedstream
    :with-zstd-dstream :with-zstd-cstream :zstd-initcstream :zstd-initdstream
@@ -97,13 +106,15 @@
    :allocate-zstd-inbuffer :allocate-zstd-outbuffer :zstd-outbuffer :zstd-inbuffer
    :zstd-inbuffer-src :zstd-inbuffer-size :zstd-outbuffer-dst :zstd-outbuffer-size
    :zstd-enddirective :zstd-dstreaminsize :zstd-dstreamoutsize
-   :zstd-cstreaminsize :zstd-cstreamoutsize)
+   :zstd-cstreaminsize :zstd-cstreamoutsize :zstd-inbuffer-pos :zstd-outbuffer-pos)
   (:import-from :std :deferror :eval-always)
-  (:import-from :sb-gray :stream-force-output :stream-finish-output)
+  (:import-from :sb-gray :stream-force-output :stream-finish-output
+   :stream-write-sequence)
   (:export :zstd-error :zstd-compressor :zstd-decompressor
            :with-zstd-output
            :with-zstd-input
-           :with-zstd))
+           :with-zstd-buffer
+           :with-zstd-stream))
 
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb)
