@@ -18,7 +18,7 @@
    :open-backup-engine-error
    :destroy-db-error
    :destroy-backup-engine-error
-   :rocksdb-error
+   :rdb-alien-error
    :rdb-user-error
    :put-kv-error
    :get-kv-error

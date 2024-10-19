@@ -165,13 +165,4 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
     (%init setq))
   (defun setf-skel-vars () (%init setf)))
 
-;;; Paths
-
-(defun parse-sk-path (input &optional (start 0) end)
-  "An 'sk-path' is a CLI argument which can be translated into a corresponding
-nested object."
-  (with-input-from-string (s input)
-    (loop for i from start below end
-          collect (read-char s))))
-
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))

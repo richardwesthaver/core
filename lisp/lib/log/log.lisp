@@ -1,3 +1,6 @@
+;;; log.lisp --- Log Objects
+
+;;; Code:
 (in-package :log)
 
 (eval-always
@@ -17,9 +20,6 @@ T which indicates that message data will be sent without generating a new
 object.")
 
 (defvar *logger* nil)
-
-(defvar *log-router* nil)
-
 (defvar *log-timestamp* t 
   "If non-nil, print a timestamp with log output. The value may be a
 function in which case it is used as the function value of
@@ -48,23 +48,15 @@ function in which case it is used as the function value of
 
 (defun universal-timestamp () (get-universal-time))
   
-;; the purpose of this struct is to route log messages to the
-;; appropriate output stream. It should be configured and bound to
-;; *LOG-ROUTER*.
-(defclass log-router ()
-  ((fatal :initarg :fatal)
-   (error :initarg :error)
-   (warn :initarg :warn)
-   (info :initarg :info)
-   (debug :initarg :debug) 
-   (trace :initarg :trace))
-  (:default-initargs
-   :fatal *error-output*
-   :error *error-output*
-   :warn *debug-io*
-   :info *terminal-io* 
-   :debug *debug-io*
-   :trace *trace-output*))
+;; the purpose of this struct is to route log messages to the appropriate
+;; output stream.
+(defstruct log-router
+  (fatal *error-output*)
+  (error *error-output*)
+  (warn *debug-io*)
+  (info *terminal-io*)
+  (debug *debug-io*)
+  (trace *trace-output*))
 
 (defmacro define-log-level (name &body pred)
   "Define a log-level of NAME with PRED being the body of the predicate
@@ -132,8 +124,6 @@ function 'NAME-P'."
           (tags message)
           (format-message nil (content message))))
 
-;; (format-message *standard-output* (make-instance 'simple-log-message :content "hi" :tags '(:test)))
-
 (declaim (inline %log-object))
 (defun %log-object (obj)
   (when *logger*
@@ -156,7 +146,11 @@ function 'NAME-P'."
     (log-message level tags (lambda () (apply datum args))))
   (:method (level tags datum &rest args)
     (declare (ignore args))
-    (log-message level tags datum)))
+    (log-message level tags datum))
+  (:method (level tags (datum condition) &rest args)
+    (declare (ignore args))
+    (log-message level tags (princ-to-string datum) 
+                 'condition-message :condition datum)))
 
 (defclass rotating-file-sink (file-sink)
   ((interval :accessor interval)
@@ -255,3 +249,87 @@ function 'NAME-P'."
             (loop for tag in (tags filter)
                   thereis (find tag (tags message) :test #'matching-tree-tag)))
     message))
+
+;;; Logger
+;; same as VERBOSE:CONTROLLER
+(defclass logger (pipe)
+  ((thread :initform nil :accessor log-thread)
+   (thread-continue :initform nil :accessor log-thread-continue)
+   (queue :initform (make-array '(10) :adjustable T :fill-pointer 0) :accessor queue)
+   (queue-back :initform (make-array '(10) :adjustable T :fill-pointer 0) :accessor queue-back)
+   (queue-condition :initform (make-waitqueue :name "message-condition") :reader queue-condition)
+   (queue-lock :initform (make-mutex :name "message-lock") :reader queue-lock))
+  (:documentation "A class which implements logging functionality. An instance of this class may
+be designated as the 'global' logger by setting the value of *LOGGER*, or may
+be implemented for a specific application."))
+
+(defmethod print-object ((self logger) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~@[:threaded~*~]~@[ :running~*~] :size ~d"
+            (log-thread self) (log-thread-continue self) (length (queue self)))))
+
+(defmethod start ((self logger))
+  (setf (log-thread-continue self) t)
+  (when (log-thread self)
+    (cerror "Spawn a new thread anyway"
+            "There is already a thread set on the controller."))
+  (setf (log-thread self)
+        (make-thread 
+         (let ((*logger* self)
+               (*standard-output* *standard-output*)
+               (*error-output* *error-output*)
+               (*trace-output* *trace-output*)
+               (*query-io* *query-io*)
+               (*debug-io* *debug-io*))
+           (lambda () (logger-loop self)))
+         :name "verbose-thread")))
+
+;; FIX 2024-10-18: 
+(defmethod stop ((self logger) &key)
+  (setf (log-thread-continue self) nil)
+  (loop for th = (log-thread self)
+        for i from 0
+        while (and th (thread-alive-p th))
+        do (condition-notify (queue-condition self))
+           (sleep 0.1)
+           (when (< 5 i)
+             (terminate-thread th)
+             (return)))
+  self)
+
+(defmacro with-logger-lock ((&optional (logger '*logger*)) &body body)
+  `(with-mutex ((queue-lock ,logger))
+     ,@body))
+
+(defmethod logger-loop ((self logger))
+  (let* ((lock (queue-lock self))
+         (condition (queue-condition self))
+         (pipe (pipe self)))
+    (grab-mutex lock)
+    (unwind-protect
+         (loop do (let ((queue (queue self)))
+                    (rotatef (queue self) (queue-back self))
+                    (release-mutex lock)
+                    (with-simple-restart (skip "Skip processing this message batch.")
+                      (loop for i from 0
+                            for m across queue
+                            do (with-simple-restart (continue "Continue processing messages, skipping ~A" m)
+                                 (msg pipe m))
+                               (setf (aref queue i) 0)))
+                    (setf (fill-pointer queue) 0))
+                  (grab-mutex lock)
+               (loop while (= 0 (length (queue self)))
+                     do (condition-wait condition lock :timeout 1))
+               while (log-thread-continue self))
+      (setf (log-thread self) nil)
+      (ignore-errors (release-mutex lock)))))
+
+(defmethod msg ((self logger) message)
+  (let ((th (log-thread self)))
+    (cond ((and th (thread-alive-p th)
+                (not (eql *current-thread* th)))
+           (with-logger-lock (self)
+             (vector-push-extend message (queue self)))
+           (condition-notify (queue-condition self)))
+          (t (msg (pipe self) message))))
+  nil)

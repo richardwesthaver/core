@@ -20,6 +20,10 @@
 ;;  :sb-unicode
 ;;  :include sb-unicode-syms)
 
+(defgeneric name (self)
+  (:method ((self t))
+    (string self)))
+
 (defparameter *omit-nulls* nil)
 (defvar *whitespaces* (list #\Backspace #\Tab #\Linefeed #\Newline #\Vt #\Page
                             #\Return #\Space #\Rubout
@@ -518,3 +522,25 @@ or a character."
                                 (hash-table->list cases-table))
                               input-var
                               `(,default-fn)))))))
+
+(defvar *tab-width* 8)
+
+;; pulled from SB-COVER
+(defun detabify (string)
+"Read STRING and replace all #\Tab characters with *TAB-WIDTH* spaces."
+  (with-output-to-string (stream)
+    (loop for char across string
+          for col from 0
+          for i from 0
+          do (if (eql char #\Tab)
+                 (loop repeat (- *tab-width* (mod col *tab-width*))
+                       do (write-char #\Space stream)
+                       do (incf col)
+                       finally (decf col))
+                 (progn
+                   (when (eql char #\Newline)
+                     ;; Filter out empty last line
+                     (when (eql i (1- (length string)))
+                       (return))
+                     (setf col -1))
+                   (write-char char stream))))))

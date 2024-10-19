@@ -6,19 +6,11 @@
 (in-package :rt/cover)
 (defvar *coverage-directory* #P"/tmp/rt/")
 
-(defun start-coverage ()
-  (progn
-    (declaim (optimize sb-c:store-coverage-data))))
+(defun enable-coverage ()
+  (proclaim '(optimize sb-cover:store-coverage-data)))
 
-(defun stop-coverage ()
-  (progn
-    (declaim (optimize (sb-c:store-coverage-data 0)))))
-
-(defmacro with-coverage (&body body)
-  `(progn
-     (start-coverage)
-     ,@body
-     (stop-coverage)))
+(defun disable-coverage ()
+  (proclaim '(optimize (sb-c:store-coverage-data 0))))
 
 (defun coverage-report ()
   "Generate a coverage report."

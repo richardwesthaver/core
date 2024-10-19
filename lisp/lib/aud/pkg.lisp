@@ -21,11 +21,9 @@
    :ping
    :kill
    :status
-
    :now-playing
    :pause
    :play
-   :stop
    :previous
    :next
    :crossfade

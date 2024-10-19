@@ -92,7 +92,7 @@
 		       :if-does-not-exist :create)
     (when comment (princ
 		   (make-source-header-comment
-		    (sk-name self)
+		    (name self)
 		    :cchar #\#
 		    :timestamp t
 		    :description (sk-description self)

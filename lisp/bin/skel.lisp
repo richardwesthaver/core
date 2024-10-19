@@ -15,6 +15,7 @@
 
 (defopt skc-help (print-help *cli*))
 (defopt skc-version (print-version *cli* t))
+(defopt skc-ast (setq *keep-ast* (or *arg*)))
 (defopt skc-level *log-level*
         (setq *log-level* (if *arg* (if (stringp *arg*)
                                         (sb-int:keywordicate (string-upcase *arg*))
@@ -24,7 +25,7 @@
 (defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*)))
 
 (defcmd skc-edit
-  (let ((file (or (when *args* (pop *args*)) (sk-path *skel-project*))))
+  (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
 
 (defcmd skc-init
@@ -182,8 +183,6 @@
 (defcmd skc-make
   (let ((sk (find-skelfile #P"." :load t)))
     (sb-ext:enable-debugger)
-    (log:debug! "cli args" *args*)
-    ;; (setq *no-exit* t)
     (if *args*
         (loop for a in *args*
               do (debug!
@@ -248,6 +247,7 @@
 	   :thunk skc-help)
 	  (:name "version" :description "print version" 
 	   :thunk skc-version)
+          (:name "ast" :description "save the intermediate skel AST in SXP form." :thunk skc-ast)
 	 (:name "level" :description "set log level (warn,info,debug,trace)"
 	  :thunk skc-level)
 	 (:name "config" :description "set a custom skel user config" :kind file)

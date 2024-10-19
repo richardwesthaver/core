@@ -50,16 +50,17 @@
 (defvar *message-log-lock* (make-mutex :name "message-log"))
 (defvar *default-connection-timeout* 20)
 (defvar *default-connection-max* 16)
-(defvar *default-service-port* 8000)
+(defvar *default-service-port* 8080)
 (defvar *default-max-thread-count* 100)
 (defvar *default-max-accept-count* (+ *default-max-thread-count* 20))
-#+ssl (defvar *default-ssl-service-port* 8000)
+#+ssl (defvar *default-ssl-service-port* 8443)
 (defvar *default-session-timeout* #.(* 30 60)) ;; 30m
 (defvar *default-content-type* "text/html")
 ;;; Conditions
 ;; from hunchentoot
 (define-condition service-condition (condition) ())
-(deferror service-error (service-condition error) () (:auto t))
+(eval-always
+  (deferror service-error (service-condition error) () (:auto t)))
 (deferror service-simple-error (service-error simple-condition) () (:auto t))
 
 (define-condition service-warning (service-condition warning) ())
@@ -108,12 +109,14 @@ logging, etc."))
   (:method ((self t)) 
     (declare (ignore self))
     nil))
+
 (defun ssl-p (&optional (service *service*))
   (and (secure-service-p service)
        (eql :https (socket-protocol (socket service)))))
 
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
+
 ;;; Response
 (defclass response () ())
 (defclass http-service-response (response) ((response :type http-response)))
@@ -324,6 +327,7 @@ logging, etc."))
 (defvar *session-gc-frequency* 60)
 
 (defgeneric session-created (service new-session))
+
 (let ((session-usage-counter 0))
   (defmethod session-created ((service t) (session t))
     (when (and *session-gc-frequency*
@@ -367,6 +371,9 @@ logging, etc."))
   (values))
           
 ;;; Headers
+
+;;; Logger
+(defclass service-logger (logger) ())
 
 ;;; Router
 ;; similar to HUNCHENTOOT:EASY-HANDLER

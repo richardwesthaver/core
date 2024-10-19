@@ -16,16 +16,15 @@ used when the slot value of :BENCH is t.")
   (declare (ignorable fx))
   (with-test-env self
     (flet ((%do ()
-	     (if-let ((opt *compile-tests*))
-	       (progn 
-		 (when (eq opt t) (setq opt *test-opts*))
-		 ;; TODO 2023-09-21: handle failures here
-		 (let ((fn (compile-test self :declare opt)))
+	     (if *compile-tests*
+	         (with-compilation-unit (:override t :policy (or (and *test-suite* (test-policy *test-suite*)) *test-policy*))
+		   ;; TODO 2023-09-21: handle failures here
+		   (let ((fn (compile-test self :declare (test-declare self))))
 		   (bench *bench-count* (funcall fn)))
 		 (setf %test-result (make-test-result :pass (test-fn self))))
 	       (progn
 		 (bench *bench-count* (eval-test self))
-		 (setf %test-result (make-test-result :pass (test-name self)))))))
+		 (setf %test-result (make-test-result :pass (name self)))))))
       (if *catch-test-errors*
 	  (handler-bind
 	      ((style-warning #'muffle-warning)

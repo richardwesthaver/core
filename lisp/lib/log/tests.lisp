@@ -3,12 +3,32 @@
 
 (in-package :log/tests)
 
-(defsuite :log)
+(eval-always
+  (defclass logger-fixture (logger fixture) ()))
+
+(defsuite :log 
+  :level :trace
+  :fixtures (list (make-instance 'logger-fixture :name "log-test-logger")))
+
 (in-suite :log)
 
-(deftest log ()
+(deftest simple-log-message ()
+  "Test a simple LOG-MESSAGE"
+  (istype 'string (format-message nil (make-instance 'simple-log-message :content "hi" :tags '(:test))))
+  (let ((*logger* (make-instance 'logger)))
+    (istype 'string (format-message nil (log-message :error nil "test")))))
+
+(deftest simple-log-PIPE ()
+  "Test a simple LOG-PIPE.")
+
+(deftest simple-log ()
   "Test logging features"
-  (is (debug! "test" *log-level*)))
+  (is (debug! "test" *log-level*))
+  (is (info! "test"))
+  (is (trace! "test"))
+  (is (error! "test"))
+  (is (fatal! "test"))
+  (is (warn! "test")))
 
 (deftest stream ()
   (let ((str (random-bytes 1024))

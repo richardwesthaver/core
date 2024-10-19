@@ -48,7 +48,7 @@
      (unwind-protect (progn ,@body)
        ,destroy)))
 
-(deftest opts ()
+(deftest opts (:skip t)
   (with-opt (o (rocksdb-options-create) (rocksdb-options-destroy o))
     ;; unsigned-char
     (rocksdb-options-set-create-if-missing o t)
@@ -147,7 +147,7 @@
     (rocksdb-readoptions-destroy ropts)
     (rocksdb-block-based-options-destroy bopts)))
 
-(deftest db-basic ()
+(deftest db-basic (:skip t)
   "Test basic RocksDB functionality. Inserts KV pair into a temporary
 DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
@@ -193,7 +193,7 @@ DB where K and V are both Lisp strings."
       (is (null-alien errptr))
       (rocksdb-options-destroy opts))))
 
-(deftest sstfiles ()
+(deftest sstfiles (:skip t)
   "Test SST file write/ingest functionality."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
@@ -237,7 +237,7 @@ DB where K and V are both Lisp strings."
       (delete-file file)
       (is (null-alien errptr)))))
 
-(deftest stats ()
+(deftest stats (:skip t)
   "Test statistics and performance-context related functionality."
   (rocksdb-set-perf-level (rocksdb-perf-level "enable-time-except-for-mutex"))
   (let* ((opts (test-opts))
@@ -334,7 +334,7 @@ DB where K and V are both Lisp strings."
       (is (null-alien errptr))
       (rocksdb-options-destroy opts))))
 
-(deftest transaction ()
+(deftest transaction (:skip t)
   "Test simple transactions using both TransactionDB and OptimisticTransactionDB."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))

@@ -84,8 +84,10 @@
 (defun reset-tests ()
   (setq *testing* nil
         *test-suite* nil
+        *fx* nil
         *test-suite-list* nil
-        *test-input* nil))
+        *test-input* nil
+        *test-output* nil))
 
 ;; this assumes that *test-suite* is re-initialized correctly to the
 ;; correct test-suite object.
@@ -120,7 +122,7 @@
   (etypecase a
     (string (string-upcase a))
     (symbol (symbol-name a))
-    (test-object (normalize-test-name (test-name a)))
+    (test-object (normalize-test-name (name a)))
     (t (format nil "~A" a))))
 
 (defun test-name= (a b)

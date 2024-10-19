@@ -27,7 +27,7 @@
               (buff (make-array 4096 :element-type 'octet :adjustable t)))
           (when len (setf len (parse-integer len)))
           (with-progress-maybe progress (len "downloading ~a to ~a..." url output)
-            (with-open-file (out output :direction :output :element-type 'octet :if-exists if-exists)
+            (with-open-file (out output :direction :output :element-type 'octet :if-exists if-exists :if-does-not-exist :create)
               (loop
                 (let ((end (read-sequence buff stream :end 4096)))
                   (when progress (update-progress *progress-bar* end))

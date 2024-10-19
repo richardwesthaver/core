@@ -18,12 +18,13 @@
 ;;; Utils
 (defun thread-support-p () (member :thread-support *features*))
 
-(eval-when (:compile-toplevel)
+(eval-always
   (defun print-top-level (msg)
-    (sb-thread:make-thread
-     (lambda ()
-       (format #.*standard-output* msg)))
-    nil))
+    (let ((*standard-output* *standard-output*))
+      (sb-thread:make-thread
+       (lambda ()
+         (format *standard-output* msg)))
+    nil)))
 
 (defun find-thread-by-id (id)
   "Search for thread by ID which must be an u64. On success returns the thread itself or nil."

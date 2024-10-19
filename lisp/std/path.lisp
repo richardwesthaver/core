@@ -8,6 +8,10 @@
 ;;; Code:
 (in-package :std/path)
 
+(defgeneric path (self)
+  (:method ((self string))
+    (pathname self)))
+
 (defun symlinkp (pathname)
   (sb-posix:s-islnk (sb-posix:stat-mode (sb-posix:lstat pathname))))
 

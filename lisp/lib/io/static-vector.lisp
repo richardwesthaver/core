@@ -22,7 +22,7 @@
                   (macroexpand form env)
                   form)))
     (or (quotedp form)
-        (constantp form))))
+        (cl:constantp form))))
 
 (defun eval-constant (form &optional env)
   (declare (ignorable env))

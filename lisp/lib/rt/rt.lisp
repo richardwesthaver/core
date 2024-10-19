@@ -8,46 +8,25 @@
 ;;; Checks
 (eval-always
   (defun %test (val &optional form)
-    (let ((r
-            (if val 
-                (make-test-result :pass form)
-                (make-test-result :fail form))))
-      ;; (print r *standard-output*)
-      r)))
+    (let ((form (macroexpand form)))
+      (if val 
+          (make-test-result :pass form)
+          (make-test-result :fail form)))))
 
-(defmacro is (test &rest args)
-  "The DWIM Check.
+(defmacro is (test)
+  "The DWIM Test Checker.
 
 (is (= 1 1)) ;=> #S(TEST-RESULT :TAG :PASS :FORM (= 1 1))
+
 If TEST returns a truthy value, return a PASS test-result, else return
-a FAIL. The TEST is parameterized by ARGS which is a plist or nil.
+a FAIL."
+  `(if *testing*
+       (push-result (trace! (funcall #'rt::%test ,test ',test)) *testing*)
+       (trace! (funcall #'rt::%test ,test ',test))))
 
-If ARGS is nil, TEST is bound to to the RESULT slot of the test-result
-and evaluated 'as-is'.
-
-(nyi!)
-ARGS may contain the following keywords followed by a corresponding
-value:
-
-:EXPECTED
-
-:TIMEOUT
-
-:THEN
-
-All other values are treated as let bindings.
-"
-    (with-gensyms (form)
-      `(if ,(null args)
-           (if *testing*
-               (push-result (trace! (funcall #'rt::%test ,test ',test)) *testing*)
-               (trace! (funcall #'rt::%test ,test ',test)))
-           (macrolet ((,form (test) `(let ,,(group args 2) ,test)))
-             ;; TODO 2023-09-21: does this work...
-             (if *testing*
-                 (push-result (trace! (funcall #'rt::%test (,form ,test) ',test) *testing*))
-                 (trace! (funcall #'rt::%test (,form ,test) ',test)))))))
-
+(declaim (inline ptypep))
+(defun ptypep (type obj) (typep obj type))
+  
 ;; convenience functions wrapping IS
 (macrolet ((defis (name op args)
              `(defmacro ,name ,args
@@ -73,7 +52,7 @@ All other values are treated as let bindings.
   (defisn is< <)
   (defisn is>= >=)
   (defisn is<= <=)
-  (defis istypep typep (type obj)))
+  (defis istype ptypep (type obj)))
 
 (defmacro signals (condition-spec &body body)
   "Generates a passing TEST-RESULT if body signals a condition of type
@@ -141,7 +120,7 @@ enabled using the IN-SUITE macro, similiar to the DEFPACKAGE API."
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (let ((obj (make-suite
                  :name (format nil "~A" ',suite-name)
-                 ,@(when-let ((v (getf props :stream))) `(:stream ,v)))))
+                 ,@props)))
        (setq *test-suite-list* (spush obj *test-suite-list* :test #'test-name=))
        obj)))
 

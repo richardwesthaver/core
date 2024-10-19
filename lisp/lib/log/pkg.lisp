@@ -26,8 +26,8 @@
 ;;; Code:
 (defpackage :log
   (:use :cl :std)
-  (:export :*log-level* :*log-router* :*logger*
-   :*default-log-router* :log-router :make-log-router :log-router-p
+  (:export :*log-level* :*logger* :log-router
+   :make-log-router :log-router-p
    :get-real-time-since :init-log-timestamp
    :*log-timestamp* :log-level-designator :log-timestamp-source :logger
    :logger-p :make-logger :log-error

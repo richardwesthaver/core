@@ -36,20 +36,45 @@
 
 ;;; Test Object
 (defclass test-object ()
-  ((name :initarg :name :initform (required-argument) :type string :accessor test-name)
+  ((name :initarg :name :initform (required-argument) :type string :accessor name)
    #+nil (cached :initarg :cache :allocation :class :accessor test-cached-p :type boolean))
   (:documentation "Super class for all test-related objects."))
 
 (defmethod print-object ((self test-object) stream)
-  (print-unreadable-object (self stream :type t :identity t)
+  (print-unreadable-object (self stream :type t)
     (format stream "~A"
-            (test-name self))))
+            (name self))))
+
+;;; Fixtures
+;; Our fixtures are objects which can be inherited to build different fixture
+;; classes. Fixtures inherit from TEST-OBJECT and have a NAME which usually
+;; indicates the key used to initialize this object with MAKE-FIXTURE.
+
+;; You can use fixtures inside a test or use the push-fixture method on a
+;; `test-suite' object to make it accessible within that suite.
+
+(defclass fixture (test-object)
+  ((name :initarg :name :initform (string (gensym "fx"))
+         :accessor name)))
+
+(defclass tmp-fixture (fixture)
+  ((directory :initform #P"/tmp/" :type directory :initarg :directory)
+   (file :initform nil :type (or null pathname string) :initarg :file)))
+
+(defmethod make-fixture (kind &rest args)
+  (apply 'make-instance 'tmp-fixture args))
+
+(defmacro with-fixture ((var kind &rest args) &body body)
+  `(let ((,var (make-fixture ,kind ,@args)))
+     (setf *fx* ,var)
+     ,@body))
 
 ;;;; Tests
 (defclass test (test-object)
   ((fn :type symbol :accessor test-fn)
    (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
    (profile :type list :accessor test-profile :initform nil :initarg :profile)
+   (cover :type boolean :accessor test-cover :initform nil :initarg :cover)
    (declare :type list :accessor test-declare :initform nil :initarg :declare)
    (form :initarg :form :initform nil :accessor test-form)
    (documentaton :initarg :documentation :type string :accessor test-documentation)
@@ -71,11 +96,13 @@
   (setf (test-results self) (make-array 0 :element-type 'test-result))
   (call-next-method))
 
+(defmethod initialize-instance :after ((self test) &key cover)
+  (when cover (push '(optimize sb-cover:store-coverage-data) (test-declare self))))
+
 (defmethod print-object ((self test) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~A :fn ~A"
-            (test-name self)
-            (test-fn self))))
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A"
+            (name self))))
 
 (defmethod push-result ((self test-result) (place test))
   (with-slots (results) place
@@ -96,12 +123,11 @@
   (funcall (test-fn self)))
 
 (defmethod compile-test ((self test) &key declare &allow-other-keys)
-  (with-compilation-unit (:policy '(optimize debug))
-    (compile
-     (test-fn self)
-     `(lambda ()
-        ,(when declare `(declare ,declare))
-        ,@(test-form self)))))
+  (compile
+   (test-fn self)
+   `(lambda ()
+      ,@(when declare `((declare ,declare)))
+      ,@(test-form self))))
 
 (defun fail! (form &optional fmt &rest args)
   (let ((reason (and fmt (apply #'format nil fmt args))))
@@ -112,6 +138,8 @@
   `(catch '%in-test
      (setf (test-lock-p ,self) t)
      (let* ((*testing* ,self)
+            (*log-level* (level *test-suite*))
+            (*fixtures* (test-fixtures *test-suite*))
             (%test-bail nil)
             %test-result)
        (block %test-bail
@@ -124,18 +152,14 @@
   (with-test-env self
     (trace! "running test: " *testing*)
     (flet ((%do ()
-             (if-let ((opt *compile-tests*))
-               ;; RESEARCH 2023-08-31: with-compilation-unit?
-               (progn
-                 (if (eq opt t)
-                     (setq opt *test-opts*)
-                     (setq opt (push *test-opts* opt)))
-                 ;; TODO 2023-09-21: handle failures here
-                 (funcall (compile-test self :declare opt))
-                 (setf %test-result (make-test-result :pass (test-fn self))))
-               (progn
-                 (funcall-test self :declare '(optimize (debug 3) (safety 0)))
-                 (setf %test-result (make-test-result :pass (test-name self)))))))
+             (if *compile-tests*
+                 (with-compilation-unit (:override t :policy (or (and *test-suite* (test-policy *test-suite*)) *test-policy*))
+                   ;; TODO 2023-09-21: handle failures here
+                   (funcall (compile-test self :declare (test-declare self)))
+                   (setf %test-result (make-test-result :pass (test-fn self))))
+                 (progn
+                   (funcall-test self :declare (test-declare self))
+                   (setf %test-result (make-test-result :pass self))))))
       (if *catch-test-errors*
           (handler-bind
               ((error 
@@ -161,13 +185,16 @@
    (results :initarg :results :initform nil :type list :accessor test-results
             :documentation "test-suite results")
    (stream :initarg :stream :initform *standard-output* :type stream :accessor test-stream)
-   (fixtures :initarg :fixtures :initform nil :type list :accessor test-fixtures))
+   (fixtures :initarg :fixtures :initform nil :type list :accessor test-fixtures)
+   (level :initarg :level :initform *log-level* :type log-level-designator :accessor level)
+   (policy :initarg :policy :initform *test-policy* :accessor test-policy)
+   (logger :initarg :logger :initform *logger* :accessor test-logger))
   (:documentation "A class for collections of related `test' objects."))
 
 (defmethod print-object ((self test-suite) stream)
   (print-unreadable-object (self stream :type t :identity t)
     (format stream "~A [~d:~d:~d:~d]"
-            (test-name self)
+            (name self)
             (length (tests self))
             (count t (map-tests self #'test-lock-p))
             (count t (map-tests self #'test-persist-p))
@@ -275,26 +302,3 @@
 
 (defmethod do-suite ((self null) &key stream)
   (do-suite *test-suite* :stream stream))
-
-;;; Fixtures
-;; Our fixtures are objects which can be inherited to build different fixture
-;; classes. Fixtures inherit from TEST-OBJECT and have a NAME which usually
-;; indicates the key used to initialize this object with MAKE-INSTANCE.
-
-;; You can use fixtures inside a test or use the push-fixture method on a
-;; `test-suite' object to make it accessible within that suite.
-
-(defclass fixture (test-object) ())
-
-(defclass tmp-fixture (fixture)
-  ((directory :initform #P"/tmp/" :type directory :initarg :directory)
-   (file :initform nil :type (or null pathname string) :initarg :file))
-  (:default-initargs
-   :name :tmp))
-
-(defmethod make-fixture ((kind (eql :tmp)) &rest args)
-  (apply 'make-instance 'tmp-fixture args))
-
-(defmacro with-fixture ((var (kind &rest args)) &body body)
-  `(let ((,var (make-fixture ,kind ,@args)))
-     ,@body))

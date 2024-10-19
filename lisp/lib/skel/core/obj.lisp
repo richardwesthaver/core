@@ -26,8 +26,8 @@
 ;; note that the sk-meta class does not inherit from skel or sxp.
 ;;; Meta
 (defclass sk-meta ()
-  ((name :initarg :name :initform nil :type (or null string) :accessor sk-name)
-   (path :initarg :path :initform nil :type (or null pathname) :accessor sk-path)
+  ((name :initarg :name :initform nil :type (or null string) :accessor name)
+   (path :initarg :path :initform nil :type (or null pathname) :accessor path)
    (author :initform "" :initarg :author :type contact-designator :accessor sk-author)
    (version :initform "" :initarg :version :type string :accessor sk-version)
    (tags :initform nil :initarg :tags :accessor sk-tags)
@@ -37,7 +37,7 @@
 
 (defmethod print-object ((self sk-meta) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A :path ~A" (sk-name self) (sk-path self))
+    (format stream "~A :path ~A" (name self) (path self))
     ;; (unless (sequence:emptyp (sk-version self))
     ;;   (format stream " :version ~A" (sk-version self)))
     (format stream " :id ~A" (format-sxhash (id self)))))
@@ -48,13 +48,13 @@
 (defmacro sk-init-dir (class &rest initargs)
   `(let ((self (sk-init ',class ,@initargs)))
      (unless (getf ',initargs :path)
-       (setf (sk-path self) (sb-posix:getcwd)))
+       (setf (path self) (sb-posix:getcwd)))
      self))
 
 (defmacro sk-init-file (class &rest initargs)
   `(let ((self (sk-init ',class ,@initargs)))
      (unless (getf ',initargs :path)
-       (setf (sk-path self) *default-skelfile*))
+       (setf (path self) *default-skelfile*))
      self))
 
 ;;; Component
@@ -94,7 +94,7 @@
   
 (defmethod sk-new ((self (eql :mod)) &key form path)
   (let ((mod (make-sk-mod form)))
-    (when path (setf (sk-path mod) path))
+    (when path (setf (path mod) path))
     mod))
 
 (defmethod sk-load-component ((kind (eql :mod)) (form t) &optional (path *default-pathname-defaults*))
@@ -110,14 +110,14 @@
 
 (defmethod sk-new ((self (eql :script)) &key form path)
   (let ((script (make-sk-script form)))
-    (setf (sk-path script) path)
+    (setf (path script) path)
     script))
 
 (defmethod sk-load-component ((kind (eql :script)) (form t) &optional (path *default-pathname-defaults*))
   (sk-new kind :form form :path path))
 
 (defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(sk-path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+  (write `(,(path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 (defun make-sk-script (script)
   "Make a new SK-SCRIPT."
@@ -134,7 +134,7 @@
                            (keywordicate ext))))))
 
 (defmethod sk-run ((self sk-script))
-  (sb-ext:run-program (sk-path self) nil :output t))
+  (sb-ext:run-program (path self) nil :output t))
 
 (defmethod sk-write ((self sk-script) stream)
   (with-slots (path) self
@@ -142,7 +142,7 @@
 
 (defmethod print-object ((self sk-script) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream ":~A ~A" (sk-kind self) (sk-name self))))
+    (format stream ":~A ~A" (sk-kind self) (name self))))
 
 ;;; Config
 (defclass sk-config (skel sxp) 
@@ -169,7 +169,7 @@
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
 (defun sk-dir (o)
-  (let ((str (directory-namestring (sk-path o))))
+  (let ((str (directory-namestring (path o))))
     (if (sb-sequence:emptyp str)
         *default-pathname-defaults*
         (pathname str))))
@@ -222,7 +222,7 @@
                            :if-does-not-exist :create)
         (when header (princ
                       (make-source-header-comment
-                       (sk-name self)
+                       (name self)
                        :cchar #\;
                        :timestamp t
                        :description (sk-description self)
@@ -256,7 +256,7 @@
 
 (defclass sk-user-config (sk-config sk-meta)
   ((user :initarg :user :type string :accessor sk-user)
-   (name :initarg :name :type string :accessor sk-name)
+   (name :initarg :name :type string :accessor name)
    (email :initarg :email :type string :accessor sk-email))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
 
@@ -361,12 +361,10 @@ via the special form stored in RECIPE."
 
 (defmethod print-object ((self sk-project) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A [c=~A;i=~A;r=~A] :id ~A"
-            (sk-name self)
+    (format stream "~A :components ~A :rules ~A"
+            (name self)
             (length (sk-components self))
-            (length (sk-include self))
-            (length (sk-rules self))
-            (format-sxhash (id self)))))
+            (length (sk-rules self)))))
 
 (defmethod sk-new ((self (eql :project)) &rest args)
   (declare (ignore self))
@@ -530,7 +528,7 @@ via the special form stored in RECIPE."
                      (coerce rules 'list)))
                    '(vector sk-rule))))          
           (unless *keep-ast* (setf (ast self) nil))
-          (setf (id self) (sxhash (cons (sk-name self) (sk-version self))))
+          (setf (id self) (sxhash (cons (name self) (sk-version self))))
           self)
         ;; invalid ast, signal error
         (invalid-skel-ast ast))))
@@ -566,7 +564,7 @@ via the special form stored in RECIPE."
 ;; file -> ast
 (defmethod sk-read-file ((self sk-project) path)
   (wrap self (file-read-forms path))
-  (setf (sk-path self) (ensure-absolute-pathname path *default-pathname-defaults*))
+  (setf (path self) (ensure-absolute-pathname path *default-pathname-defaults*))
   ;; TODO 2024-04-18: make generic
   self)
 
@@ -583,7 +581,7 @@ via the special form stored in RECIPE."
                            :if-does-not-exist :create)
         (when header (princ
                       (make-source-header-comment
-                       (sk-name self)
+                       (name self)
                        :cchar #\;
                        :timestamp t
                        :description (sk-description self)
@@ -604,7 +602,7 @@ via the special form stored in RECIPE."
   (find (string-upcase name) (sk-rules self) :test 'equalp :key #'sk-rule-target))
 
 (defmethod sk-find-script ((name string) (self skel) &key)
-  (find name (sk-scripts self) :test 'equal :key #'sk-name))
+  (find name (sk-scripts self) :test 'equal :key #'name))
 
 (defmethod sk-call ((self sk-project) (arg sk-rule))
   (sk-make self arg))

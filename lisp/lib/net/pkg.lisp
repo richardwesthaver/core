@@ -336,7 +336,8 @@
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets)
   (:import-from :std :defvar-unbound :once-only 
-   :deferror :defwarning :define-task-kernel :with-gensyms)
+   :deferror :defwarning :define-task-kernel :with-gensyms
+   :eval-always :define-task-kernel)
   (:import-from :rt :random-chars)
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)

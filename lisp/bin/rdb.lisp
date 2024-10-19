@@ -20,7 +20,7 @@
   (println (rdb-name *rdb*)))
 
 (defcmd rdb-show
-  (let* ((db-path (cli-opt-val (car (find-opts *cli* "db"))))
+  (let* ((db-path (cli-opt-val (car (find-opts "db" *cli*))))
          (*rdb* (create-db db-path :open nil)))
     (if (and (null db-path) (zerop *argc*))
         (mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
@@ -72,7 +72,7 @@
 (define-cli *rdb-cli*
   :name "rdb"
   :version "0.1.0"
-  :thunk 'rdb-show
+  :thunk rdb-show
   :description "A simple helper for RocksDB."
   :opts ((:name "level" :description "set the log level" :thunk rdb-log-level)
          (:name "help" :description "print help" :thunk rdb-help)
@@ -91,7 +91,7 @@
   (let ((*log-level* :info))
     (with-cli (*rdb-cli* :args (cli:args))
       (if (active-cmds *cli*)
-          (rdb:with-db (*rdb* (create-db (do-opt (car (find-opts *cli* "db")))))
+          (rdb:with-db (*rdb* (create-db (do-opt (car (find-opts "db" *cli*)))))
             (do-cmd *cli*)
               (close-db *rdb*))
           (print-help *cli*)))))

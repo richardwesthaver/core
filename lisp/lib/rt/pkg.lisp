@@ -28,13 +28,13 @@
 |#
 ;;; Code:
 (in-package :std-user)
+
 (defpackage :rt
   (:use 
    :cl :std :sxp :log
    :sb-aprof)
   (:export
    :test-error
-   :*test-opts*
    :*compile-tests*
    :*catch-test-errors*
    :*test-suffix*
@@ -43,6 +43,8 @@
    :*test-suite-list*
    ;;  TODO 2023-09-04: :*test-profiler-list* not yet
    :*testing*
+   :test-declare
+   :test-policy
    :random-elt
    :random-ref
    :random-char
@@ -62,7 +64,7 @@
    :%test-result
    :make-test-result
    :ensure-suite
-   :test-fixture
+   :fixture
    :fixture-prototype
    :make-fixture-prototype
    :make-fixture
@@ -92,7 +94,6 @@
    :test
    :test-fixture
    :test-suite
-   :test-name
    :tests
    :test-form
    :test-results
@@ -107,10 +108,14 @@
    :isequal
    :isand
    :isemptyp
-   :istypep
+   :istype
    :iszerop
    :isevery
-   :issome))
+   :issome
+   :test-fixtures
+   :*fx*
+   :*fixtures*
+   :*test-policy*))
 
 (defpackage :rt/bench
   (:nicknames :bench)
@@ -120,11 +125,12 @@
    :defbench
    :do-bench))
 
-(uiop:define-package :rt/cover
+(defpkg :rt/cover
   (:nicknames :cover)
   (:use :cl :std :log :rt)
+  (:use-reexport :sb-cover)
   (:export
-   :with-coverage :start-coverage :stop-coverage
+   :enable-coverage :disable-coverage
    :*coverage-directory*
    :coverage-report))
 

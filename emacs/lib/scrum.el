@@ -154,7 +154,7 @@ The following keyword parameters can be passed to the info dynamic block:
                       (org-table-align)))
           ('status (when status
                      (message "building project status...")
-                     (insert "#+CALL: hg-status() :dir " project-root "\n")))
+                     (insert "#+CALL: hg-diff-stat() :dir " project-root "\n")))
           ('tasks (when tasks
                     (message "building project tasks...")
                     (insert "#+CALL: project-tasks() :dir " project-root "\n")))

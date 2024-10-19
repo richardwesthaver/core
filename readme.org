@@ -7,20 +7,25 @@
 #+CALL: project-details()
 
 #+RESULTS:
-|-------------+--------------------------------------------------------------|
-| name        | core                                                         |
-| version     | 0.1.0                                                        |
-| description | The Compiler Company Core                                    |
-| skel-id     | 15bc-b763-ec92-1cf5                                          |
-| root        | ~/comp/core/                                                 |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/058ed5448bb3][058ed5448bb3:708+]]          |
-| tags        | core lisp rust emacs c                                       |
-| updated     | Tue Oct 15 18:25:53 2024 -0400                               |
-| langs       | c cheader elisp html javascript json lisp org rust text toml |
-| lines       | 102319 :λ 79397 :# 10566 :_ 12356                            |
-|-------------+--------------------------------------------------------------|
+|-------------+-----------------------------------------------------------------------|
+| name        | core                                                                  |
+| version     | 0.1.0                                                                 |
+| description | The Compiler Company Core                                             |
+| skel-id     | 15bc-b763-ec92-1cf5                                                   |
+| root        | ~/comp/core/                                                          |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/995a0ca9d501][995a0ca9d501:710+]]                   |
+| tags        | core lisp rust emacs c                                                |
+| updated     | Thu Oct 17 22:33:35 2024 -0400                                        |
+| langs       | c cheader elisp html javascript json lisp makefile org rust text toml |
+| lines       | 102826 :λ 79814 :# 10572 :_ 12440                                     |
+|-------------+-----------------------------------------------------------------------|
 
-- [[https://compiler.company/docs/core][Documentation]]
+#+CALL: project-links()
+
+#+RESULTS:
+- [[https://compiler.company/docs/core/index.html][Docs]]
+- [[https://compiler.company/docs/core/stats.html][Stats]]
+- [[https://compiler.company/docs/core/man.html][Manual]]
 - [[https://compiler.company/plan/tasks/core.html][Tasks]]
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].

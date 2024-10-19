@@ -30,5 +30,5 @@
    :libpod-request :libpod-request-json
    :start-podman-service :libpod-client
    :containerfile :*containerfile-predefined-args*
-   :containerfile-args :containerfile-path :containerfile-steps :containerfile-base
+   :containerfile-args :containerfile-steps :containerfile-base
    :with-libpod-client :*default-containerfile*))

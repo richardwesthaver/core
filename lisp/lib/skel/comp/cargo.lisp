@@ -31,6 +31,7 @@
 
 (defmethod sk-compile ((self sk-rust-system) &key &allow-other-keys))
 
-(defmethod sk-write-file ((self sk-rust-system) &key path))
+(defmethod sk-write-file ((self sk-rust-system) &key path)
+  (declare (ignorable path)))
 
 (defmethod sk-read-file ((self sk-rust-system) path))

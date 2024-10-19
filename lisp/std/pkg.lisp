@@ -264,12 +264,14 @@
 
 (defpkg :std/pipe
   (:use :cl :std/array)
-  (:export :sink :source :element :pipeline :filter
+  (:import-from :std/condition :required-argument)
+  (:export :sink :source :element :filter
    :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
    :element-stream :value :index :resolve-element
    :find-element :find-parent-element :insert-element :withdraw-element
    :remove-element :set-element-id :move-element :message
    :event :buffer :bus :format-message
+   :condition-message :message-condition
    :stream-sink :stream-source :file-sink :file #+nil :file-source))
 
 (defpkg :std/curry
@@ -359,6 +361,7 @@
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency)
   (:import-from :std/list :flatten)
+  (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
   (:export
    :std-thread-error
@@ -497,6 +500,7 @@
 (defpkg :std/path
   (:use :cl)
   (:export
+   :path
    :wild-pathname
    :non-wild-pathname
    :absolute-pathname
@@ -544,14 +548,17 @@
 (defpkg :std/string
   (:use :cl)
   (:export
+   :name
    :*omit-nulls*
    :*whitespaces*
+   :*tab-width*
    :string-designator
    :ssplit
    :trim
    :collapse-whitespaces
    :make-template-parser
-   :string-case))
+   :string-case
+   :detabify))
 
 (defpkg :std/seq
   (:use :cl)

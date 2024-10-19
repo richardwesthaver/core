@@ -6,7 +6,7 @@
   :depends-on (:std :rocksdb :obj :log :q)
   :serial t
   :components ((:file "pkg")
-               (:file "err") 
+               (:file "condition") 
                (:file "macs")
                (:file "raw")
                (:file "proto")

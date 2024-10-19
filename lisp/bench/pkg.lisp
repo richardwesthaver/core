@@ -6,16 +6,8 @@
 (in-package :std-user)
 
 (defpkg :core/bench
-  (:use :std-lisp :rt :log :rt/bench)
-  (:export :core-coverage))
+  (:use :std-lisp :rt :log :rt/bench :rt/cover))
 
 (in-package :core/bench)
 
 (defbench simple () "")
-
-(defun core-coverage ()
-  (sb-cover:clear-coverage)
-  (cover:with-coverage
-    (asdf:load-system :core/tests :force t)
-    (rt:do-tests :core))
-  (cover:coverage-report))

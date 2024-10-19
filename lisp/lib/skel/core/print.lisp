@@ -23,24 +23,23 @@
 ;; *readtable*
 
 (defmethod sk-print ((self skel) &key (stream t) (id t) exclude &allow-other-keys)
-  (with-standard-io-syntax
-    (let ((sk-name (keywordicate (string-left-trim "SK-" (class-name (class-of self))))))
-      (if id
+  (let ((name (keywordicate (string-left-trim "SK-" (class-name (class-of self))))))
+    (if id
         (format stream "~S ~A~%" 
-                sk-name 
+                name 
                 (format-sxhash (obj/id:id self)))
-        (format stream "~S~%" sk-name)))
-    (mapcar
-     (lambda (slot)
-       (let ((name (sb-mop:slot-definition-name slot)))
-         (when (slot-boundp self name)
-           (when-let ((val (slot-value self name)))
-             (typecase val
-               (sequence (unless (sequence:emptyp val) (format stream ":~A ~A~%" name val)))
-               (hash-table (unless (zerop (hash-table-count val))
-                             (format stream ":~A~%" name)
-                             (pprint-tabular stream (hash-table-alist val) nil nil 2)
-                             (terpri stream)))
-               (t (format stream ":~A ~A~%" name val)))))))
-     (remove-if (lambda (x) (member x exclude)) (sb-mop:class-direct-slots (class-of self))))
-    self))
+        (format stream "~S~%" name)))
+  (mapcar
+   (lambda (slot)
+     (let ((name (sb-mop:slot-definition-name slot)))
+       (when (slot-boundp self name)
+         (when-let ((val (slot-value self name)))
+           (typecase val
+             (sequence (unless (sequence:emptyp val) (format stream ":~A ~A~%" name val)))
+             (hash-table (unless (zerop (hash-table-count val))
+                           (format stream ":~A~%" name)
+                           (pprint-tabular stream (hash-table-alist val) nil nil 2)
+                           (terpri stream)))
+             (t (format stream ":~A ~A~%" name val)))))))
+   (remove-if (lambda (x) (member x exclude)) (sb-mop:class-direct-slots (class-of self))))
+  self)

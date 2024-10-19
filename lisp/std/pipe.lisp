@@ -18,10 +18,10 @@
 
 (define-condition unknown-element ()
   ((name :initarg :name :reader name)
-   (pipeline :initarg :pipeline :reader pipeline))
-  (:documentation "Error signaled when a pipeline is queried for an unrecognized element.")
+   (pipe :initarg :pipe :reader pipe))
+  (:documentation "Error signaled when a PIPE is queried for an unrecognized element.")
   (:report (lambda (c st)
-             (format st "Element ~A is not known in pipeline ~A" (name c) (pipeline c)))))
+             (format st "Element ~A is not known in pipe ~A" (name c) (pipe c)))))
 
 (defun make-pipe ()
   "Creates a new adjustable pipe (array)."
@@ -83,17 +83,17 @@
   ((value :initarg :value :initform 0 :accessor value)
    (pipe :initarg :pipe :accessor pipe)))
 
-(defclass pipeline () 
+(defclass pipe () 
   ((pipe :initarg :pipe :initform (make-pipe) :accessor pipe)
    (index :initarg :index :initform (make-hash-table :test 'eql) :accessor index)))
 
 (defgeneric resolve-element (pipe path &key if-does-not-exist)
-  (:method ((pipe pipeline) (path list) &key &allow-other-keys)
+  (:method ((pipe pipe) (path list) &key &allow-other-keys)
     (values path t))
-  (:method ((pipe pipeline) (path symbol) &key (if-does-not-exist :error))
+  (:method ((pipe pipe) (path symbol) &key (if-does-not-exist :error))
     (or (gethash path (index pipe))
         (ecase if-does-not-exist
-          (:error (restart-case (error 'unknown-element-name :name path :pipeline pipe)
+          (:error (restart-case (error 'unknown-element-name :name path :pipe pipe)
                     (use-value (value) value)))
           ((nil) (values nil nil))))))
 
@@ -105,7 +105,7 @@
   (:method ((array array) (path list))
     (labels ((%find (array p) (if p (%find (aref array (pop path)) path) array)))
       (values (%find array path) path)))
-  (:method ((elt pipeline) (path symbol))
+  (:method ((elt pipe) (path symbol))
     (if path
         (find-element elt (resolve-element elt path))
         (call-next-method)))
@@ -120,9 +120,9 @@
     (if (<= (length path) 1)
         (values array (car path))
         (find-parent-element (aref array (pop path)) path)))
-  (:method ((elt pipeline) (path list))
+  (:method ((elt pipe) (path list))
     (find-parent-element (pipe elt) path))
-  (:method ((elt pipeline) (path symbol))
+  (:method ((elt pipe) (path symbol))
     (if path
         (find-parent-element elt (resolve-element elt path))
         (call-next-method)))
@@ -147,7 +147,7 @@
     (withdraw-element (pipe pipe) pos)))
 
 (defgeneric remove-element (pipe elt)
-  (:method ((pipe pipeline) elt)
+  (:method ((pipe pipe) elt)
     (prog1
         (multiple-value-bind (parent pos) (find-parent-element pipe elt)
           (withdraw-element parent pos))
@@ -164,11 +164,11 @@
               do (decf (nth (length parent) v))))))
 
 (defgeneric set-element-id (pipe path name)
-  (:method ((pipe pipeline) (path list) (name symbol))
+  (:method ((pipe pipe) (path list) (name symbol))
     (setf (gethash name (index pipe)) path)))
 
 (defgeneric move-element (pipe elt new-elt)
-  (:method ((pipe pipeline) elt new-elt)
+  (:method ((pipe pipe) elt new-elt)
     (prog1
         (let ((e (remove-element pipe elt)))
           (insert-element pipe e new-elt))
@@ -179,7 +179,7 @@
             do (set-element-id pipe (append elt (subseq v (length elt))) k)))))
 
 (defgeneric msg (elt msg)
-  (:method ((elt pipeline) msg)
+  (:method ((elt pipe) msg)
     (msg (pipe elt) msg))
   (:method ((elt vector) msg)
     (let ((msg msg))
@@ -210,6 +210,10 @@
 (defgeneric format-message (stream message)
   (:method ((stream null) message)
     (princ-to-string message))
+  (:method :before ((stream stream) message)
+    (fresh-line stream))
+  (:method ((stream t) message)
+    (format-message *standard-output* message))
   (:method ((stream null) (message function))
     (princ-to-string (funcall message)))
   (:method ((stream null) (message message))
@@ -226,3 +230,8 @@
 (defmethod print-object ((message message) stream)
   (print-unreadable-object (message stream :type t)
     (format-message stream message)))
+
+(defclass condition-message (message)
+  ((condition :initarg :condition
+              :initform (required-argument "CONDITION")
+              :accessor message-condition)))

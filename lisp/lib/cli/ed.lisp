@@ -25,3 +25,5 @@
 (defun org-store-link (url title)
   (run-emacsclient (format nil "org-protocol://store-link?url=~a&title=~a"
                            url title)))
+
+;;; Macros

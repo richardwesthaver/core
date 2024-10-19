@@ -30,7 +30,7 @@
   `(let ((,db-var (open-db-raw ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
-       (with-errptr (err 'rocksdb-error)
+       (with-errptr (err 'rocksdb-alien-error)
          ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
          (rocksdb-options-destroy ,opt)))))
 

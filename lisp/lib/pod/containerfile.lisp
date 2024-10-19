@@ -74,7 +74,7 @@
 
 ;;; Obj
 (defclass containerfile ()
-  ((path :initform (pathname *default-containerfile*) :type pathname :initarg :path :accessor containerfile-path)
+  ((path :initform (pathname *default-containerfile*) :type pathname :initarg :path :accessor path)
    (base :type string :initarg :base :accessor containerfile-base)
    (args :initform nil :type list :initarg :args :accessor containerfile-args)
    (steps :initform (make-array 0 :element-type 'cons :adjustable t) :type (vector cons) :initarg :steps :accessor containerfile-steps)))
@@ -103,7 +103,7 @@
 
 (defmethod dat/proto:serde ((from pathname) (to containerfile))
   (with-open-file (file from)
-    (setf (containerfile-path to) from)
+    (setf (path to) from)
     (dat/proto:serde file to)))
 
 (defmethod dat/proto:serde ((from string) (to containerfile))

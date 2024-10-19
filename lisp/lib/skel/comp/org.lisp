@@ -20,8 +20,8 @@
   (let* ((name (namestring form))
          (p (make-pathname :name name :type "org" :directory (namestring path)))
          (comp (sk-convert (org-parse :document p))))
-    (setf (sk-name comp) name)
-    (setf (sk-path comp) p)
+    (setf (name comp) name)
+    (setf (path comp) p)
     comp))
 
 ;; (describe (sk-load-component :org #p"readme"))

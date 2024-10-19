@@ -1,4 +1,4 @@
-(defpackage :skel/core/err
+(defpackage :skel/core/condition
   (:use :cl :std :dat/sxp)
   (:export
    :skel-condition
@@ -28,7 +28,6 @@
    :sk-find-rule :sk-find-script
    :sk-find :sk-find*
    :sk-convert :sk-load-component
-   :sk-path :sk-path-merge
    :sk-install
    :sk-test
    :sk-deploy
@@ -40,7 +39,7 @@
    :sk-register))
 
 (defpackage :skel/core/header
-  (:use :cl :std :skel/core/err :doc)
+  (:use :cl :std :skel/core/condition :doc)
   (:export
    :make-file-header 
    :make-shebang-file-header 
@@ -63,7 +62,7 @@
 
 (defpackage :skel/core/obj
   (:use :cl :std :obj
-   :skel/core/proto :skel/core/err :skel/core/vars
+   :skel/core/proto :skel/core/condition :skel/core/vars
    :dat/sxp :skel/core/header :vc :log)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-stash :sk-cache :sk-registry :sk-user
@@ -73,7 +72,7 @@
    :sk-vc :sk-bind :sk-env :make-sk-rule
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
    :sk-make :sk-description :sk-kind :sk-rules
-   :sk-version :sk-name
+   :sk-version
    :sk-command :sk-scripts :sk-script :sk-config
    :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config :sk-system-config
@@ -83,7 +82,7 @@
    :sk-phases))
 
 (defpackage :skel/core/util
-  (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/err)
+  (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/condition)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :cli :find-exe)
   (:export
@@ -98,12 +97,10 @@
    :sk-config-slot
    :sk-project-slot
    :find-project-root
-   :parse-sk-path
-   :find-sk-path
    :setf-skel-vars))
 
 (defpackage :skel/core/vm
-  (:use :cl :std :skel/core/err)
+  (:use :cl :std :skel/core/condition :sb-vm)
   (:export :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push
            :skel-vm
            :make-skel-vm
@@ -137,6 +134,6 @@
            :init-skel-function-scope))
 
 (defpackage :skel/core/print
-  (:use :cl :std :skel/core/err :skel/core/obj :skel/core/proto :skel/core/vars)
+  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars)
   (:export
    :*sk-print-dispatch-table*))

@@ -1,45 +1,50 @@
+;;; tests.lisp --- RT Tests
+
+;;; Code:
 (defpackage :rt/tests
-  (:use :cl :std :rt :sb-sprof :rt/flamegraph :rt/tracing :rt/cover :rt/bench :rt/fuzz))
+  (:use :cl :std :rt :rt/flamegraph :rt/tracing :rt/cover :rt/bench :rt/fuzz))
 
 (in-package :rt/tests)
 
-(defsuite :rt)
+(defsuite :rt
+  :policy '(optimize sb-cover:store-coverage-data debug)
+  :fixtures (list
+             (make-fixture :tmp)))
+
 (in-suite :rt)
 
+(defun %foo (input)
+  (loop for x below input
+        collect (loop for y in (%foo x)
+                      collect (cons x y))))
+
 (deftest rt (:profile t :persist t)
-  (with-fixture (fx (:tmp :directory "/tmp/"))
-    (is fx))
+  (with-fixture (fx :tmp :directory "/tmp/")
+    (is fx)
+    (isequal fx *fx*))
   (signals (error t) (test-form (make-instance 'test-result))))
 
-(deftest flamegraph (:profile t)
+(deftest flamegraph (:profile t :cover t)
   (let ((f "/tmp/test.txt")) ;; open with https://speedscope.app or
                              ;; output svg with flamegraph.pl >>
                              ;; test.svg
-    (save-flamegraph (f :sample-interval 0.001 :show-progress t :report :flat)
-      (loop for x from 0 to 1000
-            do (* x x)))
+    (save-flamegraph (f :sample-interval 0.00001 :show-progress t :report :flat)
+      (%foo 20))
     (is (probe-file f))
     (delete-file f)))
 
-(deftest tracing (:profile t :skip t) ;; fails in x 
+(deftest tracing (:profile t)
   (let ((f "/tmp/tracing.json")
-        (*default-arg-converter* +arg-converter-store-only-simple-objects-and-strings+)) ;; open with chrome://tracing
-    (flet ((foo (i)
-             (let ((v0 (make-bit-vector 256))
-                   (v1 (make-bit-vector 256 1)))
-               (loop for x across v0
-                     for y across v1
-                     collect (list y (+ i x))))))
-      (trace "STD")
-      (start-tracing)
-      (dotimes (i 100) (foo i))
-      (save-report f))
+        (tracing::*default-arg-converter* tracing::+arg-converter-store-only-simple-objects-and-strings+)) ;; open with chrome://tracing
+    (trace "STD")
+    (with-tracing ("RT" "RT/TESTS")
+      (%foo 25))
+    (save-report f)
     (is (probe-file f))
     (delete-file f)))
 
 (deftest cover (:profile t)
-  (start-coverage)
-  (stop-coverage)
+  ;; todo
   (coverage-report))
 
 (deftest tmp ()

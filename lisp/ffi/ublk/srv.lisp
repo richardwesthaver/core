@@ -34,6 +34,12 @@
             (private-data (* t))))
 
 (std:eval-always
+  (define-alien-type ublk-io-data
+      (struct ublk-io-data
+              (tag int)
+              (pad unsigned-int)
+              (iod (* ublksrv-io-desc))
+              (private-data (* t))))
   (define-alien-type ublksrv-handle-io-async-function (function int (* ublksrv-queue) (* ublk-io-data)))
   (define-alien-type ublksrv-tgt-io-done-function (function void (* ublksrv-queue) (* ublk-io-data) (* io-uring-cqe)))
   (define-alien-type ublksrv-handle-event-function (function void (* ublksrv-queue)))
@@ -45,29 +51,27 @@
   (define-alien-type ublksrv-idle-function (function void (* ublksrv-queue) boolean))
   (define-alien-type ublksrv-recovery-tgt-function (function int (* ublksrv-dev) int))
   (define-alien-type ublksrv-init-queue-function (function int (* ublksrv-dev) (* (* t))))
-  (define-alien-type ublksrv-deinit-queue-function (function void (* ublksrv-queue))))
-
-;; TODO 2024-09-29: add all of these as callbacks :C
-(define-alien-type ublksrv-tgt-type 
-  (struct ublksrv-tgt-type
-          (handle-io-async (* ublksrv-handle-io-async-function))
-          (tgt-io-done (* ublksrv-tgt-io-done-function))
-          (handle-event (* ublksrv-handle-event-function))
-          (handle-io-background (* ublksrv-handle-io-background-function))
-          (usage-for-add (* ublksrv-usage-for-add-function))
-          (init-tgt (* ublksrv-init-tgt-function))
-          (deinit-tgt (* ublksrv-deinit-tgt-function))
-          (alloc-io-buf (* ublksrv-alloc-io-buf-function))
-          (idle-fn (* ublksrv-idle-function))
-          (type int)
-          (ublk-flags unsigned)
-          (ublksrv-flags unsigned)
-          (pad unsigned)
-          (name c-string)
-          (recovery-tgt (* ublksrv-recovery-tgt-function))
-          (init-queue (* ublksrv-init-queue-function))
-          (deinit-queue (* ublksrv-deinit-queue-function))
-          (reserved (array unsigned-long 5))))
+  (define-alien-type ublksrv-deinit-queue-function (function void (* ublksrv-queue)))
+  (define-alien-type ublksrv-tgt-type 
+      (struct ublksrv-tgt-type
+              (handle-io-async (* ublksrv-handle-io-async-function))
+              (tgt-io-done (* ublksrv-tgt-io-done-function))
+              (handle-event (* ublksrv-handle-event-function))
+              (handle-io-background (* ublksrv-handle-io-background-function))
+              (usage-for-add (* ublksrv-usage-for-add-function))
+              (init-tgt (* ublksrv-init-tgt-function))
+              (deinit-tgt (* ublksrv-deinit-tgt-function))
+              (alloc-io-buf (* ublksrv-alloc-io-buf-function))
+              (idle-fn (* ublksrv-idle-function))
+              (type int)
+              (ublk-flags unsigned)
+              (ublksrv-flags unsigned)
+              (pad unsigned)
+              (name c-string)
+              (recovery-tgt (* ublksrv-recovery-tgt-function))
+              (init-queue (* ublksrv-init-queue-function))
+              (deinit-queue (* ublksrv-deinit-queue-function))
+              (reserved (array unsigned-long 5)))))
 
 (define-alien-type ublksrv-dev-data
   (struct ublksrv-dev-data
@@ -76,20 +80,13 @@
           (nr-hw-queues unsigned-short)
           (queue-depth unsigned-short)
           (tgt-type c-string)
-          (tgt-ops (* ublksrv-tgt-type))
+          (tgt-ops (* (struct ublksrv-tgt-type)))
           (tgt-argc int)
           (tgt-argv (* (c-string)))
           (run-dir c-string)
           (flags unsigned-long)
           (ublksrv-flags unsigned-long)
           (reserved (array unsigned-long 7))))
-
-(define-alien-type ublk-io-data
-  (struct ublk-io-data
-          (tag int)
-          (pad unsigned-int)
-          (iod (* ublksrv-io-desc))
-          (private-data (* t))))
 
 (define-alien-routine build-user-data (unsigned 64)
   (tag unsigned)
@@ -154,7 +151,7 @@
 (define-alien-routine ublksrv-ctrl-prep-recovery void
   (dev (* ublksrv-ctrl-dev))
   (tgt-type c-string)
-  (tgt-ops (* ublksrv-tgt-type))
+  (tgt-ops (* (struct ublksrv-tgt-type)))
   (recovery-jbuf c-string))
 
 (define-alien-routine ublksrv-ctrl-get-recovery-jbuf c-string

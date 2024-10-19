@@ -30,6 +30,7 @@
                              (:file "dns")
                              (:file "ssh")))
                (:file "cookie")
+               (:file "srv")
                (:file "req")
                (:file "fetch"))
   :in-order-to ((test-op (test-op :net/tests))))

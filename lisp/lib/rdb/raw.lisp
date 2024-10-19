@@ -234,15 +234,15 @@ to initialize the instance with custom configuration."
   (rocksdb-backup-engine-close be))
 
 (defun create-new-backup-raw (be db)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-backup-engine-create-new-backup be db err)))
 
 (defun restore-from-latest-backup-raw (be db-path backup-path &optional (opt (rocksdb-restore-options-create)))
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-backup-engine-restore-db-from-latest-backup be db-path backup-path opt err)))
 
 (defun restore-from-backup-raw (be db-path backup-path backup-id &optional (opt (rocksdb-restore-options-create)))
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-backup-engine-restore-db-from-backup be db-path backup-path opt backup-id err)))
 
 ;;; Snapshot
@@ -263,27 +263,27 @@ to initialize the instance with custom configuration."
   (rocksdb-sstfilewriter-create-with-comparator env-opts io-opts comparator))
 
 (defun finish-sst-writer-raw (writer)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-finish writer err)))
 
 (defun destroy-sst-writer-raw (writer)
   (rocksdb-sstfilewriter-destroy writer))
 
 (defun open-sst-writer-raw (writer name)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-open writer name err)))
 
 ;; this function is deprecated in the Java API:
 ;; https://javadoc.io/doc/org.rocksdb/rocksdbjni/6.6.4/org/rocksdb/SstFileWriter.html
 
 ;; (defun sst-add-raw (writer key val)
-;;   (with-errptr (err 'rocksdb-error)
+;;   (with-errptr (err 'rdb-alien-error)
 ;;     (rocksdb-sstfilewriter-add writer key (length key) val (length val) err)))
 
 (defun sst-put-raw (writer key val)
   (let ((klen (length key))
         (vlen (length val)))
-    (with-errptr (err 'rocksdb-error)
+    (with-errptr (err 'rdb-alien-error)
       (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                    (v (* unsigned-char) (make-alien unsigned-char vlen)))
         (setfa k key)
@@ -296,23 +296,23 @@ to initialize the instance with custom configuration."
     (sst-put-raw writer key-octets val-octets)))
 
 (defun sst-put-ts-raw (writer key val ts)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-put-with-ts writer key (length key) val (length val) ts (length ts) err)))
 
 (defun sst-delete-raw (writer key)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-delete writer key (length key) err)))
 
 (defun sst-delete-ts-raw (writer key ts)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-delete-with-ts writer key (length key) ts (length ts) err)))
 
 (defun sst-delete-range-raw (writer start-key end-key)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-delete-range writer start-key (length start-key) end-key (length end-key) err)))
 
 (defun sst-file-size-raw (writer)
-  (with-errptr (err 'rocksdb-error)
+  (with-errptr (err 'rdb-alien-error)
     (with-alien ((ret unsigned-long))
       (rocksdb-sstfilewriter-file-size writer (addr ret) err)
       ret)))
