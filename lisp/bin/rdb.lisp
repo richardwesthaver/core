@@ -19,7 +19,7 @@
   (open-db *rdb*)
   (println (rdb-name *rdb*)))
 
-(defcmd rdb-show
+(defcmd rdb-show ()
   (let* ((db-path (cli-opt-val (car (find-opts "db" *cli*))))
          (*rdb* (create-db db-path :open nil)))
     (if (and (null db-path) (zerop *argc*))
@@ -37,14 +37,14 @@
                        (iter-next it))
                   finally (rocksdb::rocksdb-iter-destroy %it)))))))
 
-(defcmd rdb-set
+(defcmd rdb-set ()
   (if (> 2 *argc*)
       (rdb-error "missing args: KEY VAL")
       (with-db (db *rdb*)
         (open-db db)
         (insert-key  db (pop *args*) (pop *args*)))))
 
-(defcmd rdb-get
+(defcmd rdb-get ()
   (if (> 1 *argc*)
       (rdb-error "missing arg: KEY")
       (with-db (db *rdb*)
@@ -52,10 +52,10 @@
         (when-let ((val (get-key db (car *args*))))
           (println val)))))
 
-(defcmd rdb-destroy
+(defcmd rdb-destroy ()
   (destroy-db *rdb*))
 
-(defcmd rdb-fuzz
+(defcmd rdb-fuzz ()
   (with-db (db *rdb*)
     (open-db db)
     (let ((val (make-array 32 :element-type 'octet)))

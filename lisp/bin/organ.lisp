@@ -11,24 +11,24 @@
 (defopt organ-version (print-version *cli*))
 (defopt organ-log-level (setq *log-level* (if *arg* t :info)))
 ;; (defopt organ-output (when *arg* (trace! (or *arg* "output.organ"))))
-(defcmd organ-describe
+(defcmd organ-describe ()
   (if *args*
       ;; TODO typed args
       (describe (org-parse :document (pathname (car *args*))))
       (describe (org-parse :document #P"readme.org"))))
 
-(defcmd organ-inspect
+(defcmd organ-inspect ()
   (if *args*
       ;; TODO typed args
       (inspect (org-parse :document (pathname (car *args*))))
       (inspect (org-parse :document #P"readme.org"))))
 
-(defcmd organ-show
+(defcmd organ-show ()
   (if *args*
       (print (org-parse-lines t (uiop:read-file-string (car *args*))))
       (error! "missing file arg")))
 
-(defcmd organ-parse
+(defcmd organ-parse ()
   (let ((input (if *args* (car *args*) #P"readme.org")))
     (describe (org-parse :document input))))
 

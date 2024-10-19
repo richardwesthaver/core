@@ -23,7 +23,7 @@
 ;; *readtable*
 
 (defmethod sk-print ((self skel) &key (stream t) (id t) exclude &allow-other-keys)
-  (let ((name (keywordicate (string-left-trim "SK-" (class-name (class-of self))))))
+  (let ((name (skel/core/obj::sk-slot-name self)))
     (if id
         (format stream "~S ~A~%" 
                 name 

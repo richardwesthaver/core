@@ -7,12 +7,22 @@
   ()
   (:documentation "Base class for skeleton objects. Inherits from `sxp'."))
 
+(declaim (inline sk-object-name sk-slot-name))
+(search "SK-" "SKEL" :test 'equal)
+(defun sk-class-name (self)
+  (let* ((class-name (string (class-name (class-of self))))
+         (match (search "SK-" class-name :test 'equal :start1 0 :end1 3)))
+    (if match
+        (subseq class-name 3)
+        class-name)))
+(defun sk-slot-name (self) (keywordicate (sk-class-name self)))
+
 (defmethod sk-new ((self t) &rest initargs)
   (apply #'make-instance self initargs))
 
 (defmethod print-object ((self skel) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream ":ID ~A" (format-sxhash (id self)))))
+  (print-unreadable-object (self stream)
+    (format stream "~A :ID ~A" (sk-class-name self) (format-sxhash (id self)))))
 
 (defmethod initialize-instance :around ((self skel) &rest initargs &key &allow-other-keys)
   ;; TODO 2023-09-10: make fast 
@@ -36,8 +46,8 @@
   (:documentation "Skel Meta class."))
 
 (defmethod print-object ((self sk-meta) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A :path ~A" (name self) (path self))
+  (print-unreadable-object (self stream)
+    (format stream "~A ~A :path ~A" (sk-class-name self) (name self) (path self))
     ;; (unless (sequence:emptyp (sk-version self))
     ;;   (format stream " :version ~A" (sk-version self)))
     (format stream " :id ~A" (format-sxhash (id self)))))
@@ -141,7 +151,7 @@
     (write-string path)))
 
 (defmethod print-object ((self sk-script) stream)
-  (print-unreadable-object (self stream :type t)
+  (print-unreadable-object (self stream)
     (format stream ":~A ~A" (sk-kind self) (name self))))
 
 ;;; Config
@@ -295,10 +305,10 @@ via the special form stored in RECIPE."
   (write `(,(sk-rule-target self) ,(sk-rule-source self) ,@(sk-rule-recipe self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 (defmethod print-object ((self sk-rule) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A" (sk-rule-target self))
+  (print-unreadable-object (self stream)
+    (format stream "~A ~A" (sk-class-name self) (sk-rule-target self))
     (when-let ((source (sk-rule-source self)))
-      (format stream " :source ~A" source))))
+      (format stream " ~A" source))))
 
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
@@ -360,8 +370,9 @@ via the special form stored in RECIPE."
             :type (vector pathname))))
 
 (defmethod print-object ((self sk-project) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A :components ~A :rules ~A"
+  (print-unreadable-object (self stream)
+    (format stream "~A ~A :components ~A :rules ~A"
+            (sk-class-name self)
             (name self)
             (length (sk-components self))
             (length (sk-rules self)))))

@@ -55,17 +55,13 @@ a CLI is called without arguments, and all subcommands."))
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
-    (format stream "~(~A~) ~A~A~A"
+    (format stream "~(~A~)~@[~24t~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]"
             (cli-name self)
-            (if-let ((d (and (slot-boundp self 'description) (cli-description self))))
-              (format nil ": ~A" d)
-              "")
-            (if (null opts)
-                ""
-                (format nil "~{~%    ~A~^~}" (loop for o across opts collect (print-usage o nil))))
-            (if (null cmds)
-                ""
-                (format nil "~{!~A~}" (loop for c across cmds collect (print-usage c nil)))))))
+            (and (slot-boundp self 'description) (cli-description self))
+            (unless (null opts)
+              (loop for o across opts collect (print-usage o nil)))
+            (unless (null cmds)
+              (loop for c across cmds collect (print-usage c nil))))))
 
 (defmethod push-cmd ((self cli-cmd) (place cli-cmd))
   (vector-push self (cmds place)))

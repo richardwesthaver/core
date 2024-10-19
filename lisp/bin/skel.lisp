@@ -24,11 +24,11 @@
 
 (defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*)))
 
-(defcmd skc-edit
+(defcmd skc-edit ()
   (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
 
-(defcmd skc-init
+(defcmd skc-init ()
   (let ((file (when *args* (pop *args*)))
 	(name (when (> *argc* 1) (pop *args*))))
     ;; TODO: test, may need to be
@@ -44,14 +44,14 @@
 		     (use-value f2 s))))))
       (init-skelfile file name))))
 
-(defcmd skc-describe
+(defcmd skc-describe ()
   (describe
    (if (> *argc* 0)
        (find-skelfile (pathname (car *args*)) :load t)
        (or *skel-project* *skel-user-config* *skel-system-config*))))
 
 
-(defcmd skc-inspect
+(defcmd skc-inspect ()
   (sb-ext:enable-debugger)
   (setq *no-exit* t)
   (inspect
@@ -61,7 +61,7 @@
     :load t)))
 
 #+gui
-(defcmd skc-view
+(defcmd skc-view ()
   (if *args* 
       (let ((stuff (loop for a in *args*
                          collect (sk-slot-case a))))
@@ -71,7 +71,7 @@
                        (if (boundp '*skel-system-config*) *skel-system-config*
                            (skel-simple-error "skel config files not installed")))))))
 
-(defcmd skc-id
+(defcmd skc-id ()
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
 (defun call-with-args (action args)
@@ -82,29 +82,29 @@
                 (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
               args))))
 
-(defcmd skc-compile
+(defcmd skc-compile ()
   (call-with-args :compile *args*))
-(defcmd skc-build
+(defcmd skc-build ()
   (call-with-args :build *args*))
-(defcmd skc-dist
+(defcmd skc-dist ()
   (call-with-args :dist *args*))
-(defcmd skc-install
+(defcmd skc-install ()
   (call-with-args :install *args*))
-(defcmd skc-pack
+(defcmd skc-pack ()
   (call-with-args :pack *args*))
-(defcmd skc-unpack
+(defcmd skc-unpack ()
   (call-with-args :unpack *args*))
-(defcmd skc-bundle
+(defcmd skc-bundle ()
   (call-with-args :bundle *args*))
-(defcmd skc-unbundle
+(defcmd skc-unbundle ()
   (call-with-args :unbundle *args*))
-(defcmd skc-clean
+(defcmd skc-clean ()
   (call-with-args :clean *args*))
-(defcmd skc-test
+(defcmd skc-test ()
   (call-with-args :test *args*))
-(defcmd skc-bench
+(defcmd skc-bench ()
   (call-with-args :bench *args*))
-(defcmd skc-save
+(defcmd skc-save ()
   (call-with-args :save *args*))
 
 (defun sk-slot-case (sel)
@@ -130,7 +130,7 @@
     ("sys" *skel-system-config*)
     ("cache" (sk-cache *skel-user-config*))))
 
-(defcmd skc-show
+(defcmd skc-show ()
   (if *args*
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
       (sk-print (if (boundp '*skel-project*) *skel-project*
@@ -138,13 +138,13 @@
                         (if (boundp '*skel-system-config*) *skel-system-config*
                             (skel-simple-error "skel config files not installed")))))))
 
-(defcmd skc-push
+(defcmd skc-push ()
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "push" *args* t))
     (:hg (run-hg-command "push" *args* t))
     (t (skel-simple-error "unknown VC type"))))
 
-(defcmd skc-pull
+(defcmd skc-pull ()
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "pull" *args* t))
     (:hg (run-hg-command "pull" (append '("-u") *args*) t))
@@ -162,25 +162,25 @@
           while x
           do (println x))))
 
-(defcmd skc-status
+(defcmd skc-status ()
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (git-status))
     (:hg (hg-status))
     (t (hg-status))))
 
-(defcmd skc-clone
+(defcmd skc-clone ()
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "clone" *args* t))
     (:hg (run-hg-command "clone" *args* t))
     (t (skel-simple-error "unknown VC type"))))
 
-(defcmd skc-commit
+(defcmd skc-commit ()
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "commit" (list "-m" (clap:getopt :message)) t))
     (:hg (run-hg-command "commit" (list "-m" (clap:getopt :message)) t))
     (t (skel-simple-error "unknown VC type"))))
 
-(defcmd skc-make
+(defcmd skc-make ()
   (let ((sk (find-skelfile #P"." :load t)))
     (sb-ext:enable-debugger)
     (if *args*
@@ -192,7 +192,7 @@
                     (skel-simple-error "rule not found: ~A" a))))
         (debug! (sk-make sk (aref (sk-rules sk) 0))))))
 
-(defcmd skc-run
+(defcmd skc-run ()
   (if *args*
       (mapc (lambda (script)
               ;; first check if a script with the same name exists, else check for a rule definition
@@ -204,7 +204,7 @@
             *args*)
       (required-argument 'name)))
 
-(defcmd skc-vc
+(defcmd skc-vc ()
   (let* ((sk (find-skelfile #P"." :load t))
          (vc (vc-type (sk-vc sk))))
     (sb-ext:enable-debugger)
@@ -220,7 +220,7 @@
           while x
           do (println x)))))
 
-(defcmd skc-shell
+(defcmd skc-shell ()
   (sb-ext:enable-debugger)
   (trace! "starting skel shell")
   (setq *no-exit* t)
@@ -233,7 +233,7 @@
       (println "Welcome to SKEL")
       (sb-impl::toplevel-repl nil))))
 
-(defcmd skc-new
+(defcmd skc-new ()
   (println *args*)
   (println *opts*))
 

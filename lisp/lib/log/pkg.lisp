@@ -4,7 +4,10 @@
 
 ;;; Commentary:
 
-;; The simple (global) interface works as follows:
+
+;;; Simple Logging
+
+;; The simple logging interface works as follows:
 
 ;; Use *LOG-LEVEL* to set the current level of logging. Value is
 ;; either a boolean or one of the following keywords: :warn :info
@@ -20,8 +23,28 @@
 ;; - LOG_LEVEL : corresponds to a value for *LOG-LEVEL*. value may be
 ;; - empty or one of the following string values: WARN INFO DEBUG TRACE
 
-;; The app logging interface is based on Shinmera's VERBOSE which implements
-;; basically all of the functionality we would expect in a logging framework.
+;;; Advanced Logging
+
+;; The advanced logging interface is based on Shinmera's VERBOSE which
+;; implements basically all of the functionality we would expect in a logging
+;; framework.
+
+;; VERBOSE is built on top of another library from Shinmera's collection
+;; called PIPING which provides a message-passing CLOS API. We have taken the
+;; liberty to port over most of this functionality into a STD/PIPE package and
+;; use it to build a logging framework using the same methodology.
+
+;; In our case, the LOGGER class inherits from the STD/PIPE:PIPE class which
+;; encapsulates one slot consisting of an array (the pipeline or PIPE) and
+;; another slot providing an INDEX of cached lookup values into the array.
+
+;; The LOGGER object is multi-threaded by default and handles marshalling of
+;; MESSAGE objects through the ELEMENTs of the PIPE. A MESSAGE is handled by
+;; each ELEMENT in the PIPE via the MSG method.
+
+;; There are various ELEMENT implementations provided including level and tag
+;; filters, condition handlers, as well as SINK elements which are responsible
+;; for printing the final output of a MESSAGE to a stream or file.
 
 ;;; Code:
 (defpackage :log

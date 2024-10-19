@@ -95,13 +95,11 @@
             (cli-opt-val self))))
 
 (defmethod print-usage ((self cli-opt) &optional stream)
-  (format stream "-~(~{~A~^/--~}~) ~A"
+  (format stream "-~(~{~A~^/--~}~)~24t~@[~A~]"
           (let ((n (cli-opt-name self)))
             (declare (simple-string n))
             (list (make-shorty n) n))
-          (if-let ((d (and (slot-boundp self 'description) (cli-opt-description self))))
-            (format stream ":  ~A" d)
-            "")))
+          (and (slot-boundp self 'description) (cli-opt-description self))))
 
 (defmethod cli-equal ((a cli-opt) (b cli-opt))
   (with-slots (name kind) a

@@ -81,7 +81,7 @@
 (defopt homer-log-level (when *arg* (setq *log-level* :debug)))
 (defopt homer-force (when *arg* (setq *homer-force* t)))
 
-(defcmd homer-show
+(defcmd homer-show ()
   (describe *home-config*))
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))
@@ -111,7 +111,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
       (:push (println (format nil ":PUSH ~A" (cddr form))))
       (t nil))))
 
-(defcmd homer-check
+(defcmd homer-check ()
   (with-slots (src) *home-config*
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
@@ -157,7 +157,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
                  (trace! "skipping file:" (cddr form))))
       (t nil))))
 
-(defcmd homer-push
+(defcmd homer-push ()
   (with-slots (src) *home-config*
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
@@ -165,7 +165,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(defcmd homer-pull
+(defcmd homer-pull ()
   (with-slots (src) *home-config*
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
@@ -173,7 +173,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(defcmd homer-install
+(defcmd homer-install ()
   (with-slots (src) *home-config*
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))

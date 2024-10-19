@@ -6,7 +6,7 @@
 (in-package :cli/tests)
 (in-suite :cli)
 
-(defcmd flub-thunk
+(defcmd flub-thunk ()
   ;; FIX 2024-10-01: 
   (println *optc*)
   (println *argc*)

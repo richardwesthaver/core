@@ -13,7 +13,7 @@
                                   *arg*)
                         :info)))
 (defopt pk-target (setq *pk-target* *arg*))
-(defcmd pk-show 
+(defcmd pk-show  ()
   (println (clap:active-opts *packy-cli*))
   (println (list :optc *optc* :argc *argc*
                  :opts *opts* :args *args* )))

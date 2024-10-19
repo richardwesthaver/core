@@ -373,7 +373,12 @@ logging, etc."))
 ;;; Headers
 
 ;;; Logger
-(defclass service-logger (logger) ())
+(defclass service-logger (logger) 
+  ((access-log-output :accessor access-log-output :initarg :access-log-output)
+   (message-log-output :accessor message-log-output :initarg :message-log-output))
+  (:default-initargs
+   :access-log-output *error-output*
+   :message-log-output *error-output*))
 
 ;;; Router
 ;; similar to HUNCHENTOOT:EASY-HANDLER
@@ -439,8 +444,7 @@ logging, etc."))
    (read-timeout :type fixnum :initarg :read-timeout)
    (write-timeout :type fixnum :initarg :write-timeout)
    (connection-max :type (or fixnum null) :initarg :connection-max)
-   (access-log-destination :accessor access-log-destination :initarg :access-log-destination)
-   (message-log-destination :accessor message-log-destination :initarg :message-log-destination)
+   (logger :type service-logger :initarg :logger :reader logger)
    ;; RESEARCH 2024-07-18: 
    ;; may need to start dealing with this
    ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
@@ -464,8 +468,7 @@ logging, etc."))
    :read-timeout *default-connection-timeout*
    :write-timeout *default-connection-timeout*
    :connection-max *default-connection-max*
-   :access-log-destination *error-output*
-   :message-log-destination *error-output*
+   :logger (make-instance 'service-logger)
    :request-count 0
    :shutdown-p t
    :shutdown-lock (sb-thread:make-mutex :name "shutdown-lock")
@@ -473,13 +476,19 @@ logging, etc."))
   (:documentation "The service class is designed primarily for webservers and functionally
 similar to HUNCHENTOOT:ACCEPTOR."))
 
+(defmethod message-log-output ((self service))
+  (message-log-output (logger self)))
+
+(defmethod access-log-output ((self service))
+  (access-log-output (logger self)))
+
 (defmethod print-object ((self service) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A on port ~A"
             (or (service-address self) "*") (service-port self))))
 
 (defmethod service-log-message ((self service) level format-string &rest args)
-  (log:with-log-stream (stream (message-log-destination self) *message-log-lock*)
+  (log:with-log-stream (stream (message-log-output self) *message-log-lock*)
     (handler-case
         (format stream "[~A~@[ [~A]~]] ~?~%"
         (obj/time:iso-time) level
@@ -490,9 +499,9 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 
 (defmethod service-log-access ((self service) &optional code)
   "Default method for access logging.  It logs the information to the
-destination determined by (ACCESS-LOG-DESTINATION SERVICE) in a format that
+destination determined by (ACCESS-LOG-OUTPUT SERVICE) in a format that
 can be parsed by most log analysis tools."
-  (log:with-log-stream (stream (access-log-destination self) *access-log-lock*)
+  (log:with-log-stream (stream (access-log-output self) *access-log-lock*)
     (format stream "~:[-~@[ (~A)~]~;~:*~A~@[ (~A)~]~] ~:[-~;~:*~A~] [~A] \"~A ~A~@[?~A~] ~
                     ~A\" ~D ~:[-~;~:*~D~] \"~:[-~;~:*~A~]\" \"~:[-~;~:*~A~]\"~%"
             (remote-addr*)
