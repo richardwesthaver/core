@@ -34,6 +34,13 @@
    :run-ld
    :cc-error))
 
+(defpackage :cli/tools/nvcc
+  (:use :cl :std :cli/env)
+  (:export
+   :*nvcc*
+   :run-nvcc
+   :nvcc-error))
+
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/env)
   (:export :*pacman* :run-pacman :pacman-error))

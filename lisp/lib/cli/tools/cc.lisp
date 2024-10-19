@@ -9,10 +9,7 @@
 ;;; Code:
 (in-package :cli/tools/cc)
 
-(deferror cc-error (simple-error error) ())
-
-(defun cc-error (fmt &rest args)
-  (error 'cc-error :format-arguments args :format-control fmt))
+(deferror cc-error (simple-error) () (:auto t))
 
 (defparameter *cc* (find-exe "clang"))
 

@@ -43,7 +43,6 @@ evaluation of BODY."
        ;; reset terminal state
        #+nil (.ris)))
 
-;; TODO fix these macros
 (defmacro defcmd (name opt-list &body body)
   "Bind NAME to a functions which accepts two lists as arguments - ARGS
 containing a list of strings parsed at the CLI and OPTS containg a list of
@@ -89,7 +88,7 @@ binding and the CDR is the actual name of the CLI-OPT."
 (eval-always
   (defmacro make-opt-parser (kind-spec &body body)
     "Return a KIND-opt-parser function based on KIND-SPEC which is either a
-symbol from *cli-opt-kinds* or a list, and optional BODY which
+symbol from *CLI-OPT-KINDS* or a list, and optional BODY which
 is a list of handlers for the opt-val."
     (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
            (super (when (consp kind-spec) (cadr kind-spec)))
