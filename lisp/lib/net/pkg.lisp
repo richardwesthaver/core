@@ -100,6 +100,12 @@
    :timetag->unix-time
    :print-as-double))
 
+(defpackage :net/codec/http
+  (:use :cl :net/core)
+  (:import-from :std :eval-always :define-constant
+   :hash-table-alist)
+  (:export :+known-http-words+))
+
 ;; TODO 2024-08-20: 
 (std:defpkg :net/proto/swank
   (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
@@ -288,7 +294,9 @@
            :merge-cookies
            :cookie-p
            :copy-cookie
-           :cookie-creation-timestamp))
+           :cookie-creation-timestamp
+           :stringify-cookie
+           :cookie-date))
 
 (defpackage :net/req
   (:nicknames :req)
@@ -337,7 +345,7 @@
    :sb-gray :dat/mime :sb-bsd-sockets)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
-   :eval-always :define-task-kernel)
+   :eval-always :define-task-kernel :when-let)
   (:import-from :rt :random-chars)
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)
@@ -366,6 +374,7 @@
    :net/codec/dns 
    :net/codec/osc 
    :net/codec/tlv
+   :net/codec/http
    :net/proto/dns
    :net/proto/swank
    :net/proto/crew 

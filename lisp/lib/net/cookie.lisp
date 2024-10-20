@@ -320,3 +320,23 @@ the respective slots."
         (warn (princ-to-string e))
         (return-from parse-set-cookie-header nil)))
     cookie))
+
+(defun cookie-date (universal-time)
+  "Converts UNIVERSAL-TIME to cookie date format."
+  (and universal-time
+       (time:rfc-1123-date universal-time)))
+
+(defmethod stringify-cookie ((cookie cookie))
+  "Converts the COOKIE object COOKIE to a string suitable for a
+'Set-Cookie' header to be sent to a HTTP client."
+  (format nil
+          "~A=~A~@[; Expires=~A~]~@[; Max-Age=~A~]~@[; Domain=~A~]~@[; Path=~A~]~@[; SameSite=~A~]~:[~;; Secure~]~:[~;; HttpOnly~]"
+          (cookie-name cookie)
+          (cookie-value cookie)
+          (cookie-date (cookie-expires cookie))
+          (cookie-max-age cookie)
+          (cookie-domain cookie)
+          (cookie-path cookie)
+          (cookie-same-site cookie)
+          (cookie-secure-p cookie)
+          (cookie-httponly-p cookie)))

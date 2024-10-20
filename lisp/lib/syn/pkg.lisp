@@ -11,12 +11,13 @@
 
 (in-package :syn)
 
-(defvar *syntax-tree* nil)
+(defvar *syntax-tree*)
+
 (defclass syntax () ())
 
 ;; does not need tree-sitter lang loaded before use
 (defclass tree-sitter-syntax (syntax)
-  (path
+  ((path :accessor path)
    info))
 
 ;; needs tree-sitter lang loaded before use

@@ -54,6 +54,9 @@ compatible element-types."
 (defclass wrapped-stream (fundamental-stream)
   ((stream :initarg :stream :reader stream-of)))
 
+(defmethod open-stream-p ((stream wrapped-stream))
+  (open-stream-p (stream-of stream)))
+
 (defmethod stream-element-type ((stream wrapped-stream))
   (stream-element-type (stream-of stream)))
 

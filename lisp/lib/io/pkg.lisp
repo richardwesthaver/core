@@ -22,7 +22,10 @@
            :output-buffer
            :input-buffer
            :input-position
-           :output-position))
+           :output-position
+           :output-available-p
+           :input-available-p
+           :fill-buffer))
 
 (defpackage :io/static-vector
   (:use :cl :std :sb-alien)
@@ -69,9 +72,27 @@
   (:import-from :std :deferror :eval-always))
 
 (defpackage :io/stream
-  (:use :cl :io/proto)
+  (:use :cl :io/proto :sb-gray)
   (:import-from :std :deferror :eval-always)
   (:export :io-stream-error :io-stream))
+
+(defpackage :io/chunky
+  (:nicknames :chunky)
+  (:use :cl :std/stream :io/proto :io/stream :sb-gray)
+  (:import-from :std :deferror :when-let :define-constant)
+  (:export
+   #:output-chunking-p
+   #:chunked-input-stream
+   #:chunked-stream
+   #:+default-chunked-output-size+
+   #:input-chunking-p
+   #:simple-chunked-input-stream
+   #:chunked-input-stream-extensions
+   #:chunked-input-stream-trailers
+   #:signal-eof
+   #:expecting-crlf-p
+   #:chunked-io-stream
+   #:make-chunked-stream))
 
 (defpackage :io/socket
   (:use :cl :io/proto)

@@ -93,6 +93,7 @@
                #$mv lisp/bin/skel .stash/skel$#)
        (:build-gui ()
                    (with-sbcl (:noinform t :quit t)
+                     (push :gui *features*)
                      (push :tools *features*)
                      (ql:quickload :bin/skel)
                      (asdf:make :bin/skel))

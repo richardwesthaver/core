@@ -22,7 +22,8 @@
                 :components ((:file "punycode")
                              (:file "dns")
                              (:file "tlv")
-                             (:file "osc")))
+                             (:file "osc")
+                             (:file "http")))
                (:module "proto"
                 :components ((:file "crew" :if-feature "swank")
                              (:file "swank" :if-feature "swank")

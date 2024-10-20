@@ -19,7 +19,7 @@
    :load-gui-backend
    :with-gui-handlers
    :gui-main
-   :def-gui))
+   :define-gui))
   
 (uiop:define-package :gui
   (:use-reexport :gui/core :gui/wm :gui/ext))

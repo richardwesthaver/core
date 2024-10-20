@@ -13,6 +13,7 @@
                (grovel-constants-file "constants"
                                       :package :cuda)
                (:file "type")
+               (:file "alien")
                (:file "cuda"))
   :in-order-to ((test-op (test-op "cuda/tests"))))
 

@@ -4,3 +4,5 @@
 
 ;;; Code:
 (in-package :io/stream)
+
+(defclass io-stream () ())

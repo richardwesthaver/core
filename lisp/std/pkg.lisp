@@ -364,6 +364,8 @@
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
   (:export
+   :run
+   :run-thread
    :std-thread-error
    :print-top-level :thread-support-p
    :find-thread-by-id :thread-id-list

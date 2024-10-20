@@ -6,3 +6,18 @@
 (in-suite :syn)
 
 (deftest ts-sanity ())
+
+(defsuite :syn/gen)
+(in-suite :syn/gen)
+(deftest sxp (:skip t))
+(deftest file-headers (:skip t))
+(deftest el ())
+(deftest scm ())
+(deftest c ())
+(deftest rs ())
+(deftest js ())
+(deftest py ())
+(deftest sh ())
+(deftest zig ())
+(deftest cu ())
+(deftest cpp ())

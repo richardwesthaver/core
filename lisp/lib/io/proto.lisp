@@ -22,3 +22,6 @@
 (defgeneric (setf input-position) (new self))`
 (defgeneric output-position (self))
 (defgeneric (setf output-position) (new self))
+(defgeneric input-available-p (self))
+(defgeneric output-available-p (self))
+(defgeneric fill-buffer (self))

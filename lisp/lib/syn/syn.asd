@@ -4,7 +4,20 @@
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on (:std :obj :parse :tree-sitter)
   :serial t
-  :components ((:file "pkg"))
+  :components ((:file "pkg")
+               (:module "gen"
+                :components
+                ((:file "pkg")
+                 (:file "read")
+                 (:file "el")
+                 (:file "scm")
+                 (:file "c")
+                 (:file "cu")
+                 (:file "rs")
+                 (:file "cpp")
+                 (:file "zig")
+                 (:file "py")
+                 (:file "js"))))
   :in-order-to ((test-op (test-op "syn/tests"))))
 
 (defsystem :syn/tests

@@ -272,7 +272,7 @@ specialize it on specific condition classes for debugging purposes.")
 
 (defun get-backtrace ()
   "Returns a string with a backtrace of what the Lisp system thinks is
-the \"current\" error."
+the 'current' error."
   (handler-case
       (with-output-to-string (s)
         (sb-debug:print-backtrace :stream s))

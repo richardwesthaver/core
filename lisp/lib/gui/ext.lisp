@@ -12,14 +12,14 @@ assumed to be a path to a shared library.")
   (case backend
     (:gtk (nyi!))
     (:tk (nyi!))
-    (:mcclim (nyi!))
+    (:mcclim (ql:quickload :mcclim))
     (:slint (nyi!))))
 
 (defmacro with-gui-handlers (&body body)
   `(progn
      ,@body))
 
-(defmacro def-gui (ret &body body)
+(defmacro define-gui (ret &body body)
   "Define a CLI main function in the current package which returns RET.
 
 Note that this macro does not export the defined function and requires

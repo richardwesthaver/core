@@ -163,3 +163,5 @@
 (defgeneric stop (self &key &allow-other-keys))
 (defgeneric stopped-p (self))
 (defgeneric shutdown (self))
+(defgeneric run (self &rest args &key &allow-other-keys))
+(defgeneric run-thread (self thunk &key name &allow-other-keys))

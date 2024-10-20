@@ -5,7 +5,8 @@
 ;;; Code:
 (defpackage :cuda
   (:use :cl :std :log :sb-alien)
-  (:export :load-cuda :load-cudnn))
+  (:export :load-cuda :load-cudnn
+           :device-compute-capability))
 
 (in-package :cuda)
 ;; use the stubs
