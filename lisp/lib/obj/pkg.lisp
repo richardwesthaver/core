@@ -286,13 +286,6 @@
    :make-v5-uuid :uuid= :+namespace-dns+ :+namespace-oid+ :+namespace-x500+
    :uuid-to-octet-vector :octet-vector-to-uuid))
 
-(defpackage :obj/music
-  (:nicknames :music)
-  (:use :cl :std)
-  (:export
-   :*bpm* :*key-signature* :*time-signature*
-   :*chord-table* :*key-table* :*tone-table*))
-
 (defpackage :obj/temperature
   (:nicknames :temperature)
   (:use :cl :std)
@@ -337,6 +330,18 @@
    :database
    :db-closed-p
    :db-open-p))
+
+(defpackage :obj/ast
+  (:nicknames :ast)
+  (:use :cl :std)
+  (:export :ast :build-ast :load-ast :load-ast*
+           :wrap
+           :unwrap
+           :unwrap-or
+           :form
+           :formp
+           :unwrap-object
+           :wrap-object))
 
 (defpackage :obj/query
   (:nicknames :query)
@@ -479,6 +484,6 @@
 (uiop:define-package :obj
   (:use-reexport :list :hash :color
    :seq :tree :graph :id
-   :db :time :uri :url
-   :cfg :music :temperature :direction
+   :db :ast :time :uri :url
+   :cfg :temperature :direction
    :shape :secret :query))

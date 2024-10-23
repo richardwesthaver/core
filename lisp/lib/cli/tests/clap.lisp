@@ -30,7 +30,7 @@
 
 (deftest cli-ast ()
   "Validate the CLI/CLAP/AST parser."
-  (is (string= (cli-opt-name (cli-node-form (car (ast (proc-args *cli* '("--foo" "1"))))))
+  (is (string= (cli-opt-name (cli-node-form (car (ast:ast (proc-args *cli* '("--foo" "1"))))))
                "foo"))
   (signals clap-unknown-argument
     (proc-args *cli* '("--log" "default" "--foo=11"))))

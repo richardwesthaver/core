@@ -79,6 +79,7 @@
    :nunionf
    :reversef
    :nreversef
+   :removef
    :deletef
    :flatten
    :group
@@ -262,18 +263,6 @@
    :list-class-methods :list-class-slots :list-indirect-slot-methods
    :ensure-finalized :subclassp))
 
-(defpkg :std/pipe
-  (:use :cl :std/array)
-  (:import-from :std/condition :required-argument)
-  (:export :sink :source :element :filter
-   :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
-   :element-stream :value :index :resolve-element
-   :find-element :find-parent-element :insert-element :withdraw-element
-   :remove-element :set-element-id :move-element :message
-   :event :buffer :bus :format-message
-   :condition-message :message-condition
-   :stream-sink :stream-source :file-sink :file #+nil :file-source))
-
 (defpkg :std/curry
   (:use :cl)
   (:import-from :std/sym :make-gensym-list)
@@ -375,7 +364,10 @@
    :make-threads :with-threads 
    :thread-count :dump-thread
    :start :started-p :stop :stopped-p
-   :shutdown :thread-pool :workers))
+   :shutdown :thread-pool :workers
+   :condition-wait*
+   :sync-message
+   :with-sync-message))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency)
@@ -530,6 +522,7 @@
   (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
   (:export
    :tmpfile
+   :file
    :file-pathname
    :with-open-files
    :write-stream-into-file
@@ -546,6 +539,22 @@
    :directory-path
    :find-files
    :count-file-lines))
+
+(defpkg :std/pipe
+  (:use :cl :std/array)
+  (:import-from :std/condition :required-argument)
+  (:import-from :std/sym :with-gensyms)
+  (:import-from :std/list :removef)
+  (:export :sink :source :element :filter
+   :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
+   :element-stream :value :index :resolve-element
+   :find-element :find-parent-element :insert-element :withdraw-element
+   :remove-element :set-element-id :move-element :message
+   :event :buffer :bus :format-message
+   :condition-message :message-condition
+   :stream-sink :stream-source :file-sink :file-source
+   :add-element :insert-element*
+   :defpipe :make-pipe :simple-message :message-content))
 
 (defpkg :std/string
   (:use :cl)

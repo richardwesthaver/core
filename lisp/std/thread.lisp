@@ -165,3 +165,26 @@
 (defgeneric shutdown (self))
 (defgeneric run (self &rest args &key &allow-other-keys))
 (defgeneric run-thread (self thunk &key name &allow-other-keys))
+
+;; BORDEAUX-THREADS version
+(defun condition-wait* (cvar lock &key timeout)
+  (let ((success (condition-wait cvar lock :timeout timeout)))
+    (when (not success)
+      (grab-mutex lock))
+    success))
+
+;; From Shinmera's VERBOSE
+(defstruct sync-message
+  (condition (make-waitqueue))
+  (lock (make-mutex)))
+
+(defmethod msg ((vector vector) (msg sync-message))
+  ;; ensure we're waiting on the condition..
+  (with-mutex ((sync-message-lock msg)))
+  (condition-notify (sync-message-condition msg)))
+
+(defmacro with-sync-message (s &body body)
+  `(let ((,s (make-sync-message)))
+     (with-mutex ((sync-message-lock ,s))
+       ,@body
+       (condition-wait* (sync-message-condition ,s) (sync-message-lock ,s)))))

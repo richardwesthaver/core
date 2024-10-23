@@ -250,6 +250,13 @@ function 'NAME-P'."
                   thereis (find tag (tags message) :test #'matching-tree-tag)))
     message))
 
+;;; Log Sync
+(defun log-sync (&optional (logger *logger*))
+  (when (and logger (log-thread logger)
+             (thread-alive-p (log-thread logger)))
+    (with-sync-message sync
+      (msg logger sync))))
+
 ;;; Logger
 ;; same as VERBOSE:CONTROLLER
 (defclass logger (pipe)
@@ -265,7 +272,7 @@ be implemented for a specific application."))
 
 (defmethod print-object ((self logger) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~@[:threaded~*~]~@[ :running~*~] :size ~d"
+    (format stream "~@[:threaded ~* ~]~@[:running ~* ~]:size ~d"
             (log-thread self) (log-thread-continue self) (length (queue self)))))
 
 (defmethod start ((self logger))
@@ -282,9 +289,8 @@ be implemented for a specific application."))
                (*query-io* *query-io*)
                (*debug-io* *debug-io*))
            (lambda () (logger-loop self)))
-         :name "verbose-thread")))
+         :name "log-thread")))
 
-;; FIX 2024-10-18: 
 (defmethod stop ((self logger) &key)
   (setf (log-thread-continue self) nil)
   (loop for th = (log-thread self)
@@ -318,8 +324,8 @@ be implemented for a specific application."))
                                (setf (aref queue i) 0)))
                     (setf (fill-pointer queue) 0))
                   (grab-mutex lock)
-               (loop while (= 0 (length (queue self)))
-                     do (condition-wait condition lock :timeout 1))
+                  (loop while (= 0 (length (queue self)))
+                        do (condition-wait* condition lock :timeout 1))
                while (log-thread-continue self))
       (setf (log-thread self) nil)
       (ignore-errors (release-mutex lock)))))
@@ -333,3 +339,30 @@ be implemented for a specific application."))
            (condition-notify (queue-condition self)))
           (t (msg (pipe self) message))))
   nil)
+
+;;; Commands
+(defun add-pipe (&rest elements)
+  (let ((logger (if (typep (first elements) 'logger)
+                    (pop elements)
+                    *logger*)))
+    (with-logger-lock (logger)
+      (let ((pipe (make-pipe)))
+        (dolist (elt elements)
+          (insert-element* elt pipe))
+        (add-element logger pipe)))))
+
+(defun default-logger (&rest args)
+  (let ((pipe (apply 'make-instance 'logger args)))
+    (defpipe (pipe)
+      (level-filter :id 'repl-level)
+      (tag-tree-filter :id 'repl-tags)
+      (stream-sink :id 'repl-stream))))
+
+(defun remove-logger ()
+  (when *logger*
+    (stop *logger*)
+    (setf *logger* nil)))
+
+(defun restart-logger ()
+  (remove-logger)
+  (setf *logger* (default-logger)))

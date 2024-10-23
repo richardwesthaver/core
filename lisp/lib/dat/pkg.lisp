@@ -9,23 +9,19 @@
 
 (defpackage :dat/sxp
   (:nicknames :sxp)
-  (:use :cl :sb-mop :std)
+  (:use :cl :sb-mop :std :obj/ast)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
   ;; TODO: hot-patch readtables into sxp classes/parsers
   (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:export
    :sxp-fmt-designator
-   :form :formp :sxp-error :sxp-syntax-error :reader :writer :fmt
-   :wrap :unwrap
-   :unwrap-or
-   :sxpp :build-ast :load-ast :load-ast*
-   :ast
-   :*ast*
-   :define-macro :define-fmt :read-sxp-file :write-sxp-file
+   :sxp-error :sxp-syntax-error
+   :sxpp
+   :read-sxp-file :write-sxp-file
    :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream
-   :make-sxp :sxp :formp :form
-   :file-read-forms
-   :wrap-object :unwrap-object))
+   :make-sxp
+   :file-read-forms))
+
 
 (defpackage :dat/dot
   (:use :cl :std :dat/proto :obj/graph)

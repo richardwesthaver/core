@@ -38,7 +38,7 @@
   obj)
 
 (defclass stream-sink (sink)
-  ((output :initarg :output :initform nil :accessor output)))
+  ((output :initarg :output :initform *standard-output* :accessor output)))
 
 (defclass file-sink (stream-sink)
   ((file :accessor file)))
@@ -97,20 +97,26 @@
                     (use-value (value) value)))
           ((nil) (values nil nil))))))
 
-(defgeneric find-element (elt path)
-  (:method ((elt element) path)
-    (if path
+(defgeneric find-element (elt self)
+  (:method (elt (self element))
+    (if elt
         (error "Cannot descend into element")
         elt))
-  (:method ((array array) (path list))
-    (labels ((%find (array p) (if p (%find (aref array (pop path)) path) array)))
-      (values (%find array path) path)))
-  (:method ((elt pipe) (path symbol))
-    (if path
-        (find-element elt (resolve-element elt path))
+  (:method ((elt list) (self array))
+    (labels ((%find (array p) (if p (%find (aref array (pop elt)) elt) array)))
+      (values (%find self elt) elt)))
+  (:method ((elt symbol) (self pipe))
+    (if elt
+        (find-element elt (resolve-element self elt))
         (call-next-method)))
-  (:method ((elt switch-filter) path)
-    (find-element (pipe elt) path)))
+  (:method (elt (self switch-filter))
+    (find-element elt (pipe self)))
+  (:method ((elt integer) (self array))
+    (aref self elt))
+  (:method ((elt integer) (self pipe))
+    (aref (pipe self) elt))
+  (:method ((elt list) (self pipe))
+    (find-element elt (pipe self))))
   
 (defgeneric find-parent-element (elt path)
   (:method ((elt element) path)
@@ -129,14 +135,14 @@
   (:method ((elt switch-filter) path)
     (find-parent-element (pipe elt) path)))
 
-(defgeneric insert-element (elt pipe &optional pos)
+(defgeneric insert-element* (elt pipe &optional pos)
   (:method (elt (pipe array) &optional pos)
     (if pos
         (vector-push-extend-position elt pipe pos)
         (vector-push-extend elt pipe))
     elt)
   (:method (elt (pipe switch-filter) &optional pos)
-    (insert-element elt (pipe pipe) pos)))
+    (insert-element* elt (pipe pipe) pos)))
 
 (defgeneric withdraw-element (pipe &optional pos)
   (:method ((pipe array) &optional pos)
@@ -145,6 +151,21 @@
         (vector-pop pipe)))
   (:method ((pipe switch-filter) &optional pos)
     (withdraw-element (pipe pipe) pos)))
+
+(defgeneric add-element (self elt &optional place)
+  (:documentation "Add a new element to the pipe.
+If place is set, the element is added to the specified place as per INSERT-ELEMENT*. Return the segment.")
+  (:method ((self pipe) (elt element) &optional place)
+    (insert-element* elt (find-element place self)))
+  (:method ((self pipe) (elt array) &optional place)
+    (insert-element* elt (find-element place self)))
+  (:method ((self pipe) (elt (eql :pipe)) &optional place)
+    (insert-element* (make-pipe) (find-element place self)))
+  (:method ((self pipe) elt &optional place)
+    (add-element self elt
+                 (if (and place (symbolp place)
+                          (resolve-element self place))
+                     place))))
 
 (defgeneric remove-element (pipe elt)
   (:method ((pipe pipe) elt)
@@ -163,6 +184,65 @@
                       (< pos (nth (length parent) v)))
               do (decf (nth (length parent) v))))))
 
+(defgeneric insert-element (self elt place)
+  (:documentation "Insert the segment at the given place.
+Note that the segment is always inserted into the parent as specified by the place
+and found by FIND-PARENT and inserted into the position as per INSERT. PLACE can be a
+name, as in FIND-ELEMENT.
+
+Returns the segment.")
+  (:method ((self pipe) (elt element) place)
+    (prog1
+        (multiple-value-bind (parent pos) (find-parent-element self place)
+          (insert-element* elt parent pos))
+      (loop with parent = (subseq place 0 (1- (length place)))
+            with pos = (car (last place))
+            for k being the hash-keys of (index self)
+            for v being the hash-values of (index self)
+            when (and (<= (length parent) (length v))
+                      (every #'= parent v)
+                      (<= pos (nth (length parent) v)))
+            do (incf (nth (length parent) v)))))
+  (:method ((self pipe) (elt array) place)
+    (prog1
+        (multiple-value-bind (parent pos) (find-parent-element self place)
+          (insert-element* elt parent pos))
+      (loop with parent = (subseq place 0 (1- (length place)))
+            with pos = (car (last place))
+            for k being the hash-keys of (index self)
+            for v being the hash-values of (index self)
+            when (and (<= (length parent) (length v))
+                      (every #'= parent v)
+                      (<= pos (nth (length parent) v)))
+            do (incf (nth (length parent) v)))))
+  (:method ((self pipe) (elt (eql :pipe)) place)
+    (insert-element self (make-pipe) place))
+  (:method ((self pipe) elt (place symbol))
+    (if place
+        (insert-element self elt (resolve-element self place))
+        (call-next-method))))
+
+(defgeneric replace-element (self place pipe)
+  (:documentation "Replace a place with a pipe.
+This happens simply through REMOVE-ELEMENT and INSERT-ELEMENT. PLACE can be a
+name, as in FIND-ELEMENT.
+
+Note that this will destroy names due to REMOVE-PLACE.
+
+Returns the segment.")
+  (:method ((self pipe) place (elt element))
+    (remove-element self place)
+    (insert-element* self elt place))
+  (:method ((self pipe) place (elt array))
+    (remove-element self place)
+    (insert-element* self elt place))
+  (:method ((self pipe) place (elt (eql :pipe)))
+    (replace-element self place (make-pipe)))
+  (:method ((self pipe) (place symbol) pipe)
+    (if place
+        (replace-element self (resolve-element self place) pipe)
+        (call-next-method))))
+
 (defgeneric set-element-id (pipe path name)
   (:method ((pipe pipe) (path list) (name symbol))
     (setf (gethash name (index pipe)) path)))
@@ -171,7 +251,7 @@
   (:method ((pipe pipe) elt new-elt)
     (prog1
         (let ((e (remove-element pipe elt)))
-          (insert-element pipe e new-elt))
+          (insert-element* pipe e new-elt))
       (loop for k being the hash-keys of (index pipe)
             for v being the hash-values of (index pipe)
             when (and (<= (length elt) (length v))
@@ -181,6 +261,8 @@
 (defgeneric msg (elt msg)
   (:method ((elt pipe) msg)
     (msg (pipe elt) msg))
+  (:method ((elt pipe) (msg string))
+    (msg (pipe elt) (make-instance 'simple-message :content msg)))
   (:method ((elt vector) msg)
     (let ((msg msg))
       (loop for i across elt
@@ -231,7 +313,37 @@
   (print-unreadable-object (message stream :type t)
     (format-message stream message)))
 
+(defclass simple-message (message)
+  ((content :initarg :content
+            :accessor message-content)))
+
 (defclass condition-message (message)
   ((condition :initarg :condition
               :initform (required-argument "CONDITION")
               :accessor message-condition)))
+
+;;; Macros
+;; This is from Shinmera's VERBOSE
+(defmacro defpipe ((pipeline &optional place) &body elements)
+  "Make a new array of ELEMENTS and apply it to the PIPE slot of object
+PIPE. Optional arg PLACE designates the position to insert the elements at
+when the slot is already filled."
+  (with-gensyms (pipe parent c)
+    (let ((index (loop for i from 0
+                       for e in elements
+                       for id = (getf (rest e) :id)
+                       when id collect (list i id))))
+      `(let ((,parent ,pipeline)
+             (,pipe (make-pipe)))
+         ,@(loop for (ty . args) in elements
+                 collect `(insert-element* (make-instance 
+                                               ',ty
+                                             ,@(remf args :id))
+                                           ,pipe))
+                                           
+         (add-element ,parent ,pipe ,place)
+         ,(when index
+          `(let ((,c (1- (length (pipe ,parent)))))
+             ,@(loop for (i id) in index
+                     collect `(set-element-id ,parent (list ,c ,i) ,id))))
+         ,parent))))

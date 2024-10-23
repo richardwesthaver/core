@@ -299,14 +299,14 @@
     (close underlying-stream :abort abort)))
 
 (defclass keep-alive-chunked-stream (keep-alive-stream)
-  ((chunga-stream :initarg :chunga-stream :accessor chunga-stream)))
+  ((chunky-stream :initarg :chunky-stream :accessor chunky-stream)))
 
 (defun make-keep-alive-stream (stream &key end chunked-stream (on-close-or-eof #'keep-alive-stream-close-underlying-stream))
   "ON-CLOSE-OR-EOF takes a single parameter, STREAM (the stream passed in here, not the
 keep-alive-stream), and should handle clean-up of it"
   (assert (xor end chunked-stream))
   (if chunked-stream
-      (make-instance 'keep-alive-chunked-stream :stream stream :chunga-stream chunked-stream :on-close-or-eof on-close-or-eof)
+      (make-instance 'keep-alive-chunked-stream :stream stream :chunky-stream chunked-stream :on-close-or-eof on-close-or-eof)
       (make-instance 'keep-alive-stream :stream stream :end end :on-close-or-eof on-close-or-eof)))
 
 (defun maybe-close (stream &optional close-if)
@@ -338,8 +338,8 @@ keep-alive-stream), and should handle clean-up of it"
   "Return :EOF or byte read.  When we hit :EOF or finish reading our chunk,
    call the close-action on our underlying-stream and return :EOF"
   (or (maybe-close stream)
-      (if (chunga:chunked-stream-input-chunking-p (chunga-stream stream))
-          (let ((byte (read-byte (chunga-stream stream) nil :eof)))
+      (if (input-chunking-p (chunky-stream stream))
+          (let ((byte (read-byte (chunky-stream stream) nil :eof)))
             (if (eql byte :eof)
                 (prog1
                     byte
@@ -365,15 +365,15 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (optimize speed))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
       start
-      (if (chunga:chunked-stream-input-chunking-p (chunga-stream stream))
+      (if (input-chunking-p (chunky-stream stream))
           (prog1
-              (let ((num-read (read-sequence sequence (chunga-stream stream) :start start :end end)))
+              (let ((num-read (read-sequence sequence (chunky-stream stream) :start start :end end)))
                 num-read)
-            (maybe-close stream (not (chunga:chunked-stream-input-chunking-p (chunga-stream stream)))))
+            (maybe-close stream (not (input-chunking-p (chunky-stream stream)))))
           start)))
 
 (defmethod stream-element-type ((stream keep-alive-chunked-stream))
-  (stream-element-type (chunga-stream stream)))
+  (stream-element-type (chunky-stream stream)))
 
 (defmethod stream-element-type ((stream keep-alive-stream))
   '(unsigned-byte 8))
@@ -660,7 +660,6 @@ keep-alive-stream), and should handle clean-up of it"
 (defun decompress-body (content-encoding body)
   (unless content-encoding
     (return-from decompress-body body))
-
   (cond
     ((string= content-encoding "gzip")
      (if (streamp body)
@@ -670,6 +669,11 @@ keep-alive-stream), and should handle clean-up of it"
      (if (streamp body)
          (chipz:make-decompressing-stream :zlib body)
          (chipz:decompress nil (chipz:make-dstate :zlib) body)))
+    ;; TODO 2024-10-20: 
+    ((string= content-encoding "zstd")
+     (if (streamp body)
+         (io/flate:make-decompressing-stream :zstd body)
+         (io/flate:decompress-with (make-instance 'io/zstd:zstd-decompressor) body)))
     (t body)))
 
 ;;; connection-cache
@@ -979,14 +983,14 @@ keep-alive-stream), and should handle clean-up of it"
     (cond
       ((and keep-alive-p chunkedp)
        (setf body (make-keep-alive-stream body :chunked-stream
-                                          (let ((chunked-stream (chunga:make-chunked-stream body)))
-                                            (setf (chunga:chunked-stream-input-chunking-p chunked-stream) t)
+                                          (let ((chunked-stream (make-chunked-stream body)))
+                                            (setf (input-chunking-p chunked-stream) t)
                                             chunked-stream) :on-close-or-eof on-close)))
       ((and keep-alive-p content-length)
        (setf body (make-keep-alive-stream body :end content-length :on-close-or-eof on-close)))
       (chunkedp
-       (let ((chunked-stream (chunga:make-chunked-stream body)))
-         (setf (chunga:chunked-stream-input-chunking-p chunked-stream) t)
+       (let ((chunked-stream (make-chunked-stream body)))
+         (setf (input-chunking-p chunked-stream) t)
          (setf body chunked-stream)))))
   (let ((body (decompress-body content-encoding body)))
     (if force-binary
@@ -1395,16 +1399,16 @@ keep-alive-stream), and should handle clean-up of it"
            ;; Sending the content
            (when content
              (let ((stream (if chunkedp
-                               (chunga:make-chunked-stream stream)
+                               (make-chunked-stream stream)
                                stream)))
                (when chunkedp
-                 (setf (chunga:chunked-stream-output-chunking-p stream) t))
+                 (setf (output-chunking-p stream) t))
                (with-retrying
                  (if (consp content)
                      (write-multipart-content content boundary stream)
                      (write-as-octets stream content))
                  (when chunkedp
-                   (setf (chunga:chunked-stream-output-chunking-p stream) nil))
+                   (setf (output-chunking-p stream) nil))
                  (finish-output stream))))
 
          start-reading

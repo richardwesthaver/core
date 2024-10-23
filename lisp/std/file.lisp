@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :std/file)
 
-;;; Sexp utils
-;; (reexport-from :uiop :include '(read-file-form read-file-forms slurp-stream-forms))
+(defgeneric file (self))
+(defgeneric (setf file) (new self))
 
 (defun tmpfile (size)
   "Create an anonymous temporary file of the given size. Returns a file descriptor."

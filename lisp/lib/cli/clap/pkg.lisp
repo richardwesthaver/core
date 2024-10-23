@@ -46,7 +46,7 @@
    :cmds))
 
 (defpackage :cli/clap/ast
-  (:use :cl :std :log :dat/sxp)
+  (:use :cl :std :log :obj/ast)
   (:export :cli-node :make-cli-node :cli-ast
    :make-cli-ast :cli-node-kind :cli-node-form))
 
@@ -54,7 +54,7 @@
   (:use :cl :std :log
    :sb-ext :cli/clap/proto :cli/clap/macs :cli/clap/util
    :cli/clap/vars :cli/clap/ast :cli/clap/util)
-  (:import-from :dat/sxp :ast :*ast*)
+  (:import-from :obj/ast :ast :form)
   (:export :make-cli :define-cli :defmain
    :make-opts :make-cmds :parse-bool-opt :parse-string-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op

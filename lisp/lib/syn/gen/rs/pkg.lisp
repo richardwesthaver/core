@@ -1,4 +1,4 @@
-;;; rs.lisp --- Rust Code Generator
+;;; rs/pkg.lisp --- Rust Code Generator
 
 ;; Lisp -> Rust
 
@@ -20,6 +20,11 @@
 |#
 
 ;;; Code:
+(defpackage :syn/gen/rs
+  (:nicknames :genrs :rs)
+  (:use :cl :syn/gen)
+  (:import-from :std :in-readtable :eval-always))
+
 (in-package :syn/gen/rs)
 (in-readtable :std)
 

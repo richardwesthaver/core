@@ -42,7 +42,8 @@
     `(prog1
          (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
        (when ',fun
-         (if (member 'simple-error ',parent-types)
+         (if (or (member 'simple-error ',parent-types)
+                 (member 'simple-condition ',parent-types))
              (def-simple-error-reporter ,name)
              (def-error-reporter ,name))))))
 
@@ -72,7 +73,8 @@
          (eval-when (:compile-toplevel :load-toplevel :execute)
            (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))
        (when ',fun
-         (if (member 'simple-warning ',parent-types)
+         (if (or (find 'simple-warning ',parent-types)
+                 (find 'simple-condition ',parent-types))
              (def-simple-warning-reporter ,name)
              (def-warning-reporter ,name))))))
 

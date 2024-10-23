@@ -2,22 +2,36 @@
   :version "0.1.0"
   :maintainer "Richard Westhaver <richard.westhaver@gmail.com>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :obj :parse :tree-sitter)
+  :depends-on (:std :obj :parse :tree-sitter :doc)
   :serial t
   :components ((:file "pkg")
                (:module "gen"
                 :components
                 ((:file "pkg")
+                 (:file "condition")
+                 (:file "var")
+                 (:file "util")
                  (:file "read")
-                 (:file "el")
-                 (:file "scm")
-                 (:file "c")
-                 (:file "cu")
-                 (:file "rs")
-                 (:file "cpp")
-                 (:file "zig")
-                 (:file "py")
-                 (:file "js"))))
+                 (:module "lisp"
+                  :components
+                  ((:file "pkg")
+                   (:file "cl")
+                   (:file "el")
+                   (:file "scm")))
+                 (:module "c"
+                  :components ((:file "pkg")))
+                 (:module "cu"
+                  :components ((:file "pkg")))
+                 (:module "rs"
+                  :components ((:file "pkg")))
+                 (:module "cpp"
+                  :components ((:file "pkg")))
+                 (:module "zig"
+                  :components ((:file "pkg")))
+                 (:module "py"
+                  :components ((:file "pkg")))
+                 (:module "js"
+                  :components ((:file "pkg"))))))
   :in-order-to ((test-op (test-op "syn/tests"))))
 
 (defsystem :syn/tests

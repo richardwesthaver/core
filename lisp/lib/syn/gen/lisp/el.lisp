@@ -3,4 +3,4 @@
 ;; 
 
 ;;; Code:
-(in-package :syn/gen/el)
+(in-package :syn/gen/lisp/el)

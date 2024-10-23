@@ -142,11 +142,11 @@ server's status line."
 (define-condition service-condition (condition) ())
 (eval-always
   (deferror service-error (service-condition error) () (:auto t)))
-(deferror service-simple-error (service-error simple-condition) () (:auto t))
+(deferror simple-service-error (service-error simple-condition) () (:auto t))
 
 (define-condition service-warning (service-condition warning) ())
 
-(defwarning service-simple-warning (service-warning simple-condition) () (:auto t))
+(defwarning simple-service-warning (service-warning simple-warning) () (:auto t))
 
 (deferror bad-request (service-error) ())
 
@@ -179,9 +179,6 @@ server's status line."
 logging, etc."))
 (defgeneric dispatch-request (self request)
   (:documentation "Function called after 'handle-request' which routes a request to a service."))
-(defgeneric service-name (self)
-  (:method ((self t))
-    (obj/id:id self)))
 (defgeneric accept-connections (self))
 (defgeneric handle-connection (self conn))
 (defgeneric initialize-connection-hook (self stream))
@@ -322,7 +319,7 @@ logging, etc."))
 
 (defun encode-session-string (id &optional user-agent remote-addr (start 0))
   (unless (boundp '*session-secret*)
-    (service-simple-warning "Session secret is unbound.  Using Lisp's RANDOM function to initialize it.")
+    (simple-service-warning "Session secret is unbound.  Using Lisp's RANDOM function to initialize it.")
     (reset-session-secret))
   ;; *SESSION-SECRET* is used twice due to known theoretical
   ;; vulnerabilities of MD5 encoding
@@ -477,16 +474,16 @@ logging, etc."))
 (defclass single-threaded-engine (engine) ())
 
 (defclass multi-threaded-engine (engine)
-  ((process :accessor service-process)))
+  ((process :accessor process)))
 
 (defmethod execute-service ((self multi-threaded-engine))
-  (setf (service-process self)
+  (setf (process self)
         (run-thread 
          self
          (lambda () (accept-connections (service self)))
          :name (format nil "service-~A:~A"
-                       (or (service-address (service self)) "*")
-                       (service-port (service self))))))
+                       (or (address (service self)) "*")
+                       (port (service self))))))
                     
 ;; Note from Hunchentoot:
 #|
@@ -611,7 +608,7 @@ logging, etc."))
 (defmethod stop ((self engine) &key)
   self)
 (defmethod stop ((self thread-per-connection-engine) &key)
-  (sb-thread:join-thread (service-process self)))
+  (sb-thread:join-thread (process self)))
 
 (defun too-many-engine-requests (self socket)
   (declare (ignore socket))
@@ -642,9 +639,9 @@ logging, etc."))
   
 ;; supervisor, worker, task, kernel
 ;;; Service
-(defclass service (obj/id:id)
-  ((port :reader service-port :initarg :port)
-   (address :reader service-address :initarg :address)
+(defclass service (id:id)
+  ((port :reader port :initarg :port)
+   (address :reader address :initarg :address)
    (request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
    (engine :type service-engine :accessor engine :initarg :engine)
@@ -656,8 +653,9 @@ logging, etc."))
    ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
    (chunk-output-p :type boolean :initarg :chunk-output-p)
    (chunk-input-p :type boolean :initarg :chunk-input-p)
-   (socket :type socket :accessor socket :initarg :socket)
-   (backlog :accessor backlog :initarg :backlog)
+   (socket :type (or null socket) :accessor socket :initarg :socket :initform nil)
+   (backlog :accessor backlog :initarg :backlog
+            :documentation "Number of pending connections allowed before the service will start bouncing.")
    (request-count :type integer :accessor request-count :initarg :request-count)
    (shutdown-p :type boolean :accessor shutdown-p :initarg :shutdown-p)
    (shutdown-lock :type mutex :accessor shutdown-lock :initarg :shutdown-lock)
@@ -674,12 +672,16 @@ logging, etc."))
    :timeout *default-connection-timeout*
    :connection-max *default-connection-max*
    :logger (make-instance 'service-logger)
+   :backlog 48
    :request-count 0
    :shutdown-p t
    :shutdown-lock (sb-thread:make-mutex :name "shutdown-lock")
    :shutdown-queue (sb-thread:make-waitqueue :name "shutdown-queue"))
   (:documentation "The service class is designed primarily for webservers and functionally
 similar to HUNCHENTOOT:ACCEPTOR."))
+
+(defmethod name ((self service))
+  (id:id self))
 
 (defmethod message-log-output ((self service))
   (message-log-output (logger self)))
@@ -690,7 +692,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defmethod print-object ((self service) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A on port ~A"
-            (or (service-address self) "*") (service-port self))))
+            (or (address self) "*") (port self))))
 
 (defmethod service-log-message ((self service) level format-string &rest args)
   (log:with-log-stream (stream (message-log-output self) *message-log-lock*)
@@ -727,17 +729,18 @@ can be parsed by most log analysis tools."
 
 (defmethod start-listening ((self service))
   (when (socket self)
-    (service-simple-error "service ~A is already listening" self))
-  (setf (socket self)
-        (socket-listen (socket-bind (make-instance 'inet-socket :type :stream :protocol :tcp)
-                                    (or (service-address self)
-                                        #(0 0 0 0))
-                                    (service-port self))
-                       (backlog self)))
+    (simple-service-error "service ~A is already listening" self))
+  (setf (socket self) (make-instance 'inet-socket :type :stream :protocol :tcp))
+  (socket-bind (socket self)
+               (or (address self)
+                   #(0 0 0 0))
+               (port self))
+  (socket-listen (socket self)
+                 (backlog self))
   (values))
 
 (defmethod start-listening :after ((self service))
-  (when (zerop (service-port self))
+  (when (zerop (port self))
     (setf (slot-value self 'port) (nth-value 1 (socket-name (socket self))))))
 
 (defmacro with-open-socket ((var socket) &body body)
@@ -802,7 +805,7 @@ can be parsed by most log analysis tools."
         (when (plusp (request-count self))
           (sb-thread:condition-wait (shutdown-queue self)
                                     (shutdown-lock self)))))
-    (shutdown (engine self))
+    (stop (engine self))
     (sb-bsd-sockets:socket-close (socket self))
     (setf (socket self) nil)
     self))
@@ -811,17 +814,17 @@ can be parsed by most log analysis tools."
   stream)
 
 (defmethod reset-connection-stream ((self service) stream)
-  (cond ((typep stream 'chunga:chunked-stream)
-         (setf (chunga:chunked-stream-output-chunking-p stream) nil
-               (chunga:chunked-stream-input-chunking-p stream) nil)
-         (chunga:chunked-stream-stream stream))
+  (cond ((typep stream 'chunked-stream)
+         (setf (output-chunking-p stream) nil
+               (input-chunking-p stream) nil)
+         (stream-of stream))
          (t stream)))
 
-#+nil
 (defmethod process-connection :around ((*service* service) (socket t))
-  (with-conditions-caught-and-logged ()
-    (with-mapped-conditions ()
-      (call-next-method))))
+  (with-logger (*service*)
+    ;; (with-conditions-caught-and-logged ()
+    ;; (with-mapped-conditions ()
+    (call-next-method))) ;; )
 
 (defun do-with-service-request-count-incremented (*service* function)
   (with-mutex ((shutdown-lock *service*))

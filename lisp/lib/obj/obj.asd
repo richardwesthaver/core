@@ -52,10 +52,11 @@
                (:file "temperature")
                (:file "direction")
                (:file "shape")
+               (:file "cfg")
+               (:file "db")
+               (:file "ast")
                (:file "query")
                (:file "secret")
-               (:file "db")
-               (:file "cfg")
                (:file "build"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 

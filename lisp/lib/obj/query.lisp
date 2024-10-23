@@ -790,6 +790,7 @@
         (mult-expression (make-instance 'mult-physical-expression :lhs l :rhs r))
         (div-expression (make-instance 'div-physical-expression :lhs l :rhs r))))))
 
+;; Control Stack dies here?
 (defgeneric make-physical-plan (plan)
   (:documentation "Create a physical plan from logical PLAN.")
   (:method ((plan logical-plan))

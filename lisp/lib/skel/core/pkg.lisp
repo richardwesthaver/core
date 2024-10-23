@@ -82,7 +82,7 @@
    :sk-phases))
 
 (defpackage :skel/core/util
-  (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/condition)
+  (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/condition :obj/ast)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :cli :find-exe)
   (:export

@@ -79,11 +79,12 @@
 (defpackage :io/chunky
   (:nicknames :chunky)
   (:use :cl :std/stream :io/proto :io/stream :sb-gray)
-  (:import-from :std :deferror :when-let :define-constant)
+  (:import-from :std :deferror :when-let :define-constant :eval-always)
   (:export
    #:output-chunking-p
    #:chunked-input-stream
    #:chunked-stream
+   :chunked-output-stream
    #:+default-chunked-output-size+
    #:input-chunking-p
    #:simple-chunked-input-stream
@@ -103,14 +104,17 @@
   (:use :cl :io/proto)
   (:import-from :std :deferror :eval-always)
   (:import-from :sb-gray 
+
    :fundamental-binary-output-stream
    :fundamental-binary-input-stream)
   (:import-from :std/stream :wrapped-stream)
   (:export :flate-error :compression-error :decompression-error
+           
    :*compression-buffer-size* :decompression-buffer-size* :finish-compression :finish-decompression
    :reset-compressor :reset-decompressor
    :compress-object :decompress-object :compress :decompress
    :compressor :compressing-stream :decompressor :decompressing-stream
+   :make-decompressing-stream :make-compressing-stream
    :*decompression-buffer-size*
    :*compression-level*
    :compress-with
@@ -143,4 +147,4 @@
 
 (pkg:defpkg :io
   (:use :cl)
-  (:use-reexport :io/proto :io/ring :io/flate :io/zstd :io/stream :io/socket))
+  (:use-reexport :io/proto :io/ring :io/flate :io/zstd :io/stream :io/socket :io/chunky))

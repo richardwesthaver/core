@@ -32,14 +32,20 @@
    :udp-server
    :with-udp-client
    :with-udp-server
-   :with-udp-client-and-server))
+   :with-udp-client-and-server
+   :udp-receive-ping
+   :udp-echo))
 
 (defpackage :net/tcp
   (:nicknames :tcp)
   (:use :cl :std :net/core :sb-bsd-sockets)
   (:export
    :tcp-server
-   :with-tcp-client))
+   :with-tcp-client
+   :tcp-ping-server
+   :*tcp-ping-size*
+   :tcp-echo
+   :tcp-receive-ping))
 
 (defpackage :net/codec/punycode
   (:nicknames :codec/punycode)
@@ -302,6 +308,7 @@
   (:nicknames :req)
   (:shadowing-import-from :std/type :octet :octet-vector)
   (:import-from :dat/mime :mime)
+  (:import-from :chunky :input-chunking-p :make-chunked-stream :output-chunking-p)
   (:import-from :io/fast :make-output-buffer :finish-output-buffer)
   (:shadow :get :delete)
   (:use :cl :std :obj/uri
@@ -343,19 +350,20 @@
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets)
+  (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
-   :eval-always :define-task-kernel :when-let)
+   :eval-always :define-task-kernel :when-let :stream-of)
   (:import-from :rt :random-chars)
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)
   (:export
    #:default-web-directory
-   #:start-service
-   #:stop-service
    #:restart-service
    #:add-route
    #:delete-route
+   :handle-request
+   :dispatch-request
    #:service
    #:define-service
    #:*router*

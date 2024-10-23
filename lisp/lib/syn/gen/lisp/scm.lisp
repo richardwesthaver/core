@@ -5,4 +5,4 @@
 ;;; Commentary:
 
 ;;; Code:
-(in-package :syn/gen/scm)
+(in-package :syn/gen/lisp/scm)

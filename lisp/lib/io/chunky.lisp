@@ -74,9 +74,13 @@ otherwise."
   (assert-char stream #\Linefeed))
 
 ;;; Conditions
-(define-condition chunky-condition (condition) ())
-(deferror chunky-error (chunky-condition stream-error) ())
-(deferror simple-chunky-error (chunky-error simple-error) () (:auto t))
+(eval-always
+  (define-condition chunky-condition (condition) ()))
+
+(eval-always
+  (deferror chunky-error (chunky-condition stream-error) ()))
+
+(deferror simple-chunky-error (chunky-condition simple-error) () (:auto t))
 
 (define-condition chunky-warning (chunky-condition warning) ())
 
@@ -187,7 +191,7 @@ of simply switching chunking off.")))
 ;;                "Reads chunk extensions \(if there are any) and stores
 ;; them into the corresponding slot of the stream."
 ;;                (when-let ((extensions (read-name-value-pairs inner-stream)))
-;;                  (warn 'chunga-warning
+;;                  (warn 'chunky-warning
 ;;                        :stream stream
 ;;                        :format-control "Adding uninterpreted extensions to stream ~S."
 ;;                        :format-arguments (list stream))
@@ -403,5 +407,6 @@ sure to send the last chunk."
             ((input-stream-p stream)
              'chunked-input-stream)
             ((output-stream-p stream)
-             'chunked-output-stream))
+             'chunked-output-stream)
+            (t 'chunked-stream))
     :stream stream))

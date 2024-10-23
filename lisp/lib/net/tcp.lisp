@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :net/tcp)
 
-(defun tcp-server (port)
+(defun tcp-echo (port)
   (let ((s (make-instance 'inet-socket :type :stream :protocol :tcp)))
     (socket-bind s #(0 0 0 0) port)
     (loop
@@ -15,7 +15,7 @@
 
 (defvar *tcp-ping-size* 512)
 
-(defun tcp-ping-server (port &key (count 16))
+(defun tcp-receive-ping (port &key (count 16))
   (let ((s (make-instance 'inet-socket :type :stream :protocol :tcp)))
     (socket-bind s #(0 0 0 0) port)
     (loop for i from 0 upto count

@@ -31,7 +31,7 @@
 
 (defpackage :rt
   (:use 
-   :cl :std :sxp :log
+   :cl :std :sxp :log :obj/ast
    :sb-aprof)
   (:export
    :test-error

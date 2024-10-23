@@ -5,7 +5,7 @@
 
 (defclass skel (id)
   ()
-  (:documentation "Base class for skeleton objects. Inherits from `sxp'."))
+  (:documentation "Base class for skeleton objects."))
 
 (declaim (inline sk-object-name sk-slot-name))
 (search "SK-" "SKEL" :test 'equal)
@@ -115,7 +115,7 @@
 ;; Scripts are always assumed to point to an executable file. They can be ran
 ;; directly with SK-RUN.
 
-(defclass sk-script (sk-component sk-meta sxp)
+(defclass sk-script (sk-component sk-meta ast)
   ((kind :initform nil :initarg :kind :type (or null script-designator) :accessor sk-kind)))
 
 (defmethod sk-new ((self (eql :script)) &key form path)
@@ -155,7 +155,7 @@
     (format stream ":~A ~A" (sk-kind self) (name self))))
 
 ;;; Config
-(defclass sk-config (skel sxp) 
+(defclass sk-config (skel ast) 
   ((vc :initform *default-vc-kind* :initarg :vc :type (or vc-repo vc-designator) :accessor sk-vc)
    (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
    (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
@@ -348,7 +348,7 @@ via the special form stored in RECIPE."
   (sk-run rule))
 
 ;;; Project
-(defclass sk-project (skel sxp sk-meta)
+(defclass sk-project (skel ast sk-meta)
   ((name :initarg :name :initform "" :type string)
    (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) :type vc-repo :accessor sk-vc)
    (src :initarg :src :type pathname :accessor sk-src)

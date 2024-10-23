@@ -45,15 +45,17 @@
 
 (defgeneric reset-compressor (self))
 (defgeneric reset-decompressor (self))
-(defgeneric make-compressed-stream (&optional stream))
-(defgeneric make-decompressed-stream (&optional stream))
+(defgeneric make-compressing-stream (key &optional stream))
+(defgeneric make-decompressing-stream (key &optional stream))
 (defgeneric compress-object (obj))
 (defgeneric decompress-object (obj))
 (defgeneric compression-level (obj))
 (defgeneric (setf compression-level) (new obj))
 (defgeneric compress-with (self obj &key &allow-other-keys))
 (defgeneric decompress-with (self obj &key &allow-other-keys))
-
+;; from SALZA2
+(defgeneric compress-octet-vector (vector compressor &key start end))
+(defgeneric decompress-octet-vector (vector decompressor &key start end))
 ;;; Compression
 ;; AKA 'DEFLATE'
 
@@ -68,6 +70,11 @@
    :stream (make-instance 
                'fundamental-binary-output-stream)))
 
+(defmethod make-compressing-stream ((key t) 
+                                    &optional (stream
+                                               (make-instance 'fundamental-binary-input-stream)))
+  (make-instance 'compressing-stream :stream stream))
+
 (defclass compressor (wrapped-stream)
   (output)
   (:default-initargs
@@ -81,6 +88,11 @@
   (:default-initargs
    :stream (make-instance 
                'fundamental-binary-input-stream)))
+
+(defmethod make-decompressing-stream ((key t) 
+                                      &optional (stream
+                                                 (make-instance 'fundamental-binary-input-stream)))
+  (make-instance 'decompressing-stream :stream stream))
 
 (defclass decompressor (wrapped-stream)
   (input)

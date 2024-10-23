@@ -21,6 +21,7 @@
 ;;; Code:
 (defpackage :pod
   (:use :cl :std :cli :sb-bsd-sockets :net :dat/json)
+  (:import-from :chunky :make-chunked-stream)
   (:export
    :*podman-api-version* :*podman-exe* :*buildah-exe*
    :*podman-local-user-socket*

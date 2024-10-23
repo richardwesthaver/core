@@ -9,7 +9,7 @@
    :dat :obj
    :io :parse
    :cl+ssl :cli
-   :chipz :babel :chunga :rt
+   :chipz :babel :rt
    :std :log)
   :serial t
   :components ((:file "pkg")

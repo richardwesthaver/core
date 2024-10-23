@@ -7,7 +7,15 @@
 
 (defvar *udp-ping-size* 512)
 
-(defun udp-ping-server (port &key (count 16))
+(defun udp-echo (port)
+  (let ((s (make-instance 'inet-socket :type :datagram :protocol :udp)))
+    (socket-bind s #(0 0 0 0) port)
+    (loop
+          (multiple-value-bind (buf len addr port) (socket-receive s nil 500)
+          (format t "Received ~A bytes from ~A:~A - ~A ~%"
+                  len addr port (subseq buf 0 (min 10 len)))))))
+  
+(defun udp-receive-ping (port &key (count 16))
   (let ((s (make-instance 'inet-socket :type :datagram :protocol :udp)))
     (socket-bind s #(0 0 0 0) port)
     (loop for i from 0 upto count
