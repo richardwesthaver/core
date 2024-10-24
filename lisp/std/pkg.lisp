@@ -522,6 +522,7 @@
   (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
   (:export
    :tmpfile
+   :dir
    :file
    :file-pathname
    :with-open-files
@@ -545,6 +546,7 @@
   (:import-from :std/condition :required-argument)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :removef)
+  (:import-from :std/file :file)
   (:export :sink :source :element :filter
    :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
    :element-stream :value :index :resolve-element

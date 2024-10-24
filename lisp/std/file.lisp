@@ -7,6 +7,8 @@
 
 (defgeneric file (self))
 (defgeneric (setf file) (new self))
+(defgeneric dir (self))
+(defgeneric (setf dir) (new self))
 
 (defun tmpfile (size)
   "Create an anonymous temporary file of the given size. Returns a file descriptor."

@@ -1,5 +1,7 @@
 (defpackage :log/tests
-  (:use :cl :std :rt :log))
+  (:use :cl :std :rt :log)
+  (:export
+   #:tmp-fixture))
 
 (in-package :log/tests)
 
@@ -8,18 +10,53 @@
 
 (defsuite :log 
   :level :trace
-  :fixtures (list (make-instance 'logger-fixture :name "log-test-logger")))
+  :fixtures 
+  `(,(make-instance 'logger-fixture :name :logger)
+     ;; TODO 2024-10-23: support multiple fixtures
+     ;; ,(make-instance 'rt::tmp-fixture)
+     ))
 
 (in-suite :log)
 
-(deftest simple-log-message ()
+(deftest simple-log-message (:fx :logger)
   "Test a simple LOG-MESSAGE"
   (istype 'string (format-message nil (make-instance 'simple-log-message :content "hi" :tags '(:test))))
-  (let ((*logger* (make-instance 'logger)))
+  (let ((*logger* *fx*))
+    (istype 'thread (start *fx*))
     (istype 'string (format-message nil (log-message :error nil "test")))))
 
-(deftest simple-log-PIPE ()
-  "Test a simple LOG-PIPE.")
+(deftest simple-logger (:fx :logger)
+  "Test a simple LOGGER."
+  (issubclass 'pipe (class-of *fx*))
+  (log-message :info '(:foo :bar) "this is a test"))
+
+(deftest file-logger (:fx :logger)
+  "Test a file-backed LOGGER."
+  (with-fixture (tmp :tmp :file (tmpize-pathname "test.log"))
+    (setf *logger* *fx*)
+    (unwind-protect
+         (with-logger *fx*
+           (let ((tmpfile (path tmp)))
+             ;; (is *logger*)
+             (add-pipe (make-instance 'file-sink :file tmpfile))
+             (is (started-p *fx*))
+             (log-message :info '(:file :log) "test")
+             (is> 0 (file-size tmpfile))))
+      (delete-file (path tmp)))))
+
+(deftest rotating-file-logger (:fx :logger)
+  (with-fixture (tmp :tmp :file (tmpize-pathname "test.log"))
+    (with-logger *fx*
+      (let ((tmpfile (path tmp)))
+        (is *logger*)
+        (setf (pipe *logger*) (make-pipe))
+        (add-pipe (make-instance 'rotating-file-sink :path tmpfile))
+        (is (probe-file (file (aref (aref (pipe *logger*) 0) 0))))
+        (log-message :info nil "rotating log test")
+        (log-rotate (aref (aref (pipe *logger*) 0) 0))
+        (log-message :info nil "rotating test2")
+        (is> 0 (file-size (file (aref (aref (pipe *logger*) 0) 0))))
+        (delete-file (file (aref (aref (pipe *logger*) 0) 0)))))))
 
 (deftest simple-log ()
   "Test logging features"
@@ -47,3 +84,6 @@
       (io/fast:fast-write-sequence str st))
     (is (= (length str) (file-size *tmp*)))
     (delete-file *tmp*)))
+
+(deftest stop-logger (:fx :logger)
+  (stop *fx*))

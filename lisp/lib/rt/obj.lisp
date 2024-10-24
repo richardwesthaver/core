@@ -58,16 +58,18 @@
          :accessor name)))
 
 (defclass tmp-fixture (fixture)
-  ((directory :initform #P"/tmp/" :type directory :initarg :directory)
-   (file :initform nil :type (or null pathname string) :initarg :file)))
+  ((directory :initform #P"/tmp/" :type directory :initarg :directory :accessor dir)
+   (file :initform nil :type (or null pathname string) :initarg :file :accessor file)))
 
 (defmethod make-fixture (kind &rest args)
   (apply 'make-instance 'tmp-fixture args))
 
 (defmacro with-fixture ((var kind &rest args) &body body)
   `(let ((,var (make-fixture ,kind ,@args)))
-     (setf *fx* ,var)
      ,@body))
+
+(defmethod path ((self tmp-fixture))
+  (merge-pathnames (file self) (dir self)))
 
 ;;;; Tests
 (defclass test (test-object)
@@ -209,6 +211,11 @@
 (defun find-suite (name)
   (declare (test-suite-designator name))
   (find name *test-suite-list* :test #'test-name=))
+
+(defun find-fixture (name &optional (suite *test-suite*))
+  (find name (test-fixtures suite) 
+        :test 'string-equal
+        :key 'name))
 
 (defmethod map-tests ((self test-suite) function)
   ;; tests are stored in reverse order. run LIFO.

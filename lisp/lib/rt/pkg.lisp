@@ -69,6 +69,7 @@
    :make-fixture-prototype
    :make-fixture
    :with-fixture
+   :tmp-fixture
    :test-result
    :test-fn
    :test-pass-p
@@ -105,17 +106,25 @@
    :is=
    :iseq
    :iseql
+   :isequalp
    :isequal
    :isand
-   :isemptyp
+   :isempty
    :istype
-   :iszerop
+   :issubtype
+   :issubclass
+   :iszero
    :isevery
    :issome
    :test-fixtures
    :*fx*
    :*fixtures*
-   :*test-policy*))
+   :*test-policy*
+   :is>
+   :is<
+   :is>=
+   :is<=
+   :isor))
 
 (defpackage :rt/bench
   (:nicknames :bench)

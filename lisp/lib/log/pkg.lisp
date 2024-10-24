@@ -73,4 +73,10 @@
    :tag-filter
    :tag-tree-filter
    :*tag-separator*
-   :matching-tree-tag))
+   :matching-tree-tag
+   :restart-logger
+   :remove-logger
+   :default-logger
+   :add-pipe
+   :with-logger
+   :log-rotate))

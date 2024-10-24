@@ -38,10 +38,12 @@
   obj)
 
 (defclass stream-sink (sink)
-  ((output :initarg :output :initform *standard-output* :accessor output)))
+  ((output :initarg :output :initform (make-synonym-stream '*standard-output*) :accessor output)))
 
 (defclass file-sink (stream-sink)
-  ((file :accessor file)))
+  ((file :accessor file))
+  (:default-initargs
+   :output nil))
 
 (defmethod initialize-instance :after ((obj file-sink) &key file)
   (setf (file obj) file))

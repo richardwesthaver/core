@@ -24,9 +24,6 @@ a FAIL."
        (push-result (trace! (funcall #'rt::%test ,test ',test)) *testing*)
        (trace! (funcall #'rt::%test ,test ',test))))
 
-(declaim (inline ptypep))
-(defun ptypep (type obj) (typep obj type))
-  
 ;; convenience functions wrapping IS
 (macrolet ((defis (name op args)
              `(defmacro ,name ,args
@@ -36,14 +33,18 @@ a FAIL."
                 `(is (,',op ,@args))))
            (defisn (name op)
              `(defmacro ,name (n &rest args)
-                `(is (,',op ,n ,@args)))))
+                `(is (,',op ,n ,@args))))
+           (defis/ (name op args)
+             `(defmacro ,name ,args
+                `(is (,',op ,,@(reverse args))))))
   (defis isnt not (it))
   (defisn is= =)
   (defis iseq eq (a b))
   (defis iseql eql (a b))
   (defis isequal equal (a b))
-  (defis iszerop zerop (n))
-  (defis isemptyp sequence:emptyp (seq))
+  (defis isequalp equalp (a b))
+  (defis iszero zerop (n))
+  (defis isempty sequence:emptyp (seq))
   (defis* isand and)
   (defis* isor or)
   (defis* isevery every)
@@ -52,7 +53,9 @@ a FAIL."
   (defisn is< <)
   (defisn is>= >=)
   (defisn is<= <=)
-  (defis istype ptypep (type obj)))
+  (defis/ issubtype subtypep (type obj))
+  (defis/ issubclass subclassp (type obj))
+  (defis/ istype typep (type obj)))
 
 (defmacro signals (condition-spec &body body)
   "Generates a passing TEST-RESULT if body signals a condition of type
@@ -100,7 +103,11 @@ and declarations for the test body.
       (multiple-value-bind (forms dec documentation)
           ;; parse body with docstring allowed
           (parse-body (or body) :documentation t :whole t)
-        `(,props ,documentation ,dec ',forms))
+        `(,props ,documentation ,dec 
+                 ',(if-let ((fx (getf props :fx)))
+                     `((let ((*fx* (find-fixture ,fx)))
+                         ,@forms))
+                     forms)))
     ;; TODO 2023-09-21: parse plist
     `(let ((obj (make-test
                  :name ,(format nil "~A" name)

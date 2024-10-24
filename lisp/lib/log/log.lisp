@@ -4,9 +4,9 @@
 (in-package :log)
 
 (eval-always
-  (defparameter *log-levels* (list nil :fatal :error :warn :info :debug :trace t)))
+  (defparameter *log-levels* (vector nil :fatal :error :warn :info :debug :trace t)))
 
-(deftype log-level-designator () `(member ,@*log-levels*))
+(deftype log-level-designator () `(or (member ,@(coerce *log-levels* 'list)) integer))
 
 (declaim (log-level-designator *log-level*))
 (defparameter *log-level* :debug
@@ -155,12 +155,12 @@ function 'NAME-P'."
 (defclass rotating-file-sink (file-sink)
   ((interval :accessor interval)
    (last-rotation :initform 0 :accessor last-rotation)
-   (template :initarg :template :accessor template))
+   (path :initarg :path :initform nil :accessor path))
   (:default-initargs
    :interval :daily
    :file nil))
 
-(defmethod rotate ((obj rotating-file-sink) &optional new-file)
+(defmethod log-rotate ((obj rotating-file-sink) &optional new-file)
   (let ((time (setf (last-rotation obj) (get-universal-time))))
     (cond (new-file
            (setf (file obj) new-file))
@@ -168,8 +168,8 @@ function 'NAME-P'."
            (multiple-value-bind (s m h dd mm yy) (decode-universal-time time)
              (setf (file obj)
                    (make-pathname :name (format NIL "~4,'0d.~2,'0d.~2,'0d ~2,'0d:~2,'0d:~2,'0d~@[ ~a~]"
-                                                yy mm dd h m s (pathname-name (template obj)))
-                                  :defaults (template obj))))))
+                                                yy mm dd h m s (pathname-name (path obj)))
+                                  :defaults (path obj))))))
     (setf (last-rotation obj) time)))
 
 (defmethod initialize-instance :after ((obj rotating-file-sink) &key interval)
@@ -184,19 +184,20 @@ function 'NAME-P'."
 (defmethod msg :before ((obj rotating-file-sink) msg)
   (let ((pre (last-rotation obj))
         (now (get-universal-time)))
-    (when (multiple-value-bind (s m h dd mm yy dow) (decode-universal-time now)
-            (declare (ignore s m dow))
-            (multiple-value-bind (ps pm ph pdd pmm pyy pdow) (decode-universal-time pre)
-              (declare (ignore ps pm pdow))
-              (ecase (interval obj)
-                (:hourly
-                 (or (/= ph h) (/= pdd dd) (/= pmm mm) (/= pyy yy)))
-                (:daily
-                 (or (/= pdd dd) (/= pmm mm) (/= pyy yy)))
-                (:monthly
-                 (or (/= pmm mm) (/= pyy yy)))
-                (:weekly
-                 (< (* 60 60 24 7) (- (get-universal-time) (last-rotation obj)))))))
+    (when 
+        (multiple-value-bind (s m h dd mm yy dow) (decode-universal-time now)
+          (declare (ignore s m dow))
+          (multiple-value-bind (ps pm ph pdd pmm pyy pdow) (decode-universal-time pre)
+            (declare (ignore ps pm pdow))
+            (ecase (interval obj)
+              (:hourly
+               (or (/= ph h) (/= pdd dd) (/= pmm mm) (/= pyy yy)))
+              (:daily
+               (or (/= pdd dd) (/= pmm mm) (/= pyy yy)))
+              (:monthly
+               (or (/= pmm mm) (/= pyy yy)))
+              (:weekly
+               (< (* 60 60 24 7) (- (get-universal-time) (last-rotation obj)))))))
       (rotate obj))))
 
 (defclass level-filter (filter)
@@ -209,7 +210,7 @@ function 'NAME-P'."
 
 (defmethod (setf level) :before (level (filter level-filter))
   (unless (find level *log-levels*)
-    (cl:error "~a is neither a level in *LEVELS*, nor an integer." level)))
+    (error 'invalid-argument :reason "LEVEL is not a member of *LEVELS* or an integer" :item level)))
 
 (defmethod msg ((filter level-filter) (message message))
   (let ((level (level filter)))
@@ -279,7 +280,7 @@ be implemented for a specific application."))
   (setf (log-thread-continue self) t)
   (when (log-thread self)
     (cerror "Spawn a new thread anyway"
-            "There is already a thread set on the controller."))
+            "There is already a thread set on the logger."))
   (setf (log-thread self)
         (make-thread 
          (let ((*logger* self)
@@ -290,6 +291,10 @@ be implemented for a specific application."))
                (*debug-io* *debug-io*))
            (lambda () (logger-loop self)))
          :name "log-thread")))
+
+(defmethod started-p ((self logger)) (log-thread-continue self))
+
+(defmethod stopped-p ((self logger)) (not (log-thread-continue self)))
 
 (defmethod stop ((self logger) &key)
   (setf (log-thread-continue self) nil)
@@ -305,6 +310,11 @@ be implemented for a specific application."))
 
 (defmacro with-logger-lock ((&optional (logger '*logger*)) &body body)
   `(with-mutex ((queue-lock ,logger))
+     ,@body))
+
+(defmacro with-logger (logger &body body)
+  "Temporarily bind LOGGER to *LOGGER* for the duration of BODY."
+  `(let ((*logger* ,logger))
      ,@body))
 
 (defmethod logger-loop ((self logger))

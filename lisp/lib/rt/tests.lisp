@@ -9,7 +9,7 @@
 (defsuite :rt
   :policy '(optimize sb-cover:store-coverage-data debug)
   :fixtures (list
-             (make-fixture :tmp)))
+             (make-fixture :tmp :name :fx1)))
 
 (in-suite :rt)
 
@@ -20,8 +20,7 @@
 
 (deftest rt (:profile t :persist t)
   (with-fixture (fx :tmp :directory "/tmp/")
-    (is fx)
-    (isequal fx *fx*))
+    (istype 'tmp-fixture fx))
   (signals (error t) (test-form (make-instance 'test-result))))
 
 (deftest flamegraph (:profile t :cover t)
@@ -46,6 +45,9 @@
 (deftest cover (:profile t)
   ;; todo
   (coverage-report))
+
+(deftest fixture (:fx fx1)
+  (print *fx*))
 
 (deftest tmp ()
   (is (null (with-tmp-directory ())))
