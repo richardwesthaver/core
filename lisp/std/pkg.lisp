@@ -283,6 +283,9 @@
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :defmacro!)
   (:export
+   :define-class
+   :defclass*
+   :dlet
    :named-lambda
    :nested-loop
    :g!-symbol-p

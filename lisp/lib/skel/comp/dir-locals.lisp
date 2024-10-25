@@ -7,7 +7,7 @@
 (defvar *dir-locals-file* ".dir-locals.el")
 (deftype dir-local-var-designator () '(or symbol string))
 
-(defclass sk-dir-locals (sk-component sxp)
+(defclass sk-dir-locals (sk-component ast)
   ())
 
 (defmethod sk-new ((self (eql :dir-locals)) &rest args)

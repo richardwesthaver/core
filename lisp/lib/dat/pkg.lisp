@@ -7,9 +7,10 @@
            :serializer-error :deserializer-error
            :serde :serde-error :dat-error))
 
-(defpackage :dat/sxp
+(pkg:defpkg :dat/sxp
   (:nicknames :sxp)
-  (:use :cl :sb-mop :std :obj/ast)
+  (:use :cl :sb-mop :std)
+  (:use-reexport :obj/ast)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
   ;; TODO: hot-patch readtables into sxp classes/parsers
   (:import-from :std/named-readtables :defreadtable :in-readtable)

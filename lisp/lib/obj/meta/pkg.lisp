@@ -15,18 +15,25 @@
 
 ;;; Code:
 (defpackage :obj/meta/stealth
-  (:use :cl :std :obj/meta :sb-mop))
+  (:nicknames :meta/stealth)
+  (:use :cl :std :obj/meta :sb-mop)
+  (:export
+   #:add-mixin
+   #:define-stealth-mixin))
 
 (defpackage :obj/meta/typed
+  (:nicknames :meta/typed)
   (:use :cl :std :obj/meta :sb-mop))
 
 (defpackage :obj/meta/filtered
+  (:nicknames :meta/filtered)
   (:use :cl :std :obj/meta :sb-mop)
   (:export
    :define-filtered-function :filtered :filtered-function :filtered-method
    :generic-function-filter-expression :generic-function-filters :method-filter :simple-filtered-function))
 
 (defpackage :obj/meta/sealed
+  (:nicknames :meta/sealed)
   (:use :cl :std :obj/meta)
   (:import-from :sb-pcl :eql-specializer :intern-eql-specializer
    :eql-specializer-object :funcallable-standard-class)
@@ -85,10 +92,11 @@
    :potentially-sealable-standard-method))
 
 (defpackage :obj/meta/fast
+  (:nicknames :meta/fast)
   (:use :cl :std :obj/meta/sealed :obj/meta)
   (:import-from :sb-int :gensymify)
   (:import-from :sb-walker :macroexpand-all)
-  (:export :fast-generic-function :fast-method :inlineable))
+  (:export :fast-generic-function :fast-method :inlineable :.lambda.))
 
 (defpackage :obj/meta/lazy
   (:use :cl :std :obj/meta))
@@ -96,13 +104,19 @@
 (defpackage :obj/meta/overloaded
   (:use :cl :std :obj/meta))
 
-(defpackage :obj/meta/storable
+(defpackage :obj/meta/stored
+  (:nicknames :meta/stored)
   (:use :cl :std :obj/meta :obj/id)
   (:export
-   :storable-class :initialize-storable-class
-   :storable-slot-mixin :storable-direct-slot-definition
-   :storable-effective-slot-definition))
-  
+   :stored-class :initialize-stored-class
+   :stored-slot))
+
+(defpackage :obj/meta/dynamic
+  (:nicknames :meta/dynamic)
+  (:use :cl :std :obj/meta :std/macs)
+  (:export :dset :dref :dynamic-class
+   :slot-dlet :slot-dvar :slot-dvar*))
+
 (in-package :obj/meta)
 
 (defun class-equalp (c1 c2)

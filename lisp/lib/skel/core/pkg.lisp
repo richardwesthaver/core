@@ -1,5 +1,5 @@
 (defpackage :skel/core/condition
-  (:use :cl :std :dat/sxp)
+  (:use :cl :std :dat/sxp :obj/ast)
   (:export
    :skel-condition
    :skel-error

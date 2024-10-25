@@ -172,6 +172,7 @@ server's status line."
     (start self)))
 (defgeneric execute-service (self)
   (:documentation "A function that is called by a service once it has been initialized. Usually calls the 'accept-connections' method of the service."))
+(defgeneric find-route (self uri))
 (defgeneric add-route (self uri srv &key &allow-other-keys))
 (defgeneric delete-route (self uri &key &allow-other-keys))
 (defgeneric handle-request (self request)
@@ -672,7 +673,7 @@ logging, etc."))
    :timeout *default-connection-timeout*
    :connection-max *default-connection-max*
    :logger (make-instance 'service-logger)
-   :backlog 48
+   :backlog -1 ;; TODO 2024-10-23: what is a correct initial value here? wookie uses -1
    :request-count 0
    :shutdown-p t
    :shutdown-lock (sb-thread:make-mutex :name "shutdown-lock")

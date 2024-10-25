@@ -1,4 +1,4 @@
-;;; obj/meta/overloaded.lisp --- Overloaded generic functions
+;;; obj/meta/overloaded.lisp --- Overloaded Arity generic functions
 
 ;; see https://github.com/pve1/incongruent-methods
 

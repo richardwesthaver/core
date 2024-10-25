@@ -2,6 +2,104 @@
 
 ;; see https://github.com/marcoheisig/sealable-metaobjects
 
+;;; Commentary:
+
+;; From the sealable-metaobjects readme:
+#|
+The goal is to inline a generic function under certain circumstances. These circumstances are:
+
+1 It is possible to statically determine the generic function being called.
+2 This generic function is sealed, i.e., it is an instance of SEALABLE-GENERIC-FUNCTION that has previously been passed
+  to the function SEAL-GENERIC-FUNCTION.
+3 This sealed generic function has at least one sealed method, i.e., a method of type POTENTIALLY-SEALABLE-METHOD that
+  specializes, on each relevant argument, on a built-in or sealed class, or an eql specializer whose object is an
+  instance of a built-in or sealed class.
+4 It must be possible to determine, statically, that the types of all arguments in a specializing position uniquely
+  determine the list of applicable methods.
+
+Examples
+
+The following examples illustrate how sealable metaobjects can be used. Each example code can be evaluated as-is.
+However, for actual use, we recommend the following practices:
+
+* Sealable generic functions should be defined in a separate file that is loaded early. If this is not done, its methods
+  may not use the correct method-class. (An alternative is to specify the method class of each method explicitly).
+* Metaobject sealing should be the very last step when loading a project. Ideally, all calls to SEAL-GENERIC-FUNCTION
+  should be in a separate file that ASDF loads last. This way, sealing can also be disabled conveniently, e.g., to
+  measure whether sealing actually improves performance (Which you should do!).
+
+Generic Plus
+
+This example shows how one can implement a generic version of cl:+.
+
+(defgeneric generic-binary-+ (a b)
+  (:generic-function-class fast-generic-function))
+
+(defmethod generic-binary-+ ((a number) (b number))
+  (+ a b))
+
+(defmethod generic-binary-+ ((a character) (b character))
+  (+ (char-code a)
+     (char-code b)))
+
+(sealable-metaobjects:seal-domain #'generic-binary-+ '(number number))
+(sealable-metaobjects:seal-domain #'generic-binary-+ '(character character))
+
+(defun generic-+ (&rest things)
+  (cond ((null things) 0)
+        ((null (rest things)) (first things))
+        (t (reduce #'generic-binary-+ things))))
+
+(define-compiler-macro generic-+ (&rest things)
+  (cond ((null things) 0)
+        ((null (rest things)) (first things))
+        (t
+         (flet ((symbolic-generic-binary-+ (a b)
+                  `(generic-binary-+ ,a ,b)))
+           (reduce #'symbolic-generic-binary-+ things)))))
+
+You can quickly verify that this new operator is as efficient as cl:+:
+
+(defun triple-1 (x)
+  (declare (single-float x))
+  (+ x x x))
+
+(defun triple-2 (x)
+  (declare (single-float x))
+  (generic-+ x x x))
+
+;;; Both functions should compile to the same assembler code.
+(disassemble #'triple-1)
+(disassemble #'triple-2)
+
+Yet, other than cl:+, generic-+ can be extended by the user, just like a regular generic function. The only restriction
+is that new methods must not interfere with the behavior of methods that specialize on sealed types only.
+
+Generic Find
+
+This example illustrates how one can implement a fast, generic version of cl:find.
+
+(defgeneric generic-find (item sequence &key test)
+  (:generic-function-class fast-generic-function))
+
+(defmethod generic-find (elt (list list) &key (test #'eql))
+  (and (member elt list :test test)
+       t))
+
+(defmethod generic-find (elt (vector vector) &key (test #'eql))
+  (cl:find elt vector :test test))
+
+(seal-domain #'generic-find '(t list))
+(seal-domain #'generic-find '(t vector))
+
+(defun small-prime-p (x)
+  (generic-find x '(2 3 5 7 11)))
+
+;; The call to GENERIC-FIND should have been replaced by a direct call to
+;; the appropriate effective method.
+(disassemble #'small-prime-p)
+
+|#
 ;;; Code:
 (in-package :obj/meta/sealed)
 
@@ -130,7 +228,7 @@ Examples:
   (:method ((method method)) nil)
   (:method ((built-in-class built-in-class)) t)
   (:method ((structure-class structure-class)) t)
-  #+sbcl (:method ((system-class sb-pcl:system-class)) t))
+  (:method ((system-class sb-pcl:system-class)) t))
 
 (defgeneric class-sealable-p (class)
   (:method ((class class))
@@ -160,7 +258,7 @@ Examples:
   (:method ((method method)) nil)
   (:method ((built-in-class built-in-class)) t)
   (:method ((structure-class structure-class)) t)
-  #+sbcl (:method ((system-class sb-pcl:system-class)) t))
+  (:method ((system-class sb-pcl:system-class)) t))
 
 (defgeneric class-sealed-p (class)
   (:method ((class class))

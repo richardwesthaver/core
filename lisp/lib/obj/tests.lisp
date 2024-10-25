@@ -1,5 +1,7 @@
 (defpackage :obj/tests
-  (:use :cl :std :rt :obj :uuid :url))
+  (:use :cl :std :rt 
+   :obj :uuid :url :std/macs
+   :meta/dynamic :meta/fast :meta/sealed :meta/stealth))
 
 (in-package :obj/tests)
 
@@ -95,7 +97,7 @@
     (is (setf (getchash key map) t))
     (is (getchash key map))
     (is (null (getchash (make-string 1 :initial-element #\a) map))))
-  (let ((map (make-castable :test 'eq))) ;;eql
+  (let ((map (make-castable :test 'eql))) ;;eql
     (is (setf (getchash 0 map) t))
     (is (getchash 0 map))
     (is (null (getchash 0.0 map))))
@@ -248,6 +250,7 @@
 (deftest url ()
   (is (equal (url-encode "/fooあ") (url-encode (url-decode "%2Ffoo%E3%81%82")))))
 
+;;; Query
 (defclass bogus-data-source (data-source) ((db :initform nil :initarg :db)))
 
 (defvar *basic-query* "SELECT * FROM employee WHERE state = 'CT'")
@@ -256,3 +259,51 @@
   "Test the simple query `SELECT * FROM employee WHERE state = 'CT'` by manually
 building a query-plan."
   (make-query *basic-query*))
+
+;;; Meta
+
+;;;; Fast
+(defgeneric %test-+ (a b)
+  (:generic-function-class fast-generic-function))
+
+;; can't be in same file :(
+;; (with-compilation-unit ()
+;;   (defmethod %test-+ ((a number) (b number))  
+;;     (+ a b))
+;;   (seal-domain #'test-+ '(number number)))
+
+;;;; Dynamic
+(defclass dyno1 (id)
+  ((id :dynamic t :accessor id))
+  (:metaclass dynamic-class))
+
+(deftest dynamic-class ()
+  (let ((obj (make-instance 'dyno1 :id 1)))
+    (slot-dvar* obj 'id)
+    (slot-dlet (((obj 'id) 0))
+      (iszero (id:id obj)))
+    (is> 0 (id:id obj))))
+
+;;;; Stealth
+(defclass stealth-target () ())
+
+(deftest stealth-mixin ()
+  (add-mixin 'id 'stealth-target)
+  (issubclass 'id 'stealth-target)
+  (define-stealth-mixin stealth-mixer (secret-object) stealth-target
+    ())
+  (issubclass 'secret-object 'stealth-mixer)
+  (issubclass 'secret-object 'stealth-target)
+  (issubclass 'stealth-mixer 'stealth-target))
+
+;;;; Filtered
+(deftest filtered-function ()
+  (defmethod fac ((n number))
+    (* n (fac (- n 1))))
+
+  (defmethod fac ((n (eql 0)))
+    1)
+  (is= 362880 (fac 10)))
+
+;;;; Typed
+;; TODO

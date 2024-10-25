@@ -282,7 +282,7 @@
 
 (defun determine-hasher (test)
   ;; TODO 2024-09-23: 
-  (or (cond ;; ((eq test #'eq) #'sb-impl::eq-hash) ;; package-lock violation
+  (or (cond ((eq test #'eq) #'sb-impl::eq-hash/safe)
             ((eq test #'eql) #'sb-impl::eql-hash)
             ((eq test #'equal) #'sb-impl::equal-hash)
             ((eq test #'equalp) #'sb-impl::equalp-hash)

@@ -12,7 +12,8 @@
                              (:file "fast")
                              (:file "lazy")
                              (:file "overloaded")
-                             (:file "storable")))
+                             (:file "stored")
+                             (:file "dynamic")))
                (:module "hash"
                 :components ((:file "hasher")
                              (:file "chash")

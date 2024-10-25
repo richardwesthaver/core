@@ -7,7 +7,7 @@
 
 (defparameter *default-user-kryptrc* (merge-pathnames ".kryptrc" (user-homedir-pathname)))
 
-(defclass krypt-config (sxp id)
+(defclass krypt-config (ast id)
   ((path :initform nil :initarg :path :type (or pathname null))))
 
 (defmethod print-object ((self krypt-config) stream)

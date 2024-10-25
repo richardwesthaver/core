@@ -1,8 +1,8 @@
-;;; obj/meta/storable.lisp --- Storable Objects
+;;; obj/meta/stored.lisp --- CLOS Stored Metaclasses
 
-;; The storable-class can be assigned to the :metaclass option of a
+;; The stored-class can be assigned to the :metaclass option of a
 ;; class to allow persistent storage of an object on disk. The
-;; storable-slot-mixin is a custom slot option which can be used to
+;; stored-slot is a custom slot option which can be used to
 ;; selectively enable slot serialization.
 
 ;;; Commentary:
@@ -10,17 +10,17 @@
 ;; This code is derived from XDB.
 
 ;; Note that this is not a general purpose SerDe. It is specifically designed
-;; to decode/encode objects as single octet-vectors from/to an open stream
+;; to decode/encode objects as simple octet-vectors from/to an open stream
 ;; with minimal overhead. There is a separate interface for general-purpose
 ;; data encoding which can be found in the DAT system.
 
 ;;; Code:
-(in-package :obj/meta/storable)
+(in-package :obj/meta/stored)
 
 (sb-ext:unlock-package :sb-pcl)
 
 ;;; MOP
-(defclass storable-class (standard-class)
+(defclass stored-class (standard-class)
   ((class-id :initform nil
              :accessor class-id)
    (slots-to-store :initform nil :accessor slots-to-store)
@@ -38,58 +38,58 @@
 
 
 ;;; Initialize
-(defun initialize-storable-class (next-method class &rest args
+(defun initialize-stored-class (next-method class &rest args
                                   &key direct-superclasses &allow-other-keys)
   (apply next-method class
          (if direct-superclasses
              args
-             (list* :direct-superclasses (list (find-class 'storable-class))
+             (list* :direct-superclasses (list (find-class 'stored-class))
                     args))))
 
-(defmethod initialize-instance :around ((class storable-class)
+(defmethod initialize-instance :around ((class stored-class)
                                         &rest args)
-  (apply #'initialize-storable-class #'call-next-method class args))
+  (apply #'initialize-stored-class #'call-next-method class args))
 
-(defmethod reinitialize-instance :around ((class storable-class)
+(defmethod reinitialize-instance :around ((class stored-class)
                                           &rest args)
-  (apply #'initialize-storable-class #'call-next-method class args))
+  (apply #'initialize-stored-class #'call-next-method class args))
 
 ;;; Validate
 (defmethod validate-superclass
     ((class standard-class)
-     (superclass storable-class))
+     (superclass stored-class))
   t)
 
 (defmethod validate-superclass
-    ((class storable-class)
+    ((class stored-class)
      (superclass standard-class))
   t)
 
 ;;; Slot mixin
-(defclass storable-slot-mixin ()
+(defclass stored-slot ()
   ((storep :initarg :storep
            :initform t
            :accessor store-slot-p)))
 
-(defclass storable-direct-slot-definition (storable-slot-mixin
+(defclass stored-direct-slot-definition (stored-slot
                                            standard-direct-slot-definition)
   ())
 
-(defclass storable-effective-slot-definition
-    (storable-slot-mixin standard-effective-slot-definition)
+(defclass stored-effective-slot-definition
+    (stored-slot standard-effective-slot-definition)
   ())
 
-(defmethod direct-slot-definition-class ((class storable-class)
+(defmethod direct-slot-definition-class ((class stored-class)
                                          &rest initargs)
   (declare (ignore initargs))
-  (find-class 'storable-direct-slot-definition))
+  (find-class 'stored-direct-slot-definition))
 
-(defmethod effective-slot-definition-class ((class storable-class)
+(defmethod effective-slot-definition-class ((class stored-class)
                                             &key &allow-other-keys)
-  (find-class 'storable-effective-slot-definition))
+  (find-class 'stored-effective-slot-definition))
 
 (defmethod compute-effective-slot-definition
-    ((class storable-class) slot-name direct-definitions)
+    ((class stored-class) slot-name direct-definitions)
   (declare (ignore slot-name))
   (let ((effective-definition (call-next-method))
         (direct-definition (car direct-definitions)))
@@ -116,7 +116,7 @@
     (setf (class-initforms class)
           (map 'vector #'sb-mop:slot-definition-initform slots))))
 
-(defmethod compute-slots :around ((class storable-class))
+(defmethod compute-slots :around ((class stored-class))
   (let ((slots (call-next-method)))
     (initialize-class-slots class slots)
     slots))

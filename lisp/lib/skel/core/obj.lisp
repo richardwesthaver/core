@@ -33,7 +33,7 @@
 
 ;; TODO 2023-09-11: research other hashing strategies - maybe use the
 ;; sxhash as a nonce for UUID
-;; note that the sk-meta class does not inherit from skel or sxp.
+;; note that the sk-meta class does not inherit from skel or ast.
 ;;; Meta
 (defclass sk-meta ()
   ((name :initarg :name :initform nil :type (or null string) :accessor name)
@@ -553,7 +553,7 @@ via the special form stored in RECIPE."
                        :nullp nullp
                        :exclude exclude)))
 
-;; TODO 2023-09-26: This belongs in sxp
+;; TODO 2023-09-26: This belongs in AST
 (defmethod write-sxp-stream ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :pretty))
   (case fmt
     (:pretty
