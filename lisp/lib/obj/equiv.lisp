@@ -60,12 +60,16 @@
 ;;; Code:
 (in-package :obj/equiv)
 
-(defgeneric equiv (a b))
+(defgeneric equiv (a b)
+  (:method ((a character) (b string))
+    (and (= 1 (length b)) (char= (aref b 0) a)))
+  (:method ((a string) (b character))
+    (equiv b a))
+  (:method ((a string) (b string))
+    (string= a b))
+  (:method ((a t) (b t))
+    (equal a b)))
 
 (defgeneric eqv (a b))
-
-(defgeneric nequiv (a b))
-
-(defgeneric neqv (a b))
 
 (defgeneric equals (a b &rest args))

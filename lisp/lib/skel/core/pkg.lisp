@@ -1,5 +1,6 @@
 (defpackage :skel/core/condition
-  (:use :cl :std :dat/sxp :obj/ast)
+  (:use :cl :std/condition :dat/sxp :obj/ast)
+  (:import-from :std/macs :eval-always)
   (:export
    :skel-condition
    :skel-error
@@ -87,7 +88,7 @@
   (:import-from :cli :find-exe)
   (:export
    :init-skelrc :load-skelrc
-   :init-skel-vars
+   :init-skel
    :init-user-skelrc :load-user-skelrc
    :init-system-skelrc :load-system-skelrc
    :init-skelfile
@@ -135,5 +136,5 @@
 
 (defpackage :skel/core/print
   (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars)
-  (:export
-   :*sk-print-dispatch-table*))
+  (:export))
+

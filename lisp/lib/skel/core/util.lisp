@@ -152,7 +152,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
           (when-let ((registry (sk-config-slot :registry nil)))
             (,set *skel-registry* registry))
           (values))))
-  (defun init-skel-vars ()
+  (defun init-skel ()
     "Initialize the global SKEL variables:
 
 *SKEL-SYSTEM-CONFIG*

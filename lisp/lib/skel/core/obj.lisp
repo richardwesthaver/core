@@ -1,5 +1,7 @@
 ;;; skel/core/obj.lisp --- Skel Objects
 
+;; SKEL classes and methods
+
 ;;; Code:
 (in-package :skel/core/obj)
 
@@ -328,7 +330,9 @@ via the special form stored in RECIPE."
 (defun sk-make (obj &rest rules)
   (if rules
       (mapc
-       (lambda (r) (sk-run-with-sources obj r))
+       (lambda (r) 
+         (when-let ((rule (print (sk-find-rule r obj))))
+           (sk-run-with-sources obj rule)))
        rules)
       (unless (sequence:emptyp (sk-rules obj))
         (let ((rule (aref (sk-rules obj) 0)))
@@ -337,6 +341,7 @@ via the special form stored in RECIPE."
               (sk-run rule))))))
 
 (defun sk-run-with-sources (obj rule)
+  (declare (sk-rule rule))
   (when-let ((sources (and rule (sk-rule-source rule))))
     (mapcar
      (lambda (src)
@@ -609,8 +614,12 @@ via the special form stored in RECIPE."
     (setf (sk-license self) license)
     (setf (sk-author self) author)))
 
-(defmethod sk-find-rule (name self)
-  (find (string-upcase name) (sk-rules self) :test 'equalp :key #'sk-rule-target))
+(defmethod sk-find-rule ((item sk-rule) (self skel))
+  (find (string-upcase (sk-rule-target item))
+        (sk-rules self) :test 'string-equal :key 'sk-rule-target))
+
+(defmethod sk-find-rule ((item t) (self skel))
+  (find (string-upcase item) (sk-rules self) :test 'string-equal :key #'sk-rule-target))
 
 (defmethod sk-find-script ((name string) (self skel) &key)
   (find name (sk-scripts self) :test 'equal :key #'name))

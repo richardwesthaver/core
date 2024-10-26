@@ -43,12 +43,3 @@
 (pkg:defpkg :skel/net
   (:use :cl :std)
   (:use-reexport :skel/net/client :skel/net/server))
-  
-(pkg:defpkg :skel
-  (:nicknames :sk)
-  (:use :cl :std)
-  (:use-reexport :skel/core :skel/comp))
-
-(pkg:defpkg :sk-user
-  (:use :cl :std :std-user :cl-user :log :sb-debug :sb-ext :net/proto/dns :net/fetch :cli/tools/sbcl :pod :cli/clap)
-  (:use :skel :skel/core :skel/comp :skel/net))

@@ -10,7 +10,8 @@
    (:file "pkgbuild")
    (:file "db")
    (:file "client")
-   (:file "server"))
+   (:file "server")
+   (:file "packy"))
   :in-order-to ((test-op (test-op :packy/tests))))
 
 (defsystem :packy/tests

@@ -50,7 +50,8 @@
      (:file "inspect" :if-feature :gui)
      (:file "krypt")
      (:file "packy"))
-    :if-feature :ext))
+    :if-feature :ext)
+   (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))
 
 (defsystem :skel/tests

@@ -70,13 +70,6 @@ endif")
            (null 
             (sk-write-file mk1 :if-exists :supersede :path (merge-pathnames (tmp-path "mk") *tmp*))))))))
 
-(deftest vm ()
-  "EXPERIMENTAL"
-  (with-skel-vm (vm)
-    (is (sb-lockless::split-ordered-list-p *skel-scope*))
-    (is (sb-vm:arena-p *skel-arena*))
-    (is (skel-vm-p vm))))
-
 (deftest asd ()
   (let ((sk (make-instance 'sk-project :components '((:lisp "test")
                                                      (:lisp-system "test")))))

@@ -174,7 +174,7 @@ function 'NAME-P'."
 
 (defmethod initialize-instance :after ((obj rotating-file-sink) &key interval)
   (setf (interval obj) interval)
-  (rotate obj))
+  (log-rotate obj))
 
 (defmethod (setf interval) (value (obj rotating-file-sink))
   (ecase value
@@ -198,7 +198,7 @@ function 'NAME-P'."
                (or (/= pmm mm) (/= pyy yy)))
               (:weekly
                (< (* 60 60 24 7) (- (get-universal-time) (last-rotation obj)))))))
-      (rotate obj))))
+      (log-rotate obj))))
 
 (defclass level-filter (filter)
   ((level :initform *log-level* :accessor level))

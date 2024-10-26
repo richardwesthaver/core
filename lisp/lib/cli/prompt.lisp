@@ -6,14 +6,16 @@
 (in-package :cli/prompt)
 (declaim (optimize (speed 3) (debug 1)))
 
-(defvar *completion-trigger* "?")
+(defvar *completion-trigger* #\?)
 
 (defun completing-read (prompt collection
 			&key (history nil) (default nil)
                              (require-match t)
-			     (test #'string-equal) 
+			     (test #'equalp) 
                              (input *query-io*)
-                             (output *query-io*))
+                             (output *query-io*)
+                             (reader #'read-line)
+                             (hook))
   "A simplified COMPLETING-READ for common-lisp.
 
 The Emacs completion framework includes a function called
@@ -27,7 +29,7 @@ simulate one by embedding a DSL in our prompters if we choose. For
 example, perhaps we treat a single '?' character as a request from the
 user to list valid options while continue waiting for input."
   (declare (list collection)
-           (function test)
+           (function test reader hook)
            (boolean require-match)
            (stream input output))
   (labels ((print-coll ()
@@ -36,21 +38,29 @@ user to list valid options while continue waiting for input."
              (princ prompt output)
              (finish-output output)
              (listen input)
-             (let ((line (the string (read-line input))))
-               (if (equalp *completion-trigger* line)
+             (let ((line (funcall reader input)))
+               (if (equiv *completion-trigger* line)
                    (progn
                      (print-coll)
                      (ask))
-                   (if (> (length line) 0)
-                       line
-                       default)))))
+                   (etypecase line
+                     (string (if (> (length line) 0)
+                                 line
+                                 default))
+                     (character (if (char= line #\Newline)
+                                    default
+                                    line))
+                     (null default)
+                     (t line))))))
     (let ((res (ask)))
       (when history (push res history))
-      (if (and collection require-match)
-          (find res collection :test test)
-          res))))
+      (when (and collection require-match)
+          (setf res (find res collection :test test)))
+      (when hook
+        (setf res (funcall hook res)))
+      res)))
 
-(defmacro defprompt (var &key (prompt ">") collection default input output)
+(defmacro defprompt (var &key (prompt ">") collection default input output reader test hook)
   "Generate a 'prompter' from list or variable VAR and optional
 PROMPT string.
 
@@ -66,11 +76,15 @@ closure."
 and no value is provided by user, otherwise fallback to the `car'
 of `~A-PROMPT-HISTORY'." var var)
 	 (completing-read
-          (format nil "~A [~A]: "
+          (format nil "~A [~@[~A~]]: "
                   ,prompt
 		  (or ,default (car (symbol-value ,h))))
 	  ,collection
           :history ,h
           :default ,default
           ,@(when input (list :input input))
-          ,@(when output (list :output output)))))))
+          ,@(when output (list :output output))
+          ,@(when reader (list :reader reader))
+          ,@(when test (list :test test))
+          ,@(when hook (list :hook hook)))))))
+

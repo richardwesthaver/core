@@ -65,7 +65,7 @@
    :set-tty-mode))
 
 (defpackage :cli/prompt
-  (:use :cl :std)
+  (:use :cl :std :obj/equiv)
   (:export
    :completing-read
    :defprompt))

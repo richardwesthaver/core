@@ -69,7 +69,13 @@ lisp forms and other goodies.
 #0$ x=#,(* 2 2) 
 echo $x
 $#
-;; => 4"
+;; => 4
+
+KLUDGE: an escaped SYMBOL can't be immediately followed by the closing tag '$#' - this causes the reader to consume those characters as part of the symbol name. One thing we might end up doing is checking for those characters in the input and unreading those 2 chars.
+
+An escaped form with parens like the following works fine:
+
+#0$echo #,(+ 2 2)$# ;; => 4"
   (declare (ignore sub-char) ((or (integer 0 9) null) numarg))
   (let ((str (plain-shell-reader stream)))
     (if numarg
@@ -86,7 +92,7 @@ $#
             (t (nyi!))))
         (let ((args (list "-c" (format nil "~a" str)))
               (directory (or *shell-directory* *default-pathname-defaults*)))
-          (lambda (&key (output *standard-output*) (wait t))
+          (lambda (&key (output *standard-output*) (wait t) (status-hook))
             (case output
               (:string (string-right-trim
                         '(#\Newline)
@@ -95,7 +101,8 @@ $#
                                               :directory directory
                                               :output s
                                               :input *shell-input*
-                                              :wait wait))))
+                                              :wait wait
+                                              :status-hook status-hook))))
               (:integer (parse-integer
                          (string-right-trim
                           '(#\Newline)
@@ -104,16 +111,17 @@ $#
                                                 :directory directory
                                                 :output s
                                                 :input *shell-input*
-                                                :wait wait)))))
+                                                :wait wait
+                                                :status-hook status-hook)))))
               (t (sb-ext:run-program *shell*
                                      args
                                      :directory directory
                                      :output output
                                      :input *shell-input*
-                                     :wait wait))))))))
+                                     :wait wait
+                                     :status-hook status-hook))))))))
 
 (defreadtable :shell
   "The shell readtable"
   (:merge :std)
   (:dispatch-macro-char #\# #\$ #'|#$-reader|))
-

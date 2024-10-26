@@ -12,3 +12,7 @@
 ;;; Code:
 
 (in-package :packy/server)
+
+(defclass packy-service (service) ())
+
+(defstruct packy-server)

@@ -27,10 +27,10 @@
 :rules
 ((all (%stash
        psl.dat parquet.json rgb.txt
-       save-std save-prelude save-user
-       save-infra save-core save-tests
-       build-tree-sitter-alien build-core fasls
-       ;; build-skel build-organ build-homer build-packy build-rdb
+       ;; save-std save-prelude save-user fasls
+       ;; save-infra save-tests
+       build-tree-sitter-alien save-core
+       build-core 
        ;; rust-bin
        ))
  (clean ()

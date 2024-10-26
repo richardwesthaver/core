@@ -8,7 +8,7 @@
    :vc :sb-ext :skel :log :cli/clap/util
    :dat/sxp #+tools :skel/tools/viz)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
-  (:use :cli/tools/sbcl))
+  (:use :cli/tools/sbcl :cli/prompt))
 
 (in-package :bin/skel)
 (in-readtable :shell)
@@ -110,7 +110,7 @@
 (defun sk-slot-case (sel)
   (std/string:string-case ((string-left-trim ":" sel) :default (skel-simple-error "invalid slot"))
     ("id" (std:format-sxhash (obj/id:id *skel-project*)))
-    ("name" (sk-name *skel-project*))
+    ("name" (name *skel-project*))
     ("author" (sk-author *skel-project*))
     ("version" (sk-version *skel-project*))
     ("description" (sk-description *skel-project*))
@@ -354,6 +354,6 @@
   (let ((*log-level* :info))
     (in-readtable :shell)
     (with-cli (*skel-cli* :args (cli:args))
-      (init-skel-vars)
+      (init-skel)
       (do-cmd *cli*))))
 

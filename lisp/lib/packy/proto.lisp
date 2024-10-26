@@ -17,9 +17,27 @@
   (print-unreadable-object (self stream)
     (format stream "~A" (octet-vector-to-hex-string (id self)))))
 
-(defclass abstract-package () ())
+(defclass pack (ast id) ())
 
-(defgeneric pack (self &key &allow-other-keys))
+(defclass package-stream (pack stream) ())
+
+(defclass compressed-package (package-stream decompressing-stream) ())
+
+(defclass file-package (package-stream file-stream) ())
+
+(defclass directory-package (package-stream) 
+  ((directory :initarg :directory :accessor dir)))
+
+(defun packed-path-p (path)
+  "Return non-nil if PATH is a ZSTD compressed file or otherwise complete
+package-descriptor."
+  (and (probe-file path) (equal "zst" (pathname-type path))))
+
+(defgeneric pack (self &key &allow-other-keys)
+  (:method ((self pathname) &key)
+    (when (packed-path-p self)
+      (error 'simple-packy-error "Package is already compressed: ~A" self))))
+
 (defgeneric unpack (self &key &allow-other-keys))
 (defgeneric install-package (self &key &allow-other-keys))
 (defgeneric uninstall-package (self &key &allow-other-keys))

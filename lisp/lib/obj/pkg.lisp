@@ -71,7 +71,7 @@
 
 (defpackage :obj/equiv
   (:use :cl :std)
-  (:export :equiv :eqv :nequiv :neqv :equivalence))
+  (:export :equiv :eqv :equivalence))
 
 (defpackage :obj/uri
   (:nicknames :uri)

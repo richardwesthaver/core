@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :packy/core
-  (:use :cl :std :obj/id :dat/proto :io/flate)
+  (:use :cl :std :obj/id :dat/proto :io)
   (:export
    :*packy-url*
    :pack
@@ -26,24 +26,27 @@
    :list-packages
    :prepare-package
    :check-package
-   :package-version))
+   :package-version
+   :*pack*
+   :*packy-registry*
+   :*packy-compressor*
+   :*packy-decompressor*))
 
 (defpackage :packy/db
   (:use :cl :std :packy/core :obj/db :rdb)
   (:export :package-database))
 
 (defpackage :packy/client
-  (:use :cl :std :packy/core :net/fetch))
+  (:use :cl :std :packy/core :net/fetch)
+  (:export :pk-index
+           :packy-client))
 
 (defpackage :packy/server
-  (:use :cl :std :packy/core :net/srv))
+  (:use :cl :std :packy/core :net/srv)
+  (:export
+   #:packy-service
+   #:packy-server))
 
 (defpackage :packy/pkgbuild
   (:use :cl :std)
   (:export))
-
-(pkg:defpkg :packy
-  (:nicknames :pk)
-  (:use :cl :std)
-  (:use-reexport :packy/client :packy/server :packy/core))
-
