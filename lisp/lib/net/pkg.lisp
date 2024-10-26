@@ -368,7 +368,10 @@
    #:define-service
    #:*router*
    #:*service*
-   #:*handlers*))
+   #:*handlers*
+   #:request
+   #:response
+   #:http-service-response))
 
 (in-package :std-user)
 

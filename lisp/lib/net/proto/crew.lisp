@@ -68,7 +68,7 @@ inconsistent information."
               (t (incf busy))))
       (values idle busy disconnected))))
 
-(defmethod worker-count ((self crew-worker-pool) &key)
+(defmethod %worker-count ((self crew-worker-pool) &key)
   (length (workers self)))
 
 (defmethod print-object ((worker-pool crew-worker-pool) stream)
@@ -78,7 +78,7 @@ WORKER-POOL, so it may output inconsistent information."
     (multiple-value-bind (idle busy disconnected)
         (worker-counts worker-pool)
       (format stream "id: ~S workers: ~D idle: ~D busy: ~D disconnected: ~D"
-              (id worker-pool) (worker-count worker-pool) idle busy disconnected))))
+              (id worker-pool) (%worker-count worker-pool) idle busy disconnected))))
 
 (defmethod initialize-instance :after ((self crew-worker-pool) &key)
   (with-mutex (*crew-worker-pools-lock*)
@@ -263,7 +263,7 @@ DISCONNECTED-WORKER to another idle connected worker in WORKER-POOL."
 
 (defun no-workers-p (worker-pool)
   "Returns T if WORKER-POOL is NIL or contains no workers."
-  (or (null worker-pool) (zerop (worker-count worker-pool))))
+  (or (null worker-pool) (zerop (%worker-count worker-pool))))
 
 (defun eval-on-master (make-work list result-done)
   "Iterates over the members of LIST calling MAKE-WORK on each one.  If
@@ -362,7 +362,7 @@ each worker returns a result with two arguments, a non-negative integer
 representing the order in which the work was dispatched and the worker's result.
 If REPLAY-REQUIRED is true, which is the default, FORM will be remembered and
 evaluated again for side effects on any new worker that joins POOL."
-  (let* ((work-list (make-list (if (no-workers-p worker-pool) 1 (worker-count worker-pool))))
+  (let* ((work-list (make-list (if (no-workers-p worker-pool) 1 (%worker-count worker-pool))))
          (make-work (constantly form))
          (results (dispatch-work worker-pool make-work work-list result-done t replay-required)))
     (when (and worker-pool replay-required) (add-evaluated-form worker-pool form))
@@ -522,7 +522,7 @@ identified by ID."
      nil)))
 
 (defun eval-form-repeatedly (worker-pool result-count form
-                             &key (worker-count (when worker-pool (worker-count worker-pool))))
+                             &key (worker-count (when worker-pool (%worker-count worker-pool))))
   "Evaluates FORM, which must return a function of no arguments, on WORKER-COUNT
 workers in WORKER-POOL, then arranges for the workers to repeatedly call the
 function to create RESULT-COUNT results, which are returned in a list.
@@ -637,7 +637,7 @@ identified by ID."
 
 (defun eval-repeatedly-async-state (worker-pool form initial-state update-state
                                     &key (worker-count
-                                          (when worker-pool (worker-count worker-pool))))
+                                          (when worker-pool (%worker-count worker-pool))))
   "Evaluates FORM, which must return a function of one argument, on WORKER-COUNT
 workers in WORKER-POOL, then arranges for the workers to repeatedly call the
 work function and send its results back to the master.  The work function is

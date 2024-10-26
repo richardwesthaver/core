@@ -2,6 +2,10 @@
 
 ;; This library was written by Yukari Hafner <shinmera@tymoon.eu>: https://github.com/Shinmera/punycode.git
 
+;;; Commentary:
+
+;; ref: https://datatracker.ietf.org/doc/html/rfc3492
+
 ;;; Code:
 (in-package :net/codec/punycode)
 

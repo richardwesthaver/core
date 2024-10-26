@@ -31,6 +31,15 @@
 ;;; Code:
 (in-package :net/srv)
 
+(pkg:defpkg :net/srv/http
+  (:use :cl :std :net/proto/http 
+   :net/codec/http :net/core :net/cookie)
+  (:use-reexport :net/srv))
+
+(pkg:defpkg :net/srv/udp
+  (:use :cl :std :net/udp :net/codec/tlv :net/core)
+  (:use-reexport :net/srv))
+
 ;;; Vars
 (defvar *router*)
 (defvar *service*)
