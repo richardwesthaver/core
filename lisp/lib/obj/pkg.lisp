@@ -304,12 +304,16 @@
   (:use :cl :std)
   (:export :circle :square :cube :sphere :triangle :pyramid))
 
-(defpackage :obj/cfg
-  (:nicknames :cfg)
+(defpackage :obj/config
+  (:nicknames :config)
   (:use :cl :std)
-  (:export :cfg :make-cfg :find-cfg
-   :cfg-find :cfg-get :defcfg
-   :load-cfg))
+  (:export :config :make-config :find-config
+   :config-find :config-get :defconfig
+   :load-config))
+
+(defpackage :obj/build
+  (:use :cl :std)
+  (:export :build :build-from))
 
 (defpackage :obj/db
   (:nicknames :db)
@@ -342,6 +346,11 @@
            :formp
            :unwrap-object
            :wrap-object))
+
+(defpackage :obj/plan
+  (:nicknames :plan)
+  (:use :cl :std :obj/ast :obj/config :obj/build)
+  (:export :plan :planner))
 
 (defpackage :obj/query
   (:nicknames :query)
@@ -477,13 +486,9 @@
   (:export :secret-object :reveal-object :conceal-object
    :ensure-revealed :ensure-concealed))
 
-(defpackage :obj/build
-  (:use :cl :std)
-  (:export :build :build-from))
-
 (uiop:define-package :obj
   (:use-reexport :list :hash :color
    :seq :tree :graph :id
    :db :ast :time :uri :url
-   :cfg :temperature :direction
+   :config :temperature :direction
    :shape :secret :query))

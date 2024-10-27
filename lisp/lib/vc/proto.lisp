@@ -85,7 +85,7 @@ are missing."))
 ;;;; Config
 
 ;; usually parsed from .gitconfig or .hgrc
-(defclass vc-config (cfg) ())
+(defclass vc-config (config) ())
 
 ;;;; Ignorefile
 

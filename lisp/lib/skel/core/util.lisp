@@ -73,13 +73,13 @@ overwritten with the AUTO flag."
         (let ((next (pathname-parent-directory-pathname path)))
           (find-sk-file next ext)))))
 
-  (defun init-skelfile (&optional file name cfg)
+  (defun init-skelfile (&optional file name config)
     "Initialize a skelfile."
     (let ((sk (make-instance 'sk-project 
 		:name (or name (pathname-name (sb-posix:getcwd)))))
 	  (path (or file *default-skelfile*))
 	  (fmt :pretty))
-      (when cfg (setf sk (sk-install-user-config sk cfg)))
+      (when config (setf sk (sk-install-user-config sk config)))
       (sk-write-file sk :path path :fmt fmt))))
 
 (defun find-skelfile (start &key (load nil) (name *default-skelfile*) (ext "sk") (walk t) error)

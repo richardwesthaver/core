@@ -606,8 +606,8 @@ via the special form stored in RECIPE."
         (write-sxp-stream self out :fmt fmt))
     (unless *keep-ast* (setf (ast self) nil))))
 
-(defmethod sk-install-user-config ((self sk-project) (cfg sk-user-config))
-  (with-slots (vc store stash license author) (debug! cfg) ;; log-level, custom, fmt
+(defmethod sk-install-user-config ((self sk-project) (config sk-user-config))
+  (with-slots (vc store stash license author) (debug! config) ;; log-level, custom, fmt
     (setf (sk-vc self) vc)
     (setf (sk-stash self) stash)
     (setf (sk-store self) store)

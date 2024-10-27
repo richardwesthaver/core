@@ -11,7 +11,9 @@
 
 (defclass secret-object ()
   ((name :initform (symbol-name #1=(gensym "secret")) :type string :accessor secret-object-name :initarg :name)
-   (symbol :initform #1# :type symbol :accessor secret-object-symbol :initarg :symbol)))
+   (symbol :initform #1# :type symbol :accessor secret-object-symbol :initarg :symbol))
+  (:documentation "A 'secret' object which is hidden from view when printing to avoid embarassing
+leakage of sensitive data."))
 
 (defmethod print-object ((self secret-object) stream)
   (if (secret-object-name self)

@@ -1,0 +1,41 @@
+;;; obj/config.lisp --- Configuration flavors
+
+;;
+
+;;; Commentary:
+;; The goal of this package is to make it easy to map an object in
+;; memory to a 'user config interface' - which could be a
+;; configuration file, a datagram, CLI flags, etc.
+;;
+;; This package only provides the config protocol, for other packages to
+;; consume.
+
+;;; Usage: 
+#|
+|#
+;;; Code:
+(in-package :obj/config)
+(defclass config () ()
+  (:documentation "A configuration object."))
+
+(defgeneric make-config (obj &rest args &key &allow-other-keys)
+  (:documentation "Make a new configuration."))
+
+(defgeneric find-config (obj &rest args &key &allow-other-keys)
+  (:documentation "Find an existing configuration."))
+(defgeneric config-find (obj key &key &allow-other-keys)
+  (:documentation "Find KEY in configuration OBJ."))
+(defgeneric config-get (obj key)
+  (:documentation "Get value of KEY in configuration OBJ."))
+(defgeneric (setf config-get) (obj key val))
+
+(defmacro defconfig (name direct-superclasses direct-slots &rest options)
+  "DEFCLASS sugar for CONFIG objects."
+  `(defclass ,name ,(append direct-superclasses '(obj/config::config))
+     ,direct-slots
+     ,@options))
+
+(defgeneric configure (obj &rest args &key &allow-other-keys)
+  (:documentation "Configure an object with supplied args."))
+
+;;; TODO 2024-10-27: Simple Config AST

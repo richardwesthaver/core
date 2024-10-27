@@ -53,7 +53,7 @@
                (:file "temperature")
                (:file "direction")
                (:file "shape")
-               (:file "cfg")
+               (:file "config")
                (:file "db")
                (:file "ast")
                (:file "query")

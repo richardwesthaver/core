@@ -12,8 +12,8 @@
 
 (defpackage :cli/tools/tmux
   (:use :cl :std :cli/env :cli/tools/term)
-  (:import-from :obj/cfg
-   :defcfg :make-cfg :find-cfg)
+  (:import-from :obj/config
+   :defconfig :make-config :find-config)
   (:export
    :*tmux-user-config-path*
    :*tmux-system-config-path*

@@ -5,12 +5,15 @@
                (:feature :linux :uring) 
                (:feature :linux :xkb) 
                (:feature :linux :evdev)
+               (:feature :linux :btrfs)
                :sb-bsd-sockets :zstd :flexi-streams)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
                (:file "static-vector")
                (:file "fast")
+               (:file "xsubseq")
+               (:file "smart-buffer")
                (:file "uring" :if-feature :linux)
                (:file "socket")
                (:file "stream")
@@ -19,8 +22,8 @@
                (:file "flate")
                (:file "zstd")
                (:file "kbd")
-               (:file "xsubseq")
-               (:file "smart-buffer"))
+               (:file "disk")
+               (:file "io"))
   :in-order-to ((test-op (test-op "io/tests"))))
 
 (defsystem :io/tests

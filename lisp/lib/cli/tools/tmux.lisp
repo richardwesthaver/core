@@ -94,35 +94,35 @@
     ;; TODO 2024-08-06: parse for real
     (make-tmux-command :name (car words) :args (cdr words))))
 
-(defcfg tmux-config ()
+(defconfig tmux-config ()
   ((commands :initform nil)
    (server-options :type hash-table)
    (session-options :type hash-table)
    (window-options :type hash-table)
    (keys :type hash-table))
-  (:documentation "A CFG object containing the parsed content of a tmux configuration file."))
+  (:documentation "A CONFIG object containing the parsed content of a tmux configuration file."))
 
-(defmethod make-cfg ((obj (eql :tmux)) &key commands server session window keys)
-  (let ((cfg (make-instance 'tmux-config)))
-    (when commands (setf (slot-value cfg 'commands) commands))
-    (when server (setf (slot-value cfg 'server-options) server))
-    (when session (setf (slot-value cfg 'session-options) session))
-    (when window (setf (slot-value cfg 'window-options) window))
-    (when keys (setf (slot-value cfg 'keys) keys))
-    cfg))
+(defmethod make-config ((obj (eql :tmux)) &key commands server session window keys)
+  (let ((config (make-instance 'tmux-config)))
+    (when commands (setf (slot-value config 'commands) commands))
+    (when server (setf (slot-value config 'server-options) server))
+    (when session (setf (slot-value config 'session-options) session))
+    (when window (setf (slot-value config 'window-options) window))
+    (when keys (setf (slot-value config 'keys) keys))
+    config))
 
-(defmethod find-cfg ((obj (eql :tmux)) &key system user)
+(defmethod find-config ((obj (eql :tmux)) &key system user)
   "Find a tmux configuration and load it.
 
 When SYSTEM is non-nil, skip check for user config.
 
-When USER is non-nil it should be the name of a user whose cfg will be loaded
+When USER is non-nil it should be the name of a user whose config will be loaded
 from /home/USER/.tmux.conf."
   (let ((path (cond
                 (system (probe-file *tmux-system-config-path*))
                 (user (probe-file (format nil "/home/~A/.tmux.conf" user)))
                 (t (or (probe-file *tmux-user-config-path*) (probe-file *tmux-system-config-path*)))))
-        (obj (make-cfg :tmux :commands nil)))
+        (obj (make-config :tmux :commands nil)))
     (with-open-file (file path)
       (with-output-to-string (str)
         (loop for l = (read-line file nil nil)
@@ -131,7 +131,7 @@ from /home/USER/.tmux.conf."
               do (push (parse-tmux-command l) (slot-value obj 'commands)))))
     obj))
 
-;; (describe (find-cfg :tmux))
+;; (describe (find-config :tmux))
 
 ;;; Format Strings
 (defun format-tmux-string (dst fmt &rest args)

@@ -28,11 +28,11 @@
 (defclass git-config (vc-config) ())
 
 ;; TODO 2024-08-22: read ini files
-(defmethod find-cfg ((obj (eql :git)) &rest args &key (directory (user-homedir-pathname)))
+(defmethod find-config ((obj (eql :git)) &rest args &key (directory (user-homedir-pathname)))
   (declare (ignore args))
   (let ((*default-pathname-defaults* directory))
-    (when-let ((cfg (directory ".gitconfig")))
-      (car cfg))))
+    (when-let ((config (directory ".gitconfig")))
+      (car config))))
 
 (defclass git-repo (vc-repo)
   ((index))) ;; working-directory

@@ -138,3 +138,5 @@
   (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars)
   (:export))
 
+(defpackage :skel/core/plan
+  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars))

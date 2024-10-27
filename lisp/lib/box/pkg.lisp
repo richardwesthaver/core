@@ -18,7 +18,7 @@
 
 (defpackage :box/archiso
   (:nicknames :archiso)
-  (:use :cl :std :cli/shell :dat/json :obj/cfg)
+  (:use :cl :std :cli/shell :dat/json :obj/config)
   (:export :*archiso-config* :*archiso-creds*))
 
 (defpackage :box/qmp

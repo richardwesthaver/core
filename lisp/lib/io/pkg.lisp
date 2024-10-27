@@ -159,3 +159,7 @@
    :finalize-buffer :with-smart-buffer
    :buffer-on-memory-p :delete-stream-file
    :delete-temporary-files :buffer-limit-exceeded))
+
+(defpackage :io/disk
+  (:use :cl :std :io/proto :btrfs)
+  (:export))

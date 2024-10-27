@@ -33,7 +33,7 @@
 (pkg:defpkg :skel/core
   (:use :cl :std)
   (:use-reexport :skel/core/condition :skel/core/proto :skel/core/vars 
-   :skel/core/header :skel/core/obj :skel/core/util :dat/sxp))
+   :skel/core/header :skel/core/obj :skel/core/util))
 
 (pkg:defpkg :skel/comp
   (:use :cl :std)

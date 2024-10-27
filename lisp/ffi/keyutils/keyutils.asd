@@ -20,7 +20,8 @@
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :keyutils)
-               (:file "keyctl" :depends-on ("pkg" "constants")))
+               (:file "keyutils" :depends-on ("pkg" "constants"))
+               (:file "keyctl" :depends-on ("keyutils")))
   :in-order-to ((test-op (test-op "keyutils/tests"))))
 
 (defsystem :keyutils/tests
