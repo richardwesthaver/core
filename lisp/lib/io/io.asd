@@ -17,7 +17,6 @@
                (:file "proto")
                (:file "chunky")
                (:file "flate")
-               (:file "port")
                (:file "zstd")
                (:file "kbd")
                (:file "xsubseq")
