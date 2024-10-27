@@ -5,5 +5,10 @@
 ((:asd "prelude")
  (:asd "user")
  (:asd "core")
- (:mod "std" (:asd "std")))
+ (:mod "std" (:asd "std"))
+ (:mod "ffi" (:asd "ffi"))
+ (:mod "lib" (:mod "web"))
+ (:mod "bin" (:asd "bin")))
+
+
        
