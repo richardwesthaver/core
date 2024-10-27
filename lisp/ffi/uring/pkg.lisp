@@ -237,6 +237,6 @@ queue (CQ), and form the foundation of the new interface.
             (pad (array unsigned-char 3))
             (pad2 unsigned)))
 
-(define-alien-type io-uring* (* (struct io-uring)))
+(define-alien-type io-uring* (* io-uring))
 
 (define-alien-type io-uring-probe* (* (struct io-uring-probe)))

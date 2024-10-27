@@ -122,11 +122,11 @@ for a given type specifier."
 (declaim (inline %memalign))
 (defun %memalign (size alignment)
   (with-alien ((box (* t)))
-    (let ((errno (std/alien:posix-memalign box alignment size)))
+    (let ((errno 
+            (std/alien:posix-memalign (addr box) alignment size)))
       (when (not (zerop errno))
         (error "posix_memalign() returned error ~A" errno))
-      ;; (mem-ref box :pointer)
-      (deref box))))
+      box)))
 
 (defun %allocate-static-vector (length element-type alignment)
   (declare (type (unsigned-byte 16) alignment))
@@ -152,11 +152,11 @@ for a given type specifier."
                (lisp-header-offset
                  (- data-offset +array-header-size+))
                (lisp-header-pointer
-                 (sb-sys:sap+ foreign-block lisp-header-offset))
+                 (sb-sys:sap+ (alien-sap foreign-block) lisp-header-offset))
                (extra-header-offset
                  (- data-offset (* 2 +array-header-size+)))
                (extra-header-pointer
-                 (sb-sys:sap+ foreign-block extra-header-offset)))
+                 (sb-sys:sap+ (alien-sap foreign-block) extra-header-offset)))
           ;; Write Lisp header: tag and length
           (setf (sb-sys:sap-ref-word lisp-header-pointer 0) widetag)
           (setf (sb-sys:sap-ref-word lisp-header-pointer sb-vm:n-word-bytes)
@@ -255,7 +255,6 @@ foreign memory so you must always call FREE-STATIC-VECTOR to free it."
   ;; TODO: fix %allocate-static-vector for all implementations
   (let ((vector
           (%allocate-static-vector length element-type
-                                   #+sbcl
                                    (or alignment +default-alignment+))))
     (if initial-element-p
         (fill vector initial-element)

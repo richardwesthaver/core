@@ -2,11 +2,12 @@
 
 ;; see https://github.com/jnjcc/cl-qrencode
 
+;; Copyright (c) 2011-2014 jnjcc, Yste.org. All rights reserved.
+
 ;;; Code:
 (in-package :dat/qrcode)
 
-;;;; Copyright (c) 2011-2014 jnjcc, Yste.org. All rights reserved.
-;;;;
+
 (defun read-file-content (fpath)
   (with-open-file (fp fpath)
     (let ((content (make-string (file-length fp))))
@@ -14,7 +15,6 @@
       content)))
 
 ;;;; Galois Field with primitive element 2, as used by Reed-Solomon code
-
 (defclass galois ()
   ((power :initform nil :initarg :power :reader gf-power
           :documentation "Galois Field GF(2^POWER)")

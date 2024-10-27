@@ -15,18 +15,22 @@
 ;; impl: https://github.com/froydnj/archive
 ;; impl: https://gitlab.common-lisp.net/cl-tar
 
+;; rust impl: https://github.com/alexcrichton/tar-rs
+
 ;;; Code:
 (in-package :dat/tar)
 
+;;; Vars
 (defvar *tar-block-bytes* 512)
 
 (defvar *tar-record-blocks* 20)
 
 (defvar *tar-record-bytes* (* *tar-block-bytes* *tar-record-blocks*))
 
+;;; Conditions
 (deferror tar-error () () (:auto t))
 
+;;; Objects
 (defclass archive () ())
 (defclass tar-archive (archive) ())
-
 (defclass tar-entry () ())

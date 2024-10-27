@@ -5,6 +5,9 @@
 ;;; Code:
 (in-package :io/zstd)
 
+;;; Vars
+
+;;; Conditions
 (eval-always (deferror zstd-error (io-error) () (:auto t)))
 
 (deferror zstd-input-error (zstd-error) () (:auto t))
@@ -13,6 +16,7 @@
 (deferror zstd-checksum-error (zstd-error) () (:auto t))
 (deferror zstd-dictionary-error (zstd-error) () (:auto t))
 
+;;; Objects
 (defclass zstd-compressing-stream (compressing-stream)
   ((%level :initform *compression-level* :accessor compression-level)
    (%input :initform (allocate-zstd-inbuffer) :reader input)

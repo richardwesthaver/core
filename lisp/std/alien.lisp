@@ -218,4 +218,4 @@ Each var can be of the form:
 
 (define-alien-routine memset void (ptr (* t)) (constant int) (size size-t))
 (define-alien-routine memcpy void (dst (* t)) (src (* t)) (size size-t))
-(define-alien-routine posix-memalign int (box (* t)) (alignment size-t) (size size-t))
+(define-alien-routine posix-memalign int (box (* (* t))) (alignment size-t) (size size-t))

@@ -15,17 +15,12 @@
 (defpackage :io/proto
   (:use :cl :std/condition)
   (:export :io-error
-           :output
-           :input
-           :output-size
-           :input-size
-           :output-buffer
-           :input-buffer
-           :input-position
-           :output-position
-           :output-available-p
-           :input-available-p
-           :fill-buffer))
+   :output :input
+   :output-size :input-size
+   :output-buffer :input-buffer
+   :input-position :output-position
+   :output-available-p :input-available-p
+   :fill-buffer))
 
 (defpackage :io/static-vector
   (:use :cl :std :sb-alien)
@@ -66,7 +61,7 @@
    #:read128-le #:readu128-le #:read128-be #:readu128-be
    #:fast-output-stream #:fast-input-stream))
 
-(defpackage :io/ring
+(defpackage :io/uring
   (:use :cl :uring :io/proto)
   (:import-from :sb-alien :addr)
   (:import-from :std :deferror :eval-always))
@@ -104,9 +99,7 @@
   (:use :cl :io/proto)
   (:import-from :std :deferror :eval-always)
   (:import-from :sb-gray 
-
-   :fundamental-binary-output-stream
-   :fundamental-binary-input-stream)
+   :fundamental-binary-output-stream :fundamental-binary-input-stream)
   (:import-from :std/stream :wrapped-stream)
   (:export :flate-error :compression-error :decompression-error
            
@@ -115,11 +108,13 @@
    :compress-object :decompress-object :compress :decompress
    :compressor :compressing-stream :decompressor :decompressing-stream
    :make-decompressing-stream :make-compressing-stream
-   :*decompression-buffer-size*
-   :*compression-level*
-   :compress-with
-   :decompress-with
-   :compression-level))
+   :*decompression-buffer-size* :*compression-level*
+   :compress-with :decompress-with
+   :compression-level
+           :*compressor*
+   :*decompressor*
+           :*compression-type*
+   :*compression-types*))
 
 (defpackage :io/zstd
   (:use :cl :std :io/proto :io/flate)
@@ -130,21 +125,37 @@
    :zstd-compressstream2 :zstd-decompressstream
    :allocate-zstd-inbuffer :allocate-zstd-outbuffer :zstd-outbuffer :zstd-inbuffer
    :zstd-inbuffer-src :zstd-inbuffer-size :zstd-outbuffer-dst :zstd-outbuffer-size
-   :zstd-enddirective :zstd-dstreaminsize :zstd-dstreamoutsize
-   :zstd-cstreaminsize :zstd-cstreamoutsize :zstd-inbuffer-pos :zstd-outbuffer-pos)
+   :zstd-enddirective :zstd-dstreaminsize :zstd-dstreamoutsize :zstd-cstreaminsize 
+   :zstd-cstreamoutsize :zstd-inbuffer-pos :zstd-outbuffer-pos)
   (:import-from :std :deferror :eval-always)
   (:import-from :sb-gray :stream-force-output :stream-finish-output
    :stream-write-sequence)
   (:export :zstd-error :zstd-compressor :zstd-decompressor
-           :with-zstd-output
-           :with-zstd-input
-           :with-zstd-buffer
-           :with-zstd-stream))
+   :with-zstd-output :with-zstd-input
+   :with-zstd-buffer :with-zstd-stream))
 
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb)
   (:export :kbd-error))
 
-(pkg:defpkg :io
+(defpackage io/xsubseq
   (:use :cl)
-  (:use-reexport :io/proto :io/ring :io/flate :io/zstd :io/stream :io/socket :io/chunky))
+  (:import-from :sb-cltl2 :variable-information)
+  (:import-from :std/type :octet-vector)
+  (:export :xsubseq
+   :octet-xsubseq :string-xsubseq
+   :concatenated-xsubseqs :null-concatenated-xsubseqs
+   :octet-concatenated-xsubseqs :string-concatenated-xsubseqs
+   :make-concatenated-xsubseqs :xlength
+   :xnconc :xnconcf
+   :coerce-to-sequence :coerce-to-string
+   :with-xsubseqs))
+
+(defpackage io/smart-buffer
+  (:use :cl :io/xsubseq)
+  (:export :*default-memory-limit*
+   :*default-disk-limit* :smart-buffer
+   :make-smart-buffer :write-to-buffer
+   :finalize-buffer :with-smart-buffer
+   :buffer-on-memory-p :delete-stream-file
+   :delete-temporary-files :buffer-limit-exceeded))

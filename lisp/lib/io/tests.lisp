@@ -1,5 +1,6 @@
 (defpackage :io/tests
   (:use :cl :std :rt :io :uring :zstd :sb-gray))
+
 (in-package :io/tests)
 (defsuite :io)
 (in-suite :io)
@@ -98,3 +99,22 @@ compressed-data)
 (close out-stream)
 (fail (write-byte 2 out-stream) 'salza2:stream-closed-error))))
 |#
+
+;;; Static Vectors
+(deftest static-vector ()
+  (with-static-vector (v 4)
+    (isequalp #(0 0 0 0) v))
+  (isequalp #(0 0 0 0) (make-static-vector 4)))
+
+;;; Smart Buffers
+(deftest smart-buffer ()
+  (let ((sb (make-smart-buffer)))
+    (istype 'smart-buffer sb)))
+
+;;; XSubseq
+(deftest xsubseq ()
+  (istype 'string
+          (with-xsubseqs (ret)
+            (iszero (xlength ret))
+            (xnconcf ret (xsubseq "test" 0))
+            (is= 4 (xlength ret)))))

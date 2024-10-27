@@ -27,19 +27,13 @@
 ;;; reflects interesting aspects of the messages themselves.
 (in-package :dat/midi)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; Midifile protocol
-
 (defgeneric midifile-format (midifile))
 (defgeneric (setf midifile-format) (format midifile))
 (defgeneric midifile-division (midifile))
 (defgeneric midifile-tracks (midifile))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; Message protocol
-
 (defgeneric message-time (message))
 (defgeneric (setf message-time) (time message))
 (defgeneric message-status (message))
@@ -54,8 +48,6 @@
 ;; added 03-05-07
 (defgeneric message-program (message))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; File support
 (eval-when (:compile-toplevel :load-toplevel)
   (defun string-code (s)

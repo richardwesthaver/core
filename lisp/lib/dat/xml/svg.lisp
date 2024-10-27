@@ -7,7 +7,7 @@
 
 ;;; MATRIX
 (defun id-matrix (dims)
-  "Return a square identity matrix with the specified "
+  "Return a square identity matrix with the specified dimensions."
   (let ((array (make-array (* dims dims) :initial-element 0.0 :element-type 'single-float)))
     (dotimes (d dims)
       (setf (aref array (* d (1+ dims))) 1.0))

@@ -11,7 +11,7 @@
      (export '(,name) :uring)))
 
 (defmacro def-with-ring (name &body args)
-  `(defalien-int ,name (ring (* (struct io-uring))) ,@args))
+  `(defalien-int ,name (ring (* io-uring)) ,@args))
 
 (defvar *io-opcodes* nil)
 

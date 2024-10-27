@@ -28,11 +28,20 @@
 (defparameter *compression-buffer-size* 4096)
 (defparameter *decompression-buffer-size* 4096)
 (defparameter *default-compression-level* (zstd:zstd-defaultclevel))
+(defvar *compression-types* (list :zstd)
+  "List of available compression backend types. May be used as the value of
+*COMPRESSION-TYPE*.")
+(defvar *compression-type* :zstd
+  "Primary compression backend used by this Lisp system. Must be one of
+*COMPRESSION-TYPES* and defaults to :ZSTD.")
 (defvar *compression-level* *default-compression-level*)
-
+(defvar *compressor* nil
+  "The global COMPRESSOR object.")
+(defvar *decompressor* nil
+  "The global DECOMPRESSOR object.")
 ;;; Utils
 
-;;; Errors
+;;; Conditions
 (eval-always (deferror flate-error () () (:auto t)))
 
 (deferror compression-error (flate-error) () (:auto t))
@@ -56,12 +65,10 @@
 ;; from SALZA2
 (defgeneric compress-octet-vector (vector compressor &key start end))
 (defgeneric decompress-octet-vector (vector decompressor &key start end))
+
 ;;; Compression
 ;; AKA 'DEFLATE'
 
-;; compress-octet-vector
-
-;; finish-compression (finish-output?)
 ;; with-compressor
 ;; reset-compressor
 

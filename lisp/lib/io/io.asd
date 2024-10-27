@@ -11,7 +11,7 @@
   :components ((:file "pkg")
                (:file "static-vector")
                (:file "fast")
-               (:file "ring" :if-feature :linux)
+               (:file "uring" :if-feature :linux)
                (:file "socket")
                (:file "stream")
                (:file "proto")

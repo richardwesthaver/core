@@ -17,22 +17,22 @@
 (defalien-int io-uring-minor-version)
 (defalien-int io-uring-check-version (major int) (minor int))
 
-(define-alien-routine io-uring-get-probe-ring (* io-uring-probe) (ring (* (struct io-uring))))
+(define-alien-routine io-uring-get-probe-ring (* io-uring-probe) (ring (* io-uring)))
 (define-alien-routine io-uring-get-probe (* io-uring-probe))
 (define-alien-routine io-uring-free-probe void (p (* (struct io-uring-probe))))
 
 ;; (defalien-int io-uring-opcode-supported (p (* (struct io-uring-probe))) (op int))
 (defalien-int io-uring-queue-init-mem
   (entries unsigned)
-  (ring (* (struct io-uring)))
+  (ring (* io-uring))
   (p (* (struct io-uring-params)))
   (buf (* t)) (buf-size size-t))
 (defalien-int io-uring-queue-init-params
   (entries unsigned)
-  (ring (* (struct io-uring)))
+  (ring (* io-uring))
   (p (* (struct io-uring-params))))
-(defalien-int io-uring-queue-init (entries int) (ring (* (struct io-uring))) (flags unsigned))
-(defalien-int io-uring-queue-mmap (fd int) (p (* (struct io-uring-params))) (ring (* (struct io-uring))))
+(defalien-int io-uring-queue-init (entries int) (ring (* io-uring)) (flags unsigned))
+(defalien-int io-uring-queue-mmap (fd int) (p (* (struct io-uring-params))) (ring (* io-uring)))
 (def-with-ring io-uring-ring-dontfork)
 (def-with-ring io-uring-queue-exit)
 (def-with-ring io-uring-peek-batch-cqe (cqes (array (* (struct io-uring-cqe)))) (count unsigned))
@@ -136,13 +136,13 @@
 (defalien-int io-uring-register (fd unsigned-int) (opcode unsigned-int) (arg (* t)) (nr-args unsigned-int))
 
 (define-alien-routine io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
-  (ring (* (struct io-uring)))
+  (ring (* io-uring))
   (nentries unsigned-int)
   (bgid int)
   (flags unsigned-int)
   (ret (* int)))
 (defalien-int io-uring-free-buf-ring
-    (ring (* (struct io-uring)))
+    (ring (* io-uring))
   (br (* (struct io-uring-buf-ring)))
   (nentries unsigned-int)
   (bgid int))

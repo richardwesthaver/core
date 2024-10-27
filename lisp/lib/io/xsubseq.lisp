@@ -2,26 +2,10 @@
 
 ;; This is ported from Fukamachi's XSUBSEQ
 
+;;; Commentary:
+
+
 ;;; Code:
-(require :sb-cltl2)
-(defpackage io/xsubseq
-  (:use :cl)
-  (:import-from :sb-cltl2 :variable-information)
-  (:import-from :std/type :octet-vector)
-  (:export :xsubseq
-           :octet-xsubseq
-           :string-xsubseq
-           :concatenated-xsubseqs
-           :null-concatenated-xsubseqs
-           :octet-concatenated-xsubseqs
-           :string-concatenated-xsubseqs
-           :make-concatenated-xsubseqs
-           :xlength
-           :xnconc
-           :xnconcf
-           :coerce-to-sequence
-           :coerce-to-string
-           :with-xsubseqs))
 (in-package :io/xsubseq)
 
 (defstruct (xsubseq (:constructor make-xsubseq (data start &optional (end (length data))

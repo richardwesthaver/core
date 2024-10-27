@@ -152,3 +152,21 @@
         (trace! (slot-value footer 'dat/parquet::schema))
         (trace! (file-position st))
         (trace! (file-length st))))))
+
+;;; Midi
+;; FIX 2024-10-26: move to packy test files
+(defparameter *midi-file* "~/.stash/MIDI_sample.mid")
+
+(deftest midi ()
+  (istype 'midi:midifile (midi:read-midi-file *midi-file*)))
+
+;;; PNG
+;; TODO 2024-10-26: 
+(deftest png ())
+
+;;; SVG
+;; FIX 2024-10-26: move to packy test files
+(defparameter *svg-file* "~/.stash/simplex16.svg")
+
+(deftest svg ()
+  (istype 'list (svg:parse-svg-file *svg-file*)))

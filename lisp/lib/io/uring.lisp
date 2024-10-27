@@ -1,9 +1,9 @@
-;;; io/ring.lisp --- IO Ring Library
+;;; io/uring.lisp --- IO_URING High-level Lisp Protocol
 
-;; 
+;; Drop-in IO_URING API.
 
 ;;; Code:
-(in-package :io/ring)
+(in-package :io/uring)
 
 (load-uring)
 
