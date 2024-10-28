@@ -297,12 +297,13 @@ building a query-plan."
   (issubclass 'stealth-mixer 'stealth-target))
 
 ;;;; Filtered
-(deftest filtered-function ()
-  (defmethod fac ((n number))
-    (* n (fac (- n 1))))
+(defmethod fac ((n number))
+  (* n (fac (- n 1))))
 
-  (defmethod fac ((n (eql 0)))
-    1)
+(defmethod fac ((n (eql 0)))
+  1)
+
+(deftest filtered-function ()
   (is= 362880 (fac 10)))
 
 ;;;; Typed

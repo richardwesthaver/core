@@ -15,25 +15,25 @@
 
 ;;; Code:
 (defpackage :obj/meta/stealth
-  (:nicknames :meta/stealth)
+  (:nicknames :meta/stealth :stealth)
   (:use :cl :std :obj/meta :sb-mop)
   (:export
    #:add-mixin
    #:define-stealth-mixin))
 
 (defpackage :obj/meta/typed
-  (:nicknames :meta/typed)
+  (:nicknames :meta/typed :typed)
   (:use :cl :std :obj/meta :sb-mop))
 
 (defpackage :obj/meta/filtered
-  (:nicknames :meta/filtered)
+  (:nicknames :meta/filtered :filtered)
   (:use :cl :std :obj/meta :sb-mop)
   (:export
    :define-filtered-function :filtered :filtered-function :filtered-method
    :generic-function-filter-expression :generic-function-filters :method-filter :simple-filtered-function))
 
 (defpackage :obj/meta/sealed
-  (:nicknames :meta/sealed)
+  (:nicknames :meta/sealed :sealed)
   (:use :cl :std :obj/meta)
   (:import-from :sb-pcl :eql-specializer :intern-eql-specializer
    :eql-specializer-object :funcallable-standard-class)
@@ -92,27 +92,33 @@
    :potentially-sealable-standard-method))
 
 (defpackage :obj/meta/fast
-  (:nicknames :meta/fast)
+  (:nicknames :meta/fast :fast)
   (:use :cl :std :obj/meta/sealed :obj/meta)
   (:import-from :sb-int :gensymify)
   (:import-from :sb-walker :macroexpand-all)
   (:export :fast-generic-function :fast-method :inlineable :.lambda.))
 
 (defpackage :obj/meta/lazy
+  (:nicknames :meta/lazy :lazy)
   (:use :cl :std :obj/meta))
 
 (defpackage :obj/meta/overloaded
+  (:nicknames :meta/overloaded :overloaded)
+  (:use :cl :std :obj/meta))
+
+(defpackage :obj/meta/indexed
+  (:nicknames :meta/indexed :indexed)
   (:use :cl :std :obj/meta))
 
 (defpackage :obj/meta/stored
-  (:nicknames :meta/stored)
+  (:nicknames :meta/stored :stored)
   (:use :cl :std :obj/meta :obj/id)
   (:export
    :stored-class :initialize-stored-class
    :stored-slot))
 
 (defpackage :obj/meta/dynamic
-  (:nicknames :meta/dynamic)
+  (:nicknames :meta/dynamic :dynamic)
   (:use :cl :std :obj/meta :std/macs)
   (:export :dset :dref :dynamic-class
    :slot-dlet :slot-dvar :slot-dvar*))
@@ -225,3 +231,27 @@ which the methods are called and be set to either
                                  (,@(rest wrap-around)
                                     (make-method ,form)))))
       form)))
+
+(defun find-class-for-direct-slot (class def)
+  (let ((list (sb-mop:compute-class-precedence-list class)))
+    (labels ((rec (super)
+               (if (null super)
+                   nil
+                   (aif (find-direct-slot-def-by-name super (sb-mop:slot-definition-name def))
+                        (class-name super)
+                        (rec (pop list))))))
+      (rec class))))
+
+;;; Slot Helpers
+(defun find-direct-slot-def-by-name (class slot-name)
+  (loop for slot-def in (sb-mop:class-direct-slots class)
+        when (eq (sb-mop:slot-definition-name slot-def) slot-name)
+        do (return slot-def)))
+
+(defun find-slot-def-by-name (class slot-name)
+  (loop for slot-def in (sb-mop:class-slots class)
+        when (eq (sb-mop:slot-definition-name slot-def) slot-name)
+        do (return slot-def)))
+
+(defgeneric find-slot-defs-by-type (class type &optional by-subtype))
+(defgeneric find-slot-def-names-by-type (class type &optional by-subtype))

@@ -107,11 +107,16 @@ example."
 (defgeneric expr-name (self))
 (defgeneric expr-op (self))
 (defgeneric lhs (self))
+(defgeneric (setf lhs) (new self))
 (defgeneric rhs (self))
+(defgeneric (setf rhs) (new self))
 
-(defclass expr () ())
+(defclass expr () ()
+  (:documentation "Base Expression Object."))
 
 (defclass literal-expr (expr) ())
+(defclass logical-expr (expr) ())
+(defclass physical-expr (expr) ())
 
 (defclass unary-expr (expr)
   ((expr :initarg :expr :accessor expr)))

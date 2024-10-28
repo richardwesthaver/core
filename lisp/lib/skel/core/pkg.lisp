@@ -140,3 +140,6 @@
 
 (defpackage :skel/core/plan
   (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars))
+
+(defpackage :skel/core/db
+  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars))

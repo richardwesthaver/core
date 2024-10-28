@@ -20,6 +20,7 @@
      (:file "header")
      (:file "vars")
      (:file "obj")
+     (:file "db")
      (:file "print")
      (:file "util")
      (:file "vm")))

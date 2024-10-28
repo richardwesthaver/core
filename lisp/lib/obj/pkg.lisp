@@ -8,7 +8,11 @@
   (:use :cl :std)
   (:export
    :class-equalp
-   :*standard-metaobjects*))
+   :*standard-metaobjects*
+   :find-slot-def-by-name
+   :find-direct-slot-def-by-name
+   :find-slot-defs-by-type
+   :find-slot-def-names-by-type))
 
 (defpackage :obj/list
   (:nicknames :list)
@@ -345,7 +349,13 @@
            :form
            :formp
            :unwrap-object
-           :wrap-object))
+           :wrap-object
+           :expr
+           :literal-expr
+           :unary-expr
+           :binary-expr
+           :physical-expr
+           :logical-expr))
 
 (defpackage :obj/plan
   (:nicknames :plan)
@@ -354,7 +364,7 @@
 
 (defpackage :obj/query
   (:nicknames :query)
-  (:use :cl :std)
+  (:use :cl :std :plan :ast)
   (:export :query
            :data-source
            :query-expression
@@ -485,6 +495,10 @@
   (:use :cl :std)
   (:export :secret-object :reveal-object :conceal-object
    :ensure-revealed :ensure-concealed))
+
+(defpackage :obj/store
+  (:nicknames :store)
+  (:use :cl :std :indexed :stored))
 
 (uiop:define-package :obj
   (:use-reexport :list :hash :color

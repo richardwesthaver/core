@@ -34,9 +34,9 @@
 
 ;;; Types
 (eval-always
-  (defvar *literal-value-types* '(boolean fixnum signed-byte unsigned-byte float double-float string)))
+  (defvar *literal-value-types* '(boolean integer fixnum signed-byte unsigned-byte float double-float string)))
 
-(deftype literal-value-type () `(or ,@*literal-value-types*))
+(deftype literal-value-type () `(member ,*literal-value-types*))
 
 ;;; Field
 (defstruct field
@@ -115,7 +115,7 @@
 ;;; Proto
 (defgeneric field (self n)
   (:method ((self record-batch) (n fixnum))
-    (aref (record-batch-fields self) n)))
+    (aref (column-data (record-batch-fields self)) n)))
 
 (defgeneric fields (self)
   (:method ((self record-batch))
@@ -162,7 +162,7 @@
 
 (defgeneric row-count (self)
   (:method ((self record-batch))
-    (sequence:length (aref (record-batch-fields self) 0))))
+    (sequence:length (aref (column-data (record-batch-fields self)) 0))))
 
 (defgeneric column-count (self)
   (:method ((self record-batch))
@@ -179,9 +179,9 @@
   (:documentation "Scan the data source, selecting the specified columns."))
 
 ;;; Expressions
-(defclass query-expression () ())
+(defclass query-expr (expr) ())
 
-(defclass query-plan ()
+(defclass query-plan (plan)
   ((schema :type schema :accessor schema :initarg :schema)
    (children :type (vector query-plan))))
 
@@ -192,8 +192,6 @@
   ((children :type (vector physical-plan))))
 
 ;;; Logical Expressions
-(defclass logical-expression (query-expression) ())
-
 (defgeneric to-field (self input)
   (:method ((self string) (input logical-plan))
     (declare (ignore input))
@@ -202,7 +200,7 @@
     (declare (ignore input))
     (make-field :name (princ-to-string self) :type 'number)))
 
-(defclass column-expression (logical-expression)
+(defclass column-expression (logical-expr query-expr)
   ((name :type string :initarg :name :accessor column-name)))
 
 (defmethod to-field ((self column-expression) (input logical-plan))
@@ -212,39 +210,34 @@
 (defmethod df-col ((self string))
   (make-instance 'column-expression :name self))
 
-(defclass literal-expression (logical-expression) ())
+(defclass literal-expression (logical-expr) ())
 
 ;;;;; Alias
-(defclass alias-expression (logical-expression)
-  ((expr :type logical-expression :initarg :expr :accessor expr)
+(defclass alias-expression (logical-expr)
+  ((expr :type logical-expr :initarg :expr :accessor expr)
    (alias :type string :initarg :alias)))
 
-(defclass cast-expression (logical-expression)
-  ((expr :type logical-expression :initarg :expr :accessor expr)
+(defclass cast-expression (logical-expr)
+  ((expr :type logical-expr :initarg :expr :accessor expr)
    (data-type :type form :initarg :data-type)))
 
 (defmethod to-field ((self cast-expression) (input logical-plan))
   (make-field :name (field-name (to-field (expr self) input)) :type (slot-value self 'data-type)))
 
 ;;;;; Unary
-(defclass unary-expression (logical-expression)
-  ((expr :type logical-expression :accessor expr)))
+(defclass unary-expression (logical-expr unary-expr)
+  ((expr :type logical-expr :accessor expr)))
 
 ;;;;; Binary
-(defclass binary-expression (logical-expression)
-  ((lhs :type logical-expression :initarg :lhs :accessor lhs)
-   (rhs :type logical-expression :initarg :rhs :accessor rhs)))
-
-(defgeneric binary-expression-name (self))
-(defgeneric binary-expression-op (self))
+(defclass binary-expression (logical-expr binary-expr) ())
 
 (defclass boolean-binary-expression (binary-expression)
-  ((name :initarg :name :type string :accessor binary-expression-name)
-   (op :initarg :op :type symbol :accessor binary-expression-op)))
+  ((name :initarg :name :type string :accessor expr-name)
+   (op :initarg :op :type symbol :accessor expr-op)))
 
 (defmethod to-field ((self boolean-binary-expression) (input logical-plan))
   (declare (ignore input))
-  (make-field :name (binary-expression-name self) :type 'boolean))
+  (make-field :name (expr-name self) :type 'boolean))
 
 ;; Equiv Expr
 (defclass eq-expression (boolean-binary-expression) ()
@@ -290,8 +283,8 @@
 
 ;; Math Expr
 (defclass math-expression (binary-expression)
-  ((name :initarg :name :type string :accessor binary-expression-name)
-   (op :initarg :op :type symbol :accessor binary-expression-op)))
+  ((name :initarg :name :type string :accessor expr-name)
+   (op :initarg :op :type symbol :accessor expr-op)))
 
 ;; TODO 2024-08-03: ???
 (defmethod to-field ((self math-expression) (input logical-plan))
@@ -324,13 +317,13 @@
    :op 'mod))
 
 ;;;;; Agg Expr
-(deftype aggregate-function () `(function ((input logical-expression)) query-expression))
+(deftype aggregate-function () `(function ((input logical-expr)) query-expr))
 
 (deftype aggregate-function-designator () `(or aggregate-function symbol))
 
-(defclass aggregate-expression (logical-expression)
+(defclass aggregate-expression (logical-expr)
   ((name :type string)
-   (expr :type logical-expression :accessor expr)))
+   (expr :type logical-expr :accessor expr)))
 
 (defgeneric aggregate-expression-p (self)
   (:method ((self aggregate-expression)) t)
@@ -385,7 +378,7 @@
 ;;;;; Projection
 (defclass projection (logical-plan)
   ((input :type logical-plan :initarg :input)
-   (expr :type (vector logical-expression) :initarg :expr)))
+   (expr :type (vector logical-expr) :initarg :expr)))
 
 (defmethod schema ((self projection))
   (schema (slot-value self 'input)))
@@ -393,7 +386,7 @@
 ;;;;; Selection
 (defclass selection (logical-plan)
   ((input :type logical-plan :initarg :input)
-   (expr :type logical-expression :initarg :expr)))
+   (expr :type logical-expr :initarg :expr)))
 
 (defmethod schema ((self selection))
   (schema (slot-value self 'input)))
@@ -401,7 +394,7 @@
 ;;;;; Aggregate
 (defclass aggregate (logical-plan)
   ((input :type logical-plan :initarg :input)
-   (group-expr :type (vector logical-expression) :initarg :group-expr)
+   (group-expr :type (vector logical-expr) :initarg :group-expr)
    (agg-expr :type (vector aggregate-expression) :initarg :agg-expr)))
 
 (defmethod schema ((self aggregate))
@@ -498,7 +491,7 @@
     df))
 
 (defgeneric df-filter (df expr)
-  (:method ((df data-frame) (expr logical-expression))
+  (:method ((df data-frame) (expr logical-expr))
     (setf (data-frame-plan df)
           (make-instance 'selection :input (data-frame-plan df) :expr expr))
     df))
@@ -531,7 +524,7 @@
   (setf (df-plan df) plan))
 
 ;;; Physical Expression
-(defclass physical-expression (query-expression) ())
+(defclass physical-expression (query-expr) ())
 
 (defclass literal-physical-expression (physical-expression) ())
 

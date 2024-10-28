@@ -20,10 +20,8 @@
 (sb-ext:unlock-package :sb-pcl)
 
 ;;; MOP
-(defclass stored-class (standard-class)
-  ((class-id :initform nil
-             :accessor class-id)
-   (slots-to-store :initform nil :accessor slots-to-store)
+(defclass stored-class (standard-class id)
+  ((slots-to-store :initform nil :accessor slots-to-store)
    (slot-locations-and-initforms
     :initform nil
     :accessor slot-locations-and-initforms)
@@ -34,7 +32,8 @@
               :accessor class-initforms)
    (id-cache :initarg :id-cache
              :initform (make-hash-table :size 1000)
-             :accessor id-cache)))
+             :accessor id-cache))
+  (:documentation "Superclass for all stored objects."))
 
 
 ;;; Initialize
@@ -66,10 +65,10 @@
   t)
 
 ;;; Slot mixin
-(defclass stored-slot ()
+(defclass stored-slot (standard-slot-definition)
   ((storep :initarg :storep
            :initform t
-           :accessor store-slot-p)))
+           :accessor storep)))
 
 (defclass stored-direct-slot-definition (stored-slot
                                            standard-direct-slot-definition)
@@ -93,8 +92,8 @@
   (declare (ignore slot-name))
   (let ((effective-definition (call-next-method))
         (direct-definition (car direct-definitions)))
-    (setf (store-slot-p effective-definition)
-          (store-slot-p direct-definition))
+    (setf (storep effective-definition)
+          (storep direct-definition))
     effective-definition))
 
 (defun make-slots-cache (slot-definitions)
@@ -105,7 +104,7 @@
        slot-definitions))
 
 (defun initialize-class-slots (class slots)
-  (let* ((slots-to-store (coerce (remove-if-not #'store-slot-p slots)
+  (let* ((slots-to-store (coerce (remove-if-not #'storep slots)
                                  'simple-vector)))
     (setf (slots-to-store class)
           slots-to-store)
@@ -120,6 +119,5 @@
   (let ((slots (call-next-method)))
     (initialize-class-slots class slots)
     slots))
-
 
 (sb-ext:lock-package :sb-pcl)

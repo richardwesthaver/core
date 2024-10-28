@@ -19,9 +19,11 @@
   (:documentation "Return the Database associated with SELF."))
 
 (defclass database ()
-  ((db :initform nil :initarg :db :accessor db)))
+  ((db :initform nil :initarg :db :accessor db))
+  (:documentation "Base class for Database objects."))
 
-(defclass database-collection () ())
+(defclass database-collection () ()
+  (:documentation "A collection of DATABASE objects."))
 
 ;; TODO 2024-05-30: maybe make into a macro?
 (defgeneric make-db (engine &rest initargs &key &allow-other-keys)
@@ -40,9 +42,10 @@ usually a key such as :ROCKSDB or :SQLITE."))
 (defgeneric (setf db-get) (db key val &key &allow-other-keys))
 
 (defgeneric close-db (db &key &allow-other-keys)
-  (:documentation "Close the database DB."))
+  (:documentation "Close a database."))
 
-(defgeneric open-db (self))
+(defgeneric open-db (self)
+  (:documentation "Open a database."))
 
 (defgeneric destroy-db (self)
   (:documentation "Destroy all traces of a database, deleting any on-disk data and shutting down

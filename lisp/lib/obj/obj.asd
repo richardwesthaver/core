@@ -58,7 +58,8 @@
                (:file "ast")
                (:file "query")
                (:file "secret")
-               (:file "build"))
+               (:file "build")
+               (:file "store"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests
