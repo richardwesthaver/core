@@ -14,6 +14,17 @@
 ;; https://franz.com/support/documentation/11.0/mop/concepts.html
 
 ;;; Code:
+(defpackage :obj/meta
+  (:nicknames :meta)
+  (:use :cl :std)
+  (:export
+   :class-equalp
+   :*standard-metaobjects*
+   :find-slot-def-by-name
+   :find-direct-slot-def-by-name
+   :find-slot-defs-by-type
+   :find-slot-def-names-by-type))
+
 (defpackage :obj/meta/stealth
   (:nicknames :meta/stealth :stealth)
   (:use :cl :std :obj/meta :sb-mop)
@@ -108,7 +119,7 @@
 
 (defpackage :obj/meta/stored
   (:nicknames :meta/stored :stored)
-  (:use :cl :std :obj/meta :obj/id)
+  (:use :cl :std :obj/meta :sb-mop)
   (:export
    :stored-class :initialize-stored-class
    :stored-slot
@@ -116,7 +127,17 @@
    :stored-object
    :stored-collection
    :oid
-   :spec))
+   :spec
+   :stored-p
+   :indexed-slot-names
+   :indexed-slot-defs
+   :stored-slot-definition
+   :indexed-slot-definition
+   :derived-slot-triggers
+   :derived-fn
+   :get-slot-def-index
+   :add-slot-def-index
+   :clear-slot-def-index))
 
 (defpackage :obj/meta/dynamic
   (:nicknames :meta/dynamic :dynamic)

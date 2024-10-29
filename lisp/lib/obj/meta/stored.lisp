@@ -34,18 +34,11 @@
 (defclass stored-collection (stored) ()
   (:documentation "Abstract superclass of all STORED collection types."))
 
-(defclass stored-object (stored) ()
-  (:metaclass stored-class)
-  (:documentation 
-   "Superclass for all user-defined stored classes. This is
-    automatically inherited if you use the STORED-CLASS
-    metaclass."))
-
 (defclass stored-class (standard-class)
   ((%class-schema :accessor %class-schema :initarg :schemas :initform nil)
    (%store-schemas :accessor %store-schemas :initarg :store-schemas :initform nil)
    (%class-indexing :accessor %class-indexing :initarg :index :initform t)
-   (%cache-style :accessor %cache-style :initarg :cache-style :initform :none))
+   (%cache-style :accessor %cache-style :initarg :cache-style :initform nil))
   (:documentation "Superclass for all stored objects."))
 
 (defmethod get-class-schema (self) (slot-value self '%class-schema))
@@ -71,9 +64,8 @@
        (eq (class-name (class-of (get-class-schema class)))
            'stored-schema)))
 
-;;; Initialize
 (defmethod find-slot-defs-by-type ((class stored-class) type &optional (by-subtype t))
-  (let ((slot-defs (sb-mop:class-slots class)))
+  (let ((slot-defs (class-slots class)))
     (loop for slot-def in slot-defs
          when (if by-subtype
                   (subtypep (type-of slot-def) type)
@@ -81,22 +73,29 @@
          collect slot-def)))
 
 (defmethod find-slot-def-names-by-type ((class stored-class) type &optional (by-subtype t))
-  (mapcar #'sb-mop:slot-definition-name 
+  (mapcar #'slot-definition-name 
           (find-slot-defs-by-type class type by-subtype)))
 
 ;;; Validate
-(defmethod sb-mop:validate-superclass
+(defmethod validate-superclass
     ((class standard-class)
      (superclass stored-class))
   nil)
 
-(defmethod sb-mop:validate-superclass
+(defmethod validate-superclass
     ((class stored-class)
      (superclass standard-class))
   t)
 
+(defclass stored-object (stored) ()
+  (:metaclass stored-class)
+  (:documentation 
+   "Superclass for all user-defined stored classes. This is
+    automatically inherited if you use the STORED-CLASS
+    metaclass."))
+
 ;;; Slot mixin
-(defclass stored-slot-definition (sb-mop:standard-slot-definition)
+(defclass stored-slot-definition (standard-slot-definition)
   ((stored-p :initarg :stored
            :initform t
            :accessor stored-p)))
@@ -106,22 +105,22 @@
   (:method ((mclass stored-class)) t)
   (:method ((mclass stored-slot-definition)) t))
 
-(defclass stored-direct-slot-definition (stored-slot-definition sb-mop:standard-direct-slot-definition)
+(defclass stored-direct-slot-definition (stored-slot-definition standard-direct-slot-definition)
   ())
 
-(defclass stored-effective-slot-definition (stored-slot-definition sb-mop:standard-effective-slot-definition)
+(defclass stored-effective-slot-definition (stored-slot-definition standard-effective-slot-definition)
   ())
 
-(defmethod sb-mop:direct-slot-definition-class ((class stored-class)
+(defmethod direct-slot-definition-class ((class stored-class)
                                          &rest initargs)
   (declare (ignore initargs))
   (find-class 'stored-direct-slot-definition))
 
-(defmethod sb-mop:effective-slot-definition-class ((class stored-class)
+(defmethod effective-slot-definition-class ((class stored-class)
                                             &key &allow-other-keys)
   (find-class 'stored-effective-slot-definition))
 
-(defmethod sb-mop:compute-effective-slot-definition
+(defmethod compute-effective-slot-definition
     ((class stored-class) slot-name direct-definitions)
   (declare (ignore slot-name))
   (let ((effective-definition (call-next-method))
@@ -133,8 +132,8 @@
 (defun make-slots-cache (slot-definitions)
   (map 'vector
        (lambda (slot-definition)
-	 (cons (sb-mop:slot-definition-location slot-definition)
-	       (sb-mop:slot-definition-initform slot-definition)))
+	 (cons (slot-definition-location slot-definition)
+	       (slot-definition-initform slot-definition)))
        slot-definitions))
 
 (defun stored-slot-defs (class)
@@ -153,13 +152,13 @@
           (indexed-slot-defs class)))
 
 ;;; From Elephant - for future development
-(defclass cached-slot-definition (sb-mop:standard-slot-definition)
+(defclass cached-slot-definition (standard-slot-definition)
   ((cache :accessor cached-slot-p :initarg :cached)))
 
-(defclass cached-direct-slot-definition (sb-mop:standard-direct-slot-definition cached-slot-definition)
+(defclass cached-direct-slot-definition (standard-direct-slot-definition cached-slot-definition)
   ())
 
-(defclass cached-effective-slot-definition (sb-mop:standard-effective-slot-definition cached-slot-definition)
+(defclass cached-effective-slot-definition (standard-effective-slot-definition cached-slot-definition)
   ((triggers :accessor derived-slot-triggers :initarg :trigger :initform nil)))
 
 (defun cached-slot-defs (class)
@@ -169,17 +168,17 @@
   (find-slot-def-names-by-type class 'cached-effective-slot-definition nil))
 
 ;;; Transient Slots
-(defclass transient-slot-definition (sb-mop:standard-slot-definition)
+(defclass transient-slot-definition (standard-slot-definition)
   ((transient :initform t :initarg :transient :allocation :class)))
 
-(defclass transient-direct-slot-definition (sb-mop:standard-direct-slot-definition transient-slot-definition)
+(defclass transient-direct-slot-definition (standard-direct-slot-definition transient-slot-definition)
   ())
 
-(defclass transient-effective-slot-definition (sb-mop:standard-effective-slot-definition transient-slot-definition)
+(defclass transient-effective-slot-definition (standard-effective-slot-definition transient-slot-definition)
   ())
 
 (defgeneric transient-p (slot)
-  (:method ((slot sb-mop:standard-slot-definition)) t)
+  (:method ((slot standard-slot-definition)) t)
   (:method ((slot transient-slot-definition)) t)
   (:method ((slot cached-slot-definition)) nil)
   (:method ((slot stored-slot-definition)) nil))
@@ -190,20 +189,20 @@
      always (transient-p slot-definition)))
 
 (defun transient-slot-defs (class)
-  (let ((slot-definitions (sb-mop:class-slots class)))
+  (let ((slot-definitions (class-slots class)))
     (loop for slot-def in slot-definitions
        when (transient-p slot-def)
        collect slot-def)))
 
 (defun transient-slot-names (class)
-  (mapcar #'sb-mop:slot-definition-name (transient-slot-defs class)))
+  (mapcar #'slot-definition-name (transient-slot-defs class)))
 
 (defgeneric database-allocation-p (class)
   (:method ((class t)) nil)
   (:method ((class stored-class)) t)
   (:method ((class stored-slot-definition)) t))
 
-(defmethod sb-mop:slot-definition-allocation ((slot-definition stored-slot-definition))
+(defmethod slot-definition-allocation ((slot-definition stored-slot-definition))
   :database)
 
 ;;; Indexed Slots
@@ -313,9 +312,9 @@
      (when (consp cached-p) (setq cached-p (car cached-p)))
      ,@body))
 
-(defmethod sb-mop:direct-slot-definition-class ((class stored-class) &rest initargs)
+(defmethod direct-slot-definition-class ((class stored-class) &rest initargs)
   "Checks for the transient tag (and the allocation type)
-   and chooses persistent or transient slot definitions."
+   and chooses stored or transient slot definitions."
   (bind-standard-init-arguments (initargs)
     (cond ((and (eq allocation-key :class) (not transient-p))
            (error "Stored class slots are not supported, try :transient t."))
@@ -333,7 +332,7 @@
           (t
            (find-class 'stored-direct-slot-definition)))))
 
-(defmethod sb-mop:effective-slot-definition-class ((class stored-class) &rest initargs)
+(defmethod effective-slot-definition-class ((class stored-class) &rest initargs)
   "Chooses the stored or transient effective slot
 definition class depending on the keyword."
   (bind-standard-init-arguments (initargs)
@@ -381,11 +380,21 @@ definition class depending on the keyword."
     initargs))
 
 (defun find-class-for-direct-slot (class def)
-  (let ((list (sb-mop:compute-class-precedence-list class)))
+  (let ((list (compute-class-precedence-list class)))
     (labels ((rec (super)
                (if (null super)
                    nil
-                   (aif (find-direct-slot-def-by-name super (sb-mop:slot-definition-name def))
+                   (aif (find-direct-slot-def-by-name super (slot-definition-name def))
                         (class-name super)
                         (rec (pop list))))))
       (rec class))))
+
+(defmethod change-class :before ((previous standard-object) (new-class stored-class) &rest initargs)
+  (declare (ignorable initargs)) 
+  (unless (subtypep (type-of previous) 'stored)
+    (error "Cannot convert standard objects to stored objects")))
+
+(defmethod change-class :before ((previous stored) (new-class standard-class) &rest initargs)
+  (declare (ignorable initargs))
+  (unless (subtypep (type-of new-class) 'stored-class)
+    (error "Stored instances cannot be changed to standard classes via change-class")))

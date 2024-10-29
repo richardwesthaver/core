@@ -3,17 +3,6 @@
 ;;
 
 ;;; Code:
-(defpackage :obj/meta
-  (:nicknames :meta)
-  (:use :cl :std)
-  (:export
-   :class-equalp
-   :*standard-metaobjects*
-   :find-slot-def-by-name
-   :find-direct-slot-def-by-name
-   :find-slot-defs-by-type
-   :find-slot-def-names-by-type))
-
 (defpackage :obj/list
   (:nicknames :list)
   (:use :cl :std)
@@ -322,7 +311,7 @@
 
 (defpackage :obj/schema
   (:nicknames :schema)
-  (:use :cl :std :config :build)
+  (:use :cl :std :config :build :meta :stored)
   (:export
    #:schema
    #:object-schema
@@ -360,7 +349,43 @@
    :database
    :db-closed-p
    :db-open-p
-   :*db*))
+   :*db*
+   :get-value
+   :insert-key
+   :insert-kv
+   :make-kv
+   :delete-key
+   :delete-key-ts
+   :delete-key-range
+   :make-transaction
+   :prepare-transaction
+   :rollback-transaction
+   :commit-transaction
+   :delete-transaction
+   :flush-db
+   :sync-db
+   :repair-db
+   :backup-db
+   :restore-db
+   :snapshot-db
+   :write-db
+   :shutdown-db
+   :ingest-db
+   :put-kv
+   :put-key
+   :put-key-ts
+   :get-key
+   :multi-get
+   :execute-transaction
+   :start-transaction
+   :stop-transaction
+   :abort-transaction
+   :kv
+   :make-val
+   :make-key
+   :open-db
+   :kv-key
+   :kv-val))
 
 (defpackage :obj/ast
   (:nicknames :ast)
@@ -377,6 +402,8 @@
            :literal-expr
            :unary-expr
            :binary-expr
+           :lhs
+           :rhs
            :physical-expr
            :logical-expr))
 
@@ -462,8 +489,6 @@
            :gt-expression
            :neq-expression
            :eq-expression
-           :lhs
-           :rhs
            :aggregate-expression-p
            :df-col
            :df-project
@@ -502,4 +527,4 @@
   (:nicknames :secret)
   (:use :cl :std)
   (:export :secret-object :reveal-object :conceal-object
-   :ensure-revealed :ensure-concealed))                 
+   :ensure-revealed :ensure-concealed))

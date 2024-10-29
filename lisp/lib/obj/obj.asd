@@ -2,8 +2,7 @@
   :description "Lisp object library"
   :depends-on (:std :quri)
   :serial t
-  :components ((:file "pkg")
-               (:module "meta"
+  :components ((:module "meta"
                 :components ((:file "pkg")
                              (:file "sealed")
                              (:file "stealth")
@@ -14,6 +13,7 @@
                              (:file "overloaded")
                              (:file "stored")
                              (:file "dynamic")))
+               (:file "pkg")
                (:module "hash"
                 :components ((:file "hasher")
                              (:file "chash")

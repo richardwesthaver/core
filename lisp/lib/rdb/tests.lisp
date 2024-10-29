@@ -1,5 +1,5 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj/query))
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :obj/query))
 
 (in-package :rdb/tests)
 
@@ -100,7 +100,7 @@
       (is (zerop (nth 1 (multiple-value-list (iter-timestamp it)))))
       (is (not (iter-valid-p it)))
       (iter-seek-to-last it)
-      (is (typep (iter-kv it) 'rdb-kv))
+      (is (typep (iter-kv it) 'kv))
       (is (sequence:emptyp (iter-key it)))
       (is (sequence:emptyp (iter-val it)))
       ;; (info! (iter-next it))
@@ -143,7 +143,7 @@
       (finish-sst writer) ;; will fail on empty writer
       (destroy-sst writer)              ; TODO 2024-05-08: investigate -
                                         ; doesn't seem to actually delete the
-                                        ; file, jst the writer?
+                                        ; file, just the writer?
       (ingest-db tmp (list path))
       (delete-file path)
       ;; with macro
@@ -163,10 +163,10 @@
     (is (eql (rdb-cf-val-type cf) 'string))
     (is (string= (rdb-cf-name cf) "foo"))
     (with-temp-db (schema-no-cfs () :destroy t :open t)
-      (load-schema schema-no-cfs (make-schema (make-field :type nil)))
+      (load-schema schema-no-cfs (make-simple-schema (make-field :type nil)))
       (is (= 1 (length (rdb-cfs schema-no-cfs)))))
     (with-temp-db (schema-cfs (baz) :open t :destroy t)
-      (load-schema schema-cfs (make-schema (make-field :name "BAZ" :type '(octet-vector . string))))
+      (load-schema schema-cfs (make-simple-schema (make-field :name "BAZ" :type '(octet-vector . string))))
       (is (= 1 (length (rdb-cfs schema-cfs))))
       (is (eql 'octet-vector (rdb-cf-key-type (aref (rdb-cfs schema-cfs) 0))))
       (is (eql 'string (rdb-cf-val-type (aref (rdb-cfs schema-cfs) 0)))))))

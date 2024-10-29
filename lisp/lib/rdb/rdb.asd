@@ -16,7 +16,7 @@
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests
-  :depends-on (:rt :rocksdb :rdb :log)
+  :depends-on (:rt :rocksdb :rdb :log :obj)
   :components ((:file "tests"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :rdb)))
 

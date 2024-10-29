@@ -54,9 +54,9 @@
 (defmethod put-key ((self sst-file-writer) (key simple-string) (val simple-string))
   (sst-put-str-raw (sst-file-writer-sap self) key val))
 
-(defmethod put-kv ((self sst-file-writer) (kv rdb-kv))
+(defmethod put-kv ((self sst-file-writer) (kv kv))
   (sst-put-raw (sst-file-writer-sap self)
-               (rdb-key kv) (rdb-val kv)))
+               (kv-key kv) (kv-val kv)))
 
 (defmethod delete-key ((self sst-file-writer) key &key)
   (sst-delete-raw (sst-file-writer-sap self) key))

@@ -9,7 +9,8 @@
 ;; bits.
 (deftype octet () '(unsigned-byte 8))
 (deftype octet-vector (&optional length)
-  `(simple-array octet (,length)))
+  `(or ,(when length `(simple-array octet (,length)))
+       (vector octet)))
 
 (defconstant +default-element-type+ 'character)
 

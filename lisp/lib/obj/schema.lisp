@@ -41,7 +41,8 @@
 
 ;;; Simple Schema
 (defclass simple-schema (schema) 
-  ((fields :initarg :fields :accessor fields)))
+  ((fields :initarg :fields :accessor fields))
+  (:documentation "Base class for simple schemas."))
 
 (defun make-simple-schema (&rest fields)
   (make-instance 'simple-schema :fields (coerce fields 'field-vector)))

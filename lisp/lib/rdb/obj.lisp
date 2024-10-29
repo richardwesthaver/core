@@ -100,16 +100,7 @@ just the keys currently present in TABLE."
   (make-rdb-opts :create-if-missing t :create-missing-column-families t
                  :parallelism (num-cpus)))
 
-(defclass rdb-kv ()
-  ((key :initarg :key :type octet-vector :accessor rdb-key)
-   (val :initarg :val :type octet-vector :accessor rdb-val)))
-
-(defmethod make-kv (key val)
-  (make-instance 'rdb-kv 
-    :key (make-key key) 
-    :val (make-val val)))
-
-(defvar *default-rdb-kv* (make-kv #() #()))
+(defvar *default-kv* (make-kv #() #()))
 
 ;;; iterator
 (defclass rdb-iter (sequence)
@@ -549,11 +540,11 @@ internal sap slots are initialized."
    (sb-ext:string-to-octets key)
    (sb-ext:string-to-octets val)))
 
-(defmethod put-kv ((self rdb) (kv rdb-kv))
+(defmethod put-kv ((self rdb) (kv kv))
   (put-kv-raw
    (rdb-db self)
-   (rdb-key kv)
-   (rdb-val kv)))
+   (kv-key kv)
+   (kv-val kv)))
 
 (defmethod insert-key ((self rdb) key val &key cf)
   (if-let ((cf (and cf (find-cf cf self))))
@@ -576,7 +567,7 @@ internal sap slots are initialized."
 (defmethod insert-key ((self rdb) key (val string) &key cf)
   (insert-key self key (string-to-octets val) :cf cf))
 
-(defmethod insert-kv ((self rdb) (kv rdb-kv) &key cf (opts (rocksdb-writeoptions-create)))
+(defmethod insert-kv ((self rdb) (kv kv) &key cf (opts (rocksdb-writeoptions-create)))
   (if cf
       (let ((cf (etypecase cf
                   (rdb-cf cf)
@@ -585,8 +576,8 @@ internal sap slots are initialized."
                            :test #'equal)))))
         (put-cf-raw (rdb-db self)
                     (rdb-cf-sap cf)
-                    (rdb-key kv)
-                    (rdb-val kv)
+                    (kv-key kv)
+                    (kv-val kv)
                     opts))
       (put-kv self kv)))
 

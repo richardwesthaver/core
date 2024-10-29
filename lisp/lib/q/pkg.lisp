@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :q/proto
-  (:use :cl :std :obj/query :obj/id)
+  (:use :cl :std :obj/query :obj/plan :obj/id :obj/schema)
   (:export
    :query-engine :query-parser
    :*query-engine*

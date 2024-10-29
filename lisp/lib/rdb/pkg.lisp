@@ -8,7 +8,7 @@
 
 ;; Code:
 (defpackage :rdb
-  (:use :cl :std :rocksdb :sb-alien :obj/db :obj/query)
+  (:use :cl :std :rocksdb :sb-alien :obj/db :obj/query :obj/schema)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
@@ -49,8 +49,6 @@
    :cf-name-raw :cf-id-raw
    ;; proto
    :find-cf
-   :put-key :put-kv
-   :get-key :get-kv
    :put-cf-key :get-cf-key
    :push-sap :push-sap*
    :pull-sap :pull-sap*
@@ -58,8 +56,6 @@
    :get-opt :set-opt
    :push-cf :open-cfs
    :create-cf :create-cfs
-   :insert-kv :insert-key
-   :open-db :close-db :destroy-db
    :get-prop :get-metadata
    :multi-get :delete-key
    :delete-key-ts :put-key-ts
@@ -95,8 +91,6 @@
    :rdb-sst-file-metadata-p :rdb-cf-metadata-p
    :rdb-level-metadata-p
    :rdb-bytes :rdb-bytes-buffer :rdb-opts-sap
-   :make-key :make-kv :make-val :rdb-kv :rdb-key :rdb-val 
-   :rdb-kv
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf
