@@ -137,7 +137,9 @@
    :derived-fn
    :get-slot-def-index
    :add-slot-def-index
-   :clear-slot-def-index))
+   :clear-slot-def-index
+   :indexed-slot-base
+   :indexed-slot-indices))
 
 (defpackage :obj/meta/dynamic
   (:nicknames :meta/dynamic :dynamic)

@@ -311,7 +311,7 @@
 
 (defpackage :obj/schema
   (:nicknames :schema)
-  (:use :cl :std :config :build :meta :stored)
+  (:use :cl :std :config :build :meta :stored :sb-mop)
   (:export
    #:schema
    #:object-schema

@@ -219,7 +219,7 @@
    (base-class :accessor indexed-slot-base :initarg :base-class :allocation :instance
                :documentation "The base class to use as an index")))
 
-(defmethod indexp (def)
+(defmethod indexed-p (def)
   (declare (ignore def))
   nil)
 

@@ -22,7 +22,8 @@
 
 (deftype field-vector () '(vector field))
 
-(defclass schema () ())
+(defclass schema () ()
+  (:documentation "Base class for all schema objects."))
 
 (defmethod print-object ((self schema) stream)
   (print-unreadable-object (self stream :type t)
@@ -82,7 +83,7 @@
   (make-instance 'schema
                  :name (class-name class-obj)
                  :fields (append (compute-slot-recs class-obj)
-                                    (compute-transient-slot-recs class-obj))))
+                                 (compute-transient-slot-recs class-obj))))
 
 (defparameter *slot-def-type-tags*
   '((:stored stored::stored-effective-slot-definition)
@@ -105,11 +106,11 @@
   "Default slot computation.  Capture the name and type tag for the definition"
   (mapcar (lambda (slotname)
             (make-slot-rec :type type :name slotname :args nil))
-          (meta:find-slot-def-names-by-type class-obj slot-def-type nil)))
+          (find-slot-def-names-by-type class-obj slot-def-type nil)))
 
 (defmethod compute-slot-recs-by-type ((type (eql :indexed)) slot-def-type class-obj)
   "Special handling for hierarchical indexing, capture the base class name of the index"
   (mapcar (lambda (slot-def)
-            (make-slot-rec :type type :name (sb-mop:slot-definition-name slot-def) 
-                           :args `(:base ,(stored::indexed-slot-base slot-def))))
-          (meta:find-slot-defs-by-type class-obj slot-def-type nil)))
+            (make-slot-rec :type type :name (slot-definition-name slot-def) 
+                           :args `(:base ,(indexed-slot-base slot-def))))
+          (find-slot-defs-by-type class-obj slot-def-type nil)))
