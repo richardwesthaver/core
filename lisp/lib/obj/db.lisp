@@ -9,6 +9,8 @@
 ;;; Code:
 (in-package :obj/db)
 
+(defvar *db* nil)
+
 ;;; Vars
 (declaim (sb-kernel:type-specifier *default-database-type* *default-database-collection-type*))
 (defparameter *default-database-type* 'vector)
@@ -21,6 +23,13 @@
 (defclass database ()
   ((db :initform nil :initarg :db :accessor db))
   (:documentation "Base class for Database objects."))
+
+(defclass database-schema (schema id)
+  ((version :accessor version :initarg :version :initform 1)))
+
+(defmethod print-object ((self database-schema) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A ~A" (id self) (version self))))
 
 (defclass database-collection () ()
   (:documentation "A collection of DATABASE objects."))
@@ -116,3 +125,10 @@ hints.")
            (if (listp object)
                (replace object (list (list element new-value)))
                (error "Does not handle this type of object. Implement your own get-val method.")))))))
+
+;;; Transactions
+(defgeneric execute-transaction (self txfn &rest args &key &allow-other-keys))
+;; Explicit control
+(defgeneric start-transaction (self transaction &key &allow-other-keys))
+(defgeneric stop-transaction (self transaction &key &allow-other-keys))
+(defgeneric abort-transaction (self transaction &key &allow-other-keys))

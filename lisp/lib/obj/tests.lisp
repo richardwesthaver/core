@@ -308,3 +308,5 @@ building a query-plan."
 
 ;;;; Typed
 ;; TODO
+
+;;;; Stored

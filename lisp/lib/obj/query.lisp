@@ -32,6 +32,7 @@
 ;;; Code:
 (in-package :obj/query)
 
+(defvar *query* nil)
 ;;; Types
 (eval-always
   (defvar *literal-value-types* '(boolean integer fixnum signed-byte unsigned-byte float double-float string)))
@@ -39,17 +40,6 @@
 (deftype literal-value-type () `(member ,*literal-value-types*))
 
 ;;; Field
-(defstruct field
-  (name (symbol-name (gensym "#")) :type simple-string)
-  (type t :type (or symbol list)))
-
-(defmethod make-load-form ((self field) &optional env)
-  (declare (ignore env))
-  `(make-field :name ,(field-name self) :type ,(field-type self)))
-
-;;; Field Vectors
-(deftype field-vector () '(vector field))
-
 ;; convenience interface for FIELD-VECTOR
 (defclass column-vector () ((data :type simple-vector :accessor column-data)))
 
@@ -74,35 +64,13 @@
         (error 'simple-error :format-control "index out of bounds: ~A" :format-arguments i)
         (column-literal-value self))))
 
-;;; Schema
-(defclass schema ()
-  ((fields :type field-vector :initarg :fields :accessor fields)))
-
-(defun make-schema (&rest fields)
-  (make-instance 'schema :fields (coerce fields 'field-vector)))
-
-(defmethod print-object ((self schema) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream ":fields ~A" (map 'list 'field-name (fields self)))))
-
-(defmethod make-load-form ((self schema) &optional env)
-  (declare (ignore env))
-  `(make-instance ,(class-of self) :fields ,(fields self)))
-
-(defclass schema-metadata ()
-  ((metadata :initarg :metadata :accessor schema-metadata)))
-
-(defmethod make-load-form ((self schema-metadata) &optional env)
-  (declare (ignore env))
-  `(make-instance ,(class-of self) :metadata ,(schema-metadata self)))
-
 (defgeneric column-size (self)
   (:method ((self column-vector))
     (length (column-data self))))
 
 ;;; Record Batch
 (defstruct record-batch
-  (schema (make-schema) :type schema)
+  (schema (make-simple-schema) :type schema)
   (fields #() :type column-vector))
 
 (defmethod schema ((self record-batch))
@@ -113,21 +81,15 @@
   `(make-record-batch :schema ,(record-batch-schema self) :fields ,(record-batch-fields self)))
 
 ;;; Proto
-(defgeneric field (self n)
-  (:method ((self record-batch) (n fixnum))
-    (aref (column-data (record-batch-fields self)) n)))
+(defmethod field ((self record-batch) (n fixnum))
+  (aref (column-data (record-batch-fields self)) n))
 
-(defgeneric fields (self)
-  (:method ((self record-batch))
-    (record-batch-fields self)))
+(defmethod fields ((self record-batch))
+  (record-batch-fields self))
 
-(defgeneric schema (self)
-  (:method ((self record-batch))
-    (record-batch-schema self)))
+(defmethod schema ((self record-batch))
+  (record-batch-schema self))
 
-(defgeneric derive-schema (self))
-(defgeneric load-schema (self schema))
-(defgeneric load-field (self field))
 (defgeneric select (self names)
   (:method ((self schema) (names list))
     (let* ((fields (fields self))
@@ -185,25 +147,25 @@
   ((schema :type schema :accessor schema :initarg :schema)
    (children :type (vector query-plan))))
 
-(defclass logical-plan (query-plan)
-  ((children :type (vector logical-plan) :accessor children :initarg :children)))
+(defclass logical-query-plan (query-plan logical-plan)
+  ((children :type (vector logical-query-plan) :accessor children :initarg :children)))
 
-(defclass physical-plan (query-plan)
-  ((children :type (vector physical-plan))))
+(defclass physical-query-plan (query-plan physical-plan)
+  ((children :type (vector physical-query-plan))))
 
 ;;; Logical Expressions
 (defgeneric to-field (self input)
-  (:method ((self string) (input logical-plan))
+  (:method ((self string) (input logical-query-plan))
     (declare (ignore input))
     (make-field :name self :type 'string))
-  (:method ((self number) (input logical-plan))
+  (:method ((self number) (input logical-query-plan))
     (declare (ignore input))
     (make-field :name (princ-to-string self) :type 'number)))
 
 (defclass column-expression (logical-expr query-expr)
   ((name :type string :initarg :name :accessor column-name)))
 
-(defmethod to-field ((self column-expression) (input logical-plan))
+(defmethod to-field ((self column-expression) (input logical-query-plan))
   (or (find (column-name self) (fields (schema input)) :test 'equal :key 'field-name)
       (error 'invalid-argument :item (column-name self) :reason "Invalid column name")))
 
@@ -221,7 +183,7 @@
   ((expr :type logical-expr :initarg :expr :accessor expr)
    (data-type :type form :initarg :data-type)))
 
-(defmethod to-field ((self cast-expression) (input logical-plan))
+(defmethod to-field ((self cast-expression) (input logical-query-plan))
   (make-field :name (field-name (to-field (expr self) input)) :type (slot-value self 'data-type)))
 
 ;;;;; Unary
@@ -235,7 +197,7 @@
   ((name :initarg :name :type string :accessor expr-name)
    (op :initarg :op :type symbol :accessor expr-op)))
 
-(defmethod to-field ((self boolean-binary-expression) (input logical-plan))
+(defmethod to-field ((self boolean-binary-expression) (input logical-query-plan))
   (declare (ignore input))
   (make-field :name (expr-name self) :type 'boolean))
 
@@ -287,7 +249,7 @@
    (op :initarg :op :type symbol :accessor expr-op)))
 
 ;; TODO 2024-08-03: ???
-(defmethod to-field ((self math-expression) (input logical-plan))
+(defmethod to-field ((self math-expression) (input logical-query-plan))
   (declare (ignorable input))
   (make-field :name "*" :type (field-type (to-field (lhs self) input))))
 
@@ -330,7 +292,7 @@
   (:method ((self alias-expression)) (aggregate-expression-p (expr self)))
   (:method ((self t)) nil))
 
-(defmethod to-field ((self aggregate-expression) (input logical-plan))
+(defmethod to-field ((self aggregate-expression) (input logical-query-plan))
   (declare (ignorable input))
   (make-field :name (slot-value self 'name) :type (field-type (to-field (slot-value self 'expr) input))))
 
@@ -354,14 +316,14 @@
   (:default-initargs
    :name "COUNT"))
 
-(defmethod to-field ((self count-expression) (input logical-plan))
+(defmethod to-field ((self count-expression) (input logical-query-plan))
   (declare (ignore input))
   (make-field :name "COUNT" :type 'number))
 
 ;;; Logical Plan
 
 ;;;;; Scan
-(defclass scan-data (logical-plan)
+(defclass scan-data (logical-query-plan)
   ((path :type string :initarg :path)
    (data-source :type data-source :initarg :data-source)
    (projection :type (vector string) :initarg :projection)))
@@ -376,24 +338,24 @@
   (derive-schema self))
 
 ;;;;; Projection
-(defclass projection (logical-plan)
-  ((input :type logical-plan :initarg :input)
+(defclass projection (logical-query-plan)
+  ((input :type logical-query-plan :initarg :input)
    (expr :type (vector logical-expr) :initarg :expr)))
 
 (defmethod schema ((self projection))
   (schema (slot-value self 'input)))
 
 ;;;;; Selection
-(defclass selection (logical-plan)
-  ((input :type logical-plan :initarg :input)
+(defclass selection (logical-query-plan)
+  ((input :type logical-query-plan :initarg :input)
    (expr :type logical-expr :initarg :expr)))
 
 (defmethod schema ((self selection))
   (schema (slot-value self 'input)))
 
 ;;;;; Aggregate
-(defclass aggregate (logical-plan)
-  ((input :type logical-plan :initarg :input)
+(defclass aggregate (logical-query-plan)
+  ((input :type logical-query-plan :initarg :input)
    (group-expr :type (vector logical-expr) :initarg :group-expr)
    (agg-expr :type (vector aggregate-expression) :initarg :agg-expr)))
 
@@ -404,11 +366,11 @@
           do (push (to-field g input) ret))
     (loop for a across (slot-value self 'agg-expr)
           do (push (to-field a input) ret))
-    (apply 'make-schema ret)))
+    (apply 'make-simple-schema ret)))
 
 ;;;;; Limit
-(defclass limit (logical-plan)
-  ((input :type logical-plan :initarg :input)
+(defclass limit (logical-query-plan)
+  ((input :type logical-query-plan :initarg :input)
    (limit :type integer)))
 
 (defmethod schema ((self limit))
@@ -420,7 +382,7 @@
         (children (slot-value self 'input))))
 
 ;;;;; Joins
-(defclass join (logical-plan)
+(defclass join (logical-query-plan)
   ((left :accessor lhs)
    (right :accessor rhs)
    (on :accessor join-on)))
@@ -476,7 +438,7 @@
 ;;; Dataframes
 ;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
 (defstruct (data-frame (:constructor make-data-frame (&optional plan)))
-  (plan (make-instance 'logical-plan) :type logical-plan))
+  (plan (make-instance 'logical-query-plan) :type logical-query-plan))
 
 (defgeneric df-col (self))
 
@@ -520,7 +482,7 @@
   (:documentation "Return the logical plan associated with this data-frame.")
   (:method ((df data-frame)) (data-frame-plan df)))
 
-(defmethod (setf df-plan) ((plan logical-plan) (df data-frame))
+(defmethod (setf df-plan) ((plan logical-query-plan) (df data-frame))
   (setf (df-plan df) plan))
 
 ;;; Physical Expression
@@ -642,11 +604,11 @@
 
 ;;; Physical Plan
 (defgeneric execute (self)
-  (:documentation "Execute the LOGICAL-PLAN represented by object SELF.")
+  (:documentation "Execute the LOGICAL-QUERY-PLAN represented by object SELF.")
   (:method ((self data-frame))
     (execute (df-plan self))))
 
-(defclass scan-exec (physical-plan)
+(defclass scan-exec (physical-query-plan)
   ((data-source :type data-source :initarg :data-source)
    (projection :type (vector string) :initarg :projection)))
 
@@ -656,8 +618,8 @@
 (defmethod execute ((self scan-exec))
   (scan-data (slot-value self 'data-source) (slot-value self 'projection)))
 
-(defclass projection-exec (physical-plan)
-  ((input :type physical-plan :initarg :input)
+(defclass projection-exec (physical-query-plan)
+  ((input :type physical-query-plan :initarg :input)
    (expr :type (vector physical-expression) :initarg :expr)))
 
 (defmethod execute ((self projection-exec))
@@ -671,8 +633,8 @@
    '(vector record-batch)))
                                                  
 
-(defclass selection-exec (physical-plan)
-  ((input :type physical-plan :initarg :input)
+(defclass selection-exec (physical-query-plan)
+  ((input :type physical-query-plan :initarg :input)
    (expr :type physical-expression :initarg :expr)))
 
 (defmethod schema ((self selection-exec))
@@ -697,9 +659,9 @@
            collect (column-value columns i))
      'field-vector)))
 
-(defclass hash-aggregate-exec (physical-plan)
-  ((input :type physical-plan :initarg :input)
-   (group-expr :type (vector physical-plan) :initarg :group-expr)
+(defclass hash-aggregate-exec (physical-query-plan)
+  ((input :type physical-query-plan :initarg :input)
+   (group-expr :type (vector physical-query-plan) :initarg :group-expr)
    (agg-expr :type (vector aggregate-physical-expression) :initarg :agg-expr)))
 
 (defmethod execute ((self hash-aggregate-exec))
@@ -757,16 +719,16 @@
 (defgeneric make-physical-expression (expr input)
   (:documentation "Translate logical expression EXPR and logical plan INPUT
   into a physical expression.")
-  (:method ((expr string) (input logical-plan))
+  (:method ((expr string) (input logical-query-plan))
     (declare (ignore input))
     expr)
-  (:method ((expr number) (input logical-plan))
+  (:method ((expr number) (input logical-query-plan))
     (declare (ignore input))
     expr)
-  (:method ((expr column-expression) (input logical-plan))
+  (:method ((expr column-expression) (input logical-query-plan))
     (let ((i (position (column-name expr) (fields (schema input)) :key 'field-name :test 'equal)))
       (make-instance 'column-physical-expression :val i)))
-  (:method ((expr binary-expression) (input logical-plan))
+  (:method ((expr binary-expression) (input logical-query-plan))
     (let ((l (make-physical-expression (lhs expr) input))
           (r (make-physical-expression (rhs expr) input)))
       (etypecase expr
@@ -784,35 +746,33 @@
         (div-expression (make-instance 'div-physical-expression :lhs l :rhs r))))))
 
 ;; Control Stack dies here?
-(defgeneric make-physical-plan (plan)
-  (:documentation "Create a physical plan from logical PLAN.")
-  (:method ((plan logical-plan))
-    (etypecase plan
-      (scan-data (make-instance 'scan-exec
-                   :data-source (slot-value plan 'data-source)
-                   :projection (slot-value plan 'projection)))
-      (projection (make-instance 'projection-exec
-                    :schema (make-instance 'schema
-                              :fields
-                              (map 'field-vector
-                                   (lambda (x) (to-field x (slot-value plan 'input)))
-                                   (slot-value plan 'expr)))
-                    :input (make-physical-plan (slot-value plan 'input))
-                    :expr (map 'vector (lambda (x) (make-physical-expression x (slot-value plan 'input)))
-                               (slot-value plan 'expr))))
-      (selection (make-instance 'selection-exec
-                   :input (make-physical-plan (slot-value plan 'input))
-                   :expr (make-physical-expression (slot-value plan 'expr) (slot-value plan 'input))))
-      (aggregate (make-instance 'hash-aggregate-exec
-                   :input (make-physical-plan (slot-value plan 'input))
-                   :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
-                   :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input)))))))
+(defmethod make-physical-plan ((plan logical-query-plan))
+  (etypecase plan
+    (scan-data (make-instance 'scan-exec
+                 :data-source (slot-value plan 'data-source)
+                 :projection (slot-value plan 'projection)))
+    (projection (make-instance 'projection-exec
+                  :schema (make-instance 'schema
+                            :fields
+                            (map 'field-vector
+                                 (lambda (x) (to-field x (slot-value plan 'input)))
+                                 (slot-value plan 'expr)))
+                  :input (make-physical-query-plan (slot-value plan 'input))
+                  :expr (map 'vector (lambda (x) (make-physical-expression x (slot-value plan 'input)))
+                             (slot-value plan 'expr))))
+    (selection (make-instance 'selection-exec
+                 :input (make-physical-query-plan (slot-value plan 'input))
+                 :expr (make-physical-expression (slot-value plan 'expr) (slot-value plan 'input))))
+    (aggregate (make-instance 'hash-aggregate-exec
+                 :input (make-physical-query-plan (slot-value plan 'input))
+                 :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
+                 :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input))))))
 
 ;;; Optimizer
 
 ;; The Query Optimizer is responsible for walking a QUERY-PLAN and returning a
 ;; modified version of the same object. Usually we want to run optimization on
-;; LOGICAL-PLANs but we also support specializing on PHYSICAL-PLAN.
+;; LOGICAL-QUERY-PLANs but we also support specializing on PHYSICAL-QUERY-PLAN.
 
 ;; Rule-based Optimizers: projection/predicate push-down, sub-expr elim
 
@@ -856,7 +816,7 @@ accumulator."
 (defclass projection-pushdown-optimizer (query-optimizer) ())
 
 (defun %pushdown (plan &optional column-names)
-  (declare (logical-plan plan))
+  (declare (logical-query-plan plan))
   (etypecase plan
     (projection
      (extract-columns (slot-value plan 'expr) column-names)
@@ -881,7 +841,7 @@ accumulator."
                  :data-source (slot-value plan 'data-source)
                  :projection column-names)))) ;; maybe sort here?
 
-(defmethod optimize-query ((self projection-pushdown-optimizer) (plan logical-plan))
+(defmethod optimize-query ((self projection-pushdown-optimizer) (plan logical-query-plan))
   (%pushdown plan))
 
 ;;; Query
@@ -911,7 +871,7 @@ accumulator."
     (declare (ignore self))
     (execute df)))
 
-(defmethod execute ((self logical-plan))
+(defmethod execute ((self logical-query-plan))
   (execute
-   (make-physical-plan
+   (make-physical-query-plan
     (optimize-query (make-instance 'projection-pushdown-optimizer) self))))

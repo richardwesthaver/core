@@ -106,16 +106,17 @@
   (:nicknames :meta/overloaded :overloaded)
   (:use :cl :std :obj/meta))
 
-(defpackage :obj/meta/indexed
-  (:nicknames :meta/indexed :indexed)
-  (:use :cl :std :obj/meta))
-
 (defpackage :obj/meta/stored
   (:nicknames :meta/stored :stored)
   (:use :cl :std :obj/meta :obj/id)
   (:export
    :stored-class :initialize-stored-class
-   :stored-slot))
+   :stored-slot
+   :stored
+   :stored-object
+   :stored-collection
+   :oid
+   :spec))
 
 (defpackage :obj/meta/dynamic
   (:nicknames :meta/dynamic :dynamic)

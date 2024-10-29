@@ -316,12 +316,34 @@
    :load-config))
 
 (defpackage :obj/build
+  (:nicknames :build)
   (:use :cl :std)
   (:export :build :build-from))
 
+(defpackage :obj/schema
+  (:nicknames :schema)
+  (:use :cl :std :config :build)
+  (:export
+   #:schema
+   #:object-schema
+   #:simple-schema
+   #:schema-metadata
+   #:field-vector
+   #:field
+   #:load-field
+   #:load-schema
+   #:derive-schema
+   #:fields
+   #:make-simple-schema
+   #:make-field
+   #:field-p
+   #:copy-field
+   #:field-name
+   #:field-type))
+  
 (defpackage :obj/db
   (:nicknames :db)
-  (:use :cl :std :id :seq :sb-mop :sb-pcl)
+  (:use :cl :std :id :seq :sb-mop :sb-pcl :schema)
   (:export
    :get-val
    :set-val
@@ -337,7 +359,8 @@
    :db
    :database
    :db-closed-p
-   :db-open-p))
+   :db-open-p
+   :*db*))
 
 (defpackage :obj/ast
   (:nicknames :ast)
@@ -360,28 +383,24 @@
 (defpackage :obj/plan
   (:nicknames :plan)
   (:use :cl :std :obj/ast :obj/config :obj/build)
-  (:export :plan :planner))
+  (:export :plan :planner
+           :logical-plan
+           :physical-plan
+           :make-physical-plan))
 
 (defpackage :obj/query
   (:nicknames :query)
-  (:use :cl :std :plan :ast)
+  (:use :cl :std :plan :ast :schema)
   (:export :query
            :data-source
            :query-expression
            :logical-expression
            :column-expression
            :literal-expression
-           :field
-           :fields
            :row-count
            :column-count
            :record-batch
-           :schema
-           :derive-schema
-           :load-schema
-           :make-schema
            :make-query
-           :field-vector
            :*literal-value-types*
            :literal-value-type
            :literal-value-vector
@@ -391,7 +410,6 @@
            :data-frame
            :execution-context
            :physical-expression
-           :physical-plan
            :scan-exec
            :scan-data
            :execute-query
@@ -402,7 +420,6 @@
            :unary-expression
            :alias-expression
            :query-optimizer
-           :make-physical-plan
            :make-physical-expression
            :query-planner
            :hash-aggregate-exec
@@ -421,17 +438,11 @@
            :literal-physical-expression
            :column-physical-expression
            :evaluate
-           :schema-metadata
            :make-record-batch
            :record-batch-p
            :copy-record-batch
            :record-batch-schema
            :record-batch-fields
-           :make-field
-           :field-p
-           :copy-field
-           :field-name
-           :field-type
            :column-size
            :column-value
            :column-type
@@ -453,7 +464,6 @@
            :eq-expression
            :lhs
            :rhs
-           :logical-plan
            :aggregate-expression-p
            :df-col
            :df-project
@@ -486,23 +496,10 @@
            :projection-pushdown-optimizer
            :extract-columns*
            :extract-columns
-           :query-vop
-           :expr
-           :load-field))
+           :query-vop))
 
 (defpackage :obj/secret
   (:nicknames :secret)
   (:use :cl :std)
   (:export :secret-object :reveal-object :conceal-object
-   :ensure-revealed :ensure-concealed))
-
-(defpackage :obj/store
-  (:nicknames :store)
-  (:use :cl :std :indexed :stored))
-
-(uiop:define-package :obj
-  (:use-reexport :list :hash :color
-   :seq :tree :graph :id
-   :db :ast :time :uri :url
-   :config :temperature :direction
-   :shape :secret :query))
+   :ensure-revealed :ensure-concealed))                 

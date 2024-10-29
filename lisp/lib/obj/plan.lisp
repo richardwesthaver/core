@@ -48,8 +48,15 @@ This is a sketch of control flow for full query processing:
 ;; RESEARCH 2024-10-27: dynamic plans
 (defclass plan () ())
 
+(defclass logical-plan (plan) ())
+
+(defclass physical-plan (plan) ())
+
 (defclass planner () ())
 
 (defgeneric plan-state (self))
 (defgeneric (setf plan-state) (new-state self))
 (defgeneric plan-nodes (self))
+
+(defgeneric make-physical-plan (plan)
+  (:documentation "Create a physical plan from logical plan."))

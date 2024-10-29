@@ -53,13 +53,15 @@
                (:file "temperature")
                (:file "direction")
                (:file "shape")
+               (:file "build")
                (:file "config")
+               (:file "schema")
                (:file "db")
                (:file "ast")
                (:file "query")
                (:file "secret")
-               (:file "build")
-               (:file "store"))
+               (:file "store")
+               (:file "obj"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests
