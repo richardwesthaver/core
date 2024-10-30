@@ -16,6 +16,15 @@
 (defparameter *default-database-type* 'vector)
 (defparameter *default-database-collection-type* 'list)
 
+;;; Conditions
+(define-condition db-condition () ())
+
+(deferror not-a-database (db-condition invalid-argument) ()
+  (:default-initargs
+   :reason "Object is not a database"))
+
+(defun not-a-database (item) (error 'not-a-database :item item))
+  
 ;;; Database
 (defgeneric db (self)
   (:documentation "Return the Database associated with SELF."))
@@ -24,12 +33,17 @@
   ((db :initform nil :initarg :db :accessor db))
   (:documentation "Base class for Database objects."))
 
-(defclass database-schema (schema id)
-  ((version :accessor version :initarg :version :initform 1)))
+(defclass database-schema (simple-schema id)
+  ((version :accessor version :initarg :version :initform 1)
+   (upgrade-schema :accessor upgrade-schema :initform nil)))
 
 (defmethod print-object ((self database-schema) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A ~A" (id self) (version self))))
+
+(defmethod dump-schema ((self database-schema) &optional (stream t))
+  (awhen (upgrade-schema self)
+    (format stream "upgrade:~%~A~%" it)))
 
 (defclass database-collection () ()
   (:documentation "A collection of DATABASE objects."))
@@ -68,12 +82,12 @@ in-memory objects."))
 
 (defgeneric db-open-p (self)
   (:documentation "Return T when database SELF is open.")
-  (:method ((self t)) nil)
+  (:method ((self t)) (not-a-database self))
   (:method ((self database)) (when (db self) t)))
 
 (defgeneric db-closed-p (self)
   (:documentation "Return T when database SELF is closed.")
-  (:method ((self t)) t)
+  (:method ((self t)) (not-a-database self))
   (:method ((self database)) (unless (db self) t)))
 
 ;;; Common
@@ -206,3 +220,6 @@ hints.")
     (sb-ext:string-to-octets val))
   (:method ((val t))
     val))
+
+;;; Transactions
+;; (defmacro ensure-transaction

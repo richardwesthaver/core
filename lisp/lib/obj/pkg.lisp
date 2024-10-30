@@ -309,9 +309,29 @@
   (:use :cl :std)
   (:export :build :build-from))
 
+(defpackage :obj/ast
+  (:nicknames :ast)
+  (:use :cl :std)
+  (:export :ast :build-ast :load-ast :load-ast*
+           :wrap
+           :unwrap
+           :unwrap-or
+           :form
+           :formp
+           :unwrap-object
+           :wrap-object
+           :expr
+           :literal-expr
+           :unary-expr
+           :binary-expr
+           :lhs
+           :rhs
+           :physical-expr
+           :logical-expr))
+
 (defpackage :obj/schema
   (:nicknames :schema)
-  (:use :cl :std :config :build :meta :stored :sb-mop)
+  (:use :cl :std :config :build :meta :stored :sb-mop :id :ast)
   (:export
    #:schema
    #:object-schema
@@ -328,7 +348,27 @@
    #:field-p
    #:copy-field
    #:field-name
-   #:field-type))
+   #:field-type
+   #:defschema
+   #:list-to-fields
+   #:define-simple-schema
+   #:not-a-database
+   #:db-condition
+   #:match-schemas
+   #:schema-diff
+   #:default-class-constructor
+   #:classname
+   #:slot-field
+   #:slot-field-eq
+   #:class-instance-schema
+   #:compute-transient-schema
+   #:*slot-def-type-tags*
+   #:compute-slot-fields
+   #:compute-transient-slot-fields
+   #:dump-schema
+   #:dump-slots
+   #:sorted-slots
+   #:slot-defs-from-schema))
   
 (defpackage :obj/db
   (:nicknames :db)
@@ -385,27 +425,8 @@
    :make-key
    :open-db
    :kv-key
-   :kv-val))
-
-(defpackage :obj/ast
-  (:nicknames :ast)
-  (:use :cl :std)
-  (:export :ast :build-ast :load-ast :load-ast*
-           :wrap
-           :unwrap
-           :unwrap-or
-           :form
-           :formp
-           :unwrap-object
-           :wrap-object
-           :expr
-           :literal-expr
-           :unary-expr
-           :binary-expr
-           :lhs
-           :rhs
-           :physical-expr
-           :logical-expr))
+   :kv-val
+   :database-collection))
 
 (defpackage :obj/plan
   (:nicknames :plan)

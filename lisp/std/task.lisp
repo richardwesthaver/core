@@ -116,7 +116,6 @@ within their DOMAIN and SCOPE."))
            ,@(when input `(:input ,input)))))
 
 ;; TODO 2024-10-03: pause/resume
-
 (declaim (inline kill-worker join-worker start-worker run-worker))
 (defun start-worker (worker) 
   (sb-thread::start-thread (worker-thread worker) (worker-kernel worker) (tasks worker)))

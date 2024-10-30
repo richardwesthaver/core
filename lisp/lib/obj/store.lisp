@@ -357,3 +357,7 @@
 (defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def stored-slot-definition))
   "Removes the slot value from the database."
   (stored-slot-makunbound (get-store instance) instance (slot-definition-name slot-def)))
+
+;;; Macros
+
+(defmacro defstore (name super spec &rest options))

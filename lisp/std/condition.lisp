@@ -280,3 +280,13 @@ the 'current' error."
         (sb-debug:print-backtrace :stream s))
     (error (condition)
       (format nil "Could not generate backtrace: ~A." condition))))
+
+;; MOP
+(define-condition meta-condition () ()
+  (:documentation "A condition which is signalled somewhere within the CLOS/MOP machinery."))
+
+(define-condition missing-method (error meta-condition)
+  ((method)))
+
+(define-condition missing-methods (error meta-condition)
+  ((methods)))

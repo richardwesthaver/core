@@ -20,7 +20,6 @@
      (:file "header")
      (:file "vars")
      (:file "obj")
-     (:file "db")
      (:file "print")
      (:file "util")
      (:file "vm")))
@@ -33,6 +32,11 @@
      (:file "org")
      (:file "dir-locals")
      (:file "makefile")))
+   (:module "db"
+    :components
+    ((:file "pkg")
+     (:file "schema")
+     (:file "db")))
    (:module "net"
     :components
     ((:file "pkg")

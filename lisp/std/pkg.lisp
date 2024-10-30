@@ -42,7 +42,10 @@
    :std-warning
    :defwarning
    :def-simple-warning-reporter
-   :def-warning-reporter))
+   :def-warning-reporter
+   :meta-condition
+   :missing-method
+   :missing-methods))
 
 (defpackage :std/sym
   (:use :cl)
