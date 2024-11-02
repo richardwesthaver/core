@@ -49,10 +49,10 @@ Cookie: name=wookie
     (is req)))
 
 (deftest req ()
-  (is (req:get (uri:uri "https://compiler.company/index.html"))))
+  (is (req:get (uri:uri "https://google.com"))))
 
 (deftest fetch ()
-  (is (fetch:download "https://compiler.company/index.html" :output "/tmp/index.html" :progress t))
+  (is (fetch:download "https://reddit.com/index.html" :output "/tmp/index.html" :progress t))
   (is (delete-file "/tmp/index.html")))
 
 (deftest cookies ()

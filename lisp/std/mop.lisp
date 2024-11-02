@@ -8,6 +8,18 @@
 ;; make-specializer-form-using-class
 ;; make-method-lambda-using-specializers
 
+(defgeneric start (self))
+(defgeneric started-p (self))
+(defgeneric stop (self &key &allow-other-keys))
+(defgeneric stopped-p (self))
+(defgeneric shutdown (self))
+(defgeneric run (self &rest args &key &allow-other-keys))
+(defgeneric reset (self &rest args &key &allow-other-keys))
+
+(defgeneric write-object (obj stream &key &allow-other-keys)
+  (:method ((obj t) (stream t) &key)
+    (write obj :stream stream)))
+
 (defun list-indirect-class-methods (class)
   "List all indirect methods of CLASS."
   (remove-duplicates (mapcan #'specializer-direct-generic-functions (compute-class-precedence-list class))))

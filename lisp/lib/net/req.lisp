@@ -456,7 +456,6 @@ keep-alive-stream), and should handle clean-up of it"
     (< (- +buffer-size+ (the fixnum buffer-position))
        (the fixnum (babel-encodings:enc-max-units-per-char encoding)))))
 
-
 (defmethod stream-read-char ((stream decoding-stream))
   (declare (optimize speed))
   (when (needs-to-fill-buffer-p stream)

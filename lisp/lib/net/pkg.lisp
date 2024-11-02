@@ -373,9 +373,7 @@
    #:response
    #:http-service-response))
 
-(in-package :std-user)
-
-(defpkg :net
+(pkg:defpkg :net
   (:use :cl :std)
   (:use-reexport 
    :net/core 
@@ -392,5 +390,9 @@
    :net/proto/ssh
    :net/proto/http))
 
-(defpkg :net-user
+(pkg:defpkg :net-user
   (:use :cl :std :std-user :net :obj))
+
+(in-package :net)
+
+(pushnew :net *features*)

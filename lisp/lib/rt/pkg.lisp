@@ -156,7 +156,7 @@
 
 (defpackage :rt/flamegraph
   (:nicknames :flamegraph)
-  (:use :cl :std :log :rt :sb-sprof)
+  (:use :cl :std :log :rt)
   (:export :save-flamegraph))
 
 (defpackage :rt/fuzz

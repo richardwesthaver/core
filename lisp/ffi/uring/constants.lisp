@@ -213,14 +213,16 @@
  (:structure io-uring-getevents-arg ("struct io_uring_getevents_arg"
                                      (unsigned-long sigmask "__u64" "sigmask")
                                      (unsigned-int sigmask-sz "__u32" "sigmask_sz")
-                                     (unsigned-int pad "__u32" "pad")
+                                     (unsigned-int min-wait-used "__u32" "min_wait_usec")
                                      (unsigned-long ts "__u64" "ts")))
  (:structure io-uring-sync-cancel-reg ("struct io_uring_sync_cancel_reg"
                                        (unsigned-long addr "__u64" "addr")
                                        (int fd "__s32" "fd")
                                        (unsigned-int flags "__u32" "flags")
                                        ((struct kernel-timespec) timeout "struct __kernel_timespec" "timeout")
-                                       ((array unsigned-long 4) pad "__u64" "pad[4]")))
+                                       (unsigned-char opcode "__u8" "opcode")
+                                       ((array unsigned-char 7) pad "__u8" "pad[7]")
+                                       ((array unsigned-long 3) pad2 "__u64" "pad2[3]")))
  (:structure io-uring-file-index-range ("struct io_uring_file_index_range"
                                         (unsigned-int off "__u32" "off")
                                         (unsigned-int len "__u32" "len")

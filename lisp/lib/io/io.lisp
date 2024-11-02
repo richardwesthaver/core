@@ -11,3 +11,6 @@
 
 (defpackage :io-user
   (:use :cl :std :std-user :io))
+
+(in-package :io)
+(pushnew :io *features*)

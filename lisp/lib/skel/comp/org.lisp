@@ -24,4 +24,7 @@
     (setf (path comp) p)
     comp))
 
+(defmethod sk-compile ((self sk-org-file) &key)
+  nil)
+
 ;; (describe (sk-load-component :org #p"readme"))

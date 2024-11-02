@@ -8,65 +8,49 @@
   (:use :cl :std :sb-bsd-sockets :net/core :net/util)
   (:nicknames :mpd)
   (:export
-   :*default-host*
-   :*default-port*
-   :connect
-   :disconnect
-   :password
    :with-mpc
-   :disable-output
-   :enable-output
-   :outputs
    :ensure-mpd
-   :ping
-   :kill
-   :status
-   :now-playing
-   :pause
-   :play
-   :previous
-   :next
-   :crossfade
+   :mpd-ping
+   :mpd-kill
+   :mpd-status
+   :mpd-now-playing
+   :mpd-pause
+   :mpd-play
+   :mpd-previous
+   :mpd-next
+   :mpd-crossfade
 
-   :add
-   :add-id
-   :move
-   :move-id
-   :swap
-   :swap-id
-   :clear
-   :delete-track
-   :delete-id
-   :save-playlist
-   :load-playlist
-   :rename-playlist
-   :playlist-info
-   :playlist-changes
-   :shuffle
-   :list-playlist
-   :list-playlist-info
-   :add-to-playlist
-   :clear-playlist
-   :delete-from-playlist
-   :move-in-playlist
-   :find-in-current-playlist
-   :search-in-current-playlist
-
-   :update
-
-   :list-all
-   :list-info
-   :list-all-info
-   :find-tracks
-   :search-tracks
-   :list-metadata
-   :count-tracks
-
-   :commands
-   :not-commands
-   :tag-types
-   :url-handlers
-
+   :mpd-add
+   :mpd-add-id
+   :mpd-move
+   :mpd-move-id
+   :mpd-swap
+   :mpd-swap-id
+   :mpd-clear
+   :mpd-delete-track
+   :mpd-delete-id
+   :mpd-save-playlist
+   :mpd-load-playlist
+   :mpd-rename-playlist
+   :mpd-playlist-info
+   :mpd-playlist-changes
+   :mpd-shuffle
+   :mpd-list-playlist
+   :mpd-list-playlist-info
+   :mpd-add-to-playlist
+   :mpd-clear-playlist
+   :mpd-delete-from-playlist
+   :mpd-move-in-playlist
+   :mpd-find-in-current-playlist
+   :mpd-search-in-current-playlist
+   :mpd-update
+   :mpd-list-all
+   :mpd-list-info
+   :mpd-list-all-info
+   :mpd-find-tracks
+   :mpd-search-tracks
+   :mpd-list-metadata
+   :mpd-count-tracks
    :playlist
    :track
    :file
@@ -77,49 +61,12 @@
    :date
    :genre
    :composer
-
    :position-in-playlist
-   :id
-
    :mpd-error
-   :protocol-mismatch
-   :bad-argument
-   :incorrect-password
-   :not-permitted
-   :unknown-command
-   :not-exist
-   :playlist-size-exceed
-   :already-updating
-   :exist
-
-   :volume
-   :repeat
-   :randomized
-   :playlist-version
-   :playlist-length
-   :xfade
-   :state
-   :audio
-   :bitrate
-   :duration
-   :songid
-   :song
-   :nextsongid
-   :nextsong
-   :elapsed
-   :mixrampdb
-   :consume
-   :single
-
-   :artists
-   :albums
-   :songs
-   :uptime
-   :playtime
-   :db-playtime
-   :db-update))
-
-(in-package :aud)
-(ignore-errors
- (load-asound)
- (load-sndfile))
+   :mpd-artists
+   :mpd-albums
+   :mpd-songs
+   :mpd-uptime
+   :mpd-playtime
+   :mpd-db-playtime
+   :mpd-db-update))

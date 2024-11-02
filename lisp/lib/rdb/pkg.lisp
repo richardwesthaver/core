@@ -122,3 +122,5 @@
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)
+
+(pushnew :rdb *features*)

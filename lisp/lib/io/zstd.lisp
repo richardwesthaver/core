@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :io/zstd)
 
-;;; Vars
-
+(pushnew :zstd *features*)
 ;;; Conditions
 (eval-always (deferror zstd-error (io-error) () (:auto t)))
 

@@ -22,7 +22,7 @@
 ;;; Code:
 (defpackage :syn/gen/rs
   (:nicknames :genrs :rs)
-  (:use :cl :syn/gen)
+  (:use :cl :syn/gen :cli/tools/cargo :obj/ast :std/pipe :std/mop)
   (:import-from :std :in-readtable :eval-always))
 
 (in-package :syn/gen/rs)

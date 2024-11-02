@@ -14,12 +14,11 @@
    :btrfs-util-strerror
    :btrfs-util-subvolume-iter-destroy
    :btrfs-util-subvolume-iterator-get-fd
-   :btrfs-util-qgroup-inherit-destroy))
+   :btrfs-util-qgroup-inherit-destroy
+   :btrfs-util-subvolume-iterator))
 
 (in-package :btrfs)
 
 (define-alien-loader btrfs "/usr/lib/")
 
 (define-alien-loader btrfsutil "/usr/lib/")
-
-(defmacro define-btrfs-ioctl () "Define a wrapper for IOCTLs exposed by BTRFS.")

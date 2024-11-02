@@ -52,7 +52,6 @@
     :components
     ((:file "pkg")
      (:file "asdf")
-     (:file "inspect" :if-feature :gui)
      (:file "krypt")
      (:file "packy"))
     :if-feature :ext)

@@ -112,6 +112,14 @@
 (defmethod sk-load-component ((kind (eql :mod)) (form t) &optional (path *default-pathname-defaults*))
   (sk-new kind :form form :path path))
 
+(defmethod sk-compile ((self sk-mod) &key)
+  (dolist (c (sk-components self))
+    (sk-compile c)))
+
+(defmethod sk-build ((self sk-mod) &key)
+  (dolist (c (sk-components self))
+    (sk-build c)))
+
 ;;; Script
 
 ;; Scripts are always assumed to point to an executable file. They can be ran
@@ -157,7 +165,7 @@
     (format stream ":~A ~A" (sk-kind self) (name self))))
 
 ;;; Config
-(defclass sk-config (skel ast) 
+(defconfig sk-config (skel ast) 
   ((vc :initform *default-vc-kind* :initarg :vc :type (or vc-repo vc-designator) :accessor sk-vc)
    (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
    (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
@@ -177,6 +185,9 @@
           (:system 'sk-system-config)
           (t 'sk-config)))
   (apply #'sk-new self args))
+
+(defmethod make-config ((self (eql :skel)) &rest args)
+  (apply 'make-instance 'sk-config args))
 
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))

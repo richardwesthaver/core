@@ -64,7 +64,7 @@
    :symbolicate
    :keywordicate
    :gensymify
-   :gensymify*))
+   :gensymify* :fboundp! :vboundp! :quoty))
 
 (defpkg :std/list
   (:use :cl)
@@ -91,6 +91,7 @@
    :circular-list :circular-list-p :circular-tree-p :merge!
    :sort!
    :set-equal))
+   
 
 (defpkg :std/type
   (:use :cl)
@@ -170,6 +171,7 @@
    :coercef
    :octet
    :octet-vector
+   :octet-vector-p
    #:positive-integer-p
    #:positive-long-float
    #:positive-long-float-p
@@ -262,9 +264,12 @@
 (defpkg :std/mop
   (:use :cl :sb-mop :sb-pcl)
   (:import-from :std/sym :symb :make-keyword)
+  (:shadow :reset)
   (:export :list-slot-values-using-class
-   :list-class-methods :list-class-slots :list-indirect-slot-methods
-   :ensure-finalized :subclassp))
+   :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
+   :subclassp :write-object :start :started-p 
+   :stop :stopped-p :run :shutdown
+   :reset))
 
 (defpkg :std/curry
   (:use :cl)
@@ -354,12 +359,11 @@
    :xor))
 
 (defpkg :std/thread
-  (:use :cl :sb-thread :sb-concurrency)
+  (:use :cl :sb-thread :sb-concurrency :std/mop)
   (:import-from :std/list :flatten)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
   (:export
-   :run
    :run-thread
    :std-thread-error
    :print-top-level :thread-support-p
@@ -369,8 +373,7 @@
    :hang :finish-threads
    :make-threads :with-threads 
    :thread-count :dump-thread
-   :start :started-p :stop :stopped-p
-   :shutdown :thread-pool :workers
+   :thread-pool :workers
    :condition-wait*
    :sync-message
    :with-sync-message))

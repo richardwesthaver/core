@@ -116,7 +116,7 @@ otherwise."
 (defclass chunked-input-stream (wrapped-stream fundamental-binary-input-stream)
   ((input-chunking-p 
     :initform nil
-    :reader input-chunking-p
+    :accessor input-chunking-p
     :documentation "Whether input chunking is currently enabled.")
    (input-buffer 
     :initform nil
@@ -392,7 +392,7 @@ sure to send the last chunk."
     (setf (output-chunking-p stream) nil))
   (call-next-method))
 
-(defclass chunked-io-stream (chunked-input-stream chunked-output-stream io-stream) ())
+(defclass chunked-io-stream (simple-chunked-input-stream chunked-output-stream io-stream) ())
 
 ;;; Methods
 (defmethod stream-element-type ((stream chunked-stream))

@@ -21,8 +21,12 @@
                (:file "chunky")
                (:file "flate")
                (:file "zstd")
+               (:module "disk"
+                :components 
+                ((:file "pkg")
+                 (:file "proto")
+                 (:file "btrfs")))
                (:file "kbd")
-               (:file "disk")
                (:file "io"))
   :in-order-to ((test-op (test-op "io/tests"))))
 

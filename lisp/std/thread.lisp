@@ -158,14 +158,7 @@
 (defclass thread-pool ()
   ((workers :initarg :workers :accessor workers)))
 
-(defgeneric start (self))
-(defgeneric started-p (self))
-(defgeneric stop (self &key &allow-other-keys))
-(defgeneric stopped-p (self))
-(defgeneric shutdown (self))
-(defgeneric run (self &rest args &key &allow-other-keys))
 (defgeneric run-thread (self thunk &key name &allow-other-keys))
-(defgeneric reset (self &rest args &key &allow-other-keys))
 
 ;; BORDEAUX-THREADS version
 (defun condition-wait* (cvar lock &key timeout)

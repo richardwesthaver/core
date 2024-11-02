@@ -15,14 +15,15 @@
 ;;; Code:
 (in-package :io/kbd)
 (load-xkbcommon)
-
-(deferror kbd-error () ())
-
-(defstruct keyboard path state compose-state)
-
+(pushnew :kbd *features*)
+;;; Vars
 (defconstant +evdev-offset+ 8)
-
 (defconstant +long-bit+ (sb-alien:alien-size sb-alien:unsigned-long))
+
+;;; Conditions
+(deferror kbd-error () ())
+;;; Objects
+(defstruct keyboard path state compose-state)
 
 (defun evdev-bit-p (array bit)
   "Array elements should be unsigned-long."
@@ -49,8 +50,7 @@
       (read-sequence keybits st)
       ;; (cons evbits keybits)
       (loop for i from evdev::+key-reserved+ upto evdev::+key-min-interesting+
-            if (not (evdev-bit-p keybits i))
-            do (break)
+            if (not (evdev-bit-p keybits i)) do (break)
             else return t))))
       
 (defun make-keyboard-from-dev (dev keymap compose-table))

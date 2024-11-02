@@ -307,7 +307,7 @@
                          (remove nil (list ,@commands)))))
 
 (defmacro defcommand (name parameters &body body)
-  `(defun ,name (connection ,@parameters)
+  `(defun ,(symbolicate "MPD-" name) (connection ,@parameters)
      ,@body))
 
 (defmacro defmethod-command (name parameters &body body)

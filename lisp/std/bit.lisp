@@ -538,4 +538,4 @@ the number having BYTES octets (defaulting to 4)."
 
 (defun make-octets (dimensions &rest args)
   "Like MAKE-ARRAY but with a hard-coded element-type of (unsigned-byte 8)."
-  (apply 'make-array dimensions args))
+  (coerce (apply 'make-array dimensions args) 'octet-vector))

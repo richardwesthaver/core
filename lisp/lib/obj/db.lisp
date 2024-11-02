@@ -118,7 +118,6 @@ type hints.")
            (if (listp object)
                (second (assoc element object :test #'equal))
                (error "Does not handle this type of object. Implement your own get-val method."))))))))
-    
 
 (defgeneric (setf get-val) (new-value object element &optional data-type)
   (:documentation "Set the value in a object based on the supplied element name and possible type
@@ -194,14 +193,18 @@ hints.")
   (:documentation "Restore database SELF from object FROM."))
 (defgeneric snapshot-db (self)
   (:documentation "Create a new snapshot for database SELF."))
-(defgeneric write-db (self batch &key)
+(defgeneric write-batch (self batch &key)
   (:documentation "Write BATCH to database SELF."))
 (defgeneric shutdown-db (self &key)
   (:documentation "Shutdown database SELF."))
-(defgeneric ingest-db (self file &key)
+(defgeneric ingest-into-db (self file &key)
   (:documentation "Ingest an external file into the database"))
 
-(defstruct (kv (:constructor make-kv (&optional key val))) key val)
+(defvar *default-kv-size* 8)
+
+(defstruct (kv (:constructor make-kv (&optional key val))) 
+  (key (make-octets *default-kv-size*) :type octet-vector) 
+  (val (make-octets *default-kv-size*) :type octet-vector))
 
 (defgeneric make-val (val)
   (:documentation "Coerce VAL into an OCTET-VECTOR.")
@@ -209,8 +212,12 @@ hints.")
     #())
   (:method ((val string))
     (sb-ext:string-to-octets val))
+  (:method ((val vector))
+    (if (octet-vector-p val)
+        val
+        (call-next-method)))
   (:method ((val t))
-    val))
+    (coerce val 'octet-vector)))
 
 (defgeneric make-key (key)
   (:documentation "Coerce KEY into an OCTET-VECTOR.")
@@ -218,8 +225,16 @@ hints.")
     #())
   (:method ((val string))
     (sb-ext:string-to-octets val))
+  (:method ((val integer))
+    (integer-to-octets val))
+  (:method ((val vector))
+    (if (octet-vector-p val)
+        val
+        (call-next-method)))
   (:method ((val t))
-    val))
+    (coerce val 'octet-vector)))
 
 ;;; Transactions
-;; (defmacro ensure-transaction
+
+;; do we need objects here? Elephant uses a simple list for transaction state.
+;; (defmacro ensure-transaction ())

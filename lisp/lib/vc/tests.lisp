@@ -16,15 +16,15 @@
      (let ((*default-pathname-defaults* (vc-path repo)))
        ,@body)))
 
-(deftest git ()
+(deftest git-simple ()
   (with-temp-repo :git
     (is (streamp (sb-ext:process-output (run-git-command "status" nil :stream))))))
 
-(deftest hg ()
+(deftest hg-simple ()
   (with-temp-repo :hg
     (is (streamp (sb-ext:process-output (run-hg-command "status" nil :stream))))))
 
-(deftest vc ()
+(deftest vc-simple ()
   (with-temp-repo (*default-vc-kind*) (is repo)))
 
 ;; TODO 2024-08-22: 
@@ -33,3 +33,6 @@
 vc.nu; vc mirrors update;'"
   (with-temp-repo :hg
     (vc-id repo)))
+
+(deftest vc-iterator (:skip t)
+  "Test iteration over a set of VC-REPOs.")

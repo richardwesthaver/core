@@ -6,13 +6,15 @@
 (pkg:defpkg :skel
   (:nicknames :sk)
   (:use :cl :std)
-  (:use-reexport :skel/core :skel/comp))
+  (:use-reexport :skel/core :skel/comp #+rdb :skel/db #+net :skel/net))
 
 (pkg:defpkg :sk-user
   (:use :cl :std :std-user :cli :cl-user :log :sb-debug :sb-ext :net/proto/dns :net/fetch :cli/tools/sbcl :pod :cli/clap)
   (:use :skel :skel/core :skel/comp :skel/net))
 
 (in-package :skel)
+
+(pushnew :skel *features*)
 
 (defvar *skel-init-keywords* '(:config *skel-user-config* 
                                :project *skel-project*

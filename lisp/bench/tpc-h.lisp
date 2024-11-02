@@ -16,9 +16,8 @@
 ;;; Code:
 (defpackage :core/bench/tpc-h
   (:nicknames :bench/tpc-h :tpc-h)
-  (:import-from :obj/query :make-field)
   (:import-from :obj/time :date)
-  (:use :cl :std :rt :rt/bench :rt/cover :log :sql :parse/pratt :dat/csv :dat/proto :obj/query))
+  (:use :cl :std :rt :rt/bench :rt/cover :log :sql :parse/pratt :dat/csv :dat/proto :obj/query :obj/schema))
 
 (in-package :core/bench/tpc-h)
 (defsuite :tpc-h)

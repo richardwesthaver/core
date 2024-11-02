@@ -100,7 +100,7 @@ just the keys currently present in TABLE."
   (make-rdb-opts :create-if-missing t :create-missing-column-families t
                  :parallelism (num-cpus)))
 
-(defvar *default-kv* (make-kv #() #()))
+(defvar *default-kv* (make-kv))
 
 ;;; iterator
 (defclass rdb-iter (sequence)
