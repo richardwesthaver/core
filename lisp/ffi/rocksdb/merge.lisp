@@ -128,9 +128,8 @@ accessed using a different MergeOperator)
 
 (define-alien-callable rocksdb-name c-string () (make-alien-string (symbol-name (gensym "rocksdb:"))))
 
-;;; Associative Merge
-
-;;; Concat Merge
+;;; Associative Merge Ops
+;;;; Concat Merge
 (define-alien-callable rocksdb-concat-merge-name c-string () (make-alien-string "cc:concat"))
 
 (define-alien-callable rocksdb-concat-full-merge boolean
@@ -167,3 +166,26 @@ accessed using a different MergeOperator)
     (log:trace! "deleting value:" value)
     (setf value nil))
   (values))
+
+;;;; Index Merge
+(define-alien-callable rocksdb-index-merge-name c-string () (make-alien-string "cc:index"))
+
+(define-alien-callable rocksdb-index-partial-merge boolean
+    ((key (array unsigned-char))
+     (klen size-t)
+     (ops (array (array unsigned-char)))
+     (ops-length (* size-t))
+     (num-ops size-t)
+     (success (array unsigned-char))
+     (new-vlen (* size-t))))
+
+(define-alien-callable rocksdb-index-full-merge boolean
+    ((key (array unsigned-char))
+     (klen size-t)
+     (existing-val (array unsigned-char))
+     (existing-vlen size-t)
+     (ops (array (array unsigned-char)))
+     (ops-length (* size-t))
+     (num-ops size-t)
+     (success (array unsigned-char))
+     (new-vlen (* size-t))))

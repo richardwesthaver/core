@@ -304,8 +304,6 @@ and the stacks containing unclosed duration entries, keyed by thread."
 ;;; - Beginning or ending
 ;;; - Thread ID
 
-
-
 ;;; This prints a representation of the return values delivered.
 ;;; First, this checks to see that cookie is at the top of
 ;;; *TRACED-ENTRIES*; if it is not, then we need to adjust this list
@@ -321,8 +319,6 @@ and the stacks containing unclosed duration entries, keyed by thread."
           (progn
             ,@body))
      (stop-tracing)))
-
-
 
 (defun function-name->name-and-category (function-name)
   (etypecase function-name
@@ -439,8 +435,6 @@ and the stacks containing unclosed duration entries, keyed by thread."
             ;;(local-time:format-timestring nil (local-time:now))
             ))
   (values))
-
-
 
 ;;; Helper function for blacklisting symbols when tracing whole packages.
 (defun package-symbols-except (name &rest exceptions)

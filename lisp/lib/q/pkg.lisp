@@ -4,14 +4,17 @@
 
 ;;; Code:
 (defpackage :q/proto
-  (:use :cl :std :obj/query :obj/plan :obj/id :obj/schema)
+  (:use :cl :std :obj/query :obj/plan :obj/id :obj/schema :obj/ast)
   (:export
    :query-engine :query-parser
    :*query-engine*
    :*query-dialect*
    :query-dialect-designator
    :sql :dql))
-           
+
+(defpackage :q/simple
+  (:use :cl :std :q/proto :obj/query :obj/plan :obj/schema :obj/ast))
+
 (defpackage :q/sql
   (:nicknames :sql)
   (:use :cl :std :q/proto :parse/pratt :obj/query :obj/id)
@@ -60,7 +63,7 @@
 
 (defpackage :q/dql
   (:nicknames :dql)
-  (:use :cl :std :q/proto :obj/query :obj/id :dat/sxp :dat/proto)
+  (:use :cl :std :q/proto :obj/query :obj/id :dat/sxp :dat/proto :obj/ast)
   (:export
    :dql-error
    :dql-data-source

@@ -9,6 +9,7 @@
   :components ((:file "pkg")
                (:file "err" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("pkg"))
+               (:file "password" :depends-on ("err"))
                (:file "authinfo" :depends-on ("err"))
                (:file "jwt" :depends-on ("err"))
                (:file "hotp" :depends-on ("err"))

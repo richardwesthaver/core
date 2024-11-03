@@ -80,3 +80,7 @@
                                          (alien-sap (alien-callable-function ',pmerge))
                                          (alien-sap (alien-callable-function ',delete))
                                          (alien-sap (alien-callable-function ',mname)))))))
+
+;;; SliceTransforms
+(defmacro define-slicetransform (name &body body))
+(defmacro define-comparator (name &body body))

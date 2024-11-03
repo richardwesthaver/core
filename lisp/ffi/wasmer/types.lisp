@@ -55,5 +55,10 @@
   (struct wasmer-funcenv-t
           (inner functioncenv)))
 
+(define-alien-enum (wasmer-compiler int)
+                   :cranelift 0
+                   :llvm 1
+                   :singlepass 2)
+
 (define-alien-enum (wasmer-engine int)
                    :universal 0)

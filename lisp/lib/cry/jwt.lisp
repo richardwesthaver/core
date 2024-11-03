@@ -157,7 +157,7 @@ returns the digest, in Base64"
              :reported-digest reported-digest
              :computed-digest computed-digest))))
 
-(defun decode (jwt-string &key secret fail-if-unsecured)
+(defun jwt-decode (jwt-string &key secret fail-if-unsecured)
   "Decodes and verifies a JSON Web Token. Returns two hash tables,
 token claims and token header"
   (destructuring-bind (header-string claims-string digest-string)

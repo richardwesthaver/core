@@ -154,6 +154,8 @@
   (with-test-env self
     (trace! "running test: " *testing*)
     (flet ((%do ()
+             (when (test-profile self)
+               (sb-sprof:start-profiling))
              (if *compile-tests*
                  (with-compilation-unit (:override t :policy (or (and *test-suite* (test-policy *test-suite*)) *test-policy*))
                    ;; TODO 2023-09-21: handle failures here
@@ -161,7 +163,9 @@
                    (setf %test-result (make-test-result :pass (test-fn self))))
                  (progn
                    (funcall-test self :declare (test-declare self))
-                   (setf %test-result (make-test-result :pass self))))))
+                   (setf %test-result (make-test-result :pass self))))
+             (when (test-profile self)
+               (sb-sprof:stop-profiling))))
       (if *catch-test-errors*
           (handler-bind
               ((error 

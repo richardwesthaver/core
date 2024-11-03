@@ -132,7 +132,8 @@
   (:export
    :*bench-count*
    :defbench
-   :do-bench))
+   :do-bench
+   :bench))
 
 (defpkg :rt/cover
   (:nicknames :cover)
@@ -157,7 +158,7 @@
 (defpackage :rt/flamegraph
   (:nicknames :flamegraph)
   (:use :cl :std :log :rt)
-  (:export :save-flamegraph))
+  (:export :with-flamegraph))
 
 (defpackage :rt/fuzz
   (:nicknames :fuzz)

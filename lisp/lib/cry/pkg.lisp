@@ -29,11 +29,18 @@
 
 (defpackage :cry/jwt
   (:use :cl :std :dat/json :dat/base64 :dat/proto :cry)
-  (:export ))
+  (:export
+   #:hs256-digest
+   #:compare-hs256-digest
+   #:jwt-decode))
 
 (defpackage :cry/authinfo
   (:use :cl :std :cry)
   (:export))
+
+(defpackage :cry/password
+  (:use :cl :std :obj/secret)
+  (:export :password :password-hash :password-salt :make-password-hash :auth))
 
 (in-package :cry)
 

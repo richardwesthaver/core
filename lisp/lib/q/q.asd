@@ -3,6 +3,7 @@
   :description "Query System"
   :depends-on (:std :obj :log :dat :parse)
   :components ((:file "pkg")
+               (:file "simple")
                (:file "parser")
                (:file "engine")
                (:file "sql" :depends-on ("pkg"))

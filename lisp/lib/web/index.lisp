@@ -9,9 +9,9 @@
 
 (in-package :web/index)
 
-(defparameter *last-update* (get-universal-time))
+(defvar *last-update* (get-universal-time))
 
-(defun current-time () (setq *last-update* (get-universal-time)))
+(defun now () (setq *last-update* (get-universal-time)))
 
 (defparameter *web-index-port* 8888)
 
@@ -54,7 +54,7 @@
            (link "https://compiler.company/code" "code")
            " )")
           ,@body
-          (:footer ("Last update: ~A" (current-time))))))))
+          (:footer ("Last update: ~A" (now))))))))
 
  (defun tabulate (&rest rows)
    (with-html

@@ -10,4 +10,4 @@
 
 (in-package :core/bench)
 
-(defbench simple () "")
+(defbench simple () (println "OK"))

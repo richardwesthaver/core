@@ -28,7 +28,8 @@
 
 (defmacro with-errptr (sym &body body)
   `(with-alien ((,sym rocksdb-errptr (make-errptr)))
-     ,@body))
+     ,@body
+     (free-alien ,sym)))
 
 (defmacro with-temp-db (sym (&optional (opts (test-opts)) (path (rocksdb-test-dir))) &body body)
   `(with-errptr err
@@ -334,7 +335,7 @@ DB where K and V are both Lisp strings."
       (is (null-alien errptr))
       (rocksdb-options-destroy opts))))
 
-(deftest transaction (:skip t)
+(deftest transaction ()
   "Test simple transactions using both TransactionDB and OptimisticTransactionDB."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
@@ -515,6 +516,6 @@ DB where K and V are both Lisp strings."
                (in-domain (* rocksdb-in-domain-function))
                (in-range (* rocksdb-in-range-function))
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-name))))
-    (is (typep
-         (rocksdb-slicetransform-create state destructor transform in-domain in-range name)
-         '(alien (* rocksdb-slicetransform))))))
+    (let ((ret (rocksdb-slicetransform-create state destructor transform in-domain in-range name)))
+      (istype '(alien (* rocksdb-slicetransform)) ret)
+      (isnt (rocksdb-slicetransform-destroy ret)))))

@@ -1,6 +1,6 @@
 ;;; rocksdb/slicetransform.lisp --- RocksDB SliceTransform
 
-;; These are used primarily in transactions
+;; SliceTransformations (prefix extraction for bloom filters)
 
 ;;; Refs:
 
@@ -18,16 +18,16 @@
               (* size-t)))
 
 (define-alien-type rocksdb-in-domain-function
-  (function unsigned-char
-            (* t)
-            (array unsigned-char)
-            size-t))
+  (function boolean
+            (* t) ;;?
+            (array unsigned-char) ;;key
+            size-t)) ;;len
 
 (define-alien-type rocksdb-in-range-function
   (function unsigned-char
-            (* t)
-            (array unsigned-char)
-            size-t))
+            (* t) ;;?
+            (array unsigned-char) ;;key 
+            size-t)) ;;len
 
 (define-alien-routine rocksdb-slicetransform-create (* rocksdb-slicetransform)
   (state (* t))
@@ -43,3 +43,24 @@
   (n size-t))
 
 (define-alien-routine rocksdb-slicetransform-destroy void (st (* rocksdb-slicetransform)))
+
+(define-alien-callable rocksdb-transform-default (* unsigned-char)
+    ((key (* unsigned-char))
+     (isize size-t)
+     (osize (* size-t)))
+  (declare (ignore isize osize))
+  key)
+
+(define-alien-callable rocksdb-in-domain-default boolean
+    ((state (* t))
+     (key (array unsigned-char))
+     (len size-t))
+  (declare (ignore state key len))
+  t)
+
+(define-alien-callable rocksdb-in-range-default boolean
+    ((state (* t))
+     (key (array unsigned-char))
+     (len size-t))
+  (declare (ignore state key len))
+  t)

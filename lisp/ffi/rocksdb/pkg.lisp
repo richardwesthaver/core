@@ -371,7 +371,15 @@ set *errptr to a malloc()ed error message.
    :rocksdb-memory-usage
    :rocksdb-statistics-histogram-data
    :rocksdb-block-based-table-options
-   :rocksdb-cuckoo-table-options))
+   :rocksdb-cuckoo-table-options
+   :rocksdb-in-range-default
+   :rocksdb-in-domain-default
+   :rocksdb-transform-default
+   :define-comparator
+   :define-slicetransform
+   :rocksdb-index-full-merge
+   :rocksdb-index-partial-merge
+   :rocksdb-index-merge-name))
 
 (in-package :rocksdb)
 

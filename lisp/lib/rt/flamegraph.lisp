@@ -152,7 +152,7 @@ which is only sent to WITH-OPEN-FILE when it's not NIL."
               roots)
       (values))))
 
-(defmacro save-flamegraph ((filename &rest sb-sprof-opts) &body body)
+(defmacro with-flamegraph ((filename &rest sb-sprof-opts) &body body)
   (with-gensyms (result-var)
     `(let ((*frame-where-profiling-was-started*
              (sb-di:top-frame))

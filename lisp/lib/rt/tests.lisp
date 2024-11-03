@@ -27,7 +27,7 @@
   (let ((f "/tmp/test.txt")) ;; open with https://speedscope.app or
                              ;; output svg with flamegraph.pl >>
                              ;; test.svg
-    (save-flamegraph (f :sample-interval 0.00001 :show-progress t :report :flat)
+    (with-flamegraph (f :sample-interval 0.00001 :show-progress t :report :flat)
       (%foo 20))
     (is (probe-file f))
     (delete-file f)))

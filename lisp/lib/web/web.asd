@@ -1,11 +1,12 @@
 (defsystem :web
-  :depends-on (:std :net :obj :dat :parse :doc :organ :syn :cry :nlp)
+  :depends-on (:std :net :obj :dat :parse :doc :organ :syn :cry :nlp :wasmer)
   :components ((:file "pkg")
                (:module "wasm"
                 :components
                 ((:file "pkg")
                  (:file "text")
-                 (:file "binary"))))
+                 (:file "binary")
+                 (:file "rt"))))
   :in-order-to ((test-op (test-op "web/tests"))))
 
 (defsystem :web/tests

@@ -9,5 +9,8 @@
 (defpackage :web/wasm/binary
   (:use :cl :std :dat/proto))
 
+(defpackage :web/wasm/rt
+  (:use :cl :std :wasmer :sb-alien))
+
 ;; (defpackage :web/wasm/vm
 ;;   (:use :cl :std :web/sys :web/wasm/binary))
