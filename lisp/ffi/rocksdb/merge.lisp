@@ -34,25 +34,26 @@
 ;;; Code:
 (in-package :rocksdb)
 
-(defvar *rocksdb-partial-merge-lambda-list*
-  '((key (array unsigned-char))
-    (klen size-t)
-    (ops (array (array unsigned-char)))
-    (ops-length (* size-t))
-    (num-ops size-t)
-    (success (array unsigned-char))
-    (new-vlen (* size-t))))
+(eval-always
+  (defvar *rocksdb-partial-merge-lambda-list*
+    '((key (array unsigned-char))
+      (klen size-t)
+      (ops (array (array unsigned-char)))
+      (ops-length (* size-t))
+      (num-ops size-t)
+      (success (array unsigned-char))
+      (new-vlen (* size-t))))
 
-(defvar *rocksdb-full-merge-lambda-list*
-  '((key (array unsigned-char))
-    (klen size-t)
-    (existing-val (array unsigned-char))
-    (existing-vlen size-t)
-    (ops (array (array unsigned-char)))
-    (ops-length (* size-t))
-    (num-ops size-t)
-    (success (array unsigned-char))
-    (new-vlen (* size-t))))
+  (defvar *rocksdb-full-merge-lambda-list*
+    '((key (array unsigned-char))
+      (klen size-t)
+      (existing-val (array unsigned-char))
+      (existing-vlen size-t)
+      (ops (array (array unsigned-char)))
+      (ops-length (* size-t))
+      (num-ops size-t)
+      (success (array unsigned-char))
+      (new-vlen (* size-t)))))
 
 #|
 Gives the client a way to express the read -> modify -> write semantics
@@ -66,7 +67,7 @@ Return true on success. Return false failure / error / corruption.
 |#
 ;; FullMerge() is used when a Put/Delete is the *existing_value (or null)
 (define-alien-type rocksdb-full-merge-function
-    (function (* t)
+    (function boolean
               (array unsigned-char)
               size-t
               (array (array unsigned-char))
@@ -83,7 +84,7 @@ or infeasible to combine the two operations, return false instead.
 |#
 ;; PartialMerge() is used to combine two-merge operands (if possible)
 (define-alien-type rocksdb-partial-merge-function
-    (function (* t)
+    (function boolean
               (array unsigned-char)
               size-t
               (array (array unsigned-char))
@@ -93,7 +94,7 @@ or infeasible to combine the two operations, return false instead.
               (* size-t)))
 
 (define-alien-type rocksdb-delete-value-function
-  (function (* t)
+  (function void
             (array unsigned-char)
             size-t))
 
@@ -132,29 +133,35 @@ accessed using a different MergeOperator)
 ;;;; Concat Merge
 (define-alien-callable rocksdb-concat-merge-name c-string () (make-alien-string "cc:concat"))
 
-(define-alien-callable rocksdb-concat-full-merge boolean
-    ((key (array unsigned-char))
-     (klen size-t)
-     (existing-val (array unsigned-char))
-     (existing-vlen size-t)
-     (ops (array (array unsigned-char)))
-     (ops-length (* size-t))
-     (num-ops size-t)
-     (success (array unsigned-char))
-     (new-vlen (* size-t)))
-  (log:debug! (list key klen existing-val existing-vlen ops ops-length num-ops success new-vlen))
-  1)
+(define-alien-callable rocksdb-concat-full-merge boolean #.*rocksdb-full-merge-lambda-list*
+  (log:trace!
+   "Applying CC:CONCAT full merge..."
+   (list key klen existing-val existing-vlen ops ops-length num-ops success new-vlen))
+  (let* ((oplens (loop for i below num-ops
+                       collect (deref ops-length i)))
+         (opslen (reduce '+ oplens))
+         (evlen existing-vlen))
+      (with-alien ((len size-t (+ evlen opslen))
+                   (val (array unsigned-char)
+                        (cast (make-alien unsigned-char len) (array unsigned-char))))
+        (loop for i below evlen
+              do (setf (deref val i) (deref existing-val i)))
+        (loop with shift = 0
+              for i below num-ops
+              for j in oplens
+              with x = (deref ops i)
+              do (loop for l below j
+                       do (setf (deref val (+ shift l evlen)) (deref ops i l)))
+              do (incf shift j))
+        (setf new-vlen (addr len)
+              success val)
+        1)))
 
-(define-alien-callable rocksdb-concat-partial-merge boolean
-    ((key (array unsigned-char))
-     (klen size-t)
-     (ops (array (array unsigned-char)))
-     (ops-length (* size-t))
-     (num-ops size-t)
-     (success (array unsigned-char))
-     (new-vlen (* size-t)))
-  (log:debug! (list key klen ops ops-length num-ops success new-vlen))
-  0)
+(define-alien-callable rocksdb-concat-partial-merge boolean #.*rocksdb-partial-merge-lambda-list*
+  (log:trace! 
+   "Applying CC:CONCAT partial merge..."
+   (list key klen ops ops-length num-ops success new-vlen))
+  1)
 
 (define-alien-callable rocksdb-delete-value void
     ((state (* t))
@@ -170,22 +177,8 @@ accessed using a different MergeOperator)
 ;;;; Index Merge
 (define-alien-callable rocksdb-index-merge-name c-string () (make-alien-string "cc:index"))
 
-(define-alien-callable rocksdb-index-partial-merge boolean
-    ((key (array unsigned-char))
-     (klen size-t)
-     (ops (array (array unsigned-char)))
-     (ops-length (* size-t))
-     (num-ops size-t)
-     (success (array unsigned-char))
-     (new-vlen (* size-t))))
-
-(define-alien-callable rocksdb-index-full-merge boolean
-    ((key (array unsigned-char))
-     (klen size-t)
-     (existing-val (array unsigned-char))
-     (existing-vlen size-t)
-     (ops (array (array unsigned-char)))
-     (ops-length (* size-t))
-     (num-ops size-t)
-     (success (array unsigned-char))
-     (new-vlen (* size-t))))
+(define-alien-callable rocksdb-index-partial-merge boolean #.*rocksdb-partial-merge-lambda-list*)
+    
+(define-alien-callable rocksdb-index-full-merge boolean #.*rocksdb-full-merge-lambda-list*)
+    
+ 

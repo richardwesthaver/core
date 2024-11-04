@@ -198,7 +198,9 @@
   (opt (* rocksdb-options)) (table-opts (* rocksdb-block-based-table-options)))
 
 (define-opt-accessor rocksdb-options comparator (* rocksdb-comparator))
-(define-opt-accessor rocksdb-options merge-operator (* rocksdb-mergeoperator))
+(define-alien-routine rocksdb-options-set-merge-operator void
+  (opt (* rocksdb-options))
+  (merge-op (* rocksdb-mergeoperator)))
 (define-opt-accessor rocksdb-options statistics-level int)
 (define-opt-accessor rocksdb-options min-blob-size unsigned-long)
 (define-opt-accessor rocksdb-options blob-file-size unsigned-long)
@@ -356,8 +358,62 @@
           
 ;;; RocksDB Write Options
 (define-opt rocksdb-writeoptions)
+(define-opt-accessor rocksdb-writeoptions sync)
+(define-opt-accessor rocksdb-writeoptions disable-wal)
+(define-opt-accessor rocksdb-writeoptions ignore-missing-column-families)
+(define-opt-accessor rocksdb-writeoptions no-slowdown)
+(define-opt-accessor rocksdb-writeoptions low-pri)
+(define-opt-accessor rocksdb-writeoptions memtable-insert-hint-per-batch)
 ;;; RocksDB Read Options
 (define-opt rocksdb-readoptions)
+(define-opt-accessor rocksdb-readoptions verify-checksums)
+(define-opt-accessor rocksdb-readoptions fill-cache)
+(define-opt-accessor rocksdb-readoptions read-tier int)
+(define-opt-accessor rocksdb-readoptions tailing)
+(define-opt-accessor rocksdb-readoptions total-order-seek)
+(define-opt-accessor rocksdb-readoptions skippable-internal-keys unsigned-long)
+(define-opt-accessor rocksdb-readoptions purge-on-iterator-cleanup)
+(define-opt-accessor rocksdb-readoptions deadline unsigned-long)
+(define-opt-accessor rocksdb-readoptions io-timeout unsigned-long)
+(define-opt-accessor rocksdb-readoptions async-io)
+(define-alien-routine rocksdb-readoptions-set-snapshot void
+  (self (* rocksdb-readoptions))
+  (val (* rocksdb-snapshot)))
+(define-alien-routine rocksdb-readoptions-set-iterate-upper-bound void
+  (self (* rocksdb-readoptions))
+  (key (* char))
+  (keylen size-t))
+(define-alien-routine rocksdb-readoptions-set-iterate-lower-bound void
+  (self (* rocksdb-readoptions))
+  (key (* char))
+  (keylen size-t))
+
+(define-alien-routine rocksdb-readoptions-set-readahead-size void
+  (self (* rocksdb-readoptions))
+  (val size-t))
+
+(define-alien-routine rocksdb-readoptions-set-prefix-same-as-start void
+  (self (* rocksdb-readoptions))
+  (val unsigned-char))
+
+(define-alien-routine rocksdb-readoptions-set-ignore-range-deletions void
+  (self (* rocksdb-readoptions))
+  (val unsigned-char))
+
+(define-alien-routine rocksdb-readoptions-set-timestamp void
+  (self (* rocksdb-readoptions))
+  (ts (* char))
+  (tslen size-t))
+
+(define-alien-routine rocksdb-readoptions-set-iter-start-ts void
+  (self (* rocksdb-readoptions))
+  (ts (* char))
+  (tslen size-t))
+
+(define-alien-routine rocksdb-readoptions-set-auto-readahead-size void
+  (self (* rocksdb-readoptions))
+  (val unsigned-char))
+
 ;;; RocksDB Flush Options
 (define-opt rocksdb-flushoptions)
 (define-opt-accessor rocksdb-flushoptions wait)

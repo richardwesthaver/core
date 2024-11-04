@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :rocksdb)
 
-(define-alien-type rocksdb-errptr (* t))
+(define-alien-type rocksdb-errptr (* (* t)))
 (define-opaque rocksdb)
 (define-opaque rocksdb-iterator)
 (define-opaque rocksdb-backup-engine)

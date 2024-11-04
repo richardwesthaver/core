@@ -12,9 +12,6 @@
 (load-rocksdb)
 (init-log-timestamp)
 
-(defun make-errptr ()
-  (make-alien rocksdb-errptr))
-
 (defun rocksdb-test-dir ()
   (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
 
@@ -26,19 +23,23 @@
     (rocksdb-options-set-create-if-missing default t)
     default))
 
-(defmacro with-errptr (sym &body body)
-  `(with-alien ((,sym rocksdb-errptr (make-errptr)))
-     ,@body
-     (free-alien ,sym)))
-
-(defmacro with-temp-db (sym (&optional (opts (test-opts)) (path (rocksdb-test-dir))) &body body)
+(defmacro with-temp-db (sym (&optional (opts (test-opts)) (path)) &body body)
   `(with-errptr err
      (let* ((opts ,opts)
-            (path ,path)
+            (path (or ,path (rocksdb-test-dir)))
             (,sym (rocksdb-open opts path err)))
        (unwind-protect
             (progn ,@body)
-         (rocksdb-close ,sym)))))
+         (rocksdb-close ,sym)
+         ;; (rocksdb-destroy-db opts path err)
+         ))))
+
+(deftest errptr ()
+  (signals rocksdb-c-error
+    (with-errptr e
+      (let ((o (test-opts)))
+        (rocksdb-options-set-create-if-missing o nil)
+        (rocksdb-open o (rocksdb-test-dir) e)))))
 
 ;; not thread safe (gensym-counter)
 (defun genkey (&optional prefix) (string-to-octets (symbol-name (gensym (or prefix "key")))))
@@ -49,7 +50,7 @@
      (unwind-protect (progn ,@body)
        ,destroy)))
 
-(deftest opts (:skip t)
+(deftest opts ()
   (with-opt (o (rocksdb-options-create) (rocksdb-options-destroy o))
     ;; unsigned-char
     (rocksdb-options-set-create-if-missing o t)
@@ -194,7 +195,7 @@ DB where K and V are both Lisp strings."
       (is (null-alien errptr))
       (rocksdb-options-destroy opts))))
 
-(deftest sstfiles (:skip t)
+(deftest sstfiles ()
   "Test SST file write/ingest functionality."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
@@ -412,7 +413,6 @@ DB where K and V are both Lisp strings."
   (with-alien ((str c-string (make-alien-string ""))
                (state (* t)))
     (is (null (alien-funcall (alien-callable-function 'rocksdb-delete-value) state str 1))))
-
   (is (null (alien-funcall (alien-callable-function 'rocksdb-destructor) (make-alien (* t)))))
   ;; null merge op
   (with-alien ((state (* t))
@@ -421,8 +421,10 @@ DB where K and V are both Lisp strings."
                (partial-merge (* rocksdb-partial-merge-function))
                (delete-value (* rocksdb-delete-value-function))
                (name (* rocksdb-name-function)))
-    (is (typep (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)
-               '(alien (* rocksdb-mergeoperator)))))
+    (let ((op (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
+      (istype '(alien (* rocksdb-mergeoperator)) op)
+      (rocksdb-mergeoperator-destroy op)))
+
   ;; concat merge op
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
@@ -430,14 +432,62 @@ DB where K and V are both Lisp strings."
                (partial-merge (* rocksdb-partial-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-partial-merge)))
                (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-delete-value)))
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
-    (is (typep (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)
-               '(alien (* rocksdb-mergeoperator)))))
-  (with-opt (o (test-opts) nil)
-    (rocksdb-options-set-merge-operator o (create-dummy-mergeoperator))
-    (with-temp-db db (o)
-      ;; merge_operator=DUMMY in OPTIONS file
-      )))
-     
+    (let ((concat-op (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
+      (istype '(alien (* rocksdb-mergeoperator))
+              concat-op)
+      (with-opt (o (test-opts) (rocksdb-options-destroy o))
+        (rocksdb-options-set-merge-operator o concat-op)
+        (with-temp-db db (o)
+          (let* ((k "foobar")
+                 (klen (length k))
+                 (v "barfood")
+                 (vlen (length v)))
+            (with-errptr e
+              (rocksdb-put db (rocksdb-writeoptions-create)
+                           (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
+                           klen
+                           (cast (make-alien-string v :null-terminate nil) (* unsigned-char)) 
+                           vlen
+                           e)
+              (is (null-alien e))
+              ;; (with-alien ((rvlen (* size-t) (make-alien size-t)))
+              ;;   (rocksdb-get db (rocksdb-readoptions-create)
+              ;;                (cast (make-alien-string k) (* unsigned-char))
+              ;;                klen
+              ;;                rvlen
+              ;;                e)
+              ;;   (is= 7 (deref rvlen))
+              ;; (rocksdb-flush db (rocksdb-flushoptions-create) e)
+              ;; (rocksdb-merge db (rocksdb-writeoptions-create)
+              ;;                (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
+              ;;                klen
+              ;;                (cast (make-alien-string v :null-terminate nil) (* unsigned-char))
+              ;;                vlen
+              ;;                e)
+              ;; (is (null-alien e))
+              (with-alien ((rvlen size-t))
+                (rocksdb-get db (rocksdb-readoptions-create)
+                             (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
+                             klen
+                             (addr rvlen)
+                             e)
+                (is= 7 rvlen))
+              ;; replace with with ROCKSDB-MERGE
+              (rocksdb-put db (rocksdb-writeoptions-create)
+                           (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
+                           klen
+                           (cast (make-alien-string v :null-terminate nil) (* unsigned-char)) 
+                           vlen
+                           e)
+              (with-alien ((rvlen size-t))
+                (rocksdb-get db (rocksdb-readoptions-create)
+                             (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
+                             klen
+                             (addr rvlen)
+                             e)
+                ;; should be > prev
+                (println rvlen))
+            )))))))
 
 (deftest comparator ()
   "Test low-level comparator API."

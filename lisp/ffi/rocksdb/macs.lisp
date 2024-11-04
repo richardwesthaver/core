@@ -84,3 +84,10 @@
 ;;; SliceTransforms
 (defmacro define-slicetransform (name &body body))
 (defmacro define-comparator (name &body body))
+
+(defmacro with-errptr (sym &body body)
+  `(let ((,sym (alien-sap (make-alien (* t) 0))))
+     (setf (deref (sap-alien ,sym (* (* t)))) nil)
+     (unwind-protect (progn ,@body)
+       (unless (null-alien (deref (sap-alien ,sym (* (* t)))))
+         (rocksdb-c-error ,sym)))))

@@ -379,8 +379,28 @@ set *errptr to a malloc()ed error message.
    :define-slicetransform
    :rocksdb-index-full-merge
    :rocksdb-index-partial-merge
-   :rocksdb-index-merge-name))
+   :rocksdb-index-merge-name
+   :rocksdb-options-set-merge-operator
+   :rocksdb-readoptions-set-auto-readahead-size
+   :rocksdb-readoptions-set-iter-start-ts
+   :rocksdb-readoptions-set-timestamp
+   :rocksdb-readoptions-set-ignore-range-deletions
+   :rocksdb-readoptions-set-prefix-same-as-start
+   :rocksdb-readoptions-set-readahead-size
+   :rocksdb-readoptions-set-iterate-lower-bound
+   :rocksdb-readoptions-set-iterate-upper-bound
+   :rocksdb-readoptions-set-snapshot
+   :with-errptr
+   :rocksdb-c-error
+   :rocksdb-condition))
 
 (in-package :rocksdb)
 
 (define-alien-loader rocksdb)
+
+(define-condition rocksdb-condition () ())
+
+(define-condition rocksdb-c-error (rocksdb-condition std:std-error) ())
+
+(defun rocksdb-c-error (errptr)
+  (error 'rocksdb-c-error :message (deref (sap-alien errptr (* c-string)))))
