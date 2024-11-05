@@ -52,12 +52,12 @@
 ;;; Merge Ops
 (defmacro define-full-merge-op (name &body body)
   `(define-alien-callable ,name (* t)
-       ,*rocksdb-full-merge-lambda-list*
+       #.*rocksdb-full-merge-lambda-list*
      ,@body))
 
 (defmacro define-partial-merge-op (name &body body)
   `(define-alien-callable ,name (* t)
-       ,*rocksdb-partial-merge-lambda-list*
+       #.*rocksdb-partial-merge-lambda-list*
      ,@body))
 
 (defmacro define-merge-operator (name state &key full
@@ -82,11 +82,48 @@
                                          (alien-sap (alien-callable-function ',mname)))))))
 
 ;;; SliceTransforms
-(defmacro define-slicetransform (name &body body))
+(defmacro define-transform-function (name &body body)
+  `(define-alien-callable ,name (* unsigned-char)
+       ,*rocksdb-transform-lambda-list*
+     ,@body))
+
+(defmacro define-in-domain-function (name &body body)
+  `(define-alien-callable ,name (* unsigned-char)
+       ,*rocksdb-in-domain-lambda-list*
+     ,@body))
+
+(defmacro define-in-range-function (name &body body)
+  `(define-alien-callable ,name (* unsigned-char)
+       ,*rocksdb-in-range-lambda-list*
+     ,@body))
+
+(defmacro define-slicetransform (name state &key (destructor 'rocksdb-destructor)
+                                                 transform
+                                                 in-domain
+                                                 in-range)
+  (with-gensyms (in-domain-fn in-range-fn transform-fn sname screate)
+    (setf in-domain-fn (symbolicate name "-IN-DOMAIN")
+          in-range-fn (symbolicate name "-IN-RANGE")
+          sname (symbolicate name "-SLICETRANSFORM-NAME")
+          transform-fn (symbolicate name "-TRANSFORM")
+          screate (symbolicate "CREATE-" name "-TRANSFORM"))
+    `(progn
+       (define-transform-function ,transform-fn ,@transform)
+       (define-in-domain-function ,in-domain-fn ,@in-domain)
+       (define-in-range-function ,in-range-fn ,@in-range)
+       (define-alien-callable ,sname c-string () (string ',name))
+       (defun ,screate ()
+         (rocksdb-slicetransform-create ,state
+                                        (alien-sap (alien-callable-function ',destructor))
+                                        (alien-sap (alien-callable-function ',transform))
+                                        (alien-sap (alien-callable-function ',in-domain-fn))
+                                        (alien-sap (alien-callable-function ',in-range-fn))
+                                        (alien-sap (alien-callable-function ',sname)))))))
+
 (defmacro define-comparator (name &body body))
 
 (defmacro with-errptr (sym &body body)
-  `(let ((,sym (alien-sap (make-alien (* t) 0))))
+  `(let ((,sym (alien-sap (make-alien (* (* t))))))
      (setf (deref (sap-alien ,sym (* (* t)))) nil)
      (unwind-protect (progn ,@body)
        (unless (null-alien (deref (sap-alien ,sym (* (* t)))))

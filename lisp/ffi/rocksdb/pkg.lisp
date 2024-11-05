@@ -392,7 +392,13 @@ set *errptr to a malloc()ed error message.
    :rocksdb-readoptions-set-snapshot
    :with-errptr
    :rocksdb-c-error
-   :rocksdb-condition))
+   :rocksdb-condition
+   :*rocksdb-transform-lambda-list*
+   :*rocksdb-in-domain-lambda-list*
+   :*rocksdb-in-range-lambda-list*
+   :define-in-range-function
+   :define-in-domain-function
+   :define-transform-function))
 
 (in-package :rocksdb)
 

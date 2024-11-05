@@ -1,3 +1,4 @@
+
 ;;; rdb/raw.lisp --- Raw wrappers for ROCKSDB alien interface
 
 ;;; Code:
@@ -27,7 +28,7 @@ to initialize the instance with custom configuration."
 
 ;;; DB
 (defun open-db-raw (db-path &optional (opts (default-rocksdb-options)))
-  (with-errptr (err 'open-db-error (list :db db-path))
+  (with-errptr* (err 'open-db-error (list :db db-path))
     (let* ((db-path (if (pathnamep db-path)
                         (namestring db-path)
                         db-path)))
@@ -37,7 +38,7 @@ to initialize the instance with custom configuration."
   (rocksdb-close db))
 
 (defun destroy-db-raw (path &optional (opt (rocksdb-options-create)))
-  (with-errptr (err 'destroy-db-error (list :db path))
+  (with-errptr* (err 'destroy-db-error (list :db path))
     (rocksdb-destroy-db opt (namestring (uiop:ensure-directory-pathname path)) err)
     (rocksdb-options-destroy opt)))
 
@@ -50,16 +51,16 @@ to initialize the instance with custom configuration."
       (rocksdb-get-column-family-metadata db)))
 
 (defun flush-db-raw (db &optional (opts (rocksdb-flushoptions-create)))
-  (with-errptr (err 'flush-db-error (list :db db))
+  (with-errptr* (err 'flush-db-error (list :db db))
     (rocksdb-flush db opts err)))
 
 (defun repair-db-raw (name &optional (opts (rocksdb-options-create)))
-  (with-errptr (err 'repair-db-error (list :name name))
+  (with-errptr* (err 'repair-db-error (list :name name))
     (rocksdb-repair-db opts name err)))
 
 (defun ingest-db-raw (db files &optional (opts (rocksdb-ingestexternalfileoptions-create)))
   (let ((flen (length files)))
-    (with-errptr (err 'ingest-db-error)
+    (with-errptr* (err 'ingest-db-error)
       (with-alien ((flist (* c-string) (make-alien c-string flen)))
         (loop for f in files
               for i from 0 to flen
@@ -68,7 +69,7 @@ to initialize the instance with custom configuration."
 
 (defun ingest-db-cf-raw (db cf files &optional (opts (rocksdb-ingestexternalfileoptions-create)))
   (let ((flen (length files)))
-    (with-errptr (err 'ingest-db-error)
+    (with-errptr* (err 'ingest-db-error)
       (with-alien ((flist (* c-string) (make-alien c-string flen)))
         (loop for f in files
               for i from 0 to flen
@@ -83,7 +84,7 @@ to initialize the instance with custom configuration."
 		 (v (* unsigned-char) (make-alien unsigned-char vlen)))
       (setfa k key)
       (setfa v val)
-      (with-errptr (err 'put-kv-error (list :db db :kv (cons key val)))
+      (with-errptr* (err 'put-kv-error (list :db db :kv (cons key val)))
         (rocksdb-put db
 		     opts
 		     k
@@ -99,7 +100,7 @@ to initialize the instance with custom configuration."
 
 (defun get-kv-raw (db key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
-    (with-errptr (err 'get-kv-error (list :db db :key key))
+    (with-errptr* (err 'get-kv-error (list :db db :key key))
       (with-alien ((vlen size-t)
 		   (k (* unsigned-char) (make-alien unsigned-char klen)))
         (setfa k key)
@@ -128,12 +129,12 @@ to initialize the instance with custom configuration."
       (loop for opt in opts
             for i below n
             do (setf (deref cf-opts i) opt))
-      (with-errptr (err 'rocksdb-cf-error (list :cf name))
+      (with-errptr* (err 'rocksdb-cf-error (list :cf name))
         (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
           (values db cf-handles))))))
 
 (defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
-  (with-errptr (err 'rocksdb-cf-error (list :db db :cf name)) 
+  (with-errptr* (err 'rocksdb-cf-error (list :db db :cf name)) 
     (rocksdb-create-column-family db opt name err)))
 
 (defun destroy-cf-raw (cf)
@@ -141,7 +142,7 @@ to initialize the instance with custom configuration."
 
 (defun get-cf-raw (db cf key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
-    (with-errptr (err 'get-kv-error (list :db db :key key))
+    (with-errptr* (err 'get-kv-error (list :db db :key key))
       (with-alien ((vlen (* size-t) (make-alien size-t 0))
 		   (k (* unsigned-char) (make-alien unsigned-char klen)))
         (setfa k key)
@@ -165,7 +166,7 @@ to initialize the instance with custom configuration."
 (defun put-cf-raw (db cf key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
         (vlen (length val)))
-    (with-errptr (err 'put-kv-error (list :db db :kv (cons key val)))
+    (with-errptr* (err 'put-kv-error (list :db db :kv (cons key val)))
       (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                    (v (* unsigned-char) (make-alien unsigned-char vlen)))
         (setfa k key)
@@ -224,7 +225,7 @@ to initialize the instance with custom configuration."
 
 ;;; Backup Engine
 (defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
-  (with-errptr (err 'open-backup-engine-error (list :db be-path))
+  (with-errptr* (err 'open-backup-engine-error (list :db be-path))
     (let ((be-path (if (pathnamep be-path)
                        (namestring be-path)
                        be-path)))
@@ -234,15 +235,15 @@ to initialize the instance with custom configuration."
   (rocksdb-backup-engine-close be))
 
 (defun create-new-backup-raw (be db)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-backup-engine-create-new-backup be db err)))
 
 (defun restore-from-latest-backup-raw (be db-path backup-path &optional (opt (rocksdb-restore-options-create)))
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-backup-engine-restore-db-from-latest-backup be db-path backup-path opt err)))
 
 (defun restore-from-backup-raw (be db-path backup-path backup-id &optional (opt (rocksdb-restore-options-create)))
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-backup-engine-restore-db-from-backup be db-path backup-path opt backup-id err)))
 
 ;;; Snapshot
@@ -263,27 +264,27 @@ to initialize the instance with custom configuration."
   (rocksdb-sstfilewriter-create-with-comparator env-opts io-opts comparator))
 
 (defun finish-sst-writer-raw (writer)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-finish writer err)))
 
 (defun destroy-sst-writer-raw (writer)
   (rocksdb-sstfilewriter-destroy writer))
 
 (defun open-sst-writer-raw (writer name)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-open writer name err)))
 
 ;; this function is deprecated in the Java API:
 ;; https://javadoc.io/doc/org.rocksdb/rocksdbjni/6.6.4/org/rocksdb/SstFileWriter.html
 
 ;; (defun sst-add-raw (writer key val)
-;;   (with-errptr (err 'rdb-alien-error)
+;;   (with-errptr* (err 'rdb-alien-error)
 ;;     (rocksdb-sstfilewriter-add writer key (length key) val (length val) err)))
 
 (defun sst-put-raw (writer key val)
   (let ((klen (length key))
         (vlen (length val)))
-    (with-errptr (err 'rdb-alien-error)
+    (with-errptr* (err 'rdb-alien-error)
       (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                    (v (* unsigned-char) (make-alien unsigned-char vlen)))
         (setfa k key)
@@ -296,23 +297,23 @@ to initialize the instance with custom configuration."
     (sst-put-raw writer key-octets val-octets)))
 
 (defun sst-put-ts-raw (writer key val ts)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-put-with-ts writer key (length key) val (length val) ts (length ts) err)))
 
 (defun sst-delete-raw (writer key)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-delete writer key (length key) err)))
 
 (defun sst-delete-ts-raw (writer key ts)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-delete-with-ts writer key (length key) ts (length ts) err)))
 
 (defun sst-delete-range-raw (writer start-key end-key)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (rocksdb-sstfilewriter-delete-range writer start-key (length start-key) end-key (length end-key) err)))
 
 (defun sst-file-size-raw (writer)
-  (with-errptr (err 'rdb-alien-error)
+  (with-errptr* (err 'rdb-alien-error)
     (with-alien ((ret unsigned-long))
       (rocksdb-sstfilewriter-file-size writer (addr ret) err)
       ret)))

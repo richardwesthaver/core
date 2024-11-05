@@ -597,6 +597,8 @@
   (:import-from :sb-assem :*backend-instruction-set-package*)
   (:import-from :sb-impl :*logical-hosts*)
   (:export
+   :.i ;; alias for *inspected*
+   :hooks
    :*default-arena-size*
    :current-lisp-implementation
    :current-machine

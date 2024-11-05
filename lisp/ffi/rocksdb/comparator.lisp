@@ -20,26 +20,26 @@
 (define-alien-type rocksdb-compare-function
   (function int
             (* t)
-            c-string
+            (* unsigned-char)
             size-t
-            c-string
+            (* unsigned-char)
             size-t))
 
 (define-alien-type rocksdb-compare-with-ts-function
   (function int
             (* t)
-            c-string
+            (* unsigned-char)
             size-t
-            c-string
+            (* unsigned-char)
             size-t))
 
 (define-alien-type rocksdb-compare-without-ts-function
   (function int
             (* t)
-            c-string
+            (* unsigned-char)
             size-t
             unsigned-char
-            c-string
+            (* unsigned-char)
             size-t
             unsigned-char))
 
@@ -48,8 +48,6 @@
   (destructor (* rocksdb-destructor-function))
   (compare (* rocksdb-compare-function))
   (name (* rocksdb-name-function)))
-
-;; (rocksdb-comparator-create nil nil (make-alien int 1) (make-alien unsigned-char 10))
 
 (define-alien-routine rocksdb-comparator-destroy void (self (* rocksdb-comparator)))
 
@@ -65,31 +63,29 @@
 
 (define-alien-callable rocksdb-compare-never int
     ((state (* t))
-     (a c-string)
+     (a (* unsigned-char))
      (alen size-t)
-     (b c-string)
+     (b (* unsigned-char))
      (blen size-t))
   (declare (ignore state a alen b blen))
   0)
 
 (define-alien-callable rocksdb-compare-never-with-ts int
     ((state (* t))
-     (a c-string)
+     (a (* unsigned-char))
      (alen size-t)
-     (b c-string)
+     (b (* unsigned-char))
      (blen size-t))
   (declare (ignore state a alen b blen))
   0)
 
 (define-alien-callable rocksdb-compare-never-without-ts int
     ((state (* t))
-     (a c-string)
+     (a (* unsigned-char))
      (alen size-t)
      (a-ts unsigned-char)
-     (b c-string)
+     (b (* unsigned-char))
      (blen size-t)
      (b-ts unsigned-char))
   (declare (ignore state a alen a-ts b blen b-ts))
   0)
-
-    

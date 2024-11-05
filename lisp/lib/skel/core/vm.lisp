@@ -34,7 +34,7 @@
 
 (defsetf get-so-scope set-so-scope)
 
-(defvar *skel-arena* (new-skel-arena))
+(defvar *skel-arena*)
 
 (defvar *skel-ops* nil)
 

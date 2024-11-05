@@ -22,6 +22,14 @@
   "When non-nil (the default) specifies that this is an interactive REPL session
 and we may query the user for input.")
 
+(define-symbol-macro .i sb-ext:*inspected*)
+
+(defun hooks ()
+  (list sb-ext:*init-hooks*
+        sb-ext:*after-gc-hooks*
+        sb-ext:*save-hooks*
+        sb-ext:*exit-hooks*))
+
 (defvar *default-arena-size* (* 10 1024 1024 1024))
 
 (defun current-lisp-implementation ()

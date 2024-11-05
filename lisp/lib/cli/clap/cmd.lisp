@@ -296,9 +296,10 @@ and calls INSTALL-AST on SELF with ARGS."
 ;; WARNING: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.
 (defmethod call-cmd ((self cli-cmd) args opts)
-  (log:trace! "calling command" self 
-              "with args" args
-              "and opts" opts)
+  (log:trace! "calling command" self
+              (when args (format nil "args = ~A" args))
+              (unless (sb-sequence:emptyp opts)
+                (format nil "opts = ~A" opts)))
   (funcall (cli-thunk self) args opts))
 
 (defmethod do-opts ((self cli-cmd))

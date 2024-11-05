@@ -46,5 +46,6 @@
           (loop for n in names
                 collect `(export (list
                                   ',(symbolicate opt '-get- n)
-                                  ',(symbolicate opt '-set- n)) :rocksdb))))
+                                  ',(symbolicate opt '-set- n)) 
+                                 :rocksdb))))
     `(progn ,@forms)))

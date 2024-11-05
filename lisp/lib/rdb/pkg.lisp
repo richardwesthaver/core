@@ -12,7 +12,6 @@
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
-   :with-errptr
    :rdb-error
    :open-db-error
    :open-backup-engine-error
@@ -98,7 +97,7 @@
    :rdb-iter :make-rdb-iter :rdb-iter-p
    :rdb-iter-sap
    ;; macs
-   :with-errptr
+   :with-errptr*
    :with-db
    :*temp-db-destroy*
    :with-temp-db

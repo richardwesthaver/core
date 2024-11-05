@@ -148,7 +148,7 @@
       (delete-file path)
       ;; with macro
       (with-sst (s :file path :destroy t)
-        (put-kv s (make-kv "nil" "nil")))
+        (put-kv s (make-kv (string-to-octets "nil") (string-to-octets "nil"))))
       (delete-file path))))
 
 (deftest errors ()

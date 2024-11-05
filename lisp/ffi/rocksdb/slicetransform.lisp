@@ -11,9 +11,24 @@
 ;;; Code:
 (in-package :rocksdb)
 
+(defvar *rocksdb-transform-lambda-list*
+  '((key (* unsigned-char))
+    (len size-t)
+    (dst-len (* size-t))))
+
+(defvar *rocksdb-in-domain-lambda-list*
+  '((state (* t))
+    (key (* unsigned-char))
+    (len size-t)))
+
+(defvar *rocksdb-in-range-lambda-list*
+  '((state (* t))
+    (key (* unsigned-char))
+    (len size-t)))
+
 (define-alien-type rocksdb-transform-function
-    (function (array unsigned-char)
-              (array unsigned-char)
+    (function (* unsigned-char)
+              (* unsigned-char)
               size-t
               (* size-t)))
 

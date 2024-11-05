@@ -4,19 +4,13 @@
 (in-package :rdb)
 
 ;;; error handling
-(defmacro with-errptr ((e &optional errtyp params) &body body)
-  `(with-alien ((,e rocksdb-errptr nil))
-     (unwind-protect 
-          (handler-bind ((sb-sys:memory-fault-error
-                           (lambda (c)
-                             (declare (ignore c))
-                             (handle-errptr ,e ,errtyp ,params)))
-                         (error
-                           (lambda (c)
-                             (declare (ignore c))
-                             (handle-errptr ,e ,errtyp ,params))))
-            (progn ,@body))
-       (handle-errptr ,e ,errtyp ,params))))
+(defmacro with-errptr* ((e &optional errtyp params) &body body)
+  `(with-errptr ,e
+     (handler-bind ((sb-sys:memory-fault-error
+                      (lambda (c)
+                        (declare (ignore c))
+                        (handle-errptr ,e ,errtyp ,params))))
+       (progn ,@body))))
 
 ;;; opts
 (defmacro rdb-opt-setter (key)
@@ -30,7 +24,7 @@
   `(let ((,db-var (open-db-raw ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
-       (with-errptr (err 'rocksdb-alien-error)
+       (with-errptr* (err 'rocksdb-alien-error)
          ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
          (rocksdb-options-destroy ,opt)))))
 
