@@ -19,4 +19,7 @@
 ;; -- Ralf Hinze, Purely Functional 1-2 Brother Trees
 
 ;;; Code:
-(in-package :obj/tree)
+(defpackage :obj/tree/brother
+  (:nicknames :tree/bro :brother :tree/brother :obj/tree/bro)
+  (:use :cl :std :obj/tree))
+(in-package :obj/tree/brother)

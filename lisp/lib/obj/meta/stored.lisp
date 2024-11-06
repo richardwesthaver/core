@@ -25,7 +25,7 @@
    (spec :type (or list string) :accessor spec :initarg :spec
                  :documentation "Persistent objects use a spec pointer to identify which store
                          they are connected to"))
-  (:documentation "Slots which are implicitly bound to all STORED-CLASSes."))
+  (:documentation "Slots which are implicitly bound to all STORED-CLASS metaobjects."))
 
 (defmethod print-object ((obj stored) stream)
   "This is useful for debugging and being clear about what is persistent and what is not"

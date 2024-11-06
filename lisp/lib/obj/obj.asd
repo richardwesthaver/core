@@ -36,8 +36,9 @@
                (:module "tree"
                 :components ((:file "node")
                              (:file "avl")
-                             (:file "rb")
-                             (:file "bro")))
+                             (:file "redblack")
+                             (:file "brother")
+                             (:file "btree")))
                (:module "graph"
                 :components ((:file "pkg")))
                (:file "equiv")

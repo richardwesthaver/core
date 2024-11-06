@@ -31,6 +31,13 @@
 
 (deftype field-vector () '(vector field))
 
+(defun make-fields (&rest fields)
+  "Coerce a plist of the form :NAME TYPE into a FIELD-VECTOR."
+  (let ((ret))
+      (sb-int:doplist (k v) fields
+        (push (make-field :name (string-downcase k) :type v) ret))
+    (coerce (nreverse ret) 'field-vector)))
+
 (defmethod print-object ((self schema) stream)
   (print-unreadable-object (self stream :type t)
     (format stream ":fields ~A" (map 'list 'field-name (fields self)))))

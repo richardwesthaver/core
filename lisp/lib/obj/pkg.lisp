@@ -368,7 +368,8 @@
    #:dump-schema
    #:dump-slots
    #:sorted-slots
-   #:slot-defs-from-schema))
+   #:slot-defs-from-schema
+   #:make-fields))
   
 (defpackage :obj/db
   (:nicknames :db)

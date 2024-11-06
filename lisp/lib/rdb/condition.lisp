@@ -12,7 +12,7 @@
       (:auto t)
       (:documentation "Error signaled by the RDB system.")))
 
-(define-condition rdb-alien-error (rdb-error)
+(define-condition rdb-alien-error (rdb-error rocksdb-c-error)
   ((db :initarg :db :reader rdb-error-db))
   (:documentation "Error signaled by RDB C subsystem."))
 
@@ -76,15 +76,3 @@
 (define-condition invalid-propname (rdb-error)
   ()
   (:documentation "Error signaled when an invalid ROCKSDB-PROPERTY value is detected."))
-
-(defun handle-errptr (errptr &optional errtyp params)
-  "Handle ERRPTR, a ROCKSDB-ERRPTR type which is a pointer to NULL,
-indicating a success or a pointer to a C-STRING.
-
-ERRTYP if present must be a condition which sub-classes RDB-ERROR. If
-an error is detected, the resulting string from ERRPTR and the
-additional PARAMS will be used to signal a lisp error condition."
-  ;; if NULL, return nil
-  (unless (null-alien errptr)
-    (apply #'signal (or errtyp 'rdb-alien-error)
-           (nconc (list :message (sb-unix::strerror)) params))))

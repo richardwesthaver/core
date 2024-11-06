@@ -215,7 +215,7 @@
 
 (defun ensure-slot-def-index (slot-def sc)
   "If a slot's index does not exist, create it"
-  (aif (get-controller-index slot-def sc)
+  (aif (get-store-index slot-def sc)
        (progn (add-slot-def-index it slot-def sc) it)
        (let ((new-idx (make-dup-btree sc)))
          (add-slot-index sc new-idx (indexed-slot-base slot-def) (slot-definition-name slot-def))
@@ -357,6 +357,30 @@
 (defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def stored-slot-definition))
   "Removes the slot value from the database."
   (stored-slot-makunbound (get-store instance) instance (slot-definition-name slot-def)))
+
+(defun valid-persistent-reference-p (object sc)
+  "Ensures that object can be written as a reference into store sc"
+  (or (not (slot-boundp object 'spec))
+      (eq (db-spec object) (controller-spec sc))))
+
+(define-condition cross-store-error (error)
+  ((object :accessor error-object :initarg :object)
+   (home :accessor error-home-store :initarg :home-store)
+   (guest :accessor error-guest-store :initarg :guest-store))
+  (:documentation "An error condition raised when an object is being written into a data store other
+                   than its home store")
+  (:report (lambda (condition stream)
+             (format stream "Attempted to write object ~A with home store ~A into store ~A"
+                     (error-object condition)
+                     (error-home-store condition)
+                     (error-guest-store condition)))))
+
+(defun signal-cross-store-error (object sc)
+  (cerror "Proceed to write incorrect reference"
+          'cross-reference-error
+          :object object
+          :home-store (get-con object)
+          :guest-store sc))
 
 ;;; Macros
 

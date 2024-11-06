@@ -6,4 +6,7 @@
 ;; workloads. https://en.wikipedia.org/wiki/AVL_tree
 
 ;;; Code:
-(in-package :obj/tree)
+(defpackage :obj/tree/avl
+  (:nicknames :tree/avl :avl)
+  (:use :cl :std :obj/tree))
+(in-package :obj/tree/avl)
