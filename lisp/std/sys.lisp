@@ -231,3 +231,11 @@ Intel Core i7 4770K, do **NOT** support RTM."
       (when (>= max-cpuid 7)
         (let ((ebx (nth-value 1 (cpuid 7))))
           (not (zerop (logand ebx #x800)))))))
+
+(defparameter %little-endian nil)
+
+(defun little-endian-p ()
+  #+(or :x86 :x86-64 :LITTLE-ENDIAN) t
+  #+(or :PPC :POWERPC :BIG-ENDIAN) nil
+  #-(or :x86 :x86-64 :LITTLE-ENDIAN :PPC :POWERPC :BIG-ENDIAN)
+    (if (eq %little-endian 1) t nil))

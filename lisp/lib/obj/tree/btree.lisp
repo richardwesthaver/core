@@ -33,7 +33,50 @@
    #:map-index
    #:with-map-index-collector
    #:iterate-map-index
-   #:map-index-values))
+   #:map-index-values
+   #:secondary-cursor
+   #:cursor-set-range
+   #:cursor-set
+   #:cursor-prev
+   #:make-cursor
+   #:make-simple-cursor
+   #:cursor-close
+   #:cursor-duplicate
+   #:cursor-current
+   #:cursor-first
+   #:cursor-last
+   #:cursor-next
+   #:cursor
+   #:cursor-get-both
+   #:cursor-get-both-range
+   #:cursor-delete
+   #:cursor-put
+   #:cursor-pcurrent
+   #:cursor-pfirst
+   #:cursor-plast
+   #:cursor-pprev
+   #:cursor-pset
+   #:cursor-pset-range
+   #:cursor-pget-both
+   #:cursor-pget-both-range
+   #:cursor-next-dup
+   #:cursor-pnext-dup
+   #:cursor-pnext-nodup
+   #:cursor-prev-dup
+   #:btree-index
+   #:build-btree-index
+   #:get-primary-key
+   #:dup-btree
+   #:build-dup-btree
+   #:cursor-initialized-p
+   #:cursor-oid
+   #:cursor-btree
+   #:btree-differ-p
+   #:print-index-entry
+   #:print-btree-key-and-type
+   #:dump-btree
+   #:print-btree-entry
+   #:with-btree-cursor))
 
 (in-package :obj/tree/btree)
 

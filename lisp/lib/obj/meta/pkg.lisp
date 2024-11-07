@@ -23,7 +23,9 @@
    :find-slot-def-by-name
    :find-direct-slot-def-by-name
    :find-slot-defs-by-type
-   :find-slot-def-names-by-type))
+   :find-slot-def-names-by-type
+   :struct-slots-and-values
+   :slots-and-values))
 
 (defpackage :obj/meta/stealth
   (:nicknames :meta/stealth :stealth)
@@ -304,3 +306,26 @@ which the methods are called and be set to either
 
 (defgeneric find-slot-defs-by-type (class type &optional by-subtype))
 (defgeneric find-slot-def-names-by-type (class type &optional by-subtype))
+
+(defun slots-and-values (o)
+  "List of slot names followed by values for object"
+  (loop for sd in (sb-mop:compute-slots (class-of o))
+        for slot-name = (sb-mop:slot-definition-name sd)
+        with ret = ()
+        do
+        (when (and (slot-boundp o slot-name)
+                   (eq :instance
+                       (sb-mop:slot-definition-allocation sd)))
+          (push (slot-value o slot-name) ret)
+          (push slot-name ret))
+        finally (return ret)))
+
+(defun struct-slots-and-values (object)
+  "List of slot names followed by values for structure object"
+  (let ((result nil)
+        (slots 
+          (mapcar #'sb-mop:slot-definition-name (sb-mop:class-slots (class-of object)))))
+    (loop for slot in slots do
+         (push (slot-value object slot) result)
+         (push slot result))
+    result))

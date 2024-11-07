@@ -268,7 +268,25 @@ hints.")
 ;;; Transactions
 (defvar *txn* nil)
 
+(defclass transaction-object () ())
+
+(defgeneric transaction-object-p (self)
+  (:method ((self t))
+    (and (not (null self))
+         (consp self)
+         (subtypep (type-of (transaction-db self)) 'database)))
+  (:method ((self transaction-object)) t))
+
 (defgeneric transaction-object (self))
+(defgeneric transaction-store (self))
+(defgeneric transaction-db (self))
+(defun known-transaction (db txn)
+  "Search for a prior TXN known by this DB."
+  (when txn
+    (or (and (transaction-object-p txn)
+             (eq db (transaction-db txn))
+             txn
+             (known-transaction db (transaction-prior txn))))))
 
 (defmacro with-transaction ((&rest args &key 
                                         (db '*db*)
@@ -285,15 +303,13 @@ hints.")
       `(let ((,txn-fn (lambda () ,@body)))
          (funcall #'execute-transaction ,db
                   ,txn-fn
-                  :parent (awhen (known-transaction-p ,db ,parent)
+                  :parent (awhen (known-transaction ,db ,parent)
                             (transaction-object it))
                   ,@(progn
                       (dolist (k '(:db :parent))
                         (remf args k))
                       args))))))
-
-(defgeneric known-transaction-p (db txn))
-
+  
 (defmacro ensure-transaction ((&rest args &key
                                      (db '*db*)
                                      (parent '*txn*)
@@ -307,7 +323,7 @@ hints.")
   (once-only (db)
     (with-gensyms (txn-fn)
     `(let ((,txn-fn (lambda () ,@body)))
-       (if (known-transaction-p ,db ,parent)
+       (if (known-transaction ,db ,parent)
            (funcall ,txn-fn)
            (funcall #'execute-transaction ,db
                     ,txn-fn
@@ -323,3 +339,9 @@ hints.")
   `(loop for ,batch in (subsets ,size ,list) do
         (with-transaction ,txn-options
           ,@body)))
+
+(defmacro current-transaction (store)
+  (with-gensyms (txn)
+    `(let ((,txn *txn*))
+       (when (and ,txn (eq (transaction-store ,txn) ,store))
+         (transaction-object ,txn)))))

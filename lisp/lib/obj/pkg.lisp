@@ -142,6 +142,12 @@
   (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
            :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
+(defpackage :obj/tree/cursor
+  (:nicknames :tree/cursor :cursor)
+  (:use :cl :std :obj/id :obj/seq)
+  (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
+           :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
+
 (defpackage :obj/graph
   (:nicknames :graph)
   (:use :cl :std :obj/id :obj/seq)
@@ -444,9 +450,14 @@
    :with-transaction
    :with-batch-transaction
    :*txn*
-   :known-transaction-p
    :apply-schema-change-fn
-   :transaction-object))
+   :transaction-object
+   :current-transaction
+   :transaction-store
+   :database-version
+   :transaction-db
+   :transaction-object-p
+   :known-transaction))
 
 (defpackage :obj/plan
   (:nicknames :plan)

@@ -1,9 +1,9 @@
-;;; rdb.asd --- thin RocksDB ORM
+;;; rdb.asd --- RocksDB Storage APIs
 (defsystem "rdb"
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :rocksdb :obj :log :q)
+  :depends-on (:std :rocksdb :obj :log :q :dat)
   :serial t
   :components ((:file "pkg")
                (:file "condition") 
@@ -12,7 +12,9 @@
                (:file "proto")
                (:file "obj")
                (:file "sst")
-               (:file "query"))
+               (:file "query")
+               (:file "db")
+               (:file "store"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests

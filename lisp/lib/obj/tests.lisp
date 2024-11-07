@@ -1,7 +1,7 @@
 (defpackage :obj/tests
   (:use :cl :std :rt 
    :obj :uuid :url :std/macs
-   :meta/dynamic :meta/fast :meta/sealed :meta/stealth))
+   :dynamic :fast :sealed :stealth :stored :store))
 
 (in-package :obj/tests)
 
@@ -310,5 +310,29 @@ building a query-plan."
 ;; TODO
 
 ;;;; Stored
+(stored:defsclass person ()
+  ((name :accessor name :initarg :name :index t)
+   (age :accessor age :initarg :age)
+   (father :accessor father :initarg :father)
+   (school :accessor school :initarg :school)))
 
+(stored:defsclass school ()
+  ((name :accessor name :initarg :name :indexed t)))
+
+(deftest stored ()
+  (with-transaction ()
+    (mapcar #'(lambda (initargs) (apply #'make-instance 'school initargs))
+            '((:name "Appleton Elementary")
+              (:name "Frederick Elementary")
+              (:name "Zebra School")))
+    (mapcar #'(lambda (initargs) (apply #'make-instance 'person initargs))
+            `((:name "Bob" :age 40 :father nil 
+                     :school ,(get-instance-by-value 'school 'name "Zebra School"))))
+    (mapcar #'(lambda (initargs) (apply #'make-instance 'person initargs))
+            `((:name "Fred" :age 12 :father nil 
+                     :school ,(get-instance-by-value 'school 'name "Appleton Elementary"))
+              (:name "Sally" :age 30 :father ,(get-instance-by-value 'person 'name "Bob")
+                     :school ,(get-instance-by-value 'school 'name "Frederick Elementary"))
+              (:name "George" :age 18 :father ,(get-instance-by-value 'person 'name "Bob")
+                     :school ,(get-instance-by-value 'school 'name "Zebra School"))))))
 ;;;; Store

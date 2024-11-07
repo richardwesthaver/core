@@ -18,7 +18,20 @@
    #:make-cache-table
    #:next-oid
    #:next-cid
-   #:*store*))
+   #:*store*
+   #:spec
+   #:temp-spec
+   #:delete-spec
+   #:copy-spec
+   #:optimize-layout
+   #:oid->schema-id
+   #:default-class-id
+   #:default-class-id-type
+   #:reserved-oid-p
+   #:add-class-store-schema
+   #:dropped-instance-p
+   #:drop-instance-slots
+   #:drop-instance))
 
 (in-package :obj/store)
 
@@ -170,6 +183,10 @@
            (compute-init-slots ()
              (remove-if #'null (mapcar #'init-slot? diff))))
     (apply #'shared-initialize instance (compute-init-slots) nil)))
+
+(defgeneric temp-spec (type spec))
+(defgeneric delete-spec (type spec))
+(defgeneric copy-spec (type src dst))
 
 ;;; Classes
 (defgeneric recreate-instance (instance &rest initargs &key &allow-other-keys)

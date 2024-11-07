@@ -18,15 +18,21 @@
          (setf (rdb-opts db) (make-rdb-opts* db-opts)
                (rdb-cfs db) cfs))))
 
-(defmethod make-db ((engine (eql :rocksdb)) &rest initargs)
+(defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key 
+                    (name #.(string-downcase (gensym "RDB")))
+                    (opts (default-rdb-opts)))
   (declare (ignore engine))
-  (funcall 'make-rdb initargs))
+  (apply 'make-rdb name opts initargs))
 
 (defmethod connect-db ((db rdb) &key) db)
 
 (defmethod query-db ((db rdb) (query (eql :get)) &key key &allow-other-keys)
   (declare (ignore query))
   (get-key db key))
+
+(defclass rdb-database (database) ()
+  (:default-initargs 
+   :db (make-db :rocksdb)))
 
 (defclass rdb-collection (database-collection)
   ((collection :initform (coerce nil db::*default-database-collection-type*))))

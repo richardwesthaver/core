@@ -236,6 +236,7 @@
 (defpkg :std/alien
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :with-gensyms)
+  (:import-from :sb-alien :sap+)
   (:export
    :setfa
    :copy-c-string
@@ -254,6 +255,14 @@
    :define-alien-loader
    :c-string-to-string-list
    :list-all-shared-objects
+   :read-int32 :read-fixnum32
+   :read-int64 :read-uint32
+   :read-uint64 :read-float
+   :read-double :write-int32
+   :write-fixnum32 :write-uint32
+   :write-int64 :write-fixnum64
+   :write-uint64 :write-float
+   :write-double :offset-char-pointer
    :num-cpus
    :*cpus*
    :loff-t
@@ -613,6 +622,7 @@
    :forget-shared-objects
    :compile-lisp
    :without-fp-traps
+   :little-endian-p
    :cpuid
    :cpu-vendor))
 
