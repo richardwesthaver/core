@@ -61,12 +61,18 @@
 (defun make-simple-schema (name &rest fields)
   (make-instance 'simple-schema :name name :fields (coerce fields 'field-vector)))
 
+(defmethod id ((self simple-schema)) (name self))
+(defmethod (setf id) (new (self simple-schema)) (setf (name self) new))
+  
 ;;; Object Schema
 (defclass object-schema (schema)
-  ((classname :initarg :classname :accessor classname)))
+  ((class-name :initarg :class-name :accessor schema-class-name)
+   (successor :accessor schema-successor :initarg :successor :initform nil)
+   (predecessor :accessor schema-predecessor :initarg :predecessor :initform nil))
+  (:documentation "Keep a doubly linked list of schemas in the db"))
 
 (defmethod print-object ((schema object-schema) stream)
-  (print-unreadable-object (schema stream :type t) (format stream "~A" (classname schema))))
+  (print-unreadable-object (schema stream :type t) (format stream "~A" (schema-class-name schema))))
 
 (defstruct slot-field type name args)
 
@@ -88,12 +94,12 @@
 (defun class-instance-schema (class-obj)
   "Compute a schema representation from an instance of stored-class."
   (make-instance 'object-schema
-                 :name (class-name class-obj)
+                 :name (schema-class-name class-obj)
                  :fields (compute-slot-fields class-obj)))
 
 (defun compute-transient-schema (class-obj)
   (make-instance 'object-schema
-                 :name (class-name class-obj)
+                 :name (schema-class-name class-obj)
                  :fields (append (compute-slot-fields class-obj)
                                  (compute-transient-slot-fields class-obj))))
 
@@ -163,6 +169,22 @@
        (equal (sorted-slots :derived sch1)
               (sorted-slots :derived sch2))))
 
+(defmethod match-schemas ((sch1 object-schema) (sch2 object-schema))
+  "Are the two schemas functionally equivalent?"
+  (and (equal (schema-class-name sch1) (schema-class-name sch2))
+       (equal (merge 'list 
+                     (sorted-slots :stored sch1)
+                     (sorted-slots :cached sch1)
+                     #'symbol<)
+              (merge 'list
+                     (sorted-slots :stored sch2)
+                     (sorted-slots :cached sch2)
+                     #'symbol<))
+       (equal (sorted-slots :indexed sch1)
+              (sorted-slots :indexed sch2))
+       (equal (sorted-slots :derived sch1)
+              (sorted-slots :derived sch2))))
+
 (defun symbol< (sym1 sym2) 
   (string< (symbol-name sym1) (symbol-name sym2)))
 
@@ -198,26 +220,26 @@
                             accessor-override &allow-other-keys) args
     (loop for rec in (fields schema) do
           (list :name (slot-field-name rec)
-                :readers (compute-reader (classname schema) (slot-field-name rec)
+                :readers (compute-reader (schema-class-name schema) (slot-field-name rec)
                                          accessor-override accessor-template)
                 :writers (compute-writer (slot-field-name rec)
-                                         (classname schema) 
+                                         (schema-class-name schema) 
                                          accessor-override accessor-template )))))
 
-(defun compute-reader (classname name override-fn template-fn)
+(defun compute-reader (class-name name override-fn template-fn)
   (or (and override-fn
-           (funcall override-fn classname name :reader))
-      (funcall template-fn classname name :reader)))
+           (funcall override-fn class-name name :reader))
+      (funcall template-fn class-name name :reader)))
 
-(defun compute-writer (classname name override-fn template-fn)	
+(defun compute-writer (class-name name override-fn template-fn)	
   (or (and override-fn
-           (funcall override-fn classname name :writer))
-      (funcall template-fn classname name :writer)))
+           (funcall override-fn class-name name :writer))
+      (funcall template-fn class-name name :writer)))
 
-(defun default-template (classname name type)
+(defun default-template (class-name name type)
   (ecase type
-    (:reader (list (intern (format nil "~A-~A" classname name))))
-    (:writer `((setf ,(intern (format nil "~A-~A" classname name)))))))
+    (:reader (list (intern (format nil "~A-~A" class-name name))))
+    (:writer `((setf ,(intern (format nil "~A-~A" class-name name)))))))
 
 (defmethod default-class-constructor ((schema object-schema) &rest args
                                       &key superclasses &allow-other-keys)
@@ -228,6 +250,7 @@
                 :direct-superclasses superclasses
                 :direct-slots (slot-defs-from-schema schema args)
                 :metaclass 'stored-class)))
+
 
 ;;; Macros
 

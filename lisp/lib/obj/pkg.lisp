@@ -359,6 +359,9 @@
    #:default-class-constructor
    #:classname
    #:slot-field
+   :slot-field-type
+   :slot-field-args
+   :slot-field-name
    #:slot-field-eq
    #:class-instance-schema
    #:compute-transient-schema
@@ -369,7 +372,12 @@
    #:dump-slots
    #:sorted-slots
    #:slot-defs-from-schema
-   #:make-fields))
+   #:make-fields
+   #:schema-class-name
+   #:schema-successor
+   #:schema-predecessor
+   #:diff-type
+   #:diff-recs))
   
 (defpackage :obj/db
   (:nicknames :db)
@@ -427,7 +435,18 @@
    :open-db
    :kv-key
    :kv-val
-   :database-collection))
+   :database-collection
+   :database-schema
+   :upgrade-schema
+   :version
+   :remove-kv
+   :ensure-transaction
+   :with-transaction
+   :with-batch-transaction
+   :*txn*
+   :known-transaction-p
+   :apply-schema-change-fn
+   :transaction-object))
 
 (defpackage :obj/plan
   (:nicknames :plan)

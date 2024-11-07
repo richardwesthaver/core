@@ -24,3 +24,9 @@ value."
                               (setf ,true ,tmp))))
                    datums)
          (return-from ,xor (values ,true t))))))
+
+;; From ELEPHANT
+(defmacro ifret (pred &optional alt)
+  "If pred is non-null, return the value, otherwise return the alternate value"
+  (once-only (pred)
+    `(if ,pred ,pred ,alt)))

@@ -15,7 +15,7 @@
 (declaim (sb-kernel:type-specifier *default-database-type* *default-database-collection-type*))
 (defparameter *default-database-type* 'vector)
 (defparameter *default-database-collection-type* 'list)
-
+(defparameter *default-database-version* '(0 1 0))
 ;;; Conditions
 (define-condition db-condition () ())
 
@@ -28,6 +28,26 @@
 ;;; Database
 (defgeneric db (self)
   (:documentation "Return the Database associated with SELF."))
+
+(defgeneric database-version (self)
+  (:documentation "Return the version associated with a given database SELF."))
+
+(defmethod database-version :around (self)
+  (declare (ignorable self))
+  (let ((version (call-next-method)))
+    (std/macs:ifret version
+                    '(0 6 0))))
+
+(defun prior-version-p (v1 v2)
+  "Is v1 an equal or earlier version than v2"
+  (cond ((and (null v1) (null v2))         t)
+        ((and (null v1) (not (null v2)))   t)
+        ((and (not (null v1)) (null v2))   nil)
+        ((< (car v1) (car v2))             t)
+        ((> (car v1) (car v2))             nil)
+        ((= (car v1) (car v2))
+         (prior-version-p (cdr v1) (cdr v2)))
+        (t (error "Version comparison problem: (prior-version-p ~A ~A)" v1 v2))))
 
 (defclass database ()
   ((db :initform nil :initarg :db :accessor db))
@@ -44,6 +64,16 @@
 (defmethod dump-schema ((self database-schema) &optional (stream t))
   (awhen (upgrade-schema self)
     (format stream "upgrade:~%~A~%" it)))
+
+(defun apply-schema-change-fn (instance expr old-schema)
+  (cond ((functionp expr)
+         (funcall expr instance))
+        ((symbolp expr)
+         (funcall (symbol-function expr) instance))
+        ((consp expr)
+         (let ((fn (compile nil (eval expr))))
+           (setf (upgrade-schema old-schema) fn)
+           (funcall fn instance)))))
 
 (defclass database-collection () ()
   (:documentation "A collection of DATABASE objects."))
@@ -139,8 +169,8 @@ hints.")
                (replace object (list (list element new-value)))
                (error "Does not handle this type of object. Implement your own get-val method.")))))))
 
-(defgeneric get-value (obj elt))
-(defgeneric (setf get-value) (new obj elt))
+(defgeneric get-value (elt obj))
+(defgeneric (setf get-value) (new elt obj))
 
 ;;; Transactions
 (defgeneric execute-transaction (self txfn &rest args &key &allow-other-keys))
@@ -166,6 +196,7 @@ hints.")
   (:documentation "Insert KV object into SELF."))
 (defgeneric delete-key (self key &key)
   (:documentation "Delete value associated with KEY from SELF."))
+(defmethod remove-kv (key value self))
 (defgeneric delete-key-ts (self key ts)
   (:documentation "Delete value associated with KEY and TS from SELF."))
 (defgeneric delete-key-range (self start end &key)
@@ -235,6 +266,60 @@ hints.")
     (coerce val 'octet-vector)))
 
 ;;; Transactions
+(defvar *txn* nil)
 
-;; do we need objects here? Elephant uses a simple list for transaction state.
-;; (defmacro ensure-transaction ())
+(defgeneric transaction-object (self))
+
+(defmacro with-transaction ((&rest args &key 
+                                        (db '*db*)
+                                        (parent '*txn*)
+                             &allow-other-keys)
+                            &body body)
+  "Execute a body with a transaction in place.  On success,
+   the transaction is committed.  Otherwise, the transaction is
+   aborted.  If the body deadlocks, the body is re-executed in
+   a new transaction, retrying a fixed number of iterations.
+   If nested, the backend must support nested transactions."
+  (once-only (db)
+    (with-gensyms (txn-fn)
+      `(let ((,txn-fn (lambda () ,@body)))
+         (funcall #'execute-transaction ,db
+                  ,txn-fn
+                  :parent (awhen (known-transaction-p ,db ,parent)
+                            (transaction-object it))
+                  ,@(progn
+                      (dolist (k '(:db :parent))
+                        (remf args k))
+                      args))))))
+
+(defgeneric known-transaction-p (db txn))
+
+(defmacro ensure-transaction ((&rest args &key
+                                     (db '*db*)
+                                     (parent '*txn*)
+                                     &allow-other-keys)
+                              &body body)
+  "Execute the body with the existing transaction, or a new transaction if
+   none is currently running.  This allows sequences of database actions to 
+   be run atomically whether there is or is not an existing transaction 
+   (rather than relying on auto-commit).  with-transaction nests transactions
+   where as ensure-transaction can be part of an enclosing, flat transaction"
+  (once-only (db)
+    (with-gensyms (txn-fn)
+    `(let ((,txn-fn (lambda () ,@body)))
+       (if (known-transaction-p ,db ,parent)
+           (funcall ,txn-fn)
+           (funcall #'execute-transaction ,db
+                    ,txn-fn
+                    :parent nil
+                    ,@(progn
+                        (dolist (k '(:db :parent))
+                          (remf args k))
+                        args)))))))
+
+(defmacro with-batch-transaction ((batch size list &rest txn-options) &body body)
+  "Perform a set of DB operations over a list of elements in batches of size 'size'.
+   Pass specific transaction options after the list reference."
+  `(loop for ,batch in (subsets ,size ,list) do
+        (with-transaction ,txn-options
+          ,@body)))

@@ -32,14 +32,13 @@
 (defmethod start :after ((self skel-store))
   (setq *store* self))
 
-(defclass skel-db-schema (database-schema) ()
+(defclass skel-db-schema (database-schema)
   ((collection :type (vector schema) :initarg :collection :accessor schema-collection))
   (:default-initargs
-   :name "skel-db"
-   :fields ( ))
+   :name "skel-db"))
 
 (defclass skel-object-schema (object-schema) ())
 
 (defclass skel-record (id) ()
   (:metaclass stored-class))
-(make-instance 'skel-record)
+

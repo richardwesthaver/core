@@ -32,10 +32,6 @@
    #:add-mixin
    #:define-stealth-mixin))
 
-(defpackage :obj/meta/typed
-  (:nicknames :meta/typed :typed)
-  (:use :cl :std :obj/meta :sb-mop))
-
 (defpackage :obj/meta/filtered
   (:nicknames :meta/filtered :filtered)
   (:use :cl :std :obj/meta :sb-mop)
@@ -139,7 +135,36 @@
    :add-slot-def-index
    :clear-slot-def-index
    :indexed-slot-base
-   :indexed-slot-indices))
+   :indexed-slot-indices
+   :get-store-schemas
+   :get-class-indexing
+   :get-cache-style
+   :has-class-schema-p
+   :find-slot-defs-by-type
+   :migrate-class-index-p
+   :class-indexing-enabled-p
+   :defsclass
+   :get-class-schema
+   :drop-instance
+   :register-instance
+   :cache-instance
+   :get-cached-instance
+   :uncache-instance
+   :flush-instance-cache
+   :stored-slot-makunbound
+   :stored-slot-boundp
+   :stored-slot-writer
+   :stored-slot-reader
+   :get-store))
+
+(defpackage :obj/meta/typed
+  (:nicknames :meta/typed :typed)
+  (:use :cl :std :obj/meta :sb-mop :stored)
+  (:export
+   #:type-num
+   #:type<=
+   #:type<
+   #:type=))
 
 (defpackage :obj/meta/dynamic
   (:nicknames :meta/dynamic :dynamic)

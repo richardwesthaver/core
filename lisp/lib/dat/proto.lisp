@@ -1,6 +1,6 @@
-;;; lib/dat/proto.lisp --- data (de)serialization
+;;; lib/dat/proto.lisp --- data protocols
 
-;;
+;; Top-level generic interface to DAT objects.
 
 ;;; Code:
 (in-package :dat/proto)

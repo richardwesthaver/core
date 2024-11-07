@@ -356,7 +356,8 @@
    :pandoric-eval
    :with-collectors
    :collecting
-   :xor))
+   :xor
+   :ifret))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/mop)

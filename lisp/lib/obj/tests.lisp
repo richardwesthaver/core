@@ -160,8 +160,6 @@
                 do (loop until (remchash i table))))))
       (is = 0 (castable-count table)))))
 
-(deftest ring ())
-
 (deftest generic-tree ()
   (let ((tree (make-binary-node
               0 
@@ -176,6 +174,8 @@
 
 (deftest avl-tree ()
   (is (make-avl-node 0 0 nil nil)))
+
+(deftest btree ())
 
 (deftest basic-graph ()
   "Test basic graph functionality."
@@ -310,3 +310,5 @@ building a query-plan."
 ;; TODO
 
 ;;;; Stored
+
+;;;; Store

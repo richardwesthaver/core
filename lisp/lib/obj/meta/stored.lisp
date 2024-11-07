@@ -17,8 +17,6 @@
 ;;; Code:
 (in-package :obj/meta/stored)
 
-(sb-ext:unlock-package :sb-pcl)
-
 ;;; MOP
 (defclass stored ()
   ((oid :initarg :oid :accessor oid)
@@ -33,6 +31,40 @@
 
 (defclass stored-collection (stored) ()
   (:documentation "Abstract superclass of all STORED collection types."))
+
+(defgeneric drop-instance (stored-object)
+  (:documentation   "drop-instance reclaims stored object storage by unbinding
+   all stored slot values. It can also helps catch errors where an object
+   should be unreachable, but a reference still exists elsewhere in the DB. On
+   access, the unbound slots should flag an error in the application
+   program. IMPORTANT: this function does not clear any serialized references
+   still in the db.  Need a migration or GC for that!  drop-instances is the
+   user-facing call as it implements the proper behavior for indexed classes."))
+
+(defgeneric get-store (self))
+(defgeneric (setf get-store) (new self))
+
+(defgeneric stored-slot-reader (sc instance name &optional oids-only)
+  (:documentation 
+   "Store-specific slot reader function"))
+
+(defgeneric stored-slot-writer (sc new-value instance name)
+  (:documentation 
+   "Store-specific slot writer function"))
+
+(defgeneric stored-slot-boundp (sc instance name)
+  (:documentation
+   "Store-specific slot bound test function"))
+
+(defgeneric stored-slot-makunbound (sc instance name)
+  (:documentation
+   "Store-specific slot makunbound handler"))
+
+(defgeneric register-instance (self class intance))
+(defgeneric cache-instance (self obj))
+(defgeneric get-cached-instance (self oid))
+(defgeneric uncache-instance (self oid))
+(defgeneric flush-instance-cache (self))
 
 (defclass stored-class (standard-class)
   ((%class-schema :accessor %class-schema :initarg :schemas :initform nil)
@@ -58,6 +90,13 @@
 (defmethod get-cache-style (self) (slot-value self '%cache-style))
 (defsetf get-cache-style (self) (value)
   `(setf (slot-value ,self '%cache-style) ,value))
+
+(defmethod class-indexing-enabled-p ((class stored-class))
+  (and (not (subtypep (class-name class) 'stored-collection))
+       (get-class-indexing class)))
+
+(defun migrate-class-index-p (class)
+  (get-class-indexing class))
 
 (defmethod has-class-schema-p ((class stored-class))
   (and (get-class-schema class)
@@ -280,7 +319,6 @@
                 e inst)
         (values nil nil)))))
 
-
 (defun gen-derived-fn-wrapper (compiled)
   "Return a closure to handle errors in the derived index function"
   (lambda (inst)
@@ -293,8 +331,6 @@
                 "error ~A while computing derived value for ~A" 
                 e inst)
         (values nil nil)))))
-
-(sb-ext:lock-package :sb-pcl)
 
 (defmacro bind-standard-init-arguments ((initargs) &body body)
   `(let ((allocation-key (getf ,initargs :allocation))
@@ -398,3 +434,16 @@ definition class depending on the keyword."
   (declare (ignorable initargs))
   (unless (subtypep (type-of new-class) 'stored-class)
     (error "Stored instances cannot be changed to standard classes via change-class")))
+
+;;; Macros
+(defmacro defsclass (cname parents slot-defs &rest class-opts)
+  "Shorthand for defining stored objects.  Wraps the main
+   class definition with stored-class"
+  `(defclass ,cname ,parents
+     ,slot-defs
+     ,@(add-stored-metaclass-argument class-opts)))
+
+(defun add-stored-metaclass-argument (class-opts)
+  (when (assoc :metaclass class-opts)
+    (error "User metaclass specification not allowed in defsclass"))
+  (append class-opts (list (list :metaclass 'stored-class))))

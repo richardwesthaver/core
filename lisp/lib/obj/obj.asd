@@ -33,6 +33,7 @@
                              (:file "intern")))
                (:file "url")
                (:file "seq")
+               (:file "db")
                (:module "tree"
                 :components ((:file "node")
                              (:file "avl")
@@ -57,7 +58,6 @@
                (:file "build")
                (:file "config")
                (:file "schema")
-               (:file "db")
                (:file "ast")
                (:file "query")
                (:file "secret")
