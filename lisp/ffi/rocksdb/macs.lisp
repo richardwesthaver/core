@@ -18,6 +18,13 @@
 (deftype rocksdb-logger-function ()
   '(function (unsigned-byte string) (values)))
 
+(defmacro with-errptr (sym &body body)
+  `(let ((,sym (alien-sap (make-alien (* (* t))))))
+     (setf (deref (sap-alien ,sym (* (* t)))) nil)
+     (unwind-protect (progn ,@body)
+       (unless (null-alien (deref (sap-alien ,sym (* (* t)))))
+         (rocksdb-c-error ,sym)))))
+
 ;;; Options
 (defmacro with-latest-options (db-path (db-opts-var cf-names-var cf-opts-var) &body body)
   ;;  TODO 2024-09-26: ignore unknown?
@@ -120,12 +127,105 @@
                                         (alien-sap (alien-callable-function ',in-domain-fn))
                                         (alien-sap (alien-callable-function ',in-range-fn))
                                         (alien-sap (alien-callable-function ',sname)))))))
+;;; Comparator
+(defmacro define-compare-without-ts-function (name &body body)
+  `(define-alien-callable ,name int
+       ((state (* t))
+        (a (* unsigned-char))
+        (alen size-t)
+        (atsp unsigned-char)
+        (bts (* unsigned-char))
+        (btslen size-t)
+        (btsp unsigned-char))
+     ,@body))
 
-(defmacro define-comparator (name &body body))
+(defmacro define-compare-ts-function (name &body body)
+  `(define-alien-callable ,name int
+       ((state (* t))
+        (ats (* unsigned-char))
+        (atslen size-t)
+        (bts (* unsigned-char))
+        (btslen size-t))
+     ,@body))
+        
+(defmacro define-compare-function (name &body body)
+  `(define-alien-callable ,name int
+       ((state (* t))
+        (a (* unsigned-char))
+        (alen size-t)
+        (b (* unsigned-char))
+        (blen size-t))
+       ,@body))
 
-(defmacro with-errptr (sym &body body)
-  `(let ((,sym (alien-sap (make-alien (* (* t))))))
-     (setf (deref (sap-alien ,sym (* (* t)))) nil)
-     (unwind-protect (progn ,@body)
-       (unless (null-alien (deref (sap-alien ,sym (* (* t)))))
-         (rocksdb-c-error ,sym)))))
+(defmacro define-comparator (name &key compare (destructor 'rocksdb-destructor) state)
+  "Define a RocksDB Comparator."
+  (with-gensyms (cname cfn ccreate)
+    (setf cname (symbolicate name "-COMPARATOR-NAME")
+          cfn (symbolicate name "-COMPARE")
+          ccreate (symbolicate "CREATE-" name "-COMPARATOR"))
+    `(progn
+       (define-alien-callable ,cname c-string () (string ',name))
+       (define-compare-function ,cfn ,@compare)
+       (defun ,ccreate ()
+         (rocksdb-comparator-create ,state 
+                                    (alien-sap (alien-callable-function ',destructor))
+                                    (alien-sap (alien-callable-function ',cfn))
+                                    (alien-sap (alien-callable-function ',cname)))))))
+
+(defmacro define-comparator-with-ts (name &key state compare compare-ts compare-without-ts (destructor 'rocksdb-destructor))
+  "Define a RocksDB Comparator which is timestamp-aware."
+  (with-gensyms (cname-ts cfn cfn-ts cfn-without-ts ccreate-ts)
+    (setf cname-ts (symbolicate name "-COMPARATOR-WITH-TS-NAME")
+          cfn (symbolicate name "-COMPARE")
+          cfn-ts (symbolicate name "-COMPARE-TS")
+          cfn-without-ts (symbolicate name "-COMPARE-WITHOUT-TS")
+          ccreate-ts (symbolicate "CREATE-" name "-COMPARATOR-WITH-TS"))
+    `(progn
+       (define-comparator ,name :compare ,compare :destructor ,destructor :state ,state)
+       (define-alien-callable ,cname-ts c-string () (string ',(symbolicate name "-TS")))
+       (define-compare-ts-function ,cfn-ts ,@compare-ts)
+       (define-compare-without-ts-function ,cfn-without-ts ,@compare-without-ts)
+       (defun ,ccreate-ts ()
+         (rocksdb-comparator-with-ts-create ,state
+                                            (alien-sap (alien-callable-function ',destructor))
+                                            (alien-sap (alien-callable-function ',cfn))
+                                            (alien-sap (alien-callable-function ',cfn-ts))
+                                            (alien-sap (alien-callable-function ',cfn-without-ts))
+                                            (alien-sap (alien-callable-function ',cname-ts)))))))
+
+;;; Compaction Filter
+(defmacro define-filter-function (name &body body)
+  `(define-alien-callable ,name unsigned-char
+      ((state (* t))
+       (level int)
+       (key (array unsigned-char))
+       (key-length size-t)
+       (existing-val (array unsigned-char))
+       (existing-val-length size-t)
+       (new-val (* (array unsigned-char)))
+       (new-val-length (* size-t))
+       (value-changed (* unsigned-char)))
+    ,@body))
+
+(defmacro define-create-filter-function (name destructor-fn filter-fn name-fn)
+  `(define-alien-callable ,name (* rocksdb-compactionfilter)
+       ((state (* t))
+        (context (* rocksdb-compactionfiltercontext)))
+     (rocksdb-compactionfilter-create state 
+                                      (alien-sap (alien-callable-function ',destructor-fn))
+                                      (alien-sap (alien-callable-function ',filter-fn))
+                                      (alien-sap (alien-callable-function ',name-fn)))))
+     
+(defmacro define-compaction-filter (name &key (destructor 'rocksdb-destructor)
+                                              filter)
+  (with-gensyms (filter-fn cname ccreate)
+    (setf filter-fn (symbolicate name "-FILTER")
+          cname (symbolicate name "-COMPACTION-FILTER-NAME")
+          ccreate (symbolicate "CREATE-" name "COMPACTION-FILTER"))
+    `(progn
+       (define-alien-callable ,cname c-string () (string ',name))
+       (define-filter-function ,filter-fn ,@filter)
+       (define-create-filter-function ,ccreate
+           (alien-sap (alien-callable-function ',destructor))
+         (alien-sap (alien-callable-function ',filter-fn))
+         (alien-sap (alien-callable-function ',cname))))))

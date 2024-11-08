@@ -504,6 +504,7 @@ DB where K and V are both Lisp strings."
                        (octets-to-integer (clone-octets-from-alien val (make-octets 1)))))))))))))
 
 (define-comparator dummy)
+(define-comparator-with-ts dummy1)
 
 (deftest comparator ()
   "Test low-level comparator API."
@@ -516,12 +517,14 @@ DB where K and V are both Lisp strings."
     (is (typep (rocksdb-comparator-create state destructor compare name)
                '(alien (* rocksdb-comparator))))
     (is (typep (rocksdb-comparator-with-ts-create state destructor compare compare-with-ts compare-without-ts name)
-               '(alien (* rocksdb-comparator))))
+               '(alien (* rocksdb-comparator)))))
     ;; TODO - need to test with column-family options
     (with-opt (o (test-opts) nil)
       (rocksdb-options-set-comparator
        o
-       (rocksdb-comparator-create state destructor compare name)))))
+       (rocksdb-comparator-create state destructor compare name))))
+
+(define-compaction-filter dummy)
 
 (deftest compaction ()
   "Test low-level compactionfilter API."
@@ -530,7 +533,7 @@ DB where K and V are both Lisp strings."
     (is (typep
          (rocksdb-compactionfilter-create state
                                           (alien-sap (alien-callable-function 'rocksdb-destructor))
-(alien-sap (alien-callable-function 'rocksdb-filter-never))
+                                          (alien-sap (alien-callable-function 'rocksdb-filter-never))
                                           (alien-sap (alien-callable-function 'rocksdb-name)))
          '(alien (* rocksdb-compactionfilter))))
     (is (typep
@@ -541,7 +544,7 @@ DB where K and V are both Lisp strings."
                                                  (alien-sap (alien-callable-function 'rocksdb-name)))
          '(alien (* rocksdb-compactionfilterfactory)))))
 
-  ;; TODO
+  ;; TODO 2024-11-07: 
   (with-opt (o (test-opts) nil)
     (with-temp-db db (o)
       )))
@@ -574,7 +577,7 @@ DB where K and V are both Lisp strings."
          (rocksdb-writebatch-wi-create 0 0)
          '(alien (* rocksdb-writebatch-wi))))))
 
-(define-slicetransform dummy :transform nil :in-domain nil :in-range nil)
+(define-slicetransform dummy)
 
 (deftest slicetransform ()
   "Test slicetransform functionality."

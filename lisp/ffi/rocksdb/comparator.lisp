@@ -25,7 +25,7 @@
             (* unsigned-char)
             size-t))
 
-(define-alien-type rocksdb-compare-with-ts-function
+(define-alien-type rocksdb-compare-ts-function
   (function int
             (* t)
             (* unsigned-char)
@@ -55,7 +55,7 @@
   (state (* t))
   (destructor (* rocksdb-destructor-function))
   (compare (* rocksdb-compare-function))
-  (compare-with-ts (* rocksdb-compare-with-ts-function))
+  (compare-ts (* rocksdb-compare-ts-function))
   (compare-without-ts (* rocksdb-compare-without-ts-function))
   (name (* rocksdb-name-function)))
 

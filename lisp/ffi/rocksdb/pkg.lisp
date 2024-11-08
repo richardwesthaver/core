@@ -398,7 +398,9 @@ set *errptr to a malloc()ed error message.
    :*rocksdb-in-range-lambda-list*
    :define-in-range-function
    :define-in-domain-function
-   :define-transform-function))
+   :define-transform-function
+   :define-compaction-filter
+   :define-comparator-with-ts))
 
 (in-package :rocksdb)
 

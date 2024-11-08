@@ -95,11 +95,14 @@ including data loss, unreported corruption, deadlocks, and more.
   (declare (ignore state level key key-length existing-val existing-val-length new-val new-val-length value-changed))
   0)
 
+(define-alien-callable rocksdb-filter-never-name c-string () (make-alien-string "cc:never"))
+
 (define-alien-callable rocksdb-create-compaction-filter-never (* rocksdb-compactionfilter)
     ((state (* t))
      (context (* rocksdb-compactionfiltercontext)))
+  (declare (ignore context))
   (rocksdb-compactionfilter-create
    state
    (alien-sap (alien-callable-function 'rocksdb-destructor))
    (alien-sap (alien-callable-function 'rocksdb-filter-never))
-   context))
+   (alien-sap (alien-callable-function 'rocksdb-filter-never-name))))

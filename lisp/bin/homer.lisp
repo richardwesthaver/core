@@ -3,7 +3,7 @@
 ;;; Code:
 (defpackage :bin/homer
   (:nicknames :homer)
-  (:use :cl :std :log :sxp :rdb :skel :packy :cli :obj/id :krypt :vc)
+  (:use :cl :std :log :ast :sxp :rdb :skel :packy :cli :obj/id :krypt :vc)
   (:export :*home-config*))
 
 (in-package :bin/homer)
@@ -20,7 +20,7 @@
         *user-homedir* (user-homedir-pathname)
         *default-user-homerc* (merge-pathnames ".homerc" *user-homedir*)))
   
-(defclass home-config (sxp id)
+(defclass home-config (ast id)
   ((user :initform *user* :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
    (src :initform nil :initarg :src :type (or null pathname vc-repo))
@@ -52,7 +52,7 @@
           (setf (ast self) nil)
           self)
         ;; invalid ast, signal error
-        (error 'sxp-syntax-error))))
+        (error 'syntax-error))))
 
 ;; obj -> ast
 (defmethod build-ast ((self home-config) &key (nullp nil) (exclude '(ast id)))

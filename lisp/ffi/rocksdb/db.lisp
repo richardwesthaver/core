@@ -715,8 +715,7 @@
 (define-alien-routine rocksdb-perfcontext-metric unsigned-long
   (context (* rocksdb-perfcontext)) (metric int))
 
-;; TODO 2024-05-24: causes compile error - pass-by-struct not supported
-;; (define-alien-routine rocksdb-perfcontext-destroy void (* rocksdb-perfcontext))
+(define-alien-routine rocksdb-perfcontext-destroy void (ctx (* rocksdb-perfcontext)))
 
 ;;; Filter Policy
 (define-alien-routine rocksdb-filterpolicy-destroy void (self (* rocksdb-filterpolicy)))
