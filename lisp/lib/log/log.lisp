@@ -100,7 +100,7 @@ function 'NAME-P'."
    (level :initarg :level :accessor level)
    (content :initarg :content :accessor content))
   (:default-initargs
-   :timestamp (time:now)
+   :timestamp (now)
    :level :info
    :content nil))
 
@@ -121,7 +121,7 @@ function 'NAME-P'."
 
 (defmethod format-message ((stream stream) (message simple-log-message))
   (format stream "~a [~4,a] ~{<~a>~}: ~a"
-          (time:format-timestring nil (timestamp message) :format *log-timestamp-format*)
+          (format-timestring nil (timestamp message) :format *log-timestamp-format*)
           (level message)
           (tags message)
           (format-message nil (content message))))

@@ -358,3 +358,12 @@ Each var can be of the form:
 (define-alien-routine memset void (ptr (* t)) (constant int) (size size-t))
 (define-alien-routine memcpy void (dst (* t)) (src (* t)) (size size-t))
 (define-alien-routine posix-memalign int (box (* (* t))) (alignment size-t) (size size-t))
+
+;;; CLOS
+(defgeneric sap (self)
+  (:documentation "Return a system-area-pointer to the alien bound to object SELF or nil if no
+such alien exists.")
+  (:method ((self t)) nil)
+  (:method ((self sb-sys:system-area-pointer)) self)
+  (:method ((self integer)) (sb-alien::int-sap self))
+  (:method ((self sb-alien-internals:alien-value)) (alien-sap self)))

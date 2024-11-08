@@ -457,7 +457,22 @@
    :database-version
    :transaction-db
    :transaction-object-p
-   :known-transaction))
+   :known-transaction
+   :close-column
+   :close-columns
+   :find-column
+   :flush-column
+   :transaction-prior
+   :add-column
+   :open-columns
+   :merge-kv
+   :merge-key
+   :db-stats
+   :db-metadata
+   :db-prop
+   :db-opt
+   :columns
+   :create-columns))
 
 (defpackage :obj/plan
   (:nicknames :plan)

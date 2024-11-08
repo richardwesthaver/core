@@ -8,14 +8,14 @@
 (defclass rdb-btree (btree) ()
   (:documentation "A RocksDB implementation of a BTree."))
 
-(defmethod build-btree ((st rdb-store))
-  (make-instance 'rdb-btree :store st))
-
 (defclass rdb-store (store rdb-database)
   ((btrees :type (or null vector) :accessor btrees)
    (oid-db :type (or null rdb) :accessor oid-db)
    (oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)))
+
+(defmethod build-btree ((st rdb-store))
+  (make-instance 'rdb-btree :store st))
 
 (defun rdb-store-spec-p (spec)
   (and (eq (first spec) :rdb)
@@ -898,7 +898,7 @@
 
 (defmethod start-transaction ((self rdb-store) transaction &key))
 
-(defmethod commit-transaction (transaction &key store)
+(defmethod commit-transaction (store transaction &key)
   (assert (not *txn*))
   ;; TODO 2024-11-07: 
   )

@@ -1,5 +1,5 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :obj/query))
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :query :db))
 
 (in-package :rdb/tests)
 
@@ -24,9 +24,9 @@
     ;; check defaults
     (is (< 50 (hash-table-count (backfill-opts default :full t))))
     (is (typep (rdb-opts-sap default) '(alien (* rocksdb-options))))
-    (is (eql t (get-opt default "create-if-missing")))
+    (is (eql t (db-opt default "create-if-missing")))
     (is (eql t (set-opt default "enable-blob-files" t :push t)))
-    (is (eql t (get-opt default "enable-blob-files")))
+    (is (eql t (db-opt default "enable-blob-files")))
     (is (eql t (rocksdb-options-get-enable-blob-files (rdb-opts-sap default))))
     (is (null (rocksdb-options-get-error-if-exists (rdb-opts-sap default))))))
 
@@ -66,21 +66,21 @@
     ;; push 3 cfs
     (let ((cfs (list (make-rdb-cf "foo") (make-rdb-cf "bar") (make-rdb-cf "baz"))))
       (dolist (cf cfs)
-        (push-cf cf db)))
-    (debug! (rdb-cfs db))
-    (create-cfs db)
+        (add-column cf db)))
+    (debug! (columns db))
+    (create-columns db)
     ;; (flush-db db)
     ;; FIX 2024-08-25:
     (do-cfs (cf (rdb-cfs db))
       (with-cf (cf cf)
         (trace! cf)
         ;; (insert-kv db (make-kv "key" "val") :cf cf)
-        ;; (is (equal (get-key db "key" :cf (rdb-cf-sap cf)) "val"))
+        ;; (is (equal (get-val db "key" :cf (rdb-cf-sap cf)) "val"))
         ))
     (rocksdb-cancel-all-background-work (rdb-db db) t)
     ;; insert after background cancel
     (insert-key db "test" "zaa")
-    (is (string= "zaa" (get-key db "test")))))
+    (is (string= "zaa" (get-val db "test")))))
 
 (deftest temp-db ()
   "Test WITH-TEMP-DB macro."
@@ -92,7 +92,7 @@
     (set-opt tmp :statistics-level (rocksdb-statistics-level "all"))
     (push-opts tmp)
     (open-db tmp)
-    (create-cfs tmp)
+    (create-columns tmp)
     (with-iter (it (create-iter tmp))
       (iter-seek-to-first it)
       (is (sequence:emptyp (iter-key it)))
@@ -109,7 +109,7 @@
       (insert-key tmp (format nil "foo~A" i) (format nil "bar~A" i)))
     (loop for i below 100
           with n = (* i i)
-          do (is (string= (get-key tmp (format nil "foo~A" n)) (format nil "bar~A" n))))
+          do (is (string= (get-val tmp (format nil "foo~A" n)) (format nil "bar~A" n))))
     (flush-db tmp)
     ;; TODO: auto handle return type (get-prop-int)
     (is (= 10000 (parse-integer (get-prop tmp "rocksdb.estimate-num-keys"))))
@@ -164,9 +164,9 @@
     (is (string= (rdb-cf-name cf) "foo"))
     (with-temp-db (schema-no-cfs () :destroy t :open t)
       (load-schema schema-no-cfs (make-simple-schema (make-field :type nil)))
-      (is (= 1 (length (rdb-cfs schema-no-cfs)))))
+      (is (= 1 (length (columns schema-no-cfs)))))
     (with-temp-db (schema-cfs (baz) :open t :destroy t)
       (load-schema schema-cfs (make-simple-schema (make-field :name "BAZ" :type '(octet-vector . string))))
-      (is (= 1 (length (rdb-cfs schema-cfs))))
-      (is (eql 'octet-vector (rdb-cf-key-type (aref (rdb-cfs schema-cfs) 0))))
-      (is (eql 'string (rdb-cf-val-type (aref (rdb-cfs schema-cfs) 0)))))))
+      (is (= 1 (length (columns schema-cfs))))
+      (is (eql 'octet-vector (rdb-cf-key-type (aref (columns schema-cfs) 0))))
+      (is (eql 'string (rdb-cf-val-type (aref (columns schema-cfs) 0)))))))

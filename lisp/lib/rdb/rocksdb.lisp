@@ -1,5 +1,4 @@
-
-;;; rdb/raw.lisp --- Raw wrappers for ROCKSDB alien interface
+;;; rdb/raw.lisp --- Intermediate API to ROCKSDB aliens
 
 ;;; Code:
 (in-package :rdb)

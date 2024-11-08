@@ -268,7 +268,8 @@
    :loff-t
    :memset
    :memcpy
-   :posix-memalign))
+   :posix-memalign
+   :sap))
 
 (defpkg :std/mop
   (:use :cl :sb-mop :sb-pcl)

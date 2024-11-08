@@ -9,13 +9,13 @@
 ;;; Code:
 (in-package :obj/db)
 
-(defvar *db* nil)
-
 ;;; Vars
+(defvar *db* nil)
 (declaim (sb-kernel:type-specifier *default-database-type* *default-database-collection-type*))
 (defparameter *default-database-type* 'vector)
 (defparameter *default-database-collection-type* 'list)
 (defparameter *default-database-version* '(0 1 0))
+(defvar *default-kv-size* 8)
 ;;; Conditions
 (define-condition db-condition () ())
 
@@ -126,10 +126,10 @@ in-memory objects."))
            (slot-boundp instance slot-name))
       (slot-value instance slot-name)))
 
-(defgeneric get-val (object element &optional data-type)
+(defgeneric get-val (object element &key &allow-other-keys)
   (:documentation "Returns the value in a object based on the supplied element name and possible
 type hints.")
-  (:method (object element &optional data-type)
+  (:method (object element &key data-type)
   (when object
     (typecase (or data-type object)
       (hash-table
@@ -149,10 +149,10 @@ type hints.")
                (second (assoc element object :test #'equal))
                (error "Does not handle this type of object. Implement your own get-val method."))))))))
 
-(defgeneric (setf get-val) (new-value object element &optional data-type)
+(defgeneric (setf get-val) (new-value object element &key &allow-other-keys)
   (:documentation "Set the value in a object based on the supplied element name and possible type
 hints.")
-  (:method (new-value object element &optional data-type)
+  (:method (new-value object element &key data-type)
     (typecase (or data-type object)
       (hash-table (setf (gethash element object) new-value))
       (standard-object (setf (slot-value object element) new-value))
@@ -171,13 +171,6 @@ hints.")
 
 (defgeneric get-value (elt obj))
 (defgeneric (setf get-value) (new elt obj))
-
-;;; Transactions
-(defgeneric execute-transaction (self txfn &rest args &key &allow-other-keys))
-;; Explicit control
-(defgeneric start-transaction (self transaction &key &allow-other-keys))
-(defgeneric stop-transaction (self transaction &key &allow-other-keys))
-(defgeneric abort-transaction (self transaction &key &allow-other-keys))
 
 (defgeneric put-kv (self kv)
   (:documentation "Insert a KeyVal object."))
@@ -201,21 +194,22 @@ hints.")
   (:documentation "Delete value associated with KEY and TS from SELF."))
 (defgeneric delete-key-range (self start end &key)
   (:documentation "Delete values associates with keys between START and END from SELF."))
-(defgeneric make-transaction (self &key)
-  (:documentation "Make a new transaction object from SELF."))
-(defgeneric prepare-transaction (self &key)
-  (:documentation "Prepare transaction SELF."))
-(defgeneric rollback-transaction (self &key)
-  (:documentation "Rollback transaction SELF."))
-(defgeneric delete-transaction (self)
-  (:documentation "Delete transaction SELF."))
-(defgeneric commit-transaction (self &key)
-  (:documentation "Commit transaction object SELF."))
 (defgeneric flush-db (self &key)
   (:documentation "Flush the database SELF."))
 (defgeneric sync-db (self other &key) ;;nyi
   (:documentation "Perform a synchronization on SELF using OTHER."))
-
+(defgeneric load-db (self)
+  (:documentation "Load an existing database."))
+(defgeneric db-stats (self &optional type)
+  (:documentation "Return TYPE stats of given database."))
+(defgeneric db-metadata (self &optional type)
+  (:documentation "Return TYPE metdata of given database."))
+(defgeneric db-prop (self type)
+  (:documentation "Return TYPE property of given database."))
+(defgeneric db-opt (self key)
+  (:documentation "Return value of database option KEY."))
+(defgeneric (setf db-opt) (new self key &key &allow-other-keys)
+  (:documentation "Set the value of database option KEY."))
 (defgeneric repair-db (self &key)
   (:documentation "Attempt to repair the database SELF."))
 (defgeneric backup-db (self &key)
@@ -230,8 +224,30 @@ hints.")
   (:documentation "Shutdown database SELF."))
 (defgeneric ingest-into-db (self file &key)
   (:documentation "Ingest an external file into the database"))
-
-(defvar *default-kv-size* 8)
+;; Merge Ops
+(defgeneric merge-key (self key val &key)
+  (:documentation "Perform a merge operation on SELF using KEY and VAL."))
+(defgeneric merge-kv (self kv &key)
+  (:documentation "Perform a merge operation on SELF using object KV."))
+;; Columns (column families)
+(defgeneric open-columns (self &rest names)
+  (:documentation "Open the columns indicated by NAMES or all columns belonging
+to SELF."))
+(defgeneric close-column (self &optional error)
+  (:documentation "Close the column SELF. When ERROR is non-nil signal an error if the
+column is already closed."))
+(defgeneric close-columns (self)
+  (:documentation "Close the columns belonging to SELF."))
+(defgeneric create-columns (self)
+  (:documentation "Create the columns belonging to SELF."))
+(defgeneric find-column (cf self &key)
+  (:documentation "Find the column COL in SELF."))
+(defgeneric flush-column (self col &key)
+  (:documentation "Flush the column COL in SELF."))
+(defgeneric add-column (col self)
+  (:documentation "Add a column to SELF."))
+(defgeneric columns (self)
+  (:documentation "Return the columns of SELF."))
 
 (defstruct (kv (:constructor make-kv (&optional key val))) 
   (key (make-octets *default-kv-size*) :type octet-vector) 
@@ -266,6 +282,22 @@ hints.")
     (coerce val 'octet-vector)))
 
 ;;; Transactions
+(defgeneric make-transaction (self txn &key)
+  (:documentation "Make a new transaction object."))
+(defgeneric prepare-transaction (self txn &key)
+  (:documentation "Prepare a transaction."))
+(defgeneric rollback-transaction (self txn &key)
+  (:documentation "Rollback a transaction."))
+(defgeneric delete-transaction (self txn &key)
+  (:documentation "Delete transaction SELF."))
+(defgeneric commit-transaction (self txn &key)
+  (:documentation "Commit transaction object SELF."))
+
+(defgeneric execute-transaction (self txfn &rest args &key &allow-other-keys))
+(defgeneric start-transaction (self transaction &key &allow-other-keys))
+(defgeneric stop-transaction (self transaction &key &allow-other-keys))
+(defgeneric abort-transaction (self transaction &key &allow-other-keys))
+
 (defvar *txn* nil)
 
 (defclass transaction-object () ())
@@ -280,6 +312,8 @@ hints.")
 (defgeneric transaction-object (self))
 (defgeneric transaction-store (self))
 (defgeneric transaction-db (self))
+(defgeneric transaction-prior (self))
+
 (defun known-transaction (db txn)
   "Search for a prior TXN known by this DB."
   (when txn
@@ -340,8 +374,8 @@ hints.")
         (with-transaction ,txn-options
           ,@body)))
 
-(defmacro current-transaction (store)
+(defmacro current-transaction (db)
   (with-gensyms (txn)
     `(let ((,txn *txn*))
-       (when (and ,txn (eq (transaction-store ,txn) ,store))
+       (when (and ,txn (eq (transaction-db ,txn) ,db))
          (transaction-object ,txn)))))
