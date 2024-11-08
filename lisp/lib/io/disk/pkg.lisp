@@ -4,6 +4,7 @@
 
 ;;; Code:
 (defpackage :io/disk
+  (:nicknames :disk)
   (:use :cl :std :io/proto :btrfs)
   (:export
    #:*default-filesystem*
@@ -18,6 +19,7 @@
    #:disk-subvolume))
 
 (defpackage :io/disk/btrfs
+  (:nicknames :disk/btrfs)
   (:use :cl :std :io/proto :btrfs :io/disk)
   (:export
    :btrfs-subvolume

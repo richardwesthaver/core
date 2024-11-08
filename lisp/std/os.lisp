@@ -10,6 +10,10 @@
 (in-package :std/os)
 (require 'sb-posix)
 
+(defun sudo-p ()
+  "Return T if effective user is root."
+  (zerop (parse-integer (with-output-to-string (str) (sb-ext:process-output (sb-ext:run-program "id" (list "-u") :search t :output str)) 0))))
+
 (defun list-all-users ()
   "List all users via passwd. (uid gid name home shell comment)"
   (let ((r nil))

@@ -1,5 +1,5 @@
 (defpackage :io/tests
-  (:use :cl :std :rt :io :uring :zstd :sb-gray))
+  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs))
 
 (in-package :io/tests)
 (defsuite :io)
@@ -118,3 +118,15 @@ compressed-data)
             (iszero (xlength ret))
             (xnconcf ret (xsubseq "test" 0))
             (is= 4 (xlength ret)))))
+
+;;; Disk
+(deftest disk-generic ()
+  (let ((disk (make-instance 'disk)))
+    (istype 'disk disk)))
+
+(deftest disk-btrfs (:skip (not (cli:sudo-p)))
+  (is (load-filesystem-backend :btrfs))
+  (let ((disk (make-instance 'btrfs-disk)))
+    (issubclass 'disk (class-of disk))))
+
+

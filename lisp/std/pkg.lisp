@@ -531,6 +531,7 @@
   (:use :cl)
   (:import-from :std/macs :with-gensyms)
   (:export
+   :sudo-p
    :list-all-users
    :list-all-groups
    :with-umask

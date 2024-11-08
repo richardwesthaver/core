@@ -15,7 +15,8 @@
    :btrfs-util-subvolume-iter-destroy
    :btrfs-util-subvolume-iterator-get-fd
    :btrfs-util-qgroup-inherit-destroy
-   :btrfs-util-subvolume-iterator))
+   :btrfs-util-subvolume-iterator
+   :btrfs-util-qgroup-inherit))
 
 (in-package :btrfs)
 
