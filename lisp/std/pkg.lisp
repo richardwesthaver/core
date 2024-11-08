@@ -236,6 +236,7 @@
 (defpkg :std/alien
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :with-gensyms)
+  (:import-from :std/type :octet-vector)
   (:import-from :sb-alien :sap+)
   (:export
    :setfa

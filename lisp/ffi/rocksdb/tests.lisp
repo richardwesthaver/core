@@ -388,27 +388,6 @@ DB where K and V are both Lisp strings."
 
 (deftest merge ()
   "Test low-level merge-operator functionality using Alien Callbacks."
-  (is= 1 
-       (deref
-        (with-alien ((k (* unsigned-char))
-                     (v (* unsigned-char))
-                     (ops (* (* unsigned-char)))
-                     (s (* unsigned-char))
-                     (state (* t)))
-          (alien-funcall
-           (alien-callable-function
-            'rocksdb-concat-full-merge)
-           state k 0 v 0 ops (make-alien size-t 0) 0 s (make-alien size-t 0)))))
-  (is= 1
-       (deref
-        (with-alien ((k (* unsigned-char))
-                     (ops (* (* unsigned-char)))
-                     (s (* unsigned-char))
-                     (state (* t)))
-          (alien-funcall
-           (alien-callable-function
-            'rocksdb-concat-partial-merge)
-           state k 0 ops (make-alien size-t 0) 0 s (make-alien size-t 0)))))
   (is (alien-callable-function 'rocksdb-concat-full-merge))
   (is (alien-callable-function 'rocksdb-concat-partial-merge))
   (is (integerp
@@ -475,8 +454,55 @@ DB where K and V are both Lisp strings."
                                         klen
                                         (addr rvlen)
                                         e)))
-                  (is= 14 rvlen))))))))))
-            
+                  (is= 14 rvlen)
+                  (isequal (concatenate 'string v v) 
+                           (octets-to-string 
+                            (clone-octets-from-alien val (make-octets 14))))))))))))
+  ;; index merge op
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
+               (full-merge (* rocksdb-full-merge-function) (alien-sap (alien-callable-function 'rocksdb-index-full-merge)))
+               (partial-merge (* rocksdb-partial-merge-function) (alien-sap (alien-callable-function 'rocksdb-index-partial-merge)))
+               (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-delete-value)))
+               (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-index-merge-name))))
+    (let ((index-op (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
+      (istype '(alien (* rocksdb-mergeoperator))
+              index-op)
+      (with-opt (o (test-opts) (rocksdb-options-destroy o))
+        (rocksdb-options-set-merge-operator o index-op)
+        (with-temp-db db (o)
+          (let* ((k 42)
+                 (klen 1)
+                 (v 2)
+                 (vlen 1))
+            (with-errptr e
+              (rocksdb-put db (rocksdb-writeoptions-create)
+                           (octets-to-alien (integer-to-octets k))
+                           klen
+                           (octets-to-alien (integer-to-octets v))
+                           vlen
+                           e))
+            (with-errptr e
+              (rocksdb-flush db (rocksdb-flushoptions-create) e))
+            (with-errptr e
+              (rocksdb-merge db (rocksdb-writeoptions-create)
+                             (octets-to-alien (integer-to-octets k))
+                             klen
+                             (octets-to-alien (integer-to-octets v))
+                             vlen
+                             e))
+            (with-errptr e
+              (with-alien ((rvlen (* size-t) (make-alien size-t)))
+                (let ((val
+                        (rocksdb-get db (rocksdb-readoptions-create)
+                                     (octets-to-alien (integer-to-octets k))
+                                     klen
+                                     rvlen
+                                     e)))
+                  (is= 1 (deref rvlen))
+                  (is= (+ v v)
+                       (octets-to-integer (clone-octets-from-alien val (make-octets 1)))))))))))))
+
 (define-comparator dummy)
 
 (deftest comparator ()

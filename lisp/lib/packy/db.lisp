@@ -28,7 +28,7 @@
 (defmethod destroy-db ((db package-database))
   (destroy-db (db db)))
 
-(defmethod get-val ((obj package-database) (elt simple-string) &optional data-type)
+(defmethod get-val ((obj package-database) (elt simple-string) &key data-type)
   (declare (ignore data-type))
   (db-get obj elt))
 

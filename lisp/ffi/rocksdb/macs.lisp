@@ -97,10 +97,11 @@
        ,*rocksdb-in-range-lambda-list*
      ,@body))
 
-(defmacro define-slicetransform (name state &key (destructor 'rocksdb-destructor)
-                                                 transform
-                                                 in-domain
-                                                 in-range)
+(defmacro define-slicetransform (name &key (destructor 'rocksdb-destructor)
+                                           state
+                                           transform
+                                           in-domain
+                                           in-range)
   (with-gensyms (in-domain-fn in-range-fn transform-fn sname screate)
     (setf in-domain-fn (symbolicate name "-IN-DOMAIN")
           in-range-fn (symbolicate name "-IN-RANGE")
