@@ -319,6 +319,7 @@
   (:nicknames :ast)
   (:use :cl :std)
   (:export :ast :build-ast :load-ast :load-ast*
+           :*ast*
            :wrap
            :unwrap
            :unwrap-or

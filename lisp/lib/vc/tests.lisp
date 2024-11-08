@@ -25,7 +25,7 @@
     (is (streamp (sb-ext:process-output (run-hg-command "status" nil :stream))))))
 
 (deftest vc-simple ()
-  (with-temp-repo (*default-vc-kind*) (is repo)))
+  (with-temp-repo *default-vc-kind* (is repo)))
 
 ;; TODO 2024-08-22: 
 (deftest vc-mirror-update (:skip t)

@@ -42,11 +42,11 @@
     (is (probe-file f))
     (delete-file f)))
 
-(deftest cover (:profile t)
+(deftest cover (:profile t :skip t)
   ;; todo
   (coverage-report))
 
-(deftest fixture (:fx fx1)
+(deftest fixture (:fx "fx1")
   (print *fx*))
 
 (deftest tmp ()

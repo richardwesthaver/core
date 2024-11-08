@@ -35,6 +35,8 @@
                                         (sb-posix:group-mem g))
                                   r))))
 
+;; cat /sys/kernel/cpu_byteorder?
+
 (defmacro with-umask (mask &body body)
   "Temporarily set the system-wide umask for the extent of BODY."
   (with-gensyms (umask)
@@ -51,3 +53,27 @@ arrange for FVAR to be closed after BODY."
   `(let* ((,fvar (sb-posix:open ,fname ,flags)))
      (unwind-protect (progn ,@body)
        ,@(when close `(sb-posix:close ,fvar)))))
+
+;;; Linux
+;; https://man7.org/linux/man-pages/man3/statvfs.3.html
+(define-alien-routine statvfs int
+  (path c-string)
+  (buf (* t)))
+
+;; https://man7.org/linux/man-pages/man3/getmntent.3.html
+(define-alien-type mntent 
+  (struct mntent
+          (fsname c-string)
+          (dir c-string)
+          (type c-string)
+          (opts c-string)
+          (freq int)
+          (passno int)))
+
+(define-alien-routine setmntent (* t) (filename c-string) (type c-string))
+
+(define-alien-routine getmntent (* t) (stream (* t)))
+
+(define-alien-routine endmntent int (stream (* t)))
+
+(define-alien-routine hasmntopt c-string (mnt (* mntent)) (opt c-string))

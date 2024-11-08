@@ -528,7 +528,7 @@
    :tmpize-pathname))
 
 (defpkg :std/os
-  (:use :cl)
+  (:use :cl :sb-alien)
   (:import-from :std/macs :with-gensyms)
   (:export
    :sudo-p

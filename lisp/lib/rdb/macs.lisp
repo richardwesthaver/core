@@ -4,12 +4,15 @@
 (in-package :rdb)
 
 ;;; error handling
-(defmacro with-errptr* ((e &optional errtyp params) &body body)
+(defmacro with-errptr* ((e err &rest params) &body body)
   `(with-errptr ,e
      (handler-bind ((sb-sys:memory-fault-error
                       (lambda (c)
                         (declare (ignore c))
-                        (handle-errptr ,e ,errtyp ,params))))
+                        (rocksdb-c-error ,e)))
+                    (error (lambda (c)
+                             (declare (ignore c))
+                             (error ,err :message (deref (sap-alien ,e (* c-string))) ,@params))))
        (progn ,@body))))
 
 ;;; opts
@@ -112,7 +115,7 @@ the forms in BODY."
                       (default-rdb-opts)
                       (make-array ,(length cfs) :element-type 'rdb-cf :initial-contents ',cfs :adjustable t :fill-pointer ,(length cfs))))
      ,@(when open `((open-db ,db-var)
-                    (create-cfs ,db-var)))
+                    (create-columns ,db-var)))
        (prog1
            (progn ,@body)
          ,(if destroy

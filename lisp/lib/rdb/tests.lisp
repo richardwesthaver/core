@@ -112,11 +112,11 @@
           do (is (string= (get-val tmp (format nil "foo~A" n)) (format nil "bar~A" n))))
     (flush-db tmp)
     ;; TODO: auto handle return type (get-prop-int)
-    (is (= 10000 (parse-integer (get-prop tmp "rocksdb.estimate-num-keys"))))
+    (is (= 10000 (parse-integer (db-prop tmp "rocksdb.estimate-num-keys"))))
     (debug! ;; some info about our db
      (rdb-name tmp)
-     (get-prop tmp "rocksdb.dbstats")
-     (get-prop tmp "rocksdb.levelstats")
+     (db-prop tmp "rocksdb.dbstats")
+     (db-prop tmp "rocksdb.levelstats")
      (print-stats tmp))))
 
 (deftest metadata ()
@@ -124,12 +124,12 @@
   (with-temp-db (tmp () :open t :destroy t)
     (insert-key tmp "foo" "bar")
     (flush-db tmp)
-    (let ((cf-meta (get-metadata tmp)))
+    (let ((cf-meta (db-metadata tmp)))
       (is (rdb-cf-metadata-p (pull-sap* cf-meta)))
-      (let ((level-meta (get-metadata cf-meta)))
+      (let ((level-meta (db-metadata cf-meta)))
         (is (rdb-level-metadata-p (pull-sap* level-meta)))
         (is (rdb-sst-file-metadata-p
-             (pull-sap* (get-metadata level-meta))))))))
+             (pull-sap* (db-metadata level-meta))))))))
 
 (deftest sst ()
   "Test SST-FILE-WRITER and INGEST-DB."

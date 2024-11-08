@@ -124,7 +124,7 @@ compressed-data)
   (let ((disk (make-instance 'disk)))
     (istype 'disk disk)))
 
-(deftest disk-btrfs (:skip (not (cli:sudo-p)))
+(deftest disk-btrfs (:skip (not (std:sudo-p)))
   (is (load-filesystem-backend :btrfs))
   (let ((disk (make-instance 'btrfs-disk)))
     (issubclass 'disk (class-of disk))))

@@ -27,7 +27,7 @@ to initialize the instance with custom configuration."
 
 ;;; DB
 (defun open-db-raw (db-path &optional (opts (default-rocksdb-options)))
-  (with-errptr* (err 'open-db-error (list :db db-path))
+  (with-errptr* (err 'open-db-error :db db-path)
     (let* ((db-path (if (pathnamep db-path)
                         (namestring db-path)
                         db-path)))
@@ -37,7 +37,7 @@ to initialize the instance with custom configuration."
   (rocksdb-close db))
 
 (defun destroy-db-raw (path &optional (opt (rocksdb-options-create)))
-  (with-errptr* (err 'destroy-db-error (list :db path))
+  (with-errptr* (err 'destroy-db-error :db path)
     (rocksdb-destroy-db opt (namestring (uiop:ensure-directory-pathname path)) err)
     (rocksdb-options-destroy opt)))
 
@@ -50,11 +50,11 @@ to initialize the instance with custom configuration."
       (rocksdb-get-column-family-metadata db)))
 
 (defun flush-db-raw (db &optional (opts (rocksdb-flushoptions-create)))
-  (with-errptr* (err 'flush-db-error (list :db db))
+  (with-errptr* (err 'flush-db-error :db db)
     (rocksdb-flush db opts err)))
 
 (defun repair-db-raw (name &optional (opts (rocksdb-options-create)))
-  (with-errptr* (err 'repair-db-error (list :name name))
+  (with-errptr* (err 'repair-db-error :name name)
     (rocksdb-repair-db opts name err)))
 
 (defun ingest-db-raw (db files &optional (opts (rocksdb-ingestexternalfileoptions-create)))
@@ -83,7 +83,7 @@ to initialize the instance with custom configuration."
 		 (v (* unsigned-char) (make-alien unsigned-char vlen)))
       (setfa k key)
       (setfa v val)
-      (with-errptr* (err 'put-kv-error (list :db db :kv (cons key val)))
+      (with-errptr* (err 'put-kv-error :db db :kv (cons key val))
         (rocksdb-put db
 		     opts
 		     k
@@ -99,7 +99,7 @@ to initialize the instance with custom configuration."
 
 (defun get-kv-raw (db key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
-    (with-errptr* (err 'get-kv-error (list :db db :key key))
+    (with-errptr* (err 'get-kv-error :db db :key key)
       (with-alien ((vlen size-t)
 		   (k (* unsigned-char) (make-alien unsigned-char klen)))
         (setfa k key)
@@ -128,12 +128,12 @@ to initialize the instance with custom configuration."
       (loop for opt in opts
             for i below n
             do (setf (deref cf-opts i) opt))
-      (with-errptr* (err 'rocksdb-cf-error (list :cf name))
+      (with-errptr* (err 'rocksdb-cf-error :cf name)
         (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
           (values db cf-handles))))))
 
 (defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
-  (with-errptr* (err 'rocksdb-cf-error (list :db db :cf name)) 
+  (with-errptr* (err 'rocksdb-cf-error :db db :cf name)
     (rocksdb-create-column-family db opt name err)))
 
 (defun destroy-cf-raw (cf)
@@ -141,7 +141,7 @@ to initialize the instance with custom configuration."
 
 (defun get-cf-raw (db cf key &optional (opt (rocksdb-readoptions-create)))
   (let ((klen (length key)))
-    (with-errptr* (err 'get-kv-error (list :db db :key key))
+    (with-errptr* (err 'get-kv-error :db db :key key)
       (with-alien ((vlen (* size-t) (make-alien size-t 0))
 		   (k (* unsigned-char) (make-alien unsigned-char klen)))
         (setfa k key)
@@ -153,19 +153,19 @@ to initialize the instance with custom configuration."
 			            err)))
 	  ;; helps if we know the vlen beforehand, would need a custom
 	  ;; C-side function probably.
-	  (let ((v (make-array (deref vlen) :element-type 'unsigned-byte)))
+	  (let ((v (make-array (deref vlen) :element-type 'octet)))
             (clone-octets-from-alien val v (deref vlen))
 	    v))))))
 
 (defun get-cf-str-raw (db cf key &optional (opt (rocksdb-readoptions-create)))
   (let ((k (string-to-octets key :null-terminate nil)))
     (let ((v (get-cf-raw db cf k opt)))
-      (when v (concatenate 'string (map 'vector #'code-char v))))))
+      (when v (octets-to-string v)))))
 
 (defun put-cf-raw (db cf key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((klen (length key))
         (vlen (length val)))
-    (with-errptr* (err 'put-kv-error (list :db db :kv (cons key val)))
+    (with-errptr* (err 'put-kv-error :db db :kv (cons key val))
       (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                    (v (* unsigned-char) (make-alien unsigned-char vlen)))
         (setfa k key)
@@ -224,7 +224,7 @@ to initialize the instance with custom configuration."
 
 ;;; Backup Engine
 (defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
-  (with-errptr* (err 'open-backup-engine-error (list :db be-path))
+  (with-errptr* (err 'open-backup-engine-error :db be-path)
     (let ((be-path (if (pathnamep be-path)
                        (namestring be-path)
                        be-path)))

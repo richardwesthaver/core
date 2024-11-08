@@ -23,6 +23,7 @@
 ;;; Code:
 (in-package :obj/ast)
 
+(defvar *ast* nil)
 (defun formp (form)
   (or (consp form) (atom form)))
 

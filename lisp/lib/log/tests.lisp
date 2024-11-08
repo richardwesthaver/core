@@ -21,8 +21,8 @@
 (deftest simple-log-message (:fx :logger)
   "Test a simple LOG-MESSAGE"
   (istype 'string (format-message nil (make-instance 'simple-log-message :content "hi" :tags '(:test))))
-  (let ((*logger* *fx*))
-    (istype 'thread (start *fx*))
+  (let ((*logger* (make-instance 'logger-fixture :name :log1)))
+    (istype 'thread (start *logger*))
     (istype 'string (format-message nil (log-message :error nil "test")))))
 
 (deftest simple-logger (:fx :logger)
