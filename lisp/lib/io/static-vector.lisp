@@ -240,7 +240,8 @@ but requested vector length is ~A."
                            (alignment nil alignp))
   "Create a simple vector of length LENGTH and type ELEMENT-TYPE which will
 not be moved by the garbage collector. The vector might be allocated in
-foreign memory so you must always call FREE-STATIC-VECTOR to free it."
+foreign memory so you must always call FREE-STATIC-VECTOR to free it. Use
+WITH-STATIC-VECTOR to handle this automatically."
   (declare #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note)
            (optimize speed))
   (check-arguments length element-type initial-element initial-element-p

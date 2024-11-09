@@ -1,6 +1,6 @@
 ;;; lib/dat/sxp.lisp --- S-eXPressions
 
-;; A unified S-Expression data format
+;; A portable S-Expression data format
 
 ;;; Code:
 (in-package :dat/sxp)

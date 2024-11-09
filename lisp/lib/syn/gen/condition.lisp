@@ -4,7 +4,9 @@
 
 ;;; Code:
 (in-package :syn/gen)
+
 (eval-always
-  (define-condition codegen-condition () ()))
-(deferror codegen-error (codegen-condition) () (:auto t))
-(deferror simple-codegen-error (codegen-condition simple-error) () (:auto t))
+  (define-condition gen-condition () ()))
+
+(deferror gen-error (gen-condition) () (:auto t))
+(deferror simple-gen-error (gen-condition simple-error) () (:auto t))

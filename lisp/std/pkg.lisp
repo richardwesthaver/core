@@ -265,6 +265,7 @@
    :write-double :offset-char-pointer
    :num-cpus
    :*cpus*
+   :alien-or-lisp-octets
    :loff-t
    :pid-t
    :uid-t
@@ -375,6 +376,9 @@
    :pandoric-eval
    :with-collectors
    :collecting
+   :switch
+   :eswitch
+   :cswitch
    :xor
    :ifret))
 

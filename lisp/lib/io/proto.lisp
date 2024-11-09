@@ -25,3 +25,6 @@
 (defgeneric input-available-p (self))
 (defgeneric output-available-p (self))
 (defgeneric fill-buffer (self))
+(defgeneric header (self))
+(defgeneric header-type (self))
+(defgeneric header-length (self))

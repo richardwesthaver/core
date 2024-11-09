@@ -20,7 +20,10 @@
    :output-buffer :input-buffer
    :input-position :output-position
    :output-available-p :input-available-p
-   :fill-buffer))
+   :fill-buffer
+   :header
+   :header-type
+   :header-length))
 
 (defpackage :io/static-vector
   (:use :cl :std :sb-alien)
@@ -67,9 +70,15 @@
   (:import-from :std :deferror :eval-always))
 
 (defpackage :io/stream
-  (:use :cl :io/proto :sb-gray)
+  (:use :cl :io/proto :sb-gray :std/meta)
   (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
-  (:export :io-stream-error :io-stream))
+  (:export :io-stream-error :io-stream
+           :make-bound-stream
+           :bound-input-stream
+           :ensure-file-position
+           :peeking-input-stream
+           :peeked-bytes
+           :peeked-count))
 
 (defpackage :io/chunky
   (:nicknames :chunky)

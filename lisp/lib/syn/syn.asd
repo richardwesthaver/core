@@ -2,7 +2,7 @@
   :version "0.1.0"
   :maintainer "Richard Westhaver <richard.westhaver@gmail.com>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :obj :parse :tree-sitter :doc)
+  :depends-on (:std :obj :parse :tree-sitter :doc :cli)
   :serial t
   :components ((:file "pkg")
                (:module "gen"

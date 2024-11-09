@@ -168,3 +168,7 @@
 
 (deftest svg ()
   (istype 'list (svg:parse-svg-file *svg-file*)))
+
+;;; TAR
+(deftest tar ()
+  (make-instance 'tar-file))

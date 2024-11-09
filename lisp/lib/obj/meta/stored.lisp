@@ -29,6 +29,10 @@
   "This is useful for debugging and being clear about what is persistent and what is not"
   (format stream "#<~A oid:~A>" (type-of obj) (when (slot-boundp obj 'oid) (oid obj))))
 
+(defun write-oid (i bs) (write-fixnum32 i bs))
+
+(defun read-oid (bs) (read-fixnum32 bs))
+
 (defclass stored-collection (stored) ()
   (:documentation "Abstract superclass of all STORED collection types."))
 

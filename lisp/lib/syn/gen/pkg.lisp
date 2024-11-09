@@ -9,9 +9,9 @@
 ;;; Code:
 (defpackage :syn/gen
   (:use :cl :std :doc :obj/id :obj/graph :dat/sxp)
-  (:export :codegen-designator :codegen-condition :codegen-condition
-   :simple-codegen-error))
+  (:export :gen-designator :gen-condition :gen-condition
+   :simple-gen-error))
 
 (in-package :syn/gen)
 
-;; TODO 2024-10-20: codegen-file-header
+;; TODO 2024-10-20: gen-file-header

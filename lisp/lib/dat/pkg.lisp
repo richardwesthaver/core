@@ -22,6 +22,14 @@
    :make-sxp
    :file-read-forms))
 
+(defpackage :dat/serde
+  (:nicknames :serde)
+  (:use :cl :std :dat/proto 
+   :sxp :ast :stored :store 
+   :id :io/stream :io/proto :io/static-vector 
+   :typed :meta :sb-alien :sb-gray)
+  (:export))
+
 (defpackage :dat/dot
   (:use :cl :std :dat/proto :obj/graph)
   (:export
@@ -219,7 +227,6 @@
            #:message-velocity #:message-numerator #:message-denominator
            #:message-sf #:message-mi #:message-tempo #:message-program
            #:message-value
-           #:header #:header-type
            #:unknown-event #:data-byte #:dd #:bb #:cc #:nn))
 
 (defpackage :dat/qrcode
@@ -245,8 +252,60 @@
   (:export))
 
 (defpackage :dat/tar
-  (:use :cl :std :dat/proto :io/proto :io/chunky)
-  (:export))
+  (:nicknames :tar)
+  (:use :cl :std :dat/proto :io/proto :io/chunky :sb-ext :io/stream :std/stream :std/macs :std/ht)
+  (:export
+   #:*tar-block-bytes*
+   #:tar-error
+   #:simple-tar-error
+   #:close-tar-file
+   #:tar-file
+   #:read-entry
+   #:write-entry
+   #:open-tar-file
+   #:transfer-stream-to-tar-file
+   #:transfer-octets-to-tar-file
+   #:finalize-tar-file
+   #:v7-tar-file
+   #:entry-type
+   #:ustar-tar-file
+   #:gnu-tar-file
+   #:archive
+   #:tar-archive
+   #:tar-entry
+   #:tar-entry-data
+   #:tar-file-entry
+   #:tar-hard-link-entry
+   #:tar-symbolic-link-entry
+   #:tar-character-device-entry
+   #:write-character-device-entry
+   #:tar-block-device-entry
+   #:tar-directory-entry
+   #:tar-fifo-entry
+   #:pax-attributes-entry
+   #:do-attributes
+   #:read-attribute
+   #:pax-extended-attributes-entry
+   #:pax-global-attributes-entry
+   #:gnu-directory-dump-entry
+   #:gnu-long-link-name-entry
+   #:gnu-long-name-entry
+   #:gnu-sparse-file-entry
+   #:gnu-volume-header-name-entry
+   #:unknown-tar-entry
+   #:entry-unknown-p
+   #:entry-has-data-p
+   #:make-entry-stream
+   #:entry-file-p
+   #:entry-directory-p
+   #:entry-hard-link-p
+   #:entry-symbolic-link-p
+   #:entry-character-device-p
+   #:entry-block-device-p
+   #:entry-fifo-p
+   #:call-with-open-tar-file
+   #:with-open-tar-file
+   #:do-entries))
 
 (defpackage :dat/parquet
   (:use :cl :std :obj/id :dat/proto :dat/json)

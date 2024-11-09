@@ -1,5 +1,5 @@
 (defpackage :io/tests
-  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs))
+  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs :io/stream))
 
 (in-package :io/tests)
 (defsuite :io)
@@ -14,6 +14,10 @@
   "See 'tests/serve-event.pure.lisp'"
   nil)
 
+(deftest streams ()
+  "IO/STREAM tests"
+  (with-input-from-string (s "foo")
+    (make-instance 'peeking-input-stream :count 3 :stream s :size 3))
 (deftest chunky ()
   "Tests for CHUNKED-STREAM"
   (let ((input (make-chunked-stream 

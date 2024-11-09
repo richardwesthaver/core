@@ -157,7 +157,9 @@
    :stored-slot-boundp
    :stored-slot-writer
    :stored-slot-reader
-   :get-store))
+   :get-store
+   :read-oid
+   :write-oid))
 
 (defpackage :obj/meta/typed
   (:nicknames :meta/typed :typed)
@@ -166,7 +168,11 @@
    #:type-num
    #:type<=
    #:type<
-   #:type=))
+   #:type=
+   #:array-type=
+   #:array-type-from-byte
+   #:byte-from-array-type
+   #:int-byte-spec))
 
 (defpackage :obj/meta/dynamic
   (:nicknames :meta/dynamic :dynamic)

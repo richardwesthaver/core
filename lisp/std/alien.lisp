@@ -349,6 +349,12 @@ Each var can be of the form:
 
 (defvar *cpus* (num-cpus))
 
+;;; Non-standard types
+(deftype alien-or-lisp-octets () '(or array 
+                                   (alien (* char)) 
+                                   (alien (array char))
+                                   (alien (* unsigned-char))
+                                   (alien (array unsigned-char))))
 ;;; C Standard
 
 ;; types
