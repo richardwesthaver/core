@@ -1,9 +1,9 @@
-;;; std/mop.lisp --- Standard MOP Utilities
+;;; std/meta.lisp --- Standard MOP Utilities
 
 ;;
 
 ;;; Code:
-(in-package :std/mop)
+(in-package :std/meta)
 
 ;; make-specializer-form-using-class
 ;; make-method-lambda-using-specializers
