@@ -80,8 +80,6 @@
 (deftest arff ()
   (is (typep (parse-arff-string *arff-input*) 'arff)))
 
-(deftest bencode ())
-
 (defvar *sxp-test-long* "(edges-1
 (
 (1389.886593 1341.567282)

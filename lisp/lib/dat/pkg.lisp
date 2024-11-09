@@ -204,13 +204,6 @@
    :mime-type-glob :mime-type-magic
    :mime :get-mime :get-mime*))
 
-(defpackage :dat/bencode
-  (:use :cl :std :dat/proto :sb-gray)
-  (:export
-   :bencode-encode
-   :bencode-decode
-   :*bencode-binary-key-p*))
-
 (defpackage :dat/midi
   (:nicknames :midi)
   (:use :cl :std :dat/proto :io/proto)
@@ -265,12 +258,3 @@
    :parquet-write
    :parquet-encode
    :parquet-decode))
-
-(pkg:defpkg :dat
-  (:use :cl :std)
-  (:use-reexport :dat/proto :dat/csv :dat/arff
-   :dat/toml :dat/json :dat/sxp :dat/xml
-   :dat/bencode :dat/qrcode :dat/midi :dat/svg 
-   :dat/tar :dat/css :dat/html :dat/base64 
-   :dat/gif :dat/mime :dat/parquet :dat/bencode
-   :dat/ini :dat/handlebars :dat/dot))

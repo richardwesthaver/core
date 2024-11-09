@@ -35,9 +35,9 @@
                (:file "toml")
                (:file "arff")
                (:file "midi")
-               #+png (:file "png")
+               (:file "png")
                (:file "base64")
-               #+bencode (:file "bencode"))
+               (:file "dat"))
   :in-order-to ((test-op (test-op "dat/tests"))))
 
 (defsystem :dat/tests
