@@ -25,7 +25,8 @@
              (make-instance 'fundamental-binary-stream)))
     (istype 'chunked-input-stream input)
     (istype 'chunked-output-stream output)
-    (istype 'chunked-io-stream (make-chunked-stream (make-two-way-stream input output)))))
+    (istype 'chunked-io-stream (make-chunked-stream (make-two-way-stream input output)))
+    (istype 'blocked-input-stream (make-instance 'blocked-input-stream))))
 
 (defparameter *data-size* (* 10 1024))
 
@@ -36,9 +37,9 @@
                                                  :initial-element 0))
         compressed-data)
     (setf compressed-data 
-          (io/zstd:with-zstd-buffer :output (out data)))
+          (with-zstd-buffer :output (out data)))
     (setf round-trip-data
-          (io/zstd:with-zstd-buffer :input (in compressed-data)))
+          (with-zstd-buffer :input (in compressed-data)))
     (is (equalp round-trip-data data))))
 
 (deftest zstd-stream ()

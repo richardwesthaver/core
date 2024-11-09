@@ -67,7 +67,7 @@ works only if the chars are coded in ASCII]"
 (defparameter *midi-output* nil "stream for writing a Midifile")
 
 (define-condition unknown-event ()
-  ((status :initarg :status :reader status)
+  ((status :initarg :status :reader error-status)
    (data-byte :initform "" :initarg :data-byte :reader data-byte))
   (:documentation "condition when the event does not exist in the library"))
 

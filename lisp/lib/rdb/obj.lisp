@@ -41,7 +41,7 @@
                         (string (string-downcase k))
                         (symbol (string-downcase (symbol-name k)))
                         (t (string-downcase (format nil "~s" k))))))
-               (set-opt self k v)))
+               (setf (db-opt self k) v)))
     self))
 
 (defun make-rdb-opts (&rest values)
@@ -54,11 +54,14 @@
 values in Lisp, just binds the sap."
   (make-instance 'rdb-opts :sap alien))
 
+(defmethod set-db-opt ((self t) key val &key push)
+  (setf (db-opt self key :push push) val))
+
 (defmethod db-opt ((self rdb-opts) key)
   "Return the current value of KEY in SELF if found, else return nil."
   (gethash key (rdb-opts-table self)))
 
-(defmethod set-opt ((self rdb-opts) key val &key push)
+(defmethod (setf db-opt) (val (self rdb-opts) key &key push)
   "Set the VAL of KEY in SELF with '(setf (gethash SELF KEY) VAL)'."
   (prog1
       (setf (gethash key (rdb-opts-table self)) val)
@@ -337,9 +340,9 @@ supplied by the user from the default value."
 and update existing key/value types for cfs with the same name. Existing cfs
 only get their their type slots updated on non-nil values."
   (loop for field across (fields schema)
-        do (if-let ((cf (find-cf (field-name field) self)))
+        do (if-let ((cf (find-column (field-name field) self)))
              (load-field cf field)
-             (push-cf
+             (add-column
               (load-field (make-rdb-cf (field-name field)) field)
               self)))
   self)
@@ -431,9 +434,9 @@ internal sap slots are initialized."
     (unless (null sap)
       (setf sap (destroy-cf-raw sap)))))
 
-(defmethod set-opt ((self rdb) key val &key push)
+(defmethod (setf db-opt) (new (self rdb) key &key push)
   (with-slots (opts) self
-    (set-opt opts key val :push push)))
+    (setf (db-opt opts key :push push) new)))
 
 (defmethod db-opt ((self rdb) key)
   (with-slots (opts) self
@@ -569,7 +572,7 @@ internal sap slots are initialized."
    (kv-val kv)))
 
 (defmethod insert-key ((self rdb) key val &key cf)
-  (if-let ((cf (and cf (find-cf cf self))))
+  (if-let ((cf (and cf (find-column cf self))))
     (if-let ((sap (rdb-cf-sap cf)))
       (put-cf-raw
        (rdb-db self)

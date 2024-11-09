@@ -31,13 +31,12 @@
    :missing-argument
    :missing-argument-command
    :missing-argument-p
+   :invalid-item
    :invalid-argument
-   :invalid-argument-item
-   :invalid-argument-reason
+   :error-item
+   :error-reason
    :invalid-argument-p
    :unwind-protect-case
-   :define-simple-error
-   :define-simple-error-reporter
    :def-simple-error-reporter
    :std-warning
    :defwarning
@@ -267,12 +266,21 @@
    :num-cpus
    :*cpus*
    :loff-t
+   :pid-t
+   :uid-t
+   :gid-t
    :memset
    :memcpy
    :posix-memalign
-   :sap))
+   :timeval
+   :timespec
+   :sap
+   :push-sap
+   :push-sap*
+   :pull-sap
+   :pull-sap*))
 
-(defpkg :std/mop
+(defpkg :std/meta
   (:use :cl :sb-mop :sb-pcl)
   (:import-from :std/sym :symb :make-keyword)
   (:shadow :reset)
@@ -371,7 +379,7 @@
    :ifret))
 
 (defpkg :std/thread
-  (:use :cl :sb-thread :sb-concurrency :std/mop)
+  (:use :cl :sb-thread :sb-concurrency :std/meta)
   (:import-from :std/list :flatten)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
@@ -565,7 +573,7 @@
 
 (defpkg :std/pipe
   (:use :cl :std/array)
-  (:import-from :std/condition :required-argument)
+  (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :removef)
   (:import-from :std/file :file)
@@ -634,7 +642,7 @@
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num
    :std/stream :std/curry :std/array :std/hash-table
-   :std/alien :std/mop :std/thread :std/task
+   :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/seq
    :std/sys :std/readtable :std/pipe))

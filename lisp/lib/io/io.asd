@@ -2,8 +2,8 @@
   :description "Lisp IO Interface"
   :depends-on (:cl-ppcre 
                :std
-               (:feature :linux :uring) 
-               (:feature :linux :xkb) 
+               (:feature :linux :uring)
+               (:feature :linux :xkb)
                (:feature :linux :evdev)
                (:feature :linux :btrfs)
                :sb-bsd-sockets :zstd :flexi-streams)

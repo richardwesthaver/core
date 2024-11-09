@@ -12,7 +12,6 @@
   (:use :cl :sb-mop :std)
   (:use-reexport :obj/ast)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
-  ;; TODO: hot-patch readtables into sxp classes/parsers
   (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:export
    :sxp-fmt-designator
@@ -22,7 +21,6 @@
    :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream
    :make-sxp
    :file-read-forms))
-
 
 (defpackage :dat/dot
   (:use :cl :std :dat/proto :obj/graph)
@@ -215,7 +213,7 @@
 
 (defpackage :dat/midi
   (:nicknames :midi)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :io/proto)
   (:export #:read-midi-file #:write-midi-file
            #:midifile
            #:midifile-format #:midifile-tracks #:midifile-division
@@ -229,7 +227,7 @@
            #:message-sf #:message-mi #:message-tempo #:message-program
            #:message-value
            #:header #:header-type
-           #:unknown-event #:status #:data-byte #:dd #:bb #:cc #:nn))
+           #:unknown-event #:data-byte #:dd #:bb #:cc #:nn))
 
 (defpackage :dat/qrcode
   (:nicknames :qrcode)
@@ -254,7 +252,7 @@
   (:export))
 
 (defpackage :dat/tar
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :io/proto :io/chunky)
   (:export))
 
 (defpackage :dat/parquet
@@ -268,8 +266,11 @@
    :parquet-encode
    :parquet-decode))
 
-
 (pkg:defpkg :dat
+  (:use :cl :std)
   (:use-reexport :dat/proto :dat/csv :dat/arff
    :dat/toml :dat/json :dat/sxp :dat/xml
-   :dat/bencode :dat/qrcode))
+   :dat/bencode :dat/qrcode :dat/midi :dat/svg 
+   :dat/tar :dat/css :dat/html :dat/base64 
+   :dat/gif :dat/mime :dat/parquet :dat/bencode
+   :dat/ini :dat/handlebars :dat/dot))

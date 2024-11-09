@@ -42,10 +42,16 @@
     `(prog1
          (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
        (when ',fun
-         (if (or (member 'simple-error ',parent-types)
-                 (member 'simple-condition ',parent-types))
-             (def-simple-error-reporter ,name)
-             (def-error-reporter ,name))))))
+         (cond 
+           ((or (member 'simple-error ',parent-types)
+                (member 'simple-condition ',parent-types))
+            (def-simple-error-reporter ,name))
+           ((or
+             (member 'invalid-item ',parent-types)
+             (member 'invalid-argument ',parent-types))
+            (def-invalid-item-reporter ,name))
+           (t
+            (def-error-reporter ,name)))))))
 
 (defmacro def-error-reporter (err)
     `(defun ,err (&rest args)
@@ -65,6 +71,15 @@
         :format-control fmt
         :format-arguments args))))
 
+(defmacro def-invalid-item-reporter (name)
+  `(defun ,name (item &optional reason)
+     ,(format nil "Signal an error of type ~A." name)
+     (apply 'cerror
+            "Ignore and continue"
+            ',name
+            :item item
+            (when reason (list :reason reason)))))
+      
 (defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an warning condition."
   (let ((fun (member :auto options :test #'car-eql)))
@@ -183,20 +198,22 @@ a default value for required keyword arguments."
 (defun missing-argument-p (value)
   (typep value 'missing-argument))
 
-(define-condition invalid-argument (simple-error)
+(define-condition invalid-item ()
   ((item
     :initarg :item
     :initform (error "Must specify argument item")
-    :reader invalid-argument-item
-    :documentation "The argument which is identified as invalid")
+    :reader error-item
+    :documentation "The item which is identified as invalid")
    (reason
     :initarg :reason
     :initform (error "Must specify reason")
-    :reader invalid-argument-reason
-    :documentation "The reason why this argument is invalid"))
-  (:report (lambda (condition stream)
-             (format stream "Invalid argument: ~A~%Reason: ~A" (invalid-argument-item condition) (invalid-argument-reason condition))))
+    :reader error-reason
+    :documentation "The reason why this item is invalid"))
   (:documentation "A condition which is signalled when an argument is identified as invalid."))
+
+(define-condition invalid-argument (simple-error invalid-item) ()
+  (:report (lambda (condition stream)
+             (format stream "Invalid argument: ~A~%Reason: ~A" (error-item condition) (error-reason condition)))))
 
 (defmacro ignore-some-conditions ((&rest conditions) &body body)
   "Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS
@@ -281,7 +298,6 @@ the 'current' error."
     (error (condition)
       (format nil "Could not generate backtrace: ~A." condition))))
 
-;; MOP
 (define-condition meta-condition () ()
   (:documentation "A condition which is signalled somewhere within the CLOS/MOP machinery."))
 

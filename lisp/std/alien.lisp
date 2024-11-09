@@ -352,11 +352,24 @@ Each var can be of the form:
 ;;; C Standard
 
 ;; types
+(define-alien-type pid-t int)
+(define-alien-type uid-t unsigned-int)
+(define-alien-type gid-t unsigned-int)
 (define-alien-type loff-t long-long)
 
 (define-alien-routine memset void (ptr (* t)) (constant int) (size size-t))
 (define-alien-routine memcpy void (dst (* t)) (src (* t)) (size size-t))
 (define-alien-routine posix-memalign int (box (* (* t))) (alignment size-t) (size size-t))
+
+(define-alien-type timeval
+  (struct timeval
+          (tv-sec (signed 64))
+          (tv-usec (signed 64))))
+
+(define-alien-type timeval
+  (struct timespec
+          (tv-sec (signed 64))
+          (tv-nsec (signed 64))))
 
 ;;; CLOS
 (defgeneric sap (self)
@@ -366,3 +379,17 @@ such alien exists.")
   (:method ((self sb-sys:system-area-pointer)) self)
   (:method ((self integer)) (sb-alien::int-sap self))
   (:method ((self sb-alien-internals:alien-value)) (alien-sap self)))
+
+(defgeneric push-sap (self key)
+  (:documentation "Push a value associated with KEY to the sap associated
+with SELF. Typically used to send a value from one slot, to a foreign
+handle stored in another slot of the same object."))
+
+(defgeneric push-sap* (self)
+  (:documentation "Implicitly push values to the sap associated with SELF."))
+
+(defgeneric pull-sap (self key)
+  (:documentation "Pull a foreign value identified by KEY from the sap associated with SELF."))
+
+(defgeneric pull-sap* (self)
+  (:documentation "Implicitly pull foreign values from the sap associated with SELF."))

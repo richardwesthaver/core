@@ -473,7 +473,8 @@
    :db-prop
    :db-opt
    :columns
-   :create-columns))
+   :create-columns
+   :set-db-opt))
 
 (defpackage :obj/plan
   (:nicknames :plan)

@@ -9,8 +9,7 @@
 
 ;; ustar: https://wiki.osdev.org/USTAR
 
-;; USTAR is the widely-available POSIX standard - PAX never really took off
-;; and CPIO is all but dead.
+;; USTAR is the widely-available POSIX standard.
 
 ;; impl: https://github.com/froydnj/archive
 ;; impl: https://gitlab.common-lisp.net/cl-tar

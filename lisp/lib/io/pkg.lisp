@@ -68,12 +68,12 @@
 
 (defpackage :io/stream
   (:use :cl :io/proto :sb-gray)
-  (:import-from :std :deferror :eval-always)
+  (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
   (:export :io-stream-error :io-stream))
 
 (defpackage :io/chunky
   (:nicknames :chunky)
-  (:use :cl :std/stream :io/proto :io/stream :sb-gray)
+  (:use :cl :std/stream :io/proto :io/stream :sb-gray :std/meta)
   (:import-from :std :deferror :when-let :define-constant :eval-always)
   (:export
    #:output-chunking-p
@@ -88,11 +88,15 @@
    #:signal-eof
    #:expecting-crlf-p
    #:chunked-io-stream
-   #:make-chunked-stream))
+   #:make-chunked-stream
+   #:blocked-stream
+   #:blocked-io-stream
+   #:blocked-output-stream
+   #:blocked-input-stream))
 
 (defpackage :io/socket
-  (:use :cl :io/proto)
-  (:import-from :std :deferror :eval-always)
+  (:use :cl :io/proto :sb-alien)
+  (:import-from :std :deferror :eval-always :timeval)
   (:export :io-socket-error :io-socket :sockopt-receive-timeout))
 
 (defpackage :io/flate

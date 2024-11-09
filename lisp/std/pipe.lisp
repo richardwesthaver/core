@@ -23,6 +23,9 @@
   (:report (lambda (c st)
              (format st "Element ~A is not known in pipe ~A" (name c) (pipe c)))))
 
+(define-condition invalid-event (invalid-item) ()
+  (:documentation "Error signaled when an EVENT object is not recognized."))
+
 (defun make-pipe ()
   "Creates a new adjustable pipe (array)."
   (make-array 1 :adjustable t :fill-pointer 0))
