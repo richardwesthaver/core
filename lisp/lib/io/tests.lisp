@@ -16,8 +16,13 @@
 
 (deftest streams ()
   "IO/STREAM tests"
-  (with-input-from-string (s "foo")
-    (make-instance 'peeking-input-stream :count 3 :stream s :size 3))
+  ;; bound
+  ;; peeking
+  ;; buffer? currently in dat/serde
+  (istype 'bound-input-stream (make-instance 'bound-input-stream))
+  ;; (make-instance 'peeking-input-stream :stream (nyi!))
+  )
+
 (deftest chunky ()
   "Tests for CHUNKED-STREAM"
   (let ((input (make-chunked-stream 

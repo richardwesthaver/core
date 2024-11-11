@@ -13,9 +13,8 @@
 
 (defgeneric parse-infix (self left precedence))
 
-(defgeneric parse (self &optional precedence)
-  (:method ((self pratt-parser) &optional (precedence 0))
-    (let ((expr (parse-prefix self)))
-      (loop while (< precedence (next-precedence self))
-            do (setf expr (parse-infix self expr (next-precedence self))))
-      expr)))
+(defmethod parse((self pratt-parser) &optional (precedence 0))
+  (let ((expr (parse-prefix self)))
+    (loop while (< precedence (next-precedence self))
+          do (setf expr (parse-infix self expr (next-precedence self))))
+    expr))

@@ -11,8 +11,10 @@
 
 (defpackage :std/condition
   (:use :cl)
+  (:shadowing-import-from :asdf :error-name)
   (:export    ;; err
-   :std-error :std-error-message
+   :*error-message*
+   :std-error :error-message
    :define-error-reporter
    :deferror
    :nyi!
@@ -25,17 +27,13 @@
    :circular-dependency
    :circular-dependency-items
    :unknown-argument
-   :unknown-argument-name
-   :unknown-argument-kind
-   :unknown-argument-p
+   :error-name
+   :error-kind
    :missing-argument
    :missing-argument-command
-   :missing-argument-p
-   :invalid-item
-   :invalid-argument
    :error-item
    :error-reason
-   :invalid-argument-p
+   :invalid-argument
    :unwind-protect-case
    :def-simple-error-reporter
    :std-warning
@@ -232,9 +230,39 @@
    :maphash-values :hash-table-values
    :alist-hash-table :plist-hash-table :hash-table-plist :ensure-gethash))
 
+(defpkg :std/sys
+  (:use :cl)
+  (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
+  (:shadowing-import-from :sb-vm :list-allocated-objects)
+  (:recycle :sb-assem)
+  (:recycle :sb-sys)
+  (:import-from :sb-assem :*backend-instruction-set-package*)
+  (:import-from :sb-impl :*logical-hosts*)
+  (:export
+   :.i ;; alias for *inspected*
+   :64-bit-p :32-bit-p
+   :hooks
+   :*default-arena-size*
+   :current-lisp-implementation
+   :current-machine
+   :list-package-symbols
+   :package-symbols
+   :package-symbol-names
+   :append-logical-hosts
+   :save-lisp-tree-shake-and-die
+   :save-lisp-and-live
+   :forget-shared-object
+   :forget-shared-objects
+   :compile-lisp
+   :without-fp-traps
+   :little-endian-p
+   :cpuid
+   :cpu-vendor))
+
 (defpkg :std/alien
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :with-gensyms)
+  (:import-from :std/sys :little-endian-p)
   (:import-from :std/type :octet-vector)
   (:import-from :sb-alien :sap+)
   (:export
@@ -613,33 +641,6 @@
   (:import-from :std/array :signed-array-length)
   (:export :take :starts-with-subseq :ends-with-subseq
    :split-sequence :split-sequence-if :split-sequence-if-not))
-
-(defpkg :std/sys
-  (:use :cl)
-  (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
-  (:shadowing-import-from :sb-vm :list-allocated-objects)
-  (:recycle :sb-assem)
-  (:import-from :sb-assem :*backend-instruction-set-package*)
-  (:import-from :sb-impl :*logical-hosts*)
-  (:export
-   :.i ;; alias for *inspected*
-   :hooks
-   :*default-arena-size*
-   :current-lisp-implementation
-   :current-machine
-   :list-package-symbols
-   :package-symbols
-   :package-symbol-names
-   :append-logical-hosts
-   :save-lisp-tree-shake-and-die
-   :save-lisp-and-live
-   :forget-shared-object
-   :forget-shared-objects
-   :compile-lisp
-   :without-fp-traps
-   :little-endian-p
-   :cpuid
-   :cpu-vendor))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)

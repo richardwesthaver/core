@@ -2,7 +2,7 @@
 
 ;;; Code:
 (uiop:define-package :bin/rdb
-  (:use :cl :rdb :std :cli/clap :log :clap))
+  (:use :cl :rdb :std :cli/clap :log :clap :db))
 
 (in-package :bin/rdb)
 (rocksdb:load-rocksdb t)
@@ -25,7 +25,7 @@
     (if (and (null db-path) (zerop *argc*))
         (mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
               (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
-        (with-db (db (create-db db-path :open t))
+        (with-rdb (db (create-db db-path :open t))
           (println (hash-table-alist (backfill-opts db)))
           (with-iter (it (create-iter db))
             (iter-seek-to-first it)
@@ -40,14 +40,14 @@
 (defcmd rdb-set ()
   (if (> 2 *argc*)
       (rdb-error "missing args: KEY VAL")
-      (with-db (db *rdb*)
+      (with-rdb (db *rdb*)
         (open-db db)
         (insert-key  db (pop *args*) (pop *args*)))))
 
 (defcmd rdb-get ()
   (if (> 1 *argc*)
       (rdb-error "missing arg: KEY")
-      (with-db (db *rdb*)
+      (with-rdb (db *rdb*)
         (open-db db)
         (when-let ((val (get-key db (car *args*))))
           (println val)))))
@@ -56,7 +56,7 @@
   (destroy-db *rdb*))
 
 (defcmd rdb-fuzz ()
-  (with-db (db *rdb*)
+  (with-rdb (db *rdb*)
     (open-db db)
     (let ((val (make-array 32 :element-type 'octet)))
       (dotimes (i (if (zerop *argc*) 1000 (parse-integer (car *args*))))
@@ -91,7 +91,7 @@
   (let ((*log-level* :info))
     (with-cli (*rdb-cli* :args (cli:args))
       (if (active-cmds *cli*)
-          (rdb:with-db (*rdb* (create-db (do-opt (car (find-opts "db" *cli*)))))
+          (with-rdb (*rdb* (create-db (do-opt (car (find-opts "db" *cli*)))))
             (do-cmd *cli*)
               (close-db *rdb*))
           (print-help *cli*)))))

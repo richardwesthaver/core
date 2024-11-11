@@ -370,7 +370,7 @@ key."))
    "Move to the previous duplicate element (with the same key.)
 Returns has-pair key value."))
 
-;; Default implementation.  Plan is to update both backends when BDB 4.6 comes out
+;; Default implementation.
 (defmethod cursor-prev-dup ((cur cursor))
   (when (cursor-initialized-p cur)
     (multiple-value-bind (exists? skey-cur)
@@ -392,7 +392,7 @@ different key.)  Returns has-pair key value."))
    "Move to the previous duplicate element (with the same key.)
 Returns has-tuple / secondary key / value / primary key."))
 
-;; Default implementation.  Plan is to update both backends when BDB 4.6 comes out
+;; Default implementation.
 (defmethod cursor-pprev-dup ((cur cursor))
   (when (cursor-initialized-p cur)
     (multiple-value-bind (exists? skey-cur)

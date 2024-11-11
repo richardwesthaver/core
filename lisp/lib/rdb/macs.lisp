@@ -23,7 +23,7 @@
   `(find-symbol (format nil "~:@(rocksdb-options-get-~x~)" ,key) :rocksdb))
 
 ;;; db
-(defmacro with-open-db-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
+(defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
   `(let ((,db-var (open-db-raw ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
@@ -31,15 +31,15 @@
          ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
          (rocksdb-options-destroy ,opt)))))
 
-(defmacro with-db ((db-var db &key open close) &body body)
+(defmacro with-rdb ((db-var db &key open close) &body body)
   "Bind DB-VAR to the database object DB for the lifetime of BODY."
   `(let ((,db-var ,db))
      (handler-bind ((error (lambda (condition)
                              (error 'rdb-error
                                     :message
-                                    (format nil "WITH-DB signaled: ~A" condition)))))
+                                    (format nil "WITH-RDB signaled: ~A" condition)))))
        ,@(when open `(open-db ,db-var))
-       ,@(if close `(unwind-protect (progn ,@body) (close ,db-var))
+       ,@(if close `(unwind-protect (progn ,@body) (close-db ,db-var))
              body))))
 
 ;;; cf
@@ -101,7 +101,7 @@ handle will not be freed on exit."
 
 (defvar *temp-db-destroy* nil)
 
-(defmacro with-temp-db ((db-var (&rest cfs) &key (destroy *temp-db-destroy*) open) &body body)
+(defmacro with-temp-rdb ((db-var (&rest cfs) &key (destroy *temp-db-destroy*) open) &body body)
   "Bind DB-VAR to a temporary RDB object, arranging for CF-VARS to be
 created as column-families and destroying the database after executing
 the forms in BODY."
@@ -110,10 +110,13 @@ the forms in BODY."
          (lambda (var)
            (setf var (make-rdb-cf (symbol-name var))))
          cfs))
-  `(with-db (,db-var (make-rdb
+  `(with-rdb (,db-var (make-rdb
                       (namestring (funcall ,*temp-db-path-generator* ,(symbol-name db-var)))
                       (default-rdb-opts)
-                      (make-array ,(length cfs) :element-type 'rdb-cf :initial-contents ',cfs :adjustable t :fill-pointer ,(length cfs))))
+                      (make-array ,(length cfs) :element-type 'rdb-cf 
+                                                :initial-contents ',cfs 
+                                                :adjustable t 
+                                                :fill-pointer ,(length cfs))))
      ,@(when open `((open-db ,db-var)
                     (create-columns ,db-var)))
        (prog1

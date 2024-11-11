@@ -882,7 +882,7 @@
       (flet ((collect-prev-header-value ()
                (when header-value-buffer
                  (let ((header-value
-                         (babel:octets-to-string
+                         (sb-ext:octets-to-string
                           header-value-buffer)))
                    (when parsing-content-disposition
                      (setq field-meta

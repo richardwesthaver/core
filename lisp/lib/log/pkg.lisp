@@ -48,7 +48,7 @@
 
 ;;; Code:
 (defpackage :log
-  (:use :cl :std :std/meta :std/thread :time)
+  (:use :cl :std :std/meta :std/thread :time :db)
   (:export :*log-level* :*logger* :log-router
    :make-log-router :log-router-p
    :get-real-time-since :init-log-timestamp
@@ -79,4 +79,6 @@
    :default-logger
    :add-pipe
    :with-logger
-   :log-rotate))
+   :log-rotate
+   :database-logger
+   :db-sink))

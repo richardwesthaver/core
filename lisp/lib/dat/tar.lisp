@@ -57,7 +57,8 @@
 (defconstant +ascii-newline+ #xa)
 
 ;;; Conditions
-(deferror tar-error () () (:auto t))
+(eval-always
+  (deferror tar-error () () (:auto t)))
 
 (deferror simple-tar-error (tar-error simple-error) () (:auto t))
 
@@ -69,49 +70,49 @@
                      (error-provided condition) (error-computed condition))))
   (:documentation "Signaled when the checksum in a tar header is invalid."))
 
-(define-condition malformed-pax-attribute-entry (tar-error)
-  ())
+(deferror malformed-pax-attribute-entry (tar-error) () (:auto t))
 
 ;;; Macros
-(defun round-up-to-tar-block (num)
-  (* (ceiling num *tar-block-bytes*) *tar-block-bytes*))
+(eval-always
+  (defun round-up-to-tar-block (num)
+    (* (ceiling num *tar-block-bytes*) *tar-block-bytes*))
 
-(defun tar-checksum-guts (header-type block start transform-fun)
-  (declare (type (simple-array (unsigned-byte 8) (*)) block))
-  (let* ((end (+ start *tar-block-bytes*))
-         (checksum-offset (field-offset header-type 'checksum))
-         (checksum-start (+ start checksum-offset))
-         (checksum-end (+ start checksum-offset
-                          (field-length header-type 'checksum))))
-    (loop for i from start below end
-          sum (if (or (< i checksum-start) (<= checksum-end i))
-                  (funcall transform-fun (aref block i))
-                  +ascii-space+))))
+  (defun tar-checksum-guts (header-type block start transform-fun)
+    (declare (type (simple-array (unsigned-byte 8) (*)) block))
+    (let* ((end (+ start *tar-block-bytes*))
+           (checksum-offset (field-offset header-type 'checksum))
+           (checksum-start (+ start checksum-offset))
+           (checksum-end (+ start checksum-offset
+                            (field-length header-type 'checksum))))
+      (loop for i from start below end
+            sum (if (or (< i checksum-start) (<= checksum-end i))
+                    (funcall transform-fun (aref block i))
+                    +ascii-space+))))
 
-(defun compute-checksum-for-tar-header (header-type block start)
-  (tar-checksum-guts header-type block start #'identity))
+  (defun compute-checksum-for-tar-header (header-type block start)
+    (tar-checksum-guts header-type block start #'identity))
 
-(defun compute-old-checksum-for-tar-header (header-type block start)
-  (tar-checksum-guts header-type block start #'(lambda (b) (if (< b 128) b (- b 256)))))
+  (defun compute-old-checksum-for-tar-header (header-type block start)
+    (tar-checksum-guts header-type block start #'(lambda (b) (if (< b 128) b (- b 256)))))
 
-(defun tar-block-checksum-matches-p (header-type block checksum start)
-  (let ((sum (compute-checksum-for-tar-header header-type block start)))
-    (if (= sum checksum)
-        t
-        ;; try the older, signed arithmetic way
-        (let ((signed-sum (compute-old-checksum-for-tar-header header-type block start)))
-          (values (= signed-sum checksum) sum)))))
+  (defun tar-block-checksum-matches-p (header-type block checksum start)
+    (let ((sum (compute-checksum-for-tar-header header-type block start)))
+      (if (= sum checksum)
+          t
+          ;; try the older, signed arithmetic way
+          (let ((signed-sum (compute-old-checksum-for-tar-header header-type block start)))
+            (values (= signed-sum checksum) sum)))))
 
-(defun null-block-p (block start)
-  (declare (type (simple-array (unsigned-byte 8) (*)) block))
-  (null (position-if-not #'zerop block
-                         :start start :end (+ start *tar-block-bytes*))))
+  (defun null-block-p (block start)
+    (declare (type (simple-array (unsigned-byte 8) (*)) block))
+    (null (position-if-not #'zerop block
+                           :start start :end (+ start *tar-block-bytes*))))
 
-(defun extractor-function-name (entry-name field-name)
-  (intern (with-standard-io-syntax (format nil "~A-READ-~A-FROM-BUFFER" entry-name field-name))))
+  (defun extractor-function-name (entry-name field-name)
+    (intern (with-standard-io-syntax (format nil "~A-READ-~A-FROM-BUFFER" entry-name field-name))))
 
-(defun injector-function-name (entry-name field-name)
-  (intern (with-standard-io-syntax (format nil "~A-WRITE-~A-TO-BUFFER" entry-name field-name))))
+  (defun injector-function-name (entry-name field-name)
+    (intern (with-standard-io-syntax (format nil "~A-WRITE-~A-TO-BUFFER" entry-name field-name)))))
 
 (defgeneric field-offset (header field-name))
 
@@ -549,7 +550,7 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
           (if (and (= (aref (peeked-bytes peeking-stream) 0) #x1f)
                    (= (aref (peeked-bytes peeking-stream) 1) #x8b)
                    (= (aref (peeked-bytes peeking-stream) 2) #x08))
-              (values (io/flate:make-decompressing-stream :zstd peeking-stream) (list peeking-stream))
+              (values (make-decompressing-stream :zstd peeking-stream) (list peeking-stream))
               peeking-stream)))))
     ((nil)
      stream)))

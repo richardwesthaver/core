@@ -4,6 +4,8 @@
 (defclass id ()
   ((id :initarg :id :initform 0 :accessor id :type fixnum)))
 
+(defmethod id (self) (hash-object-address self))
+
 (defgeneric reset-id (obj)
   (:documentation "Reset the id slot of SELF to 0.")
   (:method ((obj standard-object)) (setf (id obj) 0))

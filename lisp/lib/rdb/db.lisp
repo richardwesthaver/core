@@ -5,6 +5,16 @@
 ;;; Code:
 (in-package :rdb)
 
+(defvar *rocksdb-backend-options* '(columns temp path (open t) 
+                                    destroy (close t) backup secondary 
+                                    snapshots sap ))
+(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store schema)))
+
+(set-database-backend :rocksdb *rocksdb-backend-options* 
+                      #'load-rocksdb)
+(set-database-backend :rdb *rdb-backend-options* 
+                      (lambda () (db::%load-database-backend :rocksdb)))
+
 (defmethod load-opts ((db rdb))
   (rocksdb::with-latest-options (rdb-name db) (db-opts cf-names cf-opts)
        (let ((cfs (coerce 

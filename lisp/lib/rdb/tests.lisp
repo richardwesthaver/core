@@ -6,13 +6,13 @@
 (defsuite :rdb)
 (in-suite :rdb)
 (setq rt:*compile-tests* nil)
-(rocksdb:load-rocksdb)
+(load-database-backend :rdb)
 (setq *temp-db-destroy* t)
 
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
-    (with-db (db (open-db-raw db-path))
+    (with-rdb (db (open-db-raw db-path))
       (put-kv-str-raw db "foo" "bar")
       (is (string= (get-kv-str-raw db "foo") "bar"))
       (close-db-raw db)
@@ -33,7 +33,7 @@
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
   (let ((path (merge-pathnames (symbol-name (gensym "rdb-raw")) "/tmp/")))
-    (with-open-db-raw (db path)
+    (with-open-rdb-raw (db path)
       (dotimes (i 1000)
         (let ((k (format nil "key~d" i))
               (v (format nil "val~d" i)))
@@ -58,11 +58,11 @@
 (deftest rdb ()
   "Test RDB struct and methods."
   ;; NOTE: passing a directory with trailing slash causes segfault - guess we gotta handle tht
-  (with-temp-db (db () :open t :destroy t)
+  (with-temp-rdb (db () :open t :destroy t)
     (info! (hash-table-alist (backfill-opts db :full t)))
     ;; get/set without cf
-    (put-kv-str-raw (rdb-db db) "key" "val")
-    (is (equal (get-kv-str-raw (rdb-db db) "key") "val"))
+    (put-kv-str-raw (sap db) "key" "val")
+    (is (equal (get-kv-str-raw (sap db) "key") "val"))
     ;; push 3 cfs
     (let ((cfs (list (make-rdb-cf "foo") (make-rdb-cf "bar") (make-rdb-cf "baz"))))
       (dolist (cf cfs)
@@ -77,14 +77,14 @@
         ;; (insert-kv db (make-kv "key" "val") :cf cf)
         ;; (is (equal (get-val db "key" :cf (rdb-cf-sap cf)) "val"))
         ))
-    (rocksdb-cancel-all-background-work (rdb-db db) t)
+    (rocksdb-cancel-all-background-work (sap db) t)
     ;; insert after background cancel
     (insert-key db "test" "zaa")
     (is (string= "zaa" (get-val db "test")))))
 
 (deftest temp-db ()
   "Test WITH-TEMP-DB macro."
-  (with-temp-db (tmp (cf1 cf2 cf3 cf4) :destroy t)
+  (with-temp-rdb (tmp (cf1 cf2 cf3 cf4) :destroy t)
     (set-db-opt tmp :parallelism (num-cpus))
     ;; https://github.com/facebook/rocksdb/wiki/unordered_write
     (set-db-opt tmp :unordered-write t)
@@ -121,7 +121,7 @@
 
 (deftest metadata ()
   "Test metadata types: CF -> LEVEL -> SST-FILE."
-  (with-temp-db (tmp () :open t :destroy t)
+  (with-temp-rdb (tmp () :open t :destroy t)
     (insert-key tmp "foo" "bar")
     (flush-db tmp)
     (let ((cf-meta (db-metadata tmp)))
@@ -133,7 +133,7 @@
 
 (deftest sst ()
   "Test SST-FILE-WRITER and INGEST-DB."
-  (with-temp-db (tmp () :open t :destroy t)
+  (with-temp-rdb (tmp () :open t :destroy t)
     ;; without macro
     (let ((writer (make-sst-file-writer))
           (path (namestring (merge-pathnames (format nil "/tmp/~A" (gensym "sst"))))))
@@ -153,7 +153,7 @@
 
 (deftest errors ()
   "Test basic error handling."
-  (with-temp-db (errs () :open t :destroy t)
+  (with-temp-rdb (errs () :open t :destroy t)
     (signals rdb-error (open-db errs))))
 
 (deftest schema ()
@@ -162,11 +162,21 @@
     (is (eql (rdb-cf-key-type cf) 'string))
     (is (eql (rdb-cf-val-type cf) 'string))
     (is (string= (rdb-cf-name cf) "foo"))
-    (with-temp-db (schema-no-cfs () :destroy t :open t)
+    (with-temp-rdb (schema-no-cfs () :destroy t :open t)
       (load-schema schema-no-cfs (make-simple-schema (make-field :type nil)))
       (is (= 1 (length (columns schema-no-cfs)))))
-    (with-temp-db (schema-cfs (baz) :open t :destroy t)
+    (with-temp-rdb (schema-cfs (baz) :open t :destroy t)
       (load-schema schema-cfs (make-simple-schema (make-field :name "BAZ" :type '(octet-vector . string))))
       (is (= 1 (length (columns schema-cfs))))
       (is (eql 'octet-vector (rdb-cf-key-type (aref (columns schema-cfs) 0))))
       (is (eql 'string (rdb-cf-val-type (aref (columns schema-cfs) 0)))))))
+
+(deftest merge-op ())
+
+(deftest prefix-key ()
+  "Test custom RocksDB prefix key")
+
+(deftest database ())
+
+
+(deftest store ())

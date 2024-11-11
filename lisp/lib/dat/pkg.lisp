@@ -253,7 +253,9 @@
 
 (defpackage :dat/tar
   (:nicknames :tar)
-  (:use :cl :std :dat/proto :io/proto :io/chunky :sb-ext :io/stream :std/stream :std/macs :std/ht)
+  (:use :cl :std :dat/proto 
+   :io/proto :io/chunky :sb-ext :io/stream
+   :std/stream :std/macs :std/ht :io/flate)
   (:export
    #:*tar-block-bytes*
    #:tar-error

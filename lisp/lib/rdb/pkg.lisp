@@ -8,7 +8,7 @@
 
 ;; Code:
 (defpackage :rdb
-  (:use :cl :std :rocksdb :sb-alien :db :query :schema :btree :store :stored)
+  (:use :cl :std :rocksdb :sb-alien :db :query :schema :btree :store :stored :log)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
@@ -24,7 +24,7 @@
    :handle-errptr
    ;; raw
    :make-rocksdb-options :default-rocksdb-options
-   :open-db-raw :with-open-db-raw
+   :open-db-raw
    :close-db-raw :destroy-db-raw
    :put-kv-raw :put-kv-str-raw
    :get-kv-raw :get-kv-str-raw
@@ -82,7 +82,7 @@
    :destroy-sst :sst-file-size
    ;; obj
    :rdb :make-rdb :create-db
-   :rdb-db :rdb-name :rdb-cfs :rdb-opts
+   :rdb-sap :rdb-name :rdb-cfs :rdb-opts
    :rdb-cf-metadata :make-rdb-cf-metadata
    :rdb-cf-metadata-name :rdb-cf-metadata-size
    :rdb-level-metadata :make-rdb-level-metadata
@@ -98,9 +98,9 @@
    :rdb-iter-sap
    ;; macs
    :with-errptr*
-   :with-db
+   :with-rdb
    :*temp-db-destroy*
-   :with-temp-db
+   :with-temp-rdb
    :do-db
    :with-cf
    :do-cf
@@ -117,7 +117,9 @@
    :rdb-cf-opts
    :with-latest-opts
    :make-rdb-opts*
-   :load-opts))
+   :load-opts
+   :with-open-rdb-raw
+   :rdb-logger))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

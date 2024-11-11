@@ -31,7 +31,13 @@
    #:add-class-store-schema
    #:dropped-instance-p
    #:drop-instance-slots
-   #:drop-instance))
+   #:drop-instance
+   #:store-recreate-instance
+   #:recreate-instance
+   #:recreate-instance-using-class
+   #:valid-stored-reference-p
+   #:cross-store-error
+   #:signal-cross-store-error))
 
 (in-package :obj/store)
 
@@ -218,6 +224,7 @@
    calls after the initial creation time"
   (apply #'recreate-instance (allocate-instance class) initargs))
 
+;; Class Redefinition
 (defmethod update-instance-for-redefined-class :around ((instance stored-object) added-slots discarded-slots property-list &rest initargs)
   (declare (ignore discarded-slots added-slots initargs))
   (let* ((st (get-store instance))
@@ -232,6 +239,31 @@
                                  (error "If the schemas mismatch, a derived store schema should have been computed"))))
           (assert (and current-schema prior-schema))
           (upgrade-db-instance instance current-schema prior-schema property-list)))))
+
+(defmethod change-class :before ((previous stored) (new-class standard-class) &rest initargs)
+  (declare (ignorable initargs))
+  (unless (subtypep (type-of new-class) 'stored-class)
+    (error "Stored instances cannot be changed to standard classes via change-class")))
+
+(defmethod update-instance-for-different-class :after ((previous stored-object) (current stored-object) 
+                                                        &rest initargs &key)
+  ;; Update db to new class configuration
+  ;; - handle indices, removals, associations and additions
+  (let* ((sc (get-store current))
+         (current-schema (lookup-schema sc (class-of current)))
+         (previous-schema (lookup-schema sc (class-of previous))))
+    (assert (eq sc (get-store previous)))
+    (change-db-instance current previous current-schema previous-schema)
+    ;; Deal with new persistent slot, cached and transient initialization
+    (let* ((diff-entries (schema-diff current-schema previous-schema))
+           (add-entries (remove-if-not (lambda (entry) (eq :add (diff-type entry))) diff-entries))
+           (add-names (when add-entries (mapcar #'field-name (mapcan #'diff-recs add-entries)))))
+      (apply #'shared-initialize current add-names initargs))))
+
+(defmethod change-class :before ((previous standard-object) (new-class stored-class) &rest initargs)
+  (declare (ignorable initargs)) 
+  (unless (subtypep (type-of previous) 'stored)
+    (error "Cannot convert standard objects to stored objects")))
 
 ;;; Store
 (defclass store () 

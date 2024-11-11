@@ -419,7 +419,7 @@
                            (setf cases
                                  (loop for case in cases
                                        if (stringp (car case))
-                                         collect (cons (babel:string-to-octets (car case))
+                                         collect (cons (string-to-octets (car case))
                                                        (cdr case))
                                        else
                                          collect case))
@@ -435,7 +435,7 @@
                              (setf cases
                                    (loop for case in cases
                                          if (stringp (car case))
-                                           collect (cons (babel:string-to-octets (car case))
+                                           collect (cons (string-to-octets (car case))
                                                          (cdr case))
                                          else
                                            collect case))
@@ -468,12 +468,12 @@
       (string `(with-string-parsing (,data :start ,start :end ,end) ,@body))
       (octet-vector `(macrolet ((get-elem (form) `(code-char ,form))
                           (subseq* (data start &optional end)
-                            `(babel:octets-to-string ,data :start ,start :end ,end)))
+                            `(octets-to-string ,data :start ,start :end ,end)))
                  (with-octets-parsing (,data :start ,start :end ,end) ,@body)))
       (otherwise (once-only (data)
                    `(etypecase ,data
                       (string (with-string-parsing (,data :start ,start :end ,end) ,@body))
                       (octet-vector (macrolet ((get-elem (form) `(code-char ,form))
                                          (subseq* (data start &optional end)
-                                           `(babel:octets-to-string ,data :start ,start :end ,end)))
+                                           `(octets-to-string ,data :start ,start :end ,end)))
                                 (with-octets-parsing (,data :start ,start :end ,end) ,@body)))))))))

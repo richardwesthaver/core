@@ -204,6 +204,20 @@ variant associated with this value." type name)
     (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
                  (* (signed 32))))))
 
+(defun read-fixnum64 (bs)
+  (declare (type (alien (* unsigned-char)) bs))
+  (if (< most-positive-fixnum +2^32+)
+      (let ((pos (the fixnum 0)))
+        ;; 32-bit or less fixnums; need to process as bignums64
+        (let ((first (read-int32 bs pos))
+              (second (read-int32 bs
+                                  (the fixnum (+ pos 4)))))
+          (if (little-endian-p)
+              (+ first (ash second 32))
+              (+ second (ash first 32))))))
+  ;; Native 64-bit fixnums (NOTE: issues with non 32/64 bit fixnums?)
+  (read-int64 bs))
+
 (defun read-int64 (buf &optional (offset 0))
   "Read a 64-bit signed integer from a foreign char buffer."
   (declare (type (alien (* unsigned-char)) buf)
@@ -377,6 +391,31 @@ Each var can be of the form:
           (tv-sec (signed 64))
           (tv-nsec (signed 64))))
 
+;;; Linux
+;; based on functions from Shinmera's CL-SPIDEV
+(defun ioctl (fd cmd)
+  (sb-alien:with-alien ((result sb-alien:int))
+    (multiple-value-bind (wonp error)
+        (sb-unix:unix-ioctl fd
+                            (if (< cmd (expt 2 31)) cmd (- cmd (expt 2 32)))
+                            (sb-alien:alien-sap (sb-alien:addr result)))
+      (unless wonp
+        (error "IOCTL ~a failed: ~a" cmd (sb-impl::strerror error))))
+    result))
+
+(defun (setf ioctl) (arg fd cmd)
+  (sb-alien:with-alien ((value sb-alien:int))
+    (setf value arg)
+    (multiple-value-bind (wonp error)
+        (sb-unix:unix-ioctl fd 
+                            (if (< cmd (expt 2 31)) cmd (- cmd (expt 2 32)))
+                            (sb-alien:alien-sap (sb-alien:addr value)))
+      (unless wonp
+        (error "IOCTL ~a failed: ~a" cmd (sb-impl::strerror error))))
+    arg))
+
+(defmacro define-ioctl (name fd cmd))
+
 ;;; CLOS
 (defgeneric sap (self)
   (:documentation "Return a system-area-pointer to the alien bound to object SELF or nil if no
@@ -385,6 +424,8 @@ such alien exists.")
   (:method ((self sb-sys:system-area-pointer)) self)
   (:method ((self integer)) (sb-alien::int-sap self))
   (:method ((self sb-alien-internals:alien-value)) (alien-sap self)))
+
+(defgeneric (setf sap) (new self))
 
 (defgeneric push-sap (self key)
   (:documentation "Push a value associated with KEY to the sap associated

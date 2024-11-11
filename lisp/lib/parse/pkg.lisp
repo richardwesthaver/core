@@ -1,8 +1,12 @@
 (require :sb-cltl2)
 
+(defpackage :parse/proto
+  (:use :cl :std)
+  (:export :parse :parser-condition :parser-error :simple-parser-error))
+
 (defpackage :parse/lex
   (:nicknames :lex)
-  (:use :cl :cl-ppcre :std)
+  (:use :cl :cl-ppcre :std :parse/proto)
   (:export
    #:*string*
    #:*length*
@@ -29,7 +33,7 @@
    #:define-matcher))
 
 (defpackage :parse/yacc
-  (:use :cl :std)
+  (:use :cl :std :parse/proto)
   (:export :make-production :make-grammar :make-parser :parse-with-lexer
            :define-grammar :define-parser
            :yacc-compile-warning :conflict-warning :conflict-summary-warning
@@ -37,11 +41,12 @@
            :yacc-parse-error-value :yacc-parse-error-expected-terminals))
 
 (defpackage parse/bytes
-  (:use :cl :babel)
+  (:use :cl :parse/proto)
   (:import-from :sb-cltl2
    :variable-information)
   (:import-from :std :with-gensyms :once-only
    :ensure-cons :ignore-some-conditions :octet-vector :octet)
+  (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export :with-vector-parsing
            :with-string-parsing
            :with-octets-parsing
@@ -69,9 +74,10 @@
            :match-failed))
 
 (defpackage :parse/pratt
-  (:use :cl)
-  (:export :pratt-parser :parse :next-precedence :parse-prefix :parse-infix))
+  (:use :cl :parse/proto)
+  (:export :pratt-parser :next-precedence :parse-prefix :parse-infix))
 
+;; FIX 2024-11-09: name conflict ADVANCE bytes vs lex
 (uiop:define-package :parse
-    (:use :cl :std)
-  (:use-reexport :parse/lex :parse/yacc))
+  (:use :cl :std)
+  (:use-reexport :parse/proto :parse/lex :parse/yacc :parse/pratt))

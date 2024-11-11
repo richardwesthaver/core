@@ -1,9 +1,13 @@
+;;; uring/tests.lisp --- URING Alien Tests
 (defpackage :uring/tests 
   (:use :cl :rt :std :uring :sb-alien)
   (:import-from :obj/build :build :build-from))
+
 (in-package :uring/tests)
+
 (defsuite :uring)
 (in-suite :uring)
+
 (load-uring)
 
 (deftest sanity ()
@@ -50,4 +54,3 @@
 
 (deftest register ()
   (is (io-restriction-p (make-io-restriction))))
-

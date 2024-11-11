@@ -90,3 +90,21 @@
 
 (deftest stop-logger (:fx :logger)
   (stop *fx*))
+
+(defmethod db:make-db ((engine (eql :faux-log)) &key)
+  (make-array '(4 100)))
+
+(defclass faux-db-sink (db-sink) ())
+
+(defvar *faux-log* (make-instance 'database-logger :db (db:make-db :faux-log)))
+
+(defun faux-level (int)
+  (coerce
+   (loop for i below 100
+         collect (row-major-aref (db:db *faux-log*) (+ i int)))
+   'vector))
+
+(defmethod db:column ((self faux-db-sink) (col integer)) (faux-level (* 100 col)))
+
+(deftest database-logger ())
+

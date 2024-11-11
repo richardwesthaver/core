@@ -474,7 +474,21 @@
    :db-opt
    :columns
    :create-columns
-   :set-db-opt))
+   :set-db-opt
+   :with-temp-db
+   :with-db
+   :database-backend-designator
+   :add-database-loader
+   :*database-backend-table*
+   :load-database-backend
+   :*database-backend-options*
+   :*database-backend*
+   :add-database-options
+   :set-database-loaders
+   :add-database-backend-option
+   :set-database-backend-options
+   :set-database-backend
+   :column))
 
 (defpackage :obj/plan
   (:nicknames :plan)

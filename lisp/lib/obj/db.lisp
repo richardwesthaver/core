@@ -11,20 +11,129 @@
 
 ;;; Vars
 (defvar *db* nil)
-(declaim (sb-kernel:type-specifier *default-database-type* *default-database-collection-type*))
-(defparameter *default-database-type* 'vector)
-(defparameter *default-database-collection-type* 'list)
-(defparameter *default-database-version* '(0 1 0))
+(defvar *database-backend* nil)
+(defvar *default-database-collection-type* 'list)
+(defvar *default-database-version* '(0 1 0))
 (defvar *default-kv-size* 8)
+
+;;; Backends
+(defvar *database-backends* (make-hash-table)
+  "Hash Table where keys are a database backend designator and values
+are a list of functions which are responsible for doing all initialization
+such as loading shared libraries and setting variables.")
+
+(defvar *database-backend-options* (make-hash-table)
+  "Hash Table where keys are a database backend designator and values are a
+lambda-list which will be interpreted by PARSE-DATABASE-BACKEND-OPTIONS within
+the body of WITH-DB forms.")
+
+(defvar *database-backend-close-options* '(close destroy))
+
+(defun add-database-loader (backend thunk)
+  (let ((flist (gethash backend *database-backends*)))
+    (setf (gethash backend *database-backends*) (pushnew thunk flist :test 'equalp))))
+
+(defun add-database-backend-option (backend option)
+  (let ((olist (gethash backend *database-backend-options*)))
+    (setf (gethash backend *database-backend-options*) (pushnew option olist))))
+
+(defun set-database-backend (backend options &rest thunks)
+  (setf (gethash backend *database-backends*) thunks
+        (gethash backend *database-backend-options*) options))
+
+(declaim (inline %load-database-backend))
+(defun %load-database-backend (backend)
+  (dolist (th (gethash backend *database-backends*))
+    (funcall th)))
+
+(defun load-database-backend (backend)
+  "Load database BACKEND and set value of *DATABASE-BACKEND*."
+  (%load-database-backend backend)
+  (setq *database-backend* backend))
+  
+;; TODO 2024-11-10: should we handle &rest/&optional too?
+(defun parse-database-backend-options (initargs &optional (db-var '*db*))
+  "Parse INITARGS as a plist of database options for current *DATABASE-BACKEND*."
+  ;; The first element if not a keyword, is bound to the *DB* variable.
+  (when (not (keywordp (car initargs)))
+    (set db-var (pop initargs)))
+  (mapcar
+   (lambda (opt)
+     (let ((key (keywordicate (if (atom opt) opt (car opt)))))
+       (if (member key initargs)
+           (let ((match (getf initargs key)))
+             (if (atom opt) (list opt match) (list (car opt) match)))
+           opt)))
+   (gethash *database-backend* *database-backend-options*)))
+
+(defgeneric set-database-backend-option (db key val)
+  (:method (db (key (eql :open)) val)
+    (when val
+      (open-db db)))
+  (:method (db (key (eql :close)) val)
+    (when val
+      (close-db db)))
+  (:method (db (key (eql :destroy)) val)
+    (when val
+      (destroy-db db)))
+  (:method (db (key (eql :path)) val)
+    (setf (path db) val))
+  (:method (db (key (eql :name)) val)
+    (setf (name db) val))
+  (:method (db (key (eql :id)) val)
+    (setf (id db) val))
+  (:method (db (key (eql :sap)) val)
+    (setf (sap db) val))
+  (:method (db (key (eql :opts)) val)
+    (setf (db-opts db) val))
+  (:method (db (key (eql :opt)) (val cons))
+    (set-db-opt db (car val) (cdr val)))
+  (:method (db (key (eql :shutdown)) val)
+    (shutdown-db db :wait (eql val :wait))))
+
+(defun apply-database-backend-options (db &rest options)
+  (mapc (lambda (opt) 
+          (set-database-backend-option
+           db
+           (symbolicate (car opt))
+           (cdr opt)))
+        options))
+
+(defun apply-database-backend-init-options (db &rest options)
+  (apply 'set-database-backend-options 
+         db
+         (remove-if 
+          (lambda (x) 
+            (or (null (cdr x)) 
+                (member (car x) *database-backend-close-options*)))
+          options)))
+
+(defun apply-database-backend-close-options (db &rest options)
+  (apply 'set-database-backend-options 
+         db
+         (remove-if 
+          (lambda (x) 
+            (or (null (cdr x))
+                (not (member (car x) *database-backend-close-options*))))
+          options)))
+
+(defmacro with-db ((var &rest initargs) &body body)
+  "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
+  of BODY."
+  (let ((opts (parse-database-backend-options initargs '*db*)))
+    `(let ((,var *db*))
+       (apply 'apply-database-backend-init-options ,var ',opts)
+       ,@body
+       (apply 'apply-database-backend-close-options ,var ',opts))))
+
 ;;; Conditions
 (define-condition db-condition () ())
 
 (deferror not-a-database (db-condition invalid-argument) ()
   (:default-initargs
-   :reason "Object is not a database"))
+   :reason "Object is not a database")
+  (:auto t))
 
-(defun not-a-database (item) (error 'not-a-database :item item))
-  
 ;;; Database
 (defgeneric db (self)
   (:documentation "Return the Database associated with SELF."))
@@ -208,6 +317,10 @@ hints.")
   (:documentation "Return TYPE property of given database."))
 (defgeneric db-opt (self key)
   (:documentation "Return value of database option KEY."))
+(defgeneric db-opts (self)
+  (:documentation "Accessor for database options of SELF."))
+(defgeneric (setf db-opts) (new self)
+  (:documentation "Return value of database option KEY."))
 (defgeneric (setf db-opt) (new self key &key &allow-other-keys)
   (:documentation "Set the value of database option KEY."))
 (defgeneric set-db-opt (self key val &key &allow-other-keys)
@@ -228,11 +341,13 @@ hints.")
   (:documentation "Shutdown database SELF."))
 (defgeneric ingest-into-db (self file &key)
   (:documentation "Ingest an external file into the database"))
+
 ;; Merge Ops
 (defgeneric merge-key (self key val &key)
   (:documentation "Perform a merge operation on SELF using KEY and VAL."))
 (defgeneric merge-kv (self kv &key)
   (:documentation "Perform a merge operation on SELF using object KV."))
+
 ;; Columns (column families)
 (defgeneric open-columns (self &rest names)
   (:documentation "Open the columns indicated by NAMES or all columns belonging
@@ -252,6 +367,8 @@ column is already closed."))
   (:documentation "Add a column to SELF."))
 (defgeneric columns (self)
   (:documentation "Return the columns of SELF."))
+(defgeneric column (self col))
+(defgeneric (setf column) (new self col))
 
 (defstruct (kv (:constructor make-kv (&optional key val))) 
   (key (make-octets *default-kv-size*) :type octet-vector) 

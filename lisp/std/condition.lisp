@@ -3,21 +3,21 @@
 ;;; Code:
 (in-package :std/condition)
 
-(defvar *std-error-message* "An error occured")
+(defvar *error-message* "An error occured")
 
 (define-condition std-error (error)
   ((message :initarg :message
-            :initform *std-error-message*
-            :reader std-error-message))
+            :initform *error-message*
+            :reader error-message))
   (:documentation "Standard Error")
   (:report (lambda (condition stream)
-             (format stream "~A" (std-error-message condition)))))
+             (format stream "~A" (error-message condition)))))
 
 (defun std-error (&rest args)
   (cerror
    "Ignore and continue"
    'std-error
-   :message (format nil "~A: ~A" *std-error-message* args)))
+   :message (format nil "~A: ~A" *error-message* args)))
 
 (define-condition std-warning (warning)
   ((message :initarg :message
@@ -38,7 +38,9 @@
 (defmacro deferror (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an error condition."
   (let ((fun (member :auto options :test #'car-eql)))
-    (when fun (setq options (remove (car fun) options)))
+    (when fun 
+      (setq options (remove (car fun) options))
+      (setq fun (cadar fun)))
     `(prog1
          (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
        (when ',fun
@@ -50,16 +52,17 @@
              (member 'invalid-item ',parent-types)
              (member 'invalid-argument ',parent-types))
             (def-invalid-item-reporter ,name))
-           (t
-            (def-error-reporter ,name)))))))
+           ((stringp ',fun)
+            (def-error-reporter ,name ',fun))
+           (t (def-error-reporter ,name)))))))
 
-(defmacro def-error-reporter (err)
+(defmacro def-error-reporter (err &optional (message *error-message*))
     `(defun ,err (&rest args)
        ,(format nil "Signal an error of type ~A with ARGS." err)
        (cerror
         "Ignore and continue"
         ',err
-        :message (format nil "~A: ~A" ,*std-error-message* args))))
+        :message (format nil "~A: ~A" ,message args))))
 
 (defmacro def-simple-error-reporter (name)
   `(progn
@@ -161,7 +164,7 @@ a default value for required keyword arguments."
   ((items
     :initarg :items
     :initform (error "Must specify items")
-    :reader circular-dependency-items))
+    :reader error-items))
   (:report (lambda (condition stream)
              (declare (ignore condition))
              (format stream "Circular dependency detected")))
@@ -178,8 +181,8 @@ a default value for required keyword arguments."
     :reader unknown-argument-kind))
   (:report (lambda (condition stream)
              (format stream "Unknown argument ~A of kind ~A"
-                     (unknown-argument-name condition)
-                     (unknown-argument-kind condition))))
+                     (error-name condition)
+                     (error-kind condition))))
   (:documentation "A condition which is signalled when an unknown argument is encountered."))
 
 (defun unknown-argument-p (value)
@@ -189,7 +192,7 @@ a default value for required keyword arguments."
   ((item
     :initarg :item
     :initform (error "Must specify argument item")
-    :reader missing-argument-item))
+    :reader error-item))
    (:report (lambda (condition stream)
               (declare (ignore condition))
               (format stream "Missing argument")))

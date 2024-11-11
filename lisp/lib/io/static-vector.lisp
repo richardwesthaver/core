@@ -213,6 +213,7 @@ of the array's :ELEMENT-TYPE ~S"
 but requested vector length is ~A."
              initial-contents-length length))))
 
+missing-argument
 (declaim (inline check-initialization-arguments))
 (defun check-initialization-arguments (initial-element-p initial-contents-p)
   (when (and initial-element-p initial-contents-p)

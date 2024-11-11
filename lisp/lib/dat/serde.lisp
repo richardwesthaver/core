@@ -6,21 +6,39 @@
 (in-package :dat/serde)
 (declaim  (optimize speed))
 
-(defun read-fixnum64 (bs)
-  (declare (type buffer-stream bs))
-  (let ((position (pos bs)))
-    (declare (type fixnum position))
-    (setf (pos bs) (the fixnum (+ position 8)))
-    (if (< #.most-positive-fixnum +2^32+)
-        ;; 32-bit or less fixnums; need to process as bignums64
-        (let ((first (read-int32 (buffer bs) position))
-              (second (read-int32 (buffer bs) 
-                                  (the fixnum (+ position 4)))))
-          (if (little-endian-p)
-              (+ first (ash second 32))
-              (+ second (ash first 32))))
-        ;; Native 64-bit fixnums (NOTE: issues with non 32/64 bit fixnums?)
-        (read-int64 (buffer bs) position))))
+(defgeneric struct-constructor (class)
+  (:documentation "Called to get the constructor name for a struct class.  Users
+                  should overload this when they want to serialize non-standard
+                  constructor names.  The default constructor make-xxx will work by 
+                  default.  The argument is an eql style type: i.e. of type (eql 'my-struct)"))
+
+(defmethod struct-constructor ((class t))
+  (symbol-function (intern (concatenate 'string "MAKE-" (symbol-name class))
+                           (symbol-package class))))
+
+(defvar *no-deserialization-package-found-action* :warn)
+
+(defun translate-and-intern-symbol (symbol-name package-name)
+  "Service for the serializer to translate any renamed packages or symbols
+   and then intern the decoded symbol."
+  (if package-name
+        (let ((package (find-package package-name)))
+          (if package
+              (intern symbol-name package)
+              (progn
+                (case *no-deserialization-package-found-action*
+                  (:warn 
+                   (warn "Couldn't deserialize package ~A based on symbol ~A's home package ~A.
+                         Creating an uninterned symbol" #1=package-name symbol-name #1#))
+                  (:error
+                   (error "Couldn't deserialize package ~A based on symbol ~A's home package ~A."
+                          #2=package-name symbol-name #2#))
+                  (:create
+                   (intern symbol-name 
+                           (make-package package-name :use '(cl))))
+                  (t nil))
+                (make-symbol symbol-name))))
+        (make-symbol symbol-name)))
 
 (defvar *buffer-streams* (make-array 0 :adjustable t :fill-pointer t)
   "Vector of buffer-streams, which you can grab / return.")
@@ -28,7 +46,8 @@
 (defvar *buffer-streams-lock* (make-mutex :name "buffer-streams"))
 
 (defclass buffer-stream (wrapped-stream)
-  ((buffer :initform (make-static-vector 10) :initarg :buffer :type alien-or-lisp-octets :accessor buffer)
+  ((buffer :initform (make-static-vector 10) :initarg :buffer 
+           :type alien-or-lisp-octets :accessor buffer)
    (size :initform 0 :type fixnum :initarg :size :accessor size)
    (pos :initform 0 :type fixnum :initarg :pos :accessor pos)
    (len :initform 10 :type fixnum :initarg :len :accessor len))
@@ -37,8 +56,8 @@ buffers."))
 
 (defmethod stream-file-position ((stream buffer-stream) &optional spec)
   (if spec
-      (setf (len stream) spec)
-      (len stream)))
+      (setf (pos stream) spec)
+      (pos stream)))
 
 (defun grab-buffer-stream ()
   "Grab a buffer-stream from the *buffer-streams* resource pool."
@@ -70,18 +89,18 @@ stream to the pool on exit."
            (fixnum length))
   (with-slots (buffer size len) bs
     (declare (type fixnum size len)
-             (type (alien (* unsigned-char)) buffer))
+             (type vector buffer))
     (when (> length len)
       (let ((newlen (max length (* len 2))))
         (declare (type fixnum newlen))
         ;; FIXME: async unwinds between alloc of newbuf and free of buf
         ;; will leave us with a memory leak of size NEWLEN.
-        (let ((newbuf (make-alien unsigned-char newlen)))
+        (let ((newbuf (make-static-vector newlen)))
           ;; technically we just need to copy from position to size.....
-          (when (null-alien newbuf)
+          (when (null (static-vector-pointer newbuf))
             (error "Failed to allocate buffer stream of length ~A.  allocate-foreign-object returned a null pointer" newlen))
-          (std/alien:memcpy newbuf buffer size)
-          (free-alien buffer)
+          (replace-foreign-memory newbuf buffer size)
+          (free-static-vector buffer)
           (setf buffer newbuf)
           (setf len newlen)
           nil)))))
@@ -92,16 +111,16 @@ stream to the pool on exit."
            (fixnum length))
   (with-slots (buffer size len) bs
     (declare (fixnum size len)
-             ((alien (* unsigned-char)) buffer))
+             (vector buffer))
     (when (> length len)
       (let ((newlen (max length (* len 2))))
         (declare (type fixnum newlen))
         ;; FIXME: async unwinds between alloc of newbuf and free of buf
         ;; will leave us with a memory leak of size NEWLEN.
-        (let ((newbuf (make-alien unsigned-char newlen)))
-          (when (null-alien newbuf)
+        (let ((newbuf (make-static-vector newlen)))
+          (when (null (static-vector-pointer newbuf))
             (error "Failed to allocate buffer stream of length ~A.  allocate-foreign-object returned a null pointer" newlen))
-          (free-alien buffer)
+          (free-static-vector buffer)
           (setf buffer newbuf)
           (setf len newlen)
           nil)))))
@@ -146,7 +165,7 @@ stream to the pool on exit."
 (defconstant +complex+              22)
 ;;(defconstant +oid-pair+             23)
 
-;; Lispworks support
+;; Implementation-dependent types (see sr/compiler/generic/vm-type.lisp)
 (defconstant +short-float+          30)
 
 (defconstant +nil+                  #x3F)
@@ -397,16 +416,12 @@ stream to the pool on exit."
               (serialize-string frob bs))
              (stored
               ;; TODO
-              ;; (unless (valid-stored-reference-p frob sc)
-              ;;   (cross-reference-error frob sc))
+              (unless (valid-stored-reference-p frob sc)
+                (signal-cross-store-error frob sc))
               ;; (when (store-marking-p sc)
               ;;   (gc-mark-new-write frob))
               (write-byte +stored-ref+ bs)
               (write-oid (oid frob) bs))
-             #+lispworks
-             (short-float
-              (buffer-write-byte +short-float+ bs)
-              (buffer-write-float (coerce frob 'single-float) bs))
              (single-float
               (write-byte +single-float+ bs)
               (write-float frob bs))
@@ -558,8 +573,8 @@ stream to the pool on exit."
     (,+utf32-string+ . "UTF32le string")
     (,+symbol+ . "symbol")
     (,+pathname+ . "pathname")
-    (,+persistent+ . "stored object (old)")
-    (,+persistent-ref+ . "stored object reference (new)")
+    (,+stored+ . "stored object (old)")
+    (,+stored-ref+ . "stored object reference (new)")
     ;;    (,+oid-pair+ . "oid pair for associations")
     (,+cons+ . "cons cell")
     (,+hash-table+ . "hash table")
@@ -592,15 +607,7 @@ stream to the pool on exit."
 ;; Deserialization of Strings 
 ;; 
 
-(defparameter native-string-type
-  #+(and allegro ics) :utf16le
-  #+(and allegro (not ics)) :utf8
-  #+(and sbcl sb-unicode) :utf32le
-  #+(and sbcl (not sb-unicode)) :utf8
-  #+lispworks :utf16le
-  #+(and openmcl (not openmcl-unicode-strings)) :utf8
-  #+openmcl-unicode-strings :utf32le
-  )
+(defparameter *native-string-type* :utf32le)
 
 (defun compatible-unicode-support-p (encoding-type)
   "This is a crude hack and can be improved later, but
@@ -610,46 +617,17 @@ stream to the pool on exit."
    use conjugate pair coding and variable length unicode
    string representations (formal utf-16)"
   (or (eq encoding-type :utf8) 
-      (eq encoding-type native-string-type)
-      (and (eq encoding-type :utf16le) (eq native-string-type :utf32le))))
+      (eq encoding-type *native-string-type*)
+      (and (eq encoding-type :utf16le) (eq *native-string-type* :utf32le))))
 
 (defgeneric deserialize-string (type bstream &optional temp-string))
 
-
-#+lispworks 
-(defmethod deserialize-string :around ((type t) bstream &optional temp-string)
-  (coerce (call-next-method) 'lispworks:simple-text-string))
-
-;; #+allegro
-;; (defmethod deserialize-string ((type (eql :utf8)) bstream &optional temp-string)
-;;   (declare (type buffer-stream bstream)
-;; 	   (type string temp-string)
-;; 	   (type symbol type))
-;;   (let ((buffer buffer-stream-buffer)
-;; 					(size buffer-stream-size)
-;; 					(allocated buffer-stream-length))
-;;       bstream
-;;     (declare (type array-or-pointer-char buffer)
-;; 	     (type fixnum size allocated))
-;;     (let* ((length (the fixnum (read-int32 bstream)))
-;; 	   (pos (the fixnum (file-position bstream))))
-;;       (multiple-value-bind (string chars octets)
-;; 	  (if temp-string
-;; 	      (excl:native-to-string (+ buffer pos)
-;; 				     :string temp-string :make-string? nil
-;; 				     :length length)
-;; 	      (excl:native-to-string (+ buffer pos) :length length))
-;; 	(declare (ignorable chars))
-;; 	(file-position bstream octets)
-;; 	string))))
-
-;; #-allegro
 (defmethod deserialize-string ((type (eql :utf8)) bstream &optional temp-string)
   (declare (type buffer-stream bstream)
            (type (or null string) temp-string)
            (type symbol type))
   ;; Default char-code method
-  (let* ((length (the fixnum (read-int32 bstream)))
+  (let* ((length (the fixnum (read-int32 (sap-alien (static-vector-pointer (buffer bstream)) (* unsigned-char)))))
          (pos (the fixnum (file-position bstream))))
     (file-position bstream length)
     (progn
@@ -670,7 +648,7 @@ stream to the pool on exit."
          (pos (file-position bstream))
          (code 0))
     (macrolet ((next-byte (offset)
-                 `(aref (buffer-stream-buffer bstream) (+ (* i 2) pos ,offset))))
+                 `(aref (buffer bstream) (+ (* i 2) pos ,offset))))
       (declare (type simple-string string)
                (type fixnum length pos code))
       (assert (subtypep (type-of string) 'simple-string))
@@ -685,7 +663,7 @@ stream to the pool on exit."
 (defmethod deserialize-string ((type (eql :utf32le)) bstream  &optional temp-string)
   (declare (type buffer-stream bstream))
   (macrolet ((next-byte (offset)
-               `(aref (buffer-stream-buffer bstream) (+ (* i 4) pos ,offset))))
+               `(aref (buffer bstream) (+ (* i 4) pos ,offset))))
     (let* ((length (read-int32 bstream))
            (string (or temp-string (make-string length :element-type 'character)))
            (pos (file-position bstream))
@@ -728,24 +706,15 @@ stream to the pool on exit."
                         (read-fixnum64 bs))
                        ((= tag +nil+) nil)
                        ((= tag +utf8-string+)
-                        #+lispworks
-                        (coerce (deserialize-string :utf8 bs) 'base-string)
-
                         (deserialize-string :utf8 bs))
                        ((= tag +utf16-string+)
-                        #+lispworks
-                        (coerce (deserialize-string :utf16le bs) 'lw:text-string)
-                        #-lispworks
                         (deserialize-string :utf16le bs))
                        ((= tag +utf32-string+)
-                        #+lispworks
-                        (coerce (deserialize-string :utf32le bs) 'sys:augmented-string)
-                        #-lispworks
                         (deserialize-string :utf32le bs))
                        ((= tag +symbol+)
                         (let ((name (%deserialize bs))
                               (package (%deserialize bs)))
-                          (translate-and-intern-symbol sc name package)))
+                          (translate-and-intern-symbol name package)))
                        ((= tag +stored+)
                         (let ((oid (read-oid bs))
                               (cname (%deserialize bs)))
@@ -755,9 +724,6 @@ stream to the pool on exit."
                         (let ((oid (read-oid bs)))
                           (if oid-only oid
                               (store-recreate-instance sc oid))))
-                       #+lispworks
-                       ((= tag +short-float+)
-                        (coerce (read-float bs) 'short-float))
                        ((= tag +single-float+)
                         (read-float bs))
                        ((= tag +double-float+)
@@ -898,11 +864,8 @@ stream to the pool on exit."
     (declare (dynamic-extent int-byte-spec)
              (ignorable int-byte-spec))
     (loop for i from 0 below (/ length 4)
-          for byte-spec = 
-          ;;	 #+(or allegro) (progn (setf (cdr int-byte-spec) (* 32 i)) int-byte-spec)
-             #+(or allegro sbcl cmu lispworks openmcl) (byte 32 (* 32 i))
+          for byte-spec = (byte 32 (* 32 i))
           with num of-type integer = 0 
-          do
-             (setq num (dpb (read-uint32 bs) byte-spec num))
-          finally 
-             (return (if positive num (- num))))))
+          do (setq num (dpb (read-uint32 bs) byte-spec num))
+          finally (return (if positive num (- num))))))
+             

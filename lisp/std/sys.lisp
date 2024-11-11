@@ -238,4 +238,8 @@ Intel Core i7 4770K, do **NOT** support RTM."
   #+(or :x86 :x86-64 :LITTLE-ENDIAN) t
   #+(or :PPC :POWERPC :BIG-ENDIAN) nil
   #-(or :x86 :x86-64 :LITTLE-ENDIAN :PPC :POWERPC :BIG-ENDIAN)
-    (if (eq %little-endian 1) t nil))
+  %little-endian)
+
+(defun 64-bit-p () #+x86-64 t)
+(defun 32-bit-p () #+x86 t)
+  

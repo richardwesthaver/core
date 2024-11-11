@@ -36,7 +36,7 @@
     (input-buffer (input-buffer-pos buffer))
     (output-buffer (output-buffer-len buffer))))
 
-;; Sometimes it is usefull just to skip the buffer instead of reading from it.
+;; Sometimes it is useful just to skip the buffer instead of reading from it.
 (defun (setf buffer-position) (new-pos buffer)
   "Set the buffer position for input-buffer"
   (check-type buffer input-buffer)

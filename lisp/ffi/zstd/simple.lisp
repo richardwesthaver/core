@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :zstd)
 
-(deferror zstd-alien-simple-error (zstd-alien-error std-error) () (:auto t))
+(std:deferror zstd-alien-simple-error (zstd-alien-error std-error) () (:auto t))
 
 (define-alien-routine "ZSTD_compress" size-t
   (dst (* t))
