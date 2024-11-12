@@ -5,6 +5,7 @@
   :depends-on (:std :obj :parse :tree-sitter :doc :cli)
   :serial t
   :components ((:file "pkg")
+               (:file "lint")
                (:module "gen"
                 :components
                 ((:file "pkg")

@@ -9,6 +9,10 @@
   (:use :cl :std :obj :parse :tree-sitter)
   (:export))
 
+(defpackage :syn/lint
+  (:use :cl :std :syn)
+  (:export :lint))
+
 (in-package :syn)
 
 (defvar *syntax-tree*)
