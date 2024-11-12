@@ -56,7 +56,7 @@ the body of WITH-DB forms.")
   "Parse INITARGS as a plist of database options for current *DATABASE-BACKEND*."
   ;; The first element if not a keyword, is bound to the *DB* variable.
   (when (not (keywordp (car initargs)))
-    (set db-var (pop initargs)))
+    (setf (symbol-value db-var) (eval (pop initargs))))
   (mapcar
    (lambda (opt)
      (let ((key (keywordicate (if (atom opt) opt (car opt)))))
@@ -91,29 +91,31 @@ the body of WITH-DB forms.")
   (:method (db (key (eql :shutdown)) val)
     (shutdown-db db :wait (eql val :wait))))
 
-(defun apply-database-backend-options (db &rest options)
-  (mapc (lambda (opt) 
-          (set-database-backend-option
-           db
-           (symbolicate (car opt))
-           (cdr opt)))
+(defun set-database-backend-options (db &rest options)
+  (mapc (lambda (opt)
+            (set-database-backend-option
+             db
+             (keywordicate (car opt))
+             (cdr opt)))
         options))
 
-(defun apply-database-backend-init-options (db &rest options)
-  (apply 'set-database-backend-options 
+(defun do-database-backend-init-options (db &rest options)
+  (apply 'set-database-backend-options
          db
-         (remove-if 
+         (remove-if
           (lambda (x) 
-            (or (null (cdr x)) 
+            (or (atom x)
+                (null (cdr x))
                 (member (car x) *database-backend-close-options*)))
           options)))
 
-(defun apply-database-backend-close-options (db &rest options)
-  (apply 'set-database-backend-options 
+(defun do-database-backend-close-options (db &rest options)
+  (apply 'set-database-backend-options
          db
-         (remove-if 
-          (lambda (x) 
-            (or (null (cdr x))
+         (remove-if
+          (lambda (x)
+            (or (atom x)
+                (null (cdr x))
                 (not (member (car x) *database-backend-close-options*))))
           options)))
 
@@ -122,9 +124,10 @@ the body of WITH-DB forms.")
   of BODY."
   (let ((opts (parse-database-backend-options initargs '*db*)))
     `(let ((,var *db*))
-       (apply 'apply-database-backend-init-options ,var ',opts)
-       ,@body
-       (apply 'apply-database-backend-close-options ,var ',opts))))
+       (prog2
+           (apply 'do-database-backend-init-options ,var ',opts)
+           ,@body
+         (apply 'do-database-backend-close-options ,var ',opts)))))
 
 ;;; Conditions
 (define-condition db-condition () ())

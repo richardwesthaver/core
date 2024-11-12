@@ -28,7 +28,9 @@
    :sxp :ast :stored :store 
    :id :io/stream :io/proto :io/static-vector 
    :typed :meta :sb-alien :sb-gray)
-  (:export))
+  (:export :ser :deser :with-buffer-stream 
+   :with-buffer-streams :grab-buffer-stream :buffer-stream :*buffer-streams*
+   :resize-buffer-stream))
 
 (defpackage :dat/dot
   (:use :cl :std :dat/proto :obj/graph)

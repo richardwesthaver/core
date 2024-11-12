@@ -487,6 +487,8 @@
    :set-database-loaders
    :add-database-backend-option
    :set-database-backend-options
+   :do-database-backend-init-options
+   :do-database-backend-close-options
    :set-database-backend
    :column))
 

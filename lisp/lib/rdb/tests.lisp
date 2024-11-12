@@ -141,9 +141,9 @@
       (dotimes (i 10000)
         (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
       (finish-sst writer) ;; will fail on empty writer
-      (destroy-sst writer)              ; TODO 2024-05-08: investigate -
-                                        ; doesn't seem to actually delete the
-                                        ; file, just the writer?
+      ;; TODO 2024-05-08: investigate - doesn't seem to actually delete the
+      ;; file, just the writer?
+      (destroy-sst writer)
       (ingest-db tmp (list path))
       (delete-file path)
       ;; with macro
@@ -171,6 +171,14 @@
       (is (eql 'octet-vector (rdb-cf-key-type (aref (columns schema-cfs) 0))))
       (is (eql 'string (rdb-cf-val-type (aref (columns schema-cfs) 0)))))))
 
+(deftest transaction ()
+  "Test OBJ/DB transactions."
+  (with-db (db (make-db :rdb :name "/tmp/rdb-transaction" :columns nil))
+    (flush-db db)
+    (describe (db db))
+    ;; (start-transaction db nil)
+    (ensure-transaction ())))
+
 (deftest merge-op ())
 
 (deftest prefix-key ()
@@ -178,5 +186,6 @@
 
 (deftest database ())
 
-
 (deftest store ())
+
+(deftest logger ())

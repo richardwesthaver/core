@@ -172,7 +172,6 @@ set *errptr to a malloc()ed error message.
    :rocksdb-transaction-begin
    :rocksdb-transactiondb-release-snapshot
    :rocksdb-transactiondb-property-int
-   :rocksdb-transactiondb-get-close-db
    :rocksdb-transaction-set-savepoint
    :rocksdb-transaction-create-iterator
    :rocksdb-transactiondb-create-iterator
@@ -258,7 +257,6 @@ set *errptr to a malloc()ed error message.
    :rocksdb-compare-never-name
    :rocksdb-compare-never
    :rocksdb-compare-without-ts-function
-   :rocksdb-compare-with-ts-function
    :rocksdb-compare-function
    :rocksdb-create-compaction-filter
    :rocksdb-create-compaction-filter-function
@@ -400,7 +398,12 @@ set *errptr to a malloc()ed error message.
    :define-in-domain-function
    :define-transform-function
    :define-compaction-filter
-   :define-comparator-with-ts))
+   :define-comparator-with-ts
+   :with-latest-options
+   :rocksdb-compare-ts-function
+   :rocksdb-transactiondb-close-base-db
+   :rocksdb-transactiondb-get-prepared-transactions
+   :rocksdb-transactiondb-close))
 
 (in-package :rocksdb)
 

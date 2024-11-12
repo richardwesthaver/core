@@ -288,7 +288,7 @@ DB where K and V are both Lisp strings."
          (path (rocksdb-test-dir))
          db
          (key (random-bytes 8))
-         (val (make-array 9999 :initial-element 36))
+         (val (make-octets 9999 :initial-element 36))
          (klen (length key))
          (vlen (length val))
          (wopts (rocksdb-writeoptions-create))
@@ -337,11 +337,13 @@ DB where K and V are both Lisp strings."
       (is (null-alien errptr))
       (rocksdb-options-destroy opts))))
 
-(deftest transaction ()
-  "Test simple transactions using both TransactionDB and OptimisticTransactionDB."
-  (let* ((opts (test-opts))
+(deftest transactiondb ()
+  "Test simple transactions using TransactionDB."
+  (let* ((topts (rocksdb-transactiondb-options-create))
+         (txn-opts (rocksdb-transaction-options-create))
+         (opts (test-opts))
          (path (rocksdb-test-dir))
-         (db (rocksdb-open opts path nil))
+         (txn-db (rocksdb-transactiondb-open opts topts path nil))
          (key (genkey))
          (val (genval))
          (klen (length key))
@@ -350,18 +352,71 @@ DB where K and V are both Lisp strings."
          (ropts (rocksdb-readoptions-create)))
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
                  (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
-                 (errptr rocksdb-errptr nil))
+                 (errptr rocksdb-errptr)
+                 (txn-old (* rocksdb-transaction)))
       ;; copy KEY to K
       (setfa k key)
       ;; copy VAL to V
       (setfa v val)
-      ;; put K:V in DB - 
-      (rocksdb-writeoptions-destroy wopts)
-      (rocksdb-readoptions-destroy ropts)
-      (rocksdb-close db)
-      (rocksdb-destroy-db opts path errptr)
-      (rocksdb-options-destroy opts)
-      (is (null-alien errptr)))))
+      (let ((db (rocksdb-transactiondb-get-base-db txn-db)))
+        (istype '(alien (* rocksdb)) db)
+        (isnt (rocksdb-transactiondb-close-base-db db))
+        (let ((txn (rocksdb-transaction-begin txn-db wopts txn-opts txn-old))
+              (cnt (make-alien size-t)))
+          (setf (deref cnt) 1)
+          (istype '(alien (* rocksdb-transaction)) txn)
+          (with-errptr e
+            (rocksdb-transaction-set-name txn "foo" 3 e)
+            (rocksdb-transaction-prepare txn e)
+            (istype '(alien (* rocksdb-transaction))
+                    (deref (rocksdb-transactiondb-get-prepared-transactions txn-db cnt)))
+            (rocksdb-transaction-commit txn e)
+            ;; transaction already commited
+            (signals rocksdb-c-error
+              (with-errptr e1
+                (rocksdb-transaction-rollback txn e1))))
+          (let ((txn1 (rocksdb-transaction-begin txn-db wopts txn-opts nil)))
+            (with-errptr e
+              ;; (rocksdb-transaction-prepare txn1 e)
+              (isnt (rocksdb-transaction-rollback txn1 e)))
+            (rocksdb-transaction-destroy txn)
+            (rocksdb-transaction-destroy txn1)
+            (rocksdb-writeoptions-destroy wopts)
+            (rocksdb-readoptions-destroy ropts)
+            (rocksdb-transaction-options-destroy txn-opts)
+            (rocksdb-transactiondb-close txn-db)
+            (rocksdb-destroy-db opts path errptr)
+            (rocksdb-options-destroy opts)
+            (is (null-alien errptr))))))))
+
+(deftest optimistic-transactiondb ()
+  "Test transactions using OptimisticTransactionDB."
+  (let* ((key (genkey))
+         (val (genval))
+         (klen (length key))
+         (vlen (length val))
+         (wopts (rocksdb-writeoptions-create))
+         (ropts (rocksdb-readoptions-create))
+         (otxn-db (rocksdb-optimistictransactiondb-open (test-opts) (rocksdb-test-dir) nil)))
+    (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
+                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
+                 (errptr rocksdb-errptr)
+                 (txn-old (* rocksdb-transaction))
+                 (i size-t 3))
+      ;; copy KEY to K
+      (setfa k key)
+      ;; copy VAL to V
+      (setfa v val)
+      (let ((db (rocksdb-optimistictransactiondb-get-base-db otxn-db)))
+        (istype '(alien (* rocksdb)) db)
+        (isnt (rocksdb-optimistictransactiondb-close-base-db db)))
+      (let ((txn (rocksdb-optimistictransaction-begin otxn-db wopts (rocksdb-optimistictransaction-options-create) txn-old)))
+        (is txn)
+        (rocksdb-transaction-destroy txn)
+        (rocksdb-writeoptions-destroy wopts)
+        (rocksdb-readoptions-destroy ropts)
+        (rocksdb-optimistictransactiondb-close otxn-db)
+        (is (null-alien errptr))))))
 
 (deftest metadata ()
   "Test metadata functionality :: cf-meta -> level-meta -> sst-file-meta"
@@ -511,7 +566,7 @@ DB where K and V are both Lisp strings."
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
                (compare (* rocksdb-compare-function) (alien-sap (alien-callable-function 'rocksdb-compare-never)))
-               (compare-with-ts (* rocksdb-compare-with-ts-function))
+               (compare-with-ts (* rocksdb-compare-ts-function))
                (compare-without-ts (* rocksdb-compare-without-ts-function))
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-name))))
     (is (typep (rocksdb-comparator-create state destructor compare name)
@@ -548,7 +603,7 @@ DB where K and V are both Lisp strings."
   (with-opt (o (test-opts) nil)
     (with-temp-db db (o)
       )))
-    
+
 (deftest logger ()
   "Test logging functionality."
   (with-alien ((state (* t))

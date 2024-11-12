@@ -5,4 +5,6 @@
 ;;; Code:
 (in-package :rdb)
 
+(defclass rdb-sink (db-sink) ())
+
 (defclass rdb-logger (database-logger rdb-database) ())

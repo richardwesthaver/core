@@ -557,15 +557,16 @@
 (define-alien-routine rocksdb-transactiondb-get-base-db (* rocksdb)
   (txn-db (* rocksdb-transactiondb)))
 
-(define-alien-routine rocksdb-transactiondb-get-close-db void
+(define-alien-routine rocksdb-transactiondb-close-base-db void
   (base-db (* rocksdb)))
 
 (define-alien-routine rocksdb-transaction-begin (* rocksdb-transaction)
+  (txn-db (* rocksdb-transactiondb))
   (wopts (* rocksdb-writeoptions))
   (topts (* rocksdb-transaction-options))
   (told (* rocksdb-transaction)))
 
-(define-alien-routine rocksdb-transactiondb-get-prepared-transactions (array (* rocksdb-transaction))
+(define-alien-routine rocksdb-transactiondb-get-prepared-transactions (* (* rocksdb-transaction))
   (txn-db (* rocksdb-transactiondb))
   (cnt (* size-t)))
 

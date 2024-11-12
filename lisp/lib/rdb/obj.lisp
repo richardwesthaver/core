@@ -292,6 +292,7 @@ supplied by the user from the default value."
   (snapshots #() :type (array alien)))
 
 (defmethod sap ((self rdb)) (rdb-sap self))
+(defmethod (setf sap) (new (self rdb)) (setf (rdb-sap self) new))
 
 (defvar *default-rdb-opts* (default-rdb-opts))
 
@@ -302,6 +303,9 @@ supplied by the user from the default value."
 (defmethod name ((self rdb))
   (rdb-name self))
 
+(defmethod (setf name) (new (self rdb))
+  (setf (rdb-name self) new))
+
 (defmethod columns ((self rdb))
   (rdb-cfs self))
 
@@ -310,6 +314,9 @@ supplied by the user from the default value."
 
 (defmethod db-opts ((self rdb))
   (rdb-opts self))
+
+(defmethod (setf db-opts) (new (self rdb))
+  (setf (rdb-opts self) new))
 
 (defmethod db-open-p ((self rdb))
   (when (db self) t))
@@ -430,8 +437,8 @@ internal sap slots are initialized."
         do (close-column cf)))
 
 (defmacro unless-null-db (slots self &body body)
-  `(with-slots (db ,@slots) ,self
-     (unless (null db)
+  `(with-slots (sap ,@slots) ,self
+     (unless (null sap)
        ,@body)))
 
 (defmethod destroy-column ((cf rdb-cf))
@@ -452,14 +459,14 @@ internal sap slots are initialized."
     (push-sap* opts)))
 
 (defmethod open-db ((self rdb))
-  (with-slots (name db opts) self
-    (if db
+  (with-slots (name sap opts) self
+    (if sap
         (rdb-error "DB already opened - close before re-opening")
-        (setf db (open-db-raw name (rdb-opts-sap opts))))))
+        (setf sap (open-db-raw name (rdb-opts-sap opts))))))
 
 (defmethod db-prop ((self rdb) (propname string))
   (unless-null-db () self
-    (get-property-raw db propname)))
+    (get-property-raw sap propname)))
 
 (defmethod repair-db ((self rdb) &key)
   (repair-db-raw (rdb-name self)))
@@ -477,9 +484,9 @@ internal sap slots are initialized."
   (unless-null-db (opts backup) self
     (when (null backup)
       (if (null path)
-          (error 'open-backup-engine-error :db db)
+          (error 'open-backup-engine-error :db sap)
           (open-backup-db self :path path)))
-    (create-new-backup-raw backup db)))
+    (create-new-backup-raw backup sap)))
 
 (defmethod restore-db ((self rdb) (from string) &key id opts)
   (unless-null-db (name backup) self
@@ -489,7 +496,7 @@ internal sap slots are initialized."
 
 (defmethod snapshot-db ((self rdb))
   (unless-null-db (snapshots) self
-    (vector-push-extend (create-snapshot-raw db) snapshots)))
+    (vector-push-extend (create-snapshot-raw sap) snapshots)))
 
 (defmethod db-metadata ((self rdb) &optional cf)
   (make-rdb-cf-metadata :sap (get-metadata-raw (rdb-sap self) cf)))
@@ -505,8 +512,8 @@ internal sap slots are initialized."
                (alien cf))))
   (unless-null-db () self
     (make-rdb-iter :sap (if cf
-                            (create-cf-iter-raw db cf opts)
-                            (create-iter-raw db opts)))))
+                            (create-cf-iter-raw sap cf opts)
+                            (create-iter-raw sap opts)))))
 
 (defmethod print-stats ((self rdb) &optional stream)
   (print (rocksdb-options-statistics-get-string (rdb-opts-sap (rdb-opts self))) stream))
@@ -545,13 +552,13 @@ internal sap slots are initialized."
           do (setf cf (destroy-column cf)))))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
-  (with-slots (db cfs backup snapshots) self
+  (with-slots (sap cfs backup snapshots) self
     (close-backup-db self)
     (unless (zerop (length snapshots))
-      (loop for s across snapshots do (release-snapshot-raw db s)))
+      (loop for s across snapshots do (release-snapshot-raw sap s)))
     (destroy-columns self)
-    (unless (null db)
-      (setf db (close-db-raw db)))))
+    (unless (null sap)
+      (setf sap (close-db-raw sap)))))
 
 (defmethod destroy-db ((self rdb))
   ;; close all handles before destruction ensues
@@ -612,13 +619,13 @@ internal sap slots are initialized."
       (put-kv self kv)))
 
 (defmethod get-val ((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
-  (with-slots (db) self
+  (with-slots (sap) self
     (if cf
-        (get-cf-str-raw db (rdb-cf-sap (find-column cf self)) key opts)
-        (get-kv-str-raw db key opts))))
+        (get-cf-str-raw sap (rdb-cf-sap (find-column cf self)) key opts)
+        (get-kv-str-raw sap key opts))))
 
 (defmethod get-val ((self rdb) key &key (opts (rocksdb-readoptions-create)) cf)
-  (with-slots (db) self
+  (with-slots (sap) self
     (if cf
-        (get-cf-raw db (rdb-cf-sap (find-column cf self)) key opts)
-        (get-kv-raw db key opts))))
+        (get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts)
+        (get-kv-raw sap key opts))))

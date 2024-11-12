@@ -58,10 +58,12 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
   (eval-when (:compile-toplevel :load-toplevel :execute)
     `(define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))))
 
-(defun setfa (place from) 
-  (loop for x across from
-	for i from 0 below (length from)
-	do (setf (deref place i) x)))
+(defun setfa (place from)
+  (declare (octet-vector from))
+  (loop for i below (length from)
+        for x across from
+	do (setf (deref place i)
+                 x)))
 
 (defun copy-c-string (src dest &aux (index 0))
   (declare (type sb-int:index index))
@@ -98,7 +100,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 (defun clone-octets-to-alien (lispa alien)
   (declare (optimize (speed 3))
            (vector lispa))
-  ;; (setf aliena (cast aliena (array (unsigned 8))))
+  ;; (setf alien (cast alien (array (unsigned 8))))
   (loop for i from 0 below (length lispa)
         do (setf (deref alien i)
                  (aref lispa i)))
@@ -206,7 +208,7 @@ variant associated with this value." type name)
 
 (defun read-fixnum64 (bs)
   (declare (type (alien (* unsigned-char)) bs))
-  (if (< most-positive-fixnum +2^32+)
+  (if (32-bit-p)
       (let ((pos (the fixnum 0)))
         ;; 32-bit or less fixnums; need to process as bignums64
         (let ((first (read-int32 bs pos))
@@ -386,7 +388,7 @@ Each var can be of the form:
           (tv-sec (signed 64))
           (tv-usec (signed 64))))
 
-(define-alien-type timeval
+(define-alien-type timespec
   (struct timespec
           (tv-sec (signed 64))
           (tv-nsec (signed 64))))

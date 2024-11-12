@@ -19,7 +19,7 @@
   
 (defmethod db-get ((db package-database) (key simple-string) &key &allow-other-keys)
   ;; lol
-    (with-db (db (db db))
+    (with-db (db (db:db db))
       (get-kv-str-raw db key)))
 
 (defmethod close-db ((db package-database) &key &allow-other-keys)

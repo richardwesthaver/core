@@ -8,7 +8,10 @@
 
 ;; Code:
 (defpackage :rdb
-  (:use :cl :std :rocksdb :sb-alien :db :query :schema :btree :store :stored :log)
+  (:use :cl :std :rocksdb 
+   :sb-alien :db :query :schema 
+   :btree :store :stored :log 
+   :io/static-vector :dat/serde :dat/proto)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err

@@ -7,16 +7,17 @@
 
 (defvar *rocksdb-backend-options* '(columns temp path (open t) 
                                     destroy (close t) backup secondary 
-                                    snapshots sap ))
+                                    snapshots sap))
 (defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store schema)))
 
 (set-database-backend :rocksdb *rocksdb-backend-options* 
                       #'load-rocksdb)
+
 (set-database-backend :rdb *rdb-backend-options* 
                       (lambda () (db::%load-database-backend :rocksdb)))
 
 (defmethod load-opts ((db rdb))
-  (rocksdb::with-latest-options (rdb-name db) (db-opts cf-names cf-opts)
+  (with-latest-options (rdb-name db) (db-opts cf-names cf-opts)
        (let ((cfs (coerce 
                    (loop for name across cf-names
                          for opt across cf-opts
@@ -44,9 +45,57 @@
   (:default-initargs 
    :db (make-db :rocksdb)))
 
-(defmethod make-db ((engine (eql :rdb)) &rest initargs)
+(defmethod name ((self rdb-database))
+  (name (db self)))
+
+(defmethod (setf name) (new (self rdb-database))
+  (setf (name (db self)) new))
+
+(defmethod columns ((self rdb-database))
+  (columns (db self)))
+
+(defmethod (setf columns) (new (self rdb-database))
+  (setf (columns (db self)) new))
+
+(defmethod sap ((self rdb-database))
+  (sap (db self)))
+
+(defmethod (setf sap) (new (self rdb-database))
+  (setf (sap (db self)) new))
+
+(defmethod db-opts ((self rdb-database))
+  (db-opts (db self)))
+
+(defmethod (setf db-opts) (new (self rdb-database))
+  (setf (db-opts (db self)) new))
+
+(defmethod make-db ((engine (eql :rdb)) &rest initargs &key name columns opts sap)
   (declare (ignore engine))
-  (apply 'make-instance 'rdb-database initargs))
+  (remf initargs :name)
+  (remf initargs :columns)
+  (remf initargs :opts)
+  (let ((db (apply 'make-instance 'rdb-database initargs)))
+    (when name (setf (name db) name))
+    (when columns (setf (columns db) columns))
+    (when opts (setf (db-opts db) opts))
+    (when sap (setf (sap db) sap))
+    db))
+
+(defmethod open-db ((self rdb-database)) (open-db (db self)))
+
+(defmethod flush-db ((self rdb-database) &rest args &key) (apply 'flush-db (db self) args))
+
+(defmethod close-db ((self rdb-database) &key) (close-db (db self)))
+
+(defmethod destroy-db ((self rdb-database)) (destroy-db (db self)))
+
+(defmethod shutdown-db ((self rdb-database) &key) (shutdown-db (db self)))
+
+(defmethod get-val ((self rdb-database) elt &rest initargs &key)
+  (apply 'get-val (db self) elt initargs))
+
+(defmethod get-value (elt (self rdb-database))
+  (get-value elt (db self)))
 
 (defmethod start-transaction ((self rdb-database) transaction 
                               &key (write-opts (rocksdb-writeoptions-create))

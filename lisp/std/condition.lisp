@@ -174,11 +174,11 @@ a default value for required keyword arguments."
   ((name
     :initarg :name
     :initform (error "Must specify argument name")
-    :reader unknown-argument-name)
+    :reader error-name)
    (kind
     :initarg :kind
     :initform (error "Must specify argument kind")
-    :reader unknown-argument-kind))
+    :reader error-kind))
   (:report (lambda (condition stream)
              (format stream "Unknown argument ~A of kind ~A"
                      (error-name condition)

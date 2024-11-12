@@ -262,7 +262,7 @@
 (defpkg :std/alien
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :with-gensyms)
-  (:import-from :std/sys :little-endian-p)
+  (:import-from :std/sys :little-endian-p :32-bit-p)
   (:import-from :std/type :octet-vector)
   (:import-from :sb-alien :sap+)
   (:export
@@ -316,7 +316,7 @@
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
    :subclassp :write-object :start :started-p 
-   :stop :stopped-p :run :shutdown
+   :stop :stopped-p :shutdown
    :reset))
 
 (defpkg :std/curry

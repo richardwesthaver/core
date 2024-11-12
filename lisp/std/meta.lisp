@@ -13,7 +13,6 @@
 (defgeneric stop (self &key &allow-other-keys))
 (defgeneric stopped-p (self))
 (defgeneric shutdown (self))
-(defgeneric run (self &rest args &key &allow-other-keys))
 (defgeneric reset (self &rest args &key &allow-other-keys))
 
 (defgeneric write-object (obj stream &key &allow-other-keys)
