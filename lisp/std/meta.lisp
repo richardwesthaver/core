@@ -73,6 +73,22 @@ non-nil, also include indirect (parent) methods."
               (when unboundp (list ns))))))
     slots)))
 
+(defmacro defmethods (name &body forms)
+  "Define multiple methods for a generic function. Each member of FORMS is passed
+directly to a DEFMETHOD form."
+  (eval-always
+    `(progn
+       ,@(loop for form in forms
+               collect `(defmethod ,name ,@form)))))
+
+(defmacro defaccessor ((name &optional (type 't)) args &body expansion)
+  "Define a pair of methods - an accessor with NAME and setf method for that accessor
+which simply expands to: (SETF EXPANSION %VAL)."
+  (eval-always
+    `(progn
+       (defmethod ,name ,args ,@expansion)
+       (defmethod (setf ,name) ,(push `(new ,type) args) (setf ,@expansion new)))))
+
 ;; closer-mop
 (defun ensure-finalized (class &optional (errorp t))
   (if (typep class 'class)

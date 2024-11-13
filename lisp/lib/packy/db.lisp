@@ -5,9 +5,13 @@
 ;;; Code:
 (in-package :packy/db)
 
+(defvar *packy-backend-options* rdb::*rdb-backend-options*)
+(set-database-backend :packy *packy-backend-options*
+                      (db::%load-database-backend :rdb))
+
 (defclass package-database (database) ()
   (:default-initargs 
-   :db (make-rdb "packy" (default-rdb-opts) #())))
+   :db (make-db :rdb :name "packy" :opts (default-rdb-opts) :columns #())))
 
 (defmethod make-db ((engine (eql :packy)) &rest initargs &key &allow-other-keys)
   (apply #'make-instance 'package-database initargs))
@@ -18,9 +22,7 @@
 (defmethod query-db ((db package-database) query &key &allow-other-keys))
   
 (defmethod db-get ((db package-database) (key simple-string) &key &allow-other-keys)
-  ;; lol
-    (with-db (db (db:db db))
-      (get-kv-str-raw db key)))
+  (get-kv-str-raw (db db) key))
 
 (defmethod close-db ((db package-database) &key &allow-other-keys)
   (close-db (db db)))

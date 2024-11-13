@@ -150,7 +150,7 @@
     (rocksdb-readoptions-destroy ropts)
     (rocksdb-block-based-options-destroy bopts)))
 
-(deftest db-basic (:skip t)
+(deftest db-basic ()
   "Test basic RocksDB functionality. Inserts KV pair into a temporary
 DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
@@ -240,7 +240,7 @@ DB where K and V are both Lisp strings."
       (delete-file file)
       (is (null-alien errptr)))))
 
-(deftest stats (:skip t)
+(deftest stats ()
   "Test statistics and performance-context related functionality."
   (rocksdb-set-perf-level (rocksdb-perf-level "enable-time-except-for-mutex"))
   (let* ((opts (test-opts))
@@ -269,9 +269,9 @@ DB where K and V are both Lisp strings."
                    vlen
                    errptr)
       
-      (debug! "stats:" (rocksdb-options-statistics-get-string opts))
+      (debug! "stats: ~A" (rocksdb-options-statistics-get-string opts))
       (rocksdb-options-statistics-get-histogram-data opts 5 hist) ;; histogram data types? uint64 somewhere
-      (debug! "count:" (rocksdb-statistics-histogram-data-get-count hist))
+      (debug! "count: ~A" (rocksdb-statistics-histogram-data-get-count hist))
       (rocksdb-perfcontext-reset ctx)
       ;; ...
       (rocksdb-set-perf-level (rocksdb-perf-level "disable"))
@@ -303,8 +303,8 @@ DB where K and V are both Lisp strings."
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
                  (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
                  (errptr rocksdb-errptr nil))
-      (debug! "min blob file size: " (rocksdb-options-get-min-blob-size opts))
-      (debug! "max blob file size: " (rocksdb-options-get-blob-file-size opts))
+      (debug! "min blob file size: ~A" (rocksdb-options-get-min-blob-size opts))
+      (debug! "max blob file size: ~A" (rocksdb-options-get-blob-file-size opts))
 
       ;; copy KEY to K
       (setfa k key)

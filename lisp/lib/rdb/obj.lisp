@@ -306,9 +306,10 @@ supplied by the user from the default value."
 (defmethod (setf name) (new (self rdb))
   (setf (rdb-name self) new))
 
-(defmethod columns ((self rdb))
-  (rdb-cfs self))
+(defmethod columns ((self rdb)) (rdb-cfs self))
 
+(defmethod (setf columns) (new (self rdb)) (setf (rdb-cfs self) new))
+  
 (defmethod db ((self rdb))
   (rdb-sap self))
 

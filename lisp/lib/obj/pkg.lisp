@@ -490,7 +490,8 @@
    :do-database-backend-init-options
    :do-database-backend-close-options
    :set-database-backend
-   :column))
+   :column
+   :set-database-backend-option))
 
 (defpackage :obj/plan
   (:nicknames :plan)

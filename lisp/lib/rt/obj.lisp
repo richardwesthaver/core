@@ -152,7 +152,7 @@
 (defmethod do-test ((self test) &optional fx)
   (declare (ignorable fx))
   (with-test-env self
-    (trace! "running test: " *testing*)
+    (trace! "running test: ~A" *testing*)
     (flet ((%do ()
              (when (test-profile self)
                (sb-sprof:start-profiling))
@@ -245,7 +245,7 @@
 
 (defmethod do-test ((self test-suite) &optional test)
   (push-result 
-   (if test
+   (if (log:info! test)
        (do-test
            (etypecase test
              (test test)

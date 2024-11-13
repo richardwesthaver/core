@@ -8,7 +8,12 @@
 (defvar *rocksdb-backend-options* '(columns temp path (open t) 
                                     destroy (close t) backup secondary 
                                     snapshots sap))
+
 (defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store schema)))
+
+(defmethod set-database-backend-option ((db rdb) (key (eql :close)) (val (eql :auto)))
+  "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
+  (sb-ext:finalize db (lambda () (shutdown-db db :wait t))))
 
 (set-database-backend :rocksdb *rocksdb-backend-options* 
                       #'load-rocksdb)
@@ -45,29 +50,10 @@
   (:default-initargs 
    :db (make-db :rocksdb)))
 
-(defmethod name ((self rdb-database))
-  (name (db self)))
-
-(defmethod (setf name) (new (self rdb-database))
-  (setf (name (db self)) new))
-
-(defmethod columns ((self rdb-database))
-  (columns (db self)))
-
-(defmethod (setf columns) (new (self rdb-database))
-  (setf (columns (db self)) new))
-
-(defmethod sap ((self rdb-database))
-  (sap (db self)))
-
-(defmethod (setf sap) (new (self rdb-database))
-  (setf (sap (db self)) new))
-
-(defmethod db-opts ((self rdb-database))
-  (db-opts (db self)))
-
-(defmethod (setf db-opts) (new (self rdb-database))
-  (setf (db-opts (db self)) new))
+(defaccessor (name) ((self rdb-database)) (name (db self)))
+(defaccessor (columns) ((self rdb-database)) (columns (db self)))
+(defaccessor (sap) ((self rdb-database)) (sap (db self)))
+(defaccessor (db-opts) ((self rdb-database)) (db-opts (db self)))
 
 (defmethod make-db ((engine (eql :rdb)) &rest initargs &key name columns opts sap)
   (declare (ignore engine))
@@ -99,11 +85,12 @@
 
 (defmethod start-transaction ((self rdb-database) transaction 
                               &key (write-opts (rocksdb-writeoptions-create))
-                                   (transaction-opts (rocksdb-transaction-options-create)))
+                                   (name (name self))
+                                   (transaction-opts (rocksdb-transaction-options-create))
+                                   (transactiondb-opts (rocksdb-transactiondb-options-create)))
   (with-errptr e
-    (rocksdb-transaction-prepare 
-     (rocksdb-transaction-begin write-opts transaction-opts nil) 
-     e)))
+    (let ((txn-db (rocksdb-transactiondb-open (db-opts self) transactiondb-opts name e)))
+      (rocksdb-transaction-begin txn-db write-opts transaction-opts nil))))
 
 (defmethod commit-transaction ((self rdb-database) txn &key)
   (with-errptr e

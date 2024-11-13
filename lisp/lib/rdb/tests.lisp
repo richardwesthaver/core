@@ -177,7 +177,7 @@
     (flush-db db)
     (describe (db db))
     ;; (start-transaction db nil)
-    (ensure-transaction ())))
+    (ensure-transaction (:db db))))
 
 (deftest merge-op ())
 

@@ -275,7 +275,6 @@ to initialize the instance with custom configuration."
 
 ;; this function is deprecated in the Java API:
 ;; https://javadoc.io/doc/org.rocksdb/rocksdbjni/6.6.4/org/rocksdb/SstFileWriter.html
-
 ;; (defun sst-add-raw (writer key val)
 ;;   (with-errptr* (err 'rdb-alien-error)
 ;;     (rocksdb-sstfilewriter-add writer key (length key) val (length val) err)))
@@ -316,3 +315,20 @@ to initialize the instance with custom configuration."
     (with-alien ((ret unsigned-long))
       (rocksdb-sstfilewriter-file-size writer (addr ret) err)
       ret)))
+
+;;; Transactions
+(defun open-transactiondb-raw (opts topts name)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-transactiondb-open opts topts name e)))
+
+(defun commit-transaction-raw (txn)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-transaction-commit txn e)))
+
+(defun rollback-transaction-raw (txn)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-transaction-rollback txn e)))
+
+(defun prepare-transaction-raw (txn)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-transaction-prepare txn e)))

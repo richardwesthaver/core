@@ -5,6 +5,7 @@
   :components ((:file "pkg")
                (:file "condition")
                (:file "log")
+               (:file "db")
                (:file "stream"))
   :in-order-to ((test-op (test-op "log/tests"))))
 

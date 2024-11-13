@@ -66,16 +66,18 @@ function 'NAME-P'."
        (defun ,(intern (concatenate 'string %name "-P")) ()
          ,@(or pred `((eql *log-level* ,(sb-int:keywordicate name)))))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
-         (setf args (flatten args))
          (when (,(symbolicate (concatenate 'string %name "-P")))
-           (format *trace-output* "#:~(~A~) ~@[~f~]~&"
-                 ',name
-                 (when *log-timestamp* (log-timestamp-source)))
-           (mapc (lambda (x) (format *trace-output* "; ~A~&" x)) args))
-         (case (length args) 
-           (0 (values))
-           (1 (car args))
-           (t args)))
+           (fresh-line *trace-output*)
+           (format *trace-output* "#:~(~A~)~@[ ~f~]~&"
+                   ',name
+                   (when *log-timestamp* (log-timestamp-source)))
+           (if-let ((fmt (and (stringp (car args)) (pop args))))
+             (apply 'format *trace-output* fmt args)
+             (mapc (lambda (x) (format *trace-output* "; ~A~&" x)) args))
+           (case (length args)
+             (0 (values))
+             (1 (car args))
+             (t args))))
        (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (&rest args)
          (,(intern (concatenate 'string %name "!")) (apply #'describe args))))))
 

@@ -89,7 +89,6 @@
    :sort!
    :set-equal))
    
-
 (defpkg :std/type
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
@@ -309,16 +308,6 @@
    :pull-sap
    :pull-sap*))
 
-(defpkg :std/meta
-  (:use :cl :sb-mop :sb-pcl)
-  (:import-from :std/sym :symb :make-keyword)
-  (:shadow :reset)
-  (:export :list-slot-values-using-class
-   :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
-   :subclassp :write-object :start :started-p 
-   :stop :stopped-p :shutdown
-   :reset))
-
 (defpkg :std/curry
   (:use :cl)
   (:import-from :std/sym :make-gensym-list)
@@ -409,6 +398,17 @@
    :cswitch
    :xor
    :ifret))
+
+(defpkg :std/meta
+  (:use :cl :sb-mop :sb-pcl)
+  (:import-from :std/sym :symb :make-keyword)
+  (:import-from :std/macs :eval-always)
+  (:shadow :reset)
+  (:export :list-slot-values-using-class
+   :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
+   :subclassp :write-object :start :started-p 
+   :stop :stopped-p :shutdown :reset
+   :defaccessor :defmethods))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)
