@@ -332,3 +332,12 @@ to initialize the instance with custom configuration."
 (defun prepare-transaction-raw (txn)
   (with-errptr* (e 'rdb-alien-error)
     (rocksdb-transaction-prepare txn e)))
+
+;;; Checkpoints
+(defun make-checkpoint-raw (db)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-checkpoint-object-create db e)))
+
+(defun create-checkpoint-raw (chk dir &optional log-size-for-flush)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-checkpoint-create chk dir log-size-for-flush e)))

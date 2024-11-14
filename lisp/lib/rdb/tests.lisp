@@ -23,12 +23,12 @@
   (let ((default (default-rdb-opts)))
     ;; check defaults
     (is (< 50 (hash-table-count (backfill-opts default :full t))))
-    (is (typep (rdb-opts-sap default) '(alien (* rocksdb-options))))
+    (is (typep (sap default) '(alien (* rocksdb-options))))
     (is (eql t (db-opt default "create-if-missing")))
     (is (eql t (set-db-opt default "enable-blob-files" t :push t)))
     (is (eql t (db-opt default "enable-blob-files")))
-    (is (eql t (rocksdb-options-get-enable-blob-files (rdb-opts-sap default))))
-    (is (null (rocksdb-options-get-error-if-exists (rdb-opts-sap default))))))
+    (is (eql t (rocksdb-options-get-enable-blob-files (sap default))))
+    (is (null (rocksdb-options-get-error-if-exists (sap default))))))
 
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
@@ -136,7 +136,7 @@
   (with-temp-rdb (tmp () :open t :destroy t)
     ;; without macro
     (let ((writer (make-sst-file-writer))
-          (path (namestring (merge-pathnames (format nil "/tmp/~A" (gensym "sst"))))))
+          (path (format nil "/tmp/~A" (gensym "sst"))))
       (open-sst writer path)
       (dotimes (i 10000)
         (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
@@ -173,11 +173,16 @@
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
-  (with-db (db (make-db :rdb :name "/tmp/rdb-transaction" :columns nil))
-    (flush-db db)
-    (describe (db db))
-    ;; (start-transaction db nil)
-    (ensure-transaction (:db db))))
+  (with-db (db 
+            (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)) :columns nil) 
+            :open t
+            :close :auto)
+    ;; (flush-db db)
+    
+    (with-alien ((txn-old (* rocksdb-transaction)))
+      (start-transaction db txn-old))
+    ;; (ensure-transaction (:db db))
+    ))
 
 (deftest merge-op ())
 

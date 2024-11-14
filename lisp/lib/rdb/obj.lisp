@@ -25,11 +25,9 @@
             (mapcar (lambda (x) (equal k x)) (list "parallelism" "enable-statistics")))))
 
 (defclass rdb-opts ()
-  ((table :initarg :table :type hash-table :accessor rdb-opts-table)
-   (sap :initform nil :initarg :sap :type (or null alien) :accessor rdb-opts-sap)))
+  ((table :initarg :table :type hash-table :accessor db-opts)
+   (sap :initform nil :initarg :sap :type (or null alien) :accessor sap)))
 
-(defmethod sap ((self rdb-opts)) (rdb-opts-sap self))
-  
 (defmethod initialize-instance ((self rdb-opts) &rest initargs &key &allow-other-keys)
   (with-slots ((%sap sap) (%table table)) self
     ;; initialize slots - remember, initargs doesn't refer to slot
@@ -59,16 +57,16 @@ values in Lisp, just binds the sap."
 
 (defmethod db-opt ((self rdb-opts) key)
   "Return the current value of KEY in SELF if found, else return nil."
-  (gethash key (rdb-opts-table self)))
+  (gethash key (db-opts self)))
 
 (defmethod (setf db-opt) (val (self rdb-opts) key &key push)
   "Set the VAL of KEY in SELF with '(setf (gethash SELF KEY) VAL)'."
-  (prog1 (setf (gethash key (rdb-opts-table self)) val)
+  (prog1 (setf (gethash key (db-opts self)) val)
     (when push (push-sap self key))))
 
 (defmethod push-sap ((self rdb-opts) key)
   "Push KEY from slot :TABLE to the instance :SAP."
-  (%set-rocksdb-option (rdb-opts-sap self) key (db-opt self key)))
+  (%set-rocksdb-option (sap self) key (db-opt self key)))
 
 (defmethod push-sap* ((self rdb-opts))
   "Initialized the SAP slot with values from TABLE."
@@ -79,7 +77,7 @@ values in Lisp, just binds the sap."
           do (push-sap self k))))
 
 (defmethod pull-sap ((self rdb-opts) key)
-  (setf (gethash key (rdb-opts-table self)) (%get-rocksdb-option (rdb-opts-sap self) key)))
+  (setf (gethash key (db-opts self)) (%get-rocksdb-option (sap self) key)))
 
 (defmethod pull-sap* ((self rdb-opts))
   (with-slots (table) self
@@ -98,7 +96,7 @@ just the keys currently present in TABLE."
             unless (opt-no-setter-p k)
             do (pull-sap self k))
       (pull-sap* self))
-  (rdb-opts-table self))
+  (db-opts self))
 
 (defun default-rdb-opts () 
   (make-rdb-opts :create-if-missing t :create-missing-column-families t
@@ -173,22 +171,20 @@ supplied by the user from the default value."
   (val-type nil :type (or list symbol))
   (sap nil :type (or null alien)))
       
-(defmethod db-opts ((self rdb-cf))
-  (rdb-cf-opts self))
+(defaccessor (column-opts) ((self rdb-cf)) (rdb-cf-opts self))
+(defaccessor (sap) ((self rdb-cf)) (rdb-cf-sap self))
 
 (defmethod close-column ((self rdb-cf) &optional error)
-  (if-let ((sap (rdb-cf-sap self)))
-    (setf (rdb-cf-sap self) (rocksdb:rocksdb-column-family-handle-destroy sap))
+  (if-let ((sap (sap self)))
+    (setf (sap self) (rocksdb:rocksdb-column-family-handle-destroy sap))
     (when error (rdb-error "column family is already closed."))))
-
-(defmethod sap ((self rdb-cf)) (rdb-cf-sap self))
 
 ;;; rdb-stats
 (defstruct (rdb-stats (:constructor make-rdb-stats (&optional sap)))
   (sap nil :type (or null alien)))
 
-(defmethod sap ((self rdb-stats)) (rdb-stats-sap self))
-  
+(defaccessor (sap) ((self rdb-stats)) (rdb-stats-sap self))
+
 ;;; metadata
 (defstruct rdb-cf-metadata
   (name "default" :type string)
@@ -197,8 +193,7 @@ supplied by the user from the default value."
   (file-count 0 :type fixnum)
   (sap nil :type (or null alien)))
 
-(defmethod sap ((self rdb-cf-metadata))
-  (rdb-cf-metadata-sap self))
+(defaccessor (sap) ((self rdb-cf-metadata)) (rdb-cf-metadata-sap self))
 
 (defmethod db-metadata ((self rdb-cf-metadata) &optional (level 0))
   (with-slots (sap) self
@@ -227,7 +222,7 @@ supplied by the user from the default value."
   (file-count 0 :type fixnum)
   (sap nil :type (or null alien)))
 
-(defmethod sap ((self rdb-level-metadata)) (rdb-level-metadata-sap self))
+(defaccessor (sap) ((self rdb-level-metadata)) (rdb-level-metadata-sap self))
   
 (defmethod db-metadata ((self rdb-level-metadata) &optional (file 0))
   (with-slots (sap) self
@@ -259,7 +254,7 @@ supplied by the user from the default value."
   (largestkey 0 :type fixnum)
   (sap nil :type (or null alien)))
 
-(defmethod sap ((self rdb-sst-file-metadata)) (rdb-sst-file-metadata-sap self))
+(defaccessor (sap) ((self rdb-sst-file-metadata)) (rdb-sst-file-metadata-sap self))
   
 (defmethod print-object ((self rdb-sst-file-metadata) stream)
   (print-unreadable-object (self stream :type t)
@@ -291,8 +286,7 @@ supplied by the user from the default value."
   (backup nil :type (or null alien))
   (snapshots #() :type (array alien)))
 
-(defmethod sap ((self rdb)) (rdb-sap self))
-(defmethod (setf sap) (new (self rdb)) (setf (rdb-sap self) new))
+(defaccessor (sap) ((self rdb)) (rdb-sap self))
 
 (defvar *default-rdb-opts* (default-rdb-opts))
 
@@ -300,24 +294,10 @@ supplied by the user from the default value."
   (print-unreadable-object (self stream :type t :identity t)
     (format stream ":cfs ~A :open ~A" (length (rdb-cfs self)) (db-open-p self))))
 
-(defmethod name ((self rdb))
-  (rdb-name self))
-
-(defmethod (setf name) (new (self rdb))
-  (setf (rdb-name self) new))
-
-(defmethod columns ((self rdb)) (rdb-cfs self))
-
-(defmethod (setf columns) (new (self rdb)) (setf (rdb-cfs self) new))
-  
-(defmethod db ((self rdb))
-  (rdb-sap self))
-
-(defmethod db-opts ((self rdb))
-  (rdb-opts self))
-
-(defmethod (setf db-opts) (new (self rdb))
-  (setf (rdb-opts self) new))
+(defaccessor (name) ((self rdb)) (rdb-name self))
+(defaccessor (columns) ((self rdb)) (rdb-cfs self))
+(defaccessor (db) ((self rdb)) (sap self))
+(defaccessor (db-opts) ((self rdb)) (rdb-opts self))
 
 (defmethod db-open-p ((self rdb))
   (when (db self) t))
@@ -407,13 +387,13 @@ internal sap slots are initialized."
               unless (opt-no-setter-p k)
               do (pull-sap opts k))
         (pull-sap* opts))
-    (rdb-opts-table opts)))
+    (db-opts opts)))
 
 (defmethod add-column ((cf rdb-cf) (db rdb))
   (vector-push-extend cf (rdb-cfs db)))
 
 (defmethod create-column ((db rdb) (cf rdb-cf))
-  (create-cf-raw (rdb-sap db) (rdb-cf-name cf) (rdb-opts-sap (rdb-opts db))))
+  (create-cf-raw (rdb-sap db) (rdb-cf-name cf) (sap (rdb-opts db))))
 
 (defmethod open-columns ((db rdb) &rest names)
   (let ((cf-names) (cf-opts))
@@ -421,7 +401,7 @@ internal sap slots are initialized."
           do (let ((name (rdb-cf-name cf)))
                (when (or (not names) (member name names :test 'string=))
                    (push name cf-names)
-                   (push (rdb-opts-sap (rdb-cf-opts cf)) cf-opts)))
+                   (push (sap (column-opts cf)) cf-opts)))
           finally 
           (setf cf-names (nreverse cf-names) 
                 cf-opts (nreverse cf-opts)))
@@ -463,7 +443,7 @@ internal sap slots are initialized."
   (with-slots (name sap opts) self
     (if sap
         (rdb-error "DB already opened - close before re-opening")
-        (setf sap (open-db-raw name (rdb-opts-sap opts))))))
+        (setf sap (open-db-raw name (sap opts))))))
 
 (defmethod db-prop ((self rdb) (propname string))
   (unless-null-db () self
@@ -474,7 +454,7 @@ internal sap slots are initialized."
 
 (defmethod open-backup-db ((self rdb) &key path)
   (with-slots (opts) self
-    (setf (rdb-backup self) (open-backup-engine-raw path (rdb-opts-sap opts)))))
+    (setf (rdb-backup self) (open-backup-engine-raw path (sap opts)))))
 
 (defmethod close-backup-db ((self rdb))
   (with-slots (backup) self
@@ -503,7 +483,7 @@ internal sap slots are initialized."
   (make-rdb-cf-metadata :sap (get-metadata-raw (rdb-sap self) cf)))
 
 (defmethod db-stats ((self rdb) &optional (htype (rocksdb-statistics-level "all")))
-  (make-rdb-stats (get-stats-raw (rdb-opts-sap (rdb-opts self)) htype)))
+  (make-rdb-stats (get-stats-raw (sap (rdb-opts self)) htype)))
 
 (defmethod create-iter ((self rdb) &optional cf (opts (rocksdb-readoptions-create)))
   (when cf
@@ -517,7 +497,7 @@ internal sap slots are initialized."
                             (create-iter-raw sap opts)))))
 
 (defmethod print-stats ((self rdb) &optional stream)
-  (print (rocksdb-options-statistics-get-string (rdb-opts-sap (rdb-opts self))) stream))
+  (print (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream))
 
 (defmethod flush-db ((self rdb) &key) ;; todo flushopts
   (flush-db-raw (rdb-sap self)))
@@ -566,17 +546,17 @@ internal sap slots are initialized."
   (close-db self)
   (destroy-db-raw (rdb-name self)))
 
-(defmethod put-key ((self rdb) (key t) (val t))
-  (put-kv-raw
-   (rdb-sap self)
-   key
-   val))
-
-(defmethod put-key ((self rdb) (key string) (val string))
-  (put-kv-raw
-   (rdb-sap self)
-   (sb-ext:string-to-octets key)
-   (sb-ext:string-to-octets val)))
+(defmethods put-key 
+  (((self rdb) (key t) (val t))
+   (put-kv-raw
+    (rdb-sap self)
+    key
+    val))
+  (((self rdb) (key string) (val string))
+   (put-kv-raw
+    (rdb-sap self)
+    (sb-ext:string-to-octets key)
+    (sb-ext:string-to-octets val))))
 
 (defmethod put-kv ((self rdb) (kv kv))
   (put-kv-raw
@@ -584,26 +564,24 @@ internal sap slots are initialized."
    (kv-key kv)
    (kv-val kv)))
 
-(defmethod insert-key ((self rdb) key val &key cf)
-  (if-let ((cf (and cf (find-column cf self))))
-    (if-let ((sap (rdb-cf-sap cf)))
-      (put-cf-raw
-       (rdb-sap self)
-       sap
-       key
-       val
-       (rocksdb-writeoptions-create))
-      (rdb-error "column-family is not open"))
-      (put-key self key val)))
-
-(defmethod insert-key ((self rdb) (key string) (val string) &key cf)
-  (insert-key self (string-to-octets key) (string-to-octets val) :cf cf))
-
-(defmethod insert-key ((self rdb) (key string) val &key cf)
-  (insert-key self (string-to-octets key) val :cf cf))
-
-(defmethod insert-key ((self rdb) key (val string) &key cf)
-  (insert-key self key (string-to-octets val) :cf cf))
+(defmethods insert-key 
+  (((self rdb) key val &key cf)
+   (if-let ((cf (and cf (find-column cf self))))
+     (if-let ((sap (rdb-cf-sap cf)))
+       (put-cf-raw
+        (rdb-sap self)
+        sap
+        key
+        val
+        (rocksdb-writeoptions-create))
+       (rdb-error "column-family is not open"))
+     (put-key self key val)))
+  (((self rdb) (key string) (val string) &key cf)
+   (insert-key self (string-to-octets key) (string-to-octets val) :cf cf))
+  (((self rdb) (key string) val &key cf)
+   (insert-key self (string-to-octets key) val :cf cf))
+  (((self rdb) key (val string) &key cf)
+   (insert-key self key (string-to-octets val) :cf cf)))
 
 (defmethod insert-kv ((self rdb) (kv kv) &key cf (opts (rocksdb-writeoptions-create)))
   (if cf
@@ -619,14 +597,34 @@ internal sap slots are initialized."
                     opts))
       (put-kv self kv)))
 
-(defmethod get-val ((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
-  (with-slots (sap) self
-    (if cf
-        (get-cf-str-raw sap (rdb-cf-sap (find-column cf self)) key opts)
-        (get-kv-str-raw sap key opts))))
+(defmethods get-val 
+  (((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
+   (with-slots (sap) self
+     (if cf
+         (get-cf-str-raw sap (rdb-cf-sap (find-column cf self)) key opts)
+         (get-kv-str-raw sap key opts))))
+  (((self rdb) key &key (opts (rocksdb-readoptions-create)) cf)
+   (with-slots (sap) self
+     (if cf
+         (get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts)
+         (get-kv-raw sap key opts)))))
 
-(defmethod get-val ((self rdb) key &key (opts (rocksdb-readoptions-create)) cf)
-  (with-slots (sap) self
-    (if cf
-        (get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts)
-        (get-kv-raw sap key opts))))
+;;; Transaction DB
+(defstruct rdb-transaction-db sap snapshots opts)
+
+;;; Transaction
+(defstruct rdb-transaction sap savepoint)
+
+;;; Secondary DB
+(defstruct rdb-secondary-db sap opts)
+
+;;; Backup DB
+(defstruct rdb-backup-db sap opts)
+
+;;; Write Batches
+(defstruct rdb-writebatch sap)
+
+(defstruct rdb-wbwi sap wb reserved overwrite-key data savepoints params)
+
+;;; Env
+(defstruct rdb-env sap path threads)

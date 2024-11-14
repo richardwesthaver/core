@@ -48,7 +48,6 @@
           (if buf t
               nil))))))
 
-
 (defmethod (setf get-value) (value key (bt rdb-btree))
     (let ((sc (get-store bt)))
       (ensure-transaction (:store sc)
@@ -58,7 +57,6 @@
         (db-put-buffered (btrees sc)
                          :transaction (current-transaction sc))))
   value)
-
 
 (defmethod delete-key (key (bt rdb-btree) &key)
   (let ((sc (get-store bt)) )
@@ -266,7 +264,7 @@
                   key-buf value-buf
                   :transaction (current-transaction sc))))
         (if buf 
-            (let ((oid (buffer-read-oid buf)))
+            (let ((oid (read-oid buf)))
               (values (deserialize buf sc) oid))
             (values nil nil))))))
 
@@ -489,7 +487,7 @@
     (make-instance 'rdb-secondary-cursor 
                    :btree bt
                    :handle (db-cursor (indices-assoc sc)
-                                      :transaction (my-current-transaction sc))
+                                      :transaction (current-transaction sc))
                    :oid (oid bt))))
 
 (defmethod cursor-pcurrent ((cursor rdb-secondary-cursor))
@@ -787,7 +785,7 @@
         (ser value value-buf sc)
         (db-put-buffered (dup-btrees sc)
                          key-buf value-buf
-                         :transaction (my-current-transaction sc)
+                         :transaction (current-transaction sc)
                          :no-dup t)))
     value)
 

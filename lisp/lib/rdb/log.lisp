@@ -1,10 +1,12 @@
 ;;; log.lisp --- RDB Logger
 
-;; A Logger which writes to a RDB instance.
+;; A LOGGER with a SINK that writes LOG-MESSAGEs to a RDB-DATABASE.
 
 ;;; Code:
 (in-package :rdb)
 
-(defclass rdb-sink (db-sink) ())
+(defclass rdb-sink (db-sink rdb-database) ()
+  (:default-initargs
+   :db (make-db :rdb)))
 
-(defclass rdb-logger (database-logger rdb-database) ())
+(defclass rdb-logger (database-logger) ())

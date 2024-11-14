@@ -126,7 +126,7 @@ the body of WITH-DB forms.")
     `(let ((,var *db*))
        (prog2
            (apply 'do-database-backend-init-options ,var ',opts)
-           ,@body
+           (or (progn ,@body) ,var)
          (apply 'do-database-backend-close-options ,var ',opts)))))
 
 ;;; Conditions
@@ -372,6 +372,8 @@ column is already closed."))
   (:documentation "Return the columns of SELF."))
 (defgeneric column (self col))
 (defgeneric (setf column) (new self col))
+(defgeneric column-opts (col))
+(defgeneric (setf column-opts) (new col))
 
 (defstruct (kv (:constructor make-kv (&optional key val))) 
   (key (make-octets *default-kv-size*) :type octet-vector) 
@@ -406,6 +408,8 @@ column is already closed."))
     (coerce val 'octet-vector)))
 
 ;;; Transactions
+(defgeneric transaction-opts (txn))
+(defgeneric (setf transaction-opts) (new txn))
 (defgeneric make-transaction (self txn &key)
   (:documentation "Make a new transaction object."))
 (defgeneric prepare-transaction (self txn &key)

@@ -28,7 +28,7 @@
                          for opt across cf-opts
                          collect 
                             (let ((cf-opts (make-rdb-opts)))
-                              (setf (rdb-opts-sap cf-opts) opt)
+                              (setf (sap cf-opts) opt)
                               (make-rdb-cf name :opts cf-opts)))
                    'vector)))
          (setf (rdb-opts db) (make-rdb-opts* db-opts)
@@ -46,7 +46,10 @@
   (declare (ignore query))
   (get-val db key))
 
-(defclass rdb-database (database) ()
+(defclass rdb-database (database)
+  ((txn :initform nil :type (or null rdb-transaction-db) :initarg :txn :accessor db-txn)
+   (backup :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-backup)
+   (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-secondary))
   (:default-initargs 
    :db (make-db :rocksdb)))
 
@@ -83,14 +86,14 @@
 (defmethod get-value (elt (self rdb-database))
   (get-value elt (db self)))
 
-(defmethod start-transaction ((self rdb-database) transaction 
+(defmethod start-transaction ((self rdb-database) transaction
                               &key (write-opts (rocksdb-writeoptions-create))
                                    (name (name self))
                                    (transaction-opts (rocksdb-transaction-options-create))
                                    (transactiondb-opts (rocksdb-transactiondb-options-create)))
   (with-errptr e
-    (let ((txn-db (rocksdb-transactiondb-open (db-opts self) transactiondb-opts name e)))
-      (rocksdb-transaction-begin txn-db write-opts transaction-opts nil))))
+    (let ((txn-db (rocksdb-transactiondb-open (sap (db-opts self)) transactiondb-opts name e)))
+      (rocksdb-transaction-begin txn-db write-opts transaction-opts transaction))))
 
 (defmethod commit-transaction ((self rdb-database) txn &key)
   (with-errptr e

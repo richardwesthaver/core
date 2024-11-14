@@ -122,9 +122,19 @@
    :make-rdb-opts*
    :load-opts
    :with-open-rdb-raw
-   :rdb-logger))
+   :rdb-logger
+   :close-backup-db
+   :open-backup-db
+   :open-transaction-db
+   :close-transaction-db
+   :read-opts
+   :write-opts
+   :close-secondary-db
+   :open-secondary-db
+   :rdb-transaction-db
+   :rdb-transaction
+   :rdb-secondary-db
+   :rdb-backup-db))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)
-
-(pushnew :rdb *features*)

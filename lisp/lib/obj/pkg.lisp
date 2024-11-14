@@ -491,7 +491,9 @@
    :do-database-backend-close-options
    :set-database-backend
    :column
-   :set-database-backend-option))
+   :set-database-backend-option
+   :column-opts
+   :transaction-opts))
 
 (defpackage :obj/plan
   (:nicknames :plan)

@@ -89,13 +89,13 @@
   (batch (* rocksdb-writebatch))
   (size (* size-t)))
 
-(define-alien-routine rocksdb-writebatch-set-save-point void
+(define-alien-routine rocksdb-writebatch-set-savepoint void
   (batch (* rocksdb-writebatch)))
 
-(def-with-errptr rocksdb-writebatch-rollback-to-save-point void
+(def-with-errptr rocksdb-writebatch-rollback-to-savepoint void
   (batch (* rocksdb-writebatch)))
 
-(def-with-errptr rocksdb-writebatch-pop-save-point void
+(def-with-errptr rocksdb-writebatch-pop-savepoint void
   (batch (* rocksdb-writebatch)))
 
 (def-with-errptr rocksdb-writebatch-update-timestamps void
@@ -309,10 +309,10 @@
   (batch (* rocksdb-writebatch-wi))
   (size (* size-t)))
 
-(define-alien-routine rocksdb-writebatch-wi-set-save-point void
+(define-alien-routine rocksdb-writebatch-wi-set-savepoint void
   (batch (* rocksdb-writebatch-wi)))
 
-(def-with-errptr rocksdb-writebatch-wi-rollback-to-save-point void
+(def-with-errptr rocksdb-writebatch-wi-rollback-to-savepoint void
   (batch (* rocksdb-writebatch-wi)))
 
 (def-with-errptr rocksdb-writebatch-wi-get-from-batch (array unsigned-char)
