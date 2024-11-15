@@ -87,7 +87,12 @@
    :ts-node-type-pointer
    :with-ts-parser
    :with-ts-lang
-   :language-module))
+   :language-module
+   :parse-string-with-language
+   :tree-sitter-error
+   :with-ts-node
+   :parse-string
+   :with-ts-cursor))
 
 (in-package :tree-sitter)
 

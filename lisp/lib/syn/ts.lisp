@@ -9,9 +9,8 @@
 ;; (load-tree-sitter-c)
 (load-tree-sitter-cpp)
 
-
-;; (with-ts-parser (p :lang :c)
-;;   (ts-parser-parse-string p nil "//foo" 5))
+;; (with-ts-parser (p)
+;;   (parse-string-with-language :c "//foo" p))
 
 ;; (with-ts-parser (p
 ;;     (values

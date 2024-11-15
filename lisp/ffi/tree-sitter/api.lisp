@@ -54,7 +54,7 @@
           (progn ,@forms)
        (sb-alien:free-alien ,var))))
 
-(defmacro with-tree-cursor ((var tree) &body forms &aux (node (gensym)))
+(defmacro with-ts-cursor ((var tree) &body forms &aux (node (gensym)))
   `(with-ts-node (,node (ts-tree-root-node-pointer ,tree))
      (let ((,var (ts-tree-cursor-new-pointer ,node)))
        (when (sb-alien:null-alien ,var)
@@ -82,7 +82,8 @@ desired name for use in lisp."
       (ts-parser-delete parser))))
 
 (defun parse-string-with-language (language string parser
-                                   &key (start 0) end produce-cst name-generator)
+                                   &key (start 0) end produce-cst 
+                                        (name-generator #'make-lisp-name))
   (unless (ts-parser-set-language parser (language-module language))
     (error 'cant-set-language :language language))
   (let* ((string-start start)
@@ -92,7 +93,7 @@ desired name for use in lisp."
          (string-to-pass (if (plusp string-start)
                              (subseq string string-start string-end)
                              string))
-         (tree (ts-parser-parse-string parser string string-to-pass string-length)))
+         (tree (ts-parser-parse-string parser nil string-to-pass string-length)))
     (when (sb-alien:null-alien tree)
       (error 'cant-parse-string
              :string string
@@ -105,7 +106,7 @@ desired name for use in lisp."
 
 (defun convert-foreign-tree-to-list (tree &key produce-cst name-generator
                                      &aux did-visit-children parse-stack)
-  (with-tree-cursor (cursor tree)
+  (with-ts-cursor (cursor tree)
     ;; Closely follows tree-sitter-cli parse
     ;; implementation with a modification to
     ;; allow for production of the full CST.
@@ -132,11 +133,8 @@ desired name for use in lisp."
                    (let ((start-point (ts-node-start-point-pointer node))
                          (end-point (ts-node-end-point-pointer node))
                          (type (funcall name-generator (ts-node-type-pointer node)))
-                         (field-name-ptr (ts-tree-cursor-current-field-name cursor)))
-                     (unless (sb-alien:null-alien field-name-ptr)
-                       ;; TODO
-                       (let ((field-name (deref field-name-ptr)))
-                         (setf type (list (funcall name-generator field-name) type))))
+                         (field-name (ts-tree-cursor-current-field-name cursor)))
+                     (when field-name (setf type (list (funcall name-generator field-name) type)))
                      (push (make-node :type type :range (list start-point end-point))
                            parse-stack)))
                  (setf did-visit-children
