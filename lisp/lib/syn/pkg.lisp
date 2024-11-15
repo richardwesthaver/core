@@ -7,25 +7,24 @@
 ;;; Code:
 (defpackage :syn
   (:use :cl :std :obj :parse :tree-sitter)
-  (:export))
+  (:export
+   #:syntax))
 
 (defpackage :syn/lint
   (:use :cl :std :syn)
   (:export :lint))
 
+(defpackage :syn/ts
+  (:use :cl :std :syn :tree-sitter)
+  (:export :lint))
+
+(defpackage :syn/lang
+  (:use :cl :std :syn)
+  (:export :language :lang))
+
 (in-package :syn)
-
-(defvar *syntax-tree*)
-
 (defclass syntax () ())
 
-;; does not need tree-sitter lang loaded before use
-(defclass tree-sitter-syntax (syntax)
-  ((path :accessor path)
-   info))
-
-;; needs tree-sitter lang loaded before use
-(defstruct tree-sitter-syntax-info
-  version
-  symbols
-  fields)
+(in-package :syn/lang)
+(defclass language () ())
+(defgeneric lang (self))

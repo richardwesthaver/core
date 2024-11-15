@@ -19,7 +19,7 @@
     (is (= (ts-language-version lang) 14))
     (is (ts-language-field-count lang))
     (is (ts-language-symbol-count lang))
-    (is (ts-language-symbol-name lang (sb-alien:make-alien sb-alien:unsigned-int 0)))
+    (is (ts-language-symbol-name lang (sb-alien:make-alien sb-alien:unsigned-int)))
     (is (ts-parser-set-language parser lang))
     (let ((new-tree (ts-parser-parse-string parser nil "[1, null]" 9)))
       (print (ts-tree-language new-tree))

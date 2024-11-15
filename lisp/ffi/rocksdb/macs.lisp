@@ -28,6 +28,7 @@
 ;;; Options
 (defmacro with-latest-options (db-path (db-opts-var cf-names-var cf-opts-var) &body body)
   ;;  TODO 2024-09-26: ignore unknown?
+  (declare (optimize speed))
   (with-gensyms (db-opts cf-names cf-opts)
     `(with-alien ((,db-opts (* rocksdb-options))
                   (,cf-names (* c-string))

@@ -34,6 +34,18 @@
   ())
 
 ;; util
+(defmacro with-ts-parser ((sym &key lang) &body body)
+  (let ((%lang (when lang (language-module lang))))
+    `(let ((,sym (ts-parser-new))
+           ,@(if (atom lang) nil `(,(pop lang) ,%lang)))
+       ,@(when lang `(ts-parser-set-language ,%lang))
+       (unwind-protect (progn ,@body)
+         (ts-parser-delete ,sym)))))
+
+(defmacro with-ts-lang (lang sym &body body)
+  `(let ((,sym (language-module ,lang)))
+     ,@body))
+
 (defmacro with-ts-node ((var node) &body forms)
   `(let ((,var ,node))
      (when (sb-alien:null-alien ,var)

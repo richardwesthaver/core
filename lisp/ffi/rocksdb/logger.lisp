@@ -2,6 +2,10 @@
 
 ;; RocksDB Logger Lisp FFI
 
+;;; Commentary:
+
+;; ref: https://github.com/facebook/rocksdb/wiki/Logger
+
 ;;; Code:
 (in-package :rocksdb)
 

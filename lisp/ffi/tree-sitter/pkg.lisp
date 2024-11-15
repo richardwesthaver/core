@@ -84,7 +84,10 @@
    :ts-tree-cursor-current-node-pointer
    :ts-node-start-point-pointer
    :ts-node-end-point-pointer
-   :ts-node-type-pointer))
+   :ts-node-type-pointer
+   :with-ts-parser
+   :with-ts-lang
+   :language-module))
 
 (in-package :tree-sitter)
 
