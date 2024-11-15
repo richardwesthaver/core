@@ -573,7 +573,6 @@ DB where K and V are both Lisp strings."
                '(alien (* rocksdb-comparator))))
     (is (typep (rocksdb-comparator-with-ts-create state destructor compare compare-with-ts compare-without-ts name)
                '(alien (* rocksdb-comparator))))
-    ;; TODO - need to test with column-family options
     (with-opt (o (test-opts) nil)
       (rocksdb-options-set-comparator
        o

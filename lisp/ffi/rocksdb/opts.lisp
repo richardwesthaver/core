@@ -229,8 +229,6 @@
 (define-opt-accessor rocksdb-options max-manifest-file-size size-t)
 (define-opt-accessor rocksdb-options table-cache-numshardbits int)
 (define-opt-accessor rocksdb-options arena-block-size size-t)
-;; TODO 2024-04-17: 
-;; may need to be an int -- check src
 (define-opt-accessor rocksdb-options use-fsync int)
 (define-alien-routine rocksdb-options-set-db-log-dir void
   (opts (* rocksdb-options))
