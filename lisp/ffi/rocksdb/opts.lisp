@@ -231,7 +231,7 @@
 (define-opt-accessor rocksdb-options arena-block-size size-t)
 ;; TODO 2024-04-17: 
 ;; may need to be an int -- check src
-(define-opt-accessor rocksdb-options use-fsync boolean)
+(define-opt-accessor rocksdb-options use-fsync int)
 (define-alien-routine rocksdb-options-set-db-log-dir void
   (opts (* rocksdb-options))
   (dir c-string))

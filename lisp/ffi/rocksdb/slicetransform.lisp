@@ -32,13 +32,13 @@
 
 (define-alien-type rocksdb-in-domain-function
   (function boolean
-            (* t) ;;?
+            (* t) ;;state
             (array unsigned-char) ;;key
             size-t)) ;;len
 
 (define-alien-type rocksdb-in-range-function
   (function unsigned-char
-            (* t) ;;?
+            (* t) ;;state
             (array unsigned-char) ;;key 
             size-t)) ;;len
 

@@ -89,6 +89,20 @@ which simply expands to: (SETF EXPANSION %VAL)."
        (defmethod ,name ,args ,@expansion)
        (defmethod (setf ,name) ,(push `(new ,type) args) (setf ,@expansion new)))))
 
+(defmacro defaccessor* (name args expansion setf-args &body setf-expansion)
+    "Handle special case DEFACCESSOR forms. In higher-level packages we will
+ocassionally have a more complex SETF expansion so here we support 2 additional arguments. 
+
+The first specifies arguments for the SETF expansion in addition to the simple
+accessor, and the second specifies the setf expansion.
+
+Due to these changes the EXPANSION argument is downgraded from an &rest
+argument."
+  (eval-always
+    `(progn
+       (defmethod ,name ,args ,expansion)
+       (defmethod (setf ,name) ,setf-args ,@setf-expansion))))
+       
 ;; closer-mop
 (defun ensure-finalized (class &optional (errorp t))
   (if (typep class 'class)

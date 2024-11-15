@@ -16,11 +16,17 @@
        (progn ,@body))))
 
 ;;; opts
-(defmacro rdb-opt-setter (key)
-  `(find-symbol (format nil "~:@(rocksdb-options-set-~x~)" ,key) :rocksdb))
-
-(defmacro rdb-opt-getter (key)
-  `(find-symbol (format nil "~:@(rocksdb-options-get-~x~)" ,key) :rocksdb))
+(macrolet ((%def-opt-finders (name opt)
+             `(progn 
+                (defmacro ,(symbolicate name '-setter) (key)
+                  `(find-symbol (format nil "~:@(~A-SET-~A~)" ',',opt ,key) :rocksdb))
+                (defmacro ,(symbolicate name '-getter) (key)
+                  `(find-symbol (format nil "~:@(~A-GET-~A~)" ',',opt ,key) :rocksdb)))))
+  (%def-opt-finders rdb-opt rocksdb-options)
+  (%def-opt-finders rdb-writeopt rocksdb-writeoptions)
+  (%def-opt-finders rdb-readopt rocksdb-readoptions)
+  (%def-opt-finders rdb-compactopt rocksdb-compactoptions)
+  (%def-opt-finders rdb-backupopt rocksdb-backup-engine-options))
 
 ;;; db
 (defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)

@@ -403,7 +403,21 @@ set *errptr to a malloc()ed error message.
    :rocksdb-compare-ts-function
    :rocksdb-transactiondb-close-base-db
    :rocksdb-transactiondb-get-prepared-transactions
-   :rocksdb-transactiondb-close))
+   :rocksdb-transactiondb-close
+   :*rocksdb-destructor-callback*
+   :*rocksdb-delete-value-callback*
+   :*rocksdb-name-callback*
+   :*rocksdb-log-callback*
+   :rocksdb-compaction-level
+   :*rocksdb-readoptions*
+   :*rocksdb-writeoptions*
+   :*rocksdb-flushoptions*
+   :*rocksdb-lru-cache-options*
+   :*rocksdb-compactoptions*
+   :*rocksdb-backup-engine-options*
+   :*rocksdb-set-only-backup-engine-options*
+   :*rocksdb-set-only-readoptions*
+   :*rocksdb-set-only-options*))
 
 (in-package :rocksdb)
 

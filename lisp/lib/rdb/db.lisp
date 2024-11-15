@@ -6,14 +6,14 @@
 (in-package :rdb)
 
 (defvar *rocksdb-backend-options* '(columns temp path (open t) 
-                                    destroy (close t) backup secondary 
+                                    destroy (close t) backup secondary
                                     snapshots sap))
 
 (defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store schema)))
 
 (defmethod set-database-backend-option ((db rdb) (key (eql :close)) (val (eql :auto)))
   "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
-  (sb-ext:finalize db (lambda () (shutdown-db db :wait t))))
+  (sb-ext:finalize db (lambda () (shutdown-db db))))
 
 (set-database-backend :rocksdb *rocksdb-backend-options* 
                       #'load-rocksdb)
@@ -86,13 +86,17 @@
 (defmethod get-value (elt (self rdb-database))
   (get-value elt (db self)))
 
-(defmethod start-transaction ((self rdb-database) transaction
+(defmethod start-transaction ((self rdb-database) (transaction rdb-transaction)
                               &key (write-opts (rocksdb-writeoptions-create))
                                    (name (name self))
                                    (transaction-opts (rocksdb-transaction-options-create))
                                    (transactiondb-opts (rocksdb-transactiondb-options-create)))
   (with-errptr e
-    (let ((txn-db (rocksdb-transactiondb-open (sap (db-opts self)) transactiondb-opts name e)))
+    (let ((txn-db (or (db-txn self)
+                      (setf (db-txn self)
+                            (rocksdb-transactiondb-open 
+                             (sap (db-opts self)) 
+                             transactiondb-opts name e)))))
       (rocksdb-transaction-begin txn-db write-opts transaction-opts transaction))))
 
 (defmethod commit-transaction ((self rdb-database) txn &key)

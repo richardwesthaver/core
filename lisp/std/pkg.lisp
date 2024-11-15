@@ -408,7 +408,7 @@
    :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
    :subclassp :write-object :start :started-p 
    :stop :stopped-p :shutdown :reset
-   :defaccessor :defmethods))
+   :defaccessor :defaccessor* :defmethods))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)

@@ -134,7 +134,9 @@
    :rdb-transaction-db
    :rdb-transaction
    :rdb-secondary-db
-   :rdb-backup-db))
+   :rdb-backup-db
+   :open-db-secondary-raw
+   :create-checkpoint-raw))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

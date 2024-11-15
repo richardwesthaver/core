@@ -128,12 +128,12 @@ to initialize the instance with custom configuration."
       (loop for opt in opts
             for i below n
             do (setf (deref cf-opts i) opt))
-      (with-errptr* (err 'rocksdb-cf-error :cf name)
+      (with-errptr* (err 'cf-error :cf name)
         (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
           (values db cf-handles))))))
 
 (defun create-cf-raw (db name &optional (opt (rocksdb-options-create)))
-  (with-errptr* (err 'rocksdb-cf-error :db db :cf name)
+  (with-errptr* (err 'cf-error :db db :cf name)
     (rocksdb-create-column-family db opt name err)))
 
 (defun destroy-cf-raw (cf)
@@ -222,9 +222,9 @@ to initialize the instance with custom configuration."
   (when-let ((v (iter-val-raw iter)))
     (octets-to-string v)))
 
-;;; Backup Engine
+;;; Backup DB
 (defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
-  (with-errptr* (err 'open-backup-engine-error :db be-path)
+  (with-errptr* (err 'open-backup-db :db be-path)
     (let ((be-path (if (pathnamep be-path)
                        (namestring be-path)
                        be-path)))
@@ -238,11 +238,11 @@ to initialize the instance with custom configuration."
     (rocksdb-backup-engine-create-new-backup be db err)))
 
 (defun restore-from-latest-backup-raw (be db-path backup-path &optional (opt (rocksdb-restore-options-create)))
-  (with-errptr* (err 'rdb-alien-error)
+  (with-errptr* (err 'open-db-error)
     (rocksdb-backup-engine-restore-db-from-latest-backup be db-path backup-path opt err)))
 
 (defun restore-from-backup-raw (be db-path backup-path backup-id &optional (opt (rocksdb-restore-options-create)))
-  (with-errptr* (err 'rdb-alien-error)
+  (with-errptr* (err 'open-db-error)
     (rocksdb-backup-engine-restore-db-from-backup be db-path backup-path opt backup-id err)))
 
 ;;; Snapshot
@@ -318,7 +318,7 @@ to initialize the instance with custom configuration."
 
 ;;; Transactions
 (defun open-transactiondb-raw (opts topts name)
-  (with-errptr* (e 'rdb-alien-error)
+  (with-errptr* (e 'open-db-error)
     (rocksdb-transactiondb-open opts topts name e)))
 
 (defun commit-transaction-raw (txn)
@@ -341,3 +341,8 @@ to initialize the instance with custom configuration."
 (defun create-checkpoint-raw (chk dir &optional log-size-for-flush)
   (with-errptr* (e 'rdb-alien-error)
     (rocksdb-checkpoint-create chk dir log-size-for-flush e)))
+
+;;; Secondary
+(defun open-db-secondary-raw (opts name sname)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-open-as-secondary opts name sname e)))

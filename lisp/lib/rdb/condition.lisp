@@ -8,12 +8,12 @@
 (eval-always
   (deferror rdb-error ()
       ((message :initarg :message
-                :reader rdb-error-message))
+                :reader error-message))
       (:auto t)
       (:documentation "Error signaled by the RDB system.")))
 
 (define-condition rdb-alien-error (rdb-error rocksdb-c-error)
-  ((db :initarg :db :reader rdb-error-db))
+  ((db :initarg :db :reader error-db))
   (:documentation "Error signaled by RDB C subsystem."))
 
 (defmethod print-object ((obj rdb-error) stream)
@@ -53,15 +53,15 @@
   (:documentation "Error signaled while destroying a backup engine."))
 
 (define-condition cf-error (rdb-alien-error)
-  ((cf :initarg :cf :reader rdb-error-cf))
+  ((cf :initarg :cf :reader error-cf))
   (:documentation "Error signaled in the context of a Column Family."))
 
 (define-condition put-kv-error (rdb-error)
-  ((kv :initarg :kv :reader rdb-error-kv))
+  ((kv :initarg :kv :reader error-kv))
   (:documentation "Error signaled while processing a PUT-KV request"))
 
 (define-condition get-kv-error (rdb-error)
-  ((key :initarg :key :reader key))
+  ((key :initarg :key :reader error-key))
   (:documentation "Error signaled while processing a GET-KV request"))
 
 (define-condition opt-handler-missing (warning rdb-error)

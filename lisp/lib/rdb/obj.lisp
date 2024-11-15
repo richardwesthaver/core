@@ -1,113 +1,122 @@
 (in-package :rdb)
 
 ;;; rdb-opts
-(defvar *rdb-opts-lookup-table*
-  (let ((table (make-hash-table :test #'equal)))
-    (mapc (lambda (x) (setf (gethash (car x) table) (cdr x)))
-          (loop for y across *rocksdb-options*
-                collect (cons y (format nil "~:@(rocksdb-options-set-~x~)" y))))
-    table))
+(flet ((%mktbl (accessor opts)
+         (let ((table (make-hash-table :test #'equal)))
+           (mapc (lambda (x) (setf (gethash (car x) table) (cdr x)))
+                 (loop for y across opts
+                       collect (cons y (format nil "~:@(~A-set-~x~)" accessor y))))
+           table)))
+  (defvar *rdb-opts-table*
+    (%mktbl 'rocksdb-options *rocksdb-options*))
+  (defvar *rdb-readopts-table*
+    (%mktbl 'rocksdb-readoptions *rocksdb-readoptions*))
+  (defvar *rdb-writeopts-table*
+    (%mktbl 'rocksdb-writeoptions *rocksdb-writeoptions*))
+  (defvar *rdb-backupopts-table*
+    (%mktbl 'rocksdb-backup-engine-options *rocksdb-backup-engine-options*))
+  (defvar *rdb-compactopts-table*
+    (%mktbl 'rocksdb-compactoptions *rocksdb-compactoptions*)))
 
-(defun %set-rocksdb-option (opt key val)
-  (funcall (rdb-opt-setter key) opt val))
+(macrolet ((%def-opt (name &rest set-only)
+             `(progn
+                (defun ,(symbolicate '%set- name) (opt key val)
+                  (funcall (,(symbolicate name '-setter) key) opt val))
+                (defun ,(symbolicate '%get- name) (opt key)
+                  (if-let ((g (,(symbolicate name '-getter) key)))
+                    (funcall g opt)
+                    (warn 'opt-handler-missing :message key)))
+                (defun ,(symbolicate '% name '-no-getter-p) (key)
+                  (let ((k (typecase key
+                             (string (string-downcase key))
+                             (symbol (string-downcase (symbol-name key)))
+                             (t (string-downcase (format nil "~s" key))))))
+                    (memq t (mapcar
+                             (lambda (x) (equal k x))
+                             ',set-only)))))))
+  (%def-opt rdb-opt "parallelism" "enable-statistics")
+  (%def-opt rdb-readopt)
+  (%def-opt rdb-writeopt)
+  (%def-opt rdb-backupopt)
+  (%def-opt rdb-compactopt))
 
-(defun %get-rocksdb-option (opt key)
-  (if-let ((g (rdb-opt-getter key)))
-    (funcall g opt)
-    (warn 'opt-handler-missing :message key)))
-
-(defun opt-no-setter-p (k)
-  (let ((k (typecase k
-             (string (string-downcase k))
-             (symbol (string-downcase (symbol-name k)))
-             (t (string-downcase (format nil "~s" k))))))
-    (member t
-            (mapcar (lambda (x) (equal k x)) (list "parallelism" "enable-statistics")))))
-
-(defclass rdb-opts ()
-  ((table :initarg :table :type hash-table :accessor db-opts)
-   (sap :initform nil :initarg :sap :type (or null alien) :accessor sap)))
-
-(defmethod initialize-instance ((self rdb-opts) &rest initargs &key &allow-other-keys)
-  (with-slots ((%sap sap) (%table table)) self
-    ;; initialize slots - remember, initargs doesn't refer to slot
-    ;; names, they're opt names.
-    (setf %table (or (cdr (remprop 'initargs :table)) (make-hash-table :test 'equal))
-          %sap (or (cdr (remprop 'initargs :sap)) (rocksdb-options-create)))
-    (loop for (k v) on initargs by #'cddr while v
-          do (let ((k (typecase k
-                        (string (string-downcase k))
-                        (symbol (string-downcase (symbol-name k)))
-                        (t (string-downcase (format nil "~s" k))))))
-               (setf (db-opt self k) v)))
-    self))
-
-(defun make-rdb-opts (&rest values)
-  (let ((opts (apply #'make-instance 'rdb-opts values)))
-    (push-sap* opts)
-    opts))
-
-(defun make-rdb-opts* (alien)
-  "Coerce ALIEN into an RDB-OPTS struct. This function doesn't populate the
-values in Lisp, just binds the sap."
-  (make-instance 'rdb-opts :sap alien))
-
-(defmethod set-db-opt ((self t) key val &key push)
-  (setf (db-opt self key :push push) val))
-
-(defmethod db-opt ((self rdb-opts) key)
-  "Return the current value of KEY in SELF if found, else return nil."
-  (gethash key (db-opts self)))
-
-(defmethod (setf db-opt) (val (self rdb-opts) key &key push)
-  "Set the VAL of KEY in SELF with '(setf (gethash SELF KEY) VAL)'."
-  (prog1 (setf (gethash key (db-opts self)) val)
-    (when push (push-sap self key))))
-
-(defmethod push-sap ((self rdb-opts) key)
-  "Push KEY from slot :TABLE to the instance :SAP."
-  (%set-rocksdb-option (sap self) key (db-opt self key)))
-
-(defmethod push-sap* ((self rdb-opts))
-  "Initialized the SAP slot with values from TABLE."
-  (with-slots (table) self
-    (loop for k in (hash-table-keys table)
-          ;; note how we don't handle any special cases here - we can
-          ;; always set an opt but sometimes we can't get it.
-          do (push-sap self k))))
-
-(defmethod pull-sap ((self rdb-opts) key)
-  (setf (gethash key (db-opts self)) (%get-rocksdb-option (sap self) key)))
-
-(defmethod pull-sap* ((self rdb-opts))
-  (with-slots (table) self
-    (loop for k in (hash-table-keys table)
-          unless (opt-no-setter-p k)
-          do (pull-sap self k))
-    table))
-
-(defmethod backfill-opts ((self rdb-opts) &key full)
-  "Backfill the TABLE slot with values from SAP.
+(macrolet ((define-rdb-opt-struct (name opts creator &rest defaults)
+             (let ((%name (symbolicate (string-right-trim "S" name)))
+                   (%make (symbolicate '%make- name)))
+               `(prog1
+                  (defstruct (,name (:constructor ,%make))
+                    (table (make-hash-table :test 'equal) :type hash-table)
+                    (sap nil :type (or null alien)))
+                  (eval-always
+                    (defun ,(symbolicate 'make- name) (&rest opts)
+                      (let ((obj (,%make :sap (,creator))))
+                        (loop for (k v) on opts by #'cddr while v
+                              do (let ((k (typecase k
+                                            (string (string-downcase k))
+                                            (symbol (string-downcase (symbol-name k)))
+                                            (t (string-downcase (format nil "~s" k))))))
+                                   (setf (db-opt obj k) v)))
+                        (push-sap* obj)
+                        obj)))                  
+                  (defun ,(symbolicate 'make- name '*) (alien)
+                    ,(format nil "Coerce ALIEN into a ~A struct. This function doesn't populate the
+values in Lisp, just binds the sap." name)
+                    (,%make :sap alien))
+                  (defaccessor* db-opt 
+                      ((self ,name) key)
+                    (gethash key (db-opts self))
+                    (val (self ,name) key &key push)
+                    (prog1 (setf (gethash key (db-opts self)) val)
+                      (when push (push-sap self key))))
+                  (defmethod push-sap ((self ,name) key)
+                    "Push KEY from slot :TABLE to the instance :SAP."
+                    (,(symbolicate '%set- %name) (sap self) key (db-opt self key)))
+                  (defmethod push-sap* ((self ,name))
+                    "Initialized the SAP slot with values from TABLE."
+                    (loop for k in (hash-table-keys (db-opts self))
+                          ;; note how we don't handle any special cases here - we can
+                          ;; always set an opt but sometimes we can't get it.
+                          do (push-sap self k)))
+                  (defmethod pull-sap ((self ,name) key)
+                    (setf (gethash key (db-opts self)) (,(symbolicate '%get- %name) (sap self) key)))
+                  (defmethod pull-sap* ((self ,name))
+                    (let ((table (db-opts self)))
+                      (loop for k in (hash-table-keys table)
+                            unless (,(symbolicate '% %name '-no-getter-p) k)
+                            do (pull-sap self k))
+                      table))
+                  (defmethod backfill-opts ((self ,name) &key full)
+                    "Backfill the TABLE slot with values from SAP.
 
 When FULL is non-nil, retrieve the full set of options available, not
 just the keys currently present in TABLE."
-  (if full
-      (loop for k across *rocksdb-options*
-            unless (opt-no-setter-p k)
-            do (pull-sap self k))
-      (pull-sap* self))
-  (db-opts self))
+                    (if full
+                        (loop for k across ,opts
+                              unless (,(symbolicate '% %name '-no-getter-p) k)
+                              do (pull-sap self k))
+                        (pull-sap* self))
+                    (db-opts self))
+                  ;; (defun ,(symbolicate 'default- name) ())
+                  (defaccessor (sap) ((self ,name)) (,(symbolicate name '-sap) self))
+                  (defaccessor (db-opts) ((self ,name)) (,(symbolicate name '-table) self))
+                  (defun ,(symbolicate 'default- name) ()
+                    (,(symbolicate 'make- name) ,@defaults))
+                  (defvar ,(symbolicate '*default- name '*) (,(symbolicate 'default- name)))))))
+  (define-rdb-opt-struct rdb-opts *rocksdb-options* rocksdb-options-create
+    :create-if-missing t :create-missing-column-families t :parallelism (num-cpus))
+  (define-rdb-opt-struct rdb-readopts *rocksdb-readoptions* rocksdb-readoptions-create)
+  (define-rdb-opt-struct rdb-writeopts *rocksdb-writeoptions* rocksdb-writeoptions-create)
+  (define-rdb-opt-struct rdb-compactopts *rocksdb-compactoptions* rocksdb-compactoptions-create)
+  (define-rdb-opt-struct rdb-backupopts *rocksdb-backup-engine-options* rocksdb-backup-engine-options-create))
 
-(defun default-rdb-opts () 
-  (make-rdb-opts :create-if-missing t :create-missing-column-families t
-                 :parallelism (num-cpus)))
+(defmethod set-db-opt ((self t) key val &key push)
+  (setf (db-opt self key :push push) val))
 
 (defvar *default-kv* (make-kv))
 
 ;;; Iterator
 (defstruct rdb-iter (sap nil :type (or null alien)))
-
-(defmethod sap ((self rdb-iter)) (rdb-iter-sap self))
+(defaccessor (sap) ((self rdb-iter)) (rdb-iter-sap self))
 
 (defmethod iter-valid-p ((self rdb-iter))
   (rocksdb-iter-valid (rdb-iter-sap self)))
@@ -182,7 +191,6 @@ supplied by the user from the default value."
 ;;; rdb-stats
 (defstruct (rdb-stats (:constructor make-rdb-stats (&optional sap)))
   (sap nil :type (or null alien)))
-
 (defaccessor (sap) ((self rdb-stats)) (rdb-stats-sap self))
 
 ;;; metadata
@@ -192,7 +200,6 @@ supplied by the user from the default value."
   (level-count 7 :type fixnum)
   (file-count 0 :type fixnum)
   (sap nil :type (or null alien)))
-
 (defaccessor (sap) ((self rdb-cf-metadata)) (rdb-cf-metadata-sap self))
 
 (defmethod db-metadata ((self rdb-cf-metadata) &optional (level 0))
@@ -221,7 +228,6 @@ supplied by the user from the default value."
   (size 0 :type fixnum)
   (file-count 0 :type fixnum)
   (sap nil :type (or null alien)))
-
 (defaccessor (sap) ((self rdb-level-metadata)) (rdb-level-metadata-sap self))
   
 (defmethod db-metadata ((self rdb-level-metadata) &optional (file 0))
@@ -253,7 +259,6 @@ supplied by the user from the default value."
   (smallestkey 0 :type fixnum)
   (largestkey 0 :type fixnum)
   (sap nil :type (or null alien)))
-
 (defaccessor (sap) ((self rdb-sst-file-metadata)) (rdb-sst-file-metadata-sap self))
   
 (defmethod print-object ((self rdb-sst-file-metadata) stream)
@@ -287,17 +292,14 @@ supplied by the user from the default value."
   (snapshots #() :type (array alien)))
 
 (defaccessor (sap) ((self rdb)) (rdb-sap self))
-
-(defvar *default-rdb-opts* (default-rdb-opts))
-
-(defmethod print-object ((self rdb) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream ":cfs ~A :open ~A" (length (rdb-cfs self)) (db-open-p self))))
-
 (defaccessor (name) ((self rdb)) (rdb-name self))
 (defaccessor (columns) ((self rdb)) (rdb-cfs self))
 (defaccessor (db) ((self rdb)) (sap self))
 (defaccessor (db-opts) ((self rdb)) (rdb-opts self))
+
+(defmethod print-object ((self rdb) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream ":cfs ~A :open ~A" (length (rdb-cfs self)) (db-open-p self))))
 
 (defmethod db-open-p ((self rdb))
   (when (db self) t))
@@ -384,7 +386,7 @@ internal sap slots are initialized."
   (with-slots (opts) self
     (if full
         (loop for k across *rocksdb-options*
-              unless (opt-no-setter-p k)
+              unless (%rdb-opt-no-getter-p k)
               do (pull-sap opts k))
         (pull-sap* opts))
     (db-opts opts)))
@@ -427,14 +429,12 @@ internal sap slots are initialized."
     (unless (null sap)
       (setf sap (destroy-cf-raw sap)))))
 
-(defmethod (setf db-opt) (new (self rdb) key &key push)
-  (with-slots (opts) self
-    (setf (db-opt opts key :push push) new)))
-
-(defmethod db-opt ((self rdb) key)
-  (with-slots (opts) self
-    (db-opt opts key)))
-
+(defaccessor* db-opt 
+    ((self rdb) key) (db-opt (rdb-opts self) key)
+  (new (self rdb) key &key push)
+  (setf (db-opt (rdb-opts self) key) new)
+  (when push (push-sap self key)))
+  
 (defmethod push-opts ((self rdb))
   (with-slots (opts) self
     (push-sap* opts)))
@@ -611,20 +611,53 @@ internal sap slots are initialized."
 
 ;;; Transaction DB
 (defstruct rdb-transaction-db sap snapshots opts)
+(defaccessor (sap) ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
+(defaccessor (db-opts) ((self rdb-transaction-db)) (rdb-transaction-db-opts self))
+
+(defmethod open-transaction-db ((self rdb) &key path opts)
+  (make-rdb-transaction-db
+   :sap (open-transactiondb-raw (db-opts self) opts path)
+   :opts opts))
+
+(defmethod close-transaction-db ((self rdb-transaction-db))
+  (rocksdb-transactiondb-close self))
 
 ;;; Transaction
 (defstruct rdb-transaction sap savepoint)
+(defaccessor (sap) ((self rdb-transaction)) (rdb-transaction-sap self))
 
 ;;; Secondary DB
 (defstruct rdb-secondary-db sap opts)
+(defaccessor (sap) ((self rdb-secondary-db)) (rdb-secondary-db-sap self))
+(defaccessor (db-opts) ((self rdb-secondary-db)) (rdb-secondary-db-opts self))
+
+(defmethod open-secondary-db ((self rdb) &key path opts)
+  (make-rdb-secondary-db 
+   :sap (open-db-secondary-raw opts (name self) path)
+   :opts opts))
+
+(defmethod close-transaction-db ((self rdb-transaction-db))
+  (rocksdb-close (sap self)))
 
 ;;; Backup DB
 (defstruct rdb-backup-db sap opts)
+(defaccessor (sap) ((self rdb-backup-db)) (rdb-backup-db-sap self))
+(defaccessor (db-opts) ((self rdb-backup-db)) (rdb-backup-db-opts self))
+
+(defmethod open-backup-db ((self rdb-backup-db) &key path)
+  (setf (sap self) (open-backup-engine-raw path (db-opts self))))
+        
+(defmethod close-backup-db ((self rdb-backup-db))
+  (close-backup-engine-raw (sap self)))
 
 ;;; Write Batches
 (defstruct rdb-writebatch sap)
+(defaccessor (sap) ((self rdb-writebatch)) (rdb-writebatch-sap self))
 
 (defstruct rdb-wbwi sap wb reserved overwrite-key data savepoints params)
+(defaccessor (sap) ((self rdb-wbwi)) (rdb-wbwi-sap self))
 
 ;;; Env
 (defstruct rdb-env sap path threads)
+(defaccessor (sap) ((self rdb-env)) (rdb-env-sap self))
+(defaccessor (path) ((self rdb-env)) (rdb-env-path self))
