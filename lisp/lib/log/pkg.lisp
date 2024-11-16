@@ -81,4 +81,7 @@
    :with-logger
    :log-rotate
    :database-logger
-   :db-sink))
+   :db-sink
+   :alien-logger
+   :alien-source
+   :alien-sink))

@@ -6,40 +6,17 @@
 (in-package :dat/serde)
 (declaim  (optimize speed))
 
-(defgeneric struct-constructor (class)
-  (:documentation "Called to get the constructor name for a struct class. Users
-                  should overload this when they want to serialize
-                  non-standard constructor names. The default constructor
-                  make-xxx will work by default. The argument is an eql style
-                  type: i.e. of type (eql 'my-struct)"))
-
-(defmethod struct-constructor ((class t))
-  (symbol-function (intern (concatenate 'string "MAKE-" (symbol-name class))
-                           (symbol-package class))))
-
 (defvar *no-deserialization-package-found-action* :warn)
 
 (defun translate-and-intern-symbol (symbol-name package-name)
   "Service for the serializer to translate any renamed packages or symbols
    and then intern the decoded symbol."
   (if package-name
-        (let ((package (find-package package-name)))
-          (if package
-              (intern symbol-name package)
-              (progn
-                (case *no-deserialization-package-found-action*
-                  (:warn 
-                   (warn "Couldn't deserialize package ~A based on symbol ~A's home package ~A.
-                         Creating an uninterned symbol" #1=package-name symbol-name #1#))
-                  (:error
-                   (error "Couldn't deserialize package ~A based on symbol ~A's home package ~A."
-                          #2=package-name symbol-name #2#))
-                  (:create
-                   (intern symbol-name 
-                           (make-package package-name :use '(cl))))
-                  (t nil))
-                (make-symbol symbol-name))))
-        (make-symbol symbol-name)))
+      (if-let ((package (find-package package-name)))
+        (intern symbol-name package)
+        (intern symbol-name 
+                (make-package package-name :use '(cl std obj))))
+      (make-symbol symbol-name)))
 
 ;; Constants
 (defconstant +fixnum32+              1)
@@ -539,28 +516,24 @@
            (type (or null string) temp-string)
            (type symbol type))
   ;; Default char-code method
-  (let* ((length (the fixnum (read-int32 (sap-alien (static-vector-pointer (buffer bstream)) (* unsigned-char)))))
-         (pos (the fixnum (file-position bstream))))
-    (file-position bstream length)
+  (let ((length (the fixnum (std/alien::read-alien-signed-byte-32 (sap-alien (static-vector-pointer buf) (* unsigned-char))))))
     (progn
       (let ((string (the string (or temp-string (make-string length :element-type 'character)))))
         (loop for i fixnum from 0 below length do
                  (setf (char string i)
                        (the character 
                             (code-char 
-                             (the fixnum (aref (buffer bstream) 
-                                               (+ pos i)))))))
+                             (the fixnum (aref buf i))))))
         string))))
 
-(defmethod deserialize-string ((type (eql :utf16le)) &optional (buf *default-serde-buffer*) temp-string)
+(defmethod deserialize-string ((type (eql :utf16le)) buf &optional temp-string)
   "All returned strings are simple-strings for, uh, simplicity"
-  (declare (type buf octet-vector))
-  (let* ((length (read-int32 bstream))
+  (let* ((length (std/alien::read-alien-signed-byte-32 buf))
          (string (or temp-string (make-string length :element-type 'character)))
-         (pos (file-position bstream))
+         (pos 0)
          (code 0))
     (macrolet ((next-byte (offset)
-                 `(aref (buffer bstream) (+ (* i 2) pos ,offset))))
+                 `(aref buf (+ (* i 2) pos ,offset))))
       (declare (type simple-string string)
                (type fixnum length pos code))
       (assert (subtypep (type-of string) 'simple-string))
@@ -569,16 +542,15 @@
                (setf code (dpb (next-byte 0) (byte 8 8) 0))
                (setf code (dpb (next-byte 1) (byte 8 0) code))
                (setf (schar string i) (code-char code)))
-      (file-position bstream (* length 2)))
+      (setf pos (* length 2)))
     (the simple-string string)))
 
-(defmethod deserialize-string ((type (eql :utf32le)) (buf *default-serde-buffer*) &optional temp-string)
-  (declare (type buffer-stream bstream))
+(defmethod deserialize-string ((type (eql :utf32le)) buf &optional temp-string)
   (macrolet ((next-byte (offset)
-               `(aref (buffer bstream) (+ (* i 4) pos ,offset))))
-    (let* ((length (read-int32 bstream))
+               `(aref buf (+ (* i 4) pos ,offset))))
+    (let* ((length (std/alien::read-alien-signed-byte-32 buf))
            (string (or temp-string (make-string length :element-type 'character)))
-           (pos (file-position bstream))
+           (pos 0)
            (code 0))
       (declare (type string string)
                (type fixnum length pos code))
@@ -590,7 +562,7 @@
                (setf code (dpb (next-byte 2) (byte 8 8) code))
                (setf code (dpb (next-byte 3) (byte 8 0) code))
                (setf (char string i) (code-char code)))
-      (file-position bstream (* length 4))
+      (setf pos (* length 4))
       (the simple-string string))))
 
 (defun deser (buf-str sc &optional oid-only)

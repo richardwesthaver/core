@@ -25,7 +25,8 @@
    :find-slot-defs-by-type
    :find-slot-def-names-by-type
    :struct-slots-and-values
-   :slots-and-values))
+   :slots-and-values
+   :struct-constructor))
 
 (defpackage :obj/meta/stealth
   (:nicknames :meta/stealth :stealth)
@@ -221,6 +222,17 @@
         (find-class 'standard-generic-function)
         (find-class 'standard-method)
         (find-class 'built-in-class)))
+
+(defgeneric struct-constructor (class)
+  (:documentation "Called to get the constructor name for a struct class. Users
+                  should overload this when they want to serialize
+                  non-standard constructor names. The default constructor
+                  make-xxx will work by default. The argument is an eql style
+                  type: i.e. of type (eql 'my-struct)"))
+
+(defmethod struct-constructor ((class t))
+  (symbol-function (intern (concatenate 'string "MAKE-" (symbol-name class))
+                           (symbol-package class))))
 
 ;;; From ARNESI - Messing with the MOP
 

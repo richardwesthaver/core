@@ -880,12 +880,12 @@
 ;; TODO 2024-11-07: 
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
-  (let ((oid ))
-    (with-alien ((oid (* unsigned-char) (make-alien unsigned-char 4)))
-      (write-fixnum32 oid (the fixnum (oid instance)))
-      (ser name oid self)
-      (let ((ret (get-val (db self) 
-  (ensure-transaction (:store self)))
+  (with-alien ((oid (* unsigned-char) (make-alien unsigned-char 4)))
+    (std/alien::write-alien-unsigned-byte-32 oid (the (unsigned-byte 32) (oid instance)))
+    (ser name oid self)
+    (let ((ret (get-val (db self) oid)))
+      (ensure-transaction (:store self)
+        ret))))
 
 (defmethod stored-slot-writer ((self rdb-store) new-value instance name)
   (ensure-transaction (:store self)))
