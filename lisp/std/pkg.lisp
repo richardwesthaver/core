@@ -258,11 +258,20 @@
    :cpuid
    :cpu-vendor))
 
+(defpkg :std/serde
+  (:use :cl)
+  (:import-from :std/named-readtables :parse-body)
+  (:import-from :std/macs :when-let :once-only)
+  (:import-from :std/sym :symbolicate :with-gensyms)
+  (:import-from :std/type :octet-vector)
+  (:export :define-serde :*lisp-objects*))
+
 (defpkg :std/alien
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :with-gensyms)
   (:import-from :std/sys :little-endian-p :32-bit-p)
-  (:import-from :std/type :octet-vector)
+  (:import-from :std/type :octet-vector :octet)
+  (:import-from :std/serde :define-serde)
   (:import-from :sb-alien :sap+)
   (:export
    :setfa
@@ -293,6 +302,8 @@
    :num-cpus
    :*cpus*
    :alien-or-lisp-octets
+   :read-alien
+   :write-alien
    :loff-t
    :pid-t
    :uid-t

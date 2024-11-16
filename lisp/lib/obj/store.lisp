@@ -190,6 +190,72 @@
              (remove-if #'null (mapcar #'init-slot? diff))))
     (apply #'shared-initialize instance (compute-init-slots) nil)))
 
+(defmethod change-db-instance ((current stored-object) previous
+                               new-schema old-schema)
+  "Change a database instance from one schema & class to another
+   These are different objects with the same oid"
+  (let ((sc (get-store current))
+        (oid (oid current))
+        (diff (schema-diff new-schema old-schema)))
+    (ensure-transaction (:store-controller sc)
+      ;; do we need to pass the persistent object?  Transient ops require previous?
+      (awhen (upgrade-schema old-schema)
+        (apply-schema-change-fn current it old-schema))
+      ;; Handle changed slots
+      (loop for entry in diff do
+           (change-instance-slot sc current previous (diff-type entry) (diff-recs entry)))
+      ;; Initialize new slots (is this done by default?)
+      (initialize-new-slots current diff)
+      (uncache-instance sc oid)
+      (set-instance-schema-id sc oid (id new-schema)))))
+
+(defmethod change-instance-slot (sc current previous (type (eql :change)) recs)
+  "Handle changes in class type"
+;; TODO
+;;   (print recs)
+;;   (dump-btree (instance-table sc))
+;;   (dump-index (index-table sc))
+  (destructuring-bind (old-rec new-rec) recs
+    (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
+      (with-slots ((new-type type) (new-name name) (new-args args)) new-rec
+        (cond ;; If it was not indexed, and now is, we have to notify the index of the new value (?)
+          ((and (member old-type '(:stored :cached))
+                (eq new-type :indexed) (slot-boundp previous old-name))
+           (setf (slot-value previous old-name) (slot-value previous old-name)))
+          ;; If the old slot was indexed, we definitely need to unindex it to avoid
+          ;; having the objects hang around in the index
+          ((and (eq old-type :indexed) (eq new-type :indexed)
+                (slot-boundp previous old-name))
+           (unindex-slot-value sc (slot-value previous old-name)
+                               (oid previous) old-name (getf old-args :base))
+           (setf (slot-value current new-name) (slot-value previous old-name)))
+          ((and (eq old-type :indexed) (slot-boundp previous old-name))
+           (unindex-slot-value sc (slot-value previous old-name)
+                               (oid previous) old-name (getf old-args :base)))
+          ;; If it was a stored slot and now isn't, drop it and add the new type back
+          ((and (member old-type '(:stored :indexed :cached))
+                (not (member new-type '(:stored :indexed :cached))))
+           (change-instance-slot sc current previous :rem (list old-rec))
+           (change-instance-slot sc current previous :add (list new-rec)))
+          (t nil))))))
+
+(defmethod change-instance-slot (sc current previous (type (eql :rem)) recs)
+  "Handle slot removal and cleanup of values, such as sets"
+  (declare (ignore current))
+  (with-slots ((prev-type type) (prev-name name) (prev-args args)) (first recs)
+    (cond ((member prev-type '(:stored :cached :indexed))
+           (slot-makunbound previous prev-name))
+          ((eq type :set-valued)
+           (let ((set (and (stored-slot-boundp sc previous prev-name)
+                           (stored-slot-reader sc previous prev-name))))
+             (when set (drop-btree set))
+             (slot-makunbound previous prev-name))))))
+
+(defmethod change-instance-slot (sc current previous (type (eql :add)) recs)
+  "Not needed, new slots are initialized above"
+  (declare (ignore sc current previous recs))
+  nil)
+
 (defgeneric temp-spec (type spec))
 (defgeneric delete-spec (type spec))
 (defgeneric copy-spec (type src dst))
@@ -505,7 +571,7 @@
   (awhen (get-class-store-schema st class) 
     (when (eq (schema:schema-successor it) nil)
       (return-from lookup-schema it)))
-  ;; Lookup persistent version
+  ;; Lookup stored version
   (aif (get-current-db-schema st (class-name class))
        ;; Store it
        (prog1 it

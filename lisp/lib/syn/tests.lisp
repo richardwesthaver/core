@@ -5,12 +5,12 @@
 (defsuite :syn)
 (in-suite :syn)
 
-(deftest ts-sanity ())
-
 (defsuite :syn/gen)
 (in-suite :syn/gen)
+
 (deftest sxp (:skip t))
 (deftest file-headers (:skip t))
+
 (deftest el ())
 (deftest scm ())
 (deftest c ())

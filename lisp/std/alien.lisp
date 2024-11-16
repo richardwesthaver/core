@@ -99,7 +99,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 
 (defun clone-octets-to-alien (lispa alien)
   (declare (optimize (speed 3))
-           (vector lispa))
+           (octet-vector lispa))
   ;; (setf alien (cast alien (array (unsigned 8))))
   (loop for i from 0 below (length lispa)
         do (setf (deref alien i)
@@ -185,144 +185,151 @@ variant associated with this value." type name)
                  `((when (eql found :error) (invalid-enum-value ,val ',name))))
              (values ,val found)))))))
 
-;;; C Char stream readers and writers
+(define-alien-type unsigned-char-pointer (* unsigned-char))
+(define-alien-type char-pointer (* char))
 
-;; from ELEPHANT
+;;; C Char pointer readers and writers
+
+;; inspired by ELEPHANT
 
 ;; all operations are performed on (* unsigned-char)
-(defun read-int32 (buf &optional (offset 0))
-  "Read a 32-bit signed integer from a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum offset))
-  (the (signed-byte 32)
-    (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                 (* (signed 32))))))
-
-(defun read-fixnum32 (buf &optional (offset 0))
-  "Read a 32-bit signed integer from a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum offset))
-  (the fixnum
-    (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                 (* (signed 32))))))
-
-(defun read-fixnum64 (bs)
-  (declare (type (alien (* unsigned-char)) bs))
-  (if (32-bit-p)
-      (let ((pos (the fixnum 0)))
-        ;; 32-bit or less fixnums; need to process as bignums64
-        (let ((first (read-int32 bs pos))
-              (second (read-int32 bs
-                                  (the fixnum (+ pos 4)))))
-          (if (little-endian-p)
-              (+ first (ash second 32))
-              (+ second (ash first 32))))))
-  ;; Native 64-bit fixnums (NOTE: issues with non 32/64 bit fixnums?)
-  (read-int64 bs))
-
-(defun read-int64 (buf &optional (offset 0))
-  "Read a 64-bit signed integer from a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum offset))
-  (the (signed-byte 64)
-    (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                 (* (signed 64))))))
-
-(defun read-uint32 (buf &optional (offset 0))
-  "Read a 32-bit unsigned integer from a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum offset))
-  (the (unsigned-byte 32)
-    (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                 (* (unsigned 32))))))
-
-(defun read-uint64 (buf &optional (offset 0))
-  "Read a 64-bit unsigned integer from a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum offset))
-  (the (signed-byte 64)
-    (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                 (* (signed 64))))))
-
-(defun read-float (buf &optional (offset 0))
-  "Read a single-float from a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum offset))
-  (the single-float
-    (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                 (* single-float)))))
-
-(defun read-double (buf &optional (offset 0))
-  "Read a double-float from a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum offset))
-  (the double-float
-    (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                 (* double-float)))))
-
-(defun write-int32 (buf num &optional (offset 0))
-  "Write a 32-bit signed integer to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type (signed-byte 32) num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* (signed 32)))) num))
-
-(defun write-fixnum32 (buf num &optional (offset 0))
-  "Write a 32-bit signed integer to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* (signed 32)))) num))
-
-(defun write-uint32 (buf num &optional (offset 0))
-  "Write a 32-bit unsigned integer to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type (unsigned-byte 32) num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* (unsigned 32)))) num))
-
-(defun write-int64 (buf num &optional (offset 0))
-  "Write a 64-bit signed integer to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type (signed-byte 64) num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* (signed 64)))) num))
-
-(defun write-fixnum64 (buf num &optional (offset 0))
-  "Write a 32-bit signed integer to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type fixnum num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* (signed 64)))) num))
-
-(defun write-uint64 (buf num &optional (offset 0))
-  "Write a 64-bit unsigned integer to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type (unsigned-byte 64) num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* (unsigned 64)))) num))
-
-(defun write-float (buf num &optional (offset 0))
-  "Write a single-float to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type single-float num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* single-float))) num))
-
-(defun write-double (buf num &optional (offset 0))
-  "Write a double-float to a foreign char buffer."
-  (declare (type (alien (* unsigned-char)) buf)
-           (type double-float num)
-           (type fixnum offset))
-  (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
-                     (* double-float))) num))
+(define-serde alien
+  ((unsigned-char 8) 
+   (:read (vec) 
+          vec))
+  ((signed-byte 64)
+   (:read (buf &optional (offset 0))
+          "Read a 64-bit signed integer from a foreign char buffer."
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the (signed-byte 64)
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* (signed 64))))))
+   (:write (buf num &optional (offset 0))
+           "Write a 64-bit signed integer to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type (signed-byte 64) num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* (signed 64)))) 
+                 num)))
+  ((unsigned-byte 64)
+   (:read (buf &optional (offset 0))
+          "Read a 64-bit unsigned integer from a foreign char buffer."
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the (signed-byte 64)
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* (signed 64))))))
+   (:write (buf num &optional (offset 0))
+           "Write a 64-bit unsigned integer to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type (unsigned-byte 64) num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* (unsigned 64)))) 
+                 num)))
+  (single-float
+   (:read (buf &optional (offset 0))
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the single-float
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* single-float)))))
+   (:write (buf num &optional (offset 0))
+           "Write a single-float to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type single-float num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* single-float))) 
+                 num)))
+  (double-float
+   (:read (buf &optional (offset 0))
+          "Read a double-float from a foreign char buffer."
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the double-float
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* double-float)))))
+   (:write (buf num &optional (offset 0))
+           "Write a double-float to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type double-float num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* double-float))) 
+                 num)))
+  #+x86-64
+  (fixnum 
+   (:read (buf)
+          (declare (type (alien (* unsigned-char)) buf))
+          (read-alien-signed-byte-64 buf))
+   (:write (buf num &optional (offset 0))
+           "Write a 32-bit signed integer to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type fixnum num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* (signed 64)))) 
+                 num)))
+  #+x86
+  (fixnum 
+   (:read (buf &optional (offset 0))
+          "Read a 32-bit signed integer from a foreign char buffer."
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the fixnum
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* (signed 32))))))
+   (:write (buf num &optional (offset 0))
+           "Write a 32-bit signed integer to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type fixnum num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* (signed 32)))) 
+                 num)))
+  ((signed-byte 32)
+   (:read (buf &optional (offset 0))
+          "Read a 32-bit signed integer from a foreign char buffer."
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the (signed-byte 32)
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* (signed 32))))))
+   (:write (buf num &optional (offset 0))
+           "Write a 32-bit signed integer to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type (signed-byte 32) num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* (signed 32)))) 
+                 num)))
+  ((unsigned-byte 32)
+   (:read (buf &optional (offset 0))
+          "Read a 32-bit unsigned integer from a foreign char buffer."
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the (unsigned-byte 32)
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* (unsigned 32))))))
+   (:write (buf num &optional (offset 0))
+           "Write a 32-bit unsigned integer to a foreign char buffer."
+           (declare (type (alien (* unsigned-char)) buf)
+                    (type (unsigned-byte 32) num)
+                    (type fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* (unsigned 32))))
+                 num)))
+  ;; complex types
+  (octet-vector
+   (:read (buf len)
+          (let ((ret (make-array len :element-type 'octet)))
+            (clone-octets-from-alien buf ret len)))
+   (:write (buf vec)
+           (declare (type (alien (* unsigned-char)) buf))
+           (clone-octets-to-alien vec buf))))
 
 (defun offset-char-pointer (p &optional (offset 0))
   "Pointer arithmetic."
@@ -330,13 +337,6 @@ variant associated with this value." type name)
            (type fixnum offset))
   (sap-alien (sap+ (alien-sap p) offset) (* unsigned-char)))
 
-(defmacro byte-length (s)
-  "Return the number of bytes of the internal representation
-of a string."
-  `(etypecase ,s 
-     (base-string (length ,s))
-     (string (* (length ,s) 4))))
-  
 ;; from CFFI
 (defmacro with-alien-slots (vars struct &body body)
   "Create local symbol macros for each var in VARS to reference

@@ -6,6 +6,12 @@
   :serial t
   :components ((:file "pkg")
                (:file "lint")
+               (:file "ts")
+               (:module "lang"
+                :components
+                ((:file "c")
+                 (:file "js")
+                 (:file "rs")))
                (:module "gen"
                 :components
                 ((:file "pkg")

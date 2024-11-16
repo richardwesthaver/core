@@ -12,7 +12,8 @@
   ((btrees :type (or null vector) :accessor btrees)
    (oid-db :type (or null rdb) :accessor oid-db)
    (oid-seq :accessor oid-seq)
-   (cid-seq :accessor cid-seq)))
+   (cid-seq :accessor cid-seq))
+  (:documentation "A RocksDB STORE. Note that the default column family is used to store serialized schemas."))
 
 (defmethod build-btree ((st rdb-store))
   (make-instance 'rdb-btree :store st))
@@ -879,6 +880,11 @@
 ;; TODO 2024-11-07: 
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
+  (let ((oid ))
+    (with-alien ((oid (* unsigned-char) (make-alien unsigned-char 4)))
+      (write-fixnum32 oid (the fixnum (oid instance)))
+      (ser name oid self)
+      (let ((ret (get-val (db self) 
   (ensure-transaction (:store self)))
 
 (defmethod stored-slot-writer ((self rdb-store) new-value instance name)

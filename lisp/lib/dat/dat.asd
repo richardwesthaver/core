@@ -6,7 +6,7 @@
   :components ((:file "pkg")
                (:file "proto")
                (:file "sxp")
-               (:file "serde")
+               ;; (:file "serde")
                (:file "dot")
                (:file "csv")
                (:file "json")

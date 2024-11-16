@@ -36,6 +36,13 @@
 or a character."
   `(or symbol string character))
 
+(defmacro string-byte-length (s)
+  "Return the number of bytes of the internal representation
+of a string."
+  `(etypecase ,s 
+     (base-string (length ,s))
+     (string (* (length ,s) 4))))
+
 (defun ssplit (separator s &key (omit-nulls *omit-nulls*))
   "Split s into substring by separator (cl-ppcre takes a regex, we do not).
 

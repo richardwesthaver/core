@@ -13,13 +13,14 @@
 
 (unless (sb-impl::find-logical-host "CORE" nil)
   (setf (logical-pathname-translations "CORE")
-        `(("tmp;*.*.*"   "/tmp/core/")
+        `(("stash;*.*.*" ,(merge-pathnames "comp/core/.stash/" (user-homedir-pathname)))
+          ("tmp;*.*.*"   "/tmp/core/")
           ("tmp;bench;*.*.*"   "/tmp/core/bench/")
           ("tmp;test;*.*.*"   "/tmp/core/test/")
           ("src;*.*.*"   ,(merge-pathnames "comp/core/" (user-homedir-pathname)))
-          ("misc;*.*.*"   ,(bench-path "misc/"))
+          ("misc;*.*.*"   "/tmp/core/misc/")
           ("tmp;bench;result;*.*.*" "/tmp/core/bench/result/")
           ("tmp;data;*.*.*" "/tmp/core/data/")
           ("tmp;db;*.*.*" "/tmp/core/db/"))))
 
-(setf (sb-ext:bytes-consed-between-gcs) 25000000)
+;; (setf (sb-ext:bytes-consed-between-gcs) 25000000)

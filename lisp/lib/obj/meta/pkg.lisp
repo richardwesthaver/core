@@ -159,7 +159,18 @@
    :stored-slot-reader
    :get-store
    :read-oid
-   :write-oid))
+   :write-oid
+   :stored-slot-names
+   :all-stored-slot-names
+   :all-single-valued-slot-defs
+   :cached-slot-definition
+   :cached-direct-slot-definition
+   :transient-slot-definition
+   :cached-slot-names
+   :transient-p
+   :transient-slot-names
+   :database-allocation-p
+   :slot-definition-allocation))
 
 (defpackage :obj/meta/typed
   (:nicknames :meta/typed :typed)

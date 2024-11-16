@@ -7,10 +7,11 @@
 (declaim  (optimize speed))
 
 (defgeneric struct-constructor (class)
-  (:documentation "Called to get the constructor name for a struct class.  Users
-                  should overload this when they want to serialize non-standard
-                  constructor names.  The default constructor make-xxx will work by 
-                  default.  The argument is an eql style type: i.e. of type (eql 'my-struct)"))
+  (:documentation "Called to get the constructor name for a struct class. Users
+                  should overload this when they want to serialize
+                  non-standard constructor names. The default constructor
+                  make-xxx will work by default. The argument is an eql style
+                  type: i.e. of type (eql 'my-struct)"))
 
 (defmethod struct-constructor ((class t))
   (symbol-function (intern (concatenate 'string "MAKE-" (symbol-name class))
@@ -39,97 +40,6 @@
                   (t nil))
                 (make-symbol symbol-name))))
         (make-symbol symbol-name)))
-
-(defvar *buffer-streams* (make-array 0 :adjustable t :fill-pointer t)
-  "Vector of buffer-streams, which you can grab / return.")
-
-(defvar *buffer-streams-lock* (make-mutex :name "buffer-streams"))
-
-(defclass buffer-stream (wrapped-stream)
-  ((buffer :initform (make-static-vector 10) :initarg :buffer 
-           :type alien-or-lisp-octets :accessor buffer)
-   (size :initform 0 :type fixnum :initarg :size :accessor size)
-   (pos :initform 0 :type fixnum :initarg :pos :accessor pos)
-   (len :initform 10 :type fixnum :initarg :len :accessor len))
-  (:documentation "A stream containing a static vector, providing an interface to foreign char
-buffers."))
-
-(defmethod stream-file-position ((stream buffer-stream) &optional spec)
-  (if spec
-      (setf (pos stream) spec)
-      (pos stream)))
-
-(defun grab-buffer-stream ()
-  "Grab a buffer-stream from the *buffer-streams* resource pool."
-  (or (with-mutex (*buffer-streams-lock*)
-        (and (plusp (length *buffer-streams*))
-             (vector-pop *buffer-streams*)))
-      (make-instance 'buffer-stream)))
-
-(defun return-buffer-stream (bs)
-  "Return a buffer-stream to the *buffer-streams* resource pool."
-  (reset-buffer-stream bs)
-  (with-mutex (*buffer-streams-lock*)
-    (vector-push-extend bs *buffer-streams*)))
-
-(defmacro with-buffer-streams (names &body body)
-  "Grab a buffer-stream, executes forms, and returns the
-stream to the pool on exit."
-  `(let ,(loop for name in names collect (list name '(grab-buffer-stream)))
-     (declare (type buffer-stream ,@names))
-     (unwind-protect
-          (progn ,@body)
-       (progn
-         ,@(loop for name in names 
-              collect (list 'return-buffer-stream name))))))
-
-(defun resize-buffer-stream (bs length)
-  "Resize the underlying buffer of a buffer-stream, copying the old data."
-  (declare (buffer-stream bs)
-           (fixnum length))
-  (with-slots (buffer size len) bs
-    (declare (type fixnum size len)
-             (type vector buffer))
-    (when (> length len)
-      (let ((newlen (max length (* len 2))))
-        (declare (type fixnum newlen))
-        ;; FIXME: async unwinds between alloc of newbuf and free of buf
-        ;; will leave us with a memory leak of size NEWLEN.
-        (let ((newbuf (make-static-vector newlen)))
-          ;; technically we just need to copy from position to size.....
-          (when (null (static-vector-pointer newbuf))
-            (error "Failed to allocate buffer stream of length ~A.  allocate-foreign-object returned a null pointer" newlen))
-          (replace-foreign-memory newbuf buffer size)
-          (free-static-vector buffer)
-          (setf buffer newbuf)
-          (setf len newlen)
-          nil)))))
-
-(defun resize-buffer-stream-no-copy (bs length)
-  "Resize the underlying buffer of a buffer-stream."
-  (declare (buffer-stream bs)
-           (fixnum length))
-  (with-slots (buffer size len) bs
-    (declare (fixnum size len)
-             (vector buffer))
-    (when (> length len)
-      (let ((newlen (max length (* len 2))))
-        (declare (type fixnum newlen))
-        ;; FIXME: async unwinds between alloc of newbuf and free of buf
-        ;; will leave us with a memory leak of size NEWLEN.
-        (let ((newbuf (make-static-vector newlen)))
-          (when (null (static-vector-pointer newbuf))
-            (error "Failed to allocate buffer stream of length ~A.  allocate-foreign-object returned a null pointer" newlen))
-          (free-static-vector buffer)
-          (setf buffer newbuf)
-          (setf len newlen)
-          nil)))))
-
-(defun reset-buffer-stream (bs)
-  "'Empty' the buffer-stream."
-  (declare (type buffer-stream bs))
-  (setf (size bs) 0
-        (len bs) 0))
 
 ;; Constants
 (defconstant +fixnum32+              1)
@@ -241,22 +151,24 @@ stream to the pool on exit."
 (defconstant +2^63+ (expt 2 63))
 (defconstant +2^64+ (expt 2 64))
 
-(defun serialize-string (string bstream)
+(defvar *default-serde-buffer* #.(make-array 10 :element-type 'octet :adjustable t))
+
+(defun serialize-string (string &optional (buf *default-serde-buffer*))
   "Try to write each format type and bail if code is too big"
-  (declare (type buffer-stream bstream)
+  (declare (type octet-vector buf)
            (type string string))
   (cond ((and (not (equal "" string)) (> (char-code (char string 0)) #xFFFF))
-         (serialize-to-utf32le string bstream))
+         (serialize-to-utf32le string buf))
         ;; Accelerate the common case where a character set is not Latin-1
         ((and (not (equal "" string)) (> (char-code (char string 0)) #xFF))
-         (or (serialize-to-utf16le string bstream)
-             (serialize-to-utf32le string bstream)))
+         (or (serialize-to-utf16le string buf)
+             (serialize-to-utf32le string buf)))
         ;; Actually code pages > 0 are rare; so we can pay an extra cost
-        (t (or (serialize-to-utf8 string bstream)
-               (serialize-to-utf16le string bstream)
-               (serialize-to-utf32le string bstream)))))
+        (t (or (serialize-to-utf8 string buf)
+               (serialize-to-utf16le string buf)
+               (serialize-to-utf32le string buf)))))
 
-(defun serialize-to-utf8 (string bstream)
+(defun serialize-to-utf8 (string &optional (buf *default-serde-buffer*))
   "Standard serialization"
   (declare (type stream bstream)
            (type string string))
@@ -297,7 +209,7 @@ stream to the pool on exit."
           (setf (size bstream) needed)
           (succeed))))))
 
-(defun serialize-to-utf16le (string bstream)
+(defun serialize-to-utf16le (string &optional (buf *default-serde-buffer*))
   "Serialize to utf16le compliant format unless contains code pages > 0"
   (declare (type buffer-stream bstream)
            (type string string))
@@ -333,9 +245,9 @@ stream to the pool on exit."
           (incf size (* characters 2))
           (succeed))))))
 
-(defun serialize-to-utf32le (string bstream)
+(defun serialize-to-utf32le (string &optional (buf *default-serde-buffer*))
   "Serialize to utf32 compliant format unless contains code pages > 0"
-  (declare (type buffer-stream bstream)
+  (declare (type octet-vector bstream)
            (type string string))
   (with-slots (buffer size (allocated len)) bstream
     (let* ((characters (length string)))
@@ -620,10 +532,10 @@ stream to the pool on exit."
       (eq encoding-type *native-string-type*)
       (and (eq encoding-type :utf16le) (eq *native-string-type* :utf32le))))
 
-(defgeneric deserialize-string (type bstream &optional temp-string))
+(defgeneric deserialize-string (type buffer &optional temp-string))
 
-(defmethod deserialize-string ((type (eql :utf8)) bstream &optional temp-string)
-  (declare (type buffer-stream bstream)
+(defmethod deserialize-string ((type (eql :utf8)) buf &optional temp-string)
+  (declare (type octet-vector buf)
            (type (or null string) temp-string)
            (type symbol type))
   ;; Default char-code method
@@ -640,9 +552,9 @@ stream to the pool on exit."
                                                (+ pos i)))))))
         string))))
 
-(defmethod deserialize-string ((type (eql :utf16le)) bstream &optional temp-string)
+(defmethod deserialize-string ((type (eql :utf16le)) &optional (buf *default-serde-buffer*) temp-string)
   "All returned strings are simple-strings for, uh, simplicity"
-  (declare (type buffer-stream bstream))
+  (declare (type buf octet-vector))
   (let* ((length (read-int32 bstream))
          (string (or temp-string (make-string length :element-type 'character)))
          (pos (file-position bstream))
@@ -660,7 +572,7 @@ stream to the pool on exit."
       (file-position bstream (* length 2)))
     (the simple-string string)))
 
-(defmethod deserialize-string ((type (eql :utf32le)) bstream  &optional temp-string)
+(defmethod deserialize-string ((type (eql :utf32le)) (buf *default-serde-buffer*) &optional temp-string)
   (declare (type buffer-stream bstream))
   (macrolet ((next-byte (offset)
                `(aref (buffer bstream) (+ (* i 4) pos ,offset))))
@@ -856,7 +768,7 @@ stream to the pool on exit."
            (release-circularity-vector circularity-vector)
            result))))))
 
-(defun deserialize-bignum (bs length positive)
+(defun deserialize-bignum (buf length positive)
   (declare (type buffer-stream bs)
            (type fixnum length)
            (type boolean positive))
