@@ -75,25 +75,25 @@
                    :free-space free-space))
 
 (defclass rdb-indexed-btree (indexed-btree rdb-btree)
-  ((indices :accessor indices :initarg :indices :initform (make-hash-table))
-   (indices-cache :accessor indices-cache :transient t))
+  ((index-table :accessor index-table :initarg :index-table :initform (make-hash-table))
+   (index-cache-table :accessor index-cache-table :transient t))
   (:metaclass stored-class)
-  (:documentation "A RDB-based BTree supports secondary indices."))
+  (:documentation "A RDB-based BTree supports secondary index-table."))
 
-(defmethod indices-cache ((instance rdb-indexed-btree))
-  ;; Lazily load the indices-cache to avoid bootstrapping issues: If
-  ;; we do not lazy-load the indices cache, it we attempt to
+(defmethod index-cache-table ((instance rdb-indexed-btree))
+  ;; Lazily load the index-cache-table to avoid bootstrapping issues: If
+  ;; we do not lazy-load the index-table cache, it we attempt to
   ;; initialize it before the instance-table is available (thus we
   ;; cannot map oids to classes -- deserialize does not really work
   ;; for complex objects).  -- Red Daly 07/10/2010
-  (aif (slot-value instance 'indices-cache)
+  (aif (slot-value instance 'index-cache-table)
        it
-       (setf (indices-cache instance) (indices instance))))
+       (setf (index-cache-table instance) (index-table instance))))
 
 (defmethod shared-initialize :after ((instance rdb-indexed-btree) slot-names
                                      &rest rest)
   (declare (ignore slot-names rest))
-  (setf (indices-cache instance) nil))
+  (setf (index-cache-table instance) nil))
 
 (defmethod build-indexed-btree ((sc rdb-store))
   (make-instance 'rdb-indexed-btree :sc sc))
@@ -113,13 +113,13 @@
         ;; Can it be that this fails?
         (let ((index
                (ensure-transaction (:store sc)
-                 (let ((ht (indices bt))
+                 (let ((ht (index-table bt))
                        (index (build-btree-index sc 
                                                  :primary bt 
                                                  :key-form key-form)))
-                   (setf (gethash index-name (indices-cache bt)) index)
+                   (setf (gethash index-name (index-cache-table bt)) index)
                    (setf (gethash index-name ht) index)
-                   (setf (indices bt) ht)
+                   (setf (index-table bt) ht)
                    index))))
           (when populate (populate bt index))
           index)
@@ -136,7 +136,7 @@
                ;; should silently do nothing if
                ;; the key/value already exists
                (db-put-buffered 
-                (indices sc)
+                (index-table sc)
                 secondary-buf primary-buf
                 :transaction (current-transaction sc))
                (reset-buffer-stream primary-buf)
@@ -165,22 +165,22 @@
                             (setf continue nil))))))))))))
 
 
-(defmethod map-indices (fn (bt rdb-indexed-btree))
-  (maphash fn (indices-cache bt)))
+(defmethod map-index-table (fn (bt rdb-indexed-btree))
+  (maphash fn (index-cache-table bt)))
 
 (defmethod get-index ((bt rdb-indexed-btree) index-name)
-  (gethash index-name (indices-cache bt)))
+  (gethash index-name (index-cache-table bt)))
 
 (defmethod remove-index ((bt rdb-indexed-btree) index-name)
-  (remhash index-name (indices-cache bt))
-  (let ((indices (indices bt)))
-    (remhash index-name indices)
-    (setf (indices bt) indices)))
+  (remhash index-name (index-cache-table bt))
+  (let ((index-table (index-table bt)))
+    (remhash index-name index-table)
+    (setf (index-table bt) index-table)))
 
 (defmethod (setf get-value) (value key (bt rdb-indexed-btree))
-  "Set a key / value pair, and update secondary indices."
+  "Set a key / value pair, and update secondary index-table."
   (let ((sc (get-store bt)))
-    (let ((indices (indices-cache bt)))
+    (let ((index-table (index-cache-table bt)))
       (with-buffer-streams (key-buf value-buf secondary-buf)
         (write-oid (oid bt) key-buf)
         (ser key key-buf sc)
@@ -190,7 +190,7 @@
                            key-buf value-buf
                            :transaction (current-transaction sc))
           ;; Manually write value into secondary index
-          (loop for index being the hash-value of indices
+          (loop for index being the hash-value of index-table
              do
              (multiple-value-bind (index? secondary-key)
                  (funcall (key-fn index) index key value)
@@ -198,7 +198,7 @@
                  ;; Insert
                  (write-oid (oid index) secondary-buf)
                  (ser secondary-key secondary-buf sc)
-                 (db-put-buffered (indices sc)
+                 (db-put-buffered (index-table sc)
                                   secondary-buf key-buf
                                   :no-dup t
                                   :transaction (current-transaction sc))
@@ -206,7 +206,7 @@
           value)))))
 
 (defmethod delete-key (key (bt rdb-indexed-btree) &key)
-  "Remove a key / value pair, and update secondary indices."
+  "Remove a key / value pair, and update secondary index-table."
   (let ((sc (get-store bt)))
       (with-buffer-streams (key-buf secondary-buf)
         (write-oid (oid bt) key-buf)
@@ -214,9 +214,9 @@
         (ensure-transaction (:store sc)
           (let ((value (get-value key bt)))
             (when value
-              (let ((indices (indices-cache bt)))
+              (let ((index-table (index-cache-table bt)))
                 (loop 
-                   for index being the hash-value of indices
+                   for index being the hash-value of index-table
                    do
                    (multiple-value-bind (index? secondary-key)
                        (funcall (key-fn index) index key value)
@@ -226,7 +226,7 @@
                        ;; need to remove kv pairs with a cursor! --
                        ;; this is a C performance hack
                        (db-delete-kv-buffered 
-                        (indices (get-store bt))
+                        (index-table (get-store bt))
                         secondary-buf key-buf
                         :transaction (current-transaction sc))
                        (reset-buffer-stream secondary-buf))))
@@ -240,7 +240,7 @@
 (defclass rdb-btree-index (btree-index rdb-btree)
   ()
   (:metaclass stored-class)
-  (:documentation "A RDB-based BTree supports secondary indices."))
+  (:documentation "A RDB-based BTree supports secondary index-table."))
 
 (defmethod get-value (key (bt rdb-btree-index))
   "Get the value in the primary DB from a secondary key."
@@ -249,7 +249,7 @@
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (let ((buf (db-get-key-buffered 
-                  (indices-assoc sc)
+                  (index-table-assoc sc)
                   key-buf value-buf
                   :transaction (current-transaction sc))))
         (if buf (values (deserialize buf sc) T)
@@ -261,7 +261,7 @@
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (let ((buf (db-get-key-buffered 
-                  (indices sc)
+                  (index-table sc)
                   key-buf value-buf
                   :transaction (current-transaction sc))))
         (if buf 
@@ -480,14 +480,14 @@
 ;; Secondary cursors
 
 (defclass rdb-secondary-cursor (secondary-cursor rdb-cursor) ()
-  (:documentation "Cursor for traversing rdb secondary indices."))
+  (:documentation "Cursor for traversing rdb secondary index-table."))
 
 (defmethod make-cursor ((bt rdb-btree-index))
   "Make a secondary-cursor from a secondary index."
   (let ((sc (get-store bt)))
     (make-instance 'rdb-secondary-cursor 
                    :btree bt
-                   :handle (db-cursor (indices-assoc sc)
+                   :handle (db-cursor (index-table-assoc sc)
                                       :transaction (current-transaction sc))
                    :oid (oid bt))))
 
@@ -799,7 +799,7 @@
                           :transaction (current-transaction sc)))))
 
 (defclass rdb-dup-cursor (rdb-cursor) ()
-  (:documentation "Cursor for traversing rdb secondary indices."))
+  (:documentation "Cursor for traversing rdb secondary index-table."))
 
 (defmethod make-cursor ((bt rdb-dup-btree))
   "Make a secondary-cursor from a secondary index."
@@ -866,15 +866,6 @@
 
 (defmethod reserved-oid-p ((sc rdb-store) oid)
   (< oid 2))
-
-;; db version
-(defmethod database-version ((sc rdb-store))
-  "Elephant protocol to provide the version tag or nil if unmarked"
-  (with-buffer-streams (key val)
-    (serialize-database-version-key key)
-    (let ((buf (db-get-key-buffered (store-metadata sc)
-                                    key val)))
-      (when buf (deserialize-database-version-value buf)))))
 
 ;;; slot protocol
 ;; TODO 2024-11-07: 

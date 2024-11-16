@@ -56,7 +56,7 @@
                             'vector)))
          (unwind-protect ,@body
            (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols))))))
-      
+
 ;;; Merge Ops
 (defmacro define-full-merge-op (name &body body)
   `(define-alien-callable ,name (* t)
@@ -77,17 +77,17 @@
           pmerge (symbolicate name "-PARTIAL-MERGE")
           mcreate (symbolicate "CREATE-" name "-MERGEOPERATOR")
           mname (symbolicate name "-MERGEOPERATOR-NAME"))
-      `(progn
-         (define-full-merge-op ,fmerge ,@full)
-         (define-partial-merge-op ,pmerge ,@partial)
-         (define-alien-callable ,mname c-string () (string ',name))
-         (defun ,mcreate ()
-           (rocksdb-mergeoperator-create ,state
-                                         (alien-sap (alien-callable-function ',destructor))
-                                         (alien-sap (alien-callable-function ',fmerge))
-                                         (alien-sap (alien-callable-function ',pmerge))
-                                         (alien-sap (alien-callable-function ',delete))
-                                         (alien-sap (alien-callable-function ',mname)))))))
+    `(progn
+       (define-full-merge-op ,fmerge ,@full)
+       (define-partial-merge-op ,pmerge ,@partial)
+       (define-alien-callable ,mname c-string () (string ',name))
+       (defun ,mcreate ()
+         (rocksdb-mergeoperator-create ,state
+                                       (alien-sap (alien-callable-function ',destructor))
+                                       (alien-sap (alien-callable-function ',fmerge))
+                                       (alien-sap (alien-callable-function ',pmerge))
+                                       (alien-sap (alien-callable-function ',delete))
+                                       (alien-sap (alien-callable-function ',mname)))))))
 
 ;;; SliceTransforms
 (defmacro define-transform-function (name &body body)
@@ -148,7 +148,7 @@
         (bts (* unsigned-char))
         (btslen size-t))
      ,@body))
-        
+
 (defmacro define-compare-function (name &body body)
   `(define-alien-callable ,name int
        ((state (* t))
@@ -156,7 +156,7 @@
         (alen size-t)
         (b (* unsigned-char))
         (blen size-t))
-       ,@body))
+     ,@body))
 
 (defmacro define-comparator (name &key compare (destructor 'rocksdb-destructor) state)
   "Define a RocksDB Comparator."
@@ -197,16 +197,16 @@
 ;;; Compaction Filter
 (defmacro define-filter-function (name &body body)
   `(define-alien-callable ,name unsigned-char
-      ((state (* t))
-       (level int)
-       (key (array unsigned-char))
-       (key-length size-t)
-       (existing-val (array unsigned-char))
-       (existing-val-length size-t)
-       (new-val (* (array unsigned-char)))
-       (new-val-length (* size-t))
-       (value-changed (* unsigned-char)))
-    ,@body))
+       ((state (* t))
+        (level int)
+        (key (array unsigned-char))
+        (key-length size-t)
+        (existing-val (array unsigned-char))
+        (existing-val-length size-t)
+        (new-val (* (array unsigned-char)))
+        (new-val-length (* size-t))
+        (value-changed (* unsigned-char)))
+     ,@body))
 
 (defmacro define-create-filter-function (name destructor-fn filter-fn name-fn)
   `(define-alien-callable ,name (* rocksdb-compactionfilter)
@@ -216,7 +216,7 @@
                                       (alien-sap (alien-callable-function ',destructor-fn))
                                       (alien-sap (alien-callable-function ',filter-fn))
                                       (alien-sap (alien-callable-function ',name-fn)))))
-     
+
 (defmacro define-compaction-filter (name &key (destructor 'rocksdb-destructor)
                                               filter)
   (with-gensyms (filter-fn cname ccreate)
@@ -230,3 +230,76 @@
            (alien-sap (alien-callable-function ',destructor))
          (alien-sap (alien-callable-function ',filter-fn))
          (alien-sap (alien-callable-function ',cname))))))
+
+;;; Writebatch
+(defmacro define-put-function (name &body body)
+  `(define-alien-callable ,name void
+       ((state (* t))
+        (key (array unsigned-char))
+        (klen size-t)
+        (val (array unsigned-char))
+        (vlen size-t))
+     ,@body))
+
+(defmacro define-delete-function (name &body body)
+  `(define-alien-callable ,name void
+       ((state (* t))
+        (key (array unsigned-char))
+        (klen size-t))
+     ,@body))
+
+(defmacro define-put-cf-function (name &body body)
+  `(define-alien-callable ,name void
+       ((state (* t))
+        (idx (unsigned 32))
+        (key (array unsigned-char))
+        (klen size-t)
+        (val (array unsigned-char))
+        (vlen size-t))
+     ,@body))
+
+(defmacro define-delete-cf-function (name &body body)
+  `(define-alien-callable ,name void
+       ((state (* t))
+        (idx (unsigned 32))
+        (key (array unsigned-char))
+        (klen size-t))
+     ,@body))
+
+(defmacro define-merge-cf-function (name &body body)
+  `(define-alien-callable ,name void
+       ((state (* t))
+        (idx (unsigned 32))
+        (key (array unsigned-char))
+        (klen size-t)
+        (val (array unsigned-char))
+        (vlen size-t))
+     ,@body))
+
+(defmacro define-get-ts-function (name &body body)
+  `(define-alien-callable ,name size-t
+       ((state (* t))
+        (ts (unsigned 32)))
+     ,@body))
+
+(defmacro with-writebatch ((wb &key rep (destroy t)) &body body)
+  `(let ((,wb ,@(if rep `((rocksdb-writebatch-create-from ,rep ,(length rep)))
+                    `((rocksdb-writebatch-create)))))
+     ,@(if destroy
+           `((unwind-protect (progn ,@body)
+               (rocksdb-writebatch-destroy ,wb)))
+           body)))
+
+(defmacro with-wbwi ((wbwi &key reserved overwrite rep backup-comparator max key-protection-bytes (destroy t))
+                     &body body)
+  `(let ((,wbwi ,@(if rep 
+                      `((rocksdb-writebatch-wi-create-from ,rep ,(length rep)))
+                      (if max ;; if any 'param' is present assume they all are
+                          `((rocksdb-writebatch-wi-create-with-params 
+                             ,backup-comparator ,reserved ,overwrite ,max ,key-protection-bytes))
+                          `((rocksdb-writebatch-wi-create ,reserved ,overwrite))))))
+     
+     ,@(if destroy
+           `((unwind-protect (progn ,@body)
+               (rocksdb-writebatch-wi-destroy ,wbwi)))
+           body)))

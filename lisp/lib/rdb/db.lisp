@@ -38,7 +38,7 @@
                     (name #.(string-downcase (gensym "RDB")))
                     (opts (default-rdb-opts)))
   (declare (ignore engine))
-  (apply 'make-rdb name opts initargs))
+  (apply 'make-rdb :name name :opts opts initargs))
 
 (defmethod connect-db ((db rdb) &key) db)
 
@@ -52,6 +52,12 @@
    (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-secondary))
   (:default-initargs 
    :db (make-db :rocksdb)))
+
+;; db version
+(defmethod database-version ((self rdb-database))
+  "Return the version tag or nil if unmarked"
+  (when-let ((db (and #1=(db self) (sap #1#))))
+    (rocksdb-property-value db "rocksdb.current-super-version-number")))
 
 (defaccessor (name) ((self rdb-database)) (name (db self)))
 (defaccessor (columns) ((self rdb-database)) (columns (db self)))

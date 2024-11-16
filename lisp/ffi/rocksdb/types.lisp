@@ -43,6 +43,6 @@
 (define-opaque rocksdb-transaction)
 (define-opaque rocksdb-checkpoint)
 (define-opaque rocksdb-wal-iterator)
-(define-opaque rocksdb-memory-comsumers)
+(define-opaque rocksdb-memory-consumers)
 (define-opaque rocksdb-memory-usage)
 (define-opaque rocksdb-statistics-histogram-data)

@@ -2,6 +2,10 @@
 
 ;; RocksDB Writebatch Lisp FFI
 
+;;; Commentary:
+
+;; ref: https://github.com/facebook/rocksdb/wiki/Write-Batch-With-Index
+
 ;;; Code:
 (in-package :rocksdb)
 
@@ -14,7 +18,7 @@
             (array unsigned-char)
             size-t))
 
-(define-alien-type rocksdb-deleted-function
+(define-alien-type rocksdb-delete-function
   (function void
             (* t)
             (array unsigned-char)
@@ -29,7 +33,7 @@
             (array unsigned-char)
             size-t))
 
-(define-alien-type rocksdb-deleted-cf-function
+(define-alien-type rocksdb-delete-cf-function
   (function void
             (* t)
             (unsigned 32)
@@ -76,13 +80,13 @@
   (batch (* rocksdb-writebatch))
   (state (* t))
   (put (* rocksdb-put-function))
-  (deleted (* rocksdb-deleted-function)))
+  (deleted (* rocksdb-delete-function)))`
 
 (define-alien-routine rocksdb-writebatch-iterate-cf void
   (batch (* rocksdb-writebatch))
   (state (* t))
   (put-cf (* rocksdb-put-cf-function))
-  (deleted-cf (* rocksdb-deleted-cf-function))
+  (deleted-cf (* rocksdb-delete-cf-function))
   (merge-cf (* rocksdb-merge-cf-function)))
 
 (define-alien-routine rocksdb-writebatch-data (array unsigned-char)
@@ -303,7 +307,7 @@
   (batch (* rocksdb-writebatch-wi))
   (state (* t))
   (put (* rocksdb-put-function))
-  (deleted (* rocksdb-deleted-function)))
+  (deleted (* rocksdb-delete-function)))
 
 (define-alien-routine rocksdb-writebatch-wi-data (array unsigned-char)
   (batch (* rocksdb-writebatch-wi))

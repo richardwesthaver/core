@@ -283,7 +283,7 @@ supplied by the user from the default value."
     self))
 
 ;;; rdb
-(defstruct (rdb (:constructor make-rdb (name opts &optional cfs sap)))
+(defstruct rdb
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
   (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (vector rdb-cf))
@@ -363,19 +363,20 @@ internal sap slots are initialized."
   (let* ((opts (or opts (default-rdb-opts)))
          (obj
            (make-rdb
+            :name 
             (string-right-trim '(#\/)
                                (typecase name
                                  (pathname (namestring name))
                                  (string name)
                                  (t (error "invalid NAME: ~S" name))))
-            opts
-            (or (when cfs
-                  (typecase cfs
-                    (list (coerce cfs 'vector))
-                    ((array rdb-cf) cfs)
-                    (rdb-cf (vector cfs))
-                    (t (log:warn! "invalid CF passed to create-db"))))
-                (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
+            :opts opts
+            :cfs (or (when cfs
+                       (typecase cfs
+                         (list (coerce cfs 'vector))
+                         ((array rdb-cf) cfs)
+                         (rdb-cf (vector cfs))
+                         (t (log:warn! "invalid CF passed to create-db"))))
+                     (make-array 0 :element-type 'rdb-cf :fill-pointer 0)))))
     (when schema
       (load-schema obj schema))
     (when open
@@ -447,7 +448,7 @@ internal sap slots are initialized."
 
 (defmethod db-prop ((self rdb) (propname string))
   (unless-null-db () self
-    (get-property-raw sap propname)))
+    (rocksdb-property-value sap propname)))
 
 (defmethod repair-db ((self rdb) &key)
   (repair-db-raw (rdb-name self)))

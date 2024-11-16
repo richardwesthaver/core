@@ -1,0 +1,24 @@
+EDI is an extensible line editor for the terminal and X11. It is
+inspired by some of the IBM/DB2/ UI clones out there but rebuilt from
+scratch in Lisp and ported to GNU/Linux environment.
+
+This editor intends to have the following features:
+  - Keyboard-driven control ontop of xkb/evdev bindings
+  - Simplified modal editing interface, maps to Vi bindings by default
+  - Colon commands ala StumpWM
+  - S-expr-based config which can be inserted directly into our other
+    core app configs in :EDITOR slot
+
+and has intended use-cases:
+  - drop-in line editor for lisp scripts
+  - print/tail log files
+  - interactive find/replace
+  - trivial ediff
+
+- why no emacs defaults?
+  - My current global keymap is already saturated with emacs-style
+    bindings and would cause conflicts when used from terminal
+  - I like the idea of home-row-based control as a layer within an
+    emacs-dominated environment
+  - Modal editing is easier to create interesting abstractions for
+    which we can use in other core apps

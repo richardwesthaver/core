@@ -316,9 +316,9 @@ set *errptr to a malloc()ed error message.
    :rocksdb-comparator-function
    :rocksdb-get-ts-size-function
    :rocksdb-merge-cf-function
-   :rocksdb-deleted-cf-function
+   :rocksdb-delete-cf-function
    :rocksdb-put-cf-function
-   :rocksdb-deleted-function
+   :rocksdb-delete-function
    :rocksdb-put-function
    :rocksdb-open-column-families
    :rocksdb-create-default-env
@@ -417,7 +417,9 @@ set *errptr to a malloc()ed error message.
    :*rocksdb-backup-engine-options*
    :*rocksdb-set-only-backup-engine-options*
    :*rocksdb-set-only-readoptions*
-   :*rocksdb-set-only-options*))
+   :*rocksdb-set-only-options*
+   :with-writebatch
+   :with-wbwi))
 
 (in-package :rocksdb)
 

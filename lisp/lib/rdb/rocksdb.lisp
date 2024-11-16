@@ -41,9 +41,6 @@ to initialize the instance with custom configuration."
     (rocksdb-destroy-db opt (namestring (uiop:ensure-directory-pathname path)) err)
     (rocksdb-options-destroy opt)))
 
-(defun get-property-raw (db str)
-  (rocksdb-property-value db (make-alien-string str)))
-
 (defun get-metadata-raw (db &optional cf)
   (if cf
       (rocksdb-get-column-family-metadata-cf db cf)
@@ -346,3 +343,23 @@ to initialize the instance with custom configuration."
 (defun open-db-secondary-raw (opts name sname)
   (with-errptr* (e 'rdb-alien-error)
     (rocksdb-open-as-secondary opts name sname e)))
+
+(defun open-cfs-secondary-raw (opts name sname cf-names cf-opts)
+  (with-errptr* (e 'rdb-alien-error)
+    (with-alien ((cf-handles (array (* rocksdb-column-family-handle))))
+      (rocksdb-open-as-secondary-column-families 
+       opts name sname (length cf-names) cf-names cf-opts cf-handles e))))
+
+;;; Read-only
+(defun open-cfs-read-only-raw (opts name cf-names cf-opts &optional err-if-wal)
+  (with-errptr* (e 'rdb-alien-error)
+    (with-alien ((cf-handles (array (* rocksdb-column-family-handle))))
+      (rocksdb-open-for-read-only-column-families 
+       opts name (length cf-names) cf-names cf-opts cf-handles err-if-wal e))))
+
+;;; TTL
+(defun open-cfs-with-ttl-raw (opts name cf-names cf-opts ttls)
+    (with-errptr* (e 'rdb-alien-error)
+      (with-alien ((cf-handles (array (* rocksdb-column-family-handle))))
+        (rocksdb-open-column-families-with-ttl 
+         opts name (length cf-names) cf-names cf-opts cf-handles ttls e))))

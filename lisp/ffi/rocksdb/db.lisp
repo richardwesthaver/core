@@ -633,6 +633,217 @@
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle)))
 
+(def-with-errptr rocksdb-transaction-get (* unsigned-char)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transaction-get-pinned (* rocksdb-pinnableslice)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transaction-get-cf (* unsigned-char)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (cf-handle (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transaction-get-pinned-cf (* rocksdb-pinnableslice)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (cf-handle (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transaction-get-for-update (* unsigned-char)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t))
+  (exclusive unsigned-char))
+
+(def-with-errptr rocksdb-transaction-get-pinned-for-update (* rocksdb-pinnableslice)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t))
+  (exclusive unsigned-char))
+
+(def-with-errptr rocksdb-transaction-get-for-update-cf (* unsigned-char)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (cf-handle (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t))
+  (exclusive unsigned-char))
+
+(def-with-errptr rocksdb-transaction-get-pinned-for-update-cf (* rocksdb-pinnableslice)
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (cf-handle (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t))
+  (exclusive unsigned-char))
+
+(def-with-errptr rocksdb-transaction-multi-get void
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (nkeys size-t)
+  (keys (array (* unsigned-char)))
+  (key-sizes (array size-t))
+  (vals (array (* unsigned-char)))
+  (val-sizes (array size-t)))
+
+(def-with-errptr rocksdb-transaction-multi-get-for-update void
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (nkeys size-t)
+  (keys (array (* unsigned-char)))
+  (key-sizes (array size-t))
+  (vals (array (* unsigned-char)))
+  (val-sizes (array size-t)))
+
+(def-with-errptr rocksdb-transaction-multi-get-cf void
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (cfs (array (* rocksdb-column-family-handle)))
+  (nkeys size-t)
+  (keys (array (* unsigned-char)))
+  (key-sizes (array size-t))
+  (vals (array (* unsigned-char)))
+  (val-sizes (array size-t)))
+
+(def-with-errptr rocksdb-transaction-multi-get-for-update-cf void
+  (txn (* rocksdb-transaction))
+  (opts (* rocksdb-readoptions))
+  (cfs (array (* rocksdb-column-family-handle)))
+  (nkeys size-t)
+  (keys (array (* unsigned-char)))
+  (key-sizes (array size-t))
+  (vals (array (* unsigned-char)))
+  (val-sizes (array size-t)))
+
+(def-with-errptr rocksdb-transactiondb-get (* unsigned-char)
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transactiondb-get-pinned (* rocksdb-pinnableslice)
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transactiondb-get-cf (* unsigned-char)
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transactiondb-get-cf-pinned (* rocksdb-pinnableslice)
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (vlen (* size-t)))
+
+(def-with-errptr rocksdb-transactiondb-multi-get-cf void
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-readoptions))
+  (cfs (array (* rocksdb-column-family-handle)))
+  (nkeys size-t)
+  (keys (array (* unsigned-char)))
+  (key-sizes (array size-t))
+  (vals (array (* unsigned-char)))
+  (val-sizes (array size-t)))
+
+(def-with-errptr rocksdb-transaction-put void
+  (txn (* rocksdb-transaction))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
+(def-with-errptr rocksdb-transaction-put-cf void
+  (txn (* rocksdb-transaction))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
+(def-with-errptr rocksdb-transactiondb-put void
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-writeoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
+(def-with-errptr rocksdb-transactiondb-put-cf void
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
+(def-with-errptr rocksdb-transactiondb-write void
+  (txn-db (* rocksdb-transactiondb))
+  (opts (* rocksdb-writeoptions))
+  (batch (* rocksdb-writebatch)))
+
+(def-with-errptr rocksdb-transaction-merge void
+  (txn (* rocksdb-transaction))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
+(def-with-errptr rocksdb-transaction-merge-cf void
+  (txn (* rocksdb-transaction))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
+(def-with-errptr rocksdb-transactiondb-merge void
+  (txn (* rocksdb-transactiondb))
+  (opts (* rocksdb-writeoptions))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
+(def-with-errptr rocksdb-transactiondb-merge-cf void
+  (txn (* rocksdb-transactiondb))
+  (opts (* rocksdb-writeoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (klen size-t)
+  (val (* unsigned-char))
+  (vlen size-t))
+
 (define-alien-routine rocksdb-transactiondb-create-iterator (* rocksdb-iterator)
   (txndb (* rocksdb-transactiondb))
   (opts (* rocksdb-readoptions)))
@@ -744,3 +955,45 @@
 (define-alien-routine rocksdb-release-snapshot void
   (db (* rocksdb))
   (snapshot (* rocksdb-snapshot)))
+
+;;; Pinnable Slices
+(def-with-errptr rocksdb-get-pinned (* rocksdb-pinnableslice)
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (keylen size-t))
+
+(def-with-errptr rocksdb-get-pinned-cf (* rocksdb-pinnableslice)
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (cf-handle (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (keylen size-t))
+
+(define-alien-routine rocksdb-pinnableslice-destroy void (v (* rocksdb-pinnableslice)))
+
+(define-alien-routine rocksdb-pinnableslice-value (* unsigned-char) 
+  (ty (* rocksdb-pinnableslice))
+  (vlen (* size-t)))
+
+;;; Memory Consumers
+(define-alien-routine rocksdb-memory-consumers-create (* rocksdb-memory-consumers))
+(define-alien-routine rocksdb-memory-consumers-add-db void 
+  (consumers (* rocksdb-memory-consumers))
+  (db (* rocksdb)))
+(define-alien-routine rocksdb-memory-consumers-add-cache void 
+  (consumers (* rocksdb-memory-consumers))
+  (cache (* rocksdb-cache)))
+(define-alien-routine rocksdb-memory-consumers-destroy void (consumers (* rocksdb-memory-consumers)))
+
+(def-with-errptr rocksdb-approximate-memory-usage-create (* rocksdb-memory-usage)
+  (consumers (* rocksdb-memory-consumers)))
+(define-alien-routine rocksdb-approximate-memory-usage-destroy void (usage (* rocksdb-memory-usage)))
+(define-alien-routine rocksdb-approximate-memory-usage-get-mem-table-total unsigned-long 
+  (usage (* rocksdb-memory-usage)))
+(define-alien-routine rocksdb-approximate-memory-usage-get-mem-table-unflushed unsigned-long 
+  (usage (* rocksdb-memory-usage)))
+(define-alien-routine rocksdb-approximate-memory-usage-get-mem-table-readers-total unsigned-long 
+  (usage (* rocksdb-memory-usage)))
+(define-alien-routine rocksdb-approximate-memory-usage-get-cache-total unsigned-long 
+  (usage (* rocksdb-memory-usage)))

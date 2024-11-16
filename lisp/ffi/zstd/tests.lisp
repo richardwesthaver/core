@@ -36,7 +36,7 @@
                  (clevel int (zstd-defaultclevel)))
       (let ((csize (zstd-compress dst dst-capacity src src-size clevel)))
         (is (zerop (zstd-iserror (zstd-decompress src src-size dst csize)))))))
-  (let* ((octets (make-array 4000 :element-type '(unsigned-byte 8) :initial-element (random 255)))
+  (let* ((octets (make-octets 4000 :initial-element (random 255)))
          (compressed (zstd:zstdc octets)))
     (is (equalp (zstdd compressed) octets))))
 

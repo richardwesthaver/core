@@ -58,7 +58,6 @@
    :get-opt :set-opt
    :push-cf :open-cfs
    :create-cf :create-cfs
-   :get-prop :get-metadata
    :multi-get :delete-key
    :delete-key-ts :put-key-ts
    :delete-key-range
@@ -136,7 +135,8 @@
    :rdb-secondary-db
    :rdb-backup-db
    :open-db-secondary-raw
-   :create-checkpoint-raw))
+   :create-checkpoint-raw
+   :open-cfs-secondary-raw))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

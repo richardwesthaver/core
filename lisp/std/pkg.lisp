@@ -258,67 +258,6 @@
    :cpuid
    :cpu-vendor))
 
-(defpkg :std/serde
-  (:use :cl)
-  (:import-from :std/named-readtables :parse-body)
-  (:import-from :std/macs :when-let :once-only)
-  (:import-from :std/sym :symbolicate :with-gensyms)
-  (:import-from :std/type :octet-vector)
-  (:export :define-serde :*lisp-objects*))
-
-(defpkg :std/alien
-  (:use :cl :sb-alien)
-  (:import-from :std/sym :symbolicate :with-gensyms)
-  (:import-from :std/sys :little-endian-p :32-bit-p)
-  (:import-from :std/type :octet-vector :octet)
-  (:import-from :std/serde :define-serde)
-  (:import-from :sb-alien :sap+)
-  (:export
-   :setfa
-   :copy-c-string
-   :clone-strings
-   :octets-to-alien-array
-   :with-alien-slots
-   :clone-octets-to-alien
-   :octets-to-alien
-   :clone-octets-from-alien
-   :foreign-int-to-integer
-   :foreign-int-to-bool
-   :bool-to-foreign-int
-   :define-alien-enum
-   :define-opaque
-   :shared-object-name
-   :define-alien-loader
-   :c-string-to-string-list
-   :list-all-shared-objects
-   :read-int32 :read-fixnum32
-   :read-int64 :read-uint32
-   :read-uint64 :read-float
-   :read-double :write-int32
-   :write-fixnum32 :write-uint32
-   :write-int64 :write-fixnum64
-   :write-uint64 :write-float
-   :write-double :offset-char-pointer
-   :num-cpus
-   :*cpus*
-   :alien-or-lisp-octets
-   :read-alien
-   :write-alien
-   :loff-t
-   :pid-t
-   :uid-t
-   :gid-t
-   :memset
-   :memcpy
-   :posix-memalign
-   :timeval
-   :timespec
-   :sap
-   :push-sap
-   :push-sap*
-   :pull-sap
-   :pull-sap*))
-
 (defpkg :std/curry
   (:use :cl)
   (:import-from :std/sym :make-gensym-list)
@@ -409,6 +348,67 @@
    :cswitch
    :xor
    :ifret))
+
+(defpkg :std/serde
+  (:use :cl)
+  (:import-from :std/named-readtables :parse-body)
+  (:import-from :std/macs :when-let :once-only)
+  (:import-from :std/sym :symbolicate :with-gensyms)
+  (:import-from :std/type :octet-vector)
+  (:export :define-serde :*lisp-objects*))
+
+(defpkg :std/alien
+  (:use :cl :sb-alien)
+  (:import-from :std/sym :symbolicate :with-gensyms)
+  (:import-from :std/sys :little-endian-p :32-bit-p)
+  (:import-from :std/type :octet-vector :octet)
+  (:import-from :std/serde :define-serde)
+  (:import-from :sb-alien :sap+)
+  (:export
+   :setfa
+   :copy-c-string
+   :clone-strings
+   :octets-to-alien-array
+   :with-alien-slots
+   :clone-octets-to-alien
+   :octets-to-alien
+   :clone-octets-from-alien
+   :foreign-int-to-integer
+   :foreign-int-to-bool
+   :bool-to-foreign-int
+   :define-alien-enum
+   :define-opaque
+   :shared-object-name
+   :define-alien-loader
+   :c-string-to-string-list
+   :list-all-shared-objects
+   :read-int32 :read-fixnum32
+   :read-int64 :read-uint32
+   :read-uint64 :read-float
+   :read-double :write-int32
+   :write-fixnum32 :write-uint32
+   :write-int64 :write-fixnum64
+   :write-uint64 :write-float
+   :write-double :offset-char-pointer
+   :num-cpus
+   :*cpus*
+   :alien-or-lisp-octets
+   :read-alien
+   :write-alien
+   :loff-t
+   :pid-t
+   :uid-t
+   :gid-t
+   :memset
+   :memcpy
+   :posix-memalign
+   :timeval
+   :timespec
+   :sap
+   :push-sap
+   :push-sap*
+   :pull-sap
+   :pull-sap*))
 
 (defpkg :std/meta
   (:use :cl :sb-mop :sb-pcl)
