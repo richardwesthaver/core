@@ -20,22 +20,17 @@
    :output-buffer :input-buffer
    :input-position :output-position
    :output-available-p :input-available-p
-   :fill-buffer
-   :header
-   :header-type
-   :header-length
+   :fill-buffer :header
+   :header-type :header-length
    :offset))
 
 (defpackage :io/stream
   (:use :cl :io/proto :sb-gray :std/meta)
   (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
-  (:export :io-stream-error :io-stream
-           :make-bound-stream
-           :bound-input-stream
-           :ensure-file-position
-           :peeking-input-stream
-           :peeked-bytes
-           :peeked-count))
+  (:export :io-stream-error :io-stream :make-bound-stream
+   :bound-input-stream :ensure-file-position
+   :peeking-input-stream :peeked-bytes
+   :peeked-count))
 
 (defpackage :io/static
   (:use :cl :std :sb-alien :io/stream)
@@ -128,10 +123,8 @@
    :make-decompressing-stream :make-compressing-stream
    :*decompression-buffer-size* :*compression-level*
    :compress-with :decompress-with
-   :compression-level
-           :*compressor*
-   :*decompressor*
-           :*compression-type*
+   :compression-level :*compressor*
+   :*decompressor* :*compression-type*
    :*compression-types*))
 
 (defpackage :io/zstd
@@ -153,7 +146,7 @@
    :with-zstd-buffer :with-zstd-stream))
 
 (defpackage :io/kbd
-  (:use :cl :std :io/proto :xkb)
+  (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error))
 
 (defpackage io/xsubseq

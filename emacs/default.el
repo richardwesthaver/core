@@ -225,7 +225,15 @@
 ;;; Lisp
 (use-package company :ensure t)
 
-(setq inferior-lisp-program "sbcl --dynamic-space-size=8G --control-stack-size 8"
+(defvar core-lisp-program "/usr/local/bin/core")
+
+(defun default-lisp () 
+  (if (file-exists-p core-lisp-program)
+      core-lisp-program
+    "sbcl"))
+
+(setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size 16" 
+                                    (default-lisp))
       scheme-program-name "gsi"
       guile-program "guile"
       cmulisp-program "lisp"

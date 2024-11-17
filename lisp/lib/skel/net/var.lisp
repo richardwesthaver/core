@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/net)
+(in-package :skel/net/core)
 
 (defvar *skel-service-port* 8248)
 

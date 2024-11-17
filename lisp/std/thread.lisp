@@ -155,6 +155,9 @@
 
 (defgeneric workers (self))
 
+(defgeneric run-object (self))
+(defgeneric work (self &key &allow-other-keys))
+
 (defclass thread-pool ()
   ((workers :initarg :workers :accessor workers)))
 

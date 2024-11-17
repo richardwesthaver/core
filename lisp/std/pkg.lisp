@@ -248,6 +248,7 @@
    :package-symbols
    :package-symbol-names
    :append-logical-hosts
+   :add-logical-pathname-translation
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live
    :forget-shared-object
@@ -413,13 +414,15 @@
 (defpkg :std/meta
   (:use :cl :sb-mop :sb-pcl)
   (:import-from :std/sym :symb :make-keyword)
+  (:import-from :sb-ext :without-package-locks)
+  (:shadowing-import-from :sb-ext :timeout)
   (:import-from :std/macs :eval-always)
   (:shadow :reset)
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
    :subclassp :write-object :start :started-p 
    :stop :stopped-p :shutdown :reset
-   :defaccessor :defaccessor* :defmethods))
+   :defaccessor :defaccessor* :defmethods :timeout))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)
@@ -432,7 +435,7 @@
    :print-top-level :thread-support-p
    :find-thread-by-id :thread-id-list
    :timed-join-thread :kill-thread
-   :wait-for-threads
+   :wait-for-threads :workers
    :hang :finish-threads
    :make-threads :with-threads 
    :thread-count :dump-thread
@@ -456,7 +459,6 @@
    :run-object 
    :work
    :pop-job :pop-task
-   :workers
    :tasks
    :results
    :kill-workers

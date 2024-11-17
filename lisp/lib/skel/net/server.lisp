@@ -8,8 +8,8 @@
 (defclass skel-request (request) ())
 (defclass skel-response (response) ())
 
-(defclass skel-service (service) ()
+(defclass skel-service (service skel-db) ()
   (:default-initargs
-   :port *default-skel-server-port*
+   :port *skel-service-port*
    :request-class 'skel-request
    :response-class 'skel-response))

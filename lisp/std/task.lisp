@@ -75,11 +75,11 @@ This interface is experimental and subject to change."
       (dotimes (i count ret)
         (push (make-worker :thread thread :kernel kernel :input input) ret)))))
 
+(defgeneric task (self))
+(defgeneric result (self))
+
 (defgeneric tasks (self))
 (defgeneric results (self))
-(defgeneric run-object (self))
-(defgeneric work (self &key &allow-other-keys))
-(defgeneric workers (self))
 
 ;;; Supervisor
 (defclass supervisor ()

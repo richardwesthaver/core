@@ -307,6 +307,8 @@ within its dynamic extent. The vector is freed upon exit."
   (:documentation
    "A stream backed by a STATIC-VECTOR."))
 
+(defmethod sb-sequence:length ((self static-stream)) (length (buffer self)))
+  
 (defmethod sb-gray:stream-file-position ((stream static-stream) &optional spec)
   (if spec
       (setf (offset stream) spec)

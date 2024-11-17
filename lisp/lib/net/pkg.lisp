@@ -353,7 +353,8 @@
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
-   :eval-always :define-task-kernel :when-let :stream-of)
+   :eval-always :define-task-kernel :when-let :stream-of
+   :symbolicate :defaccessor)
   (:import-from :rt :random-chars)
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)
@@ -371,7 +372,45 @@
    #:*handlers*
    #:request
    #:response
-   #:http-service-response))
+   #:http-service-response
+   #:send-response
+   #:accept-connections
+   #:handle-connection
+   #:initialize-connection-hook
+   #:reset-connection-stream
+   #:process-connection
+   #:secure-service-p
+   #:service-log-message
+   #:service-log-access
+   #:execute-service
+   #:service-status-message
+   #:start-listening
+   #:service-warning
+   #:simple-service-warning
+   #:bad-request
+   #:service-error
+   #:simple-service-error
+   #:service-condition
+   #:*default-session-timeout*
+   #:*default-ssl-service-port*
+   #:*default-max-accept-count*
+   #:*default-max-thread-count*
+   #:*default-service-port*
+   #:*default-connection-max*
+   #:*default-connection-timeout*
+   #:*global-session-db-lock*
+   #:*session-db*
+   #:in-response-p
+   #:in-request-p
+   #:*session*
+   #:*response*
+   #:*request*
+   #:*services*
+   #:*session-secret*
+   #:*service-stream*
+   #:*finish-processing-socket*
+   #:*close-service-stream*
+   #:find-route))
 
 (pkg:defpkg :net
   (:use :cl :std)

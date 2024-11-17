@@ -8,10 +8,11 @@
   (:use :cl :log :std 
    :net/core :net/proto/dns :net/codec/tlv :skel/core/proto 
    :skel/core/obj :net/udp :net/tcp :obj/id 
+   :skel/db
    :dat/proto :dat/sxp :dat/json)
   (:export
    #:*skel-client-port-range*
-   #:*default-skel-server-port*))
+   #:*skel-service-port*))
 
 (in-package :skel/net/core)
 

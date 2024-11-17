@@ -103,7 +103,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
   ;; (setf alien (cast alien (array (unsigned 8))))
   (loop for i from 0 below (length lispa)
         do (setf (deref alien i)
-                 (aref lispa i)))
+                 (svref lispa i)))
   alien)
 
 (defun octets-to-alien (lispa)

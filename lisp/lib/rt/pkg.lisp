@@ -133,7 +133,8 @@
    :*bench-count*
    :defbench
    :do-bench
-   :bench))
+   :bench
+   :time-total))
 
 (defpkg :rt/cover
   (:nicknames :cover)

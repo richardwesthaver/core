@@ -119,10 +119,7 @@
   (with-mutex (*serializer-lock*)
     (vector-push-extend vector *circularity-vector-queue* 20)))
 
-;;
-;; SERIALIZER
-;;
-
+;;; SERIALIZER
 (defconstant +2^31+ (expt 2 31))
 (defconstant +2^32+ (expt 2 32))
 (defconstant +2^63+ (expt 2 63))
@@ -147,25 +144,24 @@
 
 (defun serialize-to-utf8 (string &optional (buf *default-serde-buffer*))
   "Standard serialization"
-  (declare (type stream bstream)
+  (declare (type static-stream buf)
            (type string string))
   ;; TODO
-  (with-slots (size (allocated len) buffer) bstream
-    (let* ((saved-size (the fixnum (size bstream)))
-           (saved-pos (the fixnum (file-position bstream)))
-           (characters (the fixnum (length string))))
+  (with-slots (size (allocated len) buffer) buf
+    (let* ((size (the fixnum (length buf)))
+           (pos (the fixnum (file-position buf)))
+           (chars (the fixnum (length string))))
       (labels ((fail () 
-                 (setf (size bstream) saved-size)
-                 (file-position bstream saved-pos)
+                 (file-position buf pos)
                  (return-from serialize-to-utf8 nil))
                (succeed ()
                  (return-from serialize-to-utf8 t)))
-        (write-byte +utf8-string+ bstream)
-        (write-int32 characters bstream)
-        (let ((needed (the fixnum (+ size characters))))
+        (write-byte +utf8-string+ buf)
+        (write-int32 chars buf)
+        (let ((needed (the fixnum (+ size chars))))
           (declare (type fixnum needed))
           (when (the boolean (> needed allocated))
-            (resize-buffer-stream bstream needed))
+            (resize-static-stream buf needed))
           (etypecase string
             (simple-string
              (loop for i fixnum from 0 below characters do
@@ -183,34 +179,32 @@
                         (declare (type fixnum code))
                         (when (> code #xFF) (fail))
                         (setf (aref buffer (the fixnum (+ i size))) code)))))
-          (setf (size bstream) needed)
+          ;; (setf (size buf) needed)
           (succeed))))))
 
 (defun serialize-to-utf16le (string &optional (buf *default-serde-buffer*))
   "Serialize to utf16le compliant format unless contains code pages > 0"
-  (declare (type buffer-stream bstream)
+  (declare (type static-stream buf)
            (type string string))
-  (let ((buffer (buffer bstream))
-        (size (size bstream))
-        (allocated (len bstream)))
-    (let* ((saved-size (size bstream))
-           (saved-pos (file-position bstream))
-           (characters (length string)))
-      (labels ((fail () 
-                 (setf (size bstream) saved-size)
-                 (file-position bstream saved-pos)
+  (let* ((buffer (buffer buf))
+         (size (length buffer))
+         (allocated (offset buf))
+         (pos (file-position buf))
+         (chars (length string)))
+    (labels ((fail () 
+                 (file-position buf pos)
                  (return-from serialize-to-utf16le nil))
                (succeed ()
                  (return-from serialize-to-utf16le t)))
-        (write-byte +utf16-string+ bstream)
-        (write-int32 characters bstream)
-        (let ((needed (+ size (* characters 2)))
+        (write-byte +utf16-string+ buf)
+        (write-int32 chars buf)
+        (let ((needed (+ size (* chars 2)))
               (char (etypecase string
                       (simple-string #'schar)
                       (string #'char))))
           (when (> needed allocated)
-            (resize-buffer-stream bstream needed))
-          (loop for i fixnum from 0 below characters do
+            (resize-static-stream buf needed))
+          (loop for i fixnum from 0 below chars do
                    (let ((code (char-code (funcall char string i))))
                      (when (> code #xFFFF) (fail))
                      (setf (aref buffer (+ (* i 2) size))
@@ -219,24 +213,24 @@
                      (setf (aref buffer (+ (* i 2) size 1))
                            ;;			  (coerce (ldb (byte 8 0) code) '(signed 8))))))
                            (ldb (byte 8 0) code))))
-          (incf size (* characters 2))
-          (succeed))))))
+          (incf size (* chars 2))
+          (succeed)))))
 
 (defun serialize-to-utf32le (string &optional (buf *default-serde-buffer*))
   "Serialize to utf32 compliant format unless contains code pages > 0"
-  (declare (type octet-vector bstream)
+  (declare (type octet-vector buf)
            (type string string))
-  (with-slots (buffer size (allocated len)) bstream
-    (let* ((characters (length string)))
-      (write-byte +utf32-string+ bstream)
-      (write-int32 characters bstream)
-      (let ((needed (+ size (* 4 characters)))
+  (with-slots (buffer size (allocated len)) buf
+    (let* ((chars (length string)))
+      (write-byte +utf32-string+ buf)
+      (write-int32 chars buf)
+      (let ((needed (+ size (* 4 chars)))
             (char (etypecase string
                     (simple-string #'schar)
                     (string #'char))))
         (when (> needed allocated)
-          (resize-buffer-stream bstream needed))
-        (loop for i fixnum from 0 below characters do
+          (resize-static-stream buf needed))
+        (loop for i fixnum from 0 below chars do
                  (let ((code (char-code (funcall char string i))))
                    ;; (when (> code #x10FFFF) (error "Invalid unicode code type"))
                    (setf (aref buffer (+ (* i 4) size 0))
@@ -247,13 +241,13 @@
                          (ldb (byte 8 8) code))
                    (setf (aref buffer (+ (* i 4) size 3))
                          (ldb (byte 8 0) code)))))
-      (incf size (* characters 4))
+      (incf size (* chars 4))
       t)))
 
-(defun ser (frob bs sc)
-  "Serialize a lisp value into a buffer-stream."
-  (declare (type buffer-stream bs)
-           (ignorable sc))
+(defun ser (frob buf store)
+  "Serialize a lisp value into a static-stream."
+  (declare (static-stream buf)
+           (ignorable store))
   (let ((lisp-obj-id -1)
         (circularity-hash 
           (unless (or (stringp frob) (symbolp frob) (numberp frob))
@@ -268,63 +262,63 @@
              (fixnum 
               (if (< #.most-positive-fixnum +2^31+) ;; should be compiled away
                   (progn
-                    (write-byte +fixnum32+ bs)
-                    (write-fixnum32 frob bs))
+                    (write-byte +fixnum32+ buf)
+                    (write-fixnum32 frob buf))
                   (progn
                     (assert (eq (< #.most-positive-fixnum +2^63+) t))
                     (if (< (abs frob) +2^31+)
                         (progn
-                          (write-byte +fixnum32+ bs)
-                          (write-fixnum32 frob bs))
+                          (write-byte +fixnum32+ buf)
+                          (write-fixnum32 frob buf))
                         (progn
-                          (write-byte +fixnum64+ bs)
-                          (write-fixnum64 frob bs))))))
+                          (write-byte +fixnum64+ buf)
+                          (write-fixnum64 frob buf))))))
              (null
-              (write-byte +nil+ bs))
+              (write-byte +nil+ buf))
              (symbol
               (let ((sym-name (symbol-name frob)))
                 (declare (type string sym-name)
                          (dynamic-extent sym-name))
-                (write-byte +symbol+ bs)
-                (serialize-string sym-name bs)
+                (write-byte +symbol+ buf)
+                (serialize-string sym-name buf)
                 (let ((package (symbol-package frob)))
                   (declare (dynamic-extent package)
                            (type (or null package) package))
                   (if package
-                      (serialize-string (package-name package) bs)
-                      (write-byte +nil+ bs)))))
+                      (serialize-string (package-name package) buf)
+                      (write-byte +nil+ buf)))))
              ;;		(let ((package-name (gethash frob symbol-package-hash)))
              ;;		  (unless package-name
              ;;		    (setq package-name 
              ;;			  (setf (gethash frob symbol-package-hash)
              ;;				(package-name (symbol-package frob)))))
              ;;		  (if package-name
-             ;;		      (serialize-string package-name bs)
-             ;;		      (buffer-write-byte +nil+ bs)))))
+             ;;		      (serialize-string package-name buf)
+             ;;		      (buffer-write-byte +nil+ buf)))))
              (string
-              (serialize-string frob bs))
+              (serialize-string frob buf))
              (stored
               ;; TODO
-              (unless (valid-stored-reference-p frob sc)
-                (signal-cross-store-error frob sc))
-              ;; (when (store-marking-p sc)
+              (unless (valid-stored-reference-p frob store)
+                (signal-cross-store-error frob store))
+              ;; (when (store-marking-p store)
               ;;   (gc-mark-new-write frob))
-              (write-byte +stored-ref+ bs)
-              (write-oid (oid frob) bs))
+              (write-byte +stored-ref+ buf)
+              (write-oid (oid frob) buf))
              (single-float
-              (write-byte +single-float+ bs)
-              (write-float frob bs))
+              (write-byte +single-float+ buf)
+              (write-float frob buf))
              (double-float
-              (write-byte +double-float+ bs)
-              (write-double frob bs))
+              (write-byte +double-float+ buf)
+              (write-double frob buf))
              (standard-object
               ;; NOTE: Add support for schema validation
-              (write-byte +object+ bs)
+              (write-byte +object+ buf)
               (let ((idp (gethash frob circularity-hash)))
-                (if idp (write-int32 idp bs)
+                (if idp (write-int32 idp buf)
                     (progn
                       (let ((id (%next-object-id)))
-                        (write-int32 id bs)
+                        (write-int32 id buf)
                         (setf (gethash frob circularity-hash) id))
                       (%serialize (type-of frob))
                       (let ((svs (slots-and-values frob)))
@@ -332,44 +326,44 @@
                         (loop for item in svs
                               do (%serialize item)))))))
              (integer
-              (serialize-bignum frob bs))
+              (serialize-bignum frob buf))
              (rational
-              (write-byte +rational+ bs)
+              (write-byte +rational+ buf)
               (%serialize (numerator frob))
               (%serialize (denominator frob)))
              (character
-              (write-byte +char+ bs)
+              (write-byte +char+ buf)
               ;; might be wide!
-              (write-uint32 (char-code frob) bs))
+              (write-uint32 (char-code frob) buf))
              ;;	     (oid-pair
-             ;;	      (buffer-write-byte +oid-pair+ bs)
-             ;;	      (buffer-write-int32 (oid-pair-left frob) bs)
-             ;;	      (buffer-write-int32 (oid-pair-right frob) bs))
+             ;;	      (buffer-write-byte +oid-pair+ buf)
+             ;;	      (buffer-write-int32 (oid-pair-left frob) buf)
+             ;;	      (buffer-write-int32 (oid-pair-right frob) buf))
              (cons
-              (write-byte +cons+ bs)
+              (write-byte +cons+ buf)
               (let ((idp (gethash frob circularity-hash)))
-                (if idp (write-int32 idp bs)
+                (if idp (write-int32 idp buf)
                     (progn
                       (let ((id (%next-object-id)))
-                        (write-int32 id bs)
+                        (write-int32 id buf)
                         (setf (gethash frob circularity-hash) id))
                       (%serialize (car frob))
                       (%serialize (cdr frob))))))
              (pathname
               (let ((pstring (namestring frob)))
-                (write-byte +pathname+ bs)
-                (serialize-string pstring bs)))
+                (write-byte +pathname+ buf)
+                (serialize-string pstring buf)))
              (complex 
-              (write-byte +complex+ bs)
+              (write-byte +complex+ buf)
               (%serialize (realpart frob))
               (%serialize (imagpart frob)))
              (hash-table
-              (write-byte +hash-table+ bs)
+              (write-byte +hash-table+ buf)
               (let ((idp (gethash frob circularity-hash)))
-                (if idp (write-int32 idp bs)
+                (if idp (write-int32 idp buf)
                     (progn
                       (let ((id (%next-object-id)))
-                        (write-int32 id bs)
+                        (write-int32 id buf)
                         (setf (gethash frob circularity-hash) id))
                       (%serialize (hash-table-test frob))
                       (%serialize (hash-table-rehash-size frob))
@@ -381,12 +375,12 @@
                                (%serialize key)
                                (%serialize value))))))
              (array
-              (write-byte +array+ bs)
+              (write-byte +array+ buf)
               (let ((idp (gethash frob circularity-hash)))
-                (if idp (write-int32 idp bs)
+                (if idp (write-int32 idp buf)
                     (progn
                       (let ((id (%next-object-id)))
-                        (write-int32 id bs)
+                        (write-int32 id buf)
                         (setf (gethash frob circularity-hash) id))
                       (write-byte 
                        (logior (byte-from-array-type (array-element-type frob))
@@ -394,9 +388,9 @@
                                    +fill-pointer-p+ 0)
                                (if (adjustable-array-p frob) 
                                    +adjustable-p+ 0))
-                       bs)
+                       buf)
                       (let ((rank (array-rank frob)))
-                        (write-int32 rank bs)
+                        (write-int32 rank buf)
                         (loop for i fixnum from 0 below rank
                               do (%serialize (array-dimension frob i))))
                       (when (array-has-fill-pointer-p frob)
@@ -405,11 +399,11 @@
                             do
                                (%serialize (row-major-aref frob i)))))))
              (structure-object 
-              (write-byte +struct+ bs)
+              (write-byte +struct+ buf)
               (let ((idp (gethash frob circularity-hash)))
-                (if idp (write-int32 idp bs)
+                (if idp (write-int32 idp buf)
                     (progn
-                      (write-int32 (incf lisp-obj-id) bs)
+                      (write-int32 (incf lisp-obj-id) buf)
                       (setf (gethash frob circularity-hash) lisp-obj-id)
                       (%serialize (type-of frob))
                       (let ((svs (struct-slots-and-values frob)))
@@ -420,12 +414,12 @@
       (%serialize frob)
       (when circularity-hash
         (release-circularity-hash circularity-hash))
-      bs)))
+      buf)))
 
-(defun serialize-bignum (frob bs)
+(defun serialize-bignum (frob buf)
   "Serialize bignum to buffer stream"
-  (declare (type integer frob)
-           (type buffer-stream bs))
+  (declare (integer frob)
+           (static-stream buf))
   (let* ((num (abs frob))
          (word-size (ceiling (/ (integer-length num) 32)))
          (needed (* word-size 4))
@@ -434,11 +428,11 @@
              (type cons byte-spec)
              (ignorable byte-spec))
     (if (< frob 0) 
-        (write-byte +negative-bignum+ bs)
-        (write-byte +positive-bignum+ bs))
-    (write-uint32 needed bs)
+        (write-byte +negative-bignum+ buf)
+        (write-byte +positive-bignum+ buf))
+    (write-uint32 needed buf)
     (loop for i fixnum from 0 below word-size 
-          do (write-uint32 (ldb (byte 32 (* 32 i)) num) bs))))
+          do (write-uint32 (ldb (byte 32 (* 32 i)) num) buf))))
 
 ;;;
 ;;; DESERIALIZER
@@ -565,9 +559,9 @@
       (setf pos (* length 4))
       (the simple-string string))))
 
-(defun deser (buf-str sc &optional oid-only)
-  "Deserialize a lisp value from a buffer-stream."
-  (declare (type (or null buffer-stream) buf-str))
+(defun deser (buf sc &optional oid-only)
+  "Deserialize a lisp value from a static-stream."
+  (declare ((or null static-stream) buf))
   (let ((circularity-vector (get-circularity-vector)))
     (labels 
         ((lookup-id (id)
@@ -576,81 +570,81 @@
          (add-object (object)
            (vector-push-extend object circularity-vector 50)
            (1- (fill-pointer circularity-vector)))
-         (%deserialize (bs)
-           (declare (type buffer-stream bs))
-           (let ((tag (read-byte bs)))
+         (%deserialize (buf)
+           (declare (static-stream buf))
+           (let ((tag (read-byte buf)))
              (declare (type alien tag)
                       (dynamic-extent tag))
              ;;	   (print-pre-deserialize-tag tag)
              (let ((value  
                      (cond
                        ((= tag +fixnum32+)
-                        (read-fixnum32 bs))
+                        (read-fixnum32 buf))
                        ((= tag +fixnum64+)
-                        (read-fixnum64 bs))
+                        (read-fixnum64 buf))
                        ((= tag +nil+) nil)
                        ((= tag +utf8-string+)
-                        (deserialize-string :utf8 bs))
+                        (deserialize-string :utf8 buf))
                        ((= tag +utf16-string+)
-                        (deserialize-string :utf16le bs))
+                        (deserialize-string :utf16le buf))
                        ((= tag +utf32-string+)
-                        (deserialize-string :utf32le bs))
+                        (deserialize-string :utf32le buf))
                        ((= tag +symbol+)
-                        (let ((name (%deserialize bs))
-                              (package (%deserialize bs)))
+                        (let ((name (%deserialize buf))
+                              (package (%deserialize buf)))
                           (translate-and-intern-symbol name package)))
                        ((= tag +stored+)
-                        (let ((oid (read-oid bs))
-                              (cname (%deserialize bs)))
+                        (let ((oid (read-oid buf))
+                              (cname (%deserialize buf)))
                           (if oid-only oid
                               (store-recreate-instance sc oid cname))))
                        ((= tag +stored-ref+)
-                        (let ((oid (read-oid bs)))
+                        (let ((oid (read-oid buf)))
                           (if oid-only oid
                               (store-recreate-instance sc oid))))
                        ((= tag +single-float+)
-                        (read-float bs))
+                        (read-float buf))
                        ((= tag +double-float+)
-                        (read-double bs))
+                        (read-double buf))
                        ((= tag +char+)
-                        (code-char (read-uint32 bs)))
+                        (code-char (read-uint32 buf)))
                        ((= tag +pathname+)
-                        (parse-namestring (or (%deserialize bs) "")))
+                        (parse-namestring (or (%deserialize buf) "")))
                        ((= tag +positive-bignum+) 
-                        (deserialize-bignum bs (read-uint32 bs) t))
+                        (deserialize-bignum buf (read-uint32 buf) t))
                        ((= tag +negative-bignum+) 
-                        (deserialize-bignum bs (read-uint32 bs) nil))
+                        (deserialize-bignum buf (read-uint32 buf) nil))
                        ((= tag +rational+) 
-                        (/ (the integer (%deserialize bs)) 
-                           (the integer (%deserialize bs))))
+                        (/ (the integer (%deserialize buf)) 
+                           (the integer (%deserialize buf))))
                        ;;	     ((= tag +oid-pair+)
                        ;;	      (let ((pair (make-oid-pair)))
-                       ;;		(setf (oid-pair-left pair) (read-fixnum32 bs))
-                       ;;		(setf (oid-pair-right pair) (read-fixnum32 bs))))
+                       ;;		(setf (oid-pair-left pair) (read-fixnum32 buf))
+                       ;;		(setf (oid-pair-right pair) (read-fixnum32 buf))))
                        ((= tag +cons+)
-                        (let* ((id (read-int32 bs))
+                        (let* ((id (read-int32 buf))
                                (maybe-cons (lookup-id id)))
                           (declare (type fixnum id))
                           (if maybe-cons maybe-cons
                               (let ((c (cons nil nil)))
                                 (add-object c)
-                                (setf (car c) (%deserialize bs))
-                                (setf (cdr c) (%deserialize bs))
+                                (setf (car c) (%deserialize buf))
+                                (setf (cdr c) (%deserialize buf))
                                 c))))
                        ((= tag +complex+)
-                        (let ((rpart (%deserialize bs))
-                              (ipart (%deserialize bs)))
+                        (let ((rpart (%deserialize buf))
+                              (ipart (%deserialize buf)))
                           (complex rpart ipart)))
                        ((= tag +hash-table+)
-                        (let* ((id (read-int32 bs))
+                        (let* ((id (read-int32 buf))
                                (maybe-hash (lookup-id id)))
                           (declare (type fixnum id))
                           ;;		(format t "~A ~A~%" maybe-hash id)
                           (if maybe-hash maybe-hash
-                              (let* ((test (%deserialize bs))
-                                     (rehash-size (%deserialize bs))
-                                     (rehash-threshold (%deserialize bs))
-                                     (size (%deserialize bs))
+                              (let* ((test (%deserialize buf))
+                                     (rehash-size (%deserialize buf))
+                                     (rehash-threshold (%deserialize buf))
+                                     (size (%deserialize buf))
                                      (h (make-hash-table :test test
                                                          :rehash-size rehash-size
                                                          :rehash-threshold rehash-threshold
@@ -658,14 +652,14 @@
                                 (add-object h)
                                 (loop for i fixnum from 0 below size
                                       do
-                                         (setf (gethash (%deserialize bs) h)
-                                               (%deserialize bs)))
+                                         (setf (gethash (%deserialize buf) h)
+                                               (%deserialize buf)))
                                 h))))
                        ((= tag +object+)
-                        (let* ((id (read-int32 bs))
+                        (let* ((id (read-int32 buf))
                                (maybe-o (lookup-id id)))
                           (if maybe-o maybe-o
-                              (let ((typedesig (%deserialize bs)))
+                              (let ((typedesig (%deserialize buf)))
                                 ;; now, depending on what typedesig is, we might 
                                 ;; or might not need to specify the store controller here..
                                 (let ((o 
@@ -685,20 +679,20 @@
                                       o
                                       (progn
                                         (add-object o)
-                                        (loop for i fixnum from 0 below (%deserialize bs)
+                                        (loop for i fixnum from 0 below (%deserialize buf)
                                               do
-                                                 (setf (slot-value o (%deserialize bs))
-                                                       (%deserialize bs)))
+                                                 (setf (slot-value o (%deserialize buf))
+                                                       (%deserialize buf)))
                                         o)))))))
                        ((= tag +array+)
-                        (let* ((id (read-int32 bs))
+                        (let* ((id (read-int32 buf))
                                (maybe-array (lookup-id id)))
                           (if maybe-array maybe-array
-                              (let* ((flags (read-byte bs))
+                              (let* ((flags (read-byte buf))
                                      (a (make-array 
                                          (loop for i fixnum from 0 below 
-                                                  (read-int32 bs)
-                                               collect (%deserialize bs))
+                                                  (read-int32 buf)
+                                               collect (%deserialize buf))
                                          :element-type (array-type-from-byte 
                                                         (logand #x1f flags))
                                          :fill-pointer (/= 0 (logand +fill-pointer-p+ 
@@ -706,17 +700,17 @@
                                          :adjustable (/= 0 (logand +adjustable-p+ 
                                                                    flags)))))
                                 (when (array-has-fill-pointer-p a)
-                                  (setf (fill-pointer a) (%deserialize bs)))
+                                  (setf (fill-pointer a) (%deserialize buf)))
                                 (add-object a)
                                 (loop for i fixnum from 0 below (array-total-size a)
                                       do
-                                         (setf (row-major-aref a i) (%deserialize bs)))
+                                         (setf (row-major-aref a i) (%deserialize buf)))
                                 a))))
                        ((= tag +struct+)
-                        (let* ((id (read-int32 bs))
+                        (let* ((id (read-int32 buf))
                                (maybe-o (lookup-id id)))
                           (if maybe-o maybe-o
-                              (let ((typedesig (%deserialize bs)))
+                              (let ((typedesig (%deserialize buf)))
                                 (let ((o (or (handler-case
                                                  (funcall (struct-constructor typedesig))
                                                (error (v) (format t "got typedesig error for struct: ~A ~A ~%" v typedesig)
@@ -725,23 +719,23 @@
                                   (if (listp o) o
                                       (progn
                                         (add-object o)
-                                        (loop for i fixnum from 0 below (%deserialize bs) do
-                                                 (let ((name (%deserialize bs))
-                                                       (value (%deserialize bs)))
+                                        (loop for i fixnum from 0 below (%deserialize buf) do
+                                                 (let ((name (%deserialize buf))
+                                                       (value (%deserialize buf)))
                                                    (setf (slot-value o name) value)))
                                         o)))))))
                        (t (error 'elephant-type-deserialization-error :type-tag tag)))))
                ;;	     (print-post-deserialize-value value)
                value))))
-      (etypecase buf-str 
+      (etypecase buf
         (null (return-from deser nil))
-        (buffer-stream
-         (let ((result (%deserialize buf-str)))
+        (staticr-stream
+         (let ((result (%deserialize buf)))
            (release-circularity-vector circularity-vector)
            result))))))
 
 (defun deserialize-bignum (buf length positive)
-  (declare (type buffer-stream bs)
+  (declare (type static-stream buf)
            (type fixnum length)
            (type boolean positive))
   (let ((int-byte-spec (byte 32 0)))
@@ -750,6 +744,6 @@
     (loop for i from 0 below (/ length 4)
           for byte-spec = (byte 32 (* 32 i))
           with num of-type integer = 0 
-          do (setq num (dpb (read-uint32 bs) byte-spec num))
+          do (setq num (dpb (read-uint32 buf) byte-spec num))
           finally (return (if positive num (- num))))))
              

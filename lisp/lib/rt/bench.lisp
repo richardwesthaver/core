@@ -8,6 +8,19 @@
 (defvar *bench-count* 10 "Default number of iterations to repeat a bench test for. This value is
 used when the slot value of :BENCH is t.")
 
+(defmacro time-total (n &body body)
+  "N-average the execution time of BODY in seconds"
+  (declare (optimize (speed 0)))
+  (with-gensyms (start end)
+    `(let (,start ,end)
+       (sb-ext:gc :full t)
+       (setf ,start (get-internal-real-time))
+       (loop for i below ,n
+             do ,@body)
+       (setf ,end (get-internal-real-time))
+       (coerce (/ (- ,end ,start) internal-time-units-per-second)
+               'float))))
+
 (defmacro bench (iter &body body)
   `(loop for i from 1 to ,iter
 	 do ,@body))

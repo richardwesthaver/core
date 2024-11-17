@@ -15,6 +15,7 @@
 ;;; Code:
 (in-package :io/kbd)
 (load-xkbcommon)
+(load-evdev)
 (pushnew :kbd *features*)
 ;;; Vars
 (defconstant +evdev-offset+ 8)
@@ -50,8 +51,8 @@
       (read-sequence keybits st)
       ;; (cons evbits keybits)
       (loop for i from evdev::+key-reserved+ upto evdev::+key-min-interesting+
-            if (not (evdev-bit-p keybits i)) do (break)
-            else return t))))
+            when (evdev-bit-p keybits i)
+            return t))))
       
 (defun make-keyboard-from-dev (dev keymap compose-table))
 
@@ -67,21 +68,20 @@
 
 ;; (xkb::xkb-consumed-mode :xkb)
 
-;; (let ((dev (new-device-from-path "/dev/input/event4")))
-;;   (unless (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
-;;     (println "probably not a mouse:"))
-;;   (println
-;;    (list 
-;;     (evdev::libevdev-get-name dev) 
-;;     (evdev::libevdev-get-id-bustype dev) 
-;;     (evdev::libevdev-get-id-vendor dev)))
-;;   (with-alien ((ev evdev/input:input-event))
-;;     (when (evdev::libevdev-has-event-pending dev)
-;;       (println "has event pending"))
-;;     (assert (zerop (evdev::libevdev-next-event dev (evdev::libevdev-read-flag :normal) (addr ev))))
-;;     (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
-;;       (println (obj/time:unix-to-timestamp (sb-posix::alien-timeval-sec time)))
-;;       (println (evdev::libevdev-event-type-get-name type))
-;;       (println (evdev::libevdev-event-code-get-name type code))
-;;       (println (evdev::libevdev-event-value-get-name type code value)))))
-
+(defun print-device-input-info (path)
+  (let ((dev (new-device-from-path path)))
+    (unless (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
+      (println "probably not a mouse:"))
+    (println
+     (list 
+      (evdev::libevdev-get-name dev) 
+      (evdev::libevdev-get-id-bustype dev) 
+      (evdev::libevdev-get-id-vendor dev)))
+    (with-alien ((ev evdev/input:input-event))
+      (when (evdev::libevdev-has-event-pending dev)
+        (println "has event pending"))
+      (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
+        (println (obj/time:unix-to-timestamp (sb-posix::alien-timeval-sec time)))
+        (println (evdev::libevdev-event-type-get-name type))
+        (println (evdev::libevdev-event-code-get-name type code))
+        (println (evdev::libevdev-event-value-get-name type code value))))))

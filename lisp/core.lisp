@@ -10,3 +10,6 @@
   (:use-reexport :std :log :io :obj :net :cry :parse :syn :dat))
 
 (define-lisp-package :core)
+
+(in-package :core)
+

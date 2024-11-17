@@ -384,7 +384,8 @@
    #:schema-successor
    #:schema-predecessor
    #:diff-type
-   #:diff-recs))
+   #:diff-recs
+   #:apply-schema))
   
 (defpackage :obj/db
   (:nicknames :db)

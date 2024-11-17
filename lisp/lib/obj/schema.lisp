@@ -11,6 +11,7 @@
 (defgeneric fields (self))
 (defgeneric schema (self))
 (defgeneric derive-schema (self))
+(defgeneric apply-schema (schema object))
 (defgeneric load-schema (self schema))
 (defgeneric load-field (self field))
 

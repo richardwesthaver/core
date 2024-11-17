@@ -17,23 +17,28 @@
 (defpackage :core/bench/tpc-h
   (:nicknames :bench/tpc-h :tpc-h)
   (:import-from :obj/time :date)
-  (:use :cl :std :rt :rt/bench :rt/cover :log :sql :parse/pratt :dat/csv :dat/proto :obj/query :obj/schema))
+  (:import-from :cli/clap :defmain)
+  (:use :cl :std :rt :rt/bench :rt/cover :log :sql :parse/pratt :dat/csv :dat/proto :obj/query :obj/schema)
+  (:export :tpc-h-schema :*tpc-h-data-directory*
+           :start-tpc-h-benchmark))
 
 (in-package :core/bench/tpc-h)
+
 (defsuite :tpc-h)
 (in-suite :tpc-h)
+
 (eval-always
   (declaim (pathname *tpc-h-data-directory*))
-  (defvar *tpc-h-data-directory* (ensure-directories-exist #p"/tmp/tpc-h/")))
+  (defvar *tpc-h-data-directory* 
+    (ensure-directories-exist (directory-path (translate-logical-pathname "CORE:bench;tpc-h")))))
 
 (defclass tpc-h-schema (schema) ())
 
-(defgeneric apply-schema (self object)
-  (:method ((self tpc-h-schema) (object t))
-    (let ((flen (length (fields self)))
-          (olen (length object)))
-      (unless (= flen olen)
-        (error 'invalid-argument :reason "Field count doesn't match length of object" :item object)))))
+(defmethod apply-schema ((self tpc-h-schema) (object t))
+  (let ((flen (length (fields self)))
+        (olen (length object)))
+    (unless (= flen olen)
+      (error 'invalid-argument :reason "Field count doesn't match length of object" :item object))))
 
 (defgeneric gen-table (self count))
 
@@ -118,7 +123,7 @@
   :name '(string 25)
   :regionkey '(unsigned-byte 32)
   :comment '(string 152))
-  
+
 ;; region
 (def-table region
   :regionkey '(unsigned-byte 32)
@@ -230,6 +235,8 @@ written with a .tbl extension to *TPC-H-DATA-DIRECTORY*."
             collect (make-thread (dbgen-thread) :name (string-downcase (symbol-name (car args)))
                                                 :arguments args))))))
 
+(defmain start-tpc-h-benchmark (:exit nil)
+  (dbgen))
 
 ;; (length (read-orders-table))
 ;; (make-region-table-batch #(1 2 3))
