@@ -358,7 +358,7 @@
                                         Do not override.")
    ;; Instance storage
    (instance-table :reader instance-table
-                  :documentation "Contains btree of oid to class ids")
+                  :documentation "Contains map of oid to class ids")
    (instance-class-index :reader instance-class-index
                          :documentation "A reverse map of class id to oid")
    (instance-cache :accessor instance-cache :initform (make-cache-table :test 'eql)

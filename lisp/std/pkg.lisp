@@ -93,6 +93,7 @@
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
   (:import-from :std/list :ensure-car)
+  (:shadowing-import-from :sb-ext :word)
   (:export :+default-element-type+
    :array-index :array-length
    #:negative-double-float
@@ -173,7 +174,8 @@
    #:positive-long-float-p
    #:positive-rational-p
    :of-type
-   :type=))
+   :type=
+   :word))
 
 (defpkg :std/num
   (:use :cl)
@@ -362,6 +364,7 @@
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :with-gensyms)
   (:import-from :std/sys :little-endian-p :32-bit-p)
+  (:import-from :std/bit :make-octets)
   (:import-from :std/type :octet-vector :octet)
   (:import-from :std/serde :define-serde)
   (:import-from :sb-alien :sap+)
@@ -383,14 +386,14 @@
    :define-alien-loader
    :c-string-to-string-list
    :list-all-shared-objects
-   :read-int32 :read-fixnum32
-   :read-int64 :read-uint32
-   :read-uint64 :read-float
-   :read-double :write-int32
-   :write-fixnum32 :write-uint32
-   :write-int64 :write-fixnum64
-   :write-uint64 :write-float
-   :write-double :offset-char-pointer
+   :read-alien-signed-byte-32 :read-alien-fixnum
+   :read-alien-signed-byte-64 :read-alien-unsigned-byte-32
+   :read-alien-unsigned-byte-64 :read-alien-float
+   :read-alien-double :write-alien-signed-byte-32
+   :write-alien-fixnum :write-alien-unsigned-byte-32
+   :write-alien-signed-byte-64
+   :write-alien-unsigned-byte-64 :write-alien-float
+   :write-alien-double-float :offset-char-pointer
    :num-cpus
    :*cpus*
    :alien-or-lisp-octets
@@ -415,14 +418,14 @@
   (:use :cl :sb-mop :sb-pcl)
   (:import-from :std/sym :symb :make-keyword)
   (:import-from :sb-ext :without-package-locks)
-  (:shadowing-import-from :sb-ext :timeout)
   (:import-from :std/macs :eval-always)
   (:shadow :reset)
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
    :subclassp :write-object :start :started-p 
    :stop :stopped-p :shutdown :reset
-   :defaccessor :defaccessor* :defmethods :timeout))
+   :defaccessor :defaccessor* :defmethods :timeout
+   :data))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)

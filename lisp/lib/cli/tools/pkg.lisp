@@ -78,3 +78,10 @@
    :wg-generate-keys
    :wg-public-key
    :wg-private-key))
+
+(defpackage :cli/tools/ytdl
+  (:use :cl :std :cli/env)
+  (:export
+   :*ytdl*
+   :run-ytdl
+   :ytdl-error))

@@ -28,7 +28,8 @@
                               :components
                               ((:file "array")
                                (:file "hash")
-                               (:file "simd"))))))
+                               (:file "simd")
+                               (:file "alien"))))))
   :build-pathname "bench"
   :build-operation monolithic-compile-bundle-op)
 

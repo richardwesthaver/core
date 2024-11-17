@@ -22,7 +22,8 @@
                  (:file "systemd" :depends-on ("pkg"))
                  (:file "wg" :depends-on ("pkg"))
                  (:file "cargo" :depends-on ("pkg"))
-                 (:file "sbcl" :depends-on ("pkg"))))
+                 (:file "sbcl" :depends-on ("pkg"))
+                 (:file "ytdl" :depends-on ("pkg"))))
                (:module "clap"
                 :components
                 ((:file "pkg")

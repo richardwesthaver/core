@@ -182,13 +182,18 @@ logging, etc."))
 
 (defgeneric remove-session-hook (service session))
 
-(defgeneric session-db (service)
-  (:method ((service t))
-    *session-db*))
+(defgeneric session-db (self)
+  (:method ((self service))
+    *session-db*)
+  (:method ((self db:database))
+    (db:db self)))
 
-(defgeneric (setf session-db) (new service)
-  (:method (new (service t))
-    (setf *session-db* new)))
+(defgeneric (setf session-db) (new self)
+  (:method (new (self service))
+    (declare (ignore self))
+    (setf *session-db* new))
+  (:method (new (self db:database))
+    (setf (db:db self) new)))
 
 (defgeneric next-session-id (service))
 
@@ -205,7 +210,7 @@ logging, etc."))
 
 (defclass session (id:id)
   ((start :initarg :start :initform (get-universal-time) :accessor start)
-   (data :initarg :data :accessor session-data)
+   (data :initarg :data :accessor data)
    (timeout :type fixnum :accessor timeout :initarg :timeout))
   (:default-initargs
    :start (get-universal-time)
@@ -224,7 +229,7 @@ logging, etc."))
 
 (defun session-value (sym &optional (session *session*))
   (when session
-    (let ((found (assoc sym (session-data session) :test #'eq)))
+    (let ((found (assoc sym (data session) :test #'eq)))
       (values (cdr found) found))))
 
 (defsetf session-value (sym &optional session) (new-val)
@@ -232,7 +237,7 @@ logging, etc."))
     (with-gensyms (place %session)
       `(let ((,%session (or ,session (start-session))))
          (with-session-db-lock ((session-db-lock *service* nil))
-           (let* ((,place (assoc ,sym (session-data ,%session) :test #'eq)))
+           (let* ((,place (assoc ,sym (data ,%session) :test #'eq)))
              (cond
                (,place
                 (setf (cdr ,place) ,new-val))
@@ -244,7 +249,7 @@ logging, etc."))
 (defun delete-session-value (sym &optional (session *session*))
   (when session
     (setf (slot-value session 'data)
-          (delete sym (session-data session)
+          (delete sym (data session)
                   :key 'car :test 'eq))))
 
 

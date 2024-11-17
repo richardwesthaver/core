@@ -135,7 +135,9 @@
   "Test standard alien utils"
   (is (= 0 (foreign-int-to-integer 0 4)))
   (is (= 1 (bool-to-foreign-int t)))
-  (istype '(alien (* (unsigned 8))) (write-alien :octet-vector (std:make-octets 10) (make-alien unsigned-char 10))))
+  (istype 
+   '(alien (* (unsigned 8))) 
+   (write-alien :octet-vector (std:make-octets 10) (make-alien unsigned-char 10))))
 
 (deftest curry ()
   "Test curry functions from Alexandria, found in std/fu.

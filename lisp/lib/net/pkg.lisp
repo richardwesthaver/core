@@ -354,7 +354,7 @@
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
    :eval-always :define-task-kernel :when-let :stream-of
-   :symbolicate :defaccessor)
+   :symbolicate :defaccessor :data)
   (:import-from :rt :random-chars)
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)
@@ -410,7 +410,10 @@
    #:*service-stream*
    #:*finish-processing-socket*
    #:*close-service-stream*
-   #:find-route))
+   #:find-route
+   #:next-session-id
+   #:remove-session
+   #:session))
 
 (pkg:defpkg :net
   (:use :cl :std)

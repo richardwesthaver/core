@@ -14,10 +14,7 @@
 (defgeneric stopped-p (self))
 (defgeneric shutdown (self))
 (defgeneric reset (self &rest args &key &allow-other-keys))
-
-(without-package-locks
-  (defgeneric timeout (self))
-  (defgeneric (setf timeout) (new self)))
+(defgeneric data (self))
 
 (defgeneric write-object (obj stream &key &allow-other-keys)
   (:method ((obj t) (stream t) &key)

@@ -10,7 +10,7 @@
 (deftype octet () '(unsigned-byte 8))
 (deftype octet-vector (&optional length)
   (if length `(simple-array octet (,length))
-      `(vector octet)))
+      `(simple-vector octet)))
 
 (defun octet-vector-p (self &optional length)
   (typep self (if length `(octet-vector ,length) 'octet-vector)))

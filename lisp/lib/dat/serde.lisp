@@ -559,7 +559,7 @@
       (setf pos (* length 4))
       (the simple-string string))))
 
-(defun deser (buf sc &optional oid-only)
+(defun de (buf sc &optional oid-only)
   "Deserialize a lisp value from a static-stream."
   (declare ((or null static-stream) buf))
   (let ((circularity-vector (get-circularity-vector)))
@@ -728,7 +728,7 @@
                ;;	     (print-post-deserialize-value value)
                value))))
       (etypecase buf
-        (null (return-from deser nil))
+        (null (return-from de nil))
         (staticr-stream
          (let ((result (%deserialize buf)))
            (release-circularity-vector circularity-vector)
@@ -742,7 +742,7 @@
     (declare (dynamic-extent int-byte-spec)
              (ignorable int-byte-spec))
     (loop for i from 0 below (/ length 4)
-          for byte-spec = (byte 32 (* 32 i))
+          for byte-spec = (byte 32 (the fixnum (* 32 i)))
           with num of-type integer = 0 
           do (setq num (dpb (read-uint32 buf) byte-spec num))
           finally (return (if positive num (- num))))))

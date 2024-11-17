@@ -99,11 +99,11 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
 
 (defun clone-octets-to-alien (lispa alien)
   (declare (optimize (speed 3))
-           (vector lispa))
+           (octet-vector lispa))
   ;; (setf alien (cast alien (array (unsigned 8))))
   (loop for i from 0 below (length lispa)
         do (setf (deref alien i)
-                 (svref lispa i)))
+                 (aref lispa i)))
   alien)
 
 (defun octets-to-alien (lispa)
@@ -325,7 +325,7 @@ variant associated with this value." type name)
   ;; complex types
   (octet-vector
    (:read (buf len)
-          (let ((ret (make-array len :element-type 'octet)))
+          (let ((ret (make-octets len)))
             (clone-octets-from-alien buf ret len)))
    (:write (buf vec)
            (declare (type (alien (* unsigned-char)) buf))

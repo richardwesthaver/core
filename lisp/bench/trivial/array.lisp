@@ -9,7 +9,6 @@
 ;;
 ;; NOTE: be careful running these in CMUCL on Linux with sizes larger
 ;; than your RAM; you will most likely crash your machine.
-
 (defpackage :core/bench/array
   (:use :cl :std)
   (:export #:bench-1d-arrays

@@ -67,6 +67,7 @@
    #:build-btree-index
    #:get-primary-key
    #:dup-btree
+   :dup-btrees
    #:build-dup-btree
    #:cursor-initialized-p
    #:cursor-oid

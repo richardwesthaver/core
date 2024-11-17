@@ -11,7 +11,7 @@
   (:use :cl :std :rocksdb 
    :sb-alien :db :query :schema 
    :btree :store :stored :log 
-   :io/static :dat/serde :dat/proto)
+   :io/static :dat/serde :dat/proto :btree)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
