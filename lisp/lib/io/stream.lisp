@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :io/stream)
 
-(defclass io-stream () ())
+(defclass io-stream (stream) ())
 
 (defgeneric ensure-file-position (self))
 
@@ -49,7 +49,7 @@
 
 ;;; Peeking Stream
 ;; TODO 2024-11-08: make this concatenated-stream
-(defclass peeking-input-stream (wrapped-stream trivial-gray-streams:fundamental-binary-input-stream)
+(defclass peeking-input-stream (wrapped-stream fundamental-binary-input-stream)
   ((start
     :reader start)
    (count
@@ -72,7 +72,7 @@ functions and via PEEKED-BYTES."))
     (read-sequence buffer stream)
     (setf (slot-value self 'bytes) buffer)))
 
-;; (defmethod trivial-gray-streams:stream-element-type ((stream peeking-input-stream))
+;; (defmethod stream-element-type ((stream peeking-input-stream))
 ;;   '(unsigned-byte 8))
 
 (defmethod stream-file-position ((stream peeking-input-stream) &optional spec)
@@ -107,3 +107,10 @@ functions and via PEEKED-BYTES."))
                                   :start num-unread-peeked-bytes-remaining :end end)
               (setf (unread-peeked-bytes stream) 0))
             (+ start num-unread-peeked-bytes-remaining)))))
+
+;;; Alien Streams
+(defclass alien-stream (io-stream sb-gray:fundamental-stream)
+  ((sap :initform nil :initarg :sap :accessor sap))
+  (:default-initargs :open-p nil)
+  (:documentation
+   "A stream backed by a foreign (* unsigned-char)."))

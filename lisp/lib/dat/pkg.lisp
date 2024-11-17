@@ -26,7 +26,7 @@
   (:nicknames :serde)
   (:use :cl :std :dat/proto 
    :sxp :ast :stored :store 
-   :id :io/stream :io/proto :io/static-vector 
+   :id :io/stream :io/proto :io/static 
    :typed :meta :sb-alien :sb-gray)
   (:export :ser :deser :with-buffer-stream 
    :with-buffer-streams :grab-buffer-stream :buffer-stream :*buffer-streams*
@@ -60,8 +60,8 @@
 (defpackage :dat/toml
   (:use :cl :std :dat/proto :obj/time)
   (:export
-   #:parse
    #:parse-toml-blocks
+   :parse-toml-value
    #:toml-collection
    #:children
    #:toml-table

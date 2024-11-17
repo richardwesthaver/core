@@ -28,3 +28,4 @@
 (defgeneric header (self))
 (defgeneric header-type (self))
 (defgeneric header-length (self))
+(defgeneric offset (self))

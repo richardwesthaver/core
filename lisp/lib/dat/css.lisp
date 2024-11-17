@@ -17,6 +17,7 @@
 ;; PROPERTY  ::= (:PROPERTY string string)
 
 ;;; Vars
+
 ;; The following variables are derived from Emacs css-mode:
 ;; https://github.com/emacs-mirror/emacs/blob/master/lisp/textmodes/css-mode.el
 

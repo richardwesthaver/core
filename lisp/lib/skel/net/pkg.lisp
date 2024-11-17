@@ -11,7 +11,7 @@
    :dat/proto :dat/sxp :dat/json)
   (:export
    #:*skel-client-port-range*
-   #:*skel-service-port*))
+   #:*default-skel-server-port*))
 
 (in-package :skel/net/core)
 

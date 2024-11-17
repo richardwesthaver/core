@@ -365,10 +365,8 @@ all data has been flushed to the stream."
 (setf (symbol-function 'readu8-le) #'readu8)
 (setf (symbol-function 'readu8-be) #'readu8)
 
-;; fast-stream
-
-(defclass fast-io-stream (sb-gray:fundamental-stream)
-  ((openp :type boolean :initform t)))
+;;; Fast Streams
+(defclass fast-io-stream (io-stream sb-gray:fundamental-stream) ())
 
 (defmethod stream-file-position ((stream fast-io-stream))
   (with-slots (buffer) stream
@@ -377,7 +375,7 @@ all data has been flushed to the stream."
 (defmethod open-stream-p ((stream fast-io-stream))
   (slot-value stream 'openep))
 
- ;; fast-output-stream
+;; fast-output-stream
 
 (defclass fast-output-stream (fast-io-stream sb-gray:fundamental-output-stream)
   ((buffer :type output-buffer)))
@@ -420,7 +418,7 @@ all data has been flushed to the stream."
   (finish-output-stream stream)
   (setf (slot-value stream 'openp) nil))
 
- ;; fast-input-stream
+;; fast-input-stream
 
 (defclass fast-input-stream (fast-io-stream sb-gray:fundamental-input-stream)
   ((buffer :type input-buffer)))

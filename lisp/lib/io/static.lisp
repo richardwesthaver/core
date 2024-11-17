@@ -1,4 +1,4 @@
-;;; static-vector.lisp --- Static Vectors
+;;; static.lisp --- Static Storage IO
 
 ;; Vectors allocated in static memory. Useful for things like IO buffers
 ;; created from Lisp and shared with C code.
@@ -9,7 +9,7 @@
 ;; Quicklisp: https://github.com/sionescu/static-vectors
 
 ;;; Code:
-(in-package :io/static-vector)
+(in-package :io/static)
 ;;; --- Checking for compile-time constants and evaluating such forms
 
 (defun quotedp (form)
@@ -199,7 +199,6 @@ VECTOR must be a vector created by MAKE-STATIC-VECTOR."
 (declaim (inline check-initial-element))
 (defun check-initial-element (element-type initial-element)
   (when (not (typep initial-element element-type))
-    ;; FIXME: signal SUBTYPE-ERROR
     (error "MAKE-STATIC-VECTOR: The type of :INITIAL-ELEMENT ~S is not a subtype ~
 of the array's :ELEMENT-TYPE ~S"
            initial-element element-type)))
@@ -213,7 +212,6 @@ of the array's :ELEMENT-TYPE ~S"
 but requested vector length is ~A."
              initial-contents-length length))))
 
-missing-argument
 (declaim (inline check-initialization-arguments))
 (defun check-initialization-arguments (initial-element-p initial-contents-p)
   (when (and initial-element-p initial-contents-p)
@@ -266,7 +264,7 @@ WITH-STATIC-VECTOR to handle this automatically."
                                &key (element-type ''(unsigned-byte 8))
                                  initial-contents initial-element)
                               &body body &environment env)
-  "Bind PTR-VAR to a static vector of length LENGTH and execute BODY
+  "Bind VAR to a static vector of length LENGTH and execute BODY
 within its dynamic extent. The vector is freed upon exit."
   (declare (ignorable element-type initial-contents initial-element))
   (multiple-value-bind (real-element-type length type-spec)
@@ -289,3 +287,76 @@ within its dynamic extent. The vector is freed upon exit."
            `((with-static-vectors ,more-clauses
                ,@body))
            body)))
+
+;;; Static Streams
+
+;; Partially inspired by ELEPHANT's BUFFER-STREAM which provides accessors
+;; written in C and provides a Lisp API but not an intermediate Lisp data
+;; representation - unlike STATIC-VECTORs. It's worth trying the C-based
+;; approach and comparing in the future - I think it's faster but less
+;; convenient.
+
+(defvar *default-static-stream-size* 10)
+(defclass static-stream (io-stream sb-gray:fundamental-stream)
+  ((buffer :initform (make-static-vector *default-static-stream-size*) 
+           :initarg :buffer 
+           :accessor buffer)
+   (offset :initform 0 
+           :initarg :offset 
+           :accessor offset))
+  (:documentation
+   "A stream backed by a STATIC-VECTOR."))
+
+(defmethod sb-gray:stream-file-position ((stream static-stream) &optional spec)
+  (if spec
+      (setf (offset stream) spec)
+      (offset spec)))
+
+(defmethod sb-gray:stream-read-byte ((stream static-stream))
+  (prog1 (deref (sap-alien (static-vector-pointer (buffer stream)) (* unsigned-char)))
+    (incf (offset stream))))
+
+(defmethod sb-gray:stream-read-char ((stream static-stream))
+  (prog1 (deref (sap-alien (static-vector-pointer (buffer stream)) (* char)))
+    (incf (offset stream))))
+
+(defmethod sb-gray:stream-read-sequence ((stream static-stream) (seq sequence) 
+                                         &optional (start 0)
+                                                   end)
+  (if (= (1- (offset stream)) (length (buffer stream)))
+      start
+      (let ((inc (if end
+                     (- end start)
+                     (length seq))))
+        (coerce (subseq (buffer stream)
+                        (offset stream)
+                        inc)
+                (type-of seq))
+        (incf (offset stream) inc))))
+
+(defmethod sb-gray:stream-write-byte ((stream static-stream) n)
+  (prog1 (setf (aref (buffer stream) (offset stream)) n)
+    (incf (offset stream))))
+
+(defmethod sb-gray:stream-write-char ((stream static-stream) n)
+  (setf (aref (buffer stream) (offset stream)) n))
+
+(defmethod sb-gray:stream-write-sequence ((stream static-stream) (seq sequence)
+                                          &optional (start 0)
+                                                    (end (length seq)))
+  (replace (buffer stream) seq :start1 (offset stream) :start2 start :end2 end))
+
+(defmethod close ((stream static-stream) &key abort)
+  (declare (ignore abort))
+  (free-static-vector (buffer stream)))
+
+(defmethod sb-gray:stream-write-string ((stream static-stream) string &optional start end)
+  (sb-gray:stream-write-sequence stream (sb-ext:string-to-octets string) start end))
+
+(defmethod sb-gray:stream-peek-char ((stream static-stream))
+  (aref (buffer stream) (offset stream)))
+
+(defmethod sb-gray:stream-unread-char ((stream static-stream) char)
+  ;; we ignore the value and always DECF the offset
+  (declare (ignore char))
+  (decf (offset stream)))

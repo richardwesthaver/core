@@ -84,37 +84,35 @@ collection. The parsed result is a table representing root table.")))
 ;;; Parser
 
 ;;;; Value
-(defgeneric parse-value (type value))
-
-(defmethod parse-value ((type (eql :datetime)) value)
+(defmethod parse-toml-value ((type (eql :datetime)) value)
   "Return a timestamp."
-  (parse-timestring (ppcre:regex-replace " " "T" value)))
+  (parse-toml-timestring (ppcre:regex-replace " " "T" value)))
 
-(defmethod parse-value ((type (eql :datetime-local)) value)
+(defmethod parse-toml-value ((type (eql :datetime-local)) value)
   "Return a plist with keys (:year :month :day :hour :minute :second)."
   (let* ((delimeter (sequence:elt value 10))
          (splits (split-sequence delimeter value)))
-    (append (parse-value :date-local (car splits))
-            (parse-value :time-local (cadr splits)))))
+    (append (parse-toml-value :date-local (car splits))
+            (parse-toml-value :time-local (cadr splits)))))
 
-(defmethod parse-value ((type (eql :date-local)) value)
+(defmethod parse-toml-value ((type (eql :date-local)) value)
   "Return a plist with keys (:year :month :day)."
   (let* ((*default-timezone* +utc-zone+)
-         (timestamp (parse-timestring value)))
+         (timestamp (parse-toml-timestring value)))
     (list :year (timestamp-year timestamp)
           :month (timestamp-month timestamp)
           :day (timestamp-day timestamp))))
 
-(defmethod parse-value ((type (eql :time-local)) value)
+(defmethod parse-toml-value ((type (eql :time-local)) value)
   "Return a plist with keys (:hour :minute :second)."
   (let* ((*default-timezone* +utc-zone+)
-         (timestamp (parse-timestring value)))
+         (timestamp (parse-toml-timestring value)))
     (list :hour (timestamp-hour timestamp)
           :minute (timestamp-minute timestamp)
           :second (timestamp-second timestamp)
           :microsecond (timestamp-microsecond timestamp))))
 
-(defmethod parse-value (type value)
+(defmethod parse-toml-value (type value)
   value)
 
 ;;; Serde

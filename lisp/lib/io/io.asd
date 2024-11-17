@@ -10,13 +10,13 @@
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
-               (:file "static-vector")
+               (:file "socket")
+               (:file "stream")
+               (:file "static")
                (:file "fast")
                (:file "xsubseq")
                (:file "smart-buffer")
                (:file "uring" :if-feature :linux)
-               (:file "socket")
-               (:file "stream")
                (:file "proto")
                (:file "chunky")
                (:file "flate")

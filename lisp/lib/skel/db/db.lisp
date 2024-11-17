@@ -13,9 +13,9 @@
 
 (defvar *default-skel-db-spec* (skel-db-spec "default"))
 
-(defclass skel-db (database) ()
+(defclass skel-db (rdb-database) ()
   (:default-initargs
-   :db (make-rdb "skel-db" (default-rdb-opts))))
+   :db (make-db :rocksdb :name "skel-db" :opts (default-rdb-opts))))
 
 (defmethod name ((self skel-db)) (rdb-name (db self)))
 

@@ -5383,11 +5383,11 @@ See: https://www.w3.org/TR/html5/syntax.html#coercing-an-html-dom-into-an-infose
 
 ;;; XML DOM
 
-(defmethod transform-html5-dom ((to-type (eql :xmls)) node
+(defmethod transform-html5-dom ((to-type (eql :xml)) node
                                 &key namespace comments)
-  "Convert a node into an XMLS-compatible tree of conses, starting
-at. If the node is a document-fragement a list of XMLS trees is returned."
-  (labels ((node-to-xmls (node parent-ns xlink-defined)
+  "Convert a node into an DAT/XML-compatible tree of conses, starting
+at. If the node is a document-fragement a list of XML trees is returned."
+  (labels ((node-to-xml (node parent-ns xlink-defined)
            (ecase (node-type node)
              (:document
               (let (root)
@@ -5396,14 +5396,14 @@ at. If the node is a document-fragement a list of XMLS trees is returned."
                                           (setf root n)))
                                       node)
                 (assert root)
-                (node-to-xmls root parent-ns xlink-defined)))
+                (node-to-xml root parent-ns xlink-defined)))
              (:document-fragment
-              (let (xmls-nodes)
+              (let (xml-nodes)
                 (element-map-children (lambda (node)
-                                        (push (node-to-xmls node parent-ns xlink-defined)
-                                              xmls-nodes))
+                                        (push (node-to-xml node parent-ns xlink-defined)
+                                              xml-nodes))
                                       node)
-                (nreverse xmls-nodes)))
+                (nreverse xml-nodes)))
              (:element
               (let (attrs children)
                 (element-map-attributes (lambda (name node-namespace value)
@@ -5429,15 +5429,15 @@ at. If the node is a document-fragement a list of XMLS trees is returned."
                            (xml-escape-name (node-name node)))
                        attrs
                        (mapcar (lambda (c)
-                                 (node-to-xmls c (node-namespace node) xlink-defined))
+                                 (node-to-xml c (node-namespace node) xlink-defined))
                                (nreverse children)))))
              (:text
               (node-value node))
              (:comment
               (when comments
                 (list :comment nil (node-value node)))))))
-    (node-to-xmls node nil nil)))
+    (node-to-xml node nil nil)))
 
 
-(defmethod transform-html5-dom ((to-type (eql :xmls-ns)) node &key)
-  (transform-html5-dom :xmls node :namespace t))
+(defmethod transform-html5-dom ((to-type (eql :xml-ns)) node &key)
+  (transform-html5-dom :xml node :namespace t))

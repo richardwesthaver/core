@@ -10,6 +10,6 @@
 
 (defclass skel-service (service) ()
   (:default-initargs
-   :port *skel-service-port*
+   :port *default-skel-server-port*
    :request-class 'skel-request
    :response-class 'skel-response))

@@ -1,0 +1,15 @@
+MPK is a Media Production Kit in Lisp.
+
+- provide a shared client for popular audio/video tools and
+  applications
+  - GStreamer
+  - sndfile/asound
+  - MIDI
+  - OSC
+  - mpd
+  - ytdl
+  - musicbrainz/freesound
+  - (maybe) pipewire,jack
+  - (todo) library management
+
+- implements STD/PIPE protocol

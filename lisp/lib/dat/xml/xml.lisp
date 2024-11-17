@@ -9,11 +9,7 @@
 ;;; Code:
 (in-package :dat/xml)
 
-;;; XMLS
-
-;;;-----------------------------------------------------------------------------
-;;; GLOBAL SETTINGS
-;;;-----------------------------------------------------------------------------
+;;; Vars
 (defvar *strip-comments* t)
 (defvar *compress-whitespace* t)
 (defvar *discard-processing-instructions*)
@@ -47,19 +43,12 @@
      finally (return table))
     table))
 
-;;;---------------------------------------------------------------------------
-;;; DYNAMIC VARIABLES
-;;;---------------------------------------------------------------------------
 (defvar *parser-stream* nil
   "The currently-being-parsed stream. Used so that we can appropriately track
 the line number.")
 (defvar *parser-line-number* nil)
 
-
-
-;;;-----------------------------------------------------------------------------
-;;; CONDITIONS
-;;;-----------------------------------------------------------------------------
+;;; Conditions
 (define-condition xml-parse-error (error)
   ((line :initarg :line
          :initform nil
@@ -73,9 +62,7 @@ the line number.")
     (when *parser-line-number*
       (setf (slot-value obj 'line) *parser-line-number*))))
 
-;;;-----------------------------------------------------------------------------
-;;; NODE INTERFACE
-;;;-----------------------------------------------------------------------------
+;;; Nodes
 (defstruct (xml-node (:constructor %make-xml-node))
   name
   ns
@@ -93,18 +80,13 @@ the line number.")
                 :children children
                 :attrs attrs)))
 
-;;;---------------------------------------------------------------------------
-;;; XML Processing Instruction
-;;;---------------------------------------------------------------------------
+;;; Proc Inst
 (defstruct proc-inst
   (target "" :type string)
   (contents "" :type string)
   )
 
-
-;;;-----------------------------------------------------------------------------
-;;; UTILITY FUNCTIONS
-;;;-----------------------------------------------------------------------------
+;;; Utilities
 (defun compress-whitespace (str)
   (if *compress-whitespace*
       (progn
@@ -194,9 +176,7 @@ the line number.")
        (write-escaped e s)
        (if (> indent 0) (write-char #\Newline s))))))
 
-;;;-----------------------------------------------------------------------------
-;;; PARSER STATE & LOOKAHEAD
-;;;-----------------------------------------------------------------------------
+;;; Parser State
 (defstruct state
   "Represents parser state.  Passed among rules to avoid threading issues."
   (got-doctype nil)
@@ -235,9 +215,7 @@ character translation."
               until (char= char #\;)
               finally (return (resolve-entity (coerce ent 'simple-string)))))))
 
-;;;---------------------------------------------------------------------------
-;;; Shadow READ-CHAR and UNREAD-CHAR so we can count lines while we parse...
-;;;---------------------------------------------------------------------------
+;; Shadow READ-CHAR and UNREAD-CHAR
 (defun read-char (&optional (stream *standard-input*) (eof-error-p t) eof-value recursive-p)
   (let ((eof-p nil))
     (let ((c
@@ -261,8 +239,6 @@ character translation."
     (decf *parser-line-number*))
   (common-lisp:unread-char char stream))
     
-;;;END shadowing--------------------------------------------------------------
-
 (define-symbol-macro next-char (peek-stream (state-stream s)))
 
 (defmacro eat ()
@@ -316,9 +292,7 @@ character translation."
   `(or (progn ,@body)
     (error 'xml-parse-error)))
 
-;;;-----------------------------------------------------------------------------
-;;; PARSER INTERNAL FUNCTIONS
-;;;-----------------------------------------------------------------------------
+;;; Parser Internal
 (defstruct element
   "Common return type of all rule functions."
   (type nil :type symbol)
@@ -333,9 +307,7 @@ character translation."
              (setf (xml-node-ns elem) (cadr nsurl))
              (return ns))))))
 
-;;;-----------------------------------------------------------------------------
-;;; MATCH AND RULE BUILDING UTILITIES
-;;;-----------------------------------------------------------------------------
+;;; Match and Rule Utils
 (defmacro defmatch (name &rest body)
   "Match definition macro that provides a common lexical environment for matchers."
   `(defun ,name (c)
@@ -371,9 +343,7 @@ character translation."
           (cons val nextval))
         nil)))
 
-;;;-----------------------------------------------------------------------------
-;;; MATCHERS
-;;;-----------------------------------------------------------------------------
+;;; Matchers
 (defmatch digit ()
   (and c (digit-char-p c)))
 
@@ -414,9 +384,7 @@ character translation."
 (defmatch comment-char ()
   (and c (not (eql c #\-))))
 
-;;;-----------------------------------------------------------------------------
-;;; RULES
-;;;-----------------------------------------------------------------------------
+;;; Rules
 (defrule ncname ()
   (and (peek letter #\_)
        (match+ ncname-char)))
@@ -515,9 +483,9 @@ character translation."
      t)
    (make-element :type 'comment)))
 
-;;; For the CDATA matching of ]]> I by hand generated an NFA, and then
-;;; determinized it (also by hand).  Then I did a simpler thing of just pushing
-;;; ALL the data onto the data string, and truncating it when done.
+;; For the CDATA matching of ]]> I by hand generated an NFA, and then
+;; determinized it (also by hand).  Then I did a simpler thing of just pushing
+;; ALL the data onto the data string, and truncating it when done.
 (defrule comment-or-cdata ()
   (and
    (peek #\!)
@@ -705,9 +673,7 @@ character translation."
                        
     (and elem (element-val elem))))
 
-;;;-----------------------------------------------------------------------------
-;;; PUBLIC INTERFACE
-;;;-----------------------------------------------------------------------------
+;;; Public API
 (defun write-xml (e s &key (indent nil))
   "Renders a lisp node tree to an xml stream.  Indents if indent is non-nil."
   (if (null s)
@@ -748,7 +714,7 @@ character translation."
           (xml-parse-error () nil))
         (document (make-state :stream stream)))))
 
-;;; XMLrep
+;;; Xmlrep
 (defun make-xmlrep (tag &key (representation-kind :node) namespace attribs children)
   (case representation-kind
     ((:list)
@@ -903,7 +869,7 @@ will return the value of IF-UNDEFINED, which defaults to :ERROR."
           (t (error "Not a boolean value, ~A for attribute ~A."
                     val attrib)))))
 
-;;; XML extraction tool
+;;; XML extraction
 (defun extract-path (key-list xml)
   "Extracts data from XML parse tree.  KEY-LIST is a path for descending down
 named objects in the XML parse tree.  For each KEY-LIST element, XML subforms
@@ -1021,4 +987,3 @@ the first two return values.)"
     (if (find-test (car key-list) xml)
         (descend  key-list xml)
         (values nil nil nil))))
-

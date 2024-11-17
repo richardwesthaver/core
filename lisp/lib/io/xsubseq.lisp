@@ -4,6 +4,7 @@
 
 ;;; Commentary:
 
+;; ref: https://github.com/fukamachi/xsubseq
 
 ;;; Code:
 (in-package :io/xsubseq)

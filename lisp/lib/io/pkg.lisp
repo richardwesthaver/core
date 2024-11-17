@@ -23,10 +23,22 @@
    :fill-buffer
    :header
    :header-type
-   :header-length))
+   :header-length
+   :offset))
 
-(defpackage :io/static-vector
-  (:use :cl :std :sb-alien)
+(defpackage :io/stream
+  (:use :cl :io/proto :sb-gray :std/meta)
+  (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
+  (:export :io-stream-error :io-stream
+           :make-bound-stream
+           :bound-input-stream
+           :ensure-file-position
+           :peeking-input-stream
+           :peeked-bytes
+           :peeked-count))
+
+(defpackage :io/static
+  (:use :cl :std :sb-alien :io/stream)
   (:shadow :constantp)
   (:export
    ;; Constructors and destructors
@@ -40,11 +52,13 @@
    :static-vector
    ;; Foreign memory operations
    :replace-foreign-memory
-   :fill-foreign-memory))
+   :fill-foreign-memory
+   :static-stream
+   :*default-static-stream-size*))
 
 (defpackage :io/fast
-  (:use :cl :std :io/proto)
-  (:import-from :io/static-vector :make-static-vector)
+  (:use :cl :std :io/proto :io/stream)
+  (:import-from :io/static :make-static-vector)
   (:export
    #:fast-read-byte #:fast-write-byte
    #:fast-read-sequence #:fast-write-sequence
@@ -68,17 +82,6 @@
   (:use :cl :uring :io/proto)
   (:import-from :sb-alien :addr)
   (:import-from :std :deferror :eval-always))
-
-(defpackage :io/stream
-  (:use :cl :io/proto :sb-gray :std/meta)
-  (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
-  (:export :io-stream-error :io-stream
-           :make-bound-stream
-           :bound-input-stream
-           :ensure-file-position
-           :peeking-input-stream
-           :peeked-bytes
-           :peeked-count))
 
 (defpackage :io/chunky
   (:nicknames :chunky)
@@ -106,7 +109,9 @@
 (defpackage :io/socket
   (:use :cl :io/proto :sb-alien)
   (:import-from :std :deferror :eval-always :timeval)
-  (:export :io-socket-error :io-socket :sockopt-receive-timeout))
+  (:export :io-socket-error 
+   :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
+   :sockopt-peercred))
 
 (defpackage :io/flate
   (:use :cl :io/proto)

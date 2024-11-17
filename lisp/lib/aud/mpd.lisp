@@ -148,10 +148,10 @@
                             `(defmethod ,name ((stream socket))
                                (,name (,class stream))))
                           names))))
-  (generate-commands status
+  (generate-commands mpd-status
                      (volume repeat randomized playlist-version playlist-length
                       xfade state audio bitrate duration songid song))
-  (generate-commands stats
+  (generate-commands mpd-stats
                      (artists albums songs uptime playtime db-playtime db-update)))
 
 (defparameter *integer-keys*
@@ -181,7 +181,7 @@
     (prog1 (values connection
                    (read-answer (socket-make-stream connection :input t :output t)))
       (when password
-        (password connection password)))))
+        (mpd-password connection password)))))
 
 (defun read-answer (stream)
   (loop for line = (read-line stream)
@@ -202,7 +202,7 @@
     `(let ((,var (connect ,@options)))
        (unwind-protect
             (progn ,@body)
-         (disconnect ,var)))))
+         (mpd-disconnect ,var)))))
 
 (defun ensure-mpd ()
   (handler-case
@@ -493,7 +493,6 @@
   (add connection (file what)))
 
 (defmethod-command add ((what string))
-  (check-args string what)
   (send "add" what))
 
 (defgeneric add-id (connection what)
@@ -503,7 +502,6 @@
   (add connection (file what)))
 
 (defmethod-command add-id ((what string))
-  (check-args string what)
   (car (filter-keys (send "addid" what))))
 
 (defcommand move (from to)
