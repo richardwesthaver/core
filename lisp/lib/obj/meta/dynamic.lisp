@@ -55,6 +55,10 @@
 (defclass dynamic-class (standard-class) ())
 
 ;;; Class with dynamic slots may be subclasses of the standard class.
+(defmethod sb-mop:validate-superclass ((class standard-class)
+                                    (super dynamic-class))
+  t)
+
 (defmethod sb-mop:validate-superclass ((class dynamic-class)
                                     (super standard-class))
   t)

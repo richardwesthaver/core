@@ -167,12 +167,6 @@ logging, etc."))
   (request-protocol request))
 
 ;;; Session
-
-(defgeneric session-db-lock (service &optional global)
-  (:method ((service t) &optional (global t))
-    (declare (ignore global))
-    *global-session-db-lock*))
-
 (defmacro with-session-db-lock (lock &body body)
   (with-gensyms (th)
     (once-only (lock)
@@ -183,7 +177,7 @@ logging, etc."))
 (defgeneric remove-session-hook (service session))
 
 (defgeneric session-db (self)
-  (:method ((self service))
+  (:method ((self t))
     *session-db*)
   (:method ((self db:database))
     (db:db self)))
@@ -216,9 +210,12 @@ logging, etc."))
    :start (get-universal-time)
    :timeout *default-session-timeout*))
    
+(defclass session-database (database) 
+  ((lock :initarg :lock :initform (make-mutex :name "session-db") :accessor lock)))
+
 (defun remove-session (session)
   "Remove SESSION from the global session database."
-  (with-session-db-lock (session-db-lock *service*)
+  (with-session-db-lock (db-lock *service*)
     (remove-session-hook *service* session)
     (setf (session-db *service*)
           (delete (id:id session) (session-db *service*)
@@ -252,10 +249,26 @@ logging, etc."))
           (delete sym (data session)
                   :key 'car :test 'eq))))
 
+(defgeneric session-created (service new-session))
 
 (defvar *session-gc-frequency* 60)
 
-(defgeneric session-created (service new-session))
+(defgeneric session-expired-p (self)
+  (:method ((self session))
+    (< (+ (start self) (timeout self))
+       (get-universal-time))))
+
+(defun session-gc ()
+  "Removes sessions from the global session database which have expired or are invalid."
+  (with-session-db-lock (session-db-lock *service*)
+    (setf (session-db *service*)
+          (loop for pair in (session-db *service*)
+                for (nil . session) = pair
+                when (session-expired-p session)
+                do (remove-session-hook *service* session)
+                else
+                collect pair)))
+  (values))
 
 (let ((session-usage-counter 0))
   (defmethod session-created ((service t) (session t))

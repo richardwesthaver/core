@@ -158,6 +158,8 @@
 (defgeneric run-object (self))
 (defgeneric work (self &key &allow-other-keys))
 
+(defgeneric lock (self))
+
 (defclass thread-pool ()
   ((workers :initarg :workers :accessor workers)))
 
@@ -175,6 +177,8 @@
   (condition (make-waitqueue))
   (lock (make-mutex)))
 
+(defmethod lock ((self sync-message)) (sync-message-lock self))
+  
 (defmethod msg ((vector vector) (msg sync-message))
   ;; ensure we're waiting on the condition..
   (with-mutex ((sync-message-lock msg)))

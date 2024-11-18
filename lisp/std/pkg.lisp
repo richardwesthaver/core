@@ -424,7 +424,7 @@
    :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
    :subclassp :write-object :start :started-p 
    :stop :stopped-p :shutdown :reset
-   :defaccessor :defaccessor* :defmethods :timeout
+   :defaccessor :defaccessor* :defmethods
    :data))
 
 (defpkg :std/thread
@@ -445,7 +445,8 @@
    :thread-pool :workers
    :condition-wait*
    :sync-message
-   :with-sync-message))
+   :with-sync-message
+   :lock))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency)

@@ -23,11 +23,20 @@
 
 ;;; Obj
 (defclass authinfo ()
-  ((path :type pathname :initarg :path :accessor authinfo-path)
-   (credentials :type list :initarg :credentials :accessor authinfo-credentials)))
+  ((path :type pathname :initarg :path :accessor path)
+   (credentials :type list :initarg :credentials :accessor credentials)))
 
 ;; TODO 2024-06-30: 
 (defmethod dat/proto:serde ((from authinfo) (to pathname)))
 (defmethod dat/proto:serde ((from stream) (to authinfo)))
 
-(defmethod dat/proto:deserialize ((from pathname) (format (eql :authinfo)) &key))
+(defmethod dat/proto:deserialize ((from pathname) (format (eql :authinfo)) &key)
+  (with-open-file (s from)
+    (make-instance 'auth-info
+      :path from
+      :credentials
+      (loop with l = (read-line s nil nil)
+            while l
+            collect l))))
+
+;; (dat:deserialize #P"~/.authinfo" :authinfo)

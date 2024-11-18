@@ -161,7 +161,7 @@ server's status line."
                          (remote-addr session)
                          (session-start session)))
 
-(defun session-expired-p (session)
+(defmethod session-expired-p ((self http-session))
   (< (+ (last-click session) (session-timeout session))
      (get-universal-time)))
 

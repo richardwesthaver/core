@@ -349,7 +349,7 @@
   (:nicknames :srv)
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
-   :sb-gray :dat/mime :sb-bsd-sockets)
+   :sb-gray :dat/mime :sb-bsd-sockets :obj/db :obj/schema)
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
@@ -413,7 +413,8 @@
    #:find-route
    #:next-session-id
    #:remove-session
-   #:session))
+   #:session
+   #:session-expired-p))
 
 (pkg:defpkg :net
   (:use :cl :std)

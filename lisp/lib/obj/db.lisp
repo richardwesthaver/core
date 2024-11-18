@@ -141,6 +141,9 @@ the body of WITH-DB forms.")
 (defgeneric db (self)
   (:documentation "Return the Database associated with SELF."))
 
+(defgeneric db-lock (self)
+  (:documentation "Return an optional database MUTEX."))
+
 (defgeneric database-version (self)
   (:documentation "Return the version associated with a given database SELF."))
 
@@ -165,16 +168,16 @@ the body of WITH-DB forms.")
   ((db :initform nil :initarg :db :accessor db))
   (:documentation "Base class for Database objects."))
 
-(defclass database-schema (simple-schema id)
+(defclass database-schema (dynamic-schema)
   ((version :accessor version :initarg :version :initform 1)
-   (upgrade-schema :accessor upgrade-schema :initform nil)))
+   (upgrade :accessor upgrade :initform nil)))
 
 (defmethod print-object ((self database-schema) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A ~A" (id self) (version self))))
 
 (defmethod dump-schema ((self database-schema) &optional (stream t))
-  (awhen (upgrade-schema self)
+  (awhen (upgrade self)
     (format stream "upgrade:~%~A~%" it)))
 
 (defun apply-schema-change-fn (instance expr old-schema)
@@ -184,7 +187,7 @@ the body of WITH-DB forms.")
          (funcall (symbol-function expr) instance))
         ((consp expr)
          (let ((fn (compile nil (eval expr))))
-           (setf (upgrade-schema old-schema) fn)
+           (setf (upgrade old-schema) fn)
            (funcall fn instance)))))
 
 (defclass database-collection () ()
@@ -426,21 +429,36 @@ column is already closed."))
 (defgeneric stop-transaction (self transaction &key &allow-other-keys))
 (defgeneric abort-transaction (self transaction &key &allow-other-keys))
 
+;; Simple transactions are non-nil lists which are handled according to the
+;; *TRANSACTION-SYNTAX* variable.
+(deftype simple-transaction () `(and (not null) list))
+
 (defvar *txn* nil)
 
-(defclass transaction-object () ())
+(defclass transaction-object () ()
+  (:documentation "Base class for transactions.
+
+In our system, transactions must be one of the following:
+
+- A non-nil list
+- A subclass of TRANSACTION-OBJECT
+- Implement a TRANSACTION-DB method which returns an instance of DATABASE"))
 
 (defgeneric transaction-object-p (self)
   (:method ((self t))
-    (and (not (null self))
-         (consp self)
-         (subtypep (type-of (transaction-db self)) 'database)))
+    (or (and (not (null self))
+             (consp self))
+        (subtypep (type-of (transaction-db self)) 'database)))
   (:method ((self transaction-object)) t))
 
-(defgeneric transaction-object (self))
-(defgeneric transaction-store (self))
-(defgeneric transaction-db (self))
-(defgeneric transaction-prior (self))
+(defgeneric transaction-object (self)
+  (:documentation "Return the underlying object of a transaction."))
+(defgeneric transaction-store (self)
+  (:documentation "Return the underlying STORE of a transaction."))
+(defgeneric transaction-db (self)
+  (:documentation "Return the underlying DB of a transaction."))
+(defgeneric transaction-prior (self)
+  (:documentation "Return the previous transaction of the current transaction SELF."))
 
 (defun known-transaction (db txn)
   "Search for a prior TXN known by this DB."

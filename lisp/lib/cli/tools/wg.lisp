@@ -50,4 +50,3 @@
         (write-line pubkey f))
       (with-open-file (f private :direction :output)
         (write-line privkey f)))))
-

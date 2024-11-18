@@ -17,7 +17,7 @@
 
 (defpackage :q/sql
   (:nicknames :sql)
-  (:use :cl :std :q/proto :parse/pratt :obj/query :obj/id)
+  (:use :cl :std :q/proto :parse/pratt :obj/query :obj/id :obj/schema :parse/proto :obj/ast)
   (:export
    :sql-error
    :read-sql-string
@@ -63,7 +63,7 @@
 
 (defpackage :q/dql
   (:nicknames :dql)
-  (:use :cl :std :q/proto :obj/query :obj/id :dat/sxp :dat/proto :obj/ast)
+  (:use :cl :std :q/proto :obj/query :obj/id :dat/sxp :dat/proto :obj/ast :obj/schema)
   (:export
    :dql-error
    :dql-data-source

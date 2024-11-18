@@ -64,7 +64,12 @@
 
 (defmethod id ((self simple-schema)) (name self))
 (defmethod (setf id) (new (self simple-schema)) (setf (name self) new))
-  
+
+;;; Dynamic Schema
+(defclass dynamic-schema (schema id) 
+  ((fields :initarg :fields :accessor fields :dynamic t))
+  (:metaclass dynamic-class))
+
 ;;; Object Schema
 (defclass object-schema (schema)
   ((class-name :initarg :class-name :accessor schema-class-name)

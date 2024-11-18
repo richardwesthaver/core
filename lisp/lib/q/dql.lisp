@@ -197,11 +197,14 @@ CLAUSES.")
   
 ;; optimistic vs pessimistic when presented with infinite recursion
 
-;;; CLOS
+;;; Query
 (defclass dql-query (query) ())
 
 (defclass dql-data-source (data-source) ()
-  (:documentation "Data source which can be used withing DQL expressions."))
+  (:documentation "Data source which can be used with DQL expressions."))
 
 ;;; Parser
 (defclass dql-parser (query-parser) ())
+
+;;; Schema
+(defclass dql-schema (schema) ())

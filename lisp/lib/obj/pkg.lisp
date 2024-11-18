@@ -303,13 +303,6 @@
   (:use :cl :std)
   (:export :circle :square :cube :sphere :triangle :pyramid))
 
-(defpackage :obj/config
-  (:nicknames :config)
-  (:use :cl :std)
-  (:export :config :make-config :find-config
-   :config-find :config-get :defconfig
-   :load-config))
-
 (defpackage :obj/build
   (:nicknames :build)
   (:use :cl :std)
@@ -336,9 +329,16 @@
            :physical-expr
            :logical-expr))
 
+(defpackage :obj/config
+  (:nicknames :config)
+  (:use :cl :std :ast)
+  (:export :config :make-config :find-config
+   :config-find :config-get :defconfig
+   :load-config))
+
 (defpackage :obj/schema
   (:nicknames :schema)
-  (:use :cl :std :config :build :meta :stored :sb-mop :id :ast)
+  (:use :cl :std :config :build :meta :stored :sb-mop :id :ast :dynamic)
   (:export
    #:schema
    #:object-schema
@@ -385,116 +385,8 @@
    #:schema-predecessor
    #:diff-type
    #:diff-recs
-   #:apply-schema))
-  
-(defpackage :obj/db
-  (:nicknames :db)
-  (:use :cl :std :id :seq :sb-mop :sb-pcl :schema)
-  (:export
-   :get-val
-   :set-val
-   :dbs
-   :get-db
-   :add-db
-   :make-db
-   :close-db
-   :destroy-db
-   :connect-db
-   :query-db
-   :db-get
-   :db
-   :database
-   :db-closed-p
-   :db-open-p
-   :*db*
-   :get-value
-   :insert-key
-   :insert-kv
-   :make-kv
-   :delete-key
-   :delete-key-ts
-   :delete-key-range
-   :make-transaction
-   :prepare-transaction
-   :rollback-transaction
-   :commit-transaction
-   :delete-transaction
-   :flush-db
-   :sync-db
-   :repair-db
-   :backup-db
-   :restore-db
-   :snapshot-db
-   :write-db
-   :shutdown-db
-   :ingest-db
-   :put-kv
-   :put-key
-   :put-key-ts
-   :get-key
-   :multi-get
-   :execute-transaction
-   :start-transaction
-   :stop-transaction
-   :abort-transaction
-   :kv
-   :make-val
-   :make-key
-   :open-db
-   :kv-key
-   :kv-val
-   :database-collection
-   :database-schema
-   :upgrade-schema
-   :version
-   :remove-kv
-   :ensure-transaction
-   :with-transaction
-   :with-batch-transaction
-   :*txn*
-   :apply-schema-change-fn
-   :transaction-object
-   :current-transaction
-   :transaction-store
-   :database-version
-   :transaction-db
-   :transaction-object-p
-   :known-transaction
-   :close-column
-   :close-columns
-   :find-column
-   :flush-column
-   :transaction-prior
-   :add-column
-   :open-columns
-   :merge-kv
-   :merge-key
-   :db-stats
-   :db-metadata
-   :db-prop
-   :db-opt
-   :columns
-   :create-columns
-   :set-db-opt
-   :with-temp-db
-   :with-db
-   :database-backend-designator
-   :add-database-loader
-   :*database-backend-table*
-   :load-database-backend
-   :*database-backend-options*
-   :*database-backend*
-   :add-database-options
-   :set-database-loaders
-   :add-database-backend-option
-   :set-database-backend-options
-   :do-database-backend-init-options
-   :do-database-backend-close-options
-   :set-database-backend
-   :column
-   :set-database-backend-option
-   :column-opts
-   :transaction-opts))
+   #:apply-schema
+   #:dynamic-schema))
 
 (defpackage :obj/plan
   (:nicknames :plan)
@@ -611,6 +503,117 @@
            :extract-columns*
            :extract-columns
            :query-vop))
+
+(defpackage :obj/db
+  (:nicknames :db)
+  (:use :cl :std :id :seq :sb-mop :sb-pcl :schema :dynamic :query :plan :config)
+  (:export
+   :get-val
+   :set-val
+   :dbs
+   :get-db
+   :add-db
+   :make-db
+   :close-db
+   :destroy-db
+   :connect-db
+   :query-db
+   :db-get
+   :db
+   :database
+   :db-closed-p
+   :db-open-p
+   :*db*
+   :get-value
+   :insert-key
+   :insert-kv
+   :make-kv
+   :delete-key
+   :delete-key-ts
+   :delete-key-range
+   :make-transaction
+   :prepare-transaction
+   :rollback-transaction
+   :commit-transaction
+   :delete-transaction
+   :flush-db
+   :sync-db
+   :repair-db
+   :backup-db
+   :restore-db
+   :snapshot-db
+   :write-db
+   :shutdown-db
+   :ingest-db
+   :put-kv
+   :put-key
+   :put-key-ts
+   :get-key
+   :multi-get
+   :execute-transaction
+   :start-transaction
+   :stop-transaction
+   :abort-transaction
+   :kv
+   :make-val
+   :make-key
+   :open-db
+   :kv-key
+   :kv-val
+   :database-collection
+   :database-schema
+   :upgrade-schema
+   :version
+   :remove-kv
+   :ensure-transaction
+   :with-transaction
+   :with-batch-transaction
+   :*txn*
+   :apply-schema-change-fn
+   :transaction-object
+   :current-transaction
+   :transaction-store
+   :database-version
+   :transaction-db
+   :transaction-object-p
+   :known-transaction
+   :close-column
+   :close-columns
+   :find-column
+   :flush-column
+   :transaction-prior
+   :add-column
+   :open-columns
+   :merge-kv
+   :merge-key
+   :db-stats
+   :db-metadata
+   :db-prop
+   :db-opt
+   :columns
+   :create-columns
+   :set-db-opt
+   :with-temp-db
+   :with-db
+   :database-backend-designator
+   :add-database-loader
+   :*database-backend-table*
+   :load-database-backend
+   :*database-backend-options*
+   :*database-backend*
+   :add-database-options
+   :set-database-loaders
+   :add-database-backend-option
+   :set-database-backend-options
+   :do-database-backend-init-options
+   :do-database-backend-close-options
+   :set-database-backend
+   :column
+   :set-database-backend-option
+   :column-opts
+   :transaction-opts
+   :db-lock
+   :simple-transaction))
 
 (defpackage :obj/secret
   (:nicknames :secret)

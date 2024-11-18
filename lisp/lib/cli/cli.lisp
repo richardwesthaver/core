@@ -5,6 +5,13 @@
 ;;; Code:
 (in-package :std-user)
 
+(defpkg :cli/tools
+  (:nicknames :tools)
+  (:use :cl :std)
+  (:use-reexport :cli/tools/term :cli/tools/tmux :cli/tools/cc
+   :cli/tools/nvcc :cli/tools/pacman :cli/tools/systemd :cli/tools/cargo
+   :cli/tools/sbcl :cli/tools/wg :cli/tools/ytdl))
+
 (defpkg :cli
   (:use :cl :std)
   (:use-reexport :cli/shell :cli/ansi :cli/prompt

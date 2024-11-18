@@ -15,7 +15,7 @@
                              (input *query-io*)
                              (output *query-io*)
                              (reader #'read-line)
-                             (hook))
+                             (hook nil))
   "A simplified COMPLETING-READ for common-lisp.
 
 The Emacs completion framework includes a function called
@@ -29,7 +29,8 @@ simulate one by embedding a DSL in our prompters if we choose. For
 example, perhaps we treat a single '?' character as a request from the
 user to list valid options while continue waiting for input."
   (declare (list collection)
-           (function test reader hook)
+           (function test reader)
+           ((or function null) hook)
            (boolean require-match)
            (stream input output))
   (labels ((print-coll ()
