@@ -92,6 +92,36 @@ handle will not be freed on exit."
      (unwind-protect (progn ,@body)
        (rocksdb-backup-engine-close ,be-var))))
 
+;;; KV
+;; Following macros introduce four anaphors - %KEY and %KLEN and if present, %VAL and %VLEN.
+
+(defmacro with-kv-raw ((db key eptr &key (error 'kv-error) val cf) &body body)
+  `(let ((%klen (length ,key))
+         ,@(when val `((%vlen (length ,val)))))
+     (with-errptr* (,eptr ',error :db ,db :kv ,(if val `(cons ,key ,val) key) ,@(when cf `(:cf ,cf)))
+       (with-alien ((%key (* unsigned-char) (make-alien unsigned-char %klen))
+                    ,@(when val `((%val (* unsigned-char) (make-alien unsigned-char %vlen)))))
+         (setfa %key ,key)
+         ,@(when val `((setfa %val ,val)))
+         ,@body))))
+
+;;; TXN
+(defmacro with-txn-raw ((txn eptr &key (error 'txn-error) key val cf db) &body body)
+  `(let (,@(when key `((%klen (length ,key))))
+         ,@(when val `((%vlen (length ,val)))))
+     (with-errptr* (,eptr ',error 
+                          :txn ,txn
+                          ,@(when cf `(:cf ,cf))
+                          ,@(when db `(:db ,db))
+                          ,@(when (or key val)
+                              `(:kv ,(if val `(cons ,key ,val) key))))
+       (with-alien (,@(when key `((%key (* unsigned-char) (make-alien unsigned-char %klen))))
+                    ,@(when val `((%val (* unsigned-char) (make-alien unsigned-char %vlen)))))
+         ,@(when key `((setfa %key ,key)))
+         ,@(when val `((setfa %val ,val)))
+         ,@body))))
+
+
 ;;; top-level
 ;; TODO 2024-09-26: 
 (defmacro do-db ((db opts) accessors &body body)

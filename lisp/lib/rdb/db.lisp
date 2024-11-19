@@ -16,10 +16,10 @@
   "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
   (sb-ext:finalize db (lambda () (shutdown-db db))))
 
-(set-database-backend :rocksdb *rocksdb-backend-options* 
+(set-database-backend :rocksdb *rocksdb-backend-options*
                       #'load-rocksdb)
 
-(set-database-backend :rdb *rdb-backend-options* 
+(set-database-backend :rdb *rdb-backend-options*
                       (lambda () (db::%load-database-backend :rocksdb)))
 
 (defmethod load-opts ((db rdb))
@@ -51,7 +51,8 @@
 (defclass rdb-database (database)
   ((txn :initform nil :type (or null rdb-transaction-db) :initarg :txn :accessor transaction-db)
    (backup :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-backup)
-   (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor secondary-db))
+   (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor secondary-db)
+   (schema :initform nil :type (or null schema) :initarg :schema :accessor schema))
   (:default-initargs 
    :db (make-db :rocksdb)))
 
@@ -119,7 +120,7 @@
     (rocksdb-transaction-prepare txn e)))
 
 (defmethod commit-transaction ((self rdb-database) txn &key)
-  (with-errptr e
+  (with-errptr* (e 'rdb-alien-error)
     (rocksdb-transaction-commit txn e)))
 
 (defmethod abort-transaction ((self rdb-database) txn &key)
@@ -130,6 +131,8 @@
 (defmethod execute-transaction ((self rdb-database) txn &key)
   (prog1 (commit-transaction self txn)
     (rocksdb-transaction-destroy txn)))
+
+(defmethod rollback-transaction ((self rdb-database) txn &key))
 
 ;;; Collections
 (defclass rdb-collection (database-collection)

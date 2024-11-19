@@ -22,14 +22,12 @@
    :destroy-backup-engine-error
    :rdb-alien-error
    :rdb-user-error
-   :put-kv-error
-   :get-kv-error
    :handle-errptr
    ;; raw
    :make-rocksdb-options :default-rocksdb-options
    :open-db-raw
    :close-db-raw :destroy-db-raw
-   :put-kv-raw :put-kv-str-raw
+   :put-vkv-raw :put-kv-str-raw
    :get-kv-raw :get-kv-str-raw
    :put-cf-raw :put-cf-str-raw
    :get-cf-raw :get-cf-str-raw
@@ -136,7 +134,21 @@
    :rdb-backup-db
    :open-db-secondary-raw
    :create-checkpoint-raw
-   :open-cfs-secondary-raw))
+   :open-cfs-secondary-raw
+   :with-kv-raw
+   :get-kv-error
+   :put-kv-error
+   :kv-error
+   :cf-error
+   :db-missing
+   :metadata-missing
+   :put-kv-cf-error
+   :get-kv-cf-error
+   :transactiondb-get-kv-raw
+   :transactiondb-put-kv-raw
+   :open-transactiondb-raw
+   :txn-error
+   :with-txn-raw))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

@@ -74,47 +74,47 @@ to initialize the instance with custom configuration."
   
 ;;; KVs
 (defun put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
-  (let ((klen (length key))
-	(vlen (length val)))
-    (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
-		 (v (* unsigned-char) (make-alien unsigned-char vlen)))
-      (setfa k key)
-      (setfa v val)
-      (with-errptr* (err 'put-kv-error :db db :kv (cons key val))
-        (rocksdb-put db
-		     opts
-		     k
-		     klen
-		     v
-		     vlen
-		     err)))))
+    (with-kv-raw (db key e :error put-kv-error :val val)
+      (rocksdb-put db opts
+		   %key %klen
+		   %val %vlen
+		   e)))
 
 (defun put-kv-str-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
   (let ((key-octets (string-to-octets key :null-terminate nil))
         (val-octets (string-to-octets val :null-terminate nil)))
     (put-kv-raw db key-octets val-octets opts)))
 
-(defun get-kv-raw (db key &optional (opt (rocksdb-readoptions-create)))
-  (let ((klen (length key)))
-    (with-errptr* (err 'get-kv-error :db db :key key)
-      (with-alien ((vlen size-t)
-		   (k (* unsigned-char) (make-alien unsigned-char klen)))
-        (setfa k key)
-        (let* ((val (rocksdb-get db
-			         opt
-			         k klen
-                                 (addr vlen)
-			         err)))
+(defun get-kv-raw (db key &optional (opt (rocksdb-readoptions-create)) pinned)
+  (with-kv-raw (db key e :error get-kv-error)
+      (with-alien ((vlen size-t))
+        (let* ((val (if pinned 
+                        (rocksdb-get-pinned db opt %key %klen e)
+                        (rocksdb-get db
+                                     opt
+                                     %key
+                                     %klen
+                                     (addr vlen)
+                                     e))))
 	  ;; helps if we know the vlen beforehand, would need a custom
 	  ;; C-side function probably.
-          (let ((v (make-array vlen :element-type 'octet)))
+          (let ((v (make-octets vlen)))
             (clone-octets-from-alien val v vlen)
-            (coerce v 'octet-vector)))))))
+            (coerce v 'octet-vector))))))
 
-(defun get-kv-str-raw (db key &optional (opt (rocksdb-readoptions-create)))
+(defun get-kv-str-raw (db key &optional (opt (rocksdb-readoptions-create)) pinned)
   (let ((k (string-to-octets key)))
-    (let ((v (get-kv-raw db k opt)))
+    (let ((v (get-kv-raw db k opt pinned)))
       (when v (octets-to-string v)))))
+
+(defun merge-kv-raw (db key val &optional (opt (rocksdb-writeoptions-create)))
+  (with-kv-raw (db key e :error merge-kv-error :val val)
+    (rocksdb-merge db opt %key %klen %val %vlen e)))
+
+(defun merge-kv-str-raw (db key val &optional (opt (rocksdb-writeoptions-create)))
+  (let ((k (string-to-octets key))
+        (v (string-to-octets val)))
+    (merge-kv-raw db k v opt)))
 
 ;;; Column Family
 (defun open-cfs-raw (db-opt name names opts)
@@ -136,48 +136,51 @@ to initialize the instance with custom configuration."
 (defun destroy-cf-raw (cf)
   (rocksdb-column-family-handle-destroy cf))
 
-(defun get-cf-raw (db cf key &optional (opt (rocksdb-readoptions-create)))
-  (let ((klen (length key)))
-    (with-errptr* (err 'get-kv-error :db db :key key)
-      (with-alien ((vlen (* size-t) (make-alien size-t 0))
-		   (k (* unsigned-char) (make-alien unsigned-char klen)))
-        (setfa k key)
-        (let* ((val (rocksdb-get-cf db
-			            opt
-                                    cf
-			            k klen
-                                    vlen
-			            err)))
-	  ;; helps if we know the vlen beforehand, would need a custom
-	  ;; C-side function probably.
-	  (let ((v (make-array (deref vlen) :element-type 'octet)))
-            (clone-octets-from-alien val v (deref vlen))
-	    v))))))
+(defun get-cf-raw (db cf key &optional (opt (rocksdb-readoptions-create)) pinned)
+  (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
+      (with-alien ((vlen (* size-t) (make-alien size-t)))
+        (let ((val (if pinned
+                       (rocksdb-get-pinned db opt %key %klen e)
+                       (rocksdb-get-cf db
+			               opt
+                                       cf
+			               %key 
+                                       %klen
+                                       vlen
+			               e)))
+	      ;; helps if we know the vlen beforehand, would need a custom
+	      ;; C-side function probably.
+	      (v (make-array (deref vlen) :element-type 'octet)))
+          (clone-octets-from-alien val v (deref vlen))
+	  v))))
 
-(defun get-cf-str-raw (db cf key &optional (opt (rocksdb-readoptions-create)))
+(defun get-cf-str-raw (db cf key &optional (opt (rocksdb-readoptions-create)) pinned)
   (let ((k (string-to-octets key :null-terminate nil)))
-    (let ((v (get-cf-raw db cf k opt)))
+    (let ((v (get-cf-raw db cf k opt pinned)))
       (when v (octets-to-string v)))))
 
 (defun put-cf-raw (db cf key val &optional (opts (rocksdb-writeoptions-create)))
-  (let ((klen (length key))
-        (vlen (length val)))
-    (with-errptr* (err 'put-kv-error :db db :kv (cons key val))
-      (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
-                   (v (* unsigned-char) (make-alien unsigned-char vlen)))
-        (setfa k key)
-        (setfa v val)
-        (rocksdb-put-cf db
-                        opts
-                        cf
-                        k klen
-                        v vlen
-                        err)))))
+  (with-kv-raw (db key e :error put-kv-cf-error :val val :cf cf)
+    (rocksdb-put-cf db
+                    opts
+                    cf
+                    %key %klen
+                    %val %vlen
+                    e)))
 
 (defun put-cf-str-raw (db cf key val &optional (opt (rocksdb-writeoptions-create)))
   (let ((key-octets (string-to-octets key :null-terminate nil))
         (val-octets (string-to-octets val :null-terminate nil)))
     (put-cf-raw db cf key-octets val-octets opt)))
+
+(defun merge-cf-raw (db cf key val &optional (opt (rocksdb-writeoptions-create)))
+  (with-kv-raw (db key e :cf cf :error merge-kv-error :val val)
+    (rocksdb-merge-cf db opt cf %key %klen %val %vlen e)))
+
+(defun merge-cf-str-raw (db cf key val &optional (opt (rocksdb-writeoptions-create)))
+  (let ((k (string-to-octets key))
+        (v (string-to-octets val)))
+    (merge-cf-raw db cf k v opt)))
 
 (defun cf-name-raw (cf-handle)
   (rocksdb-column-family-handle-get-name cf-handle (make-alien unsigned-long)))
@@ -221,7 +224,7 @@ to initialize the instance with custom configuration."
 
 ;;; Backup DB
 (defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
-  (with-errptr* (err 'open-backup-db :db be-path)
+  (with-errptr* (err 'open-backup-db-error :db be-path)
     (let ((be-path (if (pathnamep be-path)
                        (namestring be-path)
                        be-path)))
@@ -315,20 +318,133 @@ to initialize the instance with custom configuration."
 
 ;;; Transactions
 (defun open-transactiondb-raw (opts topts name)
-  (with-errptr* (e 'open-db-error)
+  (with-errptr* (e 'open-db-error :db name)
     (rocksdb-transactiondb-open opts topts name e)))
+
+(defun transactiondb-get-kv-raw (db key &optional (opts (rocksdb-readoptions-create)) pinned)
+  (with-kv-raw (db key e :error get-kv-error)
+    (with-alien ((vlen (* size-t)))
+      (let* ((val (if pinned
+                      (rocksdb-transactiondb-get-pinned db opts %key %klen e)
+                      (rocksdb-transactiondb-get db opts %key %klen vlen e)))
+             (v (make-array (deref vlen) :element-type 'octet)))
+        (clone-octets-from-alien val v (deref vlen))
+        v))))
+
+(defun transactiondb-get-kv-str-raw (db key &optional (opts (rocksdb-readoptions-create)) pinned)
+  (let ((k (string-to-octets key)))
+    (let ((v (transactiondb-get-kv-raw db k opts pinned)))
+      (when v (octets-to-string v)))))
+
+(defun transactiondb-get-cf-raw (db cf key &optional (opts (rocksdb-readoptions-create)) pinned)
+  (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
+    (with-alien ((vlen (* size-t)))
+      (let* ((val (if pinned
+                      (rocksdb-transactiondb-get-cf-pinned db opts cf %key %klen vlen e)
+                      (rocksdb-transactiondb-get-cf db opts cf %key %klen vlen e)))
+             (v (make-array (deref vlen) :element-type 'octet)))
+        (clone-octets-from-alien val v (deref vlen))
+        v))))
+
+(defun transactiondb-get-cf-str-raw (db cf key &optional (opts (rocksdb-readoptions-create)) pinned)
+  (let ((k (string-to-octets key)))
+    (let ((v (transactiondb-get-cf-raw db cf k opts pinned)))
+      (when v (octets-to-string v)))))
+
+(defun transactiondb-put-kv-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
+  (with-kv-raw (db key e :error put-kv-error :val val)
+    (rocksdb-transactiondb-put db opts %key %klen %val %vlen e)))
+
+(defun transactiondb-put-kv-str-raw (db key val &optional (opts (rocksdb-writeoptions-create)))
+  (let ((key-octets (string-to-octets key :null-terminate nil))
+        (val-octets (string-to-octets val :null-terminate nil)))
+    (transactiondb-put-kv-raw db key-octets val-octets opts)))
+
+(defun transactiondb-put-cf-raw (db cf key val &optional (opts (rocksdb-writeoptions-create)))
+  (with-kv-raw (db key e :error put-kv-cf-error :val val :cf cf)
+    (rocksdb-transactiondb-put-cf db
+                                  opts
+                                  cf
+                                  %key %klen
+                                  %val %vlen
+                                  e)))
+
+(defun transactiondb-put-cf-str-raw (db cf key val &optional (opts (rocksdb-writeoptions-create)))
+  (let ((key-octets (string-to-octets key :null-terminate nil))
+        (val-octets (string-to-octets val :null-terminate nil)))
+    (transactiondb-put-cf-raw db cf key-octets val-octets opts)))
 
 (defun commit-transaction-raw (txn)
   (with-errptr* (e 'rdb-alien-error)
     (rocksdb-transaction-commit txn e)))
 
-(defun rollback-transaction-raw (txn)
+(defun rollback-transaction-raw (txn &optional savepoint)
+  "Rollback a raw transaction TXN when SAVEPOINT is non-nil only rollback to last
+savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
   (with-errptr* (e 'rdb-alien-error)
-    (rocksdb-transaction-rollback txn e)))
+    (if savepoint
+        (rocksdb-transaction-rollback-to-savepoint txn e)
+        (rocksdb-transaction-rollback txn e))))
 
 (defun prepare-transaction-raw (txn)
   (with-errptr* (e 'rdb-alien-error)
     (rocksdb-transaction-prepare txn e)))
+
+(defun transaction-name-raw (txn)
+  (with-errptr* (e 'rdb-alien-error)
+    (with-alien ((len size-t))
+      (rocksdb-transaction-get-name txn (addr len)))))
+
+(defun set-transaction-name-raw (txn name)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-transaction-set-name txn name (length name) e)))
+
+(defsetf transaction-name-raw set-transaction-name-raw)
+
+(defun transaction-get-raw (txn key &optional (opts (rocksdb-readoptions-create)) pinned)
+  (with-txn-raw (txn e :key key)
+    (with-alien ((vlen size-t))
+      (if pinned
+          (rocksdb-transaction-get-pinned txn opts %key %klen e)
+          (rocksdb-transaction-get txn opts %key %klen (addr vlen) e)))))
+
+(defun transaction-get-cf-raw (txn cf key &optional (opts (rocksdb-readoptions-create)) pinned)
+  (with-txn-raw (txn e :key key :cf cf)
+    (with-alien ((vlen size-t))
+      (if pinned
+          (rocksdb-transaction-get-pinned-cf txn opts cf %key %klen e)
+          (rocksdb-transaction-get-cf txn opts cf %key %klen (addr vlen) e)))))
+
+(defun transaction-delete-raw (txn key)
+  (with-txn-raw (txn e :key key)
+    (rocksdb-transaction-delete txn %key %klen e)))
+
+(defun transaction-delete-cf-raw (txn cf key)
+  (with-txn-raw (txn e :key key :cf cf)
+    (rocksdb-transaction-delete-cf txn cf %key %klen e)))
+
+(defun transaction-put-raw (txn key val)
+  (with-txn-raw (txn e :key key :val val)
+    (rocksdb-transaction-put txn %key %klen %val %vlen e)))
+
+(defun transaction-put-cf-raw (txn cf key val)
+  (with-txn-raw (txn e :cf cf :key key :val val)
+    (rocksdb-transaction-put-cf txn cf %key %klen %val %vlen e)))
+
+(defun transaction-merge-raw (txn key val)
+  (with-txn-raw (txn e :key key :val val)
+    (rocksdb-transaction-merge txn %key %klen %val %vlen e)))
+
+(defun transaction-merge-cf-raw (txn cf key val)
+  (with-txn-raw (txn e :key key :val val :cf cf)
+    (rocksdb-transaction-merge-cf txn cf %key %klen %val %vlen e)))
+
+(defun get-prepared-transactions-raw (txn-db)
+  "Return an array of prepared ROCKSDB-TRANSACTION pointers from this
+transaction-db."
+  (with-errptr* (e 'rdb-alien-error)
+    (with-alien ((cnt size-t))
+      (rocksdb-transactiondb-get-prepared-transactions txn-db (addr cnt)))))
 
 ;;; Checkpoints
 (defun make-checkpoint-raw (db)

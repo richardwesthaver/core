@@ -644,8 +644,7 @@
   (txn (* rocksdb-transaction))
   (opts (* rocksdb-readoptions))
   (key (* unsigned-char))
-  (klen size-t)
-  (vlen (* size-t)))
+  (klen size-t))
 
 (def-with-errptr rocksdb-transaction-get-cf (* unsigned-char)
   (txn (* rocksdb-transaction))
@@ -660,8 +659,7 @@
   (opts (* rocksdb-readoptions))
   (cf-handle (* rocksdb-column-family-handle))
   (key (* unsigned-char))
-  (klen size-t)
-  (vlen (* size-t)))
+  (klen size-t))
 
 (def-with-errptr rocksdb-transaction-get-for-update (* unsigned-char)
   (txn (* rocksdb-transaction))
@@ -676,7 +674,6 @@
   (opts (* rocksdb-readoptions))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t))
   (exclusive unsigned-char))
 
 (def-with-errptr rocksdb-transaction-get-for-update-cf (* unsigned-char)
@@ -694,7 +691,6 @@
   (cf-handle (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t))
   (exclusive unsigned-char))
 
 (def-with-errptr rocksdb-transaction-multi-get void
@@ -746,8 +742,7 @@
   (txn-db (* rocksdb-transactiondb))
   (opts (* rocksdb-readoptions))
   (key (* unsigned-char))
-  (klen size-t)
-  (vlen (* size-t)))
+  (klen size-t))
 
 (def-with-errptr rocksdb-transactiondb-get-cf (* unsigned-char)
   (txn-db (* rocksdb-transactiondb))
@@ -757,13 +752,12 @@
   (klen size-t)
   (vlen (* size-t)))
 
-(def-with-errptr rocksdb-transactiondb-get-cf-pinned (* rocksdb-pinnableslice)
+(def-with-errptr rocksdb-transactiondb-get-pinned-cf (* rocksdb-pinnableslice)
   (txn-db (* rocksdb-transactiondb))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
   (key (* unsigned-char))
-  (klen size-t)
-  (vlen (* size-t)))
+  (klen size-t))
 
 (def-with-errptr rocksdb-transactiondb-multi-get-cf void
   (txn-db (* rocksdb-transactiondb))

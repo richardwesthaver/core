@@ -554,13 +554,13 @@ internal sap slots are initialized."
     key
     val))
   (((self rdb) (key string) (val string))
-   (put-kv-raw
+   (put-val-raw
     (rdb-sap self)
     (sb-ext:string-to-octets key)
     (sb-ext:string-to-octets val))))
 
-(defmethod put-kv ((self rdb) (kv kv))
-  (put-kv-raw
+(defmethod put-val ((self rdb) (kv kv))
+  (put-val-raw
    (rdb-sap self)
    (kv-key kv)
    (kv-val kv)))
@@ -596,7 +596,7 @@ internal sap slots are initialized."
                     (kv-key kv)
                     (kv-val kv)
                     opts))
-      (put-kv self kv)))
+      (put-val self kv)))
 
 (defmethods get-val 
   (((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
@@ -609,6 +609,9 @@ internal sap slots are initialized."
      (if cf
          (get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts)
          (get-kv-raw sap key opts)))))
+
+(defmethod get-value ((self rdb) key)
+  (get-kv-raw (sap self) key (rocksdb-readoptions-create)))
 
 ;;; Transaction DB
 (defstruct rdb-transaction-db sap snapshots opts)
@@ -623,9 +626,25 @@ internal sap slots are initialized."
 (defmethod close-transaction-db ((self rdb-transaction-db))
   (rocksdb-transactiondb-close self))
 
+(defmethods get-val
+  (((self rdb-transaction-db) (key string) &key (opts (rocksdb-readoptions-create)) cf pinned)
+   (let ((sap (sap self)))
+     (if cf
+         (transactiondb-get-cf-str-raw sap (rdb-cf-sap (find-column cf self)) key opts pinned)
+         (transactiondb-get-kv-str-raw sap key opts pinned))))
+  (((self rdb) key &key (opts (rocksdb-readoptions-create)) cf pinned)
+   (with-slots (sap) self
+     (if cf
+         (transactiondb-get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts pinned)
+         (transactiondb-get-kv-raw sap key opts pinned)))))
+
+(defmethod get-value ((self rdb-transaction-db) key)
+  (transactiondb-get-kv-raw self key))
+
 ;;; Transaction
 (defstruct rdb-transaction sap savepoint)
 (defaccessor (sap) ((self rdb-transaction)) (rdb-transaction-sap self))
+(defaccessor (name) ((self rdb-transaction)) (transaction-name-raw (sap self)))
 
 ;;; Secondary DB
 (defstruct rdb-secondary-db sap opts)
