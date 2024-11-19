@@ -637,7 +637,7 @@ internal sap slots are initialized."
    :sap (open-db-secondary-raw opts (name self) path)
    :opts opts))
 
-(defmethod close-transaction-db ((self rdb-transaction-db))
+(defmethod close-secondary-db ((self rdb-secondary-db))
   (rocksdb-close (sap self)))
 
 ;;; Backup DB

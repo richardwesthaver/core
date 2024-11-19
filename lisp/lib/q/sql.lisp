@@ -799,7 +799,7 @@
                            (slot-value select 'group-by))
                       aggregate-expr)))))
 
-(defun make-sql-data-frame (select tables)
+(defun make-sql-df (select tables)
   "Process the given SELECT statement with the provided hash-table of
 string:data-frame. Returns a data-frame."
   (let* ((table (or
@@ -850,7 +850,7 @@ string:data-frame. Returns a data-frame."
 
 (defmethod make-df ((self sql-select) &key tables &allow-other-keys)
   (when tables
-    (make-sql-data-frame self tables)))
+    (make-sql-df self tables)))
 
 ;;; Optimizer
 (defclass sql-optimizer (query-optimizer) ())

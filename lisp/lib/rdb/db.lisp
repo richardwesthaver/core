@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :rdb)
 
+;;; Backend
 (defvar *rocksdb-backend-options* '(columns temp path (open t) 
                                     destroy (close t) backup secondary
                                     snapshots sap))
@@ -46,14 +47,14 @@
   (declare (ignore query))
   (get-val db key))
 
+;;; Database
 (defclass rdb-database (database)
-  ((txn :initform nil :type (or null rdb-transaction-db) :initarg :txn :accessor db-txn)
+  ((txn :initform nil :type (or null rdb-transaction-db) :initarg :txn :accessor transaction-db)
    (backup :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-backup)
-   (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-secondary))
+   (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor secondary-db))
   (:default-initargs 
    :db (make-db :rocksdb)))
 
-;; db version
 (defmethod database-version ((self rdb-database))
   "Return the version tag or nil if unmarked"
   (when-let ((db (and #1=(db self) (sap #1#))))
@@ -64,17 +65,24 @@
 (defaccessor (sap) ((self rdb-database)) (sap (db self)))
 (defaccessor (db-opts) ((self rdb-database)) (db-opts (db self)))
 
-(defmethod make-db ((engine (eql :rdb)) &rest initargs &key name columns opts sap)
-  (declare (ignore engine))
-  (remf initargs :name)
-  (remf initargs :columns)
-  (remf initargs :opts)
-  (let ((db (apply 'make-instance 'rdb-database initargs)))
-    (when name (setf (name db) name))
-    (when columns (setf (columns db) columns))
-    (when opts (setf (db-opts db) opts))
-    (when sap (setf (sap db) sap))
-    db))
+(defmethods make-db 
+  (((engine (eql :rdb)) &rest initargs &key name columns opts sap)
+   (declare (ignore engine))
+   (remf initargs :name)
+   (remf initargs :columns)
+   (remf initargs :opts)
+   (let ((db (apply 'make-instance 'rdb-database initargs)))
+     (when name (setf (name db) name))
+     (when columns (setf (columns db) columns))
+     (when opts (setf (db-opts db) opts))
+     (when sap (setf (sap db) sap))
+     db))
+  (((engine (eql :rdb-backup)) &key path (db *db*))
+   (setf (db-backup db) (backup-db db :path path)))
+  (((engine (eql :rdb-transaction)) &key path opts (db *db*))
+   (setf (transaction-db db) (open-transaction-db db :opts opts :path path)))
+  (((engine (eql :rdb-secondary)) &key path opts (db *db*))
+   (setf (secondary-db db) (open-secondary-db db :opts opts :path path))))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)))
 
@@ -92,18 +100,23 @@
 (defmethod get-value (elt (self rdb-database))
   (get-value elt (db self)))
 
+;;; Transactions
 (defmethod start-transaction ((self rdb-database) (transaction rdb-transaction)
                               &key (write-opts (rocksdb-writeoptions-create))
                                    (name (name self))
                                    (transaction-opts (rocksdb-transaction-options-create))
                                    (transactiondb-opts (rocksdb-transactiondb-options-create)))
   (with-errptr e
-    (let ((txn-db (or (db-txn self)
-                      (setf (db-txn self)
-                            (rocksdb-transactiondb-open 
+    (let ((txn-db (or (transaction-db self)
+                      (setf (transaction-db self)
+                            (rocksdb-transactiondb-open
                              (sap (db-opts self)) 
                              transactiondb-opts name e)))))
       (rocksdb-transaction-begin txn-db write-opts transaction-opts transaction))))
+
+(defmethod prepare-transaction (self txn &key)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-transaction-prepare txn e)))
 
 (defmethod commit-transaction ((self rdb-database) txn &key)
   (with-errptr e
@@ -115,7 +128,9 @@
     (rocksdb-transaction-destroy txn)))
 
 (defmethod execute-transaction ((self rdb-database) txn &key)
-  (commit-transaction self txn))
+  (prog1 (commit-transaction self txn)
+    (rocksdb-transaction-destroy txn)))
 
+;;; Collections
 (defclass rdb-collection (database-collection)
   ((collection :initform (coerce nil db::*default-database-collection-type*))))

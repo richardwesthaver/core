@@ -7,5 +7,5 @@
   (:use :cl :std :rt/fuzz :q :log :obj/query))
 
 (defpackage :q/tests
-  (:use :cl :std :rt :q :log :parse/pratt :obj/query))
+  (:use :cl :std :rt :q :log :parse/pratt :obj/query :obj/ast :obj/plan :obj/query))
 

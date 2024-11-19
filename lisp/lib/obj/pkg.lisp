@@ -613,7 +613,9 @@
    :column-opts
    :transaction-opts
    :db-lock
-   :simple-transaction))
+   :simple-transaction
+   :secondary-db
+   :db-backup))
 
 (defpackage :obj/secret
   (:nicknames :secret)

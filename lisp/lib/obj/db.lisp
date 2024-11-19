@@ -124,8 +124,7 @@ the body of WITH-DB forms.")
   of BODY."
   (let ((opts (parse-database-backend-options initargs '*db*)))
     `(let ((,var *db*))
-       (prog2
-           (apply 'do-database-backend-init-options ,var ',opts)
+       (prog2 (apply 'do-database-backend-init-options ,var ',opts)
            (or (progn ,@body) ,var)
          (apply 'do-database-backend-close-options ,var ',opts)))))
 
@@ -151,7 +150,7 @@ the body of WITH-DB forms.")
   (declare (ignorable self))
   (let ((version (call-next-method)))
     (std/macs:ifret version
-                    '(0 6 0))))
+                    *default-database-version*)))
 
 (defun prior-version-p (v1 v2)
   "Is v1 an equal or earlier version than v2"
@@ -193,7 +192,6 @@ the body of WITH-DB forms.")
 (defclass database-collection () ()
   (:documentation "A collection of DATABASE objects."))
 
-;; TODO 2024-05-30: maybe make into a macro?
 (defgeneric make-db (engine &rest initargs &key &allow-other-keys)
   (:documentation "Dispatch initializer for databases. An ENGINE must be supplied, which is
 usually a key such as :ROCKSDB or :SQLITE."))
@@ -337,6 +335,10 @@ hints.")
   (:documentation "Attempt to repair the database SELF."))
 (defgeneric backup-db (self &key)
   (:documentation "Create a new backup for database SELF."))
+(defgeneric db-backup (self)
+  (:documentation "Access the current backup of database SELF."))
+(defgeneric secondary-db (self)
+  (:documentation "Accessor for the secondary-db of a database SELF."))
 (defgeneric restore-db (self from &key)
   (:documentation "Restore database SELF from object FROM."))
 (defgeneric snapshot-db (self)
@@ -411,7 +413,25 @@ column is already closed."))
     (coerce val 'octet-vector)))
 
 ;;; Transactions
-(defgeneric transaction-opts (txn))
+
+;; In our system, transactions must be one of the following:
+
+;; - A non-nil list
+;; - A subclass of TRANSACTION-OBJECT
+;; - Implement a TRANSACTION-DB method which returns an instance of DATABASE"))
+
+;; Simple transactions are non-nil lists which are handled according to the
+
+;; 
+(deftype simple-transaction () `(and (not null) list))
+
+(defvar *txn* nil
+  "The current transaction - should only be set within the dynamic extent of an
+EXECUTE-TRANSACTION call.")
+
+(defclass transaction-object () ()
+  (:documentation "Base class for transaction objects."))
+
 (defgeneric (setf transaction-opts) (new txn))
 (defgeneric make-transaction (self txn &key)
   (:documentation "Make a new transaction object."))
@@ -423,31 +443,14 @@ column is already closed."))
   (:documentation "Delete transaction SELF."))
 (defgeneric commit-transaction (self txn &key)
   (:documentation "Commit transaction object SELF."))
-
-(defgeneric execute-transaction (self txfn &rest args &key &allow-other-keys))
+(defgeneric execute-transaction (self txn &rest args &key &allow-other-keys))
 (defgeneric start-transaction (self transaction &key &allow-other-keys))
 (defgeneric stop-transaction (self transaction &key &allow-other-keys))
 (defgeneric abort-transaction (self transaction &key &allow-other-keys))
 
-;; Simple transactions are non-nil lists which are handled according to the
-;; *TRANSACTION-SYNTAX* variable.
-(deftype simple-transaction () `(and (not null) list))
-
-(defvar *txn* nil)
-
-(defclass transaction-object () ()
-  (:documentation "Base class for transactions.
-
-In our system, transactions must be one of the following:
-
-- A non-nil list
-- A subclass of TRANSACTION-OBJECT
-- Implement a TRANSACTION-DB method which returns an instance of DATABASE"))
-
 (defgeneric transaction-object-p (self)
   (:method ((self t))
-    (or (and (not (null self))
-             (consp self))
+    (or (typep 'simple-transaction self)
         (subtypep (type-of (transaction-db self)) 'database)))
   (:method ((self transaction-object)) t))
 
@@ -456,9 +459,10 @@ In our system, transactions must be one of the following:
 (defgeneric transaction-store (self)
   (:documentation "Return the underlying STORE of a transaction."))
 (defgeneric transaction-db (self)
-  (:documentation "Return the underlying DB of a transaction."))
+  (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
+return the same value as DB depending on backend."))
 (defgeneric transaction-prior (self)
-  (:documentation "Return the previous transaction of the current transaction SELF."))
+  (:documentation "Return the previous transaction of SELF if any."))
 
 (defun known-transaction (db txn)
   "Search for a prior TXN known by this DB."
@@ -468,16 +472,13 @@ In our system, transactions must be one of the following:
              txn
              (known-transaction db (transaction-prior txn))))))
 
-(defmacro with-transaction ((&rest args &key 
-                                        (db '*db*)
-                                        (parent '*txn*)
+(defmacro with-transaction ((&rest args 
+                             &key (db '*db*)
+                                  (parent '*txn*)
                              &allow-other-keys)
                             &body body)
-  "Execute a body with a transaction in place.  On success,
-   the transaction is committed.  Otherwise, the transaction is
-   aborted.  If the body deadlocks, the body is re-executed in
-   a new transaction, retrying a fixed number of iterations.
-   If nested, the backend must support nested transactions."
+  "Execute a body with a transaction in place. On success,
+   the transaction is committed. Otherwise, the transaction is aborted."
   (once-only (db)
     (with-gensyms (txn-fn)
       `(let ((,txn-fn (lambda () ,@body)))
@@ -495,30 +496,23 @@ In our system, transactions must be one of the following:
                                      (parent '*txn*)
                                      &allow-other-keys)
                               &body body)
-  "Execute the body with the existing transaction, or a new transaction if
-   none is currently running.  This allows sequences of database actions to 
-   be run atomically whether there is or is not an existing transaction 
-   (rather than relying on auto-commit).  with-transaction nests transactions
-   where as ensure-transaction can be part of an enclosing, flat transaction"
+  "Execute the body with the existing transaction if one exists, or a new
+transaction. This allows sequences of database actions to be run atomically
+whether there is or is not an existing transaction (rather than relying on
+auto-commit). with-transaction nests transactions where as ensure-transaction
+can be part of an enclosing, flat transaction"
   (once-only (db)
     (with-gensyms (txn-fn)
     `(let ((,txn-fn (lambda () ,@body)))
        (if (known-transaction ,db ,parent)
            (funcall ,txn-fn)
-           (funcall #'execute-transaction ,db
+           (funcall 'execute-transaction ,db
                     ,txn-fn
                     :parent nil
                     ,@(progn
                         (dolist (k '(:db :parent))
                           (remf args k))
                         args)))))))
-
-(defmacro with-batch-transaction ((batch size list &rest txn-options) &body body)
-  "Perform a set of DB operations over a list of elements in batches of size 'size'.
-   Pass specific transaction options after the list reference."
-  `(loop for ,batch in (subsets ,size ,list) do
-        (with-transaction ,txn-options
-          ,@body)))
 
 (defmacro current-transaction (db)
   (with-gensyms (txn)
