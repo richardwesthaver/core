@@ -173,18 +173,37 @@
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
-  (with-db (db 
-            (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)) :columns nil) 
-            :open t
-            :close :auto)
-    ;; (flush-db db)
-    
-    (with-alien ((txn-old (* rocksdb-transaction)))
-      (start-transaction db txn-old))
-    ;; (ensure-transaction (:db db))
-    ))
+  (with-db (db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)) :columns nil)
+               :open t
+               :close :auto
+               :destroy t)
+    (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4))
+                            :opts (rocksdb-transactiondb-options-create))
+    (istype 'rdb-transaction-db (transaction-db db))
+    (let ((txn1 (make-transaction db)))
+      (isnt (abort-transaction txn1)))
+    (let ((txn2 (make-transaction db :name "foofn")))
+      (prepare-transaction txn2)
+      (rocksdb-transaction-set-savepoint (sap txn2))
+      (isequal (name txn2) "foofn")
+      (rocksdb-transaction-destroy (sap txn2)))))
 
-(deftest merge-op ())
+(deftest merge-op ()
+  (let ((opts (default-rdb-opts)))
+    (let ((op1 (concat-merge-op)))
+      (set-db-opt opts :merge-operator op1 :push t)
+      (push-sap* opts)
+      (iseq (db-opt opts :merge-operator) op1)
+      (let ((db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4))
+                              :columns nil
+                              :opts opts))
+            (k (string-to-octets "foo"))
+            (v (string-to-octets "bar")))
+        (setq *db* db)
+        (with-db (db :open t :close t :destroy t)
+          (print (put-key db k v))
+          (print (merge-key db k v))
+          (print (get-val db k)))))))
 
 (deftest prefix-key ()
   "Test custom RocksDB prefix key")

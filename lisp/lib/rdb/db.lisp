@@ -86,6 +86,12 @@
    (setf (secondary-db db) (open-secondary-db db :opts opts :path path))))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)))
+(defmethod open-transaction-db ((self rdb-database) &key path opts) 
+  (setf (transaction-db self) (open-transaction-db (db self) :opts opts :path path)))
+(defmethod open-backup-db ((self rdb-database) &key path) 
+  (setf (db-backup self) (open-backup-db (db self) :path path)))
+(defmethod open-secondary-db ((self rdb-database) &key path opts) 
+  (setf (secondary-db self) (open-secondary-db (db self) :opts opts :path path)))
 
 (defmethod flush-db ((self rdb-database) &rest args &key) (apply 'flush-db (db self) args))
 
@@ -101,38 +107,39 @@
 (defmethod get-value (elt (self rdb-database))
   (get-value elt (db self)))
 
+(defmethod put-key ((self rdb-database) key val)
+  (put-key (db self) key val))
+
+(defmethod delete-key ((self rdb-database) key &key)
+  (delete-key (db self) key))
+
+(defmethod merge-key ((self rdb-database) key val &key (opts (rocksdb-writeoptions-create)))
+  (merge-kv-raw (sap self) key val opts))
+
+(defmethod merge-kv ((self rdb-database) kv &key (opts (rocksdb-writeoptions-create)))
+  (merge-kv-raw (sap self) (kv-key kv) (kv-val kv) opts))
+
 ;;; Transactions
-(defmethod start-transaction ((self rdb-database) (transaction rdb-transaction)
-                              &key (write-opts (rocksdb-writeoptions-create))
-                                   (name (name self))
-                                   (transaction-opts (rocksdb-transaction-options-create))
-                                   (transactiondb-opts (rocksdb-transactiondb-options-create)))
+(defmethod make-transaction ((self rdb-database)
+                             &key (write-opts (rocksdb-writeoptions-create))
+                                  path
+                                  (name (name self))
+                                  txn
+                                  (opts (rocksdb-transaction-options-create))
+                                  (db-opts (rocksdb-transactiondb-options-create)))
   (with-errptr e
     (let ((txn-db (or (transaction-db self)
                       (setf (transaction-db self)
-                            (rocksdb-transactiondb-open
-                             (sap (db-opts self)) 
-                             transactiondb-opts name e)))))
-      (rocksdb-transaction-begin txn-db write-opts transaction-opts transaction))))
-
-(defmethod prepare-transaction (self txn &key)
-  (with-errptr* (e 'rdb-alien-error)
-    (rocksdb-transaction-prepare txn e)))
-
-(defmethod commit-transaction ((self rdb-database) txn &key)
-  (with-errptr* (e 'rdb-alien-error)
-    (rocksdb-transaction-commit txn e)))
-
-(defmethod abort-transaction ((self rdb-database) txn &key)
-  (with-errptr e
-    (rocksdb-transaction-rollback txn e)
-    (rocksdb-transaction-destroy txn)))
+                            (open-transaction-db self :opts db-opts :path path)))))
+      (let ((obj (make-rdb-transaction :sap (rocksdb-transaction-begin (sap txn-db) write-opts opts txn))))
+        (when name (setf (name obj) name))
+        obj))))
+              
 
 (defmethod execute-transaction ((self rdb-database) txn &key)
-  (prog1 (commit-transaction self txn)
+  (prog1 
+      (commit-transaction txn)
     (rocksdb-transaction-destroy txn)))
-
-(defmethod rollback-transaction ((self rdb-database) txn &key))
 
 ;;; Collections
 (defclass rdb-collection (database-collection)

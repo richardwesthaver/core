@@ -891,12 +891,3 @@
 (defmethod execute-transaction ((self rdb-store) txn
                                 &key
                                 transaction parent))
-
-(defmethod start-transaction ((self rdb-store) transaction &key))
-
-(defmethod commit-transaction (store transaction &key)
-  (assert (not *txn*))
-  ;; TODO 2024-11-07: 
-  )
-
-(defmethod abort-transaction (self transaction &key))

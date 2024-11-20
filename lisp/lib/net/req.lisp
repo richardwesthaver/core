@@ -299,14 +299,14 @@
     (close underlying-stream :abort abort)))
 
 (defclass keep-alive-chunked-stream (keep-alive-stream)
-  ((chunky-stream :initarg :chunky-stream :accessor chunky-stream)))
+  ((chunked-stream :initarg :chunked-stream :accessor chunked-stream)))
 
 (defun make-keep-alive-stream (stream &key end chunked-stream (on-close-or-eof #'keep-alive-stream-close-underlying-stream))
   "ON-CLOSE-OR-EOF takes a single parameter, STREAM (the stream passed in here, not the
 keep-alive-stream), and should handle clean-up of it"
   (assert (xor end chunked-stream))
   (if chunked-stream
-      (make-instance 'keep-alive-chunked-stream :stream stream :chunky-stream chunked-stream :on-close-or-eof on-close-or-eof)
+      (make-instance 'keep-alive-chunked-stream :stream stream :chunked-stream chunked-stream :on-close-or-eof on-close-or-eof)
       (make-instance 'keep-alive-stream :stream stream :end end :on-close-or-eof on-close-or-eof)))
 
 (defun maybe-close (stream &optional close-if)
@@ -338,8 +338,8 @@ keep-alive-stream), and should handle clean-up of it"
   "Return :EOF or byte read.  When we hit :EOF or finish reading our chunk,
    call the close-action on our underlying-stream and return :EOF"
   (or (maybe-close stream)
-      (if (input-chunking-p (chunky-stream stream))
-          (let ((byte (read-byte (chunky-stream stream) nil :eof)))
+      (if (input-chunking-p (chunked-stream stream))
+          (let ((byte (read-byte (chunked-stream stream) nil :eof)))
             (if (eql byte :eof)
                 (prog1
                     byte
@@ -365,15 +365,15 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (optimize speed))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
       start
-      (if (input-chunking-p (chunky-stream stream))
+      (if (input-chunking-p (chunked-stream stream))
           (prog1
-              (let ((num-read (read-sequence sequence (chunky-stream stream) :start start :end end)))
+              (let ((num-read (read-sequence sequence (chunked-stream stream) :start start :end end)))
                 num-read)
-            (maybe-close stream (not (input-chunking-p (chunky-stream stream)))))
+            (maybe-close stream (not (input-chunking-p (chunked-stream stream)))))
           start)))
 
 (defmethod stream-element-type ((stream keep-alive-chunked-stream))
-  (stream-element-type (chunky-stream stream)))
+  (stream-element-type (chunked-stream stream)))
 
 (defmethod stream-element-type ((stream keep-alive-stream))
   '(unsigned-byte 8))
@@ -390,11 +390,11 @@ keep-alive-stream), and should handle clean-up of it"
 (declaim (type fixnum +buffer-size+))
 (eval-always (defconstant +buffer-size+ 128))
   
-(defclass decoding-stream (fundamental-character-input-stream)
+(defclass decoding-stream (fundamental-character-input-stream wrapped-stream)
   ((stream :type stream
            :initarg :stream
            :initform (error ":stream is required")
-           :accessor decoding-stream-stream)
+           :accessor stream-of)
    (encoding :initarg :encoding
              :initform (error ":encoding is required")
              :accessor decoding-stream-encoding)
@@ -430,7 +430,7 @@ keep-alive-stream), and should handle clean-up of it"
     (fill-buffer decoding-stream)
     decoding-stream))
 
-(defun fill-buffer (stream)
+(defmethod fill-buffer ((stream chunky:chunked-input-stream))
   (declare (optimize speed))
   (with-slots (stream buffer buffer-position buffer-end-position) stream
     (declare (type (simple-array (unsigned-byte 8) (#.+buffer-size+)) buffer)
@@ -498,7 +498,7 @@ keep-alive-stream), and should handle clean-up of it"
     nil))
 
 (defmethod open-stream-p ((stream decoding-stream))
-  (open-stream-p (decoding-stream-stream stream)))
+  (open-stream-p (stream-of stream)))
 
 (defmethod stream-element-type ((stream decoding-stream))
   'unicode-char)
@@ -984,7 +984,8 @@ keep-alive-stream), and should handle clean-up of it"
        (setf body (make-keep-alive-stream body :chunked-stream
                                           (let ((chunked-stream (make-chunked-stream body)))
                                             (setf (input-chunking-p chunked-stream) t)
-                                            chunked-stream) :on-close-or-eof on-close)))
+                                            chunked-stream) 
+                                               :on-close-or-eof on-close)))
       ((and keep-alive-p content-length)
        (setf body (make-keep-alive-stream body :end content-length :on-close-or-eof on-close)))
       (chunkedp
@@ -996,7 +997,7 @@ keep-alive-stream), and should handle clean-up of it"
         body
         (decode-body content-type body
                      :default-charset (if force-string
-                                          babel:*default-character-encoding*
+                                          :utf-8
                                           nil)))))
 
 (defun build-cookie-headers (uri cookie-jar)

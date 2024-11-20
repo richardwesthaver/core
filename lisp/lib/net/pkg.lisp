@@ -313,7 +313,7 @@
   (:shadow :get :delete)
   (:use :cl :std :obj/uri
    :obj/url :net/proto/http :babel :net/cookie
-   :io/fast
+   :io/fast :io/chunky
    :dat/base64 :cl+ssl :sb-gray)
   (:shadowing-import-from :babel :octets-to-string)
   (:export

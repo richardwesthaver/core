@@ -5,6 +5,9 @@
 
 ;;; error handling
 (defmacro with-errptr* ((e err &rest params) &body body)
+  "Bind e to a C pointer which can be used by alien functions, and if an error is
+signaled we coerce this pointer to a string and feed it to a condition of name
+ERR with initargs PARAMS for the duration of BODY."
   `(with-errptr ,e
      (handler-bind ((sb-sys:memory-fault-error
                       (lambda (c)
@@ -16,6 +19,9 @@
        (progn ,@body))))
 
 ;;; opts
+
+;; These expand into lookup macros for the pre-defined option GET and SET
+;; functions - for example RDB-OPT-SETTER and RDB-OPT-GETTER.
 (macrolet ((%def-opt-finders (name opt)
              `(progn 
                 (defmacro ,(symbolicate name '-setter) (key)
@@ -28,13 +34,13 @@
   (%def-opt-finders rdb-compactopt rocksdb-compactoptions)
   (%def-opt-finders rdb-backupopt rocksdb-backup-engine-options))
 
-;;; db
+;;; rdb
+;; these functions only apply to the low-level API in RDB/OBJ (structs only)
 (defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
   `(let ((,db-var (open-db-raw ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
        (with-errptr* (err 'rocksdb-alien-error)
-         ;; (rocksdb-destroy-db ,opt ,db-path err) ;; when :destroy only
          (rocksdb-options-destroy ,opt)))))
 
 (defmacro with-rdb ((db-var db &key open close) &body body)
@@ -48,88 +54,7 @@
        ,@(if close `(unwind-protect (progn ,@body) (close-db ,db-var))
              body))))
 
-;;; cf
-(defmacro with-cf ((cf-var cf) &body body)
-  "Bind CF to CF-VAR for the lifetime of BODY."
-  `(let ((,cf-var ,cf))
-     (handler-bind ((error (lambda (condition)
-                             (error 'cf-error
-                                    :message
-                                    (format nil "WITH-CF signaled: ~A" condition)))))
-       ,@body)))
-
-(defmacro do-cfs ((cf cfs) &body body)
-  "Do BODY for each CF in the array CFS."
-  (with-gensyms (%cf)
-    `(loop for ,%cf across ,cfs
-           do (with-cf (,cf ,%cf) ,@body))))
-
-;;; iter
-(defmacro with-iter-raw ((iter-var db &optional (opt (rocksdb-readoptions-create))) &body body)
-  `(let ((,iter-var (create-iter-raw ,db ,opt)))
-     (unwind-protect (progn ,@body)
-       (destroy-iter-raw ,iter-var))))
-
-(defmacro with-iter ((iter-var iter) &body body)
-  "Bind object ITER to ITER-VAR.
-
-((%ITER ITER) BODY) is passed to ROCKSDB:WITH-ITER-RAW, binding the
-raw handle to the same symbol prefixed with '%'.
-
-Errors that occur in the inner body will be handled but the iterator
-handle will not be freed on exit."
-  (let ((%iter-var (symbolicate '% (symbol-name iter-var))))
-    `(let ((,iter-var ,iter))
-       (let ((,%iter-var (rdb-iter-sap ,iter-var)))
-         (declare (ignorable ,%iter-var))
-         ,@body))))
-
-;; TODO: sb-ext:with-current-source-form ?
-;;; backup
-(defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
-                                       &body body)
-  `(let ((,be-var (open-backup-engine-raw ,be-path ,opt)))
-     (unwind-protect (progn ,@body)
-       (rocksdb-backup-engine-close ,be-var))))
-
-;;; KV
-;; Following macros introduce four anaphors - %KEY and %KLEN and if present, %VAL and %VLEN.
-
-(defmacro with-kv-raw ((db key eptr &key (error 'kv-error) val cf) &body body)
-  `(let ((%klen (length ,key))
-         ,@(when val `((%vlen (length ,val)))))
-     (with-errptr* (,eptr ',error :db ,db :kv ,(if val `(cons ,key ,val) key) ,@(when cf `(:cf ,cf)))
-       (with-alien ((%key (* unsigned-char) (make-alien unsigned-char %klen))
-                    ,@(when val `((%val (* unsigned-char) (make-alien unsigned-char %vlen)))))
-         (setfa %key ,key)
-         ,@(when val `((setfa %val ,val)))
-         ,@body))))
-
-;;; TXN
-(defmacro with-txn-raw ((txn eptr &key (error 'txn-error) key val cf db) &body body)
-  `(let (,@(when key `((%klen (length ,key))))
-         ,@(when val `((%vlen (length ,val)))))
-     (with-errptr* (,eptr ',error 
-                          :txn ,txn
-                          ,@(when cf `(:cf ,cf))
-                          ,@(when db `(:db ,db))
-                          ,@(when (or key val)
-                              `(:kv ,(if val `(cons ,key ,val) key))))
-       (with-alien (,@(when key `((%key (* unsigned-char) (make-alien unsigned-char %klen))))
-                    ,@(when val `((%val (* unsigned-char) (make-alien unsigned-char %vlen)))))
-         ,@(when key `((setfa %key ,key)))
-         ,@(when val `((setfa %val ,val)))
-         ,@body))))
-
-
-;;; top-level
-;; TODO 2024-09-26: 
-(defmacro do-db ((db opts) accessors &body body)
-  "Database Iteration construct. OPTS are used to provide top-level
-  options dynamically bound to DB. ACCESSORS is a list of database
-   accessors which are available to call in BODY.")
-
-;;; temp-db
+;; temp-rdb
 (defvar *temp-db-path-generator*
   (lambda (&optional (name "temp-db"))
     (make-pathname :directory "tmp" :name (symbol-name (gensym name))))
@@ -160,6 +85,91 @@ the forms in BODY."
          ,(if destroy
               `(destroy-db ,db-var)
               `(shutdown-db ,db-var)))))
+
+;;; cf
+(defmacro with-column ((cf-var cf) &body body)
+  "Bind CF to CF-VAR for the lifetime of BODY."
+  `(let ((,cf-var ,cf))
+     (handler-bind ((error (lambda (condition)
+                             (error 'cf-error
+                                    :message
+                                    (format nil "WITH-COLUMN signaled: ~A" condition)))))
+       ,@body)))
+
+(defmacro do-columns ((cf cfs) &body body)
+  "Do BODY for each CF in the array CFS."
+  (with-gensyms (%cf)
+    `(loop for ,%cf across ,cfs
+           do (with-column (,cf ,%cf) ,@body))))
+
+;;; kv
+(defmacro with-kv ((k v kv) &body body)
+  `(let ((,k (kv-key ,kv))
+         (,v (kv-val ,kv)))
+     ,@body))
+
+(defmacro do-kvs ((k v kvs) &body body)
+  "Do BODY for each K and V in the array KVS."
+  (with-gensyms (%kv)
+    `(loop for ,%kv across ,kvs
+           do (with-kv (,k ,v ,%kv) ,@body))))
+
+;;; iter
+(defmacro with-iter-raw ((iter-var db &optional (opt (rocksdb-readoptions-create))) &body body)
+  `(let ((,iter-var (create-iter-raw ,db ,opt)))
+     (unwind-protect (progn ,@body)
+       (destroy-iter-raw ,iter-var))))
+
+(defmacro with-iter ((iter-var iter) &body body)
+  "Bind object ITER to ITER-VAR.
+
+((%ITER ITER) BODY) is passed to ROCKSDB:WITH-ITER-RAW, binding the
+raw handle to the same symbol prefixed with '%'.
+
+Errors that occur in the inner body will be handled but the iterator
+handle will not be freed on exit."
+  (let ((%iter-var (symbolicate '% (symbol-name iter-var))))
+    `(let ((,iter-var ,iter))
+       (let ((,%iter-var (rdb-iter-sap ,iter-var)))
+         (declare (ignorable ,%iter-var))
+         ,@body))))
+
+;; TODO: sb-ext:with-current-source-form ?
+;;; backup
+(defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
+                                       &body body)
+  `(let ((,be-var (open-backup-engine-raw ,be-path ,opt)))
+     (unwind-protect (progn ,@body)
+       (rocksdb-backup-engine-close ,be-var))))
+
+;;; raw
+;; Following macros introduce four anaphors - %KEY and %KLEN and if VAL is present, %VAL and %VLEN.
+(defmacro with-kv-raw ((db key eptr &key (error 'kv-error) val cf) &body body)
+  `(let ((%klen (length ,key))
+         ,@(when val `((%vlen (length ,val)))))
+     (with-errptr* (,eptr ',error :db ,db :kv ,(if val `(cons ,key ,val) key) ,@(when cf `(:cf ,cf)))
+       (with-alien ((%key (* unsigned-char) (make-alien unsigned-char %klen))
+                    ,@(when val `((%val (* unsigned-char) (make-alien unsigned-char %vlen)))))
+         (setfa %key ,key)
+         ,@(when val `((setfa %val ,val)))
+         ,@body))))
+
+(defmacro with-txn-raw ((txn eptr &key (error 'txn-error) key val cf db) &body body)
+  `(let (,@(when key `((%klen (length ,key))))
+         ,@(when val `((%vlen (length ,val)))))
+     (with-errptr* (,eptr ',error 
+                          :txn ,txn
+                          ,@(when cf `(:cf ,cf))
+                          ,@(when db `(:db ,db))
+                          ,@(when (or key val)
+                              `(:kv ,(if val `(cons ,key ,val) key))))
+       (with-alien (,@(when key `((%key (* unsigned-char) (make-alien unsigned-char %klen))))
+                    ,@(when val `((%val (* unsigned-char) (make-alien unsigned-char %vlen)))))
+         ,@(when key `((setfa %key ,key)))
+         ,@(when val `((setfa %val ,val)))
+         ,@body))))
+
+
 ;;; sst
 (defmacro with-sst ((sst &key file comparator destroy) &body body)
   "Do BODY with SST bound to a SST-FILE-WRITER. When FILE is supplied
@@ -183,3 +193,4 @@ file by a RDB instance."
   `(progn
      (let ((,db (load-opts ,db)))
        ,@body)))
+

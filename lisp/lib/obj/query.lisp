@@ -70,7 +70,7 @@
 
 ;;; Record Batch
 (defstruct record-batch
-  (schema (make-simple-schema) :type schema)
+  (schema (make-simple-schema (gensym "RECORD")) :type schema)
   (fields #() :type column-vector))
 
 (defmethod schema ((self record-batch))
@@ -757,14 +757,14 @@
                             (map 'field-vector
                                  (lambda (x) (to-field x (slot-value plan 'input)))
                                  (slot-value plan 'expr)))
-                  :input (make-physical-query-plan (slot-value plan 'input))
+                  :input (make-physical-plan (slot-value plan 'input))
                   :expr (map 'vector (lambda (x) (make-physical-expression x (slot-value plan 'input)))
                              (slot-value plan 'expr))))
     (selection (make-instance 'selection-exec
-                 :input (make-physical-query-plan (slot-value plan 'input))
+                 :input (make-physical-plan (slot-value plan 'input))
                  :expr (make-physical-expression (slot-value plan 'expr) (slot-value plan 'input))))
     (aggregate (make-instance 'hash-aggregate-exec
-                 :input (make-physical-query-plan (slot-value plan 'input))
+                 :input (make-physical-plan (slot-value plan 'input))
                  :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
                  :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input))))))
 
@@ -873,5 +873,5 @@ accumulator."
 
 (defmethod execute ((self logical-query-plan))
   (execute
-   (make-physical-query-plan
+   (make-physical-plan
     (optimize-query (make-instance 'projection-pushdown-optimizer) self))))

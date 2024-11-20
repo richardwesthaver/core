@@ -215,7 +215,3 @@ accessed using a different MergeOperator)
 (define-alien-callable rocksdb-index-partial-merge boolean #.*rocksdb-partial-merge-lambda-list*
   (setf (deref success) 0)
   nil)
-    
-
-    
- 

@@ -40,3 +40,7 @@ val."))
 (defgeneric (setf read-opts) (new self))
 (defgeneric write-opts (self))
 (defgeneric (setf write-opts) (new self))
+
+(defgeneric merge-partial (self))
+(defgeneric merge-full (self))
+(defgeneric make-merge-op (self))

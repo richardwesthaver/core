@@ -572,10 +572,10 @@
 
 (def-with-errptr rocksdb-transaction-set-name void
   (txn (* rocksdb-transaction))
-  (name c-string)
+  (name (* unsigned-char))
   (name-len size-t))
 
-(define-alien-routine rocksdb-transaction-get-name c-string
+(define-alien-routine rocksdb-transaction-get-name (* unsigned-char)
   (txn (* rocksdb-transaction))
   (name-len (* size-t)))
 

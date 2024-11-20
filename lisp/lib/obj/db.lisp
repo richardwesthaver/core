@@ -55,6 +55,7 @@ the body of WITH-DB forms.")
 (defun parse-database-backend-options (initargs &optional (db-var '*db*))
   "Parse INITARGS as a plist of database options for current *DATABASE-BACKEND*."
   ;; The first element if not a keyword, is bound to the *DB* variable.
+  ;; hmm
   (when (not (keywordp (car initargs)))
     (setf (symbol-value db-var) (eval (pop initargs))))
   (mapcar
@@ -356,6 +357,8 @@ hints.")
 (defgeneric merge-kv (self kv &key)
   (:documentation "Perform a merge operation on SELF using object KV."))
 
+(defmacro with-merge-op ())
+
 ;; Columns (column families)
 (defgeneric open-columns (self &rest names)
   (:documentation "Open the columns indicated by NAMES or all columns belonging
@@ -367,7 +370,7 @@ column is already closed."))
   (:documentation "Close the columns belonging to SELF."))
 (defgeneric create-columns (self)
   (:documentation "Create the columns belonging to SELF."))
-(defgeneric find-column (cf self &key)
+(defgeneric find-column (col self &key)
   (:documentation "Find the column COL in SELF."))
 (defgeneric flush-column (self col &key)
   (:documentation "Flush the column COL in SELF."))
@@ -380,6 +383,7 @@ column is already closed."))
 (defgeneric column-opts (col))
 (defgeneric (setf column-opts) (new col))
 
+;;; KV
 (defstruct (kv (:constructor make-kv (&optional key val))) 
   (key (make-octets *default-kv-size*) :type octet-vector) 
   (val (make-octets *default-kv-size*) :type octet-vector))
@@ -433,20 +437,16 @@ EXECUTE-TRANSACTION call.")
   (:documentation "Base class for transaction objects."))
 
 (defgeneric (setf transaction-opts) (new txn))
-(defgeneric make-transaction (self txn &key)
+(defgeneric make-transaction (self &key)
   (:documentation "Make a new transaction object."))
-(defgeneric prepare-transaction (self txn &key)
+(defgeneric prepare-transaction (self &key)
   (:documentation "Prepare a transaction."))
-(defgeneric rollback-transaction (self txn &key)
+(defgeneric rollback-transaction (self &key)
   (:documentation "Rollback a transaction."))
-(defgeneric delete-transaction (self txn &key)
-  (:documentation "Delete transaction SELF."))
-(defgeneric commit-transaction (self txn &key)
-  (:documentation "Commit transaction object SELF."))
+(defgeneric commit-transaction (self &key)
+  (:documentation "Commit a transaction."))
 (defgeneric execute-transaction (self txn &rest args &key &allow-other-keys))
-(defgeneric start-transaction (self transaction &key &allow-other-keys))
-(defgeneric stop-transaction (self transaction &key &allow-other-keys))
-(defgeneric abort-transaction (self transaction &key &allow-other-keys))
+(defgeneric abort-transaction (self &key &allow-other-keys))
 
 (defgeneric transaction-object-p (self)
   (:method ((self t))
@@ -474,7 +474,7 @@ return the same value as DB depending on backend."))
 
 (defmacro with-transaction ((&rest args 
                              &key (db '*db*)
-                                  (parent '*txn*)
+                                  (txn '*txn*)
                              &allow-other-keys)
                             &body body)
   "Execute a body with a transaction in place. On success,
@@ -484,16 +484,16 @@ return the same value as DB depending on backend."))
       `(let ((,txn-fn (lambda () ,@body)))
          (funcall #'execute-transaction ,db
                   ,txn-fn
-                  :parent (awhen (known-transaction ,db ,parent)
+                  :txn (awhen (known-transaction ,db ,txn)
                             (transaction-object it))
                   ,@(progn
-                      (dolist (k '(:db :parent))
+                      (dolist (k '(:db :txn))
                         (remf args k))
                       args))))))
   
 (defmacro ensure-transaction ((&rest args &key
                                      (db '*db*)
-                                     (parent '*txn*)
+                                     (txn '*txn*)
                                      &allow-other-keys)
                               &body body)
   "Execute the body with the existing transaction if one exists, or a new
@@ -504,13 +504,13 @@ can be part of an enclosing, flat transaction"
   (once-only (db)
     (with-gensyms (txn-fn)
     `(let ((,txn-fn (lambda () ,@body)))
-       (if (known-transaction ,db ,parent)
+       (if (known-transaction ,db ,txn)
            (funcall ,txn-fn)
            (funcall 'execute-transaction ,db
                     ,txn-fn
-                    :parent nil
+                    :txn nil
                     ,@(progn
-                        (dolist (k '(:db :parent))
+                        (dolist (k '(:db :txn))
                           (remf args k))
                         args)))))))
 

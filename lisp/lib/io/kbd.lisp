@@ -81,7 +81,7 @@
       (when (evdev::libevdev-has-event-pending dev)
         (println "has event pending"))
       (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
-        (println (obj/time:unix-to-timestamp (sb-posix::alien-timeval-sec time)))
+        (println (sb-posix::alien-timeval-sec time))
         (println (evdev::libevdev-event-type-get-name type))
         (println (evdev::libevdev-event-code-get-name type code))
         (println (evdev::libevdev-event-value-get-name type code value))))))

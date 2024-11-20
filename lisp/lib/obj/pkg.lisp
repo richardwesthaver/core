@@ -535,7 +535,6 @@
    :prepare-transaction
    :rollback-transaction
    :commit-transaction
-   :delete-transaction
    :flush-db
    :sync-db
    :repair-db
@@ -551,8 +550,6 @@
    :get-key
    :multi-get
    :execute-transaction
-   :start-transaction
-   :stop-transaction
    :abort-transaction
    :kv
    :make-val
@@ -562,7 +559,7 @@
    :kv-val
    :database-collection
    :database-schema
-   :upgrade-schema
+   :upgrade
    :version
    :remove-kv
    :ensure-transaction
@@ -615,7 +612,8 @@
    :db-lock
    :simple-transaction
    :secondary-db
-   :db-backup))
+   :db-backup
+   :db-opts))
 
 (defpackage :obj/secret
   (:nicknames :secret)

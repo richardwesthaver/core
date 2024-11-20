@@ -75,6 +75,12 @@
 (define-condition get-kv-cf-error (kv-error) ()
   (:documentation "Error signaled while processing a GET-KV-CF request"))
 
+(define-condition merge-kv-error (kv-error) ()
+  (:documentation "Error signaled while processing a MERGE-KV request"))
+
+(define-condition merge-kv-cf-error (kv-error) ()
+  (:documentation "Error signaled while processing a MERGE-KV-CF request"))
+
 (define-condition opt-handler-missing (warning rdb-error)
   ())
 

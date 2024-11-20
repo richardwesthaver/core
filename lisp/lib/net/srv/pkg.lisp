@@ -183,9 +183,6 @@ logging, etc."))
     (db:db self)))
 
 (defgeneric (setf session-db) (new self)
-  (:method (new (self service))
-    (declare (ignore self))
-    (setf *session-db* new))
   (:method (new (self db:database))
     (setf (db:db self) new)))
 
@@ -535,6 +532,8 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   (print-unreadable-object (self stream :type t)
     (format stream "~A on port ~A"
             (or (address self) "*") (port self))))
+
+(defaccessor (sesion-db) ((self service)) *session-db*)
 
 (defmethod service-log-message ((self service) level format-string &rest args)
   (log:with-log-stream (stream (message-log-output self) *message-log-lock*)

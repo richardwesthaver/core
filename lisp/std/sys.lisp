@@ -76,7 +76,7 @@ consisting of the old contents appended to the new."
 (defun add-logical-pathname-translation (host path translation)
   (let ((host-path (logical-pathname-translations host))
         (val (cons path translation)))
-    (std/macs:if-let ((found (assoc path host-path :test 'string=)))
+    (if-let ((found (assoc path host-path :test 'string=)))
         (substitute val found host-path :test 'equalp)
       (setf (logical-pathname-translations host) 
             (push val host-path)))))

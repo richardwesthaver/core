@@ -148,7 +148,10 @@
    :transactiondb-put-kv-raw
    :open-transactiondb-raw
    :txn-error
-   :with-txn-raw))
+   :with-txn-raw
+   :index-merge-op
+   :concat-merge-op
+   :rdb-log-default))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

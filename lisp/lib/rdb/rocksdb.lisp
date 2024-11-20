@@ -46,9 +46,11 @@ to initialize the instance with custom configuration."
       (rocksdb-get-column-family-metadata-cf db cf)
       (rocksdb-get-column-family-metadata db)))
 
-(defun flush-db-raw (db &optional (opts (rocksdb-flushoptions-create)))
+(defun flush-db-raw (db &optional wait)
   (with-errptr* (err 'flush-db-error :db db)
-    (rocksdb-flush db opts err)))
+    (let ((opts (rocksdb-flushoptions-create)))
+      (when wait (rocksdb-flushoptions-set-wait opts wait))
+      (rocksdb-flush db opts err))))
 
 (defun repair-db-raw (name &optional (opts (rocksdb-options-create)))
   (with-errptr* (err 'repair-db-error :name name)
@@ -393,11 +395,15 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
 (defun transaction-name-raw (txn)
   (with-errptr* (e 'rdb-alien-error)
     (with-alien ((len size-t))
-      (rocksdb-transaction-get-name txn (addr len)))))
+      (let ((name (rocksdb-transaction-get-name txn (addr len)))
+            (ret (make-octets len)))
+        (octets-to-string (clone-octets-from-alien name ret len))))))
 
 (defun set-transaction-name-raw (txn name)
   (with-errptr* (e 'rdb-alien-error)
-    (rocksdb-transaction-set-name txn name (length name) e)))
+    (let ((nlen (length name)))
+      (with-alien ((%name (* unsigned-char) (octets-to-alien (string-to-octets name))))
+        (rocksdb-transaction-set-name txn %name nlen e)))))
 
 (defsetf transaction-name-raw set-transaction-name-raw)
 

@@ -188,6 +188,12 @@ supplied by the user from the default value."
     (setf (sap self) (rocksdb:rocksdb-column-family-handle-destroy sap))
     (when error (rdb-error "column family is already closed."))))
 
+(defmethod merge-key ((self rdb-cf) key val &key db (opts (rocksdb-writeoptions-create)))
+  (merge-cf-raw (sap db) (sap self) key val opts))
+
+(defmethod merge-kv ((self rdb-cf) kv &key db (opts (rocksdb-writeoptions-create)))
+  (merge-cf-raw (sap db) (sap self) (kv-key kv) (kv-val kv) opts))
+
 ;;; rdb-stats
 (defstruct (rdb-stats (:constructor make-rdb-stats (&optional sap)))
   (sap nil :type (or null alien)))
@@ -431,10 +437,10 @@ internal sap slots are initialized."
       (setf sap (destroy-cf-raw sap)))))
 
 (defaccessor* db-opt 
-    ((self rdb) key) (db-opt (rdb-opts self) key)
-  (new (self rdb) key &key push)
-  (setf (db-opt (rdb-opts self) key) new)
-  (when push (push-sap self key)))
+    ((self rdb) key) (db-opt (db-opts self) key)
+    (new (self rdb) key &key push)
+  (setf (db-opt (db-opts self) key) new)
+  (when push (push-sap (db-opts self) key)))
   
 (defmethod push-opts ((self rdb))
   (with-slots (opts) self
@@ -466,7 +472,8 @@ internal sap slots are initialized."
   (unless-null-db (opts backup) self
     (when (null backup)
       (if (null path)
-          (error 'open-backup-engine-error :db sap)
+          (error 'open-backup-engine-error :db sap 
+                                           :message "PATH must not be nil when no backups exist")
           (open-backup-db self :path path)))
     (create-new-backup-raw backup sap)))
 
@@ -500,11 +507,11 @@ internal sap slots are initialized."
 (defmethod print-stats ((self rdb) &optional stream)
   (print (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream))
 
-(defmethod flush-db ((self rdb) &key) ;; todo flushopts
-  (flush-db-raw (rdb-sap self)))
+(defmethod flush-db ((self rdb) &key wait)
+  (flush-db-raw (rdb-sap self) wait))
 
-(defmethod sync-db ((self rdb) (other null) &key)
-  (flush-db self))
+(defmethod sync-db ((self rdb) (other null) &key wait)
+  (flush-db self :wait wait))
 
 (defmethod shutdown-db ((self rdb) &key wait)
   (log:trace! "shutting down database" (rdb-name self))
@@ -520,7 +527,7 @@ internal sap slots are initialized."
 
 (defmethod find-column ((cf string) (self rdb) &key)
   "Find a CF by name."
-  (find cf (rdb-cfs self) :key 'rdb-cf-name :test 'equal))
+  (find cf (rdb-cfs self) :key 'name :test 'equal))
 
 (defmethod ingest-db ((self rdb) (files list) &key cf (opts (rocksdb-ingestexternalfileoptions-create)))
   (if cf
@@ -554,13 +561,13 @@ internal sap slots are initialized."
     key
     val))
   (((self rdb) (key string) (val string))
-   (put-val-raw
+   (put-kv-raw
     (rdb-sap self)
     (sb-ext:string-to-octets key)
     (sb-ext:string-to-octets val))))
 
-(defmethod put-val ((self rdb) (kv kv))
-  (put-val-raw
+(defmethod put-kv ((self rdb) (kv kv))
+  (put-kv-raw
    (rdb-sap self)
    (kv-key kv)
    (kv-val kv)))
@@ -596,7 +603,7 @@ internal sap slots are initialized."
                     (kv-key kv)
                     (kv-val kv)
                     opts))
-      (put-val self kv)))
+      (put-kv self kv)))
 
 (defmethods get-val 
   (((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf)
@@ -613,18 +620,28 @@ internal sap slots are initialized."
 (defmethod get-value ((self rdb) key)
   (get-kv-raw (sap self) key (rocksdb-readoptions-create)))
 
+(defmethod merge-key ((self rdb) key val &key (opts (rocksdb-writeoptions-create)))
+  (merge-kv-raw (sap self) key val opts))
+
+(defmethod merge-kv ((self rdb) kv &key (opts (rocksdb-writeoptions-create)))
+  (merge-kv-raw (sap self) (kv-key kv) (kv-val kv) opts))
+
 ;;; Transaction DB
-(defstruct rdb-transaction-db sap snapshots opts)
+(defstruct rdb-transaction-db 
+  sap 
+  snapshots 
+  (opts (rocksdb-transactiondb-options-create)))
+
 (defaccessor (sap) ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
 (defaccessor (db-opts) ((self rdb-transaction-db)) (rdb-transaction-db-opts self))
 
-(defmethod open-transaction-db ((self rdb) &key path opts)
+(defmethod open-transaction-db ((self rdb) &key path (opts (rocksdb-transactiondb-options-create)))
   (make-rdb-transaction-db
-   :sap (open-transactiondb-raw (db-opts self) opts path)
+   :sap (open-transactiondb-raw (sap (db-opts self)) opts path)
    :opts opts))
 
 (defmethod close-transaction-db ((self rdb-transaction-db))
-  (rocksdb-transactiondb-close self))
+  (rocksdb-transactiondb-close (sap self)))
 
 (defmethods get-val
   (((self rdb-transaction-db) (key string) &key (opts (rocksdb-readoptions-create)) cf pinned)
@@ -645,6 +662,31 @@ internal sap slots are initialized."
 (defstruct rdb-transaction sap savepoint)
 (defaccessor (sap) ((self rdb-transaction)) (rdb-transaction-sap self))
 (defaccessor (name) ((self rdb-transaction)) (transaction-name-raw (sap self)))
+
+(defmethod transaction-object-p ((self rdb-transaction)) t)
+
+(defmethod make-transaction ((self rdb-transaction-db)
+                             &key name
+                                  txn
+                                  (opts (rocksdb-transaction-options-create))
+                                  (wopts (rocksdb-writeoptions-create)))
+  (let ((obj (make-rdb-transaction
+              :sap (rocksdb-transaction-begin (sap self) wopts opts txn))))
+    (when name (setf (name obj) name))
+    obj))
+
+(defmethod prepare-transaction ((self rdb-transaction) &key)
+  (prepare-transaction-raw (sap self)))
+
+(defmethod rollback-transaction ((self rdb-transaction) &key savepoint)
+  (rollback-transaction-raw (sap self) savepoint))
+
+(defmethod abort-transaction ((self rdb-transaction) &key)
+  (rollback-transaction self)
+  (rocksdb-transaction-destroy (sap self)))
+
+(defmethod commit-transaction ((self rdb-transaction) &key)
+  (commit-transaction-raw (sap self)))
 
 ;;; Secondary DB
 (defstruct rdb-secondary-db sap opts)
@@ -681,3 +723,31 @@ internal sap slots are initialized."
 (defstruct rdb-env sap path threads)
 (defaccessor (sap) ((self rdb-env)) (rdb-env-sap self))
 (defaccessor (path) ((self rdb-env)) (rdb-env-path self))
+
+;;; Merge Ops
+(defun concat-merge-op ()
+  (rocksdb-mergeoperator-create 
+   nil
+   (alien-sap (alien-callable-function 'rocksdb-destructor))
+   (alien-sap (alien-callable-function 'rocksdb-concat-full-merge))
+   (alien-sap (alien-callable-function 'rocksdb-concat-partial-merge))
+   (alien-sap (alien-callable-function 'rocksdb-delete-value))
+   (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
+
+(defun index-merge-op ()
+  (rocksdb-mergeoperator-create 
+   nil
+   (alien-sap (alien-callable-function 'rocksdb-destructor))
+   (alien-sap (alien-callable-function 'rocksdb-index-full-merge))
+   (alien-sap (alien-callable-function 'rocksdb-index-partial-merge))
+   (alien-sap (alien-callable-function 'rocksdb-delete-value))
+   (alien-sap (alien-callable-function 'rocksdb-index-merge-name))))
+
+;;; Logger
+(defun rdb-log-default (level &optional prefix)
+  (if prefix
+      (rocksdb-logger-create-stderr-logger level prefix)
+      (rocksdb-logger-create-callback-logger 
+       level 
+       (alien-sap (alien-callable-function 'rocksdb-log-default)) 
+       nil)))

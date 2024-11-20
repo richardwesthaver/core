@@ -104,7 +104,7 @@
                         :fields (copy-array (schema:fields schema)))))
     (when (subtypep (type-of schema) 'database-schema)
       (setf (id new) (id schema))
-      (setf (upgrade-schema new) (upgrade-schema schema))
+      (setf (upgrade new) (upgrade schema))
       (setf (version new) (version schema)))
     new))
 
@@ -115,7 +115,7 @@
   (let ((st (get-store instance))
         (diff (schema-diff new-schema old-schema)))
     (ensure-transaction (:store st)
-      (awhen (upgrade-schema old-schema)
+      (awhen (upgrade old-schema)
         (apply-schema-change-fn instance it old-schema))
       (loop for entry in diff do
                (upgrade-instance-slot st instance (diff-type entry) (diff-recs entry) old-values))
@@ -199,7 +199,7 @@
         (diff (schema-diff new-schema old-schema)))
     (ensure-transaction (:store-controller sc)
       ;; do we need to pass the persistent object?  Transient ops require previous?
-      (awhen (upgrade-schema old-schema)
+      (awhen (upgrade old-schema)
         (apply-schema-change-fn current it old-schema))
       ;; Handle changed slots
       (loop for entry in diff do

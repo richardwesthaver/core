@@ -231,36 +231,6 @@
    :maphash-values :hash-table-values
    :alist-hash-table :plist-hash-table :hash-table-plist :ensure-gethash))
 
-(defpkg :std/sys
-  (:use :cl)
-  (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
-  (:shadowing-import-from :sb-vm :list-allocated-objects)
-  (:recycle :sb-assem)
-  (:recycle :sb-sys)
-  (:import-from :sb-assem :*backend-instruction-set-package*)
-  (:import-from :sb-impl :*logical-hosts*)
-  (:export
-   :.i ;; alias for *inspected*
-   :64-bit-p :32-bit-p
-   :hooks
-   :*default-arena-size*
-   :current-lisp-implementation
-   :current-machine
-   :list-package-symbols
-   :package-symbols
-   :package-symbol-names
-   :append-logical-hosts
-   :add-logical-pathname-translation
-   :save-lisp-tree-shake-and-die
-   :save-lisp-and-live
-   :forget-shared-object
-   :forget-shared-objects
-   :compile-lisp
-   :without-fp-traps
-   :little-endian-p
-   :cpuid
-   :cpu-vendor))
-
 (defpkg :std/curry
   (:use :cl)
   (:import-from :std/sym :make-gensym-list)
@@ -273,6 +243,24 @@
    :multiple-value-compose
    :curry
    :rcurry))
+
+(defpkg :std/readtable
+  (:use :cl)
+  (:import-from :std/named-readtables :defreadtable)
+  (:import-from :std/curry :curry :rcurry :compose)
+  (:import-from :std/sym :symb)
+  (:import-from :std/list :defmacro!) ;; kludge
+  (:export
+   ;; readtable
+   :|#"-reader|
+   :|#`-reader|
+   :|#f-reader|
+   :|#$-reader|
+   :segment-reader
+   :match-mode-ppcre-lambda-form
+   :subst-mode-ppcre-lambda-form
+   :|#~-reader|
+   :_))
 
 (defpkg :std/macs
   (:use :cl)
@@ -351,6 +339,76 @@
    :cswitch
    :xor
    :ifret))
+
+(defpkg :std/sys
+  (:use :cl)
+  (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
+  (:shadowing-import-from :sb-vm :list-allocated-objects)
+  (:recycle :sb-assem)
+  (:recycle :sb-sys)
+  (:import-from :sb-assem :*backend-instruction-set-package*)
+  (:import-from :sb-impl :*logical-hosts*)
+  (:import-from :std/macs :if-let)
+  (:export
+   :.i ;; alias for *inspected*
+   :64-bit-p :32-bit-p
+   :hooks
+   :*default-arena-size*
+   :current-lisp-implementation
+   :current-machine
+   :list-package-symbols
+   :package-symbols
+   :package-symbol-names
+   :append-logical-hosts
+   :add-logical-pathname-translation
+   :save-lisp-tree-shake-and-die
+   :save-lisp-and-live
+   :forget-shared-object
+   :forget-shared-objects
+   :compile-lisp
+   :without-fp-traps
+   :little-endian-p
+   :cpuid
+   :cpu-vendor))
+
+(defpkg :std/bit
+  (:use :cl)
+  (:import-from :std/type :octet :octet-vector)
+  (:export
+   :make-bits
+   :sign-bit
+   :different-signs-p
+   :mortify-bits
+   :int-list-bits
+   :aref-bit
+   :make-bit-vector
+   :logbit
+   :bitfield
+   :bitfield-slot-name
+   :bitfield-slot-start
+   :bitfield-slot-end
+   :bitfield-slot-size
+   :bitfield-slot-reader
+   :bitfield-slot-initform
+   :bitfield-slot-pack
+   :bitfield-slot-unpack
+   :parse-atomic-bitfield-slot-specifier
+   :parse-compound-bitfield-slot-specifier
+   :bitfield-slot
+   :bitfield-boolean-slot
+   :bitfield-integer-slot
+   :bitfield-member-slot
+   :define-bitfield
+   :hex-string-to-octet-vector
+   :octet-vector-to-hex-string
+   :octets-to-integer
+   :integer-to-octets
+   :octets-to-integer-le
+   :integer-to-octets-le
+   :read-little-endian
+   :write-little-endian
+   :hexchar-to-int
+   :make-octets))
 
 (defpkg :std/serde
   (:use :cl)
@@ -505,63 +563,6 @@
    :task-pool-stages
    :task-pool-workers :task-pool-results
    :with-task-pool))
-
-(defpkg :std/readtable
-  (:use :cl)
-  (:import-from :std/named-readtables :defreadtable)
-  (:import-from :std/curry :curry :rcurry :compose)
-  (:import-from :std/sym :symb)
-  (:import-from :std/list :defmacro!) ;; kludge
-  (:export
-   ;; readtable
-   :|#"-reader|
-   :|#`-reader|
-   :|#f-reader|
-   :|#$-reader|
-   :segment-reader
-   :match-mode-ppcre-lambda-form
-   :subst-mode-ppcre-lambda-form
-   :|#~-reader|
-   :_))
-
-(defpkg :std/bit
-  (:use :cl)
-  (:import-from :std/type :octet :octet-vector)
-  (:export
-   :make-bits
-   :sign-bit
-   :different-signs-p
-   :mortify-bits
-   :int-list-bits
-   :aref-bit
-   :make-bit-vector
-   :logbit
-   :bitfield
-   :bitfield-slot-name
-   :bitfield-slot-start
-   :bitfield-slot-end
-   :bitfield-slot-size
-   :bitfield-slot-reader
-   :bitfield-slot-initform
-   :bitfield-slot-pack
-   :bitfield-slot-unpack
-   :parse-atomic-bitfield-slot-specifier
-   :parse-compound-bitfield-slot-specifier
-   :bitfield-slot
-   :bitfield-boolean-slot
-   :bitfield-integer-slot
-   :bitfield-member-slot
-   :define-bitfield
-   :hex-string-to-octet-vector
-   :octet-vector-to-hex-string
-   :octets-to-integer
-   :integer-to-octets
-   :octets-to-integer-le
-   :integer-to-octets-le
-   :read-little-endian
-   :write-little-endian
-   :hexchar-to-int
-   :make-octets))
 
 (defpkg :std/fmt
   (:use :cl)
