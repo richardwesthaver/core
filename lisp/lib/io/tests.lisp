@@ -40,15 +40,14 @@
 (defparameter *data-size* (* 10 1024))
 
 (deftest zstd-simple ()
-  (let ((data (make-array *data-size* :element-type '(unsigned-byte 8)
-                                      :initial-contents (random-bytes *data-size*)))
-        (round-trip-data (make-array *data-size* :element-type '(unsigned-byte 8)
-                                                 :initial-element 0))
+  (let ((data (make-array *data-size* :element-type 'octet :initial-contents (random-bytes *data-size*)))
+        (round-trip-data (make-octets *data-size*))
         compressed-data)
-    (setf compressed-data 
-          (with-zstd-buffer :output (out data)))
+    (setf compressed-data
+          (with-zstd-buffer :output (out data) out))
     (setf round-trip-data
-          (with-zstd-buffer :input (in compressed-data)))
+          (with-zstd-buffer :input (in compressed-data)
+            in))
     (is (equalp round-trip-data data))))
 
 (deftest zstd-stream ()
@@ -67,7 +66,7 @@
            (finish-output compressor)
            (log:info! (input-position compressor)
                       (output-position compressor))
-           (let ((compressed (make-octets outlen :adjustable t))
+           (let ((compressed (make-octets outlen))
                  (decompressed (make-octets ssize)))
              (clone-octets-from-alien (output-buffer compressor) compressed outlen)
              (decompress-with decompressor compressed)

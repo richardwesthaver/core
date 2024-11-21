@@ -49,10 +49,11 @@ Cookie: name=wookie
     (is req)))
 
 (deftest req ()
-  (is (req:get (uri:uri "https://google.com"))))
+  (istype 'net/req::keep-alive-chunked-stream
+          (req:get (uri:uri "https://google.com") :force-binary t :want-stream t :keep-alive t)))
 
 (deftest fetch ()
-  (is (fetch:download "https://reddit.com/index.html" :output "/tmp/index.html"))
+  (is (fetch:fetch (uri:uri "https://reddit.com/index.html")))
   (is (delete-file "/tmp/index.html")))
 
 (deftest cookies ()

@@ -32,7 +32,7 @@
             (coerce
              (loop for i from 0 below csize
                    collect (deref out i))
-             'vector))))))
+             'octet-vector))))))
 
 (defun zstdd (octets &optional (capacity 4096))
   (let ((len (length octets)))

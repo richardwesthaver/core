@@ -18,8 +18,12 @@
   "Download a file from URL to OUTPUT."
   (let ((*progress-bar-enabled* progress))
     (multiple-value-bind (stream status header uri)
-        (req:get url :want-stream t :force-binary t :connect-timeout connect-timeout :verbose (log:trace-p)
-                     :cookie-jar cookies)
+        (req:get url 
+                 :want-stream t 
+                 :force-binary t
+                 :connect-timeout connect-timeout
+                 :verbose (log:trace-p)
+                 :cookie-jar cookies)
       (when (= status 200)
         (log:debug! "download connect OK:" url)
         (log:debug! "headers:" (hash-table-alist header))
@@ -34,7 +38,7 @@
                   (write-sequence buff out :end end)
                   (unless (= end 4096)
                     (return))))))))
-      (values stream status uri header))))
+      (values status header uri))))
 
 (defun split-file-path (path)
   (let ((pos-last-slash (1+ (position #\/ path :from-end t))))

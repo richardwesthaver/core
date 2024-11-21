@@ -99,7 +99,12 @@
    #:blocked-stream
    #:blocked-io-stream
    #:blocked-output-stream
-   #:blocked-input-stream))
+   #:blocked-input-stream
+   #:read-char*
+   #:unread-char*
+   #:peek-char*
+   #:assert-char
+   #:assert-crlf))
 
 (defpackage :io/socket
   (:use :cl :io/proto :sb-alien)

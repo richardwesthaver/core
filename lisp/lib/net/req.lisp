@@ -347,21 +347,19 @@ keep-alive-stream), and should handle clean-up of it"
                 byte))
           (or (maybe-close stream t) :eof))))
 
-(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional start end)
+(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional (start 0) (end (length sequence)))
   (declare (optimize speed))
-  (let ((%end (or end 0))
-        (%start (or start 0)))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
-      %start
-      (let* ((to-read (min (- %end %start) (keep-alive-stream-end stream)))
+      start
+      (let* ((to-read (min (- end start) (keep-alive-stream-end stream)))
              (n (read-sequence sequence (keep-alive-stream-stream stream)
-                               :start %start
-                               :end (+ %start to-read))))
-        (decf (keep-alive-stream-end stream) (- n %start))
+                               :start start
+                               :end (+ start to-read))))
+        (decf (keep-alive-stream-end stream) (- n start))
         (maybe-close stream (<= (keep-alive-stream-end stream) 0))
-        n))))
+        n)))
 
-(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional start end)
+(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional (start 0) (end (length sequence)))
   (declare (optimize speed))
   (if (null (keep-alive-stream-stream stream)) ;; we already closed it
       start
@@ -391,10 +389,10 @@ keep-alive-stream), and should handle clean-up of it"
 (eval-always (defconstant +buffer-size+ 128))
   
 (defclass decoding-stream (fundamental-character-input-stream wrapped-stream)
-  ((stream :type stream
+  ((stream :type decoding-stream-of
            :initarg :stream
            :initform (error ":stream is required")
-           :accessor stream-of)
+           :accessor decoding-stream-of)
    (encoding :initarg :encoding
              :initform (error ":encoding is required")
              :accessor decoding-stream-encoding)
@@ -427,10 +425,10 @@ keep-alive-stream), and should handle clean-up of it"
                                         :stream stream
                                         :encoding encoding
                                         :on-close on-close)))
-    (fill-buffer decoding-stream)
+    (dec-fill-buffer decoding-stream)
     decoding-stream))
 
-(defmethod fill-buffer ((stream chunky:chunked-input-stream))
+(defun dec-fill-buffer (stream)
   (declare (optimize speed))
   (with-slots (stream buffer buffer-position buffer-end-position) stream
     (declare (type (simple-array (unsigned-byte 8) (#.+buffer-size+)) buffer)
@@ -451,7 +449,6 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (optimize speed))
   (when (/= -1 (the fixnum (decoding-stream-buffer-end-position stream)))
     (return-from needs-to-fill-buffer-p nil))
-
   (with-slots (buffer-position encoding) stream
     (< (- +buffer-size+ (the fixnum buffer-position))
        (the fixnum (babel-encodings:enc-max-units-per-char encoding)))))
@@ -459,7 +456,7 @@ keep-alive-stream), and should handle clean-up of it"
 (defmethod stream-read-char ((stream decoding-stream))
   (declare (optimize speed))
   (when (needs-to-fill-buffer-p stream)
-    (fill-buffer stream))
+    (dec-fill-buffer stream))
 
   (when (= (the fixnum (decoding-stream-buffer-end-position stream))
            (the fixnum (decoding-stream-buffer-position stream)))
@@ -498,7 +495,7 @@ keep-alive-stream), and should handle clean-up of it"
     nil))
 
 (defmethod open-stream-p ((stream decoding-stream))
-  (open-stream-p (stream-of stream)))
+  (open-stream-p (decoding-stream-of stream)))
 
 (defmethod stream-element-type ((stream decoding-stream))
   'unicode-char)
@@ -997,7 +994,7 @@ keep-alive-stream), and should handle clean-up of it"
         body
         (decode-body content-type body
                      :default-charset (if force-string
-                                          :utf-8
+                                          babel:*default-character-encoding*
                                           nil)))))
 
 (defun build-cookie-headers (uri cookie-jar)
@@ -1549,10 +1546,10 @@ keep-alive-stream), and should handle clean-up of it"
 					   original-user-supplied-stream) ;; return what the user sent without wrapping it
                                       (if want-stream ;; add a finalizer to the body to close the stream
                                           (progn
-                                            (trivial-garbage:finalize body (lambda () (close stream)))
+                                            (sb-ext:finalize body (lambda () (close stream)))
                                             stream)
                                           (let ((wrapped-stream (make-%wrapped-stream :stream stream)))
-                                            (trivial-garbage:finalize wrapped-stream (lambda () (close stream)))
+                                            (sb-ext:finalize wrapped-stream (lambda () (close stream)))
                                             wrapped-stream)))))))
                  (finalize-connection stream (gethash "connection" response-headers) uri))))))))))
 

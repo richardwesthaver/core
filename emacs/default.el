@@ -1,5 +1,4 @@
 ;;; default.el --- default config -*- lexical-binding: t -*-
-
 ;;; Code:
 ;;; Settings
 (require 'util)

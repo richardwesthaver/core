@@ -16,6 +16,10 @@
   :test 'equalp
   :documentation "The hexadecimal digits.")
 
+(defvar *char-buffer* nil
+  "A `buffer' for one character.  Used by PEEK-CHAR* and
+UNREAD-CHAR*.")
+
 ;;; Utils
 (defun unexpected-chars (stream last-char expected-chars)
   "Signals an error that LAST-CHAR was read although one of
@@ -61,7 +65,7 @@ according to RFC 2616."
 (defun assert-char (stream expected-char)
   "Reads the next character from STREAM and checks if it is the
 character EXPECTED-CHAR.  Signals an error otherwise."
-  (let ((char (read-char stream)))
+  (let ((char (read-char* stream)))
     (unless (char= char expected-char)
       (unexpected-chars stream char expected-char))
     char))
@@ -72,6 +76,33 @@ are a carriage return and a linefeed.  Signals an error
 otherwise."
   (assert-char stream #\Return)
   (assert-char stream #\Linefeed))
+
+(defun read-char* (stream &optional (eof-error-p t) eof-value)
+  "The streams we're dealing with are all binary with element type
+\(UNSIGNED-BYTE 8) and we're only interested in ISO-8859-1, so we use
+this to `simulate' READ-CHAR."
+  (cond (*char-buffer*
+         (prog1 *char-buffer*
+           (setq *char-buffer* nil)))
+        (t
+         ;; this assumes that character codes are identical to Unicode code
+         ;; points, at least for Latin1
+         (let ((char-code (read-byte stream eof-error-p eof-value)))
+           (and char-code
+                (code-char char-code))))))
+
+(defun unread-char* (char)
+  "Were simulating UNREAD-CHAR by putting the character into
+*CHAR-BUFFER*."
+  ;; no error checking, only used internally
+  (setq *char-buffer* char)
+  nil)
+
+(defun peek-char* (stream &optional eof-error-p eof-value)
+  "We're simulating PEEK-CHAR by reading a character and putting it
+into *CHAR-BUFFER*."
+  ;; no error checking, only used internally  
+  (setq *char-buffer* (read-char* stream eof-error-p eof-value)))
 
 ;;; Conditions
 (eval-always
@@ -172,20 +203,21 @@ of simply switching chunking off.")))
   (cond ((input-chunking-p stream)
          (or (input-available-p stream)
              (fill-buffer stream)))
-        ;; chunked-input-stream-eof-after-last-chunk
+        ((eq (signal-eof stream) :eof)
+         nil)
         (t (listen (stream-of stream)))))
 
 (defmethod fill-buffer ((stream chunked-input-stream))
   (let ((inner-stream (stream-of stream)))
         ;; set up error function for the functions in `read.lisp'
-        ;;         (*current-error-function*
-        ;;           (lambda (last-char expected-chars)
-        ;;              "The function which is called when an unexpected
+        ;; (*current-error-function*
+        ;;   (lambda (last-char expected-chars)
+        ;;     "The function which is called when an unexpected
         ;; character is seen.  Signals INPUT-CHUNKING-BODY-CORRUPTED."
-        ;;              (error 'input-chunking-body-corrupted
-        ;;                     :stream stream
-        ;;                     :last-char last-char
-        ;;                     :expected-chars expected-chars)))
+        ;;     (error 'chunky-input-corrupted
+        ;;            :stream stream
+        ;;            :last-char last-char
+        ;;            :expected-chars expected-chars))))
     (labels (
 ;;              (add-extensions ()
 ;;                "Reads chunk extensions \(if there are any) and stores
@@ -201,24 +233,24 @@ of simply switching chunking off.")))
              (get-chunk-size ()
                "Reads chunk size header \(including optional
 extensions) and returns the size."
-                 (when (expecting-crlf-p stream)
-                   (assert-crlf inner-stream))
-                 (setf (expecting-crlf-p stream) t)
-                 ;; read hexadecimal number
-                 (let (last-char)
-                   (prog1 (loop for weight = (digit-char-p (setq last-char (read-char inner-stream))
-                                                           16)
-                                for result = (if weight
+               (when (expecting-crlf-p stream)
+                 (assert-crlf inner-stream))
+               (setf (expecting-crlf-p stream) t)
+               ;; read hexadecimal number
+               (let (last-char)
+                 (prog1 (loop for weight = (digit-char-p (setq last-char (read-char* inner-stream))
+                                                         16)
+                              for result = (if weight
                                                (+ weight (* 16 (or result 0)))
                                                (return (or result
                                                            (error 'chunky-input-corrupted
                                                                   :stream stream
                                                                   :last-char last-char
                                                                   :expected-chars +hex-digits+)))))
-                     ;; unread first octet which wasn't a digit
-                     (unread-char last-char)
-                     ;; (add-extensions)
-                     ))))
+                   ;; unread first octet which wasn't a digit
+                   (unread-char* last-char)
+                   ;; (add-extensions)
+                   ))))
       (let ((chunk-size (get-chunk-size)))
         (with-slots (input-buffer input-size input-position)
             stream
@@ -230,8 +262,8 @@ extensions) and returns the size."
                        ;; (slot-value stream 'trailers)
                        ;; (read-http-headers inner-stream)
                        input-size 0)
-                 ;; (when (chunked-input-stream-eof-after-last-chunk stream)
-                 ;;   (setf (chunked-input-stream-eof-after-last-chunk stream) :eof))
+                 (when (signal-eof stream)
+                   (setf (signal-eof stream) :eof))
                  ;; return NIL
                  (return-from fill-buffer))
                 ((> chunk-size (length input-buffer))
@@ -246,7 +278,9 @@ extensions) and returns the size."
 (defmethod stream-read-byte ((stream chunked-input-stream))
   (unless (input-chunking-p stream)
     (return-from stream-read-byte
-      (read-byte (stream-of stream) nil :eof)))
+      (if (eq (signal-eof stream) :eof)
+          :eof
+          (read-byte (stream-of stream) nil :eof))))
   (unless (input-available-p stream)
     (unless (fill-buffer stream)
       (return-from stream-read-byte :eof)))
@@ -257,27 +291,28 @@ extensions) and returns the size."
 
 (defmethod stream-read-sequence ((stream chunked-input-stream)
                                  sequence &optional start end)
-  (unless (input-chunking-p stream)
-    (return-from stream-read-sequence
-      ;; (if (eq (chunked-input-stream-eof-after-last-chunk stream) :eof)
-      ;;     0
-      (read-sequence sequence (stream-of stream) :start start :end end)))
-  ;; )
-  (loop
-   (when (>= start end)
-     (return-from stream-read-sequence start))   
-   (unless (input-available-p stream)
-     (unless (fill-buffer stream)
-       (return-from stream-read-sequence start)))
-   (with-slots (input-buffer input-size input-position)
-       stream
-     (replace sequence input-buffer
-              :start1 start :end1 end
-              :start2 input-position :end2 input-size)
-     (let ((length (min (- input-size input-position)
-                        (- end start))))
-       (incf start length)
-       (incf input-position length)))))
+  (let ((start (or start 0))
+        (end (or end (length sequence))))
+    (unless (input-chunking-p stream)
+      (return-from stream-read-sequence
+        (if (eq (signal-eof stream) :eof)
+            0
+            (read-sequence sequence (stream-of stream) :start start :end end))))
+    (loop
+      (when (>= start end)
+        (return-from stream-read-sequence start))   
+      (unless (input-available-p stream)
+        (unless (fill-buffer stream)
+          (return-from stream-read-sequence start)))
+      (with-slots (input-buffer input-size input-position)
+          stream
+        (replace sequence input-buffer
+                 :start1 start :end1 end
+                 :start2 input-position :end2 input-size)
+        (let ((length (min (- input-size input-position)
+                           (- end start))))
+          (incf start length)
+          (incf input-position length))))))
   
 (defclass chunked-output-stream (wrapped-stream fundamental-binary-output-stream) 
   ((output-chunking-p :initform nil
@@ -559,7 +594,7 @@ the buffer to be written."
           (incf index)))))
 
 (defmethod stream-read-sequence ((stream blocked-input-stream)
-                                 sequence &optional start end)
+                                 sequence &optional (start 0) (end (length sequence)))
   (ensure-buffer-valid stream)
   (let ((num-bytes (- (or end (length sequence)) start))
         (num-bytes-remaining (- (or (eof-index stream) (block-size stream))
