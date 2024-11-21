@@ -151,7 +151,11 @@
    :with-txn-raw
    :index-merge-op
    :concat-merge-op
-   :rdb-log-default))
+   :rdb-log-default
+   :do-columns
+   :with-kv
+   :do-kvs
+   :with-column))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

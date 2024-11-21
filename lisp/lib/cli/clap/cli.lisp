@@ -145,3 +145,29 @@ CLI is updated based on the current environment and dynamically bound to
            ,@(when (eql install :after) '((install-ast *cli*)))
            ,@(when run '((do-cmd *cli*)))
            ,@(when exit '((sb-ext:exit))))))))
+
+;;; CLI Package Helpers
+
+(defun package-cli (&optional (package *package*))
+  (gethash (package-name package) *cli-package-table*))
+(defun (setf package-cli) (new &optional (package *package*))
+  (setf (gethash (package-name package) *cli-package-table*) new))
+(defun package-cmds (&optional (package *package*))
+  (cadr (gethash (package-name package) *cli-package-table*)))
+(defun (setf package-cmds) (new &optional (package *package*))
+  (setf (cadr (gethash (package-name package) *cli-package-table*)) new))
+(defun package-opts (&optional (package *package*))
+  (caddr (gethash (package-name package) *cli-package-table*)))
+(defun (setf package-opts) (new &optional (package *package*))
+  (setf (caddr (gethash (package-name package) *cli-package-table*)) new))
+
+;; these functions are used to populate a *CLI-PACKAGE-TABLE* record.
+(defun set-package-cli (cli &key (package *package*) cmds opts)
+  (setf (package-cli package)
+        (list cli (concatenate 'vector (cmds cli) cmds) (concatenate 'vector (opts cli) opts))))
+
+(defun add-package-cmd (cmd &optional (package *package*))
+  (vector-push-extend cmd (package-cmds package)))
+
+(defun add-package-opt (opt &optional (package *package*))
+  (vector-push-extend opt (package-opts package)))

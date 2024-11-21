@@ -153,7 +153,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
 
 (defun ansi-t08 ()
   "Why doesnt calling the stty utility work?"
-  (uiop:run-program "stty raw -echo" :ignore-error-status t)
+  ;; (uiop:run-program "stty raw -echo")
   (erase)
   (cursor-position 1 1)
   (force-output)
@@ -161,7 +161,8 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (cursor-position 2 1)
     (princ a)
     (force-output))
-  (uiop:run-program "stty -raw echo" :ignore-error-status t))
+  ;; (uiop:run-program "stty -raw echo" :ignore-error-status t)
+  )
 
 (defun ansi-t09 ()
   "Query terminal size with ANSI escape sequences."

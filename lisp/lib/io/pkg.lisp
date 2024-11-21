@@ -146,7 +146,7 @@
    :with-zstd-buffer :with-zstd-stream))
 
 (defpackage :io/kbd
-  (:use :cl :std :io/proto :xkb :evdev :sb-alien :obj/time)
+  (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error))
 
 (defpackage io/xsubseq

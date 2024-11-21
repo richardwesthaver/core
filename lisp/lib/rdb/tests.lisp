@@ -71,8 +71,8 @@
     (create-columns db)
     ;; (flush-db db)
     ;; FIX 2024-08-25:
-    (do-cfs (cf (rdb-cfs db))
-      (with-cf (cf cf)
+    (rdb:do-columns (cf (columns db))
+      (rdb:with-column (cf cf)
         (trace! cf)
         ;; (insert-kv db (make-kv "key" "val") :cf cf)
         ;; (is (equal (get-val db "key" :cf (rdb-cf-sap cf)) "val"))

@@ -199,7 +199,22 @@
    :decode-leb128
    :read-uleb128
    :encode-uleb128
-   :decode-uleb128))
+   :decode-uleb128
+   :clamp
+   :gaussian-random
+   :iota
+   :map-iota
+   :lerp
+   :mean
+   :median
+   :variance
+   :standard-deviation
+   :maxf 
+   :minf
+   :factorial
+   :binomial-coefficient
+   :subfactorial
+   :count-permutations))
 
 (defpkg :std/stream
   (:use :cl :sb-gray)

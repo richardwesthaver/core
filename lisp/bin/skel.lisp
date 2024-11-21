@@ -245,14 +245,12 @@
   :thunk skc-show
   :opts ((:name "help" :description "print this message" 
 	   :thunk skc-help)
-	  (:name "version" :description "print version" 
-	   :thunk skc-version)
-          (:name "ast" :description "save the intermediate skel AST in SXP form." :thunk skc-ast)
+	 (:name "version" :description "print version" 
+	  :thunk skc-version)
+         (:name "ast" :description "save the intermediate skel AST in SXP form." :thunk skc-ast)
 	 (:name "level" :description "set log level (warn,info,debug,trace)"
 	  :thunk skc-level)
-	 (:name "config" :description "set a custom skel user config" :kind file)
-	 (:name "input" :description "input source" :kind string)
-	 (:name "output" :description "output target" :kind string))
+	 (:name "config" :description "set a custom skel user config" :kind file))
   :cmds ((:name init
 	  :description "initialize a skelfile in the current directory"
           :opts ((:name "name" :description "project name" :kind string))
@@ -281,7 +279,7 @@
 	  :thunk skc-inspect)
          #+gui
          (:name view
-          :description "view an object in a new GUI window"
+          :description "view an object in a new window"
           :thunk skc-view)
 	 (:name make
 	  :description "build project targets"

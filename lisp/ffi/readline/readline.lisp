@@ -4,6 +4,33 @@
 
 ;;; Code:
 (in-package :readline)
+(define-alien-enum 
+    (rl-state unsigned-int)
+    :initializing 0
+    :initialized  2 ;; initialization done
+    :termprepped  4 ;; terminal is prepped
+    :readcmd      8 ;; reading a command key
+    :metanext     #x10 ;;reading input after ESC
+    :dispatching  #x0000020 ;; dispatching to a command
+    :moreinput    #x0000040 ;; reading more input in a command function
+    :isearch      #x0000080 ;; doing incremental search
+    :nsearch      #x0000100 ;; doing non-incremental search
+    :search       #x0000200 ;; doing a history search
+    :numericarg   #x0000400 ;; reading numeric argument
+    :macroinput   #x0000800 ;; getting input from a macro
+    :macrodef     #x0001000 ;; defining keyboard macro
+    :overwrite    #x0002000 ;; overwrite mode
+    :completing   #x0004000 ;; doing completion
+    :sighandler   #x0008000 ;; in readline sighandler
+    :undoing      #x0010000 ;; doing an undo
+    :inputpending #x0020000 ;; rl_execute_next called
+    :ttycsaved    #x0040000 ;; tty special chars saved
+    :callback     #x0080000 ;; using the callback interface
+    :vimotion     #x0100000 ;; reading vi motion arg
+    :multikey     #x0200000 ;; reading multiple-key command
+    :vicmdonce    #x0400000 ;; entered vi command mode at least once
+    :redisplaying #x0800000 ;; updating terminal display
+    :done         #x1000000) ;; done
 
 (define-alien-enum (rl-completion-type int :test eq)
                    :standard-completion 9
@@ -87,62 +114,62 @@
 
 ;;; Well Known Vars
 (macrolet ((def-rl-var (name var type)
-             `(define-alien-variable (,name ,var) ,type)))
-  (def-rl-var "rl_line_buffer" *line-buffer* c-string)
-  (def-rl-var "rl_point" *point* int)
-  (def-rl-var "rl_end" *end* int)
-  (def-rl-var "rl_mark" *mark* int)
-  (def-rl-var "rl_done" *point* boolean)
-  (def-rl-var "rl_num_chars_to_read" *num-chars-to-read* int)
-  (def-rl-var "rl_pending_input" *pending-input* int)
-  (def-rl-var "rl_dispatching" *point* boolean)
-  (def-rl-var "rl_erase_empty_line" *erase-empty-line* boolean)
-  (def-rl-var "rl_prompt" *prompt* c-string)
-  (def-rl-var "rl_display_prompt" *display-prompt* c-string)
-  (def-rl-var "rl_already_prompted" *already-prompted* boolean)
-  (def-rl-var "rl_library_version" *library-version* c-string)
-  (def-rl-var "rl_readline_version" *readline-version* int)
-  (def-rl-var "rl_gnu_readline_p" *gnu-readline-p* boolean)
-  (def-rl-var "rl_terminal_name" *terminal-name* c-string)
-  (def-rl-var "rl_readline_name" *readline-name* c-string)
-  (def-rl-var "rl_instream" *instream* (* t))
-  (def-rl-var "rl_outstream" *outstream* (* t))
-  (def-rl-var "rl_prefer_env_winsize" *prefer-env-winsize* boolean)
-  (def-rl-var "rl_last_func" *last-func* (* t))
-  (def-rl-var "rl_startup_hook" *startup-hook* (* t))
-  (def-rl-var "rl_pre_input_hook" *pre-input-hook* (* t))
-  (def-rl-var "rl_event_hook" *event-hook* (* t))
-  (def-rl-var "rl_getc_function" *getc-function* (* t))
-  (def-rl-var "rl_signal_event_hook" *signal-event-hook* (* t))
-  (def-rl-var "rl_input-available_hook" *input-available-hook* (* t))
-  (def-rl-var "rl_redisplay_function" *redisplay-function* (* t))
-  (def-rl-var "rl_prep_term_function" *prep-term-function* (* t))
-  (def-rl-var "rl_deprep_term_function" *deprep-term-function* (* t))
-  (def-rl-var "rl_executing_keymap" *executing-keymap* (* t))
-  (def-rl-var "rl_binding_keymap" *binding-keymap* (* t))
-  (def-rl-var "rl_executing_macro" *executing-macro* c-string)
-  (def-rl-var "rl_executing_key" *executing-key* char)
-  (def-rl-var "rl_executing_keyseq" *executing-keyseq* c-string)
-  (def-rl-var "rl_key_sequence_length" *key-sequence-length* int)
-  (def-rl-var "rl_readline_state" *readline-state* int)  
-  (def-rl-var "rl_explicit_arg" *explicit-arg* boolean)
-  (def-rl-var "rl_numeric_arg" *numeric-arg* int)
-  (def-rl-var "rl_editing_mode" *editing-mode* int)
-  (def-rl-var "rl_catch_sigwinch" *catch-sigwinch* boolean)
-  (def-rl-var "rl_change_environment" *change-environment* boolean)
-  (def-rl-var "rl_attempted_completion_function" *attempted-completion-function* (* t))
-  (def-rl-var "rl_completion_display_matches_hook" *completion-display-matches-hook* (* t))
-  (def-rl-var "rl_basic_word_break_characters" *basic-word-break-characters* c-string)
-  (def-rl-var "rl_completer_word_break_character" *completer-word-break-characters* c-string)
-  (def-rl-var "rl_completion_query_items" *completer-query-items* int)
-  (def-rl-var "rl_completion_append_character" *completion-append-character* char)
-  (def-rl-var "rl_ignore_completion_duplicates" *ignore-completion-duplicates* boolean)
-  (def-rl-var "rl_attempted_completion_over" *attempted-completion-over* boolean)
-  (def-rl-var "rl_sort_completion_matches" *sort-completion-matches* boolean)
-  (def-rl-var "rl_completion_type" *completion-type* rl-completion-type)
-  (def-rl-var "rl_inhibit_completion" *inhibit-completion* boolean)
-  (def-rl-var "history_base" *history-base* int)
-  (def-rl-var "history_length" *history-length* int))
+             `(export (define-alien-variable (,name ,var) ,type))))
+  (def-rl-var "rl_line_buffer" *rl-line-buffer* c-string)
+  (def-rl-var "rl_point" *rl-point* int)
+  (def-rl-var "rl_end" *rl-end* int)
+  (def-rl-var "rl_mark" *rl-mark* int)
+  (def-rl-var "rl_done" *rl-point* boolean)
+  (def-rl-var "rl_num_chars_to_read" *rl-num-chars-to-read* int)
+  (def-rl-var "rl_pending_input" *rl-pending-input* int)
+  (def-rl-var "rl_dispatching" *rl-point* boolean)
+  (def-rl-var "rl_erase_empty_line" *rl-erase-empty-line* boolean)
+  (def-rl-var "rl_prompt" *rl-prompt* c-string)
+  (def-rl-var "rl_display_prompt" *rl-display-prompt* c-string)
+  (def-rl-var "rl_already_prompted" *rl-already-prompted* boolean)
+  (def-rl-var "rl_library_version" *rl-library-version* c-string)
+  (def-rl-var "rl_readline_version" *rl-readline-version* int)
+  (def-rl-var "rl_gnu_readline_p" *rl-gnu-readline-p* boolean)
+  (def-rl-var "rl_terminal_name" *rl-terminal-name* c-string)
+  (def-rl-var "rl_readline_name" *rl-readline-name* c-string)
+  (def-rl-var "rl_instream" *rl-instream* (* t))
+  (def-rl-var "rl_outstream" *rl-outstream* (* t))
+  (def-rl-var "rl_prefer_env_winsize" *rl-prefer-env-winsize* boolean)
+  (def-rl-var "rl_last_func" *rl-last-func* (* t))
+  (def-rl-var "rl_startup_hook" *rl-startup-hook* (* t))
+  (def-rl-var "rl_pre_input_hook" *rl-pre-input-hook* (* t))
+  (def-rl-var "rl_event_hook" *rl-event-hook* (* t))
+  (def-rl-var "rl_getc_function" *rl-getc-function* (* t))
+  (def-rl-var "rl_signal_event_hook" *rl-signal-event-hook* (* t))
+  (def-rl-var "rl_input-available_hook" *rl-input-available-hook* (* t))
+  (def-rl-var "rl_redisplay_function" *rl-redisplay-function* (* t))
+  (def-rl-var "rl_prep_term_function" *rl-prep-term-function* (* t))
+  (def-rl-var "rl_deprep_term_function" *rl-deprep-term-function* (* t))
+  (def-rl-var "rl_executing_keymap" *rl-executing-keymap* (* t))
+  (def-rl-var "rl_binding_keymap" *rl-binding-keymap* (* t))
+  (def-rl-var "rl_executing_macro" *rl-executing-macro* c-string)
+  (def-rl-var "rl_executing_key" *rl-executing-key* char)
+  (def-rl-var "rl_executing_keyseq" *rl-executing-keyseq* c-string)
+  (def-rl-var "rl_key_sequence_length" *rl-key-sequence-length* int)
+  (def-rl-var "rl_readline_state" *rl-readline-state* int)  
+  (def-rl-var "rl_explicit_arg" *rl-explicit-arg* boolean)
+  (def-rl-var "rl_numeric_arg" *rl-numeric-arg* int)
+  (def-rl-var "rl_editing_mode" *rl-editing-mode* int)
+  (def-rl-var "rl_catch_sigwinch" *rl-catch-sigwinch* boolean)
+  (def-rl-var "rl_change_environment" *rl-change-environment* boolean)
+  (def-rl-var "rl_attempted_completion_function" *rl-attempted-completion-function* (* t))
+  (def-rl-var "rl_completion_display_matches_hook" *rl-completion-display-matches-hook* (* t))
+  (def-rl-var "rl_basic_word_break_characters" *rl-basic-word-break-characters* c-string)
+  (def-rl-var "rl_completer_word_break_character" *rl-completer-word-break-characters* c-string)
+  (def-rl-var "rl_completion_query_items" *rl-completer-query-items* int)
+  (def-rl-var "rl_completion_append_character" *rl-completion-append-character* char)
+  (def-rl-var "rl_ignore_completion_duplicates" *rl-ignore-completion-duplicates* boolean)
+  (def-rl-var "rl_attempted_completion_over" *rl-attempted-completion-over* boolean)
+  (def-rl-var "rl_sort_completion_matches" *rl-sort-completion-matches* boolean)
+  (def-rl-var "rl_completion_type" *rl-completion-type* rl-completion-type)
+  (def-rl-var "rl_inhibit_completion" *rl-inhibit-completion* boolean)
+  (def-rl-var "history_base" *rl-history-base* int)
+  (def-rl-var "history_length" *rl-history-length* int))
 
 ;; low-level
 (macrolet ((def-rl-int2 (&rest names)
@@ -338,10 +365,6 @@
 (define-alien-routine "previous_history" (* rl-hist-entry))
 (define-alien-routine "next_history" (* rl-hist-entry))
 
-(defvar +c-buffer-size+ 256
-  "How many bytes to allocate per Lisp string when converting list of
-Lisp strings into array of C strings.")
-
 (defmacro produce-callback (function return-type &optional func-arg-list)
   "Return pointer to callback that calls FUNCTION. RETURN-TYPE specifies
 return type of the function and FUNC-ARG-LIST is list of argument types (it
@@ -382,8 +405,8 @@ PREDICATE. Return T if there is no history saved."
                      (line)
                      ;; (alien-funcall "history_get"
                      ;;                :int 
-                     ;;                (1- (+ *history-base*
-                     ;;                       *history-length*)))
+                     ;;                (1- (+ *rl-history-base*
+                     ;;                       *rl-history-length*)))
                      s
                    line)))))
 
@@ -409,9 +432,9 @@ if given, must be a predicate that takes two strings: the actual line and
 the most recent history line. Only when the predicate evaluates to non-NIL
 value new line will be added to the history. Return value on success is the
 actual string and NIL on failure."
-  (setf *already-prompted*  already-prompted
-        *num-chars-to-read* (or num-chars 0)
-        *erase-empty-line*  erase-empty-line)
+  (setf *rl-already-prompted*  already-prompted
+        *rl-num-chars-to-read* (or num-chars 0)
+        *rl-erase-empty-line*  erase-empty-line)
   (let* ((prompt (if prompt (string prompt) ""))
          (ptr (readline prompt)))
     (unless (null ptr)
@@ -428,15 +451,15 @@ actual string and NIL on failure."
 
 ;; (defmacro with-possible-redirection (filename append &body body)
 ;;   "If FILENAME is not NIL, try to create C file named FILENAME,
-;; temporarily reassign `*outstream*' to pointer to this file, perform BODY,
-;; then close the file and assign `*outstream*' the old value. If APPEND is not
+;; temporarily reassign `*rl-outstream*' to pointer to this file, perform BODY,
+;; then close the file and assign `*rl-outstream*' the old value. If APPEND is not
 ;; NIL, output will be appended to the file. Returns NIL on success and T on
 ;; failure."
 ;;   (std:with-gensyms (temp-outstream file-pointer body-fnc)
 ;;     `(flet ((,body-fnc ()
 ;;               ,@body))
 ;;        (if ,filename
-;;            (let ((,temp-outstream *outstream*)
+;;            (let ((,temp-outstream *rl-outstream*)
 ;;                  (,file-pointer (foreign-funcall "fopen"
 ;;                                                  :string ,filename
 ;;                                                  :string (if ,append "a" "w")
@@ -445,10 +468,62 @@ actual string and NIL on failure."
 ;;                  t
 ;;                  (unwind-protect
 ;;                       (progn
-;;                         (setf *outstream* ,file-pointer)
+;;                         (setf *rl-outstream* ,file-pointer)
 ;;                         (,body-fnc))
 ;;                    (foreign-funcall "fclose"
 ;;                                     :pointer ,file-pointer
 ;;                                     :boolean)
-;;                    (setf *outstream* ,temp-outstream))))
+;;                    (setf *rl-outstream* ,temp-outstream))))
 ;;            (,body-fnc)))))
+
+(defun register-function (func function)
+  "Register a function. FUNC should be a keyword, one of the following:
+
+:GETC function is used to get a character from the input stream, thus
+FUNCTION should take pointer to C stream and return a character if this
+function is desired to be registered. In general, an application that
+registers :GETC function should consider registering :INPUTP hook as
+well (see REGISTER-HOOK).
+
+:REDISPLAY function is used to update the display with the current contents
+of the editing buffer, thus FUNCTION should take no arguments and return NIL
+on success and non-NIL of failure. By default, it is set to REDISPLAY, the
+default Readline redisplay function.
+
+:PREP-TERM function is used to initialize the terminal, so FUNCTION must be
+able to take one argument, a flag that says whether or not to use eight-bit
+characters. By default, PREP-TERMINAL is used.
+
+:DEPREP-TERM function is used to reset the terminal. This function should
+undo the effects of :PREP-TERM function.
+
+:COMPLETE function is used to generate list of possible completions for
+given partially entered word. The function must be able to take three
+arguments: partially entered word, start index of the word in *LINE-BUFFER*
+and end index of the word in the buffer. The function must return a list
+where first element is the actual completion (or part of completion if two
+or more completions share common prefix) and the rest arguments are possible
+completions.
+
+Other values of FUNC will be ignored.
+
+FUNCTION must be a function, if FUNCTION is NIL, result is unpredictable."
+  (case func
+    (:getc        (setf *rl-getc-function*
+                        (produce-callback* function 'char '((* t)))))
+    (:redisplay   (setf *rl-redisplay-function*
+                        (produce-callback* function 'void)))
+    (:prep-term   (setf *rl-prep-term-function*
+                        (produce-callback* function 'void '(boolean))))
+    (:deprep-term (setf *rl-deprep-term-function*
+                        (produce-callback* function 'void)))
+    (:complete    (setf *rl-attempted-completion-function*
+                        (produce-callback*
+                         (lambda (text start end)
+                           (prog1
+                               (clone-strings
+                                (funcall function text start end))
+                             (setf *rl-attempted-completion-over* t)))
+                         '(* t)
+                         '(c-string int int)))))
+  nil)

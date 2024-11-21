@@ -7,7 +7,9 @@
 ;;; Code:
 (defpackage :readline
   (:use :cl :sb-alien :std/alien)
-  (:export :load-readline))
+  (:export :load-readline
+           :rl
+           :recent-history-line-satisfies-p))
 
 (in-package :readline)
 

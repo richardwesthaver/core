@@ -50,3 +50,7 @@ DEFCMD.")
 (defvar *arg* nil
   "Current option argument.
 Bound for the lifetime of a function defined with DEFOPT.")
+
+(defvar *cli-package-table* (make-hash-table)
+  "A hash table containing a mapping of package names to a list containing a
+CLI object and two vectors: #(CLI CLI-CMDS CLI-OPTS).")
