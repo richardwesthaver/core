@@ -6,14 +6,13 @@
 (defpkg :bin/skel
   (:use :cl :std :cli
    :vc :sb-ext :skel :log :cli/clap/util
-   :dat/sxp #+tools :skel/tools/viz)
+   :obj/ast #+tools :skel/tools/viz)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl :cli/prompt))
 
 (in-package :bin/skel)
 (in-readtable :shell)
 
-(defopt skc-help (print-help *cli*))
 (defopt skc-version (print-version *cli* t))
 (defopt skc-ast (setq *keep-ast* (or *arg*)))
 (defopt skc-level *log-level*
@@ -240,14 +239,12 @@
 (define-cli *skel-cli*
   :name "skel"
   :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
-  ;; :help t
+  :help t
   :description "A hacker's project compiler."
   :thunk skc-show
-  :opts ((:name "help" :description "print this message" 
-	   :thunk skc-help)
-	 (:name "version" :description "print version" 
+  :opts ((:name "version" :description "print version" 
 	  :thunk skc-version)
-         (:name "ast" :description "save the intermediate skel AST in SXP form." :thunk skc-ast)
+         (:name "ast" :description "save the intermediate skel AST" :thunk skc-ast)
 	 (:name "level" :description "set log level (warn,info,debug,trace)"
 	  :thunk skc-level)
 	 (:name "config" :description "set a custom skel user config" :kind file))
@@ -283,7 +280,6 @@
           :thunk skc-view)
 	 (:name make
 	  :description "build project targets"
-          :opts ((:name "target" :description "target to build" :kind string))
 	  :thunk skc-make)
 	 (:name run
 	  :description "run a script or command"

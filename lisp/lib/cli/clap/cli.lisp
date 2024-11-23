@@ -14,20 +14,29 @@
     ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
     (t (apply #'make-instance kind slots))))
 
-(defmacro define-cli (sym &key name version #+nil (help t) description thunk opts cmds)
+(defopt help (print-help *cli*))
+
+(defmacro define-cli (sym &key name version help description thunk opts cmds)
   "Define a symbol NAME bound to a top-level CLI object."
-  (with-gensyms (%name %class)
+  (with-gensyms (%name %class %opts)
     (if (atom sym)
         (setq %name sym
               %class :cli)
         (setq %name (car sym)
               %class (cdr sym)))
-    ;; (when help)
+    (setq %opts
+          (if help
+              (make-opts
+               (append
+                `((:name "help" :description "print help"
+                   :thunk cli/clap/obj::help))
+                opts))
+              (make-opts opts)))
     `(,*default-cli-def* ,%name (make-cli ,%class :name ,name
                                                   :version ,version
                                                   :description ,description
                                                   :thunk ',thunk
-                                                  :opts ,(make-opts opts)
+                                                  :opts ,%opts
                                                   :cmds ,(make-cmds cmds)))))
 
 (defmacro defmain (name (&key (exit t)) &body body)
@@ -146,8 +155,12 @@ CLI is updated based on the current environment and dynamically bound to
            ,@(when run '((do-cmd *cli*)))
            ,@(when exit '((sb-ext:exit))))))))
 
-;;; CLI Package Helpers
+(defmacro with-cli-args (args &body body)
+  `(let ((*args* ,args)
+         (*argc* ,(length args)))
+     ,@body))
 
+;;; CLI Package Helpers
 (defun package-cli (&optional (package *package*))
   (gethash (package-name package) *cli-package-table*))
 (defun (setf package-cli) (new &optional (package *package*))
@@ -162,7 +175,7 @@ CLI is updated based on the current environment and dynamically bound to
   (setf (caddr (gethash (package-name package) *cli-package-table*)) new))
 
 ;; these functions are used to populate a *CLI-PACKAGE-TABLE* record.
-(defun set-package-cli (cli &key (package *package*) cmds opts)
+(defun load-package-cli (cli &key (package *package*) cmds opts)
   (setf (package-cli package)
         (list cli (concatenate 'vector (cmds cli) cmds) (concatenate 'vector (opts cli) opts))))
 

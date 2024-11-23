@@ -5,7 +5,6 @@
 
 ;;; CLI
 (defvar *pk-target* nil)
-(defopt pk-help (print-help *cli*))
 (defopt pk-version (print-version *cli*))
 (defopt pk-log-level 
   (setq *log-level* (if *arg* (if (stringp *arg*)
@@ -24,7 +23,6 @@
   :description "Universal Package Manager"
   :thunk pk-show
   :opts ((:name "level" :description "set the log level" :thunk pk-log-level)
-         (:name "help" :description "print help" :thunk pk-help)
          (:name "version" :description "print version" :thunk pk-version))
   :cmds ((:name show
           :opts ((:name "target" :thunk pk-target))

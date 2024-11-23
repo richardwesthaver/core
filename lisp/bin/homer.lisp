@@ -76,7 +76,6 @@
               (error "missing HOMER directory")))))))
 
 ;;; CLI
-(defopt homer-help (print-help *cli*))
 (defopt homer-version (print-version *cli*))
 (defopt homer-log-level (when *arg* (setq *log-level* :debug)))
 (defopt homer-force (when *arg* (setq *homer-force* t)))
@@ -187,7 +186,6 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
   :description "user home manager"
   :thunk homer-check
   :opts ((:name "level" :description "set the log level" :thunk homer-log-level)
-         (:name "help" :description "print help" :thunk homer-help)
          (:name "version" :description "print version" :thunk homer-version)
          (:name "force" :description "use force" :thunk homer-force))
   :cmds ((:name show :thunk homer-show)

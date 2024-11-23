@@ -53,7 +53,7 @@ CLI-OPTs. The following special variables are bound for the duration of BODY:
 - *OPTC* : the count of options passed to this command
 - *OPTS* : the actual list of options
 
-OPT-LIST is a which automatically selects and binds the values of parsed
+OPT-LIST is a list which automatically selects and binds the values of parsed
 CLI-OPTs to a name via SYMBOL-MACROLET. The forms accepted are the same as the
 SLOTS args to WITH-SLOTS - the CAR is used as the name of the local symbol
 binding and the CDR is the actual name of the CLI-OPT."
@@ -72,7 +72,10 @@ binding and the CDR is the actual name of the CLI-OPT."
                         (error "Malformed CLI-OPT binding: ~s, should either a symbol or (variable-name opt-name)" x))
                       (destructuring-bind (name &optional (opt-name name)) (ensure-list x)
                         `(,name
-                   (cli-opt-val (find-opt ',opt-name ,*opts*)))))
+                          (when-let ((val (find ,(string-downcase opt-name) *opts* 
+                                                :test 'equal
+                                                :key 'cli/clap/obj:cli-opt-name)))
+                            (cli-opt-val val)))))
              opt-list)
        ,@body))))
 

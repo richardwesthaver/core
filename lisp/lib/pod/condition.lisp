@@ -1,4 +1,4 @@
-;;; lib/pod/err.lisp --- Pod Errors
+;;; lib/pod/condition.lisp --- Pod Conditions
 
 ;;
 

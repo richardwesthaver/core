@@ -5,14 +5,24 @@
 ;;; Code:
 (in-package :std-user)
 (defpkg :bin/skc
-  (:use :cl)
+  (:use :cl :std :cli :skel/net/client)
+  (:import-from :cli
+   :define-cli :defmain
+   :with-cli)
   (:nicknames :skc))
+
 (in-package :bin/skc)
 
-(cli:define-cli *skc-cli*
-  :name "skc"
-  :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
-  :thunk 'cli:args)
+(defcmd skc ()
+  (log:info! :args *args* :opts *opts*))
 
-(cli:defmain start-skc ()
-  (cli:with-cli (*skc-cli* :args (cli:args) :run t :exit t)))
+(define-cli *skc-cli*
+  :name "skc"
+  :help t
+  :version "0.1.0"
+  :description "Skel Client"
+  :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
+  :thunk skc)
+
+(defmain start-skc ()
+  (with-cli (*skc-cli* :run t :exit t) (describe *cli*)))

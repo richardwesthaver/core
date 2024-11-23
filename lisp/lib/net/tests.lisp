@@ -20,7 +20,7 @@
 
 (deftest udp ()
   (with-udp-client (client)
-    (is (typep client 'sb-bsd-sockets:inet-socket))
+    (istype 'sb-bsd-sockets:inet-socket client)
     (is (= (get-protocol-by-name :udp)
            (socket-protocol client)))))
 
@@ -50,10 +50,13 @@ Cookie: name=wookie
 
 (deftest req ()
   (istype 'net/req::keep-alive-chunked-stream
-          (req:get (uri:uri "https://google.com") :force-binary t :want-stream t :keep-alive t)))
+          (req:get (uri:uri "https://google.com") :force-binary t :want-stream t :keep-alive t))
+  (istype 'string (req:get (uri:uri "https://example.com")))
+  (istype 'octet-vector (req:get (uri:uri "https://example.com") :force-binary t)))
 
 (deftest fetch ()
-  (is (fetch:fetch (uri:uri "https://reddit.com/index.html")))
+  (with-output-to-string (s)
+    (write-sequence (req:get "https://google.com") s))
   (is (delete-file "/tmp/index.html")))
 
 (deftest cookies ()

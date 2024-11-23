@@ -117,12 +117,13 @@
   (loop for opt across self
         do (do-opt opt)))
 
-(defmethod find-opt ((name string) (self list) &key active)
-  (let ((found (find name self :key 'cli-opt-name :test 'equal)))
+(defmethod find-opt ((name string) (self list) &key active default)
+  (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
     (if active
         (when (cli-lock-p found)
           found)
-        found)))
+        found)
+    default))
 
 (defmethod find-opt ((name string) (self vector) &key active default)
   (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))

@@ -102,6 +102,7 @@
  (skc (%stash)
       (:build ()
               (with-sbcl (:noinform t :quit t)
+                (push :net *features*)
                 (ql:quickload :bin/skc)
                 (asdf:make :bin/skc))
               #$mv lisp/bin/skc .stash/skc$#))

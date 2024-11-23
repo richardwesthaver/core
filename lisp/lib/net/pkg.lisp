@@ -19,7 +19,10 @@
    :tunnel
    :net-warning
    :codec-warning
-   :protocol-warning))
+   :protocol-warning
+   :net-socket
+   :net-server
+   :net-client))
 
 (defpackage :net/util
   (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
@@ -338,7 +341,8 @@
    :clear-connection-pool
    ;; Restarts
    :retry-request
-   :ignore-and-continue))
+   :ignore-and-continue
+   :decoding-stream-of))
 
 (defpackage :net/fetch
   (:nicknames :fetch)

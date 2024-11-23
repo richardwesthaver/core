@@ -105,7 +105,7 @@
 
 (eval-always
   (defparameter *default-user-agent*
-    (format nil "cc/req (~A~@[ ~A~]); ~A;~@[ ~A~]"
+    (format nil "CC/req (~A~@[ ~A~]); ~A;~@[ ~A~]"
             (lisp-implementation-type)
             (lisp-implementation-version)
             (software-type)
@@ -347,28 +347,32 @@ keep-alive-stream), and should handle clean-up of it"
                 byte))
           (or (maybe-close stream t) :eof))))
 
-(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional (start 0) (end (length sequence)))
+(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional start end)
   (declare (optimize speed))
-  (if (null (keep-alive-stream-stream stream)) ;; we already closed it
-      start
-      (let* ((to-read (min (- end start) (keep-alive-stream-end stream)))
-             (n (read-sequence sequence (keep-alive-stream-stream stream)
-                               :start start
-                               :end (+ start to-read))))
-        (decf (keep-alive-stream-end stream) (- n start))
-        (maybe-close stream (<= (keep-alive-stream-end stream) 0))
-        n)))
+  (let ((start (or start 0))
+        (end (or end (length sequence))))
+    (if (null (keep-alive-stream-stream stream)) ;; we already closed it
+        start
+        (let* ((to-read (min (- end start) (keep-alive-stream-end stream)))
+               (n (read-sequence sequence (keep-alive-stream-stream stream)
+                                 :start start
+                                 :end (+ start to-read))))
+          (decf (keep-alive-stream-end stream) (- n start))
+          (maybe-close stream (<= (keep-alive-stream-end stream) 0))
+          n))))
 
-(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional (start 0) (end (length sequence)))
+(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional start end)
   (declare (optimize speed))
-  (if (null (keep-alive-stream-stream stream)) ;; we already closed it
-      start
-      (if (input-chunking-p (chunked-stream stream))
-          (prog1
-              (let ((num-read (read-sequence sequence (chunked-stream stream) :start start :end end)))
-                num-read)
-            (maybe-close stream (not (input-chunking-p (chunked-stream stream)))))
-          start)))
+  (let ((start (or start 0))
+        (end (or end (length sequence))))
+    (if (null (keep-alive-stream-stream stream)) ;; we already closed it
+        start
+        (if (input-chunking-p (chunked-stream stream))
+            (prog1
+                (let ((num-read (read-sequence sequence (chunked-stream stream) :start start :end end)))
+                  num-read)
+              (maybe-close stream (not (input-chunking-p (chunked-stream stream)))))
+            start))))
 
 (defmethod stream-element-type ((stream keep-alive-chunked-stream))
   (stream-element-type (chunked-stream stream)))
@@ -388,8 +392,8 @@ keep-alive-stream), and should handle clean-up of it"
 (declaim (type fixnum +buffer-size+))
 (eval-always (defconstant +buffer-size+ 128))
   
-(defclass decoding-stream (fundamental-character-input-stream wrapped-stream)
-  ((stream :type decoding-stream-of
+(defclass decoding-stream (fundamental-character-input-stream)
+  ((stream :type decoding-stream
            :initarg :stream
            :initform (error ":stream is required")
            :accessor decoding-stream-of)
@@ -416,8 +420,8 @@ keep-alive-stream), and should handle clean-up of it"
 (defmethod initialize-instance :after ((stream decoding-stream) &rest initargs)
   (declare (ignore initargs))
   (with-slots (encoding) stream
-    (when (keywordp encoding)
-      (setf encoding (babel-encodings:get-character-encoding encoding)))))
+    (when encoding
+      (setf encoding (babel-encodings:get-character-encoding (sb-int:keywordicate encoding))))))
 
 (defun make-decoding-stream (stream &key (encoding babel-encodings:*default-character-encoding*)
                                       (on-close))
@@ -536,7 +540,7 @@ keep-alive-stream), and should handle clean-up of it"
                key
                utf8-filename-p
                (if utf8-filename-p
-                   (obj/uri:parse-uri filename)
+                   (obj/url:url-encode filename :encoding :utf-8)
                    filename)
                #\Return #\Newline)))
     (otherwise
@@ -1093,8 +1097,6 @@ keep-alive-stream), and should handle clean-up of it"
            (fail 'socks5-proxy-request-failed :reason "Unknown address")))))))
 
 (defun make-ssl-stream (stream ca-path ssl-key-file ssl-cert-file ssl-key-password hostname insecure)
-  #+nil (declare (ignore stream ca-path ssl-key-file ssl-cert-file ssl-key-password hostname insecure))
-  #+nil (error "SSL not supported. Remove :dexador-no-ssl from *features* to enable SSL.")
   (progn
     (cl+ssl:ensure-initialized)
     (let ((ctx (cl+ssl:make-context :verify-mode
@@ -1650,12 +1652,13 @@ keep-alive-stream), and should handle clean-up of it"
   (unless (and (eql if-exists nil)
                (probe-file destination))
     (with-open-file (out destination
-                         :direction :output :element-type '(unsigned-byte 8)
+                         :direction :output
                          :if-exists if-exists
-                         :if-does-not-exist :create)
-      (remf args :if-exists)
+                         :if-does-not-exist :create
+                         :element-type '(unsigned-byte 8))
+      
       (let ((body (apply #'req:get uri :want-stream t :force-binary t
-                         args)))
+                         (std:removef args :if-exists))))
         (alexandria:copy-stream body out)
         ;; Nominally the body gets closed, but if keep-alive is nil we need to explicitly do it.
         (when (open-stream-p body)

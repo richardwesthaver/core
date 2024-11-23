@@ -10,6 +10,14 @@
 (defvar *default-local-env-var-names* 
   '("PREFIX" "STASHDIR" "STOREDIR" "BINDIR" "LIBDIR" "DATADIR" "CARGO_TARGET_DIR"))
 
+(defvar *env-table* (make-hash-table :test 'equal))
+
+(defun load-env (&optional (scope (append *default-local-env-var-names* 
+                                          *default-global-env-var-names*)))
+  "Load the environment variables specified by SCOPE."
+  (dolist (e scope)
+    (setf (gethash e *env-table*) (sb-posix:getenv e))))
+
 (declaim (inline exec-path-list))
 (defun exec-path-list ()
   "Return a list of all members of PATH"

@@ -1,7 +1,7 @@
 (defsystem :pod
   :depends-on (:std :cli :obj :dat :net :io)
   :components ((:file "pkg")
-               (:file "err")
+               (:file "condition")
                (:module "obj"
                 :components 
                 ((:file "system")

@@ -10,7 +10,7 @@
 (in-package :io/chunky)
 ;;; Special
 (defconstant +default-chunked-output-size+ 8192)
-(define-constant +crlf+ (coerce #(#\Return #\Linefeed) 'string)
+(define-constant +crlf+ (coerce #(#\Return #\Newline) 'string)
   :test 'string=)
 (define-constant +hex-digits+ '#.(coerce "0123456789ABCDEF" 'list)
   :test 'equalp
@@ -292,7 +292,7 @@ extensions) and returns the size."
 (defmethod stream-read-sequence ((stream chunked-input-stream)
                                  sequence &optional start end)
   (let ((start (or start 0))
-        (end (or end (length sequence))))
+         (end (or end (length sequence))))
     (unless (input-chunking-p stream)
       (return-from stream-read-sequence
         (if (eq (signal-eof stream) :eof)
@@ -440,10 +440,10 @@ sure to send the last chunk."
                   (output-stream-p stream))
              'chunked-io-stream)
             ((input-stream-p stream)
-             'chunked-input-stream)
+             'simple-chunked-input-stream)
             ((output-stream-p stream)
              'chunked-output-stream)
-            (t 'chunked-stream))
+            (t 'simple-chunked-stream))
     :stream stream))
 
 ;;; Blocked Stream
@@ -594,21 +594,23 @@ the buffer to be written."
           (incf index)))))
 
 (defmethod stream-read-sequence ((stream blocked-input-stream)
-                                 sequence &optional (start 0) (end (length sequence)))
+                                 sequence &optional start end)
   (ensure-buffer-valid stream)
-  (let ((num-bytes (- (or end (length sequence)) start))
-        (num-bytes-remaining (- (or (eof-index stream) (block-size stream))
-                                (index stream))))
-    (replace sequence (buffer stream)
-             :start1 start :end1 end
-             :start2 (index stream) :end2 (eof-index stream))
-    (incf (index stream) (min num-bytes num-bytes-remaining))
-    (if (<= num-bytes num-bytes-remaining)
-        (+ num-bytes start)
-        (if (null (eof-index stream))
-            (stream-read-sequence stream sequence
-                                                       (+ start num-bytes-remaining) end)
-            (+ num-bytes-remaining start)))))
+  (let ((start (or start 0))
+        (end (or end (length sequence))))
+    (let ((num-bytes (- end start))
+          (num-bytes-remaining (- (or (eof-index stream) (block-size stream))
+                                  (index stream))))
+      (replace sequence (buffer stream)
+               :start1 start :end1 end
+               :start2 (index stream) :end2 (eof-index stream))
+      (incf (index stream) (min num-bytes num-bytes-remaining))
+      (if (<= num-bytes num-bytes-remaining)
+          (+ num-bytes start)
+          (if (null (eof-index stream))
+              (stream-read-sequence stream sequence
+                                    (+ start num-bytes-remaining) end)
+              (+ num-bytes-remaining start))))))
 
 (defmethod stream-write-byte ((stream blocked-output-stream) byte)
   (ensure-buffer-valid stream)

@@ -43,7 +43,7 @@
 
 (defgeneric (setf find-cmd) (new name self))
 
-(defgeneric find-opt (name self &key active))
+(defgeneric find-opt (name self &key active default))
 
 (defgeneric (setf find-opt) (new name self))
 

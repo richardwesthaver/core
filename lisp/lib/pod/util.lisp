@@ -21,8 +21,7 @@
                                     :output t
                                     :buffering :none)))
     ;; TODO 2024-04-01: remove dependencies
-    (let ((wrapped-stream (flexi-streams:make-flexi-stream (make-chunked-stream stream)
-                                                           :external-format :utf8)))
+    (let ((wrapped-stream (make-chunked-stream stream)))
       (req:request (format-libpod-api-local path)
                    :method method
                    :stream wrapped-stream

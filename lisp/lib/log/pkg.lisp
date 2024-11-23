@@ -84,4 +84,5 @@
    :db-sink
    :alien-logger
    :alien-source
-   :alien-sink))
+   :alien-sink
+   :ilevel))

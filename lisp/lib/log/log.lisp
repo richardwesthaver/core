@@ -6,6 +6,11 @@
 (eval-always
   (defparameter *log-levels* (vector nil :fatal :error :warn :info :debug :trace t)))
 
+(defun ilevel (name)
+  (position name *log-levels*))
+(define-setf-expander ilevel (new name)
+  (setf (svref *log-levels* (ilevel name)) new))
+
 (deftype log-level-designator () `(or (member ,@(coerce *log-levels* 'list)) integer))
 
 (declaim (log-level-designator *log-level*))
@@ -218,8 +223,8 @@ function 'NAME-P'."
 
 (defmethod msg ((filter level-filter) (message message))
   (let ((level (level filter)))
-    (when (<= (position level *log-levels*)
-              (position (level message) *log-levels*))
+    (when (<= (ilevel level)
+              (ilevel (level message)))
       message)))
 
 (defclass tag-filter (filter)

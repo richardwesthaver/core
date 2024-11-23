@@ -27,7 +27,9 @@
   (:use :cl :std)
   (:export :*default-global-env-var-names* :*default-local-env-var-names* :exec-path-list
    :program-list :find-exe :ld-library-path-list :concat-env-table
-   :make-env-var))
+   :make-env-var
+   :load-env
+   :*env-table*))
 
 (defpackage :cli/ansi
   (:use :cl :std)

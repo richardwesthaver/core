@@ -15,10 +15,32 @@
 ;;; Code:
 (in-package :log)
 
-(defclass alien-sink (sink) ())
+(defclass alien-sink (stream-sink) ()
+  (:default-initargs :output (make-instance 'io/static:static-stream)))
+
+(defun log-message-to-octets (msg)
+  "Convert a LOG-MESSAGE to an OCTET-VECTOR and return it."
+  (declare (optimize speed))
+  (with-slots (timestamp level content) msg
+    (coerce level 'octet)
+    (integer-to-octets (timestamp-to-unix (now)) 64)
+    (sb-ext:string-to-octets content)))
+
+(defun octets-to-log-message (octets)
+  "Convert OCTETS to a LOG-MESSAGE object.")
+
 (defmethod msg ((elt alien-sink) (msg log-message)))
+
 (defmethod msg ((elt alien-sink) (msg simple-message)))
 
-(defclass alien-source (source) ())
+(defclass alien-source (stream-source) ()
+  (:default-initargs :input (make-instance 'io/static:static-stream)))
 
 (defclass alien-logger (logger) ())
+
+(defun make-alien-logger (&rest args)
+  (let ((pipe (apply 'make-instance 'logger args)))
+    (defpipe (pipe)
+      (level-filter :id 'alien-level)
+      (tag-tree-filter :id 'alien-tags)
+      (alien-sink :id 'alien-stream))))

@@ -6,7 +6,6 @@
 
 (in-package :bin/rdb)
 (rocksdb:load-rocksdb t)
-(defopt rdb-help (print-help *cli*))
 (defopt rdb-version (print-version *cli*))
 (defopt rdb-log-level (when *arg* (setq *log-level* :debug)))
 (defvar *rdb*)
@@ -75,7 +74,6 @@
   :thunk rdb-show
   :description "A simple helper for RocksDB."
   :opts ((:name "level" :description "set the log level" :thunk rdb-log-level)
-         (:name "help" :description "print help" :thunk rdb-help)
          (:name "version" :description "print version" :thunk rdb-version)
          (:name "db" :description "target db" :thunk rdb-target-db :kind dir))
   :cmds ((:name new
