@@ -18,6 +18,7 @@
                  :opts *opts* :args *args* )))
 
 (define-cli *packy-cli*
+  :help t
   :name "packy"
   :version "0.1.0"
   :description "Universal Package Manager"

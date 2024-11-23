@@ -396,7 +396,7 @@ This avoids using a GENSYM as the name of a callback, and is also funcallable."
 (defun recent-history-line-satisfies-p (predicate)
   "Check if the most recent history line satisfies given predicate
 PREDICATE. Return T if there is no history saved."
-  (if (zerop *history-length*)
+  (if (zerop *rl-history-length*)
       t
       (with-alien ((s rl-hist-entry))
         (funcall predicate

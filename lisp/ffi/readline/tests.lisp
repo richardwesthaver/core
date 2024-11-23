@@ -14,8 +14,8 @@
 (deftest sanity ()
   (is= 1 *rl-history-base*)
   (is= 0 *rl-history-length*)
-  (rl :prompt "hi: ")
-  *rl-point*)
+  ;; (rl :prompt "hi: ")
+  (isnt *rl-point*))
 
 ;;; CL-READLINE example
 (defvar *verbs*  '("eat" "get" "throw" "quit"))
@@ -61,9 +61,9 @@
 
 (defun print-some-text (arg key)
   (declare (ignore arg key))
-  (rl:insert-text "inserted text"))
+  (readline::rl-insert-text "inserted text"))
 
-(rl:bind-keyseq "\\C-o" #'print-some-text)
+;; (readline::bind-keyseq "\\C-o" #'print-some-text)
 
 ;;; Let's write novelty-check, so if the actual line is equal to the most
 ;;; recent history line it will not be added to the history.
@@ -80,6 +80,10 @@
        (text ""))
       ((string= "quit" (string-trim " " text)))
     (setf text
-          (rl:readline :prompt (format nil "[~a]> " i)
-                       :add-history t
-                       :novelty-check #'novelty-check))))
+          (readline::rl :prompt (format nil "[~a]> " i)
+                        :add-history t
+                        :novelty-check #'novelty-check))))
+
+(deftest cl-readline-example (:skip t)
+  (with-input-from-string (*standard-input* (format nil "quit~%"))
+    (isnt (cl-readline-example))))

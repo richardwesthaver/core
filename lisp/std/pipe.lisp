@@ -35,7 +35,7 @@
   (format stream "[~a]" (type-of obj))
   obj)
 
-(defclass sink (ele`ment) ())
+(defclass sink (element) ())
 (defmethod print-object ((obj sink) stream)
   (format stream ">>~a" (type-of obj))
   obj)

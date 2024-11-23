@@ -9,10 +9,13 @@
 (in-package :bin/core)
 
 (define-multi-main dispatch-core
-    (sb-impl::toplevel-init)
-    (:skel (bin/skel::start-skel))
-    (:packy (bin/packy::start-packy))
-    (:rdb (bin/rdb::start-rdb))
-    (:organ (bin/organ::start-organ))
-    (:homer (bin/homer::start-homer)))
+  (progn (in-package :core-lisp)
+         (use-package '(:cl-user :sb-debug :sb-ext :std-user))
+         (sb-impl::toplevel-init))
+  (:sbcl (sb-impl::toplevel-init))
+  (:skel (bin/skel::start-skel))
+  (:packy (bin/packy::start-packy))
+  (:rdb (bin/rdb::start-rdb))
+  (:organ (bin/organ::start-organ))
+  (:homer (bin/homer::start-homer)))
 

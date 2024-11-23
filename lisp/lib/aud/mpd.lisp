@@ -175,7 +175,7 @@
 (defvar *default-host* (or (sb-posix:getenv "MPD_HOST") "localhost"))
 (defvar *default-port* (or (when-let ((port (sb-posix:getenv "MPD_PORT"))) (parse-integer port)) 6600))
 
-(defun connect (&key (host *default-host*) (port *default-port*) password)
+(defun mpd-connect (&key (host *default-host*) (port *default-port*) password)
   "Connect to MPD."
   (let ((connection (socket-connect (make-instance 'inet-socket :type :stream) (get-address-by-name host) port)))
     (prog1 (values connection
@@ -199,7 +199,7 @@
 
 (eval-always
   (defmacro with-mpc ((var &rest options) &body body)
-    `(let ((,var (connect ,@options)))
+    `(let ((,var (mpd-connect ,@options)))
        (unwind-protect
             (progn ,@body)
          (mpd-disconnect ,var)))))

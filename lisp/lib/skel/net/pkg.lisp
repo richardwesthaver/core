@@ -18,7 +18,7 @@
 
 (defpackage :skel/net/client
   (:nicknames :sk-client)
-  (:use :cl :std :net :sk-net-core)
+  (:use :cl :std :net :skel/net/core)
   (:export))
 
 (defpackage :skel/net/server

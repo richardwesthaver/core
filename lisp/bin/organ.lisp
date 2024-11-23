@@ -32,6 +32,7 @@
     (describe (org-parse :document input))))
 
 (define-cli *organ-cli*
+  :help t
   :name "organ"
   :version "0.0.1"
   :description "org-mode toolbox"

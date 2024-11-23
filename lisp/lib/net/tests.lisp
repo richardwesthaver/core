@@ -54,11 +54,6 @@ Cookie: name=wookie
   (istype 'string (req:get (uri:uri "https://example.com")))
   (istype 'octet-vector (req:get (uri:uri "https://example.com") :force-binary t)))
 
-(deftest fetch ()
-  (with-output-to-string (s)
-    (write-sequence (req:get "https://google.com") s))
-  (is (delete-file "/tmp/index.html")))
-
 (deftest cookies ()
   (let ((cookies (net/cookie:make-cookie-jar))
         (cookie (net/cookie:make-cookie)))

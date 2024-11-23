@@ -732,6 +732,10 @@ buffer."
  eww-auto-rename-buffer 'title
  eww-search-prefix "https://google.com/search?q=")
 
+(defun eww-at-point ()
+  (interactive)
+  (eww (thing-at-point 'url)))
+
 ;; ref: https://github.com/oantolin/emacs-config/blob/master/my-lisp/shr-heading.el
 (defun shr-heading-next (&optional arg)
   "Move forward by ARG headings (any h1-h4).

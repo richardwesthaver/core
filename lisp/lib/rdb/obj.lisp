@@ -308,10 +308,10 @@ supplied by the user from the default value."
     (format stream ":cfs ~A :open ~A" (length (rdb-cfs self)) (db-open-p self))))
 
 (defmethod db-open-p ((self rdb))
-  (when (db self) t))
+  (when (sap self) t))
 
 (defmethod db-closed-p ((self rdb))
-  (unless (db self) t))
+  (unless (sap self) t))
 
 (defun translate-cf-to-field (cf)
   (let ((vt (or (rdb-cf-val-type cf) 'octet-vector))
@@ -547,7 +547,8 @@ internal sap slots are initialized."
       (loop for s across snapshots do (release-snapshot-raw sap s)))
     (destroy-columns self)
     (unless (null sap)
-      (setf sap (close-db-raw sap)))))
+      (close-db-raw sap)
+      (setf (sap self) nil))))
 
 (defmethod destroy-db ((self rdb))
   ;; close all handles before destruction ensues
@@ -568,7 +569,7 @@ internal sap slots are initialized."
 
 (defmethod put-kv ((self rdb) (kv kv))
   (put-kv-raw
-   (rdb-sap self)
+   (sap self)
    (kv-key kv)
    (kv-val kv)))
 
@@ -652,8 +653,8 @@ internal sap slots are initialized."
   (((self rdb) key &key (opts (rocksdb-readoptions-create)) cf pinned)
    (with-slots (sap) self
      (if cf
-         (transactiondb-get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts pinned)
-         (transactiondb-get-kv-raw sap key opts pinned)))))
+         (get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts pinned)
+         (get-kv-raw sap key opts pinned)))))
 
 (defmethod get-value ((self rdb-transaction-db) key)
   (transactiondb-get-kv-raw self key))

@@ -54,7 +54,7 @@
    (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor secondary-db)
    (schema :initform nil :type (or null schema) :initarg :schema :accessor schema))
   (:default-initargs 
-   :db (make-db :rocksdb)))
+   :db (make-db :rocksdb :opts (default-rdb-opts))))
 
 (defmethod database-version ((self rdb-database))
   "Return the version tag or nil if unmarked"
@@ -67,7 +67,7 @@
 (defaccessor (db-opts) ((self rdb-database)) (db-opts (db self)))
 
 (defmethods make-db 
-  (((engine (eql :rdb)) &rest initargs &key name columns opts sap)
+  (((engine (eql :rdb)) &rest initargs &key name columns opts)
    (declare (ignore engine))
    (remf initargs :name)
    (remf initargs :columns)
@@ -76,7 +76,6 @@
      (when name (setf (name db) name))
      (when columns (setf (columns db) columns))
      (when opts (setf (db-opts db) opts))
-     (when sap (setf (sap db) sap))
      db))
   (((engine (eql :rdb-backup)) &key path (db *db*))
    (setf (db-backup db) (backup-db db :path path)))
@@ -85,7 +84,7 @@
   (((engine (eql :rdb-secondary)) &key path opts (db *db*))
    (setf (secondary-db db) (open-secondary-db db :opts opts :path path))))
 
-(defmethod open-db ((self rdb-database)) (open-db (db self)))
+(defmethod open-db ((self rdb-database)) (open-db (db self)) self)
 (defmethod open-transaction-db ((self rdb-database) &key path opts) 
   (setf (transaction-db self) (open-transaction-db (db self) :opts opts :path path)))
 (defmethod open-backup-db ((self rdb-database) &key path) 
@@ -96,7 +95,8 @@
 (defmethod flush-db ((self rdb-database) &rest args &key) (apply 'flush-db (db self) args))
 
 (defmethod close-db ((self rdb-database) &key) (close-db (db self)))
-
+(defmethod db-closed-p ((self rdb-database)) (db-closed-p (db self)))
+(defmethod db-open-p ((self rdb-database)) (db-open-p (db self)))
 (defmethod destroy-db ((self rdb-database)) (destroy-db (db self)))
 
 (defmethod shutdown-db ((self rdb-database) &key) (shutdown-db (db self)))
@@ -109,6 +109,9 @@
 
 (defmethod put-key ((self rdb-database) key val)
   (put-key (db self) key val))
+
+(defmethod put-kv ((self rdb-database) (kv kv))
+  (put-kv (db self) kv))
 
 (defmethod delete-key ((self rdb-database) key &key)
   (delete-key (db self) key))

@@ -37,7 +37,7 @@
   (:export :package-database))
 
 (defpackage :packy/client
-  (:use :cl :std :packy/core :net/fetch)
+  (:use :cl :std :packy/core :net/core)
   (:export :pk-index
            :packy-client))
 

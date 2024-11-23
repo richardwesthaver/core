@@ -8,8 +8,10 @@
 (defpackage :readline
   (:use :cl :sb-alien :std/alien)
   (:export :load-readline
-           :rl
-           :recent-history-line-satisfies-p))
+           :rl :readline
+           :recent-history-line-satisfies-p
+           :*rl-history-base*
+           :*rl-history-length*))
 
 (in-package :readline)
 

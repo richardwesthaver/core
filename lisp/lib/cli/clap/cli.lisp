@@ -41,12 +41,14 @@
 
 (defmacro defmain (name (&key (exit t)) &body body)
   "Define a CLI main function in the current package."
-  `(let ((*no-exit* ,(not exit)))
-     (defun ,name ()
-       "Run the top-level function and print to *STDOUT*."
-       (with-cli-handlers
-         (progn
-           ,@body)))))
+  (multiple-value-bind (body decls docs) (parse-body body :documentation t)
+    `(let ((*no-exit* ,(not exit)))
+       (defun ,name ()
+         ,(or docs "Run the top-level function and print to *STDOUT*.")
+         ,@decls
+         (with-cli-handlers
+           (progn
+             ,@body))))))
 
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function

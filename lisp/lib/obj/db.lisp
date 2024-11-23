@@ -120,13 +120,16 @@ the body of WITH-DB forms.")
                 (not (member (car x) *database-backend-close-options*))))
           options)))
 
-(defmacro with-db ((var &rest initargs) &body body)
+(defmacro with-db ((var &rest initargs &key (open t) (close t) destroy &allow-other-keys) &body body)
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
   of BODY."
   (let ((opts (parse-database-backend-options initargs '*db*)))
     `(let ((,var *db*))
-       (prog2 (apply 'do-database-backend-init-options ,var ',opts)
-           (or (progn ,@body) ,var)
+       ,@(when open (remf initargs :open) `((open-db db)))
+       (apply 'do-database-backend-init-options ,var ',opts)
+       (unwind-protect (progn ,@body)
+         ,@(when close (remf initargs :open) `((close-db db)))
+         ,@(when destroy (remf initargs :destroy) `((destroy-db db)))
          (apply 'do-database-backend-close-options ,var ',opts)))))
 
 ;;; Conditions

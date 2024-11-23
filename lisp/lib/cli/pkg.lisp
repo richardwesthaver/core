@@ -94,7 +94,8 @@
 
 (defpackage :cli/repl
   (:use :cl :std :cli/progress :cli/spark)
-  (:export :load-acl-repl :start-rl-repl))
+  (:export :load-acl-repl :start-rl-repl
+           :default-toplevel-init))
 
 (defpackage :cli/ed
   (:use :cl :std :cli/env)

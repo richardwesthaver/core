@@ -237,9 +237,9 @@
   (println *opts*))
 
 (define-cli *skel-cli*
+  :help t
   :name "skel"
   :version #.(format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
-  :help t
   :description "A hacker's project compiler."
   :thunk skc-show
   :opts ((:name "version" :description "print version" 

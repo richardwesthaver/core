@@ -26,44 +26,42 @@
                         (safety ,(- 3 numarg)))))
 
   ;; Nestable suggestion from Daniel Herring
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (defun |#"-reader| (stream sub-char numarg)
-      (declare (ignore sub-char numarg))
-      (let (chars (state 'normal) (depth 1))
-        (loop do
-                 (let ((curr (read-char stream)))
-                   (cond ((eq state 'normal)
-                          (cond ((char= curr #\#)
-                                 (push #\# chars)
-                                 (setq state 'read-sharp))
-                                ((char= curr #\")
-                                 (setq state 'read-quote))
-                                (t
-                                 (push curr chars))))
-                         ((eq state 'read-sharp)
-                          (cond ((char= curr #\")
-                                 (push #\" chars)
-                                 (incf depth)
-                                 (setq state 'normal))
-                                (t
-                                 (push curr chars)
-                                 (setq state 'normal))))
-                         ((eq state 'read-quote)
-                          (cond ((char= curr #\#)
-                                 (decf depth)
-                                 (if (zerop depth) (return))
-                                 (push #\" chars)
-                                 (push #\# chars)
-                                 (setq state 'normal))
-                                (t
-                                 (push #\" chars)
-                                 (if (char= curr #\")
-                                     (setq state 'read-quote)
-                                     (progn
-                                       (push curr chars)
-                                       (setq state 'normal)))))))))
-        (coerce (nreverse chars) 'string))))
-
+  (defun |#"-reader| (stream sub-char numarg)
+    (declare (ignore sub-char numarg))
+    (let (chars (state 'normal) (depth 1))
+      (loop do
+               (let ((curr (read-char stream)))
+                 (cond ((eq state 'normal)
+                        (cond ((char= curr #\#)
+                               (push #\# chars)
+                               (setq state 'read-sharp))
+                              ((char= curr #\")
+                               (setq state 'read-quote))
+                              (t
+                               (push curr chars))))
+                       ((eq state 'read-sharp)
+                        (cond ((char= curr #\")
+                               (push #\" chars)
+                               (incf depth)
+                               (setq state 'normal))
+                              (t
+                               (push curr chars)
+                               (setq state 'normal))))
+                       ((eq state 'read-quote)
+                        (cond ((char= curr #\#)
+                               (decf depth)
+                               (if (zerop depth) (return))
+                               (push #\" chars)
+                               (push #\# chars)
+                               (setq state 'normal))
+                              (t
+                               (push #\" chars)
+                               (if (char= curr #\")
+                                   (setq state 'read-quote)
+                                   (progn
+                                     (push curr chars)
+                                     (setq state 'normal)))))))))
+      (coerce (nreverse chars) 'string)))
   ;; This version is from Martin Dirichs
   (defun |#>-reader| (stream sub-char numarg)
     (declare (ignore sub-char numarg))
@@ -138,7 +136,6 @@
                           2)))
         (t (error "Unknown #~~ mode character"))))))
 
-;; #+cl-ppcre (set-dispatch-macro-character #\# #\~ #'|#~-reader|)
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun lcurly-brace-reader (stream inchar)
     (declare (ignore inchar))
@@ -201,6 +198,9 @@
                                    `(funcall ,(cadr clause) ,arg)
                                    (cadr clause))))
                           (cdr contents)))))))))
+
+;; Define the standard readtable with built-in functionality. We overwrite the
+;; braces [] and {} but ! and ? are free for now.
 (defreadtable :std
   (:merge :modern)
   ;; curry
@@ -220,3 +220,4 @@
   ;; lambdas
   (:dispatch-macro-char #\# #\` #'|#`-reader|)
   (:dispatch-macro-char #\# #\f #'|#f-reader|))
+

@@ -181,6 +181,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
       (error 'file-error :pathname src))))
 
 (define-cli *homer-cli*
+  :help t
   :name "homer"
   :version "0.1.0"
   :description "user home manager"

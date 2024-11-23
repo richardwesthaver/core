@@ -69,6 +69,7 @@
                  val)))))
 
 (define-cli *rdb-cli*
+  :help t
   :name "rdb"
   :version "0.1.0"
   :thunk rdb-show

@@ -22,7 +22,9 @@
    :protocol-warning
    :net-socket
    :net-server
-   :net-client))
+   :net-client
+   :connect
+   :disconnect))
 
 (defpackage :net/util
   (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
@@ -327,7 +329,6 @@
    :put
    :patch
    :delete
-   :fetch
    :*default-connect-timeout*
    :*default-read-timeout*
    :*default-proxy*
@@ -343,11 +344,6 @@
    :retry-request
    :ignore-and-continue
    :decoding-stream-of))
-
-(defpackage :net/fetch
-  (:nicknames :fetch)
-  (:use :cl :std :obj/uri :cli/progress)
-  (:export :fetch :download))
 
 (defpackage :net/srv
   (:nicknames :srv)

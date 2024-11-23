@@ -32,7 +32,6 @@
                              (:file "ssh")))
                (:file "cookie")               
                (:file "req")
-               (:file "fetch")
                (:module "srv"
                 :components ((:file "pkg"))))
   :in-order-to ((test-op (test-op :net/tests))))
