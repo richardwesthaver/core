@@ -449,7 +449,11 @@ internal sap slots are initialized."
 (defmethod open-db ((self rdb))
   (with-slots (name sap opts) self
     (if sap
-        (rdb-error "DB already opened - close before re-opening")
+        (progn
+          (cerror "Ignore and continue" 'open-db-error 
+                  :db sap
+                  :message "Database is already open")
+          sap)
         (setf sap (open-db-raw name (sap opts))))))
 
 (defmethod db-prop ((self rdb) (propname string))

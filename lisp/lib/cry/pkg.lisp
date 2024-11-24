@@ -27,6 +27,10 @@
            :init-crc64 :crc64-stream
            :crc64-file :crc64-sequence))
 
+(defpackage :cry/b3
+  (:use :cl :std :blake3 :sb-alien :io/static)
+  (:export :b3hash))
+
 (defpackage :cry/jwt
   (:use :cl :std :dat/json :dat/base64 :cry)
   (:export

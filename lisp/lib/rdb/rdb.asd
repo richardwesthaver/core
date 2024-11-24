@@ -13,8 +13,9 @@
                (:file "obj")
                (:file "sst")
                (:file "rdb")
-               (:file "query")
+               (:file "schema")
                (:file "db")
+               (:file "query")
                (:file "store"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 

@@ -46,13 +46,9 @@ ERR with initargs PARAMS for the duration of BODY."
 (defmacro with-rdb ((db-var db &key open close) &body body)
   "Bind DB-VAR to the database object DB for the lifetime of BODY."
   `(let ((,db-var ,db))
-     (handler-bind ((error (lambda (condition)
-                             (error 'rdb-error
-                                    :message
-                                    (format nil "WITH-RDB signaled: ~A" condition)))))
-       ,@(when open `(open-db ,db-var))
-       ,@(if close `(unwind-protect (progn ,@body) (close-db ,db-var))
-             body))))
+     ,@(when open `(open-db ,db-var))
+     ,@(if close `(unwind-protect (progn ,@body) (close-db ,db-var))
+           body)))
 
 ;; temp-rdb
 (defvar *temp-db-path-generator*

@@ -8,3 +8,7 @@
 (in-package :core/bench/json)
 (defsuite :json-bench)
 (in-suite :json-bench)
+
+(defbench json-stress (:bench 100 :profile t) 
+  "Stress test DAT/JSON."
+  (is t))

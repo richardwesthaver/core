@@ -5,10 +5,9 @@
   (:use :cl :std)
   (:export :dat-error))
 
-(pkg:defpkg :dat/sxp
+(defpackage :dat/sxp
   (:nicknames :sxp)
-  (:use :cl :sb-mop :std)
-  (:use-reexport :obj/ast)
+  (:use :cl :sb-mop :std :ast)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
   (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:export
@@ -20,15 +19,8 @@
    :make-sxp
    :file-read-forms))
 
-(defpackage :dat/serde
-  (:nicknames :serde)
-  (:use :cl :std :dat/proto
-   :sxp :ast :stored :store 
-   :id :io/stream :io/proto :io/static 
-   :typed :meta :sb-alien :sb-gray)
-  (:export :ser :de))
-
 (defpackage :dat/dot
+  (:nicknames :dot)
   (:use :cl :std :dat/proto :obj/graph)
   (:export
    :read-dot-file :write-dot-file
@@ -36,6 +28,7 @@
    :parse-dot-string))
 
 (defpackage :dat/csv
+  (:nicknames :csv)
   (:use :cl :std :dat/proto :obj/query)
   (:export
    :read-csv-file
@@ -48,12 +41,14 @@
    #:write-csv-string))
 
 (defpackage :dat/ini
+  (:nicknames :ini)
   (:use :cl :std :dat/proto)
   (:export
    :ini-encode
    :ini-decode))
 
 (defpackage :dat/toml
+  (:nicknames :toml)
   (:use :cl :std :dat/proto :obj/time)
   (:export
    #:parse-toml-blocks
@@ -70,6 +65,7 @@
    #:toml-dotted-key-open-table-array-error))
 
 (defpackage :dat/arff
+  (:nicknames :arff)
   (:use :cl :std :dat/proto :dat/csv)
   (:export
    :arff :arff-relation :arff-attributes :arff-data :arff-path 
@@ -77,6 +73,7 @@
    :remove-attribute-by-name))
 
 (defpackage :dat/json
+  (:nicknames :json)
   (:use :cl :std :dat/proto)
   (:export
    :*allow-json-trailing-commas*

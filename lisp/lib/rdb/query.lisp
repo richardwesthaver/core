@@ -5,10 +5,10 @@
 ;;; Code:
 (in-package :rdb)
 
-(defclass rdb-schema (schema) ())
+(defclass rdb-query-engine (query-engine rdb-database) ())
 
 (defclass rdb-data-source (data-source)
-  ((db :type rdb :initarg :db :accessor db)
+  ((db :type rdb-database :initarg :db :accessor db)
    (schema :type rdb-schema :initarg :schema :accessor schema)))
 
 (defclass rdb-execution-context (execution-context) ())

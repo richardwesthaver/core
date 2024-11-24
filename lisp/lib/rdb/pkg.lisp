@@ -10,8 +10,8 @@
 (defpackage :rdb
   (:use :cl :std :rocksdb 
    :sb-alien :db :query :schema 
-   :btree :store :stored :log 
-   :io/static :dat/serde :dat/proto :btree)
+   :btree :store :stored :log
+   :io/static :btree)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
@@ -23,30 +23,6 @@
    :rdb-alien-error
    :rdb-user-error
    :handle-errptr
-   ;; raw
-   :make-rocksdb-options :default-rocksdb-options
-   :open-db-raw
-   :close-db-raw :destroy-db-raw
-   :put-vkv-raw :put-kv-str-raw
-   :get-kv-raw :get-kv-str-raw
-   :put-cf-raw :put-cf-str-raw
-   :get-cf-raw :get-cf-str-raw
-   :create-cf-raw
-   :create-iter :with-iter-raw
-   :iter-key-raw :iter-key-str-raw
-   :iter-val-raw :iter-val-str-raw
-   :open-backup-engine-raw
-   :close-backup-engine-raw
-   :create-new-backup-raw
-   :restore-from-latest-backup-raw
-   :with-open-backup-engine-raw
-   :create-snapshot-raw :release-snapshot-raw
-   :create-sst-writer-raw :finish-sst-writer-raw
-   :destroy-sst-writer-raw :open-sst-writer-raw
-   :sst-put-raw :sst-delete-raw :sst-delete-range-raw :sst-file-size-raw
-   :sst-put-str-raw
-   :open-sst-file :close-sst-file
-   :cf-name-raw :cf-id-raw
    ;; proto
    :find-cf
    :put-cf-key :get-cf-key
@@ -155,7 +131,8 @@
    :do-columns
    :with-kv
    :do-kvs
-   :with-column))
+   :with-column
+   :with-iter-raw))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

@@ -4,7 +4,7 @@
   :depends-on (:std :log :obj :dat :rdb :cry)
   :serial t
   :components ((:file "pkg")
-               (:file "err")
+               (:file "condition")
                (:file "krypt"))
   :in-order-to ((test-op (test-op :krypt/tests))))
 

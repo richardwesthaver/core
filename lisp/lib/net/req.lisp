@@ -520,7 +520,7 @@ keep-alive-stream), and should handle clean-up of it"
         (handler-case
             (if (streamp body)
                 (make-decoding-stream body :encoding charset :on-close on-close)
-                (babel:octets-to-string body :encoding (keywordicate charset)))
+                (babel:octets-to-string body :encoding charset))
           (babel:character-decoding-error (e)
             (warn (format nil "Failed to decode the body to ~S due to the following error (falling back to binary):~%  ~A"
                           charset

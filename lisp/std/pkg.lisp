@@ -423,7 +423,8 @@
    :read-little-endian
    :write-little-endian
    :hexchar-to-int
-   :make-octets))
+   :make-octets
+   :octets))
 
 (defpkg :std/serde
   (:use :cl)
@@ -434,7 +435,7 @@
   (:import-from :std/type :octet-vector)
   (:export :define-io
    :*simple-lisp-objects* :*lisp-objects* :serializable-p :deserializable-p
-   :ser :de :serialize :deserialize   
+   :ser :de :serialize :deserialize
    :serde-condition :serde-error :serializer-error :deserializer-error
    :serde))
 

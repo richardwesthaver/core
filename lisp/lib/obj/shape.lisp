@@ -1,1 +1,0 @@
-(in-package :obj/shape)

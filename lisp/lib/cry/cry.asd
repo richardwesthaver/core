@@ -5,14 +5,16 @@
   :depends-on 
   (:ironclad :sb-concurrency :sb-posix 
              :sb-bsd-sockets :cl-ppcre
-             :std :log :obj)
+             :std :log :obj :dat
+             :blake3 :io)
   :components ((:file "pkg")
-               (:file "err" :depends-on ("pkg"))
-               (:file "crc64" :depends-on ("pkg"))
-               (:file "password" :depends-on ("err"))
-               (:file "authinfo" :depends-on ("err"))
-               (:file "jwt" :depends-on ("err"))
-               (:file "hotp" :depends-on ("err"))
+               (:file "condition" :depends-on ("pkg"))
+               (:file "crc64" :depends-on ("condition"))
+               (:file "b3" :depends-on ("condition"))
+               (:file "password" :depends-on ("condition"))
+               (:file "authinfo" :depends-on ("condition"))
+               (:file "jwt" :depends-on ("condition"))
+               (:file "hotp" :depends-on ("condition"))
                (:file "totp" :depends-on ("hotp")))
   :in-order-to ((test-op (test-op :cry/tests))))
 

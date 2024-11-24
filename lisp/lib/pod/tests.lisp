@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :pod/tests
   (:use :cl :rt :pod :sb-bsd-sockets)
-  (:import-from :dat/proto :serde))
+  (:import-from :std :serde :serialize))
 
 (in-package :pod/tests)
 
@@ -35,4 +35,4 @@ RUN sbcl
     (is (= 2 (length (containerfile-args cf))))
     (is (string= "${FOO}/${BAR}" (containerfile-base cf)))
     (is (= 1 (length (containerfile-steps cf))))
-    (is (string= *test-containerfile* (dat/proto:serialize cf :string)))))
+    (is (string= *test-containerfile* (serialize cf :string)))))

@@ -298,11 +298,6 @@
    :north-east :north-west :south-east :south-west
    :direction :angle))
 
-(defpackage :obj/shape
-  (:nicknames :shape)
-  (:use :cl :std)
-  (:export :circle :square :cube :sphere :triangle :pyramid))
-
 (defpackage :obj/build
   (:nicknames :build)
   (:use :cl :std)

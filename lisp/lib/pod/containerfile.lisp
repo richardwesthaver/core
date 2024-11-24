@@ -79,7 +79,7 @@
    (args :initform nil :type list :initarg :args :accessor containerfile-args)
    (steps :initform (make-array 0 :element-type 'cons :adjustable t) :type (vector cons) :initarg :steps :accessor containerfile-steps)))
 
-(defmethod dat/proto:serde ((from containerfile) (to pathname))
+(defmethod serde ((from containerfile) (to pathname))
   (with-open-file (file to :direction :output)
     (when-let ((base (containerfile-base from)))
       (write-containerfile-from base file))
@@ -88,7 +88,7 @@
     (loop for step across (containerfile-steps from)
           do (write-containerfile-line step file))))
 
-(defmethod dat/proto:serde ((from stream) (to containerfile))
+(defmethod serde ((from stream) (to containerfile))
   (multiple-value-bind (base args) (read-containerfile-start from)
     (setf (containerfile-base to) base)
     (setf (containerfile-args to) args))
@@ -101,19 +101,19 @@
          'simple-vector))
     to)
 
-(defmethod dat/proto:serde ((from pathname) (to containerfile))
+(defmethod serde ((from pathname) (to containerfile))
   (with-open-file (file from)
     (setf (path to) from)
-    (dat/proto:serde file to)))
+    (serde file to)))
 
-(defmethod dat/proto:serde ((from string) (to containerfile))
+(defmethod serde ((from string) (to containerfile))
   (with-input-from-string (stream from)
-    (dat/proto:serde stream to)))
+    (serde stream to)))
 
-(defmethod dat/proto:deserialize ((from pathname) (format (eql :containerfile)) &key)
-  (dat/proto:serde from (make-instance 'containerfile)))
+(defmethod deserialize ((from pathname) (format (eql :containerfile)) &key)
+  (serde from (make-instance 'containerfile)))
 
-(defmethod dat/proto:serialize ((obj containerfile) (format (eql :string)) &key)
+(defmethod serialize ((obj containerfile) (format (eql :string)) &key)
   (with-output-to-string (str)
     (loop for arg in (containerfile-args obj)
           while arg
@@ -124,5 +124,5 @@
           do (write-containerfile-line step str))
     str))
 
-(defmethod dat/proto:serialize ((obj containerfile) (format (eql :bytes)) &key)
-  (sb-ext:string-to-octets (dat/proto:serialize obj :string)))
+(defmethod serialize ((obj containerfile) (format (eql :bytes)) &key)
+  (sb-ext:string-to-octets (serialize obj :string)))

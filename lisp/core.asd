@@ -26,6 +26,9 @@
                              (:module "db"
                               :components
                               ((:file "tpc-h")))
+                             (:module "dat"
+                              :components
+                              ((:file "json")))
                              (:module "trivial"
                               :components
                               ((:file "array")

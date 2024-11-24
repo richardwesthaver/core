@@ -1,4 +1,4 @@
-;;; krypt/err.lisp --- Krypt Errors
+;;; krypt/condition.lisp --- Krypt Conditions
 
 ;;
 

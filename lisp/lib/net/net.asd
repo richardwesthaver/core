@@ -4,13 +4,11 @@
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
-  (:sb-concurrency :sb-posix 
-   :sb-bsd-sockets :cl-ppcre
-   :dat :obj
-   :io :parse
+  (:sb-concurrency :sb-posix :sb-bsd-sockets :cl-ppcre
+   :dat :obj :io :parse 
+   :chipz :babel :rt :std   
    :cl+ssl :cli
-   :chipz :babel :rt
-   :std :log)
+   :log :cry)
   :serial t
   :components ((:file "pkg")
                (:file "condition")

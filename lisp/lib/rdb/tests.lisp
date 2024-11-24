@@ -1,5 +1,8 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :query :db))
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :query :db)
+  (:import-from :rdb :open-db-raw :get-kv-str-raw :iter-key-str-raw
+   :destroy-db-raw :close-db-raw :create-cf-raw :get-cf-str-raw
+   :iter-val-str-raw :put-kv-str-raw :put-cf-str-raw))
 
 (in-package :rdb/tests)
 
@@ -154,7 +157,7 @@
 (deftest errors ()
   "Test basic error handling."
   (with-temp-rdb (errs () :open t :destroy t)
-    (signals rdb-error (open-db errs))))
+    (signals open-db-error (open-db errs))))
 
 (deftest schema ()
   "Test loading and handling of RDB-SCHEMA objects."
@@ -173,9 +176,9 @@
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
-  (with-db (db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)) :columns nil)
+  (with-db (db :db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)) :columns nil)
                :open t
-               :close :auto
+               :close t
                :destroy t)
     (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4))
                             :opts (rocksdb-transactiondb-options-create))
@@ -189,6 +192,7 @@
       (rocksdb-transaction-destroy (sap txn2)))))
 
 (deftest merge-op ()
+  (setq *db* nil)
   (let ((opts (default-rdb-opts)))
     (let ((op1 (concat-merge-op)))
       (set-db-opt opts :merge-operator op1 :push t)
@@ -199,11 +203,11 @@
                               :opts opts))
             (k (string-to-octets "foo"))
             (v (string-to-octets "bar")))
-        (setq *db* db)
-        (with-db (db :open t :close t :destroy t)
+        (with-db (db :db db :open t :close t :destroy t)
           (print (put-key db k v))
           (print (merge-key db k v))
           (print (get-val db k)))))))
+
 
 (deftest prefix-key ()
   "Test custom RocksDB prefix key")

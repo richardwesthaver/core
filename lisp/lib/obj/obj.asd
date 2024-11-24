@@ -53,7 +53,6 @@
                (:file "uuid")
                (:file "temperature")
                (:file "direction")
-               (:file "shape")
                (:file "build")
                (:file "ast")
                (:file "config")

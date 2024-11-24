@@ -125,7 +125,7 @@
 (defvar *sxp-test-short* "(FOO 'BAR `(\"test\" ,BAZ ,@QUX) 123 0.0123 1/3 `(,A1 ,A2))")
 
 (deftest sxp-string ()
-  (let ((f (make-instance 'ast)))
+  (let ((f (make-instance 'ast:ast)))
     (is (ast::formp (read-sxp-string f *sxp-test-short*)))
     (is (equalp (read-from-string (write-sxp-string f)) (read-from-string *sxp-test-short*)))))
 

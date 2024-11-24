@@ -1,3 +1,8 @@
+;;; cry/condition.lisp --- Crypto Conditions
+
+;; 
+
+;;; Code:
 (in-package :cry)
 
 (define-condition crypto-error (std-error) ())

@@ -11,10 +11,8 @@
 (defvar *jobs*)
 (defvar *stages*)
 (sb-ext:defglobal *worker-threads* nil)
-(sb-ext:defglobal *oracles* nil)
-(sb-ext:defglobal *oracle-threads* nil)
 (sb-ext:defglobal *supervisor-threads* nil)
-
+(sb-ext:defglobal *oracle-table* (make-hash-table))
 (eval-always
   (defvar *task*)
   (defvar *task-result* nil))
@@ -145,14 +143,15 @@ within their DOMAIN and SCOPE."))
     (unwind-protect (join-thread th)
       (deletef *worker-threads* th))))
 
-;;; Oracle           
+;;; Oracle
+
 (defstruct (oracle (:constructor %make-oracle (id thread)))
   "Oracles provide a tagged view into some threaded scope of work."
   (id 0 :type (unsigned-byte 32) :read-only t)
   (thread *current-thread* :read-only t))
 
 (defun oracle-of-id (id)
-  (find id *oracles* :test '= :key 'oracle-id))
+  (gethash id *oracle-table*))
 
 (defun make-oracle (thread)
   (let ((id (thread-os-tid thread)))
@@ -196,7 +195,7 @@ within their DOMAIN and SCOPE."))
       (length (task-pool-workers task-pool))))
 
 (defmethod designate-oracle ((self task-pool) (guest thread))
-  (designate-oracle self (make-oracle guest)))
+  (pushnew (sb-ext:make-weak-pointer self) (gethash (make-oracle guest) *oracle-table*)))
 
 (declaim (inline push-worker push-workers pop-worker))
 (defun push-worker (worker pool)
@@ -276,13 +275,15 @@ is responsible for indicating in the state slot the result of the computation.")
 (defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) start kernel results) &body body)
   (unless lock (setf lock (make-semaphore :name "online" :count workers)))
   (unless results (setf results (make-mailbox :name "results")))
-  `(let ((,sym (make-task-pool :lock ,lock :results ,results 
+  `(let ((,sym (make-task-pool :lock ,lock :results ,results
                                :tasks (make-queue 
                                        :name "tasks"
                                        :initial-contents
                                        (make-array ,tasks 
                                                    :element-type 'task 
                                                    :initial-element (make-instance 'task))))))
+     (setf *worker-threads* nil
+           *task-pool* ,sym)
      ,@(if kernel `((setf (task-pool-kernel ,sym) ,kernel))
            `((setf (task-pool-kernel ,sym)
                    (gen-task-kernel ,(gensym "TASK-KERNEL") ()

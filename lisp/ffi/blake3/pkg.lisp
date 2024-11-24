@@ -83,5 +83,5 @@
 
 (defmacro with-blake3-hasher (hvar &body body)
   `(with-alien ((,hvar blake3-hasher))
-     (blake3-hasher-init ,hvar)
+     (blake3-hasher-init (addr ,hvar))
      ,@body))
