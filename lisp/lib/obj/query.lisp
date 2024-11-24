@@ -437,7 +437,7 @@
 
 ;;; Dataframes
 ;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
-(defstruct (data-frame (:constructor make-data-frame (&optional plan)))
+(defstruct (data-frame (:constructor make-df (&optional plan)))
   (plan (make-instance 'logical-query-plan) :type logical-query-plan))
 
 (defgeneric df-col (self))
@@ -467,10 +467,6 @@
     df)
   (:method ((df data-frame) (group-by list) (agg-expr list))
     (df-aggregate df (coerce group-by 'vector) (coerce agg-expr 'vector))))
-
-(defgeneric make-df (self &key &allow-other-keys)
-  (:method ((self null) &key)
-    (make-data-frame)))
 
 (defmethod schema ((df data-frame))
   (schema (data-frame-plan df)))

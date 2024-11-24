@@ -848,10 +848,6 @@ string:data-frame. Returns a data-frame."
                 (df-filter plan (make-sql-logical-expression having plan))
                 plan)))))))
 
-(defmethod make-df ((self sql-select) &key tables &allow-other-keys)
-  (when tables
-    (make-sql-df self tables)))
-
 ;;; Optimizer
 (defclass sql-optimizer (query-optimizer) ())
 

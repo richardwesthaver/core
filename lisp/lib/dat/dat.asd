@@ -4,9 +4,8 @@
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
-               (:file "proto")
+               (:file "condition")
                (:file "sxp")
-               ;; (:file "serde")
                (:file "dot")
                (:file "csv")
                (:file "json")

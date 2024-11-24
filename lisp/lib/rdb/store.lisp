@@ -28,7 +28,7 @@
 (defmethod get-value (key (bt rdb-btree))
   (let ((sc (get-store bt)))
     (ensure-transaction (:store sc)
-      (with-static-streams (key-buf)
+      (with-static-stream (key-buf)
         (write-oid (oid bt) key-buf)
         (ser key key-buf sc)
         (let ((buf (db-get-key-buffered 
@@ -40,7 +40,7 @@
 (defmethod existsp (key (bt rdb-btree))
   (let ((sc (get-store bt)))
     (ensure-transaction (:store sc)
-      (with-static-streams (key-buf)
+      (with-static-stream (key-buf)
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (let ((buf (db-get-key-buffered 
@@ -52,20 +52,22 @@
 (defmethod (setf get-value) (value key (bt rdb-btree))
     (let ((sc (get-store bt)))
       (ensure-transaction (:store sc)
-        (write-oid (oid bt) key-buf)
-        (ser key key-buf sc)
-        (ser value value-buf sc)
-        (db-put-buffered (btrees sc)
-                         :transaction (current-transaction sc))))
-  value)
+        (with-static-streams ((key-buf) (value-buf))
+          (write-oid (oid bt) key-buf)
+          (ser key key-buf sc)
+          (ser value value-buf sc)
+          (db-put-buffered (btrees sc)
+                           :transaction (current-transaction sc))))
+      value))
 
 (defmethod delete-key (key (bt rdb-btree) &key)
   (let ((sc (get-store bt)) )
-    (ensure-transaction (:store sc)
-      (write-oid (oid bt) key-buf)
-      (ser key key-buf sc)
-      (db-delete-buffered (btrees sc)
-                          :transaction (current-transaction sc)))))
+    (with-static-stream (key-buf)
+      (ensure-transaction (:store sc)
+        (write-oid (oid bt) key-buf)
+        (ser key key-buf sc)
+        (db-delete-buffered (btrees sc)
+                            :transaction (current-transaction sc))))))
 
 (defmethod optimize-layout ((bt rdb-btree) &key (freelist-only t) (free-space nil) &allow-other-keys)
   (optimize-layout (get-store bt)
@@ -127,7 +129,7 @@
 
 (defmethod populate ((bt rdb-indexed-btree) index)
   (let ((sc (get-store bt)))
-    (with-static-streams (primary-buf secondary-buf)
+    (with-static-streams ((primary-buf) (secondary-buf))
       (flet ((index (key skey)
                (write-oid (oid bt) primary-buf)
                (ser key primary-buf sc)
@@ -181,7 +183,7 @@
   "Set a key / value pair, and update secondary index-table."
   (let ((sc (get-store bt)))
     (let ((index-table (index-cache-table bt)))
-      (with-static-streams (key-buf value-buf secondary-buf)
+      (with-static-streams ((key-buf) (value-buf) (secondary-buf))
         (write-oid (oid bt) key-buf)
         (ser key key-buf sc)
         (ser value value-buf sc)
@@ -208,7 +210,7 @@
 (defmethod delete-key (key (bt rdb-indexed-btree) &key)
   "Remove a key / value pair, and update secondary index-table."
   (let ((sc (get-store bt)))
-      (with-static-streams (key-buf secondary-buf)
+      (with-static-streams ((key-buf) (secondary-buf))
         (write-oid (oid bt) key-buf)
         (ser key key-buf sc)
         (ensure-transaction (:store sc)
@@ -245,7 +247,7 @@
 (defmethod get-value (key (bt rdb-btree-index))
   "Get the value in the primary DB from a secondary key."
   (let ((sc (get-store bt)))
-    (with-static-streams (key-buf value-buf)
+    (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (let ((buf (db-get-key-buffered 
@@ -257,7 +259,7 @@
 
 (defmethod get-primary-key (key (bt btree-index))
   (let ((sc (get-store bt)))
-    (with-static-streams (key-buf value-buf)
+    (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (let ((buf (db-get-key-buffered 
@@ -297,7 +299,7 @@
 (defmethod cursor-current ((cursor rdb-cursor))
   (when (cursor-initialized-p cursor)
     (let ((sc (get-store (cursor-btree cursor))))
-      (with-static-streams (key-buf value-buf)
+      (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
             (db-cursor-move-buffered (cursor-handle cursor) key-buf value-buf
                                      :current t)
@@ -309,7 +311,7 @@
 
 (defmethod cursor-first ((cursor rdb-cursor))
   (let ((sc (get-store (cursor-btree cursor))))
-    (with-static-streams (key-buf value-buf)
+    (with-static-streams ((key-buf) (value-buf))
       (write-oid (cursor-oid cursor) key-buf)
       (multiple-value-bind (key val)
           (db-cursor-set-buffered (cursor-handle cursor) 
@@ -324,7 +326,7 @@
 (defmethod cursor-last ((cursor rdb-cursor))
   "A fast cursor last, but a bit 'hackish' by exploiting oid ordering"
   (let ((sc (get-store (cursor-btree cursor))))
-  (with-static-streams (key-buf value-buf)
+  (with-static-streams ((key-buf) (value-buf))
     ;; Go to the first element of the next btree
     (write-oid (+ (cursor-oid cursor) 1) key-buf)
     (if (db-cursor-set-buffered (cursor-handle cursor)
@@ -353,7 +355,7 @@
 (defmethod cursor-next ((cursor rdb-cursor))
   (if (cursor-initialized-p cursor)
       (let ((sc (get-store (cursor-btree cursor))))
-        (with-static-streams (key-buf value-buf)
+        (with-static-streams ((key-buf) (value-buf))
           (multiple-value-bind (key val)
               (the (values (or null static-stream)
                            (or null static-stream))
@@ -369,7 +371,7 @@
 (defmethod cursor-prev ((cursor rdb-cursor))
   (if (cursor-initialized-p cursor)
       (let ((sc (get-store (cursor-btree cursor))))
-        (with-static-streams (key-buf value-buf)
+        (with-static-streams ((key-buf) (value-buf))
           (multiple-value-bind (key val)
               (db-cursor-move-buffered (cursor-handle cursor)
                                        key-buf value-buf :prev t)
@@ -381,7 +383,7 @@
 
 (defmethod cursor-set ((cursor rdb-cursor) key)
   (let ((sc (get-store (cursor-btree cursor))))
-  (with-static-streams (key-buf value-buf)
+  (with-static-streams ((key-buf) (value-buf))
     (write-oid (cursor-oid cursor) key-buf)
     (ser key key-buf sc)
     (multiple-value-bind (k val)
@@ -395,7 +397,7 @@
 
 (defmethod cursor-set-range ((cursor rdb-cursor) key)
   (let ((sc (get-store (cursor-btree cursor))))
-  (with-static-streams (key-buf value-buf)
+  (with-static-streams ((key-buf) (value-buf))
     (write-oid (cursor-oid cursor) key-buf)
     (ser key key-buf sc)
     (multiple-value-bind (k val)
@@ -409,7 +411,7 @@
 
 (defmethod cursor-get-both ((cursor rdb-cursor) key value)
   (let ((sc (get-store (cursor-btree cursor))))
-  (with-static-streams (key-buf value-buf)
+  (with-static-streams ((key-buf) (value-buf))
     (write-oid (cursor-oid cursor) key-buf)
     (ser key key-buf sc)
     (ser value value-buf sc)
@@ -424,7 +426,7 @@
 
 (defmethod cursor-get-both-range ((cursor rdb-cursor) key value)
   (let ((sc (get-store (cursor-btree cursor))))
-  (with-static-streams (key-buf value-buf)
+  (with-static-streams ((key-buf) (value-buf))
     (write-oid (cursor-oid cursor) key-buf)
     (ser key key-buf sc)
     (ser value value-buf sc)
@@ -438,7 +440,7 @@
 
 (defmethod cursor-delete ((cursor rdb-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf value-buf)
+      (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
             (db-cursor-move-buffered (cursor-handle cursor) key-buf value-buf
                                      :current t)
@@ -458,7 +460,7 @@
       (setf (get-value key (cursor-btree cursor)) value)
       (if (cursor-initialized-p cursor)
           (let ((sc (get-store (cursor-btree cursor))))
-            (with-static-streams (key-buf value-buf)
+            (with-static-streams ((key-buf) (value-buf))
               (multiple-value-bind (k v)
                   (db-cursor-move-buffered (cursor-handle cursor) key-buf 
                                            value-buf :current t)
@@ -493,7 +495,7 @@
 
 (defmethod cursor-pcurrent ((cursor rdb-secondary-cursor))
   (when (cursor-initialized-p cursor)
-    (with-static-streams (key-buf pkey-buf value-buf)
+    (with-static-streams ((key-buf) (pkey-buf) (value-buf))
       (multiple-value-bind (key pkey val)
           (db-cursor-pmove-buffered (cursor-handle cursor)
                                     key-buf pkey-buf value-buf
@@ -508,7 +510,7 @@
             (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-pfirst ((cursor rdb-secondary-cursor))
-  (with-static-streams (key-buf pkey-buf value-buf)
+  (with-static-streams ((key-buf) (pkey-buf) (value-buf))
     (write-oid (cursor-oid cursor) key-buf)
     (multiple-value-bind (key pkey val)
         (db-cursor-pset-buffered (cursor-handle cursor) 
@@ -525,7 +527,7 @@
 ;; A bit of a hack.....
 (defmethod cursor-plast ((cursor rdb-secondary-cursor))
   (let ((sc (get-store (cursor-btree cursor))))
-  (with-static-streams (key-buf pkey-buf value-buf)
+  (with-static-streams ((key-buf) (pkey-buf) (value-buf))
     (write-oid (+ (cursor-oid cursor) 1) key-buf)
     (if (db-cursor-set-buffered (cursor-handle cursor) 
                                 key-buf value-buf :set-range t)    
@@ -556,7 +558,7 @@
 
 (defmethod cursor-pnext ((cursor rdb-secondary-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf pkey-buf value-buf)
+      (with-static-streams ((key-buf) (pkey-buf) (value-buf))
         (multiple-value-bind (key pkey val)
             (db-cursor-pmove-buffered (cursor-handle cursor) 
                                      key-buf pkey-buf value-buf :next t)
@@ -570,7 +572,7 @@
 
 (defmethod cursor-pprev ((cursor rdb-secondary-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf pkey-buf value-buf)
+      (with-static-streams ((key-buf) (pkey-buf) (value-buf))
         (multiple-value-bind (key pkey val)
             (db-cursor-pmove-buffered (cursor-handle cursor)
                                       key-buf pkey-buf value-buf :prev t)
@@ -584,7 +586,7 @@
 
 (defmethod cursor-pset ((cursor rdb-secondary-cursor) key)
   (let ((sc (get-store (cursor-btree cursor))))
-    (with-static-streams (key-buf pkey-buf value-buf)
+    (with-static-streams ((key-buf) (pkey-buf) (value-buf))
       (write-oid (cursor-oid cursor) key-buf)
       (ser key key-buf sc)
       (multiple-value-bind (k pkey val)
@@ -600,7 +602,7 @@
 
 (defmethod cursor-pset-range ((cursor rdb-secondary-cursor) key)
   (let ((sc (get-store (cursor-btree cursor))))
-    (with-static-streams (key-buf pkey-buf value-buf)
+    (with-static-streams ((key-buf) (pkey-buf) (value-buf))
       (write-oid (cursor-oid cursor) key-buf)
       (ser key key-buf sc)
       (multiple-value-bind (k pkey val)
@@ -614,7 +616,7 @@
             (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-pget-both ((cursor rdb-secondary-cursor) key pkey)
-  (with-static-streams (key-buf pkey-buf value-buf)
+  (with-static-streams ((key-buf) (pkey-buf) (value-buf))
     (let ((primary-oid (oid (primary (cursor-btree cursor))))
           (sc (get-store (cursor-btree cursor))))
       (write-oid (cursor-oid cursor) key-buf)
@@ -631,7 +633,7 @@
             (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-pget-both-range ((cursor rdb-secondary-cursor) key pkey)
-  (with-static-streams (key-buf pkey-buf value-buf)
+  (with-static-streams ((key-buf) (pkey-buf) (value-buf))
     (let ((primary-oid (oid (primary (cursor-btree cursor))))
           (sc (get-store (cursor-btree cursor))))
       (write-oid (cursor-oid cursor) key-buf)
@@ -650,7 +652,7 @@
 (defmethod cursor-delete ((cursor rdb-secondary-cursor))
   "Delete by cursor: deletes ALL secondary index values."
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf pkey-buf value-buf)
+      (with-static-streams ((key-buf) (pkey-buf) (value-buf))
         (multiple-value-bind (key pkey val)
             (db-cursor-pmove-buffered (cursor-handle cursor) key-buf pkey-buf
                                       value-buf :current t)
@@ -665,7 +667,7 @@
 
 (defmethod cursor-next-dup ((cursor rdb-secondary-cursor))
   (when (cursor-initialized-p cursor)
-    (with-static-streams (key-buf value-buf)
+    (with-static-streams ((key-buf) (value-buf))
       (multiple-value-bind (key val)
           (db-cursor-move-buffered (cursor-handle cursor)
                                    key-buf value-buf :next-dup t)
@@ -676,7 +678,7 @@
 
 (defmethod cursor-next-nodup ((cursor rdb-secondary-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf value-buf)
+      (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
             (db-cursor-move-buffered (cursor-handle cursor)
                                      key-buf value-buf :next-nodup t)
@@ -688,7 +690,7 @@
 
 (defmethod cursor-prev-nodup ((cursor rdb-secondary-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf value-buf)
+      (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
           (the (values (or null static-stream) 
                        (or null static-stream))
@@ -702,7 +704,7 @@
 
 (defmethod cursor-pnext-dup ((cursor rdb-secondary-cursor))
   (when (cursor-initialized-p cursor)
-    (with-static-streams (key-buf pkey-buf value-buf)
+    (with-static-streams ((key-buf) (pkey-buf) (value-buf))
       (multiple-value-bind (key pkey val)
           (the (values (or null static-stream) 
                        (or null static-stream)
@@ -718,7 +720,7 @@
 
 (defmethod cursor-pnext-nodup ((cursor rdb-secondary-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf pkey-buf value-buf)
+      (with-static-streams ((key-buf) (pkey-buf) (value-buf))
         (multiple-value-bind (key pkey val)
             (db-cursor-pmove-buffered (cursor-handle cursor) key-buf
                                       pkey-buf value-buf :next-nodup t)
@@ -731,7 +733,7 @@
 
 (defmethod cursor-pprev-nodup ((cursor rdb-secondary-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf pkey-buf value-buf)
+      (with-static-streams ((key-buf) (pkey-buf) (value-buf))
         (multiple-value-bind (key pkey val)
             (db-cursor-pmove-buffered (cursor-handle cursor) key-buf
                                       pkey-buf value-buf :prev-nodup t)
@@ -755,7 +757,7 @@
 
 (defmethod get-value (key (bt rdb-dup-btree))
   (let ((sc (get-store bt)))
-    (with-static-streams (key-buf value-buf)
+    (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (let ((buf (db-get-key-buffered (dup-btrees sc)
@@ -766,7 +768,7 @@
 
 (defmethod existsp (key (bt rdb-dup-btree))
   (let ((sc (get-store bt)))
-    (with-static-streams (key-buf value-buf)
+    (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (let ((buf (db-get-key-buffered 
@@ -780,7 +782,7 @@
 ;; the other methods can be removed.
 (defmethod (setf get-value) (value key (bt rdb-dup-btree))
     (let ((sc (get-store bt)))
-      (with-static-streams (key-buf value-buf)
+      (with-static-streams ((key-buf) (value-buf))
         (write-oid (oid bt) key-buf)
         (ser key key-buf sc)
         (ser value value-buf sc)
@@ -792,7 +794,7 @@
 
 (defmethod delete-key (key (bt rdb-dup-btree) &key)
   (let ((sc (get-store bt)) )
-    (with-static-streams (key-buf)
+    (with-static-stream (key-buf)
       (write-oid (oid bt) key-buf)
       (ser key key-buf sc)
       (db-delete-buffered (dup-btrees sc) key-buf 
@@ -812,7 +814,7 @@
 
 (defmethod cursor-next-nodup ((cursor rdb-dup-cursor))
   (if (cursor-initialized-p cursor)
-      (with-static-streams (key-buf value-buf)
+      (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
             (db-cursor-move-buffered (cursor-handle cursor)
                                      key-buf value-buf :next-nodup t)

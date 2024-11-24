@@ -365,3 +365,36 @@ within its dynamic extent. The vector is freed upon exit."
   ;; we ignore the value and always DECF the offset
   (declare (ignore char))
   (decf (offset stream)))
+
+(defmacro with-static-stream ((var &rest args
+                                   &key (element-type ''(unsigned-byte 8))
+                                        initial-contents 
+                                        initial-element)
+                              &body body &environment env)
+  "Bind VAR to a static stream of length LENGTH and execute BODY
+within its dynamic extent. The static vector is freed upon exit."
+  (declare (ignorable element-type initial-contents initial-element))
+  (let ((length *default-static-stream-size*))
+    (when (numberp (car args))
+      (setq length (pop args)))
+    (multiple-value-bind (real-element-type length type-spec)
+        (canonicalize-args env element-type length)
+      (let ((args (copy-list args)))
+        (remf args :element-type)
+        `(sb-sys:without-interrupts
+           (with-open-stream (,var 
+                              (make-instance 'static-stream
+                                :buffer (make-static-vector ,length ,@args 
+                                                            :element-type ,real-element-type)))
+             (declare (type ,type-spec ,var))
+             (unwind-protect
+                  (sb-sys:with-local-interrupts ,@body))))))))
+
+(defmacro with-static-streams (((var &rest args) &rest more-clauses)
+                               &body body)
+  "Allocate multiple static vectors at once."
+  `(with-static-stream (,var ,@args)
+     ,@(if more-clauses
+           `((with-static-streams ,more-clauses
+               ,@body))
+           body)))

@@ -36,7 +36,6 @@ non-nil, also include indirect (parent) methods."
          (car (member s (specializer-direct-generic-functions class) :key #'generic-function-name)))
        methods)))
 
-;; FIX 2023-09-13: need exclude param
 (defun list-class-slots (class slots &optional exclude)
   ;; should probably convert slot-definition-name here
   (let ((cs (remove-if

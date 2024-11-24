@@ -19,18 +19,19 @@ If N is longer than SEQ, SEQ is simply copied.
 If N is negative, then |N| elements are taken (in their original
 order) from the end of SEQ."
   (declare (type signed-array-length n))
-  (sb-impl::seq-dispatch seq
-    (if (minusp n)
-        (last seq (abs n))
-        (firstn n seq))
-    (if (minusp n)
-        (subseq seq (max 0 (+ (length seq) n)))
-        (subseq seq 0 (min n (length seq))))))
+  (sb-impl::seq-dispatch 
+   seq
+   (if (minusp n)
+       (last seq (abs n))
+       (firstn n seq))
+   (if (minusp n)
+       (subseq seq (max 0 (+ (length seq) n)))
+       (subseq seq 0 (min n (length seq))))))
 
 (defun starts-with-subseq (prefix sequence &rest args
-                           &key
-                           return-suffix
-                           &allow-other-keys)
+                                           &key
+                                           return-suffix
+                                           &allow-other-keys)
   "Test whether the first elements of SEQUENCE are the same (as per TEST) as the elements of PREFIX.
 
 If RETURN-SUFFIX is T the function returns, as a second value, a
@@ -119,22 +120,22 @@ stopped."
               and sum 1 into nr-elts
               until (< left start)
               finally (return (values (nreverse subseqs) (1+ left))))
-      (loop for left = start then (+ right 1)
-            for right = (min (or (apply #'position delimiter seq 
-                                        :start left
-                                        other-keys)
-                                 len)
-                             end)
-            unless (and (= right left) 
-                        remove-empty-subseqs) ; empty subseq we don't want
-            if (and count (>= nr-elts count))
-            ;; We can't take any more. Return now.
-            return (values subseqs left)
-            else
-            collect (subseq seq left right) into subseqs
-            and sum 1 into nr-elts
-            until (>= right end)
-            finally (return (values subseqs right))))))
+        (loop for left = start then (+ right 1)
+              for right = (min (or (apply #'position delimiter seq 
+                                          :start left
+                                          other-keys)
+                                   len)
+                               end)
+              unless (and (= right left) 
+                          remove-empty-subseqs) ; empty subseq we don't want
+              if (and count (>= nr-elts count))
+              ;; We can't take any more. Return now.
+              return (values subseqs left)
+              else
+              collect (subseq seq left right) into subseqs
+              and sum 1 into nr-elts
+              until (>= right end)
+              finally (return (values subseqs right))))))
 
 (defun split-sequence-if (predicate seq &key (count nil) (remove-empty-subseqs nil) (from-end nil) (start 0) (end nil) (key nil key-supplied))
   "Return a list of subsequences in seq delimited by items satisfying
@@ -170,22 +171,22 @@ stopped."
               and sum 1 into nr-elts
               until (< left start)
               finally (return (values (nreverse subseqs) (1+ left))))
-      (loop for left = start then (+ right 1)
-            for right = (min (or (apply #'position-if predicate seq 
-                                        :start left
-                                        other-keys)
-                                 len)
-                             end)
-            unless (and (= right left) 
-                        remove-empty-subseqs) ; empty subseq we don't want
-            if (and count (>= nr-elts count))
-            ;; We can't take any more. Return now.
-            return (values subseqs left)
-            else
-            collect (subseq seq left right) into subseqs
-            and sum 1 into nr-elts
-            until (>= right end)
-            finally (return (values subseqs right))))))
+        (loop for left = start then (+ right 1)
+              for right = (min (or (apply #'position-if predicate seq 
+                                          :start left
+                                          other-keys)
+                                   len)
+                               end)
+              unless (and (= right left) 
+                          remove-empty-subseqs) ; empty subseq we don't want
+              if (and count (>= nr-elts count))
+              ;; We can't take any more. Return now.
+              return (values subseqs left)
+              else
+              collect (subseq seq left right) into subseqs
+              and sum 1 into nr-elts
+              until (>= right end)
+              finally (return (values subseqs right))))))
 
 (defun split-sequence-if-not (predicate seq &key (count nil) (remove-empty-subseqs nil) (from-end nil) (start 0) (end nil) (key nil key-supplied))
   "Return a list of subsequences in seq delimited by items satisfying
@@ -198,7 +199,7 @@ the behaviour of :from-end is possibly different from other versions
 of this function; :from-end values of NIL and T are equivalent unless
 :count is supplied. The second return value is an index suitable as an
 argument to CL:SUBSEQ into the sequence indicating where processing
-stopped."				; Emacs syntax highlighting is broken, and this helps: "
+stopped."
   (let ((len (length seq))
         (other-keys (when key-supplied 
                       (list :key key))))
@@ -221,19 +222,19 @@ stopped."				; Emacs syntax highlighting is broken, and this helps: "
               and sum 1 into nr-elts
               until (< left start)
               finally (return (values (nreverse subseqs) (1+ left))))
-      (loop for left = start then (+ right 1)
-            for right = (min (or (apply #'position-if-not predicate seq 
-                                        :start left
-                                        other-keys)
-                                 len)
-                             end)
-            unless (and (= right left) 
-                        remove-empty-subseqs) ; empty subseq we don't want
-            if (and count (>= nr-elts count))
-            ;; We can't take any more. Return now.
-            return (values subseqs left)
-            else
-            collect (subseq seq left right) into subseqs
-            and sum 1 into nr-elts
-            until (>= right end)
-            finally (return (values subseqs right))))))
+        (loop for left = start then (+ right 1)
+              for right = (min (or (apply #'position-if-not predicate seq 
+                                          :start left
+                                          other-keys)
+                                   len)
+                               end)
+              unless (and (= right left) 
+                          remove-empty-subseqs) ; empty subseq we don't want
+              if (and count (>= nr-elts count))
+              ;; We can't take any more. Return now.
+              return (values subseqs left)
+              else
+              collect (subseq seq left right) into subseqs
+              and sum 1 into nr-elts
+              until (>= right end)
+              finally (return (values subseqs right))))))

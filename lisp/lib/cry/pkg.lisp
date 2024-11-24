@@ -28,7 +28,7 @@
            :crc64-file :crc64-sequence))
 
 (defpackage :cry/jwt
-  (:use :cl :std :dat/json :dat/base64 :dat/proto :cry)
+  (:use :cl :std :dat/json :dat/base64 :cry)
   (:export
    #:hs256-digest
    #:compare-hs256-digest

@@ -49,7 +49,9 @@
    :replace-foreign-memory
    :fill-foreign-memory
    :static-stream
-   :*default-static-stream-size*))
+   :*default-static-stream-size*
+   :with-static-stream
+   :with-static-streams))
 
 (defpackage :io/fast
   (:use :cl :std :io/proto :io/stream)

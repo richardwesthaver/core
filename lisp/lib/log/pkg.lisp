@@ -85,4 +85,6 @@
    :alien-logger
    :alien-source
    :alien-sink
-   :ilevel))
+   :ilevel
+   :octets-to-log-message
+   :log-message-to-octets))

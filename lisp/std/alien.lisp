@@ -193,7 +193,7 @@ variant associated with this value." type name)
 ;; inspired by ELEPHANT
 
 ;; all operations are performed on (* unsigned-char)
-(define-serde alien
+(define-io alien
   ((unsigned-char 8) 
    (:read (vec) 
           vec))

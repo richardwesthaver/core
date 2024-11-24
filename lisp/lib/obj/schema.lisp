@@ -149,7 +149,7 @@
     (dump-slots self stream)))
 
 (defun dump-slots (schema &optional (stream t))
-  (loop for rec in (fields schema) do
+  (loop for rec across (fields schema) do
        (format stream "  ~A ~A ~A~%" (slot-field-name rec) (slot-field-type rec) (slot-field-args rec))))
 
 ;;; Sorting
@@ -285,7 +285,7 @@ DEFCLASS."
             ((member 'simple-schema super)
              `((defun ,(symbolicate 'make- name) (name &rest fields)
                  (make-instance ',name :name name :fields (coerce fields 'vector))))))))
-    `(prog1`
+    `(prog1
          (defclass ,name ,super ()
            (:default-initargs :fields (list-to-fields ',fields))
            ,@options)

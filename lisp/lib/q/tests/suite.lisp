@@ -22,7 +22,7 @@
       (is (typep expr 'sql-select))
       (let ((tbl (make-hash-table :test 'equalp)))
         (is (gethash "FOO" tbl))
-        (make-sql-data-frame expr tbl)))))
+        (make-sql-df expr tbl)))))
 
 (deftest sql-math ()
   (with-sql (expr "1 + 2 * 3")

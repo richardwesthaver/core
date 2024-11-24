@@ -428,10 +428,15 @@
 (defpkg :std/serde
   (:use :cl)
   (:import-from :std/named-readtables :parse-body)
-  (:import-from :std/macs :when-let :once-only)
+  (:import-from :std/condition :deferror)
+  (:import-from :std/macs :when-let :once-only :eval-always)
   (:import-from :std/sym :symbolicate :with-gensyms)
   (:import-from :std/type :octet-vector)
-  (:export :define-serde :*lisp-objects*))
+  (:export :define-io
+   :*simple-lisp-objects* :*lisp-objects* :serializable-p :deserializable-p
+   :ser :de :serialize :deserialize   
+   :serde-condition :serde-error :serializer-error :deserializer-error
+   :serde))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)
@@ -439,7 +444,7 @@
   (:import-from :std/sys :little-endian-p :32-bit-p)
   (:import-from :std/bit :make-octets)
   (:import-from :std/type :octet-vector :octet)
-  (:import-from :std/serde :define-serde)
+  (:import-from :std/serde :define-io)
   (:import-from :sb-alien :sap+)
   (:export
    :setfa
@@ -683,7 +688,7 @@
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/seq
-   :std/sys :std/readtable :std/pipe))
+   :std/sys :std/readtable :std/pipe :std/serde))
 
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std

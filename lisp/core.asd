@@ -23,7 +23,9 @@
   :depends-on (:std :core/tests :rt :obj :dat)
   :components ((:module "bench"
                 :components ((:file "pkg")
-                             (:file "tpc-h")
+                             (:module "db"
+                              :components
+                              ((:file "tpc-h")))
                              (:module "trivial"
                               :components
                               ((:file "array")

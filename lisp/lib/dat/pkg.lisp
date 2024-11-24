@@ -3,9 +3,7 @@
 ;;; Code:
 (defpackage :dat/proto
   (:use :cl :std)
-  (:export :serialize :deserialize
-           :serializer-error :deserializer-error
-           :serde :serde-error :dat-error))
+  (:export :dat-error))
 
 (pkg:defpkg :dat/sxp
   (:nicknames :sxp)
@@ -24,7 +22,7 @@
 
 (defpackage :dat/serde
   (:nicknames :serde)
-  (:use :cl :std :dat/proto 
+  (:use :cl :std :dat/proto
    :sxp :ast :stored :store 
    :id :io/stream :io/proto :io/static 
    :typed :meta :sb-alien :sb-gray)
@@ -218,7 +216,7 @@
   (:export #:read-midi-file #:write-midi-file
            #:midifile
            #:midifile-format #:midifile-tracks #:midifile-division
-           #:message #:note-off-message #:note-on-message #:tempo-message
+           #:note-off-message #:note-on-message #:tempo-message
            #:program-change-message #:pitch-bend-message
            #:key-signature-message #:time-signature-message
            #:smpte-offset-message

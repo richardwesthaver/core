@@ -18,16 +18,41 @@
 (defclass alien-sink (stream-sink) ()
   (:default-initargs :output (make-instance 'io/static:static-stream)))
 
-(defun log-message-to-octets (msg)
-  "Convert a LOG-MESSAGE to an OCTET-VECTOR and return it."
-  (declare (optimize speed))
-  (with-slots (timestamp level content) msg
-    (coerce level 'octet)
-    (integer-to-octets (timestamp-to-unix (now)) 64)
-    (sb-ext:string-to-octets content)))
+(defun log-message-to-octets (msg &key (level t))
+  "Convert a LOG-MESSAGE to an OCTET-VECTOR and return it.
 
-(defun octets-to-log-message (octets)
-  "Convert OCTETS to a LOG-MESSAGE object.")
+When WITH-LEVEL is non-nil we also encode the LEVEL slot of MSG as the last
+byte. The default is T to support a database with a single column, but may be
+excluded in a multi-column logger where each level has its own column.
+
+Messages are packed as follows:
+- 32-bit timestamp
+- 32-bit content-size
+- content array of length content-size bytes
+- optional trailing byte
+;; level: u8
+;; content: (array u8 *)
+"
+  (declare (optimize speed))
+  (with-slots (timestamp (l level) content) msg
+    (let* ((cont (when content (sb-ext:string-to-octets content)))
+           (len (integer-to-octets (length cont) 32))
+           (ts (integer-to-octets (timestamp-to-unix timestamp) 32))
+           (lvl (when level (list (coerce (ilevel l) 'octet)))))
+      (concatenate 'octet-vector ts len cont lvl))))
+
+(defun octets-to-log-message (octets &key (level t))
+  "Convert OCTETS to a LOG-MESSAGE object."
+  (declare (optimize speed)
+           (octet-vector octets))
+  (let ((ts (unix-to-timestamp (octets-to-integer (subseq octets 0 4) 4)))
+        (len (octets-to-integer (subseq octets 4 8) 4))
+        (pos 8)
+        (obj (make-instance 'log-message)))
+    (setf (timestamp obj) ts
+          (level obj) (when level (aref octets len))
+          (content obj) (sb-ext:octets-to-string octets :start pos :end (+ pos len)))
+    obj))
 
 (defmethod msg ((elt alien-sink) (msg log-message)))
 

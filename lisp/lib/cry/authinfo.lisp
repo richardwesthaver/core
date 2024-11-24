@@ -27,10 +27,10 @@
    (credentials :type list :initarg :credentials :accessor credentials)))
 
 ;; TODO 2024-06-30: 
-(defmethod dat/proto:serde ((from authinfo) (to pathname)))
-(defmethod dat/proto:serde ((from stream) (to authinfo)))
+(defmethod serde ((from authinfo) (to pathname)))
+(defmethod serde ((from stream) (to authinfo)))
 
-(defmethod dat/proto:deserialize ((from pathname) (format (eql :authinfo)) &key)
+(defmethod deserialize ((from pathname) (format (eql :authinfo)) &key)
   (with-open-file (s from)
     (make-instance 'auth-info
       :path from
@@ -39,4 +39,4 @@
             while l
             collect l))))
 
-;; (dat:deserialize #P"~/.authinfo" :authinfo)
+;; (deserialize #P"~/.authinfo" :authinfo)

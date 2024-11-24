@@ -52,12 +52,8 @@ the body of WITH-DB forms.")
   (setq *database-backend* backend))
   
 ;; TODO 2024-11-10: should we handle &rest/&optional too?
-(defun parse-database-backend-options (initargs &optional (db-var '*db*))
+(defun parse-database-backend-options (initargs)
   "Parse INITARGS as a plist of database options for current *DATABASE-BACKEND*."
-  ;; The first element if not a keyword, is bound to the *DB* variable.
-  ;; hmm
-  (when (not (keywordp (car initargs)))
-    (setf (symbol-value db-var) (eval (pop initargs))))
   (mapcar
    (lambda (opt)
      (let ((key (keywordicate (if (atom opt) opt (car opt)))))
@@ -120,11 +116,13 @@ the body of WITH-DB forms.")
                 (not (member (car x) *database-backend-close-options*))))
           options)))
 
-(defmacro with-db ((var &rest initargs &key (open t) (close t) destroy &allow-other-keys) &body body)
+(defmacro with-db ((var &rest initargs &key (db '*db*) (open t) (close t) destroy &allow-other-keys) 
+                   &body body)
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
   of BODY."
-  (let ((opts (parse-database-backend-options initargs '*db*)))
-    `(let ((,var *db*))
+  (remf initargs :db)
+  (let ((opts (parse-database-backend-options initargs)))
+    `(let ((,var ,db))
        ,@(when open (remf initargs :open) `((open-db db)))
        (apply 'do-database-backend-init-options ,var ',opts)
        (unwind-protect (progn ,@body)
