@@ -6,8 +6,8 @@
 (in-package :obj/uri)
 (defvar *render-include-slash-on-null-path* nil) ;; rfe11850
 (defvar *uri-schema-print-case* :downcase)
-
-(defmethod render-uri ((uri uri) stream
+(defgeneric render-uri (uri &optional stream))
+(defmethod render-uri ((uri uri) &optional stream
                        &aux (encode (uri-escaped uri))
                             (*print-pretty* nil)
                             res)
@@ -79,7 +79,7 @@
      then (princ res stream)
      else res))
 
-(defmethod render-uri ((urn urn) stream
+(defmethod render-uri ((urn urn) &optional stream
                        &aux (*print-pretty* nil))
   ;; This doesn't do encoding because no decoding is done for URNs when
   ;; they are parsed.
@@ -171,7 +171,7 @@
 (defmethod uri-to-string ((urn urn))
   ;; We can use render-uri here because no decoding/encoding happens for
   ;; URNs.
-  (render-uri urn nil))
+  (render-uri urn))
 
 (defun render-parsed-path (path-list escape)
   (do* ((res '())
@@ -213,5 +213,5 @@
   (if* *print-escape*
      then (format stream "#<~a ~a>"
                   (class-name (class-of uri))
-                  (render-uri uri nil))
+                  (render-uri uri))
      else (render-uri uri stream)))

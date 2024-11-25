@@ -42,6 +42,11 @@
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service))
 
+(pkg:defpkg :net/srv/oauth
+  (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http)
+  (:use-reexport :net/srv)
+  (:export :udp-service :echo-service))
+
 ;;; Vars
 (defvar *router*)
 (defvar *service*)

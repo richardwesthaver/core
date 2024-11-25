@@ -126,8 +126,10 @@ function 'NAME-P'."
   (unless (every #'keywordp tags)
     (error "Tags must be keywords")))
 
-(defmethod format-message ((stream stream) (message simple-log-message))
-  (format stream "~a [~4,a] ~{<~a>~}: ~a"
+(defvar *simple-log-message-formatter* (formatter "~a [~4,a] ~{<~a>~}: ~a"))
+
+(defmethod format-message (stream (message simple-log-message))
+  (format stream *simple-log-message-formatter*
           (format-timestring nil (timestamp message) :format *log-timestamp-format*)
           (level message)
           (tags message)

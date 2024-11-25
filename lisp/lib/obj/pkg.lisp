@@ -613,5 +613,5 @@
 (defpackage :obj/secret
   (:nicknames :secret)
   (:use :cl :std)
-  (:export :secret-object :reveal-object :conceal-object
+  (:export :secret :reveal :conceal
    :ensure-revealed :ensure-concealed))

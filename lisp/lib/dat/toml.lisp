@@ -86,7 +86,7 @@ collection. The parsed result is a table representing root table.")))
 ;;;; Value
 (defmethod parse-toml-value ((type (eql :datetime)) value)
   "Return a timestamp."
-  (parse-toml-timestring (ppcre:regex-replace " " "T" value)))
+  (parse-timestring (ppcre:regex-replace " " "T" value)))
 
 (defmethod parse-toml-value ((type (eql :datetime-local)) value)
   "Return a plist with keys (:year :month :day :hour :minute :second)."
@@ -98,7 +98,7 @@ collection. The parsed result is a table representing root table.")))
 (defmethod parse-toml-value ((type (eql :date-local)) value)
   "Return a plist with keys (:year :month :day)."
   (let* ((*default-timezone* +utc-zone+)
-         (timestamp (parse-toml-timestring value)))
+         (timestamp (parse-timestring value)))
     (list :year (timestamp-year timestamp)
           :month (timestamp-month timestamp)
           :day (timestamp-day timestamp))))
@@ -106,7 +106,7 @@ collection. The parsed result is a table representing root table.")))
 (defmethod parse-toml-value ((type (eql :time-local)) value)
   "Return a plist with keys (:hour :minute :second)."
   (let* ((*default-timezone* +utc-zone+)
-         (timestamp (parse-toml-timestring value)))
+         (timestamp (parse-timestring value)))
     (list :hour (timestamp-hour timestamp)
           :minute (timestamp-minute timestamp)
           :second (timestamp-second timestamp)

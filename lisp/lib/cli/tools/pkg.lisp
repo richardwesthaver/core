@@ -41,6 +41,14 @@
    :run-nvcc
    :nvcc-error))
 
+(defpackage :cli/tools/web
+  (:use :cl :std :cli/env)
+  (:export
+   :*browser*
+   :run-browser
+   :browse-url
+   :browser-error))
+
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/env)
   (:export :*pacman* :run-pacman :pacman-error))

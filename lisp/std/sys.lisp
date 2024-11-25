@@ -234,7 +234,6 @@ As of June 2013, the only x86-64 CPUs supporting RTM are:
 * Intel Core i7 4770
 Beware: at the time of writing all the known K models, as for example
 Intel Core i7 4770K, do **NOT** support RTM."
-
     (let ((max-cpuid (cpuid 0)))
       (when (>= max-cpuid 7)
         (let ((ebx (nth-value 1 (cpuid 7))))
@@ -243,9 +242,9 @@ Intel Core i7 4770K, do **NOT** support RTM."
 (defparameter %little-endian nil)
 
 (defun little-endian-p ()
-  #+(or :x86 :x86-64 :LITTLE-ENDIAN) t
-  #+(or :PPC :POWERPC :BIG-ENDIAN) nil
-  #-(or :x86 :x86-64 :LITTLE-ENDIAN :PPC :POWERPC :BIG-ENDIAN)
+  #+(or :x86 :x86-64 :little-endian) t
+  #+(or :PPC :POWERPC :big-endian) nil
+  #-(or :x86 :x86-64 :little-endian :ppc :powerpc :big-endian)
   %little-endian)
 
 (defun 64-bit-p () #+x86-64 t)

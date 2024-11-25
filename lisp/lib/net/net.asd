@@ -23,15 +23,19 @@
                              (:file "osc")
                              (:file "http")))
                (:module "proto"
-                :components ((:file "crew" :if-feature "swank")
-                             (:file "swank" :if-feature "swank")
+                :components ((:file "swank" :if-feature "swank")
+                             (:file "crew" :if-feature "swank")
                              (:file "http")
                              (:file "dns")
                              (:file "ssh")))
                (:file "cookie")               
                (:file "req")
                (:module "srv"
-                :components ((:file "pkg"))))
+                :components 
+                ((:file "pkg")
+                 (:file "udp")
+                 (:file "http")
+                 (:file "oauth"))))
   :in-order-to ((test-op (test-op :net/tests))))
 
 (defsystem :net/tests

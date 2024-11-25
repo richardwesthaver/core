@@ -17,8 +17,9 @@
 (in-package :std/serde)
 
 (eval-always
-  (define-condition serde-condition () ()))
-(deferror serde-error (serde-condition) ())
+  (define-condition serde-condition () ())
+  (deferror serde-error (serde-condition) ()))
+
 (deferror serializer-error (serde-error) ())
 (deferror deserializer-error (serde-error) ())
 

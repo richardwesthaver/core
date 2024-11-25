@@ -12,7 +12,7 @@
 (defpackage :std/condition
   (:use :cl)
   (:shadowing-import-from :asdf :error-name)
-  (:export    ;; err
+  (:export
    :*error-message*
    :std-error :error-message
    :define-error-reporter
@@ -44,11 +44,10 @@
    :missing-method
    :missing-methods))
 
-(defpackage :std/sym
+(defpkg :std/sym
   (:use :cl)
-  (:shadowing-import-from :sb-int
-   :with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*
-   :gensymify)
+  (:mix :sb-int)
+  (:shadowing-import-from :sb-int :once-only)
   (:export
    :ensure-symbol
    :format-symbol
@@ -279,11 +278,12 @@
 
 (defpkg :std/macs
   (:use :cl)
-  (:import-from :std/sym :symb :mkstr :make-gensym-list :once-only :with-gensyms)
+  (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :defmacro!)
   (:export
+   :once-only
    :define-class
    :defclass*
    :dlet
@@ -312,7 +312,6 @@
    :dollar-symbol-p
    :if-match
    :when-match
-   :once-only
    :destructuring-case
    :destructuring-ccase
    :destructuring-ecase
@@ -389,7 +388,9 @@
 (defpkg :std/bit
   (:use :cl)
   (:import-from :std/type :octet :octet-vector)
+  (:mix :sb-sys)
   (:export
+   :read-n-bytes
    :make-bits
    :sign-bit
    :different-signs-p
@@ -430,7 +431,7 @@
   (:use :cl)
   (:import-from :std/named-readtables :parse-body)
   (:import-from :std/condition :deferror)
-  (:import-from :std/macs :when-let :once-only :eval-always)
+  (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/sym :symbolicate :with-gensyms)
   (:import-from :std/type :octet-vector)
   (:export :define-io
@@ -618,7 +619,7 @@
 
 (defpkg :std/file
   (:use :cl)
-  (:import-from :std/macs :define-constant :once-only :eval-always)
+  (:import-from :std/macs :define-constant :eval-always :once-only)
   (:import-from :std/stream :copy-stream)
   (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
   (:export

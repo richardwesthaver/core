@@ -494,9 +494,9 @@ return the same value as DB depending on backend."))
                       args))))))
   
 (defmacro ensure-transaction ((&rest args &key
-                                     (db '*db*)
-                                     (txn '*txn*)
-                                     &allow-other-keys)
+                                          (db '*db*)
+                                          (txn '*txn*)
+                               &allow-other-keys)
                               &body body)
   "Execute the body with the existing transaction if one exists, or a new
 transaction. This allows sequences of database actions to be run atomically

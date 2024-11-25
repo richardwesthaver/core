@@ -56,6 +56,7 @@
 (defpackage :io/fast
   (:use :cl :std :io/proto :io/stream)
   (:import-from :io/static :make-static-vector)
+  (:import-from :std/macs :once-only)
   (:export
    #:fast-read-byte #:fast-write-byte
    #:fast-read-sequence #:fast-write-sequence

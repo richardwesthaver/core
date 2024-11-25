@@ -9,5 +9,5 @@
    :seq :tree :graph :id
    :db :ast :time :uri 
    :url :config :temperature :direction 
-   :build :shape :secret :query
-   :schema :store))
+   :build :secret :query :schema :store))
+                 
