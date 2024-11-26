@@ -14,8 +14,7 @@
 (defclass transport ()
   ())
 
-;; (defclass connection ()
-;;   ())
+(defclass connection () ())
 
 (defclass codec ()
   ())
@@ -23,10 +22,10 @@
 (defclass protocol ()
   ())
 
-(defclass client ()
+(defclass client (inet-socket)
   ())
 
-(defclass server ()
+(defclass server (inet-socket)
   ())
 
 (defclass peer ()
@@ -41,3 +40,6 @@
 (defgeneric connect (self &key &allow-other-keys))
 
 (defgeneric disconnect (self &key &allow-other-keys))
+
+(defgeneric make-client (kind &rest initargs &key &allow-other-keys))
+(defgeneric make-server (kind &rest initargs &key &allow-other-keys))

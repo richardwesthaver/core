@@ -44,6 +44,7 @@
 
 (pkg:defpkg :net/srv/oauth
   (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http)
+  (:import-from :cli/tools/web :browse-url)
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service))
 
@@ -309,10 +310,6 @@ logging, etc."))
   (:default-initargs
    :access-log-output *error-output*
    :message-log-output *error-output*))
-
-;;; Router
-;; similar to HUNCHENTOOT:EASY-HANDLER
-(defclass router (pipe) ())
 
 ;;; Engine
 ;; Multithreaded runtime for services
@@ -730,3 +727,19 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defmacro define-service (name &rest initargs)
   "Define a subclass of NET/SRV:SERVICE."
   `(defclass ,name ,@initargs))
+
+(defmacro defroute (spec args &body body)
+  "Define a new ROUTE with BODY and optionally register it with a URI. The
+resulting function is stored within the *ROUTER* collection and may be
+dispatched to by a SERVICE instance.
+
+SPEC is either a symbol NAME or a list matching the
+destructuring lambda list
+
+  (name &key uri service-names host
+        default-parameter-type default-request-type).
+
+ARGS is a list the elements of which are either a symbol
+VAR or a list matching the destructuring lambda list
+
+  (var &key real-name parameter-type init-form request-type).")

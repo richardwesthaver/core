@@ -11,5 +11,8 @@
 (define-alien-routine gst-element-factory-get-type gtype)
 (define-alien-routine gst-element-factory-find (* gst-element-factory) (name c-string))
 (define-alien-routine gst-element-factory-make (* gst-element)
+  (factory-name c-string)
+  (name c-string))
+(define-alien-routine gst-element-factory-create (* gst-element)
   (factory (* gst-element-factory))
   (name c-string))

@@ -1,5 +1,6 @@
-(defpackage :net/core
-  (:use :cl :std :sb-bsd-sockets :sb-thread :sb-concurrency)
+(pkg:defpkg :net/core
+  (:use :cl :std :sb-thread :sb-concurrency)
+  (:recycle :sb-bsd-sockets)
   (:export
    ;; err
    :net-condition
@@ -20,15 +21,15 @@
    :net-warning
    :codec-warning
    :protocol-warning
-   :net-socket
-   :net-server
-   :net-client
    :connect
-   :disconnect))
+   :disconnect
+   :make-client
+   :make-server))
 
 (defpackage :net/util
   (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
-  (:export :get-address-by-name))
+  (:export :get-address-by-name
+   :with-client-server))
 
 (defpackage :net/udp
   (:nicknames :udp)
@@ -37,9 +38,10 @@
    :udp-server
    :with-udp-client
    :with-udp-server
-   :with-udp-client-and-server
    :udp-receive-ping
-   :udp-echo))
+   :udp-echo
+   :udp-socket
+   :udp-client))
 
 (defpackage :net/tcp
   (:nicknames :tcp)
@@ -135,7 +137,7 @@
                 #:make-thread
                 #:with-mutex)
   (:import-from :sb-concurrency
-                :make-gate)
+   :make-gate)
   ;; (:import-from #:swank
   ;;               #:slime-close
   ;;               #:slime-connect
@@ -303,11 +305,11 @@
            :cookie-jar-cookies
    :cookie-jar-host-cookies
            :merge-cookies
-           :cookie-p
+   :cookie-p
            :copy-cookie
-           :cookie-creation-timestamp
+   :cookie-creation-timestamp
            :stringify-cookie
-           :cookie-date))
+   :cookie-date))
 
 (defpackage :net/req
   (:nicknames :req)
@@ -414,7 +416,8 @@
    #:next-session-id
    #:remove-session
    #:session
-   #:session-expired-p))
+   #:session-expired-p
+   #:defroute))
 
 (pkg:defpkg :net
   (:use :cl :std)

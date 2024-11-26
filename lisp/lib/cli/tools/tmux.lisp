@@ -19,10 +19,7 @@
 ;;; Code:
 (in-package :cli/tools/tmux)
 
-(deferror simple-tmux-error (simple-error error) ())
-
-(defun simple-tmux-error (fmt &rest args)
-  (error 'simple-tmux-error :format-arguments args :format-control fmt))
+(deferror simple-tmux-error (simple-error) () (:auto t))
 
 (defparameter *tmux-user-config-path* (merge-pathnames ".tmux.conf" (user-homedir-pathname)))
 (defparameter *tmux-system-config-path* (merge-pathnames "tmux.conf" "/etc/"))

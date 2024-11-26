@@ -31,7 +31,7 @@
         finally (return (+ k (truncate (* delta (+ 1 (- BASE TMIN))) (+ delta SKEW))))))
 
 (defmacro with-stream (stream-ish &body body)
-  (let ((thunk (gensym "THUNK")))
+  (std:with-gensyms (thunk)
     `(flet ((,thunk (,stream-ish)
               ,@body))
        (etypecase out

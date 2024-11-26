@@ -5,8 +5,18 @@
 ;;; Code:
 (in-package :obj/schema)
 
+;;; Types
+(eval-always
+  (defvar *literal-value-types* '(boolean integer fixnum signed-byte unsigned-byte float double-float string)))
+
+(deftype literal-value-type () `(member ,*literal-value-types*))
+
+(deftype field-vector () '(vector field))
+
+;;; Vars
 (defvar *schema* nil)
 
+;;; Generics
 (defgeneric field (self n))
 (defgeneric fields (self))
 (defgeneric schema (self))
@@ -14,6 +24,45 @@
 (defgeneric apply-schema (schema object))
 (defgeneric load-schema (self schema))
 (defgeneric load-field (self field))
+
+;; convenience interface for FIELD-VECTOR
+(defclass column-vector () ((data :type simple-vector :accessor column-data)))
+
+(defclass literal-value-vector (column-vector)
+  ((type :type literal-value-type :initarg :type :accessor column-type)
+   (data :initarg :data :accessor column-data)
+   (size :type fixnum :initarg :size :accessor column-size)))
+
+(defgeneric row-count (self)
+  (:method ((self record-batch))
+    (sequence:length (aref (column-data (record-batch-fields self)) 0))))
+
+(defgeneric column-count (self)
+  (:method ((self record-batch))
+    (length (record-batch-fields self))))
+
+(defgeneric column-literal-value (self)
+  (:method ((self literal-value-vector))
+    (column-data self)))
+
+(defgeneric column-type (self)
+  (:method ((self column-vector))
+    (array-element-type (column-data self))))
+
+(defgeneric column-value (self i)
+  (:method ((self column-vector) (i fixnum))
+    (aref (column-data self) i))
+  (:method ((self literal-value-vector) (i fixnum))
+    (if (or (< i 0) (>= i (column-size self)))
+        (error 'simple-error :format-control "index out of bounds: ~A" :format-arguments i)
+        (column-literal-value self))))
+
+(defgeneric column-size (self)
+  (:method ((self column-vector))
+    (length (column-data self))))
+
+(defgeneric scan-data (self projection)
+  (:documentation "Scan the data source, selecting the specified columns."))
 
 (defclass schema ()
   ((fields :initarg :fields :accessor fields))
@@ -30,8 +79,6 @@
   (declare (ignore env))
   `(make-field :name ,(field-name self) :type ,(field-type self)))
 
-(deftype field-vector () '(vector field))
-
 (defun make-fields (&rest fields)
   "Coerce a plist of the form :NAME TYPE into a FIELD-VECTOR."
   (let ((ret))
@@ -47,6 +94,35 @@
   (declare (ignore env))
   `(make-instance ,(class-of self) :fields ,(fields self)))
 
+;;; Record Batch
+(defstruct record-batch
+  (schema (make-simple-schema (gensym "RECORD")) :type schema)
+  (fields #() :type column-vector))
+
+(defmethod schema ((self record-batch))
+  (record-batch-schema self))
+
+(defmethod make-load-form ((self record-batch) &optional env)
+  (declare (ignore env))
+  `(make-record-batch :schema ,(record-batch-schema self) :fields ,(record-batch-fields self)))
+
+(defmethod field ((self record-batch) (n fixnum))
+  (aref (column-data (record-batch-fields self)) n))
+
+(defmethod fields ((self record-batch))
+  (record-batch-fields self))
+
+(defmethod schema ((self record-batch))
+  (record-batch-schema self))
+
+;;; Data Source
+(defclass data-source ()
+  ((schema :type schema :accessor schema)))
+
+(defclass file-data-source (data-source)
+  ((path :initarg :path :accessor path)))
+
+;;; Schema Metadata
 (defclass schema-metadata ()
   ((metadata :initarg :metadata :accessor schema-metadata)))
 

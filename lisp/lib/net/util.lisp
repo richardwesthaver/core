@@ -30,3 +30,25 @@
   (loop :for port :from min :to max :when (port-open-p port :host host) :return port))
 
 ;; (get-address-by-name "localhost")
+
+;;; Macros
+(defmacro with-client-server (((socket-class &rest common-initargs)
+                                   (listen-socket-var &rest listen-address)
+                                   (client-socket-var &rest client-address)
+                                   server-socket-var)
+                                      &body body)
+  `(let ((,listen-socket-var (make-instance ',socket-class ,@common-initargs))
+         (,client-socket-var (make-instance ',socket-class ,@common-initargs))
+         (,server-socket-var))
+     (unwind-protect
+          (progn
+            (setf (sockopt-reuse-address ,listen-socket-var) t)
+            (socket-bind ,listen-socket-var ,@listen-address)
+            (socket-listen ,listen-socket-var 5)
+            (socket-connect ,client-socket-var ,@client-address)
+            (setf ,server-socket-var (socket-accept ,listen-socket-var))
+            ,@body)
+       (socket-close ,client-socket-var)
+       (socket-close ,listen-socket-var)
+       (when ,server-socket-var
+         (socket-close ,server-socket-var)))))

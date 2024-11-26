@@ -381,7 +381,22 @@
    #:diff-type
    #:diff-recs
    #:apply-schema
-   #:dynamic-schema))
+   #:dynamic-schema
+   #:literal-value-vector
+   #:column-vector
+   #:literal-value-type
+   #:*literal-value-types*
+   #:column-literal-value
+   #:column-type
+   #:column-value
+   #:column-size
+   #:scan-data
+   #:record-batch
+   #:record-batch-schema
+   #:record-batch-fields
+   #:make-record-batch
+   #:data-source
+   #:file-data-source))
 
 (defpackage :obj/plan
   (:nicknames :plan)
@@ -395,7 +410,6 @@
   (:nicknames :query)
   (:use :cl :std :plan :ast :schema)
   (:export :query
-           :data-source
            :query-expression
            :logical-expression
            :column-expression
@@ -492,7 +506,6 @@
            :register-data-source
            :register-df
            :file-data-path
-           :file-data-source
            :optimize-query
            :projection-pushdown-optimizer
            :extract-columns*

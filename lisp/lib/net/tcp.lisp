@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :net/tcp)
 
+;;; Utils
 (defun tcp-echo (port)
   (let ((s (make-instance 'inet-socket :type :stream :protocol :tcp)))
     (socket-bind s #(0 0 0 0) port)
@@ -32,3 +33,8 @@
             ,(when peer `(apply #'socket-connect ,socket-var ,peer))
             ,@body)
        (socket-close ,socket-var))))
+
+;;; Objects
+(defclass tcp-socket (inet-socket) ())
+(defclass tcp-client (tcp-socket client) ())
+(defclass tcp-server (tcp-socket server) ())

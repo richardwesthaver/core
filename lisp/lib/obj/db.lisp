@@ -361,7 +361,7 @@ hints.")
 
 (defmacro with-merge-op ())
 
-;; Columns (column families)
+;; Columns
 (defgeneric open-columns (self &rest names)
   (:documentation "Open the columns indicated by NAMES or all columns belonging
 to SELF."))

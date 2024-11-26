@@ -33,63 +33,8 @@
 (in-package :obj/query)
 
 (defvar *query* nil)
-;;; Types
-(eval-always
-  (defvar *literal-value-types* '(boolean integer fixnum signed-byte unsigned-byte float double-float string)))
-
-(deftype literal-value-type () `(member ,*literal-value-types*))
-
-;;; Field
-;; convenience interface for FIELD-VECTOR
-(defclass column-vector () ((data :type simple-vector :accessor column-data)))
-
-(defclass literal-value-vector (column-vector)
-  ((type :type literal-value-type :initarg :type :accessor column-type)
-   (data :initarg :data :accessor column-data)
-   (size :type fixnum :initarg :size :accessor column-size)))
-
-(defgeneric column-literal-value (self)
-  (:method ((self literal-value-vector))
-    (column-data self)))
-
-(defgeneric column-type (self)
-  (:method ((self column-vector))
-    (array-element-type (column-data self))))
-
-(defgeneric column-value (self i)
-  (:method ((self column-vector) (i fixnum))
-    (aref (column-data self) i))
-  (:method ((self literal-value-vector) (i fixnum))
-    (if (or (< i 0) (>= i (column-size self)))
-        (error 'simple-error :format-control "index out of bounds: ~A" :format-arguments i)
-        (column-literal-value self))))
-
-(defgeneric column-size (self)
-  (:method ((self column-vector))
-    (length (column-data self))))
-
-;;; Record Batch
-(defstruct record-batch
-  (schema (make-simple-schema (gensym "RECORD")) :type schema)
-  (fields #() :type column-vector))
-
-(defmethod schema ((self record-batch))
-  (record-batch-schema self))
-
-(defmethod make-load-form ((self record-batch) &optional env)
-  (declare (ignore env))
-  `(make-record-batch :schema ,(record-batch-schema self) :fields ,(record-batch-fields self)))
 
 ;;; Proto
-(defmethod field ((self record-batch) (n fixnum))
-  (aref (column-data (record-batch-fields self)) n))
-
-(defmethod fields ((self record-batch))
-  (record-batch-fields self))
-
-(defmethod schema ((self record-batch))
-  (record-batch-schema self))
-
 (defgeneric select (self names)
   (:method ((self schema) (names list))
     (let* ((fields (fields self))
@@ -122,36 +67,18 @@
                      collect (aref (fields self) i))
                'field-vector))))
 
-(defgeneric row-count (self)
-  (:method ((self record-batch))
-    (sequence:length (aref (column-data (record-batch-fields self)) 0))))
-
-(defgeneric column-count (self)
-  (:method ((self record-batch))
-    (length (record-batch-fields self))))
-
-;;; Data Source
-(defclass data-source ()
-  ((schema :type schema :accessor schema)))
-
-(defclass file-data-source (data-source)
-  ((path :initarg :path :accessor file-data-path)))
-
-(defgeneric scan-data (self projection)
-  (:documentation "Scan the data source, selecting the specified columns."))
-
 ;;; Expressions
 (defclass query-expr (expr) ())
 
-(defclass query-plan (plan)
+(defclass query-plan (plan ast)
   ((schema :type schema :accessor schema :initarg :schema)
-   (children :type (vector query-plan))))
+   (ast :type (vector query-plan))))
 
 (defclass logical-query-plan (query-plan logical-plan)
-  ((children :type (vector logical-query-plan) :accessor children :initarg :children)))
+  ((ast :type (vector logical-query-plan) :accessor ast :initarg :ast)))
 
 (defclass physical-query-plan (query-plan physical-plan)
-  ((children :type (vector physical-query-plan))))
+  ((ast :type (vector physical-query-plan))))
 
 ;;; Logical Expressions
 (defgeneric to-field (self input)
@@ -163,11 +90,11 @@
     (make-field :name (princ-to-string self) :type 'number)))
 
 (defclass column-expression (logical-expr query-expr)
-  ((name :type string :initarg :name :accessor column-name)))
+  ((name :type string :initarg :name :accessor name)))
 
 (defmethod to-field ((self column-expression) (input logical-query-plan))
-  (or (find (column-name self) (fields (schema input)) :test 'equal :key 'field-name)
-      (error 'invalid-argument :item (column-name self) :reason "Invalid column name")))
+  (or (find (name self) (fields (schema input)) :test 'equal :key 'field-name)
+      (error 'invalid-argument :item (name self) :reason "Invalid column name")))
 
 (defmethod df-col ((self string))
   (make-instance 'column-expression :name self))
@@ -331,7 +258,7 @@
 (defmethod derive-schema ((self scan-data))
   (let ((proj (slot-value self 'projection)))
     (if (= 0 (length proj))
-        (slot-value self 'schema)
+        (schema self)
         (select (slot-value self 'schema) proj))))
 
 (defmethod schema ((self scan-data))
@@ -377,9 +304,9 @@
   (setf (slot-value self 'schema)
         (schema (slot-value self 'input))))
 
-(defmethod children ((self limit))
-  (setf (slot-value self 'children)
-        (children (slot-value self 'input))))
+(defmethod ast ((self limit))
+  (setf (slot-value self 'ast)
+        (ast (slot-value self 'input))))
 
 ;;;;; Joins
 (defclass join (logical-query-plan)
@@ -414,7 +341,7 @@
                (merge 'vector l r (lambda (x y) (declare (ignore y)) x))))))
     schema))
 
-(defmethod children ((self join))
+(defmethod ast ((self join))
   (vector (lhs self) (rhs self))) 
 
 ;;; Subqueries
@@ -710,7 +637,7 @@
 ;; The Query Planner is effectively a compiler which translates logical
 ;; expressions and plans into their physical counterparts.
 
-(defclass query-planner () ())
+(defclass query-planner (planner) ())
 
 (defgeneric make-physical-expression (expr input)
   (:documentation "Translate logical expression EXPR and logical plan INPUT
@@ -722,7 +649,7 @@
     (declare (ignore input))
     expr)
   (:method ((expr column-expression) (input logical-query-plan))
-    (let ((i (position (column-name expr) (fields (schema input)) :key 'field-name :test 'equal)))
+    (let ((i (position (name expr) (fields (schema input)) :key 'field-name :test 'equal)))
       (make-instance 'column-physical-expression :val i)))
   (:method ((expr binary-expression) (input logical-query-plan))
     (let ((l (make-physical-expression (lhs expr) input))
@@ -798,7 +725,7 @@
 accumulator."
   (etypecase expr
     (array-index (accumulate accum (field (fields (schema input)) expr)))
-    (column-expression (accumulate accum (column-name expr)))
+    (column-expression (accumulate accum (name expr)))
     (binary-expression
      (extract-columns (lhs expr) input accum)
      (extract-columns (rhs expr) input accum))

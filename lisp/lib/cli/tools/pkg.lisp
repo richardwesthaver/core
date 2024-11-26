@@ -42,7 +42,7 @@
    :nvcc-error))
 
 (defpackage :cli/tools/web
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/env :uri)
   (:export
    :*browser*
    :run-browser

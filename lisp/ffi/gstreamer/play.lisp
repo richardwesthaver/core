@@ -58,4 +58,3 @@
 (define-alien-routine gst-play-get-type gtype)
 
 (define-alien-routine gst-play-new (* gst-play) (video-renderer (* gst-play-video-renderer)))
-

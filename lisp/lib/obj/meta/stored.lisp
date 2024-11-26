@@ -50,7 +50,9 @@
    still in the db.  Need a migration or GC for that!  drop-instances is the
    user-facing call as it implements the proper behavior for indexed classes."))
 
-(defgeneric get-store (self))
+(defgeneric get-store (self)
+  (:documentation "Get the store associated with SELF. We prefix this accessor with GET- because
+STORE is reserved for a special method which operates on stored objects."))
 (defgeneric (setf get-store) (new self))
 
 (defgeneric stored-slot-reader (sc instance name &optional oids-only)

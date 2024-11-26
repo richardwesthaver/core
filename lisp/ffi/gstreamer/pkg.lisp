@@ -40,7 +40,17 @@
    :gst-task-private
    :gst-task-class
    :gst-iterator
-   :gst-element-factory))
+   :gst-element-factory
+   :gst-element-factory-find
+   :gst-element-factory-get-type
+   :gst-element-factory-create
+   :gst-object-unref
+   :gst-object-ref
+   :gst-object-get-path-string
+   :gst-object-check-uniqueness
+   :gst-object-replace
+   :gst-object-ref-sink
+   :gst-object-flags))
 
 (in-package :gstreamer)
 

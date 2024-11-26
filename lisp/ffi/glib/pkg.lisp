@@ -12,7 +12,10 @@
            :glist
            :goptioncontext
            :goptiongroup
-           :goptionentry))
+           :goptionentry
+           :gvalue
+           :gobject
+           :g-object-getv))
 
 (in-package :glib)
 
@@ -28,7 +31,8 @@
 (define-opaque gmaincontext)
 (define-opaque gobjectgroup)
 (define-opaque glist)
-
+(define-opaque gvalue)
+(define-opaque gobject)
 (define-alien-type gthread (* t))
 (define-alien-type ghook-list (* t))
 (define-alien-type ginitially-unowned (* t))
@@ -86,3 +90,9 @@
                    :int64 8)
 
 (define-alien-routine g-option-error-quark gquark)
+
+(define-alien-routine g-object-getv void
+  (object (* gobject))
+  (nprops unsigned-int)
+  (names (* c-string)) ;; array
+  (vals (* (* t)))) ;; actually array of GVALUE
