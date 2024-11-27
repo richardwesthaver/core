@@ -1,5 +1,5 @@
 (defpackage :vc/tests
-  (:use :cl :std :rt :vc/proto :vc/git :vc/hg :vc))
+  (:use :cl :std :rt :vc/proto :vc/git :vc/hg :vc :io/zstd :io/flate))
 
 (in-package :vc/tests)
 (defsuite :vc)

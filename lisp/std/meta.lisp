@@ -15,7 +15,10 @@
 (defgeneric shutdown (self))
 (defgeneric reset (self &rest args &key &allow-other-keys))
 (defgeneric data (self))
-
+(defgeneric name (self)
+  (:method ((self t))
+    (string self)))
+(defgeneric tags (self))
 (defgeneric write-object (obj stream &key &allow-other-keys)
   (:method ((obj t) (stream t) &key)
     (write obj :stream stream)))

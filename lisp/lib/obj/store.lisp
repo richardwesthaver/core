@@ -43,7 +43,7 @@
 
 (defvar *store* nil)
 
-(defvar *store-connection-spec* nil)
+(defvar *stores* nil)
 
 (defun make-btree (&optional (st *store*))
   "Constructs a new BTree instance for use by the user.  Each backend
@@ -880,7 +880,7 @@
 ;; start stop
 
 (defun close-all-stores ()
-  (loop for pair in *store-connection-spec*
+  (loop for pair in *stores*
        do (close-store (cdr pair))))
 
 ;; (pushnew 'close-all-stores sb-ext:*exit-hooks*)

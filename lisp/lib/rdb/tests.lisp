@@ -1,5 +1,5 @@
 (defpackage :rdb/tests
-  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :query :db)
+  (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :query :db :schema)
   (:import-from :rdb :open-db-raw :get-kv-str-raw :iter-key-str-raw
    :destroy-db-raw :close-db-raw :create-cf-raw :get-cf-str-raw
    :iter-val-str-raw :put-kv-str-raw :put-cf-str-raw))
@@ -161,18 +161,18 @@
 
 (deftest schema ()
   "Test loading and handling of RDB-SCHEMA objects."
-  (let ((cf (load-field (make-rdb-cf "foo") (make-field :type '(string string)))))
-    (is (eql (rdb-cf-key-type cf) 'string))
-    (is (eql (rdb-cf-val-type cf) 'string))
-    (is (string= (rdb-cf-name cf) "foo"))
+  (let ((cf (load-field (make-instance 'rdb-column-family
+                          :cf (make-rdb-cf "foo"))
+                        (make-field :type '(string string)))))
+    (isequal (column-type cf) (cons 'string 'string))
+    (isequal (name cf) "foo"))
     (with-temp-rdb (schema-no-cfs () :destroy t :open t)
-      (load-schema schema-no-cfs (make-simple-schema (make-field :type nil)))
-      (is (= 1 (length (columns schema-no-cfs)))))
+      (let ((db (make-db :rdb :db schema-no-cfs)))
+        (load-schema db (make-simple-schema (make-field :type nil)))
+        (is (= 1 (length (columns db))))))
     (with-temp-rdb (schema-cfs (baz) :open t :destroy t)
-      (load-schema schema-cfs (make-simple-schema (make-field :name "BAZ" :type '(octet-vector . string))))
-      (is (= 1 (length (columns schema-cfs))))
-      (is (eql 'octet-vector (rdb-cf-key-type (aref (columns schema-cfs) 0))))
-      (is (eql 'string (rdb-cf-val-type (aref (columns schema-cfs) 0)))))))
+      (load-schema (make-db :rdb :db schema-cfs) (make-simple-schema (make-field :name "BAZ" :type '(octet-vector . string))))
+      (is (= 1 (length (columns schema-cfs))))))
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
@@ -193,23 +193,18 @@
 
 (deftest merge-op ()
   (setq *db* nil)
-  (let ((opts (default-rdb-opts)))
-    (let ((op1 (concat-merge-op)))
-      (set-db-opt opts :merge-operator op1 :push t)
-      (push-sap* opts)
-      (iseq (db-opt opts :merge-operator) op1)
-      (let ((db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4))
-                              :columns nil
-                              :opts opts))
-            (k (string-to-octets "foo"))
-            (v (string-to-octets "bar")))
-        (with-db (db :db db :open t :close t :destroy t)
-          (print (put-key db k v))
-          (print (merge-key db k v))
-          (print (get-val db k)))))))
+  (let ((k (string-to-octets "foo"))
+        (v (string-to-octets "bar")))
+    (with-db (db :db (make-db :rdb :name (format nil "/tmp/~A" (gensym)))
+                 :close t :destroy t 
+                 :merge-op (concat-merge-op) :name (format nil "/tmp/~A" (random-chars 4)))
+      (push-opts (db db))
+      (open-db db)
+      (print (put-key db k v))
+      (merge-key db k v)
+      (print (get-val db k)))))
 
-
-(deftest prefix-key ()
+(deftest prefix-op ()
   "Test custom RocksDB prefix key")
 
 (deftest database ())

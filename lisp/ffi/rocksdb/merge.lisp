@@ -184,8 +184,7 @@ accessed using a different MergeOperator)
 
 (define-alien-callable rocksdb-index-full-merge (* unsigned-char) #.*rocksdb-full-merge-lambda-list*
   (declare (ignore state))
-  (log:trace!
-   (format nil "Applying CC:INDEX full merge with ~A operands" num-ops))
+  (log:trace! "Applying CC:INDEX full merge with ~A operands" num-ops)
   (log:trace! :key key :klen klen)
   (let ((len (if (zerop existing-vlen) 1 existing-vlen))
         (opslen (alien-sap ops-length))

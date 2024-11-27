@@ -449,6 +449,7 @@
   (:import-from :std/serde :define-io)
   (:import-from :sb-alien :sap+)
   (:export
+   :with-vector-sap
    :setfa
    :copy-c-string
    :clone-strings
@@ -505,7 +506,7 @@
    :subclassp :write-object :start :started-p 
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods
-   :data))
+   :data :name :tags))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)
@@ -605,7 +606,8 @@
    :symlinkp
    :absolute-directory-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
-   :tmpize-pathname))
+   :tmpize-pathname
+   :with-directory))
 
 (defpkg :std/os
   (:use :cl :sb-alien)
@@ -663,7 +665,6 @@
 (defpkg :std/string
   (:use :cl)
   (:export
-   :name
    :*omit-nulls*
    :*whitespaces*
    :*tab-width*

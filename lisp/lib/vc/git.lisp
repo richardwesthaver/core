@@ -49,13 +49,13 @@
   (make-instance 'git-repo :path (pathname *default-pathname-defaults*)))
 
 (defmethod vc-init ((self git-repo))
-  (let ((path (vc-path self)))
+  (let ((path (path self)))
     (if (zerop (sb-ext:process-exit-code (run-git-command "init" path)))
         (not (probe-file path))
         (git-error "git init failed:" path))))
 
 (defmethod vc-run ((self git-repo) (cmd string) &rest args)
-  (uiop:with-current-directory ((vc-path self))
+  (with-directory (path self)
     (with-open-stream (s (sb-ext:process-output (apply #'run-git-command cmd args)))
       (with-output-to-string (str)
         (loop for l = (read-line s nil nil)
@@ -68,33 +68,33 @@
 
 (defmethod vc-pull ((self git-repo) &optional (remote "main"))
   (with-slots (path) self
-    (uiop:with-current-directory (path)
+    (with-directory path
       (sb-ext:process-exit-code (run-git-command "pull" remote)))))
 
 (defmethod vc-push ((self git-repo) &optional (remote "main"))
   (with-slots (path) self
-    (uiop:with-current-directory (path)
+    (with-directory path
       (sb-ext:process-exit-code (run-git-command "push" remote)))))
 
 (defmethod vc-commit ((self git-repo) msg &key &allow-other-keys)
   (with-slots (path) self
-    (uiop:with-current-directory (path)
+    (with-directory path
       (sb-ext:process-exit-code (run-git-command "commit" "-m" msg)))))
 
 (defmethod vc-add ((self git-repo) &rest files)
   (with-slots (path) self
-    (uiop:with-current-directory (path)
+    (with-directory path
       (sb-ext:process-exit-code (apply #'run-git-command "add" files)))))
 
 (defmethod vc-remove ((self git-repo) &rest files)
   (with-slots (path) self
-    (uiop:with-current-directory (path)
+    (with-directory path
       (sb-ext:process-exit-code (apply #'run-git-command "remove" files)))))
 
 ;; TODO
 (defmethod vc-addremove ((self git-repo) &rest files)
   (with-slots (path) self
-    (uiop:with-current-directory (path)
+    (with-directory path
       (sb-ext:process-exit-code (apply #'run-git-command "addremove" files)))))
 
 (defmethod vc-status ((self git-repo) &key &allow-other-keys) (vc-run self "status"))
@@ -104,9 +104,9 @@
 (defmethod vc-diff ((a git-repo) (b git-repo) &key &allow-other-keys)
   (vc-run a "diff" (vc-head a) (vc-head b)))
 
-(defmethod vc-id ((self git-repo))
+(defmethod id ((self git-repo))
   (with-slots (path) self
-    (uiop:with-current-directory (path)
+    (with-directory path
       (with-open-stream (s (sb-ext:process-output (run-git-command "id")))
         (with-output-to-string (str)
           (loop for c = (read-char s nil nil)

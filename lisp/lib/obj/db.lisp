@@ -15,7 +15,7 @@
 (defvar *default-database-collection-type* 'list)
 (defvar *default-database-version* '(0 1 0))
 (defvar *default-kv-size* 8)
-
+(defparameter *save-database-backend-on-load* nil)
 ;;; Backends
 (defvar *database-backends* (make-hash-table)
   "Hash Table where keys are a database backend designator and values
@@ -30,14 +30,18 @@ the body of WITH-DB forms.")
 (defvar *database-backend-close-options* '(close destroy))
 
 (defun add-database-loader (backend thunk)
+  
   (let ((flist (gethash backend *database-backends*)))
     (setf (gethash backend *database-backends*) (pushnew thunk flist :test 'equalp))))
 
 (defun add-database-backend-option (backend option)
+  "Add a new database backend option."
   (let ((olist (gethash backend *database-backend-options*)))
     (setf (gethash backend *database-backend-options*) (pushnew option olist))))
 
 (defun set-database-backend (backend options &rest thunks)
+  "Set the loaders (a sequence of thunks) and options for the designated database
+backend keyword BACKEND."
   (setf (gethash backend *database-backends*) thunks
         (gethash backend *database-backend-options*) options))
 
@@ -46,10 +50,13 @@ the body of WITH-DB forms.")
   (dolist (th (gethash backend *database-backends*))
     (funcall th)))
 
-(defun load-database-backend (backend)
-  "Load database BACKEND and set value of *DATABASE-BACKEND*."
-  (%load-database-backend backend)
-  (setq *database-backend* backend))
+(defun load-database-backend (backend &optional save)
+  "Load database BACKEND and set value of *DATABASE-BACKEND*. When SAVE is
+non-nil also arrange for the BACKEND to be loaded on init when this core is
+saved."
+  (let ((*save-database-backend-on-load* save))
+    (%load-database-backend backend)
+    (setq *database-backend* backend)))
   
 ;; TODO 2024-11-10: should we handle &rest/&optional too?
 (defun parse-database-backend-options (initargs)
@@ -121,15 +128,15 @@ the body of WITH-DB forms.")
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
   of BODY."
   (remf initargs :db)
-  (let ((opts (parse-database-backend-options initargs)))
-    `(let ((,var ,db))
-       (setf *db* ,db)
-       ,@(when open (remf initargs :open) `((open-db db)))
-       (apply 'do-database-backend-init-options ,var ',opts)
-       (unwind-protect (progn ,@body)
-         ,@(when close (remf initargs :open) `((close-db db)))
-         ,@(when destroy (remf initargs :destroy) `((destroy-db db)))
-         (apply 'do-database-backend-close-options ,var ',opts)))))
+  `(let ((opts ',(parse-database-backend-options initargs))
+         (,var ,db))
+     (setf *db* ,db)
+     ,@(when open (remf initargs :open) `((open-db db)))
+     (apply 'do-database-backend-init-options ,var opts)
+     (unwind-protect (progn ,@body)
+       ,@(when close (remf initargs :open) `((close-db db)))
+       ,@(when destroy (remf initargs :destroy) `((destroy-db db)))
+       (apply 'do-database-backend-close-options ,var opts))))
 
 ;;; Conditions
 (define-condition db-condition () ())
@@ -378,10 +385,6 @@ column is already closed."))
   (:documentation "Flush the column COL in SELF."))
 (defgeneric add-column (col self)
   (:documentation "Add a column to SELF."))
-(defgeneric columns (self)
-  (:documentation "Return the columns of SELF."))
-(defgeneric column (self col))
-(defgeneric (setf column) (new self col))
 (defgeneric column-opts (col))
 (defgeneric (setf column-opts) (new col))
 

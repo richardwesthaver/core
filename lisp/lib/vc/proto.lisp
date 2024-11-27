@@ -5,6 +5,14 @@
 ;;; Code:
 (in-package :vc/proto)
 
+;;; Vars
+(defvar *default-vc-kind* :hg)
+(defvar *repo* nil)
+(defvar *repo-roots* nil)
+(defvar *repo-registry* (make-hash-table :test 'equal))
+(defvar *repo-auto-register* t
+  "When non-nil, register all VC-REPO objects when they are created.")
+
 ;;; Conditions
 (define-condition vc-error (std-error) ())
 
@@ -27,12 +35,6 @@
 
 (defgeneric vc-run (self cmd &rest args)
   (:documentation "Run a vc CMD with ARGS."))
-
-(defgeneric vc-id (self)
-  (:documentation "Get the ID of a vc object."))
-
-(defgeneric (setf vc-id) (self id)
-  (:documentation "Set the ID of a vc object."))
 
 (defgeneric vc-clone (self remote &key &allow-other-keys)
   (:documentation "Clone repo REMOTE into spec SELF."))
@@ -68,8 +70,7 @@ are missing."))
 (defgeneric vc-unbundle (self input &key &allow-other-keys))
 
 ;;; Accessors
-(defgeneric vc-name (self))
-(defgeneric vc-path (self))
+(defgeneric path (self))
 (defgeneric vc-head (self))
 (defgeneric vc-tags (self))
 (defgeneric vc-revs (self))
@@ -124,7 +125,7 @@ are missing."))
 (deftype vc-designator () `(member :hg :git list)) ;; maybe: :sp (sapling)
 
 (defclass vc-repo ()
-  ((path :initform nil :type (or null string pathname) :accessor vc-path
+  ((path :initform nil :type (or null string pathname) :accessor path
          :initarg :path
          :documentation "AKA working-directory or working-copy")
    (head :initform nil :initarg :head :type (or null vc-rev) :accessor vc-head)
@@ -138,11 +139,20 @@ are missing."))
    (config :initform nil :type (or null vc-config) :accessor vc-config))
   (:documentation "generic Repository object backed by one of VC-DESIGNATOR."))
 
-(defmethod vc-init ((self (eql t)))
-  (make-instance 'vc-repo))
+(defun register-repo (repo)
+  "Register a repo, collecting information from the filesystem and
+creating a repo object which is stored in *REPO-REGISTRY*."
+  (setf (gethash (path repo) *repo-registry*) repo))
 
-(defmethod vc-name ((self vc-repo))
-  (car (last (pathname-directory (vc-path self)))))
+(defun find-repo (name)
+  "Find a repo in *REPO-REGISTRY*."
+  (gethash name *repo-registry*))
+
+(defmethod :after initialize-instance ((self vc-repo) &key)
+  (when *repo-auto-register* (register-repo self)))
+
+(defmethod name ((self vc-repo))
+  (car (last (pathname-directory (path self)))))
 
 (defmethod vc-type ((self vc-repo)) t)
 

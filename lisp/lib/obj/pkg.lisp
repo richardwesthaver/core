@@ -396,7 +396,12 @@
    #:record-batch-fields
    #:make-record-batch
    #:data-source
-   #:file-data-source))
+   #:file-data-source
+   #:columns
+   #:column
+   #:cons-column
+   #:simple-column
+   #:simple-cons-column))
 
 (defpackage :obj/plan
   (:nicknames :plan)
@@ -595,7 +600,6 @@
    :db-metadata
    :db-prop
    :db-opt
-   :columns
    :create-columns
    :set-db-opt
    :with-temp-db
@@ -613,7 +617,6 @@
    :do-database-backend-init-options
    :do-database-backend-close-options
    :set-database-backend
-   :column
    :set-database-backend-option
    :column-opts
    :transaction-opts
@@ -621,7 +624,8 @@
    :simple-transaction
    :secondary-db
    :db-backup
-   :db-opts))
+   :db-opts
+   :*save-database-backend-on-load*))
 
 (defpackage :obj/secret
   (:nicknames :secret)

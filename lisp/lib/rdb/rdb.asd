@@ -11,7 +11,6 @@
                (:file "rocksdb")
                (:file "proto")
                (:file "obj")
-               (:file "sst")
                (:file "rdb")
                (:file "schema")
                (:file "db")

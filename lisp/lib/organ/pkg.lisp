@@ -3,6 +3,8 @@
 ;; This package contains a parsing framework for Org Syntax. It
 ;; loosely follows the org-element.el conventions.
 
+;;; Commentary:
+
 ;; Similar to the OG, we divide Org Syntax into two classes: 'objects'
 ;; and 'elements'. The paragraph is a useful unit of measurement.
 

@@ -19,11 +19,6 @@
 ;; (reexport-from 
 ;;  :sb-unicode
 ;;  :include sb-unicode-syms)
-
-(defgeneric name (self)
-  (:method ((self t))
-    (string self)))
-
 (defparameter *omit-nulls* nil)
 (defvar *whitespaces* (list #\Backspace #\Tab #\Linefeed #\Newline #\Vt #\Page
                             #\Return #\Space #\Rubout

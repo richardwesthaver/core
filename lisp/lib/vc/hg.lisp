@@ -73,7 +73,7 @@
 (defmethod vc-type ((self hg-repo)) :hg)
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
-  (uiop:with-current-directory ((vc-path self))
+  (uiop:with-current-directory ((path self))
     (let ((proc (run-hg-command cmd args :stream nil)))
       (with-open-stream (s (sb-ext:process-output proc))
         (loop for l = (read-line s nil nil)
@@ -97,7 +97,7 @@
 ;;       :remotes (or (getf form :remotes) #()))))
 
 (defmethod vc-init ((self hg-repo))
-  (let ((path (vc-path self)))
+  (let ((path (path self)))
     (if (zerop (sb-ext:process-exit-code (run-hg-command "init" (list path))))
         path
         (hg-error "hg init failed:" path))))
@@ -154,8 +154,8 @@
 (defmethod vc-unbundle ((self hg-repo) (input pathname) &key)
   (vc-run self "unbundle" (namestring input)))
 
-(defmethod vc-id ((self hg-repo))
-  (uiop:with-current-directory ((vc-path self))
+(defmethod id ((self hg-repo))
+  (uiop:with-current-directory ((path self))
     (let ((proc (run-hg-command "id" nil :stream)))
       (with-open-stream (s (sb-ext:process-output proc))
         (with-output-to-string (str)

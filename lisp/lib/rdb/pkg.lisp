@@ -132,7 +132,10 @@
    :with-kv
    :do-kvs
    :with-column
-   :with-iter-raw))
+   :with-iter-raw
+   :rdb-column-family
+   :rdb-column
+   :rdb-schema))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

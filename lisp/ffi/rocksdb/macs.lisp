@@ -128,6 +128,7 @@
                                         (alien-sap (alien-callable-function ',in-domain-fn))
                                         (alien-sap (alien-callable-function ',in-range-fn))
                                         (alien-sap (alien-callable-function ',sname)))))))
+
 ;;; Comparator
 (defmacro define-compare-without-ts-function (name &body body)
   `(define-alien-callable ,name int

@@ -50,12 +50,13 @@ _underline_
 (deftest org-standard ())
 
 (defun headline-ok (hl)
-  (and
-   (> (organ::hl-stars hl) 0)
-   (organ::hl-kw hl)
-   (organ::hl-priority hl)
-   (organ::hl-title hl)
-   (> (length (organ::hl-tags hl)) 0)))
+  (is
+   (and
+    (> (organ::hl-stars hl) 0)
+    (organ::hl-kw hl)
+    (organ::hl-priority hl)
+    (organ::hl-title hl)
+    (> (length (organ::hl-tags hl)) 0))))
 
 ;;; Elements
 (deftest org-headline () (is (headline-ok (org-parse :headline "** DONE [#A] testing stuff :foo:bar:"))))

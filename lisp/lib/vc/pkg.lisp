@@ -3,7 +3,6 @@
 ;;; Code:
 (defpackage :vc/proto
   (:use :cl :std :log :obj :parse/lex)
-  (:import-from :uiop :with-current-directory)
   (:export 
    :vc-repo
    :vc-run
@@ -22,7 +21,13 @@
    :vc-ignore
    :vc-remotes
    :vc-designator
-   :vc-type))
+   :vc-type
+   :*repo*
+   :*default-vc-kind*
+   :*repo-roots*
+   :*repo-registry*
+   :*repo-auto-register*
+   :find-repo :register-repo))
 
 (pkg:defpkg :vc/hg
   (:use :cl :std :cli :sb-bsd-sockets :vc/proto)
@@ -35,6 +40,5 @@
 (pkg:defpkg :vc
   (:use :cl :std)
   (:use-reexport :vc/proto :vc/hg :vc/git)
-  (:export :*default-vc-kind* :*repo-roots* :*repo-registry*
-   :find-repo :register-repo :make-repo :make-hg-repo
-   :make-git-repo))
+  (:export :make-hg-repo :make-git-repo :make-repo))
+   

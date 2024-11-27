@@ -167,21 +167,16 @@ just the keys currently present in TABLE."
      tslen)))
 
 ;;; column family
-(defstruct (rdb-cf (:constructor make-rdb-cf (name &key opts key-type val-type sap)))
-  "RDB Column Family structure. Contains a name, key-type, val-type,
-and a system-area-pointer to the underlying rocksdb_cf_t handle.
-
-A NIL key-type or val-type indicates an unitialized value which defaults to
-'octet-vector. This is needed to distinguish the value 'octet-vector being
-supplied by the user from the default value."
+(defstruct (rdb-cf (:constructor make-rdb-cf (name &key opts sap)))
+  "RDB Column Family structure. Contains a name, db-opts,
+and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
-  (key-type nil :type (or list symbol))
-  (val-type nil :type (or list symbol))
   (sap nil :type (or null alien)))
       
 (defaccessor (column-opts) ((self rdb-cf)) (rdb-cf-opts self))
 (defaccessor (sap) ((self rdb-cf)) (rdb-cf-sap self))
+(defaccessor (name) ((self rdb-cf)) (rdb-cf-name self))
 
 (defmethod close-column ((self rdb-cf) &optional error)
   (if-let ((sap (sap self)))
@@ -288,13 +283,69 @@ supplied by the user from the default value."
                 smallestkey ssize)))
     self))
 
+;;; SST
+(defstruct (sst-file-writer (:constructor %make-sst-file-writer (sap)))
+  (sap nil :type (or null alien)))
+
+(defun make-sst-file-writer (&optional comparator
+                               (env-opts (rocksdb-envoptions-create))
+                               (io-opts (rocksdb-options-create)))
+  (%make-sst-file-writer
+   (if comparator
+       (create-sst-writer-with-comparator-raw comparator env-opts io-opts)
+       (create-sst-writer-raw env-opts io-opts))))
+
+(defun sst-file-size (writer)
+  (declare (sst-file-writer writer))
+  (sst-file-size-raw (sst-file-writer-sap writer)))
+
+(defun open-sst (writer path)
+  (declare (sst-file-writer writer))
+  (open-sst-writer-raw (sst-file-writer-sap writer) path))
+
+(defun finish-sst (writer)
+  (declare (sst-file-writer writer))
+  (finish-sst-writer-raw (sst-file-writer-sap writer)))
+
+(defun destroy-sst (writer)
+  (declare (sst-file-writer writer))
+  (with-slots (sap) writer
+    (unless (null sap)
+      (destroy-sst-writer-raw sap)
+      (setf sap nil))))
+
+(defmethod print-object ((self sst-file-writer) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream ":size ~A" (when (sst-file-writer-sap self) (sst-file-size self)))))
+
+(defmethod put-key ((self sst-file-writer) key val)
+  (sst-put-raw (sst-file-writer-sap self) key val))
+
+(defmethod put-key ((self sst-file-writer) (key simple-string) (val simple-string))
+  (sst-put-str-raw (sst-file-writer-sap self) key val))
+
+(defmethod put-kv ((self sst-file-writer) (kv kv))
+  (sst-put-raw (sst-file-writer-sap self)
+               (kv-key kv) (kv-val kv)))
+
+(defmethod delete-key ((self sst-file-writer) key &key)
+  (sst-delete-raw (sst-file-writer-sap self) key))
+
+(defmethod delete-key-ts ((self sst-file-writer) key ts)
+  (sst-delete-ts-raw (sst-file-writer-sap self) key ts))
+
+(defmethod delete-key-range ((self sst-file-writer) start end &key)
+  (sst-delete-range-raw (sst-file-writer-sap self) start end))
+
+(defmethod put-key-ts ((self sst-file-writer) key val ts)
+  (sst-put-ts-raw (sst-file-writer-sap self) key val ts))
+
 ;;; rdb
 (defstruct rdb
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
-  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer 0) :type (vector rdb-cf))
+  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t) :type (vector rdb-cf))
   (sap nil :type (or null alien))
-  (backup nil :type (or null alien))
   (snapshots #() :type (array alien)))
 
 (defaccessor (sap) ((self rdb)) (rdb-sap self))
@@ -314,39 +365,8 @@ supplied by the user from the default value."
   (unless (sap self) t))
 
 (defun translate-cf-to-field (cf)
-  (let ((vt (or (rdb-cf-val-type cf) 'octet-vector))
-        (kt (unless (rdb-cf-val-type cf) (or (rdb-cf-key-type cf) 'octet-vector))))
-    (make-field :name (rdb-cf-name cf)
-                :type (if kt
-                          (cons kt vt)
-                          vt))))
-
-(defmethod load-field ((self rdb-cf) (field field))
-  (let ((type (field-type field)))
-  (typecase type
-    ;; note that this means you can't use LOAD-SCHEMA to reset an
-    ;; rdb schema as you may expect.
-    (null nil)
-    (atom (setf (rdb-cf-val-type self) type))
-    (list (setf (rdb-cf-key-type self) (car type)
-                (rdb-cf-val-type self)
-                (if (and (listp (cdr type))
-                         (= 1 (length (cdr type))))
-                    (cadr type)
-                    (cdr type)))))
-    self))
-
-(defmethod load-schema ((self rdb) (schema schema))
-  "Load SCHEMA into rdb database object SELF. This will add any missing rdb-cfs
-and update existing key/value types for cfs with the same name. Existing cfs
-only get their their type slots updated on non-nil values."
-  (loop for field across (fields schema)
-        do (if-let ((cf (find-column (field-name field) self)))
-             (load-field cf field)
-             (add-column
-              (load-field (make-rdb-cf (field-name field)) field)
-              self)))
-  self)
+  (make-field :name (rdb-cf-name cf)
+              :type (cons 'octet-vector 'octet-vector)))
 
 (defmethod derive-schema ((self rdb))
   (apply 'make-schema
@@ -365,7 +385,7 @@ CFS are always added before the SCHEMA which is loaded with LOAD-SCHEMA.
 
 When OPEN is non-nil, the database and all column families are opened and
 internal sap slots are initialized."
-  ;; (when (probe-file name) (log:trace! "db exists: " name))
+  (when (probe-file name) (log:trace! "attempting to create existing db: ~A" name))
   (let* ((opts (or opts (default-rdb-opts)))
          (obj
            (make-rdb
@@ -439,8 +459,8 @@ internal sap slots are initialized."
 (defaccessor* db-opt 
     ((self rdb) key) (db-opt (db-opts self) key)
     (new (self rdb) key &key push)
-  (setf (db-opt (db-opts self) key) new)
-  (when push (push-sap (db-opts self) key)))
+  (prog1 (setf (db-opt (db-opts self) key) new)
+    (when push (push-sap (db-opts self) key))))
   
 (defmethod push-opts ((self rdb))
   (with-slots (opts) self
@@ -465,27 +485,18 @@ internal sap slots are initialized."
 
 (defmethod open-backup-db ((self rdb) &key path)
   (with-slots (opts) self
-    (setf (rdb-backup self) (open-backup-engine-raw path (sap opts)))))
-
-(defmethod close-backup-db ((self rdb))
-  (with-slots (backup) self
-    (unless (null backup)
-      (setf backup (close-backup-engine-raw backup)))))
+    (open-backup-engine-raw path (sap opts))))
 
 (defmethod backup-db ((self rdb) &key path)
-  (unless-null-db (opts backup) self
-    (when (null backup)
-      (if (null path)
-          (error 'open-backup-engine-error :db sap 
-                                           :message "PATH must not be nil when no backups exist")
-          (open-backup-db self :path path)))
-    (create-new-backup-raw backup sap)))
+  (unless-null-db (opts) self
+    (if (null path)
+        (error 'open-backup-engine-error :db sap 
+                                         :message "PATH must not be nil when no backups exist")
+        (create-new-backup-raw (open-backup-db self :path path) sap))))
 
 (defmethod restore-db ((self rdb) (from string) &key id opts)
-  (unless-null-db (name backup) self
-    (when (null backup)
-      (open-backup-db self :path from))
-    (restore-from-backup-raw backup name from id opts)))
+  (unless-null-db (name) self
+    (restore-from-backup-raw (open-backup-db self :path from) name from id opts)))
 
 (defmethod snapshot-db ((self rdb))
   (unless-null-db (snapshots) self
@@ -545,10 +556,10 @@ internal sap slots are initialized."
           do (setf cf (destroy-column cf)))))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
-  (with-slots (sap cfs backup snapshots) self
-    (close-backup-db self)
-    (unless (zerop (length snapshots))
-      (loop for s across snapshots do (release-snapshot-raw sap s)))
+  (with-slots (sap cfs) self
+    ;; (close-backup-db self)
+    ;; (unless (zerop (length snapshots))
+    ;;   (loop for s across snapshots do (release-snapshot-raw sap s)))
     (destroy-columns self)
     (unless (null sap)
       (close-db-raw sap)

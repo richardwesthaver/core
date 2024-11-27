@@ -337,6 +337,11 @@ variant associated with this value." type name)
            (type fixnum offset))
   (sap-alien (sap+ (alien-sap p) offset) (* unsigned-char)))
 
+(defmacro with-vector-sap ((name vector) &body body)
+  `(sb-sys:with-pinned-objects (,vector)
+     (let ((,name (sb-sys:vector-sap ,vector)))
+       ,@body)))
+
 ;; from CFFI
 (defmacro with-alien-slots (vars struct &body body)
   "Create local symbol macros for each var in VARS to reference

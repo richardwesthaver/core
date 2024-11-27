@@ -2,6 +2,23 @@
 
 ;; Object Schema Machinery
 
+;;; Commentary:
+
+;; There are quite a few objects worth mentioning:
+
+;; SCHEMA is the top-level object which contains a slot filled with FIELDs.
+
+;; FIELDs are structs with a NAME and a TYPE. They are primitive objects which
+;; can't be extended.
+
+;; The COLUMN class can be extended but by default have the same
+;; representation as a FIELD. Implementation packages like RDB are free to
+;; extend the column class to support backend-specific abstractions - such as
+;; the RocksDB Column Family which is naturally represented by RDB-COLUMN as a
+;; pair of FIELDs - one for the key and another for the value. This class is
+;; further extended by RDB-COLUMN-FAMILY which wraps the low-level FFI
+;; interface.
+
 ;;; Code:
 (in-package :obj/schema)
 
@@ -17,21 +34,84 @@
 (defvar *schema* nil)
 
 ;;; Generics
-(defgeneric field (self n))
-(defgeneric fields (self))
-(defgeneric schema (self))
-(defgeneric derive-schema (self))
-(defgeneric apply-schema (schema object))
-(defgeneric load-schema (self schema))
-(defgeneric load-field (self field))
+(defgeneric field (self n)
+  (:documentation "Access a FIELD by index N."))
+(defgeneric fields (self)
+  (:documentation "Return all the fields of object SELF."))
+(defgeneric schema (self)
+  (:documentation "Return the schema of object SELF."))
+(defgeneric derive-schema (self)
+  (:documentation "Implicitly derive the schema of object SELF."))
+(defgeneric apply-schema (schema object)
+  (:documentation "Apply SCHEMA to OBJECT."))
+(defgeneric load-schema (self schema)
+  (:documentation "Load a SCHEMA with object SELF."))
+(defgeneric load-field (self field)
+  (:documentation "Load a FIELD with object SELF."))
+
+(defstruct field
+  "A single named field."
+  (name (symbol-name (gensym "#")) :type simple-string)
+  (type t :type (or symbol list)))
+
+(defaccessor (name) ((self field)) (field-name self))
+
+(defmethod make-load-form ((self field) &optional env)
+  (declare (ignore env))
+  `(make-field :name ,(field-name self) :type ,(field-type self)))
 
 ;; convenience interface for FIELD-VECTOR
 (defclass column-vector () ((data :type simple-vector :accessor column-data)))
 
+;; a COLUMN-VECTOR which contains a single literal value
 (defclass literal-value-vector (column-vector)
   ((type :type literal-value-type :initarg :type :accessor column-type)
+   ;; DATA is the literal value
    (data :initarg :data :accessor column-data)
    (size :type fixnum :initarg :size :accessor column-size)))
+
+(defclass column ()
+  ((type :initform t :accessor column-type :initarg :type))
+  (:documentation "Base class for all COLUMN objects. Every column contains at minimum a TYPE
+slot which may be accessed via COLUMN-TYPE."))
+
+(defmethod change-class ((self column) (new-class-name (eql 'field)) &key)
+  (make-field :type (column-type self)))
+
+(defclass simple-column (column)
+  ((name :initform (gensym "COLUMN") :accessor name))
+  (:documentation "A named COLUMN."))
+
+(defmethod change-class ((self simple-column) (new-class-name (eql 'field)) &key)
+  (make-field :name (name self) :type (column-type self)))
+
+(defclass cons-column (column) ()
+  (:default-initargs :type (cons t t))
+  (:documentation "A COLUMN which is expected to contain a cons in the TYPE slot, indicating that
+stored values are actually (KEY . VALUE) pairs with types denoted by the car
+and cdr of the cons-type. This is the preferred abstraction for some database
+backend such as RocksDB."))
+
+(defclass simple-cons-column (simple-column cons-column) ())
+
+;; Useful for query abstractions and SQL-based backends where variations on
+;; the COLUMN object are amortized.
+(defstruct record-batch
+  "An object representing the structure of a batch of records with a shared
+SCHEMA."
+  (schema (make-simple-schema (gensym "RECORD")) :type schema)
+  (fields #() :type field-vector))
+
+(defaccessor (schema) ((self record-batch)) (record-batch-schema self))
+(defaccessor (fields) ((self record-batch)) (record-batch-fields self))
+(defaccessor (name) ((self record-batch)) (name (schema self)))
+
+(defmethod make-load-form ((self record-batch) &optional env)
+  (declare (ignore env))
+  `(make-record-batch :schema ,(record-batch-schema self) :fields ,(record-batch-fields self)))
+
+(defmethod field ((self record-batch) (n fixnum))
+  (aref (column-data (record-batch-fields self)) n))
 
 (defgeneric row-count (self)
   (:method ((self record-batch))
@@ -64,20 +144,17 @@
 (defgeneric scan-data (self projection)
   (:documentation "Scan the data source, selecting the specified columns."))
 
+(defgeneric columns (self)
+  (:documentation "Return the columns of SELF."))
+(defgeneric column (self col))
+(defgeneric (setf column) (new self col))
+
 (defclass schema ()
   ((fields :initarg :fields :accessor fields))
-  (:documentation "Base class for all schema objects."))
+  (:documentation "Base class for all schema objects. At minimum a FIELDS slot is required."))
 
 (defun make-schema (&rest fields)
   (make-instance 'schema :fields (coerce fields 'vector)))
-
-(defstruct field
-  (name (symbol-name (gensym "#")) :type simple-string)
-  (type t :type (or symbol list)))
-
-(defmethod make-load-form ((self field) &optional env)
-  (declare (ignore env))
-  `(make-field :name ,(field-name self) :type ,(field-type self)))
 
 (defun make-fields (&rest fields)
   "Coerce a plist of the form :NAME TYPE into a FIELD-VECTOR."
@@ -94,33 +171,14 @@
   (declare (ignore env))
   `(make-instance ,(class-of self) :fields ,(fields self)))
 
-;;; Record Batch
-(defstruct record-batch
-  (schema (make-simple-schema (gensym "RECORD")) :type schema)
-  (fields #() :type column-vector))
-
-(defmethod schema ((self record-batch))
-  (record-batch-schema self))
-
-(defmethod make-load-form ((self record-batch) &optional env)
-  (declare (ignore env))
-  `(make-record-batch :schema ,(record-batch-schema self) :fields ,(record-batch-fields self)))
-
-(defmethod field ((self record-batch) (n fixnum))
-  (aref (column-data (record-batch-fields self)) n))
-
-(defmethod fields ((self record-batch))
-  (record-batch-fields self))
-
-(defmethod schema ((self record-batch))
-  (record-batch-schema self))
-
 ;;; Data Source
 (defclass data-source ()
-  ((schema :type schema :accessor schema)))
+  ((schema :type schema :accessor schema))
+  (:documentation "Base class for DATA-SOURCE objects which contain a schema and can be scanned via SCAN-DATA."))
 
 (defclass file-data-source (data-source)
-  ((path :initarg :path :accessor path)))
+  ((path :initarg :path :accessor path))
+  (:documentation "Wrapper for a file which acts as a single data source."))
 
 ;;; Schema Metadata
 (defclass schema-metadata ()
