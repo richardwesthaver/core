@@ -17,7 +17,7 @@
   (:import-from :time :format-timestring :timestamp)
   (:use-reexport :cli/shell :cli/ansi :cli/prompt
    :cli/progress :cli/spark :cli/prompt :cli/ed
-   :cli/env :cli/repl :cli/clap :cli/multi)
+   :cli/env :cli/repl :cli/clap :cli/multi :cli/clap/obj)
   (:export :*sudo* :sudo-prompt :sudo? :when-sudo :if-sudo))
 
 (defpkg :cli-user (:use :cl :std :cli))

@@ -135,7 +135,10 @@
    :with-iter-raw
    :rdb-column-family
    :rdb-column
-   :rdb-schema))
+   :rdb-schema
+   :create-concat-merge-op
+   :create-index-merge-op
+   :create-fixed-prefix-op))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

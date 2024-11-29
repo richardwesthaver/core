@@ -36,7 +36,8 @@
   :type 'directory
   :group 'graph)
 
-(defcustom org-graph-locations (list (join-paths company-org-directory "notes/"))
+(defcustom org-graph-locations (list (join-paths company-org-directory "notes/")
+                                     (join-paths org-directory "notes/"))
   "List of directories to check for nodes."
   :type '(list directory)
   :group 'graph)
@@ -264,8 +265,8 @@ under the heading.")
 This can be a string, nil, or a function that takes no arguments and
 returns a string.
 
-Default is the function `org-graph-edge-prefix-timestamp'
-which returns an inactive timestamp formatted according to the variable
+Default is the function `org-graph-edge-prefix-timestamp' which returns
+an inactive timestamp formatted according to the variable
 `org-time-stamp-formats'.")
 
 ;;  TODO 2024-09-16: do we need this? what sort of information for a

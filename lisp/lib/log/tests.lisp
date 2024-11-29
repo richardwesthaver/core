@@ -104,7 +104,7 @@
          collect (row-major-aref (db:db *faux-log*) (+ i int)))
    'vector))
 
-(defmethod db:column ((self faux-db-sink) (col integer)) (faux-level (* 100 col)))
+(defmethod schema:column ((self faux-db-sink) (col integer)) (faux-level (* 100 col)))
 
 (deftest database-logger ())
 

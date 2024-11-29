@@ -58,15 +58,18 @@ saved."
     (%load-database-backend backend)
     (setq *database-backend* backend)))
   
+(defun %database-backend-option-key (item)
+  (keywordicate (if (atom item) item (car item))))
+
 ;; TODO 2024-11-10: should we handle &rest/&optional too?
 (defun parse-database-backend-options (initargs)
   "Parse INITARGS as a plist of database options for current *DATABASE-BACKEND*."
-  (mapcar
+  (mapcar ;; for each registered database backend option..
    (lambda (opt)
-     (let ((key (keywordicate (if (atom opt) opt (car opt)))))
+     (let ((key (%database-backend-option-key opt)))
        (if (member key initargs)
            (let ((match (getf initargs key)))
-             (if (atom opt) (list opt match) (list (car opt) match)))
+             (if (atom opt) (cons opt match) (cons (car opt) match)))
            opt)))
    (gethash *database-backend* *database-backend-options*)))
 
@@ -100,7 +103,8 @@ saved."
             (set-database-backend-option
              db
              (keywordicate (car opt))
-             (cdr opt)))
+             ;; WARNING eval here
+             (eval (cdr opt))))
         options))
 
 (defun do-database-backend-init-options (db &rest options)
@@ -123,19 +127,18 @@ saved."
                 (not (member (car x) *database-backend-close-options*))))
           options)))
 
-(defmacro with-db ((var &rest initargs &key (db '*db*) (open t) (close t) destroy &allow-other-keys) 
+(defmacro with-db ((var &rest initargs &key db &allow-other-keys) 
                    &body body)
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
   of BODY."
-  (remf initargs :db)
   `(let ((opts ',(parse-database-backend-options initargs))
-         (,var ,db))
-     (setf *db* ,db)
-     ,@(when open (remf initargs :open) `((open-db db)))
+         (,var ,db)
+         (*db* ,db))
+     ;; ,@(when open (remf initargs :open) `((open-db ,var)))
      (apply 'do-database-backend-init-options ,var opts)
      (unwind-protect (progn ,@body)
-       ,@(when close (remf initargs :open) `((close-db db)))
-       ,@(when destroy (remf initargs :destroy) `((destroy-db db)))
+       ;; ,@(when close (remf initargs :close) `((close-db ,var)))
+       ;; ,@(when destroy (remf initargs :destroy) `((destroy-db ,var)))
        (apply 'do-database-backend-close-options ,var opts))))
 
 ;;; Conditions

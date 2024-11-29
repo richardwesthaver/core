@@ -342,7 +342,7 @@ to initialize the instance with custom configuration."
   (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
     (with-alien ((vlen (* size-t)))
       (let* ((val (if pinned
-                      (rocksdb-transactiondb-get-cf-pinned db opts cf %key %klen vlen e)
+                      (rocksdb-transactiondb-get-pinned-cf db opts cf %key %klen e)
                       (rocksdb-transactiondb-get-cf db opts cf %key %klen vlen e)))
              (v (make-array (deref vlen) :element-type 'octet)))
         (clone-octets-from-alien val v (deref vlen))
@@ -485,3 +485,26 @@ transaction-db."
       (with-alien ((cf-handles (array (* rocksdb-column-family-handle))))
         (rocksdb-open-column-families-with-ttl 
          opts name (length cf-names) cf-names cf-opts cf-handles ttls e))))
+;;; Merge Ops
+(defun create-index-merge-op ()
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
+               (full-merge (* rocksdb-full-merge-function) (alien-sap (alien-callable-function 'rocksdb-index-full-merge)))
+               (partial-merge (* rocksdb-partial-merge-function) (alien-sap (alien-callable-function 'rocksdb-index-partial-merge)))
+               (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-delete-value)))
+               (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-index-merge-name))))
+    (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
+
+(defun create-concat-merge-op ()
+  ;; concat merge op
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
+               (full-merge (* rocksdb-full-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-full-merge)))
+               (partial-merge (* rocksdb-partial-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-partial-merge)))
+               (delete-value (* rocksdb-delete-value-function) (alien-sap (alien-callable-function 'rocksdb-delete-value)))
+               (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
+    (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
+
+;;; Prefix Ops
+(defun create-fixed-prefix-op (n)
+  (rocksdb-slicetransform-create-fixed-prefix n))

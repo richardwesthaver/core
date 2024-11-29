@@ -192,22 +192,29 @@
       (rocksdb-transaction-destroy (sap txn2)))))
 
 (deftest merge-op ()
-  (setq *db* nil)
-  (let ((k (string-to-octets "foo"))
-        (v (string-to-octets "bar")))
-    (with-db (db :db (make-db :rdb :name (format nil "/tmp/~A" (gensym)))
-                 :close t :destroy t 
-                 :merge-op (concat-merge-op) :name (format nil "/tmp/~A" (random-chars 4)))
-      (push-opts (db db))
-      (open-db db)
-      (print (put-key db k v))
+  "Test custom RocksDB merge operator."
+  (let ((k "foo")
+        (v "bar"))
+    (with-db (db :db (make-db :rdb
+                              :name (format nil "/tmp/~A" (random-chars 4))
+                              :merge-op (rdb::create-concat-merge-op))
+                 :open t :close t)
+      (put-key db k v)
       (merge-key db k v)
-      (print (get-val db k)))))
+      (isequal (concatenate 'string v v) (get-val db k)))))
 
 (deftest prefix-op ()
-  "Test custom RocksDB prefix key")
+  "Test custom RocksDB prefix extractor."
+  (let ((k "1337gamer")
+        (v "foobarbaz"))
+    (with-db (db :db (make-db :rdb
+                              :name (format nil "/tmp/~A" (random-chars 4))
+                              :prefix-op (create-fixed-prefix-op 4))
+                 :open t :close t)
+      (put-key db k v))))
 
-(deftest database ())
+
+
 
 (deftest store ())
 

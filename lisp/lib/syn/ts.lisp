@@ -1,19 +1,28 @@
-;;; ts.lisp --- Treesitter API
+;;; ts.lisp --- Tree-sitter API
 
-;; 
+;; High-level Tree-sitter API
+
+;;; Commentary:
+
+;; Tree-sitter is currently the most well-supported syntax parsing backend in
+;; use by IDEs, and we can generally rely on the various language grammars
+;; defined via tree-sitter. As we progress we may adapt other more direct
+;; methods of building ASTs by querying compilers directly, but for now we
+;; have some catching up to do :).
 
 ;;; Code:
 (in-package :syn/ts)
 (load-tree-sitter)
 (load-tree-sitter-alien)
-;; (load-tree-sitter-c)
-(load-tree-sitter-cpp)
 
-;; (with-ts-parser (p)
-;;   (parse-string-with-language :c "//foo" p))
+(defun lang-counts (lang)
+  (with-ts-lang lang l
+    (cons (ts-language-symbol-count l)
+          (ts-language-field-count l))))
 
-;; (with-ts-parser (p
-;;     (values
-;;      (ts-language-version c)
-;;      (ts-language-symbol-count c)
-;;      (ts-language-field-count c))))
+(defun parse-file (lang path)
+  (parse-string 
+   lang
+   (with-output-to-string (s)
+     (write-file-into-stream path s))
+   :produce-cst t))

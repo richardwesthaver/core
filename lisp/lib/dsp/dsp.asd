@@ -9,4 +9,4 @@
 (defsystem :dsp/tests
   :depends-on (:rt :dsp)
   :components ((:file "tests"))
-  :perform (test-op (o c) (symbol-call :rt :do-tests :aud)))
+  :perform (test-op (o c) (symbol-call :rt :do-tests :dsp)))

@@ -36,9 +36,7 @@
 (defpackage :vc/git
   (:use :cl :std :cli :vc/proto)
   (:export :*git-program* :git-repo :git-error :run-git-command :git-meta :gitignore))
-
-(pkg:defpkg :vc
-  (:use :cl :std)
-  (:use-reexport :vc/proto :vc/hg :vc/git)
-  (:export :make-hg-repo :make-git-repo :make-repo))
    
+(defpackage :vc/cli
+  (:use :cl :std :cli :vc/proto :vc/git :vc/hg)
+  (:export :*vc-cli*))

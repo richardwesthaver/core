@@ -3,7 +3,15 @@
 ;; High-level API for working with VC objects.
 
 ;;; Code:
+(pkg:defpkg :vc
+  (:use :cl :std)
+  (:use-reexport :vc/proto :vc/hg :vc/git #+cli :vc/cli)
+  (:export :make-hg-repo :make-git-repo :make-repo))
+
 (in-package :vc)
+
+#+cli
+(cli:load-package-cli *vc-cli*)
 
 (defun make-hg-repo (path &key init update)
   (let ((repo (make-instance 'hg-repo :path path)))
@@ -36,7 +44,7 @@
 
 (defun bundle-repos (path output)
   (loop for repo in (directory-repos path)
-        do (let ((out (merge-pathnames output (vc-name repo))))
+        do (let ((out (merge-pathnames output (name repo))))
              (vc-bundle repo out))))
 
 (defun update-repo (repo &optional push (pull t))

@@ -39,15 +39,23 @@
 
 ;;; Code:
 (pkg:defpkg :skel/core
+  (:nicknames :sk-core)
   (:use :cl :std)
   (:use-reexport :skel/core/condition :skel/core/proto :skel/core/vars 
    :skel/core/header :skel/core/obj :skel/core/util))
 
 (pkg:defpkg :skel/comp
+  (:nicknames :sk-comp)
   (:use :cl :std)
   (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile
    :skel/comp/container :skel/comp/dir-locals :skel/comp/org))
 
 (pkg:defpkg :skel/net
+  (:nicknames :sk-net)
   (:use :cl :std)
   (:use-reexport :skel/net/client :skel/net/server))
+
+(pkg:defpkg :skel/cli
+  (:nicknames :sk-cli)
+  (:use :cl :std :log :skel/core :sb-ext :cli/clap)
+  (:export :*skel-cli*))

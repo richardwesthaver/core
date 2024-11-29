@@ -344,9 +344,8 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
 (defstruct rdb
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
-  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t) :type (vector rdb-cf))
-  (sap nil :type (or null alien))
-  (snapshots #() :type (array alien)))
+  (cfs (make-array 0 :element-type 'rdb-cf :adjustable t :fill-pointer t) :type (vector rdb-cf))
+  (sap nil :type (or null alien)))
 
 (defaccessor (sap) ((self rdb)) (rdb-sap self))
 (defaccessor (name) ((self rdb)) (rdb-name self))
@@ -499,9 +498,9 @@ internal sap slots are initialized."
     (restore-from-backup-raw (open-backup-db self :path from) name from id opts)))
 
 (defmethod snapshot-db ((self rdb))
-  (unless-null-db (snapshots) self
-    (vector-push-extend (create-snapshot-raw sap) snapshots)))
-
+  (unless-null-db () self
+    (make-rdb-snapshot :sap (create-snapshot-raw sap))))
+                       
 (defmethod db-metadata ((self rdb) &optional cf)
   (make-rdb-cf-metadata :sap (get-metadata-raw (rdb-sap self) cf)))
 
@@ -557,9 +556,6 @@ internal sap slots are initialized."
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
   (with-slots (sap cfs) self
-    ;; (close-backup-db self)
-    ;; (unless (zerop (length snapshots))
-    ;;   (loop for s across snapshots do (release-snapshot-raw sap s)))
     (destroy-columns self)
     (unless (null sap)
       (close-db-raw sap)
@@ -639,13 +635,15 @@ internal sap slots are initialized."
 (defmethod merge-key ((self rdb) key val &key (opts (rocksdb-writeoptions-create)))
   (merge-kv-raw (sap self) key val opts))
 
+(defmethod merge-key ((self rdb) (key string) (val string) &key (opts (rocksdb-writeoptions-create)))
+  (merge-kv-str-raw (sap self) key val opts))
+
 (defmethod merge-kv ((self rdb) kv &key (opts (rocksdb-writeoptions-create)))
   (merge-kv-raw (sap self) (kv-key kv) (kv-val kv) opts))
 
 ;;; Transaction DB
 (defstruct rdb-transaction-db 
   sap 
-  snapshots 
   (opts (rocksdb-transactiondb-options-create)))
 
 (defaccessor (sap) ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
@@ -669,7 +667,9 @@ internal sap slots are initialized."
    (with-slots (sap) self
      (if cf
          (get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts pinned)
-         (get-kv-raw sap key opts pinned)))))
+         (get-kv-raw sap key opts pinned))))
+  (((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf pinned)
+   (octets-to-string (get-val self (string-to-octets key) :opts opts :cf cf :pinned pinned))))
 
 (defmethod get-value ((self rdb-transaction-db) key)
   (transactiondb-get-kv-raw self key))
@@ -740,24 +740,12 @@ internal sap slots are initialized."
 (defaccessor (sap) ((self rdb-env)) (rdb-env-sap self))
 (defaccessor (path) ((self rdb-env)) (rdb-env-path self))
 
-;;; Merge Ops
-(defun concat-merge-op ()
-  (rocksdb-mergeoperator-create 
-   nil
-   (alien-sap (alien-callable-function 'rocksdb-destructor))
-   (alien-sap (alien-callable-function 'rocksdb-concat-full-merge))
-   (alien-sap (alien-callable-function 'rocksdb-concat-partial-merge))
-   (alien-sap (alien-callable-function 'rocksdb-delete-value))
-   (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
+;;; Snapshots
+(defstruct rdb-snapshot sap)
+(defaccessor (sap) ((self rdb-snapshot)) (rdb-snapshot-sap self))
 
-(defun index-merge-op ()
-  (rocksdb-mergeoperator-create 
-   nil
-   (alien-sap (alien-callable-function 'rocksdb-destructor))
-   (alien-sap (alien-callable-function 'rocksdb-index-full-merge))
-   (alien-sap (alien-callable-function 'rocksdb-index-partial-merge))
-   (alien-sap (alien-callable-function 'rocksdb-delete-value))
-   (alien-sap (alien-callable-function 'rocksdb-index-merge-name))))
+;;; Merge Ops
+
 
 ;;; Logger
 (defun rdb-log-default (level &optional prefix)

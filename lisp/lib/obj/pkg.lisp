@@ -401,7 +401,8 @@
    #:column
    #:cons-column
    #:simple-column
-   #:simple-cons-column))
+   #:simple-cons-column
+   #:make-schema))
 
 (defpackage :obj/plan
   (:nicknames :plan)

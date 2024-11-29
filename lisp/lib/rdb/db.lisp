@@ -6,26 +6,26 @@
 (in-package :rdb)
 
 ;;; Backend
-(defvar *rocksdb-backend-options* '(columns temp path (open t) 
-                                    destroy (close t) backup secondary
-                                    snapshots sap merge-op comparator prefix-op))
+(defvar *rocksdb-backend-options* '(columns temp path (open . t) 
+                                    destroy (close . t) 
+                                    sap merge-op comparator prefix-op))
 
-(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store schema)))
+(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store schema backup secondary snapshots)))
 
-(defmethods set-database-backend-option 
+(defmethods set-database-backend-option
   (((db rdb) (key (eql :close)) (val (eql :auto)))
    "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
    (sb-ext:finalize db (lambda () (shutdown-db db))))
   (((db rdb) (key (eql :merge-op)) val)
    "Assign a MERGE-OP to this database."
-   (setf (db-opt db :merge-operator) val))
+   (setf (db-opt db :merge-operator :push t) val))
   (((db rdb) (key (eql :comparator)) val)
    "Assign a custom COMPARATOR to this database."
    (setf (db-opt db :comparator :push t) val))
   (((db rdb) (key (eql :prefix-op)) val)
    "Assign a custom SLICETRANSFORM to this database to be used as a prefix
 extractor."
-   (setf (db-opt db :prefix-extractor) val)))
+   (setf (db-opt db :prefix-extractor :push t) val)))
 
 (set-database-backend :rocksdb *rocksdb-backend-options*
                       (lambda () (load-rocksdb *save-database-backend-on-load*)))
@@ -47,10 +47,17 @@ extractor."
                (rdb-cfs db) cfs))))
 
 (defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key 
-                    (name #.(string-downcase (gensym "RDB")))
+                    (name (string-downcase (gensym "rdb")))
+                    cfs
+                    merge-op
+                    prefix-op
                     (opts (default-rdb-opts)))
-  (declare (ignore engine))
-  (apply 'make-rdb :name name :opts opts initargs))
+  (declare (ignore engine initargs))
+  (when merge-op
+    (set-db-opt opts :merge-operator merge-op :push t))
+  (when prefix-op 
+    (set-db-opt opts :prefix-extractor prefix-op :push t))
+  (make-rdb :name name :opts opts :cfs (coerce cfs '(vector rdb-cf))))
 
 (defmethod query-db ((db rdb) (query (eql :get)) &key key &allow-other-keys)
   (declare (ignore query))
@@ -60,6 +67,10 @@ extractor."
 (defclass rdb-database (database)
   ((txn :initform nil :type (or null rdb-transaction-db) :initarg :txn :accessor transaction-db)
    (backup :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-backup)
+   (snapshots :initform (make-array 0 :element-type 'rdb-snapshot :adjustable t)
+              :type (vector rdb-snapshot)
+              :initarg :snapshots 
+              :accessor db-snapshots)
    (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor secondary-db)
    (schema :initform nil :type (or null schema) :initarg :schema :accessor schema))
   (:default-initargs 
@@ -71,14 +82,17 @@ extractor."
    (sb-ext:finalize db (lambda () (shutdown-db db))))
   (((db rdb-database) (key (eql :merge-op)) val)
    "Assign a MERGE-OP to this database."
-   (setf (db-opt (db db) :merge-operator) (println val)))
+   (setf (db-opt db :merge-operator :push t) (println val)))
   (((db rdb-database) (key (eql :comparator)) val)
    "Assign a custom COMPARATOR to this database."
-   (setf (db-opt (db db) :comparator :push t) val))
+   (setf (db-opt (db db) :comparator) val))
   (((db rdb-database) (key (eql :prefix-op)) val)
    "Assign a custom SLICETRANSFORM to this database to be used as a prefix
 extractor."
-   (setf (db-opt (db db) :prefix-extractor) val)))
+   (setf (db-opt (db db) :prefix-extractor :push t) val)))
+
+(defmethod find-column ((cf string) (self rdb-database) &key)
+  (find cf (columns self) :key 'name :test 'equal))
 
 (defmethod database-version ((self rdb-database))
   "Return the version tag or nil if unmarked"
@@ -90,18 +104,17 @@ extractor."
 (defaccessor (sap) ((self rdb-database)) (sap (db self)))
 (defaccessor (db-opts) ((self rdb-database)) (db-opts (db self)))
 (defaccessor* db-opt 
-    ((self rdb) key) (db-opt (db-opts self) key)
-    (new (self rdb) key &key push)
+    ((self rdb-database) key) (db-opt (db-opts self) key)
+    (new (self rdb-database) key &key push)
   (prog1 (setf (db-opt (db-opts self) key) new)
     (when push (push-sap (db-opts self) key))))
 
 (defmethods make-db 
-  (((engine (eql :rdb)) &rest initargs &key name columns opts)
+  (((engine (eql :rdb)) &rest initargs &key columns &allow-other-keys)
    (declare (ignore engine))
-   (let ((db (apply 'make-instance 'rdb-database initargs)))
-     (when name (setf (name db) name))
+   (remf initargs :columns)
+   (let ((db (make-instance 'rdb-database :db (apply 'make-db :rocksdb initargs))))
      (when columns (setf (columns db) columns))
-     (when opts (setf (db-opts db) opts))
      db))
   (((engine (eql :rdb-backup)) &key path (db *db*))
    (setf (db-backup db) (backup-db db :path path)))
@@ -109,6 +122,9 @@ extractor."
    (setf (transaction-db db) (open-transaction-db db :opts opts :path path)))
   (((engine (eql :rdb-secondary)) &key path opts (db *db*))
    (setf (secondary-db db) (open-secondary-db db :opts opts :path path))))
+
+(defmethod open-columns ((self rdb-database) &rest names) 
+  (apply 'open-columns (db self) names))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)) self)
 (defmethod open-transaction-db ((self rdb-database) &key path opts) 
@@ -118,7 +134,7 @@ extractor."
 (defmethod open-secondary-db ((self rdb-database) &key path opts) 
   (setf (secondary-db self) (open-secondary-db (db self) :opts opts :path path)))
 
-(defmethod flush-db ((self rdb-database) &rest args &key) (apply 'flush-db (db self) args))
+(defmethod flush-db ((self rdb-database) &rest args &key &allow-other-keys) (apply 'flush-db (db self) args))
 
 (defmethod close-db ((self rdb-database) &key) (close-db (db self)))
 (defmethod db-closed-p ((self rdb-database)) (db-closed-p (db self)))
@@ -130,8 +146,7 @@ extractor."
     (unless (null backup)
       (setf backup (close-backup-db backup)))))
 
-(defmethod shutdown-db ((self rdb-database) &key) 
-  (shutdown-db (db self)))
+(defmethod shutdown-db ((self rdb-database) &key) (shutdown-db (db self)))
 
 (defmethod get-val ((self rdb-database) elt &rest initargs &key)
   (apply 'get-val (db self) elt initargs))
@@ -149,10 +164,13 @@ extractor."
   (delete-key (db self) key))
 
 (defmethod merge-key ((self rdb-database) key val &key (opts (rocksdb-writeoptions-create)))
-  (merge-kv-raw (sap self) key val opts))
+  (merge-key (db self) key val :opts opts))
 
 (defmethod merge-kv ((self rdb-database) kv &key (opts (rocksdb-writeoptions-create)))
   (merge-kv-raw (sap self) (kv-key kv) (kv-val kv) opts))
+
+(defmethod add-column (col (self rdb-database))
+  (vector-push-extend col (columns self)))
 
 (defmethod load-schema ((self rdb-database) (schema schema))
   "Load SCHEMA into rdb database object SELF. This will add any missing rdb-cfs
@@ -178,6 +196,9 @@ object. (SAP CF) is the raw pointer."))
 
 (defaccessor (name) ((self rdb-column-family)) (name (cf self)))
 (defaccessor (sap) ((self rdb-column-family)) (sap (cf self)))
+
+(defmethod destroy-column ((self rdb-column-family))
+  (destroy-column (cf self)))
 
 (defmethod load-field ((self rdb-column-family) (field field))
   (let ((type (field-type field))

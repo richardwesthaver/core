@@ -1,3 +1,5 @@
+(pushnew :cli *features*)
+
 (defsystem :bin
   :depends-on (:bin/organ :bin/homer :bin/rdb :bin/skel :bin/packy :bin/core))
 
@@ -22,6 +24,13 @@
   :entry-point "bin/rdb::start-rdb"
   :depends-on (:uiop :cl-ppcre :std :rdb :cli)
   :components ((:file "rdb")))
+
+(defsystem :bin/vc
+  :build-operation program-op
+  :build-pathname "vc"
+  :entry-point "bin/vc::start-vc"
+  :depends-on (:std :cli :vc :log :obj)
+  :components ((:file "vc")))
 
 (defsystem :bin/skel
   :build-operation program-op

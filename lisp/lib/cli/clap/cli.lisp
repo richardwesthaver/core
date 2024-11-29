@@ -16,8 +16,23 @@
 
 (defopt help (print-help *cli*))
 
-(defmacro define-cli (sym &key name version help description thunk opts cmds)
-  "Define a symbol NAME bound to a top-level CLI object."
+(defmacro define-cli (sym &key name version help description thunk opts cmds include)
+  "Define a symbol SYM bound to a top-level CLI object.
+
+NAME is assigned to the CLI and assumed to be the default binary name which
+uses this object.
+
+VERSION, DESCRIPTION, and THUNK are assigned to the associated slot value of
+the CLI as is.
+
+When HELP is non-nil, auto-generate a '--help' CLI-OPT and assign it to this
+object.
+
+OPTS and CMDS are lists of forms which are passed directly to MAKE-CLI :OPT
+and MAKE-CLI :CMD respectively.
+
+INCLUDE is similar to the DEFSTRUCT keyword of the same name and specifies
+that some or all of the slots of a CLI object should be inherited by this one."
   (with-gensyms (%name %class %opts)
     (if (atom sym)
         (setq %name sym
@@ -32,6 +47,7 @@
                    :thunk cli/clap/obj::help))
                 opts))
               (make-opts opts)))
+    ;; TODO (when include 
     `(,*default-cli-def* ,%name (make-cli ,%class :name ,name
                                                   :version ,version
                                                   :description ,description
@@ -163,26 +179,39 @@ CLI is updated based on the current environment and dynamically bound to
      ,@body))
 
 ;;; CLI Package Helpers
-(defun package-cli (&optional (package *package*))
+
+(defun %package-cli (&optional (package *package*))
   (gethash (package-name package) *cli-package-table*))
-(defun (setf package-cli) (new &optional (package *package*))
+(defun (setf %package-cli) (new &optional (package *package*))
   (setf (gethash (package-name package) *cli-package-table*) new))
+(defun package-cli (&optional (package *package*))
+  (car (%package-cli package)))
+(defun (setf package-cli) (new &optional (package *package*))
+  (setf (car (%package-cli package)) new))
 (defun package-cmds (&optional (package *package*))
-  (cadr (gethash (package-name package) *cli-package-table*)))
+  (cadr (%package-cli package)))
 (defun (setf package-cmds) (new &optional (package *package*))
-  (setf (cadr (gethash (package-name package) *cli-package-table*)) new))
+  (setf (cadr (%package-cli package)) new))
 (defun package-opts (&optional (package *package*))
-  (caddr (gethash (package-name package) *cli-package-table*)))
+  (caddr (%package-cli package)))
 (defun (setf package-opts) (new &optional (package *package*))
-  (setf (caddr (gethash (package-name package) *cli-package-table*)) new))
+  (setf (caddr (%package-cli package)) new))
 
 ;; these functions are used to populate a *CLI-PACKAGE-TABLE* record.
-(defun load-package-cli (cli &key (package *package*) cmds opts)
-  (setf (package-cli package)
-        (list cli (concatenate 'vector (cmds cli) cmds) (concatenate 'vector (opts cli) opts))))
+(defmacro load-package-cli (cli &key (package *package*) cmds opts)
+  `(setf (%package-cli ,package)
+         (list ,cli 
+               (concatenate 'vector (cmds ,cli) (make-cmds ',cmds)) 
+               (concatenate 'vector (opts ,cli) (make-opts ',opts)))))
 
 (defun add-package-cmd (cmd &optional (package *package*))
   (vector-push-extend cmd (package-cmds package)))
 
 (defun add-package-opt (opt &optional (package *package*))
   (vector-push-extend opt (package-opts package)))
+
+(defmacro add-package-cmds (&rest cmds)
+  `(setf (package-cmds *package*) (concatenate 'vector (package-cmds *package*) (make-cmds ',cmds))))
+
+(defmacro add-package-opts (&rest opts)
+  `(setf (package-opts *package*) (concatenate 'vector (package-opts *package*) (make-opts ',opts))))

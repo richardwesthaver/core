@@ -55,6 +55,7 @@
      (:file "krypt")
      (:file "packy"))
     :if-feature :ext)
+   (:file "cli")
    (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))
 

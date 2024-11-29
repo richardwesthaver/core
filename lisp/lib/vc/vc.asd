@@ -11,6 +11,7 @@
    ;; (:module "git"
    ;;  :components
    ;;  ())
+   (:file "cli")
    (:file "vc"))
   :in-order-to ((test-op (test-op :vc/tests))))
 

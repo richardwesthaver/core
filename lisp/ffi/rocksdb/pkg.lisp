@@ -419,7 +419,9 @@ set *errptr to a malloc()ed error message.
    :*rocksdb-set-only-readoptions*
    :*rocksdb-set-only-options*
    :with-writebatch
-   :with-wbwi))
+   :with-wbwi
+   :rocksdb-transactiondb-get-pinned-cf
+   :rocksdb-options-set-prefix-extractor))
 
 (in-package :rocksdb)
 

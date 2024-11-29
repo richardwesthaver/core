@@ -13,7 +13,7 @@
                :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
                :zstd/tests :uring/tests :blake3/tests :ublk/tests
                :parse/tests :pod/tests :rdb/tests :rt/tests
-               :aud/tests :cry/tests :krypt/tests :io/tests
+               :dsp/tests :cry/tests :krypt/tests :io/tests
                :gui/tests :net/tests :vc/tests)
   :components ((:file "tests"))
   :build-pathname "tests"
@@ -44,7 +44,7 @@
                :nlp :skel :syn :organ
                :packy :obj :net :io
                :parse :pod :rdb :rt
-               :aud :cry :krypt :gui)
+               :dsp :cry :krypt :gui)
   :build-operation monolithic-compile-bundle-op
   :build-pathname "lib")
 

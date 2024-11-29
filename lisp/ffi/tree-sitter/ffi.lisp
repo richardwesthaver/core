@@ -116,7 +116,15 @@
 (define-alien-routine ts-language-version unsigned-int (v (* ts-language)))
 (define-alien-routine ts-language-symbol-count unsigned-int (v (* ts-language)))
 (define-alien-routine ts-language-symbol-name c-string (v (* ts-language)) (s (* ts-symbol)))
+(define-alien-routine ts-language-symbol-type ts-symbol-type (v (* ts-language)) (s ts-symbol))
 (define-alien-routine ts-language-field-count unsigned-int (v (* ts-language)))
+(define-alien-routine ts-language-field-name-for-id c-string (v (* ts-language)) (id ts-field-id))
+(define-alien-routine ts-language-field-id-for-name ts-field-id (v (* ts-language)) (name c-string) (nlen (unsigned 32)))
+
+(define-alien-routine ts-language-next-state ts-state-id 
+  (self (* ts-language)) 
+  (state ts-state-id)
+  (symbol ts-symbol))
 
 ;;; Query
 (define-alien-routine ts-query-new (* ts-query)

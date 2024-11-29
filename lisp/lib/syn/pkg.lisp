@@ -16,7 +16,9 @@
 
 (defpackage :syn/ts
   (:use :cl :std :syn :tree-sitter)
-  (:export :lint))
+  (:export :lint
+           :parse-file
+           :lang-counts))
 
 (defpackage :syn/lang
   (:use :cl :std :syn)

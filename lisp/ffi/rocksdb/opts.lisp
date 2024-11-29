@@ -266,11 +266,11 @@
 (define-opt-accessor rocksdb-options compaction-style int)
 (define-opt-accessor rocksdb-options wal-compression int)
 #|
-  rocksdb_k_by_compensated_size_compaction_pri = 0,
-  rocksdb_k_oldest_largest_seq_first_compaction_pri = 1,
-  rocksdb_k_oldest_smallest_seq_first_compaction_pri = 2,
-  rocksdb_k_min_overlapping_ratio_compaction_pri = 3,
-  rocksdb_k_round_robin_compaction_pri = 4
+rocksdb_k_by_compensated_size_compaction_pri = 0,
+rocksdb_k_oldest_largest_seq_first_compaction_pri = 1,
+rocksdb_k_oldest_smallest_seq_first_compaction_pri = 2,
+rocksdb_k_min_overlapping_ratio_compaction_pri = 3,
+rocksdb_k_round_robin_compaction_pri = 4
 |#
 (define-opt-accessor rocksdb-options compaction-pri int)
 ;; (hash-link-list-rep)
@@ -353,7 +353,11 @@
   (opt (* rocksdb-options))
   (levels (array int))
   (num-levels size-t))
-          
+
+(define-alien-routine rocksdb-options-set-prefix-extractor void
+  (self (* rocksdb-options))
+  (val (* rocksdb-slicetransform)))
+
 ;;; RocksDB Write Options
 (define-opt rocksdb-writeoptions)
 (define-opt-accessor rocksdb-writeoptions sync)

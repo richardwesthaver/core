@@ -20,6 +20,9 @@
 
 (pushnew :skel *features*)
 
+#+cli
+(cli:load-package-cli *skel-cli*)
+
 (defvar *skel-init-keywords* '(:config *skel-user-config* 
                                :project *skel-project*
                                :cache *skel-cache*
