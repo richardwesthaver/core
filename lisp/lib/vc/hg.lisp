@@ -73,7 +73,7 @@
 (defmethod vc-type ((self hg-repo)) :hg)
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
-  (uiop:with-current-directory ((path self))
+  (with-directory (path self)
     (let ((proc (run-hg-command cmd args :stream nil)))
       (with-open-stream (s (sb-ext:process-output proc))
         (loop for l = (read-line s nil nil)
@@ -155,7 +155,7 @@
   (vc-run self "unbundle" (namestring input)))
 
 (defmethod id ((self hg-repo))
-  (uiop:with-current-directory ((path self))
+  (with-directory (path self)
     (let ((proc (run-hg-command "id" nil :stream)))
       (with-open-stream (s (sb-ext:process-output proc))
         (with-output-to-string (str)

@@ -25,18 +25,6 @@
     (:hg (run-hg-command "pull" (append '("-u") *args*) t))
     (t (skel-simple-error "unknown VC type"))))
 
-(defun hg-status ()
-  (with-open-stream (proc (process-output (run-hg-command "status" nil :stream)))
-    (loop for x = (read-line proc nil)
-          while x
-          do (println x))))
-
-(defun git-status ()
-  (with-open-stream (proc (run-git-command "status" nil :stream))
-    (loop for x = (read-line proc nil)
-          while x
-          do (println x))))
-
 (defcmd skc-clone ()
   (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
     (:git (run-git-command "clone" *args* t))
@@ -79,7 +67,7 @@
       (sb-impl::toplevel-repl nil))))
 
 (load-package-cli 
- (package-cli :skel)
+ :skel
  :cmds
  ((:name vc
   :description "version control"

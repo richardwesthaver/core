@@ -23,6 +23,19 @@
   (:method ((obj t) (stream t) &key)
     (write obj :stream stream)))
 
+(defun shallow-copy-object (original)
+  (let* ((class (class-of original))
+         (copy (allocate-instance class)))
+    (dolist (slot (mapcar #'slot-definition-name (class-slots class)))
+      (when (slot-boundp original slot)
+        (setf (slot-value copy slot)
+              (slot-value original slot))))
+    copy))
+
+(defgeneric copy-object (self)
+  (:method ((self standard-object))
+    (shallow-copy-object self)))
+
 (defun list-indirect-class-methods (class)
   "List all indirect methods of CLASS."
   (remove-duplicates (mapcan #'specializer-direct-generic-functions (compute-class-precedence-list class))))

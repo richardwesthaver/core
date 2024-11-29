@@ -506,7 +506,8 @@
    :subclassp :write-object :start :started-p 
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods
-   :data :name :tags))
+   :data :name :tags :shallow-copy-object
+   :copy-object))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)
@@ -643,7 +644,8 @@
    :hidden-path-p
    :directory-path
    :find-files
-   :count-file-lines))
+   :count-file-lines
+   :probe-merge-file))
 
 (defpkg :std/pipe
   (:use :cl :std/array)

@@ -52,9 +52,6 @@ overwritten with the AUTO flag."
     "Load the 'skelfile' FILE."
     (load-ast (sk-read-file (make-instance 'sk-project) file)))
 
-  (defun probe-merge-file (name path)
-    (probe-file (merge-pathnames name path)))
-
   (defun find-sk-project-root (path &optional (name *default-skelfile*))
     "Return the root location of a `skel-project' by checking for
   NAME."

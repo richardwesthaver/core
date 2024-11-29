@@ -459,3 +459,6 @@ it only contains spaces or tab characters."
           ((and (/= octet #.(char-code #\Space))
                 (/= octet #.(char-code #\Tab)))
            (setf blank-line nil)))))))
+
+(defun probe-merge-file (name path)
+  (probe-file (merge-pathnames name path)))

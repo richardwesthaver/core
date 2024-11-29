@@ -26,17 +26,27 @@
    :*default-vc-kind*
    :*repo-roots*
    :*repo-registry*
-   :*repo-auto-register*
-   :find-repo :register-repo))
+   :*repo-auto-register*))
 
-(pkg:defpkg :vc/hg
+(defpackage :vc/hg
   (:use :cl :std :cli :sb-bsd-sockets :vc/proto)
-  (:export :*hg-program* :hg-repo :hg-error :run-hg-command :hg-meta :make-hg-client :hg-client :hgignore))
+  (:export :*hg-program* 
+   :hg-repo :hg-error 
+   :run-hg-command :hg-meta 
+   :make-hg-client :hg-client :hgignore))
 
 (defpackage :vc/git
   (:use :cl :std :cli :vc/proto)
-  (:export :*git-program* :git-repo :git-error :run-git-command :git-meta :gitignore))
+  (:export :*git-program* 
+   :git-repo :git-error 
+   :run-git-command :git-meta :gitignore))
+
+(defpackage :vc/util
+  (:use :cl :std :cli :vc/proto :vc/git :vc/hg)
+  (:export :make-hg-repo :make-git-repo :make-repo
+           :find-repo-root
+           :with-current-vc-root))
    
 (defpackage :vc/cli
-  (:use :cl :std :cli :vc/proto :vc/git :vc/hg)
+  (:use :cl :std :cli :vc/proto :vc/git :vc/hg :vc/util)
   (:export :*vc-cli*))

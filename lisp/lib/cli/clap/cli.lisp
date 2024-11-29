@@ -199,10 +199,11 @@ CLI is updated based on the current environment and dynamically bound to
 
 ;; these functions are used to populate a *CLI-PACKAGE-TABLE* record.
 (defmacro load-package-cli (cli &key (package *package*) cmds opts)
-  `(setf (%package-cli ,package)
-         (list ,cli 
-               (concatenate 'vector (cmds ,cli) (make-cmds ',cmds)) 
-               (concatenate 'vector (opts ,cli) (make-opts ',opts)))))
+  (let ((%cli (if (keywordp cli) (copy-object (package-cli cli)) cli)))
+    `(setf (%package-cli ,package)
+           (list ,%cli
+                 (setf (cmds ,%cli) (concatenate 'vector (cmds ,%cli) (make-cmds ',cmds)) )
+                 (setf (opts ,%cli) (concatenate 'vector (opts ,%cli) (make-opts ',opts)))))))
 
 (defun add-package-cmd (cmd &optional (package *package*))
   (vector-push-extend cmd (package-cmds package)))
