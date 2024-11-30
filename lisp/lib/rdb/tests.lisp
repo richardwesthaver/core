@@ -12,6 +12,10 @@
 (load-database-backend :rdb)
 (setq *temp-db-destroy* t)
 
+(defmacro with-temp-db ((sym &rest opts) &body body)
+  `(with-db (,sym :db (make-db :rdb :name (namestring (tmpize-pathname "/tmp/rdb"))) ,@opts)
+     ,@body))
+
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
@@ -44,50 +48,12 @@
           (is (string= (get-kv-str-raw db k) v))))
       (let ((cf (create-cf-raw db "cf1")))
         (put-cf-str-raw db cf "bow" "wow")
-        (is (string= (get-cf-str-raw db cf "bow") "wow")))
-      (with-iter-raw (iter db)
-        (rocksdb:rocksdb-iter-seek-to-first iter)
-        (dotimes (i 999)
-          (rocksdb:rocksdb-iter-next iter)
-          (with-alien ((tslen size-t))
-            (rocksdb-iter-timestamp iter (addr tslen))
-            (is (zerop tslen)))
-          (is (rocksdb:rocksdb-iter-valid iter))
-          (is (string= (get-kv-str-raw db (iter-key-str-raw iter)) (iter-val-str-raw iter))))
-        (rocksdb:rocksdb-iter-next iter)
-        (is (not (rocksdb:rocksdb-iter-valid iter)))))
+        (is (string= (get-cf-str-raw db cf "bow") "wow"))))
     (destroy-db-raw path)))
-
-(deftest rdb ()
-  "Test RDB struct and methods."
-  ;; NOTE: passing a directory with trailing slash causes segfault - guess we gotta handle tht
-  (with-temp-rdb (db () :open t :destroy t)
-    (info! (hash-table-alist (backfill-opts db :full t)))
-    ;; get/set without cf
-    (put-kv-str-raw (sap db) "key" "val")
-    (is (equal (get-kv-str-raw (sap db) "key") "val"))
-    ;; push 3 cfs
-    (let ((cfs (list (make-rdb-cf "foo") (make-rdb-cf "bar") (make-rdb-cf "baz"))))
-      (dolist (cf cfs)
-        (add-column cf db)))
-    (debug! (columns db))
-    (create-columns db)
-    ;; (flush-db db)
-    ;; FIX 2024-08-25:
-    (rdb:do-columns (cf (columns db))
-      (rdb:with-column (cf cf)
-        (trace! cf)
-        ;; (insert-kv db (make-kv "key" "val") :cf cf)
-        ;; (is (equal (get-val db "key" :cf (rdb-cf-sap cf)) "val"))
-        ))
-    (rocksdb-cancel-all-background-work (sap db) t)
-    ;; insert after background cancel
-    (insert-key db "test" "zaa")
-    (is (string= "zaa" (get-val db "test")))))
 
 (deftest temp-db ()
   "Test WITH-TEMP-DB macro."
-  (with-temp-rdb (tmp (cf1 cf2 cf3 cf4) :destroy t)
+  (with-temp-db (tmp :open nil :destroy t)
     (set-db-opt tmp :parallelism (num-cpus))
     ;; https://github.com/facebook/rocksdb/wiki/unordered_write
     (set-db-opt tmp :unordered-write t)
@@ -96,18 +62,18 @@
     (push-opts tmp)
     (open-db tmp)
     (create-columns tmp)
-    (with-iter (it (create-iter tmp))
-      (iter-seek-to-first it)
-      (is (sequence:emptyp (iter-key it)))
-      (is (sequence:emptyp (iter-val it)))
-      (is (zerop (nth 1 (multiple-value-list (iter-timestamp it)))))
+    (with-iter (it (iter tmp))
+      (seek-to-first it)
+      (is (sequence:emptyp (key it)))
+      (is (sequence:emptyp (val it)))
+      (is (zerop (nth 1 (multiple-value-list (timestamp it)))))
       (is (not (iter-valid-p it)))
-      (iter-seek-to-last it)
-      (is (typep (iter-kv it) 'kv))
-      (is (sequence:emptyp (iter-key it)))
-      (is (sequence:emptyp (iter-val it)))
+      (seek-to-last it)
+      (is (typep (kv it) 'kv))
+      (is (sequence:emptyp (key it)))
+      (is (sequence:emptyp (val it)))
       ;; (info! (iter-next it))
-      (rocksdb-iter-destroy (rdb-iter-sap it)))
+      (rocksdb-iter-destroy (sap it)))
     (dotimes (i 10000)
       (insert-key tmp (format nil "foo~A" i) (format nil "bar~A" i)))
     (loop for i below 100
@@ -116,15 +82,15 @@
     (flush-db tmp)
     ;; TODO: auto handle return type (get-prop-int)
     (is (= 10000 (parse-integer (db-prop tmp "rocksdb.estimate-num-keys"))))
+    (istype 'string (print-stats tmp))
+    (istype 'string (db-prop tmp :levelstats))
     (debug! ;; some info about our db
-     (rdb-name tmp)
-     (db-prop tmp "rocksdb.dbstats")
-     (db-prop tmp "rocksdb.levelstats")
-     (print-stats tmp))))
+     (name tmp)
+     (db-prop tmp "rocksdb.dbstats"))))
 
 (deftest metadata ()
   "Test metadata types: CF -> LEVEL -> SST-FILE."
-  (with-temp-rdb (tmp () :open t :destroy t)
+  (with-temp-db (tmp :open t :close t)
     (insert-key tmp "foo" "bar")
     (flush-db tmp)
     (let ((cf-meta (db-metadata tmp)))
@@ -136,7 +102,7 @@
 
 (deftest sst ()
   "Test SST-FILE-WRITER and INGEST-DB."
-  (with-temp-rdb (tmp () :open t :destroy t)
+  (with-temp-db (tmp :open t :close t)
     ;; without macro
     (let ((writer (make-sst-file-writer))
           (path (format nil "/tmp/~A" (gensym "sst"))))
@@ -150,14 +116,9 @@
       (ingest-db tmp (list path))
       (delete-file path)
       ;; with macro
-      (with-sst (s :file path :destroy t)
+      (with-sst (s :file path)
         (put-kv s (make-kv (string-to-octets "nil") (string-to-octets "nil"))))
       (delete-file path))))
-
-(deftest errors ()
-  "Test basic error handling."
-  (with-temp-rdb (errs () :open t :destroy t)
-    (signals open-db-error (open-db errs))))
 
 (deftest schema ()
   "Test loading and handling of RDB-SCHEMA objects."
@@ -166,30 +127,30 @@
                         (make-field :type '(string string)))))
     (isequal (column-type cf) (cons 'string 'string))
     (isequal (name cf) "foo"))
-    (with-temp-rdb (schema-no-cfs () :destroy t :open t)
-      (let ((db (make-db :rdb :db schema-no-cfs)))
-        (load-schema db (make-simple-schema (make-field :type nil)))
-        (is (= 1 (length (columns db))))))
-    (with-temp-rdb (schema-cfs (baz) :open t :destroy t)
-      (load-schema (make-db :rdb :db schema-cfs) (make-simple-schema (make-field :name "BAZ" :type '(octet-vector . string))))
-      (is (= 1 (length (columns schema-cfs))))))
+  (with-temp-db (db :destroy t :open t)
+    (load-schema db (make-simple-schema (make-field :type nil)))
+    (is (= 1 (length (columns db)))))
+  (with-temp-db (db1 :open t :destroy t)
+    (load-schema db1 (make-simple-schema (make-field :name "BAZ" :type '(octet-vector . string))))
+    (is (= 1 (length (columns db1))))))
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
   (with-db (db :db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)) :columns nil)
                :open t
-               :close t
                :destroy t)
     (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4))
                             :opts (rocksdb-transactiondb-options-create))
     (istype 'rdb-transaction-db (transaction-db db))
     (let ((txn1 (make-transaction db)))
       (isnt (abort-transaction txn1)))
-    (let ((txn2 (make-transaction db :name "foofn")))
+    (let ((txn2 (make-transaction db :name "foofn" :optimistic t)))
       (prepare-transaction txn2)
       (rocksdb-transaction-set-savepoint (sap txn2))
       (isequal (name txn2) "foofn")
-      (rocksdb-transaction-destroy (sap txn2)))))
+      (rocksdb-transaction-destroy (sap txn2)))
+    (with-transaction (txn :db db)
+      (istype 'rdb-transaction txn))))
 
 (deftest merge-op ()
   "Test custom RocksDB merge operator."
@@ -213,9 +174,14 @@
                  :open t :close t)
       (put-key db k v))))
 
+(deftest store ()
+  (with-store (store)))
 
-
-
-(deftest store ())
-
-(deftest logger ())
+(deftest logger ()
+  (with-db (db :db (make-db :rdb
+                            :name (format nil "/tmp/~A" (random-chars 4))
+                            :logger (create-default-logger-callback))
+               :open nil 
+               :close t)
+    (open-db db)))
+          

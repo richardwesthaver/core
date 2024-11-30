@@ -62,7 +62,7 @@ to initialize the instance with custom configuration."
       (with-alien ((flist (* c-string) (make-alien c-string flen)))
         (loop for f in files
               for i from 0 to flen
-              do (setf (deref flist i) (make-alien-string f :null-terminate nil)))
+              do (setf (deref flist i) (make-alien-string f :null-terminate t)))
         (rocksdb-ingest-external-file db flist flen opts err)))))
 
 (defun ingest-db-cf-raw (db cf files &optional (opts (rocksdb-ingestexternalfileoptions-create)))
@@ -323,6 +323,10 @@ to initialize the instance with custom configuration."
   (with-errptr* (e 'open-db-error :db name)
     (rocksdb-transactiondb-open opts topts name e)))
 
+(defun open-optimistictransactiondb-raw (opts name)
+  (with-errptr* (e 'open-db-error :db name)
+    (rocksdb-optimistictransactiondb-open opts name e)))
+
 (defun transactiondb-get-kv-raw (db key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-kv-raw (db key e :error get-kv-error)
     (with-alien ((vlen (* size-t)))
@@ -508,3 +512,9 @@ transaction-db."
 ;;; Prefix Ops
 (defun create-fixed-prefix-op (n)
   (rocksdb-slicetransform-create-fixed-prefix n))
+
+;;; Logger
+(defun create-default-logger-callback (&optional (level 0))
+  (rocksdb-logger-create-callback-logger 
+   level 
+   (alien-sap (alien-callable-function 'rocksdb-log-default)) nil))

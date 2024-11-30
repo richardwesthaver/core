@@ -134,7 +134,18 @@
 (defpackage :obj/seq
   (:nicknames :seq)
   (:use :cl :std)
-  (:export :iterator :ring))
+  (:export :iterator :ring
+           :next
+           :prev
+           :iter
+           :seek
+           :seek-to-first
+           :seek-to-last
+           :seek-for-prev
+           :iter-valid-p
+           :*iter*
+           :idx
+           :with-iter))
 
 (defpackage :obj/tree
   (:nicknames :tree)
@@ -145,7 +156,7 @@
 (defpackage :obj/tree/cursor
   (:nicknames :tree/cursor :cursor)
   (:use :cl :std :obj/id :obj/seq)
-  (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
+  (:export :tree-node :binary-node :unary-node :ternary-node :avl-node
            :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
 (defpackage :obj/graph
@@ -566,6 +577,8 @@
    :execute-transaction
    :abort-transaction
    :kv
+   :key
+   :val
    :make-val
    :make-key
    :open-db
@@ -576,7 +589,6 @@
    :upgrade
    :version
    :remove-kv
-   :ensure-transaction
    :with-transaction
    :with-batch-transaction
    :*txn*

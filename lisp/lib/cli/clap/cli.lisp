@@ -14,7 +14,8 @@
     ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
     (t (apply #'make-instance kind slots))))
 
-(defopt help (print-help *cli*))
+(defopt help-opt (print-help *cli*))
+(defopt version-opt (print-version *cli*))
 
 (defmacro define-cli (sym &key name version help description thunk opts cmds include)
   "Define a symbol SYM bound to a top-level CLI object.
@@ -44,7 +45,7 @@ that some or all of the slots of a CLI object should be inherited by this one."
               (make-opts
                (append
                 `((:name "help" :description "print help"
-                   :thunk cli/clap/obj::help))
+                   :thunk cli/clap/obj::help-opt))
                 opts))
               (make-opts opts)))
     ;; TODO (when include 
@@ -199,11 +200,12 @@ CLI is updated based on the current environment and dynamically bound to
 
 ;; these functions are used to populate a *CLI-PACKAGE-TABLE* record.
 (defmacro load-package-cli (cli &key (package *package*) cmds opts)
-  (let ((%cli (if (keywordp cli) (copy-object (package-cli cli)) cli)))
-    `(setf (%package-cli ,package)
-           (list ,%cli
-                 (setf (cmds ,%cli) (concatenate 'vector (cmds ,%cli) (make-cmds ',cmds)) )
-                 (setf (opts ,%cli) (concatenate 'vector (opts ,%cli) (make-opts ',opts)))))))
+  (with-gensyms (%cli)
+    `(let ((,%cli (if (keywordp ,cli) (copy-object (package-cli ,cli)) ,cli)))
+       (setf (cmds ,%cli) (concatenate 'vector (cmds ,%cli) (make-cmds ',cmds))
+             (opts ,%cli) (concatenate 'vector (opts ,%cli) (make-opts ',opts)))
+       (setf (%package-cli ,package)
+             (list ,%cli (cmds ,%cli) (opts ,%cli))))))
 
 (defun add-package-cmd (cmd &optional (package *package*))
   (vector-push-extend cmd (package-cmds package)))

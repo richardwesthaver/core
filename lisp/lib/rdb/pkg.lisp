@@ -10,8 +10,8 @@
 (defpackage :rdb
   (:use :cl :std :rocksdb 
    :sb-alien :db :query :schema 
-   :btree :store :stored :log
-   :io/static :btree)
+   :btree :store :stored :log 
+   :seq :io/static :btree :time)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
@@ -43,14 +43,6 @@
    :backup-db :restore-db
    :get-stats :snapshot-db
    :shutdown-db :print-stats
-   :create-iter :iter-next
-   :iter-prev :iter-seek
-   :iter-key :iter-val
-   :iter-timestamp :iter-kv
-   :iter-seek-to-first
-   :iter-seek-to-last
-   :iter-seek-for-prev
-   :iter-valid-p
    :ingest-db
    ;; sst
    :sst-file-writer :make-sst-file-writer
@@ -71,7 +63,6 @@
    :rdb-cf :make-rdb-cf :create-cf
    :rdb-cf-sap :rdb-cf-name
    :rdb-iter :make-rdb-iter :rdb-iter-p
-   :rdb-iter-sap
    ;; macs
    :with-errptr*
    :with-rdb
@@ -80,7 +71,6 @@
    :do-db
    :with-cf
    :do-cf
-   :with-iter ;; generic
    :do-cfs
    :with-sst
    :nil
@@ -132,13 +122,14 @@
    :with-kv
    :do-kvs
    :with-column
-   :with-iter-raw
    :rdb-column-family
    :rdb-column
    :rdb-schema
    :create-concat-merge-op
    :create-index-merge-op
-   :create-fixed-prefix-op))
+   :create-fixed-prefix-op
+   :cf
+   :create-default-logger-callback))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

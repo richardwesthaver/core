@@ -16,6 +16,7 @@
   (:skel (bin/skel::start-skel))
   (:packy (bin/packy::start-packy))
   (:rdb (bin/rdb::start-rdb))
+  (:vc (bin/vc::start-vc))
   (:organ (bin/organ::start-organ))
   (:homer (bin/homer::start-homer)))
 

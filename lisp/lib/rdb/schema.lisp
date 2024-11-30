@@ -13,3 +13,7 @@
 (defclass rdb-column (cons-column) ()
   (:default-initargs 
    :type (cons 'octet-vector 'octet-vector)))
+
+(defun translate-cf-to-field (cf)
+  (make-field :name (rdb-cf-name cf)
+              :type (cons 'octet-vector 'octet-vector)))

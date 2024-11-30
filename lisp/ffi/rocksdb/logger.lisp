@@ -34,4 +34,5 @@
      (lev unsigned)
      (msg c-string)
      (len size-t))
-  (log:debug! priv lev msg len))
+  (declare (ignore priv len lev))
+  (log:log-message :info nil msg))

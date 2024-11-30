@@ -78,7 +78,9 @@
    :with-cli-args
    :load-package-cli
    :add-package-cmds
-   :add-package-opts))
+   :add-package-opts
+   :help-opt
+   :version-opt))
 
 (defpackage :cli/clap/simple
   (:use :cl :std :log :sb-ext)

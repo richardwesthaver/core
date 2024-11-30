@@ -218,6 +218,10 @@ a default value for required keyword arguments."
   (:report (lambda (condition stream)
              (format stream "Invalid argument: ~A~%Reason: ~A" (error-item condition) (error-reason condition)))))
 
+(define-condition conflicting-arguments (simple-error invalid-item) ()
+  (:report (lambda (condition stream)
+             (format stream "Conflicting arguments: ~A~%Reason: ~A" (error-item condition) (error-reason condition)))))
+
 (defmacro ignore-some-conditions ((&rest conditions) &body body)
   "Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS
 list determines which specific conditions are to be ignored."

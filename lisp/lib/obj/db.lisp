@@ -82,6 +82,7 @@ saved."
       (close-db db)))
   (:method (db (key (eql :destroy)) val)
     (when val
+      (close-db db)
       (destroy-db db)))
   (:method (db (key (eql :path)) val)
     (setf (path db) val))
@@ -380,6 +381,8 @@ to SELF."))
 column is already closed."))
 (defgeneric close-columns (self)
   (:documentation "Close the columns belonging to SELF."))
+(defgeneric create-column (self)
+  (:documentation "Create the column belonging to SELF."))
 (defgeneric create-columns (self)
   (:documentation "Create the columns belonging to SELF."))
 (defgeneric find-column (col self &key)
@@ -480,47 +483,17 @@ return the same value as DB depending on backend."))
              txn
              (known-transaction db (transaction-prior txn))))))
 
-(defmacro with-transaction ((&rest args 
-                             &key (db '*db*)
-                                  (txn '*txn*)
-                             &allow-other-keys)
+(defmacro with-transaction ((sym &rest args 
+                                 &key (db '*db*)
+                                      (txn '*txn*)
+                                 &allow-other-keys)
                             &body body)
   "Execute a body with a transaction in place. On success,
    the transaction is committed. Otherwise, the transaction is aborted."
-  (once-only (db)
-    (with-gensyms (txn-fn)
-      `(let ((,txn-fn (lambda () ,@body)))
-         (funcall #'execute-transaction ,db
-                  ,txn-fn
-                  :txn (awhen (known-transaction ,db ,txn)
-                            (transaction-object it))
-                  ,@(progn
-                      (dolist (k '(:db :txn))
-                        (remf args k))
-                      args))))))
-  
-(defmacro ensure-transaction ((&rest args &key
-                                          (db '*db*)
-                                          (txn '*txn*)
-                               &allow-other-keys)
-                              &body body)
-  "Execute the body with the existing transaction if one exists, or a new
-transaction. This allows sequences of database actions to be run atomically
-whether there is or is not an existing transaction (rather than relying on
-auto-commit). with-transaction nests transactions where as ensure-transaction
-can be part of an enclosing, flat transaction"
-  (once-only (db)
-    (with-gensyms (txn-fn)
-    `(let ((,txn-fn (lambda () ,@body)))
-       (if (known-transaction ,db ,txn)
-           (funcall ,txn-fn)
-           (funcall 'execute-transaction ,db
-                    ,txn-fn
-                    :txn nil
-                    ,@(progn
-                        (dolist (k '(:db :txn))
-                          (remf args k))
-                        args)))))))
+  (declare (ignorable db txn))
+  (remf args :db)
+  `(let ((,sym (make-transaction ,db ,@args)))
+     ,@body))
 
 (defmacro current-transaction (db)
   (with-gensyms (txn)

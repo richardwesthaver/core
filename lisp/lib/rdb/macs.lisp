@@ -58,30 +58,6 @@ ERR with initargs PARAMS for the duration of BODY."
 
 (defvar *temp-db-destroy* nil)
 
-(defmacro with-temp-rdb ((db-var (&rest cfs) &key (destroy *temp-db-destroy*) open) &body body)
-  "Bind DB-VAR to a temporary RDB object, arranging for CF-VARS to be
-created as column-families and destroying the database after executing
-the forms in BODY."
-  (setf cfs
-        (mapcar
-         (lambda (var)
-           (setf var (make-rdb-cf (symbol-name var))))
-         cfs))
-  `(with-rdb (,db-var (make-rdb
-                       :name (namestring (funcall ,*temp-db-path-generator* ,(symbol-name db-var)))
-                       :opts (default-rdb-opts)
-                       :cfs (make-array ,(length cfs) :element-type 'rdb-cf 
-                                                      :initial-contents ',cfs 
-                                                      :adjustable t 
-                                                      :fill-pointer ,(length cfs))))
-     ,@(when open `((open-db ,db-var)
-                    (create-columns ,db-var)))
-       (prog1
-           (progn ,@body)
-         ,(if destroy
-              `(destroy-db ,db-var)
-              `(shutdown-db ,db-var)))))
-
 ;;; cf
 (defmacro with-column ((cf-var cf) &body body)
   "Bind CF to CF-VAR for the lifetime of BODY."
@@ -109,26 +85,6 @@ the forms in BODY."
   (with-gensyms (%kv)
     `(loop for ,%kv across ,kvs
            do (with-kv (,k ,v ,%kv) ,@body))))
-
-;;; iter
-(defmacro with-iter-raw ((iter-var db &optional (opt (rocksdb-readoptions-create))) &body body)
-  `(let ((,iter-var (create-iter-raw ,db ,opt)))
-     (unwind-protect (progn ,@body)
-       (destroy-iter-raw ,iter-var))))
-
-(defmacro with-iter ((iter-var iter) &body body)
-  "Bind object ITER to ITER-VAR.
-
-((%ITER ITER) BODY) is passed to ROCKSDB:WITH-ITER-RAW, binding the
-raw handle to the same symbol prefixed with '%'.
-
-Errors that occur in the inner body will be handled but the iterator
-handle will not be freed on exit."
-  (let ((%iter-var (symbolicate '% (symbol-name iter-var))))
-    `(let ((,iter-var ,iter))
-       (let ((,%iter-var (rdb-iter-sap ,iter-var)))
-         (declare (ignorable ,%iter-var))
-         ,@body))))
 
 ;; TODO: sb-ext:with-current-source-form ?
 ;;; backup

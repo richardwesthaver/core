@@ -22,12 +22,8 @@
                      (use-value f2 s))))))
       (init-skelfile file name))))
 
-;; TODO 2024-11-28: 
 (defcmd skc-status ()
-  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
-    (:git (git-status))
-    (:hg (hg-status))
-    (t (hg-status))))
+  (vc:vc-status (sk-vc (find-skelfile #P"." :load t))))
 
 (defcmd skc-describe ()
   (describe
@@ -166,8 +162,8 @@
 
 (define-cli *skel-cli*
   :help t
-  :version #.(format nil "0.1.1:~A" 
-                     (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
+  :version (format nil "0.1.1:~A" 
+                   (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "The hackable devtool."
   :thunk skc-show
   :name "skel"

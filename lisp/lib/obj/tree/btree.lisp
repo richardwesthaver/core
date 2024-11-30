@@ -445,12 +445,11 @@ not), evaluates the forms, then closes the cursor."
             do (delete-key key self)))))
 
 (defmethod drop-btree ((bt indexed-btree))
-  (with-transaction (:store (get-store bt))
-    (map-indices (lambda (name index)
-                   (declare (ignore index))
-                   (remove-index bt name))
-                 bt)
-    (call-next-method)))
+  (map-indices (lambda (name index)
+                 (declare (ignore index))
+                 (remove-index bt name))
+               bt)
+  (call-next-method))
 
 (defmethod drop-btree ((index btree-index))
   "Btree indices don't need to have values removed,

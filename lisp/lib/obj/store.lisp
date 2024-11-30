@@ -37,7 +37,9 @@
    #:recreate-instance-using-class
    #:valid-stored-reference-p
    #:cross-store-error
-   #:signal-cross-store-error))
+   #:signal-cross-store-error
+   #:with-store
+   #:defstore))
 
 (in-package :obj/store)
 
@@ -114,13 +116,12 @@
    This does mean loading it into memory (for now)!"
   (let ((st (get-store instance))
         (diff (schema-diff new-schema old-schema)))
-    (ensure-transaction (:store st)
-      (awhen (upgrade old-schema)
-        (apply-schema-change-fn instance it old-schema))
-      (loop for entry in diff do
-               (upgrade-instance-slot st instance (diff-type entry) (diff-recs entry) old-values))
-      (initialize-new-slots instance diff)
-      (set-instance-schema-id st (oid instance) (id new-schema)))))
+    (awhen (upgrade old-schema)
+      (apply-schema-change-fn instance it old-schema))
+    (loop for entry in diff do
+             (upgrade-instance-slot st instance (diff-type entry) (diff-recs entry) old-values))
+    (initialize-new-slots instance diff)
+    (set-instance-schema-id st (oid instance) (id new-schema))))
 
 (defmethod upgrade-instance-slot (sc instance (type (eql :change)) recs old-values)
   "Handle changes in class type"
@@ -197,7 +198,6 @@
   (let ((sc (get-store current))
         (oid (oid current))
         (diff (schema-diff new-schema old-schema)))
-    (ensure-transaction (:store-controller sc)
       ;; do we need to pass the persistent object?  Transient ops require previous?
       (awhen (upgrade old-schema)
         (apply-schema-change-fn current it old-schema))
@@ -207,7 +207,7 @@
       ;; Initialize new slots (is this done by default?)
       (initialize-new-slots current diff)
       (uncache-instance sc oid)
-      (set-instance-schema-id sc oid (id new-schema)))))
+      (set-instance-schema-id sc oid (id new-schema))))
 
 (defmethod change-instance-slot (sc current previous (type (eql :change)) recs)
   "Handle changes in class type"
@@ -467,10 +467,8 @@
     (error "This function requires a valid store")))
 
 (defmethod drop-instance ((inst stored-object))
-  (let ((sc (get-store inst)))
-    (ensure-transaction (:store sc)
-      (drop-instance-slots inst)
-      (call-next-method))))
+  (drop-instance-slots inst)
+  (call-next-method))
 
 (defmethod drop-instance ((inst stored))
   (let ((sc (get-store inst)))
@@ -675,7 +673,6 @@
 (defun update-slot-index (sc class instance slot-def new-value)
   "Update an index value when written"
   (let ((oid (oid instance)))
-    (ensure-transaction (:store sc)
       (let* ((idx (get-slot-def-index slot-def sc))
              (old-value-bound-p (slot-boundp-using-class class instance slot-def))
              (old-value (when old-value-bound-p
@@ -684,7 +681,7 @@
           (setf idx (ensure-slot-def-index slot-def sc)))
         (when old-value-bound-p 
           (remove-kv old-value oid idx))
-        (setf (get-value new-value idx) oid)))))
+        (setf (get-value new-value idx) oid))))
 
 (defun get-store-index (slot-def sc)
   "Get the slot-def's index from the store"
@@ -821,7 +818,6 @@
             (t (map-btree (if oids fn #'map-obj) btree :start start :end end :from-end from-end :collect collect))))))
 
 (defun get-unique-values (index &aux values)
-  (ensure-transaction (:store-controller (get-store index))
     (btree::with-btree-cursor (cur index)
       (multiple-value-bind (valid? value oid)
           (btree::cursor-first cur)
@@ -834,10 +830,9 @@
                  (declare (ignore oid))
                  (unless valid?
                    (return-from get-unique-values (nreverse values)))
-                 (push value values))))))))
+                 (push value values)))))))
 
 (defmethod sb-sequence:emptyp ((btree btree))
-  (ensure-transaction (:store-controller (get-store btree))
     (btree::with-btree-cursor (cur btree)
       (multiple-value-bind (valid k) (btree::cursor-next cur)
         (declare (ignore k))
@@ -845,7 +840,7 @@
                t)
               ((eq btree (store-root (get-store btree)))
                (not (btree::cursor-next cur)))
-              (t nil))))))
+              (t nil)))))
 
 (defmethod find-inverted-index ((class symbol) slot &key (null-on-fail nil) (sc *store*))
   (find-inverted-index (find-class class) slot :null-on-fail null-on-fail :sc sc))
@@ -950,12 +945,11 @@
 (defmethod (setf slot-value-using-class) (new-value (class stored-class) (instance stored-object) (slot-def stored-slot-definition))
   "Set the slot value in the database."
   (let ((name (slot-definition-name slot-def)))
-    (ensure-transaction (:store (get-store instance))
       (cond
         ((derived-slot-triggers slot-def)
          (stored-slot-writer (get-store instance) new-value instance name)
          (derived-index-updater class instance slot-def))
-        (t (stored-slot-writer (get-store instance) new-value instance name)))))
+        (t (stored-slot-writer (get-store instance) new-value instance name))))
   new-value)
 
 (defmethod slot-boundp-using-class ((class stored-class) (instance stored-object) (slot-def stored-slot-definition))
@@ -1005,3 +999,5 @@
 ;;; Macros
 
 (defmacro defstore (name super spec &rest options))
+
+(defmacro with-store (sym &body body))

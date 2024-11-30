@@ -42,7 +42,8 @@
    :def-warning-reporter
    :meta-condition
    :missing-method
-   :missing-methods))
+   :missing-methods
+   :conflicting-arguments))
 
 (defpkg :std/sym
   (:use :cl)
@@ -199,6 +200,7 @@
    :read-uleb128
    :encode-uleb128
    :decode-uleb128
+   ;; num/math
    :clamp
    :gaussian-random
    :iota
