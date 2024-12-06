@@ -121,12 +121,12 @@
 (defclass binary-expression (logical-expr binary-expr) ())
 
 (defclass boolean-binary-expression (binary-expression)
-  ((name :initarg :name :type string :accessor expr-name)
+  ((name :initarg :name :type string :accessor name)
    (op :initarg :op :type symbol :accessor expr-op)))
 
 (defmethod to-field ((self boolean-binary-expression) (input logical-query-plan))
   (declare (ignore input))
-  (make-field :name (expr-name self) :type 'boolean))
+  (make-field :name (name self) :type 'boolean))
 
 ;; Equiv Expr
 (defclass eq-expression (boolean-binary-expression) ()
@@ -172,7 +172,7 @@
 
 ;; Math Expr
 (defclass math-expression (binary-expression)
-  ((name :initarg :name :type string :accessor expr-name)
+  ((name :initarg :name :type string :accessor name)
    (op :initarg :op :type symbol :accessor expr-op)))
 
 ;; TODO 2024-08-03: ???
@@ -441,7 +441,7 @@
     (assert (= (length ll) (length rr)))
     (if (eql (column-type ll) (column-type rr))
         (evaluate2 self ll rr)
-        (error "invalid state! lhs != rhs"))))
+        (error "invalid state: lhs != rhs"))))
 
 (defclass eq-physical-expression (binary-physical-expression) ())
 
@@ -527,7 +527,7 @@
 
 ;;; Physical Plan
 (defgeneric execute (self)
-  (:documentation "Execute the LOGICAL-QUERY-PLAN represented by object SELF.")
+  (:documentation "Execute the PHYSICAL-QUERY-PLAN represented by object SELF.")
   (:method ((self data-frame))
     (execute (df-plan self))))
 

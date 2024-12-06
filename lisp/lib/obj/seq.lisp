@@ -35,6 +35,8 @@
     (:method ((self array))
       (decf *idx*)
       (aref self *idx*))))
+(defgeneric key (self))
+(defgeneric val (self))
 (defgeneric iter (self &key &allow-other-keys))
 (defgeneric iter-valid-p (self))
 (defgeneric seek (self key &key))
@@ -42,8 +44,21 @@
 (defgeneric seek-to-last (self))
 (defgeneric seek-for-prev (self key &key))
 
+(defvar *iter*)
+
+(defvar *iterator-functions*
+  '((next (&optional (s *iter*)) (next s))
+    (prev (&optional (s *iter*)) (prev s))
+    (seek-to-first (&optional (s *iter*)) (seek-to-first s))
+    (seek-to-last (&optional (s *iter*)) (seek-to-last s))
+    (seek-for-prev (key &optional (s *iter*)) (seek-for-prev s key))
+    (iter-valid-p (&optional (s *iter*)) (iter-valid-p s))
+    (seek (key &optional (s *iter*)) (seek s key))
+    (val (&optional (s *iter*)) (val s))
+    (key (&optional (s *iter*)) (key s))))
+
 (defmacro with-iter ((sym iter) &body body)
 `(let ((,sym ,iter))
-   (flet ((next (&optional (s ,sym)) (next s))
-          (prev (&optional (s ,sym)) (prev s)))
+   (setf *iter* ,sym)
+   (flet ,*iterator-functions*
      ,@body)))

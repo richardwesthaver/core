@@ -28,7 +28,6 @@
 ;;; Options
 (defmacro with-latest-options (db-path (db-opts-var cf-names-var cf-opts-var) &body body)
   ;;  TODO 2024-09-26: ignore unknown?
-  (declare (optimize speed))
   (with-gensyms (db-opts cf-names cf-opts)
     `(with-alien ((,db-opts (* rocksdb-options))
                   (,cf-names (* c-string))
@@ -37,7 +36,7 @@
                   (errptr rocksdb-errptr))
        (rocksdb-load-latest-options 
         ,db-path 
-        (rocksdb-create-default-env) 
+        (rocksdb-create-default-env)
         t
         (rocksdb-cache-create-lru 1080)
         (addr ,db-opts)
@@ -54,8 +53,10 @@
                             (loop for i below ncols
                                   collect (deref ,cf-opts i))
                             'vector)))
-         (unwind-protect ,@body
-           (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols))))))
+         ,@body
+         ;; (unwind-protect 
+         ;; (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols))
+         ))))
 
 ;;; Merge Ops
 (defmacro define-full-merge-op (name &body body)
@@ -291,12 +292,18 @@
                (rocksdb-writebatch-destroy ,wb)))
            body)))
 
-(defmacro with-wbwi ((wbwi &key reserved overwrite rep backup-comparator max key-protection-bytes (destroy t))
+(defmacro with-wbwi ((wbwi &key (reserved 0)
+                                (overwrite 0)
+                                rep 
+                                backup-comparator 
+                                max 
+                                key-protection-bytes 
+                                (destroy t))
                      &body body)
   `(let ((,wbwi ,@(if rep 
                       `((rocksdb-writebatch-wi-create-from ,rep ,(length rep)))
                       (if max ;; if any 'param' is present assume they all are
-                          `((rocksdb-writebatch-wi-create-with-params 
+                          `((rocksdb-writebatch-wi-create-with-params
                              ,backup-comparator ,reserved ,overwrite ,max ,key-protection-bytes))
                           `((rocksdb-writebatch-wi-create ,reserved ,overwrite))))))
      

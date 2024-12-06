@@ -110,12 +110,9 @@
       (dotimes (i 10000)
         (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
       (finish-sst writer) ;; will fail on empty writer
-      ;; TODO 2024-05-08: investigate - doesn't seem to actually delete the
-      ;; file, just the writer?
       (destroy-sst writer)
       (ingest-db tmp (list path))
       (delete-file path)
-      ;; with macro
       (with-sst (s :file path)
         (put-kv s (make-kv (string-to-octets "nil") (string-to-octets "nil"))))
       (delete-file path))))
@@ -185,3 +182,6 @@
                :close t)
     (open-db db)))
           
+(deftest wbwi ()
+  (with-wbwi (wbwi)
+    (is wbwi)))

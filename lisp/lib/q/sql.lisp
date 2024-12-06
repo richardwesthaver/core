@@ -717,7 +717,7 @@
 (labels ((visit (expr accum)
            (when expr
              (typecase expr
-               (column-expression (accumulate accum (column-name expr)))
+               (column-expression (accumulate accum (name expr)))
                (alias-expression (visit (slot-value expr 'expr) accum))
                (binary-expression
                 (visit (lhs expr) accum)

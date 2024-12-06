@@ -122,8 +122,8 @@ to initialize the instance with custom configuration."
 (defun open-cfs-raw (db-opt name names opts)
   (let ((n (length names)))
     (with-alien ((cf-names (* c-string) (clone-strings names))
-                 (cf-opts (* (* rocksdb-options)))
-                 (cf-handles (* (* rocksdb-column-family-handle))))
+                 (cf-opts (* (* rocksdb-options)) (make-alien (* rocksdb-options) n))
+                 (cf-handles (* (* rocksdb-column-family-handle)) (make-alien (* rocksdb-column-family-handle) n)))
       (loop for opt in opts
             for i below n
             do (setf (deref cf-opts i) opt))
@@ -518,3 +518,7 @@ transaction-db."
   (rocksdb-logger-create-callback-logger 
    level 
    (alien-sap (alien-callable-function 'rocksdb-log-default)) nil))
+
+;;; Writebatch/WBWI
+(defun create-wbwi (&optional reserved-bytes overwrite-keys)
+  (rocksdb-writebatch-wi-create reserved-bytes overwrite-keys))

@@ -4,15 +4,22 @@
 
 ;;; Commentary:
 
-;; Inspired by Elephant
+;; Based on work from Elephant and XDB.
 
-;; STOREs differ from DBs in that they always prefer transactions over simple
-;; set/get.
+;; A STORE plays a similar role to ORMs in blub languages, but better since we
+;; have CLOS and MOP for ultimate control. The purpose of a STORE is to
+;; orchestrate the persistence of objects of a specific metaclass called
+;; STORED. The metaclass adds an additional allocation target for slot-objects
+;; which indicates that any access to them from Lisp will be delegated to the
+;; associated STORE.
+
+;; The STORE itself is defined in this file and implements the 'controller'
+;; side of the underlying protocol.
 
 ;;; Code:
 (defpackage :obj/store
   (:nicknames :store)
-  (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema)
+  (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema :config)
   (:export
    #:store
    #:make-cache-table
@@ -45,8 +52,11 @@
 
 (defvar *store* nil)
 
+;; support for swapping out multiple stores? compatibility matrix?
 (defvar *stores* nil)
 
+;; TODO 2024-12-05: eradicate direct usage of BTrees. otherwise why do we need
+;; RocksDB eh?
 (defun make-btree (&optional (st *store*))
   "Constructs a new BTree instance for use by the user.  Each backend
    returns its own internal type as appropriate and ensures that the 
@@ -560,7 +570,7 @@
 (defun dump-cache (cache)
   (format t "Dumping cache: ~A~%" cache)
   (map-cache #'(lambda (k v) 
-                 (format t "key: ~A / value: ~A~%" k v))
+                 (format t ":k ~A :v ~A~%" k v))
              cache))
 
 (defmethod lookup-schema ((st store) (class stored-class))
@@ -998,6 +1008,14 @@
 
 ;;; Macros
 
-(defmacro defstore (name super spec &rest options))
+(defmacro defstore (name super spec &rest options)
+  "Define a new STORE class.")
 
-(defmacro with-store (sym &body body))
+;; TODO 2024-12-05: do we want to pass DB by value here (in the environment of
+;; WITH-STORE) or are we better off binding DATABASE instances as
+;; *STORE-BACKEND*?
+(defmacro with-store ((sym &rest initargs &key &allow-other-keys) &body body)
+  "Similar to WITH-DB but for STORE objects instead of DATABASEs. 
+
+INITARGS may contain any number keys that have been registered with the
+current *STORE-BACKEND*.")

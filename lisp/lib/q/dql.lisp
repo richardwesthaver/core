@@ -1,10 +1,13 @@
-;;; dql.lisp --- Deductive Query Langs
+;;; dql.lisp --- Deductive Query Language
 
 ;; Query Engine for Inference-based query langs.
 
 ;;; Commentary:
 
 ;; Prolog, Datalog, etc.
+
+;; Prolog rules are created with:  (*- head body body ...)
+;; Prolog queries are posed with:  (?- goal goal ...)
 
 ;;;; SQL vs Prolog
 
@@ -30,25 +33,29 @@
 ;; as a query language, and then use it to bootstrap a more elegant Prolog
 ;; compiler, likely in SYN/PROLOG.
 
-;;;;; Data Model
+;;;; Data Model
 
-;; compiled code + constants -> physical plan -> arena + hash-tables -> engine
+;; forms + specials -> logical plan -> physical plan -> engine
 
-;;;;; Compiler
+;;;; Compiler
 
-;; Predicates
+;; As always our 'compiler' for this DSL will be encapsulated in a series of
+;; macros. In this case we will be leveraging CLtL2 where possible as well as
+;; some internal SB-C functions and structures.
 
-;; Rules/Facts
+;; In CLtL2 terminology, we make use of the environment with functions such as
+;; AUGMENT-ENVIRONMENT, PARSE-MACRO, and ENCLOSE. During compilation we build
+;; the environment and then lexically bind it during execution of queries.
 
-;;;;; Runtime
+;;; Clauses
 
-;; Engine 
+;; Rules are made up of calls to predicates which are called the Rule's
+;; Goals. Facts are clauses without a body.
 
-;; Execution 
+;; Rules and Facts are compiled into Functors which consist of the function
+;; name and arity.
 
-;; Persistence
-
-;;;;; Refs
+;;;; Refs
 
 ;; https://franz.com/support/documentation/11.0/prolog.html
 
@@ -63,6 +70,8 @@
 ;; https://www.swi-prolog.org/pldoc/man?section=predsummary
 
 ;; https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=cc7dcdf130adbd7be4d0ed5d3f4ea890e4477223
+
+;; https://en.wikipedia.org/wiki/SLD_resolution
 
 ;;; Code:
 (in-package :q/dql)
@@ -89,24 +98,32 @@
   "saved state of the system")
 (defvar *trail* nil
   "the trail, for backtracking")
-(defvar *x-env* nil
+(defvar *goal-env* nil
   "env for goals")
-(defvar *y-env* nil
+(defvar *rule-env* nil
   "env for rules")
-(defvar *top-level-envs* nil
+(defvar *global-envs* nil
   "saves top-level environments")
-(defvar *top-level-vars* nil
+(defvar *global-vars* nil
   "saves top-level variable names")
+
+(defvar *functors* (make-hash-table)
+  "hash table for DQL functors. Keys are the functor name and values are either a
+single function (indicating a '&rest' lambda-list with arity *) or a vector of
+functions with length equal to the functor with the highest arity.")
+
 (defvar *rules*  (make-hash-table)
-  "hash table for prolog rule heads")
+  "hash table for rules. Keys are the HEAD and values are the body.")
 (defvar *facts* nil
-  "Facts are uncoditional truths. They are expressed simply as rules with no
+  "Facts are unconditional truths. They are expressed simply as rules with no
 variables in the head and no clauses in the body. During reading of a DQL
 form, if we find any facts we evaluate them and store them here.")
 
 ;;; Utils
 (defconstant +impossible+ 'no "make impossible look nice")
 (defconstant +solved+ 'yes "make solved look nice")
+(defconstant +dql-vars-property+ :dql-vars)
+(defconstant +dql-funs-property+ :dql-funs)
 
 (defconstant +?+ #\?)
 
@@ -116,7 +133,7 @@ and '?BAR."
   (and (symbolp sym)
        (eql (char (symbol-name sym) 0) +?+)))
 
-(deftype dql-variable () `(satisfies dql-variable-p))
+(deftype dql-variable () '(satisfies dql-variable-p))
 
 (defun dql-anonymous-p (sym)
   "Return T if SYM is a DQL anonymous variable represented by the value of +?+."
@@ -128,21 +145,63 @@ and '?BAR."
 
 (defgeneric print-proof-tree (self &optional stream))
 
-;;; Conditions
-(define-condition dql-error (error) ())
+;; functors
+(defun match-dql-variable (a b)
+  (and (eq +dql-vars-property+ (car b))
+       (find a (cadr b))))
 
-(deferror simple-dql-error (dql-error simple-error) ())
+(defun match-dql-function (a b)
+  (and (eq +dql-funs-property+ (car b))
+       (find a (cadr b))))
 
-(defun simple-dql-error (ctrl &rest args)
-  (error 'simpl-dql-error :format-control ctrl :format-arguments args))
+(defun register-dql-variable (name env)
+  (push name (cdr (assoc +dql-vars-property+ (sb-c::lexenv-user-data env)))))
 
-(define-condition invalid-dql-anonymous (dql-error) ())
+(defun register-dql-rule (name env &optional arity)
+  (push name (cdr (assoc +dql-funs-property+ (sb-c::lexenv-user-data env))))
+  (setf (gethash name *functors*)
+        (or (when arity (make-array arity :element-type 'function)) (function name))))
 
-(define-condition invalid-dql-variable (dql-error) ())
+(defun register-dql-functor (name fname arity)
+  (let ((val (gethash name *functors*)))
+    (etypecase val
+      (function (simple-dql-error "Unable to overwrite a vararg functor: ~A" name))
+      (vector (setf (aref val arity) fname)))))
 
-;;; Prolog Predicates
-(defun dql-predicate-p (sym)
-  "Check if SYM looks like a DQL predicate. It shoulb be suffixed by a #\/
+(defun dvboundp! (var &optional env)
+  "Check if VAR is bound as a DQL-VARIABLE in the given environment."
+  (sb-cltl2::lexenv-find var :user-data :lexenv env :test 'match-dql-variable))
+
+(defun dfboundp! (fun &optional env)
+  "Check if FUN is bound as a DQL-FUNCTOR in the given environment."
+  (sb-cltl2::lexenv-find fun :user-data :lexenv env :test 'match-dql-function))
+ 
+(defun term-to-head (term)
+  (etypecase term
+    (atom (values (symbolicate term '/*) nil))
+    (cons (values (symbolicate (car term) '/ (length #1=(cdr term))) #1#))))
+
+(defmacro generate-rule (head &body clauses &environment env)
+  "Generate a rule with a set of clauses which may or may not eventually return T."
+  (multiple-value-bind (fname args) (term-to-head head)
+      `(prog1 (defun ,fname ,args ,@clauses)
+         (register-dql-rule ,head ,env)
+         (register-dql-functor ,head ,fname ,(length args)))))
+
+(defmacro generate-fact (head)
+  "Generate a fact which is like a rule but contains no substantial body (always returns T)."
+  (multiple-value-bind (fname args) (term-to-head head)
+    `(prog1 (defun ,fname ,args t)
+       (register-dql-functor ,head ,fname ,(length args)))))
+
+(defmacro generate-variable (term val &environment env)
+  "Bind the symbol TERM to VAL in the specified ENV."
+  `(register-dql-variable ,term ,val ,env))
+
+(defun generate-fact (head))
+
+(defun dql-functor-p (sym)
+  "Check if SYM looks like a DQL functor. It shoulb be suffixed by a #\/
 followed by either '* for vararg functors or an integer indicating the arity
 of the predicate. On success returns the arity or T for varargs."
   (when-let ((arity (cdr (ssplit #\/ (symbol-name sym)))))
@@ -152,29 +211,59 @@ of the predicate. On success returns the arity or T for varargs."
          (parse-integer arity))
         (char= (char arity 0) #\*))))
 
+;;; Conditions
+(define-condition dql-condition () ())
+(define-condition dql-error (dql-condition error) ())
+
+(deferror simple-dql-error (dql-error simple-error) () (:auto t))
+
+(define-condition invalid-dql-anonymous (dql-error) ())
+
+(define-condition invalid-dql-variable (dql-error) ())
+
+;;; Predicates
+;; (defmacro define-dql-predicate ())
 ;; ports: call, exit, redo, and fail
 
-;; define-functor
+;;; Query Protocol
+;; variables are basically just fields?
+(defclass dql-env (simple-schema)
+  ((env :initarg :env :accessor env))
+  (:default-initargs
+   :env (sb-c::make-null-lexenv)
+   :name (symbol-name (gensym "dql-env"))))
 
-;;; Lisp Operators
+(defmacro new-dql-env (&body fields &environment env)
+  `(progn
+     (appendf (sb-c::lexenv-user-data ,env) '((,+dql-vars-property+) (,+dql-funs-property+)))
+     (make-instance 'dql-env :fields (make-fields ,@fields) :env ,env)))
 
-(defmacro <- (head &body body))
-(defmacro <-- (head &body body))
+(defclass dql-logical-plan (logical-query-plan) ())
+(defclass dql-physical-plan (physical-query-plan) ())
+(defclass dql-planner (query-plan) ())
 
-(defmacro ?- (&body clauses)
-  "Enter the interactive DQL execution environment, attempting to solve for
-CLAUSES.")
+(defclass dql-expr (query-expr unary-expression)
+  ((name :initarg :name :type string :accessor name)))
 
+(defclass dql-rule-expr (dql-expr) ())
+(defclass dql-fact-expr (dql-expr literal-expression) ())
 
-(defmacro leash (&body (functor arity))
-  "Prolog equivalent of CL:TRACE."
-  (print functor) (print arity))
-  
-(defmacro unleash (&body (functor arity))
-  "Prolog equivalent of CL:UNTRACE."
-  (print functor) (print arity))
+(defclass dql-rule (physical-expression) 
+  ())
+(defclass dql-fact (physical-expression) ())
 
-(defun prolog-compile-symbols (&rest functors))
+(defmethod evaluate ((self dql-rule) (input record-batch)))
+(defmethod evaluate ((self dql-fact) (input record-batch)))
+
+(defmethod make-physical-expression ((expr dql-expr) (input dql-logical-plan)))
+
+(defmethod make-physical-plan ((plan dql-logical-plan)))
+
+(defclass unify (dql-logical-plan) ())
+(defclass solve (dql-logical-plan) ())
+
+(defclass unify-exec (dql-physical-plan) ())
+(defclass solve-exec (dql-physical-plan) ())
 
 ;; cut
 ;; ref: https://en.wikipedia.org/wiki/Cut_(logic_programming)
@@ -204,7 +293,27 @@ CLAUSES.")
   (:documentation "Data source which can be used with DQL expressions."))
 
 ;;; Parser
-(defclass dql-parser (query-parser) ())
+;; (defclass dql-parser (query-parser) ())
 
-;;; Schema
-(defclass dql-schema (schema) ())
+;;; Lisp Interface
+(defmacro *- (head &body body))
+;; bindings?
+(defmacro <- (head &body body))
+(defmacro <-- (head &body body))
+
+(defmacro ?- (&body goals)
+  "Enter the interactive DQL execution context, attempting to solve for
+GOALS."
+  `(let ((*interactive* t)
+         (*auto-backtrack* nil))
+     (dql-solve ,goals)))
+
+(defmacro leash (&body (functor arity))
+  "Prolog equivalent of CL:TRACE."
+  (print functor) (print arity))
+
+(defmacro unleash (&body (functor arity))
+  "Prolog equivalent of CL:UNTRACE."
+  (print functor) (print arity))
+
+(defun compile-dql-symbols (&rest functors))

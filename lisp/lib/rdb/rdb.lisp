@@ -6,8 +6,15 @@
 
 ;; This package produces reasonably safe wrappers for RocksDB functionality
 ;; with alien structures wrapped in STRUCT types, conditions,
-;; etc. Additionally this package provides the RDB-DATABASE and RDB-STORE
-;; classes which implement the OBJ/DB and OBJ/STORE protocols respectively.
+;; etc. 
+
+;; Additionally this package implements the following protocols:
+
+;; RDB-DATABASE (OBJ/DB)
+;; RDB-STORE (OBJ/STORE)
+;; RDB-SCHEMA (OBJ/SCHEMA)
+;; RDB-QUERY (OBJ/QUERY)
+;; RDB-LOGGER (OBJ/LOG)
 
 ;;; Code:
 (in-package :rdb)

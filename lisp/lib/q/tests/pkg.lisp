@@ -4,8 +4,8 @@
 
 ;;; Code:
 (defpackage :q/tests/fuzz
-  (:use :cl :std :rt/fuzz :q :log :obj/query))
+  (:use :cl :std :rt/fuzz :q :log :plan :schema :query))
 
 (defpackage :q/tests
-  (:use :cl :std :rt :q :log :parse/pratt :obj/query :obj/ast :obj/plan :obj/query))
+  (:use :cl :std :rt :q :log :parse/pratt :query :ast :plan :schema :query))
 

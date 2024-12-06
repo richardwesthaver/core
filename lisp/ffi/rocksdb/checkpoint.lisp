@@ -30,7 +30,7 @@
   (options (* rocksdb-options))
   (name c-string)
   (num-column-families int)
-  (column-family-names (* c-string))
+  (column-family-names (* (* char)))
   (column-family-options (* (* rocksdb-options)))
   (column-family-handles (* (* rocksdb-column-family-handle))))
 

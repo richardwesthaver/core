@@ -65,12 +65,12 @@
 
 (define-alien-routine blake3-hasher-update void
   (self (* blake3-hasher)) 
-  (input (* t))
+  (input (* unsigned-char))
   (input-len size-t))
 
 (define-alien-routine blake3-hasher-finalize void 
   (self (* blake3-hasher)) 
-  (out (* (unsigned 8))) 
+  (out (* unsigned-char)) 
   (out-len size-t))
 
 (define-alien-routine blake3-hasher-finalize-seek void 

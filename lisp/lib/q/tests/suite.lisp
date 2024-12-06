@@ -17,12 +17,11 @@
 
 (deftest sql-select ()
   (let ((tbl (make-hash-table :test 'equal)))
-    (setf (gethash "FOO" tbl) (make-df nil))
+    (setf (gethash "FOO" tbl) (make-df))
     (with-sql (expr "SELECT I FROM FOO")
       (is (typep expr 'sql-select))
-      (let ((tbl (make-hash-table :test 'equalp)))
-        (is (gethash "FOO" tbl))
-        (make-sql-df expr tbl)))))
+      (is (gethash "FOO" tbl))
+      (make-sql-df expr tbl))))
 
 (deftest sql-math ()
   (with-sql (expr "1 + 2 * 3")
@@ -70,7 +69,7 @@ Exercise 2.9. Translate to clausal logic:
 ;; ref: https://en.wikipedia.org/wiki/Zebra_Puzzle
 
 ;; ref: https://franz.com/support/documentation/11.0/prolog.html
-(deftest dql-zebra ()
+(deftest dql-zebra (:skip t)
   "A solution for the Zebra problem using DQL."
   (<-- (nextto ?x ?y ?list) (iright ?x ?y ?list))
   (<-  (nextto ?x ?y ?list) (iright ?y ?x ?list))

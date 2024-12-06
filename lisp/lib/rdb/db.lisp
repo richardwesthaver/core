@@ -10,7 +10,9 @@
                                     destroy (close . t) 
                                     sap merge-op comparator prefix-op logger))
 
-(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store schema backup secondary snapshots)))
+(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store backup secondary snapshots)))
+
+(defvar *rdb-default-cf-name* "default")
 
 (defmethods set-database-backend-option
   (((db rdb) (key (eql :close)) (val (eql :auto)))
@@ -45,8 +47,8 @@ extractor."
                               (setf (sap cf-opts) opt)
                               (make-rdb-cf name :opts cf-opts)))
                    'vector)))
-         (setf (rdb-opts db) (make-rdb-opts* db-opts))
-         (values db cfs))))
+         (setf (db-opts db) (make-rdb-opts* db-opts))
+         cfs)))
 
 (defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key 
                     (name (string-downcase (gensym "rdb")))
@@ -77,12 +79,10 @@ object. (SAP CF) is the raw pointer."))
 
 (defaccessor (name) ((self rdb-column-family)) (name (cf self)))
 (defaccessor (sap) ((self rdb-column-family)) (sap (cf self)))
+(defaccessor (column-opts) ((self rdb-column-family)) (rdb-cf-opts (cf self)))
 
-(defmethod destroy-column ((self rdb-column-family))
-  (destroy-column (cf self)))
-
-(defmethod open-column ((self rdb-column-family))
-  (open-column (cf self)))
+(defmethod destroy-column ((self rdb-column-family) &optional error)
+  (destroy-column (cf self) error))
 
 (defmethod close-column ((self rdb-column-family) &optional error)
   (close-column (cf self) error))
@@ -92,7 +92,9 @@ object. (SAP CF) is the raw pointer."))
         (ctype (column-type self)))
   (typecase type
     (null nil)
-    (atom (setf (cdr ctype) type))
+    (atom (if (atom ctype) 
+              (setf ctype (cons ctype type))
+              (setf (cdr ctype) type)))
     (list (setf (car ctype) (car type)
                 (cdr ctype)
                 (if (and (listp (cdr type))
@@ -100,6 +102,17 @@ object. (SAP CF) is the raw pointer."))
                     (cadr type)
                     (cdr type)))))
     self))
+
+(defmethod change-class ((self field) (new-class (eql 'rdb-column-family)) &key)
+  (make-instance new-class :cf (make-rdb-cf (field-name self)) :type (field-type self)))
+
+(defmethod change-class ((self rdb-cf) (new-class (eql 'rdb-column-family)) &key)
+  (make-instance new-class :cf self))
+
+(defmethod change-class ((self column) (new-class (eql 'rdb-column-family)) &key name)
+  (let ((ret (make-instance new-class :type (column-type self))))
+    (when name (setf (name ret) name))
+    ret))
 
 ;;; Database
 (defclass rdb-database (database)
@@ -110,7 +123,6 @@ object. (SAP CF) is the raw pointer."))
               :initarg :snapshots 
               :accessor db-snapshots)
    (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor secondary-db)
-   (schema :initform nil :type (or null schema) :initarg :schema :accessor schema)
    (columns :initarg :columns :accessor columns))
   (:default-initargs 
    :db (make-db :rocksdb :opts (default-rdb-opts))
@@ -119,7 +131,8 @@ object. (SAP CF) is the raw pointer."))
    ;; much need to access this column directly as you can just access the
    ;; database directly, which will access this column internally.
    :columns (make-array 0 :element-type 'rdb-column-family
-                          :adjustable t)))
+              :adjustable t
+              :fill-pointer t)))
 
 (defmethods set-database-backend-option
   (((db rdb-database) (key (eql :close)) (val (eql :auto)))
@@ -136,29 +149,65 @@ object. (SAP CF) is the raw pointer."))
 extractor."
    (setf (db-opt (db db) :prefix-extractor :push t) val)))
 
+(defmethod load-opts ((self rdb-database)) 
+  (setf (columns self) 
+        (map 'vector (lambda (x) (make-instance 'rdb-column-family :cf x)) 
+             (load-opts (db self))))
+  self)
+
+(defmethod reset ((self rdb-database) &key (columns t) (opts t))
+  (when columns 
+    (close-columns self) 
+    (setf (columns self)
+          (make-array 0 :element-type 'rdb-column-family
+                        :adjustable t
+                        :fill-pointer t)))
+  (when opts
+    (setf (db-opts self) (if (eql t opts) (default-rdb-opts) opts))))
+
+(defmethod open-column ((self rdb-database) (col string) &key)
+  (open-column (db self) (cf (find-column col self))))
+
+(defmethod open-column ((self rdb-database) (col rdb-column-family) &key)
+  (open-column (db self) (cf col)))
+
+(defmethod open-columns ((self rdb-database) &rest columns)
+  (dolist (c columns)
+    (open-column self c)))
+
 (defmethod find-column ((cf string) (self rdb-database) &key)
   (find cf (columns self) :key 'name :test 'equal))
 
 (defmethod add-column ((cf rdb-cf) (db rdb-database))
   (vector-push-extend (make-instance 'rdb-column-family :cf cf) (columns db)))
 
-(defmethod open-columns ((db rdb-database) &rest names)
-  (let ((cf-names) (cf-opts))
-    (loop for cf across (columns db)
-          do (let ((name (name cf)))
-               (when (or (not names) (member name names :test 'string=))
-                   (push name cf-names)
-                   (push (sap (column-opts cf)) cf-opts)))
-          finally
-             (setf cf-names (nreverse cf-names) 
-                   cf-opts (nreverse cf-opts)))
-    (multiple-value-bind (db-sap cfs) (open-cfs-raw (db-opts db) (name db) cf-names cf-opts)
+(defmethod open-with-columns ((db rdb-database) &rest names)
+  (let ((cols 
+          (coerce
+           (if (null names)
+               (columns db)
+               (loop for n in names
+                     collect (if-let ((col (find-column n db)))
+                               col
+                               (add-column 
+                                (make-instance 'rdb-column-family 
+                                  :cf (make-rdb-cf n)) 
+                                db))))
+           'vector)))
+    (multiple-value-bind (db-sap cfs) (open-cfs-raw (db-opts db) (name db)
+                                                    (loop for c across cols
+                                                          collect (name c))
+                                                    (loop for c across cols
+                                                          collect (sap (column-opts c))))
       (setf (sap db) db-sap)
-      (loop for cf across (columns db)
-            with i = 0
-            do (setf (sap cf) (deref cfs i))
-            do (incf i))
+      (loop for c across cfs
+            do (when-let ((col (find-column (name c) db)))
+                 (setf (cf col) c)))
       db)))
+
+(defmethod open-columns* ((self rdb-database))
+  (loop for c across (columns self)
+        do (open-column self c)))
 
 (defmethod close-columns ((self rdb-database))
   (loop for cf across (columns self)
@@ -173,6 +222,39 @@ extractor."
         sap
         key
         val
+        (rocksdb-writeoptions-create))
+       (rdb-error "column-family is not open"))
+     (put-key self key val)))
+  (((self rdb-database) (key string) (val string) &key column)
+   (if-let ((column (and column (find-column column self))))
+     (if-let ((sap (sap column)))
+       (put-cf-raw
+        (sap self)
+        sap
+        (string-to-octets key)
+        (string-to-octets val)
+        (rocksdb-writeoptions-create))
+       (rdb-error "column-family is not open"))
+     (put-key self key val)))
+  (((self rdb-database) (key string) val &key column)
+   (if-let ((column (and column (find-column column self))))
+     (if-let ((sap (sap column)))
+       (put-cf-raw
+        (sap self)
+        sap
+        (string-to-octets key)
+        val
+        (rocksdb-writeoptions-create))
+       (rdb-error "column-family is not open"))
+     (put-key self key val)))
+  (((self rdb-database) key (val string) &key column)
+   (if-let ((column (and column (find-column column self))))
+     (if-let ((sap (sap column)))
+       (put-cf-raw
+        (sap self)
+        sap
+        key
+        (string-to-octets val)
         (rocksdb-writeoptions-create))
        (rdb-error "column-family is not open"))
      (put-key self key val)))
@@ -198,9 +280,10 @@ extractor."
       (put-kv self kv)))
 
 (defmethod iter ((self rdb-database) &key column (opts (rocksdb-readoptions-create)))
-  (if column
-      (iter (db self) :cf (cf column) :opts opts)
-      (iter (db self) :opts opts)))
+  (typecase column
+    (rdb-column-family (iter (db self) :cf (cf column) :opts opts))
+    (rdb-cf (iter (db self) :cf column :opts opts))
+    (t (iter (db self) :opts opts))))
 
 (defmethods get-val 
   (((self rdb-database) (key string) &key (opts (rocksdb-readoptions-create)) column)
@@ -215,8 +298,10 @@ extractor."
          (get-kv-raw sap key opts)))))
 
 (defmethod create-column ((db rdb-database) (col rdb-column-family))
-  (setf (sap col)
-        (create-cf-raw (sap db) (name col) (sap (db-opts db))))
+  (if (equal (name col) *rdb-default-cf-name*)
+      (rdb-default-cf-warning "ignoring attempt to create 'default' column-family: ~A" col)      
+      (setf (sap col) (create-cf-raw (sap db) (name col) (sap (column-opts col)))))
+  ;; (open-column db col)
   col)
 
 (defmethod create-columns ((self rdb-database))
@@ -226,8 +311,12 @@ extractor."
             do (create-column self cf))))
 
 (defmethod find-column ((cf string) (self rdb-database) &key)
-  "Find a CF by name."
+  "Find a column by name."
   (find cf (columns self) :key 'name :test 'equal))
+
+(defmethod (setf find-column) ((new rdb-column-family) (cf string) (self rdb-database) &key)
+  "Find and replace a column by name."
+  (nsubstitute new (find-column cf self) (columns self)))
 
 (defmethod database-version ((self rdb-database))
   "Return the version tag or nil if unmarked"
@@ -282,13 +371,10 @@ extractor."
   (((engine (eql :rdb-secondary)) &key path opts (db *db*))
    (setf (secondary-db db) (open-secondary-db db :opts opts :path path))))
 
-(defmethod open-columns ((self rdb-database) &rest names) 
-  (apply 'open-columns (db self) names))
-
 (defmethod derive-schema ((self rdb-database))
   (apply 'make-schema
          (loop for c across (columns self)
-               collect (translate-cf-to-field (cf c)))))
+               collect (cf-to-field (cf c)))))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)) self)
 (defmethod open-transaction-db ((self rdb-database) &key path opts optimistic)
@@ -301,12 +387,14 @@ extractor."
 (defmethod flush-db ((self rdb-database) &rest args &key &allow-other-keys) (apply 'flush-db (db self) args))
 
 (defmethod close-db ((self rdb-database) &key) 
-  (destroy-columns self)
+  (close-columns self)
   (close-db (db self)))
 
 (defmethod db-closed-p ((self rdb-database)) (db-closed-p (db self)))
 (defmethod db-open-p ((self rdb-database)) (db-open-p (db self)))
-(defmethod destroy-db ((self rdb-database)) (destroy-db (db self)))
+(defmethod destroy-db ((self rdb-database))
+  (destroy-columns self)
+  (destroy-db (db self)))
 
 (defmethod close-backup-db ((self rdb-database))
   (with-slots (backup) self
@@ -339,7 +427,7 @@ extractor."
 (defmethod add-column (col (self rdb-database))
   (vector-push-extend col (columns self)))
 
-(defmethod destroy-columns ((self rdb-database) &key &allow-other-keys)
+(defmethod destroy-columns ((self rdb-database))
   (with-slots (columns) self
     (loop for cf across columns
           do (setf cf (destroy-column cf)))))
@@ -353,7 +441,7 @@ only get their type slots updated on non-nil values."
              (load-field col field)
              (add-column
               (load-field 
-               (make-instance 'rdb-column-family :cf (make-rdb-cf (field-name field))) 
+               (make-instance 'rdb-column-family :cf (make-rdb-cf (field-name field)) :type (field-type field))
                field)
               self))
         finally (return self)))

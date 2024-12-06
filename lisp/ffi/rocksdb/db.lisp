@@ -440,11 +440,11 @@
   (k (* unsigned-char))
   (klen size-t))
 (define-alien-routine rocksdb-iter-valid boolean 
-      (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-next void 
-      (iter (* rocksdb-iterator)))
+  (iter (* rocksdb-iterator)))
+(define-alien-routine rocksdb-iter-next void
+  (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-prev void 
-      (iter (* rocksdb-iterator)))
+  (iter (* rocksdb-iterator)))
 (define-alien-routine rocksdb-iter-key (* unsigned-char)
   (iter (* rocksdb-iterator))
   (klen-ptr (* size-t)))

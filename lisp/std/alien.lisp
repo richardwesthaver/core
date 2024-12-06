@@ -59,7 +59,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
     `(define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))))
 
 (defun setfa (place from)
-  (declare (octet-vector from))
+  (declare (vector from))
   (loop for i below (length from)
         for x across from
 	do (setf (deref place i)
@@ -80,7 +80,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
       (labels ((populate (list index)
                  (declare (type sb-int:index index))
                  (if list
-                     (let ((array (sb-ext:string-to-octets (car list) :null-terminate t)))
+                     (let ((array (sb-ext:string-to-octets (car list) :null-terminate nil)))
                        (sb-sys:with-pinned-objects (array)
                          (setf (deref x index) (sap-alien (sb-sys:vector-sap array) (* char)))
                          (populate (cdr list) (1+ index))))

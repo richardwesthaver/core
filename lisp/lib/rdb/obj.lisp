@@ -44,9 +44,9 @@
              (let ((%name (symbolicate (string-right-trim "S" name)))
                    (%make (symbolicate '%make- name)))
                `(prog1
-                  (defstruct (,name (:constructor ,%make))
-                    (table (make-hash-table :test 'equal) :type hash-table)
-                    (sap nil :type (or null alien)))
+                    (defstruct (,name (:constructor ,%make))
+                      (table (make-hash-table :test 'equal) :type hash-table)
+                      (sap nil :type (or null alien)))
                   (eval-always
                     (defun ,(symbolicate 'make- name) (&rest opts)
                       (let ((obj (,%make :sap (,creator))))
@@ -64,8 +64,8 @@ values in Lisp, just binds the sap." name)
                     (,%make :sap alien))
                   (defaccessor* db-opt 
                       ((self ,name) key)
-                    (gethash key (db-opts self))
-                    (val (self ,name) key &key push)
+                      (gethash key (db-opts self))
+                      (val (self ,name) key &key push)
                     (prog1 (setf (gethash key (db-opts self)) val)
                       (when push (push-sap self key))))
                   (defmethod push-sap ((self ,name) key)
@@ -119,7 +119,7 @@ just the keys currently present in TABLE."
 (defaccessor (sap) ((self rdb-iter)) (rdb-iter-sap self))
 
 (defmethod iter-valid-p ((self rdb-iter))
-  (rocksdb-iter-valid (rdb-iter-sap self)))
+  (rocksdb-iter-valid (sap self)))
 
 (defmethod seek-to-first ((self rdb-iter))
   (rocksdb-iter-seek-to-first (rdb-iter-sap self))) 
@@ -142,17 +142,17 @@ just the keys currently present in TABLE."
 (defmethod key ((self rdb-iter))
   (with-alien ((klen size-t))
     (let ((key (rocksdb-iter-key (rdb-iter-sap self) (addr klen))))
-      (let ((k (make-array klen :element-type 'octet)))
-        (clone-octets-from-alien key k klen)
+      (let ((k (make-octets klen)))
+        (clone-octets-from-alien key k)
         (values
          k
          klen)))))
 
 (defmethod val ((self rdb-iter))
   (with-alien ((vlen size-t))     
-    (let ((val (rocksdb-iter-value (rdb-iter-sap self) (addr vlen))))
-      (let ((v (make-array vlen :element-type 'octet)))
-        (clone-octets-from-alien val v vlen)
+    (let ((val (rocksdb-iter-value (sap self) (addr vlen))))
+      (let ((v (make-octets vlen)))
+        (clone-octets-from-alien val v)
         (values
          v
          vlen)))))
@@ -163,7 +163,7 @@ just the keys currently present in TABLE."
 (defmethod timestamp ((self rdb-iter))
   (with-alien ((tslen size-t))
     (values
-     (rocksdb-iter-timestamp (rdb-iter-sap self) (addr tslen))
+     (rocksdb-iter-timestamp (sap self) (addr tslen))
      tslen)))
 
 ;;; column family
@@ -173,7 +173,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (name "" :type string)
   (opts (default-rdb-opts) :type rdb-opts)
   (sap nil :type (or null alien)))
-      
+
 (defaccessor (column-opts) ((self rdb-cf)) (rdb-cf-opts self))
 (defaccessor (sap) ((self rdb-cf)) (rdb-cf-sap self))
 (defaccessor (name) ((self rdb-cf)) (rdb-cf-name self))
@@ -194,7 +194,6 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (sap nil :type (or null alien)))
 (defaccessor (sap) ((self rdb-stats)) (rdb-stats-sap self))
 
-
 ;;; metadata
 (defstruct rdb-cf-metadata
   (name "default" :type string)
@@ -203,6 +202,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (file-count 0 :type fixnum)
   (sap nil :type (or null alien)))
 (defaccessor (sap) ((self rdb-cf-metadata)) (rdb-cf-metadata-sap self))
+(defaccessor (name) ((self rdb-cf-metadata)) (rdb-cf-metadata-name self))
 
 (defmethod db-metadata ((self rdb-cf-metadata) &optional (level 0))
   (with-slots (sap) self
@@ -231,7 +231,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (file-count 0 :type fixnum)
   (sap nil :type (or null alien)))
 (defaccessor (sap) ((self rdb-level-metadata)) (rdb-level-metadata-sap self))
-  
+
 (defmethod db-metadata ((self rdb-level-metadata) &optional (file 0))
   (with-slots (sap) self
     (if (null sap)
@@ -262,7 +262,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (largestkey 0 :type fixnum)
   (sap nil :type (or null alien)))
 (defaccessor (sap) ((self rdb-sst-file-metadata)) (rdb-sst-file-metadata-sap self))
-  
+
 (defmethod print-object ((self rdb-sst-file-metadata) stream)
   (print-unreadable-object (self stream :type t)
     (with-slots (relative-filename directory size smallestkey largestkey) self
@@ -284,13 +284,17 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
                 smallestkey ssize)))
     self))
 
+;;; Snapshots
+(defstruct rdb-snapshot sap)
+(defaccessor (sap) ((self rdb-snapshot)) (rdb-snapshot-sap self))
+
 ;;; SST
 (defstruct (sst-file-writer (:constructor %make-sst-file-writer (sap)))
   (sap nil :type (or null alien)))
 
 (defun make-sst-file-writer (&optional comparator
-                               (env-opts (rocksdb-envoptions-create))
-                               (io-opts (rocksdb-options-create)))
+                                       (env-opts (rocksdb-envoptions-create))
+                                       (io-opts (rocksdb-options-create)))
   (%make-sst-file-writer
    (if comparator
        (create-sst-writer-with-comparator-raw comparator env-opts io-opts)
@@ -400,25 +404,29 @@ internal sap slots are initialized."
         (pull-sap* opts))
     (db-opts opts)))
 
+(defmethod open-column ((self rdb) (col rdb-cf) &key)
+  (ifret (sap col)
+         (setf (sap col) (create-column self col))))
+
 (defmethod create-column ((db rdb) (cf rdb-cf))
-  (create-cf-raw (rdb-sap db) (rdb-cf-name cf) (sap (rdb-opts db))))
+  (create-cf-raw (sap db) (name cf) (sap (column-opts cf))))
 
 (defmacro unless-null-db (slots self &body body)
   `(with-slots (sap ,@slots) ,self
      (unless (null sap)
        ,@body)))
 
-(defmethod destroy-column ((cf rdb-cf))
+(defmethod destroy-column ((cf rdb-cf) &optional error)
   (with-slots (sap) cf
-    (unless (null sap)
+    (unless (and (null sap) (when error (std-error "column is already closed")))
       (setf sap (destroy-cf-raw sap)))))
 
-(defaccessor* db-opt 
+(defaccessor* db-opt
     ((self rdb) key) (db-opt (db-opts self) key)
     (new (self rdb) key &key push)
   (prog1 (setf (db-opt (db-opts self) key) new)
     (when push (push-sap (db-opts self) key))))
-  
+
 (defmethod push-opts ((self rdb))
   (with-slots (opts) self
     (push-sap* opts)))
@@ -458,7 +466,7 @@ internal sap slots are initialized."
 (defmethod snapshot-db ((self rdb))
   (unless-null-db () self
     (make-rdb-snapshot :sap (create-snapshot-raw sap))))
-                       
+
 (defmethod db-metadata ((self rdb) &optional cf)
   (make-rdb-cf-metadata :sap (get-metadata-raw (rdb-sap self) cf)))
 
@@ -466,15 +474,15 @@ internal sap slots are initialized."
   (make-rdb-stats (get-stats-raw (sap (rdb-opts self)) htype)))
 
 (defmethod iter ((self rdb) &key cf (opts (rocksdb-readoptions-create)))
-  (when cf
-    (setf cf (etypecase cf
+  (let ((col (etypecase cf
                (rdb-cf (rdb-cf-sap cf))
                (string (rdb-cf-sap (find-column cf self)))
+               (null nil)
                (alien cf))))
-  (unless-null-db () self
-    (make-rdb-iter :sap (if cf
-                            (create-cf-iter-raw sap cf opts)
-                            (create-iter-raw sap opts)))))
+    (unless-null-db () self
+      (make-rdb-iter :sap (if col
+                              (create-cf-iter-raw sap col opts)
+                              (create-iter-raw sap opts))))))
 
 (defmethod print-stats ((self rdb) &optional stream)
   (print (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream))
@@ -645,7 +653,7 @@ internal sap slots are initialized."
 
 (defmethod open-backup-db ((self rdb-backup-db) &key path)
   (setf (sap self) (open-backup-engine-raw path (db-opts self))))
-        
+
 (defmethod close-backup-db ((self rdb-backup-db))
   (close-backup-engine-raw (sap self)))
 
@@ -660,10 +668,6 @@ internal sap slots are initialized."
 (defstruct rdb-env sap path threads)
 (defaccessor (sap) ((self rdb-env)) (rdb-env-sap self))
 (defaccessor (path) ((self rdb-env)) (rdb-env-path self))
-
-;;; Snapshots
-(defstruct rdb-snapshot sap)
-(defaccessor (sap) ((self rdb-snapshot)) (rdb-snapshot-sap self))
 
 ;;; Logger
 (defun rdb-log-default (level &optional prefix)

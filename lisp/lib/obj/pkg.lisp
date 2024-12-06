@@ -145,7 +145,9 @@
            :iter-valid-p
            :*iter*
            :idx
-           :with-iter))
+           :with-iter
+           :key
+           :val))
 
 (defpackage :obj/tree
   (:nicknames :tree)
@@ -413,7 +415,9 @@
    #:cons-column
    #:simple-column
    #:simple-cons-column
-   #:make-schema))
+   #:make-schema
+   #:row-count
+   #:column-count))
 
 (defpackage :obj/plan
   (:nicknames :plan)
@@ -527,7 +531,14 @@
            :projection-pushdown-optimizer
            :extract-columns*
            :extract-columns
-           :query-vop))
+           :query-vop
+           :logical-query-plan
+           :physical-query-plan
+           :query-plan
+           :query-expr
+           :project
+           :select
+           :boolean-binary-expression))
 
 (defpackage :obj/db
   (:nicknames :db)
@@ -577,8 +588,6 @@
    :execute-transaction
    :abort-transaction
    :kv
-   :key
-   :val
    :make-val
    :make-key
    :open-db
@@ -638,7 +647,13 @@
    :secondary-db
    :db-backup
    :db-opts
-   :*save-database-backend-on-load*))
+   :*save-database-backend-on-load*
+   :open-with-columns
+   :open-columns*
+   :open-column
+   :destroy-column
+   :destroy-columns
+   :create-column))
 
 (defpackage :obj/secret
   (:nicknames :secret)

@@ -29,7 +29,8 @@
 
 (defpackage :cry/b3
   (:use :cl :std :blake3 :sb-alien :io/static)
-  (:export :b3hash))
+  (:export :b3hash :b3sum
+           :b3hash-string))
 
 (defpackage :cry/jwt
   (:use :cl :std :dat/json :dat/base64 :cry)
@@ -77,7 +78,7 @@
 (defclass crypto-key (id) ())
 (defclass password () ())
 (defclass password-db (database) ())
-(defclass password-store () ())
+(defclass password-store (store) ())
 
 ;;; Proto
 (defgeneric register-user (user &key store password deadline)

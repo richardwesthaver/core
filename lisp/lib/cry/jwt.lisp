@@ -172,9 +172,9 @@ token claims and token header"
                           (base64-decode
                            claims-string)
                           :external-format :utf-8)))
-           (algorithm (gethash "alg" header-hash)))
+           (algorithm (dat/json:json-getf header-hash "alg")))
       ;; Verify HMAC
-      (cond ((equal algorithm "HS256")
+      (cond ((equal algorithm "HS256") 
              (compare-HS256-digest header-string
                                    claims-string
                                    secret
@@ -184,12 +184,12 @@ token claims and token header"
             (t (cerror "Continue anyway" 'unsupported-algorithm
                        :algorithm algorithm)))
       ;; Verify timestamps
-      (let ((expires (from-unix-time (gethash "exp" claims-hash)))
-            (not-before (from-unix-time (gethash "nbf" claims-hash)))
+      (let ((expires (from-unix-time (json-getf claims-hash "exp")))
+            (not-before (from-unix-time (json-getf claims-hash "nbf")))
             (current-time (get-universal-time)))
         (when (and expires (> current-time expires))
           (cerror "Continue anyway" 'expired :delta (- current-time expires)))
         (when (and not-before (< current-time not-before))
           (cerror "Continue anyway" 'not-yet-valid :delta (- current-time not-before))))
-      ;; Return hashes
+      ;; Return json objects
       (values claims-hash header-hash))))

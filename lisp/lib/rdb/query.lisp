@@ -7,20 +7,12 @@
 
 (defclass rdb-query-engine (query-engine rdb-database) ())
 
-(defclass rdb-data-source (data-source)
-  ((db :type rdb-database :initarg :db :accessor db)
-   (schema :type rdb-schema :initarg :schema :accessor schema)))
-
-(defmethod initialize-instance :after ((self rdb-data-source) &key)
-  (unless (or (slot-boundp self 'schema) (not (slot-boundp self 'db)))
-    (setf (schema self) (schema (db self)))))
-
-(defclass rdb-execution-context (execution-context) ())
+(defclass rdb-execution-context (execution-context) ()
+  (:documentation "A context in which RDB queries may be
+  executed. DATA-FRAMEs, DATA-SOURCEs, SCHEMAs, and other complex objects are
+  stored in the slots of this class and dynamically bound during execution
+  phases."))
 
 (defclass rdb-query-plan (query-plan) ())
-
-(defclass rdb-logical-plan (logical-plan) ())
-
-(defclass rdb-physical-plan (physical-plan) ())
 
 (defclass rdb-query (query) ())
