@@ -15,15 +15,17 @@
 (defparameter *web-dash-static-directory* #P"/tmp/web/dash/static/")
 
 ;; self-signed PEM cert/key generated via 'skel make ssl-certs'
-(defvar *server* (make-instance 'https-service 
-                   :key-file (asdf:system-relative-pathname 
-                              :core "../.stash/private-key.pem")
-                   :cert-file (asdf:system-relative-pathname
-                               :core "../.stash/private-key.pem")))
+;; (defvar *server* (make-instance 'https-service 
+;;                    :key-file (asdf:system-relative-pathname 
+;;                               :core "../.stash/private-key.pem")
+;;                    :cert-file (asdf:system-relative-pathname
+;;                                :core "../.stash/private-key.pem")))
+
+(defvar *server* (make-instance 'http-service))
 
 (defun main (&key  (output *standard-output*) (port *web-dash-port*))
   (let ((*standard-output* output))
-    (print "starting dash server on ~A" port)
+    (log:info! "starting dash server on ~A" port)
     (start *server*)
     (handler-case (sb-thread:join-thread (find-if (lambda (th)
                                                     (search "service" (sb-thread:thread-name th)))

@@ -41,13 +41,33 @@
    :run-nvcc
    :nvcc-error))
 
-(defpackage :cli/tools/web
-  (:use :cl :std :cli/env :uri)
+(defpackage :cli/tools/net
+  (:use :cl :std :cli/env :uri)   
+  (:import-from :std/os :with-umask)
   (:export
    :*browser*
    :run-browser
    :browse-url
-   :browser-error))
+   :browser-error
+   :wg-showconf
+   :wg-show
+   :wg-set
+   :wg-setconf
+   :wg-generate-key-files
+   :wg-generate-keys
+   :wg-public-key
+   :wg-private-key
+   :run-wg
+   :*wg*
+   :wg-error
+   :ip-addr-add
+   :ip-link-up
+   :ip-link-add
+   :run-ip
+   :simple-ip-error
+   :*ytdl*
+   :run-ytdl
+   :ytdl-error))
 
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/env)
@@ -77,22 +97,3 @@
    :with-sbcl
    :*sbcl-runtime-options*
    :*sbcl-toplevel-options*))
-
-(defpackage :cli/tools/wg
-  (:use :cl :std :cli/env)
-  (:import-from :std/os :with-umask)
-  (:export
-   :*wg*
-   :run-wg
-   :wg-error
-   :wg-generate-key-files
-   :wg-generate-keys
-   :wg-public-key
-   :wg-private-key))
-
-(defpackage :cli/tools/ytdl
-  (:use :cl :std :cli/env)
-  (:export
-   :*ytdl*
-   :run-ytdl
-   :ytdl-error))

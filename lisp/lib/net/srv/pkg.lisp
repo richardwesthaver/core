@@ -44,7 +44,7 @@
 
 (pkg:defpkg :net/srv/oauth
   (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http)
-  (:import-from :cli/tools/web :browse-url)
+  (:import-from :cli/tools/net :browse-url)
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service))
 

@@ -20,11 +20,9 @@
                  (:file "cc" :depends-on ("pkg"))
                  (:file "nvcc" :depends-on ("pkg"))
                  (:file "systemd" :depends-on ("pkg"))
-                 (:file "wg" :depends-on ("pkg"))
                  (:file "rust" :depends-on ("pkg"))
                  (:file "sbcl" :depends-on ("pkg"))
-                 (:file "web" :depends-on ("pkg"))
-                 (:file "ytdl" :depends-on ("pkg"))))
+                 (:file "net" :depends-on ("pkg"))))
                (:module "clap"
                 :components
                 ((:file "pkg")

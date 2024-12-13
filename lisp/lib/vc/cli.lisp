@@ -20,6 +20,9 @@
 (defcmd vc-clone-cmd ()
   (vc-clone (make-instance 'vc-repo) (car *args*)))
 
+(defcmd vc-fast-export-cmd ()
+  (hg-fast-export (make-repo *default-pathname-defaults*) (car *args*)))
+
 (define-cli *vc-cli*
   :name "vc"
   :help t
@@ -32,4 +35,6 @@
           :thunk vc-push-cmd)
          (:name "pull" :description "Pull the current repo from a remote"
           :thunk vc-pull-cmd)
-         (:name "clone" :description "Clone a repo from a remote")))
+         (:name "clone" :description "Clone a repo from a remote")
+         (:name "fast-export" :description "Run the hg-fast-export script"
+          :thunk vc-fast-export-cmd)))

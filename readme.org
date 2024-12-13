@@ -2,7 +2,7 @@
 #+description: The Compiler Company Core
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
-#+comment: #+setupfile: https://cdn.compiler.company/org/clean.theme
+#+setupfile: ../org/clean.theme
 #+property: header-args :eval no-export
 #+CALL: project-details()
 

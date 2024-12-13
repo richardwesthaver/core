@@ -70,7 +70,6 @@ are missing."))
 (defgeneric vc-unbundle (self input &key &allow-other-keys))
 
 ;;; Accessors
-(defgeneric path (self))
 (defgeneric vc-head (self))
 (defgeneric vc-tags (self))
 (defgeneric vc-revs (self))

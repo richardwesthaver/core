@@ -7,13 +7,13 @@
 
 (defmacro with-temp-repo (kind &body body)
   `(let ((repo ,(make-repo ".")))
-     (setf (vc-path repo) (merge-pathnames (format nil "~A" (gensym "repo")) "/tmp/"))
+     (setf (path repo) (merge-pathnames (format nil "~A" (gensym "repo")) "/tmp/"))
      (case ,kind
        (:hg (sb-mop::change-class repo 'hg-repo))
        (:git (sb-mop::change-class repo 'git-repo))
        (t nil))
      (vc-init repo)
-     (let ((*default-pathname-defaults* (vc-path repo)))
+     (let ((*default-pathname-defaults* (path repo)))
        ,@body)))
 
 (deftest git-simple ()
@@ -36,3 +36,9 @@ vc.nu; vc mirrors update;'"
 
 (deftest vc-iterator (:skip t)
   "Test iteration over a set of VC-REPOs.")
+
+(deftest vc-bundle ()
+  (with-temp-repo :hg
+    (let ((out #p"/tmp/bundle.hg.zst"))
+      (isequal out (vc-bundle repo out :type "zstd-v2"))
+      (delete-file out))))

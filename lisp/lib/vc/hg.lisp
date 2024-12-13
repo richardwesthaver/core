@@ -60,9 +60,38 @@
 (defun hgignore (&optional (path ".hgignore"))
   (vc/proto::make-vc-ignore :path path :patterns (vc/proto::map-lines #'ppcre:create-scanner path)))
 
-;; https://www.mercurial-scm.org/doc/hgrc.5.html
-(defclass hg-config (vc-config) ())
+;;; Bundles
+(defvar *hg-bundle-types* '(:v1 :v2))
+(defvar *hg-compression-engines* '(:bzip2 :gzip :zstd))
+(deftype hg-bundle-type () `(member ,@*hg-bundle-types*))
+(deftype hg-compression-engine () `(member ,@*hg-compression-engines*))
 
+(defvar *hg-bundlespec-options* 
+  '("changegroup" "cg.version" "obsolescence" "phases" "recbranchcache" "tagsfnodescache"))
+
+;; https://hg.guido-berhoerster.org/projects/xwrited/help/bundlespec
+(defun hg-bundlespec-string-p (str)
+"A hg-bundlespec string has the following formats:
+
+<type> : The literal bundle format string is used.
+
+<compression>-<type> : The compression engine and format are delimited by a
+hyphen (\"-\").
+
+Optional parameters follow the \"<type>\". Parameters are URI escaped
+\"key=value\" pairs. Each pair is delimited by a semicolon (\";\"). The first
+parameter begins after a \";\" immediately following the \"<type>\" value."
+  (destructuring-bind (ct cv) (mapcar (lambda (x) (keywordicate (string-upcase x)))
+                                      (ssplit #\- (car (ssplit #\; str))))
+    (when (and (typep (keywordicate (string-upcase ct)) 'hg-compression-engine)
+               (typep (keywordicate (string-upcase cv)) 'hg-bundle-type))
+      (values ct cv))))
+
+;;; Config
+;; https://www.mercurial-scm.org/doc/hgrc.5.html
+(config:defconfig hg-config (vc-config) ())
+
+;;; Repo
 ;; (describe (make-instance 'hg-repo))
 ;; https://repo.mercurial-scm.org/hg/file/tip/mercurial/interfaces/repository.py
 (defclass hg-repo (vc-repo)
@@ -137,7 +166,7 @@
 (defmethod vc-log ((self hg-repo))
   (vc-run self "log"))
 
-(defmethod vc-bundle ((self hg-repo) (output pathname) &key rev branch base type)
+(defmethod vc-bundle ((self hg-repo) output &key rev branch base (type "zstd-v2"))
   (let ((args))
     (when rev
       (appendf args `("--rev" ,rev)))
@@ -149,7 +178,8 @@
       (appendf args `("--type" ,type)))
     (unless (or rev branch)
       (push "--all" args))
-    (apply #'vc-run self (push "bundle" args))))
+    (apply #'vc-run self `("bundle" ,@args ,output))
+    output))
 
 (defmethod vc-unbundle ((self hg-repo) (input pathname) &key)
   (vc-run self "unbundle" (namestring input)))
@@ -166,6 +196,24 @@
               str
               (error 'hg-error
                      :message "hg command failed: id")))))))
+
+(defvar *fast-export-directory* (merge-pathnames ".stash/fast-export/" (user-homedir-pathname)))
+(defvar *hg-fast-export-script* (merge-pathnames "hg-fast-export.sh" *fast-export-directory*))
+
+(defun hg-fast-export (repo &optional output)
+  "Call the hg-fast-export.sh script, converting a HG-REPO to a GIT-REPO which is
+initialized at OUTPUT. Note that the repo will be 'bare' and not contain a
+working directory."
+  (let* ((output (ensure-directories-exist 
+                  (or output (format nil "/tmp/~A/" (car (last (pathname-directory (path repo))))))))
+         (out-repo (make-repo output :type :git :init t)))
+    (sb-ext:run-program "/bin/bash" (list 
+                                     (namestring *hg-fast-export-script*)
+                                     "-r" (namestring (path repo)) "-M" "default")
+                        :output t
+                        :directory (pathname output))
+    out-repo))
+
 
 ;;; Client
 ;; ref: https://wiki.mercurial-scm.org/CommandServer

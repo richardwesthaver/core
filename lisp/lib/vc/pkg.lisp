@@ -29,20 +29,27 @@
    :*repo-auto-register*))
 
 (defpackage :vc/hg
-  (:use :cl :std :cli :sb-bsd-sockets :vc/proto)
+  (:use :cl :std :cli :sb-bsd-sockets :vc/proto :config)
   (:export :*hg-program* 
    :hg-repo :hg-error 
    :run-hg-command :hg-meta 
-   :make-hg-client :hg-client :hgignore))
+   :make-hg-client :hg-client :hgignore
+   :hg-bundle-type
+   :hg-compression-engine
+   :*hg-bundlespec-options*
+   :hg-bundlespec-string-p
+   :hg-config
+   :*hg-fast-export-script*
+   :hg-fast-export))
 
 (defpackage :vc/git
-  (:use :cl :std :cli :vc/proto)
+  (:use :cl :std :cli :vc/proto :config)
   (:export :*git-program* 
    :git-repo :git-error 
    :run-git-command :git-meta :gitignore))
 
 (defpackage :vc/util
-  (:use :cl :std :cli :vc/proto :vc/git :vc/hg)
+  (:use :cl :std :cli :vc/proto :vc/git :vc/hg :config)
   (:export :make-hg-repo :make-git-repo :make-repo
            :find-repo-root
            :with-current-vc-root))

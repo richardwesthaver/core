@@ -25,4 +25,3 @@
 
 (defmacro with-html ((out &optional (stream *html-output*)) &body body)
   `(let ((,out ,stream)) ,@body))
-
