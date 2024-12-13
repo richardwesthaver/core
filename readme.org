@@ -2,23 +2,23 @@
 #+description: The Compiler Company Core
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
-#+setupfile: https://cdn.compiler.company/org/clean.theme
+#+comment: #+setupfile: https://cdn.compiler.company/org/clean.theme
 #+property: header-args :eval no-export
 #+CALL: project-details()
 
 #+RESULTS:
-|-------------+-----------------------------------------------------------------------|
-| name        | core                                                                  |
-| version     | 0.1.0                                                                 |
-| description | The Compiler Company Core                                             |
-| skel-id     | 15bc-b763-ec92-1cf5                                                   |
-| root        | ~/comp/core/                                                          |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/995a0ca9d501][995a0ca9d501:710+]]                   |
-| tags        | core lisp rust emacs c                                                |
-| updated     | Thu Oct 17 22:33:35 2024 -0400                                        |
-| langs       | c cheader elisp html javascript json lisp makefile org rust text toml |
-| lines       | 102826 :λ 79814 :# 10572 :_ 12440                                     |
-|-------------+-----------------------------------------------------------------------|
+|-------------+--------------------------------------------------------------|
+| name        | core                                                         |
+| version     | 0.1.0                                                        |
+| description | The Compiler Company Core                                    |
+| skel-id     | 15bc-b763-ec92-1cf5                                          |
+| root        | ~/comp/core/                                                 |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/772aa86f47ac][772aa86f47ac:778+]]          |
+| tags        | core lisp rust emacs c                                       |
+| updated     | Thu Dec 12 21:17:51 2024 -0500                               |
+| langs       | c cheader elisp html javascript json lisp org rust text toml |
+| lines       | 116357 :λ 90336 :# 11765 :_ 14256                            |
+|-------------+--------------------------------------------------------------|
 
 #+CALL: project-links()
 
