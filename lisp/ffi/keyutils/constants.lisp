@@ -94,11 +94,11 @@
  (:integer +keyctl-caps1-ns-keyring-name+ "KEYCTL_CAPS1_NS_KEYRING_NAME" t t)
  (:integer +keyctl-caps1-ns-key-tag+ "KEYCTL_CAPS1_NS_KEY_TAG" t t)
  (:integer +keyctl-caps1-notifications+ "KEYCTL_CAPS1_NOTIFICATIONS" t t)
- (:structure keyctl-dh-params ("struct keyctl_dh_params"
-                               (key-serial-t priv "key_serial_t" "priv")
-                               (key-serial-t prime "key_serial_t" "prime")
-                               (key-serial-t base "key_serial_t" "base"))
-             t t)
+ ;; (:structure keyctl-dh-params ("struct keyctl_dh_params"
+ ;;                               (key-serial-t priv "key_serial_t" "priv")
+ ;;                               (key-serial-t prime "key_serial_t" "prime")
+ ;;                               (key-serial-t base "key_serial_t" "base"))
+ ;;             t t)
  (:structure keyctl-kdf-params ("struct keyctl_kdf_params"
                                 (c-string hashname "char *" "hashname")
                                 (c-string otherinfo "char *" "otherinfo")

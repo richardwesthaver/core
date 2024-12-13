@@ -7,9 +7,6 @@
 ;; 
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :ssh2.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

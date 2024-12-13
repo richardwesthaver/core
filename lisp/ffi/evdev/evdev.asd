@@ -7,9 +7,6 @@
 ;; https://gitlab.freedesktop.org/libevdev/libevdev
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :evdev.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

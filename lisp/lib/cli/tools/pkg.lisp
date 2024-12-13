@@ -58,12 +58,15 @@
   (:export :*systemctl* :run-systemd :run-systemctl
            :systemd-error))
 
-(defpackage :cli/tools/cargo
+(defpackage :cli/tools/rust
   (:use :cl :std :cli/env)
   (:export
    #:cargo-error
    #:*cargo*
-   #:run-cargo))
+   #:*rustup*
+   #:run-cargo
+   #:rustup-error
+   #:run-rustup))
 
 (defpackage :cli/tools/sbcl
   (:use :cl :std :cli/env)

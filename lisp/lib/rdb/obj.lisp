@@ -660,9 +660,20 @@ internal sap slots are initialized."
 ;;; Write Batches
 (defstruct rdb-writebatch sap)
 (defaccessor (sap) ((self rdb-writebatch)) (rdb-writebatch-sap self))
+(defmethod iter ((self rdb-writebatch) &key)
+  (rocksdb-writebatch-iterate self nil nil (alien-callable-function 'rocksdb-delete-value)))
+(defun rdb-writebatch-data (wb &optional size)
+  (rocksdb-writebatch-data wb size))
 
-(defstruct rdb-wbwi sap wb reserved overwrite-key data savepoints params)
+;; WBWIs consist of a WriteBatch and an Index
+(defstruct rdb-wbwi sap) ;; wb reserved overwrite-key data savepoints params
 (defaccessor (sap) ((self rdb-wbwi)) (rdb-wbwi-sap self))
+(defmethod sb-sequence:length ((self rdb-wbwi))
+  (rocksdb-writebatch-wi-count self))
+(defun rdb-wbwi-data (wbwi &optional size)
+  (rocksdb-writebatch-wi-data wbwi size))
+(defmethod iter ((self rdb-wbwi) &key)
+  (rocksdb-writebatch-wi-iterate self nil nil (sb-alien:alien-callable-function 'rocksdb-delete-value)))
 
 ;;; Env
 (defstruct rdb-env sap path threads)

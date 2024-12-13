@@ -790,11 +790,6 @@ keep-alive-stream), and should handle clean-up of it"
           (format str "~A/~A elts~%~{ ~{~A~^: ~}~^~%~}" (lru-pool-num-elts obj) (lru-pool-max-elts obj) objs)
           (format str "empty")))))
 
-(defmacro with-lock (lock &body body)
-  #+thread-support `(sb-thread:with-mutex (,lock)
-                      ,@body)
-  #-thread-support `(progn ,@body))
-
 (defun push-connection (host-port stream &optional eviction-callback)
   "Add STREAM back to connection pool with key HOST-PORT.  EVICTION-CALLBACK
    must be a function of a single parameter, and will be called with STREAM
@@ -802,7 +797,7 @@ keep-alive-stream), and should handle clean-up of it"
   (when *use-connection-pool*
     (let ((pool *connection-pool*))
       (multiple-value-bind (evicted-elt eviction-callback)
-          (with-lock (lru-pool-lock pool)
+          (with-mutex ((lru-pool-lock pool))
             (add-to-lru-pool pool host-port stream eviction-callback))
         (and eviction-callback (funcall eviction-callback evicted-elt))
         (values)))))
@@ -811,7 +806,7 @@ keep-alive-stream), and should handle clean-up of it"
   "Return the STREAM associated with key HOST-PORT"
   (when *use-connection-pool*
     (let ((pool *connection-pool*))
-      (with-lock (lru-pool-lock pool)
+      (with-mutex ((lru-pool-lock pool))
         (get-from-lru-pool pool host-port)))))
 
 (defun clear-connection-pool ()
@@ -822,7 +817,7 @@ keep-alive-stream), and should handle clean-up of it"
       (when pool
         (loop for count from 0
               do (setf (values evicted-element eviction-callback element-was-evicted)
-                       (with-lock (lru-pool-lock pool)
+                       (with-mutex ((lru-pool-lock pool))
                          (evict-tail pool)))
               do (when eviction-callback (funcall eviction-callback evicted-element))
               while element-was-evicted)))))
@@ -1108,7 +1103,8 @@ keep-alive-stream), and should handle clean-up of it"
                                     (cond
                                       (ca-path (uiop:native-namestring ca-path))
                                       ((probe-file *ca-bundle*) *ca-bundle*)
-                                      ;; In executable environment, perhaps *ca-bundle* doesn't exist.
+                                      ;; In executable environment, perhaps
+                                      ;; *ca-bundle* doesn't exist.
                                       (t :default))))
           (ssl-cert-pem-p (and ssl-cert-file
                                (std/seq:ends-with-subseq ".crt" ssl-cert-file))))
@@ -1660,7 +1656,8 @@ keep-alive-stream), and should handle clean-up of it"
       (let ((body (apply #'req:get uri :want-stream t :force-binary t
                          (std:removef args :if-exists))))
         (alexandria:copy-stream body out)
-        ;; Nominally the body gets closed, but if keep-alive is nil we need to explicitly do it.
+        ;; Usually the body gets closed, but if keep-alive is nil we need to
+        ;; explicitly do it.
         (when (open-stream-p body)
           (close body))))))
 

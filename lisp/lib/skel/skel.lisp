@@ -21,7 +21,29 @@
 (pushnew :skel *features*)
 
 #+cli
-(cli:load-package-cli *skel-cli*)
+(progn
+  #+rdb 
+  (cli:defcmd skc-db ())
+  #+gui
+  (defcmd skc-view ()
+    (if *args* 
+        (let ((stuff (loop for a in *args*
+                           collect (sk-slot-case a))))
+          (sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
+        (sk-view (if (boundp '*skel-project*) *skel-project*
+                     (if (boundp '*skel-user-config*) *skel-user-config*
+                         (if (boundp '*skel-system-config*) *skel-system-config*
+                             (skel-simple-error "skel config files not installed")))))))
+
+  #+net
+  (cli:defcmd skc-net ())
+  (cli:load-package-cli 
+   *skel-cli*
+   :cmds 
+   (#+rdb (:name db :description "interact with the skel database" :thunk skc-db)
+    #+gui (:name view :description "view an object in a new window" :thunk skc-view)
+    #+net (:name net :description "communicate with skel clients and servers" 
+           :thunk skc-net))))
 
 (defvar *skel-init-keywords* '(:config *skel-user-config* 
                                :project *skel-project*
@@ -47,5 +69,5 @@
       (values kw lst))))
 
 (defmacro with-skel (ctx &body body)
-  `(let ((*skel-project* (find-skelfile ,(or ctx *default-pathname-defaults* :load t))))
+  `(let ((*skel-project* (find-skelfile ,(or ctx *default-pathname-defaults*) :load t)))
      ,@body))

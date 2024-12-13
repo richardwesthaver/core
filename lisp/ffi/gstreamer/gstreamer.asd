@@ -1,6 +1,6 @@
 ;;; gstreamer.asd --- Gstreamer Sytem Definitions
 (defsystem :gstreamer
-  :depends-on (:std :log :glib :sb-grovel)
+  :depends-on (:std :log :glib)
   :components ((:file "pkg")
                (:file "object" :depends-on ("pkg"))
                (:file "clock" :depends-on ("object"))

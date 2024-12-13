@@ -37,7 +37,7 @@ extractor."
 (set-database-backend :rdb *rdb-backend-options*
                       (lambda () (db::%load-database-backend :rocksdb)))
 
-(defmethod load-opts ((db rdb))
+(defmethod load-opts ((db rdb) &key backfill)
   (with-latest-options (name db) (db-opts cf-names cf-opts)
        (let ((cfs (coerce 
                    (loop for name across cf-names
@@ -48,6 +48,7 @@ extractor."
                               (make-rdb-cf name :opts cf-opts)))
                    'vector)))
          (setf (db-opts db) (make-rdb-opts* db-opts))
+         (when backfill (backfill-opts (db-opts db) :full (eq backfill :full)))
          cfs)))
 
 (defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key 
@@ -129,7 +130,7 @@ object. (SAP CF) is the raw pointer."))
    ;; Note that we don't pre-populate this slot with the 'default' column
    ;; which is present on creation of a RocksDB database. Usually there isn't
    ;; much need to access this column directly as you can just access the
-   ;; database directly, which will access this column internally.
+   ;; database directly, which will access the default column internally.
    :columns (make-array 0 :element-type 'rdb-column-family
               :adjustable t
               :fill-pointer t)))
@@ -149,11 +150,14 @@ object. (SAP CF) is the raw pointer."))
 extractor."
    (setf (db-opt (db db) :prefix-extractor :push t) val)))
 
-(defmethod load-opts ((self rdb-database)) 
+(defmethod load-opts ((self rdb-database) &key (backfill t))
   (setf (columns self) 
-        (map 'vector (lambda (x) (make-instance 'rdb-column-family :cf x)) 
-             (load-opts (db self))))
+        (map 'vector (lambda (x) (make-instance 'rdb-column-family :cf x))
+             (load-opts (db self) :backfill backfill)))
   self)
+
+(defmethod backfill-opts ((self rdb-database) &key)
+  (backfill-opts (db-opts self)))
 
 (defmethod reset ((self rdb-database) &key (columns t) (opts t))
   (when columns 

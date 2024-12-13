@@ -3,7 +3,8 @@
   :depends-on (:std 
                :log :obj :xkb :parse
                (:feature :wl :wayflan) (:feature :wl :wayflan-client)
-               (:feature :x11 :clx) (:feature :x11 :stumpwm))
+               (:feature :x11 :clx) (:feature :x11 :stumpwm)
+               :cli :io)
   :components ((:file "pkg")
                (:file "err")
                (:file "server")
@@ -19,7 +20,14 @@
                    (:file "shell")))
                  #+x11
                  (:module "x11"
-                  :components ((:file "pkg")))))
+                  :components 
+                  ((:file "pkg")
+                   (:module "stump"
+                    :components
+                    ((:file "pkg")
+                     (:file "var")
+                     (:module "mod"
+                      :components ((:file "disk")))))))))
                (:file "ext"))
   :in-order-to ((test-op (test-op "gui/tests"))))
 

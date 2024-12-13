@@ -125,3 +125,7 @@ example."
 (defclass binary-expr (expr)
   ((lhs :initarg :lhs :accessor lhs)
    (rhs :initarg :rhs :accessor rhs)))
+
+;;; NODE objects
+(defclass node () ())
+(defmacro defnode (name super slots &rest opts))

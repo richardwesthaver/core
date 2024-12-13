@@ -30,7 +30,6 @@ the body of WITH-DB forms.")
 (defvar *database-backend-close-options* '(close destroy))
 
 (defun add-database-loader (backend thunk)
-  
   (let ((flist (gethash backend *database-backends*)))
     (setf (gethash backend *database-backends*) (pushnew thunk flist :test 'equalp))))
 
@@ -47,8 +46,9 @@ backend keyword BACKEND."
 
 (declaim (inline %load-database-backend))
 (defun %load-database-backend (backend)
-  (dolist (th (gethash backend *database-backends*))
-    (funcall th)))
+  (when-let ((be (gethash backend *database-backends*)))
+    (dolist (th be)
+      (funcall th))))
 
 (defun load-database-backend (backend &optional save)
   "Load database BACKEND and set value of *DATABASE-BACKEND*. When SAVE is
@@ -181,15 +181,15 @@ saved."
   ((db :initform nil :initarg :db :accessor db))
   (:documentation "Base class for Database objects."))
 
-(defclass database-schema (dynamic-schema)
+(defclass upgradable-schema (schema)
   ((version :accessor version :initarg :version :initform 1)
    (upgrade :accessor upgrade :initform nil)))
 
-(defmethod print-object ((self database-schema) stream)
+(defmethod print-object ((self upgradable-schema) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A ~A" (id self) (version self))))
 
-(defmethod dump-schema ((self database-schema) &optional (stream t))
+(defmethod dump-schema ((self upgradable-schema) &optional (stream t))
   (awhen (upgrade self)
     (format stream "upgrade:~%~A~%" it)))
 

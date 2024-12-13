@@ -93,7 +93,7 @@
 
 (define-alien-routine rustls-certified-key-free void (key (* rustls-certified-key)))
 
-;; (define-alien-routine rustls-root-cert-store-builder-new (* rustls-root-cert-store-builder))
+(define-alien-routine rustls-root-cert-store-builder-new (* rustls-root-cert-store-builder))
 
 (define-alien-routine rustls-root-cert-store-builder-add-pem rustls-result
   (builder (* rustls-root-cert-store-builder))
@@ -108,7 +108,7 @@
 
 (define-alien-routine rustls-root-cert-store-builder-build rustls-result
   (builder (* rustls-root-cert-store-builder))
-  (root-cert-store-out (* (* rustls-root-cert-store))))
+  (config-out (* (* rustls-root-cert-store))))
 
 (define-alien-routine rustls-root-cert-store-builder-free void
   (builder (* rustls-root-cert-store-builder)))
@@ -153,6 +153,13 @@
 ;;; rustls_web_pki_server_cert_verifier
 
 ;;; rustls_client_config
+(define-alien-routine rustls-client-config-builder-new (* rustls-client-config-builder))
+
+(define-alien-routine rustls-client-config-builder-new-custom rustls-result
+  (provider (* rustls-crypto-provider))
+   (tls-versions (* unsigned-short))
+   (tls-versions-len size-t)
+   (builder-out (* (* rustls-client-config-builder))))
 
 ;;; rustls_client_connection
 (define-alien-routine rustls-client-connection-new rustls-result
@@ -234,7 +241,7 @@
 
 (define-alien-routine rustl-connection-free void (conn (* rustls-connection)))
 
-(define-alien-routine rustls-error void (result rustls-result) (len size-t) (out-n (* size-t)))
+(define-alien-routine rustls-error void (result rustls-result) (buf (* unsigned-char)) (len size-t) (out-n (* size-t)))
 
 (define-alien-routine rustls-result-is-cert-errorerror boolean (result rustls-result))
 

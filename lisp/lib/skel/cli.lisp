@@ -9,13 +9,12 @@
 (defcmd skc-init ()
   (let ((file (when *args* (pop *args*)))
         (name (when (> *argc* 1) (pop *args*))))
-    ;; TODO: test, may need to be
-    ;; sequential for side-effect
-    ;; of pop
+    ;; TODO: test, may need to be sequential for side-effect of pop
     (handler-bind
         ((sb-ext:file-exists
            #'(lambda (s)
-               (std:println (format nil "file already exists: ~A" (or file *default-skelfile*)))
+               (std:println (format nil "file already exists: ~A" 
+                                    (or file *default-skelfile*)))
                (let ((f2 (read-line)))
                  (if (string= f2 "") 
                      (error s)
@@ -87,7 +86,6 @@
     ("scripts" (sk-scripts *skel-project*))
     ("rules" (sk-rules *skel-project*))
     ("phases" (hash-table-alist (sk-phases *skel-project*)))
-    ;; ("env" (sk-env *skel-project*))
     ("bind" (sk-bind *skel-project*))
     ("include" (sk-include *skel-project*))
     ("stash" (sk-stash *skel-project*))
@@ -117,17 +115,6 @@
 (defcmd skc-edit ()
   (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
-
-#+gui
-(defcmd skc-view ()
-  (if *args* 
-      (let ((stuff (loop for a in *args*
-                         collect (sk-slot-case a))))
-        (sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
-      (sk-view (if (boundp '*skel-project*) *skel-project*
-                   (if (boundp '*skel-user-config*) *skel-user-config*
-                       (if (boundp '*skel-system-config*) *skel-system-config*
-                           (skel-simple-error "skel config files not installed")))))))
 
 (defcmd skc-id ()
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
@@ -198,10 +185,6 @@
          (:name id
           :description "print the project id"
           :thunk skc-id)
-         #+gui
-         (:name view
-          :description "view an object in a new window"
-          :thunk skc-view)
          (:name make
           :description "build project targets"
           :thunk skc-make)

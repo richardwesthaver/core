@@ -13,7 +13,7 @@
    :sql :dql))
 
 (defpackage :q/simple
-  (:use :cl :std :q/proto :obj/query :obj/plan :obj/schema :obj/ast))
+  (:use :cl :std :q/proto :query :plan :schema :ast))
 
 (defpackage :q/sql
   (:nicknames :sql)
@@ -63,7 +63,7 @@
 
 (defpackage :q/dql
   (:nicknames :dql)
-  (:use :cl :std :q/proto :query :id :dat/sxp :dat/proto :ast :schema :plan)
+  (:use :cl :std :q/proto :query :id :sxp :dat/proto :ast :schema :plan)
   (:export
    :dql-error
    :dql-data-source

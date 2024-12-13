@@ -49,6 +49,7 @@
   (:use :cl)
   (:mix :sb-int)
   (:shadowing-import-from :sb-int :once-only)
+  (:shadow :make-gensym :make-gensyms :make-gensym-list)
   (:export
    :ensure-symbol
    :format-symbol
@@ -68,6 +69,7 @@
   (:shadowing-import-from :sb-int 
    :ensure-list :recons :memq :assq
    :ensure-list :proper-list-of-length-p :proper-list-p :singleton-p)
+  (:shadow :group)
   (:import-from :std/sym :symb)
   (:import-from :std/named-readtables :parse-body)
   (:export
@@ -655,6 +657,7 @@
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :removef)
   (:import-from :std/file :file)
+  (:shadow :message)
   (:export :sink :source :element :filter
    :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
    :element-stream :value :index :resolve-element
@@ -685,7 +688,8 @@
   (:import-from :sb-int :collect)
   (:import-from :std/array :signed-array-length)
   (:export :take :starts-with-subseq :ends-with-subseq
-   :split-sequence :split-sequence-if :split-sequence-if-not))
+   :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
+   :starts-with-one-of-p))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)

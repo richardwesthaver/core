@@ -1,0 +1,12 @@
+HOMER is an advanced home management application for Unix users.
+
+- provide a home management background service
+  - launched on login
+  - runs under systemd
+  - maintains user configs, repos, services, applications
+  - provides many other lispy endpoints
+
+- provide the UI trifecta - GUI, Web, and CLI
+  - interactive debugging and exploration with McCLIM
+  - live monitoring and mobile access over web client
+  - drive manual via CLI

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :packy/core
-  (:use :cl :std :obj/id :dat/proto :io)
+  (:use :cl :std :id :dat/proto :io :ast :log)
   (:export
    :*packy-url*
    :pack
@@ -30,16 +30,23 @@
    :*pack*
    :*packy-registry*
    :*packy-compressor*
-   :*packy-decompressor*))
+   :*packy-decompressor*
+   :*packy-db*
+   :*packy-logger*
+   :*packy-home*
+   :packy-condition
+   :packy-error))
 
 (defpackage :packy/db
-  (:use :cl :std :packy/core :obj/db :rdb)
-  (:export :package-database))
+  (:use :cl :std :packy/core :db :rdb :schema :time)
+  (:export :package-database
+           :init-packy-db))
 
 (defpackage :packy/client
   (:use :cl :std :packy/core :net/core)
   (:export :pk-index
-           :packy-client))
+           :packy-client
+           :init-packy))
 
 (defpackage :packy/server
   (:use :cl :std :packy/core :net/srv)

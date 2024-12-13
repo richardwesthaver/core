@@ -1,9 +1,6 @@
 ;;; ublk.asd --- UBLK SYSTEMS
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :ublk.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

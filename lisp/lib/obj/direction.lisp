@@ -1,4 +1,4 @@
-;;; obj/direction.lisp --- Physical and Metaphysical Directions
+;;; obj/direction.lisp
 
 ;;
 

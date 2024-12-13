@@ -175,7 +175,11 @@ and '?BAR."
 (defun dfboundp! (fun &optional env)
   "Check if FUN is bound as a DQL-FUNCTOR in the given environment."
   (sb-cltl2::lexenv-find fun :user-data :lexenv env :test 'match-dql-function))
- 
+
+(defmacro dquoty (form &environment env)
+  "Like QUOTY but builds DQL functors instead of functions from unknown lists."
+  )
+
 (defun term-to-head (term)
   (etypecase term
     (atom (values (symbolicate term '/*) nil))
@@ -197,8 +201,6 @@ and '?BAR."
 (defmacro generate-variable (term val &environment env)
   "Bind the symbol TERM to VAL in the specified ENV."
   `(register-dql-variable ,term ,val ,env))
-
-(defun generate-fact (head))
 
 (defun dql-functor-p (sym)
   "Check if SYM looks like a DQL functor. It shoulb be suffixed by a #\/

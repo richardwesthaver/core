@@ -35,16 +35,20 @@
   (:nicknames :x11)
   (:shadowing-import-from :std/type :array-index)
   (:use :cl :std :gui/core :xlib)
-  (:export))
+  (:export
+   #:display-extensions
+   #:display-fonts
+   #:init-x11
+   #:*x11-display*))
 
-(defvar *default-wm* :x11)
+(defvar *default-display-protocol* :x11)
 
-(defun wm-package (&optional wm)
+(defun display-protocol-package (&optional proto)
   "Return the WM package, either ':x11' for X11 or ':wl' for
 Wayland. When no WM is provided, we interrogate the host to find out
 which WM is currently running, and as a last resort falls back to
 *DEFAULT-WM*."
-  (case wm
-    ((or :x11 :wl)  (find-package wm))
-    ((nil) (find-package *default-wm*))
+  (case proto
+    ((or :x11 :wl)  (find-package proto))
+    (null (find-package *default-display-protocol*))
     (t (error "invalid wm type"))))

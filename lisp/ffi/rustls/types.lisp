@@ -5,6 +5,12 @@
 ;;; Code:
 (in-package :rustls)
 
+(define-alien-enum (rustls-handshake-kind int)
+                   :unknown 0
+                   :full 1
+                   :full-with-hello-retry-request 2
+                   :resumed 3)
+
 (define-alien-enum (rustls-result unsigned-int)
                    :ok 7000
                    :io 7001
@@ -117,12 +123,15 @@
                    :client-cert-verifier-builder-no-root-anchors 7500)
 
 (define-alien-enum (rustls-tls-version int)
+                   :unknown 0
                    :sslv2 512
                    :sslv3 768
                    :tlsv1-0 769
                    :tlsv1-1 770
                    :tlsv1-2 771
                    :tlsv1-3 772)
+
+(define-alien-type rustls-crypto-provider (struct rustls-crypto-provider))
 
 (define-alien-type rustls-accepted (struct rustls-accepted))
 

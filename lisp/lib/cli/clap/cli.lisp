@@ -16,6 +16,12 @@
 
 (defopt help-opt (print-help *cli*))
 (defopt version-opt (print-version *cli*))
+(defopt level-opt
+  (setq *log-level* (if *arg* 
+                        (if (stringp *arg*)
+                            (sb-int:keywordicate (string-upcase *arg*))
+                            *arg*)
+                        *log-level*)))
 
 (defmacro define-cli (sym &key name version help description thunk opts cmds include)
   "Define a symbol SYM bound to a top-level CLI object.
@@ -201,7 +207,7 @@ CLI is updated based on the current environment and dynamically bound to
 ;; these functions are used to populate a *CLI-PACKAGE-TABLE* record.
 (defmacro load-package-cli (cli &key (package *package*) cmds opts)
   (with-gensyms (%cli)
-    `(let ((,%cli (if (keywordp ,cli) (copy-object (package-cli ,cli)) ,cli)))
+    `(let ((,%cli (if (keywordp ,cli) (copy-object (package-cli (find-package ,cli))) ,cli)))
        (setf (cmds ,%cli) (concatenate 'vector (cmds ,%cli) (make-cmds ',cmds))
              (opts ,%cli) (concatenate 'vector (opts ,%cli) (make-opts ',opts)))
        (setf (%package-cli ,package)

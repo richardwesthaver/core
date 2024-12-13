@@ -1,5 +1,8 @@
 (in-package :packy/core)
 
+(define-condition packy-condition () ())
+(deferror packy-error (simple-error packy-condition) () (:auto t))
+
 (defclass package-id (id)
   ((id :initform (make-array 16 :element-type 'octet) :initarg :id :type (octet-vector 16) :accessor id)))
 
@@ -19,13 +22,13 @@
 
 (defclass pack (ast id) ())
 
-(defclass package-stream (pack stream) ())
+(defclass package-stream (pack io-stream) ())
 
 (defclass compressed-package (package-stream decompressing-stream) ())
 
 (defclass file-package (package-stream file-stream) ())
 
-(defclass directory-package (package-stream) 
+(defclass directory-package (package-stream)
   ((directory :initarg :directory :accessor dir)))
 
 (defun packed-path-p (path)
@@ -36,7 +39,7 @@ package-descriptor."
 (defgeneric pack (self &key &allow-other-keys)
   (:method ((self pathname) &key)
     (when (packed-path-p self)
-      (error 'simple-packy-error "Package is already compressed: ~A" self))))
+      (packy-error "Package is already compressed: ~A" self))))
 
 (defgeneric unpack (self &key &allow-other-keys))
 (defgeneric install-package (self &key &allow-other-keys))

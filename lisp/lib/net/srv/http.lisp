@@ -12,6 +12,8 @@
 (in-package :net/srv/http)
 
 (defvar *default-content-type* "text/html")
+(defvar *header-stream* nil)
+
 (eval-always
   (defvar *http-status-message-map* (make-hash-table)
     "Used to map numerical return codes to message strings.")
@@ -21,7 +23,7 @@
 ;;; Utils
 (defun ssl-p (&optional (service *service*))
   (and (secure-service-p service)
-       (eql :https (socket-protocol (socket service)))))
+       (eql :https (sb-bsd-sockets:socket-protocol (sb-bsd-sockets:socket service)))))
 
 ;;; Return Codes
 (defmacro def-http-return-code (name value message)
@@ -99,7 +101,109 @@ server's status line."
 (def-http-return-code +http-network-connect-timeout-error+ 599 "Network Connect Timeout Error")
 
 ;;; Response
-(defclass http-service-response (response) ((response :type http-response)))
+(defclass http-service-response (response) 
+  ((response :type http-response)
+   (content-type :reader content-type
+                 :documentation "The outgoing 'Content-Type' http
+header which defaults to the value of *DEFAULT-CONTENT-TYPE*.")
+   (headers-out :initform nil
+                :reader headers-out
+                :documentation "An alist of the outgoing http headers
+not including the 'Set-Cookie', 'Content-Length', and 'Content-Type'
+headers.  Use the functions HEADER-OUT and \(SETF HEADER-OUT) to
+modify this slot.")
+   (cookies-out :initform nil
+                :accessor cookies-out
+                :documentation "The outgoing cookies.  This slot's
+value should only be modified by the functions defined in cookie.lisp.")))
+
+(defmethod content-length ((res http-service-response))
+  (http-content-length (slot-value res 'response)))
+
+(defmethod response-status ((res http-service-response))
+  (http-status (slot-value *response* 'response)))
+
+(defmethod response-ok-p ((res http-service-response))
+  (eql (response-status (slot-value *response* 'response)) +http-ok+))
+
+(defun headers-out* (&optional (res *response*))
+  "Returns an alist of the outgoing headers associated with the
+RESPONSE object."
+  (headers-out res))
+
+(defun cookies-out* (&optional (response *response*))
+  "Returns an alist of the outgoing cookies associated with the
+RESPONSE object."
+  (cookies-out response))
+
+(defun (setf cookies-out*) (new-value &optional (res *response*))
+  "Sets the alist of the outgoing cookies associated with the RESPONSE
+object RES."
+  (setf (cookies-out res) new-value))
+
+(defun content-type* (&optional (res *response*))
+  "The outgoing 'Content-Type' http header of RES."
+  (content-type res))
+
+(defun (setf content-type*) (new-value &optional (res *response*))
+  "Sets the outgoing 'Content-Type' http header of RES."
+  (setf (header-out :content-type res) new-value))
+
+(defun content-length* (&optional (res *response*))
+  "The outgoing 'Content-Length' http header of RES."
+  (content-length res))
+
+(defun (setf content-length*) (new-value &optional (res *response*))
+  "Sets the outgoing 'Content-Length' http header of RES."
+  (setf (header-out :content-length res) new-value))
+
+(defun response-status* (&optional (res *response*))
+  "The http return code of RES.  The return codes Hunchentoot can
+handle are defined in specials.lisp."
+  (response-status res))
+
+(defun (setf response-status*) (new-value &optional (res *response*))
+  "Sets the http return code of RES."
+  (setf (response-status res) new-value))
+
+(defun header-out-set-p (name &optional (res *response*))
+  "Returns a true value if the outgoing http header named NAME has
+been specified already.  NAME should be a keyword or a string."
+  #|assoc*|# (assoc name (headers-out res)))
+
+(defun header-out (name &optional (res *response*))
+  "Returns the current value of the outgoing http header named NAME.
+NAME should be a keyword or a string."
+  (cdr (assoc name (headers-out res))))
+
+(defun cookie-out (name &optional (res *response*))
+  "Returns the current value of the outgoing cookie named
+NAME. Search is case-sensitive."
+  (cdr (assoc name (cookies-out res) :test #'string=)))
+
+(defgeneric (setf header-out) (new-value name &optional res)
+  (:documentation "Changes the current value of the outgoing http
+header named NAME \(a keyword or a string).  If a header with this
+name doesn't exist, it is created.")
+  (:method (new-value (name symbol) &optional (res *response*))
+   ;; the default method
+   (let ((entry (assoc name (headers-out res))))
+     (if entry
+       (setf (cdr entry) new-value)
+       (setf (slot-value res 'headers-out)
+             (acons name new-value (headers-out res))))
+     new-value))
+  (:method (new-value (name string) &optional (res *response*))
+   "If NAME is a string, it is converted to a keyword first."
+   (setf (header-out (keywordicate name) res) new-value))
+  (:method :after (new-value (name (eql :content-length)) &optional (res *response*))
+   "Special case for the `Content-Length' header."
+   (check-type new-value integer)
+   (setf (slot-value res 'content-length) new-value))
+  (:method :after (new-value (name (eql :content-type)) &optional (res *response*))
+   "Special case for the `Content-Type' header."
+   (check-type new-value (or null string))
+   (setf (slot-value res 'content-type) new-value)))
 
 ;; content-type
 ;; content-length *
@@ -123,6 +227,133 @@ server's status line."
 (defclass http-service-request (request)
   ((request :type http-request)))
 
+(defun start-http-output (status &optional (content nil contentp))
+  "Sends all headers and maybe the content body to *SERBICE-STREAM*. Returns
+immediately and does nothing if called more than once per request. Called by
+PROCESS-REQUEST and/or SEND-HEADERS. The STATUS argument represents the
+integer return code of the request. The corresponding reason phrase is
+determined by calling the HTTP-STATUS-MESSAGE function. The CONTENT provided
+represents the body data to send to the client, if any. If it is not
+specified, no body is written to the client. The handler function is expected
+to directly write to the stream in this case.
+
+Returns the stream that is connected to the client."
+  (let* ((chunkedp (and (output-chunking-p *service*)
+                        (eq (server-protocol *request*) :http/1.1)
+                        ;; only turn chunking on if the content
+                        ;; length is unknown at this point...
+                        (null (or (content-length*) contentp))))
+         (request-method (request-method *request*))
+         (head-request-p (eq request-method :head))
+         content-modified-p)
+    (multiple-value-bind (keep-alive-p keep-alive-requested-p)
+        (keep-alive-p *request*)
+      (when keep-alive-p
+        (setq keep-alive-p
+              ;; use keep-alive if there's a way for the client to
+              ;; determine when all content is sent (or if there
+              ;; is no content)
+              (or chunkedp
+                  head-request-p
+                  (eql (response-status*) +http-not-modified+)
+                  (content-length*)
+                  content)))
+      ;; now set headers for keep-alive and chunking
+      (when chunkedp
+        (setf (header-out :transfer-encoding) "chunked"))
+      (cond (keep-alive-p
+             (setf *finish-processing-socket* nil)
+             (when (and (service-read-timeout *service*)
+                        (or (not (eq (server-protocol *request*) :http/1.1))
+                            keep-alive-requested-p))
+               ;; persistent connections are implicitly assumed for
+               ;; HTTP/1.1, but we return a 'Keep-Alive' header if the
+               ;; client has explicitly asked for one
+               (unless (header-out :connection) ; allowing for handler overriding
+                 (setf (header-out :connection) "Keep-Alive"))
+               (setf (header-out :keep-alive)
+                     (format nil "timeout=~D" (service-read-timeout *service*)))))
+            ((not (header-out-set-p :connection))
+             (setf (header-out :connection) "Close"))))
+    (unless (and (header-out-set-p :server)
+                 (null (header-out :server)))
+      (setf (header-out :server) (or (header-out :server)
+                                     (name *service*))))
+    (setf (header-out :date) (time:rfc-1123-date))
+    (when (and (stringp content)
+               (not content-modified-p)
+               (starts-with-one-of-p (or (content-type*) "")
+                                     *content-types-for-url-rewrite*))
+      ;; if the Content-Type header starts with one of the strings
+      ;; in *CONTENT-TYPES-FOR-URL-REWRITE* then maybe rewrite the
+      ;; content
+      (setq content (maybe-rewrite-urls-for-session content)))
+    (when (stringp content)
+      ;; if the content is a string, convert it to the proper external format
+      (setf content (sb-ext:string-to-octets content :external-format (response-external-format*))
+            (content-type*) (maybe-add-charset-to-content-type-header (content-type*)
+                                                                      (response-external-format*))))
+    (when content
+      ;; whenever we know what we're going to send out as content, set
+      ;; the Content-Length header properly; maybe the user specified
+      ;; a different content length, but that will wrong anyway
+      (setf (header-out :content-length) (length content)))
+    ;; send headers only once
+    (when *headers-sent*
+      (return-from start-http-output))
+    (setq *headers-sent* t)
+    (send-http-response *service*
+                        *service-stream*
+                        status
+                        :headers (headers-out*)
+                        :cookies (cookies-out*)
+                        :content (unless head-request-p
+                                   content))
+    ;; when processing a HEAD request, exit to return from PROCESS-REQUEST
+    (when head-request-p
+      (throw 'request-processed nil))
+    (when chunkedp
+      ;; turn chunking on after the headers have been sent
+      (unless (typep *service-stream* 'chunked-stream)
+        (setq *service-stream* (make-chunked-stream *service-stream*)))
+      (setf (output-chunking-p *service-stream*) t))
+    *service-stream*))
+
+(defun send-http-headers ()
+  (start-http-output (response-status*)))
+
+(defmethod process-request ((req http-service-request))
+  (catch 'request-processed ;; used by HTTP HEAD handling to end request
+                            ;; processing in a HEAD request (see START-HTTP-OUTPUT)
+    (let ((*request* req)
+          ;; *tmp-files*
+          *headers-sent*)
+      (labels
+          ((report-error-to-client (error &optional backtrace)
+             (when *log-service-errors*
+               (net/srv:log-message* log:*log-level* "~A~@[~%~A~]" error (when log:*log-show-backtrace*
+                                                               backtrace)))
+                    (start-http-output +http-internal-server-error+
+                                       (service-status-message 
+                                        *service*
+                                        +http-internal-server-error+
+                                        :error (princ-to-string error)
+                                        :backtrace (princ-to-string backtrace)))))
+        (multiple-value-bind (contents error backtrace)
+            ;; skip dispatch if bad request
+            (when (response-ok-p *response*)
+              (catch 'handler-done
+                (values (handle-request *service* *request*))))
+          (declare (ignorable error backtrace))
+          (when error
+            ;; error occurred in request handler
+            (report-error-to-client error backtrace))
+          (unless *headers-sent*
+            (start-http-output (response-status *response*)
+                               (or contents
+                                   (service-status-message 
+                                    *service*
+                                    (response-status *response*))))))))))
 ;;; Session
 (defclass http-session (session)
   ((id :type integer :initarg :id)
@@ -218,6 +449,8 @@ server's status line."
   ((chunk-output-p :type boolean :initarg :chunk-output-p)
    (chunk-input-p :type boolean :initarg :chunk-input-p))
   (:default-initargs
+   :request-class 'http-service-request
+   :response-class 'http-service-response
    :chunk-output-p t
    :chunk-input-p t))
 
@@ -252,7 +485,9 @@ can be parsed by most log analysis tools."
                            &key headers cookies content)
   "Send a HTTP response to STREAM and log it with SERVICE.
 
-STATUS-CODE is the HTTP status code used in the response, HEADERS and COOKIES are used to generate the header. If CONTENT is provided, it is used as the body.
+STATUS-CODE is the HTTP status code used in the response, HEADERS and COOKIES
+are used to generate the header. If CONTENT is provided, it is used as the
+body.
 
 Headers are written to *HEADER-STREAM* when non-nil. 
 
@@ -280,24 +515,73 @@ Returns STREAM."
     (finish-output stream))
   stream)
 
+(defun get-http-request-data (stream)
+  "Reads incoming headers from the client via STREAM.  Returns as
+multiple values the headers as an alist, the method, the URI, and the
+protocol of the request."
+  (with-character-stream-semantics
+    (let ((first-line (read-initial-request-line stream)))
+      (when first-line
+        (unless (every #'printable-ascii-char-p first-line)
+          (send-bad-request-response stream "Non-ASCII character in request line")
+          (return-from get-http-request-data nil))
+        (destructuring-bind (&optional method url-string protocol)
+            (split "\\s+" first-line :limit 3)
+          (cond ((not
+                  (setf method
+                        (find method +valid-request-methods+ :test #'string-equal)))
+                 (send-bad-request-response stream)
+                 (return-from get-http-request-data nil))
+                ((not url-string)
+                 (send-bad-request-response stream)
+                 (return-from get-http-request-data nil))
+                ((not protocol)
+                 ;; HTTP/1.1 specifies that if protocol is not provided
+                 ;; then assume protocol version to be 1.0
+                 (setf protocol :http/1.0))
+                ((not
+                  (setf protocol
+                        (find protocol +valid-protocol-versions+ :test #'string-equal)))
+                 (send-unknown-protocol-response stream)
+                 (return-from get-http-request-data nil)))
+          (when *header-stream*
+            (format *header-stream* "~A~%" first-line))
+          (let ((headers (read-http-headers stream *header-stream*)))
+            ;; maybe handle 'Expect: 100-continue' header
+            (when-let ((expectations (cdr #|assoc*|# (assoc :expect headers))))
+              (when (member "100-continue" (ppcre:split "\\s*,\\s*" expectations) :test #'equalp)
+                ;; according to 14.20 in the RFC - we should actually
+                ;; check if we have to respond with 417 here
+                (let ((continue-line
+                        (format nil "HTTP/1.1 ~D ~A"
+                                +http-continue+
+                                (http-status-message +http-continue+))))
+                  (write-sequence (map 'list #'char-code continue-line) stream)
+                  (write-sequence std/string::+crlf+ stream)
+                  (write-sequence std/string::+crlf+ stream)
+                  (force-output stream)
+                  (when *header-stream*
+                    (format *header-stream* "~A~%" continue-line)))))
+            (values headers method url-string protocol)))))))
+
 #+ssl
 (defclass ssl-service (service)
-  ((certificate-file :initarg :certificate-file
-                     :reader certificate-file)
-   (privatekey-file :initarg :privatekey-file
-                    :reader privatekey-file)
-   (privatekey-password :initarg :privatekey-password
-                        :reader privatekey-password))
+  ((cert-file :initarg :cert-file
+                     :reader cert-file)
+   (key-file :initarg :key-file
+                    :reader key-file)
+   (password :initarg :password
+                        :reader password))
   (:default-initargs
    :password nil
    :port 443))
 
 (defmethod initialize-instance :after ((self ssl-service) &rest initargs)
   (declare (ignore initargs))
-  (setf (slot-value self 'privatekey-file)
-        (namestring (truename (privatekey-file self)))
-        (slot-value self 'certificate-file)
-        (namestring (truename (certificate-file self)))))
+  (setf (slot-value self 'key-file)
+        (namestring (truename (key-file self)))
+        (slot-value self 'cert-file)
+        (namestring (truename (cert-file self)))))
 
 (defmethod secure-service-p ((self ssl-service))
   (declare (ignore self))
@@ -307,9 +591,11 @@ Returns STREAM."
   (call-next-method self
                     (cl+ssl:make-ssl-server-stream
                      stream
-                     :certificate (certificate-file self)
-                     :key (privatekey-file self)
-                     :password (privatekey-password self))))
+                     :certificate (cert-file self)
+                     :key (key-file self)
+                     :password (password self))))
 
 (defun get-peer-ssl-certificate ()
   (cl+ssl:ssl-stream-x509-certificate *service-stream*))
+
+(defclass https-service (http-service ssl-service) ())

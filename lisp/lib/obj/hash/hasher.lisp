@@ -61,6 +61,8 @@
 
 ;;; Perfect Hashes
 
-;; (setq *h* (sb-c:make-perfect-hash-lambda
-;;            (map '(array (unsigned-byte 32) 1) (lambda (x) (ldb (byte 32 0) (sxhash x)))
-;;                 '(a b c d e f g h i j k l m n o p))))
+#|
+(setq *h* (sb-c:make-perfect-hash-lambda
+           (map '(array (unsigned-byte 32) 1) (lambda (x) (ldb (byte 32 0) (sxhash x)))
+                '(a b c d e f g h i j k l m n o p))))
+|#

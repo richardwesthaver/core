@@ -15,6 +15,10 @@
 ;;     unicode<= unicode>=))
 (in-package :std/string)
 
+(defconstant +cr+ #\Return)
+(defconstant +lf+ #\Linefeed)
+(sb-int:defconstant-eqx +crlf+ (coerce #(+cr+ +lf+) 'simple-array) #'equalp)
+
 ;; (mapc (lambda (s) (export s)) sb-unicode-syms)
 ;; (reexport-from 
 ;;  :sb-unicode

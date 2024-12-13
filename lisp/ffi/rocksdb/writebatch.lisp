@@ -295,7 +295,7 @@
 (define-alien-routine rocksdb-writebatch-wi-clear void
   (batch (* rocksdb-writebatch-wi)))
 
-(define-alien-routine rocksdb-writebatch-wi-count void
+(define-alien-routine rocksdb-writebatch-wi-count int
   (batch (* rocksdb-writebatch-wi)))
 
 (define-alien-routine rocksdb-writebatch-wi-put-log-data void
@@ -313,10 +313,10 @@
   (batch (* rocksdb-writebatch-wi))
   (size (* size-t)))
 
-(define-alien-routine rocksdb-writebatch-wi-set-savepoint void
+(define-alien-routine rocksdb-writebatch-wi-set-save-point void
   (batch (* rocksdb-writebatch-wi)))
 
-(def-with-errptr rocksdb-writebatch-wi-rollback-to-savepoint void
+(def-with-errptr rocksdb-writebatch-wi-rollback-to-save-point void
   (batch (* rocksdb-writebatch-wi)))
 
 (def-with-errptr rocksdb-writebatch-wi-get-from-batch (array unsigned-char)

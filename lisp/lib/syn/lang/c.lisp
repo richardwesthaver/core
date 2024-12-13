@@ -9,6 +9,4 @@
   (:export))
 
 (in-package :syn/lang/c)
-
 (load-tree-sitter-c)
-(tree-sitter-c)

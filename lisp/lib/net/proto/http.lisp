@@ -32,9 +32,7 @@
   (content-length nil :type (or null integer))
   (chunked-p nil :type boolean)
   (upgrade-p nil :type boolean)
-
   headers
-
   ;; private
   (header-read 0 :type fixnum)
   (mark -1 :type fixnum)
@@ -355,6 +353,9 @@
 
 ;;; http
 (defun make-http-parser (http &key first-line-callback header-callback body-callback finish-callback (head-request nil))
+  "Generate a parser function for HTTP objects with a set of callbacks. The
+resulting function takes a single argument which contains an octet-vector
+buffer."
   (declare (type http http))
   (let (callbacks
 

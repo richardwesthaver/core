@@ -4,10 +4,8 @@
 
 ;;; Code:
 (in-package :cli/tools/wg)
-(deferror cc-error (simple-error error) ())
 
-(defun wg-error (fmt &rest args)
-  (error 'wg-error :format-arguments args :format-control fmt))
+(deferror wg-error (simple-error error) () (:auto t))
 
 (defparameter *wg* (find-exe "wg"))
 
@@ -40,7 +38,6 @@
   (let* ((privkey (wg-private-key))
          (pubkey (wg-public-key privkey)))
     (values pubkey privkey)))
-
 
 (defun wg-generate-key-files (&optional (private "private.key") (public "public.key"))
   (multiple-value-bind (pubkey privkey) (wg-generate-keys)

@@ -11,9 +11,6 @@
 ;;   blake3_avx512_x86-64_unix.S
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :blake3.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

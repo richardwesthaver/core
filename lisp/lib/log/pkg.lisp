@@ -87,4 +87,5 @@
    :alien-sink
    :ilevel
    :octets-to-log-message
-   :log-message-to-octets))
+   :log-message-to-octets
+   :*log-show-backtrace*))

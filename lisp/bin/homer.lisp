@@ -2,7 +2,6 @@
 
 ;;; Code:
 (defpackage :bin/homer
-  (:nicknames :homer)
   (:use :cl :std :log :ast :sxp :rdb :skel :packy :cli :obj/id :krypt :vc)
   (:export :*home-config*))
 

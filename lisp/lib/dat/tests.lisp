@@ -147,16 +147,9 @@
       (let ((footer (dat/parquet::parquet-read-footer st)))
         (is (typep footer
                    'dat/parquet::parquet-file-meta-data))
-        (trace! (slot-value footer 'dat/parquet::schema))
-        (trace! (file-position st))
-        (trace! (file-length st))))))
-
-;;; Midi
-;; FIX 2024-10-26: move to packy test files
-(defparameter *midi-file* "~/.stash/MIDI_sample.mid")
-
-(deftest midi ()
-  (istype 'midi:midifile (midi:read-midi-file *midi-file*)))
+        (info! (slot-value footer 'dat/parquet::schema))
+        (info! (file-position st))
+        (info! (file-length st))))))
 
 ;;; PNG
 ;; TODO 2024-10-26: 

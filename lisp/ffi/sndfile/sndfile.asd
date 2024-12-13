@@ -5,9 +5,6 @@
 ;;; Commentary:
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :sndfile.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

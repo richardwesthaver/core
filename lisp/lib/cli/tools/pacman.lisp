@@ -9,10 +9,7 @@
 ;;; Code:
 (in-package :cli/tools/pacman)
 
-(deferror pacman-error (simple-error error) ())
-
-(defun pacman-error (fmt &rest args)
-  (error 'pacman-error :format-arguments args :format-control fmt))
+(deferror pacman-error (simple-error error) () (:auto t))
 
 (defparameter *pacman* (find-exe "pacman"))
 
@@ -24,4 +21,4 @@
             do (write-line l)))
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
-        (pacman-error "Pacman command failed: ~A ~A" *pacman* (or args "")))))
+        (pacman-error "Pacman command failed: ~A ~A" *pacman* (sb-ext:process-error proc)))))

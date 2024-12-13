@@ -23,7 +23,8 @@
 ;; *readtable*
 
 (defmethod sk-print ((self skel) &key (stream t) (id t) exclude &allow-other-keys)
-  (let ((name (skel/core/obj::sk-slot-name self)))
+  (let ((name (skel/core/obj::sk-slot-name self))
+        (*print-case* :downcase))
     (if id
         (format stream "~S ~A~%" 
                 name 
@@ -43,3 +44,7 @@
              (t (format stream ":~A ~A~%" name val)))))))
    (remove-if (lambda (x) (member x exclude)) (sb-mop:class-direct-slots (class-of self))))
   self)
+
+(defmethod sk-print ((self t) &key (stream t) (pretty t) (case :downcase))
+  (write self :stream stream :pretty pretty :case case)
+  (terpri stream))

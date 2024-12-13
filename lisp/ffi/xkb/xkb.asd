@@ -1,7 +1,4 @@
 ;;; xkb.asd-*- mode: lisp; -*-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :xkb.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

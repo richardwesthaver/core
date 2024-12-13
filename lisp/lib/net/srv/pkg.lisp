@@ -15,7 +15,7 @@
 (srv:start (srv:file-server)) ;; start a simple HTTP file server in current
                               ;; directory with all default values
 
-(srv:define-service my-homepage (:port 8080
+(srv:defservice my-homepage (:port 8080
                                  :auth (auth settings ...)
                                  :routes (routes ...)
                                  &rest ...)
@@ -59,10 +59,16 @@
 (defvar-unbound *service-stream*)
 (defvar-unbound *finish-processing-socket*)
 (defvar-unbound *close-service-stream*)
+(defvar *headers-sent* nil
+  "Used internally to check whether the response headers have
+already been sent for this request.")
+(defvar *service-header-stream* nil)
 (defun in-request-p () (and (boundp '*request*) *request*))
 (defun in-response-p () (and (boundp '*response*) *response*))
 (defvar *session-db* nil)
 (defvar *global-session-db-lock* (load-time-value (make-mutex :name "global-session-db")))
+(defvar *log-service-errors* t)
+
 (defvar *access-log-lock* (make-mutex :name "access-log"))
 (defvar *message-log-lock* (make-mutex :name "message-log"))
 (defvar *default-connection-timeout* 20)
@@ -126,6 +132,12 @@ logging, etc."))
 (defgeneric handle-connection (self conn))
 (defgeneric initialize-connection-hook (self stream))
 (defgeneric reset-connection-stream (self stream))
+(defgeneric process-request (req)
+  (:documentation "Function called by PROCESS-CONNECTION after reading incoming headers. Calls
+HANDLE-REQUEST to dispatch to a route and return output to the client using
+START-OUTPUT.
+
+Return value is ignored."))
 (defgeneric process-connection (self socket))
 (defgeneric secure-service-p (self)
   (:method ((self t)) 
@@ -135,8 +147,13 @@ logging, etc."))
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
 
+(defgeneric response-ok-p (res))
+(defgeneric response-status (res))
+(defgeneric (setf response-status) (new res))
+
 ;;; Response
 (defclass response () ())
+(defmethod response-ok-p (res) t)
 
 ;;; Request
 (defclass request ()
@@ -218,7 +235,7 @@ logging, etc."))
 
 (defun remove-session (session)
   "Remove SESSION from the global session database."
-  (with-session-db-lock (db-lock *service*)
+  (with-session-db-lock (lock *service*)
     (remove-session-hook *service* session)
     (setf (session-db *service*)
           (delete (id:id session) (session-db *service*)
@@ -236,7 +253,7 @@ logging, etc."))
   (once-only (sym)
     (with-gensyms (place %session)
       `(let ((,%session (or ,session (start-session))))
-         (with-session-db-lock ((session-db-lock *service* nil))
+         (with-session-db-lock (lock *service*)
            (let* ((,place (assoc ,sym (data ,%session) :test #'eq)))
              (cond
                (,place
@@ -263,7 +280,7 @@ logging, etc."))
 
 (defun session-gc ()
   "Removes sessions from the global session database which have expired or are invalid."
-  (with-session-db-lock (session-db-lock *service*)
+  (with-session-db-lock (lock *service*)
     (setf (session-db *service*)
           (loop for pair in (session-db *service*)
                 for (nil . session) = pair
@@ -284,7 +301,7 @@ logging, etc."))
   (let ((session (session *request*)))
     (when session
       (return-from start-session session))
-    (with-session-db-lock (session-db-lock *service*)
+    (with-session-db-lock (lock *service*)
       (setf session (make-instance session-class))
       (setf (session *request*) session
             (session-db *service*)
@@ -295,7 +312,7 @@ logging, etc."))
 (defgeneric session-verify (request))
 
 (defun reset-sessions (&optional (service *service*))
-  (with-session-db-lock (session-db-lock service)
+  (with-session-db-lock (lock service)
     (loop for (nil . s) in (session-db service)
           do (remove-session-hook service s))
     (setq *session-db* nil))
@@ -493,6 +510,7 @@ logging, etc."))
    (request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
    (engine :type service-engine :accessor engine :initarg :engine)
+   ;; TODO 2024-12-08: hunchentoot uses read-timeout/write-timeout - figure out if needed
    (timeout :type fixnum :initarg :timeout :accessor timeout)
    (connection-max :type (or fixnum null) :initarg :connection-max)
    (logger :type service-logger :initarg :logger :reader logger)
@@ -508,8 +526,8 @@ logging, etc."))
    :port *default-service-port*
    :engine (make-instance 'thread-per-connection-engine)
    :address nil
-   :request-class 'service-request
-   :response-class 'service-response
+   :request-class 'request
+   :response-class 'response
    :timeout *default-connection-timeout*
    :connection-max *default-connection-max*
    :logger (make-instance 'service-logger)
@@ -633,8 +651,11 @@ similar to HUNCHENTOOT:ACCEPTOR."))
           (sb-thread:condition-wait (shutdown-queue self)
                                     (shutdown-lock self)))))
     (stop (engine self))
-    (sb-bsd-sockets:socket-close (socket self))
-    (setf (socket self) nil)
+    (std:if-let ((sock (socket self)))
+      (progn
+        (sb-bsd-sockets:socket-close sock)
+        (setf (socket self) nil))
+      (net-warning "service socket unbound"))
     self))
 
 (defmethod initialize-connection-hook ((self service) stream)
@@ -646,7 +667,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
     ;; (with-mapped-conditions ()
     (call-next-method))) ;; )
 
-(defun do-with-service-request-count-incremented (*service* function)
+(defun do-with-request-count-incf (*service* function)
   (with-mutex ((shutdown-lock *service*))
     (incf (request-count *service*)))
   (unwind-protect
@@ -656,13 +677,13 @@ similar to HUNCHENTOOT:ACCEPTOR."))
       (when (shutdown-p *service*)
         (sb-thread:condition-broadcast (shutdown-queue *service*))))))
 
-(defmacro with-service-request-count-incremented ((service) &body body)
+(defmacro with-request-count-incf (service &body body)
   "Execute BODY with REQUEST-COUNT of SERVICE
   incremented by one.  If the SHUTDOWN-P returns true after
   the BODY has been executed, the SHUTDOWN-QUEUE condition
   variable of the SERVICE is signalled in order to finish shutdown
   processing."
-  `(do-with-service-request-count-incremented ,service (lambda () ,@body)))
+  `(do-with-request-count-incf ,service (lambda () ,@body)))
 
 (defmethod remove-session-hook ((service service) (session t))
   nil)
@@ -694,6 +715,59 @@ similar to HUNCHENTOOT:ACCEPTOR."))
     (setf *finish-processing-socket* t
           *close-service-stream* nil)))
 
+(defun printable-ascii-char-p (char)
+  (<= 32 (char-code char) 126))
+
+(defun get-request-data (stream)
+  "Reads incoming headers from the client via STREAM.  Returns as
+multiple values the headers as an alist, the method, the URI, and the
+protocol of the request."
+  (with-character-stream-semantics
+    (let ((first-line (read-initial-request-line stream)))
+      (when first-line
+        (unless (every #'printable-ascii-char-p first-line)
+          (send-bad-request-response stream "Non-ASCII character in request line")
+          (return-from get-request-data nil))
+        (destructuring-bind (&optional method url-string protocol)
+            (ppcre:split "\\s+" first-line :limit 3)
+          (cond ;; ((not
+                ;;   (setf method
+                ;;         (find method +valid-request-methods+ :test #'string-equal)))
+                ;;  (send-bad-request-response stream)
+                ;; (return-from get-request-data nil))
+                ((not url-string)
+                 (send-bad-request-response stream)
+                 (return-from get-request-data nil))
+                ((not protocol)
+                 ;; HTTP/1.1 specifies that if protocol is not provided
+                 ;; then assume protocol version to be 1.0
+                 (setf protocol :http/1.0))
+                ;; ((not
+                ;;   (setf protocol
+                ;;         (find protocol +valid-protocol-versions+ :test #'string-equal)))
+                ;;  (send-unknown-protocol-response stream)
+                ;;  (return-from get-request-data nil))
+                )
+          (when *service-header-stream*
+            (format *service-header-stream* "~A~%" first-line))
+          (let ((headers (read-http-headers stream *service-header-stream*)))
+            ;; maybe handle 'Expect: 100-continue' header
+            (when-let ((expectations (cdr #|assoc*|# (assoc :expect headers))))
+              (when (member "100-continue" (cl-ppcre:split "\\s*,\\s*" expectations) :test #'equalp)
+                ;; according to 14.20 in the RFC - we should actually
+                ;; check if we have to respond with 417 here
+                (let ((continue-line
+                        (format nil "HTTP/1.1 ~D ~A"
+                                +http-continue+
+                                (reason-phrase net/proto/http::+http-continue+))))
+                  (write-sequence (map 'list #'char-code continue-line) stream)
+                  (write-sequence +crlf+ stream)
+                  (write-sequence +crlf+ stream)
+                  (force-output stream)
+                  (when *service-header-stream*
+                    (format *service-header-stream* "~A~%" continue-line)))))
+            (values headers method url-string protocol)))))))
+
 (defmethod process-connection ((*service* service) (socket t))
   (let* ((socket-stream (sb-bsd-sockets:socket-make-stream socket))
          (*service-stream*)
@@ -701,30 +775,58 @@ similar to HUNCHENTOOT:ACCEPTOR."))
          (remote (multiple-value-list (socket-peername socket)))
          (local (multiple-value-list (socket-name socket))))
     (unwind-protect
+         ;; process requests until shutdown signal is received or the peer
+         ;; fails to send a request
          (progn
            (setq *service-stream* (initialize-connection-hook *service* socket-stream))
            (loop
              (let ((*finish-processing-socket* t))
                (when (shutdown-p *service*)
                  (return))
-               ;; TODO
-               (std:nyi! (list remote local))
-               (finish-output *service-stream*)
-               (setq *service-stream* (reset-connection-stream *service* *service-stream*))
-               (when *finish-processing-socket*
-                 (return)
-               ))))
+               (multiple-value-bind (headers-in method url-string protocol)
+                   (get-request-data *service-stream*)
+                 ;; check if there was a request at all
+                 (unless method
+                   (return))
+                 (let ((*response* (make-instance (service-response-class *service*)))
+                       (*session* nil)
+                       (transfer-encodings (cdr #|assoc*?|# 
+                                            (assoc :transfer-encoding headers-in))))
+                   (when transfer-encodings
+                     (setq transfer-encodings
+                           (cl-ppcre:split "\\s*,\\s*" transfer-encodings))
+                     (when (member "chunked" transfer-encodings :test #'equalp)
+                       (setf *service-stream* (io/chunky:make-chunked-stream *service-stream*))))
+                   (with-request-count-incf *service*
+                     (process-request 
+                      (service-make-request *service* socket
+                                            :headers-in headers-in
+                                            :content-stream *service-stream*
+                                            :method method
+                                            :uri url-string
+                                            :remote remote
+                                            :local local
+                                            :server-protocol protocol))))
+                 (finish-output *service-stream*)
+                 (setq *service-stream* (reset-connection-stream *service* *service-stream*))
+                  (when *finish-processing-socket*
+                    (return))))))
       (when *close-service-stream*
-        (flet ((close-stream (st)
-                 (ignore-errors (finish-output st))
-                 (ignore-errors (close st :abort t))))
+        (flet ((close-stream (stream)
+                 ;; as we are at the end of the request here, we ignore all
+                 ;; errors that may occur while flushing and/or closing the
+                 ;; stream.
+                 (ignore-errors
+                  (finish-output stream))
+                 (ignore-errors
+                  (close stream :abort t))))
           (unless (or (not *service-stream*)
                       (eql socket-stream *service-stream*))
             (close-stream *service-stream*))
           (close-stream socket-stream))))))
 
 ;;; Macros
-(defmacro define-service (name &rest initargs)
+(defmacro defservice (name &rest initargs)
   "Define a subclass of NET/SRV:SERVICE."
   `(defclass ,name ,@initargs))
 

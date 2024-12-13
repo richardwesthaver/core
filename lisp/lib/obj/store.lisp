@@ -87,7 +87,7 @@
     (remove-kv key value index)))
 
 ;;; Schema
-(defclass stored-object-schema (object-schema database-schema) ())
+(defclass stored-object-schema (object-schema upgradable-schema) ())
 
 (defmethod print-object ((schema stored-object-schema) stream)
   (print-unreadable-object (schema stream :type t)
@@ -114,14 +114,14 @@
                         :successor (schema:schema-successor schema)
                         :predecessor (schema:schema-predecessor schema)
                         :fields (copy-array (schema:fields schema)))))
-    (when (subtypep (type-of schema) 'database-schema)
+    (when (subtypep (type-of schema) 'upgradable-schema)
       (setf (id new) (id schema))
       (setf (upgrade new) (upgrade schema))
       (setf (version new) (version schema)))
     new))
 
 ;;; DB Evolution
-(defmethod upgrade-db-instance ((instance stored:stored-object) (new-schema database-schema) (old-schema database-schema) old-values)
+(defmethod upgrade-db-instance ((instance stored:stored-object) (new-schema upgradable-schema) (old-schema upgradable-schema) old-values)
   "Upgrade a database instance from the old-schema to the new-schema.
    This does mean loading it into memory (for now)!"
   (let ((st (get-store instance))

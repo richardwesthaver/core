@@ -95,7 +95,7 @@ passed as the first argument to `gensym'."
   (sb-cltl2::variable-information variable env))
 
 (defmacro quoty (item &environment env)
-  "Quote undefined symbols, build functions from unknown lists"
+  "Quote undefined symbols, build functions from unknown lists."
   (cond ((eql item nil)
          (values))
         ((listp item)

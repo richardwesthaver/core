@@ -129,7 +129,8 @@
    :create-index-merge-op
    :create-fixed-prefix-op
    :cf
-   :create-default-logger-callback))
+   :create-default-logger-callback
+   :rdb-database))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

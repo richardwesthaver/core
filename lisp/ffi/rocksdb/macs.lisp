@@ -292,7 +292,7 @@
                (rocksdb-writebatch-destroy ,wb)))
            body)))
 
-(defmacro with-wbwi ((wbwi &key (reserved 0)
+(defmacro with-rocksdb-wbwi ((wbwi &key (reserved 0)
                                 (overwrite 0)
                                 rep 
                                 backup-comparator 

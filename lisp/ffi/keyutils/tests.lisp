@@ -25,3 +25,7 @@
 (deftest keyutils ()
   (let ((session-id (keyctl-join-session-keyring (symbol-name (gensym "test")))))
     (is (integerp (keyctl-get-keyring-id session-id 1)))))
+
+(deftest process-key ())
+
+(deftest thread-keys ())

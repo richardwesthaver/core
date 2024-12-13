@@ -32,6 +32,8 @@ and we may query the user for input.")
 
 (defvar *default-arena-size* (* 10 1024 1024 1024))
 
+(defvar *default-heap-size* (ash 1 16))
+
 (defun current-lisp-implementation ()
   "Return the current lisp implemenation as a list: (TYPE VERSION FEATURES)"
   (list 

@@ -34,9 +34,6 @@
 
 ;; - DEPLOY enables CI/Deploy features.
 
-
-;; - BOX 
-
 ;;; Code:
 (pkg:defpkg :skel/core
   (:nicknames :sk-core)

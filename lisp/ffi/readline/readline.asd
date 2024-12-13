@@ -10,9 +10,6 @@
 ;; designed to handle many of the tricky OS-specific bits for us.
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :readline.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

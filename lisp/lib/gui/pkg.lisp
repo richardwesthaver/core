@@ -8,7 +8,9 @@
   (:use :cl :std :log :gui/core #+wl :wayflan)
   (:export
    :*default-wm*
-   :wm-package))
+   :wm-package
+   :wm-protocol
+   :display-protocol-package))
 
 (defpackage :gui/ext
   (:use :cl :std :log :gui/core)

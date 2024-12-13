@@ -150,7 +150,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
             (,set *skel-registry* registry))
           (values))))
   (defun init-skel ()
-    "Initialize the global SKEL variables:
+    "Initialize the global SKEL environment:
 
 *SKEL-SYSTEM-CONFIG*
 *SKEL-USER-CONFIG*

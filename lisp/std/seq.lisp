@@ -238,3 +238,22 @@ stopped."
               and sum 1 into nr-elts
               until (>= right end)
               finally (return (values subseqs right))))))
+
+;; from hunchentoot
+(defun starts-with-p (seq subseq &key (test 'eql))
+  "Tests whether the sequence SEQ starts with the sequence
+SUBSEQ.  Individual elements are compared with TEST."
+  (let* ((length (length subseq))
+         (mismatch (mismatch subseq seq
+                             :test test)))
+    (or (null mismatch)
+        (<= length mismatch))))
+
+;; from hunchentoot
+(defun starts-with-one-of-p (seq subseq-list &key (test 'eql))
+  "Tests whether the sequence SEQ starts with one of the
+sequences in SUBSEQ-LIST.  Individual elements are compared with
+TEST."
+  (some (lambda (subseq)
+          (starts-with-p seq subseq :test test))
+        subseq-list))

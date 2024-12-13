@@ -71,3 +71,13 @@ definitions."
          ,@(mapcan #'slot-accessor-definition
                    (remove-if-not #'listp direct-slots))
          ,@(mapcar #'method-definition body)))))
+
+;;; Nest
+;; I don't use this much, but it is quite handy.
+;; ref: https://fare.livejournal.com/189741.html
+
+;; in this case we just pull the version from UIOP
+(defmacro nest (&rest things)
+  "Macro to keep code nesting and indentation under control." ;; Thanks to mbaringer
+  (reduce #'(lambda (outer inner) `(,@outer ,inner))
+          things :from-end t))

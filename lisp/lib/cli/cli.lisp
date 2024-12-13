@@ -9,7 +9,7 @@
   (:nicknames :tools)
   (:use :cl :std)
   (:use-reexport :cli/tools/term :cli/tools/tmux :cli/tools/cc
-   :cli/tools/nvcc :cli/tools/pacman :cli/tools/systemd :cli/tools/cargo
+   :cli/tools/nvcc :cli/tools/pacman :cli/tools/systemd :cli/tools/rust
    :cli/tools/sbcl :cli/tools/wg :cli/tools/ytdl :cli/tools/web))
 
 (defpkg :cli
@@ -18,28 +18,31 @@
   (:use-reexport :cli/shell :cli/ansi :cli/prompt
    :cli/progress :cli/spark :cli/prompt :cli/ed
    :cli/env :cli/repl :cli/clap :cli/multi :cli/clap/obj)
-  (:export :*sudo* :sudo-prompt :sudo? :when-sudo :if-sudo))
+  (:export :*sudo* :sudo-prompt :sudo? :when-sudo :if-sudo :with-sudo))
 
 (defpkg :cli-user (:use :cl :std :cli))
 
 (in-package :cli)
+(pushnew :cli *features*)
 
-;;; Sudo prompt
-(defvar *sudo* nil
-  "Advise the Lisp system that we are allowed to use sudo for root access to shell commands. This is typically used in conjunction with SUDO-PROMPT.")
+;;; Sudo
+(defun sudop () 
+  (equal (namestring (user-homedir-pathname))
+         (sb-unix::uid-homedir 0)))
 
-(defun %sudop (val) 
-  (and (characterp val) (char= val #\y)))
+(defparameter *sudo* (sudop)
+  "Advise the Lisp system that we are allowed to use sudo for root access to shell commands.")
 
-(defprompt sudo
-  :prompt "use sudo?" 
-  :collection '(#\y #\n) 
-  :default #\n 
-  :reader #'read-char
-  :test #'char=
-  :hook #'%sudop)
+;; (defun %sudop (val) 
+;;   (and (characterp val) (char= val #\y)))
 
-(defun sudo? () (setq *sudo* (sudo-prompt)))
+;; (defprompt sudo
+;;   :prompt "allow root privileges?"
+;;   :collection '(#\y #\n) 
+;;   :default #\n 
+;;   :reader #'read-char
+;;   :test #'char=
+;;   :hook #'%sudop)
 
 (defmacro if-sudo (then &optional else)
   `(if *sudo* ,then ,else))
@@ -48,7 +51,6 @@
   `(when *sudo* ,@then))
 
 ;;; Pretty Log Messages
-
 (defclass pretty-log-message (simple-log-message) ())
 
 (defmethod format-message (stream (message pretty-log-message))

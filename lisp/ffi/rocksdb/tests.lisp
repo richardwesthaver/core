@@ -366,7 +366,7 @@ DB where K and V are both Lisp strings."
           (setf (deref cnt) 1)
           (istype '(alien (* rocksdb-transaction)) txn)
           (with-errptr e
-            (rocksdb-transaction-set-name txn "foo" 3 e)
+            (rocksdb-transaction-set-name txn (octets-to-alien (sb-ext:string-to-octets "foo")) 3 e)
             (rocksdb-transaction-prepare txn e)
             (istype '(alien (* rocksdb-transaction))
                     (deref (rocksdb-transactiondb-get-prepared-transactions txn-db cnt)))
@@ -619,8 +619,8 @@ DB where K and V are both Lisp strings."
 (deftest writebatch ()
   "Test writebatch functionality."
   (with-alien ((fput (* rocksdb-put-function))
-               (fdeleted (* rocksdb-deleted-function))
-               (fdeleted-cf (* rocksdb-deleted-cf-function))
+               (fdeleted (* rocksdb-delete-function))
+               (fdeleted-cf (* rocksdb-delete-cf-function))
                (fput-cf (* rocksdb-put-cf-function))
                (fmerge-cf (* rocksdb-merge-cf-function))
                (fget-ts (* rocksdb-get-ts-size-function)))
@@ -644,3 +644,13 @@ DB where K and V are both Lisp strings."
     (let ((ret (rocksdb-slicetransform-create state destructor transform in-domain in-range name)))
       (istype '(alien (* rocksdb-slicetransform)) ret)
       (isnt (rocksdb-slicetransform-destroy ret)))))
+
+(deftest wbwi ()
+  "Test WBWI functionality"
+  (with-opt (o (test-opts) (rocksdb-options-destroy o))
+    (with-temp-db db (o)
+      (with-errptr e
+        (with-rocksdb-wbwi (wbwi)
+          (iszero (rocksdb-writebatch-wi-count wbwi))
+          (rocksdb-writebatch-wi-set-save-point wbwi)
+          (rocksdb-writebatch-wi-rollback-to-save-point wbwi e))))))

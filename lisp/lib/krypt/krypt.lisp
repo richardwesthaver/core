@@ -5,10 +5,24 @@
 ;;; Code:
 (in-package :krypt)
 
-(defparameter *default-user-kryptrc* (merge-pathnames ".kryptrc" (user-homedir-pathname)))
+;;; Vars
+(defparameter *kryptrc* (merge-pathnames ".kryptrc" (user-homedir-pathname)))
+(defvar *krypt-directory* (merge-pathnames ".stash/krypt/" (user-homedir-pathname)))
+(defvar *krypt-key-directory* (merge-pathnames "keys/" *user-krypt-directory*))
+(defvar *krypt-token-directory* (merge-pathnames "keys/" *user-krypt-directory*))
+(defvar *krypt-password-directory* (merge-pathnames "keys/" *user-krypt-directory*))
+(defvar *krypt-net-directory* (merge-pathnames "net/" *user-krypt-directory*))
+(defvar *krypt-user-config* nil)
 
-(defclass krypt-config (ast id)
-  ((path :initform nil :initarg :path :type (or pathname null))))
+;;; Config
+(defconfig krypt-config (ast id)
+  ((path :initform nil :initarg :path :type (or pathname null))
+   (keyrings :initform nil :initarg :keyrings)
+   (passwords :initform *krypt-password-directory* :initarg :passwords)
+   (tokens :initform *krypt-tokens-directory* :initarg :tokens)
+   (keys :initform *krypt-key-directory* :initarg :keys)
+   #| gpg, ssh |#
+))
 
 (defmethod print-object ((self krypt-config) stream)
   (print-unreadable-object (self stream :type t)
@@ -26,9 +40,19 @@
             (when-let ((s (find-krypt-symbol k)))
               (setf (slot-value self s) v))) ;; needs to be correct package
           (setf (ast self) nil)
+          (with-slots (passwords tokens keys) self
+            (when (stringp passwords)
+              (setf (slot-value self 'passwords) 
+                    (pathname (ensure-directories-exist passwords))))
+            (when (stringp tokens) 
+              (setf (slot-value self 'tokens) 
+                    (pathname (ensure-directories-exist tokens))))
+            (when (stringp keys) 
+              (setf (slot-value self 'keys) 
+                    (pathname (ensure-directories-exist keys)))))
           self)
         ;; invalid ast, signal error
-        (error 'sxp-syntax-error))))
+        (error 'syntax-error))))
 
 (defmethod build-ast ((self krypt-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
@@ -43,3 +67,16 @@
   (unless (not (probe-file file))
     (let ((form (file-read-forms file)))
       (load-ast (make-instance 'krypt-config :ast form :path file :id (sxhash form))))))
+
+(defun init-krypt ()
+  "Initialize the global KRYPT environment:
+
+*KRYPT-USER-CONFIG*"
+  (mapc 'ensure-directories-exist 
+        (list *krypt-directory* *krypt-net-directory* 
+              *krypt-tokens-directory* *krypt-password-directory*))
+  (setq *krypt-user-config* (load-kryptrc))
+  (values))
+
+;; (init-krypt)
+;; (describe *krypt-user-config*)

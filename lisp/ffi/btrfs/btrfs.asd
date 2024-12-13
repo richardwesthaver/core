@@ -3,9 +3,6 @@
 ;; BTRFS for lisp.
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-grovel))
-
 (defpackage :btrfs.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

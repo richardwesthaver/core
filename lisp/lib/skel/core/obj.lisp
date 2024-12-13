@@ -10,21 +10,25 @@
   (:documentation "Base class for skeleton objects."))
 
 (declaim (inline sk-object-name sk-slot-name))
-(search "SK-" "SKEL" :test 'equal)
-(defun sk-class-name (self)
+(defun sk-class-name (self &optional downcase)
   (let* ((class-name (string (class-name (class-of self))))
-         (match (search "SK-" class-name :test 'equal :start1 0 :end1 3)))
-    (if match
-        (subseq class-name 3)
-        class-name)))
-(defun sk-slot-name (self) (keywordicate (sk-class-name self)))
+         (match (search "SK-" class-name :test 'equal :start1 0 :end1 3))
+         (ret (if match
+                  (subseq class-name 3)
+                  class-name)))
+    (if downcase
+        (string-downcase ret)
+        ret)))
+
+(defun sk-slot-name (self &optional downcase) 
+  (keywordicate (sk-class-name self downcase)))
 
 (defmethod sk-new ((self t) &rest initargs)
   (apply #'make-instance self initargs))
 
 (defmethod print-object ((self skel) stream)
   (print-unreadable-object (self stream)
-    (format stream "~A :ID ~A" (sk-class-name self) (format-sxhash (id self)))))
+    (format stream "~A :ID ~A" (sk-class-name self t) (format-sxhash (id self)))))
 
 (defmethod initialize-instance :around ((self skel) &rest initargs &key &allow-other-keys)
   ;; TODO 2023-09-10: make fast 
@@ -49,7 +53,7 @@
 
 (defmethod print-object ((self sk-meta) stream)
   (print-unreadable-object (self stream)
-    (format stream "~A ~A :path ~A" (sk-class-name self) (name self) (path self))
+    (format stream "~A ~A :path ~A" (sk-class-name self t) (name self) (path self))
     ;; (unless (sequence:emptyp (sk-version self))
     ;;   (format stream " :version ~A" (sk-version self)))
     (format stream " :id ~A" (format-sxhash (id self)))))
@@ -319,7 +323,7 @@ via the special form stored in RECIPE."
 
 (defmethod print-object ((self sk-rule) stream)
   (print-unreadable-object (self stream)
-    (format stream "~A ~A" (sk-class-name self) (sk-rule-target self))
+    (format stream "~A ~A" (sk-class-name self t) (sk-rule-target self))
     (when-let ((source (sk-rule-source self)))
       (format stream " ~A" source))))
 
@@ -365,8 +369,9 @@ via the special form stored in RECIPE."
 
 ;;; Project
 (defclass sk-project (skel ast sk-meta)
-  ((name :initarg :name :initform "" :type string)
-   (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) :type vc-repo :accessor sk-vc)
+  ((name :initarg :name :initform "" :type string :accessor name)
+   (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) 
+       :type vc-repo :accessor sk-vc)
    (src :initarg :src :type pathname :accessor sk-src)
    (stash :initarg :stash :accessor sk-stash :type pathname)
    (store :initarg :store :accessor sk-store :type pathname)
@@ -388,7 +393,7 @@ via the special form stored in RECIPE."
 (defmethod print-object ((self sk-project) stream)
   (print-unreadable-object (self stream)
     (format stream "~A ~A :components ~A :rules ~A"
-            (sk-class-name self)
+            (sk-class-name self t)
             (name self)
             (length (sk-components self))
             (length (sk-rules self)))))

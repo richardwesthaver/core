@@ -7,31 +7,34 @@
 
 (defvar *packy-backend-options* rdb::*rdb-backend-options*)
 (set-database-backend :packy *packy-backend-options*
-                      (db::%load-database-backend :rdb))
+                      (lambda () (db::%load-database-backend :rdb)))
 
-(defclass package-database (database) ()
+(defclass packy-schema (rdb-schema) ()
+  (:default-initargs
+   :fields (make-fields :id '(fixnum . string)
+                        :name '(string . fixnum)
+                        :hash '(fixnum . (octet-vector 32))
+                        :installed '(fixnum . octet-vector)
+                        :updated '(fixnum . octet-vector)
+                        :path '(fixnum . pathname)
+                        :type '(fixnum . octet)
+                        :tags '(fixnum . (array string))
+                        :uri '(fixnum . string))))
+
+(defclass packy-db (rdb-database) ()
   (:default-initargs 
-   :db (make-db :rdb :name "packy" :opts (default-rdb-opts) :columns #())))
+   :db (make-db :rocksdb 
+                :name (namestring (merge-pathnames "db/" *packy-home*))
+                :opts (default-rdb-opts)
+                :logger (rdb-log-default 10))))
 
 (defmethod make-db ((engine (eql :packy)) &rest initargs &key &allow-other-keys)
-  (apply #'make-instance 'package-database initargs))
-
-(defmethod connect-db ((db package-database) &key &allow-other-keys)
-  (open-db (db db)))
-
-(defmethod query-db ((db package-database) query &key &allow-other-keys))
-  
-(defmethod db-get ((db package-database) (key simple-string) &key &allow-other-keys)
-  (get-kv-str-raw (db db) key))
-
-(defmethod close-db ((db package-database) &key &allow-other-keys)
-  (close-db (db db)))
-
-(defmethod destroy-db ((db package-database))
-  (destroy-db (db db)))
-
-(defmethod get-val ((obj package-database) (elt simple-string) &key data-type)
-  (declare (ignore data-type))
-  (db-get obj elt))
+  (apply #'make-instance 'packy-db initargs))
 
 (defmethod get-db (dbs (name (eql :packy))))
+
+(defun init-packy-db ()
+  (setq *packy-db* (load-schema (make-db :packy) (make-instance 'packy-schema))))
+
+(defun insert-pack (pack)
+  (make-instance 'pack))

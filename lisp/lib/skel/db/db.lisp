@@ -24,7 +24,7 @@
   (when name (setf (name self) name)))
 
 (defmethod start :after ((self skel-db))
-  (setq *db* self))
+  (setq *db* (open-db self)))
 
 (defclass skel-store (store) ()
   (:default-initargs :spec *default-skel-db-spec*))
@@ -32,8 +32,8 @@
 (defmethod start :after ((self skel-store))
   (setq *store* self))
 
-(defclass skel-db-schema (database-schema)
-  ((collection :type (vector schema) :initarg :collection :accessor schema-collection))
+(defclass skel-db-schema (upgradable-schema)
+  ((collection :type (vector rdb-schema) :initarg :collection :accessor schema-collection))
   (:default-initargs
    :name "skel-db"))
 

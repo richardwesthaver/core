@@ -419,9 +419,67 @@ set *errptr to a malloc()ed error message.
    :*rocksdb-set-only-readoptions*
    :*rocksdb-set-only-options*
    :with-writebatch
-   :with-wbwi
+   :with-rocksdb-wbwi
    :rocksdb-transactiondb-get-pinned-cf
-   :rocksdb-options-set-prefix-extractor))
+   :rocksdb-options-set-prefix-extractor
+   :rocksdb-compression-type
+   :rocksdb-compaction-pri
+   :rocksdb-compaction-type
+   :rocksdb-writebatch-iterate
+   :rocksdb-writebatch-put-log-data
+   :rocksdb-writebatch-iterate-cf
+   :rocksdb-writebatch-data
+   :rocksdb-writebatch-set-savepoint
+   :rocksdb-writebatch-rollback-to-savepoint
+   :rocksdb-writebatch-pop-savepoint
+   :rocksdb-writebatch-update-timestamps
+   :rocksdb-writebatch-singledelete
+   :rocksdb-writebatch-singledelete-cf
+   :rocksdb-writebatch-singledelete-cf-with-ts
+   :rocksdb-writebatch-deletev
+   :rocksdb-writebatch-deletev-cf
+   :rocksdb-writebatch-delete-range
+   :rocksdb-writebatch-delete-range-cf
+   :rocksdb-writebatch-delete-rangev
+   :rocksdb-writebatch-delete-rangev-cf
+   :rocksdb-writebatch-merge
+   :rocksdb-writebatch-merge-cf
+   :rocksdb-writebatch-mergev
+   :rocksdb-writebatch-mergev-cf
+   :rocksdb-writebatch-wi-destroy
+   :rocksdb-writebatch-wi-clear
+   :rocksdb-writebatch-wi-count
+   :rocksdb-writebatch-wi-put-log-data
+   :rocksdb-writebatch-wi-iterate
+   :rocksdb-writebatch-wi-data
+   :rocksdb-writebatch-wi-get-from-batch
+   :rocksdb-writebatch-wi-get-from-batch-cf
+   :rocksdb-writebatch-wi-get-from-batch-and-db
+   :rocksdb-writebatch-wi-get-from-batch-and-db-cf
+   :rocksdb-write-writebatch-wi
+   :rocksdb-writebatch-wi-create-iterator-with-base
+   :rocksdb-writebatch-wi-create-iterator-with-base-cf
+   :rocksdb-writebatch-wi-update-timestamps
+   :rocksdb-writebatch-wi-put
+   :rocksdb-writebatch-wi-put-cf
+   :rocksdb-writebatch-wi-putv
+   :rocksdb-writebatch-wi-putv-cf
+   :rocksdb-writebatch-wi-merge
+   :rocksdb-writebatch-wi-merge-cf
+   :rocksdb-writebatch-wi-mergev
+   :rocksdb-writebatch-wi-mergev-cf
+   :rocksdb-writebatch-wi-delete
+   :rocksdb-writebatch-wi-singledelete
+   :rocksdb-writebatch-wi-delete-cf
+   :rocksdb-writebatch-wi-singledelete-cf
+   :rocksdb-writebatch-wi-deletev
+   :rocksdb-writebatch-wi-deletev-cf
+   :rocksdb-writebatch-wi-delete-range
+   :rocksdb-writebatch-wi-delete-range-cf
+   :rocksdb-writebatch-wi-delete-rangev
+   :rocksdb-writebatch-wi-delete-rangev-cf
+   :rocksdb-writebatch-wi-set-save-point
+   :rocksdb-writebatch-wi-rollback-to-save-point))
 
 (in-package :rocksdb)
 

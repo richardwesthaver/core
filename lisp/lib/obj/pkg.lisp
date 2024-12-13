@@ -335,7 +335,9 @@
            :lhs
            :rhs
            :physical-expr
-           :logical-expr))
+           :logical-expr
+           :node
+           :defnode))
 
 (defpackage :obj/config
   (:nicknames :config)
@@ -594,7 +596,7 @@
    :kv-key
    :kv-val
    :database-collection
-   :database-schema
+   :upgradable-schema
    :upgrade
    :version
    :remove-kv

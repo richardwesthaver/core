@@ -345,7 +345,8 @@
    ;; Restarts
    :retry-request
    :ignore-and-continue
-   :decoding-stream-of))
+   :decoding-stream-of
+   :fetch))
 
 (defpackage :net/srv
   (:nicknames :srv)
@@ -368,7 +369,6 @@
    :handle-request
    :dispatch-request
    #:service
-   #:define-service
    #:*router*
    #:*service*
    #:*handlers*
@@ -417,7 +417,11 @@
    #:remove-session
    #:session
    #:session-expired-p
-   #:defroute))
+   #:defroute
+   #:defservice
+   #:*headers-sent*
+   #:log-message*
+   #:*log-service-errors*))
 
 (pkg:defpkg :net
   (:use :cl :std)
