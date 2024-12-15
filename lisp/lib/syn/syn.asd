@@ -17,6 +17,7 @@
                 ((:file "pkg")
                  (:file "condition")
                  (:file "var")
+                 (:file "proto")
                  (:file "util")
                  (:file "read")
                  (:module "lisp"
@@ -26,15 +27,26 @@
                    (:file "el")
                    (:file "scm")))
                  (:module "c"
-                  :components ((:file "pkg")))
+                  :components 
+                  ((:file "pkg")
+                   (:file "sym")
+                   (:file "ast")
+                   (:file "read")
+                   (:file "print")))
+                 (:module "cpp"
+                  :components 
+                  ((:file "pkg")
+                   (:file "sym")))
                  (:module "cu"
                   :components ((:file "pkg")))
                  (:module "rs"
-                  :components ((:file "pkg")))
-                 (:module "cpp"
-                  :components ((:file "pkg")))
-                 (:module "zig"
-                  :components ((:file "pkg")))
+                  :components 
+                  ((:file "pkg")
+                   (:file "sym")
+                   (:file "util")
+                   (:file "ast")
+                   (:file "read")
+                   (:file "print")))
                  (:module "py"
                   :components ((:file "pkg")))
                  (:module "js"

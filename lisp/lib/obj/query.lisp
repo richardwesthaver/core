@@ -99,8 +99,6 @@
 (defmethod df-col ((self string))
   (make-instance 'column-expression :name self))
 
-(defclass literal-expression (logical-expr) ())
-
 ;;;;; Alias
 (defclass alias-expression (logical-expr)
   ((expr :type logical-expr :initarg :expr :accessor expr)
@@ -409,9 +407,7 @@
   (setf (df-plan df) plan))
 
 ;;; Physical Expression
-(defclass physical-expression (query-expr) ())
-
-(defclass literal-physical-expression (physical-expression) ())
+(defclass literal-physical-expression (physical-expr literal-expr) ())
 
 (defgeneric evaluate (self input)
   (:documentation "Evaluate the expression SELF with INPUT and return a COLUMN-VECTOR result.")
@@ -423,15 +419,15 @@
   (:method ((self number) (input record-batch))
     (make-instance 'literal-value-vector :size (row-count input) :type 'number :data self)))
 
-(defclass column-physical-expression (physical-expression)
+(defclass column-physical-expression (physical-expr)
   ((val :type array-index :initarg :val)))
 
 (defmethod evaluate ((self column-physical-expression) (input record-batch))
   (field input (slot-value self 'val)))
 
-(defclass binary-physical-expression (physical-expression)
-  ((lhs :type physical-expression :accessor lhs :initarg :lhs)
-   (rhs :type physical-expression :accessor rhs :initarg :rhs)))
+(defclass binary-physical-expression (physical-expr)
+  ((lhs :type physical-expr :accessor lhs :initarg :lhs)
+   (rhs :type physical-expr :accessor rhs :initarg :rhs)))
 
 (defgeneric evaluate2 (self lhs rhs))
 
@@ -517,7 +513,7 @@
   (when (> val (accumulator-value self))
     (setf (accumulator-value self) val)))
 
-(defclass aggregate-physical-expression (physical-expression)
+(defclass aggregate-physical-expression (physical-expr)
   ((input :type physical-expression)))
 
 (defclass max-physical-expression (aggregate-physical-expression) ())
@@ -543,7 +539,7 @@
 
 (defclass projection-exec (physical-query-plan)
   ((input :type physical-query-plan :initarg :input)
-   (expr :type (vector physical-expression) :initarg :expr)))
+   (expr :type (vector physical-expr) :initarg :expr)))
 
 (defmethod execute ((self projection-exec))
   (coerce
@@ -558,7 +554,7 @@
 
 (defclass selection-exec (physical-query-plan)
   ((input :type physical-query-plan :initarg :input)
-   (expr :type physical-expression :initarg :expr)))
+   (expr :type physical-expr :initarg :expr)))
 
 (defmethod schema ((self selection-exec))
   (schema (slot-value self 'input)))
@@ -731,7 +727,7 @@ accumulator."
      (extract-columns (rhs expr) input accum))
     (alias-expression (extract-columns (expr expr) input accum))
     (cast-expression (extract-columns (expr expr) input accum))
-    (literal-expression nil)))
+    (literal-expr nil)))
 
 (defun extract-columns* (exprs input &optional accum)
   (mapcar (lambda (x) (extract-columns x input accum)) exprs))

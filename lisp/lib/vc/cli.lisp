@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :vc/cli)
 
+(define-symbol-macro .repo (or *repo* (make-repo *default-pathname-defaults*)))
+
 (defcmd vc-status-cmd ()
   (with-current-vc-root (vc)
     (vc-status vc)))
@@ -23,6 +25,12 @@
 (defcmd vc-fast-export-cmd ()
   (hg-fast-export (make-repo *default-pathname-defaults*) (car *args*)))
 
+(defcmd vc-bundle-cmd ()
+  (vc-bundle (make-repo *default-pathname-defaults*) (car *args*)))
+
+(defcmd vc-unbundle-cmd ()
+  (vc-unbundle (make-repo *default-pathname-defaults*) (car *args*)))
+
 (define-cli *vc-cli*
   :name "vc"
   :help t
@@ -37,4 +45,6 @@
           :thunk vc-pull-cmd)
          (:name "clone" :description "Clone a repo from a remote")
          (:name "fast-export" :description "Run the hg-fast-export script"
-          :thunk vc-fast-export-cmd)))
+          :thunk vc-fast-export-cmd)
+         (:name "bundle" :description "Bundle a repo" :thunk vc-bundle-cmd)
+         (:name "unbundle" :description "Unbundle a repo-bundle file" :thunk vc-unbundle-cmd)))

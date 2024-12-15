@@ -8,10 +8,10 @@
 ;;; Vars
 (defparameter *kryptrc* (merge-pathnames ".kryptrc" (user-homedir-pathname)))
 (defvar *krypt-directory* (merge-pathnames ".stash/krypt/" (user-homedir-pathname)))
-(defvar *krypt-key-directory* (merge-pathnames "keys/" *user-krypt-directory*))
-(defvar *krypt-token-directory* (merge-pathnames "keys/" *user-krypt-directory*))
-(defvar *krypt-password-directory* (merge-pathnames "keys/" *user-krypt-directory*))
-(defvar *krypt-net-directory* (merge-pathnames "net/" *user-krypt-directory*))
+(defvar *krypt-key-directory* (merge-pathnames "keys/" *krypt-directory*))
+(defvar *krypt-token-directory* (merge-pathnames "keys/" *krypt-directory*))
+(defvar *krypt-password-directory* (merge-pathnames "keys/" *krypt-directory*))
+(defvar *krypt-net-directory* (merge-pathnames "net/" *krypt-directory*))
 (defvar *krypt-user-config* nil)
 
 ;;; Config

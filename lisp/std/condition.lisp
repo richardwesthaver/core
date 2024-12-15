@@ -31,7 +31,7 @@
 
 (defun std-warning (&optional message)
   (warn 'std-warning :message message))
-  
+
 (defun car-eql (a cons)
   (eql a (car cons)))
 

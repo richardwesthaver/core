@@ -319,7 +319,9 @@
 (defpackage :obj/ast
   (:nicknames :ast)
   (:use :cl :std)
+  (:shadowing-import-from :obj/seq :val)
   (:export :ast :build-ast :load-ast :load-ast*
+           :val
            :*ast*
            :wrap
            :unwrap
@@ -337,7 +339,15 @@
            :physical-expr
            :logical-expr
            :node
-           :defnode))
+           :defnode
+           :defstmt
+           :stmt
+           :defexpr
+           :traverse
+           :op
+           :*ast-dispatch-table*
+           :write-ast
+           :val))
 
 (defpackage :obj/config
   (:nicknames :config)

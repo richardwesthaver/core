@@ -17,7 +17,8 @@
    :nuke-symbol-in-package :nuke-symbol :rehome-symbol :ensure-package-unused
    :delete-package* :package-names :packages-from-names :fresh-package-name 
    :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
-   :with-package :define-lisp-package))
+   :with-package :define-lisp-package
+   :defpackage*))
 
 (in-package :std/defpkg)
 
@@ -745,3 +746,16 @@ that package. In the case of shadowing, etc. They may not be EQL."
   "Execute BODY within the package PKG."
   `(let ((*package* ,@(when pkg `((find-package ,pkg)))))
      ,@body))
+
+;; From C-MERA for internal package (syn/gen/c/sym, etc)
+(defmacro defpackage* (name (&key shadow-symbols export-symbols) &body body)
+  "defpackage with (:shadow ,@<symbols>) and (:export ,@<symbols>)"
+  `(let ((shadow-list (loop for i in (remove-duplicates ,shadow-symbols) collect
+                        (intern (format nil "~a" i) :keyword)))
+         (export-list (loop for i in (remove-duplicates ,export-symbols) collect
+                        (intern (format nil "~a" i) :keyword))) 
+         (body ',body))
+     (eval `(defpackage ,,name
+              ,@body
+              (:shadow ,@shadow-list)
+              (:export ,@export-list)))))

@@ -18,5 +18,6 @@
            :krypt-config :load-kryptrc
            :krypt-condition
            :krypt-error :simple-krypt-error
-           :init-krypt))
+           :init-krypt
+           :*krypt-directory*))
 

@@ -8,9 +8,34 @@
 
 ;;; Code:
 (defpackage :syn/gen
-  (:use :cl :std :doc :obj/id :obj/graph :dat/sxp)
+  (:use :cl :std :doc :id :graph :sxp :ast)
   (:export :gen-designator :gen-condition :gen-condition
-   :simple-gen-error))
+   :simple-gen-error :defsyntax
+   :function-call :source-location
+   :ident :str-literal
+   :num-literal :char-literal
+   :load-generator :init-gen
+   :*gen* :*gen-designators*
+   :*cl-symbols* :*code-reader*
+   :*backup-readtable* :define-code-switches
+   :define-code-switch :print-code
+   :define-code-processor :define-code-reader
+   :make-nodes :make-node
+   :generator-package :build-swap-package
+   :build-context-switches :*gen-warnings*
+   :ast-traverser :with-code-printer
+   :define-code-printer :delete-code-printer
+   :write-code :*code-dispatch-table*
+   :code-printer :with-code-printer 
+   :++indent :--indent 
+   :stream :node
+   :indent :pop-sign 
+   :top-sign :push-sign 
+   :find-sign :node-slot
+   :pop-info :top-info 
+   :push-info :find-info
+   :make-proxy :del-proxy :info-size
+   :empty))
 
 (in-package :syn/gen)
 

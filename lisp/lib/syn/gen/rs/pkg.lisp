@@ -4,14 +4,12 @@
 
 ;;; Commentary:
 
-;; There are no existing ? -> Rust generators that I know of - not exactly an
-;; intended use-case, as compile-times are quite length and the syntax is a
-;; more complex version of C++ or ML.
-
-;; ref: https://rust-lang.github.io/rfcs/3424-cargo-script.html
+;; initial set of tokens taken from rust-analyzer's ungrammar:
+;; https://github.com/rust-analyzer/ungrammar/blob/master/rust.ungram
 
 ;; This code is bootstrapped from a tiny DSL I made for working with cbindgen
 ;; a few years back. Here's the header comment in that file:
+
 #|
 ;; So basically, this was born out of personal frustration with how
 ;; cbindgen and Rust macros work (they don't). Rust macros in general
@@ -19,74 +17,29 @@
 ;; generate Rust code from Lisp instead?
 |#
 
+;; ref: https://rust-lang.github.io/rfcs/3424-cargo-script.html
+
 ;;; Code:
 (defpackage :syn/gen/rs
-  (:nicknames :genrs :rs)
-  (:use :cl :syn/gen :cli/tools/rust :obj/ast :std/pipe :std/meta)
+  (:nicknames :gen/rs)
+  (:use :cl :syn/gen :cli/tools/rust :ast :id :std/pipe :std/meta)
   (:import-from :std :in-readtable :eval-always))
 
 (in-package :syn/gen/rs)
-(in-readtable :std)
 
-(defvar *rs-macros* nil)
-(defvar *default-cargo-target-directory* (merge-pathnames "target/" *default-pathname-defaults*))
+(defmethod load-generator ((self (eql :rs))) :rs)
+(defmethod generator-package ((self (eql :rs))) :syn/gen/rs/sym)
 
-(defmacro rs-defmacro (name args &body body)
-  "Define a macro which can be used within the body of a 'with-rs' form."
-  `(prog1
-       (defmacro ,name ,@(mapcar #`(,a1) args) ,@body)
-     (push ',name *rs-macros*)))
+(defvar *rs-backend*
+  (append *cl-symbols* nil))
 
-(defun rs-mod-form (crate &optional mods pub)
-  "Generate a basic mod form (CRATE . [MODS] [PUB])"
-  `(,crate ,mods ,pub))
+(export *rs-backend*)
 
-(defmacro with-rs-env (imports &body body)
-  "Generate an environment for use within a Rust generator macro."
-  `(let ((imports ,(mapcar #'rs-mod-form imports)))
-     (format nil "~A~&~A" imports ',body)))
+(defparameter *rs-symbols* '())
+(defparameter *rs-syntax* '())
+(defparameter *rs-exports* (append *rs-symbols* *rs-syntax* *cl-symbols*))
+(defparameter *rs-swap* (append *rs-symbols* *rs-syntax*))  
 
-(defun rs-use (crate &optional mods pub)
-  "Generate a single Rust use statement."
-  (concatenate
-   'string
-   (if pub "pub " "")
-   "use " crate "::{"
-   (cond
-     ((consp mods)
-      (reduce
-       (lambda (x y) (format nil "~A,~A" x y))
-       mods))
-     (t mods))
-   "};"))
-
-(defun rs-mod (mod &optional pub)
-  "Generate a single Rust mod statement."
-  (concatenate
-   'string
-   (if pub "pub " "")
-   "mod " mod ";"))
-
-(defun rs-imports (&rest imports)
-  "Generate a string of Rust 'use' statements."
-  (cond
-    ((consp imports)
-     (mapcar (lambda (x) (apply #'rs-use (apply #'rs-mod-form x))) imports))
-    (t imports)))
-
-(defmacro rs-extern-c-fn (name args &optional pub unsafe no-mangle &body body)
-  "Generate a Rust extern 'C' fn."
-  `(concatenate
-    'string
-    ,(when no-mangle (format nil "#[no_mangle]~&"))
-    ,(when pub "pub ")
-    ,(when unsafe "unsafe ")
-    "extern \"C\" fn " ,name "("
-    ,(cond
-       ((consp args) (reduce (lambda (x y) (format nil "~A,~A" x y)) args))
-       (t args))
-    ")" "{" ,@body "}"))
-
-;; (defun rs-macroexpand-1 (form &optional env))
-
-;; (defun rs-macroexpand (env &rest body)
+(pkg:defpackage* :syn/gen/rs/sym
+    (:shadow-symbols *rs-symbols* :export-symbols *rs-exports*)
+  (:use :syn/gen/rs))

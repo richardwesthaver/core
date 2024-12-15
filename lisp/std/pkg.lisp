@@ -509,9 +509,9 @@
    :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
    :subclassp :write-object :start :started-p 
    :stop :stopped-p :shutdown :reset
-   :defaccessor :defaccessor* :defmethods
+   :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
-   :copy-object))
+   :copy-object :safe-superclasses))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)

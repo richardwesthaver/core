@@ -10,3 +10,19 @@
   (defvar *gen-designators* (list :c :cpp :cu :rs :py :js :zig :cl :el :scm)))
 
 (deftype gen-designator () `(or (member ,@*gen-designators*) null))
+
+(defparameter *code-reader* 'gen)
+(defvar *backup-readtable* (copy-readtable nil))
+
+(defvar *gen-warnings* '(:hyphen))
+
+(defvar *cl-symbols*
+  (let ((syms))
+    (do-external-symbols (s :common-lisp) (push s syms))
+    syms))
+
+;; (defparameter *opencl-backend*
+;;   (append *cpp-backend* '(vector-initialization)))
+
+;; (defparameter *glsl-backend*
+;;   (append *c-backend* '(layout)))

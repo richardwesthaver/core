@@ -47,8 +47,20 @@ slot."))
   (:documentation "Unwrap object SELF, usually returns the AST slot."))
 (defgeneric (setf unwrap) (new self))
 
+;;; NODE objects
+
+;; The 'DEF*' macros defined here are from C-MERA.
+
+;; Symbols in 'subnodes' describe slots that contain nodes.
+;; Slots with only atoms are listed in 'values'.
+(defclass node () ())
+
+(defmacro defnode (name supers slots &rest opts)
+  "Define a new subclass of NODE."
+  `(defclass! ,name ,(safe-superclasses 'node supers) ,slots ,@opts))
+
 ;;; AST Object
-(defclass ast ()
+(defclass ast (node)
   ((ast :initarg :ast :accessor ast)))
 
 (defmethod wrap ((self ast) form) (setf (slot-value self 'ast) form))
@@ -58,9 +70,9 @@ slot."))
 ;;; WRAP-OBJECT/UNWRAP-OBJECT
 (declaim (inline unwrap-object)) ;; inline -200
 (defun unwrap-object (obj &key (slots t) (methods nil)
-                            (indirect nil) (tag nil)
-                            (unboundp nil) (nullp nil)
-                            (exclude nil))
+                               (indirect nil) (tag nil)
+                               (unboundp nil) (nullp nil)
+                               (exclude nil))
   "Build and return a new `form' from OBJ by traversing the class
 definition. This differs from the generic function `unwrap' which
 always uses the ast slot as an internal buffer. We can also call this
@@ -104,18 +116,78 @@ example."
   (declare (type class class)
            (type form form)))
 
+;;; AST Traversal
+(defclass debug-traverser () ())
+
+(defclass copy-traverser ()
+  ((stack :initform '())
+   (result :initform nil)))
+
+(defgeneric traverse (self node level)
+  (:method ((self t) (node node) level)
+    (with-slots (ast) node
+      (loop for i in ast
+            do
+               (let ((n (slot-value node i)))
+                 (when n
+                   (traverse self n (1+ level)))))))
+  (:method ((self t) (node ast) level)
+    (with-slots (ast) node
+      (mapcar (lambda (x) (traverse self x level)) ast)))
+  (:method ((self t) (item t) level)
+    (declare (ignore level)))
+  (:method ((self debug-traverser) (node t) level)
+    (format t "~&~A~A~%"
+            (eval `(concatenate 'string ,@(loop for i from 9 to level collect " ")))
+            (class-name (class-of node))))
+  (:method :before ((copy copy-traverser) (item node) level)
+    (declare (ignore level))
+    (with-slots (stack) copy
+      (push '() stack)))
+  (:method :after ((copy copy-traverser) (item node) level)
+    (with-slots (stack result) copy
+      (with-slots (values subnodes) item
+        (let ((node-type (class-of item)))
+          (let ((node-copy nil)
+                (subnodes subnodes) ; changes can occur
+                (subnode-copies (reverse (pop stack))))
+            (if (eq node-type (find-class 'nodelist))
+                (setf node-copy (make-instance 'nodelist
+                                  :nodes subnode-copies
+                                  :values '()
+                                  :subnodes '(nodes)))
+                (progn
+                  (setf node-copy (allocate-instance node-type))
+                  (dolist (slot (mapcar #'sb-pcl::slot-definition-name 
+                                        (sb-pcl::class-slots node-type)))
+                    (when (slot-boundp item slot)
+                      (when (eq (slot-value item slot) nil)
+                        (setf subnodes (remove slot subnodes))) 
+                      (let ((position (position slot subnodes)))
+                        (setf (slot-value node-copy slot)
+                              (if position
+                                  (nth position subnode-copies)
+                                  (slot-value item slot))))))))
+            (if (eq level 0)
+                (setf result node-copy)
+                (push node-copy (first stack)))))))))
+
 ;;; EXPRESSION Objects
-(defgeneric expr-name (self))
-(defgeneric expr-op (self))
+(defgeneric op (self))
 (defgeneric lhs (self))
 (defgeneric (setf lhs) (new self))
 (defgeneric rhs (self))
 (defgeneric (setf rhs) (new self))
 
-(defclass expr () ()
+(defclass expr (node) ()
   (:documentation "Base Expression Object."))
 
-(defclass literal-expr (expr) ())
+(defmacro defexpr (name supers slots &rest opts)
+  `(defclass! ,name ,(safe-superclasses 'expr supers) ,slots ,@opts))
+
+(defclass literal-expr (expr) 
+  ((val :initarg :val :accessor val)))
+
 (defclass logical-expr (expr) ())
 (defclass physical-expr (expr) ())
 
@@ -126,6 +198,20 @@ example."
   ((lhs :initarg :lhs :accessor lhs)
    (rhs :initarg :rhs :accessor rhs)))
 
-;;; NODE objects
-(defclass node () ())
-(defmacro defnode (name super slots &rest opts))
+;;; Statements
+(defclass stmt (node) ())
+
+(defmacro defstmt (name supers slots &rest opts)
+  `(defclass! ,name ,(safe-superclasses 'stmt supers) ,slots ,@opts))
+
+;;; Printer
+
+;; primitive support for printing AST Nodes is provided here and implemented
+;; by higher-level packages. We use the Pretty Printer machinery as much as
+;; possible.
+
+;; ref: https://dl.acm.org/doi/pdf/10.1145/1039991.1039996
+
+(defvar *ast-dispatch-table* (copy-pprint-dispatch))
+(defun write-ast (sexpr &rest args)
+  (apply 'write sexpr :pretty t :pprint-dispatch *ast-dispatch-table* args))

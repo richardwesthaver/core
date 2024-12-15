@@ -89,6 +89,27 @@ non-nil, also include indirect (parent) methods."
               (when unboundp (list ns))))))
     slots)))
 
+(defmacro make-instance! (name &rest args)
+  `(defmacro ,(intern (format nil "~:@(~a~)" name)) (,@args)
+     (list 'make-instance '',name
+           ,@(loop for i in args append `(,(intern (symbol-name i) :keyword) ,i)))))
+
+(defmacro defclass! (name superclasses slots &rest options)
+  "Helper for DEFCLASS forms. Automatically adds INITARG based on NAME."
+  (let ((slots (loop for slot in slots 
+                     collect 
+                     (if (consp slot)
+                         `(,(car slot) :initarg ,(sb-int:keywordicate (car slot)) ,@(cdr slot))
+                         `(,slot :initarg ,(sb-int:keywordicate slot)))))
+        (fun (member :auto options :test #'std/condition::car-eql)))
+    (when fun
+      (setq options (remove (car fun) options))
+      (setq fun (cadar fun)))
+    `(prog1
+         (defclass ,name ,superclasses ,slots ,@options)
+       (when ',fun
+         (make-instance! ,name ,@(loop for s in slots collect (if (consp s) (car s) s)))))))
+
 (defmacro defmethods (name &body forms)
   "Define multiple methods for a generic function. Each member of FORMS is passed
 directly to a DEFMETHOD form."
@@ -148,3 +169,10 @@ argument."
             else collect current-class into seen
 
             finally (return nil))))
+
+(defun safe-superclasses (super classes)
+  "Return a list of class symbols same as CLASSES if one of the members is a
+subclass of SUPER."
+  (if (find super classes :test (lambda (x y) (subclassp y x)))
+      classes
+      (push super classes)))
