@@ -1,0 +1,144 @@
+;;; c/pkg.lisp --- C Code Generator
+
+;; Lisp -> C
+
+;; Commentary:
+
+;; There are quite a few C Code Generators in the Common Lisp ecosystem, and
+;; of course ECL which is itself a source-to-source Lisp implementation which
+;; targets C. This one is closer to c-mera.
+
+;; ref: https://github.com/kiselgra/c-mera
+
+;; ref: https://selgrad.org/publications/2014_els_SLWLS.pdf
+
+;; ref: https://selgrad.org/publications/2017_els_LSS.pdf
+
+;; ref: https://github.com/gcc-mirror/gcc/tree/master/gcc/c
+
+;;; Code:
+(defpackage :syn/gen/c
+  (:nicknames :gen/c)
+  (:use :cl :syn/gen :std/pipe :std/meta :cli/tools/cc :cli/env :id :ast)
+  (:import-from :std/sym :quoty)
+  (:shadowing-import-from :cl :type :float)
+  (:export
+   #:*c-backend*
+   #:split-aref
+   #:split-pref
+   #:split-targof
+   #:split-oref
+   #:split-addrof
+   #:split-unary
+   #:read-float
+   #:fix-case
+   #:dissect
+   #:pre-process
+   #:pre-process-heads
+   #:*c-swap*
+   #:*c-exports*
+   #:*c-syntax*
+   #:*c-symbols*
+   #:c-reader
+   #:c-processor
+   #:read-gen-c-file
+   #:read-gen-c-string
+   #:assignment-expression
+   #:infix-expression
+   #:prefix-expression
+   #:postfix-expression
+   #:not-expression
+   #:conditional-expression
+   #:cast-expression
+   #:jump-statement
+   #:label-statement
+   #:expression-statement
+   #:compound-statement
+   #:if-statement
+   #:for-statement
+   #:while-statement
+   #:do-statement
+   #:comment
+   #:switch-case-statement
+   #:switch-case-item
+   #:attribute-expression
+   #:typedef
+   #:include
+   #:preprocessor-macro
+   #:c-syntax
+   #:make-exprs
+   #:make-block
+   #:make-simple-block))
+
+(defpackage syn/gen/c/swap)
+
+(in-package :syn/gen/c)
+
+(defmethod load-generator ((self (eql :c))) :c)
+(defmethod generator-package ((self (eql :c))) :syn/gen/c/sym)
+
+(defvar *c-backend*
+  (append *cl-symbols*
+          '(name preprocessor-macro include typedef
+            chars comment do-statement while-statement init
+            for-statement else-body if-body if-statement
+            statements compound-statement expression semicolon
+            expression-statement kind jump-statement cast-expression
+            else then test conditional-expression not-expression
+            postfix-expression prefix-expression infix-expression
+            operator assignment-expression function-pointer float
+            pointer pointer-reference component object
+            object-reference indizes array array-reference items
+            clist value type specifier declaration-item
+            bindings braces declaration-list union-definition
+            members struct-definition parameters parameter-list
+            body parameter function-definition enum-definition
+            declaration-value float-type linebreak
+            constant attribute-expression switch cases
+            switch-case-statement switch-case-item switch-case-item)))
+
+(export *c-backend*)
+
+(defparameter *c-symbols*
+  '(and or not > <
+    set = /= <= >=
+    + - * /
+    for while do-while
+    return break continue
+    if cond when
+    array aref
+    cast union
+    function
+    progn block
+    null length
+    min max abs
+    sin cos tan 
+    1- 1+
+    type float-type
+    funcall
+    attribute))
+
+(defparameter *c-syntax*
+  '(set *= %= += -= >>= <<= &= ^= \|=
+    == != \| \|\| % << >> ^ & && ~ ! ?
+    addr-of targ-of dref switch
+    prefix++ prefix--
+    postfix-- postfix++ postfix*
+    struct enum oref pref specifier
+    include comment decl
+    fpointer for while
+    typedef cast sizeof
+    goto label clist
+    cpp pragma))
+
+(defparameter *c-exports*
+  (append *c-symbols*
+          *c-syntax*
+          *cl-symbols*))
+
+(defparameter *c-swap*
+  (append *c-symbols* *c-syntax*))
+
+(pkg:defpackage* :syn/gen/c/sym
+    (:shadow-symbols *c-symbols* :export-symbols *c-exports*)
+  (:use :syn/gen/c))
