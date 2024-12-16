@@ -8,7 +8,7 @@
 (defmacro define-code-reader (&key file-reader string-reader macro-character)
   `(progn
      (defun ,file-reader (file)
-       "Read syn/gen source code file and return AST."
+       ,(format nil "Read ~X source code file and return AST." (package-name *package*))
        (let ((ast)
              (*readtable* (copy-readtable nil)))
          (setf (readtable-case *readtable*) :invert)
@@ -57,12 +57,6 @@
              (setf (slot-value printer 'stream) *standard-output*)
              (traverse printer tree 0)
              (format t "~&")))))))
-
-(defun print-code (tree)
-  (let ((pp (make-instance 'code-printer))
-        (d (make-instance 'debug-traverser)))
-    (traverse d tree 0)
-    (traverse pp tree 0)))
 
 (defmacro define-code-switch (name &key macro-character)
   "Define a syn/gen reader switch (in repl) allowing preprocessing and mixed

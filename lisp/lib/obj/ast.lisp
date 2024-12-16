@@ -125,12 +125,11 @@ example."
 
 (defgeneric traverse (self node level)
   (:method ((self t) (node node) level)
-    (with-slots (ast) node
-      (loop for i in ast
-            do
-               (let ((n (slot-value node i)))
-                 (when n
-                   (traverse self n (1+ level)))))))
+    (loop for i in (ast node)
+          do
+             (let ((n (slot-value node i)))
+               (when n
+                 (traverse self n (1+ level))))))
   (:method ((self t) (node ast) level)
     (with-slots (ast) node
       (mapcar (lambda (x) (traverse self x level)) ast)))

@@ -10,7 +10,8 @@
 
 (defnode function-call () (function arguments))
 (defnode source-location (ast) (line file info))
-(defnode ident (id) ())
+(defexpr ident (literal-expr) ())
+(defmethod id ((self ident)) (val self))
 (defexpr str-literal (literal-expr) ())
 (defexpr num-literal (literal-expr) ())
 (defexpr char-literal (literal-expr) ())
@@ -23,7 +24,7 @@
     `(progn
        ,@(loop for i in tags 
                append
-                  (loop for k in langs 
+                  (loop for k in langs
                         collect
                            `(let ((tag ',i))
                               (declare (ignorable tag))
@@ -34,14 +35,15 @@
 (defmacro make-nodes (nodes &key prepend quoty)
   "Build general or specific AST."
   (let ((prepend (if (listp prepend) prepend `(,prepend))))
-    `(nodelist
-      (list ,@(loop for i in nodes 
-                    collect
-                       (if prepend
-                           (if quoty
-                               `(,@prepend (quoty ,i))
-                               `(,@prepend ,i))
-                           `(%make-node (quoty ,i))))))))
+    `(make-instance 'ast
+       :ast 
+       (list ,@(loop for i in nodes 
+                     collect
+                        (if prepend
+                            (if quoty
+                                `(,@prepend (quoty ,i))
+                                `(,@prepend ,i))
+                            `(%make-node (quoty ,i))))))))
 
 (defmacro make-node (item)
   "Try to identify and make a NODE from ITEM."
@@ -55,7 +57,7 @@
     ;; item is already c-mera node
     ((typep item 'node) item)
     ;; Item is most possibly an atom or a quoted symbol
-    ((symbolp item) (make-instance 'ident :id item))
+    ((symbolp item) (make-instance 'ident :val item))
     ((numberp item) (make-instance 'num-literal :val item))
     ((stringp item) (make-instance 'str-literal :val item))
     ((characterp item) (make-instance 'char-literal :val item))
@@ -96,6 +98,12 @@
 (defun write-code (expr &rest args)
   (apply 'write expr :pprint-dispatch *code-dispatch-table* args))
 
+(defun print-code (tree)
+  (let ((pp (make-instance 'code-printer))
+        (d (make-instance 'debug-traverser)))
+    (traverse d tree 0)
+    (traverse pp tree 0)))
+
 (defmacro define-code-printer (qual node &body body)
   (if (eql :self qual)
       `(defmethod traverse ((self code-printer)
@@ -119,7 +127,6 @@
                                   ,(find-class 'code-printer)
                                   (find-class ',node)
                                   ,(find-class t))))))
-
 
 (defmacro with-code-printer (&body body)
   `(symbol-macrolet ((stream (slot-value self 'stream))

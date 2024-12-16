@@ -347,7 +347,9 @@
            :op
            :*ast-dispatch-table*
            :write-ast
-           :val))
+           :val
+           :debug-traverser
+           :copy-traverser))
 
 (defpackage :obj/config
   (:nicknames :config)

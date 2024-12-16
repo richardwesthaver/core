@@ -9,6 +9,8 @@
   (:export
    #:*cpp-backend*))
 
+(defpackage :syn/gen/cpp/swap)
+
 (pkg:defpkg :syn/gen/cpp/sym
   (:use :syn/gen/c/sym :syn/gen/cpp))
 

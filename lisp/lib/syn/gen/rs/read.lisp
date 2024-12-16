@@ -1,4 +1,4 @@
-;;; read.lisp --- GEN/RS Readers
+;;; read.lisp --- SYN/GEN/RS readers
 
 ;; 
 

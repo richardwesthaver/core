@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :syn/gen/rs)
-
+(in-readtable :std)
 (defvar *rs-macros* nil)
 (defvar *default-cargo-target-directory* (merge-pathnames "target/" *default-pathname-defaults*))
 
