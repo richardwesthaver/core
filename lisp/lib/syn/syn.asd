@@ -29,9 +29,9 @@
                  (:module "c"
                   :components 
                   ((:file "pkg")
-                   (:file "sym")
                    (:file "ast")
                    (:file "read")
+                   (:file "sym")
                    (:file "print")))
                  (:module "cpp"
                   :components 
