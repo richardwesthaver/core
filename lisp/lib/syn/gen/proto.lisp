@@ -18,6 +18,21 @@
 (defnode proxy () (info subnode))
 (defnode empty () ())
 
+;; Inverts the case when interning a string.
+;; This is needed to keep the correct internal (inverted) case.
+;; Use this function for all c depending code.
+(defun cintern (name &optional package)
+  (macrolet ((case-test (test string)
+               `(reduce #'(lambda (a b) (and a b))
+                        (mapcar (lambda(x) (or (not (both-case-p x)) (,test x)))
+                                (coerce ,string 'list)))))
+    (let ((string (cond ((case-test upper-case-p name) (string-downcase name))
+                        ((case-test lower-case-p name) (string-upcase name))
+                        (t name))))
+      (if package
+          (intern string package)
+          (intern string)))))
+
 (defmacro defsyntax (tags langs lambda-list &body body)
   "Define syntax for tags from specific langs."
   (let ((tags (if (consp tags) tags (list tags))))
@@ -32,6 +47,23 @@
                                 ,@body)))))))
 
 ;;; Utils
+(defmacro quoty (item &environment env)
+  "Quote undefined symbols, build functions from unknown lists."
+  (cond ((eql item nil)
+         (values))
+        ((listp item)
+         (if (or (listp (car item))
+                 (not (fboundp! (car item) env)))
+             `(make-instance 'function-call 
+                :function (make-node ,(car item))
+                :arguments (make-nodes ,(cdr item)))
+             item))
+        ((symbolp item)
+         (if (vboundp! item env)
+             item
+             `',item))
+        (t item)))
+
 (defmacro make-nodes (nodes &key prepend quoty)
   "Build general or specific AST."
   (let ((prepend (if (listp prepend) prepend `(,prepend))))

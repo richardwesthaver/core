@@ -95,9 +95,7 @@
   "Code block with curly braces and indentation."
   `(make-instance 'compound-statement 
      :braces t
-     :statements (make-instance 'expression-statement 
-                   :force-semicolon nil 
-                   :expression (quoty ,list))))
+     :statements (make-exprs ,list)))
 
 (defmacro make-simple-block (list)
   "Code block without underlying AST.
@@ -267,7 +265,7 @@
 
 (c-syntax include (file)
   "Include for c files"
-   `(include (quoty ,file)))
+  `(make-instance 'include :file (quoty ,file)))
 
 (c-syntax comment (comment &key (prefix nil) (linebreak t))
   "Comment with default ('//') or user defined delimiter."
@@ -306,7 +304,7 @@
          ,(when specifier
             `(make-instance 'specifier
                :specifier (make-nodes ,specifier)))
-         :type (type (make-node ,type))
+         :type (make-instance 'c-type :type (make-node ,type))
          :identifier (make-node ,id)
          :value ,(if init 
                      `(make-instance 'declaration-value

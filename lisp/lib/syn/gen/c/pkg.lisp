@@ -20,8 +20,7 @@
 (defpackage :syn/gen/c
   (:nicknames :gen/c)
   (:use :cl :syn/gen :std/pipe :std/meta :cli/tools/cc :cli/env :id :ast)
-  (:import-from :std/sym :quoty)
-  (:shadowing-import-from :cl :type :float)
+  (:shadow :type :float)
   (:export
    #:*c-backend*
    #:split-aref
@@ -94,6 +93,7 @@
             members struct-definition parameters parameter-list
             body parameter function-definition enum-definition
             declaration-value float-type linebreak
+            c-type
             constant attribute-expression switch cases
             switch-case-statement switch-case-item switch-case-item)))
 
@@ -141,4 +141,6 @@
 
 (pkg:defpackage* :syn/gen/c/sym
     (:shadow-symbols *c-symbols* :export-symbols *c-exports*)
-  (:use :syn/gen/c))
+  (:use :cl)
+  (:import-from :syn/gen :quoty :print-code :write-code :cintern)
+  (:import-from :syn/gen/c :cl-reader :c-reader :switch-reader :decompose-declaration))

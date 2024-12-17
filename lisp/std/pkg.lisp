@@ -62,7 +62,7 @@
    :symbolicate
    :keywordicate
    :gensymify
-   :gensymify* :fboundp! :vboundp! :quoty))
+   :gensymify* :fboundp! :vboundp!))
 
 (defpkg :std/list
   (:use :cl)

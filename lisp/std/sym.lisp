@@ -84,8 +84,7 @@ passed as the first argument to `gensym'."
 	(loop repeat length
               collect (gensym g))))))
 
-;;; Quoty
-;; FBOUNDP!, VBOUNDP! and QUOTY are all described in the C-MERA paper.
+;; FBOUNDP!, VBOUNDP! are described in the C-MERA paper.
 (defun fboundp! (function &optional env)
   "Check if function or macro is bound globally or lexically."
   (sb-cltl2::function-information function env))
@@ -93,18 +92,3 @@ passed as the first argument to `gensym'."
 (defun vboundp! (variable &optional env)
   "Check if variable or symbol macro is bound  globally or lexically."
   (sb-cltl2::variable-information variable env))
-
-(defmacro quoty (item &environment env)
-  "Quote undefined symbols, build functions from unknown lists."
-  (cond ((eql item nil)
-         (values))
-        ((listp item)
-         (if (or (listp (car item))
-                 (not (fboundp! (car item) env)))
-             `((:function #|node|# ,(car item) #|nodelist|# ,(cdr item)))
-             item))
-        ((symbolp item)
-         (if (vboundp! item env)
-             item
-             `',item))
-        (t item)))

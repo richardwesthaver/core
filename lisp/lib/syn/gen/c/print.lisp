@@ -105,6 +105,8 @@
       (format stream ";")))
   (define-code-printer :before ident
     (format stream " "))
+  (define-code-printer :self ident
+    (format stream "~A" node))
   ;; (define-code-printer :before enum
   ;;   (if (eql (top-sign) 'first-enum)
   ;;       (progn

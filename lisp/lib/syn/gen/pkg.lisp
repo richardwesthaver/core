@@ -34,8 +34,8 @@
    :find-sign :node-slot
    :pop-info :top-info 
    :push-info :find-info
-   :make-proxy :del-proxy :info-size
-   :empty))
+   :make-proxy :del-proxy :info-size :empty
+   :quoty))
 
 (in-package :syn/gen)
 
