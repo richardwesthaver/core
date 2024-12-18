@@ -4,6 +4,25 @@
 
 ;;; Code:
 (in-package :syn/gen/c)
+
+;;; Simply prints the ast, useful in REPL.
+(defun simple-print (tree)
+  "Pretty prints C ast"
+  (let (
+        ;(nc (make-instance 'nodelist-traverser))
+        (ei (make-instance 'else-if-traverser))
+        (ib (make-instance 'if-blocker))
+        (db (make-instance 'decl-blocker))
+        (rn (make-instance 'renamer))
+        (pp (make-instance 'code-printer)))
+    (progn
+      ;(traverser nc tree 0)
+      (traverse ei tree 0)
+      (traverse ib tree 0)
+      (traverse db tree 0)
+      (traverse rn tree 0)
+      (traverse pp tree 0))))	
+
 (with-code-printer
   (define-code-printer :before expression-statement
     (push-info 'expression-statement)
@@ -46,30 +65,45 @@
     (pop-info)
     (if (node-slot braces)
         (progn (format stream "~&~a}" indent))))
-  ;; declaration item (specificer type identifier value)
-  ;; print whitespace after type only if identifier is present
-  (define-code-printer :before declaration-item
-    (push-info 'declaration-item))
-  (define-code-printer :after declaration-item
-    (pop-info))
   (define-code-printer :after c-type
     (let ((info (top-info)))
-      (when (and (node-slot c-type)
+      (when (and (node-slot type)
                  (not (eql info 'cast-expression))
                  (not (eql info 'funcall))
                  (not (eql info 'declaration-item)))
         (format stream " "))))
+  (define-code-printer :self c-type
+    (traverse %self (ast node) %level))
   (define-code-printer :before function-definition
     (push-info 'function-definition)
     (format stream "~&~%~A" indent))
+  (define-code-printer :self function-definition
+    (with-slots (parameter item body) node
+      (format stream "~A ~A"
+              (val
+               (slot-value
+                (slot-value item 'type)
+                'type))
+              (val (slot-value item 'identifier)))
+      (format stream "(~{~A~^, ~})"
+              (mapcar (lambda (x) (format nil "~A ~A" 
+                                          (val
+                                           (slot-value
+                                            (slot-value x 'type)
+                                            'type))
+                                          (val (slot-value x 'identifier))))
+                      (ast parameter)))
+      (traverse %self body %level)))
   (define-code-printer :after function-definition
     (pop-info)
     (when (not (node-slot body))
       (format stream ";")))
   (define-code-printer :before parameter-list
-    (when (not (slot-value (node-slot parameters) 'ast))
-      (format stream "void"))
+    (unless (ast node)
+      (format stream " void"))
     (push-sign 'skip-first))
+  (define-code-printer :self parameter-list
+    (format stream "~{~A~^, ~}" (ast node)))
   (define-code-printer :after parameter-list
     (when (eql (top-sign) 'skip-first)
       (pop-sign)))
@@ -103,10 +137,6 @@
     (when (not (or (eql (top-info) 'typedef)
                    (eql (top-info) 'decl)))
       (format stream ";")))
-  (define-code-printer :before ident
-    (format stream " "))
-  (define-code-printer :self ident
-    (format stream "~A" node))
   ;; (define-code-printer :before enum
   ;;   (if (eql (top-sign) 'first-enum)
   ;;       (progn
@@ -123,13 +153,11 @@
           (format stream "~&~A{" indent)
           ++indent)))
   (define-code-printer :before declaration-item
-    (pop-info)
-    (if (node-slot braces)
-        (progn
-          --indent
-          (format stream "~&~A}" indent))))
+    (push-info 'declaration-item))
+  (define-code-printer :self declaration-item
+    (traverse %self (ast node) %level))
   (define-code-printer :after declaration-item
-    (format stream ":"))
+    (pop-info))
   ;; TODO 2024-12-15: 
   (define-code-printer :before for-statement
     (push-info 'for))
@@ -204,6 +232,8 @@
   (define-code-printer :after label-statement
     (format stream ":~%"))
   ;; specifier
+  (define-code-printer :self specifier
+    (traverse %self (ast node) %level))
   ;; float
   (define-code-printer :after float-type
     (format stream "f"))

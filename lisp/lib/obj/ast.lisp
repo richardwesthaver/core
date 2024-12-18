@@ -125,20 +125,21 @@ example."
 
 (defgeneric traverse (self node level)
   (:method ((self t) (node node) level)
-    (loop for i in (ast node)
-          do
-             (let ((n (slot-value node i)))
-               (when n
-                 (traverse self n (1+ level))))))
+    (if (slot-exists-p node 'ast)
+        (loop for i in (ast node)
+              do (traverse self i (1+ level)))
+        (call-next-method)))
   (:method ((self t) (node ast) level)
     (with-slots (ast) node
       (mapcar (lambda (x) (traverse self x level)) ast)))
+  (:method ((self t) (node list) level)
+    (mapcar (lambda (x) (traverse self x level)) node))
   (:method ((self t) (item t) level)
     (declare (ignore level)))
   (:method ((self debug-traverser) (node t) level)
-    (format t "~&~A~A~%"
-            (eval `(concatenate 'string ,@(loop for i from 9 to level collect " ")))
-            (class-name (class-of node))))
+    ;; TODO 2024-12-17: 
+    ;; (format (slot-value self 'stream) "~&  ~A~%" (class-name (class-of node)))
+    )
   (:method :before ((copy copy-traverser) (item node) level)
     (declare (ignore level))
     (with-slots (stack) copy
@@ -186,17 +187,17 @@ example."
 
 (defclass literal-expr (expr) 
   ((val :initarg :val :accessor val)))
-
+(defmethod ast ((self literal-expr)) (val self))
 (defclass logical-expr (expr) ())
 (defclass physical-expr (expr) ())
 
 (defclass unary-expr (expr)
   ((expr :initarg :expr :accessor expr)))
-
+(defmethod ast ((self unary-expr)) (val self))
 (defclass binary-expr (expr)
   ((lhs :initarg :lhs :accessor lhs)
    (rhs :initarg :rhs :accessor rhs)))
-
+(defmethod ast ((self binary-expr)) (list (lhs self) (rhs self)))
 ;;; Statements
 (defclass stmt (node) ())
 

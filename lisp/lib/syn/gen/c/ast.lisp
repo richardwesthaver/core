@@ -6,7 +6,15 @@
 (in-package :syn/gen/c)
 
 (defnode function-definition () (item parameter body))
+(defmethod ast ((self function-definition)) 
+  (list 
+   ;; params are before the result type (item) in the AST
+   (slot-value self 'item)
+   (slot-value self 'parameter)
+   (slot-value self 'body)))
 (defnode parameter-list () (parameters))
+(defmethod ast ((self parameter-list))
+  (ast (slot-value self 'parameters)))
 ;; struct
 (defnode struct-definition (id) (members))
 ;; union
@@ -16,6 +24,11 @@
 ;; variable declaration
 (defnode declaration-list () (braces bindings body))
 (defnode declaration-item () (specifier type identifier value))
+(defmethod ast ((self declaration-item))
+  (list (slot-value self 'type)
+        (slot-value self 'specifier)
+        (slot-value self 'identifier)
+        (slot-value self 'value)))
 (defnode declaration-value () (value))
 
 ;; essential bulding blocks
@@ -24,8 +37,10 @@
 (defnode object-reference  () (object component))
 (defnode pointer-reference  () (pointer component))
 (defnode c-type  () (type))
+(defmethod ast ((self c-type)) (list (slot-value self 'type)))
 (defnode float-type () (number))
 (defnode specifier () (specifier))
+(defmethod ast ((self specifier)) (list (slot-value self 'specifier)))
 (defnode function-pointer () (identifier parameters))
 
 ;;; Expressions
@@ -78,7 +93,7 @@
 
 ;;; special nodes
 (defnode include () (file))
-
+(defmethod ast ((self include)) (list (slot-value self 'file)))
 ;; TODO 2024-12-13: 
 (defnode preprocessor-macro () (name function body))
 
@@ -276,21 +291,19 @@
 
 (defun decompose-declaration (item)
   "Decompose declaration item into its SPECIFIERS, TYPE, NAME and INITIALIZER"
-  (if (let ((symbol (first (last (butlast item)))))
-        (and (symbolp symbol)
-             (equal (symbol-name symbol) "=")))
+  (if (< 2 (length item))
       ;; decompose arg list with init
-      (let ((specifier (butlast item 4))
-            (type+id+val (last item 4)))
-        (let ((type (first type+id+val))
-              (id   (second type+id+val))
+      (let ((specifier (butlast item 3))
+            (type+id+val (last item 3)))
+        (let ((type (second type+id+val))
+              (id   (first type+id+val))
               (init (fourth type+id+val)))
           (values specifier type id init)))
       ;; decompose arg list without init
       (let ((specifier (butlast item 2))
             (type+id (last item 2)))
-        (let ((type (first type+id))
-              (id   (second type+id)))
+        (let ((type (second type+id))
+              (id   (first type+id)))
           (values specifier type id nil)))))
 
 (defmacro make-declaration-node (item)
@@ -351,7 +364,7 @@
      :item
      ,(if (listp type)
          ;; check if macro/function or list
-         (let ((first (first type)))
+          (let ((first (first type)))
            (if (and (not (listp first)) (std:fboundp! first env))
                ;; type is macro or function
                `(make-declaration-node (,type ,name))

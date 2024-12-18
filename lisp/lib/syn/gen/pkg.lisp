@@ -35,7 +35,9 @@
    :pop-info :top-info 
    :push-info :find-info
    :make-proxy :del-proxy :info-size :empty
-   :quoty))
+   :quoty
+   :%level
+   :%self))
 
 (in-package :syn/gen)
 

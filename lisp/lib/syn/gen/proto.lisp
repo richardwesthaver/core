@@ -9,13 +9,15 @@
 (defgeneric generator-package (self))
 
 (defnode function-call () (function arguments))
+(defmethod ast ((self function-call)) 
+  (list (slot-value self 'function) (slot-value self 'arguments)))
 (defnode source-location (ast) (line file info))
 (defexpr ident (literal-expr) ())
 (defmethod id ((self ident)) (val self))
 (defexpr str-literal (literal-expr) ())
 (defexpr num-literal (literal-expr) ())
 (defexpr char-literal (literal-expr) ())
-(defnode proxy () (info subnode))
+(defnode proxy (ast) (info))
 (defnode empty () ())
 
 ;; Inverts the case when interning a string.
@@ -108,7 +110,7 @@
              (cond 
                ((eql (class-of (first nodes)) (find-class 'ast))
                 (setf nodes (slot-value nodes 'ast)))
-               ((eql (class-of (first nodes)) (find-class 'source-position))
+               ((eql (class-of (first nodes)) (find-class 'source-location))
                 (if (eql (class-of (slot-value (first nodes) 'subnode)) (find-class 'ast))
                     (setf nodes (slot-value (slot-value (first nodes) 'subnode) 'nodes))
                     (loop-finish)))
@@ -142,8 +144,7 @@
                             (node ,node)
                             level)
          (declare (ignorable level))
-         ,@body
-         (call-next-method))
+         ,@body)
       `(defmethod traverse ,qual ((self code-printer) (node ,node) level)
          (declare (ignorable level))
          ,@body)))
@@ -162,7 +163,12 @@
 
 (defmacro with-code-printer (&body body)
   `(symbol-macrolet ((stream (slot-value self 'stream))
-                     (indent (slot-value self 'indent))
+                     (indent (concatenate 'string (loop for i
+                                                        from 1 
+                                                        to (slot-value self 'indent)
+                                                        collect #\space)))
+                     (%self self)
+                     (%level level)
                      (--indent (decf (slot-value self 'indent)))
                      (++indent (incf (slot-value self 'indent))))
      (macrolet ((push-sign (x) `(push ,x (slot-value self 'sign-stack)))
