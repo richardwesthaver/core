@@ -21,8 +21,12 @@
 (defnode union-definition (id) (members))
 ;; enum
 (defnode enum-definition (id) (members))
+(defmethod ast ((self enum-definition)) (list (id self) (slot-value self 'members)))
 ;; variable declaration
 (defnode declaration-list () (braces bindings body))
+(defmethod ast ((self declaration-list))
+  (list (slot-value self 'bindings)
+        (slot-value self 'body)))
 (defnode declaration-item () (specifier type identifier value))
 (defmethod ast ((self declaration-item))
   (list (slot-value self 'type)
@@ -30,7 +34,10 @@
         (slot-value self 'identifier)
         (slot-value self 'value)))
 (defnode declaration-value () (value))
-
+(defmethod ast ((self declaration-value)) 
+  (list (slot-value self 'value)))
+(defmethod val ((self declaration-value))
+  (slot-value self 'value))
 ;; essential bulding blocks
 (defnode clist () (items))
 (defnode array-reference  () (array indizes))
@@ -90,7 +97,6 @@
 
 ;;; typedef
 (defstmt typedef () (declaration))
-
 ;;; special nodes
 (defnode include () (file))
 (defmethod ast ((self include)) (list (slot-value self 'file)))
@@ -218,18 +224,18 @@
                 :braces t
                 :statements (make-nodes ,body))))
 
-(c-syntax enum (&rest rest)
+(c-syntax enum (name &rest enum-list)
   "Syntax for enum"
-  (destructuring-bind (enum-list &optional name) (reverse rest)
-    (setf enum-list (mapcar #'(lambda (x)
-                                (if (listp x)
-                                    x
-                                    (list x))) enum-list))
-    `(make-instance 'enum-definition
-       :id ,(when name
-              `(make-node ,name))
-       :members
-       (make-nodes ,enum-list :prepend decompose-enum))))
+  (setf enum-list (mapcar #'(lambda (x)
+                              (if (listp x)
+                                  x
+                                  (list x))) 
+                          enum-list))
+  `(make-instance 'enum-definition
+     :id ,(when name
+            `(make-node ,name))
+     :members
+     (make-nodes ,enum-list :prepend decompose-enum)))
 
 (c-syntax (aref array) (array &rest indizes &environment env)
   "Array reference"
@@ -297,7 +303,7 @@
             (type+id+val (last item 3)))
         (let ((type (second type+id+val))
               (id   (first type+id+val))
-              (init (fourth type+id+val)))
+              (init (third type+id+val)))
           (values specifier type id init)))
       ;; decompose arg list without init
       (let ((specifier (butlast item 2))
@@ -356,9 +362,8 @@
         ;; make single expression statements
         `(make-exprs ,body))))
 
-(c-syntax function (name parameters -> type &body body &environment env)
+(c-syntax function (name type parameters &body body &environment env)
   "Define c function"
-  (declare (ignore ->))
   `(make-instance 'function-definition
     ;; function name + type
      :item
@@ -371,7 +376,7 @@
                ;; type is list with type information
                `(make-declaration-node (,@type ,name))))
          ;; type is single symbol
-         `(make-declaration-node (,type ,name)))
+         `(make-declaration-node (,name ,type)))
      :parameter
      (make-instance 'parameter-list
        :parameters

@@ -10,6 +10,11 @@
    :run-terminal :with-terminal
    :terminal-error))
 
+(defpackage :cli/tools/xfs
+  (:use :cl :std :cli/env)
+  (:export
+   #:xfs-error))
+
 (defpackage :cli/tools/tmux
   (:use :cl :std :cli/env :cli/tools/term)
   (:import-from :obj/config

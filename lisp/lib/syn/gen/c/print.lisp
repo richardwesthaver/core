@@ -21,7 +21,7 @@
       (traverse ib tree 0)
       (traverse db tree 0)
       (traverse rn tree 0)
-      (traverse pp tree 0))))	
+      (traverse pp tree 0))))
 
 (with-code-printer
   (define-code-printer :before expression-statement
@@ -60,6 +60,8 @@
           (push-info 'block)))
     ;; increase indent
     ++indent)
+  (define-code-printer :self compound-statement
+    (traverse %self (node-slot statements) %level))
   (define-code-printer :after compound-statement
     --indent
     (pop-info)
@@ -124,15 +126,30 @@
                (> (length (slot-value (node-slot members) 'ast)) 3))
       (push-sign 'enum-break))
     (push-info 'enum-definition)
-    (push-sign 'first-enum)
     ++indent)
-  (define-code-printer :after enum-definition
+  (define-code-printer :self enum-definition
+    (format stream " {")
+    (let ((lprinter (copy-object %self)))
+      (setf (slot-value lprinter 'stream) nil)
+      (format stream "~{~#[~;~A~:;~A,~]~}"
+              (loop for x in (ast (node-slot members))
+                    collect 
+                       (format nil "~A~A~@[=~A~]"
+                               (if (eql (top-sign) 'enum-break)
+                                   (format nil "~%~A" indent)
+                                   "")
+                               (val (slot-value x 'identifier))
+                               (std:when-let ((val (slot-value x 'value)))
+                                 (traverse lprinter (val val) %level))))))
     --indent
     (if (eql (top-sign) 'enum-break)
         (progn
           (pop-sign)
           (format stream "~&}"))
-        (format stream " }"))
+        (format stream "}"))
+    (std:when-let ((id (and (id node) (val (id node)))))
+      (format stream " ~A" id)))
+  (define-code-printer :after enum-definition
     (pop-info)
     (when (not (or (eql (top-info) 'typedef)
                    (eql (top-info) 'decl)))
@@ -152,12 +169,25 @@
         (progn
           (format stream "~&~A{" indent)
           ++indent)))
+  (define-code-printer :self declaration-list
+    (traverse %self (ast node) %level))
+  (define-code-printer :after declaration-list
+    (pop-info)
+    (when (node-slot braces)
+      --indent
+      (format stream "~&~A}" indent)))
   (define-code-printer :before declaration-item
     (push-info 'declaration-item))
   (define-code-printer :self declaration-item
-    (traverse %self (ast node) %level))
+    (format stream "~A ~A~@[=~A~];~%"
+            (val (slot-value (node-slot type) 'type))
+            (val (node-slot identifier))
+            (std:when-let ((val (node-slot value)))
+              (val (val val)))))
   (define-code-printer :after declaration-item
     (pop-info))
+  (define-code-printer :self declaration-value
+    (traverse %self (ast node) %level))
   ;; TODO 2024-12-15: 
   (define-code-printer :before for-statement
     (push-info 'for))
@@ -277,6 +307,21 @@
       (format stream "~&"))
     (push-sign 'nested-funcall-sentinel)
     (push-sign 'skip-first-funcall))
+  (define-code-printer :self function-call
+    (format stream "~&")
+    (traverse %self (node-slot function) %level)
+    (let ((arg-printer (std:copy-object %self)))
+      (setf (slot-value arg-printer 'stream) nil)
+      (format stream "(~{~A~^, ~})"
+              (traverse arg-printer (node-slot syn/gen::arguments) %level))))
+  (define-code-printer :after function-call
+    (when (eql (top-sign) 'skip-first-funcall)
+      (pop-sign))
+    (if (eql (top-sign) 'nested-funcall-sentinel)
+        (pop-sign)
+        (warn "funcall top-sign missmatch"))
+    (unless (eql (info-size) 0)
+      (format stream ";")))
   ;; include
   (define-code-printer :self include
     (format stream (if (stringp (node-slot file))
@@ -293,7 +338,11 @@
   ;; typedef
   (define-code-printer :before typedef
     (push-info 'typedef)
-    (format stream "~&~Atypdef " indent))
+    (format stream "~&~Atypedef " indent))
+  (define-code-printer :self typedef
+    (traverse %self (slot-value (node-slot declaration) 'identifier) %level)
+    (format stream " ")
+    (traverse %self (slot-value (slot-value (node-slot declaration) 'type) 'type) %level))
   (define-code-printer :after typedef
     (pop-info)
     (format stream ";"))
