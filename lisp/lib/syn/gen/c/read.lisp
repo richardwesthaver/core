@@ -289,3 +289,16 @@
    (set-macro-character #\Tab #'pre-process)
    (set-macro-character #\Newline #'pre-process)
    (set-macro-character #\( #'pre-process-heads)))
+
+(defmethod gen-reader ((self (eql :c))) (function c-reader))
+(defmethod gen-reader-switch ((self (eql :c))) (function switch-reader))
+
+(defmethod load-gen ((self (eql :c))) 
+  (init-gen :c)
+  (c-reader))
+
+(defmethod unload-gen ((self (eql :c)))
+  (init-gen nil)
+  (cl-reader))
+
+(defmethod gen-symbol-package ((self (eql :c))) (find-package :syn/gen/c/sym))

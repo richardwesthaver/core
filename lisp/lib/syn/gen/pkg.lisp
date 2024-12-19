@@ -37,7 +37,15 @@
    :make-proxy :del-proxy :info-size :empty
    :quoty
    :%level
-   :%self))
+   :%self
+   :generator-reader
+   :generator-reader-switch
+   :load-gen
+   :gen-package
+   :gen-reader
+   :gen-reader-switch
+   :unload-gen
+   :gen-symbol-package))
 
 (in-package :syn/gen)
 

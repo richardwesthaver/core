@@ -30,8 +30,8 @@
                   :components 
                   ((:file "pkg")
                    (:file "ast")
-                   (:file "read")
                    (:file "sym")
+                   (:file "read")
                    (:file "print")))
                  (:module "cpp"
                   :components 
@@ -55,5 +55,19 @@
 
 (defsystem :syn/tests
   :depends-on (:rt :syn)
-  :components ((:file "tests"))
+  :components ((:module "tests"
+                :components 
+                ((:file "pkg")
+                 (:module "gen"
+                  :components
+                  ((:file "pkg")
+                   (:file "c")
+                   (:file "cpp")
+                   (:file "cu")
+                   (:file "rs")))
+                 (:module "lang"
+                  :components
+                  ((:file "pkg")
+                   (:file "c")
+                   (:file "rs"))))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :syn)))

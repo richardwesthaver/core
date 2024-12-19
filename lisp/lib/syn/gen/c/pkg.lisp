@@ -76,14 +76,12 @@
    #:renamer
    #:decl-blocker
    #:if-blocker
-   #:simple-print))
+   #:simple-print
+   #:gen-reader))
 
 (defpackage syn/gen/c/swap)
 
 (in-package :syn/gen/c)
-
-(defmethod load-generator ((self (eql :c))) :c)
-(defmethod generator-package ((self (eql :c))) :syn/gen/c/sym)
 
 (defvar *c-backend*
   (append *cl-symbols*

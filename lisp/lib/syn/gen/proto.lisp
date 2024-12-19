@@ -5,8 +5,12 @@
 ;;; Code:
 (in-package :syn/gen)
 
-(defgeneric load-generator (self))
-(defgeneric generator-package (self))
+(defgeneric load-gen (self))
+(defgeneric unload-gen (self))
+(defgeneric gen-package (self))
+(defgeneric gen-symbol-package (self))
+(defgeneric gen-reader (self))
+(defgeneric gen-reader-switch (self))
 
 (defnode function-call () (function arguments))
 (defmethod ast ((self function-call)) 

@@ -114,9 +114,12 @@
   ;;       (pop-sign)
   ;;       (format stream ", ")))
   (define-code-printer :before struct-definition
-    (format stream "~&~%~Astruct " indent))
+    (unless (eql (top-info) 'typedef)
+      (format stream "~&~%"))
+    (format stream "~Astruct " indent))
   (define-code-printer :after struct-definition
-    (format stream ";"))
+    (unless (eql (top-info) 'typedef)
+      (format stream ";")))
   (define-code-printer :before enum-definition
     (if (or (eql (top-info) 'typedef)
             (eql (top-info) 'decl))
