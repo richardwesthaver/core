@@ -306,7 +306,6 @@
                           `((rocksdb-writebatch-wi-create-with-params
                              ,backup-comparator ,reserved ,overwrite ,max ,key-protection-bytes))
                           `((rocksdb-writebatch-wi-create ,reserved ,overwrite))))))
-     
      ,@(if destroy
            `((unwind-protect (progn ,@body)
                (rocksdb-writebatch-wi-destroy ,wbwi)))

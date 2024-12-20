@@ -1,5 +1,11 @@
 (pushnew :cli *features*)
 
+;; #+sb-core-compression
+;; (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
+;;   (uiop:dump-image (asdf:output-file o c)
+;;                    :executable t
+;;                    :compression 2))
+
 (defsystem :bin
   :depends-on (:bin/organ :bin/homer :bin/rdb :bin/skel :bin/packy :bin/core))
 

@@ -74,7 +74,7 @@ value."
          (return-from ,xor (values ,true t))))))
 
 ;; From ELEPHANT
-(defmacro ifret (pred &optional alt)
+(defmacro ifret (pred &body alt)
   "If pred is non-null, return the value, otherwise return the alternate value"
   (once-only (pred)
-    `(if ,pred ,pred ,alt)))
+    `(if ,pred ,pred (progn ,@alt))))

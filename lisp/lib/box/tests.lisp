@@ -4,12 +4,17 @@
 
 ;;; Code:
 (defpackage :box/tests
-  (:use :cl :rt :box :box/archiso :sb-bsd-sockets))
+  (:use :cl :rt :box :box/archiso :sb-bsd-sockets)
+  (:export
+   #:*archiso-json*))
 
 (in-package :box/tests)
 (defsuite :box)
 (in-suite :box)
 
+(defparameter *archiso-json*
+  (with-open-file (file (asdf:system-relative-pathname :box #P"test.json"))
+    (dat/json:json-read file)))
+
 (deftest archiso ()
-  (is (with-open-file (file #P"test.json")
-        (inspect (dat/json:json-read file)))))
+  (is *archiso-json*))

@@ -520,5 +520,5 @@ transaction-db."
    (alien-sap (alien-callable-function 'rocksdb-log-default)) nil))
 
 ;;; Writebatch/WBWI
-(defun create-wbwi (&optional reserved-bytes overwrite-keys)
+(defun create-wbwi (&optional (reserved-bytes 0) (overwrite-keys 0))
   (rocksdb-writebatch-wi-create reserved-bytes overwrite-keys))

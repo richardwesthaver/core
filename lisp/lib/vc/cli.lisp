@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :vc/cli)
 
-(define-symbol-macro .repo (or *repo* (make-repo *default-pathname-defaults*)))
+;; (define-symbol-macro .repo (or *repo* (make-repo *default-pathname-defaults*)))
 
 (defcmd vc-status-cmd ()
   (with-current-vc-root (vc)

@@ -7,18 +7,18 @@
 #+CALL: project-details()
 
 #+RESULTS:
-|-------------+-------------------------------------------------------------------------|
-| name        | core                                                                    |
-| version     | 0.1.0                                                                   |
-| description | The Compiler Company Core                                               |
-| skel-id     | 15bc-b763-ec92-1cf5                                                     |
-| root        | ~/comp/core/                                                            |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/f2b4d45182dd][f2b4d45182dd:788+]]                     |
-| tags        | core lisp rust emacs c                                                  |
-| updated     | Wed Dec 18 22:21:04 2024 -0500                                          |
-| langs       | c cheader cpp d elisp html javascript json llvm lisp org rust text toml |
-| lines       | 218138 :λ 176531 :# 18456 :_ 23151                                      |
-|-------------+-------------------------------------------------------------------------|
+|-------------+--------------------------------------------------------------|
+| name        | core                                                         |
+| version     | 0.1.0                                                        |
+| description | The Compiler Company Core                                    |
+| skel-id     | 15bc-b763-ec92-1cf5                                          |
+| root        | ~/comp/core/                                                 |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/0daaba9fd7a1][0daaba9fd7a1:789+]]          |
+| tags        | core lisp rust emacs c                                       |
+| updated     | Thu Dec 19 23:07:49 2024 -0500                               |
+| langs       | c cheader elisp html javascript json lisp org rust text toml |
+| lines       | 118983 :λ 92399 :# 12062 :_ 14522                            |
+|-------------+--------------------------------------------------------------|
 
 #+CALL: project-links()
 

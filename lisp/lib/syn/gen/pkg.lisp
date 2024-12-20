@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; The SYN/GEN system contains code generators for all major languages we use - including other Lisps and Common Lisp itself.
+;; The SYN/GEN system contains code generators for Blub langs.
 
 ;;; Code:
 (defpackage :syn/gen

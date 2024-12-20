@@ -146,3 +146,7 @@ file by a RDB instance."
      (let ((,db (load-opts ,db)))
        ,@body)))
 
+;;; wbwi
+(defmacro with-wbwi ((var &key db cf) &body body)
+  `(let ((,var (make-rdb-wbwi :sap (create-wbwi))))
+     ,@body))

@@ -5,4 +5,8 @@
 ;;; Code:
 (in-package :mpk/int)
 
-(defvar *mpk-directory* "~/.stash/mpk/")
+(defvar *mpk-user-directory* "~/.stash/mpk/")
+
+(defvar *mpk-media-directory* nil)
+
+(defvar *mpk-media-sources* '(:youtube :freesound))

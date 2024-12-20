@@ -130,7 +130,9 @@
    :create-fixed-prefix-op
    :cf
    :create-default-logger-callback
-   :rdb-database))
+   :rdb-database
+   :create-wbwi
+   :with-wbwi))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

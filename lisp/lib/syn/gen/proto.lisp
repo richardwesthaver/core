@@ -214,3 +214,5 @@
           (t (format stream "~a" val)))))))
 
 ;; TODO 2024-10-20: gen-file-header
+;; (defclass gen-file-header (file-header)
+;;   ())

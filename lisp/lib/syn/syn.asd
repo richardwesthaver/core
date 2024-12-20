@@ -20,12 +20,6 @@
                  (:file "proto")
                  (:file "util")
                  (:file "read")
-                 (:module "lisp"
-                  :components
-                  ((:file "pkg")
-                   (:file "cl")
-                   (:file "el")
-                   (:file "scm")))
                  (:module "c"
                   :components 
                   ((:file "pkg")
