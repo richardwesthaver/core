@@ -13,8 +13,10 @@
    #:*mpk-media-directory*
    #:*mpk-media-sources*))
 
-(defpackage :mdb
-  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk/int :schema :db))
+(defpackage :mpk/db
+  (:nicknames :mdb)
+  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk/int :schema :db)
+  (:export :mdb-init :*mdb-directory* :*mdb* :*mdb-schema*))
 
 (defpackage :mpk
   (:use :cl :std :log :mpk/int))

@@ -12,6 +12,7 @@
 (in-package :net/srv/http)
 
 (defvar *default-content-type* "text/html")
+(defvar *default-ssl-key-file* #P"/etc/ssl/cert.pem")
 (defvar *header-stream* nil)
 
 (eval-always
@@ -567,21 +568,26 @@ protocol of the request."
 #+ssl
 (defclass ssl-service (service)
   ((cert-file :initarg :cert-file
-                     :reader cert-file)
+              :reader cert-file
+              :initform nil)
    (key-file :initarg :key-file
-                    :reader key-file)
+             :reader key-file
+             :initform nil)
    (password :initarg :password
-                        :reader password))
+             :reader password))
   (:default-initargs
    :password nil
-   :port 443))
+   :port 443
+   :key-file *default-ssl-key-file*))
 
 (defmethod initialize-instance :after ((self ssl-service) &rest initargs)
   (declare (ignore initargs))
-  (setf (slot-value self 'key-file)
-        (namestring (truename (key-file self)))
-        (slot-value self 'cert-file)
-        (namestring (truename (cert-file self)))))
+  (when-let ((key-file (slot-value self 'key-file)))
+    (setf (slot-value self 'key-file)
+          (namestring (truename key-file))))
+  (when-let ((cert-file (slot-value self 'cert-file)))
+    (setf (slot-value self 'cert-file)
+          (namestring (truename cert-file)))))
 
 (defmethod secure-service-p ((self ssl-service))
   (declare (ignore self))
@@ -589,11 +595,14 @@ protocol of the request."
 
 (defmethod initialize-connection-hook ((self ssl-service) stream)
   (call-next-method self
-                    (cl+ssl:make-ssl-server-stream
-                     stream
-                     :certificate (cert-file self)
-                     :key (key-file self)
-                     :password (password self))))
+                    (apply 'cl+ssl:make-ssl-server-stream
+                           stream
+                           `(,@(when-let ((cf (cert-file self)))
+                                 `(:certificate ,cf))
+                             ,@(when-let ((kf (key-file self)))
+                                 `(:key ,kf))
+                             ,@(when-let ((pw (password self)))
+                                 `(:password ,pw))))))
 
 (defun get-peer-ssl-certificate ()
   (cl+ssl:ssl-stream-x509-certificate *service-stream*))

@@ -7,10 +7,9 @@
 (in-suite :net)
 (in-readtable :std)
 
-(deftest sanity ())
-
 (deftest dns ()
-  (is (stringp (resolve "compiler.company"))))
+  (istype '(array octet 4) (make-inet-address (resolve "compiler.company")))
+  (istype 'string (hostname (resolve "google.com"))))
 
 (deftest tcp ()
   (with-tcp-client (client)
@@ -25,7 +24,7 @@
            (socket-protocol client)))))
 
 (deftest tlv ()
-  (is (= 4 (length (serialize (make-instance 'tlv :type 0 :length 1 :value #(1)) :bytes)))))
+  (is= 4 (length (serialize (make-instance 'tlv :type 0 :length 1 :value #(1)) :bytes))))
 
 (deftest osc ())
 
@@ -63,5 +62,6 @@ Cookie: name=wookie
     (is (stringp (net/cookie:write-cookie-header (list cookie))))))
 
 (deftest srv ()
-  (istype 'service (make-instance 'service)))
-
+  (istype 'service (make-instance 'service))
+  (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
+  (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service)))
