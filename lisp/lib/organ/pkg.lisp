@@ -110,24 +110,23 @@
    :read-org-file
    :read-org-lines
    :read-org-lines-from-string
-
    ;; TODO 2024-06-05: 
-   :ORG-DIARY-SEXP :ORG-FOOTNOTE-REFERENCE :ORG-CLOCK
-   :ORG-BOLD :ORG-DRAWER :ORG-TABLE-CELL :ORG-CITATION
-   :ORG-ACTIVE-TIMESTAMP :ORG-DESCRIPTIVE-LIST
-   :ORG-EXPORT-SNIPPET :ORG-CITATION-REFERENCE :ORG-TARGET
-   :ORG-STANDARD-TABLE-ROW :ORG-LESSER-BLOCK :ORG-STRIKE-THROUGH
-   :ORG-AFFILIATED-KEYWORD :ORG-PLANNING-LINE
-   :ORG-INLINE-SOURCE-BLOCK :ORG-FOOTNOTE-DEFINITION
-   :ORG-UNORDERED-LIST :ORG-ORDERED-LIST :ORG-CODE
-   :ORG-INACTIVE-TIMESTAMP :ORG-KEYWORD
-   :ORG-INACTIVE-TIMESTAMP-RANGE :ORG-STAT-COOKIE :ORG-MACRO
-   :ORG-RADIO-TARGET :ORG-TABLE :ORG-TABLE-EL :ORG-ITALIC
-   :ORG-LINK :ORG-UNDERLINE :ORG-ENTITY :ORG-RULE-TABLE-ROW
-   :ORG-VERBATIM :ORG-INLINE-BABEL-CALL :ORG-LATEX-ENVIRONMENT
-   :ORG-PRIORITY :ORG-PROPERTY-DRAWER :ORG-PLAIN-TEXT
-   :ORG-LINE-BREAK :ORG-COMMENT :ORG-GREATER-BLOCK
-   :ORG-HORIZONTAL-RULE :ORG-PLANNING
-   :ORG-ACTIVE-TIMESTAMP-RANGE))
+   :org-diary-sexp :org-footnote-reference :org-clock
+   :org-bold :org-drawer :org-table-cell :org-citation
+   :org-active-timestamp :org-descriptive-list
+   :org-export-snippet :org-citation-reference :org-target
+   :org-standard-table-row :org-lesser-block :org-strike-through
+   :org-affiliated-keyword :org-planning-line
+   :org-inline-source-block :org-footnote-definition
+   :org-unordered-list :org-ordered-list :org-code
+   :org-inactive-timestamp :org-keyword
+   :org-inactive-timestamp-range :org-stat-cookie :org-macro
+   :org-radio-target :org-table :org-table-el :org-italic
+   :org-link :org-underline :org-entity :org-rule-table-row
+   :org-verbatim :org-inline-babel-call :org-latex-environment
+   :org-priority :org-property-drawer :org-plain-text
+   :org-line-break :org-comment :org-greater-block
+   :org-horizontal-rule :org-planning
+   :org-active-timestamp-range))
    
 

@@ -184,4 +184,9 @@
           
 (deftest wbwi ()
   (with-wbwi (wbwi)
-    (is wbwi)))
+    (is wbwi)
+    (iszero (rdb-wbwi-count wbwi))
+    (put-key wbwi "foo" "bar")
+    (isequal "bar" (get-key wbwi "foo"))
+    (is= 1 (rdb-wbwi-count wbwi))
+    (rdb-wbwi-clear wbwi)))

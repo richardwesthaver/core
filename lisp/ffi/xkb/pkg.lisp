@@ -230,7 +230,7 @@
   (keymap (* xkb-keymap))
   (key xkb-keycode))
 
-;;; TODO Keyboard State
+;;; Keyboard State
 (define-alien-routine xkb-state-new (* xkb-state) (keymap (* xkb-keymap)))
 (define-alien-routine xkb-state-ref (* xkb-state) (state (* xkb-state)))
 (define-alien-routine xkb-state-unref void (state (* xkb-state)))

@@ -991,3 +991,10 @@
   (usage (* rocksdb-memory-usage)))
 (define-alien-routine rocksdb-approximate-memory-usage-get-cache-total unsigned-long 
   (usage (* rocksdb-memory-usage)))
+
+;;; DbPath
+(define-alien-routine rocksdb-dbpath-create (* rocksdb-dbpath)
+  (path c-string)
+  (target-size (unsigned 64)))
+(define-alien-routine rocksdb-dbpath-destroy (* rocksdb-dbpath)
+  (path (* rocksdb-dbpath)))

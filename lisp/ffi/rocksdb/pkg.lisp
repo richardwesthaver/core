@@ -479,7 +479,17 @@ set *errptr to a malloc()ed error message.
    :rocksdb-writebatch-wi-delete-rangev
    :rocksdb-writebatch-wi-delete-rangev-cf
    :rocksdb-writebatch-wi-set-save-point
-   :rocksdb-writebatch-wi-rollback-to-save-point))
+   :rocksdb-writebatch-wi-rollback-to-save-point
+   :rocksdb-transaction-get-writebach-wi
+   :rocksdb-transaction-rollback-to-savepoint
+   :rocksdb-transaction-rollback
+   :rocksdb-transaction-commit
+   :rocksdb-transaction-prepare
+   :rocksdb-transaction-set-name
+   :rocksdb-transaction-delete
+   :rocksdb-transaction-delete-cf
+   :rocksdb-dbpath-create
+   :rocksdb-dbpath-destroy))
 
 (in-package :rocksdb)
 

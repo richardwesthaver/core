@@ -132,7 +132,14 @@
    :create-default-logger-callback
    :rdb-database
    :create-wbwi
-   :with-wbwi))
+   :with-wbwi
+   :rdb-wbwi
+   :rdb-wbwi-count
+   :rdb-wbwi-data
+   :iter
+   :rdb-wbwi-clear
+   :rdb-wbwi-save
+   :rdb-wbwi-ts))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

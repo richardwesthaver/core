@@ -20,7 +20,6 @@
 (defun make-shebang-file-header (str)
   (make-file-header :shebang str))
 
-;; TODO 2023-09-17: this should be a struct I think - file-header maybe?
 (defun make-source-header-comment (name &key (cchar #\;) (timestamp nil) (description nil) (opts nil))
   "Generate a generic file-header with optional timestamp, description, and opts."
   (format nil "~A ~A~A~A~A~%" (make-string 3 :initial-element cchar) 

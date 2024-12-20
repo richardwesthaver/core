@@ -594,7 +594,7 @@ internal sap slots are initialized."
   (transactiondb-get-kv-raw self key))
 
 ;;; Transaction
-(defstruct rdb-transaction sap savepoint)
+(defstruct rdb-transaction sap)
 (defaccessor (sap) ((self rdb-transaction)) (rdb-transaction-sap self))
 (defaccessor (name) ((self rdb-transaction)) (transaction-name-raw (sap self)))
 
@@ -633,6 +633,9 @@ internal sap slots are initialized."
 (defmethod commit-transaction ((self rdb-transaction) &key)
   (commit-transaction-raw (sap self)))
 
+(defun rdb-transaction-wbwi (self)
+  (rocksdb-transaction-get-writebach-wi (sap self)))
+
 ;;; Secondary DB
 (defstruct rdb-secondary-db sap opts)
 (defaccessor (sap) ((self rdb-secondary-db)) (rdb-secondary-db-sap self))
@@ -668,13 +671,42 @@ internal sap slots are initialized."
 ;; WBWIs consist of a WriteBatch and an Index
 (defstruct rdb-wbwi sap) ;; wb reserved overwrite-key data savepoints params
 (defaccessor (sap) ((self rdb-wbwi)) (rdb-wbwi-sap self))
-(defmethod sb-sequence:length ((self rdb-wbwi))
-  (rocksdb-writebatch-wi-count self))
+(defun rdb-wbwi-count (self) (rocksdb-writebatch-wi-count (sap self)))
 (defun rdb-wbwi-data (wbwi &optional size)
-  (rocksdb-writebatch-wi-data wbwi size))
+  (rocksdb-writebatch-wi-data (sap wbwi) size))
 (defmethod iter ((self rdb-wbwi) &key)
-  (rocksdb-writebatch-wi-iterate self nil nil (sb-alien:alien-callable-function 'rocksdb-delete-value)))
-
+  (rocksdb-writebatch-wi-iterate (sap self) nil nil (sb-alien:alien-callable-function 'rocksdb-delete-value)))
+(defun rdb-wbwi-clear (wbwi)
+  (rocksdb-writebatch-wi-clear (sap wbwi)))
+(defun rdb-wbwi-save (self)
+  (rocksdb-writebatch-wi-set-save-point self))
+(defun rdb-wbwi-ts (self ts)
+  (with-errptr e
+    (rocksdb-writebatch-wi-update-timestamps 
+     (sap self) ts (length ts) nil nil e)))
+(defmethod destroy-db ((self rdb-wbwi))
+  (setf (sap self) (rocksdb-writebatch-wi-destroy (sap self))))
+(defmethod put-key ((self rdb-wbwi) (key vector) (val vector))
+  (rocksdb-writebatch-wi-put 
+   (sap self) 
+   (cast (octets-to-alien key) (array unsigned-char))
+   (length key) 
+   (cast (octets-to-alien val) (array unsigned-char))
+   (length val)))
+(defmethod put-key ((self rdb-wbwi) (key string) (val string))
+  (put-key self (string-to-octets key) (string-to-octets val)))
+(defmethod get-key ((self rdb-wbwi) (key string) &key)
+  (with-errptr e
+    (with-alien ((i size-t))      
+      (std:clone-octets-from-alien 
+       (rocksdb-writebatch-wi-get-from-batch 
+        (sap self) 
+        (default-rocksdb-options)
+        (cast (octets-to-alien (string-to-octets key)) (array unsigned-char))
+        (length key)
+        (addr i)
+        e)
+       (make-octets i)))))
 ;;; Env
 (defstruct rdb-env sap path threads)
 (defaccessor (sap) ((self rdb-env)) (rdb-env-sap self))

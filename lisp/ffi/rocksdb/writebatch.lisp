@@ -319,14 +319,14 @@
 (def-with-errptr rocksdb-writebatch-wi-rollback-to-save-point void
   (batch (* rocksdb-writebatch-wi)))
 
-(def-with-errptr rocksdb-writebatch-wi-get-from-batch (array unsigned-char)
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
   (opts (* rocksdb-options))
   (key (array unsigned-char))
   (keylen size-t)
   (vallen (* size-t)))
 
-(def-with-errptr rocksdb-writebatch-wi-get-from-batch-cf (array unsigned-char)
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch-cf (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (opts (* rocksdb-options))
@@ -334,7 +334,7 @@
   (keylen size-t)
   (vallen (* size-t)))
 
-(def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db (array unsigned-char)
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
   (db (* rocksdb))
   (readopts (* rocksdb-readoptions))
@@ -342,7 +342,7 @@
   (keylen size-t)
   (vallen (* size-t)))
 
-(def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db-cf (array unsigned-char)
+(def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db-cf (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
   (db (* rocksdb))
   (readopts (* rocksdb-readoptions))

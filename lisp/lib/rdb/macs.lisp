@@ -147,6 +147,13 @@ file by a RDB instance."
        ,@body)))
 
 ;;; wbwi
-(defmacro with-wbwi ((var &key db cf) &body body)
-  `(let ((,var (make-rdb-wbwi :sap (create-wbwi))))
-     ,@body))
+(defmacro with-wbwi ((var &key reserved (overwrite t) (destroy t)) &body body)
+  `(let ((,var (make-rdb-wbwi :sap (create-wbwi
+                                    ,(ifret reserved 0)
+                                    ,(ifret (and overwrite 1) 0)))))
+     ,@(if destroy
+           `((unwind-protect (progn ,@body)
+               (destroy-db ,var)))
+             body)))
+
+                       
