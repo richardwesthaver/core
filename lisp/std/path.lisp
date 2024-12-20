@@ -56,7 +56,7 @@
                         :defaults path keys))
 
 (defvar *tmp-suffix* "-tmp")
-
+(defvar *tmp* #P"/tmp/")
 ;; from UIOP
 (defun tmpize-pathname (path)
   "Return a new pathname based on PATH and *TMP-SUFFIX* with a gensym'd integer
@@ -66,4 +66,8 @@ appended."
 
 (defmacro with-directory (dir &body body)
   `(let ((*default-pathname-defaults* ,dir))
+     ,@body))
+
+(defmacro with-tmp (&body body)
+  `(with-directory *tmp*
      ,@body))

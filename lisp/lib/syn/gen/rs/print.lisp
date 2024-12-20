@@ -4,3 +4,5 @@
 
 ;;; Code:
 (in-package :syn/gen/rs)
+
+(with-code-printer nil)

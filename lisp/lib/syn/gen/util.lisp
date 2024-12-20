@@ -9,9 +9,10 @@
   (etypecase key
     (gen-designator (setq *gen* key))))
 
-(defmacro with-codegen ((sym &rest args &key &allow-other-keys) &body body)
-  (declare (ignorable args))
-  `(with-package (generator-package (init-gen ,sym))
-     (funcall (generator-reader ,sym))
-     ,@body
-     (cl-reader)))
+(defmacro with-codegen (lang &body body)
+  "Enable the *GEN* reader for the duration of BODY."
+  `(unwind-protect (progn
+                     (load-gen ,lang)
+                     (funcall (gen-reader *gen*))
+                     ,@body)
+     (unload-gen ,lang)))

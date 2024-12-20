@@ -21,8 +21,10 @@
 ;;; Code:
 (defpackage :syn/gen/rs
   (:nicknames :gen/rs)
-  (:use :cl :syn/gen :cli/tools/rust :ast :id :std/pipe :std/meta)
+  (:use :cl :syn/gen :cli/tools/rust :ast :id :std/pipe :std/meta :syn/gen/c)
   (:import-from :std :in-readtable :eval-always)
+  (:import-from :doc :file-header)
+  (:shadow :cl-reader :else :body)
   (:export
    #:*rs-backend*
    #:*rs-symbols*
@@ -30,14 +32,16 @@
    #:*rs-reserved*
    #:*rs-exports*
    #:*rs-swap*
-   #:rs-syntax))
+   #:rs-syntax
+   #:gen-rs
+   #:read-gen-rs-file
+   #:read-gen-rs-string
+   #:rs-reader-switch
+   #:rs-reader))
 
 (defpackage :syn/gen/rs/swap)
 
 (in-package :syn/gen/rs)
-
-(defmethod load-generator ((self (eql :rs))) :rs)
-(defmethod generator-package ((self (eql :rs))) :syn/gen/rs/sym)
 
 (defvar *rs-backend*
   (append *cl-symbols* '()))
@@ -64,4 +68,5 @@
 
 (pkg:defpackage* :syn/gen/rs/sym
     (:shadow-symbols *rs-symbols* :export-symbols *rs-exports*)
+  (:nicknames :rs)
   (:use :syn/gen/rs))

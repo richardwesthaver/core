@@ -14,14 +14,14 @@
    :function-call :source-location
    :ident :str-literal
    :num-literal :char-literal
-   :load-generator :init-gen
+   :load-gen :init-gen
    :*gen* :*gen-designators*
    :*cl-symbols* :*code-reader*
    :*backup-readtable* :define-code-switches
    :define-code-switch :print-code
    :define-code-processor :define-code-reader
    :make-nodes :make-node
-   :generator-package :build-swap-package
+   :build-swap-package
    :build-context-switches :*gen-warnings*
    :ast-traverser :with-code-printer
    :define-code-printer :delete-code-printer
@@ -38,15 +38,14 @@
    :quoty
    :%level
    :%self
-   :generator-reader
-   :generator-reader-switch
-   :load-gen
-   :gen-package
    :gen-reader
    :gen-reader-switch
+   :gen-package
    :unload-gen
-   :gen-symbol-package))
+   :with-codegen
+   :*indent*
+   :tag
+   :gen
+   :lisp))
 
 (in-package :syn/gen)
-
-;; TODO 2024-10-20: gen-file-header

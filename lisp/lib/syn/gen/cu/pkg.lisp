@@ -14,7 +14,8 @@
 
 (in-package :syn/gen/cu)
 
-(defmethod load-generator ((self (eql :cu))) :cu)
+(defmethod load-gen ((self (eql :cu))) :cu)
+(defmethod gen-package ((self (eql :cu))) (find-package :syn/gen/cu))
 
 (defparameter *cu-backend*
   (append *cpp-backend*

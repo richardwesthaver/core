@@ -11,7 +11,7 @@
 
 (deferror cc-error (simple-error) () (:auto t))
 
-(defparameter *cc* (find-exe "clang"))
+(defparameter *cc* (find-exe "cc"))
 
 (defparameter *ld*
   (or
@@ -21,14 +21,13 @@
    (find-exe "ld")))
 
 (defun run-cc (&rest args)
-  (let ((proc (sb-ext:run-program *cc* (or args nil) :output :stream)))
+  (let ((proc (sb-ext:run-program *cc* args :wait t :output :stream)))
     (with-open-stream (s (sb-ext:process-output proc))
       (loop for l = (read-line s nil nil)
             while l
             do (write-line l)))
-    (if (eq 0 (sb-ext:process-exit-code proc))
-        nil
-        (cc-error "CC command failed: ~A ~A" *cc* (or args "")))))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (cc-error "CC command failed: ~A ~A" *cc* (or args "")))))
 
 (defun run-ld (&rest args)
   (let ((proc (sb-ext:run-program *ld* (or args nil) :output :stream)))

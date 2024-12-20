@@ -29,9 +29,9 @@
                  (:module "c"
                   :components 
                   ((:file "pkg")
+                   (:file "read")
                    (:file "ast")
                    (:file "sym")
-                   (:file "read")
                    (:file "print")))
                  (:module "cpp"
                   :components 
@@ -42,10 +42,10 @@
                  (:module "rs"
                   :components 
                   ((:file "pkg")
+                   (:file "read")
+                   (:file "ast")
                    (:file "sym")
                    (:file "util")
-                   (:file "ast")
-                   (:file "read")
                    (:file "print")))
                  (:module "py"
                   :components ((:file "pkg")))

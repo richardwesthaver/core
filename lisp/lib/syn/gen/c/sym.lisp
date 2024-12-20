@@ -117,3 +117,7 @@
   `(progn
      ,@(loop for i in functions collect
          `(defmacro ,i (&rest body) `(funcall ,',i ,@body)))))
+
+;;; shorthands
+(defmacro fn (&body body)
+  `(function ,@body))

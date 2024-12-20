@@ -263,7 +263,7 @@
    (set-macro-character #\( #'pre-process-heads)))
 
 ;; Define a start-up function
-(define-code-processor c-processor
+(define-code-processor gen-c
   :file-reader   read-gen-c-file
   :string-reader read-gen-c-string
   :traverse
@@ -274,7 +274,7 @@
    renamer))
 
 ;;; Switches
-(define-code-switch switch-reader
+(define-code-switch c-reader-switch
   :macro-character
   ((set-macro-character #\Space #'pre-process)
    (set-macro-character #\Tab #'pre-process)
@@ -291,7 +291,7 @@
    (set-macro-character #\( #'pre-process-heads)))
 
 (defmethod gen-reader ((self (eql :c))) (function c-reader))
-(defmethod gen-reader-switch ((self (eql :c))) (function switch-reader))
+(defmethod gen-reader-switch ((self (eql :c))) (function c-reader-switch))
 
 (defmethod load-gen ((self (eql :c))) 
   (init-gen :c)
@@ -301,4 +301,4 @@
   (init-gen nil)
   (cl-reader))
 
-(defmethod gen-symbol-package ((self (eql :c))) (find-package :syn/gen/c/sym))
+(defmethod gen-package ((self (eql :c))) (find-package :syn/gen/c/sym))

@@ -5,10 +5,10 @@
 ;;; Code:
 (in-package :syn/gen)
 
+(defvar *indent* "  ")
 (defgeneric load-gen (self))
 (defgeneric unload-gen (self))
 (defgeneric gen-package (self))
-(defgeneric gen-symbol-package (self))
 (defgeneric gen-reader (self))
 (defgeneric gen-reader-switch (self))
 
@@ -49,7 +49,7 @@
                         collect
                            `(let ((tag ',i))
                               (declare (ignorable tag))
-                              (defmacro ,(intern (format nil "~:@(~a~)" i) (generator-package k)) ,lambda-list
+                              (defmacro ,(intern (format nil "~:@(~a~)" i) (gen-package k)) ,lambda-list
                                 ,@body)))))))
 
 ;;; Utils
@@ -167,10 +167,11 @@
 
 (defmacro with-code-printer (&body body)
   `(symbol-macrolet ((stream (slot-value self 'stream))
-                     (indent (concatenate 'string (loop for i
-                                                        from 1 
-                                                        to (slot-value self 'indent)
-                                                        collect #\space)))
+                     (indent (format nil "~{~A~}"
+                                     (loop for i
+                                           from 1 
+                                           to (slot-value self 'indent)
+                                           collect *indent*)))
                      (%self self)
                      (%level level)
                      (--indent (decf (slot-value self 'indent)))
@@ -211,3 +212,5 @@
                                 (substitute #\e #\d
                                             (format nil "~,8e" val))))
           (t (format stream "~a" val)))))))
+
+;; TODO 2024-10-20: gen-file-header

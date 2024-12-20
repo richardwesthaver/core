@@ -11,7 +11,7 @@
 (in-package :io/disk)
 
 ;;; Vars
-(defvar *filesystem-backends* (list :btrfs :ext4 :bcachefs))
+(defvar *filesystem-backends* (list :btrfs :ext4 :xfs))
 (defvar *default-filesystem* :btrfs)
 
 ;;; Conditions

@@ -77,7 +77,9 @@
    #:decl-blocker
    #:if-blocker
    #:simple-print
-   #:gen-reader))
+   #:gen-reader
+   #:gen-c
+   #:c-reader-switch))
 
 (defpackage syn/gen/c/swap)
 
@@ -113,6 +115,7 @@
     for while do-while
     return break continue
     if cond when
+    fn
     array aref
     cast union
     function
@@ -148,8 +151,9 @@
 
 (pkg:defpackage* :syn/gen/c/sym
     (:shadow-symbols *c-symbols* :export-symbols *c-exports*)
+  (:nicknames :c)
   (:use :cl)
-  (:import-from :syn/gen :quoty :print-code :write-code :cintern)
+  (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package)
   (:import-from :syn/gen/c :c-reader :read-gen-c-string :simple-print
    :cl-reader :switch-reader :decompose-declaration))
 

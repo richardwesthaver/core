@@ -612,7 +612,8 @@
    :absolute-directory-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
    :tmpize-pathname
-   :with-directory))
+   :with-directory
+   :with-tmp))
 
 (defpkg :std/os
   (:use :cl :sb-alien)

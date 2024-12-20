@@ -1,0 +1,3 @@
+(in-package :rs)
+(fn main (result) ())
+(+ 1 2)

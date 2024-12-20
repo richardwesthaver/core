@@ -51,7 +51,8 @@
                   (eql (top-info) 'while)
                   (eql (top-info) 'do)
                   (eql (top-info) 'if)
-                  (eql (top-info) 'else))
+                  (eql (top-info) 'else)
+                  (eql (top-info) 'function-definition))
               ;; simply append brace
               (format stream " {~%")
               ;; start new line+indent+brace
@@ -311,7 +312,7 @@
     (push-sign 'nested-funcall-sentinel)
     (push-sign 'skip-first-funcall))
   (define-code-printer :self function-call
-    (format stream "~&")
+    (format stream "~&~A" indent)
     (traverse %self (node-slot function) %level)
     (let ((arg-printer (std:copy-object %self)))
       (setf (slot-value arg-printer 'stream) nil)

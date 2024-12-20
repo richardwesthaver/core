@@ -16,7 +16,7 @@
 
 (in-package :syn/gen/cpp)
 
-(defmethod load-generator ((self (eql :cpp))) :cpp)
+(defmethod load-gen ((self (eql :cpp))) :cpp)
 
 (defparameter *cpp-backend*
   (append *c-backend*
