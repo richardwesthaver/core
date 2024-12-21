@@ -173,11 +173,11 @@
   "Prefix operators"
   `(make-instance 'prefix-expression :op ',syn/gen::tag :object (make-node ,item)))
 
-(c-syntax (addr-of) (item)
+(c-syntax (addr) (item)
   "Address-of function (&)"
   `(make-instance 'prefix-expression :op '& :object (make-node ,item)))
 
-(c-syntax (targ-of dref) (item)
+(c-syntax (deref) (item)
   "Taget-of or dereferencing pointer"
   `(make-instance 'prefix-expression :op '* :object (make-node ,item)))
 

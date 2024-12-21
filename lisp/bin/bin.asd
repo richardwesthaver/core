@@ -7,7 +7,18 @@
 ;;                    :compression 2))
 
 (defsystem :bin
-  :depends-on (:bin/organ :bin/homer :bin/rdb :bin/skel :bin/packy :bin/core))
+  :depends-on (:bin/organ :bin/homer 
+               :bin/rdb :bin/skel 
+               :bin/packy :bin/core
+               #+x11 :bin/swm))
+
+#+x11
+(defsystem :bin/swm
+  :depends-on (:std :log :gui :cli)
+  :build-operation program-op
+  :build-pathname "swm"
+  :entry-point "bin/swm::start-swm"
+  :components ((:file "swm")))
 
 (defsystem :bin/organ
   :build-operation program-op

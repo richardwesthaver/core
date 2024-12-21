@@ -2,6 +2,8 @@
 (defsystem :homer
   :depends-on (:prelude :gui :krypt :skel)
   :components ((:file "pkg")
-               (:file "homer")
+               (:file "var")
+               (:file "obj")
+               (:file "util")
                (:file "cli")
-               :file "gui"))
+               (:file "gui")))

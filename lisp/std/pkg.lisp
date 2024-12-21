@@ -600,7 +600,10 @@
 
 (defpkg :std/path
   (:use :cl)
+  (:import-from :uiop :directory-files :subdirectories)
   (:export
+   :directory-files
+   :subdirectories
    :path
    :wild-pathname
    :non-wild-pathname
@@ -613,7 +616,8 @@
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
    :tmpize-pathname
    :with-directory
-   :with-tmp))
+   :with-tmp
+   :walk-directory))
 
 (defpkg :std/os
   (:use :cl :sb-alien)

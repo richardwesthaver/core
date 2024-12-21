@@ -57,6 +57,7 @@
 
 (defvar *tmp-suffix* "-tmp")
 (defvar *tmp* #P"/tmp/")
+
 ;; from UIOP
 (defun tmpize-pathname (path)
   "Return a new pathname based on PATH and *TMP-SUFFIX* with a gensym'd integer
@@ -71,3 +72,17 @@ appended."
 (defmacro with-tmp (&body body)
   `(with-directory *tmp*
      ,@body))
+
+;;; Walkers
+;; From UIOP:COLLECT-SUB*DIRECTORIES
+(defun walk-directory (directory collectp recursep collector)
+  "Given a DIRECTORY, when COLLECTP returns true when APPLY'ed with the directory,
+call-function the COLLECTOR function designator on the directory,
+and recurse each of its subdirectories on which the RECURSEP returns true when APPLY'ed with them.
+
+The behavior in presence of symlinks is not portable."
+  (when (apply collectp directory)
+    (apply collector directory)
+    (dolist (subdir (subdirectories directory))
+      (when (apply recursep subdir)
+        (walk-directory subdir collectp recursep collector)))))

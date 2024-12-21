@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :mpk/int
-  (:use :cl :std :log)
+  (:use :cl :std :log :id :config)
   (:export
    #:*mpk-directory*
    #:mpk-path
@@ -15,8 +15,9 @@
 
 (defpackage :mpk/db
   (:nicknames :mdb)
-  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk/int :schema :db)
-  (:export :mdb-init :*mdb-directory* :*mdb* :*mdb-schema*))
+  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk/int :schema :db :id)
+  (:export :*mdb-directory* :*mdb* :*mdb-schema*
+   :mdb :init-mdb))
 
 (defpackage :mpk
   (:use :cl :std :log :mpk/int))

@@ -51,6 +51,7 @@
 (defparameter *rs-symbols* 
   '(<= >= < > + - * / = 
     for while return break continue if type let loop))
+
 (defparameter *rs-syntax*
   '(|| && == != % << >> ^ | & += /= *= %= >>= <<= -= |= &= ^=
     pub crate enum struct mod fn extern else super as
@@ -59,11 +60,14 @@
     macro-rules union
     ;; 2018+
     async await dyn))
+
 (defparameter *rs-reserved*
   '(abstract become do final macro override priv typeof unsized virtual yield
     ;; 2018+
     try))
+
 (defparameter *rs-exports* (append *rs-symbols* *rs-syntax* *cl-symbols*))
+
 (defparameter *rs-swap* (append *rs-symbols* *rs-syntax*))
 
 (pkg:defpackage* :syn/gen/rs/sym

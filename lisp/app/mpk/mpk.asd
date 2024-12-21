@@ -4,4 +4,5 @@
   :components ((:file "pkg")
                (:file "var")
                (:file "util")
-               (:file "db")))
+               (:file "db")
+               (:file "cfg")))

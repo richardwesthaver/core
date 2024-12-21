@@ -114,6 +114,17 @@
            #:+decode-table+
            #:+uri-decode-table+))
 
+(defpackage :dat/id3
+  (:use :cl :std :dat/proto :id)
+  (:export
+   :read-id3
+   :mp3-p
+   :id3-p
+   :decode-u28
+   :read-id3-header
+   :show-id3-header
+   :show-id3-headers))
+
 (defpackage :dat/css
   (:use :cl :std :dat/proto)
   (:export

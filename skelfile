@@ -83,6 +83,14 @@
  (ssl-client-certs () #$openssl req -new -nodes -x509 -days 365 -subj / \
                    -keyout .stash/client-key.pem -outform PEM \
                    -out .stash/client-cert.pem$#)
+ (swm (%stash)
+      (:build ()
+              (with-sbcl (:noinform t :quit t)
+                (push :x11 *features*)
+                (ql:quickload :bin/swm)
+                (asdf:make :bin/swm))
+              #$mv lisp/bin/swm .stash/swm$#)
+      (:install () #$install -C -m 755 .stash/swm /usr/local/bin/swm$#))
  (rdb (%stash)
       (:build ()
               (with-sbcl (:noinform t :quit t)

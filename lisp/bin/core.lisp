@@ -18,5 +18,7 @@
   (:rdb (bin/rdb::start-rdb))
   (:vc (bin/vc::start-vc))
   (:organ (bin/organ::start-organ))
-  (:homer (bin/homer::start-homer)))
+  (:homer (bin/homer::start-homer))
+  #+x11 
+  (:swm (bin/swm::start-swm)))
 
