@@ -3,10 +3,10 @@
 ;; 
 
 ;;; Code:
-(in-package :mpk/int)
+(in-package :mpk)
 
 (defvar *mpk-user-directory* (merge-pathnames ".stash/mpk/" (user-homedir-pathname)))
 
-(defvar *mpk-media-directory* "/opt/media")
+(defvar *mpk-media-directory* "/opt/media/")
 
 (defvar *mpk-media-sources* '(:youtube :freesound))

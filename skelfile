@@ -136,6 +136,11 @@
                      (ql:quickload :bin/homer)
                      (asdf:make :bin/homer))
                 #$mv lisp/bin/homer .stash/homer$#))
+ (gen (%stash)
+   (:build () (with-sbcl (:noinform t :quit t)
+                (ql:quickload :bin/gen)
+                (asdf:make :bin/gen)
+                #$mv lisp/bin/gen .stash/gen$#)))
  (packy (%stash)
         (:build () (with-sbcl (:noinform t :quit t)
                      (ql:quickload :bin/packy)
@@ -173,7 +178,7 @@
        (:compile () (compile-lisp :core :force t :verbose t))
        (:install () #$install -C -m 755 .stash/core /usr/local/bin/core
                  echo "core -> /usr/local/bin/"
-                 links="skel homer packy rdb organ vc"
+                 links="skel homer packy rdb organ vc gen"
                  for i in $links; do
                  ln -sf /usr/local/bin/core /usr/local/bin/$i
                  echo "$i -> core -> /usr/local/bin/"

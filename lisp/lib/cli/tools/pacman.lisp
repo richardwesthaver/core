@@ -12,9 +12,10 @@
 (deferror pacman-error (simple-error error) () (:auto t))
 
 (defparameter *pacman* (find-exe "pacman"))
+(defvar *pacman-output* t)
 
 (defun run-pacman (&rest args)
-  (let ((proc (sb-ext:run-program *pacman* (or args nil) :output :stream)))
+  (let ((proc (sb-ext:run-program *pacman* (or args nil) :output *pacman-output*)))
     (with-open-stream (s (sb-ext:process-output proc))
       (loop for l = (read-line s nil nil)
             while l

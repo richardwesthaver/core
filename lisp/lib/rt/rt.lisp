@@ -22,7 +22,7 @@ If TEST returns a truthy value, return a PASS test-result, else return
 a FAIL."
   `(if *testing*
        (push-result (funcall #'rt::%test ,test ',test) *testing*)
-       (trace! (funcall #'rt::%test ,test ',test))))
+       (funcall #'rt::%test ,test ',test)))
 
 ;; convenience functions wrapping IS
 (macrolet ((defis (name op args)

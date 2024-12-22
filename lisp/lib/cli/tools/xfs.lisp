@@ -1,10 +1,10 @@
-;;; xfs.lisp --- XFS Tools
+;;; fs.lisp --- Filesystem Tools
 
 ;; 
 
 ;;; Code:
-(in-package :cli/tools/xfs)
+(in-package :cli/tools/fs)
 
-(deferror xfs-error (simple-error) () (:auto t))
+(deferror fs-error (simple-error) () (:auto t))
 
-(defparameter *xfs* (find-exe "clang"))
+(defparameter *xfs-info* (find-exe "xfs_info"))

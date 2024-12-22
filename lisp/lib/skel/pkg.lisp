@@ -38,7 +38,8 @@
 (pkg:defpkg :skel/core
   (:nicknames :sk-core)
   (:use :cl :std)
-  (:use-reexport :skel/core/condition :skel/core/proto :skel/core/vars 
+  (:import-from :ast :*keep-ast*)
+  (:use-reexport :skel/core/condition :skel/core/proto :skel/core/vars
    :skel/core/header :skel/core/obj :skel/core/util))
 
 (pkg:defpkg :skel/comp

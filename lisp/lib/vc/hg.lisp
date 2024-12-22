@@ -103,11 +103,7 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
   (with-directory (path self)
-    (let ((proc (run-hg-command cmd args :stream nil)))
-      (with-open-stream (s (sb-ext:process-output proc))
-        (loop for l = (read-line s nil nil)
-              while l
-              do (write-line l)))
+    (let ((proc (run-hg-command cmd args)))
       (if (eq 0 (sb-ext:process-exit-code proc)) nil (error 'hg-error :message (format nil "hg command failed: ~A" cmd))))))
 
 (defmethod vc-init ((self (eql :hg)))

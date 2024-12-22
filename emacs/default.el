@@ -337,8 +337,8 @@ function: '(ql:quickload :clouseau)'."
   (setq common-lisp-style-default "core")
   ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
   (setq slime-threads-update-interval 1)
-  ;; (add-hook 'slime-mode-hook 'slime-cape-maybe-enable)
-  ;; (add-hook 'slime-repl-mode-hook 'slime-cape-maybe-enable)
+  (add-hook 'lisp-mode-hook 'slime-cape-enable)
+  (add-hook 'slime-repl-mode-hook 'slime-cape-enable)
   )
 
 ;;; Eglot

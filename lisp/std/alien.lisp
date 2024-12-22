@@ -149,7 +149,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
          :format-control "~A is not a value associated with a variant of enum ~A"
          :format-arguments (list var enum)))
 
-(defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &rest forms)
+(defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &body forms)
   "Define a pseudo-enum type, used to work-around difficulties working with
 SB-ALIEN, groveller, typedef enums, etc.
 

@@ -56,11 +56,7 @@
 
 (defmethod vc-run ((self git-repo) (cmd string) &rest args)
   (with-directory (path self)
-    (with-open-stream (s (sb-ext:process-output (apply #'run-git-command cmd args)))
-      (with-output-to-string (str)
-        (loop for l = (read-line s nil nil)
-              while l
-              do (write-line l))))))
+    (run-git-command cmd args)))
 
 (defmethod vc-clone ((self git-repo) remote &key &allow-other-keys)
   (with-slots (path) self

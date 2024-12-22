@@ -3,4 +3,4 @@
 ;; Skel Filesystem Abstractions and Logical Paths
 
 ;;; Code:
-(in-package :skel/core)
+(in-package :skel/core/fs)

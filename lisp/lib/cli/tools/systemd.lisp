@@ -12,12 +12,15 @@
 
 (defparameter *systemctl* (find-exe "systemctl"))
 
+(defvar *systemctl-output* t)
+
 (defun run-systemctl (&rest args)
-  (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output :stream)))
-    (with-open-stream (s (sb-ext:process-output proc))
-      (loop for l = (read-line s nil nil)
-            while l
-            do (write-line l)))
-    (if (eq 0 (sb-ext:process-exit-code proc))
-        nil
-        (systemd-error "SYSTEMCTL command failed: ~A ~A" *systemctl* (or args "")))))
+  (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output *systemctl-output*)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (systemd-error "SYSTEMCTL command failed: ~A ~A" *systemctl* (or args "")))))
+
+(defun systemctl-start (&rest args)
+  (apply 'run-systemctl "start" args))
+
+(defun systemctl-stop (&rest args)
+  (apply 'run-systemctl "stop" args))

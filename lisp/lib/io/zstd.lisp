@@ -24,6 +24,12 @@
             :type zstd-cstream
             :reader stream-of)))
 
+(defmethod make-compressing-stream ((self (eql :zstd)) 
+                                    &optional (stream 
+                                               (make-instance 'sb-gray:fundamental-binary-input-stream)))
+                                                   
+  (make-instance 'zstd-compressing-stream :stream stream))
+
 (defmethod input-size ((self zstd-compressing-stream))
   (zstd-inbuffer-size (input self)))
 
@@ -93,6 +99,10 @@
             :type zstd-dstream
             :reader stream-of)))
 
+(defmethod make-decompressing-stream ((self (eql :zstd)) 
+                                      &optional (stream 
+                                               (make-instance 'sb-gray:fundamental-binary-output-stream)))
+  (make-instance 'zstd-decompressing-stream :stream stream))
 (defmethod input-size ((self zstd-decompressing-stream))
   (zstd-inbuffer-size (input self)))
 

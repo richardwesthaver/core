@@ -19,6 +19,10 @@
   (with-current-vc-root (vc)
     (vc-push vc (car *args*))))
 
+(defcmd vc-addremove-cmd ()
+  (with-current-vc-root (vc)
+    (apply 'vc-addremove vc *args*)))
+
 (defcmd vc-clone-cmd ()
   (vc-clone (make-instance 'vc-repo) (car *args*)))
 
@@ -44,6 +48,7 @@
          (:name "pull" :description "Pull the current repo from a remote"
           :thunk vc-pull-cmd)
          (:name "clone" :description "Clone a repo from a remote")
+         (:name "addremove" :description "Add/remove files" :thunk vc-addremove-cmd)
          (:name "fast-export" :description "Run the hg-fast-export script"
           :thunk vc-fast-export-cmd)
          (:name "bundle" :description "Bundle a repo" :thunk vc-bundle-cmd)

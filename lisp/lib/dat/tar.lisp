@@ -530,7 +530,7 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
 
 (defun make-compression-stream (stream direction compression)
   (ecase compression
-    (:gzip
+    (:zstd
      (ecase direction
        (:input (io/flate:make-decompressing-stream :zstd stream))
        (:output (io/flate:make-compressing-stream :zstd stream))))
@@ -541,19 +541,11 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
           (if (null file-name)
               stream
               (let ((type (pathname-type file-name)))
-                (if (or (null type) (not (uiop:string-suffix-p type "gz")))
+                (if (or (null type) (not (uiop:string-suffix-p type "zst")))
                     stream
-                    (make-compression-stream stream direction :gzip))))))
-       (:input
-        (let ((peeking-stream (make-instance 'peeking-input-stream :stream stream
-                                                                   :num-bytes 3)))
-          (if (and (= (aref (peeked-bytes peeking-stream) 0) #x1f)
-                   (= (aref (peeked-bytes peeking-stream) 1) #x8b)
-                   (= (aref (peeked-bytes peeking-stream) 2) #x08))
-              (values (make-decompressing-stream :zstd peeking-stream) (list peeking-stream))
-              peeking-stream)))))
-    ((nil)
-     stream)))
+                    (make-compression-stream stream direction :zstd))))))
+       (:input (make-decompressing-stream :zstd stream))))
+    ((nil) stream)))
 
 (defun open-tar-file (stream &key (direction :input)
                                (type :auto)
@@ -574,11 +566,11 @@ the appropriate class will be determined by looking at the first tar header.
 HEADER-ENCODING is an encoding specifier recognized by Babel.
 
 COMPRESSION determines what compression scheme is used, if any. It can be
-either :AUTO (the default), NIL (no compression), or :GZIP. If :AUTO, the
+either :AUTO (the default), NIL (no compression), or :ZSTD. If :AUTO, the
 compression type is determined using the PATHNAME of the stream (for :OUTPUT)
 or by peeking at the stream for magic numbers (for :INPUT)."
   (declare (type (member :input :output) direction))
-  (check-type compression (member :gzip :auto nil))
+  (check-type compression (member :gzip :zstd :auto nil))
   (multiple-value-bind
         (compression-stream other-streams-to-close)
       (make-compression-stream stream direction compression)
@@ -681,7 +673,7 @@ or by peeking at the stream for magic numbers (for :INPUT)."
           (make-instance (entry-type tar-file header)
                          :tar-file tar-file
                          :header header
-                         :start-position start-position)))))
+                         :start start-position)))))
 
 (defmethod read-entry :around ((tar-file tar-file))
   (let ((entry (call-next-method)))
@@ -740,7 +732,7 @@ or by peeking at the stream for magic numbers (for :INPUT)."
   'v7-header)
 
 (defmethod entry-type ((tar-file v7-tar-file) header)
-  (if (ends-with-subseq #\/ (name header))
+  (if (ends-with-subseq "/" (name header))
       'tar-directory-entry
       (switch ((typeflag header))
         (+tar-regular-file+
@@ -1497,7 +1489,7 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
                                  (type :auto)
                                  (compression :auto)
                                  (blocking-factor 20)
-                                 (header-encoding '*default-header-encoding*))
+                                 (header-encoding :utf-8))
                               &body body)
   "Bind TAR-FILE-VAR to a newly opened TAR-FILE, backed by
 PATHNAME-OR-STREAM. If PATHNAME-OR-STREAM evaluates to a stream, that stream is

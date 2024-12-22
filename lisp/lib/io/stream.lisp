@@ -65,10 +65,10 @@
 functions and via PEEKED-BYTES."))
 
 (defmethod initialize-instance :after ((self peeking-input-stream)
-                                       &key stream size
+                                       &key stream count
                                          (start (ignore-errors (file-position stream))))
   (setf (slot-value self 'start) start)
-  (let ((buffer (make-array size :element-type '(unsigned-byte 8))))
+  (let ((buffer (make-array count :element-type '(unsigned-byte 8))))
     (read-sequence buffer stream)
     (setf (slot-value self 'bytes) buffer)))
 

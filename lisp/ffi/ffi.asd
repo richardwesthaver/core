@@ -4,7 +4,7 @@
                :cuda :evdev :glib :gstreamer
                :keyutils :readline :rocksdb :rustls
                :sndfile :ssh2 :tree-sitter :ublk
-               :uring :xkb :zstd :bcachefs)
+               :uring :xkb :zstd)
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :ffi/tests
@@ -12,7 +12,7 @@
                :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
                :keyutils/tests :readline/tests :rocksdb/tests :rustls/tests
                :sndfile/tests :ssh2/tests :tree-sitter/tests :ublk
-               :uring/tests :xkb/tests :zstd/tests :bcachefs/tests)
+               :uring/tests :xkb/tests :zstd/tests)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :ffi)))
 

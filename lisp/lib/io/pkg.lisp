@@ -30,7 +30,8 @@
   (:export :io-stream-error :io-stream :make-bound-stream
    :bound-input-stream :ensure-file-position
    :peeking-input-stream :peeked-bytes
-   :peeked-count))
+   :peeked-count
+   :peeked-size))
 
 (defpackage :io/static
   (:use :cl :std :sb-alien :io/stream)

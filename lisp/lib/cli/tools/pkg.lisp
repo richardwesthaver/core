@@ -10,10 +10,10 @@
    :run-terminal :with-terminal
    :terminal-error))
 
-(defpackage :cli/tools/xfs
+(defpackage :cli/tools/fs
   (:use :cl :std :cli/env)
   (:export
-   #:xfs-error))
+   #:fs-error))
 
 (defpackage :cli/tools/tmux
   (:use :cl :std :cli/env :cli/tools/term)
@@ -38,6 +38,15 @@
    :run-cc
    :run-ld
    :cc-error))
+
+(defpackage :cli/tools/go
+  (:nicknames :tools/go)
+  (:use :cl :std :cli/env)
+  (:export
+   :*go*
+   :run-go
+   :go-install
+   :go-error))
 
 (defpackage :cli/tools/nvcc
   (:use :cl :std :cli/env)
@@ -81,9 +90,12 @@
 (defpackage :cli/tools/systemd
   (:use :cl :std :cli/env)
   (:export :*systemctl* :run-systemd :run-systemctl
-           :systemd-error))
+           :systemd-error
+           :systemctl-stop
+           :systemctl-start))
 
 (defpackage :cli/tools/rust
+  (:nicknames :tools/rust)
   (:use :cl :std :cli/env)
   (:export
    #:cargo-error
@@ -91,7 +103,8 @@
    #:*rustup*
    #:run-cargo
    #:rustup-error
-   #:run-rustup))
+   #:run-rustup
+   #:cargo-install))
 
 (defpackage :cli/tools/sbcl
   (:use :cl :std :cli/env)

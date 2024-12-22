@@ -42,6 +42,13 @@
   :depends-on (:uiop :cl-ppcre :std :rdb :cli)
   :components ((:file "rdb")))
 
+(defsystem :bin/gen
+  :build-operation "program-op"
+  :build-pathname "gen"
+  :entry-point "bin/gen::start-gen"
+  :depends-on (:uiop :cl-ppcre :std :syn :cli)
+  :components ((:file "gen")))
+
 (defsystem :bin/vc
   :build-operation program-op
   :build-pathname "vc"
@@ -75,4 +82,4 @@
   :build-pathname "core"
   :entry-point "bin/core::dispatch-core"
   :components ((:file "core"))
-  :depends-on (:core :bin/skel :bin/organ :bin/homer :bin/rdb :bin/packy :bin/vc))
+  :depends-on (:core :bin/skel :bin/organ :bin/homer :bin/rdb :bin/packy :bin/vc :bin/gen))

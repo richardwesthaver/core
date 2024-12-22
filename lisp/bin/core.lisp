@@ -20,5 +20,6 @@
   (:organ (bin/organ::start-organ))
   (:homer (bin/homer::start-homer))
   #+x11 
-  (:swm (bin/swm::start-swm)))
+  (:swm (bin/swm::start-swm))
+  (:gen (bin/gen::start-gen)))
 

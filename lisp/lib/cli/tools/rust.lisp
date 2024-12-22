@@ -30,3 +30,6 @@
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
         (cargo-error "RUSTUP command failed: ~A ~A" *rustup* (or args "")))))
+
+(defun cargo-install (&rest args)
+  (apply 'run-cargo "install" args))

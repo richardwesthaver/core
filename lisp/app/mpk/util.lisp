@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :mpk/int)
+(in-package :mpk)
 
 (defun mpk-path (path)
   (merge-pathnames path (truename *mpk-user-directory*)))

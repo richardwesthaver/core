@@ -5,4 +5,5 @@
                (:file "var")
                (:file "util")
                (:file "db")
+               (:file "mpd")
                (:file "cfg")))

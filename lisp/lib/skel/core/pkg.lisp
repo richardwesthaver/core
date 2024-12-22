@@ -53,6 +53,7 @@
 (defpackage :skel/core/vars
   (:use :cl :std :skel/core/proto)
   (:import-from :sb-unix :uid-username :unix-getuid)
+  (:import-from :ast :*keep-ast*)
   (:import-from :vc :vc-designator)
   (:export :*user-skelrc* :*system-skelrc*
    :*skel-project* :*default-skelrc*

@@ -51,6 +51,8 @@
   (call-with-args :compile *args*))
 (defcmd skc-build ()
   (call-with-args :build *args*))
+(defcmd skc-update ()
+  (call-with-args :update *args*))
 (defcmd skc-dist ()
   (call-with-args :dist *args*))
 (defcmd skc-install ()
@@ -103,7 +105,7 @@
                             (skel-simple-error "skel config files not installed")))))))
 
 (defopt skc-version (print-version *cli* t))
-(defopt skc-ast (setq *keep-ast* (or *arg*)))
+(defopt skc-ast (setq ast:*keep-ast* (or *arg*)))
 (defopt skc-level *log-level*
         (setq *log-level* (if *arg* (if (stringp *arg*)
                                         (sb-int:keywordicate (string-upcase *arg*))
@@ -197,6 +199,9 @@
          (:name build
           :description "build programs and libraries"
           :thunk skc-build)
+         (:name update
+          :description "update components"
+          :thunk skc-update)
          (:name save
           :description "save a file"
           :thunk skc-save)
