@@ -349,7 +349,8 @@
            :write-ast
            :val
            :debug-traverser
-           :copy-traverser))
+           :copy-traverser
+           :*keep-ast*))
 
 (defpackage :obj/config
   (:nicknames :config)

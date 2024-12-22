@@ -54,7 +54,7 @@
   (:use :cl :std :skel/core/proto)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :vc :vc-designator)
-  (:export :*user-skelrc* :*system-skelrc* :*keep-ast*
+  (:export :*user-skelrc* :*system-skelrc*
    :*skel-project* :*default-skelrc*
    :*skel-env* :*skel-project*
    :*skel-registry* :*skel-cache* :*skel-store* :*skel-stash*
@@ -81,6 +81,10 @@
    :sk-src :sk-component :sk-components :sk-mod
    :sk-parent
    :sk-phases))
+
+(defpackage :skel/core/fs
+  (:use :cl :std :skel/core/proto :skel/core/condition :skel/core/vars :vc :log)
+  (:export))
 
 (defpackage :skel/core/util
   (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/condition :obj/ast)

@@ -24,6 +24,11 @@
 (in-package :obj/ast)
 
 (defvar *ast* nil)
+
+(defvar *keep-ast* nil
+  "Whether to keep the :ast slot stored with an object, or set it to nil so
+that it can be GC'd.")
+
 (defun formp (form)
   (or (consp form) (atom form)))
 

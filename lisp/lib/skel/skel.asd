@@ -21,6 +21,7 @@
      (:file "vars")
      (:file "obj")
      (:file "print")
+     (:file "fs")
      (:file "util")
      (:file "vm")))
    (:module "comp"

@@ -6,3 +6,5 @@
 
 ;;; Code:
 (in-package :box)
+
+(defconfig box-config () ())

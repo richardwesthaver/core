@@ -504,6 +504,8 @@ Return value is ignored."))
 
 ;; supervisor, worker, task, kernel
 ;;; Service
+(defconfig service-config () ())
+
 (defclass service (id:id)
   ((port :reader port :initarg :port)
    (address :reader address :initarg :address)

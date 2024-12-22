@@ -4,7 +4,8 @@
 
 ;;; Code:
 (defpackage :homer
-  (:use :cl :std :log :krypt :skel)
+  (:use :cl :std :log :krypt :skel :config :io/kbd)
+  (:import-from :mpk :mpk-config :load-mpkrc)
   (:export
    #:*user*
    #:*user-homedir*
@@ -20,8 +21,10 @@
    #:homer-maybe-pull
    #:homer-maybe-install))
 
+#+cli
 (defpackage :homer/cli
   (:use :cl :std :log :homer :cli))
 
+#+gui
 (defpackage :homer/gui
   (:use :cl :std :log :homer :gui))

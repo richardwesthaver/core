@@ -3,11 +3,12 @@
 ;; 
 
 ;;; Code:
-(defpackage :mpk/int
-  (:use :cl :std :log :id :config)
+(defpackage :mpk
+  (:use :cl :std :log :id :config :ast)
   (:export
    #:*mpk-directory*
    #:mpk-path
+   :mpk-config :load-mpkrc
    #:mpk-ensure-directories
    #:*mpk-user-directory*
    #:*mpk-media-directory*
@@ -15,12 +16,9 @@
 
 (defpackage :mpk/db
   (:nicknames :mdb)
-  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk/int :schema :db :id)
+  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id)
   (:export :*mdb-directory* :*mdb* :*mdb-schema*
    :mdb :init-mdb))
-
-(defpackage :mpk
-  (:use :cl :std :log :mpk/int))
 
 (defpackage :mpk/cli
   (:use :cl :std :log :mpk :cli))

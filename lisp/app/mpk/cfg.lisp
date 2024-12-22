@@ -3,4 +3,8 @@
 ;; 
 
 ;;; Code:
-(in-package :mpk/int)
+(in-package :mpk)
+
+(defconfig mpk-config () ())
+
+(defun load-mpkrc ())

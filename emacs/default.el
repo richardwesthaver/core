@@ -254,6 +254,7 @@
       (slime)))))
 
 (use-package slime
+  :vc (:url "https://github.com/slime/slime" :rev :newest)
   :ensure t
   :config
   (require 'slime-company "slime-company")

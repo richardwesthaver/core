@@ -7,6 +7,7 @@
 
 ;;; CLI
 (defopt homer-version (print-version *cli*))
+(defopt homer-ast (setq *keep-ast* (or *arg*)))
 (defopt homer-log-level (when *arg* (setq *log-level* :debug)))
 (defopt homer-force (when *arg* (setq *homer-force* t)))
 

@@ -190,7 +190,7 @@
 (defvar *archiso-creds*)
 
 ;; TODO 2024-05-31: 
-(defconfig archiso-config ()
+(defconfig archiso-config (box-config)
   ((config-version :initform "2.6.0" :type string)
    (hostname :type string)
    (kernels :initform '("linux") :type list)
@@ -217,4 +217,3 @@
    (swap :initform t :type boolean)
    timezone
    (version :initform "2.6.0" :type string)))
-

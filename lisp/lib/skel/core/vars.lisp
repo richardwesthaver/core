@@ -38,10 +38,6 @@ table through CLI/ENV:CONCAT-ENV-TABLE and passing it as the value of the
 
 (defvar *system-skelrc* (pathname "/etc/skelrc"))
 
-(defvar *keep-ast* nil
-  "Whether to keep the :ast slot stored with an sk object, or set it to nil so
-that it can be GC'd.")
-
 (defvar *skel-load-recursive* t
   "Whether to recursively load sk objects in the :include slot or store them
 uninitialized with non-nil :ast slots.")
