@@ -31,8 +31,7 @@
   :build-operation program-op
   :build-pathname "homer"
   :entry-point "bin/homer::start-homer"
-  :depends-on (:uiop :cl-ppcre :std :cli
-               :organ :skel :nlp :rdb :packy :krypt)
+  :depends-on (:std :cli :organ :skel :nlp :rdb :homer)
   :components ((:file "homer")))
 
 (defsystem :bin/rdb

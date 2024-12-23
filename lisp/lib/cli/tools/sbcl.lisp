@@ -31,12 +31,12 @@
     (nreverse ret)))
 
 (defvar *sbcl-output* t)
+
 (defun run-sbcl (&rest args)
   (let ((proc (sb-ext:run-program *sbcl* (or args nil) :output *sbcl-output*)))
-    (with-open-stream (s (sb-ext:process-output proc))
-      (if (eq 0 (sb-ext:process-exit-code proc))
-          nil
-          (sbcl-error "SBCL command failed: ~A ~A" *sbcl* (or args ""))))))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+        nil
+        (sbcl-error "SBCL command failed: ~A ~A" *sbcl* (or args "")))))
 
 (defmacro with-sbcl ((&rest keys) &body body)
   "Convenience macro for running an external SBCL process in its own shell. The

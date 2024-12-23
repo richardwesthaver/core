@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :homer)
+(in-package :homer/core)
 
 (defvar *user* (sb-posix:getenv "USER"))
 (defvar *user-homedir* (user-homedir-pathname))

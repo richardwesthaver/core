@@ -19,7 +19,7 @@
   ((path :initform nil :initarg :path :type (or pathname null))
    (keyrings :initform nil :initarg :keyrings)
    (passwords :initform *krypt-password-directory* :initarg :passwords)
-   (tokens :initform *krypt-tokens-directory* :initarg :tokens)
+   (tokens :initform *krypt-token-directory* :initarg :tokens)
    (keys :initform *krypt-key-directory* :initarg :keys)
    #| gpg, ssh |#
 ))
@@ -62,7 +62,7 @@
                         :nullp nullp
                         :exclude exclude)))
 
-(defun load-kryptrc (&optional (file *default-user-kryptrc*))
+(defun load-kryptrc (&optional (file *kryptrc*))
   "Load a krypt configuration from FILE. Defaults to ~/.kryptrc."
   (unless (not (probe-file file))
     (let ((form (file-read-forms file)))
@@ -74,7 +74,7 @@
 *KRYPT-USER-CONFIG*"
   (mapc 'ensure-directories-exist 
         (list *krypt-directory* *krypt-net-directory* 
-              *krypt-tokens-directory* *krypt-password-directory*))
+              *krypt-token-directory* *krypt-password-directory*))
   (setq *krypt-user-config* (load-kryptrc))
   (values))
 

@@ -3,9 +3,9 @@
 ;; 
 
 ;;; Code:
-(in-package :homer)
+(in-package :homer/core)
 
-(defun init-homer-vars ()
+(defun homer-user-init ()
   (setq *user* (sb-posix:getenv "USER")
         *user-homedir* (user-homedir-pathname)
         *default-user-homerc* (merge-pathnames ".homerc" *user-homedir*)))

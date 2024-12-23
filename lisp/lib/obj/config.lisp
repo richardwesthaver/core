@@ -32,9 +32,10 @@
 
 (defmacro defconfig (name direct-superclasses direct-slots &rest options)
   "DEFCLASS sugar for CONFIG objects."
-  `(defclass ,name ,(append direct-superclasses '(obj/config::config))
-     ,direct-slots
-     ,@options))
+  `(eval-always
+     (defclass ,name ,(append direct-superclasses '(obj/config::config))
+       ,direct-slots
+       ,@options)))
 
 ;;; TODO 2024-10-27: Simple Config AST
 (defmacro define-simple-config (name prototype &body accessors)

@@ -3,4 +3,4 @@
 ;; 
 
 ;;; Code:
-(in-package :homer)
+(in-package :homer/core)

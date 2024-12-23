@@ -1,4 +1,4 @@
-;;; cli.lisp --- Homer CLI
+;;; homer/cli.lisp --- Homer CLI
 
 ;; 
 
@@ -15,7 +15,7 @@
   (describe *home-config*))
 
 (defcmd homer-check ()
-  (with-slots (src) *home-config*
+  (let ((src (slot-value *home-config* 'homer/core::src)))
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
         (mapcar #'homer-status
@@ -25,7 +25,7 @@
       (error 'file-error :pathname src))))
 
 (defcmd homer-push ()
-  (with-slots (src) *home-config*
+  (let ((src (slot-value *home-config* 'homer/core::src)))
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
         (mapc #'homer-maybe-push
@@ -33,7 +33,7 @@
       (error 'file-error :pathname src))))
 
 (defcmd homer-pull ()
-  (with-slots (src) *home-config*
+  (let ((src (slot-value *home-config* 'homer/core::src)))
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
         (mapc #'homer-maybe-pull
@@ -41,7 +41,7 @@
       (error 'file-error :pathname src))))
 
 (defcmd homer-install ()
-  (with-slots (src) *home-config*
+  (let ((src (slot-value *home-config* 'homer/core::src)))
     (if-let ((src (probe-file src)))
       (let ((*default-pathname-defaults* src))
         (mapc #'homer-maybe-install

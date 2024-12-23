@@ -204,10 +204,20 @@ CLI is updated based on the current environment and dynamically bound to
 (defun (setf package-opts) (new &optional (package *package*))
   (setf (caddr (%package-cli package)) new))
 
+(deferror missing-package-cli (simple-error) ()
+          (:default-initargs :format-control "Missing PACKAGE-CLI method for ~A"))
+
+(defun missing-package-cli (key)
+  (error 'missing-package-cli :format-arguments (list key)))
+
 ;; these functions are used to populate a *CLI-PACKAGE-TABLE* record.
 (defmacro load-package-cli (cli &key (package *package*) cmds opts)
   (with-gensyms (%cli)
-    `(let ((,%cli (if (keywordp ,cli) (copy-object (package-cli (find-package ,cli))) ,cli)))
+    `(let ((,%cli (if-let ((pkg (and (keywordp ,cli) (package-cli (find-package ,cli)))))
+                    (copy-object pkg)
+                    (if (typep ,cli 'cli)
+                        ,cli
+                        (missing-package-cli ,cli)))))
        (setf (cmds ,%cli) (concatenate 'vector (cmds ,%cli) (make-cmds ',cmds))
              (opts ,%cli) (concatenate 'vector (opts ,%cli) (make-opts ',opts)))
        (setf (%package-cli ,package)

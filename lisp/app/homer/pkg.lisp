@@ -3,8 +3,8 @@
 ;; 
 
 ;;; Code:
-(defpackage :homer
-  (:use :cl :std :log :krypt :skel :config :io/kbd)
+(defpackage :homer/core
+  (:use :cl :std :log :krypt :skel :config :io/kbd :ast :id)
   (:import-from :mpk :mpk-config :load-mpkrc)
   (:export
    #:*user*
@@ -19,12 +19,18 @@
    #:homer-copy
    #:homer-maybe-push
    #:homer-maybe-pull
-   #:homer-maybe-install))
+   #:homer-maybe-install
+   :homer-user-init))
 
 #+cli
 (defpackage :homer/cli
-  (:use :cl :std :log :homer :cli))
+  (:use :cl :std :log :homer/core :cli :ast)
+  (:export :*homer-cli*))
 
 #+gui
 (defpackage :homer/gui
-  (:use :cl :std :log :homer :gui))
+  (:use :cl :std :log :homer/core :gui))
+
+(pkg:defpkg :homer
+  (:use :cl :std :log)
+  (:use-reexport :homer/core #+cli :homer/cli #+gui :homer/gui))

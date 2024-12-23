@@ -3,9 +3,9 @@
 ;; 
 
 ;;; Code:
-(in-package :homer)
+(in-package :homer/core)
 
-(defconfig home-config (ast id)
+(defconfig home-config (ast:ast id:id)
   ((user :initform *user* :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
    (src :initform nil :initarg :src :type (or null pathname vc-repo))
@@ -29,11 +29,11 @@
     (format stream "~S ~A" :id (format-sxhash (id:id self)))))
 
 (defun find-homer-symbol (s)
-  (find-symbol* (symbol-name s) :homer nil))
+  (find-symbol* (symbol-name s) :homer/core nil))
 
 (defmethod load-ast ((self home-config))
   (with-slots (ast) self
-    (if (ast:formp ast)
+    (if (formp ast)
         ;; ast is valid, modify object, set ast nil
         (progn
           (sb-int:doplist (k v) ast
