@@ -64,9 +64,7 @@
 (in-package :mpv)
 
 (define-alien-loader :mpv "/usr/lib/")
-
 (define-alien-type mpv-handle (struct mpv-handle))
-
 (define-alien-routine mpv-create (* mpv-handle))
 (define-alien-routine mpv-initialize int (ctx (* mpv-handle)))
 
@@ -133,9 +131,9 @@
   (ctx (* mpv-handle)) (name c-string) (format mpv-format) (data (* t)))
 
 (define-alien-routine mpv-set-option-string int 
-  (ctx (* mpv-handle)) (name c-string) (data (* t)))
+  (ctx (* mpv-handle)) (name c-string) (data c-string))
   
-(define-alien-routine mpv-command int (ctx (* mpv-handle)) (args (array c-string)))
+(define-alien-routine mpv-command int (ctx (* mpv-handle)) (args (* c-string)))
 
 ;; (define-alien-routine mpv-command-node int 
 ;;   (ctx (* mpv-handle)) 

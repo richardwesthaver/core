@@ -74,13 +74,13 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
           (setf (char dest index) (code-char b))
           (incf index))))
 
-(defun clone-strings (list)
+(defun clone-strings (list &optional null-terminate)
   (let ((len (length list)))
     (with-alien ((x (* (* char)) (make-alien (* char) len)))
       (labels ((populate (list index)
                  (declare (type sb-int:index index))
                  (if list
-                     (let ((array (sb-ext:string-to-octets (car list) :null-terminate nil)))
+                     (let ((array (sb-ext:string-to-octets (car list) :null-terminate null-terminate)))
                        (sb-sys:with-pinned-objects (array)
                          (setf (deref x index) (sap-alien (sb-sys:vector-sap array) (* char)))
                          (populate (cdr list) (1+ index))))

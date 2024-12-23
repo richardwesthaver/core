@@ -11,6 +11,10 @@
   (with-current-vc-root (vc)
     (vc-status vc)))
 
+(defcmd vc-commit-cmd ()
+  (with-current-vc-root (vc)
+    (vc-commit vc (car *args*))))
+
 (defcmd vc-pull-cmd ()
   (with-current-vc-root (vc)
     (vc-pull vc (car *args*))))
@@ -47,7 +51,9 @@
           :thunk vc-push-cmd)
          (:name "pull" :description "Pull the current repo from a remote"
           :thunk vc-pull-cmd)
-         (:name "clone" :description "Clone a repo from a remote")
+         (:name "clone" :description "Clone a repo from a remote" :thunk vc-clone-cmd)
+         (:name "commit" :description "Commit the working set to the revision tree"
+          :thunk vc-commit-cmd)
          (:name "addremove" :description "Add/remove files" :thunk vc-addremove-cmd)
          (:name "fast-export" :description "Run the hg-fast-export script"
           :thunk vc-fast-export-cmd)

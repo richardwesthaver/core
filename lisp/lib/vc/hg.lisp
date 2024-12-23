@@ -150,7 +150,7 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
   (vc-run self "remove" files))
 
 (defmethod vc-addremove ((self hg-repo) &rest files)
-  (vc-run self "addremove" files))
+  (apply 'vc-run self "addremove" files))
 
 (defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
 
