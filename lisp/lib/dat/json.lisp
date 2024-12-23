@@ -12,7 +12,7 @@
 ;;; Code:
 (in-package :dat/json)
 
-(defvar *allow-json-trailing-commas* nil
+(defvar *allow-json-trailing-commas* t
   "When non-nil, arrange for our json readers to allow trailing
 commas. This binding does not affect writers.
 
@@ -31,6 +31,9 @@ generating json from a scripting language without native json support."
             :initarg :members
             :accessor json-object-members))
   (:documentation "An associative list of key/value pairs."))
+
+(defmethod ast:ast ((self json-object))
+  (json-object-members self))
 
 (defmethod print-object ((obj json-object) stream)
   "Output a JSON object to a stream in readable form."
@@ -125,7 +128,7 @@ generating json from a scripting language without native json support."
   (declare (optimize (speed 3) (debug 0)))
   (if (json-peek-char stream expected :skip-ws skip-ws)
       t
-    (error "JSON error: unexpected ~s" (read-char stream))))
+    (error "JSON error: unexpected ~s~%expected ~A" (read-char stream) expected)))
 
 (defun json-read-true (stream)
   "Read true from a JSON stream."
@@ -218,29 +221,28 @@ generating json from a scripting language without native json support."
        ;; stop at closing quote
        until (char= c #\")
 
-       ;; write character to output
-       do (if (char/= c #\\)
-              (write-char c s)
-            (let ((c (case (read-char stream)
-                       (#\n #\newline)
-                       (#\t #\tab)
-                       (#\f #\formfeed)
-                       (#\b #\backspace)
-                       (#\r #\return)
+      ;; write character to output
+      do (if (char/= c #\\)
+             (write-char c s)
+             (let ((c (case (read-char stream)
+                        (#\n #\newline)
+                        (#\t #\tab)
+                        (#\f #\formfeed)
+                        (#\b #\backspace)
+                        (#\r #\return)
+                        ;; read unicode character
+                        (#\u (let ((x1 (digit-char-p (read-char stream) 16))
+                                   (x2 (digit-char-p (read-char stream) 16))
+                                   (x3 (digit-char-p (read-char stream) 16))
+                                   (x4 (digit-char-p (read-char stream) 16)))
+                               (code-char (logior (ash x1 12)
+                                                  (ash x2  8)
+                                                  (ash x3  4)
+                                                  (ash x4  0)))))
 
-                       ;; read unicode character
-                       (#\u (let ((x1 (digit-char-p (read-char stream) 16))
-                                  (x2 (digit-char-p (read-char stream) 16))
-                                  (x3 (digit-char-p (read-char stream) 16))
-                                  (x4 (digit-char-p (read-char stream) 16)))
-                              (code-char (logior (ash x1 12)
-                                                 (ash x2  8)
-                                                 (ash x3  4)
-                                                 (ash x4  0)))))
-
-                       ;; verbatim character
-                       (otherwise c))))
-              (write-char c s))))))
+                        ;; verbatim character
+                        (otherwise c))))
+               (write-char c s))))))
 
 (defun json-read-list (stream)
   "Read a list of JSON values."
