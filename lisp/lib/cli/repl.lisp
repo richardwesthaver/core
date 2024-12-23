@@ -29,9 +29,9 @@ REPL."
   (do ((i 0 (1+ i))
        (input ""))
       ((string= "quit" (trim input)))
-    (setf input (readline :prompt (format nil "[~a]> " i)
-                          :add-history t
-                          :novelty-check #'input-novelty-check))))
+    (setf input (readline:readline :prompt (format nil "[~a]> " i)
+                                   :add-history t
+                                   :novelty-check #'input-novelty-check))))
 
 ;;; TOPLEVEL
 

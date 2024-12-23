@@ -10,7 +10,8 @@
   (declare (type (member :opt :cmd :cli t) kind))
   (cond
     ((eql kind :cli) (apply #'make-instance 'cli slots))
-    ((eql kind :opt) (apply #'make-cli-opt slots))
+    ;; replace :DEFAULT with :VAL
+    ((eql kind :opt) (apply #'make-cli-opt (substitute :val :default slots)))
     ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
     (t (apply #'make-instance kind slots))))
 

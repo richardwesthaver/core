@@ -80,10 +80,9 @@
        (text ""))
       ((string= "quit" (string-trim " " text)))
     (setf text
-          (readline::rl :prompt (format nil "[~a]> " i)
+          (rl :prompt (format nil "[~a]> " i)
                         :add-history t
                         :novelty-check #'novelty-check))))
 
 (deftest cl-readline-example (:skip t)
-  (with-input-from-string (*standard-input* (format nil "quit~%"))
-    (isnt (cl-readline-example))))
+  (cl-readline-example))

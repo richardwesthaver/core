@@ -21,9 +21,8 @@
     (with-alien ((i boolean t))
       (iszero (mpv::mpv-set-option *test-mpv* "osc" (mpv-format :flag) (addr i))))
     (iszero (mpv-initialize *test-mpv*))
-    (iszero (mpv-command-string *test-mpv* 
-                                ;; (clone-strings (list "loadfile" "/mnt/z/music/7323889_Weltschmerz_Original_Mix.wav") t)
+    (iszero (mpv-command-string *test-mpv*
                                 "loadfile /mnt/z/music/7323889_Weltschmerz_Original_Mix.wav"))
   (unless (null-alien *test-mpv*)
-    (setq *test-mpv* (mpv-destroy *test-mpv*)))))
+    (setq *test-mpv* (mpv-terminate-destroy *test-mpv*)))))
 

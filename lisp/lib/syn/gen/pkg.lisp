@@ -48,4 +48,7 @@
    :gen
    :lisp))
 
-(in-package :syn/gen)
+(defpackage :syn/gen/cli
+  (:use :cl :std :syn/gen :cli :log)
+  (:export :*gen-cli*))
+

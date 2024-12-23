@@ -446,8 +446,7 @@ actual string and NIL on failure."
                             (recent-history-line-satisfies-p
                              (std:curry novelty-check str))))
                (add-history str))
-             str)
-        (free-alien ptr)))))
+             str)))))
 
 ;; (defmacro with-possible-redirection (filename append &body body)
 ;;   "If FILENAME is not NIL, try to create C file named FILENAME,
@@ -518,12 +517,14 @@ FUNCTION must be a function, if FUNCTION is NIL, result is unpredictable."
     (:deprep-term (setf *rl-deprep-term-function*
                         (produce-callback* function 'void)))
     (:complete    (setf *rl-attempted-completion-function*
-                        (produce-callback*
-                         (lambda (text start end)
-                           (prog1
-                               (clone-strings
-                                (funcall function text start end))
-                             (setf *rl-attempted-completion-over* t)))
-                         '(* t)
-                         '(c-string int int)))))
+                        (cast
+                         (produce-callback*
+                          (lambda (text start end)
+                            (prog1
+                                (clone-strings
+                                 (funcall function text start end))
+                              (setf *rl-attempted-completion-over* t)))
+                          '(* t)
+                          '(c-string int int))
+                         (* t)))))
   nil)

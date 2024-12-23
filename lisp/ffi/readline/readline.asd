@@ -19,7 +19,8 @@
   :depends-on (:std :sb-grovel)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
-                                      :package :readline))
+                                      :package :readline)
+               (:file "readline"))
   :in-order-to ((test-op (test-op "readline/tests"))))
 
 (defsystem :readline/tests
