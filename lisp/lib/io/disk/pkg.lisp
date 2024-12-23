@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :io/disk
   (:nicknames :disk)
-  (:use :cl :std :io/proto :btrfs)
+  (:use :cl :std :io/proto :btrfs :sb-alien)
   (:export
    #:*default-filesystem*
    #:*filesystem-backends*
@@ -16,7 +16,22 @@
    #:sync
    #:snapshot
    #:disk-snapshot
-   #:disk-subvolume))
+   #:disk-subvolume
+   :list-disks
+   :list-disk-info
+   :disk-space
+   :disk-total-space
+   :disk-available-space
+   :disk-free-space
+   #:statvfs
+   #:disk-info
+   #:mnt-fsname
+   #:mnt-dir
+   #:mnt-type
+   #:mnt-opts
+   #:mnt-freq
+   #:mnt-passno
+   #:mntent))
 
 (defpackage :io/disk/btrfs
   (:nicknames :disk/btrfs)

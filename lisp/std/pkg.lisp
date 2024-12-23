@@ -596,7 +596,8 @@
   (:use :cl)
   (:import-from :std/list :group :ensure-cons)
   (:shadowing-import-from :uiop :println)
-  (:export :printer-status :fmt-row :format-sxhash :iprintln :fmt-tree :println))
+  (:export :printer-status :fmt-row :format-sxhash :iprintln :fmt-tree :println
+           :human-readable-size))
 
 (defpkg :std/path
   (:use :cl)

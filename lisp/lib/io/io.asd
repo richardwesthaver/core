@@ -24,6 +24,7 @@
                (:module "disk"
                 :components 
                 ((:file "pkg")
+                 (:file "util")
                  (:file "proto")
                  (:file "btrfs")))
                (:file "kbd")

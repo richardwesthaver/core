@@ -19,7 +19,8 @@
 
 (defun load-filesystem-backend (&optional (fs *default-filesystem*))
   (case fs
-    (:btrfs (load-btrfs) (load-btrfsutil) t)))
+    (:btrfs (load-btrfs) (load-btrfsutil) t)
+    (:xfs t)))
 
 (defclass disk () ())
 

@@ -72,9 +72,9 @@
 
 (define-alien-routine gst-get-main-executable-path c-string)
 
-(define-alien-routine gst-init void (argc (* int)) (argv (array c-string)))
+(define-alien-routine gst-init void (argc (* int)) (argv (* (* c-string))))
 (define-alien-routine gst-init-check void
-  (argc (* int)) (argv (array c-string))
+  (argc (* int)) (argv (* (* c-string)))
   (error (* (* gerror))))
 
 (define-alien-routine gst-is-initialized boolean)
@@ -87,4 +87,3 @@
 
 ;; (with-alien ((loop (* gmainloop)))
 ;;   (g-main-loop-new loop nil))
-

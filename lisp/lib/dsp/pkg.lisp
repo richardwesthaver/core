@@ -8,5 +8,5 @@
   (:export))
 
 (defpackage :dsp/gst
-  (:use :cl :std :dsp/core :gstreamer)
+  (:use :cl :std :dsp/core :gstreamer :sb-alien)
   (:export))
