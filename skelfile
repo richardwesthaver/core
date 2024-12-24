@@ -168,6 +168,7 @@
                        (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
        (:build () (with-sbcl (:noinform t :quit t)
+                    (push :x11 *features*)
                     (ql:quickload :bin/core)
                     (asdf:make :bin/core))
                #$mv lisp/bin/core .stash/core$#)

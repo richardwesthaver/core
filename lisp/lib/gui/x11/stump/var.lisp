@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :x11/stump)
+(in-package :gui/x11/stump)
 (defvar *default-stumpwm-modules* nil)
 (defvar *default-stumpwm-prefix-key* (kbd "s-SPC"))
 (defvar *user-map* (make-sparse-keymap))

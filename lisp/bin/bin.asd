@@ -24,7 +24,7 @@
   :build-operation program-op
   :build-pathname "organ"
   :entry-point "bin/organ::start-organ"
-  :depends-on (:uiop :cl-ppcre :std :cli :organ :nlp)
+  :depends-on (:std :cli :organ :nlp)
   :components ((:file "organ")))
 
 (defsystem :bin/homer
@@ -38,14 +38,14 @@
   :build-operation "program-op"
   :build-pathname "rdb"
   :entry-point "bin/rdb::start-rdb"
-  :depends-on (:uiop :cl-ppcre :std :rdb :cli)
+  :depends-on (:std :rdb :cli)
   :components ((:file "rdb")))
 
 (defsystem :bin/gen
   :build-operation "program-op"
   :build-pathname "gen"
   :entry-point "bin/gen::start-gen"
-  :depends-on (:uiop :cl-ppcre :std :syn :cli)
+  :depends-on (:std :syn :cli)
   :components ((:file "gen")))
 
 (defsystem :bin/vc
@@ -60,7 +60,7 @@
   :build-pathname "skel"
   :entry-point "bin/skel::start-skel"
   :components ((:file "skel"))
-  :depends-on (:uiop :cl-ppcre :std :cli :skel))
+  :depends-on (:std :cli :skel))
 
 (defsystem :bin/skc
   :build-operation program-op
@@ -73,7 +73,7 @@
   :build-operation program-op
   :build-pathname "packy"
   :entry-point "bin/packy::start-packy"
-  :depends-on (:uiop :cl-ppcre :std :cli :packy :rdb)
+  :depends-on (:std :cli :packy :rdb)
   :components ((:file "packy")))
 
 (defsystem :bin/core

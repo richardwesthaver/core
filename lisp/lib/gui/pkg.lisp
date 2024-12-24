@@ -73,7 +73,7 @@
 
 (in-package :gui)
 
-(defvar *default-display-protocol* :x11)
+(defvar *default-display-protocol* :gui/x11)
 
 (defun display-protocol-package (&optional proto)
   "Return the WM package, either ':x11' for X11 or ':wl' for

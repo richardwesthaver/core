@@ -5,7 +5,7 @@
 ;; our default WM.
 
 ;;; Code:
-(defpackage :x11/stump
+(defpackage :gui/x11/stump
   (:use :cl :std :stumpwm)
   (:shadowing-import-from :std :group :message)
   (:export
@@ -19,7 +19,7 @@
    #:*default-stumpwm-prefix-key*
    #:start-stumpwm))
 
-(in-package :x11/stump)
+(in-package :gui/x11/stump)
 
 (cli:defmain start-stumpwm ()
   (let ((argv (cli:args)))

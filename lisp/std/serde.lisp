@@ -28,14 +28,14 @@
   (:method ((self t)) nil)
   (:documentation "Return non-nil of object SELF is serializable."))
 
-(defgeneric serialize (obj format &key)
+(defgeneric serialize (obj format &key &allow-other-keys)
   (:documentation "Serialize OBJ to FORMAT, which is a SERIALIZABLE-TYPE-DESIGNATOR."))
 ;;; Deserialize
 (defgeneric deserializable-p (self)
   (:method ((self t)) nil)
   (:documentation "Return non-nil if object SELF is deserializable."))
 
-(defgeneric deserialize (from format &key)
+(defgeneric deserialize (from format &key &allow-other-keys)
   (:documentation "Deserialize FROM into an object of type FORMAT, which is a
 DESERIALIZABLE-TYPE-DESIGNATOR."))
 
