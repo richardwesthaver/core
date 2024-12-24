@@ -3,4 +3,4 @@
 ;; ref: https://wayland.app/protocols/xdg-shell
 
 ;;; Code:
-(in-package :wl/shell)
+(in-package :gui/wl/shell)

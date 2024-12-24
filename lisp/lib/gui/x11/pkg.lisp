@@ -1,4 +1,4 @@
-(in-package :gui/wm/x11)
+(in-package :gui/x11)
 
 (defvar *x11-display* nil)
 

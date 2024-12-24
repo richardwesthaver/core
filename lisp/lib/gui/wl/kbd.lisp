@@ -3,4 +3,4 @@
 ;; ref: https://wayland.app/protocols/wayland#wl_keyboard
 
 ;;; Code:
-(in-package :wl/kbd)
+(in-package :gui/wl/kbd)

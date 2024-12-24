@@ -3,31 +3,36 @@
   :depends-on (:std 
                :log :obj :xkb :parse
                (:feature :wl :wayflan) (:feature :wl :wayflan-client)
-               (:feature :x11 :clx) (:feature :x11 :stumpwm)
+               (:feature :x11 :clx) 
+               (:feature :x11 :stumpwm)
+               (:feature :clim :mcclim)
+               (:feature (:and :clim :dbg) :clim-debugger)
                :cli :io)
   :components ((:file "pkg")
-               (:file "err")
+               (:file "condition")
                (:file "server")
                (:file "client")
-               (:module "wm"
+               (:module "clim"
+                :if-feature :clim
+                :components
+                ((:file "pkg")
+                 (:file "dbg" :if-feature :dbg)))
+               (:module "wl"
+                :if-feature :wl
                 :components 
                 ((:file "pkg")
-                 #+wl 
-                 (:module "wl"
-                  :components 
+                 (:file "kbd")
+                 (:file "shell")))
+               (:module "x11"
+                :if-feature :x11
+                :components 
+                ((:file "pkg")
+                 (:module "stump"
+                  :components
                   ((:file "pkg")
-                   (:file "kbd")
-                   (:file "shell")))
-                 #+x11
-                 (:module "x11"
-                  :components 
-                  ((:file "pkg")
-                   (:module "stump"
-                    :components
-                    ((:file "pkg")
-                     (:file "var")
-                     (:module "mod"
-                      :components ((:file "disk")))))))))
+                   (:file "var")
+                   (:module "mod"
+                    :components ((:file "disk")))))))
                (:file "ext"))
   :in-order-to ((test-op (test-op "gui/tests"))))
 
