@@ -4,4 +4,3 @@
 
 ;;; Code:
 (in-package :gui/clim/dbg)
-

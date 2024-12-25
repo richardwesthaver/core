@@ -11,13 +11,16 @@
 
 (in-package :bin/swm)
 
+(defcmd stumpwm-cmd ()
+  (stumpwm:stumpwm (or (car *args*) (sb-posix:getenv "DISPLAY") ":0")))
+
 (define-cli *swm-cli*
   :name "swm"
   :help t
   :version 0
-  :thunk stumpwm:stumpwm)
+  :thunk stumpwm-cmd
+  :cmds ((:name "start" :thunk stumpwm-cmd :description "Start StumpWM")))
 
 (defmain start-swm ()
-  (with-cli (*swm-cli* :args (cli:args))
-    (in-package :stumpwm-user)
-    (cli:do-cmd cli:*cli*)))
+  (with-cli (*swm-cli* :args nil)
+    (do-cmd *cli*)))

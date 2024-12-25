@@ -42,14 +42,14 @@
 
 (defpackage :dat/ini
   (:nicknames :ini)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :ast)
   (:export
-   :ini-encode
-   :ini-decode))
+   :ini-document
+   :ini-read))
 
 (defpackage :dat/toml
   (:nicknames :toml)
-  (:use :cl :std :dat/proto :obj/time)
+  (:use :cl :std :dat/proto :time :ast)
   (:export
    #:parse-toml-blocks
    :parse-toml-value

@@ -81,4 +81,5 @@
   :build-pathname "core"
   :entry-point "bin/core::dispatch-core"
   :components ((:file "core"))
-  :depends-on (:core :bin/skel :bin/organ :bin/homer :bin/rdb :bin/packy :bin/vc :bin/gen))
+  :depends-on (:core :bin/skel :bin/organ :bin/homer :bin/rdb :bin/packy :bin/vc :bin/gen
+                     (:feature :x11 :bin/swm)))

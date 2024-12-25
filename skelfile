@@ -179,7 +179,7 @@
        (:compile () (compile-lisp :core :force t :verbose t))
        (:install () #$install -C -m 755 .stash/core /usr/local/bin/core
                  echo "core -> /usr/local/bin/"
-                 links="skel homer packy rdb organ vc gen"
+                 links="skel homer packy rdb organ vc gen swm"
                  for i in $links; do
                  ln -sf /usr/local/bin/core /usr/local/bin/$i
                  echo "$i -> core -> /usr/local/bin/"
