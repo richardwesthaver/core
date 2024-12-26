@@ -6,6 +6,7 @@
                (:feature :x11 :clx) 
                (:feature :x11 :stumpwm)
                (:feature :clim :mcclim)
+               (:feature :clim :mcclim-layouts/tab)
                (:feature (:and :clim :dbg) :clim-debugger)
                :cli :io)
   :components ((:file "pkg")

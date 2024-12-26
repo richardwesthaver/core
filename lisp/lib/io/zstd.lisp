@@ -149,7 +149,6 @@
 (defmethod initialize-instance :after ((self zstd-decompressing-stream) 
                                        &key (input-size (zstd-dstreaminsize))
                                             (output-size (zstd-dstreamoutsize)))
-
   (zstd-initdstream (stream-of self))
   (setf (input-size self) input-size
         (output-size self) output-size))

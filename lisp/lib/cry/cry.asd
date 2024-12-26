@@ -6,13 +6,14 @@
   (:ironclad :sb-concurrency :sb-posix 
              :sb-bsd-sockets :cl-ppcre
              :std :log :obj :dat
-             :blake3 :io)
+             :blake3 :io :keyutils)
   :components ((:file "pkg")
                (:file "condition" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("condition"))
                (:file "b3" :depends-on ("condition"))
                (:file "password" :depends-on ("condition"))
                (:file "authinfo" :depends-on ("condition"))
+               (:file "keyring" :depends-on ("condition"))
                (:file "jwt" :depends-on ("condition"))
                (:file "hotp" :depends-on ("condition"))
                (:file "totp" :depends-on ("hotp")))

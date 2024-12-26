@@ -582,7 +582,8 @@
    :shutdown-task-pool
    :push-stage :designate-oracle
    :make-task-pool
-   :task :job :task-pool
+   :task :job :task-pool :scheduled-task
+   :schedule
    :stage :task-pool-p
    :job-tasks :make-job
    :job-p :task-object

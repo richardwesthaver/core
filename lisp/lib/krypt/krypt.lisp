@@ -73,7 +73,7 @@
 
 *KRYPT-USER-CONFIG*"
   (mapc 'ensure-directories-exist 
-        (list *krypt-directory* *krypt-net-directory* 
+        (list *krypt-directory* *krypt-net-directory*
               *krypt-token-directory* *krypt-password-directory*))
   (setq *krypt-user-config* (load-kryptrc))
   (values))

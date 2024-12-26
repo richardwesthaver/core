@@ -120,8 +120,8 @@ variables in the head and no clauses in the body. During reading of a DQL
 form, if we find any facts we evaluate them and store them here.")
 
 ;;; Utils
-(defconstant +impossible+ 'no "make impossible look nice")
-(defconstant +solved+ 'yes "make solved look nice")
+(defconstant +impossible+ '! "make impossible look nice")
+(defconstant +solved+ 'ok "make solved look nice")
 (defconstant +dql-vars-property+ :dql-vars)
 (defconstant +dql-funs-property+ :dql-funs)
 

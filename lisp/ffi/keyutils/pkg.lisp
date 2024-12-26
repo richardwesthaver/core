@@ -16,7 +16,9 @@
    :keyutils-version-string
    :keyutils-build-string
    :key-spec
-   :key-spec*))
+   :key-spec*
+   :add-key
+   :request-key))
 
 (in-package :keyutils)
 (define-alien-loader keyutils "/usr/lib/")

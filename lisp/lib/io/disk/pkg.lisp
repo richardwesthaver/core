@@ -31,7 +31,13 @@
    #:mnt-opts
    #:mnt-freq
    #:mnt-passno
-   #:mntent))
+   #:mntent
+   #:mountpoint-get
+   #:mountpoint-device
+   #:mountpoint-fstype
+   #:mountpoint-options
+   #:fsblkcnt-t
+   #:fsfilcnt-t))
 
 (defpackage :io/disk/btrfs
   (:nicknames :disk/btrfs)

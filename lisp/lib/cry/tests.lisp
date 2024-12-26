@@ -7,7 +7,7 @@
 (in-suite :cry)
 
 (deftest hotp ()
-  (is (integerp (hotp "1234" 0))))
+  (is (integerp (hotp "1234" 100))))
 (deftest totp ()
   (is (integerp (totp "1234"))))
 (deftest crc64 ()

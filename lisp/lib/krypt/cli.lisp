@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :krypt)
 
-(define-cli *krypt-cli*
-  :help t
-  :version 0
-  :description "Crypto Utilities"
-  :name "krypt")
+(defcmd b3-cmd ()
+  (let ((in (car *args*)))
+    (if (probe-file in)
+        (b3sum in)
+        (b3hash-string in))))

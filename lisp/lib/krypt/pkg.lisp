@@ -19,5 +19,6 @@
            :krypt-condition
            :krypt-error :simple-krypt-error
            :init-krypt
-           :*krypt-directory*))
+           :*krypt-directory*
+           :*krypt-user-config*))
 

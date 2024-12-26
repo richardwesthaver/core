@@ -15,7 +15,7 @@
 (sb-ext:defglobal *oracle-table* (make-hash-table))
 (eval-always
   (defvar *task*)
-  (defvar *task-result* nil))
+  (defvar *result* nil))
 
 (define-condition task-error (thread-error) ()
   (:report (lambda (condition stream)
@@ -26,15 +26,15 @@
   (error 'task-error :thread thread))
 
 ;;; Kernel
-(defmacro gen-task-kernel (name args lock queue mailbox timeout &body body)
+(defmacro make-task-kernel (name args lock queue mailbox timeout &body body)
   `(compile ',name 
             (lambda ,args 
               (wait-on-semaphore ,lock ,@(when timeout `((:timeout ,timeout))))
               (let ((*task* (dequeue ,queue)))
                 (unwind-protect 
-                     (handler-case (setf *task-result* (progn ,@body))
+                     (handler-case (setf *result* (progn ,@body))
                        (error () (task-error *current-thread*)))
-                  (send-message ,mailbox *task-result*)
+                  (send-message ,mailbox *result*)
                   (release-foreground))))))
 
 (defmacro define-task-kernel (name (&key lock timeout mailbox queue) args &body body)
@@ -50,10 +50,10 @@ SB-THREAD:MAKE-THREAD. It may accept a varying number of arguments
 specified by ARGS.
 
 Within the BODY the variable *task* is bound to the result of (DEQUEUE QUEUE)
-and *task-result* is bound to the return value of BODY.
+and *result* is bound to the return value of BODY.
 
 This interface is experimental and subject to change."
-  `(gen-task-kernel ,name ,args 
+  `(make-task-kernel ,name ,args 
        ,(if lock lock '(make-semaphore))
        ,(if queue queue '(make-queue))
        ,(if mailbox mailbox '(make-mailbox))
@@ -144,7 +144,6 @@ within their DOMAIN and SCOPE."))
       (deletef *worker-threads* th))))
 
 ;;; Oracle
-
 (defstruct (oracle (:constructor %make-oracle (id thread)))
   "Oracles provide a tagged view into some threaded scope of work."
   (id 0 :type (unsigned-byte 32) :read-only t)
@@ -158,8 +157,7 @@ within their DOMAIN and SCOPE."))
     (if-let ((found (oracle-of-id id)))
       (values id found)
       (let ((orc (%make-oracle id thread)))
-        (push orc *oracles*)
-        (push (oracle-thread orc) *oracle-threads*)
+        (setf (gethash id *oracle-table*) (make-array 0 :adjustable t))
         (values id orc)))))
 
 ;;; Task Pool
@@ -195,7 +193,9 @@ within their DOMAIN and SCOPE."))
       (length (task-pool-workers task-pool))))
 
 (defmethod designate-oracle ((self task-pool) (guest thread))
-  (pushnew (sb-ext:make-weak-pointer self) (gethash (make-oracle guest) *oracle-table*)))
+  (let ((id (make-oracle guest)))
+    (setf (gethash id *oracle-table*)
+          (pushnew (sb-ext:make-weak-pointer self) (gethash id *oracle-table*)))))
 
 (declaim (inline push-worker push-workers pop-worker))
 (defun push-worker (worker pool)
@@ -234,6 +234,12 @@ is responsible for indicating in the state slot the result of the computation.")
 
 (defun run-task (worker task)
   (run-worker worker :input task))
+
+;; Scheduled Tasks
+(defgeneric schedule (self))
+
+(defclass scheduled-task (task)
+  ((schedule :initarg :schedule :initform nil :accessor schedule)))
 
 ;;; Job
 (defclass job (task)

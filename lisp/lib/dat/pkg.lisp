@@ -45,7 +45,9 @@
   (:use :cl :std :dat/proto :ast)
   (:export
    :ini-document
-   :ini-read))
+   :ini-read
+   :ini-section
+   :ini-object))
 
 (defpackage :dat/toml
   (:nicknames :toml)

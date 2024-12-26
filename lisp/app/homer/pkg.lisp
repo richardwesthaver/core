@@ -20,7 +20,8 @@
    #:homer-maybe-push
    #:homer-maybe-pull
    #:homer-maybe-install
-   :homer-user-init))
+   :homer-user-init
+   #:homer-task))
 
 #+cli
 (defpackage :homer/cli

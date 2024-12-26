@@ -43,7 +43,7 @@
 (defun ini-read-key (stream)
   (with-output-to-string (s)
     (loop for c = (peek-char t stream nil nil)
-          while (and c (ini-bare-char-p c))
+          while (and c (ini-key-char-p c))
           do (write-char (read-char stream) s))
     s))
 

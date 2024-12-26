@@ -19,7 +19,9 @@
              `(progn
                 (define-alien-routine ,name long ,@args)
                 (export ',name))))
-  (def add-key (type c-string) (description c-string) (payload (* t)) (plen size-t) (ringid key-serial-t))
+  (def add-key 
+      (type c-string) 
+      (description c-string) (payload (* t)) (plen size-t) (ringid key-serial-t))
   (def request-key (type c-string) (description c-string) (callout-info c-string) (destringid key-serial-t))
   ;; variadic? ... prob not supported by sb-alien
   (deflong keyctl (cmd int))

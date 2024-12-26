@@ -33,6 +33,7 @@
                  (:file "html")))
                (:file "handlebars")
                (:file "mime")
+               (:file "ini")
                (:file "toml")
                (:file "arff")
                (:file "tar")

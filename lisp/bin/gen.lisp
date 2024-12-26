@@ -16,14 +16,19 @@
 
 (in-package :bin/gen)
 
+(defcmd gen-cmd ()
+  (println *opts*)
+  (load-gen (keywordicate (print (getopt "syntax")))))
+
 (define-cli *gen-cli*
   :name "gen"
   :description "code generator"
   :version 0
   :help t
-  :opts ((:name "output")
-         (:name "syntax")
-         (:name "level")))
+  :opts ((:name "output" :kind file)
+         (:name "syntax" :kind string :default "c")
+         (:name "level"))
+  :thunk gen-cmd)
 
 (defmain start-gen ()
   (with-cli (*gen-cli* :args (cli:args) :run t)))

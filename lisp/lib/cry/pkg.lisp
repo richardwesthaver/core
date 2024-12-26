@@ -44,6 +44,13 @@
   (:use :cl :std :cry)
   (:export))
 
+(defpackage :cry/keyring
+  (:use :cl :std :cry :keyutils :id :db :sb-alien)
+  (:export
+   :get-key
+   :keyring
+   :make-keyring))
+
 (defpackage :cry/password
   (:use :cl :std :obj/secret)
   (:export :password :password-hash :password-salt :make-password-hash :auth))

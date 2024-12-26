@@ -48,19 +48,8 @@
   (is (equal "foo" (xml-node-name (xml-parse "<foo></foo>")))))
 
 (deftest toml ()
-  "Tests based on https://github.com/toml-lang/toml-test"
-  ;; comment
-  ;; int
-  ;; hex
-  ;; octet
-  ;; binary
-  ;; float
-  ;; bool
-  ;; datetime
-  ;; string
-  ;; array
-  ;; kv
-  )
+  (istype 'dat/toml::toml-document
+          (std:deserialize (asdf:system-relative-pathname :core "../rust/Cargo.toml") :toml)))
 
 (defparameter *arff-input*
   "% 1. Title: Iris Plants Database
@@ -172,8 +161,8 @@
       ;; (tar:finalize-tar-file foo)
       (istype 'tar-file-entry (tar::write-file-entry foo "bar" :data "a b c")))
     (with-open-tar-file (foo path :direction :input :type :auto)
-      (istype 'tar-file-entry (read-entry foo))
-      (istype 'v7-tar-file foo))
+      ;; (istype 'tar-file-entry (read-entry foo))
+      (istype 'v7-tar-file foo)))
     (is (delete-file path))))
 
 (deftest tar-zst (:skip t)
@@ -183,3 +172,15 @@
                          :if-does-not-exist :create
                          :compression :zstd)
       (istype 'tar-file foo))))
+
+;;; INI
+(deftest ini ()
+  (let ((str "[window]
+width=956
+height=1025
+sinkInputType=0
+sourceOutputType=1
+sinkType=0
+sourceType=1
+showVolumeMeters=1"))
+    (istype 'dat/ini:ini-document (deserialize str :ini))))

@@ -35,15 +35,16 @@
   (:documentation "Length error"))
 
 (defun mntent-all-infos (&optional (mount-info-file "/etc/mtab"))
-  (let ((root-info (setmntent mount-info-file "r"))
+  (let ((root-info (setmntent mount-info-file "ro"))
         (infos '()))
     (if (not (null-alien root-info))
         (labels ((get-info ()
-                   (let ((info (deref (getmntent root-info))))
+                   (let ((info (getmntent root-info)))
                      (if (not (null-alien info))
-                         (push info infos)
-                         (get-info))
-                         infos)))
+                         (progn 
+                           (push info infos)
+                           (get-info))
+                         infos))))
           (unwind-protect (get-info)
             (endmntent root-info)))
         (error 'open-file-failed
@@ -96,6 +97,13 @@
       (flag unsigned-long)
       (namemax unsigned-long)))
 
+(define-constant +mntopt-defaults+ "defaults" :test 'equal)
+(define-constant +mntopt-ro+ "ro" :test 'equal)
+(define-constant +mntopt-rw+ "rw" :test 'equal)
+(define-constant +mntopt-suid+ "suid" :test 'equal)
+(define-constant +mntopt-nosuid+ "nosuid" :test 'equal)
+(define-constant +mntopt-noauto+ "noauto" :test 'equal)
+
 ;; (constant (st-rdonly "ST_RDONLY"))
 ;; (constant (st-nosuid "ST_NOSUID"))
 
@@ -106,14 +114,14 @@
 (defun statvfs (path)
   (with-alien ((buf (* statvfs) (make-alien statvfs)))
     (%statvfs path buf)
-    (sb-ext:finalize buf (lambda () (free-alien buf)))
-    (with-alien-slots (bsize frsize blocks bfree bavail files ffree favail fsig flag namemax) buf
+    ;; (sb-ext:finalize buf (lambda () (free-alien buf)))
+    (with-alien-slots (bsize frsize blocks bfree bavail files ffree favail fsig flag namemax) (deref buf)
       (values bsize frsize blocks bfree bavail files
               ffree favail fsig flag namemax))))
 
 ;;; Disk Info
 (defun disk-space (path &optional human-readable-p)
-  "Disk space information include total/free/available space."
+  "Disk space information including total/free/available space."
   (multiple-value-bind (bsize frsize blocks bfree bavail files
                         ffree favail fsig flag namemax)
       (statvfs path)
