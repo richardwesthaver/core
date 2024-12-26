@@ -13,14 +13,14 @@
 | description | The Compiler Company Core                                    |
 | skel-id     | 15bc-b763-ec92-1cf5                                          |
 | root        | ~/comp/core/                                                 |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/0cd06612dd38][0cd06612dd38:805]]           |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/7db6c5e4e562][7db6c5e4e562:806]]           |
 | tags        | core lisp rust emacs c                                       |
-| updated     | Tue Dec 24 21:56:28 2024 -0500                               |
+| updated     | Thu Dec 26 02:03:42 2024 -0500                               |
 | langs       | c cheader elisp html javascript json lisp org rust text toml |
-| lines       | 121140 :λ 94103 :# 12185 :_ 14852                            |
+| lines       | 121459 :λ 94331 :# 12226 :_ 14902                            |
 |-------------+--------------------------------------------------------------|
 
-#+CALL: project-links()
+#+CALL: project-files()
 
 #+RESULTS:
 - [[https://compiler.company/docs/core/index.html][Docs]]
@@ -30,7 +30,8 @@
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
-The core is primarily written from scratch in (non-portable) Lisp but
+* Source Code
+The core is primarily written from scratch in (non-portable) [[https://common-lisp.net][Lisp]] but
 also includes dedicated Emacs Lisp and Rust modules.
 
 The Lisp code is divided into separate folders under the top-level
@@ -46,5 +47,5 @@ with a user configuration file. The top-level files contain the usual
 suspects for a modern Emacs configuration and the =lib= folder
 contains various additional packages which enhance our IDE workflow.
 
-Last, we have our Rust code which lives under =rust=. There's =lib=,
+Last, we have Rust code which lives under =rust=. There's =lib=,
 =bin=, =ffi= modules same as Lisp in addition to =ui=.
