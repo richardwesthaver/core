@@ -64,7 +64,8 @@
    #:toml-redefine-property-error
    #:toml-modify-inline-table-error
    #:toml-dotted-key-redefine-table-error
-   #:toml-dotted-key-open-table-array-error))
+   #:toml-dotted-key-open-table-array-error
+   #:toml-document))
 
 (defpackage :dat/arff
   (:nicknames :arff)

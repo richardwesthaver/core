@@ -68,10 +68,11 @@ This interface is experimental and subject to change."
 (defgeneric assign-supervisor (worker supervisor))
 
 (defgeneric make-workers (count &rest initargs &key &allow-other-keys)
-  (:method ((count number) &key thread kernel input)
+  (:method ((count number) &key thread kernel input (return-type 'vector))
     (let ((ret))
-      (dotimes (i count ret)
-        (push (make-worker :thread thread :kernel kernel :input input) ret)))))
+      (dotimes (i count)
+        (push (make-worker :thread thread :kernel kernel :input input) ret))
+      (if return-type (coerce ret return-type) ret))))
 
 (defgeneric task (self))
 (defgeneric result (self))

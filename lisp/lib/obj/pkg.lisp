@@ -347,6 +347,7 @@
            :op
            :*ast-dispatch-table*
            :write-ast
+           :read-ast
            :val
            :debug-traverser
            :copy-traverser

@@ -9,8 +9,8 @@
   (:nicknames :tools)
   (:use :cl :std)
   (:use-reexport :cli/tools/term :cli/tools/tmux :cli/tools/cc
-   :cli/tools/nvcc :cli/tools/pacman :cli/tools/systemd :cli/tools/rust
-   :cli/tools/sbcl :cli/tools/net))
+   :cli/tools/pacman :cli/tools/systemd :cli/tools/rust :cli/tools/sbcl 
+   :cli/tools/net))
 
 (defpkg :cli
   (:use :cl :std :log)

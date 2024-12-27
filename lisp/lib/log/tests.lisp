@@ -39,7 +39,7 @@
          (with-logger *fx*
            (let ((tmpfile (path tmp)))
              ;; (is *logger*)
-             (add-pipe (make-instance 'file-sink :file tmpfile))
+             (log-pipe (make-instance 'file-sink :file tmpfile))
              (unless (started-p *fx*)
                (start *fx*))
              (log-message :info '(:file :log) "test")
@@ -48,17 +48,17 @@
       (delete-file (path tmp)))))
 
 (deftest rotating-file-logger (:fx :logger)
-  (with-fixture (tmp :tmp :file (tmpize-pathname "test.log"))
+  (with-fixture (tmp :tmp :file (tmpize-pathname "log"))
     (with-logger *fx*
       (let ((tmpfile (path tmp)))
         (is *logger*)
         (setf (pipe *logger*) (make-pipe))
-        (add-pipe (make-instance 'rotating-file-sink :path tmpfile))
+        (log-pipe (make-instance 'rotating-file-sink :path tmpfile))
         (is (probe-file (file (aref (aref (pipe *logger*) 0) 0))))
         (log-message :info nil "rotating log test")
         (log-rotate (aref (aref (pipe *logger*) 0) 0))
         (log-message :info nil "rotating test2")
-        (is> 0 (file-size (file (aref (aref (pipe *logger*) 0) 0))))
+        (is> 0 (file-size (print (file (aref (aref (pipe *logger*) 0) 0)))))
         (delete-file (file (aref (aref (pipe *logger*) 0) 0)))))))
 
 (deftest simple-log ()

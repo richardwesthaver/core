@@ -352,3 +352,14 @@ when the slot is already filled."
              ,@(loop for (i id) in index
                      collect `(set-element-id ,parent (list ,c ,i) ,id))))
          ,parent))))
+
+(defun defpipe* (&rest elements)
+  (let ((pipe (make-pipe)))
+    (loop for elt in elements
+          do (insert-element*
+              (typecase elt
+                (atom (make-instance elt))
+                (cons 
+                 (apply 'make-instance elt)))
+              pipe))
+       pipe))

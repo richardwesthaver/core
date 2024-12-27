@@ -12,4 +12,4 @@
 (defvar *home-config*)
 (defvar *home-hidden-paths* (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))
 (defvar *homer-force* nil)
-(defvar *homer-log-file* ".stash/log/homer.log")
+(defvar *homer-logger* nil)

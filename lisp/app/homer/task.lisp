@@ -41,3 +41,5 @@
 (define-task-kernel homer-compact () ())
 
 (define-task-kernel homer-collect-tasks () ())
+
+(defvar *homer-task-pool* (make-task-pool :kernel 'homer-idle :workers (make-workers (num-cpus))))

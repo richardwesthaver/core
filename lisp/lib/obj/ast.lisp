@@ -209,6 +209,11 @@ example."
 (defmacro defstmt (name supers slots &rest opts)
   `(defclass! ,name ,(safe-superclasses 'stmt supers) ,slots ,@opts))
 
+;;; Read/Write
+(defgeneric read-ast (fmt stream &key &allow-other-keys))
+
+(defgeneric write-ast (fmt sxp &key &allow-other-keys))
+
 ;;; Printer
 
 ;; primitive support for printing AST Nodes is provided here and implemented
@@ -217,6 +222,7 @@ example."
 
 ;; ref: https://dl.acm.org/doi/pdf/10.1145/1039991.1039996
 
+;;; Write
 (defvar *ast-dispatch-table* (copy-pprint-dispatch))
-(defun write-ast (sexpr &rest args)
+(defun pprint-ast (sexpr &rest args)
   (apply 'write sexpr :pretty t :pprint-dispatch *ast-dispatch-table* args))

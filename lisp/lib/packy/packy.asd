@@ -4,7 +4,7 @@
   :maintainer "ellis <ellis@rwest.io>"
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets 
                :sb-concurrency :std :cl-ppcre :rdb 
-               :obj :net :cli :io :cry)
+               :obj :net :cli :io :cry :dat)
   :components
   ((:file "pkg")
    (:file "vars")
@@ -13,6 +13,7 @@
    (:file "db")
    (:file "client")
    (:file "server")
+   (:file "cfg")
    (:file "cli")
    (:file "packy"))
   :in-order-to ((test-op (test-op :packy/tests))))

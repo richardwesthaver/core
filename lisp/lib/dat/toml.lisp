@@ -53,14 +53,14 @@
   (declare (optimize (speed 3) (debug 0)))
   (if (toml-peek-char stream expected :skip-ws skip-ws)
       t
-    (error "TOML error: unexpected ~s~%expected ~A" (read-char stream) expected)))
-  
+      (error "TOML error: unexpected ~s~%expected ~A" (read-char stream) expected)))
+
 (defun toml-read (stream &optional (eof-error-p t) eof-value)
   (let ((c (peek-char t stream eof-error-p :eof)))
     (case c
       (:eof eof-value)
       (#\[ (toml-read-table stream)) ;; arrays are values only
-      (#\# (toml-read-comment stream))
+      (#\# (toml-read-comment stream) (toml-read stream))
       (t (toml-read-pair stream)))))
 
 (defun toml-read-table (stream)
@@ -168,17 +168,17 @@ strings. All strings are UTF-8."
       (#\t (toml-read-true stream))
       (#\f (toml-read-false stream))
       (t (toml-read-number-or-datetime stream)))))
-      
+
 (defun toml-read-inline-table (stream)
   (toml-read-char stream #\{ :skip-ws t) ; {
   (let ((ret))
     (loop 
-      (if (and (toml-peek-char stream #\, :skip-ws t)
-               (toml-peek-char stream #\} :skip-ws t))
+      (toml-peek-char stream #\, :skip-ws t)
+      (if (toml-peek-char stream #\} :skip-ws t)
           (return ret)
           (if-let ((pair (toml-read-pair stream)))
             (push pair ret)
-            (return ret))))))
+            (return (nreverse ret)))))))
 
 (defun toml-read-array (stream)
   (toml-read-char stream #\[ :skip-ws t)

@@ -20,7 +20,7 @@
 (defun start-podman-service (addr &optional (protocol :unix) (time 0))
   "Start the Libpod API on ADDR over PROTO which is either :TCP or :UNIX."
   (declare ((member :unix :tcp) protocol))
-  (run-podman `("system"
-                "service"
-                ,(format nil "~(~a~)://~a" protocol addr)
-                ,(format nil "--time=~a" time))))
+  (run-podman "system"
+              "service"
+              (format nil "~(~a~)://~a" protocol addr)
+              (format nil "--time=~a" time)))

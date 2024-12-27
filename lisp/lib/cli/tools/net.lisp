@@ -109,6 +109,22 @@
 (defun wg-showconf (conf)
   (run-wg "showconf" conf))
 
+;;; NMAP
+(deferror nmap-error (simple-error error) () (:auto t))
+
+(defvar *nmap* (find-exe "nmap"))
+
+(defun run-nmap* (args &optional (output *standard-output*) input)
+  (let ((proc (if input
+                  (sb-ext:run-program *nmap* (or args nil) :output output :input input)
+                  (sb-ext:run-program *nmap* (or args nil) :output output))))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+        nil
+        (nmap-error "NMAP command failed: ~A ~A" *nmap* (or args "")))))
+
+(defun run-nmap (&rest args)
+  (run-nmap* args))
+
 ;;; YTDL
 (deferror ytdl-error (simple-error error) () (:auto t))
 

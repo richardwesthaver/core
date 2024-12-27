@@ -18,7 +18,6 @@
                  (:file "tmux" :depends-on ("term"))
                  (:file "pacman" :depends-on ("pkg"))
                  (:file "cc" :depends-on ("pkg"))
-                 (:file "nvcc" :depends-on ("pkg"))
                  (:file "systemd" :depends-on ("pkg"))
                  (:file "rust" :depends-on ("pkg"))
                  (:file "sbcl" :depends-on ("pkg"))

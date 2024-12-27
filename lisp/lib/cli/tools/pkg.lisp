@@ -4,11 +4,12 @@
 
 ;;; Code:
 (defpackage :cli/tools/term
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/env :config :toml :ast)
   (:export
    :*terminal* :*alacritty-config-path*
+   :alacritty-config :term-config
    :run-terminal :with-terminal
-   :terminal-error))
+   :terminal-error :load-alacritty-config))
 
 (defpackage :cli/tools/fs
   (:use :cl :std :cli/env)
@@ -37,7 +38,10 @@
    :*ld*
    :run-cc
    :run-ld
-   :cc-error))
+   :cc-error
+   :*nvcc*
+   :run-nvcc
+   :nvcc-error))
 
 (defpackage :cli/tools/go
   (:nicknames :tools/go)
@@ -47,13 +51,6 @@
    :run-go
    :go-install
    :go-error))
-
-(defpackage :cli/tools/nvcc
-  (:use :cl :std :cli/env)
-  (:export
-   :*nvcc*
-   :run-nvcc
-   :nvcc-error))
 
 (defpackage :cli/tools/net
   (:use :cl :std :cli/env :uri)   

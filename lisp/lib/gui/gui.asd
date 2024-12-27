@@ -8,6 +8,8 @@
                (:feature :clim :mcclim)
                (:feature :clim :mcclim-layouts/tab)
                (:feature (:and :clim :dbg) :clim-debugger)
+               (:feature (:and :clim :dbg) :clouseau)
+               (:feature (:and :clim :repl) :clim-listener)
                :cli :io)
   :components ((:file "pkg")
                (:file "condition")
@@ -17,7 +19,15 @@
                 :if-feature :clim
                 :components
                 ((:file "pkg")
-                 (:file "dbg" :if-feature :dbg)))
+                 (:module "layout"
+                  :components
+                  ((:file "pkg")))
+                 (:module "frame"
+                  :components
+                  ((:file "pkg")
+                   (:file "graph")))
+                 (:file "dbg" :if-feature :dbg)
+                 (:file "repl" :if-feature :repl)))
                (:module "wl"
                 :if-feature :wl
                 :components 

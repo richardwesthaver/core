@@ -674,7 +674,8 @@
    :condition-message :message-condition
    :stream-sink :stream-source :file-sink :file-source
    :add-element :insert-element*
-   :defpipe :make-pipe :simple-message :message-content))
+   :defpipe :make-pipe :simple-message :message-content
+   :defpipe*))
 
 (defpkg :std/string
   (:use :cl)

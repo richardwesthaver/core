@@ -48,7 +48,7 @@
 
 ;;; Code:
 (defpackage :log
-  (:use :cl :std :std/meta :std/thread :time :db)
+  (:use :cl :std :std/meta :std/thread :time :db :config :ast :id :build)
   (:export :*log-level* :*logger* :log-router
    :make-log-router :log-router-p
    :get-real-time-since :init-log-timestamp
@@ -77,7 +77,7 @@
    :restart-logger
    :remove-logger
    :default-logger
-   :add-pipe
+   :default-logger-config
    :with-logger
    :log-rotate
    :database-logger
@@ -88,4 +88,6 @@
    :ilevel
    :octets-to-log-message
    :log-message-to-octets
-   :*log-show-backtrace*))
+   :*log-show-backtrace*
+   :log-pipe
+   :log-config))

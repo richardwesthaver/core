@@ -10,20 +10,39 @@
 ;;; Code:
 (in-package :cli/tools/term)
 
-(deferror terminal-error (simple-error error) ())
+(deferror term-error (simple-error error) ())
 
-(defun terminal-error (fmt &rest args)
-  (error 'terminal-error :format-arguments args :format-control fmt))
+(defconfig term-config (ast) ())
 
-(defparameter *terminal* (or (find-exe "alacritty") (find-exe "xterm")))
+(defconfig alacritty-config (term-config toml-document) 
+  ((path :initarg :path :initform *alacritty-config-path* :accessor path)))
+
+(defun load-alacritty-config (&optional (path *alacritty-config-path*))
+  (change-class
+   (deserialize path :toml)
+   'alacritty-config
+   :path path))
+
+(defmethod make-config ((self (eql :alacritty)) &key (path *alacritty-config-path*))
+  (load-alacritty-config path))
+
+(defmethod make-config ((self (eql :term)) &key ast)
+  (typecase ast
+    (list (make-config (car ast) :path (cadr ast)))
+    (atom (make-config ast))))
+
+(defun term-error (fmt &rest args)
+  (error 'term-error :format-arguments args :format-control fmt))
+
+(defparameter *term* (or (find-exe "alacritty") (find-exe "xterm")))
 
 (defparameter *alacritty-config-path* (merge-pathnames ".config/alacritty.toml" (user-homedir-pathname)))
 
-(defun run-terminal (&rest args)
-  (apply #'sb-ext:run-program *terminal* args))
+(defun run-term (&rest args)
+  (apply #'sb-ext:run-program *term* args))
 
-(defmacro with-terminal ((sym &key args input output) &body body)
-  `(let ((,sym (run-terminal ,args
+(defmacro with-term ((sym &key args input output) &body body)
+  `(let ((,sym (run-term ,args
                              ,@(when input '(:input :stream))
                              ,@(when output '(:output :stream))
                              :wait nil)))

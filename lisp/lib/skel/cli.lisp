@@ -99,10 +99,11 @@
 (defcmd skc-show ()
   (if *args*
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
-      (sk-print (if (boundp '*skel-project*) *skel-project*
-                    (if (boundp '*skel-user-config*) *skel-user-config*
-                        (if (boundp '*skel-system-config*) *skel-system-config*
-                            (skel-simple-error "skel config files not installed")))))))
+       (cond 
+         ((boundp '*skel-project*) (sk-print *skel-project* :exclude '(:rules :phases :bind)))
+         ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
+         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
+         (t (skel-simple-error "skel not installed")))))
 
 (defopt skc-version (print-version *cli* t))
 (defopt skc-ast (setq ast:*keep-ast* (or *arg*)))

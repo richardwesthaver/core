@@ -6,7 +6,8 @@
                (:file "condition")
                (:file "log")
                (:file "db")
-               (:file "stream"))
+               (:file "stream")
+               (:file "cfg"))
   :in-order-to ((test-op (test-op "log/tests"))))
 
 (defsystem :log/tests

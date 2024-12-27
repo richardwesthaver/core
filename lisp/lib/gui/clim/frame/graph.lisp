@@ -11,28 +11,31 @@
 (define-application-frame graph-frame () ()
   (:menu-bar graph-command-table)
   (:panes
-   (graph (clim:scrolling (:height 300) 
-            (make-pane 'clim:application-pane
-                       ;; :end-of-line-action :wrap*
-                       ;; :width :compute
-                       ;; :height :compute
-                       :display-function 'generate-graph
-                       :background clim:+black+
-                       :foreground clim:+whitesmoke+
-                       :display-time t)))
+   (graph (make-pane 'clim:application-pane
+                     :end-of-line-action :wrap*
+                     :width :compute
+                     ;; :foreground (anathema:style-foreground-ink *current-theme*)
+                     ;; :background (anathema:style-background-ink *current-theme*)
+                     :height :compute
+                     :display-function 'generate-graph
+                     :background clim:+black+
+                     :foreground clim:+whitesmoke+
+                     :display-time t))
    (io :interactor :height 150 :width 600)
    (pdoc :pointer-documentation))
   (:geometry :width 1280 :height 720)
   (:layouts
    (default
-    (clim:vertically ()
-      (with-tab-layout ('tab-page :name 'graph-frame-layout :height 200)
-        ("Graph" graph
-                 :drawing-options 
-                 `(:text-stype ,(clim:make-text-style nil :bold t))))
-      pdoc))))
+    (clim:scrolling (:height 2000)
+      ;; (with-tab-layout ('tab-page :name 'graph-frame-layout :height 200)
+      ;; ("Graph" graph
+      ;; :drawing-options 
+      ;; `(:text-stype ,(clim:make-text-style nil :bold t))))
+      graph))
+   (repl io
+         pdoc)))
 
-(defvar *graph-root* 'standard-object)
+(defvar *graph-root* 'id:id)
 
 (defun generate-graph (frame pane)
   (declare (ignore frame))

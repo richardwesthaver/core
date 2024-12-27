@@ -21,7 +21,9 @@
    #:homer-maybe-pull
    #:homer-maybe-install
    :homer-user-init
-   #:homer-task))
+   #:homer-task
+   #:*homer-task-pool*
+   #:*homer-logger*))
 
 #+cli
 (defpackage :homer/cli

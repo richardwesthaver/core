@@ -8,7 +8,7 @@
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp/lisp.sk" "rust/rust.sk" "emacs/emacs.sk")
-:vc (:hg "https://vc.compiler.company/core")
+:vc (:hg "https://vc.compiler.company/core" "ssh://git@codeberg.org/c-c/core.git")
 :bind ((stash ".stash")
        ;; (cc :env "clang")
        (emacs-locals :dir-locals

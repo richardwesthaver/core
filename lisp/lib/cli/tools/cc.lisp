@@ -1,6 +1,6 @@
 ;;; cli/tools/cc.lisp --- C Compilers
 
-;; Use C Compiler tooling from Lisp.
+;; Use C* Compiler tooling from Lisp.
 
 ;;; Commentary:
 
@@ -38,3 +38,12 @@
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
         (cc-error "LD command failed: ~A ~A" *ld* (or args "")))))
+
+;;; NVCC
+(deferror nvcc-error (simple-error) () (:auto t))
+(defparameter *nvcc* (find-exe "nvcc"))
+(defun run-nvcc (&rest args)
+  (let ((proc (sb-ext:run-program *nvcc* (or args nil) :output t)))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+        nil
+        (nvcc-error "NVCC command failed: ~A ~@[~A~]" *nvcc* args))))

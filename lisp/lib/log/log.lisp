@@ -138,8 +138,9 @@ function 'NAME-P'."
 
 (declaim (inline %log-object))
 (defun %log-object (obj)
-  (when *logger*
-    (msg *logger* obj)))
+  (if *logger*
+    (msg *logger* obj)
+    obj))
 
 (defun log-message (level tags content &optional (class *log-message-class*) &rest initargs)
   (unless (listp tags)
@@ -179,7 +180,7 @@ function 'NAME-P'."
           (t
            (multiple-value-bind (s m h dd mm yy) (decode-universal-time time)
              (setf (file obj)
-                   (make-pathname :name (format NIL "~4,'0d.~2,'0d.~2,'0d ~2,'0d:~2,'0d:~2,'0d~@[ ~a~]"
+                   (make-pathname :name (format NIL "~4,'0d-~2,'0d-~2,'0d:~2,'0d:~2,'0d:~2,'0d~@[.~a~]"
                                                 yy mm dd h m s (pathname-name (path obj)))
                                   :defaults (path obj))))))
     (setf (last-rotation obj) time)))
@@ -363,7 +364,7 @@ be implemented for a specific application."))
   nil)
 
 ;;; Commands
-(defun add-pipe (&rest elements)
+(defun log-pipe (&rest elements)
   (let ((logger (if (typep (first elements) 'logger)
                     (pop elements)
                     *logger*)))
@@ -385,6 +386,6 @@ be implemented for a specific application."))
     (stop *logger*)
     (setf *logger* nil)))
 
-(defun restart-logger ()
+(defun restart-logger (&optional (logger (default-logger)))
   (remove-logger)
-  (setf *logger* (default-logger)))
+  (setf *logger* logger))
