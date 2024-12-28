@@ -535,16 +535,22 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
        (:input (io/flate:make-decompressing-stream :zstd stream))
        (:output (io/flate:make-compressing-stream :zstd stream))))
     (:auto
-     (ecase direction
-       (:output
-        (let ((file-name (ignore-errors (pathname stream))))
+     (let ((file-name (ignore-errors (pathname stream))))
+       (ecase direction
+         (:output
           (if (null file-name)
               stream
               (let ((type (pathname-type file-name)))
                 (if (or (null type) (not (uiop:string-suffix-p type "zst")))
                     stream
-                    (make-compression-stream stream direction :zstd))))))
-       (:input (make-decompressing-stream :zstd stream))))
+                    (make-compression-stream stream direction :zstd)))))
+         (:input 
+          (if (null file-name)
+              stream
+              (let ((type (pathname-type file-name)))
+                (if (or (null type) (not (uiop:string-suffix-p type "zst")))
+                    stream
+                    (make-compression-stream stream direction :zstd))))))))
     ((nil) stream)))
 
 (defun open-tar-file (stream &key (direction :input)

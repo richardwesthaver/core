@@ -22,5 +22,3 @@
     (loop for w across (workers tp)
           do (join-worker w))
     (is (= 4 (sb-concurrency:mailbox-count (results tp))))))
-
-

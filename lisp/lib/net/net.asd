@@ -43,5 +43,3 @@
   :depends-on (:rt :net)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :net)))
-                
-               

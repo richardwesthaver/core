@@ -162,9 +162,10 @@
       (istype 'tar-file-entry (tar::write-file-entry foo "bar" :data "a b c")))
     (with-open-tar-file (foo path :direction :input :type :auto)
       ;; (istype 'tar-file-entry (read-entry foo))
-      (istype 'v7-tar-file foo)))
+      (istype 'v7-tar-file foo))
     (is (delete-file path))))
 
+;; FIX 2024-12-27: 
 (deftest tar-zst (:skip t)
   (let ((path (format nil "/tmp/~A.tar.zst" (gensym "foo"))))
     (with-open-tar-file (foo path :direction :output :type 'v7-tar-file
