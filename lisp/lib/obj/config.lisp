@@ -19,7 +19,12 @@
 (defclass config () ()
   (:documentation "Base class for configurable objects."))
 (defgeneric make-config (obj &rest args &key &allow-other-keys)
-  (:documentation "Make a new configuration."))
+  (:documentation "Make a new configuration.")
+  (:method ((self t) &key ast)
+    (typecase ast
+      (list (make-config (car ast) :path (cadr ast)))
+      (atom (make-config ast)))))
+
 (defgeneric find-config (obj &rest args &key &allow-other-keys)
   (:documentation "Find an existing configuration."))
 (defgeneric config-find (obj key &key &allow-other-keys)

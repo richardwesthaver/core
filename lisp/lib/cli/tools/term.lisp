@@ -26,11 +26,6 @@
 (defmethod make-config ((self (eql :alacritty)) &key (path *alacritty-config-path*))
   (load-alacritty-config path))
 
-(defmethod make-config ((self (eql :term)) &key ast)
-  (typecase ast
-    (list (make-config (car ast) :path (cadr ast)))
-    (atom (make-config ast))))
-
 (defun term-error (fmt &rest args)
   (error 'term-error :format-arguments args :format-control fmt))
 

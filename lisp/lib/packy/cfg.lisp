@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :packy/core)
 
-(defconfig packy-config () ())
+(defconfig packy-config () 
+  ())
 
 (defconfig packy-user-config () ())

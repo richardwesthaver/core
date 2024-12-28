@@ -29,7 +29,7 @@
     (case c
       (:eof eof-value)
       (#\[ (ini-read-section stream))
-      (#\# (ini-read-comment stream))
+      (#\# (ini-read-comment stream) (ini-read stream eof-error-p eof-value))
       (t (ini-read-pair stream)))))
 
 (defun ini-key-char-p (c)
@@ -51,25 +51,20 @@
   (let ((line (split-sequence #\= (read-line stream) :count 2)))
     (unless (sequence:emptyp (car line))
       (let ((l (mapcar 'trim line)))
-        (cons (car l) 
-              (with-input-from-string (s (cadr l))
-                ;; read value as lisp - we may need to walk back on this and
-                ;; just accept strings - for now it's fine :)
-                (read s)))))))
+        (cons (car l) (cadr l))))))
 
 (defun ini-read-section (stream)
   (ini-read-char stream #\[ :skip-ws t)
   (let ((ret (list (ini-read-key stream))))
     (ini-read-char stream #\] :skip-ws t)
-    (loop while (ini-peek-key-char stream)
+    (loop while (or (ini-read-comment stream) (ini-peek-key-char stream))
           do (push (ini-read-pair stream) ret))
     (make-instance 'ini-section
       :ast (nreverse ret))))
 
 (defun ini-read-comment (stream)
-  (ini-read-char stream #\# :skip-ws t)
-  (log:debug! :toml-comment (trim (read-line stream)))
-  (values))
+  (loop while (ini-peek-char stream #\# :skip-ws t)
+        do (log:debug! :ini-comment (trim (read-line stream)))))
 
 (defun ini-read-document (stream)
   (make-instance 'ini-document

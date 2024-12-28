@@ -21,7 +21,9 @@
                  (:file "systemd" :depends-on ("pkg"))
                  (:file "rust" :depends-on ("pkg"))
                  (:file "sbcl" :depends-on ("pkg"))
-                 (:file "net" :depends-on ("pkg"))))
+                 (:file "net" :depends-on ("pkg"))
+                 (:file "mail" :depends-on ("pkg"))
+                 (:file "fs" :depends-on ("pkg"))))
                (:module "clap"
                 :components
                 ((:file "pkg")

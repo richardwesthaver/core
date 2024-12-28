@@ -60,13 +60,13 @@
     (case c
       (:eof eof-value)
       (#\[ (toml-read-table stream)) ;; arrays are values only
-      (#\# (toml-read-comment stream) (toml-read stream))
+      (#\# (toml-read-comment stream) (toml-read stream eof-error-p eof-value))
       (t (toml-read-pair stream)))))
 
 (defun toml-read-table (stream)
   (toml-read-char stream #\[ :skip-ws t) ; [
   (let ((ret (toml-read-header stream)))
-    (loop while (toml-peek-bare-char stream)
+    (loop while (or (toml-read-comment stream) (toml-peek-bare-char stream))
           do (push (toml-read-pair stream) ret))
     (make-instance 'toml-table :ast (nreverse ret))))
 
@@ -248,9 +248,8 @@ strings. All strings are UTF-8."
         (error "TOML error: expected 'inf', got ~A" s))))
 
 (defun toml-read-comment (stream)
-  (toml-read-char stream #\# :skip-ws t)
-  (log:debug! :toml-comment (trim (read-line stream)))
-  nil)
+  (loop while (toml-peek-char stream #\# :skip-ws t)
+           do (log:debug! :toml-comment (trim (read-line stream)))))
 
 ;; TODO 2024-12-23: may include spaces, can't do a simple read :C
 (defun toml-parse-datetime (str)

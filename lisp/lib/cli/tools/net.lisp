@@ -23,6 +23,18 @@
 (defun browse-url (url)
   (run-browser (render-uri url)))
 
+(defconfig browser-config (ast) ())
+
+(defconfig chromium-config (browser-config) ())
+
+(defmethod make-config ((obj (eql :chromium)) &key ast)
+  (make-instance 'chromium-config :ast ast))
+
+(defconfig firefox-config (browser-config) ())
+
+(defmethod make-config ((obj (eql :firefox)) &key ast)
+  (make-instance 'firefox-config :ast ast))
+
 ;;; IP
 (deferror simple-ip-error (simple-error) () (:auto t))
 
@@ -126,6 +138,7 @@
   (run-nmap* args))
 
 ;;; YTDL
+;; ref: https://github.com/yt-dlp/yt-dlp
 (deferror ytdl-error (simple-error error) () (:auto t))
 
 (defvar *ytdl* (or (find-exe "yt-dlp")
@@ -145,3 +158,48 @@
 
 (defun run-ytdl (&rest args)
   (run-ytdl* args))
+
+;;; Caddy
+(deferror caddy-error (simple-error error) () (:auto t))
+
+(defvar *caddy* (find-exe "caddy"))
+
+(defun run-caddy* (args &optional (output *standard-output*))
+  (let ((proc (sb-ext:run-program *caddy* (or (flatten args) nil) :output output)))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+        nil
+        (caddy-error "CADDY command failed: ~A ~A" *caddy* (or args "")))))
+
+(defun run-caddy (&rest args)
+  (run-caddy* args))
+
+(defun start-caddy (&rest args)
+  (apply 'run-caddy "start" args))
+
+#|
+(start-caddy)
+
+(req:post "http://127.0.0.1:2019/load" :headers '(("Content-Type" . "application/json")) :content "    {
+\"apps\": {
+   \"http\": {
+       \"servers\": {
+           \"hello\": {
+               \"listen\": [\":2015\"],
+               \"routes\": [
+                   {
+                       \"handle\": [{
+                           \"handler\": \"static_response\",
+                           \"body\": \"Hello, world!\"
+                       }]
+                   }
+               ]
+           }
+       }
+   }
+}
+}")
+
+;; OK
+
+(req:get "http://127.0.0.1:2015") ;; Hello, world!
+|#

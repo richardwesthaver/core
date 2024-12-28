@@ -122,7 +122,7 @@
     (aref (pipe self) elt))
   (:method ((elt list) (self pipe))
     (find-element elt (pipe self))))
-  
+
 (defgeneric find-parent-element (elt path)
   (:method ((elt element) path)
     (declare (ignore path))
@@ -183,11 +183,11 @@ If place is set, the element is added to the specified place as per INSERT-ELEME
             for v being the hash-values of (index pipe)
             when (and (<= (length elt) (length v))
                       (every #'= elt v))
-              do (remhash k (index pipe))
+            do (remhash k (index pipe))
             when (and (<= (length parent) (length v))
                       (every #'= parent v)
                       (< pos (nth (length parent) v)))
-              do (decf (nth (length parent) v))))))
+            do (decf (nth (length parent) v))))))
 
 (defgeneric insert-element (self elt place)
   (:documentation "Insert the segment at the given place.
@@ -287,7 +287,7 @@ Returns the segment.")
   (:method ((elt stream-sink) msg)
     (when (output elt)
       (format-message elt msg))
-      msg))
+    msg))
 
 (defclass message () ())
 (defclass event () ())
@@ -345,21 +345,33 @@ when the slot is already filled."
                                                ',ty
                                              ,@(remf args :id))
                                            ,pipe))
-                                           
+         
          (add-element ,parent ,pipe ,place)
          ,(when index
-          `(let ((,c (1- (length (pipe ,parent)))))
-             ,@(loop for (i id) in index
-                     collect `(set-element-id ,parent (list ,c ,i) ,id))))
+            `(let ((,c (1- (length (pipe ,parent)))))
+               ,@(loop for (i id) in index
+                       collect `(set-element-id ,parent (list ,c ,i) ,id))))
          ,parent))))
 
-(defun defpipe* (&rest elements)
-  (let ((pipe (make-pipe)))
-    (loop for elt in elements
-          do (insert-element*
-              (typecase elt
-                (atom (make-instance elt))
-                (cons 
-                 (apply 'make-instance elt)))
-              pipe))
-       pipe))
+(defun defpipe* (parent &rest elements)
+  (let ((index))
+    (loop for i from 0
+          for e in elements
+          if (consp e)
+          do (std:when-let ((id (getf (cdr e) :id)))
+               (push (cons i id) index)))
+    (let ((pipe (make-pipe)))
+      (loop for elt in elements
+            do (insert-element*
+                (typecase elt
+                  (atom (make-instance elt))
+                  (cons 
+                   (remf (cdr elt) :id)
+                   (apply 'make-instance elt)))
+                pipe))
+      (setf (pipe parent) pipe)
+      (when index
+        (let ((c (1- (length pipe))))
+          (loop for (i . id) in index
+                do (set-element-id parent (list c i) id))))
+      parent)))

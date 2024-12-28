@@ -11,29 +11,19 @@
 (define-application-frame graph-frame () ()
   (:menu-bar graph-command-table)
   (:panes
-   (graph (make-pane 'clim:application-pane
-                     :end-of-line-action :wrap*
-                     :width :compute
-                     ;; :foreground (anathema:style-foreground-ink *current-theme*)
-                     ;; :background (anathema:style-background-ink *current-theme*)
-                     :height :compute
-                     :display-function 'generate-graph
-                     :background clim:+black+
-                     :foreground clim:+whitesmoke+
-                     :display-time t))
-   (io :interactor :height 150 :width 600)
-   (pdoc :pointer-documentation))
-  (:geometry :width 1280 :height 720)
-  (:layouts
-   (default
-    (clim:scrolling (:height 2000)
-      ;; (with-tab-layout ('tab-page :name 'graph-frame-layout :height 200)
-      ;; ("Graph" graph
-      ;; :drawing-options 
-      ;; `(:text-stype ,(clim:make-text-style nil :bold t))))
-      graph))
-   (repl io
-         pdoc)))
+   (graph (clim:scrolling ()
+            (make-pane 'clim:application-pane
+                       :width :compute
+                       ;; :foreground (anathema:style-foreground-ink *current-theme*)
+                       ;; :background (anathema:style-background-ink *current-theme*)
+                       :height :compute
+                       :display-function 'generate-graph
+                       :background clim:+black+
+                       :foreground clim:+whitesmoke+
+                       ;; :display-time t
+                       )))
+   (repl :interactor)
+   (pdoc :pointer-documentation)))
 
 (defvar *graph-root* 'id:id)
 
@@ -44,7 +34,10 @@
    (lambda (object stream)
      (present (class-name object) (presentation-type-of object) :stream stream))
    #'sb-mop:class-direct-subclasses
-   :stream pane))
+   :stream pane
+   :orientation :vertical
+   ;; :graph-type :digraph
+   :merge-duplicates t))
 
 (defun find-graph-node (record)
   "Searches upward until a graph node parent of the supplied output record is found."
@@ -79,7 +72,7 @@
      (offset-x 'real :default 0)
      (offset-y 'real :default 0))
   (with-application-frame (frame)
-    (let* ((stream (find-pane-named frame 'graph))
+    (let* ((stream (clim:get-frame-pane frame 'graph))
            (node-record (find-graph-node record))
            (edge-records (node-edges node-record))
            (graph-record (output-record-parent node-record))

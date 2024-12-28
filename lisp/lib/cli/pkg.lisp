@@ -98,8 +98,8 @@
            :default-toplevel-init))
 
 (defpackage :cli/ed
-  (:use :cl :std :cli/env)
-  (:export :run-emacs :run-emacsclient :org-store-link))
+  (:use :cl :std :cli/env :ast :config)
+  (:export :run-emacs :run-emacsclient :org-store-link :editor-config :emacs-config))
 
 (defpackage :cli/multi
   (:use :cl :std)

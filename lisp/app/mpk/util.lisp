@@ -12,3 +12,5 @@
   (when *mpk-media-directory*
     (ensure-directories-exist *mpk-media-directory*))
   (ensure-directories-exist *mpk-user-directory*))
+
+;;; Metro

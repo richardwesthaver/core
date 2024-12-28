@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :cli/ed)
 
+(defvar *user-emacs-directory* (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
+
 (defun run-emacs (&optional file args)
   (sb-ext:run-program (find-exe "emacs") `(,@(when file (list file)) ,@args)))
   
@@ -16,6 +18,18 @@
 
 (push #'run-emacsclient sb-ext:*ed-functions*)
 (push #'run-emacs sb-ext:*ed-functions*)
+
+;;; Config
+(defconfig editor-config (ast) ())
+
+(defconfig emacs-config (editor-config) 
+  ((path :initform *user-emacs-directory* :initarg :path :accessor path)))
+
+(defun load-emacs-config (&optional (path *user-emacs-directory*))
+  (make-config :emacs :path path))
+
+(defmethod make-config ((fmt (eql :emacs)) &key ast path)
+  (make-instance 'emacs-config :ast ast :path path))
 
 ;;; Org Protocol
 ;; ref: https://orgmode.org/worg/org-contrib/org-protocol.html

@@ -1166,7 +1166,7 @@ keep-alive-stream), and should handle clean-up of it"
                                   :protocol :tcp))
                         (connection (sb-bsd-sockets:socket-connect
                                      socket
-                                     (sb-bsd-sockets:make-inet-address (net/proto/dns:resolve (uri-host con-uri)))
+                                     (sb-bsd-sockets:make-inet-address (or (net/proto/dns:resolve (uri-host con-uri)) (uri-host con-uri)))
                                      (or (uri-port con-uri) (when insecure 80) 443)))
                         (stream (sb-bsd-sockets:socket-make-stream connection
                                                                    :input t

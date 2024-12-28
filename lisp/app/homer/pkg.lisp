@@ -23,7 +23,8 @@
    :homer-user-init
    #:homer-task
    #:*homer-task-pool*
-   #:*homer-logger*))
+   #:*homer-logger*
+   #:home-config))
 
 #+cli
 (defpackage :homer/cli

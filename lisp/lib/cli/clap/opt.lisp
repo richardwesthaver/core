@@ -95,10 +95,11 @@
             (cli-opt-val self))))
 
 (defmethod print-usage ((self cli-opt) &optional stream)
-  (format stream "-~(~{~A~^/--~}~)~24t~@[~A~]"
+  (format stream "-~(~{~A~^/--~}~)~@[ :default ~A~]~24t~@[~A~]"
           (let ((n (cli-opt-name self)))
             (declare (simple-string n))
             (list (make-shorty n) n))
+          (and (slot-boundp self 'val) (cli-opt-val self))
           (and (slot-boundp self 'description) (cli-opt-description self))))
 
 (defmethod cli-equal ((a cli-opt) (b cli-opt))

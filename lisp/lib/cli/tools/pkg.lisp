@@ -29,7 +29,8 @@
    :tmux-format-string
    :*tmux-variables*
    :*tmux-var-table*
-   :simple-tmux-error))
+   :simple-tmux-error
+   :tmux-config))
 
 (defpackage :cli/tools/cc
   (:use :cl :std :cli/env)
@@ -53,7 +54,7 @@
    :go-error))
 
 (defpackage :cli/tools/net
-  (:use :cl :std :cli/env :uri)   
+  (:use :cl :std :cli/env :uri :config :ast)
   (:import-from :std/os :with-umask)
   (:export
    :*browser*
@@ -78,11 +79,23 @@
    :simple-ip-error
    :*ytdl*
    :run-ytdl
-   :ytdl-error))
+   :ytdl-error
+   :browser-config
+   :chromium-config
+   :firefox-config
+   :caddy-error
+   :*caddy*
+   :run-caddy*
+   :run-caddy
+   :start-caddy))
 
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/env)
   (:export :*pacman* :run-pacman :pacman-error))
+
+(defpackage :cli/tools/mail
+  (:use :cl :std :cli/env)
+  (:export :mail-error :*mail-program* :run-notmuch :run-offlineimap :*notmuch* :*offlineimap*))
 
 (defpackage :cli/tools/systemd
   (:use :cl :std :cli/env)
