@@ -31,6 +31,10 @@
 ;;; Code:
 (in-package :net/srv)
 
+(pkg:defpkg :net/srv/ext
+  (:use :cl :std :net/core :cli/tools/net)
+  (:export :caddy-service :nginx-service))
+
 (pkg:defpkg :net/srv/http
   (:use :cl :std :net/proto/http
    :net/codec/http :net/core :net/cookie :io/chunky)
@@ -318,8 +322,6 @@ Return value is ignored."))
     (setq *session-db* nil))
   (values))
           
-;;; Headers
-
 ;;; Logger
 (defclass service-logger (logger) 
   ((access-log-output :accessor access-log-output :initarg :access-log-output)
@@ -621,11 +623,14 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   (setf (shutdown-p self) nil)
   (let ((engine (engine self)))
     (setf (service engine) self)
-    (execute-service engine)))
+    (start-listening self)
+    (execute-service engine))
+  self)
 
 (defmethod started-p ((self service))
   (and (socket self) t))
 
+;; FIX 2024-12-28: do better :)
 (defun wake-service-for-shutdown (service)
   "Create a dummy connection to the service, waking ACCEPT-CONNECTIONS while it is waiting. The idea is to force a check of SHUTDOWN-P."
   (handler-case
@@ -690,142 +695,30 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defmethod remove-session-hook ((service service) (session t))
   nil)
 
-(defmethod service-make-request (service socket &key 
-                                         content-stream
-                                         remote local
-                                         protocol)
+(defmethod service-make-request (service socket &rest args
+                                                &key &allow-other-keys)
   "Make a REQUEST instance for SERVICE."
   (multiple-value-bind (raddr rport)
-      (if remote
-          (values-list remote)
-          (sb-bsd-sockets:socket-peername socket))
+      (std:if-let ((remote (getf args :remote)))
+        (values-list remote)
+        (sb-bsd-sockets:socket-peername socket))
     (multiple-value-bind (laddr lport)
-        (if local
-            (values-list local)
-            (socket-name socket))
-      (make-instance (service-request-class service)
-        :service service
-        :local-addr laddr
-        :local-port lport
-        :remote-addr raddr
-        :remote-port rport
-        :content-stream content-stream
-        :protocol protocol))))
+        (std:if-let ((local (getf args :local)))
+          (values-list local)
+          (socket-name socket))
+      (apply 'make-instance (service-request-class service)
+             :service service
+             :local-addr laddr
+             :local-port lport
+             :remote-addr raddr
+             :remote-port rport
+             args))))
+
 
 (defgeneric detach-socket (self)
   (:method ((self service))
     (setf *finish-processing-socket* t
           *close-service-stream* nil)))
-
-(defun printable-ascii-char-p (char)
-  (<= 32 (char-code char) 126))
-
-(defun get-request-data (stream)
-  "Reads incoming headers from the client via STREAM.  Returns as
-multiple values the headers as an alist, the method, the URI, and the
-protocol of the request."
-  (with-character-stream-semantics
-    (let ((first-line (read-initial-request-line stream)))
-      (when first-line
-        (unless (every #'printable-ascii-char-p first-line)
-          (send-bad-request-response stream "Non-ASCII character in request line")
-          (return-from get-request-data nil))
-        (destructuring-bind (&optional method url-string protocol)
-            (ppcre:split "\\s+" first-line :limit 3)
-          (cond ;; ((not
-                ;;   (setf method
-                ;;         (find method +valid-request-methods+ :test #'string-equal)))
-                ;;  (send-bad-request-response stream)
-                ;; (return-from get-request-data nil))
-                ((not url-string)
-                 (send-bad-request-response stream)
-                 (return-from get-request-data nil))
-                ((not protocol)
-                 ;; HTTP/1.1 specifies that if protocol is not provided
-                 ;; then assume protocol version to be 1.0
-                 (setf protocol :http/1.0))
-                ;; ((not
-                ;;   (setf protocol
-                ;;         (find protocol +valid-protocol-versions+ :test #'string-equal)))
-                ;;  (send-unknown-protocol-response stream)
-                ;;  (return-from get-request-data nil))
-                )
-          (when *service-header-stream*
-            (format *service-header-stream* "~A~%" first-line))
-          (let ((headers (read-http-headers stream *service-header-stream*)))
-            ;; maybe handle 'Expect: 100-continue' header
-            (when-let ((expectations (cdr #|assoc*|# (assoc :expect headers))))
-              (when (member "100-continue" (cl-ppcre:split "\\s*,\\s*" expectations) :test #'equalp)
-                ;; according to 14.20 in the RFC - we should actually
-                ;; check if we have to respond with 417 here
-                (let ((continue-line
-                        (format nil "HTTP/1.1 ~D ~A"
-                                +http-continue+
-                                (reason-phrase net/proto/http::+http-continue+))))
-                  (write-sequence (map 'list #'char-code continue-line) stream)
-                  (write-sequence +crlf+ stream)
-                  (write-sequence +crlf+ stream)
-                  (force-output stream)
-                  (when *service-header-stream*
-                    (format *service-header-stream* "~A~%" continue-line)))))
-            (values headers method url-string protocol)))))))
-
-(defmethod process-connection ((*service* service) (socket t))
-  (let* ((socket-stream (sb-bsd-sockets:socket-make-stream socket))
-         (*service-stream*)
-         (*close-service-stream* t)
-         (remote (multiple-value-list (socket-peername socket)))
-         (local (multiple-value-list (socket-name socket))))
-    (unwind-protect
-         ;; process requests until shutdown signal is received or the peer
-         ;; fails to send a request
-         (progn
-           (setq *service-stream* (initialize-connection-hook *service* socket-stream))
-           (loop
-             (let ((*finish-processing-socket* t))
-               (when (shutdown-p *service*)
-                 (return))
-               (multiple-value-bind (headers-in method url-string protocol)
-                   (get-request-data *service-stream*)
-                 ;; check if there was a request at all
-                 (unless method
-                   (return))
-                 (let ((*response* (make-instance (service-response-class *service*)))
-                       (*session* nil)
-                       (transfer-encodings (cdr #|assoc*?|# 
-                                            (assoc :transfer-encoding headers-in))))
-                   (when transfer-encodings
-                     (setq transfer-encodings
-                           (cl-ppcre:split "\\s*,\\s*" transfer-encodings))
-                     (when (member "chunked" transfer-encodings :test #'equalp)
-                       (setf *service-stream* (io/chunky:make-chunked-stream *service-stream*))))
-                   (with-request-count-incf *service*
-                     (process-request 
-                      (service-make-request *service* socket
-                                            :headers-in headers-in
-                                            :content-stream *service-stream*
-                                            :method method
-                                            :uri url-string
-                                            :remote remote
-                                            :local local
-                                            :server-protocol protocol))))
-                 (finish-output *service-stream*)
-                 (setq *service-stream* (reset-connection-stream *service* *service-stream*))
-                  (when *finish-processing-socket*
-                    (return))))))
-      (when *close-service-stream*
-        (flet ((close-stream (stream)
-                 ;; as we are at the end of the request here, we ignore all
-                 ;; errors that may occur while flushing and/or closing the
-                 ;; stream.
-                 (ignore-errors
-                  (finish-output stream))
-                 (ignore-errors
-                  (close stream :abort t))))
-          (unless (or (not *service-stream*)
-                      (eql socket-stream *service-stream*))
-            (close-stream *service-stream*))
-          (close-stream socket-stream))))))
 
 ;;; Macros
 (defmacro defservice (name &rest initargs)

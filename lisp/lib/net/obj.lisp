@@ -22,10 +22,10 @@
 (defclass protocol ()
   ())
 
-(defclass client (inet-socket)
+(defclass client (sb-bsd-sockets:inet-socket)
   ())
 
-(defclass server (inet-socket)
+(defclass server (sb-bsd-sockets:inet-socket)
   ())
 
 (defclass peer ()

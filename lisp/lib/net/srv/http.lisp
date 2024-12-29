@@ -124,6 +124,9 @@ value should only be modified by the functions defined in cookie.lisp.")))
 (defmethod response-status ((res http-service-response))
   (http-status (slot-value *response* 'response)))
 
+(defmethod (setf response-status) (new (res http-service-response))
+  (setf (http-status (slot-value *response* 'response)) new))
+
 (defmethod response-ok-p ((res http-service-response))
   (eql (response-status (slot-value *response* 'response)) +http-ok+))
 
@@ -229,7 +232,7 @@ name doesn't exist, it is created.")
   ((request :type http-request)))
 
 (defun start-http-output (status &optional (content nil contentp))
-  "Sends all headers and maybe the content body to *SERBICE-STREAM*. Returns
+  "Sends all headers and maybe the content body to *SERVICE-STREAM*. Returns
 immediately and does nothing if called more than once per request. Called by
 PROCESS-REQUEST and/or SEND-HEADERS. The STATUS argument represents the
 integer return code of the request. The corresponding reason phrase is
@@ -516,6 +519,9 @@ Returns STREAM."
     (finish-output stream))
   stream)
 
+(defun printable-ascii-char-p (char)
+  (<= 32 (char-code char) 126))
+
 (defun get-http-request-data (stream)
   "Reads incoming headers from the client via STREAM.  Returns as
 multiple values the headers as an alist, the method, the URI, and the
@@ -564,6 +570,63 @@ protocol of the request."
                   (when *header-stream*
                     (format *header-stream* "~A~%" continue-line)))))
             (values headers method url-string protocol)))))))
+
+(defmethod process-connection ((*service* http-service) (socket t))
+  (let* ((socket-stream (sb-bsd-sockets:socket-make-stream socket))
+         (*service-stream*)
+         (*close-service-stream* t)
+         (remote (multiple-value-list (sb-bsd-sockets:socket-peername socket)))
+         (local (multiple-value-list (sb-bsd-sockets:socket-name socket))))
+    (unwind-protect
+         ;; process requests until shutdown signal is received or the peer
+         ;; fails to send a request
+         (progn
+           (setq *service-stream* (initialize-connection-hook *service* socket-stream))
+           (loop
+             (let ((*finish-processing-socket* t))
+               (when (shutdown-p *service*)
+                 (return))
+               (multiple-value-bind (headers-in method url-string protocol)
+                   (print (get-http-request-data *service-stream*))
+                 ;; check if there was a request at all
+                 (unless method
+                   (return))
+                 (let ((*response* (make-instance (service-response-class *service*)))
+                       (*session* nil)
+                       (transfer-encodings (cdr #|assoc*?|# 
+                                            (assoc :transfer-encoding headers-in))))
+                   (when transfer-encodings
+                     (setq transfer-encodings
+                           (cl-ppcre:split "\\s*,\\s*" transfer-encodings))
+                     (when (member "chunked" transfer-encodings :test #'equalp)
+                       (setf *service-stream* (io/chunky:make-chunked-stream *service-stream*))))
+                   (with-request-count-incf *service*
+                     (process-request 
+                      (service-make-request *service* socket
+                                            :headers-in headers-in
+                                            :content-stream *service-stream*
+                                            :method method
+                                            :uri url-string
+                                            :remote remote
+                                            :local local
+                                            :protocol protocol))))
+                 (finish-output *service-stream*)
+                 (setq *service-stream* (reset-connection-stream *service* *service-stream*))
+                  (when *finish-processing-socket*
+                    (return))))))
+      (when *close-service-stream*
+        (flet ((close-stream (stream)
+                 ;; as we are at the end of the request here, we ignore all
+                 ;; errors that may occur while flushing and/or closing the
+                 ;; stream.
+                 (ignore-errors
+                  (finish-output stream))
+                 (ignore-errors
+                  (close stream :abort t))))
+          (unless (or (not *service-stream*)
+                      (eql socket-stream *service-stream*))
+            (close-stream *service-stream*))
+          (close-stream socket-stream))))))
 
 #+ssl
 (defclass ssl-service (service)

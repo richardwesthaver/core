@@ -65,11 +65,11 @@
                :more more))
 
 (defmethod socket-receive ((self libpod-client) buffer length 
-                        &key (oob t)
-                          (peek t)
-                          (waitall t)
-                          (dontwait t)
-                          (element-type 'character))
+                           &key (oob t)
+                                (peek t)
+                                (waitall t)
+                                (dontwait t)
+                                (element-type 'character))
   (socket-receive (client-socket self) buffer length 
                :element-type element-type
                :oob oob

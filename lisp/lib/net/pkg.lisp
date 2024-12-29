@@ -363,6 +363,12 @@
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)
   (:export
+   :service-make-request
+   :process-request
+   :with-request-count-incf
+   :service-response-class
+   :service-request-class
+   :shutdown-p
    #:default-web-directory
    #:restart-service
    #:add-route
