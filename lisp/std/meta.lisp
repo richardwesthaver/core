@@ -19,6 +19,9 @@
   (:method ((self t))
     (string self)))
 (defgeneric tags (self))
+(defgeneric run (self &key))
+(defgeneric exec (self &key))
+
 (defgeneric write-object (obj stream &key &allow-other-keys)
   (:method ((obj t) (stream t) &key)
     (write obj :stream stream)))

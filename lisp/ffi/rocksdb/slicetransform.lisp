@@ -4,7 +4,16 @@
 
 ;;; Refs:
 
+;; https://github.com/facebook/rocksdb/wiki/Prefix-Seek
 ;; https://github.com/facebook/rocksdb/blob/main/include/rocksdb/slice_transform.h
+
+;;; Commentary:
+
+#|
+A SliceTransform is a generic pluggable way of transforming one string to
+another. Its primary use-case is in configuring rocksdb to store prefix blooms
+by setting prefix_extractor in ColumnFamilyOptions.
+|#
 
 ;;; Code:
 (in-package :rocksdb)

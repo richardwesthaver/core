@@ -511,6 +511,7 @@
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
+   :run :exec
    :copy-object :safe-superclasses))
 
 (defpkg :std/thread
