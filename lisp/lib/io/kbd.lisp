@@ -22,9 +22,11 @@
 (defconstant +long-bit+ (sb-alien:alien-size sb-alien:unsigned-long))
 
 ;;; Conditions
-(deferror kbd-error () ())
+(deferror kbd-error (error) ())
+(deferror simple-kbd-error (simple-error kbd-error) () (:auto t))
+
 ;;; Objects
-(defstruct keyboard path state compose-state)
+(defstruct keyboard path sap state compose-state)
 
 (defun evdev-bit-p (array bit)
   "Array elements should be unsigned-long."
@@ -33,13 +35,17 @@
     ;; singled long.
     (logand (aref array idx) (ash 1 (mod bit +long-bit+)))))
 
-(defun new-device-from-path (path)
-  (with-fd (fd path :flags sb-posix:o-rdonly :close nil)
-    (sb-alien:with-alien ((dev (* evdev::libevdev)))
-      (let ((ret (evdev:libevdev-new-from-fd fd (sb-alien:addr dev))))
-        (if (minusp ret)
-            (sb-unix::strerror (abs ret))
-            dev)))))
+(defun new-device-from-path (path &optional (error t))
+  ;; opening FD may fail if the user does not have read permissions. When
+  ;; ERROR is non-nil (the default) this signals an error, else we return nil.
+  (handler-case
+      (with-fd (fd path :flags sb-posix:o-rdonly :close nil)
+        (sb-alien:with-alien ((dev (* evdev::libevdev)))
+          (let ((ret (evdev:libevdev-new-from-fd fd (sb-alien:addr dev))))
+            (if (minusp ret)
+                (simple-kbd-error (sb-unix::strerror (abs ret)))
+                dev))))
+    (error (c) (when error (error c)))))
 
 ;; evdev::+ev-cnt+ evdev::+key-cnt+
 (defun keyboard-device-p (path)
@@ -54,7 +60,11 @@
             when (evdev-bit-p keybits i)
             return t))))
       
-(defun make-keyboard-from-dev (dev keymap compose-table))
+(defun make-keyboard-from-dev (dev keymap compose-table)
+  "Return a KEYBOARD given a device, keymap, and compose table. Keyword argument
+ERROR when non-nil (the default) causes an error to be signaled if the device
+can't be opened, else returns nil."
+  (make-keyboard :sap dev))
 
 (defun get-keyboards (keymap compose-table &optional (dir "/dev/input"))
   (let ((devices (directory dir)))
@@ -68,20 +78,20 @@
 
 ;; (xkb::xkb-consumed-mode :xkb)
 
-(defun print-device-input-info (path)
-  (let ((dev (new-device-from-path path)))
+(defun print-device-input-info (path &optional (error t))
+  (when-let ((dev (new-device-from-path path error)))
     (unless (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
       (println "probably not a mouse:"))
-    (println
-     (list 
-      (evdev::libevdev-get-name dev) 
-      (evdev::libevdev-get-id-bustype dev) 
-      (evdev::libevdev-get-id-vendor dev)))
-    (with-alien ((ev evdev/input:input-event))
-      (when (evdev::libevdev-has-event-pending dev)
-        (println "has event pending"))
-      (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
-        (println (sb-posix::alien-timeval-sec time))
-        (println (evdev::libevdev-event-type-get-name type))
-        (println (evdev::libevdev-event-code-get-name type code))
-        (println (evdev::libevdev-event-value-get-name type code value))))))
+    (list (evdev::libevdev-get-name dev) 
+          (evdev::libevdev-get-id-bustype dev) 
+          (evdev::libevdev-get-id-vendor dev)
+          (evdev::libevdev-get-id-product dev))))
+
+(defun device-read-event (dev)
+  (with-alien ((ev evdev/input:input-event))
+    (when (evdev::libevdev-has-event-pending dev)
+      (println "has event pending")
+      (evdev::libevdev-next-event dev (libevdev-read-flag :normal) (addr ev)))
+    (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
+      (list (cons (sb-posix::alien-timeval-sec time) (sb-posix::alien-timeval-usec time))
+            type code value))))

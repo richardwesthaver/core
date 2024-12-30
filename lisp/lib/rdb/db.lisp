@@ -210,8 +210,20 @@ extractor."
       db)))
 
 (defmethod open-columns* ((self rdb-database))
-  (loop for c across (columns self)
-        do (open-column self c)))
+  (let ((names) (opts))
+    (loop for c across (columns self)
+          do (push (name c) names)
+          do (push (sap (column-opts c)) opts))
+    (multiple-value-bind (db cfs)
+        (open-cfs-raw (sap (db-opts self)) (name self) names opts)
+      (setf (sap self) db)
+      (let ((len (length names)))
+        (loop for n in names
+              for i below len
+              for cf = (deref cfs i)
+              do (when-let ((c (find-column (pop names) self)))
+                   (setf (sap c) cf)))
+        self))))
 
 (defmethod close-columns ((self rdb-database))
   (loop for cf across (columns self)
@@ -286,8 +298,10 @@ extractor."
 (defmethod iter ((self rdb-database) &key column (opts (rocksdb-readoptions-create)))
   (typecase column
     (rdb-column-family (iter (db self) :cf (cf column) :opts opts))
+    (string (iter (db self) :cf (cf (find-column column self)) :opts opts))
     (rdb-cf (iter (db self) :cf column :opts opts))
-    (t (iter (db self) :opts opts))))
+    (null (iter (db self) :opts opts))
+    (t (iter (db self) :opts opts :cf column))))
 
 (defmethods get-val 
   (((self rdb-database) (key string) &key (opts (rocksdb-readoptions-create)) column)
@@ -396,8 +410,8 @@ extractor."
 
 (defmethod db-closed-p ((self rdb-database)) (db-closed-p (db self)))
 (defmethod db-open-p ((self rdb-database)) (db-open-p (db self)))
+
 (defmethod destroy-db ((self rdb-database))
-  (destroy-columns self)
   (destroy-db (db self)))
 
 (defmethod close-backup-db ((self rdb-database))

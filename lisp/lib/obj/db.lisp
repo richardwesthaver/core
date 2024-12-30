@@ -296,7 +296,12 @@ hints.")
                (replace object (list (list element new-value)))
                (error "Does not handle this type of object. Implement your own get-val method.")))))))
 
-(defgeneric get-value (elt obj))
+(defgeneric get-value (elt obj)
+  (:method (elt (obj sequence))
+    (find elt obj :test 'equal))
+  (:method (elt (obj hash-table))
+    (gethash elt obj)))
+
 (defgeneric (setf get-value) (new elt obj))
 
 (defgeneric put-kv (self kv)

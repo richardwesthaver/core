@@ -20,6 +20,7 @@
    :load-evdev
    #:libevdev-new
    #:libevdev-new-from-fd
+   :libevdev-read-flag
    #:libevdev-free
    #:libevdev-set-fd))
 

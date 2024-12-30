@@ -32,18 +32,18 @@
     `(with-alien ((,db-opts (* rocksdb-options))
                   (,cf-names (* c-string))
                   (,cf-opts (* (* rocksdb-options)))
-                  (ncols size-t)
-                  (errptr rocksdb-errptr))
-       (rocksdb-load-latest-options 
-        ,db-path 
-        (rocksdb-create-default-env)
-        t
-        (rocksdb-cache-create-lru 1080)
-        (addr ,db-opts)
-        (addr ncols)
-        (addr ,cf-names)
-        (addr ,cf-opts)
-        errptr)
+                  (ncols size-t))
+       (with-errptr e
+         (rocksdb-load-latest-options 
+          ,db-path 
+          (rocksdb-create-default-env)
+          t
+          (rocksdb-cache-create-lru 1080)
+          (addr ,db-opts)
+          (addr ncols)
+          (addr ,cf-names)
+          (addr ,cf-opts)
+          e))
        (let ((,db-opts-var ,db-opts)
              (,cf-names-var (coerce
                              (loop for i below ncols
@@ -53,10 +53,8 @@
                             (loop for i below ncols
                                   collect (deref ,cf-opts i))
                             'vector)))
-         ,@body
-         ;; (unwind-protect 
-         ;; (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols))
-         ))))
+         (unwind-protect (unless (null-alien ,db-opts-var) ,@body)
+           (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols))))))
 
 ;;; Merge Ops
 (defmacro define-full-merge-op (name &body body)
@@ -293,13 +291,13 @@
            body)))
 
 (defmacro with-rocksdb-wbwi ((wbwi &key (reserved 0)
-                                (overwrite 0)
-                                rep 
-                                backup-comparator 
-                                max 
-                                key-protection-bytes 
-                                (destroy t))
-                     &body body)
+                                        (overwrite 0)
+                                        rep 
+                                        backup-comparator 
+                                        max 
+                                        key-protection-bytes 
+                                        (destroy t))
+                             &body body)
   `(let ((,wbwi ,@(if rep 
                       `((rocksdb-writebatch-wi-create-from ,rep ,(length rep)))
                       (if max ;; if any 'param' is present assume they all are

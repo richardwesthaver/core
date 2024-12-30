@@ -476,7 +476,7 @@ internal sap slots are initialized."
 (defmethod iter ((self rdb) &key cf (opts (rocksdb-readoptions-create)))
   (let ((col (etypecase cf
                (rdb-cf (rdb-cf-sap cf))
-               (string (rdb-cf-sap (find-column cf self)))
+               ;; (string (rdb-cf-sap (find-column cf self)))
                (null nil)
                (alien cf))))
     (unless-null-db () self
@@ -584,9 +584,10 @@ internal sap slots are initialized."
          (transactiondb-get-kv-str-raw sap key opts pinned))))
   (((self rdb) key &key (opts (rocksdb-readoptions-create)) cf pinned)
    (with-slots (sap) self
-     (if cf
-         (get-cf-raw sap (rdb-cf-sap (find-column cf self)) key opts pinned)
-         (get-kv-raw sap key opts pinned))))
+     (etypecase cf
+       (rdb-cf (get-cf-raw sap (sap cf) key opts pinned))
+       (null (get-kv-raw sap key opts pinned))
+       (alien (get-cf-raw sap cf key opts pinned)))))
   (((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) cf pinned)
    (octets-to-string (get-val self (string-to-octets key) :opts opts :cf cf :pinned pinned))))
 

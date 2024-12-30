@@ -18,6 +18,9 @@
 (in-package :obj/meta/stored)
 
 ;;; MOP
+(deftype oid () 'word)
+(deftype cid () '(unsigned-byte 32))
+
 (defclass stored ()
   ((oid :initarg :oid :accessor oid)
    (spec :type (or list string) :accessor spec :initarg :spec

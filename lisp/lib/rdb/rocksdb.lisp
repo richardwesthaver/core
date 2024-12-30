@@ -154,7 +154,7 @@ to initialize the instance with custom configuration."
 	      ;; C-side function probably.
 	      (v (make-array (deref vlen) :element-type 'octet)))
           (clone-octets-from-alien val v (deref vlen))
-	  v))))
+	  (print v)))))
 
 (defun get-cf-str-raw (db cf key &optional (opt (rocksdb-readoptions-create)) pinned)
   (let ((k (string-to-octets key :null-terminate nil)))

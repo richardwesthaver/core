@@ -70,9 +70,6 @@
    that created it."
   (build-indexed-btree sc))
 
-(defun make-dup-btree (&optional (st *store*))
-  (btree::build-dup-btree st))
-
 (defgeneric next-oid (store)
   (:documentation
    "The source of unique object IDs."))
@@ -345,6 +342,7 @@
 (defclass store () 
   ((spec :type list
          :accessor spec
+         :initform nil
          :initarg :spec
          :documentation "Data store initialization functions are
          expected to initialize :spec on the call to
@@ -352,9 +350,8 @@
    ;; Generic support for the object, indexing and root protocols
    (root :reader store-root 
          :documentation "This is an instance of the data store
-         btree.  It should have an OID that is fixed in the code and does not
-         change between sessions.  Usually it this is something like 0, 1 or
-         -1")
+         btree. It should have an OID that is fixed in the code and does not
+         change between sessions. Usually this is something like 0, 1 or -1")
    (schema-table :reader schema-table
                  :documentation "Schema id to schema database table")
    (schema-name-index :reader schema-name-index
@@ -416,7 +413,7 @@
       (id (lookup-schema st class))))
 
 (defmethod register-instance ((st store) cl instance)
-  (set-instance-schema-id st (oid instance) (class-schema-id st cl)))  
+  (set-instance-schema-id st (oid instance) (class-schema-id st cl)))
 
 (defmethod set-instance-schema-id ((st store) oid cid)
   (let ((table (instance-table st)))
@@ -704,7 +701,7 @@
   "If a slot's index does not exist, create it"
   (aif (get-store-index slot-def sc)
        (progn (add-slot-def-index it slot-def sc) it)
-       (let ((new-idx (make-dup-btree sc)))
+       (let ((new-idx (make-btree sc)))
          (add-slot-index sc new-idx (indexed-slot-base slot-def) (slot-definition-name slot-def))
          (add-slot-def-index new-idx slot-def sc)
          new-idx)))

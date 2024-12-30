@@ -5,18 +5,36 @@
 ;;; Code:
 (in-package :rdb)
 
+;; what should the underlying datastructure be? transaction-db wbwi or cf?
 (defclass rdb-btree (btree) ()
   (:documentation "A RocksDB implementation of a BTree."))
 
 (defclass rdb-store (store rdb-database)
-  ((btrees :type (or null vector) :accessor btrees)
-   (oid-db :type (or null rdb) :accessor oid-db)
-   (oid-seq :accessor oid-seq)
-   (cid-seq :accessor cid-seq))
-  (:documentation "A RocksDB STORE. Note that the default column family is used to store serialized schemas."))
+  ((oid-seq :accessor oid-seq)
+   (cid-seq :accessor cid-seq)
+   (logger :initform (default-logger) :initarg :logger :accessor logger))
+   (:default-initargs
+    :spec '(:rdb)
+    :db (make-db :rocksdb :opts (default-rdb-opts))
+    :columns (make-array 0 :element-type 'rdb-column-family
+                           :adjustable t
+                           :fill-pointer t)
+    ;; :instance-table (make-instance 'rdb-column-family :type '(oid . cid))
+    ;; :instance-class-index (make-instance 'rdb-column-family :type '(cid . oid))
+    ;; :root
+    ;; :schema-table (make-hash-table :size 100 :weakness :value)
+    ;; :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value)
+    ;; :index-table
+    ;; :instance-table
+    ;; :instance-class-index
+    )
+   (:documentation "A RocksDB STORE. Note that the default column family is used to store
+serialized object schemas."))
 
 (defmethod build-btree ((st rdb-store))
   (make-instance 'rdb-btree :store st))
+
+;; (build-btree (make-instance 'rdb-store))
 
 (defun rdb-store-spec-p (spec)
   (and (eq (first spec) :rdb)
@@ -26,12 +44,13 @@
          (t nil))))
 
 (defmethod get-value (key (bt rdb-btree))
+  "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB *STORE*)."
   (let ((sc (get-store bt)))
     (ensure-transaction (:store sc)
       (with-static-stream (key-buf)
         (write-oid (oid bt) key-buf)
         (ser key key-buf sc)
-        (let ((buf (db-get-key-buffered 
+        (let ((buf (db-get-key-buffered
                     (btrees sc)
                     :transaction (current-transaction sc))))
           (if buf (values (deserialize buf sc) t)
@@ -832,7 +851,14 @@
 
 (defmethod open-store ((store rdb-store) &key (recover t)
                                               register
-                                              log))
+                                              log)
+  (with-db (db :db store :open t)
+    (if (probe-file (name store))
+        (progn
+          (load-opts db)
+          (open-columns* db)
+          store)
+        store)))
 
 (defmethod close-store ((store rdb-store)))
 

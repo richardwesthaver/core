@@ -8,15 +8,12 @@
 ;;; Simply prints the ast, useful in REPL.
 (defun simple-print (tree)
   "Pretty prints C ast"
-  (let (
-        ;(nc (make-instance 'nodelist-traverser))
-        (ei (make-instance 'else-if-traverser))
+  (let ((ei (make-instance 'else-if-traverser))
         (ib (make-instance 'if-blocker))
         (db (make-instance 'decl-blocker))
         (rn (make-instance 'renamer))
         (pp (make-instance 'code-printer)))
     (progn
-      ;(traverser nc tree 0)
       (traverse ei tree 0)
       (traverse ib tree 0)
       (traverse db tree 0)

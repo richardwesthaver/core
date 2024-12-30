@@ -33,6 +33,7 @@
    #:*rs-exports*
    #:*rs-swap*
    #:rs-syntax
+   :trait
    #:gen-rs
    #:read-gen-rs-file
    #:read-gen-rs-string

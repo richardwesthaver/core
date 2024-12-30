@@ -126,6 +126,7 @@
    :stored-object
    :stored-collection
    :oid
+   :cid
    :spec
    :stored-p
    :indexed-slot-names

@@ -122,7 +122,7 @@
     progn block
     null length
     min max abs
-    sin cos tan 
+    sin cos tan
     1- 1+
     type float-type
     funcall
@@ -154,6 +154,6 @@
   (:nicknames :c)
   (:use :cl)
   (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package)
-  (:import-from :syn/gen/c :c-reader :read-gen-c-string :simple-print
+  (:import-from :syn/gen/c :c-reader :read-gen-c-string :read-gen-c-file :simple-print
    :cl-reader :switch-reader :decompose-declaration))
 

@@ -66,9 +66,6 @@
    #:btree-index
    #:build-btree-index
    #:get-primary-key
-   #:dup-btree
-   :dup-btrees
-   #:build-dup-btree
    #:cursor-initialized-p
    #:cursor-oid
    #:cursor-btree
@@ -187,12 +184,6 @@ the primary."
   "Remove a key / value from the PRIMARY by a secondary
 lookup, updating ALL other secondary indices."
   (delete-key (get-primary-key key bt) (primary bt)))
-
-(defclass dup-btree (btree) ())
-
-(defgeneric build-dup-btree (self)
-  (:documentation 
-   "Construct a btree of the appropriate type corresponding to this store."))
 
 (defclass cursor ()
   ((oid :accessor cursor-oid :type fixnum :initarg :oid)
@@ -423,18 +414,6 @@ not), evaluates the forms, then closes the cursor."
           (progn ,@body)
        (sb-sys:without-interrupts
          (cursor-close ,var)))))
-
-(defmethod remove-kv (key value (dbt dup-btree))
-  "Too bad there isn't a direct way to do this, but with
-   ordered duplicates this should be reasonably efficient"
-  (let ((sc (get-store dbt)))
-    (ensure-transaction (:store-controller sc)
-      (with-btree-cursor (cur dbt)
-        (multiple-value-bind (exists? k v)
-            (cursor-get-both cur key value)
-          (declare (ignore k v))
-          (when exists? 
-            (cursor-delete cur)))))))
 
 (defmethod drop-btree ((self btree))
   (ensure-transaction (:store (get-store self))
