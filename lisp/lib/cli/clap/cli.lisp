@@ -15,8 +15,16 @@
     ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
     (t (apply #'make-instance kind slots))))
 
-(defopt help-opt (print-help *cli*))
-(defopt version-opt (print-version *cli*))
+(defopt help-opt 
+  "Print help and exit."
+  (print-help *cli*)
+  (exit :code 0))
+
+(defopt version-opt 
+  "Print version and exit." 
+  (print-version *cli*)
+  (exit :code 0))
+
 (defopt level-opt
   (setq *log-level* (if *arg* 
                         (if (stringp *arg*)
@@ -51,7 +59,7 @@ that some or all of the slots of a CLI object should be inherited by this one."
           (if help
               (make-opts
                (append
-                `((:name "help" :description "print help"
+                `((:name "help" :description "print help" :kind boolean
                    :thunk cli/clap/obj::help-opt))
                 opts))
               (make-opts opts)))
@@ -113,7 +121,7 @@ that some or all of the slots of a CLI object should be inherited by this one."
 (defmethod print-version ((self cli) &optional stream)
   (println (cli-version self) stream))
 
-(defmethod print-help ((self cli) &optional (stream t)) 
+(defmethod print-help ((self cli) &optional (stream t))
   (println (format nil "~A v~A --- ~A~%" (cli-name self) (cli-version self) (cli-description self)) stream)
   (print-usage self stream)
   ;; (terpri stream)

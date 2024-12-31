@@ -852,31 +852,31 @@ serialized object schemas."))
 (defmethod open-store ((store rdb-store) &key (recover t)
                                               register
                                               log)
-  (with-db (db :db store :open t)
-    (if (probe-file (name store))
-        (progn
-          (load-opts db)
-          (open-columns* db)
-          store)
-        store)))
+  (if (db-open-p store)
+      (progn
+        (log:warn! "Database is already open: ~A" store)
+        store)
+      (with-db (db :db store :open t :close :auto)
+        (if (probe-file (name store))
+            (progn
+              (load-opts db)
+              (open-columns* db)
+              store)
+            store))))
 
-(defmethod close-store ((store rdb-store)))
+(defmethod close-store ((store rdb-store))
+  "Close the underlying RocksDB instance."
+  (close-db store))
 
-(defmethod next-oid ((self rdb-store)))
-(defmethod next-cid ((self rdb-store)))
+;; 0-15 reserved cuz why not
+(defvar *rdb-oid* 15)
+(defvar *rdb-cid* 15)
 
-(defmethod oid->schema-id (oid (sc rdb-store))
-  "For default data structures, provide a fixed mapping to class IDs based
-   on the known startup order.  It's ugly, it's sad, but it works."
-  (if (< oid 2)
-      (case oid
-        (0 4)
-        (1 4)
-        (-1 1)
-        (-2 1)
-        (-3 3)
-        (-4 3))
-      (call-next-method)))
+(defmethod next-oid ((self rdb-store))
+  (incf *rdb-oid*))
+
+(defmethod next-cid ((self rdb-store))
+  (incf *rdb-cid*))
 
 (defmethod default-class-id (type (sc rdb-store))
   (ecase type
@@ -893,15 +893,15 @@ serialized object schemas."))
     (4 'rdb-btree-index)))
 
 (defmethod reserved-oid-p ((sc rdb-store) oid)
-  (< oid 2))
+  (< oid 16))
 
 ;;; slot protocol
-;; TODO 2024-11-07: 
+;; TODO 2024-11-07:
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
   (with-alien ((oid (* unsigned-char) (make-alien unsigned-char 4)))
-    (std/alien::write-alien-unsigned-byte-32 oid (the (unsigned-byte 32) (oid instance)))
-    (ser name oid self)
+    (std/alien::write-alien-unsigned-byte-64 oid (the (unsigned-byte 64) (oid instance)))
+    (serde (cons name oid) self)
     (let ((ret (get-val (db self) oid)))
       (ensure-transaction (:store self)
         ret))))
@@ -915,7 +915,7 @@ serialized object schemas."))
 (defmethod stored-slot-makunbound ((self rdb-store) instance name)
   (ensure-transaction (:store self)))
 
-;;; transaction protocol
+;;; Transactions
 (defmethod execute-transaction ((self rdb-store) txn
                                 &key
                                 transaction parent))

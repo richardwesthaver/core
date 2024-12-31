@@ -127,7 +127,7 @@ a CLI is called without arguments, and all subcommands."))
       ret)))
 
 (defmethod find-opt (name (self cli-cmd) &key active default)
-  (if-let ((ret (find name (opts self) :key #'cli-opt-name :test 'equal)))
+  (if-let ((ret (find name (opts self) :key 'cli-opt-name :test 'equal)))
     (if active
         (when (cli-opt-lock ret) ret)
         ret)
@@ -172,8 +172,9 @@ a CLI is called without arguments, and all subcommands."))
         ret))))
 
 (defun solop (self)
-  (= 0 (length (active-cmds self))
-     (length (active-opts self))))
+  "A CLI object is considered 'solo' if there are no ACTIVE-CMDS parsed - there
+are only OPTS and ARGS which should be used with the default command."
+  (= 0 (length (active-cmds self))))
 
 (defmethod proc-args ((self cli-cmd) args)
   "Process ARGS into an ast. Each element of the ast is a node with a
@@ -296,10 +297,7 @@ and calls INSTALL-AST on SELF with ARGS."
 ;; WARNING: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.
 (defmethod call-cmd ((self cli-cmd) args opts)
-  (log:trace! "calling command" self
-              (when args (format nil "args = ~A" args))
-              (unless (sb-sequence:emptyp opts)
-                (format nil "opts = ~A" opts)))
+  (log:trace! "calling command: ~A~%:args ~A~%:opts ~A~%" self args opts)
   (funcall (cli-thunk self) args opts))
 
 (defmethod do-opts ((self cli-cmd))
@@ -317,5 +315,6 @@ evaluated with DO-OPTS along the way."
       ;;       do (setf (cli-opt-lock o) nil)))
       (loop for c across (active-cmds self)
             do (do-opts c)
-            do (call-cmd c (cli-args c) (active-opts c))))
+            do (call-cmd c (cli-args c) (active-opts c))
+            do (setf (cli-lock-p c) nil)))
   (setf (cli-lock-p self) nil))

@@ -80,9 +80,12 @@ binding and the CDR is the actual name of the CLI-OPT."
        ,@body))))
 
 (defmacro defopt (name &body body)
-  `(defun ,name (&optional arg)
-     (let ((*arg* arg))
-       ,@body)))
+  (multiple-value-bind (body decl doc-string) (parse-body body :documentation t)
+    `(defun ,name (&optional arg)
+       ,doc-string
+       ,decl
+       (let ((*arg* arg))
+         ,@body))))
 
 ;; TODO 2023-10-06: 
 ;; (defmacro gen-cli-thunk (pvars &rest thunk)

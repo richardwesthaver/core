@@ -97,16 +97,20 @@
     ("cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show ()
-  (if *args*
-      (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
-       (cond 
-         ((boundp '*skel-project*) (sk-print *skel-project* :exclude '(:rules :phases :bind)))
+       (cond
+         ((boundp '*skel-project*)
+          (sk-print *skel-project* :exclude (if ast:*keep-ast* 
+                                                '(:rules :phases :bind)
+                                                '(:ast :rules :phases :bind))))
          ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
          ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
-         (t (skel-simple-error "skel not installed")))))
+         (t (skel-simple-error "skel not installed")))
+  (when *args*
+    (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)))
+
 
 (defopt skc-version (print-version *cli* t))
-(defopt skc-ast (setq ast:*keep-ast* (or *arg*)))
+(defopt skc-ast (setq ast:*keep-ast* t))
 (defopt skc-level *log-level*
         (setq *log-level* (if *arg* (if (stringp *arg*)
                                         (sb-int:keywordicate (string-upcase *arg*))
@@ -159,7 +163,7 @@
   :name "skel"
   :opts ((:name "version" :description "print version" 
           :thunk skc-version)
-         (:name "ast" :description "save the intermediate skel AST" :thunk skc-ast)
+         (:name "ast" :description "save the intermediate skel AST" :thunk skc-ast :kind boolean)
          (:name "level" :description "set log level (warn,info,debug,trace)"
           :thunk skc-level)
          (:name "config" :description "set a custom skel user config" :kind file))

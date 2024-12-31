@@ -225,11 +225,12 @@ to initialize the instance with custom configuration."
     (octets-to-string v)))
 
 ;;; Backup DB
-(defun open-backup-engine-raw (be-path &optional (opts (rocksdb-options-create)))
+(defun open-backup-engine-raw (be-path &optional (opts (rocksdb-backup-engine-options-create)))
   (with-errptr* (err 'open-backup-db-error :db be-path)
     (let ((be-path (if (pathnamep be-path)
                        (namestring be-path)
                        be-path)))
+      (rocksdb-backup-engine-options-set-backup-dir opts be-path)
       (rocksdb-backup-engine-open opts be-path err))))
 
 (defun close-backup-engine-raw (be)

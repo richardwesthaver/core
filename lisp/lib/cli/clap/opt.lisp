@@ -112,7 +112,8 @@
   (funcall (cli-opt-thunk self) arg))
 
 (defmethod do-opt ((self cli-opt))
-  (setf (cli-opt-val self) (call-opt self (cli-opt-val self))))
+  (prog1 (setf (cli-opt-val self) (call-opt self (cli-opt-val self)))
+    (setf (cli-opt-lock self) nil)))
 
 (defmethod do-opts ((self vector))
   (loop for opt across self

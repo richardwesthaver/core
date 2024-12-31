@@ -448,7 +448,7 @@ internal sap slots are initialized."
 (defmethod repair-db ((self rdb) &key)
   (repair-db-raw (rdb-name self)))
 
-(defmethod open-backup-db ((self rdb) &key path)
+(defmethod open-backup-engine ((self rdb) &key path)
   (with-slots (opts) self
     (open-backup-engine-raw path (sap opts))))
 
@@ -457,11 +457,11 @@ internal sap slots are initialized."
     (if (null path)
         (error 'open-backup-engine-error :db sap 
                                          :message "PATH must not be nil when no backups exist")
-        (create-new-backup-raw (open-backup-db self :path path) sap))))
+        (create-new-backup-raw (open-backup-engine self :path path) sap))))
 
 (defmethod restore-db ((self rdb) (from string) &key id opts)
   (unless-null-db (name) self
-    (restore-from-backup-raw (open-backup-db self :path from) name from id opts)))
+    (restore-from-backup-raw (open-backup-engine self :path from) name from id opts)))
 
 (defmethod snapshot-db ((self rdb))
   (unless-null-db () self
@@ -651,15 +651,20 @@ internal sap slots are initialized."
   (rocksdb-close (sap self)))
 
 ;;; Backup DB
-(defstruct rdb-backup-db sap opts)
-(defaccessor (sap) ((self rdb-backup-db)) (rdb-backup-db-sap self))
-(defaccessor (db-opts) ((self rdb-backup-db)) (rdb-backup-db-opts self))
+(defstruct rdb-backup-engine sap opts)
+(defaccessor (sap) ((self rdb-backup-engine)) (rdb-backup-engine-sap self))
+(defaccessor (db-opts) ((self rdb-backup-engine)) (rdb-backup-engine-opts self))
 
-(defmethod open-backup-db ((self rdb-backup-db) &key path)
+(defmethod open-backup-engine ((self rdb-backup-engine) &key path)
   (setf (sap self) (open-backup-engine-raw path (db-opts self))))
 
-(defmethod close-backup-db ((self rdb-backup-db))
+(defmethod close-backup-engine ((self rdb-backup-engine))
   (close-backup-engine-raw (sap self)))
+
+(defun rdb-backup-engine-info (be)
+  (etypecase be
+    (rdb-backup-engine (rocksdb-backup-engine-get-backup-info (sap be)))
+    (alien (rocksdb-backup-engine-get-backup-info be))))
 
 ;;; Write Batches
 (defstruct rdb-writebatch sap)

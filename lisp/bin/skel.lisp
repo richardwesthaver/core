@@ -94,5 +94,6 @@
   (in-package :sk-user)
   (in-readtable :shell)
   (with-cli ((package-cli :bin/skel) :args (cli:args))
+    (do-opts *cli*)
     (init-skel)
     (do-cmd *cli*)))

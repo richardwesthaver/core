@@ -26,6 +26,9 @@
    (pods :initarg :pod :type (vector (or pathname pod-config)))
    (services :initarg :services :type (vector (or pathname service-config)))))
 
+(defmethod make-config ((self (eql :home)) &rest args)
+  (apply 'make-instance 'home-config args))
+
 (defmethod print-object ((self home-config) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~S ~A" :id (format-sxhash (id:id self)))))

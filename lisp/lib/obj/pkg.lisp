@@ -669,7 +669,8 @@
    :open-column
    :destroy-column
    :destroy-columns
-   :create-column))
+   :create-column
+   :db-config))
 
 (defpackage :obj/secret
   (:nicknames :secret)

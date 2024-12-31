@@ -68,7 +68,6 @@
    #:get-primary-key
    #:cursor-initialized-p
    #:cursor-oid
-   #:cursor-btree
    #:btree-differ-p
    #:print-index-entry
    #:print-btree-key-and-type
@@ -83,7 +82,7 @@
 
 (defgeneric build-btree (self)
   (:documentation 
-   "Construct a btree of the appropriate type corresponding to this store-controller."))
+   "Construct a btree of the appropriate type corresponding to this store."))
 
 (defclass btree (stored-collection) ()
   (:documentation
@@ -198,7 +197,7 @@ sheets...  Cursors are initialized when you invoke an operation
 that sets them to something (such as cursor-first), and are
 uninitialized if you move them in such a way that they no longer
 have a legimtimate value.")
-   (btree :accessor cursor-btree :initarg :btree))
+   (btree :accessor btree :initarg :btree))
   (:documentation "A cursor for traversing (primary) BTrees."))
 
 (defgeneric make-cursor (bt)
@@ -370,7 +369,7 @@ Returns has-pair key value."))
       (declare (ignore exists?))
       (multiple-value-bind (exists? skey value)
           (cursor-prev cur)
-        (if (lisp-compare-equal skey-cur skey)
+        (if (compare-equal skey-cur skey)
             (values exists? skey value)
             (setf (cursor-initialized-p cur) nil))))))
 
@@ -392,7 +391,7 @@ Returns has-tuple / secondary key / value / primary key."))
       (declare (ignore exists?))
       (multiple-value-bind (exists? skey value pkey)
           (cursor-pprev cur)
-        (if (lisp-compare-equal skey-cur skey)
+        (if (compare-equal skey-cur skey)
             (values exists? skey value pkey)
             (setf (cursor-initialized-p cur) nil))))))
 
@@ -435,7 +434,7 @@ not), evaluates the forms, then closes the cursor."
    this happens on the primary when remove-kv is called"
   nil)
 
-(defun lisp-compare<= (a b)
+(defun compare<= (a b)
   "A comparison function that mirrors the ordering of the data stores for <=
    on all sortable types.  It does not provide ordering on non-sorted values
    other than by type class (i.e. not serialized lexical values)"
@@ -448,13 +447,13 @@ not), evaluates the forms, then closes the cursor."
         (symbol (string-not-greaterp (symbol-name a) (symbol-name b)))
         (pathname (string-not-greaterp (namestring a) (namestring b)))
         (stored (<= (oid a) (oid b)))
-        (cons (or (lisp-compare<= (car a) (car b))
-                  (lisp-compare<= (cdr a) (cdr b))))
+        (cons (or (compare<= (car a) (car b))
+                  (compare<= (cdr a) (cdr b))))
         (t nil))
     (error ()
       (type<= a b))))
 
-(defun lisp-compare< (a b)
+(defun compare< (a b)
   "A comparison function that mirrors the ordering of the data stores for <
    on all sortable types.  It does not provide ordering on non-sorted values
    other than by type class (i.e. not serialized lexical values)"
@@ -467,15 +466,15 @@ not), evaluates the forms, then closes the cursor."
         (symbol (string-lessp (symbol-name a) (symbol-name b)))
         (pathname (string-lessp (namestring a) (namestring b)))
         (stored (< (oid a) (oid b)))
-        (cons (if (lisp-compare-equal (car a) (car b))
-                  (lisp-compare< (cdr a) (cdr b))
-                  (lisp-compare< (car a) (car b))))
+        (cons (if (compare-equal (car a) (car b))
+                  (compare< (cdr a) (cdr b))
+                  (compare< (car a) (car b))))
         (t nil))
     (error () 
       (type< a b))))
 
-(defun lisp-compare-equal (a b)
-  "A lisp compare equal in same spirit as lisp-compare<.  Case insensitive for strings."
+(defun compare-equal (a b)
+  "A lisp compare equal in same spirit as compare<.  Case insensitive for strings."
   (handler-case
       (typecase a
         (stored (eq (oid a) (oid b)))
@@ -483,8 +482,8 @@ not), evaluates the forms, then closes the cursor."
     (error ()
       (equal a b))))
 
-(defun lisp-compare>= (a b)
-  (not (lisp-compare< a b)))
+(defun compare>= (a b)
+  (not (compare< a b)))
 
 (defvar *current-cursor* nil
   "This dynamic variable is referenced only when deleting elements
@@ -515,8 +514,8 @@ not), evaluates the forms, then closes the cursor."
    same order the calls were made (first to last)."))
 
 (defun validate-map-call (start end)
-  (unless (or (null start) (null end) (lisp-compare<= start end))
-    (error "map-index called with start = ~A and end = ~A. Start must be less than or equal to end according to lisp-compare<=."
+  (unless (or (null start) (null end) (compare<= start end))
+    (error "map-index called with start = ~A and end = ~A. Start must be less than or equal to end according to compare<=."
            start end)))
 
 (defmacro with-map-collector ((fn collect-p) &body body)
@@ -595,7 +594,7 @@ not), evaluates the forms, then closes the cursor."
   (with-map-wrapper (fn btree collect cur)
     (iterate-map-btree 
      :start (cursor-set cur value)
-     :continue (lisp-compare-equal key value)
+     :continue (compare-equal key value)
      :step (cursor-next cur))))
 
 (defun map-btree-from-start (fn btree start end collect)
@@ -604,7 +603,7 @@ not), evaluates the forms, then closes the cursor."
      :start (if start
                 (cursor-set-range cur start)
                 (cursor-first cur))
-     :continue (or (null end) (lisp-compare<= key end))
+     :continue (or (null end) (compare<= key end))
      :step (cursor-next cur))))
 
 (defun map-btree-from-end (fn btree start end collect)
@@ -612,12 +611,12 @@ not), evaluates the forms, then closes the cursor."
     (iterate-map-btree
      :start (if end
                 (with-cursor-values (cursor-set-range cur end)
-                  (cond ((and exists? (lisp-compare-equal skey end))
+                  (cond ((and exists? (compare-equal skey end))
                          (cursor-next-nodup cur)
                          (cursor-prev cur))
                         (t (cursor-prev cur))))
                 (cursor-last cur))
-     :continue (or (null start) (lisp-compare>= key start))
+     :continue (or (null start) (compare>= key start))
      :step (cursor-prev cur))))
 
 
@@ -710,7 +709,7 @@ not), evaluates the forms, then closes the cursor."
       :start (if start 
                  (cursor-pset-range cur start) 
                  (cursor-pfirst cur))
-      :continue (or (null end) (lisp-compare<= key end))
+      :continue (or (null end) (compare<= key end))
       :step (cursor-pnext cur))))
 
 (defun map-index-from-end (fn index start end collect)
@@ -719,7 +718,7 @@ not), evaluates the forms, then closes the cursor."
      :start (if end 
                 (pset-range-for-descending cur end) 
                 (cursor-plast cur))
-     :continue (or (null start) (lisp-compare>= key start))
+     :continue (or (null start) (compare>= key start))
      :step (cursor-pprev cur))))
 
 ;; ===============================

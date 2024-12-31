@@ -11,7 +11,8 @@
   (:use :cl :std :rocksdb 
    :sb-alien :db :query :schema 
    :btree :store :stored :log 
-   :seq :io/static :btree :time)
+   :seq :io/static :btree :time
+   :config :build :ast :id)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
@@ -97,7 +98,7 @@
    :rdb-transaction-db
    :rdb-transaction
    :rdb-secondary-db
-   :rdb-backup-db
+   :rdb-backup-engine
    :open-db-secondary-raw
    :create-checkpoint-raw
    :open-cfs-secondary-raw
@@ -139,7 +140,11 @@
    :iter
    :rdb-wbwi-clear
    :rdb-wbwi-save
-   :rdb-wbwi-ts))
+   :rdb-wbwi-ts
+   :rdb-backup-engine-info
+   :open-backup-engine
+   :close-backup-engine
+   :rdb-config))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

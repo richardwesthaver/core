@@ -121,7 +121,6 @@ ERR with initargs PARAMS for the duration of BODY."
          ,@(when val `((setfa %val ,val)))
          ,@body))))
 
-
 ;;; sst
 (defmacro with-sst ((sst &key file comparator destroy) &body body)
   "Do BODY with SST bound to a SST-FILE-WRITER. When FILE is supplied
@@ -155,5 +154,3 @@ file by a RDB instance."
            `((unwind-protect (progn ,@body)
                (destroy-db ,var)))
              body)))
-
-                       

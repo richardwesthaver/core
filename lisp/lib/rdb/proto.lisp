@@ -12,6 +12,8 @@
   (:documentation "Backfill opts from an alien."))
 (defgeneric print-stats (self &optional stream)
   (:documentation "Print statistics data from SELF."))
+(defgeneric open-backup-engine (self &key path))
+(defgeneric close-backup-engine (self))
 (defgeneric open-backup-db (self &key path))
 (defgeneric close-backup-db (self))
 (defgeneric open-transaction-db (self &key path opts))

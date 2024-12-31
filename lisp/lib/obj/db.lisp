@@ -142,6 +142,11 @@ saved."
        ;; ,@(when destroy (remf initargs :destroy) `((destroy-db ,var)))
        (apply 'do-database-backend-close-options ,var opts))))
 
+;;; Config
+(defconfig db-config ()
+  ((backend :initform :rdb :type database-backend-designator)
+   (options)))
+
 ;;; Conditions
 (define-condition db-condition () ())
 
@@ -448,18 +453,18 @@ column is already closed."))
 
 ;; In our system, transactions must be one of the following:
 
-;; - A non-nil list
+;; - A non-nil list 
 ;; - A subclass of TRANSACTION-OBJECT
-;; - Implement a TRANSACTION-DB method which returns an instance of DATABASE"))
+;; - Implement a TRANSACTION-DB method which returns an instance of DATABASE
 
 ;; Simple transactions are non-nil lists which are handled according to the
+;; current database backend
 
 ;; 
 (deftype simple-transaction () `(and (not null) list))
 
 (defvar *txn* nil
-  "The current transaction - should only be set within the dynamic extent of an
-EXECUTE-TRANSACTION call.")
+  "The current transaction.")
 
 (defclass transaction-object () ()
   (:documentation "Base class for transaction objects."))
@@ -500,7 +505,8 @@ return the same value as DB depending on backend."))
              txn
              (known-transaction db (transaction-prior txn))))))
 
-(defmacro with-transaction ((sym &rest args 
+;; From ELEPHANT
+(defmacro with-transaction ((sym &rest initargs 
                                  &key (db '*db*)
                                       (txn '*txn*)
                                  &allow-other-keys)
@@ -508,8 +514,8 @@ return the same value as DB depending on backend."))
   "Execute a body with a transaction in place. On success,
    the transaction is committed. Otherwise, the transaction is aborted."
   (declare (ignorable db txn))
-  (remf args :db)
-  `(let ((,sym (make-transaction ,db ,@args)))
+  (remf initargs :db)
+  `(let ((,sym (make-transaction ,db ,@initargs)))
      ,@body))
 
 (defmacro current-transaction (db)
@@ -517,3 +523,15 @@ return the same value as DB depending on backend."))
     `(let ((,txn *txn*))
        (when (and ,txn (eq (transaction-db ,txn) ,db))
          (transaction-object ,txn)))))
+
+(defmacro ensure-transaction ((&rest initargs &key
+                                     (db '*db*)
+                                     (txn '*txn*)
+                                     &allow-other-keys)
+                              &body body)
+  "Execute BODY with an existing transaction or a new transaction if one does not exist.
+
+This macro allows for the sequencing of database actions to be run atomically
+inside a single transaction - use WITH-TRANSACTION if you want to nest
+multiple transactions.")
+  

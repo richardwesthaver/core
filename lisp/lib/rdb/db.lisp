@@ -2,6 +2,106 @@
 
 ;; RocksDB Implementation of OBJ/DB protocol.
 
+;;; Commentary:
+
+;; The DB protocol is also partially implemented by the low-level structures
+;; in rdb/obj.lisp.
+
+;; It is safe to call most functions on the same underlying Alien RocksDB
+;; object from multiple threads. Other objects such as WriteBatch and Iterator
+;; /may/ require a Lisp-side synchronization.
+
+;;;; Transactions:
+
+;; RocksDB has several variations on the concept of 'transaction':
+
+#| TransactionDB
+When using a TransactionDB, all keys that are written are locked internally by
+RocksDB to perform conflict detection. If a key cannot be locked, the
+operation will return an error. When the transaction is committed, it is
+guaranteed to succeed as long as the database is able to be written to.
+
+A TransactionDB can be better for workloads with heavy concurrency compared to
+an OptimisticTransactionDB. However, there is a small locking overhead when
+TransactionDB is used. A TransactionDB will do conflict checking for all write
+operations (Put, Delete and Merge), including writes performed outside a
+Transaction.
+|#
+
+#| WriteBatch
+
+The WriteBatch holds a sequence of edits to be made to the database - these
+edits within the batch are applied in order when written.
+
+Apart from its atomicity benefits, WriteBatch may also be used to speed up
+bulk updates by placing lots of individual mutations into the same batch.
+
+|#
+
+#| WBWI
+
+The WBWI (Write Batch With Index) encapsulates a WriteBatch and an Index into
+that WriteBatch. The index in use is a Skip List. The purpose of the WBWI is
+to sit above the DB, and offer the same basic operations as the DB,
+i.e. Writes - Put, Delete, and Merge, and Reads - Get, and newIterator.
+
+Write operations on the WBWI are serialized into the WriteBatch (of the WBWI)
+rather than acting directly on the DB. The WriteBatch can later be written
+atomically to the DB by calling db.write(wbwi).
+
+Read operations can either be solely against the
+WriteBatch (e.g. GetFromBatch), or they can be read-through operations. A
+read-through operation, (e.g. GetFromBatchAndDB), first tries to read from the
+WriteBatch, if there is no updated entry in the WriteBatch then it
+subsequently reads from the DB.
+
+The WBWI can be used as a component if one wishes to build Transaction
+Semantics atop RocksDB. The WBWI by itself isolates the Write Path to a local
+in-memory store and allows you to RYOW (Read-Your-Own-Writes) before data is
+atomically written to the database.
+
+It is a key component in RocksDB's Pessimistic and Optimistic Transaction
+utility classes.  
+
+|#
+
+;; WBWIs are ideal as a transaction building block and should be used to build
+;; higher-level transaction objects.
+
+;;;; Snapshots:
+
+;; Snapshots capture a point-in-time view of a RocksDB instance at the time of
+;; creation. Snapshots do not persist across DB sessions and are internally
+;; stored in a linked-list.
+
+;;;; Checkpoints:
+
+;; Checkpoints allow us to take a snapshot of a running RocksDB instance like
+;; Snapshots, but in a separate directory. Checkpoints persist across DB
+;; sessions. Checkpoints can be opened read-only or as read-write and be used
+;; for both full and incremental backups (as long as backups are on the same
+;; device).
+
+;;;; Backups:
+
+;; Backups are built on top of Checkpoints.
+
+;; Backup Engines control a single directory that can store any number of
+;; backups. It uses a custom on-disk format as shown below.
+
+#| directory structure
+/tmp/rocksdb_backup/
+├── meta
+│   └── 1
+├── private
+│   └── 1
+│       ├── CURRENT
+│       ├── MANIFEST-000008
+|       └── OPTIONS-000009
+└── shared_checksum
+    └── 000007_1498774076_590.sst
+|#
+
 ;;; Code:
 (in-package :rdb)
 
@@ -118,12 +218,12 @@ object. (SAP CF) is the raw pointer."))
 ;;; Database
 (defclass rdb-database (database)
   ((txn :initform nil :type (or null rdb-transaction-db) :initarg :txn :accessor transaction-db)
-   (backup :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor db-backup)
+   (backup :initform nil :type (or null rdb-backup-engine) :initarg :backup :accessor db-backup)
    (snapshots :initform (make-array 0 :element-type 'rdb-snapshot :adjustable t)
               :type (vector rdb-snapshot)
               :initarg :snapshots 
               :accessor db-snapshots)
-   (secondary :initform nil :type (or null rdb-backup-db) :initarg :txn :accessor secondary-db)
+   (secondary :initform nil :type (or null rdb-secondary-db) :initarg :secondary :accessor secondary-db)
    (columns :initarg :columns :accessor columns))
   (:default-initargs 
    :db (make-db :rocksdb :opts (default-rdb-opts))
@@ -138,7 +238,7 @@ object. (SAP CF) is the raw pointer."))
 (defmethods set-database-backend-option
   (((db rdb-database) (key (eql :close)) (val (eql :auto)))
    "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
-   (sb-ext:finalize db (lambda () (shutdown-db db))))
+   (sb-ext:finalize db (lambda () (close-db db))))
   (((db rdb-database) (key (eql :merge-op)) val)
    "Assign a MERGE-OP to this database."
    (setf (db-opt db :merge-operator :push t) val))
@@ -397,8 +497,10 @@ extractor."
 (defmethod open-db ((self rdb-database)) (open-db (db self)) self)
 (defmethod open-transaction-db ((self rdb-database) &key path opts optimistic)
   (setf (transaction-db self) (open-transaction-db (db self) :opts opts :path path :optimistic optimistic)))
-(defmethod open-backup-db ((self rdb-database) &key path) 
-  (setf (db-backup self) (open-backup-db (db self) :path path)))
+
+(defmethod open-backup-engine ((self rdb-database) &key path) 
+  (setf (db-backup self) (open-backup-engine (db self) :path path)))
+
 (defmethod open-secondary-db ((self rdb-database) &key path opts) 
   (setf (secondary-db self) (open-secondary-db (db self) :opts opts :path path)))
 
@@ -414,10 +516,10 @@ extractor."
 (defmethod destroy-db ((self rdb-database))
   (destroy-db (db self)))
 
-(defmethod close-backup-db ((self rdb-database))
+(defmethod close-backup-engine ((self rdb-database))
   (with-slots (backup) self
     (unless (null backup)
-      (setf backup (close-backup-db backup)))))
+      (setf backup (close-backup-engine backup)))))
 
 (defmethod shutdown-db ((self rdb-database) &key) (shutdown-db (db self)))
 

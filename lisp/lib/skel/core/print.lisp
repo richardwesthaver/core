@@ -22,7 +22,7 @@
 ;; sb-pretty::*standard-pprint-dispatch-table*
 ;; *readtable*
 
-(defmethod sk-print ((self skel) &key (stream t) (id t) exclude (case :downcase) &allow-other-keys)
+(defmethod sk-print ((self skel) &key (stream t) (id t) exclude (case :downcase) direct &allow-other-keys)
   (let ((name (skel/core/obj::sk-slot-name self (when (eql :downcase case))))
         (*print-case* case))
     (if id
@@ -44,7 +44,9 @@
                            (terpri stream)))
              (t (format stream ":~A ~A~%" name val)))))))
    (remove-if (lambda (x) (member (keywordicate (sb-mop:slot-definition-name x)) exclude))
-              (sb-mop:class-direct-slots (class-of self))))
+              (if direct
+                  (sb-mop:class-direct-slots (class-of self))
+                  (sb-mop:class-slots (class-of self)))))
   self)
 
 (defmethod sk-print ((self t) &key (stream t) (pretty t) (case :downcase))

@@ -228,7 +228,7 @@
         (invalid-skel-ast ast))))
 
 (defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id)))
-  (setf (ast self) 
+  (setf (ast self)
         (unwrap-object self
                        :slots t
                        :methods nil

@@ -175,7 +175,8 @@
 (deftest avl-tree ()
   (is (make-avl-node 0 0 nil nil)))
 
-(deftest btree ())
+(deftest btree ()
+  (is (make-instance 'btree)))
 
 (deftest basic-graph ()
   "Test basic graph functionality."
