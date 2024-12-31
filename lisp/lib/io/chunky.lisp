@@ -443,7 +443,7 @@ sure to send the last chunk."
              'simple-chunked-input-stream)
             ((output-stream-p stream)
              'chunked-output-stream)
-            (t 'simple-chunked-stream))
+            (t 'chunked-io-stream))
     :stream stream))
 
 ;;; Blocked Stream

@@ -110,9 +110,11 @@ utility classes.
                                     destroy (close . t) 
                                     sap merge-op comparator prefix-op logger))
 
-(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(store backup secondary snapshots)))
+;; TODO 2024-12-31: may want to have a :STORE backend-option to allow a fresh
+;; db to be backlined to a parent store instance.
+(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(backup secondary snapshots checkpoints)))
 
-(defvar *rdb-default-cf-name* "default")
+(defvar *rdb-default-column-name* "default")
 
 (defmethods set-database-backend-option
   (((db rdb) (key (eql :close)) (val (eql :auto)))
@@ -223,6 +225,10 @@ object. (SAP CF) is the raw pointer."))
               :type (vector rdb-snapshot)
               :initarg :snapshots 
               :accessor db-snapshots)
+   (checkpoints :initform (make-array 0 :element-type 'rdb-checkpoint :adjustable t)
+                :type (vector rdb-checkpoint)
+                :initarg :checkpoints
+                :accessor db-checkpoints)
    (secondary :initform nil :type (or null rdb-secondary-db) :initarg :secondary :accessor secondary-db)
    (columns :initarg :columns :accessor columns))
   (:default-initargs 
@@ -416,8 +422,8 @@ extractor."
          (get-kv-raw sap key opts)))))
 
 (defmethod create-column ((db rdb-database) (col rdb-column-family))
-  (if (equal (name col) *rdb-default-cf-name*)
-      (rdb-default-cf-warning "ignoring attempt to create 'default' column-family: ~A" col)      
+  (if (equal (name col) *rdb-default-column-name*)
+      (rdb-default-column-warning "ignoring attempt to create 'default' column-family: ~A" col)      
       (setf (sap col) (create-cf-raw (sap db) (name col) (sap (column-opts col)))))
   ;; (open-column db col)
   col)
@@ -503,6 +509,12 @@ extractor."
 
 (defmethod open-secondary-db ((self rdb-database) &key path opts) 
   (setf (secondary-db self) (open-secondary-db (db self) :opts opts :path path)))
+
+(defmethod open-checkpoint-db ((self rdb-database) &key path)
+  (vector-push-extend (%make-checkpoint (sap self) path) (db-checkpoints self)))
+
+(defmethod snapshot-db ((self rdb))
+  (vector-push-extend (snapshot-db (db self)) (db-snapshots self)))
 
 (defmethod flush-db ((self rdb-database) &rest args &key &allow-other-keys) (apply 'flush-db (db self) args))
 

@@ -144,7 +144,10 @@
    :rdb-backup-engine-info
    :open-backup-engine
    :close-backup-engine
-   :rdb-config))
+   :rdb-config
+   :rdb-checkpoint
+   :open-checkpoint-db
+   :close-checkpoint-db))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

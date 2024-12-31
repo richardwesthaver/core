@@ -22,13 +22,10 @@
     (:btrfs (load-btrfs) (load-btrfsutil) t)
     (:xfs t)))
 
-(defclass disk () ())
+(defclass disk () ((path :initarg :path :initform #p"/" :accessor path)))
 
 (defclass disk-partition () ())
 
 (defclass disk-subvolume () ())
 
 (defclass disk-snapshot () ())
-
-(defgeneric snapshot (self &rest args &key &allow-other-keys))
-(defgeneric sync (self &rest args &key &allow-other-keys))

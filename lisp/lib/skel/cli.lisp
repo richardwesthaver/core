@@ -97,17 +97,16 @@
     ("cache" (sk-cache *skel-user-config*))))
 
 (defcmd skc-show ()
-       (cond
-         ((boundp '*skel-project*)
-          (sk-print *skel-project* :exclude (if ast:*keep-ast* 
-                                                '(:rules :phases :bind)
-                                                '(:ast :rules :phases :bind))))
-         ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
-         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
-         (t (skel-simple-error "skel not installed")))
-  (when *args*
-    (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)))
-
+  (if *args*
+      (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
+      (cond
+        ((boundp '*skel-project*)
+         (sk-print *skel-project* :exclude (if ast:*keep-ast* 
+                                               '(:rules :phases :bind)
+                                               '(:ast :rules :phases :bind))))
+        ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
+        ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
+        (t (skel-simple-error "skel not installed")))))
 
 (defopt skc-version (print-version *cli* t))
 (defopt skc-ast (setq ast:*keep-ast* t))

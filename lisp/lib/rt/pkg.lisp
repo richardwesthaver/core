@@ -116,6 +116,7 @@
    :iszero
    :isevery
    :issome
+   :islist
    :test-fixtures
    :*fx*
    :*fixtures*

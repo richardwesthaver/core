@@ -15,6 +15,8 @@
 (defgeneric open-backup-engine (self &key path))
 (defgeneric close-backup-engine (self))
 (defgeneric open-backup-db (self &key path))
+(defgeneric open-checkpoint-db (self &key path))
+(defgeneric close-checkpoint-db (self &key path))
 (defgeneric close-backup-db (self))
 (defgeneric open-transaction-db (self &key path opts))
 (defgeneric close-transaction-db (self))

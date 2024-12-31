@@ -133,9 +133,9 @@ compressed-data)
   (let ((disk (make-instance 'disk)))
     (istype 'disk disk)))
 
-(deftest disk-btrfs (:skip (not (std:sudo-p)))
+(deftest disk-btrfs ()
   (is (load-filesystem-backend :btrfs))
   (let ((disk (make-instance 'btrfs-disk)))
-    (issubclass 'disk (class-of disk))))
-
-
+    (issubclass 'disk (class-of disk)))
+  ;; will return NIL on non-btrfs file systems
+  (islist (btrfs-subvolumes "/tmp")))

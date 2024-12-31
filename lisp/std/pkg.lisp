@@ -494,6 +494,7 @@
    :timeval
    :timespec
    :sap
+   :free
    :push-sap
    :push-sap*
    :pull-sap

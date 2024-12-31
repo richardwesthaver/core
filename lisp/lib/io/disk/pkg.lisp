@@ -13,8 +13,6 @@
    #:load-filesystem-backend
    :disk
    :disk-partition
-   #:sync
-   #:snapshot
    #:disk-snapshot
    #:disk-subvolume
    :list-disks
@@ -41,7 +39,14 @@
 
 (defpackage :io/disk/btrfs
   (:nicknames :disk/btrfs)
-  (:use :cl :std :io/proto :btrfs :io/disk)
+  (:use :cl :std :io/proto :btrfs :io/disk :sb-alien)
   (:export
    :btrfs-subvolume
-   :btrfs-disk))
+   :btrfs-disk
+   :btrfs-subvolumes
+   :btrfs-default-subvolume
+   :btrfs-snapshot
+   :subvolume-valid-p
+   :btrfs-partition
+   :btrfs-simple-error
+   :btrfs-error))

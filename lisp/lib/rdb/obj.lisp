@@ -287,6 +287,18 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
 ;;; Snapshots
 (defstruct rdb-snapshot sap)
 (defaccessor (sap) ((self rdb-snapshot)) (rdb-snapshot-sap self))
+(defmethod id ((self rdb-snapshot)) (rocksdb-snapshot-get-sequence-number (sap self)))
+
+;;; Checkpoints
+(defstruct rdb-checkpoint sap path)
+(defaccessor (sap) ((self rdb-checkpoint)) (rdb-checkpoint-sap self))
+(defaccessor (path) ((self rdb-checkpoint)) (rdb-checkpoint-path self))
+
+(defun %make-checkpoint (rdb &optional path)
+  (let ((chk (with-errptr e
+               (make-rdb-checkpoint :sap (rocksdb-checkpoint-object-create (sap rdb) e)))))
+    (when path (setf (path chk) path))
+    chk))
 
 ;;; SST
 (defstruct (sst-file-writer (:constructor %make-sst-file-writer (sap)))

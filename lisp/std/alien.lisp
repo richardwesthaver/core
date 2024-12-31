@@ -434,6 +434,12 @@ such alien exists.")
 
 (defgeneric (setf sap) (new self))
 
+;; TODO 2024-12-31: 
+(defgeneric free (self)
+  (:documentation "Free the SAP associated with object SELF if one exists and return NIL.")
+  (:method ((self sb-alien-internals:alien-value)) (free-alien self))
+  (:method ((self t)) nil))
+
 (defgeneric push-sap (self key)
   (:documentation "Push a value associated with KEY to the sap associated
 with SELF. Typically used to send a value from one slot, to a foreign

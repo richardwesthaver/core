@@ -22,7 +22,9 @@
    :output-available-p :input-available-p
    :fill-buffer :header
    :header-type :header-length
-   :offset))
+   :offset
+   :snapshot
+   :sync))
 
 (defpackage :io/stream
   (:use :cl :io/proto :sb-gray :std/meta)

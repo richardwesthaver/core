@@ -45,6 +45,7 @@ a FAIL."
   (defis isequalp equalp (a b))
   (defis iszero zerop (n))
   (defis isempty sequence:emptyp (seq))
+  (defis islist listp (lst))
   (defis* isand and)
   (defis* isor or)
   (defis* isevery every)
