@@ -25,12 +25,12 @@
   #+rdb 
   (cli:defcmd skc-db ())
   #+gui
-  (defcmd skc-view ()
-    (if *args* 
+  (cli:defcmd skc-view ()
+    (if cli:*args* 
         (let ((stuff (loop for a in *args*
-                           collect (sk-slot-case a))))
-          (sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
-        (sk-view (if (boundp '*skel-project*) *skel-project*
+                           collect (skel/cli::sk-slot-case a))))
+          (skel/tools/viz:sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
+        (skel/tools/viz:sk-view (if (boundp '*skel-project*) *skel-project*
                      (if (boundp '*skel-user-config*) *skel-user-config*
                          (if (boundp '*skel-system-config*) *skel-system-config*
                              (skel-simple-error "skel config files not installed")))))))
@@ -69,5 +69,5 @@
       (values kw lst))))
 
 (defmacro with-skel (ctx &body body)
-  `(let ((*skel-project* (find-skelfile ,(or ctx *default-pathname-defaults*) :load t)))
+  `(let ((*skel-project* (or *skel-project* (find-skelfile ,(or ctx *default-pathname-defaults*) :load t))))
      ,@body))

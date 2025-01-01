@@ -637,7 +637,7 @@ via the special form stored in RECIPE."
 (defmethod sk-find-rule ((item t) (self skel))
   (find (string-upcase item) (sk-rules self) :test 'string-equal :key #'sk-rule-target))
 
-(defmethod sk-find-script ((name string) (self skel) &key)
+(defmethod sk-find-script ((name string) (self sk-config) &key)
   (find name (sk-scripts self) :test 'equal :key #'name))
 
 (defmethod sk-call ((self sk-project) (arg sk-rule))

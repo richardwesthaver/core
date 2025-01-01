@@ -92,6 +92,7 @@
     ("include" (sk-include *skel-project*))
     ("stash" (sk-stash *skel-project*))
     ("store" (sk-store *skel-project*))
+    ("ast" (ast:ast *skel-project*))
     ("config" *skel-user-config*)
     ("sys" *skel-system-config*)
     ("cache" (sk-cache *skel-user-config*))))
@@ -126,7 +127,7 @@
   (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
 (defcmd skc-make ()
-  (let ((sk (find-skelfile #P"." :load t)))
+  (let ((sk *skel-project*))
     (sb-ext:enable-debugger)
     (if *args*
         (loop for a in *args*
@@ -138,12 +139,14 @@
         (debug! (sk-make sk (aref (sk-rules sk) 0))))))
 
 (defcmd skc-run ()
+  (sb-ext:enable-debugger)
   (if *args*
       (mapc (lambda (script)
-              ;; first check if a script with the same name exists, else check for a rule definition
+              ;; first check if a script with the same name exists, else check
+              ;; for a rule definition
               (if-let ((script (sk-find-script 
                                 (pathname-name script)
-                                (find-skelfile #P"." :load t))))
+                                *skel-user-config*)))
                 (sk-run script)
                 (call-with-args :run (list script))))
             *args*)

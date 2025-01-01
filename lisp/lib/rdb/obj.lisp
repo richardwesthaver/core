@@ -545,6 +545,15 @@ internal sap slots are initialized."
    (kv-key kv)
    (kv-val kv)))
 
+(defmethod multi-get ((self rdb) keys &key (data-type 'octet-vector) (opts (rocksdb-readoptions-create)) cf)
+  (if cf
+      (ecase data-type
+        (octet-vector (multi-get-cf-kv-raw (sap self) keys opts (sap cf)))
+        (string (multi-get-cf-kv-str-raw (sap self) keys opts (sap cf))))
+      (ecase data-type
+        (octet-vector (multi-get-kv-raw (sap self) keys opts))
+        (string (multi-get-kv-str-raw (sap self) keys opts)))))
+
 (defmethod get-value ((self rdb) key)
   (get-kv-raw (sap self) key (rocksdb-readoptions-create)))
 

@@ -457,6 +457,9 @@
    :setfa
    :copy-c-string
    :clone-strings
+   :clone-octet-vector-list
+   :clone-integer-list
+   :clone-octet-vector-list*
    :octets-to-alien-array
    :with-alien-slots
    :clone-octets-to-alien

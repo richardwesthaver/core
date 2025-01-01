@@ -174,7 +174,7 @@
 (define-alien-routine rocksdb-multi-get-cf void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
-  (cfs (array rocksdb-column-family-handle))
+  (cfs (array (* rocksdb-column-family-handle)))
   (num-keys size-t)
   (keys-list (array c-string))
   (keys-list-sizes (array size-t))

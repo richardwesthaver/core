@@ -99,7 +99,10 @@
 
 (defpackage :cli/ed
   (:use :cl :std :cli/env :ast :config)
-  (:export :run-emacs :run-emacsclient :org-store-link :editor-config :emacs-config))
+  (:export :run-emacs :run-emacsclient :org-store-link :editor-config :emacs-config
+   :eval-emacs
+   :slime
+   :ielm))
 
 (defpackage :cli/multi
   (:use :cl :std)

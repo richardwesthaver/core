@@ -6,7 +6,7 @@
 (defpkg :bin/skel
   (:use :cl :std :cli :cli/clap/obj
    :vc :sb-ext :skel :log :cli/clap/util
-   :obj/ast #+tools :skel/tools/viz)
+   :obj/ast #+(and tools gui) :skel/tools/viz)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl :cli/prompt))
 
@@ -54,7 +54,7 @@
           do (println x)))))
 
 (defcmd skc-shell ()
-  (sb-ext:enable-debugger)
+  ;; (sb-ext:enable-debugger)
   (trace! "starting skel shell")
   (setq *no-exit* t)
   (cli/clap::with-cli-handlers
@@ -88,7 +88,11 @@
    :opts ((:name "message" :description "commit message" :kind string)))
   (:name shell
    :description "open the sk-shell interpreter"
-   :thunk skc-shell)))
+   :thunk skc-shell)
+  #+(and tools gui)
+  (:name view
+   :description "View a skel object in the Skel Viewer GUI."
+   :thunk skc-view)))
 
 (defmain start-skel ()
   (in-package :sk-user)

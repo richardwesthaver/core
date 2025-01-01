@@ -38,6 +38,12 @@
         #$find emacs -name '*.elc' -type f -delete$#
         #$find lisp -name '*.fasl' -type f -delete$#
         #$echo 'cargo clean:' && cd rust && cargo clean$#)
+ (swank () 
+        (:run () 
+              (let ((f ".stash/.swank"))
+                (when (probe-file f)
+                  (delete-file f))
+                (swank:start-server f))))
  (tree-sitter-alien ()
                     (:build () #$cd lisp/ffi/tree-sitter &&
                             clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
@@ -169,8 +175,10 @@
                        (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
        (:build () (with-sbcl (:noinform t :quit t)
+                    (push :gui *features*)
                     (push :x11 *features*)
                     (push :clim *features*)
+                    (push :tools *features*)
                     (ql:quickload :bin/core)
                     (asdf:make :bin/core))
                #$mv lisp/bin/core .stash/core$#)

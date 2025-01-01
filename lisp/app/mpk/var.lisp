@@ -9,4 +9,4 @@
 
 (defvar *mpk-media-directory* "/opt/media/")
 
-(defvar *mpk-media-sources* '(:youtube :freesound))
+(defvar *mpk-media-sources* '(:youtube :freesound :spotify))

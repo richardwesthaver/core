@@ -1,9 +1,8 @@
 #+gui
-(defpkg :skel/tools/viz
-  (:use :cl :std :skel :dat/dot :obj/graph)
+(defpackage :skel/tools/viz
+  (:use :cl :std :skel/core :dat/dot :obj/graph)
   (:export :sk-view))
 
-#+deploy
-(defpkg :skel/tools/deploy
-  (:use :cl :std :skel)
+(defpackage :skel/tools/deploy
+  (:use :cl :std :skel/core)
   (:export))

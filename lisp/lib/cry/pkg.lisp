@@ -55,6 +55,9 @@
   (:use :cl :std :obj/secret)
   (:export :password :password-hash :password-salt :make-password-hash :auth))
 
+(defpackage :cry/drm
+  (:use :cl :std))
+  
 (in-package :cry)
 
 (defvar *password-db* nil

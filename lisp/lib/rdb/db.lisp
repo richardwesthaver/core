@@ -154,11 +154,12 @@ extractor."
          cfs)))
 
 (defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key 
-                    (name (string-downcase (gensym "rdb")))
+                    name
                     merge-op
                     prefix-op
                     logger
-                    (opts (default-rdb-opts)))
+                    (opts (default-rdb-opts))
+                    path)
   (declare (ignore engine initargs))
   (when merge-op
     (set-db-opt opts :merge-operator merge-op :push t))
@@ -166,7 +167,9 @@ extractor."
     (set-db-opt opts :prefix-extractor prefix-op :push t))
   (when logger
     (set-db-opt opts :info-log logger :push t))
-  (make-rdb :name name :opts opts))
+  (make-rdb 
+   :name (or name (namestring path) (string-downcase (gensym "rocksdb"))) 
+   :opts opts))
 
 (defmethod query-db ((db rdb) (query (eql :get)) &key key &allow-other-keys)
   (declare (ignore query))
@@ -420,6 +423,9 @@ extractor."
      (if column
          (get-cf-raw sap (sap (find-column column self)) key opts)
          (get-kv-raw sap key opts)))))
+
+(defmethod multi-get ((self rdb-database) keys &key (data-type 'octet-vector) (opts (rocksdb-readoptions-create)) columns)
+  (multi-get (db self) keys :data-type data-type :opts opts :cf (mapcar 'cf columns)))
 
 (defmethod create-column ((db rdb-database) (col rdb-column-family))
   (if (equal (name col) *rdb-default-column-name*)

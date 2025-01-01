@@ -263,7 +263,7 @@ in-memory objects."))
 type hints.")
   (:method (object element &key data-type)
   (when object
-    (typecase (or data-type object)
+    (typecase object
       (hash-table
        (gethash element object))
       (standard-object

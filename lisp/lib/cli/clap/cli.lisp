@@ -8,6 +8,7 @@
 (defun make-cli (kind &rest slots)
   "Creates a new CLI object of the given kind."
   (declare (type (member :opt :cmd :cli t) kind))
+  ;; (print (getf slots :thunk))
   (cond
     ((eql kind :cli) (apply #'make-instance 'cli slots))
     ;; replace :DEFAULT with :VAL

@@ -106,6 +106,26 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
                  (aref lispa i)))
   alien)
 
+(defun clone-octet-vector-list (lst)
+  "Clone a list of OCTET-VECTORs into an alien (* (* (UNSIGNED 8))). Keep in mind
+that the size of the individual OCTET-VECTORs are not encoded."
+  (let ((n (length lst)))
+    (let ((va (make-alien (* (unsigned 8)) n))) ;; (* (* u8))
+      (loop for i below n do (setf (deref va n) (octets-to-alien (pop lst))))
+      va)))
+
+(defun clone-integer-list (lst)
+  "Clone a list of integers to (* SIZE-T)."
+  (let ((n (length lst)))
+    (let ((va (make-alien (* size-t) n)))
+      (loop for i below n do (setf (deref va n) (pop lst)))
+      va)))
+
+(defun clone-octet-vector-list* (lst)
+  "Like CLONE-OCTET-VECTOR-LIST but also returns a second value containing an
+alien (* size-t) with same size as the first value."
+  (values (clone-octet-vector-list lst) (clone-integer-list (mapcar 'length lst))))
+
 (defun octets-to-alien (lispa)
   (let ((a (make-alien (unsigned 8) (length lispa))))
     (clone-octets-to-alien lispa a)))
