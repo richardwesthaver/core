@@ -6,7 +6,8 @@
 (defpkg :bin/skel
   (:use :cl :std :cli :cli/clap/obj
    :vc :sb-ext :skel :log :cli/clap/util
-   :obj/ast #+(and tools gui) :skel/tools/viz)
+   :obj/ast #+(and tools gui) :skel/tools/viz
+   :db :rdb :schema :config :build)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl :cli/prompt))
 
@@ -106,4 +107,5 @@
   (with-cli ((package-cli :bin/skel) :args (cli:args))
     (do-opts *cli*)
     (init-skel)
+    (setq *db* (make-db :skel))
     (do-cmd *cli*)))

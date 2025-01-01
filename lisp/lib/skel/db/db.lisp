@@ -5,17 +5,23 @@
 ;;; Code:
 (in-package :skel/db)
 
-(defvar *skel-db-path* (merge-pathnames "db/" *skel-store*))
+(defun skel-db-path () (merge-pathnames "db/" *skel-store*))
 
 (defun skel-db-spec (path &optional (backend :rdb))
   "Return a list which can be safely stored in the SPEC slot of a STORE."
-  (list backend (directory-path (merge-pathnames path *skel-db-path*))))
+  (list backend (directory-path (merge-pathnames path (skel-db-path)))))
 
 (defvar *default-skel-db-spec* (skel-db-spec "default"))
 
 (defclass skel-db (rdb-database) ()
   (:default-initargs
    :db (make-db :rocksdb :name "skel-db" :opts (default-rdb-opts))))
+
+(defmethod make-db ((engine (eql :skel)) &rest initargs &key (path (skel-db-path)) &allow-other-keys)
+  (let ((name (or (getf initargs :name) (namestring path)))
+        (db (apply 'make-instance 'skel-db (remf initargs :path))))
+    (when name (setf (name db) name))
+    db))
 
 (defmethod name ((self skel-db)) (rdb-name (db self)))
 

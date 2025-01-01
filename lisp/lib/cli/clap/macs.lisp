@@ -44,19 +44,20 @@ evaluation of BODY."
        #+nil (.ris)))
 
 (defmacro defcmd (name opt-list &body body)
-  "Bind NAME to a functions which accepts two lists as arguments - ARGS
-containing a list of strings parsed at the CLI and OPTS containg a list of
-CLI-OPTs. The following special variables are bound for the duration of BODY:
-
-- *ARGC* : the count of arguments passed to this command
-- *ARGS* : the actual list of args
-- *OPTC* : the count of options passed to this command
-- *OPTS* : the actual list of options
+  "Bind NAME to a functions which accepts an OPT-LIST containing names of
+CLI-OPTS.
 
 OPT-LIST is a list which automatically selects and binds the values of parsed
 CLI-OPTs to a name via SYMBOL-MACROLET. The forms accepted are the same as the
 SLOTS args to WITH-SLOTS - the CAR is used as the name of the local symbol
-binding and the CDR is the actual name of the CLI-OPT."
+binding and the CDR is the actual name of the CLI-OPT.
+
+The following special variables are bound for the duration of BODY:
+
+- *ARGC* : the count of arguments passed to this command
+- *ARGS* : the actual list of args
+- *OPTC* : the count of options passed to this command
+- *OPTS* : the actual list of options"
   `(defun ,name (args opts)
      (declare (ignorable args opts)
               (sequence args opts))
