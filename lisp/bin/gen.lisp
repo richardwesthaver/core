@@ -48,4 +48,3 @@
   (with-cli (*gen-cli* :args (cli:args))
     (do-opts *cli*)
     (do-cmd *cli*)))
-

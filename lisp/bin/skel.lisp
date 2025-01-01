@@ -53,6 +53,11 @@
           while x
           do (println x)))))
 
+(defcmd skc-vc* ()
+  (with-cli (*vc-cli* :args (cdr (cli:args)))
+    (do-opts *cli*)
+    (do-cmd *cli*)))
+
 (defcmd skc-shell ()
   ;; (sb-ext:enable-debugger)
   (trace! "starting skel shell")
@@ -71,8 +76,9 @@
  :cmds
  ((:name vc
   :description "version control"
-  :thunk skc-vc
-  :opts ((:name "root" :description "repository path" :kind directory)))
+  :thunk skc-vc*
+  :opts ((:name "root" :description "repository path" :kind directory)
+         (:name "help" :kind boolean :description "print help for VC subcommands")))
   (:name push
    :description "push the current project upstream"
    :thunk skc-push)

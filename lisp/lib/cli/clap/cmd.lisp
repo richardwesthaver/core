@@ -291,8 +291,10 @@ ARGS is assumed to be a valid cli-ast (list of cli-nodes), unless COMPILE is
 t, in which case a list of strings is assumed. INSTALL always implies COMPILE
 and calls INSTALL-AST on SELF with ARGS."
   (let ((ast (proc-args self args)))
-    (if install (install-ast self ast)
-        ast)))
+    (if install 
+        (install-ast self ast)
+        ast)
+    self))
 
 ;; WARNING: make sure to fill in the opt and cmd slots with values
 ;; from the top-level args before calling a command.
