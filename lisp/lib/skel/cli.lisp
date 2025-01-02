@@ -97,7 +97,7 @@
     ("sys" *skel-system-config*)
     ("cache" (sk-cache *skel-user-config*))))
 
-(defcmd skc-show ()
+(defcmd skc-show (config)
   (if *args*
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
       (cond
@@ -109,22 +109,11 @@
         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
         (t (skel-simple-error "skel not installed")))))
 
-(defopt skc-version (print-version *cli* t))
-(defopt skc-ast (setq ast:*keep-ast* t))
-(defopt skc-level *log-level*
-        (setq *log-level* (if *arg* (if (stringp *arg*)
-                                        (sb-int:keywordicate (string-upcase *arg*))
-                                        *arg*)
-                              :info)))
-
-(defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*)))
+(defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*) nil))
 
 (defcmd skc-edit ()
   (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
-
-(defcmd skc-id ()
-  (println (std:format-sxhash (obj/id:id (find-skelfile #P"." :load t)))))
 
 (defcmd skc-make ()
   (let ((sk *skel-project*))
@@ -163,12 +152,17 @@
   :description "The hackable devtool."
   :thunk skc-show
   :name "skel"
-  :opts ((:name "version" :description "print version" 
-          :thunk skc-version)
-         (:name "ast" :description "save the intermediate skel AST" :thunk skc-ast :kind boolean)
+  :opts ((:name "version" 
+          :description "print version"
+          :kind boolean
+          :thunk version-opt)
+         (:name "ast" :description "save the intermediate skel AST" 
+          :thunk keep-ast-opt :kind boolean)
          (:name "level" :description "set log level (warn,info,debug,trace)"
-          :thunk skc-level)
-         (:name "config" :description "set a custom skel user config" :kind file))
+          :thunk level-opt)
+         (:name "config" :description "set a custom skel user config" 
+          :kind file 
+          :thunk skc-config))
   :cmds ((:name init
           :description "initialize a skelfile in the current directory"
           :opts ((:name "name" :description "project name" :kind string))
@@ -191,9 +185,6 @@
           :description "show project slots"
           :opts ((:name "file" :description "path to skelfile" :kind file))
           :thunk skc-show)
-         (:name id
-          :description "print the project id"
-          :thunk skc-id)
          (:name make
           :description "build project targets"
           :thunk skc-make)

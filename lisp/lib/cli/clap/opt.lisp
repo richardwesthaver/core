@@ -36,13 +36,13 @@
   ;; note that cli-opts can have a nil or unbound name slot
   (name "" :type string)
   (kind 'boolean :type (or symbol list))
-  (thunk 'identity :type symbol)
+  (thunk 'default-thunk :type symbol)
   (val nil)
   (description nil :type (or null string))
   (lock nil :type boolean))
 
-(defmethod cli-name ((self cli-opt))
-  (cli-opt-name self))
+(defaccessor (cli-thunk) ((self cli-opt)) (cli-opt-thunk self))
+(defaccessor (cli-name) ((self cli-opt)) (cli-opt-name self))
 
 (defmethod activate-opt ((self cli-opt))
   (setf (cli-opt-lock self) t))
@@ -95,12 +95,14 @@
             (cli-opt-val self))))
 
 (defmethod print-usage ((self cli-opt) &optional stream)
-  (format stream "-~(~{~A~^/--~}~)~@[ :value ~A~]~24t~@[~A~]"
+  (format stream "-~(~{~A~^/--~}~)~@[ :value ~A~]~24t~@[~A~]~@[~%~4t:doc ~A~]"
           (let ((n (cli-opt-name self)))
             (declare (simple-string n))
             (list (make-shorty n) n))
           (and (slot-boundp self 'val) (cli-opt-val self))
-          (and (slot-boundp self 'description) (cli-opt-description self))))
+          (and (slot-boundp self 'description) (cli-opt-description self))
+          (when (fboundp (cli-thunk self))
+            (documentation (symbol-function (cli-thunk self)) 'function))))
 
 (defmethod cli-equal ((a cli-opt) (b cli-opt))
   (with-slots (name kind) a
@@ -119,28 +121,40 @@
   (loop for opt across self
         do (do-opt opt)))
 
-(defmethod find-opt ((name string) (self list) &key active default)
-  (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
-    (if active
-        (when (cli-lock-p found)
-          found)
-        found)
-    default))
+(defmethods find-opt 
+  (((name string) (self list) &key active default)
+   (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
+     (if active
+         (when (cli-lock-p found)
+           found)
+         found)
+     default))
+  (((name string) (self vector) &key active default)
+   (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
+     (if active
+         (when (cli-lock-p found)
+           found)
+         found)
+     default)))
 
-(defmethod find-opt ((name string) (self vector) &key active default)
-  (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
-    (if active
-        (when (cli-lock-p found)
-          found)
-        found)
-    default))
-
-(defun getopt (name &optional (default (clap-unknown-argument name 'opt))  (opts *opts*))
+(defun getopt (name &optional (default :error) opts)
   "Retrieve a CLI-OPT-VAL by name from a vector of CLI-OPTs."
-  (cli-opt-val (find-opt (string-downcase name) opts :default default)))
+  (let ((opts (or opts *opts* (opts *cli*))))
+    (cli-opt-val (find-opt 
+                  (string-downcase name) opts 
+                  :default (if (eql default :error)
+                               (clap-unknown-argument name 'opt)
+                               default)))))
 
-(defun setopt (name val &optional (default (clap-unknown-argument name 'opt)) (opts *opts*))
-    (setf (cli-opt-val (find-opt (string-downcase name) opts :default default)) val))
+(defun setopt (name val &optional (default :error) opts)
+  (let ((opts (or opts *opts* (opts *cli*))))
+    (setf (cli-opt-val 
+           (find-opt 
+            (string-downcase name) opts 
+            :default (if (eql default :error)
+                         (clap-unknown-argument name 'opt)
+                         default)))
+          val)))
 
 (defsetf getopt setopt)
 

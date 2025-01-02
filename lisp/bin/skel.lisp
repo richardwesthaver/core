@@ -7,7 +7,7 @@
   (:use :cl :std :cli :cli/clap/obj
    :vc :sb-ext :skel :log :cli/clap/util
    :obj/ast #+(and tools gui) :skel/tools/viz
-   :db :rdb :schema :config :build)
+   :db :rdb :schema :config :build :packy :krypt)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl :cli/prompt))
 
@@ -59,8 +59,18 @@
     (do-opts *cli*)
     (do-cmd *cli*)))
 
-(defcmd skc-shell ()
-  ;; (sb-ext:enable-debugger)
+(defcmd skc-pk* ()
+  (with-cli (*packy-cli* :args (cdr (cli:args)))
+    (do-opts *cli*)
+    (do-cmd *cli*)))
+
+(defcmd skc-kr* ()
+  (with-cli (*krypt-cli* :args (cdr (cli:args)))
+    (do-opts *cli*)
+    (blake3::load-blake3)
+    (do-cmd *cli*)))
+
+(defun sk-shell ()
   (trace! "starting skel shell")
   (setq *no-exit* t)
   (cli/clap::with-cli-handlers
@@ -72,14 +82,22 @@
       (println "Welcome to SKEL")
       (sb-impl::toplevel-repl nil))))
 
+(defcmd skc-shell () (sk-shell))
+
 (load-package-cli 
  :skel
+ :opts ((:name "interactive" 
+         :description "enter the lisp image after running commands"))
  :cmds
  ((:name vc
-  :description "version control"
-  :thunk skc-vc*
-  :opts ((:name "root" :description "repository path" :kind directory)
-         (:name "help" :kind boolean :description "print help for VC subcommands")))
+   :description "version control"
+   :thunk skc-vc*)
+  (:name pk
+   :description "packages"
+   :thunk skc-pk*)
+  (:name kr
+   :description "cryptography"
+   :thunk skc-kr*)
   (:name push
    :description "push the current project upstream"
    :thunk skc-push)
@@ -108,4 +126,6 @@
     (do-opts *cli*)
     (init-skel)
     (setq *db* (make-db :skel))
-    (do-cmd *cli*)))
+    (do-cmd *cli*)
+    (when (getopt "interactive" nil) 
+      (sk-shell))))

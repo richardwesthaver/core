@@ -13,7 +13,7 @@
 (defpackage :cli/clap/util
   (:use :cl :std :log :sb-ext :cli/clap/vars)
   (:export :args :arg0 :long-opt-p
-   :short-opt-p :opt-group-p :opt-string-prefix-eq :cli-opt-kind-p
+   :short-opt-p :group-opt-p :opt-string-prefix-eq :cli-opt-kind-p
    :default-thunk
    :long-opt-has-eq-p
    :opt-keyword-p
@@ -81,7 +81,8 @@
    :add-package-opts
    :help-opt
    :version-opt
-   :level-opt))
+   :level-opt
+   :keep-ast-opt))
 
 (defpackage :cli/clap/simple
   (:use :cl :std :log :sb-ext)

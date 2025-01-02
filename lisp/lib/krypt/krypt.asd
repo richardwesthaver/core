@@ -5,7 +5,8 @@
   :serial t
   :components ((:file "pkg")
                (:file "condition")
-               (:file "krypt"))
+               (:file "krypt")
+               (:file "cli"))
   :in-order-to ((test-op (test-op :krypt/tests))))
 
 (defsystem :krypt/tests

@@ -9,7 +9,7 @@
 (defun args () (cdr sb-ext:*posix-argv*))
 
 (declaim (inline long-opt-p long-opt-has-eq-p
-                 short-opt-p opt-group-p
+                 short-opt-p group-opt-p
                  opt-string-prefix-eq))
 
 (defun long-opt-p (str)
@@ -34,12 +34,19 @@ indicating a key/val pair without whitespace."
 (defun short-opt-p (str)
   (declare (simple-string str))
   (and (char= (aref str 0) #\-)
-       (> (length str) 1)
+       (= (length str) 2)
        (not (char= (aref str 1) #\-))))
 
-(defun opt-group-p (str)
+(defun group-opt-p (str)
   (declare (simple-string str))
   (equalp str *cli-group-separator*))
+
+(defun multi-short-opt-p (str)
+  "Return non-nil if STR is a multi-short-opt - prefixed with a single '-' but
+containing multiple characters."
+  (declare (simple-string str))
+  (and (char= (aref str 0) #\-)
+       (not (char= (aref str 1) #\-))))
 
 (defun opt-keyword-p (str)
   (declare (simple-string str))
@@ -49,6 +56,7 @@ indicating a key/val pair without whitespace."
   (char= ch (aref str 0)))
 
 ;; currently not in use
+#+nil
 (defun gen-thunk-ll (origin args)
   (let ((a0 (list (symbolicate '$a 0) origin)))
     (group 

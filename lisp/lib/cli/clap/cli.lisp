@@ -26,6 +26,16 @@
   (print-version *cli*)
   (exit :code 0))
 
+(defopt keep-ast-opt
+  "Set the *KEEP-AST* variable."
+  (setq ast:*keep-ast* t))
+
+(defopt level-opt
+  "Set the *LOG-LEVEL* for this CLI session."
+  (if *arg*
+      (setq *log-level* (sb-int:keywordicate (string-upcase *arg*)))
+      *log-level*))
+
 (defopt level-opt
   (setq *log-level* (if *arg* 
                         (if (stringp *arg*)
@@ -33,7 +43,7 @@
                             *arg*)
                         *log-level*)))
 
-(defmacro define-cli (sym &key name version help description thunk opts cmds include)
+(defmacro define-cli (sym &key name version help description thunk opts cmds)
   "Define a symbol SYM bound to a top-level CLI object.
 
 NAME is assigned to the CLI and assumed to be the default binary name which
@@ -46,10 +56,7 @@ When HELP is non-nil, auto-generate a '--help' CLI-OPT and assign it to this
 object.
 
 OPTS and CMDS are lists of forms which are passed directly to MAKE-CLI :OPT
-and MAKE-CLI :CMD respectively.
-
-INCLUDE is similar to the DEFSTRUCT keyword of the same name and specifies
-that some or all of the slots of a CLI object should be inherited by this one."
+and MAKE-CLI :CMD respectively."
   (with-gensyms (%name %class %opts)
     (if (atom sym)
         (setq %name sym
@@ -64,7 +71,6 @@ that some or all of the slots of a CLI object should be inherited by this one."
                    :thunk cli/clap/obj::help-opt))
                 opts))
               (make-opts opts)))
-    ;; TODO (when include 
     `(,*default-cli-def* ,%name (make-cli ,%class :name ,name
                                                   :version ,version
                                                   :description ,description
@@ -130,12 +136,12 @@ that some or all of the slots of a CLI object should be inherited by this one."
   (with-slots (opts cmds) self
     (unless (null opts)
       (loop for o across opts
-            do (iprintln (print-usage o nil) 2 stream)))
+            do (iprintln (with-output-to-string (s) (print-usage o s)) 2 stream)))
     (terpri stream)
     (println "commands:" stream)
     (unless (null cmds)
       (loop for c across cmds
-            do (iprintln (print-usage c nil) 2 stream)))))
+            do (iprintln (with-output-to-string (s) (print-usage c s)) 2 stream)))))
 
 (defmethod cli-equal :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.

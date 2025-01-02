@@ -23,16 +23,24 @@
                  :path file
                  :pretty t))
 
-(defun load-user-skelrc (&optional (file *user-skelrc*))
+(defun load-user-skelrc (&optional (file *user-skelrc*) (init t))
   "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
 
 If FILE does not exists, it is created with a default configuration."
-  (if-let ((f (probe-file file)))
-    (setq *skel-user-config* (load-ast 
-                              (make-instance 'sk-user-config 
-                                :ast #1=(file-read-forms f) :id (sxhash #1#)
-                                :path f)))
-    (init-user-skelrc)))
+  (flet ((%load () 
+           (setq *skel-user-config* 
+                 (load-ast 
+                  (make-instance 'sk-user-config 
+                    :ast #1=(file-read-forms file) 
+                    :id (sxhash #1#)
+                    :path file)))))
+    (if (not init)
+        (progn 
+          (assert (probe-file file))
+          (%load))
+        (if (probe-file file)
+            (%load)
+            (init-user-skelrc file)))))
 
 (defun load-system-skelrc (&optional (file *system-skelrc*) auto)
   "Load a skelrc configuration from FILE. Defaults to /etc/skel/skelrc.

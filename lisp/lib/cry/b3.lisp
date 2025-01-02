@@ -24,8 +24,11 @@ string instead of octets."
         (octet-vector-to-hex-string hash)
         hash)))
   
-(defun b3sum (path) 
+(defun b3sum (path &key (hex t))
   (with-open-file (f path :element-type 'octet)
     (let ((out (make-octets (file-length f))))
       (read-sequence out f)
-      (b3hash out))))
+      (let ((hash (b3hash out)))
+        (if hex
+            (octet-vector-to-hex-string hash)
+            hash)))))

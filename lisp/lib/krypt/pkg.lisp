@@ -20,5 +20,7 @@
            :krypt-error :simple-krypt-error
            :init-krypt
            :*krypt-directory*
-           :*krypt-user-config*))
+           :*krypt-user-config*
+           :*krypt-cli*
+           :b3-cmd))
 

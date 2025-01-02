@@ -40,7 +40,7 @@
   :help t
   :opts ((:name "output" :kind file)
          (:name "syntax" :kind string :default "c" :thunk gen-syntax-opt)
-         (:name "level"))
+         (:name "level" :thunk level-opt))
   :cmds ((:name "print" :description "Read GEN-C S expressions from a file or string." :thunk gen-print-cmd))
   :thunk gen-cmd)
 

@@ -22,11 +22,10 @@ evaluation of BODY."
          (sb-ext:enable-debugger)
          (sb-ext:disable-debugger))
      (unwind-protect
-          (restart-case
-              (progn ,@body)
-            (sb-sys:interactive-interrupt ()
-              (println ":SIGINT")
-              (sb-ext:exit :code 130))
+          (restart-case 
+              (handler-case (progn ,@body)
+                (sb-sys:interactive-interrupt ()
+                  (sb-ext:exit :code 130)))
             (abort ()
               :report (lambda (s)
                         (write-string
@@ -37,7 +36,7 @@ evaluation of BODY."
             (exit ()
               :report "Exit SBCL (calling #'EXIT, killing the process)."
               ;; :test (lambda (c) (declare (ignore c)) t)
-              (log:debug! "falling through to EXIT from pre-REPL RESTART-CASE")
+              (log:debug! "falling through to EXIT from pre-REPL RESTART-CASE~&")
               (exit :code 1))))
      (sb-impl::flush-standard-output-streams)
        ;; reset terminal state
@@ -58,33 +57,40 @@ The following special variables are bound for the duration of BODY:
 - *ARGS* : the actual list of args
 - *OPTC* : the count of options passed to this command
 - *OPTS* : the actual list of options"
-  `(defun ,name (args opts)
-     (declare (ignorable args opts)
-              (sequence args opts))
-     (let ((*argc* (length args))
-           (*optc* (length opts))
-           (*args* args)
-           (*opts* opts))
-       (symbol-macrolet
-           ,(mapcar (lambda (x)
-                      (unless (typep x
-                                     '(or symbol
-                                       (cons symbol (cons symbol null))))
-                        (error "Malformed CLI-OPT binding: ~s, should either a symbol or (variable-name opt-name)" x))
-                      (destructuring-bind (name &optional (opt-name name)) (ensure-list x)
-                        `(,name
-                          (when-let ((val (find ,(string-downcase opt-name) *opts* 
-                                                :test 'equal
-                                                :key 'cli/clap/obj:cli-opt-name)))
-                            (cli-opt-val val)))))
-             opt-list)
-       ,@body))))
+  (multiple-value-bind (body decl doc-string) (parse-body body :documentation t)
+    `(defun ,name (args opts)
+       ,(let ((%d '(ignorable args opts)))
+          (if decl 
+              (append decl (list %d))
+              `(declare ,%d)))
+       ,doc-string
+       (let ((*argc* (length args))
+             (*optc* (length opts))
+             (*args* args)
+             (*opts* opts))
+         (symbol-macrolet
+             ,(mapcar (lambda (x)
+                        (unless (typep x
+                                       '(or symbol
+                                         (cons symbol (cons symbol null))))
+                          (error "Malformed CLI-OPT binding: ~s, should either a symbol or (variable-name opt-name)" x))
+                        (destructuring-bind (name &optional (opt-name name)) (ensure-list x)
+                          `(,name
+                            (when-let ((val (find ,(string-downcase opt-name) *opts* 
+                                                  :test 'equal
+                                                  :key 'cli/clap/obj:cli-opt-name)))
+                              (cli-opt-val val)))))
+               opt-list)
+           ,@body)))))
 
 (defmacro defopt (name &body body)
   (multiple-value-bind (body decl doc-string) (parse-body body :documentation t)
     `(defun ,name (&optional arg)
-       ,doc-string
-       ,decl
+       ,(let ((%d '(ignorable arg)))
+          (if decl 
+              (append decl (list %d))
+              `(declare ,%d)))
+       ,@(when doc-string (list doc-string))
        (let ((*arg* arg))
          ,@body))))
 
@@ -106,6 +112,6 @@ is a list of handlers for the opt-val."
          "Parse the cli-opt-val *ARG*."
          (declare (ignorable arg))
          ,@(if fn1
-               `((setf *arg* (print (funcall #',fn1 arg))))
+               `((setf *arg* (funcall #',fn1 arg)))
                `((setf *arg* arg)))
          ,@body)))))

@@ -55,14 +55,19 @@ a CLI is called without arguments, and all subcommands."))
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
-    (format stream "~(~A~)~:[~;*~]~@[~24t~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]"
+    (format stream "~(~A~)~:[~;*~]~@[~24t~A~]~:[~;~%~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]"
             (cli-name self)
             (equal (string (cli-thunk *cli*)) (string (cli-thunk self)))
             (and (slot-boundp self 'description) (cli-description self))
+            (when (fboundp (cli-thunk self))
+              (when-let ((doc (documentation 
+                               (symbol-function (cli-thunk self)) 
+                               'function)))
+                (format stream "~& :doc ~A" doc)))
             (unless (null opts)
-              (loop for o across opts collect (print-usage o nil)))
+              (loop for o across opts collect (with-output-to-string (s) (print-usage o s))))
             (unless (null cmds)
-              (loop for c across cmds collect (print-usage c nil))))))
+              (loop for c across cmds collect (with-output-to-string (s) (print-usage c s)))))))
 
 (defmethod push-cmd ((self cli-cmd) (place cli-cmd))
   (vector-push self (cmds place)))
@@ -114,7 +119,7 @@ a CLI is called without arguments, and all subcommands."))
   (setf (cli-lock-p self) t)
   self)
 
-(defmethod find-opts (name (self cli-cmd) &key active recurse)
+(defmethod find-opts ((name string) (self cli-cmd) &key active recurse)
   (let ((ret))
     (flet ((%find (o obj)
              (when-let ((found (find o (opts obj) :key #'cli-opt-name :test 'equal)))
@@ -127,7 +132,7 @@ a CLI is called without arguments, and all subcommands."))
         (setf ret (remove-if-not #'cli-lock-p ret)))
       ret)))
 
-(defmethod find-opt (name (self cli-cmd) &key active default)
+(defmethod find-opt ((name string) (self cli-cmd) &key active default)
   (if-let ((ret (find name (opts self) :key 'cli-opt-name :test 'equal)))
     (if active
         (when (cli-opt-lock ret) ret)
@@ -137,7 +142,7 @@ a CLI is called without arguments, and all subcommands."))
 (defun cli-name= (a b)
   (equal (cli-name a) (cli-name b)))
 
-(defmethod (setf find-opt) ((new cli-opt) name (self cli-cmd))
+(defmethod (setf find-opt) ((new cli-opt) (name string) (self cli-cmd))
   (let ((match (find-opt name self)))
     (activate-opt new)
     (setf (opts self)
@@ -192,6 +197,8 @@ an object."
       else if exit
       do (loop-finish)
       else if (short-opt-p a) ;; SHORT OPT
+      
+      ;; TODO 2025-01-01: handle opt-group-p
       collect
          (let* ((has-eq (short-opt-has-eq-p a))
                 (names (or (car has-eq) (string-left-trim "-" a)))
@@ -212,9 +219,13 @@ an object."
              ((and (not has-eq) opts)
               (loop for o in opts
                     collect (%compose-flag-opt o)))
-             (t
-              (with-opt-restart-case a
-                (clap-unknown-argument a 'cli-opt)))))
+             (t ;; if nothing else, we usually want to pass it as an arg, but
+                ;; it may also be useful to enable the debugger and handle
+                ;; with restarts.
+              (sb-ext:enable-debugger)
+              ;; (with-opt-restart-case a
+              ;; (clap-unknown-argument a 'cli-opt))
+              a)))
       else if (long-opt-p a) ;; LONG OPT
       collect           
          (let* ((has-eq (long-opt-has-eq-p a))
@@ -233,7 +244,7 @@ an object."
               (with-opt-restart-case a
                 (clap-unknown-argument a 'cli-opt)))))
       ;; OPT GROUP
-      else if (opt-group-p a)
+      else if (group-opt-p a)
       collect 
          (make-cli-node 'group nil)
       ;; OPT KEYWORD (experimental)
