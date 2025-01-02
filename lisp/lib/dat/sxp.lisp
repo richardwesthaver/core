@@ -6,9 +6,6 @@
 (in-package :dat/sxp)
 
 ;;; Conditions
-(define-condition sxp-error (error) ())
-
-(define-condition sxp-syntax-error (sxp-error) ())
 
  ;;; Protocol
 (defgeneric sxpp (self form))

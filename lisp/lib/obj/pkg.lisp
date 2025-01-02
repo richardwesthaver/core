@@ -351,7 +351,10 @@
            :val
            :debug-traverser
            :copy-traverser
-           :*keep-ast*))
+           :*keep-ast*
+           :syntax-error
+           :syntax-warning
+           :syntax-condition))
 
 (defpackage :obj/config
   (:nicknames :config)

@@ -23,6 +23,11 @@
 ;;; Code:
 (in-package :obj/ast)
 
+(define-condition syntax-condition () ((ast :initarg :ast :initform nil :accessor ast)))
+
+(deferror syntax-error (syntax-condition error) ())
+(defwarning syntax-warning (syntax-condition warning) ())
+
 (defvar *ast* nil)
 
 (defvar *keep-ast* nil

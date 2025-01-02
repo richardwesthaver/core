@@ -12,7 +12,6 @@
   (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:export
    :sxp-fmt-designator
-   :sxp-error :sxp-syntax-error
    :sxpp
    :read-sxp-file :write-sxp-file
    :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream

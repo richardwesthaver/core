@@ -8,7 +8,7 @@
 
 (eval-always
   (deferror skel-error (error skel-condition) ())
-  (deferror skel-syntax-error (sxp-syntax-error skel-error) ())
+  (deferror skel-syntax-error (syntax-error skel-error) ())
   (deferror skel-io-error (skel-error) () (:auto t))
   (deferror skel-compile-error (skel-error) () (:auto t))
   (deferror skel-simple-error (simple-error skel-error) ()))
