@@ -12,6 +12,8 @@
 
 (defparameter *sbcl* (or sb-ext:*runtime-pathname* (find-exe "sbcl")))
 
+(when *sbcl* (pushnew :sbcl *cli-tools*))
+
 ;; ref: section 3.3.1 of the manual
 (defvar *sbcl-runtime-options*
   '(help version core dynamic-space-size control-stack-size tls-limit

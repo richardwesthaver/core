@@ -9,17 +9,7 @@
 ;;; Code:
 (in-package :cli/tools/pacman)
 
-(deferror pacman-error (simple-error error) () (:auto t))
-
-(defparameter *pacman* (find-exe "pacman"))
-(defvar *pacman-output* t)
-
-(defun run-pacman (&rest args)
-  (let ((proc (sb-ext:run-program *pacman* (or args nil) :output *pacman-output*)))
-    (with-open-stream (s (sb-ext:process-output proc))
-      (loop for l = (read-line s nil nil)
-            while l
-            do (write-line l)))
-    (if (eq 0 (sb-ext:process-exit-code proc))
-        nil
-        (pacman-error "Pacman command failed: ~A ~A" *pacman* (sb-ext:process-error proc)))))
+(define-cli-tool :pacman (&rest args)
+  (let ((proc (sb-ext:run-program *pacman* (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (pacman-error "Pacman command failed: ~A ~A" *pacman* (sb-ext:process-error proc)))))

@@ -110,6 +110,12 @@
       (and (equal name bn)
            (equal kind bk)))))
 
+(defmethod cli-equal ((a t) (b cli-opt))
+  (equalp (cli-opt-val b) a))
+
+(defmethod cli-equal ((a cli-opt) (b t))
+  (equalp (cli-opt-val a) b))
+
 (defmethod call-opt ((self cli-opt) arg)
   (funcall (cli-opt-thunk self) arg))
 

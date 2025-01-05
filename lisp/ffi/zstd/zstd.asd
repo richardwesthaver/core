@@ -11,7 +11,8 @@
                                       :package :zstd)
                (:file "simple")
                (:file "stream")
-               (:file "dict"))
+               (:file "dict")
+               (:file "util"))
   :in-order-to ((test-op (test-op :zstd/tests))))
 
 (defsystem :zstd/tests

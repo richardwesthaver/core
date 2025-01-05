@@ -3,19 +3,6 @@
 ;;
 
 ;;; Code: 
-#+dbg 
-(pkg:defpkg :gui/clim/dbg 
-  (:use :cl :std :gui/clim) 
-  (:use-reexport :clim-debugger)
-  (:export 
-   :clouseau-inspect
-   :install-clim-debugger))
-#+repl 
-(pkg:defpkg :gui/clim/repl 
-  (:use :cl :std :gui/clim :cli/repl) 
-  (:use-reexport :clim-listener)
-  (:export :run-clim-listener))
-
 (pkg:defpkg :gui/clim/layout 
   (:use :cl :std :gui/clim) 
   (:use-reexport :clim-tab-layout))
@@ -31,4 +18,19 @@
    :clear-output-record :output-record-position :with-output-recording-options :dispatch-repaint
    :define-presentation-to-command-translator))
    
+#+dbg 
+(pkg:defpkg :gui/clim/dbg 
+  (:use :cl :std :gui/clim :gui/clim/frame)
+  (:import-from :clim-debugger :clim-debugger :the-condition :returned-restart :backtrace :condition-info :shown-frames :inspectable :change-space-requirements :frame-panes :active-frame :*pointer-documentation-output* :frame-exit :stack-frame :frame-no :+minimized-stack-frame-view+ :view :+maximized-stack-frame-view+ :frame-current-layout)
+  (:use-reexport :clim-debugger)
+  (:export 
+   :clouseau-inspect
+   :install-clim-debugger))
+
+#+repl 
+(pkg:defpkg :gui/clim/repl 
+  (:use :cl :std :gui/clim :cli/repl) 
+  (:use-reexport :clim-listener)
+  (:export :run-clim-listener))
+
 (in-package :gui/clim)

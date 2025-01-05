@@ -19,7 +19,7 @@
 ;;; Code:
 (in-package :cli/tools/tmux)
 
-(deferror simple-tmux-error (simple-error) () (:auto t))
+(deferror tmux-error (simple-error) () (:auto t))
 
 (defparameter *tmux-user-config-path* (merge-pathnames ".tmux.conf" (user-homedir-pathname)))
 (defparameter *tmux-system-config-path* (merge-pathnames "tmux.conf" "/etc/"))
@@ -30,18 +30,13 @@
 (defparameter *default-tmux-socket* (merge-pathnames "default" *default-tmux-tmpdir*))
 
 ;;; Utils
-(defun run-tmux (&rest args)
-  (let ((proc (sb-ext:run-program *tmux* (or args nil) :output :stream)))
-    (with-open-stream (s (sb-ext:process-output proc))
-      (loop for l = (read-line s nil nil)
-            while l
-            do (write-line l)))
-    (if (eq 0 (sb-ext:process-exit-code proc))
-        nil
-        (simple-tmux-error "tmux command failed: ~A ~A" args))))
+(define-cli-tool :tmux (&rest args)
+  (let ((proc (sb-ext:run-program *tmux* (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (tmux-error "tmux command failed: ~A ~A" args))))
 
 (defun spawn-tmux (&rest args)
-  (run-terminal (append (list "-e" "tmux") args)))
+  (run-term (append (list "-e" "tmux") args)))
 
 ;;; Session > Window > Pane
 (defstruct tmux-session

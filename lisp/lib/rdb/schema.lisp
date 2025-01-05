@@ -8,6 +8,8 @@
 (defclass rdb-schema (schema) ()
   (:default-initargs :fields (make-fields :default '(octet-vector . octet-vector))))
 
+(defclass rdb-object-schema (object-schema) ())
+
 ;; Note that we don't use SIMPLE-CONS-COLUMN here because the NAME slot of
 ;; columns is stored in the underlying RDB-CF structure object.
 (defclass rdb-column (cons-column) ()

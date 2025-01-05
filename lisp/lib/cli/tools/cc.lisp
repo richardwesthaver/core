@@ -9,9 +9,12 @@
 ;;; Code:
 (in-package :cli/tools/cc)
 
-(deferror cc-error (simple-error) () (:auto t))
+(define-cli-tool :cc (&rest args)
+  (let ((proc (sb-ext:run-program *cc* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (cc-error "CC command failed: ~A ~A" *cc* (or args "")))))
 
-(defparameter *cc* (find-exe "cc"))
+(deferror ld-error (simple-error) () (:auto t))
 
 (defparameter *ld*
   (or
@@ -20,14 +23,7 @@
    #+windows (find-exe "lld-link")
    (find-exe "ld")))
 
-(defun run-cc (&rest args)
-  (let ((proc (sb-ext:run-program *cc* args :wait t :output :stream)))
-    (with-open-stream (s (sb-ext:process-output proc))
-      (loop for l = (read-line s nil nil)
-            while l
-            do (write-line l)))
-    (unless (eq 0 (sb-ext:process-exit-code proc))
-      (cc-error "CC command failed: ~A ~A" *cc* (or args "")))))
+(when *ld* (pushnew :ld *cli-tools*))
 
 (defun run-ld (&rest args)
   (let ((proc (sb-ext:run-program *ld* (or args nil) :output :stream)))
@@ -37,12 +33,10 @@
             do (write-line l)))
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
-        (cc-error "LD command failed: ~A ~A" *ld* (or args "")))))
+        (ld-error "LD command failed: ~A ~A" *ld* (or args "")))))
 
 ;;; NVCC
-(deferror nvcc-error (simple-error) () (:auto t))
-(defparameter *nvcc* (find-exe "nvcc"))
-(defun run-nvcc (&rest args)
+(define-cli-tool :nvcc (&rest args)
   (let ((proc (sb-ext:run-program *nvcc* (or args nil) :output t)))
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil

@@ -50,7 +50,7 @@
    :open-sst :finish-sst
    :destroy-sst :sst-file-size
    ;; obj
-   :rdb :make-rdb :create-db
+   :rdb :make-rdb :create-rdb
    :rdb-sap :rdb-name :rdb-cfs :rdb-opts
    :rdb-cf-metadata :make-rdb-cf-metadata
    :rdb-cf-metadata-name :rdb-cf-metadata-size
@@ -147,7 +147,9 @@
    :rdb-config
    :rdb-checkpoint
    :open-checkpoint-db
-   :close-checkpoint-db))
+   :close-checkpoint-db
+   :rdb-object-schema
+   :rdb-data-source))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

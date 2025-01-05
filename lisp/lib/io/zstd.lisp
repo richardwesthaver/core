@@ -151,7 +151,8 @@
                                             (output-size (zstd-dstreamoutsize)))
   (setf (input-size self) input-size
         (output-size self) output-size)
-  (log:info! (zstd-initdstream (dstream self))))
+  ;; returns recommended 
+  (zstd-initdstream (dstream self)))
 
 (defmethod close ((stream zstd-decompressing-stream) &key &allow-other-keys)
   (sb-alien:free-alien (input stream))

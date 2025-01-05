@@ -70,32 +70,9 @@
 (defcmd skc-save ()
   (call-with-args :save *args*))
 
-(defun sk-slot-case (sel)
-  (std/string:string-case ((string-left-trim ":" sel) :default (skel-simple-error "invalid slot"))
-    ("id" (std:format-sxhash (obj/id:id *skel-project*)))
-    ("name" (name *skel-project*))
-    ("author" (sk-author *skel-project*))
-    ("version" (sk-version *skel-project*))
-    ("description" (sk-description *skel-project*))
-    ("tags" (format nil "~{~A~^ ~}" (sk-tags *skel-project*)))
-    ("license" (sk-license *skel-project*))
-    ("vc" (sk-vc *skel-project*))
-    ("components" (sk-components *skel-project*))
-    ("scripts" (sk-scripts *skel-project*))
-    ("rules" (sk-rules *skel-project*))
-    ("phases" (hash-table-alist (sk-phases *skel-project*)))
-    ("bind" (sk-bind *skel-project*))
-    ("include" (sk-include *skel-project*))
-    ("stash" (sk-stash *skel-project*))
-    ("store" (sk-store *skel-project*))
-    ("ast" (ast:ast *skel-project*))
-    ("config" *skel-user-config*)
-    ("sys" *skel-system-config*)
-    ("cache" (sk-cache *skel-user-config*))))
-
 (defcmd skc-show ()
   (if *args*
-      (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
+      (mapc (lambda (x) (when-let ((ret (sk-project-slot (string-left-trim ":" x) nil))) (println ret))) *args*)
       (cond
         ((boundp '*skel-project*)
          (sk-print *skel-project* :exclude (if ast:*keep-ast* 
@@ -111,6 +88,9 @@
       (dolist (a *args*)
         (string-case ((subseq a 0 3))
           ("pro" (list-all-projects))))))
+
+(defcmd skc-id ()
+  (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
 
 (defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*) nil))
 
@@ -162,31 +142,6 @@
 
 (defcmd skc-shell () (sk-shell))
 
-;; The following commands ONLY read from the skelfile.
-(defcmd skc-push ()
-  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "push" *args* t))
-    (:hg (run-hg-command "push" *args* t))
-    (t (skel-simple-error "unknown VC type"))))
-
-(defcmd skc-pull ()
-  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "pull" *args* t))
-    (:hg (run-hg-command "pull" (append '("-u") *args*) t))
-    (t (skel-simple-error "unknown VC type"))))
-
-(defcmd skc-clone ()
-  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "clone" *args* t))
-    (:hg (run-hg-command "clone" *args* t))
-    (t (skel-simple-error "unknown VC type"))))
-
-(defcmd skc-commit ()
-  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
-    (:git (run-git-command "commit" (list "-m" (clap:getopt :message)) t))
-    (:hg (run-hg-command "commit" (list "-m" (clap:getopt :message)) t))
-    (t (skel-simple-error "unknown VC type"))))
-
 (define-cli *skel-cli*
   :help t
   :version (format nil "0.1.1:~A" 
@@ -211,6 +166,9 @@
     :description "initialize a skelfile in the current directory"
     :opts ((:name "name" :description "project name" :kind string))
     :thunk skc-init)
+   (:name id
+    :description "print the current project id"
+    :thunk skc-id)
    (:name inspect
     :description "inspect the project skelfile"
     :opts ((:name "file" :description "path to skelfile" :kind file))
@@ -280,19 +238,6 @@
    (:name status
     :description "print the project status"
     :thunk skc-status)
-   (:name push
-    :description "push the current project upstream"
-    :thunk skc-push)
-   (:name pull
-    :description "pull the current project from remote"
-    :thunk skc-pull)
-   (:name clone
-    :description "clone a remote project"
-    :thunk skc-clone)
-   (:name commit
-    :description "commit changes to the project vc"
-    :thunk skc-commit
-    :opts ((:name "message" :description "commit message" :kind string)))
    (:name shell
     :description "open the sk-shell interpreter"
     :thunk skc-shell)))

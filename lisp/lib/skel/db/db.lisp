@@ -47,4 +47,3 @@
 
 (defclass skel-record (id) ()
   (:metaclass stored-class))
-

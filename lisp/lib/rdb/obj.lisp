@@ -388,7 +388,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
 (defmethod db-closed-p ((self rdb))
   (unless (sap self) t))
 
-(defun create-db (name &key opts schema open)
+(defun create-rdb (name &key opts schema open)
   "Construct a new RDB instance from NAME.
 
 OPTS = rdb-opts

@@ -42,7 +42,8 @@
       (setq options (remove (car fun) options))
       (setq fun (cadar fun)))
     `(prog1
-         (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
+         (eval-when (:compile-toplevel :load-toplevel :execute)
+           (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))
        (when ',fun
          (cond 
            ((or (member 'simple-error ',parent-types)

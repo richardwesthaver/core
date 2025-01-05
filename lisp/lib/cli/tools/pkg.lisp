@@ -10,10 +10,10 @@
 (defpackage :cli/tools/term
   (:use :cl :std :cli/tools/proto :cli/env :config :toml :ast)
   (:export
-   :*terminal* :*alacritty-config-path*
+   :*term* :*alacritty-config-path*
    :alacritty-config :term-config
-   :run-terminal :with-terminal
-   :terminal-error :load-alacritty-config))
+   :run-term :with-term
+   :term-error :load-alacritty-config))
 
 (defpackage :cli/tools/fs
   (:use :cl :std :cli/tools/proto :cli/env)
@@ -104,9 +104,9 @@
 (defpackage :cli/tools/systemd
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*systemctl* :run-systemd :run-systemctl
-           :systemd-error
+   :systemd-error
            :systemctl-stop
-           :systemctl-start))
+   :systemctl-start))
 
 (defpackage :cli/tools/rust
   (:nicknames :tools/rust)
@@ -132,9 +132,25 @@
 
 (in-package :cli/tools/proto)
 
-(defvar *cli-tools* (make-hash-table))
+(defvar *cli-tools* nil)
 
-(defmacro define-cli-tool (name &body body)
-  "Define a new cli tool interface accessible via NAME in the *CLI-TOOLS*
-hash-table."
-  (setf (gethash name *cli-tools*) t))
+(defmacro define-cli-tool (name args &body body)
+  "Define a new cli tool with a NAME-error condition, a *NAME* variable, and a
+run-NAME function.
+
+ARGS and BODY are parsed as the args and body of the run-NAME function."
+  (with-gensyms (var err run)
+    (let ((%name (string name)))
+      (setf 
+       var (symbolicate #\* %name #\*)
+       err (symbolicate %name "-ERROR")
+       run (symbolicate "RUN-" %name))
+      `(progn
+         (defvar ,var 
+           (find-exe ,(etypecase name
+                        (string name)
+                        (symbol (string-downcase %name)))))
+         ,@(when var `((pushnew ,name *cli-tools*)))
+         (deferror ,err (simple-error) () (:auto t))
+         (defun ,run ,args ,@body)))))
+

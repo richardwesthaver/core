@@ -36,11 +36,7 @@
   (make-instance 'firefox-config :ast ast))
 
 ;;; IP
-(deferror simple-ip-error (simple-error) () (:auto t))
-
-(defparameter *ip* (find-exe "ip"))
-
-(defun run-ip (&rest args)
+(define-cli-tool :ip (&rest args)
   (let ((proc (sb-ext:run-program *ip* (or args nil) :output :stream)))
     (with-open-stream (s (sb-ext:process-output proc))
       (loop for l = (read-line s nil nil)
@@ -48,7 +44,7 @@
             do (write-line l)))
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
-        (simple-ip-error "ip command failed: ~A ~A" args))))
+        (ip-error "ip command failed: ~A ~A" args))))
 
 (defun ip-link-add (dev &optional (type "wireguard"))
   (run-ip "link" "add" "dev" dev "type" type))
@@ -78,6 +74,8 @@
 
 (defun run-wg (&rest args)
   (run-wg* args))
+
+(when *wg* (pushnew :wg *cli-tools*))
 
 (defun wg-private-key ()
   (with-output-to-string (s)
@@ -137,6 +135,9 @@
 (defun run-nmap (&rest args)
   (run-nmap* args))
 
+(when *nmap* (pushnew :nmap *cli-tools*))
+  
+
 ;;; YTDL
 ;; ref: https://github.com/yt-dlp/yt-dlp
 (deferror ytdl-error (simple-error error) () (:auto t))
@@ -175,6 +176,8 @@
 
 (defun start-caddy (&rest args)
   (apply 'run-caddy "start" args))
+
+(when *caddy* (pushnew :caddy *cli-tools*))
 
 #|
 (start-caddy)

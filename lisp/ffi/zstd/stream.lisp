@@ -28,6 +28,15 @@
                    :end 2)
 
 (define-alien-variable "ZSTD_frameParameters" int)
+#|
+Alternative for ZSTD_compressStream2(zcs, output, input, ZSTD_e_continue).
+NOTE: The return value is different. ZSTD_compressStream() returns a hint for
+the next read size (if non-zero and not an error). ZSTD_compressStream2()
+returns the minimum nb of bytes left to flush (if non-zero and not an error).
+|#
+(define-alien-routine "ZSTD_initCStream" size-t (zcs (* zstd-cstream)) (compression-level int))
+(define-alien-routine "ZSTD_compressStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)) (input (* zstd-inbuffer)))
+
 (define-alien-routine "ZSTD_compressStream2" size-t
   (cctx (* zstd-cctx))
   (output (* zstd-outbuffer))
@@ -36,9 +45,7 @@
 
 (define-alien-routine "ZSTD_CStreamInSize" size-t)
 (define-alien-routine "ZSTD_CStreamOutSize" size-t)
-(define-alien-routine "ZSTD_initCStream" size-t (zcs (* zstd-cstream)) (compression-level int))
 
-(define-alien-routine "ZSTD_compressStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)) (input (* zstd-inbuffer)))
 (define-alien-routine "ZSTD_flushStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
 (define-alien-routine "ZSTD_endStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
 
@@ -46,8 +53,22 @@
 
 (define-alien-routine "ZSTD_createDStream" (* zstd-dstream))
 (define-alien-routine "ZSTD_freeDStream" void (zds (* zstd-dstream)))
+;; returns recommended first input size
 (define-alien-routine "ZSTD_initDStream" size-t (zds (* zstd-dstream)))
 
+#|
+@return : 0 when a frame is completely decoded and fully flushed, or an error
+          code, which can be tested using ZSTD_isError(), or any other value >
+          0, which means there is some decoding or flushing to do to complete
+          current frame.
+
+Note: when an operation returns with an error code, the @zds state may be left
+      in undefined state.  It's UB to invoke `ZSTD_decompressStream()` on such
+      a state.  In order to re-use such a state, it must be first reset, which
+      can be done explicitly (`ZSTD_DCtx_reset()`), or is implied for
+      operations starting some new decompression job (`ZSTD_initDStream`,
+      `ZSTD_decompressDCtx()`, `ZSTD_decompress_usingDict()`)
+|#
 (define-alien-routine "ZSTD_decompressStream" size-t
   (zds (* zstd-dstream))
   (output (* zstd-outbuffer))

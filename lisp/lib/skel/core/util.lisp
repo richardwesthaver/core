@@ -134,7 +134,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
         (slot-value *skel-user-config* slot))))
 
 (defun sk-project-slot (slot &optional (default :error))
-  (let ((slot (print (find-symbol (string-upcase (string slot)) :skel/core/obj))))
+  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
     (if (or (null *skel-project*) (not (slot-boundp *skel-project* slot)))
         ;; Not found in project, search config files instead
         (sk-config-slot slot default)
