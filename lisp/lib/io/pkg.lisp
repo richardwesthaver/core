@@ -139,8 +139,7 @@
    :*compression-types*))
 
 (defpackage :io/zstd
-  (:use :cl :std :io/proto :io/flate)
-  (:import-from :sb-alien :make-alien)
+  (:use :cl :std :io/proto :io/flate :sb-alien)
   (:import-from :zstd :zstd-createdstream :zstd-createcstream
    :zstd-dstream :zstd-cstream :zstd-freecstream :zstd-freedstream
    :with-zstd-dstream :with-zstd-cstream :zstd-initcstream :zstd-initdstream

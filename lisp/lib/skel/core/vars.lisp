@@ -14,13 +14,13 @@
 (declaim (type pathname *skel-stash* *skel-store*
                *skel-cache* *user-skelrc* *system-skelrc*))
 
-(defvar *skel-stash* #P"/usr/local/share/skel/stash/")
+(defvar *skel-stash* (merge-homedir-pathnames ".stash/skel/stash/"))
 
-(defvar *skel-store* #P"/usr/local/share/skel/store/")
+(defvar *skel-store* (merge-homedir-pathnames  ".stash/skel/store/"))
 
-(defvar *skel-cache* #P"/usr/local/share/skel/cache/")
+(defvar *skel-cache* (merge-homedir-pathnames ".stash/skel/cache/"))
 
-(defvar *skel-registry* #P"/usr/local/share/skel/registry/")
+(defvar *skel-registry* (merge-homedir-pathnames ".stash/skel/registry/"))
 
 (defvar *skel-path* *default-pathname-defaults*)
 

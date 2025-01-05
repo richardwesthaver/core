@@ -39,17 +39,25 @@ evaluation of BODY."
               (log:debug! "falling through to EXIT from pre-REPL RESTART-CASE~&")
               (exit :code 1))))
      (sb-impl::flush-standard-output-streams)
-       ;; reset terminal state
-       #+nil (.ris)))
+     ;; reset terminal state
+     #+nil (.ris)))
 
-(defmacro defcmd (name opt-list &body body)
-  "Bind NAME to a functions which accepts an OPT-LIST containing names of
-CLI-OPTS.
+(defun parse-cli-lambda-list ()
+  "Parse a specialized CLI lambda-list.")
 
-OPT-LIST is a list which automatically selects and binds the values of parsed
-CLI-OPTs to a name via SYMBOL-MACROLET. The forms accepted are the same as the
-SLOTS args to WITH-SLOTS - the CAR is used as the name of the local symbol
-binding and the CDR is the actual name of the CLI-OPT.
+(defmacro defcmd (name cli-lambda-list &body body)
+  "Bind NAME to a functions which accepts a CLI-LAMBDA-LIST containing a
+specialized lambda-list with the following keywords:
+
+- &OPTIONAL is an optional positional argument in ARGS
+- &REST specifies the remainder of the ARGS passed at the CLI
+- &OPTS specifies a set of cli options
+- &KEYS specifies a set of cli keywords
+
+CLI-LAMBDA-LIST is a list which automatically selects and binds the values of
+parsed CLI-OPTs to a name via SYMBOL-MACROLET. The forms accepted are the same
+as the SLOTS args to WITH-SLOTS - the CAR is used as the name of the local
+symbol binding and the CDR is the actual name of the CLI-OPT.
 
 The following special variables are bound for the duration of BODY:
 
@@ -80,7 +88,7 @@ The following special variables are bound for the duration of BODY:
                                                   :test 'equal
                                                   :key 'cli/clap/obj:cli-opt-name)))
                               (cli-opt-val val)))))
-               opt-list)
+               cli-lambda-list)
            ,@body)))))
 
 (defmacro defopt (name &body body)
@@ -94,19 +102,23 @@ The following special variables are bound for the duration of BODY:
        (let ((*arg* arg))
          ,@body))))
 
+(defmacro defopts (&body body)
+  (unless (null body)
+    `(progn ,@(mapcar (lambda (x) `((defopt ,@x))) body))))
+
 ;; TODO 2023-10-06: 
 ;; (defmacro gen-cli-thunk (pvars &rest thunk)
 ;;   "Generate and return a function based on THUNK suitable for the :thunk
 ;; slot of cli objects with pandoric bindings PVARS.")
-(eval-always
-  (defmacro make-opt-parser (kind-spec &body body)
-    "Return a KIND-opt-parser function based on KIND-SPEC which is either a
+
+(defmacro make-opt-parser (kind-spec &body body)
+  "Return a KIND-opt-parser function based on KIND-SPEC which is either a
 symbol from *CLI-OPT-KINDS* or a list, and optional BODY which
 is a list of handlers for the opt-val."
-    (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
-           (super (when (consp kind-spec) (cadr kind-spec)))
-           (fn-name (symbolicate 'parse- kind '-opt)))
-      ;; thread em
+  (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
+         (super (when (consp kind-spec) (cadr kind-spec)))
+         (fn-name (symbolicate 'parse- kind '-opt)))
+    ;; thread em
     (let ((fn1 (unless (null super) (symbolicate "PARSE-" super "-OPT"))))
       `(defun ,fn-name (&optional arg)
          "Parse the cli-opt-val *ARG*."
@@ -114,4 +126,4 @@ is a list of handlers for the opt-val."
          ,@(if fn1
                `((setf *arg* (funcall #',fn1 arg)))
                `((setf *arg* arg)))
-         ,@body)))))
+         ,@body))))

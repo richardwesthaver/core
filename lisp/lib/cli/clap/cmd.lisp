@@ -24,7 +24,7 @@
          :accessor opts :type (vector cli-opt))
    (cmds :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd :adjustable t)
          :accessor cmds :type (vector cli-cmd))
-   (thunk :initform 'default-thunk :initarg :thunk :accessor cli-thunk :type symbol)
+   (thunk :initform 'default-cmd-thunk :initarg :thunk :accessor cli-thunk :type symbol)
    (lock :initform nil :initarg :lock :accessor cli-lock-p :type boolean)
    (description :initarg :description :accessor cli-description :type string)
    (args :initform nil :initarg :args :accessor cli-args))

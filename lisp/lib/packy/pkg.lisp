@@ -61,3 +61,5 @@
 (defpackage :packy/cli
   (:use :cl :std :cli :packy/client :packy/server :packy/db :packy/core)
   (:export :*packy-cli*))
+
+(in-package :packy/core)

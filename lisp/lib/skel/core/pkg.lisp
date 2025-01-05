@@ -54,6 +54,7 @@
   (:use :cl :std :skel/core/proto)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :ast :*keep-ast*)
+  (:import-from :std/path :merge-homedir-pathnames)
   (:import-from :vc :vc-designator)
   (:export :*user-skelrc* :*system-skelrc*
    :*skel-project* :*default-skelrc*
@@ -103,7 +104,8 @@
    :sk-config-slot
    :sk-project-slot
    :find-project-root
-   :setf-skel-vars))
+   :setf-skel-vars
+   :list-all-projects))
 
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/condition :sb-vm)

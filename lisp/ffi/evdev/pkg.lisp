@@ -22,7 +22,8 @@
    #:libevdev-new-from-fd
    :libevdev-read-flag
    #:libevdev-free
-   #:libevdev-set-fd))
+   #:libevdev-set-fd
+   #:libevdev))
 
 (in-package :evdev)
 (define-alien-loader evdev "/usr/lib/")

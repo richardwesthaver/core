@@ -3,8 +3,12 @@
 ;; Convenience functions for working with common CLI programs
 
 ;;; Code:
+(defpackage :cli/tools/proto
+  (:use :cl :std :cli/env :config :ast)
+  (:export :define-cli-tool :*cli-tools*))
+
 (defpackage :cli/tools/term
-  (:use :cl :std :cli/env :config :toml :ast)
+  (:use :cl :std :cli/tools/proto :cli/env :config :toml :ast)
   (:export
    :*terminal* :*alacritty-config-path*
    :alacritty-config :term-config
@@ -12,12 +16,12 @@
    :terminal-error :load-alacritty-config))
 
 (defpackage :cli/tools/fs
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    #:fs-error))
 
 (defpackage :cli/tools/tmux
-  (:use :cl :std :cli/env :cli/tools/term)
+  (:use :cl :std :cli/tools/proto :cli/env :cli/tools/term)
   (:import-from :obj/config
    :defconfig :make-config :find-config)
   (:export
@@ -33,7 +37,7 @@
    :tmux-config))
 
 (defpackage :cli/tools/cc
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*cc*
    :*ld*
@@ -46,7 +50,7 @@
 
 (defpackage :cli/tools/go
   (:nicknames :tools/go)
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*go*
    :run-go
@@ -54,7 +58,7 @@
    :go-error))
 
 (defpackage :cli/tools/net
-  (:use :cl :std :cli/env :uri :config :ast)
+  (:use :cl :std :cli/tools/proto :cli/env :uri :config :ast)
   (:import-from :std/os :with-umask)
   (:export
    :*browser*
@@ -90,15 +94,15 @@
    :start-caddy))
 
 (defpackage :cli/tools/pacman
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*pacman* :run-pacman :pacman-error))
 
 (defpackage :cli/tools/mail
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export :mail-error :*mail-program* :run-notmuch :run-offlineimap :*notmuch* :*offlineimap*))
 
 (defpackage :cli/tools/systemd
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*systemctl* :run-systemd :run-systemctl
            :systemd-error
            :systemctl-stop
@@ -106,7 +110,7 @@
 
 (defpackage :cli/tools/rust
   (:nicknames :tools/rust)
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    #:cargo-error
    #:*cargo*
@@ -117,7 +121,7 @@
    #:cargo-install))
 
 (defpackage :cli/tools/sbcl
-  (:use :cl :std :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*sbcl*
    :run-sbcl
@@ -125,3 +129,12 @@
    :with-sbcl
    :*sbcl-runtime-options*
    :*sbcl-toplevel-options*))
+
+(in-package :cli/tools/proto)
+
+(defvar *cli-tools* (make-hash-table))
+
+(defmacro define-cli-tool (name &body body)
+  "Define a new cli tool interface accessible via NAME in the *CLI-TOOLS*
+hash-table."
+  (setf (gethash name *cli-tools*) t))

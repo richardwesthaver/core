@@ -102,7 +102,8 @@
   (:export :run-emacs :run-emacsclient :org-store-link :editor-config :emacs-config
    :eval-emacs
    :slime
-   :ielm))
+   :ielm
+   :with-emacs))
 
 (defpackage :cli/multi
   (:use :cl :std)

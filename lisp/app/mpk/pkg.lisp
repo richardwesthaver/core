@@ -6,6 +6,8 @@
 
 ;; TODO: https://github.com/uways/oggify
 
+;; ref: https://github.com/schismtracker/schismtracker/wiki/ITTECH.TXT
+
 ;;; Code:
 (defpackage :mpk
   (:use :cl :std :log :id :config :ast)

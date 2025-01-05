@@ -33,11 +33,7 @@
 (defcmd skc-inspect ()
   (sb-ext:enable-debugger)
   (setq *no-exit* t)
-  (inspect
-   (find-skelfile
-    (if *opts* (cli-opt-val (aref *opts* 0))
-        #P".")
-    :load t)))
+  (inspect (or *skel-project* *skel-user-config*)))
 
 (defun call-with-args (action args)
   (let* ((*default-pathname-defaults* *skel-path*))
@@ -97,7 +93,7 @@
     ("sys" *skel-system-config*)
     ("cache" (sk-cache *skel-user-config*))))
 
-(defcmd skc-show (config)
+(defcmd skc-show ()
   (if *args*
       (mapc (lambda (x) (when-let ((ret (sk-slot-case x))) (println ret))) *args*)
       (cond
@@ -108,6 +104,13 @@
         ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
         (t (skel-simple-error "skel not installed")))))
+
+(defcmd skc-list ()
+  (if (zerop *argc*)
+      (list-all-projects)
+      (dolist (a *args*)
+        (string-case ((subseq a 0 3))
+          ("pro" (list-all-projects))))))
 
 (defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*) nil))
 
@@ -145,6 +148,45 @@
   (println *args*)
   (println *opts*))
 
+(defun sk-shell ()
+  (trace! "starting skel shell")
+  (setq *no-exit* t)
+  (cli/clap::with-cli-handlers
+    (progn
+      (in-package :sk-user)
+      (use-package :cl-user)
+      (use-package :sb-ext)
+      (use-package :std-user)
+      (println "Welcome to SKEL")
+      (sb-impl::toplevel-repl nil))))
+
+(defcmd skc-shell () (sk-shell))
+
+;; The following commands ONLY read from the skelfile.
+(defcmd skc-push ()
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "push" *args* t))
+    (:hg (run-hg-command "push" *args* t))
+    (t (skel-simple-error "unknown VC type"))))
+
+(defcmd skc-pull ()
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "pull" *args* t))
+    (:hg (run-hg-command "pull" (append '("-u") *args*) t))
+    (t (skel-simple-error "unknown VC type"))))
+
+(defcmd skc-clone ()
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "clone" *args* t))
+    (:hg (run-hg-command "clone" *args* t))
+    (t (skel-simple-error "unknown VC type"))))
+
+(defcmd skc-commit ()
+  (case (vc-type (sk-vc (find-skelfile #P"." :load t)))
+    (:git (run-git-command "commit" (list "-m" (clap:getopt :message)) t))
+    (:hg (run-hg-command "commit" (list "-m" (clap:getopt :message)) t))
+    (t (skel-simple-error "unknown VC type"))))
+
 (define-cli *skel-cli*
   :help t
   :version (format nil "0.1.1:~A" 
@@ -152,84 +194,105 @@
   :description "The hackable devtool."
   :thunk skc-show
   :name "skel"
-  :opts ((:name "version" 
-          :description "print version"
-          :kind boolean
-          :thunk version-opt)
-         (:name "ast" :description "save the intermediate skel AST" 
-          :thunk keep-ast-opt :kind boolean)
-         (:name "level" :description "set log level (warn,info,debug,trace)"
-          :thunk level-opt)
-         (:name "config" :description "set a custom skel user config" 
-          :kind file 
-          :thunk skc-config))
-  :cmds ((:name init
-          :description "initialize a skelfile in the current directory"
-          :opts ((:name "name" :description "project name" :kind string))
-          :thunk skc-init)
-         (:name inspect
-          :description "inspect the project skelfile"
-          :opts ((:name "file" :description "path to skelfile" :kind file))
-          :thunk skc-inspect)
-         (:name new
-          :description "make a new skel project"
-          :opts ((:name "name" :description "project name" :kind string))
-          :thunk skc-new)
-         (:name describe
-          :description "describe a skelfile"
-          :thunk skc-describe)
-         (:name edit
-          :description "edit a project file in emacs."
-          :thunk skc-edit)
-         (:name show
-          :description "show project slots"
-          :opts ((:name "file" :description "path to skelfile" :kind file))
-          :thunk skc-show)
-         (:name make
-          :description "build project targets"
-          :thunk skc-make)
-         (:name run
-          :description "run a script or command"
-          :thunk skc-run)
-         (:name compile
-          :description "compile source code"
-          :thunk skc-compile)
-         (:name build
-          :description "build programs and libraries"
-          :thunk skc-build)
-         (:name update
-          :description "update components"
-          :thunk skc-update)
-         (:name save
-          :description "save a file"
-          :thunk skc-save)
-         (:name dist
-          :description "distribute build artifacts"
-          :thunk skc-dist)
-         (:name install
-          :description "install stuff"
-          :thunk skc-install)
-         (:name pack
-          :description "pack stuff"
-          :thunk skc-pack)
-         (:name unpack
-          :description "unpack stuff"
-          :thunk skc-unpack)
-         (:name bundle
-          :description "bundle source code"
-          :thunk skc-bundle)
-         (:name unbundle
-          :description "unbundle source code"
-          :thunk skc-unbundle)
-         (:name clean
-          :description "clean up the project"
-          :thunk skc-clean)
-         (:name test
-          :description "run tests"
-          :thunk skc-test)
-         (:name bench
-          :description "run benchmark"
-          :thunk skc-bench)
-         (:name status
-          :description "print the project status"
-          :thunk skc-status)))
+  :opts 
+  ((:name "version" 
+    :description "print version"
+    :kind boolean
+    :thunk version-opt)
+   (:name "ast" :description "save the intermediate skel AST" 
+    :thunk keep-ast-opt :kind boolean)
+   (:name "level" :description "set log level (warn,info,debug,trace)"
+    :thunk level-opt)
+   (:name "config" :description "set a custom skel user config" 
+    :kind file 
+    :thunk skc-config))
+  :cmds 
+  ((:name init
+    :description "initialize a skelfile in the current directory"
+    :opts ((:name "name" :description "project name" :kind string))
+    :thunk skc-init)
+   (:name inspect
+    :description "inspect the project skelfile"
+    :opts ((:name "file" :description "path to skelfile" :kind file))
+    :thunk skc-inspect)
+   (:name new
+    :description "make a new skel project"
+    :opts ((:name "name" :description "project name" :kind string))
+    :thunk skc-new)
+   (:name describe
+    :description "describe a skelfile"
+    :thunk skc-describe)
+   (:name edit
+    :description "edit a project file in emacs."
+    :thunk skc-edit)
+   (:name show
+    :description "show skel objects slots"
+    :opts ((:name "file" :description "path to skelfile" :kind file))
+    :thunk skc-show)
+   (:name list
+    :description "list skel objects"
+    :thunk skc-list)
+   (:name make
+    :description "build project targets"
+    :thunk skc-make)
+   (:name run
+    :description "run a script or command"
+    :thunk skc-run)
+   (:name compile
+    :description "compile source code"
+    :thunk skc-compile)
+   (:name build
+    :description "build programs and libraries"
+    :thunk skc-build)
+   (:name update
+    :description "update components"
+    :thunk skc-update)
+   (:name save
+    :description "save a file"
+    :thunk skc-save)
+   (:name dist
+    :description "distribute build artifacts"
+    :thunk skc-dist)
+   (:name install
+    :description "install stuff"
+    :thunk skc-install)
+   (:name pack
+    :description "pack stuff"
+    :thunk skc-pack)
+   (:name unpack
+    :description "unpack stuff"
+    :thunk skc-unpack)
+   (:name bundle
+    :description "bundle source code"
+    :thunk skc-bundle)
+   (:name unbundle
+    :description "unbundle source code"
+    :thunk skc-unbundle)
+   (:name clean
+    :description "clean up the project"
+    :thunk skc-clean)
+   (:name test
+    :description "run tests"
+    :thunk skc-test)
+   (:name bench
+    :description "run benchmark"
+    :thunk skc-bench)
+   (:name status
+    :description "print the project status"
+    :thunk skc-status)
+   (:name push
+    :description "push the current project upstream"
+    :thunk skc-push)
+   (:name pull
+    :description "pull the current project from remote"
+    :thunk skc-pull)
+   (:name clone
+    :description "clone a remote project"
+    :thunk skc-clone)
+   (:name commit
+    :description "commit changes to the project vc"
+    :thunk skc-commit
+    :opts ((:name "message" :description "commit message" :kind string)))
+   (:name shell
+    :description "open the sk-shell interpreter"
+    :thunk skc-shell)))

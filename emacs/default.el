@@ -82,6 +82,12 @@
 
 (add-to-load-path user-emacs-lib-directory)
 
+(require 'graph)
+(require 'scrum)
+(require 'inbox)
+(require 'skel)
+(require 'c2)
+
 ;;; Theme
 (defun load-default-theme (&optional theme)
   (interactive)

@@ -1,33 +1,5 @@
 (in-package :gui/ext)
 
-(defparameter *gui-backend-list* '(:gtk :tk :mcclim))
-
-(defparameter *gui-backend* nil)
-
-(defun register-gui-backend (name &optional lib)
-  "Register a new GUI backend named NAME. if LIB is provided it is
-assumed to be a path to a shared library.")
-
-(defun load-gui-backend (backend)
-  (case backend
-    (:gtk (nyi!))
-    (:tk (nyi!))
-    (:mcclim (ql:quickload :mcclim))
-    (:slint (nyi!))))
-
-(defmacro with-gui-handlers (&body body)
-  `(progn
+(defmacro defapp (name opts &body body)
+  `(defun ,name ,opts
      ,@body))
-
-(defmacro define-gui (ret &body body)
-  "Define a CLI main function in the current package which returns RET.
-
-Note that this macro does not export the defined function and requires
-GUI-MAIN to be an external symbol."
-  `(progn
-     (declaim (type stream output))
-     (defun gui-main (&key (output *standard-output*))
-       "Run the top-level function and print to OUTPUT."
-       (let ((*standard-output* output))
-	 (with-gui-handlers
-	     (progn ,@body ,ret))))))

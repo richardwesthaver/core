@@ -131,7 +131,7 @@
         (b (normalize-test-name b)))
     (string= a b)))
 
-;; (declaim (inline assert-suite ensure-suite))
+(declaim (inline assert-suite ensure-suite))
 (defun ensure-suite (name)
   (if-let ((ok (member name *test-suite-list* :test #'test-name=)))
     (car ok)
@@ -142,13 +142,3 @@
 (defun assert-suite (name)
   (check-suite-designator name)
   (assert (ensure-suite name)))
-
-(declaim (inline test-opt-key-p test-opt-valid-p))
-(defun test-opt-key-p (k)
-  "Test if K is a `test-opt-key'."
-  (member k '(:profile :save :stream)))
-
-(defun test-opt-valid-p (f)
-  "Test if F is a valid `test-opt' form. If so, return F else nil."
-  (when (test-opt-key-p (car f))
-    f))

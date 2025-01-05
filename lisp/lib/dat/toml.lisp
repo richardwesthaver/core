@@ -249,7 +249,7 @@ strings. All strings are UTF-8."
 
 (defun toml-read-comment (stream)
   (loop while (toml-peek-char stream #\# :skip-ws t)
-           do (log:debug! :toml-comment (trim (read-line stream)))))
+           do (read-line stream)))
 
 ;; TODO 2024-12-23: may include spaces, can't do a simple read :C
 (defun toml-parse-datetime (str)

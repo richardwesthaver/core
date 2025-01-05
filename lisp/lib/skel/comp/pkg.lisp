@@ -9,7 +9,7 @@
    :makefile))
 
 (defpackage :skel/comp/cargo
-  (:use :cl :std :skel/core/obj :skel/core/proto)
+  (:use :cl :std :skel/core/obj :skel/core/proto :toml :build :config :cli/tools/rust)
   (:export :sk-rust-system :parse-sk-rust-system))
 
 (defpackage :skel/comp/asd

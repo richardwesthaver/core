@@ -13,7 +13,10 @@
   `(let ((*print-case* :downcase))
      ,@body))
 
-(defun run-emacs (args &key file create-frame eval)
+(defun run-emacs (args &key file create-frame eval client)
+  (when client 
+    (return-from run-emacs 
+      (run-emacsclient args :file file :create-frame create-frame :eval eval)))
   (when create-frame (push "-c" args))
   (when file (push (namestring file) args))
   (when eval 
@@ -33,10 +36,8 @@
                       :wait nil
                       :output nil))
 
-(defun eval-emacs (form &key (client t) args)
-  (if client
-      (run-emacsclient args :eval form)
-      (run-emacs args :eval form)))
+(defun eval-emacs (form &key (client t) args file)
+  (run-emacs args :eval form :file file :client client))
 
 (defun ielm (&optional buf-name)
   (eval-emacs `(ielm ,buf-name)))
@@ -46,6 +47,12 @@
 
 (push #'run-emacsclient sb-ext:*ed-functions*)
 (push #'run-emacs sb-ext:*ed-functions*)
+
+(defmacro with-emacs ((var &key (eval t) (client t) create-frame file args) &body body)
+  (if (eql t eval)
+      `(progn (eval-emacs `(progn ,,@body) :client ,client :args ,args))
+      `(let ((,var (run-emacs ,args :eval ,eval :file ,file :create-frame ,create-frame)))
+         ,@body)))
 
 ;;; Config
 (defconfig editor-config (ast) ())

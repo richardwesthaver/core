@@ -358,7 +358,7 @@ when the slot is already filled."
     (loop for i from 0
           for e in elements
           if (consp e)
-          do (std:when-let ((id (getf (cdr e) :id)))
+          do (std/macs::when-let ((id (getf (cdr e) :id)))
                (push (cons i id) index)))
     (let ((pipe (make-pipe)))
       (loop for elt in elements

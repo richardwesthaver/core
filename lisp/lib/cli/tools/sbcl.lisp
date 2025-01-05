@@ -21,14 +21,22 @@
   '(sysinit userinit no-sysinit no-userinit disable-debugger noprint script quit non-interactive eval load))
 
 (defun parse-sbcl-option-keys (keys)
-  (let ((ret))
+  (let ((rt)
+        (tl))
     (sb-int:doplist (k v) keys
       (unless (null v)
-        (push (format nil "--~A" (string-downcase (symbol-name k))) ret)
-        (etypecase v
-          (boolean nil)
-          (string (push v ret)))))
-    (nreverse ret)))
+        (let ((opt (format nil "--~A" (string-downcase (symbol-name k)))))
+          (flet ((%push-opt (opt v l)
+                   (push opt l)
+                   (etypecase v
+                     (boolean nil)
+                     (string (push v l)))))
+            (cond
+              ((member k *sbcl-runtime-options* :test 'string=) (%push-opt opt v rt))
+              ((member k *sbcl-toplevel-options* :test 'string=) (%push-opt opt v tl))
+              (t (sbcl-error "Invalid option: ~A ~A" opt v)))))))
+    ;; append and reverse
+    (nreverse (append tl rt))))
 
 (defvar *sbcl-output* t)
 

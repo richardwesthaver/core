@@ -22,11 +22,16 @@
 (defconstant +long-bit+ (sb-alien:alien-size sb-alien:unsigned-long))
 
 ;;; Conditions
-(deferror kbd-error (error) ())
+(define-condition kbd-error (error) ())
 (deferror simple-kbd-error (simple-error kbd-error) () (:auto t))
 
 ;;; Objects
-(defstruct keyboard path sap state compose-state)
+(defstruct keyboard 
+  path 
+  (sap nil :type (or null (alien (* libevdev)))) ;; device
+  (state nil)
+  (compose-state nil)
+  (keymap nil))
 
 (defun evdev-bit-p (array bit)
   "Array elements should be unsigned-long."
@@ -60,11 +65,11 @@
             when (evdev-bit-p keybits i)
             return t))))
       
-(defun make-keyboard-from-dev (dev keymap compose-table)
+(defun make-keyboard-from-dev (dev &optional keymap compose-table)
   "Return a KEYBOARD given a device, keymap, and compose table. Keyword argument
 ERROR when non-nil (the default) causes an error to be signaled if the device
 can't be opened, else returns nil."
-  (make-keyboard :sap dev))
+  (make-keyboard :sap dev :keymap keymap))
 
 (defun get-keyboards (keymap compose-table &optional (dir "/dev/input"))
   (let ((devices (directory dir)))
@@ -80,8 +85,8 @@ can't be opened, else returns nil."
 
 (defun print-device-input-info (path &optional (error t))
   (when-let ((dev (new-device-from-path path error)))
-    (unless (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
-      (println "probably not a mouse:"))
+    (when (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
+      (println "best-guess: mouse"))
     (list (evdev::libevdev-get-name dev) 
           (evdev::libevdev-get-id-bustype dev) 
           (evdev::libevdev-get-id-vendor dev)

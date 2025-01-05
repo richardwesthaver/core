@@ -38,7 +38,8 @@
 (define-alien-routine rocksdb-level-metadata-get-file-count size-t (lmeta (* rocksdb-level-metadata)))
 
 (define-alien-routine rocksdb-level-metadata-get-sst-file-metadata (* rocksdb-sst-file-metadata)
-  (lmeta (* rocksdb-level-metadata)) (i size-t))
+  (lmeta (* rocksdb-level-metadata)) 
+  (i size-t))
 
 (define-alien-routine rocksdb-sst-file-metadata-destroy void
   (fmeta (* rocksdb-sst-file-metadata)))

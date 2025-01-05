@@ -591,7 +591,8 @@ or by peeking at the stream for magic numbers (for :INPUT)."
                  (assert (= *tar-block-bytes* (read-sequence buffer blocked-stream)))
                  buffer)))
         (make-instance (if (eql type :auto)
-                           (detect-type (read-buffer))
+                           (detect-type 
+                            (read-buffer))
                            type)
                        :stream blocked-stream
                        :other-streams-to-close (append (unless (eql compression-stream stream)

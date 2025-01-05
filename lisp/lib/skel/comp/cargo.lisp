@@ -12,8 +12,8 @@
 (defparameter *default-cargo-manifest* "Cargo.toml")
 (defparameter *cargo-manifest-extension* "toml")
 
-(defclass sk-rust-system (sk-mod)
-  ())
+(defclass sk-rust-system (sk-mod) 
+  ((config :initarg :config)))
 
 (defclass sk-rust-component (sk-component)
   (type value))
@@ -22,12 +22,9 @@
   (print-unreadable-object (object stream :type t)
     (format stream ":ID ~A" (format-sxhash (obj/id:id object)))))
 
-(defun parse-sk-rust-system (path)
-  path)
-
 (defmethod sk-load-component ((kind (eql :rust-system)) (form pathname) &optional (path *default-pathname-defaults*))
   (declare (ignore kind))
-  (parse-sk-rust-system (merge-pathnames form path)))
+  (make-instance 'sk-rust-system :config (deserialize (merge-pathnames form path) :toml)))
 
 (defmethod sk-compile ((self sk-rust-system) &key &allow-other-keys))
 

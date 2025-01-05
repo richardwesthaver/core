@@ -63,9 +63,12 @@ containing multiple characters."
      (nconc (loop for i from 1 for a in args nconc (list (symbolicate '$a (the fixnum i)) a)) a0)
      2)))
 
-(defun default-thunk (args opts)
+(defun default-cmd-thunk (args opts)
   (declare (ignore args opts))
   (values))
+
+(defun default-opt-thunk (arg)
+  (identity arg))
 
 (defun cli-opt-kind-p (s)
   (declare (type symbol s))

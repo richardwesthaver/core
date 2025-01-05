@@ -50,6 +50,9 @@
 
 (defconstant +wildfile+ (make-pathname :name :wild :type :wild :version :wild))
 
+(defun merge-homedir-pathnames (pathname &optional (default-version :newest))
+  (merge-pathnames pathname (user-homedir-pathname) default-version))
+
 ;; from UIOP
 (defun set-pathname-suffix (path suffix &rest keys)
   (apply 'make-pathname :name (concatenate 'string (pathname-name path) suffix)

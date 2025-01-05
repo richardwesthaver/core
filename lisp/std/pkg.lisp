@@ -515,8 +515,7 @@
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
-   :run :exec
-   :copy-object :safe-superclasses))
+   :exec :copy-object :safe-superclasses :run-object))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)
@@ -551,7 +550,6 @@
    :oracle-id :find-thread
    :push-job :push-task
    :push-worker :push-task-result
-   :run-object 
    :work
    :pop-job :pop-task
    :tasks
@@ -619,6 +617,7 @@
    :directory-pathname
    :symlink-pathname
    :symlinkp
+   :merge-homedir-pathname
    :absolute-directory-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
    :tmpize-pathname
@@ -667,6 +666,7 @@
   (:use :cl :std/array)
   (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
   (:import-from :std/sym :with-gensyms)
+  (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/list :removef)
   (:import-from :std/file :file)
   (:shadow :message)

@@ -171,3 +171,5 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (defun setf-skel-vars () (%init setf)))
 
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
+
+(defun list-all-projects ())

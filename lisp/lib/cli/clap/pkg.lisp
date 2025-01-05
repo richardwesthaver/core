@@ -14,15 +14,17 @@
   (:use :cl :std :log :sb-ext :cli/clap/vars)
   (:export :args :arg0 :long-opt-p
    :short-opt-p :group-opt-p :opt-string-prefix-eq :cli-opt-kind-p
-   :default-thunk
    :long-opt-has-eq-p
    :opt-keyword-p
-   :short-opt-has-eq-p))
+   :short-opt-has-eq-p
+   :default-cmd-thunk
+   :default-opt-thunk))
 
 (defpackage :cli/clap/macs
   (:use :cl :std :log :sb-ext :cli/clap/util :cli/clap/vars)
   (:export :defopt :defcmd
-   :make-opt-parser :with-cli-handlers :make-shorty))
+   :make-opt-parser :with-cli-handlers :make-shorty
+   :argp))
 
 (defpackage :cli/clap/proto
   (:use :cl :std :log :sb-ext)

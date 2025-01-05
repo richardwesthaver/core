@@ -12,6 +12,10 @@
         (println (b3sum in))
         (println (b3hash-string in)))))
 
+(defcmd krypt-show ()
+  (init-krypt)
+  (println *krypt-user-config*))
+
 (define-cli *krypt-cli*
   :name "krypt"
   :version 0
