@@ -121,12 +121,17 @@ skelfile if found."
   "Open the current system configuration using ED."
   (ed *system-skelrc*))
 
+(defun slot-boundp* (obj slot)
+  (when slot
+    (handler-bind ((sb-pcl::missing-slot nil))
+      (slot-boundp obj slot))))
+
 (defun sk-config-slot (slot &optional (default :error))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
 isn't found check *SKEL-SYSTEM-CONFIG*."
   (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
-    (if (or (null *skel-user-config*) (not (slot-boundp *skel-user-config* slot)))
-        (if (or (null *skel-system-config*) (not (slot-boundp *skel-system-config* slot)))
+    (if (or (null *skel-user-config*) (not (slot-boundp* *skel-user-config* slot)))
+        (if (or (null *skel-system-config*) (not (slot-boundp* *skel-system-config* slot)))
             (if (eql default :error)
                 (skel-simple-error "slot is unbound in skelrc")
                 default)
@@ -135,7 +140,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 (defun sk-project-slot (slot &optional (default :error))
   (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
-    (if (or (null *skel-project*) (not (slot-boundp *skel-project* slot)))
+    (if (or (null *skel-project*) (not (slot-boundp* *skel-project* slot)))
         ;; Not found in project, search config files instead
         (sk-config-slot slot default)
         (slot-value *skel-project* slot))))

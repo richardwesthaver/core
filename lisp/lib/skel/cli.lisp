@@ -72,7 +72,10 @@
 
 (defcmd skc-show ()
   (if *args*
-      (mapc (lambda (x) (when-let ((ret (sk-project-slot (string-left-trim ":" x) nil))) (println ret))) *args*)
+      (mapc (lambda (x) (if-let ((ret (sk-project-slot (string-left-trim ":" x) nil))) 
+                          (println ret)
+                          (log:fatal! "unknown argument: ~A~%" x)))
+            *args*)
       (cond
         ((boundp '*skel-project*)
          (sk-print *skel-project* :exclude (if ast:*keep-ast* 
