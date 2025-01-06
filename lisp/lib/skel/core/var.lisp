@@ -1,4 +1,4 @@
-(in-package :skel/core/vars)
+(in-package :skel/core/var)
 
 (declaim (type vc-designator *default-skel-vc-kind*))
 (defparameter *default-skel-vc-kind* :hg)

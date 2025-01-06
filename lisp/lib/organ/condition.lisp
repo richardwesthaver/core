@@ -1,3 +1,9 @@
+;;; condition.lisp --- Org Conditions
+
+;; 
+
+;;; Code:
+
 (in-package :organ)
 
 (define-condition organ-error (error) 

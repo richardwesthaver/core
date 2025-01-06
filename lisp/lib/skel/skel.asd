@@ -8,6 +8,7 @@
                      :pod :net :box
                      (:feature :ext :krypt)
                      (:feature :ext :packy)
+                     (:feature :gui :gui)
                      (:feature :gui :clouseau))
   :serial t
   :components 
@@ -18,7 +19,7 @@
      (:file "condition")
      (:file "proto")
      (:file "header")
-     (:file "vars")
+     (:file "var")
      (:file "obj")
      (:file "print")
      (:file "fs")

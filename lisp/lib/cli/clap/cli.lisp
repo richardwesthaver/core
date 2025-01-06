@@ -33,15 +33,10 @@
 (defopt level-opt
   "Set the *LOG-LEVEL* for this CLI session."
   (if *arg*
-      (setq *log-level* (sb-int:keywordicate (string-upcase *arg*)))
-      *log-level*))
-
-(defopt level-opt
-  (setq *log-level* (if *arg* 
-                        (if (stringp *arg*)
+      (setq *log-level* (if (stringp *arg*)
                             (sb-int:keywordicate (string-upcase *arg*))
-                            *arg*)
-                        *log-level*)))
+                            *arg*))
+      *log-level*))
 
 (defmacro define-cli (sym &key name version help description thunk opts cmds)
   "Define a symbol SYM bound to a top-level CLI object.

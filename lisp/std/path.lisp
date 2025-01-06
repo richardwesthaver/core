@@ -50,8 +50,28 @@
 
 (defconstant +wildfile+ (make-pathname :name :wild :type :wild :version :wild))
 
+(defun directory-path-p (path)
+  "Return T if PATH is a directory or NIL else."
+  (declare (type (or pathname string) path))
+  (and (not (pathname-name path))
+       (not (pathname-type path))))
+
+(defun directory-path (path)
+  "If PATH is a directory pathname, return it as it is. If it is a file
+pathname or a string, transform it into a directory pathname."
+  (declare (type (or pathname string) path))
+  (if (directory-path-p path)
+      path
+      (make-pathname :directory (append (or (pathname-directory path)
+                                            (list :relative))
+                                        (list (file-namestring path)))
+                     :name nil :type nil :defaults path)))
+
 (defun merge-homedir-pathnames (pathname &optional (default-version :newest))
   (merge-pathnames pathname (user-homedir-pathname) default-version))
+
+(defun ensure-directory-truename (path &key verbose (mode 511))
+  (truename (ensure-directories-exist (directory-path path) :verbose verbose :mode mode)))
 
 ;; from UIOP
 (defun set-pathname-suffix (path suffix &rest keys)

@@ -24,7 +24,8 @@
   (:use :cl :std :log :sb-ext :cli/clap/util :cli/clap/vars)
   (:export :defopt :defcmd
    :make-opt-parser :with-cli-handlers :make-shorty
-   :argp))
+   :argp
+   :parse-cli-lambda-list))
 
 (defpackage :cli/clap/proto
   (:use :cl :std :log :sb-ext)

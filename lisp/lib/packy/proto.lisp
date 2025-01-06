@@ -1,3 +1,8 @@
+;;; proto.lisp --- Packy Protocol
+
+;; 
+
+;;; Code:
 (in-package :packy/core)
 
 (define-condition packy-condition () ())

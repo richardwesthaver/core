@@ -61,10 +61,8 @@
   (vc/proto::make-vc-ignore :path path :patterns (vc/proto::map-lines #'ppcre:create-scanner path)))
 
 ;;; Bundles
-(defvar *hg-bundle-types* '(:v1 :v2))
-(defvar *hg-compression-engines* '(:bzip2 :gzip :zstd))
-(deftype hg-bundle-type () `(member ,@*hg-bundle-types*))
-(deftype hg-compression-engine () `(member ,@*hg-compression-engines*))
+(deftype hg-bundle-type () `(member :v1 :v2))
+(deftype hg-compression-engine () `(member :bzip2 :gzip :zstd))
 
 (defvar *hg-bundlespec-options* 
   '("changegroup" "cg.version" "obsolescence" "phases" "recbranchcache" "tagsfnodescache"))

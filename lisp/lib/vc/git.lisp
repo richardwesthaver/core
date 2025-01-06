@@ -1,3 +1,8 @@
+;;; git.lisp --- Git VC
+
+;; 
+
+;;; Code:
 (in-package :vc/git)
 
 (deferror git-error (vc-error) () (:auto t))

@@ -42,17 +42,119 @@ evaluation of BODY."
      ;; reset terminal state
      #+nil (.ris)))
 
-(defun parse-cli-lambda-list ()
-  "Parse a specialized CLI lambda-list.")
+(define-constant +cli-lambda-list-keywords+ '(&rest &optional &opt &key) :test 'equal)
 
+;; TODO 2025-01-05: env? for shell env
+(defun parse-cli-lambda-list (ll)
+  "Parse a specialized CLI lambda-list, returning as multiple values:
+
+- required ARGs
+- optional ARGs
+- rest ARG
+- OPTs
+- key OPTs"
+  (let ((state :required)
+        (required)
+        (optional)
+        (rest)
+        (opts)
+        (key-opts))
+    (labels ((%fail (l)
+               (simple-program-error "Misplaced ~S in ordinary lambda-list:~%  ~S"
+                                     l ll))
+             (%check-var (l what)
+               (unless (and (or (symbolp l)
+                                (and (consp l) (= 2 (length l)) (symbolp (first l))))
+                            (not (constantp l)))
+                 (simple-program-error "Invalid ~A ~S in ordinary lambda-list:~%  ~S"
+                                       what l ll)))
+             (%check-spec (spec what)
+               (destructuring-bind (init suppliedp) spec
+                 (declare (ignore init))
+                 (%check-var suppliedp what))))
+      (dolist (l ll)
+        (case l
+          (&optional
+           (if (eq state :required)
+               (setf state l)
+               (%fail l)))
+          (&rest
+           (if (member state '(:required &optional))
+               (setf state l)
+               (%fail l)))
+          (&opt
+           (if (member state '(:required &optional :after-rest &key))
+               (setf state l)
+               (%fail l)))
+          (&key
+           (if (member state '(:required &optional :after-rest &opt))
+               (setf state l)
+               (%fail l)))
+          (t
+           (when (member l '#.(set-difference lambda-list-keywords
+                                              '(&optional &rest &key &allow-other-keys &aux &opt)))
+             (simple-program-error
+              "Bad lambda-list keyword ~S in ordinary lambda-list:~%  ~S"
+              l ll))
+           (case state
+             (:required
+              (%check-var l "required parameter")
+              (push l required))
+             (&optional
+              (if (consp l)
+                  (destructuring-bind (name &rest tail) l
+                    (%check-var name "optional parameter")
+                    (cond ((cdr tail)
+                           (%check-spec tail "optional-supplied-p parameter"))))
+                  (%check-var l "optional parameter"))
+              (push (ensure-list l) optional))
+             (&opt
+              (if (consp l)
+                  (destructuring-bind (name &rest tail) l
+                    (%check-var name "opt parameter")
+                    (when (cdr tail) (%check-spec tail "opt parameter")))
+                  (%check-var l "opt parameter"))
+              (push (ensure-list l) opts))
+             (&rest
+              (%check-var l "rest parameter")
+              (setf rest l
+                    state :after-rest))
+             (&key
+              (if (consp l)
+                  (destructuring-bind (var-or-kv &rest tail) l
+                    (if (consp var-or-kv)
+                        (destructuring-bind (keyword var) var-or-kv
+                          (unless (symbolp keyword)
+                            (simple-program-error "Invalid key name ~S in ordinary ~
+                                                         lambda-list:~%  ~S"
+                                                  keyword ll))
+                          (%check-var var "key parameter"))
+                        (%check-var var-or-kv "key parameter"))
+                    (when (cdr tail)
+                      (%check-spec tail "key parameter"))
+                    (setf l (cons var-or-kv tail)))
+                  (%check-var l "key parameter"))
+              (push (ensure-list l) key-opts))
+             (t (simple-program-error "invalid cli lambda-list:~%  ~S" ll)))))))
+    (values (nreverse required) 
+            (nreverse optional) 
+            rest 
+            (nreverse opts)
+            (nreverse key-opts))))
+
+#+nil (parse-cli-lambda-list '(arg1 arg2 &optional (arg3 "foo") &rest rest &opt opt1 opt2 &key key1 key2))
+
+;; DEFCMD always returns a function of two argument ARGS and OPTS - the
+;; cli-lambda-list is applied to the BODY instead of closing over the
+;; function.
 (defmacro defcmd (name cli-lambda-list &body body)
   "Bind NAME to a functions which accepts a CLI-LAMBDA-LIST containing a
 specialized lambda-list with the following keywords:
 
 - &OPTIONAL is an optional positional argument in ARGS
 - &REST specifies the remainder of the ARGS passed at the CLI
-- &OPTS specifies a set of cli options
-- &KEYS specifies a set of cli keywords
+- &OPT specifies a set of cli options
+- &KEY specifies a set of cli keywords
 
 CLI-LAMBDA-LIST is a list which automatically selects and binds the values of
 parsed CLI-OPTs to a name via SYMBOL-MACROLET. The forms accepted are the same
@@ -65,32 +167,35 @@ The following special variables are bound for the duration of BODY:
 - *ARGS* : the actual list of args
 - *OPTC* : the count of options passed to this command
 - *OPTS* : the actual list of options"
-  (multiple-value-bind (body decl doc-string) (parse-body body :documentation t)
-    `(defun ,name (args opts)
-       ,(let ((%d '(ignorable args opts)))
-          (if decl 
-              (append decl (list %d))
-              `(declare ,%d)))
-       ,doc-string
-       (let ((*argc* (length args))
-             (*optc* (length opts))
-             (*args* args)
-             (*opts* opts))
-         (symbol-macrolet
-             ,(mapcar (lambda (x)
-                        (unless (typep x
-                                       '(or symbol
-                                         (cons symbol (cons symbol null))))
-                          (error "Malformed CLI-OPT binding: ~s, should either a symbol or (variable-name opt-name)" x))
-                        (destructuring-bind (name &optional (opt-name name)) (ensure-list x)
-                          `(,name
-                            (when-let ((val (find ,(string-downcase opt-name) *opts* 
-                                                  :test 'equal
-                                                  :key 'cli/clap/obj:cli-opt-name)))
-                              (cli-opt-val val)))))
-               cli-lambda-list)
-           ,@body)))))
+  (multiple-value-bind (required optional rest opts keys) (parse-cli-lambda-list cli-lambda-list)
+    (multiple-value-bind (body decl doc-string) (parse-body body :documentation t)
+      `(defun ,name (args opts)
+         ,(let ((%d '(ignorable args opts)))
+            (if decl 
+                (append decl (list %d))
+                `(declare ,%d)))
+         ,doc-string
+         (let ((*argc* (length args))
+               (*optc* (length opts))
+               (*args* args)
+               (*opts* opts))
+           (symbol-macrolet
+               ,(mapcar (lambda (x)
+                          (unless (typep x
+                                         '(or symbol
+                                           (cons symbol (cons symbol null))))
+                            (error "Malformed CLI-OPT binding: ~s, should either a symbol or (variable-name opt-name)" x))
+                          (destructuring-bind (name &optional (opt-name name)) (ensure-list x)
+                            `(,name
+                              (when-let ((val (find ,(string-downcase opt-name) *opts* 
+                                                    :test 'equal
+                                                    :key 'cli/clap/obj:cli-opt-name)))
+                                (cli-opt-val val)))))
+                 opts)
+             ,@body))))))
 
+;; DEFOPTS are much simpler - they always take a single optional argument and
+;; have no lambda-list that needs to be applied.
 (defmacro defopt (name &body body)
   (multiple-value-bind (body decl doc-string) (parse-body body :documentation t)
     `(defun ,name (&optional arg)

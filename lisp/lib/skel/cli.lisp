@@ -21,9 +21,6 @@
                      (use-value f2 s))))))
       (init-skelfile file name))))
 
-(defcmd skc-status ()
-  (vc:vc-status (sk-vc (find-skelfile #P"." :load t))))
-
 (defcmd skc-describe ()
   (describe
    (if (> *argc* 0)
@@ -238,9 +235,6 @@
    (:name bench
     :description "run benchmark"
     :thunk skc-bench)
-   (:name status
-    :description "print the project status"
-    :thunk skc-status)
    (:name shell
     :description "open the sk-shell interpreter"
     :thunk skc-shell)))

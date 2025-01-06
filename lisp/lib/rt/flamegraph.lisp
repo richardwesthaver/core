@@ -1,3 +1,8 @@
+;;; flamegraph.lisp --- Flamegraph utils
+
+;; 
+
+;;; Code:
 (in-package :rt/flamegraph)
 (defparameter *frame-where-profiling-was-started* nil)
 

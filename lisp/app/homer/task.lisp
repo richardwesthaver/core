@@ -20,11 +20,10 @@
 (defmethod load-ast ((self homer-task))
   (with-slots (ast) self
     (setf (id self) (pop ast))
-    (let ((props (pop ast)))
-      (setf (schedule self) (getf props :repeat))
-      ;; remainder of ast is evaulated when the task is executed
-      (log:debug! "loaded task: ~A" (id self))
-      self)))
+    (setf (schedule self) (pop ast))
+    ;; remainder of ast is evaulated when the task is executed
+    (log:debug! "loaded task: ~A" (id self))
+    self))
 
 (defmethod build-ast ((self homer-task) &key)
   (unless (equal (id self) (car (ast self)))

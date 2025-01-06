@@ -50,7 +50,7 @@
    :make-source-header-comment 
    :make-shebang-comment))
 
-(defpackage :skel/core/vars
+(defpackage :skel/core/var
   (:use :cl :std :skel/core/proto)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :ast :*keep-ast*)
@@ -65,7 +65,7 @@
 
 (defpackage :skel/core/obj
   (:use :cl :std :obj
-   :skel/core/proto :skel/core/condition :skel/core/vars
+   :skel/core/proto :skel/core/condition :skel/core/var
    :dat/sxp :skel/core/header :vc :log)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-stash :sk-cache :sk-registry :sk-user
@@ -85,11 +85,11 @@
    :sk-phases))
 
 (defpackage :skel/core/fs
-  (:use :cl :std :skel/core/proto :skel/core/condition :skel/core/vars :vc :log)
+  (:use :cl :std :skel/core/proto :skel/core/condition :skel/core/var :vc :log)
   (:export))
 
 (defpackage :skel/core/util
-  (:use :cl :std :skel/core/obj :skel/core/vars :skel/core/proto :dat/sxp :skel/core/condition :obj/ast)
+  (:use :cl :std :skel/core/obj :skel/core/var :skel/core/proto :dat/sxp :skel/core/condition :obj/ast)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :cli :find-exe)
   (:export
@@ -142,8 +142,8 @@
            :init-skel-function-scope))
 
 (defpackage :skel/core/print
-  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars)
+  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/var)
   (:export))
 
 (defpackage :skel/core/plan
-  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/vars :plan))
+  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/var :plan))

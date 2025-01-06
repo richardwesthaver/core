@@ -126,7 +126,7 @@ within their DOMAIN and SCOPE."))
   (if wait (join-worker worker)
       worker))
 
-(defmethod run-object ((self worker))
+(defmethod run-object ((self worker) &key)
   (run-worker self))
 
 (defun run-with-worker (worker object &key wait)
@@ -236,11 +236,17 @@ is responsible for indicating in the state slot the result of the computation.")
 (defun run-task (worker task)
   (run-worker worker :input task))
 
-;; Scheduled Tasks
+(defmethod run-object ((self task) &key worker)
+  (run-task worker self))
+
+;;;; Scheduled Tasks
 (defgeneric schedule (self))
 
 (defclass scheduled-task (task)
   ((schedule :initarg :schedule :initform nil :accessor schedule)))
+
+(defmethod run-object ((self scheduled-task) &key time repeat absolute catch-up)
+  (sb-ext:schedule-timer (task-state self) time :repeat-interval repeat :absolute-p absolute :catch-up catch-up))
 
 ;;; Job
 (defclass job (task)
@@ -265,6 +271,9 @@ is responsible for indicating in the state slot the result of the computation.")
 
 (defun run-job (worker job)
   (run-worker worker :input job))
+
+(defmethod run-object ((self job) &key worker)
+  (run-job worker self))
 
 ;;; Work Scope
 (defclass work-scope ()

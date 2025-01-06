@@ -4,7 +4,7 @@
   :depends-on (:cl-ppcre :std :nlp :parse)
   :components ((:file "pkg")
                (:file "vars")
-               (:file "err")
+               (:file "condition")
                (:file "proto")
                (:file "util")
                (:file "macs")

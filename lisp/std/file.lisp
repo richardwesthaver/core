@@ -394,12 +394,6 @@ consider FILE-SIZE-IN-OCTETS instead."
 
 ;; see https://www.n16f.net/blog/counting-lines-with-common-lisp/
 
-(defun directory-path-p (path)
-  "Return T if PATH is a directory or NIL else."
-  (declare (type (or pathname string) path))
-  (and (not (pathname-name path))
-       (not (pathname-type path))))
-
 (defvar *hidden-paths* (list ".hg" ".git"))
 
 (defun hidden-path-p (path &optional strict)
@@ -412,17 +406,6 @@ consider FILE-SIZE-IN-OCTETS instead."
          (if strict
              (eq (char name 0) #\.)
              (member name *hidden-paths* :test 'equal)))))
-
-(defun directory-path (path)
-  "If PATH is a directory pathname, return it as it is. If it is a file
-pathname or a string, transform it into a directory pathname."
-  (declare (type (or pathname string) path))
-  (if (directory-path-p path)
-      path
-      (make-pathname :directory (append (or (pathname-directory path)
-                                            (list :relative))
-                                        (list (file-namestring path)))
-                     :name nil :type nil :defaults path)))
 
 (defun find-files (path &optional (hide *hidden-paths*))
   "Return a list of all files contained in the directory at PATH or any of its

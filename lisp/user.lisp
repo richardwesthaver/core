@@ -3,5 +3,4 @@
 ;; Top-level namespaces accessible to user lisps.
 
 ;;; Code:
-(in-package :std-user)
-(defpkg :user (:use :std-lisp :std-user))
+(pkg:defpkg :user (:use :std-lisp :std-user))

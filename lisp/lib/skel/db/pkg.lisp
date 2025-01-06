@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :skel/db
   (:use :cl :std :skel/core/condition 
-   :skel/core/obj :skel/core/proto :skel/core/vars :db
+   :skel/core/obj :skel/core/proto :skel/core/var :db
    :store :schema :query :rdb
    :id :stored)
   (:export :sk-object-schema 

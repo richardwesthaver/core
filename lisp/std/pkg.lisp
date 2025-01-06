@@ -539,7 +539,7 @@
    :lock))
 
 (defpkg :std/task
-  (:use :cl :std/thread :sb-concurrency)
+  (:use :cl :std/thread :sb-concurrency :std/meta)
   (:import-from :std/thread :%make-thread)
   (:import-from :std/macs :if-let :eval-always)
   (:import-from :std/list :deletef)
@@ -617,7 +617,10 @@
    :directory-pathname
    :symlink-pathname
    :symlinkp
+   :directory-path
+   :directory-path-p
    :merge-homedir-pathname
+   :ensure-directory-truename
    :absolute-directory-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
    :tmpize-pathname
@@ -638,6 +641,7 @@
 (defpkg :std/file
   (:use :cl)
   (:import-from :std/macs :define-constant :eval-always :once-only)
+  (:import-from :std/path :directory-path :directory-path-p)
   (:import-from :std/stream :copy-stream)
   (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
   (:export
@@ -654,10 +658,8 @@
    :octet-vector=
    :file-date
    :file-timestamp
-   :directory-path-p
    :*hidden-paths*
    :hidden-path-p
-   :directory-path
    :find-files
    :count-file-lines
    :probe-merge-file))

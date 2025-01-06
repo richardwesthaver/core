@@ -207,16 +207,14 @@ regs. Returns 4 values containing the regs RAX RBX RCX and RDX respectively."
 
 (defun lock-elision-supported-p ()
   "Test for HLE, i.e. hardware lock elision.
-HLE is supported if (cpuid 7) returns ebx with bit 4 set.
-If a processor does not support HLE, it will ignore the
-new assembler instruction prefixes XACQUIRE and XRELEASE.
+HLE is supported if (cpuid 7) returns ebx with bit 4 set.  If a processor does
+not support HLE, it will ignore the new assembler instruction prefixes
+XACQUIRE and XRELEASE.
 
-As of June 2013, the only x86-64 CPUs supporting HLE are:
-* Intel Core i5 4570
-* Intel Core i5 4670
-* Intel Core i7 4770
-Beware: at the time of writing all the known K models, as for example
-Intel Core i7 4770K, do **NOT** support HLE."
+As of June 2013, the only x86-64 CPUs supporting HLE are: * Intel Core i5 4570
+* Intel Core i5 4670 * Intel Core i7 4770 Beware: at the time of writing all
+the known K models, as for example Intel Core i7 4770K, do **NOT** support
+HLE."
 
   (let ((max-cpuid (cpuid 0)))
     (when (>= max-cpuid 7)
@@ -225,17 +223,17 @@ Intel Core i7 4770K, do **NOT** support HLE."
 
 (defun transaction-supported-p ()
   "Test for RTM, i.e. hardware memory transactions.
-RTM is supported if (cpuid 7) returns ebx with bit 11 set.
-If a processor does not support HLE, trying to execute
-the new assembler instructions XBEGIN, XEND, XABORT and XTEST
-will generate faults.
+RTM is supported if (cpuid 7) returns ebx with bit 11 set.  If a processor
+does not support HLE, trying to execute the new assembler instructions XBEGIN,
+XEND, XABORT and XTEST will generate faults.
 
 As of June 2013, the only x86-64 CPUs supporting RTM are:
 * Intel Core i5 4570
 * Intel Core i5 4670
 * Intel Core i7 4770
-Beware: at the time of writing all the known K models, as for example
-Intel Core i7 4770K, do **NOT** support RTM."
+
+Beware: at the time of writing all the known K models, as for example Intel
+Core i7 4770K, do **NOT** support RTM."
     (let ((max-cpuid (cpuid 0)))
       (when (>= max-cpuid 7)
         (let ((ebx (nth-value 1 (cpuid 7))))
