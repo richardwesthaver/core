@@ -335,7 +335,7 @@ Returns the stream that is connected to the client."
       (labels
           ((report-error-to-client (error &optional backtrace)
              (when *log-service-errors*
-               (net/srv:log-message* log:*log-level* "~A~@[~%~A~]" error (when log:*log-show-backtrace*
+               (service-log log:*log-level* "~A~@[~%~A~]" error (when log:*log-show-backtrace*
                                                                backtrace)))
                     (start-http-output +http-internal-server-error+
                                        (service-status-message 
@@ -414,11 +414,11 @@ Returns the stream that is connected to the client."
 
 (defun get-session (id)
   (let ((session
-          (cdr (assoc id (session-db *service*) :test #'=))))
+          (cdr (assoc id (net/srv::session-db *service*) :test #'=))))
     (when (and session
                (session-expired-p session))
       (when *response*
-        (log-message* :info "Session with ID ~A too old" id))
+        (service-log :info "Session with ID ~A too old" id))
       (remove-session session)
       (setq session nil))
     session))

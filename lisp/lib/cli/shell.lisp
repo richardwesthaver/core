@@ -92,7 +92,7 @@ An escaped form with parens like the following works fine:
             (t (nyi!))))
         (let ((args (list "-c" (format nil "~a" str)))
               (directory (or *shell-directory* *default-pathname-defaults*)))
-          (lambda (&key (output *standard-output*) (wait t) (status-hook))
+          (lambda (&key input (output *standard-output*) (wait t) (status-hook) pty)
             (case output
               (:string (string-right-trim
                         '(#\Newline)
@@ -100,7 +100,7 @@ An escaped form with parens like the following works fine:
                           (sb-ext:run-program *shell* args
                                               :directory directory
                                               :output s
-                                              :input *shell-input*
+                                              :input input
                                               :wait wait
                                               :status-hook status-hook))))
               (:integer (parse-integer
@@ -110,14 +110,14 @@ An escaped form with parens like the following works fine:
                             (sb-ext:run-program *shell* args
                                                 :directory directory
                                                 :output s
-                                                :input *shell-input*
+                                                :input input
                                                 :wait wait
                                                 :status-hook status-hook)))))
               (t (sb-ext:run-program *shell*
                                      args
                                      :directory directory
                                      :output output
-                                     :input *shell-input*
+                                     :input input
                                      :wait wait
                                      :status-hook status-hook))))))))
 

@@ -104,7 +104,7 @@
     (if *args*
         (loop for a in *args*
               do (debug!
-                  (if-let ((rule (sk-find-rule a sk)))
+                  (if-let ((rule (sk-find a sk)))
                     (sk-make sk rule)
                     ;;  TODO 2024-08-23: restart condition here
                     (skel-simple-error "rule not found: ~A" a))))
@@ -116,7 +116,7 @@
       (mapc (lambda (script)
               ;; first check if a script with the same name exists, else check
               ;; for a rule definition
-              (if-let ((script (sk-find-script 
+              (if-let ((script (sk-find
                                 (pathname-name script)
                                 *skel-user-config*)))
                 (sk-run script)
@@ -127,6 +127,11 @@
 (defcmd skc-new ()
   (println *args*)
   (println *opts*))
+
+(defcmd skc-search ()
+  "Search the current project and return a date-frame of results."
+  (dolist (a *args*)
+    (println (sk-search-project a))))
 
 (defun sk-shell ()
   (trace! "starting skel shell")
@@ -193,6 +198,9 @@
    (:name make
     :description "build project targets"
     :thunk skc-make)
+   (:name search
+    :description "search the current project"
+    :thunk skc-search)
    (:name run
     :description "run a script or command"
     :thunk skc-run)

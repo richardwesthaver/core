@@ -56,7 +56,7 @@
     (do-opts *cli*)
     (rocksdb:load-rocksdb)
     (init-skel)
-    (setq *db* (make-db :skel))
+    ;; (setq *db* (make-db :skel))
     (do-cmd *cli*)
     (when (getopt "interactive" nil)
       (sk-shell))))

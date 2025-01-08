@@ -82,11 +82,11 @@
 
 (add-to-load-path user-emacs-lib-directory)
 
-(require 'graph)
-(require 'scrum)
-(require 'inbox)
-(require 'skel)
-(require 'c2)
+(with-eval-after-load 'default
+  (require 'scrum)
+  (require 'inbox)
+  (require 'skel)
+  (require 'c2))
 
 ;;; Theme
 (defun load-default-theme (&optional theme)
@@ -272,7 +272,7 @@
                          ;; slime-listener-hooks
                          ;; slime-enclosing-context
                          ;; slime-media
-                         ;; slime-mrepl
+                         slime-mrepl
                          ;; slime-company
                          slime-sbcl-exts
                          slime-cape ;; ext

@@ -25,7 +25,7 @@ LOCK refers to the lock that should be held during the logging operation."
                                            :if-exists :append)
                 ,@body))
              (stream
-              (with-open-stream (,stream-var ,destination)
+              (let ((,stream-var ,destination))
                 ,@body))))))))
 
 (defmacro with-fast-log-stream ((stream-var destination &optional (lock (make-mutex :name "log-stream"))) 

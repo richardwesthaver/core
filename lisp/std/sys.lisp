@@ -66,23 +66,32 @@ and we may query the user for input.")
                 (package-symbols package test))
         #'string<))
 
-(defun standard-symbol-names (test)
+(defun standard-symbol-names (&optional test)
   (package-symbol-names :common-lisp test))
 
-(defun append-logical-hosts (&rest hosts)
-  "Reinitialize SB-IMPL::*LOGICAL-HOSTS* with a freshly allocated vector
-consisting of the old contents appended to the new."
-  (setq *logical-hosts*
-        (concatenate 'vector hosts *logical-hosts*)))
+;; reinitialize as a non-simple-vector so we can extend it
+;; (sb-ext:without-package-locks
+;;   (proclaim '(type (vector logical-host) *logical-hosts*))
+;;   (setq *logical-hosts* (make-array (length *logical-hosts*) 
+;;                                     :element-type 'logical-host 
+;;                                     :initial-contents *logical-hosts*  :adjustable t :fill-pointer t))
+;;   (defun push-logical-host (host)
+;;     "Reinitialize SB-IMPL::*LOGICAL-HOSTS* with a freshly allocated vector
+;; consisting of the old contents appended to the new."
+;;     (declare ((or logical-host string) host))
+;;     (vector-push-extend
+;;      (if (stringp host) (make-logical-host :name host :name-hash (sxhash host)) host)
+;;      *logical-hosts*)))
 
 (defun add-logical-pathname-translation (host path translation)
+  "Add a new logical pathname translation for HOST."
   (let ((host-path (logical-pathname-translations host))
-        (val (cons path translation)))
+        (val (list path translation)))
     (if-let ((found (assoc path host-path :test 'string=)))
         (substitute val found host-path :test 'equalp)
-      (setf (logical-pathname-translations host) 
+      (setf (logical-pathname-translations host)
             (push val host-path)))))
-        
+
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)
   "A naive tree-shaker for lisp."
@@ -249,4 +258,3 @@ Core i7 4770K, do **NOT** support RTM."
 
 (defun 64-bit-p () #+x86-64 t)
 (defun 32-bit-p () #+x86 t)
-  

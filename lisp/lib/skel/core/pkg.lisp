@@ -26,7 +26,6 @@
    :sk-write :sk-writeln
    :sk-write-string :sk-write-file
    :sk-read-file :sk-install-user-config
-   :sk-find-rule :sk-find-script
    :sk-find :sk-find*
    :sk-convert :sk-load-component
    :sk-install
@@ -105,7 +104,8 @@
    :sk-project-slot
    :find-project-root
    :setf-skel-vars
-   :list-all-projects))
+   :list-all-projects
+   :sk-search-project))
 
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/condition :sb-vm)

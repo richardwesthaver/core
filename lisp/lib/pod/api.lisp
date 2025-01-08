@@ -23,7 +23,7 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
  (defun register-libpod-param (name prototype)
    (setf (gethash name *libpod-params*) prototype))
  (defun register-libpod-path (name prototype)
-   (setf (gethash name *libpod-params*) prototype)))
+   (setf (gethash name *libpod-paths*) prototype)))
 
 (defmacro register-libpod-params (&rest forms)
   (dolist (f forms)
@@ -70,7 +70,7 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
                         ("depend" boolean)
                         ("force" boolean)
                         ("ignore" boolean)
-                        ("timeout" int)
+                        ("timeout" integer)
                         ("v" boolean)
                         ("until" time)
                         ("label" string)
@@ -78,10 +78,15 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
                         ("names" (vector string))
                         ("noTrunc" boolean)
                         ("podmanOnly" boolean)
-                        ("replicas" int)
+                        ("replicas" integer)
                         ("service" boolean)
                         ("type" string)
                         ("additionalEnvVariables" (vector string)))
+
+;; (uri:merge-uris 
+;;  (when-let ((params (url:url-encode-params '(("foo" . "bar738?")))))
+;;    (concatenate 'string "?" params))
+;;    (uri:parse-uri "https://test.foo"))
 
 (register-libpod-paths
  ;; system
@@ -101,29 +106,12 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
  ;; network
  ("libpod networks/json" (:get (filters))))
 
-(defstruct libpod-param 
-  (name "" :type string)
-  (val nil))
-
 (defstruct (libpod-request (:conc-name "REQUEST-"))
   (path "" :type string)
   (method :get :type keyword)
   (params (make-array 0 :element-type 'libpod-param :fill-pointer 0 :adjustable t) :type (vector libpod-param))
   (body nil))
 
-(defmethod push-param ((param libpod-param) (request libpod-request))
-  (vector-push param (request-params request)))
-
-(defmethod build-request ((self libpod-request))
-  "Return a function that calls DEX:REQUEST with args filled in from
-SELF. Holes are left open and exposed as arguments to the returned
-function as in the below lambda-list:
-
-(SOCKET ENDPOINT &OPTIONAL CALLBACK)."
-  (compile nil 
-           (lambda (socket endpoint &optional callback)
-             (declare (ignorable socket endpoint callback)))))
-  
 (defstruct libpod-response 
   (status)
   (headers)

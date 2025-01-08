@@ -11,7 +11,8 @@
   (:export :sk-object-schema 
    :sk-schema :skel-db 
    :skel-db-path :*skel-registry-schema* 
-   :*skel-cache-schema*))
+   :*skel-cache-schema*
+   :merge-homedir-pathnames))
 
 (in-package :skel/db)
 

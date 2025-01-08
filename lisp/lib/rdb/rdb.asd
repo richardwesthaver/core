@@ -14,6 +14,7 @@
                (:file "rdb")
                (:file "schema")
                (:file "db")
+               (:file "log")
                (:file "query")
                (:file "store"))
   :in-order-to ((test-op (test-op :rdb/tests))))

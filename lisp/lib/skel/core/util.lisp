@@ -145,6 +145,23 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
         (sk-config-slot slot default)
         (slot-value *skel-project* slot))))
 
+(defun sk-search-project (query &optional (project *skel-project*) 
+                                          (user-config *skel-user-config*)
+                                          (system-config *skel-system-config*))
+  "Search the current project for elements matching QUERY."
+  (etypecase query
+    (string (or (sk-find query project)
+                (sk-find query user-config)
+                (when system-config
+                  (sk-find query system-config))))
+    (integer (or (sk-find query project :slot :id)
+                 (sk-find query user-config :slot :id)
+                 (when system-config
+                   (sk-find query system-config :slot :id))))
+    (keyword (sk-project-slot query))
+    (q:sql-query)
+    (q:dql-query)))
+
 (macrolet 
     ((%init (set)
        `(with-readtable :shell

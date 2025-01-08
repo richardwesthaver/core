@@ -38,6 +38,7 @@
 (pkg:defpkg :net/srv/http
   (:use :cl :std :net/proto/http
    :net/codec/http :net/core :net/cookie :io/chunky)
+  (:import-from :net/srv :service-log)
   (:use-reexport :net/srv)
   (:export :http-service :https-service))
 
@@ -348,9 +349,11 @@ Return value is ignored."))
         (run-thread 
          self
          (lambda () (accept-connections (service self)))
-         :name (format nil "service-~A:~A"
+         :name (format nil "~A ~A ~A"
+                       (name (service self))
                        (or (address (service self)) "*")
-                       (port (service self))))))
+                       (port (service self)))))
+  (values))
                     
 ;; Note from Hunchentoot:
 #|
@@ -395,7 +398,7 @@ Return value is ignored."))
    (worker-thread-name-format
     :type (or string null)
     :initarg :worker-thread-name-format
-    :initform "service-worker-~A"
+    :initform "srv-worker-~A"
     :accessor worker-thread-name-format))
   (:default-initargs
    :max-thread-count *default-max-thread-count*
@@ -469,8 +472,7 @@ Return value is ignored."))
       (let ((*service* (service self)))
         (ignore-errors
          (close (socket-make-stream (socket *service*)) :abort t))
-        (log-message* :error
-                      "Error while creating worker thread for new connection: ~A" c)))))
+        (service-log :error "Error while creating worker thread for new connection: ~A" c)))))
 
 (defmethod stop ((self engine) &key)
   self)
@@ -505,6 +507,7 @@ Return value is ignored."))
   (create-request-worker-thread self socket))
 
 ;; supervisor, worker, task, kernel
+
 ;;; Service
 (defconfig service-config () ())
 
@@ -534,7 +537,7 @@ Return value is ignored."))
    :response-class 'response
    :timeout *default-connection-timeout*
    :connection-max *default-connection-max*
-   :logger (make-instance 'service-logger)
+   :logger (make-instance 'service-logger :message-log-output *error-output* :access-log-output *error-output*)
    :backlog -1 ;; TODO 2024-10-23: what is a correct initial value here? wookie uses -1
    :request-count 0
    :shutdown-p t
@@ -562,14 +565,14 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defmethod service-log-message ((self service) level format-string &rest args)
   (log:with-log-stream (stream (message-log-output self) *message-log-lock*)
     (handler-case
-        (format stream "[~A~@[ [~A]~]] ~?~%"
+        (format stream "[~A~@[ ~A~]] ~?~%"
         (obj/time:iso-time) level
         format-string args)
       (error (e)
         (ignore-errors
          (format *trace-output* "error ~A while writing to error log, error not logged~%" e))))))
 
-(defun log-message* (level format-string &rest args)
+(defun service-log (level format-string &rest args)
   (apply 'service-log-message *service* level format-string args))
 
 (defmethod start-listening :around ((self service))
@@ -581,8 +584,8 @@ similar to HUNCHENTOOT:ACCEPTOR."))
     (setf (slot-value self 'port) (nth-value 1 (socket-name (socket self))))))
 
 (defmethod start-listening ((self service))
-  (when (socket self)
-    (simple-service-error "service ~A is already listening" self))
+  ;; (when (socket self)
+  ;;   (simple-service-error "service ~A is already listening" self))
   (setf (socket self) (make-instance 'inet-socket :type :stream :protocol :tcp))
   (socket-bind (socket self)
                (or (address self)
@@ -605,13 +608,13 @@ similar to HUNCHENTOOT:ACCEPTOR."))
       (with-mutex ((shutdown-lock self))
         (when (shutdown-p self)
           (return))
-        (when (socket-listen sock (backlog self))
+        (when (print (socket-listen sock (backlog self))))
           (when-let ((conn
                       (handler-case (socket-accept sock)
                         (sb-bsd-sockets::connection-refused-error ()))))
             (setf (sb-impl::fd-stream-timeout (socket-make-stream conn))
                   (coerce (timeout self) 'single-float))
-            (handle-connection (engine self) conn)))))))
+            (handle-connection (engine self) conn))))))
 
 ;; (defmethod dispatch-request ((self service) request))
 
@@ -621,7 +624,10 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 
 (defmethod start ((self service))
   (setf (shutdown-p self) nil)
+  (setf *service* self)
+  (service-log :info "starting service ~A" (name self))
   (let ((engine (engine self)))
+    (service-log :debug "using engine ~A" engine)
     (setf (service engine) self)
     (start-listening self)
     (execute-service engine))
@@ -632,10 +638,12 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 
 ;; FIX 2024-12-28: do better :)
 (defun wake-service-for-shutdown (service)
-  "Create a dummy connection to the service, waking ACCEPT-CONNECTIONS while it is waiting. The idea is to force a check of SHUTDOWN-P."
+  "Create a dummy connection to the service, waking ACCEPT-CONNECTIONS while it
+is waiting. The idea is to force a check of SHUTDOWN-P."
   (handler-case
-      (multiple-value-bind (address port) (sb-bsd-sockets:get-host-by-address (sb-bsd-sockets:socket-name (socket service)))
+      (multiple-value-bind (address port) (sb-bsd-sockets:socket-name (socket service))
         (let ((conn (sb-bsd-sockets:socket-connect
+                     (make-instance 'sb-bsd-sockets:inet-socket :type :stream :protocol :tcp)
                      (cond
                        ((and (= (length address) 4) (zerop (elt address 0)))
                         #(127 0 0 1))

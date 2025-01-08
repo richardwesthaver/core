@@ -5,29 +5,36 @@
 ;;; Code:
 (in-package :skel/db)
 
-(defun skel-db-path () (merge-pathnames "db/" *skel-store*))
+(defvar *skel-db-path* (merge-homedir-pathnames ".stash/skel/db/"))
+(defun skel-db-path (path) (merge-pathnames path *skel-db-path*))
 
 (defun skel-db-spec (path &optional (backend :rdb))
   "Return a list which can be safely stored in the SPEC slot of a STORE."
-  (list backend (directory-path (merge-pathnames path (skel-db-path)))))
+  (list backend (directory-path (skel-db-path path))))
 
 (defvar *default-skel-db-spec* (skel-db-spec "default"))
 
-(defclass skel-db (rdb-database) ()
+(defclass skel-db (rdb-database) 
+  ()
   (:default-initargs
    :db (make-db :rocksdb :name "skel-db" :opts (default-rdb-opts))))
 
-(defmethod make-db ((engine (eql :skel)) &rest initargs &key (path (skel-db-path)) &allow-other-keys)
-  (let ((name (or (getf initargs :name) (namestring path)))
-        (db (apply 'make-instance 'skel-db (remf initargs :path))))
-    (when name (setf (name db) name))
-    db))
+(defmethod make-db ((engine (eql :skel)) &rest initargs &key name path &allow-other-keys)
+  (let ((name (or name (when path (namestring path)))))
+    (remf initargs :name)
+    (remf initargs :path)
+    (let ((db (apply 'make-instance 'skel-db initargs)))
+      (when name (setf (name db) name))
+      db)))
 
-(defmethod name ((self skel-db)) (rdb-name (db self)))
+(defaccessor (name) ((self skel-db)) (rdb-name (db self)))
+(defaccessor (path) ((self skel-db)) (rdb-name (db self)))
 
-(defmethod initialize-instance :after ((self skel-db) &rest initargs &key name)
+(defmethod initialize-instance :before ((self skel-db) &rest initargs &key name path &allow-other-keys)
   (declare (ignore initargs))
-  (when name (setf (name self) name)))
+  (unless name
+    (unless (not path)
+      (setf name (namestring path)))))
 
 (defmethod start :after ((self skel-db))
   (setq *db* (open-db self)))
@@ -47,3 +54,13 @@
 
 (defclass skel-record (id) ()
   (:metaclass stored-class))
+
+(defvar *skel-registry-db* (make-db :skel :path *skel-registry* :schema *skel-registry-schema*))
+(defvar *skel-cache-db* (make-db :skel :path *skel-cache* :schema *skel-cache-schema*))
+;; (with-db (db :db *skel-cache-db* :open t :close t))
+
+(defvar *skel-logger* (make-instance 'rdb-logger))
+
+(defclass skel-db-sink (rdb-sink) ()
+  (:default-initargs
+   :db (make-db :rdb :path (skel-db-path "log/"))))

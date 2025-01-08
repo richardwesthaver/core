@@ -353,7 +353,7 @@
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets :obj/db :obj/schema
-   :config :build)
+        :config :build)
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
@@ -378,6 +378,7 @@
    #:service
    #:*router*
    #:*service*
+   #:*service-table*
    #:*handlers*
    #:request
    #:response
@@ -426,10 +427,11 @@
    #:session-expired-p
    #:defroute
    #:defservice
+   :service-log
    #:*headers-sent*
-   #:log-message*
    #:*log-service-errors*
-   #:service-config))
+   #:service-config
+   #:session-db))
 
 (pkg:defpkg :net
   (:use :cl :std)

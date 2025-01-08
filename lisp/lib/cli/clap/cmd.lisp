@@ -55,15 +55,12 @@ a CLI is called without arguments, and all subcommands."))
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
-    (format stream "~(~A~)~:[~;*~]~@[~24t~A~]~:[~;~%~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]"
+    (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~%~4t:doc ~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]"
             (cli-name self)
             (equal (string (cli-thunk *cli*)) (string (cli-thunk self)))
             (and (slot-boundp self 'description) (cli-description self))
             (when (fboundp (cli-thunk self))
-              (when-let ((doc (documentation 
-                               (symbol-function (cli-thunk self)) 
-                               'function)))
-                (format stream "~& :doc ~A" doc)))
+              (documentation (symbol-function (cli-thunk self)) 'function))
             (unless (null opts)
               (loop for o across opts collect (with-output-to-string (s) (print-usage o s))))
             (unless (null cmds)

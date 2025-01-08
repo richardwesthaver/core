@@ -1,11 +1,11 @@
 (defpackage :cry/tests
-  (:use :rt :std :cl :cry :cry/hotp :cry/totp :cry/crc64 :cry/jwt :cry/b3))
+  (:use :rt :std :cl :cry :cry/hotp :cry/totp :cry/crc64 :cry/jwt :cry/b3 :cry/keyring))
 
 (in-package :cry/tests)
 
 (defsuite :cry)
 (in-suite :cry)
-
+(keyutils:load-keyutils)
 (deftest hotp ()
   (is (integerp (hotp "1234" 100))))
 (deftest totp ()
@@ -24,5 +24,8 @@
       (cry/jwt:jwt-decode "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" :secret "your-256-bit-secret")
     (istype 'dat/json:json-object claims)
     (istype 'dat/json:json-object header)))
-    
-
+(deftest keyring ()
+  (let ((kr (make-keyring :user)))
+    (istype 'keyring kr)
+    (iszero (clear-keys kr))))
+  

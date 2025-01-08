@@ -8,8 +8,6 @@
 
 (deftype document-designator () '(member :org :txt :pdf :html :md))
 
-(deftype stack-slot-kind () '(member :shell :lisp :comment :var :rule :directive :nop))
-
 (deftype contact-designator () '(or string (cons string string)))
 
 (defgeneric sk-run (self)
@@ -74,9 +72,7 @@ found in FORM. Defaults to *DEFAULT-PATHNAME-DEFAULTS*."))
   (:documentation "Write from SELF to file PATH."))
 (defgeneric sk-install-user-config (self config)
   (:documentation "Popu`late SELF with configuration object CONFIG."))
-(defgeneric sk-find-rule (name self)
+(defgeneric sk-find (name self &key &allow-other-keys)
   (:documentation "Find a rule with the given NAME in SELF."))
-(defgeneric sk-find-script (name self &key &allow-other-keys)
-  (:documentation "Find a script with the given NAME in SELF."))
 (defgeneric sk-register (self &key &allow-other-keys)
   (:documentation "Register sk-object SELF with the current Lisp system."))

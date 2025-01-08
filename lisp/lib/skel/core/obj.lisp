@@ -346,7 +346,7 @@ via the special form stored in RECIPE."
   (if rules
       (mapc
        (lambda (r) 
-         (when-let ((rule (print (sk-find-rule r obj))))
+         (when-let ((rule (print (sk-find r obj))))
            (sk-run-with-sources obj rule)))
        rules)
       (unless (sequence:emptyp (sk-rules obj))
@@ -360,7 +360,7 @@ via the special form stored in RECIPE."
   (when-let ((sources (and rule (sk-rule-source rule))))
     (mapcar
      (lambda (src)
-       (if-let* ((sr (sk-find-rule src obj)))
+       (if-let* ((sr (sk-find src obj)))
                 ;; TODO: check if we need to rerun sources
                 (sk-make obj sr)
                 (error "unhandled source: ~A for rule ~A" src rule)))
@@ -630,21 +630,21 @@ via the special form stored in RECIPE."
     (setf (sk-license self) license)
     (setf (sk-author self) author)))
 
-(defmethod sk-find-rule ((item sk-rule) (self skel))
+(defmethod sk-find ((item sk-rule) (self skel) &key)
   (find (string-upcase (sk-rule-target item))
         (sk-rules self) :test 'string-equal :key 'sk-rule-target))
 
-(defmethod sk-find-rule ((item t) (self skel))
+(defmethod sk-find ((item t) (self skel) &key)
   (find (string-upcase item) (sk-rules self) :test 'string-equal :key #'sk-rule-target))
 
-(defmethod sk-find-script ((name string) (self sk-config) &key)
+(defmethod sk-find ((name string) (self sk-config) &key)
   (find name (sk-scripts self) :test 'equal :key #'name))
 
 (defmethod sk-call ((self sk-project) (arg sk-rule))
   (sk-make self arg))
 
 (defmethod sk-call ((self sk-project) (arg t))
-  (sk-make self (sk-find-rule arg self)))
+  (sk-make self (sk-find arg self)))
 
 (defmethod sk-call ((self sk-project) (arg (eql :compile)))
   (loop for c across (sk-components self)

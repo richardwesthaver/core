@@ -36,7 +36,7 @@
 
 (defun mntent-all-infos (&optional (mount-info-file "/etc/mtab"))
   (let ((root-info (setmntent mount-info-file "ro"))
-        (infos '()))
+        (infos))
     (if (not (null-alien root-info))
         (labels ((get-info ()
                    (let ((info (getmntent root-info)))
@@ -45,10 +45,10 @@
                            (push info infos)
                            (get-info))
                          infos))))
-          (unwind-protect (get-info)
+          (prog1
+              (get-info)
             (endmntent root-info)))
-        (error 'open-file-failed
-               :file-path mount-info-file))))
+        (error 'open-file-failed :file-path mount-info-file))))
 
 (defun mntent-info (mtab plist-key looking-for-value)
   (let ((all-infos (mntent-all-infos mtab)))
@@ -78,6 +78,14 @@
          (if (cl-ppcre:scan  +suboption-separator+ i)
              (cl-ppcre:split +suboption-separator+ i)
              i))))
+
+(defun all-mountpoints (&optional (mount-info-file "/etc/mtab"))
+  (mapcar 
+   (lambda (i) 
+     (with-alien-slots (mnt-fsname mnt-dir mnt-type mnt-opts) i
+       (list :fsname mnt-fsname :type mnt-type 
+             :opts mnt-opts :dir mnt-dir)))
+   (all-infos mount-info-file)))
 
 ;;; Unix Statvfs
 (define-alien-type fsblkcnt-t unsigned-long)
@@ -114,10 +122,11 @@
 (defun statvfs (path)
   (with-alien ((buf (* statvfs) (make-alien statvfs)))
     (%statvfs path buf)
-    ;; (sb-ext:finalize buf (lambda () (free-alien buf)))
-    (with-alien-slots (bsize frsize blocks bfree bavail files ffree favail fsig flag namemax) (deref buf)
-      (values bsize frsize blocks bfree bavail files
-              ffree favail fsig flag namemax))))
+    (unwind-protect
+         (with-alien-slots (bsize frsize blocks bfree bavail files ffree favail fsig flag namemax) buf
+           (values bsize frsize blocks bfree bavail files
+                   ffree favail fsig flag namemax))
+      (free-alien buf))))
 
 ;;; Disk Info
 (defun disk-space (path &optional human-readable-p)
@@ -163,7 +172,7 @@
         (* frsize bavail))))
 
 ;;; Commands
-(defun list-disks ()
+(defun list-disks (&optional (info t))
   "List all physical disk use command line tool df. note: size in KB."
   (let ((disk-info-string (with-output-to-string (stream)
                             (sb-ext:run-program
@@ -173,15 +182,23 @@
                              #+bsd
                              '("-c" "/bin/df" "-k" "|" "grep" "^/dev")
                              :output stream))))
-    (flatten
+    (remove-if 
+     #'null
      (loop for disk-info in (ppcre:split "\\n" disk-info-string)
            collect
               #+linux
               (ppcre:register-groups-bind (filesystem size used available use-percent mounted-on)
                   ("^(.+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)%\\s+(.+)$"
                    disk-info)
-                (declare (ignore filesystem size used available use-percent))
-                (string-trim '(#\Space) mounted-on))
+                (declare (ignorable filesystem size used available use-percent))
+                (let ((mnt (string-trim " "  mounted-on)))
+                  (if info
+                      (list mnt (string-trim " " filesystem) 
+                            (parse-integer size) 
+                            (parse-integer used) 
+                            (parse-integer available)
+                            (parse-integer use-percent))
+                      mnt)))
            ;; for Mac OS X
               #+bsd
               (ppcre:register-groups-bind (filesystem size used available use-percent
@@ -200,14 +217,12 @@
               :total (human-readable-size total)
               :free (human-readable-size free)
               :available (human-readable-size available)
-              ;; :used (truncate (/ (* (- total available) 100) total))
-              )
+              :used (truncate (/ (* (- total available) 100) total)))
         (list :disk disk
               :total total
               :free free
               :available available
-              ;; :used (truncate (/ (* (- total available) 100) total))
-              ))))
+              :used (truncate (/ (* (- total available) 100) total))))))
 
 (defun list-disk-info (&optional human-readable-p)
   "List disk information. example result: 
@@ -220,5 +235,5 @@
   69)
  \(:DISK \"/mnt\" :TOTAL \"19.68 GB\" :FREE \"1.91 GB\" :AVAILABLE \"929.52 MB\"
   :USE-PERCENT 95))"
-  (loop for disk in (list-disks)
+  (loop for disk in (list-disks nil)
      collect (disk-info disk human-readable-p)))

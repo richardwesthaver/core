@@ -60,7 +60,7 @@
   :build-pathname "skel"
   :entry-point "bin/skel::start-skel"
   :components ((:file "skel"))
-  :depends-on (:std :cli :skel :packy :krypt))
+  :depends-on (:std :cli :skel :packy :krypt :swank))
 
 (defsystem :bin/skc
   :build-operation program-op

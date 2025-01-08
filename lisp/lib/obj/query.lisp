@@ -766,11 +766,14 @@ accumulator."
 ;;; Query
 (defclass query () ())
 
+(defclass simple-query (query ast id) ())
+
 (defgeneric make-query (self &rest initargs &key &allow-other-keys)
   (:documentation "Make a new QUERY object.")
   (:method ((self t) &rest initargs)
-    (declare (ignore initargs))
-    (make-instance 'query)))
+    (apply 'make-instance 'query initargs))
+  (:method ((self (eql :simple)) &rest initargs &key &allow-other-keys)
+    (apply 'make-instance 'simple-query initargs)))
 
 ;;; Execution Context
 (defclass execution-context () ())

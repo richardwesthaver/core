@@ -365,11 +365,13 @@
   (:recycle :sb-assem)
   (:recycle :sb-sys)
   (:import-from :sb-assem :*backend-instruction-set-package*)
-  (:import-from :sb-impl :*logical-hosts*)
+  (:import-from :sb-impl :*logical-hosts* :make-logical-host :logical-host)
   (:import-from :std/macs :if-let)
   (:export
    :.i ;; alias for *inspected*
    :64-bit-p :32-bit-p
+   :*logical-hosts*
+   :make-logical-host
    :hooks
    :*default-arena-size*
    :current-lisp-implementation
@@ -377,7 +379,7 @@
    :list-package-symbols
    :package-symbols
    :package-symbol-names
-   :append-logical-hosts
+   :push-logical-host
    :add-logical-pathname-translation
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live
@@ -619,7 +621,7 @@
    :symlinkp
    :directory-path
    :directory-path-p
-   :merge-homedir-pathname
+   :merge-homedir-pathnames
    :ensure-directory-truename
    :absolute-directory-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*

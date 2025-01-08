@@ -49,7 +49,8 @@
   (:export
    :get-key
    :keyring
-   :make-keyring))
+   :make-keyring
+   :clear-keys))
 
 (defpackage :cry/password
   (:use :cl :std :obj/secret)
