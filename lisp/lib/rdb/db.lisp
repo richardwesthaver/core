@@ -444,6 +444,9 @@ extractor."
   "Find a column by name."
   (find cf (columns self) :key 'name :test 'equal))
 
+(defmethod find-column ((cf symbol) (self rdb-database) &key)
+  (find (string-downcase cf) (columns self) :key 'name :test 'string=))
+
 (defmethod (setf find-column) ((new rdb-column-family) (cf string) (self rdb-database) &key)
   "Find and replace a column by name."
   (nsubstitute new (find-column cf self) (columns self)))

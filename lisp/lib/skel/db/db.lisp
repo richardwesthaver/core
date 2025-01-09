@@ -59,8 +59,15 @@
 (defvar *skel-cache-db* (make-db :skel :path *skel-cache* :schema *skel-cache-schema*))
 ;; (with-db (db :db *skel-cache-db* :open t :close t))
 
-(defvar *skel-logger* (make-instance 'rdb-logger))
-
 (defclass skel-db-sink (rdb-sink) ()
   (:default-initargs
-   :db (make-db :rdb :path (skel-db-path "log/"))))
+   :db (make-db :rocksdb :path (skel-db-path "log/") :schema *skel-log-schema*)))
+
+(defvar *skel-logger-config*
+  (config:make-config :logger :ast '((level-filter :id :level-filter)
+                                     (tag-tree-filter :id :tag-filter)
+                                     (skel-db-sink :id :sink))))
+
+(defvar *skel-logger* (build *skel-logger-config*))
+
+(defun init-skel-db-logger () (setq *skel-logger* (build *skel-logger-config*)))

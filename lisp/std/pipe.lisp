@@ -35,6 +35,7 @@
   (format stream "[~a]" (type-of obj))
   obj)
 
+(defgeneric sink (self))
 (defclass sink (element) ())
 (defmethod print-object ((obj sink) stream)
   (format stream ">>~a" (type-of obj))
@@ -62,6 +63,7 @@
                               :external-format :utf-8))
       (setf (slot-value obj 'file) file))))
 
+(defgeneric source (self))
 (defclass source (element) ())
 (defmethod print-object ((obj source) stream)
   (format stream "~a>>" (type-of obj))

@@ -150,7 +150,8 @@
    :close-checkpoint-db
    :rdb-object-schema
    :rdb-data-source
-   :rdb-sink))
+   :rdb-sink
+   :rdb-log-schema))
 
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

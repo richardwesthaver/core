@@ -287,7 +287,9 @@
    :astronomical-modified-julian-date
    :zone-name
    :encode-universal-time-with-tz
-   :decode-universal-time-with-tz))
+   :decode-universal-time-with-tz
+   :octets-to-timestamp
+   :timestamp-to-octets))
 
 (defpackage :obj/uuid
   (:nicknames :uuid)

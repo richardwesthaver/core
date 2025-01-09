@@ -8,10 +8,10 @@
 (defclass db-sink (sink database) ())
 
 (defmethod msg ((self db-sink) (msg log-message))
-  (put-key (column self (level msg)) (timestamp msg) (content msg)))
+  (insert-key self (timestamp-to-octets (timestamp msg)) (content msg) :column (level msg)))
 
 (defmethod msg ((self db-sink) (msg simple-message))
-  (put-key (column self (level msg)) (timestamp msg) (cons (tags msg) (content msg))))
+  (insert-key self (timestamp-to-octets (timestamp msg)) (cons (tags msg) (content msg)) :column (level msg)))
 
 (defclass database-logger (database logger) ()
   (:documentation "A LOGGER which writes messages to a DATABASE."))

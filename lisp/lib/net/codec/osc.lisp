@@ -30,7 +30,7 @@
 
 (defclass osc-data () ())
 
-(defclass message (osc-data)
+(defclass osc-message (osc-data)
   ((command
     :reader command
     :initarg :command)
@@ -51,15 +51,15 @@
 
 ;; Constructors
 
-(defun make-message (command args)
+(defun make-osc-message (command args)
   (unless (listp args)
     (setf args (list args)))
-  (make-instance 'message
+  (make-instance 'osc-message
                  :command command
                  :args args))
 
-(defun message (command &rest args)
-  (make-message command args))
+(defun osc-message (command &rest args)
+  (make-osc-message command args))
 
 (defun make-bundle (timetag elements)
   (unless (listp elements)
@@ -73,8 +73,8 @@
 
 (defgeneric format-osc-data (data &key stream width))
 
-(defmethod format-osc-data ((message message) &key (stream t)
-                                                (width 80))
+(defmethod format-osc-data ((message osc-message) &key (stream t)
+                                                       (width 80))
   (let ((args-string (format nil "~{~a~^ ~}" (args message))))
     (when (> (length args-string) width)
       (setf args-string
@@ -173,7 +173,7 @@ double float in the range 0-1."
 
 (defgeneric encode-osc-data (data))
 
-(defmethod encode-osc-data ((data message))
+(defmethod encode-osc-data ((data osc-message))
   "Encode an osc message with the given address and args."
   (with-slots (command args) data
     (concatenate '(vector (unsigned-byte 8))
@@ -193,7 +193,7 @@ double float in the range 0-1."
 
 (defgeneric encode-bundle-elt (data))
 
-(defmethod encode-bundle-elt ((data message))
+(defmethod encode-bundle-elt ((data osc-message))
   (let ((bytes (encode-osc-data data)))
     (cat (encode-int32 (length bytes)) bytes)))
 
@@ -334,7 +334,7 @@ pair in the buffer."
       (let ((message
              (decode-message
               (subseq buffer start (+ start end)))))
-        (make-message (car message) (cdr message)))))
+        (make-osc-message (car message) (cdr message)))))
 
 (defun decode-message (message)
   "reduces an osc message to an (address . data) pair. .."
@@ -571,7 +571,7 @@ given address pattern."
 (defgeneric dispatch (tree data device address port &optional timetag
                                                       parent-bundle))
 
-(defmethod dispatch (tree (data message) device address port &optional
+(defmethod dispatch (tree (data osc-message) device address port &optional
                                                                timetag
                                                                parent-bundle)
   "Calls the function(s) matching the address(pattern) in the osc

@@ -14,10 +14,9 @@
 (in-package :obj/time)
 
 ;;; Types
-
 (defclass timestamp ()
-  ((day :accessor day-of :initarg :day :initform 0 :type integer)
-   (sec :accessor sec-of :initarg :sec :initform 0 :type integer)
+  ((day :accessor day-of :initarg :day :initform 0 :type (unsigned-byte 16))
+   (sec :accessor sec-of :initarg :sec :initform 0 :type (unsigned-byte 16))
    (nsec :accessor nsec-of :initarg :nsec :initform 0 :type (integer 0 999999999))))
 
 (defstruct subzone
@@ -1052,7 +1051,8 @@ elements."
   (ts-sec-day-to-universal (sec-of timestamp) (day-of timestamp)))
 
 (defun unix-to-timestamp (unix &key (nsec 0))
-  "Return a TIMESTAMP corresponding to UNIX, which is the number of seconds since the unix epoch, 1970-01-01T00:00:00Z."
+  "Return a TIMESTAMP corresponding to UNIX, which is the number of seconds since
+the unix epoch, 1970-01-01T00:00:00Z."
   (multiple-value-bind (days secs)
       (floor unix +seconds-per-day+)
     (make-timestamp :day (- days 11017) :sec secs :nsec nsec)))
@@ -1065,6 +1065,20 @@ elements."
   "Return the Unix time corresponding to the TIMESTAMP"
   (declare (type timestamp timestamp))
   (timestamp-values-to-unix (sec-of timestamp) (day-of timestamp)))
+
+(defun timestamp-to-octets (timestamp)
+"Return an octet-vector consisting of 2-byte day, 2-byte sec, and 4-byte nsec."
+  (concatenate 'octet-vector
+               (integer-to-octets (day-of timestamp) 16) 
+               (integer-to-octets (sec-of timestamp) 16)
+               (integer-to-octets (nsec-of timestamp) 32)))
+
+(defun octets-to-timestamp (buf)
+  "Return a timestamp from an 8-byte octet-vector."
+  (make-timestamp
+   :day (octets-to-integer (subseq buf 0 2))
+   :sec (octets-to-integer (subseq buf 2 4))
+   :nsec (octets-to-integer (subseq buf 4 8))))
 
 (defun %get-current-time ()
   "Cross-implementation abstraction to get the current time measured from the unix epoch (1/1/1970). Should return (values sec nano-sec)."

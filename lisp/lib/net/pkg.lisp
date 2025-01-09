@@ -88,8 +88,8 @@
   (:use :cl :std :log :net/core)
   (:export
    :*default-osc-buffer-size*
-   :make-message
-   :message
+   :make-osc-message
+   :osc-message
    :make-bundle
    :bundle
    :format-osc-data

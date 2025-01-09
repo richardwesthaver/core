@@ -5,6 +5,17 @@
 ;;; Code:
 (in-package :rdb)
 
+(defclass rdb-log-schema (rdb-schema) ()
+  (:default-initargs
+   :fields 
+   (make-fields 
+    ;; default log levels
+    :trace '(octet-vector . string)
+    :debug '(octet-vector . string)
+    :info '(octet-vector . string)
+    :warn '(octet-vector . string)
+    :error '(octet-vector . string))))
+
 (defclass rdb-sink (db-sink rdb-database) ()
   (:default-initargs
    :db (make-db :rdb)))
