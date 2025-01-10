@@ -9,7 +9,8 @@
   (:default-initargs
    :fields 
    (make-fields 
-    ;; default log levels
+    ;; log levels
+    :default '(octet-vector . string)
     :trace '(octet-vector . string)
     :debug '(octet-vector . string)
     :info '(octet-vector . string)

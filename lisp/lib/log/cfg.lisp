@@ -12,12 +12,18 @@
 (defmethod pipe ((self logger-config))
   (ast self))
 
+(defmethod sink ((self logger-config))
+  (last (pipe self)))
+
+(defmethod source ((self logger-config))
+  (first (pipe self)))
+
 (defmethod make-config ((self (eql :logger)) &key ast pipe (size 10))
   (make-instance 'logger-config :ast (or ast pipe) :size size))
 
 (defun build-logger-config (cfg)
   (apply 'defpipe* (make-instance 'logger) (pipe cfg)))
-                 
+
 (defmethod build ((self logger-config) &key)
   (build-logger-config self))
 

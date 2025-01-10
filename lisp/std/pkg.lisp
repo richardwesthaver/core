@@ -673,7 +673,6 @@
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/list :removef)
   (:import-from :std/file :file)
-  (:shadow :message)
   (:export :sink :source :element :filter
    :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
    :element-stream :value :index :resolve-element

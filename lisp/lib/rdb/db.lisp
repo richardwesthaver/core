@@ -281,6 +281,9 @@ extractor."
 (defmethod open-column ((self rdb-database) (col string) &key)
   (open-column (db self) (cf (find-column col self))))
 
+(defmethod open-column ((self rdb-database) (col symbol) &key)
+  (open-column (db self) (cf (find-column (string-downcase col) self))))
+
 (defmethod open-column ((self rdb-database) (col rdb-column-family) &key)
   (open-column (db self) (cf col)))
 
@@ -322,7 +325,10 @@ extractor."
   (let ((names) (opts))
     (loop for c across (columns self)
           do (push (name c) names)
-          do (push (sap (column-opts c)) opts))
+          do (push (sap (column-opts c)) opts)
+          finally (unless (member "default" names)
+                    (push "default" names)
+                    (push (sap (default-rdb-opts)) opts)))
     (multiple-value-bind (db cfs)
         (open-cfs-raw (sap (db-opts self)) (name self) names opts)
       (setf (sap self) db)
@@ -573,7 +579,7 @@ extractor."
     (loop for cf across columns
           do (setf cf (destroy-column cf)))))
 
-(defmethod load-schema ((self rdb-database) (schema schema))
+(defmethod load-schema ((self rdb-database) (schema rdb-schema))
   "Load SCHEMA into rdb database object SELF. This will add any missing rdb-cfs
 and update existing key/value types for cfs with the same name. Existing cfs
 only get their type slots updated on non-nil values."

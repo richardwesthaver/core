@@ -284,6 +284,9 @@ function 'NAME-P'."
 be designated as the 'global' logger by setting the value of *LOGGER*, or may
 be implemented for a specific application."))
 
+(defaccessor (sink) ((self logger)) (aref #1=(pipe self) (1- (length #1#))))
+(defaccessor (source) ((self logger)) (aref (pipe self) 0))
+
 (defmethod print-object ((self logger) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~@[:threaded ~* ~]~@[:running ~* ~]:size ~d"
