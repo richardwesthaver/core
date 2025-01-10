@@ -71,6 +71,11 @@ generating json from a scripting language without native json support."
   (declare (ignore format))
   (json-decode obj :start start :end end))
 
+(defmethod deserialize ((obj pathname) (format (eql :json)) &key)
+  (declare (ignore format))
+  (with-open-file (f obj)
+    (json-read f)))
+
 (defun json-encode (value &optional stream)
   "Encodes a Lisp value into a stream."
   (json-write value stream))

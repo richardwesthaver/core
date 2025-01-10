@@ -35,7 +35,9 @@
    #:mountpoint-fstype
    #:mountpoint-options
    #:fsblkcnt-t
-   #:fsfilcnt-t))
+   #:fsfilcnt-t
+   #:disk-use-percent
+   #:mountpoint-directory))
 
 (defpackage :io/disk/btrfs
   (:nicknames :disk/btrfs)

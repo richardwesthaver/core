@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :homer/core
-  (:use :cl :std :log :krypt :skel :config :io/kbd :ast :id)
+  (:use :cl :std :log :krypt :skel :config :io/kbd :ast :id :time :pod :box)
   (:import-from :mpk :mpk-config :load-mpkrc)
   (:export
    #:*user*
@@ -24,7 +24,10 @@
    #:homer-task
    #:*homer-task-pool*
    #:*homer-logger*
-   #:home-config))
+   #:home-config
+   :home-config-slot
+   #:homer-job
+   #:homer-service-start))
 
 #+cli
 (defpackage :homer/cli
@@ -36,5 +39,5 @@
   (:use :cl :std :log :homer/core :gui))
 
 (pkg:defpkg :homer
-  (:use :cl :std :log)
+  (:use :cl :std :log :cli)
   (:use-reexport :homer/core #+cli :homer/cli #+gui :homer/gui))

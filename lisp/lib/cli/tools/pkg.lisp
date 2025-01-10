@@ -106,7 +106,9 @@
   (:export :*systemctl* :run-systemd :run-systemctl
    :systemd-error
            :systemctl-stop
-   :systemctl-start))
+   :systemctl-start
+   :systemctl-restart
+   :systemctl-status))
 
 (defpackage :cli/tools/rust
   (:nicknames :tools/rust)

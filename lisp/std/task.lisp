@@ -80,6 +80,8 @@ This interface is experimental and subject to change."
 (defgeneric tasks (self))
 (defgeneric results (self))
 
+(defgeneric status (self &key &allow-other-keys))
+
 ;;; Supervisor
 (defclass supervisor ()
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "supervisor"))) :accessor supervisor-thread)
@@ -257,6 +259,8 @@ is responsible for indicating in the state slot the result of the computation.")
    (lock :initform (make-mutex :name "job") :type mutex
          :initarg :lock))
   (:documentation "A collection of tasks forming a single unit of work."))
+
+(defgeneric jobs (self))
 
 (declaim (inline make-job))
 (defun make-job (&rest tasks)

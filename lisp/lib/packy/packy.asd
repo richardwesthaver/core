@@ -7,7 +7,7 @@
                :obj :net :cli :io :cry :dat)
   :components
   ((:file "pkg")
-   (:file "vars")
+   (:file "var")
    (:file "proto")
    (:file "pkgbuild")
    (:file "db")

@@ -72,3 +72,11 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
                    (homer-copy (cadr form) (cddr form)))
                  (trace! "skipping file:" (cddr form))))
       (t nil))))
+
+(defun home-config-slot (slot &optional (default :error))
+  (let ((slot (find-symbol (string-upcase (string slot)) :homer/core)))
+    (if (or (null *home-config*) (not (slot-boundp* *home-config* slot)))
+        (if (eql default :error)
+            (error "slot is unbound in homerc")
+            default)
+        (slot-value *home-config* slot))))

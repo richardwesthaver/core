@@ -89,6 +89,14 @@ An escaped form with parens like the following works fine:
                                                       :directory (or *shell-directory* *default-pathname-defaults*)
                                                       :output s
                                                       :input *shell-input*))))
+            ((= numarg 1)
+             (string-right-trim '(#\Newline)
+                                (with-output-to-string (s)
+                                  (sb-ext:run-program *shell*
+                                                      (list "-c" (format nil "~a" str))
+                                                      :directory (or *shell-directory* *default-pathname-defaults*)
+                                                      :output s
+                                                      :input *shell-input*))))
             (t (nyi!))))
         (let ((args (list "-c" (format nil "~a" str)))
               (directory (or *shell-directory* *default-pathname-defaults*)))

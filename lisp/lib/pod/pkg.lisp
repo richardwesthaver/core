@@ -20,7 +20,7 @@
 
 ;;; Code:
 (defpackage :pod
-  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :net/srv :config)
+  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :net/srv :config :ast)
   (:import-from :chunky :make-chunked-stream)
   (:export
    :*podman-api-version* :*podman-exe* :*buildah-exe*
@@ -33,4 +33,8 @@
    :containerfile :*containerfile-predefined-args*
    :containerfile-args :containerfile-steps :containerfile-base
    :with-libpod-client :*default-containerfile*
-   :pod-config))
+   :podman-config
+   :pod-config
+   :*podman-config-directory*
+   :load-podman-config
+   :default-podman-config))

@@ -6,8 +6,7 @@
 (in-package :log)
 
 (defconfig logger-config (ast)
-  ((ast :initform nil :initarg :ast :accessor ast)
-   (size :initform 10 :initarg :size)))
+  ((size :initform 10 :initarg :size)))
 
 (defmethod pipe ((self logger-config))
   (ast self))

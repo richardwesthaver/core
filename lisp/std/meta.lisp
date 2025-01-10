@@ -26,6 +26,11 @@
   (:method ((obj t) (stream t) &key)
     (write obj :stream stream)))
 
+(defun slot-boundp* (obj slot)
+  (when slot
+    (handler-bind ((sb-pcl::missing-slot nil))
+      (slot-boundp obj slot))))
+
 (defun shallow-copy-object (original)
   (let* ((class (class-of original))
          (copy (allocate-instance class)))

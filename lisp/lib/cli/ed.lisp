@@ -13,10 +13,10 @@
   `(let ((*print-case* :downcase))
      ,@body))
 
-(defun run-emacs (args &key file create-frame eval client)
+(defun run-emacs (args &key file create-frame eval client wait)
   (when client 
     (return-from run-emacs 
-      (run-emacsclient args :file file :create-frame create-frame :eval eval)))
+      (run-emacsclient args :file file :create-frame create-frame :eval eval :wait wait)))
   (when create-frame (push "-c" args))
   (when file (push (namestring file) args))
   (when eval 
@@ -24,7 +24,7 @@
       (appendf args (list "-e" (format nil "~A" eval)))))
   (sb-ext:run-program (find-exe "emacs") args))
   
-(defun run-emacsclient (args &key file (create-frame t) (eval))
+(defun run-emacsclient (args &key file (create-frame t) eval wait)
   (when create-frame (push "-c" args))
   (when file (push (namestring file) args))
   (push "-a=" args)
@@ -33,11 +33,11 @@
       (appendf args (list "-e" (format nil "~A" eval)))))
   (sb-ext:run-program (find-exe "emacsclient")
                       args
-                      :wait nil
+                      :wait wait
                       :output nil))
 
-(defun eval-emacs (form &key (client t) args file)
-  (run-emacs args :eval form :file file :client client))
+(defun eval-emacs (form &key (client t) args file wait)
+  (run-emacs args :eval form :file file :client client :wait wait))
 
 (defun ielm (&optional buf-name)
   (eval-emacs `(ielm ,buf-name)))
@@ -48,14 +48,21 @@
 (push #'run-emacsclient sb-ext:*ed-functions*)
 (push #'run-emacs sb-ext:*ed-functions*)
 
-(defmacro with-emacs ((var &key (eval t) (client t) create-frame file args) &body body)
+(defmacro with-emacs ((var &key (eval t) (client t) create-frame file (wait t) args) &body body)
   (if (eql t eval)
-      `(progn (eval-emacs `(progn ,,@body) :client ,client :args ,args))
-      `(let ((,var (run-emacs ,args :eval ,eval :file ,file :create-frame ,create-frame)))
+      `(progn (eval-emacs '(progn ,@body) :client ,client :args ,args :wait ,wait))
+      `(let ((,var (run-emacs ,args :eval ,eval :file ,file :create-frame ,create-frame :wait ,wait)))
          ,@body)))
 
 ;;; Config
 (defconfig editor-config (ast) ())
+
+(defmethod make-config ((fmt (eql :editor)) &rest initargs &key type &allow-other-keys)
+  (if type
+      (progn
+        (remf initargs :type)
+        (apply 'make-config type initargs))
+      (make-instance 'editor-config)))
 
 (defconfig emacs-config (editor-config) 
   ((path :initform *user-emacs-directory* :initarg :path :accessor path)))

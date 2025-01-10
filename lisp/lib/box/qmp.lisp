@@ -22,4 +22,3 @@
 
 ;;; Code:
 (in-package :box/qmp)
-

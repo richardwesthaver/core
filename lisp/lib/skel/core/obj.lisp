@@ -346,7 +346,7 @@ via the special form stored in RECIPE."
   (if rules
       (mapc
        (lambda (r) 
-         (when-let ((rule (print (sk-find r obj))))
+         (when-let ((rule (sk-find r obj)))
            (sk-run-with-sources obj rule)))
        rules)
       (unless (sequence:emptyp (sk-rules obj))

@@ -517,7 +517,8 @@
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
-   :exec :copy-object :safe-superclasses :run-object))
+   :exec :copy-object :safe-superclasses :run-object
+   :slot-boundp*))
 
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)
@@ -554,6 +555,8 @@
    :push-worker :push-task-result
    :work
    :pop-job :pop-task
+   :status
+   :jobs
    :tasks
    :results
    :kill-workers

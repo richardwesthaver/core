@@ -6,6 +6,7 @@
 (in-package :pod)
 
 (defvar *podman-exe* (find-exe "podman"))
+(defvar *podman-config-directory* (merge-homedir-pathnames ".config/containers/"))
 (defvar *buildah-exe* (find-exe "buildah")
   "Path to the 'buildah' executable. This really isn't useful in our environment.")
 

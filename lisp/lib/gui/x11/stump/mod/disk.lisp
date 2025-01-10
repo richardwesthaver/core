@@ -13,10 +13,9 @@
 (add-screen-mode-line-formatter #\D 'disk-modeline)
 
 (defparameter *disk-formatters-alist*
-  '((#\d  disk-get-device)
-    (#\s  disk-get-size)
-    (#\u  disk-get-used)
+  '((#\d  mountpoint-device)
+    (#\s  mountpoint-size)
     (#\a  disk-available-space)
     (#\p  disk-use-percent)
-    (#\m  disk-get-mount-point)
-    (#\f  disk-get-filesystem-type)))
+    (#\m  mountpoint-directory)
+    (#\f  mountpoint-fstype)))

@@ -6,13 +6,13 @@
 (in-package :homer/cli)
 
 ;;; CLI
-(defopt homer-version (print-version *cli*))
-(defopt homer-ast (setq *keep-ast* (or *arg*)))
-(defopt homer-log-level (when *arg* (setq *log-level* :debug)))
 (defopt homer-force (when *arg* (setq *homer-force* t)))
 
 (defcmd homer-show ()
-  (describe *home-config*))
+  (if *args*
+      (dolist (a *args*)
+        (println (home-config-slot (keywordicate (string-upcase a)))))
+      (describe *home-config*)))
 
 (defcmd homer-check ()
   (let ((src (slot-value *home-config* 'homer/core::src)))
@@ -40,6 +40,34 @@
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
+(defcmd homer-run ()
+  (mapcar 
+   (lambda (x)
+     (run-object
+      (find (string-upcase x) (jobs *home-config*)
+            :test 'equal
+            :key (lambda (x) (homer/core::homer-job-target x)))))
+   *args*))
+
+(defcmd homer-start-cmd ()
+  (homer-service-start (find (string-upcase (car *args*)) (homer/core::services *home-config*)
+                             :test 'equal
+                             :key (lambda (y) (string (id:id y))))
+                       :args (cdr *args*)))
+
+(defcmd homer-stop-cmd ()
+  (stop (find (string-upcase (car *args*)) (homer/core::services *home-config*)
+              :test 'equal
+              :key (lambda (y) (string (id:id y))))
+        :args (cdr *args*)))
+
+(defcmd homer-status-cmd ()
+  (let ((srv (find (string-upcase (car *args*)) 
+                   (homer/core::services *home-config*)
+                   :test 'equal
+                   :key (lambda (y) (string (id:id y))))))
+        (homer/core::status srv :args (cdr *args*))))
+
 (defcmd homer-install ()
   (let ((src (slot-value *home-config* 'homer/core::src)))
     (if-let ((src (probe-file src)))
@@ -54,11 +82,16 @@
   :version "0.1.0"
   :description "user home manager"
   :thunk homer-check
-  :opts ((:name "level" :description "set the log level" :thunk homer-log-level)
-         (:name "version" :description "print version" :thunk homer-version)
+  :opts ((:name "level" :description "set the log level" :thunk level-opt)
+         (:name "version" :description "print version" :thunk version-opt)
+         (:name "ast" :description "keep ASTs" :thunk keep-ast-opt)
          (:name "force" :description "use force" :thunk homer-force))
   :cmds ((:name show :thunk homer-show)
          (:name check :thunk homer-check)
          (:name push :thunk homer-push)
          (:name pull :thunk homer-pull)
-         (:name install :thunk homer-install)))
+         (:name install :thunk homer-install)
+         (:name run :thunk homer-run)
+         (:name start :thunk homer-start-cmd)
+         (:name stop :thunk homer-stop-cmd)
+         (:name status :thunk homer-status-cmd)))

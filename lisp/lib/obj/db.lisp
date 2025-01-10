@@ -390,7 +390,8 @@ hints.")
 (defgeneric open-columns* (self)
   (:documentation "Open all columns belonging to SELF."))
 (defgeneric open-with-columns (self &rest names)
-  (:documentation "Open a database with columns indicated by NAMES or all columns belonging to SELF. This function may error when called when (DB-OPEN-P SELF) is non-nil."))
+  (:documentation "Open a database with columns indicated by NAMES or all columns belonging to
+SELF. This function may error when (DB-OPEN-P SELF) is non-nil."))
 (defgeneric close-column (self &optional error)
   (:documentation "Close the column SELF. When ERROR is non-nil signal an error if the
 column is already closed."))

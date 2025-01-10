@@ -15,6 +15,7 @@
                (:file "containerfile")
                (:file "api")
                (:file "podman")
+               (:file "cfg")
                (:file "client")
                (:file "util"))
   :in-order-to ((test-op (test-op :pod/tests))))

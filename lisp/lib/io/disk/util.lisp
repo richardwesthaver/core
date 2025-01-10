@@ -65,6 +65,9 @@
   (when-let ((infos (mntent-info mount-info-file 'mnt-dir mountpoint)))
     (slot infos key)))
 
+(defun mountpoint-directory (mountpoint &optional (mount-info-file "/etc/mtab"))
+  (mountpoint-get mount-info-file mountpoint 'mnt-dir))
+
 (defun mountpoint-device (mountpoint &optional (mount-info-file "/etc/mtab"))
   (mountpoint-get mount-info-file mountpoint 'mnt-fsname))
 
@@ -170,6 +173,9 @@
     (if human-readable-p
         (human-readable-size (* frsize bavail))
         (* frsize bavail))))
+
+(defun disk-use-percent (path)
+  (/ (disk-available-space path) (disk-total-space path)))
 
 ;;; Commands
 (defun list-disks (&optional (info t))

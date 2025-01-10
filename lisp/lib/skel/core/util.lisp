@@ -121,11 +121,6 @@ skelfile if found."
   "Open the current system configuration using ED."
   (ed *system-skelrc*))
 
-(defun slot-boundp* (obj slot)
-  (when slot
-    (handler-bind ((sb-pcl::missing-slot nil))
-      (slot-boundp obj slot))))
-
 (defun sk-config-slot (slot &optional (default :error))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
 isn't found check *SKEL-SYSTEM-CONFIG*."

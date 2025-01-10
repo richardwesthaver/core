@@ -12,19 +12,21 @@
    (skel :initform (load-user-skelrc) :initarg :skel :type (or null pathname sk-config))
    (krypt :initform (load-kryptrc) :initarg :krypt :type (or null pathname krypt-config))
    (mpk :initform (load-mpkrc) :initarg :mpk :type (or null pathname mpk-config))
-   (packy :initform nil :initarg :packy :type (or null pathname packy-config))
+   (packy :initform nil :initarg :packy :type (or null packy-config))
    (logger :initform (default-logger-config) :initarg :logger :type (or null logger-config))
    (mail :initarg :mail :type pathname)
    (term :initform nil :type (or pathname null term-config))
    (tmux :initform nil :type (or pathname null tmux-config))
    (shell :initarg :shell :type (or pathname shell-config))
+   (tasks :initarg :tasks :type list :accessor tasks)
+   (jobs :initarg :jobs :type list :accessor jobs)
    (editor :initarg :editor :type (or pathname editor-config))
    (wm :initarg :wm :type (or pathname wm-config))
    (browser :initarg :browser :type (or pathname browser-config))
    (keyboard :initarg :keyboard :type (or pathname keyboard-config))
-   (boxes :initarg :box :type (or pathname box-config))
-   (pods :initarg :pod :type (vector (or pathname pod-config)))
-   (services :initarg :services :type (vector (or pathname service-config)))))
+   (boxes :initarg :box :type list)
+   (pods :initform nil :initarg :pod :type list)
+   (services :initform nil :initarg :services :type list :accessor services)))
 
 (defmethod make-config ((self (eql :home)) &rest args)
   (apply 'make-instance 'home-config args))
@@ -49,7 +51,31 @@
                         (:logger (make-config :logger :ast v))
                         (:term (make-config :term :ast v))
                         (:tmux (apply 'make-config :tmux v))
-                        (:editor (apply 'make-config :editor v))
+                        (:editor (if (atom v)
+                                     (make-config :editor :type v)
+                                     (apply 'make-config v)))
+                        (:pods (mapcar (lambda (x) (apply 'make-config :pod :name x)) v))
+                        (:boxes (mapcar (lambda (x) (apply 'make-config :box :name x)) v))
+                        (:packy 
+                         (if (atom v)
+                             (make-config :packy :path v)
+                             (apply 'make-config :packy ast)))
+                        (:tasks 
+                         (let ((ret))
+                           (dolist (task v ret)
+                             (push (load-ast (make-instance 'homer-task :ast task)) ret))))
+                        (:jobs
+                         (let ((ret))
+                           (dolist (job v ret)
+                             (push 
+                              (make-homer-job :target (string (pop job)) :source (pop job) :recipe job)
+                              ret))))
+                        (:services
+                         (let ((ret))
+                           (dolist (srv v ret)
+                             (push 
+                              (load-ast (make-instance 'homer-service :ast srv))
+                              ret))))
                         (t v)))
                 (setf (slot-value self s) v))))
           (setf (ast:ast self) nil)
@@ -69,12 +95,13 @@
 (defun load-homerc (&optional (file *default-user-homerc*))
   "Load a homerc configuration from FILE. Defaults to ~/.homerc."
   (unless (null (probe-file file))
-    (let ((form
-            (sxp:file-read-forms file)))
-      (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
-      (with-slots (src) *home-config*
-        (if src
-            (setf src (pathname src))
-            (if-let ((homer (sb-posix:getenv "HOMER")))
-              (setf src (pathname homer))
-              (error "missing HOMER directory")))))))
+    (with-readtable :shell
+      (let ((form
+              (sxp:file-read-forms file)))
+        (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
+        (with-slots (src) *home-config*
+          (if src
+              (setf src (pathname src))
+              (if-let ((homer (sb-posix:getenv "HOMER")))
+                (setf src (pathname homer))
+                (error "missing HOMER directory"))))))))
