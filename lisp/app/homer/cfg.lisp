@@ -78,7 +78,7 @@
                               ret))))
                         (t v)))
                 (setf (slot-value self s) v))))
-          (setf (ast:ast self) nil)
+          (unless *keep-ast* (setf (ast self) nil))
           self)
         ;; invalid ast, signal error
         (error 'syntax-error))))

@@ -69,28 +69,12 @@ and we may query the user for input.")
 (defun standard-symbol-names (&optional test)
   (package-symbol-names :common-lisp test))
 
-;; reinitialize as a non-simple-vector so we can extend it
-;; (sb-ext:without-package-locks
-;;   (proclaim '(type (vector logical-host) *logical-hosts*))
-;;   (setq *logical-hosts* (make-array (length *logical-hosts*) 
-;;                                     :element-type 'logical-host 
-;;                                     :initial-contents *logical-hosts*  :adjustable t :fill-pointer t))
-;;   (defun push-logical-host (host)
-;;     "Reinitialize SB-IMPL::*LOGICAL-HOSTS* with a freshly allocated vector
-;; consisting of the old contents appended to the new."
-;;     (declare ((or logical-host string) host))
-;;     (vector-push-extend
-;;      (if (stringp host) (make-logical-host :name host :name-hash (sxhash host)) host)
-;;      *logical-hosts*)))
-
-(defun add-logical-pathname-translation (host path translation)
-  "Add a new logical pathname translation for HOST."
-  (let ((host-path (logical-pathname-translations host))
-        (val (list path translation)))
-    (if-let ((found (assoc path host-path :test 'string=)))
-        (substitute val found host-path :test 'equalp)
-      (setf (logical-pathname-translations host)
-            (push val host-path)))))
+(defmacro define-logical-pathname (host path &body translations)
+  (mapcar (lambda (x) (setf #1=(cadr x) (merge-pathnames #1# path))) translations)
+  (setf translations 
+        (append `((,(format nil "~A;*.*.*" host) ,path)) translations))
+  `(setf (logical-pathname-translations ,host)
+         ',translations))
 
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)

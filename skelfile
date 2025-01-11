@@ -48,12 +48,12 @@
                     (:build () #$cd lisp/ffi/tree-sitter &&
                             clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
                             alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
-                    (:install () #$cp .stash/libtree-sitter-alien.so /usr/local/lib/$#))
+                    (:install () (funcall #$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
  (zstd-alien ()
              (:build () #$cd lisp/ffi/zstd &&
                      clang -g -O2 -Wall -Wno-unused-value -lzstd -shared \
                      alien.c -o ../../../.stash/libzstd-alien.so$#)
-             (:install () #$cp .stash/libzstd-alien.so /usr/local/lib/$#))
+             (:install () (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
  (psl.dat (%stash)
           (download "https://publicsuffix.org/list/public_suffix_list.dat"
                     :output ".stash/psl.dat"
@@ -97,14 +97,14 @@
                 (ql:quickload :bin/swm)
                 (asdf:make :bin/swm))
               #$mv lisp/bin/swm .stash/swm$#)
-      (:install () #$install -C -m 755 .stash/swm /usr/local/bin/swm$#))
+      (:install () (funcall #$sudo -S install -C -m 755 .stash/swm /usr/local/bin/swm$# :input t)))
  (rdb (%stash)
       (:build ()
               (with-sbcl (:noinform t :quit t)
                 (ql:quickload :bin/rdb)
                 (asdf:make :bin/rdb))
               #$mv lisp/bin/rdb .stash/rdb$#)
-      (:install () #$install -C -m 755 .stash/rdb /usr/local/bin/rdb$#))
+      (:install () (funcall #$install -C -m 755 .stash/rdb /usr/local/bin/rdb$# :input t)))
  (skel (%stash)
        (:build ()
                (with-sbcl (:noinform t :quit t)
@@ -118,7 +118,7 @@
                      (ql:quickload :bin/skel)
                      (asdf:make :bin/skel))
                    #$mv lisp/bin/skel .stash/skel$#)
-       (:install () #$install -C -m 755 .stash/skel /usr/local/bin/skel$#))
+       (:install () (funcall #$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t)))
  (skc (%stash)
       (:build ()
               (with-sbcl (:noinform t :quit t)
@@ -187,13 +187,14 @@
                    (in-package :std-user)
                    (compile-lisp :core :save ".stash/core.core")))
        (:compile () (compile-lisp :core :force t :verbose t))
-       (:install () #$install -C -m 755 .stash/core /usr/local/bin/core
-                 echo "core -> /usr/local/bin/"
-                 links="skel homer packy rdb organ vc gen swm"
-                 for i in $links; do
-                 ln -sf /usr/local/bin/core /usr/local/bin/$i
-                 echo "$i -> core -> /usr/local/bin/"
-                 done$#))
+       (:install () (funcall #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
+                             echo "core -> /usr/local/bin/"
+                             links="skel homer packy rdb organ vc gen swm"
+                             for i in $links; do
+                             sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
+                             echo "$i -> core -> /usr/local/bin/"
+                             done$#
+                             :input t)))
  (tests ()
         (:save () (with-sbcl (:noinform t :quit t)
                     (ql:quickload :core/tests)
@@ -210,14 +211,16 @@
  (alik-ui () #$trunk build --config rust/ui/alik/Trunk.toml$#)
  ;; install
  (install (install-core) 
-          #$d=/usr/local/share/lisp/
-          cd .stash
-          if [ -d $d ];
-          then
-          for f in $(find . -type f -name "*.core")
-          do echo "$(basename $f) -> $d"
-          install -C -m 755 $f $d
-          done fi$#)
+          (funcall
+           #$d=/usr/local/share/lisp/
+           cd .stash
+           if [ -d $d ];
+           then
+           for f in $(find . -type f -name "*.core")
+           do echo "$(basename $f) -> $d"
+           sudo -S install -C -m 755 $f $d
+           done fi$#
+           :input t))
  ;; TODO 2024-09-15: 
  (core-syms.sxp () (with-open-file (f ".stash/symbols.sxp" :direction :output)))
  (dist () #$mkdir -pv .stash/tmp/core/bin/ .stash/tmp/core/share/lisp/fasl/ .stash/tmp/core/lib/

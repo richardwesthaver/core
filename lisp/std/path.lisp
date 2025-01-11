@@ -42,8 +42,6 @@
 (deftype file-pathname ()
   '(and pathname (satisfies uiop:file-pathname-p)))
 
-;; logical-pathname is defined in CL.
-
 (defconstant +pathsep+
   #+windows #\; #+unix #\:
   "Path separator for this OS.")

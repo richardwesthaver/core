@@ -25,3 +25,7 @@ a query from input STREAM."
   (:macro-char #\! #'exclamation-mark-reader))
 
 (define-lisp-package :core)
+
+(define-logical-pathname "CORE" #P"/opt/core/"
+  ("CORE:STASH;*.*.*" "stash/**")
+  ("CORE:STORE;*.*.*" "store/"))
