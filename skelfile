@@ -38,6 +38,14 @@
         #$find emacs -name '*.elc' -type f -delete$#
         #$find lisp -name '*.fasl' -type f -delete$#
         #$echo 'cargo clean:' && cd rust && cargo clean$#)
+ (readme ()
+         (:update ()
+                  (cli/ed:with-emacs (e)
+                    (org-babel-lob-ingest \"~/comp/org/meta/babel.org\")
+                    (org-with-file-buffer \"~/comp/core/readme.org\"
+                                          (goto-line 7)
+                                          (org-ctrl-c-ctrl-c)
+                                          (save-buffer)))))
  (swank () 
         (:run () 
               (let ((f ".stash/.swank"))

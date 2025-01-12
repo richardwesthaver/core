@@ -42,7 +42,7 @@
       (setq options (remove (car fun) options))
       (setq fun (cadar fun)))
     `(prog1
-         (eval-when (:compile-toplevel :load-toplevel :execute)
+         (eval-when (:compile-toplevel :execute)
            (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))
        (when ',fun
          (cond 
@@ -89,7 +89,7 @@
   (let ((fun (member :auto options :test #'car-eql)))
     (when fun (setq options (remove (car fun) options)))
     `(prog1
-         (eval-when (:compile-toplevel :load-toplevel :execute)
+         (eval-when (:compile-toplevel :execute)
            (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))
        (when ',fun
          (if (or (find 'simple-warning ',parent-types)

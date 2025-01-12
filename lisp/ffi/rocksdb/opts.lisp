@@ -487,7 +487,7 @@ will be set to NULL.
   (cache (* rocksdb-cache))
   (db-options (* (* rocksdb-options)))
   (num-column-families (* size-t))
-  (column-family-names (* (* c-string)))
+  (column-family-names (* (* (* char))))
   (column-family-options (* (* (* rocksdb-options)))))
 
 (define-alien-routine rocksdb-load-latest-options-destroy void

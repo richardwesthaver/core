@@ -147,6 +147,7 @@ extractor."
                          collect 
                             (let ((cf-opts (make-rdb-opts)))
                               (setf (sap cf-opts) opt)
+                              ;; (when backfill (backfill-opts cf-opts :full (eq backfill :full)))
                               (make-rdb-cf name :opts cf-opts)))
                    'vector)))
          (setf (db-opts db) (make-rdb-opts* db-opts))
@@ -260,10 +261,20 @@ extractor."
    (setf (db-opt (db db) :prefix-extractor :push t) val)))
 
 (defmethod load-opts ((self rdb-database) &key (backfill t))
-  (setf (columns self) 
+  ;; order is determined by RocksDB
+  (setf (columns self)
         (map 'vector (lambda (x) (make-instance 'rdb-column-family :cf x))
              (load-opts (db self) :backfill backfill)))
   self)
+
+(defmethod repair-db ((self rdb-database) &key)
+  (repair-db (db self)))
+
+(defmethod merge-columns ((self rdb-database) (columns vector))
+  (loop for c across columns
+        do (if-let ((found (find-column c self)))
+             (setf (aref (columns self) (position found (columns self))) c)
+             (vector-push-extend c (columns self)))))
 
 (defmethod backfill-opts ((self rdb-database) &key)
   (backfill-opts (db-opts self)))
@@ -318,17 +329,19 @@ extractor."
       (setf (sap db) db-sap)
       (loop for c across cfs
             do (when-let ((col (find-column (name c) db)))
-                 (setf (cf col) c)))
+                 (setf (sap (cf col)) c)))
       db)))
 
 (defmethod open-columns* ((self rdb-database))
   (let ((names) (opts))
     (loop for c across (columns self)
           do (push (name c) names)
-          do (push (sap (column-opts c)) opts)
-          finally (unless (member "default" names)
-                    (push "default" names)
-                    (push (sap (default-rdb-opts)) opts)))
+          do (push (sap (column-opts c)) opts))
+    (nreversef names)
+    (nreversef opts)
+    (unless (member *rdb-default-column-name* names :test 'string=)
+      (push *rdb-default-column-name* names)
+      (push (sap (db-opts self)) opts))
     (multiple-value-bind (db cfs)
         (open-cfs-raw (sap (db-opts self)) (name self) names opts)
       (setf (sap self) db)
@@ -342,6 +355,7 @@ extractor."
 
 (defmethod close-columns ((self rdb-database))
   (loop for cf across (columns self)
+        ;; unless (string= (name cf) *rdb-default-column-name*)
         do (close-column cf)))
 
 (defmethods insert-key 
@@ -453,6 +467,9 @@ extractor."
 (defmethod find-column ((cf symbol) (self rdb-database) &key)
   (find (string-downcase cf) (columns self) :key 'name :test 'string=))
 
+(defmethod find-column ((col rdb-column-family) (self rdb-database) &key)
+  (find (string-downcase (name col)) (columns self) :key 'name :test 'string=))
+
 (defmethod (setf find-column) ((new rdb-column-family) (cf string) (self rdb-database) &key)
   "Find and replace a column by name."
   (nsubstitute new (find-column cf self) (columns self)))
@@ -516,7 +533,7 @@ extractor."
                collect (cf-to-field (cf c)))))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)) self)
-(defmethod open-transaction-db ((self rdb-database) &key path opts optimistic)
+(defmethod open-transaction-db ((self rdb-database) &key path (opts (rocksdb-transactiondb-options-create)) optimistic)
   (setf (transaction-db self) (open-transaction-db (db self) :opts opts :path path :optimistic optimistic)))
 
 (defmethod open-backup-engine ((self rdb-database) &key path) 
@@ -548,7 +565,15 @@ extractor."
     (unless (null backup)
       (setf backup (close-backup-engine backup)))))
 
-(defmethod shutdown-db ((self rdb-database) &key) (shutdown-db (db self)))
+(defmethod close-transaction-db ((self rdb-database))
+  (when-let ((sap (transaction-db self)))
+    (close-transaction-db sap)))
+
+(defmethod shutdown-db ((self rdb-database) &key) 
+  (close-backup-engine self)
+  (close-transaction-db self)
+  (close-columns self)
+  (shutdown-db (db self)))
 
 (defmethod get-val ((self rdb-database) elt &rest initargs &key)
   (apply 'get-val (db self) elt initargs))
@@ -579,7 +604,7 @@ extractor."
     (loop for cf across columns
           do (setf cf (destroy-column cf)))))
 
-(defmethod load-schema ((self rdb-database) (schema rdb-schema))
+(defmethod load-schema ((self rdb-database) (schema schema))
   "Load SCHEMA into rdb database object SELF. This will add any missing rdb-cfs
 and update existing key/value types for cfs with the same name. Existing cfs
 only get their type slots updated on non-nil values."

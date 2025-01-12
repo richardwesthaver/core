@@ -173,6 +173,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
             (,set *skel-stash* (ensure-directory-truename stash)))
           (when-let ((registry (sk-config-slot :registry nil)))
             (,set *skel-registry* (ensure-directory-truename registry)))
+          (when-let ((hooks *skel-init-hook*))
+            (mapc 'funcall hooks))
           (values))))
   (defun init-skel ()
     "Initialize the global SKEL environment:
@@ -183,7 +185,9 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 *SKEL-CACHE*
 *SKEL-STORE*
 *SKEL-STASH*
-*SKEL-REGISTRY*"
+*SKEL-REGISTRY*
+:IF-FEATURE :DB
+*SKEL-LOGGER*"
     (%init setq))
   (defun setf-skel-vars () (%init setf)))
 

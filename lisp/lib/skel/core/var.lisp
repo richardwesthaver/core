@@ -11,6 +11,8 @@
 (defparameter *default-skel-extension* "sk")
 (defparameter *default-skelrc* ".skelrc")
 
+(defvar *skel-init-hook* nil)
+
 (declaim (type pathname *skel-stash* *skel-store*
                *skel-cache* *user-skelrc* *system-skelrc*))
 

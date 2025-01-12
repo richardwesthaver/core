@@ -19,7 +19,7 @@ to initialize the instance with custom configuration."
 (defun load-opts-raw (dir)
   (rocksdb::with-latest-options dir (db-opts names cf-opts)
     (values db-opts names cf-opts)))
-    
+
 (defun get-stats-raw (opt htype)
   (with-alien ((hist (* rocksdb-statistics-histogram-data) (rocksdb-statistics-histogram-data-create)))
     (rocksdb-options-statistics-get-histogram-data opt htype hist)
@@ -192,7 +192,7 @@ to initialize the instance with custom configuration."
 	      ;; C-side function probably.
 	      (v (make-array (deref vlen) :element-type 'octet)))
           (clone-octets-from-alien val v (deref vlen))
-	  (print v)))))
+	  v))))
 
 (defun get-cf-str-raw (db cf key &optional (opt (rocksdb-readoptions-create)) pinned)
   (let ((k (string-to-octets key :null-terminate nil)))

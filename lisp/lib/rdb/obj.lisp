@@ -527,10 +527,11 @@ internal sap slots are initialized."
       (ingest-db-raw (sap self) files opts)))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
-  (with-slots (sap) self
+  (with-slots (sap opts) self
     (unless (null sap)
       (close-db-raw sap)
-      (setf (sap self) nil))))
+      (setf (sap self) nil)
+      (setf (sap (db-opts self)) (rocksdb:rocksdb-options-destroy (sap (db-opts self)))))))
 
 (defmethod destroy-db ((self rdb))
   ;; close all handles before destruction ensues
@@ -589,19 +590,24 @@ internal sap slots are initialized."
 
 (defaccessor (sap) ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-sap self))
 
-(defmethod open-transaction-db ((self rdb) &key path (opts (rocksdb-transactiondb-options-create)) optimistic)
+(defmethod open-transaction-db ((self rdb) &key path 
+                                                (db-opts (default-rocksdb-options)) 
+                                                (opts (rocksdb-transactiondb-options-create))
+                                                optimistic)
   (if optimistic
       (make-rdb-optimistic-transaction-db 
-       :sap (open-optimistictransactiondb-raw (sap (db-opts self)) path))
+       :sap (open-optimistictransactiondb-raw db-opts path))
       (make-rdb-transaction-db
-       :sap (open-transactiondb-raw (sap (db-opts self)) opts path)
+       :sap (open-transactiondb-raw db-opts opts path)
        :opts opts)))
 
 (defmethod close-transaction-db ((self rdb-transaction-db))
-  (rocksdb-transactiondb-close (sap self)))
+  (when-let ((sap (sap self)))
+    (rocksdb-transactiondb-close sap)))
 
 (defmethod close-transaction-db ((self rdb-optimistic-transaction-db))
-  (rocksdb-optimistictransactiondb-close (sap self)))
+  (when-let ((sap (sap self)))
+    (rocksdb-optimistictransactiondb-close sap)))
 
 (defmethods get-val
   (((self rdb-transaction-db) (key string) &key (opts (rocksdb-readoptions-create)) cf pinned)

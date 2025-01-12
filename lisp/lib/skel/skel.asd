@@ -34,17 +34,18 @@
      (:file "org")
      (:file "dir-locals")
      (:file "makefile")))
+   (:file "pkg")
    (:module "db"
     :components
     ((:file "pkg")
      (:file "schema")
      (:file "db")))
+   (:file "log")
    (:module "net"
     :components
     ((:file "pkg")
      (:file "server")
      (:file "client")))
-   (:file "pkg")
    (:module "tools"
     :components
     ((:file "pkg")

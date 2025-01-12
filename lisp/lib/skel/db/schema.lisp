@@ -6,7 +6,6 @@
 (in-package :skel/db)
 
 (defclass sk-schema (rdb-schema skel) ())
-(defclass sk-log-schema (rdb-log-schema skel) ())
 
 (defvar *skel-registry-schema*
   (make-instance 'sk-schema
@@ -25,8 +24,6 @@
      :id '(fixnum . octet-vector)
      :hash '((octet-vector 32) . fixnum)
      :updated '(fixnum . octet-vector))))
-
-(defvar *skel-log-schema* (make-instance 'sk-log-schema))
 
 (defclass sk-object-schema (rdb-object-schema) ()
   (:default-initargs :class-name 'skel))

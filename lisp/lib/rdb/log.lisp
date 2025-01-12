@@ -10,7 +10,6 @@
    :fields 
    (make-fields 
     ;; log levels
-    :default '(octet-vector . string)
     :trace '(octet-vector . string)
     :debug '(octet-vector . string)
     :info '(octet-vector . string)

@@ -155,7 +155,7 @@ creating a repo object which is stored in *REPO-REGISTRY*."
 
 (defmethod vc-type ((self vc-repo)) t)
 
-(defmethod write-sxp-stream ((self vc-repo) stream &key (pretty t) (case :downcase))
+(defmethod write-ast ((self vc-repo) stream &key (pretty t) (case :downcase))
   (if (= 0 (length (vc-remotes self)))
       (write (vc-type self) :stream stream :pretty pretty :case case :readably t :array t :escape t)
       (progn

@@ -10,17 +10,14 @@
  ;;; Protocol
 (defgeneric sxpp (self form))
 
-(defgeneric write-sxp-stream (self stream &key pretty case))
-(defgeneric read-sxp-stream (self stream))
-
 ;;; Objects
-(defmethod write-sxp-stream ((self ast:ast) stream &key (pretty *print-pretty*) (case :downcase))
+(defmethod write-ast ((self ast:ast) stream &key (pretty *print-pretty*) (case :downcase))
   (write (ast:ast self)
 	 :stream stream
 	 :pretty pretty
 	 :case case))
 
-(defmethod read-sxp-stream ((self ast:ast) stream)
+(defmethod read-ast ((self ast:ast) stream &key)
   (setf (ast:ast self) (slurp-stream-forms stream :count nil)))
 
 ;; (defsetf unwrap ) (defsetf wrap )
@@ -31,9 +28,9 @@
 
 (defun write-sxp-file (sxp file &optional &key if-exists)
   (with-output-file (out file) :if-exists if-exists
-    (write-sxp-stream sxp out)))
+    (write-ast sxp out)))
 
-(defun read-sxp-string (self str) (with-input-from-string (s str) (read-sxp-stream self s)))
+(defun read-sxp-string (self str) (with-input-from-string (s str) (read-ast self s)))
 
 (defun write-sxp-string (sxp) 
   (let ((ast (ast:ast sxp)))

@@ -61,8 +61,15 @@
               :key (lambda (y) (string (id:id y))))
         :args (cdr *args*)))
 
+(defcmd homer-restart-cmd ()
+  (homer-service-restart 
+   (find (string-upcase (car *args*)) (homer/core::services *home-config*)
+         :test 'equal
+         :key (lambda (y) (string (id:id y))))
+   :args (cdr *args*)))
+
 (defcmd homer-status-cmd ()
-  (let ((srv (find (string-upcase (car *args*)) 
+  (let ((srv (find (string-upcase (car *args*))
                    (homer/core::services *home-config*)
                    :test 'equal
                    :key (lambda (y) (string (id:id y))))))
@@ -93,5 +100,6 @@
          (:name install :thunk homer-install)
          (:name run :thunk homer-run)
          (:name start :thunk homer-start-cmd)
+         (:name restart :thunk homer-restart-cmd)
          (:name stop :thunk homer-stop-cmd)
          (:name status :thunk homer-status-cmd)))

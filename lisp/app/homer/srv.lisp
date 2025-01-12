@@ -39,7 +39,7 @@ toplevel)."))
     (setf (ast self)
           `(,(id self) (:engine ,(slot-value self 'engine)) ,@(ast self)))))
 
-(defmethod write-sxp-stream ((self homer-task) stream &key (pretty t) (case :downcase) &allow-other-keys)
+(defmethod write-ast ((self homer-task) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(id self) (:repeat ,(schedule self)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 (defmethod start ((self homer-service))
@@ -50,6 +50,11 @@ toplevel)."))
 (defun homer-service-start (self &key args)
   (ecase (slot-value self 'engine)
     (:systemd (apply 'cli/tools/systemd:systemctl-start "--user" (systemd-service-name (id self)) args))
+    (nil (eval (ast self)))))
+
+(defun homer-service-restart (self &key args)
+  (ecase (slot-value self 'engine)
+    (:systemd (apply 'cli/tools/systemd:systemctl-restart "--user" (systemd-service-name (id self)) args))
     (nil (eval (ast self)))))
   
 (defmethod stop ((self homer-service) &key args)

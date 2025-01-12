@@ -25,3 +25,8 @@
   (:nicknames :sk-server)
   (:use :cl :std :net/srv :sk-net-core :log)
   (:export))
+
+(pkg:defpkg :skel/net
+  (:nicknames :sk-net)
+  (:use :cl :std)
+  (:use-reexport :skel/net/client :skel/net/server))

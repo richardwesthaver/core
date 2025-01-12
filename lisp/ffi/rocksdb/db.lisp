@@ -14,8 +14,7 @@
   (trim-ts c-string)
   (trim-tslen size-t))
 
-(def-with-errptr rocksdb-open-column-families 
-  (* rocksdb)
+(def-with-errptr rocksdb-open-column-families (* rocksdb)
   (options (* rocksdb-options))
   (name c-string)
   (num-column-families int)

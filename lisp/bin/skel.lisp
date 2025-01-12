@@ -56,7 +56,12 @@
     (do-opts *cli*)
     (rocksdb:load-rocksdb)
     (init-skel)
-    ;; (setq *db* (make-db :skel))
-    (do-cmd *cli*)
-    (when (getopt "interactive" nil)
-      (sk-shell))))
+    (unwind-protect 
+         (progn
+           ;; (init-skel-db-logger)
+           ;; (setq *db* (make-db :skel))
+           (do-cmd *cli*)
+           (when (getopt "interactive" nil)
+             (sk-shell)))
+      ;; (db:shutdown-db (sink *skel-logger*))
+      )))

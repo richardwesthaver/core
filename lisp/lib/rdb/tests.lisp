@@ -133,11 +133,12 @@
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
-  (with-db (db :db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)) :columns nil)
+  (with-db (db :db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)))
+               :columns nil
                :open t
+               :close t
                :destroy t)
-    (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4))
-                            :opts (rocksdb-transactiondb-options-create))
+    (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4)))
     (istype 'rdb-transaction-db (transaction-db db))
     (let ((txn1 (make-transaction db)))
       (isnt (abort-transaction txn1)))

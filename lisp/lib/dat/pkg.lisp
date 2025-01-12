@@ -14,7 +14,7 @@
    :sxp-fmt-designator
    :sxpp
    :read-sxp-file :write-sxp-file
-   :read-sxp-string :write-sxp-string :read-sxp-stream :write-sxp-stream
+   :read-sxp-string :write-sxp-string
    :make-sxp
    :file-read-forms))
 

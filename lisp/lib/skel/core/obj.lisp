@@ -140,7 +140,7 @@
 (defmethod sk-load-component ((kind (eql :script)) (form t) &optional (path *default-pathname-defaults*))
   (sk-new kind :form form :path path))
 
-(defmethod write-sxp-stream ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
+(defmethod write-ast ((self sk-script) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(path self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 (defun make-sk-script (script)
@@ -255,10 +255,10 @@
                        :description (sk-description self)
                        :opts '("mode:skel;"))
                       out))
-        (write-sxp-stream self out :fmt fmt))
+        (write-ast self out :fmt fmt))
     (unless *keep-ast* (setf (ast self) nil))))
 
-(defmethod write-sxp-stream ((self sk-config) stream &key (pretty t) (case :downcase) (fmt :pretty))
+(defmethod write-ast ((self sk-config) stream &key (pretty t) (case :downcase) (fmt :pretty))
   (case fmt
     (:pretty
      (if (listp (ast self))
@@ -270,7 +270,7 @@
                     (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
                     (write-char #\space st)
                     (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
-                        (write-sxp-stream v stream :fmt fmt)
+                        (write-ast v stream :fmt fmt)
                         (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
                     (write-char #\newline st)))
          (skel-io-error)))
@@ -318,7 +318,7 @@ via the special form stored in RECIPE."
 (defmethod id ((self sk-rule))
   (sxhash (list (sk-rule-target self) (sk-rule-source self))))
 
-(defmethod write-sxp-stream ((self sk-rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
+(defmethod write-ast ((self sk-rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sk-rule-target self) ,(sk-rule-source self) ,@(sk-rule-recipe self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 (defmethod print-object ((self sk-rule) stream)
@@ -575,7 +575,7 @@ via the special form stored in RECIPE."
                        :exclude exclude)))
 
 ;; TODO 2023-09-26: This belongs in AST
-(defmethod write-sxp-stream ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :pretty))
+(defmethod write-ast ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :pretty))
   (case fmt
     (:pretty
      (if (listp (ast self))
@@ -587,7 +587,7 @@ via the special form stored in RECIPE."
 		    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
 		    (write-char #\space st)
 		    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
-		        (write-sxp-stream v stream :pretty pretty :case case)
+		        (write-ast v stream :pretty pretty :case case)
 		        (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
 		    (write-char #\newline st)))
 	 (skel-io-error)))
@@ -619,7 +619,7 @@ via the special form stored in RECIPE."
                        :description (sk-description self)
                        :opts '("mode:skel;"))
                       out))
-        (write-sxp-stream self out :fmt fmt))
+        (write-ast self out :fmt fmt))
     (unless *keep-ast* (setf (ast self) nil))))
 
 (defmethod sk-install-user-config ((self sk-project) (config sk-user-config))

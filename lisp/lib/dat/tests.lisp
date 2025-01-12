@@ -1,5 +1,5 @@
 (defpackage :dat/tests
-  (:use :cl :std :rt :dat :log))
+  (:use :cl :std :rt :dat :log :ast))
 
 (in-package :dat/tests)
 
@@ -121,9 +121,9 @@
 (deftest sxp-stream ()
   (let ((f (sxp:make-sxp)))
     (with-input-from-string (s *sxp-test-long*)
-      (read-sxp-stream f s))
+      (read-ast f s))
     (with-output-to-string (s)
-      (is (write-sxp-stream f s)))))
+      (is (write-ast f s)))))
 
 (defparameter *parquet-test-file*
   (probe-file
@@ -146,7 +146,8 @@
 
 ;;; SVG
 ;; FIX 2024-10-26: move to packy test files
-(defparameter *svg-file* "~/.stash/simplex16.svg")
+(defparameter *svg-file* (asdf:system-relative-pathname :dat
+                                                        "../../../.stash/simplex16.svg"))
 
 (deftest svg ()
   (istype 'list (svg:parse-svg-file *svg-file*)))

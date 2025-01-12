@@ -47,7 +47,7 @@ timestamp for a oneshot task, else it is a list."
     (setf (ast self)
           `(,(id self) ,(schedule self) ,@(ast self)))))
 
-(defmethod write-sxp-stream ((self homer-task) stream &key (pretty t) (case :downcase) &allow-other-keys)
+(defmethod write-ast ((self homer-task) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(id self) (:repeat ,(schedule self)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 ;; (build-ast (load-ast (make-instance 'homer-task :ast '(mail-update (:repeat (:every (:min 15))) 1 2 3))))
@@ -79,5 +79,5 @@ timestamp for a oneshot task, else it is a list."
        (t (eval x))))
    (homer-job-recipe self)))
 
-(defmethod write-sxp-stream ((self homer-job) stream &key (pretty t) (case :downcase) &allow-other-keys)
+(defmethod write-ast ((self homer-job) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(homer-job-target self) ,(homer-job-source self) ,@(homer-job-recipe self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))

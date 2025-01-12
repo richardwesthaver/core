@@ -48,12 +48,32 @@
   (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile
    :skel/comp/container :skel/comp/dir-locals :skel/comp/org))
 
-(pkg:defpkg :skel/net
-  (:nicknames :sk-net)
-  (:use :cl :std)
-  (:use-reexport :skel/net/client :skel/net/server))
-
 (pkg:defpkg :skel/cli
   (:nicknames :sk-cli)
   (:use :cl :std :log :skel/core :sb-ext :cli/clap)
   (:export :*skel-cli* :sk-shell))
+
+(defpackage :skel/db
+  (:nicknames :sk-db)
+  (:use :cl :std :skel/core/condition 
+   :skel/core/obj :skel/core/proto :skel/core/var :db
+   :store :schema :query :rdb
+   :id :stored :log :config :build :seq)
+  (:export :sk-object-schema 
+   :sk-schema :skel-db 
+   :skel-db-path :*skel-registry-schema* 
+   :*skel-cache-schema*))
+
+(defpackage :skel/log
+  (:use :cl :std :log :skel/db :skel/core/condition 
+   :skel/core/obj :skel/core/proto :skel/core/var :db
+   :store :schema :query :rdb :id :stored :log :config :build :seq)
+  (:export
+   :sk-log-schema
+   :*skel-log-schema*
+   :skel-db-logger
+   :*skel-logger-config*
+   :*skel-logger*
+   :init-skel-logger
+   :sk-log-list
+   :skel-db-sink))
