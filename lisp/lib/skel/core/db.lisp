@@ -3,7 +3,9 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/db)
+(in-package :skel/core/db)
+
+(load-database-backend :rdb)
 
 (defvar *skel-db-path* (merge-homedir-pathnames ".stash/skel/db/"))
 (defun skel-db-path (path) (merge-pathnames path *skel-db-path*))

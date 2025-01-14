@@ -5,7 +5,7 @@
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std
                      :obj :dat :cli :organ :doc :vc
-                     :pod :net :box
+                     :pod :net :box :rdb
                      (:feature :ext :krypt)
                      (:feature :ext :packy)
                      (:feature :gui :gui)
@@ -23,6 +23,9 @@
      (:file "obj")
      (:file "print")
      (:file "fs")
+     (:file "schema")
+     (:file "db")
+     (:file "log")
      (:file "util")
      (:file "vm")))
    (:module "comp"
@@ -35,15 +38,10 @@
      (:file "dir-locals")
      (:file "makefile")))
    (:file "pkg")
-   (:module "db"
-    :components
-    ((:file "pkg")
-     (:file "schema")
-     (:file "db")))
-   (:file "log")
    (:module "net"
     :components
-    ((:file "pkg")
+    ((:file "var")
+     (:file "proto")
      (:file "server")
      (:file "client")))
    (:module "tools"
@@ -59,6 +57,7 @@
      (:file "packy"))
     :if-feature :ext)
    (:file "cli")
+   (:file "srv")
    (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))
 

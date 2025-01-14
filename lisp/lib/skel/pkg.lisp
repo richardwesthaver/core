@@ -40,7 +40,7 @@
   (:use :cl :std)
   (:import-from :ast :*keep-ast*)
   (:use-reexport :skel/core/condition :skel/core/proto :skel/core/var
-   :skel/core/header :skel/core/obj :skel/core/util))
+   :skel/core/header :skel/core/obj :skel/core/util :skel/core/db :skel/core/log))
 
 (pkg:defpkg :skel/comp
   (:nicknames :sk-comp)
@@ -53,27 +53,37 @@
   (:use :cl :std :log :skel/core :sb-ext :cli/clap)
   (:export :*skel-cli* :sk-shell))
 
-(defpackage :skel/db
-  (:nicknames :sk-db)
-  (:use :cl :std :skel/core/condition 
-   :skel/core/obj :skel/core/proto :skel/core/var :db
-   :store :schema :query :rdb
-   :id :stored :log :config :build :seq)
-  (:export :sk-object-schema 
-   :sk-schema :skel-db 
-   :skel-db-path :*skel-registry-schema* 
-   :*skel-cache-schema*))
-
-(defpackage :skel/log
-  (:use :cl :std :log :skel/db :skel/core/condition 
-   :skel/core/obj :skel/core/proto :skel/core/var :db
-   :store :schema :query :rdb :id :stored :log :config :build :seq)
+(defpackage :skel/net/core
+  (:nicknames :sk-net-core)
+  (:use :cl :log :std 
+   :net/core :net/proto/dns :net/codec/tlv :skel/core/proto 
+   :skel/core/obj :net/udp :net/tcp :obj/id 
+   :skel/core/db :net/srv/udp
+   :skel/core/log
+   :dat/proto :dat/sxp :dat/json)
   (:export
-   :sk-log-schema
-   :*skel-log-schema*
-   :skel-db-logger
-   :*skel-logger-config*
-   :*skel-logger*
-   :init-skel-logger
-   :sk-log-list
-   :skel-db-sink))
+   #:*skel-client-port-range*
+   #:*skel-port*
+   #:*skel-service-port*
+   #:*default-skel-service-port*))
+
+(defpackage :skel/net/client
+  (:nicknames :sk-client)
+  (:use :cl :std :net :skel/net/core)
+  (:export))
+
+(defpackage :skel/net/server
+  (:nicknames :sk-server)
+  (:use :cl :std :net/srv :sk-net-core :log :skel/core/log)
+  (:export))
+
+(pkg:defpkg :skel/net
+  (:nicknames :sk-net)
+  (:use :cl :std)
+  (:use-reexport :skel/net/client :skel/net/server))
+
+(defpackage :skel/srv
+  (:use :cl :std :db 
+   :store :build :config :skel/core/db 
+   :skel/core :skel/core/log :skel/net :net/srv)
+  (:export))

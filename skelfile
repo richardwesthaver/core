@@ -230,7 +230,9 @@
            done fi$#
            :input t))
  ;; TODO 2024-09-15: 
- (core-syms.sxp () (with-open-file (f ".stash/symbols.sxp" :direction :output)))
+ (core-syms.sxp () (with-open-file (f ".stash/symbols.sxp" :direction :output :if-exists :overwrite :if-does-not-exist :create)
+                     (dolist (s (list-all-symbols))
+                       (write-line (string s) f))))
  (dist () #$mkdir -pv .stash/tmp/core/bin/ .stash/tmp/core/share/lisp/fasl/ .stash/tmp/core/lib/
        cd .stash
        mv *.core tmp/core/share/lisp/

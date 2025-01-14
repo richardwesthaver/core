@@ -84,6 +84,35 @@
    :sk-parent
    :sk-phases))
 
+(defpackage :skel/core/schema
+  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/var :schema :rdb)
+  (:export :sk-object-schema :sk-schema :*skel-registry-schema* :*skel-cache-schema*))
+
+(defpackage :skel/core/db
+  (:use :cl :std :skel/core/condition 
+   :skel/core/obj :skel/core/proto :skel/core/var :db
+   :store :schema :query :rdb
+   :id :stored :log :config :build :seq)
+  (:export :skel-db 
+   :skel-db-path))
+
+(defpackage :skel/core/log
+  (:use :cl :std :log :skel/core/db :skel/core/condition 
+   :skel/core/obj :skel/core/proto :skel/core/var :db
+   :store :schema :query :rdb :id :stored :log :config :build :seq)
+  (:export
+   :sk-log-schema
+   :*skel-log-schema*
+   :skel-db-logger
+   :*skel-logger-config*
+   :*skel-logger*
+   :init-skel-logger
+   :sk-log-shutdown
+   :sk-log-repair
+   :sk-log-close
+   :sk-log-list
+   :skel-db-sink))
+
 (defpackage :skel/core/fs
   (:use :cl :std :skel/core/proto :skel/core/condition :skel/core/var :vc :log)
   (:export))

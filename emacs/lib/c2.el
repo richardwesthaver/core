@@ -40,7 +40,7 @@ The created frame is selected when the hook is called."
   :type 'hook
   :group 'c2)
 
-(defcustom c2-port 62824
+(defcustom c2-port 82824
   "port of the c2 broadcaster"
   :group 'c2)
 
@@ -181,7 +181,7 @@ Each element is a process.")
         (or (bolp) (newline)))))
 
 ;;;###autoload
-(defun c2-start nil
+(defun c2-start ()
   "start c2 over udp"
   (interactive)
   (unless (process-status "c2")

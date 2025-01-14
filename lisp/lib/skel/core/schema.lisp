@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/db)
+(in-package :skel/core/schema)
 
 (defclass sk-schema (rdb-schema skel) ())
 

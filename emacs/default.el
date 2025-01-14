@@ -385,8 +385,7 @@ function: '(ql:quickload :clouseau)'."
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
   "List of strings with comment keywords."
-  :group 'default
-  :type 'list)
+  :group 'default)
 
 (defcustom prog-comment-timestamp-format-concise "%F"
   "Specifier for date in `prog-comment-timestamp-keyword'.

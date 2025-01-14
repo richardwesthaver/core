@@ -250,9 +250,10 @@
   (db (* rocksdb))
   (sync unsigned-char))
 
-(define-alien-routine rocksdb-delete-file void
-  (db (* rocksdb))
-  (name c-string))
+;; deprecated AO 2025-01-12
+;; (define-alien-routine rocksdb-delete-file void
+;;   (db (* rocksdb))
+;;   (name c-string))
 
 (define-alien-routine rocksdb-livefile (* rocksdb-livefiles)
   (db (* rocksdb))

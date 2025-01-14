@@ -52,6 +52,11 @@ and we may query the user for input.")
   (loop for s being the external-symbol of pkg
         collect s))
 
+(defun list-all-symbols ()
+  (let ((r)) 
+    (dolist (p (list-all-packages) r) 
+      (appendf r (list-package-symbols p)))))
+
 (defun package-symbols (&optional (package *package*) test)
   (let ((symbols))
     (do-external-symbols (symbol package)

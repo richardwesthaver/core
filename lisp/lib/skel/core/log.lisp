@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/log)
+(in-package :skel/core/log)
 
 (defclass sk-log-schema (rdb-log-schema sk-schema) ())
 

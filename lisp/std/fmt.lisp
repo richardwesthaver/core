@@ -166,3 +166,8 @@ be produced by `sxhash'."
           (format nil "~,2F ~A"
                   (float (/ number (ash 1 size)))
                   unit))))
+
+
+;;; Box
+
+;; APL Box Formatting (BQN/Dyalog/J)

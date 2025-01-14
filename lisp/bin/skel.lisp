@@ -58,10 +58,8 @@
     (init-skel)
     (unwind-protect 
          (progn
-           ;; (init-skel-db-logger)
            ;; (setq *db* (make-db :skel))
            (do-cmd *cli*)
            (when (getopt "interactive" nil)
              (sk-shell)))
-      ;; (db:shutdown-db (sink *skel-logger*))
       )))

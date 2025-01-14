@@ -76,28 +76,26 @@ which is only sent to WITH-OPEN-FILE when it's not NIL."
         (push child (get-calls node)))
       child)))
 
-(defgeneric get-name (obj))
+(defmethod name ((obj flamegraph-node))
+  (name (get-func obj)))
 
-(defmethod get-name ((obj flamegraph-node))
-  (get-name (get-func obj)))
-
-(defmethod get-name ((obj string))
+(defmethod name ((obj string))
   obj)
 
-(defmethod get-name ((obj sb-di::compiled-debug-fun))
-  (get-name (slot-value obj 'SB-DI::COMPILER-DEBUG-FUN)))
+(defmethod name ((obj sb-di::compiled-debug-fun))
+  (name (slot-value obj 'SB-DI::COMPILER-DEBUG-FUN)))
 
-(defmethod get-name ((obj SB-C::COMPILED-DEBUG-FUN))
-  (get-name (slot-value obj 'SB-C::NAME)))
+(defmethod name ((obj SB-C::COMPILED-DEBUG-FUN))
+  (name (slot-value obj 'SB-C::NAME)))
 
-(defmethod get-name ((obj cons))
+(defmethod name ((obj cons))
   (let ((*print-pretty* nil))
     (format nil "~S" obj)))
 
-(defmethod get-name ((obj symbol))
+(defmethod name ((obj symbol))
   (symbol-name obj))
 
-(defmethod get-name ((obj sb-kernel:code-component))
+(defmethod name ((obj sb-kernel:code-component))
   "Some binary code")
 
 (defun aggregate-raw-data ()
@@ -139,7 +137,7 @@ which is only sent to WITH-OPEN-FILE when it's not NIL."
                (let* ((nodes (reverse path))
                       (rest-nodes (remove-nodes-up-to-frame nodes
                                                             *frame-where-profiling-was-started*))
-                      (names (mapcar #'get-name rest-nodes)))
+                      (names (mapcar #'name rest-nodes)))
                  (when names
                    (format stream "~{~A~^;~} ~A~%"
                            names

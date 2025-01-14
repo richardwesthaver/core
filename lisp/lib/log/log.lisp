@@ -53,7 +53,7 @@ function in which case it is used as the function value of
     (t (/ (get-internal-real-time) #.internal-time-units-per-second))))
 
 (defun universal-timestamp () (get-universal-time))
-  
+
 ;; the purpose of this struct is to route log messages to the appropriate
 ;; output stream.
 (defstruct log-router
@@ -139,22 +139,27 @@ function 'NAME-P'."
 (declaim (inline %log-object))
 (defun %log-object (obj)
   (if *logger*
-    (msg *logger* obj)
-    obj))
+      (msg *logger* obj)
+      obj))
 
 (defun log-message (level tags content &optional (class *log-message-class*) &rest initargs)
   (unless (listp tags)
     (setf tags (list tags)))
   (%log-object (apply #'make-instance class :level level :tags tags :content content initargs)))
 
+(defun log-message* (level content &rest args)
+  (%log-object (make-instance 'log-message 
+                 :level level 
+                 :content (apply 'format nil content args))))
+
 (defgeneric log-object (level tags datum &rest args)
   (:method (level tags (datum string) &rest args)
     (log-message level tags (apply #'format nil datum args)))
   (:method (level tags (datum symbol) &rest args)
     (log-object level tags (apply (if (subtypep datum 'condition)
-                               #'make-condition
-                               #'make-instance)
-                           datum args)))
+                                      #'make-condition
+                                      #'make-instance)
+                                  datum args)))
   (:method (level tags (datum function) &rest args)
     (log-message level tags (lambda () (apply datum args))))
   (:method (level tags datum &rest args)
@@ -248,15 +253,15 @@ function 'NAME-P'."
   (let ((tag-leaves (ssplit *tag-separator* (string-upcase tag)))
         (filter-leaves (ssplit *tag-separator* (string-upcase filter))))
     (loop for ta in tag-leaves
-       for fill in filter-leaves
-       do (cond
-            ((or (string= ta "*")
-                 (string= fill "*"))
-             (return t))
-            ((not (string= ta fill))
-             (return nil)))
-       finally (return (>= (length tag-leaves)
-                           (length filter-leaves))))))
+          for fill in filter-leaves
+          do (cond
+               ((or (string= ta "*")
+                    (string= fill "*"))
+                (return t))
+               ((not (string= ta fill))
+                (return nil)))
+          finally (return (>= (length tag-leaves)
+                              (length filter-leaves))))))
 
 (defmethod msg ((filter tag-tree-filter) (message message))
   (when (or (eql (tags filter) t)
@@ -392,3 +397,16 @@ be implemented for a specific application."))
 (defun restart-logger (&optional (logger (default-logger)))
   (remove-logger)
   (setf *logger* logger))
+
+;;; Macros
+(defmacro with-conditions-logged (&body body)
+  `(block nil
+     (handler-bind
+         ((error
+            (lambda (c)
+              (log-message* :error "Error signalled: ~A" cond)
+              (return)))
+          (warning
+            (lambda (c)
+              (log-message* :warn "Warning signalled: ~A" c))))
+       ,@body)))

@@ -8,7 +8,6 @@
   (:use :cl :std)
   (:use-reexport 
    :skel/core :skel/comp 
-   #+rdb :skel/db 
    #+net :skel/net
    #+cli :skel/cli))
 
@@ -27,8 +26,8 @@
   #+gui
   (cli:defcmd skc-view ()
     (if cli:*args* 
-        (let ((stuff (loop for a in *args*
-                           collect (skel/cli::sk-slot-case a))))
+        (let ((stuff (loop for a in cli:*args*
+                           collect (skel::sk-project-slot a))))
           (skel/tools/viz:sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
         (skel/tools/viz:sk-view (if (boundp '*skel-project*) *skel-project*
                      (if (boundp '*skel-user-config*) *skel-user-config*
@@ -44,6 +43,11 @@
     #+gui (:name view :description "view an object in a new window" :thunk skc-view)
     #+net (:name net :description "communicate with skel clients and servers" 
            :thunk skc-net))))
+
+#+rdb
+(pushnew 'init-skel-logger *skel-init-hook*)
+#+rdb
+(pushnew 'sk-log-shutdown sb-ext:*exit-hooks*)
 
 (defvar *skel-init-keywords* '(:config *skel-user-config* 
                                :project *skel-project*

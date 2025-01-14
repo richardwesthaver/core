@@ -364,6 +364,7 @@
   (:shadowing-import-from :sb-vm :list-allocated-objects)
   (:recycle :sb-assem)
   (:recycle :sb-sys)
+  (:import-from :std/list :appendf)
   (:import-from :sb-assem :*backend-instruction-set-package*)
   (:import-from :sb-impl :*logical-hosts* :make-logical-host :logical-host)
   (:import-from :std/macs :if-let)
@@ -377,6 +378,7 @@
    :current-lisp-implementation
    :current-machine
    :list-package-symbols
+   :list-all-symbols
    :package-symbols
    :package-symbol-names
    :define-logical-pathname
