@@ -36,7 +36,8 @@
       (loop for c = (peek-char nil input nil nil) ; check that this line isn't a headline
             until (or (not c) (char= #\* c))
             do (let ((l (read-line input)))
-                 (if-let ((kw (org-parse :keyword l)))
-                   (vector-push-extend kw keywords)
+                 (if-let ((kw (org-parse :keyword l))) ;; comments are handled here
+                   (unless (typep kw 'org-comment)
+                     (vector-push-extend kw keywords))
                    (write-line l content-stream)))))
     (org-create :meta :keywords keywords :contents (org-parse :paragraph content))))

@@ -300,18 +300,12 @@
    :make-v5-uuid :uuid= :+namespace-dns+ :+namespace-oid+ :+namespace-x500+
    :uuid-to-octet-vector :octet-vector-to-uuid))
 
-(defpackage :obj/temperature
-  (:nicknames :temperature)
-  (:use :cl :std)
-  (:export :fahrenheit :celsius :kelvin :rankine))
-
-(defpackage :obj/direction
-  (:nicknames :direction)
+(defpackage :obj/unit
   (:use :cl :std)
   (:export :up :down :left
    :right :east :west :north
    :north-east :north-west :south-east :south-west
-   :direction :angle))
+   :direction :angle :fahrenheit :celsius :kelvin :rankine))
 
 (defpackage :obj/build
   (:nicknames :build)

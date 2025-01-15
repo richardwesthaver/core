@@ -8,7 +8,8 @@
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp/lisp.sk" "rust/rust.sk" "emacs/emacs.sk")
-:vc (:hg "https://vc.compiler.company/core" "ssh://git@codeberg.org/c-c/core.git")
+:vc (:hg "https://vc.compiler.company/core"
+         (cb "https://codeberg.org/c-c/core"))
 :bind ((stash ".stash")
        ;; (cc :env "clang")
        (emacs-locals :dir-locals
@@ -46,7 +47,7 @@
                                           (goto-line 7)
                                           (org-ctrl-c-ctrl-c)
                                           (save-buffer)))))
- (swank () 
+ (swank ()
         (:run () 
               (let ((f ".stash/.swank"))
                 (when (probe-file f)
@@ -230,9 +231,12 @@
            done fi$#
            :input t))
  ;; TODO 2024-09-15: 
- (core-syms.sxp () (with-open-file (f ".stash/symbols.sxp" :direction :output :if-exists :overwrite :if-does-not-exist :create)
-                     (dolist (s (list-all-symbols))
-                       (write-line (string s) f))))
+ (syms.sxp () 
+                (with-open-file (f "syms.sxp" :direction :output 
+                                                        :if-exists :overwrite 
+                                                        :if-does-not-exist :create)
+                  (dolist (s (list-all-symbols))
+                    (print s f))))
  (dist () #$mkdir -pv .stash/tmp/core/bin/ .stash/tmp/core/share/lisp/fasl/ .stash/tmp/core/lib/
        cd .stash
        mv *.core tmp/core/share/lisp/

@@ -475,10 +475,21 @@ via the special form stored in RECIPE."
               (etypecase vc
                 ((or vc-repo null) nil)
                 (vc-designator (setf (sk-vc self) (vc-init vc)))
-                (list 
-                 (let ((repo (vc-init (car vc))))
-                   (setf (vc-remotes repo) (coerce (cdr vc) 'vector))
-                   (setf (sk-vc self) repo)))))
+                (list
+                   (flet ((%vc-scan (lst)
+                            (let* ((%type (if (typep (car lst) 'vc-designator)
+                                              (pop lst)
+                                              *default-vc-kind*))
+                                   (repo (vc-init %type)))
+                              (setf (vc-remotes repo)
+                                    (map 'vector
+                                         (lambda (v)
+                                           (etypecase v
+                                             (string (vc::make-vc-remote :name 'default :url v))
+                                             (list (vc::make-vc-remote :name (pop v) :url (pop v)))))
+                                         lst))
+                              repo)))
+                     (setf (sk-vc self) (%vc-scan vc))))))
             ;; INCLUDE
             (when-let ((include (sk-include self)))
               (setf (sk-include self) (map 'vector

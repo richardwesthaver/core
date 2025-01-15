@@ -89,7 +89,7 @@
   (:export :sk-object-schema :sk-schema :*skel-registry-schema* :*skel-cache-schema*))
 
 (defpackage :skel/core/db
-  (:use :cl :std :skel/core/condition 
+  (:use :cl :std :skel/core/condition :skel/core/schema
    :skel/core/obj :skel/core/proto :skel/core/var :db
    :store :schema :query :rdb
    :id :stored :log :config :build :seq)
@@ -99,7 +99,7 @@
 (defpackage :skel/core/log
   (:use :cl :std :log :skel/core/db :skel/core/condition 
    :skel/core/obj :skel/core/proto :skel/core/var :db
-   :store :schema :query :rdb :id :stored :log :config :build :seq)
+   :store :schema :query :rdb :id :stored :log :config :build :seq :skel/core/schema)
   (:export
    :sk-log-schema
    :*skel-log-schema*

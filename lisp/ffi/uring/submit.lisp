@@ -6,4 +6,3 @@
 (in-package :uring)
 
 (defstruct io-submitter)
-

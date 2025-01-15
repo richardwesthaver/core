@@ -58,12 +58,14 @@
   (slot cqe 'user-data))
 
 (defun io-uring-sqe-set-data64 (sqe data)
-  "Assign a 64-bit value to this sqe which can be retrieved with io-uring-cqe-get-data64 instead of a pointer."
+  "Assign a 64-bit value to this sqe which can be retrieved with
+io-uring-cqe-get-data64 instead of a pointer."
   (declare (type (unsigned-byte 64) data))
   (setf (slot sqe 'user-data) data))
 
 (defun io-uring-cqe-get-data64 (cqe)
-  "Same as IO-URING-CQE-GET-DATA but return value is (unsigned-byte 64) value instead of a pointer."
+  "Same as IO-URING-CQE-GET-DATA but return value is (unsigned-byte 64) value
+instead of a pointer."
   (slot cqe 'user-data))
 
 (defun io-uring-sqe-set-flags (sqe flags)

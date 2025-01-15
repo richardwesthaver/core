@@ -20,7 +20,7 @@
             do (setf properties (org-parse :property-drawer input)))
     (values planning properties (read-until-end input))))
   
-(defclass org-heading () 
+(defclass org-heading ()
   ((headline :initarg :headline :initform (org-create :headline) :type org-headline :accessor org-headline)
    (planning :initarg :planning :initform nil :type (or null org-planning) :accessor org-planning)
    (properties :initarg :properties :initform nil :type (or null org-property-drawer) :accessor org-properties)

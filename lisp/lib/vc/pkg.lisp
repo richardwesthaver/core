@@ -20,6 +20,7 @@
    :vc-update
    :vc-ignore
    :vc-remotes
+   :make-vc-remote
    :vc-designator
    :vc-type
    :*repo*

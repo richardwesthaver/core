@@ -7,6 +7,7 @@
 ;;; Code:
 (in-package :obj/direction)
 
+;;; Direction
 (deftype direction-designator () '(or symbol string boolean number))
 
 (defclass direction () ())
@@ -21,3 +22,12 @@
 (defgeneric right (self))
 (defgeneric up (self))
 (defgeneric down (self))
+
+;;; Temperature
+(defvar *default-temperature-unit* :fahrenheit)
+
+(deftype temperature-unit-designator () '(member :fahrenheit :celsius :kelvin :rankine))
+
+(defstruct temperature
+  (degrees 0 :type single-float)
+  (scale *default-temperature-unit* :type temperature-unit-designator))

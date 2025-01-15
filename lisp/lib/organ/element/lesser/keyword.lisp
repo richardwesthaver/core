@@ -26,7 +26,9 @@
     (when match-start
       (let ((key (subseq input (aref start 0) (aref end 0)))
             (val (subseq input (aref start 1) (aref end 1))))
-        (org-create :keyword :key key :val val)))))
+        (if (and (< 7 (length key)) (string= "COMMENT" (string-upcase (subseq key 0 7))))
+            (org-create :comment :contents val)
+            (org-create :keyword :key key :val val))))))
 
 (define-org-element affiliated-keyword (key opt value) :lesser t)
 

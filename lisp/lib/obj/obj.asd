@@ -41,6 +41,7 @@
                              (:file "btree")))
                (:module "graph"
                 :components ((:file "pkg")))
+               (:file "unit")
                (:file "equiv")
                (:module "color"
                 :components ((:file "color")
@@ -51,8 +52,7 @@
                 :components ((:file "local")
                              (:file "util")))
                (:file "uuid")
-               (:file "temperature")
-               (:file "direction")
+               (:file "unit")
                (:file "build")
                (:file "ast")
                (:file "config")

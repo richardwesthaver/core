@@ -6,4 +6,6 @@
 ;;; Code:
 (in-package :organ)
 
-(define-org-element comment (contents) :lesser t)
+(define-org-element comment 
+    ((contents :accessor contents :initarg :contents :type string))
+  :lesser t)

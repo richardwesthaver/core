@@ -30,8 +30,8 @@
     (with-new-io-sqe wop
       (let ((rop (uring::build-from (uring::make-io-op-readv) (alien-sap rop)))
             (wop (uring::build-from (uring::make-io-op-writev) (alien-sap wop))))
-        (is (typep rop '(alien uring::io-uring-sqe)))
-        (is (typep wop '(alien uring::io-uring-sqe)))))))
+        (istype '(alien uring::io-uring-sqe) rop)
+        (istype '(alien uring::io-uring-sqe) wop)))))
 
 (deftest init1 ()
   (with-new-io-uring r1

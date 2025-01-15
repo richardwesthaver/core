@@ -1,6 +1,11 @@
 ;;; lib/organ/document.lisp --- Org Document API
 
-;;
+;; Top-level file object
+
+;;; Commentary:
+
+;; ORG-DOCUMENT is the top-level Lisp representation of a complete Org-mode
+;; file.
 
 ;;; Code:
 (in-package :organ)
