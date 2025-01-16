@@ -5,7 +5,7 @@
 ;;; Commentary:
 
 ;;; Code:
-(in-package :obj/direction)
+(in-package :obj/unit)
 
 ;;; Direction
 (deftype direction-designator () '(or symbol string boolean number))

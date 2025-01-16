@@ -52,7 +52,6 @@
                 :components ((:file "local")
                              (:file "util")))
                (:file "uuid")
-               (:file "unit")
                (:file "build")
                (:file "ast")
                (:file "config")
@@ -61,6 +60,7 @@
                (:file "db")
                (:file "secret")
                (:file "store")
+               (:file "srv")
                (:file "obj"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 

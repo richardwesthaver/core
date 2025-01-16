@@ -229,7 +229,31 @@ name doesn't exist, it is created.")
 ;; raw-post-data
 
 (defclass http-service-request (request)
-  ((request :type http-request)))
+  ((request :type http-request :initarg :request :accessor http)
+   (headers-in :initarg :headers-in :reader headers-in)
+   (get-parameters :initform nil
+                   :documentation "An alist of the GET parameters sent
+by the client."
+                   :reader get-parameters)
+   (post-parameters :initform nil
+                    :documentation "An alist of the POST parameters
+sent by the client."
+                    :reader post-parameters)
+   (script-name :initform nil
+                :documentation "The URI requested by the client without
+the query string."
+                :reader script-name)
+   (query-string :initform nil
+                 :documentation "The query string of this request."
+                 :reader query-string)
+   (session :initform nil
+            :accessor session
+            :documentation "The session object associated with this
+request.")
+   (aux-data :initform nil
+             :accessor aux-data
+             :documentation "Used to keep a user-modifiable alist with
+arbitrary data during the request.")))
 
 (defun start-http-output (status &optional (content nil contentp))
   "Sends all headers and maybe the content body to *SERVICE-STREAM*. Returns
@@ -247,7 +271,7 @@ Returns the stream that is connected to the client."
                         ;; only turn chunking on if the content
                         ;; length is unknown at this point...
                         (null (or (content-length*) contentp))))
-         (request-method (request-method *request*))
+         (request-method (http-method (http *request*)))
          (head-request-p (eq request-method :head))
          content-modified-p)
     (multiple-value-bind (keep-alive-p keep-alive-requested-p)
@@ -267,7 +291,8 @@ Returns the stream that is connected to the client."
         (setf (header-out :transfer-encoding) "chunked"))
       (cond (keep-alive-p
              (setf *finish-processing-socket* nil)
-             (when (and (service-read-timeout *service*)
+             ;; read-timeout
+             (when (and (service-timeout *service*)
                         (or (not (eq (server-protocol *request*) :http/1.1))
                             keep-alive-requested-p))
                ;; persistent connections are implicitly assumed for
@@ -276,7 +301,8 @@ Returns the stream that is connected to the client."
                (unless (header-out :connection) ; allowing for handler overriding
                  (setf (header-out :connection) "Keep-Alive"))
                (setf (header-out :keep-alive)
-                     (format nil "timeout=~D" (service-read-timeout *service*)))))
+                     ;; read-timeout
+                     (format nil "timeout=~D" (service-timeout *service*)))))
             ((not (header-out-set-p :connection))
              (setf (header-out :connection) "Close"))))
     (unless (and (header-out-set-p :server)
@@ -397,20 +423,8 @@ Returns the stream that is connected to the client."
                          (session-start session)))
 
 (defmethod session-expired-p ((self http-session))
-  (< (+ (last-click session) (session-timeout session))
+  (< (+ (last-click self) (session-timeout self))
      (get-universal-time)))
-
-(defun session-gc ()
-  "Removes sessions from the global session database which have expired or are invalid."
-  (with-session-db-lock (session-db-lock *service*)
-    (setf (session-db *service*)
-          (loop for pair in (session-db *service*)
-                for (nil . session) = pair
-                when (session-expired-p session)
-                do (remove-session-hook *service* session)
-                else
-                collect pair)))
-  (values))
 
 (defun get-session (id)
   (let ((session
@@ -423,6 +437,19 @@ Returns the stream that is connected to the client."
       (setq session nil))
     session))
 
+(defun set-cookie* (cookie &optional (res *response*))
+  "Adds the COOKIE object COOKIE to the outgoing cookies of the
+RESPONSE object. If a cookie with the same name
+\(case-sensitive) already exists, it is replaced."
+  (let* ((name (cookie-name cookie))
+         (place (assoc name (cookies-out res) :test #'string=)))
+    (cond
+      (place
+        (setf (cdr place) cookie))
+      (t
+        (push (cons name cookie) (cookies-out res))
+        cookie))))
+
 (defgeneric session-cookie-value (session)
   (:method ((session session))
     (and session
@@ -431,19 +458,23 @@ Returns the stream that is connected to the client."
                  (id:id session)
                  (stringify-session session)))))
 
+(defgeneric session-cookie-name (session)
+  (:method ((session session))
+    "srv-session"))
+
 (defun refresh-session-cookie-value (session)
   (setf (slot-value session 'session-start) (get-universal-time)
         (slot-value session 'session-string) (stringify-session session))
-  (set-cookie (session-cookie-name *service*)
-              :value (session-cookie-value session)
-              :path "/"
-              :http-only t))
+  (set-cookie* (make-cookie :name (session-cookie-name *service*)
+                            :value (session-cookie-value session)
+                            :path "/"
+                            :httponly-p t)))
 
 (defun html-session-hook ()
-  (set-cookie (session-cookie-name *session*)
-              :value (session-cookie-value *session*)
-              :path "/"
-              :http-only t))
+  (set-cookie* (make-cookie :name (session-cookie-name *session*)
+                            :value (session-cookie-value *session*)
+                            :path "/"
+                            :httponly-p t)))
 
 ;;; Service
 (defclass http-service (service) 
@@ -451,7 +482,8 @@ Returns the stream that is connected to the client."
    ;; may need to start dealing with this
    ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
   ((chunk-output-p :type boolean :initarg :chunk-output-p)
-   (chunk-input-p :type boolean :initarg :chunk-input-p))
+   (chunk-input-p :type boolean :initarg :chunk-input-p)
+   (document-root :type pathname :initarg :document-root :accessor service-document-root))
   (:default-initargs
    :request-class 'http-service-request
    :response-class 'http-service-response
@@ -485,6 +517,28 @@ can be parsed by most log analysis tools."
             (referer)
             (user-agent))))
 
+(defmethod handle-request ((*service* http-service) (*request* http-service-request))
+  (handler-bind ((error
+                   (lambda (c)
+                     (when *headers-sent*
+                       (setq *finish-processing-socket* t))
+                     (throw 'handler-done
+                       (values nil c (sb-debug:list-backtrace))))))
+    (dispatch-request *service* *request*)))
+
+(defmethod dispatch-request ((service http-service) request)
+  "Default implementation of the HTTP request dispatch method, generates an
++HTTP-NOT-FOUND+ error."
+  (let ((path (and (service-document-root service)
+                   (request-pathname request))))
+    (cond
+      (path
+       (handle-static-file
+        (merge-pathnames (if (equal "/" (script-name request)) #P"index.html" path)
+                         (service-document-root service))))
+      (t (setf (http-status *response*) +http-not-found+)
+         (abort-request-handler)))))
+       
 (defun send-http-response (service stream status-code 
                            &key headers cookies content)
   "Send a HTTP response to STREAM and log it with SERVICE.

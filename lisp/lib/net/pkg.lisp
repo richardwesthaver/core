@@ -349,7 +349,6 @@
    :fetch))
 
 (defpackage :net/srv
-  (:nicknames :srv)
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets :obj/db :obj/schema
@@ -431,7 +430,48 @@
    #:*headers-sent*
    #:*log-service-errors*
    #:service-config
-   #:session-db))
+   #:session-db
+   #:remote-addr*
+   #:remote-port*
+   #:local-addr*
+   #:local-port*
+   #:request-protocol*
+   #:with-session-db-lock
+   #:remove-session-hook
+   #:session-database
+   #:reset-session-secret
+   #:session-value
+   #:delete-session-value
+   #:session-created
+   #:*session-gc-frequency*
+   #:session-gc
+   #:start-session
+   #:session-verify
+   #:reset-sessions
+   #:service-logger
+   #:service-task-kernel
+   #:engine
+   #:single-threaded-engine
+   #:multi-threaded-engine
+   #:thread-per-connection-engine
+   #:initialize-instance
+   #:increment-accept-count
+   #:decrement-accept-count
+   #:increment-thread-count
+   #:decrement-thread-count
+   #:wait-for-free-connection
+   #:%handle-connection
+   #:create-request-worker-thread
+   #:too-many-engine-requests
+   #:send-service-unavailable-response
+   #:message-log-output
+   #:access-log-output
+   #:with-open-socket
+   #:wake-service-for-shutdown
+   #:do-with-request-count-incf
+   #:detach-socket
+   #:session-timeout
+   #:service-timeout))
 
 (pkg:defpkg :net
   (:use :cl :std)

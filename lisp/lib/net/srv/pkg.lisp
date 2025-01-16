@@ -12,7 +12,7 @@
 ;; In other words we want to support both these use-cases in the least amount
 ;; of code:
 #|
-(srv:start (srv:file-server)) ;; start a simple HTTP file server in current
+(start (srv/http:http-file-server)) ;; start a simple HTTP file server in current
                               ;; directory with all default values
 
 (srv:defservice my-homepage (:port 8080
@@ -22,8 +22,6 @@
  (with-service (ws 'my-homepage)
   (srv:start ws)))
 |#
-
-;; not considering SSL currently - not a core object type but perhaps subclass
 
 ;; mostly following the implementation of hunchentoot with attempts at
 ;; simplification.
@@ -230,7 +228,7 @@ Return value is ignored."))
 (defclass session (id:id)
   ((start :initarg :start :initform (get-universal-time) :accessor start)
    (data :initarg :data :accessor data)
-   (timeout :type fixnum :accessor timeout :initarg :timeout))
+   (timeout :type fixnum :accessor session-timeout :initarg :timeout))
   (:default-initargs
    :start (get-universal-time)
    :timeout *default-session-timeout*))
@@ -280,7 +278,7 @@ Return value is ignored."))
 
 (defgeneric session-expired-p (self)
   (:method ((self session))
-    (< (+ (start self) (timeout self))
+    (< (+ (start self) (session-timeout self))
        (get-universal-time))))
 
 (defun session-gc ()
@@ -518,7 +516,7 @@ Return value is ignored."))
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
    (engine :type service-engine :accessor engine :initarg :engine)
    ;; TODO 2024-12-08: hunchentoot uses read-timeout/write-timeout - figure out if needed
-   (timeout :type fixnum :initarg :timeout :accessor timeout)
+   (timeout :type fixnum :initarg :timeout :accessor service-timeout)
    (connection-max :type (or fixnum null) :initarg :connection-max)
    (logger :type service-logger :initarg :logger :reader logger)
    (socket :type (or null socket) :accessor socket :initarg :socket :initform nil)
@@ -613,12 +611,10 @@ similar to HUNCHENTOOT:ACCEPTOR."))
                       (handler-case (socket-accept sock)
                         (sb-bsd-sockets::connection-refused-error ()))))
             (setf (sb-impl::fd-stream-timeout (socket-make-stream conn))
-                  (coerce (timeout self) 'single-float))
+                  (coerce (service-timeout self) 'single-float))
             (handle-connection (engine self) conn))))))
 
 ;; (defmethod dispatch-request ((self service) request))
-
-;; (defmethod handle-request ((*service* service) (*request* request)))
 
 ;; (defmethod service-status-message )
 

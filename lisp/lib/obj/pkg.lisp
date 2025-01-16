@@ -301,6 +301,7 @@
    :uuid-to-octet-vector :octet-vector-to-uuid))
 
 (defpackage :obj/unit
+  (:nicknames :unit)
   (:use :cl :std)
   (:export :up :down :left
    :right :east :west :north
@@ -676,3 +677,8 @@
   (:use :cl :std)
   (:export :secret :reveal :conceal
    :ensure-revealed :ensure-concealed))
+
+(defpackage :obj/srv
+  (:nicknames :srv)
+  (:use :cl :std)
+  (:export))

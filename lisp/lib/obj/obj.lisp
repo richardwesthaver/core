@@ -8,6 +8,6 @@
   (:use-reexport :list :hash :color
    :seq :tree :graph :id
    :db :ast :time :uri 
-   :url :config :temperature :direction 
-   :build :secret :query :schema :store :btree))
+   :url :config :unit :build :secret :query :schema :store :btree))
+                 
                  
