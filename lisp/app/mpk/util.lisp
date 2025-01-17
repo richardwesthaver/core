@@ -14,3 +14,11 @@
   (ensure-directories-exist *mpk-user-directory*))
 
 ;;; Metro
+
+;;; Downloaders
+
+;; yt
+(defun get-playlist ())
+(defun get-video ())
+(defun get-channel ())
+(defun get-media ())

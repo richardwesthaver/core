@@ -20,7 +20,7 @@
 
 ;;; Commentary:
 
-;;
+;; 
 
 ;;; Code:
 (require 'org)
@@ -37,6 +37,7 @@
   :group 'graph)
 
 (defcustom org-graph-locations (list (join-paths company-org-directory "notes/")
+                                     (join-paths company-org-directory "graph/")
                                      (join-paths org-directory "notes/"))
   "List of directories to check for nodes."
   :type '(list directory)
@@ -100,11 +101,14 @@ non-nil visit each node and collect all edges found."
                                when (string-prefix-p l (file-truename v))
                                return t)))
              (let ((pos (cdr (org-id-find-id-in-file k v))))
-               (message "%s %s" k v)
-               (org-with-file-buffer v
-                 (goto-char pos)
-                 (org-graph-node-at-point graph)
-                 (when edges (org-graph-edges-at-point graph))))
+               (if pos
+                   (progn
+                     (message "%s %s" k v)
+                     (org-with-file-buffer v
+                       (goto-char pos)
+                       (org-graph-node-at-point graph)
+                       (when edges (org-graph-edges-at-point graph))))
+                 (warn "couldn't find node %s %s" k v)))
            (remhash k (org-graph-nodes graph))))
        (org-graph-nodes graph))
       (if local
@@ -115,7 +119,7 @@ non-nil visit each node and collect all edges found."
   (org-list-files org-graph-locations org-agenda-extensions))
 
 (cl-defstruct org-graph
-  ;; TODO 2024-09-17: use integers instead of string
+  ;; TODO 2024-09-17: use integers instead of string?
   (nodes (make-hash-table :test 'equal))
   (edges (make-hash-table :test 'equal)))
 
@@ -131,6 +135,14 @@ non-nil visit each node and collect all edges found."
     (set-buffer-multibyte nil)
     (insert-file-contents-literally file)
     (secure-hash 'md5 (current-buffer))))
+
+(defun org-graph-edge-list (&optional graph)
+  (interactive)
+  (hash-table-values (org-graph-edges (or graph org-graph))))
+
+(defun org-graph-node-list (&optional graph)
+  (interactive)
+  (hash-table-values (org-graph-nodes (or graph org-graph))))
 
 (defun org-graph-node-at-point (&optional update)
   "Return the `org-graph-node' at point. When UPDATE is non-nil insert or
@@ -398,9 +410,8 @@ This is the value of variable
 `org-graph-edge-drawer'.  However, if the current
 entry has or inherits a EDGE_DRAWER property, it will be
 used instead of the default value."
-  (let ((p (org-entry-get nil "EDGE_DRAWER" 'inherit t)))
-    (cond ((equal p "nil") nil)
-          ((stringp p) p)
+  (let ((p (org-entry-get nil "EDGE_DRAWER" 'inherit)))
+    (cond ((stringp p) p)
           (t org-graph-edge-drawer))))
 
 (defun org-graph-narrow-to-node ()
@@ -453,7 +464,7 @@ which are inserted with the edge."
 (defun org-graph-edge-insert-related (link desc)
   "Insert a relation edge."
   (with-org-graph-edge-drawer (beg t)
-    (org-graph-edge--insert link desc 'relation)                              
+    (org-graph-edge--insert link desc 'relation)
     (org-indent-region beg (point))))
 
 (defun org-graph-edge-insert-backlink (link desc)
@@ -575,6 +586,11 @@ either side, and deletes both sides of a link."
                                                    (get-file-buffer (car (cdr target))))
                                        nil no-backlink)))
 
+;;;###autoload
+(defun org-graph-init ()
+  (interactive)
+  (org-graph-from-id-locations t))
+
 (defun org-graph-edge-backlink ()
   "Insert a backlink edge to the target heading from the current one."
   (interactive)
@@ -582,6 +598,19 @@ either side, and deletes both sides of a link."
     (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
                                                    (get-file-buffer (car (cdr target)))) 
                                        t)))
+
+(defun org-graph-edge-related (&optional link desc)
+  "Insert a backlink edge to the target heading from the current one."
+  (interactive (list (org-web-tools--read-url)))
+  (let ((desc 
+         (or desc 
+             (when link
+               (if-let ((dom (plz 'get link :as (lambda ()
+                                                 (libxml-parse-html-region (point-min) (point-max)))))
+                        (title (cl-caddr (car (dom-by-tag dom 'title)))))
+                   (org-web-tools--cleanup-title title)
+                 (message "HTML page at URL has no title"))))))
+      (when link (org-graph-edge-insert-related link desc))))
 
 (defun org-dblock-write:links ()
   "Generate a 'links' block for the designated node.")

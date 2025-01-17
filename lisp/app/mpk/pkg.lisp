@@ -10,7 +10,7 @@
 
 ;;; Code:
 (defpackage :mpk
-  (:use :cl :std :log :id :config :ast)
+  (:use :cl :std :log :id :config :ast :cli/tools/net)
   (:export
    #:*mpk-directory*
    #:mpk-path

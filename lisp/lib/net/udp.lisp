@@ -39,4 +39,7 @@
 (defclass udp-client (udp-socket client) ())
 (defclass udp-server (udp-socket server) ())
 
+;;; MTU Discovery
 
+;; ref: https://www.rfc-editor.org/rfc/rfc9000.html#section-14.3
+;; ref: https://github.com/quinn-rs/quinn/blob/main/quinn-proto/src/config/transport.rs (MtuDiscoveryConfig)
