@@ -5,27 +5,20 @@
 ;;; Code:
 (in-package :vc/cli)
 
-;; (define-symbol-macro .repo (or *repo* (make-repo *default-pathname-defaults*)))
-
 (defcmd vc-status-cmd ()
-  (with-current-vc-root (vc)
-    (vc-status vc)))
+  (vc-status *repo*))
 
 (defcmd vc-commit-cmd ()
-  (with-current-vc-root (vc)
-    (vc-commit vc (car *args*))))
+  (vc-commit *repo* (car *args*)))
 
 (defcmd vc-pull-cmd ()
-  (with-current-vc-root (vc)
-    (vc-pull vc (car *args*))))
+  (vc-pull *repo* (car *args*)))
 
 (defcmd vc-push-cmd ()
-  (with-current-vc-root (vc)
-    (vc-push vc (car *args*))))
+  (vc-push *repo* (car *args*)))
 
 (defcmd vc-addremove-cmd ()
-  (with-current-vc-root (vc)
-    (apply 'vc-addremove vc *args*)))
+  (apply 'vc-addremove *repo* *args*))
 
 (defcmd vc-clone-cmd ()
   (vc-clone (make-instance 'vc-repo) (car *args*)))
@@ -39,6 +32,9 @@
 (defcmd vc-unbundle-cmd ()
   (vc-unbundle (make-repo *default-pathname-defaults*) (car *args*)))
 
+;; (defcmd vc-diff-cmd ()
+;;   (vc-diff
+
 (define-cli *vc-cli*
   :name "vc"
   :help t
@@ -49,6 +45,8 @@
           :thunk vc-status-cmd)
          (:name "push" :description "Push the current repo to a remote"
           :thunk vc-push-cmd)
+         (:name "diff" :description "Perform a diff"
+          :thunk vc-diff-cmd)
          (:name "pull" :description "Pull the current repo from a remote"
           :thunk vc-pull-cmd)
          (:name "clone" :description "Clone a repo from a remote" :thunk vc-clone-cmd)

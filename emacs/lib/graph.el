@@ -107,7 +107,7 @@ non-nil visit each node and collect all edges found."
                      (org-with-file-buffer v
                        (goto-char pos)
                        (org-graph-node-at-point graph)
-                       (when edges (org-graph-edges-at-point graph))))
+                       (when edges (print (org-graph-edges-at-point graph)))))
                  (warn "couldn't find node %s %s" k v)))
            (remhash k (org-graph-nodes graph))))
        (org-graph-nodes graph))
@@ -585,6 +585,13 @@ either side, and deletes both sides of a link."
     (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
                                                    (get-file-buffer (car (cdr target))))
                                        nil no-backlink)))
+
+;;;###autoload
+(defun org-graph-node (arg invisible-ok level)
+  (interactive "P")
+  (org-insert-heading arg invisible-ok level)
+  (org-id-get-create)
+  (org-expiry-insert-created))
 
 ;;;###autoload
 (defun org-graph-init ()

@@ -17,19 +17,20 @@
 ;;; Nested Commands
 (defcmd skc-vc* ()
   (with-cli (*vc-cli* :args (cdr (cli:args)))
-    (do-opts *cli*)
-    (do-cmd *cli*)))
+    (with-current-vc-root (*repo* *default-pathname-defaults*)
+      (do-opts *vc-cli*)
+      (do-cmd *vc-cli*))))
 
 (defcmd skc-pk* ()
   (with-cli (*packy-cli* :args (cdr (cli:args)))
-    (do-opts *cli*)
-    (do-cmd *cli*)))
+    (do-opts *packy-cli*)
+    (do-cmd *packy-cli*)))
 
 (defcmd skc-kr* ()
   (with-cli (*krypt-cli* :args (cdr (cli:args)))
-    (do-opts *cli*)
+    (do-opts *krypt-cli*)
     (blake3::load-blake3)
-    (do-cmd *cli*)))
+    (do-cmd *krypt-cli*)))
 
 (load-package-cli 
  :skel

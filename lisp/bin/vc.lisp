@@ -19,4 +19,5 @@
 (defmain start-vc ()
   (in-package :vc)
   (with-cli ((package-cli :bin/vc) :args (cli:args))
-    (do-cmd *cli*)))
+    (with-current-vc-root (*repo*)
+      (do-cmd *cli*))))
