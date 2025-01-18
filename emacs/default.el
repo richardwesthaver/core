@@ -45,7 +45,6 @@
  shr-use-xwidgets-for-media t
  which-key-mode t
  view-read-only t)
-
 ;;; Treesitter
 
 ;;(add-to-list 'treesit-extra-load-path "/usr/local/lib/")

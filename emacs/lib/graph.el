@@ -36,9 +36,7 @@
   :type 'directory
   :group 'graph)
 
-(defcustom org-graph-locations (list (join-paths company-org-directory "notes/")
-                                     (join-paths company-org-directory "graph/")
-                                     (join-paths org-directory "notes/"))
+(defcustom org-graph-locations (list (join-paths company-org-directory "graph/"))
   "List of directories to check for nodes."
   :type '(list directory)
   :group 'graph)
@@ -68,6 +66,8 @@
   :type 'hook
   :group 'graph)
 
+(defvar org-graph-target-maxlevel 9)
+
 (defcustom org-graph-db-init-script (join-paths company-source-directory "infra/scripts/org-db-init.lisp")
   "Path to a lisp script responsible for initializing the `org-graph-db-directory'.")
 
@@ -86,6 +86,9 @@
   "A handle to the database backend which stores nodes and edges."
   :type 'org-graph-db-handle
   :group 'graph)
+
+;; TODO 2025-01-17: 
+(defun org-graph-from-file (file))
 
 (defun org-graph-from-id-locations (&optional edges local)
   "Populate the `org-graph' from `org-id-locations', filtering out any
@@ -327,6 +330,9 @@ This is called with point at the location where it was called.")
   "Hook called before storing the link on the backlink side.
 This is called with point in the heading of the backlink.")
 
+(defvar org-graph-pre-child-hook nil)
+(defvar org-graph-pre-parent-hook nil)
+
 (defvar org-graph-edge-indicator-alist
   '((link . "->")
     (backlink . "<-")
@@ -477,10 +483,25 @@ which are inserted with the edge."
 (defun org-graph-edge-insert-link (link desc)
   "insert a forward link edge. When BACKLINK is non-nil also create a
 backlink at the node specified in LINK."
-  (interactive)
   (with-org-graph-edge-drawer (beg t)
     (let ((description (org-graph-edge-default-description-formatter link desc)))
       (org-graph-edge--insert link desc 'link)
+      (org-indent-region beg (point)))))
+
+(defun org-graph-edge-insert-parent (link desc)
+  "insert a forward link edge. When BACKLINK is non-nil also create a
+backlink at the node specified in LINK."
+  (with-org-graph-edge-drawer (beg t)
+    (let ((description (org-graph-edge-default-description-formatter link desc)))
+      (org-graph-edge--insert link desc 'parent)
+      (org-indent-region beg (point)))))
+
+(defun org-graph-edge-insert-child (link desc)
+  "insert a forward link edge. When BACKLINK is non-nil also create a
+backlink at the node specified in LINK."
+  (with-org-graph-edge-drawer (beg t)
+    (let ((description (org-graph-edge-default-description-formatter link desc)))
+      (org-graph-edge--insert link desc 'child)
       (org-indent-region beg (point)))))
 
 (defun org-graph-edge-links-action (marker hooks)
@@ -500,6 +521,28 @@ backlink at the node specified in LINK."
          (pre-desc (cadr link))
          (description (org-graph-edge-default-description-formatter link-ref pre-desc)))
     (cons link-ref description)))
+
+(defun org-graph-edge-insert-child-marker (target &optional no-parent)
+  "Insert link to marker TARGET and create a child edge.
+Optionally skip inserting a parent node at the target with NO-PARENT."
+  (let* ((source (point-marker))
+         (source-link (org-graph-edge-links-action source 'org-graph-edge-pre-child-hook))
+         (target-link (org-graph-edge-links-action target 'org-graph-edge-pre-parent-hook))
+         (source-formatted-link (org-graph-edge-link-builder source-link))
+         (target-formatted-link (org-graph-edge-link-builder target-link)))
+    (unless no-parnt
+      (with-current-buffer (marker-buffer target)
+        (save-excursion
+          (save-restriction
+            (widen) ;; buffer could be narrowed
+            (goto-char (marker-position target))
+            (when (derived-mode-p 'org-mode)
+              (org-graph-edge-insert-parent (car source-formatted-link) (cdr source-formatted-link)))))))
+    (with-current-buffer (marker-buffer source)
+      (save-excursion
+        (goto-char (marker-position source))
+        (print target-formatted-link)
+        (org-graph-edge-insert-child (car target-formatted-link) (cdr target-formatted-link))))))
 
 (defun org-graph-edge-insert-link-marker (target &optional no-forward no-backward)
   "Insert link to marker TARGET and create an edge.
@@ -587,16 +630,32 @@ either side, and deletes both sides of a link."
                                        nil no-backlink)))
 
 ;;;###autoload
-(defun org-graph-node (arg invisible-ok level)
+(defun org-graph-node (&optional arg invisible-ok level)
   (interactive "P")
   (org-insert-heading arg invisible-ok level)
   (org-id-get-create)
   (org-expiry-insert-created))
 
+(defun org-graph-files ()
+  (flatten (mapcar (lambda (x) (directory-files-recursively x "**/*.org")) org-graph-locations)))
+
+(defun org-graph--targets ()
+  `(,(org-graph-files) :maxlevel . ,org-graph-target-maxlevel))
+
 ;;;###autoload
 (defun org-graph-init ()
   (interactive)
-  (org-graph-from-id-locations t))
+  (prog1 (org-graph-from-id-locations t)
+    (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b))))))
+
+;;;###autoload
+(defun org-graph-load ()
+  "Load the org-graph from the org-graph-db."
+  (interactive))
+  
+(defun org-graph-save ()
+  "Save the org-graph to the org-graph-db.")
+
 
 (defun org-graph-edge-backlink ()
   "Insert a backlink edge to the target heading from the current one."
@@ -605,6 +664,21 @@ either side, and deletes both sides of a link."
     (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
                                                    (get-file-buffer (car (cdr target)))) 
                                        t)))
+
+(defun org-graph-edge-child (&optional no-parent)
+  "Insert a parent edge to the current heading point to the target."
+  (interactive "P")
+  (let ((target (org-graph-edge-search-function)))
+    (org-graph-edge-insert-child-marker (set-marker (make-marker) (car (cdddr target))
+                                                    (get-file-buffer (car (cdr target)))) 
+                                        no-parent)))
+
+(defun org-graph-edge-parent ()
+  (interactive)
+  (org-graph-edge-insert-child-marker 
+   (set-marker (make-marker) (car (cdddr target))
+               (get-file-buffer (car (cdr target))))
+   t))
 
 (defun org-graph-edge-related (&optional link desc)
   "Insert a backlink edge to the target heading from the current one."
