@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :cli/tools/systemd)
+(in-package :cli/tools/sys)
 
 (deferror systemd-error (simple-error error) ())
 

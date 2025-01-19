@@ -106,7 +106,7 @@
            :notmuch-count
            :notmuch-show))
 
-(defpackage :cli/tools/systemd
+(defpackage :cli/tools/sys
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*systemctl* :run-systemd :run-systemctl
    :systemd-error
