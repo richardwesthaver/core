@@ -530,7 +530,7 @@ Optionally skip inserting a parent node at the target with NO-PARENT."
          (target-link (org-graph-edge-links-action target 'org-graph-edge-pre-parent-hook))
          (source-formatted-link (org-graph-edge-link-builder source-link))
          (target-formatted-link (org-graph-edge-link-builder target-link)))
-    (unless no-parnt
+    (unless no-parent
       (with-current-buffer (marker-buffer target)
         (save-excursion
           (save-restriction
@@ -637,7 +637,18 @@ either side, and deletes both sides of a link."
   (org-expiry-insert-created))
 
 (defun org-graph-files ()
-  (flatten (mapcar (lambda (x) (directory-files-recursively x "**/*.org")) org-graph-locations)))
+  (flatten (mapcar (lambda (x) 
+                     (let ((paths 
+                            (cl-remove-if 
+                             (lambda (y) (string-prefix-p "." y))
+                             (directory-files x)))
+                           (ret))
+                       (dolist (d paths ret)
+                         (let ((xd (join-paths x d))) 
+                            (if (file-directory-p xd)
+                                (push (directory-files-recursively xd "**/*.org") ret)
+                              (push xd ret) )))))
+                   org-graph-locations)))
 
 (defun org-graph--targets ()
   `(,(org-graph-files) :maxlevel . ,org-graph-target-maxlevel))

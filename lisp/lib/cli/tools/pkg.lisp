@@ -99,7 +99,12 @@
 
 (defpackage :cli/tools/mail
   (:use :cl :std :cli/tools/proto :cli/env)
-  (:export :mail-error :*mail-program* :run-notmuch :run-offlineimap :*notmuch* :*offlineimap*))
+  (:export :mail-error :*mail-program* :run-notmuch :run-offlineimap :*notmuch* :*offlineimap*
+           :notmuch-search
+           :notmuch-address
+           :notmuch-tag
+           :notmuch-count
+           :notmuch-show))
 
 (defpackage :cli/tools/systemd
   (:use :cl :std :cli/tools/proto :cli/env)
