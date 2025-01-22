@@ -31,5 +31,59 @@
 
 ;; configs for everything
 
+;; program-service -> sb-ext:run-program IO
+
+;;;; REFS:
+
+;; Tower: https://github.com/tower-rs/tower
+
+;; Axum: https://github.com/tokio-rs/axum
+
 ;;; Code:
 (in-package :obj/srv)
+
+;;; Vars
+(defvar *service*)
+(defvar *service-table* (make-hash-table :weakness :value))
+(defvar-unbound *request*)
+(defvar-unbound *response*)
+
+;;; Utils
+(defun in-request-p () (and (boundp '*request*) *request*))
+(defun in-response-p () (and (boundp '*response*) *response*))
+
+;;; Conditions
+(define-condition service-condition (condition) ())
+(eval-always
+  (deferror service-error (service-condition error) () (:auto t)))
+(deferror simple-service-error (service-error simple-condition) () (:auto t))
+
+(define-condition service-warning (service-condition warning) ())
+
+(defwarning simple-service-warning (service-warning simple-warning) () (:auto t))
+
+(deferror bad-request (service-error) ())
+
+;;; Protocol
+(defgeneric service (self)
+  (:method ((self t)) (when (boundp '*service*) *service*))
+  (:method ((self symbol)) (gethash self *service-table*))
+  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
+
+(defgeneric process-request (req)
+  (:documentation "Function called by PROCESS-CONNECTION after reading incoming headers. Calls
+HANDLE-REQUEST to dispatch to a route and return output to the client using
+START-OUTPUT.
+
+Return value is ignored."))
+
+(defgeneric handle-request (self request)
+  (:documentation "Function called after fetching a request. Used to establish error handling,
+logging, etc."))
+(defgeneric dispatch-request (self request)
+  (:documentation "Function called after 'handle-request' which routes a request to a service."))
+(defgeneric send-response (service stream &key content &allow-other-keys))
+
+(defgeneric response-ok-p (res))
+(defgeneric response-status (res))
+(defgeneric (setf response-status) (new res))

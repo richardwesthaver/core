@@ -36,9 +36,25 @@
                   (#\# (setq state :pound))
                   (t (push c out))))
                ((eq state :pound)
+                ;; TODO 2025-01-20: we should consider an alternative method
+                ;; to remove the explicit evals.
+
+                ;; check for lisp-mode character
                 (if (char= c #\,)
-                    ;; slow
-                    (push (coerce (format nil "~A" (eval (read stream nil nil))) 'list) out)
+                    ;; check for splice-mode character
+                    (if (char= (peek-char nil stream) #\@)
+                        (progn
+                          ;; skip it
+                          (read-char stream)
+                          ;; eval and push each form individually.
+                          (let ((form (eval (read stream nil nil))))
+                            (push
+                             (coerce
+                              (format nil "~{~A~^ ~}" form)
+                              'list)
+                             out)))
+                        ;; unconditionally read in a single sexp and eval.
+                        (push (coerce (format nil "~A" (eval (read stream nil nil))) 'list) out))
                     (progn 
                       (push #\# out)
                       (push c out)))

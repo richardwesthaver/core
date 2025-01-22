@@ -681,4 +681,23 @@
 (defpackage :obj/srv
   (:nicknames :srv)
   (:use :cl :std)
-  (:export))
+  (:export
+   #:response-ok-p
+   #:response-status
+   #:dispatch-request
+   #:send-response
+   #:handle-request
+   #:process-request
+   #:service
+   #:bad-request
+   #:simple-service-warning
+   #:service-warning
+   #:simple-service-error
+   #:service-error
+   #:service-condition
+   #:*service*
+   #:*service-table*
+   #:*request*
+   #:*response*
+   #:in-request-p
+   #:in-response-p))

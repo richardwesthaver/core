@@ -27,7 +27,7 @@
              (:mod "rust"))
 :rules
 ((all (%stash
-       psl.dat parquet.json rgb.txt
+       ;; psl.dat parquet.json rgb.txt
        ;; save-std save-prelude save-user fasls
        ;; save-infra save-tests
        build-tree-sitter-alien save-core

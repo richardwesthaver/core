@@ -35,7 +35,9 @@
    :*packy-logger*
    :*packy-home*
    :packy-condition
-   :packy-error))
+   :packy-error
+   :*packy-dist-targets*
+   :*default-packy-dist-targets*))
 
 (defpackage :packy/db
   (:use :cl :std :packy/core :db :rdb :schema :time)

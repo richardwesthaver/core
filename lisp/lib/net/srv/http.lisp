@@ -11,6 +11,11 @@
 ;;; Code:
 (in-package :net/srv/http)
 
+(defvar *headers-sent* nil
+  "Used internally to check whether the response headers have
+already been sent for this request.")
+(defvar *service-header-stream* nil)
+(defvar *default-ssl-service-port* 8443)
 (defvar *default-content-type* "text/html")
 (defvar *default-ssl-key-file* #P"/etc/ssl/cert.pem")
 (defvar *header-stream* nil)

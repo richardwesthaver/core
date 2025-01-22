@@ -12,7 +12,7 @@
 ;;; Code:
 (in-package :organ)
 
-(define-org-element node-property ((name :initarg :name) (value :initarg :value)) :lesser t)
+(define-org-element node-property ((name :initarg :name :accessor name) (value :initarg :value :accessor value)) :lesser t)
 
 ;; assumes caller is org-property-drawer = single line
 (define-org-parser (node-property :from string)

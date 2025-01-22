@@ -8,3 +8,5 @@
   (:nicknames :bench/lan-party)
   (:use :cl :std :net :log :json :obj))
 (in-package :bench/net/lan-party)
+
+(make-instance 'udp-server)

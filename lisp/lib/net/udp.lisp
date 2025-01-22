@@ -35,7 +35,7 @@
 
 ;;; Objects
 (defclass udp-socket (inet-socket) ()
-  (:default-initargs :type :datagram))
+  (:default-initargs :type :datagram :protocol :udp))
 (defclass udp-client (udp-socket client) ())
 (defclass udp-server (udp-socket server) ())
 

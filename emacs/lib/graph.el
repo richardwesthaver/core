@@ -25,6 +25,7 @@
 ;;; Code:
 (require 'org)
 (require 'org-agenda)
+(require 'org-web-tools)
 (require 'default)
 (require 'ulang)
 
@@ -656,8 +657,9 @@ either side, and deletes both sides of a link."
 ;;;###autoload
 (defun org-graph-init ()
   (interactive)
-  (prog1 (org-graph-from-id-locations t)
-    (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b))))))
+  (let ((org-id-extra-files (org-graph-files)))
+    (prog1 (org-graph-from-id-locations t)
+      (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b)))))))
 
 ;;;###autoload
 (defun org-graph-load ()

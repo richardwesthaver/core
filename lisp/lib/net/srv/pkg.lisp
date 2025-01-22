@@ -53,21 +53,6 @@
 
 ;;; Vars
 (defvar *router*)
-(defvar *service*)
-(defvar *service-table* (make-hash-table :weakness :value))
-(defvar-unbound *request*)
-(defvar-unbound *response*)
-(defvar-unbound *session*)
-(defvar-unbound *session-secret*)
-(defvar-unbound *service-stream*)
-(defvar-unbound *finish-processing-socket*)
-(defvar-unbound *close-service-stream*)
-(defvar *headers-sent* nil
-  "Used internally to check whether the response headers have
-already been sent for this request.")
-(defvar *service-header-stream* nil)
-(defun in-request-p () (and (boundp '*request*) *request*))
-(defun in-response-p () (and (boundp '*response*) *response*))
 (defvar *session-db* nil)
 (defvar *global-session-db-lock* (load-time-value (make-mutex :name "global-session-db")))
 (defvar *log-service-errors* t)
@@ -79,20 +64,12 @@ already been sent for this request.")
 (defvar *default-service-port* 8080)
 (defvar *default-max-thread-count* 100)
 (defvar *default-max-accept-count* (+ *default-max-thread-count* 20))
-(defvar *default-ssl-service-port* 8443)
 (defvar *default-session-timeout* #.(* 30 60)) ;; 30m
-;;; Conditions
-;; from hunchentoot
-(define-condition service-condition (condition) ())
-(eval-always
-  (deferror service-error (service-condition error) () (:auto t)))
-(deferror simple-service-error (service-error simple-condition) () (:auto t))
-
-(define-condition service-warning (service-condition warning) ())
-
-(defwarning simple-service-warning (service-warning simple-warning) () (:auto t))
-
-(deferror bad-request (service-error) ())
+(defvar-unbound *session*)
+(defvar-unbound *session-secret*)
+(defvar-unbound *service-stream*)
+(defvar-unbound *finish-processing-socket*)
+(defvar-unbound *close-service-stream*)
 
 ;;; Utils
 (eval-when (:load-toplevel :compile-toplevel :execute)
@@ -106,13 +83,6 @@ already been sent for this request.")
                                       :type nil
                                       :defaults source-directory)))))
 
-;; Global Helpers
-;;; Protocol
-(defgeneric service (self)
-  (:method ((self t)) (when (boundp '*service*) *service*))
-  (:method ((self symbol)) (gethash self *service-table*))
-  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
-
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
 (defgeneric restart-service (self)
@@ -120,27 +90,13 @@ already been sent for this request.")
   (:method ((self t))
     (stop self)
     (start self)))
-(defgeneric execute-service (self)
-  (:documentation "A function that is called by a service once it has been initialized. Usually calls the 'accept-connections' method of the service."))
 (defgeneric find-route (self uri))
 (defgeneric add-route (self uri srv &key &allow-other-keys))
 (defgeneric delete-route (self uri &key &allow-other-keys))
-(defgeneric handle-request (self request)
-  (:documentation "Function called after fetching a request. Used to establish error handling,
-logging, etc."))
-(defgeneric dispatch-request (self request)
-  (:documentation "Function called after 'handle-request' which routes a request to a service."))
-(defgeneric send-response (service stream &key content &allow-other-keys))
 (defgeneric accept-connections (self))
 (defgeneric handle-connection (self conn))
 (defgeneric initialize-connection-hook (self stream))
 (defgeneric reset-connection-stream (self stream))
-(defgeneric process-request (req)
-  (:documentation "Function called by PROCESS-CONNECTION after reading incoming headers. Calls
-HANDLE-REQUEST to dispatch to a route and return output to the client using
-START-OUTPUT.
-
-Return value is ignored."))
 (defgeneric process-connection (self socket))
 (defgeneric secure-service-p (self)
   (:method ((self t)) 
@@ -149,10 +105,6 @@ Return value is ignored."))
 
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
-
-(defgeneric response-ok-p (res))
-(defgeneric response-status (res))
-(defgeneric (setf response-status) (new res))
 
 ;;; Response
 (defclass response () ())
@@ -342,7 +294,7 @@ Return value is ignored."))
 (defclass multi-threaded-engine (engine)
   ((process :accessor process)))
 
-(defmethod execute-service ((self multi-threaded-engine))
+(defmethod exec ((self multi-threaded-engine))
   (setf (process self)
         (run-thread 
          self
@@ -626,7 +578,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
     (service-log :debug "using engine ~A" engine)
     (setf (service engine) self)
     (start-listening self)
-    (execute-service engine))
+    (exec engine))
   self)
 
 (defmethod started-p ((self service))
