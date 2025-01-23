@@ -26,6 +26,7 @@
      (:file "schema")
      (:file "db")
      (:file "log")
+     (:file "rule")
      (:file "util")
      (:file "vm")))
    (:module "comp"

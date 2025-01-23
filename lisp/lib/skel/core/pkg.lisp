@@ -177,3 +177,7 @@
 
 (defpackage :skel/core/plan
   (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/var :plan))
+
+(defpackage :skel/core/rule
+  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/var :plan :skel/core/log :db :schema :ast)
+  (:export))

@@ -16,6 +16,11 @@
   `(with-db (,sym :db (make-db :rdb :name (namestring (tmpize-pathname "/tmp/rdb"))) ,@opts)
      ,@body))
 
+(defvar *rdb-schema-file* #P"test.rdb")
+(defvar *rdb-schema-file-contents* 
+  "; RDB schema file
+")
+
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))

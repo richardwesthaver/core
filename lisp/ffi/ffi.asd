@@ -4,7 +4,7 @@
                :cuda :evdev :glib :gstreamer
                :keyutils :readline :rocksdb :rustls
                :sndfile :ssh2 :tree-sitter :ublk
-               :uring :xkb :zstd)
+               :uring :xkb :zstd :sb-grovel)
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :ffi/tests

@@ -36,6 +36,7 @@
                  (:file "cmd" :depends-on ("macs" "proto" "ast"))
                  (:file "cli" :depends-on ("opt" "cmd"))))
                (:file "multi" :depends-on ("repl" "clap"))
+               (:file "tui" :depends-on ("ansi" "progress" "spark" "prompt"))
                (:file "cli"))
   :in-order-to ((test-op (test-op "cli/tests"))))
 

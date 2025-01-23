@@ -110,3 +110,7 @@
   (:export
    #:define-multi-main
    #:make-symlinks))
+
+(defpackage :cli/tui
+  (:use :cl :std :ansi)
+  (:export))
