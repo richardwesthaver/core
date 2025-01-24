@@ -54,7 +54,9 @@ cons of two ints."
                                                            :type (xmlrep-attrib-value "type" match)))))
             mime-types)))))
 
-(defvar *mime-types* #+linux (load-mime-info))
+(defvar *mime-types* 
+  #+linux (handler-case (load-mime-info)
+            (sb-ext:file-does-not-exist (c) (warn c))))
 
 (defvar *mime-database*
   #+linux

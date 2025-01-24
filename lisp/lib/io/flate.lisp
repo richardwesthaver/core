@@ -23,6 +23,7 @@
 
 ;;; Code:
 (in-package :io/flate)
+(zstd:load-zstd)
 
 ;;; Vars
 (defparameter *compression-buffer-size* 4096)

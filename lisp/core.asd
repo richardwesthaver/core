@@ -1,6 +1,6 @@
 (pushnew :core *features*)
 (defsystem :core
-  :depends-on (:std :log :io :obj :net :cry :parse :syn :dat)
+  :depends-on (:std :prelude)
   :components ((:file "core"))
   :build-pathname "core"
   :build-operation monolithic-compile-bundle-op)
