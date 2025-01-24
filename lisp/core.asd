@@ -1,4 +1,3 @@
-(pushnew :core *features*)
 (defsystem :core
   :depends-on (:std :prelude)
   :components ((:file "core"))

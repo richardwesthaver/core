@@ -8,7 +8,9 @@
 (defpkg :core 
   (:use :cl)
   (:use-reexport :std :log :io :obj :net :cry :parse :syn :dat :cl-user :sb-ext :sb-debug))
+
 (in-package :core)
+(pushnew :core *features*)
 
 (defun exclamation-mark-reader (stream inchar)
   (declare (ignore inchar))

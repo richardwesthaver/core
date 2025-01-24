@@ -427,12 +427,12 @@ via the special form stored in RECIPE."
      (destructuring-bind (spec &rest body) val
        (declare (ignore spec body))
        (nyi!)))
-    (:cmd
-     ;; process the remainder as spec+defcmd-args+body
-     )
-    (:opt
-     ;; process the remainder as spec+defcmd-args+body
-     )
+    ;; (:cmd
+    ;;  ;; process the remainder as spec+defcmd-args+body
+    ;;  )
+    ;; (:opt
+    ;;  ;; process the remainder as spec+defcmd-args+body
+    ;;  )
     (:env
      ;; process the remainder as a regular value but
      ;; associate the name with a shell environment which
@@ -443,11 +443,12 @@ via the special form stored in RECIPE."
      ;; specification with additional options for checking
      ;; for pre-existing values and 'exporting' the
      ;; environment.
-     (if (= (length val) 1)
-         ;; TODO 2024-09-21: setenv
-         (list sym val)
-         ;; process additional shell opts
-         (nyi!)))))
+     (let ((val (if (listp val) (eval val) val))
+           (sym (string sym)))
+           (let ((ret (setf (uiop:getenv sym) val)))
+             (if (zerop ret)
+                 (log:debug! "env: ~A=~A~%" sym val)
+                 (log:error! "failed to set env: ~A=~A, exit-code=~A~%" sym val ret)))))))
 
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))
@@ -536,18 +537,22 @@ via the special form stored in RECIPE."
                       (let ((sym (car b))
                             (form (cdr b)))
                             ;; (form (cddr b)))
-                        (if (keywordp sym)
-                            (sk-case-bind sym form)
-                            (cond 
-                              ;; (sym param &rest val) detected
-                              ((> (length (cdr form)) 0)
-                               (let ((key (cadr b)))
-                                 (if (keywordp key)
-                                     (sk-case-bind key form sym)
-                                     ;; if nothing else mube be a lambda
-                                     (push `(,sym ,(compile sym `(lambda ,(cadr b) ,@(cddr b)))) ret))))
-                              (t
-                               (push b ret)))))))))
+                        (let ((key (car form))
+                              (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
+                          (if (keywordp key)
+                              (sk-case-bind key val sym)
+                              (cond 
+                                ;; (sym param &rest val) detected
+                                ((> (length (cdr form)) 0)
+                                 (let ((key (cadr b)))
+                                   (if (keywordp key)
+                                       (sk-case-bind key (cdr form) sym)
+                                       ;; if nothing else must be a lambda
+                                       (push `(,sym 
+                                               ,(compile sym `(lambda ,(car b) ,@(cddr b))))
+                                             ret))))
+                                (t
+                                 (push b ret))))))))))
           ;; RULES
           (when-let ((rules (sk-rules self)))
             (setf (sk-rules self)

@@ -20,24 +20,23 @@
 (defparameter *cmd3* (make-cli :cmd :name "flub" :opts *opts* :thunk 'flub-thunk))
 (defparameter *cmds* (make-cmds (list `(:name "baz" :description "baz" :opts ,*opts*) *cmd1* *cmd2* *cmd3*)))
 
-(defparameter *cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
+(defparameter *test-cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
 
 (deftest mixed-args ()
-  (with-cli (*cli*) '("--foo" "bar" "flub") 
+  (with-cli (*test-cli*) '("--foo" "bar" "flub") 
     (is (string= "bar" (cli-opt-val (aref (opts *cli*) 0))))
     (is (null (cli-args *cli*)))
     (do-cmd *cli*)))
 
 (deftest cli-ast ()
   "Validate the CLI/CLAP/AST parser."
-  (is (string= (cli-opt-name (cli-node-form (car (ast:ast (proc-args *cli* '("--foo" "1"))))))
+  (is (string= (cli-opt-name (cli-node-form (car (ast:ast (proc-args *test-cli* '("--foo" "1"))))))
                "foo"))
   (signals clap-unknown-argument
-    (proc-args *cli* '("--log" "default" "--foo=11"))))
+    (proc-args *test-cli* '("--log" "default" "--foo=11"))))
 
 (defmain foo-main (:exit nil)
-  (with-cli (*cli*) ()
-    (log:trace! "defmain is OK")
+  (with-cli (*test-cli*) ()
     t))
 
 (deftest clap-main ()

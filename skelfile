@@ -30,6 +30,7 @@
        ;; psl.dat parquet.json rgb.txt
        ;; save-std save-prelude save-user fasls
        ;; save-infra save-tests
+       build-zstd-alien
        build-tree-sitter-alien save-core
        build-core 
        ;; rust-bin
@@ -184,8 +185,8 @@
                        (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
        (:build () (with-sbcl (:noinform t :quit t)
-                    (push :gui *features*)
                     (push :x11 *features*)
+                    (push :gui *features*)
                     (push :clim *features*)
                     (push :tools *features*)
                     (ql:quickload :bin/core)
@@ -244,4 +245,5 @@
        mv *.so tmp/core/lib/
        mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/bin/
        cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)
- (dist-source (clean) #$cd .. && tar --exclude='.hg' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#))
+ (dist-source (clean) #$cd .. && tar --exclude='.hg' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
+ (dist-core (clean %stash build-core) #$zstd .stash/core$#))

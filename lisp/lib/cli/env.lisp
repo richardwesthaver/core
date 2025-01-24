@@ -6,7 +6,7 @@
 (in-package :cli/env)
 
 (defvar *default-global-env-var-names* 
-  '("LOG_LEVEL" "CORE_ROOT" "PACKY_ROOT" "INFRA_ROOT" "KRYPT_ROOT" "SKEL_ROOT" "LISP" "ESHELL" "ORGANIZATION" "TERM"))
+  '("LOG_LEVEL" "CORE_HOME" "PACKY_URL" "VC_URL" "INFRA_HOME" "KRYPT_HOME" "SKEL_HOME" "LISP" "ESHELL" "ORGANIZATION" "TERM"))
 (defvar *default-local-env-var-names* 
   '("PREFIX" "STASHDIR" "STOREDIR" "BINDIR" "LIBDIR" "DATADIR" "CARGO_TARGET_DIR"))
 

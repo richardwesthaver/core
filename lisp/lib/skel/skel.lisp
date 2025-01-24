@@ -44,10 +44,11 @@
     #+net (:name net :description "communicate with skel clients and servers" 
            :thunk skc-net))))
 
-#+rdb
-(pushnew 'init-skel-logger *skel-init-hook*)
-#+rdb
-(pushnew 'sk-log-shutdown sb-ext:*exit-hooks*)
+;; db is locked while skel is running, prevents multiple instances
+;; #+rdb
+;; (pushnew 'init-skel-logger *skel-init-hook*)
+;; #+rdb
+;; (pushnew 'sk-log-shutdown sb-ext:*exit-hooks*)
 
 (defvar *skel-init-keywords* '(:config *skel-user-config* 
                                :project *skel-project*
