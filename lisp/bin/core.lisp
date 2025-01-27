@@ -17,6 +17,8 @@
   (:packy (bin/packy::start-packy))
   (:rdb (bin/rdb::start-rdb))
   (:vc (bin/vc::start-vc))
+  #+virt
+  (:pod (bin/pod::start-pod))
   (:organ (bin/organ::start-organ))
   (:homer (bin/homer::start-homer))
   #+x11 

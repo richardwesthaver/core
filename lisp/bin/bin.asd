@@ -34,6 +34,13 @@
   :depends-on (:std :cli :organ :skel :nlp :rdb :homer)
   :components ((:file "homer")))
 
+(defsystem :bin/pod
+  :build-operation program-op
+  :build-pathname "pod"
+  :entry-point "bin/pod::start-pod"
+  :depends-on (:std :cli :pod)
+  :components ((:file "pod")))
+
 (defsystem :bin/rdb
   :build-operation "program-op"
   :build-pathname "rdb"
@@ -82,4 +89,5 @@
   :entry-point "bin/core::dispatch-core"
   :components ((:file "core"))
   :depends-on (:core :bin/skel :bin/organ :bin/homer :bin/rdb :bin/packy :bin/vc :bin/gen
-                     (:feature :x11 :bin/swm)))
+                     (:feature :x11 :bin/swm)
+                     (:feature :virt :bin/pod)))

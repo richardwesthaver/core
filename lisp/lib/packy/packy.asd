@@ -10,6 +10,7 @@
    (:file "var")
    (:file "proto")
    (:file "pkgbuild")
+   (:file "apkbuild")
    (:file "db")
    (:file "client")
    (:file "server")

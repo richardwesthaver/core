@@ -24,6 +24,7 @@
   (:use :cl :syn/gen :cli/tools/rust :ast :id :std/pipe :std/meta :syn/gen/c)
   (:import-from :std :in-readtable :eval-always)
   (:import-from :doc :file-header)
+  (:import-from :syn/gen/c :c-type)
   (:shadow :cl-reader :else :body)
   (:export
    #:*rs-backend*
@@ -39,8 +40,6 @@
    #:read-gen-rs-string
    #:rs-reader-switch
    #:rs-reader))
-
-(defpackage :syn/gen/rs/swap)
 
 (in-package :syn/gen/rs)
 
@@ -70,6 +69,9 @@
 (defparameter *rs-exports* (append *rs-symbols* *rs-syntax* *cl-symbols*))
 
 (defparameter *rs-swap* (append *rs-symbols* *rs-syntax*))
+
+(pkg:defpackage* :syn/gen/rs/swap
+    (:shadow-symbols *rs-swap*))
 
 (pkg:defpackage* :syn/gen/rs/sym
     (:shadow-symbols *rs-symbols* :export-symbols *rs-exports*)

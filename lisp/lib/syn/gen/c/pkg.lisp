@@ -20,7 +20,7 @@
 (defpackage :syn/gen/c
   (:nicknames :gen/c)
   (:use :cl :syn/gen :std/pipe :std/meta :cli/tools/cc :cli/env :id :ast)
-  (:shadowing-import-from :cl :type :float)
+  ;; (:shadowing-import-from :cl :type :float)
   (:export
    #:*c-backend*
    #:split-aref
@@ -81,8 +81,6 @@
    #:gen-c
    #:c-reader-switch))
 
-(defpackage syn/gen/c/swap)
-
 (in-package :syn/gen/c)
 
 (defvar *c-backend*
@@ -106,7 +104,7 @@
             constant attribute-expression switch cases
             switch-case-statement switch-case-item switch-case-item)))
 
-(export *c-backend*)
+;; (export *c-backend*)
 
 (defparameter *c-symbols*
   '(and or not > <
@@ -149,6 +147,9 @@
 (defparameter *c-swap*
   (append *c-symbols* *c-syntax*))
 
+(pkg:defpackage* :syn/gen/c/swap
+    (:shadow-symbols *c-swap*))
+
 (pkg:defpackage* :syn/gen/c/sym
     (:shadow-symbols *c-symbols* :export-symbols *c-exports*)
   (:nicknames :c)
@@ -156,4 +157,3 @@
   (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package)
   (:import-from :syn/gen/c :c-reader :read-gen-c-string :read-gen-c-file :simple-print
    :cl-reader :switch-reader :decompose-declaration))
-

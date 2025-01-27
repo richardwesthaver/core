@@ -31,7 +31,7 @@
        ;; save-std save-prelude save-user fasls
        ;; save-infra save-tests
        build-zstd-alien
-       build-tree-sitter-alien save-core
+       build-tree-sitter-alien
        build-core 
        ;; rust-bin
        ))
@@ -56,7 +56,7 @@
                 (swank:start-server f))))
  (tree-sitter-alien ()
                     (:build () #$cd lisp/ffi/tree-sitter &&
-                            clang -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
+                            cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
                             alien.c -o ../../../.stash/libtree-sitter-alien.so$#)
                     (:install () (funcall #$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
  (zstd-alien ()
@@ -185,13 +185,19 @@
                        (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
        (:build () (with-sbcl (:noinform t :quit t)
-                    (push :x11 *features*)
-                    (push :gui *features*)
-                    (push :clim *features*)
-                    (push :tools *features*)
-                    (ql:quickload :bin/core)
-                    (asdf:make :bin/core))
-               #$mv lisp/bin/core .stash/core$#)
+                         (ql:quickload :bin/core)
+                         (asdf:make :bin/core))
+                    #$mv lisp/bin/core .stash/core$#)
+       (:build-all () (with-sbcl (:noinform t :quit t)
+                        (push :virt *features*)
+                        (push :x11 *features*)
+                        (push :gui *features*)
+                        (push :clim *features*)
+                        (push :tools *features*)
+                        (ql:quickload :bin/pod)
+                        (ql:quickload :bin/core)
+                        (asdf:make :bin/core))
+                   #$mv lisp/bin/core .stash/core$#)
        (:save () (with-sbcl (:noinform t :quit t)
                    (ql:quickload (list :std :core))
                    (in-package :std-user)
@@ -204,7 +210,8 @@
                              sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
                              echo "$i -> core -> /usr/local/bin/"
                              done$#
-                             :input t)))
+                             :input t))
+       (:link-pod () (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
  (tests ()
         (:save () (with-sbcl (:noinform t :quit t)
                     (ql:quickload :core/tests)
@@ -238,12 +245,10 @@
                                                         :if-does-not-exist :create)
                   (dolist (s (list-all-symbols))
                     (print s f))))
- (dist () #$mkdir -pv .stash/tmp/core/bin/ .stash/tmp/core/share/lisp/fasl/ .stash/tmp/core/lib/
+ (dist () #$mkdir -pv .stash/tmp/core
        cd .stash
-       mv *.core tmp/core/share/lisp/
-       mv *.fasl tmp/core/share/lisp/fasl/
-       mv *.so tmp/core/lib/
-       mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/bin/
+       mv *.so tmp/core/
+       mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/
        cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)
  (dist-source (clean) #$cd .. && tar --exclude='.hg' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
  (dist-core (clean %stash build-core) #$zstd .stash/core$#))

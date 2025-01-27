@@ -4,3 +4,4 @@
 
 ;;; Code:
 (in-package :skel/core/rule)
+

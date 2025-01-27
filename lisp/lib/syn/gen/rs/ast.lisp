@@ -20,10 +20,6 @@
 (defexpr match (prefix-expression) ())
 (defexpr range () ())
 
-;;; Syntax
-(defmacro rs-syntax (tags lambda-list &body body)
-  `(defsyntax ,tags (:rs) ,lambda-list ,@body))
-
 ;;; Context Switches
 (build-context-switches
  :package :syn/gen/rs/sym

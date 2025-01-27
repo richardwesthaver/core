@@ -6,7 +6,7 @@
 (in-package :mpk)
 
 (defun mpk-path (path)
-  (merge-pathnames path (truename *mpk-user-directory*)))
+  (merge-pathnames path (or (probe-file *mpk-user-directory*) *default-pathname-defaults*)))
 
 (defun mpk-ensure-directories ()
   (when *mpk-media-directory*

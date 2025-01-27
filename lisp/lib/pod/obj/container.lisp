@@ -1,3 +1,9 @@
+;;; container.lisp --- OCI Container Objects
+
+;; 
+
+;;; Code:
+
 (in-package :pod)
 
 (defclass live-container (id)
@@ -11,3 +17,7 @@
 (defclass build-container (id)
   (builder imageid imagename containername)
   (:documentation "A container in the Buildah OCI environment."))
+
+;;; Hooks
+;; https://github.com/containers/common/blob/main/pkg/hooks/docs/oci-hooks.5.md
+(defclass container-hook (json-object) ())

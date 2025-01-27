@@ -17,7 +17,8 @@
                (:file "podman")
                (:file "cfg")
                (:file "client")
-               (:file "util"))
+               (:file "util")
+               (:file "cli"))
   :in-order-to ((test-op (test-op :pod/tests))))
 
 (defsystem :pod/tests

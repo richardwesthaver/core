@@ -1,11 +1,10 @@
 ;;; obj/url.lisp --- Universal Resource Locators
 
-;; Implements some conveniences for URLs.
+;; Some conveniences for URLs.
 
 ;;; Commentary:
 
-;; This is based on QURI which is more flexible than the hunchentoot
-;; url-encode package.
+;; This package mostly just re-exports from QURI.
 
 ;;; Code:
 (in-package :obj/url)

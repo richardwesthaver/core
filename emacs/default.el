@@ -22,6 +22,7 @@
  display-time-format "%Y-%m-%d %H:%M"
  ring-bell-function 'ignore
  completion-ignore-case t
+ kill-region-dwim t
  ;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
  ;; allow-emacs-pinentry
  ;; allow-loopback-pinentry

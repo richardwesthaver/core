@@ -40,6 +40,14 @@
                (:file "midi")
                (:file "png")
                (:file "base64")
+               (:module "multi"
+                :components
+                ((:file "pkg")
+                 (:file "base")
+                 (:file "hash")
+                 (:file "key")
+                 (:file "addr")
+                 (:file "codec")))
                (:file "dat"))
   :in-order-to ((test-op (test-op "dat/tests"))))
 

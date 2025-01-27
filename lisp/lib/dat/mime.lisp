@@ -55,8 +55,11 @@ cons of two ints."
             mime-types)))))
 
 (defvar *mime-types* 
-  #+linux (handler-case (load-mime-info)
-            (sb-ext:file-does-not-exist (c) (warn c))))
+  #+linux ;; a warning is apparently not good enough to prevent a comple-time
+          ;; error from occuring.
+  ;; (handler-case (load-mime-info)
+  ;; (sb-ext:file-does-not-exist (c) (warn "~A" c)))
+  (ignore-errors (load-mime-info)))
 
 (defvar *mime-database*
   #+linux

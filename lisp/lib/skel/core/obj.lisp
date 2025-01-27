@@ -443,12 +443,11 @@ via the special form stored in RECIPE."
      ;; specification with additional options for checking
      ;; for pre-existing values and 'exporting' the
      ;; environment.
-     (let ((val (if (listp val) (eval val) val))
-           (sym (string sym)))
-           (let ((ret (setf (uiop:getenv sym) val)))
-             (if (zerop ret)
-                 (log:debug! "env: ~A=~A~%" sym val)
-                 (log:error! "failed to set env: ~A=~A, exit-code=~A~%" sym val ret)))))))
+     (unless (null val)
+       (let ((val (if (listp val) (eval val) val))
+             (sym (string sym)))
+         (setf (uiop:getenv sym) val)
+         (log:trace! "env: ~A=~A~%" sym val))))))
 
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))

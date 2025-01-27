@@ -57,7 +57,11 @@
    #:packy-server))
 
 (defpackage :packy/pkgbuild
-  (:use :cl :std)
+  (:use :cl :std :ast)
+  (:export))
+
+(defpackage :packy/apkbuild
+  (:use :cl :std :ast)
   (:export))
 
 (defpackage :packy/cli

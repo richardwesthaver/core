@@ -2,7 +2,8 @@
 (defsystem :gui
   :depends-on (:std 
                :log :obj :xkb :parse
-               (:feature :wl :wayflan) (:feature :wl :wayflan-client)
+               (:feature :wl :wayflan) 
+               (:feature :wl :wayflan-client)
                (:feature :x11 :clx) 
                (:feature :x11 :stumpwm)
                (:feature :clim :mcclim)
@@ -27,7 +28,8 @@
                   ((:file "pkg")
                    (:file "graph")))
                  (:file "dbg" :if-feature :dbg)
-                 (:file "repl" :if-feature :repl)))
+                 (:file "repl" :if-feature :repl))
+                :depends-on ("pkg"))
                (:module "wl"
                 :if-feature :wl
                 :components 
