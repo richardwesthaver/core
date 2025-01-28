@@ -445,7 +445,7 @@ via the special form stored in RECIPE."
      ;; environment.
      (unless (null val)
        (let ((val (if (listp val) (eval val) val))
-             (sym (string sym)))
+             (sym (substitute #\_ #\- (string sym))))
          (setf (uiop:getenv sym) val)
          (log:trace! "env: ~A=~A~%" sym val))))))
 
