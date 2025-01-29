@@ -1,6 +1,6 @@
 ;;; fs.lisp --- Skel Filesystem
 
-;; Skel Filesystem Abstractions and Logical Paths
+;; Skel Filesystem: Logical Paths, URI Schemas, etc
 
 ;;; Code:
 (in-package :skel/core/fs)

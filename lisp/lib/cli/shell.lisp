@@ -40,24 +40,37 @@
                 ;; to remove the explicit evals.
 
                 ;; check for lisp-mode character
-                (if (char= c #\,)
-                    ;; check for splice-mode character
-                    (if (char= (peek-char nil stream) #\@)
-                        (progn
-                          ;; skip it
-                          (read-char stream)
-                          ;; eval and push each form individually.
-                          (let ((form (eval (read stream nil nil))))
-                            (push
-                             (coerce
-                              (format nil "~{~A~^ ~}" form)
-                              'list)
-                             out)))
-                        ;; unconditionally read in a single sexp and eval.
-                        (push (coerce (format nil "~A" (eval (read stream nil nil))) 'list) out))
-                    (progn 
-                      (push #\# out)
-                      (push c out)))
+                (cond
+                  ((char= c #\,) ;; check for splice-mode character
+                   (if (char= (peek-char nil stream) #\@)
+                       (progn
+                         ;; skip it
+                         (read-char stream)
+                         ;; eval and push each form individually.
+                         (let ((form (eval (read stream nil nil))))
+                           (push
+                            (coerce
+                             (format nil "~{~A~^ ~}" form)
+                             'list)
+                            out)))
+                       ;; unconditionally read in a single sexp and eval.
+                       (push (coerce (format nil "~A" (eval (read stream nil nil))) 'list) out)))
+                  ((or (char= c #\+) (char= c #\-))
+                   (if (char= 
+                        (if (sb-int:featurep (let ((*package* sb-int:*keyword-package*)
+                                            (sb-impl::*reader-package* nil)
+                                            (*read-suppress* nil))
+                                        (read stream t nil t)))
+                            #\+ #\-)
+                        c)
+                       (push (coerce (format nil "~A" (eval (read stream t nil t))) 'list) out)
+                       (let ((*read-suppress* t))
+                         (read stream t nil t)
+                         (values))))
+                  (t ;; return as is
+                   (progn 
+                     (push #\# out)
+                     (push c out))))
                 (setq state :sh))
                ((eq state :dolla)
                 (if (char= c #\#)
