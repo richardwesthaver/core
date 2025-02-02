@@ -27,7 +27,14 @@ highest priority packet spec first.
 On success two values are returned: (PROTO HEADERS).")
 
 ;;; Service
-(defclass udp-service (service) ())
+(defclass udp-service (service) ()
+  (:default-initargs
+   :request-class 'udp-service-request
+   :response-class 'udp-service-response
+   :engine (make-instance 'multi-threaded-engine)))
+
+(defmethod accept ((self udp-service)) 
+  ())
 
 (defmethod process-connection ((*service* udp-service) (socket t))
   "UDP does not maintain connections between peers. We implement this function
@@ -76,5 +83,3 @@ On success two values are returned: (PROTO HEADERS).")
         (close-stream socket-stream)))))
 
 (defmethod process-request ((req udp-service-request)))
-
-(defclass udp-sink-service (udp-service sink) ())

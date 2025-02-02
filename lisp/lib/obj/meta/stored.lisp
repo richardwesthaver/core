@@ -17,14 +17,16 @@
 ;;; Code:
 (in-package :obj/meta/stored)
 
+(defvar *default-store* nil)
+
 ;;; MOP
 (deftype oid () 'word)
 (deftype cid () '(unsigned-byte 32))
 
 (defclass stored ()
   ((oid :initarg :oid :accessor oid)
-   (spec :type (or list string) :accessor spec :initarg :spec
-                 :documentation "Persistent objects use a spec pointer to identify which store
+   (spec :accessor spec :initarg :spec
+         :documentation "Persistent objects use a spec pointer to identify which store
                          they are connected to"))
   (:documentation "Slots which are implicitly bound to all STORED-CLASS metaobjects."))
 
@@ -55,7 +57,9 @@
 
 (defgeneric get-store (self)  
   (:documentation "Get the store associated with SELF. We prefix this accessor with GET- because
-STORE is reserved for a special method which operates on stored objects."))
+STORE is reserved for a special method which operates on stored objects.")
+  (:method ((self t))
+    *default-store*))
 
 (defgeneric stored-slot-reader (sc instance name &optional oids-only)
   (:documentation 
@@ -73,7 +77,7 @@ STORE is reserved for a special method which operates on stored objects."))
   (:documentation
    "Store-specific slot makunbound handler"))
 
-(defgeneric register-instance (self class intance))
+(defgeneric register-instance (self class instance))
 (defgeneric cache-instance (self obj))
 (defgeneric get-cached-instance (self oid))
 (defgeneric uncache-instance (self oid))
@@ -368,8 +372,7 @@ STORE is reserved for a special method which operates on stored objects."))
     (cond ((and (eq allocation-key :class) (not transient-p))
            (error "Stored class slots are not supported, try :transient t."))
           ((> (count t (list (or indexed-p derived-p) transient-p)) 1)
-           (error "Cannot declare a slot to be more than one of transient, indexed, 
-                   set-valued and associated"))
+           (error "Cannot declare a slot to be more than one of transient or indexed."))
           (derived-p
            (find-class 'derived-index-direct-slot-definition))
           (indexed-p 

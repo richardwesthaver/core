@@ -42,7 +42,8 @@
 
 (defpackage :cry/authinfo
   (:use :cl :std :cry)
-  (:export))
+  (:export
+   #:authinfo))
 
 (defpackage :cry/keyring
   (:use :cl :std :cry :keyutils :id :db :sb-alien)

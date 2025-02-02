@@ -203,7 +203,7 @@ variant associated with this value." type name)
                                           ,default)))
              ,@(when (eql default :error)
                  `((when (eql found :error) (invalid-enum-value ,val ',name))))
-             (values ,val found)))))))
+             (values found ,val)))))))
 
 (define-alien-type unsigned-char-pointer (* unsigned-char))
 (define-alien-type char-pointer (* char))

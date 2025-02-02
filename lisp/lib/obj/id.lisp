@@ -1,4 +1,8 @@
 ;;; lib/obj/id.lisp --- IDs
+
+;;
+
+;;; Code:
 (in-package :obj/id)
 
 (defclass id ()

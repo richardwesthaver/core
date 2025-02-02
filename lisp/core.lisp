@@ -29,5 +29,7 @@ a query from input STREAM."
 (define-lisp-package :core)
 
 (define-logical-pathname "CORE" #P"/opt/core/"
-  ("CORE:STASH;*.*.*" "stash/**")
-  ("CORE:STORE;*.*.*" "store/"))
+  ("CORE:STASH;*" "stash/")
+  ("CORE:STORE;*.*.*" "store/")
+  ("CORE:TMP;*.*.*" "/tmp/"))
+

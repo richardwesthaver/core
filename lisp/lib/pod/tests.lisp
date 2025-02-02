@@ -18,7 +18,7 @@
     (start-podman-service *podman-local-user-socket*))
   (with-libpod-client (c)
     (is (string= "OK" (libpod-request c "_ping" :get)))
-    (is (inspect (libpod-request-json c "info")))
+    (is (libpod-request-json c "info"))
     ;; (is (libpod-request-json c "events")) ;; hangs
     (is (libpod-request c "version"))
     (is (libpod-request-json c "containers/json"))))

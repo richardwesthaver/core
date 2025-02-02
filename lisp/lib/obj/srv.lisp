@@ -43,10 +43,10 @@
 (in-package :obj/srv)
 
 ;;; Vars
-(defvar *service*)
+(defvar *service* nil)
 (defvar *service-table* (make-hash-table :weakness :value))
-(defvar-unbound *request*)
-(defvar-unbound *response*)
+(defvar *request* nil)
+(defvar *response* nil)
 
 ;;; Utils
 (defun in-request-p () (and (boundp '*request*) *request*))
@@ -65,11 +65,6 @@
 (deferror bad-request (service-error) ())
 
 ;;; Protocol
-(defgeneric service (self)
-  (:method ((self t)) (when (boundp '*service*) *service*))
-  (:method ((self symbol)) (gethash self *service-table*))
-  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
-
 (defgeneric process-request (req)
   (:documentation "Function called by PROCESS-CONNECTION after reading incoming headers. Calls
 HANDLE-REQUEST to dispatch to a route and return output to the client using

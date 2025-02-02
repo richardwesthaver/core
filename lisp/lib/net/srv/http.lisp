@@ -486,10 +486,12 @@ RESPONSE object. If a cookie with the same name
    ;; RESEARCH 2024-07-18: 
    ;; may need to start dealing with this
    ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
-  ((chunk-output-p :type boolean :initarg :chunk-output-p)
+  ((connection-max :type (or fixnum null) :initarg :connection-max)
+   (chunk-output-p :type boolean :initarg :chunk-output-p)
    (chunk-input-p :type boolean :initarg :chunk-input-p)
    (document-root :type pathname :initarg :document-root :accessor service-document-root))
   (:default-initargs
+   :connection-max *default-connection-max*
    :request-class 'http-service-request
    :response-class 'http-service-response
    :chunk-output-p t
@@ -687,6 +689,29 @@ protocol of the request."
             (close-stream *service-stream*))
           (close-stream socket-stream))))))
 
+;; FIX 2024-12-28: do better :)
+(defun wake-tcp-service-for-shutdown (service)
+  "Create a dummy connection to the service, waking ACCEPT while it
+is waiting. The idea is to force a check of SHUTDOWN-P."
+  (handler-case
+      (multiple-value-bind (address port) (sb-bsd-sockets:socket-name (net/srv::socket service))
+        (let ((conn (sb-bsd-sockets:socket-connect
+                     (make-instance 'sb-bsd-sockets:inet-socket :type :stream :protocol :tcp)
+                     (cond
+                       ((and (= (length address) 4) (zerop (elt address 0)))
+                        #(127 0 0 1))
+                       ((and (= (length address) 16)
+                             (every #'zerop address))
+                        #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1))
+                       (t address))
+                     port)))
+          (sb-bsd-sockets:socket-close conn)))
+    (error (e)
+      (service-log-message service :error "Wake-for-shutdown connect failed: ~A" e))))
+
+(defmethod stop ((self http-service) &key)
+  (wake-tcp-service-for-shutdown self))
+
 #+ssl
 (defclass ssl-service (service)
   ((cert-file :initarg :cert-file
@@ -717,7 +742,7 @@ protocol of the request."
 
 (defmethod initialize-connection-hook ((self ssl-service) stream)
   (call-next-method self
-                    (apply 'cl+ssl:make-ssl-server-stream
+                    (apply 'ssl:make-ssl-server-stream
                            stream
                            `(,@(when-let ((cf (cert-file self)))
                                  `(:certificate ,cf))
@@ -727,6 +752,6 @@ protocol of the request."
                                  `(:password ,pw))))))
 
 (defun get-peer-ssl-certificate ()
-  (cl+ssl:ssl-stream-x509-certificate *service-stream*))
+  (ssl:ssl-stream-x509-certificate *service-stream*))
 
 (defclass https-service (http-service ssl-service) ())

@@ -321,7 +321,7 @@
   (:use :cl :std :obj/uri
    :obj/url :net/proto/http :babel :net/cookie
    :io/fast :io/chunky
-   :dat/base64 :cl+ssl :sb-gray)
+   :dat/base64 :ssl :sb-gray)
   (:shadowing-import-from :babel :octets-to-string)
   (:export
    :request
@@ -351,8 +351,8 @@
 (defpackage :net/srv
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
-   :sb-gray :dat/mime :sb-bsd-sockets :obj/db :obj/schema
-        :config :build)
+   :sb-gray :dat/mime :sb-bsd-sockets :obj/db 
+   :obj/schema :config :build :srv)
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
@@ -363,7 +363,6 @@
   (:import-from :std/thread :shutdown :start :stop :started-p)
   (:export
    :service-make-request
-   :process-request
    :with-request-count-incf
    :service-response-class
    :service-request-class
@@ -372,18 +371,11 @@
    #:restart-service
    #:add-route
    #:delete-route
-   :handle-request
    :dispatch-request
-   #:service
    #:*router*
-   #:*service*
-   #:*service-table*
    #:*handlers*
-   #:request
-   #:response
    #:http-service-response
-   #:send-response
-   #:accept-connections
+   #:accept
    #:handle-connection
    #:initialize-connection-hook
    #:reset-connection-stream
@@ -394,12 +386,7 @@
    #:execute-service
    #:service-status-message
    #:start-listening
-   #:service-warning
-   #:simple-service-warning
    #:bad-request
-   #:service-error
-   #:simple-service-error
-   #:service-condition
    #:*default-session-timeout*
    #:*default-ssl-service-port*
    #:*default-max-accept-count*
@@ -409,11 +396,7 @@
    #:*default-connection-timeout*
    #:*global-session-db-lock*
    #:*session-db*
-   #:in-response-p
-   #:in-request-p
    #:*session*
-   #:*response*
-   #:*request*
    #:*services*
    #:*session-secret*
    #:*service-stream*
@@ -471,6 +454,7 @@
    #:do-with-request-count-incf
    #:detach-socket
    #:session-timeout
+   :service
    #:service-timeout))
 
 (pkg:defpkg :net

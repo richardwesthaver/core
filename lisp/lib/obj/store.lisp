@@ -50,7 +50,7 @@
 
 (in-package :obj/store)
 
-(defvar *store* nil)
+(defparameter *store* obj/meta/stored::*default-store*)
 
 ;; support for swapping out multiple stores? compatibility matrix?
 (defvar *stores* nil)
@@ -74,9 +74,17 @@
   (:documentation
    "The source of unique object IDs."))
 
+(let ((%next-oid -1))
+  (defmethod next-oid ((store list))
+    (incf %next-oid)))
+
 (defgeneric next-cid (store)
   (:documentation
    "The source of unique class schema IDs."))
+
+(let ((%next-cid -1))
+  (defmethod next-cid ((store list))
+    (incf %next-cid)))
 
 (defun unindex-slot-value (sc key value old-name old-base)
   (let* ((master (index-table sc))
@@ -400,7 +408,7 @@
   (initial-stored-setup instance :oid oid :store store))
 
 (defun initial-stored-setup (instance &key oid store)
-  (assert store)
+  ;; (assert store)
   (if oid
       (setf (oid instance) oid)
       (register-new-instance instance (class-of instance) store))
@@ -411,6 +419,9 @@
   (if (subtypep (class-name class) 'btree)
       (default-class-id (class-name class) st)
       (id (lookup-schema st class))))
+
+(defmethod register-instance ((self list) class instance)
+  (set-instance-schema-id self (oid instance) (class-schema-id self cl)))
 
 (defmethod register-instance ((st store) cl instance)
   (set-instance-schema-id st (oid instance) (class-schema-id st cl)))
@@ -503,7 +514,9 @@
 
 (defgeneric default-class-id (base-type sc)
   (:documentation "A method implemented by the store for providing
-   fixed class ids for basic btree derivative types"))
+   fixed class ids for basic btree derivative types")
+  (:method ((base-type t) (sc list))
+    (sxhash base-type)))
 
 (defgeneric default-class-id-type (id sc)
   (:documentation "A method implemented by the store which provides

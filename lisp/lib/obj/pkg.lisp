@@ -688,7 +688,6 @@
    #:send-response
    #:handle-request
    #:process-request
-   #:service
    #:bad-request
    #:simple-service-warning
    #:service-warning

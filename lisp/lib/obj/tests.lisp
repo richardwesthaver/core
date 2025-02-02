@@ -312,28 +312,28 @@ building a query-plan."
 
 ;;;; Stored
 (stored:defsclass person ()
-  ((name :accessor name :initarg :name :index t)
+  ((name :accessor name :initarg :name)
    (age :accessor age :initarg :age)
    (father :accessor father :initarg :father)
    (school :accessor school :initarg :school)))
 
 (stored:defsclass school ()
-  ((name :accessor name :initarg :name :indexed t)))
+  ((name :accessor name :initarg :name :transient t)))
 
 (deftest stored ()
-  (with-transaction ()
+  (with-transaction (txn)
     (mapcar #'(lambda (initargs) (apply #'make-instance 'school initargs))
             '((:name "West Side")
               (:name "Fitch")
               (:name "Cutler")))
     (mapcar #'(lambda (initargs) (apply #'make-instance 'person initargs))
             `((:name "Bob" :age 40 :father nil 
-                     :school ,(get-instance-by-value 'school 'name "Cutler"))))
+               :school ,(get-instance-by-value 'school 'name "Cutler"))))
     (mapcar #'(lambda (initargs) (apply #'make-instance 'person initargs))
-            `((:name "Fred" :age 12 :father nil 
-                     :school ,(get-instance-by-value 'school 'name "West Side"))
+            `((:name "Fred" :age 20 :father nil 
+               :school ,(get-instance-by-value 'school 'name "West Side"))
               (:name "Sally" :age 30 :father ,(get-instance-by-value 'person 'name "Bob")
-                     :school ,(get-instance-by-value 'school 'name "Fitch"))
-              (:name "George" :age 18 :father ,(get-instance-by-value 'person 'name "Bob")
-                     :school ,(get-instance-by-value 'school 'name "Cutler"))))))
+               :school ,(get-instance-by-value 'school 'name "Fitch"))
+              (:name "George" :age 50 :father ,(get-instance-by-value 'person 'name "Bob")
+               :school ,(get-instance-by-value 'school 'name "Cutler"))))))
 ;;;; Store

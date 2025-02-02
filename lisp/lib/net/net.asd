@@ -1,4 +1,3 @@
-(push :ssl *features*)
 (defsystem :net
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
@@ -7,8 +6,7 @@
   (:sb-concurrency :sb-posix :sb-bsd-sockets :cl-ppcre
    :dat :obj :io :parse 
    :chipz :babel :rt :std   
-   :cl+ssl :cli
-   :log :cry)
+   :cli :log :cry)
   :serial t
   :components ((:file "pkg")
                (:file "condition")

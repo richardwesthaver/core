@@ -31,12 +31,11 @@
 (defmethod serde ((from stream) (to authinfo)))
 
 (defmethod deserialize ((from pathname) (format (eql :authinfo)) &key)
-  (with-open-file (s from)
-    (make-instance 'auth-info
-      :path from
-      :credentials
-      (loop with l = (read-line s nil nil)
-            while l
-            collect l))))
+  (make-instance 'authinfo
+    :path from
+    :credentials
+    (remove-if (lambda (x) (char= (char x 0) #\#)) (uiop:read-file-lines from))))
 
-;; (deserialize #P"~/.authinfo" :authinfo)
+(defmethod deserialize ((from string) (format (eql :authinfo)) &key)
+  (make-instance 'authinfo
+    :credentials (remove-if (lambda (x) (char= (char x 0) #\#)) (split-sequence #\newline from))))

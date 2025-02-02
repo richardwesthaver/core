@@ -1,5 +1,5 @@
 (defpackage :cry/tests
-  (:use :rt :std :cl :cry :cry/hotp :cry/totp :cry/crc64 :cry/jwt :cry/b3 :cry/keyring))
+  (:use :rt :std :cl :cry :cry/hotp :cry/totp :cry/crc64 :cry/jwt :cry/b3 :cry/keyring :cry/authinfo))
 
 (in-package :cry/tests)
 
@@ -28,4 +28,8 @@
   (let ((kr (make-keyring :user)))
     (istype 'keyring kr)
     (iszero (clear-keys kr))))
-  
+(defvar *test-authinfo* "machine foo login bar port abc password hackme")
+(deftest authinfo ()
+  (when-let ((f (probe-file "~/.authinfo")))
+    (istype 'authinfo (deserialize f :authinfo)))
+  (deserialize *test-authinfo* :authinfo))

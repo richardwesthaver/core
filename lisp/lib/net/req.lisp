@@ -1093,11 +1093,11 @@ keep-alive-stream), and should handle clean-up of it"
 
 (defun make-ssl-stream (stream ca-path ssl-key-file ssl-cert-file ssl-key-password hostname insecure)
   (progn
-    (cl+ssl:ensure-initialized)
-    (let ((ctx (cl+ssl:make-context :verify-mode
+    (ssl:ensure-initialized)
+    (let ((ctx (ssl:make-context :verify-mode
                                     (if insecure
-                                        cl+ssl:+ssl-verify-none+
-                                        cl+ssl:+ssl-verify-peer+)
+                                        ssl:+ssl-verify-none+
+                                        ssl:+ssl-verify-peer+)
                                     :verify-location
                                     ;; TODO 2024-05-22: 
                                     (cond
@@ -1108,10 +1108,10 @@ keep-alive-stream), and should handle clean-up of it"
                                       (t :default))))
           (ssl-cert-pem-p (and ssl-cert-file
                                (std/seq:ends-with-subseq ".crt" ssl-cert-file))))
-      (cl+ssl:with-global-context (ctx :auto-free-p t)
+      (ssl:with-global-context (ctx :auto-free-p t)
         (when ssl-cert-pem-p
-          (cl+ssl:use-certificate-chain-file ssl-cert-file))
-        (cl+ssl:make-ssl-client-stream stream
+          (ssl:use-certificate-chain-file ssl-cert-file))
+        (ssl:make-ssl-client-stream stream
                                        :hostname hostname
                                        :verify (not insecure)
                                        :key ssl-key-file

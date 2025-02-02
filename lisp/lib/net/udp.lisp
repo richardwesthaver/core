@@ -38,6 +38,8 @@
   (:default-initargs :type :datagram :protocol :udp))
 (defclass udp-client (udp-socket client) ())
 (defclass udp-server (udp-socket server) ())
+(defclass udp-sink (udp-client sink) ())
+(defclass udp-source (udp-server source) ())
 
 ;;; MTU Discovery
 

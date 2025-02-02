@@ -657,6 +657,7 @@ either side, and deletes both sides of a link."
 ;;;###autoload
 (defun org-graph-init ()
   (interactive)
+  (org-id-update-id-locations)
   (let ((org-id-extra-files (org-graph-files)))
     (prog1 (org-graph-from-id-locations t)
       (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b)))))))

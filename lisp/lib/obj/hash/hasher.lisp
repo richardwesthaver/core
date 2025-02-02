@@ -11,7 +11,7 @@
 ;; TODO 2024-05-24: do better
 (sb-ext:define-load-time-global *global-hash* (funcall *global-hasher* (get-universal-time)))
 
-(macrolet ((specialize (str body)       ; TODO 2023-12-21: test if this actually compiles to fastpath
+(macrolet ((specialize (str body) ; TODO 2023-12-21: test if this actually compiles to fastpath
              `(if (typep ,str '(simple-array character 1))
                   ,body
                   ,body)))
@@ -27,7 +27,18 @@
                (logand most-positive-fixnum
                        (logxor (* hash 33)
                                (char-code (schar string n)))))))
-      hash)))
+      hash))
+  (defun simple-string-hash (string)
+    (declare (string string)
+             (optimize speed))
+    (let ((value 0))
+      (declare ((unsigned-byte 32) value))
+      (specialize
+       string
+       (loop for char across string
+             for position below 2
+             do (setf value (logxor value (char-code char)))))
+      value)))
 
 (defgeneric hash-object (obj)
   (:method ((obj t))

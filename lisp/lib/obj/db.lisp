@@ -464,6 +464,7 @@ column is already closed."))
 ;; 
 (deftype simple-transaction () `(and (not null) list))
 
+(defvar *default-txn* '(nil nil nil))
 (defvar *txn* nil
   "The current transaction.")
 
@@ -472,7 +473,9 @@ column is already closed."))
 
 (defgeneric (setf transaction-opts) (new txn))
 (defgeneric make-transaction (self &key)
-  (:documentation "Make a new transaction object."))
+  (:documentation "Make a new transaction object.")
+  (:method ((self null) &key) *default-txn*))
+    
 (defgeneric prepare-transaction (self &key)
   (:documentation "Prepare a transaction."))
 (defgeneric rollback-transaction (self &key)

@@ -32,8 +32,11 @@
 
 (sb-bsd-sockets::define-socket-option sockopt-linger nil sockint::sol-socket sockint::so-linger
   linger nil check-linger sb-alien:addr)
-  
-  
+
+(let ((so-reuseport 15))
+  ;; [[file:/usr/include/asm-generic/socket.h::define SO_REUSEPORT 15][sys/socket.h]]
+  (sb-bsd-sockets::define-socket-option-bool sockopt-reuse-port sockint::sol-socket so-reuseport))
+
 ;; ucre
 (define-alien-type ucre
     (struct ucre
@@ -45,5 +48,5 @@
   (assert (= size #.(sb-alien:alien-size ucre :bytes)))
   buffer)
 
-(sb-bsd-sockets::define-socket-option sockopt-peercred nil sockint::sol-socket sockint::so-linger
+(sb-bsd-sockets::define-socket-option sockopt-peer-cred nil sockint::sol-socket sockint::so-linger
   ucre nil check-ucre sb-alien:addr)

@@ -56,7 +56,6 @@
 (defvar *session-db* nil)
 (defvar *global-session-db-lock* (load-time-value (make-mutex :name "global-session-db")))
 (defvar *log-service-errors* t)
-
 (defvar *access-log-lock* (make-mutex :name "access-log"))
 (defvar *message-log-lock* (make-mutex :name "message-log"))
 (defvar *default-connection-timeout* 20)
@@ -93,7 +92,7 @@
 (defgeneric find-route (self uri))
 (defgeneric add-route (self uri srv &key &allow-other-keys))
 (defgeneric delete-route (self uri &key &allow-other-keys))
-(defgeneric accept-connections (self))
+(defgeneric accept (self))
 (defgeneric handle-connection (self conn))
 (defgeneric initialize-connection-hook (self stream))
 (defgeneric reset-connection-stream (self stream))
@@ -102,6 +101,11 @@
   (:method ((self t)) 
     (declare (ignore self))
     nil))
+
+(defgeneric service (self)
+  (:method ((self t)) (when (boundp '*service*) *service*))
+  (:method ((self symbol)) (gethash self *service-table*))
+  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
 
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
@@ -294,11 +298,14 @@
 (defclass multi-threaded-engine (engine)
   ((process :accessor process)))
 
+(defmethod run-thread ((self multi-threaded-engine) thunk &key name)
+  (sb-thread:make-thread thunk :name name))
+
 (defmethod exec ((self multi-threaded-engine))
   (setf (process self)
         (run-thread 
          self
-         (lambda () (accept-connections (service self)))
+         (lambda () (accept (service self)))
          :name (format nil "~A ~A ~A"
                        (name (service self))
                        (or (address (service self)) "*")
@@ -363,6 +370,17 @@
     (unless (> (max-accept-count self) (max-thread-count self))
       (error "MAX-ACCEPT-COUNT must be greater than MAX-THREAD-COUNT"))))
 
+(defmethod exec ((self thread-per-connection-engine))
+  (setf (process self)
+        (run-thread 
+         self
+         (lambda () (accept (service self)))
+         :name (format nil "~A ~A ~A"
+                       (name (service self))
+                       (or (address (service self)) "*")
+                       (port (service self)))))
+  (values))
+
 (defmethod increment-accept-count ((self thread-per-connection-engine))
   (when (max-accept-count self)
     (with-mutex ((accept-count-lock self))
@@ -387,9 +405,6 @@
   (with-mutex ((wait-queue self))
     (loop until (< (thread-count self) (max-thread-count self))
           do (sb-thread:condition-wait (wait-lock self) (wait-queue self)))))
-
-(defmethod run-thread ((self thread-per-connection-engine) thunk &key name)
-  (sb-thread:make-thread thunk :name name))
 
 (defmethod %handle-connection ((self thread-per-connection-engine) socket)
   (increment-accept-count self)
@@ -469,7 +484,6 @@
    (engine :type service-engine :accessor engine :initarg :engine)
    ;; TODO 2024-12-08: hunchentoot uses read-timeout/write-timeout - figure out if needed
    (timeout :type fixnum :initarg :timeout :accessor service-timeout)
-   (connection-max :type (or fixnum null) :initarg :connection-max)
    (logger :type service-logger :initarg :logger :reader logger)
    (socket :type (or null socket) :accessor socket :initarg :socket :initform nil)
    (backlog :accessor backlog :initarg :backlog
@@ -486,7 +500,6 @@
    :request-class 'request
    :response-class 'response
    :timeout *default-connection-timeout*
-   :connection-max *default-connection-max*
    :logger (make-instance 'service-logger :message-log-output *error-output* :access-log-output *error-output*)
    :backlog -1 ;; TODO 2024-10-23: what is a correct initial value here? wookie uses -1
    :request-count 0
@@ -533,14 +546,20 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   (when (zerop (port self))
     (setf (slot-value self 'port) (nth-value 1 (socket-name (socket self))))))
 
+(defun socket-bind* (self)
+  (restart-case
+      (socket-bind (socket self)
+                   (or (address self)
+                       #(0 0 0 0))
+                   (port self))
+    (get-port-from-os () 
+      (setf (slot-value self 'port) 0)
+      (socket-bind* self))))
+
 (defmethod start-listening ((self service))
-  ;; (when (socket self)
-  ;;   (simple-service-error "service ~A is already listening" self))
-  (setf (socket self) (make-instance 'inet-socket :type :stream :protocol :tcp))
-  (socket-bind (socket self)
-               (or (address self)
-                   #(0 0 0 0))
-               (port self))
+  (unless (socket self)
+    (setf (socket self) (make-instance 'inet-socket :type :stream :protocol :tcp)))
+  (socket-bind* self)
   (socket-listen (socket self)
                  (backlog self))
   (values))
@@ -552,7 +571,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
        (unwind-protect (when ,var ,@body)
          (when ,var (socket-close ,var))))))
        
-(defmethod accept-connections ((self service))
+(defmethod accept ((self service))
   (with-open-socket (sock (socket self))
     (loop
       (with-mutex ((shutdown-lock self))
@@ -562,7 +581,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
           (when-let ((conn
                       (handler-case (socket-accept sock)
                         (sb-bsd-sockets::connection-refused-error ()))))
-            (setf (sb-impl::fd-stream-timeout (socket-make-stream conn))
+            (setf (sb-impl::fd-stream-timeout (socket-make-stream conn :input t))
                   (coerce (service-timeout self) 'single-float))
             (handle-connection (engine self) conn))))))
 
@@ -572,7 +591,8 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 
 (defmethod start ((self service))
   (setf (shutdown-p self) nil)
-  (setf *service* self)
+  (setq *service* self)
+  (std:println *service*)
   (service-log :info "starting service ~A" (name self))
   (let ((engine (engine self)))
     (service-log :debug "using engine ~A" engine)
@@ -583,31 +603,11 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 
 (defmethod started-p ((self service))
   (and (socket self) t))
-
-;; FIX 2024-12-28: do better :)
-(defun wake-service-for-shutdown (service)
-  "Create a dummy connection to the service, waking ACCEPT-CONNECTIONS while it
-is waiting. The idea is to force a check of SHUTDOWN-P."
-  (handler-case
-      (multiple-value-bind (address port) (sb-bsd-sockets:socket-name (socket service))
-        (let ((conn (sb-bsd-sockets:socket-connect
-                     (make-instance 'sb-bsd-sockets:inet-socket :type :stream :protocol :tcp)
-                     (cond
-                       ((and (= (length address) 4) (zerop (elt address 0)))
-                        #(127 0 0 1))
-                       ((and (= (length address) 16)
-                             (every #'zerop address))
-                        #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1))
-                       (t address))
-                     port)))
-          (sb-bsd-sockets:socket-close conn)))
-    (error (e)
-      (service-log-message service :error "Wake-for-shutdown connect failed: ~A" e))))
                         
-(defmethod stop ((self service) &key graceful)
+(defmethod stop :around ((self service) &key graceful)
   (with-mutex ((shutdown-lock self))
     (setf (shutdown-p self) t)
-    (wake-service-for-shutdown self)
+    (call-next-method)
     (when graceful
       (with-mutex ((shutdown-lock self))
         (when (plusp (request-count self))

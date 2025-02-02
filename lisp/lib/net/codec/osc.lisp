@@ -1,3 +1,8 @@
+;;; osc.lisp --- Open Sound Control
+
+;; 
+
+;;; Code:
 (in-package :net/codec/osc)
 
 ;;; params
@@ -11,7 +16,10 @@
 (defun padding-length (s)
   "returns the length of padding required for a given length of string"
   (declare (type fixnum s))
-  (- 4 (mod s 4)))
+  (let ((%len (mod s 4)))
+    (if (zerop %len) 
+        %len
+        (- 4 %len))))
 
 (defun padded-length (s)
   "returns the length of an osc-string made from a given length of string"
@@ -525,7 +533,6 @@ with the current time use (encode-timetag :time)."
 (defun decode-string (data)
   "converts a binary vector to a string and removes trailing #\nul characters"
   (string-trim '(#\nul) (coerce (map 'vector #'code-char data) 'string)))
-
 
 ;; blobs are binary data, consisting of a length (int32) and bytes which are
 ;; osc-padded to a 4 byte boundary.

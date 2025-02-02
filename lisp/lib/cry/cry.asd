@@ -6,10 +6,13 @@
   (:ironclad :sb-concurrency :sb-posix 
              :sb-bsd-sockets :cl-ppcre
              :std :log :obj :dat
-             :blake3 :io :keyutils)
+             :blake3 :io :keyutils
+             :rustls :cl+ssl)
   :components ((:file "pkg")
                (:file "condition" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("condition"))
+               (:module "ssl"
+                :components ((:file "pkg")))
                (:file "b3" :depends-on ("condition"))
                (:file "password" :depends-on ("condition"))
                (:file "authinfo" :depends-on ("condition"))

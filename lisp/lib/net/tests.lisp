@@ -26,7 +26,24 @@
 (deftest tlv ()
   (is= 4 (length (serialize (make-instance 'tlv :type 0 :length 1 :value #(1)) :bytes))))
 
-(deftest osc ())
+(deftest osc ()
+  (isequalp (net/codec/osc::encode-int32 16843009) #(1 1 1 1))
+  (isequalp (net/codec/osc::decode-int32 #(1 1 1 1)) 16843009)
+  (isequalp (net/codec/osc::decode-string #(110 117 108 108 32 112 97 100 100 101 100 0))
+            "null padded")
+  (isequalp (net/codec/osc::encode-blob #(1 1 1 1)) #(0 0 0 4 1 1 1 1))
+  (isequalp (net/codec/osc::encode-timetag :now) #(0 0 0 0 0 0 0 1))
+  (isequalp (net/codec/osc::encode-int64 16843009) #(0 0 0 0 1 1 1 1))
+  (isequalp (net/codec/osc::enc-float32 1.00001) #(63 128 0 84))
+  (isequalp (net/codec/osc::decode-float64 (octets-to-integer (octets 64 55 25 153 153 153 153 154))) 23.1d0)
+  (isequalp '("/test/int" -1)
+            (net/codec/osc:decode-message 
+             #(47 116 101 115 116 47 105 110 116 0 0 0 44 105 0 0 255 255 255 255))))
+   
+   
+   
+   
+   
 
 (deftest http ()
   (let ((req (make-http-request))
@@ -64,4 +81,5 @@ Cookie: name=wookie
 (deftest srv ()
   (istype 'service (make-instance 'service))
   (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
-  (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service)))
+  (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service))
+  (istype 'net/srv/udp:udp-service (make-instance 'net/srv/udp:udp-service)))

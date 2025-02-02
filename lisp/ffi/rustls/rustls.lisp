@@ -161,6 +161,41 @@
    (tls-versions-len size-t)
    (builder-out (* (* rustls-client-config-builder))))
 
+(define-alien-routine rustls-client-config-builder-build rustls-result
+  (builder (* rustls-client-config-builder))
+  (config-out (* (* rustls-client-config))))
+
+(define-alien-routine rustls-client-config-builder-set-certified-key rustls-result
+  (builder (* rustls-client-config-builder))
+  (certified-keys (* (* rustls-certified-key)))
+  (certified-keys-len size-t))
+
+(define-alien-routine rustls-client-config-builder-set-enable-sni void
+  (builder (* rustls-client-config-builder))
+  (enable boolean))
+
+(define-alien-routine rustls-client-config-builder-set-alpn-protocols rustls-result
+  (builder (* rustls-client-config-builder))
+  (protocols (* rustls-slice-bytes))
+  (len size-t))
+
+(define-alien-routine rustls-client-config-builder-set-server-verifier void
+  (builder (* rustls-client-config-builder))
+  (verifier (* rustls-server-cert-verifier)))
+
+(define-alien-routine rustls-client-config-builder-free void
+  (c (* rustls-client-config-builder)))
+
+(define-alien-routine rustls-platform-server-cert-verifier rustls-result
+  (verifier-out (* (* rustls-server-cert-verifier))))
+
+(define-alien-routine rustls-client-config-free void
+  (c (* rustls-client-config)))
+
+;; (define-alien-routine rustls-client-config-builder-dangerous-set-server-verifier rustls-result
+;;   (builder (* rustls-client-config-builder))
+;;   (callback rustls-verifiy-cert-callback))
+
 ;;; rustls_client_connection
 (define-alien-routine rustls-client-connection-new rustls-result
   (config (* rustls-client-config))
