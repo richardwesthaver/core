@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :bin/rdb
-  (:use :cl :rdb :std :cli/clap :log :clap :db))
+  (:use :cl :rdb :std :cli/clap :log :clap :db :seq))
 
 (in-package :bin/rdb)
 (rocksdb:load-rocksdb t)
@@ -12,27 +12,26 @@
 ;; (defopt rdb-config (init-rdb-user-config (parse-file-opt *arg*)))
 
 (defcmd rdb-new ()
-  (set-opt *rdb* :error-if-exists t)
+  (set-db-opt *rdb* :error-if-exists t)
   (open-db *rdb*)
   (println (rdb-name *rdb*)))
 
 (defcmd rdb-show ()
   (let* ((db-path (cli-opt-val (car (find-opts "db" *cli*))))
-         (*rdb* (create-db db-path :open nil)))
+         (*rdb* (create-rdb db-path :open nil)))
     (if (and (null db-path) (zerop *argc*))
         (mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
               (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
-        (with-rdb (db (create-db db-path :open t))
+        (with-rdb (db (create-rdb db-path :open t))
           (println (hash-table-alist (backfill-opts db)))
-          (with-iter (it (create-iter db))
-            (iter-seek-to-first it)
+          (with-iter (it (iter db))
+            (seek-to-first it)
             (loop while (iter-valid-p it)
                   do (progn
                        (format t "~A : ~A~%"
-                               (sb-ext:octets-to-string (iter-key it) :external-format '(:ascii :replacement #\_))
-                               (iter-val it))
-                       (iter-next it))
-                  finally (rocksdb::rocksdb-iter-destroy %it)))))))
+                               (sb-ext:octets-to-string (key it) :external-format '(:ascii :replacement #\_))
+                               (val it))
+                       (next it))))))))
 
 (defcmd rdb-set ()
   (if (> 2 *argc*)

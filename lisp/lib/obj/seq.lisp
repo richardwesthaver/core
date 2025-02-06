@@ -58,7 +58,8 @@
     (key (&optional (s *iter*)) (key s))))
 
 (defmacro with-iter ((sym iter) &body body)
-  `(let ((,sym ,iter))
-     (setf *iter* ,sym)
-     (flet ,*iterator-functions*
-       ,@body)))
+  (ignore-some-conditions (style-warning)
+    `(let ((,sym ,iter))
+       (setf *iter* ,sym)
+       (flet ,*iterator-functions*
+         ,@body))))

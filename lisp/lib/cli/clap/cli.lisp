@@ -18,7 +18,9 @@
 
 (defopt help-opt 
   "Print help and exit."
-  (print-help *cli*)
+  (if *arg*
+      (print-help (find-cmd *arg* *cli*) t)
+      (print-help *cli*))
   (exit :code 0))
 
 (defopt version-opt 
@@ -62,7 +64,7 @@ and MAKE-CLI :CMD respectively."
           (if help
               (make-opts
                (append
-                `((:name "help" :description "print help" :kind boolean
+                `((:name "help" :description "print help" :kind string
                    :thunk cli/clap/obj::help-opt))
                 opts))
               (make-opts opts)))
