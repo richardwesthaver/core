@@ -39,6 +39,8 @@
      (:file "dir-locals")
      (:file "makefile")))
    (:file "pkg")
+   (:file "srv")
+   (:file "infer")
    (:module "net"
     :components
     ((:file "var")
@@ -58,7 +60,6 @@
      (:file "packy"))
     :if-feature :ext)
    (:file "cli")
-   (:file "srv")
    (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))
 

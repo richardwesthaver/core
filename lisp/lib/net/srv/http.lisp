@@ -107,7 +107,7 @@ server's status line."
 (def-http-return-code +http-network-connect-timeout-error+ 599 "Network Connect Timeout Error")
 
 ;;; Response
-(defclass http-service-response (response) 
+(defclass http-service-response (net-response)
   ((response :type http-response)
    (content-type :reader content-type
                  :documentation "The outgoing 'Content-Type' http
@@ -233,7 +233,7 @@ name doesn't exist, it is created.")
 ;; query-string
 ;; raw-post-data
 
-(defclass http-service-request (request)
+(defclass http-service-request (net-request)
   ((request :type http-request :initarg :request :accessor http)
    (headers-in :initarg :headers-in :reader headers-in)
    (get-parameters :initform nil
@@ -482,7 +482,7 @@ RESPONSE object. If a cookie with the same name
                             :httponly-p t)))
 
 ;;; Service
-(defclass http-service (service) 
+(defclass http-service (net-service) 
    ;; RESEARCH 2024-07-18: 
    ;; may need to start dealing with this
    ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
@@ -713,7 +713,7 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
   (wake-tcp-service-for-shutdown self))
 
 #+ssl
-(defclass ssl-service (service)
+(defclass ssl-service (net-service)
   ((cert-file :initarg :cert-file
               :reader cert-file
               :initform nil)

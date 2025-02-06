@@ -486,7 +486,15 @@ via the special form stored in RECIPE."
                                          (lambda (v)
                                            (etypecase v
                                              (string (vc::make-vc-remote :name 'default :url v))
-                                             (list (vc::make-vc-remote :name (pop v) :url (pop v)))))
+                                             (list 
+                                              (let ((name (pop v))
+                                                    (val (pop v)))
+                                                (if (consp val)
+                                                    (vc::make-vc-remote :name name
+                                                                        :type (pop val)
+                                                                        :url (pop val))
+                                                    (vc::make-vc-remote :name name
+                                                                        :url val))))))
                                          lst))
                               repo)))
                      (setf (sk-vc self) (%vc-scan vc))))))

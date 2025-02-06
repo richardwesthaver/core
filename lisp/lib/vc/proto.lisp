@@ -117,11 +117,14 @@ are missing."))
 
 (defstruct vc-tag name id)
 
-(defstruct vc-remote name url)
+(deftype vc-designator () `(or (member :hg :git) null)) ;; maybe: :sp (sapling)
+
+(defstruct vc-remote 
+  (type nil :type vc-designator) 
+  name
+  url)
 
 (defstruct vc-rev num id)
-
-(deftype vc-designator () `(member :hg :git list)) ;; maybe: :sp (sapling)
 
 (defclass vc-repo ()
   ((path :initform nil :type (or null string pathname) :accessor path

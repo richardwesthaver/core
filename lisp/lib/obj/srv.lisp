@@ -64,7 +64,34 @@
 
 (deferror bad-request (service-error) ())
 
+;;; Objects
+(defclass engine () ((service :accessor service)))
+
+(defclass service (id)
+  ((request-class :type symbol :initarg :request-class :accessor service-request-class)
+   (response-class :type symbol :initarg :response-class :accessor service-response-class)
+   (engine :type service-engine :accessor engine :initarg :engine)))
+
+(defclass response () ())
+(defmethod response-ok-p (res) t)
+
+(defclass request ()
+  ((service :initarg :service
+           :reader service)
+   (session :initform nil
+            :accessor session)
+   (protocol :initarg :request-protocol :reader request-protocol)
+   (content-stream :initarg :content-stream :reader content-stream)
+   (data :initarg :data :accessor request-data)))
+
+(defconfig service-config () ())
 ;;; Protocol
+(defgeneric restart-service (self)
+  (:documentation "Restart a service.")
+  (:method ((self t))
+    (stop self)
+    (start self)))
+
 (defgeneric process-request (req)
   (:documentation "Function called by PROCESS-CONNECTION after reading incoming headers. Calls
 HANDLE-REQUEST to dispatch to a route and return output to the client using
@@ -82,3 +109,7 @@ logging, etc."))
 (defgeneric response-ok-p (res))
 (defgeneric response-status (res))
 (defgeneric (setf response-status) (new res))
+
+;;; Tasks
+(define-task-kernel service-task-kernel () ()
+  "Default task kernel for service-based tasks.")

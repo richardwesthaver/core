@@ -5,4 +5,4 @@
 ;;; Code:
 (in-package :skel/srv)
 
-(defclass skel-service (id) ())
+(defclass sk-service (skel) ())

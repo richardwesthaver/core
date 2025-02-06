@@ -105,7 +105,7 @@
    :dp-register
    :dp-remove
    :dp-match
-   :dispatch
+   ;; :dispatch
    :get-current-timetag            ; osc-time
    :timetag+
    :get-unix-time
@@ -364,14 +364,10 @@
   (:export
    :service-make-request
    :with-request-count-incf
-   :service-response-class
-   :service-request-class
    :shutdown-p
    #:default-web-directory
-   #:restart-service
    #:add-route
    #:delete-route
-   :dispatch-request
    #:*router*
    #:*handlers*
    #:http-service-response
@@ -386,7 +382,6 @@
    #:execute-service
    #:service-status-message
    #:start-listening
-   #:bad-request
    #:*default-session-timeout*
    #:*default-ssl-service-port*
    #:*default-max-accept-count*
@@ -432,8 +427,6 @@
    #:session-verify
    #:reset-sessions
    #:service-logger
-   #:service-task-kernel
-   #:engine
    #:single-threaded-engine
    #:multi-threaded-engine
    #:thread-per-connection-engine
@@ -454,8 +447,10 @@
    #:do-with-request-count-incf
    #:detach-socket
    #:session-timeout
-   :service
-   #:service-timeout))
+   #:service-timeout
+   #:net-response
+   #:net-request
+   #:net-service))
 
 (pkg:defpkg :net
   (:use :cl :std)

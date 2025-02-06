@@ -680,7 +680,7 @@
 
 (defpackage :obj/srv
   (:nicknames :srv)
-  (:use :cl :std)
+  (:use :cl :std :config :id)
   (:export
    #:response-ok-p
    #:response-status
@@ -699,4 +699,10 @@
    #:*request*
    #:*response*
    #:in-request-p
-   #:in-response-p))
+   #:in-response-p
+   #:request
+   #:response
+   #:service-request-class
+   #:service-response-class
+   #:engine
+   #:restart-service))

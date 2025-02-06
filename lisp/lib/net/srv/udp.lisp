@@ -14,9 +14,9 @@
 ;;; Code:
 (in-package :net/srv/udp)
 
-(defclass udp-service-request (request) ())
+(defclass udp-service-request (net-request) ())
 
-(defclass udp-service-response (response) ())
+(defclass udp-service-response (net-response) ())
 
 (defun get-udp-request-data (stream &optional spec)
   "Read an incoming UDP packet. An optional SPEC may be provided which should
@@ -27,7 +27,7 @@ highest priority packet spec first.
 On success two values are returned: (PROTO HEADERS).")
 
 ;;; Service
-(defclass udp-service (service) ()
+(defclass udp-service (net-service) ()
   (:default-initargs
    :request-class 'udp-service-request
    :response-class 'udp-service-response

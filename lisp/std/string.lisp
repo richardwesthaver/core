@@ -550,3 +550,4 @@ of a string."
                        (return))
                      (setf col -1))
                    (write-char char stream))))))
+

@@ -3,6 +3,20 @@
 ;;
 
 ;;; Code: 
+(pkg:defpkg :gui/clim
+  (:use :clim :clim-lisp)
+  (:recycle :clim :clim-lisp)
+  (:shadowing-import-from :std)
+  (:shadowing-import-from :cl)
+  (:export :define-application-frame
+   :make-pane :define-presentation-to-command-translator
+   :present :presentation-type-of 
+   :output-record-parent :graph-node-output-record-p :region-union :format-graph-from-roots
+   :with-bounding-rectangle* :make-rectangle* :with-application-frame :+nowhere+
+   :find-pane-named :graph-output-record :drag-output-record :define-command-table
+   :clear-output-record :output-record-position :with-output-recording-options :dispatch-repaint
+   :*application-frame* :make-application-frame :run-frame-top-level))
+
 (pkg:defpkg :gui/clim/layout 
   (:use :cl :std :gui/clim) 
   (:use-reexport :clim-tab-layout))
@@ -32,5 +46,3 @@
   (:use :cl :std :gui/clim :cli/repl) 
   (:use-reexport :clim-listener)
   (:export :run-clim-listener))
-
-(in-package :gui/clim)

@@ -175,4 +175,3 @@ often does a term appear in a document as compared to all other
 documents?"
   (vectorize-documents document-collection (lambda (document dictionary)
                                              (tf-idf-vectorize document document-collection dictionary))))
-

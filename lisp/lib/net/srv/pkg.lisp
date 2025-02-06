@@ -35,18 +35,18 @@
 
 (pkg:defpkg :net/srv/http
   (:use :cl :std :net/proto/http
-   :net/codec/http :net/core :net/cookie :io/chunky)
+   :net/codec/http :net/core :net/cookie :io/chunky :srv)
   (:import-from :net/srv :service-log)
   (:use-reexport :net/srv)
   (:export :http-service :https-service))
 
 (pkg:defpkg :net/srv/udp
-  (:use :cl :std :net/udp :net/codec/tlv :net/core)
+  (:use :cl :std :net/udp :net/codec/tlv :net/core :srv)
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service))
 
 (pkg:defpkg :net/srv/oauth
-  (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http)
+  (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http :srv)
   (:import-from :cli/tools/net :browse-url)
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service))
@@ -84,11 +84,6 @@
 
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
-(defgeneric restart-service (self)
-  (:documentation "Restart a service.")
-  (:method ((self t))
-    (stop self)
-    (start self)))
 (defgeneric find-route (self uri))
 (defgeneric add-route (self uri srv &key &allow-other-keys))
 (defgeneric delete-route (self uri &key &allow-other-keys))
@@ -110,23 +105,13 @@
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
 
-;;; Response
-(defclass response () ())
-(defmethod response-ok-p (res) t)
+(defclass net-response (response) ())
 
-;;; Request
-(defclass request ()
-  ((service :initarg :service
-           :reader service)
-   (session :initform nil
-            :accessor session)
-   (protocol :initarg :request-protocol :reader request-protocol)
-   (local-addr :initarg :local-addr :reader local-addr)
+ (defclass net-request (request)
+  ((local-addr :initarg :local-addr :reader local-addr)
    (local-port :initarg :local-port :reader local-port)
    (remote-addr :initarg :remote-addr :reader remote-addr)
-   (remote-port :initarg :remote-prot :reader remote-port)
-   (content-stream :initarg :content-stream :reader content-stream)
-   (data :initarg :data :accessor request-data)))
+   (remote-port :initarg :remote-prot :reader remote-port)))
 
 (defun remote-addr* (&optional (request *request*))
   "Returns the address the current request originated from."
@@ -286,15 +271,9 @@
    :message-log-output *error-output*))
 
 ;;; Engine
-;; Multithreaded runtime for services
-
-(define-task-kernel service-task-kernel () ()
-  "Default task kernel for service-based tasks.")
-
-(defclass engine () ((service :accessor service)))
-
 (defclass single-threaded-engine (engine) ())
 
+;; Multithreaded runtime for services
 (defclass multi-threaded-engine (engine)
   ((process :accessor process)))
 
@@ -474,9 +453,7 @@
 ;; supervisor, worker, task, kernel
 
 ;;; Service
-(defconfig service-config () ())
-
-(defclass service (id:id)
+(defclass net-service (service)
   ((port :reader port :initarg :port)
    (address :reader address :initarg :address)
    (request-class :type symbol :initarg :request-class :accessor service-request-class)
@@ -497,7 +474,7 @@
    :port *default-service-port*
    :engine (make-instance 'thread-per-connection-engine)
    :address nil
-   :request-class 'request
+   :request-class 'net-request
    :response-class 'response
    :timeout *default-connection-timeout*
    :logger (make-instance 'service-logger :message-log-output *error-output* :access-log-output *error-output*)
@@ -509,23 +486,22 @@
   (:documentation "The service class is designed primarily for webservers and functionally
 similar to HUNCHENTOOT:ACCEPTOR."))
 
-(defmethod name ((self service))
-  (id:id self))
+(defaccessor (name) ((self net-service)) (id:id self))
 
-(defmethod message-log-output ((self service))
+(defmethod message-log-output ((self net-service))
   (message-log-output (logger self)))
 
-(defmethod access-log-output ((self service))
+(defmethod access-log-output ((self net-service))
   (access-log-output (logger self)))
 
-(defmethod print-object ((self service) stream)
+(defmethod print-object ((self net-service) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A on port ~A"
             (or (address self) "*") (port self))))
 
-(defaccessor (sesion-db) ((self service)) *session-db*)
+(defaccessor (sesion-db) ((self net-service)) *session-db*)
 
-(defmethod service-log-message ((self service) level format-string &rest args)
+(defmethod service-log-message ((self net-service) level format-string &rest args)
   (log:with-log-stream (stream (message-log-output self) *message-log-lock*)
     (handler-case
         (format stream "[~A~@[ ~A~]] ~?~%"
@@ -538,7 +514,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defun service-log (level format-string &rest args)
   (apply 'service-log-message *service* level format-string args))
 
-(defmethod start-listening :around ((self service))
+(defmethod start-listening :around ((self net-service))
   (when (socket self)
     (simple-service-error "service ~A is already listening" self))
   ;; setup the socket and call SOCKET-LISTEN
@@ -556,7 +532,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
       (setf (slot-value self 'port) 0)
       (socket-bind* self))))
 
-(defmethod start-listening ((self service))
+(defmethod start-listening ((self net-service))
   (unless (socket self)
     (setf (socket self) (make-instance 'inet-socket :type :stream :protocol :tcp)))
   (socket-bind* self)
@@ -571,7 +547,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
        (unwind-protect (when ,var ,@body)
          (when ,var (socket-close ,var))))))
        
-(defmethod accept ((self service))
+(defmethod accept ((self net-service))
   (with-open-socket (sock (socket self))
     (loop
       (with-mutex ((shutdown-lock self))
@@ -589,7 +565,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 
 ;; (defmethod service-status-message )
 
-(defmethod start ((self service))
+(defmethod start ((self net-service))
   (setf (shutdown-p self) nil)
   (setq *service* self)
   (std:println *service*)
@@ -601,10 +577,10 @@ similar to HUNCHENTOOT:ACCEPTOR."))
     (exec engine))
   self)
 
-(defmethod started-p ((self service))
+(defmethod started-p ((self net-service))
   (and (socket self) t))
                         
-(defmethod stop :around ((self service) &key graceful)
+(defmethod stop :around ((self net-service) &key graceful)
   (with-mutex ((shutdown-lock self))
     (setf (shutdown-p self) t)
     (call-next-method)
@@ -621,10 +597,10 @@ similar to HUNCHENTOOT:ACCEPTOR."))
       (net-warning "service socket unbound"))
     self))
 
-(defmethod initialize-connection-hook ((self service) stream)
+(defmethod initialize-connection-hook ((self net-service) stream)
   stream)
 
-(defmethod process-connection :around ((*service* service) (socket t))
+(defmethod process-connection :around ((*service* net-service) (socket t))
   (with-logger *service*
     ;; (with-conditions-caught-and-logged ()
     ;; (with-mapped-conditions ()
@@ -648,11 +624,10 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   processing."
   `(do-with-request-count-incf ,service (lambda () ,@body)))
 
-(defmethod remove-session-hook ((service service) (session t))
+(defmethod remove-session-hook ((service net-service) (session t))
   nil)
 
-(defmethod service-make-request (service socket &rest args
-                                                &key &allow-other-keys)
+(defmethod service-make-request (service socket &rest args &key &allow-other-keys)
   "Make a REQUEST instance for SERVICE."
   (multiple-value-bind (raddr rport)
       (std:if-let ((remote (getf args :remote)))
@@ -672,7 +647,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 
 
 (defgeneric detach-socket (self)
-  (:method ((self service))
+  (:method ((self net-service))
     (setf *finish-processing-socket* t
           *close-service-stream* nil)))
 

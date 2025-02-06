@@ -691,6 +691,7 @@
 
 (defpkg :std/string
   (:use :cl)
+  (:use-reexport :sb-unicode)
   (:export
    :*omit-nulls*
    :*whitespaces*
