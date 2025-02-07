@@ -46,7 +46,8 @@
                    (:file "var")
                    (:module "mod"
                     :components ((:file "disk")))))))
-               (:file "ext"))
+               (:file "ext")
+               (:file "gui"))
   :in-order-to ((test-op (test-op "gui/tests"))))
 
 (defsystem :gui/tests

@@ -1,3 +1,12 @@
+(defpackage :gui/x11
+  (:shadowing-import-from :std/type :array-index)
+  (:use :cl :std :gui/core :xlib)
+  (:export
+   #:display-extensions
+   #:display-fonts
+   #:init-x11
+   #:*x11-display*))
+
 (in-package :gui/x11)
 
 (defvar *x11-display* nil)

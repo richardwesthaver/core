@@ -146,8 +146,7 @@
 
 ;;; SVG
 ;; FIX 2024-10-26: move to packy test files
-(defparameter *svg-file* (asdf:system-relative-pathname :dat
-                                                        "../../../.stash/simplex16.svg"))
+(defparameter *svg-file* (asdf:system-relative-pathname :dat "../../../.stash/simplex16.svg"))
 
 (deftest svg ()
   (istype 'list (svg:parse-svg-file *svg-file*)))

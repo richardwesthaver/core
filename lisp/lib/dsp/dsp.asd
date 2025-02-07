@@ -6,10 +6,7 @@
   :components ((:file "pkg")
                (:module "aud"
                 :components 
-                ((:file "pkg")
-                 (:module "music"
-                  :components
-                  ((:file "pkg"))))))
+                ((:file "pkg"))))
   :in-order-to ((test-op (test-op "dsp/tests"))))
 
 (defsystem :dsp/tests

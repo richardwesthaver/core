@@ -313,7 +313,7 @@ building a query-plan."
 ;;;; Stored
 (stored:defsclass person ()
   ((name :accessor name :initarg :name)
-   (age :accessor age :initarg :age)
+   (id :accessor id :initarg :age)
    (father :accessor father :initarg :father)
    (school :accessor school :initarg :school)))
 
