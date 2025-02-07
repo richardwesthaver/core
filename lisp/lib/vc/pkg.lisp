@@ -53,7 +53,8 @@
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :config)
   (:export :make-hg-repo :make-git-repo :make-repo
            :find-repo-root
-           :with-current-vc-root))
+           :with-current-vc-root
+           :with-repo))
    
 (defpackage :vc/cli
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :vc/util)

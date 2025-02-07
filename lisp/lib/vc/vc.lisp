@@ -5,7 +5,7 @@
 ;;; Code:
 (pkg:defpkg :vc
   (:use :cl :std)
-  (:use-reexport :vc/proto :vc/hg :vc/git #+cli :vc/cli :vc/util))  
+  (:use-reexport :vc/proto :vc/hg :vc/git #+cli :vc/cli :vc/util))
 
 (in-package :vc)
 #+cli

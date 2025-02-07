@@ -35,9 +35,14 @@
        build-core 
        ;; rust-bin
        ))
- (upstream ()
-           ;; (with-repo (hg-fast-export *repo*))
-           )
+ (upstream () 
+           (:build () (vc:hg-fast-export (skel:sk-vc skel:*skel-project*)))
+           (:push (build-upstream) 
+                  #$cd /tmp/core
+                  git remote add cb ssh://git@codeberg.org/c-c/core
+                  git remote add gh ssh://git@github.com/richardwesthaver/core
+                  git push -u cb default
+                  git push gh default$#))
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#

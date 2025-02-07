@@ -311,11 +311,11 @@ and the stacks containing unclosed duration entries, keyed by thread."
 ;;; see whether the function is still traced and that the condition
 ;;; succeeded before printing anything.
 
-(defmacro with-tracing ((&rest specs) &body body)
+(defmacro with-tracing (specs &body body)
   `(unwind-protect
         (progn
           (reset-tracing)
-          (start-tracing ',specs)
+          (start-tracing ,specs)
           (progn
             ,@body))
      (stop-tracing)))
