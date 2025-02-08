@@ -5,7 +5,9 @@
 ;;; Code:
 (in-package :pod)
 
-(defvar *podman-local-user-socket* (format nil "/var/run/user/~a/podman/podman.sock" (sb-posix:getuid)))
+(declaim (inline podman-local-user-socket))
+(defun podman-local-user-socket () 
+  (format nil "/var/run/user/~a/podman/podman.sock" (sb-posix:getuid)))
 
 (defvar *libpod-api-version* "4.8.2")
 
@@ -17,14 +19,14 @@
 ;;; Client
 (defclass libpod-client ()
   ((socket :initarg :socket 
-           :initform (make-instance 'local-socket :type :stream) 
+           :initform (make-instance 'local-socket :type :stream)
            :type (or local-socket null)
            :accessor client-socket)
    (addr :initarg :addr
          :initform nil
          :accessor client-addr)
    (peer :initarg :peer
-         :initform *podman-local-user-socket*
+         :initform (podman-local-user-socket)
          :accessor client-peer)))
 
 (defmethod make-load-form ((self libpod-client) &optional env)
@@ -104,8 +106,9 @@
                       :auto-close auto-close
                       :serve-events serve-events))
 
-(defmacro with-libpod-client ((cvar &optional c) &body body)
-  `(let ((,cvar ,(or c (make-instance 'libpod-client))))
-     (socket-connect ,cvar)
-     (unwind-protect (progn ,@body)
-       (socket-close ,cvar))))
+(defmacro with-libpod-client ((cvar &optional (c (make-instance 'libpod-client))) &body body)
+  `(let ((,cvar ,c))
+     (progn
+       (socket-connect ,cvar)
+       (unwind-protect (progn ,@body)
+         (socket-close ,cvar)))))

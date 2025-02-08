@@ -682,6 +682,7 @@
   (:nicknames :srv)
   (:use :cl :std :config :id)
   (:export
+   :service
    #:response-ok-p
    #:response-status
    #:dispatch-request

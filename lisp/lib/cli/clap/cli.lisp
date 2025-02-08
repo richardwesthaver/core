@@ -19,7 +19,7 @@
 (defopt help-opt 
   "Print help and exit."
   (if *arg*
-      (print-help (find-cmd *arg* *cli*) t)
+      (print-help (find-cmd *arg* *cli* :default :error) t)
       (print-help *cli*))
   (exit :code 0))
 
@@ -125,20 +125,8 @@ and MAKE-CLI :CMD respectively."
 (defmethod print-version ((self cli) &optional stream)
   (println (cli-version self) stream))
 
-(defmethod print-help ((self cli) &optional (stream t))
-  (println (format nil "~A v~A --- ~A~%" (cli-name self) (cli-version self) (cli-description self)) stream)
-  (print-usage self stream)
-  ;; (terpri stream)
-  (println "options:" stream)
-  (with-slots (opts cmds) self
-    (unless (null opts)
-      (loop for o across opts
-            do (iprintln (with-output-to-string (s) (print-usage o s)) 2 stream)))
-    (terpri stream)
-    (println "commands:" stream)
-    (unless (null cmds)
-      (loop for c across cmds
-            do (iprintln (with-output-to-string (s) (print-usage c s)) 2 stream)))))
+(defmethod print-help :before ((self cli) &optional (stream t))
+  (println (format nil "~A v~A --- ~A~%" (cli-name self) (cli-version self) (cli-description self)) stream))
 
 (defmethod cli-equal :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.

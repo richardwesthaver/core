@@ -47,4 +47,5 @@
 (defmain start-gen ()
   (with-cli (*gen-cli* :args (cli:args))
     (do-opts *cli*)
-    (do-cmd *cli*)))
+    (with-codegen (or *gen* :c)
+      (do-cmd *cli*))))

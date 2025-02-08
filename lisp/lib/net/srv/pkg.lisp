@@ -97,11 +97,6 @@
     (declare (ignore self))
     nil))
 
-(defgeneric service (self)
-  (:method ((self t)) (when (boundp '*service*) *service*))
-  (:method ((self symbol)) (gethash self *service-table*))
-  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
-
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
 

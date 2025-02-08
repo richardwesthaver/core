@@ -24,7 +24,6 @@
   (:import-from :chunky :make-chunked-stream)
   (:export
    :*podman-api-version* :*podman-exe* :*buildah-exe*
-   :*podman-local-user-socket*
    :pod-error :podman-error :libpod-error
    :decode-podman-response :encode-podman-request
    :podman-request :podman-response
@@ -37,4 +36,5 @@
    :pod-config
    :*podman-config-directory*
    :load-podman-config
-   :default-podman-config))
+   :default-podman-config
+   :podman-local-user-socket))

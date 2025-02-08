@@ -10,6 +10,8 @@
 ;;; Code:
 (in-package :cry/keyring)
 
+(defvar *keyrings* (make-hash-table :weakness :value))
+
 (defclass keyring (id) ((keys :initform nil :initarg :keys :accessor keys)))
 
 (defmethod initialize-instance ((self keyring) &key id)
@@ -36,11 +38,14 @@
   (:method ((self (eql :reqkey-auth)))
     (make-instance 'keyring :id (key-spec self))))
 
+(defun register-keyring (self)
+  (setf (gethash (id self) *keyrings*) self))
+
 (defvar *keyring-payload-size* 32)
 (defvar *keyring-key-types* '("big_val" "user" "logon" "keyring"))
 (defvar *keyring-key-type* "user")
 
-(defmethods get-key 
+(defmethods get-key
   (((self keyring) (key t) &key (size *keyring-payload-size*))
    (get-key self (id key) :size size))
   (((self keyring) (key number) &key (size *keyring-payload-size*))

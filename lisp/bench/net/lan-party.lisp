@@ -6,7 +6,7 @@
 (in-package :std-user)
 (defpkg :bench/net/lan-party
   (:nicknames :bench/lan-party)
-  (:use :cl :std :net/srv/udp :log :json :obj))
+  (:use :cl :std :net/srv/udp :log :json :obj :srv))
 (in-package :bench/net/lan-party)
 
 ;; (make-instance 'udp-server)

@@ -3,7 +3,7 @@
   (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
   (:use :cl :std :sb-thread :sb-concurrency #+crypto :ironclad :obj/db :obj/id)
   (:export :crypto-error :crypto-token-expired :crypto-token-invalid
-   :crypto-key :token :crypto-token :password
+   :crypto-key :token :crypto-token
    :*default-password-db* :*default-password-hasher* :*default-password-store* :*default-password-pepper*
    :password-db))
 
@@ -89,7 +89,6 @@
 
 (defclass crypto-token (token) ())
 (defclass crypto-key (id) ())
-(defclass password () ())
 (defclass password-db (database) ())
 (defclass password-store (store) ())
 

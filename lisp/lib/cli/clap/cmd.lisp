@@ -57,7 +57,8 @@ a CLI is called without arguments, and all subcommands."))
   (with-slots (opts cmds) self
     (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~%~4t:doc ~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]"
             (cli-name self)
-            (equal (string (cli-thunk *cli*)) (string (cli-thunk self)))
+            (when *cli*
+              (equal (string (cli-thunk *cli*)) (string (cli-thunk self))))
             (and (slot-boundp self 'description) (cli-description self))
             (when (fboundp (cli-thunk self))
               (documentation (symbol-function (cli-thunk self)) 'function))
@@ -65,6 +66,21 @@ a CLI is called without arguments, and all subcommands."))
               (loop for o across opts collect (with-output-to-string (s) (print-usage o s))))
             (unless (null cmds)
               (loop for c across cmds collect (with-output-to-string (s) (print-usage c s)))))))
+
+(defmethod print-help ((self cli-cmd) &optional stream)
+  (unless (typep self 'cli)
+    (print-usage self stream))
+  (let ((opts (opts self))
+        (cmds (cmds self)))
+    (unless (null opts)
+      (println "options:" stream)
+      (loop for o across opts
+            do (iprintln (with-output-to-string (s) (print-usage o s)) 2 stream)))
+    (terpri stream)
+    (unless (null cmds)
+      (println "commands:" stream)
+      (loop for c across cmds
+            do (iprintln (with-output-to-string (s) (print-usage c s)) 2 stream)))))
 
 (defmethod push-cmd ((self cli-cmd) (place cli-cmd))
   (vector-push self (cmds place)))
@@ -102,7 +118,9 @@ a CLI is called without arguments, and all subcommands."))
         (when (cli-lock-p c)
           c)
         c)
-    default))
+    (if (eql default :error)
+        (error 'unknown-argument :name name :kind :cmd)
+        default)))
 
 (defmethod (setf find-cmd) ((new cli-cmd) name (self cli-cmd))
   (let ((match (find-cmd name self)))
@@ -134,7 +152,9 @@ a CLI is called without arguments, and all subcommands."))
     (if active
         (when (cli-opt-lock ret) ret)
         ret)
-    default))
+    (if (eql default :error)
+        (error 'unknown-argument :name name :kind :opt)
+        default)))
 
 (defun cli-name= (a b)
   (equal (cli-name a) (cli-name b)))

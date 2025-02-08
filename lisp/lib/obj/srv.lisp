@@ -86,6 +86,11 @@
 
 (defconfig service-config () ())
 ;;; Protocol
+(defgeneric service (self)
+  (:method ((self t)) (when (boundp '*service*) *service*))
+  (:method ((self symbol)) (gethash self *service-table*))
+  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
+
 (defgeneric restart-service (self)
   (:documentation "Restart a service.")
   (:method ((self t))

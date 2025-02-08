@@ -1,8 +1,0 @@
-[package]
-name = "sbcl-sys"
-version.workspace = true
-authors.workspace = true
-edition.workspace = true
-[dependencies]
-libc = "0.2.154"
-libloading = "0.8.3"

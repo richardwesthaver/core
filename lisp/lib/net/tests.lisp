@@ -79,7 +79,7 @@ Cookie: name=wookie
     (is (stringp (net/cookie:write-cookie-header (list cookie))))))
 
 (deftest srv ()
-  (istype 'service (make-instance 'service))
+  (istype 'net-service (make-instance 'net-service))
   (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
   (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service))
   (istype 'net/srv/udp:udp-service (make-instance 'net/srv/udp:udp-service)))

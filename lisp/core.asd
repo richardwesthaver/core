@@ -22,6 +22,9 @@
   :depends-on (:std :core/tests :rt :obj :dat)
   :components ((:module "bench"
                 :components ((:file "pkg")
+                             (:module "net"
+                              :components
+                              ((:file "lan-party")))
                              (:module "db"
                               :components
                               ((:file "tpc-h")))
@@ -33,7 +36,8 @@
                               ((:file "array")
                                (:file "hash")
                                (:file "simd")
-                               (:file "alien"))))))
+                               (:file "alien")))
+                             (:file "bench"))))
   :build-pathname "bench"
   :build-operation monolithic-compile-bundle-op)
 

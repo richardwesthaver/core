@@ -14,8 +14,9 @@
 
 (deftest podman-api ()
   "Test the podman API over a local unix socket."
-  (unless (probe-file *podman-local-user-socket*)
-    (start-podman-service *podman-local-user-socket*))
+  (let ((local-socket (podman-local-user-socket)))
+    (unless (probe-file local-socket)
+      (start-podman-service local-socket)))
   (with-libpod-client (c)
     (is (string= "OK" (libpod-request c "_ping" :get)))
     (is (libpod-request-json c "info"))

@@ -25,7 +25,10 @@ evaluation of BODY."
           (restart-case 
               (handler-case (progn ,@body)
                 (sb-sys:interactive-interrupt ()
-                  (sb-ext:exit :code 130)))
+                  (sb-ext:exit :code 130))
+                (error (c)
+                  (println c)
+                  (sb-ext:exit :code 1)))
             (abort ()
               :report (lambda (s)
                         (write-string

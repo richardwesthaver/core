@@ -1,7 +1,0 @@
-### src/sys/btrfsutil/Cargo.toml --- libbtrfsutil Rust bindings
-[package]
-name = "btrfsutil-sys"
-version = "0.1.0"
-edition = "2021"
-[build-dependencies]
-bindgen = { workspace = true }

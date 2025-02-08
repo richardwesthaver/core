@@ -9,6 +9,6 @@
 (defsuite :json-bench)
 (in-suite :json-bench)
 
-(defbench json-stress (:bench 100 :profile t) 
+(deftest json-stress (:bench 100 :profile t) 
   "Stress test DAT/JSON."
   (is t))

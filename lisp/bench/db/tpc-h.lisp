@@ -30,7 +30,7 @@
 (eval-always
   (declaim (pathname *tpc-h-data-directory*))
   (defvar *tpc-h-data-directory* 
-    (ensure-directories-exist (directory-path (translate-logical-pathname "CORE:bench;tpc-h")))))
+    (ensure-directories-exist (directory-path (translate-logical-pathname "core:tmp;tpc-h")))))
 
 (defclass tpc-h-schema (schema) ())
 

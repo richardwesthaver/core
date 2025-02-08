@@ -56,6 +56,7 @@
                (:file "ast")
                (:file "config")
                (:file "schema")
+               (:file "plan")
                (:file "query")
                (:file "db")
                (:file "secret")

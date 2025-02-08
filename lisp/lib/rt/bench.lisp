@@ -49,6 +49,11 @@ used when the slot value of :BENCH is t.")
 	    (%do))
 	  (%do)))))
 
+(defmethod do-bench ((self t) &optional fx)
+  (declare (ignorable fx))
+  (when-let ((test (find-test *test-suite* self)))
+    (do-bench test)))
+
 (defclass benchmark (test-object) ())
 
 (defmacro defbench (name props &body body)

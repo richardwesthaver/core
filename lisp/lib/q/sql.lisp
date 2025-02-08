@@ -56,10 +56,10 @@
 (defclass sql-math-expression (sql-binary-expression)
   ((op :initarg :op :type symbol :accessor binary-expression-op)))
 
-(defclass sql-string (sql-expression literal-expression)
+(defclass sql-string (sql-expression literal-expr)
   ((value :type string :initarg :value :accessor literal-value)))
 
-(defclass sql-number (sql-expression literal-expression)
+(defclass sql-number (sql-expression literal-expr)
   ((value :type number :initarg :value :accessor literal-value)))
 
 (defclass sql-function (id sql-expression)

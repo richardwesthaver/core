@@ -7,18 +7,18 @@
 #+CALL: project-details()
 
 #+RESULTS:
-|-------------+--------------------------------------------------------------|
-| name        | core                                                         |
-| version     | 0.1.0                                                        |
-| description | The Compiler Company Core                                    |
-| skel-id     | 1566328410216733941                                          |
-| root        | ~/comp/core/                                                 |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/f48365f31386][f48365f31386:850+]]          |
-| tags        | (core lisp rust emacs c)                                     |
-| updated     | Thu Feb 06 20:58:04 2025 -0500                               |
-| langs       | c cheader elisp html javascript json lisp org rust text toml |
-| lines       | 123725 :λ 96000 :# 12408 :_ 15317                            |
-|-------------+--------------------------------------------------------------|
+|-------------+------------------------------------------------------|
+| name        | core                                                 |
+| version     | 0.1.0                                                |
+| description | The Compiler Company Core                            |
+| skel-id     | 1566328410216733941                                  |
+| root        | ~/comp/core/                                         |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/103c957d9304][103c957d9304:851+]]  |
+| tags        | (core lisp rust emacs c)                             |
+| updated     | Fri Feb 07 10:51:41 2025 -0500                       |
+| langs       | c elisp html javascript json lisp org rust text toml |
+| lines       | 123693 :λ 95969 :# 12393 :_ 15331                    |
+|-------------+------------------------------------------------------|
 
 #+comment: #+CALL: project-files()
 
@@ -30,22 +30,5 @@
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
-* Source Code
 The core is primarily written from scratch in (non-portable) [[https://common-lisp.net][Lisp]] but
 also includes dedicated Emacs Lisp and Rust modules.
-
-The Lisp code is divided into separate folders under the top-level
-=lisp= folder. There is a standard library named =std=, =ffi= modules
-which provide C bindings, =lib= modules for high-level packages, and
-=bin= modules containing executable programs. Unit tests can be found
-in directories and lisp files starting with =tests= and benchmarks are
-contained in the dedicated =bench= directory.
-
-The =emacs= folder contains our core Emacs Lisp code. The contents are
-intended to be copied directly into the user's =.emacs.d= and paired
-with a user configuration file. The top-level files contain the usual
-suspects for a modern Emacs configuration and the =lib= folder
-contains various additional packages which enhance our IDE workflow.
-
-Last, we have Rust code which lives under =rust=. There's =lib=,
-=bin=, =ffi= modules same as Lisp in addition to =ui=.
