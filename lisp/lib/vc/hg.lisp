@@ -208,6 +208,8 @@ working directory."
                         :directory (pathname output))
     out-repo))
 
+(defmethod vc-export ((self hg-repo) output &key)
+  (hg-fast-export self output))
 
 ;;; Client
 ;; ref: https://wiki.mercurial-scm.org/CommandServer

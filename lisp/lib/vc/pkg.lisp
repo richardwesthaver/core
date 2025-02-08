@@ -16,6 +16,7 @@
    :vc-addremove :vc-diff
    :vc-branch :repo
    :vc-meta :find-repo
+   :vc-export
    :make-repo :register-repo
    :vc-update
    :vc-ignore

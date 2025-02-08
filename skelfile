@@ -9,7 +9,8 @@
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("lisp/lisp.sk" "rust/rust.sk" "emacs/emacs.sk")
 :vc (:hg "https://vc.compiler.company/core"
-         (cb (:git "ssh://git@codeberg.org/c-c/core")))
+         (cb (:git "ssh://git@codeberg.org/c-c/core"))
+         (gh (:git "ssh://git@github.com/richardwesthaver/core")))
 :bind ((stash ".stash")
        ;; (cc :env "clang")
        (emacs-locals :dir-locals
@@ -41,7 +42,7 @@
            #$cd /tmp/core
            git remote add cb ssh://git@codeberg.org/c-c/core
            git remote add gh ssh://git@github.com/richardwesthaver/core
-           git filter-repo --invert-paths --path std
+           git filter-repo --invert-paths --path std --force
            git push -u cb default
            git push gh default$#)
  (clean ()

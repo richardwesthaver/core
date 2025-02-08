@@ -69,6 +69,8 @@ are missing."))
 (defgeneric vc-bundle (self output &key &allow-other-keys))
 (defgeneric vc-unbundle (self input &key &allow-other-keys))
 
+(defgeneric vc-export (self output &key &allow-other-keys))
+
 ;;; Accessors
 (defgeneric vc-head (self))
 (defgeneric vc-tags (self))
