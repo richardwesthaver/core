@@ -1,14 +1,6 @@
 ;;; dbscan --- Density-based spacial clustering of applications with noise (DBSCAN) algorithm
 
 ;;; Code:
-(defpackage :nlp/dbscan
-  (:use :cl :std :nlp/doc :nlp/textrank :nlp/tokenize)
-  (:export 
-   :document-cluster :clusters :get-cluster :distance
-   :generate-document-distance-vectors
-   :cluster :neighbors :clusters
-   :dbscan))
-
 (in-package :nlp/dbscan)
 
 (defclass document-cluster (document-vertex)

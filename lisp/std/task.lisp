@@ -13,9 +13,8 @@
 (sb-ext:defglobal *worker-threads* nil)
 (sb-ext:defglobal *supervisor-threads* nil)
 (sb-ext:defglobal *oracle-table* (make-hash-table))
-(eval-always
-  (defvar *task*)
-  (defvar *result* nil))
+(defvar *task*)
+(defvar *result* nil)
 
 (define-condition task-error (thread-error) ()
   (:report (lambda (condition stream)
@@ -68,10 +67,10 @@ This interface is experimental and subject to change."
 (defgeneric assign-supervisor (worker supervisor))
 
 (defgeneric make-workers (count &rest initargs &key &allow-other-keys)
-  (:method ((count number) &key thread kernel input (return-type 'vector))
+  (:method ((count number) &key thread kernel input bindings (return-type 'vector))
     (let ((ret))
       (dotimes (i count)
-        (push (make-worker :thread thread :kernel kernel :input input) ret))
+        (push (make-worker :thread thread :kernel kernel :input input :bindings bindings) ret))
       (if return-type (coerce ret return-type) ret))))
 
 (defgeneric task (self))
@@ -104,17 +103,19 @@ within their DOMAIN and SCOPE."))
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
            :accessor worker-thread
            :initarg :thread)
+   (bindings :type list)
    (kernel :type function :accessor worker-kernel :initarg :kernel)
    (tasks :initform nil :accessor tasks :initarg :input)))
 
 (defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
   (push (worker-thread self) *worker-threads*))
 
-(defun make-worker (&key thread kernel input)
+(defun make-worker (&key thread kernel input bindings)
   (apply #'make-instance 'worker
          `(,@(when thread `(:thread ,thread))
            ,@(when kernel `(:kernel ,kernel))
-           ,@(when input `(:input ,input)))))
+           ,@(when input `(:input ,input))
+           ,@(when bindings `(:bindings ,bindings)))))
 
 ;; TODO 2024-10-03: pause/resume
 (declaim (inline kill-worker join-worker start-worker run-worker))

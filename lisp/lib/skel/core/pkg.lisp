@@ -1,15 +1,3 @@
-(defpackage :skel/core/condition
-  (:use :cl :std/condition :dat/sxp :obj/ast)
-  (:import-from :std/macs :eval-always)
-  (:export
-   :skel-condition
-   :skel-error
-   :skel-simple-error
-   :skel-syntax-error
-   :invalid-skel-ast
-   :skel-io-error
-   :skel-compile-error))
-
 (defpackage :skel/core/proto
   (:use :cl :std)
   (:export
@@ -38,8 +26,41 @@
    :sk-unbundle
    :sk-register))
 
+(defpackage :skel/core/int
+  (:use :cl :std/condition :dat/sxp :obj/ast :skel/core/proto)
+  (:import-from :std/macs :eval-always)
+  (:import-from :sb-unix :uid-username :unix-getuid)
+  (:import-from :ast :*keep-ast*)
+  (:import-from :std/path :merge-homedir-pathnames)
+  (:import-from :vc :vc-designator)
+  ;; conditions
+  (:export
+   :skel-condition
+   :skel-error
+   :skel-simple-error
+   :skel-syntax-error
+   :invalid-skel-ast
+   :skel-io-error
+   :skel-compile-error)
+  ;; vars
+  (:export
+   :*skel-project* :*default-skelrc*
+   :*skel-env* :*skel-project*
+   :*default-skelfile* :*default-skel-user* 
+   :*default-skel-vc-kind*
+   :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
+   :*skel-init-hook*)
+  (:export
+   #:skel-stash
+   #:skel-store
+   #:skel-cache
+   #:skel-registry
+   #:skel-path
+   #:user-skelrc
+   #:system-skelrc))
+
 (defpackage :skel/core/header
-  (:use :cl :std :skel/core/condition :doc)
+  (:use :cl :std :skel/core/int :doc)
   (:export
    :make-file-header 
    :make-shebang-file-header 
@@ -49,23 +70,9 @@
    :make-source-header-comment 
    :make-shebang-comment))
 
-(defpackage :skel/core/var
-  (:use :cl :std :skel/core/proto)
-  (:import-from :sb-unix :uid-username :unix-getuid)
-  (:import-from :ast :*keep-ast*)
-  (:import-from :std/path :merge-homedir-pathnames)
-  (:import-from :vc :vc-designator)
-  (:export :*user-skelrc* :*system-skelrc*
-   :*skel-project* :*default-skelrc*
-   :*skel-env* :*skel-project*
-   :*skel-registry* :*skel-cache* :*skel-store* :*skel-stash*
-   :*skel-registry* :*default-skelfile* :*default-skel-user* :*default-skel-vc-kind*
-   :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary* :*skel-path*
-   :*skel-init-hook*))
-
 (defpackage :skel/core/obj
   (:use :cl :std :obj
-   :skel/core/proto :skel/core/condition :skel/core/var
+   :skel/core/proto :skel/core/int
    :dat/sxp :skel/core/header :vc :log)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-stash :sk-cache :sk-registry :sk-user
@@ -85,20 +92,20 @@
    :sk-phases))
 
 (defpackage :skel/core/schema
-  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/var :schema :rdb)
+  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :schema :rdb)
   (:export :sk-object-schema :sk-schema :*skel-registry-schema* :*skel-cache-schema*))
 
 (defpackage :skel/core/db
-  (:use :cl :std :skel/core/condition :skel/core/schema
-   :skel/core/obj :skel/core/proto :skel/core/var :db
+  (:use :cl :std :skel/core/int :skel/core/schema
+   :skel/core/obj :skel/core/proto :db
    :store :schema :query :rdb
    :id :stored :log :config :build :seq)
   (:export :skel-db 
    :skel-db-path))
 
 (defpackage :skel/core/log
-  (:use :cl :std :log :skel/core/db :skel/core/condition 
-   :skel/core/obj :skel/core/proto :skel/core/var :db
+  (:use :cl :std :log :skel/core/db :skel/core/int 
+   :skel/core/obj :skel/core/proto :db
    :store :schema :query :rdb :id :stored :log :config :build :seq :skel/core/schema)
   (:export
    :sk-log-schema
@@ -113,12 +120,8 @@
    :sk-log-list
    :skel-db-sink))
 
-(defpackage :skel/core/fs
-  (:use :cl :std :skel/core/proto :skel/core/condition :skel/core/var :vc :log)
-  (:export))
-
 (defpackage :skel/core/util
-  (:use :cl :std :skel/core/obj :skel/core/var :skel/core/proto :dat/sxp :skel/core/condition :obj/ast)
+  (:use :cl :std :skel/core/obj :skel/core/proto :dat/sxp :skel/core/int :obj/ast)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :cli :find-exe)
   (:export
@@ -138,7 +141,7 @@
    :sk-search-project))
 
 (defpackage :skel/core/vm
-  (:use :cl :std :skel/core/condition :sb-vm)
+  (:use :cl :std :skel/core/int :sb-vm)
   (:export :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push
            :skel-vm
            :make-skel-vm
@@ -172,12 +175,12 @@
            :init-skel-function-scope))
 
 (defpackage :skel/core/print
-  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/var)
+  (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto)
   (:export))
 
 (defpackage :skel/core/plan
-  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/var :plan))
+  (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto :plan))
 
 (defpackage :skel/core/rule
-  (:use :cl :std :skel/core/condition :skel/core/obj :skel/core/proto :skel/core/var :plan :skel/core/log :db :schema :ast)
+  (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto :plan :skel/core/log :db :schema :ast)
   (:export))

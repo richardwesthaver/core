@@ -3,7 +3,6 @@
 ;;; Code:
 (uiop:define-package :web/dash
   (:use :cl :std #+nil :lass #+nil :spinneret :cli/clap :net/srv :net/srv/http)
-  ;; (:import-from :clack :clackup)
   (:export 
    :main
    :serve-static-assets

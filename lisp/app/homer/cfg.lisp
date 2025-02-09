@@ -92,16 +92,31 @@
                        :nullp nullp
                        :exclude exclude)))
 
-(defun load-homerc (&optional (file *default-user-homerc*))
+(defun init-homerc (&optional (file (merge-homedir-pathnames ".homerc")))
+  (let ((cfg (make-instance 'home-config)))
+    (build-ast cfg :exclude '(ast id skel krypt mpk logger))
+    (with-open-file (out file
+                         :direction :output
+                         :if-does-not-exist :create)
+      (write-ast cfg out :fmt :canonical))))
+
+(defun load-homerc (&optional (file *user-homerc*) (init t))
   "Load a homerc configuration from FILE. Defaults to ~/.homerc."
-  (unless (null (probe-file file))
-    (with-readtable :shell
-      (let ((form
-              (sxp:file-read-forms file)))
-        (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
-        (with-slots (src) *home-config*
-          (if src
-              (setf src (pathname src))
-              (if-let ((homer (sb-posix:getenv "HOMER")))
-                (setf src (pathname homer))
-                (error "missing HOMER directory"))))))))
+  (flet ((%load ()
+           (with-readtable :shell
+             (let ((form
+                     (sxp:file-read-forms file)))
+               (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
+               (with-slots (src) *home-config*
+                 (if src
+                     (setf src (pathname src))
+                     (if-let ((homer (sb-posix:getenv "HOMER")))
+                       (setf src (pathname homer))
+                       (error "missing HOMER directory"))))))))
+    (if (not init)
+        (progn 
+          (assert (probe-file file))
+          (%load))
+        (if (probe-file file)
+            (%load)
+            (init-homerc file)))))

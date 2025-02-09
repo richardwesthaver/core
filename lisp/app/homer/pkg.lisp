@@ -7,9 +7,8 @@
   (:use :cl :std :log :krypt :skel :config :io/kbd :ast :id :time :pod :box)
   (:import-from :mpk :mpk-config :load-mpkrc)
   (:export
-   #:*user*
    #:*user-homedir*
-   #:*default-user-homerc*
+   #:*user-homerc*
    #:*home-config*
    #:*home-hidden-paths*
    #:*homer-force*

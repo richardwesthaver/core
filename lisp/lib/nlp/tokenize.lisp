@@ -1,7 +1,3 @@
-(defpackage :nlp/tokenize
-  (:use :cl :std :cl-ppcre :nlp/data :nlp/stem/porter)
-  (:export :word-tokenize :sentence-tokenize))
-
 (in-package :nlp/tokenize)
 
 (defun word-tokenize (string &key (remove-stop-words t) (stem nil) (down-case t) (alphabetic t))

@@ -24,4 +24,3 @@
   #+x11 
   (:swm (bin/swm::start-swm))
   (:gen (bin/gen::start-gen)))
-

@@ -540,7 +540,10 @@
    :condition-wait*
    :sync-message
    :with-sync-message
-   :lock))
+   :lock
+   :+standard-io-syntax+
+   :*default-special-bindings*
+   :compute-special-bindings))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency :std/meta)
@@ -642,7 +645,8 @@
    :list-all-users
    :list-all-groups
    :with-umask
-   :with-fd))
+   :with-fd
+   :*user*))
 
 (defpkg :std/file
   (:use :cl)

@@ -6,7 +6,7 @@
 (defpkg :bin/skel
   (:use :cl :std :cli :cli/clap/obj
    :vc :sb-ext :skel :log :cli/clap/util
-   :obj/ast #+(and tools gui) :skel/tools/viz
+   :obj/ast #+(and tools gui) :skel/tools/view
    :db :rdb :schema :config :build :packy :krypt :skel/cli)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl :cli/prompt))

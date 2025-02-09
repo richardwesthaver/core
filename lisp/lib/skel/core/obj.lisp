@@ -171,10 +171,10 @@
 ;;; Config
 (defconfig sk-config (skel ast) 
   ((vc :initform *default-vc-kind* :initarg :vc :type (or vc-repo vc-designator) :accessor sk-vc)
-   (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
-   (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
-   (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
-   (registry :initform *skel-registry* :initarg :registry :type pathname :accessor sk-registry)
+   (store :initform skel-store :initarg :store :type pathname :accessor sk-store)
+   (stash :initform skel-stash :initarg :stash :type pathname :accessor sk-stash)
+   (cache :initform skel-cache :initarg :cache :type pathname :accessor sk-cache)
+   (registry :initform skel-registry :initarg :registry :type pathname :accessor sk-registry)
    (scripts :initform nil :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
    (license :initform nil :initarg :license :type license-designator :accessor sk-license)
    (log-level :initform *log-level* :initarg :log-level :type log-level-designator)
@@ -227,7 +227,7 @@
         ;; invalid ast, signal error
         (invalid-skel-ast ast))))
 
-(defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id)))
+(defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id author version user)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -237,8 +237,8 @@
 
 (defmethod sk-write-file ((self sk-config) 
                           &key (path *default-skelfile*) 
-                               (nullp nil) 
-                               (header t) 
+                               nullp
+                               comment
                                (fmt :canonical)
                                (if-exists :error))
   (build-ast self :nullp nullp)
@@ -247,7 +247,7 @@
                            :direction :output
                            :if-exists if-exists
                            :if-does-not-exist :create)
-        (when header (princ
+        (when comment (princ
                       (make-source-header-comment
                        (name self)
                        :cchar #\;
@@ -259,7 +259,7 @@
     (unless *keep-ast* (setf (ast self) nil))))
 
 (defmethod write-ast ((self sk-config) stream &key (pretty t) (case :downcase) (fmt :pretty))
-  (case fmt
+  (ecase fmt
     (:pretty
      (if (listp (ast self))
          (with-open-stream (st stream)
@@ -274,7 +274,7 @@
                         (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
                     (write-char #\newline st)))
          (skel-io-error)))
-    (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
+    (:canonical (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
 (defclass sk-system-config (sk-config sk-meta) ())
 
@@ -282,7 +282,7 @@
   (make-instance 'sk-system-config))
 
 (defclass sk-user-config (sk-config sk-meta)
-  ((user :initarg :user :type string :accessor sk-user)
+  ((user :initarg :user :type string :accessor sk-user :initform *user*)
    (name :initarg :name :type string :accessor name)
    (email :initarg :email :type string :accessor sk-email))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
@@ -462,12 +462,12 @@ via the special form stored in RECIPE."
           ;;; SRC
           (if (bound-string-p self 'src)
               (setf (sk-src self) (or (probe-file (sk-src self))
-                                      (probe-file (merge-pathnames (sk-src self) *skel-path*))
+                                      (probe-file (merge-pathnames (sk-src self) skel-path))
                                       (error 'invalid-argument :reason "project source not found"
                                                                :item (sk-src self))))
               (setf (sk-src self) (sk-dir self)))
-          (setq *skel-path* (or (sk-src self) *default-pathname-defaults*))
-          (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
+          (setq skel-path (or (sk-src self) *default-pathname-defaults*))
+          (let ((*default-pathname-defaults* (make-pathname :defaults (namestring skel-path))))
             (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
             (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
             ;; VC
@@ -626,7 +626,7 @@ via the special form stored in RECIPE."
 ;; ast -> file
 (defmethod sk-write-file ((self sk-project) 
 			  &key 
-                          (path *default-skelfile*) (nullp nil) (header t) (fmt :canonical)
+                          (path *default-skelfile*) (nullp nil) (comment t) (fmt :canonical)
                           (if-exists :error))
   (build-ast self :nullp nullp)
   (prog1 
@@ -634,7 +634,7 @@ via the special form stored in RECIPE."
                            :direction :output
                            :if-exists if-exists
                            :if-does-not-exist :create)
-        (when header (princ
+        (when comment (princ
                       (make-source-header-comment
                        (name self)
                        :cchar #\;

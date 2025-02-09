@@ -104,11 +104,13 @@
                                        :if-exists :supersede))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
+
  (ssl-certs () #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
             -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)
  (ssl-client-certs () #$openssl req -new -nodes -x509 -days 365 -subj / \
                    -keyout .stash/client-key.pem -outform PEM \
                    -out .stash/client-cert.pem$#)
+
  (swm (%stash)
       (:build ()
               (with-sbcl (:noinform t :quit t)
@@ -143,7 +145,8 @@
       (:build ()
               (with-sbcl (:noinform t :quit t)
                 (push :net *features*)
-                (ql:quickload :bin/skc)
+                (ql:quickload :std)
+                (std:save-lisp-tree-shake-and-die "foo")
                 (asdf:make :bin/skc))
               #$mv lisp/bin/skc .stash/skc$#))
  (vc (%stash)

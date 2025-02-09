@@ -6,9 +6,8 @@
 (in-package :homer/core)
 
 (defun homer-user-init ()
-  (setq *user* (sb-posix:getenv "USER")
-        *user-homedir* (user-homedir-pathname)
-        *default-user-homerc* (merge-pathnames ".homerc" *user-homedir*)))
+  (setq *user* (or (sb-posix:getenv "USER") "root")
+        *user-homerc* (merge-homedir-pathnames ".homerc")))
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))
 (defun ctime (path) (sb-posix:stat-ctime (sb-posix:stat path)))

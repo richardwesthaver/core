@@ -1,27 +1,6 @@
 ;;; doc.lisp --- Text Documents
 
 ;;; Code:
-(defpackage :nlp/doc
-  (:use :cl :std :nlp/data :nlp/tokenize)
-  (:export 
-   :document
-   :documents
-   :add-document
-   :document-collection
-   :keywords
-   :dictionary
-   :term-count
-   :document-frequency
-   :inverse-document-frequency
-   :tf-idf-vectorize-documents
-   :termp
-   :string-contents
-   :rank
-   :term-frequency
-   :extract-keywords
-   :tf-vectorize-documents
-   :vector-data))
-
 (in-package :nlp/doc)
 
 (defclass document ()

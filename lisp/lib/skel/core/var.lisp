@@ -1,4 +1,4 @@
-(in-package :skel/core/var)
+(in-package :skel/core/int)
 
 (declaim (type vc-designator *default-skel-vc-kind*))
 (defparameter *default-skel-vc-kind* :hg)
@@ -13,19 +13,6 @@
 
 (defvar *skel-init-hook* nil)
 
-(declaim (type pathname *skel-stash* *skel-store*
-               *skel-cache* *user-skelrc* *system-skelrc*))
-
-(defvar *skel-stash* (merge-homedir-pathnames ".stash/skel/stash/"))
-
-(defvar *skel-store* (merge-homedir-pathnames  ".stash/skel/store/"))
-
-(defvar *skel-cache* (merge-homedir-pathnames ".stash/skel/cache/"))
-
-(defvar *skel-registry* (merge-homedir-pathnames ".stash/skel/registry/"))
-
-(defvar *skel-path* *default-pathname-defaults*)
-
 (defvar *skel-project* nil)
 
 (defvar *skel-env* (make-hash-table :test 'equal)
@@ -35,10 +22,6 @@ strings.
 The environment can be used for example in SB-EXT:RUN-PROGRAM by running the
 table through CLI/ENV:CONCAT-ENV-TABLE and passing it as the value of the
 :ENVIRONMENT keyword argument.")
-
-(defvar *user-skelrc* (pathname (format nil "~~/~A" *default-skelrc*)))
-
-(defvar *system-skelrc* (pathname "/etc/skelrc"))
 
 (defvar *skel-load-recursive* t
   "Whether to recursively load sk objects in the :include slot or store them

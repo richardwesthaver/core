@@ -9,7 +9,7 @@
                      (:feature :ext :krypt)
                      (:feature :ext :packy)
                      (:feature :gui :gui)
-                     (:feature :gui :clouseau))
+                     (:feature :clim :clouseau))
   :serial t
   :components 
   ((:module "core"
@@ -51,7 +51,7 @@
     :components
     ((:file "pkg")
      (:file "deploy" :if-feature :deploy)
-     (:file "viz" :if-feature :gui)))
+     (:file "view" :if-feature :clim)))
    (:module "ext"
     :components
     ((:file "pkg")

@@ -24,7 +24,7 @@
 ;; Additionally there is a collection of default extensions which may be
 ;; toggled off via the SK-CONFIG FEATURES slot:
 
-;; - VIZ provides an API for generating visualizations of SKEL objects
+;; - VIEW provides an API for generating visualizations of SKEL objects
 
 ;; - PACKY enables package management and distribution.
 
@@ -39,7 +39,7 @@
   (:nicknames :sk-core)
   (:use :cl :std)
   (:import-from :ast :*keep-ast*)
-  (:use-reexport :skel/core/condition :skel/core/proto :skel/core/var
+  (:use-reexport :skel/core/proto :skel/core/int
    :skel/core/header :skel/core/obj :skel/core/util :skel/core/db :skel/core/log))
 
 (pkg:defpkg :skel/comp

@@ -57,6 +57,11 @@
                (atom a)
                (cons (car a))))))
 
+(defmacro with-thread ((&key bindings name) &body body)
+  `(let ((*default-special-bindings* ,bindings))
+     (make-thread (lambda () ,@body)
+                  :name ,name)))
+
 (defmacro with-threads ((n &key args) &body body)
   `(make-threads ,n (lambda (,@args) (declare (ignorable ,@(parse-lambda-list-names args))) ,@body)))
 
@@ -170,6 +175,120 @@
     (when (not success)
       (grab-mutex lock))
     success))
+
+(sb-ext:defglobal .known-threads-lock. (make-mutex :name "known-threads-lock"))
+(sb-ext:defglobal .known-threads. (make-hash-table #-genera :weakness #-genera :key))
+
+(defun %get-thread-wrapper (native-thread)
+  (multiple-value-bind (thread presentp)
+      (with-mutex (.known-threads-lock.)
+        (gethash native-thread .known-threads.))
+    (if presentp
+        thread
+        (error "Thread wrapper is supposed to exist for ~S"
+               native-thread))))
+
+(defun (setf thread-wrapper) (thread native-thread)
+  (with-mutex (.known-threads-lock.)
+    (setf (gethash native-thread .known-threads.) thread)))
+
+(defun remove-thread-wrapper (native-thread)
+  (with-mutex (.known-threads-lock.)
+    (remhash native-thread .known-threads.)))
+
+;; Forms are evaluated in the new thread or in the calling thread?
+(defvar *default-special-bindings* nil
+  "This variable holds an alist associating special variable symbols
+  to forms to evaluate. Special variables named in this list will
+  be locally bound in the new thread before it begins executing user code.
+
+  This variable may be rebound around calls to MAKE-THREAD to
+  add/alter default bindings. The effect of mutating this list is
+  undefined, but earlier forms take precedence over later forms for
+  the same symbol, so defaults may be overridden by consing to the
+  head of the list.")
+
+(macrolet
+    ((defbindings (name docstring &body initforms)
+         (check-type docstring string)
+       `(std/macs:define-constant ,name
+            (list
+             ,@(loop for (special form) in initforms
+                     collect `(cons ',special ',form)))
+          :test #'equal
+          :documentation ,docstring)))
+  (defbindings +standard-io-bindings+
+      "Standard bindings of printer/reader control variables as per
+CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
+    (*package*                   (find-package :common-lisp-user))
+    (*print-array*               t)
+    (*print-base*                10)
+    (*print-case*                :upcase)
+    (*print-circle*              nil)
+    (*print-escape*              t)
+    (*print-gensym*              t)
+    (*print-length*              nil)
+    (*print-level*               nil)
+    (*print-lines*               nil)
+    (*print-miser-width*         nil)
+    ;; Genera doesn't yet implement COPY-PPRINT-DISPATCH
+    ;; (Calling it signals an error)
+    #-genera
+    (*print-pprint-dispatch*     (copy-pprint-dispatch nil))
+    (*print-pretty*              nil)
+    (*print-radix*               nil)
+    (*print-readably*            t)
+    (*print-right-margin*        nil)
+    (*random-state*              (make-random-state t))
+    (*read-base*                 10)
+    (*read-default-float-format* 'double-float)
+    (*read-eval*                 nil)
+    (*read-suppress*             nil)
+    (*readtable*                 (copy-readtable nil))))
+
+(defun compute-special-bindings (bindings)
+  (remove-duplicates (append bindings +standard-io-bindings+)
+                     :from-end t :key #'car))
+
+(defvar *%current-thread*)
+
+(defun establish-dynamic-env (thread function special-bindings trap-conditions)
+  "Return a closure that binds the symbols in SPECIAL-BINDINGS and calls
+FUNCTION."
+  (let* ((bindings (compute-special-bindings special-bindings))
+         (specials (mapcar #'car bindings))
+         (values (mapcar (lambda (f) (eval (cdr f))) bindings)))
+    (std/macs:named-lambda %establish-dynamic-env-wrapper ()
+      (progv specials values
+        (with-slots (%lock %return-values %exit-condition #+genera native-thread)
+            thread
+          (flet ((record-condition (c)
+                   (with-mutex (%lock)
+                     (setf %exit-condition c)))
+                 (run-function ()
+                   (let ((*%current-thread* nil))
+                     ;; Wait until the thread creator has finished creating
+                     ;; the wrapper.
+                     (with-mutex (%lock)
+                       (setf *%current-thread* (%get-thread-wrapper *%current-thread*)))
+                     (let ((retval
+                             (multiple-value-list (funcall function))))
+                       (with-mutex (%lock)
+                         (setf %return-values retval))
+                       retval))))
+            (unwind-protect
+                 (if trap-conditions
+                     (handler-case
+                         (values-list (run-function))
+                       (condition (c)
+                         (record-condition c)))
+                     (handler-bind
+                         ((condition #'record-condition))
+                       (values-list (run-function))))
+              ;; Genera doesn't support weak key hash tables. If we don't remove
+              ;; the native-thread object's entry from the hash table here, we'll
+              ;; never be able to GC the native-thread after it terminates
+              #+genera (remove-thread-wrapper native-thread))))))))
 
 ;; From Shinmera's VERBOSE
 (defstruct sync-message

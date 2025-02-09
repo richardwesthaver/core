@@ -84,7 +84,9 @@ and we may query the user for input.")
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)
   "A naive tree-shaker for lisp."
-  (sb-ext:gc :full t)
+  ;; https://gist.github.com/burtonsamograd/f08f561264ff94391300
+    (loop repeat 10
+          do (sb-ext:gc :full t))
   (apply #'sb-ext:save-lisp-and-die path args))
 
 (defun save-lisp-and-live (filename completion-function restart &rest args)

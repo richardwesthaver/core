@@ -1,4 +1,4 @@
-;;; skel/tools/viz.lisp --- skel object visualizer
+;;; skel/tools/view.lisp --- skel object visualizer
 
 ;; Skel Visualization extensions
 
@@ -17,7 +17,7 @@
 ;; - native  :: native backend - look into widgets, mcclim, gtk4
 
 ;;; Code:
-(in-package :skel/tools/viz)
+(in-package :skel/tools/view)
 
 (defgeneric sk-view (self &key new-process &allow-other-keys)
   (:documentation "View a SKEL object.")

@@ -1,7 +1,3 @@
-(defpackage :nlp/section
-  (:use :cl :std :nlp/doc :nlp/dbscan :nlp/tokenize)
-  (:export :extract-sections))
-
 (in-package :nlp/section)
 
 (defun extract-sections (text &key (epsilon 0.5))

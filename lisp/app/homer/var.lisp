@@ -4,9 +4,7 @@
 
 ;;; Code:
 (in-package :homer/core)
-
-(defparameter *user* (sb-posix:getenv "USER"))
-(defparameter *default-user-homerc* (merge-pathnames ".homerc" (user-homedir-pathname)))
+(defvar *user-homerc* (merge-homedir-pathnames ".homerc"))
 (declaim (type home-config *home-config*))
 (defvar *home-config*)
 (defvar *home-hidden-paths* (nconc *hidden-paths* (list "stash" "store" "readme.org" ".hgignore")))

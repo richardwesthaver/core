@@ -1,11 +1,3 @@
-(defpackage :nlp/data
-  (:use :cl :std)
-  (:export 
-   :language-data
-   :*language-data*
-   :stop-words-lookup
-   :stop-words))
-
 (in-package :nlp/data)
 
 (defclass language-data ()

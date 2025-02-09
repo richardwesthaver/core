@@ -33,7 +33,7 @@
   (inspect (or *skel-project* *skel-user-config*)))
 
 (defun call-with-args (action args)
-  (let* ((*default-pathname-defaults* *skel-path*))
+  (let* ((*default-pathname-defaults* skel-path))
     (if (null args)
         (sk-call *skel-project* action)
         (mapc (lambda (x)
@@ -92,7 +92,7 @@
 (defcmd skc-id ()
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
 
-(defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*) nil))
+(defopt skc-config (load-user-skelrc (or *arg* user-skelrc) nil))
 
 (defcmd skc-edit ()
   (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))
@@ -136,14 +136,13 @@
 (defun sk-shell ()
   (trace! "starting skel shell")
   (setq *no-exit* t)
-  (cli/clap::with-cli-handlers
-    (progn
-      (in-package :sk-user)
-      (use-package :cl-user)
-      (use-package :sb-ext)
-      (use-package :std-user)
-      (println "Welcome to SKEL")
-      (sb-impl::toplevel-repl nil))))
+  (progn
+    (in-package :sk-user)
+    (use-package :cl-user)
+    (use-package :sb-ext)
+    (use-package :std-user)
+    (println "Welcome to SKEL")
+    (sb-impl::toplevel-repl nil)))
 
 (defcmd skc-shell () (sk-shell))
 

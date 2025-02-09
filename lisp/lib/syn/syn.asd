@@ -5,13 +5,14 @@
   :depends-on (:std :obj :parse :tree-sitter :doc :cli)
   :serial t
   :components ((:file "pkg")
-               (:file "lint")
                (:file "ts")
                (:module "lang"
                 :components
                 ((:file "c")
                  (:file "js")
                  (:file "rs")))
+               (:file "lint")
+               (:file "cli")
                (:module "gen"
                 :components
                 ((:file "pkg")

@@ -76,10 +76,6 @@
 ;;;         for detecting this and suggesting the fix.
 
 ;;; Code:
-(defpackage :nlp/stem/porter
-  (:use :cl :std :rdb)
-  (:export :stem))
-
 (in-package :nlp/stem/porter)
 
 (defun consonantp (str i)

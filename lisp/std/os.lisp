@@ -10,6 +10,8 @@
 (in-package :std/os)
 (require 'sb-posix)
 
+(defvar *user* (sb-posix:getenv "USER"))
+
 (defun sudo-p ()
   "Return T if effective user is root."
   (zerop (parse-integer (with-output-to-string (str) (sb-ext:process-output (sb-ext:run-program "id" (list "-u") :search t :output str)) 0))))

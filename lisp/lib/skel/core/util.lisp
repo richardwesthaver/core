@@ -4,27 +4,27 @@
 ;;; Configs
 
 ;; init-*,load-*
-(defun load-skelrc (&optional (usr-path *user-skelrc*) (sys-path *system-skelrc*))
+(defun load-skelrc (&optional (usr-path user-skelrc) (sys-path system-skelrc))
   (values
    (load-system-skelrc sys-path)
    (load-user-skelrc usr-path)))
 
-(defun init-user-skelrc (&optional (file *user-skelrc*))
+(defun init-user-skelrc (&optional (file user-skelrc))
   "Initialize a skelrc configuration based on the currently active
 *SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
   (sk-write-file (make-instance 'sk-user-config)
                  :path file
                  :pretty t))
 
-(defun init-system-skelrc (&optional (file *system-skelrc*))
+(defun init-system-skelrc (&optional (file system-skelrc))
   "Initialize a system skelrc configuration based on the currently active
 *SKEL-SYSTEM-CONFIG*."
   (sk-write-file (make-instance 'sk-system-config)
                  :path file
                  :pretty t))
 
-(defun load-user-skelrc (&optional (file *user-skelrc*) (init t))
-  "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
+(defun load-user-skelrc (&optional (file user-skelrc) (init t))
+  "Load a user-skelrc configuration from FILE. Defaults to USER-SKELR*.
 
 If FILE does not exists, it is created with a default configuration."
   (flet ((%load () 
@@ -42,7 +42,7 @@ If FILE does not exists, it is created with a default configuration."
             (%load)
             (init-user-skelrc file)))))
 
-(defun load-system-skelrc (&optional (file *system-skelrc*) auto)
+(defun load-system-skelrc (&optional (file system-skelrc) auto)
   "Load a skelrc configuration from FILE. Defaults to /etc/skel/skelrc.
 
 Unlike LOAD-USER-SKELRC we don't generate a default file if one
@@ -115,11 +115,11 @@ skelfile if found."
 
 (defun edit-skelrc ()
   "Open the current user configuration using ED."
-  (ed *user-skelrc*))
+  (ed user-skelrc))
 
 (defun edit-system-skelrc ()
   "Open the current system configuration using ED."
-  (ed *system-skelrc*))
+  (ed system-skelrc))
 
 (defun sk-config-slot (slot &optional (default :error))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
@@ -161,18 +161,18 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
     ((%init (set)
        `(with-readtable :shell
           (load-skelrc)
+          (when-let ((cache (sk-config-slot :cache nil)))
+            (,set skel-cache (ensure-directory-truename cache)))
+          (when-let ((store (sk-config-slot :store nil)))
+            (,set skel-store (ensure-directory-truename store)))
+          (when-let ((stash (sk-config-slot :stash nil)))
+            (,set skel-stash (ensure-directory-truename stash)))
+          (when-let ((registry (sk-config-slot :registry nil)))
+            (,set skel-registry (ensure-directory-truename registry)))
           (when-let ((project (find-skelfile *default-pathname-defaults*)))
             (,set *skel-project* (load-skelfile project)
-                  *skel-path* #1=(sk-src *skel-project*)
+                  skel-path #1=(sk-src *skel-project*)
                   cli/shell:*shell-directory* #1#))
-          (when-let ((cache (sk-config-slot :cache nil)))
-            (,set *skel-cache* (ensure-directory-truename cache)))
-          (when-let ((store (sk-config-slot :store nil)))
-            (,set *skel-store* (ensure-directory-truename store)))
-          (when-let ((stash (sk-config-slot :stash nil)))
-            (,set *skel-stash* (ensure-directory-truename stash)))
-          (when-let ((registry (sk-config-slot :registry nil)))
-            (,set *skel-registry* (ensure-directory-truename registry)))
           (when-let ((hooks *skel-init-hook*))
             (mapc 'funcall hooks))
           (values))))
@@ -182,10 +182,10 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 *SKEL-SYSTEM-CONFIG*
 *SKEL-USER-CONFIG*
 *SKEL-PROJECT*
-*SKEL-CACHE*
-*SKEL-STORE*
-*SKEL-STASH*
-*SKEL-REGISTRY*
+SKEL-CACHE
+SKEL-STORE
+SKEL-STASH
+SKEL-REGISTRY
 :IF-FEATURE :DB
 *SKEL-LOGGER*"
     (%init setq))

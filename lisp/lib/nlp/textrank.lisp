@@ -3,11 +3,6 @@
 ;; based on https://web.eecs.umich.edu/~mihalcea/papers/mihalcea.emnlp04.pdf
 
 ;;; Code:
-(defpackage :nlp/textrank
-  (:use :cl :std :nlp/doc :nlp/tokenize)
-  (:export 
-   :summarize-text :edges :document-vertex))
-
 (in-package :nlp/textrank)
 
 (defclass document-vertex (document)

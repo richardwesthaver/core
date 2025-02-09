@@ -41,7 +41,7 @@
 
 (defun make-sxp (&rest form) (make-instance 'ast:ast :ast form))
 
-(deftype sxp-fmt-designator () '(member :canonical :collapsed :pretty)) 
+(deftype sxp-fmt-designator () '(member :canonical :collapsed :pretty))
 
 (defun file-read-forms (file)
   (declare (sb-kernel:pathname-designator file))

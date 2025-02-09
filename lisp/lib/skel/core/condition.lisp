@@ -1,7 +1,7 @@
 ;;; skel/core/condition.lisp --- Skel Errors
 
 ;;; Code:
-(in-package :skel/core/condition)
+(in-package :skel/core/int)
 
 (define-condition skel-condition () ()
   (:documentation "Superclass of SKEL error types."))

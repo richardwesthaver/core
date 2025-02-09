@@ -32,10 +32,11 @@ approval status.
 
 (define-constant +id3-magic+ #(73 68 51) :test 'equalp)
 
+;; FIX 2025-02-07: 
 (defun decode-u28 (bytes)
   "Decode a sequence of 7-bit bytes as an ID3-compliant unsigned 28-bit integer."
-  
-)
+  (declare ((array (unsigned-byte 7)) bytes))
+  (octets-to-integer bytes))
 
 (defun read-id3-header (file)
   (with-open-file (in file :element-type '(unsigned-byte 8))
@@ -54,7 +55,7 @@ approval status.
 ;; (read-id3-header "/mnt/z/music/05 - Clear.mp3")
 
 (defun show-id3-header (file)
-  (with-slots (major-version revision flags size) (read-id3 file)
+  (with-slots (major-version revision flags size) (read-id3-header file)
     (format t "ID3 ~d.~d ~8,'0b ~d bytes -- ~a~%"
             major-version revision flags size (enough-namestring file))))
 

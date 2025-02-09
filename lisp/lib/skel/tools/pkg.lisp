@@ -1,4 +1,4 @@
-(defpackage :skel/tools/viz
+(defpackage :skel/tools/view
   (:use :cl :std :skel/core :dat/dot :obj/graph)
   (:export :sk-view))
 
