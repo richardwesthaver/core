@@ -79,3 +79,65 @@ arrange for FVAR to be closed after BODY."
 (define-alien-routine endmntent int (stream (* t)))
 
 (define-alien-routine hasmntopt c-string (mnt (* mntent)) (opt c-string))
+
+;;; XDG
+
+;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
+(defvar *xdg-user-dirs* 
+  (let ((tbl (make-hash-table)))
+    (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
+          '((:desktop . "Desktop")
+            (:download . "Downloads")
+            (:templates . "Templates")
+            (:publicshare . "Public")
+            (:documents . "Documents")
+            (:music . "Music")
+            (:pictures . "Pictures")
+            (:videos . "Videos")))
+    tbl))
+
+(defun xdg-user-dir (key) (gethash key *xdg-user-dirs*))
+
+(defun (setf xdg-user-dir) (v k)
+  (let ((new (if (typep v 'std/path:absolute-pathname)
+                 v
+                 (merge-pathnames v "~/"))))
+    (setf (gethash k *xdg-user-dirs*) new)))
+
+(defun init-xdg-user-dirs ()
+  "Init *XDG-USER-DIRS* from environment."
+  (mapc
+   (lambda (k)
+     (std/macs:when-let ((e (sb-posix:getenv (concatenate 'string "XDG_" (substitute #\_ #\- (string k)) "DIR"))))
+       (setf (xdg-user-dir k) (pathname e))))
+   (std/hash-table:hash-table-keys *xdg-user-dirs*))
+  *xdg-user-dirs*)
+
+;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
+(defvar *xdg-base-dirs*
+  (let ((tbl (make-hash-table)))
+    (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
+          `((:data-home . ".local/share")
+            (:config-home ".config")
+            (:state-home . ".local/state")
+            (:data-dirs . (#p"/usr/local/share/" #p"/usr/share/"))
+            (:config-dirs . (#P"/etc/xdg"))
+            (:cache-home . (".cache"))
+            (:runtime-dir)))
+    tbl))
+
+(defun xdg-base-dir (key) (gethash key *xdg-base-dirs*))
+
+(defun (setf xdg-base-dir) (v k)
+  (let ((new (if (typep v 'std/path:absolute-pathname)
+                 v
+                 (merge-pathnames v "~/"))))
+    (setf (gethash k *xdg-base-dirs*) new)))
+
+(defun init-xdg-base-dirs ()
+  "Init *XDG-BASE-DIRS* from environment."
+  (mapc
+   (lambda (k)
+     (std/macs:when-let ((e (sb-posix:getenv (concatenate 'string "XDG_" (substitute #\_ #\- (string k))))))
+       (setf (xdg-base-dir k) (pathname e))))
+   (std/hash-table:hash-table-keys *xdg-base-dirs*)))

@@ -646,7 +646,13 @@
    :list-all-groups
    :with-umask
    :with-fd
-   :*user*))
+   :*user*
+   :*xdg-user-dirs*
+   :xdg-user-dir
+   :xdg-base-dir
+   :*xdg-base-dirs*
+   :init-xdg-user-dirs
+   :init-xdg-base-dirs))
 
 (defpkg :std/file
   (:use :cl)

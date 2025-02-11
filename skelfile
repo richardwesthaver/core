@@ -36,15 +36,14 @@
        build-core 
        ;; rust-bin
        ))
- (upstream ()
-           ;; pretty gross hack to fix broken tree
+ (upstream () ;; pretty gross hack to fix broken tree
            (vc:hg-fast-export (sk-vc *skel-project*))
            #$cd /tmp/core
            git remote add cb ssh://git@codeberg.org/c-c/core
            git remote add gh ssh://git@github.com/richardwesthaver/core
            git filter-repo --invert-paths --path std --force
-           git push -u cb default
-           git push gh default$#)
+           git push -u cb default --force
+           git push gh default --force$#)
  (clean ()
         #$rm -vrf .stash$#
         #$find emacs -name '*.elc' -type f -delete$#

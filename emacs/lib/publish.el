@@ -95,13 +95,13 @@
          :publishing-function org-html-publish-to-html
          :htmlized-source t
          :html-postamble ,html-foot)
-        ("notes"
-         :base-directory ,(expand-file-name "notes" project-dir)
+        ("graph"
+         :base-directory ,(expand-file-name "graph" project-dir)
          :recursive t
          :base-extension "org"
          :footnote-section-p t
          :html-doctype "<!doctype html>"
-         :publishing-directory ,(expand-file-name "notes" publish-dir)
+         :publishing-directory ,(expand-file-name "graph" publish-dir)
          :publishing-function org-html-publish-to-html
          :htmlized-source t
          :html-postamble ,html-foot)

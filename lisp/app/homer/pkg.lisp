@@ -26,7 +26,8 @@
    #:home-config
    :home-config-slot
    #:homer-job
-   #:homer-service-start))
+   #:homer-service-start
+   #:homer-service-restart))
 
 #+cli
 (defpackage :homer/cli
