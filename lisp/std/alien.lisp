@@ -42,6 +42,7 @@
       (pathname name)))
 
 (defun list-all-shared-objects ()
+  "Return the current value of SB-ALIEN::*SHARED-OBJECTS*."
   sb-alien::*shared-objects*)
 
 (defmacro define-alien-loader (name &optional (root "/usr/local/lib/") path)
@@ -55,10 +56,14 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
          (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))))
        
 (defmacro define-opaque (ty &optional foreign-type)
+  "Define an 'opaque' alien type. This is an internal convenience function for
+types which are effectively aliases for other types. The default target type
+is TY with a -T prepended as is customary in many C codebases."
   (eval-when (:compile-toplevel :load-toplevel :execute)
     `(define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))))
 
 (defun setfa (place from)
+  "Fill in a foreign array PLACE using lisp vector FROM."
   (declare (vector from))
   (loop for i below (length from)
         for x across from
@@ -66,6 +71,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
                  x)))
 
 (defun copy-c-string (src dest &aux (index 0))
+  "Copy a C-allocated string SRC into lisp string DEST."
   (declare (type sb-int:index index))
   (loop (let ((b (sb-sys:sap-ref-8 src index)))
           (when (= b 0)
@@ -75,6 +81,8 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
           (incf index))))
 
 (defun clone-strings (list &optional null-terminate)
+  "Copy the list of strings in LIST to a foreign array of C strings. When
+NULL-TERMINATE is T we append a null character to each string."
   (let ((len (length list)))
     (with-alien ((x (* (* char)) (make-alien (* char) len)))
       (labels ((populate (list index)
@@ -88,6 +96,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
         (cast (populate list 0) (* c-string))))))
 
 (defun c-strings-to-string-list (c-strings)
+  "Copy the foreign array C-STRINGS to a lisp list of strings."
   (declare (type (alien (* c-string)) c-strings))
   (let ((reversed-result nil))
     (dotimes (i most-positive-fixnum)
@@ -98,6 +107,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
             (return (nreverse reversed-result)))))))
 
 (defun clone-octets-to-alien (lispa alien)
+  "Copy the octet-vector LISPA to foreign array ALIEN."
   (declare (optimize (speed 3))
            (octet-vector lispa))
   ;; (setf alien (cast alien (array (unsigned 8))))
@@ -127,14 +137,17 @@ alien (* size-t) with same size as the first value."
   (values (clone-octet-vector-list lst) (clone-integer-list (mapcar 'length lst))))
 
 (defun octets-to-alien (lispa)
+  "Copy octet-vector LISPA to a foreign byte pointer."
   (let ((a (make-alien (unsigned 8) (length lispa))))
     (clone-octets-to-alien lispa a)))
 
 ;; TODO 2024-09-19: maybe want to return values, second being the length?
 (defun octets-to-alien-array (lispa)
+  "Copy octet-vector LISPA to a foreign byte array."
   (cast (octets-to-alien lispa) (array (unsigned 8))))
 
 (defun clone-octets-from-alien (aliena lispa &optional len)
+  "Copy the foreign byte pointer ALIENA to lisp octet-vector LISPA. When LEN is non-nil only copy that number of bytes starting from the beginning."
   (declare (optimize (speed 3))
            (octet-vector lispa))
   (unless len (setf len (length lispa)))
@@ -149,22 +162,27 @@ alien (* size-t) with same size as the first value."
   buffer)
 
 (defun foreign-int-to-bool (x size)
+  "Convert a foreign integer X of length SIZE to a lisp boolean."
   (if (zerop (foreign-int-to-integer x size))
       nil
       t))
 
+;; TODO 2025-02-11: should be bool-to-int
 (defun bool-to-foreign-int (val)
+  "Convert a lisp boolean to an integer."
   (if val 1 0))
 
 (define-condition invalid-enum-variant (simple-error) ())
 (define-condition invalid-enum-value (simple-error) ())
 
 (defun invalid-enum-variant (var enum)
+  "Signal an INVALID-ENUM-VARIANT error."
   (error 'invalid-enum-variant
          :format-control "~A is not a variant of enum ~A"
          :format-arguments (list var enum)))
 
 (defun invalid-enum-value (var enum)
+  "Signal an INVALID-ENUM-VALUE error."
   (error 'invalid-enum-value
          :format-control "~A is not a value associated with a variant of enum ~A"
          :format-arguments (list var enum)))
@@ -352,12 +370,13 @@ variant associated with this value." type name)
            (clone-octets-to-alien vec buf))))
 
 (defun offset-char-pointer (p &optional (offset 0))
-  "Pointer arithmetic."
+  "Return a pointer to the address OFFSET bytes from P."
   (declare (type (alien (* unsigned-char)) p)
            (type fixnum offset))
   (sap-alien (sap+ (alien-sap p) offset) (* unsigned-char)))
 
 (defmacro with-vector-sap ((name vector) &body body)
+  "Do BODY with NAME bound to the vector-sap of VECTOR. VECTOR is pinned for the duration."
   `(sb-sys:with-pinned-objects (,vector)
      (let ((,name (sb-sys:vector-sap ,vector)))
        ,@body)))
@@ -388,7 +407,8 @@ Each var can be of the form:
   "Return the number of CPU threads online."
   (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln))
 
-(defvar *cpus* (num-cpus))
+(defparameter *cpus* (num-cpus)
+  "The number of unique processors (cores) reported by the OS.")
 
 ;;; Non-standard types
 (deftype alien-or-lisp-octets () '(or array 

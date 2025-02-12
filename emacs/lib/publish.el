@@ -54,7 +54,7 @@
 <button accesskey=\"s\" class=show onclick=open_all_sections()>show</button> <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></nav>")
       
 (setq org-publish-project-alist
-      `(("compiler.company" :components ("index" "meta" "blog" "docs" "notes" "plan"))
+      `(("compiler.company" :components ("index" "meta" "blog" "docs" "graph" "plan"))
         ("index"
          :base-directory ,project-dir
          :base-extension "org"
@@ -68,7 +68,7 @@
         ("meta"
          :base-directory ,(expand-file-name "meta" project-dir)
          :base-extension "org"
-         :recursive nil
+         :recursive t
          :footnote-section-p t
          :html-doctype "<!doctype html>"
          :publishing-directory ,(expand-file-name "meta" publish-dir)

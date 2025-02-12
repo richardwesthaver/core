@@ -6,7 +6,7 @@
   (:sb-concurrency :sb-posix :sb-bsd-sockets :cl-ppcre
    :dat :obj :io :parse 
    :chipz :babel :rt :std   
-   :cli :log :cry)
+   :cli :log :cry (:feature :swank :swank))
   :serial t
   :components ((:file "pkg")
                (:file "condition")
@@ -21,8 +21,8 @@
                              (:file "osc")
                              (:file "http")))
                (:module "proto"
-                :components ((:file "swank" :if-feature "swank")
-                             (:file "crew" :if-feature "swank")
+                :components ((:file "swank" :if-feature :swank)
+                             (:file "crew" :if-feature :swank)
                              (:file "http")
                              (:file "dns")
                              (:file "ssh")))

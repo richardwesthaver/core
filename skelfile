@@ -33,7 +33,7 @@
        ;; save-infra save-tests
        build-zstd-alien
        build-tree-sitter-alien
-       build-core 
+       build-all-core 
        ;; rust-bin
        ))
  (upstream () ;; pretty gross hack to fix broken tree
@@ -204,6 +204,8 @@
                #$mv lisp/bin/core .stash/core$#)
        (:build-all (%stash) (with-sbcl (:noinform t :quit t)
                               (push :virt *features*)
+                              (push :net *features*)
+                              (push :swank *features*)
                               (push :gui *features*)
                               (push :x11 *features*)
                               (push :clim *features*)
