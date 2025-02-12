@@ -14,6 +14,8 @@
                (:file "util")
                (:file "udp")
                (:file "tcp")
+               (:file "endpoint")
+               (:file "transport")
                (:module "codec"
                 :components ((:file "punycode")
                              (:file "dns")
