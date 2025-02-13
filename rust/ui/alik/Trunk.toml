@@ -1,4 +1,0 @@
-[build]
-target = "index.html"
-release = true
-dist = "../../../.stash/dist"

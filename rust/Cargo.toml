@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["lib/*","bin/*","ui/*", "ui/alik/dash"]
+members = ["crates/*"]
 [workspace.package]
 version = "0.1.0"
 authors = ["Richard Westhaver <ellis@rwest.io>"]
@@ -9,16 +9,16 @@ edition = "2021"
 lto = true
 panic = "abort"
 [workspace.dependencies]
-tokio = "1.37"
-tokio-util = "0.7.10"
-tokio-stream = "0.1.15"
-serde = "1.0.200"
-log = "0.4.21"
+tokio = "1.43"
+tokio-util = "0.7.13"
+tokio-stream = "0.1.17"
+serde = "1.0.217"
+log = "0.4.25"
 bindgen = "0.66.1"
 
 # [profile.dev.package."*"]
 # opt-level = 2
 
 [patch.crates-io]
-egui = { git = "https://github.com/emilk/egui", branch = "emilk/release-0.27.2" }
-eframe = { git = "https://github.com/emilk/egui", branch = "emilk/release-0.27.2" }
+egui = { git = "https://github.com/emilk/egui", branch = "emilk/release-0.28.0" }
+eframe = { git = "https://github.com/emilk/egui", branch = "emilk/release-0.28.0" }

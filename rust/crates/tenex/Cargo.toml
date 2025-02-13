@@ -1,0 +1,33 @@
+[package]
+name = "tenex"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+util = ["tenex-util"]
+oauth = ["tenex-util/oauth2"]
+progress = ["tenex-util/indicatif"]
+default = ["util"]
+full = ["ipapi","nws","freesound","gitlab","util","oauth","progress","aws"]
+
+[dependencies]
+tenex-util = { path = "util", optional = true }
+ipapi = { path = "models/ipapi", optional = true }
+aws = { path = "models/aws", optional = true }
+gitlab = { path = "models/gitlab", optional = true }
+nws = { path = "models/nws", optional = true }
+freesound = { path = "models/freesound", optional = true }
+tokio = "1.43"
+serde_json = "1.0.138"
+serde = { version = "1.0.217", features = ["derive"] }
+chrono = { version = "0.4.39", features = ["serde"] }
+jwt = { version = "0.15.0", optional = true }
+oauth2 = { version = "4.4.2", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.43", features = ["full"] }
+
+[[example]]
+name = "freesound"
+path = "examples/freesound.rs"
+required-features = ["freesound"]
