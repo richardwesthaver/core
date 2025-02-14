@@ -5,11 +5,14 @@
 ;;; Code:
 (pkg:defpkg :gui
   (:use :cl :std :log)
-  (:use-reexport :gui/core :gui/ext
-   #+wl :gui/wl 
-   #+x11 :gui/x11))
+  (:use-reexport :gui/core :gui/ext))
 
 (in-package :gui)
+
+(when (sb-int:featurep :x11)
+  (use-package :gui/x11))
+(when (sb-int:featurep :wl)
+  (use-package :gui/wl))
 
 (defvar *default-display-protocol* :gui/x11)
 

@@ -18,6 +18,8 @@
   ((serial :initform nil :type boolean :accessor sk-lisp-system-serial)
    (perform :initform nil :type list :accessor sk-lisp-system-perform)))
 
+(defmethod name ((self sk-lisp-system)) (asdf::coerce-name self))
+
 (defun read-system-definitions (system)
   (with-open-file (file (asdf:system-source-file system))
     (loop for x = (read file nil)

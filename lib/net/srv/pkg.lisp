@@ -100,6 +100,14 @@
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
 
+;;; Conditions
+(defun abort-request-handler (&optional result)
+  "This function can be called by a request handler at any time to
+immediately abort handling the request.  This works as if the handler
+had returned RESULT.  See the source code of REDIRECT for an example."
+  (throw 'handler-done result))
+
+;;; Classes
 (defclass net-response (response) ())
 
  (defclass net-request (request)
@@ -126,7 +134,7 @@
 
 (defun request-protocol* (&optional (request *request*))
   "Returns the request protocol as a Lisp keyword."
-  (request-protocol request))
+  (uri-scheme (uri request)))
 
 ;;; Session
 (defmacro with-session-db-lock (lock &body body)
@@ -589,7 +597,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
       (progn
         (sb-bsd-sockets:socket-close sock)
         (setf (socket self) nil))
-      (net-warning "service socket unbound"))
+      (warn 'protocol-warning :message "service socket unbound"))
     self))
 
 (defmethod initialize-connection-hook ((self net-service) stream)

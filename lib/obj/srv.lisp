@@ -70,7 +70,7 @@
 (defclass service (id)
   ((request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
-   (engine :type service-engine :accessor engine :initarg :engine)))
+   (engine :type engine :accessor engine :initarg :engine)))
 
 (defclass response () ())
 (defmethod response-ok-p (res) t)

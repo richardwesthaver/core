@@ -22,7 +22,36 @@
 ;; sb-pretty::*standard-pprint-dispatch-table*
 ;; *readtable*
 
-(defmethod sk-print ((self skel) &key (stream t) (id t) exclude (case :downcase) direct &allow-other-keys)
+(defun sk-coerce-name (name &optional (case :downcase))
+  (if (eql :downcase case) (string-downcase name) (string-upcase name)))
+
+(defun sk-print-slot (slot self &key (stream *standard-output*) (limit 8) (case :downcase))
+     (let ((name (sb-mop:slot-definition-name slot)))
+       (when (slot-boundp self name)
+         (when-let ((val (slot-value self name))
+                    (name (sk-coerce-name name case)))
+           (typecase val
+             (string (format stream ":~A ~A~%" name val))
+             (cons (unless (sequence:emptyp val) (format stream ":~A ~A~%" name val)))
+             (vector (unless (sequence:emptyp val)
+                       (format stream ":~A~%[" name)
+                       (pprint-tabular stream (coerce (take limit val) 'list) nil)
+                       (force-output stream)
+                       (when (> (length val) limit) (format stream " ..."))
+                       (format stream "]~%")))
+             (hash-table (unless (zerop (hash-table-count val))
+                           (format stream ":~A~%{" name)
+                           (pprint-tabular 
+                            stream 
+                            (mapcar (lambda (x) (setf (car x) (sk-coerce-name (car x) case)) x)
+                                    (coerce (take limit (hash-table-alist val)) 'list))
+                            nil)
+                           (force-output stream)
+                           (when (> (hash-table-count val) limit) (format stream " ..."))
+                           (format stream "}~%")))
+             (t (format stream ":~A ~A~%" name val)))))))
+
+(defmethod sk-print ((self skel) &key (stream *standard-output*) (id t) exclude (case :downcase) direct (limit 8) &allow-other-keys)
   (let ((name (skel/core/obj::sk-slot-name self (when (eql :downcase case))))
         (*print-case* case))
     (if id
@@ -31,24 +60,9 @@
                 (format-sxhash (obj/id:id self)))
         (format stream "~S~%" name)))
   (mapcar
-   (lambda (slot)
-     (let ((name (sb-mop:slot-definition-name slot)))
-       (when (slot-boundp self name)
-         (when-let ((val (slot-value self name))
-                    (name (if (eql :downcase case) (string-downcase name) name)))
-           (typecase val
-             (sequence (unless (sequence:emptyp val) (format stream ":~A ~A~%" name val)))
-             (hash-table (unless (zerop (hash-table-count val))
-                           (format stream ":~A~%" name)
-                           (pprint-tabular stream (hash-table-alist val) nil nil 2)
-                           (terpri stream)))
-             (t (format stream ":~A ~A~%" name val)))))))
+   (lambda (slot) (sk-print-slot slot self :stream stream :limit limit :case case))
    (remove-if (lambda (x) (member (keywordicate (sb-mop:slot-definition-name x)) exclude))
               (if direct
                   (sb-mop:class-direct-slots (class-of self))
                   (sb-mop:class-slots (class-of self)))))
   self)
-
-(defmethod sk-print ((self t) &key (stream t) (pretty t) (case :downcase))
-  (write self :stream stream :pretty pretty :case case)
-  (terpri stream))

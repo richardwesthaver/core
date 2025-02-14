@@ -86,6 +86,11 @@
 (defclass sk-component (skel)
   ((parent :initarg :parent :accessor sk-parent)))
 
+(defmethod print-object ((self sk-component) stream)
+  (print-unreadable-object (self stream)
+    (when-let ((name (or (name self) (format-sxhash (id self)))))
+      (format stream "~A ~A" (sk-class-name self t) name))))
+
 ;;; Module
 
 ;; Again just like ASDF, we define a SK-MOD class which subclasses
@@ -325,7 +330,7 @@ via the special form stored in RECIPE."
   (print-unreadable-object (self stream)
     (format stream "~A ~A" (sk-class-name self t) (sk-rule-target self))
     (when-let ((source (sk-rule-source self)))
-      (format stream " ~A" source))))
+      (format stream " ~A" (mapcar 'string-downcase source)))))
 
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))

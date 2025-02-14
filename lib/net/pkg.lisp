@@ -1,3 +1,10 @@
+;;; pkg.lisp --- Network Packages
+
+;; 
+
+;;; Code:
+(pushnew :net *features*)
+
 (pkg:defpkg :net/core
   (:use :cl :std :sb-thread :sb-concurrency)
   (:recycle :sb-bsd-sockets)
@@ -18,7 +25,6 @@
    :peer
    :proxy
    :tunnel
-   :net-warning
    :codec-warning
    :protocol-warning
    :connect
@@ -117,50 +123,9 @@
   (:use :cl :net/core)
   (:import-from :std :eval-always :define-constant
    :hash-table-alist)
-  (:export :+known-http-words+))
-
-;; TODO 2024-08-20: 
-(std:defpkg :net/proto/swank
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
-  ;; (:import-from :swank-client ...)
-  ;; (:use-reexport :swank-client)
-  (:export))
-
-(defpackage :net/proto/crew
-  (:nicknames :net/crew)
-  (:use :cl :sb-bsd-sockets :std :net/core :obj/id)
-  (:import-from #:sb-thread
-                #:condition-notify
-                #:condition-wait
-                ;; #:make-condition-variable
-                #:make-mutex
-                #:make-thread
-                #:with-mutex)
-  (:import-from :sb-concurrency
-   :make-gate)
-  ;; (:import-from #:swank
-  ;;               #:slime-close
-  ;;               #:slime-connect
-  ;;               #:slime-eval
-  ;;               #:slime-eval-async
-  ;;               #:slime-migrate-evals
-  ;;               #:slime-network-error
-  ;;               #:slime-pending-evals-p
-  ;;               #:swank-connection
-  ;;               #:with-slime-connection)
-  (:export 
-   :crew-connection-info
-   :make-worker-pool
-   :crew-worker :crew-worker-pool
-   :*crew-worker-pools-lock*
-   :*crew-worker-pools*
-   :connect-worker
-   :disconnect-worker
-   :parallel-mapcar :parallel-reduce
-   :eval-form-all-workers
-   :eval-form-repeatedly
-   :eval-repeatedly-async-state   
-   :reconnect-worker))
+  (:export :+known-http-words+ 
+   :*http-status-message-map* :http-status-message :http-keyword :+known-http-versions+
+   :+known-http-methods+))
 
 (defpackage :net/proto/dns
   (:nicknames :net/dns)
@@ -450,28 +415,6 @@
    #:service-timeout
    #:net-response
    #:net-request
-   #:net-service))
-
-(pkg:defpkg :net
-  (:use :cl :std)
-  (:use-reexport 
-   :net/core 
-   :net/tcp 
-   :net/udp
-   :net/srv
-   :net/codec/dns 
-   :net/codec/osc 
-   :net/codec/tlv
-   :net/codec/http
-   :net/proto/dns
-   :net/proto/swank
-   :net/proto/crew 
-   :net/proto/ssh
-   :net/proto/http))
-
-(pkg:defpkg :net-user
-  (:use :cl :std :std-user :net :obj))
-
-(in-package :net)
-
-(pushnew :net *features*)
+   #:net-service
+   #:*access-log-lock*
+   #:*message-log-lock*))

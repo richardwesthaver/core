@@ -6,7 +6,10 @@
   (:sb-concurrency :sb-posix :sb-bsd-sockets :cl-ppcre
    :dat :obj :io :parse 
    :chipz :babel :rt :std   
-   :cli :log :cry (:feature :swank :swank))
+   :cli :log :cry 
+   (:feature :swank :swank)
+   (:feature :swank :swank-client)
+   (:feature :swank :swank-crew))
   :serial t
   :components ((:file "pkg")
                (:file "condition")
@@ -36,7 +39,8 @@
                  (:file "udp")
                  (:file "http")
                  (:file "oauth")
-                 (:file "ext"))))
+                 (:file "ext")))
+               (:file "net"))
   :in-order-to ((test-op (test-op :net/tests))))
 
 (defsystem :net/tests

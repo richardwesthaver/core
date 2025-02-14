@@ -126,6 +126,11 @@ are missing."))
   name
   url)
 
+(defmethod print-object ((self vc-remote) stream)
+  (let ((name (vc-remote-name self))
+        (url (vc-remote-url self)))
+    (format stream "(~A . ~A)" (string-downcase name) url)))
+
 (defstruct vc-rev num id)
 
 (defclass vc-repo ()
@@ -174,6 +179,7 @@ creating a repo object which is stored in *REPO-REGISTRY*."
 
 (defmethod print-object ((self vc-repo) stream)
   (print-unreadable-object (self stream)
-    (format stream "~S" (vc-type self))
+    (write "vc-repo" :stream stream)
     (when-let ((remotes (vc-remotes self)))
-      (format stream " ~A" remotes))))
+      (write " " :stream stream)
+      (pprint-tabular stream remotes nil nil 2))))

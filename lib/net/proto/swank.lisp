@@ -7,6 +7,11 @@
 ;; ref: https://github.com/astine/swank-client/blob/master/swank-description.markdown
 
 ;;; Code:
+(std:defpkg :net/proto/swank
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
+  (:use-reexport :swank-client)
+  (:export))
+
 (in-package :net/proto/swank)
 
 ;;; Vars

@@ -100,7 +100,10 @@ echo $x
 $#
 ;; => 4
 
-KLUDGE: an escaped SYMBOL can't be immediately followed by the closing tag '$#' - this causes the reader to consume those characters as part of the symbol name. One thing we might end up doing is checking for those characters in the input and unreading those 2 chars.
+KLUDGE: an escaped SYMBOL can't be immediately followed by the closing tag
+'$#' - this causes the reader to consume those characters as part of the
+symbol name. One thing we might end up doing is checking for those characters
+in the input and unreading those 2 chars.
 
 An escaped form with parens like the following works fine:
 

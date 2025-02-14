@@ -542,7 +542,6 @@
            :register-file
            :register-data-source
            :register-df
-           :file-data-path
            :optimize-query
            :projection-pushdown-optimizer
            :extract-columns*

@@ -80,33 +80,33 @@
                      alien.c -o ../../.stash/libzstd-alien.so$#)
              (:install () (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
  (psl.dat (%stash)
-          (download "https://publicsuffix.org/list/public_suffix_list.dat"
-                    :output ".stash/psl.dat"
-                    :if-exists :supersede))
+          (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
+                     ".stash/psl.dat"
+                     :if-exists :supersede))
  (rgb.txt (%stash)
-          (download "https://packy.compiler.company/data/rgb.txt"
-                    :output ".stash/rgb.txt"
-                    :if-exists :supersede))
+          (req:fetch "https://packy.compiler.company/data/rgb.txt"
+                     ".stash/rgb.txt"
+                     :if-exists :supersede))
  (x11.lisp (rgb.txt)
            (color::parse-x11-color-definitions
             :input ".stash/rgb.txt"
             :output "lib/obj/color/x11.lisp"))
  (parquet.thrift (%stash)
-                 (download
+                 (req:fetch
                   "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"
-                  :output ".stash/parquet.thrift"
+                  ".stash/parquet.thrift"
                   :if-exists :supersede)
                  #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json (%stash)
-               (download "https://packy.compiler.company/data/parquet.json"
-                         :output ".stash/parquet.json"
-                         :if-exists :supersede))
+               (req:fetch "https://packy.compiler.company/data/parquet.json"
+                          ".stash/parquet.json"
+                          :if-exists :supersede))
  (freedesktop.org.xml (%stash)
-                      (download "https://packy.compiler.company/data/freedesktop.org.xml"
-                                :output ".stash/freedesktop.org.xml"))
- (parquet-test-data (%stash) (download "https://packy.compiler.company/data/test/alltypes_plain.parquet"
-                                       :output ".stash/alltypes_plain.parquet"
-                                       :if-exists :supersede))
+                      (req:fetch "https://packy.compiler.company/data/freedesktop.org.xml"
+                                 ".stash/freedesktop.org.xml"))
+ (parquet-test-data (%stash) (req:fetch "https://packy.compiler.company/data/test/alltypes_plain.parquet"
+                                        ".stash/alltypes_plain.parquet"
+                                        :if-exists :supersede))
  ;; lisp
  (%stash () #$mkdir -pv .stash$#)
 
@@ -151,7 +151,6 @@
               (with-sbcl (:noinform t :quit t)
                 (push :net *features*)
                 (ql:quickload :std)
-                (std:save-lisp-tree-shake-and-die "foo")
                 (asdf:make :bin/skc))
               #$mv bin/skc .stash/skc$#))
  (vc (%stash)

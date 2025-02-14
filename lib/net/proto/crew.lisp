@@ -3,6 +3,32 @@
 ;;
 
 ;;; Code:
+(defpackage :net/proto/crew
+  (:nicknames :net/crew)
+  (:use :cl :sb-bsd-sockets :std :net/core :obj/id :net/proto/swank)
+  (:import-from #:sb-thread
+                #:condition-notify
+                #:condition-wait
+                ;; #:make-condition-variable
+                #:make-mutex
+                #:make-thread
+                #:with-mutex)
+  (:import-from :sb-concurrency
+   :make-gate)
+  (:export 
+   :crew-connection-info
+   :make-worker-pool
+   :crew-worker :crew-worker-pool
+   :*crew-worker-pools-lock*
+   :*crew-worker-pools*
+   :connect-worker
+   :disconnect-worker
+   :parallel-mapcar :parallel-reduce
+   :eval-form-all-workers
+   :eval-form-repeatedly
+   :eval-repeatedly-async-state   
+   :reconnect-worker))
+
 (in-package :net/proto/crew)
 
 (defclass crew-connection-info ()

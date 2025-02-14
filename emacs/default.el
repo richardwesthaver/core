@@ -897,8 +897,8 @@ Add this function to appropriate major mode hooks such as
         org-refile-use-cache t
         org-refile-allow-creating-parent-nodes 'confirm
 
-        org-refile-targets '((nil :maxlevel . 3)
-                             (org-agenda-files :maxlevel . 3))
+        org-refile-targets '((nil :maxlevel . 8)
+                             (org-agenda-files :maxlevel . 8))
         ;; org-agenda-files (list "inbox.org")
         org-agenda-include-diary t
         org-agenda-include-inactive-timestamps t

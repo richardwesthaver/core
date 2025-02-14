@@ -69,15 +69,20 @@
 
 (defcmd skc-show ()
   (if *args*
-      (mapc (lambda (x) (if-let ((ret (sk-project-slot (string-left-trim ":" x) nil))) 
-                          (println ret)
-                          (log:fatal! "unknown argument: ~A~%" x)))
+      (mapc (lambda (x) 
+              (let ((y (string-left-trim ":" x)))
+                (if (sk-project-slot y nil)
+                    (skel/core/print::sk-print-slot
+                     (find y 
+                           (sb-mop:class-slots (class-of *skel-project*)) 
+                           :test 'string= 
+                           :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))
+                     *skel-project*)
+                    (log:fatal! "unknown argument: ~A~%" x))))
             *args*)
       (cond
         ((boundp '*skel-project*)
-         (sk-print *skel-project* :exclude (if ast:*keep-ast* 
-                                               '(:rules :phases :bind)
-                                               '(:ast :rules :phases :bind))))
+         (sk-print *skel-project* :exclude (if ast:*keep-ast* '(:ast :rules) '(:rules))))
         ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
         (t (skel-simple-error "skel not installed")))))

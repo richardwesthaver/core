@@ -109,7 +109,7 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
 (defstruct (libpod-request (:conc-name "REQUEST-"))
   (path "" :type string)
   (method :get :type keyword)
-  (params (make-array 0 :element-type 'libpod-param :fill-pointer 0 :adjustable t) :type (vector libpod-param))
+  (params (make-array 0 :fill-pointer 0 :adjustable t) :type vector)
   (body nil))
 
 (defstruct libpod-response 

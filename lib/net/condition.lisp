@@ -10,11 +10,9 @@
 (define-condition protocol-condition (net-condition) ())
 
 (define-condition net-error (net-condition std-error) ())
-(eval-always
-  (defwarning net-warning (net-condition std-warning) () (:auto t)))
+(define-condition codec-warning (codec-condition std-warning) ())
+(define-condition protocol-warning (protocol-condition std-warning) ())
 (define-condition codec-error (codec-condition net-error) ())
-(define-condition codec-warning (codec-condition net-warning) ())
-(define-condition protocol-warning (protocol-condition net-warning) ())
 (define-condition protocol-error (protocol-condition net-error) ())
 ;; sb-bsd-sockets:socket-error
 ;; sb-thread:thread-error
