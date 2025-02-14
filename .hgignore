@@ -1,6 +1,3 @@
-# test
-
-^x$
 .*Cargo.lock$
 .*target/.*
 .*system-index.txt$
@@ -13,6 +10,4 @@
 .*[.]core$
 .*[.]elc$
 emacs/.*[.]html$
-c/.*
-.*dist/.*
 [.]stash/.*

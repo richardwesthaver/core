@@ -30,5 +30,4 @@
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
-The core is primarily written from scratch in (non-portable) [[https://common-lisp.net][Lisp]] but
-also includes dedicated Emacs Lisp and Rust modules.
+The core is primarily written from scratch in (non-portable) [[https://common-lisp.net][Lisp]].
