@@ -445,3 +445,8 @@ it only contains spaces or tab characters."
 
 (defun probe-merge-file (name path)
   (probe-file (merge-pathnames name path)))
+
+(defun delete-directories (dirs &key (recursive t) (probe t))
+  "Delete directories in list DIRS."
+  (dolist (d dirs)
+    (when (probe-file d) (sb-ext:delete-directory d :recursive t))))

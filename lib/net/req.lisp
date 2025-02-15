@@ -1653,9 +1653,9 @@ keep-alive-stream), and should handle clean-up of it"
                          :if-does-not-exist :create
                          :element-type '(unsigned-byte 8))
       
-      (let ((body (apply #'req:get uri :want-stream t :force-binary t
-                         (std:removef args :if-exists))))
-        (alexandria:copy-stream body out)
+      (remf args :if-exists)
+      (let ((body (apply #'req:get uri :want-stream t :force-binary t args)))
+        (copy-stream body out)
         ;; Usually the body gets closed, but if keep-alive is nil we need to
         ;; explicitly do it.
         (when (open-stream-p body)

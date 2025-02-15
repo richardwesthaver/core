@@ -34,12 +34,12 @@
              (:mod "rust"))
 :rules
 ((all (%stash
-       ;; psl.dat parquet.json rgb.txt
-       ;; save-std save-prelude save-user fasls
-       ;; save-infra save-tests
+       psl.dat parquet.thrift rgb.txt
        build-zstd-alien
        build-tree-sitter-alien
        build-all-core 
+       ;; save-std save-prelude save-user fasls
+       ;; save-infra save-tests
        ;; rust-bin
        ))
  (upstream () ;; pretty gross hack to fix broken tree
@@ -47,7 +47,7 @@
            #$cd /tmp/core
            git remote add cb ssh://git@codeberg.org/c-c/core
            git remote add gh ssh://git@github.com/richardwesthaver/core
-           git filter-repo --invert-paths --path std --force
+           git filter-repo --invert-paths --path-regex '^std$' --force
            git push -u cb default --force
            git push gh default --force$#)
  (clean ()
@@ -84,7 +84,7 @@
                      ".stash/psl.dat"
                      :if-exists :supersede))
  (rgb.txt (%stash)
-          (req:fetch "https://packy.compiler.company/data/rgb.txt"
+          (req:fetch "https://raw.githubusercontent.com/rgb-x/system/refs/heads/master/root/etc/X11/rgb.txt"
                      ".stash/rgb.txt"
                      :if-exists :supersede))
  (x11.lisp (rgb.txt)

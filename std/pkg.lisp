@@ -660,7 +660,12 @@
   (:import-from :std/path :directory-path :directory-path-p)
   (:import-from :std/stream :copy-stream)
   (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
+  (:import-from :sb-ext :delete-directory :delete-file-error)
+  (:import-from :uiop :delete-file-if-exists)
   (:export
+   :delete-directory :delete-file-error
+   :delete-file-if-exists
+   :delete-directories
    :tmpfile
    :dir
    :file
