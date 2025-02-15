@@ -75,8 +75,10 @@ case."
   "Define syn/gen and common-lisp reader switches."
   `(progn
      (defun ,cl-reader ()
-       (setf *code-reader* 'cl)
-       (setf *readtable* *backup-readtable*))
+       (setf *code-reader* 'cl
+             *readtable* *backup-readtable*
+             (readtable-case *readtable*) *print-case*
+             *package* *default-package*))
      (defun ,code-reader ()
        (setf *code-reader* 'gen)
        ,@macro-character

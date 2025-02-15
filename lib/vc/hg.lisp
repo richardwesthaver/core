@@ -110,9 +110,9 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 (defmethod print-object ((self hg-repo) stream)
   (print-unreadable-object (self stream)
     (format stream "hg-repo")
-    (when-let ((remotes (vc-remotes self)))
+    (unless (zerop (length (vc-remotes self)))
       (format stream " ")
-      (pprint-tabular stream (coerce remotes 'list) nil nil 2))))
+      (pprint-tabular stream (coerce (vc-remotes self) 'list) nil nil 2))))
 
 ;; (defmethod vc-init ((self list))
 ;;   (when-let ((form self))

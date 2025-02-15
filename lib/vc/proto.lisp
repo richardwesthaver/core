@@ -180,6 +180,6 @@ creating a repo object which is stored in *REPO-REGISTRY*."
 (defmethod print-object ((self vc-repo) stream)
   (print-unreadable-object (self stream)
     (write "vc-repo" :stream stream)
-    (when-let ((remotes (vc-remotes self)))
+    (std:when-let ((remotes (vc-remotes self)))
       (write " " :stream stream)
       (pprint-tabular stream remotes nil nil 2))))

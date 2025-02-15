@@ -30,7 +30,7 @@
        (with-output-to-string (s)
          (sb-ext:run-program %bin nil :output s :wait t)))
       ;; (delete-file %out)
-      (println %out)
+      (std:println %out)
       (delete-file %bin))))
 
 

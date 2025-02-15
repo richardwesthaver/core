@@ -375,6 +375,7 @@
    :*logical-hosts*
    :make-logical-host
    :hooks
+   :*default-package*
    :*default-arena-size*
    :current-lisp-implementation
    :current-machine

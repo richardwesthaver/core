@@ -6,4 +6,6 @@
 :rules 
 ((clean () #$cargo clean$#)
  (update () #$cargo update$#)
- (build () #$cargo build$#))
+ (build () #$cargo build$#)
+ (upgrade () #$cargo upgrade$#)
+ (fmt () #$cargo fmt$#))

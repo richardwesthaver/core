@@ -18,7 +18,7 @@ we find one, else return NIL."
     (let ((%path (car (directory (or path *default-pathname-defaults*)))))
       (loop for x = (%check %path)
             for parent = (when-let ((parent (butlast (pathname-directory %path))))
-                            (make-pathname :directory parent))
+                           (make-pathname :directory parent))
             if x
             return (values %path x)
             else if (not parent)
