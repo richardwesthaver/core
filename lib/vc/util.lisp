@@ -17,10 +17,11 @@ we find one, else return NIL."
                        :git)))))
     (let ((%path (car (directory (or path *default-pathname-defaults*)))))
       (loop for x = (%check %path)
-            with parent = (uiop:pathname-parent-directory-pathname %path)
+            for parent = (when-let ((parent (butlast (pathname-directory %path))))
+                            (make-pathname :directory parent))
             if x
             return (values %path x)
-            else if (equal %path parent)
+            else if (not parent)
             return nil
             else
             do (setf %path parent)))))

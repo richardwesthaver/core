@@ -77,7 +77,8 @@
                            (sb-mop:class-slots (class-of *skel-project*)) 
                            :test 'string= 
                            :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))
-                     *skel-project*)
+                     *skel-project*
+                     :limit nil)
                     (log:fatal! "unknown argument: ~A~%" x))))
             *args*)
       (cond
