@@ -1,10 +1,11 @@
 ;;; ~/comp/core/lisp/ffi/ffi.asd --- Ffi Sytem Definitions
 (defsystem :ffi
-  :depends-on (:alsa :arrow :blake3 :btrfs 
+  :depends-on (:sb-grovel
+               :alsa :arrow :blake3 :btrfs 
                :cuda :evdev :glib :gstreamer
                :keyutils :readline :rocksdb :rustls
                :sndfile :ssh2 :tree-sitter :ublk
-               :uring :xkb :zstd :sb-grovel)
+               :uring :xkb :zstd :jpeg)
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :ffi/tests

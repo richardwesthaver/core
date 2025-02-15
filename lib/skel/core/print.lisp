@@ -18,42 +18,49 @@
 
 ;;; Code:
 (in-package :skel/core/print)
-
+(declaim (optimize (speed 3)))
 ;; sb-pretty::*standard-pprint-dispatch-table*
 ;; *readtable*
+
+(declaim (inline sk-coerce-name sk-coerce-sequence))
 
 (defun sk-coerce-name (name &optional (case :downcase))
   (if (eql :downcase case) (string-downcase name) (string-upcase name)))
 
+(defun sk-coerce-sequence (seq &optional limit)
+  (coerce
+   (if limit
+       (take limit seq)
+       seq)
+   'list))
+
 (defun sk-print-slot (slot self &key (stream *standard-output*) (limit 8) (case :downcase))
-     (let ((name (sb-mop:slot-definition-name slot)))
+  (declare (stream stream) (positive-fixnum limit) (skel self))
+     (let ((name (sb-mop:slot-definition-name slot))
+           (*print-case* case))
        (when (slot-boundp self name)
-         (when-let ((val (slot-value self name))
-                    (name (sk-coerce-name name case)))
+         (let ((val (slot-value self name))
+               (name (sk-coerce-name name case)))
            (typecase val
              (string (format stream ":~A ~A~%" name val))
              (cons (unless (sequence:emptyp val) (format stream ":~A ~A~%" name val)))
              (vector (unless (sequence:emptyp val)
-                       (format stream ":~A [ " name)
-                       (pprint-tabular stream (coerce (take limit val) 'list) nil)
+                       (format stream ":~A~% [ " name)
+                       (pprint-tabular stream (sk-coerce-sequence val limit) nil nil 2)
                        (force-output stream)
                        (when (> (length val) limit) (format stream " ..."))
                        (format stream " ]~%")))
              (hash-table (unless (zerop (hash-table-count val))
-                           (format stream ":~A {~%" name)
-                           (loop for kv in (take limit (hash-table-alist val))
-                                    do (format stream ":~A ~A~%" 
-                                               (string-downcase (car kv))
-                                               (typecase (cdr kv)
-                                                 (string (cdr kv))
-                                                 (sequence (coerce (take limit (cdr kv)) 'list))
-                                                 (t (cdr kv)))))
+                           (format stream ":~A~% { " name)
+                           (pprint-tabular stream (sk-coerce-sequence (hash-table-alist val) limit)
+                                           nil nil 2)
                            (force-output stream)
                            (when (> (hash-table-count val) limit) (format stream " ..."))
                            (format stream " }~%")))
              (t (format stream ":~A ~A~%" name val)))))))
 
 (defmethod sk-print ((self skel) &key (stream *standard-output*) (id t) exclude (case :downcase) direct (limit 8) &allow-other-keys)
+  (declare (stream stream) (positive-fixnum limit))
   (let ((name (skel/core/obj::sk-slot-name self (when (eql :downcase case))))
         (*print-case* case))
     (if id

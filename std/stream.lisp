@@ -176,3 +176,28 @@ NIL
     (when (zerop cols)
       (write-prefix prefix inner-stream))
     (call-next-method)))
+
+;;; Input Macros
+(defmacro with-input-from-file ((stream-name file-name &rest args
+                                             &key (direction nil direction-p)
+                                             &allow-other-keys)
+                                &body body)
+  "Evaluate BODY with STREAM-NAME to an input stream on the file
+FILE-NAME."
+  (declare (ignore direction))
+  (when direction-p
+    (error "Can't specify :DIRECTION for WITH-INPUT-FROM-FILE."))
+  `(with-open-file (,stream-name ,file-name :direction :input ,@args)
+     ,@body))
+
+(defmacro with-output-to-file ((stream-name file-name &rest args
+                                            &key (direction nil direction-p)
+                                            &allow-other-keys)
+                               &body body)
+  "Evaluate BODY with STREAM-NAME to an output stream on the file
+FILE-NAME."
+  (declare (ignore direction))
+  (when direction-p
+    (error "Can't specify :DIRECTION for WITH-OUTPUT-TO-FILE."))
+  `(with-open-file (,stream-name ,file-name :direction :output ,@args)
+     ,@body))

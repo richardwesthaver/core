@@ -232,7 +232,8 @@
    :prefixed-character-output-stream
    :stream-of :char-count-of :line-count-of :col-count-of
    :prev-col-count-of :col-index-of :write-prefix
-   :prefix-of))
+   :prefix-of
+   :with-input-from-file :with-output-to-file))
 
 (defpkg :std/array
   (:use :cl)
