@@ -43,6 +43,7 @@
        ;; rust-bin
        ))
  (upstream () ;; pretty gross hack to fix broken tree
+           (delete-directory "/tmp/core/" :recursive t)
            (vc:hg-fast-export (sk-vc *skel-project*))
            #$cd /tmp/core
            git remote add cb ssh://git@codeberg.org/c-c/core
