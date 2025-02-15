@@ -14,11 +14,6 @@ tokio-util = "0.7.13"
 tokio-stream = "0.1.17"
 serde = "1.0.217"
 log = "0.4.25"
-bindgen = "0.66.1"
-
+# bindgen = "0.71.1"
 # [profile.dev.package."*"]
 # opt-level = 2
-
-[patch.crates-io]
-egui = { git = "https://github.com/emilk/egui", branch = "emilk/release-0.28.0" }
-eframe = { git = "https://github.com/emilk/egui", branch = "emilk/release-0.28.0" }

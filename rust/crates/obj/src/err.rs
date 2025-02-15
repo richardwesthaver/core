@@ -91,3 +91,9 @@ impl From<hg_parser::ErrorKind> for Error {
 }
 
 impl std::error::Error for Error {}
+
+impl From<ron::error::SpannedError> for Error {
+  fn from(e: ron::error::SpannedError) -> Self {
+    Error::Ron(e.into())
+  }
+}
