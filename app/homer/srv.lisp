@@ -7,15 +7,14 @@
 
 (defvar *systemd-config-directory* (merge-homedir-pathnames ".config/systemd/"))
 
-(defconfig homer-service-config (ast id) 
-  ((unit)
-   (service)
-   (install))
+(defconfig homer-service-config (ast id) ()
   (:documentation "Configuration class for HOMER-SERVICE objects."))
 
 ;; https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
 (defconfig systemd-service-config (homer-service-config) 
-  (())
+  ((unit)
+   (service)
+   (install))
   (:documentation "HOMER-SERVICE configuration from systemd unit files."))
 
 (defclass homer-service (id ast)

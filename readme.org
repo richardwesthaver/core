@@ -4,7 +4,8 @@
 #+email: richard.westhaver@gmail.com
 #+setupfile: ../org/clean.theme
 #+property: header-args :eval no-export
-#+CALL: project-details()
+#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil
+#+CALL: project-details() :dir ~/comp/core/
 
 #+RESULTS:
 |-------------+-----------------------------------------------------|
@@ -13,18 +14,17 @@
 | description | :description The Compiler Company Core              |
 | skel-id     | :id 1566328410216733941                             |
 | root        | ~/comp/core/                                        |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/bbc1acc33745][bbc1acc33745:864+]] |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/380fe1d96a11][380fe1d96a11:868+]] |
 | tags        | :tags (core lisp rust emacs c)                      |
-| updated     | Fri Feb 14 23:23:54 2025 -0500                      |
+| updated     | Sun Feb 16 21:24:06 2025 -0500                      |
 | langs       | c elisp json lisp org rust text toml                |
-| lines       | 120729 :λ 93571 :# 12194 :_ 14964                   |
+| lines       | 120505 :λ 93404 :# 12169 :_ 14932                   |
 |-------------+-----------------------------------------------------|
 
-#+comment: #+CALL: project-files()
-
+#+END:
 #+RESULTS:
+
 - [[https://compiler.company/docs/core/index.html][Docs]]
-- [[https://compiler.company/docs/core/stats.html][Stats]]
 - [[https://compiler.company/docs/core/man.html][Manual]]
 - [[https://compiler.company/plan/tasks/core.html][Tasks]]
 
