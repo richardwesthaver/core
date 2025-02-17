@@ -123,7 +123,7 @@
   "Sorting function used by `org-sort' to sort by todo order
     followed by priority. Returns a pair of numbers (TODO . PRIO)."
   (let* ((elt (cadr (org-element-at-point)))
-         (todo (when-let ((kw (plist-get elt :todo-keyword)))
+         (todo (when-let* ((kw (plist-get elt :todo-keyword)))
                  (when (stringp kw)
                    (substring-no-properties kw))))
          (prio (pcase (plist-get elt :priority)
@@ -179,7 +179,7 @@
 (defun org-inbox-open ()
   "Open `org-inbox-file' or switch to its buffer if already open."
   (interactive)
-  (if-let ((inbox (get-buffer org-inbox-buffer-name)))
+  (if-let* ((inbox (get-buffer org-inbox-buffer-name)))
       (switch-to-buffer inbox)
     (find-file org-inbox-file)
     (rename-buffer org-inbox-buffer-name)))
@@ -187,7 +187,7 @@
 (defun org-inbox-close ()
   "Close the org-inbox and associated buffers."
   (interactive)
-  (when-let ((inbox (get-buffer org-inbox-buffer-name)))
+  (when-let* ((inbox (get-buffer org-inbox-buffer-name)))
     (kill-buffer inbox)))
 
 ;;; dblocks

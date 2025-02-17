@@ -34,10 +34,10 @@
              (:mod "rust"))
 :rules
 ((all (%stash
-       psl.dat parquet.thrift rgb.txt
+       psl.dat rgb.txt ;; parquet.thrift
        build-zstd-alien
        build-tree-sitter-alien
-       build-all-core 
+       build-core 
        ;; save-std save-prelude save-user fasls
        ;; save-infra save-tests
        ;; rust-bin
@@ -268,7 +268,7 @@
                     (print s f))))
  (dist () #$mkdir -pv .stash/tmp/core
        cd .stash
-       mv *.so tmp/core/
+       mv *.so psl.dat rgb.txt tmp/core/ # parquet.json not needed - pre-compiled
        mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/
        cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)
  (dist-source (clean) #$cd .. && tar --exclude='.hg' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)

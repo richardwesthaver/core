@@ -108,7 +108,7 @@ active."
 `skel-triggers'.")
 
 (defmacro make-id (&optional pre)
-  `(let ((pre ,(if-let (pre) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
+  `(let ((pre ,(if-let* ((pre)) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
 	 (current-time-list nil))
      (symb pre (prog1 gensym-counter (setq gensym-counter (1+ gensym-counter))) (format "%x" (car (current-time))))))
 

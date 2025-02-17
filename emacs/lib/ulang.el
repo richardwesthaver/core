@@ -33,7 +33,6 @@
 
 (defvar ulang-link-history nil)
 (defvar ulang-file-history nil)
-
 ;; see org-special-properties
 (defvar ulang-special-properties
   '("VERSION"))
@@ -171,7 +170,7 @@ For example, a PROPERTY value of 'LOCATION' would check all property
 values in addition to the keyword '#+LOCATION:'."
   (interactive (list nil nil))
   (let* ((property (or property (org-read-property-name)))
-         (kw (when-let ((val (org-collect-keywords '("LOCATION") nil)))
+         (kw (when-let* ((val (org-collect-keywords '("LOCATION") nil)))
                (cadar val)))
          ;; most of the work passed through to the property handler
          (props (org-entry-get-with-inheritance property literal-nil epom)))

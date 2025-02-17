@@ -27,7 +27,10 @@
    :home-config-slot
    #:homer-job
    #:homer-service-start
-   #:homer-service-restart))
+   #:homer-service-restart
+   #:systemd-service-config
+   #:homer-service-config
+   #:*systemd-config-directory*))
 
 #+cli
 (defpackage :homer/cli

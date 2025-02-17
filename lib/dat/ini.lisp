@@ -64,7 +64,7 @@
 
 (defun ini-read-comment (stream)
   (loop while (ini-peek-char stream #\# :skip-ws t)
-        do (log:debug! :ini-comment (trim (read-line stream)))))
+        do (read-line stream)))
 
 (defun ini-read-document (stream)
   (make-instance 'ini-document

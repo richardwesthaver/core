@@ -67,7 +67,7 @@
   :type 'hook
   :group 'graph)
 
-(defvar org-graph-target-maxlevel 9)
+(defvar org-graph-target-maxlevel 4)
 
 (defcustom org-graph-db-init-script (join-paths company-source-directory "infra/scripts/org-db-init.lisp")
   "Path to a lisp script responsible for initializing the `org-graph-db-directory'.")
@@ -101,7 +101,7 @@ non-nil visit each node and collect all edges found."
            (graph (make-org-graph :nodes node-ids)))
       (maphash
        (lambda (k v)
-         (if-let ((ok (cl-loop for l in org-graph-locations
+         (if-let* ((ok (cl-loop for l in org-graph-locations
                                when (string-prefix-p l (file-truename v))
                                return t)))
              (let ((pos (cdr (org-id-find-id-in-file k v))))
@@ -700,7 +700,7 @@ either side, and deletes both sides of a link."
   (let ((desc 
          (or desc 
              (when link
-               (if-let ((dom (plz 'get link :as (lambda ()
+               (if-let* ((dom (plz 'get link :as (lambda ()
                                                  (libxml-parse-html-region (point-min) (point-max)))))
                         (title (cl-caddr (car (dom-by-tag dom 'title)))))
                    (org-web-tools--cleanup-title title)

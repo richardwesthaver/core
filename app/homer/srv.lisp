@@ -7,9 +7,20 @@
 
 (defvar *systemd-config-directory* (merge-homedir-pathnames ".config/systemd/"))
 
+(defconfig homer-service-config (ast id) 
+  ((unit)
+   (service)
+   (install))
+  (:documentation "Configuration class for HOMER-SERVICE objects."))
+
+;; https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+(defconfig systemd-service-config (homer-service-config) 
+  (())
+  (:documentation "HOMER-SERVICE configuration from systemd unit files."))
+
 (defclass homer-service (id ast)
   ((engine :initarg :engine :initform nil :type (or null keyword))
-   (config :initarg :config))
+   (config :initarg :config :type homer-service-config))
   (:documentation "Base class for HOMER services. Services are similar to Systemd units - they
 may be individually controlled by an ORACLE thread (usually the default
 toplevel)."))
@@ -64,5 +75,5 @@ toplevel)."))
 
 (defmethod status ((self homer-service) &key args)
   (ecase (slot-value self 'engine)
-    (:systemd (apply 'cli/tools/sys:systemctl-status "--user" (systemd-service-name (id self)) args))
-    (nil (describe self))))
+    (:systemd (apply 'cli/tools/sys:systemctl-status "--user" (systemd-service-name (string-downcase (id self))) args))
+    (null (describe self))))

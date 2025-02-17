@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :homer/core)
 
-(defconfig home-config (ast:ast id:id)
+(defconfig home-config (ast id)
   ((user :initform *user* :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
    (src :initform nil :initarg :src :type (or null pathname vc-repo))

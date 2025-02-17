@@ -22,7 +22,7 @@
  display-time-format "%Y-%m-%d %H:%M"
  ring-bell-function 'ignore
  completion-ignore-case t
- kill-region-dwim t
+ kill-region-dwim nil
  ;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
  ;; allow-emacs-pinentry
  ;; allow-loopback-pinentry
@@ -74,6 +74,8 @@
 (defvar default-theme 'leuven-dark)
 (defvar company-source-directory (join-paths user-home-directory "comp"))
 (defvar company-org-directory (join-paths company-source-directory "org"))
+(defvar company-babel-file (join-paths company-org-directory "meta/babel.org"))
+(defvar company-bibliography (join-paths company-org-directory "graph/refs.bib"))
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
@@ -106,12 +108,13 @@
   (add-packages
    ;; eglot-x ;; LSP extensions
    org-web-tools ;; web parsing
-   citeproc ;; citations
+   ol-notmuch ;; mail links
    htmlize ;; html export
    ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
    nerd-icons nerd-icons-dired nerd-icons-ibuffer nerd-icons-corfu nerd-icons-completion
    hide-mode-line) ;; ui
   ;; bbdb
+  (package-refresh-contents)
   (package-install-selected-packages t))
 
 ;;; Env
@@ -140,7 +143,29 @@
 (add-to-list 'exec-path "/usr/local/share/lisp/bin/")
 
 ;;; Completions
+
+;; avoid obsolete warnings about if-let -> if-let* etc
 (use-package cape :ensure t)
+(use-package consult :ensure t)
+(use-package embark-consult :ensure t)
+(use-package embark
+  :ensure t)
+(use-package vertico
+  :ensure t
+  :config (vertico-mode)
+  (keymap-set vertico-map "M-q" #'vertico-quick-insert)
+  (keymap-set vertico-map "C-q" #'vertico-quick-exit))
+(use-package marginalia :ensure t
+  :config (marginalia-mode))
+;; (use-package kind-icon
+;;   :ensure t
+;;   :after corfu
+;;                                         ;:custom
+;;                                         ; (kind-icon-blend-background t)
+;;                                         ; (kind-icon-default-face 'corfu-default) ; only needed with blend-background
+;;   :config
+;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
 (use-package orderless
   :ensure t
   :init
@@ -153,8 +178,8 @@
   :ensure t
   :config
   (global-corfu-mode)
-  (corfu-popupinfo-mode)
-  (corfu-echo-mode)
+  ;; (corfu-popupinfo-mode)
+  ;; (corfu-echo-mode)
   (dolist (c (list (cons "SPC" " ")
                    (cons "." ".")
                    (cons "," ",")
@@ -177,32 +202,7 @@
              completion-cycle-threshold completion-cycling)
          (consult-completion-in-region beg end table pred)))))
   (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
-  (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
-  (unless (display-graphic-p)
-    (use-package corfu-terminal :ensure t :config (corfu-terminal-mode 1))))
-
-(use-package kind-icon
-  :ensure t
-  :after corfu
-                                        ;:custom
-                                        ; (kind-icon-blend-background t)
-                                        ; (kind-icon-default-face 'corfu-default) ; only needed with blend-background
-  :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
-
-
-(use-package vertico
-  :ensure t
-  :config (vertico-mode)
-  (keymap-set vertico-map "M-q" #'vertico-quick-insert)
-  (keymap-set vertico-map "C-q" #'vertico-quick-exit))
-
-(use-package marginalia :ensure t
-  :config (marginalia-mode))
-(use-package embark
-  :ensure t)
-(use-package embark-consult :ensure t)
-(use-package consult :ensure t)
+  (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer))
 
 ;;; Desktop
 (setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
@@ -385,7 +385,8 @@ function: '(ql:quickload :clouseau)'."
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
   "List of strings with comment keywords."
-  :group 'default)
+  :group 'default
+  :type '(list string))
 
 (defcustom prog-comment-timestamp-format-concise "%F"
   "Specifier for date in `prog-comment-timestamp-keyword'.
@@ -752,7 +753,7 @@ If ARG is negative move backwards, ARG defaults to 1."
   (catch 'return
     (dotimes (_ (abs arg))
       (when (> arg 0) (end-of-line))
-      (if-let ((match
+      (if-let* ((match
                 (funcall (if (> arg 0)
                              #'text-property-search-forward
                            #'text-property-search-backward)

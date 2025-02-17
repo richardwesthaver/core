@@ -27,5 +27,5 @@
                                           (ensure-directories-exist 
                                            (merge-pathnames "lib/" dotemacs)))))
              lib))))
- (purge () #$rm -rf ~/.emacs.d/{*.el,lisp,site-lisp,lib,elpa$#))
+ (purge () #$rm -rf ~/.emacs.d/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))
                  

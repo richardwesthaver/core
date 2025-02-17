@@ -82,7 +82,7 @@ It is an :override function for `tempo-add-tag'.  The original
 function does not update identical tags."
   (interactive "sTag: \nCTemplate: ")
   (let ((tag-list (or tag-list 'tempo-tags)))
-    (if-let ((value (assoc tag (symbol-value tag-list))))
+    (if-let* ((value (assoc tag (symbol-value tag-list))))
         (setcdr value template)
       (set tag-list (cons (cons tag template) (symbol-value tag-list))))
     (tempo-invalidate-collection)))
@@ -91,7 +91,7 @@ function does not update identical tags."
   "List all derived modes of MODE + MODE itself."
   (let ((modes nil))
     (while mode
-      (when-let ((alias (symbol-function mode)))
+      (when-let* ((alias (symbol-function mode)))
         (when (symbolp alias)
           (setq mode alias)))
       (push mode modes)
