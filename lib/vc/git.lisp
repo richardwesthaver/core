@@ -12,7 +12,7 @@
 (defun run-git-command (cmd &optional args (output t) (wait t))
   (unless (listp args) (setf args (list args)))
   (setf args (mapcar #'vc/proto::namestring-or args)) ;;  TODO 2024-05-10: slow
-  (sb-ext:run-program *git-program* (push cmd args) :output output :wait wait :input nil))
+  (sb-ext:run-program *git-program* (push cmd args) :output output :wait wait))
 
 (defun git-url-p (url)
   "Return nil if URL does not look like a URL to a git valid remote."
@@ -65,7 +65,7 @@
 
 (defmethod vc-clone ((self git-repo) remote &key &allow-other-keys)
   (with-slots (path) self
-    (sb-ext:process-exit-code (run-git-command "clone" remote path))))
+    (sb-ext:process-exit-code (run-git-command "clone" (list remote path)))))
 
 (defmethod vc-pull ((self git-repo) &optional (remote "main"))
   (with-slots (path) self
