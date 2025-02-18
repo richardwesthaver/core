@@ -77,7 +77,7 @@
                     (:install () (funcall #$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
  (zstd-alien ()
              (:build () #$cd ffi/zstd &&
-                     clang -g -O2 -Wall -Wno-unused-value -lzstd -shared \
+                     $CC -g -O2 -Wall -Wno-unused-value -lzstd -shared \
                      alien.c -o ../../.stash/libzstd-alien.so$#)
              (:install () (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
  (psl.dat (%stash)
