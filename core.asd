@@ -1,8 +1,8 @@
 (defsystem :core
   :depends-on (:std :prelude)
   :components ((:file "core"))
-  :build-pathname "core"
-  :build-operation monolithic-compile-bundle-op)
+  :build-pathname "core-source"
+  :build-operation monolithic-concatenate-source-op)
 
 (defsystem :core/tests
   :depends-on (:rt :std/tests :log/tests :rt/tests :cli/tests

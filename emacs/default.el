@@ -238,21 +238,18 @@
     "sbcl"))
 
 (add-to-list 'load-path "~/.stash/lisp/slime/")
-(require 'slime)
-(add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
-(add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
-
-(setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size 16" 
-                                    (default-lisp))
-      scheme-program-name "gsi"
-      guile-program "guile"
-      cmulisp-program "lisp"
-      scsh-program "scsh")
-
 (use-package slime
   ;; :vc (:url "https://github.com/slime/slime" :rev :newest)
-  :ensure t
   :config
+  (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
+  (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
+
+  (setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size 16" 
+                                      (default-lisp))
+        scheme-program-name "gsi"
+        guile-program "guile"
+        cmulisp-program "lisp"
+        scsh-program "scsh")
   (require 'slime-company "slime-company")
   (require 'slime-cape "slime-cape")
   (require 'slime-repl-ansi-color "slime-repl-ansi-color")

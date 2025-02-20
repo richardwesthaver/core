@@ -206,7 +206,7 @@ If given a prefix (C-u), set all args to t"
 	    force t
             async t))
   (let ((default-directory project-dir))
-    (message (format "publishing from %s" default-directory))    
+    (message (format "publishing from %s" default-directory))
     (org-publish "compiler.company" force async)))
 
 (provide 'publish)
