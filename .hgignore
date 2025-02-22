@@ -9,5 +9,6 @@
 .*[.]a$
 .*[.]core$
 .*[.]elc$
+.*[.]zst$
 emacs/.*[.]html$
 [.]stash/.*

@@ -68,7 +68,7 @@
    (replay-forms :type list :initform nil :accessor replay-forms)))
 
 (defvar *crew-worker-pools-lock* (make-mutex :name "worker-pools-lock")
-  "Lock protecting access to *WORKER-POOLS*.")
+  "Lock protecting access to *CREW-WORKER-POOLS*.")
 
 ;; could be chashtable
 (defvar *crew-worker-pools* (make-hash-table) "Mapping from worker pool IDs to active worker pools.")

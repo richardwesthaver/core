@@ -30,6 +30,7 @@
                              (:file "crew" :if-feature :swank)
                              (:file "http")
                              (:file "dns")
+                             (:file "whois")
                              (:file "ssh")))
                (:file "cookie")               
                (:file "req")

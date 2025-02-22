@@ -127,6 +127,10 @@
    :*http-status-message-map* :http-status-message :http-keyword :+known-http-versions+
    :+known-http-methods+))
 
+(defpackage :net/proto/whois
+  (:nicknames :net/whois)
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :codec/punycode))
+
 (defpackage :net/proto/dns
   (:nicknames :net/dns)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/dns)

@@ -163,4 +163,4 @@
                  (return)))))
 
 (eval-when (:load-toplevel)
-  (push :rfc3492 *features*))
+  (pushnew :rfc3492 *features*))
