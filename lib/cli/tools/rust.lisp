@@ -17,3 +17,6 @@
 
 (defun cargo-install (&rest args)
   (apply 'run-cargo "install" args))
+
+(defun cargo-clean (&rest args)
+  (apply 'run-cargo "clean" args))

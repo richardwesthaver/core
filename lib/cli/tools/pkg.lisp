@@ -125,7 +125,8 @@
    #:run-cargo
    #:rustup-error
    #:run-rustup
-   #:cargo-install))
+   #:cargo-install
+   #:cargo-clean))
 
 (defpackage :cli/tools/sbcl
   (:use :cl :std :cli/tools/proto :cli/env)

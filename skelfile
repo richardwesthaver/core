@@ -7,7 +7,7 @@
 :store ".store"
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "rust" "emacs" "c")
-:include ("rust/rust.sk" "emacs/emacs.sk")
+:include ("emacs/emacs.sk")
 :vc (:hg "https://vc.compiler.company/core"
          (cb (:git "ssh://git@codeberg.org/c-c/core"))
          (gh (:git "ssh://git@github.com/richardwesthaver/core")))
@@ -21,7 +21,8 @@
                      (nushell-ts-mode . ((nushell-indent-offset . 2)))
                      (sh-mode . (sh-indentation . 2))
                      (makefile-mode . ((indent-tabs-mode . t)))
-                     (slint-mode . ((slint-indent-level . 2)))))
+                     (slint-mode . ((slint-indent-level . 2))))
+       (cargo-target-dir :env ".stash/target"))
 :components ((:org "readme")
              (:asd "prelude")
              (:asd "user")
@@ -30,8 +31,8 @@
              (:mod "ffi" (:asd "ffi"))
              (:mod "lib" (:asd "lib"))
              (:mod "bin" (:asd "bin"))
-             (:mod "emacs")
-             (:mod "rust"))
+             (:rust-system "Cargo.toml")
+             (:mod "emacs"))
 :rules
 ((all (%stash
        psl.dat rgb.txt ;; parquet.thrift
@@ -54,8 +55,8 @@
  (clean ()
         #$rm -vrf .stash
         find emacs -name '*.elc' -type f -delete
-        find . -name '*.fasl' -type f -delete
-        echo 'cargo clean:' && cd rust && cargo clean$#)
+        find . -name '*.fasl' -type f -delete$#
+        (cli/tools/rust:cargo-clean))
  (readme ()
          (:update ()
                   (cli/ed:with-emacs (e)
@@ -242,11 +243,6 @@
                   (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
  (fasls (compile-core #+nil compile-tests compile-bench compile-user compile-prelude))
- ;; rust
- (mailman () #$cd rust && cargo build -Z unstable-options --bin mailman --artifact-dir ../.stash/$#)
- (alik () #$cd rust && cargo build -Z unstable-options --bin alik --artifact-dir ../.stash/$#)
- (rust-bin (mailman alik))
- (alik-ui () #$trunk build --config rust/ui/alik/Trunk.toml$#)
  ;; install
  (install (install-core) 
           (funcall
@@ -271,5 +267,5 @@
        mv *.so psl.dat rgb.txt tmp/core/ # parquet.json not needed - pre-compiled
        mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/
        cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)
- (dist-source () #$cd .. && tar --exclude='.hg' --exclude='.stash' --exclude='rust/target' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
+ (dist-source () #$cd .. && tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
  (dist-core (clean %stash build-core) #$zstd .stash/core$#))
