@@ -833,6 +833,21 @@ Add this function to appropriate major mode hooks such as
         ("C" . "comment")
         ("v" . "verse")))
 
+(org-babel-do-load-languages
+ ;; TODO 2021-10-24: bqn, apl, k
+ 'org-babel-load-languages '((shell . t)
+                             (emacs-lisp . t)
+                             (lisp . t)
+                             (org . t)
+                             (eshell . t)
+                             (calc . t)
+                             (sed . t)
+                             (awk . t)
+                             (dot . t)
+                             (js . t)
+                             (C . t)
+                             (python . t)))
+
 ;; org-sbx [[https://list.orgmode.org/d429d29b-42fa-7d7b-6f3a-9fe692fd6dc7@grinta.net/T/]]
 (defun %org-sbx (name header args)
   (let* ((args (mapconcat

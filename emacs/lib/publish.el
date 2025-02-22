@@ -205,13 +205,14 @@ If FORCE is t, skip checking file mod date and just publish all files.
 If ASYNC is t, call `org-publish' asynchronously.
 If given a prefix (C-u), set all args to t"
   (interactive)
-  (if current-prefix-arg
-      (setq static t
-	    force t
-            async t))
+  (when current-prefix-arg
+    (setq static t
+	  force t
+          async t))
   (let ((default-directory project-dir))
     (message (format "publishing from %s" default-directory))
-    (org-publish "compiler.company" force async)))
+    (org-publish "compiler.company" force async)
+    (message "finished publishing compiler.company from %s to %s" project-dir publish-dir)))
 
 (provide 'publish)
 ;;; publish.el ends here
