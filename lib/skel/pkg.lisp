@@ -74,7 +74,7 @@
 
 (defpackage :skel/net/server
   (:nicknames :sk-server)
-  (:use :cl :std :net/srv :sk-net-core :log :skel/core/log)
+  (:use :cl :std :net/srv/udp :net/srv/http :sk-net-core :log :skel/core/log :srv)
   (:export))
 
 (pkg:defpkg :skel/net
@@ -85,7 +85,7 @@
 (defpackage :skel/srv
   (:use :cl :std :db 
    :store :build :config :skel/core/db 
-   :skel/core :skel/core/log :skel/net :net/srv)
+   :skel/core :skel/core/log :skel/net :net/srv/udp :net/srv/http :srv)
   (:export))
 
 (defpackage :skel/infer

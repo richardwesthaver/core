@@ -65,7 +65,8 @@ that ASDF can find, or have quicklisp installed.")))
                (:file "os")
                (:file "file")
                (:file "string")
-               (:file "seq"))
+               (:file "seq")
+               (:file "rand"))
   :build-pathname "../.stash/std"
   :build-operation monolithic-concatenate-source-op
   :in-order-to ((test-op (test-op "std/tests"))))

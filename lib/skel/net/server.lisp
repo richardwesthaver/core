@@ -5,8 +5,11 @@
 ;;; Code:
 (in-package :skel/net/server)
 
-(defclass skel-service (net/srv/udp:udp-service) ()
+(defclass sk-request (request) ())
+(defclass sk-response (response) ())
+
+(defclass sk-service (udp-service) ()
   (:default-initargs
    :port *skel-service-port*
-   :request-class 'skel-request
-   :response-class 'skel-response))
+   :request-class 'sk-request
+   :response-class 'sk-response))

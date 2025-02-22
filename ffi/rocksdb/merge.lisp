@@ -133,7 +133,7 @@ accessed using a different MergeOperator)
   (free-alien self)
   (values))
 
-(define-alien-callable rocksdb-name c-string () (make-alien-string (symbol-name (gensym "rocksdb:"))))
+(define-alien-callable rocksdb-name c-string () (make-alien-string #.(symbol-name (gensym "rocksdb:"))))
 
 ;;; Associative Merge Ops
 ;;;; Concat Merge
@@ -212,5 +212,6 @@ accessed using a different MergeOperator)
     (octets-to-alien (std:integer-to-octets ret (* 8 len)))))
 
 (define-alien-callable rocksdb-index-partial-merge boolean #.*rocksdb-partial-merge-lambda-list*
+  (declare (ignore state key klen ops ops-length num-ops new-vlen))
   (setf (deref success) 0)
-  nil)
+  0)

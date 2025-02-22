@@ -45,7 +45,7 @@
   (:name kr
    :description "cryptography"
    :thunk skc-kr*)
-  #+(and tools gui)
+  #+gui
   (:name view
    :description "View a skel object in the Skel Viewer GUI."
    :thunk skc-view)))

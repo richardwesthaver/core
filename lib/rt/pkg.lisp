@@ -45,11 +45,6 @@
    :*testing*
    :test-declare
    :test-policy
-   :random-elt
-   :random-ref
-   :random-char
-   :random-chars
-   :random-bytes
    :test-suite-designator
    :check-suite-designator
    :make-test

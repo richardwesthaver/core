@@ -77,6 +77,3 @@
               *krypt-token-directory* *krypt-password-directory*))
   (setq *krypt-user-config* (load-kryptrc))
   (values))
-
-;; (init-krypt)
-;; (describe *krypt-user-config*)

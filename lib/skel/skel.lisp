@@ -9,7 +9,8 @@
   (:use-reexport 
    :skel/core :skel/comp 
    #+net :skel/net
-   #+cli :skel/cli))
+   #+cli :skel/cli)
+  (:export :with-project))
 
 (pkg:defpkg :sk-user
   (:use :cl :std :std-user :cli :cl-user :log :sb-debug :sb-ext :net/proto/dns :cli/tools/sbcl :pod :cli/clap)
@@ -58,21 +59,21 @@
                                :registry *skel-registry*
                                :cd *default-pathname-defaults*))
 
-(eval-always
-  (defun skel-keywordp (kw)
-    (getf *skel-init-keywords* kw))
-  (defun apply-skel-keywords (lst)
-    ;; kludge
-    (setf-skel-vars)
-    (let ((kw))
-      (loop with elt = (car kw)
-            while (keywordp elt)
-            do 
-               (progn
-                 (push (pop lst) kw)
-                 (push (pop lst) kw)))
-      (values kw lst))))
+(defun skel-keywordp (kw)
+  (getf *skel-init-keywords* kw))
+(defun apply-skel-keywords (lst)
+  ;; kludge
+  (setf-skel-vars)
+  (let ((kw))
+    (loop with elt = (car kw)
+          while (keywordp elt)
+          do 
+             (progn
+               (push (pop lst) kw)
+               (push (pop lst) kw)))
+    (values kw lst)))
 
-(defmacro with-skel (ctx &body body)
-  `(let ((*skel-project* (or *skel-project* (find-skelfile ,(or ctx *default-pathname-defaults*) :load t))))
+(defmacro with-project (ctx &body body)
+  `(let* ((*skel-project* ,(find-skelfile (or ctx *default-pathname-defaults*) :load t))
+          (*default-pathname-defaults* (sk-src *skel-project*)))
      ,@body))

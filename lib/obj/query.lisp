@@ -361,12 +361,6 @@
 ;; NOTE 2024-08-02: EXISTS, IN, NOT EXISTS, and NOT IN are also subqueries
 
 ;;; Dataframes
-;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
-(defstruct (data-frame (:constructor make-df (&optional plan)))
-  (plan (make-instance 'logical-query-plan) :type logical-query-plan))
-
-(defgeneric df-col (self))
-
 (defgeneric df-project (df exprs)
   (:method ((df data-frame) (expr list))
     (df-project df (coerce expr 'vector)))
@@ -392,19 +386,6 @@
     df)
   (:method ((df data-frame) (group-by list) (agg-expr list))
     (df-aggregate df (coerce group-by 'vector) (coerce agg-expr 'vector))))
-
-(defmethod schema ((df data-frame))
-  (schema (data-frame-plan df)))
-
-(defmethod (setf schema) ((schema schema) (df data-frame))
-  (setf (slot-value (data-frame-plan df) 'schema) schema))
-
-(defgeneric df-plan (df)
-  (:documentation "Return the logical plan associated with this data-frame.")
-  (:method ((df data-frame)) (data-frame-plan df)))
-
-(defmethod (setf df-plan) ((plan logical-query-plan) (df data-frame))
-  (setf (df-plan df) plan))
 
 ;;; Physical Expression
 (defclass literal-physical-expression (physical-expr literal-expr) ())

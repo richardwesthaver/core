@@ -26,7 +26,6 @@
 
 (setq org-html-style-default ""
       ;; org-html-scripts ""
-      
       org-html-htmlize-output-type 'css
       org-export-htmlize-output-type 'css
       org-export-allow-bind-keywords t
@@ -34,6 +33,7 @@
       org-html-html5-fancy t
       ;; org-html-validation-link nil
       org-src-fontify-natively t
+      org-export-with-broken-links 'mark
       make-backup-files nil
       debug-on-error t
       org-id-link-to-org-use-id t
@@ -88,6 +88,8 @@
         ("plan"
          :base-directory ,(expand-file-name "plan" project-dir)
          :recursive t
+         :with-todo-keywords t
+         :with-properties t
          :base-extension "org"
          :footnote-section-p t
          :html-doctype "<!doctype html>"
@@ -99,6 +101,8 @@
          :base-directory ,(expand-file-name "graph" project-dir)
          :recursive t
          :base-extension "org"
+         :with-properties t
+         :with-drawers t
          :footnote-section-p t
          :html-doctype "<!doctype html>"
          :publishing-directory ,(expand-file-name "graph" publish-dir)

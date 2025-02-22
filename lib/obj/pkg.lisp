@@ -360,9 +360,17 @@
    :config-find :config-get :defconfig
    :load-config))
 
+(defpackage :obj/plan
+  (:nicknames :plan)
+  (:use :cl :std :obj/ast :obj/config :obj/build)
+  (:export :plan :planner
+           :logical-plan
+           :physical-plan
+           :make-physical-plan))
+
 (defpackage :obj/schema
   (:nicknames :schema)
-  (:use :cl :std :config :build :meta :stored :sb-mop :id :ast :dynamic)
+  (:use :cl :std :config :build :meta :stored :sb-mop :id :ast :dynamic :plan)
   (:export
    #:schema
    #:object-schema
@@ -433,15 +441,11 @@
    #:simple-cons-column
    #:make-schema
    #:row-count
-   #:column-count))
-
-(defpackage :obj/plan
-  (:nicknames :plan)
-  (:use :cl :std :obj/ast :obj/config :obj/build)
-  (:export :plan :planner
-           :logical-plan
-           :physical-plan
-           :make-physical-plan))
+   #:column-count
+   :make-df
+   :df-col
+   :df
+   :data-frame))
 
 (defpackage :obj/query
   (:nicknames :query)
@@ -461,7 +465,6 @@
            :projection
            :selection
            :aggregate
-           :data-frame
            :execution-context
            :physical-expression
            :scan-exec
@@ -517,7 +520,7 @@
            :neq-expression
            :eq-expression
            :aggregate-expression-p
-           :df-col
+
            :df-project
            :df-filter
            :df-aggregate
@@ -525,7 +528,6 @@
            :df-fields
            :df-data
            :limit
-           :make-df
            :binary-expression-name
            :binary-expression-op
            :sum-expression

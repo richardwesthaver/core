@@ -19,8 +19,6 @@
 ;;; Code:
 (in-package :cli/tools/tmux)
 
-(deferror tmux-error (simple-error) () (:auto t))
-
 (defparameter *tmux-user-config-path* (merge-pathnames ".tmux.conf" (user-homedir-pathname)))
 (defparameter *tmux-system-config-path* (merge-pathnames "tmux.conf" "/etc/"))
 

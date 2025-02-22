@@ -158,7 +158,6 @@
            :skel-op-type
            :new-skel-arena
            :with-skel-vm
-           :with-skel-scope
            :skel-op
            :make-skel-op
            :skel-op-p

@@ -729,6 +729,16 @@
    :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
    :starts-with-one-of-p))
 
+(defpkg :std/rand
+  (:use :cl)
+  (:import-from :std/type :octet)
+  (:export
+   :random-elt
+   :random-ref
+   :random-char
+   :random-chars
+   :random-bytes))
+
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
@@ -737,7 +747,8 @@
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/seq
-   :std/sys :std/readtable :std/pipe :std/serde))
+   :std/sys :std/readtable :std/pipe :std/serde
+   :std/rand))
 
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std
