@@ -220,6 +220,10 @@
    :mime-type-glob :mime-type-magic
    :mime :get-mime :get-mime*))
 
+(defpackage :dat/yaml
+  (:use :cl :dat/proto)
+  (:import-from :log :trace!))
+
 (defpackage :dat/midi
   (:nicknames :midi)
   (:use :cl :std :dat/proto :io/proto)

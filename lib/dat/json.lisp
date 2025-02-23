@@ -120,7 +120,7 @@ generating json from a scripting language without native json support."
       (#\[ (json-read-list stream))
       (#\" (json-read-string stream))
       ;; must be a number
-      (otherwise (json-read-number stream)))))
+      (t (json-read-number stream)))))
 
 (defun json-peek-char (stream expected &key skip-ws)
   "Peek at the next character or token and optionally error if unexpected."

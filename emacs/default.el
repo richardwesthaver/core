@@ -6,7 +6,7 @@
 (put 'list-threads 'disabled nil)
 (put 'list-timers 'disabled nil)
 (setq show-paren-context-when-offscreen 'overlay)
-(setopt
+(setq
  org-safe-remote-resources '("\\`https://cdn\\.compiler\\.company/org/clean\\.theme\\'")
  ;; tabs = bad (unless in makefile..)
  indent-tabs-mode nil
@@ -237,117 +237,114 @@
       core-lisp-program
     "sbcl"))
 
-(add-to-list 'load-path "~/.stash/lisp/slime/")
-(use-package slime
-  ;; :vc (:url "https://github.com/slime/slime" :rev :newest)
-  :config
-  (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
-  (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
+(add-to-list 'load-path "~/.stash/lisp/slime")
+(require 'slime)
+(add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
+(add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
 
-  (setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size 16" 
-                                      (default-lisp))
-        scheme-program-name "gsi"
-        guile-program "guile"
-        cmulisp-program "lisp"
-        scsh-program "scsh")
-  (require 'slime-company "slime-company")
-  (require 'slime-cape "slime-cape")
-  (require 'slime-repl-ansi-color "slime-repl-ansi-color")
-  (defvar slime-toggle nil)
-  (defun slime-toggle ()
-    "toggle between lisp file and slime-repl"
-    (interactive)
-    (cond
-     ((eq major-mode 'slime-repl-mode)
-      (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp buffer: ")))))
-     ((not (eq major-mode 'slime-repl-mode))
-      (if (slime-connected-p)
-          (progn
-            (setq slime-toggle (current-buffer))
-            (slime-switch-to-output-buffer))
-        (setq slime-toggle (current-buffer))
-        (slime)))))
-  (setq slime-contribs '(slime-fancy
-                         slime-quicklisp
-                         slime-hyperdoc
-                         ;; slime-listener-hooks
-                         ;; slime-enclosing-context
-                         ;; slime-media
-                         slime-mrepl
-                         ;; slime-company
-                         slime-sbcl-exts
-                         slime-cape ;; ext
-                         slime-repl-ansi-color
-                         ;; slime-cl-indent
-                         ;; slime-snapshot
-                         slime-sprof
-                         slime-tramp
-                         ;; slime-typeout-frame
-                         slime-xref-browser
-                         slime-repl-ansi-color
-                         ;; slime-highlight-edits
-                         slime-asdf))
-  (put 'make-instance 'common-lisp-indent-function 1)
-  (put 'reinitialize-instance 'common-lisp-indent-function 1)
-  (slime-setup slime-contribs)
-  ;; X11-only (mcclim requires clx)
-  (defun clouseau-inspect (string)
-    "Inspect a lisp value with Clouseau. make sure to load clouseau
+(setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size 16" 
+                                    (default-lisp))
+      scheme-program-name "gsi"
+      guile-program "guile"
+      cmulisp-program "lisp"
+      scsh-program "scsh")
+(require 'slime-company "slime-company")
+(require 'slime-cape "slime-cape")
+(require 'slime-repl-ansi-color "slime-repl-ansi-color")
+(defvar slime-toggle nil)
+(defun slime-toggle ()
+  "toggle between lisp file and slime-repl"
+  (interactive)
+  (cond
+   ((eq major-mode 'slime-repl-mode)
+    (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp buffer: ")))))
+   ((not (eq major-mode 'slime-repl-mode))
+    (if (slime-connected-p)
+        (progn
+          (setq slime-toggle (current-buffer))
+          (slime-switch-to-output-buffer))
+      (setq slime-toggle (current-buffer))
+      (slime)))))
+(setq slime-contribs '(slime-fancy
+                       slime-quicklisp
+                       slime-hyperdoc
+                       ;; slime-listener-hooks
+                       ;; slime-enclosing-context
+                       ;; slime-media
+                       slime-mrepl
+                       ;; slime-company
+                       slime-sbcl-exts
+                       slime-cape ;; ext
+                       slime-repl-ansi-color
+                       ;; slime-cl-indent
+                       ;; slime-snapshot
+                       slime-sprof
+                       slime-tramp
+                       ;; slime-typeout-frame
+                       slime-xref-browser
+                       slime-repl-ansi-color
+                       ;; slime-highlight-edits
+                       slime-asdf))
+(put 'make-instance 'common-lisp-indent-function 1)
+(put 'reinitialize-instance 'common-lisp-indent-function 1)
+(slime-setup slime-contribs)
+;; X11-only (mcclim requires clx)
+(defun clouseau-inspect (string)
+  "Inspect a lisp value with Clouseau. make sure to load clouseau
 with a custom core or in your init file before using this
 function: '(ql:quickload :clouseau)'."
-    (interactive
-     (list (slime-read-from-minibuffer
-            "Inspect value (evaluated): "
-            (slime-sexp-at-point))))
-    (let ((inspector 'cl-user::*clouseau-inspector*))
-      (slime-eval-async
-          `(cl:progn
-            (cl:defvar ,inspector nil)
-            ;; (Re)start the inspector if necessary.
-            (cl:unless (cl:and (clim:application-frame-p ,inspector)
-                               (clim-internals::frame-process ,inspector))
-                       (cl:setf ,inspector (cl:nth-value 1 (clouseau:inspect nil :new-process t))))
-            ;; Tell the inspector to visualize the correct datum.
-            (cl:setf (clouseau:root-object ,inspector :run-hook-p t)
-                     (cl:eval (cl:read-from-string ,string)))
-            ;; Return nothing.
-            (cl:values)))))
+  (interactive
+   (list (slime-read-from-minibuffer
+          "Inspect value (evaluated): "
+          (slime-sexp-at-point))))
+  (let ((inspector 'cl-user::*clouseau-inspector*))
+    (slime-eval-async
+        `(cl:progn
+          (cl:defvar ,inspector nil)
+          ;; (Re)start the inspector if necessary.
+          (cl:unless (cl:and (clim:application-frame-p ,inspector)
+                             (clim-internals::frame-process ,inspector))
+                     (cl:setf ,inspector (cl:nth-value 1 (clouseau:inspect nil :new-process t))))
+          ;; Tell the inspector to visualize the correct datum.
+          (cl:setf (clouseau:root-object ,inspector :run-hook-p t)
+                   (cl:eval (cl:read-from-string ,string)))
+          ;; Return nothing.
+          (cl:values)))))
 
-  (define-common-lisp-style "core" "Core Common Lisp Indentation Style"
-                            (:inherit "sbcl")
-                            (:indentation
-                             (defpkg (as defpackage))
-                             (define-package (as defpackage))
-                             (defconfig (as defclass))))
+(define-common-lisp-style "core" "Core Common Lisp Indentation Style"
+                          (:inherit "sbcl")
+                          (:indentation
+                           (defpkg (as defpackage))
+                           (define-package (as defpackage))
+                           (defconfig (as defclass))))
 
-  ;; lisp font-lock defaults: https://www.n16f.net/blog/custom-font-lock-configuration-in-emacs/
-  ;; (defface cl-character-face
-  ;;   '((default :inherit font-lock-constant-face))
-  ;;   "The face used to highlight Common Lisp character literals.")
+;; lisp font-lock defaults: https://www.n16f.net/blog/custom-font-lock-configuration-in-emacs/
+;; (defface cl-character-face
+;;   '((default :inherit font-lock-constant-face))
+;;   "The face used to highlight Common Lisp character literals.")
 
-  ;; (defface cl-standard-function-face
-  ;;   '((default :inherit font-lock-keyword-face))
-  ;;   "The face used to highlight standard Common Lisp function symbols.")
+;; (defface cl-standard-function-face
+;;   '((default :inherit font-lock-keyword-face))
+;;   "The face used to highlight standard Common Lisp function symbols.")
 
-  ;; (defface cl-standard-value-face
-  ;;   '((default :inherit font-lock-variable-name-face))
-  ;;   "The face used to highlight standard Common Lisp value symbols.")
+;; (defface cl-standard-value-face
+;;   '((default :inherit font-lock-variable-name-face))
+;;   "The face used to highlight standard Common Lisp value symbols.")
 
-  ;; (defvar cl-font-lock-keywords
-  ;;   (let* ((character-re (concat "#\\\\" lisp-mode-symbol-regexp "\\_>"))
-  ;;          (function-re (concat "(" (regexp-opt cl-function-names t) "\\_>"))
-  ;;          (value-re (regexp-opt cl-value-names 'symbols)))
-  ;;     `((,character-re . 'cl-character-face)
-  ;;       (,function-re
-  ;;        (1 'cl-standard-function-face))
-  ;;       (,value-re . 'cl-standard-value-face))))
+;; (defvar cl-font-lock-keywords
+;;   (let* ((character-re (concat "#\\\\" lisp-mode-symbol-regexp "\\_>"))
+;;          (function-re (concat "(" (regexp-opt cl-function-names t) "\\_>"))
+;;          (value-re (regexp-opt cl-value-names 'symbols)))
+;;     `((,character-re . 'cl-character-face)
+;;       (,function-re
+;;        (1 'cl-standard-function-face))
+;;       (,value-re . 'cl-standard-value-face))))
 
-  (setq common-lisp-style-default "core")
-  ;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
-  (setq slime-threads-update-interval 1)
-  (add-hook 'lisp-mode-hook 'slime-cape-enable)
-  (add-hook 'slime-repl-mode-hook 'slime-cape-enable)
-  )
+(setq common-lisp-style-default "core")
+;; (define-key slime-prefix-map (kbd "i") 'clouseau-inspect)
+(setq slime-threads-update-interval 1)
+(add-hook 'lisp-mode-hook 'slime-cape-enable)
+(add-hook 'slime-repl-mode-hook 'slime-cape-enable)
 
 ;;; Eglot
 ;; (with-eval-after-load 'eglot
