@@ -812,6 +812,8 @@ Add this function to appropriate major mode hooks such as
 (require 'org-id)
 (require 'org-protocol)
 
+(use-package citeproc :ensure t)
+
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil
       ;; cc default

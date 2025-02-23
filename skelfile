@@ -271,4 +271,4 @@
  (dist-source ()
               #$cd .. && tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
  (dist-core (clean %stash build-core) #$zstd .stash/core$#)
- (deploy () (rename-file ".stash/core.tar.zst" (merge-pathnames "dist/x86_64-unknown-linux-gnu/core.tar.zst" packy-home))))
+ (deploy (all dist) #$mv ".stash/core.tar.zst" $PACKY_HOME/dist/x86_64-unknown-linux-gnu/core.tar.zst$#))
