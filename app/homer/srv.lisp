@@ -49,8 +49,8 @@ toplevel)."))
     (setf (ast self)
           `(,(id self) (:engine ,(slot-value self 'engine)) ,@(ast self)))))
 
-(defmethod write-ast ((self homer-task) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(id self) (:repeat ,(schedule self)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+(defmethod write-ast ((self homer-service) stream &key (pretty t) (case :downcase) &allow-other-keys)
+  (write `(,(id self) (:engine ,(slot-value self 'engine)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 (defmethod start ((self homer-service))
   (ecase (slot-value self 'engine)

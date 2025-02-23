@@ -451,7 +451,7 @@ via the special form stored in RECIPE."
      (unless (null val)
        (let ((val (if (listp val) (eval val) val))
              (sym (substitute #\_ #\- (string sym))))
-         (setf (uiop:getenv sym) val)
+         (setf (uiop:getenv sym) (format nil "~A" val))
          (log:trace! "env: ~A=~A~%" sym val))))))
 
 ;; ast -> obj

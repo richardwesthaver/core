@@ -292,13 +292,13 @@
   ;; Load cached slots, set, assoc values, etc.
   (shared-initialize instance t :oid oid)
   instance)
-  (:method recreate-instance ((instance stored-collection) &rest initargs &key oid (st *store*))
-  (declare (ignore initargs))
-  ;; Initialize basic instance data
-  (initial-stored-setup instance :oid oid :store st)
-  ;; Load cached slots, set, assoc values, etc.
-  (shared-initialize instance t :oid oid)
-  instance))
+  (:method ((instance stored-collection) &rest initargs &key oid (st *store*))
+    (declare (ignore initargs))
+    ;; Initialize basic instance data
+    (initial-stored-setup instance :oid oid :store st)
+    ;; Load cached slots, set, assoc values, etc.
+    (shared-initialize instance t :oid oid)
+    instance))
 
 (defmethod recreate-instance-using-class ((class t) &rest initargs &key &allow-other-keys)
   "Implement a subset of the make-instance functionality to avoid initialize-instance
@@ -321,11 +321,6 @@
           (assert (and current-schema prior-schema))
           (upgrade-db-instance instance current-schema prior-schema property-list)))))
 
-(defmethod change-class :before ((previous stored) (new-class standard-class) &rest initargs)
-  (declare (ignorable initargs))
-  (unless (subtypep (type-of new-class) 'stored-class)
-    (error "Stored instances cannot be changed to standard classes via change-class")))
-
 (defmethod update-instance-for-different-class :after ((previous stored-object) (current stored-object) 
                                                         &rest initargs &key)
   ;; Update db to new class configuration
@@ -340,11 +335,6 @@
            (add-entries (remove-if-not (lambda (entry) (eq :add (diff-type entry))) diff-entries))
            (add-names (when add-entries (mapcar #'field-name (mapcan #'diff-recs add-entries)))))
       (apply #'shared-initialize current add-names initargs))))
-
-(defmethod change-class :before ((previous standard-object) (new-class stored-class) &rest initargs)
-  (declare (ignorable initargs)) 
-  (unless (subtypep (type-of previous) 'stored)
-    (error "Cannot convert standard objects to stored objects")))
 
 ;;; Store
 (defclass store () 
@@ -421,7 +411,7 @@
       (id (lookup-schema st class))))
 
 (defmethod register-instance ((self list) class instance)
-  (set-instance-schema-id self (oid instance) (class-schema-id self cl)))
+  (set-instance-schema-id self (oid instance) (class-schema-id self class)))
 
 (defmethod register-instance ((st store) cl instance)
   (set-instance-schema-id st (oid instance) (class-schema-id st cl)))

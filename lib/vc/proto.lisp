@@ -157,7 +157,7 @@ creating a repo object which is stored in *REPO-REGISTRY*."
   "Find a repo in *REPO-REGISTRY*."
   (gethash name *repo-registry*))
 
-(defmethod :after initialize-instance ((self vc-repo) &key)
+(defmethod initialize-instance :after ((self vc-repo) &key)
   (when *repo-auto-register* (register-repo self)))
 
 (defmethod name ((self vc-repo))

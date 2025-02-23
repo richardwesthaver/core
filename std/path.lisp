@@ -87,7 +87,7 @@ appended."
                              (gensym *tmp-suffix*))))
 
 (defmacro with-directory (dir &body body)
-  `(let ((*default-pathname-defaults* ,dir))
+  `(let ((*default-pathname-defaults* (probe-file ,dir)))
      ,@body))
 
 (defmacro with-tmp (&body body)

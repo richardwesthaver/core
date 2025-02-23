@@ -58,19 +58,17 @@
 
 ;;; Conditions
 (eval-always
-  (deferror tar-error () () (:auto t)))
+  (deferror tar-error () () (:auto t))
+  (deferror simple-tar-error (tar-error simple-error) () (:auto t))
+  (define-condition invalid-checksum-error (tar-error)
+    ((provided :initarg :provided :reader error-provided)
+     (computed :initarg :computed :reader error-computed))
+    (:report (lambda (condition stream)
+               (format stream "Invalid tar header checksum ~D (wanted ~D)"
+                       (error-provided condition) (error-computed condition))))
+    (:documentation "Signaled when the checksum in a tar header is invalid."))
 
-(deferror simple-tar-error (tar-error simple-error) () (:auto t))
-
-(define-condition invalid-checksum-error (tar-error)
-  ((provided :initarg :provided :reader error-provided)
-   (computed :initarg :computed :reader error-computed))
-  (:report (lambda (condition stream)
-             (format stream "Invalid tar header checksum ~D (wanted ~D)"
-                     (error-provided condition) (error-computed condition))))
-  (:documentation "Signaled when the checksum in a tar header is invalid."))
-
-(deferror malformed-pax-attribute-entry (tar-error) () (:auto t))
+  (deferror malformed-pax-attribute-entry (tar-error) () (:auto t)))
 
 ;;; Macros
 (eval-always
