@@ -82,7 +82,7 @@
 (defvar company-home "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
 
-(add-to-load-path user-emacs-lib-directory)
+(add-to-load-path user-emacs-lib-directory (join-paths user-stash-directory "lisp/slime"))
 
 (with-eval-after-load 'default
   (require 'scrum)
@@ -110,6 +110,11 @@
    org-web-tools ;; web parsing
    ol-notmuch ;; mail links
    htmlize ;; html export
+   citeproc
+   cape
+   consult
+   embark-consult
+   embark
    ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
    nerd-icons nerd-icons-dired nerd-icons-ibuffer nerd-icons-corfu nerd-icons-completion
    hide-mode-line) ;; ui
@@ -145,11 +150,6 @@
 ;;; Completions
 
 ;; avoid obsolete warnings about if-let -> if-let* etc
-(use-package cape :ensure t)
-(use-package consult :ensure t)
-(use-package embark-consult :ensure t)
-(use-package embark
-  :ensure t)
 (use-package vertico
   :ensure t
   :config (vertico-mode)
@@ -229,16 +229,13 @@
 
 ;;; Lisp
 (use-package company :ensure t)
-
+(require 'slime "slime")
 (defvar core-lisp-program "/usr/local/bin/core")
-
 (defun default-lisp () 
   (if (file-exists-p core-lisp-program)
       core-lisp-program
     "sbcl"))
 
-(add-to-list 'load-path "~/.stash/lisp/slime")
-(require 'slime)
 (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
 (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
 
