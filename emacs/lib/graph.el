@@ -97,7 +97,7 @@ entries not under a member of `org-graph-locations'. When EDGES is
 non-nil visit each node and collect all edges found."
   (interactive "P")
   (save-excursion
-    (let* ((node-ids (copy-hash-table (org-id-locations-load))) ;; don't overwrite `org-id-locations'
+    (let* ((node-ids (copy-hash-table (or org-id-locations (org-id-locations-load)))) ;; don't overwrite `org-id-locations'
            (graph (make-org-graph :nodes node-ids)))
       (maphash
        (lambda (k v)
@@ -657,10 +657,9 @@ either side, and deletes both sides of a link."
 ;;;###autoload
 (defun org-graph-init ()
   (interactive)
-  (org-id-update-id-locations)
-  (let ((org-id-extra-files (org-graph-files)))
-    (prog1 (org-graph-from-id-locations t)
-      (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b)))))))
+  (org-id-update-id-locations (org-graph-files))
+  (prog1 (org-graph-from-id-locations t)
+    (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b))))))
 
 ;;;###autoload
 (defun org-graph-load ()
