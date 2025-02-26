@@ -33,6 +33,19 @@
 (define-condition null-tree-cursor-pointer (tree-sitter-error)
   ())
 
+(define-condition tree-sitter-query-error (tree-sitter-error)
+  ((offset :initarg :offset :reader tree-sitter-error-offset)
+   (type :initarg :type :reader tree-sitter-error-type))
+  (:report (lambda (c s)
+             (format s "~A of type ~A occurred at offset ~A."
+                     (class-name (class-of c))
+                     (tree-sitter-error-type c)
+                     (tree-sitter-error-offset c)))))
+
+(defun ts-query-error-p (type &optional (offset 0))
+  (unless (zerop type) ;; pass
+    (error 'tree-sitter-query-error :type (ts-query-error* type) :offset offset)))
+
 ;; util
 (defmacro with-ts-parser ((sym &key lang) &body body)
   (let ((%lang (when lang (language-module lang))))
@@ -62,6 +75,22 @@
        (unwind-protect
             (progn ,@forms)
          (ts-tree-cursor-delete ,var)))))
+
+(defmacro with-ts-query ((var lang string &optional (length '(length string))) &body body)
+  (with-gensyms (eoff etype)
+    `(with-alien ((,eoff unsigned-int)
+                  (,etype ts-query-error))
+       (let ((,var (ts-query-new (language-module ,lang) (make-alien-string ,string) ,length
+                                 (addr ,eoff) (addr ,etype))))
+         (unwind-protect
+              (progn (ts-query-error-p ,etype ,eoff)
+                     ,@body)
+           (ts-query-delete ,var))))))
+
+(defmacro with-ts-query-cursor (var &body body)
+  `(let ((,var (ts-query-cursor-new)))
+     (unwind-protect (progn ,@body)
+       (ts-query-cursor-delete ,var))))
 
 (defun parse-string (language string &key (start 0) end produce-cst (name-generator #'make-lisp-name))
   "Parse a STRING that represents LANGUAGE code using tree-sitter. START is

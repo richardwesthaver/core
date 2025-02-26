@@ -14,8 +14,12 @@
 (in-package :syn/ts)
 (load-tree-sitter)
 (load-tree-sitter-alien)
+;; (setq syn/lang:*language* :rust)
+(defmacro with-lang (lang &body body)
+  `(with-ts-lang syn/lang:*language* ,lang
+     ,@body))
 
-(defun lang-counts (lang)
+(defun lang-stats (lang)
   (with-ts-lang lang l
     (cons (ts-language-symbol-count l)
           (ts-language-field-count l))))
@@ -25,4 +29,11 @@
    lang
    (with-output-to-string (s)
      (write-file-into-stream path s))
-   :produce-cst t))
+   :produce-cst nil))
+
+(defun ts-file-query (path)
+  (with-ts-query (q :rust 
+                    (with-output-to-string (s)
+                      (write-file-into-stream path s))
+                  0)
+    (print q)))

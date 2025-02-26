@@ -97,7 +97,10 @@
    :ts-language-next-state
    :ts-language-field-id-for-name
    :ts-language-field-name-for-id
-   :ts-language-symbol-type))
+   :ts-language-symbol-type
+   :with-ts-query
+   :ts-query-cursor-delete
+   :with-ts-query-cursor))
 
 (in-package :tree-sitter)
 

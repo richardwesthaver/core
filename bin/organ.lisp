@@ -4,8 +4,9 @@
 
 ;;; Code:
 (defpackage :bin/organ
-  (:use :cl :organ :std :log :organ/cli)
+  (:use :cl :organ :std :log :organ/cli :cli)
   (:import-from :cli :with-cli :do-cmd :*cli* :debug-opts))
+
 (in-package :bin/organ)
 (defun run ()
   (let ((*log-level* :info))

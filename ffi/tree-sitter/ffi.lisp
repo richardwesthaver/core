@@ -21,8 +21,21 @@
 (define-alien-type ts-tree (struct ts-tree))
 ;; not thread-safe
 (define-alien-type ts-query (struct ts-query))
-(define-alien-type ts-query-error unsigned-int)
+(define-alien-enum (ts-query-error unsigned-int)
+  :none 0
+  :syntax 1
+  :node-type 2
+  :field 3
+  :capture 4)
 (define-alien-type ts-query-cursor (struct ts-query-cursor))
+(define-alien-type ts-query-cursor-state
+    (struct ts-query-cursor-state
+      (payload (* t))
+      (current-byte-offset unsigned-int)))
+(define-alien-type ts-query-cursor-options 
+  (struct ts-query-cursor-options
+    (payload (* t))
+    (state (* ts-query-cursor-state))))
 (define-alien-type ts-lookahead-iterator (struct ts-lookahead-iterator))
 (define-alien-type ts-point
     (struct ts-point
@@ -136,7 +149,23 @@
 
 (define-alien-routine ts-query-delete void (query (* ts-query)))
 
+(define-alien-routine ts-query-cursor-new (* ts-query-cursor))
+
+(define-alien-routine ts-query-cursor-delete void
+  (cursor (* ts-query-cursor)))
+
 ;;; ALIEN.C
+(define-alien-routine ts-query-cursor-exec-pointer void
+  (cursor (* ts-query-cursor))
+  (query (* ts-query))
+  (node (* ts-node)))
+
+(define-alien-routine ts-query-cursor-exec-with-options-pointer void
+  (cursor (* ts-query-cursor))
+  (query (* ts-query))
+  (node (* ts-node))
+  (options (* ts-query-cursor-options)))
+
 (define-alien-routine ts-tree-root-node-pointer (* ts-node)
   (tree (* ts-tree)))
 

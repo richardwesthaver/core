@@ -10,54 +10,65 @@
 // build with:
 /*
   cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared lisp/ffi/tree-sitter/alien.c \
-     -o .stash/libtree-sitter-alien.so
+  -o .stash/libtree-sitter-alien.so
 */
 
 /// Code:
 #include <tree_sitter/api.h>
 TSNode *ts_tree_root_node_pointer(const TSTree *self) {
-    TSNode *node = malloc(sizeof(TSNode));
+  TSNode *node = malloc(sizeof(TSNode));
 
-    if (node) {
-        *node = ts_tree_root_node(self);
-    }
+  if (node) {
+    *node = ts_tree_root_node(self);
+  }
 
-    return node;
+  return node;
 }
 
 TSTreeCursor *ts_tree_cursor_new_pointer(TSNode *node) {
-    TSTreeCursor *cursor = malloc(sizeof(TSTreeCursor));
+  TSTreeCursor *cursor = malloc(sizeof(TSTreeCursor));
 
-    if (cursor) {
-        *cursor = ts_tree_cursor_new(*node);
-    }
+  if (cursor) {
+    *cursor = ts_tree_cursor_new(*node);
+  }
 
-    return cursor;
+  return cursor;
 }
 
 TSNode *ts_tree_cursor_current_node_pointer(const TSTreeCursor *cursor) {
-    TSNode *return_node = malloc(sizeof(TSNode));
+  TSNode *return_node = malloc(sizeof(TSNode));
 
-    if (return_node) {
-        *return_node = ts_tree_cursor_current_node(cursor);
-    }
+  if (return_node) {
+    *return_node = ts_tree_cursor_current_node(cursor);
+  }
 
-    return return_node;
+  return return_node;
 }
 
 int ts_node_is_named_pointer(TSNode *node) {
-    return ts_node_is_named(*node);
+  return ts_node_is_named(*node);
 }
 
 TSPoint ts_node_start_point_pointer(TSNode *node) {
-    return ts_node_start_point(*node);
+  return ts_node_start_point(*node);
 }
 
 
 TSPoint ts_node_end_point_pointer(TSNode *node) {
-    return ts_node_end_point(*node);
+  return ts_node_end_point(*node);
 }
 
 const char *ts_node_type_pointer(TSNode *node) {
-    return ts_node_type(*node);
+  return ts_node_type(*node);
+}
+
+void ts_query_cursor_exec_pointer(TSQueryCursor *cursor, const TSQuery *query, TSNode *node) {
+  return ts_query_cursor_exec(cursor,query,*node);
+}
+
+void ts_query_cursor_exec_with_options_pointer(TSQueryCursor *cursor, 
+					       const TSQuery *query, 
+					       TSNode *node,
+					       const TSQueryCursorOptions *query_options) {
+  return ts_query_cursor_exec_with_options(cursor,query,*node,query_options);
 }

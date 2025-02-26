@@ -11,4 +11,4 @@
 (in-suite :syn/lang/rs)
 (deftest rust-src ()
   (istype 'cons
-          (parse-file :rust (asdf:system-relative-pathname :core "../rust/bin/alik/main.rs"))))
+          (parse-file :rust (asdf:system-relative-pathname :core "crates/sxp/src/lib.rs"))))
