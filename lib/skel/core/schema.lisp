@@ -12,7 +12,7 @@
     :fields 
     (make-fields 
      :id '(fixnum . string)
-     ;; blob?
+     :properties '(fixnum . octet-vector)
      :name '(string . fixnum)
      :path '(fixnum . pathname)
      :tags '(fixnum . (array string)))))

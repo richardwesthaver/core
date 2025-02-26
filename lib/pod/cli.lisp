@@ -14,8 +14,7 @@
 
 (define-cli *pod-cli*
   :name "pod"
+  :package :pod
   :help t
   :description "container tools/libpod API client"
   :thunk pod-info-cmd)
-
-(load-package-cli *pod-cli* :package :pod)

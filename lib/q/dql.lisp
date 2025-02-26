@@ -91,9 +91,9 @@
 
 ;; from GAMBOL
 (defvar *interactive* t
-  "true iff interacting with user")
+  "non-nil iff interacting with user")
 (defvar *auto-backtrack* nil
-  "return all solutions if true")
+  "return all solutions if non-nil")
 (defvar *last-continuation* nil
   "saved state of the system")
 (defvar *trail* nil
@@ -103,9 +103,9 @@
 (defvar *rule-env* nil
   "env for rules")
 (defvar *global-envs* nil
-  "saves top-level environments")
+  "top-level environments")
 (defvar *global-vars* nil
-  "saves top-level variable names")
+  "top-level variable names")
 
 (defvar *functors* (make-hash-table)
   "hash table for DQL functors. Keys are the functor name and values are either a
@@ -120,8 +120,8 @@ variables in the head and no clauses in the body. During reading of a DQL
 form, if we find any facts we evaluate them and store them here.")
 
 ;;; Utils
-(defconstant +impossible+ '! "make impossible look nice")
-(defconstant +solved+ 'ok "make solved look nice")
+(defconstant +impossible+ :ko "make impossible look nice")
+(defconstant +solved+ :ok "make solved look nice")
 (defconstant +dql-vars-property+ :dql-vars)
 (defconstant +dql-funs-property+ :dql-funs)
 

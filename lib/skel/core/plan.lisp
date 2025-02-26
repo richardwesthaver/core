@@ -12,4 +12,4 @@
   (:documentation "A physical plan containing SKEL objects."))
 
 (defclass sk-planner (planner ast) ()
-  (:default-initargs :ast (query:make-df (make-instance 'sk-logical-plan))))
+  (:default-initargs :ast (schema:make-df (make-instance 'sk-logical-plan))))

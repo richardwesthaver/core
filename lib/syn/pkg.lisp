@@ -5,24 +5,27 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :syn
-  (:use :cl :std :obj :parse :tree-sitter)
-  (:export
-   #:syntax))
-
 (defpackage :syn/lint
-  (:use :cl :std :syn)
+  (:use :cl :std)
   (:export :lint))
 
 (defpackage :syn/ts
-  (:use :cl :std :syn :tree-sitter)
-  (:export :lint
-           :parse-file
-           :lang-counts))
+  (:use :cl :std :tree-sitter)
+  (:export 
+   :parse-file
+   :lang-counts))
 
 (defpackage :syn/lang
-  (:use :cl :std :syn)
+  (:use :cl :std)
   (:export :language :lang))
+
+(defpackage :syn
+  (:use :cl :std :syn/lint :syn/ts :syn/lang)
+  (:export :syntax))
+
+(defpackage :syn/cli
+  (:use :cl :std :syn/lint :syn/ts :syn/lang :cli)
+  (:export :*syn-cli*))
 
 (in-package :syn)
 (defclass syntax () ())

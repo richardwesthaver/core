@@ -3,10 +3,6 @@
 ;; High-level API for working with VC objects.
 
 ;;; Code:
-(pkg:defpkg :vc
-  (:use :cl :std)
-  (:use-reexport :vc/proto :vc/hg :vc/git #+cli :vc/cli :vc/util))
-
 (in-package :vc)
 
 (defmethod vc-clone ((self pathname) (remote string) &key)
@@ -18,7 +14,3 @@
 
 (defmethod vc-clone ((self string) (remote t) &key)
   (vc-clone (pathname self) remote))
-
-
-#+cli
-(cli:load-package-cli *vc-cli*)

@@ -153,5 +153,9 @@
    :rdb-sink
    :rdb-log-schema))
 
+(defpackage :rdb/cli
+  (:use :cl :std :cli :rdb)
+  (:export :*rdb-cli*))
+
 (in-package :rdb)
 (rocksdb:load-rocksdb nil)

@@ -40,7 +40,7 @@
                             *arg*))
       *log-level*))
 
-(defmacro define-cli (sym &key name version help description thunk opts cmds)
+(defmacro define-cli (sym &key name version help description thunk opts cmds package)
   "Define a symbol SYM bound to a top-level CLI object.
 
 NAME is assigned to the CLI and assumed to be the default binary name which
@@ -68,12 +68,13 @@ and MAKE-CLI :CMD respectively."
                    :thunk cli/clap/obj::help-opt))
                 opts))
               (make-opts opts)))
-    `(,*default-cli-def* ,%name (make-cli ,%class :name ,name
-                                                  :version ,version
-                                                  :description ,description
-                                                  :thunk ',thunk
-                                                  :opts ,%opts
-                                                  :cmds ,(make-cmds cmds)))))
+    `(prog1 (,*default-cli-def* ,%name (make-cli ,%class :name ,name
+                                                         :version ,version
+                                                         :description ,description
+                                                         :thunk ',thunk
+                                                         :opts ,%opts
+                                                         :cmds ,(make-cmds cmds)))
+       ,@(when package `((load-package-cli ,%name :package ,package))))))
 
 (defmacro defmain (name (&key (exit t)) &body body)
   "Define a CLI main function in the current package."

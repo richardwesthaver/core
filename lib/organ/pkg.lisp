@@ -129,4 +129,6 @@
    :org-horizontal-rule :org-planning
    :org-active-timestamp-range))
    
-
+(defpackage :organ/cli
+  (:use :cl :std :organ :cli)
+  (:export :*organ-cli*))

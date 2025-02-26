@@ -60,3 +60,7 @@
 (defpackage :vc/cli
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :vc/util)
   (:export :*vc-cli*))
+
+(pkg:defpkg :vc
+  (:use :cl :std)
+  (:use-reexport :vc/proto :vc/hg :vc/git #+cli :vc/cli :vc/util))

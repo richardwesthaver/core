@@ -1,4 +1,4 @@
-;;; condition.lisp --- Org Conditions
+;;; condition.lisp --- Organ Conditions
 
 ;; 
 

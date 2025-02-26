@@ -23,3 +23,5 @@
 
 (defun invalid-skel-ast (ast)
   (error 'invalid-skel-ast :ast ast))
+
+(deferror invalid-skel-bind (invalid-argument skel-compile-error) () (:auto t))

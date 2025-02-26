@@ -11,12 +11,13 @@
                (:file "rocksdb")
                (:file "proto")
                (:file "obj")
-               (:file "rdb")
                (:file "schema")
                (:file "db")
                (:file "log")
                (:file "query")
-               (:file "store"))
+               (:file "store")
+               (:file "cli")
+	       (:file "rdb"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests

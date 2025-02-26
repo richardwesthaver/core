@@ -12,7 +12,6 @@
                  (:file "js")
                  (:file "rs")))
                (:file "lint")
-               (:file "cli")
                (:module "gen"
                 :components
                 ((:file "pkg")
@@ -45,7 +44,8 @@
                  (:module "py"
                   :components ((:file "pkg")))
                  (:module "js"
-                  :components ((:file "pkg"))))))
+                  :components ((:file "pkg")))))
+	       (:file "cli"))
   :in-order-to ((test-op (test-op "syn/tests"))))
 
 (defsystem :syn/tests

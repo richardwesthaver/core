@@ -179,7 +179,3 @@
 
 (defpackage :skel/core/plan
   (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto :plan))
-
-(defpackage :skel/core/rule
-  (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto :plan :skel/core/log :db :schema :ast)
-  (:export))

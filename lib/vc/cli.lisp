@@ -37,6 +37,7 @@
 
 (define-cli *vc-cli*
   :name "vc"
+  :package :vc
   :help t
   :version 0
   :description "Version Controller"
