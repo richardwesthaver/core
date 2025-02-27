@@ -79,6 +79,7 @@
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
+(defvar company-vc-url (format "https://%s" company-vc-domain))
 (defvar company-home "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
 

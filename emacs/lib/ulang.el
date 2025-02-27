@@ -82,7 +82,7 @@
 
 ;; link abbrevs
 (setq org-link-abbrev-alist
-      '(("vc" . "https://vc.compiler.company/%s")
+      `(("vc" . ,(concat (string-trim-right company-vc-url "[/]") "/%s"))
         ("comp" . "https://compiler.company/%s")
 	("cdn" . "https://cdn.compiler.company/%s")
         ("packy" . "https://packy.compiler.company/%s")

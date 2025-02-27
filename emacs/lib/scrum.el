@@ -111,11 +111,12 @@ The following keyword parameters can be passed to the info dynamic block:
 :branch Set or override the project branch to display info for. Default
         branch name is 'default'.
 
-:files When nil don't include the files table.
-:churn When nil don't include the vc churn report.
-:log when nil don't include the vc log.
-:status when nil don't include vc status.
-:details When nil don't include the project details section."
+:files   when nil don't include the files table.
+:churn   when nil don't include the vc churn report.
+:log     when nil don't include the vc log.
+:status  when nil don't include vc status.
+:details when nil don't include the project details section.
+:html    when non-nil include the html files table. "
   (let ((location (or (when-let* ((param (plist-get params :location)))
                         (cl-coerce param 'string))
                       (org-entry-get (point) "LOCATION")
@@ -123,6 +124,9 @@ The following keyword parameters can be passed to the info dynamic block:
                         (cadar kw))
                       (project-root (project-current))))
         (point (point))
+	(html (if-let* ((val (plist-member params :html)))
+		   (cadr val)
+		 t))
         (files (if-let* ((val (plist-member params :files)))
                    (cadr val)
                  t))
@@ -163,8 +167,11 @@ The following keyword parameters can be passed to the info dynamic block:
                     (insert "#+CALL: hg-churn() :dir " project-root "\n")))
           ('log (when log
                   (message "building project vc log...")))
+	  ('html (when html
+		     (message "building project html files...")
+		     (insert "#+CALL: project-html-files() :dir " project-root "\n")))
           ('files (when files
-                    (message "building project file table...")
+                    (message "building project files...")
                     (insert "#+CALL: project-files() :dir " project-root "\n")))))
       (org-babel-execute-region point (point)))))
 
