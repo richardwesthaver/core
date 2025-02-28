@@ -24,7 +24,8 @@
 #+END:
 
 - [[https://compiler.company/docs/core/index.html][Docs]]
-- [[https://compiler.company/docs/core/man.html][Manual]]
+  - [[https://compiler.company/docs/core/man.html][Manual]]
+  - [[https://compiler.company/docs/core/ref.html][API Reference]]
 - [[https://compiler.company/plan/tasks/core.html][Tasks]]
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
