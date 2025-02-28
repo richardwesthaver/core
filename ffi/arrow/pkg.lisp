@@ -2,6 +2,11 @@
 
 ;; 
 
+;;; Commentary:
+
+;; this library seems to be linking in a static glib which conflicts with
+;; dynamic link already loaded
+
 ;;; Code:
 (defpackage :arrow
   (:use :cl :std :sb-alien)

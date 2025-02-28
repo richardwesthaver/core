@@ -61,11 +61,14 @@
   ((directory :initform #P"/tmp/" :type directory :initarg :directory :accessor dir)
    (file :initform nil :type (or null pathname string) :initarg :file :accessor file)))
 
-(defmethod make-fixture (kind &rest args)
+(defmethod make-fixture ((kind (eql :tmp)) &rest args)
   (apply 'make-instance 'tmp-fixture args))
 
+(defmethod make-fixture (kind &rest args)
+  (apply 'make-instance kind args))
+
 (defmacro with-fixture ((var kind &rest args) &body body)
-  `(let ((,var (make-fixture ,kind ,@args)))
+  `(let ((,var (make-fixture ',kind ,@args)))
      ,@body))
 
 (defmethod path ((self tmp-fixture))

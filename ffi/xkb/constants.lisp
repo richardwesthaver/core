@@ -1,4 +1,4 @@
-("stdint.h" "stdio.h" "stdarg.h" "xkbcommon/xkbcommon-names.h" "xkbcommon/xkbcommon-keysyms.h" "xkbcommon/xkbcommon.h" "xkbcommon/xkbregistry.h" "xkbcommon/xkbcommon-compose.h")
+("xkbcommon/xkbcommon-names.h" "xkbcommon/xkbcommon-keysyms.h" "xkbcommon/xkbcommon.h" "xkbcommon/xkbregistry.h" "xkbcommon/xkbcommon-compose.h")
 ((:integer +xkb-keycode-invalid+ "XKB_KEYCODE_INVALID")
  (:integer +xkb-layout-invalid+ "XKB_LAYOUT_INVALID")
  (:integer +xkb-level-invalid+ "XKB_LEVEL_INVALID")

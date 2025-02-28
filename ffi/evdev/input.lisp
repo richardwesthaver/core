@@ -1,6 +1,6 @@
-;;; input.lisp --- Linux Input Subsystem Wrappers
+;;; input.lisp --- Linux Input drivers
 
-;; 
+;; https://www.kernel.org/doc/Documentation/input/input.txt
 
 ;;; Code:
 (in-package :evdev/input)

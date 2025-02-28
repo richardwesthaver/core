@@ -35,9 +35,8 @@
 
 (deftest gobject-elements ()
   (with-alien ((elt (* gst-element) (gst-element-factory-make "fakesrc" "source"))
-               (vals (* (* t))))
+               (vals (array (* t))))
     (glib:g-object-getv (cast elt (* glib:gobject)) 1 (clone-strings (list "name")) vals)
-    (print (deref vals 0))
     (gst-object-unref elt)))
 
       

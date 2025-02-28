@@ -95,4 +95,4 @@
   (object (* gobject))
   (nprops unsigned-int)
   (names (* c-string)) ;; array
-  (vals (* (* t)))) ;; actually array of GVALUE
+  (vals (array (* t))))

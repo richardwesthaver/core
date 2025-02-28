@@ -15,5 +15,6 @@
                      (load-gen ,lang)
                      (funcall (gen-reader *gen*))
                      ,@body)
-     (unload-gen ,lang)))
+     (unload-gen ,lang)
+     (init-gen nil)))
 

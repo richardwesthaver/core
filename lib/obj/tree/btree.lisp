@@ -82,7 +82,7 @@
 
 (defgeneric build-btree (self)
   (:documentation 
-   "Construct a btree of the appropriate type corresponding to this store."))
+   "Construct a btree of the appropriate type corresponding to the current *STORE*."))
 
 (defclass btree (stored-collection) ()
   (:documentation

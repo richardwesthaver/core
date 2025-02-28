@@ -7,6 +7,28 @@
 ;; note that we also wrap the linux input subsystem linux/input.h which does
 ;; not require loading of the libevdev shared library. See input.lisp.
 
+#|
+  evdev is the generic input event interface. It passes the events
+generated in the kernel straight to the program, with timestamps. The
+API is still evolving, but should be usable now. It's described in
+section 5. 
+
+  This should be the way for GPM and X to get keyboard and mouse
+events. It allows for multihead in X without any specific multihead
+kernel support. The event codes are the same on all architectures and
+are hardware independent.
+
+  The devices are in /dev/input:
+
+	crw-r--r--   1 root     root      13,  64 Apr  1 10:49 event0
+	crw-r--r--   1 root     root      13,  65 Apr  1 10:50 event1
+	crw-r--r--   1 root     root      13,  66 Apr  1 10:50 event2
+	crw-r--r--   1 root     root      13,  67 Apr  1 10:50 event3
+	...
+
+And so on up to event31.
+|#
+
 ;;; Code:
 (defpackage :evdev/input
   (:use :cl :std :sb-alien)

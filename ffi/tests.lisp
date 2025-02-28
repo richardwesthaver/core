@@ -8,4 +8,3 @@
 (in-package :ffi/tests)
 (defsuite :ffi)
 (in-suite :ffi)
-  

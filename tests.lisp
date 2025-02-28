@@ -12,10 +12,6 @@
 (defsuite :core)
 (in-suite :core)
 
-(declaim (inline run-all-tests))
-(defun run-all-tests (&optional force)
-  (mapcar (lambda (x) (do-tests x force)) (remove *test-suite* *test-suite-list*)))
-
 (defun core-coverage-report ()
   (sb-cover:clear-coverage)
   (rt/cover:enable-coverage)

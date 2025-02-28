@@ -120,7 +120,9 @@
    :is<
    :is>=
    :is<=
-   :isor))
+   :isor
+   :run-all-tests
+   :run-all-tests*))
 
 (defpackage :rt/bench
   (:nicknames :bench)

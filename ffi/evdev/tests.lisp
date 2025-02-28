@@ -24,11 +24,14 @@ if (err < 0)
         printf("Failed (errno %d): %s\n", -err, strerror(-err));
 
 libevdev_free(dev);
-|#
+|# 
 (deftest basic ()
-  (with-open-file (file "/dev/input/event4")
-    (let ((dev (libevdev-new))
-          (fd (sb-sys:fd-stream-fd file)))
+  (labels ((input (&optional (n 0))
+           (handler-case (open (format nil "/dev/input/event~A" n))
+             (file-error () (input (incf n))))))
+    (let* ((file (input))
+           (dev (libevdev-new))
+           (fd (sb-sys:fd-stream-fd file)))
       (is (typep dev '(alien (* evdev::libevdev))))
       (is (zerop (libevdev-set-fd dev fd)))
       (is (null (libevdev-free dev))))))

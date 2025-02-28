@@ -32,5 +32,3 @@
       ;; (delete-file %out)
       (std:println %out)
       (delete-file %bin))))
-
-
