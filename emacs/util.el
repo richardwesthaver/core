@@ -184,5 +184,7 @@ TABLE."
   (package-install-selected-packages (not ask))
   (package-upgrade-all ask))
 
+(defmacro defcmd (name &rest body) `(defun ,name nil (interactive) ,@body))
+
 (provide 'util)
 ;; util.el ends here

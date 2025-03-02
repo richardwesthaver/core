@@ -110,7 +110,8 @@
    #:unread-char*
    #:peek-char*
    #:assert-char
-   #:assert-crlf))
+   #:assert-crlf
+   #:with-character-stream-semantics))
 
 (defpackage :io/socket
   (:use :cl :io/proto :sb-alien)

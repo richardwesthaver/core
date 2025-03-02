@@ -104,6 +104,13 @@ into *CHAR-BUFFER*."
   ;; no error checking, only used internally  
   (setq *char-buffer* (read-char* stream eof-error-p eof-value)))
 
+(defmacro with-character-stream-semantics (&body body)
+  "Binds *CHAR-BUFFER* around BODY so that within BODY we can use
+READ-CHAR* and friends \(see above) to simulate a character stream
+although we're reading from a binary stream."
+  `(let ((*char-buffer* nil))
+     ,@body))
+
 ;;; Conditions
 (eval-always
   (define-condition chunky-condition (condition) ()))

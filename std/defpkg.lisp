@@ -570,10 +570,10 @@ or when loading the package is optional."
                                 shadow shadowing-import-from
                                 import-from export intern
                                 recycle mix reexport
-                                unintern)
+                                unintern package-local-nicknames lock implements)
     #+genera (declare (ignore documentation))
     (let* ((package-name (string name))
-           (nicknames (mapcar #'string nicknames))
+	   (nicknames (mapcar #'string nicknames))
            (names (cons package-name nicknames))
            (previous (packages-from-names names))
            (discarded (cdr previous))
@@ -585,7 +585,8 @@ or when loading the package is optional."
            (reexport (mapcar 'find-package* reexport))
            (shadow (mapcar 'string shadow))
            (export (mapcar 'string export))
-           (intern (mapcar 'string intern))
+	   (intern (mapcar 'string intern))
+	   (implements (mapcar 'find-package* implements))
            (unintern (mapcar 'string unintern))
            (shadowed (make-hash-table :test 'equal)) ; string to bool
            (imported (make-hash-table :test 'equal)) ; string to bool
@@ -593,8 +594,13 @@ or when loading the package is optional."
            ;; string to list home package and use package:
            (inherited (make-hash-table :test 'equal)))
       (when-package-fishiness (record-fishy package-name))
-      #-genera
+      #-genera 
       (when documentation (setf (documentation package t) documentation))
+      (when lock (sb-ext:lock-package package))
+      (loop for p in (set-difference implements (sb-ext:package-implements-list package))
+            do (sb-ext:add-implementation-package p package))
+      (loop for p in package-local-nicknames
+	    do (sb-ext:add-package-local-nickname (pop p) (pop p) package))
       (loop :for p :in (set-difference (package-use-list package) (append mix use))
             :do (note-package-fishiness :over-use name (package-names p))
                 (unuse-package p package))
@@ -671,6 +677,7 @@ or when loading the package is optional."
     (loop
       :with use-p = nil :with recycle-p = nil
       :with documentation = nil
+      :with lock = nil
       :for (kw . args) :in clauses
       :when (eq kw :nicknames) :append args :into nicknames :else
       :when (eq kw :documentation)
@@ -687,6 +694,9 @@ or when loading the package is optional."
       :when (eq kw :intern) :append args :into intern :else
       :when (eq kw :recycle) :append args :into recycle :and :do (setf recycle-p t) :else
       :when (eq kw :mix) :append args :into mix :else
+      :when (eq kw :package-local-nicknames) :collect args :into plns :else
+      :when (eq kw :implements) :append args :into implements :else
+      :when (and (eq kw :lock) args) :do (setf lock t) :else
       :when (eq kw :reexport) :append args :into reexport :else
       :when (eq kw :use-reexport) :append args :into use :and :append args :into reexport
       :and :do (setf use-p t) :else
@@ -698,6 +708,9 @@ or when loading the package is optional."
          (return 
            `(,package
              :nicknames ,nicknames :documentation ,documentation
+             :package-local-nicknames ,plns
+             :implements ,implements
+             :lock ,lock
              :use ,(if use-p use '(:common-lisp))
              :shadow ,shadow :shadowing-import-from ,shadowing-import-from
              :import-from ,import-from :export ,export :intern ,intern
@@ -753,7 +766,7 @@ that package. In the case of shadowing, etc. They may not be EQL."
   `(let ((shadow-list (loop for i in (remove-duplicates ,shadow-symbols) collect
                         (intern (format nil "~a" i) :keyword)))
          (export-list (loop for i in (remove-duplicates ,export-symbols) collect
-                        (intern (format nil "~a" i) :keyword))) 
+                        (intern (format nil "~a" i) :keyword)))
          (body ',body))
      (eval `(defpackage ,,name
               ,@body

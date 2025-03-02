@@ -44,6 +44,7 @@
   "SPC" #'toggle-macro-recording
   "x" #'org-clock-toggle-auto-clockout
   "s" #'slime-toggle
+  "l" #'lisp-toggle
   "w" #'which-key-mode)
 
 (defvar-keymap status-map
@@ -133,7 +134,7 @@
    (keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)))
 
 ;;; C-x
-(keymap-set ctl-x-map "C-b" #'ibuffer)
+(keymap-set ctl-x-map "C-b" #'bs-show)
 
 ;;; C-x r
 (keymap-set ctl-x-r-map "SPC" #'point-to-register)

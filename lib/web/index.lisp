@@ -2,7 +2,7 @@
 
 ;;; Code:
 (uiop:define-package :web/index
-    (:use :cl :std :hunchentoot :lass :spinneret)
+  (:use :cl :std :net/srv/http :lass :spinneret)
   (:export 
    :main
    :*web-index-port*))
@@ -16,23 +16,23 @@
 (defparameter *web-index-port* 8888)
 
 (defparameter *server* 
-  (make-instance 'easy-acceptor 
+  (make-instance 'http-service
     :port 8888
-    :name "index"))
+    :id "index"))
 
-(define-easy-handler (b :uri "/b") (user)
+(defroute (b :uri "/b") (user)
   (setf (content-type*) "text/plain")
   (format nil "showing buffers for ~@[ ~A~]." user))
 
-(define-easy-handler (i :uri "/i") (user)
+(defroute (i :uri "/i") (user)
   (setf (content-type*) "text/plain")
   (format nil "showing inbox for ~@[ ~A~]." user))
 
-(define-easy-handler (a :uri "/a") (user)
+ (defroute (a :uri "/a") (user)
   (setf (content-type*) "text/plain")
   (format nil "showing agenda for ~@[ ~A~]." user))
 
-(define-easy-handler (org :uri "/org") (user)
+(defroute (org :uri "/org") (user)
   (setf (content-type*) "text/plain")
   (format nil "showing org-files for ~@[ ~A~]." user))
 
@@ -87,3 +87,4 @@
 
 (defun shutdown (&optional (target *server*))
   (stop target))
+(start *server*)

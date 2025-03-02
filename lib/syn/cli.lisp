@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :syn/cli)
 
-(defcmd gen-cmd ()
-  (println *gen*))
+(defcmd gen-cmd () (println syn/gen:*gen*))
 
 (defcmd gen-print-cmd ()
   (when *args*
@@ -18,8 +17,8 @@
 
 (defopt gen-syntax-opt ()
   (let ((syn (keywordicate (string-upcase *arg*))))
-    (load-gen syn)
-    (setq *package* (gen-package syn))
+    (syn/gen:load-gen syn)
+    (setq *package* (syn/gen:gen-package syn))
     syn))
 
 (define-cli *gen-cli*

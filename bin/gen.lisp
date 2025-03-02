@@ -12,7 +12,7 @@
 
 ;;; Code:
 (defpackage :bin/gen
-  (:use :cl :syn/cli :std :cli/clap :log :clap :db))
+  (:use :cl :syn/cli :std :cli/clap :log :clap :db :syn/gen))
 
 (in-package :bin/gen)
 

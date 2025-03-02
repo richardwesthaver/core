@@ -1,3 +1,8 @@
+;;; var.lisp --- Skel Core Vars
+
+;; 
+
+;;; Code:
 (in-package :skel/core/int)
 
 (declaim (type vc-designator *default-skel-vc-kind*))

@@ -38,6 +38,9 @@
    :net/codec/http :net/core :net/cookie :io/chunky :srv)
   (:import-from :net/srv :service-log)
   (:use-reexport :net/srv)
+  (:package-local-nicknames
+   :codec :net/codec/http
+   :proto :net/proto/http)
   (:export :http-service :https-service))
 
 (pkg:defpkg :net/srv/udp

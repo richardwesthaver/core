@@ -8,6 +8,9 @@
 (defclass system-documentation ()
   ((system :initarg :system :type system :accessor doc-system)))
 
+(defmethod name ((self system-documentation))
+  (asdf:component-name (doc-system self)))
+
 (defun system-documentation (system)
   "Return the SYSTEM-DOCUMENTATION for a specified SYSTEM."
   (let ((s (find-system system)))

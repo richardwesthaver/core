@@ -116,12 +116,13 @@
 string and a 'level' indicating how many comment characters were
 stripped. Note that this level is NOT the same as the heading level."
   (let ((level 0) (contents (organ::read-line stream)))
-    (loop for c = (char contents level)
-          until (not (char= c #\;))
-          do (incf level))
-    (values
-     (if (zerop level) contents (subseq contents (1+ level)))
-     level)))
+    (when (> (length contents) 9)
+      (loop for c = (char contents level)
+            until (not (char= c #\;))
+            do (incf level))
+      (values
+       (if (zerop level) contents (subseq contents (1+ level)))
+       level))))
 
 (defun read-file-heading (stream)
   (destructuring-bind (name level) (read-comment-line stream)
@@ -140,26 +141,31 @@ next heading line found or nil if EOF."
                collect l)))
 
 (defun headline-values-p (string)
-  (let ((found (search " --- " string)))
-    (values (subseq string 0 found) (when found (subseq string (+ found 5))))))
+  (unless (> 5 (length string))
+    (let ((found (search " --- " string)))
+      (values (subseq string 0 found) (when found (subseq string (+ found 5)))))))
 
 (defun split-headline-values (string)
   "Split the headline in STRING into individual values."
   (multiple-value-bind (name rest) (headline-values-p string)
-    (if rest
-        (multiple-value-bind (summary opts) (headline-values-p rest)
-          (values name summary opts))
-        (values name nil nil))))
+    (when name
+      (if rest
+          (multiple-value-bind (summary opts) (headline-values-p rest)
+            (values name summary opts))
+          (values name nil nil)))))
 
-(defun read-file-headline (stream)
-  (let ((line (read-comment-line stream))) ;; throw out second value
-    (multiple-value-bind (name summary opts) (split-headline-values line)
-      (make-instance 'file-headline
-        :name name
-        :summary summary
-        :opts opts
-        :level 0
-        :contents (read-file-headline-description stream)))))
+(defun read-file-headline (stream &optional error)
+  (handler-case      
+      (let ((line (read-comment-line stream))) ;; throw out second value
+        (multiple-value-bind (name summary opts) (split-headline-values line)
+          (when name
+            (make-instance 'file-headline
+              :name name
+              :summary summary
+              :opts opts
+              :level 0
+              :contents (read-file-headline-description stream)))))
+    (end-of-file (c) (when error (error "failed to read file headline: ~A" c)))))
 
 (defclass file-header ()
   ((headline :initarg :headline :type file-headline)
@@ -167,21 +173,20 @@ next heading line found or nil if EOF."
   (:documentation "A source-file header object containing a FILE-HEADLINE and array of
 optional top-level FILE-HEADINGs."))
 
-(defun read-file-header (path)
+(defun read-file-header (path &optional (if-does-not-exist :error))
   "Read a FILE-HEADER from PATH which should be an INPUT-FILE-STREAM.
 
 File headers always appear at the very start of a file so the stream
 position is always assumed to be 0."
-  (with-open-file (f path :if-does-not-exist :error)
-    (let ((hl (read-file-headline f)))
-      (loop for l = (read-line f nil)
-            while l
-            until (uiop:string-prefix-p ";;; Code:" l)
-            collect l into contents)
-      (make-instance 'file-header
-        :headline hl
-        :headings #()
-        ))))
+  (with-open-file (f path :if-does-not-exist if-does-not-exist)
+    (when f
+      (when-let ((hl (read-file-headline f)))
+        (loop for l = (read-line f nil)
+              while l
+              until (uiop:string-prefix-p ";;; Code:" l))
+        (make-instance 'file-header
+          :headline hl
+          :headings #())))))
 
 ;; (defmacro define-file-heading (type slots))
 
@@ -196,6 +201,8 @@ position is always assumed to be 0."
   contains inline comments. Symbol documentation such as this one will
   not be captured in instances of this object."))
 
+(defaccessor (path) ((self file-documentation)) (doc-path self))
+
 (defmethod print-object ((self file-documentation) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (doc-path self))))
@@ -204,6 +211,6 @@ position is always assumed to be 0."
   "Return the FILE-DOCUMENTATION for PATH."
   (make-instance 'file-documentation
     :path path
-    :header (read-file-header path)))
+    :header (read-file-header path nil)))
 
 ;; asdf:source-file

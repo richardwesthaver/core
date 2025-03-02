@@ -24,7 +24,8 @@
 
 (defpackage :syn/cli
   (:use :cl :std :syn/lint :syn/ts :syn/lang :cli)
-  (:export :*syn-cli*))
+  (:export :*syn-cli*
+           :*gen-cli*))
 
 (in-package :syn)
 

@@ -30,7 +30,8 @@
 (require 'ulang)
 
 (defgroup graph nil
-  "CC Graph")
+  "CC Graph"
+  :group 'org)
 
 (defcustom org-graph-db-directory (join-paths user-org-stash-directory "graph")
   "graph database storage directory."
@@ -70,7 +71,8 @@
 (defvar org-graph-target-maxlevel 4)
 
 (defcustom org-graph-db-init-script (join-paths company-source-directory "infra/scripts/org-db-init.lisp")
-  "Path to a lisp script responsible for initializing the `org-graph-db-directory'.")
+  "Path to a lisp script responsible for initializing the `org-graph-db-directory'."
+  :type 'file)
 
 (cl-defstruct org-graph-db-handle
   (type :rocksdb)
@@ -111,16 +113,13 @@ non-nil visit each node and collect all edges found."
                      (org-with-file-buffer v
                        (goto-char pos)
                        (org-graph-node-at-point graph)
-                       (when edges (print (org-graph-edges-at-point graph)))))
+                       (when edges (org-graph-edges-at-point graph))))
                  (warn "couldn't find node %s %s" k v)))
            (remhash k (org-graph-nodes graph))))
        (org-graph-nodes graph))
       (if local
           (setq-local org-graph graph)
         (setq org-graph graph)))))
-
-(defun org-graph-files ()
-  (org-list-files org-graph-locations org-agenda-extensions))
 
 (cl-defstruct org-graph
   ;; TODO 2024-09-17: use integers instead of string?
@@ -253,8 +252,7 @@ or when 't' use the currently active org-graph."
 point. When UPDATE is non-nil insert or update the edges into the
 currently active org-graph."
   (interactive)
-    (when (derived-mode-p 'org-mode)
-      (org-graph-collect-edges-at-point update)))
+  (org-graph-collect-edges-at-point update))
 
 (defun org-graph-buffer-update (&optional buffer)
   "Map over an org buffer adding all nodes to the active org-graph."
@@ -637,26 +635,44 @@ either side, and deletes both sides of a link."
   (org-id-get-create)
   (org-expiry-insert-created))
 
-(defun org-graph-files ()
-  (flatten (mapcar (lambda (x) 
-                     (let ((paths 
-                            (cl-remove-if 
-                             (lambda (y) (string-prefix-p "." y))
-                             (directory-files x)))
-                           (ret))
-                       (dolist (d paths ret)
-                         (let ((xd (join-paths x d))) 
-                            (if (file-directory-p xd)
-                                (push (directory-files-recursively xd "**/*.org") ret)
-                              (push xd ret) )))))
-                   org-graph-locations)))
+(defun org-graph-files (&optional no-readme)
+  (let ((files (flatten 
+		(mapcar (lambda (x) 
+			  (let ((paths 
+				 (cl-remove-if 
+				  (lambda (y) (string-prefix-p "." y))
+				  (directory-files x)))
+				(ret))
+			    (dolist (d paths ret)
+			      (let ((xd (join-paths x d))) 
+				(if (file-directory-p xd)
+				    (push (directory-files-recursively xd "**/*.org") ret)
+				  (push xd ret) )))))
+			org-graph-locations))))
+    (if no-readme
+	(cl-remove-if '(lambda (x) (string= (file-name-base x) "readme")) files)
+      files)))
 
 (defun org-graph--targets ()
   `(,(org-graph-files) :maxlevel . ,org-graph-target-maxlevel))
 
 ;;;###autoload
-(defun org-graph-init ()
+(defun org-graph-kill-all (&optional exclude-readme)
   (interactive)
+  (mapcar
+   (lambda (x)
+     (when (and 
+	    (member (buffer-file-name x) (org-graph-files exclude-readme))
+	    (buffer-live-p x))
+       (kill-buffer x)))
+   (org-buffer-list))
+  (message "closed all org-graph buffers"))
+
+;; TODO 2025-03-01: babel-mode or only no-readme?
+;;;###autoload
+(defun org-graph-init (&optional no-readme)
+  (interactive)
+  (org-graph-kill-all no-readme)
   (org-id-update-id-locations (org-graph-files))
   (prog1 (org-graph-from-id-locations t)
     (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b))))))
@@ -668,7 +684,6 @@ either side, and deletes both sides of a link."
   
 (defun org-graph-save ()
   "Save the org-graph to the org-graph-db.")
-
 
 (defun org-graph-edge-backlink ()
   "Insert a backlink edge to the target heading from the current one."

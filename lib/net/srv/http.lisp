@@ -52,7 +52,7 @@ value should only be modified by the functions defined in cookie.lisp.")))
   (setf (http-status (slot-value *response* 'response)) new))
 
 (defmethod response-ok-p ((res http-service-response))
-  (eql (response-status (slot-value *response* 'response)) +http-ok+))
+  (eql (response-status (slot-value *response* 'response)) codec::+http-ok+))
 
 (defun headers-out* (&optional (res *response*))
   "Returns an alist of the outgoing headers associated with the
@@ -207,7 +207,7 @@ Returns the stream that is connected to the client."
               ;; is no content)
               (or chunkedp
                   head-request-p
-                  (eql (response-status*) +http-not-modified+)
+                  (eql (response-status*) codec::+http-not-modified+)
                   (content-length*)
                   content)))
       ;; now set headers for keep-alive and chunking
@@ -287,10 +287,10 @@ Returns the stream that is connected to the client."
              (when *log-service-errors*
                (service-log log:*log-level* "~A~@[~%~A~]" error (when log:*log-show-backtrace*
                                                                backtrace)))
-                    (start-http-output +http-internal-server-error+
+                    (start-http-output codec::+http-internal-server-error+
                                        (service-status-message 
                                         *service*
-                                        +http-internal-server-error+
+                                        codec::+http-internal-server-error+
                                         :error (princ-to-string error)
                                         :backtrace (princ-to-string backtrace)))))
         (multiple-value-bind (contents error backtrace)
@@ -456,15 +456,16 @@ can be parsed by most log analysis tools."
   "Default implementation of the HTTP request dispatch method, generates an
 +HTTP-NOT-FOUND+ error."
   (let ((path (and (service-document-root service)
-                   (request-pathname request))))
+                   ;; request-pathname?
+                   (path request))))
     (cond
       (path
        (handle-static-file
         (merge-pathnames (if (equal "/" (script-name request)) #P"index.html" path)
                          (service-document-root service))))
-      (t (setf (http-status *response*) +http-not-found+)
+      (t (setf (http-status *response*) codec::+http-not-found+)
          (abort-request-handler)))))
-       
+
 (defun send-http-response (service stream status-code 
                            &key headers cookies content)
   "Send a HTTP response to STREAM and log it with SERVICE.
@@ -507,7 +508,7 @@ Returns STREAM."
 multiple values the headers as an alist, the method, the URI, and the
 protocol of the request."
   (with-character-stream-semantics
-    (let ((first-line (read-initial-request-line stream)))
+    (let ((first-line (read-line stream)))
       (when first-line
         (unless (every #'printable-ascii-char-p first-line)
           (send-bad-request-response stream "Non-ASCII character in request line")
@@ -541,8 +542,8 @@ protocol of the request."
                 ;; check if we have to respond with 417 here
                 (let ((continue-line
                         (format nil "HTTP/1.1 ~D ~A"
-                                +http-continue+
-                                (http-status-message +http-continue+))))
+                                codec::+http-continue+
+                                (http-status-message codec::+http-continue+))))
                   (write-sequence (map 'list #'char-code continue-line) stream)
                   (write-sequence std/string::+crlf+ stream)
                   (write-sequence std/string::+crlf+ stream)

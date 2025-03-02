@@ -715,6 +715,7 @@
    :*tab-width*
    :string-designator
    :ssplit
+   :remove-string
    :trim
    :collapse-whitespaces
    :make-template-parser

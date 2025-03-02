@@ -11,32 +11,21 @@
 (in-package :doc)
 
 (defclass dist-documentation ()
-  ((dist :initarg :dist :type dist :accessor doc-dist)
-   (systems :initarg :systems :type list :accessor doc-systems)))
+  ((dist :initarg :dist :type dist :accessor doc-dist)))
 
-(defun dist-documentation (dist &optional all)
+(defmethod doc-systems ((self dist-documentation))
+  (provided-systems (doc-dist self)))
+
+(defun dist-documentation (dist)
   "Return the DIST-DOCUMENTATION for a specified DIST."
-  (unless (typep dist 'dist)
-    (setf dist (find-dist (format nil "~(~A~)" dist))))
-  (make-instance 'dist-documentation
-    :dist dist
-    :systems
-    (remove-if #'null 
-               (mapcar
-                (lambda (s)
-                  ;; may need (ignore-errors-if (error-p) body)
-                  (ignore-errors
-                   ;; can do better here anyway
-                   (when-let ((found (find-system (doc-system s) nil)))
-                     (system-documentation found))))
-                (if all 
-                    (provided-systems dist)
-                    (installed-systems dist))))))
+  (let ((dist (if (typep dist 'dist)
+                  dist
+                  (find-dist (string-downcase dist)))))
+    (make-instance 'dist-documentation :dist dist)))
 
 (defmethod print-object ((self dist-documentation) stream)
-  (with-slots (dist systems) self
-    (print-unreadable-object (self stream :type t)
-      (format stream "~S :systems ~A" (ql-dist:name dist) (length systems)))))
+  (print-unreadable-object (self stream :type t)
+    (format stream "~S :systems ~A" (doc-dist self) (length (doc-systems self)))))
 
 ;; maybe except an additional key for specific file types and maybe
 ;; include system def files..

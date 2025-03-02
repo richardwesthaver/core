@@ -267,7 +267,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
 (defun start-tracing (specs)
   (install-tracing-overrides)
   `(progn
-     (trace :encapsulate t :methods t ,@specs)))
+     (trace :encapsulate :default :methods t ,@specs)))
 
 (defun stop-tracing ()
   (untrace)

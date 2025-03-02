@@ -76,6 +76,27 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :keymap skel-minor-mode-map
   :version skel-version)
 
+(defun skel-indent-region (start end)
+  "Indent region as a SKEL S-expression."
+  (save-excursion
+    (setq end (copy-marker end))
+    (goto-char start)
+    (beginning-of-line)
+    (let* ((parse-state (lisp-indent-initial-state))
+	   (pr (unless (minibufferp)
+		 (make-progress-reporter "Indenting region..." (point) end))))
+      (let ((ppss (lisp-indent-state-ppss parse-state)))
+	(unless (or (and (bolp) (eolp)) (nth 3 ppss))
+	  (lisp-indent-line (calculate-lisp-indent ppss))))
+      (let ((indent nil))
+	(while (progn (setq indent (lisp-indent-calc-next parse-state))
+		      (< (point) end))
+	  (unless (or (and (bolp) (eolp)) (not indent))
+	    (lisp-indent-line indent))
+	  (and pr (progress-reporter-update pr (point)))))
+      (and pr (progress-reporter-done pr))
+      (move-marker end nil))))
+  
 ;; TODO 2023-09-06: 
 (define-derived-mode skel-mode lisp-mode "SKEL"
   :group 'skel
@@ -111,8 +132,6 @@ active."
   `(let ((pre ,(if-let* ((pre)) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
 	 (current-time-list nil))
      (symb pre (prog1 gensym-counter (setq gensym-counter (1+ gensym-counter))) (format "%x" (car (current-time))))))
-
-(defmacro defcmd (name &rest body) `(defun ,name nil (interactive) ,@body))
 
 (defclass sk (sxp)
   ((id :initarg :id :initform (make-id)))
@@ -204,7 +223,5 @@ project's skelfile, if any. Typically added to
       (push (skel-dir-local--get-variables) dir-locals-class-alist))))
 
 ;; (add-hook 'skel-minor-mode-hook '%skel-dir-local--get-variables)
-
 (provide 'skel)
-(provide 'sk)
 ;;; sk.el ends here

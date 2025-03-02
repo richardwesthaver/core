@@ -91,6 +91,7 @@
   (require 'skel)
   (require 'c2))
 
+
 ;;; Theme
 (defun load-default-theme (&optional theme)
   (interactive)
@@ -240,9 +241,10 @@
 (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
 (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
 
-(setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size 16" 
+(setq inferior-lisp-program (format "%s --dynamic-space-size=8G" 
                                     (default-lisp))
       scheme-program-name "gsi"
+      slime-auto-start t
       guile-program "guile"
       cmulisp-program "lisp"
       scsh-program "scsh")
@@ -250,19 +252,47 @@
 (require 'slime-cape "slime-cape")
 (require 'slime-repl-ansi-color "slime-repl-ansi-color")
 (defvar slime-toggle nil)
-(defun slime-toggle ()
-  "toggle between lisp file and slime-repl"
+(defun slime-switch-to-output (&optional same-window)
+  "Select the output buffer, when possible in an existing window. When
+SAME-WINDOW is non-nil open in the current window.
+
+Hint: You can use `display-buffer-reuse-frames' and
+`special-display-buffer-names' to customize the frame in which the
+buffer should appear."
   (interactive)
-  (cond
-   ((eq major-mode 'slime-repl-mode)
-    (setq slime-toggle (pop-to-buffer (or slime-toggle (read-buffer "lisp buffer: ")))))
-   ((not (eq major-mode 'slime-repl-mode))
+  (let ((buffer (slime-output-buffer)))
+    (if same-window
+	    (pop-to-buffer-same-window buffer)
+      (pop-to-buffer buffer))))
+
+(defun slime-toggle ()
+  "Toggle between current buffer and slime-repl."
+  (interactive)
+  (if (eq major-mode 'slime-repl-mode)
+      (setq slime-toggle 
+	    (pop-to-buffer-same-window 
+	     (or slime-toggle (read-buffer "lisp buffer: "))))
     (if (slime-connected-p)
         (progn
           (setq slime-toggle (current-buffer))
-          (slime-switch-to-output-buffer))
+          (slime-switch-to-output t))
       (setq slime-toggle (current-buffer))
-      (slime)))))
+      (slime))))
+
+(defvar lisp-toggle nil)
+(defun lisp-toggle (&optional cmd)
+  "Toggle between current buffer and inferior-lisp process buffer."
+  (interactive)
+  (if (eq major-mode 'inferior-lisp-mode)
+      (pop-to-buffer-same-window 
+       (or lisp-toggle (read-buffer "lisp buffer: ")))
+    (if inferior-lisp-buffer
+        (progn
+	      (setq lisp-toggle (current-buffer))
+	      (inferior-lisp (or cmd inferior-lisp-program)))
+	  (setq lisp-toggle (current-buffer))
+	  (inferior-lisp (or cmd inferior-lisp-program)))))
+
 (setq slime-contribs '(slime-fancy
                        slime-quicklisp
                        slime-hyperdoc

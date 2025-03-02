@@ -30,6 +30,9 @@
    (files :initform #() :initarg :files :type (array file-documentation) :accessor doc-files)
    (symbols :initform #() :initarg :symbols :type (array symbol-documentation) :accessor doc-symbols)))
 
+(defmethod name ((self package-documentation))
+  (package-name (doc-package self)))
+
 (defun package-documentation (&optional (package *package*) (for :external))
   "Return a PACKAGE-DOCUMENTATION object from PACKAGE."
   (unless (packagep package)
@@ -80,6 +83,12 @@
      stream 
      (loop for s across symbols
            collect (doc-symbol s)))))
+
+(defmethod doc-dependents ((self package-documentation))
+  (mapcar #'package-documentation (package-used-by-list (doc-package self))))
+
+(defmethod doc-dependencies ((self package-documentation))
+  (mapcar #'package-documentation (package-use-list (doc-package self))))
 
 ;; (sb-introspect:allocation-information (make-instance 'package-documentation))
 ;; sb-introspect:definition-source

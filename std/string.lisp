@@ -551,3 +551,12 @@ of a string."
                      (setf col -1))
                    (write-char char stream))))))
 
+
+(defun remove-string (rem-string full-string &rest args &key &allow-other-keys)
+  "returns full-string with rem-string removed"
+  (let ((subst-point (apply 'search rem-string full-string args)))
+    (if subst-point
+        (concatenate 'string
+                     (subseq full-string 0 subst-point)
+                     (subseq full-string (+ subst-point (length rem-string))))
+        full-string)))

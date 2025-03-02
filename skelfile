@@ -9,21 +9,22 @@
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("emacs/emacs.sk")
 :vc (:hg "https://vc.compiler.company/core"
-         (cb (:git "ssh://git@codeberg.org/c-c/core"))
-         (gh (:git "ssh://git@github.com/richardwesthaver/core")))
-:bind ((stash ".stash")
-       ;; (cc :env "clang")
-       (emacs-locals :dir-locals
-                     (nil . ((indent-tabs-mode . nil)))
-                     (rust-mode . ((eglot-workspace-configuration
-                                    . (:rust-analyzer (:cargo (:buildScripts (:enable t) (:features "all")))))))
-                     (nushell-mode . ((nushell-indent-offset . 2)))
-                     (nushell-ts-mode . ((nushell-indent-offset . 2)))
-                     (sh-mode . (sh-indentation . 2))
-                     (makefile-mode . ((indent-tabs-mode . t)))
-                     (slint-mode . ((slint-indent-level . 2))))
-       (cargo-target-dir :env ".stash/target")
-       (packy-home :env "/opt/core/store/packy"))
+	 (cb (:git "ssh://git@codeberg.org/c-c/core"))
+	 (gh (:git "ssh://git@github.com/richardwesthaver/core")))
+:bind 
+((stash ".stash")
+ ;; (cc :env "clang")
+ (emacs-locals :dir-locals
+               (nil . ((indent-tabs-mode . nil)))
+               (rust-mode . ((eglot-workspace-configuration
+                              . (:rust-analyzer (:cargo (:buildScripts (:enable t) (:features "all")))))))
+               (nushell-mode . ((nushell-indent-offset . 2)))
+               (nushell-ts-mode . ((nushell-indent-offset . 2)))
+               (sh-mode . (sh-indentation . 2))
+               (makefile-mode . ((indent-tabs-mode . t)))
+               (slint-mode . ((slint-indent-level . 2))))
+ (cargo-target-dir :env ".stash/target")
+ (packy-home :env "/opt/core/store/packy"))
 :components ((:org "readme")
              (:asd "prelude")
              (:asd "user")
@@ -66,7 +67,7 @@
                                           (goto-line 7)
                                           (org-ctrl-c-ctrl-c)
                                           (save-buffer)))))
- (swank ()
+ (swank (%stash)
         (:run () 
               (let ((f ".stash/.swank"))
                 (when (probe-file f)
@@ -258,11 +259,11 @@
            :input t))
  ;; TODO 2024-09-15: 
  (syms.sxp () 
-                (with-open-file (f "syms.sxp" :direction :output 
-                                                        :if-exists :overwrite 
-                                                        :if-does-not-exist :create)
-                  (dolist (s (list-all-symbols))
-                    (print s f))))
+           (with-open-file (f "syms.sxp" :direction :output 
+                                         :if-exists :overwrite 
+                                         :if-does-not-exist :create)
+             (dolist (s (list-all-symbols))
+               (print s f))))
  (dist () #$mkdir -pv .stash/tmp/core
        cd .stash
        mv *.so psl.dat rgb.txt tmp/core/ # parquet.json not needed - pre-compiled
