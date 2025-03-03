@@ -54,8 +54,15 @@ SELF."
                      p))
                  (list-all-packages))))))
 
+;; TODO 2025-03-02: handle (:feature :foo :sysname) in system-depends-on results
 (defmethod doc-dependencies ((self system-documentation))
-  (mapcar #'system-documentation (system-depends-on (doc-system self))))
+  (mapcar (lambda (x) 
+             (if (consp x)
+                 (if (eql (pop x) :feature)
+                     (when (sb-int:featurep (pop x))
+                       (system-documentation (pop x))))
+                 (system-documentation x)))
+          (system-depends-on (doc-system self))))
 
 (defun find-system-dependents (system)
   "Return a list of systems which depend on SYSTEM by iterating over ASDF:REGISTER-SYSTEMS."

@@ -14,27 +14,29 @@
 :bind 
 ((stash ".stash")
  ;; (cc :env "clang")
- (emacs-locals :dir-locals
-               (nil . ((indent-tabs-mode . nil)))
-               (rust-mode . ((eglot-workspace-configuration
-                              . (:rust-analyzer (:cargo (:buildScripts (:enable t) (:features "all")))))))
-               (nushell-mode . ((nushell-indent-offset . 2)))
-               (nushell-ts-mode . ((nushell-indent-offset . 2)))
-               (sh-mode . (sh-indentation . 2))
-               (makefile-mode . ((indent-tabs-mode . t)))
-               (slint-mode . ((slint-indent-level . 2))))
+ (emacs-locals 
+  :dir-locals
+  (nil . ((indent-tabs-mode . nil)))
+  (rust-mode . ((eglot-workspace-configuration
+                 . (:rust-analyzer (:cargo (:buildScripts (:enable t) (:features "all")))))))
+  (nushell-mode . ((nushell-indent-offset . 2)))
+  (nushell-ts-mode . ((nushell-indent-offset . 2)))
+  (sh-mode . (sh-indentation . 2))
+  (makefile-mode . ((indent-tabs-mode . t)))
+  (slint-mode . ((slint-indent-level . 2))))
  (cargo-target-dir :env ".stash/target")
  (packy-home :env "/opt/core/store/packy"))
-:components ((:org "readme")
-             (:asd "prelude")
-             (:asd "user")
-             (:asd "core")
-             (:mod "std" (:asd "std"))
-             (:mod "ffi" (:asd "ffi"))
-             (:mod "lib" (:asd "lib"))
-             (:mod "bin" (:asd "bin"))
-             (:rust-system "Cargo.toml")
-             (:mod "emacs"))
+:components 
+((:org "readme")
+ (:asd "prelude")
+ (:asd "user")
+ (:asd "core")
+ (:mod "std" (:asd "std"))
+ (:mod "ffi" (:asd "ffi"))
+ (:mod "lib" (:asd "lib"))
+ (:mod "bin" (:asd "bin"))
+ (:rust-system "Cargo.toml")
+ (:mod "emacs"))
 :rules
 ((all (%stash
        psl.dat rgb.txt ;; parquet.thrift
@@ -82,7 +84,9 @@
              (:build () #$cd ffi/zstd &&
                      cc -g -O2 -Wall -Wno-unused-value -lzstd -shared \
                      alien.c -o ../../.stash/libzstd-alien.so$#)
-             (:install () (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
+             (:install () 
+                       (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
+ 
  (psl.dat (%stash)
           (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
                      ".stash/psl.dat"
@@ -195,52 +199,58 @@
                       (compile-lisp :prelude :save ".stash/prelude.core")))
           (:compile () (compile-lisp :prelude :force t :verbose t)))
  (user ()
-       (:save () (with-sbcl (:noinform t :quit t)
-                   (ql:quickload :user)
-                   (in-package :user)
-                   (compile-lisp :user :save ".stash/user.core")))
+       (:save () 
+              (with-sbcl (:noinform t :quit t)
+                (ql:quickload :user)
+                (in-package :user)
+                (compile-lisp :user :save ".stash/user.core")))
        (:compile () (compile-lisp :user :force t :verbose t)))
- (infra () (:save () (with-sbcl (:noinform t :quit t)
-                       (ql:quickload :user)
-                       (in-package :user)
-                       (compile-lisp :user :save ".stash/infra.core" :compression 22))))
+ (infra () 
+        (:save () 
+               (with-sbcl (:noinform t :quit t)
+                 (ql:quickload :user)
+                 (in-package :user)
+                 (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
-       (:build (%stash) (with-sbcl (:noinform t :quit t)
-                          (push :virt *features*)
-                          (push :tools *features*)
-                          (asdf:load-system :bin/core)
-                          (asdf:make :bin/core))
+       (:build (%stash) 
+               (with-sbcl (:noinform t :quit t)
+                 (push :virt *features*)
+                 (push :tools *features*)
+                 (asdf:load-system :bin/core)
+                 (asdf:make :bin/core))
                #$mv bin/core .stash/core$#)
-       (:build-all (%stash) (with-sbcl (:noinform t :quit t)
-                              (push :virt *features*)
-                              (push :net *features*)
-                              (push :swank *features*)
-                              (push :gui *features*)
-                              (push :x11 *features*)
-                              (push :clim *features*)
-                              (push :tools *features*)
-                              (asdf:load-system :core)
-                              (asdf:make :bin/core))
+       (:build-all (%stash)
+                   (with-sbcl (:noinform t :quit t)
+                     (push :virt *features*)
+                     (push :net *features*)
+                     (push :swank *features*)
+                     (push :gui *features*)
+                     (push :x11 *features*)
+                     (push :clim *features*)
+                     (push :tools *features*)
+                     (asdf:load-system :core)
+                     (asdf:make :bin/core))
                    #$mv bin/core .stash/core$#)
        (:save () (with-sbcl (:noinform t :quit t)
                    (ql:quickload (list :std :core))
                    (in-package :std-user)
                    (compile-lisp :core :save ".stash/core.core")))
        (:compile () (compile-lisp :core :force t :verbose t))
-       (:install () (funcall #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
-                             echo "core -> /usr/local/bin/"
-                             links="skel homer packy rdb organ vc gen swm"
-                             for i in $links; do
-                             sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
-                             echo "$i -> core -> /usr/local/bin/"
-                             done$#
-                             :input t))
+       (:install () (funcall 
+                     #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
+                     echo "core -> /usr/local/bin/"
+                     links="skel homer packy rdb organ vc gen swm"
+                     for i in $links; do
+                     sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
+                     echo "$i -> core -> /usr/local/bin/"
+                     done$#
+                     :input t))
        (:link-pod () (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
  (tests ()
         (:save () (with-sbcl (:noinform t :quit t)
-                    (ql:quickload :core/tests)
-                    (in-package :core/tests)
-                    (compile-lisp :core/tests :save ".stash/tests.core")))
+		    (ql:quickload :core/tests)
+		    (in-package :core/tests)
+		    (compile-lisp :core/tests :save ".stash/tests.core")))
         (:compile () 
                   (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
@@ -259,9 +269,10 @@
            :input t))
  ;; TODO 2024-09-15: 
  (syms.sxp () 
-           (with-open-file (f "syms.sxp" :direction :output 
-                                         :if-exists :overwrite 
-                                         :if-does-not-exist :create)
+           (with-open-file (f "syms.sxp" 
+                              :direction :output 
+                              :if-exists :overwrite 
+                              :if-does-not-exist :create)
              (dolist (s (list-all-symbols))
                (print s f))))
  (dist () #$mkdir -pv .stash/tmp/core

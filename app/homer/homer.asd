@@ -1,6 +1,6 @@
 ;;; ~/comp/core/lisp/app/homer/homer.asd --- Homer Sytem Definitions
 (defsystem :homer
-  :depends-on (:prelude 
+  :depends-on (:core
                (:feature :gui :gui) 
                (:feature :cli :cli) 
                :krypt :skel :io :pod :box :net :obj :dat :mpk)

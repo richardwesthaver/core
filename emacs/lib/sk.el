@@ -96,13 +96,16 @@ to trigger `skel-actions' based on the `skel-behavior' value."
 	  (and pr (progress-reporter-update pr (point)))))
       (and pr (progress-reporter-done pr))
       (move-marker end nil))))
-  
-;; TODO 2023-09-06: 
-(define-derived-mode skel-mode lisp-mode "SKEL"
-  :group 'skel
-  (skel-minor-mode 1))
 
-(org-babel-make-language-alias "skel" "lisp")
+;; TODO 2023-09-06: 
+(define-derived-mode skel-mode lisp-mode "Skel"
+  :group 'skel
+  (skel-minor-mode 1)
+  (setq-local electric-quote-string t)
+  (setq imenu-case-fold-search nil)
+  (setq-local indent-region-function 'skel-indent-region))
+
+(org-babel-make-language-alias "skel" "lisp-data")
 
 (defun maybe-skel-minor-mode ()
   "Check the current environment and determine if `skel-minor-mode' should
@@ -111,8 +114,6 @@ be enabled. This function is added as a hook to
 
 (defvar skel-hashtable (make-hash-table :test #'equal)
   "Internal table of available skeletons.")
-
-(defvar skel-stack nil "Internal stack of skeletons.")
 
 (defcustom skel-state 'passive
   "State toggle for the `skel' system. Base states are passive and
@@ -161,8 +162,7 @@ DOC, and NAME."
 
 (def-sk-class project
   "Project skeleton class."
-  ((type :initarg :type :initform nil :accessor sk-project-type :type (or null symbol))
-   (rules :initarg :rules :initform nil :accessor sk-project-rules :type list)))
+  ((rules :initarg :rules :initform nil :accessor sk-project-rules :type list)))
 
 (defun skel-init ()
   "Initialize the skel library."
@@ -193,6 +193,7 @@ directory and returns name of skelfile. When PROJECT is T uses
                    (directory-files project-root t))))))
 
 (defun read-skelfile-bind (&optional project)
+  "Open PROJECT's skelfile and return the :bind form."
   (let ((buffer (find-file-noselect (project-skelfile-path project))))
     (with-current-buffer buffer
       (goto-char (point-min))
@@ -218,6 +219,7 @@ project's skelfile, if any. Typically added to
     (cons (expand-file-name root) (project-skelfile-dir-locals root))))
 
 (defun skel-dir-local-get-variables ()
+  "Open the project skelfile and return the :dir-locals bindingings if present."
   (let ((root (expand-file-name (project-root (project-current)))))
     (unless (assoc-string root dir-locals-class-alist)
       (push (skel-dir-local--get-variables) dir-locals-class-alist))))

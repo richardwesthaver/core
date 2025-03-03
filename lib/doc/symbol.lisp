@@ -102,6 +102,9 @@ boundp fboundp generic-function class macro special-operator package"
    (info :initarg :info :type (or null packed-info) :accessor doc-info)
    (alloc :initarg :alloc :type list :accessor doc-alloc)))
 
+(defmethod name ((self symbol-documentation))
+  (symbol-name (doc-symbol self)))
+
 #|
 (setq *defs* 
  (loop for x across (doc-symbols (package-documentation)) collect (doc-definitions x)))

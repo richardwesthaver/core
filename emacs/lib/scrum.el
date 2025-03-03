@@ -99,6 +99,21 @@
   :type 'list
   :group 'scrum)
 
+(defcustom org-lisp-system-info-order '(log packages dependencies dependents files tests symbols)
+  "Order in which sections of the 'lisp-system-info' dblock will appear."
+  :type 'list
+  :group 'scrum)
+
+(defmacro with-dblock-defaults (&rest body)
+  `(let ((location (or (when-let* ((param (plist-get params :location)))
+			(cl-coerce param 'string))
+		      (org-entry-get (point) "LOCATION")
+		      (when-let* ((kw (org-collect-keywords '("LOCATION"))))
+			(cadar kw))
+		      (project-root (project-current))))
+	 (point (point)))
+     ,@body))
+
 (defun org-dblock-write:project-info (params)
   "Generate a project-info section.
 
@@ -116,64 +131,58 @@ The following keyword parameters can be passed to the info dynamic block:
 :log     when nil don't include the vc log.
 :status  when nil don't include vc status.
 :details when nil don't include the project details section.
-:html    when non-nil include the html files table. "
-  (let ((location (or (when-let* ((param (plist-get params :location)))
-                        (cl-coerce param 'string))
-                      (org-entry-get (point) "LOCATION")
-                      (when-let* ((kw (org-collect-keywords '("LOCATION"))))
-                        (cadar kw))
-                      (project-root (project-current))))
-        (point (point))
-	(html (if-let* ((val (plist-member params :html)))
+:html    when non-nil include the html files table."
+  (with-dblock-defaults
+   (let ((html (if-let* ((val (plist-member params :html)))
 		   (cadr val)
 		 t))
-        (files (if-let* ((val (plist-member params :files)))
-                   (cadr val)
-                 t))
-        (churn (if-let* ((val (plist-member params :churn)))
-                   (cadr val)
-                 t))
-        (status (if-let* ((val (plist-member params :status)))
+         (files (if-let* ((val (plist-member params :files)))
                     (cadr val)
                   t))
-        (log (if-let* ((val (plist-member params :log)))
-                 (cadr val)
-               t))
-        (tasks (if-let* ((val (plist-member params :tasks)))
-                   (cadr val)
-                 t))
-        (details (if-let* ((val (plist-member params :details)))
+         (churn (if-let* ((val (plist-member params :churn)))
+                    (cadr val)
+                  t))
+         (status (if-let* ((val (plist-member params :status)))
                      (cadr val)
-                   t)))
-    (message "Generating info for project: %s" location)
-    (let* ((project (project-current nil location))
-           (project-name (project-name project))
-           (project-root (project-root project)))
-      (dolist (i org-project-info-order)
-        (pcase i
-          ('details (when details
-                      (message "building project details...")
-                      (insert "#+CALL: project-details() :dir " project-root "\n")
-                      (org-babel-execute-maybe)
-                      (org-table-align)))
-          ('status (when status
-                     (message "building project status...")
-                     (insert "#+CALL: hg-diff-stat() :dir " project-root "\n")))
-          ('tasks (when tasks
-                    (message "building project tasks...")
-                    (insert "#+CALL: project-tasks() :dir " project-root "\n")))
-          ('churn (when churn
-                    (message "building project vc churn...")
-                    (insert "#+CALL: hg-churn() :dir " project-root "\n")))
-          ('log (when log
-                  (message "building project vc log...")))
-	  ('html (when html
-		     (message "building project html files...")
-		     (insert "#+CALL: project-html-files() :dir " project-root "\n")))
-          ('files (when files
-                    (message "building project files...")
-                    (insert "#+CALL: project-files() :dir " project-root "\n")))))
-      (org-babel-execute-region point (point)))))
+                   t))
+         (log (if-let* ((val (plist-member params :log)))
+                  (cadr val)
+		t))
+         (tasks (if-let* ((val (plist-member params :tasks)))
+                    (cadr val)
+                  t))
+         (details (if-let* ((val (plist-member params :details)))
+                      (cadr val)
+                    t)))
+     (message "Generating info for project: %s" location)
+     (let* ((project (project-current nil location))
+            (project-name (project-name project))
+            (project-root (project-root project)))
+       (dolist (i org-project-info-order)
+         (pcase i
+           ('details (when details
+                       (message "building project details...")
+                       (insert "#+CALL: project-details() :dir " project-root "\n")
+                       (org-babel-execute-maybe)
+                       (org-table-align)))
+           ('status (when status
+                      (message "building project status...")
+                      (insert "#+CALL: hg-diff-stat() :dir " project-root "\n")))
+           ('tasks (when tasks
+                     (message "building project tasks...")
+                     (insert "#+CALL: project-tasks() :dir " project-root "\n")))
+           ('churn (when churn
+                     (message "building project vc churn...")
+                     (insert "#+CALL: hg-churn() :dir " project-root "\n")))
+           ('log (when log
+                   (message "building project vc log...")))
+	   ('html (when html
+		    (message "building project html files...")
+		    (insert "#+CALL: project-html-files() :dir " project-root "\n")))
+           ('files (when files
+                     (message "building project files...")
+                     (insert "#+CALL: project-files() :dir " project-root "\n")))))
+       (org-babel-execute-region point (point))))))
 
 (defun org-project-info ()
   "Insert or update a project-info dblock."
@@ -185,6 +194,83 @@ The following keyword parameters can be passed to the info dynamic block:
           (with-no-warnings (org-show-entry)))
         (beginning-of-line))        
     (org-create-dblock (list :name "project-info")))
+  (org-update-dblock))
+
+(defun org-dblock-write:lisp-system-info (params)
+  "Generate a project-info section.
+
+The following keyword parameters can be passed to the info dynamic
+block:
+
+:location Set or override the project location which is inferred by
+       checking for a LOCATION property in the current tree, followed by
+       the value of the `project-current' function.
+
+:log          when nil don't include the vc log.
+:files        when nil don't include the files section.
+:packages     when nil don't include the packages section.
+:symbols      when nil don't include the symbols section.
+:tests        when nil don't include the tests section.
+:dependencies when nil don't include the dependencies section.
+:dependents   when nil don't include the dependents section."
+  (with-dblock-defaults
+   (let ((files (if-let* ((val (plist-member params :files)))
+		    (cadr val)
+		  t))
+	 (system (if-let* ((val (plist-member params :system)))
+		     (cadr val)
+		   t))
+	 (packages (if-let* ((val (plist-member params :packages)))
+		       (cadr val)
+		     t))
+	 (symbols (if-let* ((val (plist-member params :symbols)))
+		      (cadr val)
+		    t))
+	 (tests (if-let* ((val (plist-member params :symbols)))
+		    (cadr val)
+		  t))
+	 (dependencies (if-let* ((val (plist-member params :packages)))
+			   (cadr val)
+			 t))
+	 (dependents (if-let* ((val (plist-member params :symbols)))
+			 (cadr val)
+		       t)))
+     (message "Generating info for lisp-system: %s" location)
+     (let* ((project (project-current nil location))
+	    (project-name (project-name project))
+	    (project-root (project-root project)))
+       (dolist (i org-lisp-system-info-order)
+	 (pcase i
+	   ('dependents (when dependents
+			  (message "building lisp-system dependents...")
+			  (insert (format "- dependents\n#+CALL: lisp-system-dependents[:post transpose](\"%s\")" system) "\n")))
+	   ('dependencies (when dependencies
+			  (message "building lisp-system dependencies...")
+			  (insert (format "- dependencies\n#+CALL: lisp-system-dependencies[:post transpose](\"%s\")" system) "\n")))
+	   ('files (when files
+		     (message "building lisp-system files...")
+		     (insert (format "- files\n#+CALL: lisp-system-files[:post transpose](\"%s\")" system) "\n")))
+	   ('packages (when packages
+		     (message "building lisp-system packages...")
+		     (insert (format "- packages\n#+CALL: lisp-system-packages[:post transpose](\"%s\")" system) "\n")))
+	   ('symbols (when symbols
+		     (message "building lisp-system symbols...")
+		     (insert (format "- symbols\n#+CALL: lisp-package-symbols[:post codify-transpose](\"%s\")" (upcase (format "%s" system))) "\n")))
+	   ('tests (when tests
+		     (message "building lisp-system tests...")
+		     (insert (format "- tests\n#+CALL: lisp-system-tests[:post transpose](\"%s\")" system) "\n")))))
+       (org-babel-execute-region point (point))))))
+
+(defun org-lisp-system-info (&optional system)
+  "Insert or update a lisp-system-info dblock."
+  (interactive "S")
+  (if (re-search-forward (rx bol "#+BEGIN:" (+ space) "lisp-system-info") nil t)
+      (progn
+	(if (fboundp 'org-fold-show-entry)
+	    (org-fold-show-entry)
+	  (with-no-warnings (org-show-entry)))
+	(beginning-of-line))
+    (org-create-dblock (list :name "lisp-system-info" :system system)))
   (org-update-dblock))
 
 (provide 'scrum)

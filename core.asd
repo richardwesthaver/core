@@ -1,5 +1,13 @@
 (defsystem :core
-  :depends-on (:std :prelude)
+  :depends-on 
+  (:std :std :cli :log 
+   :dat :rocksdb :btrfs :doc 
+   :alsa :nlp :skel :syn
+   :organ :packy :obj :net
+   :tree-sitter :xkb :ssh2 :sndfile
+   :zstd :uring :blake3 :gstreamer :q :dsp ;; :ublk
+   :parse :pod :rdb :gui
+   :cry :krypt :io :glib)
   :components ((:file "core"))
   :build-pathname "core-source"
   :build-operation monolithic-concatenate-source-op)

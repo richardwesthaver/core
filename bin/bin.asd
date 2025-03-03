@@ -9,7 +9,9 @@
 (defsystem :bin
   :depends-on (:bin/organ :bin/homer 
                :bin/rdb :bin/skel 
-               :bin/packy :bin/core
+	       :bin/packy :bin/core
+	       :bin/vc :bin/skc
+	       :bin/pod :bin/gen
                #+x11 :bin/swm))
 
 #+x11
