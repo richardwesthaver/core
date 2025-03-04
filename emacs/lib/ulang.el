@@ -171,6 +171,7 @@
 
 (defun ulang-init ()
   (interactive)
+  (org-babel-lob-ingest company-babel-file)
   (let ((%eq (lambda (a b) (equal (car a) (car b)))))
     (mapcar (lambda (x) 
 	      (cl-pushnew x org-info-other-documents :test %eq)
