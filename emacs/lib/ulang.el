@@ -27,15 +27,31 @@
 (require 'org)
 (require 'org-element)
 (require 'ox)
-
+(require 'ol-man)
+(require 'ol-info)
 (defgroup ulang nil
   "CC Universal Language.")
 
 (defvar ulang-link-history nil)
 (defvar ulang-file-history nil)
-;; see org-special-properties
+;; 
 (defvar ulang-special-properties
+  "See 'org-special-properties'."
   '("VERSION"))
+
+(defvar ulang-info-url-alist
+  '(("sbcl" . "https://www.sbcl.org/manual/")
+    ("asdf" . "https://asdf.common-lisp.dev/asdf/")
+    ("tar" . "https://www.gnu.org/software/tar/manual/")
+    ("emms" . "https://www.gnu.org/software/emms/manual/")
+    ("clang" . "https://clang.llvm.org/docs/UsersManual.html")
+    ("llvm" . "https://llvm.org/docs/ProgrammersManual.html")
+    ("slime" . "https://slime.common-lisp.dev/doc/html/")
+    ("gforth" . "https://www.complang.tuwien.ac.at/forth/gforth/Docs-html/")
+    ("guile" . "https://www.gnu.org/software/guile/manual/html_node/"))
+  "See 'org-info-other-documents'.")
+
+(setq org-man-command 'woman)
 
 ;;;###autoload
 (defun dblock-insert-links (regexp)
@@ -153,7 +169,14 @@
     (org-id-add-to-headlines-in-files
      (directory-files-recursively dir "[.]org$"))))
 
-(message "Initialized ULANG.")
+(defun ulang-init ()
+  (interactive)
+  (let ((%eq (lambda (a b) (equal (car a) (car b)))))
+    (mapcar (lambda (x) 
+	      (cl-pushnew x org-info-other-documents :test %eq)
+	      (cl-pushnew x Info-url-alist :test %eq))
+	    ulang-info-url-alist)
+    (message "Initialized ULANG.")))
 
 ;;; Commands
 

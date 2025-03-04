@@ -86,11 +86,12 @@
 (add-to-load-path user-emacs-lib-directory (join-paths user-stash-directory "lisp/slime"))
 
 (with-eval-after-load 'default
+  (require 'ulang)
+  (ulang-init)
   (require 'scrum)
   (require 'inbox)
   (require 'skel)
   (require 'c2))
-
 
 ;;; Theme
 (defun load-default-theme (&optional theme)
@@ -1250,7 +1251,7 @@ inherited by a parent headline."
 (add-hook 'mail-send-hook  #'ispell-message)
 
 ;;; Skel
-(require 'sk)
+(require 'skel)
 (require 'skt)
 
 (provide 'default)

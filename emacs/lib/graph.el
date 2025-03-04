@@ -101,22 +101,30 @@ non-nil visit each node and collect all edges found."
   (save-excursion
     (let* ((node-ids (copy-hash-table (or org-id-locations (org-id-locations-load)))) ;; don't overwrite `org-id-locations'
            (graph (make-org-graph :nodes node-ids)))
-      (maphash
-       (lambda (k v)
-         (if-let* ((ok (cl-loop for l in org-graph-locations
-                               when (string-prefix-p l (file-truename v))
-                               return t)))
-             (let ((pos (cdr (org-id-find-id-in-file k v))))
-               (if pos
-                   (progn
-                     (message "%s %s" k v)
-                     (org-with-file-buffer v
-                       (goto-char pos)
-                       (org-graph-node-at-point graph)
-                       (when edges (org-graph-edges-at-point graph))))
-                 (warn "couldn't find node %s %s" k v)))
-           (remhash k (org-graph-nodes graph))))
-       (org-graph-nodes graph))
+      (maphash 
+       (lambda (k v) 
+	 (unless (cl-loop for l in org-graph-locations
+			  when (string-prefix-p l (file-truename v))
+			  return t)
+	   (remhash k node-ids)))
+       node-ids)
+      (let* ((total (hash-table-count node-ids))
+	     (i 0)
+	     (prog (make-progress-reporter "Building org-graph..."
+					   i total)))
+	(maphash
+	 (lambda (k v)
+	   (progress-reporter-update prog (incf i) v)
+           (let ((pos (cdr (org-id-find-id-in-file k v))))
+             (if pos
+		 (progn
+                   (org-with-file-buffer v
+                     (goto-char pos)
+                     (org-graph-node-at-point graph)
+                     (when edges (org-graph-edges-at-point graph))))
+               (warn "couldn't find node %s %s" k v))))
+	 (org-graph-nodes graph))
+	(progress-reporter-done prog))
       (if local
           (setq-local org-graph graph)
         (setq org-graph graph)))))
@@ -132,6 +140,7 @@ non-nil visit each node and collect all edges found."
 (cl-defstruct org-graph-node id name file point)
 (cl-defstruct org-graph-edge (type 'link) in properties timestamp point out)
 
+;; TODO 2025-03-03: b3hash
 (defun org-graph--file-hash (file)
   "Compute the hash of FILE."
   (with-temp-buffer
@@ -429,14 +438,14 @@ used instead of the default value."
 ;; delete related functions
 (defun org-graph-find-links (id)
   "Return link elements for ID."
-    (org-graph-narrow-to-node)
-    (let ((links
-           (org-element-map (org-element-parse-buffer) 'link
-             (lambda (link)
-               (when (string= (org-element-property :path link) id)
-                 link)))))
-      (widen)
-      links))
+  (org-graph-narrow-to-node)
+  (let ((links
+         (org-element-map (org-element-parse-buffer) 'link
+           (lambda (link)
+             (when (string= (org-element-property :path link) id)
+               link)))))
+    (widen)
+    links))
 
 (defun org-graph-edge--in-drawer-p ()
   "Return non-nil if point is in drawer. Value is element at point."
@@ -543,6 +552,28 @@ Optionally skip inserting a parent node at the target with NO-PARENT."
         (print target-formatted-link)
         (org-graph-edge-insert-child (car target-formatted-link) (cdr target-formatted-link))))))
 
+(defun org-graph-edge-insert-parent-marker (target &optional no-child)
+  "Insert link to marker TARGET and create a parent edge.
+Optionally skip inserting a child node at the target with NO-CHILD."
+  (let* ((source (point-marker))
+	 (source-link (org-graph-edge-links-action source 'org-graph-edge-pre-parent-hook))
+	 (target-link (org-graph-edge-links-action target 'org-graph-edge-pre-child-hook))
+	 (source-formatted-link (org-graph-edge-link-builder source-link))
+	 (target-formatted-link (org-graph-edge-link-builder target-link)))
+    (unless no-child
+      (with-current-buffer (marker-buffer target)
+	(save-excursion
+	  (save-restriction
+	    (widen) ;; buffer could be narrowed
+	    (goto-char (marker-position target))
+	    (when (derived-mode-p 'org-mode)
+	      (org-graph-edge-insert-child (car source-formatted-link) (cdr source-formatted-link)))))))
+    (with-current-buffer (marker-buffer source)
+      (save-excursion
+	(goto-char (marker-position source))
+	(print target-formatted-link)
+	(org-graph-edge-insert-parent (car target-formatted-link) (cdr target-formatted-link))))))
+
 (defun org-graph-edge-insert-link-marker (target &optional no-forward no-backward)
   "Insert link to marker TARGET and create an edge.
 Only create edges in files in `org-mode' or a derived mode, otherwise just
@@ -635,26 +666,31 @@ either side, and deletes both sides of a link."
   (org-id-get-create)
   (org-expiry-insert-created))
 
-(defun org-graph-files (&optional no-readme)
-  (let ((files (flatten 
-		(mapcar (lambda (x) 
-			  (let ((paths 
-				 (cl-remove-if 
-				  (lambda (y) (string-prefix-p "." y))
-				  (directory-files x)))
-				(ret))
-			    (dolist (d paths ret)
-			      (let ((xd (join-paths x d))) 
-				(if (file-directory-p xd)
-				    (push (directory-files-recursively xd "**/*.org") ret)
-				  (push xd ret) )))))
-			org-graph-locations))))
-    (if no-readme
-	(cl-remove-if '(lambda (x) (string= (file-name-base x) "readme")) files)
+(defun org-graph-files (&optional clean)
+  (let ((files 
+	 (flatten 
+	  (mapcar (lambda (x) 
+		    (let ((paths 
+			   (cl-remove-if 
+			    (lambda (y) (string-prefix-p "." y))
+			    (directory-files x)))
+			  (ret))
+		      (dolist (d paths ret)
+			(let ((xd (join-paths x d))) 
+			  (if (file-directory-p xd)
+			      (push (directory-files-recursively xd "**/*.org$") ret)
+			    (push xd ret))))))
+		  org-graph-locations))))
+    (if clean
+	(cl-remove-if '(lambda (x) 
+			 (or
+			  (string= (file-name-base x) "readme")
+			  (not (string= (file-name-extension x) "org"))))
+		      files)
       files)))
 
 (defun org-graph--targets ()
-  `(,(org-graph-files) :maxlevel . ,org-graph-target-maxlevel))
+  (cons (org-graph-files t) (cons :maxlevel org-graph-target-maxlevel)))
 
 ;;;###autoload
 (defun org-graph-kill-all (&optional exclude-readme)
@@ -668,6 +704,10 @@ either side, and deletes both sides of a link."
    (org-buffer-list))
   (message "closed all org-graph buffers"))
 
+(defun org-graph-install-refile-targets ()
+  (cl-pushnew (org-graph--targets) org-refile-targets 
+	      :test (lambda (a b) (equal (car a) (car b)))))
+
 ;; TODO 2025-03-01: babel-mode or only no-readme?
 ;;;###autoload
 (defun org-graph-init (&optional no-readme)
@@ -675,13 +715,13 @@ either side, and deletes both sides of a link."
   (org-graph-kill-all no-readme)
   (org-id-update-id-locations (org-graph-files))
   (prog1 (org-graph-from-id-locations t)
-    (cl-pushnew (org-graph--targets) org-refile-targets :test (lambda (a b) (equal (car a) (car b))))))
+    (org-graph-install-refile-targets)))
 
 ;;;###autoload
 (defun org-graph-load ()
   "Load the org-graph from the org-graph-db."
   (interactive))
-  
+
 (defun org-graph-save ()
   "Save the org-graph to the org-graph-db.")
 
@@ -694,32 +734,45 @@ either side, and deletes both sides of a link."
                                        t)))
 
 (defun org-graph-edge-child (&optional no-parent)
-  "Insert a parent edge to the current heading point to the target."
+  "Insert a child edge from the current heading pointing to the target."
   (interactive "P")
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-child-marker (set-marker (make-marker) (car (cdddr target))
                                                     (get-file-buffer (car (cdr target)))) 
                                         no-parent)))
 
-(defun org-graph-edge-parent ()
-  (interactive)
-  (org-graph-edge-insert-child-marker 
-   (set-marker (make-marker) (car (cdddr target))
-               (get-file-buffer (car (cdr target))))
-   t))
+(defun org-graph-edge-parent (&optional no-child)
+  "Insert a parent edge to the current heading from the target."
+  (interactive "P")
+  (let ((target (org-graph-edge-search-function)))
+    (org-graph-edge-insert-parent-marker
+     (set-marker (make-marker) (car (cdddr target))
+		 (get-file-buffer (car (cdr target))))
+     no-child)))
 
-(defun org-graph-edge-related (&optional link desc)
-  "Insert a backlink edge to the target heading from the current one."
+(defun org-graph-edge-web (&optional link desc)
+  "Insert a related link to a web page."
   (interactive (list (org-web-tools--read-url)))
   (let ((desc 
          (or desc 
              (when link
                (if-let* ((dom (plz 'get link :as (lambda ()
-                                                 (libxml-parse-html-region (point-min) (point-max)))))
-                        (title (cl-caddr (car (dom-by-tag dom 'title)))))
+                                                   (libxml-parse-html-region (point-min) (point-max)))
+				:else nil))
+                         (title (cl-caddr (car (dom-by-tag dom 'title)))))
                    (org-web-tools--cleanup-title title)
                  (message "HTML page at URL has no title"))))))
-      (when link (org-graph-edge-insert-related link desc))))
+    (when link (org-graph-edge-insert-related link desc))))
+
+(defun org-graph-edge-info (&optional link desc)
+  "Insert a related link to an info page."
+  (interactive "sinfo:")
+  (when link (org-graph-edge-insert-related (format "info:%s" link) (or desc "info"))))
+
+(defun org-graph-edge-man (&optional link desc)
+  "Insert a related link to a man page."
+  (interactive "sinfo:")
+  (when link (org-graph-edge-insert-related (format "man:%s" link) (or desc "man"))))
 
 (defun org-dblock-write:links ()
   "Generate a 'links' block for the designated node.")

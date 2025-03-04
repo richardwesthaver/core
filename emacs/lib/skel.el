@@ -1,4 +1,4 @@
-;;; sk.el --- skel Emacs Mode -*- lexical-binding:t -*-
+;;; skel.el --- skel Emacs Mode -*- lexical-binding:t -*-
 
 ;; skel-mode, skel-minor-mode,skt-minor-mode, sk-classes
 
@@ -226,4 +226,4 @@ project's skelfile, if any. Typically added to
 
 ;; (add-hook 'skel-minor-mode-hook '%skel-dir-local--get-variables)
 (provide 'skel)
-;;; sk.el ends here
+;;; skel.el ends here

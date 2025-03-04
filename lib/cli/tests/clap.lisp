@@ -13,14 +13,14 @@
   (print *opts*)
   (print *args*))
 
-(defparameter *opts* '((:name "foo" :description "bar" :kind string)
-                       (:name "bar" :description "foo" :kind string)))
-(defparameter *cmd1* (make-cli :cmd :name "holla" :opts *opts* :description "cmd1 description"))
-(defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds (vector *cmd1*) :opts *opts* :description "cmd1 description"))
-(defparameter *cmd3* (make-cli :cmd :name "flub" :opts *opts* :thunk 'flub-thunk))
-(defparameter *cmds* (make-cmds (list `(:name "baz" :description "baz" :opts ,*opts*) *cmd1* *cmd2* *cmd3*)))
+(defparameter *test-opts* '((:name "foo" :description "bar" :kind string)
+                            (:name "bar" :description "foo" :kind string)))
+(defparameter *cmd1* (make-cli :cmd :name "holla" :opts *test-opts* :description "cmd1 description"))
+(defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds (vector *cmd1*) :opts *test-opts* :description "cmd1 description"))
+(defparameter *cmd3* (make-cli :cmd :name "flub" :opts *test-opts* :thunk 'flub-thunk))
+(defparameter *cmds* (make-cmds (list `(:name "baz" :description "baz" :opts ,*test-opts*) *cmd1* *cmd2* *cmd3*)))
 
-(defparameter *test-cli* (make-cli :cli :opts *opts* :cmds *cmds* :description "test cli"))
+(defparameter *test-cli* (make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli"))
 
 (deftest mixed-args ()
   (with-cli (*test-cli*) '("--foo" "bar" "flub") 
@@ -44,7 +44,7 @@
 
 (deftest clap-basic (:skip t)
   "test basic CLAP functionality."
-  (with-cli ((make-cli :cli :opts *opts* :cmds *cmds* :description "test cli") opts cmds args) *args*
+  (with-cli ((make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli") opts cmds args) *args*
     (is (eq (make-shorty "test") #\t))
     (is (equalp (proc-args *cli* '("-f" "baz" "--bar=fax")) ;; not eql
                 (make-cli-ast 

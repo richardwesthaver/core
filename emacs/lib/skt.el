@@ -23,7 +23,7 @@
 ;; 
 
 ;;; Code:
-(require 'sk)
+(require 'skel)
 
 ;; ref: https://raw.githubusercontent.com/xFA25E/skempo/master/skempo.el
 
