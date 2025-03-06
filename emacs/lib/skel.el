@@ -42,8 +42,8 @@
   "skel customization group."
   :group 'local)
 
-(defcustom skel-minor-mode-map-prefix "C-c C-."
-  "Prefix for `skel-minor-mode' keymap."
+(defcustom skel-map-prefix "C-x M-s"
+  "Prefix for `skel' keymap."
   :type 'string
   :group 'skel)
 
@@ -63,18 +63,44 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :type 'string
   :group 'skel)
 
-(defvar-keymap skel-minor-mode-map
-  :doc "skel-minor-mode keymap."
-  :repeat (:enter)
-  :prefix 'skel-minor-mode-map)
+(defvar-keymap skel-map
+  :doc "ske keymap."
+  :prefix 'skel-map
+  "b" 'skel:build
+  "m" 'skel:make
+  "c" 'skel:compile
+  "s" 'skel:show
+  "i" 'skel:install
+  "v" 'skel:vc)
+
+(defmacro def-skel-cmd (name)
+  `(defun ,(symb 'skel: name) (&rest args)
+     (interactive)
+     (let ((default-directory (project-root (project-current t))))
+       (async-shell-command (format "skel %s %s" ',name (with-output-to-string
+							 (cl-dolist (a args)
+							   (princ a)
+							   (princ " "))))))))
+(def-skel-cmd build)
+(def-skel-cmd dist)
+(def-skel-cmd compile)
+(def-skel-cmd make)
+(def-skel-cmd run)
+(def-skel-cmd pack)
+(def-skel-cmd install)
+(def-skel-cmd unpack)
+(def-skel-cmd show)
+(def-skel-cmd vc)
+(def-skel-cmd search)
+(def-skel-cmd view)
 
 (define-minor-mode skel-minor-mode
   "skel-minor-mode"
   :global t
   :lighter " Sk"
   :group 'skel
-  :keymap skel-minor-mode-map
-  :version skel-version)
+  :version skel-version
+  (keymap-local-set skel-map-prefix skel-map))
 
 (defun skel-indent-region (start end)
   "Indent region as a SKEL S-expression."

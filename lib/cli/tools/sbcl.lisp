@@ -25,20 +25,27 @@
 (defun parse-sbcl-option-keys (keys)
   (let ((rt)
         (tl))
-    (sb-int:doplist (k v) keys
-      (unless (null v)
-        (let ((opt (format nil "--~A" (string-downcase (symbol-name k)))))
-          (flet ((%push-opt (opt v l)
-                   (push opt l)
-                   (etypecase v
-                     (boolean nil)
-                     (string (push v l)))))
+    (flet ((%push-opt-rt (opt v)
+	     (appendf
+	      rt
+	      (etypecase v
+	        (boolean (list opt))
+	        (string (list opt v)))))
+           (%push-opt-tl (opt v)
+             (appendf 
+              tl
+              (etypecase v
+		(boolean (list opt))
+		(string (list opt v))))))
+      (sb-int:doplist (k v) keys
+        (unless (null v)
+          (let ((opt (format nil "--~A" (string-downcase (symbol-name k)))))
             (cond
-              ((member k *sbcl-runtime-options* :test 'string=) (%push-opt opt v rt))
-              ((member k *sbcl-toplevel-options* :test 'string=) (%push-opt opt v tl))
-              (t (sbcl-error "Invalid option: ~A ~A" opt v)))))))
-    ;; append and reverse
-    (nreverse (append tl rt))))
+              ((member k *sbcl-runtime-options* :test 'string=) (%push-opt-rt opt v))
+              ((member k *sbcl-toplevel-options* :test 'string=) (%push-opt-tl opt v))
+              (t (sbcl-error "Invalid option: ~A ~A" opt v))))))
+      ;; append and reverse
+      (nreverse (append tl rt)))))
 
 (defvar *sbcl-output* t)
 
