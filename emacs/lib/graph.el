@@ -74,6 +74,10 @@
   "Path to a lisp script responsible for initializing the `org-graph-db-directory'."
   :type 'file)
 
+(defcustom org-graph-file (join-paths user-emacs-directory "graph.sxp")
+  "Path to the default output location of 'org-graph-save'."
+  :type 'file)
+
 (cl-defstruct org-graph-db-handle
   (type :rocksdb)
   (name "org-graph-db")
@@ -138,7 +142,20 @@ non-nil visit each node and collect all edges found."
   "The Emacs-native org-graph. Should be assigned to an `org-graph' instance.")
 
 (cl-defstruct org-graph-node id name file point)
+(cl-defmethod unwrap ((self org-graph-node))
+  (with-slots (id name file point) self
+    (list id name file point)))
+(cl-defmethod wrap ((self org-graph-node) form)
+  (dolist (s '(id name file point) self)
+    (oset self s (pop form))))
+
 (cl-defstruct org-graph-edge (type 'link) in properties timestamp point out)
+(cl-defmethod unwrap ((self org-graph-edge))
+  (with-slots (type in properties timestamp point out) self
+    (list type in properties timestamp point out)))
+(cl-defmethod wrap ((self org-graph-edge) form)
+  (dolist (s '(type in properties timestamp point out) self)
+    (oset self s (pop form))))
 
 ;; TODO 2025-03-03: b3hash
 (defun org-graph--file-hash (file)
@@ -722,11 +739,19 @@ either side, and deletes both sides of a link."
   "Load the org-graph from the org-graph-db."
   (interactive))
 
-(defun org-graph-save ()
-  "Save the org-graph to the org-graph-db.")
+(defun org-graph-save (&optional output)
+  "Save the org-graph to a sxp file."
+  (interactive)
+  (with-temp-buffer 
+    (beginning-of-buffer)
+    (pp
+     (list :nodes (mapcar 'unwrap (org-graph-node-list))
+	   :edges (mapcar 'unwrap (org-graph-edge-list)))
+     (current-buffer))
+    (write-file (or output org-graph-file))))
 
 (defun org-graph-edge-backlink ()
-  "Insert a backlink edge to the target heading from the current one."
+  "Insert a backlink edge from the target to current heading."
   (interactive)
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
@@ -734,7 +759,7 @@ either side, and deletes both sides of a link."
                                        t)))
 
 (defun org-graph-edge-child (&optional no-parent)
-  "Insert a child edge from the current heading pointing to the target."
+  "Insert a child edge from the target to the current heading."
   (interactive "P")
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-child-marker (set-marker (make-marker) (car (cdddr target))

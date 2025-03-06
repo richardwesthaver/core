@@ -48,7 +48,7 @@
        ;; rust-bin
        ))
  (upstream () ;; pretty gross hack to fix broken tree
-           (delete-directory "/tmp/core/" :recursive t)
+           (probe-delete-directory "/tmp/core/")
            (vc:hg-fast-export (sk-vc *skel-project*))
            #$cd /tmp/core
            git remote add cb ssh://git@codeberg.org/c-c/core
@@ -214,8 +214,8 @@
  (core ()
        (:build (%stash) 
                (with-sbcl (:noinform t :quit t)
-                 (push :virt *features*)
-                 (push :tools *features*)
+                 ;; (push :virt *features*)
+                 ;; (push :tools *features*)
                  (asdf:load-system :bin/core)
                  (asdf:make :bin/core))
                #$mv bin/core .stash/core$#)
@@ -254,6 +254,7 @@
         (:compile () 
                   (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
+ (rust () (:build () #$cargo build$#))
  (fasls (compile-core #+nil compile-tests compile-bench compile-user compile-prelude))
  ;; install
  (install (install-core) 

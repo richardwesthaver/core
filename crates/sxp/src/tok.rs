@@ -343,7 +343,7 @@ macro_rules! deserialize_any {
 
 macro_rules! deserialize_number {
   ($deserialize:ident => $visit:ident) => {
-    #[cfg(not(feature = "arbitrary_precision"))]
+    // #[cfg(not(feature = "arbitrary_precision"))]
     fn $deserialize<V>(self, visitor: V) -> Result<V::Value, Error>
     where
       V: Visitor<'de>,

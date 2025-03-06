@@ -667,6 +667,8 @@
   (:export
    :delete-directory :delete-file-error
    :delete-file-if-exists
+   :probe-delete-file
+   :probe-delete-directory
    :delete-directories
    :tmpfile
    :dir

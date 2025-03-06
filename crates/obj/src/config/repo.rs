@@ -33,15 +33,3 @@ impl Default for RepoConfig {
     }
   }
 }
-
-/// Subrepo type
-///
-/// Note that Mercurial subrepos are a 'feature of last resort'
-/// according to official docs. They are needed in very niche
-/// scenarios and shouldn't be used most of the time.
-#[derive(Default)]
-pub struct SubRepo {
-  pub vcs: String,
-  pub origin: String,
-  pub path: String,
-}

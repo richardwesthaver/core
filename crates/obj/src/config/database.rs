@@ -18,5 +18,4 @@ pub struct DatabaseConfig {
 pub enum DatabaseType {
   #[default]
   RocksDB,
-  Alch,
 }

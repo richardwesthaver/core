@@ -3,35 +3,14 @@
 //! Primitive configuration types
 pub mod auth;
 pub mod database;
-pub mod display;
-pub mod library;
 pub mod meta;
 pub mod network;
-pub mod package;
-pub mod program;
-pub mod project;
-pub mod registry;
 pub mod repo;
-pub mod user;
+
 
 #[cfg(test)]
 mod test {
   use super::*;
-
-  #[test]
-  fn test_package_cfg() {
-    let mut pkg: package::PackageConfig = ron::from_str(
-      r#"(name: "test-pack-cfg",
-        repo: None,
-        program: None,
-        library: None)"#,
-    )
-    .unwrap();
-    assert_eq!(pkg, package::PackageConfig::new("test-pack-cfg"));
-    pkg.repo = Some(repo::RepoConfig::new());
-    assert_eq!(repo::RepoConfig::new(), pkg.repo.unwrap());
-  }
-
   #[test]
   fn test_network_cfg() {
     let mut net: network::NetworkConfig = ron::from_str(

@@ -48,10 +48,10 @@
          (out (sb-ext:process-output proc)))
     (read out)))
 
-(defun notmuch-tag (query)
-  (run-notmuch "tag" query))
+(defun notmuch-tag (query &rest args)
+  (apply 'run-notmuch "tag" (push query args)))
 
-(defun notmuch-address (query)
-  (let* ((proc (%notmuch `("address" "--format=sexp" ,query) :stream nil))
+(defun notmuch-address (query &rest args)
+  (let* ((proc (%notmuch `("address" "--format=sexp" ,@args ,query) :stream nil))
          (out (sb-ext:process-output proc)))
     (read out)))

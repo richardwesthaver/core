@@ -1,4 +1,3 @@
-use super::SubRepo;
 use crate::Result;
 use hg_parser::{
   file_content, FileType, ManifestEntryDetails, MercurialRepository, Revision,
@@ -35,7 +34,7 @@ impl MercurialConfig {
 /// Mercurial '.hgsub' file handle, which is just a list of PATH=SOURCE pairs.
 pub struct HgSubFile {
   pub path: PathBuf,          // path to the .hgsub file
-  pub subrepos: Vec<SubRepo>, // Vec containing `SubRepo` handles
+  pub subrepos: Vec<Repo>, // Vec containing `Repo` handles
 }
 
 impl HgSubFile {
@@ -77,13 +76,13 @@ impl HgSubFile {
 
     let source = format!("{}:{}", prefix, source);
 
-    let subrepo = SubRepo {
+    let subrepo = Repo {
       vcs: vcs.unwrap().to_string(),
       origin: source.to_string(),
       path: path.to_string(),
     };
 
-    self.subrepos.push(subrepo);
+    self.repos.push(repo);
     Ok(())
   }
 

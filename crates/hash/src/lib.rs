@@ -17,7 +17,6 @@ pub const KEY_LEN: usize = 32;
 pub const OUT_LEN: usize = 32;
 pub const OUT_LEN_HEX: usize = OUT_LEN * 2;
 
-//mod tree;
 #[cfg(test)]
 mod tests;
 /// a simple Id abstraction with help functions. I'm finding this easier than
@@ -29,9 +28,9 @@ pub struct Id(pub Vec<u8>);
 
 impl Id {
   pub fn rand() -> Self {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let vals: Vec<u8> =
-      (0..KEY_LEN).map(|_| rng.gen_range(0..u8::MAX)).collect();
+      (0..KEY_LEN).map(|_| rng.random_range(0..u8::MAX)).collect();
     Id(vals)
   }
 
@@ -62,7 +61,7 @@ impl PeerId {
   }
 
   pub fn rand() -> Self {
-    let pd = rand::thread_rng().gen::<[u8; 32]>();
+    let pd = rand::rng().random::<[u8; 32]>();
     Self { id: pd }
   }
 

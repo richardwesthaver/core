@@ -5,20 +5,9 @@ mod err;
 mod id;
 
 mod config;
-mod object;
 
 pub use err::{Error, Result};
 pub use id::{Domain, Id, Identity, NameSpace};
-
-pub use object::{
-  color::Color,
-  direction::{CardinalDirection, EdgeDirection, RelativeDirection},
-  doc::{Doc, DocExtension},
-  location::{City, Point},
-  media::{Media, MediaExtension},
-  meta::{Meta, Note, Property, Summary},
-  temperature::Temperature,
-};
 
 #[cfg(feature = "oauth")]
 pub use config::auth::Oauth2Config;
@@ -32,19 +21,9 @@ pub use config::repo::hg::{
 pub use config::{
   auth::{AuthConfig, SshConfig},
   database::DatabaseConfig,
-  display::DisplayConfig,
-  library::LibraryConfig,
   meta::MetaConfig,
   network::NetworkConfig,
-  package::PackageConfig,
-  program::ProgramConfig,
-  project::ProjectConfig,
-  registry::RegistryConfig,
   repo::RepoConfig,
-  user::{
-    ShellConfig, TmuxPaneConfig, TmuxSessionConfig, TmuxWindowConfig,
-    UserConfig,
-  },
 };
 
 use ron::extensions::Extensions;
@@ -66,15 +45,6 @@ impl_config!(
   MetaConfig,
   RepoConfig,
   DatabaseConfig,
-  DisplayConfig,
-  UserConfig,
-  ShellConfig,
-  TmuxSessionConfig,
-  TmuxWindowConfig,
-  TmuxPaneConfig,
-  LibraryConfig,
-  ProgramConfig,
-  ProjectConfig,
   NetworkConfig,
   AuthConfig,
   SshConfig
