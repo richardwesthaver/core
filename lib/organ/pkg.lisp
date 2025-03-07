@@ -128,7 +128,10 @@
    :org-line-break :org-comment :org-greater-block
    :org-horizontal-rule :org-planning
    :org-active-timestamp-range))
-   
+
+(defpackage :organ/graph
+  (:use :cl :std :organ :graph :db :rdb :seq :query :id :uuid :q :schema :graph :ast :time :b3))
+
 (defpackage :organ/cli
   (:use :cl :std :organ :cli)
   (:export :*organ-cli*))
