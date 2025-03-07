@@ -1,9 +1,20 @@
 (defpackage :organ/tests
-  (:use :cl :organ :std :rt)
+  (:use :cl :organ :std :rt :rt/fuzz)
   (:export *test-org-file*))
 
 (in-package :organ/tests)
 (in-readtable :std)
+
+(defclass org-fuzzer (fuzzer) ()
+  (:default-initargs
+   :state nil
+   :generator 
+   (lambda (state)
+     (org-create 
+      (or state
+          (keywordicate
+           (random-elt (append org-element-objects org-element-types))))))))
+
 (defparameter *test-org-heading* 
   #"* TODO [#A] header1                       :tag1:tag2:
 :PROPERTIES:

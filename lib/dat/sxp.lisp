@@ -20,6 +20,9 @@
 (defmethod read-ast ((self ast:ast) stream &key)
   (setf (ast:ast self) (slurp-stream-forms stream :count nil)))
 
+(defmethod read-ast ((self null) stream &key)
+  (slurp-stream-forms stream :count nil))
+
 ;; (defsetf unwrap ) (defsetf wrap )
 
 ;;; Functions

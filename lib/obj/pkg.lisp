@@ -168,7 +168,10 @@
    :vertex :edge :graph :make-edge :make-graph
    :nodes :edges :add-node :add-edge
    :weighted-edge :directed-edge :undirected-edge :directed-graph
-   :edge-value :edge-weight :node-edges))
+   :edge-value :edge-weight :node-edges
+   :edgex
+   :edge-out
+   :edge-in))
 
 (defpackage :obj/color
   (:nicknames :color)
