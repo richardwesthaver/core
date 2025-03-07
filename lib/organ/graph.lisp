@@ -30,9 +30,7 @@
 
 (defparameter *org-graph-schema* (make-instance 'org-graph-schema))
 
-(defparameter *org-graph-db-directory*
-  (or (probe-file (car (cli:args)))
-      (merge-pathnames ".store/db/graph/" (user-homedir-pathname))))
+(defvar *org-graph-db-directory* (merge-pathnames ".store/db/graph/" (user-homedir-pathname)))
 
 (defun make-org-graph-db ()
   (load-schema
