@@ -3,6 +3,7 @@
   :depends-on (:std :cli :obj :dat :net :log)
   :components ((:file "pkg")
                (:file "archiso")
+               (:file "ignition")
                (:file "qmp"))
   :in-order-to ((test-op (test-op :box/tests))))
 

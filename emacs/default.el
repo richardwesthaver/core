@@ -90,7 +90,9 @@
   (ulang-init)
   (require 'scrum)
   (require 'inbox)
+  (require 'graph)
   (require 'skel)
+  (require 'bar)
   (require 'c2))
 
 ;;; Theme
@@ -875,6 +877,10 @@ Add this function to appropriate major mode hooks such as
                              (js . t)
                              (C . t)
                              (python . t)))
+
+(setq org-babel-default-header-args
+      '((:session . "none") (:results . "replace") (:eval . "no-export") (:exports . "both")
+	(:cache . "no") (:noweb . "no") (:hlines . "no") (:tangle . "no")))
 
 ;; org-sbx [[https://list.orgmode.org/d429d29b-42fa-7d7b-6f3a-9fe692fd6dc7@grinta.net/T/]]
 (defun %org-sbx (name header args)

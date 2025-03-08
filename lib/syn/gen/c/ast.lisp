@@ -363,7 +363,7 @@
         `(make-exprs ,body))))
 
 (c-syntax function (name type parameters &body body &environment env)
-  "Define c function"
+  "Define a C function"
   `(make-instance 'function-definition
     ;; function name + type
      :item

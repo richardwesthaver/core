@@ -22,7 +22,7 @@
     (with-gen-test (merge-pathnames "simple.sxp" *gen-rs-test-files*)
       (gen-rs %in %out)
       (is (probe-file %out))
-      (delete-file %out)
+      (delete-file %out)))
       ;; (is (probe-file %bin))
       ;; (delete-file %bin)
       ;;  TODO 2024-12-19: (run-cargo (namestring %out)) ;; use cargo-script
@@ -31,4 +31,4 @@
       ;;  (format nil "Hello, World!~%")
       ;;  (with-output-to-string (s)
       ;;    (sb-ext:run-program %bin nil :output s :wait t)))
-      )))
+      )

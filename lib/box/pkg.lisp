@@ -22,6 +22,11 @@
   (:use :cl :std :cli/shell :dat/json :obj/config :box)
   (:export :*archiso-config* :*archiso-creds* :archiso-config))
 
+(defpackage :box/ignition
+  (:nicknames :ignition)
+  (:use :cl :std :shell :json :config :box)
+  (:export :*ignition-config* :ignition-config))
+
 (defpackage :box/qemu
   (:nicknames :qemu)
   (:use :cl :std :cli/shell :dat/json :config :box)

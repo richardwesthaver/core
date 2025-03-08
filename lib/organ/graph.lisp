@@ -38,7 +38,7 @@
 		 :opts (default-rdb-opts))
    *org-graph-schema*))
 
-(defvar *org-graph-db* (make-org-graph-db))
+(defvar *org-graph-db* nil)
 
 (define-condition org-id-locations-out-of-sync (simple-error) ())
 
@@ -58,8 +58,6 @@
   (handler-case (uuid-to-octet-vector id)
     (simple-error () id)
     (sb-pcl::missing-slot () id)))
-
-(defvar *org-id-locations* (make-org-id-locations))
 
 (defvar *org-graph* nil)
 
@@ -177,6 +175,7 @@
     (log:info! "created org-graph-db" *org-graph-db* *org-graph-db-directory* *org-graph-schema*)))
 
 (defun open-org-graph-db ()
+  (unless *org-graph* (init-org-graph))
   (unless (probe-file *org-graph-db-directory*)
     (init-org-graph-db))
   (if (and *org-graph-db* (db-open-p *org-graph-db*))
@@ -187,8 +186,7 @@
 
 (defun destroy-org-graph-db ()
   (unless (db-closed-p *org-graph-db*)
-    (shutdown-db *org-graph-db*)
-    (destroy-db *org-graph-db*)
+    (close-db *org-graph-db*)
     (log:info! "destroyed org-graph-db at ~A" *org-graph-db-directory*)))
 
 (defun og-get (key &optional (from "node"))
