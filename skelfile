@@ -47,6 +47,14 @@
        ;; save-infra save-tests
        ;; rust-bin
        ))
+(full (%stash
+        psl.dat rgb.txt parquet.thrift
+        build-zstd-alien
+        build-tree-sitter-alien
+        build-full-core 
+        ;; save-std save-prelude save-user fasls
+        ;; save-infra save-tests
+        ))
  (upstream () ;; pretty gross hack to fix broken tree
            (probe-delete-directory "/tmp/core/")
            (vc:hg-fast-export (sk-vc *skel-project*))
@@ -218,18 +226,18 @@
                  (asdf:load-system :bin/core)
                  (asdf:make :bin/core))
                #$mv bin/core .stash/core$#)
-       (:build-all (%stash)
-                   (with-sbcl (:noinform t :quit t)
-                     (push :virt *features*)
-                     (push :net *features*)
-                     (push :swank *features*)
-                     (push :gui *features*)
-                     (push :x11 *features*)
-                     (push :clim *features*)
-                     (push :tools *features*)
-                     (asdf:load-system :core)
-                     (asdf:make :bin/core))
-                   #$mv bin/core .stash/core$#)
+       (:build-full (%stash)
+                    (with-sbcl (:noinform t :quit t)
+                      (push :virt *features*)
+                      (push :net *features*)
+                      (push :swank *features*)
+                      (push :gui *features*)
+                      (push :x11 *features*)
+                      (push :clim *features*)
+                      (push :tools *features*)
+                      (asdf:load-system :core)
+                      (asdf:make :bin/core))
+                    #$mv bin/core .stash/core$#)
        (:save () (with-sbcl (:noinform t :quit t)
                    (ql:quickload (list :std :core))
                    (in-package :std-user)

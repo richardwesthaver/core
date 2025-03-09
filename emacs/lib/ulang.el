@@ -48,6 +48,7 @@
     ("llvm" . "https://llvm.org/docs/ProgrammersManual.html")
     ("slime" . "https://slime.common-lisp.dev/doc/html/")
     ("gforth" . "https://www.complang.tuwien.ac.at/forth/gforth/Docs-html/")
+    ("ecl" . "https://ecl.common-lisp.dev/static/manual/")
     ("guile" . "https://www.gnu.org/software/guile/manual/html_node/"))
   "See 'org-info-other-documents'.")
 

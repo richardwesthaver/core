@@ -26,7 +26,8 @@
   "x" #'eval-defun)
 
 (defvar-keymap toggle-map
-  :doc "User-specified keymap for mode toggles. Usually bound to 'C-c c SPC'."
+  :doc
+  "User-specified keymap for mode toggles. Usually bound to 'C-c c SPC'."
   :prefix 'toggle-map
   "v" #'global-visual-line-mode
   "b" #'bar-toggle
@@ -49,7 +50,8 @@
   "w" #'which-key-mode)
 
 (defvar-keymap status-map
-  :doc "User-specified keymap for status functions. Usually bound to 'C-c c .'."
+  :doc
+  "User-specified keymap for status functions. Usually bound to 'C-c c .'."
   "l" #'eglot-list-connections
   "p" #'list-processes
   "t" #'list-threads
@@ -60,12 +62,14 @@
   "P" #'list-packages)
 
 (defvar-keymap server-map
-  :doc "User-specified keymap for server functions. Usually bound to 'C-c c q'."
+  :doc
+  "User-specified keymap for server functions. Usually bound to 'C-c c q'."
   "q"  #'kill-emacs
   "r" #'kill-emacs-restart)
 
 (defvar-keymap review-map
-  :doc "User-specified keymap for review functions. Usually bound to 'C-c c r'."
+  :doc
+  "User-specified keymap for review functions. Usually bound to 'C-c c r'."
   "s" #'flyspell-buffer
   "SPC" #'whitespace-cleanup
   "C-s" #'org-schedule-effort
@@ -73,7 +77,8 @@
   "q" #'query-replace-regexp)
 
 (defvar-keymap search-map
-  :doc "User-specified keymap for search functions. Usually bound to 'C-c c s'."
+  :doc
+  "User-specified keymap for search functions. Usually bound to 'C-c c s'."
   "g" #'grep
   "r" #'rgrep
   "z" #'zrgrep
@@ -84,7 +89,8 @@
   "SPC" #'whitespace-cleanup)
 
 (defvar-keymap clock-map
-  :doc "User-specified keymap for org-clock functions. Usually bound to 'C-c c t'."
+  :doc
+  "User-specified keymap for org-clock functions. Usually bound to 'C-c c t'."
   "j" #'org-clock-goto
   "i" #'org-clock-in
   "o" #'org-clock-out
@@ -95,7 +101,8 @@
   "m" #'org-clock-mark-default-task)
 
 (defvar-keymap user-map
-  :doc "User-specified keymap usually bound to 'C-c c' and populated in 'custom.el'."
+  :doc
+  "User-specified keymap usually bound to 'C-c c' and populated in 'custom.el'."
   :prefix 'user-map
   "c" #'org-capture
   "1" #'org-inbox-open

@@ -94,7 +94,7 @@
 ;; inherited. The 'PROJECT' property itself can be inherited.
 
 ;; project-info
-(defcustom org-project-info-order '(details status tasks churn log files)
+(defcustom org-project-info-order '(details status html tasks churn log files)
   "Order in which sections of the 'project-info' dblock will appear."
   :type 'list
   :group 'scrum)

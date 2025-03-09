@@ -64,26 +64,33 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :group 'skel)
 
 (defvar-keymap skel-map
-  :doc "ske keymap."
+  :doc "skel keymap"
   :prefix 'skel-map
   "b" 'skel:build
   "m" 'skel:make
   "c" 'skel:compile
+  "u" 'skel:update
+  "U" 'skel:unpack
+  "P" 'skel:pack
+  "d" 'skel:dist
+  "x" 'skel:clean
+  "r" 'skel:run
   "s" 'skel:show
   "i" 'skel:install
-  "v" 'skel:vc)
+  "v" 'skel:vc
+  "V" 'skel:view)
 
 (defmacro def-skel-cmd (name)
-  `(defun ,(symb 'skel: name) (&rest args)
-     (interactive)
+  `(defun ,(symb 'skel: name) (&optional arg)
+     (interactive "P")
+     (when arg (setf arg (read-string (format "skel %s " ',name))))
      (let ((default-directory (project-root (project-current t))))
-       (async-shell-command (format "skel %s %s" ',name (with-output-to-string
-							 (cl-dolist (a args)
-							   (princ a)
-							   (princ " "))))))))
+       (async-shell-command (format "skel %s %s" ',name (princ (or arg "")))))))
+
 (def-skel-cmd build)
 (def-skel-cmd dist)
 (def-skel-cmd compile)
+(def-skel-cmd update)
 (def-skel-cmd make)
 (def-skel-cmd run)
 (def-skel-cmd pack)

@@ -6,8 +6,7 @@
 
 ;;; Code:
 (defpackage :gui/x11/stump
-  (:use :cl :std :stumpwm)
-  (:shadowing-import-from :std :group :message)
+  (:use :cl :stumpwm)
   (:export
    #:*app-map*
    #:*edit-map*

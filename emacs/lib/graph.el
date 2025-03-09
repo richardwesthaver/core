@@ -97,6 +97,12 @@
 ;; TODO 2025-01-17: 
 (defun org-graph-from-file (file))
 
+(defun org-graph-file-p (v)
+  (when v
+    (cl-loop for l in org-graph-locations
+	     when (string-prefix-p l (file-truename v))
+	     return t)))
+
 (defun org-graph-from-id-locations (&optional edges local)
   "Populate the `org-graph' from `org-id-locations', filtering out any
 entries not under a member of `org-graph-locations'. When EDGES is
@@ -107,9 +113,7 @@ non-nil visit each node and collect all edges found."
            (graph (make-org-graph :nodes node-ids)))
       (maphash 
        (lambda (k v) 
-	 (unless (cl-loop for l in org-graph-locations
-			  when (string-prefix-p l (file-truename v))
-			  return t)
+	 (unless (org-graph-file-p v)
 	   (remhash k node-ids)))
        node-ids)
       (let* ((total (hash-table-count node-ids))
@@ -702,6 +706,7 @@ either side, and deletes both sides of a link."
 	(cl-remove-if '(lambda (x) 
 			 (or
 			  (string= (file-name-base x) "readme")
+			  (string= (file-name-base x) "index")
 			  (not (string= (file-name-extension x) "org"))))
 		      files)
       files)))
@@ -804,6 +809,33 @@ either side, and deletes both sides of a link."
 
 (defun org-dblock-write:graph ()
   "Generate a 'graph' block for the designated set of nodes.")
+
+;;; Keys
+(defvar org-graph-map-prefix "C-c g")
+
+(defvar-keymap org-graph-map
+  :doc "org-graph keymap"
+  :prefix 'org-graph-map-prefix
+  "n" 'org-graph-node
+  "w" 'org-graph-edge-web
+  "l" 'org-graph-edge-link
+  "i" 'org-graph-edge-info
+  "m" 'org-graph-edge-man
+  "c" 'org-graph-edge-child
+  "p" 'org-graph-edge-parent)
+
+;;; Minor Mode
+(define-minor-mode org-graph-minor-mode
+  "Minor mode for `org-graph'."
+  :lighter " OG"
+  :group 'graph
+  :keymap org-graph-map
+  (keymap-local-set org-graph-map-prefix org-graph-map))
+
+(defun org-graph-maybe-enable ()
+  (when (org-graph-file-p buffer-file-name) (org-graph-minor-mode 1)))
+
+(add-hook 'org-mode-hook 'org-graph-maybe-enable)
 
 (provide 'graph)
 ;; graph.el ends here

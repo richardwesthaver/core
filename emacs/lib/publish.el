@@ -31,26 +31,45 @@
       org-export-allow-bind-keywords t
       org-html-doctype "html5"
       org-html-html5-fancy t
-      ;; org-html-validation-link nil
       org-src-fontify-natively t
       org-export-with-broken-links 'mark
       make-backup-files nil
       debug-on-error t
-      org-id-link-to-org-use-id t
-      org-html-klipsify-src nil)
+      org-id-link-to-org-use-id t)
 
-;; (setq org-html-klipse-selection-script
+;; (setq org-html-klipsify-src t
+;;       org-html-klipse-js (join-paths company-cdn-url "js/klipse.min.js")
+;;       org-html-klipse-css (join-paths company-cdn-url "css/klipse.css")
+;;       org-html-klipse-selection-script
 ;;       "window.klipse_settings = {selector_eval_html: '.src-html',
-;;                              selector_eval_js: '.src-js',
-;;                              selector_eval_python_client: '.src-python',
-;;                              selector_eval_scheme: '.src-scheme',
-;;                              selector: '.src-clojure',
-;;                              selector_eval_ruby: '.src-ruby',
-;;                              selector_eval_clisp: '.src-lisp'};")
+;; 			     selector_eval_js: '.src-js',
+;; 			     selector_sql: '.src-sql',
+;; 			     selector_pyodide: '.src-python',
+;; 			     selector_eval_clisp: '.src-lisp',
+;; 			     selector_eval_scheme: '.src-scheme',
+;; 			     selector: '.src-clojure',
+;; 			     selector_eval_ruby: '.src-ruby'};")
 
-(setq org-html-link-home url)
+;; (setq org-html-link-home url)
 
-(setq org-html-home/up-format "<nav id=\"org-div-home-and-up\"><a href=\"%s\" accesskey=\"h\"><button class=home>⌂</button></a><a href=\"%s\" accesskey=\"u\"><button class=up>▲</button></a>
+(defmacro with-org-publish (&rest body)
+  `(let (
+	 ;; (save-silently t)
+	 (debug-on-error t)
+	 ;; (coding-system-for-read 'utf-8-unix)
+	 ;; (coding-system-for-write 'utf-8-unix)
+	 (org-inhibit-startup t)
+	 (org-mode-hook nil)
+	 (find-file-hook nil)
+	 (kill-buffer-hook nil)
+	 (org-element-use-cache nil)
+	 (before-save-hook nil)
+	 (after-save-hook nil)
+	 (kill-buffer-query-functions nil)
+	 (buffer-list-update-hook nil))
+     ,@body))
+
+(setq org-html-home/up-format "<nav id=\"org-div-home-and-up\"><a href=\"%s\" accesskey=\"u\"><button class=up>▲</button></a><a href=\"%s\" accesskey=\"h\"><button class=home>⌂</button></a>
 <button accesskey=\"s\" class=show onclick=open_all_sections()>show</button> <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></nav>")
       
 (setq org-publish-project-alist
@@ -197,22 +216,104 @@
 ;;           (inc-suffixf ref)))
 ;;       ref)))
 
+(defun org-html--reference (datum info &optional named-only)
+  "Return an appropriate reference for DATUM.
+DATUM is an element or a `target' type object.  INFO is the
+current export state, as a plist.
+When NAMED-ONLY is non-nil and DATUM has no NAME keyword, return
+nil.  This doesn't apply to headlines, inline tasks, radio
+targets and targets."
+  (let* ((type (org-element-type datum))
+	 (user-label
+	  (org-element-property
+	   (pcase type
+	     ((or `headline `inlinetask) :CUSTOM_ID)
+	     ((or `radio-target `target) :value)
+	     (_ :name))
+	   datum))
+	 (user-label (or user-label
+			 (when-let ((path (org-element-property :ID datum)))
+			   (concat "ID-" path)))))
+    (cond
+     ((and user-label
+	   (or (plist-get info :html-prefer-user-labels)
+	       ;; Used CUSTOM_ID property unconditionally.
+	       (memq type '(headline inlinetask))))
+      user-label)
+     ((and named-only
+	   (not (memq type '(headline inlinetask radio-target target)))
+	   (not user-label))
+      nil)
+     (t
+      (org-export-get-reference datum info)))))
+
 ;;;###autoload
-(defun publish (&optional sitemap static force async)
+(defun update-sitemap ()
+  "update `rwest-io' sitemaps:
+- blog
+- notes
+- projects"
+  (interactive)
+  (save-excursion
+    (let ((dirs '("blog/draft" 
+		  "graph/app" "graph/comp" "graph/lang" "graph/hw" "graph/math" "graph/os" 
+		  "graph/proto" "graph/sys" "graph/theory" "graph/web"
+		  "plan/tasks"
+		  "docs/core/app" "docs/core/lib")))
+      (message (format "generating sitemaps: %s" dirs))
+      (while dirs
+	(let* ((dir (pop dirs))
+	       (default-directory (join-paths project-dir dir))
+	       (files (remove "index.org" (directory-files default-directory nil ".org$" t)))
+	       (entries))
+	  (delete-file "index.org")
+	  (when-let ((index-open (find-buffer-visiting "index.org")))
+	    (kill-buffer index-open))
+	  (while files
+	    (let* ((file (pop files)))
+	      (with-temp-buffer
+		(org-mode)
+		(insert-file-contents file nil)
+		(add-to-list
+		 'entries
+		 (cons file (org-collect-keywords '("TITLE")))))))
+	  (sort entries
+		(lambda (a b)
+		  (string-greaterp (car (cdaddr a)) (car (cdaddr b)))))
+	  (org-with-file-buffer "index.org"
+	    (insert (format "#+TITLE: %s\n" dir))
+	    (insert (format "#+HTML_LINK_UP: %s\n" "../"))
+	    (insert (format "#+SETUPFILE: %s\n" 
+			    (cl-case (length (file-name-split dir))
+			      (2 "../../clean.theme")
+			      (3 "../../../clean.theme")
+			      (4 "../../../../clean.theme")
+			      (t (error "max index level reached in 'update-sitemap'")))))
+	    (dolist (e entries)
+	      (let ((file (file-name-with-extension (car e) "html"))
+		    (title (cadadr e)))
+		(insert (format "- [[%s/%s/%s][%s]]\n" url dir file title))))
+	    (save-buffer))
+	  (message (format "generated %s/index.org" dir)))))))
+
+;;;###autoload
+(defun publish (&optional sitemap force async)
   "publish `compiler.company' content.
-If STATIC is t, also publish media and static files.
+If SITEMAP is t, generate sitemaps.
 If FORCE is t, skip checking file mod date and just publish all files.
 If ASYNC is t, call `org-publish' asynchronously.
 If given a prefix (C-u), set all args to t"
   (interactive)
-  (when current-prefix-arg
-    (setq static t
-	  force t
-          async t))
-  (let ((default-directory project-dir))
-    (message (format "publishing from %s" default-directory))
-    (org-publish "compiler.company" force async)
-    (message "finished publishing compiler.company from %s to %s" project-dir publish-dir)))
+  (with-org-publish
+   (when current-prefix-arg
+     (setq sitemap t
+	   force t
+	   async t))
+   (let ((default-directory project-dir))
+     (message (format "publishing %s" default-directory))
+     (when sitemap (update-sitemap))
+     (org-publish "compiler.company" force async)
+     publish-dir)))
 
 (provide 'publish)
 ;;; publish.el ends here
