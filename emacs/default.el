@@ -845,7 +845,8 @@ Add this function to appropriate major mode hooks such as
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil
       ;; cc default
-      org-ascii-text-width 80)
+      org-ascii-text-width 80
+      org-attach-id-dir (join-paths company-cdn-url "media/"))
 
 (org-crypt-use-before-save-magic)
 

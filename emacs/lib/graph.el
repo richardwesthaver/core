@@ -829,7 +829,6 @@ either side, and deletes both sides of a link."
   "Minor mode for `org-graph'."
   :lighter " OG"
   :group 'graph
-  :keymap org-graph-map
   (keymap-local-set org-graph-map-prefix org-graph-map))
 
 (defun org-graph-maybe-enable ()
