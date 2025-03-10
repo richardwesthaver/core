@@ -1,3 +1,0 @@
-("stddef.h" "stdint.h")
-
-()

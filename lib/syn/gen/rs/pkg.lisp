@@ -68,7 +68,7 @@
 
 (defparameter *rs-exports* (append *rs-symbols* *rs-syntax* *cl-symbols*))
 
-(defparameter *rs-swap* (append *rs-symbols* *rs-syntax*))
+(defparameter *rs-swap* (append *rs-symbols* *rs-syntax* *cl-symbols*))
 
 (pkg:defpackage* :syn/gen/rs/swap
     (:shadow-symbols *rs-swap*))
@@ -76,4 +76,6 @@
 (pkg:defpackage* :syn/gen/rs/sym
     (:shadow-symbols *rs-symbols* :export-symbols *rs-exports*)
   (:nicknames :rs)
-  (:use :syn/gen/rs))
+  (:use :cl)
+  (:import-from :syn/gen :gen-package)
+  (:import-from :syn/gen/c :cl-reader :switch-reader :decompose-declaration))

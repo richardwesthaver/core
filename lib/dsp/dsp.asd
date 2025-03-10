@@ -1,6 +1,6 @@
 (defsystem :dsp
   :description "High-level DSP"
-  :depends-on (:cl-ppcre :std :obj :dat :alsa :sndfile :net :gstreamer :log :io)
+  :depends-on (:cl-ppcre :std :obj :dat :sndfile :net :gstreamer :log :io)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")

@@ -5,4 +5,4 @@
 ;;; Code:
 (defpackage :dsp/aud
   (:nicknames :aud)
-  (:use :cl :std :dat/midi :sndfile :alsa))
+  (:use :cl :std :dat/midi :sndfile))

@@ -70,19 +70,17 @@ by setting prefix_extractor in ColumnFamilyOptions.
     ((key (* unsigned-char))
      (isize size-t)
      (osize (* size-t)))
-  (declare (ignore isize osize))
   key)
 
 (define-alien-callable rocksdb-in-domain-default boolean
     ((state (* t))
      (key (array unsigned-char))
      (len size-t))
-  (declare (ignore state key len))
-  t)
+  1)
 
 (define-alien-callable rocksdb-in-range-default boolean
-    ((state (* t))
-     (key (array unsigned-char))
+    ((state (* unsigned))
+     (key (* unsigned-char))
      (len size-t))
-  (declare (ignore state key len))
-  t)
+  ;; (declare (ignore state key len))
+  1)

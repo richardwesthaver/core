@@ -47,7 +47,7 @@
        ;; save-infra save-tests
        ;; rust-bin
        ))
-(full (%stash
+ (full (%stash
         psl.dat rgb.txt parquet.thrift
         build-zstd-alien
         build-tree-sitter-alien

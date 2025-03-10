@@ -437,9 +437,9 @@ DB where K and V are both Lisp strings."
     (is (stringp (debug! (rocksdb-property-value db (make-alien-string "rocksdb.stats")))))
     (is (zerop (parse-integer (rocksdb-property-value db (make-alien-string "rocksdb.num-files-at-level3")))))))
 
-(define-merge-operator dummy nil
-  :full nil
-  :partial nil)
+;; (define-merge-operator dummy nil
+;;   :full nil
+;;   :partial nil)
 
 (deftest merge ()
   "Test low-level merge-operator functionality using Alien Callbacks."
@@ -558,8 +558,8 @@ DB where K and V are both Lisp strings."
                   (is= (+ v v)
                        (octets-to-integer (clone-octets-from-alien val (make-octets 1)))))))))))))
 
-(define-comparator dummy)
-(define-comparator-with-ts dummy1)
+;; (define-comparator dummy)
+;; (define-comparator-with-ts dummy1)
 
 (deftest comparator ()
   "Test low-level comparator API."
@@ -578,7 +578,7 @@ DB where K and V are both Lisp strings."
        o
        (rocksdb-comparator-create state destructor compare name)))))
 
-(define-compaction-filter dummy)
+;; (define-compaction-filter dummy)
 
 (deftest compaction ()
   "Test low-level compactionfilter API."
@@ -631,7 +631,7 @@ DB where K and V are both Lisp strings."
          (rocksdb-writebatch-wi-create 0 0)
          '(alien (* rocksdb-writebatch-wi))))))
 
-(define-slicetransform dummy)
+;; (define-slicetransform dummy)
 
 (deftest slicetransform ()
   "Test slicetransform functionality."

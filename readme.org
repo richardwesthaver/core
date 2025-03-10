@@ -4,7 +4,7 @@
 #+email: richard.westhaver@gmail.com
 #+setupfile: ../org/clean.theme
 #+property: header-args :eval no-export
-#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil
+#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :html nil
 #+CALL: project-details() :dir ~/comp/core/
 
 #+RESULTS:
@@ -14,11 +14,11 @@
 | description | :description The Compiler Company Core              |
 | skel-id     | :id 1566328410216733941                             |
 | root        | ~/comp/core/                                        |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/3ed2c6cf8cfb][3ed2c6cf8cfb:900+]] |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/f655319642eb][f655319642eb:903+]] |
 | tags        | :tags (core lisp rust emacs c)                      |
-| updated     | Thu Mar 06 20:04:57 2025 -0500                      |
+| updated     | Sun Mar 09 17:49:49 2025 -0400                      |
 | langs       | c elisp json lisp org rust text toml                |
-| lines       | 121000 :λ 93722 :# 12287 :_ 14991                   |
+| lines       | 121152 :λ 93843 :# 12306 :_ 15003                   |
 |-------------+-----------------------------------------------------|
 
 #+END:
