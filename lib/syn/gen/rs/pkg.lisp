@@ -68,13 +68,13 @@
 
 (defparameter *rs-exports* (append *rs-symbols* *rs-syntax* *cl-symbols*))
 
-(defparameter *rs-swap* (append *rs-symbols* *rs-syntax* *cl-symbols*))
+(defparameter *rs-swap* (append *rs-symbols* *rs-syntax*))
 
 (pkg:defpackage* :syn/gen/rs/swap
     (:shadow-symbols *rs-swap*))
 
 (pkg:defpackage* :syn/gen/rs/sym
-    (:shadow-symbols *rs-symbols* :export-symbols *rs-exports*)
+    (:shadow-symbols *rs-swap* :export-symbols *rs-exports*)
   (:nicknames :rs)
   (:use :cl)
   (:import-from :syn/gen :gen-package)

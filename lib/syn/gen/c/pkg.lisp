@@ -104,18 +104,18 @@
             constant attribute-expression switch cases
             switch-case-statement switch-case-item switch-case-item)))
 
-;; (export *c-backend*)
+(export *c-backend*)
 
 (defparameter *c-symbols*
   '(and or not > <
-    set = /= <= >=
+    = /= <= >=
     + - * /
-    for while do-while
+    do-while
     return break continue
     if cond when
     fn
     array aref
-    cast union
+    union
     function
     progn block
     null length
@@ -151,7 +151,7 @@
     (:shadow-symbols *c-swap*))
 
 (pkg:defpackage* :syn/gen/c/sym
-    (:shadow-symbols *c-symbols* :export-symbols *c-exports*)
+    (:shadow-symbols *c-swap* :export-symbols *c-exports*)
   (:nicknames :c)
   (:use :cl)
   (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package)

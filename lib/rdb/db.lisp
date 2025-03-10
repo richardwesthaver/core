@@ -545,7 +545,7 @@ extractor."
 (defmethod open-checkpoint-db ((self rdb-database) &key path)
   (vector-push-extend (%make-checkpoint (sap self) path) (db-checkpoints self)))
 
-(defmethod snapshot-db ((self rdb))
+(defmethod snapshot-db ((self rdb-database))
   (vector-push-extend (snapshot-db (db self)) (db-snapshots self)))
 
 (defmethod flush-db ((self rdb-database) &rest args &key &allow-other-keys) (apply 'flush-db (db self) args))

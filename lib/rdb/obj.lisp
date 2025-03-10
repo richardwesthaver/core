@@ -109,9 +109,6 @@ just the keys currently present in TABLE."
   (define-rdb-opt-struct rdb-compactopts *rocksdb-compactoptions* rocksdb-compactoptions-create)
   (define-rdb-opt-struct rdb-backupopts *rocksdb-backup-engine-options* rocksdb-backup-engine-options-create))
 
-(defmethod set-db-opt ((self t) key val &key push)
-  (setf (db-opt self key :push push) val))
-
 (defvar *default-kv* (make-kv))
 
 ;;; Iterator
