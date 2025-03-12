@@ -34,5 +34,9 @@
 
 (defpackage :box/qmp
   (:nicknames :qmp)
-  (:use :cl :std :dat/json :net/srv :box/qemu)
-  (:export :*archiso-config* :*archiso-creds*))
+  (:use :cl :std :dat/json :net/srv :box/qemu))
+
+(defpackage :box/qga
+  (:nicknames :qga)
+  (:use :cl :std :dat/json :net/srv :box/qemu))
+

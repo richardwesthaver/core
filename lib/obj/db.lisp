@@ -57,7 +57,7 @@ saved."
   (let ((*save-database-backend-on-load* save))
     (%load-database-backend backend)
     (setq *database-backend* backend)))
-  
+
 (defun %database-backend-option-key (item)
   (keywordicate (if (atom item) item (car item))))
 
@@ -101,11 +101,11 @@ saved."
 
 (defun set-database-backend-options (db &rest options)
   (mapc (lambda (opt)
-            (set-database-backend-option
-             db
-             (keywordicate (car opt))
-             ;; WARNING eval here
-             (eval (cdr opt))))
+          (set-database-backend-option
+           db
+           (keywordicate (car opt))
+           ;; WARNING eval here
+           (eval (cdr opt))))
         options))
 
 (defun do-database-backend-init-options (db &rest options)
@@ -151,9 +151,9 @@ saved."
 (define-condition db-condition () ())
 
 (deferror not-a-database (db-condition invalid-argument) ()
-  (:default-initargs
-   :reason "Object is not a database")
-  (:auto t))
+          (:default-initargs
+           :reason "Object is not a database")
+          (:auto t))
 
 ;;; Database
 (defgeneric db (self)
@@ -169,7 +169,7 @@ saved."
   (declare (ignorable self))
   (let ((version (call-next-method)))
     (std/macs:ifret version
-                    *default-database-version*)))
+      *default-database-version*)))
 
 (defun prior-version-p (v1 v2)
   "Is v1 an equal or earlier version than v2"
@@ -262,24 +262,24 @@ in-memory objects."))
   (:documentation "Returns the value in a object based on the supplied element name and possible
 type hints.")
   (:method (object element &key data-type)
-  (when object
-    (typecase object
-      (hash-table
-       (gethash element object))
-      (standard-object
-       (slot-val object element))
-      (t
-       (if data-type
-           (cond 
-             ((equal 'alist data-type)
-              (second (assoc element object :test #'equal)))
-             ((equal 'plist data-type)
-              (get object element))
-             (t
-              (error "Does not handle this type of object. Implement your own get-val method.")))
-           (if (listp object)
-               (second (assoc element object :test #'equal))
-               (error "Does not handle this type of object. Implement your own get-val method."))))))))
+    (when object
+      (typecase object
+        (hash-table
+         (gethash element object))
+        (standard-object
+         (slot-val object element))
+        (t
+         (if data-type
+             (cond 
+               ((equal 'alist data-type)
+                (second (assoc element object :test #'equal)))
+               ((equal 'plist data-type)
+                (get object element))
+               (t
+                (error "Does not handle this type of object. Implement your own get-val method.")))
+             (if (listp object)
+                 (second (assoc element object :test #'equal))
+                 (error "Does not handle this type of object. Implement your own get-val method."))))))))
 
 (defgeneric (setf get-val) (new-value object element &key &allow-other-keys)
   (:documentation "Set the value in a object based on the supplied element name and possible type
@@ -477,7 +477,7 @@ column is already closed."))
 (defgeneric make-transaction (self &key)
   (:documentation "Make a new transaction object.")
   (:method ((self null) &key) *default-txn*))
-    
+
 (defgeneric prepare-transaction (self &key)
   (:documentation "Prepare a transaction."))
 (defgeneric rollback-transaction (self &key)
@@ -531,13 +531,13 @@ return the same value as DB depending on backend."))
          (transaction-object ,txn)))))
 
 (defmacro ensure-transaction ((&rest initargs &key
-                                     (db '*db*)
-                                     (txn '*txn*)
-                                     &allow-other-keys)
+                                              (db '*db*)
+                                              (txn '*txn*)
+                               &allow-other-keys)
                               &body body)
   "Execute BODY with an existing transaction or a new transaction if one does not exist.
 
 This macro allows for the sequencing of database actions to be run atomically
 inside a single transaction - use WITH-TRANSACTION if you want to nest
 multiple transactions.")
-  
+

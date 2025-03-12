@@ -10,7 +10,7 @@
 (in-package :dat/parquet/gen)
 
 (defparameter *parquet-json-file*
-  (or (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/parquet.json"))
+  (or (probe-file #.(asdf:system-relative-pathname :prelude #p".stash/parquet.json"))
       (warn "*PARQUET-JSON-FILE* not found")))
 
 (defparameter *parquet-output-file*

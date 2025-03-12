@@ -6,7 +6,7 @@
 (defpkg :bin/skel
   (:use :cl :std :cli :cli/clap/obj
    :vc :sb-ext :skel :log :cli/clap/util
-   :obj/ast #+(and tools gui) :skel/tools/view
+   :obj/ast #+clim :skel/tools/view
    :db :rdb :schema :config :build :packy :krypt :skel/cli)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
   (:use :cli/tools/sbcl :cli/prompt))
@@ -44,11 +44,7 @@
    :thunk skc-pk*)
   (:name kr
    :description "cryptography"
-   :thunk skc-kr*)
-  #+gui
-  (:name view
-   :description "View a skel object in the Skel Viewer GUI."
-   :thunk skc-view)))
+   :thunk skc-kr*)))
 
 (defmain start-skel ()
   (in-package :sk-user)

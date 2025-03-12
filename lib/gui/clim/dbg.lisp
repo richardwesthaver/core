@@ -23,12 +23,12 @@
                                       :end-of-page-action :scroll
                                       :width :compute
                                       :height :compute
-                                      :background clim:+black+
-                                      :foreground clim:+whitesmoke+)))
+                                      :background clim:+lightgray+
+                                      :foreground clim:+black+)))
           (interactor :interactor
                       :height 80
-                      :background clim:+black+
-                      :foreground clim:+whitesmoke+))
+                      :background clim:+lightgray+
+                      :foreground clim:+black+))
   (:command-table (dbg :inherit-from (clouseau:inspector-command-table))))
 
 (define-presentation-to-command-translator more-backtraces
@@ -102,7 +102,7 @@
          (active-frame (active-frame dbg-pane)))
     (format *pointer-documentation-output*
             (swank:eval-string-in-frame
-             form active-frame (swank-backend:frame-package active-frame)))))
+             form active-frame (swank-backend:frame-package active-frame) 10 80))))
 
 (define-dbg-command (com-quit :name "Quit" :menu t
                                         :keystroke :exit) ()

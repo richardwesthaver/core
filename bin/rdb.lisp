@@ -7,7 +7,7 @@
 (load-package-cli :rdb)
 (defmain start-rdb ()
   (let ((*log-level* :info))
-    (with-cli (*rdb-cli* :args (cli:args))
+    (with-cli ((package-cli) :args (cli:args))
       (when (find-opt "help" *cli*)
         (print-help *cli*)
         (sb-ext:exit :code 0))

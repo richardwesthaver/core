@@ -121,7 +121,8 @@
    embark-consult
    embark
    ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
-   nerd-icons nerd-icons-dired nerd-icons-ibuffer nerd-icons-corfu nerd-icons-completion
+   nerd-icons nerd-icons-dired nerd-icons-corfu nerd-icons-completion
+   ;; nerd-icons-ibuffer
    hide-mode-line) ;; ui
   ;; bbdb
   (package-refresh-contents)
@@ -863,6 +864,8 @@ Add this function to appropriate major mode hooks such as
         ("c" . "center")
         ("C" . "comment")
         ("v" . "verse")))
+
+(keymap-set org-mode-map "C-c l" 'org-follow-location)
 
 (org-babel-do-load-languages
  ;; TODO 2021-10-24: bqn, apl, k

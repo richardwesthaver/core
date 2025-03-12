@@ -101,7 +101,7 @@
 	    (when tag-str
 	      (setf (hl-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
                     ;;  Q 2023-12-27: should we preserve whitespace here?
-		    (hl-title res) (string-right-trim 
+		    (hl-title res) (string-right-trim
                                     *whitespaces* 
                                     (subseq (hl-title res) 0 (- (length (hl-title res)) 1 (length tag-str)))))))))
       ;; TODO 2023-07-24: cookies,priority,comment,footnote,archive

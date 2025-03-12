@@ -4,22 +4,7 @@
 
 ;;; Code:
 (in-package :organ)
-(defun planning-line-p (l) (scan org-planning-rx l))
-(defun property-start-p (l) (scan org-property-start-rx l))
 
-(defun org-parse-planning-and-properties (input)
-  "Parse INPUT returning the following values:
-
-(PLANNING PROPERTIES REST)"
-  (let ((planning) properties)
-    (loop for l = (read-line input) ;; FIXME: peek-line
-          until (not l)
-          when (planning-line-p l)
-            do (push (org-parse :planning-line (read-line input)) planning)
-          when (property-start-p l)
-            do (setf properties (org-parse :property-drawer input)))
-    (values planning properties (read-until-end input))))
-  
 (defclass org-heading ()
   ((headline :initarg :headline :initform (org-create :headline) :type org-headline :accessor org-headline)
    (planning :initarg :planning :initform nil :type (or null org-planning) :accessor org-planning)
@@ -32,15 +17,14 @@
 
 ;; TODO 2024-03-17: fix org-parse-planning-properties -- hangs
 (define-org-parser (heading :from stream)
-    (let ((headline (org-parse :headline (read-line input))))
-      ;; (multiple-value-bind (planning properties rest)
-      ;; (org-parse-planning-and-properties input)
+  (when-let* ((l (read-line input))
+              (headline (org-parse :headline l)))
+    (let ((planning (org-parse :planning input)))
       (make-instance 'org-heading
         :headline headline
-        ;; :planning planning
-        ;; :properties properties
-        ;; :contents (org-parse :section (read-until-end rest)))
-        )))
+        :planning planning
+        :properties (org-parse :property-drawer input)
+        :contents (org-parse :section input)))))
 
 (define-org-parser (heading :from string)
   (with-input-from-string (s input)

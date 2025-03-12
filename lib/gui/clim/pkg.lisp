@@ -4,7 +4,7 @@
 
 ;;; Code: 
 (pkg:defpkg :gui/clim
-  (:use :clim :clim-lisp)
+  (:use :clim :clim-lisp :clim-extensions)
   (:recycle :clim :clim-lisp)
   (:shadowing-import-from :std)
   (:shadowing-import-from :cl)
@@ -22,7 +22,7 @@
   (:use-reexport :clim-tab-layout))
 
 (pkg:defpkg :gui/clim/frame 
-  (:use :cl :std :gui/clim) 
+  (:use :cl :std :gui/clim)
   (:use-reexport :clim-tab-layout) 
   (:import-from :clim :define-application-frame :make-pane
    :present :presentation-type-of 
@@ -32,7 +32,6 @@
    :clear-output-record :output-record-position :with-output-recording-options :dispatch-repaint
    :define-presentation-to-command-translator))
    
-#+dbg 
 (pkg:defpkg :gui/clim/dbg 
   (:use :cl :std :gui/clim :gui/clim/frame)
   (:import-from :clim-debugger :clim-debugger :the-condition :returned-restart :backtrace :condition-info :shown-frames :inspectable :change-space-requirements :frame-panes :active-frame :*pointer-documentation-output* :frame-exit :stack-frame :frame-no :+minimized-stack-frame-view+ :view :+maximized-stack-frame-view+ :frame-current-layout)
@@ -41,7 +40,6 @@
    :clouseau-inspect
    :install-clim-debugger))
 
-#+repl 
 (pkg:defpkg :gui/clim/repl 
   (:use :cl :std :gui/clim :cli/repl) 
   (:use-reexport :clim-listener)

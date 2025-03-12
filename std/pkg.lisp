@@ -222,7 +222,10 @@
 (defpkg :std/stream
   (:use :cl :sb-gray)
   (:import-from :std/type :non-negative-integer :positive-integer)
+  (:import-from :std/sym :with-gensyms)
   (:export
+   :read-lisp-until-end
+   :read-until-end
    ;; stream
    :copy-stream
    :wrapped-stream

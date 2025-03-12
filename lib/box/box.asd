@@ -4,7 +4,8 @@
   :components ((:file "pkg")
                (:file "archiso")
                (:file "ignition")
-               (:file "qmp"))
+               (:file "qmp")
+               (:file "qga"))
   :in-order-to ((test-op (test-op :box/tests))))
 
 (defsystem :box/tests

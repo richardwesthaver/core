@@ -5,25 +5,17 @@
 ;;; Code:
 (in-package :gui/clim/frame)
 
-(define-command-table graph-command-table
-  :menu (("About" :menu (("CC" :menu nil)))))
-
 (define-application-frame graph-frame () ()
-  (:menu-bar graph-command-table)
-  (:panes
-   (graph (clim:scrolling ()
-            (make-pane 'clim:application-pane
-                       :width :compute
-                       ;; :foreground (anathema:style-foreground-ink *current-theme*)
-                       ;; :background (anathema:style-background-ink *current-theme*)
-                       :height :compute
-                       :display-function 'generate-graph
-                       :background clim:+black+
-                       :foreground clim:+whitesmoke+
-                       ;; :display-time t
-                       )))
-   (repl :interactor)
-   (pdoc :pointer-documentation)))
+  (:menu-bar nil)
+  (:panes (graph
+           (clim:scrolling ()
+             (make-pane 'clim:application-pane
+		        :width 500
+		        :height 800
+		        :background clim:+lightgray+
+		        :foreground clim:+black+
+		        :display-function 'generate-graph
+		        :display-time t)))))
 
 (defvar *graph-root* 'id:id)
 
@@ -35,7 +27,7 @@
      (present (class-name object) (presentation-type-of object) :stream stream))
    #'sb-mop:class-direct-subclasses
    :stream pane
-   :orientation :vertical
+   ;; :orientation :vertical
    ;; :graph-type :digraph
    :merge-duplicates t))
 
@@ -54,8 +46,9 @@
   (append (hash-table-values (slot-value node 'climi::edges-from))
           (hash-table-values (slot-value node 'climi::edges-to))))
 
-(defun run-graph (&optional (name "graph"))
-  (clim:run-frame-top-level (clim:make-application-frame name :frame-class 'graph-frame)))
+(defun view-graph (&optional (class *graph-root*))
+  (setq *graph-root* class)
+  (clim:find-application-frame 'graph-frame))
 
 (defun node-and-edges-region (node edges)
   (reduce #'region-union edges :key #'copy-rectangle

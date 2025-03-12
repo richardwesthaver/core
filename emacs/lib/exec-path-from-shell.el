@@ -265,12 +265,4 @@ values used in the user's shell."
 
 
 (provide 'exec-path-from-shell)
-
-;; Local Variables:
-;; coding: utf-8
-;; indent-tabs-mode: nil
-;; require-final-newline: t
-;; checkdoc-minor-mode: t
-;; End:
-
 ;;; exec-path-from-shell.el ends here

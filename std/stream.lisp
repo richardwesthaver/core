@@ -4,6 +4,20 @@
 
 ;;; Code:
 (in-package :std/stream)
+(declaim (optimize speed))
+(declaim (inline read-until-end read-lisp-until-end copy-stream))
+
+(defun read-until-end (stream)
+  (with-output-to-string (s)
+    (loop for c = (read-char stream nil)
+	  until (not c)
+	  do (write-char c s))))
+
+(defun read-lisp-until-end (stream)
+  (with-gensyms (eof)
+    (loop for c = (read stream nil eof)
+	  until (eql c eof)
+	  collect c)))
 
 (defun copy-stream (input output &key (element-type (stream-element-type input))
                     (buffer-size 4096)

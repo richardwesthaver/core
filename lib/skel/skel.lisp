@@ -42,7 +42,7 @@
    :cmds 
    (#+rdb (:name db :description "interact with the skel database" :thunk skc-db)
     #+clim (:name view :description "view an object in a new window" :thunk skc-view)
-    #+net (:name net :description "communicate with skel clients and servers" 
+    #+net (:name net :description "communicate with skel clients and servers"
            :thunk skc-net))))
 
 ;; db is locked while skel is running, prevents multiple instances

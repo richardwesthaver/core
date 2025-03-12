@@ -16,18 +16,23 @@
   (unless (sequence:emptyp input)
     (org-create :section :contents input)))
 
+(defmethod org-parse ((type (eql :section)) (input stream))
+  (let ((content (make-array 0 :element-type 'character :fill-pointer 0)))
+    (with-output-to-string (content-stream content)
+      (loop for c = (peek-char nil input nil nil) ; check that this line isn't a headline
+	    until (or (not c) (char= #\* c))
+	    do (let ((l (read-line input)))
+		 (write-line l content-stream))))
+    (org-create :section :contents (org-parse :paragraph content))))
+
 (defclass org-meta-section (org-section) ((keywords :initform #() :initarg :keywords :type (vector org-keyword))))
 
 (defmethod org-create ((type (eql :meta)) &rest initargs)
   (apply #'make-instance 'org-meta-section initargs))
 
 (defmethod org-parse ((type (eql :meta)) (input string))
-  (unless (sequence:emptyp input)
-    (let ((contents (make-array 0 :element-type 'org-element :fill-pointer 0 :adjustable t)))
-      (log:debug! "meta section input:" input)
-      (with-input-from-string (s input)
-        (vector-push-extend (org-parse :keyword (read-line s)) contents))
-      (org-create :meta :contents contents))))
+  (with-input-from-string (s input)
+    (org-parse :meta s)))
 
 (defmethod org-parse ((type (eql :meta)) (input stream))
   (let ((keywords (make-array 0 :element-type 'org-keyword :adjustable t :fill-pointer 0))

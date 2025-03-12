@@ -13,6 +13,8 @@ CONTENTS
 ;;; Code:
 (in-package :organ)
 
+(defun property-start-p (l) (scan org-property-start-rx l))
+
 (define-org-element drawer (name contents) :greater t)
 
 (define-org-element property-drawer 
@@ -24,14 +26,15 @@ CONTENTS
   ORG-DOCUMENT, and ORG-INLINETASK objects.")
 
 (define-org-parser (property-drawer :from stream)
-  (let ((l (read-line input nil)))
-    (unless (or (not l) (not (typep l 'string)))
-      (if (scan org-property-start-rx l)
-          (let ((drawer (org-create :property-drawer)))
-            (loop for p = (read-line input nil)
-                  until (or (not p) (scan org-end-rx p))
-                  do (vector-push-extend (org-parse :node-property p) (org-contents drawer)))
-            drawer)))))
+  (when-let ((pos (file-position input))
+             (l (read-line input nil nil)))
+    (if (not (property-start-p l))
+        (progn (file-position input pos) nil)
+        (let ((drawer (org-create :property-drawer)))
+          (loop for p = (read-line input nil)
+                until (scan org-end-rx p)
+                do (vector-push-extend (org-parse :node-property p) (org-contents drawer)))
+          drawer))))
 
 (define-org-parser (property-drawer :from string)
   (with-input-from-string (s input)

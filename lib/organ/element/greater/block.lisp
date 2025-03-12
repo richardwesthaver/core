@@ -1,14 +1,18 @@
 ;;; lib/organ/element/greater/block.lisp --- Org Greater Block Elements
 
-;; Greater blocks match the pattern:
+;; Dynamic blocks match the pattern:
 
 #|
-#+begin_NAME PARAMETERS
+#+begin NAME PARAMETERS
 CONTENTS
-#+end_NAME
+#+end
 |#
 
 ;;; Code:
 (in-package :organ)
 
-(define-org-element greater-block (name parameters contents) :greater t)
+(define-org-element dynamic-block 
+    ((name :initarg :name :accessor name) 
+     (parameters :initarg :parameters) 
+     (contents :initarg :contents :accessor org-contents))
+  :greater t)

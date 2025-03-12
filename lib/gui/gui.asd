@@ -8,9 +8,9 @@
                (:feature :x11 :stumpwm)
                (:feature :clim :mcclim)
                (:feature :clim :mcclim-layouts/tab)
-               (:feature (:and :clim :dbg) :clim-debugger)
-               (:feature (:and :clim :dbg) :clouseau)
-               (:feature (:and :clim :repl) :clim-listener)
+               (:feature :clim :clim-debugger)
+               (:feature :clim :clouseau)
+               (:feature :clim :clim-listener)
                :cli :io)
   :components ((:file "pkg")
                (:file "condition")
@@ -27,8 +27,8 @@
                   :components
                   ((:file "pkg")
                    (:file "graph")))
-                 (:file "dbg" :if-feature :dbg)
-                 (:file "repl" :if-feature :repl))
+                 (:file "dbg")
+                 (:file "repl"))
                 :depends-on ("pkg"))
                (:module "wl"
                 :if-feature :wl
