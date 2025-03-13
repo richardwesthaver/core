@@ -18,7 +18,14 @@
    #:mpk-ensure-directories
    #:*mpk-user-directory*
    #:*mpk-media-directory*
-   #:*mpk-media-sources*))
+   #:*mpk-media-sources*
+   #:*known-media-types*
+   #:*mpk-media-types*
+   #:mpk-previous
+   #:mpk-shuffle
+   #:mpk-stop
+   #:mpk-pause
+   #:mpk-play))
 
 (defpackage :mpk/db
   (:nicknames :mdb)
@@ -27,4 +34,6 @@
    :mdb :init-mdb))
 
 (defpackage :mpk/cli
-  (:use :cl :std :log :mpk :cli))
+  (:use :cl :std :log :mpk :cli)
+  (:export
+   #:*mpk-cli*))

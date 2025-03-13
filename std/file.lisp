@@ -5,6 +5,12 @@
 ;;; Code:
 (in-package :std/file)
 
+(define-condition unknown-file-type (file-error) ()
+  (:report (lambda (c s) (format s "unknown file type: ~A" (file-error-pathname c)))))
+
+(defun unknown-file-type (file)
+  (error 'unknown-file-type :pathname file))
+
 (defgeneric file (self))
 (defgeneric (setf file) (new self))
 (defgeneric dir (self))

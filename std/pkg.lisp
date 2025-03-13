@@ -662,6 +662,7 @@
 (defpkg :std/file
   (:use :cl)
   (:import-from :std/macs :define-constant :eval-always :once-only)
+  (:import-from :std/condition :deferror)
   (:import-from :std/path :directory-path :directory-path-p)
   (:import-from :std/stream :copy-stream)
   (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
@@ -669,6 +670,7 @@
   (:import-from :uiop :delete-file-if-exists)
   (:export
    :delete-directory :delete-file-error
+   :unknown-file-type
    :delete-file-if-exists
    :probe-delete-file
    :probe-delete-directory

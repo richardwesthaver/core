@@ -48,6 +48,16 @@
    :run-nvcc
    :nvcc-error))
 
+(defpackage :cli/tools/media
+  (:use :cl :std :cli/tools/proto :cli/env)
+  (:export
+   :*ffmpeg*
+   :run-ffmpeg
+   :ffmpeg-error
+   :*mpv*
+   :run-mpv
+   :mpv-error))
+
 (defpackage :cli/tools/go
   (:nicknames :tools/go)
   (:use :cl :std :cli/tools/proto :cli/env)
