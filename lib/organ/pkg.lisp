@@ -130,7 +130,12 @@
    :org-active-timestamp-range))
 
 (defpackage :organ/graph
-  (:use :cl :std :organ :graph :db :rdb :seq :query :id :uuid :q :schema :graph :ast :time :b3))
+  (:use :cl :std :organ :graph :db :rdb :seq :query :id :uuid :q :schema :graph :ast :time :b3)
+  (:export :init-org-graph :org-graph :org-id 
+   :org-graph-schema :*org-graph-schema* :*org-graph-db-directory* :init-org-graph-db 
+   :org-graph-db :*org-graph-file* :*org-id-locations-file* :*org-graph*
+   :org-graph-node :org-graph-edge :org-graph-extract-files :close-org-graph-db
+   :open-org-graph-db :og-get :org-graph-values :org-graph-files-scrape))
 
 (defpackage :organ/cli
   (:use :cl :std :organ :cli)

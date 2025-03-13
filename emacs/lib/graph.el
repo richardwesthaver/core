@@ -815,7 +815,6 @@ either side, and deletes both sides of a link."
 
 (defvar-keymap org-graph-map
   :doc "org-graph keymap"
-  :prefix 'org-graph-map-prefix
   "n" 'org-graph-node
   "w" 'org-graph-edge-web
   "l" 'org-graph-edge-link

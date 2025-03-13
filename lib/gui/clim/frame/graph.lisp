@@ -7,6 +7,7 @@
 
 (define-application-frame graph-frame () ()
   (:menu-bar nil)
+  (:reinitialize-frames t)
   (:panes (graph
            (clim:scrolling ()
              (make-pane 'clim:application-pane
@@ -14,12 +15,12 @@
 		        :height 800
 		        :background clim:+lightgray+
 		        :foreground clim:+black+
-		        :display-function 'generate-graph
+		        :display-function 'generate-class-graph
 		        :display-time t)))))
 
 (defvar *graph-root* 'id:id)
 
-(defun generate-graph (frame pane)
+(defun generate-class-graph (frame pane)
   (declare (ignore frame))
   (format-graph-from-roots
    (list (find-class *graph-root*))
@@ -27,10 +28,11 @@
      (present (class-name object) (presentation-type-of object) :stream stream))
    #'sb-mop:class-direct-subclasses
    :stream pane
+   :center-nodes t
    ;; :orientation :vertical
    ;; :graph-type :digraph
    :merge-duplicates t))
-
+   
 (defun find-graph-node (record)
   "Searches upward until a graph node parent of the supplied output record is found."
   (loop for current = record then (output-record-parent current)
@@ -46,9 +48,9 @@
   (append (hash-table-values (slot-value node 'climi::edges-from))
           (hash-table-values (slot-value node 'climi::edges-to))))
 
-(defun view-graph (&optional (class *graph-root*))
+(defun view-class-graph (&optional (class *graph-root*))
   (setq *graph-root* class)
-  (clim:find-application-frame 'graph-frame))
+  (clim:find-application-frame 'graph-class-frame))
 
 (defun node-and-edges-region (node edges)
   (reduce #'region-union edges :key #'copy-rectangle
@@ -59,6 +61,9 @@
     ;; We use this rectangle to clear an area on the sheet which only
     ;; makes sense for integer coordinates.
     (make-rectangle* (floor x0) (floor y0) (ceiling x1) (ceiling y1))))
+
+(define-graph-frame-command (com-quit :name t) ()
+  (gui/clim::frame-exit *application-frame*))
 
 (define-graph-frame-command (com-drag-node)
     ((record t)
