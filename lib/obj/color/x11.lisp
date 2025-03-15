@@ -1,4 +1,4 @@
-;;; color/x11.lisp --- X11 Colors -*- buffer-read-only:t -*-
+;;; lib/obj/color/x11.lisp --- X11 Colors -*- buffer-read-only:t -*-
 
 ;; input = .stash/rgb.txt
 
@@ -398,6 +398,7 @@
 (export (define-rgb-color red2 14/15 0 0))
 (export (define-rgb-color red3 41/51 0 0))
 (export (define-rgb-color red4 139/255 0 0))
+(export (define-rgb-color debianred 43/51 7/255 27/85))
 (export (define-rgb-color deeppink1 1 4/51 49/85))
 (export (define-rgb-color deeppink2 14/15 6/85 137/255))
 (export (define-rgb-color deeppink3 41/51 16/255 118/255))

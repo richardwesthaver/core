@@ -50,7 +50,17 @@ SELF."
      (remove-if #'null
                 (mapcar
                  (lambda (p)
-                   (when (and (packagep p) (string-prefix-p (string-upcase s) (package-name p)))
+                   (when (and (packagep p) 
+                              (or
+                               (string=
+                                (string-upcase s) 
+                                (package-name p))
+			       (string-prefix-p 
+				(concatenate 'string (string-upcase s) "-")
+				(package-name p))
+			       (string-prefix-p 
+				(concatenate 'string (string-upcase s) "/")
+				(package-name p))))
                      p))
                  (list-all-packages))))))
 
