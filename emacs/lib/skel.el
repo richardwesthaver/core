@@ -136,7 +136,8 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   (skel-minor-mode 1)
   (setq-local electric-quote-string t)
   (setq imenu-case-fold-search nil)
-  (setq-local indent-region-function 'skel-indent-region))
+  (setq-local indent-region-function 'skel-indent-region)
+  (setq-local lisp-indent-offset 1))
 
 (org-babel-make-language-alias "skel" "lisp-data")
 

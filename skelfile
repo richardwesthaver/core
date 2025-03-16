@@ -9,8 +9,8 @@
 :tags ("core" "lisp" "rust" "emacs" "c")
 :include ("emacs/emacs.sk")
 :vc (:hg "https://vc.compiler.company/core"
-	 (cb (:git "ssh://git@codeberg.org/c-c/core"))
-	 (gh (:git "ssh://git@github.com/richardwesthaver/core")))
+     (cb (:git "ssh://git@codeberg.org/c-c/core"))
+     (gh (:git "ssh://git@github.com/richardwesthaver/core")))
 :bind 
 ((stash ".stash")
  ;; (cc :env "clang")
@@ -44,268 +44,271 @@
        ;; save-infra save-tests
        ;; rust-bin
        ))
- (full (%stash
-        psl.dat x11.lisp parquet.thrift
-        build-zstd-alien
-        build-tree-sitter-alien
-        build-full-core 
-        ;; save-std save-prelude save-user fasls
-        ;; save-infra save-tests
-        ))
+ (full 
+  (%stash
+   psl.dat x11.lisp parquet.thrift
+   build-zstd-alien
+   build-tree-sitter-alien
+   build-full-core 
+   ;; save-std save-prelude save-user fasls
+   ;; save-infra save-tests
+   ))
  (upstream () ;; pretty gross hack to fix broken tree
-           (probe-delete-directory "/tmp/core/")
-           (vc:hg-fast-export (sk-vc *skel-project*))
-           #$cd /tmp/core
-           git remote add cb ssh://git@codeberg.org/c-c/core
-           git remote add gh ssh://git@github.com/richardwesthaver/core
-           git filter-repo --invert-paths --path-regex '^std$' --force
-           git push -u cb default --force
-           git push gh default --force$#)
+  (probe-delete-directory "/tmp/core/")
+  (vc:hg-fast-export (sk-vc *skel-project*))
+  #$cd /tmp/core
+  git remote add cb ssh://git@codeberg.org/c-c/core
+  git remote add gh ssh://git@github.com/richardwesthaver/core
+  git filter-repo --invert-paths --path-regex '^std$' --force
+  git push -u cb default --force
+  git push gh default --force$#)
  (clean ()
-        #$rm -vrf .stash
-        find emacs -name '*.elc' -type f -delete
-        find . -name '*.fasl' -type f -delete$#
-        (cli/tools/rust:cargo-clean))
+  #$rm -vrf .stash
+  find emacs -name '*.elc' -type f -delete
+  find . -name '*.fasl' -type f -delete$#
+  (cli/tools/rust:cargo-clean))
  (readme ()
-         (:update ()
-                  (cli/ed:with-emacs (e)
-                    (org-babel-lob-ingest company-babel-file)
-                    (org-with-file-buffer (print (join-paths company-source-directory \"core/readme.org\"))
-					  (org-babel-execute-buffer)
-                                          (save-buffer)))))
+  (:update ()
+   (cli/ed:with-emacs (e)
+    (org-babel-lob-ingest company-babel-file)
+    (org-with-file-buffer (print (join-paths company-source-directory \"core/readme.org\"))
+     (org-babel-execute-buffer)
+     (save-buffer)))))
  (swank (%stash)
-        (:run () 
-              (let ((f ".stash/.swank"))
-                (when (probe-file f)
-                  (delete-file f))
-                (swank:start-server f))))
+  (:run () 
+   (let ((f ".stash/.swank"))
+    (when (probe-file f)
+     (delete-file f))
+    (swank:start-server f))))
  (tree-sitter-alien ()
-                    (:build () #$cd ffi/tree-sitter &&
-                            cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
-                            alien.c -o ../../.stash/libtree-sitter-alien.so$#)
-                    (:install () (funcall #$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
+  (:build () #$cd ffi/tree-sitter &&
+   cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
+   alien.c -o ../../.stash/libtree-sitter-alien.so$#)
+  (:install () (funcall #$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
  (zstd-alien ()
-             (:build () #$cd ffi/zstd &&
-                     cc -g -O2 -Wall -Wno-unused-value -lzstd -shared \
-                     alien.c -o ../../.stash/libzstd-alien.so$#)
-             (:install () 
-                       (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
- 
+  (:build () #$cd ffi/zstd &&
+   cc -g -O2 -Wall -Wno-unused-value -lzstd -shared \
+   alien.c -o ../../.stash/libzstd-alien.so$#)
+  (:install () 
+   (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
  (psl.dat (%stash)
-          (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
-                     ".stash/psl.dat"
-                     :if-exists :supersede))
+  (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
+   ".stash/psl.dat"
+   :if-exists :supersede))
  (rgb.txt (%stash)
-          (req:fetch "https://raw.githubusercontent.com/rgb-x/system/refs/heads/master/root/etc/X11/rgb.txt"
-                     ".stash/rgb.txt"
-                     :if-exists :supersede))
+  (req:fetch "https://raw.githubusercontent.com/rgb-x/system/refs/heads/master/root/etc/X11/rgb.txt"
+   ".stash/rgb.txt"
+   :if-exists :supersede))
  (x11.lisp (rgb.txt)
-           (color::parse-x11-color-definitions
-            :input ".stash/rgb.txt"
-            :output "lib/obj/color/x11.lisp"))
+  (color::parse-x11-color-definitions
+   :input ".stash/rgb.txt"
+   :output "lib/obj/color/x11.lisp"))
  (parquet.thrift (%stash)
-                 (req:fetch
-                  "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"
-                  ".stash/parquet.thrift"
-                  :if-exists :supersede)
-                 #$thrift --gen json -out .stash .stash/parquet.thrift$#)
+  (req:fetch
+   "https://raw.githubusercontent.com/apache/parquet-format/master/src/main/thrift/parquet.thrift"
+   ".stash/parquet.thrift"
+   :if-exists :supersede)
+  #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json (%stash)
-               (req:fetch "https://packy.compiler.company/data/parquet.json"
-                          ".stash/parquet.json"
-                          :if-exists :supersede))
+  (req:fetch "https://packy.compiler.company/data/parquet.json"
+   ".stash/parquet.json"
+   :if-exists :supersede))
  (freedesktop.org.xml (%stash)
-                      (req:fetch "https://packy.compiler.company/data/freedesktop.org.xml"
-                                 ".stash/freedesktop.org.xml"))
+  (req:fetch "https://packy.compiler.company/data/freedesktop.org.xml"
+   ".stash/freedesktop.org.xml"))
  (parquet-test-data (%stash) (req:fetch "https://packy.compiler.company/data/test/alltypes_plain.parquet"
-                                        ".stash/alltypes_plain.parquet"
-                                        :if-exists :supersede))
- ;; lisp
+                              ".stash/alltypes_plain.parquet"
+                              :if-exists :supersede))
  (%stash () #$mkdir -pv .stash$#)
-
  (ssl-certs () #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
-            -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)
+  -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)
  (ssl-client-certs () #$openssl req -new -nodes -x509 -days 365 -subj / \
-                   -keyout .stash/client-key.pem -outform PEM \
-                   -out .stash/client-cert.pem$#)
-
+  -keyout .stash/client-key.pem -outform PEM \
+  -out .stash/client-cert.pem$#)
  (swm (%stash)
-      (:build ()
-              (with-sbcl (:noinform t :quit t)
-                (push :x11 *features*)
-                (push :clim *features*)
-                (ql:quickload :bin/swm)
-                (asdf:make :bin/swm))
-              #$mv bin/swm .stash/swm$#)
-      (:install () (funcall #$sudo -S install -C -m 755 .stash/swm /usr/local/bin/swm$# :input t)))
+  (:build ()
+   (with-sbcl (:noinform t :quit t)
+    (push :x11 *features*)
+    (push :clim *features*)
+    (ql:quickload :bin/swm)
+    (asdf:make :bin/swm))
+   #$mv bin/swm .stash/swm$#)
+  (:install () (funcall #$sudo -S install -C -m 755 .stash/swm /usr/local/bin/swm$# :input t)))
  (rdb (%stash)
-      (:build ()
-              (with-sbcl (:noinform t :quit t)
-                (ql:quickload :bin/rdb)
-                (asdf:make :bin/rdb))
-              #$mv bin/rdb .stash/rdb$#)
-      (:install () (funcall #$install -C -m 755 .stash/rdb /usr/local/bin/rdb$# :input t)))
+  (:build ()
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :bin/rdb)
+    (asdf:make :bin/rdb))
+   #$mv bin/rdb .stash/rdb$#)
+  (:install () (funcall #$install -C -m 755 .stash/rdb /usr/local/bin/rdb$# :input t)))
  (skel (%stash)
-       (:build ()
-               (with-sbcl (:noinform t :quit t)
-                 (ql:quickload :bin/skel)
-                 (asdf:make :bin/skel))
-               #$mv bin/skel .stash/skel$#)
-       (:build-gui ()
-                   (with-sbcl (:noinform t :quit t)
-		      (push :virt *features*)
-		      (push :net *features*)
-		      (push :swank *features*)
-		      (push :x11 *features*)
-		      (push :clim *features*)
-		      (push :gui *features*)
-		      (push :tools *features*)
-                     (ql:quickload :bin/skel)
-                     (asdf:make :bin/skel))
-                   #$mv bin/skel .stash/skel-gui$#)
-       (:install () (funcall #$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t))
-       (:install-gui () (funcall #$sudo -S install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui$# :input t)))
+  (:build ()
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :bin/skel)
+    (asdf:make :bin/skel))
+   #$mv bin/skel .stash/skel$#)
+  (:build-gui ()
+   (with-sbcl (:noinform t :quit t)
+    (push :virt *features*)
+    (push :net *features*)
+    (push :swank *features*)
+    (push :x11 *features*)
+    (push :clim *features*)
+    (push :gui *features*)
+    (push :tools *features*)
+    (ql:quickload :bin/skel)
+    (asdf:make :bin/skel))
+   #$mv bin/skel .stash/skel-gui$#)
+  (:install () (funcall #$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t))
+  (:install-gui () (funcall #$sudo -S install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui$# :input t)))
  (skc (%stash)
-      (:build ()
-              (with-sbcl (:noinform t :quit t)
-                (push :net *features*)
-                (ql:quickload :std)
-                (asdf:make :bin/skc))
-              #$mv bin/skc .stash/skc$#))
+  (:build ()
+   (with-sbcl (:noinform t :quit t)
+    (push :net *features*)
+    (ql:quickload :std)
+    (asdf:make :bin/skc))
+   #$mv bin/skc .stash/skc$#))
  (vc (%stash)
-     (:build ()
-             (with-sbcl (:noinform t :quit t)
-               (push :cli *features*)
-               (ql:quickload :bin/vc)
-               (asdf:make :bin/vc))
-             #$mv bin/vc .stash/vc$#))
+  (:build ()
+   (with-sbcl (:noinform t :quit t)
+    (push :cli *features*)
+    (ql:quickload :bin/vc)
+    (asdf:make :bin/vc))
+   #$mv bin/vc .stash/vc$#))
  (organ (%stash)
-        (:build () (with-sbcl (:noinform t :quit t)
-                     (ql:quickload :bin/organ)
-                     (asdf:make :bin/organ))
-                #$mv bin/organ .stash/organ$#))
+  (:build () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :bin/organ)
+    (asdf:make :bin/organ))
+   #$mv bin/organ .stash/organ$#))
  (homer (%stash)
-        (:build () (with-sbcl (:noinform t :quit t)
-                     (ql:quickload :bin/homer)
-                     (asdf:make :bin/homer))
-                #$mv bin/homer .stash/homer$#))
+  (:build () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :bin/homer)
+    (asdf:make :bin/homer))
+   #$mv bin/homer .stash/homer$#))
  (gen (%stash)
-   (:build () (with-sbcl (:noinform t :quit t)
-                (ql:quickload :bin/gen)
-                (asdf:make :bin/gen)
-                #$mv bin/gen .stash/gen$#)))
+  (:build () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :bin/gen)
+    (asdf:make :bin/gen)
+    #$mv bin/gen .stash/gen$#)))
  (packy (%stash)
-        (:build () (with-sbcl (:noinform t :quit t)
-                     (ql:quickload :bin/packy)
-                     (asdf:make :bin/packy))
-                #$mv bin/packy .stash/packy$#))
- (std () (:save () (with-sbcl (:noinform t :quit t)
-                     (ql:quickload :std)
-                     (in-package :std-user)
-                     (compile-lisp :std :save ".stash/std.core"))))
+  (:build () (with-sbcl (:noinform t :quit t)
+              (ql:quickload :bin/packy)
+              (asdf:make :bin/packy))
+   #$mv bin/packy .stash/packy$#))
+ (std () 
+  (:save () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :std)
+    (in-package :std-user)
+    (compile-lisp :std :save ".stash/std.core"))))
  (prelude ()
-          (:save () (with-sbcl (:noinform t :quit t)
-                      (ql:quickload :prelude)
-                      (in-package :std-user)
-                      (compile-lisp :prelude :save ".stash/prelude.core")))
-          (:compile () (compile-lisp :prelude :force t :verbose t)))
+  (:save () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :prelude)
+    (in-package :std-user)
+    (compile-lisp :prelude :save ".stash/prelude.core")))
+  (:compile () (compile-lisp :prelude :force t :verbose t)))
  (user ()
-       (:save () 
-              (with-sbcl (:noinform t :quit t)
-                (ql:quickload :user)
-                (in-package :user)
-                (compile-lisp :user :save ".stash/user.core")))
-       (:compile () (compile-lisp :user :force t :verbose t)))
+  (:save () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :user)
+    (in-package :user)
+    (compile-lisp :user :save ".stash/user.core")))
+  (:compile () (compile-lisp :user :force t :verbose t)))
  (infra () 
-        (:save () 
-               (with-sbcl (:noinform t :quit t)
-                 (ql:quickload :user)
-                 (in-package :user)
-                 (compile-lisp :user :save ".stash/infra.core" :compression 22))))
+  (:save () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :user)
+    (in-package :user)
+    (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
-       (:build (%stash) 
-               (with-sbcl (:noinform t :quit t)
-                 ;; (push :virt *features*)
-                 ;; (push :tools *features*)
-                 (asdf:load-system :bin/core)
-                 (asdf:make :bin/core))
-               #$mv bin/core .stash/core$#)
-       (:build-all (%stash)
-                   (with-sbcl (:noinform t :quit t)
-                     (push :virt *features*)
-                     (push :net *features*)
-                     (push :swank *features*)
-		     (push :x11 *features*)
-		     (push :clim *features*)
-                     (push :gui *features*)
-                     (push :tools *features*)
-                     (asdf:load-system :core)
-                     (asdf:make :bin/core))
-                   #$mv bin/core .stash/core$#)
-       (:save () (with-sbcl (:noinform t :quit t)
-                   (asdf:load-system :core)
-                   (in-package :std-user)
-                   (compile-lisp :core :save ".stash/core.core")))
-       (:save-all () (with-sbcl (:noinform t :quit t)
-		       (push :virt *features*)
-		       (push :net *features*)
-		       (push :swank *features*)
-		       (push :x11 *features*)
-		       (push :clim *features*)
-		       (push :gui *features*)
-		       (push :tools *features*)
-		       (asdf:load-system :core)
-		       (in-package :std-user)
-		       (compile-lisp :core :save ".stash/all.core")))
-       (:compile () (compile-lisp :core :force t :verbose t))
-       (:install () (funcall 
-                     #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
-                     echo "core -> /usr/local/bin/"
-                     links="skel homer packy rdb organ vc gen swm"
-                     for i in $links; do
-                     sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
-                     echo "$i -> core -> /usr/local/bin/"
-                     done$#
-                     :input t))
-       (:link-pod () (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
+  (:build (%stash) 
+   (with-sbcl (:noinform t :quit t)
+    ;; (push :virt *features*)
+    ;; (push :tools *features*)
+    (asdf:load-system :bin/core)
+    (asdf:make :bin/core))
+   #$mv bin/core .stash/core$#)
+  (:build-all (%stash)
+   (with-sbcl (:noinform t :quit t)
+    (push :virt *features*)
+    (push :net *features*)
+    (push :swank *features*)
+    (push :x11 *features*)
+    (push :clim *features*)
+    (push :gui *features*)
+    (push :tools *features*)
+    (asdf:load-system :core)
+    (asdf:make :bin/core))
+   #$mv bin/core .stash/core$#)
+  (:save () (with-sbcl (:noinform t :quit t)
+             (asdf:load-system :core)
+             (in-package :std-user)
+             (compile-lisp :core :save ".stash/core.core")))
+  (:save-all () (with-sbcl (:noinform t :quit t)
+		 (push :virt *features*)
+		 (push :net *features*)
+		 (push :swank *features*)
+		 (push :x11 *features*)
+		 (push :clim *features*)
+		 (push :gui *features*)
+		 (push :tools *features*)
+		 (asdf:load-system :core)
+		 (in-package :std-user)
+		 (compile-lisp :core :save ".stash/all.core")))
+  (:compile () (compile-lisp :core :force t :verbose t))
+  (:install () (funcall 
+                #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
+                echo "core -> /usr/local/bin/"
+                links="skel homer packy rdb organ vc gen swm"
+                for i in $links; do
+                sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
+                echo "$i -> core -> /usr/local/bin/"
+                done$#
+                :input t))
+  (:link-pod () (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
  (tests ()
-        (:save () (with-sbcl (:noinform t :quit t)
-		    (ql:quickload :core/tests)
-		    (in-package :core/tests)
-		    (compile-lisp :core/tests :save ".stash/tests.core")))
-        (:compile () 
-                  (compile-lisp :core/tests :force t :verbose t)))
+  (:save () (with-sbcl (:noinform t :quit t)
+	     (ql:quickload :core/tests)
+	     (in-package :core/tests)
+	     (compile-lisp :core/tests :save ".stash/tests.core")))
+  (:compile () 
+   (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
  (rust () (:build () #$cargo build$#))
  (fasls (compile-core #+nil compile-tests compile-bench compile-user compile-prelude))
  ;; install
  (install (install-core) 
-          (funcall
-           #$d=/usr/local/share/lisp/
-           cd .stash
-           if [ -d $d ];
-           then
-           for f in $(find . -type f -name "*.core")
-           do echo "$(basename $f) -> $d"
-           sudo -S install -C -m 755 $f $d
-           done fi$#
-           :input t))
+  (funcall
+   #$d=/usr/local/share/lisp/
+   cd .stash
+   if [ -d $d ];
+   then
+   for f in $(find . -type f -name "*.core")
+   do echo "$(basename $f) -> $d"
+   sudo -S install -C -m 755 $f $d
+   done fi$#
+   :input t))
  ;; TODO 2024-09-15: 
  (syms.sxp () 
-           (with-open-file (f "syms.sxp" 
-                              :direction :output 
-                              :if-exists :overwrite 
-                              :if-does-not-exist :create)
-             (dolist (s (list-all-symbols))
-               (print s f))))
+  (with-open-file (f "syms.sxp" 
+                   :direction :output 
+                   :if-exists :overwrite 
+                   :if-does-not-exist :create)
+   (dolist (s (list-all-symbols))
+    (print s f))))
  (dist () #$mkdir -pv .stash/tmp/core
-       cd .stash
-       mv *.so psl.dat rgb.txt tmp/core/ # parquet.json not needed - pre-compiled
-       mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/
-       cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)
+  cd .stash
+  mv *.so psl.dat rgb.txt tmp/core/ # parquet.json not needed - pre-compiled
+  mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/
+  cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)
  (dist-source ()
-              #$cd .. && tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
+  #$cd .. && tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
  (dist-core (clean %stash build-core) #$zstd .stash/core$#)
  (deploy (all dist) 
-         #$mv ".stash/core.tar.zst" $PACKY_HOME/dist/x86_64-unknown-linux-gnu/core.tar.zst$#
-         (sk-make *skel-project* :dist-source)
-         #$mv "core.tar.zst" $PACKY_HOME/src/core.tar.zst$#))
+  #$mv ".stash/core.tar.zst" $PACKY_HOME/dist/x86_64-unknown-linux-gnu/core.tar.zst$#
+  (sk-make *skel-project* :dist-source)
+  #$mv "core.tar.zst" $PACKY_HOME/src/core.tar.zst$#))
