@@ -116,13 +116,16 @@
  (freedesktop.org.xml (%stash)
   (req:fetch "https://packy.compiler.company/data/freedesktop.org.xml"
    ".stash/freedesktop.org.xml"))
- (parquet-test-data (%stash) (req:fetch "https://packy.compiler.company/data/test/alltypes_plain.parquet"
-                              ".stash/alltypes_plain.parquet"
-                              :if-exists :supersede))
+ (parquet-test-data (%stash) 
+  (req:fetch "https://packy.compiler.company/data/test/alltypes_plain.parquet"
+   ".stash/alltypes_plain.parquet"
+   :if-exists :supersede))
  (%stash () #$mkdir -pv .stash$#)
- (ssl-certs () #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
+ (ssl-certs () 
+  #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
   -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)
- (ssl-client-certs () #$openssl req -new -nodes -x509 -days 365 -subj / \
+ (ssl-client-certs () 
+  #$openssl req -new -nodes -x509 -days 365 -subj / \
   -keyout .stash/client-key.pem -outform PEM \
   -out .stash/client-cert.pem$#)
  (swm (%stash)
@@ -133,14 +136,16 @@
     (ql:quickload :bin/swm)
     (asdf:make :bin/swm))
    #$mv bin/swm .stash/swm$#)
-  (:install () (funcall #$sudo -S install -C -m 755 .stash/swm /usr/local/bin/swm$# :input t)))
+  (:install () 
+   (funcall #$sudo -S install -C -m 755 .stash/swm /usr/local/bin/swm$# :input t)))
  (rdb (%stash)
   (:build ()
    (with-sbcl (:noinform t :quit t)
     (ql:quickload :bin/rdb)
     (asdf:make :bin/rdb))
    #$mv bin/rdb .stash/rdb$#)
-  (:install () (funcall #$install -C -m 755 .stash/rdb /usr/local/bin/rdb$# :input t)))
+  (:install () 
+   (funcall #$install -C -m 755 .stash/rdb /usr/local/bin/rdb$# :input t)))
  (skel (%stash)
   (:build ()
    (with-sbcl (:noinform t :quit t)
@@ -159,8 +164,10 @@
     (ql:quickload :bin/skel)
     (asdf:make :bin/skel))
    #$mv bin/skel .stash/skel-gui$#)
-  (:install () (funcall #$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t))
-  (:install-gui () (funcall #$sudo -S install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui$# :input t)))
+  (:install () 
+   (funcall #$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t))
+  (:install-gui () 
+   (funcall #$sudo -S install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui$# :input t)))
  (skc (%stash)
   (:build ()
    (with-sbcl (:noinform t :quit t)
@@ -194,9 +201,10 @@
     (asdf:make :bin/gen)
     #$mv bin/gen .stash/gen$#)))
  (packy (%stash)
-  (:build () (with-sbcl (:noinform t :quit t)
-              (ql:quickload :bin/packy)
-              (asdf:make :bin/packy))
+  (:build () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :bin/packy)
+    (asdf:make :bin/packy))
    #$mv bin/packy .stash/packy$#))
  (std () 
   (:save () 
@@ -272,7 +280,8 @@
     echo "$i -> core -> /usr/local/bin/"
     done$#
     :input t))
-  (:link-pod () (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
+  (:link-pod () 
+   (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
  (tests ()
   (:save () 
    (with-sbcl (:noinform t :quit t)
