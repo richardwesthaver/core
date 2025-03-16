@@ -143,7 +143,7 @@
    (keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)))
 
 ;;; C-x
-(keymap-set ctl-x-map "C-b" #'bs-show)
+(keymap-set ctl-x-map "C-b" #'ibuffer)
 
 ;;; C-x r
 (keymap-set ctl-x-r-map "SPC" #'point-to-register)

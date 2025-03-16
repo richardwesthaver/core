@@ -5,14 +5,20 @@
 ;;; Code:
 (add-to-list 'load-path (expand-file-name "lib" user-emacs-directory))
 
+;;; Packages
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+	("nongnu" . "https://elpa.nongnu.org/nongnu/")
+	;; melpa is 429in us.. :C
+	;; ("melpa" . "https://melpa.org/packages/")
+	))
+(setopt
+ use-package-always-ensure t
+ use-package-expand-minimally t)
+
 (dolist (x '("util.el" "default.el" "keys.el"))
   (let ((y (concat user-emacs-directory x)))
-    (setf byte-compile-warnings nil
-          native-comp-async-warnings-errors-kind nil)
-    (load y nil t)
-    (if (and (native-comp-available-p) (not (eq system-type 'darwin)))
-        (native-compile y)
-      (byte-compile-file y))))
+    (load y nil t)))
 
 (add-hook 'after-init-hook (load-keys))
 

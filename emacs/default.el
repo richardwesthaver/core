@@ -46,6 +46,25 @@
  shr-use-xwidgets-for-media t
  which-key-mode t
  view-read-only t)
+
+(add-packages
+ ;; eglot-x ;; LSP extensions
+ org-web-tools ;; web parsing
+ ol-notmuch ;; mail links
+ htmlize ;; html export
+ citeproc
+ cape
+ consult
+ embark-consult
+ embark
+ ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
+ nerd-icons nerd-icons-dired nerd-icons-corfu nerd-icons-completion
+ nerd-icons-ibuffer
+ hide-mode-line) ;; ui
+;; bbdb
+(package-refresh-contents)
+(package-install-selected-packages t)
+
 ;;; Treesitter
 
 ;;(add-to-list 'treesit-extra-load-path "/usr/local/lib/")
@@ -95,39 +114,6 @@
   (require 'bar)
   (require 'c2))
 
-;;; Theme
-(defun load-default-theme (&optional theme)
-  (interactive)
-  (when theme (setq default-theme theme))
-  (load-theme default-theme))
-
-;;; Packages
-(with-eval-after-load 'package
-  (setq package-archives
-        '(("gnu" . "https://elpa.gnu.org/packages/")
-          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-          ("melpa" . "https://melpa.org/packages/")))
-  (setopt
-   use-package-always-ensure t
-   use-package-expand-minimally t)
-  (add-packages
-   ;; eglot-x ;; LSP extensions
-   org-web-tools ;; web parsing
-   ol-notmuch ;; mail links
-   htmlize ;; html export
-   citeproc
-   cape
-   consult
-   embark-consult
-   embark
-   ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
-   nerd-icons nerd-icons-dired nerd-icons-corfu nerd-icons-completion
-   ;; nerd-icons-ibuffer
-   hide-mode-line) ;; ui
-  ;; bbdb
-  (package-refresh-contents)
-  (package-install-selected-packages t))
-
 ;;; Env
 (require 'exec-path-from-shell)
 (exec-path-from-shell-copy-envs (list "SSH_AGENT_PID"
@@ -154,15 +140,14 @@
 (add-to-list 'exec-path "/usr/local/share/lisp/bin/")
 
 ;;; Completions
-
+(use-package marginalia :ensure t
+  :config (marginalia-mode))
 ;; avoid obsolete warnings about if-let -> if-let* etc
 (use-package vertico
   :ensure t
   :config (vertico-mode)
   (keymap-set vertico-map "M-q" #'vertico-quick-insert)
   (keymap-set vertico-map "C-q" #'vertico-quick-exit))
-(use-package marginalia :ensure t
-  :config (marginalia-mode))
 ;; (use-package kind-icon
 ;;   :ensure t
 ;;   :after corfu

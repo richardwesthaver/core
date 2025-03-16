@@ -11,12 +11,11 @@
 (require 'htmlize)
 (defvar project-dir "~/comp/org")
 (defvar publish-dir "/tmp/www")
-(defvar html-theme nil)
 (defvar url "https://compiler.company")
 (defvar vc-url "https://vc.compiler.company")
 (defvar packy-url "https://packy.compiler.company")
 (defvar html-foot "<footer><p>updated %C</p></footer>")
-
+(defvar default-org-export-setupfile (join-paths company-org-directory "clean.theme"))
 ;; (setq org-protocol-project-alist
 ;;       '(("comp"
 ;;          :base-url url
@@ -29,6 +28,9 @@
       org-html-htmlize-output-type 'css
       org-export-htmlize-output-type 'css
       org-export-allow-bind-keywords t
+      org-export-async-init-file (join-paths user-emacs-lib-directory "publish-init.el")
+      org-export-async-debug t
+      org-export-in-background t
       org-html-doctype "html5"
       org-html-html5-fancy t
       org-src-fontify-natively t
@@ -314,6 +316,27 @@ If given a prefix (C-u), set all args to t"
      (when sitemap (update-sitemap))
      (org-publish "compiler.company" force async)
      publish-dir)))
+
+(org-export-define-derived-backend 'cc-html 'html
+  :menu-entry
+  '(?c "Export compiler.company HTML"
+       ((?C "As HTML buffer" org-cc-html-export-as-html)
+	(?c "As HTML buffer" org-cc-html-export-to-html)
+	(?o "As HTML file and open"
+	    (lambda (a s v b)
+	      (if a (org-cc-html-export-to-html t s v b)
+		(org-open-file (org-cc-html-export-to-html nil s v b))))))))
+
+(defun org-cc-html-edge-drawer (drawer contents info)
+  (funcall (plist-get info :html-format-drawer-function)
+	   (org-element-property :drawer-name drawer)
+	   contents))
+
+(defun org-cc-html-drawer (drawer contents info)
+  (org-html-drawer drawer contents info))
+
+(defun org-cc-html-format-drawer (name contents)
+  contents)
 
 (provide 'publish)
 ;;; publish.el ends here

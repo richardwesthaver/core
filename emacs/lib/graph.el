@@ -804,6 +804,21 @@ either side, and deletes both sides of a link."
   (interactive "sinfo:")
   (when link (org-graph-edge-insert-related (format "man:%s" link) (or desc "man"))))
 
+(defun org-graph-edge-wikipedia (&optional link desc)
+  "Insert a related link to a wikipedia page."
+  (interactive "swiki:")
+  (when link (org-graph-edge-insert-related (format "wikipedia:%s" link) (or desc "wiki"))))
+
+(defun org-graph-edge-src (&optional link desc)
+  "Insert a related source link."
+  (interactive "ssrc:")
+  (when link (org-graph-edge-insert-related link (or desc "src"))))
+
+(defun org-graph-edge-github-src (&optional link desc)
+  "Insert a related link to a github source."
+  (interactive "ssrc:")
+  (when link (org-graph-edge-insert-related (format "github:%s" link) (or desc "src"))))
+
 (defun org-dblock-write:links ()
   "Generate a 'links' block for the designated node.")
 
@@ -818,6 +833,9 @@ either side, and deletes both sides of a link."
   "n" 'org-graph-node
   "w" 'org-graph-edge-web
   "l" 'org-graph-edge-link
+  "W" 'org-graph-edge-wikipedia
+  "G" 'org-graph-edge-github-src
+  "s" 'org-graph-edge-src
   "i" 'org-graph-edge-info
   "m" 'org-graph-edge-man
   "c" 'org-graph-edge-child

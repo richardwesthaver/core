@@ -94,7 +94,7 @@
 ;; inherited. The 'PROJECT' property itself can be inherited.
 
 ;; project-info
-(defcustom org-project-info-order '(details status html tasks churn log files)
+(defcustom org-project-info-order '(details status churn files html tasks log vc)
   "Order in which sections of the 'project-info' dblock will appear."
   :type 'list
   :group 'scrum)
@@ -126,19 +126,20 @@ The following keyword parameters can be passed to the info dynamic block:
 :branch Set or override the project branch to display info for. Default
         branch name is 'default'.
 
-:files   when nil don't include the files table.
 :churn   when nil don't include the vc churn report.
 :log     when nil don't include the vc log.
 :status  when nil don't include vc status.
 :details when nil don't include the project details section.
+:vc      when non-nil include the vc files table.
+:files   when non-nil include the local files table.
 :html    when non-nil include the html files table."
   (with-dblock-defaults
-   (let ((html (if-let* ((val (plist-member params :html)))
-		   (cadr val)
-		 t))
-         (files (if-let* ((val (plist-member params :files)))
-                    (cadr val)
-                  t))
+   (let ((html (when-let* ((val (plist-member params :html)))
+		 (cadr val)))
+         (vc (when-let* ((val (plist-member params :vc)))
+               (cadr val)))
+	 (files (when-let* ((val (plist-member params :files)))
+		  (cadr val)))
          (churn (if-let* ((val (plist-member params :churn)))
                     (cadr val)
                   t))
@@ -179,9 +180,12 @@ The following keyword parameters can be passed to the info dynamic block:
 	   ('html (when html
 		    (message "building project html files...")
 		    (insert "#+CALL: project-html-files() :dir " project-root "\n")))
-           ('files (when files
-                     (message "building project files...")
-                     (insert "#+CALL: project-files() :dir " project-root "\n")))))
+           ('vc (when vc
+                  (message "building project vc files...")
+                  (insert "#+CALL: project-vc-files() :dir " project-root "\n")))
+	   ('files (when files
+		     (message "building project local files...")
+		     (insert "#+CALL: project-files() :dir " project-root "\n")))))
        (org-babel-execute-region point (point))))))
 
 (defun org-project-info ()

@@ -21,6 +21,10 @@
   (:use :cl :std :pod :skel/core/obj :skel/core/proto :dat/proto :obj/id)
   (:export :sk-containerfile))
 
+(defpackage :skel/comp/ignition
+  (:use :cl :std :box :skel/core/obj :skel/core/proto :dat/proto :obj/id)
+  (:export :sk-ignition))
+
 (defpackage :skel/comp/dir-locals
   (:use :cl :std :skel/core/obj :skel/core/proto :dat/sxp)
   (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals))

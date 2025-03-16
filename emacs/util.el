@@ -186,5 +186,11 @@ TABLE."
 
 (defmacro defcmd (name &rest body) `(defun ,name nil (interactive) ,@body))
 
+;;; Theme
+(defun load-default-theme (&optional theme)
+  (interactive)
+  (when theme (setq default-theme theme))
+  (load-theme default-theme))
+
 (provide 'util)
 ;; util.el ends here
