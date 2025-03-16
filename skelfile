@@ -244,37 +244,41 @@
     (asdf:load-system :core)
     (asdf:make :bin/core))
    #$mv bin/core .stash/core$#)
-  (:save () (with-sbcl (:noinform t :quit t)
-             (asdf:load-system :core)
-             (in-package :std-user)
-             (compile-lisp :core :save ".stash/core.core")))
-  (:save-all () (with-sbcl (:noinform t :quit t)
-		 (push :virt *features*)
-		 (push :net *features*)
-		 (push :swank *features*)
-		 (push :x11 *features*)
-		 (push :clim *features*)
-		 (push :gui *features*)
-		 (push :tools *features*)
-		 (asdf:load-system :core)
-		 (in-package :std-user)
-		 (compile-lisp :core :save ".stash/all.core")))
+  (:save () 
+   (with-sbcl (:noinform t :quit t)
+    (asdf:load-system :core)
+    (in-package :std-user)
+    (compile-lisp :core :save ".stash/core.core")))
+  (:save-all () 
+   (with-sbcl (:noinform t :quit t)
+    (push :virt *features*)
+    (push :net *features*)
+    (push :swank *features*)
+    (push :x11 *features*)
+    (push :clim *features*)
+    (push :gui *features*)
+    (push :tools *features*)
+    (asdf:load-system :core)
+    (in-package :std-user)
+    (compile-lisp :core :save ".stash/all.core")))
   (:compile () (compile-lisp :core :force t :verbose t))
-  (:install () (funcall 
-                #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
-                echo "core -> /usr/local/bin/"
-                links="skel homer packy rdb organ vc gen swm"
-                for i in $links; do
-                sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
-                echo "$i -> core -> /usr/local/bin/"
-                done$#
-                :input t))
+  (:install () 
+   (funcall 
+    #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
+    echo "core -> /usr/local/bin/"
+    links="skel homer packy rdb organ vc gen swm"
+    for i in $links; do
+    sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
+    echo "$i -> core -> /usr/local/bin/"
+    done$#
+    :input t))
   (:link-pod () (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
  (tests ()
-  (:save () (with-sbcl (:noinform t :quit t)
-	     (ql:quickload :core/tests)
-	     (in-package :core/tests)
-	     (compile-lisp :core/tests :save ".stash/tests.core")))
+  (:save () 
+   (with-sbcl (:noinform t :quit t)
+    (ql:quickload :core/tests)
+    (in-package :core/tests)
+    (compile-lisp :core/tests :save ".stash/tests.core")))
   (:compile () 
    (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
