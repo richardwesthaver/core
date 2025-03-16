@@ -1,6 +1,6 @@
-;;; box/box.lisp --- Box API
+;;; box/proto.lisp --- Box Protocols
 
-;; High-level Box interface for KVM management.
+;;
 
 ;;; Commentary:
 

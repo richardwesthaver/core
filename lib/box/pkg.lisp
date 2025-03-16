@@ -24,7 +24,7 @@
 
 (defpackage :box/ignition
   (:nicknames :ignition)
-  (:use :cl :std :shell :json :config :box)
+  (:use :cl :std :shell :json :config :box :ast)
   (:export :*ignition-config* :ignition-config))
 
 (defpackage :box/qemu

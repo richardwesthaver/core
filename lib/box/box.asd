@@ -2,6 +2,7 @@
   :description "Kernel virtualization support for Lisp - wraps QEMU,archiso,etc."
   :depends-on (:std :cli :obj :dat :net :log)
   :components ((:file "pkg")
+               (:file "proto")
                (:file "archiso")
                (:file "ignition")
                (:file "qmp")

@@ -141,7 +141,7 @@
    :compile-css-block))
 
 (defpackage :dat/html
-  (:use :cl :dat/proto :std/macs :std/string)
+  (:use :cl :dat/proto :std/macs :std/string :std/serde)
   (:import-from :sb-ext :defglobal)
   (:export
    :parse-html5
@@ -178,6 +178,7 @@
 (defpackage :dat/xml
   (:use :cl :dat/proto)
   (:import-from :log :trace!)
+  (:import-from :std :serialize :deserialize)
   (:shadow :read-char :unread-char)
   (:export
    :xml-node-name 

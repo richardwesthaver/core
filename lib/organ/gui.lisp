@@ -45,4 +45,3 @@
 	     collect edge))
      :stream pane
      :center-nodes t)))
-

@@ -45,7 +45,11 @@
     (is (equal str2 (with-output-to-string (s) (serialize (list 1 2 3) :json :stream s))))))
 
 (deftest xml ()
-  (is (equal "foo" (xml-node-name (xml-parse "<foo></foo>")))))
+  (is (equal "foo" (xml-node-name (deserialize "<foo></foo>" :xml)))))
+
+(deftest html ()
+  (istype 'dat/html::document 
+          (deserialize "<!DOCTYPE html><html lang=\"ulang\"></html>" :html)))
 
 (deftest toml ()
   (istype 'dat/toml::toml-document

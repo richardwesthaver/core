@@ -2,9 +2,9 @@
 
 ;; see https://github.com/rotatef/cl-html5-parser
 
-;; spec: https://html.spec.whatwg.org/
-
 ;;; Commentary:
+
+;; spec: https://html.spec.whatwg.org/
 
 ;; HTML is usually associated with XML, but not all HTML is valid
 ;; XML.
@@ -3949,11 +3949,11 @@ pointer at the end."
                 (remove node open-elements)))))
   nil)
 
-;;; Note to self:
-;;;   - A token is a plist.
-;;;   - A property is an alist.
-;;;   - A node is an object.
-;;;   - An element is a node.
+;; Note:
+;;   - A token is a plist.
+;;   - A property is an alist.
+;;   - A node is an object.
+;;   - An element is a node.
 
 (def :in-body end-tag-list-item (open-elements)
   (let ((variant (if (string= (getf token :name) "li")
@@ -5382,7 +5382,6 @@ See: https://www.w3.org/TR/html5/syntax.html#coercing-an-html-dom-into-an-infose
       (char<= (code-char #x203F) c (code-char #x2040))))
 
 ;;; XML DOM
-
 (defmethod transform-html5-dom ((to-type (eql :xml)) node
                                 &key namespace comments)
   "Convert a node into an DAT/XML-compatible tree of conses, starting
@@ -5438,6 +5437,11 @@ at. If the node is a document-fragement a list of XML trees is returned."
                 (list :comment nil (node-value node)))))))
     (node-to-xml node nil nil)))
 
-
 (defmethod transform-html5-dom ((to-type (eql :xml-ns)) node &key)
   (transform-html5-dom :xml node :namespace t))
+
+;;; DAT proto
+(defmethod deserialize (from (fmt (eql :html)) &key encoding strictp container dom)
+  (declare (ignore fmt))
+  (parse-html5 from :encoding encoding :strictp strictp :container container :dom dom))
+

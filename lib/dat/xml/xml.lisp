@@ -726,7 +726,7 @@ character translation."
     ((:node)
      (make-xml-node :name tag :ns namespace :attrs attribs :children children))
     (otherwise
-     (error "REPRESENTATION-KIND must be :LIST or :NODE, found ~s" representation-kind))))
+     (error "REPRESENTATION-KIND must be :LIST or :NODE, got ~s" representation-kind))))
 
 (defgeneric xmlrep-add-child! (xmlrep child)
   (:method ((xmlrep xml-node) child)
@@ -987,3 +987,18 @@ the first two return values.)"
     (if (find-test (car key-list) xml)
         (descend  key-list xml)
         (values nil nil nil))))
+
+;;; DAT Proto
+(defmethod deserialize ((self string) (fmt (eql :xml)) &key)
+  (declare (ignore fmt))
+  (xml-parse self))
+(defmethod deserialize ((self stream) (fmt (eql :xml)) &key)
+  (declare (ignore fmt))
+  (xml-parse self))
+(defmethod deserialize ((self pathname) (fmt (eql :xml)) &key)
+  (declare (ignore fmt))
+  (with-open-file (f self)
+    (xml-parse f)))
+
+(defmethod serialize (self (fmt (eql :xml)) &key indent stream)
+  (write-xml self stream :indent indent))
