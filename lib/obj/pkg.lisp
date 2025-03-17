@@ -161,18 +161,6 @@
   (:export :tree-node :binary-node :unary-node :ternary-node :avl-node
            :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
-(defpackage :obj/graph
-  (:nicknames :graph)
-  (:use :cl :std :obj/id :obj/seq)
-  (:export 
-   :vertex :edge :graph :make-edge :make-graph
-   :nodes :edges :add-node :add-edge
-   :weighted-edge :directed-edge :undirected-edge :directed-graph
-   :edge-value :edge-weight :node-edges
-   :edgex
-   :edge-out
-   :edge-in))
-
 (defpackage :obj/color
   (:nicknames :color)
   (:use :cl :std)
@@ -301,7 +289,8 @@
    :uuid :*ticks-per-count* :format-as-urn :make-null-uuid
    :make-uuid-from-string :make-v1-uuid :make-v3-uuid :make-v4-uuid
    :make-v5-uuid :uuid= :+namespace-dns+ :+namespace-oid+ :+namespace-x500+
-   :uuid-to-octet-vector :octet-vector-to-uuid))
+   :uuid-to-octet-vector :octet-vector-to-uuid
+   :uuid-to-string))
 
 (defpackage :obj/unit
   (:nicknames :unit)
@@ -355,6 +344,18 @@
            :syntax-error
            :syntax-warning
            :syntax-condition))
+
+(defpackage :obj/graph
+  (:nicknames :graph)
+  (:use :cl :std :obj/id :obj/seq :ast)
+  (:export 
+   :vertex :edge :graph :make-edge :make-graph
+   :nodes :edges :add-node :add-edge
+   :weighted-edge :directed-edge :undirected-edge :directed-graph
+   :edge-value :edge-weight :node-edges
+   :edgex
+   :edge-out
+   :edge-in))
 
 (defpackage :obj/config
   (:nicknames :config)

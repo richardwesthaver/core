@@ -52,6 +52,19 @@
   (:use :cl :std :nlp/doc :nlp/dbscan :nlp/tokenize)
   (:export :extract-sections))
 
+(defpackage :nlp/string
+  (:use :cl)
+  (:export    
+   #:hamming
+   #:levenshtein
+   #:damerau-levenshtein
+   #:norm-levenshtein
+   #:norm-damerau-levenshtein
+   #:overlap
+   #:jaccard
+   #:jaro
+   #:jaro-winkler))
+
 (defpackage :nlp/fuzzy
   (:use :cl)
   (:export :fuzzy-match))
@@ -65,4 +78,5 @@
    :nlp/stem/porter
    :nlp/textrank
    :nlp/dbscan
-   :nlp/section))
+   :nlp/section
+   :nlp/fuzzy))

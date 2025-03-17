@@ -10,6 +10,7 @@
 
 (deftype org-id () `(octet-vector 16))
 
+;;; Schema
 (defclass org-graph-schema (rdb-schema) ()
   (:default-initargs
    :fields (make-fields :file '(pathname . octet-vector)
@@ -30,21 +31,12 @@
 
 (defparameter *org-graph-schema* (make-instance 'org-graph-schema))
 
-(defvar *org-graph-db-directory* (merge-pathnames ".store/db/graph/" (user-homedir-pathname)))
-
-(defun make-org-graph-db ()
-  (load-schema
-   (make-db :rdb :name (namestring *org-graph-db-directory*)
-		 :opts (default-rdb-opts))
-   *org-graph-schema*))
-
-(defvar *org-graph-db* nil)
-
 (define-condition org-id-locations-out-of-sync (simple-error) ())
 
 (defvar *org-graph-file* (merge-pathnames ".emacs.d/graph.sxp" (user-homedir-pathname)))
 (defvar *org-id-locations-file* (merge-pathnames ".emacs.d/.org-id-locations" (user-homedir-pathname)))
 
+;;; Org IDs
 (defun make-org-id-locations (&optional (file *org-id-locations-file*))
   (let ((tbl (make-hash-table :test 'equal)))
     (with-open-file (file file)
@@ -59,6 +51,7 @@
     (simple-error () id)
     (sb-pcl::missing-slot () id)))
 
+;;; Org Graph
 (defvar *org-graph* nil)
 
 (defstruct org-graph nodes edges)
@@ -70,6 +63,10 @@
 	  #2=(org-graph-edges graph) 
 	  (mapcar (lambda (x) (wrap (make-instance 'org-graph-edge) x)) #2#))
     graph))
+
+(defmethod build-ast ((self org-graph) &key)
+  `(:nodes ,(mapcar 'build-ast (org-graph-nodes self))
+    :edges ,(mapcar 'build-ast (org-graph-edges self))))
 
 (defun read-org-graph-file (&optional (file *org-graph-file*))
   (with-open-file (f file) (read-ast :org-graph f)))
@@ -85,6 +82,9 @@
 (defmethod wrap ((self org-graph-node) form)
   (make-instance 'org-graph-node 
     :id (make-uuid-from-string (pop form)) :name (pop form) :path (pop form) :point (pop form)))
+
+(defmethod build-ast ((self org-graph-node) &key)
+  `(,(uuid-to-string (id self)) ,(name self) ,(path self) ,(idx self)))
 
 (defclass org-graph-edge (edge) 
   ((type :initarg :type :accessor edge-type)
@@ -103,6 +103,10 @@
       (encode-timestamp 0 sec minute hour day month year :timezone (or timezone *default-timezone*)))
     :point (pop form)
     :out (pop form)))
+
+(defmethod build-ast ((self org-graph-edge) &key)
+  `(,(keywordicate (edge-type self)) ,(uuid-to-string (edge-in self)) ,(edge-properties self)
+    ,(timestamp-to-universal (timestamp self)) ,(idx self) ,(format nil "~A" (edge-out self))))
 
 (defstruct org-graph-file 
   "Internal helper struct used while processing files in the *ORG-GRAPH*."
@@ -159,6 +163,17 @@
 ;; do (iter-next it)
 ;; do (print (incf i))))
 
+;;; Org Graph DB
+(defvar *org-graph-db-directory* (merge-pathnames ".store/db/graph/" (user-homedir-pathname)))
+
+(defun make-org-graph-db ()
+  (load-schema
+   (make-db :rdb :name (namestring *org-graph-db-directory*)
+		 :opts (default-rdb-opts))
+   *org-graph-schema*))
+
+(defvar *org-graph-db* nil)
+
 (defun close-org-graph-db ()
   (when (db-open-p *org-graph-db*)
     (shutdown-db *org-graph-db*)))
@@ -192,7 +207,7 @@
 (defun og-get (key &optional (from "node"))
   (get-val *org-graph-db* key :data-type 'string :column from))
 
-(defun org-graph-values (column)
+(defun og-values (column)
   (with-iter (it (iter *org-graph-db* :column (find-column column *org-graph-db*)))
     (seek-to-first)
     (loop while (iter-valid-p)
@@ -201,7 +216,8 @@
 			(sb-ext:octets-to-string (val)))
 	  do (next))))
 
-(defun org-graph-file-scrape (path &rest ids)
+;;; Files
+(defun org-graph-file-search (path &rest ids)
   "Return a list of org headings corresponding to IDS in PATH."
   ;; first get an org-document and list of headings
   (let* ((doc (organ:org-parse :document path))
@@ -221,3 +237,7 @@
 		h)
 	      ret)
 	  finally (return ret))))
+
+;;; Serde
+(defmethod serialize ((self org-graph) format &key stream)
+  (serialize (build-ast self) format :stream stream))

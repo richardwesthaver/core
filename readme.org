@@ -8,18 +8,18 @@
 #+CALL: project-details() :dir ~/comp/core/
 
 #+RESULTS:
-|-------------+----------------------------------------------------|
-| name        | core                                               |
-| version     | :version 0.1.0                                     |
-| description | :description The Compiler Company Core             |
-| skel-id     | :id 1566328410216733941                            |
-| root        | ~/comp/core/                                       |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/504ce9c6c4e4][504ce9c6c4e4:907]] |
-| tags        | :tags (core lisp rust emacs c)                     |
-| updated     | Wed Mar 12 20:46:17 2025 -0400                     |
-| langs       | c elisp json lisp org rust text toml               |
-| lines       | 121172 :λ 93852 :# 12326 :_ 14994                  |
-|-------------+----------------------------------------------------|
+|-------------+-----------------------------------------------------|
+| name        | core                                                |
+| version     | :version 0.1.0                                      |
+| description | :description The Compiler Company Core              |
+| skel-id     | :id 1566328410216733941                             |
+| root        | ~/comp/core/                                        |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/9cb2e29da493][9cb2e29da493:915+]] |
+| tags        | :tags (core lisp rust emacs c)                      |
+| updated     | Sun Mar 16 15:53:47 2025 -0400                      |
+| langs       | c elisp json lisp org rust text toml                |
+| lines       | 121793 :λ 94314 :# 12404 :_ 15075                   |
+|-------------+-----------------------------------------------------|
 
 #+END:
 

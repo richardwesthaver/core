@@ -55,8 +55,8 @@ A higher score means the suggestion comes first."
   ;; The Jaccard metric seems to provide much better results than, say,
   ;; Damerau-Levensthein but it's much slower.
   ;; TODO: Check out fzf for a possibly good scoring algorithm.
-  (+ (* 1.0 (mk-string-metrics:norm-damerau-levenshtein suggestion input))
-     (* 1.0 (substring-norm (str:split " " input) suggestion))))
+  (+ (* 1.0 (nlp/string:norm-damerau-levenshtein suggestion input))
+     (* 1.0 (substring-norm (std:ssplit " " input) suggestion))))
 
 (defvar score-threshold 0.0             ; TODO: Learn good value and enable low-score filtering below.
   "The threshold under which suggestions are eleminated.")
@@ -89,7 +89,7 @@ more details."
   "Return the list of input substrings that match at least one suggestion.
 The substrings must be SUBSTRING-LENGTH characters long or more."
   (let ((input-strings (delete-if (lambda (s) (< (length s) substring-length))
-                                  (str:split " " input :omit-nulls t))))
+                                  (std:ssplit " " input :omit-nulls t))))
     (when input-strings
       (delete-duplicates
        (loop for suggestion in suggestions
@@ -127,9 +127,9 @@ suggestions; otherwise `object-display' is used."
   (let ((pairs (if suggestions-display
                    (mapcar #'list suggestions-display suggestions)
                    (mapcar (lambda (c) (list (object-display c) c)) suggestions))))
-    (if (not (str:empty? input))
-        (let* ((input (str:replace-all " " " " input))
-               (pairs (if (str:downcasep input)
+    (if (not (sequence:emptyp input))
+        (let* ((input (substitute " " " " input))
+               (pairs (if (not (some 'lower-case-p input))
                           (mapcar (lambda (p) (list (string-downcase (first p)) (second p))) pairs)
                           pairs))
                (pairs (keep-exact-matches-in-suggestions input pairs))

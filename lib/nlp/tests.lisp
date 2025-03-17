@@ -26,6 +26,9 @@
                 doc "test")))))
 
 (deftest textrank ()
-  (is (typep (summarize-text 
-              "This is a test which will be summarized by the 'SUMMARIZE-TEXT' function. Yada yada. Test 1 2 3.")
-             'list)))
+  (istype 'list 
+          (summarize-text 
+           "This is a test which will be summarized by the 'SUMMARIZE-TEXT' function. Yada yada. Test 1 2 3.")))
+
+(deftest dbscan ()
+  (dbscan (extract-sections "This is a test which will be summarized by the 'SUMMARIZE-TEXT' function. Yada yada. Test 1 2 3.")))

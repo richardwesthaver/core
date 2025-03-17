@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :nlp/textrank)
 
-(defclass document-vertex (document)
+(defclass document-vertex (document ast:node)
   ((edges :accessor edges :initform (make-hash-table)
           :documentation "The keys of the hash table represent the
           edges, the values of the hash table represent the edge

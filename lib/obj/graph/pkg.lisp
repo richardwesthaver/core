@@ -19,8 +19,6 @@
 
 (in-readtable :std)
 
-(defclass node () ())
-
 ;;; Vertex
 (defclass vertex (id node)
   ()

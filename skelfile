@@ -44,6 +44,9 @@
        ;; save-infra save-tests
        ;; rust-bin
        ))
+ (c ()
+  (:build (build-zstd-alien build-tree-sitter-alien))
+  (:install (install-zstd-alien install-tree-sitter-alien)))
  (full 
   (%stash
    psl.dat x11.lisp parquet.thrift

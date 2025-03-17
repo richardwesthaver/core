@@ -39,8 +39,6 @@
                              (:file "redblack")
                              (:file "brother")
                              (:file "btree")))
-               (:module "graph"
-                :components ((:file "pkg")))
                (:file "unit")
                (:file "equiv")
                (:module "color"
@@ -54,6 +52,8 @@
                (:file "uuid")
                (:file "build")
                (:file "ast")
+	       (:module "graph"
+		:components ((:file "pkg")))
                (:file "config")
                (:file "plan")
                (:file "schema")

@@ -52,3 +52,19 @@
     (if (> (length it) 1)
         it
         (car it))))
+
+;;; DAT proto
+(defmethod serialize (self (format (eql :sxp)) &key stream)
+  (typecase self
+      (ast (write-ast self stream))
+      (t (write self :stream stream))))
+
+(defmethod deserialize ((from string) (format (eql :sxp)) &key)
+  (with-input-from-string (s from)
+    (read-ast nil s)))
+
+(defmethod deserialize ((from stream) (format (eql :sxp)) &key)
+  (read-ast nil from))
+
+(defmethod deserialize ((from pathname) (format (eql :sxp)) &key)
+  (read-sxp-file from))

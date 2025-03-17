@@ -231,6 +231,9 @@ characters.~@:>" string (length string)))
 		      do (setf (aref array i) (ldb (byte 8 (* 8 (- 15 i))) node)))
     array)))
 
+(defun uuid-to-string (uuid)
+  (print-object uuid nil))
+
 (defmacro arr-to-bytes (from to array)
   "Helper macro used in byte-array-to-uuid."
   `(loop for i from ,from to ,to

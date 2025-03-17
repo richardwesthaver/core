@@ -77,6 +77,7 @@
 (defpackage :dat/json
   (:nicknames :json)
   (:use :cl :std :dat/proto)
+  (:import-from :ast :ast)
   (:export
    :*allow-json-trailing-commas*
    :json-trailing-commas-p
@@ -85,9 +86,9 @@
    #:json-read
    #:json-enable-reader-macro
    #:json-object
-   #:json-object-members
    #:json-getf
-   #:json-setf))
+   #:json-setf
+   #:json-write))
 
 (defpackage :dat/base64
   (:use :cl :std :dat/proto)
@@ -187,7 +188,6 @@
    :xml-node-children 
    :make-xml-node 
    :xml-parse 
-   :to-xml 
    :write-xml
    :xml-node-p 
    :xml-node ; needed to support use in typep

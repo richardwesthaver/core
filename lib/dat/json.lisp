@@ -26,14 +26,8 @@ generating json from a scripting language without native json support."
 (defsetf json-trailing-commas-p () (val)
   `(setq *allow-json-trailing-commas* ,val))
 
-(defclass json-object ()
-  ((members :initform nil
-            :initarg :members
-            :accessor json-object-members))
+(defclass json-object (ast) ()
   (:documentation "An associative list of key/value pairs."))
-
-(defmethod ast:ast ((self json-object))
-  (json-object-members self))
 
 (defmethod print-object ((obj json-object) stream)
   "Output a JSON object to a stream in readable form."
@@ -43,20 +37,20 @@ generating json from a scripting language without native json support."
 
 (defun json-getf (object key &optional value)
   "Find an member's value in a JSON object."
-  (let ((place (assoc key (json-object-members object) :test 'string=)))
+  (let ((place (assoc key (ast object) :test 'string=)))
     (if (null place)
         value
       (values (second place) t))))
 
 (defun json-setf (object key value)
   "Assign a value to a key in a JSON object."
-  (let ((place (assoc key (json-object-members object) :test 'string=)))
+  (let ((place (assoc key (ast object) :test 'string=)))
     (prog1 value
       (if (null place)
           (let ((k (if (stringp key)
                        key
                      (princ-to-string key))))
-            (push (list k value) (json-object-members object)))
+            (push (list k value) (ast object)))
         (rplacd place (list value))))))
 
 (defsetf json-getf json-setf)
@@ -321,6 +315,9 @@ generating json from a scripting language without native json support."
   "Encode a ratio to a stream."
   (format stream "~<~a~>" (float value)))
 
+(defmethod json-write ((value character) &optional stream)
+  (json-write (string value) stream))
+
 (defmethod json-write ((value string) &optional stream)
   "Encode a string as a stream."
   (flet ((encode-char (c)
@@ -398,13 +395,14 @@ generating json from a scripting language without native json support."
                  (pprint-newline :mandatory)
                  (pprint-indent :current 0)))))))))
 
-(defmethod json-write ((value json-object) &optional stream)
-  "Encode a JSON object with an associative list of members to a stream."
+(defmethod json-write ((value ast) &optional stream)
+  "Encode an object with an associative list of members to a stream. There must
+be an AST accessor present which points to the list."
   (let ((*print-pretty* t)
         (*print-length* nil)
         (*print-lines* nil)
         (*print-right-margin* 72))
-    (pprint-logical-block (stream (json-object-members value)
+    (pprint-logical-block (stream (ast value)
                                   :prefix "{"
                                   :suffix "}")
       (pprint-exit-if-list-exhausted)

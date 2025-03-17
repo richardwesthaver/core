@@ -3,9 +3,7 @@
   :version "0.1.0"
   :maintainer "Richard Westhaver <ellis@rwest.io>"
   :bug-tracker "https://lab.rwest.io/comp/core/issues"
-  :class :package-inferred-system
-  :defsystem-depends-on (:asdf-package-system)
-  :depends-on (:std :rdb :cl-ppcre :parse :nlp/pkg)
+  :depends-on (:std :rdb :cl-ppcre :parse :obj)
   :components ((:file "pkg")
                (:file "data")
                (:file "tokenize")
@@ -15,7 +13,9 @@
                 ((:file "porter")))
                (:file "textrank")
                (:file "dbscan")
-               (:file "section"))
+               (:file "section")
+               (:file "string")
+               (:file "fuzzy"))
   :in-order-to ((test-op (test-op :nlp/tests))))
 
 

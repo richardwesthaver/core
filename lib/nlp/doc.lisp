@@ -15,9 +15,9 @@ amount of times word appears in the document.")
    (rank :accessor rank :documentation "Rank used for sorting.")
    (tokens :accessor tokens)
    (token-count :accessor token-count))
-  (:documentation "The document class represents a document. After
-creating a document, you can perform several operations on it, some
-examples:
+  (:documentation 
+   "The document class represents a search-optimized document. After creating a
+document, you can perform several operations on it, some examples:
 
 + term count: how many times does a term appear in a document?
 + term frequency: how many times does a term appear divided by the
@@ -26,8 +26,8 @@ examples:
 (defclass document-collection ()
   ((documents :initform () :initarg :documents :accessor documents))
   (:documentation "The document collection class represents a
-collection of documents. As with a document, there are several
-operations available, some examples:
+collection of documents. As with a document, there are several operations
+available, some examples:
 
 + dictionary: which words appear in the document collection?
 + keywords: what are the important keywords in this document
@@ -103,7 +103,6 @@ operations available, some examples:
                                        :string-contents text))))
 
 ;;; Doc Vector
-
 (defmethod word-count-vectorize ((document document) dictionary)
   "Transform a document into a vector using word counts."
   (let ((vector-data (make-array (length dictionary) :initial-element 0)))

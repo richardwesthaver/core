@@ -251,10 +251,7 @@ targets and targets."
 
 ;;;###autoload
 (defun update-sitemap ()
-  "update `rwest-io' sitemaps:
-- blog
-- notes
-- projects"
+  "Update compiler.company sitemaps."
   (interactive)
   (save-excursion
     (let ((dirs '("blog/draft" 
@@ -262,7 +259,6 @@ targets and targets."
 		  "graph/proto" "graph/sys" "graph/theory" "graph/web"
 		  "plan/tasks"
 		  "docs/core/app" "docs/core/lib")))
-      (message (format "generating sitemaps: %s" dirs))
       (while dirs
 	(let* ((dir (pop dirs))
 	       (default-directory (join-paths project-dir dir))
@@ -317,9 +313,20 @@ If given a prefix (C-u), set all args to t"
      (org-publish "compiler.company" force async)
      publish-dir)))
 
+(defun publish* (&optional force)
+  "start async compiler.company publish."
+  (interactive)
+  (when current-prefix-arg (setq force t))
+  (org-publish-project "index" force t)
+  (org-publish-project "meta" force t)
+  (update-sitemap)
+  (dolist (p '("plan" "blog" "docs" "graph"))
+    (org-publish-project p force t))
+  (org-export-stack))
+
 (org-export-define-derived-backend 'cc-html 'html
   :menu-entry
-  '(?c "Export compiler.company HTML"
+  '(?c "Export CC HTML"
        ((?C "As HTML buffer" org-cc-html-export-as-html)
 	(?c "As HTML buffer" org-cc-html-export-to-html)
 	(?o "As HTML file and open"
