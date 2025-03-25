@@ -18,9 +18,9 @@ ARGS starting from the position of ARG."
   "A wrapper which handles common cli errors that may occur during
 evaluation of BODY."
   `(progn
-     (if *no-exit*
-         (sb-ext:enable-debugger)
-         (sb-ext:disable-debugger))
+     (if *no-debug*
+         (sb-ext:disable-debugger)
+         (sb-ext:enable-debugger))
      (unwind-protect
           (restart-case 
               (handler-case (progn ,@body)
@@ -42,6 +42,8 @@ evaluation of BODY."
               (log:debug! "falling through to EXIT from pre-REPL RESTART-CASE~&")
               (exit :code 1))))
      (sb-impl::flush-standard-output-streams)
+     (unless *no-exit*
+       (exit :code 0))
      ;; reset terminal state
      #+nil (.ris)))
 

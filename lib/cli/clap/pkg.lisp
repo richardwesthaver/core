@@ -8,7 +8,8 @@
   (:export :*cli-group-separator* :*no-exit* :*default-cli-def*
    :*default-cli-class* :*cli-opt-kinds* :*cli* :*opts*
    :*args* :*argc* :*arg* :*optc*
-   :*cli-package-table*))
+   :*cli-package-table*
+   :*no-debug*))
 
 (defpackage :cli/clap/util
   (:use :cl :std :log :sb-ext :cli/clap/vars)

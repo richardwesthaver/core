@@ -145,21 +145,49 @@
 (defvar *ytdl* (or (find-exe "yt-dlp")
                    (find-exe "youtube-dl")))
 
-(defun run-ytdl* (args &optional (output *standard-output*) input)
-  (let ((proc (if input
-                  (sb-ext:run-program *ytdl* (or args nil) :output :stream :input input)
-                  (sb-ext:run-program *ytdl* (or args nil) :output :stream))))
-  (with-open-stream (s (sb-ext:process-output proc))
-    (loop for l = (read-line s nil nil)
-          while l
-          do (write-string l output)))
-  (if (eq 0 (sb-ext:process-exit-code proc))
-      nil
-      (ytdl-error "YTDL command failed: ~A ~A" *ytdl* (or args "")))))
-
+(defmacro with-ytdl ((args &optional output proc input) &body body)
+  (with-gensyms (s)
+    `(let ((,(or proc s)
+           (if ,input
+	       (sb-ext:run-program *ytdl* ,(or args nil) :output ,output :input ,input)
+	       (sb-ext:run-program *ytdl* ,(or args nil) :output ,output))))
+       (unwind-protect (progn ,@body)
+         (unless (eq 0 (sb-ext:process-exit-code ,(or proc s)))
+	   nil
+	   (ytdl-error "YTDL command failed: ~A ~A" *ytdl* ,(or args "")))))))
+  
 (defun run-ytdl (&rest args)
-  (run-ytdl* args))
+  (with-ytdl (args *standard-output*)))
 
+(defun ytdl-extractors ()
+  "Return the list of available YTDL extractors."
+  (mapcar 
+   'trim
+   (lines
+    (with-output-to-string (s)
+      (with-ytdl ((list "--list-extractors") s))))))
+
+(defun ytdl-user-agent ()
+  "Return the current YTDL user-agent."
+  (trim
+   (with-output-to-string (s)
+     (with-ytdl ((list "--dump-user-agent") s)))))
+
+(defun ytdl-list (playlist)
+  "Return a list of matches for given PLAYLIST."
+  (mapcar
+   'trim
+   (lines
+    (with-output-to-string (s)
+      (with-ytdl (`("--flat-playlist" "--print" "id" ,playlist) s))))))
+
+(defun ytdl-json (query)
+  "Return the infojson for a given track or playlist QUERY."
+  (deserialize
+   (with-output-to-string (s)
+     (with-ytdl (`("--dump-json" ,query) s)))
+   :json))
+  
 ;;; Caddy
 (deferror caddy-error (simple-error error) () (:auto t))
 

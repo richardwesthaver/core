@@ -6,6 +6,6 @@
 (in-package :mpk)
 
 (defconfig mpk-config () 
-  ((mpd :type mpd-config)))
+  ((mpd :type mpd:mpd-config)))
 
 (defun load-mpkrc ())

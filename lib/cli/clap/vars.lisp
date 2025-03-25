@@ -13,6 +13,9 @@
 (defparameter *no-exit* nil
   "Indicate whether the WITH-CLI-HANDLERS form should exit on completion.")
 
+(defparameter *no-debug* nil
+  "Indicate whether the WITH-CLI-HANDLERS form should enable the debugger.")
+
 (defvar *default-cli-def* 'defparameter)
 
 (defvar *default-cli-class* 'cli

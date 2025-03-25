@@ -76,7 +76,7 @@ and MAKE-CLI :CMD respectively."
                                                          :cmds ,(make-cmds cmds)))
        ,@(when package `((load-package-cli ,%name :package ,package))))))
 
-(defmacro defmain (name (&key (exit t)) &body body)
+(defmacro defmain (name (&key (exit t) (debug t)) &body body)
   "Define a CLI main function in the current package."
   (multiple-value-bind (body decls docs) (parse-body body :documentation t)
     `(let ((*no-exit* ,(not exit)))
@@ -147,7 +147,7 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 
 (deftype cli-hook-designator () '(or boolean :after))
 
-(defmacro with-cli ((cli &key slots (args *args*) (install t) run exit) &body body)
+(defmacro with-cli ((cli &key slots (args *args*) (install t) run exit)  &body body)
   "Like with-slots with some extra bindings.
 
 - CLI is an instance of a CLI class.

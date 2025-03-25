@@ -384,6 +384,7 @@
    :current-machine
    :list-package-symbols
    :list-all-symbols
+   :do-internal-symbols
    :package-symbols
    :package-symbol-names
    :define-logical-pathname
@@ -647,17 +648,37 @@
   (:import-from :std/macs :with-gensyms)
   (:export
    :sudo-p
+   :user-info
    :list-all-users
    :list-all-groups
    :with-umask
    :with-fd
+   :cfmakeraw
+   :+tiocgwinsz+
+   :+tiocswinsz+
+   :+tiocnotty+
+   :+tcsanow+
+   :+tcsaflush+
+   :+tcsadrain+
+   :+opost+
    :*user*
    :*xdg-user-dirs*
    :xdg-user-dir
    :xdg-base-dir
+   :termios
+   :winsize
+   :isatty
+   :tcgetattr
+   :tcsetattr
    :*xdg-base-dirs*
    :init-xdg-user-dirs
-   :init-xdg-base-dirs))
+   :init-xdg-base-dirs
+   :relative-pathname-p
+   :absolute-pathname-p
+   :unmerge-pathnames
+   :current-directory
+   :with-directory-iterator
+   :file-kind))
 
 (defpkg :std/file
   (:use :cl)

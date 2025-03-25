@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :cli/tools/media)
 
-(define-cli-tool :ffmpeg (&rest args)
-  (let ((proc (sb-ext:run-program *ffmpeg* args :wait t :output t)))
+(define-cli-tool :ffmpeg (args &optional (output *standard-output*))
+  (let ((proc (sb-ext:run-program *ffmpeg* args :wait t :output output)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (ffmpeg-error "FFMPEG command failed: ~A ~A" *ffmpeg* (or args "")))))
 
@@ -42,10 +42,24 @@
 (defstruct ffmpeg-codec (props 0 :type ffmpeg-codec-props) name description)
 
 (defun read-ffmpeg-codec (stream)
-  (let ((props (read stream))
-        (name (read stream))
-        (description (read-line stream)))
+  (when-let ((props (read stream nil nil))
+             (name (read stream nil nil))
+             (description (trim (read-line stream nil nil))))
     (make-ffmpeg-codec :props (parse-ffmpeg-codec-props props) :name name :description description)))
+
+(defun list-ffmpeg-codecs ()
+  (let ((ret (with-output-to-string (s)
+               (run-ffmpeg (list "-v" "0" "-codecs") s))))
+    (when-let ((i (search " -------" ret)))
+      (with-input-from-string (s (subseq ret (+ i 9)))
+        (loop for f = (print (read-ffmpeg-codec s))
+              while f
+              collect f)))))
+
+;; TODO 2025-03-23: 
+;; (defun list-ffmpeg-formats ()
+;;   (with-output-to-string (s)
+;;     (run-ffmpeg (list "-v" "0" "-formats") s)))
 
 (define-cli-tool :mpv (&rest args)
   (let ((proc (sb-ext:run-program *ffmpeg* args :wait t :output t)))

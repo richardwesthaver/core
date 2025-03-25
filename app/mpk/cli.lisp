@@ -24,4 +24,12 @@
   :help t
   :description "Media Production Kit"
   :cmds ((:name play :thunk mpk-play-cmd)
-         (:name mpc :thunk mpk-mpc-cmd)))
+         (:name mpc :thunk mpk-mpc-cmd))
+  :thunk mpk-play-cmd)
+
+(load-package-cli *mpk-cli* :package :mpk)
+
+(defmain start-mpk ()
+  (in-package :mpk)
+  (cli:with-cli ((cli:package-cli :mpk) :args (cli:args))
+    (cli:do-cmd cli:*cli*)))

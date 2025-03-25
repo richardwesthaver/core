@@ -6,6 +6,8 @@
                (:file "env" :depends-on ("pkg"))
                (:file "progress" :depends-on ("pkg"))
                (:file "spark" :depends-on ("pkg"))
+               (:file "terminfo" :depends-on ("pkg"))
+               (:file "linedit" :depends-on ("pkg" "terminfo"))
                (:file "repl" :depends-on ("pkg"))
                (:file "shell" :depends-on ("env"))
                (:file "prompt" :depends-on ("env" "ansi"))
@@ -36,7 +38,7 @@
                  (:file "cmd" :depends-on ("macs" "proto" "ast"))
                  (:file "cli" :depends-on ("opt" "cmd"))))
                (:file "multi" :depends-on ("repl" "clap"))
-               (:file "tui" :depends-on ("ansi" "progress" "spark" "prompt"))
+               (:file "tui" :depends-on ("ansi" "progress" "spark" "prompt" "linedit"))
                (:file "cli"))
   :in-order-to ((test-op (test-op "cli/tests"))))
 

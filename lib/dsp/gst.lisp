@@ -20,5 +20,5 @@
 
 ;; implements the PIPE protocol for the GST-PIPE class which wraps a foreign
 ;; pointer to a GST-PIPELINE struct.
-(defclass gst-pipe (pipe) 
+(defclass gst-pipe (pipe)
   ((sap :accessor sap :initarg :sap :initform nil)))

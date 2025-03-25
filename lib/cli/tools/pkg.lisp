@@ -56,7 +56,9 @@
    :ffmpeg-error
    :*mpv*
    :run-mpv
-   :mpv-error))
+   :mpv-error
+   :list-ffmpeg-codecs
+   :list-ffmpeg-formats))
 
 (defpackage :cli/tools/go
   (:nicknames :tools/go)
@@ -101,7 +103,11 @@
    :*caddy*
    :run-caddy*
    :run-caddy
-   :start-caddy))
+   :start-caddy
+   :ytdl-list
+   :ytdl-user-agent
+   :ytdl-extractors
+   :ytdl-json))
 
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/tools/proto :cli/env)

@@ -73,6 +73,14 @@ and we may query the user for input.")
                 (package-symbols package test))
         #'string<))
 
+(defmacro do-internal-symbols ((var package) &body forms)
+  (std/sym:with-gensyms (state)
+    `(do-symbols (,var ,package)
+       (multiple-value-bind (,var ,state)
+	   (find-symbol (symbol-name ,var) ,package)
+	 (when (eq ,state :internal)
+	   ,@forms)))))
+
 (defun standard-symbol-names (&optional test)
   (package-symbol-names :common-lisp test))
 

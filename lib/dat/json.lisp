@@ -27,7 +27,8 @@ generating json from a scripting language without native json support."
   `(setq *allow-json-trailing-commas* ,val))
 
 (defclass json-object (ast) ()
-  (:documentation "An associative list of key/value pairs."))
+  (:documentation "An associative list of key/value pairs.")
+  (:default-initargs :ast nil))
 
 (defmethod print-object ((obj json-object) stream)
   "Output a JSON object to a stream in readable form."
@@ -93,7 +94,7 @@ generating json from a scripting language without native json support."
 
                 ;; stop when nothing is left
                 unless (or xs key value)
-                return (make-instance 'json-object :members pairs)
+                return (make-instance 'json-object :ast pairs)
 
                 ;; build associative list of key/value pairs
                 collect (list (princ-to-string key) value)
@@ -290,7 +291,7 @@ generating json from a scripting language without native json support."
                   (unless (and (json-trailing-commas-p) (equal #\} (peek-char t stream)))
                     t))
       ;; return the final list
-      finally (return (prog1 (make-instance 'json-object :members xs)
+      finally (return (prog1 (make-instance 'json-object :ast xs)
                         (json-read-char stream #\} :skip-ws t))))))
 
 (defmethod json-write ((value (eql t)) &optional stream)

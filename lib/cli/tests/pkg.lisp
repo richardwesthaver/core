@@ -30,7 +30,7 @@
     (let ((*progress-bar-enabled* t)
           (n 100))
       (with-progress-bar (n "TEST: # of steps = ~a" n)
-        (dotimes (i n) (%step))))))
+        (dotimes (i n) (sleep 0.4) (%step))))))
 
 (deftest spark ()
   (is (string= 
