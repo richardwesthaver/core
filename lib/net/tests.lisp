@@ -39,11 +39,6 @@
   (isequalp '("/test/int" -1)
             (net/codec/osc:decode-message 
              #(47 116 101 115 116 47 105 110 116 0 0 0 44 105 0 0 255 255 255 255))))
-   
-   
-   
-   
-   
 
 (deftest http ()
   (let ((req (make-http-request))
@@ -79,7 +74,8 @@ Cookie: name=wookie
     (is (stringp (net/cookie:write-cookie-header (list cookie))))))
 
 (deftest srv ()
-  (istype 'net-service (make-instance 'net-service))
-  (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
-  (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service))
-  (istype 'net/srv/udp:udp-service (make-instance 'net/srv/udp:udp-service)))
+  (let ((srv (make-service nil))) ;; a clean-slate service
+    (istype 'net-service srv)
+    (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
+    (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service))
+    (istype 'net/srv/udp:udp-service (make-instance 'net/srv/udp:udp-service))))

@@ -7,7 +7,7 @@
 (rocksdb:load-rocksdb t)
 (defvar *rdb*)
 (defopt rdb-config (init-rdb-user-config (parse-file-opt *arg*)))
-(defopt rdb-target-db (or *arg* "/tmp/rdb"))
+(defopt rdb-path (or *arg* "/tmp/rdb"))
 (defcmd rdb-new ()
   (set-db-opt *rdb* :error-if-exists t)
   (open-db *rdb*)
@@ -28,12 +28,14 @@
 			       (sb-ext:octets-to-string (key it) :external-format '(:ascii :replacement #\_))
 			       (val it))
 		       (next it))))))))
+
 (defcmd rdb-set ()
   (if (> 2 *argc*)
       (rdb-error "missing args: KEY VAL")
       (with-rdb (db *rdb*)
 	(open-db db)
 	(insert-key  db (pop *args*) (pop *args*)))))
+
 (defcmd rdb-get ()
   (if (> 1 *argc*)
       (rdb-error "missing arg: KEY")
@@ -41,8 +43,10 @@
 	(open-db db)
 	(when-let ((val (get-key db (car *args*))))
 	  (println val)))))
+
 (defcmd rdb-destroy ()
   (destroy-db *rdb*))
+
 (defcmd rdb-fuzz ()
   (with-rdb (db *rdb*)
     (open-db db)
@@ -66,7 +70,6 @@
   :thunk rdb-show
   :opts ((:name "level" :description "set log level" :thunk level-opt)
          (:name "version" :description "print version" :thunk version-opt)
-         (:name "db" :description "target db" :thunk rdb-target-db :kind dir))
+         (:name "path" :description "database path" :thunk rdb-path :kind dir)
+         (:name "config" :description "database configuration" :thunk rdb-config))
   :cmds ((:name new :thunk rdb-new)))
-
-

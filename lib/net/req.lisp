@@ -227,7 +227,8 @@
      :cp932)
     ((string-equal charset "windows-31j")
      :cp932)
-    (t (or (when (sb-impl::get-external-format (keywordicate charset)) charset)
+    (t (or (find charset (babel:list-character-encodings)
+                 :test 'string-equal)
            default))))
 
 (defun detect-charset (content-type body)
@@ -511,7 +512,7 @@ keep-alive-stream), and should handle clean-up of it"
       (close stream :abort abort))))
 
 ;;; body
-(defun decode-body (content-type body &key default-charset on-close)
+(defun decode-body (content-type body &key (default-charset :utf-8) on-close)
   (let ((charset (or (and content-type
                           (detect-charset content-type body))
                      default-charset))

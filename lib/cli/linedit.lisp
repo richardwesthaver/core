@@ -8,6 +8,8 @@
   (:use :cl)
   (:import-from :sb-posix :getenv :ioctl)
   (:import-from :std
+                :foreign-alloc
+                :foreign-free
                 :with-gensyms
                 :with-directory-iterator
                 :file-kind
@@ -35,6 +37,9 @@
 ;;; Utils
 (declaim (type simple-string *word-delimiters*))
 (defparameter *word-delimiters* "()[]{}',` \"")
+
+(defmacro ensure (symbol expr)
+  `(or ,symbol (setf ,symbol ,expr)))
 
 (defun word-delimiter-p (char)
   (declare (simple-string *word-delimiters*)
@@ -198,24 +203,23 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defvar +linedit-no-attr-error+   6)
 
 (let (attr)
-
   (defun c-terminal-init ()
-    (if (zerop (isatty 0))
-        (return-from c-terminal-init +linedit-not-atty+))
+    (when (zerop (isatty 0))
+      (return-from c-terminal-init +linedit-not-atty+))
     ;; Save current terminal state in attr
-    (if attr
-        (return-from c-terminal-init +linedit-attr-error+))
-    (setf attr (sb-alien:make-alien termios))
+    (when attr
+      (return-from c-terminal-init +linedit-attr-error+))
+    (setf attr (foreign-alloc 'termios))
     (when (minusp (tcgetattr 0 attr))
       (return-from c-terminal-init +linedit-tcgetattr-error+))
     ;; Enter keyboard input mode
     (sb-alien:with-alien ((tmp termios))
-      (when (minusp (tcgetattr 0 tmp))
+      (when (minusp (tcgetattr 0 (sb-alien:addr tmp)))
         (return-from c-terminal-init +linedit-tcgetattr-error+))
-      (std::cfmakeraw tmp)
-      (std:with-alien-slots ((oflag) tmp termios)
-          (setf oflag (logior oflag std::+opost++)))
-      (if (minusp (tcsetattr 0 std::+tcsaflush+ tmp))
+      (std::cfmakeraw (sb-alien:addr tmp))
+      (std:with-alien-slots (std/os:oflag) tmp
+        (setf (sb-alien:slot tmp 'std/os:oflag) (logior std/os:oflag std::+opost+)))
+      (if (minusp (tcsetattr 0 std::+tcsaflush+ (sb-alien:addr tmp)))
           +linedit-tcsetattr-error+))
     +linedit-ok+)
 
@@ -230,24 +234,22 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (if (minusp (tcsetattr 0 std::+TCSANOW+ attr))
         (return-from c-terminal-close +linedit-tcsetattr-error+))
 
-    (sb-alien:free-alien attr)
+    (foreign-free attr)
     (setf attr nil)
 
     +linedit-ok+))
 
 (defun c-terminal-winsize (def side side-env)
+  (declare (symbol side) (ignore def side-env))
   (sb-alien:with-alien ((size winsize))
-    (when (zerop (ioctl 0 std::+tiocgwinsz+ size))
-      (sb-alien:slot size side))))
-      ;; (if-let ((it (getenv side-env)))
-      ;;   (parse-integer it)
-      ;;   def)))
+    (and (zerop (ioctl 0 std::+tiocgwinsz+ (sb-alien:addr size)))
+         (sb-alien:slot size side))))
 
 (defun c-terminal-lines (def)
-  (c-terminal-winsize def 'std::row "LINES"))
+  (c-terminal-winsize def 'std/os::row "LINES"))
 
 (defun c-terminal-columns (def)
-  (c-terminal-winsize def 'std::col "COLUMNS"))
+  (c-terminal-winsize def 'std/os::col "COLUMNS"))
 
 ;;; Terminal Translations
 (defvar *terminal-translations* (make-hash-table :test #'equalp))
@@ -361,8 +363,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (setf (backend-ready-p backend) t))
 
 (defmethod backend-close ((backend terminal))
-  (assert (backend-ready-p backend))
-  (assert (zerop (c-terminal-close)))
+  (ensure (backend-ready-p backend) (zerop (c-terminal-close)))
   (setf (backend-ready-p backend) nil))
 
 ;;; FIXME: Use read-char-no-hang to detect pastes, and set an
@@ -373,7 +374,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 	   (do ((chars nil)
 		(c #1=(read-char) #1#))
 	       ((member c '(#\- #\~ #\$)) (nconc (nreverse chars) (list c)))
-	     (push c chars))))
+	     (push (print c) chars))))
     (let ((chord
 	   (case #2=(read-char)
 	         (#\Esc

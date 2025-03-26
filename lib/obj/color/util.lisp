@@ -66,14 +66,13 @@ with a quick google search."
                 ;; we don't ingest color names with spaces because they are
                 ;; duplicates - 'dark goldenrod' has the same value as
                 ;; 'darkgoldenrod' so just use that.
-                (if (and match (not (find #\space (aref registers 3))))
-                    (let ((colorname (string-downcase (aref registers 3))))
-                      (format colordefs
-                              "(export (define-rgb-color ~A ~A ~A ~A))~%"
-                              colorname
-                              (parse-channel (aref registers 0))
-                              (parse-channel (aref registers 1))
-                              (parse-channel (aref registers 2)))
-                      (push colorname colornames))
-                    (warn "ignoring line ~A~%" line)))))))
+                (when (and match (not (find #\space (aref registers 3))))
+                  (let ((colorname (string-downcase (aref registers 3))))
+                    (format colordefs
+                            "(export (define-rgb-color ~A ~A ~A ~A))~%"
+                            colorname
+                            (parse-channel (aref registers 0))
+                            (parse-channel (aref registers 1))
+                            (parse-channel (aref registers 2)))
+                    (push colorname colornames))))))))
       (nreverse colornames))))

@@ -154,7 +154,7 @@
    :rdb-log-schema))
 
 (defpackage :rdb/cli
-  (:use :cl :std :cli :rdb)
+  (:use :cl :std :cli :rdb :db :iter)
   (:export :*rdb-cli*))
 
 (in-package :rdb)

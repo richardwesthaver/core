@@ -251,7 +251,7 @@
     (forget-shared-objects)
     (asdf:make :bin/core))
    #$mv bin/core .stash/core$#)
-  (:build-all (%stash)
+  (:build-full (%stash)
    (with-sbcl (:noinform t :quit t)
     (push :virt *features*)
     (push :net *features*)

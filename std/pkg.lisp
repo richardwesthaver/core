@@ -494,6 +494,8 @@
    :num-cpus
    :*cpus*
    :alien-or-lisp-octets
+   :foreign-alloc
+   :foreign-free
    :read-alien
    :write-alien
    :loff-t
@@ -654,6 +656,11 @@
    :with-umask
    :with-fd
    :cfmakeraw
+   :iflag
+   :oflag
+   :lflag
+   :cflag
+   :cc
    :+tiocgwinsz+
    :+tiocswinsz+
    :+tiocnotty+

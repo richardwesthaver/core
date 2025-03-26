@@ -54,6 +54,16 @@
   (name (symbol-name (gensym "#")) :type simple-string)
   (type t :type (or symbol list)))
 
+(defmethod read-ast ((self field) stream &key)
+  (apply 'make-fields (read stream))
+  self)
+
+(defmethod build-ast ((self field) &key)
+  `(,(keywordicate (field-name self)) ,(field-type self)))
+
+(defmethod write-ast ((self field) stream &key)
+  (write (build-ast self) :stream stream))
+
 (defaccessor (name) ((self field)) (field-name self))
 
 (defmethod make-load-form ((self field) &optional env)
@@ -152,6 +162,16 @@ SCHEMA."
 (defclass schema ()
   ((fields :initarg :fields :accessor fields))
   (:documentation "Base class for all schema objects. At minimum a FIELDS slot is required."))
+
+(defmethod read-ast ((self schema) stream &key)
+  (setf (fields self) (apply 'make-fields (read stream)))
+  self)
+
+(defmethod build-ast ((self schema) &key)
+  (map 'list 'build-ast (fields self)))
+
+(defmethod write-ast ((self schema) stream &key)
+  (write (build-ast self) :stream stream))
 
 (defun make-schema (&rest fields)
   (make-instance 'schema :fields (coerce fields 'vector)))

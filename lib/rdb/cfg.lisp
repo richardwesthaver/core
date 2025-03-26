@@ -14,9 +14,9 @@
 (in-package :rdb)
 
 (defconfig rdb-config (ast id db-config)
-  ((path)
-   (logger)
-   (schema)))
+  ((path :initform (std::tmpize-pathname "/tmp/rdb") :initarg :path :type (or pathname string))
+   (logger :initform (default-logger-config) :initarg :logger :type (or null log::logger-config))
+   (schema :initform (make-instance 'rdb-schema) :initarg :schema :type rdb-schema)))
 
 (defmethod print-object ((self rdb-config) stream)
   (print-unreadable-object (self stream :type t)
@@ -43,7 +43,7 @@
         ;; invalid ast, signal error
         (error 'syntax-error))))
   
-(defmethod build-ast ((self rdb-config) &key (nullp nil) (exclude '(ast id)))
+(defmethod build-ast ((self rdb-config) &key (nullp nil) (exclude '(ast id logger)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -59,3 +59,12 @@
 
 (defmethod make-config ((self (eql :rdb)) &rest args)
   (apply 'make-instance 'rdb-config args))
+
+(defun init-rdbrc (&optional (file (merge-homedir-pathnames ".rdbrc")))
+  (let ((cfg (make-instance 'rdb-config)))
+    (build-ast cfg)
+    (with-open-file (out file
+			 :direction :output
+			 :if-does-not-exist :create)
+      (write-ast cfg out :fmt :canonical))))
+(init-rdbrc)

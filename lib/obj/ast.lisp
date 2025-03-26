@@ -215,9 +215,9 @@ example."
   `(defclass! ,name ,(safe-superclasses 'stmt supers) ,slots ,@opts))
 
 ;;; Read/Write
-(defgeneric read-ast (fmt stream &key &allow-other-keys))
+(defgeneric read-ast (self stream &key &allow-other-keys))
 
-(defgeneric write-ast (fmt sxp &key &allow-other-keys))
+(defgeneric write-ast (self stream &key &allow-other-keys))
 
 ;;; Printer
 
