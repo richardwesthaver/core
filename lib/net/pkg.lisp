@@ -421,4 +421,5 @@
    #:net-request
    #:net-service
    #:*access-log-lock*
-   #:*message-log-lock*))
+   #:*message-log-lock*
+   #:make-service))

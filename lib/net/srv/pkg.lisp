@@ -85,6 +85,7 @@
                                       :type nil
                                       :defaults source-directory)))))
 
+(defgeneric make-service (self &rest args &key &allow-other-keys))
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
 (defgeneric find-route (self uri))

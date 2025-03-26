@@ -1,7 +1,8 @@
 ;;; ~/comp/core/lisp/ffi/ffi.asd --- Ffi Sytem Definitions
 (defsystem :ffi
   :depends-on (:sb-grovel
-               :arrow :blake3 :btrfs 
+               :arrow :blake3 :btrfs :alsa
+               :jack
                :cuda :evdev :glib :gstreamer
                :keyutils :readline :rocksdb :rustls
                :sndfile :ssh2 :tree-sitter :ublk
