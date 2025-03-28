@@ -238,25 +238,25 @@
 ;;; using midi-classes:
 
 (defun seqhash-midi-note-on (seq frame noteno velocity &optional (channel 1))
-  (let ((event (om-midi::make-note-on-message frame noteno velocity channel)))
+  (let ((event (make-instance 'midi:note-on-message frame noteno velocity channel)))
     (seqhash-midi-event seq frame event)))
 
 (defun seqhash-midi-note-off (seq frame noteno velocity &optional (channel 1))
-  (let ((event (om-midi::make-note-off-message frame noteno velocity channel)))
+  (let ((event (make-instance 'midi:note-off-message frame noteno velocity channel)))
     (seqhash-midi-event seq frame event)))
 
 (defun seqhash-midi-program-change (seq frame program &optional (channel 1))
-  (let ((event (om-midi::make-program-change-message frame program channel)))
+  (let ((event (make-instance 'midi:program-change-message frame program channel)))
     (seqhash-midi-event seq frame event)))
 
 (defun seqhash-midi-control-change (seq frame control value &optional (channel 1))
-  (let ((event (om-midi::make-control-change-message frame control value channel)))
+  (let ((event (make-instance 'midi::control-change-message frame control value channel)))
     (seqhash-midi-event seq frame event)))
 
 (defun seqhash-midi-pitch-wheel-msg (seq frame bend &optional (channel 1))
-  (let ((mybend (+ bend 8192)))		;expects values between -8192->8191
-    (let ((event (om-midi::make-pitch-bend-message frame bend channel)))   ;;; use bend: in OM 6.9 values are 0-16383
-      (seqhash-midi-event seq frame event))))
+  ;; expects values between -8192->8191
+  (let ((event (make-instance 'midi:pitch-bend-message frame bend channel)))   ;;; use bend: in OM 6.9 values are 0-16383
+    (seqhash-midi-event seq frame event)))
 
 ;; erase pending note-offs for interval - don't shut off later arriving notes
 (defun seqhash-clear-note-offs (seq startframe endframe noteno &optional (channel 1))
@@ -264,8 +264,8 @@
 	       (let ((event (car val)))
 		 (when (and (<= startframe key endframe)
 			    (typep event 'midi::note-off-message)
-			    (eql (om-midi::midi-key event) noteno)
-			    (eql (om-midi::midi-channel event) channel))
+			    (eql (midi::message-key event) noteno)
+			    (eql (midi::message-channel event) channel))
 		   (remhash key seq))))
 	   seq))
 
@@ -293,7 +293,7 @@
   (let ((sounding-notes '()))
     (maphash #'(lambda (key val)
 		 (declare (ignore key))
-		 (mapc #'(lambda (ev) (push (list (om-midi::midi-key ev) (1- (om-midi::midi-channel ev)))
+		 (mapc #'(lambda (ev) (push (list (midi:message-key ev) (1- (midi:message-channel ev)))
 					    sounding-notes))
 		       val))
 	     seq)
@@ -345,10 +345,7 @@
 	   (dolist (midimsg events)
 	     (let ((buffer (jack-midi-event-reserve port-buf offset 3))) ;offset inside period
 	       (unless (null-alien buffer)
-		 (setf (mem-aref buffer :int8 0) (om-midi::midi-status-byte midimsg) ;command
-		       (mem-aref buffer :int8 1) (om-midi::midi-data-byte-1 midimsg) ;data-byte 1
-		       (mem-aref buffer :int8 2) (om-midi::midi-data-byte-2 midimsg) ;data-byte 2
-		       ))))
+		 (setf (deref buffer) (midi::write-message midimsg)))))
 	   (remhash key seq)))))
 
 ;; callback function handles seq-events, plugged into jacks
@@ -363,15 +360,10 @@
 		 (play-from-seq port-buf seq))
 	     *jack-seqs*)))
 
-
-
 (defun jack-init-midi ()
-
   ;; get up and running
-
   (unless *jack-client*
     (setf *jack-client* (jack-client-open "lisp-jack" 0 0)))
-
   (setf *jack-midi-output-port*
 	(let ((port (jack-port-register *jack-client*
 					"midiout"
@@ -419,7 +411,7 @@
 (defparameter *jack-audio-input-ports* nil)
 (defparameter *jack-audio-output-ports* nil)
 
-(defun cl-jack-init-audio ()
+(defun jack-init-audio ()
   (unless *jack-client*
     (setf *jack-client* (jack-client-open "lisp-jack" 0 0)))
   (setf *jack-audio-input-ports*
@@ -435,39 +427,35 @@
 		 (setf port -1)
 		 (cerror (format nil "Set jack-input-port ~A to -1" chan)
 			 "*jack-audio-input-ports* not allocated"))
-	       port)))
-
-  (setf *jack-audio-output-ports*
+	       port))
+        *jack-audio-output-ports*
 	(loop for chan from 0 below *jack-audio-output-channels*
-	   collect
-	     (let ((port (jack-port-register
-			  *jack-client*
-			  (format nil "out_~A" chan)
-			  *jack-default-audio-type*
-			  (jackportflags :is-output)
-			  0)))
-	       (when (zerop (sb-sys:sap-int (alien-sap port))) ;0 if not allocated
-		 (setf port -1)
-		 (cerror (format nil "Set jack-output-port ~A to -1" chan)
-			 "*jack-audio-output-ports* not allocated"))
-	       port)))
+	      collect
+	         (let ((port (jack-port-register
+			      *jack-client*
+			      (format nil "out_~A" chan)
+			      *jack-default-audio-type*
+			      (jackportflags :is-output)
+			      0)))
+	           (when (zerop (sb-sys:sap-int (alien-sap port))) ;0 if not allocated
+		     (setf port -1)
+		     (cerror (format nil "Set jack-output-port ~A to -1" chan)
+			     "*jack-audio-output-ports* not allocated"))
+	           port))))
 
-  ;; provide default-callback which just copies in to out:
-
-  (define-alien-callable jack-process-callback-silence int ((nframes jack-nframes-t) (arg (* t)))
-    (declare (ignorable arg))
-    (when (fboundp 'jack-handle-event-seqs) (jack-handle-event-seqs nframes))
-    (loop for inport in *jack-audio-input-ports*
-       for outport in *jack-audio-output-ports*
-       do
-	 (let ((in (jack-port-get-buffer inport nframes))
-	       (out (jack-port-get-buffer outport nframes)))
-	   (memcpy out in
-		   (* nframes (std/alien::foreign-type-size 'size-t)))))
+;; provide default-callback which just copies in to out:
+(define-alien-callable jack-process-callback-silence int ((nframes jack-nframes-t) (arg (* t)))
+  (when (fboundp 'jack-handle-event-seqs) (jack-handle-event-seqs nframes))
+  (loop for inport in *jack-audio-input-ports*
+        for outport in *jack-audio-output-ports*
+        do
+	   (let ((in (jack-port-get-buffer inport nframes))
+	         (out (jack-port-get-buffer outport nframes)))
+	     (memcpy out in
+		     (* nframes (std/alien::foreign-type-size 'size-t)))))
   
-    0)
-  ;;(jack-deactivate *CLJackClient*)
-  )
+  0)
+;;(jack-deactivate *CLJackClient*)
 
 (defun jack-connect-audio-client-to-system-output ()
   (loop for port in *jack-audio-output-ports*

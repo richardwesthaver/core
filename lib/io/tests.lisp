@@ -44,12 +44,12 @@
         (round-trip-data (make-octets *data-size*))
         compressed-data)
     (setf compressed-data
-          (with-zstd-buffer :output (out data) out))
+          (with-zstd-buffer (b data :direction :output) b))
     (setf round-trip-data
-          (with-zstd-buffer :input (in compressed-data)
-            in))
+          (with-zstd-buffer (b compressed-data :direction :input) b))
     (is (equalp round-trip-data data))))
 
+;; FIX 2025-03-27: 
 (deftest zstd-stream ()
   (let* ((bsize 4096)
          (ssize (* 20 bsize))
@@ -62,14 +62,16 @@
                  with i = (* x bsize)
                  with v = (subseq data i (+ i bsize))
                  do (compress-with compressor v))
-           ;; (stream-force-output compressor)
-           ;; (finish-output compressor)
+	   (finish-output compressor) ;; endstream
+	   ;; (stream-force-output compressor) ;; flush
+	   ;; (setf (output-size compressor) (output-position compressor))
+                 ;; (output-position compressor) 0)
            (log:info! :in.pos (input-position compressor)
                       :in.size (input-size compressor)
                       :out.pos (output-position compressor)
                       :out.size (output-size compressor))
-           (let ((compressed (make-octets (output-size compressor)))
-                 (decompressed (make-octets (output-size compressor))))
+           (let ((compressed (make-array (output-position compressor) :element-type 'octet))
+                 (decompressed (make-array (output-size compressor) :element-type 'octet)))
              (clone-octets-from-alien (output-buffer compressor) compressed)
              (println compressed)
              (decompress-with decompressor compressed)
@@ -79,8 +81,9 @@
              (log:info! data)
              (log:info! decompressed)
              (is (equalp data decompressed))))
-      (close (stream-of decompressor))
-      (close (stream-of compressor)))))
+      ;; (close (stream-of decompressor))
+      ;; (close (stream-of compressor))
+      )))
 
 #| test from salza2
 (defparameter *data-size* (* 10 1024))

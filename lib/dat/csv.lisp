@@ -289,10 +289,10 @@ If start or end is negative, it counts from the end. -1 is the last element.
                                 :key (lambda (rec) (aref rec i))))
           finally (return table))))
 
-(defclass csv-file-data (file-data-source) ())
+(defclass csv-file-data (schema:file-data-source) ())
 
 ;; TODO 2024-08-05: 
 (defmethod scan-data ((self csv-file-data) (projection sequence))
   (if (null projection)
-      (read-csv-file (file-data-path self))
+      (read-csv-file (path self))
       (nyi!)))

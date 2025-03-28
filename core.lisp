@@ -29,8 +29,17 @@
 
 (define-lisp-package :core)
 
-(define-logical-pathname "CORE" #P"/opt/core/"
-  ("CORE:STASH;*" "stash/")
-  ("CORE:STORE;*.*.*" "store/")
-  ("CORE:TMP;*.*.*" "/tmp/"))
-
+(define-logical-pathname "STASH" "/opt/stash/"
+  ("**;*.*" "/opt/stash/**/*.*"))
+(define-logical-pathname "STORE" "/opt/store/"
+  ("**;*.*.*" "/opt/store/**/*.*"))
+(define-logical-pathname "SCRATCH" "/opt/scratch/"
+  ("**;*.*.*" "/opt/scratch/**/*.*"))
+(define-logical-pathname "TMP" "/tmp/"
+  ("**;*.*.*" "/tmp/**/*.*"))
+(define-logical-pathname "SYS" "/usr/local/lib/sbcl/"
+  ("SYS:SRC;**;*.*.*" #P"/usr/local/src/sbcl/**/*.*")
+  ("SYS:CONTRIB;**;*.*.*"
+   #P"/usr/local/lib/sbcl/contrib/**/*.*")
+  ("SYS:OUTPUT;**;*.*.*"
+   #P"/home/ellis/comp/infra/.stash/src/sbcl/output/**/*.*"))

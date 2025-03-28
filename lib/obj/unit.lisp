@@ -82,7 +82,8 @@
 
 ;;; Temperature
 (deftype temperature-unit-designator () '(member :fahrenheit :celsius :kelvin :rankine))
-
+(declaim (temperature-unit-designator *default-temperature-unit*))
+(defvar *default-temperature-unit* :fahrenheit)
 (defstruct temperature
   (degrees 0 :type single-float)
   (scale *default-temperature-unit* :type temperature-unit-designator))

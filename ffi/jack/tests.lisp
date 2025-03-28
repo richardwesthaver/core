@@ -8,5 +8,5 @@
 (in-package :jack/tests)
 (defsuite :jack)
 (in-suite :jack)
+;; v2 /approaches/ 2.0
 (deftest sanity () (iseql (schar (jack::jack-get-version-string) 0) #\1))
-  

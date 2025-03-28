@@ -88,9 +88,10 @@
 (defmethod stream-write-sequence ((stream zstd-compressing-stream) (seq vector) &optional start end))
     
 (defmethod close ((stream zstd-compressing-stream) &key &allow-other-keys)
-  (sb-alien:free-alien (input stream))
-  (sb-alien:free-alien (output stream))
-  (zstd-freecstream (cstream stream)))
+  ;; (sb-alien:free-alien (input stream))
+  ;; (sb-alien:free-alien (output stream))
+  ;; (zstd-freecstream (cstream stream))
+  )
 
 (defclass zstd-decompressing-stream (decompressing-stream)
   ((%input :initform (allocate-zstd-inbuffer) :reader input :type (alien zstd-inbuffer))
@@ -155,8 +156,8 @@
   (zstd-initdstream (dstream self)))
 
 (defmethod close ((stream zstd-decompressing-stream) &key &allow-other-keys)
-  (sb-alien:free-alien (input stream))
-  (sb-alien:free-alien (output stream))
+  ;; (sb-alien:free-alien (input stream))
+  ;; (sb-alien:free-alien (output stream))
   (zstd-freedstream (dstream stream)))
 
 (defmethod stream-read-sequence ((self zstd-decompressing-stream) (seq vector) &key start end)
@@ -188,6 +189,9 @@
 (defmethod output-size ((self zstd-compressor))
   (output-size (stream-of self)))
 
+(defmethod (setf output-size) (new (self zstd-compressor))
+  (setf (output-size (stream-of self)) new))
+
 (defmethod output-buffer ((self zstd-compressor))
   (output-buffer (stream-of self)))
 
@@ -195,7 +199,7 @@
   (setf (output-buffer (stream-of self)) new))
 
 (defmethod (setf output-buffer) ((new vector) (self zstd-compressor))
-  (setf (zstd-outbuffer-dst (output self)) (octets-to-alien new)))
+  (memcpy (zstd-outbuffer-dst (output self)) (octets-to-alien new) (length new)))
 
 (defmethod input-buffer ((self zstd-compressor))
   (input-buffer (stream-of self)))
@@ -204,7 +208,7 @@
   (setf (input-buffer (stream-of self)) new))
 
 (defmethod (setf input-buffer) ((new vector) (self zstd-compressor))
-  (setf (zstd-inbuffer-src (input self)) (octets-to-alien new)))
+  (memcpy (zstd-inbuffer-src (input self)) (octets-to-alien new) (length new)))
 
 (defmethod input-position ((self zstd-compressor))
   (input-position (stream-of self)))
@@ -234,7 +238,7 @@
           (zstd-error (zstd::zstd-geterrorstring (zstd::zstd-geterrorcode code)))))))
 
 (defmethod stream-force-output ((stream zstd-compressor))
-  (stream-force-output (stream-of stream)))
+  (force-output (stream-of stream)))
 
 (defmethod stream-finish-output ((stream zstd-compressor))
   (stream-finish-output (stream-of stream)))
@@ -260,7 +264,7 @@
   (setf (input-buffer (stream-of self)) new))
 
 (defmethod (setf input-buffer) ((new vector) (self zstd-decompressor))
-  (setf (zstd-inbuffer-src (input self)) (octets-to-alien new)))
+  (memcpy (zstd-inbuffer-src (input self)) (octets-to-alien new) (length new)))
 
 (defmethod output-buffer ((self zstd-decompressor))
   (output-buffer (stream-of self)))
@@ -269,7 +273,7 @@
   (setf (output-buffer (stream-of self)) new))
 
 (defmethod (setf output-buffer) ((new vector) (self zstd-decompressor))
-  (setf (zstd-outbuffer-dst (output self)) (octets-to-alien new)))
+  (memcpy (zstd-outbuffer-dst (output self)) (octets-to-alien new) (length new)))
 
 (defmethod input-size ((self zstd-decompressor))
   (input-size (stream-of self)))
@@ -314,14 +318,14 @@
          (zstd:zstdc ,sym ,level))
      (error (c) (zstd-output-error c))))
 
-(defmacro with-zstd-input ((sym buffer &optional capacity) &body body)
+(defmacro with-zstd-input ((sym buffer &optional size) &body body)
   `(handler-case 
-       (let ((,sym (zstd:zstdd ,buffer ,(or capacity `(length ,buffer)))))
+       (let ((,sym (zstd:zstdd ,buffer ,(or size `(length ,buffer)))))
          ,@(when (null body) `(,sym))
          ,@body)
      (error (c) (zstd-input-error c))))
 
-(defmacro with-zstd-buffer (direction &body body)
+(defmacro with-zstd-buffer ((sym buffer &key size (level #.zstd:+zstd-clevel-default+) (direction :input)) &body body)
   (ecase direction
-    (:input `(with-zstd-input ,@body))
-    (:output `(with-zstd-output ,@body))))
+    (:input `(with-zstd-input (,sym ,buffer ,size) ,@body))
+    (:output `(with-zstd-output (,sym ,buffer ,level) ,@body))))

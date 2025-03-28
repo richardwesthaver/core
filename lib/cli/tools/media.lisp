@@ -65,3 +65,8 @@
   (let ((proc (sb-ext:run-program *ffmpeg* args :wait t :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (mpv-error "MPV command failed: ~A ~A" *mpv* (or args "")))))
+
+(define-cli-tool :wireplumber (&rest args)
+  (let ((proc (sb-ext:run-program *wireplumber* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (wireplumber-error "WIREPLUMBER command failed: ~A ~A" *wireplumber* (or args "")))))

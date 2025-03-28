@@ -465,7 +465,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
    (address :reader address :initarg :address)
    (request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
-   (engine :type service-engine :accessor engine :initarg :engine)
+   (engine :type engine :accessor engine :initarg :engine)
    ;; TODO 2024-12-08: hunchentoot uses read-timeout/write-timeout - figure out if needed
    (timeout :type fixnum :initarg :timeout :accessor service-timeout)
    (logger :type service-logger :initarg :logger :reader logger)

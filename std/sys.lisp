@@ -87,7 +87,7 @@ and we may query the user for input.")
 (defmacro define-logical-pathname (host path &body translations)
   (mapcar (lambda (x) (setf #1=(cadr x) (merge-pathnames #1# path))) translations)
   (setf translations 
-        (append `((,(format nil "~A;*.*.*" host) ,path)) translations))
+        (append `((,(format nil "~A;**;*.*" host) ,path)) translations))
   `(setf (logical-pathname-translations ,host)
          ',translations))
 
