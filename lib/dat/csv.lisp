@@ -296,3 +296,25 @@ If start or end is negative, it counts from the end. -1 is the last element.
   (if (null projection)
       (read-csv-file (path self))
       (nyi!)))
+
+;;; Serde
+(defmethod serialize ((obj vector) (format (eql :csv)) &key stream (delimiter *csv-separator*))
+  (write-csv-stream stream obj :delimiter delimiter))
+
+(defmethod serialize ((obj vector) (format (eql :csv)) 
+                      &key path 
+                           (external-format *csv-default-external-format*) 
+                           (delimiter *csv-separator*))
+  (write-csv-file path obj :delimiter delimiter :external-format external-format))
+
+(defmethod deserialize ((from pathname) (format (eql :csv)) &rest args)
+  (declare (ignore format))
+  (apply 'read-csv-file from args))
+
+(defmethod deserialize (from (format (eql :csv)) &rest args)
+  (declare (ignore format))
+  (apply 'read-csv-stream from args))
+
+(defmethod deserialize ((from string) (format (eql :csv)) &rest args)
+  (declare (ignore format))
+  (apply 'parse-csv-string from args))

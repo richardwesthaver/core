@@ -192,3 +192,5 @@ dot executable."
 ;; (defun read-dot-file (path)
 ;;   "Read from file PATH in Graphviz DOT format.")
 
+;;; Serde
+;; TODO 2025-03-27: 
