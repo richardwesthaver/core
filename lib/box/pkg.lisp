@@ -14,7 +14,6 @@
 (defpackage :box
   (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :config)
   (:export
-   :*lxc-version*
    :box-config))
 
 (defpackage :box/archiso

@@ -21,7 +21,7 @@
 (defcmd organ-show ()
   (if *args*
       (print (org-parse-lines t (uiop:read-file-string (car *args*))))
-      (error! "missing file arg")))
+      (log:error! "missing file arg")))
 
 (defcmd organ-parse ()
   (let ((input (if *args* (car *args*) #P"readme.org")))

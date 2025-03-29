@@ -35,18 +35,48 @@
 (defvar *ignition-config*)
 
 (defconfig ignition-config (box-config) 
-  ((version :initform +ignition-version+)
-   config
-   timeouts
-   security
-   proxy
-   storage
-   systemd
-   passwd
-   kernel-arguments))
+  ((version :initform +ignition-version+ :initarg :version)
+   (config :initarg :config)
+   (timeouts :initarg :timeouts)
+   (security :initarg :security)
+   (proxy :initarg :proxy)
+   (storage :initarg :storage)
+   (systemd :initarg :systemd)
+   (passwd :initarg :passwd)
+   (kernel-arguments :initarg :kernel-arguments)))
 
 (defmethod make-config ((self (eql :ignition)) &rest args)
   (apply 'make-instance 'ignition-config args))
+
+(defmethod deserialize (self (fmt (eql :ignition)) &key)
+  (let* ((json (deserialize self :json))
+         (ignition (json-getf json "ignition"))
+	 (passwd (json-getf json "passwd"))
+	 (storage (json-getf json "storage"))
+	 (systemd (json-getf json "systemd")))
+    (make-config :ignition 
+                 :version (json-getf ignition "version")
+		 :config (json-getf ignition "config")
+		 :security (json-getf ignition "security")
+		 :proxy (json-getf ignition "proxy")
+		 :timeouts (json-getf ignition "timeouts")
+                 :passwd passwd
+                 :storage storage
+                 :systemd systemd)))
+
+(defmethod serialize ((self ignition-config) (fmt (eql :ignition)) &key stream)
+  (serialize 
+   (make-instance 'json-object
+     :ast
+     `(("version" ,(slot-value self 'version))
+       ,@(when (slot-boundp* self 'passwd)
+           `(("passwd" ,(slot-value self 'passwd))))
+       ,@(when (slot-boundp* self 'storage)
+	   `(("storage" ,(slot-value self 'storage))))
+       ,@(when (slot-boundp* self 'systemd)
+	   `(("systemd" ,(slot-value self 'systemd))))))
+   :json
+   :stream stream))
 
 (defconfig ignition-config-options () 
   ((merge)

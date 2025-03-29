@@ -6,16 +6,16 @@
 (defpackage :organ/gui
   (:use :cl :std :organ :organ/graph :gui/clim :gui/clim/frame)
   (:import-from :gui/clim/frame :graph-frame)
-  (:import-from :gui/clim :vertically :define-application-frame)
+  (:import-from :gui/clim :vertically :define-application-frame :scrolling :find-application-frame)
   (:export :org-graph-view :org-node-view :org-edge-view :display-org-graph :org-graph-frame))
 (in-package :organ/gui)
 
-(defun org-graph-view () (clim:find-application-frame 'org-graph-frame))
+(defun org-graph-view () (find-application-frame 'org-graph-frame))
 
 (define-application-frame org-graph-frame (graph-frame) ()
   (:panes 
    (graph
-    (clim:scrolling ()
+    (scrolling ()
       (make-pane 'clim:application-pane
 		 :background clim:+gray21+
 		 :foreground clim:+oldlace+
@@ -23,7 +23,7 @@
 		 :display-time t)))
     (repl
      (make-pane 'clim:interactor-pane
-                :height 100
+                :height 80
 		:background clim:+black+
 		:foreground clim:+blanchedalmond+)))
   (:layouts
@@ -43,5 +43,4 @@
 						  (uuid:uuid= (id:id x) (organ/graph::edge-in edge))
 						  (uuid:uuid= (id:id x) (organ/graph::edge-out edge))))
 	     collect edge))
-     :stream pane
-     :center-nodes t)))
+     :stream pane)))

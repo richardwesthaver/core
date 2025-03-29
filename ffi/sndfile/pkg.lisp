@@ -7,7 +7,41 @@
 ;;; Code:
 (defpackage :sndfile
   (:use :cl :std :sb-alien)
-  (:export :sf-version-string :load-sndfile :sndfile :sf-chunk-iterator))
+  (:export :sf-version-string :load-sndfile :sndfile 
+   :sf-chunk-iterator :sf-info :samplerate :channels 
+   :frames :format :sections :seekable
+   :sf-format-info :extension :sf-seek-mode :sf-dither
+   :sf-cue-point :sf-loop :sf-instrument :sf-loop-info
+   :sf-format :sf-format-subtype :sf-flag :sf-flag*
+   :sf-err :sf-err* :sf-command-op :sf-command
+   :sf-open
+   :sf-open-fd
+   :sf-error
+   :sf-strerror
+   :sf-error-number
+   :sf-perror
+   :sf-error-str
+   :sf-format-check
+   :sf-seek
+   :sf-set-string
+   :sf-get-string
+   :sf-current-byterate
+   :sf-read-raw
+   :sf-write-raw
+   :sf-close
+   :sf-write-sync
+   :sf-chunk-info
+   :sf-set-chunk
+   :sf-get-chunk-iterator
+   :sf-next-chunk-iterator
+   :sf-get-chunk-size
+   :sf-get-chunk-data
+   :decode-sf-format
+   :encode-sf-format
+   :sf-str
+   :sf-format-mask
+   :with-sndfile
+   :with-sf-info))
 
 (in-package :sndfile)
 
@@ -155,24 +189,12 @@
   :dpcm-8 #x0050                 ; 8 bit differential PCM (XI only)
   :dpcm-16 #x0051)                 ; 16 bit differential PCM (XI only)
 
-(defun decode-bitflags (value flag-names)
-  (loop for symbol in flag-names
-        as flag-value = (symbol-value symbol)
-        when (= flag-value (logand value flag-value))
-        collect symbol))
-
-(defun match-field (value flag-names)
-  (loop for symbol in flag-names
-        when (= value (symbol-value symbol))
-        return symbol))
-
 ;;;; Endian-ness options. 
 (define-alien-enum (sf-endian int)
   :file #x00000000     ; Default file endian-ness. 
   :little #x10000000     ; Force little endian-ness. 
   :big #x20000000     ; Force big endian-ness. 
   :cpu #x30000000)     ; Force CPU endian-ness. 
-
 
 (define-alien-enum (sf-format-mask int)
   :sub #x0000FFFF
@@ -186,6 +208,15 @@
   :artist 4
   :comment 5
   :date 6)
+
+(define-alien-enum (sf-flag int)
+  :false 0
+  :true 1
+  :read #x10
+  :write #x20
+  :rdwr #x30
+  :ambisonic-none #x40
+  :ambisonic-b-format #x41)
 
 ;;;; Public error numbers
 (define-alien-enum (sf-err int)
@@ -324,3 +355,32 @@
 (define-alien-routine sf-get-chunk-data int
   (it (* sf-chunk-iterator))
   (chunk-info (* sf-chunk-info)))
+
+;;; Utils
+(defun decode-sf-format (i)
+  "Decode an SF-FORMAT integer into a list of (TYPE SUB ENDIAN)."
+  (list
+   (sf-format* (logand i #.(sf-format-mask :type)))
+   (sf-format-subtype* (logand i #.(sf-format-mask :sub)))
+   (sf-endian* (logand i #.(sf-format-mask :end)))))
+
+(defun encode-sf-format (type sub &optional (end :file))
+  "Encode an SF-FORMAT integer from TYPE SUB and optional ENDian."
+  (logior (sf-format type) (sf-format-subtype sub) (sf-endian end)))
+
+(defmacro with-sf-info ((sym &key samplerate channels format sections seekable) &body body)
+  `(with-alien ((,sym sf-info))
+     ,@(when samplerate `((setf (slot ,sym 'samplerate) ,samplerate)))
+     ,@(when channels `((setf (slot ,sym 'channels) ,channels)))
+     ,@(when format 
+	 (etypecase format
+	   (list `((setf (slot ,sym 'format) (apply 'encode-sf-format ,format))))
+	   (integer `((setf (slot ,sym 'format) ,format)))))
+     ,@(when sections `((setf (slot ,sym 'sections) ,sections)))
+     ,@(when seekable `((setf (slot ,sym 'seekable) ,seekable)))
+     ,@body))
+
+(defmacro with-sndfile ((sym info path &key close (mode (sf-flag :read))) &body body)
+  `(let ((,sym (sf-open (namestring ,path) ,mode ,info)))
+     (unwind-protect (progn ,@body)
+       ,@(when close `((sf-close ,sym))))))

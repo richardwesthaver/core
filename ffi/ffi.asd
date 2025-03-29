@@ -6,7 +6,8 @@
                :cuda :evdev :glib :gstreamer
                :keyutils :readline :rocksdb :rustls
                :sndfile :ssh2 :tree-sitter :ublk
-               :uring :xkb :zstd :jpeg)
+               :uring :xkb :zstd :jpeg
+               :chromaprint)
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :ffi/tests
@@ -14,7 +15,8 @@
                :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
                :keyutils/tests :readline/tests :rocksdb/tests :rustls/tests
                :sndfile/tests :ssh2/tests :tree-sitter/tests :ublk
-               :uring/tests :xkb/tests :zstd/tests)
+               :uring/tests :xkb/tests :zstd/tests :chromaprint/tests
+               :chromaprint/tests :jack/tests)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :ffi)))
 
