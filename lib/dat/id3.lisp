@@ -74,4 +74,3 @@ approval status.
 (defun find-id3-frame-class (id)
   (declare (ignore id))
   'id3-frame)
-  

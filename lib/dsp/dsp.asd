@@ -1,12 +1,16 @@
+;;; dsp.asd --- Dsp Sytem Definitions
 (defsystem :dsp
   :description "High-level DSP"
-  :depends-on (:cl-ppcre :std :obj :dat :sndfile :net :gstreamer :log :io)
+  :depends-on (:cl-ppcre :std :obj :dat :sndfile :net :gstreamer :log :io :jack :chromaprint :alsa)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
                (:module "aud"
                 :components 
-                ((:file "pkg"))))
+                ((:file "pkg")
+                 (:file "snd")
+                 (:file "chroma")))
+               (:file "gst"))
   :in-order-to ((test-op (test-op "dsp/tests"))))
 
 (defsystem :dsp/tests

@@ -6,7 +6,7 @@
 (in-package :dsp/gst)
 (glib:load-glib)
 (load-gstreamer)
-(load-gst-play)
+;; (load-gst-play)
 
 ;; (gst-version-string)
 

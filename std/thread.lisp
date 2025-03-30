@@ -155,6 +155,7 @@
 (defun wait-for-threads (threads)
   (map 'list (lambda (thread) (sb-thread:join-thread thread :default nil)) threads)
   (not (some #'sb-thread:thread-alive-p threads)))
+
 (defun process-all-interrupts (&optional (thread sb-thread:*current-thread*))
   (sb-ext:wait-for (null (sb-thread::thread-interruptions thread))))
 

@@ -4,9 +4,16 @@
 
 ;;; Code:
 (defpackage :jack/tests
-  (:use :cl :std :log :rt))
+  (:use :cl :std :log :rt :jack))
 (in-package :jack/tests)
 (defsuite :jack)
 (in-suite :jack)
+(load-jack)
+
 ;; v2 /approaches/ 2.0
-(deftest sanity () (iseql (schar (jack::jack-get-version-string) 0) #\1))
+;; version string also indicates pipewire version
+(deftest sanity ()  (istype 'string (jack-get-version-string)))
+  
+(deftest basic ()
+  (jack-init-audio)
+  (jack-init-midi))

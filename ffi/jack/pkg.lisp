@@ -5,7 +5,92 @@
 ;;; Code:
 (defpackage :jack
   (:use :cl :std :log :sb-alien)
-  (:export :load-jack))
+  (:export :load-jack
+           :jack-get-version-string
+           :*jack-default-audio-type*
+           :*jack-default-midi-type*
+           :jackoptions
+           :jackportflags
+           :jack-client-name-size
+           :input-port
+           :jack-client-open
+           :jack-get-sample-rate
+           :jack-port-type-get-buffer-size
+           :jack-get-buffer-size
+           :jack-get-client-name
+           :jack-port-get-buffer
+           :jack-port-name
+           :jack-connect
+           :jack-disconnect
+           :jack-get-ports
+           :jack-port-register
+           :jack-client-close
+           :jack-activate
+           :jack-deactivate
+           :jack-set-process-callback
+           :jack-midi-clear-buffer
+           :jack-midi-event-reserve
+           :jack-get-time
+           :jack-frames-to-time
+           :jack-time-to-frames
+           :jack-last-frame-time
+           :jack-frame-time
+           :jack-ringbuffer
+           :jack-ringbuffer-data
+           :rb-data-buf
+           :rb-data-len
+           :rb-data-len-p
+           :jack-ringbuffer-create
+           :jack-ringbuffer-reset
+           :jack-ringbuffer-get-write-vector
+           :jack-ringbuffer-free
+           :jack-ringbuffer-write-advance
+           :jack-ringbuffer-write-space
+           :jack-ringbuffer-write
+           :jack-ringbuffer-get-read-vector
+           :jack-ringbuffer-read
+           :jack-ringbuffer-read-space
+           :*jack-midi-output-port*
+           :*jack-midi-input-port*
+           :make-jack-seqs
+           :*jack-seqs*
+           :make-jack-seq
+           :*jack-seq*
+           :jack-add-event-this-period
+           :jack-add-event-this-frame
+           :seqhash-midi-event
+           :seqhash-midi-note-on
+           :seqhash-midi-note-off
+           :seqhash-midi-program-change
+           :seqhash-midi-control-change
+           :seqhash-midi-pitch-wheel-msg
+           :seqhash-clear-note-offs
+           :jack-start-dur-to-frames
+           :jack-play-event
+           :jack-play-note
+           :jack-all-notes-off
+           :jack-all-notes-off-and-kill-seq
+           :jack-reset
+           :jack-reset-channels
+           :jack-seq-hush-this-seq
+           :jack-seq-hush-all-seqs
+           :*jack-playing*
+           :play-from-seq
+           :jack-handle-event-seqs
+           :jack-init-midi
+           :*jack-client*
+           :jack-period-now
+           :jack-frame-now
+           :*jack-audio-input-channels*
+           :*jack-audio-output-channels*
+           :*jack-audio-input-ports*
+           :*jack-audio-output-ports*
+           :jack-init-audio
+           :jack-process-callback-silence
+           :jack-connect-audio-client-to-system-output
+           :ms->frame
+           :sec->frame
+           :frame->period-offset))
 
 (in-package :jack)
 
@@ -285,8 +370,8 @@
 	 (endframe (+ startframe (sec->frame dur) -1)))
     (seqhash-clear-note-offs seq startframe endframe noteno chan)
     (seqhash-midi-note-on seq startframe noteno vel chan)
-    ;; (sleep (/ (jack-get-buffer-size *CLJackClient*)
-    ;; 	   (jack-get-sample-rate *CLJackClient*)))
+    ;; (sleep (/ (jack-get-buffer-size *jack-client*)
+    ;; 	   (jack-get-sample-rate *jack-client*)))
     (seqhash-midi-note-off seq endframe noteno 0 chan)))
 
 (defun jack-all-notes-off (seq)
@@ -305,8 +390,8 @@
 (defun jack-all-notes-off-and-kill-seq (seq)
   (jack-all-notes-off seq)
   (sleep (float (/ 2
-  		   (jack-get-buffer-size *CLJACKCLIENT*)
-  		   (jack-get-sample-rate *CLJACKCLIENT*))))
+  		   (jack-get-buffer-size *jack-client*)
+  		   (jack-get-sample-rate *jack-client*))))
   (remhash seq *jack-seqs*))
 
 (defun jack-reset (&optional (seq *jack-seq*))
@@ -455,7 +540,7 @@
 		     (* nframes (std/alien::foreign-type-size 'size-t)))))
   
   0)
-;;(jack-deactivate *CLJackClient*)
+;;(jack-deactivate *jack-client*)
 
 (defun jack-connect-audio-client-to-system-output ()
   (loop for port in *jack-audio-output-ports*
@@ -463,4 +548,4 @@
         do (or (not  (minusp (jack-connect *jack-client*
 					   (jack-port-name port)
 					   (format nil "system:playback_~A" system-out))))
-	       (warn "could not connect CLJack port ~A to output-port ~A" (jack-port-name port) system-out))))
+	       (warn "could not connect JACK port ~A to output-port ~A" (jack-port-name port) system-out))))

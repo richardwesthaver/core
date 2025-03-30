@@ -587,10 +587,8 @@
    :*jobs*
    :*stages*
    :*task*
-   :*task-result*
+   :*result*
    :define-task-kernel
-   :*task-kernel*
-   :default-task-kernel
    :make-worker
    :make-workers
    :run-tasks

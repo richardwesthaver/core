@@ -41,7 +41,13 @@
    :sf-str
    :sf-format-mask
    :with-sndfile
-   :with-sf-info))
+   :with-sf-info
+   :sf-readf-float
+   :sf-writef-float
+   :sf-writef-double
+   :sf-readf-double
+   :sf-writef-short
+   :sf-readf-short))
 
 (in-package :sndfile)
 
@@ -324,6 +330,14 @@
 (define-alien-routine sf-current-byterate int (sndfile (* sndfile)))
 (define-alien-routine sf-read-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
 (define-alien-routine sf-write-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
+
+(define-alien-routine sf-readf-float sf-count (sndfile (* sndfile)) (ptr (* float)) (frames sf-count))
+(define-alien-routine sf-writef-float sf-count (sndfile (* sndfile)) (ptr (* float)) (frames sf-count))
+(define-alien-routine sf-readf-short sf-count (sndfile (* sndfile)) (ptr (* short)) (frames sf-count))
+(define-alien-routine sf-writef-short sf-count (sndfile (* sndfile)) (ptr (* short)) (frames sf-count))
+(define-alien-routine sf-readf-double sf-count (sndfile (* sndfile)) (ptr (* double)) (frames sf-count))
+(define-alien-routine sf-writef-double sf-count (sndfile (* sndfile)) (ptr (* double)) (frames sf-count))
+
 ;; ...
 (define-alien-routine sf-close int (sndfile (* sndfile)))
 

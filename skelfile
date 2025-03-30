@@ -41,7 +41,7 @@
        build-tree-sitter-alien
        build-core 
        ;; save-std save-prelude save-user fasls
-       ;; save-infra save-tests
+       ;; save-tests
        ;; rust-bin
        ))
  (c ()
@@ -54,7 +54,7 @@
    build-tree-sitter-alien
    build-full-core 
    ;; save-std save-prelude save-user fasls
-   ;; save-infra save-tests
+   ;; save-tests
    ))
  (upstream () ;; pretty gross hack to fix broken tree
   (probe-delete-directory "/tmp/core/")
@@ -126,7 +126,10 @@
  (sndfile-test-data (%stash)
   (req:fetch "https://packy.compiler.company/data/test/Weltschmerz.wav"
    :if-exists :supersede))
- (%stash () #$mkdir -pv .stash$#)
+ (%stash () 
+  #$mkdir -pv .stash$#
+  ;; move this to a hook?
+  (cl+ssl:reload))
  (ssl-certs () 
   #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
   -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)
@@ -238,20 +241,15 @@
     (in-package :user)
     (compile-lisp :user :save ".stash/user.core")))
   (:compile () (compile-lisp :user :force t :verbose t)))
- (infra () 
-  (:save () 
-   (with-sbcl (:noinform t :quit t)
-    (ql:quickload :user)
-    (in-package :user)
-    (compile-lisp :user :save ".stash/infra.core" :compression 22))))
  (core ()
   (:build (%stash) 
    (with-sbcl (:noinform t :quit t)
     ;; (push :virt *features*)
     ;; (push :tools *features*)
-    (asdf:load-system :bin/core)
+    (asdf:load-system :core)
     (in-package :std-user)
     (forget-shared-objects)
+    (cl+ssl:reload)
     (asdf:make :bin/core))
    #$mv bin/core .stash/core$#)
   (:build-full (%stash)

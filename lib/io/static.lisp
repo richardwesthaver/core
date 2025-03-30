@@ -298,7 +298,7 @@ within its dynamic extent. The vector is freed upon exit."
 
 (defvar *default-static-stream-size* 10)
 (defclass static-stream (io-stream sb-gray:fundamental-stream)
-  ((buffer :initform (make-static-vector *default-static-stream-size*) 
+  ((buffer :initform (make-static-vector *default-static-stream-size*)
            :initarg :buffer 
            :accessor buffer)
    (offset :initform 0 

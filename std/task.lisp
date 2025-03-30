@@ -67,10 +67,10 @@ This interface is experimental and subject to change."
 (defgeneric assign-supervisor (worker supervisor))
 
 (defgeneric make-workers (count &rest initargs &key &allow-other-keys)
-  (:method ((count number) &key thread kernel input bindings (return-type 'vector))
+  (:method ((count number) &key thread function tasks bind (return-type 'vector))
     (let ((ret))
       (dotimes (i count)
-        (push (make-worker :thread thread :kernel kernel :input input :bindings bindings) ret))
+        (push (make-worker :thread thread :function function :tasks tasks :bind bind) ret))
       (if return-type (coerce ret return-type) ret))))
 
 (defgeneric task (self))
@@ -103,28 +103,30 @@ within their DOMAIN and SCOPE."))
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
            :accessor worker-thread
            :initarg :thread)
-   (bindings :type list)
-   (kernel :type function :accessor worker-kernel :initarg :kernel)
-   (tasks :initform nil :accessor tasks :initarg :input)))
+   (bind :type list :accessor worker-bind :initarg :bind)
+   (function :type function :accessor worker-function :initarg :function)
+   (tasks :initform nil :accessor tasks :initarg :tasks)))
 
 (defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
   (push (worker-thread self) *worker-threads*))
 
-(defun make-worker (&key thread kernel input bindings)
+(defun make-worker (&key thread function tasks bind)
   (apply #'make-instance 'worker
          `(,@(when thread `(:thread ,thread))
-           ,@(when kernel `(:kernel ,kernel))
-           ,@(when input `(:input ,input))
-           ,@(when bindings `(:bindings ,bindings)))))
+           ,@(when function `(:function ,function))
+           ,@(when tasks `(:tasks ,tasks))
+           ,@(when bind `(:bind ,bind)))))
 
 ;; TODO 2024-10-03: pause/resume
 (declaim (inline kill-worker join-worker start-worker run-worker))
 (defun start-worker (worker) 
-  (sb-thread::start-thread (worker-thread worker) (worker-kernel worker) (tasks worker)))
+  (sb-thread::start-thread (worker-thread worker) (worker-function worker) (tasks worker)))
 
-(defun run-worker (worker &key input wait)
-  (when input
-    (setf (tasks worker) input))
+(defun run-worker (worker &key tasks bind wait)
+  (when tasks
+    (setf (tasks worker) tasks))
+  (when bind
+    (setf (worker-bind worker) bind))
   (start-worker worker)
   (if wait (join-worker worker)
       worker))
@@ -133,7 +135,7 @@ within their DOMAIN and SCOPE."))
   (run-worker self))
 
 (defun run-with-worker (worker object &key wait)
-  (run-worker worker :input object :wait wait))
+  (run-worker worker :tasks (list object) :wait wait))
 
 (defun kill-worker (worker) 
   (declare (worker worker))
@@ -237,7 +239,7 @@ is responsible for indicating in the state slot the result of the computation.")
     (format stream ":state ~A" (task-state self))))
 
 (defun run-task (worker task)
-  (run-worker worker :input task))
+  (run-worker worker :tasks (list task)))
 
 (defmethod run-object ((self task) &key worker)
   (run-task worker self))
@@ -275,7 +277,7 @@ is responsible for indicating in the state slot the result of the computation.")
     (format stream "~A tasks" (length (tasks self)))))
 
 (defun run-job (worker job)
-  (run-worker worker :input job))
+  (run-worker worker :tasks (coerce 'list (tasks job))))
 
 (defmethod run-object ((self job) &key worker)
   (run-job worker self))
@@ -293,7 +295,7 @@ is responsible for indicating in the state slot the result of the computation.")
     (format stream "~A" (tasks self))))
 
 ;;; Macros
-(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) start kernel results) &body body)
+(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) start function kernel results) &body body)
   (unless lock (setf lock (make-semaphore :name "online" :count workers)))
   (unless results (setf results (make-mailbox :name "results")))
   `(let ((,sym (make-task-pool :lock ,lock :results ,results
@@ -313,7 +315,7 @@ is responsible for indicating in the state slot the result of the computation.")
                        (results ,sym)
                        nil))))
      (loop for i below ,workers
-           do (push-worker (make-worker :kernel (task-pool-kernel ,sym)) ,sym))
+           do (push-worker (make-worker :function ,function) ,sym))
      ,@(when oracle `((designate-oracle ,sym ,oracle)))
      ,@(when start `((start-task-workers ,sym)))
      ,@body))

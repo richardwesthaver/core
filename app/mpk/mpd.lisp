@@ -141,6 +141,11 @@
    (last-modified
     :initform nil :initarg :last-modified :accessor last-modified)))
 
+(defmethod initialize-instance :around ((self track) &key duration &allow-other-keys)
+  (when duration
+    (setf (duration self) duration))
+  (call-next-method))
+
 (defclass playlist (track)
   ((pos
     :initform 0 :initarg :pos :accessor position-in-playlist
