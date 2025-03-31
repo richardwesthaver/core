@@ -483,7 +483,6 @@
   (send "crossfade" seconds))
 
 ;; Playlist
-
 (defcommand list-playlist (name)
   "List files in the playlist `name'"
   (check-args string name)

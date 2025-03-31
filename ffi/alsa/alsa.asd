@@ -5,18 +5,11 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :alsa.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :alsa.sys)
-
 (defsystem "alsa"
   :description "ALSA C FFI"
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :in-order-to ((test-op (test-op "alsa/tests")))
-  :components ((:file "pkg")
-               (grovel-constants-file "constants"
-                                      :package :alsa))
+  :components ((:file "pkg"))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :alsa)))
 
 (defsystem "alsa/tests"

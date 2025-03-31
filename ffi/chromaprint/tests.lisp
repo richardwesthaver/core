@@ -24,4 +24,14 @@
       (isequal "AQAAAA" fp)
       (chromaprint-free ctx))))
 
-
+(deftest chroma-random ()
+  (let ((sr 44100) (n 2))
+    (with-alien ((fp c-string))
+      (io/static:with-static-vector (data #1=(* n sr) :initial-element (random 255))
+        (with-chromaprint-ctx (ctx :samplerate sr :channels n)
+	  (chromaprint-feed ctx (io/static:static-vector-pointer data) #1#)
+	  (chromaprint-feed ctx (io/static:static-vector-pointer data) #1#)
+	  (chromaprint-feed ctx (io/static:static-vector-pointer data) #1#)
+          (chromaprint-finish ctx)
+          (chromaprint-get-fingerprint ctx (addr fp))
+          (is> (length fp) 6))))))

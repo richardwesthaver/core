@@ -5,7 +5,9 @@
 ;;; Code:
 (defpackage :cli/tools/proto
   (:use :cl :std :cli/env :config :ast)
-  (:export :define-cli-tool :*cli-tools*))
+  (:export :define-cli-tool :*cli-tools*
+           :cli-tool-config
+           :cli-tool-error))
 
 (defpackage :cli/tools/term
   (:use :cl :std :cli/tools/proto :cli/env :config :toml :ast)
@@ -58,7 +60,12 @@
    :run-mpv
    :mpv-error
    :list-ffmpeg-codecs
-   :list-ffmpeg-formats))
+   :list-ffmpeg-formats
+   :exec-picard
+   :load-picard-config
+   :picard-config
+   :*picard-config-path*
+   :*picard-commands*))
 
 (defpackage :cli/tools/go
   (:nicknames :tools/go)
@@ -156,7 +163,11 @@
 
 (in-package :cli/tools/proto)
 
+(defconfig cli-tool-config () ())
+
 (defvar *cli-tools* nil)
+
+(define-condition cli-tool-error (simple-error) ())
 
 (defmacro define-cli-tool (name args &body body)
   "Define a new cli tool with a NAME-error condition, a *NAME* variable, and a
@@ -175,6 +186,6 @@ ARGS and BODY are parsed as the args and body of the run-NAME function."
                         (string name)
                         (symbol (string-downcase %name)))))
          ,@(when var `((pushnew ,name *cli-tools*)))
-         (deferror ,err (simple-error) () (:auto t))
+         (deferror ,err (cli-tool-error) () (:auto t))
          (defun ,run ,args ,@body)))))
 

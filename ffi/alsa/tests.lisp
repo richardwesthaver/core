@@ -11,4 +11,6 @@
 
 (load-asound)
 
-(deftest sanity ())
+(deftest sanity () 
+  (iseql :double (alsa-element-type 'double-float))
+  (iseql :float64-le (alsa-format-type 'double-float)))

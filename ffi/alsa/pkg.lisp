@@ -17,7 +17,9 @@
            :snd-pcm-set-params
            :snd-pcm-recover
            :snd-pcm-writei
-           :snd-pcm-dump))
+           :snd-pcm-dump
+           :alsa-element-type
+           :alsa-format-type))
 
 (in-package :alsa)
 

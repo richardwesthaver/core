@@ -12,7 +12,7 @@
    (buffer :reader buffer :initarg :buffer)
    (buffer-size :reader buffer-size :initarg :buffer-size)
    (element-type :reader :element-type :initarg :element-type)
-   (sample-rate :reader sample-rate :initarg :sample-rate :initform 44100)
+   (samplerate :reader samplerate :initarg :samplerate :initform 44100)
    (direction :reader direction :initarg :direction)
    (channels :reader channels :initarg :channels)))
    

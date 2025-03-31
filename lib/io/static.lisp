@@ -234,9 +234,9 @@ but requested vector length is ~A."
 
 (declaim (inline make-static-vector))
 (defun make-static-vector (length &key (element-type '(unsigned-byte 8))
-                           (initial-element nil initial-element-p)
-                           (initial-contents nil initial-contents-p)
-                           (alignment nil alignp))
+                                       (initial-element nil initial-element-p)
+                                       (initial-contents nil initial-contents-p)
+                                       (alignment nil alignp))
   "Create a simple vector of length LENGTH and type ELEMENT-TYPE which will
 not be moved by the garbage collector. The vector might be allocated in
 foreign memory so you must always call FREE-STATIC-VECTOR to free it. Use
@@ -371,12 +371,12 @@ within its dynamic extent. The vector is freed upon exit."
                                         initial-contents 
                                         initial-element)
                               &body body &environment env)
-  "Bind VAR to a static stream of length LENGTH and execute BODY
+  "Bind VAR to a static stream with an internal static vector buffer and execute BODY
 within its dynamic extent. The static vector is freed upon exit."
   (declare (ignorable element-type initial-contents initial-element))
-  (let ((length *default-static-stream-size*))
-    (when (numberp (car args))
-      (setq length (pop args)))
+  (let ((length (or (when (numberp (car args))
+                      (pop args))
+                    *default-static-stream-size*)))
     (multiple-value-bind (real-element-type length type-spec)
         (canonicalize-args env element-type length)
       (let ((args (copy-list args)))

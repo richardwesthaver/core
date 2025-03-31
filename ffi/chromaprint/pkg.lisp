@@ -43,7 +43,8 @@ two fingerprints yourself, you probably want them in this form.  |#
            :chromaprint-get-raw-fingerprint-size
            :chromaprint-get-fingerprint-hash
            :chromaprint-clear-fingerprint
-           :chromaprint-encode-fingerprint))
+           :chromaprint-encode-fingerprint
+           :with-chromaprint-ctx))
 
 (in-package :chromaprint)
 
@@ -120,3 +121,14 @@ two fingerprints yourself, you probably want them in this form.  |#
   (hash (* unsigned)))
 
 (define-alien-routine chromaprint-dealloc void (ptr (* t)))
+
+;;; Utils
+(defmacro with-chromaprint-ctx ((sym &key (algo (chromaprint-algorithm :default))
+                                          (samplerate 44100)
+                                          (channels 2))
+                                &body body)
+  `(let ((,sym (chromaprint-new ,algo)))
+     (unwind-protect (progn
+                       (chromaprint-start ,sym ,samplerate ,channels)
+                       ,@body)
+       (chromaprint-free ,sym))))
