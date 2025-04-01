@@ -125,6 +125,7 @@
   "(" parens-map
   "M-l" #'duplicate-dwim
   "d i" #'image-dired
+  "e p" #'mpc
   "TAB" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
   "z" #'scratch-buffer
@@ -133,6 +134,12 @@
   "t" clock-map
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
+
+;;; MPC
+(keymap-set mpc-mode-map "v" 'mpc-tagbrowser)
+(keymap-set mpc-mode-map "a" 'mpc-playlist-add)
+(keymap-set mpc-mode-map "c" 'mpc-playlist-create)
+(keymap-set mpc-mode-map "." 'mpc-play-at-point)
 
 ;;; Modes
 (add-hook

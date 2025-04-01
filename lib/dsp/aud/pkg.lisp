@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :dsp/aud
   (:nicknames :aud)
-  (:use :cl :std :dat/midi :sndfile :jack :alsa :chromaprint)
+  (:use :cl :std :dat/midi :sndfile :jack :alsa :chromaprint :io/static)
   (:export
    #:jack-play-sound
    #:jack-close-sound
@@ -18,4 +18,5 @@
    #:jack-close-all-sounds
    #:n-sounds-playing-now
    #:n-sounds-pausing-now
-   #:jack-sounds-playing-now))
+   #:jack-sounds-playing-now
+   #:chromaprint))

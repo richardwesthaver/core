@@ -25,7 +25,8 @@
   (:use :cl :std :gui/clim)
   (:use-reexport :clim-tab-layout) 
   (:import-from :clim :define-application-frame :make-pane
-   :present :presentation-type-of 
+   :present :presentation-type-of :make-application-frame :application-frame
+   :run-frame-top-level
    :output-record-parent :graph-node-output-record-p :region-union :format-graph-from-roots
    :with-bounding-rectangle* :make-rectangle* :with-application-frame :+nowhere+
    :find-pane-named :graph-output-record :drag-output-record :define-command-table

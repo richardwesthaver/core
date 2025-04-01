@@ -22,7 +22,7 @@
   (sh-mode . (sh-indentation . 2))
   (makefile-mode . ((indent-tabs-mode . t))))
  (cargo-target-dir :env ".stash/target")
- (packy-home :env "/opt/core/store/packy"))
+ (packy-home :env "/opt/store/packy"))
 :components 
 ((:org "readme")
  (:asd "prelude")

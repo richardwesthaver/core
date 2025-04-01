@@ -9,7 +9,7 @@
   ()
   (:documentation "Base class for skeleton objects."))
 
-(declaim (inline sk-object-name sk-slot-name))
+(declaim (inline sk-slot-name sk-class-name))
 (defun sk-class-name (self &optional downcase)
   (let* ((class-name (string (class-name (class-of self))))
          (match (search "SK-" class-name :test 'equal :start1 0 :end1 3))

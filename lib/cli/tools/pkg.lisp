@@ -136,7 +136,8 @@
            :systemctl-stop
    :systemctl-start
    :systemctl-restart
-   :systemctl-status))
+   :systemctl-status
+   :systemctl-json))
 
 (defpackage :cli/tools/rust
   (:nicknames :tools/rust)

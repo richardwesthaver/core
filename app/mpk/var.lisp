@@ -6,8 +6,9 @@
 (in-package :mpk)
 
 (defvar *mpk-user-directory* (merge-pathnames ".stash/mpk/" (user-homedir-pathname)))
-
 (defvar *mpk-media-directory* "/opt/stash/media/")
+(defvar *mpk-data-directory* "/opt/stash/media/")
+(defvar *mpk-cache-directory* "/opt/stash/media/")
 
 (defvar *mpk-media-sources* '(:youtube :freesound :spotify :local :torrent))
 

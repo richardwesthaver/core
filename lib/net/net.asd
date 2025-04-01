@@ -31,7 +31,10 @@
                              (:file "http")
                              (:file "dns")
                              (:file "whois")
-                             (:file "ssh")))
+                             (:file "ssh")
+                             (:file "dm")
+                             (:file "sesh")
+                             (:file "nsm")))
                (:file "cookie")               
                (:file "req")
                (:module "srv"

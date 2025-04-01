@@ -23,10 +23,7 @@
                  (:module "layout"
                   :components
                   ((:file "pkg")))
-                 (:module "frame"
-                  :components
-                  ((:file "pkg")
-                   (:file "graph")))
+                 (:file "frame")
                  (:file "dbg")
                  (:file "repl"))
                 :depends-on ("pkg"))

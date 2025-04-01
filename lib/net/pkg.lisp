@@ -225,15 +225,25 @@
    :strict-error
    :paused-error
    :unknown-error
-
    :multipart-parsing-error
    :invalid-multipart-body
    :invalid-boundary
-
    :header-value-parsing-error
    :invalid-header-value
    :invalid-parameter-key
    :invalid-parameter-value))
+
+(defpackage :net/proto/dm
+  (:nicknames :net/dm)
+  (:use :cl :sb-bsd-sockets :std :net/core :net/udp :net/codec/tlv))
+
+(defpackage :net/proto/sesh
+  (:nicknames :net/sesh)
+  (:use :cl :sb-bsd-sockets :std :net/core :net/udp))
+
+(defpackage :net/proto/nsm
+  (:nicknames :net/nsm)
+  (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/osc))
 
 (defpackage net/cookie
   (:use :cl :std :parse/bytes :obj/uri)

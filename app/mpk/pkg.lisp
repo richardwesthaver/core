@@ -10,7 +10,7 @@
 
 ;;; Code:
 (defpackage :mpk
-  (:use :cl :std :log :id :config :ast :cli/tools/net)
+  (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time)
   (:export
    #:*mpk-directory*
    #:mpk-path
@@ -25,11 +25,13 @@
    #:mpk-shuffle
    #:mpk-stop
    #:mpk-pause
-   #:mpk-play))
+   #:mpk-play
+   #:*mpk-data-directory*
+   #:*mpk-cache-directory*))
 
 (defpackage :mpk/db
   (:nicknames :mdb)
-  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id)
+  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid)
   (:export :*mdb-directory* :*mdb* :*mdb-schema*
    :mdb :init-mdb))
 

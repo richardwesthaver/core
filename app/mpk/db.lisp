@@ -18,7 +18,7 @@
 (defvar *mdb-id-seed* (random 99999))
 
 (defclass mdb-id (id:id) ()
-  (:default-initargs :id *mdb-id-seed*))
+  (:default-initargs :id (uuid:make-v4-uuid)))
 
 (defclass mdb (rdb-database) ()
   (:default-initargs
@@ -27,7 +27,7 @@
                 :opts (default-rdb-opts)
                 :logger (rdb-log-default 1))))
 
-(defmethod id:make-id ((self (eql :mdb))) (make-instance 'mdb-id :id *mdb-id-seed*))
+(defmethod id:make-id ((self (eql :mdb))) (make-instance 'mdb-id))
 
 (defmethod make-db ((engine (eql :mdb)) &rest initargs &key)
   (apply #'make-instance 'mdb initargs))
@@ -36,12 +36,12 @@
 
 (defvar *mdb-schema* (make-instance 'rdb-schema
                        :fields (make-fields 
-                                :id '(word . string)
-                                :file '(word . string)
-                                :name '(word . string)
-                                :source '(word . string)
-                                :state '(word . octet)
-                                :meta '(word . string))))
+                                :id '(uuid . string)
+                                :file '(uuid . string)
+                                :name '(uuid . string)
+                                :source '(uuid . string)
+                                :state '(uuid . octet)
+                                :meta '(uuid . string))))
 
 (defun init-mdb ()
   (ifret *mdb*
