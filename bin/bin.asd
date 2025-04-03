@@ -12,7 +12,7 @@
 	       :bin/packy :bin/core
 	       :bin/vc :bin/skc
 	       :bin/pod :bin/gen
-               #+x11 :bin/swm))
+               :bin/mpk #+x11 :bin/swm))
 
 #+x11
 (defsystem :bin/swm
@@ -35,6 +35,13 @@
   :entry-point "bin/homer::start-homer"
   :depends-on (:std :cli :organ :skel :nlp :rdb :homer)
   :components ((:file "homer")))
+
+(defsystem :bin/mpk
+  :build-operation program-op
+  :build-pathname "mpk"
+  :entry-point "bin/mpk:start-mpk"
+  :depends-on (:std :cli :mpk)
+  :components ((:file "mpk")))
 
 (defsystem :bin/pod
   :build-operation program-op
@@ -92,4 +99,4 @@
   :components ((:file "core"))
   :depends-on (:core :bin/skel :bin/organ :bin/homer :bin/rdb :bin/packy :bin/vc :bin/gen
                      (:feature :x11 :bin/swm)
-                     :bin/pod))
+                     :bin/pod :bin/mpk))

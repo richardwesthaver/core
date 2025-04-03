@@ -140,6 +140,10 @@
 (keymap-set mpc-mode-map "a" 'mpc-playlist-add)
 (keymap-set mpc-mode-map "c" 'mpc-playlist-create)
 (keymap-set mpc-mode-map "." 'mpc-play-at-point)
+(keymap-set mpc-mode-map "P" 'mpc-resume)
+(keymap-set mpc-mode-map "f" 'mpc-ffwd)
+(keymap-set mpc-mode-map "b" 'mpc-rewind)
+(keymap-set mpc-mode-map "x" 'mpc-playlist-delete)
 
 ;;; Modes
 (add-hook

@@ -47,20 +47,23 @@
                          ;; skip it
                          (read-char stream)
                          ;; eval and push each form individually.
-                         (let ((form (eval (read stream nil nil))))
+                         (let ((form (sb-cltl2:enclose `(lambda () ',(read stream nil nil)))))
                            (push
                             (coerce
-                             (format nil "~{~A~^ ~}" form)
+                             (format nil "~{~A~^ ~}" (funcall form))
                              'list)
                             out)))
                        ;; unconditionally read in a single sexp and eval.
-                       (push (coerce (format nil "~A" (eval (read stream nil nil))) 'list) out)))
+                       (push (coerce (format nil "~A" (funcall 
+                                                       (compile nil (sb-cltl2:enclose `(lambda () ',(read stream nil nil))))))
+                                     'list)
+                             out)))
                   ((or (char= c #\+) (char= c #\-))
                    (if (char= 
                         (if (sb-int:featurep (let ((*package* sb-int:*keyword-package*)
-                                            (sb-impl::*reader-package* nil)
-                                            (*read-suppress* nil))
-                                        (read stream t nil t)))
+                                                   (sb-impl::*reader-package* nil)
+                                                   (*read-suppress* nil))
+                                               (read stream t nil t)))
                             #\+ #\-)
                         c)
                        (push (coerce (format nil "~A" (eval (read stream t nil t))) 'list) out)
@@ -132,7 +135,7 @@ An escaped form with parens like the following works fine:
             (t (nyi!))))
         (let ((args (list "-c" (format nil "~a" str)))
               (directory (or *shell-directory* *default-pathname-defaults*)))
-          (lambda (&key input (output *standard-output*) (wait t) (status-hook) pty)
+          (lambda (&key input (output *standard-output*) (wait t) (status-hook))
             (case output
               (:string (string-right-trim
                         '(#\Newline)

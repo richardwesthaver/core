@@ -286,7 +286,7 @@
    (funcall 
     #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
     echo "core -> /usr/local/bin/"
-    links="skel homer packy rdb organ vc gen swm"
+    links="skel homer packy rdb organ vc gen swm mpk"
     for i in $links; do
     sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
     echo "$i -> core -> /usr/local/bin/"

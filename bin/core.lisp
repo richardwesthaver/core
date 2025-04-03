@@ -16,10 +16,11 @@
   (:skel (bin/skel::start-skel))
   (:packy (bin/packy::start-packy))
   (:rdb (bin/rdb::start-rdb))
-  (:vc (bin/vc::start-vc))
+  (:vc (bin/vc:start-vc))
   (:pod (bin/pod::start-pod))
   (:organ (bin/organ::start-organ))
   (:homer (bin/homer::start-homer))
+  (:mpk (bin/mpk:start-mpk))
   #+x11
   (:swm (bin/swm::start-swm))
   (:gen (bin/gen::start-gen)))

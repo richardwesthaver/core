@@ -627,11 +627,15 @@
   (send "shuffle"))
 
 ;;; Database
-
 (defcommand update (&optional path)
   "Scan directory for music files and add them to the database."
   (check-args string path)
   (send "update" path))
+
+(defcommand rescan (&optional path)
+  "Scan all music files and update the database."
+  (check-args string path)
+  (send "rescan" path))
 
 (defcommand find-tracks (type what)
   "Find tracks in the database with a case sensitive, exact match."
