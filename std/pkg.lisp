@@ -687,7 +687,7 @@
 
 (defpkg :std/file
   (:use :cl)
-  (:import-from :std/macs :define-constant :eval-always :once-only)
+  (:import-from :std/macs :define-constant :eval-always :once-only :when-let)
   (:import-from :std/condition :deferror)
   (:import-from :std/path :directory-path :directory-path-p)
   (:import-from :std/stream :copy-stream)
@@ -718,7 +718,8 @@
    :hidden-path-p
    :find-files
    :count-file-lines
-   :probe-merge-file))
+   :probe-merge-file
+   :probe-directory))
 
 (defpkg :std/pipe
   (:use :cl :std/array)

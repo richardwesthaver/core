@@ -456,6 +456,11 @@ it only contains spaces or tab characters."
   (when (probe-file file)
     (delete-file file)))
 
+(defun probe-directory (directory)
+  (when-let ((dir (probe-file directory))) 
+    (when (directory-path-p dir)
+      dir)))
+
 (defun probe-delete-directory (directory &key (recursive t))
   (when (probe-file directory)
     (delete-directory directory :recursive recursive)))

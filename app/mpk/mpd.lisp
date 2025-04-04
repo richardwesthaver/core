@@ -10,73 +10,6 @@
 ;; slightly.
 
 ;;; Code:
-(defpackage :mpk/mpd
-  (:use :cl :std :sb-bsd-sockets :net/core :net/util :config)
-  (:nicknames :mpd)
-  (:export
-   :with-mpc
-   :ensure-mpd
-   :mpd-ping
-   :mpd-kill
-   :mpd-status
-   :mpd-now-playing
-   :mpd-pause
-   :mpd-play
-   :mpd-previous
-   :mpd-next
-   :mpd-crossfade
-   :mpd-add
-   :mpd-add-id
-   :mpd-move
-   :mpd-move-id
-   :mpd-swap
-   :mpd-swap-id
-   :mpd-clear
-   :mpd-delete-track
-   :mpd-delete-id
-   :mpd-save-playlist
-   :mpd-load-playlist
-   :mpd-rename-playlist
-   :mpd-playlist-info
-   :mpd-playlist-changes
-   :mpd-shuffle
-   :mpd-list-playlist
-   :mpd-list-playlist-info
-   :mpd-add-to-playlist
-   :mpd-clear-playlist
-   :mpd-delete-from-playlist
-   :mpd-move-in-playlist
-   :mpd-find-in-current-playlist
-   :mpd-search-in-current-playlist
-   :mpd-update
-   :mpd-list-all
-   :mpd-list-info
-   :mpd-list-all-info
-   :mpd-find-tracks
-   :mpd-search-tracks
-   :mpd-list-metadata
-   :mpd-count-tracks
-   :playlist
-   :track
-   :file
-   :title
-   :artist
-   :albumartist
-   :album
-   :date
-   :genre
-   :composer
-   :position-in-playlist
-   :mpd-error
-   :mpd-artists
-   :mpd-albums
-   :mpd-songs
-   :mpd-uptime
-   :mpd-playtime
-   :mpd-db-playtime
-   :mpd-db-update
-   :mpd-config))
-
 (in-package :mpk/mpd)
 ;;; Classes
 (define-condition mpd-error (error)
@@ -164,7 +97,8 @@
     :reader repeat :initarg :repeat :initform nil)
    (random
     :reader randomized :initarg :random :initform nil)
-   (playlist
+   (last-loaded-playlist :reader last-loaded-playlist :initarg :lastloadedplaylist :initform nil)
+   (playlist-version
     :reader playlist-version :initarg :playlist :initform nil)
    (playlist-length
     :reader playlist-length :initarg :playlistlength :initform nil)
@@ -196,7 +130,8 @@
    (consume 
     :reader consume :initarg :consume :initform nil)
    (single 
-    :reader single :initarg :single :initform nil)))
+    :reader single :initarg :single :initform nil)
+   (updating :reader updating :initarg :updating_db :initform nil)))
 
 (defclass stats ()
   ((artists
@@ -221,13 +156,13 @@
                                (,name (,class stream))))
                           names))))
   (generate-commands mpd-status
-                     (volume repeat randomized playlist-version playlist-length
-                      xfade state audio bitrate duration songid song))
+                     (volume repeat randomized last-loaded-playlist playlist-version playlistlength
+                      xfade state audio bitrate duration songid song updating))
   (generate-commands mpd-stats
                      (artists albums songs uptime playtime db-playtime db-update)))
 
 (defparameter *integer-keys*
-  '(:id :pos :volume :playlist :playlistlength
+  '(:id :pos :volume :playlist :playlist-length
     :xfade :song :songid :bitrate :playtime
     :artists :albums :songs :uptime :db_playtime :db_update
     :outputid)
@@ -437,9 +372,9 @@
   "Return status of MPD."
   (make-class (send "status") 'status))
 
-(defcommand stats ()
-  "Return statisics."
-  (make-class (send "stats") 'stats))
+;; (defcommand stats ()
+;;   "Return statisics."
+;;   (make-class (send "stats") 'stats))
 
 (defcommand outputs ()
   "Return information about all outputs."
@@ -632,10 +567,18 @@
   (check-args string path)
   (send "update" path))
 
-(defcommand rescan (&optional path)
+(defcommand rescan ()
   "Scan all music files and update the database."
-  (check-args string path)
-  (send "rescan" path))
+  (send "rescan"))
+
+(defcommand stats ()
+  "Print database statistics."
+  (when-let ((res (send "stats")))
+    (mapcar 
+     (lambda (x) 
+       (destructuring-bind (k v) (split-sequence #\: x :count 2)
+         (cons (keywordicate (substitute #\- #\_ (string-upcase k))) (parse-integer v :junk-allowed t))))
+     res)))
 
 (defcommand find-tracks (type what)
   "Find tracks in the database with a case sensitive, exact match."

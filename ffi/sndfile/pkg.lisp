@@ -374,9 +374,9 @@
 (defun decode-sf-format (i)
   "Decode an SF-FORMAT integer into a list of (TYPE SUB ENDIAN)."
   (list
-   (sf-format* (logand i #.(sf-format-mask :type)))
-   (sf-format-subtype* (logand i #.(sf-format-mask :sub)))
-   (sf-endian* (logand i #.(sf-format-mask :end)))))
+   (sf-format* (logand i (sf-format-mask :type)))
+   (sf-format-subtype* (logand i (sf-format-mask :sub)))
+   (sf-endian* (logand i (sf-format-mask :end)))))
 
 (defun encode-sf-format (type sub &optional (end :file))
   "Encode an SF-FORMAT integer from TYPE SUB and optional ENDian."

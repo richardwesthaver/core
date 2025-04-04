@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :mpk)
 
+(defvar *mpc*)
 (defvar *mpk-user-directory* (merge-pathnames ".stash/mpk/" (user-homedir-pathname)))
 (defvar *mpk-media-directory* "/opt/stash/media/")
 (defvar *mpk-data-directory* "/opt/stash/media/")
