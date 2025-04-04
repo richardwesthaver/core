@@ -11,4 +11,5 @@
                (:file "db")
                (:file "mpd")
                (:file "cfg")
+               (:file "dl")
                (:file "cli")))

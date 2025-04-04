@@ -27,7 +27,13 @@
    #:mpk-pause
    #:mpk-play
    #:*mpk-data-directory*
-   #:*mpk-cache-directory*))
+   #:*mpk-cache-directory*
+   #:mpk-media-collection
+   #:*mpk-media-collections*
+   #:mpk-user-path
+   #:mpk-media-path
+   #:mpk-music-path
+   #:mpk-data-path))
 
 (defpackage :mpk/db
   (:nicknames :mdb)

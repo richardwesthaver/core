@@ -14,6 +14,11 @@
 
 (defvar *mpk-media-types* '(:audio :video :image :sprite :texture :shader :text))
 
+(defvar *mpk-media-collections*
+  (let ((tbl (make-hash-table)))
+    (dolist (p '(:music :tv :screenshot :movies :aud :img :vid) tbl)
+      (setf (gethash p tbl) (merge-pathnames (string-downcase p) *mpk-media-directory*)))))
+
 ;; TODO 2025-03-12: 
 (defun find-supported-media-types (type))
   

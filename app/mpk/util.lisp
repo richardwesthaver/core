@@ -5,20 +5,21 @@
 ;;; Code:
 (in-package :mpk)
 
-(defun mpk-path (path)
-  (merge-pathnames path (or (probe-file *mpk-user-directory*) *default-pathname-defaults*)))
+(defun mpk-media-collection (k)
+  (gethash k *mpk-media-collections*))
+
+(defun mpk-user-path (path)
+  (merge-pathnames path *mpk-user-directory*))
+
+(defun mpk-media-path (path)
+  (merge-pathnames path *mpk-media-directory*))
+
+(defun mpk-music-path (path)
+  (merge-pathnames path (mpk-media-collection :music)))
+
+(defun mpk-data-path (path)
+  (merge-pathnames path *mpk-data-directory*))
 
 (defun mpk-ensure-directories ()
-  (when *mpk-media-directory*
-    (ensure-directories-exist *mpk-media-directory*))
-  (ensure-directories-exist *mpk-user-directory*))
-
-;;; Metro
-
-;;; Downloaders
-
-;; yt
-(defun get-playlist ())
-(defun get-video ())
-(defun get-channel ())
-(defun get-media ())
+  (maphash-values (lambda (p) (ensure-directories-exist p :verbose t)) *mpk-media-collections*)
+  (ensure-directories-exist *mpk-user-directory* :verbose t))

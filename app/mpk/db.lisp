@@ -9,8 +9,8 @@
 (set-database-backend :mdb *mdb-backend-options*
                       (lambda () (db::%load-database-backend :rdb)))
 
-(defvar *mdb-directory* (mpk-path "db/"))
-(defvar *mdb-meta-directory* (mpk-path "db/meta"))
+(defvar *mdb-directory* (mpk-data-path "db/"))
+(defvar *mdb-meta-directory* (mpk-data-path "db/meta"))
 (defvar *mdb* nil)
 
 (load-database-backend :rdb)

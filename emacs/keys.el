@@ -144,7 +144,7 @@
 (keymap-set mpc-mode-map "f" 'mpc-ffwd)
 (keymap-set mpc-mode-map "b" 'mpc-rewind)
 (keymap-set mpc-mode-map "x" 'mpc-playlist-delete)
-
+(keymap-set mpc-mode-map "1" 'mpc-playlist)
 ;;; Modes
 (add-hook
  'conf-toml-mode-hook
