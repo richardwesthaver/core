@@ -134,15 +134,15 @@ Each element is a process.")
 	      (prog1 (progn (forward-char) (following-char)) (forward-char)))))
     (cond
      ((and (= e 0) (= f 0))
-      (* 0.0 (expt -1 s))
-      ((and (= e 255) (or (= f (1- (expt 2 23))) (= f 0)))
+      (* 0.0 (expt -1 s)))
+     ((and (= e 255) (or (= f (1- (expt 2 23))) (= f 0)))
        (* 1.0e+INF (expt -1 s)))
-      ((and (= e 255) (not (or (= f 0) (= f (1- (expt 2 23))))))
-       0.0e+NaN)
-      (t
-       (* (expt -1 s)
-	  (expt 2.0 (- e 127))
-	  (1+ (/ f (expt 2.0 23)))))))))
+     ((and (= e 255) (not (or (= f 0) (= f (1- (expt 2 23))))))
+      0.0e+NaN)
+     (t
+      (* (expt -1 s)
+	 (expt 2.0 (- e 127))
+	 (1+ (/ f (expt 2.0 23))))))))
 
 ;;; Network
 ;;;###autoload

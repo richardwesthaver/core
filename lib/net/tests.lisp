@@ -74,7 +74,7 @@ Cookie: name=wookie
     (is (stringp (net/cookie:write-cookie-header (list cookie))))))
 
 (deftest srv ()
-  (let ((srv (make-service nil))) ;; a clean-slate service
+  (let ((srv (make-instance 'net-service)))
     (istype 'net-service srv)
     (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
     (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service))

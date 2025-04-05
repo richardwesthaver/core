@@ -11,6 +11,16 @@
 
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
+;;; Vars
+(defvar *worker-class* 'worker)
+(defvar *worker* nil)
+(defvar *kernel*)
+(defvar *worker-kernel* 'identity)
+
+;;; Globals
+(sb-ext:defglobal *worker-threads* nil)
+(sb-ext:defglobal *supervisor-threads* nil)
+(sb-ext:defglobal *oracle-table* (make-hash-table))
 
 ;;; Conditions
 (define-condition std-thread-error (thread-error) ())
@@ -48,6 +58,111 @@
   (loop for i below n
         collect (make-thread fn :name (format nil "~A-~D" name i))))
 
+(defun make-ephemeral-thread (name)
+    (sb-thread::%make-thread name t (make-semaphore :name name)))
+
+(defgeneric designate-oracle (host guest))
+(defgeneric assign-supervisor (worker supervisor))
+
+;;; Scheduler
+(defgeneric schedule (self &key &allow-other-keys))
+
+;;; Kernel
+
+;;; Supervisor
+(defclass supervisor ()
+  ((thread :initform (make-ephemeral-thread (symbol-name (gensym "supervisor"))) :accessor supervisor-thread)
+   (domain)
+   (scope))
+  (:documentation "Supervisors are threads which are responsible for a set of worker threads
+within their DOMAIN and SCOPE."))
+
+(defmethod initialize-instance :after ((self supervisor) &key &allow-other-keys)
+  (push (supervisor-thread self) *supervisor-threads*))
+
+;;; Worker
+;; unix-getrusage  
+;; 0,-1,-2
+;; (multiple-value-list (sb-unix:unix-getrusage 0))
+;; (setf sb-unix::*on-dangerous-wait* :error)
+
+;; TODO 2024-10-03: with-cas-lock?
+(defclass worker ()
+  ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
+	   :accessor worker-thread
+	   :initarg :thread)
+   ;; TODO 2025-04-04: environment here
+   (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings*)
+   (kernel :type kernel :accessor worker-kernel :initarg :kernel :initform *worker-kernel*)))
+
+(defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
+  (push (worker-thread self) *worker-threads*))
+
+(defun make-worker (&key thread kernel bind)
+  (apply #'make-instance *worker-class*
+	 `(,@(when thread `(:thread ,thread))
+	   ,@(when kernel `(:kernel ,kernel))
+	   ,@(when bind `(:bind ,bind)))))
+
+(defmacro with-default-special-bindings (bindings &body body)
+  `(let ((*default-special-bindings* ,bindings))
+     ,@body))
+
+;; TODO 2024-10-03: pause/resume
+(declaim (inline kill-worker join-worker start-worker run-worker))
+(defun start-worker (worker &rest args)
+  (with-default-special-bindings (worker-bind worker)
+    (sb-thread::start-thread (worker-thread worker) (worker-kernel worker) args)))
+
+(defun run-worker (worker &key bind wait)
+  (when bind
+    (setf (worker-bind worker) bind))
+  (start-worker worker)
+  (if wait (join-worker worker)
+      worker))
+
+(defmethod run-object ((self worker) &key)
+  (run-worker self))
+
+(defun run-with-worker (worker object &key wait)
+  (run-worker worker :bind object :wait wait))
+
+(defun kill-worker (worker) 
+  (declare (worker worker))
+  (let ((th (worker-thread worker)))
+    (unwind-protect (kill-thread th)
+      (deletef *worker-threads* th))))
+
+(defun join-worker (worker)
+  (declare (worker worker))
+  (let ((th (worker-thread worker)))
+    (unwind-protect (join-thread th)
+      (deletef *worker-threads* th))))
+
+;;; Oracle
+(defstruct (oracle (:constructor %make-oracle (id thread)))
+  "Oracles provide a tagged view into some threaded scope of work."
+  (id 0 :type (unsigned-byte 32) :read-only t)
+  (thread *current-thread* :read-only t))
+
+(defun oracle-of-id (id)
+  (gethash id *oracle-table*))
+
+(defun make-oracle (thread)
+  (let ((id (thread-os-tid thread)))
+    (if-let ((found (oracle-of-id id)))
+      (values id found)
+      (let ((orc (%make-oracle id thread)))
+	(setf (gethash id *oracle-table*) (make-array 0 :adjustable t))
+	(values id orc)))))
+
+(defgeneric make-workers (count &rest initargs &key &allow-other-keys)
+  (:method ((count number) &key thread kernel bind (return-type 'vector))
+    (let ((ret))
+      (dotimes (i count)
+	(push (make-worker :thread thread :kernel kernel :bind bind) ret))
+      (if return-type (coerce ret return-type) ret))))
+
 (defun parse-lambda-list-names (ll)
   (multiple-value-bind (idx _ args) (sb-int:parse-lambda-list ll)
     (declare (ignore idx _))
@@ -58,9 +173,9 @@
                (cons (car a))))))
 
 (defmacro with-thread ((&key bindings name) &body body)
-  `(let ((*default-special-bindings* ,bindings))
+  `(with-default-special-bindings ,bindings
      (make-thread (lambda () ,@body)
-                  :name ,name)))
+                  ,@(when name `(:name ,name)))))
 
 (defmacro with-threads ((n &key args) &body body)
   `(make-threads ,n (lambda (,@args) (declare (ignorable ,@(parse-lambda-list-names args))) ,@body)))

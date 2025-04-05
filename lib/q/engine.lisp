@@ -12,14 +12,14 @@
 
 ;;; Vars
 (defvar *query-engine*)
-(deftype query-dialect-designator () `(member :sql :dql))
+(deftype query-dialect-designator () `(member :sql :dql :simple))
 (declaim (query-dialect-designator *query-dialect*))
 (defvar *query-dialect* :sql)
 
 ;;; Engine
-;; NOTE 2024-08-04: only slot inherited should be :SCHEMA from DATA-SOURCE. A
-;; QUERY-ENGINE may always act as a source for another engine (maybe, probably)
-(defclass query-engine (query-planner execution-context data-source)
+
+;; (sb-mop:class-slots (find-class 'query-engine)) ;; service schema
+(defclass query-engine (query-planner execution-context data-source engine)
   ((sources :initarg :sources)
    (parser :initarg :parser :type query-parser)
    (optimizer :initarg :optimizer :type query-optimizer)))

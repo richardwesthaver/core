@@ -54,10 +54,10 @@
    #:skel-stash
    #:skel-store
    #:skel-cache
-   #:skel-registry
    #:skel-path
    #:user-skelrc
-   #:system-skelrc))
+   #:system-skelrc
+   #:skel-data))
 
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/int :doc)
@@ -75,7 +75,7 @@
    :skel/core/proto :skel/core/int
    :dat/sxp :skel/core/header :vc :log)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
-  (:export :sk-license :sk-author :sk-stash :sk-cache :sk-registry :sk-user
+  (:export :sk-license :sk-author :sk-stash :sk-cache :sk-data :sk-user
    :sk-store :sk-push :sk-pull :sk-include
    :sk-tags :edit-skelrc :sk-target :skel
    :sk-meta :def-sk-class :sk-project :sk-source

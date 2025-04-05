@@ -692,8 +692,7 @@ keep-alive-stream), and should handle clean-up of it"
 
 ;; An LRU-POOL can have multiple entries for the same key
 (defstruct lru-pool
-  (lock #+sb-thread (sb-thread:make-mutex :name "connection pool lock")
-        #-sb-thread nil)
+  (lock (sb-thread:make-mutex :name "connection pool lock"))
   (hash-table nil :type (or null hash-table)) ;; hash table entries are lists of elements
   (head nil :type (or null lru-pool-elt)) ;; most recently used is here and it's a doubly-linked-list
   (tail nil :type (or null lru-pool-elt)) ;; least recently used is here

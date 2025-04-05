@@ -529,12 +529,23 @@
    :exec :copy-object :safe-superclasses :run-object
    :slot-boundp*))
 
+(defpkg :std/spin
+  (:use :cl)
+  (:import-from :sb-ext :cas)
+  (:export :spin-queue :make-spin-queue :push-spin-queue
+   :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
+   :make-spin-lock))
+
 (defpkg :std/thread
   (:use :cl :sb-thread :sb-concurrency :std/meta)
   (:import-from :std/list :flatten)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
+  (:import-from :std/macs :if-let :eval-always)
+  (:import-from :std/list :deletef)
   (:export
+   :*worker-class*
+   :*worker-kernel*
    :run-thread
    :std-thread-error
    :print-top-level :thread-support-p
@@ -542,27 +553,41 @@
    :timed-join-thread :kill-thread
    :wait-for-threads :workers
    :hang :finish-threads
+   :spawn-workers
+   :make-workers
+   :make-oracle :make-supervisor
+   :kill-worker
+   :join-worker
+   :start-worker
+   :run-worker
+   :with-default-special-bindings
+   :worker-thread
+   :oracle 
+   :oracle-id :find-thread
    :make-threads :with-threads 
    :thread-count :dump-thread
    :thread-pool :workers
+   :make-worker :designate-oracle
    :condition-wait*
    :sync-message
    :with-sync-message
    :lock
+   :schedule
    :+standard-io-syntax+
    :*default-special-bindings*
+   :*worker*
+   :*kernel*
+   :*oracles*
+   :*oracle-threads*
+   :*oracle-table*
+   :*worker-threads*
+   :*supervisor-threads*
    :compute-special-bindings))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency :std/meta)
   (:import-from :std/thread :%make-thread)
-  (:import-from :std/macs :if-let :eval-always)
-  (:import-from :std/list :deletef)
   (:export
-   :spawn-workers
-   :make-oracle :make-supervisor
-   :oracle 
-   :oracle-id :find-thread
    :push-job :push-task
    :push-worker :push-task-result
    :work
@@ -572,25 +597,16 @@
    :tasks
    :results
    :kill-workers
-   :kill-worker
-   :join-worker
-   :worker-thread
    :start-task-worker
    :start-task-workers
    :pop-worker :pop-task-result
    :*task-pool*
    :*tasks*
-   :*oracles*
-   :*oracle-threads*
-   :*worker-threads*
-   :*supervisor-threads*
    :*jobs*
    :*stages*
    :*task*
    :*result*
    :define-task-kernel
-   :make-worker
-   :make-workers
    :run-tasks
    :run-jobs
    :worker-count
@@ -598,18 +614,27 @@
    :make-task-pool
    :start-task-pool :pause-task-pool
    :shutdown-task-pool
-   :push-stage :designate-oracle
+   :push-stage
    :make-task-pool
    :task :job :task-pool :scheduled-task
-   :schedule
    :stage :task-pool-p
    :job-tasks :make-job
    :job-p :task-object
-   :make-task :task-p :task
+   :make-task :task-p :task :task-epoch
    :task-pool-oracle :task-pool-jobs
    :task-pool-stages
    :task-pool-workers :task-pool-results
    :with-task-pool))
+
+(defpkg :std/async
+  (:use :cl :std/task :std/thread)
+  (:import-from :std/macs :with-gensyms :when-let)
+  (:export :future :promise :await 
+   :fulfill :fulfilledp :while-waiting-for))
+
+(defpkg :std/par
+  (:use :cl :std/task :std/thread)
+  (:export))
 
 (defpkg :std/fmt
   (:use :cl)

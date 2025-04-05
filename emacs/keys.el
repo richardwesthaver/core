@@ -136,15 +136,17 @@
   "C-;" #'prog-comment-timestamp-keyword)
 
 ;;; MPC
-(keymap-set mpc-mode-map "v" 'mpc-tagbrowser)
-(keymap-set mpc-mode-map "a" 'mpc-playlist-add)
-(keymap-set mpc-mode-map "c" 'mpc-playlist-create)
-(keymap-set mpc-mode-map "." 'mpc-play-at-point)
-(keymap-set mpc-mode-map "P" 'mpc-resume)
-(keymap-set mpc-mode-map "f" 'mpc-ffwd)
-(keymap-set mpc-mode-map "b" 'mpc-rewind)
-(keymap-set mpc-mode-map "x" 'mpc-playlist-delete)
-(keymap-set mpc-mode-map "1" 'mpc-playlist)
+(with-eval-after-load "mpc"
+  (keymap-set mpc-mode-map "v" 'mpc-tagbrowser)
+  (keymap-set mpc-mode-map "a" 'mpc-playlist-add)
+  (keymap-set mpc-mode-map "c" 'mpc-playlist-create)
+  (keymap-set mpc-mode-map "." 'mpc-play-at-point)
+  (keymap-set mpc-mode-map "P" 'mpc-resume)
+  (keymap-set mpc-mode-map "f" 'mpc-ffwd)
+  (keymap-set mpc-mode-map "b" 'mpc-rewind)
+  (keymap-set mpc-mode-map "x" 'mpc-playlist-delete)
+  (keymap-set mpc-mode-map "1" 'mpc-playlist))
+
 ;;; Modes
 (add-hook
  'conf-toml-mode-hook

@@ -117,6 +117,17 @@
            #:+decode-table+
            #:+uri-decode-table+))
 
+(defpackage :dat/m3u
+  (:nicknames :m3u)
+  (:use :cl :std :dat/proto)
+  (:export
+   :read-m3u-file
+   :read-m3u-stream
+   :write-m3u-file
+   :write-m3u-stream
+   :parse-m3u-string
+   :write-m3u-string))
+
 (defpackage :dat/id3
   (:use :cl :std :dat/proto :id)
   (:export

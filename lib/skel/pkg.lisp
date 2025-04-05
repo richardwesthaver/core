@@ -86,10 +86,11 @@
   (:use :cl :std :db 
    :store :build :config :skel/core/db 
    :skel/core :skel/core/log :skel/net :net/srv/udp :net/srv/http :srv)
-  (:export))
+  (:export
+   #:sk-service))
 
 (defpackage :skel/infer
-  (:use :cl :std :db :skel/core :dat :nlp :id :config :vc)
+  (:use :cl :std :db :skel/core :skel/srv :dat :nlp :id :config :vc :srv)
   (:export
    #:sk-inference-engine
    #:sk-inference-service

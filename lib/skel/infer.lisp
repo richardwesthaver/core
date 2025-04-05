@@ -11,5 +11,4 @@
 
 (defclass sk-inference-engine (engine skel) ())
 (defclass sk-inference-service (sk-service) ())
-
 (defclass sk-inferred-project (sk-project) ())

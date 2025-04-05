@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :q/proto
-  (:use :cl :std :query :plan :id :schema :ast)
+  (:use :cl :std :query :plan :id :schema :ast :srv)
   (:export
    :query-engine :query-parser
    :*query-engine*
@@ -76,6 +76,6 @@
 
 ;; (defpackage :q/e)
 
-(in-package :std-user)
-(defpkg :q
+(pkg:defpkg :q
+  (:use :cl :std)
   (:use-reexport :q/proto :q/sql :q/dql))

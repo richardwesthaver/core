@@ -9,6 +9,7 @@
                (:file "dot")
                (:file "csv")
                (:file "json")
+	       (:file "m3u")
                (:file "id3")
                (:module "parquet"
                 :components

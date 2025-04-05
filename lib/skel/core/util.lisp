@@ -30,8 +30,8 @@ If FILE does not exists, it is created with a default configuration."
   (flet ((%load () 
            (setq *skel-user-config* 
                  (load-ast 
-                  (make-instance 'sk-user-config 
-                    :ast #1=(file-read-forms file) 
+                  (make-instance 'sk-user-config
+                    :ast #1=(file-read-forms file)
                     :id (sxhash #1#)
                     :path file)))))
     (if (not init)
@@ -154,8 +154,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
                  (when system-config
                    (sk-find query system-config :slot :id))))
     (keyword (sk-project-slot query))
-    (q:sql-query)
-    (q:dql-query)))
+    (q:sql-query (nyi!))
+    (q:dql-query (nyi!))))
 
 (macrolet 
     ((%init (set)
@@ -176,6 +176,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
           (when-let ((hooks *skel-init-hook*))
             (mapc 'funcall hooks))
           (values))))
+
   (defun init-skel ()
     "Initialize the global SKEL environment:
 

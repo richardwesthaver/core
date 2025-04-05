@@ -1,10 +1,9 @@
 (defpackage :syn/tests
-  (:use :cl :rt :syn))
+  (:use :cl :rt :syn :syn/ts))
 
 (in-package :syn/tests)
 (defsuite :syn)
 (in-suite :syn)
-
 (defsuite :syn/gen)
 (in-suite :syn/gen)
 

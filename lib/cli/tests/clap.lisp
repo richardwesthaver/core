@@ -6,6 +6,8 @@
 (in-package :cli/tests)
 (in-suite :cli)
 
+(setf *no-exit* t)
+
 (defcmd flub-thunk ()
   ;; FIX 2024-10-01: 
   (println *optc*)
@@ -23,7 +25,7 @@
 (defparameter *test-cli* (make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli"))
 
 (deftest mixed-args ()
-  (with-cli (*test-cli*) '("--foo" "bar" "flub") 
+  (with-cli (*test-cli* :exit nil) '("--foo" "bar" "flub") 
     (is (string= "bar" (cli-opt-val (aref (opts *cli*) 0))))
     (is (null (cli-args *cli*)))
     (do-cmd *cli*)))
@@ -36,7 +38,7 @@
     (proc-args *test-cli* '("--log" "default" "--foo=11"))))
 
 (defmain foo-main (:exit nil)
-  (with-cli (*test-cli*) ()
+  (with-cli (*test-cli* :exit nil) ()
     t))
 
 (deftest clap-main ()
@@ -44,7 +46,7 @@
 
 (deftest clap-basic (:skip t)
   "test basic CLAP functionality."
-  (with-cli ((make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli") opts cmds args) *args*
+  (with-cli ((make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli") opts cmds args :exit nil) *args*
     (is (eq (make-shorty "test") #\t))
     (is (equalp (proc-args *cli* '("-f" "baz" "--bar=fax")) ;; not eql
                 (make-cli-ast 

@@ -139,9 +139,6 @@ NAME. Return the object."
   `(progn
      (setq *test-suite* (ensure-suite ,name))))
 
-(defun run-all-tests* (&optional force)
+(defun run-all-tests (&optional force)
   (with-readtable :std
     (mapcar (lambda (x) (do-tests x force)) (remove *test-suite* *test-suite-list*))))
-
-(defun run-all-tests (&optional force)
-  (mapcar (lambda (x) (do-tests x force)) *test-suite-list*))

@@ -79,7 +79,7 @@
    (store :initform skel-store :initarg :store :type pathname :accessor sk-store)
    (stash :initform skel-stash :initarg :stash :type pathname :accessor sk-stash)
    (cache :initform skel-cache :initarg :cache :type pathname :accessor sk-cache)
-   (registry :initform skel-registry :initarg :registry :type pathname :accessor sk-registry)
+   (data :initform skel-data :initarg :data :type pathname :accessor sk-data)
    (scripts :initform nil :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
    (license :initform nil :initarg :license :type license-designator :accessor sk-license)
    (log-level :initform *log-level* :initarg :log-level :type log-level-designator)
@@ -117,8 +117,8 @@
               (setf (slot-value self s) v))) ;; needs to be the correct package
           (when (bound-string-p self 'stash) (setf (sk-stash self) (merge-pathnames (sk-stash self) (sk-dir self))))
           (when (bound-string-p self 'store) (setf (sk-store self) (merge-pathnames (sk-store self) (sk-dir self))))
-          (when (bound-string-p self 'cache) (setf (sk-cache self) (merge-pathnames (sk-cache self) (sk-dir self))))
-          (when (bound-string-p self 'registry) (setf (sk-registry self) (merge-pathnames (sk-registry self) (sk-dir self))))
+          (when (bound-string-p self 'cache) (setf (sk-cache self) (sk-cache self)))
+          (when (bound-string-p self 'data) (setf (sk-data self) (sk-data self)))
           ;; SCRIPTS
           (if (bound-string-p self 'scripts)
               (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
