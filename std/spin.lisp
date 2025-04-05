@@ -10,8 +10,8 @@
 
 ;;; Code:
 (in-package :std/spin)
-(defconstant +dummy+ 'dummy)
-(defconstant +dead-end+ 'dead-end)
+(defconstant +dummy+ :dummy)
+(defconstant +dead-end+ :dead-end)
 
 (defun make-spin-lock () 
   "Allocate a fresh 'spin-lock' which is simply NIL."

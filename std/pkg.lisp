@@ -640,8 +640,9 @@
   (:use :cl)
   (:import-from :std/list :group :ensure-cons)
   (:shadowing-import-from :uiop :println)
-  (:export :printer-status :fmt-row :format-sxhash :iprintln :fmt-tree :println
-           :human-readable-size))
+  (:export :printer-status :fmt-row :format-sxhash 
+   :iprintln :fmt-tree :println :human-readable-size 
+   :print-slots :format-slots))
 
 (defpkg :std/path
   (:use :cl)

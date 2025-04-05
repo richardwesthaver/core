@@ -86,88 +86,137 @@ be produced by `sxhash'."
     (return-from format-tree-segments nil)) ; nothing to do here
   (setq node (ensure-cons node))
   (flet ((prefix-node-strings (child-node &key layout node-formatter
-                                                 (upper-connector *pipe*)
-                                                 (root-connector  *tee*)
-                                                 (lower-connector *pipe*))
-                "A local utility to add connectors to a string representation
+                                               (upper-connector *pipe*)
+                                               (root-connector  *tee*)
+                                               (lower-connector *pipe*))
+           "A local utility to add connectors to a string representation
                  of a tree segment to connect it to other tree segments."
-                (multiple-value-bind (u r l)
-                    (format-tree-segments child-node
-                        :layout         layout
-                        :node-formatter node-formatter)
-                    ; prefix tree segment with connector glyphs to connect it to
-                    ; other segments.
-                    (nconc
-                        (mapcar
-                            (lambda (str) (concatenate 'string upper-connector str))
-                            u)
-                         (list (concatenate 'string root-connector r))
-                         (mapcar
-                             (lambda (str) (concatenate 'string lower-connector str))
-                             l)))))
-        (let* ((children (rest node))
-              (pivot (case layout ; the split point of the list of children
-                         (:up   (length children)) ; split at top
-                         (:down 0)                 ; split at bottom
-                         (otherwise (round (/ (length children) 2))))) ; bisect
-              (upper-children (reverse (subseq children 0 pivot))) ; above root
-              (lower-children (subseq children pivot))) ; nodes below root
-        (values ; compile multiple value return of upper-children root lower children
-            (when upper-children
-                (loop with top = (prefix-node-strings (first upper-children)
-                                     :layout layout
-                                     :node-formatter node-formatter
-                                     :upper-connector *space*
-                                     :root-connector  *upper-knee*) ; top node has special connectors
-                    for child-node in (rest upper-children)
-                    nconc (prefix-node-strings child-node
-                              :layout layout
-                              :node-formatter node-formatter)
-                    into strlist
-                    finally (return (nconc top strlist))))
-            (let ((root-name (funcall node-formatter (car node)))) ; root node
-                (if (= 1 (length root-name))
-                    (concatenate 'string " " root-name) ; at least 2 chars needed
-                 ;else
-                     root-name))
-            (when lower-children
-                (loop for (head . tail) on lower-children
-                    while tail ; omit the last child
-                    nconc (prefix-node-strings head
-                              :layout layout
-                              :node-formatter node-formatter)
-                    into strlist
-                    finally (return
-                                (nconc
-                                    strlist
-                                    ; bottom node has special connectors
-                                    (prefix-node-strings head
-                                        :layout layout
-                                        :node-formatter  node-formatter
-                                        :root-connector  *lower-knee*
-                                        :lower-connector *space*)))))))))
+           (multiple-value-bind (u r l)
+               (format-tree-segments child-node
+                                     :layout         layout
+                                     :node-formatter node-formatter)
+                                        ; prefix tree segment with connector glyphs to connect it to
+                                        ; other segments.
+             (nconc
+              (mapcar
+               (lambda (str) (concatenate 'string upper-connector str))
+               u)
+              (list (concatenate 'string root-connector r))
+              (mapcar
+               (lambda (str) (concatenate 'string lower-connector str))
+               l)))))
+    (let* ((children (rest node))
+           (pivot (case layout ; the split point of the list of children
+                    (:up   (length children)) ; split at top
+                    (:down 0)                 ; split at bottom
+                    (otherwise (round (/ (length children) 2))))) ; bisect
+           (upper-children (reverse (subseq children 0 pivot))) ; above root
+           (lower-children (subseq children pivot))) ; nodes below root
+      (values ; compile multiple value return of upper-children root lower children
+       (when upper-children
+         (loop with top = (prefix-node-strings (first upper-children)
+                                               :layout layout
+                                               :node-formatter node-formatter
+                                               :upper-connector *space*
+                                               :root-connector  *upper-knee*) ; top node has special connectors
+               for child-node in (rest upper-children)
+               nconc (prefix-node-strings child-node
+                                          :layout layout
+                                          :node-formatter node-formatter)
+               into strlist
+               finally (return (nconc top strlist))))
+       (let ((root-name (funcall node-formatter (car node)))) ; root node
+         (if (= 1 (length root-name))
+             (concatenate 'string " " root-name) ; at least 2 chars needed
+                                        ;else
+             root-name))
+       (when lower-children
+         (loop for (head . tail) on lower-children
+               while tail ; omit the last child
+               nconc (prefix-node-strings head
+                                          :layout layout
+                                          :node-formatter node-formatter)
+               into strlist
+               finally (return
+                         (nconc
+                          strlist
+                                        ; bottom node has special connectors
+                          (prefix-node-strings head
+                                               :layout layout
+                                               :node-formatter  node-formatter
+                                               :root-connector  *lower-knee*
+                                               :lower-connector *space*)))))))))
 
 (defun fmt-tree (stream root &key 
-			       (plist nil)
-			       (layout :centered)
-                               (node-formatter #'write-to-string))
-    (multiple-value-bind (u r l)
-        (format-tree-segments (if plist (cons (car root) (group (cdr root) 2)) root)
-                              :layout layout
-                              :node-formatter node-formatter)
-        (format stream "~{~A~%~}" (nconc u (list r) l))))
+			     (plist nil)
+			     (layout :centered)
+                             (node-formatter #'write-to-string))
+  (multiple-value-bind (u r l)
+      (format-tree-segments (if plist (cons (car root) (group (cdr root) 2)) root)
+                            :layout layout
+                            :node-formatter node-formatter)
+    (format stream "~{~A~%~}" (nconc u (list r) l))))
 
 (defun human-readable-size (number)
   (check-type number integer)
   (loop for size in '(80 70 60 50 40 30 20 10)
-     and unit in '("YB" "ZB" "EB" "PB" "TB" "GB" "MB" "KB")
-     when (> (ash number (- size)) 0)
-     do (return-from human-readable-size
-          (format nil "~,2F ~A"
-                  (float (/ number (ash 1 size)))
-                  unit))))
+        and unit in '("YB" "ZB" "EB" "PB" "TB" "GB" "MB" "KB")
+        when (> (ash number (- size)) 0)
+        do (return-from human-readable-size
+             (format nil "~,2F ~A"
+                     (float (/ number (ash 1 size)))
+                     unit))))
 
+;;; MOP
+(defun describe-slot (name value &optional (max-slot-name-length 30) (stream t))
+  (format stream "~%~VA = ~A" max-slot-name-length name (sb-impl::prin1-to-line value)))
+
+;; FROM: sb-impl describe
+(defun %describe-object (object stream)
+  (let* ((class (class-of object))
+	 (slotds (sb-mop:class-slots class))
+	 (max-slot-name-length 30)
+	 (plist nil))
+    ;; Figure out a good width for the slot-name column.
+    (flet ((adjust-slot-name-length (name)
+	     (setf max-slot-name-length
+		   (max max-slot-name-length (length (symbol-name name))))))
+      (dolist (slotd slotds)
+	(adjust-slot-name-length (sb-mop:slot-definition-name slotd))
+	(push slotd (getf plist (sb-mop:slot-definition-allocation slotd)))))
+    ;; Now that we know the width, we can print.
+      (sb-int:doplist (allocation slots) plist
+	(dolist (slotd (nreverse slots))
+	  (describe-slot
+	   (sb-mop:slot-definition-name slotd)
+	   (sb-pcl::slot-value-for-printing object (sb-mop:slot-definition-name slotd)))))
+    (unless slotds
+      (format stream "~@:_No slots."))))
+
+(defun print-slots (object &optional (stream t))
+  (let ((*print-right-margin* (or *print-right-margin* 72))
+	(*print-circle* t)
+	(sb-impl::*print-circle-not-shared* t)
+	(*print-pretty* t)
+	(sb-impl::*suppress-print-errors*
+	  (if (subtypep 'serious-condition sb-impl::*suppress-print-errors*)
+	      sb-impl::*suppress-print-errors*
+	      'serious-condition)))
+    (%describe-object object stream)))
+
+(defun format-slots (stream &rest slots)
+  (let ((*print-right-margin* (or *print-right-margin* 72))
+	(*print-circle* t)
+	(sb-impl::*print-circle-not-shared* t)
+	(*print-pretty* t)
+	(sb-impl::*suppress-print-errors*
+	  (if (subtypep 'serious-condition sb-impl::*suppress-print-errors*)
+	      sb-impl::*suppress-print-errors*
+	      'serious-condition)))
+    (sb-int:doplist (k v) (print slots)
+      (describe-slot (string k) v 30 stream))
+    (force-output stream)))
 
 ;;; Box
-
+;; TODO 2025-04-04: 
 ;; APL Box Formatting (BQN/Dyalog/J)

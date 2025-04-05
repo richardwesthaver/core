@@ -372,9 +372,9 @@
   "Return status of MPD."
   (make-class (send "status") 'status))
 
-;; (defcommand stats ()
-;;   "Return statisics."
-;;   (make-class (send "stats") 'stats))
+(defcommand stats ()
+  "Return statisics."
+  (make-class (send "stats") 'stats))
 
 (defcommand outputs ()
   "Return information about all outputs."
@@ -570,15 +570,6 @@
 (defcommand rescan ()
   "Scan all music files and update the database."
   (send "rescan"))
-
-(defcommand stats ()
-  "Print database statistics."
-  (when-let ((res (send "stats")))
-    (mapcar 
-     (lambda (x) 
-       (destructuring-bind (k v) (split-sequence #\: x :count 2)
-         (cons (keywordicate (substitute #\- #\_ (string-upcase k))) (parse-integer v :junk-allowed t))))
-     res)))
 
 (defcommand find-tracks (type what)
   "Find tracks in the database with a case sensitive, exact match."

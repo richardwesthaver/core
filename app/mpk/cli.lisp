@@ -6,9 +6,9 @@
 (in-package :mpk/cli)
 (defcmd mpk-stats-cmd ()
   (mpd:with-mpc (*mpc*)
-    (describe (mpd:mpd-status *mpc*))
-    (dolist (s (mpd:mpd-stats *mpc*))
-      (format t "~A: ~A~%" (car s) (cdr s)))))
+    (print-slots (mpd:mpd-status *mpc*))
+    (print-slots (mpd:mpd-stats *mpc*))
+    (terpri)))
 
 (defcmd mpk-play-cmd ()
   (let ((arg (car *args*)))
