@@ -2,7 +2,7 @@
 (defsystem :ffi
   :depends-on (:sb-grovel
                :arrow :blake3 :btrfs :alsa
-               :jack
+               :jack :matroska
                :cuda :evdev :glib :gstreamer
                :keyutils :readline :rocksdb :rustls
                :sndfile :ssh2 :tree-sitter :ublk
@@ -11,7 +11,7 @@
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :ffi/tests
-  :depends-on (:arrow/tests :blake3/tests :btrfs/tests 
+  :depends-on (:arrow/tests :blake3/tests :btrfs/tests :matroska/tests
                :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
                :keyutils/tests :readline/tests :rocksdb/tests :rustls/tests
                :sndfile/tests :ssh2/tests :tree-sitter/tests :ublk
