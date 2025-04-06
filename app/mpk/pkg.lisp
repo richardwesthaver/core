@@ -15,48 +15,48 @@
   (:export
    :with-mpc
    :ensure-mpd
-   :mpd-ping
-   :mpd-kill
-   :mpd-status
-   :mpd-now-playing
-   :mpd-pause
-   :mpd-play
-   :mpd-previous
-   :mpd-next
-   :mpd-crossfade
-   :mpd-add
-   :mpd-add-id
-   :mpd-move
-   :mpd-move-id
-   :mpd-swap
-   :mpd-swap-id
-   :mpd-clear
-   :mpd-delete-track
-   :mpd-delete-id
-   :mpd-save-playlist
-   :mpd-load-playlist
-   :mpd-rename-playlist
-   :mpd-playlist-info
-   :mpd-playlist-changes
-   :mpd-shuffle
-   :mpd-list-playlist
-   :mpd-list-playlist-info
-   :mpd-add-to-playlist
-   :mpd-clear-playlist
-   :mpd-delete-from-playlist
-   :mpd-move-in-playlist
-   :mpd-find-in-current-playlist
-   :mpd-search-in-current-playlist
-   :mpd-update
-   :mpd-rescan
-   :mpd-stats
-   :mpd-list-all
-   :mpd-list-info
-   :mpd-list-all-info
-   :mpd-find-tracks
-   :mpd-search-tracks
-   :mpd-list-metadata
-   :mpd-count-tracks
+   :mpc-ping
+   :mpc-kill
+   :mpc-status
+   :mpc-now-playing
+   :mpc-pause
+   :mpc-play
+   :mpc-previous
+   :mpc-next
+   :mpc-crossfade
+   :mpc-add
+   :mpc-add-id
+   :mpc-move
+   :mpc-move-id
+   :mpc-swap
+   :mpc-swap-id
+   :mpc-clear
+   :mpc-delete-track
+   :mpc-delete-id
+   :mpc-save-playlist
+   :mpc-load-playlist
+   :mpc-rename-playlist
+   :mpc-playlist-info
+   :mpc-playlist-changes
+   :mpc-shuffle
+   :mpc-list-playlist
+   :mpc-list-playlist-info
+   :mpc-add-to-playlist
+   :mpc-clear-playlist
+   :mpc-delete-from-playlist
+   :mpc-move-in-playlist
+   :mpc-find-in-current-playlist
+   :mpc-search-in-current-playlist
+   :mpc-update
+   :mpc-rescan
+   :mpc-stats
+   :mpc-list-all
+   :mpc-list-info
+   :mpc-list-all-info
+   :mpc-find-tracks
+   :mpc-search-tracks
+   :mpc-list-metadata
+   :mpc-count-tracks
    :playlist
    :track
    :file
@@ -69,13 +69,13 @@
    :composer
    :position-in-playlist
    :mpd-error
-   :mpd-artists
-   :mpd-albums
-   :mpd-songs
-   :mpd-uptime
-   :mpd-playtime
-   :mpd-db-playtime
-   :mpd-db-update
+   :mpc-artists
+   :mpc-albums
+   :mpc-songs
+   :mpc-uptime
+   :mpc-playtime
+   :mpc-db-playtime
+   :mpc-db-update
    :mpd-config))
 
 (defpackage :mpk

@@ -810,7 +810,7 @@
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/seq
    :std/sys :std/readtable :std/pipe :std/serde
-   :std/rand))
+   :std/rand :std/async :std/par :std/spin))
 
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std

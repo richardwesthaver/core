@@ -155,10 +155,10 @@
                             `(defmethod ,name ((stream socket))
                                (,name (,class stream))))
                           names))))
-  (generate-commands mpd-status
+  (generate-commands mpc-status
                      (volume repeat randomized last-loaded-playlist playlist-version playlistlength
                       xfade state audio bitrate duration songid song updating))
-  (generate-commands mpd-stats
+  (generate-commands mpc-stats
                      (artists albums songs uptime playtime db-playtime db-update)))
 
 (defparameter *integer-keys*
@@ -182,13 +182,13 @@
 (defvar *default-host* (or (sb-posix:getenv "MPD_HOST") "localhost"))
 (defvar *default-port* (or (when-let ((port (sb-posix:getenv "MPD_PORT"))) (parse-integer port)) 6600))
 
-(defun mpd-connect (&key (host *default-host*) (port *default-port*) password)
+(defun mpc-connect (&key (host *default-host*) (port *default-port*) password)
   "Connect to MPD."
   (let ((connection (socket-connect (make-instance 'inet-socket :type :stream) (get-address-by-name host) port)))
     (prog1 (values connection
                    (read-answer (socket-make-stream connection :input t :output t)))
       (when password
-        (mpd-password connection password)))))
+        (mpc-password connection password)))))
 
 (defun read-answer (stream)
   (loop for line = (read-line stream)
@@ -206,10 +206,10 @@
 
 (eval-always
   (defmacro with-mpc ((var &rest options) &body body)
-    `(let ((,var (mpd-connect ,@options)))
+    `(let ((,var (mpc-connect ,@options)))
        (unwind-protect
             (progn ,@body)
-         (mpd-disconnect ,var)))))
+         (mpc-disconnect ,var)))))
 
 (defun ensure-mpd ()
   (handler-case
@@ -314,7 +314,7 @@
                          (remove nil (list ,@commands)))))
 
 (defmacro defcommand (name parameters &body body)
-  `(defun ,(symbolicate "MPD-" name) (connection ,@parameters)
+  `(defun ,(symbolicate "MPC-" name) (connection ,@parameters)
      ,@body))
 
 (defmacro defmethod-command (name parameters &body body)

@@ -8,8 +8,8 @@
   (mpd:with-mpc (*mpc*)
     (let ((*print-slot-indent* 2))
       (print *mpc*)
-      (print-slots (mpd:mpd-status *mpc*))
-      (print-slots (mpd:mpd-stats *mpc*)))
+      (print-slots (mpd:mpc-status *mpc*))
+      (print-slots (mpd:mpc-stats *mpc*)))
     (terpri)))
 
 (defcmd mpk-play-cmd ()
