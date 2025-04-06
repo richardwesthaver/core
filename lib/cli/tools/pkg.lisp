@@ -65,7 +65,14 @@
    :load-picard-config
    :picard-config
    :*picard-config-path*
-   :*picard-commands*))
+   :*picard-commands*
+   :ffmpeg-format
+   :ffmpeg-codec
+   :ffmpeg-codec-props
+   :ffmpeg-format-props
+   :do-picard
+   :picard-error
+   :wireplumber-error))
 
 (defpackage :cli/tools/go
   (:nicknames :tools/go)
@@ -114,7 +121,13 @@
    :ytdl-list
    :ytdl-user-agent
    :ytdl-extractors
-   :ytdl-json))
+   :ytdl-json
+   :run-transmission-remote
+   :run-transmission-daemon
+   :transmission-remote-error
+   :*transmission-remote*
+   :transmission-daemon-error
+   :*transmission-daemon*))
 
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/tools/proto :cli/env)

@@ -9,42 +9,6 @@
 
 (in-package :std-int)
 
-(defpackage :std/condition
-  (:use :cl)
-  (:shadowing-import-from :asdf :error-name)
-  (:export
-   :*error-message*
-   :std-error :error-message
-   :define-error-reporter
-   :deferror
-   :nyi!
-   :required-argument
-   :ignore-some-conditions
-   :simple-style-warning
-   :simple-reader-error
-   :simple-parse-error
-   :simple-program-error
-   :circular-dependency
-   :circular-dependency-items
-   :unknown-argument
-   :error-name
-   :error-kind
-   :missing-argument
-   :missing-argument-command
-   :error-item
-   :error-reason
-   :invalid-argument
-   :unwind-protect-case
-   :def-simple-error-reporter
-   :std-warning
-   :defwarning
-   :def-simple-warning-reporter
-   :def-warning-reporter
-   :meta-condition
-   :missing-method
-   :missing-methods
-   :conflicting-arguments))
-
 (defpkg :std/sym
   (:use :cl)
   (:mix :sb-int)
@@ -90,6 +54,43 @@
    :circular-list :circular-list-p :circular-tree-p :merge!
    :sort!
    :set-equal))
+
+(defpackage :std/condition
+  (:use :cl)
+  (:shadowing-import-from :asdf :error-name)
+  (:import-from :std/list :flatten)
+  (:export
+   :*error-message*
+   :std-error :error-message
+   :define-error-reporter
+   :deferror
+   :nyi!
+   :required-argument
+   :ignore-some-conditions
+   :simple-style-warning
+   :simple-reader-error
+   :simple-parse-error
+   :simple-program-error
+   :circular-dependency
+   :circular-dependency-items
+   :unknown-argument
+   :error-name
+   :error-kind
+   :missing-argument
+   :missing-argument-command
+   :error-item
+   :error-reason
+   :invalid-argument
+   :unwind-protect-case
+   :def-simple-error-reporter
+   :std-warning
+   :defwarning
+   :def-simple-warning-reporter
+   :def-warning-reporter
+   :meta-condition
+   :missing-method
+   :missing-methods
+   :conflicting-arguments))
    
 (defpkg :std/type
   (:use :cl)
@@ -642,7 +643,7 @@
   (:shadowing-import-from :uiop :println)
   (:export :printer-status :fmt-row :format-sxhash 
    :iprintln :fmt-tree :println :human-readable-size 
-   :print-slots :format-slots))
+   :print-slots :format-slots :*print-slot-indent*))
 
 (defpkg :std/path
   (:use :cl)

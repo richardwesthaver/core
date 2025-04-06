@@ -30,6 +30,15 @@
   (lossy boolean)
   (lossless boolean))
 
+(defun list-ffmpeg-codec-props (i)
+  (list
+   :decode (ffmpeg-codec-props-decode i)
+   :encode (ffmpeg-codec-props-encode i)
+   :type (ffmpeg-codec-props-type i)
+   :intra (ffmpeg-codec-props-intra i)
+   :lossy (ffmpeg-codec-props-lossy i)
+   :lossless (ffmpeg-codec-props-lossless i)))
+
 (defun parse-ffmpeg-codec-type (char)
   (ecase char
     (#\V :video)
@@ -50,8 +59,14 @@
 
 (defstruct ffmpeg-codec (props 0 :type ffmpeg-codec-props) name description)
 
+(defmethod print-object ((self ffmpeg-codec) stream)
+  (format stream "#S(~A ~A ~{~S~^ ~})"
+          (type-of self)
+          (ffmpeg-codec-name self)
+          (list-ffmpeg-codec-props (ffmpeg-codec-props self))))
+
 (defun read-ffmpeg-codec (stream)
-  (when-let ((props (read stream nil nil))
+  (when-let ((props (string (read stream nil nil)))
              (name (read stream nil nil))
              (description (trim (read-line stream nil nil))))
     (make-ffmpeg-codec :props (parse-ffmpeg-codec-props props) :name name :description description)))
@@ -65,10 +80,45 @@
               while f
               collect f)))))
 
-;; TODO 2025-03-23: 
-;; (defun list-ffmpeg-formats ()
-;;   (with-output-to-string (s)
-;;     (run-ffmpeg (list "-v" "0" "-formats") s)))
+(defstruct ffmpeg-format props name description)
+
+(defmethod print-object ((self ffmpeg-format) stream)
+  (format stream "#S(~A ~A ~{~S~^ ~})"
+	  (type-of self)
+	  (ffmpeg-format-name self)
+	  (list-ffmpeg-format-props (ffmpeg-format-props self))))
+
+(define-bitfield ffmpeg-format-props
+  (mux boolean)
+  (demux boolean)
+  (device boolean))
+
+(defun list-ffmpeg-format-props (i)
+  (list
+   :mux (ffmpeg-format-props-mux i)
+   :demux (ffmpeg-format-props-demux i)
+   :device (ffmpeg-format-props-device i)))
+
+(defun parse-ffmpeg-format-props (str)
+  (make-ffmpeg-format-props
+   :demux (find #\D str)
+   :mux (find #\E str)
+   :device (find #\d str)))
+
+(defun read-ffmpeg-format (stream)
+  (when-let ((props (string (read stream nil nil)))
+	     (name (read stream nil nil))
+	     (description (trim (read-line stream nil nil))))
+    (make-ffmpeg-format :props (parse-ffmpeg-format-props props) :name name :description description)))
+  
+(defun list-ffmpeg-formats ()
+  (let ((ret (with-output-to-string (s)
+               (run-ffmpeg (list "-v" "0" "-formats") s))))
+    (when-let ((i (search " ---" ret)))
+      (with-input-from-string (s (subseq ret (+ i 5)))
+        (loop for f = (print (read-ffmpeg-format s))
+              while f
+              collect f)))))
 
 (define-cli-tool :mpv (&rest args)
   (let ((proc (sb-ext:run-program *ffmpeg* args :wait t :output t)))
@@ -82,8 +132,8 @@
 
 (define-cli-tool :picard (args &key (wait t) (output t))
   (let ((proc (sb-ext:run-program *picard* args :wait wait :output output)))
-    (unless (eq 0 (sb-ext:process-exit-code proc))
-      (picard-error "PICARD command failed: ~A ~A" *picard* (or args "")))))
+    (unless (positive-integer-p #1=(sb-ext:process-exit-code proc))
+      (picard-error "PICARD command failed: ~A ~{~A ~^~}~%exit-code = ~A" *picard* (or args "") #1#))))
 
 (defvar *picard-config-path* (merge-homedir-pathnames ".config/MusicBrainz/Picard.ini"))
 
@@ -122,6 +172,30 @@
     (when (member cmd *picard-commands*)
       (substitute #\_ #\- (string-upcase cmd)))))
 
+;; TODO 2025-04-05: 
+(defun %do-picard (body)
+  "Execute a sequence of forms where atoms are interpreted by picard as commands
+or arguments and lists are evaluated  interpreted as args."
+  (let ((cmd) (args) (ret))
+    (loop for i below (length body)
+          for a in body
+          do (typecase a
+               (symbol (if cmd
+                           (progn
+                             (push (cons cmd args) ret)
+                             (setf cmd a
+                                   args nil))
+                           (setf cmd a)))
+               (t (push (format nil "~A" a) args)))
+          finally 
+             (progn
+               (when cmd (push (cons cmd args) ret))
+               (return (nreverse ret))))))
+
 (defun exec-picard (&rest commands)
   "Execute a PICARD batch program consisting of COMMANDS."
-  (apply 'run-picard (cons "-e" (apply 'picard-cmd commands))))
+  (run-picard (flatten (mapcar (lambda (x) (cons "-e" (rplaca x (string (car x))))) commands))))
+
+(defmacro do-picard (&body body)
+  `(progn
+     (apply 'exec-picard ',(%do-picard body))))

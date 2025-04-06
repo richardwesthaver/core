@@ -168,8 +168,10 @@ be produced by `sxhash'."
                      unit))))
 
 ;;; MOP
-(defun describe-slot (name value &optional (max-slot-name-length 30) (stream t))
-  (format stream "~%~VA = ~A" max-slot-name-length name (sb-impl::prin1-to-line value)))
+(defvar *print-slot-indent* 0)
+
+(defun describe-slot (name value &optional (max-slot-name-length 30) (stream t) (indent *print-slot-indent*))
+  (format stream "~%~A~VA = ~A" (make-string indent :initial-element #\space) max-slot-name-length name (sb-impl::prin1-to-line value)))
 
 ;; FROM: sb-impl describe
 (defun %describe-object (object stream)

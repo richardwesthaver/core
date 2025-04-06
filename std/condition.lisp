@@ -37,7 +37,11 @@
 
 (defmacro deferror (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an error condition."
-  (let ((fun (member :auto options :test #'car-eql)))
+  (let ((fun (member :auto options :test #'car-eql))
+        (%ancestors (flatten (mapcar (lambda (x) 
+                                       (mapcar 'sb-mop:class-name 
+                                               (sb-mop:class-precedence-list (find-class x))))
+                                     parent-types))))
     (when fun 
       (setq options (remove (car fun) options))
       (setq fun (cadar fun)))
@@ -46,12 +50,12 @@
            (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))
        (when ',fun
          (cond 
-           ((or (member 'simple-error ',parent-types)
-                (member 'simple-condition ',parent-types))
+           ((or (member 'simple-error ',%ancestors)
+                (member 'simple-condition ',%ancestors))
             (def-simple-error-reporter ,name))
            ((or
-             (member 'invalid-item ',parent-types)
-             (member 'invalid-argument ',parent-types))
+             (member 'invalid-item ',%ancestors)
+             (member 'invalid-argument ',%ancestors))
             (def-invalid-item-reporter ,name))
            ((stringp ',fun)
             (def-error-reporter ,name ',fun))

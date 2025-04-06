@@ -105,6 +105,8 @@
 	("cdn" . "https://cdn.compiler.company/%s")
         ("packy" . "https://packy.compiler.company/%s")
         ("yt" . "https://youtube.com/watch?v=%s")
+	("gh" . "https://github.com/%s")
+	("cb" . "https://codeberg.org/%s")
         ("wikipedia" . "https://en.wikipedia.org/wiki/%s")
         ("reddit" . "https://reddit.com/%s")
         ("hn" . "https://news.ycombinator.com/%s")

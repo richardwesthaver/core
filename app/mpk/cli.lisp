@@ -6,8 +6,10 @@
 (in-package :mpk/cli)
 (defcmd mpk-stats-cmd ()
   (mpd:with-mpc (*mpc*)
-    (print-slots (mpd:mpd-status *mpc*))
-    (print-slots (mpd:mpd-stats *mpc*))
+    (let ((*print-slot-indent* 2))
+      (print *mpc*)
+      (print-slots (mpd:mpd-status *mpc*))
+      (print-slots (mpd:mpd-stats *mpc*)))
     (terpri)))
 
 (defcmd mpk-play-cmd ()

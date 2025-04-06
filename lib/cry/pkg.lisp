@@ -1,3 +1,16 @@
+;;; pkg.lisp --- Crypto Packages
+
+;; 
+
+;;; Code:
+
+#|
+(ironclad:digest-file :sha1 "/tmp/picard01t0fjkc.jpg")
+
+(cry/b3::load-blake3)
+(cry/b3:b3sum "/tmp/picard01t0fjkc.jpg" :hex nil)
+|#
+
 (defpackage :cry
   (:nicknames :cryptography)
   (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)

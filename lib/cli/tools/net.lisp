@@ -234,3 +234,30 @@
 
 (req:get "http://127.0.0.1:2015") ;; Hello, world!
 |#
+
+;;; Transmission
+(defvar *transmission-user-config-directory* (merge-homedir-pathnames ".config/transmission/"))
+
+(defconfig transmission-config ()
+  ((settings :initarg :settings :type transmission-settings)))
+
+(defconfig transmission-settings (json:json-object) ())
+
+(defmethod make-config ((obj (eql :transmission)) &key settings)
+  (make-instance 'transmission-config :settings settings))
+
+(defun load-transmission-config (&optional (path *transmission-user-config-directory*))
+  (make-config :transmission 
+               :settings (change-class 
+                          (deserialize (merge-pathnames "settings.json" path) :json)
+                          'transmission-settings)))
+
+(define-cli-tool :transmission-remote (args &key (wait t) (output t))
+  (let ((proc (sb-ext:run-program *transmission-remote* args :wait wait :output output)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (transmission-remote-error "TRANSMISSION-REMOTE command failed: ~A ~A" *transmission-remote* (or args "")))))
+
+(define-cli-tool :transmission-daemon (args &key (wait t) (output t))
+  (let ((proc (sb-ext:run-program *transmission-daemon* args :wait wait :output output)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (transmission-daemon-error "TRANSMISSION-DAEMON command failed: ~A ~A" *transmission-daemon* (or args "")))))

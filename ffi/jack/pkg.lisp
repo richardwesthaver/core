@@ -7,12 +7,9 @@
   (:use :cl :std :log :sb-alien)
   (:export :load-jack
            :jack-get-version-string
-           :*jack-default-audio-type*
-           :*jack-default-midi-type*
            :jackoptions
            :jackportflags
            :jack-client-name-size
-           :input-port
            :jack-client-open
            :jack-get-sample-rate
            :jack-port-type-get-buffer-size
@@ -90,22 +87,27 @@
            :jack-connect-audio-client-to-system-output
            :ms->frame
            :sec->frame
-           :frame->period-offset))
+           :frame->period-offset
+           :+jack-default-midi-type+
+           :+jack-default-audio-type+))
 
 (in-package :jack)
 
+(defconstant +jack-max-frames+ 4294967295)
 (define-alien-loader :jack "/usr/lib/")
 
 (define-alien-routine jack-get-version-string c-string)
 
 (define-alien-type jack-nframes-t unsigned-int)
+
 (define-alien-type jack-port-t (* t))
 (define-alien-type jack-options-t (* t))
 (define-alien-type jack-time-t unsigned-long)
 (define-alien-type jack-midi-data-t unsigned-char)
 
-(defvar *jack-default-audio-type* "32 bit float mono audio")
-(defvar *jack-default-midi-type* "8 bit raw midi")
+(define-constant +jack-default-audio-type+ "32 bit float mono audio" :test 'string=)
+(define-constant +jack-default-midi-type+ "8 bit raw midi" :test 'string=)
+
 (define-alien-type jack-default-audio-sample-t float)
 
 (define-alien-enum (jackoptions int)
@@ -125,7 +127,6 @@
   :is-terminal #x10)
 
 (define-alien-routine jack-client-name-size int)
-(define-alien-routine input-port jack-port-t)
 (define-alien-routine jack-client-open (* t)
   (name c-string)
   (opt int)
@@ -331,7 +332,7 @@
     (seqhash-midi-event seq frame event)))
 
 (defun seqhash-midi-program-change (seq frame program &optional (channel 1))
-  (let ((event (make-instance 'midi:program-change-message frame program channel)))
+  (let ((event (make-instance 'midi:program-change-message :time frame :program program :status channel)))
     (seqhash-midi-event seq frame event)))
 
 (defun seqhash-midi-control-change (seq frame control value &optional (channel 1))
@@ -340,7 +341,7 @@
 
 (defun seqhash-midi-pitch-wheel-msg (seq frame bend &optional (channel 1))
   ;; expects values between -8192->8191
-  (let ((event (make-instance 'midi:pitch-bend-message frame bend channel)))   ;;; use bend: in OM 6.9 values are 0-16383
+  (let ((event (make-instance 'midi:pitch-bend-message :time frame :value bend :status channel)))
     (seqhash-midi-event seq frame event)))
 
 ;; erase pending note-offs for interval - don't shut off later arriving notes
@@ -537,15 +538,14 @@
 	   (let ((in (jack-port-get-buffer inport nframes))
 	         (out (jack-port-get-buffer outport nframes)))
 	     (memcpy out in
-		     (* nframes (std/alien::foreign-type-size 'size-t)))))
-  
+		     (* nframes #.(std/alien::foreign-type-size 'size-t)))))
   0)
-;;(jack-deactivate *jack-client*)
 
 (defun jack-connect-audio-client-to-system-output ()
-  (loop for port in *jack-audio-output-ports*
-        for system-out from 1
-        do (or (not  (minusp (jack-connect *jack-client*
-					   (jack-port-name port)
-					   (format nil "system:playback_~A" system-out))))
-	       (warn "could not connect JACK port ~A to output-port ~A" (jack-port-name port) system-out))))
+  (let ((ports (take 2 *jack-audio-output-ports*)))
+    (with-alien ((l jack-port-t (pop ports))
+                 (r jack-port-t (pop ports)))
+      (or (not (minusp (jack-connect *jack-client* #1=(jack-port-name (addr l)) "playback_FL")))
+          (warn "could not connect JACK port ~A to output-port playback_FL" #1#))
+      (or (not (minusp (jack-connect *jack-client* #2=(jack-port-name (addr r)) "playback_FR")))
+          (warn "could not connect JACK port ~A to output-port playback_FR" #2#)))))
