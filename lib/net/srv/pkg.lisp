@@ -493,7 +493,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
   (:documentation "The service class is designed primarily for webservers and functionally
 similar to HUNCHENTOOT:ACCEPTOR."))
 
-(defaccessor (name) ((self net-service)) (id:id self))
+(defaccessor name ((self net-service)) (id:id self))
 
 (defmethod message-log-output ((self net-service))
   (message-log-output (logger self)))
@@ -506,7 +506,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
     (format stream "~A on port ~A"
             (or (address self) "*") (port self))))
 
-(defaccessor (sesion-db) ((self net-service)) *session-db*)
+(defaccessor sesion-db ((self net-service)) *session-db*)
 
 (defmethod service-log-message ((self net-service) level format-string &rest args)
   (log:with-log-stream (stream (message-log-output self) *message-log-lock*)

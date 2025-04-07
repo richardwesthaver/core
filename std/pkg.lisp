@@ -517,7 +517,7 @@
 
 (defpkg :std/meta
   (:use :cl :sb-mop :sb-pcl)
-  (:import-from :std/sym :symb :make-keyword)
+  (:import-from :std/sym :symb :make-keyword :with-gensyms)
   (:import-from :sb-ext :without-package-locks)
   (:import-from :std/macs :eval-always)
   (:shadow :reset)

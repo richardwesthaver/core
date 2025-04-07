@@ -64,7 +64,7 @@
 (defmethod write-ast ((self field) stream &key)
   (write (build-ast self) :stream stream))
 
-(defaccessor (name) ((self field)) (field-name self))
+(defaccessor name ((self field)) (field-name self))
 
 (defmethod make-load-form ((self field) &optional env)
   (declare (ignore env))
@@ -112,9 +112,9 @@ SCHEMA."
   (schema (make-simple-schema (gensym "RECORD")) :type schema)
   (fields #() :type field-vector))
 
-(defaccessor (schema) ((self record-batch)) (record-batch-schema self))
-(defaccessor (fields) ((self record-batch)) (record-batch-fields self))
-(defaccessor (name) ((self record-batch)) (name (schema self)))
+(defaccessor schema ((self record-batch)) (record-batch-schema self))
+(defaccessor fields ((self record-batch)) (record-batch-fields self))
+(defaccessor name ((self record-batch)) (name (schema self)))
 
 (defmethod make-load-form ((self record-batch) &optional env)
   (declare (ignore env))

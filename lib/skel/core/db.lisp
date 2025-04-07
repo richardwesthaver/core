@@ -29,8 +29,8 @@
       (when name (setf (name db) name))
       db)))
 
-(defaccessor (name) ((self skel-db)) (rdb-name (db self)))
-(defaccessor (path) ((self skel-db)) (rdb-name (db self)))
+(defaccessor name ((self skel-db)) (rdb-name (db self)))
+(defaccessor path ((self skel-db)) (rdb-name (db self)))
 
 (defmethod initialize-instance :before ((self skel-db) &rest initargs &key name path &allow-other-keys)
   (declare (ignore initargs))

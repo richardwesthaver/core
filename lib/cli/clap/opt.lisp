@@ -41,8 +41,8 @@
   (description nil :type (or null string))
   (lock nil :type boolean))
 
-(defaccessor (cli-thunk) ((self cli-opt)) (cli-opt-thunk self))
-(defaccessor (cli-name) ((self cli-opt)) (cli-opt-name self))
+(defaccessor cli-thunk ((self cli-opt)) (cli-opt-thunk self))
+(defaccessor cli-name ((self cli-opt)) (cli-opt-name self))
 
 (defmethod activate-opt ((self cli-opt))
   (setf (cli-opt-lock self) t))

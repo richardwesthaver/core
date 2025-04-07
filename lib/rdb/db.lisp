@@ -184,9 +184,9 @@ extractor."
 protocol and contains a CF slot which contains an RDB-CF structure
 object. (SAP CF) is the raw pointer."))
 
-(defaccessor (name) ((self rdb-column-family)) (name (cf self)))
-(defaccessor (sap) ((self rdb-column-family)) (sap (cf self)))
-(defaccessor (column-opts) ((self rdb-column-family)) (rdb-cf-opts (cf self)))
+(defaccessor name ((self rdb-column-family)) (name (cf self)))
+(defaccessor sap ((self rdb-column-family)) (sap (cf self)))
+(defaccessor column-opts ((self rdb-column-family)) (rdb-cf-opts (cf self)))
 
 (defmethod destroy-column ((self rdb-column-family) &optional error)
   (destroy-column (cf self) error))
@@ -479,9 +479,9 @@ extractor."
   (when-let ((db (and #1=(db self) (sap #1#))))
     (rocksdb-property-value db "rocksdb.current-super-version-number")))
 
-(defaccessor (name) ((self rdb-database)) (name (db self)))
-(defaccessor (sap) ((self rdb-database)) (sap (db self)))
-(defaccessor (db-opts) ((self rdb-database)) (db-opts (db self)))
+(defaccessor name ((self rdb-database)) (name (db self)))
+(defaccessor sap ((self rdb-database)) (sap (db self)))
+(defaccessor db-opts ((self rdb-database)) (db-opts (db self)))
 (defaccessor* db-opt 
     ((self rdb-database) key) (db-opt (db-opts self) key)
     (new (self rdb-database) key &key push)

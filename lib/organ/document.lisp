@@ -14,7 +14,7 @@
   ((meta :initform nil :initarg :meta :type (or null org-zeroth-section) :accessor doc-meta)
    (tree :initform nil :initarg :tree :type (or (vector org-heading) null) :accessor doc-tree)))
 
-(defaccessor (ast) ((self org-document)) (doc-tree self))
+(defaccessor ast ((self org-document)) (doc-tree self))
 
 (defmethod org-create ((type (eql :document)) &rest initargs)
   (apply #'make-instance (sym-to-org-class-name type) initargs))

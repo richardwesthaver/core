@@ -66,6 +66,7 @@
 
 ;;; Scheduler
 (defgeneric schedule (self &key &allow-other-keys))
+(defgeneric (setf schedule) (new self &key &allow-other-keys))
 
 ;;; Kernel
 

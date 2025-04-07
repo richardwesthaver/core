@@ -233,6 +233,13 @@
    :invalid-parameter-key
    :invalid-parameter-value))
 
+(defpackage :net/proto/transmission
+  (:nicknames :net/transmission)
+  (:import-from :id :id)
+  (:import-from :uri :uri)
+  (:import-from :srv :request :response :service :session :request-protocol :content-stream)
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :net/proto/http))
+
 (defpackage :net/proto/dm
   (:nicknames :net/dm)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :net/codec/tlv))
@@ -249,45 +256,26 @@
   (:use :cl :std :parse/bytes :obj/uri)
   (:shadowing-import-from :alexandria :when-let :if-let)
   (:import-from :obj/time
-   :today
-                :timestamp-century
-   :timestamp-to-universal
-                :universal-to-timestamp
-   :format-timestring
-                :encode-timestamp
-   :*abbreviated-subzone-name->timezone-list*
-                :reread-timezone-repository
-   :timezone-subzones
-                :subzone-abbrev
-   :subzone-offset
-                :+gmt-zone+)
+   :today :timestamp-century
+   :timestamp-to-universal :universal-to-timestamp
+   :format-timestring :encode-timestamp
+   :*abbreviated-subzone-name->timezone-list* :reread-timezone-repository
+   :timezone-subzones :subzone-abbrev
+   :subzone-offset :+gmt-zone+)
   (:export :parse-set-cookie-header
-   :write-cookie-header
-           :write-set-cookie-header
-   :cookie
-           :make-cookie
-   :cookie=
-           :cookie-equal
-   :cookie-name
-           :cookie-value
-   :cookie-expires
-           :cookie-path
-   :cookie-domain
-           :cookie-same-site
-   :cookie-max-age
-           :cookie-partitioned
-   :cookie-secure-p
-           :cookie-httponly-p
-   :cookie-origin-host
-           :cookie-jar
-   :make-cookie-jar
-           :cookie-jar-cookies
-   :cookie-jar-host-cookies
-           :merge-cookies
-   :cookie-p
-           :copy-cookie
-   :cookie-creation-timestamp
-           :stringify-cookie
+   :write-cookie-header :write-set-cookie-header
+   :cookie :make-cookie
+   :cookie= :cookie-equal
+   :cookie-name :cookie-value
+   :cookie-expires :cookie-path
+   :cookie-domain :cookie-same-site
+   :cookie-max-age :cookie-partitioned
+   :cookie-secure-p :cookie-httponly-p
+   :cookie-origin-host :cookie-jar
+   :make-cookie-jar :cookie-jar-cookies
+   :cookie-jar-host-cookies :merge-cookies
+   :cookie-p :copy-cookie
+   :cookie-creation-timestamp :stringify-cookie
    :cookie-date))
 
 (defpackage :net/req

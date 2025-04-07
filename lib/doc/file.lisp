@@ -201,7 +201,7 @@ position is always assumed to be 0."
   contains inline comments. Symbol documentation such as this one will
   not be captured in instances of this object."))
 
-(defaccessor (path) ((self file-documentation)) (doc-path self))
+(defaccessor path ((self file-documentation)) (doc-path self))
 
 (defmethod print-object ((self file-documentation) stream)
   (print-unreadable-object (self stream :type t)

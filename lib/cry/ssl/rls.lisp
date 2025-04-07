@@ -6,7 +6,7 @@
 (in-package :ssl)
 
 (defstruct rls-connection (sap nil))
-(defaccessor (sap) ((self rls-connection)) (rls-connection-sap self))
+(defaccessor sap ((self rls-connection)) (rls-connection-sap self))
 
 (defclass rls-client-config (config) 
   ((sap :initform nil :initarg :sap :accessor sap)

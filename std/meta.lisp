@@ -126,13 +126,15 @@ directly to a DEFMETHOD form."
        ,@(loop for form in forms
                collect `(defmethod ,name ,@form)))))
 
-(defmacro defaccessor ((name &optional (type 't)) args &body expansion)
+(defmacro defaccessor (name-and-opts args &body expansion)
   "Define a pair of methods - an accessor with NAME and setf method for that accessor
 which simply expands to: (SETF EXPANSION %VAL)."
-  (eval-always
-    `(progn
-       (defmethod ,name ,args ,@expansion)
-       (defmethod (setf ,name) ,(push `(new ,type) args) (setf ,@expansion new)))))
+  (let ((name (if (atom name-and-opts) name-and-opts (pop name-and-opts)))
+        (type (if (atom name-and-opts) t (pop name-and-opts))))
+    (eval-always
+      `(progn
+         (defmethod ,name ,args ,@expansion)
+         (defmethod (setf ,name) ,(push `(new ,type) args) (setf ,@expansion new))))))
 
 (defmacro defaccessor* (name args expansion setf-args &body setf-expansion)
     "Handle special case DEFACCESSOR forms. In higher-level packages we will

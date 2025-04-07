@@ -84,7 +84,7 @@
             :accessor session)
    (protocol :initarg :request-protocol :reader request-protocol)
    (content-stream :initarg :content-stream :reader content-stream)
-   (data :initarg :data :accessor request-data)))
+   (data :initarg :data :accessor data)))
 
 (defconfig service-config () ())
 ;;; Protocol

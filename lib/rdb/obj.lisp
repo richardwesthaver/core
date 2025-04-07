@@ -97,8 +97,8 @@ just the keys currently present in TABLE."
                         (pull-sap* self))
                     (db-opts self))
                   ;; (defun ,(symbolicate 'default- name) ())
-                  (defaccessor (sap) ((self ,name)) (,(symbolicate name '-sap) self))
-                  (defaccessor (db-opts) ((self ,name)) (,(symbolicate name '-table) self))
+                  (defaccessor sap ((self ,name)) (,(symbolicate name '-sap) self))
+                  (defaccessor db-opts ((self ,name)) (,(symbolicate name '-table) self))
                   (defun ,(symbolicate 'default- name) ()
                     (,(symbolicate 'make- name) ,@defaults))
                   (defvar ,(symbolicate '*default- name '*) (,(symbolicate 'default- name)))))))
@@ -115,7 +115,7 @@ just the keys currently present in TABLE."
 (defstruct rdb-iter 
   (sap nil :type (or null (alien (* rocksdb-iterator)))))
 
-(defaccessor (sap) ((self rdb-iter)) (rdb-iter-sap self))
+(defaccessor sap ((self rdb-iter)) (rdb-iter-sap self))
 
 (defmethod iter-valid-p ((self rdb-iter))
   (rocksdb-iter-valid (sap self)))
@@ -173,9 +173,9 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (opts (default-rdb-opts) :type rdb-opts)
   (sap nil :type (or null (alien (* rocksdb-column-family-handle)))))
 
-(defaccessor (column-opts) ((self rdb-cf)) (rdb-cf-opts self))
-(defaccessor (sap) ((self rdb-cf)) (rdb-cf-sap self))
-(defaccessor (name) ((self rdb-cf)) (rdb-cf-name self))
+(defaccessor column-opts ((self rdb-cf)) (rdb-cf-opts self))
+(defaccessor sap ((self rdb-cf)) (rdb-cf-sap self))
+(defaccessor name ((self rdb-cf)) (rdb-cf-name self))
 
 (defmethod close-column ((self rdb-cf) &optional error)
   (if-let ((sap (sap self)))
@@ -192,7 +192,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
 (defstruct (rdb-stats (:constructor make-rdb-stats (&optional sap)))
   (sap nil :type (or null (alien (* rocksdb-statistics-histogram-data)))))
 
-(defaccessor (sap) ((self rdb-stats)) (rdb-stats-sap self))
+(defaccessor sap ((self rdb-stats)) (rdb-stats-sap self))
 
 ;;; metadata
 (defstruct rdb-cf-metadata
@@ -202,8 +202,8 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (file-count 0 :type fixnum)
   (sap nil :type (or null (alien (* rocksdb-column-family-metadata)))))
 
-(defaccessor (sap) ((self rdb-cf-metadata)) (rdb-cf-metadata-sap self))
-(defaccessor (name) ((self rdb-cf-metadata)) (rdb-cf-metadata-name self))
+(defaccessor sap ((self rdb-cf-metadata)) (rdb-cf-metadata-sap self))
+(defaccessor name ((self rdb-cf-metadata)) (rdb-cf-metadata-name self))
 
 (defmethod db-metadata ((self rdb-cf-metadata) &optional (level 0))
   (with-slots (sap) self
@@ -232,7 +232,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (file-count 0 :type fixnum)
   (sap nil :type (or null (alien (* rocksdb-level-metadata)))))
 
-(defaccessor (sap) ((self rdb-level-metadata)) (rdb-level-metadata-sap self))
+(defaccessor sap ((self rdb-level-metadata)) (rdb-level-metadata-sap self))
 
 (defmethod db-metadata ((self rdb-level-metadata) &optional (file 0))
   (if (null (sap self))
@@ -263,7 +263,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (largestkey 0 :type fixnum)
   (sap nil :type (or null (alien (* rocksdb-sst-file-metadata)))))
 
-(defaccessor (sap) ((self rdb-sst-file-metadata)) (rdb-sst-file-metadata-sap self))
+(defaccessor sap ((self rdb-sst-file-metadata)) (rdb-sst-file-metadata-sap self))
 
 (defmethod print-object ((self rdb-sst-file-metadata) stream)
   (print-unreadable-object (self stream :type t)
@@ -290,7 +290,7 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
 (defstruct rdb-snapshot 
   (sap nil :type (or null (alien (* rocksdb-snapshot)))))
 
-(defaccessor (sap) ((self rdb-snapshot)) (rdb-snapshot-sap self))
+(defaccessor sap ((self rdb-snapshot)) (rdb-snapshot-sap self))
 (defmethod id ((self rdb-snapshot)) (rocksdb-snapshot-get-sequence-number (sap self)))
 
 ;;; Checkpoints
@@ -298,8 +298,8 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (sap nil :type (or null (alien (* rocksdb-checkpoint))))
   path)
 
-(defaccessor (sap) ((self rdb-checkpoint)) (rdb-checkpoint-sap self))
-(defaccessor (path) ((self rdb-checkpoint)) (rdb-checkpoint-path self))
+(defaccessor sap ((self rdb-checkpoint)) (rdb-checkpoint-sap self))
+(defaccessor path ((self rdb-checkpoint)) (rdb-checkpoint-path self))
 
 (defun %make-checkpoint (rdb &optional path)
   (let ((chk (with-errptr e
@@ -370,10 +370,10 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (opts (default-rdb-opts) :type rdb-opts)
   (sap nil :type (or null (alien (* rocksdb)))))
 
-(defaccessor (sap) ((self rdb)) (rdb-sap self))
-(defaccessor (name) ((self rdb)) (rdb-name self))
-(defaccessor (db) ((self rdb)) (sap self))
-(defaccessor (db-opts) ((self rdb)) (rdb-opts self))
+(defaccessor sap ((self rdb)) (rdb-sap self))
+(defaccessor name ((self rdb)) (rdb-name self))
+(defaccessor db ((self rdb)) (sap self))
+(defaccessor db-opts ((self rdb)) (rdb-opts self))
 
 (defmethod print-object ((self rdb) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -579,13 +579,13 @@ internal sap slots are initialized."
   (sap nil :type (or null (alien (* rocksdb-transactiondb))))
   (opts (rocksdb-transactiondb-options-create)))
 
-(defaccessor (sap) ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
-(defaccessor (db-opts) ((self rdb-transaction-db)) (rdb-transaction-db-opts self))
+(defaccessor sap ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
+(defaccessor db-opts ((self rdb-transaction-db)) (rdb-transaction-db-opts self))
 
 (defstruct rdb-optimistic-transaction-db 
   (sap nil :type (or null (alien (* rocksdb-optimistictransactiondb)))))
 
-(defaccessor (sap) ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-sap self))
+(defaccessor sap ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-sap self))
 
 (defmethod open-transaction-db ((self rdb) &key path 
                                                 (db-opts (default-rocksdb-options)) 
@@ -633,8 +633,8 @@ internal sap slots are initialized."
 (defstruct rdb-transaction 
   (sap nil :type (or null (alien (* rocksdb-transaction)))))
 
-(defaccessor (sap) ((self rdb-transaction)) (rdb-transaction-sap self))
-(defaccessor (name) ((self rdb-transaction)) (transaction-name-raw (sap self)))
+(defaccessor sap ((self rdb-transaction)) (rdb-transaction-sap self))
+(defaccessor name ((self rdb-transaction)) (transaction-name-raw (sap self)))
 
 (defmethod transaction-object-p ((self rdb-transaction)) t)
 
@@ -679,8 +679,8 @@ internal sap slots are initialized."
   (sap nil :type (or null (alien (* rocksdb))))
   opts)
 
-(defaccessor (sap) ((self rdb-secondary-db)) (rdb-secondary-db-sap self))
-(defaccessor (db-opts) ((self rdb-secondary-db)) (rdb-secondary-db-opts self))
+(defaccessor sap ((self rdb-secondary-db)) (rdb-secondary-db-sap self))
+(defaccessor db-opts ((self rdb-secondary-db)) (rdb-secondary-db-opts self))
 
 (defmethod open-secondary-db ((self rdb) &key path opts)
   (make-rdb-secondary-db 
@@ -695,8 +695,8 @@ internal sap slots are initialized."
   (sap nil :type (or null (alien (* rocksdb-backup-engine))))
   opts)
 
-(defaccessor (sap) ((self rdb-backup-engine)) (rdb-backup-engine-sap self))
-(defaccessor (db-opts) ((self rdb-backup-engine)) (rdb-backup-engine-opts self))
+(defaccessor sap ((self rdb-backup-engine)) (rdb-backup-engine-sap self))
+(defaccessor db-opts ((self rdb-backup-engine)) (rdb-backup-engine-opts self))
 
 (defmethod open-backup-engine ((self rdb-backup-engine) &key path)
   (setf (sap self) (open-backup-engine-raw path (db-opts self))))
@@ -713,7 +713,7 @@ internal sap slots are initialized."
 (defstruct rdb-writebatch 
   (sap nil :type (or null (alien (* rocksdb-writebatch)))))
 
-(defaccessor (sap) ((self rdb-writebatch)) (rdb-writebatch-sap self))
+(defaccessor sap ((self rdb-writebatch)) (rdb-writebatch-sap self))
 (defmethod iter ((self rdb-writebatch) &key)
   (rocksdb-writebatch-iterate self nil nil (alien-callable-function 'rocksdb-delete-value)))
 (defun rdb-writebatch-data (wb &optional size)
@@ -723,7 +723,7 @@ internal sap slots are initialized."
 (defstruct rdb-wbwi ;; wb reserved overwrite-key data savepoints params
   (sap nil :type (or null (alien (* rocksdb-writebatch-wi)))))
 
-(defaccessor (sap) ((self rdb-wbwi)) (rdb-wbwi-sap self))
+(defaccessor sap ((self rdb-wbwi)) (rdb-wbwi-sap self))
 (defun rdb-wbwi-count (self) (rocksdb-writebatch-wi-count (sap self)))
 (defun rdb-wbwi-data (wbwi &optional size)
   (rocksdb-writebatch-wi-data (sap wbwi) size))
@@ -766,8 +766,8 @@ internal sap slots are initialized."
   path 
   threads)
 
-(defaccessor (sap) ((self rdb-env)) (rdb-env-sap self))
-(defaccessor (path) ((self rdb-env)) (rdb-env-path self))
+(defaccessor sap ((self rdb-env)) (rdb-env-sap self))
+(defaccessor path ((self rdb-env)) (rdb-env-path self))
 
 ;;; Logger
 (defun rdb-log-default (level &optional prefix)

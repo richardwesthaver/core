@@ -56,7 +56,7 @@
       ;; task has been stolen from pool
       (setf (future-canceledp obj) t)
       ;; TODO 2025-04-04: 
-      (funcall (future-fn obj) (multiple-value-list (funcall fn))))))
+      (funcall fn (future-fn obj)))))
 
 (defun force-future (obj)
   ;; task has been stolen from pool
@@ -65,13 +65,18 @@
   (setf (future-result obj) (funcall (future-fn obj))
         (future-fn obj) nil))
 
+(defun fulfill (obj fn)
+  (etypecase obj
+    (promise (fulfill-promise obj fn))
+    (future (fulfill-future obj fn))))
+
 (defun result (obj)
   (etypecase obj
     (promise (promise-result obj))
     (future (future-result obj))))
 
 (defmacro future (&body body)
-  `(make-future (lambda () ,@body)))
+  `(make-future :fn (lambda () ,@body)))
 
 (defmacro while-waiting-for (obj &body body)
   (with-gensyms (lock canceledp res)
@@ -93,8 +98,8 @@
   (typecase object
     ((or promise future)
      (while-waiting-for object
-                        (etypecase object
-                          (future (force-future object))
-                          (promise (force-promise object))))
-     (values-list (result object)))
+       (etypecase object
+         (future (force-future object))
+         (promise (force-promise object))))
+     (result object))
     (t object)))
