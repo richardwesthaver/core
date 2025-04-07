@@ -45,6 +45,12 @@
    :*ld*
    :run-cc
    :run-ld
+   :run-gdb
+   :gdb-error
+   :*gdb*
+   :*lldb*
+   :lldb-error
+   :run-lldb
    :cc-error
    :*nvcc*
    :run-nvcc

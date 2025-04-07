@@ -41,3 +41,15 @@
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
         (nvcc-error "NVCC command failed: ~A ~@[~A~]" *nvcc* args))))
+
+(define-cli-tool :gdb (args &key (output t) (wait t) input)
+  (let ((proc (sb-ext:run-program *gdb* (or args nil) :output output :wait wait :input input)))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+	nil
+	(gdb-error "GDB command failed: ~A ~@[~A~]" *gdb* args))))
+
+(define-cli-tool :lldb (args &key (output t) (wait t) input)
+  (let ((proc (sb-ext:run-program *lldb* (or args nil) :output output :wait wait :input input)))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+	nil
+	(lldb-error "LLDB command failed: ~A ~@[~A~]" *lldb* args))))
