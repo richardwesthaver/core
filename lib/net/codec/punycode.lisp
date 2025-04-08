@@ -1,6 +1,6 @@
 ;;; lib/net/codec/punycode.lisp --- RFC 3492 Punycode strings
 
-;; This library was written by Yukari Hafner <shinmera@tymoon.eu>:
+;; This library was written by Shinmera
 ;; https://github.com/Shinmera/punycode.git
 
 ;;; Commentary:

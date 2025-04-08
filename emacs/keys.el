@@ -136,6 +136,12 @@
   "C-;" #'prog-comment-timestamp-keyword)
 
 ;;; MPC
+(defun mpc-mark ()
+  "Mark mpc song at point and move to next line."
+  (interactive)
+  (mpc-select-toggle)
+  (next-line))
+
 (with-eval-after-load "mpc"
   (keymap-set mpc-mode-map "v" 'mpc-tagbrowser)
   (keymap-set mpc-mode-map "a" 'mpc-playlist-add)
@@ -145,6 +151,7 @@
   (keymap-set mpc-mode-map "f" 'mpc-ffwd)
   (keymap-set mpc-mode-map "b" 'mpc-rewind)
   (keymap-set mpc-mode-map "x" 'mpc-playlist-delete)
+  (keymap-set mpc-mode-map "m" 'mpc-mark)
   (keymap-set mpc-mode-map "1" 'mpc-playlist))
 
 ;;; Modes
