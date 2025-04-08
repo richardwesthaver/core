@@ -11,7 +11,11 @@
   (:use :cl :std :sb-alien)
   (:export :load-avcodec :load-avutil :load-avformat
    :load-avfilter :avcodec-init
-   :avcodec-version :avformat-version :avutil-version :avfilter-version))
+   :avcodec-version :avformat-version :avutil-version :avfilter-version
+   :avformat-alloc-context
+   :avformat-free-context
+   :avcodec-alloc-context3
+   :avcodec-open2))
            
 (in-package :ffmpeg)
 
@@ -373,6 +377,57 @@
       (codec-tag (* (* av-codec-tag)))
       (priv-class (* av-class))
       (mime-type c-string)))
+
+(define-alien-routine avformat-alloc-context (* av-format-context))
+(define-alien-routine avformat-free-context void (ctx (* av-format-context)))
+(define-alien-routine avformat-init-output int (s (* av-format-context)) (options (* (* av-dictionary))))
+(define-alien-routine av-write-frame int (s (* av-format-context)) (pkt (* av-packet)))
+(define-alien-routine av-guess-format (* av-output-format)
+  (short-name c-string)
+  (filename c-string)
+  (mime-type c-string))
+(define-alien-routine av-guess-codec av-codec-id
+  (fmt (* av-output-format))
+  (short-name c-string)
+  (filename c-string)
+  (mime-type c-string)
+  (type av-media-type))
+(define-alien-routine av-get-output-timestamp int 
+  (s (* av-format-context)) 
+  (stream int)
+  (dts (* (signed 64)))
+  (wall (* (signed 64))))
+(define-alien-routine av-codec-get-id av-codec-id
+  (tags (* (* av-codec-tag)))
+  (tag unsigned-int))
+(define-alien-routine av-codec-get-tag unsigned-int
+  (tags (* (* av-codec-tag)))
+  (id av-codec-id))
+(define-alien-routine av-dump-format void
+  (ic (* av-format-context))
+  (index int)
+  (url c-string)
+  (is-output int))
+(define-alien-routine avformat-get-riff-video-tags (* av-codec-tag))
+(define-alien-routine avformat-get-riff-audio-tags (* av-codec-tag))
+(define-alien-routine avformat-get-mov-video-tags (* av-codec-tag))
+(define-alien-routine avformat-get-mov-audio-tags (* av-codec-tag))
+(define-alien-routine avformat-open-input int 
+  (ps (* (* av-format-context)))
+  (url c-string)
+  (fmt (* av-input-format))
+  (options (* (* av-dictionary))))
+(define-alien-routine avformat-write-header int
+  (s (* av-format-context))
+  (options (* (* av-dictionary))))
+(define-alien-routine av-find-default-stream-index int (s (* av-format-context)))
+(define-alien-routine avformat-network-init int)
+(define-alien-routine avformat-network-deinit int)
+(define-alien-routine avformat-get-class (* av-class))
+(define-alien-routine avformat-stream-group-get-class (* av-class))
+;; (define-alien-routine avformat-stream-group-name c-string (type av-stream-group-params-type))
+;; (define-alien-routine avformat-new-stream (* av-stream) (s (* av-format-context)) (c (* av-codec)))
+;; (define-alien-routine avformat-new-program (* av-program) (s (* av-format-context)) (id int))
 
 ;;; avcodec
 (define-alien-enum (av-codec-flag int)
@@ -1040,3 +1095,20 @@
     (nb-side-data-prefer-packet unsigned)
     (decoded-side-data (* (* av-frame-side-data)))
     (nb-decoded-side-data int)))
+
+(define-alien-routine avcodec-free-context void (ctx (* (* av-codec-context))))
+(define-alien-routine avcodec-close int (ctx (* av-codec-context)))
+(define-alien-routine avsubtitle-free void (sub (* av-subtitle)))
+(define-alien-routine avcodec-get-class (* av-class))
+(define-alien-routine avcodec-alloc-context3 (* av-codec-context) (codec (* av-codec)))
+(define-alien-routine avcodec-get-subtitle-rect-class (* av-class))
+(define-alien-routine avcodec-open2 int (avctx (* av-codec-context)) (codec (* av-codec)) (options (* (* av-dictionary))))
+(define-alien-routine av-codec-iterate (* av-codec) (opaque (* (* t))))
+(define-alien-routine avcodec-find-decoder (* av-codec) (id av-codec-id))
+(define-alien-routine avcodec-find-decoder-by-name (* av-codec) (name c-string))
+(define-alien-routine avcodec-find-encoder (* av-codec) (id av-codec-id))
+(define-alien-routine avcodec-find-encoder-by-name (* av-codec) (name c-string))
+
+(define-alien-routine av-codec-is-encoder int (codec (* av-codec)))
+(define-alien-routine av-codec-is-decoder int (codec (* av-codec)))
+(define-alien-routine av-get-profile-name c-string (codec (* av-codec)) (profile int))
