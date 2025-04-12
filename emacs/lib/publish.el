@@ -235,7 +235,7 @@ targets and targets."
 	   datum))
 	 (user-label (or user-label
 			 (when-let ((path (org-element-property :ID datum)))
-			   (concat "ID-" path)))))
+			   path))))
     (cond
      ((and user-label
 	   (or (plist-get info :html-prefer-user-labels)

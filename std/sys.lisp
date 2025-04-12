@@ -91,6 +91,14 @@ and we may query the user for input.")
   `(setf (logical-pathname-translations ,host)
          ',translations))
 
+(defun revive-image (&key (lisp-interaction uiop:*lisp-interaction*)
+                          (restore-hook uiop:*image-restore-hook*)
+                          (prelude uiop:*image-prelude*)
+                          (entry-point uiop/image:*image-entry-point*)
+                          (if-already-restored '(cerror "Revive image anyway")))
+  (uiop:restore-image :lisp-interaction lisp-interaction :restore-hook restore-hook :prelude prelude
+                      :entry-point entry-point :if-already-restored if-already-restored))
+
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)
   "A naive tree-shaker for lisp."
@@ -142,6 +150,10 @@ and we may query the user for input.")
 (defun forget-shared-objects (&optional (objects sb-sys:*shared-objects*))
   "Set the DONT-SAVE slot of all objects in SB-SYS:*SHARED-OBJECTS* to T."
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) t)) objects))
+
+(defun save-shared-objects (objects)
+  "Set the DONT-SAVE slot of OBJECTS to T."
+  (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) nil)) objects))
 
 (defun compile-lisp (name &key force save make package compression verbose version callable-exports executable (toplevel #'sb-impl::toplevel-init) forget save-runtime-options root-structures (purify t))
   (pkg:with-package (or package *package*)

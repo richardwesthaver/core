@@ -15,7 +15,16 @@
 (defvar *worker-class* 'worker)
 (defvar *worker* nil)
 (defvar *kernel*)
-(defvar *worker-kernel* 'identity)
+(defvar *worker-kernel* 
+  (lambda (&rest args) 
+    (values-list 
+     (mapcar 
+      (lambda (x)
+        (typecase x 
+          (function (funcall x))
+          (cons (apply (car x) (cdr x)))
+          (t x)))
+      args))))
 
 ;;; Globals
 (sb-ext:defglobal *worker-threads* nil)
@@ -94,7 +103,8 @@ within their DOMAIN and SCOPE."))
 	   :initarg :thread)
    ;; TODO 2025-04-04: environment here
    (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings*)
-   (kernel :type kernel :accessor worker-kernel :initarg :kernel :initform *worker-kernel*)))
+   (kernel :type kernel :accessor worker-kernel :initarg :kernel :initform *worker-kernel*
+           :allocation :class)))
 
 (defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
   (push (worker-thread self) *worker-threads*))

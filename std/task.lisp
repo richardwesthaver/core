@@ -66,6 +66,11 @@ This interface is experimental and subject to change."
 
 (defgeneric status (self &key &allow-other-keys))
 
+(defgeneric jobp (self)
+  (:method ((self t)) nil))
+(defgeneric taskp (self)
+  (:method ((self t)) nil))
+
 ;;; Task Worker
 (defclass task-worker (worker)
   ((tasks :initform nil :accessor tasks :initarg :tasks)))
@@ -141,6 +146,8 @@ is responsible for indicating in the state slot the result of the computation.")
   (print-unreadable-object (self stream :type t)
     (format stream ":state ~A" (task-state self))))
 
+(defmethod taskp ((self task)) t)
+
 (defun run-task (worker task)
   (push task (tasks worker))
   (run-worker worker))
@@ -150,10 +157,12 @@ is responsible for indicating in the state slot the result of the computation.")
 
 ;;;; Scheduled Tasks
 (defclass scheduled-task (task)
-  ((epoch :initarg :schedule :initform (get-universal-time) :accessor task-epoch)))
+  ((schedule :initarg :schedule :initform (get-universal-time) :accessor task-schedule)))
 
-(defmethod run-object ((self scheduled-task) &key time repeat absolute catch-up)
-  (sb-ext:schedule-timer (task-state self) time :repeat-interval repeat :absolute-p absolute :catch-up catch-up))
+(defmethod run-object ((self scheduled-task) &key time repeat absolute-p catch-up worker name)
+  (sb-ext:schedule-timer 
+   (sb-ext:make-timer (task-state self) :thread worker :name name)
+   time :repeat-interval repeat :absolute-p absolute-p :catch-up catch-up))
 
 ;;; Job
 (defclass job (task)
@@ -166,7 +175,9 @@ is responsible for indicating in the state slot the result of the computation.")
   (:documentation "A collection of tasks forming a single unit of work."))
 
 (defgeneric jobs (self))
-
+(defmethod jobp ((self job)) t)
+(defmethod taskp ((self job)) t)
+  
 (declaim (inline make-job))
 (defun make-job (&rest tasks)
   (make-instance 'job

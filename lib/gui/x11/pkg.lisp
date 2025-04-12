@@ -55,8 +55,6 @@
    *palette* nil
    *black* (xlib:screen-black-pixel *screen*)))
    
-(xlib:map-window *window*)               
-
 (defun display-fonts (&optional display (pattern "*"))
   (xlib:list-fonts (or display *default-display*) pattern))
 

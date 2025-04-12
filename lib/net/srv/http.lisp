@@ -18,19 +18,28 @@ already been sent for this request.")
 (defvar *default-ssl-service-port* 8443)
 (defvar *default-content-type* "text/html")
 (defvar *default-ssl-key-file* #P"/etc/ssl/cert.pem")
+(defvar *http-external-format* :default)
 (defvar *header-stream* nil)
+;; TODO 2025-04-11: 
+(defvar *rewrite-for-session-urls* t
+  "Whether HTML pages should possibly be rewritten for cookie-less
+session-management.")
+(defvar *content-types-for-url-rewrite*
+  '("text/html" "application/xhtml+xml")
+  "The content types for which url-rewriting is OK. See
+*REWRITE-FOR-SESSION-URLS*.")
 
 ;;; Utils
+(defun keep-alive-p (&optional (object *request*))
+  (typep (content-stream object) 'net/req::keep-alive-stream))
+
 (defun ssl-p (&optional (service *service*))
   (and (secure-service-p service)
        (eql :https (sb-bsd-sockets:socket-protocol (sb-bsd-sockets:socket service)))))
 
 ;;; Response
-(defclass http-service-response (net-response)
-  ((response :type http-response)
-   (content-type :reader content-type
-                 :documentation "The outgoing 'Content-Type' http
-header which defaults to the value of *DEFAULT-CONTENT-TYPE*.")
+(defclass http-service-response (net-service-response)
+  ((http :type http-response)
    (headers-out :initform nil
                 :reader headers-out
                 :documentation "An alist of the outgoing http headers
@@ -53,6 +62,9 @@ value should only be modified by the functions defined in cookie.lisp.")))
 
 (defmethod response-ok-p ((res http-service-response))
   (eql (response-status (slot-value *response* 'response)) codec::+http-ok+))
+
+(defun header-in* (name &optional (req *request*))
+  (header-out name req))
 
 (defun headers-out* (&optional (res *response*))
   "Returns an alist of the outgoing headers associated with the
@@ -89,6 +101,24 @@ object RES."
   "The http return code of RES.  The return codes Hunchentoot can
 handle are defined in specials.lisp."
   (response-status res))
+
+(defun request-method* (&optional (req *request*))
+  (http-method (http req)))
+
+(defun script-name* (&optional (req *request*))
+  (script-name req))
+
+(defun query-string* (&optional (req *request*))
+  (query-string req))
+
+(defun user-agent* (&optional (req *request*))
+  (user-agent (session req)))
+
+(defun referer* (&optional (req *request*))
+  (header-in* :referer req))
+
+(defun authorization* (&optional (req *request*))
+  (header-in* :authorization req))
 
 (defun (setf response-status*) (new-value &optional (res *response*))
   "Sets the http return code of RES."
@@ -152,8 +182,8 @@ name doesn't exist, it is created.")
 ;; query-string
 ;; raw-post-data
 
-(defclass http-service-request (net-request)
-  ((request :type http-request :initarg :request :accessor http)
+(defclass http-service-request (net-service-request)
+  ((http :type http-request :initarg :http :accessor http)
    (headers-in :initarg :headers-in :reader headers-in)
    (get-parameters :initform nil
                    :documentation "An alist of the GET parameters sent
@@ -191,7 +221,7 @@ to directly write to the stream in this case.
 
 Returns the stream that is connected to the client."
   (let* ((chunkedp (and (output-chunking-p *service*)
-                        (eq (server-protocol *request*) :http/1.1)
+                        (eq (request-protocol *request*) :http/1.1)
                         ;; only turn chunking on if the content
                         ;; length is unknown at this point...
                         (null (or (content-length*) contentp))))
@@ -217,7 +247,7 @@ Returns the stream that is connected to the client."
              (setf *finish-processing-socket* nil)
              ;; read-timeout
              (when (and (service-timeout *service*)
-                        (or (not (eq (server-protocol *request*) :http/1.1))
+                        (or (not (eq (request-protocol *request*) :http/1.1))
                             keep-alive-requested-p))
                ;; persistent connections are implicitly assumed for
                ;; HTTP/1.1, but we return a 'Keep-Alive' header if the
@@ -244,9 +274,9 @@ Returns the stream that is connected to the client."
       (setq content (maybe-rewrite-urls-for-session content)))
     (when (stringp content)
       ;; if the content is a string, convert it to the proper external format
-      (setf content (sb-ext:string-to-octets content :external-format (response-external-format*))
-            (content-type*) (maybe-add-charset-to-content-type-header (content-type*)
-                                                                      (response-external-format*))))
+      (setf content (sb-ext:string-to-octets content :external-format *http-external-format*)
+            (content-type*) (net/req::charset-to-encoding (content-type*)
+                                                          *http-external-format*)))
     (when content
       ;; whenever we know what we're going to send out as content, set
       ;; the Content-Length header properly; maybe the user specified
@@ -344,7 +374,7 @@ Returns the stream that is connected to the client."
   (encode-session-string (id:id session)
                          (user-agent session)
                          (remote-addr session)
-                         (session-start session)))
+                         (start-session session)))
 
 (defmethod session-expired-p ((self http-session))
   (< (+ (last-click self) (session-timeout self))
@@ -432,16 +462,16 @@ can be parsed by most log analysis tools."
                     ~A\" ~D ~:[-~;~:*~D~] \"~:[-~;~:*~A~]\" \"~:[-~;~:*~A~]\"~%"
             (remote-addr*)
             (header-in* :x-forwarded-for)
-            (authorization)
-            (iso-time)
+            (authorization*)
+            (time:iso-time)
             (request-method*)
             (script-name*)
             (query-string*)
-            (server-protocol*)
+            (request-protocol*)
             code
             (content-length*)
-            (referer)
-            (user-agent))))
+            (referer*)
+            (user-agent*))))
 
 (defmethod handle-request ((*service* http-service) (*request* http-service-request))
   (handler-bind ((error
@@ -465,6 +495,43 @@ can be parsed by most log analysis tools."
                          (service-document-root service))))
       (t (setf (http-status *response*) codec::+http-not-found+)
          (abort-request-handler)))))
+
+(defun get-post-data (&key (request *request*) want-stream (position 0))
+  (let* ((headers-in (headers-in request))
+         (content-length (when-let ((len (assoc :content-length headers-in
+                                                :test 'eq)))
+                           (parse-integer (car len) :junk-allowed t)))
+         (content-stream (content-stream request)))
+    (setf (slot-value request 'data)
+          (cond (want-stream (net/req::make-decoding-stream content-stream :encoding *http-external-format*))
+                ((and content-length (> content-length position))
+                 (decf content-length position)
+                 (when (input-chunking-p *service-stream*)
+                   ;; log-message
+                   )
+                 (let ((content (make-array content-length :element-type 'octet)))
+                   (read-sequence content content-stream)
+                   content))
+                ((input-chunking-p *service-stream*)
+		 (loop with buffer = (make-array net/req::+buffer-size+ :element-type 'octet)
+		       with content = (make-array 0 :element-type 'octet :adjustable t)
+		       for index = 0 then (+ index pos)
+		       for pos = (read-sequence buffer content-stream)
+		       do (adjust-array content (+ index pos))
+			  (replace content buffer :start1 index :end2 pos)
+		       while (= pos net/req::+buffer-size+)
+		       finally (return content)))))))
+                 
+                         
+(defun raw-post-data (&key (request *request*) want-stream force-binary force-string)
+  (when (and force-binary force-string)
+    (std-error "FORCE-BINARY and FORCE-STRING are mutually exclusive."))
+  (let ((raw-post-data (or (slot-value request 'data)
+                           (get-post-data :request request :want-stream want-stream))))
+    (cond ((typep raw-post-data 'stream) raw-post-data)
+          ((member raw-post-data '(t nil)) nil)
+          (force-string (sb-ext:octets-to-string raw-post-data :external-format *http-external-format*))
+          (t raw-post-data))))
 
 (defun send-http-response (service stream status-code 
                            &key headers cookies content)
@@ -499,6 +566,22 @@ Returns STREAM."
     (write-sequence content stream)
     (finish-output stream))
   stream)
+
+(defun send-bad-request-response (stream &optional additional-info)
+  "Send a ``Bad Request'' response to the client."
+  (write-sequence (flex:string-to-octets
+		   (format nil "HTTP/1.0 ~D ~A~C~CConnection: close~C~C~C~CYour request could not be interpreted by this HTTP server~C~C~@[~A~]~C~C"
+			   +http-bad-request+ (reason-phrase +http-bad-request+) #\Return #\Linefeed
+			   #\Return #\Linefeed #\Return #\Linefeed #\Return #\Linefeed additional-info #\Return #\Linefeed))
+		  stream))
+
+(defun send-unknown-protocol-response (stream &optional additional-info)
+  "Send a ``HTTP Version Not Supported'' response to the client."
+  (write-sequence (flex:string-to-octets
+		   (format nil "HTTP/1.0 ~D ~A~C~CConnection: close~C~C~C~CYour request could not be interpreted by this HTTP server~C~C~@[~A~]~C~C"
+			   +http-version-not-supported+ (reason-phrase +http-version-not-supported+) #\Return #\Linefeed
+			   #\Return #\Linefeed #\Return #\Linefeed #\Return #\Linefeed additional-info #\Return #\Linefeed))
+		  stream))
 
 (defun printable-ascii-char-p (char)
   (<= 32 (char-code char) 126))
@@ -675,3 +758,4 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
   (ssl:ssl-stream-x509-certificate *service-stream*))
 
 (defclass https-service (http-service ssl-service) ())
+(declaim (sb-ext:end-block))

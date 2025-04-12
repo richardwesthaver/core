@@ -23,15 +23,15 @@ REPL."
   (string/= (trim x)
             (trim y)))
 
-#+readline
 (defun start-rl-repl ()
   "Start a GNU Readline REPL."
-  (do ((i 0 (1+ i))
-       (input ""))
-      ((string= "quit" (trim input)))
-    (setf input (readline:readline :prompt (format nil "[~a]> " i)
-                                   :add-history t
-                                   :novelty-check #'input-novelty-check))))
+  (readline:load-readline)
+  (let ((i 0))
+    (loop 
+      (progn
+        (print (eval (read-from-string (readline:readline (format nil "~%[~a]> " (prog1 i (incf i)))) 
+                                       :eof-error-p nil)))
+        (force-output)))))
 
 ;;; TOPLEVEL
 

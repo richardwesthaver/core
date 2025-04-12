@@ -711,4 +711,11 @@
    #:service-request-class
    #:service-response-class
    #:engine
-   #:restart-service))
+   #:restart-service
+   #:content-stream
+   #:request-protocol
+   #:session
+   #:service-config
+   #:service-task-kernel
+   #:service-request
+   #:service-response))

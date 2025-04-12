@@ -29,6 +29,8 @@
 ;;; Code:
 (in-package :net/srv)
 
+(declaim (sb-ext:start-block))
+
 (pkg:defpkg :net/srv/ext
   (:use :cl :std :net/core :cli/tools/net)
   (:export :caddy-service :nginx-service))
@@ -114,11 +116,15 @@ had returned RESULT.  See the source code of REDIRECT for an example."
 ;;; Classes
 (defclass net-response (response) ())
 
- (defclass net-request (request)
+(defclass net-service-response (net-response service-response) ())
+
+(defclass net-request (request)
   ((local-addr :initarg :local-addr :reader local-addr)
    (local-port :initarg :local-port :reader local-port)
    (remote-addr :initarg :remote-addr :reader remote-addr)
    (remote-port :initarg :remote-prot :reader remote-port)))
+
+(defclass net-service-request (net-request service-request) ())
 
 (defun remote-addr* (&optional (request *request*))
   "Returns the address the current request originated from."
@@ -481,8 +487,8 @@ had returned RESULT.  See the source code of REDIRECT for an example."
    :port *default-service-port*
    :engine (make-instance 'thread-per-connection-engine)
    :address nil
-   :request-class 'net-request
-   :response-class 'response
+   :request-class 'net-service-request
+   :response-class 'net-service-response
    :timeout *default-connection-timeout*
    :logger (make-instance 'service-logger :message-log-output *error-output* :access-log-output *error-output*)
    :backlog -1 ;; TODO 2024-10-23: what is a correct initial value here? wookie uses -1

@@ -10,12 +10,30 @@
 (defpackage :ffmpeg
   (:use :cl :std :sb-alien)
   (:export :load-avcodec :load-avutil :load-avformat
-   :load-avfilter :avcodec-init
+   :load-avfilter :avcodec-open2
    :avcodec-version :avformat-version :avutil-version :avfilter-version
    :avformat-alloc-context
    :avformat-free-context
    :avcodec-alloc-context3
-   :avcodec-open2))
+   :avcodec-free-context
+   :avcodec-close
+   :avsubtitle-free
+   :avcodec-get-class
+   :avcodec-get-subtitle-rect-class
+   :av-codec-iterate
+   :avcodec-find-decoder
+   :avcodec-find-decoder-by-name
+   :avcodec-find-encoder
+   :avcodec-find-encoder-by-name
+   :av-codec-is-encoder
+   :av-codec-is-decoder
+   :av-get-profile-name
+   :av-codec-id
+   :av-codec
+   :av-codec-context
+   :av-dictionary
+   :av-class
+   :av-subtitle))
            
 (in-package :ffmpeg)
 
@@ -428,6 +446,35 @@
 ;; (define-alien-routine avformat-stream-group-name c-string (type av-stream-group-params-type))
 ;; (define-alien-routine avformat-new-stream (* av-stream) (s (* av-format-context)) (c (* av-codec)))
 ;; (define-alien-routine avformat-new-program (* av-program) (s (* av-format-context)) (id int))
+
+(define-alien-routine av-opt-set-defaults void (s (* t)))
+(define-alien-routine av-opt-set int (obj (* t)) (name c-string) (val c-string) (search-flags int))
+(define-alien-routine av-opt-set-int int (obj (* t)) (name c-string) (val int) (search-flags int))
+(define-alien-routine av-opt-set-double int (obj (* t)) (name c-string) (val double) (search-flags int))
+;; (define-alien-routine av-opt-set-q int (obj (* t)) (name c-string) (val av-rational) (search-flags int))
+(define-alien-routine av-opt-set-image-size int (obj (* t)) (name c-string) (val (* unsigned-char)) (size int) (search-flags int))
+(define-alien-routine av-opt-set-pixel-fmt int (obj (* t)) (name c-string) (fmt av-pixel-format) (search-flags int))
+(define-alien-routine av-opt-set-sample-fmt int (obj (* t)) (name c-string) (fmt av-sample-format) (search-flags int))
+;; (define-alien-routine av-opt-set-video-rate int (obj (* t)) (name c-string) (val av-rational) (search-flags int))
+(define-alien-routine av-opt-set-chlayout int (obj (* t)) (name c-string) (val (* av-channel-layout)) (search-flags int))
+(define-alien-routine av-opt-set-dict-val int (obj (* t)) (name c-string) (val (* av-dictionary)) (search-flags int))
+(define-alien-routine av-opt-set-array int (obj (* t)) (name c-string) (search-flags int)
+  (start-elem unsigned-int) (nb-elems unsigned-int) (val-type av-option-type) (val (* t)))
+
+(define-alien-routine av-opt-get int (obj (* t)) (name c-string) (search-flags int) (out-val (* (* unsigned-char))))
+(define-alien-routine av-opt-get-int int (obj (* t)) (name c-string) (search-flags int) (out-val (* int)))
+(define-alien-routine av-opt-get-double int (obj (* t)) (name c-string) (search-flags int) (out-val (* double)))
+(define-alien-routine av-opt-get-q int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-rational)))
+(define-alien-routine av-opt-get-image-size int (obj (* t)) (name c-string) (search-flags int) (w-out (* int)) (h-out (* int)))
+(define-alien-routine av-opt-get-pixel-fmt int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-pixel-format)))
+(define-alien-routine av-opt-get-sample-fmt int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-sample-format)))
+(define-alien-routine av-opt-get-video-rate int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-rational)))
+(define-alien-routine av-opt-get-chlayout int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-channel-layout)))
+(define-alien-routine av-opt-get-dict-val int (obj (* t)) (name c-string) (search-flags int) (out-val (* (* av-dictionary))))
+(define-alien-routine av-opt-get-array-size int (obj (* t)) (name c-string) (search-flags int) (out-val (* unsigned-int)))
+(define-alien-routine av-opt-get-array int (obj (* t)) (name c-string) (search-flags int) (start-elem unsigned-int) (nb-elems unsigned-int) (out-type av-option-type) (out-val (* t)))
+(define-alien-routine av-opt-flag-is-set int (obj (* t)) (field-name c-string) (flag-name c-string))
+(define-alien-routine av-free void (obj (* t)))
 
 ;;; avcodec
 (define-alien-enum (av-codec-flag int)
@@ -1108,7 +1155,6 @@
 (define-alien-routine avcodec-find-decoder-by-name (* av-codec) (name c-string))
 (define-alien-routine avcodec-find-encoder (* av-codec) (id av-codec-id))
 (define-alien-routine avcodec-find-encoder-by-name (* av-codec) (name c-string))
-
 (define-alien-routine av-codec-is-encoder int (codec (* av-codec)))
 (define-alien-routine av-codec-is-decoder int (codec (* av-codec)))
 (define-alien-routine av-get-profile-name c-string (codec (* av-codec)) (profile int))

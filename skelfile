@@ -35,24 +35,25 @@
  (:rust-system "Cargo.toml")
  (:mod "emacs"))
 :rules
-((all (%stash
-       psl.dat x11.lisp parquet.json
-       build-zstd-alien
-       build-tree-sitter-alien
-       build-core 
-       ;; save-std save-prelude save-user fasls
-       ;; save-tests
-       ;; rust-bin
-       ))
+((default 
+  (%stash
+   psl.dat x11.lisp parquet.json
+   build-zstd-alien
+   build-tree-sitter-alien
+   build-core 
+   ;; save-std save-prelude save-user fasls
+   ;; save-tests
+   ;; rust-bin
+   ))
  (c ()
   (:build (build-zstd-alien build-tree-sitter-alien))
   (:install (install-zstd-alien install-tree-sitter-alien)))
- (full 
+ (all
   (%stash
    psl.dat x11.lisp parquet.thrift
    build-zstd-alien
    build-tree-sitter-alien
-   build-full-core 
+   build-all-core 
    ;; save-std save-prelude save-user fasls
    ;; save-tests
    ))
@@ -244,15 +245,17 @@
  (core ()
   (:build (%stash) 
    (with-sbcl (:noinform t :quit t)
+    (setf sb-ext:*block-compile-default* t)
+    (asdf:compile-system :core)
     ;; (push :virt *features*)
     ;; (push :tools *features*)
     (asdf:load-system :core)
     (in-package :std-user)
-    (forget-shared-objects)
+    ;; (forget-shared-objects)
     (cl+ssl:reload)
     (asdf:make :bin/core))
    #$mv bin/core .stash/core$#)
-  (:build-full (%stash)
+  (:build-all (%stash)
    (with-sbcl (:noinform t :quit t)
     (push :virt *features*)
     (push :net *features*)
@@ -261,7 +264,10 @@
     (push :clim *features*)
     (push :gui *features*)
     (push :tools *features*)
+    (setf sb-ext:*block-compile-default* t)
+    (asdf:compile-system :core)
     (asdf:load-system :core)
+    (cl+ssl:reload)
     (asdf:make :bin/core))
    #$mv bin/core .stash/core$#)
   (:save () 
@@ -293,8 +299,20 @@
     done$#
     :input t))
   (:link-pod () 
-   (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
+   (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t))
+  (:load ()
+   (asdf:load-asd (merge-pathnames "core.asd"))
+   (asdf:load-system "core")
+   (cli/linedit:install-repl)
+   ;; (cli/repl:start-rl-repl)
+   ;; (cli/repl:load-acl-repl)
+   (cli/repl:default-toplevel-init (find-package "CORE-LISP"))
+   ))
  (tests ()
+  (:run ()
+   (asdf:compile-system "core/tests" :force t)
+   (asdf:load-system "core/tests")
+   (rt:do-tests :all))
   (:save () 
    (with-sbcl (:noinform t :quit t)
     (ql:quickload :core/tests)

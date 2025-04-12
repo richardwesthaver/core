@@ -98,17 +98,8 @@ arrange for FVAR to be closed after BODY."
 
 (define-alien-routine isatty int (fd int))
 
-(define-alien-type termios 
-    (struct termios
-      (iflag unsigned-int)
-      (oflag unsigned-int)
-      (cflag unsigned-int)
-      (lflag unsigned-int)
-      (cc (* unsigned-char))))
-
-(define-alien-routine tcgetattr int (fd int) (term (* termios)))
-(define-alien-routine tcsetattr int (fd int) (actions int) (term (* termios)))
-(define-alien-routine cfmakeraw void (term (* termios)))
+(define-alien-routine tcsetattr int (fd int) (actions int) (term (* t)))
+(define-alien-routine cfmakeraw void (term (* t)))
 (define-alien-type winsize (struct winsize
 			     (row unsigned-short)
 			     (col unsigned-short)

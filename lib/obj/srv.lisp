@@ -75,16 +75,23 @@
    (engine :type engine :accessor engine :initarg :engine)))
 
 (defclass response () ())
-(defmethod response-ok-p (res) t)
+
+(defclass service-response (response)
+  ((content-type :reader content-type)
+   (content-length :reader content-length :initform nil)))
+
+(defmethod response-ok-p ((res response)) t)
 
 (defclass request ()
-  ((service :initarg :service
-           :reader service)
+  ((data :initarg :data :accessor data)))
+
+(defclass service-request (request)
+  ((content-stream :initarg :content-stream :reader content-stream)
+   (service :initarg :service
+	    :reader service)
    (session :initform nil
-            :accessor session)
-   (protocol :initarg :request-protocol :reader request-protocol)
-   (content-stream :initarg :content-stream :reader content-stream)
-   (data :initarg :data :accessor data)))
+	    :accessor session)
+   (protocol :initarg :request-protocol :reader request-protocol)))
 
 (defconfig service-config () ())
 ;;; Protocol

@@ -375,8 +375,10 @@
   (:import-from :std/macs :if-let)
   (:export
    :.i ;; alias for *inspected*
+   :revive-image
    :64-bit-p :32-bit-p
    :*logical-hosts*
+   :save-shared-objects
    :make-logical-host
    :hooks
    :*default-package*
@@ -591,6 +593,7 @@
   (:export
    :push-job :push-task
    :push-worker :push-task-result
+   :task-schedule
    :work
    :pop-job :pop-task
    :status
@@ -620,8 +623,8 @@
    :task :job :task-pool :scheduled-task
    :stage :task-pool-p
    :job-tasks :make-job
-   :job-p :task-object
-   :make-task :task-p :task :task-epoch
+   :jobp :task-object
+   :taskp :task
    :task-pool-oracle :task-pool-jobs
    :task-pool-stages
    :task-pool-workers :task-pool-results
@@ -673,6 +676,9 @@
 (defpkg :std/os
   (:use :cl :sb-alien)
   (:import-from :std/macs :with-gensyms)
+  (:import-from :sb-posix :tcgetattr :tcsetattr 
+   :termios :termios-cc :termios-cflag :termios-iflag 
+   :termios-oflag :termios-lflag)
   (:export
    :sudo-p
    :user-info
@@ -681,10 +687,10 @@
    :with-umask
    :with-fd
    :cfmakeraw
-   :iflag
-   :oflag
-   :lflag
-   :cflag
+   :termios-iflag
+   :termios-oflag
+   :termios-lflag
+   :termios-cflag
    :cc
    :+tiocgwinsz+
    :+tiocswinsz+

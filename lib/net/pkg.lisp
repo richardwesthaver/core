@@ -420,4 +420,7 @@
    #:net-service
    #:*access-log-lock*
    #:*message-log-lock*
-   #:make-service))
+   #:make-service
+   #:net-service-response
+   #:net-service-request
+   #:abort-request-handler))

@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :cli/linedit
   (:nicknames :linedit)
-  (:use :cl)
+  (:use :cl :std)
   (:import-from :sb-posix :getenv :ioctl)
   (:import-from :std
                 :foreign-alloc
@@ -209,34 +209,22 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     ;; Save current terminal state in attr
     (when attr
       (return-from c-terminal-init +linedit-attr-error+))
-    (setf attr (foreign-alloc 'termios))
-    (when (minusp (tcgetattr 0 attr))
+    (setf attr (sb-posix:tcgetattr 0))
+    (when (null (tcgetattr 0 attr))
       (return-from c-terminal-init +linedit-tcgetattr-error+))
     ;; Enter keyboard input mode
-    (sb-alien:with-alien ((tmp termios))
-      (when (minusp (tcgetattr 0 (sb-alien:addr tmp)))
-        (return-from c-terminal-init +linedit-tcgetattr-error+))
-      (std::cfmakeraw (sb-alien:addr tmp))
-      (std:with-alien-slots (std/os:oflag) tmp
-        (setf (sb-alien:slot tmp 'std/os:oflag) (logior std/os:oflag std::+opost+)))
-      (if (minusp (tcsetattr 0 std::+tcsaflush+ (sb-alien:addr tmp)))
-          +linedit-tcsetattr-error+))
-    +linedit-ok+)
-
+      (when-let ((tc (tcgetattr 0)))
+        (ansi:set-tty-mode tc)
+        (setf (slot-value tc 'termios-oflag) (logior (slot-value tc 'termios-oflag) std::+opost+))
+        (tcsetattr 0 std::+tcsaflush+ tc)
+        +linedit-ok+))
   (defun c-terminal-close ()
     ;; Restore saved terminal state from attr
     (if (null attr)
         (return-from c-terminal-close +linedit-no-attr-error+))
-
     (if (zerop (isatty 0))
         (return-from c-terminal-close +linedit-not-atty+))
-
-    (if (minusp (tcsetattr 0 std::+TCSANOW+ attr))
-        (return-from c-terminal-close +linedit-tcsetattr-error+))
-
-    (foreign-free attr)
     (setf attr nil)
-
     +linedit-ok+))
 
 (defun c-terminal-winsize (def side side-env)

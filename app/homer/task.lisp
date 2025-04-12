@@ -37,7 +37,7 @@ timestamp for a oneshot task, else it is a list."
 (defmethod load-ast ((self homer-task))
   (with-slots (ast) self
     (setf (id self) (pop ast))
-    (setf (schedule self) (pop ast))
+    (setf (task-schedule self) (pop ast))
     ;; remainder of ast is evaulated when the task is executed
     (log:debug! "loaded task: ~A" (id self))
     self))
@@ -45,10 +45,10 @@ timestamp for a oneshot task, else it is a list."
 (defmethod build-ast ((self homer-task) &key)
   (unless (equal (id self) (car (ast self)))
     (setf (ast self)
-          `(,(id self) ,(schedule self) ,@(ast self)))))
+          `(,(id self) ,(task-schedule self) ,@(ast self)))))
 
 (defmethod write-ast ((self homer-task) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(id self) (:repeat ,(schedule self)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+  (write `(,(id self) (:repeat ,(task-schedule self)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
 ;; (build-ast (load-ast (make-instance 'homer-task :ast '(mail-update (:repeat (:every (:min 15))) 1 2 3))))
   
