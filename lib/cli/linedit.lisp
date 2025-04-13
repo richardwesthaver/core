@@ -6,10 +6,8 @@
 (defpackage :cli/linedit
   (:nicknames :linedit)
   (:use :cl :std)
-  (:import-from :sb-posix :getenv :ioctl)
+  (:import-from :sb-posix :getenv :ioctl :termios :tcgetattr :tcsetattr)
   (:import-from :std
-                :foreign-alloc
-                :foreign-free
                 :with-gensyms
                 :with-directory-iterator
                 :file-kind
@@ -17,9 +15,6 @@
                 :relative-pathname-p
                 :if-let
                 #:isatty
-                #:termios
-                #:tcgetattr
-                #:tcsetattr
                 #:winsize)
   (:export
    #:linedit
@@ -210,14 +205,26 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (when attr
       (return-from c-terminal-init +linedit-attr-error+))
     (setf attr (sb-posix:tcgetattr 0))
-    (when (null (tcgetattr 0 attr))
-      (return-from c-terminal-init +linedit-tcgetattr-error+))
     ;; Enter keyboard input mode
-      (when-let ((tc (tcgetattr 0)))
-        (ansi:set-tty-mode tc)
-        (setf (slot-value tc 'termios-oflag) (logior (slot-value tc 'termios-oflag) std::+opost+))
-        (tcsetattr 0 std::+tcsaflush+ tc)
-        +linedit-ok+))
+    (ansi:set-tty-mode t :ignbrk nil
+		         :brkint nil
+		         :parmrk nil
+		         :istrip nil
+		         :inlcr  nil
+		         :igncr  nil
+		         :icrnl  nil
+		         :ixon   nil
+		         :opost  nil
+		         :echo   nil
+		         :echonl nil
+		         :icanon nil
+		         :isig   nil
+		         :iexten nil
+		         :csize  nil
+		         :parenb nil
+		         :vmin 1
+		         :vtime 0)
+    +linedit-ok+)
   (defun c-terminal-close ()
     ;; Restore saved terminal state from attr
     (if (null attr)

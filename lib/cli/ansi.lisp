@@ -2,9 +2,6 @@
 
 ;; based on https://github.com/McParen/croatoan/tree/master
 
-;; the tests for the original source are at the bottom of the file
-;; (interactive).
-
 ;;; Code:
 (in-package :cli/ansi)
 
@@ -565,13 +562,13 @@ struct termios
 
 (defun stream-fd (stream)
   "Return the posix file descriptor associated with the lisp stream."
-  (let ((stream (typecase stream
-                  ;; *standard-input*, *standard-output*, *terminal-io*, etc.
-                  (synonym-stream (symbol-value (synonym-stream-symbol stream)))
-                  ;; sb-sys:*stdin*, *stdout*, *tty*, etc.
-                  (sb-sys:fd-stream stream))))
-    ;; requires a fd-stream, not a synonym-stream
-    (sb-posix:file-descriptor stream)))
+  (etypecase stream
+    (fixnum stream)
+    ;; *standard-input*, *standard-output*, *terminal-io*, etc.
+    (synonym-stream (sb-sys:fd-stream-fd (symbol-value (synonym-stream-symbol stream))))
+    ;; sb-sys:*stdin*, *stdout*, *tty*, etc.
+    (file-stream (sb-sys:fd-stream-fd stream))
+    (t (sb-sys:fd-stream-fd (symbol-value (synonym-stream-symbol *standard-input*))))))
 
 ;; ncurses:
 ;; cooked: ixon brkint parmrk
