@@ -41,12 +41,42 @@
 
 (deftest decode-audio ()
   "See https://github.com/FFmpeg/FFmpeg/blob/master/doc/examples/decode_audio.c"
-  (with-alien ((pkt (* av-packet) (av-packet-alloc))
-               (codec (* av-codec) (avcodec-find-decoder (av-codec-id :mp2))))
-    (isnt (null-alien codec))
-    (with-alien ((parser (* av-codec-parser-context) (av-parser-init (slot codec 'ffmpeg::id)))
-                 (c (* av-codec-context) (avcodec-alloc-context3 codec)))
-      (iszero (avcodec-open2 c codec nil))
-      (avcodec-free-context (addr c))
-      (av-parser-close parser)
-      (av-packet-free pkt))))
+  (let ((inbuf-size 20480)
+        ;; (refill-thres 4096)
+        (out-path (tmpize-pathname "/tmp/av-out.flac"))
+        (in-path #p"/opt/stash/media/music/J/my_seat_and_weep/01_J_-_but_not_in_this_room.flac"))
+    (with-alien ((pkt (* av-packet) (av-packet-alloc))
+                 (codec (* av-codec) (avcodec-find-decoder (av-codec-id :mp2))))
+        (isnt (null-alien codec))
+        (with-alien ((parser (* av-codec-parser-context) (av-parser-init (slot codec 'ffmpeg::id)))
+                     (c (* av-codec-context) (avcodec-alloc-context3 codec))
+                     (frame (* av-frame) (av-frame-alloc)))
+          (iszero (avcodec-open2 c codec nil))
+          (io/static:with-static-vector (inbuf (+ inbuf-size +av-input-buffer-padding-size+))
+            (with-open-files ((f in-path :element-type 'octet)
+                              (out out-path :direction :output))
+              (let ((data-size (read-sequence inbuf f)))
+                (loop while (> data-size 0)
+                      with ret
+                      do (progn
+                           (is>= 0 
+                                 ;; FIX 2025-04-13: 
+                                 (setf ret
+                                       (av-parser-parse2 parser c (addr (slot pkt 'ffmpeg::data)) 
+                                                         (addr (slot pkt 'ffmpeg::size))
+                                                         (io/static:static-vector-pointer inbuf) data-size
+                                                         +av-nopts-value+ +av-nopts-value+ 0)))
+                           (decf data-size ret)
+                           (when (slot pkt 'ffmpeg::size)
+                             (let ((ret 0) (size -1))
+                               (setf ret (avcodec-send-packet c pkt))
+                               (loop while (>= ret 0)
+                                     do (progn
+                                          (setf ret (avcodec-receive-frame c frame)
+                                                size (av-get-bytes-per-sample (slot c 'ffmpeg::sample-fmt)))
+                                          (loop for i below (slot frame 'ffmpeg::nb-samples)
+                                                for ch below (slot (slot c 'ffmpeg::ch-layout) 'ffmpeg::nb-channels)
+                                                do (print (subseq inbuf ch (+ ch (* size i))))))))))))))
+          (avcodec-free-context (addr c))
+          (av-parser-close parser)
+          (av-packet-free pkt)))))

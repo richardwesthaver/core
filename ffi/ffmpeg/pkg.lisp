@@ -103,7 +103,17 @@
    :av-parser-iterate
    :av-frame-free
    :av-log-set-level
-   :av-log-get-level))
+   :av-log-get-level
+   :+av-input-buffer-padding-size+
+   :+av-nopts-value+
+   :+av-time-base+
+   :av-frame-alloc
+   :av-parser-parse2
+   :avcodec-send-packet
+   :avcodec-send-frame
+   :avcodec-receive-frame
+   :avcodec-receive-packet
+   :av-get-bytes-per-sample))
            
 (in-package :ffmpeg)
 
@@ -121,6 +131,8 @@
 (define-alien-routine avfilter-version unsigned)
 
 ;;; avutil
+(defconstant +av-nopts-value+ #x8000000000000000)
+(defconstant +av-time-base+ 1000000)
 (define-alien-enum (av-media-type int)
   :unknown -1
   :video 0
@@ -362,7 +374,6 @@
 (define-alien-routine av-dict-set int (pm (* (* av-dictionary))) (key c-string) (value c-string) (flags int))
 (define-alien-routine av-dict-set-int int (pm (* (* av-dictionary))) (key c-string) (value long) (flags int))
 ;;; avformat
-(define-opaque av-frame)
 (define-opaque av-codec-tag)
 
 (defconstant +av-num-data-pointers+ 8)
@@ -1187,92 +1198,8 @@ brevity.
   (* (function int 
 	 (* av-format-context) (* (* av-io-context)) c-string int (* av-io-interrupt-cb) (* (* av-dictionary)))))
 
-(define-alien-routine avformat-alloc-context (* av-format-context))
-(define-alien-routine avformat-free-context void (ctx (* av-format-context)))
-(define-alien-routine avformat-init-output int (s (* av-format-context)) (options (* (* av-dictionary))))
-(define-alien-routine avformat-find-stream-info int (ic (* av-format-context)) (opts (* (* av-dictionary))))
-(define-alien-routine av-write-frame int (s (* av-format-context)) (pkt (* av-packet)))
-(define-alien-routine av-guess-format (* av-output-format)
-  (short-name c-string)
-  (filename c-string)
-  (mime-type c-string))
-(define-alien-routine av-guess-codec av-codec-id
-  (fmt (* av-output-format))
-  (short-name c-string)
-  (filename c-string)
-  (mime-type c-string)
-  (type av-media-type))
-(define-alien-routine av-get-output-timestamp int 
-  (s (* av-format-context)) 
-  (stream int)
-  (dts (* (signed 64)))
-  (wall (* (signed 64))))
-(define-alien-routine av-codec-get-id av-codec-id
-  (tags (* (* av-codec-tag)))
-  (tag unsigned-int))
-(define-alien-routine av-codec-get-tag unsigned-int
-  (tags (* (* av-codec-tag)))
-  (id av-codec-id))
-(define-alien-routine av-dump-format void
-  (ic (* av-format-context))
-  (index int)
-  (url c-string)
-  (is-output int))
-(define-alien-routine avformat-get-riff-video-tags (* av-codec-tag))
-(define-alien-routine avformat-get-riff-audio-tags (* av-codec-tag))
-(define-alien-routine avformat-get-mov-video-tags (* av-codec-tag))
-(define-alien-routine avformat-get-mov-audio-tags (* av-codec-tag))
-(define-alien-routine avformat-open-input int 
-  (ps (* (* av-format-context)))
-  (url c-string)
-  (fmt (* av-input-format))
-  (options (* (* av-dictionary))))
-(define-alien-routine avformat-flush int (s (* av-format-context)))
-(define-alien-routine av-read-play int (s (* av-format-context)))
-(define-alien-routine av-read-pause int (s (* av-format-context)))
-(define-alien-routine avformat-close-input void (s (* (* av-format-context))))
-(define-alien-routine avformat-write-header int
-  (s (* av-format-context))
-  (options (* (* av-dictionary))))
-(define-alien-routine av-find-default-stream-index int (s (* av-format-context)))
-(define-alien-routine avformat-network-init int)
-(define-alien-routine avformat-network-deinit int)
-(define-alien-routine avformat-get-class (* av-class))
-(define-alien-routine avformat-stream-group-get-class (* av-class))
-;; (define-alien-routine avformat-stream-group-name c-string (type av-stream-group-params-type))
-;; (define-alien-routine avformat-new-stream (* av-stream) (s (* av-format-context)) (c (* av-codec)))
-;; (define-alien-routine avformat-new-program (* av-program) (s (* av-format-context)) (id int))
-
-(define-alien-routine av-opt-set-defaults void (s (* t)))
-(define-alien-routine av-opt-set int (obj (* t)) (name c-string) (val c-string) (search-flags int))
-(define-alien-routine av-opt-set-int int (obj (* t)) (name c-string) (val int) (search-flags int))
-(define-alien-routine av-opt-set-double int (obj (* t)) (name c-string) (val double) (search-flags int))
-;; (define-alien-routine av-opt-set-q int (obj (* t)) (name c-string) (val av-rational) (search-flags int))
-(define-alien-routine av-opt-set-image-size int (obj (* t)) (name c-string) (val (* unsigned-char)) (size int) (search-flags int))
-(define-alien-routine av-opt-set-pixel-fmt int (obj (* t)) (name c-string) (fmt av-pixel-format) (search-flags int))
-(define-alien-routine av-opt-set-sample-fmt int (obj (* t)) (name c-string) (fmt av-sample-format) (search-flags int))
-;; (define-alien-routine av-opt-set-video-rate int (obj (* t)) (name c-string) (val av-rational) (search-flags int))
-(define-alien-routine av-opt-set-chlayout int (obj (* t)) (name c-string) (val (* av-channel-layout)) (search-flags int))
-(define-alien-routine av-opt-set-dict-val int (obj (* t)) (name c-string) (val (* av-dictionary)) (search-flags int))
-(define-alien-routine av-opt-set-array int (obj (* t)) (name c-string) (search-flags int)
-  (start-elem unsigned-int) (nb-elems unsigned-int) (val-type av-option-type) (val (* t)))
-
-(define-alien-routine av-opt-get int (obj (* t)) (name c-string) (search-flags int) (out-val (* (* unsigned-char))))
-(define-alien-routine av-opt-get-int int (obj (* t)) (name c-string) (search-flags int) (out-val (* int)))
-(define-alien-routine av-opt-get-double int (obj (* t)) (name c-string) (search-flags int) (out-val (* double)))
-(define-alien-routine av-opt-get-q int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-rational)))
-(define-alien-routine av-opt-get-image-size int (obj (* t)) (name c-string) (search-flags int) (w-out (* int)) (h-out (* int)))
-(define-alien-routine av-opt-get-pixel-fmt int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-pixel-format)))
-(define-alien-routine av-opt-get-sample-fmt int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-sample-format)))
-(define-alien-routine av-opt-get-video-rate int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-rational)))
-(define-alien-routine av-opt-get-chlayout int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-channel-layout)))
-(define-alien-routine av-opt-get-dict-val int (obj (* t)) (name c-string) (search-flags int) (out-val (* (* av-dictionary))))
-(define-alien-routine av-opt-get-array-size int (obj (* t)) (name c-string) (search-flags int) (out-val (* unsigned-int)))
-(define-alien-routine av-opt-get-array int (obj (* t)) (name c-string) (search-flags int) (start-elem unsigned-int) (nb-elems unsigned-int) (out-type av-option-type) (out-val (* t)))
-(define-alien-routine av-opt-flag-is-set int (obj (* t)) (field-name c-string) (flag-name c-string))
-(define-alien-routine av-free void (obj (* t)))
-
 ;;; avcodec
+(defconstant +av-input-buffer-padding-size+ 64)
 (define-alien-enum (av-codec-flag int)
   :unaligned (ash 1 0)
   :qscale (ash 1 1)
@@ -1570,6 +1497,21 @@ brevity.
   :ambisonic-base #x400
   :ambisonic-end #x7ff)
 
+(define-alien-type av-channel-custom
+    (struct av-channel-custom
+      (id av-channel)
+      (name (array char 16))
+      (opaque (* t))))
+
+(define-alien-type av-channel-layout
+    (struct av-channel-layout
+      (order av-channel-order)
+      (nb-channels int)
+      (u (union nil
+	   (mask (unsigned 64))
+	   (map (* av-channel-custom))))
+      (opaque (* t))))
+
 (define-alien-enum (av-audio-service-type int)
   :main 0
   :effects 1
@@ -1636,21 +1578,6 @@ brevity.
       (opaque-ref (* av-buffer-ref))
       (time-base av-rational)))
 
-(define-alien-type av-channel-custom
-    (struct av-channel-custom
-      (id av-channel)
-      (name (array char 16))
-      (opaque (* t))))
-
-(define-alien-type av-channel-layout
-    (struct av-channel-layout
-      (order av-channel-order)
-      (nb-channels int)
-      (u (union nil
-	   (mask (unsigned 64))
-	   (map (* av-channel-custom))))
-      (opaque (* t))))
-
 (define-alien-type rc-override
     (struct rc-override
       (start-frame int)
@@ -1676,6 +1603,59 @@ brevity.
       (metadata (* av-dictionary))
       (buf (* av-buffer-ref))))
 
+(define-alien-enum (av-picture-type int)
+  :none 0
+  :i 1
+  :p 2
+  :b 3
+  :s 4
+  :si 5
+  :sp 6
+  :bi 7)
+
+(define-alien-type av-frame
+    (struct av-frame
+      (data (array unsigned-char 8))
+      (linesize (array int 8))
+      (extended-data (* (* unsigned-char)))
+      (width int)
+      (height int)
+      (nb-samples int)
+      (format int)
+      (pict-type av-picture-type)
+      (sample-aspect-ratio av-rational)
+      (pts long)
+      (pkt-dts long)
+      (time-base av-rational)
+      (quality int)
+      (opaque (* t))
+      (repeat-pict int)
+      (sample-rate int)
+      (buf (array av-buffer-ref 8))
+      (extended-buf (* (* av-buffer-ref)))
+      (nb-extended-buf int)
+      (side-data (* (* av-frame-side-data)))
+      (nb-side-data int)
+      (flags int)
+      (color-range av-color-range)
+      (color-primaries av-color-primaries)
+      (color-trc av-color-transfer-characteristic)
+      (colorspace av-color-space)
+      (chroma-location av-chroma-location)
+      (best-effort-timestamp long)
+      (metadata (* av-dictionary))
+      (decode-error-flags int)
+      (hw-frames-ctx (* av-buffer-ref))
+      (opaque-ref (* av-buffer-ref))
+      (crop-top size-t)
+      (crop-bottom size-t)
+      (crop-left size-t)
+      (crop-right size-t)
+      (private-ref (* av-buffer-ref))
+      (ch-layout av-channel-layout)
+      (duration long)))
+                
+      
 (defconstant +av-parser-pts-nb+ 4)
 
 (define-alien-type av-codec-parser-context
@@ -1896,6 +1876,90 @@ brevity.
       (parser-close (* (function void (* av-codec-parser-context))))
       (split (* (function int (* av-codec-context) (* unsigned-char) int)))))
 
+(define-alien-routine avformat-alloc-context (* av-format-context))
+(define-alien-routine avformat-free-context void (ctx (* av-format-context)))
+(define-alien-routine avformat-init-output int (s (* av-format-context)) (options (* (* av-dictionary))))
+(define-alien-routine avformat-find-stream-info int (ic (* av-format-context)) (opts (* (* av-dictionary))))
+(define-alien-routine av-write-frame int (s (* av-format-context)) (pkt (* av-packet)))
+(define-alien-routine av-guess-format (* av-output-format)
+  (short-name c-string)
+  (filename c-string)
+  (mime-type c-string))
+(define-alien-routine av-guess-codec av-codec-id
+  (fmt (* av-output-format))
+  (short-name c-string)
+  (filename c-string)
+  (mime-type c-string)
+  (type av-media-type))
+(define-alien-routine av-get-output-timestamp int 
+  (s (* av-format-context)) 
+  (stream int)
+  (dts (* (signed 64)))
+  (wall (* (signed 64))))
+(define-alien-routine av-codec-get-id av-codec-id
+  (tags (* (* av-codec-tag)))
+  (tag unsigned-int))
+(define-alien-routine av-codec-get-tag unsigned-int
+  (tags (* (* av-codec-tag)))
+  (id av-codec-id))
+(define-alien-routine av-dump-format void
+  (ic (* av-format-context))
+  (index int)
+  (url c-string)
+  (is-output int))
+(define-alien-routine avformat-get-riff-video-tags (* av-codec-tag))
+(define-alien-routine avformat-get-riff-audio-tags (* av-codec-tag))
+(define-alien-routine avformat-get-mov-video-tags (* av-codec-tag))
+(define-alien-routine avformat-get-mov-audio-tags (* av-codec-tag))
+(define-alien-routine avformat-open-input int 
+  (ps (* (* av-format-context)))
+  (url c-string)
+  (fmt (* av-input-format))
+  (options (* (* av-dictionary))))
+(define-alien-routine avformat-flush int (s (* av-format-context)))
+(define-alien-routine av-read-play int (s (* av-format-context)))
+(define-alien-routine av-read-pause int (s (* av-format-context)))
+(define-alien-routine avformat-close-input void (s (* (* av-format-context))))
+(define-alien-routine avformat-write-header int
+  (s (* av-format-context))
+  (options (* (* av-dictionary))))
+(define-alien-routine av-find-default-stream-index int (s (* av-format-context)))
+(define-alien-routine avformat-network-init int)
+(define-alien-routine avformat-network-deinit int)
+(define-alien-routine avformat-get-class (* av-class))
+(define-alien-routine avformat-stream-group-get-class (* av-class))
+;; (define-alien-routine avformat-stream-group-name c-string (type av-stream-group-params-type))
+;; (define-alien-routine avformat-new-stream (* av-stream) (s (* av-format-context)) (c (* av-codec)))
+;; (define-alien-routine avformat-new-program (* av-program) (s (* av-format-context)) (id int))
+
+(define-alien-routine av-opt-set-defaults void (s (* t)))
+(define-alien-routine av-opt-set int (obj (* t)) (name c-string) (val c-string) (search-flags int))
+(define-alien-routine av-opt-set-int int (obj (* t)) (name c-string) (val int) (search-flags int))
+(define-alien-routine av-opt-set-double int (obj (* t)) (name c-string) (val double) (search-flags int))
+;; (define-alien-routine av-opt-set-q int (obj (* t)) (name c-string) (val av-rational) (search-flags int))
+(define-alien-routine av-opt-set-image-size int (obj (* t)) (name c-string) (val (* unsigned-char)) (size int) (search-flags int))
+(define-alien-routine av-opt-set-pixel-fmt int (obj (* t)) (name c-string) (fmt av-pixel-format) (search-flags int))
+(define-alien-routine av-opt-set-sample-fmt int (obj (* t)) (name c-string) (fmt av-sample-format) (search-flags int))
+;; (define-alien-routine av-opt-set-video-rate int (obj (* t)) (name c-string) (val av-rational) (search-flags int))
+(define-alien-routine av-opt-set-chlayout int (obj (* t)) (name c-string) (val (* av-channel-layout)) (search-flags int))
+(define-alien-routine av-opt-set-dict-val int (obj (* t)) (name c-string) (val (* av-dictionary)) (search-flags int))
+(define-alien-routine av-opt-set-array int (obj (* t)) (name c-string) (search-flags int)
+  (start-elem unsigned-int) (nb-elems unsigned-int) (val-type av-option-type) (val (* t)))
+
+(define-alien-routine av-opt-get int (obj (* t)) (name c-string) (search-flags int) (out-val (* (* unsigned-char))))
+(define-alien-routine av-opt-get-int int (obj (* t)) (name c-string) (search-flags int) (out-val (* int)))
+(define-alien-routine av-opt-get-double int (obj (* t)) (name c-string) (search-flags int) (out-val (* double)))
+(define-alien-routine av-opt-get-q int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-rational)))
+(define-alien-routine av-opt-get-image-size int (obj (* t)) (name c-string) (search-flags int) (w-out (* int)) (h-out (* int)))
+(define-alien-routine av-opt-get-pixel-fmt int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-pixel-format)))
+(define-alien-routine av-opt-get-sample-fmt int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-sample-format)))
+(define-alien-routine av-opt-get-video-rate int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-rational)))
+(define-alien-routine av-opt-get-chlayout int (obj (* t)) (name c-string) (search-flags int) (out-val (* av-channel-layout)))
+(define-alien-routine av-opt-get-dict-val int (obj (* t)) (name c-string) (search-flags int) (out-val (* (* av-dictionary))))
+(define-alien-routine av-opt-get-array-size int (obj (* t)) (name c-string) (search-flags int) (out-val (* unsigned-int)))
+(define-alien-routine av-opt-get-array int (obj (* t)) (name c-string) (search-flags int) (start-elem unsigned-int) (nb-elems unsigned-int) (out-type av-option-type) (out-val (* t)))
+(define-alien-routine av-opt-flag-is-set int (obj (* t)) (field-name c-string) (flag-name c-string))
+(define-alien-routine av-free void (obj (* t)))
 (define-alien-routine avcodec-free-context void (ctx (* (* av-codec-context))))
 (define-alien-routine avcodec-close int (ctx (* av-codec-context)))
 (define-alien-routine avsubtitle-free void (sub (* av-subtitle)))
@@ -1927,6 +1991,7 @@ brevity.
 (define-alien-routine avcodec-send-frame int (avctx (* av-codec-context)) (avpkt (* av-frame)))
 (define-alien-routine avcodec-receive-packet int (avctx (* av-codec-context)) (avpkt (* av-packet)))
 
+(define-alien-routine av-frame-alloc (* av-frame))
 (define-alien-routine av-packet-alloc (* av-packet))
 (define-alien-routine av-packet-free void (pkt (* av-packet)))
 (define-alien-routine av-frame-free void (frame (* av-frame)))
@@ -1935,8 +2000,20 @@ brevity.
 (define-alien-routine av-parser-init (* av-codec-parser-context) (codec-id int))
 (define-alien-routine av-parser-close void (parser (* av-codec-parser-context)))
 
+(define-alien-routine av-parser-parse2 int
+  (s (* av-codec-parser-context))
+  (avctx (* av-codec-context))
+  (poutbuf (* (* unsigned-char)))
+  (poutbuf-size (* int))
+  (buf (* unsigned-char))
+  (buf-size int)
+  (pts unsigned-long)
+  (dts unsigned-long)
+  (pos unsigned-long))
 (define-alien-routine av-log-get-level int)
 (define-alien-routine av-log-set-level void (level int))
 ;; va-list
 (define-alien-routine av-log-set-callback void
   (callback (* (function void (* t) int c-string (* t)))))
+(define-alien-routine av-get-bytes-per-sample int
+  (sample-fmt av-sample-format))
