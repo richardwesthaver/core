@@ -6,7 +6,7 @@
 (defpackage :cli/linedit
   (:nicknames :linedit)
   (:use :cl :std)
-  (:import-from :sb-posix :getenv :ioctl :termios :tcgetattr :tcsetattr)
+  (:import-from :sb-posix :getenv :ioctl :tcgetattr :tcsetattr :termios)
   (:import-from :std
                 :with-gensyms
                 :with-directory-iterator
@@ -197,42 +197,26 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defvar +linedit-attr-error+      5)
 (defvar +linedit-no-attr-error+   6)
 
-(let (attr)
+(let ((attr))
   (defun c-terminal-init ()
-    (when (zerop (isatty 0))
-      (return-from c-terminal-init +linedit-not-atty+))
-    ;; Save current terminal state in attr
-    (when attr
-      (return-from c-terminal-init +linedit-attr-error+))
-    (setf attr (sb-posix:tcgetattr 0))
-    ;; Enter keyboard input mode
-    (ansi:set-tty-mode t :ignbrk nil
-		         :brkint nil
-		         :parmrk nil
-		         :istrip nil
-		         :inlcr  nil
-		         :igncr  nil
-		         :icrnl  nil
-		         :ixon   nil
-		         :opost  nil
-		         :echo   nil
-		         :echonl nil
-		         :icanon nil
-		         :isig   nil
-		         :iexten nil
-		         :csize  nil
-		         :parenb nil
-		         :vmin 1
-		         :vtime 0)
-    +linedit-ok+)
+    (cond 
+      ((zerop (isatty 0))
+       +linedit-not-atty+)
+      ;; Save current terminal state in attr
+      (attr +linedit-attr-error+)
+      (t (setf attr (sb-posix:tcgetattr 0 attr))
+         ;; Enter keyboard input mode
+         (ansi:set-tty-mode t :raw t)
+         +linedit-ok+)))
   (defun c-terminal-close ()
     ;; Restore saved terminal state from attr
-    (if (null attr)
-        (return-from c-terminal-close +linedit-no-attr-error+))
-    (if (zerop (isatty 0))
-        (return-from c-terminal-close +linedit-not-atty+))
-    (setf attr nil)
-    +linedit-ok+))
+    (etypecase attr
+      (null +linedit-no-attr-error+)
+      (termios
+       (if (zerop (isatty 0))
+           +linedit-not-atty+
+           (progn (setf attr nil)
+                  +linedit-ok+))))))
 
 (defun c-terminal-winsize (def side side-env)
   (declare (symbol side) (ignore def side-env))

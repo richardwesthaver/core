@@ -4,8 +4,9 @@
 
 ;;; Code:
 (in-package :dsp/gst)
-(glib:load-glib)
-(load-gstreamer)
+(defun load-gst (&key (glib t))
+  (when glib (glib:load-glib))
+  (load-gstreamer))
 ;; (load-gst-play)
 
 ;; (gst-version-string)

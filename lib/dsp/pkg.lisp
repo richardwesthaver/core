@@ -5,8 +5,36 @@
 ;;; Code:
 (defpackage :dsp/core
   (:use :cl :std :log)
-  (:export))
+  (:export
+   #:media-codec
+   #:audio-codec
+   #:video-codec
+   #:media-meta
+   #:av-meta
+   #:media-file
+   #:audio-file
+   #:video-file
+   #:image-file
+   #:*media-directory*
+   #:*default-media-probe*))
+
+(defpackage :dsp/av
+  (:use :cl :std :dsp/core :ffmpeg :sb-alien :dat/mime :id)
+  (:export
+   #:with-av-codec-context
+   #:with-av-format-context
+   #:av-dictionary-to-hash-table
+   #:av-dictionary-alist
+   #:with-av-parser
+   #:av-context-metadata
+   #:media-file-metadata
+   #:media-file-format
+   #:media-file-codecs
+   #:media-file-stream-count
+   #:load-av))
 
 (defpackage :dsp/gst
   (:use :cl :std :dsp/core :gstreamer :sb-alien)
-  (:export))
+  (:export
+   #:load-gst
+   #:gst-pipe))

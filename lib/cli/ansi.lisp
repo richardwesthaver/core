@@ -648,6 +648,8 @@ struct termios
          ;; get the current attributes in a termios object
          (termios (sb-posix:tcgetattr fd)))
     ;; Update the termios struct in place.
-    (update-termios termios modes)
+    (print (update-termios termios modes))
     ;; write the new termios struct to the fd of the tty now.
-    (sb-posix:tcsetattr fd sb-posix:tcsanow termios)))
+    (sb-alien:with-alien ((term sb-posix::alien-termios))
+      (sb-posix::termios-to-alien termios (sb-alien:addr term))
+      (sb-posix:tcsetattr fd sb-posix:tcsanow (sb-alien:addr term)))))

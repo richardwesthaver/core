@@ -39,4 +39,17 @@
     (glib:g-object-getv (cast elt (* glib:gobject)) 1 (clone-strings (list "name")) vals)
     (gst-object-unref elt)))
 
-      
+(deftest basic ()
+  (with-alien ((argv (* c-string))
+	       (argc int 0))
+    (gst-init (addr argc) (addr argv))
+    (with-alien ((pipeline (* gst-element)
+                           (gst-parse-launch 
+                            "playbin uri=https://gstreamer.freedesktop.org/data/media/sintel_trailer-480p.webm"
+                            nil)))
+      ;; if we pause here the video will play in a new X window
+      (gst-element-set-state pipeline (gst-state :playing))
+      (with-alien ((bus (* gst-bus) (gst-element-get-bus pipeline)))
+        (gst-object-unref bus)
+        (gst-element-set-state pipeline (gst-state :null))
+        (gst-object-unref pipeline)))))

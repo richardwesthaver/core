@@ -828,9 +828,9 @@
             (t (map-btree (if oids fn #'map-obj) btree :start start :end end :from-end from-end :collect collect))))))
 
 (defun get-unique-values (index &aux values)
-    (btree::with-btree-cursor (cur index)
+    (with-btree-cursor (cur index)
       (multiple-value-bind (valid? value oid)
-          (btree::cursor-first cur)
+          (cursor-first cur)
         (declare (ignore oid))
         (when valid?
           (push value values)
@@ -843,13 +843,13 @@
                  (push value values)))))))
 
 (defmethod sb-sequence:emptyp ((btree btree))
-    (btree::with-btree-cursor (cur btree)
-      (multiple-value-bind (valid k) (btree::cursor-next cur)
+    (with-btree-cursor (cur btree)
+      (multiple-value-bind (valid k) (cursor-next cur)
         (declare (ignore k))
         (cond ((not valid) ;; truly empty
                t)
               ((eq btree (store-root (get-store btree)))
-               (not (btree::cursor-next cur)))
+               (not (cursor-next cur)))
               (t nil)))))
 
 (defmethod find-inverted-index ((class symbol) slot &key (null-on-fail nil) (sc *store*))

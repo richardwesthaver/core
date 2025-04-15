@@ -97,13 +97,14 @@ appended."
 ;;; Walkers
 ;; From UIOP:COLLECT-SUB*DIRECTORIES
 (defun walk-directory (directory collectp recursep collector)
-  "Given a DIRECTORY, when COLLECTP returns true when APPLY'ed with the directory,
-call-function the COLLECTOR function designator on the directory,
-and recurse each of its subdirectories on which the RECURSEP returns true when APPLY'ed with them.
+  "Given a DIRECTORY, when COLLECTP returns true,
+call the COLLECTOR function designator with the directory and recurse each of
+its subdirectories on which RECURSEP returns true.
 
-The behavior in presence of symlinks is not portable."
-  (when (apply collectp directory)
-    (apply collector directory)
+COLLECTP, RECURSEP, and COLLECT all take a single pathname (the directory) as
+their only argument."
+  (when (funcall collectp directory)
+    (funcall collector directory)
     (dolist (subdir (subdirectories directory))
-      (when (apply recursep subdir)
+      (when (funcall recursep subdir)
         (walk-directory subdir collectp recursep collector)))))

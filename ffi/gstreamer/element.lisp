@@ -100,3 +100,20 @@
   (gst-elt iterate-pads (* gst-iterator))
   (gst-elt iterate-src-pads (* gst-iterator))
   (gst-elt iterate-sink-pads (* gst-iterator)))
+
+(define-alien-routine gst-element-get-state gst-state-change-return 
+  (element (* gst-element)) 
+  (state (* gst-state))
+  (pending (* gst-state))
+  (timeout gst-clock-time))
+
+(define-alien-routine gst-element-set-state gst-state-change-return (element (* gst-element)) (state gst-state))
+(define-alien-routine gst-element-set-bus void (element (* gst-element)) (bus (* gst-bus)))
+(define-alien-routine gst-element-get-bus (* gst-bus) (element (* gst-element)))
+(define-alien-routine gst-element-set-context void (element (* gst-element)) (bus (* gst-context)))
+(define-alien-routine gst-element-get-context (* gst-context) (element (* gst-element)) (context-type c-string))
+(define-alien-routine gst-element-get-contexts (* glist) (element (* gst-element)))
+(define-alien-routine gst-element-get-context-unlocked (* gst-context) (element (* gst-element)) (context-type c-string))
+(define-alien-routine gst-element-add-pad boolean (element (* gst-element)) (pad (* gst-pad)))
+(define-alien-routine gst-element-remove-pad boolean (element (* gst-element)) (pad (* gst-pad)))
+(define-alien-routine gst-element-no-more-pads void (element (* gst-element)))

@@ -113,7 +113,14 @@
    :avcodec-send-frame
    :avcodec-receive-frame
    :avcodec-receive-packet
-   :av-get-bytes-per-sample))
+   :av-get-bytes-per-sample
+   :averror
+   :averror*
+   :+av-error-max-string-size+
+   :av-strerror
+   :av-make-error-string
+   :av-channel-layout-default
+   :av-channel-layout))
            
 (in-package :ffmpeg)
 
@@ -133,6 +140,53 @@
 ;;; avutil
 (defconstant +av-nopts-value+ #x8000000000000000)
 (defconstant +av-time-base+ 1000000)
+(eval-when (:compile-toplevel)
+  (defun mktag (a b c d)
+    (logior a (ash b 8) (ash c 16) (ash d 24)))
+  (defun fferrtag (a b c d)
+    (- (mktag a b c d)))
+  (defun fferrtag* (str)
+    (- (mktag 
+        (char-code (schar str 0)) 
+        (char-code (schar str 1)) 
+        (char-code (schar str 2)) 
+        (char-code (schar str 3))))))
+
+(defconstant +av-error-max-string-size+ 64)
+
+(define-alien-enum (averror int)
+  :bsf-not-found (fferrtag #xf8 (char-code #\B) (char-code #\S) (char-code #\F))
+  :bug (fferrtag* "BUG!")
+  :buffer-too-small (fferrtag* "BUFS")
+  :decoder-not-found (fferrtag #xf8 (char-code #\D) (char-code #\E) (char-code #\C))
+  :demuxer-not-found (fferrtag #xf8 (char-code #\D) (char-code #\E) (char-code #\M))
+  :encoder-not-found (fferrtag #xf8 (char-code #\E) (char-code #\N) (char-code #\C))
+  :eof (fferrtag* "EOF ")
+  :exit (fferrtag* "EXIT")
+  :external (fferrtag* "EXT ")
+  :filter-not-found (fferrtag #xf8 (char-code #\F) (char-code #\I) (char-code #\L))
+  :invaliddata (fferrtag* "INDA")
+  :muxer-not-found (fferrtag #xf8 (char-code #\M) (char-code #\U) (char-code #\X))
+  :option-not-found (fferrtag #xf8 (char-code #\O) (char-code #\P) (char-code #\T))
+  :patchwelcome (fferrtag* "PAWE")
+  :protocol-not-found (fferrtag #xf8 (char-code #\P) (char-code #\R) (char-code #\O))
+  :stream-not-found (fferrtag #xf8 (char-code #\S) (char-code #\T) (char-code #\R))
+  :bug2 (fferrtag* "BUG ")
+  :unknown (fferrtag* "UNKN")
+  :experimental (- #x2bb2afa8)
+  :input-changed (- #x636e6701)
+  :output-changed (- #x636e6702)
+  :http-bad-request (fferrtag #xf8 (char-code #\4) (char-code #\0) (char-code #\0))
+  :http-unauthorized (fferrtag #xf8 (char-code #\4) (char-code #\0) (char-code #\1))
+  :http-forbidden (fferrtag #xf8 (char-code #\4) (char-code #\0) (char-code #\3))
+  :http-not-found (fferrtag #xf8 (char-code #\4) (char-code #\0) (char-code #\4))
+  :http-too-many-requests (fferrtag #xf8 (char-code #\4) (char-code #\2) (char-code #\9))
+  :http-other-4xx (fferrtag #xf8 (char-code #\4) (char-code #\X) (char-code #\X))
+  :http-server-error (fferrtag #xf8 (char-code #\5) (char-code #\X) (char-code #\X)))
+
+(define-alien-routine av-strerror int (errnum int) (errbuf c-string) (errbuf-size size-t))
+(define-alien-routine av-make-error-string c-string (errbuf c-string) (errbuf-size size-t) (errnum int))
+
 (define-alien-enum (av-media-type int)
   :unknown -1
   :video 0
@@ -429,16 +483,6 @@
       (buf (* unsigned-char))
       (buf-size int)
       (mime-type c-string)))
-
-(define-alien-routine av-get-packet int
-  (s (* av-io-context))
-  (pkt (* av-packet))
-  (size int))
-
-(define-alien-routine av-append-packet int
-  (s (* av-io-context))
-  (pkt (* av-packet))
-  (size int))
 
 (define-alien-enum (av-duration-estimation-method int)
   :pts 0
@@ -1876,6 +1920,16 @@ brevity.
       (parser-close (* (function void (* av-codec-parser-context))))
       (split (* (function int (* av-codec-context) (* unsigned-char) int)))))
 
+(define-alien-routine av-get-packet int
+  (s (* av-io-context))
+  (pkt (* av-packet))
+  (size int))
+
+(define-alien-routine av-append-packet int
+  (s (* av-io-context))
+  (pkt (* av-packet))
+  (size int))
+
 (define-alien-routine avformat-alloc-context (* av-format-context))
 (define-alien-routine avformat-free-context void (ctx (* av-format-context)))
 (define-alien-routine avformat-init-output int (s (* av-format-context)) (options (* (* av-dictionary))))
@@ -2017,3 +2071,4 @@ brevity.
   (callback (* (function void (* t) int c-string (* t)))))
 (define-alien-routine av-get-bytes-per-sample int
   (sample-fmt av-sample-format))
+(define-alien-routine av-channel-layout-default void (ch-layout (* av-channel-layout)) (nb-channels int))

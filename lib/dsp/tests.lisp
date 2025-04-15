@@ -4,9 +4,11 @@
 
 ;;; Code:
 (defpackage :dsp/tests
-  (:use :cl :std :rt :log :aud :gstreamer))
+  (:use :cl :std :rt :log :dsp))
 (in-package :dsp/tests)
 (defsuite :dsp)
 (in-suite :dsp)
 
-(deftest sanity ())
+(deftest sanity ()
+  (is (load-gst))
+  (is (load-av)))

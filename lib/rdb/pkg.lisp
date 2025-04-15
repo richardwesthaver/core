@@ -151,7 +151,8 @@
    :rdb-object-schema
    :rdb-data-source
    :rdb-sink
-   :rdb-log-schema))
+   :rdb-log-schema
+   :cursor-handle))
 
 (defpackage :rdb/cli
   (:use :cl :std :cli :rdb :db :seq)

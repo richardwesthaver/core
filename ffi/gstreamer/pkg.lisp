@@ -50,7 +50,25 @@
    :gst-object-check-uniqueness
    :gst-object-replace
    :gst-object-ref-sink
-   :gst-object-flags))
+   :gst-object-flags
+   :gst-play-state
+   :gst-play-state-get-name
+   :gst-play-message
+   :gst-play-message-get-name
+   :gst-play-get-type
+   :gst-play-new
+   :gst-play-error
+   :gst-state
+   :gst-pipeline
+   :gst-pipeline-new
+   :gst-pipeline-get-bus
+   :gst-pipeline-get-type
+   :gst-parse-launch
+   :gst-element-set-bus
+   :gst-element-get-bus
+   :gst-element-set-context
+   :gst-element-get-context
+   :gst-element-get-state))
 
 (in-package :gstreamer)
 

@@ -449,7 +449,8 @@
    :make-df
    :df-col
    :df
-   :data-frame))
+   :data-frame
+   :data-frame-plan))
 
 (defpackage :obj/query
   (:nicknames :query)
