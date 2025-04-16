@@ -5,7 +5,6 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-opaque gst-task)
 (define-opaque gst-task-private)
 (define-opaque gst-task-class)
 
@@ -16,9 +15,9 @@
 
 (define-alien-type gst-task-thread-func (* t))
 
-(define-alien-type gst-task-t
+(define-alien-type gst-task
   (struct gst-task
-          (object gst-object-t)
+          (object gst-object)
           (state gst-task-state)
           (cond gcond)
           (lock (* grec-mutex))

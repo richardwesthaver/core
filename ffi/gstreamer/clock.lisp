@@ -7,7 +7,8 @@
 
 (define-opaque gst-clock-private)
 
-(define-alien-type gst-clock-time (unsigned 64))
+(define-alien-enum (gst-clock-time (unsigned 64))
+  :none 18446744073709551615)
 
 (define-alien-type gst-clock-time-diff (signed 64))
 
@@ -15,6 +16,6 @@
 
 (define-alien-type gst-clock
   (struct gst-clock
-          (object gst-object-t)
+          (object gst-object)
           (priv (* gst-clock-private))
           (gst-reserved (array gpointer #.+gst-padding+))))

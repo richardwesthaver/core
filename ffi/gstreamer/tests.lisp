@@ -47,9 +47,13 @@
                            (gst-parse-launch 
                             "playbin uri=https://gstreamer.freedesktop.org/data/media/sintel_trailer-480p.webm"
                             nil)))
-      ;; if we pause here the video will play in a new X window
-      (gst-element-set-state pipeline (gst-state :playing))
+      ;; if we sleep here the video will play in a new X window
+      (iseq :async (gst-state-change-return* (gst-element-set-state pipeline (gst-state :playing))))
       (with-alien ((bus (* gst-bus) (gst-element-get-bus pipeline)))
-        (gst-object-unref bus)
-        (gst-element-set-state pipeline (gst-state :null))
-        (gst-object-unref pipeline)))))
+        (with-alien ((msg (* gst-message) (gst-bus-timed-pop-filtered bus (gst-clock-time :none))))
+	  (when (= (slot msg 'gstreamer::type) (gst-message-type :error))
+            (error "GStreamer error occurred"))
+          (gst-message-unref msg)
+          (gst-object-unref bus)
+          (gst-element-set-state pipeline (gst-state :null))
+          (gst-object-unref pipeline))))))

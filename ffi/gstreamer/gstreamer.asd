@@ -9,7 +9,8 @@
                (:file "context" :depends-on ("pkg"))
                (:file "task" :depends-on ("object"))
                (:file "iterator" :depends-on ("pkg"))
-               (:file "bus" :depends-on ("object"))
+               (:file "message" :depends-on ("mini-object"))
+               (:file "bus" :depends-on ("object" "message"))
                (:file "pad" :depends-on ("object"))
                (:file "element" :depends-on ("clock" "object" "iterator" "context"))
 	       (:file "parse" :depends-on ("element"))
@@ -17,7 +18,8 @@
                (:file "bin" :depends-on ("element"))
                (:file "pipeline" :depends-on ("bin"))
                (:file "debug" :depends-on ("bin"))
-               (:file "play" :depends-on ("element")))
+               (:file "play" :depends-on ("element" "bin"))
+               (:file "ges" :depends-on ("element" "bin" "pipeline")))
   :in-order-to ((test-op (test-op "gstreamer/tests"))))
 
 (defsystem :gstreamer/tests

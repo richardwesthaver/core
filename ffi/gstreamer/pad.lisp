@@ -5,9 +5,6 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-opaque gst-pad)
-(define-opaque gst-pad-template)
-
 (define-alien-type gst-pad-private (* t))
 
 (define-alien-enum (gst-pad-presence int)
@@ -28,9 +25,9 @@
                    :push 1
                    :pull 2)
 
-(define-alien-type gst-pad-template-t
+(define-alien-type gst-pad-template
   (struct gst-pad-template
-          (object gst-object-t)
+          (object gst-object)
           (name-template c-string)
           (direction gst-pad-direction)
           (presence gst-pad-presence)
@@ -47,9 +44,9 @@
 (define-alien-type gst-pad-query-function (* t))
 (define-alien-type gst-pad-iter-int-link-function (* t))
 
-(define-alien-type gst-pad-t
+(define-alien-type gst-pad
   (struct gst-pad
-          (object gst-object-t)
+          (object gst-object)
           (element-private gpointer)
           (padtemplate (* gst-pad-template))
           (direction gst-pad-direction)
@@ -63,7 +60,8 @@
           (activatenotify gdestroy-notify)
           (activatemodefunc gst-pad-activate-mode-function)
           (activatemodenotify gdestroy-notify)
-          (peer (* gst-pad))
+          ;; (* gst-pad)
+          (peer (* t))
           (linkfunc gst-pad-link-function)
           (linkdata gpointer)
           (linknotify gdestroy-notify)

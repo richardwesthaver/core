@@ -22,5 +22,7 @@
  (:integer +d-max-blocks-in-mcu+ "D_MAX_BLOCKS_IN_MCU")
  (:integer +jpool-permanent+ "JPOOL_PERMANENT")
  (:integer +jpool-image+ "JPOOL_IMAGE")
- (:integer +jpool-numpools+ "JPOOL_NUMPOOLS"))
+ (:integer +jpool-numpools+ "JPOOL_NUMPOOLS")
+ (:integer +jcs-extensions+ "JCS_EXTENSIONS")
+ (:integer +jcs-alpha-extensions+ "JCS_ALPHA_EXTENSIONS"))
 

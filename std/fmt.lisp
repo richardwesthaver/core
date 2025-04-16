@@ -171,7 +171,7 @@ be produced by `sxhash'."
 (defvar *print-slot-indent* 0)
 
 (defun describe-slot (name value &optional (max-slot-name-length 30) (stream t) (indent *print-slot-indent*))
-  (format stream "~%~A~VA = ~A" (make-string indent :initial-element #\space) max-slot-name-length name (sb-impl::prin1-to-line value)))
+  (format stream "~%~A~VA = ~A" (make-string indent :initial-element #\space) max-slot-name-length name (prin1-to-line value)))
 
 ;; FROM: sb-impl describe
 (defun %describe-object (object stream)
@@ -198,22 +198,22 @@ be produced by `sxhash'."
 (defun print-slots (object &optional (stream t))
   (let ((*print-right-margin* (or *print-right-margin* 72))
 	(*print-circle* t)
-	(sb-impl::*print-circle-not-shared* t)
+	(sb-*print-circle-not-shared* t)
 	(*print-pretty* t)
-	(sb-impl::*suppress-print-errors*
-	  (if (subtypep 'serious-condition sb-impl::*suppress-print-errors*)
-	      sb-impl::*suppress-print-errors*
+	(*suppress-print-errors*
+	  (if (subtypep 'serious-condition *suppress-print-errors*)
+	      *suppress-print-errors*
 	      'serious-condition)))
     (%describe-object object stream)))
 
 (defun format-slots (stream &rest slots)
   (let ((*print-right-margin* (or *print-right-margin* 72))
 	(*print-circle* t)
-	(sb-impl::*print-circle-not-shared* t)
+	(*print-circle-not-shared* t)
 	(*print-pretty* t)
-	(sb-impl::*suppress-print-errors*
-	  (if (subtypep 'serious-condition sb-impl::*suppress-print-errors*)
-	      sb-impl::*suppress-print-errors*
+	(*suppress-print-errors*
+	  (if (subtypep 'serious-condition *suppress-print-errors*)
+	      *suppress-print-errors*
 	      'serious-condition)))
     (sb-int:doplist (k v) (print slots)
       (describe-slot (string k) v 30 stream))

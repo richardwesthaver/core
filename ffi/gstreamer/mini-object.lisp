@@ -5,11 +5,20 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-opaque gst-mini-object)
-
 (define-alien-type gst-mini-object-copy-function (* t))
 (define-alien-type gst-mini-object-dispose-function (* t))
 (define-alien-type gst-mini-object-free-function (* t))
+
+(define-alien-type gst-mini-object
+  (struct gst-mini-object
+    (type gtype)
+    (lockstate int)
+    (flags unsigned-int)
+    (copy gst-mini-object-copy-function)
+    (dispose gst-mini-object-dispose-function)
+    (free gst-mini-object-free-function)
+    (priv-uint unsigned-int)
+    (priv-pointer gpointer)))
 
 (define-alien-enum (gst-mini-object-flags int)
                    :lockable (ash 1 0)
@@ -17,14 +26,16 @@
                    :may-be-leaked (ash 1 2)
                    :last (ash 1 4))
 
-(define-alien-type gst-mini-object-t
-  (struct gst-mini-object
-          (type gtype)
-          (refcount int)
-          (lockstate int)
-          (flags unsigned-int)
-          (copy gst-mini-object-copy-function)
-          (dispose gst-mini-object-dispose-function)
-          (free gst-mini-object-free-function)
-          (priv-uint unsigned-int)
-          (priv-pointer gpointer)))
+(define-alien-routine gst-mini-object-init void
+  (mini-object (* gst-mini-object))
+  (flags unsigned-int)
+  (type gtype)
+  (copy-func gst-mini-object-copy-function)
+  (dispose-func gst-mini-object-dispose-function)
+  (free-func gst-mini-object-free-function))
+
+(define-alien-routine gst-mini-object-ref (* gst-mini-object)
+  (mini-object (* gst-mini-object)))
+
+(define-alien-routine gst-mini-object-unref void
+  (mini-object (* gst-mini-object)))

@@ -68,14 +68,34 @@
    :gst-element-get-bus
    :gst-element-set-context
    :gst-element-get-context
-   :gst-element-get-state))
+   :gst-element-get-state
+   :load-ges
+   :ges-init
+   :ges-init-check
+   :ges-is-initialized
+   :ges-deinit
+   :gst-message-type
+   :gst-message
+   :gst-message-type-get-name
+   :gst-message-get-type
+   :gst-message-ref
+   :gst-message-unref
+   :gst-clock-time
+   :gst-message-code
+   :gst-task-state
+   :gst-bus-timed-pop-filtered
+   :gst-state-change-return
+   :gst-state-change-return*
+   :with-gst-init))
 
 (in-package :gstreamer)
 
 ;; (load-glib)
 
 (define-alien-loader gstreamer "/usr/lib/" "gstreamer-1.0")
+(define-alien-loader ges "/usr/lib/" "ges-1.0")
 ;; (load-gstreamer)
+;; (load-ges)
 
 (define-alien-routine gst-version void (major (* unsigned)) (minor (* unsigned)) (micro (* unsigned)) (nano (* unsigned)))
 

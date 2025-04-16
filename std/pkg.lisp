@@ -643,6 +643,8 @@
 (defpkg :std/fmt
   (:use :cl)
   (:import-from :std/list :group :ensure-cons)
+  (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors*)
+  (:import-from :sb-impl :prin1-to-line)
   (:shadowing-import-from :uiop :println)
   (:export :printer-status :fmt-row :format-sxhash 
    :iprintln :fmt-tree :println :human-readable-size 

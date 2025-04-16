@@ -9,7 +9,7 @@
 
 (define-alien-type gst-bin
     (struct gst-bin
-      (element gst-element-t)
+      (element gst-element)
       (numchildren int)
       (children (* glist))
       (children-cookie (unsigned 32))
@@ -19,7 +19,7 @@
       (state-dirty boolean)
       (clock-dirty boolean)
       (provided-clock (* gst-clock))
-      (clock-provider (* gst-element-t))
+      (clock-provider (* gst-element))
       (priv (* gst-bin-private))
       (%gst-reserved (array gpointer #.+gst-padding+))))
 

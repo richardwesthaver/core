@@ -5,24 +5,23 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-opaque gst-object)
-
 (define-alien-enum (gst-object-flags int)
                    :may-be-leaked (ash 1 0)
                    :constructed (ash 1 1)
                    :last (ash 1 4))
 
-(define-alien-type gst-object-t
-  (struct gst-object
-          (object ginitially-unowned)
-          (lock gmutex)
-          (name c-string)
-          (parent (* gst-object))
-          (flags (unsigned 32))
-          (control-bindings (* glist))
-          (control-rate (unsigned 64))
-          (last-sync (unsigned 64))
-          (%gst-reserved gpointer)))
+(define-alien-type gst-object
+    (struct gst-object
+      (object ginitially-unowned)
+      (lock gmutex)
+      (name c-string)
+      ;; (* gst-object)
+      (parent (* t))
+      (flags (unsigned 32))
+      (control-bindings (* glist))
+      (control-rate (unsigned 64))
+      (last-sync (unsigned 64))
+      (%gst-reserved gpointer)))
 
 (define-opaque gst-object-class)
 
