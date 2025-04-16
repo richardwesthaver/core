@@ -4,7 +4,7 @@
 (in-package :log)
 
 (eval-always
-  (defparameter *log-levels* (vector nil :fatal :error :warn :info :debug :trace t)))
+  (defparameter *log-levels* (vector nil :trace :debug :info :warn :error :fatal t)))
 
 (defun ilevel (name)
   (position name *log-levels*))
@@ -72,18 +72,22 @@ function 'NAME-P'."
        (defun ,(intern (concatenate 'string %name "-P")) ()
          ,@(or pred `((eql *log-level* ,(sb-int:keywordicate name)))))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
-         (when (,(symbolicate (concatenate 'string %name "-P")))
-           (fresh-line *trace-output*)
-           (format *trace-output* "#:~(~A~)~@[ ~f~]~&"
-                   ',name
-                   (when *log-timestamp* (log-timestamp-source)))
-           (if-let ((fmt (and (stringp (car args)) (pop args))))
-             (apply 'format *trace-output* fmt args)
-             (mapc (lambda (x) (format *trace-output* "; ~A~&" x)) args))
-           (case (length args)
-             (0 (values))
-             (1 (car args))
-             (t args))))
+         (cond 
+           ((and (boundp '*logger*) (started-p *logger*))
+            (log-message ,(keywordicate name) nil args))
+           ((,(symbolicate (concatenate 'string %name "-P")))
+            (fresh-line *trace-output*)
+            (format *trace-output* "#:~(~A~)~@[ ~f~]~&"
+                    ',name
+                    (when *log-timestamp* (log-timestamp-source)))
+            (if (and (stringp (car args)) (> (length args) 1))
+                (let ((fmt (pop args)))
+                  (apply 'format *trace-output* fmt args))
+                (mapc (lambda (x) (format *trace-output* "; ~A~&" x)) args))))
+         (case (length args)
+           (0 (values))
+           (1 (car args))
+           (t args)))
        (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (&rest args)
          (,(intern (concatenate 'string %name "!")) (apply #'describe args))))))
 
@@ -178,7 +182,7 @@ function 'NAME-P'."
    :interval :daily
    :file nil))
 
-(defmethod log-rotate ((obj rotating-file-sink) &optional new-file)
+(defun rotate-file-sink (obj &optional new-file)
   (let ((time (setf (last-rotation obj) (get-universal-time))))
     (cond (new-file
            (setf (file obj) new-file))
@@ -192,7 +196,7 @@ function 'NAME-P'."
 
 (defmethod initialize-instance :after ((obj rotating-file-sink) &key interval)
   (setf (interval obj) interval)
-  (log-rotate obj))
+  (rotate-file-sink obj))
 
 (defmethod (setf interval) (value (obj rotating-file-sink))
   (ecase value
@@ -200,6 +204,7 @@ function 'NAME-P'."
      (setf (slot-value obj 'interval) value))))
 
 (defmethod msg :before ((obj rotating-file-sink) msg)
+  "Check the last-rotation value and rotate the file sink if needed before processing MSG."
   (let ((pre (last-rotation obj))
         (now (get-universal-time)))
     (when 
@@ -216,7 +221,7 @@ function 'NAME-P'."
                (or (/= pmm mm) (/= pyy yy)))
               (:weekly
                (< (* 60 60 24 7) (- (get-universal-time) (last-rotation obj)))))))
-      (log-rotate obj))))
+      (rotate-file-sink obj))))
 
 (defclass level-filter (filter)
   ((level :initform *log-level* :accessor level))
@@ -227,8 +232,10 @@ function 'NAME-P'."
   (setf (level filter) level))
 
 (defmethod (setf level) :before (level (filter level-filter))
-  (unless (find level *log-levels*)
-    (error 'invalid-argument :reason "LEVEL is not a member of *LEVELS* or an integer" :item level)))
+  "Assert LEVEL is a member of *LOG-LEVELS*."
+  (assert (find level *log-levels*) nil 'invalid-argument
+          :reason "LEVEL is not a member of *LOG-LEVELS* or an integer" 
+          :item level))
 
 (defmethod msg ((filter level-filter) (message message))
   (let ((level (level filter)))

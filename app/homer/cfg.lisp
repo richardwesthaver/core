@@ -13,7 +13,7 @@
    (krypt :initform (load-kryptrc) :initarg :krypt :type (or null pathname krypt-config))
    (mpk :initform (load-mpkrc) :initarg :mpk :type (or null pathname mpk-config))
    (packy :initform nil :initarg :packy :type (or null packy-config))
-   (logger :initform (default-logger-config) :initarg :logger :type (or null logger-config))
+   (logger :initform (default-logger-config) :initarg :logger :type (or null logger-config) :accessor logger)
    (mail :initarg :mail :type pathname)
    (term :initform nil :type (or pathname null term-config))
    (tmux :initform nil :type (or pathname null tmux-config))
@@ -48,7 +48,7 @@
               (unless (null v)
                 (setf v
                       (case k
-                        (:logger (make-config :logger :ast v))
+                        (:logger (apply 'make-config :logger v))
                         (:term (make-config :term :ast v))
                         (:tmux (apply 'make-config :tmux v))
                         (:editor (if (atom v)
@@ -119,4 +119,6 @@
           (%load))
         (if (probe-file file)
             (%load)
-            (init-homerc file)))))
+            (init-homerc file))))
+  (setf *log-level* (level (logger *home-config*)))
+  *home-config*)

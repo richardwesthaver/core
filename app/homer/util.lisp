@@ -7,7 +7,8 @@
 
 (defun homer-user-init ()
   (setq *user* (or (sb-posix:getenv "USER") "root")
-        *user-homerc* (merge-homedir-pathnames ".homerc")))
+        *user-homerc* (merge-homedir-pathnames ".homerc")
+        *log-level* :info))
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))
 (defun ctime (path) (sb-posix:stat-ctime (sb-posix:stat path)))

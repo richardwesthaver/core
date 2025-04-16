@@ -315,7 +315,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
   `(unwind-protect
         (progn
           (reset-tracing)
-          (start-tracing ,specs)
+          (start-tracing ',specs)
           (progn
             ,@body))
      (stop-tracing)))

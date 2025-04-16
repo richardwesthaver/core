@@ -12,8 +12,8 @@
 
 (defparameter *systemctl* (find-exe "systemctl"))
 
-(defun run-systemctl (args &key (output t))
-  (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output output :wait t)))
+(defun run-systemctl (args &key (output t) (wait t))
+  (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output output :wait wait)))
     (unless (or (= 0 #1=(sb-ext:process-exit-code proc))
                 (= 3 #1#))
       (systemd-error "SYSTEMCTL command failed: ~A ~A" *systemctl* (or args "")))))
