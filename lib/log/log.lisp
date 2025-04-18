@@ -73,7 +73,7 @@ function 'NAME-P'."
          ,@(or pred `((eql *log-level* ,(sb-int:keywordicate name)))))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
          (cond 
-           ((and (boundp '*logger*) (started-p *logger*))
+           ((and (boundp '*logger*) *logger* (started-p *logger*))
             (log-message ,(keywordicate name) nil args))
            ((,(symbolicate (concatenate 'string %name "-P")))
             (fresh-line *trace-output*)

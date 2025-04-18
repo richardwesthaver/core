@@ -333,6 +333,7 @@ function: '(ql:quickload :clouseau)'."
                           (:indentation
                            (defpkg (as defpackage))
                            (define-package (as defpackage))
+			   (walk-directory 1)
                            (defconfig (as defclass))))
 
 ;; lisp font-lock defaults: https://www.n16f.net/blog/custom-font-lock-configuration-in-emacs/

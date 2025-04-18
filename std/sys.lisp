@@ -271,3 +271,8 @@ Core i7 4770K, do **NOT** support RTM."
 
 (defun 64-bit-p () #+x86-64 t)
 (defun 32-bit-p () #+x86 t)
+
+(defun register-project-directory (path)
+  "Add PATH to QL:*LOCAL-PROJECT-DIRECTORIES* and ASDF:*CENTRAL-REGISTRY*."
+  #+quicklisp (pushnew path ql:*local-project-directories*)
+  (pushnew path asdf:*central-registry*))

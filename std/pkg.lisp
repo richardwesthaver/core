@@ -375,6 +375,7 @@
   (:import-from :std/macs :if-let)
   (:export
    :.i ;; alias for *inspected*
+   :register-project-directory
    :revive-image
    :64-bit-p :32-bit-p
    :*logical-hosts*
@@ -662,6 +663,7 @@
    :absolute-pathname
    :relative-pathname
    :directory-pathname
+   :directory-empty-p
    :symlink-pathname
    :symlinkp
    :directory-path

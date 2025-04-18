@@ -5,6 +5,10 @@
 ;;; Code:
 (in-package :dsp/core)
 
+(define-condition dsp-condition () ())
+
+(define-condition dsp-error () ())
+
 (defclass media-codec (id)
   ((name :initarg :name :accessor name)))
 

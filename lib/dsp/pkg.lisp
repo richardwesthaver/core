@@ -16,11 +16,14 @@
    #:video-file
    #:image-file
    #:*media-directory*
-   #:*default-media-probe*))
+   #:*default-media-probe*
+   #:dsp-condition
+   #:dsp-error))
 
 (defpackage :dsp/av
   (:use :cl :std :dsp/core :ffmpeg :sb-alien :dat/mime :id)
   (:export
+   :av-error
    #:with-av-codec-context
    #:with-av-format-context
    #:av-dictionary-to-hash-table
@@ -36,5 +39,7 @@
 (defpackage :dsp/gst
   (:use :cl :std :dsp/core :gstreamer :sb-alien)
   (:export
+   :gst-condition
+   :gst-error
    #:load-gst
    #:gst-pipe))

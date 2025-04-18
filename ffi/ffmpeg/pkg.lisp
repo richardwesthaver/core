@@ -185,7 +185,7 @@
   :http-server-error (fferrtag #xf8 (char-code #\5) (char-code #\X) (char-code #\X)))
 
 (define-alien-routine av-strerror int (errnum int) (errbuf c-string) (errbuf-size size-t))
-(define-alien-routine av-make-error-string c-string (errbuf c-string) (errbuf-size size-t) (errnum int))
+;; (define-alien-routine av-make-error-string c-string (errbuf c-string) (errbuf-size size-t) (errnum int))
 
 (define-alien-enum (av-media-type int)
   :unknown -1

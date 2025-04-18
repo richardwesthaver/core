@@ -12,6 +12,8 @@
 
 ;; (load-libav)
 
+(deferror av-error (dsp-error std-error) () (:auto t))
+
 (defmacro with-av-format-context (sym &body body)
   `(with-alien ((,sym (* av-format-context) (avformat-alloc-context)))
      (unwind-protect (progn ,@body)
@@ -58,10 +60,12 @@
 
 (defun media-file-metadata (path &optional (type :hash-table))
   (with-av-format-context ctx
-    (assert (zerop (avformat-open-input (addr ctx) (namestring path) nil nil)))
-    (with-alien ((dict (* av-dictionary) (slot ctx 'ffmpeg::metadata)))
-      (prog1 (av-dictionary-coerce dict type)
-	(avformat-close-input (addr ctx))))))
+    (unwind-protect 
+         (case #1=(avformat-open-input (addr ctx) (namestring path) nil nil)
+               (0 (with-alien ((dict (* av-dictionary) (slot ctx 'ffmpeg::metadata)))
+                    (prog1 (av-dictionary-coerce dict type))))
+               (t (av-error #1#)))
+      (avformat-close-input (addr ctx)))))
 
 (defun media-file-format (path)
   (with-av-format-context ctx

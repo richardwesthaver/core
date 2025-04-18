@@ -10,7 +10,7 @@
 (in-package :std/os)
 (require 'sb-posix)
 
-(defvar *user* (sb-posix:getenv "USER"))
+(defparameter *user* (sb-posix:getenv "USER"))
 
 (defun sudo-p ()
   "Return T if effective user is root."

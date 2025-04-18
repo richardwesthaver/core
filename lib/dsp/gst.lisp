@@ -4,10 +4,15 @@
 
 ;;; Code:
 (in-package :dsp/gst)
+
 (defun load-gst (&key (glib t))
   (when glib (glib:load-glib))
   (load-gstreamer))
+
 ;; (load-gst-play)
+
+(define-condition gst-condition (dsp-condition) ())
+(deferror gst-error (gst-condition dsp-error) () (:auto t))
 
 ;; (gst-version-string)
 

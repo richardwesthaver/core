@@ -27,3 +27,5 @@
   (let ((tbl (make-hash-table :size (length *mpk-media-types*))))
     (dolist (m *mpk-media-types* tbl)
       (setf (gethash m tbl) (find-supported-media-types m)))))
+
+(defvar *music-metadata*)

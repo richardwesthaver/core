@@ -49,7 +49,7 @@
 (defconstant +wildfile+ (make-pathname :name :wild :type :wild :version :wild))
 
 (defun directory-path-p (path)
-  "Return T if PATH is a directory or NIL else."
+  "Return T if PATH is a directory else NIL."
   (declare (type (or pathname string) path))
   (and (not (pathname-name path))
        (not (pathname-type path))))
@@ -108,3 +108,8 @@ their only argument."
     (dolist (subdir (subdirectories directory))
       (when (funcall recursep subdir)
         (walk-directory subdir collectp recursep collector)))))
+
+(defun directory-empty-p (&optional (dir *default-pathname-defaults*))
+  "Return non-nil if DIR is a DIRECTORY-PATHNAME which does not contain any files
+or directories."
+  (and (directory-path-p dir) (not (directory (merge-pathnames "*" dir)))))

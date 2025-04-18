@@ -79,7 +79,7 @@
    :mpd-config))
 
 (defpackage :mpk
-  (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time)
+  (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp)
   (:export
    #:*mpk-directory*
    #:mpk-path
@@ -103,7 +103,9 @@
    #:mpk-media-path
    #:mpk-music-path
    #:mpk-data-path
-   #:*mpc*))
+   #:*mpc*
+   #:mpk-music-metadata-scan
+   #:*music-metadata*))
 
 (defpackage :mpk/db
   (:nicknames :mdb)
