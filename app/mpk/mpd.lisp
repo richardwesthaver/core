@@ -318,7 +318,7 @@
      ,@body))
 
 (defmacro defmethod-command (name parameters &body body)
-  `(defmethod ,name (connection ,@parameters)
+  `(defmethod ,(symbolicate "MPC-" name) (connection ,@parameters)
      ,@body))
 
 (defmacro check-args (type &rest args)
@@ -396,9 +396,14 @@
   (send "pause"))
 
 (defcommand play (&optional song-number)
-  (check-args (or unsigned-byte null) song-number)
+  ;; (check-args (or positive-fixnum null) song-number)
   "Begin playing the playlist starting from song-number, default is 0."
-  (send "play" song-number))
+  (send "play" (- song-number 1)))
+
+(defcommand searchplay (type &optional query)
+  (check-args string type query)
+  "Search and play a song in the current playlist."
+  (send "searchplay" type query))
 
 (defcommand stop ()
   "Stop playing."
@@ -450,7 +455,7 @@
 
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
-  (check-args (or unsigned-byte null) id)
+  (check-args (or positive-fixnum null) id)
   (if id
       (make-class (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
@@ -473,13 +478,13 @@
 (defcommand delete-from-playlist (name song-id)
   "Delete `song-id' from playlist `name'."
   (check-args string name)
-  (check-args unsigned-byte song-id)
+  (check-args positive-fixnum song-id)
   (send "playlistdelete" name song-id))
 
 (defcommand move-in-playlist (name song-id position)
   "Move `song-id' in playlist `name' to `position'."
   (check-args string name)
-  (check-args unsigned-byte song-id position)
+  (check-args positive-fixnum song-id position)
   (send "playlistmove" name song-id position))
 
 (defcommand find-in-current-playlist (scope query)
@@ -512,7 +517,7 @@
 
 (defcommand move (from to)
   "Move track from `from' to `to' in the playlist."
-  (check-args unsigned-byte from to)
+  (check-args positive-fixnum from to)
   (unless (= from to)
     (send "move" from to)))
 
@@ -618,16 +623,16 @@ Return: (number playtime)."
   "Get a list of available URL handlers."
   (filter-keys (send "urlhandlers")))
 
-(defun (setf volume) (value connection)
+(defun (setf mpc-volume) (value connection)
   "Set the volume to the value between 0-100."
   (check-type value (integer 0 100) "an integer in range 0-100")
   (send "setvol" value))
 
-(defun (setf randomized) (value connection)
+(defun (setf mpc-randomized) (value connection)
   "NIL---turn off random mode, non-nil---turn on random mode."
   (send "random" (if value 1 0)))
 
-(defun (setf repeat) (value connection)
+(defun (setf mpc-repeat) (value connection)
   "NIL---turn off repeat mode, non-nil---turn on repeat mode."
   (send "repeat" (if value 1 0)))
 
@@ -696,3 +701,6 @@ Parameters that take a file or directory as an argument should use absolute path
    replaygain-preamp
    volume-normalization
    filesystem-charset))
+
+(defmethod make-config ((self (eql :mpd)) &rest args)
+  (apply 'make-instance 'mpd-config args))

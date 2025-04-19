@@ -4,6 +4,7 @@
 
 ;;; Code:
 (in-package :mpk/cli)
+
 (defcmd mpk-stats-cmd ()
   (mpd:with-mpc (*mpc*)
     (let ((*print-slot-indent* 2))
@@ -15,14 +16,17 @@
 (defcmd mpk-play-cmd ()
   (let ((arg (car *args*)))
     (if (null arg)
-        (mpk-play *default-pathname-defaults*)
+        (mpd:with-mpc (*mpc*) (mpd:mpc-play *mpc*))
         (if-let ((path (probe-file arg)))
           (let ((ext (pathname-type path)))
             (cond 
               ((null ext) (mpk-play path)) ;; directory
               ;; ((member (string-downcase ext) *known-media-types*) (mpk-play file))
               (t #+nil (unknown-file-type file) (mpk-play path))))
-          (error 'sb-ext:file-does-not-exist :pathname (car *args*))))))
+          (mpk-play arg)))))
+
+(defcmd mpk-pause-cmd ()
+  (mpk-pause :mpd))
 
 (defcmd mpk-mpc-cmd ()
   (with-package :mpk-user
@@ -37,7 +41,9 @@
   :help t
   :description "Media Production Kit"
   :cmds ((:name play :thunk mpk-play-cmd)
-         (:name mpc :thunk mpk-mpc-cmd))
+         (:name pause :thunk mpk-pause-cmd)
+         (:name mpc :thunk mpk-mpc-cmd)
+         (:name stats :thunk mpk-stats-cmd))
   :thunk mpk-stats-cmd)
 
 (load-package-cli *mpk-cli* :package :mpk)

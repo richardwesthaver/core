@@ -17,38 +17,38 @@
 
 (defvar *mdb-id-seed* (random 99999))
 
-(defclass mdb-id (id:id) ()
+(defclass mdb-id (id) ()
   (:default-initargs :id (uuid:make-v4-uuid)))
 
 (defclass mdb (rdb-database) ()
   (:default-initargs
    :db (make-db :rocksdb
-                :name (namestring *mdb-directory*)
-                :opts (default-rdb-opts)
-                :logger (rdb-log-default 1))))
+         :name (namestring *mdb-directory*)
+         :opts (default-rdb-opts)
+         :logger (rdb-log-default 1))))
 
-(defmethod id:make-id ((self (eql :mdb))) (make-instance 'mdb-id))
+(defmethod make-id ((self (eql :mdb))) (make-instance 'mdb-id))
 
 (defmethod make-db ((engine (eql :mdb)) &rest initargs &key)
   (apply #'make-instance 'mdb initargs))
 
 (defmethod get-db (dbs (name (eql :mdb))))
 
-(defvar *mdb-schema* (make-instance 'rdb-schema
-                       :fields (make-fields 
-                                :id '(uuid . string)
-                                :file '(uuid . string)
-                                :name '(uuid . string)
-                                :source '(uuid . string)
-                                :state '(uuid . octet)
-                                :meta '(uuid . string))))
+(defvar *mdb-schema* 
+  (defschema rdb-schema (simple-schema)
+    ((:id '(uuid . string))
+     (:file '(uuid . string))
+     (:name '(uuid . string))
+     (:source '(uuid . string))
+     (:state '(uuid . octet))
+     (:meta '(uuid . string)))))
 
 (defun init-mdb ()
   (ifret *mdb*
     (setq *mdb* 
           (make-db :mdb
-                   :opts (default-rdb-opts)
-                   :name (namestring *mdb-directory*)))
+            :opts (default-rdb-opts)
+            :name (namestring *mdb-directory*)))
     (if (probe-file *mdb-directory*)
         (progn
           (load-opts *mdb* :backfill t)

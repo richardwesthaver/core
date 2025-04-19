@@ -92,7 +92,7 @@
                        :nullp nullp
                        :exclude exclude)))
 
-(defun init-homerc (&optional (file (merge-homedir-pathnames ".homerc")))
+(defun init-homerc (&optional (file *user-homerc*))
   (let ((cfg (make-instance 'home-config)))
     (build-ast cfg :exclude '(ast id skel krypt mpk logger))
     (with-open-file (out file

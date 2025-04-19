@@ -57,7 +57,7 @@
    :nvcc-error))
 
 (defpackage :cli/tools/media
-  (:use :cl :std :cli/tools/proto :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env :config :ini :ast)
   (:export
    :*ffmpeg*
    :run-ffmpeg
@@ -78,7 +78,9 @@
    :ffmpeg-format-props
    :do-picard
    :picard-error
-   :wireplumber-error))
+   :wireplumber-error
+   :mpv-config
+   :*mpv-config-path*))
 
 (defpackage :cli/tools/go
   (:nicknames :tools/go)

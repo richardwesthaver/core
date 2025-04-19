@@ -332,8 +332,10 @@ function: '(ql:quickload :clouseau)'."
                           (:inherit "sbcl")
                           (:indentation
                            (defpkg (as defpackage))
+			   (make-db (as make-instance))
                            (define-package (as defpackage))
 			   (walk-directory 1)
+			   (with-db 1)
                            (defconfig (as defclass))))
 
 ;; lisp font-lock defaults: https://www.n16f.net/blog/custom-font-lock-configuration-in-emacs/

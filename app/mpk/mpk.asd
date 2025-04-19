@@ -5,11 +5,11 @@
   :build-pathname "mpk"
   :entry-point "mpk/cli::start-mpk"
   :components ((:file "pkg")
+               (:file "mpd")
                (:file "proto")
                (:file "var")
                (:file "util")
                (:file "db")
-               (:file "mpd")
                (:file "cfg")
                (:file "dl")
                (:file "cli")))

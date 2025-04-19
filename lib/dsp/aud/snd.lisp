@@ -4,5 +4,4 @@
 
 ;;; Code:
 (in-package :aud)
-(load-sndfile)
-
+;; (load-sndfile)

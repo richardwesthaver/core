@@ -91,11 +91,11 @@ function 'NAME-P'."
        (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (&rest args)
          (,(intern (concatenate 'string %name "!")) (apply #'describe args))))))
 
-(define-log-level trace (or (eql *log-level* :trace) (eql *log-level* t)))
-(define-log-level debug (or (trace-p) (eql *log-level* :debug)))
-(define-log-level info (or (debug-p) (eql *log-level* :info)))
-(define-log-level warn (or (info-p) (eql *log-level* :warn)))
-(define-log-level error (or (warn-p) (eql *log-level* :error)))
+(define-log-level trace (or (eq *log-level* :trace) (eq *log-level* t)))
+(define-log-level debug (or (trace-p) (eq *log-level* :debug)))
+(define-log-level info (or (debug-p) (eq *log-level* :info)))
+(define-log-level warn (or (info-p) (eq *log-level* :warn)))
+(define-log-level error (or (warn-p) (eq *log-level* :error)))
 (define-log-level fatal t) ;; probably needs to be a special case
 
 ;; TODO 2023-08-31: single format control string

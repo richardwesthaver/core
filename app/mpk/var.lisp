@@ -8,8 +8,8 @@
 (defvar *mpc*)
 (defvar *mpk-user-directory* (merge-pathnames ".stash/mpk/" (user-homedir-pathname)))
 (defvar *mpk-media-directory* "/opt/stash/media/")
-(defvar *mpk-data-directory* "/opt/stash/media/")
-(defvar *mpk-cache-directory* "/opt/stash/media/")
+(defvar *mpk-data-directory* "/opt/stash/data/")
+(defvar *mpk-cache-directory* "/opt/stash/cache/")
 
 (defvar *mpk-media-sources* '(:youtube :freesound :spotify :local :torrent))
 
@@ -28,4 +28,8 @@
     (dolist (m *mpk-media-types* tbl)
       (setf (gethash m tbl) (find-supported-media-types m)))))
 
-(defvar *music-metadata*)
+(defvar *music-metadata* (make-hash-table))
+
+(defvar *mpk-user-config* nil)
+
+(defvar *user-mpkrc* (merge-homedir-pathnames ".mpkrc"))

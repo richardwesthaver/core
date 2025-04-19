@@ -21,10 +21,15 @@
    :mpc-now-playing
    :mpc-pause
    :mpc-play
+   :mpc-searchplay
    :mpc-previous
    :mpc-next
    :mpc-crossfade
    :mpc-add
+   :mpc-tag-types
+   :mpc-url-handlers
+   :mpc-seek
+   :mpc-seek-id
    :mpc-add-id
    :mpc-move
    :mpc-move-id
@@ -105,7 +110,12 @@
    #:mpk-data-path
    #:*mpc*
    #:mpk-music-metadata-scan
-   #:*music-metadata*))
+   #:*music-metadata*
+   #:mpk-component
+   #:mpk-toggle
+   #:find-mpk-symbol
+   #:*user-mpkrc*
+   #:init-mpkrc))
 
 (defpackage :mpk/db
   (:nicknames :mdb)

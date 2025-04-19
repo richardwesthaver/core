@@ -230,7 +230,8 @@
    :mime-magic :mime-magic-offset :mime-magic-type :mime-magic-value
    :mime-type :mime-type-name :mime-type-superclasses :mime-type-glob
    :mime-type-glob :mime-type-magic
-   :mime :get-mime :get-mime*))
+   :mime :get-mime :get-mime*
+   :mime-case))
 
 (defpackage :dat/yaml
   (:use :cl :dat/proto)

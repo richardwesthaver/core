@@ -121,9 +121,50 @@
               collect f)))))
 
 (define-cli-tool :mpv (&rest args)
-  (let ((proc (sb-ext:run-program *ffmpeg* args :wait t :output t)))
+  (let ((proc (sb-ext:run-program *mpv* args :wait t :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (mpv-error "MPV command failed: ~A ~A" *mpv* (or args "")))))
+
+(defvar *mpv-config-path* (merge-homedir-pathnames ".config/mpv/mpv.conf"))
+
+;; incomplete config description
+(defconfig mpv-config (cli-tool-config ini-document) 
+  (fs
+   profile
+   hwdec
+   user-agent
+   alang
+   slang))
+
+(defmethod make-config ((self (eql :mpv)) &rest args &key path &allow-other-keys)
+  (if (remf args :path)
+      (load-ast (apply 'change-class (deserialize path :ini) 'mpv-config args))
+      (apply 'make-instance 'mpv-config args)))
+
+(defmethod load-ast ((self mpv-config))
+  (with-slots (ast) self
+    (if (formp ast)
+	(mapc
+         (lambda (x)
+           (let ((k (car x)) (v (cdr x)))
+	     (when-let ((s (print (find-symbol* (string-upcase k) #.*package* nil)))) ;; needs to be correct package
+	       (unless (null v)
+		 (setf v
+		       (case k
+			 (:fs v)
+			 (:hwdec v)
+			 (:alang v)
+			 (:slang v)
+			 (t v)))
+		 (setf (slot-value self s) v)))))
+         ast)
+	;; invalid ast, signal error
+	(error 'syntax-error)))
+  (unless *keep-ast* (setf (ast self) nil))
+  self)
+    
+(defun load-mpv-config (&optional (path *mpv-config-path*))
+  (make-config :mpv :path path))
 
 (define-cli-tool :wireplumber (&rest args)
   (let ((proc (sb-ext:run-program *wireplumber* args :wait t :output t)))
@@ -137,15 +178,15 @@
 
 (defvar *picard-config-path* (merge-homedir-pathnames ".config/MusicBrainz/Picard.ini"))
 
-(config:defconfig picard-config (cli-tool-config ini:ini-document) ())
+(defconfig picard-config (cli-tool-config ini-document) ())
 
-(defmethod config:make-config ((self (eql :picard)) &rest args &key path &allow-other-keys)
+(defmethod make-config ((self (eql :picard)) &rest args &key path &allow-other-keys)
   (if (remf args :path)
       (apply 'change-class (deserialize path :ini) 'picard-config args)
       (apply 'make-instance 'picard-config args)))
 
 (defun load-picard-config (&optional (path *picard-config-path*))
-  (config:make-config :picard :path path))
+  (make-config :picard :path path))
 
 (defvar *picard-commands*
   '(:clear-logs
