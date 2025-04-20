@@ -676,7 +676,8 @@
    :destroy-column
    :destroy-columns
    :create-column
-   :db-config))
+   :db-config
+   :*database-collection-type*))
 
 (defpackage :obj/secret
   (:nicknames :secret)

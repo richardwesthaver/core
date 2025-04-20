@@ -541,7 +541,7 @@
    :make-spin-lock))
 
 (defpkg :std/thread
-  (:use :cl :sb-thread :sb-concurrency :std/meta)
+  (:use :cl :sb-thread :sb-concurrency :std/meta :std/macs :std/sym :std/type :std/spin)
   (:import-from :std/list :flatten)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
@@ -570,6 +570,10 @@
    :oracle-id :find-thread
    :make-threads :with-threads 
    :thread-count :dump-thread
+   :channel
+   :make-channel
+   :channel-kernel
+   :channel-queue
    :thread-pool :workers
    :make-worker :designate-oracle
    :condition-wait*
@@ -579,17 +583,14 @@
    :schedule
    :+standard-io-syntax+
    :*default-special-bindings*
-   :*worker*
    :*kernel*
-   :*oracles*
-   :*oracle-threads*
    :*oracle-table*
    :*worker-threads*
    :*supervisor-threads*
    :compute-special-bindings))
 
 (defpkg :std/task
-  (:use :cl :std/thread :sb-concurrency :std/meta)
+  (:use :cl :std/thread :sb-concurrency :std/meta :std/spin)
   (:import-from :std/thread :%make-thread)
   (:export
    :push-job :push-task
@@ -616,11 +617,9 @@
    :run-jobs
    :worker-count
    :init-task-pool
-   :make-task-pool
    :start-task-pool :pause-task-pool
    :shutdown-task-pool
    :push-stage
-   :make-task-pool
    :task :job :task-pool :scheduled-task
    :stage :task-pool-p
    :job-tasks :make-job
@@ -638,7 +637,7 @@
    :fulfill :fulfilledp :while-waiting-for))
 
 (defpkg :std/par
-  (:use :cl :std/task :std/thread)
+  (:use :cl :std/task :std/thread :std/macs :std/sym)
   (:export))
 
 (defpkg :std/fmt

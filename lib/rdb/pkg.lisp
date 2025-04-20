@@ -152,7 +152,8 @@
    :rdb-data-source
    :rdb-sink
    :rdb-log-schema
-   :cursor-handle))
+   :cursor-handle
+   :simple-rdb-warning))
 
 (defpackage :rdb/cli
   (:use :cl :std :cli :rdb :db :seq)

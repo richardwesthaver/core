@@ -73,15 +73,14 @@ This interface is experimental and subject to change."
 
 ;;; Task Worker
 (defclass task-worker (worker)
-  ((tasks :initform nil :accessor tasks :initarg :tasks)))
+  ((tasks :accessor tasks :initarg :tasks :type spin-queue)))
 ;;; Task Pool
-(defstruct task-pool
-  (kernel 'identity :type symbol)
-  (tasks *tasks*)
-  (lock (make-semaphore :name "online") :type semaphore)
-  ;; TODO: test weak-vector here
-  (workers (make-array 0 :element-type 'worker :fill-pointer 0) :type (vector worker))
-  (results (make-mailbox :name "results")))
+(defclass task-pool (thread-pool)
+  ((tasks :initform *tasks* :initarg :tasks)
+   ;; TODO: test weak-vector here
+   (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
+            :initarg :workers)
+   (results :initform (make-mailbox :name "results"))))
 
 (defmethod tasks ((self task-pool)) (task-pool-tasks self))
 (defmethod results ((self task-pool)) (task-pool-results self))

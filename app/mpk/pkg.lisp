@@ -44,6 +44,7 @@
    :mpc-playlist-info
    :mpc-playlist-changes
    :mpc-shuffle
+   :mpc-stop
    :mpc-list-playlist
    :mpc-list-playlist-info
    :mpc-add-to-playlist
@@ -81,7 +82,8 @@
    :mpc-playtime
    :mpc-db-playtime
    :mpc-db-update
-   :mpd-config))
+   :mpd-config
+   :ensure-mpc))
 
 (defpackage :mpk
   (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp)
@@ -118,10 +120,9 @@
    #:init-mpkrc))
 
 (defpackage :mpk/db
-  (:nicknames :mdb)
-  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid)
-  (:export :*mdb-directory* :*mdb* :*mdb-schema*
-   :mdb :init-mdb))
+  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
+  (:export :*mpk-db-directory* :*mpk-db* :*mpk-db-schema*
+   :mpk-db :init-mpk-db))
 
 (pkg:defpkg :mpk-user
   (:use :cl :std :cl-user :std-user :sb-ext)

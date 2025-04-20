@@ -92,3 +92,17 @@ passed as the first argument to `gensym'."
 (defun vboundp! (variable &optional env)
   "Check if variable or symbol macro is bound  globally or lexically."
   (sb-cltl2::variable-information variable env))
+
+;;; Aliases
+;; from LPARALLEL
+(defmacro alias-function (alias orig)
+  `(progn
+     (setf (symbol-function ',alias) #',orig)
+     (define-compiler-macro ,alias (&rest args)
+       `(,',orig ,@args))
+     ',alias))
+
+(defmacro alias-macro (alias orig)
+  `(progn
+     (setf (macro-function ',alias) (macro-function ',orig))
+     ',alias))

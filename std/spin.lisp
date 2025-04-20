@@ -25,7 +25,6 @@
   (let ((dummy (cons +dummy+ nil)))
     (%make-spin-queue dummy dummy)))
 
-
 (defun push-spin-queue (value queue) 
   (declare (ftype (function (t spin-queue) (values)) push-spin-queue))
   ;; Attempt CAS, repeat upon failure. Upon success update QUEUE-TAIL.

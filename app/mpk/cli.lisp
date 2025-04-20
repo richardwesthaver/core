@@ -25,8 +25,14 @@
               (t #+nil (unknown-file-type file) (mpk-play path))))
           (mpk-play arg)))))
 
-(defcmd mpk-pause-cmd ()
-  (mpk-pause :mpd))
+(defcmd mpk-toggle-cmd ()
+  (mpk-toggle :mpd))
+
+(defcmd mpk-stop-cmd ()
+  (mpk-stop :mpd))
+
+(defcmd mpk-shuffle-cmd ()
+  (mpk-shuffle :mpd))
 
 (defcmd mpk-mpc-cmd ()
   (with-package :mpk-user
@@ -38,11 +44,14 @@
 
 (define-cli *mpk-cli*
   :name "mpk"
+  :version "0.1.0"
   :help t
   :description "Media Production Kit"
   :cmds ((:name play :thunk mpk-play-cmd)
-         (:name pause :thunk mpk-pause-cmd)
-         (:name mpc :thunk mpk-mpc-cmd)
+         (:name toggle :thunk mpk-toggle-cmd)
+	 (:name stop :thunk mpk-stop-cmd)
+	 (:name shuffle :thunk mpk-shuffle-cmd)
+	 (:name mpc :thunk mpk-mpc-cmd)
          (:name stats :thunk mpk-stats-cmd))
   :thunk mpk-stats-cmd)
 

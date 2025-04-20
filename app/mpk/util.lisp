@@ -38,6 +38,8 @@
           (setf (gethash y *music-metadata*) meta)))))
   *music-metadata*)
 
+(defun mpk-music-metadata-scan-parallel (&optional (dir (directory-path (mpk-media-collection :music)))))
+
 ;;  REVIEW 2025-04-18: good case for threading
 #|
 (time (mpk-music-metadata-scan)) ; 373.815s 

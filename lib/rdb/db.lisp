@@ -643,4 +643,4 @@ only get their type slots updated on non-nil values."
 
 ;;; Collections
 (defclass rdb-collection (database-collection)
-  ((collection :initform (coerce nil db::*default-database-collection-type*))))
+  ((collection :initform (coerce nil db::*database-collection-type*))))

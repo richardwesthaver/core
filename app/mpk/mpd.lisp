@@ -209,7 +209,11 @@
     `(let ((,var (mpc-connect ,@options)))
        (unwind-protect
             (progn ,@body)
-         (mpc-disconnect ,var)))))
+         (mpc-disconnect ,var))))
+  (defmacro ensure-mpc ((var &rest options) &body body)
+    `(progn
+       (setf ,var (or ,@(when (boundp var) `(,var)) (mpc-connect ,@options)))
+       ,@body)))
 
 (defun ensure-mpd ()
   (handler-case

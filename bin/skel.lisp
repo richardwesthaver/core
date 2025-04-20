@@ -52,12 +52,12 @@
   (let ((sb-debug:*backtrace-frame-count* 8))
     (with-cli ((package-cli :bin/skel) :args (cli:args))
       (do-opts *cli*)
-      (rocksdb:load-rocksdb)
+      ;; (rocksdb:load-rocksdb)
       (init-skel)
       (unwind-protect 
            (progn
              ;; (setq *db* (make-db :skel))
              (do-cmd *cli*)
              (when (getopt "interactive" nil)
-               (sk-shell)))
-        ))))
+               (sk-shell)))))))
+        

@@ -8,26 +8,45 @@
 (defclass mpk-object (id) ())
 
 (defclass mpk-project (mpk-object skel:sk-project) ())
+
 (defclass mpk-component (mpk-object skel:sk-component) ())
 
+;; playback state
 (defgeneric mpk-play (self &rest args &key &allow-other-keys)
+  (:documentation "Play media object SELF.")
   (:method ((self pathname) &key &allow-other-keys)
+    "Pathnames are ran through MIME-CASE and played with the associated default media player."
     (dat/mime:mime-case self
       ;; todo - aplay? snd? jack? gstreamer?
       ("audio/*" (run-mpv (namestring self)))
       ("video/*" (run-mpv (namestring self)))
       (t (nyi! (format nil "unknown file type: ~A" self)))))
   (:method ((self string) &key &allow-other-keys)
-    (mpd:with-mpc (*mpc*)
+    "Strings are assumed to be song queries sent to MPD - matching tracks are played immediately."
+    (mpd:ensure-mpc (*mpc*)
       (let ((id (parse-integer (mpd:mpc-add-id *mpc* self))))
         (mpd:mpc-play *mpc* id)
-        id))))
+        id)))
+  (:method ((self integer) &key &allow-other-keys)
+    "An integer is assumed to refer to an index in the current MPD playlist."
+    (mpd:ensure-mpc (*mpc*)
+      (mpd:mpc-play *mpc* self))))
 
-(defgeneric mpk-toggle (self &rest args &key &allow-other-keys))
-(defgeneric mpk-pause (self &rest args &key &allow-other-keys)
+(defgeneric mpk-toggle (self &rest args &key &allow-other-keys)
+  (:documentation "Toggle playback state of player object SELF between :PLAYING and :PAUSED.")
   (:method ((self (eql :mpd)) &key &allow-other-keys)
-    (mpd:with-mpc (*mpc*)
+    (mpd:ensure-mpc (*mpc*)
       (mpd:mpc-pause *mpc*))))
-(defgeneric mpk-stop (self &rest args &key &allow-other-keys))
-(defgeneric mpk-shuffle (self &rest args &key &allow-other-keys))
-(defgeneric mpk-previous (self &rest args &key &allow-other-keys))
+
+(defgeneric mpk-stop (self &rest args &key &allow-other-keys)
+  (:documentation "Set playback state of object SELF to :STOPPED.")
+  (:method ((self (eql :mpd)) &key &allow-other-keys)
+    (mpd:ensure-mpc (*mpc*)
+      (mpd:mpc-stop *mpc*))))
+
+;; playlist state
+(defgeneric mpk-shuffle (self &rest args &key &allow-other-keys)
+  (:documentation "Toggle shuffling of object SELF.")
+  (:method ((self (eql :mpd)) &key &allow-other-keys)
+    (mpd:ensure-mpc (*mpc*)
+      (mpd:mpc-shuffle *mpc*))))

@@ -5,23 +5,27 @@
 ;;; Code:
 (in-package :rdb)
 
-(define-condition rdb-condition () ())
-(eval-always
-  (deferror rdb-error (rdb-condition)
-      ((message :initarg :message
-                :reader error-message))
-      (:auto t)
-      (:documentation "Error signaled by the RDB system.")))
+(define-condition rdb-condition (db-condition) ())
 
-(defwarning rdb-default-column-warning (rdb-condition simple-warning) () (:auto t))
+(eval-always
+  (deferror simple-rdb-error (rdb-condition simple-error)
+    ()
+    (:auto t)
+    (:documentation "Simple RDB Error."))
+  (deferror rdb-error (rdb-condition std-error)
+    ()
+    (:auto t)
+    (:documentation "Error signaled by the RDB system."))
+  (defwarning simple-rdb-warning (rdb-condition simple-warning) () (:auto t)))
+
+(defwarning rdb-default-column-warning (simple-rdb-warning) () (:auto t))
 
 (define-condition rdb-alien-error (rdb-error rocksdb-c-error)
   ((db :initarg :db :reader error-db))
   (:documentation "Error signaled by RDB C subsystem."))
 
 (defmethod print-object ((obj rdb-error) stream)
-  (print-unreadable-object (obj stream :type t :identity t)
-    (format stream "~A" (error-message obj))))
+  (print-unreadable-object (obj stream :type t :identity t)))
 
 (define-condition open-db-error (rdb-alien-error)
   ()

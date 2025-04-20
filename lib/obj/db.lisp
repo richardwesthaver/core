@@ -12,7 +12,7 @@
 ;;; Vars
 (defvar *db* nil)
 (defvar *database-backend* nil)
-(defvar *default-database-collection-type* 'list)
+(defvar *database-collection-type* 'list)
 (defvar *default-database-version* '(0 1 0))
 (defvar *default-kv-size* 8)
 (defparameter *save-database-backend-on-load* nil)
@@ -499,7 +499,8 @@ column is already closed."))
   (:documentation "Return the underlying STORE of a transaction."))
 (defgeneric transaction-db (self)
   (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
-return the same value as DB depending on backend."))
+return the same value as DB depending on backend.")
+  (:method ((self t)) *db*))
 (defgeneric transaction-prior (self)
   (:documentation "Return the previous transaction of SELF if any."))
 
