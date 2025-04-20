@@ -594,7 +594,7 @@ When USE-CALLER is non-nil the calling thread may be enlisted to steal work from
                  :accept-tasks-p t
                  :limiter-count (initial-limiter-count thread-count)
                  :limiter-lock (make-spin-lock))))
-    (fill-workers workers pool)
+    ;; (fill-workers workers pool)
     pool))
                                                             
 ;;; Thread Wrappers

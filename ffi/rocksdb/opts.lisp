@@ -39,7 +39,6 @@
 (define-opt-accessor rocksdb-backup-engine-options callback-trigger-interval-size (unsigned 64))
 (define-opt-accessor rocksdb-backup-engine-options max-valid-backups-to-open int)
 (define-opt-accessor rocksdb-backup-engine-options shared-files-with-checksum-naming int)
-
 (define-opt rocksdb-restore-options)
 (define-alien-routine rocksdb-restore-options-set-keep-log-files void
   (opts (* rocksdb-restore-options))
@@ -189,7 +188,7 @@
 (define-opt-accessor rocksdb-options target-file-size-multiplier int)
 (define-opt-accessor rocksdb-options max-bytes-for-level-base unsigned-long)
 (define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
-
+(define-opt-accessor rocksdb-options memtable-op-scan-flush-trigger (unsigned 32))
 (define-alien-enum (rocksdb-compression-type int)
                    :none 0
                    :snappy 1
@@ -224,7 +223,8 @@
 (define-opt-accessor rocksdb-options prepopulate-blob-cache int)
 (define-opt-accessor rocksdb-options max-write-buffer-number int)
 (define-opt-accessor rocksdb-options min-write-buffer-number-to-merge int)
-(define-opt-accessor rocksdb-options max-write-buffer-number-to-maintain int)
+;; deprecated
+;; (define-opt-accessor rocksdb-options max-write-buffer-number-to-maintain int)
 (define-opt-accessor rocksdb-options max-write-buffer-size-to-maintain long)
 (define-opt-accessor rocksdb-options max-subcompactions unsigned-int)
 (define-opt-accessor rocksdb-options max-background-jobs int)
@@ -447,6 +447,9 @@ rocksdb_k_round_robin_compaction_pri = 4
 (define-opt-accessor rocksdb-compactoptions bottommost-level-compaction)
 (define-opt-accessor rocksdb-compactoptions change-level)
 (define-opt-accessor rocksdb-compactoptions target-level int)
+(define-opt-accessor rocksdb-compactoptions target-path-id int)
+(define-opt-accessor rocksdb-compactoptions allow-write-stall unsigned-char)
+(define-opt-accessor rocksdb-compactoptions max-subcompactions int)
 ;;; RocksDB LRU Cache Options
 (define-opt rocksdb-lru-cache-options)
 

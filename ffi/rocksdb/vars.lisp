@@ -105,7 +105,8 @@
     skip-stats-update-on-db-open skip-checking-sst-file-sizes-on-db-open enable-blob-files
     min-blob-size blob-file-size blob-compression-type enable-blob-gc blob-gc-age-cutoff
     blob-gc-force-threshold blob-compaction-readahead-size blob-file-starting-level
-    max-write-buffer-number min-write-buffer-number-to-merge max-write-buffer-number-to-maintain
+    ;; deprecated: max-write-buffer-number-to-maintain
+    max-write-buffer-number min-write-buffer-number-to-merge memtable-op-scan-flush-trigger
     max-write-buffer-size-to-maintain enable-pipelined-write unordered-write max-subcompactions
     max-background-jobs max-background-compactions max-background-flushes max-log-file-size
     log-file-time-to-roll keep-log-file-num recycle-log-file-num soft-pending-compaction-bytes-limit
@@ -139,7 +140,14 @@
 
 (defvar *rocksdb-flushoptions* (%svec wait))
 (defvar *rocksdb-lru-cache-options*)
-(defvar *rocksdb-compactoptions* (%svec bottommost-level-compaction change-level target-level))
+(defvar *rocksdb-compactoptions* 
+  (%svec exclusive-manual-compaction 
+         bottommost-level-compaction 
+         change-level 
+         target-level
+         target-path-id
+         allow-write-stall
+         max-subcompactions))
 
 (defvar *rocksdb-set-only-backup-engine-options* (%svec backup-dir env))
 (defvar *rocksdb-backup-engine-options*
