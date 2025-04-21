@@ -61,6 +61,7 @@
   (:import-from :std/list :flatten)
   (:export
    :*error-message*
+   :*handlers*
    :std-error :error-message
    :define-error-reporter
    :deferror
@@ -90,7 +91,13 @@
    :meta-condition
    :missing-method
    :missing-methods
-   :conflicting-arguments))
+   :conflicting-arguments
+   :condition-handler
+   :wrapped-condition
+   :wrapped-condition-value
+   :wrap-condition
+   :wrapped-error
+   :wrap-error))
    
 (defpkg :std/type
   (:use :cl)
@@ -541,7 +548,7 @@
    :make-spin-lock))
 
 (defpkg :std/thread
-  (:use :cl :sb-thread :sb-concurrency :std/meta :std/macs :std/sym :std/type :std/spin)
+  (:use :cl :sb-thread :sb-concurrency :std/meta :std/macs :std/sym :std/type :std/spin :std/condition)
   (:import-from :std/list :flatten)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
@@ -575,6 +582,7 @@
    :channel-kernel
    :channel-queue
    :thread-pool :workers
+   :make-thread-pool
    :make-worker :designate-oracle
    :condition-wait*
    :sync-message

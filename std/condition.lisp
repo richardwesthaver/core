@@ -4,7 +4,7 @@
 (in-package :std/condition)
 
 (defvar *error-message* "An error occured")
-
+(defvar *handlers* nil)
 (define-condition std-error (error)
   ((message :initarg :message
             :initform *error-message*
@@ -318,3 +318,29 @@ the 'current' error."
 
 (define-condition missing-methods (error meta-condition)
   ((methods)))
+
+;;; Wrapped
+(define-condition wrapped-condition ()
+  ((value :type condition :reader wrapped-condition-value))
+  (:documentation 
+   "A container for transporting conditions - usually to another thread."))
+
+(defun wrap-condition (condition)
+  "Wrap a condition. A non-error condition may also be wrapped, though it
+will still be signaled with `signal'."
+  (make-condition 
+   'wrapped-condition
+   :value (ctypecase condition
+	    (symbol (make-condition condition))
+	    (condition condition))))
+
+(define-condition wrapped-error (wrapped-condition) ())
+
+(defun wrap-error (condition)
+  "Wrap an error. A non-error condition may also be wrapped, though it
+will still be signaled with `error'."
+  (make-condition 
+   'wrapped-error
+   :value (ctypecase condition
+            (symbol (make-condition condition))
+            (condition condition))))

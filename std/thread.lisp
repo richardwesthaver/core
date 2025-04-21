@@ -15,6 +15,7 @@
 
 ;;; Vars
 (defvar *worker-class* 'worker)
+(defvar *worker*)
 (defvar *scheduler-class* 'biased-scheduler)
 (defvar *kernel* (lambda (&rest args) (apply 'funcall args))
   "A funcallable object which drives THREAD-POOLs.")
@@ -40,10 +41,122 @@
 (sb-ext:defglobal *supervisor-threads* nil
   "List of threads with supervisor privileges.")
 (sb-ext:defglobal *oracle-table* (make-hash-table)
-  "Hashtable containining (ID . ORACLE-SCOPE)).")
-
+  "Hashtable containining (ID . ORACLE-SCOPE).")
+(sb-ext:defglobal *pool-table* (make-hash-table)
+  "Hashtable containing (NAME . THREAD-POOL).")
 ;;; Conditions
+(defvar *error-workers* nil
+  "Track debugger popups in order to kill them.")
+
+(defvar *error-workers-lock* (make-mutex :name "error workers")
+  "Lock for *ERROR-WORKERS*.")
+
 (define-condition std-thread-error (thread-error) ())
+
+(defun invoke-transfer-error (error)
+  "Equivalent to (invoke-restart 'transfer-error error)."
+  (invoke-restart 'transfer-error error))
+
+(defun transfer-error-report (stream)
+  (format stream "Transfer this error to a dependent thread, if one exists."))
+
+(defun condition-handler (condition)
+  "Mimic the CL handling mechanism, calling handlers until one assumes
+control (or not)."
+  (loop for ((condition-type . handler) . rest) on *handlers*
+	do (when (typep condition condition-type)
+	     (let ((*handlers* rest))
+	       (handler-bind ((condition #'condition-handler))
+		 (funcall handler condition)))))
+  (when (typep condition 'error)
+    (invoke-transfer-error condition)))
+
+(defconstant +current-task+ 'current-task)
+
+(defvar *debugger-error* nil
+  "Track the error inside the debugger for the `transfer-error' restart.")
+
+(defvar *handler-active-p* nil
+  "Non-nil when handlers have been established via `call-with-work-handler'.")
+
+(defun unwrap-result (result)
+  "In `receive-result', this is called on the stored task result. The
+user receives the return value of this function."
+  (typecase result
+    (wrapped-error
+     ;; A `wrapped-error' signals an error upon being unwrapped.
+     (error (wrapped-condition-value result)))
+    (t
+     ;; Most objects unwrap to themselves.
+     result)))
+
+(defmacro work-handler-bind (clauses &body body)
+  "Like `handler-bind' but handles conditions signaled inside work
+that was created in `body'."
+  (let ((forms (loop for clause in clauses
+                     for (name fn . more) = clause
+                     do (unless (and name (symbolp name) fn (not more))
+                          (error "Ill-formed binding in `work-handler-bind': ~a"
+                                 clause))
+                     collect `(cons ',name ,fn))))
+    `(let ((*handlers* (list* ,@forms *handlers*)))
+       ,@body)))
+
+(defun transfer-error-restart (&optional (err *debugger-error*))
+  (when err
+    (throw +current-task+ (wrap-error err))))
+
+(defun call-with-tracked-error (condition body-fn)
+  (when *worker*
+    (with-mutex (*error-workers-lock*)
+      (push *worker* *error-workers*)))
+  (unwind-protect
+       (let ((*debugger-error* condition))
+         (funcall body-fn))
+    (when *worker*
+      (with-mutex (*error-workers-lock*)
+        (setf *error-workers*
+              (delete *worker* *error-workers*))))))
+
+(defmacro with-tracked-error (condition &body body)
+  `(call-with-tracked-error ,condition (lambda () ,@body)))
+
+(defun make-debugger-hook ()
+  "Record `*debugger-error*' for the `transfer-error' restart."
+  (if *debugger-hook*
+      (let ((previous-hook *debugger-hook*))
+        (lambda (condition self)
+          (with-tracked-error condition
+            (funcall previous-hook condition self))))
+      (lambda (condition self)
+        (declare (ignore self))
+        (with-tracked-error condition
+          (invoke-debugger condition)))))
+
+(defmacro with-task-context (&body body)
+  `(catch +current-task+ ,@body))
+
+(defun %call-with-task-handler (fn)
+  (declare (function fn))
+  (let ((*handler-active-p* t)
+        (*debugger-hook* (make-debugger-hook)))
+    (handler-bind ((condition #'condition-handler))
+      (restart-bind ((transfer-error #'transfer-error-restart
+                                     :report-function #'transfer-error-report))
+        (funcall fn)))))
+
+(defun call-with-task-handler (fn)
+  (declare (function fn))
+  (with-task-context
+    (if *handler-active-p*
+        (funcall fn)
+        (%call-with-task-handler fn))))
+
+(define-condition worker-killed-error (error) ()
+  (:report
+   "The worker was killed.")
+  (:documentation
+   "Error signaled when attempting to obtain a result from a killed worker."))
 
 ;;; Utils
 (defmacro mod-inc (k n)
@@ -172,7 +285,7 @@
    (wait-lock :initform (make-mutex :name "wait-lock"))
    (wait-count :initform (make-counter) :type counter)
    (notify-count :initform 0 :type (integer 0))
-   (spin-count :type array-index)
+   (spin-count :type array-index :initarg :spin-count :initform *kernel-spin-count*)
    ;; cursor?
    (index :initform 0 :type array-index :initarg :index :accessor scheduler-index))
   (:documentation
@@ -545,7 +658,7 @@ within their DOMAIN and SCOPE."))
   (sb-ext:wait-for (null (sb-thread::thread-interruptions thread))))
 
 (defclass thread-limiter ()
-  ((accept-tasks-p :accessor accept-tasks-p :type boolean :initarg :accept-tasks-p)
+  ((accept-work-p :accessor accept-work-p :type boolean :initarg :accept-work-p)
    (limiter-lock :accessor limiter-lock :initarg :limiter-lock)
    (limiter-count :accessor limiter-count :initarg :limiter-count :type fixnum)))
 
@@ -559,41 +672,49 @@ within their DOMAIN and SCOPE."))
 
 ;;; Thread Pool
 (defclass thread-pool (thread-limiter)
-  ((kernel :initform *kernel* :type symbol :accessor kernel :initarg :kernel)
+  ((kernel :initform *kernel* :type kernel :accessor kernel :initarg :kernel)
    (scheduler :initarg :scheduler :accessor scheduler)
    (workers :initarg :workers :accessor workers :type (vector worker))
    (lock :initarg :lock :initform (make-semaphore :name "online") :type semaphore :accessor lock))
   (:documentation "Thread pools are similar to LPARALLEL kernels - they encompass the scheduling
 and execution of concurrent work using a pool of 'worker' threads."))
 
+(defun register-thread-pool (name pool)
+  (declare (thread-pool pool))
+  (setf (gethash *pool-table* name) pool))
+
 (defun make-thread-pool (worker-count &key name 
-                                           (bindings `((*standard-output* . ,*standard-output*)
+                                           (bind `((*standard-output* . ,*standard-output*)
                                                        (*error-output* . ,*error-output*)))
-                                           (worker-kernel #'funcall)
+                                           (worker-kernel *worker-kernel*)
                                            (spin-count *kernel-spin-count*)
                                            (use-caller nil)
                                            (kernel *kernel*))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
-NAME is a unique identifier for this thread-pool.
+NAME when non-nil is an EQL-unique identifier associated with the thread-pool in *POOL-TABLE*.
 
 BINDINGS is an alist for establishing thread-local dynamic bindings inside worker threads.
 
 WORKER-KERNEL is a function which must be funcalled. It begins the worker loop and does not return until the worker exits.
+
+KERNEL is a function which 
 
 SPIN-COUNT is the number of work-searching iterations done by the worker before going to sleep.
 
 When USE-CALLER is non-nil the calling thread may be enlisted to steal work from worker threads."
   (check-type worker-count positive-fixnum)
   (check-type spin-count array-index)
-  (let* ((workers (make-array worker-count))
+  (let* ((workers (make-array worker-count :initial-element (make-worker :kernel worker-kernel :bind bind)))
          (thread-count (if use-caller (1+ worker-count) worker-count))
          (pool (make-instance 'thread-pool
                  :scheduler (make-scheduler workers spin-count)
                  :workers workers
-                 :accept-tasks-p t
+                 :kernel kernel
+                 :accept-work-p t
                  :limiter-count (initial-limiter-count thread-count)
                  :limiter-lock (make-spin-lock))))
+    (when name (register-thread-pool name pool))
     ;; (fill-workers workers pool)
     pool))
                                                             
