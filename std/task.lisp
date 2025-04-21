@@ -76,24 +76,20 @@ This interface is experimental and subject to change."
   ((tasks :accessor tasks :initarg :tasks :type spin-queue)))
 ;;; Task Pool
 (defclass task-pool (thread-pool)
-  ((tasks :initform *tasks* :initarg :tasks)
+  ((tasks :initform *tasks* :initarg :tasks :accessor tasks)
    ;; TODO: test weak-vector here
    (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
-            :initarg :workers)
-   (results :initform (make-mailbox :name "results"))))
-
-(defmethod tasks ((self task-pool)) (task-pool-tasks self))
-(defmethod results ((self task-pool)) (task-pool-results self))
-(defmethod workers ((self task-pool)) (task-pool-workers self))
+            :initarg :workers :accessor workers)
+   (results :initform (make-mailbox :name "results") :accessor results)))
 
 (defmethod print-object ((self task-pool) (stream t))
   (print-unreadable-object (self stream :type t)
     (format stream "~A :workers ~A :tasks ~A/~A :results ~A"
-            (task-pool-kernel self)
+            (kernel self)
             (length (workers self))
             (queue-count (tasks self))
-            (semaphore-count (task-pool-lock self))
-            (mailbox-count (task-pool-results self)))))
+            (semaphore-count (lock self))
+            (mailbox-count (results self)))))
 
 (defun kill-workers (pool)
   "Call FINISH-THREADS on task-pool's workers."
@@ -102,8 +98,8 @@ This interface is experimental and subject to change."
 
 (defun worker-count (task-pool &key online)
   (if online
-      (semaphore-count (task-pool-lock task-pool))
-      (length (task-pool-workers task-pool))))
+      (semaphore-count (lock task-pool))
+      (length (workers task-pool))))
 
 (defmethod designate-oracle ((self task-pool) (guest thread))
   (let ((id (make-oracle guest)))
@@ -112,7 +108,7 @@ This interface is experimental and subject to change."
 
 (declaim (inline push-worker push-workers pop-worker))
 (defun push-worker (worker pool)
-  (vector-push-extend worker (task-pool-workers pool)))
+  (vector-push-extend worker (workers pool)))
 
 (defun push-workers (threads pool)
   (with-slots (workers) pool
@@ -120,7 +116,7 @@ This interface is experimental and subject to change."
       (vector-push-extend w workers))))
 
 (defmethod pop-worker (pool)
-  (vector-pop (task-pool-workers pool)))
+  (vector-pop (workers pool)))
 
 (defun start-task-worker (pool index)
   ;; (with-recursive-lock

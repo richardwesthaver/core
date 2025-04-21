@@ -592,6 +592,7 @@
    :+standard-io-syntax+
    :*default-special-bindings*
    :*kernel*
+   :kernel
    :*oracle-table*
    :*worker-threads*
    :*supervisor-threads*

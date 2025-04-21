@@ -36,11 +36,10 @@
 
 (defcmd mpk-mpc-cmd ()
   (with-package :mpk-user
-    (mpd:with-mpc (*mpc*)
-      (loop (progn
-              (format t "~%(*mpc*) >> ")
-              (let ((form (read)))
-                (print (funcall (sb-cltl2:enclose `(lambda () ,form))))))))))
+    (mpd:ensure-mpd)
+    (mpd:ensure-mpc (*mpc*))
+    (cli/linedit:install-repl)
+    (sb-impl::toplevel-repl nil)))
 
 (define-cli *mpk-cli*
   :name "mpk"

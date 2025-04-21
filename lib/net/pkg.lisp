@@ -336,7 +336,6 @@
    #:add-route
    #:delete-route
    #:*router*
-   #:*handlers*
    #:http-service-response
    #:accept
    #:handle-connection

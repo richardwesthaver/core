@@ -33,7 +33,8 @@
    #:define-matcher))
 
 (defpackage :parse/yacc
-  (:use :cl :std :parse/proto)
+  (:use :cl :parse/proto)
+  (:import-from :std :memq :required-argument)
   (:export :make-production :make-grammar :make-parser :parse-with-lexer
            :define-grammar :define-parser
            :yacc-compile-warning :conflict-warning :conflict-summary-warning
