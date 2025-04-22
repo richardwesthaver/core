@@ -35,8 +35,9 @@
 
 (defvar *worker-class* 'worker)
 (defvar *worker*)
+(defvar *work-priority* :default)
 (defvar *scheduler-class* 'biased-scheduler)
-(defvar *kernel* 'funcall
+(defvar *kernel* #'funcall
   "The current thread's kernel, or nil.")
 (defvar *pool-kernel* (lambda (&rest args) (apply 'funcall args))
   "A function which drives THREAD-POOLs.")
@@ -531,9 +532,9 @@ FUNCTION."
   (values))
 
 ;;; Channel
-(defstruct channel 
-  (queue (make-raw-queue) :type raw-queue) 
-  (kernel *kernel* :type kernel))
+(defclass channel ()
+  ((queue :initform (make-raw-queue) :type raw-queue :initarg :queue :accessor channel-queue)
+   (pool :initform *kernel* :type kernel :initarg :kernel :accessor channel-pool)))
 
 ;;; Limiter
 (defclass thread-limiter ()
@@ -876,7 +877,8 @@ within their DOMAIN and SCOPE."))
   ((kernel :initform *pool-kernel* :type kernel :accessor kernel :initarg :kernel)
    (scheduler :initarg :scheduler :accessor scheduler)
    (workers :initarg :workers :accessor workers :type (vector worker))
-   (lock :initarg :lock :initform (make-semaphore :name "online") :type semaphore :accessor lock))
+   (lock :initarg :lock :initform (make-mutex :name "workers") :type mutex :accessor lock)
+   (alivep :reader alivep :type boolean :initarg :alivep))
   (:documentation "Thread pools are similar to LPARALLEL kernels - they encompass the scheduling
 and execution of concurrent work using a pool of 'worker' threads."))
 
@@ -1003,6 +1005,7 @@ When USE-CALLER is non-nil the calling thread may be enlisted to steal work from
 		 :workers workers
 		 :kernel kernel
 		 :accept-work-p t
+                 :alivep t
 		 :limiter-count (initial-limiter-count thread-count)
 		 :limiter-lock (make-spin-lock))))
     (when name (register-thread-pool name pool))
@@ -1042,15 +1045,136 @@ provided. *THREAD-POOL* is returned."
           :interactive (lambda () (print "Value for *THREAD-POOL*: ") (read))
           (check-type value thread-pool)
           (setf *thread-pool* value)))))
-
                            
+(defun worker-count (pool)
+  (length (workers pool)))
+
 (defun current-worker-count ()
-  (length (workers *thread-pool*)))
+  (worker-count *thread-pool*))
 
 (defun current-worker-index ()
   "If called from inside a worker return the worker's assigned index, ranging from 0 to (current-worker-count)."
   (when-let ((worker *worker*))
     (worker-index worker)))
+
+(defmacro work-lambda (&body body)
+  (with-gensyms (body-fn handlers)
+    `(flet ((,body-fn () ,@body))
+       (declare (optimize (speed 3) (safety 0)))
+       (let ((,handlers *handlers*))
+         (if ,handlers
+             (lambda ()
+               (let ((*handlers* ,handlers))
+                 (,body-fn)))
+             #',body-fn)))))
+
+(defun make-channeled-work (channel fn args)
+  (declare (channel channel) (function fn) (list args))
+  (let ((queue (channel-queue channel)))
+    (work-lambda
+      (unwind-protect (push-raw-queue (with-work-context (apply fn args)) queue)
+        (push-raw-queue (wrap-error 'worker-killed-error) queue)))))
+
+;; make-work 
+(defun submit-raw-work (work pool &optional (priority *work-priority*))
+  (unless (alivep pool)
+    (error "attempted to submit work to a dead thread-pool"))
+  (schedule-work (scheduler pool) work priority))
+
+(defun submit-work (ch fn &rest args)
+  (check-type ch channel)
+  (submit-raw-work (make-channeled-work ch
+                                        (std/curry:ensure-function fn)
+                                        args)
+                   (channel-pool ch)))
+
+(defun receive-result (channel)
+  "Remove a result from CHANNEL. If nothing is available the call will block until a result is received."
+  (unwrap-result (pop-raw-queue (channel-queue channel))))
+
+(defun try-receive-result (channel &key timeout)
+  "Attempt to remove a result from CHANNEL and return (values RESULT t).
+
+By default if the channel is empty return (values nil nil)
+immediately. TIMEOUT, if non-nil is the number of seconds to wait for a result
+to appear on the queue."
+  (multiple-value-bind (result presentp)
+      (try-pop-raw-queue (channel-queue channel) :timeout timeout)
+    (if presentp
+        (values (unwrap-result result) t)
+        (values nil nil))))
+
+(defmacro! do-fast-receives ((ret o!ch o!n) &body body)
+  "Receive N results from channel CH, executing BODY each iteration with results bound to RET."
+  `(loop for i below ,g!n
+         do (let ((,ret (receive-result ,g!ch)))
+              ,@body)))
+
+(defun shutdown-channel (channel pool)
+  (let ((*work-priority* :low))
+    (submit-work channel (lambda ())))
+  (receive-result channel)
+  (with-slots (scheduler workers alivep) pool
+    (loop for i below (length workers)
+          do (schedule-work scheduler nil :low))
+    (map nil #'wait-for-worker workers)
+    (setf alivep nil)))
+
+(defun end-thread-pool (&key wait)
+  (let ((pool *thread-pool*))
+    (when pool
+      (setf *thread-pool* nil)
+      (when (alivep pool)
+        (let ((channel (let ((*thread-pool* pool)) (make-channel)))
+              (threads (map 'list #'worker-thread (workers pool))))
+          (cond (wait
+                 (shutdown-thread-pool channel pool)
+                 threads)
+                (t
+                 (cons (with-thread (:name "%thread-pool-shutdown")
+                         (shutdown-thread-pool channel pool))
+                       threads))))))))
+
+(defun thread-pool-info (pool)
+  (list :workers (worker-count pool)
+        :alive (alivep pool)
+        :spin-count (slot-value (scheduler pool) 'spin-count)))
+
+(defmethod print-object ((pool thread-pool) stream)
+  (print-unreadable-object (pool stream :type t :identity t)
+    (format stream "~{~s~^ ~}" (thread-pool-info pool))))
+
+(defun broadcast-work (function &rest args)
+  "Wait for current and pending work to complete, if any, then
+simultaneously execute the given work inside each worker. Wait until
+these tasks finish, then return the results in a vector.
+
+Calling `broadcast-work' from inside a worker is an error."
+  (when *worker*
+    (error "Cannot call `broadcast-work' from inside a worker."))
+  (let* ((function (std/curry:ensure-function function))
+	 (*kernel* (check-kernel))
+	 (*thread-pool* (check-thread-pool))
+         (worker-count (current-worker-count))
+         (channel (make-instance 'channel))
+         ;; TODO: replace queues with semaphores
+         (from-workers (make-raw-queue))
+         (to-workers (make-raw-queue)))
+    (loop repeat worker-count 
+          do (submit-work channel (lambda ()
+                                    (push-raw-queue t from-workers)
+                                    (pop-raw-queue to-workers)
+                                    (apply function args))))
+    (loop repeat worker-count 
+          do (pop-raw-queue from-workers))
+    (loop repeat worker-count 
+          do (push-raw-queue t to-workers))
+    (map-into (make-array worker-count) (lambda () (receive-result channel)))))
+
+(defun %exit-threads ()
+  (setf *lisp-exiting-p* t))
+
+(pushnew '%exit-threads sb-ext:*exit-hooks*)
 
 ;;; Kernel
 ;; kernel utils
