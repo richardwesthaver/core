@@ -498,7 +498,7 @@ FUNCTION."
 ;;; Channel
 (defclass channel ()
   ((queue :initform (make-queue) :type queue :initarg :queue :accessor channel-queue)
-   (pool :initform *kernel* :type kernel :initarg :kernel :accessor channel-pool)))
+   (pool :initform *thread-pool* :type kernel :initarg :kernel :accessor channel-pool)))
 
 ;;; Limiter
 (defclass thread-limiter ()
@@ -613,17 +613,17 @@ FUNCTION."
       (deletef *worker-threads* th))))
 
 (defun send-worker-start (worker)
-  (push-queue 'proceed (slot-value worker '%rx)))
-
-(defun send-worker-ready (worker)
-  (ecase (pop-queue (slot-value worker '%tx))
-    (ok)
-    (error (error 'kernel-init-error))))
+  (print (push-queue 'proceed (slot-value worker '%rx))))
 
 (defun receive-worker-start (worker)
   (assert (eq 'proceed (pop-queue (slot-value worker '%rx)))))
 
-(defun receive-worker-ready (worker status)
+(defun receive-worker-status (worker)
+  (ecase (pop-queue (slot-value worker '%tx))
+    (ok)
+    (error (error 'kernel-init-error))))
+
+(defun send-worker-status (worker status)
   (check-type status (member ok error))
   (push-queue status (slot-value worker '%tx)))
 
@@ -837,22 +837,28 @@ within their DOMAIN and SCOPE."))
 	(values id orc)))))
 
 ;;; Thread Pool
-(defclass thread-pool (thread-limiter)
+(defclass thread-pool-context ()
+  ((bind :initarg :bind :initform *default-special-bindings* :type list :accessor bind)
+   (name :accessor name :initarg :name)))
+
+(defclass thread-pool (thread-limiter thread-pool-context)
   ((kernel :initform *pool-kernel* :type kernel :accessor kernel :initarg :kernel)
    (scheduler :initarg :scheduler :accessor scheduler)
    (workers :initarg :workers :accessor workers :type (simple-array worker))
    (lock :initarg :lock :initform (make-mutex :name "workers") :type mutex :accessor lock)
-   (alivep :reader alivep :type boolean :initarg :alivep))
+   (alivep :initform t :reader alivep :type boolean :initarg :alivep))
   (:documentation "Thread pools are similar to LPARALLEL kernels - they encompass the scheduling
 and execution of concurrent work using a pool of 'worker' threads."))
 
+(declaim (inline register-thread-pool))
 (defun register-thread-pool (name pool)
   (declare (thread-pool pool))
-  (setf (gethash *pool-table* name) pool))
+  (setf (gethash name *pool-table*) pool))
 
+(defun find-thread-pool (name) (gethash name *pool-table*))
+  
 (defmethod initialize-instance :after ((self thread-pool) &key name &allow-other-keys)
-  (when name
-    (register-thread-pool name self)))
+  (when name (register-thread-pool name self)))
 
 ;;;; Core
 (defun exec-with-worker (work worker)
@@ -873,7 +879,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
 	     (let ((new-worker (make-worker* :kernel kernel :index i :bind (worker-bind worker))))
 	       (setf (svref workers i) new-worker)
 	       (send-worker-start new-worker)
-	       (send-worker-ready new-worker))
+	       (receive-worker-start new-worker))
 	  (warn "Failed to replace worker - kernel corrupted"))))))
 
 (defun worker-loop (pool worker)
@@ -895,12 +901,12 @@ and execution of concurrent work using a pool of 'worker' threads."))
                   (let ((*worker* (find *current-thread* (workers pool)
                                         :key #'worker-thread)))
                     (assert *worker*)
-                    (receive-worker-ready worker 'ok)
+                    (send-worker-status worker 'ok)
                     (with-worker-restarts
                       (%call-with-work-handler fn)))))
     ;; This error notification is seen when `worker-context' does not
     ;; call its worker-loop parameter, otherwise it's ignored.
-    (receive-worker-ready worker 'error)))
+    (send-worker-status worker 'error)))
 
 (defun enter-worker-loop (pool worker)
   (call-with-worker-context 
@@ -915,16 +921,17 @@ and execution of concurrent work using a pool of 'worker' threads."))
 (defun %make-worker (index)
   (make-worker* :index index :thread nil))
 
-(defun make-worker-thread (pool worker bind)
-  (with-thread (:bindings bind)
+(defun make-worker-thread (pool worker &optional bind)
+  (with-thread (:bindings (or bind (worker-bind worker)))
     (unwind-protect (enter-worker-loop pool worker)
       (notify-exit worker))))
 
 (defun make-worker (pool index)
   (let* ((worker (%make-worker index))
-         (bind (make-all-bindings *worker-kernel* (worker-bind worker)))
+         (bind (make-all-bindings *worker-kernel* (bind pool)))
          (worker-thread (make-worker-thread pool worker bind)))
-    (setf (worker-thread worker) worker-thread)
+    (setf (worker-thread worker) worker-thread
+          (worker-bind worker) bind)
     worker))
 
 (defmacro with-fill-workers-handler (workers &body body)
@@ -940,22 +947,26 @@ and execution of concurrent work using a pool of 'worker' threads."))
 (defun fill-workers (workers pool)
   (with-fill-workers-handler workers
     (%fill-workers workers pool)
-    (map nil #'send-worker-start workers)
-    (map nil #'send-worker-ready workers)))
+    (map nil #'send-worker-start workers)))
+
+    ;; (map nil #'receive-worker-start workers)))
+    ;; (map nil #'receive-worker-start workers)))
+
 
 (defun make-thread-pool (worker-count &key (name :default)
 					   (bind `((*standard-output* . ,*standard-output*)
 						       (*error-output* . ,*error-output*)))
 					   (worker-kernel *worker-kernel*)
 					   (spin-count *default-spin-count*)
-					   (use-caller nil)
+					   ;; (use-caller nil)
+                                           (alivep t)
 					   (kernel *kernel*)
                                            (class 'thread-pool))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
 NAME when non-nil is an EQL-unique identifier associated with the thread-pool in *POOL-TABLE*.
 
-BINDINGS is an alist for establishing thread-local dynamic bindings inside worker threads.
+BIND is an alist for establishing thread-local dynamic bindings inside worker threads.
 
 WORKER-KERNEL is a function which must be funcalled. It begins the worker loop and does not return until the worker exits.
 
@@ -968,19 +979,21 @@ SPIN-COUNT is the number of work-searching iterations done by the worker before 
 When USE-CALLER is non-nil the calling thread may be enlisted to steal work from worker threads."
   (check-type worker-count positive-fixnum)
   (check-type spin-count array-index)
-  (let* ((workers (make-array worker-count :initial-element (make-worker* :kernel worker-kernel :bind bind) :fill-pointer t))
-	 (thread-count (if use-caller (1+ worker-count) worker-count))
-	 (pool (make-instance class
-                 :name name
-		 :scheduler (make-scheduler workers spin-count)
-		 :workers workers
-		 :kernel kernel
-		 :accept-work-p t
-                 :alivep t
-		 :limiter-count (initial-limiter-count thread-count)
-		 :limiter-lock (make-spin-lock))))
-    (fill-workers workers pool)
-    pool))
+  (let ((*worker-kernel* worker-kernel)
+        (*pool-kernel* kernel))
+    (let* ((workers (make-array worker-count))
+           (pool (make-instance class
+                   :name name
+		   :bind bind
+	           :kernel *pool-kernel*
+	           :accept-work-p alivep
+                   :alivep alivep
+                   :workers workers
+	           :scheduler (make-scheduler workers spin-count)
+	           :limiter-count (initial-limiter-count worker-count)
+	           :limiter-lock (make-spin-lock))))
+      (fill-workers workers pool)
+      pool)))
 
 (defun check-kernel ()
   "Check the current value of *KERNEL*, ensuring it is bound appropriately
@@ -1093,6 +1106,8 @@ to appear on the queue."
 (defun end-thread-pool (&key wait)
   (let ((pool *thread-pool*))
     (when pool
+      (when (slot-boundp pool 'name)
+	(remhash (name pool) *pool-table*))
       (setf *thread-pool* nil)
       (when (alivep pool)
         (let ((channel (let ((*thread-pool* pool)) (make-instance 'channel)))

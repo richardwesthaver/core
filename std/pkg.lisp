@@ -586,6 +586,7 @@
    :*worker-kernel*
    :*pool-kernel*
    :*thread-pool*
+   :find-thread-pool
    :run-thread
    :std-thread-error
    :print-top-level :thread-support-p
@@ -608,7 +609,7 @@
    :thread-count :dump-thread
    :channel
    :make-channel
-   :channel-kernel
+   :channel-pool
    :channel-queue
    :thread-pool :workers
    :make-thread-pool
