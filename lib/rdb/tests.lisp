@@ -164,9 +164,11 @@
                               :merge-op (rdb::create-concat-merge-op))
                  :open t :close t)
       (put-key db k v)
+      (print (get-val db k))
       (merge-key db k v)
       (isequal (concatenate 'string v v) (get-val db k)))))
 
+;; TODO 2025-04-22: 
 (deftest prefix-op ()
   "Test custom RocksDB prefix extractor."
   (let ((k "1337gamer")
@@ -175,7 +177,8 @@
                               :name (format nil "/tmp/~A" (random-chars 4))
                               :prefix-op (create-fixed-prefix-op 4))
                  :open t :close t)
-      (put-key db k v))))
+      (put-key db k v)
+      (get-val db k))))
 
 (deftest store ()
   (with-store (store)))

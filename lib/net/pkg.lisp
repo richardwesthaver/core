@@ -6,7 +6,7 @@
 (pushnew :net *features*)
 
 (pkg:defpkg :net/core
-  (:use :cl :std :sb-thread :sb-concurrency)
+  (:use :cl :std :sb-thread)
   (:recycle :sb-bsd-sockets)
   (:export
    ;; err

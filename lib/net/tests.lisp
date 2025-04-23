@@ -1,5 +1,5 @@
 (defpackage :net/tests
-  (:use :rt :std :cl :net :sb-concurrency :sb-thread :dat/proto :sb-bsd-sockets))
+  (:use :rt :std :cl :net :sb-thread :dat/proto :sb-bsd-sockets))
 
 (in-package :net/tests)
 

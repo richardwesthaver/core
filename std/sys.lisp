@@ -276,3 +276,16 @@ Core i7 4770K, do **NOT** support RTM."
   "Add PATH to QL:*LOCAL-PROJECT-DIRECTORIES* and ASDF:*CENTRAL-REGISTRY*."
   #+quicklisp (pushnew path ql:*local-project-directories*)
   (pushnew path asdf:*central-registry*))
+
+;;; Time
+(defun get-real-time-seconds ()
+  (/ (get-internal-real-time) internal-time-units-per-second))
+
+(defun %time-remaining (start timeout) (- timeout (- (get-real-time-seconds) start)))
+
+(defmacro! with-countdown (o!time &body body)
+  (with-gensyms (start)
+    `(let ((,start (get-real-time-seconds)))
+       (flet ((time-remaining () (std/sys::%time-remaining ,start ,g!time)))
+         (declare (inline time-remaining))
+         ,@body))))

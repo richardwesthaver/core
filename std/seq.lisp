@@ -257,3 +257,394 @@ TEST."
   (some (lambda (subseq)
           (starts-with-p seq subseq :test test))
         subseq-list))
+
+;;; Queues
+
+;;;; Basic Queue
+(defstruct (basic-queue (:conc-name nil)
+		      (:constructor %make-basic-queue (head tail)))
+  (head (error "no head") :type list)
+  (tail (error "no tail") :type list))
+
+(defun make-basic-queue ()
+  (%make-basic-queue nil nil))
+
+(defun push-basic-queue (val queue)
+  (declare (basic-queue queue))
+  (let ((new (cons val nil)))
+    (if (head queue)
+	(setf (cdr (tail queue)) new
+	      (head queue) new)
+	(setf (tail queue) new))))
+
+(defun pop-basic-queue (queue)
+  (declare (basic-queue queue))
+  (let ((node (head queue)))
+    (if node
+	(multiple-value-prog1 (values (car node) t)
+	  (when (null (setf (head queue) (cdr node)))
+	    (setf (tail queue) nil))
+	  ;; clear node for conservative gcs
+	  (setf (car node) nil
+		(cdr node) nil))
+	(values nil nil))))
+
+(defun basic-queue-count (queue) (length (the list (head queue))))
+(defun basic-queue-empty-p (queue) (not (head queue)))
+(defun peek-basic-queue (queue) 
+  (let ((node (head queue)))
+    (values (car node)
+	    (if node t nil))))
+
+;;;; Raw Queue (vectorized)
+
+(deftype raw-queue-count () 'std/type:array-length)
+
+(defstruct (raw-queue (:constructor %make-raw-queue))
+  (data (vector) :type simple-array)
+  (start 0 :type std/type:array-index)
+  (count 0 :type raw-queue-count))
+
+(defun make-raw-queue (capacity)
+  (%make-raw-queue :data (make-array capacity)))
+
+(defun push-raw-queue (val queue)
+  (declare (raw-queue queue))
+  (with-slots (data start count) queue
+    (setf (svref data (mod (+ start count) (length data))) val)
+    (incf count))
+  (values))
+
+(defun pop-raw-queue (queue)
+  (declare (raw-queue queue))
+  (with-slots (data start count) queue
+    (let ((data data))
+      (if (plusp count)
+          (multiple-value-prog1 (values (svref data start) t)
+            (setf (svref data start) nil
+                  start (mod (1+ start) (length data)))
+            (decf count))
+          (values nil nil)))))
+
+(defun peek-raw-queue (queue)
+  (declare (raw-queue queue))
+  (with-slots (data start count) queue
+    (if (plusp count)
+        (values (svref data start) t)
+        (values nil nil))))
+
+(defun raw-queue-empty-p (queue) 
+  (declare (raw-queue queue))
+  (zerop (raw-queue-count queue)))
+
+(defun raw-queue-full-p (queue) 
+  (declare (raw-queue queue))
+  (eql (raw-queue-count queue) (length (raw-queue-data queue))))
+
+(defun raw-queue-capacity (queue) 
+  (declare (raw-queue queue))
+  (length (raw-queue-data queue)))
+
+;;;; Vector Queue
+(defstruct (vector-queue (:constructor %make-vector-queue))
+  (impl (make-raw-queue 0) :type raw-queue)
+  (lock (make-mutex))
+  (%push nil)
+  (%pop nil))
+
+(defun make-vector-queue* (capacity)
+  (%make-vector-queue :impl (make-raw-queue capacity)))
+
+(defmacro with-vector-queue-lock (queue &body body)
+  `(with-mutex ((vector-queue-lock ,queue))
+     ,@body))
+
+;; no lock
+(declaim (inline push-vector-queue* pop-vector-queue*))
+(defun push-vector-queue* (obj queue)
+  (with-slots (impl lock %push %pop) queue
+    (loop (cond ((< (raw-queue-count impl) (raw-queue-capacity impl))
+		 (push-raw-queue obj impl)
+		 (when %push
+		   (condition-notify %push))
+		 (return))
+		(t
+		 (condition-wait
+		  (or %pop
+		      (setf %pop (make-waitqueue)))
+		  lock))))))
+
+(defun push-vector-queue (obj queue)
+  (declare (vector-queue queue))
+  (with-mutex ((vector-queue-lock queue))
+    (push-vector-queue* obj queue)
+    (values)))
+
+(defun pop-vector-queue* (queue)
+  (declare (vector-queue queue))
+  (with-slots (impl lock %push %pop) queue
+    (loop (multiple-value-bind (value presentp) (pop-raw-queue impl)
+	    (cond (presentp
+		   (when %pop
+		     (condition-notify %pop))
+		   (return value))
+		  (t 
+		   (condition-wait
+		    (or %push
+			(setf %push (make-waitqueue)))
+		    lock)))))))
+
+(defun pop-vector-queue (queue)
+  (declare (vector-queue queue))
+  (with-mutex ((vector-queue-lock queue))
+    (pop-vector-queue* queue)))
+
+(defun %try-pop-vector-queue (queue timeout)
+  ;; queue is empty and timeout is positive
+  (with-countdown timeout
+    (with-slots (impl lock %push %pop) queue
+      (loop (multiple-value-bind (value presentp) (pop-raw-queue impl)
+	      (when presentp
+                (when %pop (condition-notify %pop))
+                (return (values value t)))
+	      (let ((time-remaining (time-remaining)))
+		(when (or (not (plusp time-remaining))
+			  (null (condition-wait
+				 (or %push (setf %push (make-waitqueue)))
+				 lock :timeout time-remaining)))
+		  (return (values nil nil)))))))))
+
+(defun %try-pop-vector-queue-with-timeout (queue timeout)
+  (with-slots (impl) queue
+    (if (basic-queue-empty-p impl)
+	(%try-pop-vector-queue queue timeout)
+	(pop-basic-queue impl))))
+
+(defun try-pop-vector-queue* (queue)
+  (with-slots (impl %pop) queue
+    (multiple-value-bind (value presentp) (pop-raw-queue impl)
+      (cond (presentp
+             (when %pop (condition-notify %pop))
+             (values value t))
+            (t (values nil nil))))))
+
+(defun try-pop-vector-queue (queue timeout)
+  (if (raw-queue-empty-p (vector-queue-impl queue))
+      (%try-pop-vector-queue-with-timeout queue timeout)
+      (try-pop-vector-queue* queue)))
+
+(macrolet ((define-queue-fn (name type raw)
+	     `(progn
+                (defun ,name (queue) 
+		  (declare (,type queue))
+		  (with-mutex ((vector-queue-lock queue))
+		    (,raw (vector-queue-impl queue))))
+                (defun ,(symbolicate (concatenate 'string (symbol-name name) "*")) (queue)
+                  (declare (,type queue))
+                  (,raw (vector-queue-impl queue))))))
+  (define-queue-fn vector-queue-count vector-queue raw-queue-count)
+  (define-queue-fn vector-queue-empty-p vector-queue raw-queue-empty-p)
+  (define-queue-fn vector-queue-full-p vector-queue raw-queue-full-p)
+  (define-queue-fn peek-vector-queue vector-queue peek-raw-queue))
+
+(defun make-vector-queue (capacity &key initial-contents)
+  (let ((queue (make-vector-queue* capacity)))
+    (when initial-contents
+      (block done
+        (flet ((push-elem (elem)
+                 (when (vector-queue-full-p queue)
+                   (return-from done))
+                 (push-vector-queue elem queue)))
+	  (declare (dynamic-extent #'push-elem))
+	  (map nil #'push-elem initial-contents))))
+    queue))
+
+;;;; Cons Queue
+(defstruct (cons-queue (:constructor %make-cons-queue))
+  (impl (make-basic-queue) :type basic-queue)
+  (lock (sb-thread:make-mutex))
+  (cvar nil))
+
+(defmacro with-cons-queue-lock (queue &body body)
+  `(with-mutex ((cons-queue-lock ,queue))
+     ,@body))
+
+(declaim (inline push-vector-queue* pop-vector-queue*))
+
+(defun push-cons-queue* (object queue) 
+  (declare (cons-queue queue))
+  (with-slots (impl cvar) queue
+    (push-basic-queue object impl)
+    (when cvar
+      (condition-notify cvar)))
+    (values))
+
+(defun push-cons-queue (object queue) 
+  (declare (cons-queue queue))
+  (with-mutex ((cons-queue-lock queue))
+    (push-cons-queue* object queue)))
+
+(defun pop-cons-queue* (queue)
+  (declare (cons-queue queue))
+  (with-slots (impl lock cvar) queue
+    (loop (multiple-value-bind (value presentp) (pop-basic-queue impl)
+	    (if presentp
+		(return value)
+		(condition-wait (or cvar (setf cvar (make-waitqueue)))
+				lock))))))
+
+(defun pop-cons-queue (queue) 
+  (declare (cons-queue queue))
+  (with-mutex ((cons-queue-lock queue))
+    (pop-cons-queue* queue)))
+
+(defun %try-pop-cons-queue (queue timeout)
+  ;; queue is empty and timeout is positive
+  (with-countdown timeout
+    (with-slots (impl lock cvar) queue
+      (loop (multiple-value-bind (value presentp) (pop-basic-queue impl)
+              (when presentp
+                (return (values value t)))
+              (let ((time-remaining (time-remaining)))
+                (when (or (not (plusp time-remaining))
+                          (null (condition-wait
+                                 (or cvar (setf cvar (make-waitqueue)))
+                                 lock :timeout time-remaining)))
+                  (return (values nil nil)))))))))
+
+(defun try-pop-cons-queue-with-timeout (queue timeout)
+  (with-slots (impl) queue
+    (if (basic-queue-empty-p impl)
+        (%try-pop-cons-queue queue timeout)
+        (pop-basic-queue impl))))
+
+(defun try-pop-cons-queue (queue timeout)
+  (with-slots (impl lock) queue
+    (cond ((plusp timeout)
+           (with-mutex (lock)
+             (try-pop-cons-queue queue timeout)))
+          (t
+           ;; optimization: don't lock if nothing is there
+           (with-mutex (lock :wait-p nil) 
+             (when (not (basic-queue-empty-p impl))
+               (return-from try-pop-cons-queue (pop-basic-queue impl))))
+           (values nil nil)))))
+
+(defun try-pop-cons-queue* (queue timeout)
+  (if (plusp timeout)
+      (try-pop-cons-queue-with-timeout queue timeout)
+      (pop-basic-queue (cons-queue-impl queue))))
+
+(macrolet ((define-queue-fn (name type raw)
+             `(progn
+                (defun ,name (queue) 
+		  (declare (,type queue))
+                  (with-mutex ((cons-queue-lock queue))
+                    (,raw (cons-queue-impl queue))))
+		(defun ,(symbolicate (concatenate 'string (symbol-name name) "*")) (queue)
+		  (declare (,type queue))
+		  (,raw (cons-queue-impl queue))))))
+  (define-queue-fn cons-queue-count cons-queue basic-queue-count)
+  (define-queue-fn cons-queue-empty-p cons-queue basic-queue-empty-p)
+  (define-queue-fn peek-cons-queue cons-queue peek-basic-queue))
+
+(defun make-cons-queue (&key initial-contents)
+  (let ((queue (%make-cons-queue)))
+    (when initial-contents
+      (flet ((push-elem (elem)
+               (push-cons-queue elem queue)))
+        (declare (dynamic-extent #'push-elem))
+        (map nil #'push-elem initial-contents)))
+    queue))
+
+;;;; Protocol
+(deftype queue () '(or cons-queue vector-queue))
+
+(defun %make-queue (&key fixed-capacity initial-contents)
+  (if fixed-capacity
+      (make-vector-queue fixed-capacity :initial-contents initial-contents)
+      (make-cons-queue :initial-contents initial-contents)))
+
+(defun make-queue (&rest args)
+  (apply #'%make-queue (if (= 1 (length args))
+                           nil
+                           args)))
+
+(defun call-with-cons-queue-lock (fn queue)
+  (with-cons-queue-lock queue
+    (funcall fn)))
+
+(defun call-with-vector-queue-lock (fn queue)
+  (with-vector-queue-lock queue
+    (funcall fn)))
+
+(defmacro with-queue-lock (queue &body body)
+  `(call-with-queue-lock (lambda () ,@body) ,queue))
+
+(defun cons-queue-full-p (queue) (declare (ignore queue)) nil)
+
+(macrolet ((define-queue-fn (name params cons-name vector-name)
+             `(defun ,name ,params
+                (typecase ,(car (last params))
+                  (cons-queue (,cons-name ,@params))
+                  (vector-queue (,vector-name ,@params))
+                  (t (error 'type-error
+                            :datum ,(car (last params))
+                            :expected-type 'queue)))))
+           (define-try-pop-queue (name cons-name vector-name)
+             `(defun ,name (queue &key timeout)
+                (unless timeout
+                  (setf timeout 0))
+                (typecase queue
+                  (cons-queue (,cons-name queue timeout))
+                  (vector-queue (,vector-name queue timeout))
+                  (t (error 'type-error
+		            :datum queue
+		            :expected-type 'queue))))))
+  (define-queue-fn push-queue (obj queue)
+    push-cons-queue
+    push-vector-queue)
+  (define-queue-fn push-queue* (obj queue)
+    push-cons-queue*
+    push-vector-queue*)
+  (define-queue-fn pop-queue (queue)
+    pop-cons-queue
+    pop-vector-queue)
+  (define-queue-fn pop-queue* (queue)
+    pop-cons-queue*
+    pop-vector-queue*)
+  (define-queue-fn peek-queue (queue)
+    peek-cons-queue
+    peek-vector-queue)
+  (define-queue-fn peek-queue* (queue)
+    peek-cons-queue*
+    peek-vector-queue*)
+  (define-queue-fn queue-count (queue)
+    cons-queue-count
+    vector-queue-count)
+  (define-queue-fn queue-count* (queue)
+    cons-queue-count*
+     vector-queue-count*)
+  (define-queue-fn queue-empty-p (queue)
+    cons-queue-empty-p
+    vector-queue-empty-p)
+  (define-queue-fn queue-empty-p* (queue)
+    cons-queue-empty-p*
+    vector-queue-empty-p*)
+  (define-queue-fn queue-full-p (queue)
+    cons-queue-full-p
+    vector-queue-full-p)
+  (define-queue-fn queue-full-p* (queue)
+    cons-queue-full-p
+    vector-queue-full-p*)
+
+  (define-try-pop-queue try-pop-queue
+    try-pop-cons-queue
+    try-pop-vector-queue)
+  (define-try-pop-queue try-pop-queue*
+    try-pop-cons-queue*
+    %try-pop-vector-queue)
+
+  (define-queue-fn call-with-queue-lock (fn queue)
+    call-with-cons-queue-lock
+    call-with-vector-queue-lock))

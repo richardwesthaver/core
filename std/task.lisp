@@ -80,7 +80,7 @@ This interface is experimental and subject to change."
    ;; TODO: test weak-vector here
    (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
             :initarg :workers :accessor workers)
-   (results :initform (make-mailbox :name "results") :accessor results)))
+   (results :initform (make-mailbox :name "results") :accessor results :initarg :results)))
 
 (defmethod print-object ((self task-pool) (stream t))
   (print-unreadable-object (self stream :type t)
@@ -204,27 +204,21 @@ is responsible for indicating in the state slot the result of the computation.")
     (format stream "~A" (tasks self))))
 
 ;;; Macros
-(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) start kernel worker-kernel results) &body body)
-  (unless lock (setf lock (make-semaphore :name "online" :count workers)))
+(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) #+nil start (kernel *pool-kernel*) (worker-kernel *worker-kernel*) results) &body body)
   (unless results (setf results (make-mailbox :name "results")))
-  `(let ((,sym (make-task-pool :lock ,lock :results ,results
-                               :tasks (make-queue 
-                                       :name "tasks"
-                                       :initial-contents
-                                       (make-array ,tasks 
-                                                   :element-type 'task 
-                                                   :initial-element (make-instance 'task))))))
-     (setf *worker-threads* nil
-           *task-pool* ,sym)
-     ,@(if kernel `((setf (task-pool-kernel ,sym) ,kernel))
-           `((setf (task-pool-kernel ,sym)
-                   (make-task-kernel ,(gensym "TASK-KERNEL") ()
-                       (task-pool-lock ,sym) 
-                       (tasks ,sym) 
-                       (results ,sym)
-                       nil))))
-     (loop for i below ,workers
-           do (push-worker (make-worker :kernel ,worker-kernel) ,sym))
+  `(let ((,sym (make-thread-pool ,workers :class 'task-pool
+                                 ,@(when lock `(:lock ,lock))
+                                 :worker-kernel ,worker-kernel
+                                 :kernel ,kernel)))
+     (setf (tasks ,sym)
+           (make-queue
+	    :name "tasks"
+	    :initial-contents
+	    (make-array ,tasks 
+			:element-type 'task
+			:initial-element (make-instance 'task)
+			:fill-pointer t)))
+     ,@(when results `((setf (results ,sym) ,results)))
      ,@(when oracle `((designate-oracle ,sym ,oracle)))
-     ,@(when start `((start-task-workers ,sym)))
+     ;; ,@(when start `((start-task-workers ,sym)))
      ,@body))

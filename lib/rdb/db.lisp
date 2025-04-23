@@ -164,13 +164,15 @@ extractor."
   (declare (ignore engine initargs))
   (when merge-op
     (set-db-opt opts :merge-operator merge-op :push t))
-  (when prefix-op 
+  (when prefix-op
     (set-db-opt opts :prefix-extractor prefix-op :push t))
   (when logger
     (set-db-opt opts :info-log logger :push t))
-  (make-rdb 
-   :name (or name (namestring path) (string-downcase (gensym "rocksdb"))) 
-   :opts opts))
+  (let ((db (make-rdb 
+             :name (or name (namestring path) (string-downcase (gensym "rocksdb"))) 
+             :opts opts)))
+    (push-opts db)
+    db))
 
 (defmethod query-db ((db rdb) (query (eql :get)) &key key &allow-other-keys)
   (declare (ignore query))

@@ -376,10 +376,11 @@
   (:shadowing-import-from :sb-vm :list-allocated-objects)
   (:recycle :sb-assem)
   (:recycle :sb-sys)
+  (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :appendf)
   (:import-from :sb-assem :*backend-instruction-set-package*)
   (:import-from :sb-impl :*logical-hosts* :make-logical-host :logical-host)
-  (:import-from :std/macs :if-let)
+  (:import-from :std/macs :if-let :defmacro!)
   (:export
    :.i ;; alias for *inspected*
    :register-project-directory
@@ -407,7 +408,10 @@
    :without-fp-traps
    :little-endian-p
    :cpuid
-   :cpu-vendor))
+   :cpu-vendor
+   :get-real-time-seconds 
+   :time-remaining 
+   :with-countdown))
 
 (defpkg :std/bit
   (:use :cl)
@@ -547,8 +551,31 @@
    :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
    :make-spin-lock))
 
+(defpkg :std/seq
+  (:use :cl)
+  (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
+  (:shadow :queue :make-queue :queue-count :queue-empty-p)
+  (:import-from :sb-int :collect)
+  (:import-from :std/array :signed-array-length)
+  (:import-from :std/sym :symbolicate)
+  (:import-from :std/type :array-length :array-index)
+  (:import-from :std/sys :get-internal-time-seconds :time-remaining :with-countdown)
+  (:export :take :starts-with-subseq :ends-with-subseq
+   :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
+   :starts-with-one-of-p
+   :basic-queue :raw-queue-count :raw-queue :make-raw-queue
+   :pop-raw-queue :peek-raw-queue :raw-queue-empty-p :raw-queue-full-p
+   :raw-queue-capacity :cons-queue-capacity :cons-queue :push-cons-queue
+   :pop-cons-queue :make-cons-queue :peek-cons-queue :cons-queue-empty-p
+   :push-queue :push-queue* :pop-queue :pop-queue* :peek-queue :peek-queue*
+   :queue-count :queue-count* :queue-empty-p :queue-empty-p* :queue-full-p :queue-full-p*
+   :try-pop-queue :try-pop-queue* :call-with-queue-lock :qith-queue-lock
+   :queue :make-queue))
+
 (defpkg :std/thread
-  (:use :cl :sb-thread :sb-concurrency :std/meta :std/macs :std/sym :std/type :std/spin :std/condition)
+  (:use :cl)
+  (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
+  (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/spin :std/condition :std/seq)
   (:import-from :std/list :flatten)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
@@ -557,6 +584,8 @@
   (:export
    :*worker-class*
    :*worker-kernel*
+   :*pool-kernel*
+   :*thread-pool*
    :run-thread
    :std-thread-error
    :print-top-level :thread-support-p
@@ -593,6 +622,7 @@
    :*default-special-bindings*
    :*kernel*
    :kernel
+   :check-thread-pool :check-kernel
    :*oracle-table*
    :*worker-threads*
    :*supervisor-threads*
@@ -801,14 +831,6 @@
    :string-case
    :detabify))
 
-(defpkg :std/seq
-  (:use :cl)
-  (:import-from :sb-int :collect)
-  (:import-from :std/array :signed-array-length)
-  (:export :take :starts-with-subseq :ends-with-subseq
-   :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
-   :starts-with-one-of-p))
-
 (defpkg :std/rand
   (:use :cl)
   (:import-from :std/type :octet)
@@ -820,7 +842,7 @@
    :random-bytes))
 
 (defpkg :std
-  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray :sb-concurrency)
+  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num
    :std/stream :std/curry :std/array :std/hash-table

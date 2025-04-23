@@ -476,64 +476,28 @@ FUNCTION."
 		       (values-list (run-function)))))))))))
 
 ;;; Queues
-;;;; Raw Queue
-(defstruct (raw-queue (:conc-name nil)
-                      (:constructor %make-raw-queue (head tail)))
-  (head (error "no head") :type list)
-  (tail (error "no tail") :type list))
-
-(defun make-raw-queue ()
-  (%make-raw-queue nil nil))
-
-(defun push-raw-queue (val queue)
-  (declare (raw-queue queue))
-  (let ((new (cons val nil)))
-    (if (head queue)
-        (setf (cdr (tail queue)) new
-              (head queue) new)
-        (setf (tail queue) new))))
-
-(defun pop-raw-queue (queue)
-  (declare (raw-queue queue))
-  (let ((node (head queue)))
-    (if node
-        (multiple-value-prog1 (values (car node) t)
-          (when (null (setf (head queue) (cdr node)))
-            (setf (tail queue) nil))
-          ;; clear node for conservative gcs
-          (setf (car node) nil
-                (cdr node) nil))
-        (values nil nil))))
-
-(defun raw-queue-count (queue) (length (the list (head queue))))
-(defun raw-queue-empty-p (queue) (not (head queue)))
-(defun peek-raw-queue (queue) 
-  (let ((node (head queue)))
-    (values (car node)
-            (if node t nil))))
-
 ;;;; Biased Queue
 (defstruct (biased-queue (:conc-name queue-))
   (lock (make-mutex :name "queue-lock"))
   (cvar (make-waitqueue :name "queue-cvar"))
-  (high (make-raw-queue) :type raw-queue)
-  (low (make-raw-queue) :type raw-queue))
+  (high (make-queue) :type queue)
+  (low (make-queue) :type queue))
 
 (defun push-biased-queue (obj queue)
   (declare (biased-queue queue))
-  (push-raw-queue obj (queue-high queue))
+  (push-queue obj (queue-high queue))
   (condition-notify (queue-cvar queue))
   (values))
 
 (defun push-biased-queue-low (obj queue)
   (declare (biased-queue queue))
-  (push-raw-queue obj (queue-low queue))
+  (push-queue obj (queue-low queue))
   (condition-notify (queue-cvar queue))
   (values))
 
 ;;; Channel
 (defclass channel ()
-  ((queue :initform (make-raw-queue) :type raw-queue :initarg :queue :accessor channel-queue)
+  ((queue :initform (make-queue) :type queue :initarg :queue :accessor channel-queue)
    (pool :initform *kernel* :type kernel :initarg :kernel :accessor channel-pool)))
 
 ;;; Limiter
@@ -587,10 +551,10 @@ FUNCTION."
 ;;; Worker
 (defclass worker-notifications ()
   ;; to-worker
-  ((%rx :initform (make-raw-queue))
+  ((%rx :initform (make-queue))
    ;; from-worker
-   (%tx :initform (make-raw-queue))
-   (%exit :initform (make-raw-queue))))
+   (%tx :initform (make-queue))
+   (%exit :initform (make-queue))))
 
 (defclass worker (worker-notifications)
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
@@ -649,25 +613,25 @@ FUNCTION."
       (deletef *worker-threads* th))))
 
 (defun send-worker-start (worker)
-  (push-raw-queue 'proceed (slot-value worker '%rx)))
+  (push-queue 'proceed (slot-value worker '%rx)))
 
 (defun send-worker-ready (worker)
-  (ecase (pop-raw-queue (slot-value worker '%tx))
+  (ecase (pop-queue (slot-value worker '%tx))
     (ok)
     (error (error 'kernel-init-error))))
 
 (defun receive-worker-start (worker)
-  (assert (eq 'proceed (pop-raw-queue (slot-value worker '%rx)))))
+  (assert (eq 'proceed (pop-queue (slot-value worker '%rx)))))
 
 (defun receive-worker-ready (worker status)
   (check-type status (member ok error))
-  (push-raw-queue status (slot-value worker '%tx)))
+  (push-queue status (slot-value worker '%tx)))
 
 (defun notify-exit (worker)
-  (push-raw-queue 'exit (slot-value worker '%exit)))
+  (push-queue 'exit (slot-value worker '%exit)))
 
 (defun wait-for-worker (worker)
-  (assert (eq 'exit (pop-raw-queue (slot-value worker '%exit)))))
+  (assert (eq 'exit (pop-queue (slot-value worker '%exit)))))
 
 ;;;; Worker Protocol
 (defgeneric workers (self))
@@ -876,7 +840,7 @@ within their DOMAIN and SCOPE."))
 (defclass thread-pool (thread-limiter)
   ((kernel :initform *pool-kernel* :type kernel :accessor kernel :initarg :kernel)
    (scheduler :initarg :scheduler :accessor scheduler)
-   (workers :initarg :workers :accessor workers :type (vector worker))
+   (workers :initarg :workers :accessor workers :type (simple-array worker))
    (lock :initarg :lock :initform (make-mutex :name "workers") :type mutex :accessor lock)
    (alivep :reader alivep :type boolean :initarg :alivep))
   (:documentation "Thread pools are similar to LPARALLEL kernels - they encompass the scheduling
@@ -886,6 +850,9 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (declare (thread-pool pool))
   (setf (gethash *pool-table* name) pool))
 
+(defmethod initialize-instance :after ((self thread-pool) &key name &allow-other-keys)
+  (when name
+    (register-thread-pool name self)))
 
 ;;;; Core
 (defun exec-with-worker (work worker)
@@ -976,13 +943,14 @@ and execution of concurrent work using a pool of 'worker' threads."))
     (map nil #'send-worker-start workers)
     (map nil #'send-worker-ready workers)))
 
-(defun make-thread-pool (worker-count &key name 
+(defun make-thread-pool (worker-count &key (name :default)
 					   (bind `((*standard-output* . ,*standard-output*)
 						       (*error-output* . ,*error-output*)))
 					   (worker-kernel *worker-kernel*)
 					   (spin-count *default-spin-count*)
 					   (use-caller nil)
-					   (kernel *kernel*))
+					   (kernel *kernel*)
+                                           (class 'thread-pool))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
 NAME when non-nil is an EQL-unique identifier associated with the thread-pool in *POOL-TABLE*.
@@ -991,16 +959,19 @@ BINDINGS is an alist for establishing thread-local dynamic bindings inside worke
 
 WORKER-KERNEL is a function which must be funcalled. It begins the worker loop and does not return until the worker exits.
 
-KERNEL is a function which 
+KERNEL is a function which drives the THREAD-POOL.
+
+CLASS is the designated class of the returned THREAD-POOL object.
 
 SPIN-COUNT is the number of work-searching iterations done by the worker before going to sleep.
 
 When USE-CALLER is non-nil the calling thread may be enlisted to steal work from worker threads."
   (check-type worker-count positive-fixnum)
   (check-type spin-count array-index)
-  (let* ((workers (make-array worker-count :initial-element (make-worker* :kernel worker-kernel :bind bind)))
+  (let* ((workers (make-array worker-count :initial-element (make-worker* :kernel worker-kernel :bind bind) :fill-pointer t))
 	 (thread-count (if use-caller (1+ worker-count) worker-count))
-	 (pool (make-instance 'thread-pool
+	 (pool (make-instance class
+                 :name name
 		 :scheduler (make-scheduler workers spin-count)
 		 :workers workers
 		 :kernel kernel
@@ -1008,7 +979,6 @@ When USE-CALLER is non-nil the calling thread may be enlisted to steal work from
                  :alivep t
 		 :limiter-count (initial-limiter-count thread-count)
 		 :limiter-lock (make-spin-lock))))
-    (when name (register-thread-pool name pool))
     (fill-workers workers pool)
     pool))
 
@@ -1072,8 +1042,8 @@ provided. *THREAD-POOL* is returned."
   (declare (channel channel) (function fn) (list args))
   (let ((queue (channel-queue channel)))
     (work-lambda
-      (unwind-protect (push-raw-queue (with-work-context (apply fn args)) queue)
-        (push-raw-queue (wrap-error 'worker-killed-error) queue)))))
+      (unwind-protect (push-queue (with-work-context (apply fn args)) queue)
+        (push-queue (wrap-error 'worker-killed-error) queue)))))
 
 ;; make-work 
 (defun submit-raw-work (work pool &optional (priority *work-priority*))
@@ -1090,7 +1060,7 @@ provided. *THREAD-POOL* is returned."
 
 (defun receive-result (channel)
   "Remove a result from CHANNEL. If nothing is available the call will block until a result is received."
-  (unwrap-result (pop-raw-queue (channel-queue channel))))
+  (unwrap-result (pop-queue (channel-queue channel))))
 
 (defun try-receive-result (channel &key timeout)
   "Attempt to remove a result from CHANNEL and return (values RESULT t).
@@ -1099,7 +1069,7 @@ By default if the channel is empty return (values nil nil)
 immediately. TIMEOUT, if non-nil is the number of seconds to wait for a result
 to appear on the queue."
   (multiple-value-bind (result presentp)
-      (try-pop-raw-queue (channel-queue channel) :timeout timeout)
+      (try-pop-queue (channel-queue channel) :timeout timeout)
     (if presentp
         (values (unwrap-result result) t)
         (values nil nil))))
@@ -1125,14 +1095,14 @@ to appear on the queue."
     (when pool
       (setf *thread-pool* nil)
       (when (alivep pool)
-        (let ((channel (let ((*thread-pool* pool)) (make-channel)))
+        (let ((channel (let ((*thread-pool* pool)) (make-instance 'channel)))
               (threads (map 'list #'worker-thread (workers pool))))
           (cond (wait
-                 (shutdown-thread-pool channel pool)
+                 (shutdown-channel channel pool)
                  threads)
                 (t
                  (cons (with-thread (:name "%thread-pool-shutdown")
-                         (shutdown-thread-pool channel pool))
+                         (shutdown-channel channel pool))
                        threads))))))))
 
 (defun thread-pool-info (pool)
@@ -1158,17 +1128,17 @@ Calling `broadcast-work' from inside a worker is an error."
          (worker-count (current-worker-count))
          (channel (make-instance 'channel))
          ;; TODO: replace queues with semaphores
-         (from-workers (make-raw-queue))
-         (to-workers (make-raw-queue)))
+         (from-workers (make-queue))
+         (to-workers (make-queue)))
     (loop repeat worker-count 
           do (submit-work channel (lambda ()
-                                    (push-raw-queue t from-workers)
-                                    (pop-raw-queue to-workers)
+                                    (push-queue t from-workers)
+                                    (pop-queue to-workers)
                                     (apply function args))))
     (loop repeat worker-count 
-          do (pop-raw-queue from-workers))
+          do (pop-queue from-workers))
     (loop repeat worker-count 
-          do (push-raw-queue t to-workers))
+          do (push-queue t to-workers))
     (map-into (make-array worker-count) (lambda () (receive-result channel)))))
 
 (defun %exit-threads ()
