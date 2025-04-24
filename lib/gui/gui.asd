@@ -14,6 +14,7 @@
                :cli :io)
   :components ((:file "pkg")
                (:file "condition")
+               (:file "proto")
                (:file "server")
                (:file "client")
                (:module "clim"

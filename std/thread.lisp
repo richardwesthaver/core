@@ -1104,10 +1104,9 @@ to appear on the queue."
     (setf alivep nil)))
 
 (defun end-thread-pool (&key wait)
-  (let ((pool *thread-pool*))
-    (when pool
-      (when (slot-boundp pool 'name)
-	(remhash (name pool) *pool-table*))
+  (when-let ((pool *thread-pool*))
+    (let ((name (when (slot-boundp pool 'name) (name pool))))
+      (when name (remhash name *pool-table*))
       (setf *thread-pool* nil)
       (when (alivep pool)
         (let ((channel (let ((*thread-pool* pool)) (make-instance 'channel)))
@@ -1116,7 +1115,7 @@ to appear on the queue."
                  (shutdown-channel channel pool)
                  threads)
                 (t
-                 (cons (with-thread (:name "%thread-pool-shutdown")
+                 (cons (with-thread (:name (format nil "%shutdown-~A" (or name "thread-pool")))
                          (shutdown-channel channel pool))
                        threads))))))))
 

@@ -47,7 +47,7 @@
                          ;; skip it
                          (read-char stream)
                          ;; eval and push each form individually.
-                         (let ((form (sb-cltl2:enclose `(lambda () ',(read stream nil nil)))))
+                         (let ((form (lambda () (read stream nil nil))))
                            (push
                             (coerce
                              (format nil "~{~A~^ ~}" (funcall form))
@@ -55,7 +55,7 @@
                             out)))
                        ;; unconditionally read in a single sexp and eval.
                        (push (coerce (format nil "~A" (funcall 
-                                                       (compile nil (sb-cltl2:enclose `(lambda () ',(read stream nil nil))))))
+                                                       (compile nil `(lambda () ',(read stream nil nil)))))
                                      'list)
                              out)))
                   ((or (char= c #\+) (char= c #\-))

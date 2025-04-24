@@ -199,7 +199,7 @@ is responsible for indicating in the state slot the result of the computation.")
            :type (vector task))
    (lock :initform (make-mutex :name "work-scope") :initarg :lock :accessor work-scope-lock :type mutex)))
 
-(defmethod print-object ((self work-scope) stream)
+(defmethod print-object ((self work-scope) (stream stream))
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (tasks self))))
 

@@ -15,7 +15,7 @@
     (:integer (make-instance 'sql-number :value (random most-positive-fixnum)))
     (:float (make-instance 'sql-number :value (random most-positive-single-float)))
     (:double (make-instance 'sql-number :value (random most-positive-double-float)))
-    (:string (make-instance 'sql-string :value (rt:random-chars (random *fuzz-value-max-size* state))))))
+    (:string (make-instance 'sql-string :value (random-chars (random *fuzz-value-max-size* state))))))
 
 (defun generate-dql-type (state &optional (type :string)))
 

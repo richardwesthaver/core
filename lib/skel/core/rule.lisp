@@ -47,7 +47,7 @@ via the special form stored in RECIPE."
     (mapcar (lambda (x)
 	      (etypecase x
 		((or symbol function) (funcall x :output t))
-		(t (funcall (sb-cltl2:enclose `(lambda () ,x))))))
+		(t (funcall (compile nil `(lambda () ,x))))))
 	    recipe)))
 
 (defmethod sk-write ((self sk-rule) stream)

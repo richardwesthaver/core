@@ -30,7 +30,17 @@
   (:method ((self integer) &key &allow-other-keys)
     "An integer is assumed to refer to an index in the current MPD playlist."
     (mpd:ensure-mpc (*mpc*)
-      (mpd:mpc-play *mpc* self))))
+      (mpd:mpc-play *mpc* self)))
+  (:method ((self null) &key &allow-other-keys)
+    "A nil value resumes playback of the current playlist."
+    (mpd:ensure-mpc (*mpc*)
+      (mpd:mpc-play *mpc*))))
+
+(defgeneric mpk-pause (self &rest args &key &allow-other-keys)
+  (:documentation "Pause playback state of player object SELF.")
+  (:method ((self (eql :mpd)) &key &allow-other-keys)
+    (mpd:ensure-mpc (*mpc*)
+      (mpd:mpc-pause *mpc*))))
 
 (defgeneric mpk-toggle (self &rest args &key &allow-other-keys)
   (:documentation "Toggle playback state of player object SELF between :PLAYING and :PAUSED.")
@@ -50,3 +60,15 @@
   (:method ((self (eql :mpd)) &key &allow-other-keys)
     (mpd:ensure-mpc (*mpc*)
       (mpd:mpc-shuffle *mpc*))))
+
+(defgeneric mpk-next (self)
+  (:documentation "Move to the next item in the playlist.")
+  (:method ((self (eql :mpd)))
+    (mpd:ensure-mpc (*mpc*)
+      (mpd:mpc-next *mpc*))))
+    
+(defgeneric mpk-prev (self)
+  (:documentation "Move to the previous item in the playlist.")
+  (:method ((self (eql :mpd)))
+    (mpd:ensure-mpc (*mpc*)
+      (mpd:mpc-previous *mpc*))))

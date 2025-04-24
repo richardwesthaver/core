@@ -18,7 +18,7 @@
    :mpc-ping
    :mpc-kill
    :mpc-status
-   :mpc-now-playing
+   :mpc-playing
    :mpc-pause
    :mpc-play
    :mpc-searchplay
@@ -83,7 +83,8 @@
    :mpc-db-playtime
    :mpc-db-update
    :mpd-config
-   :ensure-mpc))
+   :ensure-mpc
+   :mpc-connect))
 
 (defpackage :mpk
   (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp)
@@ -117,7 +118,9 @@
    #:mpk-toggle
    #:find-mpk-symbol
    #:*user-mpkrc*
-   #:init-mpkrc))
+   #:init-mpkrc
+   #:mpk-prev
+   #:mpk-next))
 
 (defpackage :mpk/db
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
@@ -132,3 +135,6 @@
   (:use :cl :std :log :mpk :cli)
   (:export
    #:*mpk-cli*))
+
+(defpackage :mpk/gui
+  (:use :cl :std :log :mpk :gui))

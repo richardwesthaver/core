@@ -6,7 +6,6 @@
 (in-package :q/tests)
 
 (defsuite :q)
-
 (in-suite :q)
 
 (deftest sanity ()
@@ -18,10 +17,10 @@
 (deftest sql-select ()
   (let ((tbl (make-hash-table :test 'equal)))
     (setf (gethash "FOO" tbl) (make-df))
-    (with-sql (expr "SELECT I FROM FOO")
+    (with-sql (expr "SELECT * FROM FOO" :optimize t)
       (is (typep expr 'sql-select))
       (is (gethash "FOO" tbl))
-      (make-sql-df expr tbl))))
+      (istype 'data-frame (make-sql-df expr tbl)))))
 
 (deftest sql-math ()
   (with-sql (expr "1 + 2 * 3")

@@ -120,24 +120,24 @@ variables in the head and no clauses in the body. During reading of a DQL
 form, if we find any facts we evaluate them and store them here.")
 
 ;;; Utils
-(defconstant +impossible+ :ko "make impossible look nice")
+(defconstant +impossible+ :never "make impossible look nice")
 (defconstant +solved+ :ok "make solved look nice")
 (defconstant +dql-vars-property+ :dql-vars)
 (defconstant +dql-funs-property+ :dql-funs)
 
-(defconstant +?+ #\?)
+(defconstant +dql-variable-prefix+ #\?)
 
 (defun dql-variable-p (sym)
   "Valid DQL variables are symbols which start with the character #\? as in '?FOO
 and '?BAR."
   (and (symbolp sym)
-       (eql (char (symbol-name sym) 0) +?+)))
+       (eql (char (symbol-name sym) 0) +dql-variable-prefix+)))
 
 (deftype dql-variable () '(satisfies dql-variable-p))
 
 (defun dql-anonymous-p (sym)
   "Return T if SYM is a DQL anonymous variable represented by the value of +?+."
-  (eq sym (symbolicate +?+)))
+  (eq sym (symbolicate +dql-variable-prefix+)))
 
 (deftype dql-anonymous () '(satisfies dql-anonymous-p))
 
@@ -155,10 +155,10 @@ and '?BAR."
        (find a (cadr b))))
 
 (defun register-dql-variable (name env)
-  (push name (cdr (assoc +dql-vars-property+ (sb-c::lexenv-user-data env)))))
+  (push name (cdr (assoc +dql-vars-property+ (lexenv-user-data env)))))
 
 (defun register-dql-rule (name env &optional arity)
-  (push name (cdr (assoc +dql-funs-property+ (sb-c::lexenv-user-data env))))
+  (push name (cdr (assoc +dql-funs-property+ (lexenv-user-data env))))
   (setf (gethash name *functors*)
         (or (when arity (make-array arity :element-type 'function)) (function name))))
 
@@ -170,11 +170,11 @@ and '?BAR."
 
 (defun dvboundp! (var &optional env)
   "Check if VAR is bound as a DQL-VARIABLE in the given environment."
-  (sb-cltl2::lexenv-find var :user-data :lexenv env :test 'match-dql-variable))
+  (lexenv-find var :user-data :lexenv env :test 'match-dql-variable))
 
 (defun dfboundp! (fun &optional env)
   "Check if FUN is bound as a DQL-FUNCTOR in the given environment."
-  (sb-cltl2::lexenv-find fun :user-data :lexenv env :test 'match-dql-function))
+  (lexenv-find fun :user-data :lexenv env :test 'match-dql-function))
 
 (defmacro dquoty (form &environment env)
   "Like QUOTY but builds DQL functors instead of functions from unknown lists."
@@ -232,12 +232,12 @@ of the predicate. On success returns the arity or T for varargs."
 (defclass dql-env (simple-schema)
   ((env :initarg :env :accessor env))
   (:default-initargs
-   :env (sb-c::make-null-lexenv)
+   :env (make-null-lexenv)
    :name (symbol-name (gensym "dql-env"))))
 
 (defmacro new-dql-env (&body fields &environment env)
   `(progn
-     (appendf (sb-c::lexenv-user-data ,env) '((,+dql-vars-property+) (,+dql-funs-property+)))
+     (appendf (lexenv-user-data ,env) '((#.+dql-vars-property+) (#.+dql-funs-property+)))
      (make-instance 'dql-env :fields (make-fields ,@fields) :env ,env)))
 
 (defclass dql-logical-plan (logical-query-plan) ())

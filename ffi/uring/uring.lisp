@@ -101,14 +101,13 @@ which accepts a boolean value and automatically adjust the slot."
 (defmethod build ((self uring-builder) &key (entries *default-io-entry-count*))
   (make-uring :sq (make-submission-queue) :cq (make-completion-queue) :memory (make-io-memory-map)))
 
-(defun setup-queue (fd p)
+(defun setup-uring-queue (fd p)
   "Setup a URING struct given a reference to a FILE-DESCRIPTOR and IO-PARAMS.")
 
-(defun make-queue (&optional (entries *default-io-entry-count*))
+(defun make-uring-queue (&optional (entries *default-io-entry-count*))
   "Create a new URING instance with default params. N is the size of the
 queue, which must be a power of two."
   (build (make-uring-builder) :entries entries))
 
-#+nil (make-queue 2)
 (defmethod build-submitter ((self uring-builder))
   (make-io-submitter))

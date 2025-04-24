@@ -162,15 +162,17 @@
                      (artists albums songs uptime playtime db-playtime db-update)))
 
 (defparameter *integer-keys*
-  '(:id :pos :volume :playlist :playlist-length
-    :xfade :song :songid :bitrate :playtime
+  '(:id :pos :volume :playlist :playlistlength
+    :xfade :song :songid :nextsongid :nextsong :bitrate :playtime
     :artists :albums :songs :uptime :db_playtime :db_update
-    :outputid)
+    :outputid :track :disc)
   "List of keys which values must be integers.")
 
 (defparameter *value-processing-functions*
   '(:time parse-time :state to-keyword
+    :last-modified time:parse-timestring :duration parse-number
     :random string-not-zerop :repeat string-not-zerop
+    :elapsed parse-number :mixrampdb parse-number :consume string-not-zerop :single string-not-zerop
     :outputenabled string-not-zerop))
 
 (defmethod print-object ((object track) stream)
@@ -350,11 +352,11 @@
   "Close connection."
   (socket-close connection))
 
-(defcommand now-playing ()
+(defcommand playing ()
   "Return instance of playlist with current song."
   (let ((track (send "currentsong")))
     (when track
-      (make-class track 'playlist))))
+      (make-class track 'track))))
 
 (defcommand disable-output (id)
   (check-args unsigned-byte id)
@@ -402,7 +404,9 @@
 (defcommand play (&optional song-number)
   ;; (check-args (or positive-fixnum null) song-number)
   "Begin playing the playlist starting from song-number, default is 0."
-  (send "play" (- song-number 1)))
+  (if song-number
+      (send "play" (- song-number 1))
+      (send "play")))
 
 (defcommand searchplay (type &optional query)
   (check-args string type query)

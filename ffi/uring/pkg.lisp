@@ -51,8 +51,8 @@ queue (CQ), and form the foundation of the new interface.
    :io-uring-cqe :io-uring-cqe* :io-uring-sqe :io-uring-sqe*
    :submission-queue-entry :submission-queue-entry-128
    :io-memory-map :parse-io-uring-params :io-params :io-uring
-   :uring :*default-io-params* :uring-builder :setup-queue
-   :make-queue :build-submitter :sigset-t :cpu-set-t
+   :uring :*default-io-params* :uring-builder :setup-uring-queue
+   :make-uring-queue :build-submitter :sigset-t :cpu-set-t
    :cpu-mask-t :recv-msg-out :cancel-builder :mmapped-region
    :with-io-uring :with-new-io-uring :io-uring-get-sqe :io-uring-sqe-set-flags
    :with-io-sqe :with-new-io-sqe :with-io-cqe :with-new-io-cqe

@@ -374,7 +374,9 @@
   (:use :cl)
   (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
   (:shadowing-import-from :sb-vm :list-allocated-objects)
+  (:use-reexport :sb-cltl2)
   (:recycle :sb-assem)
+  (:shadowing-import-from :sb-c :lexenv-user-data :lexenv-find :make-null-lexenv)
   (:recycle :sb-sys)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :appendf)
@@ -384,6 +386,9 @@
   (:export
    :.i ;; alias for *inspected*
    :register-project-directory
+   :lexenv-user-data
+   :lexenv-find
+   :make-null-lexenv
    :revive-image
    :64-bit-p :32-bit-p
    :*logical-hosts*
@@ -530,14 +535,15 @@
    :pull-sap*))
 
 (defpkg :std/meta
-  (:use :cl :sb-mop :sb-pcl)
+  (:use :cl :sb-pcl)
+  (:use-reexport :sb-mop)
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
   (:import-from :sb-ext :without-package-locks)
   (:import-from :std/macs :eval-always)
   (:shadow :reset)
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
-   :subclassp :write-object :start :started-p 
+   :subclassp :write-object :start :started-p
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object

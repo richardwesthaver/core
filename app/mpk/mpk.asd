@@ -11,5 +11,6 @@
                (:file "util")
                (:file "db")
                (:file "cfg")
-               (:file "dl")
-               (:file "cli")))
+               (:file "net")
+               (:file "cli")
+               (:file "gui")))

@@ -58,6 +58,6 @@
            (progn
              ;; (setq *db* (make-db :skel))
              (do-cmd *cli*)
-             (when (getopt "interactive" nil)
+	     (when (getopt "interactive" nil)
                (sk-shell)))))))
         

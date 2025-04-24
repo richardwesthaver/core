@@ -851,6 +851,10 @@ string:data-frame. Returns a data-frame."
 ;;; Optimizer
 (defclass sql-optimizer (query-optimizer) ())
 
+(defmethod optimize-query ((self sql-optimizer) (expr sql-expression))
+  (declare (ignore self))
+  expr)
+
 ;;; Engine
 (defclass sql-engine (query-engine) ()
   (:default-initargs
@@ -862,7 +866,7 @@ string:data-frame. Returns a data-frame."
                               (stream `((read-sql-stream ,input)))
                               (string `((read-sql-string ,input)))))
      ,@(cond
-         (optimize `((setq ,sym (optimize (parse ,sym)))))
+         (optimize `((setq ,sym (optimize-query (make-instance 'sql-optimizer) (parse ,sym)))))
          (parse `((setq ,sym (parse ,sym)))))
      ,@(when execute
          `((execute (make-physical-plan ,sym))))
