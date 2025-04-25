@@ -183,6 +183,10 @@
    :*sbcl-runtime-options*
    :*sbcl-toplevel-options*))
 
+(defpackage :cli/tools/virt
+  (:use :cl :std :cli/tools/proto :cli/env)
+  (:export :*buildah* :*podman* :run-buildah :run-podman))
+
 (in-package :cli/tools/proto)
 
 (defconfig cli-tool-config () ())

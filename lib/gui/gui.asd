@@ -13,6 +13,7 @@
                (:feature :clim :clim-listener)
                :cli :io)
   :components ((:file "pkg")
+               (:file "var")
                (:file "condition")
                (:file "proto")
                (:file "server")
@@ -21,9 +22,6 @@
                 :if-feature :clim
                 :components
                 ((:file "pkg")
-                 (:module "layout"
-                  :components
-                  ((:file "pkg")))
                  (:file "frame")
                  (:file "dbg")
                  (:file "repl"))
@@ -44,7 +42,6 @@
                    (:file "var")
                    (:module "mod"
                     :components ((:file "disk")))))))
-               (:file "ext")
                (:file "gui"))
   :in-order-to ((test-op (test-op "gui/tests"))))
 

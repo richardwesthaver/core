@@ -10,9 +10,9 @@
 ;;; Simple frames
 (define-application-frame simple-frame () ()
   (:pointer-documentation t))
-  
+
 ;;; Graph Frame
-(define-application-frame graph-frame () ()
+(define-application-frame graph-frame (simple-frame) ()
   (:menu-bar nil)
   (:reinitialize-frames t)
   (:panes (graph

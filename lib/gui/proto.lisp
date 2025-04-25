@@ -9,10 +9,6 @@
 (defapp () )
 |#
 
-(defparameter *gui-backend-list* '(:gtk :tk :mcclim))
-
-(defparameter *gui-backend* nil)
-
 (defun register-gui-backend (name &optional lib)
   "Register a new GUI backend named NAME. if LIB is provided it is
 assumed to be a path to a shared library.")

@@ -15,6 +15,7 @@
                (:file "containerfile")
                (:file "api")
                (:file "podman")
+               (:file "buildah")
                (:file "cfg")
                (:file "client")
                (:file "util")

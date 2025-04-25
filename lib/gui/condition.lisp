@@ -1,3 +1,6 @@
 (in-package :gui/core)
 
-(deferror gui-error () ())
+(define-condition gui-condition () ())
+
+(deferror gui-error (gui-condition) () (:auto t))
+(defwarning gui-warning (gui-condition) () (:auto t))

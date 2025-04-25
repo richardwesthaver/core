@@ -1,4 +1,4 @@
-;;; systemd.lisp --- Systemd CLI Tools
+;;; sys.lisp --- System CLI Tools
 
 ;; 
 

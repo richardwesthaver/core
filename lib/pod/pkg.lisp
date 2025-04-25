@@ -20,10 +20,11 @@
 
 ;;; Code:
 (defpackage :pod
-  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :net/srv :config :ast)
+  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :net/srv :config :ast :cli/tools/virt)
   (:import-from :chunky :make-chunked-stream)
   (:export
-   :*podman-api-version* :*podman-exe* :*buildah-exe*
+   :*podman-api-version*
+   :buildah :podman
    :pod-error :podman-error :libpod-error
    :decode-podman-response :encode-podman-request
    :podman-request :podman-response

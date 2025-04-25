@@ -17,10 +17,6 @@
    :clear-output-record :output-record-position :with-output-recording-options :dispatch-repaint
    :*application-frame* :make-application-frame :run-frame-top-level))
 
-(pkg:defpkg :gui/clim/layout 
-  (:use :cl :std :gui/clim) 
-  (:use-reexport :clim-tab-layout))
-
 (pkg:defpkg :gui/clim/frame 
   (:use :cl :std :gui/clim)
   (:use-reexport :clim-tab-layout) 
@@ -32,7 +28,11 @@
    :find-pane-named :graph-output-record :drag-output-record :define-command-table
    :clear-output-record :output-record-position :with-output-recording-options :dispatch-repaint
    :define-presentation-to-command-translator))
-   
+
+(pkg:defpkg :gui/clim/app
+  (:use :cl :std :gui/clim :gui/clim/frame)
+  (:export :run-app))
+
 (pkg:defpkg :gui/clim/dbg 
   (:use :cl :std :gui/clim :gui/clim/frame)
   (:import-from :clim-debugger :clim-debugger :the-condition :returned-restart :backtrace :condition-info :shown-frames :inspectable :change-space-requirements :frame-panes :active-frame :*pointer-documentation-output* :frame-exit :stack-frame :frame-no :+minimized-stack-frame-view+ :view :+maximized-stack-frame-view+ :frame-current-layout)

@@ -30,13 +30,15 @@
   (:use :cl :std :log)
   (:export
    :gui-error
-   :gui-client-p :gui-server-p))
+   :gui-client-p :gui-server-p
+   :*application*
+   :*default-application-class*
+   :*gui-backend-list*
+   :*gui-backend*))
 
 (defpackage :gui/ext
   (:use :cl :std :log :gui/core)
   (:export 
-   :*gui-backend-list*
-   :*gui-backend*
    :register-gui-backend
    :load-gui-backend
    :with-gui-handlers
