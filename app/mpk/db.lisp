@@ -43,26 +43,20 @@
 (defmethod make-id ((self (eql :mpk-db))) (make-instance 'mpk-db-id))
 
 ;;; DB
-(defclass mpk-db (rdb-database) ()
-  (:default-initargs
-   :db (make-db :rocksdb
-         :name (namestring *mpk-db-directory*)
-         :opts (default-rdb-opts)
-         :logger (rdb-log-default 1))))
+(defclass mpk-db (rdb-database) ())
 
+(defmethod make-db ((engine (eql :mpk-db)) &rest initargs)
+  (declare (ignore engine))
+  (change-class (apply 'make-db :rdb initargs) 'mpk-db))
 
+(defmethod get-db (dbs (name (eql :mpk-db)))
+  (sb-sequence:find name dbs :key 'name :test 'string-equal))
 
-(defmethod make-db ((engine (eql :mpk-db)) &rest initargs &key)
-  (apply #'make-instance 'mpk-db initargs))
-
-(defmethod get-db (dbs (name (eql :mpk-db))))
-
-(defun init-mpk-db ()
+(defun mpk-db-init ()
   (if *db*
       (simple-rdb-warning "*DB* already bound.")
       (setq *db* 
             (make-db :mpk-db
-              :opts (default-rdb-opts)
               :name (namestring *mpk-db-directory*))))
   (if (probe-file *mpk-db-directory*)
       (progn

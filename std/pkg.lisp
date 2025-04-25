@@ -589,8 +589,10 @@
   (:import-from :std/list :deletef)
   (:export
    :*worker-class*
+   :%worker
    :*worker-kernel*
    :*pool-kernel*
+   :%thread
    :*thread-pool*
    :find-thread-pool
    :run-thread

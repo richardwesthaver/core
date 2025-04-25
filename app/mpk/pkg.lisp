@@ -125,7 +125,7 @@
 (defpackage :mpk/db
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
   (:export :*mpk-db-directory* :*mpk-db* :*mpk-db-schema*
-   :mpk-db :init-mpk-db))
+   :mpk-db :mpk-db-init))
 
 (pkg:defpkg :mpk-user
   (:use :cl :std :cl-user :std-user :sb-ext)

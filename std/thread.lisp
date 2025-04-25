@@ -19,7 +19,7 @@
 
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
-(deftype kernel () 'function)
+(deftype kernel () '(or cons symbol))
 
 ;;; Vars
 (defvar *default-special-bindings* nil
@@ -39,8 +39,11 @@
 (defvar *scheduler-class* 'biased-scheduler)
 (defvar *kernel* #'funcall
   "The current thread's kernel, or nil.")
-(defvar *pool-kernel* (lambda (&rest args) (apply 'funcall args))
+
+(defun %pool (&rest args) (apply 'funcall args))
+(defvar *pool-kernel* '%pool
   "A function which drives THREAD-POOLs.")
+
 (defvar *thread-pool* nil)
 ;; on core-i7 3.4ghz, a single spin takes ~ 2.5 microseconds.
 (defvar *default-spin-count* 2000
@@ -53,16 +56,17 @@ threaded context.")
 (defvar *lisp-exiting-p* nil
   "True if the Lisp process is exiting - used for skipping auto-replacement of killed workers during shutdown.")
 
-(defvar *worker-kernel* 
-  (lambda (&rest args) 
-    (values-list 
-     (mapcar 
-      (lambda (x)
-        (typecase x 
-          (function (funcall x))
-          (cons (apply (car x) (cdr x)))
-          (t x)))
-      args)))
+(defun %worker (&rest args) 
+  (values-list 
+   (mapcar 
+    (lambda (x)
+      (typecase x 
+	(function (funcall x))
+	(cons (apply (car x) (cdr x)))
+	(t x)))
+    args)))
+
+(defvar *worker-kernel* '%worker
   "A function which drives WORKERs.")
 
 ;;; Globals

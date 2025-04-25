@@ -26,7 +26,7 @@
 ;;; Kernel
 (defmacro make-task-kernel (name args lock queue mailbox timeout &body body &environment env)
   (declare (ignorable env))
-  `(compile ',name 
+  `(compile ',name
             (lambda ,args 
               (wait-on-semaphore ,lock ,@(when timeout `((:timeout ,timeout))))
               (let ((*task* (dequeue ,queue)))
@@ -204,8 +204,7 @@ is responsible for indicating in the state slot the result of the computation.")
     (format stream "~A" (tasks self))))
 
 ;;; Macros
-(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) #+nil start (kernel *pool-kernel*) (worker-kernel *worker-kernel*) results) &body body)
-  (unless results (setf results (make-mailbox :name "results")))
+(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) #+nil start (kernel (quote *pool-kernel*)) (worker-kernel (quote *worker-kernel*)) results) &body body)
   `(let ((,sym (make-thread-pool ,workers :class 'task-pool
                                  ,@(when lock `(:lock ,lock))
                                  :worker-kernel ,worker-kernel
