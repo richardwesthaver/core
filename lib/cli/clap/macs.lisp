@@ -24,8 +24,10 @@ evaluation of BODY."
      (unwind-protect
           (restart-case 
               (handler-case (progn ,@body)
-                (sb-sys:interactive-interrupt ()
-                  (sb-ext:exit :code 130))
+                (sb-sys:interactive-interrupt (c)
+                  (if *no-debug*
+                      (sb-ext:exit :code 130)
+                      c))
                 (error (c)
                   (println c)
                   (sb-ext:exit :code 1)))

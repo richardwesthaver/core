@@ -79,7 +79,8 @@ and MAKE-CLI :CMD respectively."
 (defmacro defmain (name (&key (exit t) (debug t)) &body body)
   "Define a CLI main function in the current package."
   (multiple-value-bind (body decls docs) (parse-body body :documentation t)
-    `(let ((*no-exit* ,(not exit)))
+    `(let ((*no-exit* ,(not exit))
+           (*no-debug* ,(not debug)))
        (defun ,name ()
          ,(or docs "Run the top-level function and print to *STDOUT*.")
          ,@decls

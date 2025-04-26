@@ -157,7 +157,7 @@
 
 (defparameter *default-columns* 80)
 (defparameter *default-lines* 24)
-(defparameter *highlight-color* nil
+(defparameter *highlight-color* :magenta
   "Color to use for highlighting parentheses. NIL is the current foreground
 color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 :BLUE, :MAGENTA, :CYAN, and :WHITE.")

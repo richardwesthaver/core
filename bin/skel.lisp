@@ -46,7 +46,7 @@
    :description "cryptography"
    :thunk skc-kr*)))
 
-(defmain start-skel ()
+(defmain start-skel (:debug nil)
   (in-package :sk-user)
   (in-readtable :shell)
   (let ((sb-debug:*backtrace-frame-count* 8))
@@ -60,4 +60,3 @@
              (do-cmd *cli*)
 	     (when (getopt "interactive" nil)
                (sk-shell)))))))
-        

@@ -45,4 +45,3 @@ REPL."
   "Default toplevel initializer - wraps SBCL init."
   (with-package package
     (sb-impl::toplevel-init)))
-
