@@ -652,4 +652,4 @@ struct termios
     ;; write the new termios struct to the fd of the tty now.
     (sb-alien:with-alien ((term sb-posix::alien-termios))
       (sb-posix::termios-to-alien termios (sb-alien:addr term))
-      (sb-posix:tcsetattr fd sb-posix:tcsanow (sb-alien:addr term)))))
+      (tcsetattr* fd sb-posix:tcsanow (sb-alien:addr term)))))

@@ -603,3 +603,8 @@ corresponding function."
                    (declare (ignorable it))
                    ,@progn)
                  (acond2 ,@others)))))))
+
+(defmacro acase (form &rest cases)
+  `(let ((it ,form))
+     (case it
+       ,@cases)))

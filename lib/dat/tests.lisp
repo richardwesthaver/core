@@ -49,7 +49,8 @@
 
 (deftest html ()
   (istype 'dat/html::document 
-          (deserialize "<!DOCTYPE html><html lang=\"ulang\"></html>" :html)))
+          (deserialize "<!DOCTYPE html><html lang=\"ulang\"></html>" :html))
+  )
 
 (deftest toml ()
   (istype 'dat/toml::toml-document

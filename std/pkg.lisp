@@ -343,6 +343,7 @@
    ;; ana
    :awhen
    :acond
+   :acase
    :alambda
    :nlet-tail
    :alet%
@@ -759,6 +760,8 @@
    :isatty
    :tcgetattr
    :tcsetattr
+   :tcgetattr*
+   :tcsetattr*
    :*xdg-base-dirs*
    :init-xdg-user-dirs
    :init-xdg-base-dirs

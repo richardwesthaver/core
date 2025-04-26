@@ -8,11 +8,11 @@
   (:use :cl :std)
   (:import-from :sb-posix :getenv :ioctl :tcgetattr :tcsetattr :termios)
   (:import-from :std
-                :with-gensyms
+   :with-gensyms
                 :with-directory-iterator
-                :file-kind
+   :file-kind
                 :current-directory
-                :relative-pathname-p
+   :relative-pathname-p
                 :if-let
                 #:isatty
                 #:winsize)
@@ -25,7 +25,8 @@
    #:install-repl
    #:uninstall-repl
    #:start-debug
-   #:end-debug))
+   #:end-debug
+   #:*announce*))
 
 (in-package :linedit)
 
@@ -197,32 +198,48 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defvar +linedit-attr-error+      5)
 (defvar +linedit-no-attr-error+   6)
 
-(let ((attr))
+(let (attr)
   (defun c-terminal-init ()
-    (cond 
-      ((zerop (isatty 0))
-       +linedit-not-atty+)
-      ;; Save current terminal state in attr
-      (attr +linedit-attr-error+)
-      (t (setf attr (sb-posix:tcgetattr 0 attr))
-         ;; Enter keyboard input mode
-         (ansi:set-tty-mode t :raw t)
-         +linedit-ok+)))
+    (if (zerop (isatty 0))
+        (return-from c-terminal-init +linedit-not-atty+))
+    ;; Save current terminal state in attr
+    (when attr
+      (warn "bad linedit attr: ~A" attr)
+      (return-from c-terminal-init +linedit-attr-error+))
+    (setf attr (std::foreign-alloc 'sb-posix::alien-termios))
+    (when (minusp (std::tcgetattr* 0 attr))
+      (return-from c-terminal-init +linedit-tcgetattr-error+))
+    ;; Enter keyboard input mode
+    (sb-alien:with-alien ((tmp sb-posix::alien-termios))
+      (when (minusp (tcgetattr* 0 (sb-alien:addr tmp)))
+        (return-from c-terminal-init +linedit-tcgetattr-error+))
+      (cfmakeraw (sb-alien:addr tmp))
+      (with-alien-slots (sb-posix::oflag) tmp
+        (setf sb-posix::oflag (logior sb-posix::oflag sb-posix::opost)))
+      (if (minusp (tcsetattr* 0 sb-posix::tcsaflush (sb-alien:addr tmp)))
+          +linedit-tcsetattr-error+))
+    +linedit-ok+)
   (defun c-terminal-close ()
     ;; Restore saved terminal state from attr
-    (etypecase attr
-      (null +linedit-no-attr-error+)
-      (termios
-       (if (zerop (isatty 0))
-           +linedit-not-atty+
-           (progn (setf attr nil)
-                  +linedit-ok+))))))
+    (when (null attr)
+      (warn "missing linedit attr on close")
+      (return-from c-terminal-close +linedit-no-attr-error+))
+    (when (zerop (isatty 0))
+      (return-from c-terminal-close +linedit-not-atty+))
+    (when (minusp (tcsetattr* 0 sb-posix::tcsanow attr))
+      (return-from c-terminal-close +linedit-tcsetattr-error+))
+    (std:foreign-free attr)
+    (setf attr nil)
+    +linedit-ok+))
 
 (defun c-terminal-winsize (def side side-env)
-  (declare (symbol side) (ignore def side-env))
-  (sb-alien:with-alien ((size winsize))
-    (and (zerop (ioctl 0 std::+tiocgwinsz+ (sb-alien:addr size)))
-         (sb-alien:slot size side))))
+  (if (boundp 'std::+tiocgwinsz+)
+      (sb-alien:with-alien ((size winsize))
+        (and (zerop (ioctl 0 std::+tiocgwinsz+ (sb-alien:cast size (* t))))
+             (sb-alien:slot size side)))
+      (aif (getenv side-env)
+           (parse-integer it)
+           def)))
 
 (defun c-terminal-lines (def)
   (c-terminal-winsize def 'std/os::row "LINES"))
@@ -336,13 +353,22 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defmethod backend-lines ((backend terminal))
   (c-terminal-lines *default-lines*))
 
+(defmacro invariant (condition)
+  (with-unique-names (value)
+    `(let ((,value ,condition))
+       (unless ,value
+         (let ((*print-pretty* nil))
+           (error "Invariant ~S violated."
+                  ',condition))))))
+
 (defmethod backend-init ((backend terminal))
-  (assert (not (backend-ready-p backend)))
-  (assert (zerop (c-terminal-init)))
+  (invariant (not (backend-ready-p backend)))
+  (invariant (zerop (c-terminal-init)))
   (setf (backend-ready-p backend) t))
 
 (defmethod backend-close ((backend terminal))
-  (ensure (backend-ready-p backend) (zerop (c-terminal-close)))
+  (invariant (backend-ready-p backend))
+  (invariant (zerop (c-terminal-close)))
   (setf (backend-ready-p backend) nil))
 
 ;;; FIXME: Use read-char-no-hang to detect pastes, and set an
@@ -353,22 +379,22 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 	   (do ((chars nil)
 		(c #1=(read-char) #1#))
 	       ((member c '(#\- #\~ #\$)) (nconc (nreverse chars) (list c)))
-	     (push (print c) chars))))
+	     (push c chars))))
     (let ((chord
-	   (case #2=(read-char)
-	         (#\Esc
-	          (cons #2# (case #3=(read-char)
-			 (#\[ (cons
-                               #3#
-			       (let ((char (read-char)))
-				 (if (digit-char-p char)
-				     (cons char
-					   (read-open-chord))
-				     (list char)))))
-			 (t (list #3#)))))
-	     (t (if (graphic-char-p #2#)
-		    #2#
-		    (char-code #2#))))))
+	    (acase (read-char)
+	      (#\Esc
+	       (cons it (acase (read-char)
+			  (#\[ (cons
+			        it
+			        (let ((char (read-char)))
+				  (if (digit-char-p char)
+				      (cons char
+					    (read-open-chord))
+				      (list char)))))
+			  (t (list it)))))
+	      (t (if (graphic-char-p it)
+		     it
+		     (char-code it))))))
       (gethash chord
 	       (backend-translations backend)
 	       (if (characterp chord)
@@ -509,8 +535,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (let* (;; SBCL and CMUCL traditionally point *terminal-io* to /dev/tty,
          ;; and we do output on it assuming it goes to STDOUT. Binding
          ;; *terminal-io* is unportable, so do it only when needed.
-         #+(or sbcl cmu)
-           (*terminal-io* *standard-output*)
+         (*terminal-io* *standard-output*)
 	 (columns (backend-columns backend))
 	 (old-markup (old-markup backend))
 	 (old-point (old-point backend))
@@ -531,31 +556,31 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 			      :pre-mark (paren-style)
 			      :post-mark ti:exit-attribute-mode)
 	    (values line point))
-	(let* ((full (concatenate 'simple-string prompt marked-line))
-	       (point (+ point (length prompt)))
-	       (point-row (find-row point columns))
-	       (point-col (find-col point columns))
-	       (diff (mismatch new old))
-	       (start (apply 'min (remove-if 'null (list old-point point markup old-markup diff end))))
-	       (start-row (find-row start columns))
-	       (start-col (find-col start columns)))
-	  ;; (dbg "---~%")
-	  ;; (dbg-values (subseq new start))
-	  ;; (dbg-values rows point point-row point-col start start-row start-col
-	  ;;             old-point old-row old-col end diff)
-	  (move-in-column
-	   :col start-col 
-	   :vertical (- old-row start-row)
-	   :clear-to-eos t
-	   :current-col old-col)
-	  (write-string (subseq full start))
-	  (fix-wraparound start end columns)
-	  (move-in-column 
-	   :col point-col
-	   :vertical (- rows point-row)
-	   :current-col (find-col end columns))
-	  ;; Save state
-	  (setf	(old-string backend) new
+      (let* ((full (concatenate 'simple-string prompt marked-line))
+	     (point (+ point (length prompt)))
+	     (point-row (find-row point columns))
+	     (point-col (find-col point columns))
+	     (diff (mismatch new old))
+	     (start (apply 'min (remove-if 'null (list old-point point markup old-markup diff end))))
+	     (start-row (find-row start columns))
+	     (start-col (find-col start columns)))
+	;; (dbg "---~%")
+	;; (dbg-values (subseq new start))
+	;; (dbg-values rows point point-row point-col start start-row start-col
+	;;             old-point old-row old-col end diff)
+	(move-in-column
+	 :col start-col 
+	 :vertical (- old-row start-row)
+	 :clear-to-eos t
+	 :current-col old-col)
+	(write-string (subseq full start))
+	(fix-wraparound start end columns)
+	(move-in-column 
+	 :col point-col
+	 :vertical (- rows point-row)
+	 :current-col (find-col end columns))
+	;; Save state
+	(setf	(old-string backend) new
 		(old-markup backend) markup
 		(old-point backend) point
 		(dirty-p backend) nil)))
@@ -587,10 +612,10 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (:policy '(optimize (debug 3) (safety 3)))
   (defclass rewindable ()
     ((rewind-store :reader %rewind-store
-		 :initform (make-array 12 :fill-pointer 0 :adjustable t))
-   ;; Index is the number of rewinds we've done.
-   (rewind-index :accessor %rewind-index
-		 :initform 0)))
+		   :initform (make-array 12 :fill-pointer 0 :adjustable t))
+     ;; Index is the number of rewinds we've done.
+     (rewind-index :accessor %rewind-index
+		   :initform 0)))
 
   (defun %rewind-count (rewindable)
     (fill-pointer (%rewind-store rewindable)))
@@ -642,10 +667,10 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 
 (defun copy-buffer (buffer)
   (make-instance 'buffer
-                 :prev (%buffer-prev buffer)
-                 :next (%buffer-next buffer)
-                 :list (%buffer-list buffer)
-                 :pathname (%buffer-pathname buffer)))
+    :prev (%buffer-prev buffer)
+    :next (%buffer-next buffer)
+    :list (%buffer-list buffer)
+    :pathname (%buffer-pathname buffer)))
 
 (defun ensure-buffer (datum)
   ;; DATUM may be a buffer, NIL, or a pathname designator
@@ -692,7 +717,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 
 (defun buffer-peek (buffer)
   (std:aif (%buffer-prev buffer)
-       (car std:it)))
+           (car std:it)))
 
 (defun buffer-find-next-if (test buffer)
   (std:awhen (position-if test (%buffer-next buffer))
@@ -757,7 +782,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defcommand "M-G")
 (defcommand "M-H" 'help)
 (defcommand "M-I" 'describe-word)
-(defcommand "M-J")
+(defcommand "M-J" 'inspect-word)
 (defcommand "M-K")
 (defcommand "M-L" 'downcase-word)
 (defcommand "M-M")
@@ -851,7 +876,8 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defclass smart-editor (editor smart-terminal) ())
 (defclass dumb-editor (editor dumb-terminal) ())
 
-(defvar *announced* nil)
+(defvar *announce* nil)
+(defvar *linedit-spec* nil)
 (defvar *version* "0.1.0-cc")
 
 (defun make-editor (&rest args)
@@ -860,13 +886,14 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
                    'smart-editor
                    'dumb-editor))
          (spec (list *version* type)))
-    (unless (equal *announced* spec)
-      (format t "~&Linedit version ~A, ~A mode, ESC-h for help.~%"
-              *version*
-              (if (eq 'smart-editor type)
-                  "smart"
-                  "dumb"))
-      (setf *announced* spec))
+    (when *announce*
+      (unless (equal *linedit-spec* spec)
+        (format t "~&Linedit version ~A, ~A mode, ESC-h for help.~%"
+                *version*
+                (if (eq 'smart-editor type)
+                    "smart"
+                    "dumb"))))
+        (setf *linedit-spec* spec)
     (apply 'make-instance type args)))
 
 ;;; undo
@@ -878,8 +905,8 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
       ;; Save only if different than last saved state
       (save-rewindable-state editor
 			     (make-instance 'line
-					    :string (copy-seq string)
-					    :point (get-point editor))))))
+			       :string (copy-seq string)
+			       :point (get-point editor))))))
 
 (defmethod rewind-state ((editor editor))
   (let ((line (call-next-method)))
@@ -1069,30 +1096,30 @@ empty string."
 			     (let ((rule (find-if (lambda (rule)
 						    (misma
 
-  (flet ((maybe-translate-logical-pathname (string)
-	   (handler-case
-	       (translate-logical-pathname string)
-	     (error () 
-	       (return-from logical-pathname-complete (values nil 0))))))
-    (directory-complete 
-     (namestring 
-      (maybe-translate-logical-pathname string)))))
-    ;; FIXME: refactor chared code with directory complete
-    (loop with all
-	  with common
-	  with max
-	  for cand in matches
-	  do (let ((diff (mismatch string cand)))
-	       (when (and diff (> diff (length string)))
-		   (setf common (if common 
-				    (subseq common 0 (mismatch common cand))
-				    cand)
-			 max (max max (length cand))
-			 all (cons cand all))))
-	  finally (if (or (null common)
-			  (<= (length common) (length string)))
-		      (return (values all max))
-		      (return (values (list common) (length common))))))))))))))))
+                                                     (flet ((maybe-translate-logical-pathname (string)
+	                                                      (handler-case
+	                                                          (translate-logical-pathname string)
+	                                                        (error () 
+	                                                          (return-from logical-pathname-complete (values nil 0))))))
+                                                       (directory-complete 
+                                                        (namestring 
+                                                         (maybe-translate-logical-pathname string)))))
+                                                    ;; FIXME: refactor chared code with directory complete
+                                                    (loop with all
+	                                                  with common
+	                                                  with max
+	                                                  for cand in matches
+	                                                  do (let ((diff (mismatch string cand)))
+	                                                       (when (and diff (> diff (length string)))
+		                                                 (setf common (if common 
+				                                                  (subseq common 0 (mismatch common cand))
+				                                                  cand)
+			                                               max (max max (length cand))
+			                                               all (cons cand all))))
+	                                                  finally (if (or (null common)
+			                                                  (<= (length common) (length string)))
+		                                                      (return (values all max))
+		                                                      (return (values (list common) (length common))))))))))))))))
 
 ;;; We can't easily do zsh-style tab-completion of ~us into ~user, but
 ;;; at least we can expand ~ and ~user.  The other bug here at the
@@ -1168,7 +1195,7 @@ to the appropriate home directory."
 	       (hash (make-hash-table :test #'equal))
 	       (common nil)
 	       (max-len 0))
-       
+          
 	  (labels ((stringify (symbol)
 		     (if (upper-case-p (schar string 0))
 			 (string symbol)
@@ -1196,7 +1223,7 @@ to the appropriate home directory."
 				   (select-symbol sym match)))
 		      (:external (do-external-symbols (sym package)
 				   (select-symbol sym match)))))
-		
+		  
 		  ;; Symbols without explicit package prefix + packges
 		  (dolist (package (list-all-packages))
 		    (if (eq *package* package)
@@ -1242,8 +1269,8 @@ completion."
   (flet ((edit ()
            (catch 'linedit-done
              (loop
-		(catch 'linedit-loop
-		  (next-chord *editor*))))
+	       (catch 'linedit-loop
+		 (next-chord *editor*))))
            (redraw-line *editor*)
            (get-finished-string *editor*)))
     (if (and *editor* (backend-ready-p *editor*))
@@ -1308,8 +1335,8 @@ completion."
 	(set-dispatch-macro-character #\# #\. (constantly (values)) table)
 	(do ((str (apply #'linedit :prompt prompt1 args)
 		  (concatenate 'simple-string str
-			  (string #\newline)
-			  (apply #'linedit :prompt prompt2 args))))
+			       (string #\newline)
+			       (apply #'linedit :prompt prompt2 args))))
 	    ((let ((form (handler-case (let ((*readtable* table)
                                              (*level* (1+ *level*))
 					     (*package* (make-package
@@ -1352,11 +1379,11 @@ completion."
   (with-editor-point-and-string ((point string) editor)
     (setf (get-string editor)
           (concatenate 'simple-string (subseq string 0 point)
-                  (string char)
-                  (if (editor-insert-mode editor)
-                      (subseq string point)
-                      (when (> (length string) (1+ point))
-                        (subseq string (1+ point))))))
+                       (string char)
+                       (if (editor-insert-mode editor)
+                           (subseq string point)
+                           (when (> (length string) (1+ point))
+                             (subseq string (1+ point))))))
     (incf (get-point editor))))
 
 (defun delete-char-backwards (chord editor)
@@ -1365,14 +1392,14 @@ completion."
     ;; Can't delegate to editor because of the SUBSEQ index calc.
     (unless (zerop point)
       (setf (get-string editor) (concatenate 'simple-string (subseq string 0 (1- point))
-                                        (subseq string point))
+                                             (subseq string point))
             (get-point editor) (1- point)))))
 
 (defun delete-char-forwards (chord editor)
   (declare (ignore chord))
   (with-editor-point-and-string ((point string) editor)
     (setf (get-string editor) (concatenate 'simple-string (subseq string 0 point)
-                                      (subseq string (min (1+ point) (length string)))))))
+                                           (subseq string (min (1+ point) (length string)))))))
 
 (defun delete-char-forwards-or-eof (chord editor)
   (if (equal "" (get-string editor))
@@ -1393,7 +1420,7 @@ completion."
   (with-editor-point-and-string ((point string) editor)
     (let ((i (editor-previous-word-start editor)))
       (setf (get-string editor) (concatenate 'simple-string (subseq string 0 i)
-                                        (subseq string point))
+                                             (subseq string point))
             (get-point editor) i))))
 
 (defun finish-input (chord editor)
@@ -1406,10 +1433,10 @@ completion."
          (with-editor-point-and-string ((point string) editor)
            (let ((end (editor-next-word-end editor)))
              (setf (get-string editor) (concatenate 'simple-string
-                                        (subseq string 0 point)
-                                        (funcall frob
-                                                 (subseq string point end))
-                                        (subseq string end))
+                                                    (subseq string 0 point)
+                                                    (funcall frob
+                                                             (subseq string point end))
+                                                    (subseq string end))
                    (get-point editor) end)))))
 
   (defun upcase-word (chord editor)
@@ -1458,14 +1485,14 @@ completion."
 (defun history-previous (chord editor)
   (declare (ignore chord))
   (std:aif (buffer-previous (get-string editor) (editor-history editor))
-       (setf (get-string editor) std:it)
-       (beep editor)))
+           (setf (get-string editor) std:it)
+           (beep editor)))
 
 (defun history-next (chord editor)
   (declare (ignore chord))
   (std:aif (buffer-next (get-string editor) (editor-history editor))
-       (setf (get-string editor) std:it)
-       (beep editor)))
+           (setf (get-string editor) std:it)
+           (beep editor)))
 
 (defvar *history-search* nil)
 (defvar *history-needle* nil)
@@ -1514,13 +1541,13 @@ completion."
 
 (defun %yank (editor)
   (std:aif (buffer-peek (editor-killring editor))
-       (with-editor-point-and-string ((point string) editor)
-         (setf (get-string editor)
-               (concatenate 'simple-string (subseq string 0 (editor-yank editor))
-                       std:it
-                       (subseq string point))
-               (get-point editor) (+ (editor-yank editor) (length std:it))))
-        (beep editor)))
+           (with-editor-point-and-string ((point string) editor)
+             (setf (get-string editor)
+                   (concatenate 'simple-string (subseq string 0 (editor-yank editor))
+                                std:it
+                                (subseq string point))
+                   (get-point editor) (+ (editor-yank editor) (length std:it))))
+           (beep editor)))
 
 (defun yank (chord editor)
   (declare (ignore chord))
@@ -1531,8 +1558,8 @@ completion."
   (declare (ignore chord))
   (if (try-yank editor)
       (progn
-         (buffer-cycle (editor-killring editor))
-         (%yank editor))
+        (buffer-cycle (editor-killring editor))
+        (%yank editor))
       (beep editor)))
 
 (defun kill-to-eol (chord editor)
@@ -1552,21 +1579,21 @@ completion."
 (defun copy-region (chord editor)
   (declare (ignore chord))
   (std:awhen (editor-mark editor)
-     (with-editor-point-and-string ((point string) editor)
-       (let ((start (min std:it point))
-             (end (max std:it point)))
-         (buffer-push (subseq string start end) (editor-killring editor))
-         (setf (editor-mark editor) nil)))))
+    (with-editor-point-and-string ((point string) editor)
+      (let ((start (min std:it point))
+            (end (max std:it point)))
+        (buffer-push (subseq string start end) (editor-killring editor))
+        (setf (editor-mark editor) nil)))))
 
 (defun cut-region (chord editor)
   (declare (ignore chord))
   (std:awhen (editor-mark editor)
-     (with-editor-point-and-string ((point string) editor)
-       (let ((start (min std:it point))
-             (end (max std:it point)))
+    (with-editor-point-and-string ((point string) editor)
+      (let ((start (min std:it point))
+            (end (max std:it point)))
         (copy-region t editor)
         (setf (get-string editor) (concatenate 'simple-string (subseq string 0 start)
-                                          (subseq string end))
+                                               (subseq string end))
               (get-point editor) start)))))
 
 (defun set-mark (chord editor)
@@ -1596,7 +1623,7 @@ completion."
           (end (min (1+ (editor-sexp-end editor)) (length string))))
       (buffer-push (subseq string start end) (editor-killring editor))
       (setf (get-string editor) (concatenate 'simple-string (subseq string 0 start)
-                                        (subseq string end))
+                                             (subseq string end))
             (get-point editor) start))))
 
 (defun close-all-sexp (chord editor)
@@ -1604,9 +1631,9 @@ completion."
   (do ((string (get-string editor) (get-string editor)))
       ((not (find-open-paren string (length string))))
     (add-char (case (schar string (find-open-paren string (length string)))
-                    (#\( #\))
-                    (#\[ #\])
-                    (#\{ #\}))
+                (#\( #\))
+                (#\[ #\])
+                (#\{ #\}))
               editor)))
 
 ;;; SIGNALS
@@ -1634,12 +1661,12 @@ completion."
              (editor-commands editor))
     (print-in-columns editor
                       (mapcar (lambda (pair)
-                                 (destructuring-bind (id f) pair
-                                   (with-output-to-string (s)
-                                     (write-string id s)
-                                     (loop repeat (- (1+ max-id) (length id))
-                                           do (write-char #\Space s))
-                                     (write-string f s))))
+                                (destructuring-bind (id f) pair
+                                  (with-output-to-string (s)
+                                    (write-string id s)
+                                    (loop repeat (- (1+ max-id) (length id))
+                                          do (write-char #\Space s))
+                                    (write-string f s))))
                               (nreverse pairs))
                       :width (+ max-id max-f 2))))
 
@@ -1677,6 +1704,11 @@ completion."
   (print-in-lines editor
                   (with-output-to-string (s)
                     (describe (read-from-string (editor-word editor)) s))))
+
+(defun inspect-word (chord editor)
+  (declare (ignore chord))
+  (without-backend editor
+    (inspect (read-from-string (editor-word editor)))))
 
 (defun toggle-insert (chord editor)
   (declare (ignore chord))

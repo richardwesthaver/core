@@ -98,8 +98,10 @@ arrange for FVAR to be closed after BODY."
 
 (define-alien-routine isatty int (fd int))
 
-(define-alien-routine tcsetattr int (fd int) (actions int) (term (* t)))
-(define-alien-routine cfmakeraw void (term (* t)))
+(define-alien-routine ("tcgetattr" tcgetattr*) int (fd int) (term (* sb-posix::alien-termios)))
+(define-alien-routine ("tcsetattr" tcsetattr*) int (fd int) (actions int) (term (* sb-posix::alien-termios)))
+(define-alien-routine cfmakeraw void (term (* sb-posix::alien-termios)))
+
 (define-alien-type winsize (struct winsize
 			     (row unsigned-short)
 			     (col unsigned-short)
