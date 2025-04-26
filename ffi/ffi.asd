@@ -4,7 +4,7 @@
                :arrow :blake3 :btrfs :alsa
                :jack :matroska
                :cuda :evdev :glib :gstreamer
-               :keyutils :readline :rocksdb :rustls
+               :keyutils :rocksdb :rustls
                :sndfile :ssh2 :tree-sitter :ublk
                :uring :xkb :zstd :jpeg
                :chromaprint)
@@ -13,7 +13,7 @@
 (defsystem :ffi/tests
   :depends-on (:arrow/tests :blake3/tests :btrfs/tests :matroska/tests
                :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
-               :keyutils/tests :readline/tests :rocksdb/tests :rustls/tests
+               :keyutils/tests :rocksdb/tests :rustls/tests
                :sndfile/tests :ssh2/tests :tree-sitter/tests :ublk
                :uring/tests :xkb/tests :zstd/tests :chromaprint/tests
                :chromaprint/tests :jack/tests)

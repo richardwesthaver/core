@@ -14,25 +14,6 @@
 REPL."
   (require 'sb-aclrepl))
 
-;;; Readline-style REPL
-;; this is suited for non-Lisp input which should skip the Lisp
-;; reader. Input is interpreted as strings and handled by the GNU
-;; Readline library via FFI. Features include History, Custom
-;; Functions, and Custom Keybinds (not available in ACLREPL above).
-(defun input-novelty-check (x y)
-  (string/= (trim x)
-            (trim y)))
-
-(defun start-rl-repl ()
-  "Start a GNU Readline REPL."
-  (readline:load-readline)
-  (let ((i 0))
-    (loop 
-      (progn
-        (print (eval (read-from-string (readline:readline (format nil "~%[~a]> " (prog1 i (incf i)))) 
-                                       :eof-error-p nil)))
-        (force-output)))))
-
 ;;; TOPLEVEL
 
 ;; These macros help with defining a toplevel initialization

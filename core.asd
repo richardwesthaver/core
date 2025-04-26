@@ -57,7 +57,6 @@
                :dsp :cry :krypt :gui))
 
 (defsystem :core/ffi
-  :depends-on (:blake3 :btrfs :keyutils
-               :keyutils :readline :rocksdb :rustls
-               :sndfile :ssh2 :tree-sitter :ublk
-               :uring :xkb :zstd))
+  :depends-on (:blake3 :btrfs :keyutils :rocksdb 
+               :rustls :sndfile :ssh2 :tree-sitter 
+               :ublk :uring :xkb :zstd))
