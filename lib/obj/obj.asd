@@ -53,7 +53,8 @@
                (:file "build")
                (:file "ast")
 	       (:module "graph"
-		:components ((:file "pkg")))
+		:components ((:file "pkg")
+                             (:file "read")))
                (:file "config")
                (:file "plan")
                (:file "schema")

@@ -30,6 +30,7 @@ that ASDF can find, or have quicklisp installed.")))
                (:file "condition")
                (:file "sym")
                (:file "list")
+               (:file "early")
                (:file "type")
                (:module "num"
                 :components
@@ -71,10 +72,8 @@ that ASDF can find, or have quicklisp installed.")))
                (:file "string")
                (:file "rand"))
   :build-pathname "../.stash/std"
-  :build-operation monolithic-concatenate-source-op
+  :build-operation asdf:monolithic-compile-bundle-op
   :in-order-to ((test-op (test-op "std/tests"))))
-
-(register-system-packages "std" '(:std))
 
 (defsystem :std/tests
   :depends-on (:std :rt)

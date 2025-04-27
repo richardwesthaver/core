@@ -16,6 +16,7 @@
   (:shadow :make-gensym :make-gensyms :make-gensym-list)
   (:export
    :ensure-symbol
+   :symb
    :format-symbol
    :make-keyword
    :make-slot-name
@@ -34,8 +35,6 @@
    :ensure-list :recons :memq :assq
    :ensure-list :proper-list-of-length-p :proper-list-p :singleton-p)
   (:shadow :group)
-  (:import-from :std/sym :symb)
-  (:import-from :std/named-readtables :parse-body)
   (:export
    :ensure-car
    :ensure-cons
@@ -55,10 +54,22 @@
    :sort!
    :set-equal))
 
+(defpackage :std/early
+  (:use :cl :std/list)
+  (:import-from :std/sym :symb)
+  (:import-from :std/named-readtables :parse-body)
+  (:export 
+   :g!-symbol-p
+   :defmacro/g!
+   :o!-symbol-p
+   :o!-symbol-to-g!-symbol
+   :defmacro!
+   :defun!))
+
 (defpackage :std/condition
   (:use :cl)
   (:shadowing-import-from :asdf :error-name)
-  (:import-from :std/list :flatten)
+  (:import-from :std/list :flatten :removef)
   (:export
    :*error-message*
    :*handlers*
@@ -73,13 +84,12 @@
    :simple-parse-error
    :simple-program-error
    :circular-dependency
-   :circular-dependency-items
    :unknown-argument
    :error-name
    :error-kind
    :missing-argument
-   :missing-argument-command
    :error-item
+   :error-items
    :error-reason
    :invalid-argument
    :unwind-protect-case
@@ -279,7 +289,7 @@
   (:import-from :std/named-readtables :defreadtable)
   (:import-from :std/curry :curry :rcurry :compose)
   (:import-from :std/sym :symb)
-  (:import-from :std/list :defmacro!) ;; kludge
+  (:import-from :std/early :defmacro!)
   (:export
    ;; readtable
    :|#"-reader|
@@ -293,11 +303,12 @@
    :_))
 
 (defpkg :std/macs
-  (:use :cl)
+  (:use :cl :std/early)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
-  (:import-from :std/list :flatten :defmacro!)
+  (:import-from :std/list :flatten)
+  (:import-from :std/early :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
   (:export
    :once-only
    :define-class
@@ -313,16 +324,6 @@
    :defun!
    :dlambda
    :until
-   :fact
-   :choose
-   :make-tlist
-   :tlist-left
-   :tlist-right
-   :tlist-empty-p
-   :tlist-add-left
-   :tlist-add-right
-   :tlist-rem-left
-   :tlist-update
    :build-batcher-sn
    :sortf
    :dollar-symbol-p
@@ -359,7 +360,7 @@
    :pandoriclet-set
    :get-pandoric
    :with-pandoric
-   :pandoric-hotpatch
+   ;; :pandoric-hotpatch
    :pandoric-recode
    :plambda
    :pandoric-eval
@@ -438,7 +439,6 @@
    :bitfield-slot-start
    :bitfield-slot-end
    :bitfield-slot-size
-   :bitfield-slot-reader
    :bitfield-slot-initform
    :bitfield-slot-pack
    :bitfield-slot-unpack
@@ -502,15 +502,15 @@
    :define-opaque
    :shared-object-name
    :define-alien-loader
-   :c-string-to-string-list
+   :c-strings-to-string-list
    :list-all-shared-objects
    :read-alien-signed-byte-32 :read-alien-fixnum
    :read-alien-signed-byte-64 :read-alien-unsigned-byte-32
-   :read-alien-unsigned-byte-64 :read-alien-float
-   :read-alien-double :write-alien-signed-byte-32
+   :read-alien-unsigned-byte-64 :read-alien-single-float
+   :read-alien-double-float :write-alien-signed-byte-32
    :write-alien-fixnum :write-alien-unsigned-byte-32
    :write-alien-signed-byte-64
-   :write-alien-unsigned-byte-64 :write-alien-float
+   :write-alien-unsigned-byte-64 :write-alien-single-float
    :write-alien-double-float :offset-char-pointer
    :num-cpus
    :*cpus*
@@ -543,7 +543,7 @@
   (:import-from :std/macs :eval-always)
   (:shadow :reset)
   (:export :list-slot-values-using-class
-   :list-class-methods :list-class-slots :list-indirect-slot-methods :ensure-finalized 
+   :list-class-methods :list-class-slots :ensure-finalized 
    :subclassp :write-object :start :started-p
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
@@ -572,11 +572,11 @@
    :starts-with-one-of-p
    :basic-queue :raw-queue-count :raw-queue :make-raw-queue
    :pop-raw-queue :peek-raw-queue :raw-queue-empty-p :raw-queue-full-p
-   :raw-queue-capacity :cons-queue-capacity :cons-queue :push-cons-queue
+   :raw-queue-capacity :cons-queue :push-cons-queue
    :pop-cons-queue :make-cons-queue :peek-cons-queue :cons-queue-empty-p
    :push-queue :push-queue* :pop-queue :pop-queue* :peek-queue :peek-queue*
    :queue-count :queue-count* :queue-empty-p :queue-empty-p* :queue-full-p :queue-full-p*
-   :try-pop-queue :try-pop-queue* :call-with-queue-lock :qith-queue-lock
+   :try-pop-queue :try-pop-queue* :call-with-queue-lock :with-queue-lock
    :queue :make-queue))
 
 (defpkg :std/thread
@@ -603,9 +603,8 @@
    :timed-join-thread :kill-thread
    :wait-for-threads :workers
    :hang :finish-threads
-   :spawn-workers
    :make-workers
-   :make-oracle :make-supervisor
+   :make-oracle
    :kill-worker
    :join-worker
    :start-worker
@@ -617,7 +616,6 @@
    :make-threads :with-threads 
    :thread-count :dump-thread
    :channel
-   :make-channel
    :channel-pool
    :channel-queue
    :thread-pool :workers
@@ -628,25 +626,22 @@
    :with-sync-message
    :lock
    :schedule
-   :+standard-io-syntax+
+   :+standard-io-bindings+
    :*default-special-bindings*
    :*kernel*
    :kernel
    :check-thread-pool :check-kernel
    :*oracle-table*
    :*worker-threads*
-   :*supervisor-threads*
+   :*super-threads*
    :compute-special-bindings))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency :std/meta :std/spin)
   (:import-from :std/thread :%make-thread)
   (:export
-   :push-job :push-task
-   :push-worker :push-task-result
+   :push-worker
    :task-schedule
-   :work
-   :pop-job :pop-task
    :status
    :jobs
    :tasks
@@ -654,30 +649,19 @@
    :kill-workers
    :start-task-worker
    :start-task-workers
-   :pop-worker :pop-task-result
-   :*task-pool*
+   :pop-worker
+   :*task-class*
+   :*task-priority*
    :*tasks*
    :*jobs*
    :*stages*
    :*task*
    :*result*
    :define-task-kernel
-   :run-tasks
-   :run-jobs
    :worker-count
-   :init-task-pool
-   :start-task-pool :pause-task-pool
-   :shutdown-task-pool
-   :push-stage
    :task :job :task-pool :scheduled-task
-   :stage :task-pool-p
-   :job-tasks :make-job
-   :jobp :task-object
-   :taskp :task
-   :task-pool-oracle :task-pool-jobs
-   :task-pool-stages
-   :task-pool-workers :task-pool-results
-   :with-task-pool))
+   :make-job
+   :jobp :taskp :task :with-task-pool))
 
 (defpkg :std/async
   (:use :cl :std/task :std/thread)
@@ -707,6 +691,7 @@
    :subdirectories
    :path
    :wild-pathname
+   :file-pathname
    :non-wild-pathname
    :absolute-pathname
    :relative-pathname
@@ -791,7 +776,6 @@
    :tmpfile
    :dir
    :file
-   :file-pathname
    :with-open-files
    :write-stream-into-file
    :write-file-into-stream
@@ -856,13 +840,14 @@
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
-   :std/sym :std/list :std/type :std/num
+   :std/sym :std/list :std/type :std/num :std/early
    :std/stream :std/curry :std/array :std/hash-table
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/seq
    :std/sys :std/readtable :std/pipe :std/serde
-   :std/rand :std/async :std/par :std/spin))
+   :std/rand :std/async :std/par :std/spin)
+  (:export :*std-packages*))
 
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std
@@ -870,3 +855,16 @@
    :sb-gray :sb-mop :sb-debug))
 
 (pkg:define-lisp-package :std)
+
+(in-package :std)
+(defvar *std-packages*
+  '(:std/named-readtables :std/defpkg :std/condition
+    :std/sym :std/list :std/type :std/num
+    :std/stream :std/curry :std/array :std/hash-table
+    :std/alien :std/meta :std/thread :std/task
+    :std/macs :std/bit :std/fmt :std/path
+    :std/os :std/file :std/string :std/seq
+    :std/sys :std/readtable :std/pipe :std/serde
+    :std/rand :std/async :std/par :std/spin))
+
+(asdf:register-system-packages "STD" *std-packages*)

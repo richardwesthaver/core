@@ -5,6 +5,7 @@
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
+               (:file "var")
                (:file "proto")
                (:file "av")
                (:module "aud"

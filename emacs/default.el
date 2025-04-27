@@ -332,6 +332,8 @@ function: '(ql:quickload :clouseau)'."
                           (:inherit "sbcl")
                           (:indentation
                            (defpkg (as defpackage))
+			   (deferror (as define-condition))
+			   (defwarning (as define-condition))
 			   (make-db (as make-instance))
                            (define-package (as defpackage))
 			   (walk-directory 1)

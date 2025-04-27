@@ -415,12 +415,11 @@ not), evaluates the forms, then closes the cursor."
          (cursor-close ,var)))))
 
 (defmethod drop-btree ((self btree))
-  (ensure-transaction (:store (get-store self))
-    (with-btree-cursor (cur self)
-      (loop for (exists? key) = (multiple-value-list (cursor-first cur))
-            then (multiple-value-list (cursor-next cur))
-            while exists?
-            do (delete-key key self)))))
+  (with-btree-cursor (cur self)
+    (loop for (exists? key) = (multiple-value-list (cursor-first cur))
+          then (multiple-value-list (cursor-next cur))
+          while exists?
+          do (delete-key key self))))
 
 (defmethod drop-btree ((bt indexed-btree))
   (map-indices (lambda (name index)

@@ -20,7 +20,7 @@
                   (list options value))))
 
 ;; TODO 2024-10-24: 
-;; (defmacro defclass* (name direct-superclasses direct-slots &rest opts))
+(defmacro defclass* (name direct-superclasses direct-slots &rest opts))
 
 ;; Based on INCONGRUENT-METHODS:DEFINE-CLASS
 (defmacro define-class (name direct-superclasses direct-slots &body body)

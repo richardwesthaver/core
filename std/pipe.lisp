@@ -70,7 +70,22 @@
   obj)
 
 (defclass stream-source (source)
-  ((input :initarg :input :initform nil :accessor input)))
+  ((input :initarg :input :initform (make-synonym-stream '*standard-input*) :accessor input)))
+
+(defclass file-source (stream-source)
+  ((file :accessor file))
+  (:default-initargs :input nil))
+
+(defmethod initialize-instance :after ((obj file-source) &key file)
+  (setf (file obj) file))
+
+(defmethod (setf file) (file (obj file-source))
+  (with-slots (input) obj
+    (when input
+      (close input))
+    (when file
+      (setf input (open file :direction :input :element-type 'octet)
+            (slot-value obj 'file) file))))
 
 (defclass filter (element) ())
 (defmethod print-object ((obj filter) stream)

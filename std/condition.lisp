@@ -42,9 +42,9 @@
                                        (mapcar 'sb-mop:class-name 
                                                (sb-mop:class-precedence-list (find-class x))))
                                      parent-types))))
-    (when fun 
-      (setq options (remove (car fun) options))
-      (setq fun (cadar fun)))
+    (when fun
+      (setf options (remove (car fun) options))
+      (setf fun (cadar fun)))
     `(prog1
          (eval-when (:compile-toplevel :execute)
            (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))
@@ -58,10 +58,10 @@
              (member 'invalid-argument ',%ancestors))
             (def-invalid-item-reporter ,name))
            ((stringp ',fun)
-            (def-error-reporter ,name ',fun))
-           (t (def-error-reporter ,name)))))))
+            (define-error-reporter ,name ',fun))
+           (t (define-error-reporter ,name)))))))
 
-(defmacro def-error-reporter (err &optional (message *error-message*))
+(defmacro define-error-reporter (err &optional (message *error-message*))
     `(defun ,err (&rest args)
        ,(format nil "Signal an error of type ~A with ARGS." err)
        (cerror

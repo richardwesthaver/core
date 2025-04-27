@@ -47,6 +47,7 @@
      (funcall ,box :pandoric-set ,sym ,val)
      ,val))
 
+
 (defmacro! with-pandoric (syms o!box &rest body)
   `(symbol-macrolet
        (,@(mapcar #`(,a1 (get-pandoric ,g!box ,a1))

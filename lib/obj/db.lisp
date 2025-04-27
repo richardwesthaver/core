@@ -148,12 +148,14 @@ saved."
    (options)))
 
 ;;; Conditions
-(define-condition db-condition () ())
+(define-condition db-condition () ()
+  (:documentation "Superclass for DB conditions."))
 
 (deferror not-a-database (db-condition invalid-argument) ()
-          (:default-initargs
-           :reason "Object is not a database")
-          (:auto t))
+  (:documentation "Error signaled when an illegal DB is detected.")
+  (:default-initargs
+   :reason "Object is not a database")
+  (:auto t))
 
 ;;; Database
 (defgeneric db (self)
@@ -188,7 +190,8 @@ saved."
 
 (defclass upgradable-schema (schema)
   ((version :accessor version :initarg :version :initform 1)
-   (upgrade :accessor upgrade :initform nil)))
+   (upgrade :accessor upgrade :initform nil))
+  (:documentation "A schema which may be upgraded in-place."))
 
 (defmethod print-object ((self upgradable-schema) stream)
   (print-unreadable-object (self stream :type t)

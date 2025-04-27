@@ -282,10 +282,11 @@ Core i7 4770K, do **NOT** support RTM."
        (flet ((time-remaining () (std/sys::%time-remaining ,start ,g!time)))
          (declare (inline time-remaining))
          ,@body))))
+
 ;;; Logical Pathnames
 (defmacro define-logical-pathname (host path &rest translations)
   (setf translations 
-	(append `((,(format nil "~A:**;*.*.*" host) ,path)) translations))
+	(append `((,(format nil "~A" host) ,path)) translations))
   `(setf (logical-pathname-translations ,host)
          ;; eval second element only
 	 ',(mapcar (lambda (x) 
@@ -307,5 +308,3 @@ Core i7 4770K, do **NOT** support RTM."
   ("SYS:OUTPUT;**;*.*.*"
    (translate-logical-pathname "STASH:OUTPUT;**;*.*.*"))
   ("SYS:TMP;**;*.*.*" "/tmp/**/*.*"))
-
-(logical-pathname-translations "MEDIA") 

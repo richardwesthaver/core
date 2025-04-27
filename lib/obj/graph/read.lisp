@@ -8,7 +8,7 @@
 (defun |#G-reader| (stream sub-char numarg)
   "Enable the Graph reader for the following form."
   (declare (ignore sub-char))
-  (std/readtable::|#~-reader|)
+  (STD/READTABLE:|#~-reader|))
 
 (defreadtable :graph
   "Graph notation readtable"

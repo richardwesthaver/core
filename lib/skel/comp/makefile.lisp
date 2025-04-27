@@ -103,10 +103,6 @@
 (defmethod sk-read-file ((self makefile) path)
   (with-open-file (in path :direction :input)))
 
-;;; Readtable
-(defreadtable :makefile
-  (:merge :std))
-
 ;;; Auto Vars
 
 ;; simplified version of GNU Make Automatic Variables

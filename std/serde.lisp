@@ -19,9 +19,14 @@
 (eval-always
   (define-condition serde-condition () ())
   (deferror serde-error (serde-condition) ()))
+  
+(deferror serializer-error (serde-error)
+    ()
+    (:documentation "An error which occurs during object serialization."))
 
-(deferror serializer-error (serde-error) ())
-(deferror deserializer-error (serde-error) ())
+(deferror deserializer-error (serde-error) 
+    ()
+    (:documentation "An error which occurs during object deserialization."))
 
 ;;; Serialize
 (defgeneric serializable-p (self)
@@ -62,10 +67,14 @@ method body."))
                    cons hash-table 
                    standard-object struct
                    array class 
-                   null t)))
-(defvar *lisp-objects* *simple-lisp-objects*)
+                   null t))
+  "A vector containing the simple set of lisp objects.")
+(defvar *lisp-objects* *simple-lisp-objects*
+  "A vector containing the names of serializable lisp objects.")
 
+(declaim (inline %lisp-object-id))
 (defun %lisp-object-id (obj)
+  "Return the STD/SERDE 'id' of OBJ - which is its position in *LISP-OBJECTS*."
   (position obj *lisp-objects*))
 
 (defmacro define-io (name &body body)

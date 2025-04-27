@@ -347,7 +347,7 @@
 
 (defpackage :obj/graph
   (:nicknames :graph)
-  (:use :cl :std :obj/id :obj/seq :ast)
+  (:use :cl :std :obj/id :obj/seq :ast :std/readtable)
   (:export 
    :vertex :edge :graph :make-edge :make-graph
    :nodes :edges :add-node :add-edge

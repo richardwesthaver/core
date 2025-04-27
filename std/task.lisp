@@ -7,9 +7,11 @@
 
 ;;; Vars
 (defvar *task-pool*)
-(defvar *tasks* (make-queue :name "tasks"))
+(defvar *tasks*)
 (defvar *jobs*)
-(defvar *stages*)
+(defvar *job*)
+(defvar *stage*)
+(defvar *stage*)
 (defvar *task*)
 (defvar *task-class* 'task)
 (defvar *task-priority* nil)
@@ -76,7 +78,7 @@ This interface is experimental and subject to change."
   ((tasks :accessor tasks :initarg :tasks :type spin-queue)))
 ;;; Task Pool
 (defclass task-pool (thread-pool)
-  ((tasks :initform *tasks* :initarg :tasks :accessor tasks)
+  ((tasks :initform (when (boundp '*tasks*) *tasks*) :initarg :tasks :accessor tasks)
    ;; TODO: test weak-vector here
    (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
             :initarg :workers :accessor workers)
