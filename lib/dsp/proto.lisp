@@ -7,7 +7,7 @@
 
 (define-condition dsp-condition () ())
 
-(define-condition dsp-error () ())
+(define-condition dsp-error (dsp-condition) ())
 
 (defclass media-codec (id)
   ((name :initarg :name :accessor name)))

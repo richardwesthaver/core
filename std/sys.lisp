@@ -84,13 +84,6 @@ and we may query the user for input.")
 (defun standard-symbol-names (&optional test)
   (package-symbol-names :common-lisp test))
 
-(defmacro define-logical-pathname (host path &body translations)
-  (mapcar (lambda (x) (setf #1=(cadr x) (merge-pathnames #1# path))) translations)
-  (setf translations 
-        (append `((,(format nil "~A;**;*.*" host) ,path)) translations))
-  `(setf (logical-pathname-translations ,host)
-         ',translations))
-
 (defun revive-image (&key (lisp-interaction uiop:*lisp-interaction*)
                           (restore-hook uiop:*image-restore-hook*)
                           (prelude uiop:*image-prelude*)
@@ -289,3 +282,30 @@ Core i7 4770K, do **NOT** support RTM."
        (flet ((time-remaining () (std/sys::%time-remaining ,start ,g!time)))
          (declare (inline time-remaining))
          ,@body))))
+;;; Logical Pathnames
+(defmacro define-logical-pathname (host path &rest translations)
+  (setf translations 
+	(append `((,(format nil "~A:**;*.*.*" host) ,path)) translations))
+  `(setf (logical-pathname-translations ,host)
+         ;; eval second element only
+	 ',(mapcar (lambda (x) 
+                     (setf (cadr x) (eval (cadr x)))
+                     x) 
+                   translations)))
+
+(define-logical-pathname "STASH" "/opt/stash/"
+  ("**;*.*.*" "/opt/stash/**/*.*"))
+(define-logical-pathname "STORE" "/opt/store/"
+  ("**;*.*.*" "/opt/store/**/*.*"))
+(define-logical-pathname "SCRATCH" "/opt/scratch/"
+  ("**;*.*.*" "/opt/scratch/**/*.*"))
+;; redefine the sys table
+(define-logical-pathname "SYS" "/usr/local/lib/sbcl/"
+  ("SYS:SRC;**;*.*.*" #P"/usr/local/src/sbcl/src/**/*.*")
+  ("SYS:CONTRIB;**;*.*.*"
+   #P"/usr/local/lib/sbcl/contrib/**/*.*")
+  ("SYS:OUTPUT;**;*.*.*"
+   (translate-logical-pathname "STASH:OUTPUT;**;*.*.*"))
+  ("SYS:TMP;**;*.*.*" "/tmp/**/*.*"))
+
+(logical-pathname-translations "MEDIA") 

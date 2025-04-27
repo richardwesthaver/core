@@ -10,33 +10,35 @@
   (when codec (load-avcodec))
   (when format (load-avformat)))
 
-;; (load-libav)
+(deferror av-error (dsp-error std-error) ())
 
-(deferror av-error (dsp-error std-error) () (:auto t))
+(defmacro with-av-handlers (&body body)
+  `(handler-case (progn ,@body)
+     (error (c) (error 'av-error :message (format nil "An error occurred in a LIBAV* context: ~S" c)))))
 
 (defmacro with-av-format-context (sym &body body)
   `(with-alien ((,sym (* av-format-context) (avformat-alloc-context)))
-     (unwind-protect (progn ,@body)
+     (unwind-protect (with-av-handlers ,@body)
        (avformat-free-context ,sym))))
 
 (defmacro with-av-codec-context ((sym codec-id) &body body)
   `(with-alien ((,sym (* av-codec-context) (avcodec-alloc-context3 (avcodec-find-decoder ,codec-id))))
-     (unwind-protect (progn ,@body)
+     (unwind-protect (with-av-handlers ,@body)
        (avcodec-free-context ,sym))))
 
 (defmacro with-av-parser ((sym codec-id) &body body)
   `(with-alien ((,sym (* av-codec-context) (av-parser-init ,codec-id)))
-     (unwind-protect (progn ,@body)
+     (unwind-protect (with-av-handlers ,@body)
        (av-parser-close ,sym))))
 
 (defmacro with-av-frame (sym &body body)
   `(with-alien ((,sym (* av-frame) (av-frame-alloc)))
-     (unwind-protect (progn ,@body)
+     (unwind-protect (with-av-handlers ,@body)
        (av-frame-free ,sym))))
 
 (defmacro with-av-packet (sym &body body)
   `(with-alien ((,sym (* av-packet) (av-packet-alloc)))
-     (unwind-protect (progn ,@body)
+     (unwind-protect (with-av-handlers ,@body)
        (av-frame-free ,sym))))
 
 (defun av-dictionary-alist (dict)
