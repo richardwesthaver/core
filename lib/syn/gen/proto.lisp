@@ -15,7 +15,7 @@
 (defnode function-call () (function arguments))
 (defmethod ast ((self function-call)) 
   (list (slot-value self 'function) (slot-value self 'arguments)))
-(defnode source-location (ast) (line file info))
+(defnode src-location (ast) (line file info))
 (defexpr ident (literal-expr) ())
 (defmethod id ((self ident)) (val self))
 (defexpr str-literal (literal-expr) ())
@@ -105,7 +105,7 @@
 (defclass ast-traverser () ())
 
 (defmethod traverse :before ((self ast-traverser) (item ast) level)
-  "remove unecessary trees"
+  "remove unnecessary trees"
   (declare (ignore level))
   (with-slots (nodes) item
     (loop 
@@ -114,7 +114,7 @@
              (cond 
                ((eql (class-of (first nodes)) (find-class 'ast))
                 (setf nodes (slot-value nodes 'ast)))
-               ((eql (class-of (first nodes)) (find-class 'source-location))
+               ((eql (class-of (first nodes)) (find-class 'src-location))
                 (if (eql (class-of (slot-value (first nodes) 'subnode)) (find-class 'ast))
                     (setf nodes (slot-value (slot-value (first nodes) 'subnode) 'nodes))
                     (loop-finish)))

@@ -26,7 +26,7 @@
   (:use :cl :std :doc :id :graph :sxp :ast)
   (:export :gen-designator :gen-condition :gen-condition
    :simple-gen-error :defsyntax
-   :function-call :source-location
+   :function-call :src-location
    :ident :str-literal
    :num-literal :char-literal
    :load-gen :init-gen

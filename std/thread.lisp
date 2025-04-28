@@ -511,6 +511,27 @@ FUNCTION."
    (limiter-count :accessor limiter-count :initarg :limiter-count :type fixnum)))
 
 (defun initial-limiter-count (thread-count) (+ thread-count 1))
+
+(defmacro ensure-working-p (pool)
+  `(locally (declare (optimize (speed 3) (safety 0)))
+     (accept-work-p (the thread-pool ,pool))))
+
+(defun update-limiter-count* (pool delta)
+  (declare (thread-pool pool) (fixnum delta) 
+           (optimize (speed 3) (safety 0)))
+  (incf (the fixnum (limiter-count pool)) delta)
+  (setf (accept-work-p pool)
+        (plusp (the fixnum (limiter-count pool))))
+  (values))
+
+;; REVIEW 2025-04-27: may need to add more to std/spin
+(defun update-limiter-count (pool delta)
+  (declare (thread-pool pool) (fixnum delta)
+           (optimize (speed 3) (safety 0)))
+  (with-mutex ((limiter-lock pool))
+    (update-limiter-count* pool delta))
+  (values))
+
 ;;; Kill
 (defconstant +worker-suicide-tag+ 'worker-suicide-tag)
 
@@ -649,8 +670,8 @@ FUNCTION."
       (dotimes (i count)
 	(push (make-worker* :thread thread :kernel kernel :bind bind) ret))
       (if return-type (coerce ret return-type) ret))))
-;;; Scheduler
 
+;;; Scheduler
 ;; simple atomic counter
 (defstruct (counter (:constructor make-counter (&optional value)))
   (value 0 :type sb-ext:word))
