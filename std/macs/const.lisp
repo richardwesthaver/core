@@ -4,10 +4,7 @@
 
 ;;; Code:
 (in-package :std/macs)
-;; (reexport-from :sb-c
-;; 	       :include '(:define-source-transformation
-;; 			  :parse-eval-when-situations
-;; 			  :source-location))
+
 ;;; Definitions
 (defun %reevaluate-constant (name value test)
   (if (not (boundp name))

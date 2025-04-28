@@ -6,7 +6,13 @@
 ;; sb-kernel:with-array-data
 (in-package :std/array)
 
+;; NOTE 2025-04-27: probably not a good idea
+(declaim (optimize (safety 0) (speed 3)))
+
+(declaim (ftype (function (array) array) copy-array)
+         (maybe-inline copy-array))
 (defun copy-array (array)
+  "Make a new copy of ARRAY and return it."
   (let ((new-array
           (make-array (array-dimensions array)
                       :element-type (array-element-type array)
@@ -58,6 +64,7 @@ FILL   --- If provided, any empty space will be filled with this element."
                 do (setf (aref array cursor) fill)))))
   array)
 
+(declaim (inline vector-push-extend-position vector-pop-position))
 (defun vector-push-extend-position (element vector position)
   "Push the element into the specified position and shift-right to make
 space. This is potentially very costly as all elements after the given

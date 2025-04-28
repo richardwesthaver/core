@@ -11,12 +11,16 @@
 
 ;;; Utils
 (defun zip-vector (seqs)
+  "Return a vector containing zipped SEQS."
   (apply #'map 'vector #'list seqs))
 
 (defun find-min-length (seqs)
+  "Find and return the sequence of minimum length in SEQS."
   (reduce #'min seqs :key #'length))
 
 (defun subsize (seq size start end)
+  "Return the length of a subseq of SEQ with given SIZE, erroring if (START
+. END) is a bad range."
   (let ((ret (- (or end size) start)))
     (when (or (minusp ret) (> ret size))
       (error "Bad range for seq ~A: :start ~A :end ~A"

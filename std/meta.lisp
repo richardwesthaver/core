@@ -20,7 +20,8 @@
   (:documentation "Shutdown object SELF."))
 (defgeneric reset (self &rest args &key &allow-other-keys)
   (:documentation "Reset object SELF."))
-(defgeneric data (self))
+(defgeneric data (self)
+  (:documentation "Return the data associated with SELF."))
 (defgeneric name (self)
   (:method ((self t))
     (string self))
@@ -31,7 +32,10 @@
   (:documentation "Explicitly run the object SELF."))
 (defgeneric exec (self)
   (:documentation "Execute object SELF."))
-
+(defgeneric explain (self &key &allow-other-keys)
+  (:documentation "Explain object SELF."))
+(defgeneric explore (self &key &allow-other-keys)
+  (:documentation "Explain object SELF."))
 (defgeneric write-object (selfj stream &key &allow-other-keys)
   (:documentation "Write object SELF to STREAM.")
   (:method ((self t) (stream t) &key)
@@ -54,6 +58,7 @@
     copy))
 
 (defgeneric copy-object (self)
+  (:documentation "Return a copy of object SELF.")
   (:method ((self standard-object))
     (shallow-copy-object self)))
 
@@ -74,6 +79,7 @@ non-nil, also include indirect (parent) methods."
        methods)))
 
 (defun list-class-slots (class slots &optional exclude)
+  "List the SLOTS found in CLASS, optionally excluding list EXCLUDE."
   ;; should probably convert slot-definition-name here
   (let ((cs (remove-if
              (lambda (s)
@@ -95,6 +101,8 @@ non-nil, also include indirect (parent) methods."
 
 ;; TODO 2023-09-09: slot exclusion from dynamic var
 (defun list-slot-values-using-class (class obj slots &optional nullp unboundp)
+  "List the values of SLOTS bound in OBJ according to CLASS. When NULLP is T also
+include NIL values. Likewise with UNBOUNDP for unbound slot values."
   (remove-if
    #'null
    (mapcar
@@ -165,6 +173,7 @@ argument."
        
 ;; closer-mop
 (defun ensure-finalized (class &optional (errorp t))
+  "Ensure that CLASS is finalized returning an error if ERRORP is non-nil."
   (if (typep class 'class)
     (unless (class-finalized-p class)
       (finalize-inheritance class))
@@ -172,6 +181,7 @@ argument."
   class)
 
 (defun subclassp (class superclass)
+  "Return T if CLASS is a subclass of SUPERCLASS."
   (flet ((get-class (class) (etypecase class
                               (class class)
                               (symbol (find-class class)))))

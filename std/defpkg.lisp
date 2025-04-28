@@ -24,6 +24,7 @@
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun find-package* (package-designator &optional (error t))
+    "Alternative to FIND-PACKAGE with optional error."
     (let ((package (find-package package-designator)))
       (cond
         (package package)
@@ -50,22 +51,30 @@ with given ARGS. Useful when the call is read before the package is loaded,
 or when loading the package is optional."
     (apply (find-symbol* name package) args))
   (defun intern* (name package-designator &optional (error t))
+    "Like INTERN but never create a new package."
     (intern (string name) (find-package* package-designator error)))
   (defun export* (name package-designator)
+    "Like EXPORT but return NIL on error."
     (let* ((package (find-package* package-designator))
            (symbol (intern* name package)))
       (export (or symbol (list symbol)) package)))
   (defun import* (symbol package-designator)
+    "Like IMPORT but return NIL on error."
     (import (or symbol (list symbol)) (find-package* package-designator)))
   (defun shadowing-import* (symbol package-designator)
+    "Like SHADOWING-IMPORT but return NIL on error."
     (shadowing-import (or symbol (list symbol)) (find-package* package-designator)))
   (defun shadow* (name package-designator)
+    "Like SHADOW but return NIL on error."
     (shadow (list (string name)) (find-package* package-designator)))
   (defun make-symbol* (name)
+    "Like MAKE-SYMBOL but when NAME is a symbol and not a string, call COPY-SYMBOL
+instead."
     (etypecase name
       (string (make-symbol name))
       (symbol (copy-symbol name))))
   (defun unintern* (name package-designator &optional (error t))
+    "Like UNINTERN but with optional errors."
     (block nil
       (let ((package (find-package* package-designator error)))
         (when package
@@ -77,8 +86,10 @@ or when loading the package is optional."
                             (string symbol) (package-name package))))))
         (values nil nil))))
   (defun symbol-shadowing-p (symbol package)
+    "Return T if SYMBOL is a member PACKAGE's shadowing symbols."
     (and (member symbol (package-shadowing-symbols package)) t))
   (defun home-package-p (symbol package)
+    "Return T if PACKAGE is the 'home package' of SYMBOL."
     (and package (let ((sp (symbol-package symbol)))
                    (and sp (let ((pp (find-package* package)))
                              (and pp (eq sp pp))))))))
@@ -86,28 +97,34 @@ or when loading the package is optional."
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun symbol-package-name (symbol)
+    "Return the name of the package SYMBOL belongs to."
     (let ((package (symbol-package symbol)))
       (and package (package-name package))))
   (defun standard-common-lisp-symbol-p (symbol)
+    "Return T if SYMBOL is a standard COMMON-LISP symbol."
     (multiple-value-bind (sym status) (find-symbol* symbol :common-lisp nil)
       (and (eq sym symbol) (eq status :external))))
   (defun reify-package (package &optional package-context)
+    "Return the appropriate relative value of PACKAGE in optional PACKAGE-CONTEXT."
     (if (eq package package-context) t
         (etypecase package
           (null nil)
           ((eql (find-package :cl)) :cl)
           (package (package-name package)))))
   (defun unreify-package (package &optional package-context)
+    "Return the concrete value of PACKAGE modulo PACKAGE-CONTEXT."
     (etypecase package
       (null nil)
       ((eql t) package-context)
       ((or symbol string) (find-package package))))
   (defun reify-symbol (symbol &optional package-context)
+    "Return the appropriate relative value of SYMBOL in optional PACKAGE-CONTEXT."
     (etypecase symbol
       ((or keyword (satisfies standard-common-lisp-symbol-p)) symbol)
       (symbol (vector (symbol-name symbol)
                       (reify-package (symbol-package symbol) package-context)))))
   (defun unreify-symbol (symbol &optional package-context)
+    "Return the concrete value of SYMBOL modulo PACKAGE-CONTEXT."
     (etypecase symbol
       (symbol symbol)
       ((simple-vector 2)
@@ -129,51 +146,26 @@ or when loading the package is optional."
     `(when-package-fishiness (record-fishy (list ,@info)))))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
-  #+(or clisp clozure)
-  (defun get-setf-function-symbol (symbol)
-    #+clisp (let ((sym (get symbol 'system::setf-function)))
-              (if sym (values sym :setf-function)
-                  (let ((sym (get symbol 'system::setf-expander)))
-                    (if sym (values sym :setf-expander)
-                        (values nil nil)))))
-    #+clozure (gethash symbol ccl::%setf-function-names%))
-  #+(or clisp clozure)
-  (defun set-setf-function-symbol (new-setf-symbol symbol &optional kind)
-    #+clisp (assert (member kind '(:setf-function :setf-expander)))
-    #+clozure (assert (eq kind t))
-    #+clisp
-    (cond
-      ((null new-setf-symbol)
-       (remprop symbol 'system::setf-function)
-       (remprop symbol 'system::setf-expander))
-      ((eq kind :setf-function)
-       (setf (get symbol 'system::setf-function) new-setf-symbol))
-      ((eq kind :setf-expander)
-       (setf (get symbol 'system::setf-expander) new-setf-symbol))
-      (t (error "invalid kind of setf-function ~S for ~S to be set to ~S"
-                kind symbol new-setf-symbol)))
-    #+clozure
-    (progn
-      (gethash symbol ccl::%setf-function-names%) new-setf-symbol
-      (gethash new-setf-symbol ccl::%setf-function-name-inverses%) symbol))
-  #+(or clisp clozure)
-  (defun create-setf-function-symbol (symbol)
-    #+clisp (system::setf-symbol symbol)
-    #+clozure (ccl::construct-setf-function-name symbol))
   (defun set-dummy-symbol (symbol reason other-symbol)
+    "Set the DUMMY-SYMBOL prop of SYMBOL to (REASON . OTHER-SYMBOL)."
     (setf (get symbol 'dummy-symbol) (cons reason other-symbol)))
   (defun make-dummy-symbol (symbol)
+    "Make a DUMMY-SYMBOL and set the prop value of SYMBOL."
     (let ((dummy (copy-symbol symbol)))
       (set-dummy-symbol dummy 'replacing symbol)
       (set-dummy-symbol symbol 'replaced-by dummy)
       dummy))
   (defun dummy-symbol (symbol)
+    "Return the DUMMY-SYMBOL prop of SYMBOL."
     (get symbol 'dummy-symbol))
   (defun get-dummy-symbol (symbol)
+    "Get the DUMMY-SYMBOL prop of SYMBOL returning values (SYMBOL REASON) if it
+exists and setting it if not."
     (let ((existing (dummy-symbol symbol)))
       (if existing (values (cdr existing) (car existing))
           (make-dummy-symbol symbol))))
   (defun nuke-symbol-in-package (symbol package-designator)
+    "Nuke SYMBOL in package PACKAGE-DESIGNATOR."
     (let ((package (find-package* package-designator))
           (name (symbol-name symbol)))
       (multiple-value-bind (sym stat) (find-symbol name package)
@@ -182,10 +174,7 @@ or when loading the package is optional."
               (shadowing-import* (get-dummy-symbol symbol) package)
               (unintern* symbol package))))))
   (defun nuke-symbol (symbol &optional (packages (list-all-packages)))
-    #+(or clisp clozure)
-    (multiple-value-bind (setf-symbol kind)
-        (get-setf-function-symbol symbol)
-      (when kind (nuke-symbol setf-symbol)))
+    "Nuke SYMBOL form PACKAGES."
     (loop :for p :in packages :do (nuke-symbol-in-package symbol p)))
   (defun rehome-symbol (symbol package-designator)
     "Changes the home package of a symbol, also leaving it present in its old home if any"
@@ -217,43 +206,28 @@ or when loading the package is optional."
             (if shadowing
                 (shadowing-import* symbol old-package)
                 (import* symbol old-package))
-            #+(or clisp clozure)
-            (multiple-value-bind (setf-symbol kind)
-                (get-setf-function-symbol symbol)
-              (when kind
-                (let* ((setf-function (fdefinition setf-symbol))
-                       (new-setf-symbol (create-setf-function-symbol symbol)))
-                  (note-package-fishiness
-                   :setf-function
-                   name (package-name package)
-                   (symbol-name setf-symbol) (symbol-package-name setf-symbol)
-                   (symbol-name new-setf-symbol) (symbol-package-name new-setf-symbol))
-                  (when (symbol-package setf-symbol)
-                    (unintern* setf-symbol (symbol-package setf-symbol)))
-                  (setf (fdefinition new-setf-symbol) setf-function)
-                  (set-setf-function-symbol new-setf-symbol symbol kind))))
-            #+(or clisp clozure)
-            (multiple-value-bind (overwritten-setf foundp)
-                (get-setf-function-symbol overwritten-symbol)
-              (when foundp
-                (unintern overwritten-setf)))
             (when (eq old-status :external)
               (export* symbol old-package))
             (when (eq overwritten-symbol-status :external)
               (export* symbol package))))
         (values overwritten-symbol overwritten-symbol-status))))
   (defun ensure-package-unused (package)
+    "Ensure that PACKAGE is unused by any other package."
     (loop :for p :in (package-used-by-list package) :do
       (unuse-package package p)))
   (defun delete-package* (package &key nuke)
+    "Delete package PACKAGE, additionally ensuring it is unused by other packages
+and optionally nuking all symbols as well."
     (let ((p (find-package package)))
       (when p
         (when nuke (do-symbols (s p) (when (home-package-p s p) (nuke-symbol s))))
         (ensure-package-unused p)
         (delete-package package))))
   (defun package-names (package)
+    "Return a cons of PACKAGE name and nicknames."
     (cons (package-name package) (package-nicknames package)))
   (defun packages-from-names (names)
+    "Return packages associated with list NAMES, starting from the end and deleting all duplicates."
     (remove-duplicates (remove nil (mapcar #'find-package names)) :from-end t))
   (defun fresh-package-name (&key (prefix :%TO-BE-DELETED)
                                separator
@@ -270,7 +244,6 @@ or when loading the package is optional."
 
 
 ;;; Communicable representation of symbol and package information
-
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun package-definition-form (package-designator
                                   &key (nicknamesp t) (usep t)
@@ -478,12 +451,11 @@ or when loading the package is optional."
              (ensure-inherited name symbol to-package from-package t shadowed imported inherited)))))))
 
   (defun recycle-symbol (name recycle exported)
-    ;; Takes a symbol NAME (a string), a list of package designators for RECYCLE
-    ;; packages, and a hash-table of names (strings) of symbols scheduled to be
-    ;; EXPORTED from the package being defined. It returns two values, the
-    ;; symbol found (if any, or else NIL), and a boolean flag indicating whether
-    ;; a symbol was found. The caller (DEFPKG) will then do the
-    ;; re-homing of the symbol, etc.
+    "Takes a symbol NAME (a string), a list of package designators for RECYCLE
+packages, and a hash-table of names (strings) of symbols scheduled to be
+EXPORTED from the package being defined. It returns two values, the symbol
+found (if any, or else NIL), and a boolean flag indicating whether a symbol
+was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
     (check-type name string)
     (check-type recycle list)
     (check-type exported hash-table)
@@ -571,7 +543,6 @@ or when loading the package is optional."
                                 import-from export intern
                                 recycle mix reexport
                                 unintern package-local-nicknames lock implements)
-    #+genera (declare (ignore documentation))
     (let* ((package-name (string name))
 	   (nicknames (mapcar #'string nicknames))
            (names (cons package-name nicknames))
@@ -738,19 +709,20 @@ that package. In the case of shadowing, etc. They may not be EQL."
        (eval-when (:compile-toplevel :load-toplevel :execute)
          ,ensure-form))))
 
-;; This macro is courtesy of Paul Werkowski. A very nice idea. (From LISA)
-
-(defmacro define-lisp-package (pkg-name)
+(defmacro define-lisp-package (package)
+  "Define a lisp package based on target PACKAGE which transparently exports all
+COMMON-LISP symbols in addition to those already exported by the target
+package."
   (flet ((externals-of (pkg)
            (loop for s being each external-symbol in pkg collect s)))
-    (let* ((pkg-externs (externals-of pkg-name))
-           (pkg-shadows (intersection (package-shadowing-symbols pkg-name)
+    (let* ((pkg-externs (externals-of package))
+           (pkg-shadows (intersection (package-shadowing-symbols package)
                                        pkg-externs))
            (cl-externs (externals-of "COMMON-LISP")))
-      `(defpackage ,(sb-int:symbolicate pkg-name "-LISP")
+      `(defpackage ,(sb-int:symbolicate package "-LISP")
          (:use "COMMON-LISP")
-         (:shadowing-import-from ,pkg-name ,@pkg-shadows)
-         (:import-from ,pkg-name ,@(set-difference pkg-externs pkg-shadows))
+         (:shadowing-import-from ,package ,@pkg-shadows)
+         (:import-from ,package ,@(set-difference pkg-externs pkg-shadows))
          (:export ,@cl-externs)
          (:export ,@pkg-externs)))))
 

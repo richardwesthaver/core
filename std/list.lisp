@@ -110,6 +110,7 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
 
 ;;; On Lisp
 (defun group (source n)
+  "Return a list of lists by grouping SOURCE into N-element batches."
   (declare (fixnum n))
   (when (zerop n) (error "zero length"))
   (labels ((rec (source acc)
@@ -124,6 +125,7 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defun flatten (x)
+    "Flatten list X, removing nil elements."
     (labels ((rec (x acc)
                (cond ((null x) acc)
                      #+sbcl
@@ -135,9 +137,10 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
       (rec x nil))))
 
 ;;; cl-bench utils
-;; Destructive merge of two sorted lists.
+;; 
 ;; From Hansen's MS thesis.
 (defun merge! (a b predicate)
+  "Destructively merge two sorted lists given comparison function PREDICATE."
   (labels ((merge-loop (r a b)
              (cond ((funcall predicate (car b) (car a))
                     (setf (cdr r) b)
@@ -162,10 +165,10 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                (merge-loop a (cdr a) b))
            a))))
 
-;; Stable sort procedure which copies the input list and then sorts
-;; the new list imperatively. Due to Richard O'Keefe; algorithm
-;; attributed to D.H.D. Warren.
+;; Due to Richard O'Keefe; algorithm attributed to D.H.D. Warren.
 (defun sort! (seq predicate)
+  "Stable sort which copies the input list SEQ and then sorts the new list
+imperatively according to PREDICATE."
   (labels ((astep (n)
              (cond ((> n 2)
                     (let* ((j (truncate n 2))

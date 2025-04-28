@@ -11,7 +11,6 @@
                (:file "system")
                (:file "dist")
                (:file "reprex")
-               (:file "explain")
                (:file "image"))
   :in-order-to ((test-op (test-op :doc/tests))))
 

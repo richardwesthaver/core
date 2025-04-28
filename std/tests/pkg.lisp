@@ -112,8 +112,8 @@
   (is (= 42 (awhen 42 it)))
   (is (= 3 (acond ((1+ 1) (1+ it)))))
   (loop for x in '(1 2 3)
-        for y in (funcall (alet ((a 1) (b 2) (c 3))
-                                (lambda () (mapc #'1+ (list a b c)))))
+        for y in (funcall (alet* ((a 1) (b 2) (c 3))
+                                 (lambda () (mapc #'1+ (list a b c)))))
         collect (is (= x y))))
 
 (deftest pan ()

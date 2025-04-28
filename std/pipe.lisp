@@ -35,19 +35,24 @@
   (format stream "[~a]" (type-of obj))
   obj)
 
-(defgeneric sink (self))
-(defclass sink (element) ())
+(defgeneric sink (self)
+  (:documentation "Return the sink of SELF."))
+
+(defclass sink (element) ()
+  (:documentation "Superclass of sink elements."))
 (defmethod print-object ((obj sink) stream)
   (format stream ">>~a" (type-of obj))
   obj)
 
 (defclass stream-sink (sink)
-  ((output :initarg :output :initform (make-synonym-stream '*standard-output*) :accessor output)))
+  ((output :initarg :output :initform (make-synonym-stream '*standard-output*) :accessor output))
+  (:documentation "A sink which outputs to a stream."))
 
 (defclass file-sink (stream-sink)
   ((file :accessor file))
   (:default-initargs
-   :output nil))
+   :output nil)
+  (:documentation "A sink which outputs to a file."))
 
 (defmethod initialize-instance :after ((obj file-sink) &key file)
   (setf (file obj) file))
@@ -63,18 +68,22 @@
                               :external-format :utf-8))
       (setf (slot-value obj 'file) file))))
 
-(defgeneric source (self))
-(defclass source (element) ())
+(defgeneric source (self)
+  (:documentation "Return the source of SELF."))
+(defclass source (element) ()
+  (:documentation "Superclass of source elements."))
 (defmethod print-object ((obj source) stream)
   (format stream "~a>>" (type-of obj))
   obj)
 
 (defclass stream-source (source)
-  ((input :initarg :input :initform (make-synonym-stream '*standard-input*) :accessor input)))
+  ((input :initarg :input :initform (make-synonym-stream '*standard-input*) :accessor input))
+  (:documentation "A source with input from a stream."))
 
 (defclass file-source (stream-source)
   ((file :accessor file))
-  (:default-initargs :input nil))
+  (:default-initargs :input nil)
+  (:documentation "A source with input from a file."))
 
 (defmethod initialize-instance :after ((obj file-source) &key file)
   (setf (file obj) file))
@@ -87,15 +96,18 @@
       (setf input (open file :direction :input :element-type 'octet)
             (slot-value obj 'file) file))))
 
-(defclass filter (element) ())
+(defclass filter (element) ()
+  (:documentation "Superclass of filter elements."))
 (defmethod print-object ((obj filter) stream)
   (format stream ":~a:" (type-of obj))
   obj)
 
-(defclass bin (element) ())
+(defclass bin (element) ()
+  (:documentation "Superclass of bin elements."))
 
 (defclass predicate-filter (filter)
-  ((predicate :initarg :predicate :accessor predicate)))
+  ((predicate :initarg :predicate :accessor predicate))
+  (:documentation "Predicate-based filter element."))
 
 (defclass print-filter (filter)
   ((stream :initarg :stream :initform *standard-output* :accessor element-stream))
@@ -103,13 +115,16 @@
 
 (defclass switch-filter (filter)
   ((value :initarg :value :initform 0 :accessor value)
-   (pipe :initarg :pipe :accessor pipe)))
+   (pipe :initarg :pipe :accessor pipe))
+  (:documentation "A filter which holds a 'switch' value."))
 
 (defclass pipe () 
   ((pipe :initarg :pipe :initform (make-pipe) :accessor pipe)
-   (index :initarg :index :initform (make-hash-table :test 'eql) :accessor index)))
+   (index :initarg :index :initform (make-hash-table :test 'eql) :accessor index))
+  (:documentation "Superclass of pipe objects containing a PIPE and INDEX slot."))
 
 (defgeneric resolve-element (pipe path &key if-does-not-exist)
+  (:documentation "Resolve element PATH on PIPE.")
   (:method ((pipe pipe) (path list) &key &allow-other-keys)
     (values path t))
   (:method ((pipe pipe) (path symbol) &key (if-does-not-exist :error))
@@ -120,6 +135,7 @@
           ((nil) (values nil nil))))))
 
 (defgeneric find-element (elt self)
+  (:documentation "Find element ELT in SELF.")
   (:method (elt (self element))
     (if elt
         (error "Cannot descend into element")
@@ -141,6 +157,7 @@
     (find-element elt (pipe self))))
 
 (defgeneric find-parent-element (elt path)
+  (:documentation "Find the parent of PATH in ELT.")
   (:method ((elt element) path)
     (declare (ignore path))
     (error "Cannot descend into element"))
@@ -158,6 +175,7 @@
     (find-parent-element (pipe elt) path)))
 
 (defgeneric insert-element* (elt pipe &optional pos)
+  (:documentation "Insert an element ELT onto PIPE at POS if present or appended.")
   (:method (elt (pipe array) &optional pos)
     (if pos
         (vector-push-extend-position elt pipe pos)
@@ -167,6 +185,7 @@
     (insert-element* elt (pipe pipe) pos)))
 
 (defgeneric withdraw-element (pipe &optional pos)
+  (:documentation "Remove and return an element from PIPE at POS if given or pop from the end.")
   (:method ((pipe array) &optional pos)
     (if pos
         (vector-pop-position pipe pos)
@@ -190,6 +209,7 @@ If place is set, the element is added to the specified place as per INSERT-ELEME
                      place))))
 
 (defgeneric remove-element (pipe elt)
+  (:documentation "Remove element ELT from PIPE.")
   (:method ((pipe pipe) elt)
     (prog1
         (multiple-value-bind (parent pos) (find-parent-element pipe elt)
@@ -266,10 +286,12 @@ Returns the segment.")
         (call-next-method))))
 
 (defgeneric set-element-id (pipe path name)
+  (:documentation "Set a unique NAME for PATH on PIPE and store in the INDEX of PIPE.")
   (:method ((pipe pipe) (path list) (name symbol))
     (setf (gethash name (index pipe)) path)))
 
 (defgeneric move-element (pipe elt new-elt)
+  (:documentation "Move element NEW-ELT to ELT.")
   (:method ((pipe pipe) elt new-elt)
     (prog1
         (let ((e (remove-element pipe elt)))
@@ -281,6 +303,7 @@ Returns the segment.")
             do (set-element-id pipe (append elt (subseq v (length elt))) k)))))
 
 (defgeneric msg (elt msg)
+  (:documentation "Pass message MSG through element ELT.")
   (:method ((elt pipe) msg)
     (msg (pipe elt) msg))
   (:method ((elt pipe) (msg string))
@@ -312,6 +335,7 @@ Returns the segment.")
 (defclass bus () ())
 
 (defgeneric format-message (stream message)
+  (:documentation "Format MESSAGE on STREAM.")
   (:method ((stream null) message)
     (princ-to-string message))
   (:method :before ((stream stream) message)
@@ -337,12 +361,14 @@ Returns the segment.")
 
 (defclass simple-message (message)
   ((content :initarg :content
-            :accessor message-content)))
+            :accessor message-content))
+  (:documentation "Simple message objects."))
 
 (defclass condition-message (message)
   ((condition :initarg :condition
               :initform (required-argument "CONDITION")
-              :accessor message-condition)))
+              :accessor message-condition))
+  (:documentation "Messages containing a condition."))
 
 ;;; Macros
 ;; This is from Shinmera's VERBOSE

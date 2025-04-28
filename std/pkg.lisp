@@ -258,6 +258,7 @@
 
 (defpkg :std/array
   (:use :cl)
+  (:import-from :sb-ext :maybe-inline)
   (:export :copy-array :signed-array-length :array-shift 
    :vector-push-extend-position :vector-pop-position))
 
@@ -305,11 +306,14 @@
 (defpkg :std/macs
   (:use :cl :std/early)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms)
+  (:import-from :sb-int :make-macro-lambda :parse-lambda-list)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten)
   (:import-from :std/early :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
   (:export
+   :make-macro-lambda
+   :parse-lambda-list
    :once-only
    :define-class
    :defclass*
@@ -347,7 +351,7 @@
    :acase
    :alambda
    :nlet-tail
-   :alet%
+   :alet*
    :alet
    :acond2
    :aif
@@ -372,6 +376,11 @@
    :xor
    :ifret))
 
+;; (reexport-from :sb-c
+;; 	       :include '(:define-source-transformation
+;; 			  :parse-eval-when-situations
+;; 			  :source-location))
+
 (defpkg :std/sys
   (:use :cl)
   (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
@@ -379,7 +388,10 @@
   (:use-reexport :sb-cltl2)
   (:recycle :sb-assem)
   (:shadowing-import-from :sb-c :lexenv-user-data :lexenv-find :make-null-lexenv)
+  (:shadowing-import-from :sb-c :define-vop)
+  (:shadowing-import-from :sb-c :define-source-transform :parse-eval-when-situations :source-location)
   (:recycle :sb-sys)
+  (:import-from :sb-ext :maybe-inline)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :appendf)
   (:import-from :sb-assem :*backend-instruction-set-package*)
@@ -387,7 +399,12 @@
   (:import-from :std/macs :if-let :defmacro!)
   (:export
    :.i ;; alias for *inspected*
+   :maybe-inline
    :register-project-directory
+   :define-vop
+   :define-source-transform
+   :parse-eval-when-situations 
+   :source-location
    :lexenv-user-data
    :lexenv-find
    :make-null-lexenv
@@ -549,7 +566,8 @@
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
-   :slot-boundp*))
+   :slot-boundp*
+   :explore :explain))
 
 (defpkg :std/spin
   (:use :cl)

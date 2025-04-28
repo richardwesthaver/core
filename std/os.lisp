@@ -10,7 +10,8 @@
 (in-package :std/os)
 (require 'sb-posix)
 
-(defparameter *user* (sb-posix:getenv "USER"))
+(defparameter *user* (sb-posix:getenv "USER")
+  "The name of the currently logged-in user.")
 
 (defun sudo-p ()
   "Return T if effective user is root."
@@ -135,7 +136,8 @@ arrange for FVAR to be closed after BODY."
             (:videos . "Videos")))
     tbl))
 
-(defun xdg-user-dir (key) (gethash key *xdg-user-dirs*))
+(defun xdg-user-dir (key)
+  (gethash key *xdg-user-dirs*))
 
 (defun (setf xdg-user-dir) (v k)
   (let ((new (if (typep v 'std/path:absolute-pathname)
@@ -263,6 +265,7 @@ is wild or does not designate a directory."
         (error "Could not get current directory."))))
 
 (defun (setf current-directory) (pathspec)
+  "Implicitly set current-directory to PATHSPEC using SB-POSIX:CHDIR."
   (sb-posix:chdir pathspec))
 
 (defun call-with-directory-iterator (pathspec fun)

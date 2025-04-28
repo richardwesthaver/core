@@ -78,7 +78,9 @@ point numbers anymore, but also keywords."
 	 (max-exponent (1- (expt 2 exponent-bits)))) ; (B)
     `(progn
        (defun ,encoder-name (float)
-	 ,@(unless nan `((declare (type float float))))
+         ,(format nil "Encoding a float value with ~A exponent and ~A significand bits (plus an extra sign bit)."
+                  exponent-bits significand-bits)
+	 ,@(unless nan `((declare (float float))))
          (multiple-value-bind (sign significand exponent)
              (cond ,@(when nan `(((eq float :not-a-number)
                                   (values 0 1 ,max-exponent))
@@ -105,6 +107,8 @@ point numbers anymore, but also keywords."
 	     bits)))
 
        (defun ,decoder-name (bits)
+	 ,(format nil "Decode a float value with ~A exponent and ~A significand bits (plus an extra sign bit)."
+		  exponent-bits significand-bits)
 	 (declare (type (unsigned-byte ,total-bits) bits))
 	 (let* ((sign ,sign-part)
 		(exponent ,exponent-part)

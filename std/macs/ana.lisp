@@ -5,50 +5,6 @@
 
 (in-readtable :std)
 
-;;; Named Lambdas
-;; (reexport-from :sb-int :include '(:make-macro-lambda :parse-lambda-list))
-
-;; LoL tlist
-;; (declaim (inline make-tlist tlist-left
-;;                  tlist-right tlist-empty-p))
-
-;; (defun make-tlist () (cons nil nil))
-;; (defun tlist-left (tl) (caar tl))
-;; (defun tlist-right (tl) (cadr tl))
-;; (defun tlist-empty-p (tl) (null (car tl)))
-
-;; (declaim (inline tlist-add-left
-;;                  tlist-add-right))
-
-;; (defun tlist-add-left (tl it)
-;;   (let ((x (cons it (car tl))))
-;;     (if (tlist-empty-p tl)
-;;         (setf (cdr tl) x))
-;;     (setf (car tl) x)))
-
-;; (defun tlist-add-right (tl it)
-;;   (let ((x (cons it nil)))
-;;     (if (tlist-empty-p tl)
-;;         (setf (car tl) x)
-;;         (setf (cddr tl) x))
-;;     (setf (cdr tl) x)))
-
-;; (declaim (inline tlist-rem-left))
-
-;; (defun tlist-rem-left (tl)
-;;   (if (tlist-empty-p tl)
-;;       (error "Remove from empty tlist")
-;;       (let ((x (car tl)))
-;;         (setf (car tl) (cdar tl))
-;;         (if (tlist-empty-p tl)
-;;             (setf (cdr tl) nil)) ;; For gc
-;;         (car x))))
-
-;; (declaim (inline tlist-update))
-
-;; (defun tlist-update (tl)
-;;   (setf (cdr tl) (last (car tl))))
-
 (defun build-batcher-sn (n)
   (let* (network
          (tee (ceiling (log n 2)))
@@ -276,9 +232,11 @@ Example:
   (expand-destructuring-case keyform clauses 'case))
 
 (defmacro destructuring-ccase (keyform &body clauses)
+  "Combination of destructuring-bind and ccase."
   (expand-destructuring-case keyform clauses 'ccase))
 
 (defmacro destructuring-ecase (keyform &body clauses)
+  "Combination of destructuring-bind and ecase."
   (expand-destructuring-case keyform clauses 'ecase))
 
 (dolist (name '(destructuring-ccase destructuring-ecase))
@@ -440,12 +398,15 @@ Example:
   `(defun ,name () ,@body))
 
 (defmacro eval-always (&body body)
+  "Eval BODY in all contexts (:compile-toplevel :load-toplevel :execute)."
   `(eval-when (:compile-toplevel :load-toplevel :execute) ,@body))
 
 ;;; Franz
-(defvar if*-keyword-list '("then" "thenret" "else" "elseif"))
+(defvar if*-keyword-list '("then" "thenret" "else" "elseif")
+  "List of keywords accessible in the body of the IF* macro.")
 
 (defmacro if* (&rest args)
+  "Extended IF macro - supports a LOOP-like list of keywords in IF*-KEYWORD-LIST."
   (do ((xx (reverse args) (cdr xx))
        (state :init)
        (elseseen nil)
@@ -504,6 +465,7 @@ corresponding function."
 
 ;;; Misc
 (defmacro until (condition &body body)
+  "Repeat BODY until CONDITION evals to T."
   (let ((block-name (gensym)))
     `(block ,block-name
        (loop
@@ -528,21 +490,25 @@ corresponding function."
 
 ;; Graham's alambda
 (defmacro alambda (parms &body body)
-  `(labels ((%a ,parms ,@body))
-     #'%a))
+  "Define an anaphoric lambda with IT bound to the result."
+  `(labels ((it ,parms ,@body))
+     #'it))
 
 ;; Graham's aif
 (defmacro aif (test then &optional else)
+  "Anaphoric IF with IT bound to the result of TEST."
   `(let ((it ,test))
      (if it ,then ,else)))
 
 ;; ;; TODO 2023-09-05: wrap, document, optimize, hack
 ;; re-exported from SB-INT
 (defmacro awhen (test &body body)
+  "Anaphoric WHEN with IT bound to the result of TEST."
   `(let ((it ,test))
      (when it ,@body)))
 
 (defmacro acond (&rest clauses)
+  "Anaphoric COND with IT bound in each element of CLAUSES to the result of the test form (first element)."
   (if (null clauses)
       `()
       (destructuring-bind ((test &body body) &rest rest) clauses
@@ -574,23 +540,25 @@ corresponding function."
               ,g!n (return-from
                     ,g!b (progn ,@body))))))))
 
-(defmacro alet% (letargs &rest body)
-  `(let ((%a) ,@letargs)
-     (setq %a ,@(last body))
-     ,@(butlast body)
-     %a))
-
 (defmacro alet (letargs &rest body)
-  `(let ((%a) ,@letargs)
-     (setq %a ,@(last body))
+  "Anaphoric LET with IT bound to the last element of BODY."
+  `(let ((it) ,@letargs)
+     (setq it ,@(last body))
+     ,@(butlast body)
+     it))
+
+(defmacro alet* (letargs &rest body)
+  "Return an Anaphoric LET with IT bound to the last element of BODY."
+  `(let ((it) ,@letargs)
+     (setq it ,@(last body))
      ,@(butlast body)
      (lambda (&rest params)
-       (apply %a params))))
+       (apply it params))))
 
-;; swiped from fiveam. This is just like acond except it assumes that
-;; the TEST in each element of CLAUSES returns two values as opposed
-;; to one.
+;; swiped from fiveam. 
 (defmacro acond2 (&rest clauses)
+  "Like ACOND except assume the test in each element of CLAUSES returns two
+values as opposed to one."
   (if (null clauses)
       nil
       (with-gensyms (val foundp)
@@ -605,6 +573,7 @@ corresponding function."
                  (acond2 ,@others)))))))
 
 (defmacro acase (form &rest cases)
+  "Anaphoric case with FORM bound to IT."
   `(let ((it ,form))
      (case it
        ,@cases)))

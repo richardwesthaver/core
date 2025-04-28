@@ -15,7 +15,8 @@
   (:report (lambda (c s)
              (format s "Invalid number: ~S [Reason: ~A]"
                      (invalid-number-value c)
-                     (invalid-number-reason c)))))
+                     (invalid-number-reason c))))
+  (:documentation "Error signaled when an invalid number is parsed."))
 
 (declaim (type (cons character) *white-space-characters*))
 (defparameter *white-space-characters*

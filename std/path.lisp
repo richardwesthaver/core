@@ -10,10 +10,12 @@
 
 (defgeneric path (self)
   (:method ((self string))
-    (pathname self)))
+    (pathname self))
+  (:documentation "Return the path associated with SELF."))
 
-(defun symlinkp (pathname)
-  (sb-posix:s-islnk (sb-posix:stat-mode (sb-posix:lstat pathname))))
+(defun symlinkp (path)
+  "Return T if PATH is a symlink."
+  (sb-posix:s-islnk (sb-posix:stat-mode (sb-posix:lstat path))))
 
 (deftype wild-pathname ()
   "A pathname with wild components."
@@ -25,28 +27,35 @@
     (and pathname (not (satisfies wild-pathname-p)))))
 
 (deftype absolute-pathname ()
+  "An absolute pathname."
   '(and pathname (satisfies uiop:absolute-pathname-p)))
 
 (deftype relative-pathname ()
+  "A relative pathname."
   '(and pathname (satisfies uiop:relative-pathname-p)))
 
 (deftype directory-pathname ()
+  "A directory pathname."
   '(and pathname (satisfies uiop:directory-pathname-p)))
 
 (deftype symlink-pathname ()
+  "A symlink pathname."
   '(and pathname (satisfies symlinkp)))
 
 (deftype absolute-directory-pathname ()
+  "An absolute directory pathname."
   '(and absolute-pathname directory-pathname))
 
 (deftype file-pathname ()
+  "A file pathname."
   '(and pathname (satisfies uiop:file-pathname-p)))
 
 (defconstant +pathsep+
   #+windows #\; #+unix #\:
   "Path separator for this OS.")
 
-(defconstant +wildfile+ (make-pathname :name :wild :type :wild :version :wild))
+(defconstant +wildfile+ (make-pathname :name :wild :type :wild :version :wild)
+  "Constant wild file pathname specifier.")
 
 (defun directory-path-p (path)
   "Return T if PATH is a directory else NIL."
@@ -66,18 +75,21 @@ pathname or a string, transform it into a directory pathname."
                      :name nil :type nil :defaults path)))
 
 (defun merge-homedir-pathnames (pathname &optional (default-version :newest))
+  "Merge PATHNAME on USER-HOMEDIR-PATHNAME."
   (merge-pathnames pathname (user-homedir-pathname) default-version))
 
 (defun ensure-directory-truename (path &key verbose (mode 511))
+  "Ensure directory PATH exists and return its truename."
   (truename (ensure-directories-exist (directory-path path) :verbose verbose :mode mode)))
 
 ;; from UIOP
 (defun set-pathname-suffix (path suffix &rest keys)
+  "Return a pathname like PATH with a custom SUFFIX."
   (apply 'make-pathname :name (concatenate 'string (pathname-name path) suffix)
                         :defaults path keys))
 
-(defvar *tmp-suffix* "-tmp")
-(defvar *tmp* #P"/tmp/")
+(defvar *tmp-suffix* "-tmp" "Default suffix for TMPIZE-PATHNAME")
+(defvar *tmp* #P"/tmp/" "Default temporary directory pathname.")
 
 ;; from UIOP
 (defun tmpize-pathname (path)
@@ -87,10 +99,12 @@ appended."
                              (gensym *tmp-suffix*))))
 
 (defmacro with-directory (dir &body body)
+  "Bind *DEFAULT-PATHNAME-DEFAULTS* to the absolute path of DIR if it exists around BODY."
   `(let ((*default-pathname-defaults* (probe-file ,dir)))
      ,@body))
 
 (defmacro with-tmp (&body body)
+  "Bind *DEFAULT-PATHNAME-DEFAULTS* to *TMP* around BODY."
   `(with-directory *tmp*
      ,@body))
 

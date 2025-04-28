@@ -4,9 +4,11 @@
 (in-package :std/fmt)
 
 (defun iprintln (x &optional (n 2) stream)
+  "Print object X with indentation N to stream followed by a new line."
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))
 
 (defun printer-status ()
+  "Return the current printer status."
   (format t ";;           *print-array* = ~a~%" *print-array*)
   (format t ";;            *print-base* = ~a~%" *print-base*)
   (format t ";;            *print-case* = ~a~%" *print-case*)
@@ -24,6 +26,7 @@
   (format t ";;    *print-right-margin* = ~a~%" *print-right-margin*))
 
 (defun fmt-row (data &optional stream)
+  "Format DATA as a table row to STREAM."
   (format stream "| ~{~A~^ | ~} |~%" data))
 
 (defun format-sxhash (code &optional stream)
@@ -82,6 +85,7 @@ be produced by `sxhash'."
 
 (defun format-tree-segments (node &key (layout :centered)
                                        (node-formatter #'write-to-string))
+  "Format the tree-segments of NODE."
   (unless node
     (return-from format-tree-segments nil)) ; nothing to do here
   (setq node (ensure-cons node))
@@ -151,6 +155,7 @@ be produced by `sxhash'."
 			     (plist nil)
 			     (layout :centered)
                              (node-formatter #'write-to-string))
+  "Format ROOT as a tree of nodes, printing to STREAM."
   (multiple-value-bind (u r l)
       (format-tree-segments (if plist (cons (car root) (group (cdr root) 2)) root)
                             :layout layout
@@ -171,6 +176,7 @@ be produced by `sxhash'."
 (defvar *print-slot-indent* 0)
 
 (defun describe-slot (name value &optional (max-slot-name-length 30) (stream t) (indent *print-slot-indent*))
+  "Describe slot NAME with associated VALUE."
   (format stream "~%~A~VA = ~A" (make-string indent :initial-element #\space) max-slot-name-length name (prin1-to-line value)))
 
 ;; FROM: sb-impl describe
@@ -196,6 +202,7 @@ be produced by `sxhash'."
       (format stream "~@:_No slots."))))
 
 (defun print-slots (object &optional (stream t))
+  "Print the slots of OBJECT to STREAM."
   (let ((*print-right-margin* (or *print-right-margin* 72))
 	(*print-circle* t)
 	(sb-*print-circle-not-shared* t)
@@ -207,6 +214,7 @@ be produced by `sxhash'."
     (%describe-object object stream)))
 
 (defun format-slots (stream &rest slots)
+  "Print SLOTS to STREAM."
   (let ((*print-right-margin* (or *print-right-margin* 72))
 	(*print-circle* t)
 	(*print-circle-not-shared* t)

@@ -6,10 +6,9 @@
 (in-package :std/curry)
 
 ;;; Alexandria Functions
-(declaim (inline ensure-function))
-
 (declaim (ftype (function (t) (values function &optional))
-                ensure-function))
+                ensure-function)
+         (inline ensure-function))
 (defun ensure-function (function-designator)
   "Returns the function designated by FUNCTION-DESIGNATOR:
 if FUNCTION-DESIGNATOR is a function, it is returned, otherwise

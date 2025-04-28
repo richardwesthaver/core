@@ -3,8 +3,10 @@
 ;;; Code:
 (in-package :std/condition)
 
-(defvar *error-message* "An error occured")
-(defvar *handlers* nil)
+(defvar *error-message* "An error occured"
+  "The default error message used in STD-ERROR conditions.")
+(defvar *handlers* nil
+  "A list of condition handlers - often useful in asynchronous contexts.")
 (define-condition std-error (error)
   ((message :initarg :message
             :initform *error-message*
@@ -14,6 +16,7 @@
              (format stream "~A" (error-message condition)))))
 
 (defun std-error (&rest args)
+  "Signal an error of type STD-ERROR."
   (cerror
    "Ignore and continue"
    'std-error
@@ -32,6 +35,7 @@
 (defun std-warning (&optional message)
   (warn 'std-warning :message message))
 
+(declaim (inline car-eql))
 (defun car-eql (a cons)
   (eql a (car cons)))
 
@@ -128,9 +132,11 @@ a default value for required keyword arguments."
   (error "Required argument ~@[~S ~]missing." name))
 
 (define-condition simple-style-warning (simple-warning style-warning)
-  ())
+  ()
+  (:documentation "Simple style warnings."))
 
 (defun simple-style-warning (message &rest args)
+  "Signal a SIMPLE-STYLE-WARNING using format-contorl MESSAGE and format-arguments ARGS."
   (warn 'simple-style-warning :format-control message :format-arguments args))
 
 ;; We don't specify a :report for simple-reader-error to let the
@@ -139,28 +145,33 @@ a default value for required keyword arguments."
 ;; displayed, unless there's special support for that in the
 ;; implementation. But even then it's still inspectable from the
 ;; debugger...
-(define-condition simple-reader-error
-    (sb-int:simple-reader-error)
-  ())
+(define-condition simple-reader-error (sb-int:simple-reader-error)
+  ()
+  (:documentation "Simple reader errors."))
 
 (defun simple-reader-error (stream message &rest args)
+  "Signal an error of type SIMPLE-READER-ERROR."
   (error 'simple-reader-error
          :stream stream
          :format-control message
          :format-arguments args))
 
 (define-condition simple-parse-error (simple-error parse-error)
-  ())
+  ()
+  (:documentation "Simple parse errors."))
 
 (defun simple-parse-error (message &rest args)
+  "Signal an error of type SIMPLE-PARSE-ERROR."
   (error 'simple-parse-error
          :format-control message
          :format-arguments args))
 
 (define-condition simple-program-error (simple-error program-error)
-  ())
+  ()
+  (:documentation "Simple program errors."))
 
 (defun simple-program-error (message &rest args)
+  "Signal an error of type SIMPLE-PROGRAM-ERROR."
   (error 'simple-program-error
          :format-control message
          :format-arguments args))
@@ -191,6 +202,7 @@ a default value for required keyword arguments."
   (:documentation "A condition which is signalled when an unknown argument is encountered."))
 
 (defun unknown-argument-p (value)
+  "Return T if VALUE is a condition of type UNKNOWN-ARGUMENT."
   (typep value 'unknown-argument))
 
 (define-condition missing-argument (simple-error)
@@ -204,6 +216,7 @@ a default value for required keyword arguments."
    (:documentation "A condition which is signalled when an option expects an argument, but none was provided"))
 
 (defun missing-argument-p (value)
+  "Return T if VALUE is a condition of type MISSING-ARGUMENT."
   (typep value 'missing-argument))
 
 (define-condition invalid-item ()
@@ -221,11 +234,13 @@ a default value for required keyword arguments."
 
 (define-condition invalid-argument (simple-error invalid-item) ()
   (:report (lambda (condition stream)
-             (format stream "Invalid argument: ~A~%Reason: ~A" (error-item condition) (error-reason condition)))))
+             (format stream "Invalid argument: ~A~%Reason: ~A" (error-item condition) (error-reason condition))))
+  (:documentation "Invalid argument errors."))
 
 (define-condition conflicting-arguments (simple-error invalid-item) ()
   (:report (lambda (condition stream)
-             (format stream "Conflicting arguments: ~A~%Reason: ~A" (error-item condition) (error-reason condition)))))
+             (format stream "Conflicting arguments: ~A~%Reason: ~A" (error-item condition) (error-reason condition))))
+  (:documentation "Conflicting argument errors."))
 
 (defmacro ignore-some-conditions ((&rest conditions) &body body)
   "Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS
@@ -314,10 +329,12 @@ the 'current' error."
   (:documentation "A condition which is signalled somewhere within the CLOS/MOP machinery."))
 
 (define-condition missing-method (error meta-condition)
-  ((method)))
+  ((method))
+  (:documentation "Missing CLOS method errors."))
 
 (define-condition missing-methods (error meta-condition)
-  ((methods)))
+  ((methods))
+  (:documentation "Multiple missing CLOS methods errors."))
 
 ;;; Wrapped
 (define-condition wrapped-condition ()
@@ -334,7 +351,8 @@ will still be signaled with `signal'."
 	    (symbol (make-condition condition))
 	    (condition condition))))
 
-(define-condition wrapped-error (wrapped-condition) ())
+(define-condition wrapped-error (wrapped-condition) ()
+  (:documentation "A container for transporting errors - usually to another thread."))
 
 (defun wrap-error (condition)
   "Wrap an error. A non-error condition may also be wrapped, though it

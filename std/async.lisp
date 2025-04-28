@@ -6,6 +6,13 @@
 
 ;; based on LPARALLEL
 
+#|
+           promise-base
+             /     \
+          promise  plan
+                   /  \
+ speculation = future  delay
+|#
 ;; NOTE: instead of 'force' we use 'await'
 
 ;; ref: https://github.com/lmj/lparallel
@@ -18,12 +25,14 @@
 (defconstant +no-result+ :null)
 
 (defstruct (promise (:constructor promise))
+  "An placeholder object for a result which is not-yet-known."
   (result +no-result+)
   (lock (make-mutex))
   (cvar nil)
   (availablep t :type boolean))
 
 (defstruct future
+  "A promise which is fulfilled in parallel by evaluating the FN slot."
   (result +no-result+)
   (lock (make-mutex))
   (canceledp nil :type boolean)
@@ -40,7 +49,7 @@
              (when-let ((cvar (promise-cvar obj))) (condition-notify cvar))
              (return t))))
 
-(defun force-promise (obj)
+(defun await-promise (obj)
   (let ((res (promise-result obj))
         (lock (promise-lock obj))
         (cvar (promise-cvar obj)))
@@ -58,7 +67,7 @@
       ;; TODO 2025-04-04: 
       (funcall fn (future-fn obj)))))
 
-(defun force-future (obj)
+(defun await-future (obj)
   ;; task has been stolen from pool
   (setf (future-canceledp obj) t)
   ;; TODO 2025-04-04:
@@ -76,6 +85,7 @@
     (future (future-result obj))))
 
 (defmacro future (&body body)
+  "Create a future which is fulfilled in parallel by the implicit progn BODY."
   `(make-future :fn (lambda () ,@body)))
 
 (defmacro while-waiting-for (obj &body body)
@@ -99,7 +109,7 @@
     ((or promise future)
      (while-waiting-for object
        (etypecase object
-         (future (force-future object))
-         (promise (force-promise object))))
+         (future (await-future object))
+         (promise (await-promise object))))
      (result object))
     (t object)))

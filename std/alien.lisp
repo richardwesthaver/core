@@ -172,8 +172,10 @@ alien (* size-t) with same size as the first value."
   "Convert a lisp boolean to an integer."
   (if val 1 0))
 
-(define-condition invalid-enum-variant (simple-error) ())
-(define-condition invalid-enum-value (simple-error) ())
+(define-condition invalid-enum-variant (simple-error) ()
+  (:documentation "Error signaled when an invalid enum variant is used."))
+(define-condition invalid-enum-value (simple-error) ()
+  (:documentation "Error signaled when an invalid enum value is used."))
 
 (defun invalid-enum-variant (var enum)
   "Signal an INVALID-ENUM-VARIANT error."
@@ -353,7 +355,7 @@ variant associated with this value." type name)
                (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
                             (* (unsigned 32))))))
    (:write (buf num &optional (offset 0))
-           "Write a 32-bit unsigned integer to a foreign char buffer."
+	   "Write a 32-bit unsigned integer to a foreign char buffer."
            (declare (type (alien (* unsigned-char)) buf)
                     (type (unsigned-byte 32) num)
                     (type fixnum offset))
@@ -363,9 +365,11 @@ variant associated with this value." type name)
   ;; complex types
   (octet-vector
    (:read (buf len)
+	  "Read an octet-vector from a foreign unsigned-char buffer."
           (let ((ret (make-octets len)))
             (clone-octets-from-alien buf ret len)))
    (:write (buf vec)
+	   "Write an octet-vector to a foreign unsigned-char buffer."
            (declare (type (alien (* unsigned-char)) buf))
            (clone-octets-to-alien vec buf))))
 
@@ -510,6 +514,7 @@ newly allocated memory."
 
 ;;; Linux
 ;; based on functions from Shinmera's CL-SPIDEV
+;; TODO 2025-04-27: 
 (defun ioctl (fd cmd)
   (sb-alien:with-alien ((result sb-alien:int))
     (multiple-value-bind (wonp error)
@@ -531,7 +536,7 @@ newly allocated memory."
         (error "IOCTL ~a failed: ~a" cmd (sb-impl::strerror error))))
     arg))
 
-(defmacro define-ioctl (name fd cmd))
+;; (defmacro define-ioctl (name fd cmd))
 
 ;;; CLOS
 (defgeneric sap (self)
@@ -542,7 +547,8 @@ such alien exists.")
   (:method ((self integer)) (sb-alien::int-sap self))
   (:method ((self sb-alien-internals:alien-value)) (alien-sap self)))
 
-(defgeneric (setf sap) (new self))
+(defgeneric (setf sap) (new self)
+  (:documentation "Set the value of system-area-pointer SELF to NEW."))
 
 ;; TODO 2024-12-31: 
 (defgeneric free (self)

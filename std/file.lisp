@@ -6,15 +6,21 @@
 (in-package :std/file)
 
 (define-condition unknown-file-type (file-error) ()
-  (:report (lambda (c s) (format s "unknown file type: ~A" (file-error-pathname c)))))
+  (:report (lambda (c s) (format s "unknown file type: ~A" (file-error-pathname c))))
+  (:documentation "Error signaled when the type of a file is unknown."))
 
 (defun unknown-file-type (file)
+  "Signal an error of type UNKNOWN-FILE-TYPE."
   (error 'unknown-file-type :pathname file))
 
-(defgeneric file (self))
-(defgeneric (setf file) (new self))
-(defgeneric dir (self))
-(defgeneric (setf dir) (new self))
+(defgeneric file (self)
+  (:documentation "Return the file associated with SELF."))
+(defgeneric (setf file) (new self)
+  (:documentation "Set the value of the file associated with SELF to NEW."))
+(defgeneric dir (self)
+  (:documentation "Return the directory associated with SELF."))
+(defgeneric (setf dir) (new self)
+  (:documentation "Set the value of the directory associated with SELF to NEW."))
 
 (defun tmpfile (size)
   "Create an anonymous temporary file of the given size. Returns a file descriptor."
@@ -59,6 +65,7 @@
     (octet-vector=/unsafe v1 v2 start1 end1 start2 end2)))
 
 (defun file-size-in-octets (file)
+  "Return the file-size of FILE in octets."
   (multiple-value-bind (path namestring)
       (etypecase file
         (string (values (pathname file)
@@ -450,18 +457,22 @@ it only contains spaces or tab characters."
            (setf blank-line nil)))))))
 
 (defun probe-merge-file (name path)
+  "Merge paths NAME on PATH and call PROBE-FILE on the result."
   (probe-file (merge-pathnames name path)))
 
 (defun probe-delete-file (file)
+  "Delete FILE if it exists, else return NIL."
   (when (probe-file file)
     (delete-file file)))
 
 (defun probe-directory (directory)
+  "Probe DIRECTORY, ensuring it is a valid directory name and exists."
   (when-let ((dir (probe-file directory))) 
     (when (directory-path-p dir)
       dir)))
 
 (defun probe-delete-directory (directory &key (recursive t))
+  "Delete DIRECTORY if it exists, when RECURSIVE is non-nil, delete recursively."
   (when (probe-file directory)
     (delete-directory directory :recursive recursive)))
 

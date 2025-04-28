@@ -15,12 +15,42 @@
                            ,@body))))
 
 (defun without-props (plist props)
-  (loop :for (options value) :on plist :by #'cddr
-        :append (unless (member options props)
-                  (list options value))))
+  "Return a new PLIST with all keys in PROPS dropped."
+  (loop for (options value) on plist by #'cddr
+        append (unless (member options props)
+                 (list options value))))
 
 ;; TODO 2024-10-24: 
-(defmacro defclass* (name direct-superclasses direct-slots &rest opts))
+(defmacro defclass* (name direct-superclasses direct-slots &rest opts)
+  "Convenience wrapper for DEFCLASS - always binds the following slot args to
+default values unless overwritten at runtime:
+
+:INITARG
+:ACCESSOR"
+  `(defclass ,name ,direct-superclasses 
+     ,(mapcar (lambda (x) 
+                (etypecase x
+                  (atom `(,x :initarg ,(sb-int:keywordicate x) :accessor ,(sb-int:symbolicate name '- x)))
+                  (cons 
+                   (let ((%name (car x))
+                         (%args (cdr x)))
+                     `(,%name ,@(std:acond
+                                 ((getf x :initarg)
+                                  (remf x :initarg)
+                                  (if-let ((acc (getf x :accessor)))
+                                    (progn
+                                      (remf x :accessor)
+                                      `(:initarg ,it :accessor ,acc ,@%args))
+				    `(:initarg ,it :accessor ,(sb-int:symbolicate name '- x) ,@%args)))
+				 ((getf x :accessor)
+				  (remf x :accessor)
+				  (if-let ((acc (getf x :intargr)))
+				    (progn
+				      (remf x :initarg)
+				      `(:accessor ,it :initarg ,acc ,@%args))
+				    `(:accessor ,it :initarg ,%name ,@%args)))))))))
+       direct-slots)
+     ,@opts))
 
 ;; Based on INCONGRUENT-METHODS:DEFINE-CLASS
 (defmacro define-class (name direct-superclasses direct-slots &body body)
@@ -33,26 +63,24 @@ definitions."
                          (without-props (rest x)
                            '(:reader :writer :accessor)))
                    x))
-
              (slot-accessor-definition (x)
                (destructuring-bind (slot-name &rest options) x
                  (loop :for (options value) :on options :by #'cddr
                        :append
-                       (case options
-                         (:accessor
-                          `((defmethod ,value ((,self ,name))
-                              (slot-value ,self ',slot-name))
-                            (defmethod (setf ,value)
-                                (new (,self ,name))
-                              (setf (slot-value ,self ',slot-name) new))))
-                         (:reader
-                          `((defmethod ,value ((,self ,name))
-                              (slot-value ,self ',slot-name))))
-                         (:writer
-                          `((defmethod (setf ,value)
-                                (new (,self ,name))
-                              (setf (slot-value ,self ',slot-name) new))))))))
-
+                          (case options
+                            (:accessor
+                             `((defmethod ,value ((,self ,name))
+                                 (slot-value ,self ',slot-name))
+                               (defmethod (setf ,value)
+                                   (new (,self ,name))
+                                 (setf (slot-value ,self ',slot-name) new))))
+                            (:reader
+                             `((defmethod ,value ((,self ,name))
+                                 (slot-value ,self ',slot-name))))
+                            (:writer
+                             `((defmethod (setf ,value)
+                                   (new (,self ,name))
+                                 (setf (slot-value ,self ',slot-name) new))))))))
              (method-definition (definition)
                (destructuring-bind (method-name lambda-list &rest body)
                    definition
@@ -64,7 +92,6 @@ definitions."
                      `(define-class-method ,method-name ((,(intern "SELF") ,name)
                                                          ,@lambda-list)
                         ,@body)))))
-
       `(progn
          (defclass ,name ,direct-superclasses
            ,(mapcar #'slot-definition direct-slots))

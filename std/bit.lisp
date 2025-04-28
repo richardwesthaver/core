@@ -11,6 +11,7 @@
 
 ;;; Bits
 (defun make-bits (length &rest args)
+  "Make an array of bits with dimensions LENGTH and keyword arguments ARGS."
   (apply #'make-array length (nconc (list :element-type 'bit) args)))
 
 ;; https://graphics.stanford.edu/~seander/bithacks.html
@@ -51,12 +52,14 @@
   )
 
 (defun int-list-bits (n)
+  "Return the list of bits which compose the fixnum N."
   (declare (fixnum n))
   (let ((bits '()))
     (dotimes (position (integer-length n) bits)
       (push (ldb (byte 1 position) n) bits))))
 
 (defun int-bit-vector (n)
+  "Return the bit representation of N as a vector of bits."
   (declare (fixnum n))
   (let ((bits (make-array 0 :element-type 'bit :adjustable t :fill-pointer t)))
     (dotimes (position (integer-length n) bits)
@@ -175,11 +178,13 @@ when creating the bitfield slot instance."))
    (%initform :initarg :initform :reader bitfield-slot-initform)
    (%start :initarg :start :reader bitfield-slot-start)
    (%end :initarg :end :reader bitfield-slot-end)
-   (%size :initarg :size :reader bitfield-slot-size)))
+   (%size :initarg :size :reader bitfield-slot-size))
+  (:documentation "Superclass for slot objects of a BITFIELD class."))
 
 ;;; Boolean Slots
 (defclass bitfield-boolean-slot (bitfield-slot)
-  ())
+  ()
+  (:documentation "Boolean bitfield slots."))
 
 (defmethod bitfield-slot-pack ((slot bitfield-boolean-slot) value-form)
   `(if ,value-form 1 0))
@@ -198,7 +203,8 @@ when creating the bitfield slot instance."))
   ((%offset
     :type integer
     :initarg :offset
-    :reader bitfield-integer-slot-offset)))
+    :reader bitfield-integer-slot-offset))
+  (:documentation "Integer bitfield slots."))
 
 (defmethod bitfield-slot-pack ((slot bitfield-integer-slot) value-form)
   (let ((offset (bitfield-integer-slot-offset slot))
@@ -265,7 +271,8 @@ when creating the bitfield slot instance."))
   ((%objects
     :type list
     :initarg :objects
-    :reader bitfield-member-slot-objects)))
+    :reader bitfield-member-slot-objects))
+  (:documentation "Bitfield slots containing a value from a mutually-exclusive list of options."))
 
 (defmethod bitfield-slot-pack ((slot bitfield-member-slot) value-form)
   `(ecase ,value-form
@@ -499,6 +506,8 @@ the element-type of the returned string."
        finally (return string))))
 
 (defun octets-to-integer (octet-vec &optional (bytes (length octet-vec)))
+  "Return the integer representation of OCTET-VEC by reading BYTES number of
+bytes from the start."
   (declare (type (simple-array (unsigned-byte 8)) octet-vec))
   (do ((j 0 (1+ j))
        (sum 0))
@@ -506,6 +515,7 @@ the element-type of the returned string."
     (setf sum (+ (aref octet-vec j) (ash sum 8)))))
 
 (defun integer-to-octets (bignum &optional (n-bits (integer-length bignum)))
+  "Return an octet-vector representation of BIGNUM using N-BITS number of bits."
   (let* ((n-bytes (ceiling n-bits 8))
          (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
     (declare (type (simple-array (unsigned-byte 8)) octet-vec))
@@ -515,11 +525,15 @@ the element-type of the returned string."
           finally (return octet-vec))))
 
 (defun octets-to-integer-le (octet-vec &optional (bytes (length octet-vec)))
+  "Return the integer representation of OCTET-VEC in little-endian by reading
+BYTES number of bytes from the start."
   (declare (type (simple-array (unsigned-byte 8)) octet-vec))
   (loop for i from 0 below bytes
         sum (ash (aref octet-vec i) (* 8 i))))
 
 (defun integer-to-octets-le (bignum &optional (n-bits (integer-length bignum)))
+  "Return an octet-vector representation of BIGNUM in little-endian using N-BITS
+number of bits."
   (let* ((n-bytes (ceiling n-bits 8))
          (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
     (declare (type (simple-array (unsigned-byte 8)) octet-vec))
@@ -528,12 +542,13 @@ the element-type of the returned string."
           finally (return octet-vec))))
 
 (defun read-little-endian (s &optional (bytes 4))
-  "Read a number in little-endian format from an byte (octet) stream S,
+  "Read a number in little-endian format from a byte (octet) stream S,
 the number having BYTES octets (defaulting to 4)."
   (loop for i from 0 below bytes
         sum (ash (read-byte s) (* 8 i))))
 
 (defun write-little-endian (i s &optional (bytes 4))
+  "Write a number to a byte stream S in little-endian having BYTES octets."
   (write-sequence (integer-to-octets-le i bytes) s))
 
 (defun make-octets (dimensions &rest args)
@@ -541,4 +556,5 @@ the number having BYTES octets (defaulting to 4)."
   (apply 'make-array dimensions :element-type 'octet args))
 
 (defun octets (&rest bytes)
+  "Return an octet-vector with initial contents BYTES."
   (make-octets (length bytes) :initial-contents bytes))
