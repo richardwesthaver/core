@@ -153,7 +153,8 @@
    :rdb-sink
    :rdb-log-schema
    :cursor-handle
-   :simple-rdb-warning))
+   :simple-rdb-warning
+   :schema-from-rdb-column-families))
 
 (defpackage :rdb/cli
   (:use :cl :std :cli :rdb :db :seq)

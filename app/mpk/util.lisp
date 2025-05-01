@@ -23,9 +23,12 @@
   (merge-pathnames path *mpk-data-directory*))
 
 (defun mpk-ensure-directories ()
-  (maphash-values (lambda (p) (ensure-directories-exist p :verbose t)) *mpk-media-collections*)
-  (ensure-directories-exist *mpk-user-directory* :verbose t))
-  
+  (values
+   (maphash-values (lambda (p) (ensure-directories-exist p :verbose t)) *mpk-media-collections*)
+   (ensure-directories-exist *mpk-user-directory* :verbose t)
+   (ensure-directories-exist *mpk-data-directory* :verbose t)
+   (ensure-directories-exist *mpk-cache-directory* :verbose t)))
+
 ;;  FIX 2025-04-18: takes a long time, do better
 (defun mpk-music-metadata-scan (&optional (dir (directory-path (mpk-media-collection :music))))
   (log:info! "walking music directory: ~A" dir)
@@ -38,8 +41,10 @@
           (setf (gethash y *music-metadata*) meta)))))
   *music-metadata*)
 
+;; TODO 2025-04-30: 
 (defun mpk-music-metadata-scan-parallel (&optional (dir (directory-path (mpk-media-collection :music))))
-  (with-task-pool (tp)))
+  (with-task-pool (tp)
+    (nyi!)))
 
 ;;  REVIEW 2025-04-18: good case for threading
 #|

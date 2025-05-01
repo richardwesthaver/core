@@ -190,6 +190,14 @@ object. (SAP CF) is the raw pointer."))
 (defaccessor sap ((self rdb-column-family)) (sap (cf self)))
 (defaccessor column-opts ((self rdb-column-family)) (rdb-cf-opts (cf self)))
 
+(defun schema-from-rdb-column-families (columns)
+  "Convert a sequence of RDB-COLUMN-FAMILYs to a SCHEMA."
+  (apply 'make-schema 
+	 (map 'list 
+	      (lambda (x)
+		(make-field :name (keywordicate (name x)) :type (column-type x)))
+		columns)))
+
 (defmethod destroy-column ((self rdb-column-family) &optional error)
   (destroy-column (cf self) error))
 
@@ -451,7 +459,7 @@ extractor."
 
 (defmethod create-column ((db rdb-database) (col rdb-column-family))
   (if (equal (name col) *rdb-default-column-name*)
-      (rdb-default-column-warning "ignoring attempt to create 'default' column-family: ~A" col)      
+      (rdb-default-column-warning (format nil "ignoring attempt to create 'default' column-family: ~A" col))
       (setf (sap col) (create-cf-raw (sap db) (name col) (sap (column-opts col)))))
   ;; (open-column db col)
   col)
@@ -506,7 +514,7 @@ extractor."
 (defmethod db-metadata ((self rdb-database) &optional type)
   (db-metadata (db self) type))
 
-(defmethod db-stats ((self rdb-database) &optional type)
+(defmethod db-stats ((self rdb-database) &optional (type (rocksdb-statistics-level "all")))
   (db-stats (db self) type))
 
 (defmethod ingest-db ((self rdb-database) files &key (opts (rocksdb-ingestexternalfileoptions-create))
@@ -599,7 +607,7 @@ extractor."
   (merge-kv-raw (sap self) (kv-key kv) (kv-val kv) opts))
 
 (defmethod add-column (col (self rdb-database))
-  (vector-push-extend col (columns self)))
+  (vector-push-extend col (coerce (columns self) 'vector)))
 
 (defmethod destroy-columns ((self rdb-database))
   (with-slots (columns) self

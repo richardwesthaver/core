@@ -6,8 +6,8 @@
   :entry-point "mpk/cli::start-mpk"
   :components ((:file "pkg")
                (:file "mpd")
+	       (:file "var")
                (:file "proto")
-               (:file "var")
                (:file "util")
                (:file "db")
                (:file "cfg")

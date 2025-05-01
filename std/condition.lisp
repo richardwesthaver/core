@@ -2,11 +2,25 @@
 
 ;;; Code:
 (in-package :std/condition)
-
+(declaim (optimize (speed 3)))
+;;; Vars
 (defvar *error-message* "An error occured"
   "The default error message used in STD-ERROR conditions.")
 (defvar *handlers* nil
   "A list of condition handlers - often useful in asynchronous contexts.")
+
+;;; Utils
+(declaim (inline car-eql))
+(defun car-eql (a cons)
+  "Return T if the CAR of CONS is EQL to A."
+  (eql a (car cons)))
+
+(defmacro nyi! (&optional comment)
+  `(prog1
+       (error "Not Yet Implemented!")
+     (when ',comment (print ',comment))))
+
+;;; Standard Conditions
 (define-condition std-error (error)
   ((message :initarg :message
             :initform *error-message*
@@ -35,10 +49,7 @@
 (defun std-warning (&optional message)
   (warn 'std-warning :message message))
 
-(declaim (inline car-eql))
-(defun car-eql (a cons)
-  (eql a (car cons)))
-
+;;; Deferror
 (defmacro deferror (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an error condition."
   (let ((fun (member :auto options :test #'car-eql))
@@ -91,7 +102,8 @@
             ',name
             :item item
             (when reason (list :reason reason)))))
-      
+
+;;; Defwarning      
 (defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an warning condition."
   (let ((fun (member :auto options :test #'car-eql)))
@@ -120,17 +132,14 @@
       :format-control fmt
       :format-arguments args)))
 
-(defmacro nyi! (&optional comment)
-  `(prog1
-       (error "Not Yet Implemented!")
-     (when ',comment (print ',comment))))
-
+;;; Conditions
 (defun required-argument (&optional name)
   "Signals an error for a missing argument of NAME. Intended for
 use as an initialization form for structure and class-slots, and
 a default value for required keyword arguments."
   (error "Required argument ~@[~S ~]missing." name))
 
+;;;; Simple
 (define-condition simple-style-warning (simple-warning style-warning)
   ()
   (:documentation "Simple style warnings."))
@@ -242,6 +251,7 @@ a default value for required keyword arguments."
              (format stream "Conflicting arguments: ~A~%Reason: ~A" (error-item condition) (error-reason condition))))
   (:documentation "Conflicting argument errors."))
 
+;;; Macros
 (defmacro ignore-some-conditions ((&rest conditions) &body body)
   "Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS
 list determines which specific conditions are to be ignored."
@@ -287,7 +297,8 @@ Examples:
 			     (:abort  `(when ,gflag ,@forms))
 			     (:always `(progn ,@forms)))))))))
 
-;; hunchentoot
+;;; Debugger
+;; from hunchentoot
 (defvar *catch-errors-p* nil
   "When non-nil catch and log errors instead of invoking the debugger.")
 
@@ -325,6 +336,7 @@ the 'current' error."
     (error (condition)
       (format nil "Could not generate backtrace: ~A." condition))))
 
+;;; Meta
 (define-condition meta-condition () ()
   (:documentation "A condition which is signalled somewhere within the CLOS/MOP machinery."))
 
@@ -336,7 +348,7 @@ the 'current' error."
   ((methods))
   (:documentation "Multiple missing CLOS methods errors."))
 
-;;; Wrapped
+;;;; Wrapped
 (define-condition wrapped-condition ()
   ((value :type condition :reader wrapped-condition-value))
   (:documentation 

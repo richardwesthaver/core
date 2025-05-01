@@ -37,13 +37,6 @@
 (defvar *worker*)
 (defvar *work-priority* :default)
 (defvar *scheduler-class* 'biased-scheduler)
-(defvar *kernel* #'funcall
-  "The current thread's kernel, or nil.")
-
-(defun %pool (&rest args) (apply 'funcall args))
-(defvar *pool-kernel* '%pool
-  "A function which drives THREAD-POOLs.")
-
 (defvar *thread-pool* nil)
 ;; on core-i7 3.4ghz, a single spin takes ~ 2.5 microseconds.
 (defvar *default-spin-count* 2000
@@ -56,7 +49,12 @@ threaded context.")
 (defvar *lisp-exiting-p* nil
   "True if the Lisp process is exiting - used for skipping auto-replacement of killed workers during shutdown.")
 
-(defun %worker (&rest args) 
+(defun %pool (&rest args) (apply 'funcall args))
+
+(defvar *pool-kernel* '%pool
+  "A function which drives THREAD-POOLs.")
+
+(defun %worker (&rest args)
   (values-list 
    (mapcar 
     (lambda (x)
@@ -65,6 +63,9 @@ threaded context.")
 	(cons (apply (car x) (cdr x)))
 	(t x)))
     args)))
+
+(defvar *kernel* nil
+  "The current thread's kernel, or nil. A kernel is simply a funcallable symbol.")
 
 (defvar *worker-kernel* '%worker
   "A function which drives WORKERs.")
@@ -105,7 +106,7 @@ control (or not)."
   (when (typep condition 'error)
     (invoke-transfer-error condition)))
 
-(defconstant +current-work+ 'current-work)
+(defconstant +work-tag+ 'my-work)
 
 (defvar *debugger-error* nil
   "Track the error inside the debugger for the `transfer-error' restart.")
@@ -138,7 +139,7 @@ that was created in `body'."
 
 (defun transfer-error-restart (&optional (err *debugger-error*))
   (when err
-    (throw +current-work+ (wrap-error err))))
+    (throw +work-tag+ (wrap-error err))))
 
 (defun call-with-tracked-error (condition body-fn)
   (when *worker*
@@ -168,7 +169,7 @@ that was created in `body'."
           (invoke-debugger condition)))))
 
 (defmacro with-work-context (&body body)
-  `(catch +current-work+ ,@body))
+  `(catch +work-tag+ ,@body))
 
 (defun %call-with-work-handler (fn)
   (declare (function fn))
@@ -574,14 +575,12 @@ FUNCTION."
        ,@body)))
 
 ;;; Worker
-(defclass worker-notifications ()
-  ;; to-worker
-  ((%rx :initform (make-queue))
+(defclass worker-status ()
+  ((%rx :initform (sb-concurrency:make-gate))
    ;; from-worker
-   (%tx :initform (make-queue))
-   (%exit :initform (make-queue))))
+   (%tx :initform (make-queue :fixed-capacity 8))))
 
-(defclass worker (worker-notifications)
+(defclass worker (worker-status)
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
 	   :accessor worker-thread
 	   :initarg :thread)
@@ -638,10 +637,10 @@ FUNCTION."
       (deletef *worker-threads* th))))
 
 (defun send-worker-start (worker)
-  (print (push-queue 'proceed (slot-value worker '%rx))))
+  (assert (sb-concurrency:open-gate (slot-value worker '%rx))))
 
 (defun receive-worker-start (worker)
-  (assert (eq 'proceed (pop-queue (slot-value worker '%rx)))))
+  (assert (sb-concurrency:gate-open-p (slot-value worker '%rx))))
 
 (defun receive-worker-status (worker)
   (ecase (pop-queue (slot-value worker '%tx))
@@ -653,10 +652,10 @@ FUNCTION."
   (push-queue status (slot-value worker '%tx)))
 
 (defun notify-exit (worker)
-  (push-queue 'exit (slot-value worker '%exit)))
+  (sb-concurrency:close-gate (slot-value worker '%rx)))
 
-(defun wait-for-worker (worker)
-  (assert (eq 'exit (pop-queue (slot-value worker '%exit)))))
+(defun wait-for-worker (worker &optional timeout)
+  (assert (sb-concurrency:wait-on-gate (slot-value worker '%rx) :timeout timeout)))
 
 ;;;; Worker Protocol
 (defgeneric workers (self))
@@ -961,9 +960,11 @@ and execution of concurrent work using a pool of 'worker' threads."))
 
 (defmacro with-fill-workers-handler (workers &body body)
   `(unwind-protect (progn ,@body)
-     (sb-sequence:dosequence (worker ,workers)
-       (when (typep worker 'worker)
-         (ignore-errors (terminate-thread (worker-thread worker)))))))
+     (map 'simple-vector
+          (lambda (w)
+            (when (typep w 'worker)
+              (ignore-errors (terminate-thread (worker-thread w)))))
+          ,workers)))
 
 (defun %fill-workers (workers pool)
   (dotimes (i (length workers))
@@ -1022,7 +1023,7 @@ When USE-CALLER is non-nil the calling thread may be enlisted to steal work from
 
 (defun check-kernel ()
   "Check the current value of *KERNEL*, ensuring it is bound appropriately
-according to the current thread (worker or super). STORE-VALUE
+according to the current thread (worker, pool, super). STORE-VALUE
 restarts is provided. *KERNEL* is returned."
   ;; TODO 2025-04-21: 
   (or (and *worker* (eql *kernel* *worker-kernel*))
@@ -1057,11 +1058,11 @@ provided. *THREAD-POOL* is returned."
 (defun worker-count (pool)
   (length (workers pool)))
 
-(defun current-worker-count ()
+(defun worker-count* ()
   (worker-count *thread-pool*))
 
-(defun current-worker-index ()
-  "If called from inside a worker return the worker's assigned index, ranging from 0 to (current-worker-count)."
+(defun worker-index* ()
+  "If called from inside a worker return the worker's assigned index, ranging from 0 to (worker-count*)."
   (when-let ((worker *worker*))
     (worker-index worker)))
 
@@ -1075,6 +1076,25 @@ provided. *THREAD-POOL* is returned."
                (let ((*handlers* ,handlers))
                  (,body-fn)))
              #',body-fn)))))
+
+;; TODO 2025-04-30: 
+(defmacro pool-lambda (&body body)
+  (with-gensyms (body-fn handlers pool)
+    `(flet ((,body-fn (state) ,@body))
+       (declare (optimize (speed 3) (safety 0))
+                (type (function (t) (values t t)) ,body-fn))
+       (let ((,handlers *handlers*)
+             (,pool *thread-pool*))
+	 (if ,handlers
+	     (lambda (state)
+	       (let ((*handlers* ,handlers)
+                     (*thread-pool* ,pool))
+		 (,body-fn state)))
+             (lambda (state)
+               (let ((*thread-pool* ,pool))
+	         (,body-fn state))))))))
+
+;; (defmacro super-lambda (&body body))
 
 (defun make-channeled-work (channel fn args)
   (declare (channel channel) (function fn) (list args))
@@ -1156,7 +1176,7 @@ to appear on the queue."
 (defun broadcast-work (function &rest args)
   "Wait for current and pending work to complete, if any, then
 simultaneously execute the given work inside each worker. Wait until
-these tasks finish, then return the results in a vector.
+this work is complete, then return the results in a vector.
 
 Calling `broadcast-work' from inside a worker is an error."
   (when *worker*
@@ -1164,20 +1184,19 @@ Calling `broadcast-work' from inside a worker is an error."
   (let* ((function (std/curry:ensure-function function))
 	 (*kernel* (check-kernel))
 	 (*thread-pool* (check-thread-pool))
-         (worker-count (current-worker-count))
+         (worker-count (worker-count*))
          (channel (make-instance 'channel))
-         ;; TODO: replace queues with semaphores
-         (from-workers (make-queue))
-         (to-workers (make-queue)))
+         (from-workers (make-semaphore :count worker-count))
+         (to-workers (make-semaphore :count worker-count)))
     (loop repeat worker-count 
           do (submit-work channel (lambda ()
-                                    (push-queue t from-workers)
-                                    (pop-queue to-workers)
+                                    (try-semaphore from-workers)
+                                    (wait-on-semaphore to-workers)
                                     (apply function args))))
     (loop repeat worker-count 
-          do (pop-queue from-workers))
+          do (wait-on-semaphore from-workers))
     (loop repeat worker-count 
-          do (push-queue t to-workers))
+          do (try-semaphore to-workers))
     (map-into (make-array worker-count) (lambda () (receive-result channel)))))
 
 (defun %exit-threads ()

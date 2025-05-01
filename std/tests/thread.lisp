@@ -69,6 +69,11 @@
 
 (deftest timers ()
   "Test various timer functionality."
-  (sb-int:with-progressive-timeout (ttl :seconds 2)
+  (sb-int:with-progressive-timeout (ttl :seconds 1)
     (sleep 0.1)
-    (is (/= (ttl) 2.0))))
+    (is (/= (ttl) 1))))
+
+(deftest thread-pool ()
+  "Test THREAD-POOLs."
+  (let ((tp (make-thread-pool 8)))
+    (istype 'thread-pool tp)))

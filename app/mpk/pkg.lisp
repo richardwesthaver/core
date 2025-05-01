@@ -10,7 +10,7 @@
 
 ;;; Code:
 (defpackage :mpk/mpd
-  (:use :cl :std :sb-bsd-sockets :net/core :net/util :config)
+  (:use :cl :std :sb-bsd-sockets :net/core :net/util :config :time)
   (:nicknames :mpd)
   (:export
    :with-mpc
@@ -70,7 +70,7 @@
    :artist
    :albumartist
    :album
-   :date
+   ;; :date
    :genre
    :composer
    :position-in-playlist
@@ -120,15 +120,19 @@
    #:*user-mpkrc*
    #:init-mpkrc
    #:mpk-prev
-   #:mpk-next))
+   #:mpk-next
+   #:*mpk-db-id-seed*
+   #:*mpk-db-meta-directory*
+   #:*mpk-db-directory*))
 
 (defpackage :mpk/db
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
-  (:export :*mpk-db-directory* :*mpk-db* :*mpk-db-schema*
-   :mpk-db :mpk-db-init))
+  (:export :*mpk-db* :*mpk-db-schema* :mpk-db 
+   :mpk-db-init :mpk-db-shutdown
+   :mpk-db-info))
 
 (pkg:defpkg :mpk-user
-  (:use :cl :std :cl-user :std-user :sb-ext)
+  (:use :core-lisp)
   (:use-reexport :mpk :mpk/db :mpk/mpd))
 
 (defpackage :mpk/cli

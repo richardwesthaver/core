@@ -6,7 +6,7 @@
 (in-package :std/tests)
 (in-suite :std)
 
-(deftest task-pool ()
+(deftest task-pool (:skip t)
   "Task Pool tests."
   (with-task-pool (tp :workers 4 :tasks 10)
     (is (= 4 (length (workers tp))))

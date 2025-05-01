@@ -32,9 +32,9 @@ and we may query the user for input.")
         sb-ext:*save-hooks*
         sb-ext:*exit-hooks*))
 
-(defvar *default-arena-size* (* 10 1024 1024 1024))
+(defparameter *default-arena-size* (* 10 1024 1024 1024))
 
-(defvar *default-heap-size* (ash 1 16))
+(defparameter *default-heap-size* (ash 1 16))
 
 (defun current-lisp-implementation ()
   "Return the current lisp implemenation as a list: (TYPE VERSION FEATURES)"
@@ -285,13 +285,14 @@ Core i7 4770K, do **NOT** support RTM."
 
 ;;; Logical Pathnames
 (defmacro define-logical-pathname (host path &rest translations)
-  (setf translations 
-	(append `((,(format nil "~A" host) ,path)) translations))
+  (unless (null path)
+    (setf translations 
+	  (append `((,(format nil "~A" host) ,path)) translations)))
   `(setf (logical-pathname-translations ,host)
          ;; eval second element only
-	 ',(mapcar (lambda (x) 
+	 ',(mapcar (lambda (x)
                      (setf (cadr x) (eval (cadr x)))
-                     x) 
+                     x)
                    translations)))
 
 (define-logical-pathname "STASH" "/opt/stash/"
@@ -302,9 +303,9 @@ Core i7 4770K, do **NOT** support RTM."
   ("**;*.*.*" "/opt/scratch/**/*.*"))
 ;; redefine the sys table
 (define-logical-pathname "SYS" "/usr/local/lib/sbcl/"
-  ("SYS:SRC;**;*.*.*" #P"/usr/local/src/sbcl/src/**/*.*")
-  ("SYS:CONTRIB;**;*.*.*"
-   #P"/usr/local/lib/sbcl/contrib/**/*.*")
-  ("SYS:OUTPUT;**;*.*.*"
-   (translate-logical-pathname "STASH:OUTPUT;**;*.*.*"))
-  ("SYS:TMP;**;*.*.*" "/tmp/**/*.*"))
+  ("SRC;**;*.*.*" #P"/usr/local/src/sbcl/src/**/*.*")
+  ("CONTRIB;**;*.*.*"
+   #P"/usr/local/src/sbcl/contrib/**/*.*")
+  ("OUTPUT;**;*.*.*"
+   (translate-logical-pathname "STASH:OUTPUT;sbcl;**;*.*.*"))
+  ("TMP;**;*.*.*" "/tmp/**/*.*"))

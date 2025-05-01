@@ -29,8 +29,6 @@
 ;;; Code:
 (in-package :net/srv)
 
-(declaim (sb-ext:start-block))
-
 (pkg:defpkg :net/srv/ext
   (:use :cl :std :net/core :cli/tools/net)
   (:export :caddy-service :nginx-service))
@@ -303,6 +301,9 @@ had returned RESULT.  See the source code of REDIRECT for an example."
                        (or (address (service self)) "*")
                        (port (service self)))))
   (values))
+
+(defmethod stop ((self multi-threaded-engine) &key)
+  (sb-thread:join-thread (process self)))
                     
 ;; Note from Hunchentoot:
 #|
@@ -430,11 +431,6 @@ had returned RESULT.  See the source code of REDIRECT for an example."
         (ignore-errors
          (close (socket-make-stream (socket *service*)) :abort t))
         (service-log :error "Error while creating worker thread for new connection: ~A" c)))))
-
-(defmethod stop ((self engine) &key)
-  self)
-(defmethod stop ((self thread-per-connection-engine) &key)
-  (sb-thread:join-thread (process self)))
 
 (defun too-many-engine-requests (self socket)
   (declare (ignore socket))
@@ -593,22 +589,21 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defmethod started-p ((self net-service))
   (and (socket self) t))
                         
-(defmethod stop :around ((self net-service) &key graceful)
-  (with-mutex ((shutdown-lock self))
+(defmethod stop ((self net-service) &key graceful)
+  (sb-thread:with-recursive-lock ((shutdown-lock self))
     (setf (shutdown-p self) t)
-    (call-next-method)
+    ;; (call-next-method)
     (when graceful
-      (with-mutex ((shutdown-lock self))
-        (when (plusp (request-count self))
-          (sb-thread:condition-wait (shutdown-queue self)
-                                    (shutdown-lock self)))))
-    (stop (engine self))
-    (std:if-let ((sock (socket self)))
-      (progn
-        (sb-bsd-sockets:socket-close sock)
-        (setf (socket self) nil))
-      (warn 'protocol-warning :message "service socket unbound"))
-    self))
+      (when (plusp (request-count self))
+        (sb-thread:condition-wait (shutdown-queue self)
+                                  (shutdown-lock self)))))
+  (stop (engine self))
+  (std:if-let ((sock (socket self)))
+    (progn
+      (sb-bsd-sockets:socket-close sock)
+      (setf (socket self) nil))
+    (warn 'protocol-warning :message "service socket unbound"))
+  self)
 
 (defmethod initialize-connection-hook ((self net-service) stream)
   stream)

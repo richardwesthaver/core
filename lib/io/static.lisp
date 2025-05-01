@@ -296,7 +296,8 @@ within its dynamic extent. The vector is freed upon exit."
 ;; approach and comparing in the future - I think it's faster but less
 ;; convenient.
 
-(defvar *default-static-stream-size* 10)
+(defvar *default-static-stream-size* 100)
+
 (defclass static-stream (io-stream sb-gray:fundamental-stream)
   ((buffer :initform (make-static-vector *default-static-stream-size*)
            :initarg :buffer 
@@ -368,27 +369,26 @@ within its dynamic extent. The vector is freed upon exit."
 
 (defmacro with-static-stream ((var &rest args
                                    &key (element-type ''(unsigned-byte 8))
-                                        initial-contents 
+                                        (size *default-static-stream-size*)
+                                        initial-contents
                                         initial-element)
                               &body body &environment env)
   "Bind VAR to a static stream with an internal static vector buffer and execute BODY
 within its dynamic extent. The static vector is freed upon exit."
   (declare (ignorable element-type initial-contents initial-element))
-  (let ((length (or (when (numberp (car args))
-                      (pop args))
-                    *default-static-stream-size*)))
-    (multiple-value-bind (real-element-type length type-spec)
-        (canonicalize-args env element-type length)
+  (multiple-value-bind (real-element-type size)
+        (canonicalize-args env element-type size)
       (let ((args (copy-list args)))
-        (remf args :element-type)
+	(remf args :element-type)
+	(remf args :size)
         `(sb-sys:without-interrupts
-           (with-open-stream (,var 
+           (with-open-stream (,var
                               (make-instance 'static-stream
-                                :buffer (make-static-vector ,length ,@args 
+                                :buffer (make-static-vector ,size ,@args 
                                                             :element-type ,real-element-type)))
-             (declare (type ,type-spec ,var))
+             (declare (type static-stream ,var))
              (unwind-protect
-                  (sb-sys:with-local-interrupts ,@body))))))))
+                  (sb-sys:with-local-interrupts ,@body)))))))
 
 (defmacro with-static-streams (((var &rest args) &rest more-clauses)
                                &body body)

@@ -280,7 +280,8 @@
    :encode-universal-time-with-tz
    :decode-universal-time-with-tz
    :octets-to-timestamp
-   :timestamp-to-octets))
+   :timestamp-to-octets
+   :duration))
 
 (defpackage :obj/uuid
   (:nicknames :uuid)
@@ -450,7 +451,8 @@
    :df-col
    :df
    :data-frame
-   :data-frame-plan))
+   :data-frame-plan
+   #:schema-from-columns))
 
 (defpackage :obj/query
   (:nicknames :query)

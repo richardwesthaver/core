@@ -10,9 +10,9 @@
 
 ;;; Code:
 (in-package :std/spin)
+(declaim (optimize (speed 3)))
 (defconstant +dummy+ :dummy)
 (defconstant +dead-end+ :dead-end)
-
 (defun make-spin-lock () 
   "Allocate a fresh 'spin-lock' which is simply NIL."
   nil)
@@ -52,6 +52,7 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
   (null (cdr (spin-queue-head queue))))
 
 (defun try-each-elem (fun queue)
+  (declare ((function (spin-queue) (values t boolean)) fun))
   (let ((node (spin-queue-head queue)))
     (loop
       (let ((value (car node)))
@@ -68,7 +69,8 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
   (tagbody
    :retry
      (let ((count 0))
-       (unless (try-each-elem 
+       (declare (fixnum count))
+       (unless (try-each-elem
                 (lambda (elem)
                   (declare (ignore elem))
                   (incf count))
@@ -77,6 +79,7 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
        (return-from spin-queue-count count))))
 
 (defun peek-spin-queue (queue)
+  (declare (optimize (safety 0)))
   (loop 
     until (try-each-elem 
            (lambda (elem)

@@ -51,7 +51,7 @@
 
 (defstruct field
   "A single named field."
-  (name (symbol-name (gensym "#")) :type simple-string)
+  (name (symbol-name (gensym "#")))
   (type t :type (or symbol list)))
 
 (defmethod read-ast ((self field) stream &key)
@@ -190,6 +190,18 @@ SCHEMA."
 (defmethod make-load-form ((self schema) &optional env)
   (declare (ignore env))
   `(make-instance ,(class-of self) :fields ,(fields self)))
+
+(defun schema-from-columns (columns)
+  "Convert a sequence of COLUMNs to a SCHEMA."
+  (let ((i 0))
+    (apply 'make-schema 
+	   (map 'list 
+		(lambda (x)
+		  (incf i)
+		  (typecase x
+		    (simple-column (make-field :name (keywordicate (name x)) :type (column-type x)))
+		    (column (make-field :name i :type (column-type x)))))
+		columns))))
 
 ;;; Data Source
 (defclass data-source ()

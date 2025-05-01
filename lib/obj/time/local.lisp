@@ -1121,6 +1121,12 @@ The currently supported values in obj/time are:
   clock.  The date is encoded by convention as a timestamp with the
   time set to 00:00:00UTC."))
 
+(defgeneric date (self)
+  (:documentation "Return the date of object SELF."))
+
+(defgeneric duration (self)
+  (:documentation "Return the duration of object SELF."))1
+
 (defun %leap-seconds-offset (leap-seconds sec)
   "Find the latest leap second adjustment effective at SEC system time."
   (elt (leap-seconds-adjustment leap-seconds)

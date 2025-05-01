@@ -23,7 +23,7 @@ to initialize the instance with custom configuration."
 (defun get-stats-raw (opt htype)
   (with-alien ((hist (* rocksdb-statistics-histogram-data) (rocksdb-statistics-histogram-data-create)))
     (rocksdb-options-statistics-get-histogram-data opt htype hist)
-    (deref hist)))
+    hist))
 
 ;;; DB
 (defun open-db-raw (db-path &optional (opts (default-rocksdb-options)))

@@ -3,18 +3,15 @@
 ;; 
 
 ;;; Code:
-(in-package :std-user)
-(defpkg :core/bench/db/stress
+(pkg:defpkg :core/bench/db/stress
   (:nicknames :bench/db/stress :db/stress)
   (:use :cl :std :rt :rt/bench :rt/cover :log :query :schema :config :rdb :db)
-  (:export :tpc-h-schema :*tpc-h-data-directory*
-           :start-tpc-h-benchmark))
-
+  (:export :stressed-out-db-config :bench-db-stress))
 (in-package :core/bench/db/stress)
 (defsuite :db-stress)
 (in-suite :db-stress)
 
-(defconfig db-stress-config () 
+(defconfig stressed-out-db-config () 
   ())
 
 (deftest db-stress (:bench t :profile t))

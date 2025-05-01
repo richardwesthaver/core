@@ -391,7 +391,7 @@
   (:shadowing-import-from :sb-c :define-vop)
   (:shadowing-import-from :sb-c :define-source-transform :parse-eval-when-situations :source-location)
   (:recycle :sb-sys)
-  (:import-from :sb-ext :maybe-inline)
+  (:import-from :sb-ext :maybe-inline :defglobal :define-load-time-global)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :appendf)
   (:import-from :sb-assem :*backend-instruction-set-package*)
@@ -400,6 +400,7 @@
   (:export
    :.i ;; alias for *inspected*
    :maybe-inline
+   :defglobal :define-load-time-global
    :register-project-directory
    :define-vop
    :define-source-transform
@@ -609,6 +610,7 @@
   (:export
    :*worker-class*
    :%worker
+   :*worker*
    :*worker-kernel*
    :*pool-kernel*
    :%thread
@@ -629,6 +631,10 @@
    :run-worker
    :with-default-special-bindings
    :worker-thread
+   :worker-count
+   :worker-count*
+   :worker-index
+   :worker-index*
    :oracle 
    :oracle-id :find-thread
    :make-threads :with-threads 
@@ -637,7 +643,7 @@
    :channel-pool
    :channel-queue
    :thread-pool :workers
-   :make-thread-pool
+   :make-thread-pool :end-thread-pool
    :make-worker :designate-oracle
    :condition-wait*
    :sync-message
@@ -676,7 +682,6 @@
    :*task*
    :*result*
    :define-task-kernel
-   :worker-count
    :task :job :task-pool :scheduled-task
    :make-job
    :jobp :taskp :task :with-task-pool))

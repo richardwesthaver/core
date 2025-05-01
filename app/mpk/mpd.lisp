@@ -113,7 +113,7 @@
    (bitrate
     :reader bitrate :initarg :bitrate :initform nil)
    (duration
-    :reader duration :initarg :duration :initform nil)
+    :reader obj/time:duration :initarg :duration :initform nil)
    (time
     :reader %time :initarg :time :initform nil)
    (songid

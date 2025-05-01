@@ -7,15 +7,22 @@
 
 ;; Bytes aren't necessarily 8 bits wide in Lisp. OCTET is always 8
 ;; bits.
-(deftype octet () '(unsigned-byte 8))
+(deftype octet () 
+  "An 8-bit unsigned-byte."
+  '(unsigned-byte 8))
+  
 (deftype octet-vector (&optional length)
+  "A simple-array of OCTETs."
   (if length `(simple-array octet (,length))
       `(simple-vector octet)))
 
+
 (defun octet-vector-p (self &optional length)
+  "Return T if SELF is an OCTET-VECTOR, optionally with a fixed LENGTH."
   (typep self (if length `(octet-vector ,length) 'octet-vector)))
 
-(defconstant +default-element-type+ 'character)
+(defconstant +default-element-type+ 'character
+  "The default ELEMENT-TYPE used by some array operations.")
 
 (deftype array-index (&optional (length (1- array-dimension-limit)))
   "Type designator for an index into array of LENGTH: an integer between

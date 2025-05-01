@@ -13,9 +13,10 @@
 
 (in-package :core/bench/alien)
 
-(defun static-bytes ()
-  (with-open-stream (s (make-instance 'static-stream))
-    (dotimes (i 20)
-      (write-byte i s))
-    (print (buffer s))
-    (read-byte s)))
+(defvar *static-io-element-type* 'fixnum)
+
+(defun static-iota-stream (n)
+  (with-static-stream (s :size n :element-type *static-io-element-type*)
+    (dotimes (i n)
+      (sb-gray:stream-write-byte s i))
+    s))

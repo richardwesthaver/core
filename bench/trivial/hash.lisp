@@ -13,7 +13,7 @@
 (defpackage :core/bench/hash
   (:nicknames :bench/hash)
   (:use :cl :std :id :hash :blake3)
-  (:export))
+  (:export :bench-hash-strings :bench-hash-integers))
 
 (in-package :core/bench/hash)
 
@@ -35,16 +35,16 @@
          (setf (schar result i) (aref +digit+ r)))
     result))
 
-(defun hash-strings (&optional (size 300))
-  (declare (fixnum size))
+(defun bench-hash-strings (&optional (size 300) (runs 100000))
+  (declare (fixnum size runs))
    (setq *table* (make-hash-table :test #'equal :size size))
-   (dotimes (i 100000)
+   (dotimes (i runs)
      (setf (gethash (fixnum-to-string i 16) *table*) i))
    (maphash (lambda (key value) (incf (gethash key *table*) value)) *table*))
   
-(defun hash-integers (&optional (size 300))
-  (declare (fixnum size))
+(defun bench-hash-integers (&optional (size 300) (runs 100000))
+  (declare (fixnum size runs))
   (setq *table* (make-hash-table :test #'eql :size size))
-  (dotimes (i 100000)
+  (dotimes (i runs)
     (setf (gethash i *table*) (1+ i)))
   (maphash (lambda (key value) (incf (gethash key *table*) value)) *table*))

@@ -5,6 +5,14 @@
 ;;; Code:
 (in-package :mpk)
 
+(define-logical-pathname "MPK" nil
+  ;; ("**;*.*.*" (merge-pathnames "**/*.*" *mpk-user-directory*))
+  ("MEDIA;**;*.*.*" (merge-pathnames "**/*.*" *mpk-media-directory*))
+  ("USER;**;*.*.*" (merge-pathnames "**/*.*" *mpk-user-directory*))
+  ("DATA;**;*.*.*" (merge-pathnames "**/*.*" *mpk-data-directory*))
+  ("DB;**;*.*.*" (merge-pathnames "**/*.*" *mpk-db-directory*))
+  ("CACHE;**;*.*.*" (merge-pathnames "**/*.*" *mpk-cache-directory*)))
+
 (defclass mpk-object (id) ())
 
 (defclass mpk-project (mpk-object skel:sk-project) ())
