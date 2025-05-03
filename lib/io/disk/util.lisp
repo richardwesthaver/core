@@ -65,11 +65,11 @@
   (when-let ((infos (mntent-info mount-info-file 'mnt-dir mountpoint)))
     (slot infos key)))
 
-(defun mountpoint-directory (mountpoint &optional (mount-info-file "/etc/mtab"))
-  (mountpoint-get mount-info-file mountpoint 'mnt-dir))
+(defun mountpoint-directory (mountpoint &optional default (mount-info-file "/etc/mtab"))
+  (or (mountpoint-get mount-info-file mountpoint 'mnt-dir) default))
 
-(defun mountpoint-device (mountpoint &optional (mount-info-file "/etc/mtab"))
-  (mountpoint-get mount-info-file mountpoint 'mnt-fsname))
+(defun mountpoint-device (mountpoint &optional default (mount-info-file "/etc/mtab"))
+  (or (mountpoint-get mount-info-file mountpoint 'mnt-fsname) default))
 
 (defun mountpoint-fstype (mountpoint &optional (mount-info-file "/etc/mtab"))
   (mountpoint-get mount-info-file mountpoint 'mnt-type))

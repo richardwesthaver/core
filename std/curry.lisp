@@ -59,7 +59,7 @@ predicates returns false, returns the primary value of the last predicate."
 
 (defun compose (function &rest more-functions)
   "Returns a function composed of FUNCTION and MORE-FUNCTIONS that applies its
-arguments to to each in turn, starting from the rightmost of MORE-FUNCTIONS,
+arguments to each in turn, starting from the rightmost of MORE-FUNCTIONS,
 and then calling the next one with the primary value of the last."
   (declare (optimize (speed 3) (safety 1) (debug 1)))
   (reduce (lambda (f g)
@@ -155,4 +155,3 @@ with and ARGUMENTS to FUNCTION."
          (multiple-value-call ,fun (values-list more) ,@rcurries)))))
 
 (declaim (notinline curry rcurry))
-

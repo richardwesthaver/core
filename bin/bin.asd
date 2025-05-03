@@ -100,3 +100,10 @@
   :depends-on (:core :bin/skel :bin/organ :bin/homer :bin/rdb :bin/packy :bin/vc :bin/gen
                      (:feature :x11 :bin/swm)
                      :bin/pod :bin/mpk))
+
+(defsystem :bin/gui
+  :build-operation program-op
+  :build-pathname "gui"
+  :entry-point "bin/gui::gui-lisp"
+  :components ((:file "gui"))
+  :depends-on (:core :gui))

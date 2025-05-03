@@ -575,10 +575,10 @@ FUNCTION."
        ,@body)))
 
 ;;; Worker
+(defvar *default-worker-tx-capacity* 8)
 (defclass worker-status ()
   ((%rx :initform (sb-concurrency:make-gate))
-   ;; from-worker
-   (%tx :initform (make-queue :fixed-capacity 8))))
+   (%tx :initform (make-queue :fixed-capacity *default-worker-tx-capacity*))))
 
 (defclass worker (worker-status)
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
@@ -1182,7 +1182,6 @@ Calling `broadcast-work' from inside a worker is an error."
   (when *worker*
     (error "Cannot call `broadcast-work' from inside a worker."))
   (let* ((function (std/curry:ensure-function function))
-	 (*kernel* (check-kernel))
 	 (*thread-pool* (check-thread-pool))
          (worker-count (worker-count*))
          (channel (make-instance 'channel))

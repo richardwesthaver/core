@@ -6,7 +6,9 @@
 
 ;;; Code:
 (defpackage :gui/x11/stump
-  (:use :cl :stumpwm)
+  (:use :cl :stumpwm :std)
+  (:nicknames :gui/stump)
+  (:shadowing-import-from :stumpwm :group :quit :*default-package* :message)
   (:export
    #:*app-map*
    #:*edit-map*

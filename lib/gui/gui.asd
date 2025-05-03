@@ -41,7 +41,9 @@
                   ((:file "pkg")
                    (:file "var")
                    (:module "mod"
-                    :components ((:file "disk")))))))
+                    :components 
+                    ((:file "disk")
+                     (:file "mode-line")))))))
                (:file "gui"))
   :in-order-to ((test-op (test-op "gui/tests"))))
 

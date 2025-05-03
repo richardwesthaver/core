@@ -27,7 +27,7 @@
 
   (defun |#l-reader| (stream sub num)
     (declare (ignore sub num))
-    (translate-logical-pathname (read stream)))
+    `(translate-logical-pathname (pathname ,(read stream))))
 
   ;; Nestable suggestion from Daniel Herring
   (defun |#"-reader| (stream sub-char numarg)

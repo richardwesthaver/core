@@ -11,15 +11,13 @@
 
 ;;; Code:
 (in-package :dat/json)
-
-(defvar *allow-json-trailing-commas* t
+(defvar *allow-json-trailing-commas* nil
   "When non-nil, arrange for our json readers to allow trailing
 commas. This binding does not affect writers.
 
 Trailing commas in json lists and objects is a common source of frustration
 since they're not allowed in the spec. This is easily forgotten when
-generating json from a scripting language without native json support."
-  )
+generating json from a scripting language without native json support.")
 
 (defun json-trailing-commas-p () *allow-json-trailing-commas*)
 
@@ -123,13 +121,13 @@ generating json from a scripting language without native json support."
 
 (defun json-peek-char (stream expected &key skip-ws)
   "Peek at the next character or token and optionally error if unexpected."
-  (declare (optimize (speed 3) (debug 0)))
+  (declare (optimize (speed 3) (safety 0) (debug 0)))
   (when (equal (peek-char skip-ws stream) expected)
     (read-char stream)))
 
 (defun json-read-char (stream expected &key skip-ws)
   "Read the next, expected character in the stream."
-  (declare (optimize (speed 3) (debug 0)))
+  (declare (optimize (speed 3) (safety 0) (debug 0)))
   (if (json-peek-char stream expected :skip-ws skip-ws)
       t
     (error "JSON error: unexpected ~s~%expected ~A" (read-char stream) expected)))
@@ -160,7 +158,7 @@ generating json from a scripting language without native json support."
 
 (defun json-read-number (stream)
   "Read a number from a JSON stream."
-  (declare (optimize (speed 3) (debug 0)))
+  (declare (optimize (speed 3) (debug 0) (safety 0)))
   (let ((s (with-output-to-string (s)
              (when (equal (peek-char t stream) #\-)
                (write-char (read-char stream) s))
@@ -212,7 +210,7 @@ generating json from a scripting language without native json support."
 
 (defun json-read-string (stream)
   "Read a string from a JSON stream."
-  (declare (optimize (speed 3) (debug 0)))
+  (declare (optimize (speed 3) (debug 0) (safety 0)))
 
   ;; read the expected quote
   (json-read-char stream #\" :skip-ws t)
@@ -250,7 +248,7 @@ generating json from a scripting language without native json support."
 
 (defun json-read-list (stream)
   "Read a list of JSON values."
-  (declare (optimize (speed 3) (debug 0)))
+  (declare (optimize (speed 3) (debug 0) (safety 0)))
 
   ;; read the expected open bracket
   (json-read-char stream #\[ :skip-ws t)
@@ -272,7 +270,7 @@ generating json from a scripting language without native json support."
 
 (defun json-read-object (stream)
   "Read an associative list of key/value pairs into a JSON object."
-  (declare (optimize (speed 3) (debug 0)))
+  (declare (optimize (speed 3) (debug 0) (safety 0)))
 
   ;; read the expected open brace
   (json-read-char stream #\{ :skip-ws t)
