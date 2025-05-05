@@ -603,6 +603,7 @@
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/spin :std/condition :std/seq)
   (:import-from :std/list :flatten)
+  (:import-from :std/curry :ensure-function)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
   (:import-from :std/macs :if-let :eval-always)

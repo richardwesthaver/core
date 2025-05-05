@@ -13,6 +13,33 @@
   (env (* rocksdb-env))
   (n int))
 
+(define-alien-routine rocksdb-env-set-high-priority-background-threads void
+  (env (* rocksdb-env)) (n int))
+
+(define-alien-routine rocksdb-env-set-low-priority-background-threads void
+  (env (* rocksdb-env)) (n int))
+
+(define-alien-routine rocksdb-env-get-high-priority-background-threads int
+  (env (* rocksdb-env)))
+
+(define-alien-routine rocksdb-env-get-low-priority-background-threads int
+  (env (* rocksdb-env)))
+
+(define-alien-routine rocksdb-env-set-bottom-priority-background-threads void
+  (env (* rocksdb-env)) (n int))
+
+(define-alien-routine rocksdb-env-get-bottom-priority-background-threads int
+  (env (* rocksdb-env)))
+
+(define-alien-routine rocksdb-env-join-all-threads void
+  (env (* rocksdb-env)))
+
+(define-alien-routine rocksdb-env-lower-thread-pool-io-priority void
+  (env (* rocksdb-env)))
+
+(define-alien-routine rocksdb-env-lower-thread-pool-cpu-priority void (env (* rocksdb-env)))
+
+(define-alien-routine rocksdb-env-lower-high-priority-thread-pool-cpu-priority void (env (* rocksdb-env)))
 (define-alien-routine rocksdb-env-get-background-threads int
   (env (* rocksdb-env)))
 

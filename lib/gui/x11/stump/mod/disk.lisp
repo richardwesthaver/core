@@ -24,7 +24,7 @@
     (#\m  disk-get-mount-point)
     (#\f  disk-get-filesystem-type)))
 
-(defparameter *disk-modeline-fmt* "%m: %u/%s"
+(defparameter *disk-modeline-fmt* "%d: %p"
   "The default value for displaying disk usage information on the modeline.
 
 %% = A literal '%'
@@ -36,7 +36,7 @@
 %f = Filesystem type
 ")
 
-(defvar *disk-usage-paths* '("/" "/home/" "/opt/store/" "/opt/stash/" "/opt/backup/")
+(defvar *disk-usage-paths* '("/" "/home/")
   "The list of mount points to report the disk usage of.")
 
 (defun disk-update-usage (paths)

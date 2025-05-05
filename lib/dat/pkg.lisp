@@ -254,9 +254,23 @@
            #:message-value
            #:unknown-event #:data-byte #:dd #:bb #:cc #:nn))
 
+(defpackage :dat/png
+  (:use :cl :std :dat/proto)
+  (:export
+   :png
+   :copy-png
+   :png=
+   :write-png
+   :write-png-stream
+   :streamed-png
+   :start-png
+   :finish-png
+   :pixel-streamed-png
+   :png-error))
+
 (defpackage :dat/qrcode
   (:nicknames :qrcode)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :dat/png)
   (:export
    :encode-symbol
    ;; QR code representation
@@ -265,15 +279,15 @@
    :matrix
    :modules
    :dark-module-p
-   :read-file-content))
+   :qr-symbol-to-png
+   :qr-encode-png
+   :qr-encode-png-stream
+   :qr-encode-png-bytes
+   :qr-encode-png-bytes-stream))
 
 (defpackage :dat/gif
   (:nicknames :gif)
   (:use :cl :std :dat/proto)
-  (:export))
-
-(defpackage :dat/png
-  (:use :cl :std :dat/proto #+png :png)
   (:export))
 
 (defpackage :dat/tar

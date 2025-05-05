@@ -33,6 +33,7 @@
 (define-opaque rocksdb-column-family-handle)
 (define-opaque rocksdb-column-family-metadata)
 (define-opaque rocksdb-level-metadata)
+(define-opaque rocksdb-sst-file-manager)
 (define-opaque rocksdb-sst-file-metadata)
 (define-opaque rocksdb-sstfilewriter)
 (define-opaque rocksdb-ratelimiter)

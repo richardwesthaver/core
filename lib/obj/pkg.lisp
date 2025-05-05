@@ -452,7 +452,8 @@
    :df
    :data-frame
    :data-frame-plan
-   #:schema-from-columns))
+   #:schema-from-columns
+   #:df-plan))
 
 (defpackage :obj/query
   (:nicknames :query)

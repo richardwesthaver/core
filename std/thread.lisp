@@ -1181,21 +1181,21 @@ this work is complete, then return the results in a vector.
 Calling `broadcast-work' from inside a worker is an error."
   (when *worker*
     (error "Cannot call `broadcast-work' from inside a worker."))
-  (let* ((function (std/curry:ensure-function function))
+  (let* ((function (ensure-function function))
 	 (*thread-pool* (check-thread-pool))
          (worker-count (worker-count*))
          (channel (make-instance 'channel))
-         (from-workers (make-semaphore :count worker-count))
-         (to-workers (make-semaphore :count worker-count)))
+         (from-workers (make-semaphore))
+         (to-workers (make-semaphore)))
     (loop repeat worker-count 
           do (submit-work channel (lambda ()
-                                    (try-semaphore from-workers)
+                                    (signal-semaphore from-workers)
                                     (wait-on-semaphore to-workers)
                                     (apply function args))))
     (loop repeat worker-count 
           do (wait-on-semaphore from-workers))
     (loop repeat worker-count 
-          do (try-semaphore to-workers))
+          do (signal-semaphore to-workers))
     (map-into (make-array worker-count) (lambda () (receive-result channel)))))
 
 (defun %exit-threads ()

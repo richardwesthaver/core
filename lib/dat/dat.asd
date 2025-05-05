@@ -1,6 +1,6 @@
 (defsystem :dat
   :description "Data Systems"
-  :depends-on (:cl-ppcre :std :obj #+png :png :flexi-streams :io :log)
+  :depends-on (:cl-ppcre :std :obj :flexi-streams :io :log :salza2)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")
@@ -42,6 +42,7 @@
                (:file "midi")
                (:file "png")
                (:file "base64")
+               (:file "qrcode")
                (:module "multi"
                 :components
                 ((:file "pkg")

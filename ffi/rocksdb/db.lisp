@@ -230,6 +230,12 @@
       
 (define-alien-routine rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
 
+(define-alien-routine rocksdb-cache-create-hyper-clock (* rocksdb-cache)
+  (capacity size-t) (estimated-entry-charge size-t))
+
+(define-alien-routine rocksdb-cache-create-hyper-clock-opts (* rocksdb-cache)
+  (opts (* rocksdb-hyper-clock-cache-options)))
+
 (def-with-errptr rocksdb-flush void 
   (db (* rocksdb))
   (options (* rocksdb-flushoptions)))

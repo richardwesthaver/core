@@ -95,3 +95,26 @@
 
 (def-with-errptr rocksdb-try-catch-up-with-primary void
   (db (* rocksdb)))
+
+(define-alien-routine rocksdb-sst-file-manager-create (* rocksdb-sst-file-manager) (env (* rocksdb-env)))
+(define-alien-routine rocksdb-sst-file-manager-destroy void (sfm (* rocksdb-sst-file-manager)))
+(define-alien-routine rocksdb-sst-file-manager-set-max-allowed-space-usage void
+  (sfm (* rocksdb-sst-file-manager))
+  (max-allowed-space unsigned-long))
+(define-alien-routine rocksdb-sst-file-manager-set-compaction-buffer-size void
+  (sfm (* rocksdb-sst-file-manager))
+  (compaction-buffer-size unsigned-long))
+(define-alien-routine rocksdb-sst-file-manager-is-max-allowed-space-reached boolean
+  (sfm (* rocksdb-sst-file-manager)))
+(define-alien-routine rocksdb-sst-file-manager-is-max-allowed-space-reached-including-compactions boolean
+  (sfm (* rocksdb-sst-file-manager)))
+(define-alien-routine rocksdb-sst-file-manager-get-total-size unsigned-long (sfm (* rocksdb-sst-file-manager)))
+(define-alien-routine rocksdb-sst-file-manager-get-delete-rate-bytes-per-second long
+  (sfm (* rocksdb-sst-file-manager)))
+(define-alien-routine rocksdb-sst-file-manager-get-max-trash-db-ration double
+  (sfm (* rocksdb-sst-file-manager)))
+(define-alien-routine rocksdb-sst-file-manager-set-max-trash-db-ration void
+  (sfm (* rocksdb-sst-file-manager))
+  (ratio double))
+(define-alien-routine rocksdb-sst-file-manager-get-total-trash-size unsigned-long
+  (sfm (* rocksdb-sst-file-manager)))

@@ -103,7 +103,8 @@
    :eval-emacs
    :slime
    :ielm
-   :with-emacs))
+   :with-emacs
+   :emacs-find-file))
 
 (defpackage :cli/multi
   (:use :cl :std)

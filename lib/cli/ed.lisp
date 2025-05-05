@@ -14,30 +14,31 @@
      ,@body))
 
 (defun run-emacs (args &key file create-frame eval client wait)
-  (when client 
-    (return-from run-emacs 
-      (run-emacsclient args :file file :create-frame create-frame :eval eval :wait wait)))
-  (when create-frame (push "-c" args))
-  (when file (push (namestring file) args))
-  (when eval 
-    (with-emacs-printer
-      (appendf args (list "-e" (format nil "~A" eval)))))
-  (sb-ext:run-program (find-exe "emacs") args))
-  
-(defun run-emacsclient (args &key file (create-frame t) eval wait)
-  (when create-frame (push "-c" args))
-  (when file (push (namestring file) args))
-  (push "-a=" args)
-  (when eval 
-    (with-emacs-printer
-      (appendf args (list "-e" (format nil "~A" eval)))))
-  (sb-ext:run-program (find-exe "emacsclient")
-                      args
-                      :wait wait
-                      :output nil))
+  (if client
+      (run-emacsclient args :file file :create-frame create-frame :eval eval :wait wait)
+      (let ((keys))
+        (when file (push (format nil "~S" file) keys))
+        (when create-frame (push "-c" keys))
+        (when eval 
+          (with-emacs-printer
+            (appendf keys (list "-e" (format nil "~S" eval)))))
+        (sb-ext:run-program (find-exe "emacs") (print (append (nreverse keys) args))))))
 
-(defun eval-emacs (form &key (client t) args file wait)
-  (run-emacs args :eval form :file file :client client :wait wait))
+(defun run-emacsclient (args &key file (create-frame t) eval wait)
+  (let ((keys))
+    (when file (push (format nil "~S" file) keys))
+    (when create-frame (push "-c" keys))
+    (push "-a=" keys)
+    (when eval
+      (with-emacs-printer
+        (appendf keys (list "-e" (format nil "~S" eval)))))
+    (sb-ext:run-program (find-exe "emacsclient")
+                        (append (nreverse keys) args)
+                        :wait wait
+                        :output nil)))
+
+(defun eval-emacs (form &key (client t) args file wait create-frame)
+  (run-emacs args :eval form :file file :client client :wait wait :create-frame create-frame))
 
 (defun ielm (&optional buf-name)
   (eval-emacs `(ielm ,buf-name)))
@@ -82,4 +83,8 @@
   (run-emacsclient (format nil "org-protocol://store-link?url=~a&title=~a"
                            url title)))
 
+(defun emacs-find-file (path &key (position 0) (wait t) create-frame (client t))
+  (eval-emacs `(progn (find-file ,path) (goto-char ,position)) :wait wait :create-frame create-frame :client client))
+
 ;;; Macros
+

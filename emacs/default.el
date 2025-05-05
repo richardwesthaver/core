@@ -230,7 +230,7 @@
 (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
 (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
 
-(setq inferior-lisp-program (format "%s --dynamic-space-size=8G" 
+(setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size=32"
                                     (default-lisp))
       scheme-program-name "gsi"
       slime-auto-start t

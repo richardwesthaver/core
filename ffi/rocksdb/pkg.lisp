@@ -489,7 +489,8 @@ set *errptr to a malloc()ed error message.
    :rocksdb-transaction-delete
    :rocksdb-transaction-delete-cf
    :rocksdb-dbpath-create
-   :rocksdb-dbpath-destroy))
+   :rocksdb-dbpath-destroy
+   :rocksdb-sst-file-manager))
 
 (in-package :rocksdb)
 

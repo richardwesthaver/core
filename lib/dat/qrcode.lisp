@@ -1626,3 +1626,56 @@ Data capacity codewords (bytes, including ecc codewords) | Remainder bits.")
     (1 0 0) (1 0 1) (1 1 0) (1 1 1)))
 (defun mask-pattern-ref (ind)
   (aref *mask-pattern-reference* ind))
+
+;;; png backend for QR code symbol
+
+(defun set-color (pngarray x y color)
+  (setf (aref pngarray x y 0) color)
+  (setf (aref pngarray x y 1) color)
+  (setf (aref pngarray x y 2) color))
+
+(defun qr-symbol-to-png (symbol pixsize margin)
+  "return the qr symbol written into a PNG object with PIXSIZE
+pixels for each module, and MARGIN pixels on all four sides"
+  (with-slots (matrix modules) symbol
+    (let* ((size (+ (* modules pixsize) (* margin 2)))
+           (qrpng (make-instance 'png :width size :height size))
+           (qrarray (dat/png::data-array qrpng)))
+      (dotimes (x size)
+        (dotimes (y size)
+          (if (and (<= margin x (- size margin 1))
+                   (<= margin y (- size margin 1)))
+              (let ((i (floor (- x margin) pixsize))
+                    (j (floor (- y margin) pixsize)))
+                (if (dark-module-p matrix i j)
+                    (set-color qrarray x y 0)
+                    (set-color qrarray x y 255)))
+              ;; quiet zone
+              (set-color qrarray x y 255))))
+      qrpng)))
+
+(defun qr-encode-png (text &key (path "qrcode.png") (version 1) (level :level-m)
+                   (mode nil) (pixsize 9) (margin 8))
+  (let ((symbol (encode-symbol text :version version :level level :mode mode)))
+    (write-png (qr-symbol-to-png symbol pixsize margin) path)))
+
+(defmethod serialize ((self string) (format (eql :qrcode)) &key path (version 1) (level :level-m))
+  (declare (ignore format))
+  (qr-encode-png self :path path :version version :level level))
+
+(defun qr-encode-png-stream (text stream &key (version 1) (level :level-m)
+                          (mode nil) (pixsize 9) (margin 8))
+  (let ((symbol (encode-symbol text :version version :level level :mode mode)))
+    (write-png-stream (qr-symbol-to-png symbol pixsize margin) stream)))
+
+(defun qr-encode-png-bytes (bytes &key (fpath "kanji.png") (version 1)
+                         (level :level-m) (mode nil) (pixsize 9) (margin 8))
+  (let ((symbol (encode-symbol-bytes bytes :version version :level level
+                                     :mode mode)))
+    (write-png (qr-symbol-to-png symbol pixsize margin) fpath)))
+
+(defun qr-encode-png-bytes-stream (bytes stream &key (version 1) (level :level-m)
+                                (mode nil) (pixsize 9) (margin 8))
+  (let ((symbol (encode-symbol-bytes bytes :version version :level level
+                                     :mode mode)))
+    (write-png-stream (qr-symbol-to-png symbol pixsize margin) stream)))
