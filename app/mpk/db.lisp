@@ -89,3 +89,11 @@
 (defun mpk-db-info (&key (schema t) stats log metadata)
   (when schema
     (schema-from-rdb-column-families (columns *db*))))
+
+(defun mpk-metadata-sst (&optional (meta *music-metadata*))
+  (with-sst (s :file (namestring (mpk-cache-path "metadata.sst")) :destroy t)
+    (let ((i -1))
+      (maphash 
+       (lambda (k v) (declare (ignore v)) (put-kv s (make-kv (integer-to-octets (incf i) 32) (string-to-octets (namestring k)))))
+       meta))))
+

@@ -123,10 +123,12 @@
    #:mpk-next
    #:*mpk-db-id-seed*
    #:*mpk-db-meta-directory*
-   #:*mpk-db-directory*))
+   #:*mpk-db-directory*
+   #:mpk-cache-path))
 
 (defpackage :mpk/db
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
+  (:import-from :sb-ext :string-to-octets)
   (:export :*mpk-db* :*mpk-db-schema* :mpk-db 
    :mpk-db-init :mpk-db-shutdown
    :mpk-db-info))

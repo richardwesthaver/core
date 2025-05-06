@@ -16,6 +16,9 @@
 (defun mpk-media-path (path)
   (merge-pathnames path *mpk-media-directory*))
 
+(defun mpk-cache-path (path)
+  (merge-pathnames path *mpk-cache-directory*))
+
 (defun mpk-music-path (path)
   (merge-pathnames path (mpk-media-collection :music)))
 

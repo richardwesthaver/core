@@ -38,4 +38,10 @@
    :*podman-config-directory*
    :load-podman-config
    :default-podman-config
-   :podman-local-user-socket))
+   :podman-local-user-socket
+   :buildah-from
+   :*working-container*
+   :buildah-add
+   :buildah-run
+   :buildah-config
+   :with-buildah))
