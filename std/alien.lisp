@@ -141,10 +141,9 @@ alien (* size-t) with same size as the first value."
   (let ((a (make-alien (unsigned 8) (length lispa))))
     (clone-octets-to-alien lispa a)))
 
-;; TODO 2024-09-19: maybe want to return values, second being the length?
 (defun octets-to-alien-array (lispa)
   "Copy octet-vector LISPA to a foreign byte array."
-  (cast (octets-to-alien lispa) (array (unsigned 8))))
+  (values (cast (octets-to-alien lispa) (array (unsigned 8))) (length lispa)))
 
 (defun clone-octets-from-alien (aliena lispa &optional len)
   "Copy the foreign byte pointer ALIENA to lisp octet-vector LISPA. When LEN is non-nil only copy that number of bytes starting from the beginning."
@@ -167,7 +166,6 @@ alien (* size-t) with same size as the first value."
       nil
       t))
 
-;; TODO 2025-02-11: should be bool-to-int
 (defun bool-to-foreign-int (val)
   "Convert a lisp boolean to an integer."
   (if val 1 0))
@@ -203,8 +201,7 @@ containing the variants. These are technically exposed anaphors
                     collect (cons k v)))
   (with-gensyms (val)
     (let ((%lisp-enum-table (make-hash-table :test test :size (length forms)))
-          (%lisp-enum-table* (make-hash-table :test 'equal :size (length forms)))) ; TODO: may want this to be EQL,
-                                                                                   ; taking strings for now.
+          (%lisp-enum-table* (make-hash-table :size (length forms))))
       (mapc (lambda (x) (setf (gethash (car x) %lisp-enum-table) (eval (cadr x)))) forms)
       (mapc (lambda (x) (setf (gethash (eval (cadr x)) %lisp-enum-table*) (car x))) forms)
       `(progn
