@@ -360,10 +360,21 @@
   (wbwi (* rocksdb-writebatch-wi))
   (base-iterator (* rocksdb-iterator)))
 
+(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base-readopts (* rocksdb-iterator)
+  (wbwi (* rocksdb-writebatch-wi))
+  (base-iterator (* rocksdb-iterator))
+  (options (* rocksdb-readoptions)))
+
 (define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base-cf (* rocksdb-iterator)
   (wbwi (* rocksdb-writebatch-wi))
   (base-iterator (* rocksdb-iterator))
   (cf (* rocksdb-column-family-handle)))
+
+(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base-cf-readopts (* rocksdb-iterator)
+  (wbwi (* rocksdb-writebatch-wi))
+  (base-iterator (* rocksdb-iterator))
+  (cf (* rocksdb-column-family-handle))
+  (options (* rocksdb-readoptions)))
 
 (def-with-errptr rocksdb-writebatch-wi-update-timestamps void
   (wbwi (* rocksdb-writebatch-wi))

@@ -149,6 +149,9 @@
          allow-write-stall
          max-subcompactions))
 
+(defvar *rocksdb-ingestexternalfileoptions*
+  (%svec move-files snapshot-consistency allow-global-seqno allow-blocking-flush 
+    ingest-behind fail-if-not-bottommost-level))
 (defvar *rocksdb-set-only-backup-engine-options* (%svec backup-dir env))
 (defvar *rocksdb-backup-engine-options*
   (%svec share-table-files sync destroy-old-data backup-log-files backup-rate-limit

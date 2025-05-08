@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; mostly yoinked from sb-thread and friends
+;; mostly yoinked from sb-thread and lparallel
 
 #|
 ;; unix-getrusage  
@@ -857,7 +857,7 @@ within their DOMAIN and SCOPE."))
     (if-let ((found (oracle-of-id id)))
       (values id found)
       (let ((orc (%make-oracle id thread)))
-	(setf (gethash id *oracle-table*) (make-array 0 :adjustable t))
+	(setf (gethash id *oracle-table*) (make-array 0 :adjustable t :fill-pointer 0))
 	(values id orc)))))
 
 ;;; Thread Pool
@@ -1078,23 +1078,25 @@ provided. *THREAD-POOL* is returned."
              #',body-fn)))))
 
 ;; TODO 2025-04-30: 
-(defmacro pool-lambda (&body body)
+(defmacro pool-lambda (state &body body)
   (with-gensyms (body-fn handlers pool)
-    `(flet ((,body-fn (state) ,@body))
+    `(flet ((,body-fn (,state) ,@body))
        (declare (optimize (speed 3) (safety 0))
                 (type (function (t) (values t t)) ,body-fn))
        (let ((,handlers *handlers*)
              (,pool *thread-pool*))
 	 (if ,handlers
-	     (lambda (state)
+	     (lambda (,state)
 	       (let ((*handlers* ,handlers)
                      (*thread-pool* ,pool))
-		 (,body-fn state)))
-             (lambda (state)
+		 (,body-fn ,state)))
+             (lambda (,state)
                (let ((*thread-pool* ,pool))
-	         (,body-fn state))))))))
+	         (,body-fn ,state))))))))
 
 ;; (defmacro super-lambda (&body body))
+
+;; (defmacro channel-lambda (ch &body body))
 
 (defun make-channeled-work (channel fn args)
   (declare (channel channel) (function fn) (list args))
@@ -1117,7 +1119,8 @@ provided. *THREAD-POOL* is returned."
                    (channel-pool ch)))
 
 (defun receive-result (channel)
-  "Remove a result from CHANNEL. If nothing is available the call will block until a result is received."
+  "Remove a result from CHANNEL. If nothing is available the call will block
+until a result is received."
   (unwrap-result (pop-queue (channel-queue channel))))
 
 (defun try-receive-result (channel &key timeout)
@@ -1133,7 +1136,8 @@ to appear on the queue."
         (values nil nil))))
 
 (defmacro! do-fast-receives ((ret o!ch o!n) &body body)
-  "Receive N results from channel CH, executing BODY each iteration with results bound to RET."
+  "Receive N results from channel CH, executing BODY each iteration with results
+bound to RET."
   `(loop for i below ,g!n
          do (let ((,ret (receive-result ,g!ch)))
               ,@body)))

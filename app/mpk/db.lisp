@@ -11,7 +11,7 @@
 
 ;;; Code:
 (in-package :mpk/db)
-
+(in-readtable :std)
 (defvar *mpk-db-backend-options* rdb::*rdb-backend-options*)
 (set-database-backend :mpk *mpk-db-backend-options*
                       (lambda () (db::%load-database-backend :rdb)))
@@ -73,27 +73,14 @@
   (when *db* 
     (shutdown-db *db* :wait wait)
     (setf *db* nil)))
-    
-(defun schema-from-columns (columns)
-  "Convert a sequence of COLUMNs to a SCHEMA."
-  (let ((i 0))
-    (apply 'make-schema 
-	   (map 'list 
-		(lambda (x)
-		  (incf i)
-		  (typecase x
-		    (simple-column (make-field :name (keywordicate (name x)) :type (column-type x)))
-		    (column (make-field :name i :type (column-type x)))))
-		columns))))
 
 (defun mpk-db-info (&key (schema t) stats log metadata)
   (when schema
     (schema-from-rdb-column-families (columns *db*))))
 
 (defun mpk-metadata-sst (&optional (meta *music-metadata*))
-  (with-sst (s :file (namestring (mpk-cache-path "metadata.sst")) :destroy t)
+  (with-sst (s :file (namestring #l"mpk:cache;metadata.sst") :destroy t)
     (let ((i -1))
       (maphash 
        (lambda (k v) (declare (ignore v)) (put-kv s (make-kv (integer-to-octets (incf i) 32) (string-to-octets (namestring k)))))
        meta))))
-

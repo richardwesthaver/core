@@ -15,6 +15,8 @@
     (%mktbl 'rocksdb-writeoptions *rocksdb-writeoptions*))
   (defvar *rdb-backupopts-table*
     (%mktbl 'rocksdb-backup-engine-options *rocksdb-backup-engine-options*))
+  (defvar *rdb-ingestopts-table*
+    (%mktbl 'rocksdb-ingestexternalfileoptions *rocksdb-ingestexternalfileoptions*))
   (defvar *rdb-compactopts-table*
     (%mktbl 'rocksdb-compactoptions *rocksdb-compactoptions*)))
 
@@ -38,7 +40,8 @@
   (%def-opt rdb-readopt)
   (%def-opt rdb-writeopt)
   (%def-opt rdb-backupopt)
-  (%def-opt rdb-compactopt))
+  (%def-opt rdb-compactopt)
+  (%def-opt rdb-ingestopt))
 
 (macrolet ((define-rdb-opt-struct (name opts creator &rest defaults)
              (let ((%name (symbolicate (string-right-trim "S" name)))
@@ -518,9 +521,9 @@ internal sap slots are initialized."
     (rocksdb-cancel-all-background-work db wait)
     (close-db self)))
 
-(defmethod ingest-db ((self rdb) (files list) &key cf (opts (rocksdb-ingestexternalfileoptions-create)))
-  (if cf
-      (ingest-db-cf-raw (sap self) cf files opts)
+(defmethod ingest-db ((self rdb) (files list) &key column (opts (rocksdb-ingestexternalfileoptions-create)))
+  (if column
+      (ingest-db-cf-raw (sap self) column files opts)
       (ingest-db-raw (sap self) files opts)))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)

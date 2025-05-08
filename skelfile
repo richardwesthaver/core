@@ -75,7 +75,7 @@
   (:update ()
    (cli/ed:with-emacs (e)
     (org-babel-lob-ingest company-babel-file)
-    (org-with-file-buffer (print (join-paths company-source-directory \"core/readme.org\"))
+    (org-with-file-buffer (print (join-paths company-source-directory "core/readme.org"))
      (org-babel-execute-buffer)
      (save-buffer)))))
  (swank (%stash)

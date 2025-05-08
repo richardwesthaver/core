@@ -106,7 +106,10 @@ This interface is experimental and subject to change."
 (defmethod designate-oracle ((self task-pool) (guest thread))
   (let ((id (make-oracle guest)))
     (setf (gethash id *oracle-table*)
-          (pushnew (sb-ext:make-weak-pointer self) (gethash id *oracle-table*)))))
+          (vector-push-extend (sb-ext:make-weak-pointer self) (gethash id *oracle-table*)))))
+
+(defmethod designate-oracle ((self task-pool) (guest (eql t)))
+  (designate-oracle self *current-thread*))
 
 (declaim (inline push-worker push-workers pop-worker))
 (defun push-worker (worker pool)
@@ -206,7 +209,7 @@ is responsible for indicating in the state slot the result of the computation.")
     (format stream "~A" (tasks self))))
 
 ;;; Macros
-(defmacro with-task-pool ((sym &key oracle (tasks 0) lock (workers 4) #+nil start (kernel (quote *pool-kernel*)) (worker-kernel (quote *worker-kernel*)) results) &body body)
+(defmacro with-task-pool ((sym &key (oracle t) (tasks 0) lock (workers 4) #+nil start (kernel (quote *pool-kernel*)) (worker-kernel (quote *worker-kernel*)) results) &body body)
   `(let ((,sym (make-thread-pool ,workers :class 'task-pool
                                  ,@(when lock `(:lock ,lock))
                                  :worker-kernel ,worker-kernel

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :mpk)
-
+(in-readtable :std)
 (defun find-mpk-symbol (s) (find-symbol* (symbol-name s) :mpk nil))
 
 (defun mpk-media-collection (k)
@@ -33,7 +33,7 @@
    (ensure-directories-exist *mpk-cache-directory* :verbose t)))
 
 ;;  FIX 2025-04-18: takes a long time, do better
-(defun mpk-music-metadata-scan (&optional (dir (directory-path (mpk-media-collection :music))))
+(defun mpk-music-metadata-scan (&optional (dir #l"mpk:media;music;"))
   (log:info! "walking music directory: ~A" dir)
   (walk-directory dir 
     (constantly t) ; collectp
@@ -45,7 +45,7 @@
   *music-metadata*)
 
 ;; TODO 2025-04-30: 
-(defun mpk-music-metadata-scan-parallel (&optional (dir (directory-path (mpk-media-collection :music))))
+(defun mpk-music-metadata-scan-parallel (&optional (dir #l"mpk:media;music;"))
   (with-task-pool (tp)
     (nyi!)))
 

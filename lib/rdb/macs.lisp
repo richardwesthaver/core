@@ -32,6 +32,7 @@ ERR with initargs PARAMS for the duration of BODY."
   (%def-opt-finders rdb-writeopt rocksdb-writeoptions)
   (%def-opt-finders rdb-readopt rocksdb-readoptions)
   (%def-opt-finders rdb-compactopt rocksdb-compactoptions)
+  (%def-opt-finders rdb-ingestopt rocksdb-ingestexternalfileoptions)
   (%def-opt-finders rdb-backupopt rocksdb-backup-engine-options))
 
 ;;; rdb

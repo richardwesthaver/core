@@ -14,11 +14,11 @@
 | description | :description The Compiler Company Core              |
 | skel-id     | :id 1566328410216733941                             |
 | root        | ~/comp/core/                                        |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/8e9e98ab0491][8e9e98ab0491:975+]] |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/68c8ce5707a9][68c8ce5707a9:977+]] |
 | tags        | :tags (core lisp rust emacs c)                      |
-| updated     | Mon May 05 18:12:32 2025 -0400                      |
+| updated     | Tue May 06 20:53:25 2025 -0400                      |
 | langs       | c elisp json lisp org rust text toml                |
-| lines       | 132431 :λ 103137 :# 13032 :_ 16262                  |
+| lines       | 132430 :λ 103140 :# 13030 :_ 16260                  |
 |-------------+-----------------------------------------------------|
 
 #+END:
