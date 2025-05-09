@@ -62,6 +62,14 @@ is TY with a -T prepended as is customary in many C codebases."
   (eval-when (:compile-toplevel :load-toplevel :execute)
     `(define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))))
 
+(defun double-array-pointer (array)
+  "Return a SAP pointing to the start of ARRAY's storage vector."
+  (sap-alien (sb-sys:vector-sap (sb-ext:array-storage-vector array)) (* double)))
+
+(defun octet-vector-pointer (array)
+  "Return a SAP pointing to the start of ARRAY's storage vector."
+  (sap-alien (sb-sys:vector-sap (sb-ext:array-storage-vector array)) (* unsigned-char)))
+
 (defun setfa (place from)
   "Fill in a foreign array PLACE using lisp vector FROM."
   (declare (vector from))

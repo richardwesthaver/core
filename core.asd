@@ -5,7 +5,7 @@
    :nlp :skel :syn
    :organ :packy :obj :net
    :tree-sitter :xkb :ssh2 :sndfile
-   :zstd :uring :blake3 :gstreamer :q :dsp ;; :ublk
+   :zstd :uring :blake3 :gstreamer :q :dsp :math ;; :ublk
    :parse :pod :rdb :gui
    :cry :krypt :io :glib)
   :components ((:file "core"))

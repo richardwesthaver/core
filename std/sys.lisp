@@ -257,18 +257,24 @@ Core i7 4770K, do **NOT** support RTM."
 (defparameter %little-endian nil)
 
 (defun little-endian-p ()
+  "Return T if the current platform is little-endian else NIL."
   #+(or :x86 :x86-64 :little-endian) t
   #+(or :PPC :POWERPC :big-endian) nil
   #-(or :x86 :x86-64 :little-endian :ppc :powerpc :big-endian)
   %little-endian)
 
-(defun 64-bit-p () #+x86-64 t)
-(defun 32-bit-p () #+x86 t)
+(defun 64-bit-p () 
+  "Return T on a 64-bit platform else NIL."
+  #+x86-64 t)
+(defun 32-bit-p () 
+  "Return T on a 64-bit platform else NIL."
+  #+x86 t)
 
-(defun register-project-directory (path)
-  "Add PATH to QL:*LOCAL-PROJECT-DIRECTORIES* and ASDF:*CENTRAL-REGISTRY*."
+(defun register-project-directory (path &optional (asdf t))
+  "Add PATH to QL:*LOCAL-PROJECT-DIRECTORIES* and ASDF:*CENTRAL-REGISTRY* (as
+long as ASDF is non-nil)."
   #+quicklisp (pushnew path ql:*local-project-directories*)
-  (pushnew path asdf:*central-registry*))
+  (when asdf (pushnew path asdf:*central-registry*)))
 
 ;;; Time
 (defun get-real-time-seconds ()

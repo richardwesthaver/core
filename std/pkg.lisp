@@ -503,6 +503,8 @@
   (:export
    :with-vector-sap
    :setfa
+   :double-array-pointer
+   :octet-vector-pointer
    :copy-c-string
    :clone-strings
    :clone-octet-vector-list

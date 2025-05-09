@@ -305,7 +305,6 @@
   (:link-pod () 
    (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t))
   (:load ()
-   (asdf:load-asd (merge-pathnames "core.asd"))
    (asdf:load-system "core")
    (cli/linedit:install-repl)
    ;; (cli/repl:start-rl-repl)

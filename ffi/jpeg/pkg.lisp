@@ -30,7 +30,8 @@
 (define-alien-type jblockarray (* jblockimage))
 (define-alien-type jblockrow (* jblockarray))
 (define-alien-type jblock (* jblockrow))
-(define-alien-type jcoef (array jblock #.+dctsize2+))
+;; +dctsize2+
+(define-alien-type jcoef (array jblock 64))
 
 ;; jquant, jhuff
 ;; jpeg-component-info
