@@ -504,6 +504,7 @@
    :with-vector-sap
    :setfa
    :double-array-pointer
+   :float-array-pointer
    :octet-vector-pointer
    :copy-c-string
    :clone-strings

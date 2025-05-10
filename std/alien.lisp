@@ -66,6 +66,10 @@ is TY with a -T prepended as is customary in many C codebases."
   "Return a SAP pointing to the start of ARRAY's storage vector."
   (sap-alien (sb-sys:vector-sap (sb-ext:array-storage-vector array)) (* double)))
 
+(defun float-array-pointer (array)
+  "Return a SAP pointing to the start of ARRAY's storage vector."
+  (sap-alien (sb-sys:vector-sap (sb-ext:array-storage-vector array)) (* float)))
+
 (defun octet-vector-pointer (array)
   "Return a SAP pointing to the start of ARRAY's storage vector."
   (sap-alien (sb-sys:vector-sap (sb-ext:array-storage-vector array)) (* unsigned-char)))

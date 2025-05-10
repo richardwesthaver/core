@@ -142,7 +142,7 @@
   (incy int :copy))
 
 (blasfunc cdotu void
-  (ret complex-float :in-out)
+  (z (* complex-float))
   (n int :copy)
   (x (* float))
   (incx int :copy)
@@ -150,7 +150,7 @@
   (incy int :copy))
 
 (blasfunc cdotc void
-  (ret complex-float :in-out)
+  (z (* complex-float))
   (n int :copy)
   (x (* float))
   (incx int :copy)
@@ -158,7 +158,7 @@
   (incy int :copy))
 
 (blasfunc zdotu void
-  (ret complex-double :in-out)
+  (z (* complex-double))
   (n int :copy)
   (x (* double))
   (incx int :copy)
@@ -166,7 +166,7 @@
   (incy int :copy))
 
 (blasfunc zdotc void
-  (ret complex-double :in-out)
+  (z (* complex-double))
   (n int :copy)
   (x (* double))
   (incx int :copy)
@@ -174,7 +174,7 @@
   (incy int :copy))
 
 (blasfunc xdotu void
-  (ret complex-xdouble :in-out)
+  (z (* complex-xdouble))
   (n int :copy)
   (x (* xdouble))
   (incx int :copy)
@@ -182,11 +182,20 @@
   (incy int :copy))
 
 (blasfunc xdotc void
-  (ret complex-xdouble :in-out)
+  (z (* complex-xdouble))
   (n int :copy)
   (x (* xdouble))
   (incx int :copy)
   (y (* xdouble))
+  (incy int :copy))
+
+;; z = ax + y
+(blasfunc saxpy void
+  (n int :copy)
+  (sa float :copy)
+  (sx (* float))
+  (incx int :copy)
+  (sy (* float))
   (incy int :copy))
 
 ;; saxpy daxpy qaxpy caxpy zaxpy xaxpy
