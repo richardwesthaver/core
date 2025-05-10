@@ -112,9 +112,9 @@ to initialize the instance with custom configuration."
 (defun multi-get-kv-raw (db keys &optional (opt (rocksdb-readoptions-create)))
   (multiple-value-bind (keys keyns) (clone-octet-vector-list* keys)
     (let ((n (length keys)))
-      (with-alien ((vals (* (* (unsigned 8))) (make-alien (* (unsigned 8)) n))
+      (with-alien ((vals (* c-string) (make-alien c-string n))
                    (valns (* size-t) (make-alien size-t n))
-                   (errs (* rocksdb-errptr) (make-alien rocksdb-errptr n)))        
+                   (errs (* rocksdb-errptr) (make-alien rocksdb-errptr n)))     
         (rocksdb-multi-get db opt n keys keyns vals valns errs)))))
 
 (defun multi-get-kv-str-raw (db keys &optional (opt (rocksdb-readoptions-create)))
@@ -141,7 +141,7 @@ to initialize the instance with custom configuration."
         (keys (clone-strings keys nil))
         (keyns (clone-integer-list (mapcar 'length keys))))
     (with-alien ((%cfs (* (* rocksdb-column-family-handle)) (make-alien (* rocksdb-column-family-handle) n))
-                 (vals (* c-string) (make-alien c-string n))
+                 (vals (* (* (unsigned 8))) (make-alien (* (unsigned 8)) n))
                  (valns (* size-t) (make-alien size-t n))
                  (errs (* rocksdb-errptr) (make-alien rocksdb-errptr n)))
       (loop for i below n do (setf (deref %cfs i) (pop cfs)))
@@ -511,21 +511,21 @@ transaction-db."
 
 (defun open-cfs-secondary-raw (opts name sname cf-names cf-opts)
   (with-errptr* (e 'rdb-alien-error)
-    (with-alien ((cf-handles (array (* rocksdb-column-family-handle))))
+    (with-alien ((cf-handles (* (* rocksdb-column-family-handle))))
       (rocksdb-open-as-secondary-column-families 
        opts name sname (length cf-names) cf-names cf-opts cf-handles e))))
 
 ;;; Read-only
 (defun open-cfs-read-only-raw (opts name cf-names cf-opts &optional err-if-wal)
   (with-errptr* (e 'rdb-alien-error)
-    (with-alien ((cf-handles (array (* rocksdb-column-family-handle))))
+    (with-alien ((cf-handles (* (* rocksdb-column-family-handle))))
       (rocksdb-open-for-read-only-column-families 
        opts name (length cf-names) cf-names cf-opts cf-handles err-if-wal e))))
 
 ;;; TTL
 (defun open-cfs-with-ttl-raw (opts name cf-names cf-opts ttls)
     (with-errptr* (e 'rdb-alien-error)
-      (with-alien ((cf-handles (array (* rocksdb-column-family-handle))))
+      (with-alien ((cf-handles (* (* rocksdb-column-family-handle))))
         (rocksdb-open-column-families-with-ttl 
          opts name (length cf-names) cf-names cf-opts cf-handles ttls e))))
 ;;; Merge Ops

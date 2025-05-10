@@ -89,7 +89,7 @@
 (def-with-errptr rocksdb-ingest-external-file-cf void
   (db (* rocksdb))
   (cf-handle (* rocksdb-column-family-handle))
-  (file-list (array c-string))
+  (file-list (* c-string))
   (list-len size-t)
   (opt (* rocksdb-ingestexternalfileoptions)))
 

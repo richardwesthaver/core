@@ -130,10 +130,10 @@ just the keys currently present in TABLE."
   (rocksdb-iter-seek-to-last (rdb-iter-sap self)))
 
 (defmethod seek-for-prev ((self rdb-iter) (key vector) &key)
-  (rocksdb-iter-seek-for-prev (rdb-iter-sap self) key (length key)))
+  (rocksdb-iter-seek-for-prev (rdb-iter-sap self) (octets-to-alien key) (length key)))
 
 (defmethod seek ((self rdb-iter) (key simple-vector) &key)
-  (rocksdb-iter-seek (rdb-iter-sap self) key (length key)))
+  (rocksdb-iter-seek (rdb-iter-sap self) (octets-to-alien key) (length key)))
 
 (defmethod next ((self rdb-iter))
   (rocksdb-iter-next (rdb-iter-sap self)))
@@ -718,7 +718,7 @@ internal sap slots are initialized."
 
 (defaccessor sap ((self rdb-writebatch)) (rdb-writebatch-sap self))
 (defmethod iter ((self rdb-writebatch) &key)
-  (rocksdb-writebatch-iterate self nil nil (alien-callable-function 'rocksdb-delete-value)))
+  (rocksdb-writebatch-iterate (sap self) nil nil (alien-callable-function 'rocksdb-delete-value)))
 (defun rdb-writebatch-data (wb &optional size)
   (rocksdb-writebatch-data wb size))
 
@@ -739,7 +739,7 @@ internal sap slots are initialized."
 (defun rdb-wbwi-ts (self ts)
   (with-errptr e
     (rocksdb-writebatch-wi-update-timestamps 
-     (sap self) ts (length ts) nil nil e)))
+     (sap self) (octets-to-alien ts) (length ts) nil nil e)))
 (defmethod destroy-db ((self rdb-wbwi))
   (setf (sap self) (rocksdb-writebatch-wi-destroy (sap self))))
 (defmethod put-key ((self rdb-wbwi) (key vector) (val vector))

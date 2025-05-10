@@ -35,7 +35,13 @@
                               ((:file "lan-party")))
                              (:module "db"
                               :components
-                              ((:file "tpc-h")))
+                              ((:file "log")
+                               (:file "stress")
+                               (:module "tpc-h"
+                                :components
+                                ((:file "pkg")
+                                 (:file "dbgen")
+                                 (:file "tpc-h")))))
                              (:module "dat"
                               :components
                               ((:file "json")))

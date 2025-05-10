@@ -28,3 +28,5 @@
   )
 
 (define-lisp-package :core)
+
+;; (with-core-lisp

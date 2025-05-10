@@ -48,9 +48,10 @@
       (nreverse (append tl rt)))))
 
 (defvar *sbcl-output* t)
+(defvar *sbcl-input* t)
 
 (defun run-sbcl (&rest args)
-  (let ((proc (sb-ext:run-program *sbcl* (or args nil) :output *sbcl-output*)))
+  (let ((proc (sb-ext:run-program *sbcl* (or args nil) :output *sbcl-output* :input *sbcl-input*)))
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
         (sbcl-error "SBCL command failed: ~A ~A" *sbcl* (or args "")))))

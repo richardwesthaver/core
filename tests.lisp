@@ -17,7 +17,6 @@
   (rt/cover:enable-coverage)
   (sb-sprof:with-profiling (:report :graph :reset t 
                             :show-progress t)
-
     (asdf:compile-system :core :force t)
     (asdf:compile-system :core/tests :force t)
     (asdf:load-system :core/tests :force t)
