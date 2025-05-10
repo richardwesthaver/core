@@ -54,17 +54,17 @@
   (name c-string)
   (secondary-path c-string))
 
-(define-alien-routine rocksdb-close void 
+(defar rocksdb-close void 
       (db (* rocksdb)))
 
-(define-alien-routine rocksdb-cancel-all-background-work void 
+(defar rocksdb-cancel-all-background-work void 
   (db (* rocksdb))
   (wait boolean))
 
-(define-alien-routine rocksdb-disable-manual-compaction void
+(defar rocksdb-disable-manual-compaction void
   (db (* rocksdb)))
 
-(define-alien-routine rocksdb-enable-manual-compaction void
+(defar rocksdb-enable-manual-compaction void
   (db (* rocksdb)))
 
 (def-with-errptr rocksdb-put 
@@ -143,12 +143,12 @@
   (ts (* c-string))
   (tslen (* size-t)))
 
-(define-alien-routine rocksdb-get-db-identity c-string (db (* rocksdb)) (idlen (* size-t)))
+(defar rocksdb-get-db-identity c-string (db (* rocksdb)) (idlen (* size-t)))
 
 ;; NOTE 2023-12-19: only the VOID-returning functions in the multi-
 ;; family perform parallel IO:
 ;; https://github.com/facebook/rocksdb/wiki/MultiGet-Performance
-(define-alien-routine rocksdb-multi-get void
+(defar rocksdb-multi-get void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (num-keys size-t)
@@ -158,7 +158,7 @@
   (values-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
-(define-alien-routine rocksdb-multi-get-with-ts void
+(defar rocksdb-multi-get-with-ts void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (num-keys size-t)
@@ -170,7 +170,7 @@
   (ts-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
-(define-alien-routine rocksdb-multi-get-cf void
+(defar rocksdb-multi-get-cf void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (cfs (array (* rocksdb-column-family-handle)))
@@ -181,7 +181,7 @@
   (values-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
-(define-alien-routine rocksdb-multi-get-cf-with-ts void
+(defar rocksdb-multi-get-cf-with-ts void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (cfs (array rocksdb-column-family-handle))
@@ -194,7 +194,7 @@
   (ts-list-sizes (array size-t))
   (errs (array rocksdb-errptr)))
 
-(define-alien-routine rocksdb-batched-multi-get-cf void
+(defar rocksdb-batched-multi-get-cf void
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
@@ -205,7 +205,7 @@
   (errs (array (* rocksdb-errptr)))
   (sorted-input boolean))
 
-(define-alien-routine rocksdb-key-may-exist unsigned-char
+(defar rocksdb-key-may-exist unsigned-char
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
   (key c-string)
@@ -216,7 +216,7 @@
   (timestamp-len size-t)
   (value-found (* unsigned-char)))
 
-(define-alien-routine rocksdb-key-may-exist-cf unsigned-char
+(defar rocksdb-key-may-exist-cf unsigned-char
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
@@ -228,12 +228,12 @@
   (timestamp-len size-t)
   (value-found (* unsigned-char)))
       
-(define-alien-routine rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
+(defar rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
 
-(define-alien-routine rocksdb-cache-create-hyper-clock (* rocksdb-cache)
+(defar rocksdb-cache-create-hyper-clock (* rocksdb-cache)
   (capacity size-t) (estimated-entry-charge size-t))
 
-(define-alien-routine rocksdb-cache-create-hyper-clock-opts (* rocksdb-cache)
+(defar rocksdb-cache-create-hyper-clock-opts (* rocksdb-cache)
   (opts (* rocksdb-hyper-clock-cache-options)))
 
 (def-with-errptr rocksdb-flush void 
@@ -257,31 +257,31 @@
   (sync unsigned-char))
 
 ;; deprecated AO 2025-01-12
-;; (define-alien-routine rocksdb-delete-file void
+;; (defar rocksdb-delete-file void
 ;;   (db (* rocksdb))
 ;;   (name c-string))
 
-(define-alien-routine rocksdb-livefile (* rocksdb-livefiles)
+(defar rocksdb-livefile (* rocksdb-livefiles)
   (db (* rocksdb))
   (name c-string))
 
 ;; return NULL if prop name is unknown, else return pointer to
 ;; malloc-ed null-term value.
-(define-alien-routine rocksdb-property-value c-string
+(defar rocksdb-property-value c-string
   (db (* rocksdb))
   (propname c-string))
 
 ;; return 0 on success, else -1
-(define-alien-routine rocksdb-property-int int
+(defar rocksdb-property-int int
   (db (* rocksdb))
   (propname c-string))
 
-(define-alien-routine rocksdb-property-value-cf c-string
+(defar rocksdb-property-value-cf c-string
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
   (propname c-string))
 
-(define-alien-routine rocksdb-property-int-cf int
+(defar rocksdb-property-int-cf int
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
   (propname c-string))
@@ -301,7 +301,7 @@
   (column-family-names (array c-string))
   (lencfs (* size-t)))
 
-(define-alien-routine rocksdb-create-column-families-destroy void
+(defar rocksdb-create-column-families-destroy void
   (list (array rocksdb-column-family-handle)))
 
 (def-with-errptr rocksdb-create-column-family-with-ttl (* rocksdb-column-family-handle)
@@ -310,13 +310,13 @@
   (cf-name c-string)
   (ttl int))
 
-(define-alien-routine rocksdb-column-family-handle-destroy void
+(defar rocksdb-column-family-handle-destroy void
   (cf (* rocksdb-column-family-handle)))
 
-(define-alien-routine rocksdb-column-family-handle-get-id unsigned-int
+(defar rocksdb-column-family-handle-get-id unsigned-int
   (cf (* rocksdb-column-family-handle)))
 
-(define-alien-routine rocksdb-column-family-handle-get-name c-string
+(defar rocksdb-column-family-handle-get-name c-string
   (handle (* rocksdb-column-family-handle))
   (name-len (* size-t)))
 
@@ -325,7 +325,7 @@
   (db (* rocksdb))
   (handle (* rocksdb-column-family-handle)))
 
-(define-alien-routine rocksdb-get-default-column-family-handle (* rocksdb-column-family-handle)
+(defar rocksdb-get-default-column-family-handle (* rocksdb-column-family-handle)
   (db (* rocksdb)))
 
 (def-with-errptr rocksdb-list-column-families 
@@ -334,7 +334,7 @@
   (name c-string)
   (lencf (* size-t)))
 
-(define-alien-routine rocksdb-list-column-families-destroy void
+(defar rocksdb-list-column-families-destroy void
   (list (array c-string))
   (len size-t))
 
@@ -462,15 +462,15 @@
   (name c-string))
 
 ;;; Iterators
-(define-alien-routine rocksdb-create-iterator (* rocksdb-iterator)
+(defar rocksdb-create-iterator (* rocksdb-iterator)
   (db (* rocksdb))
   (opt (* rocksdb-readoptions)))
 
-(define-alien-routine rocksdb-get-updates-since (* rocksdb-wal-iterator)
+(defar rocksdb-get-updates-since (* rocksdb-wal-iterator)
   (db (* rocksdb))
   (opts (* rocksdb-readoptions)))
 
-(define-alien-routine rocksdb-create-iterator-cf (* rocksdb-iterator)
+(defar rocksdb-create-iterator-cf (* rocksdb-iterator)
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle)))
@@ -481,44 +481,44 @@
   (cfs (array (* rocksdb-column-family-handle)))
   (iters (array (* rocksdb-iterator))))
   
-(define-alien-routine rocksdb-iter-destroy void 
+(defar rocksdb-iter-destroy void 
       (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-seek-to-first void 
+(defar rocksdb-iter-seek-to-first void 
       (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-seek-to-last void 
+(defar rocksdb-iter-seek-to-last void 
       (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-seek void 
+(defar rocksdb-iter-seek void 
   (iter (* rocksdb-iterator))
   (k (* unsigned-char))
   (klen size-t))
-(define-alien-routine rocksdb-iter-seek-for-prev void 
+(defar rocksdb-iter-seek-for-prev void 
   (iter (* rocksdb-iterator))
   (k (* unsigned-char))
   (klen size-t))
-(define-alien-routine rocksdb-iter-valid boolean 
+(defar rocksdb-iter-valid boolean 
   (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-next void
+(defar rocksdb-iter-next void
   (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-prev void 
+(defar rocksdb-iter-prev void 
   (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-iter-key (* unsigned-char)
+(defar rocksdb-iter-key (* unsigned-char)
   (iter (* rocksdb-iterator))
   (klen-ptr (* size-t)))
-(define-alien-routine rocksdb-iter-value (* unsigned-char) 
+(defar rocksdb-iter-value (* unsigned-char) 
   (iter (* rocksdb-iterator)) 
   (vlen-ptr (* size-t)))
-(define-alien-routine rocksdb-iter-timestamp (* unsigned-char) 
+(defar rocksdb-iter-timestamp (* unsigned-char) 
   (iter (* rocksdb-iterator))
   (tslen (* size-t)))
 (def-with-errptr rocksdb-iter-get-error void (iter (* rocksdb-iterator)))
-(define-alien-routine rocksdb-wal-iter-next void (iter (* rocksdb-wal-iterator)))
-(define-alien-routine rocksdb-wal-iter-valid unsigned-char (iter (* rocksdb-wal-iterator)))
+(defar rocksdb-wal-iter-next void (iter (* rocksdb-wal-iterator)))
+(defar rocksdb-wal-iter-valid unsigned-char (iter (* rocksdb-wal-iterator)))
 (def-with-errptr rocksdb-wal-iter-status unsigned-char (iter (* rocksdb-wal-iterator)))
-(define-alien-routine rocksdb-wal-iter-get-batch (* rocksdb-writebatch)
+(defar rocksdb-wal-iter-get-batch (* rocksdb-writebatch)
   (iter (* rocksdb-wal-iterator))
   (seq (* (unsigned 64))))
-(define-alien-routine rockdsb-get-latest-sequence-number (unsigned 64) (db (* rocksdb)))
-(define-alien-routine rocksdb-wal-iter-destroy void
+(defar rockdsb-get-latest-sequence-number (unsigned 64) (db (* rocksdb)))
+(defar rocksdb-wal-iter-destroy void
   (iter (* rocksdb-wal-iterator)))
 
 ;;; Backup
@@ -551,26 +551,26 @@
   (res-opts (* rocksdb-restore-options))
   (backup-id unsigned-int))
 
-(define-alien-routine rocksdb-backup-engine-close void
+(defar rocksdb-backup-engine-close void
   (be (* rocksdb-backup-engine)))
 
-(define-alien-routine rocksdb-backup-engine-get-backup-info (* rocksdb-backup-engine-info)
+(defar rocksdb-backup-engine-get-backup-info (* rocksdb-backup-engine-info)
   (be (* rocksdb-backup-engine)))
-(define-alien-routine rocksdb-backup-engine-info-count int
+(defar rocksdb-backup-engine-info-count int
   (info (* rocksdb-backup-engine-info)))
-(define-alien-routine rocksdb-backup-engine-info-timestamp (signed 64)
+(defar rocksdb-backup-engine-info-timestamp (signed 64)
   (info (* rocksdb-backup-engine-info))
   (index int))
-(define-alien-routine rocksdb-backup-engine-info-backup-id (unsigned 64)
+(defar rocksdb-backup-engine-info-backup-id (unsigned 64)
   (info (* rocksdb-backup-engine-info))
   (index int))
-(define-alien-routine rocksdb-backup-engine-info-size (unsigned 64)
+(defar rocksdb-backup-engine-info-size (unsigned 64)
   (info (* rocksdb-backup-engine-info))
   (index int))
-(define-alien-routine rocksdb-backup-engine-info-num-files (unsigned 32)
+(defar rocksdb-backup-engine-info-num-files (unsigned 32)
   (info (* rocksdb-backup-engine-info))
   (index int))
-(define-alien-routine rocksdb-backup-engine-info-destroy void
+(defar rocksdb-backup-engine-info-destroy void
   (info (* rocksdb-backup-engine-info)))
 
 ;;; Transactions
@@ -593,36 +593,36 @@
   (cf-opfs (* rocksdb-options))
   (cf-handles (array (* rocksdb-column-family-handle))))
 
-(define-alien-routine rocksdb-transactiondb-create-snapshot (* rocksdb-snapshot)
+(defar rocksdb-transactiondb-create-snapshot (* rocksdb-snapshot)
   (txn-db (* rocksdb-transactiondb))
   (snapshot (* rocksdb-snapshot)))
 
-(define-alien-routine rocksdb-transactiondb-release-snapshot void
+(defar rocksdb-transactiondb-release-snapshot void
   (txn-db (* rocksdb-transactiondb))
   (snapshot (* rocksdb-snapshot)))
 
-(define-alien-routine rocksdb-transactiondb-property-value c-string
+(defar rocksdb-transactiondb-property-value c-string
   (db (* rocksdb-transactiondb))
   (propname c-string))
 
-(define-alien-routine rocksdb-transactiondb-property-int int
+(defar rocksdb-transactiondb-property-int int
   (db (* rocksdb-transactiondb))
   (propname c-string)
   (out-val (unsigned 64)))
 
-(define-alien-routine rocksdb-transactiondb-get-base-db (* rocksdb)
+(defar rocksdb-transactiondb-get-base-db (* rocksdb)
   (txn-db (* rocksdb-transactiondb)))
 
-(define-alien-routine rocksdb-transactiondb-close-base-db void
+(defar rocksdb-transactiondb-close-base-db void
   (base-db (* rocksdb)))
 
-(define-alien-routine rocksdb-transaction-begin (* rocksdb-transaction)
+(defar rocksdb-transaction-begin (* rocksdb-transaction)
   (txn-db (* rocksdb-transactiondb))
   (wopts (* rocksdb-writeoptions))
   (topts (* rocksdb-transaction-options))
   (told (* rocksdb-transaction)))
 
-(define-alien-routine rocksdb-transactiondb-get-prepared-transactions (* (* rocksdb-transaction))
+(defar rocksdb-transactiondb-get-prepared-transactions (* (* rocksdb-transaction))
   (txn-db (* rocksdb-transactiondb))
   (cnt (* size-t)))
 
@@ -631,7 +631,7 @@
   (name (* unsigned-char))
   (name-len size-t))
 
-(define-alien-routine rocksdb-transaction-get-name (* unsigned-char)
+(defar rocksdb-transaction-get-name (* unsigned-char)
   (txn (* rocksdb-transaction))
   (name-len (* size-t)))
 
@@ -644,16 +644,16 @@
 (def-with-errptr rocksdb-transaction-rollback void
   (txn (* rocksdb-transaction)))
 
-(define-alien-routine rocksdb-transaction-set-savepoint void
+(defar rocksdb-transaction-set-savepoint void
   (txn (* rocksdb-transaction)))
 
 (def-with-errptr rocksdb-transaction-rollback-to-savepoint void
   (txn (* rocksdb-transaction)))
 
-(define-alien-routine rocksdb-transaction-destroy void
+(defar rocksdb-transaction-destroy void
   (txn (* rocksdb-transaction)))
 
-(define-alien-routine rocksdb-transaction-get-writebach-wi (* rocksdb-writebatch-wi)
+(defar rocksdb-transaction-get-writebach-wi (* rocksdb-writebatch-wi)
   (txn (* rocksdb-transaction)))
 
 (def-with-errptr rocksdb-transaction-delete void
@@ -680,11 +680,11 @@
   (key c-string)
   (klen size-t))
 
-(define-alien-routine rocksdb-transaction-create-iterator (* rocksdb-iterator)
+(defar rocksdb-transaction-create-iterator (* rocksdb-iterator)
   (txn (* rocksdb-transaction))
   (opts (* rocksdb-readoptions)))
 
-(define-alien-routine rocksdb-transaction-create-iterator-cf (* rocksdb-iterator)
+(defar rocksdb-transaction-create-iterator-cf (* rocksdb-iterator)
   (txn (* rocksdb-transaction))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle)))
@@ -894,16 +894,16 @@
   (val (* unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-transactiondb-create-iterator (* rocksdb-iterator)
+(defar rocksdb-transactiondb-create-iterator (* rocksdb-iterator)
   (txndb (* rocksdb-transactiondb))
   (opts (* rocksdb-readoptions)))
 
-(define-alien-routine rocksdb-transactiondb-create-iterator-cf (* rocksdb-iterator)
+(defar rocksdb-transactiondb-create-iterator-cf (* rocksdb-iterator)
   (txndb (* rocksdb-transactiondb))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle)))
 
-(define-alien-routine rocksdb-transactiondb-close void
+(defar rocksdb-transactiondb-close void
   (tdb (* rocksdb-transactiondb)))
 
 (def-with-errptr rocksdb-transactiondb-flush void
@@ -940,13 +940,13 @@
   (cf-opts (array (* rocksdb-options)))
   (cf-handles (array (* rocksdb-column-family-handle))))
 
-(define-alien-routine rocksdb-optimistictransactiondb-get-base-db (* rocksdb)
+(defar rocksdb-optimistictransactiondb-get-base-db (* rocksdb)
   (otxn-db (* rocksdb-optimistictransactiondb)))
 
-(define-alien-routine rocksdb-optimistictransactiondb-close-base-db void
+(defar rocksdb-optimistictransactiondb-close-base-db void
   (base-db (* rocksdb)))
 
-(define-alien-routine rocksdb-optimistictransaction-begin (* rocksdb-transaction)
+(defar rocksdb-optimistictransaction-begin (* rocksdb-transaction)
   (otxn-db (* rocksdb-optimistictransactiondb))
   (wopts (* rocksdb-writeoptions))
   (otxn-opts (* rocksdb-optimistictransaction-options))
@@ -957,52 +957,52 @@
   (wopts (* rocksdb-writeoptions))
   (batch (* rocksdb-writebatch)))
 
-(define-alien-routine rocksdb-optimistictransactiondb-close void
+(defar rocksdb-optimistictransactiondb-close void
   (otxn-db (* rocksdb-optimistictransactiondb)))
 
 (def-with-errptr rocksdb-optimistictransactiondb-checkpoint-object-create (* rocksdb-checkpoint)
   (otxn-db (* rocksdb-optimistictransactiondb)))
 
 ;;; Perfcontext
-(define-alien-routine rocksdb-set-perf-level void (val int))
+(defar rocksdb-set-perf-level void (val int))
 
-(define-alien-routine rocksdb-perfcontext-create (* rocksdb-perfcontext))
+(defar rocksdb-perfcontext-create (* rocksdb-perfcontext))
 
-(define-alien-routine rocksdb-perfcontext-reset void (ctx (* rocksdb-perfcontext)))
+(defar rocksdb-perfcontext-reset void (ctx (* rocksdb-perfcontext)))
 
-(define-alien-routine rocksdb-perfcontext-report (* unsigned-char) 
+(defar rocksdb-perfcontext-report (* unsigned-char) 
   (context (* rocksdb-perfcontext))
   (exclude-zero-counters unsigned-char))
 
-(define-alien-routine rocksdb-perfcontext-metric unsigned-long
+(defar rocksdb-perfcontext-metric unsigned-long
   (context (* rocksdb-perfcontext)) (metric int))
 
-(define-alien-routine rocksdb-perfcontext-destroy void (ctx (* rocksdb-perfcontext)))
+(defar rocksdb-perfcontext-destroy void (ctx (* rocksdb-perfcontext)))
 
 ;;; Filter Policy
-(define-alien-routine rocksdb-filterpolicy-destroy void (self (* rocksdb-filterpolicy)))
+(defar rocksdb-filterpolicy-destroy void (self (* rocksdb-filterpolicy)))
 
-(define-alien-routine rocksdb-filterpolicy-create-bloom (* rocksdb-filterpolicy)
+(defar rocksdb-filterpolicy-create-bloom (* rocksdb-filterpolicy)
   (bits-per-key double))
 
-(define-alien-routine rocksdb-filterpolicy-create-bloom-full (* rocksdb-filterpolicy)
+(defar rocksdb-filterpolicy-create-bloom-full (* rocksdb-filterpolicy)
   (bits-per-key double))
 
-(define-alien-routine rocksdb-filterpolicy-create-ribbon (* rocksdb-filterpolicy)
+(defar rocksdb-filterpolicy-create-ribbon (* rocksdb-filterpolicy)
   (bloom-equivalent-bits-per-key double))
 
-(define-alien-routine rocksdb-filterpolicy-create-ribbon-hybrid (* rocksdb-filterpolicy)
+(defar rocksdb-filterpolicy-create-ribbon-hybrid (* rocksdb-filterpolicy)
   (bloom-equivalent-bits-per-key double)
   (bloom-before-level int))
 
 ;;; Snapshot
-(define-alien-routine rocksdb-create-snapshot (* rocksdb-snapshot)
+(defar rocksdb-create-snapshot (* rocksdb-snapshot)
   (db (* rocksdb)))
 
-(define-alien-routine rocksdb-snapshot-get-sequence-number (unsigned 64)
+(defar rocksdb-snapshot-get-sequence-number (unsigned 64)
   (snapshot (* rocksdb-snapshot)))
 
-(define-alien-routine rocksdb-release-snapshot void
+(defar rocksdb-release-snapshot void
   (db (* rocksdb))
   (snapshot (* rocksdb-snapshot)))
 
@@ -1020,37 +1020,37 @@
   (key (* unsigned-char))
   (keylen size-t))
 
-(define-alien-routine rocksdb-pinnableslice-destroy void (v (* rocksdb-pinnableslice)))
+(defar rocksdb-pinnableslice-destroy void (v (* rocksdb-pinnableslice)))
 
-(define-alien-routine rocksdb-pinnableslice-value (* unsigned-char) 
+(defar rocksdb-pinnableslice-value (* unsigned-char) 
   (ty (* rocksdb-pinnableslice))
   (vlen (* size-t)))
 
 ;;; Memory Consumers
-(define-alien-routine rocksdb-memory-consumers-create (* rocksdb-memory-consumers))
-(define-alien-routine rocksdb-memory-consumers-add-db void 
+(defar rocksdb-memory-consumers-create (* rocksdb-memory-consumers))
+(defar rocksdb-memory-consumers-add-db void 
   (consumers (* rocksdb-memory-consumers))
   (db (* rocksdb)))
-(define-alien-routine rocksdb-memory-consumers-add-cache void 
+(defar rocksdb-memory-consumers-add-cache void 
   (consumers (* rocksdb-memory-consumers))
   (cache (* rocksdb-cache)))
-(define-alien-routine rocksdb-memory-consumers-destroy void (consumers (* rocksdb-memory-consumers)))
+(defar rocksdb-memory-consumers-destroy void (consumers (* rocksdb-memory-consumers)))
 
 (def-with-errptr rocksdb-approximate-memory-usage-create (* rocksdb-memory-usage)
   (consumers (* rocksdb-memory-consumers)))
-(define-alien-routine rocksdb-approximate-memory-usage-destroy void (usage (* rocksdb-memory-usage)))
-(define-alien-routine rocksdb-approximate-memory-usage-get-mem-table-total unsigned-long 
+(defar rocksdb-approximate-memory-usage-destroy void (usage (* rocksdb-memory-usage)))
+(defar rocksdb-approximate-memory-usage-get-mem-table-total unsigned-long 
   (usage (* rocksdb-memory-usage)))
-(define-alien-routine rocksdb-approximate-memory-usage-get-mem-table-unflushed unsigned-long 
+(defar rocksdb-approximate-memory-usage-get-mem-table-unflushed unsigned-long 
   (usage (* rocksdb-memory-usage)))
-(define-alien-routine rocksdb-approximate-memory-usage-get-mem-table-readers-total unsigned-long 
+(defar rocksdb-approximate-memory-usage-get-mem-table-readers-total unsigned-long 
   (usage (* rocksdb-memory-usage)))
-(define-alien-routine rocksdb-approximate-memory-usage-get-cache-total unsigned-long 
+(defar rocksdb-approximate-memory-usage-get-cache-total unsigned-long 
   (usage (* rocksdb-memory-usage)))
 
 ;;; DbPath
-(define-alien-routine rocksdb-dbpath-create (* rocksdb-dbpath)
+(defar rocksdb-dbpath-create (* rocksdb-dbpath)
   (path c-string)
   (target-size (unsigned 64)))
-(define-alien-routine rocksdb-dbpath-destroy (* rocksdb-dbpath)
+(defar rocksdb-dbpath-destroy (* rocksdb-dbpath)
   (path (* rocksdb-dbpath)))

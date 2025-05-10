@@ -195,6 +195,16 @@ alien (* size-t) with same size as the first value."
          :format-control "~A is not a value associated with a variant of enum ~A"
          :format-arguments (list var enum)))
 
+;;; DEFAR
+(defmacro defar (name result-type &rest args)
+  "Like DEFINE-ALIEN-ROUTINE but always inline the resulting alien function."
+  `(progn 
+     (declaim (inline ,(typecase name
+                         (cons (second name))
+                         (t name))))
+     (define-alien-routine ,name ,result-type ,@args)))
+
+;;; DEFINE-ALIEN-ENUM
 (defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &body forms)
   "Define a pseudo-enum type, used to work-around difficulties working with
 SB-ALIEN, groveller, typedef enums, etc.
@@ -503,9 +513,9 @@ newly allocated memory."
 (define-alien-type gid-t unsigned-int)
 (define-alien-type loff-t long-long)
 
-(define-alien-routine memset void (ptr (* t)) (constant int) (size size-t))
-(define-alien-routine memcpy void (dst (* t)) (src (* t)) (size size-t))
-(define-alien-routine posix-memalign int (box (* (* t))) (alignment size-t) (size size-t))
+(defar memset void (ptr (* t)) (constant int) (size size-t))
+(defar memcpy void (dst (* t)) (src (* t)) (size size-t))
+(defar posix-memalign int (box (* (* t))) (alignment size-t) (size size-t))
 
 (define-alien-type timeval
   (struct timeval

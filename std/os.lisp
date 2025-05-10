@@ -75,7 +75,7 @@ arrange for FVAR to be closed after BODY."
 
 ;;; Linux
 ;; https://man7.org/linux/man-pages/man3/statvfs.3.html
-(define-alien-routine statvfs int
+(defar statvfs int
   (path c-string)
   (buf (* t)))
 
@@ -89,19 +89,19 @@ arrange for FVAR to be closed after BODY."
           (freq int)
           (passno int)))
 
-(define-alien-routine setmntent (* t) (filename c-string) (type c-string))
+(defar setmntent (* t) (filename c-string) (type c-string))
 
-(define-alien-routine getmntent (* t) (stream (* t)))
+(defar getmntent (* t) (stream (* t)))
 
-(define-alien-routine endmntent int (stream (* t)))
+(defar endmntent int (stream (* t)))
 
-(define-alien-routine hasmntopt c-string (mnt (* mntent)) (opt c-string))
+(defar hasmntopt c-string (mnt (* mntent)) (opt c-string))
 
-(define-alien-routine isatty int (fd int))
+(defar isatty int (fd int))
 
-(define-alien-routine ("tcgetattr" tcgetattr*) int (fd int) (term (* sb-posix::alien-termios)))
-(define-alien-routine ("tcsetattr" tcsetattr*) int (fd int) (actions int) (term (* sb-posix::alien-termios)))
-(define-alien-routine cfmakeraw void (term (* sb-posix::alien-termios)))
+(defar ("tcgetattr" tcgetattr*) int (fd int) (term (* sb-posix::alien-termios)))
+(defar ("tcsetattr" tcsetattr*) int (fd int) (actions int) (term (* sb-posix::alien-termios)))
+(defar cfmakeraw void (term (* sb-posix::alien-termios)))
 
 (define-alien-type winsize (struct winsize
 			     (row unsigned-short)

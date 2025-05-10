@@ -43,15 +43,15 @@
             size-t
             unsigned-char))
 
-(define-alien-routine rocksdb-comparator-create (* rocksdb-comparator)
+(defar rocksdb-comparator-create (* rocksdb-comparator)
   (state (* t))
   (destructor (* rocksdb-destructor-function))
   (compare (* rocksdb-compare-function))
   (name (* rocksdb-name-function)))
 
-(define-alien-routine rocksdb-comparator-destroy void (self (* rocksdb-comparator)))
+(defar rocksdb-comparator-destroy void (self (* rocksdb-comparator)))
 
-(define-alien-routine rocksdb-comparator-with-ts-create (* rocksdb-comparator)
+(defar rocksdb-comparator-with-ts-create (* rocksdb-comparator)
   (state (* t))
   (destructor (* rocksdb-destructor-function))
   (compare (* rocksdb-compare-function))

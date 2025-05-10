@@ -17,9 +17,9 @@
 (defalien-int io-uring-minor-version)
 (defalien-int io-uring-check-version (major int) (minor int))
 
-(define-alien-routine io-uring-get-probe-ring (* io-uring-probe) (ring (* io-uring)))
-(define-alien-routine io-uring-get-probe (* io-uring-probe))
-(define-alien-routine io-uring-free-probe void (p (* (struct io-uring-probe))))
+(defar io-uring-get-probe-ring (* io-uring-probe) (ring (* io-uring)))
+(defar io-uring-get-probe (* io-uring-probe))
+(defar io-uring-free-probe void (p (* (struct io-uring-probe))))
 
 ;; (defalien-int io-uring-opcode-supported (p (* (struct io-uring-probe))) (op int))
 (defalien-int io-uring-queue-init-mem
@@ -135,7 +135,7 @@
   (p (* (struct io-uring-params))))
 (defalien-int io-uring-register (fd unsigned-int) (opcode unsigned-int) (arg (* t)) (nr-args unsigned-int))
 
-(define-alien-routine io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
+(defar io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
   (ring (* io-uring))
   (nentries unsigned-int)
   (bgid int)
@@ -148,5 +148,5 @@
   (bgid int))
 
 ;;..
-(define-alien-routine io-uring-mlock-size ssize-t (entries unsigned) (flags unsigned))
-(define-alien-routine io-uring-mlock-size-params ssize-t (entries unsigned) (p (* (struct io-uring-params))))
+(defar io-uring-mlock-size ssize-t (entries unsigned) (flags unsigned))
+(defar io-uring-mlock-size-params ssize-t (entries unsigned) (p (* (struct io-uring-params))))

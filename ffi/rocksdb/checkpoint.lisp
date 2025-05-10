@@ -13,5 +13,5 @@
   (checkpoint-dir c-string)
   (log-size-for-flush (unsigned 64)))
 
-(define-alien-routine rocksdb-checkpoint-object-destroy void
+(defar rocksdb-checkpoint-object-destroy void
   (checkpoint (* rocksdb-checkpoint)))

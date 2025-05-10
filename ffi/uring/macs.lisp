@@ -7,7 +7,7 @@
 
 (defmacro defalien-int (name &body args)
   `(progn
-     (define-alien-routine ,name int ,@args)
+     (defar ,name int ,@args)
      (export '(,name) :uring)))
 
 (defmacro def-with-ring (name &body args)

@@ -6,9 +6,31 @@
 (in-package :rocksdb)
 
 ;;; Early Macros
+#|
+  note: 
+    unable to
+      optimize away %SAP-ALIEN
+    because:
+      forced to do runtime allocation of alien-value structure
+    --> STD/ALIEN:DEFAR PROGN LOCALLY DEFINE-ALIEN-ROUTINE PROGN DEFUN 
+    --> PROGN SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA FUNCTION 
+    --> BLOCK WITH-ALIEN SYMBOL-MACROLET SYMBOL-MACROLET SYMBOL-MACROLET 
+    --> VALUES 
+    ==>
+      1
+
+  note: 
+    doing SAP to pointer coercion (cost 20)
+    --> STD/ALIEN:DEFAR PROGN LOCALLY DEFINE-ALIEN-ROUTINE PROGN DEFUN 
+    --> PROGN SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA FUNCTION 
+    --> BLOCK WITH-ALIEN SYMBOL-MACROLET SYMBOL-MACROLET SYMBOL-MACROLET 
+    --> VALUES 
+    ==>
+      1
+|#
 (defmacro def-with-errptr (name result-type &rest args)
   `(progn
-     (define-alien-routine ,name ,result-type ,@args (errptr rocksdb-errptr))
+     (defar ,name ,result-type ,@args (errptr rocksdb-errptr))
      (export '(,name) :rocksdb)))
 
 (defmacro define-opt (name)
@@ -17,8 +39,8 @@
         (typ (symbolicate name '-t)))
     `(progn
        (define-alien-type ,name (struct ,typ))
-       (define-alien-routine ,c-fn (* ,name))
-       (define-alien-routine ,d-fn void
+       (defar ,c-fn (* ,name))
+       (defar ,d-fn void
          (opt (* ,name)))
        (export '(,c-fn ,d-fn ,name) :rocksdb))))
 
@@ -27,17 +49,17 @@
          (s-fn (symbolicate opt '-set- name)))
     (if val
         `(progn
-           (define-alien-routine ,s-fn void
+           (defar ,s-fn void
              (opt (* ,opt))
              (val ,val))
-           (define-alien-routine ,g-fn ,val
+           (defar ,g-fn ,val
              (opt (* ,opt)))
            (export '(,g-fn ,s-fn) :rocksdb))
         `(progn
-           (define-alien-routine ,s-fn void
+           (defar ,s-fn void
              (opt (* ,opt)) 
              (val boolean))
-           (define-alien-routine ,g-fn boolean
+           (defar ,g-fn boolean
              (opt (* ,opt)))
            (export '(,g-fn ,s-fn) :rocksdb)))))
 

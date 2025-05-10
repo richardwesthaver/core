@@ -51,7 +51,7 @@ by setting prefix_extractor in ColumnFamilyOptions.
             (array unsigned-char) ;;key 
             size-t)) ;;len
 
-(define-alien-routine rocksdb-slicetransform-create (* rocksdb-slicetransform)
+(defar rocksdb-slicetransform-create (* rocksdb-slicetransform)
   (state (* t))
   (destructor (* rocksdb-destructor-function))
   (transform (* rocksdb-transform-function))
@@ -59,12 +59,12 @@ by setting prefix_extractor in ColumnFamilyOptions.
   (in-range (* rocksdb-in-range-function))
   (name (* rocksdb-name-function)))
 
-(define-alien-routine rocksdb-slicetransform-create-noop (* rocksdb-slicetransform))
+(defar rocksdb-slicetransform-create-noop (* rocksdb-slicetransform))
 
-(define-alien-routine rocksdb-slicetransform-create-fixed-prefix (* rocksdb-slicetransform)
+(defar rocksdb-slicetransform-create-fixed-prefix (* rocksdb-slicetransform)
   (n size-t))
 
-(define-alien-routine rocksdb-slicetransform-destroy void (st (* rocksdb-slicetransform)))
+(defar rocksdb-slicetransform-destroy void (st (* rocksdb-slicetransform)))
 
 (define-alien-callable rocksdb-transform-default (* unsigned-char)
     ((key (* unsigned-char))

@@ -53,33 +53,33 @@ including data loss, unreported corruption, deadlocks, and more.
               (* t)
               (* rocksdb-compactionfiltercontext)))
 
-(define-alien-routine rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
+(defar rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
   (state (* t))
   (destructor (* rocksdb-destructor-function))
   (filter (* rocksdb-filter-function))
   (name (* rocksdb-name-function)))
 
-(define-alien-routine rocksdb-compactionfilter-set-ignore-snapshots void
+(defar rocksdb-compactionfilter-set-ignore-snapshots void
   (self (* rocksdb-compactionfilter)) (val unsigned-char))
 
-(define-alien-routine rocksdb-compactionfilter-destroy void
+(defar rocksdb-compactionfilter-destroy void
   (self (* rocksdb-compactionfilter)))
 
 ;;; Compaction Filter Context
-(define-alien-routine rocksdb-compactionfiltercontext-is-full-compaction unsigned-char
+(defar rocksdb-compactionfiltercontext-is-full-compaction unsigned-char
   (context (* rocksdb-compactionfiltercontext)))
 
-(define-alien-routine rocksdb-compactionfiltercontext-is-manual-compaction unsigned-char
+(defar rocksdb-compactionfiltercontext-is-manual-compaction unsigned-char
   (context (* rocksdb-compactionfiltercontext)))
 
 ;;; Compaction Filter Factory
-(define-alien-routine rocksdb-compactionfilterfactory-create (* rocksdb-compactionfilterfactory)
+(defar rocksdb-compactionfilterfactory-create (* rocksdb-compactionfilterfactory)
   (state (* t))
   (destructor (* rocksdb-destructor-function))
   (creator (* rocksdb-create-compaction-filter-function))
   (name (* rocksdb-name-function)))
 
-(define-alien-routine rocksdb-compacitonfilterfactory-destroy void
+(defar rocksdb-compacitonfilterfactory-destroy void
   (factory (* rocksdb-compactionfilterfactory)))
 
 (define-alien-callable rocksdb-filter-never unsigned-char

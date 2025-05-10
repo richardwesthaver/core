@@ -9,16 +9,16 @@
 ;;; Code:
 (in-package :rocksdb)
 
-(define-alien-routine rocksdb-sstfilewriter-create (* rocksdb-sstfilewriter)
+(defar rocksdb-sstfilewriter-create (* rocksdb-sstfilewriter)
   (env-opts (* rocksdb-envoptions))
   (io-options (* rocksdb-options)))
 
-(define-alien-routine rocksdb-sstfilewriter-create-with-comparator (* rocksdb-sstfilewriter)
+(defar rocksdb-sstfilewriter-create-with-comparator (* rocksdb-sstfilewriter)
   (env-opts (* rocksdb-envoptions))
   (io-options (* rocksdb-options))
   (comparator (* rocksdb-comparator)))
 
-(define-alien-routine rocksdb-sstfilewriter-destroy void (writer (* rocksdb-sstfilewriter)))
+(defar rocksdb-sstfilewriter-destroy void (writer (* rocksdb-sstfilewriter)))
 
 (def-with-errptr rocksdb-sstfilewriter-open void
   (writer (* rocksdb-sstfilewriter))
@@ -96,25 +96,25 @@
 (def-with-errptr rocksdb-try-catch-up-with-primary void
   (db (* rocksdb)))
 
-(define-alien-routine rocksdb-sst-file-manager-create (* rocksdb-sst-file-manager) (env (* rocksdb-env)))
-(define-alien-routine rocksdb-sst-file-manager-destroy void (sfm (* rocksdb-sst-file-manager)))
-(define-alien-routine rocksdb-sst-file-manager-set-max-allowed-space-usage void
+(defar rocksdb-sst-file-manager-create (* rocksdb-sst-file-manager) (env (* rocksdb-env)))
+(defar rocksdb-sst-file-manager-destroy void (sfm (* rocksdb-sst-file-manager)))
+(defar rocksdb-sst-file-manager-set-max-allowed-space-usage void
   (sfm (* rocksdb-sst-file-manager))
   (max-allowed-space unsigned-long))
-(define-alien-routine rocksdb-sst-file-manager-set-compaction-buffer-size void
+(defar rocksdb-sst-file-manager-set-compaction-buffer-size void
   (sfm (* rocksdb-sst-file-manager))
   (compaction-buffer-size unsigned-long))
-(define-alien-routine rocksdb-sst-file-manager-is-max-allowed-space-reached boolean
+(defar rocksdb-sst-file-manager-is-max-allowed-space-reached boolean
   (sfm (* rocksdb-sst-file-manager)))
-(define-alien-routine rocksdb-sst-file-manager-is-max-allowed-space-reached-including-compactions boolean
+(defar rocksdb-sst-file-manager-is-max-allowed-space-reached-including-compactions boolean
   (sfm (* rocksdb-sst-file-manager)))
-(define-alien-routine rocksdb-sst-file-manager-get-total-size unsigned-long (sfm (* rocksdb-sst-file-manager)))
-(define-alien-routine rocksdb-sst-file-manager-get-delete-rate-bytes-per-second long
+(defar rocksdb-sst-file-manager-get-total-size unsigned-long (sfm (* rocksdb-sst-file-manager)))
+(defar rocksdb-sst-file-manager-get-delete-rate-bytes-per-second long
   (sfm (* rocksdb-sst-file-manager)))
-(define-alien-routine rocksdb-sst-file-manager-get-max-trash-db-ration double
+(defar rocksdb-sst-file-manager-get-max-trash-db-ration double
   (sfm (* rocksdb-sst-file-manager)))
-(define-alien-routine rocksdb-sst-file-manager-set-max-trash-db-ration void
+(defar rocksdb-sst-file-manager-set-max-trash-db-ration void
   (sfm (* rocksdb-sst-file-manager))
   (ratio double))
-(define-alien-routine rocksdb-sst-file-manager-get-total-trash-size unsigned-long
+(defar rocksdb-sst-file-manager-get-total-trash-size unsigned-long
   (sfm (* rocksdb-sst-file-manager)))

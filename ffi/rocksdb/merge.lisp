@@ -117,7 +117,7 @@ accessed using a different MergeOperator)
 
 ;; (sb-alien::define-alien-callable mangle int () 0)
 
-(define-alien-routine rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
+(defar rocksdb-mergeoperator-create (* rocksdb-mergeoperator)
   (state (* t))
   (destructor (* rocksdb-destructor-function))
   (full-merge (* rocksdb-full-merge-function))
@@ -127,7 +127,7 @@ accessed using a different MergeOperator)
 
 #| [[file:~/dev/comp/core/c/rocksdb.h::/* Merge Operator */]] |#
 
-(define-alien-routine rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
+(defar rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
 
 (define-alien-callable rocksdb-destructor void ((self (* t)))
   (free-alien self)

@@ -98,6 +98,14 @@
         ("WIP" . (:foreground "darkorchid2" :weight bold))
         ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen"))))
 
+(defun org-clock-in-wip ()
+  "Clock in when todo state is changed to WIP."
+  (when (string= (org-get-todo-state) "WIP")
+    (unless (org-clocking-p)
+      (org-clock-in))))
+
+(add-hook 'org-after-todo-state-change-hook #'org-clock-in-wip)
+
 ;; link abbrevs
 (setq org-link-abbrev-alist
       `(("vc" . ,(concat (string-trim-right company-vc-url "[/]") "/%s"))

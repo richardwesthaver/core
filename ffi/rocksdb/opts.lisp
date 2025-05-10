@@ -6,17 +6,17 @@
 (in-package :rocksdb)
 
 (define-opt rocksdb-ingestexternalfileoptions)
-(define-alien-routine rocksdb-ingestexternalfileoptions-set-move-files void
+(defar rocksdb-ingestexternalfileoptions-set-move-files void
   (val boolean))
-(define-alien-routine rocksdb-ingestexternalfileoptions-set-snapshot-consistency void
+(defar rocksdb-ingestexternalfileoptions-set-snapshot-consistency void
   (val boolean))
-(define-alien-routine rocksdb-ingestexternalfileoptions-set-allow-global-seqno void
+(defar rocksdb-ingestexternalfileoptions-set-allow-global-seqno void
   (val boolean))
-(define-alien-routine rocksdb-ingestexternalfileoptions-set-allow-blocking-flush void
+(defar rocksdb-ingestexternalfileoptions-set-allow-blocking-flush void
   (val boolean))
-(define-alien-routine rocksdb-ingestexternalfileoptions-set-ingest-behind void
+(defar rocksdb-ingestexternalfileoptions-set-ingest-behind void
   (val boolean))
-(define-alien-routine rocksdb-ingestexternalfileoptions-set-fail-if-not-bottommost-level void
+(defar rocksdb-ingestexternalfileoptions-set-fail-if-not-bottommost-level void
   (val boolean))
 (export '(rocksdb-ingestexternalfileoptions-set-move-files 
           rocksdb-ingestexternalfileoptions-set-snapshot-consistency
@@ -26,9 +26,9 @@
           rocksdb-ingestexternalfileoptions-set-fail-if-not-bottommost-level))
 
 (define-opt rocksdb-backup-engine-options)
-(define-alien-routine rocksdb-backup-engine-options-set-backup-dir void
+(defar rocksdb-backup-engine-options-set-backup-dir void
   (opts (* rocksdb-backup-engine-options)) (backup-dir c-string))
-(define-alien-routine rocksdb-backup-engine-options-set-env void
+(defar rocksdb-backup-engine-options-set-env void
   (opts (* rocksdb-backup-engine-options)) (val boolean))
 (define-opt-accessor rocksdb-backup-engine-options share-table-files)
 (define-opt-accessor rocksdb-backup-engine-options sync)
@@ -40,21 +40,21 @@
 (define-opt-accessor rocksdb-backup-engine-options max-valid-backups-to-open int)
 (define-opt-accessor rocksdb-backup-engine-options shared-files-with-checksum-naming int)
 (define-opt rocksdb-restore-options)
-(define-alien-routine rocksdb-restore-options-set-keep-log-files void
+(defar rocksdb-restore-options-set-keep-log-files void
   (opts (* rocksdb-restore-options))
   (v int))
 
 (define-opt rocksdb-hyper-clock-cache-options)
-(define-alien-routine rocksdb-hyper-clock-cache-options-set-capacity void
+(defar rocksdb-hyper-clock-cache-options-set-capacity void
   (opts (* rocksdb-hyper-clock-cache-options))
   (v size-t))
-(define-alien-routine rocksdb-hyper-clock-cache-options-set-estimated-entry-charge void
+(defar rocksdb-hyper-clock-cache-options-set-estimated-entry-charge void
   (opts (* rocksdb-hyper-clock-cache-options))
   (v size-t))
-(define-alien-routine rocksdb-hyper-clock-cache-options-set-num-shard-bits void
+(defar rocksdb-hyper-clock-cache-options-set-num-shard-bits void
   (opts (* rocksdb-hyper-clock-cache-options))
   (v int))
-(define-alien-routine rocksdb-hyper-clock-cache-options-set-memory-allocator void
+(defar rocksdb-hyper-clock-cache-options-set-memory-allocator void
   (opts (* rocksdb-hyper-clock-cache-options))
   (malloc (* rocksdb-memory-allocator)))
 
@@ -71,53 +71,53 @@
 ;;; Block based Table Options
 (define-opaque rocksdb-block-based-table-options)
 
-(define-alien-routine rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
-(define-alien-routine rocksdb-block-based-options-destroy void (self (* rocksdb-block-based-table-options)))
-(define-alien-routine rocksdb-block-based-options-set-checksum void
+(defar rocksdb-block-based-options-create (* rocksdb-block-based-table-options))
+(defar rocksdb-block-based-options-destroy void (self (* rocksdb-block-based-table-options)))
+(defar rocksdb-block-based-options-set-checksum void
   (opt (* rocksdb-block-based-table-options)) (val char))
-(define-alien-routine rocksdb-block-based-options-set-block-size void
+(defar rocksdb-block-based-options-set-block-size void
   (opt (* rocksdb-block-based-table-options)) (block-size size-t))
-(define-alien-routine rocksdb-block-based-options-set-block-size-deviation void
+(defar rocksdb-block-based-options-set-block-size-deviation void
   (opt (* rocksdb-block-based-table-options)) (block-size-deviation int))
-(define-alien-routine rocksdb-block-based-options-set-block-restart-interval void
+(defar rocksdb-block-based-options-set-block-restart-interval void
   (opt (* rocksdb-block-based-table-options)) (block-restart-interval int))
-(define-alien-routine rocksdb-block-based-options-set-index-block-restart-interval void
+(defar rocksdb-block-based-options-set-index-block-restart-interval void
   (opt (* rocksdb-block-based-table-options)) (index-block-restart-interval char))
-(define-alien-routine rocksdb-block-based-options-set-metadata-block-size void
+(defar rocksdb-block-based-options-set-metadata-block-size void
   (opt (* rocksdb-block-based-table-options)) (metadata-block-size unsigned-long))
-(define-alien-routine rocksdb-block-based-options-set-partition-filters void
+(defar rocksdb-block-based-options-set-partition-filters void
   (opt (* rocksdb-block-based-table-options)) (partition-filters unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-partition-filters-for-memory void
+(defar rocksdb-block-based-options-set-partition-filters-for-memory void
   (opt (* rocksdb-block-based-table-options)) (optimize-filters-for-memory unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-use-delta-encoding void
+(defar rocksdb-block-based-options-set-use-delta-encoding void
   (opt (* rocksdb-block-based-table-options)) (use-delta-encoding unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-no-block-cache void
+(defar rocksdb-block-based-options-set-no-block-cache void
   (opt (* rocksdb-block-based-table-options)) (no-block-cache unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-block-cache void
+(defar rocksdb-block-based-options-set-block-cache void
   (opt (* rocksdb-block-based-table-options)) (block-cache (* rocksdb-cache)))
-(define-alien-routine rocksdb-block-based-options-set-format-version void
+(defar rocksdb-block-based-options-set-format-version void
   (opt (* rocksdb-block-based-table-options)) (val int))
-(define-alien-routine rocksdb-block-based-options-set-index-type void
+(defar rocksdb-block-based-options-set-index-type void
   (opt (* rocksdb-block-based-table-options)) (val int))
-(define-alien-routine rocksdb-block-based-options-set-data-block-index-type void
+(defar rocksdb-block-based-options-set-data-block-index-type void
   (opt (* rocksdb-block-based-table-options)) (val int))
-(define-alien-routine rocksdb-block-based-options-set-data-block-hash-ratio void
+(defar rocksdb-block-based-options-set-data-block-hash-ratio void
   (opt (* rocksdb-block-based-table-options)) (val double))
-(define-alien-routine rocksdb-block-based-options-set-cache-index-and-filter-blocks void
+(defar rocksdb-block-based-options-set-cache-index-and-filter-blocks void
   (opt (* rocksdb-block-based-table-options)) (val unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-cache-index-and-filter-blocks-with-high-priority void
+(defar rocksdb-block-based-options-set-cache-index-and-filter-blocks-with-high-priority void
   (opt (* rocksdb-block-based-table-options)) (val unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-pin-l0-filter-and-index-blocks-in-cache void
+(defar rocksdb-block-based-options-set-pin-l0-filter-and-index-blocks-in-cache void
   (opt (* rocksdb-block-based-table-options)) (val unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-pin-top-level-index-and-filter void
+(defar rocksdb-block-based-options-set-pin-top-level-index-and-filter void
   (opt (* rocksdb-block-based-table-options)) (val unsigned-char))
-(define-alien-routine rocksdb-block-based-options-set-top-level-index-pinning-tier void
+(defar rocksdb-block-based-options-set-top-level-index-pinning-tier void
   (opt (* rocksdb-block-based-table-options))
   (i int))
-(define-alien-routine rocksdb-block-based-options-set-partition-pinning-tier void
+(defar rocksdb-block-based-options-set-partition-pinning-tier void
   (opt (* rocksdb-block-based-table-options))
   (i int))
-(define-alien-routine rocksdb-block-based-options-set-unpartition-pinning-tier void
+(defar rocksdb-block-based-options-set-unpartition-pinning-tier void
   (opt (* rocksdb-block-based-table-options))
   (i int))
 
@@ -198,15 +198,15 @@
   :lz4hc 5
   :xpress 6
   :zstd 7)
-(define-alien-routine rocksdb-options-set-compression-options void
+(defar rocksdb-options-set-compression-options void
   (opt (* rocksdb-options))
   (a int) (b int) (c int) (d int))
 
-(define-alien-routine rocksdb-option-set-block-based-table-factory void
+(defar rocksdb-option-set-block-based-table-factory void
   (opt (* rocksdb-options)) (table-opts (* rocksdb-block-based-table-options)))
 
 (define-opt-accessor rocksdb-options comparator (* rocksdb-comparator))
-(define-alien-routine rocksdb-options-set-merge-operator void
+(defar rocksdb-options-set-merge-operator void
   (opt (* rocksdb-options))
   (merge-op (* rocksdb-mergeoperator)))
 (define-opt-accessor rocksdb-options statistics-level int)
@@ -239,10 +239,10 @@
 (define-opt-accessor rocksdb-options table-cache-numshardbits int)
 (define-opt-accessor rocksdb-options arena-block-size size-t)
 (define-opt-accessor rocksdb-options use-fsync int)
-(define-alien-routine rocksdb-options-set-db-log-dir void
+(defar rocksdb-options-set-db-log-dir void
   (opts (* rocksdb-options))
   (dir c-string))
-(define-alien-routine rocksdb-options-set-wal-dir void
+(defar rocksdb-options-set-wal-dir void
   (opts (* rocksdb-options))
   (dir c-string))
 (define-opt-accessor rocksdb-options wal-ttl-seconds unsigned-long)
@@ -286,23 +286,23 @@ rocksdb_k_round_robin_compaction_pri = 4
 ;; (hash-skip-list-rep)
 ;; (memtable-vector-rep)
 
-(define-alien-routine rocksdb-options-set-row-cache void
+(defar rocksdb-options-set-row-cache void
   (opt (* rocksdb-options))
   (cache (* rocksdb-cache)))
 
-(define-alien-routine rocksdb-options-set-ratelimiter void
+(defar rocksdb-options-set-ratelimiter void
   (opt (* rocksdb-options))
   (limiter (* rocksdb-ratelimiter)))
 
-(define-alien-routine rocksdb-options-set-universal-compaction-options void
+(defar rocksdb-options-set-universal-compaction-options void
   (opt (* rocksdb-options))
   (opts (* rocksdb-universal-compaction-options)))
 
-(define-alien-routine rocksdb-options-set-min-level-to-compress void
+(defar rocksdb-options-set-min-level-to-compress void
   (opt (* rocksdb-options))
   (level int))
 
-(define-alien-routine rocksdb-options-set-plain-table-factory void
+(defar rocksdb-options-set-plain-table-factory void
   (opt (* rocksdb-options))
   (i int)
   (d double)
@@ -312,58 +312,58 @@ rocksdb_k_round_robin_compaction_pri = 4
   (f1 unsigned-char)
   (f2 unsigned-char))
 
-(define-alien-routine rocksdb-options-prepare-for-bulk-load void
+(defar rocksdb-options-prepare-for-bulk-load void
   (opts (* rocksdb-options)))
 
-(define-alien-routine rocksdb-options-increase-parallelism void 
+(defar rocksdb-options-increase-parallelism void 
   (opt (* rocksdb-options)) (total-threads int))
 
-(define-alien-routine rocksdb-options-optimize-level-style-compaction void 
+(defar rocksdb-options-optimize-level-style-compaction void 
   (opt (* rocksdb-options))
   (memtable-memory-budget unsigned-long))
 
-(define-alien-routine rocksdb-options-enable-statistics void
+(defar rocksdb-options-enable-statistics void
   (opt (* rocksdb-options)))
 
-(define-alien-routine rocksdb-options-statistics-get-string c-string
+(defar rocksdb-options-statistics-get-string c-string
   (opt (* rocksdb-options)))
 
-(define-alien-routine rocksdb-options-statistics-get-ticker-count unsigned-long
+(defar rocksdb-options-statistics-get-ticker-count unsigned-long
   (opt (* rocksdb-options))
   (ticker-type unsigned-int))
 
-(define-alien-routine rocksdb-options-statistics-get-histogram-data void
+(defar rocksdb-options-statistics-get-histogram-data void
   (opt (* rocksdb-options))
   (histogram-type unsigned-int)
   (data (* rocksdb-statistics-histogram-data)))
 
-(define-alien-routine rocksdb-options-set-db-paths void
+(defar rocksdb-options-set-db-paths void
   (opt (* rocksdb-options))
   (paths (array (* rocksdb-dbpath)))
   (num-paths size-t))
 
-(define-alien-routine rocksdb-options-set-cf-paths void
+(defar rocksdb-options-set-cf-paths void
   (opt (* rocksdb-options))
   (paths (array (* rocksdb-dbpath)))
   (num-paths size-t))
 
-(define-alien-routine rocksdb-options-set-env void
+(defar rocksdb-options-set-env void
   (opts (* rocksdb-options))
   (env (* rocksdb-env)))
 
-(define-alien-routine rocksdb-options-set-info-log void
+(defar rocksdb-options-set-info-log void
   (opts (* rocksdb-options))
   (logger (* rocksdb-logger)))
 
-(define-alien-routine rocksdb-options-set-uint64add-merge-operator void
+(defar rocksdb-options-set-uint64add-merge-operator void
   (opt (* rocksdb-options)))
 
-(define-alien-routine rocksdb-options-set-compression-per-level void
+(defar rocksdb-options-set-compression-per-level void
   (opt (* rocksdb-options))
   (levels (array int))
   (num-levels size-t))
 
-(define-alien-routine rocksdb-options-set-prefix-extractor void
+(defar rocksdb-options-set-prefix-extractor void
   (self (* rocksdb-options))
   (val (* rocksdb-slicetransform)))
 
@@ -387,41 +387,41 @@ rocksdb_k_round_robin_compaction_pri = 4
 (define-opt-accessor rocksdb-readoptions deadline unsigned-long)
 (define-opt-accessor rocksdb-readoptions io-timeout unsigned-long)
 (define-opt-accessor rocksdb-readoptions async-io)
-(define-alien-routine rocksdb-readoptions-set-snapshot void
+(defar rocksdb-readoptions-set-snapshot void
   (self (* rocksdb-readoptions))
   (val (* rocksdb-snapshot)))
-(define-alien-routine rocksdb-readoptions-set-iterate-upper-bound void
+(defar rocksdb-readoptions-set-iterate-upper-bound void
   (self (* rocksdb-readoptions))
   (key (* char))
   (keylen size-t))
-(define-alien-routine rocksdb-readoptions-set-iterate-lower-bound void
+(defar rocksdb-readoptions-set-iterate-lower-bound void
   (self (* rocksdb-readoptions))
   (key (* char))
   (keylen size-t))
 
-(define-alien-routine rocksdb-readoptions-set-readahead-size void
+(defar rocksdb-readoptions-set-readahead-size void
   (self (* rocksdb-readoptions))
   (val size-t))
 
-(define-alien-routine rocksdb-readoptions-set-prefix-same-as-start void
+(defar rocksdb-readoptions-set-prefix-same-as-start void
   (self (* rocksdb-readoptions))
   (val unsigned-char))
 
-(define-alien-routine rocksdb-readoptions-set-ignore-range-deletions void
+(defar rocksdb-readoptions-set-ignore-range-deletions void
   (self (* rocksdb-readoptions))
   (val unsigned-char))
 
-(define-alien-routine rocksdb-readoptions-set-timestamp void
+(defar rocksdb-readoptions-set-timestamp void
   (self (* rocksdb-readoptions))
   (ts (* char))
   (tslen size-t))
 
-(define-alien-routine rocksdb-readoptions-set-iter-start-ts void
+(defar rocksdb-readoptions-set-iter-start-ts void
   (self (* rocksdb-readoptions))
   (ts (* char))
   (tslen size-t))
 
-(define-alien-routine rocksdb-readoptions-set-auto-readahead-size void
+(defar rocksdb-readoptions-set-auto-readahead-size void
   (self (* rocksdb-readoptions))
   (val unsigned-char))
 
@@ -452,15 +452,15 @@ rocksdb_k_round_robin_compaction_pri = 4
 ;;; RocksDB LRU Cache Options
 (define-opt rocksdb-lru-cache-options)
 
-(define-alien-routine rocksdb-lru-cache-options-set-capacity void
+(defar rocksdb-lru-cache-options-set-capacity void
   (self (* rocksdb-lru-cache-options))
   (val size-t))
 
-(define-alien-routine rocksdb-lru-cache-options-set-num-shard-bits void
+(defar rocksdb-lru-cache-options-set-num-shard-bits void
   (self (* rocksdb-lru-cache-options))
   (val int))
 
-(define-alien-routine rocksdb-lru-cache-options-set-memory-allocator void
+(defar rocksdb-lru-cache-options-set-memory-allocator void
   (self (* rocksdb-lru-cache-options))
   (val (* rocksdb-memory-allocator)))
 
@@ -492,7 +492,7 @@ will be set to NULL.
   (column-family-names (* (* (* char))))
   (column-family-options (* (* (* rocksdb-options)))))
 
-(define-alien-routine rocksdb-load-latest-options-destroy void
+(defar rocksdb-load-latest-options-destroy void
   (db-options (* rocksdb-options))
   (list-column-family-names (* c-string))
   (list-column-family-options (* (* rocksdb-options)))
@@ -512,7 +512,7 @@ will be set to NULL.
   (keys (array (array unsigned-char)))
   (values (array (array unsigned-char))))
 
-(define-alien-routine rocksdb-options-create-copy (* rocksdb-options)
+(defar rocksdb-options-create-copy (* rocksdb-options)
   (src (* rocksdb-options)))
 
 ;;; Aliases

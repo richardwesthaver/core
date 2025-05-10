@@ -553,7 +553,8 @@
    :push-sap
    :push-sap*
    :pull-sap
-   :pull-sap*))
+   :pull-sap*
+   :defar))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)
@@ -742,6 +743,7 @@
   (:import-from :sb-posix :tcgetattr :tcsetattr 
    :termios :termios-cc :termios-cflag :termios-iflag 
    :termios-oflag :termios-lflag)
+  (:import-from :std/alien :defar)
   (:export
    :sudo-p
    :user-info

@@ -21,7 +21,7 @@
 (define-alien-routine openblas-get-num-procs int)
 (define-alien-routine openblas-get-config c-string)
 (define-alien-routine openblas-get-corename c-string)
-(define-alien-routine openblas-set-threads-callback-function void (* function))
+(define-alien-routine openblas-set-threads-callback-function void (* (function void)))
 ;; (define-alien-routine openblas-setaffinity int (thread-idx int) (cpusetsize size-t) (cpu-set (* cpu-set-t)))
 ;; (define-alien-routine openblas-getaffinity int (thread-idx int) (cpusetsize size-t) (cpu-set (* cpu-set-t)))
 (define-alien-routine openblas-get-parallel int)
@@ -36,7 +36,7 @@
 
 ;; RETURN ON STACK (f77blas.h, libblas.so)
 (defmacro blasfunc (sym ret &rest args)
-  `(define-alien-routine (,(concatenate 'string (string-downcase (symbol-name sym)) "_") ,sym) ,ret ,@args))
+  `(defar (,(concatenate 'string (string-downcase (symbol-name sym)) "_") ,sym) ,ret ,@args))
 
 ;; FLOATRET = float
 ;; blasint = int

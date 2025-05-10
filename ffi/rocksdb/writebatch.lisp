@@ -55,45 +55,45 @@
             (unsigned 32)))
 
 ;;; Alien Functions
-(define-alien-routine rocksdb-writebatch-create (* rocksdb-writebatch))
-(define-alien-routine rocksdb-writebatch-create-from (* rocksdb-writebatch)
+(defar rocksdb-writebatch-create (* rocksdb-writebatch))
+(defar rocksdb-writebatch-create-from (* rocksdb-writebatch)
   (rep c-string)
   (size size-t))
 
-(define-alien-routine rocksdb-writebatch-create-with-params (* rocksdb-writebatch)
+(defar rocksdb-writebatch-create-with-params (* rocksdb-writebatch)
   (reserved-bytes size-t)
   (max-bytes size-t)
   (protection-bytes-per-key size-t)
   (default-cf-ts-sz size-t))
 
-(define-alien-routine rocksdb-writebatch-destroy void (batch (* rocksdb-writebatch)))
+(defar rocksdb-writebatch-destroy void (batch (* rocksdb-writebatch)))
 
-(define-alien-routine rocksdb-writebatch-clear void (b (* rocksdb-writebatch)))
-(define-alien-routine rocksdb-writebatch-count int (b (* rocksdb-writebatch)))
+(defar rocksdb-writebatch-clear void (b (* rocksdb-writebatch)))
+(defar rocksdb-writebatch-count int (b (* rocksdb-writebatch)))
 
-(define-alien-routine rocksdb-writebatch-put-log-data void
+(defar rocksdb-writebatch-put-log-data void
   (batch (* rocksdb-writebatch))
   (blob (array unsigned-char))
   (len size-t))
 
-(define-alien-routine rocksdb-writebatch-iterate void
+(defar rocksdb-writebatch-iterate void
   (batch (* rocksdb-writebatch))
   (state (* t))
   (put (* rocksdb-put-function))
   (deleted (* rocksdb-delete-function)))`
 
-(define-alien-routine rocksdb-writebatch-iterate-cf void
+(defar rocksdb-writebatch-iterate-cf void
   (batch (* rocksdb-writebatch))
   (state (* t))
   (put-cf (* rocksdb-put-cf-function))
   (deleted-cf (* rocksdb-delete-cf-function))
   (merge-cf (* rocksdb-merge-cf-function)))
 
-(define-alien-routine rocksdb-writebatch-data (array unsigned-char)
+(defar rocksdb-writebatch-data (array unsigned-char)
   (batch (* rocksdb-writebatch))
   (size (* size-t)))
 
-(define-alien-routine rocksdb-writebatch-set-savepoint void
+(defar rocksdb-writebatch-set-savepoint void
   (batch (* rocksdb-writebatch)))
 
 (def-with-errptr rocksdb-writebatch-rollback-to-savepoint void
@@ -110,14 +110,14 @@
   (get-ts-size (* rocksdb-get-ts-size-function)))
 
 ;; put
-(define-alien-routine rocksdb-writebatch-put void
+(defar rocksdb-writebatch-put void
   (batch (* rocksdb-writebatch))
   (key (array unsigned-char))
   (klen size-t)
   (val (array unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-writebatch-put-cf void
+(defar rocksdb-writebatch-put-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
@@ -125,7 +125,7 @@
   (val (array unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-writebatch-put-cf-with-ts void
+(defar rocksdb-writebatch-put-cf-with-ts void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
@@ -135,7 +135,7 @@
   (val (array unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-writebatch-putv void
+(defar rocksdb-writebatch-putv void
   (batch (* rocksdb-writebatch))
   (num-keys int)
   (keys-list (array (array unsigned-char)))
@@ -144,7 +144,7 @@
   (values-list (array (array unsigned-char)))
   (values-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-putv-cf void
+(defar rocksdb-writebatch-putv-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (num-keys int)
@@ -155,29 +155,29 @@
   (values-list-sizes (array size-t)))
 
 ;; delete
-(define-alien-routine rocksdb-writebatch-delete void
+(defar rocksdb-writebatch-delete void
   (batch (* rocksdb-writebatch))
   (key (array unsigned-char))
   (klen size-t))
 
-(define-alien-routine rocksdb-writebatch-singledelete void
+(defar rocksdb-writebatch-singledelete void
   (batch (* rocksdb-writebatch))
   (key (array unsigned-char))
   (klen size-t))
 
-(define-alien-routine rocksdb-writebatch-delete-cf void
-  (batch (* rocksdb-writebatch))
-  (cf (* rocksdb-column-family-handle))
-  (key (array unsigned-char))
-  (klen size-t))
-
-(define-alien-routine rocksdb-writebatch-singledelete-cf void
+(defar rocksdb-writebatch-delete-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
   (klen size-t))
 
-(define-alien-routine rocksdb-writebatch-singledelete-cf-with-ts void
+(defar rocksdb-writebatch-singledelete-cf void
+  (batch (* rocksdb-writebatch))
+  (cf (* rocksdb-column-family-handle))
+  (key (array unsigned-char))
+  (klen size-t))
+
+(defar rocksdb-writebatch-singledelete-cf-with-ts void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
@@ -185,7 +185,7 @@
   (ts (array unsigned-char))
   (tslen size-t))
 
-(define-alien-routine rocksdb-writebatch-delete-cf-with-ts void
+(defar rocksdb-writebatch-delete-cf-with-ts void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
@@ -193,27 +193,27 @@
   (ts (array unsigned-char))
   (tslen size-t))
 
-(define-alien-routine rocksdb-writebatch-deletev void
+(defar rocksdb-writebatch-deletev void
   (batch (* rocksdb-writebatch))
   (num-keys int)
   (keys-list (array (array unsigned-char)))
   (keys-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-deletev-cf void
+(defar rocksdb-writebatch-deletev-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (num-keys int)
   (keys-list (array (array unsigned-char)))
   (keys-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-delete-range void
+(defar rocksdb-writebatch-delete-range void
   (batch (* rocksdb-writebatch))
   (start-key (array unsigned-char))
   (start-key-len size-t)
   (end-key (array unsigned-char))
   (end-key-len size-t))
 
-(define-alien-routine rocksdb-writebatch-delete-range-cf void
+(defar rocksdb-writebatch-delete-range-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (start-key (array unsigned-char))
@@ -221,7 +221,7 @@
   (end-key (array unsigned-char))
   (end-key-len size-t))
 
-(define-alien-routine rocksdb-writebatch-delete-rangev void
+(defar rocksdb-writebatch-delete-rangev void
   (batch (* rocksdb-writebatch))
   (num-keys int)
   (start-keys-list (array (array unsigned-char)))
@@ -229,7 +229,7 @@
   (end-keys-list (array (array unsigned-char)))
   (end-keys-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-delete-rangev-cf void
+(defar rocksdb-writebatch-delete-rangev-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (num-keys int)
@@ -239,14 +239,14 @@
   (end-keys-list-sizes (array size-t)))
 
 ;; merge
-(define-alien-routine rocksdb-writebatch-merge void
+(defar rocksdb-writebatch-merge void
   (batch (* rocksdb-writebatch))
   (key (array unsigned-char))
   (klen size-t)
   (val (array unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-writebatch-merge-cf void
+(defar rocksdb-writebatch-merge-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
@@ -254,7 +254,7 @@
   (val (array unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-writebatch-mergev void
+(defar rocksdb-writebatch-mergev void
   (batch (* rocksdb-writebatch))
   (num-keys int)
   (keys-list (array (array unsigned-char)))
@@ -263,7 +263,7 @@
   (values-list (array (array unsigned-char)))
   (values-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-mergev-cf void
+(defar rocksdb-writebatch-mergev-cf void
   (batch (* rocksdb-writebatch))
   (cf (* rocksdb-column-family-handle))
   (num-keys int)
@@ -274,46 +274,46 @@
   (values-list-sizes (array size-t)))
   
 ;;; with-index (wi)
-(define-alien-routine rocksdb-writebatch-wi-create (* rocksdb-writebatch-wi)
+(defar rocksdb-writebatch-wi-create (* rocksdb-writebatch-wi)
   (reserved-bytes size-t)
   (overwrite-keys unsigned-char))
 
-(define-alien-routine rocksdb-writebatch-wi-create-from (* rocksdb-writebatch-wi)
+(defar rocksdb-writebatch-wi-create-from (* rocksdb-writebatch-wi)
   (rep (array unsigned-char))
   (size size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-create-with-params (* rocksdb-writebatch-wi)
+(defar rocksdb-writebatch-wi-create-with-params (* rocksdb-writebatch-wi)
   (backup-index-comparator (* rocksdb-comparator))
   (reserved-bytes size-t)
   (overwrite-key unsigned-char)
   (max-bytes size-t)
   (protection-bytes-per-key size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-destroy void
+(defar rocksdb-writebatch-wi-destroy void
   (batch (* rocksdb-writebatch-wi)))
 
-(define-alien-routine rocksdb-writebatch-wi-clear void
+(defar rocksdb-writebatch-wi-clear void
   (batch (* rocksdb-writebatch-wi)))
 
-(define-alien-routine rocksdb-writebatch-wi-count int
+(defar rocksdb-writebatch-wi-count int
   (batch (* rocksdb-writebatch-wi)))
 
-(define-alien-routine rocksdb-writebatch-wi-put-log-data void
+(defar rocksdb-writebatch-wi-put-log-data void
   (batch (* rocksdb-writebatch-wi))
   (blob (array unsigned-char))
   (len size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-iterate void
+(defar rocksdb-writebatch-wi-iterate void
   (batch (* rocksdb-writebatch-wi))
   (state (* t))
   (put (* rocksdb-put-function))
   (deleted (* rocksdb-delete-function)))
 
-(define-alien-routine rocksdb-writebatch-wi-data (array unsigned-char)
+(defar rocksdb-writebatch-wi-data (array unsigned-char)
   (batch (* rocksdb-writebatch-wi))
   (size (* size-t)))
 
-(define-alien-routine rocksdb-writebatch-wi-set-save-point void
+(defar rocksdb-writebatch-wi-set-save-point void
   (batch (* rocksdb-writebatch-wi)))
 
 (def-with-errptr rocksdb-writebatch-wi-rollback-to-save-point void
@@ -356,21 +356,21 @@
   (wopts (* rocksdb-writeoptions))
   (wbwi (* rocksdb-writebatch-wi)))
 
-(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base (* rocksdb-iterator)
+(defar rocksdb-writebatch-wi-create-iterator-with-base (* rocksdb-iterator)
   (wbwi (* rocksdb-writebatch-wi))
   (base-iterator (* rocksdb-iterator)))
 
-(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base-readopts (* rocksdb-iterator)
+(defar rocksdb-writebatch-wi-create-iterator-with-base-readopts (* rocksdb-iterator)
   (wbwi (* rocksdb-writebatch-wi))
   (base-iterator (* rocksdb-iterator))
   (options (* rocksdb-readoptions)))
 
-(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base-cf (* rocksdb-iterator)
+(defar rocksdb-writebatch-wi-create-iterator-with-base-cf (* rocksdb-iterator)
   (wbwi (* rocksdb-writebatch-wi))
   (base-iterator (* rocksdb-iterator))
   (cf (* rocksdb-column-family-handle)))
 
-(define-alien-routine rocksdb-writebatch-wi-create-iterator-with-base-cf-readopts (* rocksdb-iterator)
+(defar rocksdb-writebatch-wi-create-iterator-with-base-cf-readopts (* rocksdb-iterator)
   (wbwi (* rocksdb-writebatch-wi))
   (base-iterator (* rocksdb-iterator))
   (cf (* rocksdb-column-family-handle))
@@ -383,14 +383,14 @@
   (state (* t))
   (get-ts-size (* rocksdb-get-ts-size-function)))
 
-(define-alien-routine rocksdb-writebatch-wi-put void
+(defar rocksdb-writebatch-wi-put void
   (batch (* rocksdb-writebatch-wi))
   (key (array unsigned-char))
   (klen size-t)
   (val (array unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-put-cf void
+(defar rocksdb-writebatch-wi-put-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
@@ -398,7 +398,7 @@
   (val (array unsigned-char))
   (vlen size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-putv void
+(defar rocksdb-writebatch-wi-putv void
   (batch (* rocksdb-writebatch-wi))
   (num-keys int)
   (keys-list (array (array unsigned-char)))
@@ -407,41 +407,7 @@
   (values-list (array (array unsigned-char)))
   (values-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-wi-putv-cf void
-  (batch (* rocksdb-writebatch-wi))
-  (cf (* rocksdb-column-family-handle))
-  (num-keys int)
-  (keys-list (array (array unsigned-char)))
-  (keys-list-sizes (array size-t))
-  (num-values int)
-  (values-list (array (array unsigned-char)))
-  (values-list-sizes (array size-t)))
-
-(define-alien-routine rocksdb-writebatch-wi-merge void
-  (batch (* rocksdb-writebatch-wi))
-  (key (array unsigned-char))
-  (klen size-t)
-  (val (array unsigned-char))
-  (vlen size-t))
-
-(define-alien-routine rocksdb-writebatch-wi-merge-cf void
-  (batch (* rocksdb-writebatch-wi))
-  (cf (* rocksdb-column-family-handle))
-  (key (array unsigned-char))
-  (klen size-t)
-  (val (array unsigned-char))
-  (vlen size-t))
-
-(define-alien-routine rocksdb-writebatch-wi-mergev void
-  (batch (* rocksdb-writebatch-wi))
-  (num-keys int)
-  (keys-list (array (array unsigned-char)))
-  (keys-list-sizes (array size-t))
-  (num-values int)
-  (values-list (array (array unsigned-char)))
-  (values-list-sizes (array size-t)))
-
-(define-alien-routine rocksdb-writebatch-wi-mergev-cf void
+(defar rocksdb-writebatch-wi-putv-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (num-keys int)
@@ -451,35 +417,69 @@
   (values-list (array (array unsigned-char)))
   (values-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-wi-delete void
+(defar rocksdb-writebatch-wi-merge void
+  (batch (* rocksdb-writebatch-wi))
+  (key (array unsigned-char))
+  (klen size-t)
+  (val (array unsigned-char))
+  (vlen size-t))
+
+(defar rocksdb-writebatch-wi-merge-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (key (array unsigned-char))
+  (klen size-t)
+  (val (array unsigned-char))
+  (vlen size-t))
+
+(defar rocksdb-writebatch-wi-mergev void
+  (batch (* rocksdb-writebatch-wi))
+  (num-keys int)
+  (keys-list (array (array unsigned-char)))
+  (keys-list-sizes (array size-t))
+  (num-values int)
+  (values-list (array (array unsigned-char)))
+  (values-list-sizes (array size-t)))
+
+(defar rocksdb-writebatch-wi-mergev-cf void
+  (batch (* rocksdb-writebatch-wi))
+  (cf (* rocksdb-column-family-handle))
+  (num-keys int)
+  (keys-list (array (array unsigned-char)))
+  (keys-list-sizes (array size-t))
+  (num-values int)
+  (values-list (array (array unsigned-char)))
+  (values-list-sizes (array size-t)))
+
+(defar rocksdb-writebatch-wi-delete void
   (batch (* rocksdb-writebatch-wi))
   (key (array unsigned-char))
   (klen size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-singledelete void
+(defar rocksdb-writebatch-wi-singledelete void
   (batch (* rocksdb-writebatch-wi))
   (key (array unsigned-char))
   (klen size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-delete-cf void
+(defar rocksdb-writebatch-wi-delete-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
   (klen size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-singledelete-cf void
+(defar rocksdb-writebatch-wi-singledelete-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
   (klen size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-deletev void
+(defar rocksdb-writebatch-wi-deletev void
   (batch (* rocksdb-writebatch-wi))
   (num-keys int)
   (keys-list (array (array unsigned-char)))
   (keys-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-wi-deletev-cf void
+(defar rocksdb-writebatch-wi-deletev-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (num-keys int)
@@ -487,14 +487,14 @@
   (keys-list-sizes (array size-t)))
 
 ;;; DO NOT USE
-(define-alien-routine rocksdb-writebatch-wi-delete-range void
+(defar rocksdb-writebatch-wi-delete-range void
   (batch (* rocksdb-writebatch-wi))
   (start-key (array unsigned-char))
   (start-key-len size-t)
   (end-key (array unsigned-char))
   (end-key-len size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-delete-range-cf void
+(defar rocksdb-writebatch-wi-delete-range-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (start-key (array unsigned-char))
@@ -502,14 +502,14 @@
   (end-key (array unsigned-char))
   (end-key-len size-t))
 
-(define-alien-routine rocksdb-writebatch-wi-delete-rangev void
+(defar rocksdb-writebatch-wi-delete-rangev void
   (batch (* rocksdb-writebatch-wi))
   (start-keys-list (array (array unsigned-char)))
   (start-keys-list-sizes (array size-t))
   (end-keys-list (array (array unsigned-char)))
   (end-keys-list-sizes (array size-t)))
 
-(define-alien-routine rocksdb-writebatch-wi-delete-rangev-cf void
+(defar rocksdb-writebatch-wi-delete-rangev-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
   (start-keys-list (array (array unsigned-char)))
