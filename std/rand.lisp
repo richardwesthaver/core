@@ -37,3 +37,13 @@
     (dotimes (i (array-total-size r) r)
       (setf (row-major-aref r i) (random-byte)))))
 
+(defun random-booleans (num &optional (probability 2))
+  (loop for i from 1 to num
+        collect (zerop (random probability))))
+
+(defmacro random-do (&rest statements)
+  (let ((length (length statements)))
+    `(case (random ,length)
+       ,@(loop for x from 0 to length
+               for statement in statements
+               collect `(,x ,statement)))))

@@ -5,6 +5,9 @@
 ;;; Code:
 (in-package :std/num)
 
+(defun power-of-two-p (n)
+  (= 1 (logcount n)))
+
 ;;; From ALEXANDRIA/NUMBERS
 (declaim (inline clamp))
 (defun clamp (number min max)
@@ -185,13 +188,13 @@ minimum of its original value and NUMBERS.")
 
 ;;;; Factorial
 
-;;; KLUDGE: This is really dependant on the numbers in question: for
-;;; small numbers this is larger, and vice versa. Ideally instead of a
-;;; constant we would have RANGE-FAST-TO-MULTIPLY-DIRECTLY-P.
+;; KLUDGE: This is really dependant on the numbers in question: for
+;; small numbers this is larger, and vice versa. Ideally instead of a
+;; constant we would have RANGE-FAST-TO-MULTIPLY-DIRECTLY-P.
 (defconstant +factorial-bisection-range-limit+ 8)
 
-;;; KLUDGE: This is really platform dependant: ideally we would use
-;;; (load-time-value (find-good-direct-multiplication-limit)) instead.
+;; KLUDGE: This is really platform dependant: ideally we would use
+;; (load-time-value (find-good-direct-multiplication-limit)) instead.
 (defconstant +factorial-direct-multiplication-limit+ 13)
 
 (defun %multiply-range (i j)
@@ -257,10 +260,9 @@ minimum of its original value and NUMBERS.")
   (%factorial n))
 
 ;;;; Combinatorics
-
 (defun binomial-coefficient (n k)
   "Binomial coefficient of N and K, also expressed as N choose K. This is the
-number of K element combinations given N choises. N must be equal to or
+number of K element combinations given N choices. N must be equal to or
 greater then K."
   (check-type n (integer 0))
   (check-type k (integer 0))

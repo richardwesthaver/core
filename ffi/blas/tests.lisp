@@ -7,20 +7,10 @@
 (defsuite :blas)
 (in-suite :blas)
 (load-blas)
-(deftest sanity ()
-  (let ((a (make-array '(2 3) :element-type 'double-float
-                              :initial-contents '((2d0 1d0 6d0) (7d0 3d0 4d0))))
-        (b (make-array '(3 2) :element-type 'double-float
-                              :initial-contents '((3d0 1d0) (6d0 5d0) (2d0 3d0))))
-        (c (make-array '(2 2) :element-type 'double-float))
-        (expected-c (make-array '(2 2) :element-type 'double-float
-                                       :initial-contents '((24d0 25d0) (47d0 34d0)))))
-    (sb-sys:with-pinned-objects (a b c)
-      (dgemm (char-code #\n) (char-code #\n) 2 2 3 1d0 (double-array-pointer b) 2 (double-array-pointer a) 3 0d0 (double-array-pointer c) 2))
-    (isequalp expected-c c)))
 
 (deftest static-vector ())
 
+;;; Level 1
 ;; from CL-OPENBLAS
 (defun test-saxpy (n &key (repeat 100))
   (let ((alpha 1.f0)
@@ -31,10 +21,12 @@
     (sb-sys:with-pinned-objects (x y)
       (time
        (dotimes (i repeat)
-         (blas::saxpy n alpha (float-array-pointer x) incx (float-array-pointer y) incy))))))
+         (blas::saxpy n alpha (float-array-pointer x) incx (float-array-pointer y) incy)))
+      (isequalp x y))))
 
 (defun lisp-saxpy (z a x y)
-  "Compute BLAS Level 1 SAXPY operation: zi = a * xi + yi with map-into CL procedure"
+  "Compute BLAS Level 1 SAXPY operation: zi = a * xi + yi with map-into CL
+procedure."
   (declare (type single-float a))
   (declare (type (simple-array single-float (*))
                  z x y))
@@ -53,7 +45,8 @@
         (z (make-array n :element-type 'single-float :initial-element 0.f0)))
     (time
      (dotimes (i repeat)
-       (lisp-saxpy z alpha x y)))))
+       (lisp-saxpy z alpha x y)))
+    (isequalp x y)))
 
 #| saxpy
 Evaluation took:
@@ -76,3 +69,18 @@ Evaluation took:
   (test-saxpy 10000000)
   (println :LISP-SAXPY)
   (test-lisp-saxpy 10000000))
+
+;;; Level 2
+
+;;; Level 3
+(deftest dgemm ()
+  (let ((a (make-array '(2 3) :element-type 'double-float
+                              :initial-contents '((2d0 1d0 6d0) (7d0 3d0 4d0))))
+        (b (make-array '(3 2) :element-type 'double-float
+                              :initial-contents '((3d0 1d0) (6d0 5d0) (2d0 3d0))))
+        (c (make-array '(2 2) :element-type 'double-float))
+        (expected-c (make-array '(2 2) :element-type 'double-float
+                                       :initial-contents '((24d0 25d0) (47d0 34d0)))))
+    (sb-sys:with-pinned-objects (a b c)
+      (dgemm (char-code #\n) (char-code #\n) 2 2 3 1d0 (double-array-pointer b) 2 (double-array-pointer a) 3 0d0 (double-array-pointer c) 2))
+    (isequalp expected-c c)))

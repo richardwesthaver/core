@@ -1,9 +1,9 @@
-;;; early.lisp --- A few early STD macros
+;;; prim.lisp --- Primitive Macros
 
 ;; 
 
 ;;; Code:
-(in-package :std/early)
+(in-package :std/prim)
 
 ;;; EARLY MACROS
 (defun g!-symbol-p (s)

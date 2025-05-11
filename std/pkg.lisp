@@ -54,7 +54,7 @@
    :sort!
    :set-equal))
 
-(defpackage :std/early
+(defpackage :std/prim
   (:use :cl :std/list)
   (:import-from :std/sym :symb)
   (:import-from :std/named-readtables :parse-body)
@@ -199,6 +199,7 @@
 
 (defpkg :std/num
   (:use :cl)
+  (:import-from :sb-int :power-of-two-ceiling)
   (:export
    ;; num/parse
    :parse-number
@@ -221,6 +222,8 @@
    :encode-uleb128
    :decode-uleb128
    ;; num/math
+   :power-of-two-ceiling
+   :power-of-two-p
    :clamp
    :gaussian-random
    :iota
@@ -290,7 +293,7 @@
   (:import-from :std/named-readtables :defreadtable)
   (:import-from :std/curry :curry :rcurry :compose)
   (:import-from :std/sym :symb)
-  (:import-from :std/early :defmacro!)
+  (:import-from :std/prim :defmacro!)
   (:export
    ;; readtable
    :|#"-reader|
@@ -304,13 +307,13 @@
    :_))
 
 (defpkg :std/macs
-  (:use :cl :std/early)
+  (:use :cl :std/prim)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms)
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten)
-  (:import-from :std/early :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
+  (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
   (:export
    :make-macro-lambda
    :parse-lambda-list
@@ -709,7 +712,13 @@
   (:shadowing-import-from :uiop :println)
   (:export :printer-status :fmt-row :format-sxhash 
    :iprintln :fmt-tree :println :human-readable-size 
-   :print-slots :format-slots :*print-slot-indent*))
+   :print-slots :format-slots :*print-slot-indent* :make-bitmap
+   :with-bitmap :set-pixel :outside-bounds :draw
+   :pattern-to-bitmap :draw-border :draw-circle :bullseye
+   :moire :draw-line :sunbeam :fill-bitmap 
+   :draw-filled-circle :sun :peace :with-comic-strip
+   :plot-function :print-table :print-heading :print-in-box
+   :print-boxed :smile))
 
 (defpkg :std/path
   (:use :cl)
@@ -864,12 +873,14 @@
    :random-ref
    :random-char
    :random-chars
-   :random-bytes))
+   :random-bytes
+   :random-booleans
+   :random-do))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
-   :std/sym :std/list :std/type :std/num :std/early
+   :std/sym :std/list :std/type :std/num :std/prim
    :std/stream :std/curry :std/array :std/hash-table
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path

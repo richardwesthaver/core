@@ -6,7 +6,7 @@
 (in-package :cuda)
 
 (macrolet ((defcu (name &rest args)
-             `(define-alien-routine ,name cu-result ,@args)))
+             `(defar ,name cu-result ,@args)))
   (defcu ("cuInit" cu-init) (flags unsigned-int))
   (defcu ("cuDeviceGet" cu-device-get) (device (* cu-device)) (ordinal int))
   (defcu ("cuDeviceGetCount" cu-device-get-count) (count (* int)))

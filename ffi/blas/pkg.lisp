@@ -32,6 +32,45 @@
       
 (defmacro blasfunc (sym ret &rest args)
   `(defar (,(concatenate 'string (string-downcase (symbol-name sym)) "_") ,sym) ,ret ,@args))
+(defmacro blas5 (sym type ret &rest args)
+  `(blasfunc ,sym ,ret (n int :copy) ,@args (x (* ,type)) (incx int :copy) (y (* ,type)) (incy int :copy)))
+(defmacro blas5s (sym &rest args)
+  `(blas5 ,sym float void ,@args))
+(defmacro blas5d (sym &rest args)
+  `(blas5 ,sym double void ,@args))
+(defmacro blas5bf16 (sym &rest args)
+  `(blas5 ,sym unsigned-short void ,@args))
+(defmacro blas5c (sym &rest args)
+  `(blas5 ,sym complex-float void ,@args))
+(defmacro blas5z (sym &rest args)
+  `(blas5 ,sym complex-double void ,@args))
+(defmacro blas5q (sym &rest args)
+  `(blas5 ,sym xdouble void ,@args))
+(defmacro blas5x (sym &rest args)
+  `(blas5 ,sym complex-xdouble void ,@args))
+(defmacro blas3 (sym type ret)
+  `(blasfunc ,sym ,ret (n int :copy) (x (* ,type)) (incx int :copy)))
+(defmacro blas3s (sym ret &rest args)
+  `(blas3 ,sym float ,ret ,@args))
+(defmacro blas3d (sym ret &rest args)
+  `(blas3 ,sym double ,ret ,@args))
+(defmacro blas3bf16 (sym ret &rest args)
+  `(blas3 ,sym unsigned-short ,ret ,@args))
+(defmacro blas3c (sym ret &rest args)
+  `(blas3 ,sym complex-float ,ret ,@args))
+(defmacro blas3z (sym ret &rest args)
+  `(blas3 ,sym complex-double ,ret ,@args))
+(defmacro blas3q (sym ret &rest args)
+  `(blas3 ,sym xdouble ,ret ,@args))
+(defmacro blas3x (sym ret &rest args)
+  `(blas3 ,sym complex-xdouble ,ret ,@args))
+(defmacro blas7 (sym type)
+  `(blasfunc ,sym void (n int :copy) (x (* ,type)) (incx int :copy) (y (* ,type)) (incy int :copy)
+             (za (* ,type)) (zb (* ,type))))
+
+;; (defmacro blas4 (sym type ret &rest args)
+;; (defmacro blas4*)
+;; (defmacro blas5*)
 
 ;; FLOATRET = float
 ;; blasint = int
@@ -68,51 +107,14 @@
 
 (define-alien-type openblas-threads-callback
     (function void int (* openblas-dojob-callback) int size-t (* t) int))
-     
+
 ;;; Level 1
-(blasfunc sdot float
-  (n int :copy)
-  (x (* float))
-  (incx int :copy)
-  (y (* float))
-  (incy int :copy))
-
-(blasfunc sdsdot float
-  (n int :copy)
-  (alpha (* float))
-  (x (* float))
-  (incx int :copy)
-  (y (* float))
-  (incy int :copy))
-
-(blasfunc dsdot float
-  (n int :copy)
-  (x (* float))
-  (incx int :copy)
-  (y (* float))
-  (incy int :copy))
-
-(blasfunc ddot float
-  (n int :copy)
-  (x (* float))
-  (incx int :copy)
-  (y (* float))
-  (incy int :copy))
-
-(blasfunc qdot xdouble
-  (n int :copy)
-  (x (* xdouble))
-  (incx int :copy)
-  (y (* xdouble))
-  (incy int :copy))
-
-(blasfunc sbdot float
-  (n int :copy)
-  (x (* unsigned-short))
-  (incx int :copy)
-  (y (* unsigned-short))
-  (incy int :copy))
-
+(blas5 sdot float float)
+(blas5 sdsdot float float (a (* float)))
+(blas5 dsdot float double)
+(blas5 ddot float double)
+(blas5 qdot xdouble xdouble)
+(blas5 sbdot unsigned-short float)
 (blasfunc sbstobf16 void
   (n int :copy)
   (x (* float))
@@ -189,33 +191,104 @@
   (y (* xdouble))
   (incy int :copy))
 
-;; z = ax + y
-(blasfunc saxpy void
-  (n int :copy)
-  (sa float :copy)
-  (sx (* float))
-  (incx int :copy)
-  (sy (* float))
-  (incy int :copy))
+;; y = ax + y
+(blas5s saxpy (a float :copy))
+(blas5d daxpy (a double :copy))
+(blas5q qaxpy (a xdouble :copy))
+(blas5c caxpy (a complex-float :copy))
+(blas5z zaxpy (a complex-double :copy))
+(blas5x xaxpy (a complex-xdouble :copy))
+(blas5s caxpyc (a float :copy))
+(blas5d zaxpyc (a double :copy))
+(blas5q xaxpyc (a xdouble :copy))
+(blas5s scopy)
+(blas5d dcopy)
+(blas5q qcopy)
+(blas5c ccopy)
+(blas5z zcopy)
+(blas5x xcopy)
+(blas5s sswap)
+(blas5d dswap)
+(blas5q qswap)
+(blas5c cswap)
+(blas5z zswap)
+(blas5x xswap)
+(blas3s sasum float)
+(blas3s scasum float)
+(blas3d dasum double)
+(blas3q qasum xdouble)
+(blas3d dzasum double)
+(blas3q qxasum xdouble)
+(blas3s ssum float)
+(blas3s scsum float)
+(blas3d dsum double)
+(blas3q qsum xdouble)
+(blas3d dzsum double)
+(blas3q qxsum xdouble)
 
-;; saxpy daxpy qaxpy caxpy zaxpy xaxpy
-;; caxpyc zaxpyc xaxpyc
-;; scopy dcopy qcopy ccopy zcopy xcopy
-;; sswap dswap qswap cswap zswap xswap
-;; sasum scasum dasum qasum dzasum qxasum
-;; ssum scsum dsum qsum dzsum qxsum
-;; isamax idamax iqamax icamax izamax ixamax
-;; ismax idmax iqmax icmax izmax ixmax
-;; isamin idamin iqamin icamin izamin ixamin
-;; ismin idmin iqmin icmin izmin ixmin
-;; samax damax qamax scamax dzamax qxamax
-;; samin damin qamin scamin dzamin qxamin
-;; smax dmax qmax scmax dzmax qxmax
-;; smin dmin qmin scmin dzmin qxmin
+(blas3s isamax int)
+(blas3d idamax int)
+(blas3q iqamax int)
+(blas3s icamax int)
+(blas3d izamax int)
+(blas3q ixamax int)
+(blas3s ismax int)
+(blas3d idmax int)
+(blas3q iqmax int)
+(blas3s icmax int)
+(blas3d izmax int)
+(blas3q ixmax int)
+(blas3s isamin int)
+(blas3d idamin int)
+(blas3q iqamin int)
+(blas3s icamin int)
+(blas3d izamin int)
+(blas3q ixamin int)
+(blas3s ismin int)
+(blas3d idmin int)
+(blas3q iqmin int)
+(blas3s icmin int)
+(blas3d izmin int)
+(blas3q ixmin int)
+(blas3s samax float)
+(blas3d damax double)
+(blas3q qamax xdouble)
+(blas3s scamax float)
+(blas3d dzamax double)
+(blas3q qxamax xdouble)
+(blas3s samin float)
+(blas3d damin double)
+(blas3q qamin xdouble)
+(blas3s scamin float)
+(blas3d dzamin double)
+(blas3q qxamin xdouble)
+(blas3s smax float)
+(blas3d dmax double)
+(blas3q qmax xdouble)
+(blas3s scmax float)
+(blas3d dzmax double)
+(blas3q qxmax xdouble)
+(blas3s smin float)
+(blas3d dmin double)
+(blas3q qmin xdouble)
+(blas3s scmin float)
+(blas3d dzmin double)
+(blas3q qxmin xdouble)
+
 ;; sscal dscal qscal cscal zscal xscal csscal zdscal xqscal
-;; snrm2 scnrm2
-;; dnrm2 qnrm2 dznrm2 qxnrm2
-;; srot drot qrot csrot zdrot xqrot
+(blas3s snrm2 float)
+(blas3s scnrm2 float)
+(blas3d dnrm2 double)
+(blas3q qnrm2 xdouble)
+(blas3d dznrm2 double)
+(blas3q qxnrm2 xdouble)
+
+(blas7 srot float) 
+(blas7 drot double)
+(blas7 qrot xdouble)
+(blas7 csrot float)
+(blas7 zdrot double)
+(blas7 xqrot xdouble)
 ;; srotg drotg qrotg crotg zrotg xrotg
 ;; srotmg drotmg
 ;; srotm drotm qrotm

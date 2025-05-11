@@ -30,7 +30,7 @@ that ASDF can find, or have quicklisp installed.")))
                (:file "condition")
                (:file "sym")
                (:file "list")
-               (:file "early")
+               (:file "prim")
                (:file "type")
                (:module "num"
                 :components
