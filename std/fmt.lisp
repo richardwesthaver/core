@@ -276,7 +276,8 @@ be produced by `sxhash'."
                                 (top              #\UPPER_HALF_BLOCK)
                                 (bottom           #\LOWER_HALF_BLOCK )
                                 (t                #\space)))))
-                  (fresh-line))))))
+                  (fresh-line)))))
+  (values))
 
 (defun draw-from-list (bit-list width)
   (let ((rows (group bit-list width)))
@@ -324,7 +325,8 @@ be produced by `sxhash'."
                    (aref bitmap (1- height) x) t))
     (loop for y from 1 to (- height 2)
           do (setf (aref bitmap y 0) t
-                   (aref bitmap y (1- width)) t))))
+                   (aref bitmap y (1- width)) t)))
+  (values))
 
 ;;; Described in
 ;;; Computer Graphics - Principles and Practice by Donald Hearn and M. Pauline Baker
