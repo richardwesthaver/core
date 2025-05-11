@@ -227,10 +227,6 @@ be produced by `sxhash'."
       (describe-slot (string k) v 30 stream))
     (force-output stream)))
 
-;;; Box
-;; TODO 2025-04-04: 
-;; APL Box Formatting (BQN/Dyalog/J)
-
 ;;; Drawing
 
 ;; These bits of lovely code are sourced from here:
@@ -532,3 +528,7 @@ be produced by `sxhash'."
   `(print-in-box
     (with-output-to-string (*standard-output*)
       ,@body)))
+
+;;; Box
+;; TODO 2025-04-04: 
+;; APL Box Formatting (BQN/Dyalog/J)

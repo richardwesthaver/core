@@ -273,19 +273,20 @@ is wild or does not designate a directory."
         (old-dir (current-directory)))
     (let ((dp (sb-posix:opendir dir)))
       (labels ((one-iter ()
-                 (let ((name (sb-posix:dirent-name (sb-posix:readdir dp))))
-                   (unless (null name)
-                     (cond
-                       ((member name '("." "..") :test #'string=)
-                        (one-iter))
-                       ((eq :directory (%get-file-kind name t))
-                        (make-pathname :directory `(:relative ,name)))
-                       (t
-                        (let ((dotpos (position #\. name :from-end t)))
-                          (if (and dotpos (plusp dotpos))
-                              (make-pathname :name (subseq name 0 dotpos)
-                                             :type (subseq name (1+ dotpos)))
-                              (make-pathname :name name)))))))))
+                 (let ((dir (sb-posix:readdir dp)))
+                   (unless (or (null dir) (null-alien dir))
+                     (let ((name (sb-posix:dirent-name dir)))
+                       (cond
+                         ((member name '("." "..") :test #'string=)
+                          (one-iter))
+                         ((eq :directory (%get-file-kind name t))
+                          (make-pathname :directory `(:relative ,name)))
+                         (t
+                          (let ((dotpos (position #\. name :from-end t)))
+                            (if (and dotpos (plusp dotpos))
+                                (make-pathname :name (subseq name 0 dotpos)
+                                               :type (subseq name (1+ dotpos)))
+                                (make-pathname :name name))))))))))
         (unwind-protect
              (let ((*default-pathname-defaults* dir))
                (setf (current-directory) dir)

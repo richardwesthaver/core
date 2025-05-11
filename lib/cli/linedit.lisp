@@ -897,7 +897,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (apply 'make-instance type args)))
 
 ;;; undo
-
 (defun save-state (editor)
   (let ((string (get-string editor))
 	(last (last-state editor)))
@@ -913,8 +912,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (setf (get-string editor) (copy-seq (get-string line))
 	  (get-point editor) (get-point line))))
 
-(defvar *debug-info* nil)
-
+;; (defvar *debug-info* nil)
 (defvar *aux-prompt* nil)
 
 (defun redraw-line (editor &key markup)
@@ -934,7 +932,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 			   (if (characterp chord)
 			       'add-char
 			       'unknown-command))))
-    (setf *debug-info* (list command chord editor))
+    ;; (setf *debug-info* (list command chord editor))
     (funcall command chord editor)
     (setf *last-command* command))
   (save-state editor))
@@ -944,7 +942,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (newline editor)
   (get-string editor))
 
-(std:eval-always
+(eval-always
   (defmacro with-editor-point-and-string (((point string) editor) &body forms)
     `(let ((,point (get-point ,editor))
 	   (,string (get-string ,editor)))
@@ -1162,12 +1160,16 @@ to the appropriate home directory."
 	    while entry
 	    do (let* ((full (funcall namefun entry))
 		      (diff (mismatch string full)))
+                 ;; (log:debug! "~& completed: ~A, diff: ~A~%" full diff)
 		 (unless (and diff (< diff (length string)))
+                   ;; (log:debug! "~& common ~A mismatch ~A~&" common 
+                   ;;   (mismatch common full))
 		   (setf common (if common
 				    (subseq common 0 (mismatch common full))
 				    full)
 			 max (max max (length full))
 			 all (cons full all))))))
+    ;; (log:debug! "~&common: ~A~%" common)
     (if (or (null common)
 	    (<= (length common) (length string)))
 	(values all max)
