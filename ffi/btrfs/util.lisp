@@ -37,20 +37,20 @@
                    :error-ino-lookup-user-failed 25
                    :error-fs-info-failed 26)
 
-(define-alien-routine btrfs-util-strerror c-string (err btrfs-util-error))
+(defar btrfs-util-strerror c-string (err btrfs-util-error))
 
-(define-alien-routine btrfs-util-subvolume-iter-destroy void
+(defar btrfs-util-subvolume-iter-destroy void
   (iter (* btrfs-util-subvolume-iterator)))
 
-(define-alien-routine btrfs-util-subvolume-iterator-get-fd int
+(defar btrfs-util-subvolume-iterator-get-fd int
   (iter (* btrfs-util-subvolume-iterator)))
 
-(define-alien-routine btrfs-util-qgroup-inherit-destroy void
+(defar btrfs-util-qgroup-inherit-destroy void
   (inherit (* btrfs-util-qgroup-inherit)))
 
 (macrolet ((def (name &rest args)
                `(progn
-                  (define-alien-routine ,name btrfs-util-error ,@args)
+                  (defar ,name btrfs-util-error ,@args)
                   (export ',name))))
   (def btrfs-util-fs-sync (path c-string))
   (def btrfs-util-fs-sync-fd (fd int))

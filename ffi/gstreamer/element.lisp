@@ -67,10 +67,10 @@
 
 (define-opaque gst-element-class)
 
-(define-alien-routine gst-element-get-type gtype)
+(defar gst-element-get-type gtype)
 
 (macrolet ((gst-elt (name ret &rest args)
-             `(define-alien-routine ,(symbolicate "GST-ELEMENT-" name) ,ret (element (* gst-element)) ,@args)))
+             `(defar ,(symbolicate "GST-ELEMENT-" name) ,ret (element (* gst-element)) ,@args)))
   (gst-elt provide-clock (* gst-clock))
   (gst-elt get-clock (* gst-clock))
   (gst-elt set-clock boolean (clock (* gst-clock)))
@@ -99,10 +99,10 @@
   (gst-elt iterate-src-pads (* gst-iterator))
   (gst-elt iterate-sink-pads (* gst-iterator)))
 
-(define-alien-routine gst-element-get-state gst-state-change-return 
+(defar gst-element-get-state gst-state-change-return 
   (element (* gst-element)) 
   (state (* gst-state))
   (pending (* gst-state))
   (timeout gst-clock-time))
 
-(define-alien-routine gst-element-set-state gst-state-change-return (element (* gst-element)) (state gst-state))
+(defar gst-element-set-state gst-state-change-return (element (* gst-element)) (state gst-state))

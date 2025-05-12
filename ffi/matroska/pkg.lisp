@@ -39,47 +39,47 @@
 (define-alien-type matroska-file-mode c-string)
 (define-alien-type matroska-error-callback (function (* t) matroska-error c-string))
 
-(define-alien-routine matroska-plug-log int
+(defar matroska-plug-log int
   (callback matroska-error-callback))
 
-(define-alien-routine matroska-unplug-log int
+(defar matroska-unplug-log int
   (callback matroska-error-callback))
 
-(define-alien-routine matroska-open-stream-file matroska-stream
+(defar matroska-open-stream-file matroska-stream
   (string c-string)
   (mode open-mode))
 
-(define-alien-routine matroska-open-stream matroska-id
+(defar matroska-open-stream matroska-id
   (stream matroska-stream))
 
-(define-alien-routine matroska-open-url matroska-id
+(defar matroska-open-url matroska-id
   (string c-string))
 
-(define-alien-routine matroska-close void
+(defar matroska-close void
   (id matroska-id))
 
-(define-alien-routine matroska-end void
+(defar matroska-end void
   (id matroska-id)
   (totaltime (unsigned 32)))
 
-(define-alien-routine matroska-create-track matroska-track
+(defar matroska-create-track matroska-track
   (id matroska-id)
   (type track-type))
 
-(define-alien-routine matroska-read-head void
+(defar matroska-read-head void
   (id matroska-id))
 
-(define-alien-routine matroska-read-tracks void
+(defar matroska-read-tracks void
   (id matroska-id))
 
-(define-alien-routine matroska-get-number-track unsigned-char
+(defar matroska-get-number-track unsigned-char
   (id matroska-id))
 
-(define-alien-routine matroska-get-track matroska-track
+(defar matroska-get-track matroska-track
   (id matroska-id)
   (track-index unsigned-char))
 
-(define-alien-routine matroska-get-track-info void
+(defar matroska-get-track-info void
   (id matroska-id)
   (track matroska-track)
   (infos (* (* t))))

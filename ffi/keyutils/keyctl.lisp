@@ -7,17 +7,17 @@
 
 (macrolet ((def (name &rest args)
                `(progn
-                  (define-alien-routine ,name key-serial-t ,@args)
+                  (defar ,name key-serial-t ,@args)
                   ,@(if (atom name)
                         `((export ',name))
                         `((export ',(cadr name))))))
            (defint (name &rest args)
              `(progn
-                (define-alien-routine ,name int ,@args)
+                (defar ,name int ,@args)
                 (export ',name)))
            (deflong (name &rest args)
              `(progn
-                (define-alien-routine ,name long ,@args)
+                (defar ,name long ,@args)
                 (export ',name))))
   (def add-key 
       (type c-string) 

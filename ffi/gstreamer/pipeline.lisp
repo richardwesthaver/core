@@ -14,6 +14,6 @@
       (priv (* t))
       (%gst-reserved (array gpointer #.+gst-padding+))))
 
-(define-alien-routine gst-pipeline-get-type gtype)
-(define-alien-routine gst-pipeline-new (* gst-element) (name c-string))
-(define-alien-routine gst-pipeline-get-bus (* gst-bus) (pipeline (* gst-pipeline)))
+(defar gst-pipeline-get-type gtype)
+(defar gst-pipeline-new (* gst-element) (name c-string))
+(defar gst-pipeline-get-bus (* gst-bus) (pipeline (* gst-pipeline)))

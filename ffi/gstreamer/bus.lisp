@@ -15,4 +15,4 @@
 
 (define-opaque gst-bus-class)
 
-(define-alien-routine gst-bus-timed-pop-filtered (* gst-message) (bus (* gst-bus)) (timeout gst-clock-time))
+(defar gst-bus-timed-pop-filtered (* gst-message) (bus (* gst-bus)) (timeout gst-clock-time))

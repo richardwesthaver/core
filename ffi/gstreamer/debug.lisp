@@ -14,7 +14,7 @@
                    :show-all (- (ash 1 4) 1)
                    :show-verbose #xffffffff)
 
-(define-alien-routine gst-debug-bin-to-dot-data c-string
+(defar gst-debug-bin-to-dot-data c-string
   (bin (* gst-bin))
   (details gst-debug-graph-details))
 

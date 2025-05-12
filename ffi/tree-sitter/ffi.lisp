@@ -6,8 +6,8 @@
 ;; implementation - has functions for working on pointers instead of
 ;; raw objects like below:
 
-;;(define-alien-routine ts-node-start-point-pointer ts-point (self (* ts-node)))
-;;(define-alien-routine ts-node-end-point-pointer ts-point (self (* ts-node)))
+;;(defar ts-node-start-point-pointer ts-point (self (* ts-node)))
+;;(defar ts-node-end-point-pointer ts-point (self (* ts-node)))
 
 ;;; Code:
 (in-package :tree-sitter)
@@ -96,93 +96,93 @@
                                     (encoding ts-input-encoding)))
 
 ;;; Parser
-(define-alien-routine ts-parser-new (* ts-parser))
-(define-alien-routine ts-parser-delete void (self (* ts-parser)))
-(define-alien-routine ts-parser-reset void (self (* ts-parser)))
-(define-alien-routine ts-parser-set-language boolean (self (* ts-parser)) (language (* ts-language)))
-(define-alien-routine ts-parser-language (* ts-language) (self (* ts-parser)))
-;; (define-alien-routine ts-parser-parse (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (input ts-input))
-(define-alien-routine ts-parser-parse-string (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (string c-string) (length unsigned-int))
+(defar ts-parser-new (* ts-parser))
+(defar ts-parser-delete void (self (* ts-parser)))
+(defar ts-parser-reset void (self (* ts-parser)))
+(defar ts-parser-set-language boolean (self (* ts-parser)) (language (* ts-language)))
+(defar ts-parser-language (* ts-language) (self (* ts-parser)))
+;; (defar ts-parser-parse (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (input ts-input))
+(defar ts-parser-parse-string (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (string c-string) (length unsigned-int))
 ;; Set the file descriptor to which the parser should write debugging graphs
 ;; during parsing. The graphs are formatted in the DOT language. You may want
 ;; to pipe these graphs directly to a `dot(1)` process in order to generate
 ;; SVG output. You can turn off this logging by passing a negative number.
-(define-alien-routine ts-parser-print-dot-graphs void (self (* ts-parser)) (fd int))
+(defar ts-parser-print-dot-graphs void (self (* ts-parser)) (fd int))
 ;;; Tree
-(define-alien-routine ts-tree-copy (* ts-tree) (self (* ts-tree)))
-(define-alien-routine ts-tree-delete void (self (* ts-tree)))
-(define-alien-routine ts-tree-language (* ts-language) (self (* ts-tree)))
-(define-alien-routine ts-tree-edit void (self (* ts-tree)) (edit (* unsigned-int)))
-(define-alien-routine ts-tree-print-dot-graph void (self (* ts-tree)) (file-descriptor int))
+(defar ts-tree-copy (* ts-tree) (self (* ts-tree)))
+(defar ts-tree-delete void (self (* ts-tree)))
+(defar ts-tree-language (* ts-language) (self (* ts-tree)))
+(defar ts-tree-edit void (self (* ts-tree)) (edit (* unsigned-int)))
+(defar ts-tree-print-dot-graph void (self (* ts-tree)) (file-descriptor int))
 
 ;;; Tree Cursor
-(define-alien-routine ts-tree-cursor-current-field-name c-string (cursor (* ts-tree-cursor)))
+(defar ts-tree-cursor-current-field-name c-string (cursor (* ts-tree-cursor)))
 
-(define-alien-routine ts-tree-cursor-goto-next-sibling boolean (self (* ts-tree-cursor)))
+(defar ts-tree-cursor-goto-next-sibling boolean (self (* ts-tree-cursor)))
 
-(define-alien-routine ts-tree-cursor-goto-parent boolean (self (* ts-tree-cursor)))
+(defar ts-tree-cursor-goto-parent boolean (self (* ts-tree-cursor)))
 
-(define-alien-routine ts-tree-cursor-goto-first-child boolean (self (* ts-tree-cursor)))
+(defar ts-tree-cursor-goto-first-child boolean (self (* ts-tree-cursor)))
 
-(define-alien-routine ts-tree-cursor-delete void (cursor (* ts-tree-cursor)))
+(defar ts-tree-cursor-delete void (cursor (* ts-tree-cursor)))
 
-(define-alien-routine ts-language-version unsigned-int (v (* ts-language)))
-(define-alien-routine ts-language-symbol-count unsigned-int (v (* ts-language)))
-(define-alien-routine ts-language-symbol-name c-string (v (* ts-language)) (s (* ts-symbol)))
-(define-alien-routine ts-language-symbol-type ts-symbol-type (v (* ts-language)) (s ts-symbol))
-(define-alien-routine ts-language-field-count unsigned-int (v (* ts-language)))
-(define-alien-routine ts-language-field-name-for-id c-string (v (* ts-language)) (id ts-field-id))
-(define-alien-routine ts-language-field-id-for-name ts-field-id (v (* ts-language)) (name c-string) (nlen (unsigned 32)))
+(defar ts-language-version unsigned-int (v (* ts-language)))
+(defar ts-language-symbol-count unsigned-int (v (* ts-language)))
+(defar ts-language-symbol-name c-string (v (* ts-language)) (s (* ts-symbol)))
+(defar ts-language-symbol-type ts-symbol-type (v (* ts-language)) (s ts-symbol))
+(defar ts-language-field-count unsigned-int (v (* ts-language)))
+(defar ts-language-field-name-for-id c-string (v (* ts-language)) (id ts-field-id))
+(defar ts-language-field-id-for-name ts-field-id (v (* ts-language)) (name c-string) (nlen (unsigned 32)))
 
-(define-alien-routine ts-language-next-state ts-state-id 
+(defar ts-language-next-state ts-state-id 
   (self (* ts-language)) 
   (state ts-state-id)
   (symbol ts-symbol))
 
 ;;; Query
-(define-alien-routine ts-query-new (* ts-query)
+(defar ts-query-new (* ts-query)
   (lang (* ts-language))
   (source (* char))
   (source-len unsigned-int)
   (error-offset (* unsigned-int))
   (error-type (* ts-query-error)))
 
-(define-alien-routine ts-query-delete void (query (* ts-query)))
+(defar ts-query-delete void (query (* ts-query)))
 
-(define-alien-routine ts-query-cursor-new (* ts-query-cursor))
+(defar ts-query-cursor-new (* ts-query-cursor))
 
-(define-alien-routine ts-query-cursor-delete void
+(defar ts-query-cursor-delete void
   (cursor (* ts-query-cursor)))
 
 ;;; ALIEN.C
-(define-alien-routine ts-query-cursor-exec-pointer void
+(defar ts-query-cursor-exec-pointer void
   (cursor (* ts-query-cursor))
   (query (* ts-query))
   (node (* ts-node)))
 
-(define-alien-routine ts-query-cursor-exec-with-options-pointer void
+(defar ts-query-cursor-exec-with-options-pointer void
   (cursor (* ts-query-cursor))
   (query (* ts-query))
   (node (* ts-node))
   (options (* ts-query-cursor-options)))
 
-(define-alien-routine ts-tree-root-node-pointer (* ts-node)
+(defar ts-tree-root-node-pointer (* ts-node)
   (tree (* ts-tree)))
 
-(define-alien-routine ts-tree-cursor-new-pointer (* ts-tree-cursor)
+(defar ts-tree-cursor-new-pointer (* ts-tree-cursor)
   (node (* ts-node)))
 
-(define-alien-routine ts-node-is-named-pointer boolean
+(defar ts-node-is-named-pointer boolean
   (node (* ts-node)))
 
-(define-alien-routine ts-tree-cursor-current-node-pointer (* ts-node)
+(defar ts-tree-cursor-current-node-pointer (* ts-node)
   (cursor (* ts-tree-cursor)))
 
-(define-alien-routine ts-node-start-point-pointer (* ts-point)
+(defar ts-node-start-point-pointer (* ts-point)
   (node (* ts-node)))
 
-(define-alien-routine ts-node-end-point-pointer (* ts-point)
+(defar ts-node-end-point-pointer (* ts-point)
   (node (* ts-node)))
 
-(define-alien-routine ts-node-type-pointer c-string
+(defar ts-node-type-pointer c-string
   (node (* ts-node)))

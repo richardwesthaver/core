@@ -19,8 +19,8 @@
 
 (define-alien-type zstd-cstream zstd-cctx)
 
-(define-alien-routine "ZSTD_createCStream" (* zstd-cstream))
-(define-alien-routine "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
+(defar "ZSTD_createCStream" (* zstd-cstream))
+(defar "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
 
 (define-alien-enum (zstd-enddirective int :default :error :test eq)
                    :continue 0
@@ -34,27 +34,27 @@ NOTE: The return value is different. ZSTD_compressStream() returns a hint for
 the next read size (if non-zero and not an error). ZSTD_compressStream2()
 returns the minimum nb of bytes left to flush (if non-zero and not an error).
 |#
-(define-alien-routine "ZSTD_initCStream" size-t (zcs (* zstd-cstream)) (compression-level int))
-(define-alien-routine "ZSTD_compressStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)) (input (* zstd-inbuffer)))
+(defar "ZSTD_initCStream" size-t (zcs (* zstd-cstream)) (compression-level int))
+(defar "ZSTD_compressStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)) (input (* zstd-inbuffer)))
 
-(define-alien-routine "ZSTD_compressStream2" size-t
+(defar "ZSTD_compressStream2" size-t
   (cctx (* zstd-cctx))
   (output (* zstd-outbuffer))
   (input (* zstd-inbuffer))
   (end-op zstd-enddirective))
 
-(define-alien-routine "ZSTD_CStreamInSize" size-t)
-(define-alien-routine "ZSTD_CStreamOutSize" size-t)
+(defar "ZSTD_CStreamInSize" size-t)
+(defar "ZSTD_CStreamOutSize" size-t)
 
-(define-alien-routine "ZSTD_flushStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
-(define-alien-routine "ZSTD_endStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
+(defar "ZSTD_flushStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
+(defar "ZSTD_endStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
 
 (define-alien-type zstd-dstream zstd-dctx)
 
-(define-alien-routine "ZSTD_createDStream" (* zstd-dstream))
-(define-alien-routine "ZSTD_freeDStream" void (zds (* zstd-dstream)))
+(defar "ZSTD_createDStream" (* zstd-dstream))
+(defar "ZSTD_freeDStream" void (zds (* zstd-dstream)))
 ;; returns recommended first input size
-(define-alien-routine "ZSTD_initDStream" size-t (zds (* zstd-dstream)))
+(defar "ZSTD_initDStream" size-t (zds (* zstd-dstream)))
 
 #|
 @return : 0 when a frame is completely decoded and fully flushed, or an error
@@ -69,13 +69,13 @@ Note: when an operation returns with an error code, the @zds state may be left
       operations starting some new decompression job (`ZSTD_initDStream`,
       `ZSTD_decompressDCtx()`, `ZSTD_decompress_usingDict()`)
 |#
-(define-alien-routine "ZSTD_decompressStream" size-t
+(defar "ZSTD_decompressStream" size-t
   (zds (* zstd-dstream))
   (output (* zstd-outbuffer))
   (input (* zstd-inbuffer)))
 
-(define-alien-routine "ZSTD_DStreamInSize" size-t)
-(define-alien-routine "ZSTD_DStreamOutSize" size-t)
+(defar "ZSTD_DStreamInSize" size-t)
+(defar "ZSTD_DStreamOutSize" size-t)
 
 (defmacro with-zstd-inbuffer ((iv &key src size pos) &body body)
   `(with-alien ((,iv (* zstd-inbuffer) (allocate-zstd-inbuffer)))

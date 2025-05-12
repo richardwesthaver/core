@@ -96,7 +96,7 @@
 (defconstant +jack-max-frames+ 4294967295)
 (define-alien-loader :jack "/usr/lib/")
 
-(define-alien-routine jack-get-version-string c-string)
+(defar jack-get-version-string c-string)
 
 (define-alien-type jack-nframes-t unsigned-int)
 
@@ -126,92 +126,92 @@
   :can-monitor #x8
   :is-terminal #x10)
 
-(define-alien-routine jack-client-name-size int)
-(define-alien-routine jack-client-open (* t)
+(defar jack-client-name-size int)
+(defar jack-client-open (* t)
   (name c-string)
   (opt int)
   (status int))
 
-(define-alien-routine jack-get-sample-rate int
+(defar jack-get-sample-rate int
   (client (* t)))
 
-(define-alien-routine jack-port-type-get-buffer-size size-t
+(defar jack-port-type-get-buffer-size size-t
   (client (* t))
   (port-type c-string))
 
-(define-alien-routine jack-get-buffer-size jack-nframes-t
+(defar jack-get-buffer-size jack-nframes-t
   (client (* t)))
 
-(define-alien-routine jack-get-client-name c-string
+(defar jack-get-client-name c-string
   (client (* t)))
 
-(define-alien-routine jack-port-get-buffer (* t)
+(defar jack-port-get-buffer (* t)
   (port (* t))
   (frames jack-nframes-t))
 
-(define-alien-routine jack-port-name c-string
+(defar jack-port-name c-string
   (port (* jack-port-t)))
 
-(define-alien-routine jack-connect int
+(defar jack-connect int
   (client (* t))
   (source-port c-string)
   (destination-port c-string))
 
-(define-alien-routine jack-disconnect int
+(defar jack-disconnect int
   (client (* t))
   (source-port c-string)
   (destination-port c-string))
 
-(define-alien-routine jack-get-ports (* t)
+(defar jack-get-ports (* t)
   (client (* t))
   (port_name_pattern c-string)
   (type_name_pattern c-string)
   (flags unsigned-long))
 
-(define-alien-routine jack-port-register (* t)
+(defar jack-port-register (* t)
   (client (* t))
   (port-name c-string)
   (port-type c-string)
   (flags unsigned-long)
   (buffer-size unsigned-long))
 
-(define-alien-routine jack-client-close int
+(defar jack-client-close int
   (client (* t)))
 
-(define-alien-routine jack-activate int
+(defar jack-activate int
   (client (* t)))
 
-(define-alien-routine jack-deactivate int
+(defar jack-deactivate int
   (client (* t)))
 
-(define-alien-routine jack-set-process-callback int
+(defar jack-set-process-callback int
   (client (* t))
   (process_callback (* t))
   (arg int))
 
-(define-alien-routine jack-midi-clear-buffer void
+(defar jack-midi-clear-buffer void
   (port-buffer (* t)))
 
-(define-alien-routine jack-midi-event-reserve (* t)
+(defar jack-midi-event-reserve (* t)
   (port-buffer (* t))
   (time unsigned-int)
   (data-size unsigned-char))
 
 ;;; TIME
-(define-alien-routine jack-get-time jack-time-t)
+(defar jack-get-time jack-time-t)
 
-(define-alien-routine jack-frames-to-time jack-time-t
+(defar jack-frames-to-time jack-time-t
   (client (* t))
   (frames jack-nframes-t))
 
-(define-alien-routine jack-time-to-frames jack-nframes-t
+(defar jack-time-to-frames jack-nframes-t
   (client (* t))
   (time jack-time-t))
 
-(define-alien-routine jack-last-frame-time jack-nframes-t
+(defar jack-last-frame-time jack-nframes-t
   (client (* t)))
 
-(define-alien-routine jack-frame-time jack-nframes-t
+(defar jack-frame-time jack-nframes-t
   (client (* t)))
 
 (define-alien-type jack-ringbuffer
@@ -244,41 +244,41 @@
 (defun rb-data-len-p (arr index)	;len=0 := nothing to get
   (plusp (rb-data-len arr index)))
 
-(define-alien-routine jack-ringbuffer-create (* jack-ringbuffer)
+(defar jack-ringbuffer-create (* jack-ringbuffer)
   (sz size-t))
 
-(define-alien-routine jack-ringbuffer-reset void
+(defar jack-ringbuffer-reset void
   (rb (* jack-ringbuffer)))
 
-(define-alien-routine jack-ringbuffer-get-write-vector void
+(defar jack-ringbuffer-get-write-vector void
   (rb (* jack-ringbuffer))
   (vec (* jack-ringbuffer-data)))
 
-(define-alien-routine jack-ringbuffer-free void
+(defar jack-ringbuffer-free void
   (rb (* jack-ringbuffer)))
 
-(define-alien-routine jack-ringbuffer-write-advance void
+(defar jack-ringbuffer-write-advance void
   (rb (* jack-ringbuffer))
   (cnt size-t))
 
-(define-alien-routine jack-ringbuffer-write-space size-t
+(defar jack-ringbuffer-write-space size-t
   (rb (* jack-ringbuffer)))
 
-(define-alien-routine jack-ringbuffer-write size-t
+(defar jack-ringbuffer-write size-t
   (rb (* jack-ringbuffer))
   (src (* char))
   (cnt size-t))
 
-(define-alien-routine jack-ringbuffer-get-read-vector void
+(defar jack-ringbuffer-get-read-vector void
   (rb (* jack-ringbuffer))
   (vec (* jack-ringbuffer-data)))
 
-(define-alien-routine jack-ringbuffer-read size-t
+(defar jack-ringbuffer-read size-t
   (rb (* jack-ringbuffer))
   (dest (* char))
   (cnt size-t))
 
-(define-alien-routine jack-ringbuffer-read-space size-t
+(defar jack-ringbuffer-read-space size-t
   (rb (* jack-ringbuffer)))
 
 ;;; MIDI

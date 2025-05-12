@@ -12,9 +12,9 @@
 
 (define-alien-loader ssh2 "/usr/lib/")
 
-(define-alien-routine libssh2-init int (flags int))
+(defar libssh2-init int (flags int))
 
-(define-alien-routine libssh2-exit void)
+(defar libssh2-exit void)
 
 ;; TODO
-(define-alien-routine libssh2-free void (session (* t)) (ptr (* t)))
+(defar libssh2-free void (session (* t)) (ptr (* t)))

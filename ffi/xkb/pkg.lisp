@@ -65,59 +65,59 @@
             (variant c-string)
             (options c-string)))
 
-(define-alien-routine xkb-keysym-get-name int
+(defar xkb-keysym-get-name int
   (keysym xkb-keysym)
   (buffer (* char))
   (size size-t))
 
-(define-alien-routine xkb-keysym-from-name xkb-keysym
+(defar xkb-keysym-from-name xkb-keysym
   (name c-string)
   (flags xkb-keysym-flags))
 
-(define-alien-routine xkb-keysym-to-utf8 int
+(defar xkb-keysym-to-utf8 int
   (keysym xkb-keysym)
   (buffer c-string)
   (size size-t))
 
-(define-alien-routine xkb-keysym-to-utf32 unsigned-int
+(defar xkb-keysym-to-utf32 unsigned-int
   (keysym xkb-keysym))
 
-(define-alien-routine xkb-utf32-to-keysym xkb-keysym
+(defar xkb-utf32-to-keysym xkb-keysym
   (ucs unsigned-int))
 
-(define-alien-routine xkb-keysym-to-upper xkb-keysym
+(defar xkb-keysym-to-upper xkb-keysym
   (ks xkb-keysym))
 
-(define-alien-routine xkb-keysym-to-lower xkb-keysym
+(defar xkb-keysym-to-lower xkb-keysym
   (ks xkb-keysym))
 
-(define-alien-routine xkb-context-new (* xkb-context)
+(defar xkb-context-new (* xkb-context)
   (flags xkb-context-flags))
 
-(define-alien-routine xkb-context-set-user-data void
+(defar xkb-context-set-user-data void
   (context (* xkb-context))
   (user-data (* t)))
 
-;; (define-alien-routine xkb-context-get-user-data (* t)
+;; (defar xkb-context-get-user-data (* t)
 ;;   (context (* xkb-context)))
 
-(define-alien-routine xkb-context-include-path-append int
+(defar xkb-context-include-path-append int
   (context (* xkb-context))
   (path c-string))
 
-(define-alien-routine xkb-context-include-path-append-default int
+(defar xkb-context-include-path-append-default int
   (context (* xkb-context)))
 
-(define-alien-routine xkb-context-include-path-reset-defaults int
+(defar xkb-context-include-path-reset-defaults int
   (context (* xkb-context)))
 
-(define-alien-routine xkb-context-include-path-clear void
+(defar xkb-context-include-path-clear void
   (context (* xkb-context)))
 
-(define-alien-routine xkb-context-num-include-paths unsigned-int
+(defar xkb-context-num-include-paths unsigned-int
   (context (* xkb-context)))
 
-(define-alien-routine xkb-context-include-path-get c-string
+(defar xkb-context-include-path-get c-string
   (context (* xkb-context)))
 
 ;;; NYI Logging
@@ -132,24 +132,24 @@
                    :debug 50)
 ;;; Keymap Init
 
-(define-alien-routine xkb-keymap-new-from-names (* xkb-keymap)
+(defar xkb-keymap-new-from-names (* xkb-keymap)
   (context (* xkb-context))
   (names (* xkb-rule-names))
   (flags xkb-keymap-compile-flags))
 
-(define-alien-routine xkb-keymap-new-from-file (* xkb-keymap)
+(defar xkb-keymap-new-from-file (* xkb-keymap)
   (context (* xkb-context))
   (file (* t))
   (fmt xkb-keymap-format)
   (flags xkb-keymap-compile-flags))
 
-(define-alien-routine xkb-keymap-new-from-string (* xkb-keymap)
+(defar xkb-keymap-new-from-string (* xkb-keymap)
   (context (* xkb-context))
   (str c-string)
   (fmt xkb-keymap-format)
   (flags xkb-keymap-compile-flags))
 
-(define-alien-routine xkb-keymap-new-from-buffer (* xkb-keymap)
+(defar xkb-keymap-new-from-buffer (* xkb-keymap)
   (context (* xkb-context))
   (buffer c-string)
   (length size-t)
@@ -158,60 +158,60 @@
 
 ;;; Keymap Components
 
-(define-alien-routine xkb-keymap-min-keycode xkb-keycode
+(defar xkb-keymap-min-keycode xkb-keycode
   (keymap (* xkb-keymap)))
 
-(define-alien-routine xkb-keymap-max-keycode xkb-keycode
+(defar xkb-keymap-max-keycode xkb-keycode
   (keymap (* xkb-keymap)))
 
-(define-alien-routine xkb-keymap-key-for-each void
+(defar xkb-keymap-key-for-each void
   (keymap (* xkb-keymap))
   (iter (* t))
   (data (* t)))
 
-(define-alien-routine xkb-keymap-key-get-name c-string
+(defar xkb-keymap-key-get-name c-string
   (keymap (* xkb-keymap))
   (key xkb-keycode))
 
-(define-alien-routine xkb-keymap-num-mods xkb-mod-index
+(defar xkb-keymap-num-mods xkb-mod-index
   (keymap (* xkb-keymap)))
 
-(define-alien-routine xkb-keymap-mod-get-name c-string
+(defar xkb-keymap-mod-get-name c-string
   (keymap (* xkb-keymap))
   (idx xkb-mod-index))
 
-(define-alien-routine xkb-keymap-get-index xkb-mod-index
+(defar xkb-keymap-get-index xkb-mod-index
   (keymap (* xkb-keymap))
   (name c-string))
 
-(define-alien-routine xkb-keymap-num-layouts xkb-layout-index
+(defar xkb-keymap-num-layouts xkb-layout-index
   (keymap (* xkb-keymap)))
 
-(define-alien-routine xkb-keymap-layout-get-name c-string
+(defar xkb-keymap-layout-get-name c-string
   (keymap (* xkb-keymap))
   (idx xkb-layout-index))
 
-(define-alien-routine xkb-keymap-layout-get-index xkb-layout-index
+(defar xkb-keymap-layout-get-index xkb-layout-index
   (keymap (* xkb-keymap))
   (name c-string))
 
-(define-alien-routine xkb-keymap-num-leds xkb-led-index
+(defar xkb-keymap-num-leds xkb-led-index
   (keymap (* xkb-keymap)))
 
-(define-alien-routine xkb-keymap-led-get-name c-string
+(defar xkb-keymap-led-get-name c-string
   (keymap (* xkb-keymap))
   (idx xkb-led-index))
 
-(define-alien-routine xkb-keymap-led-get-index xkb-led-index
+(defar xkb-keymap-led-get-index xkb-led-index
   (keymap (* xkb-keymap))
   (name c-string))
 
-(define-alien-routine xkb-keymap-num-levels-for-key xkb-level-index
+(defar xkb-keymap-num-levels-for-key xkb-level-index
   (keymap (* xkb-keymap))
   (key xkb-keycode)
   (layout xkb-layout-index))
 
-(define-alien-routine xkb-keymap-key-get-mods-for-level size-t
+(defar xkb-keymap-key-get-mods-for-level size-t
   (keymap (* xkb-keymap))
   (key xkb-keycode)
   (layout xkb-layout-index)
@@ -219,22 +219,22 @@
   (masks-out (* xkb-mod-mask))
   (masks-size size-t))
 
-(define-alien-routine xkb-keymap-key-get-syms-by-level int
+(defar xkb-keymap-key-get-syms-by-level int
   (keymap (* xkb-keymap))
   (key xkb-keycode)
   (layout xkb-layout-index)
   (level xkb-level-index)
   (syms-out (* (* xkb-keysym))))
 
-(define-alien-routine xkb-keymap-key-repeats int
+(defar xkb-keymap-key-repeats int
   (keymap (* xkb-keymap))
   (key xkb-keycode))
 
 ;;; Keyboard State
-(define-alien-routine xkb-state-new (* xkb-state) (keymap (* xkb-keymap)))
-(define-alien-routine xkb-state-ref (* xkb-state) (state (* xkb-state)))
-(define-alien-routine xkb-state-unref void (state (* xkb-state)))
-(define-alien-routine xkb-state-get-keymap (* xkb-keymap) (state (* xkb-state)))
+(defar xkb-state-new (* xkb-state) (keymap (* xkb-keymap)))
+(defar xkb-state-ref (* xkb-state) (state (* xkb-state)))
+(defar xkb-state-unref void (state (* xkb-state)))
+(defar xkb-state-get-keymap (* xkb-keymap) (state (* xkb-state)))
 
 (define-alien-enum (xkb-key-direction unsigned-char)
                    :up 0
@@ -251,12 +251,12 @@
                    :layout-effective (ash 1 7)
                    :leds (ash 1 8))
 
-(define-alien-routine xkb-state-update-key xkb-state-component
+(defar xkb-state-update-key xkb-state-component
   (state (* xkb-state))
   (key xkb-keycode)
   (direction xkb-key-direction))
 
-(define-alien-routine xkb-state-update-mask xkb-state-component
+(defar xkb-state-update-mask xkb-state-component
   (state (* xkb-state))
   (depressed-mods xkb-mod-mask)
   (latched-mods xkb-mod-mask)
@@ -265,30 +265,30 @@
   (latched-layout xkb-mod-mask)
   (locked-layout xkb-mod-mask))
 
-(define-alien-routine xkb-state-key-get-syms int
+(defar xkb-state-key-get-syms int
   (state (* xkb-state))
   (key xkb-keycode)
   (syms-out (* (* xkb-keysym))))
 
-(define-alien-routine xkb-state-key-get-utf8 int
+(defar xkb-state-key-get-utf8 int
   (state (* xkb-state))
   (key xkb-keycode)
   (buffer (* char))
   (size size-t))
 
-(define-alien-routine xkb-state-key-get-utf32 int
+(defar xkb-state-key-get-utf32 int
   (state (* xkb-state))
   (key xkb-keycode))
 
-(define-alien-routine xkb-state-key-get-one-sym xkb-keysym
+(defar xkb-state-key-get-one-sym xkb-keysym
   (state (* xkb-state))
   (key xkb-keycode))
 
-(define-alien-routine xkb-state-key-get-layout xkb-layout-index
+(defar xkb-state-key-get-layout xkb-layout-index
   (state (* xkb-state))
   (key xkb-keycode))
 
-(define-alien-routine xkb-state-key-get-level xkb-level-index
+(defar xkb-state-key-get-level xkb-level-index
   (state (* xkb-state))
   (key xkb-keycode)
   (layout xkb-layout-index))
@@ -298,31 +298,31 @@
                    :all (ash 1 1)
                    :non-exclusive (ash 1 16))
 
-(define-alien-routine xkb-state-serialize-mods xkb-mod-mask
+(defar xkb-state-serialize-mods xkb-mod-mask
   (state (* xkb-state))
   (components xkb-state-component))
 
-(define-alien-routine xkb-state-serialize-layout xkb-layout-index
+(defar xkb-state-serialize-layout xkb-layout-index
   (state (* xkb-state))
   (components xkb-state-component))
 
-(define-alien-routine xkb-state-mod-name-is-active int
+(defar xkb-state-mod-name-is-active int
   (state (* xkb-state))
   (name (* char))
   (type xkb-state-component))
 
-(define-alien-routine xkb-state-mod-names-are-active int
+(defar xkb-state-mod-names-are-active int
   (state (* xkb-state))
   (type xkb-state-component)
   (match xkb-state-match)
   #+nil ...)
 
-(define-alien-routine xkb-state-mod-index-is-active int
+(defar xkb-state-mod-index-is-active int
   (state (* xkb-state))
   (idx xkb-mod-index)
   (type xkb-state-component))
 
-(define-alien-routine xkb-state-mod-indices-are-active int
+(defar xkb-state-mod-indices-are-active int
   (state (* xkb-state))
   (type xkb-state-component)
   (match xkb-state-match)
@@ -332,46 +332,46 @@
                    :xkb 0
                    :gtk 1)
 
-(define-alien-routine xkb-state-key-get-consumed-mods2 xkb-mod-mask
+(defar xkb-state-key-get-consumed-mods2 xkb-mod-mask
   (state (* xkb-state))
   (key xkb-keycode)
   (mode xkb-consumed-mode))
 
-(define-alien-routine xkb-state-key-get-consumed-mods xkb-mod-mask
+(defar xkb-state-key-get-consumed-mods xkb-mod-mask
   (state (* xkb-state))
   (key xkb-keycode))
 
-(define-alien-routine xkb-state-mod-index-is-consumed2 int
+(defar xkb-state-mod-index-is-consumed2 int
   (state (* xkb-state))
   (key xkb-keycode)
   (idx xkb-mod-index)
   (mode xkb-consumed-mode))
 
-(define-alien-routine xkb-state-mod-index-is-consumed int
+(defar xkb-state-mod-index-is-consumed int
   (state (* xkb-state))
   (key xkb-keycode)
   (idx xkb-mod-index))
 
-(define-alien-routine xkb-state-mode-mask-remove-consumed xkb-mod-mask
+(defar xkb-state-mode-mask-remove-consumed xkb-mod-mask
   (state (* xkb-state))
   (key xkb-keycode)
   (mask xkb-mod-mask))
 
-(define-alien-routine xkb-state-layout-name-is-active int
+(defar xkb-state-layout-name-is-active int
   (state (* xkb-state))
   (name (* char))
   (type xkb-state-component))
 
-(define-alien-routine xkb-state-layout-index-is-active int
+(defar xkb-state-layout-index-is-active int
   (state (* xkb-state))
   (idx xkb-layout-index)
   (type xkb-state-component))
 
-(define-alien-routine xkb-state-led-name-is-active int
+(defar xkb-state-led-name-is-active int
   (state (* xkb-state))
   (name (* char)))
 
-(define-alien-routine xkb-state-led-index-is-active int
+(defar xkb-state-led-index-is-active int
   (state (* xkb-state))
   (idx xkb-led-index))
 
@@ -386,18 +386,18 @@
 (define-alien-enum (xkb-compose-format unsigned-char)
                    :text-v1 1)
 
-(define-alien-routine xkb-compose-table-new-from-locale (* xkb-compose-table)
+(defar xkb-compose-table-new-from-locale (* xkb-compose-table)
   (context (* xkb-context))
   (locale (* char))
   (flags xkb-compose-compile-flags))
 
-(define-alien-routine xkb-compose-table-new-from-file (* xkb-compose-table)
+(defar xkb-compose-table-new-from-file (* xkb-compose-table)
   (file (* t)) ;;FILE
   (locale (* char))
   (format xkb-compose-format)
   (flags xkb-compose-compile-flags))
 
-(define-alien-routine xkb-compose-table-new-from-buffer (* xkb-compose-table)
+(defar xkb-compose-table-new-from-buffer (* xkb-compose-table)
   (context (* xkb-context))
   (buffer (* char))
   (length size-t)
@@ -405,49 +405,49 @@
   (format xkb-compose-format)
   (flags xkb-compose-compile-flags))
 
-(define-alien-routine xkb-compose-table-ref (* xkb-compose-table)
+(defar xkb-compose-table-ref (* xkb-compose-table)
   (table (* xkb-compose-table)))
 
-(define-alien-routine xkb-compose-table-unref void
+(defar xkb-compose-table-unref void
   (table (* xkb-compose-table)))
 
 (define-alien-type xkb-compose-table-entry (struct xkb-compose-table-entry))
 
-(define-alien-routine xkb-compose-table-entry-sequence (* xkb-keysym)
+(defar xkb-compose-table-entry-sequence (* xkb-keysym)
   (entry (* xkb-compose-table-entry))
   (sequence-length (* size-t)))
 
-(define-alien-routine xkb-compose-table-entry-keysym xkb-keysym
+(defar xkb-compose-table-entry-keysym xkb-keysym
   (entry (* xkb-compose-table-entry)))
 
-(define-alien-routine xkb-compose-table-entry-utf8 (* char)
+(defar xkb-compose-table-entry-utf8 (* char)
   (entry (* xkb-compose-table-entry)))
 
 (define-alien-type xkb-compose-table-iterator (struct xkb-compose-table-iterator))
 
-(define-alien-routine xkb-compose-table-iterator-new (* xkb-compose-table-iterator)
+(defar xkb-compose-table-iterator-new (* xkb-compose-table-iterator)
   (table (* xkb-compose-table)))
 
-(define-alien-routine xkb-compose-table-iterator-free void
+(defar xkb-compose-table-iterator-free void
   (iter (* xkb-compose-table-iterator)))
 
-(define-alien-routine xkb-compose-table-iterator-next (* xkb-compose-table-entry)
+(defar xkb-compose-table-iterator-next (* xkb-compose-table-entry)
   (iter (* xkb-compose-table-iterator)))
 
 (define-alien-enum (xkb-compose-state-flags int)
                    :no-flags 0)
 
-(define-alien-routine xkb-compose-state-new (* xkb-compose-state)
+(defar xkb-compose-state-new (* xkb-compose-state)
   (table (* xkb-compose-table))
   (flags xkb-compose-state-flags))
 
-(define-alien-routine xkb-compose-state-ref (* xkb-compose-state)
+(defar xkb-compose-state-ref (* xkb-compose-state)
   (state (* xkb-compose-state)))
 
-(define-alien-routine xkb-compose-state-unref void
+(defar xkb-compose-state-unref void
   (state (* xkb-compose-state)))
 
-(define-alien-routine xkb-compose-state-get-compose-table (* xkb-compose-table)
+(defar xkb-compose-state-get-compose-table (* xkb-compose-table)
   (state (* xkb-compose-state)))
 
 (define-alien-enum (xkb-compose-status unsigned-char)
@@ -460,20 +460,20 @@
                    :ignored 0
                    :accepted 1)
 
-(define-alien-routine xkb-compose-state-feed xkb-compose-feed-result
+(defar xkb-compose-state-feed xkb-compose-feed-result
   (state (* xkb-compose-state))
   (keysym xkb-keysym))
 
-(define-alien-routine xkb-compose-state-reset void
+(defar xkb-compose-state-reset void
   (state (* xkb-compose-state)))
 
-(define-alien-routine xkb-compose-state-get-status xkb-compose-status
+(defar xkb-compose-state-get-status xkb-compose-status
   (state (* xkb-compose-state)))
 
-(define-alien-routine xkb-compose-state-get-utf8 int
+(defar xkb-compose-state-get-utf8 int
   (state (* xkb-compose-state))
   (buffer (* char))
   (size size-t))
 
-(define-alien-routine xkb-compose-state-get-one-sym xkb-keysym
+(defar xkb-compose-state-get-one-sym xkb-keysym
   (state (* xkb-compose-state)))

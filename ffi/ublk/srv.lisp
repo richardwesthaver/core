@@ -88,98 +88,98 @@
           (ublksrv-flags unsigned-long)
           (reserved (array unsigned-long 7))))
 
-(define-alien-routine build-user-data (unsigned 64)
+(defar build-user-data (unsigned 64)
   (tag unsigned)
   (op unsigned)
   (tgt-data unsigned)
   (is-target-io unsigned))
 
-(define-alien-routine ublksrv-ctrl-deinit void
+(defar ublksrv-ctrl-deinit void
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-init (* ublksrv-ctrl-dev)
+(defar ublksrv-ctrl-init (* ublksrv-ctrl-dev)
   (data (* ublksrv-dev-data)))
 
-(define-alien-routine ublksrv-ctrl-get-affinity int
+(defar ublksrv-ctrl-get-affinity int
   (ctrl-dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-add-dev int
+(defar ublksrv-ctrl-add-dev int
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-del-dev int
+(defar ublksrv-ctrl-del-dev int
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-get-info int
+(defar ublksrv-ctrl-get-info int
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-stop-dev int
+(defar ublksrv-ctrl-stop-dev int
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-dump void
+(defar ublksrv-ctrl-dump void
   (dev (* ublksrv-ctrl-dev))
   (buf (* char)))
 
-(define-alien-routine ublksrv-ctrl-start-dev int
+(defar ublksrv-ctrl-start-dev int
   (ctrl-dev (* ublksrv-ctrl-dev))
   (daemon-pid int))
 
-(define-alien-routine ublksrv-ctrl-set-params int
+(defar ublksrv-ctrl-set-params int
   (dev (* ublksrv-ctrl-dev))
   (params (* ublk-params)))
 
-(define-alien-routine ublksrv-ctrl-get-params int
+(defar ublksrv-ctrl-get-params int
   (dev (* ublksrv-ctrl-dev))
   (params (* ublk-params)))
 
-(define-alien-routine ublksrv-ctrl-start-recovery int
+(defar ublksrv-ctrl-start-recovery int
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-end-recovery int
+(defar ublksrv-ctrl-end-recovery int
   (dev (* ublksrv-ctrl-dev))
   (daemon-pid int))
 
-(define-alien-routine ublksrv-ctrl-get-dev-info (* ublksrv-ctrl-dev-info)
+(defar ublksrv-ctrl-get-dev-info (* ublksrv-ctrl-dev-info)
   (dev (* ublksrv-ctrl-dev)))
   
-(define-alien-routine ublksrv-ctrl-get-features int
+(defar ublksrv-ctrl-get-features int
   (dev (* ublksrv-ctrl-dev))
   (features (* unsigned-long)))
 
-(define-alien-routine ublksrv-ctrl-get-run-dir c-string
+(defar ublksrv-ctrl-get-run-dir c-string
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-ctrl-prep-recovery void
+(defar ublksrv-ctrl-prep-recovery void
   (dev (* ublksrv-ctrl-dev))
   (tgt-type c-string)
   (tgt-ops (* (struct ublksrv-tgt-type)))
   (recovery-jbuf c-string))
 
-(define-alien-routine ublksrv-ctrl-get-recovery-jbuf c-string
+(defar ublksrv-ctrl-get-recovery-jbuf c-string
   (dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-is-recovering boolean
+(defar ublksrv-is-recovering boolean
   (ctrl-dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-dev-init (* ublksrv-dev)
+(defar ublksrv-dev-init (* ublksrv-dev)
   (ctrl-dev (* ublksrv-ctrl-dev)))
 
-(define-alien-routine ublksrv-dev-deinit void
+(defar ublksrv-dev-deinit void
   (dev (* ublksrv-dev)))
 
-(define-alien-routine ublksrv-get-ctrl-dev (* ublksrv-ctrl-dev)
+(defar ublksrv-get-ctrl-dev (* ublksrv-ctrl-dev)
   (dev (* ublksrv-dev)))
 
-(define-alien-routine ublksrv-get-pidfile-fd int
+(defar ublksrv-get-pidfile-fd int
   (dev (* ublksrv-dev)))
 
-(define-alien-routine ublksrv-dev-set-cq-depth void
+(defar ublksrv-dev-set-cq-depth void
   (dev (* ublksrv-dev))
   (cq-depth int))
 
-(define-alien-routine ublksrv-dev-get-cq-depth int
+(defar ublksrv-dev-get-cq-depth int
   (dev (* ublksrv-dev)))
 
-(define-alien-routine ublksrv-apply-oom-protection void)
+(defar ublksrv-apply-oom-protection void)
 
 (define-alien-type ublksrv-tgt-base-json
   (struct ublksrv-tgt-base-json
@@ -189,124 +189,124 @@
           (dev-size unsigned-long-long)
           (reserved (array unsigned-long 8))))
 
-(define-alien-routine ublksrv-json-write-dev-info int
+(defar ublksrv-json-write-dev-info int
   (dev (* ublksrv-ctrl-dev))
   (buf (* char))
   (len int))
 
-(define-alien-routine ublksrv-json-read-dev-info int
+(defar ublksrv-json-read-dev-info int
   (json-buf (* char))
   (info (* ublksrv-ctrl-dev-info)))
 
-(define-alien-routine ublksrv-json-write-queue-info int
+(defar ublksrv-json-write-queue-info int
   (dev (* ublksrv-ctrl-dev))
   (jbuf (* char))
   (len int)
   (qid int)
   (ubq-daemon-tid int))
 
-(define-alien-routine ublksrv-json-read-queue-info int
+(defar ublksrv-json-read-queue-info int
   (jbuf (* char))
   (qid int)
   (tid (* unsigned))
   (affinity-buf (* char))
   (len int))
 
-(define-alien-routine ublksrv-json-read-target-info int
+(defar ublksrv-json-read-target-info int
   (jbuf (* char))
   (tgt-buf (* char))
   (len int))
 
-(define-alien-routine ublksrv-json-read-target-str-info int
+(defar ublksrv-json-read-target-str-info int
   (jbuf (* char))
   (len int)
   (name (* char))
   (val (* long)))
 
-(define-alien-routine ublksrv-json-read-target-ulong-info int
+(defar ublksrv-json-read-target-ulong-info int
   (jbuf (* char))
   (name (* char))
   (val (* long)))
 
-(define-alien-routine ublksrv-json-write-target-str-info int
+(defar ublksrv-json-write-target-str-info int
   (jbuf (* char))
   (len int)
   (name (* char))
   (val (* char)))
 
-(define-alien-routine ublksrv-json-write-target-long-info int
+(defar ublksrv-json-write-target-long-info int
   (jbuf (* char))
   (len int)
   (name (* char))
   (val long))
 
-(define-alien-routine ublksrv-json-write-target-ulong-info int
+(defar ublksrv-json-write-target-ulong-info int
   (jbuf (* char))
   (len int)
   (name (* char))
   (val unsigned-long))
 
-(define-alien-routine ublksrv-json-dump void
+(defar ublksrv-json-dump void
   (jbuf (* char)))
 
-(define-alien-routine ublksrv-json-read-target-base-info int
+(defar ublksrv-json-read-target-base-info int
   (jbuf (* char))
   (tgt (* ublksrv-tgt-base-json)))
 
-(define-alien-routine ublksrv-json-read-params int
+(defar ublksrv-json-read-params int
   (p (* ublk-params))
   (jbuf (* char)))
 
-(define-alien-routine ublksrv-json-write-params int
+(defar ublksrv-json-write-params int
   (p (* ublk-params))
   (jbuf (* char))
   (len int))
 
-(define-alien-routine ublksrv-json-dump-params int
+(defar ublksrv-json-dump-params int
   (jbuf (* char)))
 
-(define-alien-routine ublksrv-json-get-length int (jbuf (* char)))
+(defar ublksrv-json-get-length int (jbuf (* char)))
 
-(define-alien-routine ublksrv-io-private-data (* t)
+(defar ublksrv-io-private-data (* t)
   (q (* ublksrv-queue))
   (tag int))
 
-(define-alien-routine ublksrv-queue-get-io-data (* ublk-io-data)
+(defar ublksrv-queue-get-io-data (* ublk-io-data)
   (q (* ublksrv-queue))
   (tag int))
 
-(define-alien-routine ublksrv-queue-get-io-buf (* t)
+(defar ublksrv-queue-get-io-buf (* t)
   (q (* ublksrv-queue))
   (tag int))
 
-(define-alien-routine ublksrv-queue-state unsigned-int
+(defar ublksrv-queue-state unsigned-int
   (q (* ublksrv-queue)))
 
-(define-alien-routine ublksrv-queue-init (* ublksrv-queue)
+(defar ublksrv-queue-init (* ublksrv-queue)
   (dev (* ublksrv-dev))
   (d-id unsigned-short)
   (queue-data (* t)))
 
-(define-alien-routine ublksrv-queue-deinit void
+(defar ublksrv-queue-deinit void
   (q (* ublksrv-queue)))
 
-(define-alien-routine ublksrv-queue-unconsumed-cqes int
+(defar ublksrv-queue-unconsumed-cqes int
   (q (* ublksrv-queue)))
 
-(define-alien-routine ublksrv-queue-handled-event int
+(defar ublksrv-queue-handled-event int
   (q (* ublksrv-queue)))
 
-(define-alien-routine ublksrv-queue-send-event int
+(defar ublksrv-queue-send-event int
   (q (* ublksrv-queue)))
 
-(define-alien-routine ublksrv-get-queue (* ublksrv-queue)
+(defar ublksrv-get-queue (* ublksrv-queue)
   (dev (* ublksrv-dev))
   (q-id int))
 
-(define-alien-routine ublksrv-process-io int
+(defar ublksrv-process-io int
   (q (* ublksrv-queue)))
 
-(define-alien-routine ublksrv-complete-io int
+(defar ublksrv-complete-io int
   (q (* ublksrv-queue))
   (tag unsigned)
   (res int))

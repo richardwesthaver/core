@@ -19,16 +19,16 @@
           (parent-iface gtype-interface)
           (gst-element (* t))))
 
-(define-alien-routine gst-play-state-get-type gtype)
+(defar gst-play-state-get-type gtype)
 
-(define-alien-routine gst-play-error-quark gquark)
+(defar gst-play-error-quark gquark)
 ;; (gst-play-state-get-type)
-(define-alien-routine gst-play-error-get-type gtype)
+(defar gst-play-error-get-type gtype)
 
 (define-alien-enum (gst-play-error int)
                    :failed 0)
 
-(define-alien-routine gst-play-error-get-name c-string (error gst-play-error))
+(defar gst-play-error-get-name c-string (error gst-play-error))
 
 (define-alien-enum (gst-play-state int)
                    :stopped 0
@@ -36,7 +36,7 @@
                    :paused 2
                    :playing 3)
 
-(define-alien-routine gst-play-state-get-name c-string (state gst-play-state))
+(defar gst-play-state-get-name c-string (state gst-play-state))
 
 (define-alien-enum (gst-play-message int)
                    :uri-loaded 0
@@ -53,8 +53,8 @@
                    :mute-changed 11
                    :seek-done 12)
 
-(define-alien-routine gst-play-message-get-name c-string (message-type gst-play-message))
+(defar gst-play-message-get-name c-string (message-type gst-play-message))
 
-(define-alien-routine gst-play-get-type gtype)
+(defar gst-play-get-type gtype)
 
-(define-alien-routine gst-play-new (* gst-play) (video-renderer (* gst-play-video-renderer)))
+(defar gst-play-new (* gst-play) (video-renderer (* gst-play-video-renderer)))

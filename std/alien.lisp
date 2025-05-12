@@ -202,11 +202,10 @@ alien (* size-t) with same size as the first value."
 ;;; DEFAR
 (defmacro defar (name result-type &rest args)
   "Like DEFINE-ALIEN-ROUTINE but always inline the resulting alien function."
-  `(progn 
-     (declaim (inline ,(typecase name
-                         (cons (second name))
-                         (t name))))
-     (define-alien-routine ,name ,result-type ,@args)))
+  (multiple-value-bind (lisp-name alien-name) (sb-alien::pick-lisp-and-alien-names name)
+    `(progn
+       (declaim (inline ,lisp-name))
+       (define-alien-routine ,(list alien-name lisp-name) ,result-type ,@args))))
 
 ;;; DEFINE-ALIEN-ENUM
 (defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &body forms)

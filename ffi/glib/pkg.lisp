@@ -56,7 +56,7 @@
             (p gpointer)
             (i (array unsigned-int 2))))
 
-(define-alien-routine g-main-loop-new (* gmainloop) (context (* gmaincontext)) (is-running boolean))
+(defar g-main-loop-new (* gmainloop) (context (* gmaincontext)) (is-running boolean))
 
 (define-alien-type gquark (unsigned 32))
 (define-alien-type gerror (struct gerror
@@ -89,9 +89,9 @@
                    :double 7
                    :int64 8)
 
-(define-alien-routine g-option-error-quark gquark)
+(defar g-option-error-quark gquark)
 
-(define-alien-routine g-object-getv void
+(defar g-object-getv void
   (object (* gobject))
   (nprops unsigned-int)
   (names (* c-string)) ;; array

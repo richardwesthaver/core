@@ -97,29 +97,29 @@
 ;; (load-gstreamer)
 ;; (load-ges)
 
-(define-alien-routine gst-version void (major (* unsigned)) (minor (* unsigned)) (micro (* unsigned)) (nano (* unsigned)))
+(defar gst-version void (major (* unsigned)) (minor (* unsigned)) (micro (* unsigned)) (nano (* unsigned)))
 
-(define-alien-routine gst-version-string c-string)
+(defar gst-version-string c-string)
 
-(define-alien-routine gst-segtrap-is-enabled boolean)
-(define-alien-routine gst-segtrap-set-enabled void (enabled boolean))
-(define-alien-routine gst-registry-fork-is-enabled boolean)
-(define-alien-routine gst-registry-fork-set-enabled void (enabled boolean))
+(defar gst-segtrap-is-enabled boolean)
+(defar gst-segtrap-set-enabled void (enabled boolean))
+(defar gst-registry-fork-is-enabled boolean)
+(defar gst-registry-fork-set-enabled void (enabled boolean))
 
-(define-alien-routine gst-update-registry boolean)
+(defar gst-update-registry boolean)
 
-(define-alien-routine gst-get-main-executable-path c-string)
+(defar gst-get-main-executable-path c-string)
 
-(define-alien-routine gst-init void (argc (* int)) (argv (* (* c-string))))
-(define-alien-routine gst-init-check void
+(defar gst-init void (argc (* int)) (argv (* (* c-string))))
+(defar gst-init-check void
   (argc (* int)) (argv (* (* c-string)))
   (error (* (* gerror))))
 
-(define-alien-routine gst-is-initialized boolean)
+(defar gst-is-initialized boolean)
 
-(define-alien-routine gst-init-get-option-group (* goptiongroup))
+(defar gst-init-get-option-group (* goptiongroup))
 
-(define-alien-routine gst-deinit void)
+(defar gst-deinit void)
 
 (defconstant +gst-padding+ 4)
 

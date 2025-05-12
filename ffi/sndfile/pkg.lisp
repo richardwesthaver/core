@@ -313,35 +313,35 @@
   :set-add-dither-on-read #x1071)
 
 ;;; Functions
-(define-alien-routine sf-open (* sndfile) (path c-string) (mode int) (sfinfo (* sf-info)))
-(define-alien-routine sf-open-fd (* sndfile) (fd int) (mode int) (sfinfo (* sf-info)))
-(define-alien-routine sf-error int (sndfile (* sndfile)))
-(define-alien-routine sf-strerror c-string (sndfile (* sndfile)))
-(define-alien-routine sf-error-number c-string (errnum int))
-(define-alien-routine sf-perror int (sndfile (* sndfile)))
-(define-alien-routine sf-error-str int (sndfile (* sndfile)) (str c-string) (len size-t))
-(define-alien-routine sf-command int (sndfile (* sndfile)) (command int) (data (* t)) (datasize int))
-(define-alien-routine sf-format-check int (info (* sf-info)))
-(define-alien-routine sf-seek sf-count (sndfile (* sndfile)) (frames sf-count) (whence int))
+(defar sf-open (* sndfile) (path c-string) (mode int) (sfinfo (* sf-info)))
+(defar sf-open-fd (* sndfile) (fd int) (mode int) (sfinfo (* sf-info)))
+(defar sf-error int (sndfile (* sndfile)))
+(defar sf-strerror c-string (sndfile (* sndfile)))
+(defar sf-error-number c-string (errnum int))
+(defar sf-perror int (sndfile (* sndfile)))
+(defar sf-error-str int (sndfile (* sndfile)) (str c-string) (len size-t))
+(defar sf-command int (sndfile (* sndfile)) (command int) (data (* t)) (datasize int))
+(defar sf-format-check int (info (* sf-info)))
+(defar sf-seek sf-count (sndfile (* sndfile)) (frames sf-count) (whence int))
 
-(define-alien-routine sf-set-string int (sndfile (* sndfile)) (str-type int) (str c-string))
-(define-alien-routine sf-get-string c-string (sndfile (* sndfile)) (str-type int))
-(define-alien-routine sf-version-string c-string)
-(define-alien-routine sf-current-byterate int (sndfile (* sndfile)))
-(define-alien-routine sf-read-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
-(define-alien-routine sf-write-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
+(defar sf-set-string int (sndfile (* sndfile)) (str-type int) (str c-string))
+(defar sf-get-string c-string (sndfile (* sndfile)) (str-type int))
+(defar sf-version-string c-string)
+(defar sf-current-byterate int (sndfile (* sndfile)))
+(defar sf-read-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
+(defar sf-write-raw sf-count (sndfile (* sndfile)) (ptr (* t)) (bytes sf-count))
 
-(define-alien-routine sf-readf-float sf-count (sndfile (* sndfile)) (ptr (* float)) (frames sf-count))
-(define-alien-routine sf-writef-float sf-count (sndfile (* sndfile)) (ptr (* float)) (frames sf-count))
-(define-alien-routine sf-readf-short sf-count (sndfile (* sndfile)) (ptr (* short)) (frames sf-count))
-(define-alien-routine sf-writef-short sf-count (sndfile (* sndfile)) (ptr (* short)) (frames sf-count))
-(define-alien-routine sf-readf-double sf-count (sndfile (* sndfile)) (ptr (* double)) (frames sf-count))
-(define-alien-routine sf-writef-double sf-count (sndfile (* sndfile)) (ptr (* double)) (frames sf-count))
+(defar sf-readf-float sf-count (sndfile (* sndfile)) (ptr (* float)) (frames sf-count))
+(defar sf-writef-float sf-count (sndfile (* sndfile)) (ptr (* float)) (frames sf-count))
+(defar sf-readf-short sf-count (sndfile (* sndfile)) (ptr (* short)) (frames sf-count))
+(defar sf-writef-short sf-count (sndfile (* sndfile)) (ptr (* short)) (frames sf-count))
+(defar sf-readf-double sf-count (sndfile (* sndfile)) (ptr (* double)) (frames sf-count))
+(defar sf-writef-double sf-count (sndfile (* sndfile)) (ptr (* double)) (frames sf-count))
 
 ;; ...
-(define-alien-routine sf-close int (sndfile (* sndfile)))
+(defar sf-close int (sndfile (* sndfile)))
 
-(define-alien-routine sf-write-sync void
+(defar sf-write-sync void
   (sndfile (* sndfile)))
 
 (define-alien-type sf-chunk-info
@@ -351,22 +351,22 @@
       (datalen unsigned)
       (data (* t))))
 
-(define-alien-routine sf-set-chunk int
+(defar sf-set-chunk int
   (sndfile (* sndfile))
   (chunk-info (* sf-chunk-info)))
 
-(define-alien-routine sf-get-chunk-iterator (* sf-chunk-iterator)
+(defar sf-get-chunk-iterator (* sf-chunk-iterator)
   (sndfile (* sndfile))
   (chunk-info (* sf-chunk-info)))
 
-(define-alien-routine sf-next-chunk-iterator (* sf-chunk-iterator)
+(defar sf-next-chunk-iterator (* sf-chunk-iterator)
   (iterator (* sf-chunk-iterator)))
 
-(define-alien-routine sf-get-chunk-size int
+(defar sf-get-chunk-size int
   (it (* sf-chunk-iterator))
   (chunk-info (* sf-chunk-info)))
 
-(define-alien-routine sf-get-chunk-data int
+(defar sf-get-chunk-data int
   (it (* sf-chunk-iterator))
   (chunk-info (* sf-chunk-info)))
 

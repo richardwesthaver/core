@@ -61,45 +61,45 @@ two fingerprints yourself, you probably want them in this form.  |#
 (define-opaque chromaprint-context)
 ;; (define-opaque chromaprint-matcher-context)
 
-(define-alien-routine chromaprint-get-version c-string)
+(defar chromaprint-get-version c-string)
 
-(define-alien-routine chromaprint-new (* chromaprint-context) (algo int))
+(defar chromaprint-new (* chromaprint-context) (algo int))
 
-(define-alien-routine chromaprint-free void (ctx (* chromaprint-context)))
+(defar chromaprint-free void (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-get-algorithm int (ctx (* chromaprint-context)))
+(defar chromaprint-get-algorithm int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-set-option int (ctx (* chromaprint-context)) (name c-string) (value int))
+(defar chromaprint-set-option int (ctx (* chromaprint-context)) (name c-string) (value int))
 
-(define-alien-routine chromaprint-get-num-channels int (ctx (* chromaprint-context)))
+(defar chromaprint-get-num-channels int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-get-sample-rate int (ctx (* chromaprint-context)))
+(defar chromaprint-get-sample-rate int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-get-item-duration int (ctx (* chromaprint-context)))
+(defar chromaprint-get-item-duration int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-get-item-duration-ms int (ctx (* chromaprint-context)))
+(defar chromaprint-get-item-duration-ms int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-get-delay int (ctx (* chromaprint-context)))
+(defar chromaprint-get-delay int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-get-delay-ms int (ctx (* chromaprint-context)))
+(defar chromaprint-get-delay-ms int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-start int (ctx (* chromaprint-context)) (sample-rate int) (num-channels int))
+(defar chromaprint-start int (ctx (* chromaprint-context)) (sample-rate int) (num-channels int))
 
-(define-alien-routine chromaprint-feed int (ctx (* chromaprint-context)) (data (* short)) (size int))
+(defar chromaprint-feed int (ctx (* chromaprint-context)) (data (* short)) (size int))
 
-(define-alien-routine chromaprint-finish int (ctx (* chromaprint-context)))
+(defar chromaprint-finish int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-get-fingerprint int (ctx (* chromaprint-context)) (fingerprint (* c-string)))
+(defar chromaprint-get-fingerprint int (ctx (* chromaprint-context)) (fingerprint (* c-string)))
 
-(define-alien-routine chromaprint-get-raw-fingerprint int (ctx (* chromaprint-context)) (fingerprint (* (array unsigned-int))) (size (* int)))
+(defar chromaprint-get-raw-fingerprint int (ctx (* chromaprint-context)) (fingerprint (* (array unsigned-int))) (size (* int)))
 
-(define-alien-routine chromaprint-get-raw-fingerprint-size int (ctx (* chromaprint-context)) (size (* int)))
+(defar chromaprint-get-raw-fingerprint-size int (ctx (* chromaprint-context)) (size (* int)))
 
-(define-alien-routine chromaprint-get-fingerprint-hash int (ctx (* chromaprint-context)) (hash (* unsigned-int)))
+(defar chromaprint-get-fingerprint-hash int (ctx (* chromaprint-context)) (hash (* unsigned-int)))
 
-(define-alien-routine chromaprint-clear-fingerprint int (ctx (* chromaprint-context)))
+(defar chromaprint-clear-fingerprint int (ctx (* chromaprint-context)))
 
-(define-alien-routine chromaprint-encode-fingerprint int 
+(defar chromaprint-encode-fingerprint int 
   (fp (* unsigned-int)) 
   (size int)
   (algo int)
@@ -107,7 +107,7 @@ two fingerprints yourself, you probably want them in this form.  |#
   (encoded-size (* int))
   (base64 int))
 
-(define-alien-routine chromaprint-decode-fingerprint int 
+(defar chromaprint-decode-fingerprint int 
   (encoded-fp c-string)
   (encoded-size int)
   (fp (* (* unsigned)))
@@ -115,12 +115,12 @@ two fingerprints yourself, you probably want them in this form.  |#
   (algo (* int))
   (base64 int))
 
-(define-alien-routine chromaprint-hash-fingerprint int
+(defar chromaprint-hash-fingerprint int
   (fp (* unsigned))
   (size int)
   (hash (* unsigned)))
 
-(define-alien-routine chromaprint-dealloc void (ptr (* t)))
+(defar chromaprint-dealloc void (ptr (* t)))
 
 ;;; Utils
 (defmacro with-chromaprint-ctx ((sym &key (algo (chromaprint-algorithm :default))

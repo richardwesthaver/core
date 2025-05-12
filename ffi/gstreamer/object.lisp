@@ -25,11 +25,11 @@
 
 (define-opaque gst-object-class)
 
-(define-alien-routine gst-object-ref gpointer (object gpointer))
-(define-alien-routine gst-object-unref void (object gpointer))
-(define-alien-routine gst-clear-object void (* (* gst-object)))
-(define-alien-routine gst-object-ref-sink gpointer (object gpointer))
-(define-alien-routine gst-object-replace boolean (old (* (* gst-object))) (new (* gst-object)))
-(define-alien-routine gst-object-get-path-string c-string (object (* gst-object)))
-(define-alien-routine gst-object-check-uniqueness boolean (list (* glist)) (name c-string))
+(defar gst-object-ref gpointer (object gpointer))
+(defar gst-object-unref void (object gpointer))
+(defar gst-clear-object void (* (* gst-object)))
+(defar gst-object-ref-sink gpointer (object gpointer))
+(defar gst-object-replace boolean (old (* (* gst-object))) (new (* gst-object)))
+(defar gst-object-get-path-string c-string (object (* gst-object)))
+(defar gst-object-check-uniqueness boolean (list (* glist)) (name c-string))
 

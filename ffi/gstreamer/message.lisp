@@ -59,7 +59,7 @@
     (lock gmutex)
     (cond gcond)))
 
-(define-alien-routine gst-message-get-type gtype)
-(define-alien-routine gst-message-type-get-name c-string (type gst-message-type))
-(define-alien-routine gst-message-ref (* gst-message) (msg (* gst-message)))
-(define-alien-routine gst-message-unref void (msg (* gst-message)))
+(defar gst-message-get-type gtype)
+(defar gst-message-type-get-name c-string (type gst-message-type))
+(defar gst-message-ref (* gst-message) (msg (* gst-message)))
+(defar gst-message-unref void (msg (* gst-message)))

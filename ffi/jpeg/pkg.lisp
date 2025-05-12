@@ -86,30 +86,30 @@
 (define-alien-type j-compress-ptr (* (struct jpeg-compress-struct)))
 (define-alien-type j-decompress-ptr (* (struct jpeg-decompress-struct)))
 
-(define-alien-routine jpeg-std-error (* jpeg-error-mgr) (err (* jpeg-error-mgr)))
+(defar jpeg-std-error (* jpeg-error-mgr) (err (* jpeg-error-mgr)))
 
-(define-alien-routine jpeg-createcompress void (cinfo j-compress-ptr) (version int) (structsize size-t))
-(define-alien-routine jpeg-createdecompress void (cinfo j-decompress-ptr) (version int) (structsize size-t))
+(defar jpeg-createcompress void (cinfo j-compress-ptr) (version int) (structsize size-t))
+(defar jpeg-createdecompress void (cinfo j-decompress-ptr) (version int) (structsize size-t))
 
-(define-alien-routine jpeg-destroy-compress void (cinfo j-compress-ptr))
-(define-alien-routine jpeg-destroy-decompress void (cinfo j-decompress-ptr))
+(defar jpeg-destroy-compress void (cinfo j-compress-ptr))
+(defar jpeg-destroy-decompress void (cinfo j-decompress-ptr))
 
-(define-alien-routine jpeg-set-defaults void (cinfo j-compress-ptr))
+(defar jpeg-set-defaults void (cinfo j-compress-ptr))
 
-(define-alien-routine jpeg-start-compress void (cinfo j-compress-ptr) (write-all-tables boolean))
-(define-alien-routine jpeg-finish-compress void (cinfo j-compress-ptr))
+(defar jpeg-start-compress void (cinfo j-compress-ptr) (write-all-tables boolean))
+(defar jpeg-finish-compress void (cinfo j-compress-ptr))
 
-(define-alien-routine jpeg-calc-jpeg-dimensions void (cinfo j-compress-ptr))
+(defar jpeg-calc-jpeg-dimensions void (cinfo j-compress-ptr))
 
-(define-alien-routine jpeg-start-decompress boolean (cinfo j-decompress-ptr))
-(define-alien-routine jpeg-finish-decompress boolean (cinfo j-decompress-ptr))
+(defar jpeg-start-decompress boolean (cinfo j-decompress-ptr))
+(defar jpeg-finish-decompress boolean (cinfo j-decompress-ptr))
 
-(define-alien-routine jpeg-has-multiple-scans boolean (cinfo j-decompress-ptr))
-(define-alien-routine jpeg-start-output boolean (cinfo j-decompress-ptr) (scan-number int))
-(define-alien-routine jpeg-finish-output boolean (cinfo j-decompress-ptr))
-(define-alien-routine jpeg-input-complete boolean (cinfo j-decompress-ptr))
-(define-alien-routine jpeg-new-colormap void (cinfo j-decompress-ptr))
-(define-alien-routine jpeg-consume-input int (cinfo j-decompress-ptr))
+(defar jpeg-has-multiple-scans boolean (cinfo j-decompress-ptr))
+(defar jpeg-start-output boolean (cinfo j-decompress-ptr) (scan-number int))
+(defar jpeg-finish-output boolean (cinfo j-decompress-ptr))
+(defar jpeg-input-complete boolean (cinfo j-decompress-ptr))
+(defar jpeg-new-colormap void (cinfo j-decompress-ptr))
+(defar jpeg-consume-input int (cinfo j-decompress-ptr))
 
-(define-alien-routine jpeg-abort-compress void (cinfo j-compress-ptr))
-(define-alien-routine jpeg-abort-decompress void (cinfo j-decompress-ptr))
+(defar jpeg-abort-compress void (cinfo j-compress-ptr))
+(defar jpeg-abort-decompress void (cinfo j-decompress-ptr))

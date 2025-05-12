@@ -1074,10 +1074,6 @@ empty string."
 (defun logical-pathname-p (pathname)
   (typep (pathname pathname) 'logical-pathname))
 
-(defun logical-host-names ()
-  "Print a list of currently available logical hosts."
-  (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
-
 (defun check-logical-pathname (string)
   (acond 
    ((find (trim string :char-bag ":") (logical-host-names) :test 'string-equal)

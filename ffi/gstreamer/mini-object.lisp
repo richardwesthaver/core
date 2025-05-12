@@ -26,7 +26,7 @@
                    :may-be-leaked (ash 1 2)
                    :last (ash 1 4))
 
-(define-alien-routine gst-mini-object-init void
+(defar gst-mini-object-init void
   (mini-object (* gst-mini-object))
   (flags unsigned-int)
   (type gtype)
@@ -34,8 +34,8 @@
   (dispose-func gst-mini-object-dispose-function)
   (free-func gst-mini-object-free-function))
 
-(define-alien-routine gst-mini-object-ref (* gst-mini-object)
+(defar gst-mini-object-ref (* gst-mini-object)
   (mini-object (* gst-mini-object)))
 
-(define-alien-routine gst-mini-object-unref void
+(defar gst-mini-object-unref void
   (mini-object (* gst-mini-object)))

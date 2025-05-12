@@ -30,7 +30,7 @@
 
 (define-alien-loader blake3)
 
-(define-alien-routine blake3-version c-string)
+(defar blake3-version c-string)
 
 (define-alien-type blake3-chunk-state
     (struct blake3-chunk-state
@@ -48,38 +48,38 @@
           (cv-stack-len (unsigned 8))
           (cv-stack (array (unsigned 8) 1760))))
 
-(define-alien-routine blake3-hasher-init void (self (* blake3-hasher)))
+(defar blake3-hasher-init void (self (* blake3-hasher)))
 
-(define-alien-routine blake3-hasher-init-keyed void 
+(defar blake3-hasher-init-keyed void 
   (self (* blake3-hasher))
   (key (array (unsigned 8) 32)))
 
-(define-alien-routine blake3-hasher-init-derive-key void 
+(defar blake3-hasher-init-derive-key void 
   (self (* blake3-hasher))
   (context c-string))
 
-(define-alien-routine blake3-hasher-init-derive-key-raw void 
+(defar blake3-hasher-init-derive-key-raw void 
   (self (* blake3-hasher))
   (context (* t))
   (context-len size-t))
 
-(define-alien-routine blake3-hasher-update void
+(defar blake3-hasher-update void
   (self (* blake3-hasher)) 
   (input (* unsigned-char))
   (input-len size-t))
 
-(define-alien-routine blake3-hasher-finalize void 
+(defar blake3-hasher-finalize void 
   (self (* blake3-hasher)) 
   (out (* unsigned-char)) 
   (out-len size-t))
 
-(define-alien-routine blake3-hasher-finalize-seek void 
+(defar blake3-hasher-finalize-seek void 
   (self (* blake3-hasher)) 
   (seek (unsigned 64)) 
   (out (* unsigned-char))
   (out-len size-t))
 
-(define-alien-routine blake3-hasher-reset void (self (* blake3-hasher)))
+(defar blake3-hasher-reset void (self (* blake3-hasher)))
 
 (defmacro with-blake3-hasher (hvar &body body)
   `(with-alien ((,hvar blake3-hasher))

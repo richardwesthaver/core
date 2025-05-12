@@ -148,37 +148,37 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
                    :maxcode 120)
 
 ;;; Utils
-(define-alien-routine "ZSTD_versionNumber" unsigned)
-(define-alien-routine "ZSTD_versionString" c-string)
-(define-alien-routine "ZSTD_compressBound" size-t (src-size size-t))
-(define-alien-routine "ZSTD_isError" unsigned (code size-t))
-(define-alien-routine "ZSTD_getErrorName" c-string (code size-t))
+(defar "ZSTD_versionNumber" unsigned)
+(defar "ZSTD_versionString" c-string)
+(defar "ZSTD_compressBound" size-t (src-size size-t))
+(defar "ZSTD_isError" unsigned (code size-t))
+(defar "ZSTD_getErrorName" c-string (code size-t))
 ;; zstd_errors.h - does this work?
-(define-alien-routine "ZSTD_getErrorCode" int (function-result size-t))
-(define-alien-routine "ZSTD_getErrorString" c-string (code int))
+(defar "ZSTD_getErrorCode" int (function-result size-t))
+(defar "ZSTD_getErrorString" c-string (code int))
 
-(define-alien-routine "ZSTD_minCLevel" int)
-(define-alien-routine "ZSTD_maxCLevel" int)
-(define-alien-routine "ZSTD_defaultCLevel" int)
+(defar "ZSTD_minCLevel" int)
+(defar "ZSTD_maxCLevel" int)
+(defar "ZSTD_defaultCLevel" int)
 
-(define-alien-routine "ZSTD_findFrameCompressedSize" size-t
+(defar "ZSTD_findFrameCompressedSize" size-t
   (src (* t))
   (src-size size-t))
 
-(define-alien-routine "ZSTD_getFrameContentSize" unsigned-long-long
+(defar "ZSTD_getFrameContentSize" unsigned-long-long
   (src (* t))
   (src-size size-t))
 
-(define-alien-routine "ZSTD_decompressBound" unsigned-long-long
+(defar "ZSTD_decompressBound" unsigned-long-long
   (src (* t))
   (src-size size-t))
 
 ;;; Explicit Context API
 (define-alien-type zstd-cctx (struct zstd-cctx-s))
 
-(define-alien-routine "ZSTD_createCCtx" (* zstd-cctx))
-(define-alien-routine "ZSTD_freeCCtx" void (cctx (* zstd-cctx)))
-(define-alien-routine "ZSTD_compressCCtx" size-t
+(defar "ZSTD_createCCtx" (* zstd-cctx))
+(defar "ZSTD_freeCCtx" void (cctx (* zstd-cctx)))
+(defar "ZSTD_compressCCtx" size-t
   (cctx (* zstd-cctx))
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (src-size size-t)
@@ -186,9 +186,9 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 
 (define-alien-type zstd-dctx (struct zstd-dctx-s))
 
-(define-alien-routine "ZSTD_createDCtx" (* zstd-dctx))
-(define-alien-routine "ZSTD_freeDCtx" void (dctx (* zstd-dctx)))
-(define-alien-routine "ZSTD_decompressDCtx" size-t
+(defar "ZSTD_createDCtx" (* zstd-dctx))
+(defar "ZSTD_freeDCtx" void (dctx (* zstd-dctx)))
+(defar "ZSTD_decompressDCtx" size-t
   (dctx (* zstd-dctx))
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (src-size size-t))

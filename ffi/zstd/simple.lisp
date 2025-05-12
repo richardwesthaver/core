@@ -7,14 +7,14 @@
 
 (std:deferror zstd-alien-simple-error (zstd-alien-error std-error) () (:auto t))
 
-(define-alien-routine "ZSTD_compress" size-t
+(defar "ZSTD_compress" size-t
   (dst (* t))
   (dst-capacity size-t)
   (src (* t))
   (src-size size-t)
   (compression int))
 
-(define-alien-routine "ZSTD_decompress" size-t
+(defar "ZSTD_decompress" size-t
   (dst (* t))
   (dst-capacity size-t)
   (src (* t))

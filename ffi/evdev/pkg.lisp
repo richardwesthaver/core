@@ -58,13 +58,13 @@ And so on up to event31.
                    :force-sync 4
                    :blocking 8)
 
-(define-alien-routine libevdev-new (* libevdev))
+(defar libevdev-new (* libevdev))
 
-(define-alien-routine libevdev-new-from-fd int
+(defar libevdev-new-from-fd int
   (fd int)
   (dev (* (* libevdev))))
 
-(define-alien-routine libevdev-free void
+(defar libevdev-free void
   (dev (* libevdev)))
 
 (define-alien-enum (libevdev-log-priority unsigned-char)
@@ -90,14 +90,14 @@ And so on up to event31.
             c-string
             va-list))
 
-(define-alien-routine libevdev-set-log-function void
+(defar libevdev-set-log-function void
   (logfunc libevdev-log-function)
   (data (* t)))
 
-(define-alien-routine libevdev-set-log-priority void
+(defar libevdev-set-log-priority void
   (priority libevdev-log-priority))
 
-(define-alien-routine libevdev-get-log-priority libevdev-log-priority)
+(defar libevdev-get-log-priority libevdev-log-priority)
 
 (define-alien-type libevdev-device-log-function
   (function void
@@ -110,7 +110,7 @@ And so on up to event31.
             c-string
             va-list))
 
-(define-alien-routine libevdev-set-device-log-function void
+(defar libevdev-set-device-log-function void
   (dev (* libevdev))
   (logfunc libevdev-device-log-function)
   (priority libevdev-log-priority)
@@ -120,13 +120,13 @@ And so on up to event31.
                    :grab 3
                    :ungrab 4)
 
-(define-alien-routine libevdev-grab int
+(defar libevdev-grab int
   (dev (* libevdev))
   (grab libevdev-grab-mode))
 
-(define-alien-routine libevdev-set-fd int
+(defar libevdev-set-fd int
   (dev (* libevdev))
   (fd int))
 
-(define-alien-routine libevdev-get-fd int
+(defar libevdev-get-fd int
   (dev (* libevdev)))

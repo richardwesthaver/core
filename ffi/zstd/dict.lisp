@@ -221,7 +221,7 @@
                    :explicit-block-delimiters 1)
 
 ;;; Simple Dictionary API
-(define-alien-routine "ZSTD_compress_usingDict" size-t
+(defar "ZSTD_compress_usingDict" size-t
   (cctx (* zstd-cctx))
   (dst (* t))
   (dst-capacity size-t)
@@ -231,7 +231,7 @@
   (dict-size size-t)
   (compression-level int))
 
-(define-alien-routine "ZSTD_decompress_usingDict" size-t
+(defar "ZSTD_decompress_usingDict" size-t
   (dctx (* zstd-dctx))
   (dst (* t))
   (dst-capacity size-t)
@@ -243,14 +243,14 @@
 ;;; Bulk-processing Dictionary API
 (define-alien-type zstd-cdict (struct zstd-cdict-s))
 
-(define-alien-routine "ZSTD_createCDict" (* zstd-cdict)
+(defar "ZSTD_createCDict" (* zstd-cdict)
   (dict-buffer (* t))
   (dict-size size-t)
   (compression-level int))
 
-(define-alien-routine "ZSTD_freeCDict" size-t (cdict (* zstd-cdict)))
+(defar "ZSTD_freeCDict" size-t (cdict (* zstd-cdict)))
 
-(define-alien-routine "ZSTD_compress_usingCDict" size-t
+(defar "ZSTD_compress_usingCDict" size-t
   (cctx (* zstd-cctx))
   (dst (* t))
   (dst-capacity size-t)
@@ -260,13 +260,13 @@
 
 (define-alien-type zstd-ddict (struct zstd-ddict-s))
 
-(define-alien-routine "ZSTD_createDDict" (* zstd-ddict)
+(defar "ZSTD_createDDict" (* zstd-ddict)
   (dict-buffer (* t))
   (dict-size size-t))
 
-(define-alien-routine "ZSTD_freeDDict" size-t (ddict (* zstd-ddict)))
+(defar "ZSTD_freeDDict" size-t (ddict (* zstd-ddict)))
 
-(define-alien-routine "ZSTD_decompress_usingDDict" size-t
+(defar "ZSTD_decompress_usingDDict" size-t
   (dctx (* zstd-dctx))
   (dst (* t))
   (dst-capacity size-t)
@@ -275,21 +275,21 @@
   (ddict (* zstd-ddict)))
 
 ;; dictionary utils
-(define-alien-routine "ZSTD_getDictID_fromDict" unsigned
+(defar "ZSTD_getDictID_fromDict" unsigned
   (dict (* t))
   (dict-size size-t))
 
-(define-alien-routine "ZSTD_getDictID_fromCDict" unsigned
+(defar "ZSTD_getDictID_fromCDict" unsigned
   (cdict (* zstd-cdict)))
 
-(define-alien-routine "ZSTD_getDictID_fromDDict" unsigned
+(defar "ZSTD_getDictID_fromDDict" unsigned
   (cdict (* zstd-ddict)))
 
-(define-alien-routine "ZSTD_getDictID_fromFrame" unsigned
+(defar "ZSTD_getDictID_fromFrame" unsigned
   (src (* t))
   (src-size size-t))
 
-(define-alien-routine "ZSTD_estimatedDictSize" size-t (dict-size size-t) (dict-load-method zstd-dict-load-method))
+(defar "ZSTD_estimatedDictSize" size-t (dict-size size-t) (dict-load-method zstd-dict-load-method))
 
 (defmacro with-zstd-cdict ((cv &key buffer size (level (zstd-defaultclevel))) &body body)
   `(with-alien ((,cv (* zstd-cdict) (zstd-createcdict (cast (octets-to-alien ,buffer) (* t))
@@ -316,7 +316,7 @@
             (shrink-dict-max-regression unsigned)
             (zparams zdict-params)))
 
-(define-alien-routine ("ZDICT_trainFromBuffer" zdict-train-from-buffer) size-t
+(defar ("ZDICT_trainFromBuffer" zdict-train-from-buffer) size-t
   (dict-buffer (* t))
   (dict-buffer-capacity size-t)
   (samples-buffer (* t))
@@ -326,7 +326,7 @@
 ;; NOTE: Requires returning struct by value
 
 ;; This is the ONLY function which used libzstd-alien.so right now.
-(define-alien-routine ("ZDICT_finalizeDictionaryWithParams" zdict-finalize-dictionary) size-t
+(defar ("ZDICT_finalizeDictionaryWithParams" zdict-finalize-dictionary) size-t
   (dst-dict-buffer (* t))
   (max-dict-size size-t)
   (dict-content (* t))
@@ -336,13 +336,13 @@
   (nb-samples unsigned)
   (parameters (* zdict-params)))
 
-(define-alien-routine ("ZDICT_getDictID" zdict-get-dict-id) unsigned
+(defar ("ZDICT_getDictID" zdict-get-dict-id) unsigned
   (dict-buffer (* t))
   (dict-size size-t))
 
-(define-alien-routine ("ZDICT_getDictHeaderSize" zdict-get-dict-header-size) size-t
+(defar ("ZDICT_getDictHeaderSize" zdict-get-dict-header-size) size-t
   (dict-buffer (* t))
   (dict-size size-t))
 
-(define-alien-routine ("ZDICT_isError" zdict-is-error) unsigned
+(defar ("ZDICT_isError" zdict-is-error) unsigned
   (error-code size-t))
