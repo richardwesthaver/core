@@ -68,10 +68,17 @@
   `(blasfunc ,sym void (n int :copy) (x (* ,type)) (incx int :copy) (y (* ,type)) (incy int :copy)
              (za (* ,type)) (zb (* ,type))))
 
-;; (defmacro blas4 (sym type ret &rest args)
-;; (defmacro blas4*)
-;; (defmacro blas5*)
+(defmacro blas4 (sym type &rest args)
+  `(blasfunc ,sym void (n int :copy) (a (* ,type)) (x (* ,type)) (incx int :copy)))
 
+(defmacro blas4* (sym type)
+  `(blasfunc ,sym void (a (* ,type)) (b (* ,type)) (c (* ,type)) (s (* ,type))))
+
+(defmacro blas5* (sym type)
+  `(blasfunc ,sym void (d1 (* ,type)) (d2 (* ,type)) (x (* ,type)) (y (* ,type)) (s (* ,type))))
+
+(defmacro blas6 (sym type)
+  `(blasfunc ,sym void (n int :copy) (x (* ,type)) (incx int :copy) (y (* ,type)) (incy int :copy) (s (* ,type))))
 ;; FLOATRET = float
 ;; blasint = int
 ;; BLASLONG = long
@@ -115,6 +122,7 @@
 (blas5 ddot float double)
 (blas5 qdot xdouble xdouble)
 (blas5 sbdot unsigned-short float)
+
 (blasfunc sbstobf16 void
   (n int :copy)
   (x (* float))
@@ -225,7 +233,6 @@
 (blas3q qsum xdouble)
 (blas3d dzsum double)
 (blas3q qxsum xdouble)
-
 (blas3s isamax int)
 (blas3d idamax int)
 (blas3q iqamax int)
@@ -274,24 +281,38 @@
 (blas3s scmin float)
 (blas3d dzmin double)
 (blas3q qxmin xdouble)
-
-;; sscal dscal qscal cscal zscal xscal csscal zdscal xqscal
+(blas4 sscal float)
+(blas4 dscal double)
+(blas4 qscal xdouble)
+(blas4 cscal float)
+(blas4 zscal double)
+(blas4 xscal xdouble)
+(blas4 csscal float)
+(blas4 zdscal double)
+(blas4 xqscal xdouble)
 (blas3s snrm2 float)
 (blas3s scnrm2 float)
 (blas3d dnrm2 double)
 (blas3q qnrm2 xdouble)
 (blas3d dznrm2 double)
 (blas3q qxnrm2 xdouble)
-
 (blas7 srot float) 
 (blas7 drot double)
 (blas7 qrot xdouble)
 (blas7 csrot float)
 (blas7 zdrot double)
 (blas7 xqrot xdouble)
-;; srotg drotg qrotg crotg zrotg xrotg
-;; srotmg drotmg
-;; srotm drotm qrotm
+(blas4* srotg float)
+(blas4* drotg double)
+(blas4* qrotg xdouble)
+(blas4* crotg float)
+(blas4* zrotg double)
+(blas4* xrotg xdouble)
+(blas5* srotmg float)
+(blas5* drotmg double)
+(blas6 srotm float)
+(blas6 drotm double)
+(blas6 qrotm xdouble)
 
 ;;; Level 2
 ;; sger dger cgeru cgerc zgeru zgerc xgeru xgerc
