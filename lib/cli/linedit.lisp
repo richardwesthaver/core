@@ -1074,50 +1074,26 @@ empty string."
 (defun logical-pathname-p (pathname)
   (typep (pathname pathname) 'logical-pathname))
 
-(defun logical-pathname-complete (string)
-  (values (list string) (length string)))
+(defun logical-host-names ()
+  "Print a list of currently available logical hosts."
+  (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
 
-#+nil
-(defun logical-pathname-complete (string)
-  (let* ((host (pathname-host string))
-	 (rest (subseq string (1+ (mismatch host string))))
-	 (rules (remove-if-not (lambda (rule)
-				 (mismatch rest (first rule)))))
-	 (physicals (mapcar (lambda (rule)
-			      (namestring 
-			       (translate-pathname string 
-						   (first rule)
-						   (second rule))))
-			    rules))
-	 (matches (apply #'append (mapcar #'directory-complete physicals)))
-	 (logicals (mapcar (lambda (physical)
-			     (let ((rule (find-if (lambda (rule)
-						    (misma
+(defun check-logical-pathname (string)
+  (acond 
+   ((find (trim string :char-bag ":") (logical-host-names) :test 'string-equal)
+    (list (replace string it)))
+   ((ignore-errors 
+     (namestring 
+      (translate-logical-pathname 
+       (unless (find #\; string)
+         (concatenate 'string string ";")))))
+    (list it))
+   (t nil)))
 
-                                                     (flet ((maybe-translate-logical-pathname (string)
-	                                                      (handler-case
-	                                                          (translate-logical-pathname string)
-	                                                        (error () 
-	                                                          (return-from logical-pathname-complete (values nil 0))))))
-                                                       (directory-complete 
-                                                        (namestring 
-                                                         (maybe-translate-logical-pathname string)))))
-                                                    ;; FIXME: refactor chared code with directory complete
-                                                    (loop with all
-	                                                  with common
-	                                                  with max
-	                                                  for cand in matches
-	                                                  do (let ((diff (mismatch string cand)))
-	                                                       (when (and diff (> diff (length string)))
-		                                                 (setf common (if common 
-				                                                  (subseq common 0 (mismatch common cand))
-				                                                  cand)
-			                                               max (max max (length cand))
-			                                               all (cons cand all))))
-	                                                  finally (if (or (null common)
-			                                                  (<= (length common) (length string)))
-		                                                      (return (values all max))
-		                                                      (return (values (list common) (length common))))))))))))))))
+;; simplified LPN completion (just shows the expansion if available)
+(defun logical-pathname-complete (string)
+  (when-let ((path (check-logical-pathname string)))
+    (values path (length string))))
 
 ;;; We can't easily do zsh-style tab-completion of ~us into ~user, but
 ;;; at least we can expand ~ and ~user.  The other bug here at the

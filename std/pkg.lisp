@@ -428,6 +428,7 @@
    :package-symbols
    :package-symbol-names
    :define-logical-pathname
+   :logical-host-names
    :save-lisp-tree-shake-and-die
    :save-lisp-and-live
    :forget-shared-object

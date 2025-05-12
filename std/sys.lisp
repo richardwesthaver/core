@@ -290,6 +290,10 @@ long as ASDF is non-nil)."
          ,@body))))
 
 ;;; Logical Pathnames
+(defun logical-host-names ()
+  "Print a list of currently available logical hosts."
+  (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
+
 (defmacro define-logical-pathname (host path &rest translations)
   (unless (null path)
     (setf translations 
