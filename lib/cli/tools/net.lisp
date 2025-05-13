@@ -275,3 +275,8 @@ TR_TORRENT_TRACKERS ; A comma-delimited list of the torrent's trackers' announce
   (let ((proc (sb-ext:run-program *transmission-daemon* args :wait wait :output output)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (transmission-daemon-error "TRANSMISSION-DAEMON command failed: ~A ~A" *transmission-daemon* (or args "")))))
+
+(define-cli-tool :rsync (args &key (output t) (wait t) (input t))
+  (let ((proc (sb-ext:run-program *rsync* args :wait wait :output output :input input)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (rsync-error "RSYNC command failed: ~A ~A" *rsync* (or args "")))))
