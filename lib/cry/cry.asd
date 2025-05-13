@@ -12,7 +12,9 @@
                (:file "condition" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("condition"))
                (:module "ssl"
-                :components ((:file "pkg")))
+                :components ((:file "pkg")
+                             (:file "rls")
+                             (:file "stream")))
                (:file "b3" :depends-on ("condition"))
                (:file "password" :depends-on ("condition"))
                (:file "authinfo" :depends-on ("condition"))
