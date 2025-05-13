@@ -5,9 +5,8 @@
 ;;; Code:
 (in-package :io/zstd)
 
-(pushnew :zstd *features*)
 ;;; Conditions
-(eval-always (deferror zstd-error (io-error) () (:auto t)))
+(eval-always (deferror zstd-error (io-error flate-error) () (:auto t)))
 
 (deferror zstd-input-error (zstd-error) () (:auto t))
 (deferror zstd-output-error (zstd-error) () (:auto t))

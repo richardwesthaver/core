@@ -21,6 +21,7 @@
                (:file "chunky")
                (:file "flate")
                (:file "zstd")
+               (:file "zlib")
                (:module "disk"
                 :components 
                 ((:file "pkg")

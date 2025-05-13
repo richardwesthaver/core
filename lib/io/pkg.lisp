@@ -156,6 +156,15 @@
    :with-zstd-output :with-zstd-input
    :with-zstd-buffer :with-zstd-stream))
 
+(defpackage :io/zlib
+  (:use :cl :std :io/proto :io/flate)
+  (:import-from :std :deferror :eval-always)
+  (:import-from :sb-gray :stream-force-output :stream-finish-output
+   :stream-write-sequence)
+  (:export :zlib-error :zlig-compressor :zlib-decompressor
+   :with-zlib-output :with-zlib-input
+   :with-zlib-buffer :with-zlib-stream))
+
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error))
