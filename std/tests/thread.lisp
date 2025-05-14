@@ -8,7 +8,7 @@
 
 (deftest with-threads ()
   "Test with-threads macro."
-  (with-threads (4 :args (&optional (a 0) (b 1) (c 2)))
+  (with-threads (i 4 :args (&optional (a 0) (b 1) (c 2)))
     (is (= 3 (+ a b c)))))
 
 (deftest threads ()

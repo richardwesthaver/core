@@ -626,8 +626,8 @@
    :*thread-pool*
    :find-thread-pool
    :run-thread
-   :std-thread-error
-   :print-top-level :thread-support-p
+   :std-thread-error :thread-support-p
+   :print-top-level :println-top-level
    :find-thread-by-id :thread-id-list
    :timed-join-thread :kill-thread
    :wait-for-threads :workers

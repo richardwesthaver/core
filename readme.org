@@ -3,7 +3,6 @@
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
 #+setupfile: ../org/clean.theme
-#+property: header-args :eval no-export
 #+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :html nil
 #+CALL: project-details() :dir ~/comp/core/
 
@@ -14,20 +13,16 @@
 | description | :description The Compiler Company Core              |
 | skel-id     | :id 1566328410216733941                             |
 | root        | ~/comp/core/                                        |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/d9a0a9d0f3ab][d9a0a9d0f3ab:991+]] |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/e349ada7d97b][e349ada7d97b:992+]] |
 | tags        | :tags (core lisp rust emacs c)                      |
-| updated     | Mon May 12 23:32:25 2025 -0400                      |
+| updated     | Mon May 12 23:40:15 2025 -0400                      |
 | langs       | c elisp json lisp org rust text toml                |
-| lines       | 133760 :λ 104120 :# 13252 :_ 16388                  |
+| lines       | 133874 :λ 104248 :# 13238 :_ 16388                  |
 |-------------+-----------------------------------------------------|
 
 #+END:
 
 - [[https://compiler.company/docs/core/index.html][Docs]]
-  - [[https://compiler.company/docs/core/man.html][Manual]]
-  - [[https://compiler.company/docs/core/ref.html][API Reference]]
 - [[https://compiler.company/plan/tasks/core.html][Tasks]]
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
-
-The core is primarily written from scratch in (non-portable) [[https://common-lisp.net][Lisp]].

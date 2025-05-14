@@ -232,8 +232,15 @@ that was created in `body'."
     (let ((*standard-output* *standard-output*))
       (sb-thread:make-thread
        (lambda ()
-         (format *standard-output* msg)))
+         (format *standard-output* "~A" msg)))
     nil)))
+
+(defun println-top-level (msg)
+  (let ((*standard-output* *standard-output*))
+    (sb-thread:make-thread
+     (lambda ()
+       (format *standard-output* "~A~%" msg)))
+    nil))
 
 (defun find-thread-by-id (id)
   "Search for thread by ID which must be an u64. On success returns the thread itself or nil."
@@ -279,8 +286,11 @@ that was created in `body'."
 	       (atom a)
 	       (cons (car a))))))
 
-(defmacro with-threads ((n &key args) &body body)
-  `(make-threads ,n (lambda (,@args) (declare (ignorable ,@(parse-lambda-list-names args))) ,@body)))
+(defmacro with-threads ((i n &key return bindings args name) &body body)
+  `(with-default-special-bindings ,bindings
+     (dotimes (,i ,n ,@(when return (list return)))
+       (make-thread (lambda (,@args) ,@body)
+                    ,@(when name `(:name (symbolicate ,name i)))))))
 
 (defun finish-threads (&rest threads)
   (let ((threads (flatten threads)))
@@ -512,26 +522,6 @@ FUNCTION."
    (limiter-count :accessor limiter-count :initarg :limiter-count :type fixnum)))
 
 (defun initial-limiter-count (thread-count) (+ thread-count 1))
-
-(defmacro ensure-working-p (pool)
-  `(locally (declare (optimize (speed 3) (safety 0)))
-     (accept-work-p (the thread-pool ,pool))))
-
-(defun update-limiter-count* (pool delta)
-  (declare (thread-pool pool) (fixnum delta) 
-           (optimize (speed 3) (safety 0)))
-  (incf (the fixnum (limiter-count pool)) delta)
-  (setf (accept-work-p pool)
-        (plusp (the fixnum (limiter-count pool))))
-  (values))
-
-;; REVIEW 2025-04-27: may need to add more to std/spin
-(defun update-limiter-count (pool delta)
-  (declare (thread-pool pool) (fixnum delta)
-           (optimize (speed 3) (safety 0)))
-  (with-mutex ((limiter-lock pool))
-    (update-limiter-count* pool delta))
-  (values))
 
 ;;; Kill
 (defconstant +worker-suicide-tag+ 'worker-suicide-tag)
@@ -883,6 +873,26 @@ and execution of concurrent work using a pool of 'worker' threads."))
   
 (defmethod initialize-instance :after ((self thread-pool) &key name &allow-other-keys)
   (when name (register-thread-pool name self)))
+
+(defmacro ensure-working-p (pool)
+  `(locally (declare (optimize (speed 3) (safety 0)))
+     (accept-work-p (the thread-pool ,pool))))
+
+(defun update-limiter-count* (pool delta)
+  (declare (thread-pool pool) (fixnum delta) 
+           (optimize (speed 3) (safety 0)))
+  (incf (the fixnum (limiter-count pool)) delta)
+  (setf (accept-work-p pool)
+        (plusp (the fixnum (limiter-count pool))))
+  (values))
+
+;; REVIEW 2025-04-27: may need to add more to std/spin
+(defun update-limiter-count (pool delta)
+  (declare (thread-pool pool) (fixnum delta)
+           (optimize (speed 3) (safety 0)))
+  (with-mutex ((limiter-lock pool))
+    (update-limiter-count* pool delta))
+  (values))
 
 ;;;; Core
 (defun exec-with-worker (work worker)

@@ -715,7 +715,6 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
 (defmethod stop ((self http-service) &key)
   (wake-tcp-service-for-shutdown self))
 
-#+ssl
 (defclass ssl-service (net-service)
   ((cert-file :initarg :cert-file
               :reader cert-file
