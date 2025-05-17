@@ -9,6 +9,4 @@
    :dat/toml :dat/json :dat/sxp :dat/xml
    :dat/qrcode :dat/midi :dat/svg :dat/dot
    :dat/tar :dat/css :dat/html :dat/base64 
-   :dat/gif :dat/mime :dat/parquet :dat/ini 
-   :dat/handlebars))
-                 
+   :dat/gif :dat/mime :dat/parquet :dat/ini))

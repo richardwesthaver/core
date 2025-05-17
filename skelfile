@@ -246,8 +246,6 @@
   (:build (%stash) 
    (with-sbcl (:noinform t :quit t)
     (setf sb-ext:*block-compile-default* t)
-
-    (asdf:load-asd "core.asd")
     (asdf:compile-system :core)
     (asdf:load-system :core)
     (in-package :std-user)

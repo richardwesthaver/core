@@ -10,7 +10,7 @@
 (defun sbcl-error (fmt &rest args)
   (error 'sbcl-error :format-arguments args :format-control fmt))
 
-(defparameter *sbcl* (or sb-ext:*runtime-pathname* (find-exe "sbcl")))
+(defparameter *sbcl* (find-exe "sbcl"))
 
 (when *sbcl* (pushnew :sbcl *cli-tools*))
 
@@ -47,8 +47,8 @@
       ;; append and reverse
       (nreverse (append tl rt)))))
 
-(defvar *sbcl-output* t)
-(defvar *sbcl-input* t)
+(defvar *sbcl-output* (make-synonym-stream '*standard-output*))
+(defvar *sbcl-input* (make-synonym-stream '*standard-input*))
 
 (defun run-sbcl (&rest args)
   (let ((proc (sb-ext:run-program *sbcl* (or args nil) :output *sbcl-output* :input *sbcl-input*)))
