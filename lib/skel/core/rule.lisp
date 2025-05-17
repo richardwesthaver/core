@@ -46,8 +46,18 @@ via the special form stored in RECIPE."
   (with-slots (recipe) self
     (mapcar (lambda (x)
 	      (etypecase x
+                ;; shell command? no rule bindings
 		((or symbol function) (funcall x :output t))
-		(t (funcall (compile nil `(lambda () ,x))))))
+		(t (funcall (compile 
+                             nil 
+                             ;; muahahahaha (dangerous)
+                             `(lambda ()
+                                (symbol-macrolet ,*skel-project-symbol-macros*
+                                  (macrolet ,*skel-project-macros*
+                                    (labels ,*skel-project-functions*
+                                      (let ,#1=(sk-bind *skel-project*)
+                                        (declare (ignorable ,@(mapcar 'car #1#)))
+                                        ,x))))))))))
 	    recipe)))
 
 (defmethod sk-write ((self sk-rule) stream)

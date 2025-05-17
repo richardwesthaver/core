@@ -158,7 +158,7 @@ arrange for FVAR to be closed after BODY."
 (defvar *xdg-base-dirs*
   (let ((tbl (make-hash-table)))
     (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
-          `((:data-home . ".local/share")
+          `((:data-home . ".data")
             (:config-home ".config")
             (:state-home . ".local/state")
             (:data-dirs . (#p"/usr/local/share/" #p"/usr/share/"))

@@ -829,7 +829,8 @@
    :find-files
    :count-file-lines
    :probe-merge-file
-   :probe-directory))
+   :probe-directory
+   :move-file))
 
 (defpkg :std/pipe
   (:use :cl :std/array)

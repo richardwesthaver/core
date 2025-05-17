@@ -14,7 +14,7 @@
    (stash :initarg :stash :accessor sk-stash :type pathname)
    (store :initarg :store :accessor sk-store :type pathname)
    (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component))
-   (bind :initarg :bind :initform nil :accessor sk-bind :type list)
+   (bind :initarg :bind :initform *default-skel-bindings* :accessor sk-bind :type list)
    (phases :initarg :phases
 	   :initform (make-hash-table)
 	   :accessor sk-phases
@@ -65,11 +65,19 @@
      (destructuring-bind (spec &rest body) val
        (declare (ignore spec body))
        (nyi!)))
+    (:macro
+     (destructuring-bind (args &rest body) val
+       (push (list sym args body) *skel-project-macros*)))
+    (:symbol-macro
+     (push (list sym val) *skel-project-symbol-macros*))
+    (:function
+        (destructuring-bind (args &rest body) val
+          (push (list sym args body) *skel-project-functions*)))
     ;; (:cmd
     ;;  ;; process the remainder as spec+defcmd-args+body
     ;;  )
     ;; (:opt
-    ;;  ;; process the remainder as spec+defcmd-args+body
+    ;;  ;; process the remainder as spec+defopt-args+body
     ;;  )
     (:env
      ;; process the remainder as a regular value but
@@ -114,28 +122,28 @@
 		((or vc-repo null) nil)
 		(vc-designator (setf (sk-vc self) (vc-init vc)))
 		(list
-		   (flet ((%vc-scan (lst)
-			    (let* ((%type (if (typep (car lst) 'vc-designator)
-					      (pop lst)
-					      *default-vc-kind*))
-				   (repo (vc-init %type)))
-			      (setf (vc-remotes repo)
-				    (map 'vector
-					 (lambda (v)
-					   (etypecase v
-					     (string (vc::make-vc-remote :name 'default :url v))
-					     (list 
-					      (let ((name (pop v))
-						    (val (pop v)))
-						(if (consp val)
-						    (vc::make-vc-remote :name name
-									:type (pop val)
-									:url (pop val))
-						    (vc::make-vc-remote :name name
-									:url val))))))
-					 lst))
-			      repo)))
-		     (setf (sk-vc self) (%vc-scan vc))))))
+		 (flet ((%vc-scan (lst)
+			  (let* ((%type (if (typep (car lst) 'vc-designator)
+					    (pop lst)
+					    *default-vc-kind*))
+				 (repo (vc-init %type)))
+			    (setf (vc-remotes repo)
+				  (map 'vector
+				       (lambda (v)
+					 (etypecase v
+					   (string (vc::make-vc-remote :name 'default :url v))
+					   (list 
+					    (let ((name (pop v))
+						  (val (pop v)))
+					      (if (consp val)
+						  (vc::make-vc-remote :name name
+								      :type (pop val)
+								      :url (pop val))
+						  (vc::make-vc-remote :name name
+								      :url val))))))
+				       lst))
+			    repo)))
+		   (setf (sk-vc self) (%vc-scan vc))))))
 	    ;; INCLUDE
 	    (when-let ((include (sk-include self)))
 	      (setf (sk-include self) (map 'vector
@@ -155,21 +163,6 @@
 						   (if (listp val) val (pathname val)))
 						 *default-pathname-defaults*))
 					      (sk-components self)))))
-	  ;; ;; ENV
-	  ;; ;; TODO
-	  ;; (when-let ((env (sk-env self)))
-	  ;;   (setf (sk-env self) (mapcar
-	  ;;                        (lambda (e)
-	  ;;                          (etypecase e
-	  ;;                            (symbol (cons
-	  ;;                                     (sb-int:keywordicate e)
-	  ;;                                     (sb-posix:getenv (format nil "~a" (symbol-name e)))))
-	  ;;                            (string (cons
-	  ;;                                     (sb-int:keywordicate e)
-	  ;;                                     (sb-posix:getenv (string-upcase e))))
-	  ;;                            (list
-	  ;;                             (cons (sb-int:keywordicate (car e)) (cadr e)))))
-	  ;;                        env)))
 	  ;; BIND contains a list of forms which are bound dynamically based
 	  ;; on the contents of the cdr
 	  (when-let ((bind (sk-bind self)))
@@ -181,12 +174,12 @@
 		      ;; (key &rest val) or (var param &rest val)
 		      (let ((sym (car b))
 			    (form (cdr b)))
-			    ;; (form (cddr b)))
+			;; (form (cddr b)))
 			(let ((key (car form))
 			      (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
 			  (if (keywordp key)
 			      (sk-case-bind key val sym)
-			      (cond 
+			      (cond
 				;; (sym param &rest val) detected
 				((> (length (cdr form)) 0)
 				 (let ((key (cadr b)))
@@ -273,13 +266,13 @@
 			   :if-exists if-exists
 			   :if-does-not-exist :create)
 	(when comment (princ
-		      (make-source-header-comment
-		       (name self)
-		       :cchar #\;
-		       :timestamp t
-		       :description (sk-description self)
-		       :opts '("mode:skel;"))
-		      out))
+		       (make-source-header-comment
+		        (name self)
+		        :cchar #\;
+		        :timestamp t
+		        :description (sk-description self)
+		        :opts '("mode:skel;"))
+		       out))
 	(write-ast self out :fmt fmt))
     (unless *keep-ast* (setf (ast self) nil))))
 

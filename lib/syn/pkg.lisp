@@ -5,10 +5,6 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :syn/lint
-  (:use :cl :std)
-  (:export :lint))
-
 (defpackage :syn/ts
   (:use :cl :std :tree-sitter)
   (:export 
@@ -18,9 +14,6 @@
 (defpackage :syn/lang
   (:use :cl :std)
   (:export :language :lang :*language*))
-
-(defpackage :syn
-  (:use :cl :std :syn/lint :syn/ts :syn/lang))
 
 (defpackage :syn/gen
   (:use :cl :std :doc :id :graph :sxp :ast)
@@ -35,7 +28,7 @@
    :*backup-readtable* :define-code-switches
    :define-code-switch :print-code
    :define-code-processor :define-code-reader
-   :make-nodes :make-node
+   ;; :make-nodes :make-node
    :build-swap-package
    :build-context-switches :*gen-warnings*
    :ast-traverser :with-code-printer
@@ -63,8 +56,19 @@
    :gen
    :lisp))
 
+(defpackage :syn/lint
+  (:use :cl :std)
+  (:export :lint))
+
+(defpackage :syn/tempo
+  (:use :cl :std :syn/ts :syn/lang :syn/gen))
+
+(pkg:defpkg :syn
+  (:use :cl :std)
+  (:use-reexport :syn/lint :syn/ts :syn/lang :syn/gen :syn/tempo))
+
 (defpackage :syn/cli
-  (:use :cl :std :syn/lint :syn/ts :syn/lang :cli :log :syn/gen)
+  (:use :cl :std :syn :cli :log)
   (:export :*syn-cli*
            :*gen-cli*))
 

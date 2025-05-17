@@ -32,7 +32,6 @@
                 ((:file "const")
                  (:file "entity")
                  (:file "html")))
-               (:file "handlebars")
                (:file "yaml")
                (:file "mime")
                (:file "ini")

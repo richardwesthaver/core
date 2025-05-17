@@ -31,3 +31,9 @@ table through CLI/ENV:CONCAT-ENV-TABLE and passing it as the value of the
 (defvar *skel-load-recursive* t
   "Whether to recursively load sk objects in the :include slot or store them
 uninitialized with non-nil :ast slots.")
+
+(defvar *default-skel-bindings* nil)
+
+(defvar *skel-project-macros* nil)
+(defvar *skel-project-symbol-macros* nil)
+(defvar *skel-project-functions* nil)

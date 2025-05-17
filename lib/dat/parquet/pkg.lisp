@@ -34,18 +34,6 @@ https://thrift.apache.org/docs/types
     4-byte magic number "PAR1"
 |#
 
-;; In this file we're being as lazy as possible. To generate our base objects
-;; we depend on the file parquet.thrift in the parquet-format repo. The core
-;; skelfile includes a script to download it and convert it to parquet.json
-;; (requires the thirft cli tool). We then decode it with DAT/JSON and
-;; generate lisp classes, and types.
-
-;; NOTE: there is actually a Common Lisp code generate for Thrift. It seems to
-;; work but it requires an ASDF system named thrift which I couldn't find
-;; anywhere. Granted I didn't look that hard, but I don't think it matters
-;; because we ultimately don't want to depend on the Thrift CLI tool for
-;; codegen.
-
 ;;; Code:
 (in-package :dat/parquet)
 

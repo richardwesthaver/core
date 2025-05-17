@@ -5,8 +5,8 @@
 ;;; Commentary:
 
 ;; in order to encode Parquet, we need to be able to encode the Thrift Compact
-;; Protocol (TCompact). All thrift structures we've generated via parquet.json
-;; are serialized using TCompact.
+;; Protocol (TCompact). All objects in thrift.lisp are serialized using
+;; TCompact.
 
 ;; see also: https://thrift.apache.org/static/files/thrift-20070401.pdf
 

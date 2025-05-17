@@ -57,7 +57,11 @@
    #:skel-path
    #:user-skelrc
    #:system-skelrc
-   #:skel-data))
+   #:skel-data
+   #:*default-skel-bindings*
+   #:*skel-project-functions*
+   #:*skel-project-symbol-macros*
+   #:*skel-project-macros*))
 
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/int :doc)

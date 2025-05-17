@@ -482,3 +482,8 @@ it only contains spaces or tab characters."
     (if probe
         (probe-delete-directory d :recursive recursive)
         (sb-ext:delete-directory d :recursive recursive))))
+
+(defun move-file (input output)
+  "Move file INPUT to OUTPUT."
+  (prog1 (uiop:copy-file input output)
+    (delete-file input)))

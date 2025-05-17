@@ -8,8 +8,8 @@
   (:use :cl :std)
   (:use-reexport 
    :skel/core :skel/comp 
-   #+net :skel/net
-   #+cli :skel/cli)
+   :skel/net
+   :skel/cli)
   (:export :with-project))
 
 (pkg:defpkg :sk-user
@@ -20,9 +20,7 @@
 
 (pushnew :skel *features*)
 
-#+cli
 (progn
-  #+rdb 
   (cli:defcmd skc-db ())
   #+clim
   (cli:defcmd skc-view ()
@@ -34,15 +32,14 @@
                      (if (boundp '*skel-user-config*) *skel-user-config*
                          (if (boundp '*skel-system-config*) *skel-system-config*
                              (skel-simple-error "skel config files not installed")))))))
-  #+net
   (cli:defcmd skc-net ())
   (cli:defcmd skc-serve ())
   (cli:load-package-cli 
    *skel-cli*
    :cmds 
-   (#+rdb (:name db :description "interact with the skel database" :thunk skc-db)
+   ((:name db :description "interact with the skel database" :thunk skc-db)
     #+clim (:name view :description "view an object in a new window" :thunk skc-view)
-    #+net (:name net :description "communicate with skel clients and servers"
+    (:name net :description "communicate with skel clients and servers"
            :thunk skc-net))))
 
 ;; db is locked while skel is running, prevents multiple instances
@@ -61,15 +58,15 @@
 
 (defun skel-keywordp (kw)
   (getf *skel-init-keywords* kw))
+
 (defun apply-skel-keywords (lst)
   ;; kludge
   (setf-skel-vars)
   (let ((kw))
-    (loop with elt = (car kw)
+    (loop with elt = (car lst)
           while (keywordp elt)
           do 
-             (progn
-               (push (pop lst) kw)
+             (dotimes (i 2)
                (push (pop lst) kw)))
     (values kw lst)))
 
