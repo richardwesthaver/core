@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :blas/tests
-  (:use :cl :log :std :rt :blas :sb-alien :io/static))
+  (:use :cl :log :std :rt :blas :sb-alien :io/static :rt/bench))
 (in-package :blas/tests)
 (defsuite :blas)
 (in-suite :blas)
@@ -64,7 +64,7 @@ Evaluation took:
   3,111,793,188 processor cycles
   0 bytes consed
 |#
-(deftest saxpy ()
+(defbench saxpy ()
   (println :BLAS-SAXPY)
   (test-saxpy 10000000)
   (println :LISP-SAXPY)
