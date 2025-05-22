@@ -9,7 +9,7 @@
 ;; Code:
 (defpackage :rdb
   (:use :cl :std :rocksdb 
-   :sb-alien :db :query :schema 
+   :sb-alien :db :schema 
    :btree :store :stored :log 
    :seq :io/static :btree :time
    :config :build :ast :id)

@@ -30,7 +30,7 @@
 ;; https://howqueryengineswork.com/
 
 ;;; Code:
-(in-package :obj/query)
+(in-package :q/proto)
 (declaim (optimize (debug 3)))
 (defvar *query* nil)
 

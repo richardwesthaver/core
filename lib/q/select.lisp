@@ -1,6 +1,6 @@
-;;; simple.lisp --- Simple Queries
+;;; select.lisp --- Simple Selection
 
-;; Trivial, easily-embedded Query DSLs.
+;; Trivial, easily-embedded subscript-based queries.
 
 ;;; Commentary:
 
@@ -12,4 +12,4 @@
 ;; - boolean-set
 
 ;;; Code:
-(in-package :q/simple)
+(in-package :q/select)

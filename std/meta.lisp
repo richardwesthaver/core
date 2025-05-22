@@ -99,6 +99,26 @@ non-nil, also include indirect (parent) methods."
               when (eq sn cn)
                 collect c))))
 
+(definline slot-values (obj slots)
+  "Returns a list containing slot-values of OBJ corresponding to symbols in the list SLOTS.
+
+Example:
+(defstruct obj a b)
+
+(let ((thing (make-obj :a 1 :b 2)))
+   (slot-values thing '(a b)))
+;; (1 2)"
+  (mapcar #'(lambda (s) (slot-value obj s)) slots))
+
+(defmacro with-fslots (slots instance &rest body)
+  (with-gensyms (obj args)
+    `(let ((,obj ,instance))
+       (flet (,@(mapcar #'(lambda (decl)
+                            (destructuring-bind (name slot-name) (if (consp decl) decl (list decl decl))
+                              `(,name (&rest ,args) (apply (the function (slot-value ,obj ',slot-name)) ,args))))
+                        slots))
+         ,@body))))
+
 ;; TODO 2023-09-09: slot exclusion from dynamic var
 (defun list-slot-values-using-class (class obj slots &optional nullp unboundp)
   "List the values of SLOTS bound in OBJ according to CLASS. When NULLP is T also

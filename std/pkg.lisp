@@ -33,7 +33,7 @@
   (:use :cl)
   (:shadowing-import-from :sb-int 
    :ensure-list :recons :memq :assq
-   :ensure-list :proper-list-of-length-p :proper-list-p :singleton-p)
+   :proper-list-of-length-p :proper-list-p :singleton-p)
   (:shadow :group)
   (:export
    :ensure-car
@@ -48,6 +48,17 @@
    :deletef
    :flatten
    :group
+   :zip-list :zip-tree
+   :zipsym
+   :ziprm
+   :pairs
+   :nconsc
+   :cart :mapcart
+   :cart-case :cart-ecase
+   :cart-typecase :cart-etypecase
+   :recursive-append :list-dimensions
+   :maptree :maptree-if
+   :copy-n
    :let-binding-transform
    :ensure-list :recons :memq :assq
    :circular-list :circular-list-p :circular-tree-p :merge!
@@ -64,7 +75,12 @@
    :o!-symbol-p
    :o!-symbol-to-g!-symbol
    :defmacro!
-   :defun!))
+   :unquote-args
+   :defun!
+   :definline
+   :with-optimization
+   :macrofy
+   :with-marking))
 
 (defpackage :std/condition
   (:use :cl)
@@ -262,8 +278,10 @@
 (defpkg :std/array
   (:use :cl)
   (:import-from :sb-ext :maybe-inline)
+  (:import-from :std/prim :definline)
   (:export :copy-array :signed-array-length :array-shift 
-   :vector-push-extend-position :vector-pop-position))
+   :vector-push-extend-position :vector-pop-position
+   :vectorify :make-array-allocator))
 
 (defpkg :std/hash-table
   (:use :cl)
@@ -273,7 +291,8 @@
   (:export :hash-table-alist
    :maphash-keys :hash-table-keys
    :maphash-values :hash-table-values
-   :alist-hash-table :plist-hash-table :hash-table-plist :ensure-gethash))
+   :alist-hash-table :plist-hash-table :hash-table-plist :ensure-gethash
+   :pophash))
 
 (defpkg :std/curry
   (:use :cl)
@@ -308,11 +327,11 @@
 
 (defpkg :std/macs
   (:use :cl :std/prim)
-  (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms)
+  (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms :symbolicate :keywordicate)
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
-  (:import-from :std/list :flatten)
+  (:import-from :std/list :flatten :recursive-append :zip-tree :group)
   (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
   (:export
    :make-macro-lambda
@@ -377,7 +396,12 @@
    :eswitch
    :cswitch
    :xor
-   :ifret))
+   :ifret
+   :letv*
+   :lety
+   :lety*
+   :defunits :unit-of-distance 
+   :distance-designator))
 
 ;; (reexport-from :sb-c
 ;; 	       :include '(:define-source-transformation
@@ -567,6 +591,7 @@
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
   (:import-from :sb-ext :without-package-locks)
   (:import-from :std/macs :eval-always)
+  (:import-from :std/prim :definline)
   (:shadow :reset)
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :ensure-finalized 
@@ -575,8 +600,8 @@
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
-   :slot-boundp*
-   :explore :explain))
+   :slot-boundp* :slot-values
+   :explore :explain :with-fslots))
 
 (defpkg :std/spin
   (:use :cl)

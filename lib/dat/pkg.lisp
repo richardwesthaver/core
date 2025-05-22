@@ -28,7 +28,7 @@
 
 (defpackage :dat/csv
   (:nicknames :csv)
-  (:use :cl :std :dat/proto :obj/query)
+  (:use :cl :std :dat/proto)
   (:export
    :read-csv-file
    :*csv-separator*

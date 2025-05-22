@@ -5,7 +5,7 @@
 ;;; Code:
 (pkg:defpkg :core/bench/db/log
   (:nicknames :bench/db/log)
-  (:use :cl :std :rt :rt/bench :rt/cover :log :query :schema :config :rdb :db)
+  (:use :cl :std :rt :rt/bench :rt/cover :log :schema :config :rdb :db)
   (:export :bench-log-db))
 
 (in-package :core/bench/db/log)

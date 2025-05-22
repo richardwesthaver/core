@@ -3,10 +3,6 @@
 ;;; Code:
 (in-package :std/list)
 
-;; (reexport-from :sb-int
-;; 	       :include '(:recons :memq :assq :ensure-list :proper-list-of-length-p :proper-list-p
-;; 			  :singleton-p))
-
 (defun ensure-car (thing)
   "If THING is a CONS, its CAR is returned. Otherwise THING is returned."
   (if (consp thing)
@@ -109,6 +105,7 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
     (circularp object nil)))
 
 ;;; On Lisp
+(declaim (inline source))
 (defun group (source n)
   "Return a list of lists by grouping SOURCE into N-element batches."
   (declare (fixnum n))
@@ -135,6 +132,179 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                          (car x)
                          (rec (cdr x) acc))))))
       (rec x nil))))
+
+(defun zip-list (&rest args)
+  "Return a list of lists containing every member of ARGS at the same position."
+  (apply 'map 'list 'list args))
+
+(defun zip-tree (&rest args)
+  (if (and (some #'atom args) (some #'consp args)) nil
+      (if (every #'atom args) args
+          (apply #'mapcar #'zip-tree args))))
+
+(defun zipsym (lst)
+  "Zips a unique gensym with each element of LST.
+
+Example:
+(zipsym '(a b c)) ;; ((#:G1064 A) (#:G1065 B) (#:G1066 C))"  
+  (map 'list #'(lambda (x) (list (gensym) x)) lst))
+
+(defun list-dimensions (lst)
+  (if (atom lst) nil
+      (cons (length lst) (list-dimensions (car lst)))))
+
+(defun recursive-append (&rest lsts)
+  "Append lists in a nested manner.
+
+Example:
+
+(recursive-append
+  '(let ((x 1)))
+  '(+ x 2))
+
+;; (LET ((X 1)) (+ X 2))"
+  (reduce #'(lambda (x y)
+              (if (null x)
+                  (if (typep (car y) 'symbol) y (car y))
+                  (append x (and y (if (typep (car y) 'symbol) `(,y) y)))))
+          lsts :from-end t))
+
+(defmacro ziprm (r m &rest args)
+  "Reduce-Map on ARGS.
+
+Example:
+
+(macroexpand-1
+  `(ziprm (and =) (a b c) (1 2 3)))
+;; (AND (= A 1) (= B 2) (= C 3))"
+  `(,r ,@(apply #'mapcar #'(lambda (&rest atoms) (cons m atoms)) (mapcar #'ensure-list args))))
+
+(defun cart (list &rest more-lists)
+  "Returns the cartesian product of LIST and MORE-LISTS.
+
+The length of the result is equal to the product of the lengths of all input
+lists. A zero-length list anywhere in the input will always return NIL.
+
+The length of each element of the result is equal to the length of the
+shortest input list.
+
+Example:
+
+(cart (list 1 2) (list 3 4 5)) ;; ((1 3) (2 3) (1 4) (2 4) (1 5) (2 5))
+(cart (list 1 2 3) (list 4 5)) ;; ((1 4) (2 4) (3 4) (1 5) (2 5) (3 5))
+(cart (list 1 2 3) nil (list 4 5)) ;; nil
+"
+  (if more-lists
+      (mapcan #'(lambda (y) (mapcar #'(lambda (x) (cons x y)) list)) (apply #'cart more-lists))
+      (mapcar #'list list)))
+
+(defun mapcart (function list &rest more-lists)
+  "(MAPCAR (LAMBDA (X) (APPLY FUNCTION X)) (APPLY CART LIST MORE-LISTS))
+
+Remember that CART always returns elements with a length equal to the smallest
+input list. FUNCTION will need to accept at least as many args as the element
+size.
+
+Example:
+(mapcart '+ '(1 2 3) '(4 5)) ;; (5 6 7 6 7 8)"
+  (mapcar (lambda (args) (apply function args)) (apply #'cart list more-lists)))
+
+(defmacro cart-case ((&rest vars) &body cases)
+  (let ((decl (zipsym vars)))
+    `(let (,@decl)
+       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and eql) ,(mapcar #'car decl) ,(first clause)) ,@(cdr clause))) cases)))))
+
+(defmacro cart-ecase ((&rest vars) &body cases)
+  (let ((decl (zipsym vars)))
+    `(let (,@decl)
+       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and eql) ,(mapcar #'car decl) ,(first clause)) ,@(cdr clause))) cases)
+         (t (error "cart-ecase: Case failure."))))))
+
+(defmacro cart-typecase (vars &body cases)
+  (let* ((decl (zipsym vars)))
+    `(let (,@decl)
+       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause))) ,@(cdr clause))) cases)))))
+
+(defmacro cart-etypecase (vars &body cases)
+  (let* ((decl (zipsym vars)))
+    `(let (,@decl)
+       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause))) ,@(cdr clause))) cases)
+             (t (error "cart-etypecase: Case failure."))))))
+
+(declaim (inline pairs))
+(defun pairs (list)
+  "Return a new list containing each pair of elements in LIST."
+  (loop for (a . b) on list by #'cddr collect (if b (list a (first b)) (list a))))
+
+(declaim (inline copy-n))
+(defun copy-n (vec lst n)
+  (declare (type vector vec)
+	   (type list lst)
+	   (type fixnum n))
+  (loop :for i :of-type fixnum :from 0 :below n
+     :for vlst := lst :then (cdr vlst)
+     :do (setf (car vlst) (aref vec i)))
+  lst)
+
+(defun maptree-if (predicate transformer tree)
+  "Returns a new tree by recursively calling TRANSFORMER on sub-trees which
+satisfy the PREDICATE.
+
+predicate : tree -> boolean
+transformer: tree -> (or tree atom) *control
+
+If the transformer returns a CONTROL function, then the tree returned by the
+transformer is replaced in-turn by the result of:
+
+(funcall CONTROL #'(lambda (x) (maptree-if PREDICATE TRANSFORMER x)) transformed-tree)
+
+otherwise it is left as it is.
+
+Example:
+  (maptree-if #'(λ (x) (and (consp x) (eq (car x) 'ping)))
+              #'(λ (x) `(pong ,@(cdr x)))
+              '(progn (ping (ping (ping 1)))))
+  ;; (PROGN (PONG (PING (PING 1))))
+  (maptree-if #'(λ (x) (and (consp x) (eq (car x) 'ping)))
+              #'(λ (x) (values `(pong ,@(cdr x)) #'mapcar))
+              '(progn (ping (ping (ping 1)))))
+  ;; (PROGN (PONG (PONG (PONG 1))))
+  "
+  (multiple-value-bind (t-tree control) (if (funcall predicate tree)
+					    (funcall transformer tree)
+					    (values tree #'mapcar))
+    (if (and (consp t-tree) control)
+	(funcall control #'(lambda (x) (maptree-if predicate transformer x)) t-tree)
+	t-tree)))
+
+(defun maptree (keys transformer tree)
+  (maptree-if #'(lambda (x) (and (consp x) (member (car x) keys)))
+	      transformer tree))
+
+(defmacro nconsc (var &rest args)
+  "Macro to do setf and nconc for destructive list updates. 
+
+If VAR is null then VAR is set to (apply #'nconc ARGS), 
+
+else does (apply #'nconc (cons VAR ARGS)).
+
+Example:
+(let ((x nil))
+  (nconsc x (list 1 2 3) (list 'a 'b 'c))
+  x)
+;; (1 2 3 A B C)
+
+(let ((x (list 'a 'b 'c)))
+  (nconsc x (list 1 2 3))
+   x)
+;; (A B C 1 2 3)"
+  (assert (and (symbolp var) (not (member var '(t nil)))))
+  (if (null args) var
+      `(if (null ,var)
+	   (progn
+	     (setf ,var ,(car args))
+	     (nconc ,var ,@(cdr args)))
+	   (nconc ,var ,@args))))
 
 ;;; cl-bench utils
 ;; 

@@ -80,3 +80,29 @@ need to be shifted back as per ARRAY-SHIFT."
   (let ((el (aref vector position)))
     (array-shift vector :n -1 :from (1+ position))
     el))
+
+;; Matlisp
+(declaim (inline vectorify))
+(defun vectorify (seq n &optional (element-type t))
+  (declare (type (or vector list) seq))
+  (etypecase seq
+    (cons
+     (let ((ret (make-array n element-type element-type)))
+       (loop for i of-type fixnum from 0 below n
+          for lst = seq then (cdr lst)
+          do (setf (aref ret i) (car lst))
+          finally (return ret))))
+    (vector
+     (let ((ret (make-array n element-type element-type)))
+       (loop for i of-type fixnum from 0 below n
+          for ele across seq	    
+          do (setf (aref ret i) ele)
+          finally (return ret))))))
+
+(defmacro make-array-allocator (allocator-name type init &optional doc)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (definline ,allocator-name (size &optional (initial-element ,init))
+       ,@(unless (null doc)
+		 `(,doc))
+       (make-array size
+		   :element-type ,type :initial-element initial-element))))

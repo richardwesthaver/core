@@ -54,6 +54,22 @@
 
 (deftype solist-element-designator () `(member ,@(list :addr :fixnum :string)))
 
+(defmacro make-so-set (&optional (type :addr))
+  "Return a SOLIST set. Type is of type SOLIST-ELEMENT-DESIGNATOR."
+  (declare (solist-element-designator type))
+  `(case ,type
+     (:fixnum ,(make-so-set/fixnum))
+     (:string ,(make-so-map/string))
+     (:addr ,(make-so-set/addr))))
+
+(defmacro make-so-map (&optional (type :addr))
+  "Return a SOLIST map. Type may be either FIXNUM or STRING."
+  (declare (solist-element-designator type))
+  `(case ,type
+     (:fixnum ,(make-so-map/fixnum))
+     (:string ,(make-so-map/string))
+     (:addr ,(make-so-map/addr))))
+
 (defun show-list (solist)
   (let ((node (so-head solist)))
     (loop (format t "~s~%" node)

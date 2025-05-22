@@ -4,20 +4,123 @@
 
 ;;; Code:
 (defpackage :q/proto
-  (:use :cl :std :query :plan :id :schema :ast :srv)
-  (:export
-   :query-engine :query-parser
-   :*query-engine*
-   :*query-dialect*
-   :query-dialect-designator
-   :sql :dql))
+  ;; (:nicknames :query)
+  (:use :cl :std :plan :ast :schema)
+  (:export 
+   :query
+   :query-expression
+   :logical-expression
+   :column-expression
+   :literal-expression
+   :row-count
+   :column-count
+   :record-batch
+   :make-query
+   :*literal-value-types*
+   :literal-value-type
+   :literal-value-vector
+   :projection
+   :selection
+   :aggregate
+   :execution-context
+   :physical-expression
+   :scan-exec
+   :scan-data
+   :execute-query
+   :aggregate-function
+   :aggregate-function-designator
+   :aggregate-expression
+   :binary-expression
+   :unary-expression
+   :alias-expression
+   :query-optimizer
+   :make-physical-expression
+   :query-planner
+   :hash-aggregate-exec
+   :filter
+   :selection-exec
+   :projection-exec
+   :execute
+   :max-physical-expression
+   :aggregate-physical-expression
+   :accumulated
+   :accumulate
+   :accumulator
+   :math-physical-expression
+   :equiv-physical-expression
+   :binary-physical-expression
+   :literal-physical-expression
+   :column-physical-expression
+   :evaluate
+   :make-record-batch
+   :record-batch-p
+   :copy-record-batch
+   :record-batch-schema
+   :record-batch-fields
+   :column-size
+   :column-value
+   :column-type
+   :column-vector
+   :column-data
+   :math-expression
+   :add-expression
+   :sub-expression
+   :mult-expression
+   :div-expression
+   :mod-expression
+   :and-expression
+   :or-expression
+   :lteq-expression
+   :gteq-expression
+   :lt-expression
+   :gt-expression
+   :neq-expression
+   :eq-expression
+   :aggregate-expression-p
+   :df-project
+   :df-filter
+   :df-aggregate
+   :df-select
+   :df-fields
+   :df-data
+   :limit
+   :binary-expression-name
+   :binary-expression-op
+   :sum-expression
+   :min-expression
+   :max-expression
+   :avg-expression
+   :count-expression
+   :to-field
+   :column-name
+   :cast-expression
+   :df-plan
+   :df-exec
+   :execute*
+   :register-file
+   :register-data-source
+   :register-df
+   :optimize-query
+   :projection-pushdown-optimizer
+   :extract-columns*
+   :extract-columns
+   :query-vop
+   :logical-query-plan
+   :physical-query-plan
+   :query-plan
+   :query-expr
+   :project
+   :select
+   :boolean-binary-expression))
 
-(defpackage :q/simple
-  (:use :cl :std :q/proto :query :plan :schema :ast))
+(defpackage :q/select
+  (:use :cl :std :q/proto :plan :schema :ast)
+  (:shadow :select)
+  (:export :select))
 
 (defpackage :q/sql
   (:nicknames :sql)
-  (:use :cl :std :q/proto :parse/pratt :query :id :schema :parse/proto :ast :plan)
+  (:use :cl :std :q/proto :parse/pratt :id :schema :parse/proto :ast :plan)
   (:export
    :sql-error
    :read-sql-string
@@ -63,7 +166,7 @@
 
 (defpackage :q/dql
   (:nicknames :dql)
-  (:use :cl :std :q/proto :query :id :sxp :dat/proto :ast :schema :plan)
+  (:use :cl :std :q/proto :id :sxp :dat/proto :ast :schema :plan)
   (:export
    :dql-error
    :dql-data-source
@@ -77,5 +180,12 @@
 ;; (defpackage :q/e)
 
 (pkg:defpkg :q
-  (:use :cl :std)
-  (:use-reexport :q/proto :q/sql :q/dql))
+  (:use :cl :std :plan :id :schema :ast :srv)
+  (:use-reexport :q/select)
+  (:export
+   :query-engine :query-parser
+   :*query-engine*
+   :*query-dialect*
+   :query-dialect-designator
+   :sql :dql))
+

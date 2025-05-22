@@ -18,10 +18,6 @@
   ()
   (:documentation "Iterator superclass inherited by objects implementing the iterator protocol."))
 
-(defclass ring ()
-  ()
-  (:documentation "Ring buffer protocol."))
-
 ;;; Protocol
 (defvar *idx* 0)
 (let ((*idx* 0))

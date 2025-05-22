@@ -153,9 +153,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
                  (sk-find query user-config :slot :id)
                  (when system-config
                    (sk-find query system-config :slot :id))))
-    (keyword (sk-project-slot query))
-    (q:sql-query (nyi!))
-    (q:dql-query (nyi!))))
+    (keyword (sk-project-slot query))))
 
 (macrolet 
     ((%init (set)

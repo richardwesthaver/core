@@ -5,10 +5,7 @@
 ;;; Code:
 (pkg:defpkg :obj
   (:use :cl :std)
-  (:use-reexport :list :hash :color
+  (:use-reexport :hash :color
    :seq :tree :graph :id
    :db :ast :time :uri 
-   :url :config :unit :build :secret :query :schema :store :btree
-   :unit))
-                 
-                 
+   :url :config :build :secret :schema :store :btree))

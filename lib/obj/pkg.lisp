@@ -3,16 +3,6 @@
 ;;
 
 ;;; Code:
-(defpackage :obj/list
-  (:nicknames :list)
-  (:use :cl :std)
-  (:import-from :sb-lockless
-   :make-ordered-list :lfl-insert
-   :lfl-delete :lfl-find
-   :lfl-insert*/t :lfl-delete*/t :lfl-find*/t
-   :do-lockfree-list :lfl-keys :make-marked-ref)
-  (:export :clist))
-
 (defpackage :obj/hash
   (:nicknames :hash)
   (:use :cl :std)
@@ -75,10 +65,8 @@
    :iri				; subclass of uri
    :iri-p
    :copy-uri
-   
    :uri-parse-error
    :uri-parse-error-string
-
    :uri-scheme
    :uri-userinfo
    :uri-port
@@ -134,20 +122,21 @@
 (defpackage :obj/seq
   (:nicknames :seq)
   (:use :cl :std)
-  (:export :iterator :ring
-           :next
-           :prev
-           :iter
-           :seek
-           :seek-to-first
-           :seek-to-last
-           :seek-for-prev
-           :iter-valid-p
-           :*iter*
-           :idx
-           :with-iter
-           :key
-           :val))
+  (:export 
+   :iterator 
+   :next
+   :prev
+   :iter
+   :seek
+   :seek-to-first
+   :seek-to-last
+   :seek-for-prev
+   :iter-valid-p
+   :*iter*
+   :idx
+   :with-iter
+   :key
+   :val))
 
 (defpackage :obj/tree
   (:nicknames :tree)
@@ -292,14 +281,6 @@
    :make-v5-uuid :uuid= :+namespace-dns+ :+namespace-oid+ :+namespace-x500+
    :uuid-to-octet-vector :octet-vector-to-uuid
    :uuid-to-string))
-
-(defpackage :obj/unit
-  (:nicknames :unit)
-  (:use :cl :std)
-  (:export :up :down :left
-   :right :east :west :north
-   :north-east :north-west :south-east :south-west
-   :direction :angle :fahrenheit :celsius :kelvin :rankine))
 
 (defpackage :obj/build
   (:nicknames :build)
@@ -455,119 +436,9 @@
    #:schema-from-columns
    #:df-plan))
 
-(defpackage :obj/query
-  (:nicknames :query)
-  (:use :cl :std :plan :ast :schema)
-  (:export :query
-           :query-expression
-           :logical-expression
-           :column-expression
-           :literal-expression
-           :row-count
-           :column-count
-           :record-batch
-           :make-query
-           :*literal-value-types*
-           :literal-value-type
-           :literal-value-vector
-           :projection
-           :selection
-           :aggregate
-           :execution-context
-           :physical-expression
-           :scan-exec
-           :scan-data
-           :execute-query
-           :aggregate-function
-           :aggregate-function-designator
-           :aggregate-expression
-           :binary-expression
-           :unary-expression
-           :alias-expression
-           :query-optimizer
-           :make-physical-expression
-           :query-planner
-           :hash-aggregate-exec
-           :filter
-           :selection-exec
-           :projection-exec
-           :execute
-           :max-physical-expression
-           :aggregate-physical-expression
-           :accumulated
-           :accumulate
-           :accumulator
-           :math-physical-expression
-           :equiv-physical-expression
-           :binary-physical-expression
-           :literal-physical-expression
-           :column-physical-expression
-           :evaluate
-           :make-record-batch
-           :record-batch-p
-           :copy-record-batch
-           :record-batch-schema
-           :record-batch-fields
-           :column-size
-           :column-value
-           :column-type
-           :column-vector
-           :column-data
-           :math-expression
-           :add-expression
-           :sub-expression
-           :mult-expression
-           :div-expression
-           :mod-expression
-           :and-expression
-           :or-expression
-           :lteq-expression
-           :gteq-expression
-           :lt-expression
-           :gt-expression
-           :neq-expression
-           :eq-expression
-           :aggregate-expression-p
-
-           :df-project
-           :df-filter
-           :df-aggregate
-           :df-select
-           :df-fields
-           :df-data
-           :limit
-           :binary-expression-name
-           :binary-expression-op
-           :sum-expression
-           :min-expression
-           :max-expression
-           :avg-expression
-           :count-expression
-           :to-field
-           :column-name
-           :cast-expression
-           :df-plan
-           :df-exec
-           :execute*
-           :register-file
-           :register-data-source
-           :register-df
-           :optimize-query
-           :projection-pushdown-optimizer
-           :extract-columns*
-           :extract-columns
-           :query-vop
-           :logical-query-plan
-           :physical-query-plan
-           :query-plan
-           :query-expr
-           :project
-           :select
-           :boolean-binary-expression))
-
 (defpackage :obj/db
   (:nicknames :db)
-  (:use :cl :std :id :seq :sb-mop :sb-pcl :schema :dynamic :query :plan :config)
+  (:use :cl :std :id :seq :sb-mop :sb-pcl :schema :dynamic :plan :config)
   (:export
    :get-val
    :set-val

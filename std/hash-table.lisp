@@ -69,3 +69,8 @@ PLIST. Hash table is initialized using the HASH-TABLE-INITARGS."
         ((not tail))
       (ensure-gethash (car tail) table (cadr tail)))
     table))
+
+(defun pophash (key hash-table &optional default)
+  (multiple-value-bind (value existsp) (gethash key hash-table default)
+    (when existsp (remhash key hash-table))
+    (values value existsp)))

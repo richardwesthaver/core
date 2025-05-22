@@ -108,3 +108,101 @@ definitions."
   "Macro to keep code nesting and indentation under control." ;; Thanks to mbaringer
   (reduce #'(lambda (outer inner) `(,@outer ,inner))
           things :from-end t))
+
+;;; Let extensions
+(defmacro letv* (bindings &rest body)
+  "Extended LET* which handles multiple values, destructuring bind, and type declarations. 
+
+The declarations list VARS is similar to that in let.
+
+Examples:
+(macroexpand-1 `(letv* ((x 2 :type fixnum)
+                        ((a &optional (c 2)) b (values (list 1) 3) :type (fixnum &optional (t)) t))
+                  t))
+;; (LET ((X 2))
+;;       (DECLARE (TYPE FIXNUM X))
+;;   (MULTIPLE-VALUE-BIND (#:G1120 B) (VALUES (LIST 1) 3)
+;;     (DECLARE (TYPE T B))
+;;     (DESTRUCTURING-BIND (A &OPTIONAL (C 2)) #:G1120
+;;       (DECLARE (TYPE FIXNUM A)
+;;                (TYPE T C))
+;;       (PROGN T))))"
+  (labels ((typedecl (syms alist)
+	     (let ((decls (remove-if #'null (mapcar #'(lambda (s)
+							(let ((ts (assoc s alist)))
+							  (if (cdr ts)
+							      `(type ,(cdr ts) ,s)
+							      `(ignore ,s))))
+						    syms))))
+	       (when decls `((declare ,@decls))))))
+    (apply #'recursive-append
+	   (append
+	    (mapcan #'(lambda (x)
+			(destructuring-bind (bind expr type) (let ((tpos (position :type x)) (len (length x)))
+							       (list (subseq x 0 (1- (or tpos len))) (nth (1- (or tpos len)) x) (when tpos (nthcdr (1+ tpos) x))))
+			  (let* ((typa (loop for (s ty) on (flatten (zip-tree bind type))
+					     with skip? = nil
+					     if (or skip? (null s)) do (setf skip? nil)
+                                             else 
+                                             do (progn (setf skip? t)
+						       (unless (member s cl:lambda-list-keywords)
+							 (collect (cons s ty))))))
+			         (vsyms (mapcar #'(lambda (x) (if (consp x)
+								  (let ((g (gensym)))
+								    (list g
+									  `(destructuring-bind (,@x) ,g
+									     ,@(typedecl (flatten x) typa))))
+								  (list x)))
+						bind)))
+			    (list*
+			     (recursive-append
+			      (if (> (length bind) 1)
+				  `(multiple-value-bind (,@(mapcar #'car vsyms)) ,expr)
+				  `(let ((,@(mapcar #'car vsyms) ,expr))))
+			      (car (typedecl (mapcar #'car vsyms) typa)))
+			     (remove-if #'null (mapcar #'cadr vsyms))))))
+		    bindings)
+	    `((progn ,@body))))))
+
+(defmacro lety (bindings &rest body)
+  "Like let, but also allows type-declarations with the key :type.
+
+  Example:
+  (macroexpand-1
+    `(let-typed ((x 1 :type fixnum))
+    (+ 1 x)))
+  ;; (LET ((X 1))
+  ;;   (DECLARE (TYPE FIXNUM X))
+  ;;   (+ 1 X))"
+  `(let (,@(mapcar #'(lambda (x) (subseq x 0 2)) bindings))
+     ,@(let ((types (remove-if #'null (mapcar #'(lambda (x) (destructuring-bind (s e &key (type t)) x
+							      (declare (ignore e))
+							      (unless (eql type t)
+								(if (null type)
+								    `(ignore ,s)
+								    `(type ,type ,s)))))
+					      bindings))))
+	 (when types `((declare ,@types))))
+     ,@body))
+
+(defmacro lety* (bindings &rest body)
+  "Like let*, but also allows type-declarations with the key :type.
+
+Example:
+(macroexpand-1
+  `(let*-typed ((x 1 :type fixnum))
+      (+ 1 x)))
+;; (LET* ((X 1))
+;;   (DECLARE (TYPE FIXNUM X))
+;;   (+ 1 X))"
+  `(let* (,@(mapcar #'(lambda (x) (subseq x 0 2)) bindings))
+     ,@(let ((types (remove-if #'null
+			       (mapcar #'(lambda (x) (destructuring-bind (s e &key (type t)) x
+						       (declare (ignore e))
+						       (unless (eql type t)
+							 (if (null type)
+							     `(ignore ,s)
+							     `(type ,type ,s)))))
+				       bindings))))
+	 (when types `((declare ,@types))))
+     ,@body))

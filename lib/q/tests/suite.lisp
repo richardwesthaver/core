@@ -4,16 +4,7 @@
 
 ;;; Code:
 (in-package :q/tests)
-
-(defsuite :q)
 (in-suite :q)
-
-(deftest sanity ()
-  (is (make-instance 'query-engine
-        :parser (make-instance 'query-parser)
-        :optimizer (make-instance 'sql-optimizer)
-        :sources nil)))
-
 (deftest sql-select ()
   (let ((tbl (make-hash-table :test 'equal)))
     (setf (gethash "FOO" tbl) (make-df))

@@ -17,8 +17,6 @@
                (:module "hash"
                 :components ((:file "hasher")
                              (:file "chash")
-                             (:file "map")
-                             (:file "set")
                              (:file "castable")))
                (:file "id")
                (:module "uri"
@@ -39,7 +37,6 @@
                              (:file "redblack")
                              (:file "brother")
                              (:file "btree")))
-               (:file "unit")
                (:file "equiv")
                (:module "color"
                 :components ((:file "color")
@@ -52,13 +49,10 @@
                (:file "uuid")
                (:file "build")
                (:file "ast")
-	       (:module "graph"
-		:components ((:file "pkg")
-                             (:file "read")))
+	       (:file "graph")
                (:file "config")
                (:file "plan")
                (:file "schema")
-               (:file "query")
                (:file "db")
                (:file "secret")
                (:file "store")

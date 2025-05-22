@@ -281,6 +281,10 @@
 (defar jack-ringbuffer-read-space size-t
   (rb (* jack-ringbuffer)))
 
+;;; API
+;; default global client-name
+(defparameter *jack-client* nil)
+
 ;;; MIDI
 (defvar *jack-midi-output-port* nil)
 (defvar *jack-midi-input-port* nil)
@@ -453,7 +457,7 @@
   (setf *jack-midi-output-port*
 	(let ((port (jack-port-register *jack-client*
 					"midiout"
-					*jack-default-midi-type*
+					+jack-default-midi-type+
 					(jackportflags :is-output)
 					0)))
 	  (when (zerop (sb-sys:sap-int (alien-sap port))) ;0 if not allocated
@@ -462,9 +466,6 @@
 	  port)))
 
 ;;; Client
-;; default global client-name
-(defparameter *jack-client* nil)
-
 (defun jack-period-now (&optional sek)
   (+ (jack-last-frame-time *jack-client*)
      (jack-get-buffer-size *jack-client*)
@@ -506,7 +507,7 @@
 	     (let ((port (jack-port-register
 			  *jack-client*
 			  (format nil "in_~A" chan)
-			  *jack-default-audio-type*
+			  +jack-default-audio-type+
 			  (jackportflags :is-input)
 			  0)))
 	       (when (zerop (sb-sys:sap-int (alien-sap port))) ;0 if not allocated
@@ -520,7 +521,7 @@
 	         (let ((port (jack-port-register
 			      *jack-client*
 			      (format nil "out_~A" chan)
-			      *jack-default-audio-type*
+			      +jack-default-audio-type+
 			      (jackportflags :is-output)
 			      0)))
 	           (when (zerop (sb-sys:sap-int (alien-sap port))) ;0 if not allocated

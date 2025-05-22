@@ -10,6 +10,10 @@
 ;;; Code:
 (in-package :cli/tools/term)
 
+(defparameter *alacritty-config-path* (merge-pathnames ".config/alacritty.toml" (user-homedir-pathname)))
+
+(defparameter *term* (or (find-exe "alacritty") (find-exe "xterm")))
+
 (deferror term-error (simple-error error) ())
 
 (defconfig term-config (ast) ())
@@ -28,10 +32,6 @@
 
 (defun term-error (fmt &rest args)
   (error 'term-error :format-arguments args :format-control fmt))
-
-(defparameter *term* (or (find-exe "alacritty") (find-exe "xterm")))
-
-(defparameter *alacritty-config-path* (merge-pathnames ".config/alacritty.toml" (user-homedir-pathname)))
 
 (defun run-term (&rest args)
   (apply #'sb-ext:run-program *term* args))

@@ -1,4 +1,4 @@
-;;; obj/direction.lisp
+;;; obj/unit.lisp
 
 ;;
 
@@ -7,7 +7,7 @@
 ;; ref: https://www.dot.state.wy.us/files/live/sites/wydot/files/shared/Highway_Development/Surveys/Survey%20Manual/Appendix%20G%20-%20Units%20of%20Measure.pdf
 
 ;;; Code:
-(in-package :obj/unit)
+(in-package :std/macs)
 (eval-always
   (defun defunits-chaining (u units prev)
     (if (member u prev)
@@ -42,9 +42,7 @@
                  (group units 2)))))
      (deftype ,(symbolicate quantity '-designator) ()
        '(member ,@(loop for k in units by 'cddr
-                        collect (keywordicate k))))
-     (defgeneric ,quantity (self))
-     (defgeneric (setf ,quantity) (self &optional units))))
+                        collect (keywordicate k))))))
 
 ;;; Distance
 (defunits distance m
@@ -59,31 +57,5 @@
   furlong (1/8 mile)
   fathom (2 yard) ; Defined in 1929
   nautical-mile 1852
-  cable (1/10 nautical-mile))
-
-(defgeneric distance (self &optional units))
-(defgeneric (setf distance) (new self &optional units))
-
-;;; Direction
-(deftype direction-designator () '(or symbol string boolean number))
-
-(defclass direction () ())
-
-(defgeneric direction (self))
-(defgeneric (setf direction) (new self))
-
-(defgeneric directions (self))
-(defgeneric (setf directions) (new self))
-
-(defgeneric left (self))
-(defgeneric right (self))
-(defgeneric up (self))
-(defgeneric down (self))
-
-;;; Temperature
-(deftype temperature-unit-designator () '(member :fahrenheit :celsius :kelvin :rankine))
-(declaim (temperature-unit-designator *default-temperature-unit*))
-(defvar *default-temperature-unit* :fahrenheit)
-(defstruct temperature
-  (degrees 0 :type single-float)
-  (scale *default-temperature-unit* :type temperature-unit-designator))
+  cable (1/10 nautical-mile)
+  light-year (9.4607e+12 mile))

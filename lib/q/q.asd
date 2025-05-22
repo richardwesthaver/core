@@ -3,11 +3,12 @@
   :description "Query System"
   :depends-on (:std :obj :log :dat :parse)
   :components ((:file "pkg")
-               (:file "simple")
+               (:file "query")
+               (:file "select")
                (:file "parser")
                (:file "engine")
-               (:file "sql" :depends-on ("pkg"))
-               (:file "dql" :depends-on ("pkg"))
+               (:file "sql")
+               (:file "dql")
                (:file "readtable"))
   :in-order-to ((test-op (test-op "q/tests"))))
 

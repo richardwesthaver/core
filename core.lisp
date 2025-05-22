@@ -22,7 +22,7 @@
 ;;   (declare (ignore inchar)))
 
 (defreadtable :core
-  (:merge :modern :std :shell :graph)
+  (:merge :modern :std :shell)
   ;; (:macro-char #\? #'question-mark-reader)
   ;; (:macro-char #\! #'exclamation-mark-reader)
   )

@@ -8,7 +8,7 @@
 ;; all levels of Query processing.
 
 ;;; Code:
-(in-package :q/proto)
+(in-package :q)
 
 ;;; Vars
 (defvar *query-engine*)
