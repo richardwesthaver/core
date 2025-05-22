@@ -1,6 +1,6 @@
 ;;; srv.lisp --- Sans-IO Service Protocol
 
-;; Base Protocol used by any type of state-managed service.
+;; Base Protocol used by any type of managed/stateful service.
 
 ;;; Commentary:
 

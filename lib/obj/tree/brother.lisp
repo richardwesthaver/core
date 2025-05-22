@@ -1,4 +1,4 @@
-;;; lib/obj/tree/bro.lisp --- Brother Tree
+;;; lib/obj/tree/brother.lisp --- Brother Tree
 
 ;; support for SBCL's 1-2 brother tree implementation.
 

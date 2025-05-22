@@ -5,11 +5,6 @@
 ;;; Code:
 (in-package :std/seq)
 
-;; from serapeum
-(declaim (inline firstn))
-(defun firstn (n list)
-  (loop repeat n for x in list collect x))
-
 (defun take (n seq)
   "Return, at most, the first N elements of SEQ, as a *new* sequence
 of the same type as SEQ.
@@ -258,11 +253,22 @@ TEST."
           (starts-with-p seq subseq :test test))
         subseq-list))
 
+;; matlisp
+(definline copy-n (vec lst n)
+  "Copy N elements of vector VEC into list LST."
+  (declare (type vector vec)
+           (type list lst)
+           (type fixnum n))
+  (loop :for i :of-type fixnum :from 0 :below n
+        :for vlst := lst :then (cdr vlst)
+        :do (setf (car vlst) (aref vec i)))
+  lst)
+
 ;;; Queues
 
 ;;;; Basic Queue
 (defstruct (basic-queue (:conc-name nil)
-		      (:constructor %make-basic-queue (head tail)))
+		        (:constructor %make-basic-queue (head tail)))
   (head (error "no head") :type list)
   (tail (error "no tail") :type list))
 
@@ -477,7 +483,7 @@ TEST."
     (push-basic-queue object impl)
     (when cvar
       (condition-notify cvar)))
-    (values))
+  (values))
 
 (defun push-cons-queue (object queue) 
   (declare (cons-queue queue))
@@ -624,7 +630,7 @@ TEST."
     vector-queue-count)
   (define-queue-fn queue-count* (queue)
     cons-queue-count*
-     vector-queue-count*)
+    vector-queue-count*)
   (define-queue-fn queue-empty-p (queue)
     cons-queue-empty-p
     vector-queue-empty-p)

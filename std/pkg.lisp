@@ -58,7 +58,6 @@
    :cart-typecase :cart-etypecase
    :recursive-append :list-dimensions
    :maptree :maptree-if
-   :copy-n
    :let-binding-transform
    :ensure-list :recons :memq :assq
    :circular-list :circular-list-p :circular-tree-p :merge!
@@ -615,13 +614,14 @@
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-int :collect)
+  (:import-from :std/prim :definline)
   (:import-from :std/array :signed-array-length)
   (:import-from :std/sym :symbolicate)
   (:import-from :std/type :array-length :array-index)
   (:import-from :std/sys :get-internal-time-seconds :time-remaining :with-countdown)
   (:export :take :starts-with-subseq :ends-with-subseq
    :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
-   :starts-with-one-of-p
+   :starts-with-one-of-p :copy-n
    :basic-queue :raw-queue-count :raw-queue :make-raw-queue
    :pop-raw-queue :peek-raw-queue :raw-queue-empty-p :raw-queue-full-p
    :raw-queue-capacity :cons-queue :push-cons-queue
@@ -730,9 +730,22 @@
   (:use :cl :std/task :std/thread :std/macs :std/sym)
   (:export))
 
+(defpkg :std/rand
+  (:use :cl)
+  (:import-from :std/type :octet)
+  (:export
+   :random-elt
+   :random-ref
+   :random-char
+   :random-chars
+   :random-bytes
+   :random-booleans
+   :random-do))
+
 (defpkg :std/fmt
   (:use :cl)
   (:import-from :std/list :group :ensure-cons)
+  (:import-from :std/rand :random-booleans)
   (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors*)
   (:import-from :sb-impl :prin1-to-line)
   (:shadowing-import-from :uiop :println)
@@ -744,7 +757,7 @@
    :moire :draw-line :sunbeam :fill-bitmap 
    :draw-filled-circle :sun :peace :with-comic-strip
    :plot-function :print-table :print-heading :print-in-box
-   :print-boxed :smile))
+   :print-boxed :smile :draw-one-in-chance :draw-chance))
 
 (defpkg :std/path
   (:use :cl)
@@ -891,18 +904,6 @@
    :make-template-parser
    :string-case
    :detabify))
-
-(defpkg :std/rand
-  (:use :cl)
-  (:import-from :std/type :octet)
-  (:export
-   :random-elt
-   :random-ref
-   :random-char
-   :random-chars
-   :random-bytes
-   :random-booleans
-   :random-do))
 
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray)

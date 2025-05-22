@@ -17,37 +17,6 @@
 ;; side of the underlying protocol.
 
 ;;; Code:
-(defpackage :obj/store
-  (:nicknames :store)
-  (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema :config)
-  (:export
-   #:store
-   #:make-cache-table
-   #:next-oid
-   #:next-cid
-   #:*store*
-   #:spec
-   #:temp-spec
-   #:delete-spec
-   #:copy-spec
-   #:optimize-layout
-   #:oid->schema-id
-   #:default-class-id
-   #:default-class-id-type
-   #:reserved-oid-p
-   #:add-class-store-schema
-   #:dropped-instance-p
-   #:drop-instance-slots
-   #:drop-instance
-   #:store-recreate-instance
-   #:recreate-instance
-   #:recreate-instance-using-class
-   #:valid-stored-reference-p
-   #:cross-store-error
-   #:signal-cross-store-error
-   #:with-store
-   #:defstore))
-
 (in-package :obj/store)
 
 (defparameter *store* obj/meta/stored::*default-store*)

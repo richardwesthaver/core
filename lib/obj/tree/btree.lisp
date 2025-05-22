@@ -15,66 +15,6 @@
 ;; https://planetscale.com/blog/btrees-and-database-indexes
 
 ;;; Code:
-(defpackage :obj/tree/btree
-  (:nicknames :obj/btree :btree)
-  (:use :cl :std :obj/tree :stored :db :typed)
-  (:export
-   #:existsp
-   #:btree
-   #:drop-btree
-   #:make-indexed-btree
-   #:build-indexed-btree
-   #:indexed-btree
-   #:build-btree
-   #:map-btree
-   #:dump-index
-   #:btree-keys
-   #:remove-current-kv
-   #:map-index
-   #:with-map-index-collector
-   #:iterate-map-index
-   #:map-index-values
-   #:secondary-cursor
-   #:cursor-set-range
-   #:cursor-set
-   #:cursor-prev
-   #:make-cursor
-   #:make-simple-cursor
-   #:cursor-close
-   #:cursor-duplicate
-   #:cursor-current
-   #:cursor-first
-   #:cursor-last
-   #:cursor-next
-   #:cursor
-   #:cursor-get-both
-   #:cursor-get-both-range
-   #:cursor-delete
-   #:cursor-put
-   #:cursor-pcurrent
-   #:cursor-pfirst
-   #:cursor-plast
-   #:cursor-pprev
-   #:cursor-pset
-   #:cursor-pset-range
-   #:cursor-pget-both
-   #:cursor-pget-both-range
-   #:cursor-next-dup
-   #:cursor-pnext-dup
-   #:cursor-pnext-nodup
-   #:cursor-prev-dup
-   #:btree-index
-   #:build-btree-index
-   #:get-primary-key
-   #:cursor-initialized-p
-   #:cursor-oid
-   #:btree-differ-p
-   #:print-index-entry
-   #:print-btree-key-and-type
-   #:dump-btree
-   #:print-btree-entry
-   #:with-btree-cursor))
-
 (in-package :obj/tree/btree)
 
 (defgeneric existsp (key tree)

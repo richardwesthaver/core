@@ -119,6 +119,10 @@
   (:shadowing-import-from :quri :url-encode :url-decode :url-encode-params :url-decode-params)
   (:export :url-encode :url-decode :url-encode-params :url-decode-params))
 
+(defpackage :obj/tensor
+  (:nicknames :tensor)
+  (:use :cl :std))
+
 (defpackage :obj/seq
   (:nicknames :seq)
   (:use :cl :std)
@@ -137,18 +141,6 @@
    :with-iter
    :key
    :val))
-
-(defpackage :obj/tree
-  (:nicknames :tree)
-  (:use :cl :std :obj/id :obj/seq)
-  (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
-           :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
-
-(defpackage :obj/tree/cursor
-  (:nicknames :tree/cursor :cursor)
-  (:use :cl :std :obj/id :obj/seq)
-  (:export :tree-node :binary-node :unary-node :ternary-node :avl-node
-           :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
 (defpackage :obj/color
   (:nicknames :color)
@@ -553,6 +545,72 @@
    :db-config
    :*database-collection-type*))
 
+(defpackage :obj/tree
+  (:nicknames :tree)
+  (:use :cl :std :obj/id :obj/seq)
+  (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
+           :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
+
+(defpackage :obj/tree/btree
+  (:nicknames :obj/btree :btree)
+  (:use :cl :std :obj/tree :stored :db :typed)
+  (:export
+   #:existsp
+   #:btree
+   #:drop-btree
+   #:make-indexed-btree
+   #:build-indexed-btree
+   #:indexed-btree
+   #:build-btree
+   #:map-btree
+   #:dump-index
+   #:btree-keys
+   #:remove-current-kv
+   #:map-index
+   #:with-map-index-collector
+   #:iterate-map-index
+   #:map-index-values
+   #:secondary-cursor
+   #:cursor-set-range
+   #:cursor-set
+   #:cursor-prev
+   #:make-cursor
+   #:make-simple-cursor
+   #:cursor-close
+   #:cursor-duplicate
+   #:cursor-current
+   #:cursor-first
+   #:cursor-last
+   #:cursor-next
+   #:cursor
+   #:cursor-get-both
+   #:cursor-get-both-range
+   #:cursor-delete
+   #:cursor-put
+   #:cursor-pcurrent
+   #:cursor-pfirst
+   #:cursor-plast
+   #:cursor-pprev
+   #:cursor-pset
+   #:cursor-pset-range
+   #:cursor-pget-both
+   #:cursor-pget-both-range
+   #:cursor-next-dup
+   #:cursor-pnext-dup
+   #:cursor-pnext-nodup
+   #:cursor-prev-dup
+   #:btree-index
+   #:build-btree-index
+   #:get-primary-key
+   #:cursor-initialized-p
+   #:cursor-oid
+   #:btree-differ-p
+   #:print-index-entry
+   #:print-btree-key-and-type
+   #:dump-btree
+   #:print-btree-entry
+   #:with-btree-cursor))
+
 (defpackage :obj/secret
   (:nicknames :secret)
   (:use :cl :std)
@@ -595,3 +653,42 @@
    #:service-task-kernel
    #:service-request
    #:service-response))
+
+(defpackage :obj/store
+  (:nicknames :store)
+  (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema :config)
+  (:export
+   #:store
+   #:make-cache-table
+   #:next-oid
+   #:next-cid
+   #:*store*
+   #:spec
+   #:temp-spec
+   #:delete-spec
+   #:copy-spec
+   #:optimize-layout
+   #:oid->schema-id
+   #:default-class-id
+   #:default-class-id-type
+   #:reserved-oid-p
+   #:add-class-store-schema
+   #:dropped-instance-p
+   #:drop-instance-slots
+   #:drop-instance
+   #:store-recreate-instance
+   #:recreate-instance
+   #:recreate-instance-using-class
+   #:valid-stored-reference-p
+   #:cross-store-error
+   #:signal-cross-store-error
+   #:with-store
+   #:defstore))
+
+(pkg:defpkg :obj
+  (:use :cl :std)
+  (:use-reexport 
+   :hash :color
+   :seq :tree :graph :id
+   :db :ast :time :uri 
+   :url :config :build :secret :schema :store :btree))

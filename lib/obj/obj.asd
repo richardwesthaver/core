@@ -30,6 +30,7 @@
                              (:file "path")
                              (:file "intern")))
                (:file "url")
+               (:file "tensor")
                (:file "seq")
                (:module "tree"
                 :components ((:file "node")
@@ -56,8 +57,7 @@
                (:file "db")
                (:file "secret")
                (:file "store")
-               (:file "srv")
-               (:file "obj"))
+               (:file "srv"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests

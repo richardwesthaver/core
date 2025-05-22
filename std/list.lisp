@@ -236,16 +236,6 @@ Example:
   "Return a new list containing each pair of elements in LIST."
   (loop for (a . b) on list by #'cddr collect (if b (list a (first b)) (list a))))
 
-(declaim (inline copy-n))
-(defun copy-n (vec lst n)
-  (declare (type vector vec)
-	   (type list lst)
-	   (type fixnum n))
-  (loop :for i :of-type fixnum :from 0 :below n
-     :for vlst := lst :then (cdr vlst)
-     :do (setf (car vlst) (aref vec i)))
-  lst)
-
 (defun maptree-if (predicate transformer tree)
   "Returns a new tree by recursively calling TRANSFORMER on sub-trees which
 satisfy the PREDICATE.
@@ -305,6 +295,11 @@ Example:
 	     (setf ,var ,(car args))
 	     (nconc ,var ,@(cdr args)))
 	   (nconc ,var ,@args))))
+
+;; from serapeum
+(declaim (inline firstn))
+(defun firstn (n list)
+  (loop repeat n for x in list collect x))
 
 ;;; cl-bench utils
 ;; 
