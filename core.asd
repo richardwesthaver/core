@@ -21,7 +21,7 @@
                :zstd/tests :uring/tests :blake3/tests :ublk/tests
                :parse/tests :pod/tests :rdb/tests :rt/tests
                :dsp/tests :cry/tests :krypt/tests :io/tests
-               :gui/tests :net/tests :vc/tests)
+               :gui/tests :net/tests :vc/tests :math/tests)
   :components ((:file "tests"))
   :build-pathname "tests"
   :build-operation monolithic-compile-bundle-op)

@@ -10,3 +10,8 @@
 
 (defsuite :math)
 (in-suite :math)
+
+(deftest sanity ()
+  (signals math-error (math-error))
+  (signals math-warning (math-warning)))
+

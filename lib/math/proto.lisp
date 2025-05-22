@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :math/core)
+(in-package :math/proto)
 
 (define-condition math-condition () ())
 (deferror math-error (math-condition error) () (:auto t))

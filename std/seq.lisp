@@ -654,3 +654,27 @@ TEST."
   (define-queue-fn call-with-queue-lock (fn queue)
     call-with-cons-queue-lock
     call-with-vector-queue-lock))
+
+;;; Accumulator
+
+;; originally part of q/query, may serve useful in other contexts.
+
+(defclass accumulator ()
+  ((value :initarg :value :accessor accumulator-value)))
+
+(defgeneric accumulate (self val)
+  (:method ((self accumulator) val)
+    (when val
+      (setf (accumulator-value self) (+ val (accumulator-value self)))))
+  (:method ((self list) val)
+    (push val self)))
+
+(defgeneric make-accumulator (self))
+
+;; max-accumulator
+(defclass max-accumulator (accumulator) ())
+
+(defmethod accumulate ((self max-accumulator) (val number))
+  (when (> val (accumulator-value self))
+    (setf (accumulator-value self) val)))
+

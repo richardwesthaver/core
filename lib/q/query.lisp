@@ -475,25 +475,6 @@
   (declare (ignore self))
   (/ lhs rhs))
 
-(defclass accumulator ()
-  ((value :initarg :value :accessor accumulator-value)))
-
-(defgeneric accumulate (self val)
-  (:method ((self accumulator) val)
-    (when val
-      (setf (accumulator-value self) (+ val (accumulator-value self)))))
-  (:method ((self list) val)
-    (push val self)))
-
-(defgeneric make-accumulator (self))
-
-;; max-accumulator
-(defclass max-accumulator (accumulator) ())
-
-(defmethod accumulate ((self max-accumulator) (val number))
-  (when (> val (accumulator-value self))
-    (setf (accumulator-value self) val)))
-
 (defclass aggregate-physical-expression (physical-expr)
   ((input :type physical-expression)))
 

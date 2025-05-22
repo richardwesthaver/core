@@ -629,7 +629,11 @@
    :push-queue :push-queue* :pop-queue :pop-queue* :peek-queue :peek-queue*
    :queue-count :queue-count* :queue-empty-p :queue-empty-p* :queue-full-p :queue-full-p*
    :try-pop-queue :try-pop-queue* :call-with-queue-lock :with-queue-lock
-   :queue :make-queue))
+   :queue :make-queue
+   :accumulated
+   :accumulate
+   :accumulator
+   :max-accumulator))
 
 (defpkg :std/thread
   (:use :cl)

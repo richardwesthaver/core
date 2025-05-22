@@ -43,9 +43,6 @@
    :execute
    :max-physical-expression
    :aggregate-physical-expression
-   :accumulated
-   :accumulate
-   :accumulator
    :math-physical-expression
    :equiv-physical-expression
    :binary-physical-expression
