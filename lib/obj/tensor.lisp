@@ -198,7 +198,140 @@ indexing.")
   (copy value (subtensor tensor subscripts)))
 
 ;;; Internal Tensor Protocols
-;;;; Numeric
+(macrolet ((defn (sym num args &body body)
+             `(definline ,(symbolicate 't. (string sym)) ,(cons (car num) args)
+                (declare ,(reverse num) (optimize (speed 3) (space 0)))
+                ,@body))
+           (def-marith (tname clop)
+             `(defn ,tname (num number) (&rest nums)
+                (if (and (consp num) (eql (first num) 'mod))
+                    `(mod (,',clop ,@(mapcar #'(lambda (x) `(the ,num ,x)) nums)) ,(second num))
+                    `(,', clop ,@(mapcar #'(lambda (x) `(the ,num ,x)) nums)))))
+           (genarith (&rest args)
+             `(progn ,@(mapcar #'(lambda (x) `(def-marith ,(car x) ,(cadr x))) args))))
+  (genarith (f+ +) (f- -) (f* *) (f= =) (f/ /)))
+
+(definline t.fid+ (ty)
+  (coerce 0 ty))
+(definline t.fid* (ty)
+  (coerce 1 ty))
+(definline t.fc (ty)
+  (etypecase ty
+    (real ty)
+    (t (conjugate ty))))
+(defgeneric fc (x)
+  (:method ((x complex))
+    (conjugate x))
+  (:method ((x real))
+    x)
+  (:method ((x t))
+    (let ((clname (class-name (class-of x))))
+      (compile-and-eval
+       `(defmethod fconj ((x ,clname))
+          (t.fc ,clname x)))
+      (fc x))))
+(defun field-realp (fil)
+  (eql (macroexpand-1 `(t.fc ,fil phi)) 'phi))
+(definline t.frealpart (ty)
+  (etypecase ty
+    (real ty)
+    (t (realpart ty))))
+(definline t.fimagpart (ty)
+  (etypecase ty
+    (real (t.fid+ 'real))
+    (t (imagpart ty))))
+(definline t.coerce (val ty)
+  (if (and (consp ty) (eql (first ty) 'mod))
+      `(mod (coerce ,val 'fixnum ,(second ty)))
+      `(coerce ,val ',ty)))
+
+;; HACK 2025-05-22: strict-coerce
+;; (defun strict-compare (func-list a b)
+;;   (loop :for func :in func-list
+;;         :for elea :in a
+;;         :for eleb :in b
+;;         :do (unless (funcall func elea eleb)
+;;               (return nil))
+;;         :finally (return t)))
+
+;; (defun dict-compare (func-list a b)
+;;   (loop :for func :in func-list
+;;         :for elea :in a
+;;         :for eleb :in b
+;;         :do (when (funcall func elea eleb)
+;;               (return t))))
+
+;;;; Tensor Specialization
+(definline t.field-type (sym)
+  (typecase sym
+    (base-tensor t)))
+
+(defun field-type (clname)
+  (macroexpand-1 `(t.field-type ,clname)))
+
+(definline t.store-allocator (sym size &optional initial-element)
+  (typecase sym
+    (standard-tensor
+     (with-gensyms (sitm size-sym arr idx init)
+       (let ((type (macroexpand-1 `(t.store-element-type ,sym))))
+         `(let*-typed ((,size-sym (t.compute-store-size ,sym (let ((,sitm ,size))
+                                                               (etypecase ,sitm
+                                                                 (index-type ,sitm)
+                                                                 (index-store-vector (lvec-foldr #'* (the index-store-vector ,sitm)))
+                                                                 (cons (reduce #'* ,sitm))))))
+                       ,@(when initial-element `((,init ,initial-element :type ,(field-type sym))))
+                       (,arr (make-array ,size-sym :element-type ',type :initial-element ,(if (subtypep type 'number) `(t.fid+ ,type) nil)) :type ,(store-type sym)))
+                      ,@(when initial-element
+                          `((loop :for ,idx :from 0 :below ,size-sym
+                                  :do (t.store-set ,sym ,init ,arr ,idx))))
+                      ,arr))))))
+
+(definline t.store-type (sym &optional size))
+
+(defun store-type (cl &optional (size '*))
+  (macroexpand-1 `(t.store-stype ,cl ,size)))
+
+(definline t.store-ref (sym store &rest idx)
+  (typecase sym
+    (linear-store (assert (null (cdr idx)) nil "given more than one index for linear-store")
+     `(aref (the ,(store-type sym) ,store) (the index-type ,(car idx))))))
+
+(definline t.store-set (sym value store &rest idx)
+  (typecase sym
+    (linear-store
+     (assert (null (cdr idx)) nil "given more than one index for linear-store")
+     `(setf (aref (the ,(store-type sym) ,store) (the index-type ,(car idx))) (the ,(field-type sym) ,value)))))
+
+(define-setf-expander t.store-ref (sym store &rest idx &environment env)
+  (multiple-value-bind (dummies vals newval setter getter)
+      (get-setf-expansion store env)
+    (declare (ignore newval setter))
+    (with-gensyms (nval)
+      (values dummies
+              vals
+              `(,nval)
+              `(t.store-set ,sym ,nval ,getter ,@idx)
+              `(t.store-ref ,sym ,getter ,@idx)))))
+
+(definline t.store-element-type (sym)
+  (macroexpand-1 `(t.field-type ,sym)))
+
+(defun store-element-type (clname)
+  (macroexpand-1 `(t.store-element-type ,clname)))
+
+(definline t.compute-store-size (sym &optional (size '*))
+  (typecase sym
+    (standard-tensor `(simple-array ,(store-element-type sym) (,size)))))
+
+(definline t.store-size (sym ele)
+  (typecase sym
+    (standard-tensor `(lemgth ,ele))))
+
+(defun with-field-element (sym decl &rest body)
+  (destructuring-bind (var init &optional (count 1)) decl
+    `(lety ((,var (t.store-allocator ,sym ,count ,init) :type ,(store-type sym)))
+           ,@body)))
+
 ;;;; Standard Tensor
 (defclass linear-store ()
   ((head :initarg :head :initform 0 :reader head :type index-type
@@ -331,7 +464,7 @@ HD + \  STRIDES  * IDX
     (compile-and-eval
      `(defmethod ref ((tensor ,clname) &rest subscripts)
         (let ((subs (if (numberp (car subscripts)) subscripts (car subscripts))))
-          (t/store-ref ,clname (store tensor) (store-indexing subs tensor)))))
+          (t.store-ref ,clname (store tensor) (store-indexing subs tensor)))))
     (apply #'ref (cons tensor subscripts))))
 
 (defmethod (setf ref) (value (tensor standard-tensor) &rest subscripts)
@@ -342,8 +475,8 @@ HD + \  STRIDES  * IDX
         (let* ((subs (if (numberp (car subscripts)) subscripts (car subscripts)))
                (idx (store-indexing subs tensor))
                (sto (store tensor)))
-          (t/store-set ,clname (t/coerce ,(field-type clname) value) sto idx)
-          (t/store-ref ,clname sto idx))))
+          (t.store-set ,clname (t.coerce ,(field-type clname) value) sto idx)
+          (t.store-ref ,clname sto idx))))
     (setf (ref tensor (if (numberp (car subscripts)) subscripts (car subscripts))) value)))
 
 ;; (defmethod subtensor ((tensor standard-tensor) (subscripts list))
@@ -552,7 +685,7 @@ Examples:
                                     ,@(remove-if #'null (mapcar #'(lambda (of ten typ) (when typ `(,of (strides ,(car ten)) (head ,(car ten)))))
                                                                 osyms tsyms types)))
                              :do (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) (if typ
-                                                                                                (list ref `(the ,(field-type typ) (t/store-ref ,typ ,(car sto) ,of)))
+                                                                                                (list ref `(the ,(field-type typ) (t.store-ref ,typ ,(car sto) ,of)))
                                                                                                 (list ref `(ref ,(car ten) ,idx))))
                                                              rsyms ssyms tsyms osyms types))
                                    ,@body))))))
@@ -698,7 +831,7 @@ Examples:
                    (mod-dotimes (idx (dimensions y))
                      with (linear-sums
                            (of-y (strides y) (head y)))
-                     do (t/store-set ,clname (t/coerce ,(field-type clname) (apply #'aref x (lvec->list! idx lst))) sto-y of-y)))
+                     do (t.store-set ,clname (t.coerce ,(field-type clname) (apply #'aref x (lvec->list! idx lst))) sto-y of-y)))
         y))
     (copy x y)))
 
