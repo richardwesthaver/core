@@ -34,6 +34,7 @@
   (:shadowing-import-from :sb-int 
    :ensure-list :recons :memq :assq
    :proper-list-of-length-p :proper-list-p :singleton-p)
+  (:import-from :std/sym :with-gensyms)
   (:shadow :group)
   (:export
    :ensure-car
@@ -62,11 +63,14 @@
    :ensure-list :recons :memq :assq
    :circular-list :circular-list-p :circular-tree-p :merge!
    :sort!
-   :set-equal))
+   :set-equal
+   :dcons :dpush
+   :dpop :dlist :drdc :dcdr :dcar :dappendf
+   :topological-sort :match-lambda-lists))
 
 (defpackage :std/prim
   (:use :cl :std/list)
-  (:import-from :std/sym :symb)
+  (:import-from :std/sym :symb :with-gensyms)
   (:import-from :std/named-readtables :parse-body)
   (:export 
    :g!-symbol-p
@@ -79,7 +83,9 @@
    :definline
    :with-optimization
    :macrofy
-   :with-marking))
+   :with-marking
+   :using-gensyms
+   :binding-gensyms))
 
 (defpackage :std/condition
   (:use :cl)
@@ -117,6 +123,7 @@
    :missing-method
    :missing-methods
    :conflicting-arguments
+   :unknown-token
    :condition-handler
    :wrapped-condition
    :wrapped-condition-value
@@ -280,7 +287,13 @@
   (:import-from :std/prim :definline)
   (:export :copy-array :signed-array-length :array-shift 
    :vector-push-extend-position :vector-pop-position
-   :vectorify :make-array-allocator))
+   :vectorify :make-array-allocator
+   :vector-foldl :vector-foldr
+   :vector-map-foldl :vector-map-foldr
+   :vector-max :vector-min
+   :vector-eq
+   :vector-to-list :copy-vector-to-list
+   :modproj))
 
 (defpkg :std/hash-table
   (:use :cl)
@@ -366,6 +379,7 @@
    :defvar-unbound
    :def!
    :eval-always
+   :compile-and-eval
    ;; ana
    :awhen
    :acond

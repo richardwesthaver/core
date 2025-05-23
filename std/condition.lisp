@@ -251,6 +251,15 @@ a default value for required keyword arguments."
              (format stream "Conflicting arguments: ~A~%Reason: ~A" (error-item condition) (error-reason condition))))
   (:documentation "Conflicting argument errors."))
 
+(define-condition unknown-token (std-error)
+  ((token :reader error-token :initarg :token))
+  (:documentation "Unknown token errors."))
+
+(defmethod print-object ((c unknown-token) stream)
+  (when (slot-boundp c 'token)
+    (format stream "Unknown token: ~A.~%" (error-token c)))
+  (call-next-method))
+
 ;;; Macros
 (defmacro ignore-some-conditions ((&rest conditions) &body body)
   "Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS

@@ -3,6 +3,7 @@
   :description "Core Math System"
   :depends-on (:std :obj :blas :cuda)
   :components ((:file "pkg")
+               (:file "var")
                (:file "proto")
                (:file "sfc")
                (:file "auto"))

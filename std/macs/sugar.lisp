@@ -5,6 +5,17 @@
 ;;; Code:
 (in-package :std/macs)
 
+(defmacro def! (name &body body)
+  "`defun' without args."
+  `(defun ,name () ,@body))
+
+(defmacro eval-always (&body body)
+  "Eval BODY in all contexts (:compile-toplevel :load-toplevel :execute)."
+  `(eval-when (:compile-toplevel :load-toplevel :execute) ,@body))
+
+(defun compile-and-eval (source)
+  (funcall (compile nil `(lambda () ,source))))
+
 ;; from jackdaniel's Dynamic Slots, see also META/DYNAMIC
 (defmacro dlet (bindings &body body)
   "LET form -> PROGV form."

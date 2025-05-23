@@ -91,6 +91,17 @@
    :go-install
    :go-error))
 
+(defpackage :cli/tools/plot
+  (:nicknames :tools/plot)
+  (:use :cl :std :cli/tools/proto :cli/env)
+  (:export
+   :open-gnuplot
+   :close-gnuplot
+   :*gnuplot-process*
+   :gnuplot-send
+   :with-gnuplot-stream
+   :with-gnuplot-term))
+
 (defpackage :cli/tools/net
   (:use :cl :std :cli/tools/proto :cli/env :uri :config :ast)
   (:import-from :std/os :with-umask)

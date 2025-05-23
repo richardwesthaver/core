@@ -62,6 +62,24 @@
   (:method ((self standard-object))
     (shallow-copy-object self)))
 
+(defgeneric copy (from to)
+  (:documentation "Copy the contents of FROM into TO. Returns TO.")
+  (:method :before ((x array) (y array))
+    (assert (tree-equal (array-dimensions x) (array-dimensions y))
+            nil 'dimension-mismatch))
+  (:method ((from cons) (to cons))
+    (do ((flst from (cdr flst))
+         (tlst to (cdr tlst)))
+        ((or (null flst) (null tlst)))
+      (setf (car tlst) (car flst)))
+    to)
+  (:method ((from t) (to cons))
+    (mapl #'(lambda (lst) (rplaca lst from)) to)
+    to))
+  
+(defgeneric swap (from to)
+  (:documentation "Swap the contents of FROM with the contents of TO, returning TO."))
+
 (defun list-indirect-class-methods (class)
   "List all indirect methods of CLASS."
   (remove-duplicates (mapcan #'specializer-direct-generic-functions (compute-class-precedence-list class))))

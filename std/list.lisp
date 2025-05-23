@@ -61,14 +61,14 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
 
 (defun let-binding-transform (bs)
   (if bs
-    (cons
-      (cond ((symbolp (car bs))
+      (cons
+       (cond ((symbolp (car bs))
               (list (car bs)))
-            ((consp (car bs))
+             ((consp (car bs))
               (car bs))
-            (t
+             (t
               (error "Bad let bindings")))
-      (let-binding-transform (cdr bs)))))
+       (let-binding-transform (cdr bs)))))
 
 (defun circular-list (&rest elements)
   "Creates a circular list of ELEMENTS."
@@ -218,7 +218,7 @@ Example:
   (let ((decl (zipsym vars)))
     `(let (,@decl)
        (cond ,@(mapcar #'(lambda (clause) `((ziprm (and eql) ,(mapcar #'car decl) ,(first clause)) ,@(cdr clause))) cases)
-         (t (error "cart-ecase: Case failure."))))))
+             (t (error "cart-ecase: Case failure."))))))
 
 (defmacro cart-typecase (vars &body cases)
   (let* ((decl (zipsym vars)))
@@ -371,3 +371,134 @@ every element of LIST2 matches some element of LIST1. Otherwise returns false."
          (dolist (elt keylist2 t)
            (or (member elt keylist1 :test test)
                (return nil))))))
+
+;;; DLIST
+
+;; Simple doubly-linked lists
+
+;; ref: https://github.com/bharath1097/matlisp/blob/94b65e68f2de5208ef9641cd105e25512c36a7f5/src/utilities/dlist.lisp
+
+;; ref: https://github.com/krzysz00/dlist
+(defun dcons (obj)
+  (let ((lst (list* nil nil obj)))
+    (setf (first lst) lst
+	  (second lst) lst)
+    lst))
+
+(defmacro dpush (obj dll &environment env)
+  (multiple-value-bind (dummies vals new setter getter) (get-setf-expansion dll env)
+    (when (cdr new)
+      (error "Can't expand this."))
+    (with-gensyms (left right ele ncon)
+      (let ((new (car new)))
+	`(let* (,@(zip-list dummies vals)
+		(,new ,getter)
+		(,ncon (dcons ,obj)))
+	   (when ,new
+	     (destructuring-bind (,left ,right . ,ele) ,new
+	       (declare (ignore ,right ,ele))
+	       (setf (first ,ncon) ,left
+		     (second ,left) ,ncon
+		     (second ,ncon) ,new
+		     (first ,new) ,ncon)))
+	   (setf ,new ,ncon)
+	   ,setter)))))
+
+(defmacro dpop (dll &environment env)
+  (multiple-value-bind (dummies vals new setter getter) (get-setf-expansion dll env)
+    (when (cdr new)
+      (error "Can't expand this."))
+    (with-gensyms (left right ele)
+      (let ((new (car new)))
+	`(let* (,@(zip-list dummies vals)
+		(,new ,getter))
+	   (when ,new
+	     (destructuring-bind (,left ,right . ,ele) ,new
+	       (prog1 ,ele
+		 ;;update cons cell
+		 (setf (first ,new) ,new
+		       (second ,new) ,new)
+		 ;;update place
+		 (if (and (eql ,new ,left) (eql ,new ,right))
+		     (setf ,new nil)
+		     (setf (second ,left) ,right
+			   (first ,right) ,left
+			   ,new ,right))
+		 ,setter))))))))
+
+(defun dlist (&rest objs)
+  (let* ((rev (reverse objs))
+	 (ret (dcons (car rev))))
+    (loop :for ele :in (cdr rev)
+       :do (dpush ele ret))
+    ret))
+
+(declaim (inline drdc dcdr dcar))
+(defun drdc (buf) (first buf))
+(defun dcdr (buf) (second buf))
+(defun dcar (buf) (cddr buf))
+
+(defun dappendf (&rest dlsts)
+  (let ((dlsts (remove-if #'null dlsts)))
+    (loop for se in (cdr dlsts)
+       with ft = (car dlsts)
+       do (progn
+	     (rotatef (first ft) (first se))
+	     (rotatef (second (first ft)) (second (first se))))
+       finally (return ft))))
+
+;;; Template utils
+;; Topological sort (matlisp)
+(defun topological-sort (lst func &optional (test #'eql))
+  (multiple-value-bind (nlst len) (loop :for ele :in lst
+				     :for i := 0 :then (1+ i)
+				     :collect (cons i ele) :into ret
+				     :finally (return (values ret (1+ i))))
+    (let* ((s nil)
+	   (graph (let ((ret (make-array len)))
+		    (loop :for (i . ele) :in nlst
+		       :do (let ((children (mapcar #'car (remove-if-not #'(lambda (x) (and (not (funcall test (cdr x) ele)) (funcall func (cdr x) ele))) nlst)))
+				 (parents (mapcar #'car (remove-if-not #'(lambda (x) (and (not (funcall test (cdr x) ele)) (funcall func ele (cdr x)))) nlst))))
+			     (when (null parents)
+			       (push i s))
+			     (setf (aref ret i) (list ele children parents))))
+		    ret))
+	   (ordering nil))
+    (let ((last-s (last s)))
+      (do ((slst s (cdr slst)))
+	  ((null slst))
+	(let* ((i (car slst))
+	       (children (second (aref graph i))))
+	  (mapcar #'(lambda (x)
+		      (let ((par (third (aref graph x))))
+			(let ((par (remove i par)))
+			  (setf (third (aref graph x)) par)
+			  (when (null par)
+			    (setf (cdr last-s) (cons x nil)
+				  last-s (cdr last-s))))))
+		  children)
+	  (push i ordering))))
+    (mapcar #'(lambda (x) (car (aref graph x))) ordering))))
+
+(defun match-lambda-lists (lsta lstb)
+  (let ((optional? nil))
+    (labels ((optp? (a b)
+	       (if (and (consp a) (atom b)) (optp? b a)
+		   (progn
+		     (if (or (member a lambda-list-keywords) (not optional?)) nil
+			 (if (null (cddr b)) t nil)))))
+	     (lst-walker (a b)
+	       (cond
+		 ((and (atom a) (atom b))
+		  (if (eq a b)
+		      (progn
+			(when (member a lambda-list-keywords)
+			  (setq optional? (if (member a '(&optional &key)) t nil)))
+			t)
+		      (if (or (member a lambda-list-keywords) (member b lambda-list-keywords)) nil t)))
+		 ((or (atom a) (atom b))
+		  (if (optp? a b) t nil))
+		 ((and (consp a) (consp b))
+		  (and (lst-walker (car a) (car b))
+		       (lst-walker (cdr a) (cdr b)))))))
+      (lst-walker lsta lstb))))

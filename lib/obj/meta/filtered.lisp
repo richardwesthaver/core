@@ -56,8 +56,7 @@
         do (error "~S is not a valid function designator for filter ~S in filtered function ~S."
                   filter key ff)))
 
-(defmethod initialize-instance :after
-  ((ff filtered-function) &key filters)
+(defmethod initialize-instance :after ((ff filtered-function) &key filters)
   (check-filters ff filters)
   (loop with initargs = `(,@(handler-case
                                 (list :lambda-list
@@ -131,7 +130,6 @@
      (call-next-method))
     (call-next-method)))
 
-#-ecl
 (defmethod compute-discriminating-function ((ff filtered-function))
   (flet ((compute-discriminator ()
            (loop with gfs
@@ -159,34 +157,6 @@
           (sb-mop:set-funcallable-instance-function ff discriminator)
           (apply discriminator args)))
       (compute-discriminator))))
-
-#+ecl
-(defmethod compute-discriminating-function ((ff filtered-function))
-  (let ((original-discriminator (call-next-method)))
-    (flet ((compute-discriminator ()
-             (loop with gfs
-                   for (nil . gf) in (%filter-groups ff)
-                   when (generic-function-methods gf) do (push gf gfs)
-                   finally
-                   (return
-                    (if (generic-function-methods ff)
-                      (lambda (&rest args)
-                        (let ((*generic-functions* gfs))
-                          (apply original-discriminator args)))
-                      (cond ((null gfs)
-                             (lambda (&rest args)
-                               (apply #'no-applicable-method ff args)))
-                            ((null (cdr gfs))
-                             (compute-discriminating-function (car gfs)))
-                            (t (lambda (&rest args)
-                                 (let ((*generic-functions* gfs))
-                                   (apply original-discriminator args))))))))))
-      (if (eq (class-of ff) (find-class 'filtered-function))
-        (lambda (&rest args)
-          (let ((discriminator (compute-discriminator)))
-            (set-funcallable-instance-function ff discriminator)
-            (apply discriminator args)))
-        (compute-discriminator)))))
 
 (defgeneric method-filter (method)
   (:method ((method method)) nil))

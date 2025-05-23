@@ -392,15 +392,6 @@ Example:
            (return-from ,outer ,then)))
        ,else)))
 
-
-(defmacro def! (name &body body)
-  "`defun' without args."
-  `(defun ,name () ,@body))
-
-(defmacro eval-always (&body body)
-  "Eval BODY in all contexts (:compile-toplevel :load-toplevel :execute)."
-  `(eval-when (:compile-toplevel :load-toplevel :execute) ,@body))
-
 ;;; Franz
 (defvar if*-keyword-list '("then" "thenret" "else" "elseif")
   "List of keywords accessible in the body of the IF* macro.")

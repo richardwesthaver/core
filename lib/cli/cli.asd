@@ -26,7 +26,8 @@
                  (:file "net" :depends-on ("pkg"))
                  (:file "media" :depends-on ("pkg"))
                  (:file "mail" :depends-on ("pkg"))
-                 (:file "fs" :depends-on ("pkg"))))
+                 (:file "fs" :depends-on ("pkg"))
+                 (:file "plot" :depends-on ("pkg"))))
                (:module "clap"
                 :components
                 ((:file "pkg")
