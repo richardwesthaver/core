@@ -8,6 +8,7 @@
 (defsuite :obj)
 (in-suite :obj)
 
+;;; Color
 (defun eps= (a b &optional (eps 1e-10))
   (<= (abs (- a b)) eps))
 
@@ -58,19 +59,23 @@
                            (print-hex-rgb rgb :destination t))))
     (is (rgb= rgb (parse-hex-rgb "foo#123456zzz" :start 3 :end 10) 0.001))))
 
+;;; Id
 (deftest ids ()
   (is (= (reset-id t) (reset-id '(1 2 3))))
   (is (not (equalp (make-id nil) (make-id nil)))))
 
+;;; Uuid
 (deftest uuids ()
   (macrolet ((is-uuid (obj) `(is (typep ,obj 'uuid))))
     (is-uuid (make-v1-uuid))
     (is-uuid (make-v4-uuid))))
 
+;;; Seq
 (deftest def-iter ())
 
 (deftest def-seq ())
 
+;;; Castable
 (deftest castable-solo ()
   (is (typep (make-castable) 'castable))
   (is (null (clrchash (make-castable))))
@@ -160,6 +165,7 @@
                 do (loop until (remchash i table))))))
       (is = 0 (castable-count table)))))
 
+;;; Trees
 (deftest generic-tree ()
   (let ((tree (make-binary-node
               0 
@@ -179,6 +185,7 @@
   ;; FIX 2025-02-27: 
   (is (make-instance 'btree-index)))
 
+;;; Graphs
 (deftest basic-graph ()
   "Test basic graph functionality."
   (let ((g1 (make-instance 'graph:graph)))
@@ -205,6 +212,7 @@
       ;; (is (not (graph::has-node-p g1 g2)))
       )))
 
+;;; Uri
 ;; TODO 2023-12-17: 
 (deftest uris ()
   "Tests for different types of URIs. Attempts to conform with RFCs and test suites."
@@ -327,4 +335,5 @@
                :school ,(get-instance-by-value 'school 'name "Fitch"))
               (:name "George" :age 50 :father ,(get-instance-by-value 'person 'name "Bob")
                :school ,(get-instance-by-value 'school 'name "Cutler"))))))
-;;;; Store
+;;; Store
+;;; Tensors

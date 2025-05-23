@@ -36,6 +36,27 @@ carful when doing, much of Matlisp's code is written on the assumption that
 the fields of a tensor don't take invalid values; failing which case, may lead
 to memory error. Use at your own risk.")
 
+(defparameter *print-tensor-max-len* 10
+  "Maximum number of elements in any particular argument to print.
+Set this to T to print all the elements.")
+
+(defparameter *print-tensor-max-args* 5
+  "Maximum number of arguments of the tensor to print.
+Set this to T to print all the arguments.")
+
+(defparameter *print-tensor-indent* 0
+  "Determines how many spaces will be printed before each row
+of a matrix (default 0)")
+
+;;; Conditions
+(define-condition tensor-invalid-dimension-value (error)
+  ((argument :initarg :argument)
+   (dimension :initarg :dimension))
+  (:report 
+   (lambda (c s)
+     (with-slots (argument dimension) c
+       (format s "Invalid dimension arg: ~A~%dimension: ~A" argument dimension)))))
+
 ;;; Types
 (deftype index-type () 'fixnum)
 
@@ -69,6 +90,13 @@ to memory error. Use at your own risk.")
    ;;             :documentation "Place for computable attributes of an object instance.")
    )
   (:documentation "Basic tensor class."))
+
+(defgeneric print-element (tensor
+                           element stream)
+  (:documentation "This generic function is specialized to TENSOR to print ELEMENT to STREAM.
+Called by PRINT-TENSOR/MATRIX to format a tensor into the STREAM.")
+  (:method ((tensor base-tensor) element stream)
+    (format stream "~a" element)))
 
 (definline rank (tensor)
   (declare (type base-tensor tensor))
@@ -197,7 +225,151 @@ indexing.")
 (defun (setf subtensor) (value tensor subscripts)
   (copy value (subtensor tensor subscripts)))
 
+(definline parse-slice (subs dimensions)
+  (declare (type index-store-vector dimensions))
+  (let ((dims) (psubs))
+    (loop for sub.i in subs
+          for d of-type index-type across dimensions
+          do (if (not (consp sub.i))
+                 (let ((idx (modproj (the (or index-type null) sub.i) d nil 0)))
+                   (push 1 dims)
+                   (push idx psubs))
+                 (destructuring-bind (start end . inc) sub.i
+                   (declare ((or index-type null) start end inc))
+                   (let* ((inc (modproj inc nil nil 1))
+                          (start (modproj start d nil (if (> inc 0) 0 (1- d))))
+                          (end (modproj end d t (if (> inc 0) d -1)))
+                          (nd (ceiling (- end start) inc)))
+                     (declare (type index-type start end inc nd))
+                     (when (<= nd 0) (return nil))
+                     (push nd dims)
+                     (push (list* start end inc) psubs))))
+          finally (return (values (nreverse psubs) (nreverse dims))))))
+
+(definline parse-slice-for-strides (subscripts dimensions strides)
+  (declare (type index-store-vector dimensions strides)
+           (type list subscripts))
+  (let ((dims) (stds))
+    (loop for sub.i in subscripts
+          for d across dimensions
+          for s across strides
+          with hd = 0
+          if (not (consp sub.i))
+          do
+             (let ((idx (modproj (the (or index-type null) sub.i) d nil 0)))
+               (incf hd (* s idx)))
+          else do
+             (destructuring-bind (start end . inc) sub.i
+               (declare ((or index-type null) start end inc))
+               (let* ((inc (modproj inc nil nil 1))
+                      (start (modproj start d nil (if (> inc 0) 0 (1- d))))
+                      (end (modproj end d t (if (> inc 0) d -1)))
+                      (nd (ceiling (- end start) inc)))
+                 (declare (type index-type start end inc nd))
+                 (when (<= nd 0) (return nil))
+                 (incf hd (* s start))
+                 (push nd dims)
+                 (push (* inc s) stds)))
+          finally (return (values hd (nreverse dims) (nreverse stds))))))
+
+(definline slice (x axis &optional (idx 0) (preserve-rank-p (when (= (rank x) 1) t)))
+  (let* ((axis (modproj axis (rank x) nil 0))
+         (subs (loop for i from 0 below (rank x) 
+                        collect 
+                        (cond ((/= i axis) '(nil nil))
+                              (preserve-rank-p (list idx (1+ idx)))
+                              (t idx)))))
+    (subtensor x subs)))
+
+(definline row-slice (x idx)
+  (slice x 0 idx))
+
+(definline col-slice (x idx)
+  (slice x 1 idx))
+;;
+(defgeneric suptensor (tensor ord &optional start)
+  (:method :before ((tensor base-tensor) ord &optional (start 0))
+    (declare (type index-type start))
+    (let ((tord (rank tensor)))
+      (assert (and (< -1 start) (<= tord (rank tensor)) (<= 0 start (- ord tord))) nil 'invalid-arguments))))
+
+(defgeneric reshape (tensor dims)
+  (:documentation "Reshape TENSOR to DIMS. This function expects all the strides to be of the
+same sign when TENSOR is subtype of STANDARD-TENSOR."))
+
+(definline matrixify (vec &optional (col-vectorp t))
+  (if (tensor-matrixp vec) vec (suptensor vec 2 (if col-vectorp 0 1))))
+;;
+(defun tensor-typep (tensor subs)
+  "Check if the given tensor is of a particular size in particular arguments.
+
+Checking for a vector:
+(tensor-typep ten '(class-name *))
+
+Checking for a matrix with 2 columns:
+(tensor-typep ten '(real-tensor (* 2)))"
+  (declare (type base-tensor tensor))
+  (destructuring-bind (cls &optional subscripts) (ensure-list subs)
+    (and (typep tensor cls)
+         (if subscripts
+             (lety ((rank (rank tensor) :type index-type)
+                    (dims (dimensions tensor) :type index-store-vector))
+                   (loop :for val :in subscripts
+                         :for i :of-type index-type := 0 :then (1+ i)
+                         :do (unless (or (eq val '*) (eq val (aref dims i)))
+                               (return nil))
+                         :finally (return (when (= (1+ i) rank) t))))
+             t))))
+
+(definline tensor-matrixp (ten)
+  (declare (type base-tensor ten))
+  (= (rank ten) 2))
+
+(definline tensor-vectorp (ten)
+  (declare (type base-tensor ten))
+  (= (rank ten) 1))
+
+(deftype base-square-matrix ()
+  `(and base-tensor (satisfies tensor-square-matrixp)))
+
+(deftype base-matrix ()
+  `(and base-tensor (satisfies tensor-matrixp)))
+
+(deftype base-vector ()
+  `(and base-tensor (satisfies tensor-vectorp)))
+
+(definline tensor-squarep (tensor)
+  (declare (type base-tensor tensor))
+  (lety ((dims (dimensions tensor) :type index-store-vector))
+        (loop :for i :from 1 :below (length dims)
+              :do (unless (= (aref dims i) (aref dims 0))
+                    (return nil))
+              :finally (return t))))
+;;
+(defun tensor-append (axis tensor &rest more-tensors)
+  (if (null tensor)
+      (when more-tensors
+        (apply #'tensor-append axis (car more-tensors) (cdr more-tensors)))
+      (let ((dims (copy-seq (dimensions tensor))))
+        (loop for ele in more-tensors do (incf (aref dims axis) (aref (dimensions ele) axis)))
+        (let* ((ret (zeros dims (class-of tensor)))
+               (view (slice ret axis 0 t)))
+          (loop for ele in (cons tensor more-tensors)
+                with head = 0
+                do
+                   (progn
+                     (setf (slot-value view 'head) head
+                           (aref (dimensions view) axis) (aref (dimensions ele) axis))
+                     (copy ele view)
+                     (incf head (* (aref (strides ret) axis) (aref (dimensions ele) axis)))))
+          ret))))
+
 ;;; Internal Tensor Protocols
+
+;; tensor macro template
+;; TODO 2025-05-22: 
+(defmacro deft ())
+
 (macrolet ((defn (sym num args &body body)
              `(definline ,(symbolicate 't. (string sym)) ,(cons (car num) args)
                 (declare ,(reverse num) (optimize (speed 3) (space 0)))
@@ -286,7 +458,10 @@ indexing.")
                                   :do (t.store-set ,sym ,init ,arr ,idx))))
                       ,arr))))))
 
-(definline t.store-type (sym &optional size))
+(definline t.store-type (sym &optional (size '*))
+  (typecase sym
+    (standard-tensor
+     `(simple-array ,(store-element-type sym) (,size)))))
 
 (defun store-type (cl &optional (size '*))
   (macroexpand-1 `(t.store-stype ,cl ,size)))
@@ -332,14 +507,92 @@ indexing.")
     `(lety ((,var (t.store-allocator ,sym ,count ,init) :type ,(store-type sym)))
            ,@body)))
 
+(defmacro with-field-elements (sym decls &rest body)
+  (if (null decls) `(progn ,@body)
+      `(with-field-element ,sym ,(first decls)
+         (with-field-elements ,sym ,(cdr decls) ,@body))))
+
+(defparameter *tensor-methods* (make-hash-table))
+
+(definline lazy-coerce (x out)
+  (if (typep x out) x
+      (copy x out)))
+
+(defun cclass-max (lst)
+  (let ((max nil))
+    (loop :for ele :in lst
+          ;; FIX 2025-05-22: 
+          :do (when (or (null max) #+nil (and (coerceable-p max ele)
+                                              (or (not (coerceable-p ele max))
+                                                  (and (subtypep ele 'blas-numeric-tensor) (subtypep max 'blas-numeric-tensor)
+                                                       (> (float-digits (coerce 0 (store-element-type ele)))
+                                                          (float-digits (coerce 0 (store-element-type max))))))))
+                (setf max ele)))
+    max))
+
+(defmacro define-tensor-method (name (&rest args) &body body)
+  (let* ((inputs (mapcar #'car (remove-if-not #'(lambda (x) (and (consp x) (eql (third x) :input))) args)))
+         (outputs (mapcar #'car (remove-if-not #'(lambda (x) (and (consp x) (eql (third x) :output))) args)))
+         (iclsym (zipsym inputs))
+         (oclsym (zipsym outputs))
+         (dargs (let ((pos (position-if #'(lambda (x) (member x cl:lambda-list-keywords)) args)))
+                  (if pos (subseq args 0 pos) args))))
+    (with-gensyms (x classes iclasses oclasses)
+      `(progn
+         (multiple-value-bind (val exists?) (gethash ',name *tensor-methods*)
+           (if exists?
+               (let ((type-meths (assoc ',(mapcar #'(lambda (x) (if (consp x) (cadr x) t)) dargs) (cdr val) :test #'tree-equal)))
+                 (if type-meths
+                     (progn
+                       (loop :for ele in (cdr type-meths)
+                             :do (remove-method (symbol-function ',name) ele))
+                       (setf (cdr type-meths) nil))
+                     (setf (cdr val) (list* (list ',(mapcar #'(lambda (x) (if (consp x) (cadr x) t)) dargs)) (cdr val)))))
+               (setf (gethash ',name *tensor-methods*) (list ',name (list ',(mapcar #'(lambda (x) (if (consp x) (cadr x) t)) dargs))))))
+         ;;
+         (defmethod ,name (,@(mapcar #'(lambda (x) (if (consp x) (subseq x 0 2) x)) args))
+           (let* (,@(mapcar #'(lambda (lst) `(,(car lst) (class-name (class-of ,(cadr lst))))) (append iclsym oclsym))
+                  (,iclasses (list ,@(mapcar #'car iclsym)))
+                  (,oclasses (list ,@(mapcar #'car oclsym)))
+                  (,classes (append ,iclasses ,oclasses)))
+             (labels ((generate-code (class)
+                        (let ((args (mapcar #'(lambda (x) (if (and (consp x) (member (third x) '(:input :output)))
+                                                              (list (car x) class)
+                                                              x))
+                                            '(,@args)))
+                              (ebody (macrolet ((cl (,x)
+                                                  (let ((slook '(,@(mapcar #'(lambda (x) `(,(cadr x) class)) iclsym)
+                                                                 ,@(mapcar #'(lambda (x) `(,(cadr x) class)) oclsym))))
+                                                    (or (cadr (assoc ,x slook)) (error "Can't find class of ~a" ,x)))))
+                                       (list ,@body))))
+                          `(defmethod ,',name (,@args)
+                             ,@ebody))))
+               (cond
+                 ((every #'(lambda (,x) (eql ,x (car ,classes))) ,classes)
+                  ;; (assert (member (car ,classes) *tensor-type-leaves*)
+                  ;; nil 'tensor-abstract-class :tensor-class ,classes)
+                  (let* ((method (compile-and-eval (generate-code (car ,classes))))
+                         (lst (assoc ',(mapcar #'(lambda (x) (if (consp x) (cadr x) t)) dargs) (cdr (gethash ',name *tensor-methods*)) :test #'tree-equal)))
+                    (assert lst nil "Method table missing from *tensor-methods*")
+                    (setf (cdr lst) (list* method (cdr lst))))
+                  (,name ,@(mapcar  #'(lambda (x) (if (consp x) (car x) x)) (remove-if #'(lambda (x) (member x cl:lambda-list-keywords)) args))))
+                 ((and (every #'(lambda (,x) (eql ,x (car ,oclasses))) ,oclasses)
+                       (or (null ,oclasses) (coerceable? (cclass-max ,iclasses) (car ,oclasses))))
+                  (let* ((clm (or (car ,oclasses) (cclass-max ,iclasses)))
+                         ,@(mapcar #'(lambda (x) `(,x (lazy-coerce ,x clm))) inputs))
+                    (declare (ignorable clm))
+                    (,name ,@(mapcar  #'(lambda (x) (if (consp x) (car x) x)) (remove-if #'(lambda (x) (member x cl:lambda-list-keywords)) args)))))
+                 (t
+                  (error "Don't know how to apply ~a to classes ~a, ~a." ',name ,iclasses ,oclasses))))))))))
+
 ;;;; Standard Tensor
 (defclass linear-store ()
   ((head :initarg :head :initform 0 :reader head :type index-type
-    :documentation "Head for the store's accessor.")
+         :documentation "Head for the store's accessor.")
    (strides :initarg :strides :type index-store-vector
-    :documentation "Strides for accesing elements of the tensor.")
+            :documentation "Strides for accesing elements of the tensor.")
    (store :initarg :store :reader store :type vector
-    :documentation "The actual storage for the tensor.")))
+          :documentation "The actual storage for the tensor.")))
 
 (declaim (ftype (function (base-tensor &optional index-type) (or index-type index-store-vector)) strides)
 	 (ftype (function (base-tensor) index-type) head))
@@ -351,7 +604,7 @@ indexing.")
       (the index-store-vector (slot-value x 'strides))))
 
 (defun store-indexing-vec (idx hd strides dims)
-"Does error checking to make sure IDX is not out of bounds.
+  "Does error checking to make sure IDX is not out of bounds.
 
 Returns the sum:
 
@@ -363,20 +616,20 @@ HD + \  STRIDE  * IDX
   (declare (type index-type hd)
 	   (type index-store-vector idx strides dims))
   (lety ((rank (length strides) :type index-type))
-    (assert (= rank (length idx) (length dims)) nil 'tensor-index-rank-mismatch :index-rank (length idx) :rank rank)
-      (loop
-	 :for i :of-type index-type :from 0 :below rank
-	 :for cidx :across idx
-	 :for d :across dims
-	 :for s :across strides
-	 :with sto-idx :of-type index-type := hd
-	 :do (progn
-	       (assert (< (1- (- d)) cidx d) nil 'tensor-index-out-of-bounds :argument i :index cidx :dimension d)
-	       (incf sto-idx (the index-type (* s (if (< cidx 0) (mod cidx d) cidx)))))
-	 :finally (return sto-idx))))
+        (assert (= rank (length idx) (length dims)) nil 'tensor-index-rank-mismatch :index-rank (length idx) :rank rank)
+        (loop
+	  :for i :of-type index-type :from 0 :below rank
+	  :for cidx :across idx
+	  :for d :across dims
+	  :for s :across strides
+	  :with sto-idx :of-type index-type := hd
+	  :do (progn
+	        (assert (< (1- (- d)) cidx d) nil 'tensor-index-out-of-bounds :argument i :index cidx :dimension d)
+	        (incf sto-idx (the index-type (* s (if (< cidx 0) (mod cidx d) cidx)))))
+	  :finally (return sto-idx))))
 
 (defun store-indexing-lst (idx hd strides dims)
-"Does error checking to make sure idx is not out of bounds.
+  "Does error checking to make sure idx is not out of bounds.
 
 Returns the sum:
 
@@ -389,20 +642,20 @@ HD + \  STRIDE  * IDX
 	   (type index-store-vector strides dims)
 	   (type cons idx))
   (lety ((rank (length strides) :type index-type))
-      (loop :for cidx :of-type index-type :in idx
-	 :for i :of-type index-type := 0 :then (1+ i)
-	 :for d :across dims
-	 :for s :across strides
-	 :with sto-idx :of-type index-type := hd
-	 :do (progn
-	       (assert (< (1- (- d)) cidx d) nil 'tensor-index-out-of-bounds :argument i :index cidx :dimension d)
-	       (incf sto-idx (the index-type (* s (if (< cidx 0) (mod cidx d) cidx)))))
-	 :finally (progn
-		    (assert (= (1+ i) rank) nil 'tensor-index-rank-mismatch :index-rank (1+ i) :rank rank)
-		    (return sto-idx)))))
+        (loop :for cidx :of-type index-type :in idx
+	      :for i :of-type index-type := 0 :then (1+ i)
+	      :for d :across dims
+	      :for s :across strides
+	      :with sto-idx :of-type index-type := hd
+	      :do (progn
+	            (assert (< (1- (- d)) cidx d) nil 'tensor-index-out-of-bounds :argument i :index cidx :dimension d)
+	            (incf sto-idx (the index-type (* s (if (< cidx 0) (mod cidx d) cidx)))))
+	      :finally (progn
+		         (assert (= (1+ i) rank) nil 'tensor-index-rank-mismatch :index-rank (1+ i) :rank rank)
+		         (return sto-idx)))))
 
 (definline store-indexing (idx tensor)
-"Returns the linear index of the element pointed by IDX. Does error checking to
+  "Returns the linear index of the element pointed by IDX. Does error checking to
 make sure idx is not out of bounds.
 
 Returns the sum:
@@ -444,19 +697,19 @@ HD + \  STRIDES  * IDX
   (declare (ignore initargs))
   (when *check-after-initializing-p*
     (lety ((dims (dimensions tensor) :type index-store-vector))
-      (assert (>= (head tensor) 0) nil 'tensor-invalid-head-value :head (head tensor) :tensor tensor)
-      (if (not (slot-boundp tensor 'strides))
-          (multiple-value-bind (stds size) (make-stride dims)
-            (declare (type index-store-vector stds)
-                     (type index-type size))
-            (setf (slot-value tensor 'strides) stds)
-            (assert (<= (+ (head tensor) size) (store-size tensor)) nil 'tensor-insufficient-store :store-size (store-size tensor) :max-idx (+ (head tensor) (1- (size tensor))) :tensor tensor))
-            (lety ((stds (strides tensor) :type index-store-vector))
-              (loop :for i :of-type index-type :from 0 :below (rank tensor)
-                 :for sz :of-type index-type := (aref dims 0) :then (the index-type (* sz (aref dims i)))
-                 :summing (the index-type (the index-type (* (aref stds i) (1- (aref dims i))))) :into lidx :of-type index-type 
-                 :do (assert (> (aref dims i) 0) nil 'tensor-invalid-dimension-value :argument i :dimension (aref dims i) :tensor tensor)
-                 :finally (assert (>= (the index-type (store-size tensor)) (the index-type (+ (the index-type (head tensor)) lidx)) 0) nil 'tensor-insufficient-store :store-size (store-size tensor) :max-idx (the index-type (+ (head tensor) lidx)) :tensor tensor)))))))
+          (assert (>= (head tensor) 0) nil 'tensor-invalid-head-value :head (head tensor) :tensor tensor)
+          (if (not (slot-boundp tensor 'strides))
+              (multiple-value-bind (stds size) (make-stride dims)
+                (declare (type index-store-vector stds)
+                         (type index-type size))
+                (setf (slot-value tensor 'strides) stds)
+                (assert (<= (+ (head tensor) size) (store-size tensor)) nil 'tensor-insufficient-store :store-size (store-size tensor) :max-idx (+ (head tensor) (1- (size tensor))) :tensor tensor))
+              (lety ((stds (strides tensor) :type index-store-vector))
+                    (loop :for i :of-type index-type :from 0 :below (rank tensor)
+                          :for sz :of-type index-type := (aref dims 0) :then (the index-type (* sz (aref dims i)))
+                          :summing (the index-type (the index-type (* (aref stds i) (1- (aref dims i))))) :into lidx :of-type index-type 
+                          :do (assert (> (aref dims i) 0) nil 'tensor-invalid-dimension-value :argument i :dimension (aref dims i) :tensor tensor)
+                          :finally (assert (>= (the index-type (store-size tensor)) (the index-type (+ (the index-type (head tensor)) lidx)) 0) nil 'tensor-insufficient-store :store-size (store-size tensor) :max-idx (the index-type (+ (head tensor) lidx)) :tensor tensor)))))))
 
 (defmethod ref ((tensor standard-tensor) &rest subscripts)
   (let ((clname (class-name (class-of tensor))))
@@ -827,11 +1080,11 @@ Examples:
     (compile-and-eval
      `(defmethod copy ((x array) (y ,clname))
         (lety ((sto-y (store y) :type (simple-array ,(store-element-type clname)))
-                    (lst (make-list (array-rank x)) :type cons))
-                   (mod-dotimes (idx (dimensions y))
-                     with (linear-sums
-                           (of-y (strides y) (head y)))
-                     do (t.store-set ,clname (t.coerce ,(field-type clname) (apply #'aref x (lvec->list! idx lst))) sto-y of-y)))
+               (lst (make-list (array-rank x)) :type cons))
+              (mod-dotimes (idx (dimensions y))
+                with (linear-sums
+                      (of-y (strides y) (head y)))
+                do (t.store-set ,clname (t.coerce ,(field-type clname) (apply #'aref x (lvec->list! idx lst))) sto-y of-y)))
         y))
     (copy x y)))
 
@@ -843,7 +1096,7 @@ Examples:
                     (lst (make-list (array-rank y)) :type cons))
                    (mod-dotimes (idx (dimensions x))
                      with (linear-sums
-                            (of-x (strides x) (head x)))
+                           (of-x (strides x) (head x)))
                      do (setf (apply #'aref y (lvec->list! idx lst)) (t.store-ref ,clname sto-x of-x))))
         y))
     (copy x y)))
@@ -856,10 +1109,377 @@ Examples:
 ;;; SWAP
 
 ;;; PRINT
+(defun print-tensor (tensor stream)
+  (let ((rank (rank tensor))
+        (dims (dimensions tensor))
+        (two-print-calls 0))
+    (labels ((two-print (tensor subs)
+               (let ((strs) (cprints)
+                     (maxw (make-array (if (eq *print-tensor-max-len* t) (aref dims 1) (1+ *print-tensor-max-len*)) :initial-element 0)))
+                 (setq strs
+                       (loop for i from 0 below (aref dims 0)
+                             if (or (eq *print-tensor-max-len* t) (< i *print-tensor-max-len*))
+                             collect (loop for j from 0 below (aref dims 1)
+                                           if (or (eq *print-tensor-max-len* t) (< j *print-tensor-max-len*))
+                                           do 
+                                              (let ((str (with-output-to-string (str)
+                                                           (print-element tensor (ref tensor (append `(,i ,j) subs)) str))))
+                                                (push str cprints)
+                                                (setf (aref maxw j) (max (aref maxw j) (length str))))
+                                           else do
+                                              (let ((str (with-output-to-string (str) (format str "..."))))
+                                                (push str cprints)
+                                                (setf (aref maxw j) (max (aref maxw j) (length str)))
+                                                (return cprints))
+                                           finally (return cprints))
+                             into rprints
+                             finally (return rprints)))
+                 (loop for row in strs
+                       do (format stream (format nil "~~~AT" *print-tensor-indent*))
+                       do 
+                          (loop for cref in row
+                                with j = 0
+                                do (format stream (replace (make-string (+ (aref maxw j) 4) :initial-element #\Space) cref :start1 (if (char= (aref cref 0) #\-) 0 1)))
+                                do (incf j))
+                       do (format stream "~%"))
+                 (unless (or (eq *print-tensor-max-len* t) (< (aref dims 0) *print-tensor-max-len*))
+                   (format stream (format nil "~~~AT.~~%~~~:*~AT:~~%" *print-tensor-indent*)))))
+             (rec-print (tensor idx subs)
+               (if (>= idx 2)
+                   (dotimes (i (aref dims idx) t)
+                     (unless (rec-print tensor (1- idx) (append `(,i) subs))
+                       (return nil)))
+                   (progn
+                     (if (or (eq *print-tensor-max-args* t) (< two-print-calls *print-tensor-max-args*))
+                         (progn
+                           (format stream "~A~%" (append '(\: \:) subs))
+                           (two-print tensor subs)
+                           (format stream "~%")
+                           (incf two-print-calls)
+                           t)
+                         (progn
+                           (format stream "~A~%" (make-list rank :initial-element '\:))
+                           (format stream (format nil "~~~AT..~~%~~~AT::~~%" *print-tensor-indent* *print-tensor-indent*))
+                           nil))))))
+      (case rank
+        (1
+         (format stream (format nil "~~~AT" *print-tensor-indent*))
+         (dotimes (i (aref dims 0))
+           (if (or (eq *print-tensor-max-len* t) (< i *print-tensor-max-len*))
+               (progn
+                 (print-element tensor (ref tensor i) stream)
+                 (format stream "~,4T"))
+               (progn
+                 (format stream "...")
+                 (return nil))))
+         (format stream "~%"))
+        (2
+         (two-print tensor nil))
+        (t
+         (rec-print tensor (1- (rank tensor)) nil))))))
+
+(defmethod print-object ((tensor standard-tensor) stream)
+  (print-unreadable-object (tensor stream :type t)
+    (if (slot-value tensor 'parent-tensor)
+        (format stream "~A~,4T:DISPLACED" (dimensions tensor))
+        (format stream "~A" (dimensions tensor)))
+    (when (> (size tensor) 0)
+      (format stream "~%")
+      (print-tensor tensor stream))))
+
+(defmethod print-object ((tensor sparse-tensor) stream)
+  (print-unreadable-object (tensor stream :type t)
+    (format stream
+            (concatenate 'string
+                         "~A, store-size: ~A"
+                         (if (slot-value tensor 'parent-tensor) ",4T:DISPLACED" ""))
+            (dimensions tensor) (store-size tensor))))
+
 ;;; Coordinate Sparse
+(defclass coordinate-sparse-tensor (sparse-tensor)
+  ((head :initarg :head :initform 0 :reader head :type index-type
+         :documentation "Head for the store's accessor.")
+   (strides :initarg :strides :type index-store-vector
+            :documentation "Strides for accesing elements of the tensor.")))
+
+;; (deft t.sparse-fill sparse-tensor (sym)
+;;  `(t.fid+ (t.field-type ,sym)))
+
+;; (deft t.store-allocator coordinate-sparse-tensor (sym size &optional nz)
+;;   (with-gensyms (size-sym)
+;;     `(let ((,size-sym (or ,nz (min (max 16 (ceiling (/ ,size *default-sparsity*))) *max-sparse-size*))))
+;;        (make-hash-table :size ,size-sym))))
+
+;; (deft t.store-ref coordinate-sparse-tensor (sym store &rest idx)
+;;    (assert (null (cdr idx)) nil "given more than one index for hashtable.")
+;;   `(the ,(field-type sym) (gethash ,(car idx) ,store (t/sparse-fill ,sym))))
+
+;; (deft t.store-set coordinate-sparse-tensor (sym value store &rest idx)
+;;    (assert (null (cdr idx)) nil "given more than one index for hashtable.")
+;;    (with-gensyms (val)
+;;      `(let-typed ((,val ,value :type ,(field-type sym)))
+;;         (unless (t/f= ,(field-type sym) ,val (t/fid+ ,(field-type sym)))
+;;           (setf (gethash ,(car idx) ,store) (the ,(field-type sym) ,value))))))
+
+;; (deft t.store-type coordinate-sparse-tensor (sym &optional (size '*))
+;;   'hash-table)
+
+;; (deft t.store-size coordinate-sparse-tensor (sym ele)
+;;   `(hash-table-count ,ele))
+
+;; (deft t.store-type coordinate-sparse-tensor (sym &optional (size '*))
+;;   'hash-table)
+;;
+(defmethod ref ((tensor coordinate-sparse-tensor) &rest subscripts)
+  (let ((clname (class-name (class-of tensor))))
+    ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
+    (compile-and-eval
+     `(defmethod ref ((tensor ,clname) &rest subscripts)
+        (let ((subs (if (numberp (car subscripts)) subscripts (car subscripts))))
+          (t.store-ref ,clname (store tensor) (store-indexing subs tensor)))))
+    (apply #'ref (cons tensor subscripts))))
+
+(defmethod (setf ref) (value (tensor coordinate-sparse-tensor) &rest subscripts)
+  (let ((clname (class-name (class-of tensor))))
+    ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
+    (compile-and-eval
+     `(defmethod (setf ref) (value (tensor ,clname) &rest subscripts)
+        (let* ((subs (if (numberp (car subscripts)) subscripts (car subscripts)))
+               (idx (store-indexing subs tensor))
+               (sto (store tensor)))
+          (t.store-set ,clname (t/coerce ,(field-type clname) value) sto idx)
+          (t.store-ref ,clname sto idx))))
+    (setf (ref tensor (if (numberp (car subscripts)) subscripts (car subscripts))) value)))
+
 ;;; Compressed Sparse
+(defclass compressed-sparse-matrix (sparse-tensor)
+  ((transposed :initform nil :initarg :transpose? :reader transposed :type boolean
+               :documentation "If NIL the matrix is in CSC, else if T, then matrix is CSR.")
+   (neighbour-start :initarg :neighbour-start :reader neighbour-start :type index-store-vector
+                    :documentation "Start index for ids and store.")
+   (neighbour-id :initarg :neighbour-id :reader neighbour-id :type index-store-vector
+                 :documentation "Row id.")))
+
+(declaim (ftype (function (compressed-sparse-matrix) index-store-vector) neighbour-start neighbour-id))
+
+(defun compressed-sparse-indexing (subs tensor)
+  (declare (type compressed-sparse-matrix tensor)
+           (type (or index-store-vector cons) subs))
+  (lety ((row 0 :type index-type)
+         (col 0 :type index-type))
+        (etypecase subs
+          (cons
+           (assert (null (cddr subs)) nil 'tensor-index-rank-mismatch)
+           (setf row (the index-type (car subs))
+                 col (the index-type (cadr subs))))
+          (index-store-vector
+           (assert (= (length subs) 2) nil 'tensor-index-rank-mismatch)
+           (setf row (the index-type (aref subs 0))
+                 col (the index-type (aref subs 1)))))
+        (when (transpose? tensor)
+          (rotatef row col))
+        (lety* ((nst (neighbour-start tensor) :type index-store-vector)
+                (nid (neighbour-id tensor) :type index-store-vector)
+                (lb (aref nst col) :type index-type)
+                (ub (aref nst (1+ col)) :type index-type))
+               (declare (type index-type row col))
+               (if (or (= lb ub) (< row (aref nid lb)) (> row (aref nid (1- ub)))) (values -1 row col)
+                   (values
+                    (loop :with j := (ash (+ lb ub) -1)
+                          :repeat 64
+                          :do (cond
+                                ((= (aref nid j) row) (return j))
+                                ((>= lb (1- ub)) (return -1))
+                                (t
+                                 (if (< row (aref nid j))
+                                     (setf ub j)
+                                     (setf lb (1+ j)))
+                                 (setf j (ash (+ lb ub) -1)))))
+                    row col)))))
+
+;; FIX 2025-05-22: 
+;; (deft t.store-allocator (cl compressed-sparse-matrix) (size &optional nz)
+;;   (let ((sto-type (store-element-type cl)))
+;;     `(destructuring-bind (nr nc) ,size
+;;        (let ((nz (or ,nz (min (ceiling (* nr nc *default-sparsity*)) *max-sparse-size*))))
+;;          (list
+;;           (allocate-index-store nz)
+;;           (make-array (t/compute-store-size ,cl nz) :element-type ',sto-type :initial-element ,(if (subtypep sto-type 'number) `(t/fid+ ,sto-type) nil)))))))
+
+;; (deft t.compute-store-size (sym compressed-sparse-matrix) (size)
+;;   size)
+;; ;;
+;; (deft t.store-type (sym compressed-sparse-matrix) (&optional (size '*))
+;;   `(simple-array ,(store-element-type sym) (,size)))
+
+;; (deft t.store-ref (sym compressed-sparse-matrix) (store &rest idx)
+;;    (assert (null (cdr idx)) nil "given more than one index for compressed-store")
+;;   `(aref (the ,(store-type sym) ,store) (the index-type ,(car idx))))
+
+;; (deft t.store-set (sym compressed-sparse-matrix) (value store &rest idx)
+;;    (assert (null (cdr idx)) nil "given more than one index for compressed store")
+;;   `(setf (aref (the ,(store-type sym) ,store) (the index-type ,(car idx))) (the ,(field-type sym) ,value)))
+
+;; (deft t.store-size (sym compressed-sparse-matrix) (ele)
+;;   `(length ,ele))
+
+;; (deft t.store-element-type (sym compressed-sparse-matrix) ()
+;;   (macroexpand `(t/field-type ,sym)))
+;;
+(defmethod ref ((tensor compressed-sparse-matrix) &rest subscripts)
+  (let ((clname (class-name (class-of tensor))))
+    ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
+    (compile-and-eval
+     `(defmethod ref ((tensor ,clname) &rest subscripts)
+        (let ((idx (compressed-sparse-indexing (if (numberp (car subscripts)) subscripts (car subscripts)) tensor)))
+          (if (< idx 0)
+              (values (t/sparse-fill ,clname) nil)
+              (values (t/store-ref ,clname (store tensor) idx) t)))))
+    (apply #'ref (cons tensor subscripts))))
+
+(defmethod (setf ref) (value (tensor compressed-sparse-matrix) &rest subscripts)
+  (let ((clname (class-name (class-of tensor))))
+    ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
+    (compile-and-eval
+     `(defmethod (setf ref) (value (tensor ,clname) &rest subscripts)
+        (multiple-value-bind (idx row col) (compressed-sparse-indexing (if (numberp (car subscripts)) subscripts (car subscripts)) tensor)
+          (declare (type index-type idx row col))
+          (lety ((value (t/coerce ,(field-type clname) value) :type ,(field-type clname)))
+                (if (/= value (t/fid+ ,(field-type clname)))
+                    (if (< idx 0)
+                        (let* ((ns (neighbour-start tensor))
+                               (value (t/coerce ,(field-type clname) value))
+                               (row-data (let ((ni (neighbour-id tensor))
+                                               (vi (store tensor)))
+                                           (merge 'list
+                                                  (list (cons row value))
+                                                  (loop :for j :from (aref ns col) :below (aref ns (1+ col))
+                                                        :collect (cons (aref ni j) (aref vi j)))
+                                                  #'< :key #'car))))
+                          (unless (> (store-size tensor) (aref ns (1- (length ns))))
+                            (destructuring-bind (ni vi) (t/store-allocator ,clname (dims tensor) (+ (store-size tensor) *default-sparse-store-increment*))
+                              (let ((nio (neighbour-id tensor))
+                                    (vio (store tensor)))
+                                (very-quickly
+                                  (declare (type index-store-vector nio ni ns)
+                                           (type ,(store-type clname) vio vi))
+                                  (loop :for i :from 0 :below (aref ns col)
+                                        :do (setf (aref nio i) (aref ni i)
+                                                  (aref vio i) (aref vi i)))
+                                  (loop :for i :from (aref ns (1+ col)) :below (aref ns (1- (length ns)))
+                                        :do (setf (aref nio (1+ i)) (aref ni i)
+                                                  (aref vio (1+ i)) (aref vi i))))
+                                (setf (slot-value tensor 'neighbour-id) ni
+                                      (slot-value tensor 'store) vi))))
+                          (let ((ni (neighbour-id tensor))
+                                (vi (store tensor)))
+                            (very-quickly
+                              (declare (type index-store-vector ni ns)
+                                       (type ,(store-type clname) vi))
+                              (loop :for i :from (1+ col) :below (length ns)
+                                    :do (incf (aref ns i))))
+                            (loop :for (r . v) :in row-data
+                                  :for i := (aref ns col) :then (1+ i)
+                                  :do (setf (aref ni i) r
+                                            (aref vi i) v))))
+                        (t/store-set ,clname value (store tensor) idx))
+                    (when (>= idx 0)
+                      (let ((ns (neighbour-start tensor))
+                            (ni (neighbour-id tensor))
+                            (vi (store tensor)))
+                        (very-quickly
+                          (declare (type index-store-vector ns ni)
+                                   (type ,(store-type clname) vi))
+                          (loop :for i :from idx :below (aref ns (1- (length ns)))
+                                :do (setf (aref ni i) (aref ni (1+ i))
+                                          (aref vi i) (aref vi (1+ i))))
+                          (loop :for i :from (1+ col) :below (length ns)
+                                :do (decf (aref ns i)))))))
+                value))))
+    (setf (ref tensor (if (numberp (car subscripts)) subscripts (car subscripts))) value)))
 
 ;;; Utils
+;; (deft t.zeros (class standard-tensor) (dims &optional initial-element)
+;;   (with-gensyms (astrs adims sizs)
+;;     `(let* ((,adims (make-index-store ,dims)))
+;;        (declare (type index-store-vector ,adims))
+;;        (multiple-value-bind (,astrs ,sizs) (make-stride ,adims)
+;;          (declare (type index-store-vector ,astrs))
+;;          (make-instance ',class
+;;            :dimensions ,adims
+;;            :head 0
+;;            :strides ,astrs
+;;            :store (t/store-allocator ,class ,sizs ,@(when initial-element `((t/coerce ,(field-type class) ,initial-element)))))))))
+
+;; (deft t.zeros (class coordinate-sparse-tensor) (dims &optional nz)
+;;   (with-gensyms (astrs adims sizs)
+;;     `(let* ((,adims (make-index-store ,dims)))
+;;        (declare (type index-store-vector ,adims))
+;;        (multiple-value-bind (,astrs ,sizs) (make-stride-cmj ,adims)
+;;          (declare (type index-store-vector ,astrs))
+;;          (make-instance ',class
+;;            :dimensions ,adims
+;;            :strides ,astrs
+;;            :store (t/store-allocator ,class ,sizs ,nz))))))
+
+;; (deft t.zeros (class compressed-sparse-matrix) (dims &optional nz)
+;;   (with-gensyms (dsym)
+;;     `(let ((,dsym ,dims))
+;;        (destructuring-bind (vr vd) (t/store-allocator ,class ,dsym ,nz)
+;;          (make-instance ',class
+;;            :dimensions (make-index-store ,dims)
+;;            :neighbour-start (allocate-index-store (1+ (second ,dsym)))
+;;            :neighbour-id vr
+;;            :store vd)))))
+
+(defgeneric zeros-generic (dims dtype &optional initial-element)
+  (:documentation "
+    A generic version of @func{zeros}.
+")
+  (:method ((dims cons) (dtype t) &optional initial-element)
+    ;; (assert (member dtype *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class dtype)
+    (compile-and-eval
+     `(defmethod zeros-generic ((dims cons) (dtype (eql ',dtype)) &optional initial-element)
+        (if initial-element
+            (t.zeros ,dtype dims initial-element)
+            (t.zeros ,dtype dims))))
+    (zeros-generic dims dtype initial-element)))
+
+(definline zeros (dims &optional (type *default-tensor-type*) initial-element)
+"Create a tensor with dimensions @arg{dims} of class @arg{dtype}.
+The optional argument @arg{initial-element} is used in two completely
+incompatible ways.
+
+If @arg{dtype} is a dense tensor, then @arg{initial-element}, is used to
+initialize all the elements. If @arg{dtype} is however, a sparse tensor,
+it is used for computing the number of nonzeros slots in the store.
+
+Example:
+(zeros 3)
+#<REAL-TENSOR #(3)
+  0.0000      0.0000      0.0000     
+>
+
+(zeros 3 'complex-tensor 2)
+#<COMPLEX-TENSOR #(3)
+  2.0000      2.0000      2.0000     
+>
+
+(zeros '(10000 10000) 'real-compressed-sparse-matrix 10000)
+#<REAL-COMPRESSED-SPARSE-MATRIX #(10000 10000), store-size: 10000>"
+  ;; (with-no-init-checks
+    (let ((type (etypecase type (standard-class (class-name type)) (symbol type))))
+      (etypecase dims
+        (cons
+         (zeros-generic dims type initial-element))
+        (vector
+         (zeros-generic (vector-to-list dims) type initial-element))
+        (fixnum
+         (zeros-generic (list dims) type initial-element)))))
+;;)
+
+(declaim (ftype (function ((or cons vector fixnum) &optional t t) base-tensor) zeros))
+
 (defmacro with-rowm (&rest body)
   `(let ((*default-stride-ordering* :row-major))
      ,@body))
@@ -867,3 +1487,24 @@ Examples:
 (defmacro with-colm (&rest body)
   `(let ((*default-stride-ordering* :col-major))
      ,@body))
+
+
+(definline nrows (matrix)
+  (aref (the index-store-vector (dimensions matrix)) 0))
+
+(definline ncols (matrix)
+  (aref (the index-store-vector (dimensions matrix)) 1))
+
+(definline row-stride (matrix)
+  (aref (the index-store-vector (strides matrix)) 0))
+
+(definline col-stride (matrix)
+  (aref (the index-store-vector (strides matrix)) 1))
+
+(definline tensor-square-matrixp (matrix)
+  (and (tensor-matrixp matrix) (tensor-squarep matrix)))
+
+;;; Tensor Classes
+;;;; Numeric
+
+;;;; Sparse
