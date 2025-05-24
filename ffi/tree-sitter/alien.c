@@ -45,21 +45,84 @@ TSNode *ts_tree_cursor_current_node_pointer(const TSTreeCursor *cursor) {
   return return_node;
 }
 
-int ts_node_is_named_pointer(TSNode *node) {
+int64_t ts_tree_cursor_goto_first_child_for_point_pointer (TSTreeCursor *cursor, TSPoint *goal_point) {
+  return ts_tree_cursor_goto_first_child_for_point(cursor,*goal_point);
+}
+
+TSTreeCursor *ts_tree_cursor_copy_pointer (const TSTreeCursor *cursor) {
+  TSTreeCursor *ret = malloc(sizeof(TSTreeCursor));
+  if (ret) {
+    *ret = ts_tree_cursor_copy(cursor);
+  }
+  return ret;
+}
+  
+bool ts_node_is_named_pointer(TSNode *node) {
   return ts_node_is_named(*node);
 }
 
-TSPoint ts_node_start_point_pointer(TSNode *node) {
-  return ts_node_start_point(*node);
+bool ts_node_is_missing_pointer(TSNode *node) {
+  return ts_node_is_missing(*node);
 }
 
+bool ts_node_is_extra_pointer(TSNode *node) {
+  return ts_node_is_extra(*node);
+}
 
-TSPoint ts_node_end_point_pointer(TSNode *node) {
-  return ts_node_end_point(*node);
+bool ts_node_is_error_pointer(TSNode *node) {
+  return ts_node_is_error(*node);
+}
+
+bool ts_node_has_error_pointer(TSNode *node) {
+  return ts_node_has_error(*node);
+}
+
+TSNode *ts_node_parent_pointer(TSNode *node) {
+  TSNode *parent = malloc(sizeof(TSNode));
+  if (parent) {
+    *parent = ts_node_parent(*node);
+  }
+  return parent;
+}
+
+uint32_t ts_node_child_count_pointer(TSNode *node) {
+  return ts_node_child_count(*node);
+}
+
+uint32_t ts_node_start_byte_pointer(TSNode *node) {
+  return ts_node_start_byte(*node);
+}
+
+uint32_t ts_node_end_byte_pointer(TSNode *node) {
+  return ts_node_end_byte(*node);
+}
+
+TSPoint *ts_node_start_point_pointer(TSNode *node) {
+  TSPoint *point = malloc(sizeof(TSPoint));
+  if (point) {
+    *point = ts_node_start_point(*node);
+  }
+  return point;
+}
+
+TSPoint *ts_node_end_point_pointer(TSNode *node) {
+  TSPoint *point = malloc(sizeof(TSPoint));
+  if (point) {
+    *point = ts_node_end_point(*node);
+  }
+  return point;
 }
 
 const char *ts_node_type_pointer(TSNode *node) {
   return ts_node_type(*node);
+}
+
+char *ts_node_string_pointer(TSNode *node) {
+  return ts_node_string(*node);
+}
+
+bool ts_node_is_null_pointer(TSNode *node) {
+  return ts_node_is_null(*node);
 }
 
 void ts_query_cursor_exec_pointer(TSQueryCursor *cursor, const TSQuery *query, TSNode *node) {

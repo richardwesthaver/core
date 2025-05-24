@@ -165,39 +165,22 @@ Called by PRINT-TENSOR/MATRIX to format a tensor into the STREAM.")
   (:documentation  "Generic serial read access to the store.")
   (:method ((tensor base-tensor) idx)
     (let ((clname (class-name (class-of tensor))))
-      ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
-      (compile-and-eval
-       `(defmethod store-ref ((tensor ,clname) idx)
-          (t.store-ref ,clname (store tensor) idx))))
-    (store-ref tensor idx)))
+          (t.store-ref clname (store tensor) idx))))
 
 (defgeneric (setf store-ref) (value tensor idx)
   (:method (value (tensor base-tensor) idx)
     (let ((clname (class-name (class-of tensor))))
-      ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
-      (compile-and-eval
-       `(defmethod (setf store-ref) (value (tensor ,clname) idx)
-          (t.store-set ,clname value (store tensor) idx)
-          (t.store-ref ,clname (store tensor) idx))))
-    (setf (store-ref tensor idx) value)))
+      (t.store-set clname value (store tensor) idx)
+      (t.store-ref clname (store tensor) idx))))
 
 ;;
 (defgeneric store-size (tensor)
-  (:documentation "
-  Syntax
-  ======
-  (store-size tensor)
-
-  Purpose
-  =======
-  Returns the number of elements the store of the tensor can hold
-  (which is not necessarily equal to its vector length).")
+  (:documentation "Returns the number of elements the store of the tensor can hold (which is not
+necessarily equal to its vector length).")
   (:method ((tensor base-tensor))
     (let ((clname (class-name (class-of tensor))))
-      (compile-and-eval
-       `(defmethod store-size ((tensor ,clname))
-          (t.store-size ,clname (store tensor))))
-      (store-size tensor))))
+      (t.store-size clname (store tensor)))))
+
 
 (defgeneric subtensor (tensor subscripts)
   (:documentation "Creates a new tensor data structure, sharing store with TENSOR but with
@@ -365,20 +348,13 @@ Checking for a matrix with 2 columns:
           ret))))
 
 ;;; Internal Tensor Protocols
-
-;; tensor macro template
-;; TODO 2025-05-22: 
-(defmacro deft ())
-
 (macrolet ((defn (sym num args &body body)
              `(definline ,(symbolicate 't. (string sym)) ,(cons (car num) args)
                 (declare ,(reverse num) (optimize (speed 3) (space 0)))
                 ,@body))
            (def-marith (tname clop)
              `(defn ,tname (num number) (&rest nums)
-                (if (and (consp num) (eql (first num) 'mod))
-                    `(mod (,',clop ,@(mapcar #'(lambda (x) `(the ,num ,x)) nums)) ,(second num))
-                    `(,', clop ,@(mapcar #'(lambda (x) `(the ,num ,x)) nums)))))
+                `(,',clop ,@(mapcar #'(lambda (x) `(the ,num ,x)) nums))))
            (genarith (&rest args)
              `(progn ,@(mapcar #'(lambda (x) `(def-marith ,(car x) ,(cadr x))) args))))
   (genarith (f+ +) (f- -) (f* *) (f= =) (f/ /)))
@@ -398,12 +374,9 @@ Checking for a matrix with 2 columns:
     x)
   (:method ((x t))
     (let ((clname (class-name (class-of x))))
-      (compile-and-eval
-       `(defmethod fconj ((x ,clname))
-          (t.fc ,clname x)))
-      (fc x))))
+      (t.fc clname))))
 (defun field-realp (fil)
-  (eql (macroexpand-1 `(t.fc ,fil phi)) 'phi))
+  (eql (t.fc fil) 'phi))
 (definline t.frealpart (ty)
   (etypecase ty
     (real ty)
@@ -414,8 +387,8 @@ Checking for a matrix with 2 columns:
     (t (imagpart ty))))
 (definline t.coerce (val ty)
   (if (and (consp ty) (eql (first ty) 'mod))
-      `(mod (coerce ,val 'fixnum ,(second ty)))
-      `(coerce ,val ',ty)))
+      (mod (coerce val 'fixnum) (second ty))
+      (coerce val ty)))
 
 ;; HACK 2025-05-22: strict-coerce
 ;; (defun strict-compare (func-list a b)
@@ -437,45 +410,45 @@ Checking for a matrix with 2 columns:
 (definline t.field-type (sym)
   (typecase sym
     (base-tensor t)))
-
 (defun field-type (clname)
-  (macroexpand-1 `(t.field-type ,clname)))
+  (t.field-type clname))
 
-(definline t.store-allocator (sym size &optional initial-element)
+(definline t.store-allocator (sym size &optional (initial-element 0))
   (typecase sym
     (standard-tensor
-     (with-gensyms (sitm size-sym arr idx init)
-       (let ((type (macroexpand-1 `(t.store-element-type ,sym))))
-         `(let*-typed ((,size-sym (t.compute-store-size ,sym (let ((,sitm ,size))
-                                                               (etypecase ,sitm
-                                                                 (index-type ,sitm)
-                                                                 (index-store-vector (lvec-foldr #'* (the index-store-vector ,sitm)))
-                                                                 (cons (reduce #'* ,sitm))))))
-                       ,@(when initial-element `((,init ,initial-element :type ,(field-type sym))))
-                       (,arr (make-array ,size-sym :element-type ',type :initial-element ,(if (subtypep type 'number) `(t.fid+ ,type) nil)) :type ,(store-type sym)))
-                      ,@(when initial-element
-                          `((loop :for ,idx :from 0 :below ,size-sym
-                                  :do (t.store-set ,sym ,init ,arr ,idx))))
-                      ,arr))))))
+     (let ((type (t.store-element-type sym)))
+       (lety* ((size-sym (t.compute-store-size sym (let ((sitm size))
+                                                          (etypecase sitm
+                                                            (index-type sitm)
+                                                            (index-store-vector (vector-foldr 
+                                                                                 #'* 
+                                                                                 (the index-store-vector sitm)))
+                                                            (cons (reduce #'* sitm))))))
+               (init initial-element)
+               (arr (make-array size-sym :element-type type :initial-element (if (subtypep type 'number) (t.fid+ type) nil))))
+              (when initial-element
+                (loop :for idx :from 0 :below size-sym
+                      :do (t.store-set sym init arr idx)))
+              arr)))))
 
 (definline t.store-type (sym &optional (size '*))
   (typecase sym
     (standard-tensor
-     `(simple-array ,(store-element-type sym) (,size)))))
+     (simple-array-type (store-element-type sym) size))))
 
 (defun store-type (cl &optional (size '*))
-  (macroexpand-1 `(t.store-stype ,cl ,size)))
+  (t.store-type cl size))
 
 (definline t.store-ref (sym store &rest idx)
   (typecase sym
     (linear-store (assert (null (cdr idx)) nil "given more than one index for linear-store")
-     `(aref (the ,(store-type sym) ,store) (the index-type ,(car idx))))))
+     (aref store (the index-type (car idx))))))
 
 (definline t.store-set (sym value store &rest idx)
   (typecase sym
     (linear-store
      (assert (null (cdr idx)) nil "given more than one index for linear-store")
-     `(setf (aref (the ,(store-type sym) ,store) (the index-type ,(car idx))) (the ,(field-type sym) ,value)))))
+     (setf (aref store (the index-type (car idx))) value))))
 
 (define-setf-expander t.store-ref (sym store &rest idx &environment env)
   (multiple-value-bind (dummies vals newval setter getter)
@@ -489,18 +462,18 @@ Checking for a matrix with 2 columns:
               `(t.store-ref ,sym ,getter ,@idx)))))
 
 (definline t.store-element-type (sym)
-  (macroexpand-1 `(t.field-type ,sym)))
+  (t.field-type sym))
 
 (defun store-element-type (clname)
-  (macroexpand-1 `(t.store-element-type ,clname)))
+  (t.store-element-type clname))
 
-(definline t.compute-store-size (sym &optional (size '*))
+(definline t.compute-store-size (sym size)
   (typecase sym
-    (standard-tensor `(simple-array ,(store-element-type sym) (,size)))))
+    (standard-tensor size)))
 
 (definline t.store-size (sym ele)
   (typecase sym
-    (standard-tensor `(lemgth ,ele))))
+    (standard-tensor (length ele))))
 
 (defun with-field-element (sym decl &rest body)
   (destructuring-bind (var init &optional (count 1)) decl
@@ -707,30 +680,24 @@ HD + \  STRIDES  * IDX
               (lety ((stds (strides tensor) :type index-store-vector))
                     (loop :for i :of-type index-type :from 0 :below (rank tensor)
                           :for sz :of-type index-type := (aref dims 0) :then (the index-type (* sz (aref dims i)))
-                          :summing (the index-type (the index-type (* (aref stds i) (1- (aref dims i))))) :into lidx :of-type index-type 
+                          :summing (the index-type (* (aref stds i) (1- (aref dims i)))) :into lidx :of-type index-type
                           :do (assert (> (aref dims i) 0) nil 'tensor-invalid-dimension-value :argument i :dimension (aref dims i) :tensor tensor)
                           :finally (assert (>= (the index-type (store-size tensor)) (the index-type (+ (the index-type (head tensor)) lidx)) 0) nil 'tensor-insufficient-store :store-size (store-size tensor) :max-idx (the index-type (+ (head tensor) lidx)) :tensor tensor)))))))
 
 (defmethod ref ((tensor standard-tensor) &rest subscripts)
   (let ((clname (class-name (class-of tensor))))
     ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
-    (compile-and-eval
-     `(defmethod ref ((tensor ,clname) &rest subscripts)
-        (let ((subs (if (numberp (car subscripts)) subscripts (car subscripts))))
-          (t.store-ref ,clname (store tensor) (store-indexing subs tensor)))))
-    (apply #'ref (cons tensor subscripts))))
+    (let ((subs (if (numberp (car subscripts)) subscripts (car subscripts))))
+      (t.store-ref clname (store tensor) (store-indexing subs tensor)))))
 
 (defmethod (setf ref) (value (tensor standard-tensor) &rest subscripts)
   (let ((clname (class-name (class-of tensor))))
     ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
-    (compile-and-eval
-     `(defmethod (setf ref) (value (tensor ,clname) &rest subscripts)
-        (let* ((subs (if (numberp (car subscripts)) subscripts (car subscripts)))
-               (idx (store-indexing subs tensor))
-               (sto (store tensor)))
-          (t.store-set ,clname (t.coerce ,(field-type clname) value) sto idx)
-          (t.store-ref ,clname sto idx))))
-    (setf (ref tensor (if (numberp (car subscripts)) subscripts (car subscripts))) value)))
+    (let* ((subs (if (numberp (car subscripts)) subscripts (car subscripts)))
+           (idx (store-indexing subs tensor))
+           (sto (store tensor)))
+      (t.store-set clname (t.coerce value (field-type clname)) sto idx)
+      (t.store-ref clname sto idx))))
 
 ;; (defmethod subtensor ((tensor standard-tensor) (subscripts list))
 ;;   (multiple-value-bind (hd dims stds) (parse-slice-for-strides subscripts (dimensions tensor) (strides tensor))
@@ -1084,7 +1051,7 @@ Examples:
               (mod-dotimes (idx (dimensions y))
                 with (linear-sums
                       (of-y (strides y) (head y)))
-                do (t.store-set ,clname (t.coerce ,(field-type clname) (apply #'aref x (lvec->list! idx lst))) sto-y of-y)))
+                do (t.store-set ,clname (t.coerce ,(field-type clname) (apply #'aref x (copy-vector-to-list idx lst))) sto-y of-y)))
         y))
     (copy x y)))
 
@@ -1097,7 +1064,7 @@ Examples:
                    (mod-dotimes (idx (dimensions x))
                      with (linear-sums
                            (of-x (strides x) (head x)))
-                     do (setf (apply #'aref y (lvec->list! idx lst)) (t.store-ref ,clname sto-x of-x))))
+                     do (setf (apply #'aref y (copy-vector-to-list idx lst)) (t.store-ref ,clname sto-x of-x))))
         y))
     (copy x y)))
 
@@ -1107,7 +1074,7 @@ Examples:
     (copy arr y)))
 
 ;;; SWAP
-
+;;; Permutation
 ;;; PRINT
 (defun print-tensor (tensor stream)
   (let ((rank (rank tensor))
@@ -1179,15 +1146,20 @@ Examples:
          (rec-print tensor (1- (rank tensor)) nil))))))
 
 (defmethod print-object ((tensor standard-tensor) stream)
+  (declare (optimize (safety 0) (debug 1)))
   (print-unreadable-object (tensor stream :type t)
-    (if (slot-value tensor 'parent-tensor)
-        (format stream "~A~,4T:DISPLACED" (dimensions tensor))
-        (format stream "~A" (dimensions tensor)))
-    (when (> (size tensor) 0)
-      (format stream "~%")
-      (print-tensor tensor stream))))
+    (let ((dims (dimensions tensor)))
+      ;; (if ;; (and (slot-value tensor 'parent-tensor) dims)
+      ;; dims
+      ;; (format stream "~A~,4T:DISPLACED" dims)
+       (format stream "~A" dims)
+      ;; )
+      (when (> (size tensor) 0)
+        (format stream "~%")
+        (print-tensor tensor stream)))))
 
 (defmethod print-object ((tensor sparse-tensor) stream)
+  (declare (optimize (safety 0) (debug 1)))
   (print-unreadable-object (tensor stream :type t)
     (format stream
             (concatenate 'string
@@ -1253,7 +1225,7 @@ Examples:
 
 ;;; Compressed Sparse
 (defclass compressed-sparse-matrix (sparse-tensor)
-  ((transposed :initform nil :initarg :transpose? :reader transposed :type boolean
+  ((transposed :initform nil :initarg :transposed :reader transposed :type boolean
                :documentation "If NIL the matrix is in CSC, else if T, then matrix is CSR.")
    (neighbour-start :initarg :neighbour-start :reader neighbour-start :type index-store-vector
                     :documentation "Start index for ids and store.")
@@ -1276,7 +1248,7 @@ Examples:
            (assert (= (length subs) 2) nil 'tensor-index-rank-mismatch)
            (setf row (the index-type (aref subs 0))
                  col (the index-type (aref subs 1)))))
-        (when (transpose? tensor)
+        (when (transposed tensor)
           (rotatef row col))
         (lety* ((nst (neighbour-start tensor) :type index-store-vector)
                 (nid (neighbour-id tensor) :type index-store-vector)
@@ -1333,8 +1305,8 @@ Examples:
      `(defmethod ref ((tensor ,clname) &rest subscripts)
         (let ((idx (compressed-sparse-indexing (if (numberp (car subscripts)) subscripts (car subscripts)) tensor)))
           (if (< idx 0)
-              (values (t/sparse-fill ,clname) nil)
-              (values (t/store-ref ,clname (store tensor) idx) t)))))
+              (values (t.sparse-fill ,clname) nil)
+              (values (t.store-ref ,clname (store tensor) idx) t)))))
     (apply #'ref (cons tensor subscripts))))
 
 (defmethod (setf ref) (value (tensor compressed-sparse-matrix) &rest subscripts)
@@ -1357,7 +1329,7 @@ Examples:
                                                         :collect (cons (aref ni j) (aref vi j)))
                                                   #'< :key #'car))))
                           (unless (> (store-size tensor) (aref ns (1- (length ns))))
-                            (destructuring-bind (ni vi) (t/store-allocator ,clname (dims tensor) (+ (store-size tensor) *default-sparse-store-increment*))
+                            (destructuring-bind (ni vi) (t.store-allocator ,clname (dims tensor) (+ (store-size tensor) *default-sparse-store-increment*))
                               (let ((nio (neighbour-id tensor))
                                     (vio (store tensor)))
                                 (very-quickly
@@ -1382,7 +1354,7 @@ Examples:
                                   :for i := (aref ns col) :then (1+ i)
                                   :do (setf (aref ni i) r
                                             (aref vi i) v))))
-                        (t/store-set ,clname value (store tensor) idx))
+                        (t.store-set ,clname value (store tensor) idx))
                     (when (>= idx 0)
                       (let ((ns (neighbour-start tensor))
                             (ni (neighbour-id tensor))
@@ -1399,17 +1371,23 @@ Examples:
     (setf (ref tensor (if (numberp (car subscripts)) subscripts (car subscripts))) value)))
 
 ;;; Utils
-;; (deft t.zeros (class standard-tensor) (dims &optional initial-element)
-;;   (with-gensyms (astrs adims sizs)
-;;     `(let* ((,adims (make-index-store ,dims)))
-;;        (declare (type index-store-vector ,adims))
-;;        (multiple-value-bind (,astrs ,sizs) (make-stride ,adims)
-;;          (declare (type index-store-vector ,astrs))
-;;          (make-instance ',class
-;;            :dimensions ,adims
-;;            :head 0
-;;            :strides ,astrs
-;;            :store (t/store-allocator ,class ,sizs ,@(when initial-element `((t/coerce ,(field-type class) ,initial-element)))))))))
+(defmacro with-no-init-checks (&body body)
+  `(let ((*check-after-initializing-p* nil))
+     ,@body))
+
+(defun subfieldp (a b)
+  (subtypep (field-type a) (field-type b)))
+
+(defun t.zeros (ty dims &optional initial-element)
+  (let* ((adims (make-index-store dims)))
+    (declare (type index-store-vector adims))
+    (multiple-value-bind (astrs sizs) (make-stride adims)
+      (declare (type index-store-vector astrs))
+      (make-instance ty
+        :dimensions adims
+        :head 0
+        :strides astrs
+        :store (t.store-allocator ty sizs initial-element)))))
 
 ;; (deft t.zeros (class coordinate-sparse-tensor) (dims &optional nz)
 ;;   (with-gensyms (astrs adims sizs)
@@ -1420,12 +1398,12 @@ Examples:
 ;;          (make-instance ',class
 ;;            :dimensions ,adims
 ;;            :strides ,astrs
-;;            :store (t/store-allocator ,class ,sizs ,nz))))))
+;;            :store (t.store-allocator ,class ,sizs ,nz))))))
 
 ;; (deft t.zeros (class compressed-sparse-matrix) (dims &optional nz)
 ;;   (with-gensyms (dsym)
 ;;     `(let ((,dsym ,dims))
-;;        (destructuring-bind (vr vd) (t/store-allocator ,class ,dsym ,nz)
+;;        (destructuring-bind (vr vd) (t.store-allocator ,class ,dsym ,nz)
 ;;          (make-instance ',class
 ;;            :dimensions (make-index-store ,dims)
 ;;            :neighbour-start (allocate-index-store (1+ (second ,dsym)))
@@ -1438,14 +1416,11 @@ Examples:
 ")
   (:method ((dims cons) (dtype t) &optional initial-element)
     ;; (assert (member dtype *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class dtype)
-    (compile-and-eval
-     `(defmethod zeros-generic ((dims cons) (dtype (eql ',dtype)) &optional initial-element)
         (if initial-element
-            (t.zeros ,dtype dims initial-element)
-            (t.zeros ,dtype dims))))
-    (zeros-generic dims dtype initial-element)))
+            (t.zeros dtype dims initial-element)
+            (t.zeros dtype dims))))
 
-(definline zeros (dims &optional (type *default-tensor-type*) initial-element)
+(definline zeros (dims &key (type *default-tensor-type*) (initial-element 0))
 "Create a tensor with dimensions @arg{dims} of class @arg{dtype}.
 The optional argument @arg{initial-element} is used in two completely
 incompatible ways.
@@ -1467,18 +1442,16 @@ Example:
 
 (zeros '(10000 10000) 'real-compressed-sparse-matrix 10000)
 #<REAL-COMPRESSED-SPARSE-MATRIX #(10000 10000), store-size: 10000>"
-  ;; (with-no-init-checks
-    (let ((type (etypecase type (standard-class (class-name type)) (symbol type))))
-      (etypecase dims
-        (cons
-         (zeros-generic dims type initial-element))
-        (vector
-         (zeros-generic (vector-to-list dims) type initial-element))
-        (fixnum
-         (zeros-generic (list dims) type initial-element)))))
-;;)
+  (with-no-init-checks
+    (etypecase dims
+      (cons
+       (zeros-generic dims type initial-element))
+      (vector
+       (zeros-generic (vector-to-list dims) type initial-element))
+      (fixnum
+       (zeros-generic (list dims) type initial-element)))))
 
-(declaim (ftype (function ((or cons vector fixnum) &optional t t) base-tensor) zeros))
+(declaim (ftype (function ((or cons vector fixnum) &key (type t) (initial-element t)) base-tensor) zeros))
 
 (defmacro with-rowm (&rest body)
   `(let ((*default-stride-ordering* :row-major))
@@ -1506,5 +1479,73 @@ Example:
 
 ;;; Tensor Classes
 ;;;; Numeric
+(defclass numeric-tensor (standard-tensor) ())
+;; (deft t.field-type (sym numeric-tensor) ()
+;;   'number)
+(defclass real-numeric-tensor (numeric-tensor) ())
+;; (deft t.field-type (sym real-numeric-tensor) ()
+;;   'real)
+;; (deft t.realified-type (sym real-numeric-tensor) ()
+;;   sym)
+
+(defclass rational-tensor (real-numeric-tensor) ())
+;; (deft t.field-type (sym rational-tensor) ()
+;;   'rational)
+
+(defclass fixnum-tensor (real-numeric-tensor) ())
+;; (deft t.field-type (sym fixnum-tensor) () 'fixnum)
+
+(defclass u8-tensor (real-numeric-tensor) ())
+;; (deft t.field-type (sym u8-tensor) () '(unsigned-byte 8))
+
+(defclass boolean-tensor (real-numeric-tensor) ())
+;; (deft t.field-type (sym boolean-tensor) () '(mod 2))
+
+(defclass blas-numeric-tensor (numeric-tensor) ())
+
+(defclass real-blas-tensor (real-numeric-tensor blas-numeric-tensor) ())
+
+(defmethod print-element ((tensor real-blas-tensor)
+                          element stream)
+  (format stream "~,4,-2,,,,'Eg" element))
+
+(defclass real-tensor (real-blas-tensor) ())
+;; (deft t.field-type (sym real-tensor) () 'double-float)
+;; (deft t.complexified-type (sym real-tensor) () 'complex-tensor)
+
+(defclass sreal-tensor (real-blas-tensor) ())
+;; (deft t.field-type (sym sreal-tensor) () 'single-float)
+;; (deft t.complexified-type (sym sreal-tensor) () 'scomplex-tensor)
+
+(defclass complex-numeric-tensor (numeric-tensor) ())
+;; (deft t.field-type (sym complex-numeric-tensor) () 'complex)
+;; (deft t.complexified-type (sym complex-numeric-tensor) () sym)
+  
+(defclass complex-blas-tensor (complex-numeric-tensor blas-numeric-tensor) ())
+
+(defmethod store-size ((tensor complex-blas-tensor))
+  (floor (/ (length (store tensor)) 2)))
+
+(defmethod print-element ((tensor complex-blas-tensor)
+                          element stream)
+  (let ((realpart (realpart element))
+        (imagpart (imagpart element)))
+    (if (not (zerop imagpart))
+        (format stream "~,4,-2,,,,'Eg ~a ~,4,-2,,,,'Egi"  realpart (if (>= imagpart 0) #\+ #\-) (abs imagpart))
+        (format stream "~,4,-2,,,,'Eg" realpart))))
+
+(defclass complex-tensor (complex-blas-tensor) ())
+;; (deft t.field-type (sym complex-tensor) () '(complex double-float))
+;; (deft t.realified-type (sym complex-tensor) () 'real-tensor)
+
+(defclass scomplex-tensor (complex-blas-tensor) ())
+;; (deft t.field-type (sym scomplex-tensor) () '(complex single-float))
+;; (deft t.realified-type (sym scomplex-tensor) () 'sreal-tensor)
 
 ;;;; Sparse
+(defclass real-coordinate-sparse-tensor (coordinate-sparse-tensor) ())
+;; (deft t.field-type (sym real-coordinate-sparse-tensor) () 'double-float)
+
+(defclass real-compressed-sparse-matrix (compressed-sparse-matrix) ())
+;; (deft t.field-type (sym real-compressed-sparse-matrix) () 'double-float)
+  

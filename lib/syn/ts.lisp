@@ -14,6 +14,26 @@
 (in-package :syn/ts)
 (load-tree-sitter)
 (load-tree-sitter-alien)
+
+(defun ts-node-start (node)
+  "Return a cons (ROW . COL) indicating the file-position of the start of NODE."
+  (sb-alien:with-alien ((p (* ts-point) (ts-node-start-point-pointer node)))
+    (unless (sb-alien:null-alien p)
+      (with-alien-slots (tree-sitter::row tree-sitter::column) p
+        (cons tree-sitter::row tree-sitter::column)))))
+
+(defun ts-node-end (node)
+  "Return a cons (ROW . COL) indicating the file-position of the end of NODE."
+  (sb-alien:with-alien ((p (* ts-point) (ts-node-end-point-pointer node)))
+    (unless (sb-alien:null-alien p)
+      (with-alien-slots (tree-sitter::row tree-sitter::column) (sb-alien:deref p)
+        (cons tree-sitter::row tree-sitter::column)))))
+
+(definline ts-node-start-byte (node)
+  (tree-sitter::ts-node-start-byte-pointer node))
+(definline ts-node-end-byte (node)
+  (tree-sitter::ts-node-end-byte-pointer node))
+
 ;; (setq syn/lang:*language* :rust)
 (defmacro with-lang (lang &body body)
   `(with-ts-lang syn/lang:*language* ,lang
@@ -24,16 +44,20 @@
     (cons (ts-language-symbol-count l)
           (ts-language-field-count l))))
 
-(defun parse-file (lang path)
+(defun parse-file (lang path &key (produce-cst t) (consume t) (start 0) (end))
   (parse-string 
    lang
    (with-output-to-string (s)
      (write-file-into-stream path s))
-   :produce-cst nil))
+   :consume consume
+   :produce-cst produce-cst
+   :start start
+   :end end))
 
-(defun ts-file-query (path)
-  (with-ts-query (q :rust 
-                    (with-output-to-string (s)
-                      (write-file-into-stream path s))
-                  0)
-    (print q)))
+(defun ts-file-query (lang path query)
+  (let ((input (with-output-to-string (s) (write-file-into-stream path s))))
+    (with-ts-query (q lang query (length query))
+      (with-ts-query-cursor c
+        (let ((tree (parse-string lang input :consume nil)))
+          (tree-sitter::ts-query-cursor-exec-pointer c q (tree-sitter::ts-tree-root-node-pointer tree))
+          c)))))

@@ -32,15 +32,31 @@
     (struct ts-query-cursor-state
       (payload (* t))
       (current-byte-offset unsigned-int)))
+
+(define-alien-type ts-query-capture
+    (struct ts-query-capture
+      (node ts-node)
+      (index unsigned-int)))
+
+(define-alien-type ts-query-match
+    (struct ts-query-match
+      (id unsigned-int)
+      (pattern-index unsigned-short)
+      (capture-count unsigned-short)
+      (captures (* ts-query-capture))))
+
 (define-alien-type ts-query-cursor-options 
   (struct ts-query-cursor-options
     (payload (* t))
     (state (* ts-query-cursor-state))))
+
 (define-alien-type ts-lookahead-iterator (struct ts-lookahead-iterator))
+
 (define-alien-type ts-point
     (struct ts-point
 	    (row unsigned-int)
 	    (column unsigned-int)))
+
 (define-alien-type ts-range
   (struct ts-range
           (start-point ts-point)
@@ -117,13 +133,17 @@
 
 ;;; Tree Cursor
 (defar ts-tree-cursor-current-field-name c-string (cursor (* ts-tree-cursor)))
-
+(defar ts-tree-cursor-current-field-id ts-field-id (cursor (* ts-tree-cursor)))
+(defar ts-tree-cursor-current-descendant-index unsigned-int (cursor (* ts-tree-cursor)))
+(defar ts-tree-cursor-current-depth unsigned-int (cursor (* ts-tree-cursor)))
 (defar ts-tree-cursor-goto-next-sibling boolean (self (* ts-tree-cursor)))
-
+(defar ts-tree-cursor-goto-first-child-for-byte long (self (* ts-tree-cursor)) (goal-byte unsigned-int))
+(defar ts-tree-cursor-goto-first-child-for-point-pointer long (self (* ts-tree-cursor)) (goal-point (* ts-point)))
 (defar ts-tree-cursor-goto-parent boolean (self (* ts-tree-cursor)))
-
+(defar ts-tree-cursor-copy-pointer (* ts-tree-cursor) (cursor (* ts-tree-cursor)))
 (defar ts-tree-cursor-goto-first-child boolean (self (* ts-tree-cursor)))
-
+(defar ts-tree-cursor-goto-last-child boolean (self (* ts-tree-cursor)))
+(defar ts-tree-cursor-goto-descendant void (self (* ts-tree-cursor)) (goal-descendant-index unsigned-int))
 (defar ts-tree-cursor-delete void (cursor (* ts-tree-cursor)))
 
 (defar ts-language-version unsigned-int (v (* ts-language)))
@@ -154,6 +174,13 @@
 (defar ts-query-cursor-delete void
   (cursor (* ts-query-cursor)))
 
+(defar ts-query-pattern-count unsigned-int
+  (self (* ts-query)))
+(defar ts-query-capture-count unsigned-int
+  (self (* ts-query)))
+(defar ts-query-string-count unsigned-int
+  (self (* ts-query)))
+
 ;;; ALIEN.C
 (defar ts-query-cursor-exec-pointer void
   (cursor (* ts-query-cursor))
@@ -165,6 +192,10 @@
   (query (* ts-query))
   (node (* ts-node))
   (options (* ts-query-cursor-options)))
+
+(defar ts-query-cursor-next-match boolean
+  (cursor (* ts-query-cursor))
+  (match (* ts-query-match)))
 
 (defar ts-tree-root-node-pointer (* ts-node)
   (tree (* ts-tree)))
@@ -186,3 +217,19 @@
 
 (defar ts-node-type-pointer c-string
   (node (* ts-node)))
+
+(defar ts-node-string-pointer c-string
+  (node (* ts-node)))
+
+(defar ts-node-start-byte-pointer unsigned-int
+  (node (* ts-node)))
+
+(defar ts-node-end-byte-pointer unsigned-int
+  (node (* ts-node)))
+
+(defar ts-node-child-count-pointer unsigned-int
+  (node (* ts-node)))
+
+(defar ts-node-parent-pointer (* ts-node)
+  (node (* ts-node)))
+

@@ -92,7 +92,7 @@
      (unwind-protect (progn ,@body)
        (ts-query-cursor-delete ,var))))
 
-(defun parse-string (language string &key (start 0) end produce-cst (name-generator #'make-lisp-name))
+(defun parse-string (language string &key (start 0) end consume produce-cst (name-generator #'make-lisp-name))
   "Parse a STRING that represents LANGUAGE code using tree-sitter. START is
 where to start parsing STRING. END is where to stop parsing STRING.
 When PRODUCE-CST is set, the full concrete syntax tree will be produced as
@@ -106,12 +106,15 @@ desired name for use in lisp."
     (unwind-protect (parse-string-with-language language string parser
                                                 :start start
                                                 :end end
+                                                :consume consume
                                                 :produce-cst produce-cst
                                                 :name-generator name-generator)
       (ts-parser-delete parser))))
+        
 
 (defun parse-string-with-language (language string parser
-                                   &key (start 0) end produce-cst 
+                                   &key (start 0) end produce-cst
+                                        (consume t)
                                         (name-generator #'make-lisp-name))
   (unless (ts-parser-set-language parser (language-module language))
     (error 'cant-set-language :language language))
@@ -129,9 +132,11 @@ desired name for use in lisp."
              :string-start start
              :string-end end
              :language language))
-    (unwind-protect (convert-foreign-tree-to-list tree :produce-cst produce-cst
-                                                       :name-generator name-generator)
-      (ts-tree-delete tree))))
+    (if consume
+        (unwind-protect (convert-foreign-tree-to-list tree :produce-cst produce-cst
+                                                           :name-generator name-generator)
+          (ts-tree-delete tree))
+        tree)))
 
 (defun convert-foreign-tree-to-list (tree &key produce-cst name-generator
                                      &aux did-visit-children parse-stack)

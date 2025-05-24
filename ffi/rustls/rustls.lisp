@@ -317,7 +317,7 @@
 
 (defar rustls-server-config-builder-set-hello-callback rustls-result
   (builder (* rustls-server-config-builder))
-  (callback rustls-client-hello-callback))
+  (callback (* rustls-client-hello-callback)))
 
 (defar rustls-client-hello-select-certified-key rustls-result
   (hello (* rustls-client-hello))

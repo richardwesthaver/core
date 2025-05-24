@@ -1,7 +1,9 @@
 ;;; blas.asd --- BLAS Sytem Definitions
 (defsystem :blas
   :depends-on (:std :log)
-  :components ((:file "pkg"))
+  :components ((:file "pkg")
+               (:file "blas")
+               (:file "lapack"))
   :in-order-to ((test-op (test-op "blas/tests"))))
 
 (defsystem :blas/tests

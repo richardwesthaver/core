@@ -49,6 +49,7 @@
    :deletef
    :flatten
    :group
+   :firstn
    :zip-list :zip-tree
    :zipsym
    :ziprm
@@ -627,6 +628,7 @@
   (:use :cl)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
+  (:import-from :std/list :firstn)
   (:import-from :sb-int :collect)
   (:import-from :std/prim :definline)
   (:import-from :std/array :signed-array-length)
@@ -868,6 +870,7 @@
    :probe-delete-file
    :probe-delete-directory
    :delete-directories
+   :read-file
    :tmpfile
    :dir
    :file
