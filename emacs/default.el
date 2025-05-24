@@ -47,6 +47,8 @@
  which-key-mode t
  view-read-only t)
 
+(cl-pushnew (cons "melpa" "https://melpa.org/packages/") package-archives :test 'cl-equalp)
+
 (add-packages
  ;; eglot-x ;; LSP extensions
  org-web-tools ;; web parsing
@@ -379,6 +381,12 @@ function: '(ql:quickload :clouseau)'."
 ;;                  '((rust-ts-mode rust-mode) .
 ;;                    ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
 ;;     (eglot-x-setup)))
+
+;;; Asm
+(require 'x86-lookup "lib/x86-lookup")
+(setq  x86-lookup-pdf "/opt/store/data/doc/64-iA32-isa.pdf")
+(use-package nasm-mode :ensure t)
+(add-hook 'asm-mode-hook 'nasm-mode)
 
 ;;; Rust
 (add-hook 'rust-mode-hook 'eglot-ensure)
