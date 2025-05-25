@@ -13,6 +13,7 @@
    :complex-xdouble))
 
 (in-package :blas)
+
 (define-alien-loader openblas "/usr/lib/")
 ;; usually just points to libopenblas.so
 (define-alien-loader blas "/usr/lib/")

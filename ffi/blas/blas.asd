@@ -3,7 +3,8 @@
   :depends-on (:std :log)
   :components ((:file "pkg")
                (:file "blas")
-               (:file "lapack"))
+               (:file "lapack")
+               (:file "lapack-ffi"))
   :in-order-to ((test-op (test-op "blas/tests"))))
 
 (defsystem :blas/tests

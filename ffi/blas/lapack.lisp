@@ -20,8 +20,30 @@
 ;; in the future.
 
 ;;; Code:
-(in-package :blas)
+(defpackage :lapack
+  (:use :cl :sb-alien :blas)
+  (:import-from :blas :deflapack)
+  (:export))
 
+(in-package :lapack)
+;; types
 (define-alien-type lapack-int int)
 (define-alien-type lapack-logical lapack-int)
 (define-alien-type lapack-float-return float)
+(define-alien-type lapack-complex-float complex-float)
+(define-alien-type lapack-complex-double complex-double)
+;; callbacks
+(define-alien-type lapack-s-select2 (* (function lapack-logical (* float) (* float))))
+(define-alien-type lapack-s-select3 (* (function lapack-logical (* float) (* float) (* float))))
+(define-alien-type lapack-d-select2 (* (function lapack-logical (* double) (* double))))
+(define-alien-type lapack-d-select3 (* (function lapack-logical (* double) (* double) (* double))))
+(define-alien-type lapack-c-select1 (* (function lapack-logical (* lapack-complex-float))))
+(define-alien-type lapack-c-select2 (* (function lapack-logical (* lapack-complex-float) (* lapack-complex-float))))
+(define-alien-type lapack-z-select1 (* (function lapack-logical (* lapack-complex-double))))
+(define-alien-type lapack-z-select2 (* (function lapack-logical (* lapack-complex-double) (* lapack-complex-double))))
+
+(defparameter *lapack-ffi* (asdf:system-relative-pathname :blas "lapack-ffi.lisp"))
+(defun load-lapack-ffi (&optional (file *lapack-ffi*))
+  (load file))
+(defun compile-lapack-ffi (&optional (file *lapack-ffi*))
+  (compile-file file))
