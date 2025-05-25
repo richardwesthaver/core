@@ -100,7 +100,8 @@
    :ts-language-symbol-type
    :with-ts-query
    :ts-query-cursor-delete
-   :with-ts-query-cursor))
+   :with-ts-query-cursor
+   :check-ts-query-error))
 
 (in-package :tree-sitter)
 

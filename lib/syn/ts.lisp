@@ -15,25 +15,6 @@
 (load-tree-sitter)
 (load-tree-sitter-alien)
 
-(defun ts-node-start (node)
-  "Return a cons (ROW . COL) indicating the file-position of the start of NODE."
-  (sb-alien:with-alien ((p (* ts-point) (ts-node-start-point-pointer node)))
-    (unless (sb-alien:null-alien p)
-      (with-alien-slots (tree-sitter::row tree-sitter::column) p
-        (cons tree-sitter::row tree-sitter::column)))))
-
-(defun ts-node-end (node)
-  "Return a cons (ROW . COL) indicating the file-position of the end of NODE."
-  (sb-alien:with-alien ((p (* ts-point) (ts-node-end-point-pointer node)))
-    (unless (sb-alien:null-alien p)
-      (with-alien-slots (tree-sitter::row tree-sitter::column) (sb-alien:deref p)
-        (cons tree-sitter::row tree-sitter::column)))))
-
-(definline ts-node-start-byte (node)
-  (tree-sitter::ts-node-start-byte-pointer node))
-(definline ts-node-end-byte (node)
-  (tree-sitter::ts-node-end-byte-pointer node))
-
 ;; (setq syn/lang:*language* :rust)
 (defmacro with-lang (lang &body body)
   `(with-ts-lang syn/lang:*language* ,lang

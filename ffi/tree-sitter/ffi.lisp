@@ -19,14 +19,19 @@
 (define-alien-type ts-language (struct ts-language))
 (define-alien-type ts-parser (struct ts-parser))
 (define-alien-type ts-tree (struct ts-tree))
-;; not thread-safe
-(define-alien-type ts-query (struct ts-query))
 (define-alien-enum (ts-query-error unsigned-int)
   :none 0
   :syntax 1
   :node-type 2
   :field 3
   :capture 4)
+
+(define-alien-type ts-query 
+    (struct ts-query
+      (query (* ts-query))
+      (error-offset unsigned-int)
+      (error-type ts-query-error)))
+
 (define-alien-type ts-query-cursor (struct ts-query-cursor))
 (define-alien-type ts-query-cursor-state
     (struct ts-query-cursor-state
@@ -196,6 +201,19 @@
 (defar ts-query-cursor-next-match boolean
   (cursor (* ts-query-cursor))
   (match (* ts-query-match)))
+
+(defar ts-query-cursor-remove-match void
+  (cursor (* ts-query-cursor))
+  (match-id unsigned-int))
+
+(defar ts-query-cursor-next-capture boolean
+  (cursor (* ts-query-cursor))
+  (match (* ts-query-match))
+  (capture-index (* unsigned-int)))
+
+(defar ts-query-cursor-set-max-start-depth void
+  (cursor (* ts-query-cursor))
+  (max-start-depth unsigned-int))
 
 (defar ts-tree-root-node-pointer (* ts-node)
   (tree (* ts-tree)))

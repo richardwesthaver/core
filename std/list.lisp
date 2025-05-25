@@ -133,9 +133,10 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                          (rec (cdr x) acc))))))
       (rec x nil))))
 
-(defun zip-list (&rest args)
-  "Return a list of lists containing every member of ARGS at the same position."
-  (apply 'map 'list 'list args))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun zip-list (&rest args)
+    "Return a list of lists containing every member of ARGS at the same position."
+    (apply 'map 'list 'list args)))
 
 (defun zip-tree (&rest args)
   (if (and (some #'atom args) (some #'consp args)) nil

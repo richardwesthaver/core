@@ -30,7 +30,15 @@
                              (:file "path")
                              (:file "intern")))
                (:file "url")
-               (:file "tensor")
+               (:module "tensor"
+                :components 
+                ((:file "proto")
+                 (:file "base")
+                 (:file "loop")
+                 (:file "print")
+                 (:file "copy")
+                 (:file "util")
+                 (:file "class")))
                (:file "seq")
                (:module "tree"
                 :components ((:file "node")

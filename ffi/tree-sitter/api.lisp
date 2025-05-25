@@ -42,7 +42,7 @@
                      (tree-sitter-error-type c)
                      (tree-sitter-error-offset c)))))
 
-(defun ts-query-error-p (type &optional (offset 0))
+(defun check-ts-query-error (type &optional (offset 0))
   (unless (zerop type) ;; pass
     (error 'tree-sitter-query-error :type (ts-query-error* type) :offset offset)))
 
@@ -82,15 +82,12 @@
                   (,etype ts-query-error))
        (let ((,var (ts-query-new (language-module ,lang) (make-alien-string ,string) ,length
                                  (addr ,eoff) (addr ,etype))))
-         (unwind-protect
-              (progn (ts-query-error-p ,etype ,eoff)
-                     ,@body)
-           (ts-query-delete ,var))))))
+         (check-ts-query-error ,etype ,eoff)
+         ,@body))))
 
 (defmacro with-ts-query-cursor (var &body body)
   `(let ((,var (ts-query-cursor-new)))
-     (unwind-protect (progn ,@body)
-       (ts-query-cursor-delete ,var))))
+     ,@body))
 
 (defun parse-string (language string &key (start 0) end consume produce-cst (name-generator #'make-lisp-name))
   "Parse a STRING that represents LANGUAGE code using tree-sitter. START is
@@ -138,6 +135,28 @@ desired name for use in lisp."
           (ts-tree-delete tree))
         tree)))
 
+(defun ts-point-cons (p)
+  (unless (sb-alien:null-alien p)
+    (with-alien-slots (tree-sitter::row tree-sitter::column) p
+      (cons tree-sitter::row tree-sitter::column))))
+
+(defun ts-node-start (node)
+  "Return a cons (ROW . COL) indicating the file-position of the start of NODE."
+  (sb-alien:with-alien ((p (* ts-point) (ts-node-start-point-pointer node)))
+    (ts-point-cons p)))
+
+(defun ts-node-end (node)
+  "Return a cons (ROW . COL) indicating the file-position of the end of NODE."
+  (sb-alien:with-alien ((p (* ts-point) (ts-node-end-point-pointer node)))
+    (unless (sb-alien:null-alien p)
+      (with-alien-slots (tree-sitter::row tree-sitter::column) (sb-alien:deref p)
+        (cons tree-sitter::row tree-sitter::column)))))
+
+(definline ts-node-start-byte (node)
+  (tree-sitter::ts-node-start-byte-pointer node))
+(definline ts-node-end-byte (node)
+  (tree-sitter::ts-node-end-byte-pointer node))
+
 (defun convert-foreign-tree-to-list (tree &key produce-cst name-generator
                                      &aux did-visit-children parse-stack)
   (with-ts-cursor (cursor tree)
@@ -164,8 +183,8 @@ desired name for use in lisp."
                           (return root)))))
                 (t
                  (when is-named
-                   (let ((start-point (ts-node-start-point-pointer node))
-                         (end-point (ts-node-end-point-pointer node))
+                   (let ((start-point (ts-node-start-byte node))
+                         (end-point (ts-node-end-byte node))
                          (type (funcall name-generator (ts-node-type-pointer node)))
                          (field-name (ts-tree-cursor-current-field-name cursor)))
                      (when field-name (setf type (list (funcall name-generator field-name) type)))
