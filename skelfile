@@ -144,7 +144,7 @@
   	  (laparm (str)
   	   (let ((a (nreverse (split-sequence #\space str))))
   	    (list (if (string-equal (first a) "T")
-                     (gensym "T")
+                     '%t
                      (lasym (first a)))
                (if (third a)
                 ;; type param (could be X const* or const X*)

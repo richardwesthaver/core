@@ -18,6 +18,36 @@
 ;; This file provides alien type definitions for the generated bindings so
 ;; that we only need to walk the lapack.h AST for C functions.
 
+#|
+LAPACK routines use the following matrix storage schemes:
+
+Full storage: an m-by-n matrix A is stored in a two-dimensional array a, with
+the matrix element aij (i = 1..mj = 1..n), and stored in the array element
+a(i,j).
+
+Packed storage scheme allows you to store symmetric, Hermitian, or triangular
+matrices more compactly: the upper or lower triangle of the matrix is packed
+by columns in a one-dimensional array.
+
+Band storage: an m-by-n band matrix with kl sub-diagonals and ku
+superdiagonals is stored compactly in a two-dimensional array ab with kl+ku+1
+rows and n columns. Columns of the matrix are stored in the corresponding
+columns of the array, and diagonals of the matrix are stored in rows of the
+array.
+
+Rectangular Full Packed (RFP) storage: the upper or lower triangle of the
+matrix is packed combining the full and packed storage schemes. This
+combination enables using half of the full storage as packed storage while
+maintaining efficiency by using Level 3 BLAS/LAPACK kernels as the full
+storage.
+
+Generally in LAPACK routines, arrays that hold matrices in packed storage have
+names ending in p; arrays with matrices in band storage have names ending in
+b; arrays with matrices in the RFP storage have names ending in fp.
+|#
+
+;; lapack description notation ref: 
+;; https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-fortran/2025-1/mathematical-notation-for-lapack-routines.html
 ;;; Code:
 (defpackage :lapack
   (:use :std :cl :sb-alien :blas)
