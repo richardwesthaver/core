@@ -139,6 +139,8 @@
                                 len))))))
   	  (lasyms (x start end)
   	   (symbolicate (string-upcase (substitute #\- #\_ (lastr x start end)))))
+            (lasymf (x start end)
+             (symbolicate (string-upcase (substitute #\- #\_ (remove-string "LAPACK_" (lastr x start end))))))
   	  (laparm (str)
   	   (let ((a (nreverse (split-sequence #\space str))))
   	    (list (if (string-equal (first a) "T")
@@ -166,7 +168,7 @@
        (let ((p (position :function-declarator x)))
         (list* 'deflapack
          ;; routine name
-         (lasyms x (+ p 5) (+ p 7))
+         (lasymf x (+ p 5) (+ p 7))
          ;; return-type
          (lasyms x (- p 3) (- p 1))
          ;; list of function parameters (NAME TYPE)
