@@ -1,13 +1,10 @@
 ;;; blas.asd --- BLAS Sytem Definitions
 (defsystem :blas
   :depends-on (:std :log)
-  :components ((:file "pkg")
-               (:file "blas")
-               (:file "lapack")
-               (:file "lapack-ffi"))
+  :components ((:file "blas"))
   :in-order-to ((test-op (test-op "blas/tests"))))
 
 (defsystem :blas/tests
   :depends-on (:rt :blas :io)
-  :components ((:file "tests"))
+  :components ((:file "tests/blas"))
   :perform (test-op (op c) (uiop:symbol-call :rt :do-tests :blas)))
