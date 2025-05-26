@@ -1,4 +1,4 @@
-;;; lib/obj/hash/castable.lisp --- CAS Table
+;;; castable.lisp --- CAS Table
 
 ;; This implementation was written by Shinmera:
 ;; https://github.com/Shinmera/luckless/blob/master/cat.lisp
@@ -7,7 +7,7 @@
 ;; structures.
 
 ;;; Code:
-(in-package :obj/hash)
+(in-package :std/castable)
 
 (eval-always
   (defstruct (prime (:constructor prime (value)))
@@ -282,7 +282,7 @@
 
 (defun determine-hasher (test)
   ;; TODO 2024-09-23: 
-  (or (cond ((eq test #'eq) #'sb-impl::eq-hash/safe)
+  (or (cond ((eq test #'eq) #'sb-impl::eq-hash/common)
             ((eq test #'eql) #'sb-impl::eql-hash)
             ((eq test #'equal) #'sb-impl::equal-hash)
             ((eq test #'equalp) #'sb-impl::equalp-hash)

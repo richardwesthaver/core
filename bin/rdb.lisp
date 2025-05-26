@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :bin/rdb 
-  (:use :cl :rdb :std :cli/clap :log :clap :db :seq))
+  (:use :cl :rdb :std :cli/clap :log :clap :db))
 (in-package :bin/rdb)
 (load-package-cli :rdb)
 (defmain start-rdb ()

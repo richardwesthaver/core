@@ -28,7 +28,8 @@
 
 (define-alien-type ts-query 
     (struct ts-query
-      (query (* ts-query))
+      ;; ts-query
+      (query (* t))
       (error-offset unsigned-int)
       (error-type ts-query-error)))
 
@@ -48,7 +49,8 @@
       (id unsigned-int)
       (pattern-index unsigned-short)
       (capture-count unsigned-short)
-      (captures (* ts-query-capture))))
+      ;; (* ts-query-capture)
+      (captures (* t))))
 
 (define-alien-type ts-query-cursor-options 
   (struct ts-query-cursor-options

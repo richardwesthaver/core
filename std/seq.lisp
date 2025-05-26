@@ -678,3 +678,60 @@ TEST."
   (when (> val (accumulator-value self))
     (setf (accumulator-value self) val)))
 
+;;; Iterator
+#|
+
+The iterator protocol allows subsequently accessing some or all elements of a
+sequence in forward or reverse direction. Users first call
+make-sequence-iterator to create an iteration state and receive functions to
+query and mutate it. These functions allow, among other things, moving to,
+retrieving or modifying elements of the sequence. An iteration state consists
+of a state object, a limit object, a from-end indicator and the following six
+functions to query or mutate this state:
+
+|#
+
+(defclass iterator ()
+  ()
+  (:documentation "Iterator superclass inherited by objects implementing the iterator protocol."))
+
+;;; Protocol
+(defvar *idx* 0)
+(let ((*idx* 0))
+  (defgeneric next (self)
+    (:method ((self array))
+      (prog1 (aref self *idx*)
+        (incf *idx*))))
+  (defgeneric idx (self)
+    (:method ((self t)) *idx*))
+  (defgeneric prev (self)
+    (:method ((self array))
+      (decf *idx*)
+      (aref self *idx*))))
+(defgeneric key (self))
+(defgeneric val (self))
+(defgeneric iter (self &key &allow-other-keys))
+(defgeneric iter-valid-p (self))
+(defgeneric seek (self key &key))
+(defgeneric seek-to-first (self))
+(defgeneric seek-to-last (self))
+(defgeneric seek-for-prev (self key &key))
+
+(defvar *iter*)
+
+(defvar *iterator-functions*
+  '((next (&optional (s *iter*)) (next s))
+    (prev (&optional (s *iter*)) (prev s))
+    (seek-to-first (&optional (s *iter*)) (seek-to-first s))
+    (seek-to-last (&optional (s *iter*)) (seek-to-last s))
+    (seek-for-prev (key &optional (s *iter*)) (seek-for-prev s key))
+    (iter-valid-p (&optional (s *iter*)) (iter-valid-p s))
+    (seek (key &optional (s *iter*)) (seek s key))
+    (val (&optional (s *iter*)) (val s))
+    (key (&optional (s *iter*)) (key s))))
+
+(defmacro with-iter ((sym iter) &body body)
+    `(let ((,sym (setf *iter* ,iter)))
+       (flet ,*iterator-functions*
+         (declare (ignorable ,@(mapcar (lambda (x) `(function ,(car x))) *iterator-functions*)))
+         ,@body)))

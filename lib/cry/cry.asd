@@ -3,11 +3,11 @@
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
-  (:ironclad :sb-concurrency :sb-posix 
-             :sb-bsd-sockets :cl-ppcre
-             :std :log :obj :dat
-             :blake3 :io :keyutils
-             :rustls :cl+ssl)
+  (:ironclad :sb-concurrency 
+   :sb-posix :sb-bsd-sockets 
+   :std :log :obj :dat
+   :blake3 :keyutils
+   :rustls :cl+ssl)
   :components ((:file "pkg")
                (:file "condition" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("condition"))

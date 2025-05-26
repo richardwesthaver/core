@@ -1230,6 +1230,8 @@ ever overlap the vertical timing pattern."
     (format-information matrix modules level mask-ind)
     matrix))
 
+(defvar *mask-pattern-num* 8)
+
 (defun choose-masking (matrix modules level)
   "mask and evaluate using each mask pattern, choose the best mask result"
   (let ((n4 10)
@@ -1596,7 +1598,6 @@ Data capacity codewords (bytes, including ecc codewords) | Remainder bits.")
                  (push (list y x) centers))))))
     centers))
 
-(defvar *mask-pattern-num* 8)
 (defun mask-condition (indicator)
   (lambda (i j)
     (case indicator

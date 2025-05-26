@@ -103,14 +103,14 @@
   (:use :cl :std :skel/core/int :skel/core/schema
    :skel/core/obj :skel/core/proto :db
    :store :schema :rdb
-   :id :stored :log :config :build :seq)
+   :id :stored :log :config :build)
   (:export :skel-db 
    :skel-db-path))
 
 (defpackage :skel/core/log
   (:use :cl :std :log :skel/core/db :skel/core/int 
    :skel/core/obj :skel/core/proto :db
-   :store :schema :rdb :id :stored :log :config :build :seq :skel/core/schema)
+   :store :schema :rdb :id :stored :log :config :build :skel/core/schema)
   (:export
    :sk-log-schema
    :*skel-log-schema*

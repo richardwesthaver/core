@@ -301,11 +301,29 @@
   (:nicknames :std/ht)
   (:recycle :sb-int)
   (:import-from :sb-int :ensure-gethash)
+  (:import-from :std/prim :definline)
+  (:shadowing-import-from :sb-lockless :endp)
+  (:import-from :sb-lockless
+   :make-so-map/fixnum :+hash-nbits+
+   :node-hash :%node-next
+   :unbound-marker-p
+   :get-next :node-hash
+   :so-head :so-bins
+   :so-key :so-data
+   :so-count :so-key-node-p
+   :so-insert :so-delete
+   :so-find :so-find/string
+   :so-maplist :make-so-map/string
+   :make-so-set/string :make-so-set/fixnum :make-so-map/addr :make-marked-ref
+   :make-so-set/addr)
   (:export :hash-table-alist
    :maphash-keys :hash-table-keys
    :maphash-values :hash-table-values
    :alist-hash-table :plist-hash-table :hash-table-plist :ensure-gethash
-   :pophash))
+   :pophash :*global-hasher*
+   :*global-hash* :djb
+   :hash-object :hash-object-address
+   :dumb-string-hash))
 
 (defpkg :std/curry
   (:use :cl)
@@ -643,7 +661,19 @@
    :accumulated
    :accumulate
    :accumulator
-   :max-accumulator))
+   :max-accumulator
+   :iterator 
+   :next
+   :prev
+   :iter
+   :seek
+   :seek-to-first
+   :seek-to-last
+   :seek-for-prev
+   :iter-valid-p
+   :*iter*
+   :idx
+   :with-iter))
 
 (defpkg :std/thread
   (:use :cl)
@@ -708,6 +738,26 @@
    :*worker-threads*
    :*super-threads*
    :compute-special-bindings))
+
+(defpkg :std/castable
+  (:use :cl :std/thread :sb-concurrency :std/hash-table :std/spin :std/macs)
+  (:export
+   :castable
+   :make-castable
+   :castable-p
+   :rehash
+   :castable-size
+   :castable-count
+   :castable-test
+   :castable-hasher
+   :getchash
+   :remchash
+   :try-remchash
+   :put-if-absent
+   :put-if-equal
+   :put-if-present
+   :clrchash
+   :mapchash))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency :std/meta :std/spin)

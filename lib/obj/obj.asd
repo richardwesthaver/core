@@ -14,10 +14,6 @@
                              (:file "stored")
                              (:file "dynamic")))
                (:file "pkg")
-               (:module "hash"
-                :components ((:file "hasher")
-                             (:file "chash")
-                             (:file "castable")))
                (:file "id")
                (:module "uri"
                 :components ((:file "pkg")
@@ -39,7 +35,6 @@
                  (:file "copy")
                  (:file "util")
                  (:file "class")))
-               (:file "seq")
                (:module "tree"
                 :components ((:file "node")
                              (:file "avl")

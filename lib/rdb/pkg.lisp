@@ -9,10 +9,10 @@
 ;; Code:
 (defpackage :rdb
   (:use :cl :std :rocksdb 
-   :sb-alien :db :schema 
-   :btree :store :stored :log 
-   :seq :io/static :btree :time
-   :config :build :ast :id)
+   :sb-alien :db :schema :btree 
+   :store :stored :log :io/static 
+   :time :config :build :ast 
+   :id)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
@@ -157,7 +157,7 @@
    :schema-from-rdb-column-families))
 
 (defpackage :rdb/cli
-  (:use :cl :std :cli :rdb :db :seq)
+  (:use :cl :std :cli :rdb :db)
   (:export :*rdb-cli*))
 
 (in-package :rdb)

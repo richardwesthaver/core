@@ -3,51 +3,9 @@
 ;;
 
 ;;; Code:
-(defpackage :obj/hash
-  (:nicknames :hash)
-  (:use :cl :std)
-  (:shadowing-import-from :sb-lockless :endp)
-  (:import-from :sb-lockless
-   :make-so-map/fixnum :+hash-nbits+
-   :node-hash :%node-next
-   :unbound-marker-p
-   :get-next :node-hash
-   :so-head :so-bins
-   :so-key :so-data
-   :so-count :so-key-node-p
-   :so-insert :so-delete
-   :so-find :so-find/string
-   :so-maplist :make-so-map/string
-   :make-so-set/string :make-so-set/fixnum :make-so-map/addr :make-marked-ref
-   :make-so-set/addr)
-  (:export 
-   :*global-hasher*
-   :*global-hash*
-   :djb
-   :hash-object
-   :hash-object-address
-   :dumb-string-hash
-   ;; castable
-   :castable
-   :make-castable
-   :castable-p
-   :rehash
-   :castable-size
-   :castable-count
-   :castable-test
-   :castable-hasher
-   :getchash
-   :remchash
-   :try-remchash
-   :put-if-absent
-   :put-if-equal
-   :put-if-present
-   :clrchash
-   :mapchash))
-
 (defpackage :obj/id
   (:nicknames :id)
-  (:use :cl :std :obj/hash)
+  (:use :cl :std)
   (:export 
    :id :reset-id :update-id :make-id
    :id-factory))
@@ -122,25 +80,6 @@
 (defpackage :obj/tensor
   (:nicknames :tensor)
   (:use :cl :std))
-
-(defpackage :obj/seq
-  (:nicknames :seq)
-  (:use :cl :std)
-  (:export 
-   :iterator 
-   :next
-   :prev
-   :iter
-   :seek
-   :seek-to-first
-   :seek-to-last
-   :seek-for-prev
-   :iter-valid-p
-   :*iter*
-   :idx
-   :with-iter
-   :key
-   :val))
 
 (defpackage :obj/color
   (:nicknames :color)
@@ -282,7 +221,6 @@
 (defpackage :obj/ast
   (:nicknames :ast)
   (:use :cl :std)
-  (:shadowing-import-from :obj/seq :val)
   (:export :ast :build-ast :load-ast :load-ast*
            :val
            :*ast*
@@ -321,7 +259,7 @@
 
 (defpackage :obj/graph
   (:nicknames :graph)
-  (:use :cl :std :obj/id :obj/seq :ast :std/readtable)
+  (:use :cl :std :obj/id :ast :std/readtable)
   (:export 
    :vertex :edge :graph :make-edge :make-graph
    :nodes :edges :add-node :add-edge
@@ -430,7 +368,7 @@
 
 (defpackage :obj/db
   (:nicknames :db)
-  (:use :cl :std :id :seq :sb-mop :sb-pcl :schema :dynamic :plan :config)
+  (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :plan :config)
   (:export
    :get-val
    :set-val
@@ -547,7 +485,7 @@
 
 (defpackage :obj/tree
   (:nicknames :tree)
-  (:use :cl :std :obj/id :obj/seq)
+  (:use :cl :std :obj/id)
   (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
            :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
@@ -687,8 +625,7 @@
 
 (pkg:defpkg :obj
   (:use :cl :std)
-  (:use-reexport 
-   :hash :color
-   :seq :tree :graph :id
+  (:use-reexport :tree :graph :id
    :db :ast :time :uri 
-   :url :config :build :secret :schema :store :btree))
+   :url :config :build :secret 
+   :color :schema :store :btree))

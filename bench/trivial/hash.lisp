@@ -12,7 +12,7 @@
 ;;; Code:
 (defpackage :core/bench/hash
   (:nicknames :bench/hash)
-  (:use :cl :std :id :hash :blake3)
+  (:use :cl :std :id :blake3)
   (:export :bench-hash-strings :bench-hash-integers))
 
 (in-package :core/bench/hash)

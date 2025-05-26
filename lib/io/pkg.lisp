@@ -161,6 +161,7 @@
   (:import-from :std :deferror :eval-always)
   (:import-from :sb-gray :stream-force-output :stream-finish-output
    :stream-write-sequence)
+  (:import-from :ironclad :make-digest :produce-digest :update-digest)
   (:export :zlib-error :zlig-compressor :zlib-decompressor
    :with-zlib-output :with-zlib-input
    :with-zlib-buffer :with-zlib-stream))

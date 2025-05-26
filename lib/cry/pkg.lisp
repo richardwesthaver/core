@@ -42,7 +42,7 @@
 
 (defpackage :cry/b3
   (:nicknames :b3)
-  (:use :cl :std :blake3 :sb-alien :io/static)
+  (:use :cl :std :blake3 :sb-alien)
   (:export :b3hash :b3sum
            :b3hash-string))
 
