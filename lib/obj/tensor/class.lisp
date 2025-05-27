@@ -23,8 +23,8 @@
 (defclass fixnum-tensor (real-numeric-tensor) ())
 ;; (deft t.field-type (sym fixnum-tensor) () 'fixnum)
 
-(defclass u8-tensor (real-numeric-tensor) ())
-;; (deft t.field-type (sym u8-tensor) () '(unsigned-byte 8))
+(defclass octet-tensor (real-numeric-tensor) ())
+;; (deft t.field-type (sym octet-tensor) () '(unsigned-byte 8))
 
 (defclass boolean-tensor (real-numeric-tensor) ())
 ;; (deft t.field-type (sym boolean-tensor) () '(mod 2))

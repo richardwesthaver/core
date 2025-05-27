@@ -611,6 +611,14 @@
    :pull-sap*
    :defar))
 
+(defpkg :std/comp
+  (:use :cl)
+  (:import-from :sb-c :deftransform :defoptimizer :parse-deftransform :defknown :ctype-of :ctypecase
+   :ctype-array-dimensions :ctypep)
+  (:import-from :sb-ext :*compiler-print-variable-alist*)
+  (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
+   :defoptimizer :defknown :ctype-of :ctypecase :ctypep :ctype-array-dimensions))
+
 (defpkg :std/meta
   (:use :cl :sb-pcl)
   (:use-reexport :sb-mop)

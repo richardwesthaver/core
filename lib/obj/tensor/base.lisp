@@ -552,6 +552,7 @@ HD + \  STRIDES  * IDX
   (definline make-stride (dims)
     (ecase *default-stride-ordering* (:row-major (make-stride-rmj dims)) (:col-major (make-stride-cmj dims)))))
 
+;;; Standard Tensor
 ;;Is it a tensor, a linear-store ? It is both!
 (defclass standard-tensor (dense-tensor linear-store) ())
 

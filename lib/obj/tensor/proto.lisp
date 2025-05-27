@@ -1,6 +1,11 @@
 ;;; proto.lisp --- Tensor Protocols
 
-;; 
+;; Tensor Object API
+
+;;; Commentary:
+
+;; This file contains the 'high-level' tensor protocol. See meta.lisp for the
+;; low-level bits.
 
 ;;; Code:
 (in-package :obj/tensor)
