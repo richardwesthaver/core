@@ -19,7 +19,27 @@
 
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
-(deftype kernel () '(or cons symbol))
+(defclass kernel-object (funcallable-standard-object)
+  ()
+  (:metaclass funcallable-standard-class))
+
+;; make-instance (set-funcallable-instance-function kernel)
+
+(deftype kernel () 
+  "A type which specifies kernels. A kernel may be a list which is interpreted as
+a lambda expression, a symbol which names a function, or a compiled-function."
+  '(or cons symbol compiled-function kernel-object))
+
+(deftype kernel-function ()
+  "A function of at least one argument with no return value."
+  '(function (t &rest args) (values)))
+
+(deftype worker-kernel-function (&optional (kind 'worker))
+  `(function (,kind t t) (values)))
+(deftype channel-kernel-function (&optional (kind 'channel))
+  `(function (,kind) (values)))
+(deftype pool-kernel-function (&optional (kind 'thread-pool))
+  `(function (,kind scheduler t t &rest args) (values)))
 
 ;;; Vars
 (defvar *default-special-bindings* nil
@@ -511,9 +531,10 @@ FUNCTION."
   (values))
 
 ;;; Channel
-(defclass channel ()
+(defclass channel (sb-mop:funcallable-standard-object)
   ((queue :initform (make-queue) :type queue :initarg :queue :accessor channel-queue)
-   (pool :initform *thread-pool* :type kernel :initarg :kernel :accessor channel-pool)))
+   (pool :initform *thread-pool* :type kernel :initarg :kernel :accessor channel-pool))
+  (:metaclass sb-mop:funcallable-standard-class))
 
 ;;; Limiter
 (defclass thread-limiter ()
@@ -1230,6 +1251,12 @@ Calling `broadcast-work' from inside a worker is an error."
 		,g!array))
 	 (declare (inline submit-indexed receive-indexed))
 	 ,@body))))
+
+(defmacro defkernel (name-and-opts (&rest args) &body body)
+  "Define a new kernel function with NAME ARGS and BODY."
+  (typecase name-and-opts
+    (cons `(definline ,(car name-and-opts) ,args ,@body))
+    (t `(definline ,name-and-opts ,args ,@body))))
 
 ;;; Pipes
 ;; From Shinmera's VERBOSE

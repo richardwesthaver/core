@@ -704,6 +704,12 @@
    :*worker-class*
    :%worker
    :*worker*
+   :kernel-function
+   :defkernel
+   :kernel-object
+   :worker-kernel-function
+   :pool-kernel-function
+   :channel-kernel-function
    :*worker-kernel*
    :*pool-kernel*
    :%thread

@@ -314,7 +314,6 @@ TEST."
 	    (if node t nil))))
 
 ;;;; Raw Queue (vectorized)
-
 (deftype raw-queue-count () 'std/type:array-length)
 
 (defstruct (raw-queue (:constructor %make-raw-queue))
