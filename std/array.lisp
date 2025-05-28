@@ -24,6 +24,19 @@
                    (row-major-aref array i)))
     new-array))
 
+;; from petalisp
+(defun simplify-array (array)
+  "Returns an array with the same shape and elements as ARRAY, but that is
+guaranteed to be simple."
+  (if (typep array 'simple-array)
+      array
+      (let ((copy (make-array (array-dimensions array)
+                              :element-type (array-element-type array))))
+        (loop for index below (array-total-size array) do
+          (setf (row-major-aref copy index)
+                (row-major-aref array index)))
+        copy)))
+
 (deftype signed-array-length ()
   "A (possibly negated) array length."
   '#.(let ((limit (1- array-dimension-limit)))

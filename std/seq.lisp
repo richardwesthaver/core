@@ -265,7 +265,18 @@ TEST."
   lst)
 
 ;;; Queues
+;;;; Conditions
+(defun report-queue-size-limit-reached (condition stream)
+  (let ((queue (error-queue condition))
+        (element (error-element condition)))
+    (format stream "Size limit (~D) reached for non-extensible ~
+                    queue ~S while trying to enqueue element ~S onto it."
+            (length (data queue)) queue element)))
 
+(define-condition queue-size-limit-reached (error)
+  ((queue :reader error-queue :initarg :queue)
+   (element :reader error-element :initarg :element))
+  (:report report-queue-size-limit-reached))
 ;;;; Basic Queue
 (defstruct (basic-queue (:conc-name nil)
 		        (:constructor %make-basic-queue (head tail)))
@@ -310,6 +321,9 @@ TEST."
   (data (vector) :type simple-array)
   (start 0 :type std/type:array-index)
   (count 0 :type raw-queue-count))
+
+(defmethod data ((self raw-queue))
+  (raw-queue-data self))
 
 (defun make-raw-queue (capacity)
   (%make-raw-queue :data (make-array capacity)))
@@ -357,6 +371,9 @@ TEST."
   (lock (make-mutex))
   (%push nil)
   (%pop nil))
+
+(defmethod data ((self vector-queue))
+  (raw-queue-data (vector-queue-impl self)))
 
 (defun make-vector-queue* (capacity)
   (%make-vector-queue :impl (make-raw-queue capacity)))
@@ -471,6 +488,9 @@ TEST."
   (lock (sb-thread:make-mutex))
   (cvar nil))
 
+(defmethod data ((self cons-queue))
+  (cons-queue-impl self))
+
 (defmacro with-cons-queue-lock (queue &body body)
   `(with-mutex ((cons-queue-lock ,queue))
      ,@body))
@@ -563,19 +583,147 @@ TEST."
         (map nil #'push-elem initial-contents)))
     queue))
 
+;;; Priority Queue
+;; this queue implementation is based on phoe's DAMN-FAST-PRIORITY-QUEUE
+;; ref: https://github.com/phoe/damn-fast-priority-queue/blob/main/damn-fast-priority-queue/src.lisp
+
+;; TODO 2025-05-27: make thread-safe version? currently not needed
+(defvar *default-priority* 0)
+(defvar *default-priority-queue-size* 256)
+(deftype priority () '(unsigned-byte 32))
+(deftype priority-vector () '(simple-array priority (*)))
+(deftype priority-vector-extension () '(integer 2 256))
+
+(defstruct (priority-queue (:constructor %make-priority-queue))
+  (data (make-array *default-priority-queue-size*) :type simple-array)
+  (priorities (make-array *default-priority-queue-size* :element-type 'priority) :type priority-vector)
+  (size 0 :type array-length)
+  (extension 256 :type priority-vector-extension)
+  (extend-p t :type boolean))
+
+(defmethod data ((self priority-queue))
+  (priority-queue-data self))
+
+(declaim (ftype (function (simple-array priority-vector array-length)
+                          (values null &optional))
+                heapify-upwards))
+(definline heapify-upwards (data-vector prio-vector index)
+  (declare (type simple-array data-vector))
+  (declare (type priority-vector prio-vector))
+  (declare (type array-length index))
+  (do ((child-index index parent-index)
+       (parent-index (ash (1- index) -1) (ash (1- parent-index) -1)))
+      ((= child-index 0))
+    (let ((child-priority (aref prio-vector child-index))
+          (parent-priority (aref prio-vector parent-index)))
+      (cond ((< child-priority parent-priority)
+             (rotatef (aref prio-vector parent-index)
+                      (aref prio-vector child-index))
+             (rotatef (aref data-vector parent-index)
+                      (aref data-vector child-index)))
+            (t (return))))))
+
+(declaim (ftype (function (queue t priority) (values null &optional)) push-priority-queue))
+(definline push-priority-queue (queue object priority)
+  (symbol-macrolet ((data-vector (priority-queue-data queue))
+                    (prio-vector (priority-queue-priorities queue)))
+    (let ((size (priority-queue-size queue))
+          (extension-factor (priority-queue-extension queue))
+          (length (array-total-size data-vector)))
+      (when (>= size length)
+        (unless (priority-queue-extend-p queue)
+          (error 'queue-size-limit-reached :queue queue :element object))
+        (let ((new-length (max 1 (mod (* length extension-factor)
+                                      (ash 1 64)))))
+          (declare (type array-length new-length))
+          (when (<= new-length length)
+            (error "Integer overflow while resizing array: new-length ~D is ~
+                    smaller than old length ~D" new-length length))
+          (setf data-vector (adjust-array data-vector new-length)
+                prio-vector (adjust-array prio-vector new-length))))
+      (setf (aref data-vector size) object
+            (aref prio-vector size) priority)
+      (heapify-upwards data-vector prio-vector (priority-queue-size queue))
+      (incf (priority-queue-size queue))
+      nil)))
+
+(declaim (ftype (function (simple-array priority-vector array-index)
+                          (values null &optional))
+                heapify-downwards))
+(definline heapify-downwards (data-vector prio-vector size)
+  (declare (type simple-array data-vector))
+  (declare (type priority-vector prio-vector))
+  (let ((parent-index 0))
+    (loop
+      (let* ((left-index (+ (* parent-index 2) 1))
+             (left-index-validp (< left-index size))
+             (right-index (+ (* parent-index 2) 2))
+             (right-index-validp (< right-index size)))
+        (flet ((swap-left ()
+                 (rotatef (aref prio-vector parent-index)
+                          (aref prio-vector left-index))
+                 (rotatef (aref data-vector parent-index)
+                          (aref data-vector left-index))
+                 (setf parent-index left-index))
+               (swap-right ()
+                 (rotatef (aref prio-vector parent-index)
+                          (aref prio-vector right-index))
+                 (rotatef (aref data-vector parent-index)
+                          (aref data-vector right-index))
+                 (setf parent-index right-index)))
+          (declare (inline swap-left swap-right))
+          (when (and (not left-index-validp)
+                     (not right-index-validp))
+            (return))
+          (when (and left-index-validp
+                     (< (aref prio-vector parent-index)
+                        (aref prio-vector left-index))
+                     (or (not right-index-validp)
+                         (< (aref prio-vector parent-index)
+                            (aref prio-vector right-index))))
+            (return))
+          (if (and right-index-validp
+                   (<= (aref prio-vector right-index)
+                       (aref prio-vector left-index)))
+              (swap-right)
+              (swap-left)))))))
+
+(declaim (ftype (function (queue) (values t boolean &optional)) dequeue))
+(definline pop-priority-queue (queue)
+  (declare (type queue queue))
+  (if (= 0 (priority-queue-size queue))
+      (values nil nil)
+      (let ((data-vector (priority-queue-data queue))
+            (prio-vector (priority-queue-priorities queue)))
+        (multiple-value-prog1 (values (aref data-vector 0) t)
+          (decf (priority-queue-size queue))
+          (let ((old-data (aref data-vector (priority-queue-size queue)))
+                (old-prio (aref prio-vector (priority-queue-size queue))))
+            (setf (aref data-vector 0) old-data
+                  (aref prio-vector 0) old-prio))
+          (heapify-downwards data-vector prio-vector (priority-queue-size queue))))))
+
+(defun make-priority-queue (capacity &key initial-contents prioritize (element-type t))
+  (let ((queue (%make-priority-queue
+                :data (make-array capacity :element-type element-type)
+                :priorities (make-array capacity :element-type 'priority))))
+    (setf (priority-queue-size queue) capacity)
+    (when initial-contents
+      (flet ((push-elem (elem)
+               (push-priority-queue elem queue (if prioritize (funcall prioritize elem) *default-priority*))))
+        (declare (dynamic-extent #'push-elem))
+        (map nil #'push-elem initial-contents)))
+    queue))
+
 ;;;; Protocol
-(deftype queue () '(or cons-queue vector-queue))
+(deftype queue () '(or cons-queue vector-queue priority-queue))
 
-(defun %make-queue (&key fixed-capacity initial-contents)
-  (if fixed-capacity
-      (make-vector-queue fixed-capacity :initial-contents initial-contents)
-      (make-cons-queue :initial-contents initial-contents)))
-
-(defun make-queue (&rest args)
-  (apply #'%make-queue (if (= 1 (length args))
-                           nil
-                           args)))
-
+(defun make-queue (&key capacity initial-contents prioritize)
+  (cond 
+    ((and capacity (not prioritize)) (make-vector-queue capacity :initial-contents initial-contents))
+    ((not prioritize) (make-cons-queue :initial-contents initial-contents))
+    (prioritize (make-priority-queue (or capacity *default-priority-queue-size*) :initial-contents initial-contents :prioritize prioritize))))
+     
 (defun call-with-cons-queue-lock (fn queue)
   (with-cons-queue-lock queue
     (funcall fn)))
@@ -687,7 +835,9 @@ make-sequence-iterator to create an iteration state and receive functions to
 query and mutate it. These functions allow, among other things, moving to,
 retrieving or modifying elements of the sequence. An iteration state consists
 of a state object, a limit object, a from-end indicator and the following six
-functions to query or mutate this state:
+functions to query or mutate this state: step endp element (setf element) index copy
+
+See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-functions
 
 |#
 
@@ -695,7 +845,7 @@ functions to query or mutate this state:
   ()
   (:documentation "Iterator superclass inherited by objects implementing the iterator protocol."))
 
-;;; Protocol
+;; Protocol
 (defvar *idx* 0)
 (let ((*idx* 0))
   (defgeneric next (self)

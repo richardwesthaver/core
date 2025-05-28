@@ -568,7 +568,7 @@ FUNCTION."
 (defvar *default-worker-tx-capacity* 8)
 (defclass worker-status ()
   ((%rx :initform (sb-concurrency:make-gate))
-   (%tx :initform (make-queue :fixed-capacity *default-worker-tx-capacity*))))
+   (%tx :initform (make-queue :capacity *default-worker-tx-capacity*))))
 
 (defclass worker (worker-status)
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))

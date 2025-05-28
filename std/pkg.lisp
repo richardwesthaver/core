@@ -294,7 +294,7 @@
    :vector-max :vector-min
    :vector-eq
    :vector-to-list :copy-vector-to-list
-   :modproj))
+   :modproj :simplify-array))
 
 (defpkg :std/hash-table
   (:use :cl)
@@ -647,6 +647,7 @@
 (defpkg :std/seq
   (:use :cl)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
+  (:import-from :std/meta :data)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :std/list :firstn)
   (:import-from :sb-int :collect)
@@ -666,6 +667,11 @@
    :queue-count :queue-count* :queue-empty-p :queue-empty-p* :queue-full-p :queue-full-p*
    :try-pop-queue :try-pop-queue* :call-with-queue-lock :with-queue-lock
    :queue :make-queue
+   :priority-queue
+   :*default-priority* :*default-priority-queue-size*
+   :push-priority-queue
+   :pop-priority-queue
+   :make-priority-queue
    :accumulated
    :accumulate
    :accumulator

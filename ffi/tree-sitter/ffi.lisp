@@ -39,6 +39,12 @@
       (payload (* t))
       (current-byte-offset unsigned-int)))
 
+(define-alien-type ts-node
+    (struct ts-node
+            (context (array unsigned-int 4))
+            (id (* t))
+            (tree (* ts-tree))))
+
 (define-alien-type ts-query-capture
     (struct ts-query-capture
       (node ts-node)
@@ -88,12 +94,6 @@
           (start-point ts-point)
           (old-end-point ts-point)
           (new-end-point ts-point)))
-
-(define-alien-type ts-node
-    (struct ts-node
-	    (context (array unsigned-int 4))
-	    (id (* t))
-	    (tree (* ts-tree))))
 
 (define-alien-type ts-tree-cursor 
     (struct nil
