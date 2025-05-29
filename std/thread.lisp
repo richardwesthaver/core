@@ -19,12 +19,25 @@
 
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
+;;; Kernel Classes
+(defclass kernel-class (funcallable-standard-class)
+  ())
+
 (defclass kernel-object (funcallable-standard-object)
   ()
   (:metaclass funcallable-standard-class))
 
+(definline make-kernel (fn)
+  (let ((fin (make-instance 'kernel-object)))
+    (set-funcallable-instance-function fin fn)
+    fin))
+
+;; (defmethod :before initialize-instance ((self kernel-object) &key)
+;;   (when *kernel* (set-funcallable-instance-function self *kernel*)))
+    
 ;; make-instance (set-funcallable-instance-function kernel)
 
+;;; Types
 (deftype kernel () 
   "A type which specifies kernels. A kernel may be a list which is interpreted as
 a lambda expression, a symbol which names a function, or a compiled-function."
@@ -97,7 +110,7 @@ threaded context.")
   "List of threads with supervisor privileges.")
 (sb-ext:defglobal *oracle-table* (make-hash-table)
   "Hashtable containining (ID . ORACLE-SCOPE).")
-(sb-ext:defglobal *pool-table* (make-hash-table)
+(sb-ext:defglobal *thread-pool-table* (make-hash-table)
   "Hashtable containing (NAME . THREAD-POOL).")
 ;;; Conditions
 (defvar *error-workers* nil
@@ -531,7 +544,7 @@ FUNCTION."
   (values))
 
 ;;; Channel
-(defclass channel (sb-mop:funcallable-standard-object)
+(defclass channel (sb-funcallable-standard-object)
   ((queue :initform (make-queue) :type queue :initarg :queue :accessor channel-queue)
    (pool :initform *thread-pool* :type kernel :initarg :kernel :accessor channel-pool))
   (:metaclass sb-mop:funcallable-standard-class))
@@ -595,10 +608,9 @@ FUNCTION."
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
 	   :accessor worker-thread
 	   :initarg :thread)
+   (kernel :initform (make-kernel (compile-and-eval `(function ,*worker-kernel*))))
    (index :reader worker-index :type array-index :initarg :index)
-   (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings*)
-   (kernel :type kernel :accessor worker-kernel :initarg :kernel :initform *worker-kernel*
-	   :allocation :class)))
+   (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings*)))
 
 (defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
   (push (worker-thread self) *worker-threads*))
@@ -877,7 +889,7 @@ within their DOMAIN and SCOPE."))
    (name :accessor name :initarg :name)))
 
 (defclass thread-pool (thread-limiter thread-pool-context)
-  ((kernel :initform *pool-kernel* :type kernel :accessor kernel :initarg :kernel)
+  ((kernel :initform (make-kernel (compile-and-eval `(function ,*pool-kernel*))) :type kernel :accessor kernel :initarg :kernel)
    (scheduler :initarg :scheduler :accessor scheduler)
    (workers :initarg :workers :accessor workers :type (simple-array worker))
    (lock :initarg :lock :initform (make-mutex :name "workers") :type mutex :accessor lock)
@@ -885,12 +897,11 @@ within their DOMAIN and SCOPE."))
   (:documentation "Thread pools are similar to LPARALLEL kernels - they encompass the scheduling
 and execution of concurrent work using a pool of 'worker' threads."))
 
-(declaim (inline register-thread-pool))
-(defun register-thread-pool (name pool)
+(definline register-thread-pool (name pool)
   (declare (thread-pool pool))
-  (setf (gethash name *pool-table*) pool))
+  (setf (gethash name *thread-pool-table*) pool))
 
-(defun find-thread-pool (name) (gethash name *pool-table*))
+(defun find-thread-pool (name) (gethash name *thread-pool-table*))
   
 (defmethod initialize-instance :after ((self thread-pool) &key name &allow-other-keys)
   (when name (register-thread-pool name self)))
@@ -931,7 +942,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
 	(assert (eql i (worker-index worker)))
 	(warn "Replacing lost or dead worker")
 	(unwind-protect
-	     (let ((new-worker (make-worker* :kernel kernel :index i :bind (worker-bind worker))))
+	     (let ((new-worker (make-instance 'worker :kernel kernel :index i :bind (worker-bind worker))))
 	       (setf (svref workers i) new-worker)
 	       (send-worker-start new-worker)
 	       (receive-worker-start new-worker))
@@ -974,7 +985,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (append bindings (list (cons '*kernel* kernel))))
 
 (defun %make-worker (index)
-  (make-worker* :index index :thread nil))
+  (make-instance 'worker :index index :thread nil))
 
 (defun make-worker-thread (pool worker &optional bind)
   (with-thread (:bindings (or bind (worker-bind worker)))
@@ -1021,7 +1032,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
                                            (class 'thread-pool))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
-NAME when non-nil is an EQL-unique identifier associated with the thread-pool in *POOL-TABLE*.
+NAME when non-nil is an EQL-unique identifier associated with the thread-pool in *THREAD-POOL-TABLE*.
 
 BIND is an alist for establishing thread-local dynamic bindings inside worker threads.
 
@@ -1186,7 +1197,7 @@ bound to RET."
 (defun end-thread-pool (&key wait)
   (when-let ((pool *thread-pool*))
     (let ((name (when (slot-boundp pool 'name) (name pool))))
-      (when name (remhash name *pool-table*))
+      (when name (remhash name *thread-pool-table*))
       (setf *thread-pool* nil)
       (when (alivep pool)
         (let ((channel (let ((*thread-pool* pool)) (make-instance 'channel)))

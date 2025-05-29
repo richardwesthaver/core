@@ -694,6 +694,7 @@
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/spin :std/condition :std/seq)
   (:import-from :std/list :flatten)
+  (:import-from :std/prim :definline)
   (:import-from :std/prim :defmacro!)
   (:import-from :std/curry :ensure-function)
   (:import-from :std/macs :eval-always)
@@ -701,8 +702,8 @@
   (:import-from :std/macs :if-let :eval-always)
   (:import-from :std/list :deletef)
   (:export
+   :*default-spint-count*
    :*worker-class*
-   :%worker
    :*worker*
    :kernel-function
    :defkernel
@@ -712,7 +713,6 @@
    :channel-kernel-function
    :*worker-kernel*
    :*pool-kernel*
-   :%thread
    :*thread-pool*
    :find-thread-pool
    :run-thread
@@ -722,7 +722,6 @@
    :timed-join-thread :kill-thread
    :wait-for-threads :workers
    :hang :finish-threads
-   :make-workers
    :make-oracle
    :kill-worker
    :join-worker
@@ -744,6 +743,7 @@
    :thread-pool :workers
    :make-thread-pool :end-thread-pool
    :make-worker :designate-oracle
+   :make-workers
    :condition-wait*
    :sync-message
    :with-sync-message
@@ -782,6 +782,8 @@
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency :std/meta :std/spin)
   (:import-from :std/thread :%make-thread)
+  (:import-from :std/type :positive-fixnum)
+  (:import-from :std/macs :if-let)
   (:export
    :push-worker
    :task-schedule
@@ -802,7 +804,7 @@
    :*result*
    :define-task-kernel
    :task :job :task-pool :scheduled-task
-   :make-job
+   :make-job :make-task-pool
    :jobp :taskp :task :with-task-pool))
 
 (defpkg :std/async

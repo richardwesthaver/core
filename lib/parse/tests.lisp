@@ -52,8 +52,7 @@
       (t (error "Lexing error")))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun k-2-3 (a b c) (declare (ignore a c)) b)
-  )
+  (defun k-2-3 (a b c) (declare (ignore a c)) b))
 
 (define-parser *left-expression-parser*
   (:start-symbol expression)

@@ -89,7 +89,9 @@ This interface is experimental and subject to change."
     (format stream "~A :workers ~A :tasks ~A/~A :results ~A"
             (kernel self)
             (length (workers self))
-            (queue-count (tasks self))
+            (if-let ((tasks (tasks self)))
+              (queue-count tasks)
+              0)
             (semaphore-count (lock self))
             (mailbox-count (results self)))))
 
@@ -208,12 +210,26 @@ is responsible for indicating in the state slot the result of the computation.")
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (tasks self))))
 
+(defun make-task-pool (worker-count &key (name :default) (kernel *kernel*) tasks (task-class 'task))
+  (let ((tp (make-thread-pool 
+             worker-count 
+             :class 'task-pool
+             :name name
+             :kernel kernel)))
+    (declare (task-pool tp))
+    (setf (tasks tp)
+          (make-queue
+           :name "tasks"
+           :initial-contents
+           (make-array tasks 
+                       :element-type task-class
+                       :initial-element (make-instance task-class)
+                       :fill-pointer t)))
+    tp))
+
 ;;; Macros
 (defmacro with-task-pool ((sym &key (oracle t) (tasks 0) lock (workers 4) #+nil start (kernel (quote *pool-kernel*)) (worker-kernel (quote *worker-kernel*)) results) &body body)
-  `(let ((,sym (make-thread-pool ,workers :class 'task-pool
-                                 ,@(when lock `(:lock ,lock))
-                                 :worker-kernel ,worker-kernel
-                                 :kernel ,kernel)))
+  `(let ((,sym ))
      (setf (tasks ,sym)
            (make-queue
 	    :name "tasks"
