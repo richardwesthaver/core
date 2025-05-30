@@ -520,7 +520,7 @@ extractor."
 (defmethod ingest-db ((self rdb-database) files &key (opts (rocksdb-ingestexternalfileoptions-create))
                                                      column)
   (if column
-      (ingest-db (db self) files :opts opts :cf (cf column))
+      (ingest-db (db self) files :opts opts :column (find-column column self))
       (ingest-db (db self) files :opts opts)))
 
 (defmethods make-db 

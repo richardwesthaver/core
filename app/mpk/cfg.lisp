@@ -75,4 +75,3 @@
 	    (init-mpkrc file))))
   (setf *log-level* (level (logger *mpk-user-config*)))
   *mpk-user-config*)
-

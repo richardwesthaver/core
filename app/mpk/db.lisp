@@ -13,8 +13,9 @@
 (in-package :mpk/db)
 (in-readtable :std)
 (defvar *mpk-db-backend-options* rdb::*rdb-backend-options*)
-(set-database-backend :mpk *mpk-db-backend-options*
-                      (lambda () (db::%load-database-backend :rdb)))
+(set-database-backend 
+ :mpk *mpk-db-backend-options*
+ (lambda () (db::%load-database-backend :rdb)))
 
 (defschema mpk-db-schema (rdb-schema)
   ((:id (uuid . string))
@@ -36,29 +37,28 @@
 (defclass mpk-db-id (id) ()
   (:default-initargs :id (uuid:make-v4-uuid)))
 
-(defmethod make-id ((self (eql :mpk-db))) (make-instance 'mpk-db-id))
+(defmethod make-id ((self (eql :mpk))) (make-instance 'mpk-db-id))
 
 ;;; DB
 (defclass mpk-db (rdb-database) ())
 
-(defmethod make-db ((engine (eql :mpk-db)) &rest initargs)
+(defmethod make-db ((engine (eql :mpk)) &rest initargs)
   (declare (ignore engine))
   (change-class (apply 'make-db :rdb initargs) 'mpk-db))
 
-(defmethod get-db (dbs (name (eql :mpk-db)))
-  (sb-sequence:find name dbs :key 'name :test 'string-equal))
+(defmethod get-db (dbs (name (eql :mpk)))
+  (find name dbs :key 'name :test 'string-equal))
 
 (defun ensure-mpk-db ()
   (etypecase *db*
     (mpk-db *db*)
-    (null (mpk-db-init))
-    (t (rdb-error "*DB* is not of type MPK-DB."))))
+    (null (mpk-db-init))))
 
 (defun mpk-db-init ()
   (if *db*
       (simple-rdb-warning "*DB* already bound.")
       (setq *db* 
-            (make-db :mpk-db
+            (make-db :mpk
               :name (namestring *mpk-db-meta-directory*))))
   (if (probe-file *mpk-db-meta-directory*)
       (progn
@@ -84,3 +84,6 @@
       (maphash 
        (lambda (k v) (declare (ignore v)) (put-kv s (make-kv (integer-to-octets (incf i) 32) (string-to-octets (namestring k)))))
        meta))))
+
+(defun ingest-metadata (&optional (metadata #l"mpk:cache;metadata.sst"))
+  (ingest-db *db* (list (namestring metadata)) :column :metadata))

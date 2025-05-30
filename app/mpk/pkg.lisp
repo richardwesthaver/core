@@ -124,7 +124,8 @@
    #:*mpk-db-id-seed*
    #:*mpk-db-meta-directory*
    #:*mpk-db-directory*
-   #:mpk-cache-path))
+   #:mpk-cache-path
+   #:mpk-init))
 
 (defpackage :mpk/db
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)

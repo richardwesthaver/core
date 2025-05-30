@@ -12,5 +12,6 @@
                (:file "db")
                (:file "cfg")
                (:file "net")
+               (:file "mpk")
                (:file "cli")
                (:file "gui")))
