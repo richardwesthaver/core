@@ -12,7 +12,7 @@
    :sb-alien :db :schema :btree 
    :store :stored :log :io/static 
    :time :config :build :ast 
-   :id)
+   :id :std/seq)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    ;; err
@@ -137,7 +137,6 @@
    :rdb-wbwi
    :rdb-wbwi-count
    :rdb-wbwi-data
-   :iter
    :rdb-wbwi-clear
    :rdb-wbwi-save
    :rdb-wbwi-ts
@@ -154,10 +153,11 @@
    :rdb-log-schema
    :cursor-handle
    :simple-rdb-warning
-   :schema-from-rdb-column-families))
+   :schema-from-rdb-column-families
+   :rdb-write))
 
 (defpackage :rdb/cli
-  (:use :cl :std :cli :rdb :db)
+  (:use :cl :std :cli :rdb :db :std/seq)
   (:export :*rdb-cli*))
 
 (in-package :rdb)

@@ -4,3 +4,4 @@
 
 ;;; Code:
 (pkg:defpkg :user (:use :std-lisp :std-user :cl-user :sb-ext))
+(pushnew :user *features*)

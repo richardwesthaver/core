@@ -25,7 +25,7 @@
    (:state (uuid . octet))
    (:meta (uuid . string))))
 
-(defvar *mpk-db-schema* (make-instance 'mpk-db-schema))
+(defvar *mpk-metadata-schema* (make-instance 'mpk-db-schema))
 
 (load-database-backend :mpk)
 
@@ -54,20 +54,24 @@
     (mpk-db *db*)
     (null (mpk-db-init))))
 
-(defun mpk-db-init ()
-  (if *db*
-      (simple-rdb-warning "*DB* already bound.")
-      (setq *db* 
-            (make-db :mpk
-              :name (namestring *mpk-db-meta-directory*))))
-  (if (probe-file *mpk-db-meta-directory*)
-      (progn
-        (load-opts *db* :backfill t)
-        (open-columns* *db*))
-      (progn 
-        (open-db *db*)
-        (load-schema *db* *mpk-db-schema*)
-        (create-columns *db*))))
+(defun mpk-db-init (&key (metadata t))
+  (when *db* 
+    (simple-rdb-warning "*DB* already bound")
+    (shutdown-db *db*))
+  (when metadata
+    (setq *db*
+          (make-db :mpk
+            :name (namestring (mpk-db-path "metadata"))
+            :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+            :logger (create-default-logger-callback)))
+    (if (probe-file (mpk-db-path "metadata"))
+        (progn
+          (load-opts *db* :backfill t)
+          (open-columns* *db*))
+        (progn
+          (open-db *db*)
+          (load-schema *db* *mpk-metadata-schema*)
+          (create-columns *db*)))))
 
 (defun mpk-db-shutdown (&optional (wait t))
   (when *db* 
@@ -78,12 +82,78 @@
   (when schema
     (schema-from-rdb-column-families (columns *db*))))
 
-(defun mpk-metadata-sst (&optional (meta *music-metadata*))
-  (with-sst (s :file (namestring #l"mpk:cache;metadata.sst") :destroy t)
-    (let ((i -1))
-      (maphash 
-       (lambda (k v) (declare (ignore v)) (put-kv s (make-kv (integer-to-octets (incf i) 32) (string-to-octets (namestring k)))))
-       meta))))
+(defun make-metadata-sst (&optional (meta *music-metadata*))
+  (wait-for-threads
+   (list
+    (with-thread (:name "music-files")
+      (with-sst (s :file (namestring #l"mpk:cache;file.sst") :destroy t)
+        (let ((i -1))
+          (maphash-keys 
+           (lambda (k) 
+             (put-kv s (make-kv (integer-to-octets (incf i) 128) (string-to-octets (namestring k)))))
+           meta))))
+    (with-thread (:name "music-names")
+      (with-sst (s :file (namestring #l"mpk:cache;name.sst") :destroy t)
+        (let ((i -1))
+          (mapc (lambda (k) 
+                  (put-kv 
+                   s 
+                   (make-kv 
+                    (integer-to-octets (incf i) 128)
+                    (if k
+                        (string-to-octets k)
+                        (make-octets 0)))))
+                (get-music-metadata* "TITLE"))))))))
 
-(defun ingest-metadata (&optional (metadata #l"mpk:cache;metadata.sst"))
-  (ingest-db *db* (list (namestring metadata)) :column :metadata))
+(defun insert-music-metadata (&key (file t) (name t))
+  (let ((files (rdb::make-rdb-wbwi)) (names (rdb::make-rdb-wbwi)))
+    (wait-for-threads
+     (flatten
+      (list
+       (when file
+         (with-thread (:name "music-files")
+           (let ((i -1))
+             (maphash-keys 
+              (lambda (k) 
+                (put-kv files (make-kv (integer-to-octets (incf i) 128) (string-to-octets (namestring k)))))
+              *music-metadata*))))
+       (when name
+         (with-thread (:name "music-names")
+           (let ((i -1))
+             (mapc (lambda (k) 
+                     (put-kv 
+                      names 
+                      (make-kv 
+                       (integer-to-octets (incf i) 128)
+                       (if k
+                           (string-to-octets k)
+                           (make-octets 0)))))
+                   (get-music-metadata* "TITLE"))))))))
+    (unwind-protect
+         (progn
+           (when file (rdb-write *db* files))
+           (when name (rdb-write *db* names)))
+      (when file (rocksdb::rocksdb-writebatch-wi-destroy (sap files)))
+      (when name (rocksdb::rocksdb-writebatch-wi-destroy (sap names))))))
+
+;; (defun update-metadata ())
+
+;; WHY DOES THIS CORRUPT
+(defun ingest-metadata-sst (&key (file #l"mpk:cache;file.sst") (name #l"mpk:cache;name.sst"))
+  (let ((opts (rocksdb:rocksdb-ingestexternalfileoptions-create)))
+    (rocksdb:rocksdb-ingestexternalfileoptions-set-allow-global-seqno opts nil)
+    (rocksdb:rocksdb-ingestexternalfileoptions-set-move-files opts t)
+    (ingest-db *db* (list (namestring file)) :column :file :opts opts)
+    (ingest-db *db* (list (namestring name)) :column :name :opts opts)))
+
+(defun get-metadata* (column)
+  (rdb:with-column (cf (find-column column *db*))
+    (std/seq:with-iter (it (iter *db* :cf cf))
+      (seek-to-first it)
+      (loop while (iter-valid-p it)
+            do (progn
+                 (fmt-row (list
+                           (octets-to-integer (key it))
+                           (sb-ext:octets-to-string (val it)))
+                          t)
+                 (next it))))))

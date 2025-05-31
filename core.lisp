@@ -7,7 +7,7 @@
 
 (defpkg :core 
   (:use :cl)
-  (:use-reexport :std :log :io :obj :net :cry :parse :syn :dat :cl-user :sb-ext :sb-debug))
+  (:use-reexport :std :log :io :obj :net :cry :parse :dat :cl-user :sb-ext :sb-debug))
 
 (in-package :core)
 (pushnew :core *features*)

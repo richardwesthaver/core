@@ -1,16 +1,21 @@
 (defsystem :core
   :depends-on 
-  (:std :std :cli :log 
-   :dat :rocksdb :btrfs :doc 
-   :nlp :skel :syn
-   :organ :packy :obj :net
-   :tree-sitter :xkb :ssh2 :sndfile
-   :zstd :uring :blake3 :gstreamer :q :dsp :math ;; :ublk
-   :parse :pod :rdb :gui
-   :cry :krypt :io :glib)
+  (:std :cli :log :obj
+   :net :nlp :dat :doc
+   :q :dsp :math :parse 
+   :rdb :cry :io)
   :components ((:file "core"))
   :build-pathname "core-source"
   :build-operation monolithic-concatenate-source-op)
+
+(defsystem :core/user
+  :depends-on 
+  (:core :packy :pod :krypt 
+   :krypt :rt :vc :web :gui)
+  :components ((:file "user")
+               (:file "prelude"))
+  :build-operation monolithic-compile-bundle-op
+  :build-pathname "user")
 
 (defsystem :core/tests
   :depends-on (:rt :std/tests :log/tests :rt/tests :cli/tests
@@ -54,15 +59,3 @@
                              (:file "bench"))))
   :build-pathname "bench"
   :build-operation monolithic-compile-bundle-op)
-
-(defsystem :core/lib
-  :depends-on (:cli :log :dat :doc
-               :nlp :skel :syn :organ
-               :packy :obj :net :io
-               :parse :pod :rdb :rt
-               :dsp :cry :krypt :gui))
-
-(defsystem :core/ffi
-  :depends-on (:blake3 :btrfs :keyutils :rocksdb 
-               :rustls :sndfile :ssh2 :tree-sitter 
-               :ublk :uring :xkb :zstd))

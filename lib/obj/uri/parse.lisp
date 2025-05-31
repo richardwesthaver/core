@@ -92,7 +92,6 @@
   (multiple-value-bind (scheme host userinfo port path query fragment
                         pct-encoded ipv6 zone-id)
       (parse-uri-string-rfc3986 thing)
-
     (when scheme
       (setq scheme
         (cond

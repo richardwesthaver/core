@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :log)
 
+(defclass db-source (source database) ())
+
 (defclass db-sink (sink database) ())
 
 (defmethod msg ((self db-sink) (msg log-message))

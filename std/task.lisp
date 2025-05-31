@@ -78,7 +78,7 @@ This interface is experimental and subject to change."
   ((tasks :accessor tasks :initarg :tasks :type spin-queue)))
 ;;; Task Pool
 (defclass task-pool (thread-pool)
-  ((tasks :initform (when (boundp '*tasks*) *tasks*) :initarg :tasks :accessor tasks)
+  ((tasks :initform (if (boundp '*tasks*) *tasks*) :initarg :tasks :accessor tasks)
    ;; TODO: test weak-vector here
    (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
             :initarg :workers :accessor workers)
@@ -210,7 +210,7 @@ is responsible for indicating in the state slot the result of the computation.")
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (tasks self))))
 
-(defun make-task-pool (worker-count &key (name :default) (kernel *kernel*) tasks (task-class 'task))
+(defun make-task-pool (worker-count &key (name :default) (kernel *kernel*) tasks results (task-class 'task))
   (let ((tp (make-thread-pool 
              worker-count 
              :class 'task-pool
@@ -225,20 +225,12 @@ is responsible for indicating in the state slot the result of the computation.")
                        :element-type task-class
                        :initial-element (make-instance task-class)
                        :fill-pointer t)))
+    (setf (results tp) (make-mailbox :name "results" :initial-contents results))
     tp))
 
 ;;; Macros
-(defmacro with-task-pool ((sym &key (oracle t) (tasks 0) lock (workers 4) #+nil start (kernel (quote *pool-kernel*)) (worker-kernel (quote *worker-kernel*)) results) &body body)
-  `(let ((,sym ))
-     (setf (tasks ,sym)
-           (make-queue
-	    :name "tasks"
-	    :initial-contents
-	    (make-array ,tasks 
-			:element-type 'task
-			:initial-element (make-instance 'task)
-			:fill-pointer t)))
-     ,@(when results `((setf (results ,sym) ,results)))
-     ,@(when oracle `((designate-oracle ,sym ,oracle)))
+(defmacro with-task-pool ((sym &key (tasks 0) (workers 4) #+nil start (kernel (quote *pool-kernel*)) results) 
+                          &body body)
+  `(let ((,sym (make-task-pool ,workers :kernel ,kernel :tasks ,tasks :results ,results)))
      ;; ,@(when start `((start-task-workers ,sym)))
      ,@body))

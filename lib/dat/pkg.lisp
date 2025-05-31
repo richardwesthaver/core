@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :dat/proto
-  (:use :cl :std)
+  (:use :cl :std :std/seq)
   (:export :dat-error))
 
 (defpackage :dat/sxp

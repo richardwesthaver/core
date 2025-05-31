@@ -437,9 +437,10 @@ extractor."
 (defmethod iter ((self rdb-database) &key column (opts (rocksdb-readoptions-create)))
   (typecase column
     (rdb-column-family (iter (db self) :cf (cf column) :opts opts))
-    (string (iter (db self) :cf (cf (find-column column self)) :opts opts))
-    (rdb-cf (iter (db self) :cf column :opts opts))
     (null (iter (db self) :opts opts))
+    (symbol (iter (db self) :cf (cf (find-column column self)) :opts opts))
+    (simple-string (iter (db self) :cf (cf (find-column column self)) :opts opts))
+    (rdb-cf (iter (db self) :cf column :opts opts))
     (t (iter (db self) :opts opts :cf column))))
 
 (defmethods get-val 

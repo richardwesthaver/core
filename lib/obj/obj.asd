@@ -34,7 +34,8 @@
                  (:file "print")
                  (:file "copy")
                  (:file "util")
-                 (:file "class")))
+                 (:file "class")
+                 (:file "readtable")))
                (:module "tree"
                 :components ((:file "node")
                              (:file "avl")

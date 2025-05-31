@@ -187,7 +187,7 @@
   (with-db (db :db (make-db :rdb
                             :name (format nil "/tmp/~A" (random-chars 4))
                             :logger (create-default-logger-callback))
-               :open nil 
+               :open nil
                :close t)
     (open-db db)))
           

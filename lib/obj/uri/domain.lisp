@@ -7,7 +7,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *default-etld-names*
-    (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/psl.dat")))
+    (probe-file #.(asdf:system-relative-pathname :core ".stash/psl.dat")))
 
   (defun load-etld-data (&optional (etld-names-file *default-etld-names*))
     (when etld-names-file

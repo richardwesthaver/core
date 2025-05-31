@@ -6,7 +6,8 @@
                (:file "var")
                (:file "proto")
                (:file "sfc")
-               (:file "auto"))
+               (:file "auto")
+               (:file "readtable"))
   :in-order-to ((test-op (test-op :math/tests))))
 
 (defsystem :math/tests

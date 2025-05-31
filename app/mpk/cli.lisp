@@ -54,6 +54,17 @@
 	(print-slots (mpd:mpc-stats *mpc*)))
       (terpri))))
 
+(defcmd mpk-daemon* ()
+  (with-cli (*mpkd-cli* :args (cdr (cli:args)))
+    (do-opts *mpkd-cli*)
+    (do-cmd *mpkd-cli*)))
+
+(define-cli *mpkd-cli*
+  :name "mpkd"
+  :version "0.1.0"
+  :help t
+  :description "Media Production Kit Daemon")
+
 (define-cli *mpk-cli*
   :name "mpk"
   :version "0.1.0"
@@ -69,6 +80,7 @@
 	 (:name shuffle :thunk mpk-shuffle-cmd)
 	 (:name mpc :thunk mpk-mpc-cmd)
          (:name get :thunk mpk-get-cmd)
+         (:name daemon :thunk mpk-daemon*)
          (:name stats :thunk mpk-stats-cmd
           :opts #1#))
   :thunk mpk-stats-cmd)

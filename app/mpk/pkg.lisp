@@ -112,7 +112,7 @@
    #:mpk-music-path
    #:mpk-data-path
    #:*mpc*
-   #:mpk-music-metadata-scan
+   #:music-metadata-scan
    #:*music-metadata*
    #:mpk-component
    #:mpk-toggle
@@ -125,14 +125,21 @@
    #:*mpk-db-meta-directory*
    #:*mpk-db-directory*
    #:mpk-cache-path
-   #:mpk-init))
+   #:mpk-init
+   #:get-music-metadata
+   #:get-music-metadata*
+   #:mpk-db-path))
 
 (defpackage :mpk/db
-  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
+  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config :std/seq)
   (:import-from :sb-ext :string-to-octets)
   (:export :*mpk-db* :*mpk-db-schema* :mpk-db 
    :mpk-db-init :mpk-db-shutdown
-   :mpk-db-info))
+   :mpk-db-info
+   :ingest-metadata-sst
+   :make-metadata-sst
+   :insert-music-metadata
+   :get-metadata*))
 
 (pkg:defpkg :mpk-user
   (:use :core-lisp)

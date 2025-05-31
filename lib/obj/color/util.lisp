@@ -8,7 +8,7 @@
 
 (eval-always
   (defparameter *rgb-colors-path*
-    (probe-file #.(asdf:system-relative-pathname :prelude #P"../.stash/rgb.txt")))
+    (probe-file #.(asdf:system-relative-pathname :core ".stash/rgb.txt")))
   (defvar *x11-colors* nil))
 
 ;;; macros used by color generator scripts

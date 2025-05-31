@@ -523,7 +523,7 @@ internal sap slots are initialized."
 
 (defmethod ingest-db ((self rdb) (files list) &key column (opts (rocksdb-ingestexternalfileoptions-create)))
   (if column
-      (ingest-db-cf-raw (sap self) column files opts)
+      (ingest-db-cf-raw (sap self) (sap column) files opts)
       (ingest-db-raw (sap self) files opts)))
 
 (defmethod close-db ((self rdb) &key &allow-other-keys)
@@ -724,7 +724,7 @@ internal sap slots are initialized."
 
 ;; WBWIs consist of a WriteBatch and an Index
 (defstruct rdb-wbwi ;; wb reserved overwrite-key data savepoints params
-  (sap nil :type (or null (alien (* rocksdb-writebatch-wi)))))
+  (sap (create-wbwi) :type (or null (alien (* rocksdb-writebatch-wi)))))
 
 (defaccessor sap ((self rdb-wbwi)) (rdb-wbwi-sap self))
 (defun rdb-wbwi-count (self) (rocksdb-writebatch-wi-count (sap self)))
@@ -751,6 +751,8 @@ internal sap slots are initialized."
    (length val)))
 (defmethod put-key ((self rdb-wbwi) (key string) (val string))
   (put-key self (string-to-octets key) (string-to-octets val)))
+(defmethod put-kv ((self rdb-wbwi) (kv kv))
+  (put-key self (kv-key kv) (kv-val kv)))
 (defmethod get-key ((self rdb-wbwi) (key string) &key)
   (with-errptr e
     (with-alien ((i size-t))      
@@ -763,6 +765,10 @@ internal sap slots are initialized."
         (addr i)
         e)
        (make-octets i)))))
+
+(defun rdb-write (db batch &optional (opts (make-rdb-writeopts)))
+  (with-errptr e (rocksdb-write-writebatch-wi (sap db) (sap opts) (sap batch) e)))
+    
 ;;; Env
 (defstruct rdb-env 
   (sap nil :type (or null (alien (* rocksdb-env))))

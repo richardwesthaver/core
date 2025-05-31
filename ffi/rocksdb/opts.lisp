@@ -7,17 +7,24 @@
 
 (define-opt rocksdb-ingestexternalfileoptions)
 (defar rocksdb-ingestexternalfileoptions-set-move-files void
+  (opts (* rocksdb-ingestexternalfileoptions))
   (val boolean))
 (defar rocksdb-ingestexternalfileoptions-set-snapshot-consistency void
+  (opts (* rocksdb-ingestexternalfileoptions))
   (val boolean))
 (defar rocksdb-ingestexternalfileoptions-set-allow-global-seqno void
+  (opts (* rocksdb-ingestexternalfileoptions))
   (val boolean))
 (defar rocksdb-ingestexternalfileoptions-set-allow-blocking-flush void
+  (opts (* rocksdb-ingestexternalfileoptions))
   (val boolean))
 (defar rocksdb-ingestexternalfileoptions-set-ingest-behind void
+  (opts (* rocksdb-ingestexternalfileoptions))
   (val boolean))
 (defar rocksdb-ingestexternalfileoptions-set-fail-if-not-bottommost-level void
+  (opts (* rocksdb-ingestexternalfileoptions))
   (val boolean))
+
 (export '(rocksdb-ingestexternalfileoptions-set-move-files 
           rocksdb-ingestexternalfileoptions-set-snapshot-consistency
           rocksdb-ingestexternalfileoptions-set-allow-global-seqno 

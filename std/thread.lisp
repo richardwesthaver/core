@@ -615,7 +615,7 @@ FUNCTION."
 (defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
   (push (worker-thread self) *worker-threads*))
 
-(defaccessor work ((self worker) &key &allow-other-keys) (worker-kernel self))
+(defaccessor work ((self worker) &key &allow-other-keys) (kernel self))
 
 (defun make-worker* (&key thread kernel bind index)
   (apply #'make-instance *worker-class*
@@ -632,7 +632,7 @@ FUNCTION."
 (declaim (inline kill-worker join-worker start-worker run-worker))
 (defun start-worker (worker &rest args)
   (with-default-special-bindings (worker-bind worker)
-    (sb-thread::start-thread (worker-thread worker) (worker-kernel worker) args)))
+    (sb-thread::start-thread (worker-thread worker) (kernel worker) args)))
 
 (defun run-worker (worker &key bind wait)
   (when bind
@@ -808,7 +808,7 @@ WORKER threads."))
            (try-pop-all ()
              (with-slots (workers) sched
                (do-workers (w workers (worker-index w) nil)
-                 (try-pop (worker-kernel w))))
+                 (try-pop (kernel w))))
              (values))
            (maybe-sleep ()
              (with-slots (wait-cvar wait-lock wait-count
@@ -848,7 +848,7 @@ WORKER threads."))
         ;; Start with the worker that has the most recently submitted
         ;; work (approximately) and advance rightward.
         (do-workers (worker workers index t)
-          (try-pop (worker-kernel worker)))
+          (try-pop (kernel worker)))
         (try-pop low-priority-work))))
   nil)
 
@@ -929,7 +929,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
 ;;;; Core
 (defun exec-with-worker (work worker)
   (declare (worker worker))
-  (funcall (worker-kernel worker) work))
+  (funcall (kernel worker) work))
 
 (defun exec-without-worker (work)
   (call-with-work-handler (funcall *kernel* work)))

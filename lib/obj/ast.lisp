@@ -124,7 +124,8 @@ CLASS. FORM is assumed to be the finalized lisp object which has
 already passed through `read' -- not a string or file-stream for
 example."
   (declare (type class class)
-           (type form form)))
+           (type form form)
+           (ignore class form)))
 
 ;;; AST Traversal
 (defclass debug-traverser () ())
@@ -196,14 +197,14 @@ example."
   `(defclass! ,name ,(safe-superclasses 'expr supers) ,slots ,@opts))
 
 (defclass literal-expr (expr) 
-  ((val :initarg :val :accessor val)))
-(defmethod ast ((self literal-expr)) (val self))
+  ((val :initarg :val :accessor literal-val)))
+(defmethod ast ((self literal-expr)) (literal-val self))
 (defclass logical-expr (expr) ())
 (defclass physical-expr (expr) ())
 
 (defclass unary-expr (expr)
   ((expr :initarg :expr :accessor expr)))
-(defmethod ast ((self unary-expr)) (val self))
+(defmethod ast ((self unary-expr)) (literal-val self))
 (defclass binary-expr (expr)
   ((lhs :initarg :lhs :accessor lhs)
    (rhs :initarg :rhs :accessor rhs)))

@@ -8,13 +8,13 @@
 
 (define-alien-type nil
   (struct sigset-t
-          (val (array unsigned-long #.+sigset-nwords+))))
+    (val (array unsigned-long #.+sigset-nwords+))))
 
 (define-alien-type cpu-mask-t unsigned-long)
 
 (define-alien-type nil
   (struct cpu-set-t
-          (bits (array cpu-mask-t #.(/ +cpu-setsize+ +ncpu-bits+)))))
+    (bits (array cpu-mask-t #.(/ +cpu-setsize+ +ncpu-bits+)))))
 
 ;; statx epoll-event __kernel_rwf_t
 

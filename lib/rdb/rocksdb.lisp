@@ -71,7 +71,7 @@ to initialize the instance with custom configuration."
       (with-alien ((flist (* c-string) (make-alien c-string flen)))
         (loop for f in files
               for i from 0 to flen
-              do (setf (deref flist i) (make-alien-string f :null-terminate nil)))
+              do (setf (deref flist i) (make-alien-string f :null-terminate t)))
         (rocksdb-ingest-external-file-cf db cf flist flen opts err)))))
   
 ;;; KVs

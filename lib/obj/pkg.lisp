@@ -16,7 +16,7 @@
 
 (defpackage :obj/uri
   (:nicknames :uri)
-  (:use :cl :std)
+  (:use :cl :std :std/seq)
   (:export
    :uri				; class
    :uri-p
@@ -270,42 +270,26 @@
 
 (defpackage :obj/ast
   (:nicknames :ast)
-  (:use :cl :std)
-  (:export :ast :build-ast :load-ast :load-ast*
-           :val
-           :*ast*
-           :wrap
-           :unwrap
-           :unwrap-or
-           :form
-           :formp
-           :unwrap-object
-           :wrap-object
-           :expr
-           :literal-expr
-           :unary-expr
-           :binary-expr
-           :lhs
-           :rhs
-           :physical-expr
-           :logical-expr
-           :node
-           :defnode
-           :defstmt
-           :stmt
-           :defexpr
-           :traverse
-           :op
-           :*ast-dispatch-table*
-           :write-ast
-           :read-ast
-           :val
-           :debug-traverser
-           :copy-traverser
-           :*keep-ast*
-           :syntax-error
-           :syntax-warning
-           :syntax-condition))
+  (:use :cl :std :std/seq)
+  (:export :ast 
+   :build-ast :load-ast 
+   :load-ast* :*ast*
+   :wrap :unwrap
+   :unwrap-or :form
+   :formp :unwrap-object
+   :wrap-object :expr
+   :literal-expr :unary-expr
+   :binary-expr :lhs
+   :rhs :physical-expr
+   :logical-expr :node
+   :defnode :defstmt
+   :stmt :defexpr
+   :traverse :op
+   :*ast-dispatch-table* :write-ast
+   :read-ast
+   :debug-traverser :copy-traverser
+   :*keep-ast* :syntax-error
+   :syntax-warning :syntax-condition))
 
 (defpackage :obj/graph
   (:nicknames :graph)

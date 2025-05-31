@@ -678,6 +678,8 @@
    :max-accumulator
    :iterator 
    :next
+   :key
+   :val
    :prev
    :iter
    :seek
@@ -736,6 +738,7 @@
    :oracle 
    :oracle-id :find-thread
    :make-threads :with-threads 
+   :with-thread
    :thread-count :dump-thread
    :channel
    :channel-pool
@@ -758,26 +761,6 @@
    :*worker-threads*
    :*super-threads*
    :compute-special-bindings))
-
-(defpkg :std/castable
-  (:use :cl :std/thread :sb-concurrency :std/hash-table :std/spin :std/macs)
-  (:export
-   :castable
-   :make-castable
-   :castable-p
-   :rehash
-   :castable-size
-   :castable-count
-   :castable-test
-   :castable-hasher
-   :getchash
-   :remchash
-   :try-remchash
-   :put-if-absent
-   :put-if-equal
-   :put-if-present
-   :clrchash
-   :mapchash))
 
 (defpkg :std/task
   (:use :cl :std/thread :sb-concurrency :std/meta :std/spin)
@@ -1000,9 +983,9 @@
    :std/stream :std/curry :std/array :std/hash-table
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
-   :std/os :std/file :std/string :std/seq
-   :std/sys :std/readtable :std/pipe :std/serde
-   :std/rand :std/async :std/par :std/spin)
+   :std/os :std/file :std/string :std/sys 
+   :std/readtable :std/pipe :std/serde :std/rand 
+   :std/async :std/par :std/spin :std/seq)
   (:export :*std-packages*))
 
 (defpkg :std-user

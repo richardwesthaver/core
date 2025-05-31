@@ -1,6 +1,6 @@
 ;;; ~/comp/core/lisp/app/mpk/mpk.asd --- Mpk Sytem Definitions
 (defsystem :mpk
-  :depends-on (:prelude :dsp)
+  :depends-on (:core/user)
   :build-operation program-op
   :build-pathname "mpk"
   :entry-point "mpk/cli::start-mpk"

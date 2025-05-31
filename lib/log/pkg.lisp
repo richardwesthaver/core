@@ -92,4 +92,5 @@
    :log-pipe
    :log-config
    :*simple-log-message-formatter*
-   :*log-message-class*))
+   :*log-message-class*
+   :db-source))

@@ -26,6 +26,9 @@
 (defun mpk-data-path (path)
   (merge-pathnames path *mpk-data-directory*))
 
+(defun mpk-db-path (path)
+  (merge-pathnames path *mpk-db-directory*))
+
 (defun mpk-ensure-directories ()
   (values
    (maphash-values (lambda (p) (ensure-directories-exist p :verbose t)) *mpk-media-collections*)
@@ -44,6 +47,16 @@
         (when-let ((meta (ignore-errors (media-file-metadata y :list))))
           (setf (gethash y *music-metadata*) meta)))))
   *music-metadata*)
+
+(defun get-music-metadata (k tag)
+  (cdr (assoc tag (gethash k *music-metadata*) :test 'string-equal)))
+
+(defun get-music-metadata* (tag)
+  (let ((ret))
+    (maphash-keys
+     (lambda (k) (push (get-music-metadata k tag) ret))
+     *music-metadata*)
+    ret))
 
 ;; TODO 2025-04-30: 
 (defun mpk-music-metadata-scan-parallel (&optional (dir #l"mpk:media;music;"))
