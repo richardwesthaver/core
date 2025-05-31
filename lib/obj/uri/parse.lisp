@@ -28,20 +28,20 @@
                    (setq zone-id (third host))
               else (setq real-host host))
            (when port
-             (setq port (val string port))
+             (setq port (xval string port))
              (setq port (parse-integer port :radix 10)))
            (return-from ,name
-             (values (val string scheme)
-                     (val string real-host)
-                     (val string userinfo)
+             (values (xval string scheme)
+                     (xval string real-host)
+                     (xval string userinfo)
                      port
-                     (val string path)
-                     (val string query)
+                     (xval string path)
+                     (xval string query)
                      ;; This is only non-nil for URNs
-                     (val string fragment)
+                     (xval string fragment)
                      .pct-encoded.
-                     (val string ipv6)
-                     (val string zone-id)))))
+                     (xval string ipv6)
+                     (xval string zone-id)))))
 
        (multiple-value-bind (i scheme userinfo host port path query fragment)
            (state-uri-reference string 0 end)
@@ -52,19 +52,19 @@
                    (setq zone-id (third host))
               else (setq real-host host))
            (when port
-             (setq port (val string port))
+             (setq port (xval string port))
              (setq port (parse-integer port :radix 10)))
            (return-from ,name
-             (values (val string scheme)
-                     (val string real-host)
-                     (val string userinfo)
+             (values (xval string scheme)
+                     (xval string real-host)
+                     (xval string userinfo)
                      port
-                     (val string path)
-                     (val string query)
-                     (val string fragment)
+                     (xval string path)
+                     (xval string query)
+                     (xval string fragment)
                      .pct-encoded.
-                     (val string ipv6)
-                     (val string zone-id)))))
+                     (xval string ipv6)
+                     (xval string zone-id)))))
 
        (uri-parse-error string "Couldn't parse uri: ~s." string))))
 

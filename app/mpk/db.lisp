@@ -138,7 +138,7 @@
 
 ;; (defun update-metadata ())
 
-;; WHY DOES THIS CORRUPT
+;; CORRUPTED - MAGIC TABLE #
 (defun ingest-metadata-sst (&key (file #l"mpk:cache;file.sst") (name #l"mpk:cache;name.sst"))
   (let ((opts (rocksdb:rocksdb-ingestexternalfileoptions-create)))
     (rocksdb:rocksdb-ingestexternalfileoptions-set-allow-global-seqno opts nil)

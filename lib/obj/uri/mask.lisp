@@ -479,7 +479,7 @@
        (+ start (the fixnum
                      (ash end +uri-pack-shift+)))))
 
-(defun val (string i)
+(defun xval (string i)
   ;; Return the subsequence of STRING given by I, which was encoded with
   ;; XSUBSEQ.
   (declare (type (or fixnum null) i) (optimize (safety 1)))
