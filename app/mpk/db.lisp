@@ -106,7 +106,8 @@
                 (get-music-metadata* "TITLE"))))))))
 
 (defun insert-music-metadata (&key (file t) (name t))
-  (let ((files (rdb::make-rdb-wbwi)) (names (rdb::make-rdb-wbwi)))
+  (let ((files (rdb::make-rdb-wbwi)) (names (rdb::make-rdb-wbwi))
+        (files-cf (find-column :file *db*)) (names-cf (find-column :name *db*)))
     (wait-for-threads
      (flatten
       (list
@@ -115,14 +116,16 @@
            (let ((i -1))
              (maphash-keys 
               (lambda (k) 
-                (put-kv files (make-kv (integer-to-octets (incf i) 128) (string-to-octets (namestring k)))))
+                (wbwi-put-kv-cf 
+                 files files-cf 
+                 (make-kv (integer-to-octets (incf i) 128) (string-to-octets (namestring k)))))
               *music-metadata*))))
        (when name
          (with-thread (:name "music-names")
            (let ((i -1))
              (mapc (lambda (k) 
-                     (put-kv 
-                      names 
+                     (wbwi-put-kv-cf
+                      names names-cf
                       (make-kv 
                        (integer-to-octets (incf i) 128)
                        (if k
@@ -148,7 +151,7 @@
 
 (defun get-metadata* (column)
   (rdb:with-column (cf (find-column column *db*))
-    (std/seq:with-iter (it (iter *db* :cf cf))
+    (std/seq:with-iter (it (iter *db* :column cf))
       (seek-to-first it)
       (loop while (iter-valid-p it)
             do (progn

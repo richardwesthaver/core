@@ -154,7 +154,8 @@
    :cursor-handle
    :simple-rdb-warning
    :schema-from-rdb-column-families
-   :rdb-write))
+   :rdb-write
+   :wbwi-put-kv-cf))
 
 (defpackage :rdb/cli
   (:use :cl :std :cli :rdb :db :std/seq)

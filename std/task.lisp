@@ -76,6 +76,7 @@ This interface is experimental and subject to change."
 ;;; Task Worker
 (defclass task-worker (worker)
   ((tasks :accessor tasks :initarg :tasks :type spin-queue)))
+
 ;;; Task Pool
 (defclass task-pool (thread-pool)
   ((tasks :initform (if (boundp '*tasks*) *tasks*) :initarg :tasks :accessor tasks)
@@ -84,26 +85,21 @@ This interface is experimental and subject to change."
             :initarg :workers :accessor workers)
    (results :initform (make-mailbox :name "results") :accessor results :initarg :results)))
 
-(defmethod print-object ((self task-pool) (stream t))
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A :workers ~A :tasks ~A/~A :results ~A"
-            (kernel self)
-            (length (workers self))
-            (if-let ((tasks (tasks self)))
-              (queue-count tasks)
-              0)
-            (semaphore-count (lock self))
-            (mailbox-count (results self)))))
+(defun task-pool-info (tp)
+  (append
+   (std/thread::thread-pool-info tp)
+   (list
+    :tasks (queue-count (tasks tp))
+    :results (mailbox-count (results tp)))))
+
+(defmethod print-object ((self task-pool) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~(~A ~^~)~{~s~^ ~}" (name self) (task-pool-info self))))
 
 (defun kill-workers (pool)
   "Call FINISH-THREADS on task-pool's workers."
   (dotimes (i (length (workers pool)))
     (kill-worker (vector-pop (workers pool)))))
-
-(defun worker-count (task-pool &key online)
-  (if online
-      (semaphore-count (lock task-pool))
-      (length (workers task-pool))))
 
 (defmethod designate-oracle ((self task-pool) (guest thread))
   (let ((id (make-oracle guest)))
@@ -210,27 +206,32 @@ is responsible for indicating in the state slot the result of the computation.")
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (tasks self))))
 
-(defun make-task-pool (worker-count &key (name :default) (kernel *kernel*) tasks results (task-class 'task))
-  (let ((tp (make-thread-pool 
-             worker-count 
-             :class 'task-pool
-             :name name
-             :kernel kernel)))
-    (declare (task-pool tp))
-    (setf (tasks tp)
-          (make-queue
-           :name "tasks"
-           :initial-contents
-           (make-array tasks 
-                       :element-type task-class
-                       :initial-element (make-instance task-class)
-                       :fill-pointer t)))
-    (setf (results tp) (make-mailbox :name "results" :initial-contents results))
-    tp))
+(defun make-task-pool (worker-count &key (name :default) (kernel *kernel*) 
+                                         (task-class *task-class*) initial-task
+                                         tasks
+                                         alivep)
+  (let ((*worker-class* 'task-worker))
+    (let ((tp (make-thread-pool
+               worker-count 
+               :class 'task-pool
+               :alivep alivep
+               :name name
+               :kernel kernel))
+          (%tasks (or tasks worker-count)))
+      (declare (task-pool tp))
+      (setf (tasks tp)
+            (make-queue
+             :name "tasks"
+             :initial-contents
+             (make-array %tasks
+                         :element-type task-class
+                         :initial-element (or initial-task (make-instance task-class))))
+            (results tp) (make-mailbox :name "results"))
+      tp)))
 
 ;;; Macros
-(defmacro with-task-pool ((sym &key (tasks 0) (workers 4) #+nil start (kernel (quote *pool-kernel*)) results) 
+(defmacro with-task-pool ((sym &key (tasks (std/alien:num-cpus)) (workers (std/alien:num-cpus)) #+nil start)
                           &body body)
-  `(let ((,sym (make-task-pool ,workers :kernel ,kernel :tasks ,tasks :results ,results)))
+  `(let ((,sym (make-task-pool ,workers :tasks ,tasks)))
      ;; ,@(when start `((start-task-workers ,sym)))
      ,@body))

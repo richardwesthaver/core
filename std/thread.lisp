@@ -67,7 +67,7 @@ a lambda expression, a symbol which names a function, or a compiled-function."
   head of the list.")
 
 (defvar *worker-class* 'worker)
-(defvar *worker*)
+(defvar *worker* nil)
 (defvar *work-priority* :default)
 (defvar *scheduler-class* 'biased-scheduler)
 (defvar *thread-pool* nil)
@@ -172,7 +172,7 @@ that was created in `body'."
 
 (defun transfer-error-restart (&optional (err *debugger-error*))
   (when err
-    (throw +work-tag+ (wrap-error err))))
+    (throw '#.+work-tag+ (wrap-error err))))
 
 (defun call-with-tracked-error (condition body-fn)
   (when *worker*
@@ -573,7 +573,7 @@ FUNCTION."
 	(when *worker*
 	  (assert (eq (worker-thread *worker*) *current-thread*))
 	  ;; (when (eql category (running-category *worker*))
-	  (throw +worker-suicide-tag+ nil))))
+	  (throw '#.+worker-suicide-tag+ nil))))
     kill-count))
 
 (defun kill-errors ()
@@ -587,15 +587,20 @@ FUNCTION."
 	    (ignore-errors (terminate-thread (worker-thread worker)))))
       (when suicide
 	(assert (eq (worker-thread *worker*) *current-thread*))
-	(throw +worker-suicide-tag+ nil)))))
+	(throw '#.+worker-suicide-tag+ nil)))))
 
 (defun kill-errors-report (stream)
   (format stream "Kill errors in workers (remove debugger instances)."))
 
+(eval-always
+  (defvar *worker-restarts* '((kill-errors #'kill-errors :report-function #'kill-errors-report))
+    "A list of restarts available in the body of a WITH-WORKER-RESTARTS form."))
+                                        
 (defmacro with-worker-restarts (&body body)
-  `(catch +worker-suicide-tag+
-     (restart-bind ((kill-errors #'kill-errors
-		      :report-function #'kill-errors-report))
+  "Eval BODY in a worker context with restarts and a catch for
++WORKER-SUICIDE-TAG+. See variable *WORKER-RESTARTS*."
+  `(catch +worker-suicide-tag+ 
+     (restart-bind ,*worker-restarts*
        ,@body)))
 
 ;;; Worker
@@ -686,12 +691,11 @@ FUNCTION."
 (defgeneric lock (self))
 (defgeneric run-thread (self thunk &key name &allow-other-keys))
 
-(defgeneric make-workers (count &rest initargs &key &allow-other-keys)
-  (:method ((count number) &key thread kernel bind (return-type 'vector))
-    (let ((ret))
-      (dotimes (i count)
-	(push (make-worker* :thread thread :kernel kernel :bind bind) ret))
-      (if return-type (coerce ret return-type) ret))))
+(defun make-workers (count &key thread kernel bind (return-type 'vector))
+  (let ((ret))
+    (dotimes (i count)
+      (push (make-worker* :thread thread :kernel kernel :bind bind) ret))
+    (if return-type (coerce ret return-type) ret)))
 
 ;;; Scheduler
 ;; simple atomic counter
@@ -932,6 +936,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (funcall (kernel worker) work))
 
 (defun exec-without-worker (work)
+  (check-kernel)
   (call-with-work-handler (funcall *kernel* work)))
 
 (defun replace-worker (pool worker &optional (kernel *worker-kernel*))
@@ -984,16 +989,16 @@ and execution of concurrent work using a pool of 'worker' threads."))
 (defun make-all-bindings (kernel bindings)
   (append bindings (list (cons '*kernel* kernel))))
 
-(defun %make-worker (index)
-  (make-instance 'worker :index index :thread nil))
+(defun %make-worker (index class)
+  (make-instance class :index index :thread nil))
 
 (defun make-worker-thread (pool worker &optional bind)
   (with-thread (:bindings (or bind (worker-bind worker)))
     (unwind-protect (enter-worker-loop pool worker)
       (notify-exit worker))))
 
-(defun make-worker (pool index)
-  (let* ((worker (%make-worker index))
+(defun make-worker (pool index &optional (class *worker-class*))
+  (let* ((worker (%make-worker index class))
          (bind (make-all-bindings *worker-kernel* (bind pool)))
          (worker-thread (make-worker-thread pool worker bind)))
     (setf (worker-thread worker) worker-thread
@@ -1217,7 +1222,7 @@ bound to RET."
 
 (defmethod print-object ((pool thread-pool) stream)
   (print-unreadable-object (pool stream :type t :identity t)
-    (format stream "~{~s~^ ~}" (thread-pool-info pool))))
+    (format stream "~(~s ~^~)~{~s~^ ~}" (name pool) (thread-pool-info pool))))
 
 (defun broadcast-work (function &rest args)
   "Wait for current and pending work to complete, if any, then

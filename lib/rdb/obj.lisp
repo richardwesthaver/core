@@ -768,7 +768,10 @@ internal sap slots are initialized."
 
 (defun rdb-write (db batch &optional (opts (make-rdb-writeopts)))
   (with-errptr e (rocksdb-write-writebatch-wi (sap db) (sap opts) (sap batch) e)))
-    
+
+(defun wbwi-put-kv-cf (wbwi column kv)
+  (wbwi-put-cf-raw (sap wbwi) (sap column) (kv-key kv) (kv-val kv)))
+
 ;;; Env
 (defstruct rdb-env 
   (sap nil :type (or null (alien (* rocksdb-env))))

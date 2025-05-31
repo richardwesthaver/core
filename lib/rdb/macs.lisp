@@ -107,6 +107,15 @@ ERR with initargs PARAMS for the duration of BODY."
          ,@(when val `((setfa %val ,val)))
          ,@body))))
 
+(defmacro with-kv-raw* (key val &body body)
+  `(let ((%klen (length ,key))
+         ,@(when val `((%vlen (length ,val)))))
+     (with-alien ((%key (* unsigned-char) (make-alien unsigned-char %klen))
+                  ,@(when val `((%val (* unsigned-char) (make-alien unsigned-char %vlen)))))
+       (setfa %key ,key)
+       ,@(when val `((setfa %val ,val)))
+       ,@body)))
+
 (defmacro with-txn-raw ((txn eptr &key (error 'txn-error) key val cf db) &body body)
   `(let (,@(when key `((%klen (length ,key))))
          ,@(when val `((%vlen (length ,val)))))

@@ -561,3 +561,11 @@ transaction-db."
 ;;; Writebatch/WBWI
 (defun create-wbwi (&optional (reserved-bytes 0) (overwrite-keys 1))
   (rocksdb-writebatch-wi-create reserved-bytes overwrite-keys))
+
+(defun wbwi-put-cf-raw (wbwi cf key val)
+  (with-kv-raw* key val
+    (rocksdb-writebatch-wi-put-cf 
+     wbwi
+     cf
+     %key %klen
+     %val %vlen)))

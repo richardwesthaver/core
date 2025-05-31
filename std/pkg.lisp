@@ -722,7 +722,7 @@
    :print-top-level :println-top-level
    :find-thread-by-id :thread-id-list
    :timed-join-thread :kill-thread
-   :wait-for-threads :workers
+   :wait-for-threads :worker
    :hang :finish-threads
    :make-oracle
    :kill-worker
@@ -731,6 +731,7 @@
    :run-worker
    :with-default-special-bindings
    :worker-thread
+   :*worker-restarts*
    :worker-count
    :worker-count*
    :worker-index

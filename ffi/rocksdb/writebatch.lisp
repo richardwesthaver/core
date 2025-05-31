@@ -393,18 +393,18 @@
 (defar rocksdb-writebatch-wi-put-cf void
   (batch (* rocksdb-writebatch-wi))
   (cf (* rocksdb-column-family-handle))
-  (key (array unsigned-char))
+  (key (* unsigned-char))
   (klen size-t)
-  (val (array unsigned-char))
+  (val (* unsigned-char))
   (vlen size-t))
 
 (defar rocksdb-writebatch-wi-putv void
   (batch (* rocksdb-writebatch-wi))
   (num-keys int)
-  (keys-list (array (array unsigned-char)))
+  (keys-list (* (* unsigned-char)))
   (keys-list-sizes (array size-t))
   (num-values int)
-  (values-list (array (array unsigned-char)))
+  (values-list (* (* unsigned-char)))
   (values-list-sizes (array size-t)))
 
 (defar rocksdb-writebatch-wi-putv-cf void
