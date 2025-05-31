@@ -6,7 +6,7 @@
 :stash ".stash"
 :store ".store"
 :description "The Compiler Company Core"
-:tags ("core" "lisp" "rust" "emacs" "c")
+:tags ("core" "lisp" "emacs" "c")
 :include ("emacs/emacs.sk")
 :vc (:hg "https://vc.compiler.company/core"
      (cb (:git "ssh://git@codeberg.org/c-c/core"))
@@ -17,11 +17,8 @@
  (emacs-locals
   :dir-locals
   (nil . ((indent-tabs-mode . nil)))
-  (rust-mode . ((eglot-workspace-configuration
-                 . (:rust-analyzer (:cargo (:buildScripts (:enable t) (:features "all")))))))
   (sh-mode . (sh-indentation . 2))
   (makefile-mode . ((indent-tabs-mode . t))))
- (cargo-target-dir :env ".stash/target")
  (packy-home :env "/opt/store/packy"))
 :components 
 ((:org "readme")
@@ -32,7 +29,6 @@
  (:mod "ffi" (:asd "ffi"))
  (:mod "lib" (:asd "lib"))
  (:mod "bin" (:asd "bin"))
- (:rust-system "Cargo.toml")
  (:mod "emacs"))
 :rules
 ((default 
@@ -43,7 +39,6 @@
    build-core 
    ;; save-std save-prelude save-user fasls
    ;; save-tests
-   ;; rust-bin
    ))
  (c ()
   (:build (build-zstd-alien build-tree-sitter-alien))
@@ -69,8 +64,7 @@
  (clean ()
   #$rm -vrf .stash
   find emacs -name '*.elc' -type f -delete
-  find . -name '*.fasl' -type f -delete$#
-  (cli/tools/rust:cargo-clean))
+  find . -name '*.fasl' -type f -delete$#)
  (readme ()
   (:update ()
    (cli/ed:with-emacs (e)
@@ -395,7 +389,6 @@
   (:compile () 
    (compile-lisp :core/tests :force t :verbose t)))
  (bench () (:compile () (compile-lisp :core/bench :force t :verbose t)))
- (rust () (:build () #$cargo build$#))
  (fasls (compile-core #+nil compile-tests compile-bench compile-user compile-prelude))
  ;; install
  (install (install-core) 
