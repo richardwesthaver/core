@@ -106,7 +106,10 @@ just the keys currently present in TABLE."
                     (,(symbolicate 'make- name) ,@defaults))
                   (defvar ,(symbolicate '*default- name '*) (,(symbolicate 'default- name)))))))
   (define-rdb-opt-struct rdb-opts *rocksdb-options* rocksdb-options-create
-    :create-if-missing t :create-missing-column-families t :parallelism (num-cpus))
+    :create-if-missing t 
+    :create-missing-column-families t 
+    :parallelism (num-cpus)
+    :compression (rocksdb-compression-type :zstd))
   (define-rdb-opt-struct rdb-readopts *rocksdb-readoptions* rocksdb-readoptions-create)
   (define-rdb-opt-struct rdb-writeopts *rocksdb-writeoptions* rocksdb-writeoptions-create)
   (define-rdb-opt-struct rdb-compactopts *rocksdb-compactoptions* rocksdb-compactoptions-create)

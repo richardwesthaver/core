@@ -112,7 +112,6 @@
    #:mpk-music-path
    #:mpk-data-path
    #:*mpc*
-   #:music-metadata-scan
    #:*music-metadata*
    #:mpk-component
    #:mpk-toggle
@@ -128,7 +127,9 @@
    #:mpk-init
    #:get-music-metadata
    #:get-music-metadata*
-   #:mpk-db-path))
+   #:mpk-db-path
+   #:*movies-metadata*
+   #:metadata-scan-directory))
 
 (defpackage :mpk/db
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config :std/seq)

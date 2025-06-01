@@ -37,7 +37,7 @@
    (ensure-directories-exist *mpk-cache-directory* :verbose t)))
 
 ;;  FIX 2025-04-18: takes a long time, do better
-(defun music-metadata-scan (&optional (dir #l"mpk:media;music;"))
+(defun metadata-scan-directory (&optional (dir #l"mpk:media;music;") (table (make-hash-table)))
   (log:info! "walking music directory: ~A" dir)
   (walk-directory dir 
     (constantly t) ; collectp
@@ -47,8 +47,8 @@
         (when-let ((meta (ignore-errors (media-file-metadata y :list)))
                    (y y))
           ;; (appendf meta (cons 'hash (cry/b3:b3sum y)))
-          (setf (gethash y *music-metadata*) meta)))))
-  *music-metadata*)
+          (setf (gethash y table) meta)))))
+  table)
 
 (defun get-music-metadata (k tag)
   (cdr (assoc tag (gethash k *music-metadata*) :test 'string-equal)))
@@ -61,14 +61,13 @@
     ret))
 
 ;; TODO 2025-04-30: 
+#+nil
 (defun mpk-music-metadata-scan-parallel (&optional (dir #l"mpk:media;music;"))
   (with-task-pool (tp)
     (nyi!)))
 
 ;;  REVIEW 2025-04-18: good case for threading
 #|
-(time (mpk-music-metadata-scan)) ; 373.815s 
-;; #<HASH-TABLE :TEST EQL :COUNT 62513 {1096798293}>
 (time ;; unique tags (case-insensitive)
  (reduce (lambda (a b) (union a b :test 'string-equal))
   (let ((ret)) 
