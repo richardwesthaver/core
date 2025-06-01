@@ -160,7 +160,7 @@ SCHEMA."
 (defgeneric (setf column) (new self col))
 
 (defclass schema ()
-  ((fields :initarg :fields :accessor fields))
+  ((fields :initform (make-fields) :initarg :fields :accessor fields))
   (:documentation "Base class for all schema objects. At minimum a FIELDS slot is required."))
 
 (defmethod read-ast ((self schema) stream &key)
@@ -437,7 +437,13 @@ SCHEMA."
 
 (eval-always
   (defun class-default-fields (c)
-    (compile-and-eval (cadr (assoc :fields (class-default-initargs (find-class c nil)))))))
+    (let ((class (find-class c)))
+      (if-let ((def (assoc :fields (class-default-initargs class))))
+        (if-let ((fn (caddr def)))
+          (funcall fn)
+          (when-let ((form (cadr def)))
+            (compile-and-eval form)))
+        (fields (make-instance c))))))
   
 (defmacro defschema (name super fields &rest options)
   "Define a new schema. DIRECT-SUPERCLASSES is the base SCHEMA class to inherit
@@ -445,7 +451,7 @@ from defaulting to SIMPLE-SCHEMA. FIELDS
 are a list of field forms passed through LIST-TO-FIELDS and initialized in the
 appropriate slot of the new class given by NAME. OPTIONS are the same as
 DEFCLASS."
-  `(progn
+  `(eval-always
      (defclass ,name ,(or super `(simple-schema)) ()
        (:default-initargs 
         :fields (apply 'concatenate 'field-vector

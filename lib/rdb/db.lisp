@@ -147,7 +147,7 @@ extractor."
                          collect 
                             (let ((cf-opts (make-rdb-opts)))
                               (setf (sap cf-opts) opt)
-                              ;; (when backfill (backfill-opts cf-opts :full (eq backfill :full)))
+                              (when (eq backfill :full) (backfill-opts cf-opts :full t))
                               (make-rdb-cf name :opts cf-opts)))
                    'vector)))
          (setf (db-opts db) (make-rdb-opts* db-opts))
@@ -620,7 +620,7 @@ only get their type slots updated on non-nil values."
         do (if-let ((col (find-column (field-name field) self)))
              (load-field col field)
              (add-column
-              (load-field 
+              (load-field
                (make-instance 'rdb-column-family :cf (make-rdb-cf (field-name field)) :type (field-type field))
                field)
               self))

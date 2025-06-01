@@ -31,21 +31,18 @@
   ((:file (uuid . string))
    (:format (uuid . octet))))
 
-(defschema mpk-aud-meta-schema (mpk-meta-schema) ())
-;; (class-default-initargs (find-class 'mpk-aud-meta-schema))
-;; (make-instance 'mpk-meta-schema)
-;; (mapcar (lambda (c)
-;;           (mapcar (lambda (x) (when (eql 'fields (slot-definition-name x))
-;;                                 (slot-definition-initform x)))
-;;                   (class-direct-slots c)))
-;;         (class-precedence-list (find-class 'mpk-meta-schema)))
+;; (funcall (caddr (assoc :fields (class-default-initargs (find-class 'mpk-meta-schema)))))
+
+(defschema mpk-aud-meta-schema (mpk-meta-schema mpk-db-schema) ())
+
+;; (make-instance 'mpk-music-meta-schema)
 
 (defschema mpk-vid-meta-schema (mpk-meta-schema) ())
 
 (defschema mpk-img-meta-schema (mpk-meta-schema) ())
 
 (defschema mpk-music-meta-schema (mpk-aud-meta-schema)
-  ((:title (uuid . string))))o
+  ((:title (uuid . string))))
 
 (defschema mpk-movies-meta-schema (mpk-vid-meta-schema)
   ((:title (uuid . string))))
