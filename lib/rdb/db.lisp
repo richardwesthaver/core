@@ -460,7 +460,7 @@ extractor."
 
 (defmethod create-column ((db rdb-database) (col rdb-column-family))
   (if (equal (name col) *rdb-default-column-name*)
-      (rdb-default-column-warning (format nil "ignoring attempt to create 'default' column-family: ~A" col))
+      (rdb-default-column-warning "ignoring attempt to create 'default' column-family: ~A" col)
       (setf (sap col) (create-cf-raw (sap db) (name col) (sap (column-opts col)))))
   ;; (open-column db col)
   col)

@@ -16,9 +16,13 @@
     ()
     (:auto t)
     (:documentation "Error signaled by the RDB system."))
-  (defwarning simple-rdb-warning (rdb-condition simple-warning) () (:auto t)))
+  (defwarning simple-rdb-warning (rdb-condition simple-warning)
+    () 
+    (:default-initargs 
+     :format-control "RDB warning: ~A")
+    (:auto t)))
 
-(defwarning rdb-default-column-warning (simple-rdb-warning) () (:auto t))
+(defwarning rdb-default-column-warning (simple-rdb-warning simple-warning) () (:auto t))
 
 (define-condition rdb-alien-error (rdb-error rocksdb-c-error)
   ((db :initarg :db :reader error-db))
