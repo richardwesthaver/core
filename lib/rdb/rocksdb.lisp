@@ -191,8 +191,9 @@ to initialize the instance with custom configuration."
 	      ;; helps if we know the vlen beforehand, would need a custom
 	      ;; C-side function probably.
 	      (v (make-array (deref vlen) :element-type 'octet)))
-          (clone-octets-from-alien val v (deref vlen))
-	  v))))
+          (let ((ret (clone-octets-from-alien val v (deref vlen))))
+            (unless (zerop (length ret))
+              ret))))))
 
 (defun get-cf-str-raw (db cf key &optional (opt (rocksdb-readoptions-create)) pinned)
   (let ((k (string-to-octets key :null-terminate nil)))

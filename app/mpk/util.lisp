@@ -44,7 +44,8 @@
     (constantly t) ; recursep
     (lambda (x) ; collector
       (dolist (y (directory-files x "*.*"))
-        (when-let ((meta (ignore-errors (media-file-metadata y :list))))
+        (when-let ((meta (ignore-errors (media-file-metadata y :list)))
+                   (y y))
           ;; (appendf meta (cons 'hash (cry/b3:b3sum y)))
           (setf (gethash y *music-metadata*) meta)))))
   *music-metadata*)

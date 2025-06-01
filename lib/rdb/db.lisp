@@ -174,9 +174,9 @@ extractor."
     (push-opts db)
     db))
 
-(defmethod query-db ((db rdb) (query (eql :get)) &key key &allow-other-keys)
+(defmethod query-db ((db rdb) (query (eql :get)) &key key column &allow-other-keys)
   (declare (ignore query))
-  (get-val db key))
+  (get-val db key :column column))
 
 ;;; Column Families
 (defclass rdb-column-family (rdb-column) 
@@ -585,9 +585,6 @@ extractor."
   (close-transaction-db self)
   (close-columns self)
   (shutdown-db (db self)))
-
-(defmethod get-val ((self rdb-database) elt &rest initargs &key)
-  (apply 'get-val (db self) elt initargs))
 
 (defmethod get-value (elt (self rdb-database))
   (get-value elt (db self)))

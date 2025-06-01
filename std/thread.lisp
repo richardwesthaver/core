@@ -341,7 +341,9 @@ that was created in `body'."
       :timeout)))
 
 (defun hang ()
+  "Attempt to join the current thread, causing it to hang. You should never call this."
   (join-thread *current-thread*))
+
 (defun kill-thread (thread)
   (when (thread-alive-p thread)
     (ignore-errors
@@ -358,10 +360,13 @@ that was created in `body'."
 
 ;; with-progressive-timeout
 
+;; (definline all-threads-sap ()
+;;   (sb-vm::extern-alien "all_threads" sb-vm::system-area-pointer))
+
 ;; from sb-thread
-(defun dump-thread ()
+(defun dump-thread (&optional thread)
   (let* ((slots (sb-vm::primitive-object-slots #1=(sb-vm::primitive-object 'sb-vm::thread)))
-	 (sap (current-thread-sap))
+	 (sap (if thread (thread-sap thread) (current-thread-sap)))
 	 (thread-obj-len (sb-vm::primitive-object-length #1#))
 	 (names (make-array thread-obj-len :initial-element "")))
     (loop for slot across slots
@@ -411,9 +416,8 @@ that was created in `body'."
 	    (show sym val))
 	  (setq from (sb-vm::sap+ from (* sb-vm:binding-size sb-vm:n-word-bytes))))))))
 
-(defun wait-for-threads (threads)
-  (map 'list (lambda (thread) (sb-thread:join-thread thread :default nil)) threads)
-  (not (some #'sb-thread:thread-alive-p threads)))
+(definline wait-for-threads (threads)
+  (map 'list (lambda (thread) (sb-thread:join-thread thread :default nil)) threads))
 
 (defun process-all-interrupts (&optional (thread sb-thread:*current-thread*))
   (sb-ext:wait-for (null (sb-thread::thread-interruptions thread))))
@@ -427,7 +431,7 @@ that was created in `body'."
     success))
 
 (sb-ext:defglobal .known-threads-lock. (make-mutex :name "known-threads-lock"))
-(sb-ext:defglobal .known-threads. (make-hash-table #-genera :weakness #-genera :key))
+(sb-ext:defglobal .known-threads. (make-hash-table :weakness :key))
 
 (defun %get-thread-wrapper (native-thread)
   (multiple-value-bind (thread presentp)
@@ -497,7 +501,7 @@ FUNCTION."
 	 (values (mapcar (lambda (f) (eval (cdr f))) bindings)))
     (std/macs:named-lambda %establish-dynamic-env-wrapper ()
       (progv specials values
-	(with-slots (%lock %return-values %exit-condition #+genera native-thread)
+	(with-slots (%lock %return-values %exit-condition)
 	    thread
 	  (flet ((record-condition (c)
 		   (with-mutex (%lock)

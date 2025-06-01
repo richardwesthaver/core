@@ -138,8 +138,9 @@
    :mpk-db-info
    :ingest-metadata-sst
    :make-metadata-sst
-   :insert-music-metadata
-   :get-metadata*))
+   :get-metadata*
+   :*mpk-db-table*
+   :update-music-metadata))
 
 (pkg:defpkg :mpk-user
   (:use :core-lisp)

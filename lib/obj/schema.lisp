@@ -427,7 +427,7 @@ SCHEMA."
 ;;; Macros
 
 (defun list-to-fields (fields)
-  "List is assumed to be a list of lists where each element is of the form:
+  "FIELDS is assumed to be a list of lists where each element is of the form:
 (name type &keys)"
   (make-array (length fields)
               :element-type 'field
@@ -435,27 +435,26 @@ SCHEMA."
               (loop for f in fields
                     collect (make-field :name (string-downcase (pop f)) :type (pop f)))))
 
+(eval-always
+  (defun class-default-fields (c)
+    (compile-and-eval (cadr (assoc :fields (class-default-initargs (find-class c nil)))))))
+  
 (defmacro defschema (name super fields &rest options)
   "Define a new schema. DIRECT-SUPERCLASSES is the base SCHEMA class to inherit
 from defaulting to SIMPLE-SCHEMA. FIELDS
 are a list of field forms passed through LIST-TO-FIELDS and initialized in the
 appropriate slot of the new class given by NAME. OPTIONS are the same as
 DEFCLASS."
-  (unless super
-    (setf super '(simple-schema)))
-  (let ((api
-          (cond 
-            ((member 'object-schema super)
-             `((defun ,(symbolicate 'make- name) (name &rest fields)
-                 (make-instance ',name :name name :fields (coerce fields 'vector)))))
-            ((member 'simple-schema super)
-             `((defun ,(symbolicate 'make- name) (name &rest fields)
-                 (make-instance ',name :name name :fields (coerce fields 'vector))))))))
-    `(prog1
-         (defclass ,name ,super ()
-           (:default-initargs :fields (list-to-fields ',fields))
-           ,@options)
-       ,@api)))
+  `(progn
+     (defclass ,name ,(or super `(simple-schema)) ()
+       (:default-initargs 
+        :fields (apply 'concatenate 'field-vector
+                       (list-to-fields ',fields)
+                       (let ((ret))
+                         (dolist (x ',super ret)
+                           (when x
+                             (push (class-default-fields x) ret))))))
+       ,@options)))
 
 ;;; Dataframes
 ;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
