@@ -5,6 +5,7 @@
   :components ((:file "pkg")
                (:file "var")
                (:file "proto")
+               (:file "prim")
                (:file "sfc")
                (:file "auto")
                (:file "readtable"))

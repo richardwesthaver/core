@@ -105,7 +105,7 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
     (circularp object nil)))
 
 ;;; On Lisp
-(declaim (inline source))
+(declaim (inline group))
 (defun group (source n)
   "Return a list of lists by grouping SOURCE into N-element batches."
   (declare (fixnum n))

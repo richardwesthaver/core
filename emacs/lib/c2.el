@@ -40,7 +40,7 @@ The created frame is selected when the hook is called."
   :type 'hook
   :group 'c2)
 
-(defcustom c2-port 82824
+(defcustom c2-port 8284
   "port of the c2 broadcaster"
   :group 'c2)
 

@@ -136,8 +136,14 @@
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
   (:import-from :std/list :ensure-car)
+  (:import-from :sb-impl :sfunction)
+  (:import-from :sb-c :integer-type-length)
+  (:import-from :sb-kernel :*type-classes* :type-class 
+   :make-type-class)
   (:shadowing-import-from :sb-ext :word)
   (:export :+default-element-type+
+   :*type-classes* :type-class
+   :make-type-class
    :array-index :array-length
    #:negative-double-float
    #:negative-fixnum-p
@@ -208,6 +214,7 @@
    #:non-positive-long-float-p
    #:non-positive-rational-p
    #:non-positive-single-float
+   :integer-type-length
    :coercef
    :octet
    :octet-vector
@@ -286,13 +293,14 @@
   (:use :cl)
   (:import-from :sb-ext :maybe-inline)
   (:import-from :std/prim :definline)
+  (:import-from :sb-kernel :with-array-data)
   (:export :copy-array :signed-array-length :array-shift 
    :vector-push-extend-position :vector-pop-position
    :vectorify :make-array-allocator
    :vector-foldl :vector-foldr
    :vector-map-foldl :vector-map-foldr
    :vector-max :vector-min
-   :vector-eq
+   :vector-eq :with-array-data
    :vector-to-list :copy-vector-to-list
    :modproj :simplify-array))
 
@@ -429,34 +437,73 @@
    :defunits :unit-of-distance 
    :distance-designator))
 
-;; (reexport-from :sb-c
-;; 	       :include '(:define-source-transformation
-;; 			  :parse-eval-when-situations
-;; 			  :source-location))
-
 (defpkg :std/sys
-  (:use :cl)
-  (:shadowing-import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
-  (:shadowing-import-from :sb-vm :list-allocated-objects)
+  (:use :cl :sb-int)
+  (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
+  (:import-from :sb-vm :list-allocated-objects :fun-signature= 
+   :map-allocated-objects :fset :*linkage-name-map* :ldb-monitor
+   :map-immobile-objects :memory-usage :references-p :show-ctype-ctor-cache-metrics)
+  (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
+   :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr)
   (:use-reexport :sb-cltl2)
   (:recycle :sb-assem)
-  (:shadowing-import-from :sb-c :lexenv-user-data :lexenv-find :make-null-lexenv)
-  (:shadowing-import-from :sb-c :define-vop)
-  (:shadowing-import-from :sb-c :define-source-transform :parse-eval-when-situations :source-location)
+  (:import-from :sb-c :lexenv-user-data :lexenv-find 
+   :make-null-lexenv :name-reserved-by-ansi-p :default-gc-strategy)
+  (:import-from :sb-c :parse-eval-when-situations :source-location :*backend-byte-order*)
   (:recycle :sb-sys)
-  (:import-from :sb-ext :maybe-inline :defglobal :define-load-time-global)
+  (:import-from :sb-ext :maybe-inline :defglobal :define-load-time-global :finalize :cancel-finalization)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/list :appendf)
+  (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:import-from :sb-assem :*backend-instruction-set-package*)
-  (:import-from :sb-impl :*logical-hosts* :make-logical-host :logical-host)
+  (:import-from :sb-impl :*logical-hosts* :make-logical-host 
+   :logical-host :info :show-info :*info-types*
+   :*finalizer-thread* :show-finalizers :dx-flet :dx-let
+   :read-only-space-obj-p :dynamic-space-obj-p :tune-image-for-dump)
+  (:import-from :sb-debug :untrace-all :untrace-package)
+  (:import-from :sb-ext :fold-identical-code)
   (:import-from :std/macs :if-let :defmacro!)
   (:export
+   :shake-packages
+   :tune-image-for-dump
+   :show-ctype-ctor-cache-metrics
+   :memory-usage
+   :references-p
+   :untrace-all
+   :defprinter
+   :untrace-package
+   :ldb-monitor
+   :read-only-space-obj-p
+   :dynamic-space-obj-p
+   :*loops-ansi-universe*
+   :loop-standard-expansion
+   :asm-routine-index-from-addr
+   :*assembler-routines*
+   :+fasl-file-version+
+   :*fasl-file-type*
+   :get-asm-routine
+   :fun-signature=
+   :fset
+   :*linkage-name-map*
+   :map-immobile-objects
+   :map-allocated-objects
+   :fold-identical-code
+   :*finalizer-thread*
+   :show-finalizers
+   :with-pinned-objects
+   :finalize
+   :cancel-finalization
+   :get-lisp-obj-address
+   :list-allocated-objects
+   :generation-of
+   :default-gc-strategy
+   :name-reserved-by-ansi-p
+   :*backend-byte-order*
    :.i ;; alias for *inspected*
+   :info
    :maybe-inline
    :defglobal :define-load-time-global
    :register-project-directory
-   :define-vop
-   :define-source-transform
    :parse-eval-when-situations 
    :source-location
    :lexenv-user-data
@@ -467,6 +514,8 @@
    :*logical-hosts*
    :save-shared-objects
    :make-logical-host
+   :logical-host :info 
+   :show-info :*info-types*
    :hooks
    :*default-package*
    :*default-arena-size*
@@ -613,11 +662,29 @@
 
 (defpkg :std/comp
   (:use :cl)
-  (:import-from :sb-c :deftransform :defoptimizer :parse-deftransform :defknown :ctype-of :ctypecase
-   :ctype-array-dimensions :ctypep)
+  (:import-from :sb-c :deftransform :defoptimizer 
+   :define-vop :parse-deftransform :defknown :ctype-of 
+   :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
+   :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
+   :assemble :without-scheduling :inst :inst* 
+   :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
+   :make-file-source-info :make-lisp-source-info)
+  (:import-from :sb-c :vop)
+  (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
+   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
+   :*backend-predicate-types* :*backend-type-predicates*
+   :*compile-progress* :*compile-component-hook*)
+  (:import-from :sb-vm :*register-arg-tns*)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
   (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
-   :defoptimizer :defknown :ctype-of :ctypecase :ctypep :ctype-array-dimensions))
+   :defoptimizer :defknown :ctype-of :ctypecase :ctypep :ctype-array-dimensions
+   :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop :vop*
+   :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
+   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
+   :*backend-predicate-types* :*backend-type-predicates* :emit :assemble
+   :without-scheduling :dump-symbolic-asm :inst :inst*
+   :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
+   :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)
@@ -695,6 +762,7 @@
   (:use :cl)
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/spin :std/condition :std/seq)
+  (:import-from :sb-thread :*all-threads* :make-foreign-thread)
   (:import-from :std/list :flatten)
   (:import-from :std/prim :definline)
   (:import-from :std/prim :defmacro!)
@@ -705,6 +773,8 @@
   (:import-from :std/list :deletef)
   (:export
    :*default-spint-count*
+   :make-foreign-thread
+   :*all-threads*
    :*worker-class*
    :*worker*
    :kernel-function
@@ -978,7 +1048,7 @@
    :detabify))
 
 (defpkg :std
-  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-c :sb-thread :sb-alien :sb-gray)
+  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-thread :sb-alien :sb-gray)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num :std/prim
    :std/stream :std/curry :std/array :std/hash-table
@@ -986,7 +1056,8 @@
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/sys 
    :std/readtable :std/pipe :std/serde :std/rand 
-   :std/async :std/par :std/spin :std/seq)
+   :std/async :std/par :std/spin :std/seq
+   :std/comp)
   (:export :*std-packages*))
 
 (defpkg :std-user
