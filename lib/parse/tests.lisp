@@ -51,9 +51,6 @@
            (vector-push-extend c buffer))))
       (t (error "Lexing error")))))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun k-2-3 (a b c) (declare (ignore a c)) b))
-
 (define-parser *left-expression-parser*
   (:start-symbol expression)
   (:terminals (int id + - * / |(| |)|))
@@ -71,7 +68,7 @@
   (factor
    id
    int
-   (|(| expression |)| #'k-2-3)))
+   (|(| expression |)| (lambda (a b c) (declare (ignore a c)) b))))
 
 (define-parser *ambiguous-expression-parser*
   (:start-symbol expression)
@@ -85,7 +82,7 @@
    (expression / expression)
    id
    int
-   (|(| expression |)| #'k-2-3)))
+   (|(| expression |)| (lambda (a b c) (declare (ignore a c)) b))))
 
 (define-parser *precedence-left-expression-parser*
   (:start-symbol expression)
@@ -99,7 +96,7 @@
    (expression / expression)
    id
    int
-   (|(| expression |)| #'k-2-3)))
+   (|(| expression |)| (lambda (a b c) (declare (ignore a c)) b))))
 
 (define-parser *precedence-right-expression-parser*
   (:start-symbol expression)
@@ -113,7 +110,7 @@
    (expression / expression)
    id
    int
-   (|(| expression |)| #'k-2-3)))
+   (|(| expression |)| (lambda (a b c) (declare (ignore a c)) b))))
 
 (define-parser *precedence-nonassoc-expression-parser*
   (:start-symbol expression)
@@ -126,7 +123,7 @@
    (expression / expression)
    id
    int
-   (|(| expression |)| #'k-2-3)))
+   (|(| expression |)| (lambda (a b c) (declare (ignore a c)) b))))
 
 (deftest yacc ()
   (flet ((parse (parser e) 

@@ -38,30 +38,31 @@
     (proc-args *test-cli* '("--log" "default" "--foo=11"))))
 
 (defmain foo-main (:exit nil)
-  (with-cli (*test-cli* :exit nil) ()
-    t))
+  (is
+   (with-cli (*test-cli* :exit nil) ()
+             t)))
 
 (deftest clap-main ()
   (is (null (funcall #'foo-main))))
 
-(deftest clap-basic (:skip t)
+(deftest clap-basic ()
   "test basic CLAP functionality."
-  (with-cli ((make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli") opts cmds args :exit nil) *args*
+  (with-cli ((make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli") :exit nil) *args*
     (is (eq (make-shorty "test") #\t))
     (is (equalp (proc-args *cli* '("-f" "baz" "--bar=fax")) ;; not eql
                 (make-cli-ast 
                  (list (make-cli-node 'opt (find-short-opts #\f *cli*))
-                       (make-cli-node 'cmd (find-cmd *cli* "baz"))
-                       (make-cli-node 'opt (find-opts *cli* "bar"))
+                       (make-cli-node 'cmd (find-cmd "baz" *cli*))
+                       (make-cli-node 'opt (find-opts "bar" *cli*))
                        (make-cli-node 'arg "fax")))))
-    (parse-args *cli* '("--bar" "baz" "-f" "yaks")))
+    (parse-args *cli* '("--bar" "baz" "-f" "yaks"))
     (is (stringp
          (with-output-to-string (s)
            (print-version *cli* s)
            (print-usage *cli* s)
            (print-help *cli* s))))
     (is (string= "foobar" (cli/clap:parse-string-opt "foobar")))
-  (do-cmd *cli*))
+    (do-cmd *cli*)))
 
 (make-opt-parser trivial *arg*)
 

@@ -87,7 +87,7 @@
     (flush-db tmp)
     ;; TODO: auto handle return type (get-prop-int)
     (is (= 10000 (parse-integer (db-prop tmp "rocksdb.estimate-num-keys"))))
-    (istype 'string (print-stats tmp))
+    (istype 'string (print-stats tmp nil))
     (istype 'string (db-prop tmp :levelstats))
     (debug! ;; some info about our db
      (name tmp)
@@ -164,7 +164,7 @@
                               :merge-op (rdb::create-concat-merge-op))
                  :open t :close t)
       (put-key db k v)
-      (print (get-val db k))
+      (get-val db k)
       (merge-key db k v)
       (isequal (concatenate 'string v v) (get-val db k)))))
 

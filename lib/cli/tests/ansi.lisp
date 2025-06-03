@@ -6,7 +6,20 @@
 (in-package :cli/tests)
 (in-suite :cli)
 
-(defun ansi-t01 ()
+(defmacro with-ansi-test-io (&body body)
+  "Rebind *STANDARD-OUTPUT* for testing CLI/ANSI."
+  `(istype 
+    'string
+    (with-output-to-string (s)
+      (let ((*standard-output* s))
+        ,@body))))
+
+(defmacro defansi-test (name args &body body)
+  `(defun ,name ,args
+     (with-ansi-test-io
+       ,@body)))
+
+(defansi-test ansi-t01 ()
   (erase)
     (cursor-position 0 0)
     (princ "0")
@@ -22,7 +35,7 @@
       (princ a)
       (force-output))))
 
-(defun ansi-t02 ()
+(defansi-test ansi-t02 ()
   (print "normal")
   (.sgr 1)
   (print "bold")
@@ -42,8 +55,7 @@
   (print "normal")
   (force-output))
 
-(defun ansi-t03 ()
-  "Display the 256 color palette."
+(defansi-test ansi-t03 ()
   (clear)
   (loop for i from 0 to 255 do
            (.sgr 48 5 i)
@@ -59,8 +71,7 @@
   (.ris)
   (force-output))
 
-(defun ansi-t04 ()
-  "Hide and show the cursor."
+(defansi-test ansi-t04 ()
   (princ "Cursor visible:")
   (force-output)
   ;; (sleep 2)
@@ -76,8 +87,7 @@
   ;; (sleep 2)
   )
 
-(defun ansi-t05 ()
-  "Switch to and back from the alternate screen buffer."
+(defansi-test ansi-t05 ()
   (princ "Normal screen buffer. ")
   (force-output)
   ;; (sleep 2)
@@ -94,12 +104,7 @@
   ;; (sleep 1)
   )
 
-(defun ansi-t06 ()
-  "Set individual termios flags to enable raw and disable echo mode.
-
-Enabling raw mode allows read-char to return immediately after a key is pressed.
-
-In the default cooked mode, the entry has to be confirmed by pressing enter."
+(defansi-test ansi-t06 ()
   (set-tty-mode t :ignbrk nil
                   :brkint nil
                   :parmrk nil
@@ -137,10 +142,7 @@ In the default cooked mode, the entry has to be confirmed by pressing enter."
                   :icanon t
                   :veol 0))
 
-(defun ansi-t07 ()
-  "Use combination modes that consist of several individual flags.
-
-Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
+(defansi-test ansi-t07 ()
   (set-tty-mode t :cooked nil)
   (erase)
   (cursor-position 1 1)
@@ -151,8 +153,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (force-output))
   (set-tty-mode t :raw nil))
 
-(defun ansi-t08 ()
-  "Why doesnt calling the stty utility work?"
+(defansi-test ansi-t08 ()
   ;; (uiop:run-program "stty raw -echo")
   (erase)
   (cursor-position 1 1)
@@ -164,8 +165,7 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
   ;; (uiop:run-program "stty -raw echo" :ignore-error-status t)
   )
 
-(defun ansi-t09 ()
-  "Query terminal size with ANSI escape sequences."
+(defansi-test ansi-t09 ()
   ;; Put the terminal into raw mode so we can read the "user input"
   ;; of the reply char by char
   ;; Turn off the echo or the sequence will be displayed
@@ -189,7 +189,8 @@ Cooked and raw are opposite modes. Enabling cooked disbles raw and vice versa."
     (set-tty-mode t :raw nil :echo t)
     (restore-cursor-position)
     ;; Return the read sequence as a list of characters.
-    (nreverse chars)))
+    ;; (nreverse chars)
+    ))
 
 (deftest ansi ()
   (with-input-from-string (in (format nil "~%~%"))

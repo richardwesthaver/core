@@ -51,6 +51,5 @@
                 ((:file "pkg")
                  (:file "shell")
                  (:file "ansi")
-                 (:file "clap")
-                 (:file "tools"))))
+                 (:file "clap"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :cli)))

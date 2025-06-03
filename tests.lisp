@@ -24,6 +24,3 @@
   (rt/cover:report "/tmp/rt/"))
 
 ;; (core-coverage-report)
-
-(deftest all ()
-  (run-all-tests))

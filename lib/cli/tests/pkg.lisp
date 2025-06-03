@@ -439,13 +439,19 @@ Eastern Mediterranean ████████████████▊
 ██████████████████████████████████████████████████
 ")))))
 
-(deftest repl ())
+(deftest repl (:skip t))
 
 (deftest env ()
-  (ld-library-path-list)
   (is (exec-path-list))
   (is (find-exe "sbcl")))
 
 (deftest sbcl-tools ()
-  (with-sbcl (:noinform t :quit t)
-    (print 1)))
+  (when (find-exe "sbcl")
+    (iseql 
+     :ok
+     (read-from-string
+      (with-output-to-string (s)
+        (let ((cli/tools/sbcl::*sbcl-input* nil)
+              (cli/tools/sbcl::*sbcl-output* s))
+          (with-sbcl (:noinform t :quit t)
+            (print :ok))))))))

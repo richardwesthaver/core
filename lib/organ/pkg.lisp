@@ -95,6 +95,7 @@
    :org-tag
    :org-paragraph
    :org-block
+   :org-dynamic-block
    :org-node-property
    :org-file-property
    :org-todo-keyword-p

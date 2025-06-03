@@ -13,11 +13,11 @@
 | description | :description The Compiler Company Core               |
 | skel-id     | :id 1566328410216733941                              |
 | root        | ~/comp/core/                                         |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/d1fee5d3e4eb][d1fee5d3e4eb:1027+]] |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/5f993037a095][5f993037a095:1028+]] |
 | tags        | :tags (core lisp emacs c)                            |
-| updated     | Sun Jun 01 02:12:38 2025 -0400                       |
+| updated     | Sun Jun 01 22:51:34 2025 -0400                       |
 | langs       | c elisp json lisp org text                           |
-| lines       | 134269 :λ 105121 :# 13118 :_ 16030                   |
+| lines       | 134264 :λ 105123 :# 13116 :_ 16025                   |
 |-------------+------------------------------------------------------|
 
 #+END:
@@ -26,3 +26,6 @@
 - [[https://compiler.company/plan/tasks/core.html][Tasks]]
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
+
+The core is a deeply opinionated development environment intended for
+advanced Lisp hackers building next-gen applications.
