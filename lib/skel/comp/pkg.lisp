@@ -14,7 +14,6 @@
 
 (defpackage :skel/comp/asd
   (:use :cl :std :skel/core/obj :skel/core/proto :asdf)
-  (:shadowing-import-from :std :explain)
   (:shadow :circular-dependency)
   (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
 

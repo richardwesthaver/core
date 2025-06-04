@@ -105,7 +105,7 @@
    :simple-reader-error
    :simple-parse-error
    :simple-program-error
-   :circular-dependency
+   :circular-dependencies
    :unknown-argument
    :error-name
    :error-kind
@@ -452,7 +452,7 @@
   (:import-from :sb-c :parse-eval-when-situations :source-location :*backend-byte-order*)
   (:recycle :sb-sys)
   (:import-from :sb-ext :maybe-inline :defglobal :define-load-time-global :finalize :cancel-finalization)
-  (:import-from :std/sym :with-gensyms)
+  (:import-from :std/sym :with-gensyms :search-roots)
   (:import-from :std/list :appendf)
   (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:import-from :sb-assem :*backend-instruction-set-package*)
@@ -517,7 +517,6 @@
    :logical-host :info 
    :show-info :*info-types*
    :hooks
-   :*default-package*
    :*default-arena-size*
    :current-lisp-implementation
    :current-machine
@@ -702,7 +701,7 @@
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
    :slot-boundp* :slot-values
-   :explore :explain :with-fslots))
+   :explore :with-fslots))
 
 (defpkg :std/spin
   (:use :cl)
@@ -1047,6 +1046,21 @@
    :string-case
    :detabify))
 
+(pkg:defpkg :std/defsys
+  (:use :cl :asdf)
+  (:nicknames :sys)
+  (:import-from :sb-impl :*requiring* :module-provide-contrib)
+  (:shadowing-import-from :sb-ext :retry)
+  (:import-from :asdf :module-provide-asdf)
+  (:export 
+   :defsys
+   :find-system*
+   :defsystem*
+   ;; re-exports from ASDF
+   :defsystem
+   :compile-system
+   :load-system))
+
 (defpkg :std
   (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-thread :sb-alien :sb-gray)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
@@ -1057,7 +1071,7 @@
    :std/os :std/file :std/string :std/sys 
    :std/readtable :std/pipe :std/serde :std/rand 
    :std/async :std/par :std/spin :std/seq
-   :std/comp)
+   :std/comp :std/defsys)
   (:export :*std-packages*))
 
 (defpkg :std-user
@@ -1065,11 +1079,9 @@
    :std-int :sb-alien :sb-thread :sb-bsd-sockets
    :sb-gray :sb-mop :sb-debug))
 
-(pkg:define-lisp-package :std)
-
-(in-package :std)
+(in-package :std-user)
 (defvar *std-packages*
-  '(:std/named-readtables :std/defpkg :std/condition
+  '(:std/named-readtables :std/defpkg :std/defsys :std/condition
     :std/sym :std/list :std/type :std/num
     :std/stream :std/curry :std/array :std/hash-table
     :std/alien :std/meta :std/thread :std/task
@@ -1077,5 +1089,6 @@
     :std/os :std/file :std/string :std/seq
     :std/sys :std/readtable :std/pipe :std/serde
     :std/rand :std/async :std/par :std/spin))
-
+(define-lisp-package :std)
 (asdf:register-system-packages "STD" *std-packages*)
+(setq *default-package* "STD-USER")

@@ -13,14 +13,13 @@
 ;; - parallel compilation (completely short-circuiting asdf)
 
 ;;; Code:
-(defpackage :std/defsys
-  (:use :cl :asdf)
-  (:nicknames :sys)
-  (:export :defsys
-   :find-system*
-   :defsystem*))
-
-(in-package :sys)
+(in-package :std/defsys)
+(defun module-provide-core (name)
+  "Provide a CORE-MODULE, adding valid entries to the *CORE-MODULES*
+  variable. The function USE should be called in order to load and activate a
+  module, but the deprecated PROVIDE function is also supported."
+  (or (module-provide-asdf name)
+      (module-provide-contrib name)))
 
 (defmacro defsys (name &body body)
   `(defsystem ,name ,@body))

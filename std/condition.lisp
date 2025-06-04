@@ -185,7 +185,7 @@ a default value for required keyword arguments."
          :format-control message
          :format-arguments args))
 
-(define-condition circular-dependency (simple-error)
+(define-condition circular-dependencies (simple-error)
   ((items
     :initarg :items
     :initform (error "Must specify items")

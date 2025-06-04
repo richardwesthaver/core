@@ -18,9 +18,11 @@
    :delete-package* :package-names :packages-from-names :fresh-package-name 
    :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
    :with-package :define-lisp-package
-   :defpackage*))
+   :defpackage* :*default-package*))
 
 (in-package :std/defpkg)
+
+(defvar *default-package* "CL-USER")
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun find-package* (package-designator &optional (error t))
@@ -726,11 +728,10 @@ package."
          (:export ,@cl-externs)
          (:export ,@pkg-externs)))))
 
-
 (defmacro with-package (pkg &body body)
   "Execute BODY within the package PKG."
-  `(let ((*package* ,@(when pkg `((find-package ,pkg)))))
-     ,@body))
+  `(let ((*package* (find-package ,pkg)))
+     (progn ,@body)))
 
 ;; From C-MERA for internal package (syn/gen/c/sym, etc)
 (defmacro defpackage* (name (&key shadow-symbols export-symbols) &body body)

@@ -3,12 +3,9 @@
 ;; Top-level namespaces accessible to Core lisps.
 
 ;;; Code:
-(in-package :std-user)
-
-(defpkg :core 
+(pkg:defpkg :core 
   (:use :cl)
   (:use-reexport :std :log :io :obj :net :cry :parse :dat :cl-user :sb-ext :sb-debug))
-
 (in-package :core)
 (pushnew :core *features*)
 

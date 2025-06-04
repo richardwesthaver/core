@@ -18,8 +18,6 @@
 ;; sb-sys:*linkage-info* *machine-version* *runtime-dlhandle* *periodic-polling-function*
 ;; *periodic-polling-period* io-timeout nlx-protect serve-event os-deinit os-exit with-deadline dlopen-or-lose deallocate-system-memory
 
-(defvar *default-package* (find-package :std-user))
-
 (defvar *interactive* t
   "When non-nil (the default) specifies that this is an interactive REPL session
 and we may query the user for input.")

@@ -32,8 +32,6 @@
   (:documentation "Explicitly run the object SELF."))
 (defgeneric exec (self)
   (:documentation "Execute object SELF."))
-(defgeneric explain (self &key &allow-other-keys)
-  (:documentation "Explain object SELF."))
 (defgeneric explore (self &key &allow-other-keys)
   (:documentation "Explain object SELF."))
 (defgeneric write-object (selfj stream &key &allow-other-keys)
