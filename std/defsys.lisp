@@ -14,12 +14,31 @@
 
 ;;; Code:
 (in-package :std/defsys)
+
+;;; Systems
+(defclass sysdef () ())
+
+(defmacro defsys (name &body body)
+  `(defsystem ,name ,@body))
+
+;;; Modules
+(defvar *module* nil)
+(defparameter *core-modules* nil)
+
+(defun load-module (name)
+  "Load module NAME from the global list *MODULES*."
+  (find name *modules* :test 'string-equal))
+
+(defun unload-module () (setf *module* nil))
+  
 (defun module-provide-core (name)
-  "Provide a CORE-MODULE, adding valid entries to the *CORE-MODULES*
+  "Provide a CORE-MODULE, adding valid entries to the *MODULES*
   variable. The function USE should be called in order to load and activate a
   module, but the deprecated PROVIDE function is also supported."
   (or (module-provide-asdf name)
       (module-provide-contrib name)))
 
-(defmacro defsys (name &body body)
-  `(defsystem ,name ,@body))
+(defmacro with-module (name &body body)
+  "Load the module named NAME, binding it to *MODULE* and eval BODY."
+  `(let ((*module* (load-module ,name)))
+     ,@body))

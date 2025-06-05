@@ -731,7 +731,7 @@ package."
 (defmacro with-package (pkg &body body)
   "Execute BODY within the package PKG."
   `(let ((*package* (find-package ,pkg)))
-     (progn ,@body)))
+     ,@body))
 
 ;; From C-MERA for internal package (syn/gen/c/sym, etc)
 (defmacro defpackage* (name (&key shadow-symbols export-symbols) &body body)

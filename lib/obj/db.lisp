@@ -128,19 +128,19 @@ saved."
                 (not (member (car x) *database-backend-close-options*))))
           options)))
 
-(defmacro with-db ((var &rest initargs &key db &allow-other-keys) 
+(defmacro with-db ((var &rest initargs &key (db '*db*) &allow-other-keys) 
                    &body body)
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
   of BODY."
-  `(let ((opts ',(parse-database-backend-options initargs))
-         (,var (or ,db *db*)))
-     ,@(when db `((setf *db* ,var)))
-     ;; ,@(when open (remf initargs :open) `((open-db ,var)))
-     (apply 'do-database-backend-init-options ,var opts)
-     (unwind-protect (progn ,@body)
-       ;; ,@(when close (remf initargs :close) `((close-db ,var)))
-       ;; ,@(when destroy (remf initargs :destroy) `((destroy-db ,var)))
-       (apply 'do-database-backend-close-options ,var opts))))
+  (with-gensyms (opts)
+    `(let ((,opts ',(parse-database-backend-options initargs))
+           (,var ,db))
+       ;; ,@(when open (remf initargs :open) `((open-db ,var)))
+       (apply 'do-database-backend-init-options ,var opts)
+       (unwind-protect (progn ,@body)
+         ;; ,@(when close (remf initargs :close) `((close-db ,var)))
+         ;; ,@(when destroy (remf initargs :destroy) `((destroy-db ,var)))
+         (apply 'do-database-backend-close-options ,var opts)))))
 
 ;;; Config
 (defconfig db-config ()
@@ -228,6 +228,11 @@ usually a key such as :ROCKSDB or :SQLITE."))
   (:documentation "Return the value associated with KEY from DB."))
 
 (defgeneric (setf db-get) (db key val &key &allow-other-keys))
+
+(defgeneric db-set (db key val &key &allow-other-keys)
+  (:documentation "Set the value associated with KEY from DB to VAL.")
+  (:method (db key val &rest args)
+    (setf (apply #'db-get db key args) val)))
 
 (defgeneric close-db (db &key &allow-other-keys)
   (:documentation "Close a database."))
@@ -491,6 +496,7 @@ column is already closed."))
 (defgeneric abort-transaction (self &key &allow-other-keys))
 
 (defgeneric transaction-object-p (self)
+  (:documentation "Return Non-nil if SELF is a transaction object.")
   (:method ((self t))
     (or (typep 'simple-transaction self)
         (subtypep (type-of (transaction-db self)) 'database)))
@@ -529,6 +535,7 @@ return the same value as DB depending on backend.")
      ,@body))
 
 (defmacro current-transaction (db)
+  "Return the current transaction associated with database DB."
   (with-gensyms (txn)
     `(let ((,txn *txn*))
        (when (and ,txn (eq (transaction-db ,txn) ,db))
