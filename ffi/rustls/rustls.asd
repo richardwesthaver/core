@@ -11,6 +11,7 @@
   :depends-on (:std)
   :components ((:file "pkg")
                (:file "types")
+               (:file "condition")
                (:file "rustls"))
   :in-order-to ((test-op (test-op "rustls/tests"))))
 

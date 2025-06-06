@@ -151,6 +151,30 @@
   (builder (* rustls-web-pki-client-cert-verifier-builder)))
 
 ;;; rustls_web_pki_server_cert_verifier
+(defar rustls-web-pki-server-cert-verifier-builder-new (* rustls-web-pki-server-cert-verifier-builder)
+  (store (* rustls-root-cert-store)))
+(defar rustls-web-pki-server-cert-verifier-builder-new-with-provider (* rustls-web-pki-server-cert-verifier-builder)
+  (provider (* rustls-crypto-provider))
+  (store (* rustls-root-cert-store)))
+(defar rustls-web-pki-server-cert-verifier-builder-add-crl rustls-result
+  (builder (* rustls-web-pki-server-cert-verifier-builder))
+  (crl-pem (* unsigned-char))
+  (crl-pem-len size-t))
+(defar rustls-web-pki-server-cert-verifier-only-check-end-entity-revocation rustls-result
+  (builder (* rustls-web-pki-server-cert-verifier-builder)))
+(defar rustls-web-pki-server-cert-verifier-enforce-revocation-expir rustls-result
+  (builder (* rustls-web-pki-server-cert-verifier-builder)))
+(defar rustls-web-pki-server-cert-verifier-builder-build rustls-result
+  (builder (* rustls-web-pki-server-cert-verifier-builder))
+  (verifier-out (* rustls-server-cert-verifier)))
+(defar rustls-web-pki-server-cert-verifier-builder-free void
+  (builder (* rustls-web-pki-server-cert-verifier-builder)))
+(defar rustls-platform-server-cert-verifier rustls-result
+  (verifier-out (* (* rustls-server-cert-verifier))))
+(defar rustls-platform-server-cert-verifier-with-provider (* rustls-server-cert-verifier)
+  (provider (* rustls-crypto-provider)))
+(defar rustls-server-cert-verifier-free void
+  (verifier (* rustls-server-cert-verifier)))
 
 ;;; rustls_client_config
 (defar rustls-client-config-builder-new (* rustls-client-config-builder))
@@ -186,8 +210,6 @@
 (defar rustls-client-config-builder-free void
   (c (* rustls-client-config-builder)))
 
-(defar rustls-platform-server-cert-verifier rustls-result
-  (verifier-out (* (* rustls-server-cert-verifier))))
 
 (defar rustls-client-config-free void
   (c (* rustls-client-config)))
@@ -278,7 +300,7 @@
 
 (defar rustls-error void (result rustls-result) (buf (* unsigned-char)) (len size-t) (out-n (* size-t)))
 
-(defar rustls-result-is-cert-errorerror boolean (result rustls-result))
+(defar rustls-result-is-cert-error boolean (result rustls-result))
 
 (defar rustls-log-level-str c-string (level rustls-log-level))
 
@@ -305,6 +327,7 @@
 
 (defar rustls-server-config-free void (config (* rustls-server-config)))
 
+;;; rustls_server_connection
 (defar rustls-server-connection-new rustls-result
   (config (* rustls-server-config))
   (conn-out (* (* rustls-connection))))

@@ -14,9 +14,10 @@
 
 (defsystem :ssh2
   :depends-on (:sb-grovel :std)
-  :components ((grovel-constants-file "constants"
+  :components ((:file "pkg")
+               (grovel-constants-file "constants"
                                       :package :ssh2)
-               (:file "pkg"))
+               (:file "ssh2"))
   :in-order-to ((test-op (test-op "ssh2/tests"))))
 
 (defsystem :ssh2/tests

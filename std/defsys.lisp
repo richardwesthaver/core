@@ -23,22 +23,35 @@
 
 ;;; Modules
 (defvar *module* nil)
-(defparameter *core-modules* nil)
+(defparameter *core-module-table* (make-hash-table :test 'equal))
 
-(defun load-module (name)
+(defclass core-module () ())
+
+(defun load-core-module (name)
+  (let ((cmod (gethash name *core-module-table*)))
+    (with-slots (load-hook exit-hook) cmod
+      (when exit-hook
+        (pushnew exit-hook sb-ext:*exit-hooks*))
+      (funcall load-hook))))
+
+(defmacro load-module (name)
   "Load module NAME from the global list *MODULES*."
-  (find name *modules* :test 'string-equal))
+  (let ((mod (find name *modules* :test 'string-equal)))
+    (if (null mod) (warn "Module not found: ~A" name)
+        (let ((core-mod (gethash mod *core-module-table*)))
+           (if core-mod
+               `(load-core-module ,core-mod)
+               `(require ,mod))))))
 
 (defun unload-module () (setf *module* nil))
-  
+
 (defun module-provide-core (name)
   "Provide a CORE-MODULE, adding valid entries to the *MODULES*
   variable. The function USE should be called in order to load and activate a
   module, but the deprecated PROVIDE function is also supported."
-  (or (module-provide-asdf name)
-      (module-provide-contrib name)))
+  (load-core-module name))
 
 (defmacro with-module (name &body body)
   "Load the module named NAME, binding it to *MODULE* and eval BODY."
-  `(let ((*module* (load-module ,name)))
+  `(let ((*module* (or (load-module ,name) ,name)))
      ,@body))
