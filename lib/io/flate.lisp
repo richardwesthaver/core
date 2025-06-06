@@ -49,6 +49,9 @@
 (deferror decompression-error (flate-error) () (:auto t))
 
 ;;; Proto
+(defgeneric decompress (output state input &key &allow-other-keys))
+(defgeneric compress (input state &key &allow-other-keys))
+
 (defgeneric finish-compression (self))
 (defgeneric finish-decompression (self))
 ;; TODO 2024-06-08: maybe move this to generic io/stream protocol - 'RESET'

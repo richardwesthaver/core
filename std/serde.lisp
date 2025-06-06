@@ -74,7 +74,7 @@ method body."))
 
 (declaim (inline %lisp-object-id))
 (defun %lisp-object-id (obj)
-  "Return the STD/SERDE 'id' of OBJ - which is its position in *LISP-OBJECTS*."
+  "Return the STD/SERDE 'id' of OBJ - which is its position in *SIMPLE-LISP-OBJECTS*."
   (position obj *lisp-objects*))
 
 (defmacro define-io (name &body body)

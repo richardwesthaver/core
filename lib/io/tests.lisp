@@ -1,5 +1,5 @@
 (defpackage :io/tests
-  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs :io/stream))
+  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs :io/stream :io/deflate))
 
 (in-package :io/tests)
 (defsuite :io)
@@ -85,6 +85,7 @@
       ;; (close (stream-of compressor))
       )))
 
+
 #| test from salza2
 (defparameter *data-size* (* 10 1024))
 
@@ -116,6 +117,11 @@ compressed-data)
 (close out-stream)
 (fail (write-byte 2 out-stream) 'salza2:stream-closed-error))))
 |#
+
+;;; Deflate
+(deftest gzip ())
+(deftest bzip2 ())
+(deftest zlib ())
 
 ;;; Static Vectors
 (deftest static-vector ()

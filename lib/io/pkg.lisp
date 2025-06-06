@@ -156,15 +156,24 @@
    :with-zstd-output :with-zstd-input
    :with-zstd-buffer :with-zstd-stream))
 
-(defpackage :io/zlib
+(defpackage :io/deflate
   (:use :cl :std :io/proto :io/flate)
   (:import-from :std :deferror :eval-always)
   (:import-from :sb-gray :stream-force-output :stream-finish-output
    :stream-write-sequence)
-  (:import-from :ironclad :make-digest :produce-digest :update-digest)
-  (:export :zlib-error :zlig-compressor :zlib-decompressor
-   :with-zlib-output :with-zlib-input
-   :with-zlib-buffer :with-zlib-stream))
+  (:import-from :ironclad :make-digest :produce-digest :update-digest :copy-digest)
+  (:export :inflate-state :bzip2-state :make-dstate 
+   :finish-dstate :make-inflate-state :finish-inflate-state :deflate
+   :zlib :gzip :bzip2 :invalid-format-error
+   #:invalid-checksum-error
+   #:premature-end-of-stream
+   #:inflate-error
+   #:invalid-zlib-header-error
+   #:invalid-gzip-header-error
+   #:reserved-block-type-error
+   #:invalid-stored-block-length-error
+   #:bzip2-error
+   #:invalid-bzip2-data))
 
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)

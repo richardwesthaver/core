@@ -22,7 +22,7 @@
                (:file "chunky")
                (:file "flate")
                (:file "zstd")
-               (:file "zlib")
+               (:file "deflate")
                (:module "disk"
                 :components 
                 ((:file "pkg")
