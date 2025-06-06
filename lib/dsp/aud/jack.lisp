@@ -59,14 +59,13 @@
   (multiple-value-bind (mysf chans) (jack-open-sound soundfile)
     (when mysf
       (let ((jack-snd (make-jack-snd :path soundfile
-				   :sound-file-handle mysf
+				     :sound-file-handle mysf
 				   :chans chans
 				   :ringbuffer (jack-ringbuffer-create (* +sample-size+ *output-channels* (ash 1 15)))
 				   :playing? t
 				   :start (if start (ms->frame start))
 				   :loop? loop?
-				   :outbus tracknum
-				   )))
+				   :outbus tracknum)))
 	(when (numberp start) (jack-seek mysf (ms->frame start)))
 	(let ((thisproc (make-thread 'disk-to-ringbuffer-proc
                                      :name (format nil "jack-producer ~S" (file-namestring soundfile))

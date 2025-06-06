@@ -91,7 +91,7 @@ two fingerprints yourself, you probably want them in this form.  |#
 
 (defar chromaprint-get-fingerprint int (ctx (* chromaprint-context)) (fingerprint (* c-string)))
 
-(defar chromaprint-get-raw-fingerprint int (ctx (* chromaprint-context)) (fingerprint (* (array unsigned-int))) (size (* int)))
+(defar chromaprint-get-raw-fingerprint int (ctx (* chromaprint-context)) (fingerprint (* (* unsigned-int))) (size (* int)))
 
 (defar chromaprint-get-raw-fingerprint-size int (ctx (* chromaprint-context)) (size (* int)))
 
@@ -123,11 +123,11 @@ two fingerprints yourself, you probably want them in this form.  |#
 (defar chromaprint-dealloc void (ptr (* t)))
 
 ;;; Utils
-(defmacro with-chromaprint-ctx ((sym &key (algo (chromaprint-algorithm :default))
+(defmacro with-chromaprint-ctx ((sym &key (algo :default)
                                           (samplerate 44100)
                                           (channels 2))
                                 &body body)
-  `(let ((,sym (chromaprint-new ,algo)))
+  `(let ((,sym (chromaprint-new (chromaprint-algorithm ,algo))))
      (unwind-protect (progn
                        (chromaprint-start ,sym ,samplerate ,channels)
                        ,@body)

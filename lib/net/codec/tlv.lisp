@@ -15,6 +15,8 @@ TLVs are a common packet format in communication protocols. Objects of
 this type are assumed to have a 1 byte TYPE, a 2 byte LENGTH, and a
 VALUE which is an OCTET-VECTOR of length LENGTH."))
 
+(defmethod sequence:length ((self tlv)) (+ (tlv-length self) 3))
+
 (defmethod serialize ((obj tlv) (format (eql :bytes)) &key stream)
   (declare (ignore format))
   (with-slots (type length value) obj

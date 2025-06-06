@@ -75,7 +75,7 @@
 <button accesskey=\"s\" class=show onclick=open_all_sections()>show</button> <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></nav>")
       
 (setq org-publish-project-alist
-      `(("compiler.company" :components ("index" "meta" "blog" "docs" "graph" "plan"))
+      `(("compiler.company" :components ("index" "meta" "blog" "docs" "graph" "plan" "notes" "archive"))
         ("index"
          :base-directory ,project-dir
          :base-extension "org"
@@ -96,6 +96,26 @@
          :publishing-function org-html-publish-to-html
          :htmlized-source t
          :html-postamble ,html-foot)
+	("notes"
+	 :base-directory ,(expand-file-name "notes" project-dir)
+	 :base-extension "org"
+	 :recursive t
+	 :footnote-section-p t
+	 :html-doctype "<!doctype html>"
+	 :publishing-directory ,(expand-file-name "notes" publish-dir)
+	 :publishing-function org-html-publish-to-html
+	 :htmlized-source t
+	 :html-postamble ,html-foot)
+	("archive"
+	 :base-directory ,(expand-file-name "archive" project-dir)
+	 :base-extension "org"
+	 :recursive t
+	 :footnote-section-p t
+	 :html-doctype "<!doctype html>"
+	 :publishing-directory ,(expand-file-name "archive" publish-dir)
+	 :publishing-function org-html-publish-to-html
+	 :htmlized-source t
+	 :html-postamble ,html-foot)
         ("blog"
          :base-directory ,(expand-file-name "blog" project-dir)
          :recursive t

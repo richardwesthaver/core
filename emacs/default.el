@@ -383,7 +383,7 @@ function: '(ql:quickload :clouseau)'."
 ;;     (eglot-x-setup)))
 
 ;;; Asm
-(require 'x86-lookup "lib/x86-lookup")
+(require 'x86-lookup "x86-lookup")
 (setq  x86-lookup-pdf "/opt/store/data/doc/64-iA32-isa.pdf")
 (use-package nasm-mode :ensure t)
 (add-hook 'asm-mode-hook 'nasm-mode)

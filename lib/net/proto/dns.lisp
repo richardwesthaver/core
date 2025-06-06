@@ -31,7 +31,7 @@
                 *cloudflare-servers* *opendns-servers*
                 *google-servers*)))
 
-(defun try-server (server send send-length recv recv-length &key (attempts 1) (timeout 1))
+(defun try-server (server send send-length recv recv-length &key (attempts 1) (timeout 10))
   (handler-case
       (let ((socket (sb-bsd-sockets:socket-connect
                      (make-instance 'inet-socket
@@ -55,7 +55,7 @@
      (declare (dynamic-extent ,send))
      ,@body))
 
-(defun dns-query (hostname &key (type T) (dns-servers *dns-servers*) (attempts 1) (timeout 1))
+(defun dns-query (hostname &key (type T) (dns-servers *dns-servers*) (attempts 1) (timeout 10))
   (with-simple-restart (abort "Abort the DNS query.")
     (let ((recv (make-array +dns-buffer-length+ :element-type '(unsigned-byte 8) :initial-element 0)))
       (declare (dynamic-extent recv))
