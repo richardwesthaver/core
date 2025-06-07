@@ -18,11 +18,13 @@
    :delete-package* :package-names :packages-from-names :fresh-package-name 
    :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
    :with-package :define-lisp-package
-   :defpackage* :*default-package*))
+   :defpackage* :*default-package* :*defpkg-hook*))
 
 (in-package :std/defpkg)
 
 (defvar *default-package* "CL-USER")
+
+(defparameter *defpkg-hook* nil)
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun find-package* (package-designator &optional (error t))
@@ -706,10 +708,10 @@ the list, export symbols with the same name as those exported from
 that package. In the case of shadowing, etc. They may not be EQL."
   (let ((ensure-form
           `(apply 'ensure-package ',(parse-defpkg-form package clauses))))
-    `(progn
-       #+(or clasp ecl gcl mkcl) (defpackage ,package (:use))
-       (eval-when (:compile-toplevel :load-toplevel :execute)
-         ,ensure-form))))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (if #1=*defpkg-hook*
+           (funcall #1# ,ensure-form)
+           ,ensure-form))))
 
 (defmacro define-lisp-package (package)
   "Define a lisp package based on target PACKAGE which transparently exports all

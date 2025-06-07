@@ -141,8 +141,13 @@ of TYPE."
            (typep ,thing ,type)))
       form))
 
-(declaim (inline type=))
-(defun type= (type1 type2)
+(definline type-class-of (obj)
+  (type-class (ctype-of obj)))
+
+(definline type-class-name-of (obj)
+  (type-class-name (type-class-of obj)))
+
+(definline type= (type1 type2)
   "Returns a primary value of T if TYPE1 and TYPE2 are the same type,
 and a secondary value that is true is the type equality could be reliably
 determined: primary value of NIL and secondary value of T indicates that the

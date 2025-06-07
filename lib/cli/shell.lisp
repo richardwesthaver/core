@@ -47,15 +47,14 @@
                          ;; skip it
                          (read-char stream)
                          ;; eval and push each form individually.
-                         (let ((form (lambda () (read stream nil nil))))
+                         (let ((form (read stream nil nil)))
                            (push
                             (coerce
-                             (format nil "~{~A~^ ~}" (funcall form))
+                             (format nil "~{~A~^ ~}" (compile-and-eval form))
                              'list)
                             out)))
                        ;; unconditionally read in a single sexp and eval.
-                       (push (coerce (format nil "~A" (funcall 
-                                                       (compile nil `(lambda () ',(read stream nil nil)))))
+                       (push (coerce (format nil "~A " (compile-and-eval (read stream nil nil)))
                                      'list)
                              out)))
                   ((or (char= c #\+) (char= c #\-))
@@ -66,7 +65,7 @@
                                                (read stream t nil t)))
                             #\+ #\-)
                         c)
-                       (push (coerce (format nil "~A" (eval (read stream t nil t))) 'list) out)
+                       (push (coerce (format nil "~A " (eval (read stream t nil t))) 'list) out)
                        (let ((*read-suppress* t))
                          (read stream t nil t)
                          (values))))

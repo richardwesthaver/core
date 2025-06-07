@@ -371,3 +371,33 @@ long as ASDF is non-nil)."
   ("OUTPUT;**;*.*.*"
    (translate-logical-pathname "STASH:OUTPUT;sbcl;**;*.*.*"))
   ("TMP;**;*.*.*" "/tmp/**/*.*"))
+
+;;; Hexdump
+;; https://stackoverflow.com/questions/69974963/object-memory-layout-in-common-lisp#70019565
+(defun hexdump-object (obj)
+  "Try to hexdump an object, including immediate objects. All the
+work is done by sb-vm:hexdump in the interesting cases."
+  #-64-bit
+  (error "not a 64-bit SBCL")
+  (let* ((address/thing (sb-kernel:get-lisp-obj-address obj))
+         (tags (ldb (byte 4 0) address/thing)))
+    (format t "~&lowtags: ~12T~4,'0b~%" tags)
+    (cond
+      ((zerop (ldb (byte 1 0) tags))
+       (format t "~&fixnum:~12T~16,'0x = ~S~%" address/thing obj))
+      ((= (ldb (byte 2 0) tags) #b01)
+       (format t "~&immediate:~12T~16,'0x = ~S~%" address/thing obj))
+      ((= (ldb (byte 2 0) tags) #b11)   ;must be true
+       (format t "~&~A:~12T~16,'0x : ~16,'0x~%"
+               (case (ldb (byte 2 2) tags)
+                 (#b00 "instance")
+                 (#b01 "cons")
+                 (#b10 "function")
+                 (#b11 "other"))
+               address/thing (dpb #b0000 (byte 4 0) address/thing))
+       ;; this tells you at least something (and really annoyingly
+       ;; does not pad addresses on the left)
+       (sb-vm:hexdump obj))
+      ;; can't happen
+      (t (error "mutant"))))
+  (values))

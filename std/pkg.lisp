@@ -5,10 +5,12 @@
 ;;; Code:
 (pkg:defpkg :std-int
   (:use :cl)
-  (:use-reexport :std/named-readtables :std/defpkg))
+  (:use-reexport :std/named-readtables :std/defpkg)
+  (:export :*std-packages*))
 
 (in-package :std-int)
-
+(defparameter *std-packages* `(,(package-name *package*)))
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *std-packages* :test 'string=)))
 (defpkg :std/sym
   (:use :cl)
   (:mix :sb-int)
@@ -136,14 +138,19 @@
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
   (:import-from :std/list :ensure-car)
+  (:import-from :std/prim :definline)
   (:import-from :sb-impl :sfunction)
-  (:import-from :sb-c :integer-type-length)
+  (:import-from :sb-int :unsigned-byte*)
+  (:import-from :sb-c :integer-type-length :ctype-of)
   (:import-from :sb-kernel :*type-classes* :type-class 
-   :make-type-class)
+   :make-type-class :*type-cache-nonce* :type-class-name)
   (:shadowing-import-from :sb-ext :word)
   (:export :+default-element-type+
+   :type-class-of :unsigned-byte*
+   :type-class-name-of
+   :type-class-name
+   :*type-cache-nonce* :make-type-class
    :*type-classes* :type-class
-   :make-type-class
    :array-index :array-length
    #:negative-double-float
    #:negative-fixnum-p
@@ -293,7 +300,7 @@
   (:use :cl)
   (:import-from :sb-ext :maybe-inline)
   (:import-from :std/prim :definline)
-  (:import-from :sb-kernel :with-array-data)
+  (:import-from :sb-kernel :with-array-data :array-rank-limit)
   (:export :copy-array :signed-array-length :array-shift 
    :vector-push-extend-position :vector-pop-position
    :vectorify :make-array-allocator
@@ -302,7 +309,7 @@
    :vector-max :vector-min
    :vector-eq :with-array-data
    :vector-to-list :copy-vector-to-list
-   :modproj :simplify-array))
+   :modproj :simplify-array :array-rank-limit))
 
 (defpkg :std/hash-table
   (:use :cl)
@@ -439,10 +446,17 @@
 
 (defpkg :std/sys
   (:use :cl :sb-int)
-  (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects :unbound-marker-p :generation-of)
+  (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects 
+   :unbound-marker-p :generation-of
+   :current-sp :current-fp)
   (:import-from :sb-vm :list-allocated-objects :fun-signature= 
    :map-allocated-objects :fset :*linkage-name-map* :ldb-monitor
-   :map-immobile-objects :memory-usage :references-p :show-ctype-ctor-cache-metrics)
+   :map-immobile-objects :memory-usage :references-p :show-ctype-ctor-cache-metrics
+   :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
+   :fixnum-tag-mask :n-fixnum-bits :word-shift :n-word-bytes
+   :n-machine-word-bytes :n-widetag-bits :widetag-mask :most-positive-word
+   :lowtag-of :widetag-of :hexdump)
+  (:import-from :sb-sys :int-sap)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
    :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr)
   (:use-reexport :sb-cltl2)
@@ -464,7 +478,14 @@
   (:import-from :sb-ext :fold-identical-code)
   (:import-from :std/macs :if-let :defmacro!)
   (:export
-   :shake-packages
+   :int-sap
+   :current-sp :current-fp
+   :hexdump :hexdump-object
+   :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
+   :fixnum-tag-mask :n-fixnum-bits :word-shift :n-word-bytes
+   :n-machine-word-bytes :n-widetag-bits :widetag-mask :shake-packages
+   :lowtag-of :widetag-of
+   :most-positive-word
    :tune-image-for-dump
    :show-ctype-ctor-cache-metrics
    :memory-usage
@@ -581,18 +602,53 @@
    :make-octets
    :octets))
 
+(defpkg :std/comp
+  (:use :cl)
+  (:import-from :sb-c :deftransform :defoptimizer 
+   :define-vop :parse-deftransform :defknown :ctype-of 
+   :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
+   :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
+   :assemble :without-scheduling :inst :inst* 
+   :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
+   :make-file-source-info :make-lisp-source-info)
+  (:import-from :sb-c :vop)
+  (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
+   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
+   :*backend-predicate-types* :*backend-type-predicates*
+   :*compile-progress* :*compile-component-hook* :primitive-type :primitive-type-of
+   :primitive-type-name)
+  (:import-from :sb-vm :*register-arg-tns* :*primitive-objects*
+   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
+  (:import-from :sb-ext :*compiler-print-variable-alist*)
+  (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
+   :defoptimizer :defknown :ctype-of :ctypecase :ctypep :ctype-array-dimensions
+   :*primitive-objects*
+   :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop :vop*
+   :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
+   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
+   :*backend-predicate-types* :*backend-type-predicates* :emit :assemble
+   :without-scheduling :dump-symbolic-asm :inst :inst* :primitive-type :primitive-type-of
+   :primitive-type-name :primitive-object-name :primitive-object-lowtag :primitive-object-widetag
+   :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
+   :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info))
+
 (defpkg :std/serde
   (:use :cl)
   (:import-from :std/named-readtables :parse-body)
+  (:import-from :std/prim :definline)
   (:import-from :std/condition :deferror)
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/sym :symbolicate :with-gensyms)
-  (:import-from :std/type :octet-vector)
+  (:import-from :std/type :octet-vector :*type-classes* :type-class-name-of :type-class-name :type=)
+  (:import-from :std/comp :*primitive-objects* :primitive-object-size 
+   :widetag-of :lowtag-of :primitive-type-of :backend-primitive-type-name
+   :*backend-primitive-type-names* :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:export :define-io
-   :*simple-lisp-objects* :*lisp-objects* :serializable-p :deserializable-p
-   :ser :de :serialize :deserialize
-   :serde-condition :serde-error :serializer-error :deserializer-error
-   :serde))
+   :*simple-object-table* :*primitive-object-table* 
+   :*core-object-table* :serde
+   :prim-type
+   :serializable-p :deserializable-p
+   :ser :de :serialize :deserialize :serde-condition :serde-error :serializer-error :deserializer-error))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)
@@ -658,32 +714,6 @@
    :pull-sap
    :pull-sap*
    :defar))
-
-(defpkg :std/comp
-  (:use :cl)
-  (:import-from :sb-c :deftransform :defoptimizer 
-   :define-vop :parse-deftransform :defknown :ctype-of 
-   :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
-   :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
-   :assemble :without-scheduling :inst :inst* 
-   :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
-   :make-file-source-info :make-lisp-source-info)
-  (:import-from :sb-c :vop)
-  (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
-   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
-   :*backend-predicate-types* :*backend-type-predicates*
-   :*compile-progress* :*compile-component-hook*)
-  (:import-from :sb-vm :*register-arg-tns*)
-  (:import-from :sb-ext :*compiler-print-variable-alist*)
-  (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
-   :defoptimizer :defknown :ctype-of :ctypecase :ctypep :ctype-array-dimensions
-   :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop :vop*
-   :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
-   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
-   :*backend-predicate-types* :*backend-type-predicates* :emit :assemble
-   :without-scheduling :dump-symbolic-asm :inst :inst*
-   :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
-   :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)
@@ -1071,24 +1101,16 @@
    :std/os :std/file :std/string :std/sys 
    :std/readtable :std/pipe :std/serde :std/rand 
    :std/async :std/par :std/spin :std/seq
-   :std/comp :std/defsys)
-  (:export :*std-packages*))
+   :std/comp :std/defsys))
 
 (defpkg :std-user
   (:use :cl :cl-user :sb-ext :std
    :std-int :sb-alien :sb-thread :sb-bsd-sockets
    :sb-gray :sb-mop :sb-debug))
 
-(in-package :std-user)
-(defvar *std-packages*
-  '(:std/named-readtables :std/defpkg :std/defsys :std/condition
-    :std/sym :std/list :std/type :std/num
-    :std/stream :std/curry :std/array :std/hash-table
-    :std/alien :std/meta :std/thread :std/task
-    :std/macs :std/bit :std/fmt :std/path
-    :std/os :std/file :std/string :std/seq
-    :std/sys :std/readtable :std/pipe :std/serde
-    :std/rand :std/async :std/par :std/spin))
 (define-lisp-package :std)
+
 (asdf:register-system-packages "STD" *std-packages*)
-(setq *default-package* "STD-USER")
+
+(setq *default-package* "STD-USER"
+      *defpkg-hook* nil)

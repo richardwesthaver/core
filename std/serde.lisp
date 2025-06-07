@@ -56,8 +56,14 @@ Calling this function requires you to initialize the arguments instead
 of relying on a type-designator format and generating an object in the
 method body."))
 
-(declaim (simple-vector *lisp-objects* *simple-lisp-objects*))
-(defparameter *simple-lisp-objects* 
+(defparameter *primitive-object-table*
+  (let ((tbl (make-hash-table)))
+    (dolist (obj *primitive-objects* tbl)
+      (setf (gethash (primitive-object-name obj) tbl) (cons (symbol-value (primitive-object-lowtag obj)) (symbol-value (primitive-object-widetag obj))))))
+  "Primitive objects are defined by SBCL and will not change. Convenient as a
+non-unique ID prefix.")
+
+(defparameter *simple-object-table*
   (apply 'vector '(fixnum
                    character single-float 
                    double-float bignum
@@ -69,8 +75,13 @@ method body."))
                    array class 
                    null t))
   "A vector containing the simple set of lisp objects.")
-(defvar *lisp-objects* *simple-lisp-objects*
-  "A vector containing the names of serializable lisp objects.")
+
+(defvar *core-object-table* (make-hash-table)
+  "A hash-table mapping PRIMITIVE-TYPE names to integers.")
+
+(definline prim-type (obj)
+  "Return the name of the primitive type of OBJ."
+  (primitive-type-name (primitive-type-of obj)))
 
 (declaim (inline %lisp-object-id))
 (defun %lisp-object-id (obj)

@@ -195,9 +195,7 @@
   (req:fetch "https://packy.compiler.company/data/test/Weltschmerz.wav"
    :if-exists :supersede))
  (%stash () 
-  #$mkdir -pv .stash$#
-  ;; move this to a hook?
-  (cl+ssl:reload))
+  #$mkdir -pv .stash$#)
  (ssl-certs () 
   #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
   -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)
@@ -317,8 +315,6 @@
     (setf sb-ext:*block-compile-default* t)
     (compile-system :core)
     (load-system :core)
-    ;; (forget-shared-objects)
-    ;; (cl+ssl:reload)
     (enable-debugger)
     (asdf:make :bin/core))
    #$mv bin/core .stash/core$#)
@@ -334,7 +330,7 @@
     (setf sb-ext:*block-compile-default* t)
     (asdf:compile-system :core)
     (asdf:load-system :core)
-    (cl+ssl:reload)
+    (ssl:reload)
     (asdf:make :bin/core))
    #$mv bin/core .stash/core$#)
   (:save () 
