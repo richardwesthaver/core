@@ -3,6 +3,8 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'calendar)
+(require 'package)
+
 ;;; Helpers
 (defun group (source n)
   "This is Paul Graham's group utility from On Lisp.

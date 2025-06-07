@@ -150,14 +150,14 @@ Examples:
     `(let-typed (,@(mapcar #'(lambda (x y) (if y (append x `(:type ,y)) x)) tsyms types))
                 (let-typed (,@(remove-if #'null (mapcar #'(lambda (x y) (when y (append x `(:type ,(store-type y))))) ssyms types)))
                            (mod-dotimes (,idx ,dims ,@(when loop-ordering-p `(:loop-order ,loop-order)) :uplo? ,uplo?)
-                                        :with (linear-sums
-                                               ,@(remove-if #'null (mapcar #'(lambda (of ten typ) (when typ `(,of (strides ,(car ten)) (head ,(car ten)))))
-                                                                           osyms tsyms types)))
-                                        :do (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) (if typ
-                                                                                                           (list ref `(the ,(field-type typ) (t.store-ref ,typ ,(car sto) ,of)))
-                                                                                                           (list ref `(ref ,(car ten) ,idx))))
-                                                                        rsyms ssyms tsyms osyms types))
-                                              ,@body))))))
+                             :with (linear-sums
+                                    ,@(remove-if #'null (mapcar #'(lambda (of ten typ) (when typ `(,of (strides ,(car ten)) (head ,(car ten)))))
+                                                                osyms tsyms types)))
+                             :do (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) (if typ
+                                                                                                (list ref `(the ,(field-type typ) (t.store-ref ,typ ,(car sto) ,of)))
+                                                                                                (list ref `(ref ,(car ten) ,idx))))
+                                                             rsyms ssyms tsyms osyms types))
+                                   ,@body))))))
 
 (defmacro list-loop ((idx ele lst) &rest body)
   "
@@ -182,11 +182,6 @@ Examples:
                 (multiple-value-bind (indic decl) (parse-with (cadr body))
                   (setf (getf ret indic) decl))
                 (parse-code (cddr body) ret))
-               ;;Let's not do too much.
-               #+nil
-               ((eq (car body) 'finally)
-                (setf (getf ret :finally) (second body))
-                (parse-code (cddr body) ret))
                ((eq (car body) 'do)
                 (values (cadr body) ret))
                (t (error 'unknown-token :token (car body) :message "Error in macro: mod-dotimes -> parse-code.~%"))))
@@ -200,20 +195,6 @@ Examples:
                                               :offset-init init
                                               :stride-sym (gensym (concatenate 'string (symbol-name offst) "-stride"))
                                               :stride-expr strds)))))
-               ;;Traversing the list the other way is far too inefficient and/or too hard to do.
-               #+nil
-               ((and (eq (car code) 'loop-order)
-                     (member (cadr code) '(:row-major :col-major)))
-                (values :loop-order (second code)))
-               ;;Useless without a finally clause.
-               #+nil
-               ((eq (car code) 'variables)
-                (values :variables
-                        (loop for decl in (cdr code)
-                              collect (destructuring-bind (sym init &key type) decl
-                                        (list :variable sym
-                                              :init init
-                                              :type type)))))
                (t (error 'std/condition:unknown-token :token (car code) :message "Error in macro: mod-dotimes -> parse-with.~%")))))
     (multiple-value-bind (code sdecl) (parse-code body nil)
       (with-gensyms (lst-sym dims-sym rank-sym lst-rec-sym lst-rec-count-sym lst-rec-lst-sym)
@@ -248,8 +229,9 @@ Examples:
                                         `((when (= ,lst-rec-count-sym 0)
                                             ,(getf sdecl :finally)))))
                                 (progn
-                                  ;;list-dimensions does not parse the entire list, just goes through caaa..r's to find out the
-                                  ;;dimensions if it is uniform.
+                                  ;;list-dimensions does not parse the entire
+                                  ;;list, just goes through caaa..r's to find
+                                  ;;out the dimensions if it is uniform.
                                   (unless (< -1 (aref ,idx ,lst-rec-count-sym) (aref ,dims-sym ,lst-rec-count-sym))
                                     (error 'out-of-bounds-error :requested (aref ,idx ,lst-rec-count-sym) :bound (aref ,dims-sym ,lst-rec-count-sym)
                                                                 :message "Error in list-loop, given list is not uniform in dimensions."))
