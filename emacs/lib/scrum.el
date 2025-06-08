@@ -163,7 +163,9 @@ The following keyword parameters can be passed to the info dynamic block:
          (pcase i
            ('details (when details
                        (message "building project details...")
-                       (insert "#+CALL: project-details() :dir " project-root "\n")
+                       (insert "#+CALL: project-details(")
+		       (unless vc (insert "vc='nil"))
+		       (insert ") :dir " project-root "\n")
                        (org-babel-execute-maybe)
                        (org-table-align)))
            ('status (when status

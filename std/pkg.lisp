@@ -1092,7 +1092,7 @@
    :load-system))
 
 (defpkg :std
-  (:use :cl :sb-unicode :cl-ppcre :sb-mop :sb-thread :sb-alien :sb-gray)
+  (:use :cl)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num :std/prim
    :std/stream :std/curry :std/array :std/hash-table
@@ -1103,12 +1103,12 @@
    :std/async :std/par :std/spin :std/seq
    :std/comp :std/defsys))
 
-(defpkg :std-user
-  (:use :cl :cl-user :sb-ext :std
-   :std-int :sb-alien :sb-thread :sb-bsd-sockets
-   :sb-gray :sb-mop :sb-debug))
-
 (define-lisp-package :std)
+
+(defpkg :std-user
+  (:use :std-lisp :cl-user :sb-ext 
+   :sb-alien :sb-thread :sb-bsd-sockets :sb-gray 
+   :sb-mop :sb-debug))
 
 (asdf:register-system-packages "STD" *std-packages*)
 
