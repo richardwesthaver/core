@@ -302,8 +302,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
                             (find-package "SB-IMPL"))
            (pushnew :sbcl+safe-standard-readtable *features*)))
 
-
-
 ;;;; Mapping between a readtable object and its readtable-name.
 
 (defvar *readtable-names* (make-hash-table :test 'eq))
@@ -326,7 +324,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
   #+ :common-lisp (list* :standard :current :modern
                          (loop for name being each hash-value of *readtable-names*
                                collect name)))
-
+
 ;;;; Mapping READTABLE objects to docstrings.
 
 (defvar *readtable-to-docstring* (make-hash-table :test 'eq))
@@ -364,7 +362,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
                                              (doc-type (eql 'readtable)))
     (setf (gethash readtable *readtable-to-docstring*) docstring)))
 
-
 ;;;; Mapping between a readtable-name and the actual readtable object.
 
 ;;; On Allegro we reuse their named-readtable support so we work
@@ -385,7 +382,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
   "Return the readtable named NAME."
   #+ :common-lisp (values (gethash name *named-readtables* nil)))
 
-
 ;;;; Reader-macro related predicates
 
 ;;; CLISP creates new function objects for standard reader macros on
@@ -437,7 +433,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 ;; 	 (eq (get-dispatch-macro-character disp-char sub-char rt)
 ;; 	     (get-dispatch-macro-character disp-char sub-char *standard-readtable*)))))
 
-
 ;;;; Readtables Iterators
 
 (defmacro with-readtable-iterator ((name readtable) &body body)
@@ -514,7 +509,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
                        `((,non-terminating-p
                           (nth-value 1 (get-macro-character ,char ,rt)))))
                  ,@body))))))))
-
 ;;;; Misc
 
 ;;; This should return an implementation's actual standard readtable
@@ -549,7 +543,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
   "Ensure ANSI behaviour for GET-MACRO-CHARACTER."
   #+ :common-lisp (get-macro-character char rt))
 
-
 ;;;; Specialized PRINT-OBJECT for named readtables.
 
 ;;; As per #19 in CLHS 11.1.2.1.2 defining a method for PRINT-OBJECT
@@ -749,14 +742,14 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
                (remove new-item (symbol-value readtable-alist)
                        :test (lambda (entry1 entry2)
                                (string= (car entry1) (car entry2))))))))))
-
+
 (deftype readtable-designator ()
   `(or null readtable))
 
 (deftype named-readtable-designator ()
   "Either a symbol or a readtable itself."
   `(or readtable-designator symbol))
-
+
 ;;;;; Compiler macros
 
 ;;; Since the :STANDARD readtable is interned, and we can't enforce
@@ -798,7 +791,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
   (when default-p
     (signal-suspicious-registration-warning name default))
   form)
-
+
 (declaim (special *standard-readtable* *empty-readtable*))
 
 (define-api make-readtable
@@ -915,7 +908,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
   guaranteed to be fresh, but may contain duplicates."
   (mapcar #'ensure-readtable (%list-all-readtable-names)))
 
-
 (define-condition readtable-error (error) ())
 
 (define-condition readtable-does-not-exist (readtable-error)
@@ -992,7 +984,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
               :macro-char char
               :sub-char subchar))))
 
-
 ;;; Although there is no way to get at the standard readtable in
 ;;; Common Lisp (cf. /standard readtable/, CLHS glossary), we make
 ;;; up the perception of its existence by interning a copy of it.
@@ -1070,7 +1061,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
          (error 'readtable-does-not-exist :readtable-name name))
         (t (setf (find-readtable name) (ensure-readtable default)))))
 
-
 (define-api register-readtable
     (name readtable)
     (symbol readtable => readtable)

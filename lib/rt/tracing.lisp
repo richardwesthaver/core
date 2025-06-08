@@ -69,8 +69,6 @@
 (defvar *default-arg-converter* +arg-converter-ignore-all+)
 (defvar *tracing-arg-converters* (make-hash-table :test 'equal))
 
-
-
 ;;; The format of trace event; created primarily for reference, though later on we might upgrade to vector storage, and then it'll come helpful.
 (defstruct (trace-event (:type list))
   "A single event being traced. "
@@ -431,25 +429,6 @@ and the stacks containing unclosed duration entries, keyed by thread."
 \"version\" : \"FIXME\",
 \"traceTime\" : ~S
 }"
-            " TODO local-time independent time"
-            ;;(local-time:format-timestring nil (local-time:now))
+            (time:format-timestring nil (time:now))
             ))
   (values))
-
-;;; Helper function for blacklisting symbols when tracing whole packages.
-(defun package-symbols-except (name &rest exceptions)
-  (let (symbols
-        (package (sb-impl::find-undeleted-package-or-lose name)))
-    (do-all-symbols (symbol (find-package name))
-      (when (eql package (symbol-package symbol))
-        (when (and (fboundp symbol)
-                   (not (macro-function symbol))
-                   (not (special-operator-p symbol)))
-          (push symbol symbols))
-        (let ((setf-name `(setf ,symbol)))
-          (when (fboundp setf-name)
-            (push setf-name symbols)))))
-    (set-difference symbols exceptions :key (lambda (x)
-                                              (if (consp x)
-                                                  (string (second x))
-                                                  (string x))) :test #'string-equal)))

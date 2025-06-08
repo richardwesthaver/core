@@ -238,7 +238,7 @@ all data has been flushed to the stream."
   `(let ((,buffer (make-input-buffer :vector ,vector :stream ,stream :pos ,offset)))
      ,@body))
 
- ;; READx and WRITEx
+;; READx and WRITEx
 ;;; WRITE-UNSIGNED-BE, READ-UNSIGNED-BE, etc taken from PACK, which is
 ;;; in the public domain.
 

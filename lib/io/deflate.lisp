@@ -224,7 +224,6 @@
   (bits nil :read-only t))
 ) ; EVAL-WHEN
 
-
 ;;; decode table construction
 
 (defun construct-huffman-decode-table (code-lengths &optional n-syms start)

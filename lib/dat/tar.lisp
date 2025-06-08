@@ -652,7 +652,6 @@ or by peeking at the stream for magic numbers (for :INPUT)."
     (write-entry-data tar-file entry stream)
     (values)))
 
-
 ;;; providing streamy access for an entry
 (defun make-stream-for-entry (tar-file entry)
   (make-bound-stream (tar-file-stream tar-file) (size entry)))

@@ -18,7 +18,7 @@
    :delete-package* :package-names :packages-from-names :fresh-package-name 
    :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
    :with-package :define-lisp-package
-   :defpackage* :*default-package* :*defpkg-hook*))
+   :defpackage* :*default-package* :*defpkg-hook* :package-symbols-except))
 
 (in-package :std/defpkg)
 
@@ -747,3 +747,21 @@ package."
               ,@body
               (:shadow ,@shadow-list)
               (:export ,@export-list)))))
+
+;; Helper function for blacklisting symbols when tracing whole packages.
+(defun package-symbols-except (name &rest exceptions)
+  (let (symbols
+        (package (sb-impl::find-undeleted-package-or-lose name)))
+    (do-all-symbols (symbol (find-package name))
+      (when (eql package (symbol-package symbol))
+        (when (and (fboundp symbol)
+                   (not (macro-function symbol))
+                   (not (special-operator-p symbol)))
+          (push symbol symbols))
+        (let ((setf-name `(setf ,symbol)))
+          (when (fboundp setf-name)
+            (push setf-name symbols)))))
+    (set-difference symbols exceptions :key (lambda (x)
+                                              (if (consp x)
+                                                  (string (second x))
+                                                  (string x))) :test #'string-equal)))

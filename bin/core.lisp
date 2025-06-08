@@ -10,7 +10,7 @@
 
 (define-multi-main dispatch-core
   (progn (in-package :core-lisp)
-         (use-package '(:cl-user :sb-debug :sb-ext :std-user))
+         ;; (use-package '(:cl-user :sb-debug :sb-ext :std-user))
          (sb-impl::toplevel-init))
   (:sbcl (sb-impl::toplevel-init))
   (:skel (bin/skel::start-skel))

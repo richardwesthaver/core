@@ -1,4 +1,4 @@
-;;; lib/rt/err.lisp --- RT Errors
+;;; lib/rt/condition.lisp --- RT Errors
 
 ;; Errors which may occur within the Regression Testing framework.
 
