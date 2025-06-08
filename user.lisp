@@ -10,3 +10,7 @@
 (in-package :user)
 (pushnew :user *features*)
 (setq *default-package* "USER")
+
+(defpkg lib/prelude)
+(defpkg ffi/prelude)
+(defpkg prelude)

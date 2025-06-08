@@ -55,3 +55,5 @@
   "Load the module named NAME, binding it to *MODULE* and eval BODY."
   `(let ((*module* (or (load-module ,name) ,name)))
      ,@body))
+
+;; (with-eval-after-load (module &body body))

@@ -12,8 +12,7 @@
   :depends-on 
   (:core :packy :pod :krypt 
    :krypt :rt :vc :web :gui)
-  :components ((:file "user")
-               (:file "prelude"))
+  :components ((:file "user"))
   :build-operation monolithic-compile-bundle-op
   :build-pathname "user")
 
