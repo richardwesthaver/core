@@ -7,26 +7,36 @@
 
 ;;; Project
 (defclass sk-project (skel ast sk-meta)
-  ((name :initarg :name :initform "" :type string :accessor name)
+  ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
+         :documentation "The name of this project.")
    (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) 
        :type vc-repo :accessor sk-vc)
    (src :initarg :src :type pathname :accessor sk-src)
    (stash :initarg :stash :accessor sk-stash :type pathname)
    (store :initarg :store :accessor sk-store :type pathname)
-   (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component))
-   (bind :initarg :bind :initform *default-skel-bindings* :accessor sk-bind :type list)
+   (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component)
+               :documentation "A vector of child components belonging to this project.")
+   (bind :initarg :bind :initform *default-skel-bindings* :accessor sk-bind :type list
+         :documentation "A list of dynamic bindings which are applied to rule definitions.")
    (phases :initarg :phases
 	   :initform (make-hash-table)
 	   :accessor sk-phases
-	   :type hash-table)
+	   :type hash-table
+           :documentation "A hash-table containing PHASE-NAME : RULE-MEMBER-LIST pairs.")
    (rules :initarg :rules
 	  :initform (make-array 0 :element-type 'sk-rule :adjustable t)
 	  :accessor sk-rules
-	  :type (vector sk-rule))
+	  :type (vector sk-rule)
+          :documentation "A vector of rule objects containing individual units of work. Each rule is
+implicitly linked to a phase in the PHASES hash-table slot.")
    (include :initarg :include
 	    :initform (make-array 0 :element-type 'pathname :adjustable t)
 	    :accessor sk-include
-	    :type (vector pathname))))
+	    :type (vector pathname)
+            :documentation "A list of skelfiles to include in the current project. Files in this list may
+define their own subprojects or extend the current one."))
+  (:documentation "Skel project base class, usually defined by skelfiles at a project's root
+directory."))
 
 (defmethod print-object ((self sk-project) stream)
   (print-unreadable-object (self stream)
@@ -148,10 +158,11 @@
 	    (when-let ((include (sk-include self)))
 	      (setf (sk-include self) (map 'vector
 					   ;; recursively load included projects
-					   (lambda (i) (load-ast
-							(sk-read-file
-							 (make-instance 'sk-project)
-							 i)))
+					   (lambda (i) 
+                                             (load-ast
+					      (sk-read-file
+					       (make-instance 'sk-project)
+					       i)))
 					   include)))
 	    ;; COMPONENTS
 	    (when (slot-boundp self 'components)

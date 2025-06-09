@@ -1,6 +1,5 @@
 ;;; Utils
 (in-package :skel/core/util)
-
 ;;; Configs
 
 ;; init-*,load-*
