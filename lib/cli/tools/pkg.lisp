@@ -159,7 +159,8 @@
 
 (defpackage :cli/tools/pacman
   (:use :cl :std :cli/tools/proto :cli/env)
-  (:export :*pacman* :run-pacman :pacman-error))
+  (:export :*pacman* :run-pacman :pacman-error
+           :pacman-upgrade))
 
 (defpackage :cli/tools/mail
   (:use :cl :std :cli/tools/proto :cli/env)
@@ -205,7 +206,8 @@
 
 (defpackage :cli/tools/virt
   (:use :cl :std :cli/tools/proto :cli/env)
-  (:export :*buildah* :*podman* :run-buildah :run-podman))
+  (:export :*buildah* :*podman* :run-buildah 
+   :run-podman :podman-machine-upgrade))
 
 (in-package :cli/tools/proto)
 

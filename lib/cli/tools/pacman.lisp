@@ -13,3 +13,7 @@
   (let ((proc (sb-ext:run-program *pacman* (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (pacman-error "Pacman command failed: ~A ~A" *pacman* (sb-ext:process-error proc)))))
+
+(defun pacman-upgrade ()
+  (run-pacman "-Sy" "archlinux-keyring")
+  (run-pacman "-Su"))
