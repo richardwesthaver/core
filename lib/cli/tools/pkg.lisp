@@ -15,7 +15,10 @@
    :*term* :*alacritty-config-path*
    :alacritty-config :term-config
    :run-term :with-term
-   :term-error :load-alacritty-config))
+   :term-error :load-alacritty-config
+   :*scriptreplay*
+   :*script*
+   :run-script :run-scriptreplay))
 
 (defpackage :cli/tools/fs
   (:use :cl :std :cli/tools/proto :cli/env)
@@ -119,6 +122,12 @@
    :wg-public-key
    :wg-private-key
    :run-wg
+   :run-easyrsa
+   :easyrsa-init-pki
+   :easyrsa-gen-req
+   :easyrsay-build-ca
+   :*easy-rsa-directory*
+   :*easy-rsa-vars-file*
    :*wg*
    :wg-error
    :ip-addr-add

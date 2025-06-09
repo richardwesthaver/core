@@ -15,8 +15,12 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (cargo-error "RUSTUP command failed: ~A ~A" *rustup* (or args "")))))
 
-(defun cargo-install (&rest args)
-  (apply 'run-cargo "install" args))
+(defun cargo-install (crate &key force git path)
+  (let ((args `(,crate
+                ,@(when force '("--force"))
+                ,@(when git `("--git" ,git))
+                ,@(when path `("--path" ,path)))))
+    (apply 'run-cargo "install" args)))
 
 (defun cargo-clean (&rest args)
   (apply 'run-cargo "clean" args))

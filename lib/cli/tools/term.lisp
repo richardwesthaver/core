@@ -44,3 +44,14 @@
      (let (,@(when input `((,input (sb-ext:process-input ,sym))))
            ,@(when output `((,output (sb-ext:process-output ,sym)))))
        ,@body)))
+
+;;; Terminal Recording
+(define-cli-tool :script (&rest args)
+  (let ((proc (sb-ext:run-program *script* (or args nil) :output t)))
+    (unless (not (eq 0 (sb-ext:process-exit-code proc)))
+      (script-error "script command failed: ~A " args))))
+  
+(define-cli-tool :scriptreplay (&rest args)
+  (let ((proc (sb-ext:run-program *scriptreplay* (or args nil) :output t)))
+    (unless (not (eq 0 (sb-ext:process-exit-code proc)))
+      (scriptreplay-error "scriptreplay command failed: ~A " args))))

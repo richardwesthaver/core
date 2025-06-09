@@ -119,6 +119,27 @@
 (defun wg-showconf (conf)
   (run-wg "showconf" conf))
 
+;;; EASYRSA
+(defvar *easy-rsa-directory* #p"/etc/easy-rsa/")
+(defvar *easy-rsa-vars-file* (merge-pathnames "vars" *easy-rsa-directory*))
+
+(define-cli-tool :easyrsa (&rest args)
+  (let ((proc (sb-ext:run-program *easyrsa* (or args nil) :output t)))
+    (unless (not (eq 0 (sb-ext:process-exit-code proc)))
+      (easyrsa-error "easyrsa command failed: ~A " args))))
+
+(definline easyrsa-init-pki (&key (use-algo "ed") (curve "ed25519") (digest "sha512"))
+  (let ((args `(,@(when use-algo `("--use-algo" ,use-algo))
+                ,@(when curve `("--curve" ,curve))
+                ,@(when digest `("--digest" ,digest)))))
+    (apply 'run-easyrsa "init-pki" args)))
+
+(definline easyrsa-build-ca ()
+  (run-easyrsa "build-ca"))
+
+(definline easyrsa-gen-req (name &rest cmd-opts)
+  (apply 'run-easyrsa "gen-req" name cmd-opts))
+
 ;;; NMAP
 (deferror nmap-error (simple-error error) () (:auto t))
 
