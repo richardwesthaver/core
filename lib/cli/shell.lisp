@@ -22,6 +22,7 @@
 (defparameter *shell* "/bin/bash")
 (defparameter *shell-directory* nil)
 (defparameter *shell-input* nil)
+(defparameter *shell-output* t)
 
 (deftype %shell-state () '(member :sh :dolla :pound))
 
@@ -113,55 +114,52 @@ An escaped form with parens like the following works fine:
   (declare (ignore sub-char) ((or (integer 0 9) null) numarg))
   (let ((str (plain-shell-reader stream)))
     (if numarg
-        (progn
-          (cond
-            ((= numarg 0)
-             (string-right-trim '(#\Newline)
-                                (with-output-to-string (s)
-                                  (sb-ext:run-program *shell*
-                                                      (list "-c" (format nil "~a" str))
-                                                      :directory (or *shell-directory* *default-pathname-defaults*)
-                                                      :output s
-                                                      :input *shell-input*))))
-            ((= numarg 1)
-             (string-right-trim '(#\Newline)
-                                (with-output-to-string (s)
-                                  (sb-ext:run-program *shell*
-                                                      (list "-c" (format nil "~a" str))
-                                                      :directory (or *shell-directory* *default-pathname-defaults*)
-                                                      :output s
-                                                      :input *shell-input*))))
-            (t (nyi!))))
-        (let ((args (list "-c" (format nil "~a" str)))
-              (directory (or *shell-directory* *default-pathname-defaults*)))
-          (lambda (&key input (output *standard-output*) (wait t) (status-hook))
-            (case output
-              (:string (string-right-trim
-                        '(#\Newline)
-                        (with-output-to-string (s)
-                          (sb-ext:run-program *shell* args
-                                              :directory directory
-                                              :output s
-                                              :input input
-                                              :wait wait
-                                              :status-hook status-hook))))
-              (:integer (parse-integer
-                         (string-right-trim
-                          '(#\Newline)
-                          (with-output-to-string (s)
-                            (sb-ext:run-program *shell* args
-                                                :directory directory
-                                                :output s
-                                                :input input
-                                                :wait wait
-                                                :status-hook status-hook)))))
-              (t (sb-ext:run-program *shell*
-                                     args
-                                     :directory directory
-                                     :output output
-                                     :input input
-                                     :wait wait
-                                     :status-hook status-hook))))))))
+        (cond
+          ((= numarg 0)
+           (let ((args (list "-c" (format nil "~a" str)))
+                 (directory (or *shell-directory* *default-pathname-defaults*)))
+             (lambda (&key input (output *standard-output*) (wait t) (status-hook))
+               (case output
+                 (:string (string-right-trim
+                           '(#\Newline)
+                           (with-output-to-string (s)
+                             (sb-ext:run-program *shell* args
+                                                 :directory directory
+                                                 :output s
+                                                 :input input
+                                                 :wait wait
+                                                 :status-hook status-hook))))
+                 (:integer (parse-integer
+                            (string-right-trim
+                             '(#\Newline)
+                             (with-output-to-string (s)
+                               (sb-ext:run-program *shell* args
+                                                   :directory directory
+                                                   :output s
+                                                   :input input
+                                                   :wait wait
+                                                   :status-hook status-hook)))))
+                 (t (sb-ext:run-program *shell*
+                                        args
+                                        :directory directory
+                                        :output output
+                                        :input input
+                                        :wait wait
+                                        :status-hook status-hook))))))
+          ((= numarg 1)
+           (string-right-trim '(#\Newline)
+                              (with-output-to-string (s)
+                                (sb-ext:run-program *shell*
+                                                    (list "-c" (format nil "~a" str))
+                                                    :directory (or *shell-directory* *default-pathname-defaults*)
+                                                    :output s
+                                                    :input *shell-input*))))
+          (t (nyi!)))
+        (sb-ext:run-program *shell*
+                            (list "-c" (format nil "~a" str))
+                            :directory (or *shell-directory* *default-pathname-defaults*)
+                            :input *shell-input*
+                            :output *shell-output*))))
 
 (defreadtable :shell
   "The shell readtable"

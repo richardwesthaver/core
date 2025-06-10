@@ -82,13 +82,13 @@
   (:build () #$cd ffi/tree-sitter &&
    cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
    alien.c -o ../../.stash/libtree-sitter-alien.so$#)
-  (:install () (funcall #$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
+  (:install () (funcall #0$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
  (zstd-alien ()
   (:build () #$cd ffi/zstd &&
    cc -g -O2 -Wall -Wno-unused-value -lzstd -shared \
    alien.c -o ../../.stash/libzstd-alien.so$#)
   (:install () 
-   (funcall #$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
+   (funcall #0$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
  (psl.dat (%stash)
   (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
    ".stash/psl.dat"
@@ -211,7 +211,7 @@
     (asdf:make :bin/swm))
    #$mv bin/swm .stash/swm$#)
   (:install () 
-   (funcall #$sudo -S install -C -m 755 .stash/swm /usr/local/bin/swm$# :input t)))
+   (funcall #0$sudo -S install -C -m 755 .stash/swm /usr/local/bin/swm$# :input t)))
  (rdb (%stash)
   (:build ()
    (with-sbcl (:noinform t :quit t)
@@ -219,7 +219,7 @@
     (asdf:make :bin/rdb))
    #$mv bin/rdb .stash/rdb$#)
   (:install () 
-   (funcall #$install -C -m 755 .stash/rdb /usr/local/bin/rdb$# :input t)))
+   (funcall #0$install -C -m 755 .stash/rdb /usr/local/bin/rdb$# :input t)))
  (skel (%stash)
   (:build ()
    (with-sbcl (:noinform t :quit t)
@@ -239,9 +239,9 @@
     (asdf:make :bin/skel))
    #$mv bin/skel .stash/skel-gui$#)
   (:install () 
-   (funcall #$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t))
+   (funcall #0$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t))
   (:install-gui () 
-   (funcall #$sudo -S install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui$# :input t)))
+   (funcall #0$sudo -S install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui$# :input t)))
  (skc (%stash)
   (:build ()
    (with-sbcl (:noinform t :quit t)
@@ -352,7 +352,7 @@
   (:compile () (compile-lisp :core :force t :verbose t))
   (:install () 
    (funcall 
-    #$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
+    #0$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
     echo "core -> /usr/local/bin/"
     links="skel homer packy rdb organ vc gen swm mpk"
     for i in $links; do
@@ -362,11 +362,11 @@
     :input t))
   (:install-gui ()
    (funcall 
-    #$sudo -S install -C -m 755 .stash/gui /usr/local/bin/gui
+    #0$sudo -S install -C -m 755 .stash/gui /usr/local/bin/gui
     echo "gui -> /usr/local/bin/"$#
     :input t))
   (:link-pod () 
-   (funcall #$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t))
+   (funcall #0$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t))
   (:load ()
    (asdf:load-system "core")
    (cli/linedit:install-repl)
@@ -396,7 +396,7 @@
  ;; install
  (install (install-core)
   (funcall
-   #$d=/usr/local/share/lisp/
+   #0$d=/usr/local/share/lisp/
    cd .stash
    if [ -d $d ];
    then

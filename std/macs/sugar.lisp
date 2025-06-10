@@ -13,8 +13,13 @@
   "Eval BODY in all contexts (:compile-toplevel :load-toplevel :execute)."
   `(eval-when (:compile-toplevel :load-toplevel :execute) ,@body))
 
-(defun compile-and-eval (source)
-  (funcall (compile nil `(lambda () ,source))))
+(defun compile-and-eval (form)
+  "Compile and eval a FORM."
+  (funcall (compile nil `(lambda () ,form))))
+
+(defun compile-and-load (file &key (output-file ""))
+  "Utility function which compiles a lisp FILE and loads the resulting fasl file."
+  (load (compile-file (pathname file) :output-file output-file)))
 
 ;; from jackdaniel's Dynamic Slots, see also META/DYNAMIC
 (defmacro dlet (bindings &body body)

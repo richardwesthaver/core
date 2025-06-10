@@ -430,6 +430,7 @@
    :def!
    :eval-always
    :compile-and-eval
+   :compile-and-load
    ;; ana
    :awhen
    :acond

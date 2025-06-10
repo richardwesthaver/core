@@ -6,6 +6,7 @@
 (in-package :skel/core/obj)
 
 ;;; Rule
+(declaim (inline %make-sk-rule))
 (defstruct (sk-rule (:constructor %make-sk-rule (target source recipe)))
 "Maps a SOURCE to a corresponding TARGET
 via the special form stored in RECIPE."
@@ -13,8 +14,7 @@ via the special form stored in RECIPE."
   (source nil :type list)
   (recipe nil :type list))
 
-(declaim (inline make-sk-rule))
-(defun make-sk-rule (target &optional source recipe)
+(definline make-sk-rule (target &optional source recipe)
   (%make-sk-rule
    (etypecase target 
      (string target)
@@ -44,21 +44,18 @@ via the special form stored in RECIPE."
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
   (with-slots (recipe) self
-    (mapcar (lambda (x)
-	      (etypecase x
-                ;; shell command? no rule bindings
-		((or symbol function) (funcall x :output t))
-		(t (funcall (compile 
-                             nil 
-                             ;; muahahahaha (dangerous)
-                             `(lambda ()
-                                (symbol-macrolet ,*skel-project-symbol-macros*
-                                  (macrolet ,*skel-project-macros*
-                                    (labels ,*skel-project-functions*
-                                      (let ,#1=(sk-bind *skel-project*)
-                                        (declare (ignorable ,@(mapcar 'car #1#)))
-                                        ,x))))))))))
-	    recipe)))
+    (eval
+     `(symbol-macrolet ,*skel-project-symbol-macros*
+        (macrolet ,*skel-project-macros*
+          (labels ,*skel-project-functions*
+            (let ,#1=(sk-bind *skel-project*)
+              (declare (ignorable ,@(mapcar 'car #1#)))
+              ;; ,@(mapcar (lambda (x)
+	      ;;             (etypecase x
+              ;;               ;; shell command? no rule bindings
+	      ;;               (function (funcall x :output t))
+	      ;;               (t x)))
+	      ',@recipe)))))))
 
 (defmethod sk-write ((self sk-rule) stream)
   (with-slots (target source recipe) self
@@ -66,6 +63,7 @@ via the special form stored in RECIPE."
     (write (sk-rule-source self) :stream stream)
     (write (sk-rule-recipe self) :stream stream)))
 
+;; FIX 2025-06-09: 
 (defun sk-make (obj &rest rules)
   (if rules
       (mapc
