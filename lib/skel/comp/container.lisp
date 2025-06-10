@@ -25,7 +25,7 @@
 
 (defmethod sk-load-component ((kind (eql :containerfile))
                               (name pathname)
-                              &optional (path *default-pathname-defaults*))
+                              &optional (path (project-root)))
   (declare (ignore kind))
   (sk-convert (deserialize
                (make-pathname :name *default-containerfile* :type (namestring name)

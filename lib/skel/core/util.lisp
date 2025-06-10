@@ -192,3 +192,6 @@ SKEL-REGISTRY
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
 
 (defun list-all-projects ())
+
+(defun project-root (&optional (project *skel-project*))
+  (or (when project (sk-src project)) *default-pathname-defaults*))

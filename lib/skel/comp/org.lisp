@@ -16,9 +16,9 @@
     self))
 
 (defmethods sk-load-component 
-  (((kind (eql :org)) (form string) &optional (path (sk-src *skel-project*)))
+  (((kind (eql :org)) (form string) &optional (path (project-root)))
    (sk-load-component kind (pathname form) path))
-  (((kind (eql :org)) (form pathname) &optional (path (sk-src *skel-project*)))
+  (((kind (eql :org)) (form pathname) &optional (path (project-root)))
    (declare (ignore kind))
    (let* ((name (namestring form))
           (p (make-pathname :name name :type "org" :directory (namestring path)))

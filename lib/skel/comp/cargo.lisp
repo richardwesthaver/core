@@ -22,7 +22,7 @@
   (print-unreadable-object (object stream :type t)
     (format stream ":ID ~A" (format-sxhash (obj/id:id object)))))
 
-(defmethod sk-load-component ((kind (eql :rust-system)) (form pathname) &optional (path *default-pathname-defaults*))
+(defmethod sk-load-component ((kind (eql :rust-system)) (form pathname) &optional (path (project-root)))
   (declare (ignore kind))
   (make-instance 'sk-rust-system :config (deserialize (merge-pathnames form path) :toml)))
 

@@ -142,7 +142,8 @@
    :find-project-root
    :setf-skel-vars
    :list-all-projects
-   :sk-search-project))
+   :sk-search-project
+   :project-root))
 
 (defpackage :skel/core/vm
   (:use :cl :std :skel/core/int :sb-vm)

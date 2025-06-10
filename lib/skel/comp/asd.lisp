@@ -46,9 +46,9 @@
   (asdf:load-system self :force force :force-not force-not :verbose verbose :version version))
 
 (defmethods sk-load-component 
-  (((kind (eql :asd)) (form string) &optional (path *default-pathname-defaults*))
+  (((kind (eql :asd)) (form string) &optional (path (project-root)))
    (sk-load-component kind (pathname form) path))
-  (((kind (eql :asd)) (form pathname) &optional (path *default-pathname-defaults*))
+  (((kind (eql :asd)) (form pathname) &optional (path (project-root)))
    (declare (ignore kind))
    (let* ((type (pathname-type form))
           (name (namestring (if type (pathname-name form) form)))

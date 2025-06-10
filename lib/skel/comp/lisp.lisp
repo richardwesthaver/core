@@ -28,7 +28,7 @@
   (compile-and-eval `(progn ,@(ast self))))
   
 (defmethods sk-load-component 
-  (((self (eql :lisp)) (form pathname) &optional (path *default-pathname-defaults*))
+  (((self (eql :lisp)) (form pathname) &optional (path (project-root)))
    (declare (ignore self))
    (let* ((type (pathname-type form))
           (name (namestring (if type (pathname-name form) form)))
@@ -36,12 +36,12 @@
           (comp (make-instance 'sk-lisp-file :parent *skel-project* :path fname :name name)))
      (sk-read-file comp fname)
      comp))
-  (((self (eql :lisp)) (form list) &optional (path *default-pathname-defaults*))
+  (((self (eql :lisp)) (form list) &optional (path (project-root)))
    (let ((opts (cdr form))
          (comp (sk-load-component self (pathname (car form)) (namestring path))))
      (when-let ((load (getf opts :load)))
        (ecase load
-         (t (sk-run comp))))
+         (t (sk-load comp))))
      comp)))
 
 (defmethod print-object ((object sk-lisp-component) stream)
