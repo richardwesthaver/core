@@ -101,6 +101,7 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
   (with-directory (path self)
+    (current-directory)
     (let ((proc (run-hg-command cmd args)))
       (if (eq 0 (sb-ext:process-exit-code proc)) nil (error 'hg-error :message (format nil "hg command failed: ~A" cmd))))))
 
@@ -162,7 +163,8 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
   (vc-run self "log"))
 
 (defmethod vc-bundle ((self hg-repo) output &key rev branch base (type "zstd-v2"))
-  (let ((args))
+  (let ((*default-pathname-defaults* (path self))
+        (args))
     (when rev
       (appendf args `("--rev" ,rev)))
     (when branch

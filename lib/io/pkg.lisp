@@ -137,7 +137,9 @@
    :compress-with :decompress-with
    :compression-level :*compressor*
    :*decompressor* :*compression-type*
-   :*compression-types*))
+   :*compression-types*
+   :compress-octet-vector
+   :compress-octet))
 
 (defpackage :io/zstd
   (:use :cl :std :io/proto :io/flate :sb-alien)
@@ -177,7 +179,8 @@
 
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)
-  (:export :kbd-error))
+  (:export :kbd-error
+   :load-kbd-libs))
 
 (defpackage io/xsubseq
   (:use :cl)

@@ -51,4 +51,5 @@
    :subvolume-valid-p
    :btrfs-partition
    :btrfs-simple-error
-   :btrfs-error))
+   :btrfs-error
+   :load-btrfs-libs))

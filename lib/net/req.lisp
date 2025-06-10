@@ -1659,7 +1659,8 @@ keep-alive-stream), and should handle clean-up of it"
         ;; Usually the body gets closed, but if keep-alive is nil we need to
         ;; explicitly do it.
         (when (open-stream-p body)
-          (close body))))))
+          (close body)
+          destination)))))
 
 (defun ignore-and-continue (e)
   (let ((restart (find-restart 'ignore-and-continue e)))

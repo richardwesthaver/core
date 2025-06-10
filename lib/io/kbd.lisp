@@ -14,9 +14,12 @@
 
 ;;; Code:
 (in-package :io/kbd)
-(load-xkbcommon)
-(load-evdev)
 (pushnew :kbd *features*)
+
+(defun load-kbd-libs ()
+  (load-xkbcommon)
+  (load-evdev))
+
 ;;; Vars
 (defconstant +evdev-offset+ 8)
 (defconstant +long-bit+ (sb-alien:alien-size sb-alien:unsigned-long))

@@ -9,11 +9,12 @@
 ;;; Code:
 (in-package :io/deflate)
 
-;;; Constants
+;;; DECOMPRRESSION (chipz)
+;;;; Constants
 
-;;;; miscellaneous
+;;;;; miscellaneous
 (defconstant +default-deflate-buffer-size+ 8192)
-;;;; block types
+;;;;; block types
 (defconstant +block-no-compress+ 0)
 (defconstant +block-fixed-codes+ 1)
 (defconstant +block-dynamic-codes+ 2)
@@ -36,7 +37,7 @@
           '(vector (unsigned-byte 16)))
   :test 'equalp)
 
-;;;; BZIP constants.
+;;;;; BZIP constants.
 (defconstant +bz-header-b+ #x42)
 (defconstant +bz-header-z+ #x5a)
 (defconstant +bz-header-h+ #x68)
@@ -54,7 +55,7 @@
 (defconstant +bz-n-iters+ 4)
 (defconstant +bz-max-selectors+ (+ 2 (/ (* 9 +100k+) +bz-g-size+)))
 
-;;;; CRC32
+;;;;; CRC32
 (declaim (type (simple-array (unsigned-byte 32) (256)) +crc32-table+ +bzip2-crc32-table+))
 (define-constant +crc32-table+
   (coerce '(#x00000000 #x77073096 #xEE0E612C #x990951BA #x076DC419 #x706AF48F
@@ -171,14 +172,15 @@
             '(vector (unsigned-byte 32)))
   :test 'equalp)
 
-;;;; Adler32, smallest prime < 65536
+;;;;; Adler32, smallest prime < 65536
 (defconstant adler32-modulo 65521)
 
-;;; Types
+;;;; Types
 (deftype deflate-code-length () '(integer 0 #.+max-code-length+))
 (deftype deflate-code () '(unsigned-byte #.+max-code-length+))
 (deftype deflate-code-value () '(integer 0 (#.+max-codes+)))
 
+;;;; Utils
 (defparameter *distance-code-extra-bits*
   ;; codes 30 and 31 will never actually appear, but we represent them
   ;; for completeness' sake
@@ -187,17 +189,20 @@
   #(1 2 3 4 5 7 9 13 17 25 33 49 65 97 129 193 257 385 513 769
       1025 1537 2049 3073 4097 6145 8193 12289 16385 24577))
 
-(declaim (inline n-length-extra-bits n-distance-extra-bits length-base distance-base))
-(defun n-length-extra-bits (value)
+(defun maybe-subseq (v end)
+  (if (= end (length v))
+      v
+      (subseq v 0 end)))
+(definline n-length-extra-bits (value)
   (aref +length-code-extra-bits+ value))
 
-(defun n-distance-extra-bits (distance-code)
+(definline n-distance-extra-bits (distance-code)
   (svref *distance-code-extra-bits* distance-code))
 
-(defun length-base (value)
+(definline length-base (value)
   (aref +length-code-base-lengths+ value))
 
-(defun distance-base (distance-code)
+(definline distance-base (distance-code)
   (svref *distance-code-base-distances* distance-code))
 
 (defparameter *code-length-code-order*
@@ -224,8 +229,7 @@
   (bits nil :read-only t))
 ) ; EVAL-WHEN
 
-;;; decode table construction
-
+;;;;; decode table construction
 (defun construct-huffman-decode-table (code-lengths &optional n-syms start)
   (let* ((n-syms (or n-syms (length code-lengths)))
          (start (or start 0))
@@ -252,7 +256,7 @@
           (setf (aref symbols (aref offsets l)) i)
           (incf (aref offsets l)))))))
 
-;;; decoders for fixed compression blocks
+;;;;; decoders for fixed compression blocks
 
 (defparameter *fixed-block-code-lengths*
   (map 'list #'make-crd
@@ -283,7 +287,7 @@
 (defmacro probably-the-fixnum (form)
   `(sb-ext:truly-the fixnum ,form))
 
-;;; Conditions
+;;;; Conditions
 (define-condition invalid-format-error (decompression-error)
   ((format :initarg :format :reader invalid-format))
   (:report (lambda (condition stream)
@@ -392,9 +396,10 @@ decompressing BZIP2-related formats."))
 (define-condition invalid-bzip2-data (bzip2-error) ()
   (:documentation "Error signaled when invalid bzip2 data is found."))
 
-;;; Decompression State
-;;; This structure is never meant to be instantiated.  It exists only to
-;;; provide common framework for other decompressors.
+;;;; State
+;;;;; Decompression State
+;; This structure is never meant to be instantiated.  It exists only to
+;; provide common framework for other decompressors.
 (defstruct (decompression-state
              (:constructor)
              (:conc-name dstate-))
@@ -445,7 +450,7 @@ The usual value of DATA-FORMAT will be one of CHIPZ:BZIP2 or CHIPZ:GZIP."
     (error 'premature-end-of-stream))
   t)
 
-;;; Inflate State
+;;;;; Inflate State
 (deftype sliding-window () '(simple-array (unsigned-byte 8) (32768)))
 
 (defstruct (inflate-state
@@ -524,7 +529,7 @@ The usual value of FORMAT will be one of CHIPZ:GZIP or CHIPZ:ZLIB."
             (- (inflate-state-output-end object)
                (inflate-state-output-index object)))))
 
-;;; Gzip
+;;;; Gzip
 (defclass gzip-header ()
   ((flags :initarg :flags :accessor flags)
    (filename :initform nil :accessor filename)
@@ -536,21 +541,21 @@ The usual value of FORMAT will be one of CHIPZ:GZIP or CHIPZ:ZLIB."
    (crc16 :initarg :crc16 :accessor crc16)
    (compression-method :initarg :compression-method :accessor compression-method)))
 
-;;; individual bit meanings in the flag field
+;; individual bit meanings in the flag field
 (defconstant +gzip-flag-text+ 0)
 (defconstant +gzip-flag-crc+ 1)
 (defconstant +gzip-flag-extra+ 2)
 (defconstant +gzip-flag-name+ 3)
 (defconstant +gzip-flag-comment+ 4)
 
-;;; values of the compression method byte
+;; values of the compression method byte
 (defconstant +gzip-deflate-method+ 8)
 
-;;; values of the extra flag field
+;; values of the extra flag field
 (defconstant +gzip-xfl-max-compression+ 2)
 (defconstant +gzip-xfl-fast-compression+ 4)
 
-;;; Zlib
+;;;; Zlib
 (defclass zlib-header ()
   ((flags :initarg :flags :accessor flags)
    (cmf :initarg :cmf :accessor cmf)
@@ -582,7 +587,7 @@ The usual value of FORMAT will be one of CHIPZ:GZIP or CHIPZ:ZLIB."
   (declare (type (unsigned-byte 8) flag-byte))
   (ldb (byte 2 6) flag-byte))
 
-;;; Inflate
+;;;; Inflate
 (defun update-window (state)
   (declare (type inflate-state state))
   (let* ((output (inflate-state-output state))
@@ -614,9 +619,9 @@ The usual value of FORMAT will be one of CHIPZ:GZIP or CHIPZ:ZLIB."
             (setf (inflate-state-window-index state)
                   (mod (+ window-index n-bytes-to-copy) (length window))))))))))
 
-;;; This is used behind-the-scenes to do efficient buffer->buffer
-;;; decompression.  Everything user-visible that's related to
-;;; decompression ultimately comes down to this function.
+;; This is used behind-the-scenes to do efficient buffer->buffer
+;; decompression.  Everything user-visible that's related to
+;; decompression ultimately comes down to this function.
 (defun %inflate (state input output &key (input-start 0) input-end
                 (output-start 0) output-end)
   "Decompresses data in INPUT between INPUT-START and INPUT-END
@@ -651,7 +656,7 @@ the input and the number of bytes written to the output."
                     (inflate-state-n-values-read state))) value)
   (incf (inflate-state-n-values-read state)))
 
-;;; internal inflate function
+;; internal inflate function
 
 (defun %inflate-state-machine (state)
   (declare (type inflate-state state))
@@ -825,8 +830,7 @@ the input and the number of bytes written to the output."
                     (#.+block-invalid+
                        (error 'reserved-block-type-error))))))
 
-;;; processing uncompressed blocks
-
+;; processing uncompressed blocks
              (uncompressed-block (state)
                (align-bits-bytewise state)
                (setf (inflate-state-length state) (ensure-and-read-bits 16 state))
@@ -866,7 +870,7 @@ the input and the number of bytes written to the output."
                         (decf (inflate-state-length state) n-copied-bytes)))))
                (values))
 
-;;; dynamic block compression tables
+;; dynamic block compression tables
 
              (dynamic-tables (state)
                (declare (type inflate-state state))
@@ -905,7 +909,7 @@ the input and the number of bytes written to the output."
                                                      (inflate-state-n-length-codes state)))
                (transition-to literal/length))
 
-;;; normal operation on compressed blocks
+;; normal operation on compressed blocks
 
              (literal/length (state)
                (declare (type inflate-state state))
@@ -1183,27 +1187,27 @@ the input and the number of bytes written to the output."
                 (gzip #'gzip-header-id))))
       (loop (funcall (inflate-state-state state) state)))))
 
-;;; Bzip2
-;;; bzip2's decompress.c looks relatively simple, but a great deal of
-;;; complexity and cleverness is hidden behind C preprpocessor macro.
-;;; The single biggest help in understand what is going on behind the
-;;; macros is to read "Coroutines in C" by Simon Tatham:
+;;;; Bzip2
+;; bzip2's decompress.c looks relatively simple, but a great deal of
+;; complexity and cleverness is hidden behind C preprpocessor macro.
+;; The single biggest help in understand what is going on behind the
+;; macros is to read "Coroutines in C" by Simon Tatham:
 ;;;
 ;;;  http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
 ;;;
-;;; decompress.c is using the same technique described in the paper,
-;;; although with a slightly different implementation.
+;; decompress.c is using the same technique described in the paper,
+;; although with a slightly different implementation.
 ;;;
-;;; Lisp, fortunately/alas, does not admit the same sort of techniques
-;;; that C does--at least not expressed exactly the same way.  So our
-;;; translation naturally differs in some places.  For example, to make
-;;; it easier to figure out how much state we have to preserve, we
-;;; choose to read more in at one time than decompress.c--the magic
-;;; number header all at once or the bits for the mapping table in
-;;; larger chunks than 1 bit at a time, for instance.
+;; Lisp, fortunately/alas, does not admit the same sort of techniques
+;; that C does--at least not expressed exactly the same way.  So our
+;; translation naturally differs in some places.  For example, to make
+;; it easier to figure out how much state we have to preserve, we
+;; choose to read more in at one time than decompress.c--the magic
+;; number header all at once or the bits for the mapping table in
+;; larger chunks than 1 bit at a time, for instance.
 
-;;; Reading things in larger chunks than bits means that we have to do
-;;; bit-reversal of various quantities.
+;; Reading things in larger chunks than bits means that we have to do
+;; bit-reversal of various quantities.
 
 (defun reverse-ub4 (x)
   (let ((table (load-time-value (make-array 16 :element-type 'fixnum
@@ -1489,10 +1493,10 @@ the input and the number of bytes written to the output."
                   (bzip2-state-output-index state) index)
           nil)))))
 
-;;; decompress.c has various logic relating to whether the user has
-;;; chosen "small" decompression, which uses less memory.  We're just
-;;; going to be memory-intensive and always pick the large option.  Maybe
-;;; someday we can come back and add the small option.
+;; decompress.c has various logic relating to whether the user has
+;; chosen "small" decompression, which uses less memory.  We're just
+;; going to be memory-intensive and always pick the large option.  Maybe
+;; someday we can come back and add the small option.
 
 (defun %bzip2-state-machine (state)
   (declare (type bzip2-state state))
@@ -2152,12 +2156,7 @@ the input and the number of bytes written to the output."
           (dstate-update-checksum state) #'update-digest)
     state))
 
-;;; Proto
-(defun maybe-subseq (v end)
-  (if (= end (length v))
-      v
-      (subseq v 0 end)))
-
+;;;; Decompression Protocol
 (defun %decompress (output format input keys)
   (let ((state (make-dstate format)))
     (multiple-value-prog1 (apply #'decompress output state input keys)
@@ -2189,16 +2188,6 @@ the input and the number of bytes written to the output."
 
 (defmethod decompress ((output stream) (state decompression-state) (input pathname)
                        &key buffer-size)
-  (check-type buffer-size (or null integer))
-  (%decompress-from-pathname output state input buffer-size))
-
-;;; Genera's STREAM class is actually a FLAVOR while Gray Streams are CLOS classes.
-;;; Since a CLOS class cannot subclass a FLAVOR, Gray Streams are not subclasses of STREAM
-;;; so we must define methods on both STREAM and GRAY-STREAMS:FUNDAMENTAL-STREAM
-#+(and genera gray-streams)
-(defmethod decompress ((output gray-streams:fundamental-stream) (state decompression-state)
-		       (input pathname)
-		       &key buffer-size)
   (check-type buffer-size (or null integer))
   (%decompress-from-pathname output state input buffer-size))
 
@@ -2353,6 +2342,545 @@ the input and the number of bytes written to the output."
                        &key)
   (%decompress/stream-stream output state input
                              (decompress-fun-for-state state)))
+
+;;; COMPRESSION (salza2)
+;; HACK 2025-06-10: 
+(defparameter +input-limit+ 32768)
+(defparameter +input-limit-mask+ (1- +input-limit+))
+(defparameter +buffer-size+ (* +input-limit+ 2))
+(defparameter +buffer-size-mask+ (1- +buffer-size+))
+
+(defparameter +input-size+ #x10000)
+(defparameter +input-mask+ #x0FFFF)
+(defparameter +hashes-size+ 8191)
+(defparameter +radix+ 109)
+(defparameter +rmax+ (* +radix+ +radix+))
+
+(defparameter +bitstream-buffer-size+ 4096)
+(defparameter +bitstream-buffer-mask+ (1- +bitstream-buffer-size+))
+(defparameter +bitstream-buffer-bits+ (* +bitstream-buffer-size+ 8))
+(defparameter +bitstream-buffer-bitmask+ (1- +bitstream-buffer-bits+))
+
+(defconstant +final-block+ #b1)
+(defconstant +fixed-tables+ #b01)
+
+;;;; Types
+(deftype input-index ()
+  '(unsigned-byte 16))
+
+(deftype input-buffer ()
+  `(simple-array (unsigned-byte 8) (,+input-size+)))
+
+(deftype chains-buffer ()
+  `(simple-array (unsigned-byte 16) (,+input-size+)))
+
+(deftype hashes-buffer ()
+  `(simple-array (unsigned-byte 16) (,+hashes-size+)))
+
+(deftype hash ()
+  `(integer 0 ,+hashes-size+))
+
+(deftype bitstream-buffer ()
+  `(simple-array (unsigned-byte 8) (,+bitstream-buffer-size+)))
+
+(deftype bitstream-buffer-bit-count ()
+  `(integer 0 ,+bitstream-buffer-bits+))
+
+;;;; Chains
+(defun hash-value (input position)
+  (+ (* #.+rmax+ (aref input position))
+     (* #.+radix+ (aref input (logand #.+input-mask+ (+ position 1))))
+     (aref input (logand #.+input-mask+ (+ position 2)))))
+
+(declaim (inline mod8191))
+(defun mod8191 (z)
+  (declare (type (integer 0 3057705) z))
+  (let ((zz (+ (ash z -13) (logand #x1FFF z))))
+    (if (< zz #x1FFF)
+        zz
+        (- zz #x1FFF))))
+
+(defun update-chains (input hashes chains start count)
+  (declare (type input-buffer input)
+           (type hashes-buffer hashes)
+           (type chains-buffer chains)
+           (type input-index start)
+           (type (integer 0 32768) count)
+           (optimize speed))
+  (when (< count 3)
+    (return-from update-chains))
+  (let* ((hash (hash-value input start))
+         (p0 start)
+         (p1 (logand (+ start 2) #xFFFF)))
+    (declare (type (integer 0 3057705) hash))
+    (loop
+     (let ((hash-index (mod8191 hash)))
+       ;; Stuff the old hash index into chains at p0
+       (setf (aref chains p0) (aref hashes hash-index))
+       ;; Stuff p0 into the hashes
+       (setf (aref hashes hash-index) p0)
+       ;; Tentatively advance; if we hit the end, don't do the rest of
+       ;; the hash update
+       (setf p1 (logand (1+ p1) #xFFFF))
+       (decf count)
+       (when (= count 2)
+         (return))
+       ;; We're not at the end, so lop off the high, shift left, and
+       ;; add the low to form a new hash value
+       (setf hash (- hash (* (aref input p0) 11881)))
+       (setf hash (* hash 109))
+       (setf p0 (logand (1+ p0) #xFFFF))
+       (setf hash (+ hash (aref input p1)))))))
+;;;; Matches
+(defconstant +maximum-match-length+ 258
+  "The maximum match length allowed.")
+
+(defconstant +maximum-match-distance+ 32768
+  "The maximum distance for a match.")
+
+(declaim (inline match-length))
+(defun match-length (p1 p2 input end)
+  "Returns the length of the match between positions p1 and p2 in
+INPUT; END is a sentinel position that ends the match length
+check if reached."
+  (declare (type input-index p1 p2 end)
+           (type input-buffer input)
+           (optimize speed))
+  (let ((length 0))
+    (loop
+     (when (or (/= (aref input p1) (aref input p2))
+               (= length +maximum-match-length+)
+               (= p1 end))
+       (return length))
+     (setf p1 (logand (1+ p1) #xFFFF)
+           p2 (logand (1+ p2) #xFFFF)
+           length (logand #xFFF (1+ length))))))
+
+(defun longest-match (p1 input chains end max-tests)
+  (declare (type input-index p1 end)
+           (type input-buffer input)
+           (type chains-buffer chains)
+           (type (integer 0 32) max-tests)
+           (optimize speed))
+  (let ((match-length 0)
+        (p2 (aref chains p1))
+        (test-count 0)
+        (distance 0))
+    (declare (type (integer 0 258) match-length)
+             (type (integer 0 32) test-count))
+    (loop
+     (when (or (= match-length +maximum-match-length+)
+               (= test-count max-tests)
+               (= p2 p1)
+               (= p2 (aref chains p2)))
+       (return (values match-length distance)))
+     (let ((step (logand (- p1 p2) #xFFFF)))
+       (when (< +maximum-match-distance+ step)
+         (return (values match-length distance)))
+       (let ((possible-length (match-length p1 p2 input end)))
+         (when (and (< 2 possible-length)
+                    (< match-length possible-length))
+           (setf distance step
+                 match-length possible-length))
+         (setf p2 (aref chains p2)))
+       (incf test-count)))))
+;;;; Bitstream
+(defun bitstream-callback-missing (&rest args)
+  (declare (ignore args))
+  (error "No callback set in bitstream"))
+
+(defun merge-bits (code size buffer bits callback)
+  (declare (type (unsigned-byte 32) code)
+           (type (integer 0 32) size)
+           (type bitstream-buffer-bit-count bits)
+           (type bitstream-buffer buffer)
+           (type function callback)
+           (optimize speed))
+  ;; BITS represents how many bits have been added to BUFFER so far,
+  ;; so the FLOOR of it by 8 will give both the buffer byte index and
+  ;; the bit index within that byte to where new bits should be
+  ;; merged
+  (let ((buffer-index (ash bits -3))
+        (bit (logand #b111 bits)))
+    ;; The first byte to which new bits are merged might have some
+    ;; bits in it already, so pull it out for merging back in the
+    ;; loop. This only has to be done for the first byte, since
+    ;; subsequent bytes in the buffer will consist solely of bits from
+    ;; CODE.
+    ;;
+    ;; The check (PLUSP BIT) is done to make sure that no garbage bits
+    ;; from a previous write are re-used; if (PLUSP BIT) is zero, all
+    ;; bits in the first output byte come from CODE.
+    (let ((merge-byte (if (plusp bit) (aref buffer buffer-index) 0))
+          (end #.+bitstream-buffer-size+)
+          (result (+ bits size)))
+      ;; (ceiling (+ bit size) 8) is the total number of bytes touched
+      ;; in the buffer
+      (dotimes (i (ceiling (+ bit size) 8))
+        (let ((shift (+ bit (* i -8)))
+              (j (+ buffer-index i)))
+          ;; Buffer filled up in the middle of CODE
+          (when (= j end)
+            (funcall callback buffer j))
+          ;; Merge part of CODE into the buffer
+          (setf (aref buffer (logand #.+bitstream-buffer-mask+ j))
+                (logior (logand #xFF (ash code shift)) merge-byte))
+          (setf merge-byte 0)))
+      ;; Writing is done, and the buffer is full, so call the callback
+      (when (= result #.+bitstream-buffer-bits+)
+        (funcall callback buffer #.+bitstream-buffer-size+))
+      ;; Return only the low bits of the sum
+      (logand #.+bitstream-buffer-bitmask+ result))))
+
+(defun merge-octet (octet buffer bits callback)
+  (declare (type octet octet)
+           (type bitstream-buffer buffer)
+           (type bitstream-buffer-bit-count bits)
+           (type function callback)
+           (optimize speed))
+  (let ((offset (ceiling bits 8)))
+    ;; End of the buffer beforehand
+    (when (= offset #.+bitstream-buffer-size+)
+      (funcall callback buffer #.+bitstream-buffer-size+)
+      (setf offset 0
+            bits 0))
+    (setf (aref buffer offset) octet
+          bits (+ bits 8))
+    (when (= (1+ offset) #.+bitstream-buffer-size+)
+      (funcall callback buffer #.+bitstream-buffer-size+)
+      (setf bits 0))
+    bits))
+
+;;;;; Protocol
+(defclass bitstream ()
+  ((buffer
+    :initarg :buffer
+    :accessor buffer
+    :documentation "Holds accumulated bits packed into octets.")
+   (bits
+    :initarg :bits
+    :accessor bits
+    :documentation "The number of bits written to the buffer so far.")
+   (callback
+    :initarg :callback
+    :accessor callback
+    :documentation "A function of two arguments, BUFFER and END,
+    that should write out all the data in BUFFER up to END."))
+   (:default-initargs
+    :buffer (make-array +bitstream-buffer-size+ :element-type 'octet)
+    :bits 0
+    :callback #'bitstream-callback-missing))
+
+(defgeneric write-bits (code size bitstream))
+(defgeneric write-octet (octet bitstream))
+(defgeneric write-octet-vector (vector bitstream &key start end))
+(defgeneric flush (bitstream))
+
+(defmethod write-bits (code size (bitstream bitstream))
+  (setf (bits bitstream)
+        (merge-bits code size
+                    (buffer bitstream)
+                    (bits bitstream)
+                    (callback bitstream))))
+
+(defmethod write-octet (octet (bitstream bitstream))
+  (setf (bits bitstream)
+        (merge-octet octet
+                     (buffer bitstream)
+                     (bits bitstream)
+                     (callback bitstream))))
+
+(defmethod write-octet-vector (vector (bitstream bitstream) &key (start 0) end)
+  ;;; Not efficient in the slightest, but not actually used internally.
+  (let ((end (or end (length vector))))
+    (loop for i from start below end
+          do (write-octet (aref vector i) bitstream))))
+
+(defmethod flush ((bitstream bitstream))
+  (let ((end (ceiling (bits bitstream) 8)))
+    (funcall (callback bitstream) (buffer bitstream) end)
+    (setf (bits bitstream) 0)))
+
+(defmethod reset ((bitstream bitstream) &key)
+  (fill (buffer bitstream) 0)
+  (setf (bits bitstream) 0))
+
+(defun make-huffman-writer (table bitstream)
+  (let ((codes (hdt-symbols table))
+        (sizes (hdt-counts table))
+        (buffer (buffer bitstream))
+        (callback (callback bitstream)))
+    (lambda (value)
+      (setf (bits bitstream)
+            (merge-bits (aref codes value)
+                        (aref sizes value)
+                        buffer
+                        (bits bitstream)
+                        callback)))))
+(defun make-input ()
+  (make-array 65536 :element-type 'octet))
+
+(defun make-chains ()
+  (make-array 65536
+              :element-type '(unsigned-byte 16)
+              :initial-element 0))
+
+(defun make-hashes ()
+  (make-array +hashes-size+
+              :element-type '(unsigned-byte 16)
+              :initial-element 0))
+
+(defun error-missing-callback (&rest args)
+  (declare (ignore args))
+  (error "No callback given for compression"))
+
+;; FIXME: MERGE-INPUT is pretty ugly. It's the product of incremental
+;; evolution and experimentation. It should be cleaned up.
+
+;; Its basic purpose is to use octets from INPUT to fill up 32k-octet halves
+;; of the 64k-octet OUTPUT buffer. Whenever a half fills up, the COMPRESS-FUN
+;; is invoked to compress that half. At the end, a partial half may remain
+;; uncompressed to be either filled by a future call to MERGE-INPUT or to get
+;; flushed out by a call to FINAL-COMPRESS.
+(defun merge-input (input start count output offset compress-fun)
+  "Merge COUNT octets from START of INPUT into OUTPUT at OFFSET;
+on reaching 32k boundaries within OUTPUT, call the COMPRESS-FUN
+with OUTPUT, a starting offset, and the count of pending data."
+  (declare (type octet-vector input output))
+  (let ((i start)
+        (j (+ start (min count (- +input-limit+ (mod offset +input-limit+)))))
+        (result (logand +buffer-size-mask+ (+ offset count))))
+    (dotimes (k (ceiling (+ (logand offset +input-limit-mask+) count)
+                         +input-limit+))
+      (when (plusp k)
+        (funcall compress-fun
+                 output
+                 (logxor offset #x8000)
+                 +input-limit+))
+      (replace output input :start1 offset :start2 i :end2 j)
+      (setf offset (logand +input-limit+ (+ offset +input-limit+)))
+      (setf i j
+            j (min (+ start count) (+ j +input-limit+))))
+    (when (zerop (logand result +input-limit-mask+))
+      (funcall compress-fun output (logxor offset #x8000) +input-limit+))
+    result))
+
+(defun reinitialize-bitstream-funs (compressor bitstream)
+  (setf (literal-fun compressor)
+        (make-huffman-writer *fixed-distance-table* bitstream)
+        (length-fun compressor)
+        (make-huffman-writer *fixed-literal/length-table* bitstream)
+        (distance-fun compressor)
+        (make-huffman-writer *fixed-distance-table* bitstream)
+        (compress-fun compressor)
+        (make-compress-fun compressor)))
+
+(defclass deflate-compressor ()
+  ((input
+    :initarg :input
+    :accessor input)
+   (chains
+    :initarg :chains
+    :accessor chains)
+   (hashes
+    :initarg :hashes
+    :accessor hashes)
+   (start
+    :initarg :start
+    :accessor start)
+   (end
+    :initarg :end
+    :accessor end)
+   (counter
+    :initarg :counter
+    :accessor counter)
+   (octet-buffer
+    :initarg :octet-buffer
+    :accessor octet-buffer)
+   (bitstream
+    :initarg :bitstream
+    :accessor bitstream)
+   (literal-fun
+    :initarg :literal-fun
+    :accessor literal-fun)
+   (length-fun
+    :initarg :length-fun
+    :accessor length-fun)
+   (distance-fun
+    :initarg :distance-fun
+    :accessor distance-fun)
+   (byte-fun
+    :initarg :byte-fun
+    :accessor byte-fun)
+   (compress-fun
+    :initarg :compress-fun
+    :accessor compress-fun))
+  (:default-initargs
+   :input (make-input)
+   :chains (make-chains)
+   :hashes (make-hashes)
+   :start 0
+   :end 0
+   :counter 0
+   :bitstream (make-instance 'bitstream)
+   :octet-buffer (make-octets 1)))
+
+;;;; Compressor
+;;;;; Public protocol GFs
+
+(defgeneric start-data-format (compressor)
+  (:documentation "Add any needed prologue data to the output bitstream."))
+
+(defgeneric process-input (compressor input start count)
+  (:documentation "Map over pending octets in INPUT and perform
+  any needed processing. Called before the data is compressed. A
+  subclass might use this to compute a checksum of all input
+  data."))
+
+(defgeneric finish-data-format (compressor)
+  (:documentation "Add any needed epilogue data to the output bitstream."))
+
+(defgeneric finish-compression (compressor)
+  (:documentation "Finish the data format and flush all pending
+  data in the bitstream."))
+
+;;;;; Internal GFs
+(defgeneric final-compress (compressor)
+  (:documentation "Perform the final compression on pending input
+  data in COMPRESSOR."))
+
+(defgeneric make-compress-fun (compressor)
+  (:documentation "Create a callback suitable for passing to
+  MERGE-INPUT for performing incremental compression of the next
+  32k octets of input."))
+
+(defmethod initialize-instance :after ((compressor deflate-compressor)
+                                       &rest initargs
+                                       &key
+                                       literal-fun length-fun distance-fun
+                                       compress-fun
+                                       callback)
+  (declare (ignore initargs))
+  (let ((bitstream (bitstream compressor)))
+    (setf (callback bitstream)
+          (or callback #'error-missing-callback))
+    (setf (literal-fun compressor)
+          (or literal-fun (make-huffman-writer *fixed-literal/length-table*
+                                               bitstream)))
+    (setf (length-fun compressor)
+          (or length-fun (make-huffman-writer *fixed-distance-table*
+                                              bitstream)))
+    (setf (distance-fun compressor)
+          (or distance-fun (make-huffman-writer *fixed-distance-table*
+                                                bitstream)))
+    (setf (compress-fun compressor)
+          (or compress-fun (make-compress-fun compressor)))
+    (start-data-format compressor)))
+
+;;;;; A few methods defer to the bitstream
+
+(defmethod (setf callback) (new-fun (compressor deflate-compressor))
+  (let ((bitstream (bitstream compressor)))
+    (prog1
+        (setf (callback bitstream) new-fun)
+      (reinitialize-bitstream-funs compressor bitstream))))
+
+(defmethod write-bits (code size (compressor deflate-compressor))
+  (write-bits code size (bitstream compressor)))
+
+(defmethod write-octet (octet (compressor deflate-compressor))
+  (write-octet octet (bitstream compressor)))
+
+(defmethod write-octet-vector (vector (compressor deflate-compressor)
+                               &key (start 0) end)
+  (write-octet-vector vector (bitstream compressor)
+                      :start start
+                      :end end))
+                               
+
+(defmethod start-data-format ((compressor deflate-compressor))
+  (let ((bitstream (bitstream compressor)))
+    (write-bits +final-block+ 1 bitstream)
+    (write-bits +fixed-tables+ 2 bitstream)))
+
+(defmethod compress-octet (octet compressor)
+  (let ((vector (octet-buffer compressor)))
+    (setf (aref vector 0) octet)
+    (compress-octet-vector vector compressor)))
+
+(defmethod compress-octet-vector (vector compressor &key (start 0) end)
+  (let* ((closure (compress-fun compressor))
+         (end (or end (length vector)))
+         (count (- end start)))
+    (let ((end
+           (merge-input vector start count
+                        (input compressor)
+                        (end compressor)
+                        closure)))
+      (setf (end compressor) end
+            (start compressor) (logand #x8000 end)
+            (counter compressor) (logand #x7FFF end)))))
+
+(defmethod process-input ((compressor deflate-compressor) input start count)
+  (update-chains input (hashes compressor) (chains compressor) start count))
+
+(defmethod finish-data-format ((compressor deflate-compressor))
+  (funcall (literal-fun compressor) 256))
+
+(defmethod finish-compression ((compressor deflate-compressor))
+  (final-compress compressor)
+  (finish-data-format compressor)
+  (flush (bitstream compressor)))
+
+(defmethod final-compress ((compressor deflate-compressor))
+  (let ((input (input compressor))
+        (chains (chains compressor))
+        (start (start compressor))
+        (end (end compressor))
+        (counter (counter compressor))
+        (literal-fun (literal-fun compressor))
+        (length-fun (length-fun compressor))
+        (distance-fun (distance-fun compressor)))
+    (process-input compressor input start counter)
+    (compress input chains 
+              :start start 
+              :end end
+              :literal-fun literal-fun
+              :length-fun length-fun
+              :distance-fun distance-fun)))
+
+(defmethod make-compress-fun ((compressor deflate-compressor))
+  (let ((literal-fun (literal-fun compressor))
+        (length-fun (length-fun compressor))
+        (distance-fun (distance-fun compressor)))
+    (lambda (input start count)
+      (process-input compressor input start count)
+      (let ((end (+ start count)))
+        (compress input (chains compressor) 
+                  :start start 
+                  :end (logand #xFFFF end)
+                  :literal-fun literal-fun
+                  :length-fun length-fun
+                  :distance-fun distance-fun)))))
+
+(defmethod reset ((compressor deflate-compressor) &key)
+  (fill (chains compressor) 0)
+  (fill (input compressor) 0)
+  (fill (hashes compressor) 0)
+  (setf (start compressor) 0
+        (end compressor) 0
+        (counter compressor) 0)
+  (reset (bitstream compressor))
+  (start-data-format compressor))
+
+(defmacro with-compressor ((var class
+                                &rest initargs
+                                &key &allow-other-keys)
+                           &body body)
+  `(let ((,var (make-instance ,class ,@initargs)))
+     (multiple-value-prog1 
+         (progn ,@body)
+       (finish-compression ,var))))
 
 ;;; Proto
 ;; TODO 2025-05-12: 

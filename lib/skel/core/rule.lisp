@@ -47,12 +47,13 @@ via the special form stored in RECIPE."
        (labels ,*skel-project-functions*
          (progv (mapcar 'car ,binds)
              (mapcar 'cdr ,binds)
-           (compile-and-eval* ,@body))))))
+           ,@body)))))
 
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
   (with-sk-rule-env (sk-bind *skel-project*)
-    (sk-rule-recipe self)))
+    (compile-and-eval* 
+     (sk-rule-recipe self))))
 
 (defmethod sk-write ((self sk-rule) stream)
   (with-slots (target source recipe) self

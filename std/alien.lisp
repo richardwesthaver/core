@@ -43,7 +43,7 @@
 
 (defun list-all-shared-objects ()
   "Return the current value of SB-ALIEN::*SHARED-OBJECTS*."
-  sb-alien::*shared-objects*)
+  *shared-objects*)
 
 (defmacro define-alien-loader (name &optional (root "/usr/local/lib/") path)
   "Define a default loader function named load-NAME which calls

@@ -418,6 +418,8 @@
   mv *.so psl.dat rgb.txt tmp/core/ # parquet.json not needed - pre-compiled
   mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/
   cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)
+ (dist-repo ()
+  (vc:vc-bundle (sk-vc *skel-project*) "/opt/store/packy/vc/core.hg"))
  (dist-source ()
   #$cd .. && tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
  (dist-core (clean %stash build-core) #$zstd .stash/core$#)

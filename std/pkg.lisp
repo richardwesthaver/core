@@ -684,8 +684,10 @@
   (:import-from :std/bit :make-octets)
   (:import-from :std/type :octet-vector :octet)
   (:import-from :std/serde :define-io)
-  (:import-from :sb-alien :sap+)
+  (:import-from :sb-alien :sap+ :*linkage-info* :*shared-objects*)
   (:export
+   :*linkage-info*
+   :*shared-objects*
    :with-vector-sap
    :setfa
    :double-array-pointer
@@ -980,6 +982,7 @@
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
    :tmpize-pathname
    :with-directory
+   :call-with-directory
    :with-tmp
    :walk-directory))
 

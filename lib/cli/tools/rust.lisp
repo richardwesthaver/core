@@ -16,7 +16,10 @@
       (cargo-error "RUSTUP command failed: ~A ~A" *rustup* (or args "")))))
 
 (defun cargo-install (crate &key force git path)
-  (let ((args `(,crate
+  (let ((args `(,@(etypecase crate
+                    (string `(,crate))
+                    (symbol `(,(string-downcase crate)))
+                    (list crate))
                 ,@(when force '("--force"))
                 ,@(when git `("--git" ,git))
                 ,@(when path `("--path" ,path)))))

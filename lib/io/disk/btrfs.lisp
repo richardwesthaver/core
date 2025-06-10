@@ -4,8 +4,10 @@
 
 ;;; Code:
 (in-package :io/disk/btrfs)
-(load-btrfs)
-(load-btrfsutil)
+
+(defun load-btrfs-libs ()
+  (load-btrfs)
+  (load-btrfsutil))
 
 (define-condition btrfs-error (io-error) ())
 

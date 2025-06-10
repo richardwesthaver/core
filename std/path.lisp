@@ -98,10 +98,22 @@ appended."
   (set-pathname-suffix path (symbol-name
                              (gensym *tmp-suffix*))))
 
+(defun call-with-directory (dir thunk)
+  "call the THUNK in a context where the current directory was changed to DIR, if not NIL.
+Note that this operation is usually NOT thread-safe."
+  (if dir
+      (let* ((dir (directory-path dir))
+             (cwd (sb-posix:getcwd))
+             (*default-pathname-defaults* dir))
+        (sb-posix:chdir dir)
+        (unwind-protect
+             (funcall thunk)
+          (sb-posix:chdir cwd)))
+      (funcall thunk)))
+
 (defmacro with-directory (dir &body body)
-  "Bind *DEFAULT-PATHNAME-DEFAULTS* to the absolute path of DIR if it exists around BODY."
-  `(let ((*default-pathname-defaults* (probe-file ,dir)))
-     ,@body))
+  "Call BODY while the POSIX current working directory is set to DIR"
+  `(call-with-directory ,dir #'(lambda () ,@body)))
 
 (defmacro with-tmp (&body body)
   "Bind *DEFAULT-PATHNAME-DEFAULTS* to *TMP* around BODY."
