@@ -41,21 +41,18 @@ via the special form stored in RECIPE."
     (when-let ((source (sk-rule-source self)))
       (format stream " ~A" (mapcar 'string-downcase source)))))
 
+(defmacro with-sk-rule-env (binds &body body)
+  `(symbol-macrolet ,*skel-project-symbol-macros*
+     (macrolet ,*skel-project-macros*
+       (labels ,*skel-project-functions*
+         (progv (mapcar 'car ,binds)
+             (mapcar 'cdr ,binds)
+           (compile-and-eval* ,@body))))))
+
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
-  (with-slots (recipe) self
-    (eval
-     `(symbol-macrolet ,*skel-project-symbol-macros*
-        (macrolet ,*skel-project-macros*
-          (labels ,*skel-project-functions*
-            (let ,#1=(sk-bind *skel-project*)
-              (declare (ignorable ,@(mapcar 'car #1#)))
-              ;; ,@(mapcar (lambda (x)
-	      ;;             (etypecase x
-              ;;               ;; shell command? no rule bindings
-	      ;;               (function (funcall x :output t))
-	      ;;               (t x)))
-	      ',@recipe)))))))
+  (with-sk-rule-env (sk-bind *skel-project*)
+    (sk-rule-recipe self)))
 
 (defmethod sk-write ((self sk-rule) stream)
   (with-slots (target source recipe) self

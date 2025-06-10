@@ -155,11 +155,11 @@ An escaped form with parens like the following works fine:
                                                     :output s
                                                     :input *shell-input*))))
           (t (nyi!)))
-        (sb-ext:run-program *shell*
-                            (list "-c" (format nil "~a" str))
-                            :directory (or *shell-directory* *default-pathname-defaults*)
-                            :input *shell-input*
-                            :output *shell-output*))))
+        `(sb-ext:run-program *shell*
+                             (list "-c" (format nil "~a" ,str))
+                             :directory (or *shell-directory* *default-pathname-defaults*)
+                             :input *shell-input*
+                             :output *shell-output*))))
 
 (defreadtable :shell
   "The shell readtable"

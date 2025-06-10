@@ -13,11 +13,11 @@
 | description | :description The Compiler Company Core               |
 | skel-id     | :id 1566328410216733941                              |
 | root        | ~/comp/core/                                         |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/675ff1f37766][675ff1f37766:1044+]] |
+| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/857a7a9f8e7f][857a7a9f8e7f:1046+]] |
 | tags        | :tags (core lisp emacs c)                            |
-| updated     | Mon Jun 09 20:39:21 2025 -0400                       |
+| updated     | Mon Jun 09 23:23:39 2025 -0400                       |
 | langs       | c elisp json lisp org text                           |
-| lines       | 137306 :λ 107664 :# 13328 :_ 16314                   |
+| lines       | 137317 :λ 107672 :# 13328 :_ 16317                   |
 |-------------+------------------------------------------------------|
 
 #+END:

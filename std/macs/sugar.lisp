@@ -17,6 +17,10 @@
   "Compile and eval a FORM."
   (funcall (compile nil `(lambda () ,form))))
 
+(defun compile-and-eval* (form)
+  "Splice, compile, and eval a FORM."
+  (funcall (compile nil `(lambda () ,@form))))
+
 (defun compile-and-load (file &key (output-file ""))
   "Utility function which compiles a lisp FILE and loads the resulting fasl file."
   (load (compile-file (pathname file) :output-file output-file)))
