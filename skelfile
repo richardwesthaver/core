@@ -35,8 +35,7 @@
 ((default 
   (%stash
    psl.dat x11.lisp parquet.json
-   build-zstd-alien
-   build-tree-sitter-alien
+   build-c
    build-core 
    ;; save-std save-prelude save-user fasls
    ;; save-tests

@@ -101,11 +101,16 @@ evaluated once and bound to a G!-symbol for use in BODY."
                               (cons (values `(list ,@x) #'(lambda (f x) (cons (first x) (mapcar f (cdr x))))))))
               lst))
 
-(defmacro definline (name &rest rest)
+(defmacro definline (name lambda-list &body body)
   "Define an inlined function."
   `(progn
      (declaim (inline ,name))
-     (defun ,name ,@rest)))
+     (defun ,name ,lambda-list ,@body)))
+
+(defmacro defnotinline (name lambda-list &body body)
+  `(progn
+     (declaim (notinline ,name))
+     (defun ,name ,lambda-list ,@body)))
 
 (defmacro with-optimization ((&rest args) &body body)
   "Create a local environment with optimization declarations ARGS and execute

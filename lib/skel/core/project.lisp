@@ -168,10 +168,11 @@ directory."))
 	    (when (slot-boundp self 'components)
 	      (setf (sk-components self) (map 'vector
 					      (lambda (c)
-						(sk-load-component 
-						 (car c) 
-						 (let ((val (cadr c)))
-						   (if (listp val) val (pathname val)))
+						(sk-load-component
+						 (pop c)
+                                                 (if (= 1 (length c))
+                                                     (pathname (car c))
+                                                     c)
 						 *default-pathname-defaults*))
 					      (sk-components self)))))
 	  ;; BIND contains a list of forms which are bound dynamically based

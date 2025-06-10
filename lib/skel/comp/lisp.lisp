@@ -1,0 +1,70 @@
+;;; lisp.lisp --- Lisp files
+
+;; SK-LISP-FILE
+
+;;; Code:
+(in-package :skel/comp/lisp)
+
+(defclass sk-lisp-component (sk-component ast) ())
+(defclass sk-lisp-file (sk-lisp-component sk-meta) ())
+
+(defmethod sk-new ((self (eql :lisp)) &rest args)
+  (apply #'make-instance 'sk-lisp-file args))
+
+(defmethod sk-convert ((self cl-source-file))
+  (make-instance 'sk-lisp-file 
+    :path #1=(component-pathname self)
+    :name (component-name self)
+    :parent (component-parent self)
+    :version (component-version self)))
+
+(defmethod sk-compile ((self sk-lisp-file) &rest args)
+  (apply 'compile-file (path self) args))
+
+(defmethod sk-load ((self sk-lisp-file) &rest args)
+  (apply 'load (path self) args))
+
+(defmethod sk-run ((self sk-lisp-file))
+  (compile-and-eval `(progn ,@(ast self))))
+  
+(defmethods sk-load-component 
+  (((self (eql :lisp)) (form pathname) &optional (path *default-pathname-defaults*))
+   (declare (ignore self))
+   (let* ((type (pathname-type form))
+          (name (namestring (if type (pathname-name form) form)))
+          (fname (if type form (make-pathname :directory (namestring path) :name name :type "lisp")))
+          (comp (make-instance 'sk-lisp-file :parent *skel-project* :path fname :name name)))
+     (sk-read-file comp fname)
+     comp))
+  (((self (eql :lisp)) (form list) &optional (path *default-pathname-defaults*))
+   (let ((opts (cdr form))
+         (comp (sk-load-component self (pathname (car form)) (namestring path))))
+     (when-let ((load (getf opts :load)))
+       (ecase load
+         (t (sk-run comp))))
+     comp)))
+
+(defmethod print-object ((object sk-lisp-component) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream ":ID ~A" (format-sxhash (id object)))))
+
+(defmethod read-ast ((self sk-lisp-component) stream &key)
+  (setf (ast self) (read-lisp-until-end stream)))
+
+(defmethod sk-read-file ((self sk-lisp-component) path)
+  (with-input-from-file (f path)
+    (read-ast self f)))
+
+(defmethod write-ast ((self sk-lisp-component) stream &key)
+  (write (ast self) :stream stream))
+
+(defmethod sk-write-file ((self sk-lisp-component) &key path)
+  (with-output-to-file (f (or path (path self)))
+    (write-ast self f)))
+
+(defmethod load-ast ((self sk-lisp-component))
+  (if (ast self)
+      (sk-run (ast self))
+      (sk-load self)))
+      
+      

@@ -34,6 +34,7 @@
    (:module "comp"
     :components
     ((:file "pkg")
+     (:file "lisp")
      (:file "asd")
      (:file "cargo")
      (:file "container")

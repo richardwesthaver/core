@@ -13,7 +13,10 @@
   (:export :with-project))
 
 (pkg:defpkg :sk-user
-  (:use :cl :std :std-user :cli :cl-user :log :sb-debug :sb-ext :net/proto/dns :cli/tools/sbcl :pod :cli/clap)
+  (:use :cl :std :std-user 
+   :cli :cl-user :log :sb-debug 
+   :sb-ext :net/proto/dns :cli/tools/sbcl :pod 
+   :cli/clap :obj/ast)
   (:use :skel :skel/core :skel/comp :skel/net))
 
 (in-package :skel)

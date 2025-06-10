@@ -25,7 +25,7 @@
 
 ;;; Module
 
-;; Again just like ASDF, we define a SK-MOD class which subclasses
+;; Again just like ASDF, we define an SK-MOD class which subclasses
 ;; SK-COMPONENT. The SK-MOD class is used for components which have
 ;; sub-components themselves.
 
@@ -40,7 +40,7 @@
 		   (components 
 		     (mapcar 
 		      (lambda (f)
-			(sk-load-component (car f) (cdr f)))
+			(sk-load-component (car f) (if (= 1 (length (cdr f))) (cadr f) (cdr f))))
 		      form)))
 	       `(:name ,name :components ,components)))
       (make-instance 'sk-mod :name form :components nil)))

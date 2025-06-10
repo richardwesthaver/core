@@ -13,5 +13,7 @@
 ;;; Code:
 (in-package :obj/tensor)
 
+(defclass tensor-class (standard-class) ())
+
 (defmacro deftensor (name supers slots &rest options)
   `(defclass ,name ,supers ,slots ,@options (:metaclass tensor-class)))

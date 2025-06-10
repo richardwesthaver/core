@@ -101,7 +101,7 @@
     (sk-compile self :stream out)))
 
 (defmethod sk-read-file ((self makefile) path)
-  (with-open-file (in path :direction :input)))
+  (with-open-file (f path :direction :input)))
 
 ;;; Auto Vars
 

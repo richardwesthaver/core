@@ -37,6 +37,7 @@
    :ensure-list :recons :memq :assq
    :proper-list-of-length-p :proper-list-p :singleton-p)
   (:import-from :std/sym :with-gensyms)
+  (:import-from :sb-kernel :topological-sort)
   (:shadow :group)
   (:export
    :ensure-car
@@ -69,7 +70,8 @@
    :set-equal
    :dcons :dpush
    :dpop :dlist :drdc :dcdr :dcar :dappendf
-   :topological-sort :match-lambda-lists))
+   :topological-sort :match-lambda-lists
+   :toposort))
 
 (defpackage :std/prim
   (:use :cl :std/list)
@@ -84,6 +86,7 @@
    :unquote-args
    :defun!
    :definline
+   :defnotinline
    :with-optimization
    :macrofy
    :with-marking
@@ -141,14 +144,33 @@
   (:import-from :std/prim :definline)
   (:import-from :sb-impl :sfunction)
   (:import-from :sb-int :unsigned-byte*)
-  (:import-from :sb-c :integer-type-length :ctype-of)
+  (:import-from :sb-c :integer-type-length :ctype-of :ctype)
   (:import-from :sb-kernel :*type-classes* :type-class 
-   :make-type-class :*type-cache-nonce* :type-class-name)
+   :make-type-class :*type-cache-nonce* :type-class-name
+   :type-class-id
+   :classoid
+   :type-id->type-class
+   :type-hash-value
+   :*ctype-hashsets*
+   :find-classoid
+   :classoid-of
+   :ctype-of
+   :ctype
+   :layout-of)
   (:shadowing-import-from :sb-ext :word)
   (:export :+default-element-type+
    :type-class-of :unsigned-byte*
+   :type-class-id
+   :find-classoid
+   :classoid
+   :type-class-id-of
+   :classoid-of
+   :layout-of
+   :type-id->type-class
+   :type-hash-value
    :type-class-name-of
    :type-class-name
+   :*ctype-hashsets*
    :*type-cache-nonce* :make-type-class
    :*type-classes* :type-class
    :array-index :array-length
@@ -455,7 +477,7 @@
    :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
    :fixnum-tag-mask :n-fixnum-bits :word-shift :n-word-bytes
    :n-machine-word-bytes :n-widetag-bits :widetag-mask :most-positive-word
-   :lowtag-of :widetag-of :hexdump)
+   :lowtag-of :widetag-of :hexdump :print-allocated-objects)
   (:import-from :sb-sys :int-sap)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
    :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr)
@@ -478,7 +500,7 @@
   (:import-from :sb-ext :fold-identical-code)
   (:import-from :std/macs :if-let :defmacro!)
   (:export
-   :int-sap
+   :int-sap :print-allocated-objects
    :current-sp :current-fp
    :hexdump :hexdump-object
    :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
@@ -604,13 +626,15 @@
 
 (defpkg :std/comp
   (:use :cl)
+  (:import-from :std/prim :definline)
   (:import-from :sb-c :deftransform :defoptimizer 
-   :define-vop :parse-deftransform :defknown :ctype-of 
+   :define-vop :parse-deftransform :defknown
    :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
    :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
    :assemble :without-scheduling :inst :inst* 
    :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
-   :make-file-source-info :make-lisp-source-info)
+   :make-file-source-info :make-lisp-source-info
+   :def-ir1-translator)
   (:import-from :sb-c :vop)
   (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
    :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
@@ -621,8 +645,8 @@
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
   (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
-   :defoptimizer :defknown :ctype-of :ctypecase :ctypep :ctype-array-dimensions
-   :*primitive-objects*
+   :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions
+   :*primitive-objects* :def-ir1-translator
    :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop :vop*
    :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
    :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
@@ -630,7 +654,8 @@
    :without-scheduling :dump-symbolic-asm :inst :inst* :primitive-type :primitive-type-of
    :primitive-type-name :primitive-object-name :primitive-object-lowtag :primitive-object-widetag
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
-   :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info))
+   :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
+   :primitive-type-name-of))
 
 (defpkg :std/serde
   (:use :cl)

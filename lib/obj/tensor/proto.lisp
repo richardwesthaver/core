@@ -125,3 +125,10 @@ same sign when TENSOR is subtype of STANDARD-TENSOR."))
     (conjugate x))
   (:method ((x real))
     x))
+
+;;; Tensor Classes
+;; base-tensor, dense/sparse
+;; standard-tensor (lisp)
+;; static-tensor, c-tensor
+;; blas-tensor, lapack-tensor
+;; simd-tensor

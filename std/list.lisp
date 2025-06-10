@@ -450,7 +450,7 @@ every element of LIST2 matches some element of LIST1. Otherwise returns false."
 
 ;;; Template utils
 ;; Topological sort (matlisp)
-(defun topological-sort (lst func &optional (test #'eql))
+(defun toposort (lst func &optional (test #'eql))
   (multiple-value-bind (nlst len) (loop :for ele :in lst
 				     :for i := 0 :then (1+ i)
 				     :collect (cons i ele) :into ret

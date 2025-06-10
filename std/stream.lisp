@@ -8,12 +8,14 @@
 (declaim (inline read-until-end read-lisp-until-end copy-stream))
 
 (defun read-until-end (stream)
+  "Read input from STREAM until EOF and return a string."
   (with-output-to-string (s)
     (loop for c = (read-char stream nil)
 	  until (not c)
 	  do (write-char c s))))
 
 (defun read-lisp-until-end (stream)
+  "Read input from STREAM until EOF and return a form."
   (with-gensyms (eof)
     (loop for c = (read stream nil eof)
 	  until (eql c eof)
