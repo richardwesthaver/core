@@ -185,11 +185,44 @@
 :json)
 |#
 
+#|
+profile/
+├── airootfs/
+├── efiboot/
+├── syslinux/
+├── grub/
+├── bootstrap_packages.arch
+├── packages.arch
+├── pacman.conf
+└── profiledef.sh
+|#
+;;; Types
+(deftype archiso-profile-designator () '(member :releng :baseline))
+(deftype airootfs-image-type () '(member :squashfs :ext4+squashfs :erofs))
+(deftype archiso-build-mode () '(member :bootstrap :iso :netboot))
+(deftype archiso-boot-mode () 
+  '(member 
+    :bios.syslinux.mbr
+    :bios.syslinux.eltorito
+    :uefi-ia32.grub.esp
+    :uefi.ia32.grub.eltorito
+    :uefi-x64.grub.esp
+    :uefi-x64.grub.eltorito
+    :uefi-ia32.systemd-boot.esp
+    :uefi-ia32.systemd-boot.eltorito
+    :uefi-x64.systemd-boot.esp
+    :uefi-x64.systemd-boot.eltorito))
+
+;;; Vars
 (defvar *archiso-config*)
 
 (defvar *archiso-creds*)
 
+(declaim (archiso-profile-designator *default-archiso-profile*))
+(defvar *default-archiso-profile* :releng)
+
 ;; TODO 2024-05-31: 
+;;; Config
 (defconfig archiso-config (box-config)
   ((config-version :initform "2.6.0" :type string)
    (hostname :type string)
@@ -217,3 +250,28 @@
    (swap :initform t :type boolean)
    timezone
    (version :initform "2.6.0" :type string)))
+
+;;; CLI
+(defun mkarchiso (profile-dir 
+                  &key config install-dir out-dir work-dir
+                       application label publisher
+                       cert gpg mbox modes packages
+                       delete verbose output)
+  (sb-ext:run-program 
+   (cli:find-exe "mkarchiso") 
+   `(,@(when config `("-C" ,config))
+     ,@(when install-dir `("-D" ,install-dir))
+     ,@(when out-dir `("-o" ,out-dir))
+     ,@(when work-dir `("-w" ,work-dir))
+     ,@(when application `("-A" ,application))
+     ,@(when label `("-L" ,label))
+     ,@(when publisher `("-P" ,publisher))
+     ,@(when cert `("-c" ,cert))
+     ,@(when gpg `("-g" ,gpg))
+     ,@(when mbox `("-G" ,mbox))
+     ,@(when modes `("-m" ,@modes))
+     ,@(when packages `("-p" ,@packages))
+     ,@(when delete '("-r"))
+     ,@(when verbose '("-v"))
+     ,profile-dir)
+   :output output))

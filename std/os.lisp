@@ -17,7 +17,7 @@
   "Return T if effective user is root."
   (zerop (parse-integer (with-output-to-string (str) (sb-ext:process-output (sb-ext:run-program "id" (list "-u") :search t :output str)) 0))))
 
-(defun user-info (id)
+(defun user-info (&optional (id (sb-posix:getuid)))
   "USER-INFO returns the password entry for the given name or
 numerical user ID, as an assoc-list."
   (multiple-value-bind (name password uid gid gecos home shell)
@@ -183,6 +183,36 @@ arrange for FVAR to be closed after BODY."
        (setf (xdg-base-dir k) (pathname e))))
    (std/hash-table:hash-table-keys *xdg-base-dirs*)))
 
+;;; user-add
+(defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
+  (let ((useradd (probe-file "/bin/useradd")))
+    (if useradd
+        (sb-ext:run-program 
+         useradd `(,name
+                   ,@(when shell `("-s" ,shell))
+                   ,@(when home `("-d" ,home))
+                   ,@(when comment `("-c" ,comment))
+                   ,@(when base `("-b" ,base))
+                   ,@(when gid `("-g" ,gid))
+                   ,@(when uid `("-u" ,uid))
+                   ,@(when system '("-r"))
+                   ,@(when groups (cons "-g" groups))
+                   ,@(when defaults '("-D")))
+         :output output)
+        (error "unable to find USERADD program (/bin/useradd)"))))
+                            
+;;; group-add
+(defun group-add (name &key force id users (output t))
+  (let ((groupadd (probe-file "/bin/groupadd")))
+    (if groupadd
+        (sb-ext:run-program
+         groupadd `(,name
+                    ,@(when force '("-f"))
+                    ,@(when id `("-i" ,id))
+                    ,@(when users (cons "-i" users)))
+         :output output)
+        (error "unable to find GROUPADD program (/bin/groupadd)"))))
+
 ;;; with-directory-iterator
 (defun %get-file-kind (namestring follow-p)
   (handler-case
@@ -218,7 +248,6 @@ arrange for FVAR to be closed after BODY."
   (%get-file-kind (sb-ext:native-namestring file) follow-p))
 
 ;;;; Hopefully portable pathname manipulations
-
 (defun absolute-pathname-p (pathspec)
   "Returns T if the PATHSPEC designates an absolute pathname, NIL otherwise."
   (eq :absolute (car (pathname-directory pathspec))))

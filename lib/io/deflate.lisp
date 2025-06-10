@@ -2345,30 +2345,31 @@ the input and the number of bytes written to the output."
 
 ;;; COMPRESSION (salza2)
 ;; HACK 2025-06-10: 
-(defparameter +input-limit+ 32768)
-(defparameter +input-limit-mask+ (1- +input-limit+))
-(defparameter +buffer-size+ (* +input-limit+ 2))
-(defparameter +buffer-size-mask+ (1- +buffer-size+))
+(eval-always
+  (defparameter +input-limit+ 32768)
+  (defparameter +input-limit-mask+ (1- +input-limit+))
+  (defparameter +buffer-size+ (* +input-limit+ 2))
+  (defparameter +buffer-size-mask+ (1- +buffer-size+))
 
-(defparameter +input-size+ #x10000)
-(defparameter +input-mask+ #x0FFFF)
-(defparameter +hashes-size+ 8191)
-(defparameter +radix+ 109)
-(defparameter +rmax+ (* +radix+ +radix+))
+  (defparameter +input-size+ #x10000)
+  (defparameter +input-mask+ #x0FFFF)
+  (defparameter +hashes-size+ 8191)
+  (defparameter +radix+ 109)
+  (defparameter +rmax+ (* +radix+ +radix+))
 
-(defparameter +bitstream-buffer-size+ 4096)
-(defparameter +bitstream-buffer-mask+ (1- +bitstream-buffer-size+))
-(defparameter +bitstream-buffer-bits+ (* +bitstream-buffer-size+ 8))
-(defparameter +bitstream-buffer-bitmask+ (1- +bitstream-buffer-bits+))
+  (defparameter +bitstream-buffer-size+ 4096)
+  (defparameter +bitstream-buffer-mask+ (1- +bitstream-buffer-size+))
+  (defparameter +bitstream-buffer-bits+ (* +bitstream-buffer-size+ 8))
+  (defparameter +bitstream-buffer-bitmask+ (1- +bitstream-buffer-bits+))
 
-(defconstant +final-block+ #b1)
-(defconstant +fixed-tables+ #b01)
+  (defconstant +final-block+ #b1)
+  (defconstant +fixed-tables+ #b01))
 
 ;;;; Types
 (deftype input-index ()
   '(unsigned-byte 16))
 
-(deftype input-buffer ()
+(deftype deflate-buffer ()
   `(simple-array (unsigned-byte 8) (,+input-size+)))
 
 (deftype chains-buffer ()
@@ -2401,7 +2402,7 @@ the input and the number of bytes written to the output."
         (- zz #x1FFF))))
 
 (defun update-chains (input hashes chains start count)
-  (declare (type input-buffer input)
+  (declare (type deflate-buffer input)
            (type hashes-buffer hashes)
            (type chains-buffer chains)
            (type input-index start)
@@ -2444,7 +2445,7 @@ the input and the number of bytes written to the output."
 INPUT; END is a sentinel position that ends the match length
 check if reached."
   (declare (type input-index p1 p2 end)
-           (type input-buffer input)
+           (type deflate-buffer input)
            (optimize speed))
   (let ((length 0))
     (loop
@@ -2458,7 +2459,7 @@ check if reached."
 
 (defun longest-match (p1 input chains end max-tests)
   (declare (type input-index p1 end)
-           (type input-buffer input)
+           (type deflate-buffer input)
            (type chains-buffer chains)
            (type (integer 0 32) max-tests)
            (optimize speed))

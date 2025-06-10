@@ -996,6 +996,8 @@
   (:export
    :sudo-p
    :user-info
+   :user-add
+   :group-add
    :list-all-users
    :list-all-groups
    :with-umask
