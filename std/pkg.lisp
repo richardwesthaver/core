@@ -502,6 +502,7 @@
   (:import-from :sb-ext :fold-identical-code)
   (:import-from :std/macs :if-let :defmacro!)
   (:export
+   :revive-image
    :int-sap :print-allocated-objects
    :current-sp :current-fp
    :hexdump :hexdump-object

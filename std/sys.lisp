@@ -25,10 +25,11 @@ and we may query the user for input.")
 (define-symbol-macro .i sb-ext:*inspected*)
 
 (defun hooks ()
-  (list sb-ext:*init-hooks*
-        sb-ext:*after-gc-hooks*
-        sb-ext:*save-hooks*
-        sb-ext:*exit-hooks*))
+  (list 
+   :init *init-hooks*
+   :after-gc sb-ext:*after-gc-hooks*
+   :save sb-ext:*save-hooks*
+   :exit sb-ext:*exit-hooks*))
 
 (defparameter *default-arena-size* (* 10 1024 1024 1024))
 
@@ -82,20 +83,58 @@ and we may query the user for input.")
 (defun standard-symbol-names (&optional test)
   (package-symbol-names :common-lisp test))
 
-(defun revive-image (&key (lisp-interaction uiop:*lisp-interaction*)
-                          (restore-hook uiop:*image-restore-hook*)
-                          (prelude uiop:*image-prelude*)
-                          (entry-point uiop/image:*image-entry-point*)
-                          (if-already-restored '(cerror "Revive image anyway")))
-  (uiop:restore-image :lisp-interaction lisp-interaction :restore-hook restore-hook :prelude prelude
-                      :entry-point entry-point :if-already-restored if-already-restored))
+(defun handle-serious-condition (condition)
+  "Handle a fatal CONDITION:
+depending on whether *INTERACTIVE* is set, enter debugger or die"
+  (cond
+    (*interactive*
+     (invoke-debugger condition))
+    (t
+     (with-sane-io-syntax 
+       (let ((out (make-synonym-stream '*error-output*)))
+         (format  out "~&Fatal condition:~%~A~%" condition)
+         (sb-debug:print-backtrace :stream out))
+       (when condition
+         (format t "~A" condition)
+         (sb-ext:quit :unix-status 99))))))
 
-;;; Remove all symbols from all packages, storing them in weak pointers,
-;;; then collect garbage, and re-intern all symbols that survived GC.
-;;; Any symbol satisfying PREDICATE will be strongly referenced during GC
-;;; so that it doesn't disappear, regardless of whether it appeared unused.
+(defvar *core-image-revived-p* nil)
+(defvar *core-image-revive-hooks* nil)
+(defvar *core-image-entry-point* nil)
+(defun revive-image (&key (interactive *interactive*)
+                          (hooks *core-image-revive-hooks*)
+                          (entry-point *core-image-entry-point*)
+                          (if-already-revived '(cerror "Revive image anyway")))
+  "Like UIOP:RESTORE-IMAGE but without a prelude."
+    (when *core-image-revived-p*
+      (if if-already-revived
+          (funcall if-already-revived "Image already ~:[being ~;~]revived"
+                   (eq *core-image-revived-p* t))
+          (return-from revive-image)))
+  (handler-bind ((serious-condition #'handle-serious-condition))
+    (setf *interactive* interactive)
+    (setf *core-image-revive-hook* hooks)
+    (setf *core-image-revived-p* :in-progress)
+    (dolist (f *core-image-revive-hooks*)
+      (funcall f))
+    (setf *core-image-revived-p* t)
+    (let ((results (multiple-value-list
+                    (if entry-point
+                        (funcall entry-point)
+                        t))))
+      (if interactive
+          (values-list results)
+          (sb-ext:exit :code (if (first results) 0 1))))))
+
+;; HACK 2025-06-10: this attempts to modify read-only memory - can we arrange
+;; for the read-only mem to be replaced on save?
+
+;; Remove all symbols from all packages, storing them in weak pointers,
+;; then collect garbage, and re-intern all symbols that survived GC.
+;; Any symbol satisfying PREDICATE will be strongly referenced during GC
+;; so that it doesn't disappear, regardless of whether it appeared unused.
 (in-package :sb-impl)
-(defun std/sys:shake-packages (predicate &key print verbose query)
+(defun shake-packages (predicate &key print verbose query)
   (declare (function predicate))
   (let (list)
     (flet ((weaken (table accessibility)
@@ -144,6 +183,7 @@ and we may query the user for input.")
         (force-output)))))
 
 (in-package :std/sys)
+
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)
   "A naive tree-shaker for lisp."
