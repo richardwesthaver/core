@@ -662,15 +662,16 @@ keep-alive-stream), and should handle clean-up of it"
   (unless content-encoding
     (return-from decompress-body body))
   (cond
+    ;; FIX 2025-06-10: 
     ((string= content-encoding "gzip")
      (if (streamp body)
-         (chipz:make-decompressing-stream :gzip body)
-         (chipz:decompress nil (chipz:make-dstate :gzip) body)))
+         (io/flate:make-decompressing-stream :gzip body)
+         (io/flate:decompress nil (io/deflate:make-dstate :gzip) body)))
     ((string= content-encoding "deflate")
      (if (streamp body)
-         (chipz:make-decompressing-stream :zlib body)
-         (chipz:decompress nil (chipz:make-dstate :zlib) body)))
-    ;; TODO 2024-10-20: 
+         (io/flate:make-decompressing-stream :zlib body)
+         (io/flate:decompress nil (io/deflate:make-dstate :zlib) body)))
+
     ((string= content-encoding "zstd")
      (if (streamp body)
          (io/flate:make-decompressing-stream :zstd body)

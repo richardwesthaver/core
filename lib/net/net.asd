@@ -4,9 +4,7 @@
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
   (:sb-concurrency :sb-posix :sb-bsd-sockets :cl-ppcre
-   :dat :obj :io :parse 
-   :chipz :babel :rt :std   
-   :cli :log :cry 
+   :dat :obj :io :parse :babel :rt :std :cli :log :cry
    (:feature :swank :swank)
    (:feature :swank :swank-client)
    (:feature :swank :swank-crew))

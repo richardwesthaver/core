@@ -157,8 +157,8 @@
   (with-test-env self
     (trace! "running test: ~A" *testing*)
     (flet ((%do ()
-             (when (test-profile self)
-               (sb-sprof:start-profiling))
+             ;; (when (test-profile self)
+             ;;   (sb-sprof:start-profiling))
              (if *compile-tests*
                  (with-compilation-unit (:override t :policy (or (and *test-suite* (test-policy *test-suite*)) *test-policy*))
                    ;; TODO 2023-09-21: handle failures here

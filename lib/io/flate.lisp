@@ -60,9 +60,11 @@
 (defgeneric reset-decompressor (self))
 (defgeneric compress-octet (octet compressor)
   (:documentation "Add OCTET to the compressed data of COMPRESSOR."))
+
 (defgeneric compress-octet-vector (vector compressor &key start end)
   (:documentation "Add the octets of VECTOR to the compressed
   data of COMPRESSOR."))
+
 (defgeneric make-compressing-stream (key &optional stream))
 (defgeneric make-decompressing-stream (key &optional stream))
 (defgeneric compress-object (obj))

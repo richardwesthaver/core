@@ -2343,6 +2343,29 @@ the input and the number of bytes written to the output."
   (%decompress/stream-stream output state input
                              (decompress-fun-for-state state)))
 
+(defmethod decompress-with ((self decompression-state) (obj t) &rest args)
+  (apply 'decompress nil self obj args))
+
+(defun make-decompressing-deflate-stream (format stream)
+    (multiple-value-bind (state dfun)
+        (ecase format
+          ((:deflate :zlib :gzip deflate zlib gzip)
+           (values (make-inflate-state format) #'%inflate))
+          ((:bzip2 bzip2)
+           (values (make-bzip2-state) #'%bzip2-decompress)))
+      (make-instance 'decompressing-stream
+        :stream stream
+        :dstate state
+        :dfun dfun)))
+
+(defmethods make-decompressing-stream 
+  (((key (eql :deflate)) &optional stream)
+   (make-decompressing-deflate-stream key stream))
+  (((key (eql :zlib)) &optional stream)
+   (make-decompressing-deflate-stream key stream))
+  (((key (eql :gzip)) &optional stream)
+   (make-decompressing-deflate-stream key stream)))
+
 ;;; COMPRESSION (salza2)
 ;; HACK 2025-06-10: 
 (eval-always
