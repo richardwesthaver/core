@@ -14,12 +14,24 @@
 
 ;;; Code:
 (in-package :std/defsys)
+(declaim (optimize speed))
+;;; Conditions
+(define-condition defsys-error (error) ())
+(define-condition simple-defsys-error (simple-error) ())
+(defun defsys-error (format &rest args)
+  (error 'simple-defsys-error :format-control format :format-arguments args))
 
+;;; Components
+;;; Ops
+;;; Actions
+;;; Dependencies
 ;;; Systems
 (defclass sysdef () ())
 
 (defmacro defsys (name &body body)
   `(defsystem ,name ,@body))
+
+;;; Plan
 
 ;;; Modules
 (defvar *module* nil)
