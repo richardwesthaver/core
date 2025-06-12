@@ -3,23 +3,18 @@
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
-  (:sb-concurrency :sb-posix :sb-bsd-sockets :cl-ppcre
-   :dat :obj :io :parse :babel :rt :std :cli :log :cry
-   (:feature :swank :swank)
-   (:feature :swank :swank-client)
-   (:feature :swank :swank-crew))
+  (:dat :obj :io :parse :babel :rt :std :cli :log :cry
+        (:feature :swank :swank)
+        (:feature :swank :swank-client)
+        (:feature :swank :swank-crew))
   :serial t
   :components ((:file "pkg")
-               (:file "condition")
                (:file "obj")
                (:file "util")
                (:file "udp")
                (:file "tcp")
-               (:file "endpoint")
-               (:file "transport")
                (:module "codec"
-                :components ((:file "punycode")
-                             (:file "dns")
+                :components ((:file "dns")
                              (:file "tlv")
                              (:file "osc")
                              (:file "http")))

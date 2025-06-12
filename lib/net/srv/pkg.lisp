@@ -111,6 +111,9 @@ immediately abort handling the request.  This works as if the handler
 had returned RESULT.  See the source code of REDIRECT for an example."
   (throw 'handler-done result))
 
+;;; Config
+(defconfig net-service-config (service-config) ())
+
 ;;; Classes
 (defclass net-response (response) ())
 
@@ -462,7 +465,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
 ;; supervisor, worker, task, kernel
 
 ;;; Service
-(defclass net-service (service)
+(defclass net-service (service server)
   ((port :reader port :initarg :port)
    (address :reader address :initarg :address)
    (request-class :type symbol :initarg :request-class :accessor service-request-class)

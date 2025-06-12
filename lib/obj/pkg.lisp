@@ -14,9 +14,18 @@
   (:use :cl :std)
   (:export :equiv :eqv :equivalence))
 
+(defpackage :obj/uri/punycode
+  (:nicknames :punycode)
+  (:use :cl)
+  (:export
+   :encode-punycode
+   :decode-punycode
+   :encode-domain
+   :decode-domain))
+
 (defpackage :obj/uri
   (:nicknames :uri)
-  (:use :cl :std :std/seq)
+  (:use :cl :std :std/seq :punycode)
   (:export
    :uri				; class
    :uri-p
@@ -74,7 +83,7 @@
 (pkg:defpkg :obj/url
   (:nicknames :url)
   (:use :cl :std :obj/uri)
-  (:shadowing-import-from :quri :url-encode :url-decode :url-encode-params :url-decode-params)
+  ;; (:shadowing-import-from :quri :url-encode :url-decode :url-encode-params :url-decode-params)
   (:export :url-encode :url-decode :url-encode-params :url-decode-params))
 
 (defpackage :obj/tensor

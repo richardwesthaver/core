@@ -19,7 +19,9 @@
 (defpackage :box/archiso
   (:nicknames :archiso)
   (:use :cl :std :cli/shell :dat/json :obj/config :box)
-  (:export :*archiso-config* :*archiso-creds* :archiso-config))
+  (:export :*archiso-config* :*archiso-creds* :archiso-config
+           :mkarchiso
+           :run-archiso))
 
 (defpackage :box/ignition
   (:nicknames :ignition)

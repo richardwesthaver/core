@@ -42,7 +42,7 @@
          :documentation "Port on which the worker's swank server is listening for connections."
          :accessor port)))
 
-(defclass crew-worker ()
+(defclass crew-worker (worker)
   ((connection-info :type crew-connection-info :accessor connection-info :initarg :connection-info)
    (lock :initform (make-mutex :name "worker") :accessor lock)
    (set-worker :accessor set-worker
@@ -53,14 +53,12 @@
                :initform nil :accessor %connection))
   (:documentation "A remote Lisp running a Swank server."))
 
-(defclass crew-worker-pool (id)
+(defclass crew-worker-pool (id thread-pool)
   ((connection-info :type crew-connection-info :accessor connection-info)
    (leader :reader leader
            :type crew-connection-info
            :initarg :leader
            :initform (required-argument))
-   (workers :type vector :initform (vector) :accessor workers)
-   (lock :initform (make-mutex :name "worker-pool") :accessor lock)
    (idle-workers :type list :initform nil :accessor idle-workers)
    (worker-ready :initform (make-waitqueue :name "worker-ready") :accessor worker-ready)
    (disconnecting :initform nil :accessor disconnecting)

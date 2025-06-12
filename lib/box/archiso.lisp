@@ -275,3 +275,16 @@ profile/
      ,@(when verbose '("-v"))
      ,profile-dir)
    :output output))
+
+(defun run-archiso (iso &key (uefi t) additional-iso vnc secure-boot disk accessibility (output t))
+  (sb-ext:run-program 
+   (cli:find-exe "run_archiso")
+   `("-i" ,iso
+     ,@(when uefi '("-u"))
+     ,@(when additional-iso `("-c" ,additional-iso))
+     ,@(when vnc '("-v"))
+     ,@(when secure-boot '("-s"))
+     ,@(when disk '("-d"))
+     ,@(when accessibility '("-a")))
+   :output output))
+

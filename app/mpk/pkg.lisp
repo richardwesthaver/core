@@ -10,7 +10,7 @@
 
 ;;; Code:
 (defpackage :mpk/mpd
-  (:use :cl :std :sb-bsd-sockets :net/core :net/util :config :time)
+  (:use :cl :std :sb-bsd-sockets :net/core :config :time)
   (:nicknames :mpd)
   (:export
    :with-mpc

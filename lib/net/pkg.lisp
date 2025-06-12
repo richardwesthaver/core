@@ -6,22 +6,24 @@
 (pushnew :net *features*)
 
 (pkg:defpkg :net/core
-  (:use :cl :std :sb-thread)
+  (:use :cl :std :sb-thread :config)
   (:recycle :sb-bsd-sockets)
   (:export
-   ;; err
+   ;; obj
    :net-condition
    :protocol-condition
    :codec-condition
    :net-error
    :codec-error
    :protocol-error
-   ;; obj
    :transport
    :codec
    :protocol
+   :net-config
    :client
+   :client-config
    :server
+   :server-config
    :peer
    :proxy
    :tunnel
@@ -30,12 +32,10 @@
    :connect
    :disconnect
    :make-client
-   :make-server))
-
-(defpackage :net/util
-  (:use :cl :obj :dat/proto :std :log :net/core :sb-bsd-sockets)
+   :make-server)
+  ;; utils
   (:export :get-address-by-name
-   :with-client-server))
+   :with-client-server :*localhost*))
 
 (defpackage :net/udp
   (:nicknames :udp)
@@ -58,20 +58,15 @@
    :tcp-ping-server
    :*tcp-ping-size*
    :tcp-echo
-   :tcp-receive-ping))
-
-(defpackage :net/codec/punycode
-  (:nicknames :codec/punycode)
-  (:use :cl)
-  (:export
-   :encode-punycode
-   :decode-punycode
-   :encode-domain
-   :decode-domain))
+   :tcp-receive-ping
+   :tcp-client
+   :tcp-source
+   :tcp-sink
+   :tcp-socket))
 
 (defpackage :net/codec/dns
   (:nicknames :codec/dns)
-  (:use :cl :std :net/core :net/codec/punycode)
+  (:use :cl :std :net/core :punycode)
   (:export
    :dns-condition
    :dns-server-failure
@@ -129,7 +124,7 @@
 
 (defpackage :net/proto/whois
   (:nicknames :net/whois)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :codec/punycode))
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :punycode))
 
 (defpackage :net/proto/dns
   (:nicknames :net/dns)
@@ -285,11 +280,11 @@
   (:import-from :chunky :input-chunking-p :make-chunked-stream :output-chunking-p)
   (:import-from :io/fast :make-output-buffer :finish-output-buffer)
   (:shadow :get :delete)
+  (:import-from :sb-ext :string-to-octets)
   (:use :cl :std :obj/uri
-   :obj/url :net/proto/http :babel :net/cookie
+   :obj/url :net/proto/http :net/cookie
    :io/fast :io/chunky
    :dat/base64 :ssl :sb-gray)
-  (:shadowing-import-from :babel :octets-to-string)
   (:export
    :request
    :get
@@ -422,4 +417,5 @@
    #:make-service
    #:net-service-response
    #:net-service-request
-   #:abort-request-handler))
+   #:abort-request-handler
+   #:net-service-config))

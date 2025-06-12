@@ -1,6 +1,6 @@
 (defsystem :obj
   :description "Lisp object library"
-  :depends-on (:std :quri)
+  :depends-on (:std)
   :serial t
   :components ((:module "meta"
                 :components ((:file "pkg")
@@ -16,7 +16,7 @@
                (:file "pkg")
                (:file "id")
                (:module "uri"
-                :components ((:file "pkg")
+                :components ((:file "punycode")
                              (:file "domain")
                              (:file "uri")
                              (:file "mask")

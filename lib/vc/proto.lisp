@@ -29,7 +29,7 @@
   (lambda (p start end)
     (member (subseq p start end) (directory (rel-pathname glob)) :test 'equal)))
 
-;;; Functions
+;;; Generics
 (defgeneric vc-init (self)
   (:documentation "Initialize a vc-repo - calls either 'git init' or 'hg init'"))
 
@@ -77,6 +77,7 @@ are missing."))
 (defgeneric vc-revs (self))
 (defgeneric vc-branches (self))
 (defgeneric vc-remotes (self))
+(defgeneric vc-remote (self cmd &key &allow-other-keys))
 (defgeneric vc-config (self))
 (defgeneric vc-type (self))
 ;;  IDEA 2023-12-29: :ediff t

@@ -23,6 +23,7 @@
 
 (in-package :net)
 (when (sb-int:featurep :swank)
+  #+quicklisp (ql:quickload '(:swank-client))
   (use-package :net/proto/swank)
   (use-package :net/proto/crew))
   

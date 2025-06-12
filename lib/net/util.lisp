@@ -1,4 +1,9 @@
-(in-package :net/util)
+;;; util.lisp --- Network Utils
+
+;; 
+
+;;; Code:
+(in-package :net/core)
 
 (defvar *localhost* #(127 0 0 1))
 
@@ -25,10 +30,11 @@
       (declare (ignore condition))
       nil)))
 
-(defun find-port (&key (min 32000) (max 48000) (host *localhost*))
+(defun find-port (&key (min 2000) (max 65535) (host *localhost*))
   "Return the first available port in a range of port numbers."
   (loop :for port :from min :to max :when (port-open-p port :host host) :return port))
 
+;; (find-port)
 ;; (get-address-by-name "localhost")
 
 ;;; Macros

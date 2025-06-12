@@ -1,6 +1,6 @@
 (defsystem :dat
   :description "Data Systems"
-  :depends-on (:cl-ppcre :std :obj :io :log :salza2)
+  :depends-on (:obj :io :log)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")

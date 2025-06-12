@@ -29,12 +29,15 @@
 (defparameter *compression-buffer-size* 4096)
 (defparameter *decompression-buffer-size* 4096)
 (defparameter *default-compression-level* (zstd:zstd-defaultclevel))
-(defvar *compression-types* (list :zstd)
-  "List of available compression backend types. May be used as the value of
-*COMPRESSION-TYPE*.")
-(defvar *compression-type* :zstd
-  "Primary compression backend used by this Lisp system. Must be one of
+
+(defvar *compression-types* 
+  (list :zstd :gzip :zlib :deflate)
+  "List of available compression backend types available for use as the value of  *PREFERRED-COMPRESSION-TYPE*.")
+
+(defvar *preferred-compression-type* :zstd
+  "Preferred compression backend used by this Lisp system. Must be one of
 *COMPRESSION-TYPES* and defaults to :ZSTD.")
+
 (defvar *compression-level* *default-compression-level*)
 (defvar *compressor* nil
   "The global COMPRESSOR object.")
@@ -52,8 +55,12 @@
 (defgeneric decompress (output state input &key &allow-other-keys))
 (defgeneric compress (input state &key &allow-other-keys))
 
-(defgeneric finish-compression (self))
+(defgeneric finish-compression (self)
+  (:documentation "Finish the data format and flush all pending
+  data in the bitstream."))
+
 (defgeneric finish-decompression (self))
+
 ;; TODO 2024-06-08: maybe move this to generic io/stream protocol - 'RESET'
 
 (defgeneric reset-compressor (self))
@@ -80,7 +87,15 @@
 ;;; Compression
 ;; AKA 'DEFLATE'
 
-;; with-compressor
+(defmacro with-compressor ((var class
+                                &rest initargs
+                                &key &allow-other-keys)
+                           &body body)
+  `(let ((,var (make-instance ,class ,@initargs)))
+     (multiple-value-prog1 
+         (progn ,@body)
+       (finish-compression ,var))))
+
 ;; reset-compressor
 
 (defclass compressing-stream (wrapped-stream) ()

@@ -2751,7 +2751,6 @@ with OUTPUT, a starting offset, and the count of pending data."
 
 ;;;; Compressor
 ;;;;; Public protocol GFs
-
 (defgeneric start-data-format (compressor)
   (:documentation "Add any needed prologue data to the output bitstream."))
 
@@ -2763,10 +2762,6 @@ with OUTPUT, a starting offset, and the count of pending data."
 
 (defgeneric finish-data-format (compressor)
   (:documentation "Add any needed epilogue data to the output bitstream."))
-
-(defgeneric finish-compression (compressor)
-  (:documentation "Finish the data format and flush all pending
-  data in the bitstream."))
 
 ;;;;; Internal GFs
 (defgeneric final-compress (compressor)
@@ -2897,16 +2892,132 @@ with OUTPUT, a starting offset, and the count of pending data."
   (reset (bitstream compressor))
   (start-data-format compressor))
 
-(defmacro with-compressor ((var class
-                                &rest initargs
-                                &key &allow-other-keys)
-                           &body body)
-  `(let ((,var (make-instance ,class ,@initargs)))
-     (multiple-value-prog1 
-         (progn ,@body)
-       (finish-compression ,var))))
+;;;; Zlib
+(defclass zlib-compressor (deflate-compressor)
+  ((adler32
+    :initarg :adler32
+    :accessor adler32))
+  (:default-initargs
+   :adler32 (make-digest :adler32)))
 
-;;; Proto
-;; TODO 2025-05-12: 
-;; (defclass zlib-decompressing-stream (decompressing-stream) ())
-;; (defclass zlib-decompressor (decompressor) ())
+(defmethod start-data-format :before ((compressor zlib-compressor))
+  ;; FIXME: Replace these naked constants with symbolic constants.
+  (write-octet #x78 compressor)
+  (write-octet #x9C compressor))
+
+(defmethod process-input :after ((compressor zlib-compressor) input start count)
+  (let ((checksum (adler32 compressor)))
+    (update-digest checksum input :start start :end count)))
+
+(defmethod finish-data-format :after ((compressor zlib-compressor))
+  (dolist (octet (produce-digest (adler32 compressor)))
+    (write-octet octet compressor)))
+
+(defmethod reset :after ((compressor zlib-compressor) &key)
+  (reset (adler32 compressor)))
+
+;;;; Gzip
+(defvar *gzip-signature* (octets #x1F #x8B)
+  "These two octets precede all data in the gzip format.")
+
+(defconstant +gzip-fast-compression+ 4
+  "Code for gzip compression level. This is present only to create valid
+gzip data; it has no meaning to the compressor and is only a hint to
+the decompressor.")
+
+;;; These are all used to create valid files, not to control or modify
+;;; the compression process.
+
+(defconstant +gzip-deflate-compression+ 8)
+(defconstant +gzip-flags+ 0)
+(defconstant +gzip-unix-os+ 3)
+(defconstant +gzip-mtime+ 0)
+
+(defun gzip-write-u32 (value compressor)
+  ;; LSB
+  (write-octet (ldb (byte 8 0) value) compressor)
+  (write-octet (ldb (byte 8 8) value) compressor)
+  (write-octet (ldb (byte 8 16) value) compressor)
+  (write-octet (ldb (byte 8 24) value) compressor))
+
+(defclass gzip-compressor (deflate-compressor)
+  ((checksum
+    :initarg :checksum
+    :accessor checksum)
+   (data-length
+    :initarg :data-length
+    :accessor data-length))
+  (:default-initargs
+   :checksum (make-digest :crc32)
+   :data-length 0))
+
+(defmethod start-data-format :before ((compressor gzip-compressor))
+  (write-octet-vector *gzip-signature* compressor)
+  (write-octet +gzip-deflate-compression+ compressor)
+  (write-octet +gzip-flags+ compressor)
+  (gzip-write-u32 +gzip-mtime+ compressor)
+  (write-octet +gzip-fast-compression+ compressor)
+  (write-octet +gzip-unix-os+ compressor))
+
+(defmethod process-input :after ((compressor gzip-compressor)
+                                 input start count)
+  (incf (data-length compressor) count)
+  (update-digest (checksum compressor) input :start start :end count))
+
+(defmethod finish-data-format :after ((compressor gzip-compressor))
+  (gzip-write-u32 (produce-digest (checksum compressor)) compressor)
+  (gzip-write-u32 (data-length compressor) compressor))
+
+(defmethod reset :after ((compressor gzip-compressor) &key)
+  (reset (checksum compressor))
+  (setf (data-length compressor) 0))
+
+(defun make-stream-output-callback (stream)
+  "Return a function suitable for use as a compressor callback that
+writes all compressed data to STREAM."
+  (lambda (buffer end)
+    (write-sequence buffer stream :end end)))
+
+(defun gzip-stream (input output)
+  (let ((callback (make-stream-output-callback output))
+        (buffer (make-array 8192 :element-type '(unsigned-byte 8))))
+    (with-compressor (compressor 'gzip-compressor
+                                 :callback callback)
+      (loop
+       (let ((end (read-sequence buffer input)))
+         (when (zerop end)
+           (return))
+         (compress-octet-vector buffer compressor :end end))))))
+
+(defun gzip-file (input output &key (if-exists :supersede))
+  (with-open-file (istream input :element-type '(unsigned-byte 8))
+    (with-open-file (ostream output
+                             :element-type '(unsigned-byte 8)
+                             :direction :output
+                             :if-exists if-exists)
+      (gzip-stream istream ostream)))
+  (probe-file output))
+
+(defun compressor-designator-compressor (designator initargs)
+  (etypecase designator
+    (symbol (apply #'make-instance designator initargs))
+    (deflate-compressor designator)))
+
+(defun compress-data (data compressor-designator &rest initargs)
+  (let ((chunks '())
+        (size 0)
+        (compressor (compressor-designator-compressor compressor-designator
+                                                      initargs)))
+    (setf (callback compressor)
+          (lambda (buffer end)
+            (incf size end)
+            (push (subseq buffer 0 end)
+                  chunks)))
+    (compress-octet-vector data compressor)
+    (finish-compression compressor)
+    (let ((compressed (make-array size :element-type '(unsigned-byte 8)))
+          (start 0))
+      (dolist (chunk (nreverse chunks))
+        (replace compressed chunk :start1 start)
+        (incf start (length chunk)))
+      compressed)))

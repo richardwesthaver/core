@@ -94,6 +94,7 @@
    (protocol :initarg :request-protocol :reader request-protocol)))
 
 (defconfig service-config () ())
+  
 ;;; Protocol
 (defgeneric service (self)
   (:method ((self t)) (when (boundp '*service*) *service*))

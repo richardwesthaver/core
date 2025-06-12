@@ -756,7 +756,7 @@
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :ensure-finalized 
    :subclassp :write-object :start :started-p
-   :stop :stopped-p :shutdown
+   :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
@@ -845,6 +845,14 @@
    :*worker-kernel*
    :*pool-kernel*
    :*thread-pool*
+   :*thread-pool-table*
+   :worker-count*
+   :worker-index*
+   :submit-work
+   :receive-result
+   :try-receive-result
+   :shutdown-channel
+   :broadcast-work
    :find-thread-pool
    :run-thread
    :std-thread-error :thread-support-p

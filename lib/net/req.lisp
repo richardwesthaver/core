@@ -422,10 +422,11 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (ignore initargs))
   (with-slots (encoding) stream
     (when encoding
-      (setf encoding (babel-encodings:get-character-encoding (sb-int:keywordicate encoding))))))
+      ;; REVIEW 2025-06-12: was babel fn
+      (setf encoding (sb-int:get-external-format (sb-int:keywordicate encoding))))))
 
-(defun make-decoding-stream (stream &key (encoding babel-encodings:*default-character-encoding*)
-                                      (on-close))
+(defun make-decoding-stream (stream &key (encoding :utf-8)
+                                         (on-close))
   (let ((decoding-stream (make-instance 'decoding-stream
                                         :stream stream
                                         :encoding encoding
@@ -462,11 +463,9 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (optimize speed))
   (when (needs-to-fill-buffer-p stream)
     (dec-fill-buffer stream))
-
   (when (= (the fixnum (decoding-stream-buffer-end-position stream))
            (the fixnum (decoding-stream-buffer-position stream)))
     (return-from stream-read-char :eof))
-
   (with-slots (buffer buffer-position encoding last-char last-char-size)
       stream
     (declare (fixnum buffer-position))
@@ -476,7 +475,7 @@ keep-alive-stream), and should handle clean-up of it"
       (multiple-value-bind (chars new-end)
           (funcall counter buffer buffer-position +buffer-size+ 1)
         (declare (ignore chars) (fixnum new-end))
-        (let ((string (make-string 1 :element-type 'babel:unicode-char))
+        (let ((string (make-string 1 :element-type 'character))
               (size (the fixnum (- new-end buffer-position))))
           (funcall (the function (babel-encodings:decoder mapping))
                    buffer buffer-position new-end string 0)
@@ -521,7 +520,7 @@ keep-alive-stream), and should handle clean-up of it"
         (handler-case
             (if (streamp body)
                 (make-decoding-stream body :encoding charset :on-close on-close)
-                (babel:octets-to-string body :encoding charset))
+                (sb-ext:octets-to-string body :external-format charset))
           (babel:character-decoding-error (e)
             (warn (format nil "Failed to decode the body to ~S due to the following error (falling back to binary):~%  ~A"
                           charset
@@ -591,11 +590,11 @@ keep-alive-stream), and should handle clean-up of it"
   (or (lookup-in-content-encoding-cache val)
       (setf (lookup-in-content-encoding-cache val)
             (typecase val
-              (string (babel:string-to-octets val))
+              (string (string-to-octets val))
               ((array (unsigned-byte 8) (*)) val)
-              (symbol (babel:string-to-octets (princ-to-string val)))
+              (symbol (string-to-octets (princ-to-string val)))
               (cons (convert-to-octets (first val)))
-              (otherwise (babel:string-to-octets (princ-to-string val)))))))
+              (otherwise (string-to-octets (princ-to-string val)))))))
 
 (defun write-as-octets (stream val)
   (typecase val
@@ -994,7 +993,7 @@ keep-alive-stream), and should handle clean-up of it"
         body
         (decode-body content-type body
                      :default-charset (if force-string
-                                          babel:*default-character-encoding*
+                                          :utf-8
                                           nil)))))
 
 (defun build-cookie-headers (uri cookie-jar)
@@ -1057,7 +1056,7 @@ keep-alive-stream), and should handle clean-up of it"
     (exact +socks5-no-auth+ "Unsupported auth method")
 
     ;; Send domainname Request
-    (let* ((host (babel:string-to-octets (uri-host uri)))
+    (let* ((host (string-to-octets (uri-host uri)))
            (hostlen (length host))
            (port (uri-port uri)))
       (unless (<= 1 hostlen 255)

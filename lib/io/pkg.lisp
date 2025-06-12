@@ -136,10 +136,11 @@
    :*decompression-buffer-size* :*compression-level*
    :compress-with :decompress-with
    :compression-level :*compressor*
-   :*decompressor* :*compression-type*
+   :*decompressor* :*preferred-compression-type*
    :*compression-types*
    :compress-octet-vector
-   :compress-octet))
+   :compress-octet
+   :with-compressor))
 
 (defpackage :io/zstd
   (:use :cl :std :io/proto :io/flate :sb-alien)
@@ -175,7 +176,10 @@
    #:reserved-block-type-error
    #:invalid-stored-block-length-error
    #:bzip2-error
-   #:invalid-bzip2-data))
+   #:invalid-bzip2-data
+   :deflate-compressor
+   :zlib-compressor
+   :gzip-compressor))
 
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)

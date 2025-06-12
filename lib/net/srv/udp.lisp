@@ -27,7 +27,7 @@ highest priority packet spec first.
 On success two values are returned: (PROTO HEADERS).")
 
 ;;; Service
-(defclass udp-service (net-service) ()
+(defclass udp-service (net-service udp-server) ()
   (:default-initargs
    :request-class 'udp-service-request
    :response-class 'udp-service-response

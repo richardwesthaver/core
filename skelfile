@@ -52,14 +52,17 @@
    ;; save-tests
    ))
  (upstream () ;; pretty gross hack to fix broken tree
-  (probe-delete-directory "/tmp/core/")
-  (vc:hg-fast-export (sk-vc *skel-project*))
-  #$cd /tmp/core
-  git remote add cb ssh://git@codeberg.org/c-c/core
-  git remote add gh ssh://git@github.com/richardwesthaver/core
-  git filter-repo --invert-paths --path-regex '^std$' --force
-  git push -u cb default --force
-  git push gh default --force$#)
+  (let ((tmp "/tmp/core/"))
+   (probe-delete-directory tmp)
+   (vc:hg-fast-export (sk-vc *skel-project*))
+   (with-directory tmp
+    ;; (vc:with-repo (r :path tmp)
+    ;; (vc:vc-re
+    #$git remote add cb ssh://git@codeberg.org/c-c/core
+    git remote add gh ssh://git@github.com/richardwesthaver/core
+    # git filter-repo --invert-paths --path-regex '^std$' --force     
+    git push -u cb default --force
+    git push gh default --force$#)))
  (clean ()
   #$rm -vrf .stash
   find emacs -name '*.elc' -type f -delete
@@ -78,14 +81,17 @@
      (delete-file f))
     (swank:start-server f))))
  (tree-sitter-alien ()
-  (:build () #$cd ffi/tree-sitter &&
-   cc -g -O2 -Wall -Wno-unused-value -ltree-sitter -shared \
-   alien.c -o ../../.stash/libtree-sitter-alien.so$#)
+  (:build ()
+   (with-directory "ffi/tree-sitter"
+    (cli/tools/cc:run-cc "-g" "-O2" "-Wall" 
+     "-Wno-ununsed-value" "-ltree-sitter" "-shared" "alien.c" 
+     "-o" "../../.stash/libtree-sitter-alien.so")))
   (:install () (funcall #0$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
  (zstd-alien ()
-  (:build () #$cd ffi/zstd &&
-   cc -g -O2 -Wall -Wno-unused-value -lzstd -shared \
-   alien.c -o ../../.stash/libzstd-alien.so$#)
+  (:build () 
+   (with-directory "ffi/zstd"
+    (cli/tools/cc:run-cc "-g" "-O2" "-Wall" "-Wno-unused-value" "-lzstd" "-shared"
+     "alien.c" "-o" "../../.stash/libzstd-alien.so")))
   (:install () 
    (funcall #0$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
  (psl.dat (%stash)
@@ -192,8 +198,7 @@
  (sndfile-test-data (%stash)
   (req:fetch "https://packy.compiler.company/data/test/Weltschmerz.wav"
    :if-exists :supersede))
- (%stash () 
-  #$mkdir -pv .stash$#)
+ (%stash () (ensure-directories-exist ".stash/"))
  (ssl-certs () 
   #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
   -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)

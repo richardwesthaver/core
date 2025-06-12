@@ -1,4 +1,4 @@
-;;; lib/net/codec/punycode.lisp --- RFC 3492 Punycode strings
+;;; obj/uri/punycode.lisp --- RFC 3492 Punycode strings
 
 ;; This library was written by Shinmera
 ;; https://github.com/Shinmera/punycode.git
@@ -7,8 +7,11 @@
 
 ;; ref: https://datatracker.ietf.org/doc/html/rfc3492
 
+;; A Bootstring encoding of Unicode for Internationalized Domain Names in
+;; Applications (IDNA)
+
 ;;; Code:
-(in-package :net/codec/punycode)
+(in-package :obj/uri/punycode)
 
 (defconstant INITIAL-N #x80)
 (defconstant INITIAL-BIAS 72)
@@ -31,7 +34,7 @@
         do (setf delta (truncate delta (- BASE TMIN)))
         finally (return (+ k (truncate (* delta (+ 1 (- BASE TMIN))) (+ delta SKEW))))))
 
-(defmacro with-stream (stream-ish &body body)
+(defmacro %with-stream (stream-ish &body body)
   (std:with-gensyms (thunk)
     `(flet ((,thunk (,stream-ish)
               ,@body))
@@ -39,13 +42,13 @@
          (null
           (with-output-to-string (,stream-ish)
             (,thunk ,stream-ish)))
-         ((eql T)
+         ((eql t)
           (,thunk *standard-output*))
          (stream
           (,thunk ,stream-ish))))))
 
 (defun encode-punycode (string &optional out)
-  (with-stream out
+  (%with-stream out
     (let ((n INITIAL-N)
           (bias INITIAL-BIAS)
           (delta 0)
@@ -132,11 +135,11 @@
                (setf i (mod i written))
                (insert i (code-char n))
                (incf i)))
-    (with-stream out
+    (%with-stream out
       (write-string uni out :end written))))
 
 (defun encode-domain (string &optional out)
-  (with-stream out
+  (%with-stream out
     (loop for start = 0 then (1+ end)
           for end = (or (position #\. string :start start) (length string))
           do (cond ((loop for i from start below end
@@ -150,7 +153,7 @@
                  (return)))))
 
 (defun decode-domain (string &optional out)
-  (with-stream out
+  (%with-stream out
     (loop for start = 0 then (1+ end)
           for end = (or (position #\. string :start start) (length string))
           do (cond ((and (< (length "xn--") (- end start))

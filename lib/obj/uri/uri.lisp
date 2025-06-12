@@ -25,6 +25,10 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
 
 ;;; Code:
 (in-package :obj/uri)
+(eval-when (:load-toplevel)
+  (pushnew :rfc3986 *features*)
+  (pushnew :rfc6874 *features*)
+  (pushnew :rfc8141 *features*))
 
 ;; This does not persist past the end of compile-file
 (eval-when (:compile-toplevel) (declaim (optimize (speed 3))))
@@ -306,3 +310,24 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
 (defmethod uri ((thing uri))     thing)
 (defmethod uri ((thing string)) (parse-uri thing))
 (defmethod uri ((thing t))      (error "Cannot coerce ~s to a uri." thing))
+
+;; (parse-uri-string-rfc3986 "https://test.com")
+
+;; TODO
+;; (defmacro do-all-uris ((var &optional uri-space result-form)
+;; 		       &rest forms
+;; 		       &environment env)
+;;   "do-all-uris (var [[uri-space] result-form])
+;;   		    {declaration}* {tag | statement}*
+;; Executes the forms once for each uri with var bound to the current uri"
+;;   (let ((f (gensym))
+;; 	(g-ignore (gensym))
+;; 	(g-uri-space (gensym))
+;; 	(body (third (excl::parse-body forms env))))
+;;     `(let ((,g-uri-space (or ,uri-space *uris*)))
+;;        (prog nil
+;; 	 (flet ((,f (,var &optional ,g-ignore)
+;; 		  (declare (ignorable ,var ,g-ignore))
+;; 		  (tagbody ,@body)))
+;; 	   (maphash #',f ,g-uri-space))
+;; 	 (return ,result-form)))))

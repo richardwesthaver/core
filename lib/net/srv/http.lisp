@@ -431,7 +431,7 @@ RESPONSE object. If a cookie with the same name
                             :httponly-p t)))
 
 ;;; Service
-(defclass http-service (net-service) 
+(defclass http-service (net-service tcp-server) 
    ;; RESEARCH 2024-07-18: 
    ;; may need to start dealing with this
    ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
