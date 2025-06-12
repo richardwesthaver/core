@@ -29,6 +29,9 @@
       org-export-htmlize-output-type 'css
       org-export-allow-bind-keywords t
       org-export-async-init-file (join-paths user-emacs-lib-directory "publish-init.el")
+      org-export-with-clocks t
+      org-export-with-date t
+      org-export-with-drawers t
       org-export-async-debug t
       org-export-in-background t
       org-html-doctype "html5"
@@ -39,27 +42,12 @@
       debug-on-error t
       org-id-link-to-org-use-id t)
 
-;; (setq org-html-klipsify-src t
-;;       org-html-klipse-js (join-paths company-cdn-url "js/klipse.min.js")
-;;       org-html-klipse-css (join-paths company-cdn-url "css/klipse.css")
-;;       org-html-klipse-selection-script
-;;       "window.klipse_settings = {selector_eval_html: '.src-html',
-;; 			     selector_eval_js: '.src-js',
-;; 			     selector_sql: '.src-sql',
-;; 			     selector_pyodide: '.src-python',
-;; 			     selector_eval_clisp: '.src-lisp',
-;; 			     selector_eval_scheme: '.src-scheme',
-;; 			     selector: '.src-clojure',
-;; 			     selector_eval_ruby: '.src-ruby'};")
-
-;; (setq org-html-link-home url)
-
 (defmacro with-org-publish (&rest body)
   `(let (
-	 ;; (save-silently t)
+	 (save-silently t)
 	 (debug-on-error t)
-	 ;; (coding-system-for-read 'utf-8-unix)
-	 ;; (coding-system-for-write 'utf-8-unix)
+	 (coding-system-for-read 'utf-8-unix)
+	 (coding-system-for-write 'utf-8-unix)
 	 (org-inhibit-startup t)
 	 (org-mode-hook nil)
 	 (find-file-hook nil)

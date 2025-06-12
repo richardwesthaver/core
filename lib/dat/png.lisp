@@ -33,9 +33,9 @@
   (write-byte (ldb (byte 8  0) integer) stream))
 
 (defun checksum (data count)
-  (let ((checksum (make-instance 'salza2:crc32-checksum)))
-    (salza2:update checksum data 0 count)
-    (salza2:result checksum)))
+  (let ((checksum (ironclad:make-digest :crc32)))
+    (ironclad:update-digest checksum data :start 0 :end count)
+    (ironclad:produce-digest checksum)))
 
 (defclass chunk ()
   ((buffer :initarg :buffer :reader buffer)
@@ -274,16 +274,17 @@ data size SIZE."
 
 (defmethod write-idat (png stream)
   (let ((callback (make-idat-callback stream)))
+    ;; TODO 2025-06-11: 
     (salza2:with-compressor (compressor 'salza2:zlib-compressor
                                  :callback callback)
       (dotimes (i (height png))
         (let* ((start-offset (scanline-offset png i))
                (end-offset (+ start-offset (rowstride png))))
-          (salza2:compress-octet 0 compressor)
-          (salza2:compress-octet-vector (image-data png)
-                                        compressor
-                                        :start start-offset
-                                        :end end-offset))))))
+          (io/flate:compress-octet 0 compressor)
+          (io/flate:compress-octet-vector (image-data png)
+                                          compressor
+                                          :start start-offset
+                                          :end end-offset))))))
 
 (defmethod write-iend (png stream)
   (let ((chunk (make-chunk 73 69 78 68 0)))
@@ -357,8 +358,8 @@ data size SIZE."
       (unless (< (rows-written png) (height png))
         (error 'too-many-rows :count (height png)))
       (let ((compressor (compressor png)))
-        (salza2:compress-octet 0 compressor)
-        (salza2:compress-octet-vector row compressor :start start :end end)
+        (io/flate:compress-octet 0 compressor)
+        (io/flate:compress-octet-vector row compressor :start start :end end)
         (incf (rows-written png))))))
 
 (defmethod reset-streamed-png ((png streamed-png))
@@ -376,7 +377,7 @@ data size SIZE."
     (error 'insufficient-rows
            :written (rows-written png)
            :needed (height png)))
-  (salza2:finish-compression (compressor png))
+  (io/flate:finish-compression (compressor png))
   (write-iend png (output-stream png))
   (reset-streamed-png png)
   png)

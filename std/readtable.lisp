@@ -14,15 +14,13 @@
 
 Defines a lambda with the arg count determined by the numeric reader arg.
 
-(funcall #2`(,a0 ,@a1) 0 '(1 2 3 4)) ;= (0 1 2 3 4)"
+(funcall #2`(,a1 ,@a2) 0 '(1 2 3 4)) ;= (0 1 2 3 4)"
     (declare (ignore sub-char))
-    (unless numarg (setq numarg 0))
-    (compile 
-     nil
-     `(lambda ,(loop for i from 0 to (1- numarg)
-                     collect (symb 'a i))
-        ,(funcall
-          (get-macro-character #\`) stream nil))))
+    (unless numarg (setq numarg 1))
+    `(lambda ,(loop for i from 1 to numarg
+                    collect (symb 'a i))
+       ,(funcall
+         (get-macro-character #\`) stream nil)))
 
   (defun |#l-reader| (stream sub num)
     "Sharp L reader - logical pathname translation."
@@ -189,9 +187,9 @@ externally by users. Don't modify this readtable directly - create your own
 copy if necessary."
   (:merge :modern)
   ;; curry
-  (:macro-char #\{ #'|#{-reader|)
+  (:macro-char #\{ #'|{-reader|)
   (:macro-char #\} (get-macro-character #\) ))
-  (:macro-char #\[ #'lsquare-brace-reader)
+  (:macro-char #\[ #'|[-reader|)
   (:macro-char #\] (get-macro-character #\) ))
   ;; strings
   (:dispatch-macro-char #\# #\" #'|#"-reader|)
