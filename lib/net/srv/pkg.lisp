@@ -35,13 +35,14 @@
 
 (pkg:defpkg :net/srv/http
   (:use :cl :std :net/proto/http
-   :net/codec/http :net/core :net/cookie :io/chunky :srv)
+   :net/codec/http :net/core :net/cookie :io/chunky 
+   :srv :net/tcp :config)
   (:import-from :net/srv :service-log)
   (:use-reexport :net/srv)
   (:package-local-nicknames
    :codec :net/codec/http
    :proto :net/proto/http)
-  (:export :http-service :https-service))
+  (:export :http-service :https-service :http-server-config :https-server-config :tls-config))
 
 (pkg:defpkg :net/srv/udp
   (:use :cl :std :net/udp :net/codec/tlv :net/core :srv)

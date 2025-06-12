@@ -24,7 +24,7 @@
 (define-condition protocol-error (protocol-condition net-error) ())
 
 ;;; Classes
-(defconfig net-config () 
+(defconfig net-config (id) 
   ())
 
 (defclass transport ()

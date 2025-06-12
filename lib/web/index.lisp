@@ -2,7 +2,7 @@
 
 ;;; Code:
 (uiop:define-package :web/index
-  (:use :cl :std :net/srv/http :lass :spinneret)
+  (:use :cl :std :net/srv/http)
   (:export 
    :main
    :*web-index-port*))

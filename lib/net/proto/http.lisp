@@ -1832,3 +1832,6 @@ us a never-ending header that the application keeps buffering.")
                (funcall (the function header-parameter-value-callback)
                         data parameter-value-mark p))))))
     p))
+
+;;; Config
+(defconfig http-config (tcp-config) ())

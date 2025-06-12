@@ -15,7 +15,7 @@
   :perform (test-op (o c) (symbol-call :rt :do-tests :web)))
 
 (defsystem :web/index
-  :depends-on (:uiop :cl-ppcre :std :rdb :hunchentoot :parenscript :lass :spinneret :organ)
+  :depends-on (:cl-ppcre :std :rdb :organ)
   :components ((:file "index"))
   :in-order-to ((test-op (test-op "web/tests")))
   :build-operation "program-op"

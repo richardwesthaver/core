@@ -35,6 +35,7 @@
        (socket-close ,socket-var))))
 
 ;;; Objects
+(defconfig tcp-config (net-config) ())
 (defclass tcp-socket (inet-socket) 
   ()
   (:default-initargs :type :stream :protocol :tcp))

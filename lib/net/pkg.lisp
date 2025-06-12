@@ -6,7 +6,7 @@
 (pushnew :net *features*)
 
 (pkg:defpkg :net/core
-  (:use :cl :std :sb-thread :config)
+  (:use :cl :std :sb-thread :config :id)
   (:recycle :sb-bsd-sockets)
   (:export
    ;; obj
@@ -39,7 +39,7 @@
 
 (defpackage :net/udp
   (:nicknames :udp)
-  (:use :cl :std :net/core :sb-bsd-sockets)
+  (:use :cl :std :net/core :sb-bsd-sockets :config)
   (:export
    :udp-server
    :with-udp-client
@@ -51,7 +51,7 @@
 
 (defpackage :net/tcp
   (:nicknames :tcp)
-  (:use :cl :std :net/core :sb-bsd-sockets)
+  (:use :cl :std :net/core :sb-bsd-sockets :config)
   (:export
    :tcp-server
    :with-tcp-client
@@ -62,7 +62,8 @@
    :tcp-client
    :tcp-source
    :tcp-sink
-   :tcp-socket))
+   :tcp-socket
+   :tcp-config))
 
 (defpackage :net/codec/dns
   (:nicknames :codec/dns)
@@ -153,8 +154,9 @@
 
 (defpackage :net/proto/http
   (:nicknames :http)
-  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer)
+  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer :config :net/tcp)
   (:export
+   :http-config
    :make-http-parser
    :http-request
    :http-response
@@ -281,10 +283,10 @@
   (:import-from :io/fast :make-output-buffer :finish-output-buffer)
   (:shadow :get :delete)
   (:import-from :sb-ext :string-to-octets)
-  (:use :cl :std :obj/uri
-   :obj/url :net/proto/http :net/cookie
+  (:use :cl :std :uri
+   :url :http :net/cookie :net/core
    :io/fast :io/chunky
-   :dat/base64 :ssl :sb-gray)
+   :dat/base64 :ssl :sb-gray :config)
   (:export
    :request
    :get

@@ -52,17 +52,17 @@
    ;; save-tests
    ))
  (upstream () ;; pretty gross hack to fix broken tree
-  (let ((tmp "/tmp/core/"))
+  (let ((tmp #p"/tmp/core/"))
    (probe-delete-directory tmp)
    (vc:hg-fast-export (sk-vc *skel-project*))
-   (with-directory tmp
-    ;; (vc:with-repo (r :path tmp)
-    ;; (vc:vc-re
-    #$git remote add cb ssh://git@codeberg.org/c-c/core
-    git remote add gh ssh://git@github.com/richardwesthaver/core
-    # git filter-repo --invert-paths --path-regex '^std$' --force     
-    git push -u cb default --force
-    git push gh default --force$#)))
+   (setf *shell-directory* tmp)
+   ;; (vc:with-repo (r :path tmp)
+   ;; (vc:vc-re
+   #$git remote add cb ssh://git@codeberg.org/c-c/core
+   git remote add gh ssh://git@github.com/richardwesthaver/core
+   git filter-repo --invert-paths --path-regex '^std$' --force     
+   git push -u cb default --force
+   git push gh default --force$#))
  (clean ()
   #$rm -vrf .stash
   find emacs -name '*.elc' -type f -delete

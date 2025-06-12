@@ -37,6 +37,8 @@ session-management.")
   (and (secure-service-p service)
        (eql :https (sb-bsd-sockets:socket-protocol (sb-bsd-sockets:socket service)))))
 
+;;; Config
+(defconfig http-server-config (http-config server-config) ())
 ;;; Response
 (defclass http-service-response (net-service-response)
   ((http :type http-response)
@@ -80,6 +82,9 @@ RESPONSE object."
   "Sets the alist of the outgoing cookies associated with the RESPONSE
 object RES."
   (setf (cookies-out res) new-value))
+
+(defmethod content-type ((res http-service-response))
+  (gethash "content-type" (http:http-headers res)))
 
 (defun content-type* (&optional (res *response*))
   "The outgoing 'Content-Type' http header of RES."
@@ -567,19 +572,23 @@ Returns STREAM."
     (finish-output stream))
   stream)
 
+(defconstant +http-bad-request+ 400)
+
 (defun send-bad-request-response (stream &optional additional-info)
   "Send a ``Bad Request'' response to the client."
   (write-sequence (flex:string-to-octets
 		   (format nil "HTTP/1.0 ~D ~A~C~CConnection: close~C~C~C~CYour request could not be interpreted by this HTTP server~C~C~@[~A~]~C~C"
-			   +http-bad-request+ (reason-phrase +http-bad-request+) #\Return #\Linefeed
+			   +http-bad-request+ (http-status-message +http-bad-request+) #\Return #\Linefeed
 			   #\Return #\Linefeed #\Return #\Linefeed #\Return #\Linefeed additional-info #\Return #\Linefeed))
 		  stream))
+
+(defconstant +http-version-not-supported+ 505)
 
 (defun send-unknown-protocol-response (stream &optional additional-info)
   "Send a ``HTTP Version Not Supported'' response to the client."
   (write-sequence (flex:string-to-octets
 		   (format nil "HTTP/1.0 ~D ~A~C~CConnection: close~C~C~C~CYour request could not be interpreted by this HTTP server~C~C~@[~A~]~C~C"
-			   +http-version-not-supported+ (reason-phrase +http-version-not-supported+) #\Return #\Linefeed
+			   +http-version-not-supported+ (http-status-message +http-version-not-supported+) #\Return #\Linefeed
 			   #\Return #\Linefeed #\Return #\Linefeed #\Return #\Linefeed additional-info #\Return #\Linefeed))
 		  stream))
 
@@ -597,7 +606,7 @@ protocol of the request."
           (send-bad-request-response stream "Non-ASCII character in request line")
           (return-from get-http-request-data nil))
         (destructuring-bind (&optional method url-string protocol)
-            (std::split "\\s+" first-line :limit 3)
+            (cl-ppcre:split "\\s+" first-line :limit 3)
           (cond ((not
                   (setf method
                         (find method +known-http-methods+ :test #'string-equal)))
@@ -757,4 +766,3 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
   (ssl:ssl-stream-x509-certificate *service-stream*))
 
 (defclass https-service (http-service ssl-service) ())
-(declaim (sb-ext:end-block))

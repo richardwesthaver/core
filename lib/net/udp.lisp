@@ -34,6 +34,7 @@
        (socket-close ,socket-var))))
 
 ;;; Objects
+(defconfig udp-config (net-config) ())
 (defclass udp-socket (inet-socket) ()
   (:default-initargs :type :datagram :protocol :udp))
 (defclass udp-client (udp-socket client) ())
