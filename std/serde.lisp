@@ -17,16 +17,18 @@
 (in-package :std/serde)
 
 (eval-always
-  (define-condition serde-condition () ())
-  (deferror serde-error (serde-condition) ()))
-  
+  (define-condition serde-condition () ()
+    (:documentation "Default SERDE condition class."))
+  (deferror serde-error (serde-condition) ()
+    (:documentation "An error signaled during serialization OR deserialization.")))
+
 (deferror serializer-error (serde-error)
-    ()
-    (:documentation "An error which occurs during object serialization."))
+  ()
+  (:documentation "An error which occurs during object serialization."))
 
 (deferror deserializer-error (serde-error) 
-    ()
-    (:documentation "An error which occurs during object deserialization."))
+  ()
+  (:documentation "An error which occurs during object deserialization."))
 
 ;;; Serialize
 (defgeneric serializable-p (self)
@@ -44,8 +46,10 @@
   (:documentation "Deserialize FROM into an object of type FORMAT, which is a
 DESERIALIZABLE-TYPE-DESIGNATOR."))
 
-(defgeneric ser (kind obj))
-(defgeneric de (kind obj))
+(defgeneric ser (kind obj)
+  (:documentation "Convenience function for serializing OBJ into KIND."))
+(defgeneric de (kind obj)
+  (:documentation "Convenience function for deserializing OBJ of type KIND."))
 
 (defgeneric serde (from to)
   (:documentation "Point-to-point serialization.

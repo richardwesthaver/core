@@ -22,6 +22,10 @@
 (defvar *sbcl-toplevel-options*
   '(sysinit userinit no-sysinit no-userinit disable-debugger noprint script quit non-interactive eval load))
 
+(defvar *sbcl-output* (make-synonym-stream '*standard-output*))
+(defvar *sbcl-input* (make-synonym-stream '*standard-input*))
+(defvar *sbcl-wait* t)
+
 (defun parse-sbcl-option-keys (keys)
   (let ((rt)
         (tl))
@@ -43,12 +47,12 @@
             (cond
               ((member k *sbcl-runtime-options* :test 'string=) (%push-opt-rt opt v))
               ((member k *sbcl-toplevel-options* :test 'string=) (%push-opt-tl opt v))
+              ((eql k :input) (setf *sbcl-input* v))
+              ((eql k :output) (setf *sbcl-output* v))
+              ((eql k :wait) (setf *sbcl-wait* v))
               (t (sbcl-error "Invalid option: ~A ~A" opt v))))))
       ;; append and reverse
       (nreverse (append tl rt)))))
-
-(defvar *sbcl-output* (make-synonym-stream '*standard-output*))
-(defvar *sbcl-input* (make-synonym-stream '*standard-input*))
 
 (defun run-sbcl (&rest args)
   (let ((proc (sb-ext:run-program *sbcl* (or args nil) :output *sbcl-output* :input *sbcl-input*)))
@@ -61,7 +65,4 @@
 keys are the same as those listed in `sbcl --help` and the BODY is wrapped in
 a PROGN and passed to the --eval flag."
   `(run-sbcl ,@(when keys (parse-sbcl-option-keys keys))
-             ,@(when body
-                 (flatten
-                  (mapcar (lambda (x) (list "--eval" (with-output-to-string (s) (prin1 x s))))
-                          body)))))
+             ,@(when body (list "--eval" (with-output-to-string (s) (prin1 `(progn ,@body) s))))))

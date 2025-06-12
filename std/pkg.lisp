@@ -756,7 +756,7 @@
   (:export :list-slot-values-using-class
    :list-class-methods :list-class-slots :ensure-finalized 
    :subclassp :write-object :start :started-p
-   :stop :stopped-p :shutdown :reset
+   :stop :stopped-p :shutdown
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
@@ -1113,16 +1113,17 @@
   (:use :cl :asdf)
   (:nicknames :sys)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
-  (:shadowing-import-from :sb-ext :retry)
-  (:import-from :asdf :module-provide-asdf)
+  ;; (:shadowing-import-from :asdf :retry)
+  (:import-from :asdf :module-provide-asdf :compile-system :defsystem :load-system)
   (:export 
    :defsys
    :find-system*
    :defsystem*
    ;; re-exports from ASDF
-   :defsystem
-   :compile-system
-   :load-system))
+   ;; :defsystem
+   ;; :compile-system
+   ;; :load-system
+   ))
 
 (defpkg :std
   (:use :cl)
@@ -1139,9 +1140,9 @@
 (define-lisp-package :std)
 
 (defpkg :std-user
-  (:use :std-lisp :cl-user :sb-ext 
-   :sb-alien :sb-thread :sb-bsd-sockets :sb-gray 
-   :sb-mop :sb-debug))
+  (:use :std-lisp :sb-ext :sb-alien :sb-thread :sb-bsd-sockets :sb-gray :sb-mop :sb-debug :std/defsys)
+  (:shadowing-import-from :std/meta :reset)
+  (:shadowing-import-from :cl-user :path))
 
 (asdf:register-system-packages "STD" *std-packages*)
 

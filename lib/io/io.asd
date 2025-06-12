@@ -7,7 +7,7 @@
                :xkb
                :evdev
                :btrfs
-               :sb-bsd-sockets :zstd :flexi-streams)
+               :sb-bsd-sockets :zstd)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")

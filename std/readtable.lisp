@@ -10,27 +10,31 @@
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defun |#`-reader| (stream sub-char numarg)
-    (declare (ignore sub-char))
-    (unless numarg (setq numarg 1))
-    `(lambda ,(loop for i from 1 to numarg
-                    collect (symb 'a i))
-       ,(funcall
-         (get-macro-character #\`) stream nil)))
+    "Sharp Backquote (#`) reader - quoted lambda shorthand.
 
-  (defun |#f-reader| (stream sub-char numarg)
-    (declare (ignore stream sub-char))
-    (setq numarg (or numarg 3))
-    (unless (<= numarg 3)
-      (error "Bad value for #f: ~a" numarg))
-    `(declare (optimize (speed ,numarg)
-                        (safety ,(- 3 numarg)))))
+Defines a lambda with the arg count determined by the numeric reader arg.
+
+(funcall #2`(,a0 ,@a1) 0 '(1 2 3 4)) ;= (0 1 2 3 4)"
+    (declare (ignore sub-char))
+    (unless numarg (setq numarg 0))
+    (compile 
+     nil
+     `(lambda ,(loop for i from 0 to (1- numarg)
+                     collect (symb 'a i))
+        ,(funcall
+          (get-macro-character #\`) stream nil))))
 
   (defun |#l-reader| (stream sub num)
+    "Sharp L reader - logical pathname translation."
     (declare (ignore sub num))
     `(translate-logical-pathname (pathname ,(read stream))))
 
   ;; Nestable suggestion from Daniel Herring
   (defun |#"-reader| (stream sub-char numarg)
+    "Sharp Double-quote reader - nestable strings.
+
+Output is quoted appropriated - simply wrap outer-most double-quotes in
+sharps."
     (declare (ignore sub-char numarg))
     (let (chars (state 'normal) (depth 1))
       (loop do
@@ -65,35 +69,11 @@
                                    (progn
                                      (push curr chars)
                                      (setq state 'normal)))))))))
-      (coerce (nreverse chars) 'string)))
-  ;; This version is from Martin Dirichs
-  (defun |#>-reader| (stream sub-char numarg)
-    (declare (ignore sub-char numarg))
-    (let (chars)
-      (do ((curr (read-char stream)
-                 (read-char stream)))
-          ((char= #\newline curr))
-        (push curr chars))
-      (let ((pattern (nreverse chars))
-            output)
-        (labels ((match (pos chars)
-                   (if (null chars)
-                       pos
-                       (if (char= (nth pos pattern) (car chars))
-                           (match (1+ pos) (cdr chars))
-                           (match 0 (cdr (append (subseq pattern 0 pos) chars)))))))
-          (do (curr
-               (pos 0))
-              ((= pos (length pattern)))
-            (setf curr (read-char stream)
-                  pos (match pos (list curr)))
-            (push curr output))
-          (coerce
-           (nreverse
-            (nthcdr (length pattern) output))
-           'string))))))
+      (coerce (nreverse chars) 'string))))
 
 (defun segment-reader (stream ch n)
+  "Recursively read a CH delimited sequence of strings from STREAM. N is a
+recursion count. Used internally by the CL-PPCRE reader (#~)."
   (if (> n 0)
       (let ((chars))
         (do ((curr (read-char stream)
@@ -102,6 +82,12 @@
           (push curr chars))
         (cons (coerce (nreverse chars) 'string)
               (segment-reader stream ch (- n 1))))))
+
+(defmacro! scan-mode-ppcre-lambda-form (o!args)
+  ``(lambda (,',g!str)
+      (cl-ppcre:scan
+       ,(car ,g!args)
+       ,',g!str)))
 
 (defmacro! match-mode-ppcre-lambda-form (o!args o!mods)
   ``(lambda (,',g!str)
@@ -120,11 +106,26 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun |#~-reader| (stream sub-char numarg)
-    (declare (ignore sub-char numarg))
-    (let ((mode-char (read-char stream)))
-      (cond
-        ((char= mode-char #\m)
-         (match-mode-ppcre-lambda-form
+    "Sharp-tilde reader - Perl-like Regexp shorthand.
+
+NUMARG is the mode to use:
+0 : scan-mode
+1 : match-mode
+2 : replace-mode
+
+#1~/abc/ ;= #<function>
+(funcall * \"123abc\") ;= \"abc\" #()
+
+(funcall #2~/abc// \"abcdef\") ;= \"def\" T
+(funcall #0~/abc/ \"abcdef\") ;= 0 3 #() #()"
+    (declare (ignore sub-char))
+    (ecase numarg
+      (0 (scan-mode-ppcre-lambda-form
+          (segment-reader 
+           stream
+           (read-char stream)
+           1)))
+      (1 (match-mode-ppcre-lambda-form
           (segment-reader stream
                           (read-char stream)
                           1)
@@ -133,15 +134,22 @@
                         collect c
                         finally (unread-char c stream))
                   'string)))
-        ((char= mode-char #\s)
-         (subst-mode-ppcre-lambda-form
+      (2 (subst-mode-ppcre-lambda-form
           (segment-reader stream
                           (read-char stream)
-                          2)))
-        (t (error "Unknown #~~ mode character"))))))
+                          2))))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun lcurly-brace-reader (stream inchar)
+  (defun |{-reader| (stream inchar)
+    "Curly-brace reader - curry shorthand.
+
+The car of the 'curly-form' is a function which is curried with the cdr. The
+cdr may contain the special symbol '_' which will be bound to the function and
+indicates a recursive call (RCURRY instead of CURRY).
+
+'{car _} ;= (THE (VALUES FUNCTION &OPTIONAL) (RCURRY #'CAR))
+
+(funcall {car (list 1 2 3)}) ;= 1"
     (declare (ignore inchar))
     (let ((spec (read-delimited-list #\} stream t)))
       (if (typep (car spec) '(integer 0))
@@ -163,67 +171,33 @@
               `(the (values function &optional) (rcurry (function ,(car spec)) ,@(cddr spec)))
               `(the (values function &optional) (curry (function ,(car spec)) ,@(cdr spec)))))))
 
-  (defun lsquare-brace-reader (stream inchar)
+  (defun |[-reader| (stream inchar)
+    "Square-bracket reader - compose shorthand.
+
+'[#'car #'cdr] ;= (THE (VALUES FUNCTION &OPTIONAL) (COMPOSE #'CAR #'CDR))
+
+(funcall ['car 'cdr] (list 1 2 3)) ;= 2"
     (declare (ignore inchar))
     (list 'the '(values function &optional)
-          (cons 'compose (read-delimited-list #\] stream t))))
-
-  (defun langle-quotation-reader (stream inchar)
-    (declare (ignore inchar))
-    (let ((contents (read-delimited-list #\» stream t))
-          (args (gensym "langle-quotation-reader")))
-      `(lambda (&rest ,args)
-         (,(car contents)                 ; Join function (or macro).
-          ,@(mapcar (lambda (fun) `(apply ,fun ,args)) (cdr contents))))))
-
-  (defun lsingle-pointing-angle-quotation-mark-reader (stream inchar)
-    (declare (ignore inchar))
-    (flet ((function-p (form) (functionp (ignore-errors (eval form)))))
-      (let ((contents (read-delimited-list #\› stream t))
-            (arg (gensym "lsingle-pointing-angle-quotation-mark-reader")))
-        `(lambda (,arg)
-           (,(car contents)               ; Case form.
-            ,@(case (car contents)       ; If/when/unless guard.
-                ((if when unless)
-                 `((funcall ,(cadr contents) ,arg)))
-                (cond nil)
-                (t (list arg)))
-            ,@(if (member (car contents) '(if when unless)) ; Clauses.
-                  (mapcar (lambda (clause)
-                            (if (function-p clause)
-                                `(funcall ,clause ,arg)
-                                clause))
-                          (cddr contents))
-                  (mapcar (lambda (clause)
-                            `(,(if (function-p (car clause))
-                                   `(funcall ,(car clause) ,arg)
-                                   (car clause))
-                              ,(if (function-p (cadr clause))
-                                   `(funcall ,(cadr clause) ,arg)
-                                   (cadr clause))))
-                          (cdr contents)))))))))
+          (cons 'compose (read-delimited-list #\] stream t)))))
 
 ;; Define the standard readtable with built-in functionality. We overwrite the
 ;; braces [] and {} but ! and ? are free for now.
 (defreadtable :std
+  "The standard readtable, available for use internally in core source code or
+externally by users. Don't modify this readtable directly - create your own
+copy if necessary."
   (:merge :modern)
   ;; curry
-  (:macro-char #\{ #'lcurly-brace-reader)
+  (:macro-char #\{ #'|#{-reader|)
   (:macro-char #\} (get-macro-character #\) ))
   (:macro-char #\[ #'lsquare-brace-reader)
   (:macro-char #\] (get-macro-character #\) ))
-  (:macro-char #\« #'langle-quotation-reader)
-  (:macro-char #\» (get-macro-character #\) ))
-  (:macro-char #\‹ #'lsingle-pointing-angle-quotation-mark-reader)
-  (:macro-char #\› (get-macro-character #\) ))
   ;; strings
   (:dispatch-macro-char #\# #\" #'|#"-reader|)
-  (:dispatch-macro-char #\# #\> #'|#>-reader|)
   ;; regex
   (:dispatch-macro-char #\# #\~ #'|#~-reader|)
   ;; lambdas
   (:dispatch-macro-char #\# #\` #'|#`-reader|)
-  (:dispatch-macro-char #\# #\f #'|#f-reader|)
   ;; logical paths
   (:dispatch-macro-char #\# #\l #'|#l-reader|))
-

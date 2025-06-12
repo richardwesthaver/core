@@ -80,12 +80,16 @@
              (buffer-current-len buffer)))
      (error 'buffer-limit-exceeded :limit (buffer-disk-limit buffer)))))
 
+;; REVIEW 2025-06-11: used to be flexi stream
 (defun finalize-buffer (buffer)
   (if (buffer-on-memory-p buffer)
-      (flexi-streams:make-in-memory-input-stream
-       (typecase (buffer-memory-buffer buffer)
-         (null-concatenated-xsubseqs #())
-         (t (coerce-to-sequence (buffer-memory-buffer buffer)))))
+      (let ((s (make-instance 'sb-gray:fundamental-binary-input-stream)))
+        (write-sequence
+         (typecase (buffer-memory-buffer buffer)
+           (null-concatenated-xsubseqs #())
+           (t (coerce-to-sequence (buffer-memory-buffer buffer))))
+         s)
+        s)
       (open (buffer-disk-buffer buffer) :direction :input :element-type '(unsigned-byte 8))))
 
 (defmacro with-smart-buffer ((buffer &key
