@@ -197,6 +197,7 @@
              cur-y (cadr cur-point))
        (dotimes (,a ,count)
          (setf ,args (cdr ,args))))))
+
 (defun get-points-from-path (str-data &key (curve-resolution 10))
   "Given a string describing an SVG path, do our best to retrieve points along
   that path. Bezier curves are approximated as accurately as needed (defined by
@@ -208,7 +209,7 @@
   If Z/z ends the path in the middle, we silently return the current set of 
   points without continuing the path. The idea here is we are generating
   polygons so breaks or cutouts are not acceptable."
-    (let ((commands (print (split "(?=[a-zA-Z])" str-data)))
+    (let ((commands (split "(?=[a-zA-Z])" str-data))
           (scanner-empty-p (cl-ppcre:create-scanner (concatenate 'string "[" *whitespaces* "]") :multi-line-mode t))
           (points nil)
         (parts nil)

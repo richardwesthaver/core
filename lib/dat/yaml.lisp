@@ -4,8 +4,8 @@
 
 ;;; Commentary:
 
-;; My least favorite markup format, but common enough to warrant building some
-;; support for it.
+;; My least favorite markup format, but common enough to warrant reserving
+;; space for it.
 
 ;; The use-cases we have in mind are: 
 

@@ -18,7 +18,8 @@
   (:export :crypto-error :crypto-token-expired :crypto-token-invalid
    :crypto-key :token :crypto-token
    :*default-password-db* :*default-password-hasher* :*default-password-store* :*default-password-pepper*
-   :password-db))
+   :password-db
+   :crypto-condition))
 
 (defpackage :cry/hotp
   (:nicknames :hotp)

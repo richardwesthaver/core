@@ -5,7 +5,8 @@
 ;;; Code:
 (in-package :cry)
 
-(define-condition crypto-error (std-error) ())
+(define-condition crypto-condition () ())
+(define-condition crypto-error (crypto-condition std-error) ())
 
 (define-condition crypto-token-expired (crypto-error)
   ((token :initarg :token :accessor token)

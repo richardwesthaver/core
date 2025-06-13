@@ -58,7 +58,10 @@
   ;; Normalize the string designator
   (setf encoding-name (string-upcase (substitute #\- #\_ (string-trim +space-characters+ (string encoding-name)))))
   ;; All known encoding will already be interned in the keyword package so find-symbol is fine here
-  (setf encoding-name (car (sb-impl::ef-names (sb-int:get-external-format encoding-name)))))
+  (setf encoding-name 
+        (if-let ((known (sb-int:get-external-format encoding-name)))
+          (car (sb-impl::ef-names known))
+          *default-encoding*)))
 
 ;; 12.2.2.1 Determining the character encoding
 (defun detect-encoding (stream override-encoding fallback-encoding)

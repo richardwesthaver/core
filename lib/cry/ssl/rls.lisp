@@ -5,10 +5,13 @@
 ;;; Code:
 (in-package :ssl)
 
+(define-condition rls-condition (ssl-condition) ())
+(define-condition rls-error (ssl-error) ())
+
 (defstruct rls-connection (sap nil))
 (defaccessor sap ((self rls-connection)) (rls-connection-sap self))
 
-(defclass rls-client-config (config) 
+(defconfig rls-client-config ()
   ((sap :initform nil :initarg :sap :accessor sap)
    (root-store :initform nil :initarg :root-store :accessor root-store)
    (certified-keys :initform nil :initarg :certified-keys :accessor certified-keys)))
@@ -32,7 +35,7 @@
        self
        (rustls::rustls-client-config-builder-build cbuilder (addr cout))))))
 
-(defclass rls-server-config (config) ())
+(defconfig rls-server-config () ())
 (defclass rls-session-store () ())
 
 (defun build-root-store ()

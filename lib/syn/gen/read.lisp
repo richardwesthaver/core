@@ -74,11 +74,12 @@ case."
 (defmacro define-code-switches (&key cl-reader code-reader macro-character)
   "Define syn/gen and common-lisp reader switches."
   `(progn
-     (defun ,cl-reader ()
-       (setf *code-reader* 'cl
-             *readtable* *backup-readtable*
-             (readtable-case *readtable*) *print-case*
-             *package* *default-package*))
+     ,@(when cl-reader
+         `((defun ,cl-reader ()
+             (setf *code-reader* 'cl
+                   *readtable* *backup-readtable*
+                   (readtable-case *readtable*) *print-case*
+                   *package* *default-package*))))
      (defun ,code-reader ()
        (setf *code-reader* 'gen)
        ,@macro-character

@@ -12,7 +12,7 @@
 (deftype keytype () 'sb-vm:word)
 
 (defstruct (tree-node (:copier nil)
-                 (:constructor make-node (key)))
+                 (:constructor make-tree-node (key)))
   (key 0 :type keytype))
 
 (defstruct (unary-node (:include tree-node))

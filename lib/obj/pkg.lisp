@@ -531,7 +531,7 @@
   (:nicknames :tree)
   (:use :cl :std :obj/id)
   (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
-           :make-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
+           :make-tree-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
 (defpackage :obj/tree/btree
   (:nicknames :obj/btree :btree)
