@@ -213,7 +213,9 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
      :nss ,(urn-nss self)
      :r-component ,(urn-r-component self)))
 
-(define-condition uri-parse-error (parse-error)
+(define-condition uri-condition () ())
+(define-condition uri-error (uri-condition error) ())
+(define-condition uri-parse-error (parse-error uri-error)
   ((string :initarg :string :reader uri-parse-error-string)))
 
 (defmethod uri-p ((thing uri)) t)

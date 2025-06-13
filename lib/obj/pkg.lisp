@@ -78,12 +78,13 @@
    :ip-addr-p
    :ip-addr=
    :uri-tld
-   :uri-domain))
+   :uri-domain
+   :uri-condition
+   :uri-error))
 
 (pkg:defpkg :obj/url
   (:nicknames :url)
-  (:use :cl :std :obj/uri)
-  ;; (:shadowing-import-from :quri :url-encode :url-decode :url-encode-params :url-decode-params)
+  (:use :cl :std :obj/uri :sb-ext)
   (:export :url-encode :url-decode :url-encode-params :url-decode-params))
 
 (defpackage :obj/tensor

@@ -542,7 +542,7 @@ keep-alive-stream), and should handle clean-up of it"
                key
                utf8-filename-p
                (if utf8-filename-p
-                   (obj/url:url-encode filename :encoding :utf-8)
+                   (url-encode filename :encoding :utf-8)
                    filename)
                #\Return #\Newline)))
     (otherwise
@@ -1248,7 +1248,7 @@ keep-alive-stream), and should handle clean-up of it"
              (boundary (and multipart-p
                             (make-random-string 12)))
              (content (if (and form-urlencoded-p (not (stringp content))) ;; user can provide already encoded content, trust them.
-                          (obj/url::url-encode-params content)
+                          (url-encode-params content)
                           content))
              (stream (or user-supplied-stream
                          (and use-connection-pool

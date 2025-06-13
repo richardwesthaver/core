@@ -492,13 +492,13 @@ PARSE-COMPOUND-BITFIELD-SLOT-SPECIFIER.
                     #*1110
                     #*1111))
 
-(deftype hex-char ()
+(deftype hexchar ()
   `(member #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9
            #\a #\b #\c #\d #\e #\f
            #\A #\B #\C #\D #\E #\F))
 
-(declaim (ftype (function (hex-char) (integer 0 16)) hexchar->int)
-         (inline hexchar->int))
+(declaim (ftype (function (hexchar) (integer 0 16)) hexchar->int)
+         (inline hexchar-to-int))
 (defun hexchar-to-int (char)
   "Return the bit vector associated with a hex-value character CHAR from *bit-map*."
   (declare (optimize (speed 2) (safety 0)))
