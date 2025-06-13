@@ -274,7 +274,7 @@
                  (incf end)
                  (let ((match (nth-value 1 (ppcre:scan-to-strings
                                             "charset=[\"']?([^\\s\"'>]+)[\"']?"
-                                            (octets-to-string body :start start :end end)))))
+                                            (sb-ext:octets-to-string body :start start :end end)))))
                    (if match
                        (aref match 0)
                        (main end)))))))
@@ -1694,3 +1694,6 @@ keep-alive-stream), and should handle clean-up of it"
               (function (funcall interval retries))
               (integer (sleep interval)))
             (invoke-restart restart)))))))
+
+;;; Client
+(defclass http-client (tcp-client) ())

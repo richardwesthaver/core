@@ -286,7 +286,8 @@
   (:use :cl :std :uri
    :url :http :net/cookie :net/core
    :io/fast :io/chunky
-   :dat/base64 :ssl :sb-gray :config)
+   :dat/base64 :ssl :sb-gray :config
+   :net/tcp)
   (:export
    :request
    :get
@@ -421,3 +422,29 @@
    #:net-service-request
    #:abort-request-handler
    #:net-service-config))
+
+(pkg:defpkg :net
+  (:use :cl :std)
+  (:use-reexport 
+   :net/core 
+   :net/tcp 
+   :net/udp
+   :net/srv
+   :net/codec/dns 
+   :net/codec/osc 
+   :net/codec/tlv
+   :net/codec/http
+   :net/proto/dns
+   :net/proto/ssh
+   :net/proto/http)
+  (:import-from :net/req :http-client-config :http-client)
+  (:export :http-client-config :http-client))
+
+(pkg:defpkg :net-user
+  (:use :cl :std :net :uri :url))
+
+(in-package :net)
+(when (sb-int:featurep :swank)
+  #+quicklisp (ql:quickload '(:swank-client))
+  (use-package :net/proto/swank)
+  (use-package :net/proto/crew))

@@ -37,8 +37,7 @@
                  (:file "udp")
                  (:file "http")
                  (:file "oauth")
-                 (:file "ext")))
-               (:file "net"))
+                 (:file "ext"))))
   :in-order-to ((test-op (test-op :net/tests))))
 
 (defsystem :net/tests
