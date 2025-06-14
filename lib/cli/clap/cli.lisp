@@ -148,6 +148,8 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 
 (deftype cli-hook-designator () '(or boolean :after))
 
+;; TODO 2025-06-13: call-with-cli
+
 (defmacro with-cli ((cli &key slots (args *args*) (install t) run exit)  &body body)
   "Like with-slots with some extra bindings.
 

@@ -15,6 +15,8 @@
 ;;     unicode<= unicode>=))
 (in-package :std/string)
 
+(defparameter *suppress-character-coding-errors* nil)
+
 (defconstant +cr+ #\Return)
 (defconstant +lf+ #\Linefeed)
 (sb-int:defconstant-eqx +crlf+ (coerce #(+cr+ +lf+) 'simple-array) #'equalp)

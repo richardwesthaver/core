@@ -15,10 +15,8 @@
 (in-package :net/proto/swank)
 
 ;;; Vars
-(defvar *swank-connections* nil)
-
-(defvar *swank-connections-lock* (make-mutex :name "swank-connections"))
-
+(defvar *swank-connections* (make-cons-queue))
+  
 ;;; Remote Execution (RDP)
 
 ;;;; Messages

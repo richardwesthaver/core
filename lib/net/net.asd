@@ -1,12 +1,13 @@
 (defsystem :net
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
-  :bug-tracker "https://vc.compiler.company/comp/core/issues"
   :depends-on 
-  (:dat :obj :io :parse :babel :rt :std :cli :log :cry
-        (:feature :swank :swank)
-        (:feature :swank :swank-client)
-        (:feature :swank :swank-crew))
+  (:dat :obj :io :parse
+   :babel :rt :std :cli 
+   :log :cry
+   (:feature :swank :swank)
+   (:feature :swank :swank-client)
+   (:feature :swank :swank-crew))
   :serial t
   :components ((:file "pkg")
                (:file "obj")

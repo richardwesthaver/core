@@ -3,7 +3,6 @@
 ;;
 
 ;;; Code:
-;; sb-kernel:with-array-data
 (in-package :std/array)
 
 ;; NOTE 2025-04-27: probably not a good idea

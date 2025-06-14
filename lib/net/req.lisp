@@ -227,8 +227,9 @@
      :cp932)
     ((string-equal charset "windows-31j")
      :cp932)
-    (t (or (find charset (babel:list-character-encodings)
-                 :test 'string-equal)
+    (t (or (find charset *external-formats*
+                 :test 'string-equal
+                 :key (lambda (x) (car (sb-impl::ef-names x))))
            default))))
 
 (defun detect-charset (content-type body)
@@ -517,16 +518,17 @@ keep-alive-stream), and should handle clean-up of it"
   (let ((charset (or (and content-type
                           (detect-charset content-type body))
                      default-charset))
-        (babel-encodings:*suppress-character-coding-errors* t))
+        (*suppress-character-coding-errors* t))
     (if charset
         (handler-case
             (if (streamp body)
                 (make-decoding-stream body :encoding charset :on-close on-close)
                 (sb-ext:octets-to-string body :external-format charset))
-          (babel:character-decoding-error (e)
-            (warn (format nil "Failed to decode the body to ~S due to the following error (falling back to binary):~%  ~A"
-                          charset
-                          e))
+          (character-decoding-error (e)
+            (warn 
+             (format nil "Failed to decode the body to ~S due to the following error (falling back to binary):~%  ~A"
+                     charset
+                     e))
             (return-from decode-body body)))
         body)))
 

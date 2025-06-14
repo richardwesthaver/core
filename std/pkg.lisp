@@ -473,6 +473,7 @@
   (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects 
    :unbound-marker-p :generation-of
    :current-sp :current-fp)
+  (:import-from :sb-impl :*external-formats*)
   (:import-from :sb-vm :list-allocated-objects :fun-signature= 
    :map-allocated-objects :fset :*linkage-name-map* :ldb-monitor
    :map-immobile-objects :memory-usage :references-p :show-ctype-ctor-cache-metrics
@@ -497,11 +498,13 @@
   (:import-from :sb-impl :*logical-hosts* :make-logical-host 
    :logical-host :info :show-info :*info-types*
    :*finalizer-thread* :show-finalizers :dx-flet :dx-let
-   :read-only-space-obj-p :dynamic-space-obj-p :tune-image-for-dump)
+   :read-only-space-obj-p :dynamic-space-obj-p :tune-image-for-dump :get-external-format)
   (:import-from :sb-debug :untrace-all :untrace-package)
   (:import-from :sb-ext :fold-identical-code)
   (:import-from :std/macs :if-let :defmacro!)
   (:export
+   :*external-formats*
+   :get-external-format
    :revive-image
    :int-sap :print-allocated-objects
    :current-sp :current-fp
@@ -1104,7 +1107,12 @@
 (defpkg :std/string
   (:use :cl)
   (:use-reexport :sb-unicode)
+  (:import-from :sb-impl :ef-octets-to-string-fun :ef-string-to-octets-fun)
+  (:import-from :sb-kernel :character-coding-error :character-encoding-error :character-decoding-error)
   (:export
+   :ef-octets-to-string-fun :ef-string-to-octets-fun
+   :character-coding-error :character-encoding-error
+   :character-decoding-error :*suppress-character-coding-errors*
    :*omit-nulls*
    :*whitespaces*
    :*tab-width*

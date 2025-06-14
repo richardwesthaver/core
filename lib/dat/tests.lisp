@@ -7,8 +7,6 @@
 (in-suite :dat)
 (in-readtable :std)
 
-(deftest bytes ())
-
 (deftest dot ()
   "Test Graphviz DOT functionality."
   (let ((g1 (make-instance 'graph:graph)))

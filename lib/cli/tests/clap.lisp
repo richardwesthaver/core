@@ -26,9 +26,9 @@
 
 (deftest mixed-args ()
   (with-cli (*test-cli* :exit nil) '("--foo" "bar" "flub") 
-    (is (string= "bar" (cli-opt-val (aref (opts *cli*) 0))))
-    (is (null (cli-args *cli*)))
-    (do-cmd *cli*)))
+    (is (string= "bar" (cli-opt-val (aref (opts *test-cli*) 0))))
+    (is (null (cli-args *test-cli*)))
+    (do-cmd *test-cli*)))
 
 (deftest cli-ast ()
   "Validate the CLI/CLAP/AST parser."
@@ -38,9 +38,7 @@
     (proc-args *test-cli* '("--log" "default" "--foo=11"))))
 
 (defmain foo-main (:exit nil)
-  (is
-   (with-cli (*test-cli* :exit nil) ()
-             t)))
+  (isnt (do-cmd *test-cli*)))
 
 (deftest clap-main ()
   (is (null (funcall #'foo-main))))

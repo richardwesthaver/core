@@ -7,6 +7,47 @@
 
 (defar rustls-version c-string)
 
+;;; Provider
+(defar rustls-crypto-provider-builder-new-from-default rustls-result 
+  (builder-out (* (* rustls-crypto-provider-builder))))
+
+(defar rustls-crypto-provider-builder-new-with-base (* rustls-crypto-provider-builder)
+  (base (* rustls-crypto-provider)))
+
+(defar rustls-crypto-provider-builder-set-cipher-suites rustls-result
+  (builder (* rustls-crypto-provider-builder))
+  (cipher-suites (* (* rustls-supported-ciphersuite)))
+  (cipher-suites-len size-t))
+
+(defar rustls-crypto-provider-builder-build rustls-result
+  (builder (* rustls-crypto-provider-builder))
+  (provider-out (* rustls-crypto-provider)))
+
+(defar rustls-crypto-provider-builder-build-as-default rustls-result
+  (builder (* rustls-crypto-provider-builder)))
+
+(defar rustls-crypto-provider-builder-free void
+  (builder (* rustls-crypto-provider-builder)))
+
+;; NOTE: These are dependent on Rustls compile-time features
+(defar rustls-ring-crypto-provider (* rustls-crypto-provider))
+(defar rustls-default-fips-provider (* rustls-crypto-provider))
+
+;; available with default config
+(defar rustls-aws-lc-rs-crypto-provider (* rustls-crypto-provider))
+(defar rustls-crypto-provider-default (* rustls-crypto-provider))
+(defar rustls-crypto-provider-ciphersuites-len size-t
+  (provider (* rustls-crypto-provider)))
+(defar rustls-crypto-provider-ciphersuites-get (* rustls-supported-ciphersuite)
+  (provider (* rustls-crypto-provider))
+  (index size-t))
+(defar rustls-crypto-provider-load-key rustls-result
+  (provider (* rustls-crypto-provider))
+  (private-key (* unsigned-char))
+  (private-key-len size-t)
+  (signing-key-out (* (* rustls-signing-key))))
+
+;;; Acceptor
 (defar rustls-acceptor-new (* rustls-acceptor))
 
 (defar rustls-acceptor-free void (acceptor (* rustls-acceptor)))
@@ -54,11 +95,7 @@
 (defar rustls-accepted-alert-free void
   (accepted-alert (* rustls-accepted-alert)))
 
-(defar rustls-certificate-get-der rustls-result
-  (cert (* rustls-certificate))
-  (out-der-data (* (* (unsigned 8))))
-  (out-der-len (* size-t)))
-
+;;; Ciphersuite
 (defar rustls-supported-ciphersuite-get-suite (unsigned 16)
   (supported-ciphersuite (* rustls-supported-ciphersuite)))
 
@@ -75,10 +112,16 @@
 (defar rustls-default-ciphersuites-get-entry (* rustls-supported-ciphersuite)
   (i size-t))
 
+(defar rustls-certificate-get-der rustls-result
+  (cert (* rustls-certificate))
+  (out-der-data (* (* (unsigned 8))))
+  (out-der-len (* size-t)))
+
+;;; Certified Key
 (defar rustls-certified-key-build rustls-result
-  (cert-chain (array (unsigned 8)))
+  (cert-chain (* (unsigned 8)))
   (cert-chain-len size-t)
-  (private-key (array (unsigned 8)))
+  (private-key (* (unsigned 8)))
   (private-key-len size-t)
   (certified-key-out (* (* rustls-certified-key))))
 
@@ -93,6 +136,7 @@
 
 (defar rustls-certified-key-free void (key (* rustls-certified-key)))
 
+;;; Root Cert Store
 (defar rustls-root-cert-store-builder-new (* rustls-root-cert-store-builder))
 
 (defar rustls-root-cert-store-builder-add-pem rustls-result
@@ -116,6 +160,7 @@
 (defar rustls-root-cert-store-free void
   (storer (* rustls-root-cert-store)))
 
+;;; Client Cert Verifier
 (defar rustls-client-cert-verifier-free void
   (verifier (* rustls-client-cert-verifier)))
 
@@ -150,7 +195,6 @@
 (defar rustls-web-pki-client-cert-verifier-builder-free void
   (builder (* rustls-web-pki-client-cert-verifier-builder)))
 
-;;; rustls_web_pki_server_cert_verifier
 (defar rustls-web-pki-server-cert-verifier-builder-new (* rustls-web-pki-server-cert-verifier-builder)
   (store (* rustls-root-cert-store)))
 (defar rustls-web-pki-server-cert-verifier-builder-new-with-provider (* rustls-web-pki-server-cert-verifier-builder)
@@ -176,7 +220,7 @@
 (defar rustls-server-cert-verifier-free void
   (verifier (* rustls-server-cert-verifier)))
 
-;;; rustls_client_config
+;;; Client Config
 (defar rustls-client-config-builder-new (* rustls-client-config-builder))
 
 (defar rustls-client-config-builder-new-custom rustls-result
@@ -210,6 +254,12 @@
 (defar rustls-client-config-builder-free void
   (c (* rustls-client-config-builder)))
 
+(defar rustls-client-config-builder-set-key-log-file rustls-result (builder (* rustls-client-config-builder)))
+
+(defar rustls-client-config-builder-set-key-log rustls-result 
+  (builder (* rustls-client-config-builder))
+  (log-cb (* rustls-keylog-log-callback))
+  (will-log-cb (* rustls-keylog-will-log-callback)))
 
 (defar rustls-client-config-free void
   (c (* rustls-client-config)))
@@ -218,7 +268,7 @@
 ;;   (builder (* rustls-client-config-builder))
 ;;   (callback rustls-verifiy-cert-callback))
 
-;;; rustls_client_connection
+;;; Client Connection
 (defar rustls-client-connection-new rustls-result
   (config (* rustls-client-config))
   (server-name c-string)
@@ -318,16 +368,25 @@
   (input (* rustls-slice-str))
   (n size-t))
 
-;;; rustls_server_config
+;;; Server Config
 (defar rustls-server-config-builder-new (* rustls-server-config-builder))
 
 (defar rustls-server-config-builder-free void (config (* rustls-server-config-builder)))
 
-(defar rustls-server-config-builder-build (* rustls-server-config) (builder (* rustls-server-config-builder)))
+(defar rustls-server-config-builder-build rustls-result
+  (builder (* rustls-server-config-builder))
+  (config-out (* (* rustls-server-config))))
+
+(defar rustls-server-config-builder-set-key-log-file rustls-result (builder (* rustls-server-config-builder)))
+
+(defar rustls-server-config-builder-set-key-log rustls-result 
+  (builder (* rustls-server-config-builder))
+  (log-cb (* rustls-keylog-log-callback))
+  (will-log-cb (* rustls-keylog-will-log-callback)))
 
 (defar rustls-server-config-free void (config (* rustls-server-config)))
 
-;;; rustls_server_connection
+;;; Server Connection
 (defar rustls-server-connection-new rustls-result
   (config (* rustls-server-config))
   (conn-out (* (* rustls-connection))))
@@ -352,3 +411,11 @@
   (builder (* rustls-server-config-builder))
   (get-cb rustls-session-store-get-callback)
   (put-cb rustls-session-store-put-callback))
+
+(defar rustls-server-config-builder-set-ignore-client-order rustls-result
+  (builder (* rustls-server-config-builder))
+  (ignore boolean))
+
+(defar rustls-server-config-builder-set-client-verifier void
+  (builder (* rustls-server-config-builder))
+  (verifier (* rustls-client-cert-verifier)))

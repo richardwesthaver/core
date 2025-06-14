@@ -59,7 +59,33 @@
    :rustls-root-cert-store-builder-build
    :rustls-root-cert-store-builder-free
    :rustls-root-cert-store-free
-   :rustls-client-cert-verifier-free))
+   :rustls-client-cert-verifier-free
+   :rustls-server-config-builder-set-hello-callback
+   :rustls-client-hello-select-certified-key
+   :rustls-server-config-builder-set-persistence
+   :rustls-certified-key
+   :rustls-client-hello-userdata
+   :rustls-client-hello
+   :rustls-session-store-userdata
+   :rustls-slice-bytes
+   :rustls-crypto-provider-default
+   :rustls-crypto-provider-ciphersuites-len
+   :rustls-crypto-provider-ciphersuites-get
+   :rustls-crypto-provider-load-key
+   :rustls-aws-lc-rs-crypto-provider
+   :rustls-client-config-builder-set-enable-sni
+   :rustls-keylog-will-log-callback
+   :rustls-keylog-log-callback
+   :rustls-server-config-builder-set-key-log
+   :rustls-server-config-builder-set-key-log-file
+   :rustls-server-config-builder-set-ignore-client-order
+   :rustls-server-config-builder-set-client-verifier
+   :rustls-client-config-builder-set-server-verifier
+   :rustls-certificate
+   :rustls-acceptor
+   :rustls-accepted
+   :rustls-signing-key
+   :rustls-crypto-provider))
 
 (in-package :rustls)
 
