@@ -180,9 +180,9 @@
 
 (define-alien-type rustls-supported-ciphersuite (struct rustls-supported-ciphersuite))
 
-(define-alien-type rustls-web-pki-client-cert-verifier-builder (struct rustls-web-pki-client-cert-verifier-builder))
+(define-alien-type rustls-web-pki-client-cert-verifier (struct rustls-web-pki-client-cert-verifier))
 
-(define-alien-type rustls-web-pki-server-cert-verifier-builder (struct rustls-web-pki-server-cert-verifier-builder))
+(define-alien-type rustls-web-pki-server-cert-verifier (struct rustls-web-pki-server-cert-verifier))
 
 (define-alien-type rustls-str 
     (struct rustls-str
@@ -279,7 +279,7 @@
 
 (define-alien-type rustls-supported-ciphersuite (struct rustls-supported-ciphersuite))
 
-(define-alien-type rustls-web-pki-client-vert-verifier-builder (struct rustls-web-pki-client-vert-verifier-builder))
+(define-alien-type rustls-web-pki-client-cert-verifier-builder (struct rustls-web-pki-client-vert-verifier-builder))
 
 (define-alien-type rustls-web-pki-server-cert-verifier-builder (struct rustls-web-pki-server-cert-verifier-builder))
 

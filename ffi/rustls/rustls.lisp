@@ -134,6 +134,9 @@
   (ocsp-response (* rustls-slice-bytes))
   (clone-key-out (* (* rustls-certified-key))))
 
+(defar rustls-certified-key-keys-match rustls-result
+  (key (* rustls-certified-key)))
+
 (defar rustls-certified-key-free void (key (* rustls-certified-key)))
 
 ;;; Root Cert Store
@@ -190,7 +193,7 @@
 
 (defar rustls-web-pki-client-cert-verifier-builder-build rustls-result
   (builder (* rustls-web-pki-client-cert-verifier-builder))
-  (verifier-out (* (* rustls-client-cert-verifier))))
+  (verifier-out (* (* rustls-web-pki-client-cert-verifier))))
 
 (defar rustls-web-pki-client-cert-verifier-builder-free void
   (builder (* rustls-web-pki-client-cert-verifier-builder)))

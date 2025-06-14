@@ -85,7 +85,14 @@
    :rustls-acceptor
    :rustls-accepted
    :rustls-signing-key
-   :rustls-crypto-provider))
+   :rustls-crypto-provider
+   :rustls-client-cert-verifier
+   :rustls-client-config
+   :rustls-server-cert-verifier
+   :rustls-server-config
+   :rustls-web-pki-server-cert-verifier
+   :rustls-web-pki-client-cert-verifier
+   :rustls-supported-ciphersuite))
 
 (in-package :rustls)
 

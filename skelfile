@@ -31,14 +31,7 @@
  (:mod "bin" (:asd "bin"))
  (:mod "emacs"))
 :rules
-((default 
-  (%stash
-   psl.dat x11.lisp parquet.json
-   build-c
-   build-core 
-   ;; save-std save-prelude save-user fasls
-   ;; save-tests
-   ))
+((default (%stash psl.dat x11.lisp parquet.json build-c build-core))
  (c ()
   (:build (build-zstd-alien build-tree-sitter-alien))
   (:install (install-zstd-alien install-tree-sitter-alien)))
@@ -313,8 +306,8 @@
  (core ()
   (:build (%stash) 
    (with-sbcl (:noinform t :quit t :input t)
-    (setq sb-ext:*block-compile-default* t)
-    (asdf:make :bin/core))
+    (let ((sb-ext:*block-compile-default* t))
+     (asdf:make :bin/core)))
    (move-file "bin/core" ".stash/core"))
   (:build-all (%stash)
    (with-sbcl (:noinform t :quit t)

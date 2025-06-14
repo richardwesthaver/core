@@ -58,6 +58,8 @@ secrets persistence."
   (get (required-argument :get) :type function) 
   (put (required-argument :put) :type function))
 
+;; (defclass rls-session-store () ())
+
 (defun make-rls-session-store-get-callback (fn)
   (declare (ignore fn))
   (alien-callable-function 'default-rls-session-store-get-callback))
@@ -116,15 +118,52 @@ secrets persistence."
        self
        (rustls-result* (rustls::rustls-server-config-builder-build cbuilder (addr cout)))))))
 
-(defclass rls-session-store () ())
+#|
+ * The root cert store can be used in several `rustls_web_pki_client_cert_verifier_builder_new`
+ * instances and must be freed by the application when no longer needed. See the documentation of
+ * `rustls_root_cert_store_free` for details about lifetime.
+|#
+(defclass rls-root-cert-store () 
+  ((certs :initarg :certs :initform nil)
+   (strict :initarg :strict :initform nil)))
 
-(defun build-root-store ()
+(defmethod build ((self rls-root-cert-store) &key) ()
   (let ((sbuilder (rustls::rustls-root-cert-store-builder-new)))
+    (when-let ((certs (slot-value self 'certs)))
+      (let ((strict (slot-value self 'strict)))
+        (dolist (c certs)
+          (etypecase c
+            (pathname (rustls-root-cert-store-builder-load-roots-from-file sbuilder (namestring c) strict))
+            (string 
+             (rustls-root-cert-store-builder-add-pem 
+              sbuilder 
+              (octets-to-alien (sb-ext:string-to-octets c)) (length c) 
+              strict))
+            (octet-vector 
+             (rustls-root-cert-store-builder-add-pem 
+              sbuilder 
+              (octets-to-alien c) (length c) 
+              strict))))))
     (sb-alien:with-alien ((sc (* rustls::rustls-root-cert-store)))
       (unwind-protect (values sc (rustls::rustls-root-cert-store-builder-build sbuilder (sb-alien:addr sc)))
         (rustls::rustls-root-cert-store-builder-free sbuilder)))))
 
-(defclass rls-client-cert-verifier ()
-  ((sap :initform nil :initarg :sap :accessor sap)))
 
-(defclass rls-web-pki-client-cert-verifier (rustls-client-cert-verifier) ())
+(defclass rls-client-cert-verifier ()
+  ((sap :initform nil :initarg :sap :accessor sap)
+   (crls :initform nil :initarg :crls)
+   (end-entity-only :initform nil :initarg :end-entity-only :type boolean)
+   (allow-unknown-revocation-status :initform nil :initarg :allow-unknown-revocation-status :type boolean)
+   (allow-unauthenticated :initform nil :initarg :allow-unauthenticated)))
+
+(defclass rls-web-pki-client-cert-verifier (rls-client-cert-verifier) ())
+
+(defmethod build ((self rls-web-pki-client-cert-verifier) &key store) ()
+  (let ((builder (rustls::rustls-web-pki-client-cert-verifier-builder-new store)))
+    (sb-alien:with-alien ((out (* rustls-web-pki-client-cert-verifier)))
+      (setf (sap self) out)
+      (unwind-protect (values self (rustls-result*
+                                    (rustls::rustls-web-pki-client-cert-verifier-builder-build 
+                                     builder
+                                     (addr out))))
+        (rustls::rustls-web-pki-client-cert-verifier-builder-free builder)))))
