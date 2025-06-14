@@ -2,6 +2,8 @@
 
 ;;; Commentary:
 
+;; ref: https://ffi.rustls.dev/
+
 ;; ref: https://docs.rs/rustls/latest/rustls/
 
 ;; ref: https://certifi.io/
@@ -92,8 +94,14 @@
    :rustls-server-config
    :rustls-web-pki-server-cert-verifier
    :rustls-web-pki-client-cert-verifier
-   :rustls-supported-ciphersuite))
+   :rustls-supported-ciphersuite
+   :rustls-crypto-provider-builder-build-as-default
+   :rustls-crypto-provider-builder-free
+   :rustls-crypto-provider-builder-build
+   :rustls-crypto-provider-builder-set-cipher-suites
+   :rustls-crypto-provider-builder-new-with-base
+   :rustls-crypto-provider-builder-new-from-default))
 
 (in-package :rustls)
 
-(define-alien-loader rustls "/usr/lib/")
+(define-alien-loader rustls "/usr/local/lib/")

@@ -91,6 +91,13 @@
   (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
    ".stash/psl.dat"
    :if-exists :supersede))
+ (ccadb.dat (%stash)
+  (req:fetch "https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormatv2"
+   ".stash/cert.csv")
+  (loop for i from 1994 to (time:timestamp-year (time::today))
+   do (req:fetch 
+       (format nil "https://ccadb.my.salesforce-sites.com/ccadb/AllCertificatePEMsCSVFormat?NotBeforeYear=~A" i) 
+       (format nil ".stash/pem-~A.csv" i) :if-exists :append)))
  (rgb.txt (%stash)
   (req:fetch "https://raw.githubusercontent.com/rgb-x/system/refs/heads/master/root/etc/X11/rgb.txt"
    ".stash/rgb.txt"

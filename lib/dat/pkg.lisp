@@ -5,6 +5,10 @@
   (:use :cl :std :std/seq)
   (:export :dat-error))
 
+(defpackage :dat/asn1
+  (:nicknames :asn1)
+  (:use :cl :std :dat/proto))
+
 (defpackage :dat/sxp
   (:nicknames :sxp)
   (:use :cl :sb-mop :std :ast)
@@ -92,30 +96,31 @@
 
 (defpackage :dat/base64
   (:use :cl :std :dat/proto)
-  (:export #:base64-stream-to-integer
-           #:base64-stream-to-string
-           #:base64-stream-to-stream
-           #:base64-stream-to-usb8-array
-           #:base64-string-to-integer
-           #:base64-string-to-string
-           #:base64-string-to-stream
-           #:base64-string-to-usb8-array
-           #:string-to-base64-string
-           #:string-to-base64-stream
-           #:usb8-array-to-base64-string
-           #:usb8-array-to-base64-stream
-           #:stream-to-base64-string
-           #:stream-to-base64-stream
-           #:integer-to-base64-string
-           #:integer-to-base64-stream
-           ;; Conditions.
-           #:base64-error
-           #:bad-base64-character
-           #:incomplete-base64-data
-           ;; For creating custom encode/decode tables.
-           #:make-decode-table
-           #:+decode-table+
-           #:+uri-decode-table+))
+  (:export 
+   #:base64-stream-to-integer
+   #:base64-stream-to-string
+   #:base64-stream-to-stream
+   #:base64-stream-to-octet-vector
+   #:base64-string-to-integer
+   #:base64-string-to-string
+   #:base64-string-to-stream
+   #:base64-string-to-octet-vector
+   #:string-to-base64-string
+   #:string-to-base64-stream
+   #:octet-vector-to-base64-string
+   #:octet-vector-to-base64-stream
+   #:stream-to-base64-string
+   #:stream-to-base64-stream
+   #:integer-to-base64-string
+   #:integer-to-base64-stream
+   ;; Conditions.
+   #:base64-error
+   #:bad-base64-character
+   #:incomplete-base64-data
+   ;; For creating custom encode/decode tables.
+   #:make-decode-table
+   #:+decode-table+
+   #:+uri-decode-table+))
 
 (defpackage :dat/m3u
   (:nicknames :m3u)
@@ -354,3 +359,11 @@
    :parquet-write
    :parquet-encode
    :parquet-decode))
+
+(pkg:defpkg :dat
+  (:use :cl :std)
+  (:use-reexport :dat/proto :dat/csv :dat/arff
+   :dat/toml :dat/json :dat/sxp :dat/xml
+   :dat/qrcode :dat/midi :dat/svg :dat/dot
+   :dat/tar :dat/css :dat/html :dat/base64 
+   :dat/gif :dat/mime :dat/parquet :dat/ini))

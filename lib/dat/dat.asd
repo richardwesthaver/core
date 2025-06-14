@@ -5,6 +5,7 @@
   :serial t
   :components ((:file "pkg")
                (:file "condition")
+               (:file "asn1")
                (:file "sxp")
                (:file "dot")
                (:file "csv")
@@ -41,8 +42,7 @@
                (:file "midi")
                (:file "png")
                (:file "base64")
-               (:file "qrcode")
-               (:file "dat"))
+               (:file "qrcode"))
   :in-order-to ((test-op (test-op "dat/tests"))))
 
 (defsystem :dat/tests

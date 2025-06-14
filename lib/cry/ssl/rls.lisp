@@ -5,14 +5,75 @@
 ;;; Code:
 (in-package :ssl)
 
+;;; Conditions
 (define-condition rls-condition (ssl-condition) ())
 (define-condition rls-error (ssl-error) ())
 
+;;; Crypto Provider
+(defvar *crypto-provider* nil)
+
+(defun init-rls ()
+  "Initialize RLS - ensures rustls shared library is loaded and that the default
+crypto provider is initialized for the current process."
+  (load-rustls)
+  (with-alien ((b (* rustls::rustls-crypto-provider-builder)))
+    (rustls::rustls-crypto-provider-builder-new-from-default (addr b))
+    (values (setf *crypto-provider* (rustls-crypto-provider-default))
+            (rustls:rustls-result* (rustls::rustls-crypto-provider-builder-build-as-default b)))))
+
+;;; Keys
+(defun build-rls-certified-key (cert-chain private-key 
+                                &optional signing-key (provider (rustls-crypto-provider-default)))
+  "Build and return a RUSTLS-CERTIFIED-KEY alien. Typically used to create a
+RUSTLS-SERVER-CONFIG and then immediately called with
+RUSTLS-CERTIFIED-KEY-FREE. This will transfer ownership of the key to the
+config, which will be freed automatically when RUSTLS-SERVER-CONFIG-FREE is
+called.
+
+CERT-CHAIN is an octet-vector containing a series of PEM-encoded certs, with
+the end-entity (leaf) certificate first.
+
+PRIVATE-KEY is an octet-vector containing a PEM-encoded private key in either
+PKCS#1, PKCS#8 or SEC#1 when compiled with default settings (aws-lc-rs as
+crypto provider).
+
+Optional SIGNING-KEY is an octet-vector containing the PEM-encoded signing
+key, passed to RUSTLS-CRYPTO-PROVIDER-LOAD-KEY using the PROVIDER."
+  (let ((cl (length cert-chain)) (pl (length private-key)))
+    (with-static-vectors ((c cl :initial-contents cert-chain)
+                          (p pl :initial-contents private-key))
+      (with-alien ((out (* rustls-certified-key)))
+        (if signing-key
+            (with-alien ((kout (* rustls-signing-key)))
+              (let ((kres (rustls-result* 
+                           (rustls-crypto-provider-load-key 
+                            provider 
+                            (static-vector-pointer p) pl 
+                            (addr kout)))))
+                (if (eql kres :ok)
+                    (values 
+                     out
+                     (rustls-result* 
+                      (rustls-certified-key-build 
+                       (static-vector-pointer c) cl 
+                       (static-vector-pointer p) pl 
+                       (addr out))))
+                    (values kout kres))))
+            (values 
+             out
+             (rustls-result* 
+              (rustls-certified-key-build 
+               (static-vector-pointer c) cl 
+               (static-vector-pointer p) pl 
+               (addr out)))))))))
+
+;;; Connection
 (defstruct rls-connection 
   (sap nil))
 
 (defaccessor sap ((self rls-connection)) (rls-connection-sap self))
 
+;;; Client
 (defconfig rls-client-config ()
   ((sap :initform nil :initarg :sap :accessor sap)
    (root-store :initform nil :initarg :root-store :accessor root-store)
@@ -41,6 +102,7 @@
        self
        (rustls-result* (rustls::rustls-client-config-builder-build cbuilder (addr cout)))))))
 
+;;; Callbacks
 (define-alien-callable default-rls-hello-callback (* rustls-certified-key)
     ((userdata rustls-client-hello-userdata)
      (hello (* rustls-client-hello)))
@@ -87,6 +149,7 @@ secrets persistence."
   (values (make-rls-session-store-get-callback (rls-server-persistence-get self))
           (make-rls-session-store-put-callback (rls-server-persistence-put self))))
 
+;;; Server
 (defconfig rls-server-config ()
   ((sap :initform nil :initarg :sap :accessor sap)
    (hello :initarg :hello :type function)
@@ -123,6 +186,7 @@ secrets persistence."
  * instances and must be freed by the application when no longer needed. See the documentation of
  * `rustls_root_cert_store_free` for details about lifetime.
 |#
+;;; Root Cert Store
 (defclass rls-root-cert-store () 
   ((certs :initarg :certs :initform nil)
    (strict :initarg :strict :initform nil)))
@@ -149,6 +213,7 @@ secrets persistence."
         (rustls::rustls-root-cert-store-builder-free sbuilder)))))
 
 
+;;; Client Cert Verifier
 (defclass rls-client-cert-verifier ()
   ((sap :initform nil :initarg :sap :accessor sap)
    (crls :initform nil :initarg :crls)

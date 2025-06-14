@@ -77,7 +77,7 @@ with a #\Newline."
      (declare ,@(case input-type
                   (:string
                    '((string input)))
-                  (:usb8-array
+                  (:octet-vector
                    '((type (array (unsigned-byte 8) (*)) input))))
               (fixnum columns)
               (optimize (speed 3) (safety 1) (space 0)))
@@ -162,7 +162,7 @@ with a #\Newline."
                                 ,(case input-type
                                    (:string
                                     '(char-code (the character (char input isource))))
-                                   (:usb8-array
+                                   (:octet-vector
                                     '(the fixnum (aref input isource))))
                                 16))
                           (the fixnum
@@ -171,7 +171,7 @@ with a #\Newline."
                                    (:string
                                     '(char-code (the character (char input
                                                                 (the fixnum (1+ isource))))))
-                                   (:usb8-array
+                                   (:octet-vector
                                     '(the fixnum (aref input (the fixnum
                                                               (1+ isource))))))
                                 8))))
@@ -183,7 +183,7 @@ with a #\Newline."
                           ,(case input-type
                              (:string
                               '(char-code (the character (char input isource))))
-                             (:usb8-array
+                             (:octet-vector
                               '(the fixnum (aref input isource))))
                           16))
                     2)))
@@ -202,7 +202,7 @@ with a #\Newline."
                                ,(case input-type
                                   (:string
                                    '(char-code (the character (char input isource))))
-                                  (:usb8-array
+                                  (:octet-vector
                                    '(aref input isource))))
                           16))
                     (the fixnum
@@ -212,7 +212,7 @@ with a #\Newline."
                                   (:string
                                    '(char-code (the character (char input
                                                                (the fixnum (1+ isource))))))
-                                  (:usb8-array
+                                  (:octet-vector
                                    '(aref input (1+ isource)))))
                           8))
                     (the fixnum
@@ -220,15 +220,15 @@ with a #\Newline."
                             (:string
                              '(char-code (the character (char input
                                                          (the fixnum (+ 2 isource))))))
-                            (:usb8-array
+                            (:octet-vector
                              '(aref input (+ 2 isource))))
                          )))
               4)))))))
 
 (def-*-to-base64-* :string :string)
 (def-*-to-base64-* :string :stream)
-(def-*-to-base64-* :usb8-array :string)
-(def-*-to-base64-* :usb8-array :stream)
+(def-*-to-base64-* :octet-vector :string)
+(def-*-to-base64-* :octet-vector :stream)
 
 
 (defun integer-to-base64-string (input &key (uri nil) (columns 0))
@@ -425,7 +425,7 @@ WHITESPACE can be one of:
                                decode-table)
                  ,@(ecase sink
                      (:stream)
-                     (:usb8-array
+                     (:octet-vector
                       (ecase hose
                         (:stream
                          `((result (make-array 1024
@@ -519,7 +519,7 @@ WHITESPACE can be one of:
                                                    #xFF)))
                                  (declare (type (unsigned-byte 8) byte))
                                  ,@(ecase sink
-                                     (:usb8-array
+                                     (:octet-vector
                                       (ecase hose
                                         (:string
                                          `((setf (aref result rpos) byte)
@@ -545,7 +545,7 @@ WHITESPACE can be one of:
                      (unless (zerop bitcount)
                        (incomplete-input ipos))
                      ,(ecase sink
-                        ((:string :usb8-array)
+                        ((:string :octet-vector)
                          (ecase hose
                            (:string
                             `(if (= rpos (length result))
@@ -568,15 +568,15 @@ WHITESPACE can be one of:
               (:stream
                body)))))))
 
-(define-base64-decoder :string :usb8-array)
+(define-base64-decoder :string :octet-vector)
 (define-base64-decoder :string :string)
 (define-base64-decoder :string :integer)
 (define-base64-decoder :string :stream)
 
-(define-base64-decoder :stream :usb8-array)
+(define-base64-decoder :stream :octet-vector)
 (define-base64-decoder :stream :string)
 (define-base64-decoder :stream :integer)
 (define-base64-decoder :stream :stream)
 
 ;; input-mode can be :string or :stream
-;; input-format can be :character or :usb8
+;; input-format can be :character or :octet-vector
