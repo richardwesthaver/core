@@ -190,7 +190,7 @@
 (defmethod decode-asn1-string (self (type (eql +v-asn1-printablestring+)))
   (let* ((bytes (sb-ext:string-to-octets self)))
     (if (asn1-printable-string-p bytes)
-        (flex:octets-to-string bytes :external-format :ascii)
+        (sb-ext:octets-to-string bytes :external-format :ascii)
         (error 'invalid-asn1-string :type '+v-asn1-printablestring+))))
 
 (defmethod decode-asn1-string (self (type (eql +v-asn1-utf8string+)))

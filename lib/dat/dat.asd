@@ -25,7 +25,6 @@
                (:module "xml"
                 :components
                 ((:file "xml")
-                 (:file "pkg")
                  (:file "svg")
                  (:file "fixml")))
                (:module "html"

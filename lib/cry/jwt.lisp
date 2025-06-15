@@ -69,7 +69,7 @@
     (string (base64-encode (sb-ext:string-to-octets input :external-format :utf-8)))
     ((simple-array (unsigned-byte 8))
      (with-output-to-string (out)
-       (with-input-from-string (in (dat/base64:usb8-array-to-base64-string input :uri t))
+       (with-input-from-string (in (dat/base64:octet-vector-to-base64-string input :uri t))
          (loop for character = (read-char in nil)
                while character do
                  ;; CL-BASE64 always uses padding, which must be removed.
@@ -78,7 +78,7 @@
 
 (defun base64-decode (base-64-string)
   "Takes a base64-uri string and return an array of octets"
-  (dat/base64:base64-string-to-usb8-array
+  (dat/base64:base64-string-to-octet-vector
    ;; Re-pad the string, or CL-BASE64 will get confused
    (concatenate 'string
                 base-64-string
