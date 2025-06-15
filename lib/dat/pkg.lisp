@@ -7,7 +7,11 @@
 
 (defpackage :dat/asn1
   (:nicknames :asn1)
-  (:use :cl :std :dat/proto))
+  (:use :cl :std :dat/proto :aws-lc)
+  (:export
+   #:decode-asn1-string
+   #:try-get-asn1-string-data
+   #:decode-asn1-time))
 
 (defpackage :dat/sxp
   (:nicknames :sxp)

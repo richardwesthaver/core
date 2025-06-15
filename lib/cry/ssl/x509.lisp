@@ -18,8 +18,49 @@
 ;;; Code:
 (defpackage :ssl/x509
   (:nicknames :x509)
-  (:use :cl :std :dat/asn1))
+  (:use :cl :std :aws-lc :dat/asn1 :sb-alien)
+  (:export
+   #:decode-der-octet-vector
+   #:decode-certificate-from-file))
 
 (in-package :ssl/x509)
 
-(defun decode-der-octet-vector (bytes))
+(defun decode-der-octet-vector (bytes)
+  (with-vector-sap (buffer bytes)
+    (with-alien ((buf (* unsigned-char)))
+      (setfa buf buffer)
+      (let ((cert (d2i-x509 nil (addr buf) (length bytes))))
+        (when (null-alien cert)
+          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))))))
+
+(defun decode-pem-octet-vector (bytes)
+  (with-vector-sap (buffer bytes)
+    (with-alien ((buf (* unsigned-char)))
+      (setfa buf buffer)
+      ;; (let ((cert ..))
+      ;; (when (null-alien cert)
+      (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))))
+
+(defun cert-format-from-path (path)
+  "Return the assumed format of PATH - :DER if it is specified as the extension
+else defaults to :PEM."
+  (if (string-equal "der" (pathname-type path))
+      :der
+      :pem))
+
+(defun slurp-stream (stream)
+  "Returns a sequence containing the STREAM bytes; the
+sequence is created by IO/STATIC:MAKE-STATIC-VECTOR.
+therefore it can safely be passed to
+ STD:WITH-VECTOR-SAP."
+  (let ((seq (io/static:make-static-vector (file-length stream))))
+    (read-sequence seq stream)
+    seq))
+
+(defun decode-certificate-from-file (path &key format)
+  (let ((bytes (with-open-file (stream path :element-type '(unsigned-byte 8))
+                 (slurp-stream stream)))
+        (format (or format (cert-format-from-path path))))
+    (case format
+      (:der (decode-der-octet-vector bytes))
+      (:pem (decode-pem-octet-vector bytes)))))
