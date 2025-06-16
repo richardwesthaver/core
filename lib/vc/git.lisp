@@ -72,10 +72,15 @@
     (with-directory path
       (sb-ext:process-exit-code (run-git-command "pull" remote)))))
 
-(defmethod vc-push ((self git-repo) &optional (remote "main"))
+(defmethod vc-push ((self git-repo) &key remote branch set-upstream force all)
   (with-slots (path) self
     (with-directory path
-      (sb-ext:process-exit-code (run-git-command "push" remote)))))
+      (sb-ext:process-exit-code 
+       (run-git-command "push" `(,@(when force '("-f"))
+                                 ,@(when all '("-a"))
+                                 ,@(when set-upstream '("-u"))
+                                 ,@(when remote `(,remote))
+                                 ,@(when branch `(,branch))))))))
 
 (defmethod vc-commit ((self git-repo) msg &key &allow-other-keys)
   (with-slots (path) self
@@ -85,12 +90,32 @@
 (defmethod vc-add ((self git-repo) &rest files)
   (with-slots (path) self
     (with-directory path
-      (sb-ext:process-exit-code (apply #'run-git-command "add" files)))))
+      (sb-ext:process-exit-code (run-git-command "add" files)))))
 
 (defmethod vc-remove ((self git-repo) &rest files)
   (with-slots (path) self
     (with-directory path
       (sb-ext:process-exit-code (apply #'run-git-command "remove" files)))))
+
+(defmethod vc-remote ((self git-repo) (cmd (eql :add)) &key (name "origin") url)
+  (run-git-command "remote" (list "add" name url)))
+
+(defmethod vc-submodule ((self git-repo) (cmd (eql :add)) &key url)
+  (run-git-command "submodule" (list "add" url)))
+
+(defmethod vc-submodule ((self git-repo) (cmd (eql :init)) &key)
+  (run-git-command "submodule" (list "init")))
+
+(defmethod vc-submodule ((self git-repo) (cmd (eql :update)) &key)
+  (run-git-command "submodule" (list "update")))
+
+(defmethod vc-remote ((self git-repo) (cmd null) &key name verbose)
+  (if name
+      (run-git-command "remote" `("show" ,name ,@(when verbose '("-v"))))
+      (run-git-command "remote")))
+
+(defmethod vc-update ((self git-repo) &optional branch)
+  (run-git-command "checkout" (when branch (list branch))))
 
 ;; TODO
 (defmethod vc-addremove ((self git-repo) &rest files)

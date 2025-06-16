@@ -744,15 +744,20 @@ either side, and deletes both sides of a link."
   "Load the org-graph from the org-graph-db."
   (interactive))
 
-(defun org-graph-save (&optional output)
+(defun org-graph-plist ()
+  (list :nodes (mapcar 'unwrap (org-graph-node-list))
+	:edges (mapcar 'unwrap (org-graph-edge-list))))
+
+(defun org-graph-json ()
+  (json-encode-plist (org-graph-plist)))
+
+(defun org-graph-save (&optional output json)
   "Save the org-graph to a sxp file."
   (interactive)
-  (with-temp-buffer 
+  (with-temp-buffer
     (beginning-of-buffer)
-    (pp
-     (list :nodes (mapcar 'unwrap (org-graph-node-list))
-	   :edges (mapcar 'unwrap (org-graph-edge-list)))
-     (current-buffer))
+    (if json (insert (org-graph-json)) 
+      (pp (org-graph-plist) (current-buffer)))
     (write-file (or output org-graph-file))))
 
 (defun org-graph-edge-backlink ()
@@ -819,6 +824,7 @@ either side, and deletes both sides of a link."
   (interactive "ssrc:")
   (when link (org-graph-edge-insert-related (format "github:%s" link) (or desc "src"))))
 
+;;; Dynamic Blocks
 (defun org-dblock-write:links ()
   "Generate a 'links' block for the designated node.")
 

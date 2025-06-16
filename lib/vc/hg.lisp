@@ -137,7 +137,7 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 (defmethod vc-update ((self hg-repo) &optional branch)
   (vc-run self "update" branch))
 
-(defmethod vc-push ((self hg-repo) &optional (remote "default"))
+(defmethod vc-push ((self hg-repo) &key (remote "default"))
   (vc-run self "push" remote))
 
 (defmethod vc-commit ((self hg-repo) msg &key &allow-other-keys)

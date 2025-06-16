@@ -94,8 +94,6 @@
 (defvar *default-connect-timeout* 10)
 (defvar *default-read-timeout* 10)
 (defvar *verbose* nil)
-(defvar *no-ssl* nil)
-
 (defvar *default-proxy* (or #-windows (uiop:getenv "HTTPS_PROXY")
                             #-windows (uiop:getenv "HTTP_PROXY"))
   "If specified will be used as the default value of PROXY in calls to dexador.  Defaults to
@@ -843,12 +841,6 @@ keep-alive-stream), and should handle clean-up of it"
 (make-new-connection-pool)
 
 ;;; backend
-(eval-always
-  (defparameter *ca-bundle*
-    #.(uiop:native-namestring #P"/etc/ca-certificates/extracted/ca-bundle.trust.crt")
-    "The default public root certificates used in requests."))
-
-
 (defun read-until-crlf*2 (stream)
   (with-fast-output (buf)
     (tagbody
@@ -1119,7 +1111,8 @@ keep-alive-stream), and should handle clean-up of it"
                                  :verify-location
                                  ;; TODO 2024-05-22: 
                                  (cond
-                                   (ca-path (uiop:native-namestring ca-path))
+                                   ;; REVIEW 2025-06-16: was uiop:native-namestring
+                                   (ca-path (namestring ca-path))
                                    ((probe-file *ca-bundle*) *ca-bundle*)
                                    ;; In executable environment, perhaps
                                    ;; *ca-bundle* doesn't exist.
@@ -1168,7 +1161,7 @@ keep-alive-stream), and should handle clean-up of it"
                          (insecure *no-ssl*)
                          ca-path
                     &aux
-                    (proxy-uri (and proxy (obj/uri:uri proxy)))
+                    (proxy-uri (and proxy (uri proxy)))
                     (original-user-supplied-stream stream)
                     (user-supplied-stream (if (%wrapped-stream-p stream) (%wrapped-stream-stream stream) stream)))
   (declare (ignorable ssl-key-file ssl-cert-file ssl-key-password

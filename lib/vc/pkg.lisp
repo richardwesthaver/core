@@ -28,7 +28,9 @@
    :*default-vc-kind*
    :*repo-roots*
    :*repo-registry*
-   :*repo-auto-register*))
+   :*repo-auto-register*
+   :vc-remote
+   :vc-submodule))
 
 (defpackage :vc/hg
   (:use :cl :std :cli :sb-bsd-sockets :vc/proto :config)

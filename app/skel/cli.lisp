@@ -75,7 +75,7 @@
                     (skel/core/print::sk-print-slot
                      (find y 
                            (sb-mop:class-slots (class-of *skel-project*)) 
-                           :test 'string= 
+                           :test 'string=
                            :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))
                      *skel-project*
                      :limit nil)

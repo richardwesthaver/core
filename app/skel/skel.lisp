@@ -16,7 +16,8 @@
   (:use :cl :std :cli 
    :cl-user :log :sb-debug :sb-ext 
    :net/proto/dns :cli/tools/sbcl :cli/clap :obj/ast 
-   :vc :rdb :io :net)
+   :vc :rdb :io :net
+   :cli/ed :cli/tools/cc)
   (:use :skel :skel/core :skel/comp :skel/net))
 
 (in-package :skel)

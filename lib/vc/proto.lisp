@@ -39,7 +39,7 @@
 (defgeneric vc-clone (self remote &key &allow-other-keys)
   (:documentation "Clone repo REMOTE into spec SELF."))
 
-(defgeneric vc-push (self &optional remote)
+(defgeneric vc-push (self &key remote)
   (:documentation "Push repo SELF to REMOTE."))
 
 (defgeneric vc-pull (self &optional remote)
@@ -78,6 +78,7 @@ are missing."))
 (defgeneric vc-branches (self))
 (defgeneric vc-remotes (self))
 (defgeneric vc-remote (self cmd &key &allow-other-keys))
+(defgeneric vc-submodule (self cmd &key &allow-other-keys))
 (defgeneric vc-config (self))
 (defgeneric vc-type (self))
 ;;  IDEA 2023-12-29: :ediff t

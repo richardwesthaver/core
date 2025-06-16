@@ -300,8 +300,6 @@
    :*default-read-timeout*
    :*default-proxy*
    :*verbose*
-   :*no-ssl*
-   :*ca-bundle*
    :+socks5-version+
    :*connection-pool*
    :*use-connection-pool*

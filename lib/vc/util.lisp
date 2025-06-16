@@ -78,9 +78,10 @@ we find one, else return NIL."
   (loop for repo in (directory-repos path)
         do (update-repo repo push pull)))
 
-(defmacro with-repo ((sym &rest args &key path init &allow-other-keys) &body body)
-  `(let ((,sym ,@(or (unless (keywordp (car args))
-                       `(pop ,args))
-                     `((make-repo ,path :init ,init)))))
-     (setf *repo* ,sym)
-     ,@body))
+(defmacro with-repo ((sym &rest args &key path init type &allow-other-keys) &body body)
+  `(with-directory ,path
+     (let ((,sym ,@(or (unless (keywordp (car args))
+                         `(pop ,args))
+                       `((make-repo ,path ,@(when init `(:init ,init)) ,@(when type `(:type ,type)))))))
+       (setf *repo* ,sym)
+       ,@body)))
