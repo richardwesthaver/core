@@ -101,7 +101,7 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
               ,last))))))
 
 ;;; Encode
-(definline url-encode-params (params &key (encoding *default-external-format*)
+(definline url-encode-params (params &key (external-format *default-external-format*)
                                      space-to-plus
                                      (percent-encode t))
   (declare (optimize (speed 3)))
@@ -109,7 +109,7 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
   (flet ((maybe-encode (string)
            (if percent-encode
                (url-encode string
-                           :encoding encoding
+                           :external-format external-format
                            :space-to-plus space-to-plus)
                string)))
     (with-output-to-string (s)
@@ -163,7 +163,7 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
           do (setf (aref ary i) (int-to-hexchar i)))
     ary))
 
-(defun url-encode (data &key (encoding *default-external-format*)
+(defun url-encode (data &key (external-format *default-external-format*)
                              (start 0)
                              end
                              space-to-plus)
@@ -171,7 +171,7 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
            (integer start)
            (optimize (speed 3) (safety 2)))
   (let* ((octets (if (stringp data)
-                     (string-to-octets data :external-format encoding :start start :end end)
+                     (string-to-octets data :external-format external-format :start start :end end)
                      data))
          (res (make-array (* (length octets) 3) :element-type 'character :fill-pointer t))
          (i 0))
@@ -202,14 +202,14 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
                (t
                 (setf (aref res i) #\%)
                 (incf i)
-                (replace res (integer-to-hexdigit byte) :start1 i)
+                (replace res (int-to-hexchar byte) :start1 i)
                 (incf i 2))))
     (setf (fill-pointer res) i)
     res))
 
 ;;; Decode
 (definline url-decode-params (data &key (delimiter #\&)
-                                   (encoding *default-external-format*)
+                                   (external-format *default-external-format*)
                                    (start 0)
                                    end
                                    lenient
@@ -223,10 +223,10 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
         (=-mark nil))
     (declare (integer end))
     (std/macs:collecting
-      (labels ((maybe-decode (string encoding start end)
+      (labels ((maybe-decode (string external-format start end)
                  (if percent-decode
                      (url-decode string
-                                 :encoding encoding
+                                 :external-format external-format
                                  :start start
                                  :end end
                                  :lenient lenient)
@@ -239,8 +239,8 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
                                        (when lenient
                                          (go continue)))))
                       (std/macs::collect
-                          (cons (maybe-decode data encoding start-mark =-mark)
-                                (maybe-decode data encoding (1+ =-mark) p))))
+                          (cons (maybe-decode data external-format start-mark =-mark)
+                                (maybe-decode data external-format (1+ =-mark) p))))
                   continue)
                  (setq start-mark nil
                        =-mark nil))
@@ -252,7 +252,7 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
                                        (when lenient
                                          (go continue)))))
                       (std/macs::collect
-                          (cons (maybe-decode data encoding start-mark p)
+                          (cons (maybe-decode data external-format start-mark p)
                                 nil)))
                   continue)
                  (setq start-mark nil)))
@@ -294,7 +294,7 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
              (=-mark (collect-pair p))
              (start-mark (collect-field p)))))))))
 
-(defun url-decode (data &key (encoding *default-external-format*)
+(defun url-decode (data &key (external-format *default-external-format*)
                              (start 0)
                              end
                              lenient)
@@ -345,5 +345,5 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
          (when parsing-encoded-part
            (error 'url-decoding-error)))))
     ;;  TODO 2025-06-13: handle leniency
-    (octets-to-string buffer :end i :external-format encoding)))
+    (octets-to-string buffer :end i :external-format external-format)))
 

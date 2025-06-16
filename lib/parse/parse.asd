@@ -1,7 +1,6 @@
 (defsystem :parse
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
-  :bug-tracker "https://lab.rwest.io/ellis/packy/issues"
   :depends-on (:cl-ppcre :std :sb-cltl2)
   :components ((:file "pkg")
                (:file "bytes")

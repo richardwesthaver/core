@@ -229,7 +229,12 @@
      :cp932)
     (t (or (find charset *external-formats*
                  :test 'string-equal
-                 :key (lambda (x) (car (sb-impl::ef-names x))))
+                 :key (lambda (x) (unless (null x)
+                                    (car (sb-impl::ef-names 
+                                          (typecase x
+                                            (sb-impl::external-format x)
+                                            (null default)
+                                            (list (car x))))))))
            default))))
 
 (defun detect-charset (content-type body)
@@ -373,8 +378,7 @@ keep-alive-stream), and should handle clean-up of it"
         start
         (if (input-chunking-p (chunked-stream stream))
             (prog1
-                (let ((num-read (read-sequence sequence (chunked-stream stream) :start start :end end)))
-                  num-read)
+                (read-sequence sequence (chunked-stream stream) :start start :end end)
               (maybe-close stream (not (input-chunking-p (chunked-stream stream)))))
             start))))
 
@@ -401,9 +405,9 @@ keep-alive-stream), and should handle clean-up of it"
            :initarg :stream
            :initform (error ":stream is required")
            :accessor decoding-stream-of)
-   (encoding :initarg :encoding
-             :initform (error ":encoding is required")
-             :accessor decoding-stream-encoding)
+   (external-format :initarg :external-format
+             :initform (error ":external-format is required")
+             :accessor decoding-stream-external-format)
    (buffer :type (simple-array (unsigned-byte 8) (#.+buffer-size+))
            :initform (make-array +buffer-size+ :element-type '(unsigned-byte 8))
            :accessor decoding-stream-buffer)
@@ -428,11 +432,11 @@ keep-alive-stream), and should handle clean-up of it"
       ;; REVIEW 2025-06-12: was babel fn
       (setf encoding (sb-int:get-external-format (sb-int:keywordicate encoding))))))
 
-(defun make-decoding-stream (stream &key (encoding :utf-8)
+(defun make-decoding-stream (stream &key (external-format :utf-8)
                                          (on-close))
   (let ((decoding-stream (make-instance 'decoding-stream
                            :stream stream
-                           :encoding encoding
+                           :external-format external-format
                            :on-close on-close)))
     (dec-fill-buffer decoding-stream)
     decoding-stream))
@@ -458,9 +462,10 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (optimize speed))
   (when (/= -1 (the fixnum (decoding-stream-buffer-end-position stream)))
     (return-from needs-to-fill-buffer-p nil))
-  (with-slots (buffer-position encoding) stream
+  (with-slots (buffer-position external-format) stream
     (< (- +buffer-size+ (the fixnum buffer-position))
-       (the fixnum (babel-encodings:enc-max-units-per-char encoding)))))
+       ;; REVIEW 2025-06-15: used to be babel explicit test for max char width
+       (the fixnum (if (sb-impl::variable-width-external-format-p external-format) 4 2)))))
 
 (defmethod stream-read-char ((stream decoding-stream))
   (declare (optimize speed))
@@ -469,23 +474,32 @@ keep-alive-stream), and should handle clean-up of it"
   (when (= (the fixnum (decoding-stream-buffer-end-position stream))
            (the fixnum (decoding-stream-buffer-position stream)))
     (return-from stream-read-char :eof))
-  (with-slots (buffer buffer-position encoding last-char last-char-size)
+  (with-slots (buffer buffer-position external-format last-char last-char-size)
       stream
     (declare (fixnum buffer-position))
-    (let* ((mapping (babel-encodings:lookup-mapping babel::*string-vector-mappings* encoding))
-           (counter (babel-encodings:code-point-counter mapping)))
-      (declare (type function counter))
-      (multiple-value-bind (chars new-end)
-          (funcall counter buffer buffer-position +buffer-size+ 1)
-        (declare (ignore chars) (fixnum new-end))
-        (let ((string (make-string 1 :element-type 'character))
-              (size (the fixnum (- new-end buffer-position))))
-          (funcall (the function (babel-encodings:decoder mapping))
-                   buffer buffer-position new-end string 0)
-          (setf buffer-position new-end
-                last-char (aref string 0)
-                last-char-size size)
-          (aref string 0))))))
+    ;; (let* ((mapping (print (babel-encodings:lookup-mapping babel::*string-vector-mappings* encoding)))
+    ;; (counter (print (babel-encodings:code-point-counter mapping))))
+    ;; (declare (type function counter))
+    ;; REVIEW 2025-06-15: TEST THIS HEAVILY - removing a large code path here
+    (let* ((c (schar (funcall 
+                     (sb-impl::ef-octets-to-string-fun external-format) 
+                     buffer buffer-position 
+                     (1+ buffer-position) 
+                     nil)
+                    0))
+          (size (funcall (the function (sb-impl::ef-bytes-for-char-fun external-format)) c)))
+      (declare (fixnum size))
+      ;; (multiple-value-bind (chars new-end)
+      ;;     (funcall counter buffer buffer-position +buffer-size+ 1)
+      ;;   (declare (ignore chars) (fixnum new-end))
+      ;;   (let ((string (make-string 1 :element-type 'character))
+      ;;         (size (the fixnum (- new-end buffer-position))))
+      ;;     (funcall (the function (print (babel-encodings:decoder mapping)))
+      ;;              buffer buffer-position new-end string 0)
+      (setf buffer-position (+ buffer-position size)
+            last-char c
+            last-char-size size)
+      c)))
 
 (defmethod stream-unread-char ((stream decoding-stream) char)
   (let ((last-char (decoding-stream-last-char stream)))
@@ -522,7 +536,7 @@ keep-alive-stream), and should handle clean-up of it"
     (if charset
         (handler-case
             (if (streamp body)
-                (make-decoding-stream body :encoding charset :on-close on-close)
+                (make-decoding-stream body :external-format charset :on-close on-close)
                 (sb-ext:octets-to-string body :external-format charset))
           (character-decoding-error (e)
             (warn 
@@ -544,7 +558,7 @@ keep-alive-stream), and should handle clean-up of it"
                key
                utf8-filename-p
                (if utf8-filename-p
-                   (url-encode filename :encoding :utf-8)
+                   (url-encode filename :external-format :utf-8)
                    filename)
                #\Return #\Newline)))
     (otherwise

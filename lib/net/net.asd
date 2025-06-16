@@ -3,8 +3,7 @@
   :maintainer "ellis <ellis@rwest.io>"
   :depends-on 
   (:dat :obj :io :parse
-   :babel :rt :std :cli 
-   :log :cry
+   :rt :std :cli :log :cry
    (:feature :swank :swank)
    (:feature :swank :swank-client)
    (:feature :swank :swank-crew))
