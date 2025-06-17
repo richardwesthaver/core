@@ -107,13 +107,12 @@ then chipz."
         (is eql :eof (read-byte in-stream nil :eof))))
     (is equalp data round-trip-data)))
 
-(define-test compressing-stream-closed-error
-(flexi-streams:with-output-to-sequence (wrapped-stream)
-(let ((out-stream (salza2:make-compressing-stream 'salza2:gzip-compressor wrapped-stream)))
-(write-byte 1 out-stream)
-(close out-stream)
-(fail (write-byte 2 out-stream) 'salza2:stream-closed-error))))
-|#
+(deftest compressing-stream-closed-error ()
+  (with-output-to-string (s)
+    (let ((out-stream (make-compressing-stream :gzip s)))
+      (write-byte 1 out-stream)
+      (close out-stream)
+      (signals 'error (write-byte 2 out-stream)))))
 
 ;;; Deflate
 (deftest gzip ())
