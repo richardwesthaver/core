@@ -392,7 +392,7 @@ within its dynamic extent. The static vector is freed upon exit."
 
 (defmacro with-static-streams (((var &rest args) &rest more-clauses)
                                &body body)
-  "Allocate multiple static vectors at once."
+  "Allocate multiple static streams at once."
   `(with-static-stream (,var ,@args)
      ,@(if more-clauses
            `((with-static-streams ,more-clauses

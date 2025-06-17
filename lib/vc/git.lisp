@@ -76,8 +76,8 @@
   (with-slots (path) self
     (with-directory path
       (sb-ext:process-exit-code 
-       (run-git-command "push" `(,@(when force '("-f"))
-                                 ,@(when all '("-a"))
+       (run-git-command "push" `(,@(when force '("--force"))
+                                 ,@(when all '("--all"))
                                  ,@(when set-upstream '("-u"))
                                  ,@(when remote `(,remote))
                                  ,@(when branch `(,branch))))))))

@@ -55,58 +55,70 @@
    (count
     :initarg :count
     :reader peeked-count)
-   (bytes
-    :reader peeked-bytes)
-   (unread-bytes
+   (peeked
+    :reader peeked)
+   (unread
     :initarg :count
-    :accessor unread-peeked-bytes))
+    :accessor unread-peeked))
   (:documentation
    "A stream that makes the first N elements available both via normal read
-functions and via PEEKED-BYTES."))
+functions and via PEEKED."))
 
 (defmethod initialize-instance :after ((self peeking-input-stream)
-                                       &key stream count
-                                         (start (ignore-errors (file-position stream))))
+                                       &key stream (count 4)
+                                            (element-type 'octet)
+                                            (start (ignore-errors (file-position stream))))
+  (unless stream
+    (std:required-argument :stream))
   (setf (slot-value self 'start) start)
-  (let ((buffer (make-array count :element-type '(unsigned-byte 8))))
+  (let ((buffer (make-array count :element-type element-type)))
     (read-sequence buffer stream)
-    (setf (slot-value self 'bytes) buffer)))
+    (setf (slot-value self 'peeked) buffer)))
 
-;; (defmethod stream-element-type ((stream peeking-input-stream))
-;;   '(unsigned-byte 8))
+(defmethod stream-element-type ((self peeking-input-stream))
+  (if (zerop (peeked-count self))
+      (stream-element-type (stream-of self))
+      (array-element-type (peeked self))))
 
 (defmethod stream-file-position ((stream peeking-input-stream) &optional spec)
   (when (start stream)
     (if spec
-        (if (zerop (unread-peeked-bytes stream))
+        (if (zerop (unread-peeked stream))
             (file-position (stream-of stream) spec)
             nil)
-        (if (zerop (unread-peeked-bytes stream))
+        (if (zerop (unread-peeked stream))
             (file-position (stream-of stream))
-            (+ (- (peeked-count stream) (unread-peeked-bytes stream))
+            (+ (- (peeked-count stream) (unread-peeked stream))
                (start stream))))))
 
 (defmethod stream-read-byte ((stream peeking-input-stream))
-  (if (zerop (unread-peeked-bytes stream))
+  (if (zerop (unread-peeked stream))
       (read-byte (stream-of stream))
-      (prog1 (aref (peeked-bytes stream) (- (length (peeked-bytes stream))
-                                            (unread-peeked-bytes stream)))
-        (decf (unread-peeked-bytes stream)))))
+      (prog1 (aref (peeked stream) (- (length (peeked stream))
+                                            (unread-peeked stream)))
+        (decf (unread-peeked stream)))))
+
+(defmethod stream-read-char ((stream peeking-input-stream))
+  (if (zerop (unread-peeked stream))
+      (read-char (stream-of stream))
+      (prog1 (aref (peeked stream) (- (length (peeked stream))
+                                      (unread-peeked stream)))
+        (decf (unread-peeked stream)))))
 
 (defmethod stream-read-sequence ((stream peeking-input-stream)
                                  sequence &optional start end)
-  (if (zerop (unread-peeked-bytes stream))
+  (if (zerop (unread-peeked stream))
       (read-sequence sequence (stream-of stream) :start start :end end)
       (let* ((end (or end (length sequence)))
              (buffer-size (- end start))
-             (num-unread-peeked-bytes-remaining (unread-peeked-bytes stream)))
-        (setf (subseq sequence start end) (peeked-bytes stream))
-        (decf (unread-peeked-bytes stream) buffer-size)
-        (if (minusp (unread-peeked-bytes stream))
+             (num-unread-peeked-remaining (unread-peeked stream)))
+        (setf (subseq sequence start end) (peeked stream))
+        (decf (unread-peeked stream) buffer-size)
+        (if (minusp (unread-peeked stream))
             (prog1 (read-sequence sequence (stream-of stream)
-                                  :start num-unread-peeked-bytes-remaining :end end)
-              (setf (unread-peeked-bytes stream) 0))
-            (+ start num-unread-peeked-bytes-remaining)))))
+                                  :start num-unread-peeked-remaining :end end)
+              (setf (unread-peeked stream) 0))
+            (+ start num-unread-peeked-remaining)))))
 
 ;;; Alien Streams
 (defclass alien-stream (io-stream sb-gray:fundamental-stream)

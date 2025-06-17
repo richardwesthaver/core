@@ -118,7 +118,7 @@
    :emacs-find-file))
 
 (defpkg :cli/multi
-  (:use :cl :std :clap)
+  (:use :cl :std)
   (:export
    #:define-multi-main
    #:make-symlinks))

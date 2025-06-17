@@ -146,28 +146,27 @@
          (,out (output ,stream)))
      ,@body))
 
-(defmethod initialize-instance :after ((self zstd-decompressing-stream) 
+(defmethod initialize-instance :after ((self zstd-decompressing-stream)
                                        &key (input-size (zstd-dstreaminsize))
                                             (output-size (zstd-dstreamoutsize)))
   (setf (input-size self) input-size
         (output-size self) output-size)
-  ;; returns recommended 
-  (zstd-initdstream (dstream self)))
+  ;; returns recommended
+  (print (zstd-initdstream (dstream self))))
 
 (defmethod close ((stream zstd-decompressing-stream) &key &allow-other-keys)
   ;; (sb-alien:free-alien (input stream))
   ;; (sb-alien:free-alien (output stream))
   (zstd-freedstream (dstream stream)))
 
-(defmethod stream-read-sequence ((self zstd-decompressing-stream) (seq vector) &key start end)
+(defmethod sb-gray:stream-read-sequence ((self zstd-decompressing-stream) (seq vector) &optional start end)
   (declare (ignore start end))
-  (with-zstd-stream self (z i o)
-    (setf
-     (zstd-outbuffer-dst o)
-     (octets-to-alien seq)
-     (zstd-outbuffer-size o)
-     (input-size self))
-    (zstd-decompressstream z o i)))
+  (with-vector-sap (sp seq)
+    (with-zstd-stream self (z i o)
+      (setf
+       (zstd-outbuffer-dst o) sp
+       (zstd-outbuffer-size o) (output-size self))
+      (zstd-decompressstream z o i))))
 
 (defclass zstd-compressor (compressor) ()
   (:default-initargs

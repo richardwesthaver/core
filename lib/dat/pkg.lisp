@@ -23,8 +23,7 @@
    :sxpp
    :read-sxp-file :write-sxp-file
    :read-sxp-string :write-sxp-string
-   :make-sxp
-   :file-read-forms))
+   :file-read-forms :make-sxp))
 
 (defpackage :dat/dot
   (:nicknames :dot)

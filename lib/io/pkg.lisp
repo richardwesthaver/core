@@ -31,7 +31,7 @@
   (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
   (:export :io-stream-error :io-stream :make-bound-stream
    :bound-input-stream :ensure-file-position
-   :peeking-input-stream :peeked-bytes
+   :peeking-input-stream :peeked
    :peeked-count
    :peeked-size))
 
