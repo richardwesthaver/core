@@ -2,12 +2,12 @@
 
 ;;; Code:
 (defpackage :bin/rdb 
-  (:use :cl :rdb :std :cli/clap :log :clap :db))
+  (:use :cl :rdb :std :cli :log :clap :db))
 (in-package :bin/rdb)
 (load-package-cli :rdb)
 (defmain start-rdb ()
   (let ((*log-level* :info))
-    (with-cli ((package-cli) :args (cli:args))
+    (with-cli ((package-cli) :args (args))
       (when (find-opt "help" *cli*)
         (print-help *cli*)
         (sb-ext:exit :code 0))

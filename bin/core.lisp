@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :bin/core
-  (:use :cl :std :sb-ext :cli :log))
+  (:use :cl :std :sb-ext :cli :clap :log))
 
 (in-package :bin/core)
 

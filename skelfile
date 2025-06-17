@@ -46,7 +46,6 @@
    (vc-export (sk-vc *skel-project*) tmp)
    (setf *shell-directory* tmp)
    (with-repo (r :path tmp :type :git)
-    (inspect r)
     (vc-remote r :add :name "cb" :url "ssh://git@codeberg.org/c-c/core")
     (vc-remote r :add :name "gh" :url "ssh://git@github.com/richardwesthaver/core")
     ;; pretty gross hack to fix broken tree

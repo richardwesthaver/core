@@ -67,10 +67,10 @@
   (with-slots (path) self
     (sb-ext:process-exit-code (run-git-command "clone" (list remote path)))))
 
-(defmethod vc-pull ((self git-repo) &optional (remote "main"))
+(defmethod vc-pull ((self git-repo) &optional remote)
   (with-slots (path) self
     (with-directory path
-      (sb-ext:process-exit-code (run-git-command "pull" remote)))))
+      (sb-ext:process-exit-code (run-git-command "pull" `(,@(when remote (list remote))))))))
 
 (defmethod vc-push ((self git-repo) &key remote branch set-upstream force all)
   (with-slots (path) self

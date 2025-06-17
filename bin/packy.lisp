@@ -30,7 +30,7 @@
           :thunk pk-show)))
 
 (defun run ()
-  (with-cli (*packy-cli* :args (cli:args))
+  (with-cli (*packy-cli* :args (args))
     (do-cmd *packy-cli*)))
 
 (defmain start-packy ()

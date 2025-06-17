@@ -5,50 +5,38 @@
 ;;; Code:
 (in-package :std-user)
 
-(defpkg :cli/tools
-  (:nicknames :tools)
-  (:use :cl :std)
-  (:use-reexport :cli/tools/term :cli/tools/tmux :cli/tools/cc
-   :cli/tools/pacman :cli/tools/sys :cli/tools/rust :cli/tools/sbcl 
-   :cli/tools/net))
-
 (defpkg :cli
   (:use :cl :std :log)
   (:import-from :time :format-timestring :timestamp)
-  (:use-reexport :cli/shell :cli/ansi :cli/prompt
-   :cli/progress :cli/spark :cli/prompt :cli/ed
-   :cli/env :cli/repl :cli/clap :cli/multi :cli/clap/obj)
-  (:export :*sudo* :sudo-prompt :sudo? :when-sudo :if-sudo :with-sudo))
+  #.`(:use-reexport ,@cli/int:*cli-packages*)
+  (:export :sudop :with-sudo :pretty-log-message))
 
-(defpkg :cli-user (:use :cl :std :cli))
+(defpkg :cli/tools
+  (:nicknames :tools)
+  (:use :cl :std)
+  #.`(:use-reexport ,@cli/int:*cli-tool-packages*))
+
+(defpkg :cli/clap
+  (:nicknames :clap)
+  #.`(:use-reexport ,@cli/int:*cli-clap-packages*))
+
+(defpkg :cli-user 
+  (:use :cl :std :cli :tools :clap))
 
 (in-package :cli)
 (pushnew :cli *features*)
 
 ;;; Sudo
 (defun sudop () 
+  "Return T if user appears to be root."
   (equal (namestring (user-homedir-pathname))
          (sb-unix::uid-homedir 0)))
 
-(defparameter *sudo* (sudop)
-  "Advise the Lisp system that we are allowed to use sudo for root access to shell commands.")
-
-;; (defun %sudop (val) 
-;;   (and (characterp val) (char= val #\y)))
-
-;; (defprompt sudo
-;;   :prompt "allow root privileges?"
-;;   :collection '(#\y #\n) 
-;;   :default #\n 
-;;   :reader #'read-char
-;;   :test #'char=
-;;   :hook #'%sudop)
-
-(defmacro if-sudo (then &optional else)
-  `(if *sudo* ,then ,else))
-
-(defmacro when-sudo (&body then)
-  `(when *sudo* ,@then))
+(defmacro with-sudo (&body body)
+  "Eval BODY with sudo privileges."
+  `(progn
+     (sb-ext:run-program "sudo" :input t :output t)
+     ,@body))
 
 ;;; Pretty Log Messages
 (defclass pretty-log-message (simple-log-message) ())

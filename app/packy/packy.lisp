@@ -15,4 +15,4 @@
 (in-package :packy)
 
 #+cli
-(cli:load-package-cli *packy-cli*)
+(clap:load-package-cli *packy-cli*)

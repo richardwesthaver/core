@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :bin/swm
-  (:use :cl :std :log :gui :cli)
+  (:use :cl :std :log :gui :cli :clap)
   (:export
    #:start-swm
    #:*swm-cli*))

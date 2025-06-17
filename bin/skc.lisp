@@ -5,10 +5,7 @@
 ;;; Code:
 (in-package :std-user)
 (defpkg :bin/skc
-  (:use :cl :std :cli :skel/net/client)
-  (:import-from :cli
-   :define-cli :defmain
-   :with-cli)
+  (:use :cl :std :cli :skel/net/client :clap)
   (:nicknames :skc))
 
 (in-package :bin/skc)

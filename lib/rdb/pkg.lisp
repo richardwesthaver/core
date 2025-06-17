@@ -158,7 +158,7 @@
    :wbwi-put-kv-cf))
 
 (defpackage :rdb/cli
-  (:use :cl :std :cli :rdb :db :std/seq)
+  (:use :cl :std :cli :clap :rdb :db :std/seq)
   (:export :*rdb-cli*))
 
 (in-package :rdb)

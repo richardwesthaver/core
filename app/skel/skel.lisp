@@ -13,11 +13,10 @@
   (:export :with-project))
 
 (pkg:defpkg :sk-user
-  (:use :cl :std :cli 
+  (:use :cl :std :cli :clap :tools
    :cl-user :log :sb-debug :sb-ext 
-   :net/proto/dns :cli/tools/sbcl :cli/clap :obj/ast 
-   :vc :rdb :io :net
-   :cli/ed :cli/tools/cc)
+   :net/proto/dns :obj/ast 
+   :vc :rdb :io :net)
   (:use :skel :skel/core :skel/comp :skel/net))
 
 (in-package :skel)
@@ -25,20 +24,20 @@
 (pushnew :skel *features*)
 
 (progn
-  (cli:defcmd skc-db ())
+  (clap:defcmd skc-db ())
   #+clim
-  (cli:defcmd skc-view ()
-    (if cli:*args* 
-        (let ((stuff (loop for a in cli:*args*
+  (clap:defcmd skc-view ()
+    (if clap:*args* 
+        (let ((stuff (loop for a in clap:*args*
                            collect (skel::sk-project-slot a))))
           (skel/tools/view:sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
         (skel/tools/view:sk-view (if (boundp '*skel-project*) *skel-project*
                      (if (boundp '*skel-user-config*) *skel-user-config*
                          (if (boundp '*skel-system-config*) *skel-system-config*
                              (skel-simple-error "skel config files not installed")))))))
-  (cli:defcmd skc-net ())
-  (cli:defcmd skc-serve ())
-  (cli:load-package-cli 
+  (clap:defcmd skc-net ())
+  (clap:defcmd skc-serve ())
+  (clap:load-package-cli 
    *skel-cli*
    :cmds 
    ((:name db :description "interact with the skel database" :thunk skc-db)

@@ -148,7 +148,7 @@
   (:use-reexport :mpk :mpk/db :mpk/mpd))
 
 (defpackage :mpk/cli
-  (:use :cl :std :log :mpk :cli)
+  (:use :cl :std :log :mpk :cli :clap)
   (:export
    #:*mpk-cli*))
 

@@ -3,7 +3,11 @@
 ;; 
 
 ;;; Code:
-(defpackage :cli/clap/vars
+(in-package :cli/int)
+(defparameter *cli-clap-packages* nil)
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cli-clap-packages* :test 'string=)))
+
+(defpkg :cli/clap/vars
   (:use :cl)
   (:export :*cli-group-separator* :*no-exit* :*default-cli-def*
    :*default-cli-class* :*cli-opt-kinds* :*cli* :*opts*
@@ -11,7 +15,7 @@
    :*cli-package-table*
    :*no-debug*))
 
-(defpackage :cli/clap/util
+(defpkg :cli/clap/util
   (:use :cl :std :log :sb-ext :cli/clap/vars)
   (:export :args :arg0 :long-opt-p
    :short-opt-p :group-opt-p :opt-string-prefix-eq :cli-opt-kind-p
@@ -21,14 +25,14 @@
    :default-cmd-thunk
    :default-opt-thunk))
 
-(defpackage :cli/clap/macs
+(defpkg :cli/clap/macs
   (:use :cl :std :log :sb-ext :cli/clap/util :cli/clap/vars)
   (:export :defopt :defcmd
    :make-opt-parser :with-cli-handlers :make-shorty
    :argp
    :parse-cli-lambda-list))
 
-(defpackage :cli/clap/proto
+(defpkg :cli/clap/proto
   (:use :cl :std :log :sb-ext)
   (:import-from :cli/clap/util :args)
   (:export :proc-args :clap-error :find-short-opts
@@ -50,12 +54,12 @@
    :opts
    :cmds))
 
-(defpackage :cli/clap/ast
+(defpkg :cli/clap/ast
   (:use :cl :std :log :obj/ast)
   (:export :cli-node :make-cli-node :cli-ast
    :make-cli-ast :cli-node-kind :cli-node-form))
 
-(defpackage :cli/clap/obj
+(defpkg :cli/clap/obj
   (:use :cl :std :log
    :sb-ext :cli/clap/proto :cli/clap/macs :cli/clap/util
    :cli/clap/vars :cli/clap/ast :cli/clap/util)
@@ -88,7 +92,7 @@
    :level-opt
    :keep-ast-opt))
 
-(defpackage :cli/clap/simple
+(defpkg :cli/clap/simple
   (:use :cl :std :log :sb-ext)
   (:import-from :cli/ansi :.ris)
   (:import-from :uiop :println)
@@ -96,8 +100,4 @@
   (:shadowing-import-from :sb-ext :exit)
   (:export))
 
-(pkg:defpkg :cli/clap
-  (:nicknames :clap)
-  (:use-reexport :cli/clap/proto :cli/clap/obj :cli/clap/vars
-   :cli/clap/simple :cli/clap/util :cli/clap/macs :cli/clap/ast
-   :cli/clap/vars))
+(setq *defpkg-hook* nil)

@@ -55,7 +55,7 @@
       (terpri))))
 
 (defcmd mpk-daemon* ()
-  (with-cli (*mpkd-cli* :args (cdr (cli:args)))
+  (with-cli (*mpkd-cli* :args (cdr (args)))
     (do-opts *mpkd-cli*)
     (do-cmd *mpkd-cli*)))
 
@@ -90,4 +90,4 @@
 (defmain start-mpk ()
   (with-cli ((package-cli :mpk) :args (args))
     (with-package :mpk-user
-      (cli:do-cmd cli:*cli*))))
+      (do-cmd *cli*))))

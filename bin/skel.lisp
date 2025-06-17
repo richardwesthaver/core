@@ -4,30 +4,30 @@
 ;;  level. :INPUT :WAIT :OUTPUT
 (in-package :std-user)
 (defpkg :bin/skel
-  (:use :cl :std :cli :cli/clap/obj
-   :vc :sb-ext :skel :log :cli/clap/util
+  (:use :cl :std :cli :clap
+   :vc :sb-ext :skel :log
    :obj/ast #+clim :skel/tools/view
    :db :rdb :schema :config :build :packy :krypt :skel/cli)
   (:import-from :cli/shell :*shell-input* :*shell-directory*)
-  (:use :cli/tools/sbcl :cli/prompt))
+  (:use :cli/tools/sbcl))
 
 (in-package :bin/skel)
 (in-readtable :shell)
 
 ;;; Nested Commands
 (defcmd skc-vc* ()
-  (with-cli (*vc-cli* :args (cdr (cli:args)))
+  (with-cli (*vc-cli* :args (cdr (args)))
     (with-current-vc-root (*repo* *default-pathname-defaults*)
       (do-opts *vc-cli*)
       (do-cmd *vc-cli*))))
 
 (defcmd skc-pk* ()
-  (with-cli (*packy-cli* :args (cdr (cli:args)))
+  (with-cli (*packy-cli* :args (cdr (args)))
     (do-opts *packy-cli*)
     (do-cmd *packy-cli*)))
 
 (defcmd skc-kr* ()
-  (with-cli (*krypt-cli* :args (cdr (cli:args)))
+  (with-cli (*krypt-cli* :args (cdr (args)))
     (do-opts *krypt-cli*)
     (blake3::load-blake3)
     (do-cmd *krypt-cli*)))
@@ -50,7 +50,7 @@
   (in-package :sk-user)
   (in-readtable :shell)
   (let ((sb-debug:*backtrace-frame-count* 8))
-    (with-cli ((package-cli :bin/skel) :args (cli:args))
+    (with-cli ((package-cli :bin/skel) :args (args))
       (do-opts *cli*)
       ;; (rocksdb:load-rocksdb)
       (init-skel)

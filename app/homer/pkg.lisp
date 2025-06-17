@@ -34,7 +34,7 @@
 
 #+cli
 (defpackage :homer/cli
-  (:use :cl :std :log :homer/core :cli :ast)
+  (:use :cl :std :log :homer/core :cli :ast :clap)
   (:export :*homer-cli*))
 
 #+gui

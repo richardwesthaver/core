@@ -13,7 +13,7 @@
 
 ;;; Code:
 (defpackage :krypt
-  (:use :cl :std :cry :cry/b3 :sxp :id :ast :config :secret :cli)
+  (:use :cl :std :cry :cry/b3 :sxp :id :ast :config :secret :cli :clap)
   (:export :krypt-error :*default-user-kryptrc*
            :krypt-config :load-kryptrc
            :krypt-condition

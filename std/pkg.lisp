@@ -11,6 +11,7 @@
 (in-package :std-int)
 (defparameter *std-packages* `(,(package-name *package*)))
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *std-packages* :test 'string=)))
+
 (defpkg :std/sym
   (:use :cl)
   (:mix :sb-int)
@@ -73,7 +74,7 @@
    :topological-sort :match-lambda-lists
    :toposort))
 
-(defpackage :std/prim
+(defpkg :std/prim
   (:use :cl :std/list)
   (:import-from :std/sym :symb :with-gensyms)
   (:import-from :std/named-readtables :parse-body)
@@ -93,7 +94,7 @@
    :using-gensyms
    :binding-gensyms))
 
-(defpackage :std/condition
+(defpkg :std/condition
   (:use :cl)
   (:shadowing-import-from :asdf :error-name)
   (:import-from :std/list :flatten :removef)

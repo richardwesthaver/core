@@ -61,7 +61,7 @@
            :directory-repos))
    
 (defpackage :vc/cli
-  (:use :cl :std :cli :vc/proto :vc/git :vc/hg :vc/util)
+  (:use :cl :std :cli :clap :vc/proto :vc/git :vc/hg :vc/util)
   (:export :*vc-cli*))
 
 (pkg:defpkg :vc

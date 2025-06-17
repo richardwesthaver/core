@@ -7,5 +7,5 @@
 
 #+cli
 (progn
-  (cli:load-package-cli homer/cli:*homer-cli*)
+  (clap:load-package-cli homer/cli:*homer-cli*)
   (use-package :homer/cli))

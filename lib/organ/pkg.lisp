@@ -139,5 +139,5 @@
    :open-org-graph-db :og-get :org-graph-values :org-graph-files-scrape))
 
 (defpackage :organ/cli
-  (:use :cl :std :organ :cli)
+  (:use :cl :std :organ :cli :clap)
   (:export :*organ-cli*))

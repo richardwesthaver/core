@@ -40,7 +40,7 @@ When you save an executable lisp image with this function you should
 arrange for symlinks for each handled value of (ARG0) to be generated
 ."
   `(defun ,name ()
-     (case (keywordicate (string-upcase (pathname-name (clap:arg0))))
+     (case (keywordicate (string-upcase (pathname-name (cli/clap/util:arg0))))
        ,@mains
        (t ,default))))
 

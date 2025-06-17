@@ -12,12 +12,12 @@
 
 ;;; Code:
 (defpackage :bin/gen
-  (:use :cl :syn/cli :std :cli/clap :log :clap :db :syn/gen))
+  (:use :cl :syn/cli :std :clap :log :clap :db :syn/gen))
 
 (in-package :bin/gen)
 
 (defmain start-gen ()
-  (with-cli (*gen-cli* :args (cli:args))
+  (with-cli (*gen-cli* :args (args))
     (do-opts *cli*)
     (with-codegen (or *gen* :c)
       (do-cmd *cli*))))

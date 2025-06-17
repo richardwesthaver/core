@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :bin/mpk
-  (:use :cl :std :log :cli :mpk :homer/core)
+  (:use :cl :std :log :cli :clap :mpk :homer/core)
   (:export
    #:start-mpk))
 (in-package :bin/mpk)
@@ -14,7 +14,7 @@
 (defmain start-mpk ()
   (mpk-ensure-directories)
   (load-mpkrc)
-  (with-cli (mpk/cli:*mpk-cli* :args (cli:args))
-    (do-cmd cli:*cli*)))
+  (with-cli (mpk/cli:*mpk-cli* :args (args))
+    (do-cmd *cli*)))
 
   

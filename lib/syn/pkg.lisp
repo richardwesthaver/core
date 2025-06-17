@@ -68,7 +68,7 @@
   (:use-reexport :syn/lint :syn/ts :syn/lang :syn/gen :syn/tempo))
 
 (defpackage :syn/cli
-  (:use :cl :std :syn :cli :log)
+  (:use :cl :std :syn :cli :clap :log)
   (:export :*syn-cli*
            :*gen-cli*))
 

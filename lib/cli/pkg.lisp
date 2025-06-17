@@ -18,12 +18,23 @@
 ;; install-ir, etc.
 
 ;;; Code:
-(defpackage :cli/shell
+(in-package :std-user)
+(defpkg :cli/int 
+  (:use :cl :std) 
+  (:export :*cli-packages* :*cli-tool-packages* :*cli-clap-packages*))
+
+(in-package :cli/int)
+
+(defparameter *cli-packages* nil)
+
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cli-packages* :test 'string=)))
+
+(defpkg :cli/shell
   (:use :cl :std)
   (:nicknames :shell)
   (:export :*shell* :*shell-directory* :*shell-input*))
 
-(defpackage :cli/env
+(defpkg :cli/env
   (:use :cl :std)
   (:export :*default-global-env-var-names* :*default-local-env-var-names* :exec-path-list
    :program-list :find-exe :ld-library-path-list :concat-env-table
@@ -31,7 +42,7 @@
    :load-env
    :*env-table*))
 
-(defpackage :cli/ansi
+(defpkg :cli/ansi
   (:use :cl :std)
   (:nicknames :ansi)
   (:export
@@ -66,13 +77,13 @@
    ;; stty
    :set-tty-mode))
 
-(defpackage :cli/prompt
+(defpkg :cli/prompt
   (:use :cl :std :obj/equiv)
   (:export
    :completing-read
    :defprompt))
    
-(defpackage :cli/progress
+(defpkg :cli/progress
   (:use :cl :std)
   (:export
    :update-progress
@@ -86,18 +97,18 @@
    :progress-bar
    :with-progress-maybe))
 
-(defpackage :cli/spark
+(defpkg :cli/spark
   (:use :cl :std)
   (:export
    :spark :*ticks*
    :vspark :*vticks*))
 
-(defpackage :cli/repl
+(defpkg :cli/repl
   (:use :cl :std :cli/progress :cli/spark)
   (:export :load-acl-repl :start-rl-repl
            :default-toplevel-init))
 
-(defpackage :cli/ed
+(defpkg :cli/ed
   (:use :cl :std :cli/env :ast :config)
   (:export :run-emacs :run-emacsclient :org-store-link :editor-config :emacs-config
    :eval-emacs
@@ -106,12 +117,15 @@
    :with-emacs
    :emacs-find-file))
 
-(defpackage :cli/multi
-  (:use :cl :std)
+(defpkg :cli/multi
+  (:use :cl :std :clap)
   (:export
    #:define-multi-main
    #:make-symlinks))
 
-(defpackage :cli/tui
+(defpkg :cli/tui
   (:use :cl :std :ansi)
   (:export))
+
+(setq *defpkg-hook* nil)
+ 

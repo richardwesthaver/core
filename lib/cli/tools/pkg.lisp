@@ -3,13 +3,17 @@
 ;; Convenience functions for working with common CLI programs
 
 ;;; Code:
-(defpackage :cli/tools/proto
-  (:use :cl :std :cli/env :config :ast)
-  (:export :define-cli-tool :*cli-tools*
-           :cli-tool-config
-           :cli-tool-error))
+(in-package :cli/int)
 
-(defpackage :cli/tools/term
+(defparameter *cli-tool-packages* `(,(package-name *package*)))
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cli-tool-packages* :test 'string=)))
+
+(defpkg :cli/tools/proto
+  (:use :cl :std :cli/env :config :ast)
+  (:export :define-cli-tool :*cli-tools* :cli-tool-config
+   :cli-tool-error))
+
+(defpkg :cli/tools/term
   (:use :cl :std :cli/tools/proto :cli/env :config :toml :ast)
   (:export
    :*term* :*alacritty-config-path*
@@ -20,12 +24,12 @@
    :*script*
    :run-script :run-scriptreplay))
 
-(defpackage :cli/tools/fs
+(defpkg :cli/tools/fs
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    #:fs-error))
 
-(defpackage :cli/tools/tmux
+(defpkg :cli/tools/tmux
   (:use :cl :std :cli/tools/proto :cli/env :cli/tools/term)
   (:import-from :obj/config
    :defconfig :make-config :find-config)
@@ -41,7 +45,7 @@
    :simple-tmux-error
    :tmux-config))
 
-(defpackage :cli/tools/cc
+(defpkg :cli/tools/cc
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*cc*
@@ -59,7 +63,21 @@
    :run-nvcc
    :nvcc-error))
 
-(defpackage :cli/tools/media
+(defpkg :cli/tools/make
+  (:use :cl :std :cli/tools/proto :cli/env)
+  (:export
+   :*make*
+   :run-make
+   :*cmake*
+   :run-cmake))
+
+(defpkg :cli/tools/ninja
+  (:use :cl :std :cli/tools/proto :cli/env)
+  (:export
+   :*ninja*
+   :run-ninja))
+
+(defpkg :cli/tools/media
   (:use :cl :std :cli/tools/proto :cli/env :config :ini :ast)
   (:export
    :*ffmpeg*
@@ -85,7 +103,7 @@
    :mpv-config
    :*mpv-config-path*))
 
-(defpackage :cli/tools/go
+(defpkg :cli/tools/go
   (:nicknames :tools/go)
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
@@ -94,7 +112,7 @@
    :go-install
    :go-error))
 
-(defpackage :cli/tools/plot
+(defpkg :cli/tools/plot
   (:nicknames :tools/plot)
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
@@ -105,7 +123,7 @@
    :with-gnuplot-stream
    :with-gnuplot-term))
 
-(defpackage :cli/tools/net
+(defpkg :cli/tools/net
   (:use :cl :std :cli/tools/proto :cli/env :uri :config :ast)
   (:import-from :std/os :with-umask)
   (:export
@@ -157,12 +175,12 @@
    :transmission-daemon-error
    :*transmission-daemon*))
 
-(defpackage :cli/tools/pacman
+(defpkg :cli/tools/pacman
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*pacman* :run-pacman :pacman-error
            :pacman-upgrade))
 
-(defpackage :cli/tools/mail
+(defpkg :cli/tools/mail
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :mail-error :*mail-program* :run-notmuch :run-offlineimap :*notmuch* :*offlineimap*
            :notmuch-search
@@ -171,7 +189,7 @@
            :notmuch-count
            :notmuch-show))
 
-(defpackage :cli/tools/sys
+(defpkg :cli/tools/sys
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*systemctl* :run-systemd :run-systemctl
    :systemd-error
@@ -181,7 +199,7 @@
    :systemctl-status
    :systemctl-json))
 
-(defpackage :cli/tools/rust
+(defpkg :cli/tools/rust
   (:nicknames :tools/rust)
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
@@ -194,7 +212,7 @@
    #:cargo-install
    #:cargo-clean))
 
-(defpackage :cli/tools/sbcl
+(defpkg :cli/tools/sbcl
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*sbcl*
@@ -204,10 +222,12 @@
    :*sbcl-runtime-options*
    :*sbcl-toplevel-options*))
 
-(defpackage :cli/tools/virt
+(defpkg :cli/tools/virt
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*buildah* :*podman* :run-buildah 
    :run-podman :podman-machine-upgrade))
+
+(setq *defpkg-hook* nil)
 
 (in-package :cli/tools/proto)
 
@@ -236,4 +256,3 @@ ARGS and BODY are parsed as the args and body of the run-NAME function."
          ,@(when var `((pushnew ,name *cli-tools*)))
          (deferror ,err (cli-tool-error) () (:auto t))
          (defun ,run ,args ,@body)))))
-

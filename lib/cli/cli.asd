@@ -20,6 +20,8 @@
                  (:file "tmux" :depends-on ("term"))
                  (:file "pacman" :depends-on ("pkg"))
                  (:file "cc" :depends-on ("pkg"))
+                 (:file "make" :depends-on ("pkg"))
+                 (:file "ninja" :depends-on ("pkg"))
                  (:file "sys" :depends-on ("pkg"))
                  (:file "rust" :depends-on ("pkg"))
                  (:file "sbcl" :depends-on ("pkg"))
@@ -41,7 +43,7 @@
                  (:file "cli" :depends-on ("opt" "cmd"))))
                (:file "multi" :depends-on ("repl" "clap"))
                (:file "tui" :depends-on ("ansi" "progress" "spark" "prompt" "linedit"))
-               (:file "cli"))
+               (:file "cli" :depends-on ("pkg" "clap")))
   :in-order-to ((test-op (test-op "cli/tests"))))
 
 (defsystem :cli/tests
