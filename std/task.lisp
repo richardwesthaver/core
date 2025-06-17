@@ -6,11 +6,9 @@
 (in-package :std/task)
 
 ;;; Vars
-(defvar *task-pool*)
 (defvar *tasks*)
 (defvar *jobs*)
 (defvar *job*)
-(defvar *stage*)
 (defvar *stage*)
 (defvar *task*)
 (defvar *task-class* 'task)
@@ -20,9 +18,11 @@
 (define-condition task-error (thread-error) ()
   (:report (lambda (condition stream)
              (format stream "Unhandled task error in thread ~A" 
-                     (thread-error-thread condition)))))
+                     (thread-error-thread condition))))
+  (:documentation "An error which occurs while processing a task."))
 
 (defun task-error (thread)
+  "Signal a TASK-ERROR associated with THREAD."
   (error 'task-error :thread thread))
 
 ;;; Kernel
@@ -60,22 +60,27 @@ This interface is experimental and subject to change."
      ,@body))
 
 ;;; Proto
-(defgeneric task (self))
-(defgeneric result (self))
+(defgeneric task (self)
+  (:documentation "Return the task associated with SELF."))
+(defgeneric result (self)
+  (:documentation "Return the result associated with SELF."))
 
-(defgeneric tasks (self))
-(defgeneric results (self))
-
-(defgeneric status (self &key &allow-other-keys))
+(defgeneric tasks (self)
+  (:documentation "Return the tasks associated with SELF."))
+(defgeneric results (self)
+  (:documentation "Return the results associated with SELF."))
 
 (defgeneric jobp (self)
-  (:method ((self t)) nil))
+  (:method ((self t)) nil)
+  (:documentation "Return Non-nil if SELF is a job."))
 (defgeneric taskp (self)
-  (:method ((self t)) nil))
+  (:method ((self t)) nil)
+  (:documentation "Return Non-nil if SELF is a task."))
 
 ;;; Task Worker
 (defclass task-worker (worker)
-  ((tasks :accessor tasks :initarg :tasks :type spin-queue)))
+  ((tasks :accessor tasks :initarg :tasks :type spin-queue))
+  (:documentation "A Worker which stores a queue of TASKS."))
 
 ;;; Task Pool
 (defclass task-pool (thread-pool)
@@ -83,9 +88,11 @@ This interface is experimental and subject to change."
    ;; TODO: test weak-vector here
    (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
             :initarg :workers :accessor workers)
-   (results :initform (make-mailbox :name "results") :accessor results :initarg :results)))
+   (results :initform (make-mailbox :name "results") :accessor results :initarg :results))
+  (:documentation "A thread-pool which maintains a dynamic list of TASKS."))
 
 (defun task-pool-info (tp)
+  "Return a plist of info about task-pool TP."
   (append
    (std/thread::thread-pool-info tp)
    (list
@@ -114,14 +121,17 @@ This interface is experimental and subject to change."
   (vector-push-extend worker (workers pool)))
 
 (defun push-workers (threads pool)
+  "Push a list of THREADS to POOL."
   (with-slots (workers) pool
     (dolist (w threads)
       (vector-push-extend w workers))))
 
 (defmethod pop-worker (pool)
+  "Pop the next worker from POOL."
   (vector-pop (workers pool)))
 
 (defun start-task-worker (pool index)
+  "Start the TASK-WORKER at INDEX of POOL."
   ;; (with-recursive-lock
   (start-worker (aref (workers pool) index)))
 
@@ -147,6 +157,7 @@ is responsible for indicating in the state slot the result of the computation.")
 (defmethod taskp ((self task)) t)
 
 (defun run-task (worker task)
+  "Run TASK on WORKER."
   (push task (tasks worker))
   (run-worker worker))
 
@@ -155,7 +166,8 @@ is responsible for indicating in the state slot the result of the computation.")
 
 ;;;; Scheduled Tasks
 (defclass scheduled-task (task)
-  ((schedule :initarg :schedule :initform (get-universal-time) :accessor task-schedule)))
+  ((schedule :initarg :schedule :initform (get-universal-time) :accessor task-schedule))
+  (:documentation "A task object with an associated schedule."))
 
 (defmethod run-object ((self scheduled-task) &key time repeat absolute-p catch-up worker name)
   (sb-ext:schedule-timer 
@@ -172,12 +184,14 @@ is responsible for indicating in the state slot the result of the computation.")
          :initarg :lock))
   (:documentation "A collection of tasks forming a single unit of work."))
 
-(defgeneric jobs (self))
+(defgeneric jobs (self)
+  (:documentation "Return the jobs associated with SELF."))
 (defmethod jobp ((self job)) t)
 (defmethod taskp ((self job)) t)
   
 (declaim (inline make-job))
 (defun make-job (&rest tasks)
+  "Return a new job containing TASKS."
   (make-instance 'job
     :tasks (make-array (length tasks) 
                        :element-type 'task
@@ -188,6 +202,7 @@ is responsible for indicating in the state slot the result of the computation.")
     (format stream "~A tasks" (length (tasks self)))))
 
 (defun run-job (worker job)
+  "Run JOB on WORKER."
   (setf (tasks worker) (coerce 'list (tasks job)))
   (run-worker worker))
 
@@ -200,7 +215,8 @@ is responsible for indicating in the state slot the result of the computation.")
            :initarg :tasks
            :accessor tasks
            :type (vector task))
-   (lock :initform (make-mutex :name "work-scope") :initarg :lock :accessor work-scope-lock :type mutex)))
+   (lock :initform (make-mutex :name "work-scope") :initarg :lock :accessor work-scope-lock :type mutex))
+  (:documentation "A scope of work containing TASKS and a LOCK."))
 
 (defmethod print-object ((self work-scope) (stream stream))
   (print-unreadable-object (self stream :type t)
@@ -210,6 +226,7 @@ is responsible for indicating in the state slot the result of the computation.")
                                          (task-class *task-class*) initial-task
                                          tasks
                                          alivep)
+  "Make a new TASK-POOL with a worker capacity of WORKER-COUNT."
   (let ((*worker-class* 'task-worker))
     (let ((tp (make-thread-pool
                worker-count 
@@ -232,6 +249,7 @@ is responsible for indicating in the state slot the result of the computation.")
 ;;; Macros
 (defmacro with-task-pool ((sym &key (tasks (std/alien:num-cpus)) (workers (std/alien:num-cpus)) #+nil start)
                           &body body)
+  "Eval BODY with SYM bound to a new TASK-POOL."
   `(let ((,sym (make-task-pool ,workers :tasks ,tasks)))
      ;; ,@(when start `((start-task-workers ,sym)))
      ,@body))

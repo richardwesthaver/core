@@ -57,7 +57,9 @@ ARRAY-DIMENSION-LIMIT."
                     (format nil "Type specifier denoting the ~(~A~) range from ~A to ~A."
                             type
                             (if (equal range-beg ''*) inf (ensure-car range-beg))
-                            (if (equal range-end ''*) inf (ensure-car range-end))))))
+                            (if (equal range-end ''*) inf (ensure-car range-end)))))
+                (make-docstring* (type)
+                  (format nil "Return Non-nil if N is of type ~A." type)))
            (let* ((negative-name     (make-subtype-name '#:negative-~a))
                   (non-positive-name (make-subtype-name '#:non-positive-~a))
                   (non-negative-name (make-subtype-name '#:non-negative-~a))
@@ -103,18 +105,22 @@ ARRAY-DIMENSION-LIMIT."
                 (declaim (inline ,@predicate-names))
 
                 (defun ,negative-p-name (n)
+                  ,(make-docstring* negative-name)
                   (and (typep n ',type)
                        (< n ,zero)))
 
                 (defun ,non-positive-p-name (n)
+                  ,(make-docstring* positive-name)
                   (and (typep n ',type)
                        (<= n ,zero)))
 
                 (defun ,non-negative-p-name (n)
+                  ,(make-docstring* non-negative-name)
                   (and (typep n ',type)
                        (<= ,zero n)))
 
                 (defun ,positive-p-name (n)
+                  ,(make-docstring* positive-name)
                   (and (typep n ',type)
                        (< ,zero n)))))))))
   (frob fixnum integer)
@@ -142,12 +148,15 @@ of TYPE."
       form))
 
 (definline type-class-of (obj)
+  "Return the TYPE-CLASS of OBJ."
   (type-class (ctype-of obj)))
 
 (definline type-class-name-of (obj)
+  "Return the name of the TYPE-CLASS of OBJ."
   (type-class-name (type-class-of obj)))
 
 (definline type-class-id-of (obj)
+  "Return the ID of the TYPE-CLASS of OBJ."
   (type-class-id (ctype-of obj)))
 
 (definline type= (type1 type2)

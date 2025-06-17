@@ -25,15 +25,18 @@ and we may query the user for input.")
 (define-symbol-macro .i sb-ext:*inspected*)
 
 (defun hooks ()
+  "Return the standard list of system hooks."
   (list 
-   :init *init-hooks*
+   :init sb-ext:*init-hooks*
    :after-gc sb-ext:*after-gc-hooks*
    :save sb-ext:*save-hooks*
    :exit sb-ext:*exit-hooks*))
 
-(defparameter *default-arena-size* (* 10 1024 1024 1024))
+(defparameter *default-arena-size* (* 10 1024 1024 1024)
+  "The default size of freshly allocated arenas."
 
-(defparameter *default-heap-size* (ash 1 16))
+(defparameter *default-heap-size* (ash 1 16)
+  "The default system heap size.")
 
 (defun current-lisp-implementation ()
   "Return the current lisp implemenation as a list: (TYPE VERSION FEATURES)"
@@ -50,15 +53,18 @@ and we may query the user for input.")
    (machine-version)))
 
 (defun list-package-symbols (&optional (pkg *package*))
+  "List all external symbols of PKG."
   (loop for s being the external-symbol of pkg
         collect s))
 
 (defun list-all-symbols ()
+  "List all symbols found in this iamge."
   (let ((r)) 
     (dolist (p (list-all-packages) r) 
       (appendf r (list-package-symbols p)))))
 
 (defun package-symbols (&optional (package *package*) test)
+  "List the symbols of PACKAGE which satisfy TEST if present."
   (let ((symbols))
     (do-external-symbols (symbol package)
       (if test
@@ -68,11 +74,13 @@ and we may query the user for input.")
     symbols))
 
 (defun package-symbol-names (&optional (package *package*) test)
+  "List the symbol names of PACKAGE which satisfy test if present."
   (sort (mapcar (lambda (x) (string-downcase (symbol-name x)))
                 (package-symbols package test))
         #'string<))
 
 (defmacro do-internal-symbols ((var package) &body forms)
+  "Bind VAR to each internal symbol of PACKAGE in turn and evaluating FORMS for each."
   (std/sym:with-gensyms (state)
     `(do-symbols (,var ,package)
        (multiple-value-bind (,var ,state)
@@ -81,11 +89,12 @@ and we may query the user for input.")
 	   ,@forms)))))
 
 (defun standard-symbol-names (&optional test)
+  "List the ANSI standard list of symbols which satisfy TEST if present."
   (package-symbol-names :common-lisp test))
 
 (defun handle-serious-condition (condition)
-  "Handle a fatal CONDITION:
-depending on whether *INTERACTIVE* is set, enter debugger or die"
+  "Handle a fatal CONDITION. Depending on whether *INTERACTIVE* is set, enter
+debug or die."
   (cond
     (*interactive*
      (invoke-debugger condition))
@@ -98,9 +107,13 @@ depending on whether *INTERACTIVE* is set, enter debugger or die"
          (format t "~A" condition)
          (sb-ext:quit :unix-status 99))))))
 
-(defvar *core-image-revived-p* nil)
-(defvar *core-image-revive-hooks* nil)
-(defvar *core-image-entry-point* nil)
+(defvar *core-image-revived-p* nil
+  "Set to T when the current image has been revived.")
+(defvar *core-image-revive-hooks* nil
+  "List of hooks to be evaluated when an image is revived.")
+(defvar *core-image-entry-point* nil
+  "Entrypoint associated with this core image.")
+
 (defun revive-image (&key (interactive *interactive*)
                           (hooks *core-image-revive-hooks*)
                           (entry-point *core-image-entry-point*)
@@ -135,6 +148,7 @@ depending on whether *INTERACTIVE* is set, enter debugger or die"
 ;; so that it doesn't disappear, regardless of whether it appeared unused.
 (in-package :sb-impl)
 (defun shake-packages (predicate &key print verbose query)
+  "WIP Tree Shaker"
   (declare (function predicate))
   (let (list)
     (flet ((weaken (table accessibility)
@@ -192,40 +206,14 @@ depending on whether *INTERACTIVE* is set, enter debugger or die"
           do (sb-ext:gc :full t))
   (apply #'sb-ext:save-lisp-and-die path args))
 
-(defun save-lisp-and-live (filename completion-function restart &rest args)
-  (flet ((restart-sbcl ()
-           (sb-debug::enable-debugger)
-           (setf sb-impl::*descriptor-handlers* nil)
-           (funcall restart)))
-    ;; fork it - assumes only one thread is running
-    (multiple-value-bind (pipe-in pipe-out) (sb-posix:pipe)
-      (let ((pid (sb-posix:fork)))
-        (cond ((= pid 0) ;; make simple-restart core
-               (sb-posix:close pipe-in)
-               (sb-debug::disable-debugger)
-               (apply #'sb-ext:save-lisp-and-die filename
-                      (append
-                       (list :toplevel #'restart-sbcl)
-                       args)))
-              (t
-               (sb-posix:close pipe-out)
-               (sb-sys:add-fd-handler
-                pipe-in :input
-                (lambda (fd)
-                  (sb-sys:invalidate-descriptor fd)
-                  (sb-posix:close fd)
-                  (multiple-value-bind (rpid status) (sb-posix:waitpid pid 0) ;; wait for master
-                    (assert (= pid rpid))
-                    (assert (sb-posix:wifexited status))
-                    (funcall completion-function
-                             (zerop (sb-posix:wexitstatus status))))))))))))
-
 (defparameter *gc-logfile* #P"gc.log")
 
 (defun enable-gc-logfile (&optional (file *gc-logfile*))
+  "Enable the system *GC-LOGFILE*."
   (setf (sb-ext:gc-logfile) file))
 
 (defun forget-shared-object (name)
+  "Forget the shared object specified by NAME."
   (setf (sb-alien::shared-object-dont-save
          (find name sb-sys:*shared-objects*
                :key 'sb-alien::shared-object-namestring
@@ -241,6 +229,8 @@ depending on whether *INTERACTIVE* is set, enter debugger or die"
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) nil)) objects))
 
 (defun compile-lisp (name &key force save make package compression verbose version callable-exports executable (toplevel #'sb-impl::toplevel-init) forget save-runtime-options root-structures (purify t))
+  "Process NAME and keyword arguments then pass options to the underlying build
+system - eventually terminating on SAVE-LISP-AND-DIE."
   (pkg:with-package (or package *package*)
     (asdf:compile-system name :force force :verbose verbose :version version)
     (when make
@@ -259,6 +249,8 @@ depending on whether *INTERACTIVE* is set, enter debugger or die"
                                      :compression compression))))
 
 (defmacro without-fp-traps (() &body body)
+  "Eval BODY with float traps disabled - sometimes necessary when working with
+shared libraries."
   `(sb-int:with-float-traps-masked (:invalid :divide-by-zero)
      ,@body))
 
@@ -278,6 +270,8 @@ regs. Returns 4 values containing the regs RAX RBX RCX and RDX respectively."
   (sb-vm::%cpu-identification eax ecx))
 
 (defun word-byte-list (n)
+  "Decompose a 32-bit integer N into 4 octets."
+  (declare ((unsigned-byte 32) n))
   (list
    (ldb (byte 8 0) n)
    (ldb (byte 8 8) n)
@@ -288,6 +282,7 @@ regs. Returns 4 values containing the regs RAX RBX RCX and RDX respectively."
              `(multiple-value-bind (a b c d) (cpuid ,n) 
                 ,@body)))
   (defun cpu-vendor ()
+    "Return the vendor of the host CPU."
     (%with-cpuid 0
      (declare (ignore a))
      (coerce
@@ -298,6 +293,7 @@ regs. Returns 4 values containing the regs RAX RBX RCX and RDX respectively."
       'string)))
   ;; this is the same as MACHINE-VERSION
   (defun cpu-brand ()
+    "Return the brand of the host CPU."
     (with-output-to-string (s)
       (dolist (n '#.(mapcar #'(lambda (x)
 			       (coerce x '(unsigned-byte 32)))
@@ -346,7 +342,9 @@ Core i7 4770K, do **NOT** support RTM."
         (let ((ebx (nth-value 1 (cpuid 7))))
           (not (zerop (logand ebx #x800)))))))
 
-(defparameter %little-endian nil)
+(defparameter %little-endian nil
+  "An internal flag which indicates the host is little-endian, in the event that
+we can't determine endianness at compile-time.")
 
 (defun little-endian-p ()
   "Return T if the current platform is little-endian else NIL."
@@ -369,12 +367,16 @@ long as ASDF is non-nil)."
   (when asdf (pushnew path asdf:*central-registry*)))
 
 ;;; Time
-(defun get-real-time-seconds ()
+(definline get-real-time-seconds ()
+  "Call GET-INTERNAL-REAL-TIME and convert the result to seconds."
   (/ (get-internal-real-time) internal-time-units-per-second))
 
-(defun %time-remaining (start timeout) (- timeout (- (get-real-time-seconds) start)))
+(defun %time-remaining (start timeout)
+  "Check the current time to see if TIMEOUT seconds have elapsed since START."
+  (- timeout (- (get-real-time-seconds) start)))
 
 (defmacro! with-countdown (o!time &body body)
+  "Eval BODY with an implicit timeout TIME."
   (with-gensyms (start)
     `(let ((,start (get-real-time-seconds)))
        (flet ((time-remaining () (std/sys::%time-remaining ,start ,g!time)))
@@ -387,6 +389,8 @@ long as ASDF is non-nil)."
   (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
 
 (defmacro define-logical-pathname (host path &rest translations)
+  "Define a new LOGICAL-PATHNAME associated with HOST and defaulting to
+PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
   (unless (null path)
     (setf translations 
 	  (append `((,(format nil "~A" host) ,path)) translations)))

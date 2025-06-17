@@ -577,7 +577,7 @@ or by peeking at the stream for magic numbers (for :INPUT)."
   (multiple-value-bind
         (compression-stream other-streams-to-close)
       (make-compression-stream stream direction compression)
-    (let ((blocked-stream (make-instance (ecase direction
+    (let ((blocked-stream (make-instance (case direction
                                            (:input 'blocked-input-stream)
                                            (:output 'blocked-output-stream))
                                          :stream compression-stream
@@ -587,16 +587,16 @@ or by peeking at the stream for magic numbers (for :INPUT)."
                                                              :element-type '(unsigned-byte 8))))
                  (assert (= *tar-block-bytes* (read-sequence buffer blocked-stream)))
                  buffer)))
-        (make-instance (if (eql type :auto)
-                           (detect-type 
+        (make-instance (if (and (eql type :auto) (eql direction :input))
+                           (detect-type
                             (read-buffer))
-                           type)
-                       :stream blocked-stream
-                       :other-streams-to-close (append (unless (eql compression-stream stream)
-                                                         (list compression-stream))
-                                                       other-streams-to-close)
-                       :direction direction
-                       :header-encoding header-encoding)))))
+                           *default-type*)
+          :stream blocked-stream
+          :other-streams-to-close (append (unless (eql compression-stream stream)
+                                            (list compression-stream))
+                                          other-streams-to-close)
+          :direction direction
+          :header-encoding header-encoding)))))
 
 (defmethod close-tar-file (tar-file)
   (when (open-tar-file-p tar-file)
@@ -1444,13 +1444,12 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
 (defun call-with-open-tar-file (thunk pathname-or-stream
                                 &key (direction :input)
                                   (if-exists nil)
-                                  (if-does-not-exist nil)
+                                  (if-does-not-exist :create)
                                   (type :auto)
                                   (blocking-factor 20)
                                   (compression :auto)
                                   (header-encoding :utf-8))
-  (when (or (eq direction :io) (eq direction :probe))
-    (error "Cannot open tar-files in direction ~A" direction))
+  (declare ((member :input :output) direction))
   (let (tar-file
         stream
         (should-close t)
@@ -1495,28 +1494,28 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
                                  (header-encoding :utf-8))
                               &body body)
   "Bind TAR-FILE-VAR to a newly opened TAR-FILE, backed by
-PATHNAME-OR-STREAM. If PATHNAME-OR-STREAM evaluates to a stream, that stream is
-used directly, otherwise, it is opened via OPEN. If PATHNAME-OR-STREAM is a
+PATHNAME-OR-STREAM. If PATHNAME-OR-STREAM evaluates to a stream, that stream
+is used directly, otherwise, it is opened via OPEN. If PATHNAME-OR-STREAM is a
 stream, that stream is not closed upon exiting the body of the macro.
 
 DIRECTION must be either :INPUT or :OUTPUT.
 
-IF-EXISTS and IF-DOES-NOT-EXIST are passed to OPEN if PATHNAME-OR-STREAM is not
-a stream.
+IF-EXISTS and IF-DOES-NOT-EXIST are passed to OPEN if PATHNAME-OR-STREAM is
+not a stream.
 
 See OPEN-TAR-FILE for a description of TYPE, BLOCKING-FACTOR, HEADER-ENCODING,
 and COMPRESSION."
-  (when (or (eq direction :io) (eq direction :probe))
-    (error "Cannot open tar-files in direction ~A" direction))
-  `(call-with-open-tar-file (lambda (,tar-file-var) ,@body)
-                            ,pathname-or-stream
-                            :direction ,direction
-                            :if-exists ,if-exists
-                            :if-does-not-exist ,if-does-not-exist
-                            :type ,type
-                            :blocking-factor ,blocking-factor
-                            :header-encoding ,header-encoding
-                            :compression ,compression))
+  (declare ((member :input :output) direction))
+  `(call-with-open-tar-file 
+    (lambda (,tar-file-var) ,@body)
+    ,pathname-or-stream
+    :direction ,direction
+    :if-exists ,if-exists
+    :if-does-not-exist ,if-does-not-exist
+    :type ,type
+    :blocking-factor ,blocking-factor
+    :header-encoding ,header-encoding
+    :compression ,compression))
 
 (defmacro do-entries ((entry tar-file &optional result)
                       &body body)

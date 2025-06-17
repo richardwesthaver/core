@@ -7,12 +7,12 @@
 
 (load-uring)
 (load-zstd)
-(deftest sanity ()
-  (uring::io-uring-major-version))
+(btrfs:load-btrfs)
+(deftest sanity () (uring::io-uring-major-version))
 
-(deftest serve-event ()
-  "See 'tests/serve-event.pure.lisp'"
-  nil)
+;; (deftest uring-serve-event ()
+;;   "See 'tests/serve-event.pure.lisp'"
+;;   nil)
 
 (deftest streams ()
   "IO/STREAM tests"
@@ -85,16 +85,13 @@
       ;; (close (stream-of compressor))
       )))
 
-
-(defparameter *deflate-data-size* (* 10 1024))
-
-(deftest compressing-stream ()
-  "Test the compressing stream by round tripping random data through salza2 and
-then chipz."
-  (let ((data (make-array *deflate-data-size* :element-type '(unsigned-byte 8)
-                                              :initial-contents (loop repeat *deflate-data-size*
+;;; Deflate
+(deftest gzip-stream ()
+  "Test the compressing stream by round tripping random data."
+  (let ((data (make-array *data-size* :element-type '(unsigned-byte 8)
+                                              :initial-contents (loop repeat *data-size*
                                                                       collect (random 256))))
-        (round-trip-data (make-array *deflate-data-size* :element-type '(unsigned-byte 8)
+        (round-trip-data (make-array *data-size* :element-type '(unsigned-byte 8)
                                                          :initial-element 0))
         compressed-data)
     (setf compressed-data
@@ -107,15 +104,13 @@ then chipz."
         (is eql :eof (read-byte in-stream nil :eof))))
     (is equalp data round-trip-data)))
 
-(deftest compressing-stream-closed-error ()
+(deftest gzip-stream-closed-error ()
   (with-output-to-string (s)
     (let ((out-stream (make-compressing-stream :gzip s)))
       (write-byte 1 out-stream)
       (close out-stream)
       (signals 'error (write-byte 2 out-stream)))))
 
-;;; Deflate
-(deftest gzip ())
 (deftest bzip2 ())
 (deftest zlib ())
 

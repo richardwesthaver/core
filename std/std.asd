@@ -1,12 +1,4 @@
 ;;; std.asd --- standard library
-(pushnew :std *features*)
-
-(defsystem :std/named-readtables
-  :version "0.1.0"
-  :components ((:file "named-readtables"))
-  :in-order-to ((test-op (test-op "std/tests"))))
-
-(register-system-packages "std/named-readtables" '(:std))
 
 ;; the build op on the STD system system concatenates all dependency systems -
 ;; make sure CL-PPCRE is loaded first but not included in the build output.
@@ -23,10 +15,11 @@ that ASDF can find, or have quicklisp installed.")))
 
 (defsystem :std
   :version "0.1.0"
-  :depends-on (:std/named-readtables)
+  :description "CC Standard Library"
   :serial t
   :components 
-  ((:file "defpkg")
+  ((:file "named-readtables")
+   (:file "defpkg")
    (:file "pkg")
    (:file "condition")
    (:file "sym")
@@ -81,6 +74,7 @@ that ASDF can find, or have quicklisp installed.")))
 
 (defsystem :std/tests
   :depends-on (:std :rt)
+  :description "CC Standard Library Tests"
   :serial t
   :components 
   ((:module "tests"

@@ -9,7 +9,7 @@
   (:use :cl :std :log)
   (:import-from :time :format-timestring :timestamp)
   #.`(:use-reexport ,@cli/int:*cli-packages*)
-  (:export :sudop :with-sudo :pretty-log-message))
+  (:export :sudop :call-with-sudo :with-sudo :pretty-log-message :*sudo-silent*))
 
 (defpkg :cli/tools
   (:nicknames :tools)
@@ -26,17 +26,23 @@
 (in-package :cli)
 (pushnew :cli *features*)
 
+(in-readtable :shell)
+
 ;;; Sudo
 (defun sudop () 
   "Return T if user appears to be root."
   (equal (namestring (user-homedir-pathname))
          (sb-unix::uid-homedir 0)))
 
+(defvar *sudo-silent* nil)
+
+(defun call-with-sudo (str &optional (silent *sudo-silent*))
+  ;; (when silent (princ "sudo password: "))
+  (sb-ext:run-program (find-exe "sudo") `("-S" ,@(split-sequence #\space str)) :input t :output (not silent)))
+
 (defmacro with-sudo (&body body)
-  "Eval BODY with sudo privileges."
-  `(progn
-     (sb-ext:run-program "sudo" :input t :output t)
-     ,@body))
+  "Eval BODY, a list of shell command strings, with sudo privileges."
+  `(progn ,@(mapcar (lambda (x) `(call-with-sudo ,x)) body)))
 
 ;;; Pretty Log Messages
 (defclass pretty-log-message (simple-log-message) ())

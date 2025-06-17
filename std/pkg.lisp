@@ -304,6 +304,7 @@
   (:use :cl :sb-gray)
   (:import-from :std/type :non-negative-integer :positive-integer)
   (:import-from :std/sym :with-gensyms)
+  (:import-from :std/prim :definline)
   (:export
    :read-lisp-until-end
    :read-until-end
@@ -474,6 +475,7 @@
   (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects 
    :unbound-marker-p :generation-of
    :current-sp :current-fp)
+  (:import-from :std/prim :definline)
   (:import-from :sb-impl :*external-formats*)
   (:import-from :sb-vm :list-allocated-objects :fun-signature= 
    :map-allocated-objects :fset :*linkage-name-map* :ldb-monitor
@@ -578,7 +580,6 @@
    :define-logical-pathname
    :logical-host-names
    :save-lisp-tree-shake-and-die
-   :save-lisp-and-live
    :forget-shared-object
    :forget-shared-objects
    :compile-lisp
@@ -765,7 +766,8 @@
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
    :slot-boundp* :slot-values
-   :explore :with-fslots))
+   :explore :with-fslots
+   :status))
 
 (defpkg :std/spin
   (:use :cl)
@@ -912,7 +914,6 @@
   (:export
    :push-worker
    :task-schedule
-   :status
    :jobs
    :tasks
    :results
@@ -1165,3 +1166,5 @@
 
 (setq *default-package* "STD-USER"
       *defpkg-hook* nil)
+
+(eval-when (:load-toplevel) (pushnew :std *features*))

@@ -5,23 +5,22 @@
 ;;; Code:
 (in-package :std/stream)
 (declaim (optimize speed))
-(declaim (inline read-until-end read-lisp-until-end copy-stream))
 
-(defun read-until-end (stream)
+(definline read-until-end (stream)
   "Read input from STREAM until EOF and return a string."
   (with-output-to-string (s)
     (loop for c = (read-char stream nil)
 	  until (not c)
 	  do (write-char c s))))
 
-(defun read-lisp-until-end (stream)
+(definline read-lisp-until-end (stream)
   "Read input from STREAM until EOF and return a form."
   (with-gensyms (eof)
     (loop for c = (read stream nil eof)
 	  until (eql c eof)
 	  collect c)))
 
-(defun copy-stream (input output &key (element-type (stream-element-type input))
+(definline copy-stream (input output &key (element-type (stream-element-type input))
                     (buffer-size 4096)
                     (buffer (make-array buffer-size :element-type element-type))
                     (start 0) end
@@ -68,7 +67,8 @@ compatible element-types."
 ;; from SBCL manual
 ;;; Wrapped Streams
 (defclass wrapped-stream (fundamental-stream)
-  ((stream :initarg :stream :reader stream-of)))
+  ((stream :initarg :stream :reader stream-of))
+  (:documentation "A stream which wraps another stream accessible via STREAM-OF."))
 
 (defmethod open-stream-p ((stream wrapped-stream))
   (open-stream-p (stream-of stream)))
@@ -80,7 +80,8 @@ compatible element-types."
   (close (stream-of stream) :abort abort))
 
 (defclass wrapped-character-input-stream (wrapped-stream fundamental-character-input-stream)
-  ())
+  ()
+  (:documentation "A wrapped CHARACTER-INPUT-STREAM."))
 
 (defmethod stream-read-char ((stream wrapped-character-input-stream))
   (read-char (stream-of stream) nil :eof))
@@ -108,12 +109,17 @@ compatible element-types."
 Non-number :FOO (line 2, column 5)
   [Condition of type SIMPLE-ERROR]
 |#
-(defclass counting-character-input-stream
-    (wrapped-character-input-stream)
+(defclass counting-character-input-stream (wrapped-character-input-stream)
   ((char-count :initform 1 :accessor char-count-of)
    (line-count :initform 1 :accessor line-count-of)
    (col-count :initform 1 :accessor col-count-of)
-   (prev-col-count :initform 1 :accessor prev-col-count-of)))
+   (prev-col-count :initform 1 :accessor prev-col-count-of))
+  (:documentation "A CHARACTER-INPUT-STREAM with automatic counters:
+
+- CHAR-COUNT via CHAR-COUNT-OF
+- LINE-COUNT via LINE-COUNT-OF
+- COL-COUNT via COL-COUNT-OF
+- PREV-COL-COUNT via PREV-COL-COUNT-OF"))
 
 (defmethod stream-read-char ((stream counting-character-input-stream))
   (with-accessors ((inner-stream stream-of) (chars char-count-of)
@@ -149,7 +155,9 @@ Non-number :FOO (line 2, column 5)
       (call-next-method)))
 
 (defclass wrapped-character-output-stream (wrapped-stream fundamental-character-output-stream)
-  ((col-index :initform 0 :accessor col-index-of)))
+  ((col-index :initform 0 :accessor col-index-of))
+  (:documentation "A wrapped CHARACTER-OUTPUT-STREAM with the current column index accessible via
+COL-INDEX-OF."))
 
 (defmethod stream-line-column ((stream wrapped-character-output-stream))
   (col-index-of stream))
@@ -179,11 +187,14 @@ NIL
 |#
 (defclass prefixed-character-output-stream
     (wrapped-character-output-stream)
-  ((prefix :initarg :prefix :reader prefix-of)))
+  ((prefix :initarg :prefix :reader prefix-of))
+  (:documentation "A CHARACTER-OUTPUT-STREAM which automatically writes each line of output with
+a designated prefix accessible via PREFIX-OF."))
 
 (defgeneric write-prefix (prefix stream)
   (:method ((prefix string) stream) (write-string prefix stream))
-  (:method ((prefix function) stream) (funcall prefix stream)))
+  (:method ((prefix function) stream) (funcall prefix stream))
+  (:documentation "Write a PREFIX to STREAM."))
 
 (defmethod stream-write-char ((stream prefixed-character-output-stream)
                               char)

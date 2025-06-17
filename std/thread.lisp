@@ -21,13 +21,16 @@
 ;; sb-thread:interrupt-thread
 ;;; Kernel Classes
 (defclass kernel-class (funcallable-standard-class)
-  ())
+  ()
+  (:documentation "Standard kernel class."))
 
 (defclass kernel-object (funcallable-standard-object)
   ()
-  (:metaclass funcallable-standard-class))
+  (:metaclass funcallable-standard-class)
+  (:documentation "Standard kernel object."))
 
 (definline make-kernel (fn)
+  "Return a new KERNEL-OBJECT and set the instance function to FN."
   (let ((fin (make-instance 'kernel-object)))
     (set-funcallable-instance-function fin fn)
     fin))
@@ -48,10 +51,13 @@ a lambda expression, a symbol which names a function, or a compiled-function."
   '(function (t &rest args) (values)))
 
 (deftype worker-kernel-function (&optional (kind 'worker))
+  "A function which is suitable as a kernel for KIND workers."
   `(function (,kind t t) (values)))
 (deftype channel-kernel-function (&optional (kind 'channel))
+  "A function which is suitable as a kernel for KIND channels."
   `(function (,kind) (values)))
 (deftype pool-kernel-function (&optional (kind 'thread-pool))
+  "A function which is suitable as a kernel for KIND thread-pools."
   `(function (,kind scheduler t t &rest args) (values)))
 
 ;;; Vars
@@ -66,11 +72,16 @@ a lambda expression, a symbol which names a function, or a compiled-function."
   the same symbol, so defaults may be overridden by consing to the
   head of the list.")
 
-(defvar *worker-class* 'worker)
-(defvar *worker* nil)
-(defvar *work-priority* :default)
-(defvar *scheduler-class* 'biased-scheduler)
-(defvar *thread-pool* nil)
+(defvar *worker-class* 'worker
+  "The default WORKER class used to initialize THREAD-POOLs.")
+(defvar *worker* nil
+  "The current WORKER or nil.")
+(defvar *work-priority* :default
+  "The default priority assigned to new work.")
+(defvar *scheduler-class* 'biased-scheduler
+  "The default class of the scheduler used in THREAD-POOLs.")
+(defvar *thread-pool* nil
+  "The current THREAD-POOL or nil.")
 ;; on core-i7 3.4ghz, a single spin takes ~ 2.5 microseconds.
 (defvar *default-spin-count* 2000
   "Default value of the 'spin-count' argument to MAKE-THREAD-POOL.")
@@ -82,12 +93,17 @@ threaded context.")
 (defvar *lisp-exiting-p* nil
   "True if the Lisp process is exiting - used for skipping auto-replacement of killed workers during shutdown.")
 
-(defun %pool (&rest args) (apply 'funcall args))
+;; TODO 2025-06-17: 
+(defun %pool (&rest args) 
+  "An empty pool kernel."
+  (apply 'funcall args))
 
 (defvar *pool-kernel* '%pool
   "A function which drives THREAD-POOLs.")
 
+;; TODO 2025-06-17: 
 (defun %worker (&rest args)
+  "An empty worker kernel."
   (values-list 
    (mapcar 
     (lambda (x)
@@ -119,7 +135,8 @@ threaded context.")
 (defvar *error-workers-lock* (make-mutex :name "error workers")
   "Lock for *ERROR-WORKERS*.")
 
-(define-condition std-thread-error (thread-error) ())
+(define-condition std-thread-error (thread-error) ()
+  (:documentation "Error signaled while handling standard threads."))
 
 (defun invoke-transfer-error (error)
   "Equivalent to (invoke-restart 'transfer-error error)."
@@ -202,9 +219,11 @@ that was created in `body'."
           (invoke-debugger condition)))))
 
 (defmacro with-work-context (&body body)
+  "Eval BODY in a context where throw to +WORK-TAG+ will be caught."
   `(catch +work-tag+ ,@body))
 
 (defun %call-with-work-handler (fn)
+  "Call FN with worker conditions handled."
   (declare (function fn))
   (let ((*handler-active-p* t)
         (*debugger-hook* (make-debugger-hook)))
@@ -214,6 +233,7 @@ that was created in `body'."
         (funcall fn)))))
 
 (defun call-with-work-handler (fn)
+  "Call FN in a worker context with conditions handled."
   (declare (function fn))
   (with-work-context
     (if *handler-active-p*
@@ -258,10 +278,13 @@ that was created in `body'."
 (defmacro mod-decf (place n)
   `(the array-index (setf ,place (mod-dec ,place ,n))))
 
-(defun thread-support-p () (member :thread-support *features*))
+(defun thread-support-p () 
+  "Return Non-nil if threads are supported on this system. (:THREAD-SUPPORT feature)"
+  (member :thread-support *features*))
 
 (eval-always
   (defun print-top-level (msg)
+    "Print MSG to the top-level *STANDARD-OUTPUT*."
     (let ((*standard-output* *standard-output*))
       (sb-thread:make-thread
        (lambda ()
@@ -269,6 +292,7 @@ that was created in `body'."
     nil)))
 
 (defun println-top-level (msg)
+  "Print MSG to the top-level *STANDARD-OUTPUT* followed by a newline."
   (let ((*standard-output* *standard-output*))
     (sb-thread:make-thread
      (lambda ()
@@ -284,27 +308,35 @@ that was created in `body'."
   (find name (sb-thread::list-all-threads) :test 'equal :key 'thread-name))
 
 (defun thread-key-list ()
+  "Return AVLNODE-KEYs associated with threads in *ALL-THREADS*."
   (sb-thread::avltree-filter #'sb-thread::avlnode-key sb-thread::*all-threads*))
 
 (defun thread-id-list ()
+  "Return the THREAD-OS-TID associated with thread in *ALL-THREADS*."
   (sb-thread::avltree-filter (lambda (th) (thread-os-tid (sb-thread::avlnode-data th))) sb-thread::*all-threads*))
 
 (defun thread-count ()
+  "Return the current count of threads in *ALL-THREADS*."
   (sb-thread::avl-count sb-thread::*all-threads*))
 
-(defun make-threads (n fn &key (name "thread"))
+(defun make-threads (n thunk &key (name "thread"))
+  "Make N number of threads which each eval THUNK."
   (declare (type fixnum n))
   (loop for i below n
-        collect (make-thread fn :name (format nil "~A-~D" name i))))
+        collect (make-thread thunk :name (format nil "~A-~D" name i))))
 
 (defun make-ephemeral-thread (name)
+  "Make a new 'ephemeral' thread called NAME."
     (sb-thread::%make-thread name t (make-semaphore :name name)))
 
-(defgeneric designate-oracle (host guest))
-(defgeneric assign-supervisor (worker supervisor))
+(defgeneric designate-oracle (host guest)
+  (:documentation "Designate an oracle GUEST for HOST."))
+(defgeneric assign-supervisor (worker supervisor)
+  (:documentation "Assign a SUPERVISOR for WORKER."))
 
 ;;; Threads
 (defmacro with-thread ((&key bindings name) &body body)
+  "Eval BODY in a new thread with optional BINDINGS and NAME."
   `(with-default-special-bindings ,bindings
      (make-thread (lambda () ,@body)
 		  ,@(when name `(:name ,name)))))
@@ -320,12 +352,15 @@ that was created in `body'."
 	       (cons (car a))))))
 
 (defmacro with-threads ((i n &key return bindings args name) &body body)
+  "Eval BODY N times in a function with I bound to a new thread. Optional
+keywords modify the bindings in effect."
   `(with-default-special-bindings ,bindings
      (dotimes (,i ,n ,@(when return (list return)))
        (make-thread (lambda (,@args) ,@body)
                     ,@(when name `(:name (symbolicate ,name i)))))))
 
 (defun finish-threads (&rest threads)
+  "Finish THREADS, attempting to join them, else calling TERMINATE-THREAD."
   (let ((threads (flatten threads)))
     (unwind-protect
 	 (mapc #'join-thread threads)
@@ -334,6 +369,7 @@ that was created in `body'."
 	  (terminate-thread thread))))))
 
 (defun timed-join-thread (thread timeout)
+  "Join THREAD waiting at most TIMEOUT seconds."
   (declare (type thread thread) (type float timeout))
   (handler-case (sb-sys:with-deadline (:seconds timeout)
 		  (join-thread thread :default :aborted))
@@ -345,12 +381,13 @@ that was created in `body'."
   (join-thread *current-thread*))
 
 (defun kill-thread (thread)
+  "Kill THREAD, ignoring all errors which may occur."
   (when (thread-alive-p thread)
     (ignore-errors
       (terminate-thread thread))))
 
 ;; (sb-vm::primitive-object-slots (sb-vm::primitive-object 'sb-vm::thread))
-(defun init-session (&optional (thread *current-thread*)) (sb-thread::new-session thread))
+;; (defun init-session (&optional (thread *current-thread*)) (sb-thread::new-session thread))
 
 ;; (sb-thread::with-progressive-timeout (timet :seconds 4) (dotimes (i 4000) (print (timet))))
 
@@ -365,6 +402,7 @@ that was created in `body'."
 
 ;; from sb-thread
 (defun dump-thread (&optional thread)
+  "Dump the contents of THREAD."
   (let* ((slots (sb-vm::primitive-object-slots #1=(sb-vm::primitive-object 'sb-vm::thread)))
 	 (sap (if thread (thread-sap thread) (current-thread-sap)))
 	 (thread-obj-len (sb-vm::primitive-object-length #1#))

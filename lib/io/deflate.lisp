@@ -2978,10 +2978,19 @@ writes all compressed data to STREAM."
   (lambda (buffer end)
     (write-sequence buffer stream :end end)))
 
+(defmacro %with-compressor ((var class
+                                &rest initargs
+                                &key &allow-other-keys)
+                           &body body)
+  `(let ((,var (make-instance ,class ,@initargs)))
+     (multiple-value-prog1 
+         (progn ,@body)
+       (finish-compression ,var))))
+
 (defun gzip-stream (input output)
   (let ((callback (make-stream-output-callback output))
         (buffer (make-array 8192 :element-type '(unsigned-byte 8))))
-    (with-compressor (compressor 'gzip-compressor
+    (%with-compressor (compressor 'gzip-compressor
                                  :callback callback)
       (loop
        (let ((end (read-sequence buffer input)))

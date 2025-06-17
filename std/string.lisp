@@ -15,17 +15,21 @@
 ;;     unicode<= unicode>=))
 (in-package :std/string)
 
-(defparameter *suppress-character-coding-errors* nil)
+(defparameter *suppress-character-coding-errors* nil
+  "Suppress errors which may arise from character encoding/decoding.")
 
-(defconstant +cr+ #\Return)
-(defconstant +lf+ #\Linefeed)
-(sb-int:defconstant-eqx +crlf+ (coerce #(+cr+ +lf+) 'simple-array) #'equalp)
+(defconstant +cr+ #\Return "Return char.")
+(defconstant +lf+ #\Linefeed "Linefeed char.")
+(sb-int:defconstant-eqx +crlf+ (coerce #(+cr+ +lf+) 'simple-array) #'equalp
+  "Character sequcne #(Return Linefeed) = '\\r\\n'")
 
 ;; (mapc (lambda (s) (export s)) sb-unicode-syms)
 ;; (reexport-from 
 ;;  :sb-unicode
 ;;  :include sb-unicode-syms)
-(defparameter *omit-nulls* nil)
+(defparameter *omit-nulls* nil
+  "When Non-nil, omit null values returned by SSPLIT.")
+
 (defvar *whitespaces* (list #\Backspace #\Tab #\Linefeed #\Newline #\Vt #\Page
                             #\Return #\Space #\Rubout
                             #+sbcl #\Next-Line #-sbcl (code-char 133)
@@ -173,6 +177,7 @@ of a string."
                       cur-key  new-key))))))))
 
 (defun iota (n)
+  "Return a list of positive integers below N."
   (loop for i below n collect i))
 
 (defun hash-table->list (table &key (keep-keys t) (keep-values t))
@@ -196,6 +201,7 @@ of a string."
     list))
 
 (defun all-equal (list &key (key 'identity) (test 'eql))
+  "Return Non-nil if all elements of LIST are equal according to KEY and TEST."
   (if (or (null list)
           (null (rest list)))
       t
@@ -362,8 +368,8 @@ of a string."
 ;;       (move r x)
 ;;       (sb-vm::inst #:xor r (char-code y)))))
 
-#+ (and sbcl (or x86 x86-64))
 (defun numeric-char= (x y)
+  "Return Non-nil if X and Y are equal numeric characters."
   (declare (type character x y))
   (logxor (char-code x)
           (char-code y)))
@@ -531,7 +537,8 @@ of a string."
                               input-var
                               `(,default-fn)))))))
 
-(defvar *tab-width* 8)
+(defvar *tab-width* 4
+  "The number of spaces to replace all #\Tab characters with in DETABIFY.")
 
 ;; pulled from SB-COVER
 (defun detabify (string)

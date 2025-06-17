@@ -360,7 +360,17 @@
    #:entry-fifo-p
    #:call-with-open-tar-file
    #:with-open-tar-file
-   #:do-entries))
+   #:do-entries
+   #:write-file-entry
+   #:write-hard-link-entry
+   #:write-symbolic-link-entry
+   #:write-block-device-entry
+   #:write-directory-entry
+   #:write-fifo-entry
+   #:write-pax-extended-attributes-entry
+   #:write-pax-global-attributes-entry
+   #:write-gnu-long-link-name-entry
+   #:write-gnu-long-name-entry))
 
 (defpackage :dat/parquet
   (:use :cl :std :obj/id :dat/proto :dat/json)

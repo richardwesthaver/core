@@ -102,7 +102,7 @@ appended."
   "call the THUNK in a context where the current directory was changed to DIR, if not NIL.
 Note that this operation is usually NOT thread-safe."
   (if dir
-      (let* ((dir (directory-path dir))
+      (let* ((dir (directory-path (probe-file dir)))
              (cwd (sb-posix:getcwd))
              (*default-pathname-defaults* dir))
         (sb-posix:chdir dir)

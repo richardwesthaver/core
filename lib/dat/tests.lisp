@@ -160,9 +160,8 @@
 ;;; TAR
 (deftest tar ()
   (let ((path (tmpize-pathname "/tmp/foo.tar")))
-    (with-open-tar-file (foo path :direction :output :type 'v7-tar-file
-                                      :if-exists :overwrite
-                                      :if-does-not-exist :create)
+    (with-open-tar-file (foo path :direction :output
+                                  :if-does-not-exist :create)
       (istype 'tar-file foo)
       ;; (tar:finalize-tar-file foo)
       (istype 'tar-file-entry (tar::write-file-entry foo "bar" :data "a b c")))

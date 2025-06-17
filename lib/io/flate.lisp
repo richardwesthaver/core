@@ -52,19 +52,28 @@
 (deferror decompression-error (flate-error) () (:auto t))
 
 ;;; Proto
-(defgeneric decompress (output state input &key &allow-other-keys))
-(defgeneric compress (input state &key &allow-other-keys))
+(defgeneric decompress (output state input &key &allow-other-keys)
+  (:documentation "Decompress INPUT using initial STATE, writing to OUTPUT. STATE is either a
+DECOMPRESSION-STATE object for deflate-based compression or a
+ZSTD-DECOMPRESSOR in the case of zstd."))
+
+(defgeneric compress (input state &key &allow-other-keys)
+  (:documentation "Compress INPUT using initial STATE, which may be a COMPRESSION-STATE object
+for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 
 (defgeneric finish-compression (self)
   (:documentation "Finish the data format and flush all pending
   data in the bitstream."))
 
-(defgeneric finish-decompression (self))
+(defgeneric finish-decompression (self)
+  (:documentation "Flush all pending compressed input of decompressor SELF."))
 
 ;; TODO 2024-06-08: maybe move this to generic io/stream protocol - 'RESET'
 
-(defgeneric reset-compressor (self))
-(defgeneric reset-decompressor (self))
+(defgeneric reset-compressor (self)
+  (:documentation "Reset the state of compressor SELF."))
+(defgeneric reset-decompressor (self)
+  (:documentation "Reset the state of decompressor SELF."))
 (defgeneric compress-octet (octet compressor)
   (:documentation "Add OCTET to the compressed data of COMPRESSOR."))
 
@@ -72,32 +81,24 @@
   (:documentation "Add the octets of VECTOR to the compressed
   data of COMPRESSOR."))
 
-(defgeneric make-compressing-stream (key &optional stream))
-(defgeneric make-decompressing-stream (key &optional stream))
+(defgeneric make-compressing-stream (key &optional stream)
+  (:documentation "Return a new COMPRESSING-STREAM of kind KEY, optionally wrapping STREAM."))
+(defgeneric make-decompressing-stream (key &optional stream)
+  (:documentation "Return a new DECOMPRESSING-STREAM of kind KEY, optionally wrapping STREAM."))
+
 (defgeneric compress-object (obj))
 (defgeneric decompress-object (obj))
+
 (defgeneric compression-level (obj))
 (defgeneric (setf compression-level) (new obj))
+
 (defgeneric compress-with (self obj &key &allow-other-keys))
 (defgeneric decompress-with (self obj &key &allow-other-keys))
-;; from SALZA2
+
 (defgeneric compress-octet-vector (vector compressor &key start end))
 (defgeneric decompress-octet-vector (vector decompressor &key start end))
 
 ;;; Compression
-;; AKA 'DEFLATE'
-
-(defmacro with-compressor ((var class
-                                &rest initargs
-                                &key &allow-other-keys)
-                           &body body)
-  `(let ((,var (make-instance ,class ,@initargs)))
-     (multiple-value-prog1 
-         (progn ,@body)
-       (finish-compression ,var))))
-
-;; reset-compressor
-
 (defclass compressing-stream (wrapped-stream) ()
   (:default-initargs
    :stream (make-instance 
@@ -115,8 +116,6 @@
                'compressing-stream)))
 
 ;;; Decompression
-
-;; AKA 'INFLATE'
 (defclass decompressing-stream (wrapped-stream) ()
   (:default-initargs
    :stream (make-instance 

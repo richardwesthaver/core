@@ -69,14 +69,14 @@
     (run-cc "-g" "-O2" "-Wall" 
      "-Wno-ununsed-value" "-ltree-sitter" "-shared" "alien.c" 
      "-o" "../../.stash/libtree-sitter-alien.so")))
-  (:install () (funcall #0$sudo -S cp .stash/libtree-sitter-alien.so /usr/local/lib/$# :input t)))
+  (:install () (with-sudo "cp .stash/libtree-sitter-alien.so /usr/local/lib/")))
  (zstd-alien ()
   (:build () 
    (with-directory "ffi/zstd"
     (run-cc "-g" "-O2" "-Wall" "-Wno-unused-value" "-lzstd" "-shared"
      "alien.c" "-o" "../../.stash/libzstd-alien.so")))
   (:install () 
-   (funcall #0$sudo -S cp .stash/libzstd-alien.so /usr/local/lib/$# :input t)))
+   (with-sudo "cp .stash/libzstd-alien.so /usr/local/lib/")))
  (psl.dat (%stash)
   (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
    ".stash/psl.dat"
@@ -101,22 +101,22 @@
   (tree-sitter:load-tree-sitter-alien)
   (tree-sitter:load-tree-sitter-c)
   (let (lapack lapack.h code)
-  (setf
-   lapack
-   (let* ((str (read-file #p"/usr/include/openblas/lapack.h"))
-  	  (tree (flatten (syn/ts::parse-string :c str :consume t :produce-cst nil)))
-  	  (ret))
-    (setf lapack.h str)
-    (loop with dx = 0
-     for di = (position :declaration tree :start dx)
-     if (null di) 
-     do (return ret)
-     else
-     do (progn
-         (setf dx di)
-         (incf dx)
-         (let ((ei (position :declaration tree :start dx)))
-          (push (subseq tree di ei) ret))))))
+   (setf
+    lapack
+    (let* ((str (read-file #p"/usr/include/openblas/lapack.h"))
+  	   (tree (flatten (syn/ts::parse-string :c str :consume t :produce-cst nil)))
+  	   (ret))
+     (setf lapack.h str)
+     (loop with dx = 0
+      for di = (position :declaration tree :start dx)
+      if (null di) 
+      do (return ret)
+      else
+      do (progn
+          (setf dx di)
+          (incf dx)
+          (let ((ei (position :declaration tree :start dx)))
+           (push (subseq tree di ei) ret))))))
    (labels ((lastr (x start end)
              (apply 'subseq lapack.h (subseq x start end)))
             (lasym (str) (symbolicate (string-upcase (substitute #\- #\_ str))))
@@ -126,13 +126,13 @@
                                (if (char= (char str (1- len)) #\*)
                                 (1- len)
                                 len))))))
-  	  (lasyms (x start end)
-  	   (symbolicate (string-upcase (substitute #\- #\_ (lastr x start end)))))
+  	    (lasyms (x start end)
+  	     (symbolicate (string-upcase (substitute #\- #\_ (lastr x start end)))))
             (lasymf (x start end)
              (symbolicate (string-upcase (substitute #\- #\_ (remove-string "LAPACK_" (lastr x start end))))))
-  	  (laparm (str)
-  	   (let ((a (nreverse (split-sequence #\space str))))
-  	    (list (if (string-equal (first a) "T")
+  	    (laparm (str)
+  	     (let ((a (nreverse (split-sequence #\space str))))
+  	      (list (if (string-equal (first a) "T")
                      '%t
                      (lasym (first a)))
                (if (third a)
@@ -144,13 +144,13 @@
                  (lasym* (second a)))))))
             (gen-lapack-args (x)
              (let* ((pa (position :parameter-list x)) ;; param start
-  	          (pb (position :preproc-ifdef x)) ;; param end
-  	          (params (subseq x pa pb)))
-  	    (loop with p1 = 0
-  	     for pos = (position :parameter-declaration params :start p1)
-  	     while pos
-  	     do (setf p1 (1+ pos))
-  	     collect (laparm (lastr params (+ pos 1) (+ pos 3)))))))
+  	            (pb (position :preproc-ifdef x)) ;; param end
+  	            (params (subseq x pa pb)))
+  	      (loop with p1 = 0
+  	       for pos = (position :parameter-declaration params :start p1)
+  	       while pos
+  	       do (setf p1 (1+ pos))
+  	       collect (laparm (lastr params (+ pos 1) (+ pos 3)))))))
     (setf code
      (mapcar
       (lambda (x)
@@ -214,9 +214,9 @@
     (asdf:make :bin/skel))
    (move-file "bin/skel" ".stash/skel-gui"))
   (:install () 
-   (funcall #0$sudo -S install -C -m 755 .stash/skel /usr/local/bin/skel$# :input t))
+   (with-sudo "install -C -m 755 .stash/skel /usr/local/bin/skel"))
   (:install-gui () 
-   (funcall #0$sudo -S install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui$# :input t)))
+   (with-sudo "install -C -m 755 .stash/skel-gui /usr/local/bin/skel-gui")))
  (skc (%stash)
   (:build ()
    (with-sbcl (:noinform t :quit t)
@@ -248,22 +248,17 @@
    (move-file "bin/core" ".stash/core"))
   (:compile () (std:compile-lisp :core :force t :verbose t))
   (:install ()
-   (funcall 
-    #0$sudo -S install -C -m 755 .stash/core /usr/local/bin/core
-    echo "core -> /usr/local/bin/"
-    links="skel homer packy rdb organ vc gen swm mpk"
-    for i in $links; do
-    sudo ln -sf /usr/local/bin/core /usr/local/bin/$i
-    echo "$i -> core -> /usr/local/bin/"
-    done$#
-    :input t))
+   (with-sudo "install -C -m 755 .stash/core /usr/local/bin/core")
+   (println "core -> /usr/local/bin/")
+   (loop for i in '("skel" "homer" "packy" "rdb" "organ" "vc" "gen" "swm" "mpk")
+    while i
+    do (with-sudo (format nil "ln -sf /usr/local/bin/core /usr/local/bin/~A" i))
+    do (println (format nil "~A -> core -> /usr/local/bin/" i))))
   (:install-gui ()
-   (funcall 
-    #0$sudo -S install -C -m 755 .stash/gui /usr/local/bin/gui
-    echo "gui -> /usr/local/bin/"$#
-    :input t))
+    (with-sudo "install -C -m 755 .stash/gui /usr/local/bin/gui")
+    (println "gui -> /usr/local/bin/"))
   (:link-pod () 
-   (funcall #0$sudo -S ln -sf /usr/local/bin/core /usr/local/bin/pod$# :input t)))
+   (with-sudo "ln -sf /usr/local/bin/core /usr/local/bin/pod")))
  (tests ()
   (:run ()
    (asdf:load-system :core/tests)
@@ -283,16 +278,12 @@
    (core-coverage-report)))
  ;; install
  (install (install-core)
-  (funcall
-   #0$d=/usr/local/share/lisp/
-   cd .stash
-   if [ -d $d ];
-   then
-   for f in $(find . -type f -name "*.core")
-   do echo "$(basename $f) -> $d"
-   sudo -S install -C -m 755 $f $d
-   done fi$#
-   :input t))
+  (with-directory ".stash/"
+   (loop for f in (directory "*.core")
+    while f
+    with d = #P"/usr/local/share/lisp/"
+    do (format t "~A -> ~A" f d)
+    do (sb-ext:run-program (find-exe "install") `("-C" "-m" "755" ,f ,d) :output t))))
  ;; TODO 2024-09-15: 
  (syms.sxp () 
   (with-open-file (f "syms.sxp" 
@@ -304,15 +295,17 @@
  (dist () 
   (ensure-directories-exist ".stash/tmp/core/" :verbose t)
   (with-directory ".stash"
-   #$mv *.so psl.dat rgb.txt tmp/core/ # parquet.json not needed - pre-compiled
-   mv $(find -maxdepth 1 -type f ! -name "*.*") tmp/core/
-   cd tmp && tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#))
+   (mapc (lambda (x) (move-file x (merge-pathnames x "tmp/core/"))) (directory "*.so"))
+   (mapc (lambda (x) (move-file x (merge-pathnames x "tmp/core/"))) (directory "*"))
+   (with-directory "tmp"
+    ;; (compress #p"core.tar" :zstd :output #p"core.tar.zst")
+    #$tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#)))
  (dist-repo ()
   (vc:vc-bundle (sk-vc *skel-project*) "/opt/store/packy/vc/core.hg"))
  (dist-source ()
-  #$cd .. && tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#)
- (dist-core (clean %stash build-core) #$zstd .stash/core$#)
- (deploy (all dist) 
-  #$mv ".stash/core.tar.zst" $PACKY_HOME/dist/x86_64-unknown-linux-gnu/core.tar.zst$#
+  (with-directory ".."
+   #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#))
+ (deploy (default dist)
+  (move-file ".stash/core.tar.zst" "/opt/store/packy/dist/x86_64-unknown-linux-gnu/core.tar.zst")
   (sk-make *skel-project* :dist-source)
   (move-file "core.tar.zst" "/opt/store/packy/src/core.tar.zst")))

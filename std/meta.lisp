@@ -26,6 +26,8 @@
   (:method ((self t))
     (string self))
   (:documentation "Return the name of object SELF."))
+(defgeneric status (self &key &allow-other-keys)
+  (:documentation "Return the status of SELF."))
 (defgeneric tags (self)
   (:documentation "Return the tags associated with object SELF."))
 (defgeneric run-object (self &key &allow-other-keys)

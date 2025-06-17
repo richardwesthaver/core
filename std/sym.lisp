@@ -29,6 +29,7 @@ Example:
   (intern (string name) package))
 
 (defun maybe-intern (name package)
+  "Intern NAME in PACKAGE if it exists, else return a fresh symbol of the same name."
   (values
    (if package
        (intern name (if (eq t package) *package* package))
@@ -64,10 +65,12 @@ string as the argument."
               (string name))))
 
 (defun mkstr (&rest args)
+  "Print all ARGS to a temporary stream using PRINC and return the output as a string."
   (with-output-to-string (s)
     (dolist (a args) (princ a s))))
 
 (defun symb (&rest args)
+  "Intern a new symbol with a name equal to the result of applying MKSTR to ARGS."
   (values (intern (apply #'mkstr args))))
 
 (sb-ext:with-unlocked-packages (:sb-int)
@@ -96,6 +99,7 @@ passed as the first argument to `gensym'."
 ;;; Aliases
 ;; from LPARALLEL
 (defmacro alias-function (alias orig)
+  "Define an ALIAS of function ORIG."
   `(progn
      (setf (symbol-function ',alias) #',orig)
      (define-compiler-macro ,alias (&rest args)
@@ -103,6 +107,7 @@ passed as the first argument to `gensym'."
      ',alias))
 
 (defmacro alias-macro (alias orig)
+  "Define an ALIAS of macro ORIG."
   `(progn
      (setf (macro-function ',alias) (macro-function ',orig))
      ',alias))
