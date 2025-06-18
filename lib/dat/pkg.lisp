@@ -97,6 +97,11 @@
    #:json-setf
    #:json-write))
 
+(defpackage :dat/openapi
+  (:nicknames :openapi)
+  (:use :cl :std :dat/proto :dat/json :schema)
+  (:import-from :ast :ast))
+
 (defpackage :dat/base64
   (:use :cl :std :dat/proto)
   (:export 
