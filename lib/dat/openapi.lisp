@@ -4,3 +4,5 @@
 
 ;;; Code:
 (in-package :dat/openapi)
+
+(defschema openapi-schema () ())
