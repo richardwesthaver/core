@@ -130,3 +130,22 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
   (input)
   (:default-initargs
    :stream (make-instance 'decompressing-stream)))
+
+;;; Macros
+(defmacro with-compressor ((var class
+                                &rest initargs
+                                &key &allow-other-keys)
+                           &body body)
+  `(let ((,var (make-instance ,class ,@initargs)))
+     (multiple-value-prog1 
+         (progn ,@body)
+       (finish-compression ,var))))
+
+(defmacro with-decompressor ((var class
+                              &rest initargs
+                              &key &allow-other-keys)
+                             &body body)
+  `(let ((,var (make-instance ,class ,@initargs)))
+     (multiple-value-prog1
+         (progn ,@body)
+       (finish-decompression ,var))))

@@ -2978,7 +2978,7 @@ writes all compressed data to STREAM."
   (lambda (buffer end)
     (write-sequence buffer stream :end end)))
 
-(defmacro %with-compressor ((var class
+(defmacro with-compressor ((var class
                                 &rest initargs
                                 &key &allow-other-keys)
                            &body body)

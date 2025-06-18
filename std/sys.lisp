@@ -33,7 +33,7 @@ and we may query the user for input.")
    :exit sb-ext:*exit-hooks*))
 
 (defparameter *default-arena-size* (* 10 1024 1024 1024)
-  "The default size of freshly allocated arenas."
+  "The default size of freshly allocated arenas.")
 
 (defparameter *default-heap-size* (ash 1 16)
   "The default system heap size.")

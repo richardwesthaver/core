@@ -3,9 +3,9 @@
 ;; 
 
 ;;; Code:
-(pushnew :net *features*)
+(in-package :std-user)
 
-(pkg:defpkg :net/core
+(defpkg :net/core
   (:use :cl :std :sb-thread :config :id)
   (:recycle :sb-bsd-sockets)
   (:export
@@ -35,9 +35,16 @@
    :make-server)
   ;; utils
   (:export :get-address-by-name
-   :with-client-server :*localhost*))
+   :with-client-server :*localhost*)
+  ;; pkg
+  (:export :*net-packages*))
 
-(defpackage :net/udp
+(in-package :net/core)
+
+(defparameter *net-packages* nil)
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *net-packages* :test 'string=)))
+
+(defpkg :net/udp
   (:nicknames :udp)
   (:use :cl :std :net/core :sb-bsd-sockets :config)
   (:export
@@ -49,7 +56,7 @@
    :udp-socket
    :udp-client))
 
-(defpackage :net/tcp
+(defpkg :net/tcp
   (:nicknames :tcp)
   (:use :cl :std :net/core :sb-bsd-sockets :config)
   (:export
@@ -65,7 +72,7 @@
    :tcp-socket
    :tcp-config))
 
-(defpackage :net/codec/dns
+(defpkg :net/codec/dns
   (:nicknames :codec/dns)
   (:use :cl :std :net/core :punycode)
   (:export
@@ -79,13 +86,13 @@
    :encode-query :decode-query
    :decode-data))
 
-(defpackage :net/codec/tlv
+(defpkg :net/codec/tlv
   (:nicknames :codec/tlv)
   (:use :cl :std :net/core :dat/proto)
   (:export
    :tlv :tlv-type :tlv-length :tlv-value :make-tlv))
 
-(defpackage :net/codec/osc
+(defpkg :net/codec/osc
   (:nicknames :codec/osc)
   (:use :cl :std :log :net/core)
   (:export
@@ -115,7 +122,7 @@
    :timetag->unix-time
    :print-as-double))
 
-(defpackage :net/codec/http
+(defpkg :net/codec/http
   (:use :cl :net/core)
   (:import-from :std :eval-always :define-constant
    :hash-table-alist)
@@ -123,11 +130,11 @@
    :*http-status-message-map* :http-status-message :http-keyword :+known-http-versions+
    :+known-http-methods+))
 
-(defpackage :net/proto/whois
+(defpkg :net/proto/whois
   (:nicknames :net/whois)
   (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :punycode))
 
-(defpackage :net/proto/dns
+(defpkg :net/proto/dns
   (:nicknames :net/dns)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/dns)
   (:export
@@ -148,12 +155,13 @@
    :response-code-name
    :with-dns-error-handling))
 
-(defpackage :net/proto/ssh
-  (:use :cl :std :net/core :sb-bsd-sockets)
-  (:export))
+;; (defpkg :net/proto/ssh
+;;   (:use :cl :std :net/core :sb-bsd-sockets)
+;;   (:export))
 
-(defpackage :net/proto/http
+(defpkg :net/proto/http
   (:nicknames :http)
+  (:use-reexport :net/codec/http)
   (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer :config :net/tcp)
   (:export
    :http-config
@@ -230,26 +238,26 @@
    :invalid-parameter-key
    :invalid-parameter-value))
 
-(defpackage :net/proto/transmission
+(defpkg :net/proto/transmission
   (:nicknames :net/transmission)
   (:import-from :id :id)
   (:import-from :uri :uri)
   (:import-from :srv :request :response :service :session :request-protocol :content-stream)
   (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :net/proto/http))
 
-(defpackage :net/proto/dm
+(defpkg :net/proto/dm
   (:nicknames :net/dm)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :net/codec/tlv))
 
-(defpackage :net/proto/sesh
+(defpkg :net/proto/sesh
   (:nicknames :net/sesh)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp))
 
-(defpackage :net/proto/nsm
+(defpkg :net/proto/nsm
   (:nicknames :net/nsm)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/osc))
 
-(defpackage net/cookie
+(defpkg net/cookie
   (:use :cl :std :parse/bytes :obj/uri)
   (:shadowing-import-from :alexandria :when-let :if-let)
   (:import-from :obj/time
@@ -275,7 +283,7 @@
    :cookie-creation-timestamp :stringify-cookie
    :cookie-date))
 
-(defpackage :net/req
+(defpkg :net/req
   (:nicknames :req)
   (:shadowing-import-from :std/type :octet :octet-vector)
   (:import-from :dat/mime :mime)
@@ -311,7 +319,7 @@
    :decoding-stream-of
    :fetch))
 
-(defpackage :net/srv
+(defpkg :net/srv
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets :obj/db 
@@ -421,7 +429,33 @@
    #:abort-request-handler
    #:net-service-config))
 
-(pkg:defpkg :net
+(defpkg :net/srv/ext
+  (:use :cl :std :net/core :cli/tools/net)
+  (:export :caddy-service :nginx-service))
+
+(pkg:defpkg :net/srv/http
+  (:use :cl :std :net/proto/http
+   :net/codec/http :net/core :net/cookie :io/chunky 
+   :srv :net/tcp :config)
+  (:import-from :net/srv :service-log)
+  (:use-reexport :net/srv)
+  (:package-local-nicknames
+   :codec :net/codec/http
+   :proto :net/proto/http)
+  (:export :http-service :https-service :http-server-config :https-server-config :tls-config))
+
+(pkg:defpkg :net/srv/udp
+  (:use :cl :std :net/udp :net/codec/tlv :net/core :srv)
+  (:use-reexport :net/srv)
+  (:export :udp-service :echo-service))
+
+(pkg:defpkg :net/srv/oauth
+  (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http :srv)
+  (:import-from :cli/tools/net :browse-url)
+  (:use-reexport :net/srv)
+  (:export :udp-service :echo-service))
+
+(defpkg :net
   (:use :cl :std)
   (:use-reexport 
    :net/core 
@@ -438,8 +472,10 @@
   (:import-from :net/req :http-client-config :http-client)
   (:export :http-client-config :http-client))
 
-(pkg:defpkg :net-user
+(defpkg :net-user
   (:use :cl :std :net :uri :url))
+
+(setq *defpkg-hook* nil)
 
 (in-package :net)
 (when (sb-int:featurep :swank)
@@ -448,3 +484,6 @@
   (load (asdf:system-relative-pathname :net "proto/crew.lisp"))
   (use-package :net/proto/swank)
   (use-package :net/proto/crew))
+
+(eval-when (:load-toplevel)
+  (pushnew :net *features*))

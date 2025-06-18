@@ -302,6 +302,18 @@
       (if (or (zerop code) (zerop (zstd::zstd-iserror code)))
           code
           (zstd-error (zstd::zstd-geterrorstring (zstd::zstd-geterrorcode code)))))))
+
+;; (defmethod stream-force-output ((stream zstd-decompressor))
+;;   (force-output (stream-of stream)))
+
+(defmethod stream-finish-output ((stream zstd-decompressor))
+  (stream-finish-output (stream-of stream)))
+
+;; (defmethod stream-force-output ((stream zstd-decompressing-stream))
+;;   (zstd::zstd-flushstream (dstream stream) (output stream)))
+
+(defmethod stream-finish-output ((stream zstd-compressing-stream))
+  (zstd::zstd-freedstream (dstream stream)))
        
 ;; (zstd::zstd-decompressbound
 

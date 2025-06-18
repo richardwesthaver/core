@@ -1,7 +1,6 @@
-;;; net/srv.lisp --- Lisp Web Services
+;;; net/srv/proto.lisp --- Lisp Net Services
 
-;; This library contains provides a Web Server abstraction a la Hunchentoot or
-;; Woo.
+;;
 
 ;;; Commentary:
 
@@ -28,32 +27,6 @@
 
 ;;; Code:
 (in-package :net/srv)
-
-(pkg:defpkg :net/srv/ext
-  (:use :cl :std :net/core :cli/tools/net)
-  (:export :caddy-service :nginx-service))
-
-(pkg:defpkg :net/srv/http
-  (:use :cl :std :net/proto/http
-   :net/codec/http :net/core :net/cookie :io/chunky 
-   :srv :net/tcp :config)
-  (:import-from :net/srv :service-log)
-  (:use-reexport :net/srv)
-  (:package-local-nicknames
-   :codec :net/codec/http
-   :proto :net/proto/http)
-  (:export :http-service :https-service :http-server-config :https-server-config :tls-config))
-
-(pkg:defpkg :net/srv/udp
-  (:use :cl :std :net/udp :net/codec/tlv :net/core :srv)
-  (:use-reexport :net/srv)
-  (:export :udp-service :echo-service))
-
-(pkg:defpkg :net/srv/oauth
-  (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http :srv)
-  (:import-from :cli/tools/net :browse-url)
-  (:use-reexport :net/srv)
-  (:export :udp-service :echo-service))
 
 ;;; Vars
 (defvar *router*)

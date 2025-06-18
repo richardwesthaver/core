@@ -33,7 +33,7 @@
                (:file "req")
                (:module "srv"
                 :components 
-                ((:file "pkg")
+                ((:file "proto")
                  (:file "udp")
                  (:file "http")
                  (:file "oauth")

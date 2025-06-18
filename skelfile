@@ -284,11 +284,10 @@
     with d = #P"/usr/local/share/lisp/"
     do (format t "~A -> ~A" f d)
     do (sb-ext:run-program (find-exe "install") `("-C" "-m" "755" ,f ,d) :output t))))
- ;; TODO 2024-09-15: 
  (syms.sxp () 
   (with-open-file (f "syms.sxp" 
                    :direction :output 
-                   :if-exists :overwrite 
+                   :if-exists :supersede
                    :if-does-not-exist :create)
    (dolist (s (list-all-symbols))
     (print s f))))

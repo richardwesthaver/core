@@ -63,17 +63,15 @@
    :run-nvcc
    :nvcc-error))
 
-(defpkg :cli/tools/make
+(defpkg :cli/tools/build
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*make*
    :run-make
    :*cmake*
-   :run-cmake))
-
-(defpkg :cli/tools/ninja
-  (:use :cl :std :cli/tools/proto :cli/env)
-  (:export
+   :run-cmake
+   :*meson*
+   :run-meson
    :*ninja*
    :run-ninja))
 

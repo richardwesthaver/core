@@ -106,8 +106,8 @@
 (defmethod vc-submodule ((self git-repo) (cmd (eql :init)) &key)
   (run-git-command "submodule" (list "init")))
 
-(defmethod vc-submodule ((self git-repo) (cmd (eql :update)) &key)
-  (run-git-command "submodule" (list "update")))
+(defmethod vc-submodule ((self git-repo) (cmd (eql :update)) &key init)
+  (run-git-command "submodule" `("update" ,@(when init '("--init")))))
 
 (defmethod vc-remote ((self git-repo) (cmd null) &key name verbose)
   (if name
