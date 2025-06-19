@@ -85,7 +85,7 @@
 (defmethod vc-commit ((self git-repo) msg &key &allow-other-keys)
   (with-slots (path) self
     (with-directory path
-      (sb-ext:process-exit-code (run-git-command "commit" "-m" msg)))))
+      (sb-ext:process-exit-code (run-git-command "commit" `("-m" ,msg))))))
 
 (defmethod vc-add ((self git-repo) &rest files)
   (with-slots (path) self
@@ -95,7 +95,7 @@
 (defmethod vc-remove ((self git-repo) &rest files)
   (with-slots (path) self
     (with-directory path
-      (sb-ext:process-exit-code (apply #'run-git-command "remove" files)))))
+      (sb-ext:process-exit-code (run-git-command "remove" files)))))
 
 (defmethod vc-remote ((self git-repo) (cmd (eql :add)) &key (name "origin") url)
   (run-git-command "remote" (list "add" name url)))
@@ -121,7 +121,7 @@
 (defmethod vc-addremove ((self git-repo) &rest files)
   (with-slots (path) self
     (with-directory path
-      (sb-ext:process-exit-code (apply #'run-git-command "addremove" files)))))
+      (sb-ext:process-exit-code (run-git-command "addremove" files)))))
 
 (defmethod vc-status ((self git-repo) &key &allow-other-keys) (vc-run self "status"))
 

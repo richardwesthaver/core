@@ -7,9 +7,9 @@
 
 (defvar *podman-config-directory* (merge-homedir-pathnames ".config/containers/"))
 
-(defvar *container*)
+(defvar *container* nil)
 
-(defun check-container (c)
+(defun check-container (&optional (c *container*))
   (unless c
     (required-argument :container)))
 
@@ -26,15 +26,15 @@
            ,@(if (atom cmd) `(,cmd) cmd))))
 
 (defun podman-run (args &key dir (container *container*) name (tty t) (detach t))
-                             ;; attach cpu 
-                             ;; gpu health network 
-                             ;; mount memory hostname env
-                             ;; dns authfile cap cgroup
-                             ;; expose label log mac-address
-                             ;; pod publish quiet read-only
-                             ;; replace restart requires rm
-                             ;; secret systemd timeout tty
-                             ;; tz ulimit user volume
+  ;; attach cpu 
+  ;; gpu health network 
+  ;; mount memory hostname env
+  ;; dns authfile cap cgroup
+  ;; expose label log mac-address
+  ;; pod publish quiet read-only
+  ;; replace restart requires rm
+  ;; secret systemd timeout tty
+  ;; tz ulimit user volume
   (check-container container)
   (apply 'run-podman "exec"
          `(,@(when dir `("-w" ,(namestring dir)))
@@ -64,5 +64,3 @@
      (setf *container* ,sym)
      ,@body
      ,@(when stop `((podman-stop ,sym)))))
-
-  
