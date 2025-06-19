@@ -1000,9 +1000,48 @@
    :with-tmp
    :walk-directory))
 
+(defpkg :std/file
+  (:use :cl)
+  (:import-from :std/macs :define-constant :eval-always :once-only :when-let)
+  (:import-from :std/condition :deferror)
+  (:import-from :std/path :directory-path :directory-path-p)
+  (:import-from :std/stream :copy-stream)
+  (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
+  (:import-from :sb-ext :delete-directory :delete-file-error)
+  (:import-from :uiop :delete-file-if-exists)
+  (:export
+   :delete-directory :delete-file-error
+   :unknown-file-type
+   :delete-file-if-exists
+   :probe-delete-file
+   :probe-delete-directory
+   :delete-directories
+   :read-file
+   :tmpfile
+   :dir
+   :file
+   :with-open-files
+   :write-stream-into-file
+   :write-file-into-stream
+   :file=
+   :file-size
+   :file-size-in-octets
+   :octet-vector=
+   :file-date
+   :file-timestamp
+   :*hidden-paths*
+   :hidden-path-p
+   :find-files
+   :count-file-lines
+   :probe-merge-file
+   :probe-directory
+   :move-file))
+
 (defpkg :std/os
   (:use :cl :sb-alien)
-  (:import-from :std/macs :with-gensyms)
+  (:import-from :std/macs :with-gensyms :if-let)
+  (:import-from :std/file :probe-directory)
+  (:import-from :std/path :directory-path)
   (:import-from :sb-posix :tcgetattr :tcsetattr 
    :termios :termios-cc :termios-cflag :termios-iflag 
    :termios-oflag :termios-lflag)
@@ -1048,44 +1087,8 @@
    :unmerge-pathnames
    :current-directory
    :with-directory-iterator
-   :file-kind))
-
-(defpkg :std/file
-  (:use :cl)
-  (:import-from :std/macs :define-constant :eval-always :once-only :when-let)
-  (:import-from :std/condition :deferror)
-  (:import-from :std/path :directory-path :directory-path-p)
-  (:import-from :std/stream :copy-stream)
-  (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
-  (:import-from :sb-ext :delete-directory :delete-file-error)
-  (:import-from :uiop :delete-file-if-exists)
-  (:export
-   :delete-directory :delete-file-error
-   :unknown-file-type
-   :delete-file-if-exists
-   :probe-delete-file
-   :probe-delete-directory
-   :delete-directories
-   :read-file
-   :tmpfile
-   :dir
-   :file
-   :with-open-files
-   :write-stream-into-file
-   :write-file-into-stream
-   :file=
-   :file-size
-   :file-size-in-octets
-   :octet-vector=
-   :file-date
-   :file-timestamp
-   :*hidden-paths*
-   :hidden-path-p
-   :find-files
-   :count-file-lines
-   :probe-merge-file
-   :probe-directory
-   :move-file))
+   :file-kind
+   :merge-env-pathnames))
 
 (defpkg :std/pipe
   (:use :cl :std/array)

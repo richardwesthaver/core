@@ -363,3 +363,8 @@ returns :BROKEN as second value.
 
 Signals an error if PATHSPEC is wild."
   (get-file-kind (merge-pathnames pathspec) follow-symlinks))
+
+(defun merge-env-pathnames (path &optional default)
+  (if-let ((%default (sb-posix:getenv default)))
+    (merge-pathnames path (namestring (directory-path %default)))
+    path))

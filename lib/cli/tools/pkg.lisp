@@ -223,7 +223,8 @@
 (defpkg :cli/tools/virt
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*buildah* :*podman* :run-buildah 
-   :run-podman :podman-machine-upgrade))
+   :run-podman :podman-machine-upgrade
+   :start-podman-service))
 
 (setq *defpkg-hook* nil)
 
@@ -246,7 +247,7 @@ ARGS and BODY are parsed as the args and body of the run-NAME function."
        var (symbolicate #\* %name #\*)
        err (symbolicate %name "-ERROR")
        run (symbolicate "RUN-" %name))
-      `(progn
+      `(eval-always
          (defvar ,var 
            (find-exe ,(etypecase name
                         (string name)

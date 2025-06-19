@@ -40,8 +40,16 @@
    :default-podman-config
    :podman-local-user-socket
    :buildah-from
-   :*working-container*
+   :*buildah-container*
+   :*container*
    :buildah-add
    :buildah-run
    :buildah-config
-   :with-buildah))
+   :with-buildah
+   :podman-build
+   :podman-stop
+   :podman-cp
+   :podman-exec
+   :buildah-copy
+   :with-container
+   :podman-run))

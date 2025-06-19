@@ -301,7 +301,7 @@ generating json from a scripting language without native json support.")
   (declare (ignore value))
   (format stream "~<true~>"))
 
-(defmethod json-write ((value (eql nil)) &optional stream)
+(defmethod json-write ((value null) &optional stream)
   "Encode the null constant."
   (declare (ignore value))
   (format stream "~<null~>"))

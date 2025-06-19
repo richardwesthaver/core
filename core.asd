@@ -10,11 +10,11 @@
 
 (defsystem :core/user
   :depends-on 
-  (:core :packy :pod :krypt 
-   :krypt :rt :vc :web :gui)
+  (:core :pod :box :gui
+   :web :vc :syn :rt)
   :components ((:file "user"))
   :build-operation monolithic-compile-bundle-op
-  :build-pathname "user")
+  :build-pathname "user-source")
 
 (defsystem :core/tests
   :depends-on (:rt :std/tests :log/tests :rt/tests :cli/tests

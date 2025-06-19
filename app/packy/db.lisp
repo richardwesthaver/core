@@ -6,6 +6,7 @@
 (in-package :packy/db)
 
 (defvar *packy-backend-options* rdb::*rdb-backend-options*)
+
 (set-database-backend :packy *packy-backend-options*
                       (lambda () (db::%load-database-backend :rdb)))
 

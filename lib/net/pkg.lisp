@@ -155,9 +155,9 @@
    :response-code-name
    :with-dns-error-handling))
 
-;; (defpkg :net/proto/ssh
-;;   (:use :cl :std :net/core :sb-bsd-sockets)
-;;   (:export))
+(defpkg :net/proto/ssh
+  (:use :cl :std :net/core :sb-bsd-sockets)
+  (:export))
 
 (defpkg :net/proto/http
   (:nicknames :http)

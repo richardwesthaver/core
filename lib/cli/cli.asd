@@ -21,6 +21,7 @@
                  (:file "pacman" :depends-on ("pkg"))
                  (:file "cc" :depends-on ("pkg"))
                  (:file "build" :depends-on ("pkg"))
+                 (:file "virt" :depends-on ("pkg"))
                  (:file "sys" :depends-on ("pkg"))
                  (:file "rust" :depends-on ("pkg"))
                  (:file "sbcl" :depends-on ("pkg"))
