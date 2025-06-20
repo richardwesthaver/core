@@ -43,13 +43,10 @@
  (upstream () 
   (let ((tmp #p"/tmp/core/"))
    (probe-delete-directory tmp)
-   (vc-export (sk-vc *skel-project*) tmp)
-   (setf *shell-directory* tmp)
+   (vc-export (sk-vc *skel-project*) tmp :filter-regexp "^std$") ;; yuck
    (with-repo (r :path tmp :type :git)
     (vc-remote r :add :name "cb" :url "ssh://git@codeberg.org/c-c/core")
     (vc-remote r :add :name "gh" :url "ssh://git@github.com/richardwesthaver/core")
-    ;; pretty gross hack to fix broken tree
-    #$git filter-repo --invert-paths --path-regex '^std$' --force$#
     (vc-push r :set-upstream t :remote "cb" :branch "default" :force t)
     (vc-push r :remote "gh" :branch "default" :force t))))
  (clean ()

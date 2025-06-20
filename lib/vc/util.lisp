@@ -5,41 +5,6 @@
 ;;; Code:
 (in-package :vc/util)
 
-(defun find-repo-root (&optional path)
-  "Check PATH for evidence of a VCS and continue walking up the filesystem until
-we find one, else return NIL."
-  (labels ((%check (dir)
-             (if (null dir)
-                 (return-from find-repo-root)
-                 (if (directory (merge-pathnames ".hg/" dir))
-                     :hg
-                     (when (directory (merge-pathnames ".git/" dir))
-                       :git)))))
-    (let ((%path (car (directory (or path *default-pathname-defaults*)))))
-      (loop for x = (%check %path)
-            for parent = (when-let ((parent (butlast (pathname-directory %path))))
-                           (make-pathname :directory parent))
-            if x
-            return (values %path x)
-            else if (not parent)
-            return nil
-            else
-            do (setf %path parent)))))
-
-(defun make-hg-repo (path &key init update)
-  (let ((repo (make-instance 'hg-repo :path path)))
-    (when init (vc-init repo))
-    (when update
-      (setf (vc/hg::vc-requires repo)
-            (mapcar (lambda (s) (trim s))
-                    (sb-unicode:lines (vc-run repo "debugrequires")))))
-    repo))
-
-(defun make-git-repo (path &key init)
-  (let ((repo (make-instance 'git-repo :path path)))
-    (when init (vc-init repo))
-    repo))
-
 (defun make-repo (path &key (type *default-vc-kind*) init)
   (case type
     (:hg (make-hg-repo path :init init))
@@ -87,3 +52,14 @@ we find one, else return NIL."
                           ,@(when init `(:init ,init)) ,@(when type `(:type ,type)))))))
        (setf *repo* ,sym)
        ,@body)))
+
+;;; Clone
+(defmethod vc-clone ((self pathname) (remote string) &key)
+  (let ((repo (if (or (search "git" remote)
+                      (search "codeberg" remote))
+                  (make-git-repo self)
+                  (make-hg-repo self))))
+    (vc-clone repo remote)))
+
+(defmethod vc-clone ((self string) (remote t) &key)
+  (vc-clone (pathname self) remote))

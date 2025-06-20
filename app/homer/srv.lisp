@@ -17,14 +17,20 @@
    (install))
   (:documentation "HOMER-SERVICE configuration from systemd unit files."))
 
-(defclass homer-service (id ast)
-  ((engine :initarg :engine :initform nil :type (or null keyword))
+(defclass homer-service (service ast id)
+  ((engine :initarg :engine :initform nil)
    (config :initarg :config :type homer-service-config))
+  (:default-initargs 
+   :request-class 'homer-service-request
+   :response-class 'homer-service-response)
   (:documentation "Base class for HOMER services. Services are similar to Systemd units - they
 may be individually controlled by an ORACLE thread (usually the default
 toplevel)."))
 
-(defmethod name ((self homer-service)) (id self))
+(defmethod name ((self homer-service)) 
+  (typecase (engine self)
+    ((eql :systemd) (systemd-service-name (id self)))
+    (t (id self))))
 
 (defun systemd-service-name (name)
   (format nil "~A.service" (string-downcase name)))
@@ -52,27 +58,34 @@ toplevel)."))
 (defmethod write-ast ((self homer-service) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(id self) (:engine ,(slot-value self 'engine)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
+(definline systemd-start (self &optional args)
+  (apply 'cli/tools/sys:systemctl-start "--user" `(,(systemd-service-name (id self)) ,@args)))
+
+(definline systemd-restart (self &optional args)
+  (apply 'cli/tools/sys:systemctl-restart "--user" `(,(systemd-service-name (id self)) ,@args)))
+
+(definline systemd-stop (self &optional args)
+  (apply 'cli/tools/sys:systemctl-stop "--user" `(,(systemd-service-name (id self)) ,@args)))
+
+(definline systemd-status (self &optional args)
+  (apply 'cli/tools/sys:systemctl-status "--user" `(,(systemd-service-name (string-downcase (id self))) ,@args)))
+
 (defmethod start ((self homer-service))
-  (ecase (slot-value self 'engine)
-    (:systemd (cli/tools/sys:systemctl-start "--user" (systemd-service-name (id self))))
-    (nil (eval (ast self)))))
+  (case (slot-value self 'engine)
+    (:systemd (systemd-start self))
+    (t (eval (ast self)))))
 
-(defun homer-service-start (self &key args)
-  (ecase (slot-value self 'engine)
-    (:systemd (apply 'cli/tools/sys:systemctl-start "--user" (systemd-service-name (id self)) args))
-    (nil (eval (ast self)))))
+(defmethod reset ((self homer-service) &rest args)
+  (case (slot-value self 'engine)
+    (:systemd (systemd-restart self args))
+    (t)))
 
-(defun homer-service-restart (self &key args)
-  (ecase (slot-value self 'engine)
-    (:systemd (apply 'cli/tools/sys:systemctl-restart "--user" (systemd-service-name (id self)) args))
-    (nil (eval (ast self)))))
-  
 (defmethod stop ((self homer-service) &key args)
-  (ecase (slot-value self 'engine)
-    (:systemd (apply 'cli/tools/sys:systemctl-stop "--user" (systemd-service-name (id self)) args))
-    (nil)))
+  (case (slot-value self 'engine)
+    (:systemd (systemd-stop self args))
+    (t)))
 
 (defmethod status ((self homer-service) &key args)
-  (ecase (slot-value self 'engine)
-    (:systemd (apply 'cli/tools/sys:systemctl-status "--user" (systemd-service-name (string-downcase (id self))) args))
-    (null (describe self))))
+  (case (print (slot-value self 'engine))
+    (:systemd (print (systemd-status self args)))
+    (t (describe self))))

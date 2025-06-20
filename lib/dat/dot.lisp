@@ -98,21 +98,18 @@ SUBGRAPH structure."
                                              (format nil "[~(~a~)=~a]" attr val)) ""))))
                   attrs)))
 
-(defgeneric to-dot (graph
-                    &key stream attributes node-attrs edge-attrs
-                         subgraphs ranks)
-  (:documentation "Print the dot code representing GRAPH. The keyword
+(defun graph-to-dot (graph
+                     &key stream attributes node-attrs edge-attrs
+                          subgraphs ranks)
+  "Print the dot code representing GRAPH. The keyword
 argument ATTRIBUTES takes an assoc list with DOT graph attribute (name
-. value) pairs. NODE-ATTRS and EDGE-ATTRS also take assoc lists of DOT
-graph attributes and functions taking nodes or edges respectively and
-returning values. The DOT graph, node, and edge attributes are
-described at http://www.graphviz.org/doc/info/attrs.html. SUBGRAPHS is
-a list of SUBGRAPH structures.  RANKS is a list of RANK structures."))
-
-(defmethod to-dot ((graph graph)
-                   &key stream attributes node-attrs edge-attrs
-                        subgraphs ranks)
+. value) pairs. NODE-ATTRS and EDGE-ATTRS also take assoc lists of DOT graph
+attributes and functions taking nodes or edges respectively and returning
+values. The DOT graph, node, and edge attributes are described at
+http://www.graphviz.org/doc/info/attrs.html. SUBGRAPHS is a list of SUBGRAPH
+structures.  RANKS is a list of RANK structures."
   ;; by default edges are labeled with their values
+  (declare (graph graph))
   (unless (assoc :label edge-attrs)
     (push (cons :label
                 (lambda (edge)
@@ -136,18 +133,15 @@ a list of SUBGRAPH structures.  RANKS is a list of RANK structures."))
            (mapcar #'subgraph-print subgraphs)
            (mapcar #'rank-print ranks))))
 
-(defgeneric to-dot-file (graph path &key attributes node-attrs edge-attrs
-                                         subgraphs ranks)
-  (:documentation "Write a dot representation of GRAPH to PATH."))
-
-(defmethod to-dot-file
-    ((object graph) path &key attributes node-attrs edge-attrs
-                          subgraphs ranks)
+(defun graph-to-dot-file (graph path 
+                              &key attributes node-attrs edge-attrs
+                                   subgraphs ranks)
+  "Write a dot representation of GRAPH to PATH."
   (with-open-file (out path :direction :output :if-exists :supersede)
-    (to-dot object :stream out :attributes attributes :node-attrs node-attrs
+    (graph-to-dot graph :stream out :attributes attributes :node-attrs node-attrs
                    :edge-attrs edge-attrs :subgraphs subgraphs :ranks ranks)))
 
-(defun from-dot (dot-string)
+(defun graph-from-dot (dot-string)
   "Parse the DOT format string DOT-STRING into a graph.
 More robust behavior may be achieved through parsing the output of the
 dot executable."
@@ -179,6 +173,22 @@ dot executable."
                       (if (cl-ppcre:scan number-re (aref regs 1))
                           (read-from-string (aref regs 1)))))))
       graph)))
+
+
+(defmethod serialize ((self graph) (fmt (eql :dot))
+                      &key stream path attributes node-attrs edge-attrs
+                           subgraphs ranks)
+  (declare (ignore fmt))
+  (cond
+    ((and stream path) (error "passed both STREAM and PATH - pick one"))
+    (stream (graph-to-dot self :stream stream :attributes attributes :node-attrs node-attrs
+                               :edge-attrs edge-attrs :subgraphs subgraphs :ranks ranks))
+    (path (graph-to-dot-file self path :attributes attributes :node-attrs node-attrs
+                             :edge-attrs edge-attrs :subgraphs subgraphs :ranks ranks))))
+
+(defmethod deserialize ((from string) (fmt (eql :dot)) &key)
+  (declare (ignore fmt))
+  (graph-from-dot from))
 
 ;; (defun write-dot-stream (object stream)
 ;;   "Write OBJECT to STREAM in Graphviz DOT format.")

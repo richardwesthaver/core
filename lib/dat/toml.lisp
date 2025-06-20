@@ -280,7 +280,9 @@ strings. All strings are UTF-8."
           :microsecond (timestamp-microsecond timestamp))))
 
 ;; TODO 2024-12-24: traverse?
-
+(defmethod unwrap ((self toml-document))
+  (mapcar 'ast (ast self)))
+  
 ;;; Serde
 
 ;; TODO 2023-12-23: 

@@ -89,7 +89,7 @@ are missing."))
 ;;;; Config
 
 ;; usually parsed from .gitconfig or .hgrc
-(defclass vc-config (config) ())
+(defconfig vc-config () ())
 
 ;;;; Ignorefile
 
@@ -142,6 +142,7 @@ are missing."))
    (head :initform nil :initarg :head :type (or null vc-rev) :accessor vc-head)
    (branches :initform (make-array 0 :element-type 'vc-branch :fill-pointer 0)
              :type (vector vc-branch) :accessor vc-branches)
+   (submodules :type (vector vc-repo) :accessor vc-submodules)
    (tags :initform (make-array 0 :element-type 'vc-tag :fill-pointer 0) :type (vector vc-tag) :accessor vc-tags)
    (revisions :initform (make-array 0 :element-type 'vc-rev :fill-pointer 0)
               :type (vector vc-rev) :accessor vc-revs)
@@ -185,3 +186,24 @@ creating a repo object which is stored in *REPO-REGISTRY*."
     (std:when-let ((remotes (vc-remotes self)))
       (write " " :stream stream)
       (pprint-tabular stream remotes nil nil 2))))
+
+(defun find-repo-root (&optional path)
+  "Check PATH for evidence of a VCS and continue walking up the filesystem until
+we find one, else return NIL."
+  (labels ((%check (dir)
+             (if (null dir)
+                 (return-from find-repo-root)
+                 (if (directory (merge-pathnames ".hg/" dir))
+                     :hg
+                     (when (directory (merge-pathnames ".git/" dir))
+                       :git)))))
+    (let ((%path (car (directory (or path *default-pathname-defaults*)))))
+      (loop for x = (%check %path)
+            for parent = (when-let ((parent (butlast (pathname-directory %path))))
+                           (make-pathname :directory parent))
+            if x
+            return (values %path x)
+            else if (not parent)
+            return nil
+            else
+            do (setf %path parent)))))

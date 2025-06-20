@@ -28,10 +28,7 @@
 (defpackage :dat/dot
   (:nicknames :dot)
   (:use :cl :std :dat/proto :obj/graph)
-  (:export
-   :read-dot-file :write-dot-file
-   :read-dot-stream :write-dot-stream
-   :parse-dot-string))
+  (:export :graph-to-dot-file :graph-from-dot-file :graph-to-dot))
 
 (defpackage :dat/csv
   (:nicknames :csv)
@@ -62,7 +59,6 @@
    #:parse-toml-blocks
    :parse-toml-value
    #:toml-collection
-   #:children
    #:toml-table
    #:inline-toml-table
    #:toml-table-array

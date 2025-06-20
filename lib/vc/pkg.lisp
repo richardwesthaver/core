@@ -30,10 +30,20 @@
    :*repo-registry*
    :*repo-auto-register*
    :vc-remote
-   :vc-submodule))
+   :vc-submodule
+   :vc-submodules
+   :vc-config
+   :find-repo-root))
+
+(defpackage :vc/git
+  (:use :cl :std :cli :vc/proto :config)
+  (:export :*git-program* 
+   :git-repo :git-error 
+   :run-git-command :git-meta :gitignore :make-git-repo))
 
 (defpackage :vc/hg
-  (:use :cl :std :cli :sb-bsd-sockets :vc/proto :config)
+  (:use :cl :std :cli :sb-bsd-sockets :vc/proto :config :dat/toml :ast :uri)
+  (:import-from :vc/git :run-git-command)
   (:export :*hg-program* 
    :hg-repo :hg-error 
    :run-hg-command :hg-meta 
@@ -44,21 +54,17 @@
    :hg-bundlespec-string-p
    :hg-config
    :*hg-fast-export-script*
-   :hg-fast-export))
-
-(defpackage :vc/git
-  (:use :cl :std :cli :vc/proto :config)
-  (:export :*git-program* 
-   :git-repo :git-error 
-   :run-git-command :git-meta :gitignore))
+   :hg-fast-export
+   :find-hgrc
+   :make-hg-repo
+   :find-hg-bookmarks))
 
 (defpackage :vc/util
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :config)
-  (:export :make-hg-repo :make-git-repo :make-repo
-           :find-repo-root
-           :with-current-vc-root
-           :with-repo
-           :directory-repos))
+  (:export :make-repo :with-current-vc-root :with-repo
+   :directory-repos :bundle-repo
+   :bundle-repos :update-repo
+   :update-repos))
    
 (defpackage :vc/cli
   (:use :cl :std :cli :clap :vc/proto :vc/git :vc/hg :vc/util)

@@ -73,7 +73,7 @@
                    (homer/core::services *home-config*)
                    :test 'equal
                    :key (lambda (y) (string (id:id y))))))
-        (homer/core::status srv :args (cdr *args*))))
+    (homer/core::status srv :args (cdr *args*))))
 
 (defcmd homer-install ()
   (let ((src (slot-value *home-config* 'homer/core::src)))

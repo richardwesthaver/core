@@ -155,8 +155,7 @@
 
 (define-cli *skel-cli*
   :help t
-  :version (format nil "0.1.1:~A" 
-                   (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
+  :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "The hackable devtool."
   :thunk skc-show
   :name "skel"

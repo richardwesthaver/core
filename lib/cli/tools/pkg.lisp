@@ -119,7 +119,8 @@
    :*gnuplot-process*
    :gnuplot-send
    :with-gnuplot-stream
-   :with-gnuplot-term))
+   :with-gnuplot-term
+   :run-dot :dot-error :*dot*))
 
 (defpkg :cli/tools/net
   (:use :cl :std :cli/tools/proto :cli/env :uri :config :ast)

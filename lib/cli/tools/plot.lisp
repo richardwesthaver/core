@@ -44,3 +44,9 @@
 	   (when ,multiplot (format ,stream "unset multiplot~%"))
 	   (when ,output (format ,stream "set output~%"))
 	   (format ,stream "set term pop~%"))))))
+
+(define-cli-tool :dot (args &key (output t) input)
+  (let ((proc (sb-ext:run-program *dot* args :output output :input input)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (dot-error "DOT (graphviz) command failed: ~A ~A" *dot* args))))
+

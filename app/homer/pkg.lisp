@@ -5,6 +5,7 @@
 ;;; Code:
 (defpackage :homer/core
   (:use :cl :std :log :krypt :skel :config :io/kbd :ast :id :time :pod :box)
+  (:import-from :srv :request :response :service :engine)
   (:import-from :mpk :mpk-config :load-mpkrc)
   (:export
    #:*user-homedir*

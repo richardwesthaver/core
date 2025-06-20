@@ -65,7 +65,6 @@
                      .pct-encoded.
                      (xval string ipv6)
                      (xval string zone-id)))))
-
        (uri-parse-error string "Couldn't parse uri: ~s." string))))
 
 (defun uri-parse-error (string format-string &rest format-arguments)
@@ -99,6 +98,7 @@
          ;; hardwired for efficiency.
          ((string-equal scheme "https") :https)
          ((string-equal scheme "http") :http)
+         ((string-equal scheme "ssh") :ssh)
          ((string-equal scheme "ftp") :ftp)
          ((string-equal scheme "file") :file)
          ((string-equal scheme "urn") :urn)

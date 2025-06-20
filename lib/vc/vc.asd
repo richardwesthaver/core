@@ -3,17 +3,10 @@
   :components 
   ((:file "pkg")
    (:file "proto")
-   (:file "hg")
-   ;; (:module "hg"
-   ;;  :components
-   ;;  ())
    (:file "git")
-   ;; (:module "git"
-   ;;  :components
-   ;;  ())
+   (:file "hg")
    (:file "util")
-   (:file "cli")
-   (:file "vc"))
+   (:file "cli"))
   :in-order-to ((test-op (test-op :vc/tests))))
 
 (defsystem :vc/tests

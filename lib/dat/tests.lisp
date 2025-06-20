@@ -1,12 +1,12 @@
 (defpackage :dat/tests
-  (:use :cl :std :rt :dat :log :ast))
+  (:use :cl :std :rt :dat :log :ast)
+  (:export))
 
 (in-package :dat/tests)
 
 (defsuite :dat)
 (in-suite :dat)
-(in-readtable :std)
-
+(in-readtable :shell)
 (deftest dot ()
   "Test Graphviz DOT functionality."
   (let ((g1 (make-instance 'graph:graph)))
@@ -16,10 +16,12 @@
     (graph:add-edge g1 '("foo" :bar) "a")
     (graph:add-edge g1 '(:bar 42) "b")
     (graph:add-edge g1 '(42 "foo") "c")
-    (is (stringp (dat/dot::to-dot g1)))
-    (dat/dot::to-dot-file g1 "/tmp/test")
+    (is (stringp (serialize g1 :dot)))
+    (dat/dot::graph-to-dot-file g1 "/tmp/test")
     (is (probe-file "/tmp/test"))
-    (is (delete-file "/tmp/test"))))
+    #$dot -Tsvg /tmp/test -o/tmp/test.svg$#
+    (is (delete-file "/tmp/test"))
+    (is (delete-file "/tmp/test.svg"))))
 
 (deftest csv ()
   "Test CSV functionality."

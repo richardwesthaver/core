@@ -42,6 +42,11 @@
 (defclass git-repo (vc-repo)
   ((index))) ;; working-directory
 
+(defun make-git-repo (path &key init)
+  (let ((repo (make-instance 'git-repo :path path)))
+    (when init (vc-init repo))
+    repo))
+
 (defmethod vc-type ((self git-repo)) :git)
 
 (defmethod print-object ((self git-repo) stream)

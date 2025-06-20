@@ -87,7 +87,42 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 
 ;;; Config
 ;; https://www.mercurial-scm.org/doc/hgrc.5.html
-(config:defconfig hg-config (vc-config) ())
+(config:defconfig hg-config (vc-config) 
+  ((paths :initarg :paths)
+   (ui :initarg :ui)))
+
+(defmethod make-config ((self (eql :hg)) &key paths)
+  (declare (ignore self))
+  (make-instance 'hg-config :paths paths))
+
+(defun parse-hg-uri (str)
+  "Parse a URI which may be prefixed with '[stuff]' - the uri is returned as the
+first value and 'stuff' as the second."
+  (if (char= (schar str 0) #\[)
+      (let ((end (position #\] str)))
+        (values (uri (subseq str (1+ end))) (keywordicate (string-upcase (subseq str 1 end)))))
+      (values (uri str) :hg)))
+
+(defun find-hgrc (&optional (root *default-pathname-defaults*) (load t))
+  (when-let ((config (probe-file (merge-pathnames ".hg/hgrc" root))))
+    (let ((cfg (deserialize config :toml)))
+      (if load
+          (let ((ret (make-config :hg)))
+            (dolist (c (unwrap cfg) ret)
+              (unless (null c)
+                (string-case ((car c))
+                  ("paths" (setf (slot-value ret 'paths) (cdr c)))
+                  ("ui" (setf (slot-value ret 'ui) (cdr c)))))))
+          cfg))))
+
+(defun find-hg-bookmarks (&optional (root *default-pathname-defaults*))
+  (when-let ((bkm (probe-file (merge-pathnames ".hg/bookmarks" root))))
+    (mapcar (lambda (x) (nreverse (mapcar 'trim (ssplit #\space x)))) (lines (read-file bkm)))))
+
+(defun find-hg-submodules (&optional (root *default-pathname-defaults*))
+  (when-let ((subs (probe-file (merge-pathnames ".hgsub" root))))
+    (mapcar (lambda (x) (mapcar 'trim (ssplit #\= x)))
+            (lines (read-file subs)))))
 
 ;;; Repo
 ;; (describe (make-instance 'hg-repo))
@@ -97,6 +132,43 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
    (bookmarks :accessor vc-bookmarks)
    (requires :accessor vc-requires)))
 
+(defmethod vc-init ((self (eql :hg)))
+  (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
+
+(defmethod vc-init ((self hg-repo))
+  (let ((path (path self)))
+    (if (zerop (sb-ext:process-exit-code (run-hg-command "init" (list path))))
+        path
+        (hg-error "hg init failed:" path))))
+
+(defun make-hg-repo (path &key init (update '(:bookmarks :submodules :remotes)))
+  (let ((repo (make-instance 'hg-repo :path path)))
+    (when init (vc-init repo))
+    (when update
+      (when (member :requires update)
+        (setf (vc-requires repo) (mapcar 'trim
+                                         (lines 
+                                          (with-output-to-string (s)
+                                            (run-hg-command "debugrequires" nil s)
+                                            s)))))
+      (when (member :bookmarks update)
+        (setf (vc-bookmarks repo) (find-hg-bookmarks path)))
+      (when (member :submodules update)
+        (setf (vc-submodules repo) 
+              (mapcar 
+               (lambda (x) (make-hg-repo (probe-directory (merge-pathnames (car x) path)) 
+                                         :update update))
+               (find-hg-submodules path)))))
+    (when-let ((cfg (find-hgrc path)))
+      (setf (vc-config repo) cfg)
+      (when (member :remotes update)
+        (setf (vc-remotes repo) 
+              (mapcar (lambda (x) 
+                        (multiple-value-bind (uri type) (parse-hg-uri (cdr x))
+                          (make-vc-remote :type type :url uri :name (car x))))
+                      (slot-value cfg 'paths)))))
+    repo))
+
 (defmethod vc-type ((self hg-repo)) :hg)
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
@@ -104,9 +176,6 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
     (current-directory)
     (let ((proc (run-hg-command cmd args)))
       (if (eq 0 (sb-ext:process-exit-code proc)) nil (error 'hg-error :message (format nil "hg command failed: ~A" cmd))))))
-
-(defmethod vc-init ((self (eql :hg)))
-  (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
 
 (defmethod print-object ((self hg-repo) stream)
   (print-unreadable-object (self stream)
@@ -120,12 +189,6 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 ;;     (make-instance 'hg-repo
 ;;       :path (pathname (pop form))
 ;;       :remotes (or (getf form :remotes) #()))))
-
-(defmethod vc-init ((self hg-repo))
-  (let ((path (path self)))
-    (if (zerop (sb-ext:process-exit-code (run-hg-command "init" (list path))))
-        path
-        (hg-error "hg init failed:" path))))
 
 (defmethod vc-clone ((self hg-repo) remote &key &allow-other-keys)
   (with-slots (path) self
@@ -197,10 +260,15 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 (defvar *fast-export-directory* (merge-pathnames ".stash/fast-export/" (user-homedir-pathname)))
 (defvar *hg-fast-export-script* (merge-pathnames "hg-fast-export.sh" *fast-export-directory*))
 
-(defun hg-fast-export (repo &optional output)
+(defun hg-fast-export (repo &optional output filter-regexp)
   "Call the hg-fast-export.sh script, converting a HG-REPO to a GIT-REPO which is
 initialized at OUTPUT. Note that the repo will be 'bare' and not contain a
-working directory."
+working directory.
+
+FILTER-REGEXP is an optional field containing a regexp string which will be
+used in the following call in the OUTPUT directory after init:
+
+git filter-repo --invert-paths --path-regex FILTER-REGEXP --force"
   (let* ((output (ensure-directories-exist 
                   (or output (format nil "/tmp/~A/" (car (last (pathname-directory (path repo))))))))
          (out-repo (make-repo output :type :git :init t)))
@@ -209,10 +277,12 @@ working directory."
                                      "-r" (namestring (path repo)) "-M" "default")
                         :output t
                         :directory (pathname output))
+    (when filter-regexp
+      (run-git-command "filter-repo" `("--invert-paths" "--path-regex" ,filter-regexp "--force")))
     out-repo))
 
-(defmethod vc-export ((self hg-repo) output &key)
-  (hg-fast-export self output))
+(defmethod vc-export ((self hg-repo) output &key filter-regexp)
+  (hg-fast-export self output filter-regexp))
 
 ;;; Client
 ;; ref: https://wiki.mercurial-scm.org/CommandServer
