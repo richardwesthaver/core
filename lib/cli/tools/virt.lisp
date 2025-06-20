@@ -32,3 +32,14 @@
   (let ((proc (sb-ext:run-program *mkarchiso* (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (mkarchiso-error "MKARCHISO command failed: ~A ~A" *mkarchiso* (or args "")))))
+
+(defun find-qemu-exe (&optional (arch (machine-type)))
+  (find-exe (concatenate 'string "qemu-system-" (string-downcase (substitute #\_ #\- arch)))))
+
+(defvar *qemu* (find-qemu-exe))
+
+(define-cli-tool :qemu (&rest args)
+  (let ((proc (sb-ext:run-program *qemu* (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (qemu-error "QEMU command failed: ~A ~A" *qemu* (or args "")))))
+  

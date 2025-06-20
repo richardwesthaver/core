@@ -223,9 +223,9 @@
 
 (defpkg :cli/tools/virt
   (:use :cl :std :cli/tools/proto :cli/env)
-  (:export :*buildah* :*podman* :run-buildah 
-   :run-podman :podman-machine-upgrade
-   :start-podman-service))
+  (:export :*buildah* :*podman* :*qemu*
+   :run-buildah :run-podman :run-qemu :podman-machine-upgrade
+   :start-podman-service :find-qemu-exe))
 
 (setq *defpkg-hook* nil)
 
