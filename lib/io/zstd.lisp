@@ -23,11 +23,9 @@
             :type (alien (* zstd-cstream))
             :reader cstream)))
 
-(defmethod make-compressing-stream ((self (eql :zstd)) 
-                                    &optional (stream 
-                                               (make-instance 'sb-gray:fundamental-binary-input-stream)))
-                                                   
-  (make-instance 'zstd-compressing-stream :stream stream))
+(defmethod make-compressing-stream ((self (eql :zstd)) stream &rest args)
+  (declare (ignore self))
+  (make-instance 'zstd-compressing-stream :compressor (apply 'make-instance 'zstd-compressor args)))
 
 (defmethod input-size ((self zstd-compressing-stream))
   (zstd-inbuffer-size (input self)))
@@ -84,7 +82,7 @@
 (defmethod stream-finish-output ((stream zstd-compressing-stream))
   (zstd::zstd-endstream (cstream stream) (output stream)))
 
-(defmethod stream-write-sequence ((stream zstd-compressing-stream) (seq vector) &optional start end))
+(defmethod stream-write-sequence ((stream zstd-compressing-stream) seq &optional start end))
     
 (defmethod close ((stream zstd-compressing-stream) &key &allow-other-keys)
   ;; (sb-alien:free-alien (input stream))
@@ -99,10 +97,8 @@
             :type (alien (* zstd-dstream))
             :reader dstream)))
 
-(defmethod make-decompressing-stream ((self (eql :zstd)) 
-                                      &optional (stream 
-                                               (make-instance 'sb-gray:fundamental-binary-output-stream)))
-  (make-instance 'zstd-decompressing-stream :stream stream))
+(defmethod make-decompressing-stream ((self (eql :zstd)) stream &rest args)
+  (make-instance 'zstd-decompressing-stream :decompressor (apply 'make-instance 'zstd-decompressor args)))
 
 (defmethod input-size ((self zstd-decompressing-stream))
   (zstd-inbuffer-size (input self)))

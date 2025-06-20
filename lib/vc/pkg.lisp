@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :vc/proto
-  (:use :cl :std :log :obj :parse/lex :dat/sxp)
+  (:use :cl :std :log :parse/lex :dat/sxp :obj)
   (:export 
    :vc-repo
    :vc-run

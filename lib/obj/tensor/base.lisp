@@ -229,7 +229,7 @@ Checking for a matrix with 2 columns:
         (apply #'tensor-append axis (car more-tensors) (cdr more-tensors)))
       (let ((dims (copy-seq (dimensions tensor))))
         (loop for ele in more-tensors do (incf (aref dims axis) (aref (dimensions ele) axis)))
-        (let* ((ret (zeros dims (class-of tensor)))
+        (let* ((ret (%zeros dims (class-of tensor)))
                (view (slice ret axis 0 t)))
           (loop for ele in (cons tensor more-tensors)
                 with head = 0
@@ -558,7 +558,7 @@ HD + \  STRIDES  * IDX
 
 (defmethod initialize-instance :after ((tensor standard-tensor) &rest initargs)
   (declare (ignore initargs))
-  (when *check-after-initializing-p*
+  (when *tensor-safety-p*
     (lety ((dims (dimensions tensor) :type index-store-vector))
           (assert (>= (head tensor) 0) nil 'tensor-invalid-head-value :head (head tensor) :tensor tensor)
           (if (not (slot-boundp tensor 'strides))

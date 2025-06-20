@@ -41,7 +41,7 @@
    build-c
    build-all-core))
  (upstream () 
-  (let ((tmp #p"/tmp/core/"))
+  (let ((tmp "/tmp/core/"))
    (probe-delete-directory tmp)
    (vc-export (sk-vc *skel-project*) tmp :filter-regexp "^std$") ;; yuck
    (with-repo (r :path tmp :type :git)

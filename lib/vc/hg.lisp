@@ -284,7 +284,7 @@ used in the following call in the OUTPUT directory after init:
 
 git filter-repo --invert-paths --path-regex FILTER-REGEXP --force"
   (let* ((output (ensure-directories-exist 
-                  (or output (format nil "/tmp/~A/" (car (last (pathname-directory (path repo))))))))
+                  (or output (format nil "/tmp/~A" (car (last (pathname-directory (path repo))))))))
          (out-repo (make-repo output :type :git :init t)))
     (sb-ext:run-program "/bin/bash" (list 
                                      (namestring *hg-fast-export-script*)
@@ -292,7 +292,8 @@ git filter-repo --invert-paths --path-regex FILTER-REGEXP --force"
                         :output t
                         :directory (pathname output))
     (when filter-regexp
-      (run-git-command "filter-repo" `("--invert-paths" "--path-regex" ,filter-regexp "--force")))
+      (with-directory output
+        (run-git-command "filter-repo" `("--invert-paths" "--path-regex" ,filter-regexp "--force"))))
     out-repo))
 
 (defmethod vc-export ((self hg-repo) output &key filter-regexp)

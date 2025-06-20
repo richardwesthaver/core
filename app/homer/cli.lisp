@@ -50,30 +50,27 @@
    *args*))
 
 (defcmd homer-start-cmd ()
-  (homer-service-start (find (string-upcase (car *args*)) (homer/core::services *home-config*)
-                             :test 'equal
-                             :key (lambda (y) (string (id:id y))))
-                       :args (cdr *args*)))
+  (start (find (string-upcase (car *args*)) (homer/core::services *home-config*)
+               :test 'equal
+               :key (lambda (y) (string (id:id y))))))
 
 (defcmd homer-stop-cmd ()
   (stop (find (string-upcase (car *args*)) (homer/core::services *home-config*)
-              :test 'equal
-              :key (lambda (y) (string (id:id y))))
-        :args (cdr *args*)))
+                      :test 'equal
+                      :key (lambda (y) (string (id:id y))))))
 
 (defcmd homer-restart-cmd ()
-  (homer-service-restart 
+  (reset
    (find (string-upcase (car *args*)) (homer/core::services *home-config*)
          :test 'equal
-         :key (lambda (y) (string (id:id y))))
-   :args (cdr *args*)))
+         :key (lambda (y) (string (id:id y))))))
 
 (defcmd homer-status-cmd ()
   (let ((srv (find (string-upcase (car *args*))
                    (homer/core::services *home-config*)
                    :test 'equal
                    :key (lambda (y) (string (id:id y))))))
-    (homer/core::status srv :args (cdr *args*))))
+    (homer/core::status srv)))
 
 (defcmd homer-install ()
   (let ((src (slot-value *home-config* 'homer/core::src)))

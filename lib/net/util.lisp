@@ -11,7 +11,7 @@
 (defun get-address-by-name (name)
   "Return the address of a host by NAME."
   (multiple-value-bind (host4 host6)
-      (get-host-by-name name)
+      (sb-bsd-sockets:get-host-by-name name)
     (let ((addr4 (when host4
                    (car (sb-bsd-sockets::host-ent-addresses host4))))
           (addr6 (when host6

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :homer/core
-  (:use :cl :std :log :krypt :skel :config :io/kbd :ast :id :time :pod :box)
+  (:use :cl :std :log :krypt :skel :config :io/kbd :ast :id :time :pod :box :cli/tools/sys)
   (:import-from :srv :request :response :service :engine)
   (:import-from :mpk :mpk-config :load-mpkrc)
   (:export
@@ -31,7 +31,11 @@
    #:homer-service-restart
    #:systemd-service-config
    #:homer-service-config
-   #:*systemd-config-directory*))
+   #:*systemd-config-directory*
+   #:systemd-start
+   #:systemd-restart
+   #:systemd-stop
+   #:systemd-status))
 
 #+cli
 (defpackage :homer/cli

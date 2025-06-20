@@ -27,7 +27,7 @@
 
 (defparameter *cli-packages* nil)
 
-(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cli-packages* :test 'string=)))
+(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *cli-packages* :test 'string=))))
 
 (defpkg :cli/shell
   (:use :cl :std)
@@ -128,4 +128,3 @@
   (:export))
 
 (setq *defpkg-hook* nil)
- 

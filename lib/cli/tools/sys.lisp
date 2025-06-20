@@ -12,23 +12,27 @@
 
 (defparameter *systemctl* (find-exe "systemctl"))
 
-(defun run-systemctl (args &key (output t) (wait t))
-  (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output output :wait wait)))
+(defun run-systemctl (args &key (output t))
+  (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output output)))
     (unless (or (= 0 #1=(sb-ext:process-exit-code proc))
                 (= 3 #1#))
       (systemd-error "SYSTEMCTL command failed: ~A ~A" *systemctl* (or args "")))))
 
 (defun systemctl-start (&rest args)
-  (run-systemctl (cons "start" args)))
+  (run-systemctl `("start" ,@args)))
 
 (defun systemctl-stop (&rest args)
-  (run-systemctl (cons "stop" args)))
+  (run-systemctl `("stop" ,@args)))
 
-(defun systemctl-status (&rest args)
-  (run-systemctl (cons "status" args)))
+(defun systemctl-status (unit &key (user t) (lines 20))
+  (run-systemctl 
+   `("status" ,@(when lines `("--lines" ,(format nil "~A" lines)))
+              "--no-pager"
+              ,@(when user '("--user")) 
+              ,unit)))
 
 (defun systemctl-restart (&rest args)
-  (run-systemctl (cons "restart" args)))
+  (run-systemctl `("restart" ,@args)))
 
 (defun systemctl-json (&rest args)
   (deserialize

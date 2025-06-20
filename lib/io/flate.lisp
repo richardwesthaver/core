@@ -81,9 +81,9 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
   (:documentation "Add the octets of VECTOR to the compressed
   data of COMPRESSOR."))
 
-(defgeneric make-compressing-stream (key &optional stream)
+(defgeneric make-compressing-stream (key stream &key &allow-other-keys)
   (:documentation "Return a new COMPRESSING-STREAM of kind KEY, optionally wrapping STREAM."))
-(defgeneric make-decompressing-stream (key &optional stream)
+(defgeneric make-decompressing-stream (key stream &key &allow-other-keys)
   (:documentation "Return a new DECOMPRESSING-STREAM of kind KEY, optionally wrapping STREAM."))
 
 (defgeneric compress-object (obj))
@@ -99,37 +99,32 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 (defgeneric decompress-octet-vector (vector decompressor &key start end))
 
 ;;; Compression
-(defclass compressing-stream (wrapped-stream) ()
-  (:default-initargs
-   :stream (make-instance 
-               'fundamental-binary-output-stream)))
+(defclass compressor () ((output :initarg :output :accessor output)))
 
-(defmethod make-compressing-stream ((key t) 
-                                    &optional (stream
-                                               (make-instance 'fundamental-binary-input-stream)))
-  (make-instance 'compressing-stream :stream stream))
+(defclass compressing-stream (fundamental-binary-output-stream)
+  ((compressor :initarg :compressor :accessor compressor)))
 
-(defclass compressor (wrapped-stream)
-  (output)
-  (:default-initargs
-   :stream (make-instance 
-               'compressing-stream)))
+(defmethod make-compressing-stream (compressor-class stream &rest args)
+  (make-instance 'compressing-stream
+    :compressor (apply 'make-instance compressor-class args)))
+
+(defmethod stream-write-sequence ((self compressing-stream) seq &optional start end)
+  (unless (open-stream-p self)
+    (error 'stream-closed-error :stream self))
+  (let ((vector (if (typep seq 'vector)
+                    seq
+                    (coerce seq 'vector))))
+    (compress-octet-vector vector (compressor self) :start start :end end))
+  seq)
 
 ;;; Decompression
-(defclass decompressing-stream (wrapped-stream) ()
-  (:default-initargs
-   :stream (make-instance 
-               'fundamental-binary-input-stream)))
+(defclass decompressor () ((input :initarg :input :accessor input)))
 
-(defmethod make-decompressing-stream ((key t) 
-                                      &optional (stream
-                                                 (make-instance 'fundamental-binary-input-stream)))
-  (make-instance 'decompressing-stream :stream stream))
+(defclass decompressing-stream (fundamental-binary-input-stream)
+  ((decompressor :initarg :decompressor :accessor decompressor)))
 
-(defclass decompressor (wrapped-stream)
-  (input)
-  (:default-initargs
-   :stream (make-instance 'decompressing-stream)))
+(defmethod make-decompressing-stream (decompressor-class stream &rest args)
+  (make-instance 'decompressing-stream :decompressor (apply 'make-instance decompressor-class args)))
 
 ;;; Macros
 (defmacro with-compressor ((var class

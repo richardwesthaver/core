@@ -34,7 +34,7 @@ of non-zero is not specified.")
 
 (defparameter *default-tensor-type* 'real-tensor)
 
-(defparameter *check-after-initializing-p* t
+(defparameter *tensor-safety-p* t
   "If non-nil, then check for invalid values in the field of the class in the
 :after specialized method (if defined), else do nothing. One ought to be very
 carful when doing, much of Matlisp's code is written on the assumption that

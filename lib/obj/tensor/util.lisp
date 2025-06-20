@@ -6,7 +6,7 @@
 (in-package :obj/tensor)
 ;;; Utils
 (defmacro with-no-init-checks (&body body)
-  `(let ((*check-after-initializing-p* nil))
+  `(let ((*tensor-safety-p* nil))
      ,@body))
 
 (defun subfieldp (a b)
@@ -77,11 +77,11 @@ Example:
   (with-no-init-checks
     (etypecase dims
       (cons
-       (zeros-generic dims type initial-element))
+       (%zeros dims type initial-element))
       (vector
-       (zeros-generic (vector-to-list dims) type initial-element))
+       (%zeros (vector-to-list dims) type initial-element))
       (fixnum
-       (zeros-generic (list dims) type initial-element)))))
+       (%zeros (list dims) type initial-element)))))
 
 (declaim (ftype (function ((or cons vector fixnum) &key (type t) (initial-element t)) base-tensor) zeros))
 

@@ -1,20 +1,29 @@
-;;; obj/pkg.lisp --- Object System
+;;; obj/pkg.lisp --- Object Packages
 
 ;;
 
 ;;; Code:
-(defpackage :obj/id
+(defpackage obj/int
+  (:use :cl :std)
+  (:export :*obj-packages*))
+(in-package :obj/int)
+
+(eval-always (defvar *obj-packages* nil))
+
+(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *obj-packages* :test 'string=))))
+
+(defpkg :obj/id
   (:nicknames :id)
   (:use :cl :std)
   (:export 
    :id :reset-id :update-id :make-id
    :id-factory))
 
-(defpackage :obj/equiv
+(defpkg :obj/equiv
   (:use :cl :std)
   (:export :equiv :eqv :equivalence))
 
-(defpackage :obj/uri/punycode
+(defpkg :obj/uri/punycode
   (:nicknames :punycode)
   (:use :cl)
   (:export
@@ -23,7 +32,7 @@
    :encode-domain
    :decode-domain))
 
-(defpackage :obj/uri
+(defpkg :obj/uri
   (:nicknames :uri)
   (:use :cl :std :std/seq :punycode)
   (:export
@@ -87,7 +96,7 @@
   (:use :cl :std :obj/uri :sb-ext)
   (:export :url-encode :url-decode :url-encode-params :url-decode-params))
 
-(defpackage :obj/tensor
+(defpkg :obj/tensor
   (:nicknames :tensor)
   (:use :cl :std)
   (:export
@@ -116,6 +125,7 @@
    #:*print-tensor-max-len*
    #:*print-tensor-max-args*
    #:*print-tensor-indent*
+   #:*tensor-safety-p*
    #:print-tensor
    #:print-element
    #:*default-sparse-store-increment*
@@ -141,7 +151,7 @@
    #:col-stride
    #:tensor-square-matrixp))
 
-(defpackage :obj/color
+(defpkg :obj/color
   (:nicknames :color)
   (:use :cl :std)
   (:export
@@ -157,7 +167,7 @@
    #:copy-color-palette
    #:color-palette-table))
 
-(defpackage :obj/time
+(defpkg :obj/time
   (:nicknames :time)
   (:use :cl :std)
   (:export
@@ -263,7 +273,7 @@
    :timestamp-to-octets
    :duration))
 
-(defpackage :obj/uuid
+(defpkg :obj/uuid
   (:nicknames :uuid)
   (:use :cl :std :obj/id :obj/time)
   (:export
@@ -273,12 +283,12 @@
    :uuid-to-octet-vector :octet-vector-to-uuid
    :uuid-to-string))
 
-(defpackage :obj/build
+(defpkg :obj/build
   (:nicknames :build)
   (:use :cl :std)
   (:export :build :build-from))
 
-(defpackage :obj/ast
+(defpkg :obj/ast
   (:nicknames :ast)
   (:use :cl :std :std/seq)
   (:export :ast 
@@ -301,7 +311,7 @@
    :*keep-ast* :syntax-error
    :syntax-warning :syntax-condition))
 
-(defpackage :obj/graph
+(defpkg :obj/graph
   (:nicknames :graph)
   (:use :cl :std :obj/id :ast :std/readtable)
   (:export 
@@ -313,14 +323,14 @@
    :edge-out
    :edge-in))
 
-(defpackage :obj/config
+(defpkg :obj/config
   (:nicknames :config)
   (:use :cl :std :ast)
   (:export :config :make-config :find-config
    :config-find :config-get :defconfig
    :load-config))
 
-(defpackage :obj/plan
+(defpkg :obj/plan
   (:nicknames :plan)
   (:use :cl :std :obj/ast :obj/config :obj/build)
   (:export :plan :planner
@@ -328,7 +338,7 @@
            :physical-plan
            :make-physical-plan))
 
-(defpackage :obj/schema
+(defpkg :obj/schema
   (:nicknames :schema)
   (:use :cl :std :config :build :meta :stored :sb-mop :id :ast :dynamic :plan)
   (:export
@@ -410,7 +420,7 @@
    #:schema-from-columns
    #:df-plan))
 
-(defpackage :obj/db
+(defpkg :obj/db
   (:nicknames :db)
   (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :plan :config)
   (:export
@@ -527,13 +537,13 @@
    :db-config
    :*database-collection-type*))
 
-(defpackage :obj/tree
+(defpkg :obj/tree
   (:nicknames :tree)
   (:use :cl :std :obj/id)
   (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
            :make-tree-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
-(defpackage :obj/tree/btree
+(defpkg :obj/tree/btree
   (:nicknames :obj/btree :btree)
   (:use :cl :std :obj/tree :stored :db :typed)
   (:export
@@ -593,13 +603,13 @@
    #:print-btree-entry
    #:with-btree-cursor))
 
-(defpackage :obj/secret
+(defpkg :obj/secret
   (:nicknames :secret)
   (:use :cl :std)
   (:export :secret :reveal :conceal
    :ensure-revealed :ensure-concealed))
 
-(defpackage :obj/srv
+(defpkg :obj/srv
   (:nicknames :srv)
   (:use :cl :std :config :id)
   (:export
@@ -636,7 +646,7 @@
    #:service-request
    #:service-response))
 
-(defpackage :obj/store
+(defpkg :obj/store
   (:nicknames :store)
   (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema :config)
   (:export
@@ -667,9 +677,11 @@
    #:with-store
    #:defstore))
 
-(pkg:defpkg :obj
-  (:use :cl :std)
-  (:use-reexport :tree :graph :id
-   :db :ast :time :uri 
-   :url :config :build :secret 
-   :color :schema :store :btree))
+(setq *defpkg-hook* nil)
+
+(in-package :std-user)
+
+(eval-always
+  (defpkg :obj
+    (:use :cl :std)
+    #.`(:use-reexport ,@obj/int:*obj-packages*)))

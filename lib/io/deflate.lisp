@@ -2359,11 +2359,11 @@ the input and the number of bytes written to the output."
         :dfun dfun)))
 
 (defmethods make-decompressing-stream 
-  (((key (eql :deflate)) &optional stream)
+  (((key (eql :deflate)) stream &key)
    (make-decompressing-deflate-stream key stream))
-  (((key (eql :zlib)) &optional stream)
+  (((key (eql :zlib)) stream &key)
    (make-decompressing-deflate-stream key stream))
-  (((key (eql :gzip)) &optional stream)
+  (((key (eql :gzip)) stream &key)
    (make-decompressing-deflate-stream key stream)))
 
 ;;; COMPRESSION (salza2)
@@ -2827,7 +2827,7 @@ with OUTPUT, a starting offset, and the count of pending data."
     (setf (aref vector 0) octet)
     (compress-octet-vector vector compressor)))
 
-(defmethod compress-octet-vector (vector compressor &key (start 0) end)
+(defmethod compress-octet-vector (vector (compressor deflate-compressor) &key (start 0) end)
   (let* ((closure (compress-fun compressor))
          (end (or end (length vector)))
          (count (- end start)))
@@ -2972,13 +2972,8 @@ the decompressor.")
   (reset (checksum compressor))
   (setf (data-length compressor) 0))
 
-(defun make-stream-output-callback (stream)
-  "Return a function suitable for use as a compressor callback that
-writes all compressed data to STREAM."
-  (lambda (buffer end)
-    (write-sequence buffer stream :end end)))
 
-(defmacro with-compressor ((var class
+(defmacro %with-compressor ((var class
                                 &rest initargs
                                 &key &allow-other-keys)
                            &body body)
@@ -2986,6 +2981,12 @@ writes all compressed data to STREAM."
      (multiple-value-prog1 
          (progn ,@body)
        (finish-compression ,var))))
+
+(defun make-stream-output-callback (stream)
+  "Return a function suitable for use as a compressor callback that
+writes all compressed data to STREAM."
+  (lambda (buffer end)
+    (write-sequence buffer stream :end end)))
 
 (defun gzip-stream (input output)
   (let ((callback (make-stream-output-callback output))

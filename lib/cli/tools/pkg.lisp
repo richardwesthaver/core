@@ -22,7 +22,8 @@
    :term-error :load-alacritty-config
    :*scriptreplay*
    :*script*
-   :run-script :run-scriptreplay))
+   :run-script :run-scriptreplay
+   :run-fbterm :*fbterm* :fbterm-error))
 
 (defpkg :cli/tools/fs
   (:use :cl :std :cli/tools/proto :cli/env)

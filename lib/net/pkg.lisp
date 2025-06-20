@@ -3,7 +3,14 @@
 ;; 
 
 ;;; Code:
-(in-package :std-user)
+(defpackage :net/int
+  (:use :cl :std)
+  (:export :*net-packages*))
+(in-package :net/int)
+
+(eval-always (defparameter *net-packages* nil))
+
+(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *net-packages* :test 'string=))))
 
 (defpkg :net/core
   (:use :cl :std :sb-thread :config :id)
@@ -38,11 +45,6 @@
    :with-client-server :*localhost*)
   ;; pkg
   (:export :*net-packages*))
-
-(in-package :net/core)
-
-(defparameter *net-packages* nil)
-(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *net-packages* :test 'string=)))
 
 (defpkg :net/udp
   (:nicknames :udp)
@@ -453,29 +455,19 @@
   (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http :srv)
   (:import-from :cli/tools/net :browse-url)
   (:use-reexport :net/srv)
-  (:export :udp-service :echo-service))
+  (:export :oauth-service))
 
-(defpkg :net
-  (:use :cl :std)
-  (:use-reexport 
-   :net/core 
-   :net/tcp 
-   :net/udp
-   :net/srv
-   :net/codec/dns 
-   :net/codec/osc 
-   :net/codec/tlv
-   :net/codec/http
-   :net/proto/dns
-   :net/proto/ssh
-   :net/proto/http)
-  (:import-from :net/req :http-client-config :http-client)
-  (:export :http-client-config :http-client))
+(setq *defpkg-hook* nil)
+
+(eval-always
+  (defpkg :net
+    (:use :cl :std)
+    #.`(:use-reexport ,@(remove "NET/REQ" net/int:*net-packages* :test 'string=))
+    (:import-from :net/req :http-client-config :http-client)
+    (:export :http-client-config :http-client)))
 
 (defpkg :net-user
   (:use :cl :std :net :uri :url))
-
-(setq *defpkg-hook* nil)
 
 (in-package :net)
 (when (sb-int:featurep :swank)

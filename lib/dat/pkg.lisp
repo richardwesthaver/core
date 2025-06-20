@@ -1,11 +1,21 @@
 ;;; dat/pkg.lisp --- Data
 
 ;;; Code:
-(defpackage :dat/proto
-  (:use :cl :std :std/seq)
+(defpackage :dat/int
+  (:use :cl :std)
+  (:export *dat-packages*))
+
+(in-package :dat/int)
+
+(eval-always (defparameter *dat-packages* nil))
+
+(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *dat-packages* :test 'string=))))
+
+(defpkg :dat/proto
+  (:use :cl :std)
   (:export :dat-error))
 
-(defpackage :dat/asn1
+(defpkg :dat/asn1
   (:nicknames :asn1)
   (:use :cl :std :dat/proto :aws-lc)
   (:export
@@ -13,7 +23,7 @@
    #:try-get-asn1-string-data
    #:decode-asn1-time))
 
-(defpackage :dat/sxp
+(defpkg :dat/sxp
   (:nicknames :sxp)
   (:use :cl :sb-mop :std :ast)
   (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
@@ -25,12 +35,12 @@
    :read-sxp-string :write-sxp-string
    :file-read-forms :make-sxp))
 
-(defpackage :dat/dot
+(defpkg :dat/dot
   (:nicknames :dot)
   (:use :cl :std :dat/proto :obj/graph)
   (:export :graph-to-dot-file :graph-from-dot-file :graph-to-dot))
 
-(defpackage :dat/csv
+(defpkg :dat/csv
   (:nicknames :csv)
   (:use :cl :std :dat/proto)
   (:export
@@ -43,7 +53,7 @@
    :parse-csv-string
    #:write-csv-string))
 
-(defpackage :dat/ini
+(defpkg :dat/ini
   (:nicknames :ini)
   (:use :cl :std :dat/proto :ast)
   (:export
@@ -52,7 +62,7 @@
    :ini-section
    :ini-object))
 
-(defpackage :dat/toml
+(defpkg :dat/toml
   (:nicknames :toml)
   (:use :cl :std :dat/proto :time :ast)
   (:export
@@ -69,7 +79,7 @@
    #:toml-dotted-key-open-table-array-error
    #:toml-document))
 
-(defpackage :dat/arff
+(defpkg :dat/arff
   (:nicknames :arff)
   (:use :cl :std :dat/proto :dat/csv)
   (:export
@@ -77,7 +87,7 @@
    :parse-arff :parse-arff-string :parse-arff-stream
    :remove-attribute-by-name))
 
-(defpackage :dat/json
+(defpkg :dat/json
   (:nicknames :json)
   (:use :cl :std :dat/proto)
   (:import-from :ast :ast)
@@ -93,12 +103,12 @@
    #:json-setf
    #:json-write))
 
-(defpackage :dat/openapi
+(defpkg :dat/openapi
   (:nicknames :openapi)
   (:use :cl :std :dat/proto :dat/json :schema)
   (:import-from :ast :ast))
 
-(defpackage :dat/base64
+(defpkg :dat/base64
   (:use :cl :std :dat/proto)
   (:export 
    #:base64-stream-to-integer
@@ -126,7 +136,7 @@
    #:+decode-table+
    #:+uri-decode-table+))
 
-(defpackage :dat/m3u
+(defpkg :dat/m3u
   (:nicknames :m3u)
   (:use :cl :std :dat/proto)
   (:export
@@ -137,7 +147,7 @@
    :parse-m3u-string
    :write-m3u-string))
 
-(defpackage :dat/id3
+(defpkg :dat/id3
   (:use :cl :std :dat/proto :id)
   (:export
    :read-id3
@@ -148,7 +158,7 @@
    :show-id3-header
    :show-id3-headers))
 
-(defpackage :dat/css
+(defpkg :dat/css
   (:use :cl :std :dat/proto)
   (:export
    :parse-css
@@ -161,7 +171,7 @@
    :compile-css
    :compile-css-block))
 
-(defpackage :dat/html
+(defpkg :dat/html
   (:use :cl :dat/proto :std/macs :std/string :std/serde)
   (:import-from :sb-ext :defglobal)
   (:export
@@ -196,7 +206,7 @@
    :element-map-attributes*
    :element-map-children))
 
-(defpackage :dat/xml
+(defpkg :dat/xml
   (:use :cl :dat/proto)
   (:import-from :log :trace!)
   (:import-from :std :serialize :deserialize)
@@ -228,17 +238,17 @@
    :extract-path-list
    :extract-path))
 
-(defpackage :dat/fixml
+(defpkg :dat/fixml
   (:nicknames :fixml)
   (:use :cl :dat/xml :dat/proto))
 
-(defpackage :dat/svg
+(defpkg :dat/svg
   (:nicknames :svg)
   (:use :cl :cl-ppcre :dat/xml :dat/proto)
   (:import-from :std/string :*whitespaces*)
   (:export :parse-svg-file :parse-svg-string))
 
-(defpackage :dat/mime
+(defpkg :dat/mime
   (:use :cl :std :dat/proto :dat/xml)
   (:export :*mime-database*
    :load-mime-info :update-mime-database
@@ -248,11 +258,11 @@
    :mime :get-mime :get-mime*
    :mime-case))
 
-(defpackage :dat/yaml
+(defpkg :dat/yaml
   (:use :cl :dat/proto)
   (:import-from :log :trace!))
 
-(defpackage :dat/midi
+(defpkg :dat/midi
   (:nicknames :midi)
   (:use :cl :std :dat/proto :io/proto)
   (:export #:read-midi-file #:write-midi-file
@@ -269,7 +279,7 @@
            #:message-value
            #:unknown-event #:data-byte #:dd #:bb #:cc #:nn))
 
-(defpackage :dat/png
+(defpkg :dat/png
   (:use :cl :std :dat/proto)
   (:export
    :png
@@ -283,7 +293,7 @@
    :pixel-streamed-png
    :png-error))
 
-(defpackage :dat/qrcode
+(defpkg :dat/qrcode
   (:nicknames :qrcode)
   (:use :cl :std :dat/proto :dat/png)
   (:export
@@ -300,12 +310,12 @@
    :qr-encode-png-bytes
    :qr-encode-png-bytes-stream))
 
-(defpackage :dat/gif
+(defpkg :dat/gif
   (:nicknames :gif)
   (:use :cl :std :dat/proto)
   (:export))
 
-(defpackage :dat/tar
+(defpkg :dat/tar
   (:nicknames :tar)
   (:use :cl :std :dat/proto 
    :io/proto :io/chunky :sb-ext :io/stream
@@ -373,7 +383,7 @@
    #:write-gnu-long-link-name-entry
    #:write-gnu-long-name-entry))
 
-(defpackage :dat/parquet
+(defpkg :dat/parquet
   (:use :cl :std :obj/id :dat/proto :dat/json)
   (:export
    :parquet-object
@@ -384,10 +394,9 @@
    :parquet-encode
    :parquet-decode))
 
-(pkg:defpkg :dat
-  (:use :cl :std)
-  (:use-reexport :dat/proto :dat/csv :dat/arff
-   :dat/toml :dat/json :dat/sxp :dat/xml
-   :dat/qrcode :dat/midi :dat/svg :dat/dot
-   :dat/tar :dat/css :dat/html :dat/base64 
-   :dat/gif :dat/mime :dat/parquet :dat/ini))
+(setq *defpkg-hook* nil)
+
+(eval-always
+  (pkg:defpkg :dat
+    (:use :cl :std)
+    #.`(:use-reexport ,@dat/int:*dat-packages*)))

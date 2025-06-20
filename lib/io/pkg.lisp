@@ -121,13 +121,10 @@
    :sockopt-peercred))
 
 (defpackage :io/flate
-  (:use :cl :io/proto)
+  (:use :cl :io/proto :sb-gray)
   (:import-from :std :deferror :eval-always)
-  (:import-from :sb-gray 
-   :fundamental-binary-output-stream :fundamental-binary-input-stream)
   (:import-from :std/stream :wrapped-stream)
   (:export :flate-error :compression-error :decompression-error
-           
    :*compression-buffer-size* :decompression-buffer-size* :finish-compression :finish-decompression
    :reset-compressor :reset-decompressor
    :compress-object :decompress-object :compress :decompress
