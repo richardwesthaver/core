@@ -142,37 +142,46 @@ first value and 'stuff' as the second."
         (hg-error "hg init failed:" path))))
 
 (defun make-hg-repo (path &key init (update '(:bookmarks :submodules :remotes)))
-  (let ((repo (make-instance 'hg-repo :path path)))
-    (when init (vc-init repo))
-    (when update
-      (when (member :requires update)
-        (setf (vc-requires repo) (mapcar 'trim
-                                         (lines 
-                                          (with-output-to-string (s)
-                                            (run-hg-command "debugrequires" nil s)
-                                            s)))))
-      (when (member :bookmarks update)
-        (setf (vc-bookmarks repo) (find-hg-bookmarks path)))
-      (when (member :submodules update)
-        (setf (vc-submodules repo) 
-              (mapcar 
-               (lambda (x) 
-                 (let ((r (make-hg-repo 
-                           (probe-directory (merge-pathnames (car x) path)) 
-                           :update update)))
-                   (unless (find "default" (vc-remotes r) :key 'name :test 'string=)
-                     (push (make-vc-remote :type :hg :name "default" :url (cdr x)) (vc-remotes r)))
-                   r))
-               (find-hg-submodules path)))))
-    (when-let ((cfg (find-hgrc path)))
-      (setf (vc-config repo) cfg)
-      (when (member :remotes update)
-        (setf (vc-remotes repo) 
-              (mapcar (lambda (x) 
-                        (multiple-value-bind (uri type) (parse-hg-uri (cdr x))
-                          (make-vc-remote :type type :url uri :name (car x))))
-                      (slot-value cfg 'paths)))))
-    repo))
+  (flet ((set-requires (repo)
+           (setf (vc-requires repo) 
+                 (mapcar 'trim
+                         (lines 
+                          (with-output-to-string (s)
+                            (run-hg-command "debugrequires" nil s)
+                            s)))))
+
+         (set-submodules (repo)
+           (setf (vc-submodules repo) 
+                 (mapcar 
+                  (lambda (x) 
+                    (let ((r (make-hg-repo 
+                              (probe-directory (merge-pathnames (car x) path)) 
+                              :update update)))
+                      (unless (find "default" (vc-remotes r) :key 'name :test 'string=)
+                        (push (make-vc-remote :type :hg :name "default" :url (cdr x)) (vc-remotes r)))
+                      r))
+                  (find-hg-submodules path))))
+         (set-bookmarks (repo) (setf (vc-bookmarks repo) (find-hg-bookmarks path))))
+    (let ((repo (make-instance 'hg-repo :path path)))
+      (when init (vc-init repo))
+      (etypecase update
+        ((eql t)
+         (set-requires repo)
+         (set-bookmarks repo)
+         (set-submodules repo))
+        (cons
+         (when (member :requires update) (set-requires repo))
+         (when (member :bookmarks update) (set-bookmarks repo))
+         (when (member :submodules update) (set-submodules repo))))
+      (when-let ((cfg (find-hgrc path)))
+        (setf (vc-config repo) cfg)
+        (when (or (eql update t) (member :remotes update))
+          (setf (vc-remotes repo) 
+                (mapcar (lambda (x) 
+                          (multiple-value-bind (uri type) (parse-hg-uri (cdr x))
+                            (make-vc-remote :type type :url uri :name (car x))))
+                        (slot-value cfg 'paths)))))
+      repo)))
 
 (defmethod vc-type ((self hg-repo)) :hg)
 

@@ -43,3 +43,7 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (qemu-error "QEMU command failed: ~A ~A" *qemu* (or args "")))))
   
+(defun run-qemu-img (&rest args)
+  (let ((proc (sb-ext:run-program #1=(find-exe "qemu-img") (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (qemu-error "QEMU-IMG command failed: ~A ~A" #1# (or args "")))))

@@ -61,6 +61,7 @@
 
 (defpackage :vc/util
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :config)
+  (:import-from :uri :uri :uri-to-string)
   (:export :make-repo :with-current-vc-root :with-repo
    :directory-repos :bundle-repo
    :bundle-repos :update-repo

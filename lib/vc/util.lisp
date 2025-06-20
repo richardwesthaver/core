@@ -54,12 +54,17 @@
        ,@body)))
 
 ;;; Clone
-(defmethod vc-clone ((self pathname) (remote string) &key)
+(defmethod vc-clone ((self pathname) (remote string) &key type)
   (let ((repo (if (or (search "git" remote)
-                      (search "codeberg" remote))
+                      (search "codeberg" remote)
+                      (eql type :git))
                   (make-git-repo self)
                   (make-hg-repo self))))
     (vc-clone repo remote)))
 
-(defmethod vc-clone ((self string) (remote t) &key)
-  (vc-clone (pathname self) remote))
+(defmethod vc-clone ((self pathname) (remote uri) &key type)
+  (vc-clone (pathname self) (uri-to-string remote) :type type))
+
+(defmethod vc-clone ((self string) (remote t) &key type)
+  (vc-clone (pathname self) remote :type type))
+
