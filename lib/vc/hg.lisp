@@ -156,8 +156,13 @@ first value and 'stuff' as the second."
       (when (member :submodules update)
         (setf (vc-submodules repo) 
               (mapcar 
-               (lambda (x) (make-hg-repo (probe-directory (merge-pathnames (car x) path)) 
-                                         :update update))
+               (lambda (x) 
+                 (let ((r (make-hg-repo 
+                           (probe-directory (merge-pathnames (car x) path)) 
+                           :update update)))
+                   (unless (find "default" (vc-remotes r) :key 'name :test 'string=)
+                     (push (make-vc-remote :type :hg :name "default" :url (cdr x)) (vc-remotes r)))
+                   r))
                (find-hg-submodules path)))))
     (when-let ((cfg (find-hgrc path)))
       (setf (vc-config repo) cfg)

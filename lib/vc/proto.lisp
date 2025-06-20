@@ -128,6 +128,8 @@ are missing."))
   name
   url)
 
+(defaccessor name ((self vc-remote)) (vc-remote-name self))
+
 (defmethod print-object ((self vc-remote) stream)
   (let ((name (vc-remote-name self))
         (url (vc-remote-url self)))
