@@ -25,7 +25,9 @@
                                     `("--env" ,(format nil "~A=~A" (car e) val))
                                     `("--unsetenv" ,(car e))))
                                 env)))
-           ,*buildah-container* ,@(mapcar 'string args))
+           ,*buildah-container* ,@(if (stringp args)
+                                      (ssplit #\space args)
+                                      (mapcar 'string args)))
    :output t))
 
 (defun buildah-copy (&rest args)

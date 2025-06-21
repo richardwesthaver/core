@@ -13,10 +13,11 @@
   (unless c
     (required-argument :container)))
 
-(defun podman-build (&key file tag)
+(defun podman-build (&key file tag no-cache)
   (apply 'run-podman "build" 
          `(,@(when file `("--file" ,(namestring file)))
-           ,@(when tag `("--tag" ,tag)))))
+           ,@(when tag `("--tag" ,tag))
+           ,@(when no-cache `("--no-cache")))))
 
 (defun podman-exec (cmd &key dir (container *container*))
   (check-container container)
@@ -25,7 +26,7 @@
            ,container
            ,@(if (atom cmd) `(,cmd) cmd))))
 
-(defun podman-run (args &key dir (container *container*) name (tty t) (detach t))
+(defun podman-run (args &key dir (container *container*) name (tty t) (detach t) cmd (replace t) systemd)
   ;; attach cpu 
   ;; gpu health network 
   ;; mount memory hostname env
@@ -39,8 +40,11 @@
   (apply 'run-podman "exec"
          `(,@(when dir `("-w" ,(namestring dir)))
            ,@(when name `("--name" ,name))
-           ,@(when tty `("--tty" ,name))
-           ,@(when detach `("--detach" ,name))
+           ,@(when tty `("--tty" ,tty))
+           ,@(when detach `("--detach" ,detach))
+           ,@(when cmd `("--cmd" ,cmd))
+           ,@(when replace '("--replace"))
+           ,@(when systemd '("--systemd=true"))
            ,container
            ,@(if (atom args) `(,args) args))))
 
@@ -51,13 +55,14 @@
   (check-container container)
   (run-podman "stop" container))
 
-(defmacro with-container ((sym container &key run stop name dir tty detach)
+(defmacro with-container ((sym container &key run stop name dir tty detach cmd)
                           &body body)
   `(let ((,sym ,(if run 
                     `(podman-run ,run 
                                  ,@(when dir `(:dir ,dir))
                                  ,@(when tty `(:dir ,tty))
                                  ,@(when detach `(:dir ,detach))
+                                 ,@(when cmd `(:cmd ,cmd))
                                  ,@(when name `(:name ,name))
                                  :container ,container)
                     container)))
