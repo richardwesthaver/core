@@ -425,3 +425,7 @@ be an AST accessor present which points to the list."
                  (write-char #\, stream)
                  (pprint-newline :mandatory)
                  (pprint-indent :current 0)))))))))
+
+;;; Json Schema
+
+;; ref: https://json-schema.org/specification

@@ -431,11 +431,7 @@
    #:abort-request-handler
    #:net-service-config))
 
-(defpkg :net/srv/ext
-  (:use :cl :std :net/core :cli/tools/net)
-  (:export :caddy-service :nginx-service))
-
-(pkg:defpkg :net/srv/http
+(defpkg :net/srv/http
   (:use :cl :std :net/proto/http
    :net/codec/http :net/core :net/cookie :io/chunky 
    :srv :net/tcp :config)
@@ -446,16 +442,25 @@
    :proto :net/proto/http)
   (:export :http-service :https-service :http-server-config :https-server-config :tls-config))
 
-(pkg:defpkg :net/srv/udp
+(defpkg :net/srv/udp
   (:use :cl :std :net/udp :net/codec/tlv :net/core :srv)
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service))
 
-(pkg:defpkg :net/srv/oauth
-  (:use :cl :std :net/codec/http :net/core :net/cookie :net/core :id :secret :uri :net/srv/http :srv)
+(defpkg :net/srv/oauth
+  (:use :cl :std :net/codec/http :net/cookie :net/core :id :secret :uri :net/srv/http :srv)
   (:import-from :cli/tools/net :browse-url)
   (:use-reexport :net/srv)
   (:export :oauth-service))
+
+(defpkg :net/srv/openapi
+  (:use :cl :std :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json)
+  (:use-reexport :net/srv)
+  (:export :openapi-service))
+
+(defpkg :net/srv/ext
+  (:use :cl :std :net/core :cli/tools/net)
+  (:export :caddy-service :nginx-service))
 
 (setq *defpkg-hook* nil)
 
