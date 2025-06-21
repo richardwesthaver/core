@@ -8,7 +8,7 @@
 
 ;; ref: https://api.weather.gov/openapi.json
 
-;; ref: 
+;; ref: https://developer.shodan.io/api/openapi.json
 
 ;;; Code:
 (in-package :net/srv/openapi)
@@ -18,74 +18,148 @@
 
 (define-constant +openapi-pattern-extension-prefix+ "x-" :test 'string=)
 
-(defstruct openapi-info title description terms contact license version)
+;;; Objects
+(macrolet ((defoapi (name fields args &rest body)
+             (let ((sname (symbolicate "OPENAPI-" name)))
+               `(progn 
+                  (defstruct ,sname ,@fields)
+                  (defun ,(symbolicate sname "-FROM-JSON") ,args
+                    (declare (optimize (speed 3) (safety 0)))
+                    ,@body)))))
+  (defoapi info (title description terms contact license version) (obj)
+    (make-openapi-info
+     :title (json-getf obj "title")
+     :description (json-getf obj "description")
+     :version (json-getf obj "version")))
 
-(defstruct openapi-contact name url email)
+  (defoapi contact (name url email) (obj)
+    (make-openapi-contact
+     :name (json-getf obj "name")
+     :url (json-getf obj "url")
+     :email (json-getf obj "email")))
 
-(defstruct openapi-license name url)  
+  (defoapi license (name url) (obj)
+    (make-openapi-license
+     :name (json-getf obj "name")
+     :url (json-getf obj "url")))
 
-(defstruct openapi-server url description variables)
+  (defoapi server (url description variables) (obj)
+    (make-openapi-server
+     :url (json-getf obj "url")
+     :description (json-getf obj "description")
+     :variables (json-getf obj "variables")))
 
-(defstruct openapi-server-var enum default description)
+  (defoapi server-var (enum default description) (obj)
+    (make-openapi-server-var
+     :enum (json-getf obj "enum")
+     :default (json-getf obj "default")
+     :description (json-getf obj "description")))
 
-(defstruct openapi-component 
-  schemas responses parameters examples request-bodies headers security-schemes links callbacks)
+  (defoapi components
+      (schemas responses parameters examples request-bodies headers security-schemes links callbacks) (obj)
+    (make-openapi-components
+     :schemas (json-getf obj "schemas")
+     :responses (json-getf obj "responses")
+     :parameters (json-getf obj "parameters")
+     :examples (json-getf obj "examples")
+     :headers (json-getf obj "headers")
+     :links (json-getf obj "links")))
+     ;; TODO 2025-06-20: 
 
-;; openapi-path
-(defstruct openapi-path-item 
-  $ref summary description get put post delete options head patch trace servers parameters)
+  ;; openapi-path
+  (defoapi path-item ($ref summary description get put post delete options head patch trace servers parameters) (obj)
+    (make-openapi-path-item
+     :$ref (json-getf obj "$ref")))
 
-(defstruct openapi-operation 
-  tags summary description external-docs id parameters request-body responses callbacks deprecated security servers)
+  (defoapi operation 
+      (tags summary 
+            description external-docs 
+            id parameters request-body 
+            responses callbacks 
+            deprecated security 
+            servers) 
+    (obj))
 
-(defstruct openapi-external-documentation description url)
+  (defoapi external-documentation (description url) (obj)
+    (make-openapi-external-documentation :description (json-getf obj "description") :url (json-getf obj "url")))
 
-(defstruct openapi-parameter name in description required deprecated allow-empty style explode allow-reserved schema examples content)
+  (defoapi parameter (name in description required deprecated allow-empty style explode allow-reserved schema examples content) (obj))
 
-(defstruct openapi-request-body description content required)
+  (defoapi request-body (description content required) (obj))
 
-(defstruct openapi-media-type schema examples encoding)
+  (defoapi media-type (schema examples encoding) (obj))
 
-(defstruct openapi-encoding content-type headers style explode allow-reserved)
+  (defoapi encoding (content-type headers style explode allow-reserved) (obj))
 
-(defstruct openapi-response default codes)
+  (defoapi response (default codes) (obj))
 
-(defstruct openapi-response-object description headers content links)
+  (defoapi response-object (description headers content links) (obj))
 
-;; callback
+  ;; callback
 
-(defstruct openapi-example summary description value external-value)
+  (defoapi example (summary description value external-value) (obj))
 
-(defstruct openapi-link operation-ref operation-id parameters request-body description server)
+  (defoapi link (operation-ref operation-id parameters request-body description server) (obj))
 
-(defstruct openapi-header description required deprecated allow-empty style explode allow-reserved schema examples content)
+  (defoapi header (description required deprecated allow-empty style explode allow-reserved schema examples content) (obj))
 
-(defstruct openapi-tag name description external-docs)
+  (defoapi tag (name description external-docs) (obj)
+    (make-openapi-tag 
+     :name (json-getf obj "name")
+     :description (json-getf obj "description")
+     :external-docs (json-getf obj "externalDocs")))
+     
 
-;; ref
+  ;; ref
 
-;; openapi-schema
+  ;; openapi-schema
 
-(defstruct openapi-discriminator name mapping)
+  (defoapi discriminator (name mapping) (obj))
 
-(defstruct openapi-xml name namespace prefix attribute wrapped)
+  (defoapi xml (name namespace prefix attribute wrapped) (obj))
 
-(defstruct openapi-security-scheme type description name in scheme bearer-format flows open-id-connect-url)
+  (defoapi security-scheme (type description name in scheme bearer-format flows open-id-connect-url) (obj))
+ 
+  (defoapi oauth-flow (implicit password client-credentials authorization-code) (obj))
+  (defoapi oauth-flow-object (authorization-url token-url refresh-url scopes) (obj)))
 
-(defstruct openapi-oauth-flow implicit password client-credentials authorization-code)
-(defstruct openapi-oauth-flow-object authorization-url token-url refresh-url scopes)
+(defun openapi-paths-from-json (obj)
+  (mapcar (lambda (x) (cons (car x) (openapi-path-item-from-json (cadr x)))) (ast:ast obj)))
+
+(defun openapi-servers-from-json (obj)
+  (mapcar 'openapi-server-from-json obj))
+
+(defun openapi-tags-from-json (obj)
+  (mapcar 'openapi-tag-from-json obj))
 
 ;; security-requirement
 
+
+;;; Document
 (defclass openapi-document (json-object) 
   ((spec-version :initarg :spec-version :initform *default-openapi-version*)
    (info :initarg :info :type openapi-info)
-   (components)
-   (paths)
-   (servers)
-   (definitions)
-   (parameters)
-   (responses)
-   (security)
-   (tags)
-   (external-docs)))
+   (components :initarg :components :type openapi-components)
+   (paths :initarg :paths)
+   (servers :initarg :servers)
+   (security :initarg :security)
+   (tags :initarg :tags)
+   (external-docs :initarg :external-docs)))
+
+(defmethod deserialize ((self json-object) (format (eql :openapi)) &key)
+  (flet ((%from (key fn)
+           (declare (string key) (function fn))
+           (when-let ((k (json-getf self key)))
+             (funcall fn k))))
+  (make-instance 'openapi-document
+    :spec-version (json-getf self "openapi")
+    :info (openapi-info-from-json (json-getf self "info"))
+    :paths (openapi-paths-from-json (json-getf self "paths"))
+    :servers (%from "servers" #'openapi-servers-from-json)
+    :components (%from "components" #'openapi-components-from-json)
+    :security (%from "security" #'openapi-security-scheme-from-json)
+    :tags (%from "tags" #'openapi-tags-from-json)
+    :external-docs (%from "externalDocs" #'openapi-external-documentation-from-json))))
+
+(defmethod deserialize ((self t) (format (eql :openapi)) &key)
+  (deserialize (deserialize self :json) :openapi))
