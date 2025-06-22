@@ -767,7 +767,7 @@
    :exec :copy-object :safe-superclasses :run-object
    :slot-boundp* :slot-values
    :explore :with-fslots
-   :status))
+   :status :validate))
 
 (defpkg :std/spin
   (:use :cl)

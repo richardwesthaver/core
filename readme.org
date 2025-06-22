@@ -4,21 +4,20 @@
 #+email: richard.westhaver@gmail.com
 #+setupfile: ../org/clean.theme
 #+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :html nil
-#+CALL: project-details() :dir ~/comp/core/
+#+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
-|-------------+--------------------------------------------------|
-| name        | core                                             |
-| version     | :version 0.1.0                                   |
-| description | :description The Compiler Company Core           |
-| skel-id     | :id 1566328410216733941                          |
-| root        | ~/comp/core/                                     |
-| vc          | :hg [[https://vc.compiler.company/core][vc.compiler.company/core]] :rev [[https://vc.compiler.company/core/rev/1.0e+INF][1.0e+INF:1084+]] |
-| tags        | :tags (core lisp emacs c)                        |
-| updated     | Fri Jun 20 22:14:14 2025 -0400                   |
-| langs       | c elisp lisp org text                            |
-| lines       | 134315 :λ 104081 :# 13566 :_ 16668               |
-|-------------+--------------------------------------------------|
+|-------------+----------------------------------------|
+| name        | core                                   |
+| version     | :version 0.1.0                         |
+| description | :description The Compiler Company Core |
+| skel-id     | :id 1566328410216733941                |
+| root        | ~/comp/core/                           |
+| tags        | :tags (core lisp emacs c)              |
+| updated     | Sat Jun 21 00:04:17 2025 -0400         |
+| langs       | c elisp lisp org text                  |
+| lines       | 134563 :λ 104298 :# 13581 :_ 16684     |
+|-------------+----------------------------------------|
 
 #+END:
 

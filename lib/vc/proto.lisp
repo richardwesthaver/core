@@ -80,6 +80,7 @@ are missing."))
 (defgeneric vc-remote (self cmd &key &allow-other-keys))
 (defgeneric vc-submodule (self cmd &key &allow-other-keys))
 (defgeneric vc-config (self))
+(defgeneric (setf vc-config) (new self))
 (defgeneric vc-type (self))
 ;;  IDEA 2023-12-29: :ediff t
 (defgeneric vc-diff (a b &key &allow-other-keys))

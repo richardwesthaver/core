@@ -454,7 +454,7 @@
   (:export :oauth-service))
 
 (defpkg :net/srv/openapi
-  (:use :cl :std :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json)
+  (:use :cl :std :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json :ast)
   (:use-reexport :net/srv)
   (:export :openapi-service))
 

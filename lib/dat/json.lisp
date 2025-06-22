@@ -11,6 +11,7 @@
 
 ;;; Code:
 (in-package :dat/json)
+
 (defvar *allow-json-trailing-commas* nil
   "When non-nil, arrange for our json readers to allow trailing
 commas. This binding does not affect writers.
@@ -54,6 +55,13 @@ generating json from a scripting language without native json support.")
 
 (defsetf json-getf json-setf)
 
+(defun json-remf (obj key)
+  "Destructively alter OBJ to remove key/value indicated by KEY. Returns T if
+such a key was present, else NIL."
+  (let ((place (assoc key (ast obj) :test 'string=)))
+    (unless (null place)
+      (deletef (ast obj) place))))
+
 (defun json-decode (string &key (start 0) end)
   "Convert a JSON string into a Lisp object."
   (with-input-from-string (stream string :start start :end end)
@@ -84,25 +92,6 @@ generating json from a scripting language without native json support.")
       (with-output-to-string (s)
         (json-encode obj s)
         s)))
-
-(defun json-enable-reader-macro ()
-  "Set the #{ dispatch macro character for reading JSON objects."
-  (flet ((json-object-reader (stream char n)
-           (declare (ignorable char n))
-           (let ((xs (read-delimited-list #\} stream t)))
-             (loop
-                for key = (pop xs)
-                for value = (pop xs)
-
-                ;; stop when nothing is left
-                unless (or xs key value)
-                return (make-instance 'json-object :ast pairs)
-
-                ;; build associative list of key/value pairs
-                collect (list (princ-to-string key) value)
-                into pairs))))
-    (set-dispatch-macro-character #\# #\{ #'json-object-reader)
-    (set-macro-character #\} (get-macro-character #\) nil))))
 
 (defun json-read (stream &optional (eof-error-p t) eof-value)
   "Read a JSON object from a stream."
@@ -388,7 +377,7 @@ generating json from a scripting language without native json support.")
              (if (not (stringp key))
                  (progn
                    (warn "~s is not a valid JSON key; skipping...~%" key)
-                   (pprint-exit-if-list-exhausted))
+  (pprint-exit-if-list-exhausted))
                (progn
                  (json-write key stream)
                  (write-char #\: stream)
@@ -426,6 +415,152 @@ be an AST accessor present which points to the list."
                  (pprint-newline :mandatory)
                  (pprint-indent :current 0)))))))))
 
-;;; Json Schema
+;;; Reader Macro
+;; not used, but maybe useful some day
+(defun json-enable-reader-macro ()
+  "Set the #{ dispatch macro character for reading JSON objects."
+  (flet ((json-object-reader (stream char n)
+           (declare (ignorable char n))
+           (let ((xs (read-delimited-list #\} stream t)))
+             (loop
+                for key = (pop xs)
+                for value = (pop xs)
 
+                ;; stop when nothing is left
+                unless (or xs key value)
+                return (make-instance 'json-object :ast pairs)
+
+                ;; build associative list of key/value pairs
+                collect (list (princ-to-string key) value)
+                into pairs))))
+    (set-dispatch-macro-character #\# #\{ #'json-object-reader)
+    (set-macro-character #\} (get-macro-character #\) nil))))
+
+;;; Json Pointer
+;; ref: https://datatracker.ietf.org/doc/html/rfc6901
+#| abnf
+
+      json-pointer    = *( "/" reference-token )
+      reference-token = *( unescaped / escaped )
+      unescaped       = %x00-2E / %x30-7D / %x7F-10FFFF
+         ; %x2F ('/') and %x7E ('~') are excluded from 'unescaped'
+      escaped         = "~" ( "0" / "1" )
+        ; representing '~' and '/', respectively
+|#
+
+(defun json-pointer-token-encode (str)
+  "Return a new string with '~' replaced with '~0' and '/' replaced with '~1'."
+  (let ((ret))
+    (loop for c across str
+          if (char= c #\~)
+          do (progn
+               (push #\~ ret)
+               (push #\0 ret))
+          else if (char= c #\/)
+          do (progn
+               (push #\~ ret)
+               (push #\1 ret))
+          else do (push c ret)
+          finally (return (concatenate 'string (nreverse ret))))))
+          
+(defun json-pointer-token-decode (str)
+  "Return a new string with '~0' replace by '~' and '~1' replace by '/'."
+  (let ((ret)
+        (tilde))
+    (loop for c across str
+          if (char= c #\~) do (setf tilde t)
+          else if (and tilde (char= #\0 c)) do (progn (push #\~ ret) (setf tilde nil))
+          else if (and tilde (char= #\1 c)) do (progn (push #\/ ret) (setf tilde nil))
+          ;; is this a syntax error?
+          else if tilde do (progn (push #\~ ret) (push c ret) (setf tilde nil))
+          else do (push c ret)
+          finally (return (concatenate 'string (nreverse ret))))))
+
+(defun json-pointer-p (str)
+  "Return t if STR is a JSON Pointer -- a unicode string containing a sequence of
+zero or more reference tokens prefixed by a '/'."
+  (char= (schar str 0) #\/))
+
+(defun json-pointer-from-string (str)
+  (mapcar 'json-pointer-token-decode (ssplit #\/ str :omit-nulls t)))
+
+;;; Json Schema
 ;; ref: https://json-schema.org/specification
+;; examples: https://json-schema.org/learn/json-schema-examples
+
+(defclass json-schema-object (json-object id)
+  ((id :type uri)))
+
+(defclass json-schema (json-schema-object)
+  ((schema :type uri)
+   (title :type string)
+   (description :type string)
+   (type :type string)
+   (properties :type list)
+   (required :type list)
+   (defs :type list))
+  (:documentation "Class which represents JSON Schema documents.
+
+ref: https://json-schema.org"))
+
+(defun json-schema-validate (schema obj)
+  (declare (json-object obj) (json-schema schema))
+  (when (and (ast schema) (ast obj))
+    obj))
+
+(defvar *json-schema-key-map*
+  (let ((tbl (make-hash-table :test 'equal)))
+    (flet ((add (key slot &optional fn push)
+             (setf (gethash key tbl)
+                   (lambda (x &optional consume)
+                     (declare (json-object x) (boolean consume))
+                     (when-let ((val (json-getf x key)))
+                       (when consume (json-remf x key))
+                       (let ((ret (ifret (when fn (funcall fn val))
+                                    val)))
+                         (if push
+                             (push ret (slot-value x slot))
+                             (setf (slot-value x slot) ret))))))))
+      (add "$id" 'id 'uri)
+      (add "$schema" 'schema 'uri)
+      (add "description" 'description)
+      (add "type" 'type 'string)
+      (add "properties" 'properties
+           (lambda (x)
+             (mapcar 
+              (lambda (y) (cons (car y) (ast (cadr y))))
+              (print (ast x)))))
+      (add "required" 'required
+           (lambda (x)
+             (mapcar
+              (lambda (y)
+                (if (stringp y) y (ast y)))
+              x)))
+      (add "$defs" 'defs 'ast)
+      (add "dependentRequired" 'required 'ast t))
+    tbl))
+
+(defmethod load-ast ((self json-schema))
+  (maphash-values (lambda (x) (funcall x self t)) *json-schema-key-map*)
+  self)
+
+(defmethod deserialize ((obj json-object) (fmt (eql :json-schema)) &key)
+  (declare (ignore fmt))
+  (load-ast (change-class obj 'json-schema)))
+
+(defmethod deserialize ((obj t) (fmt (eql :json-schema)) &key)
+  (declare (ignore fmt))
+  (deserialize (deserialize obj :json) :json-schema))
+
+(defmethod validate ((obj json-object) (schema json-schema) &key (default :error))
+  "Check json-object OBJ against json-schema SCHEMA and return it if valid. If
+validation fails then the parameter DEFAULT determines the result. A keyword
+value of :error (the default) will signal an error, all other values will be
+returned as is."
+  (ifret (json-schema-validate schema obj)
+    (if (eql default :error)
+        (error "JSON-OBJECT failed validation")
+        default)))
+  
+(defun json-schema (obj)
+  "Attempt to convert a json-object OBJ to a json-schema.")

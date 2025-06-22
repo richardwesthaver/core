@@ -218,7 +218,7 @@ is responsible for indicating in the state slot the result of the computation.")
    (lock :initform (make-mutex :name "work-scope") :initarg :lock :accessor work-scope-lock :type mutex))
   (:documentation "A scope of work containing TASKS and a LOCK."))
 
-(defmethod print-object ((self work-scope) (stream stream))
+(defmethod print-object ((self work-scope) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (tasks self))))
 

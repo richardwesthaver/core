@@ -89,11 +89,11 @@
 
 (defpkg :dat/json
   (:nicknames :json)
-  (:use :cl :std :dat/proto)
-  (:import-from :ast :ast)
+  (:use :cl :std :dat/proto :uri :id)
+  (:import-from :ast :ast :load-ast)
   (:export
-   :*allow-json-trailing-commas*
-   :json-trailing-commas-p
+   #:*allow-json-trailing-commas*
+   #:json-trailing-commas-p
    #:json-decode
    #:json-encode
    #:json-read
@@ -101,7 +101,11 @@
    #:json-object
    #:json-getf
    #:json-setf
-   #:json-write))
+   #:json-remf
+   #:json-delf
+   #:json-write
+   #:json-pointer-p #:json-pointer-from-string
+   #:json-schema #:json-schema-validate))
 
 (defpkg :dat/openapi
   (:nicknames :openapi)

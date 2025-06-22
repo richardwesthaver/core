@@ -10,7 +10,7 @@
 
 (eval-always (defvar *obj-packages* nil))
 
-(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *obj-packages* :test 'string=))))
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *obj-packages* :test 'string=)))
 
 (defpkg :obj/id
   (:nicknames :id)

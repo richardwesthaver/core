@@ -26,7 +26,7 @@
            ,container
            ,@(if (atom cmd) `(,cmd) cmd))))
 
-(defun podman-run (args &key dir (container *container*) name (tty t) (detach t) cmd (replace t) systemd)
+(defun podman-run (args &key dir (container *container*) name (tty t) (detach t) cmd (replace t) systemd ports)
   ;; attach cpu 
   ;; gpu health network 
   ;; mount memory hostname env
@@ -44,6 +44,14 @@
            ,@(when detach `("--detach" ,detach))
            ,@(when cmd `("--cmd" ,cmd))
            ,@(when replace '("--replace"))
+           ,@(when ports (flatten
+                          (mapcar 
+                           (lambda (x) 
+                             (list "-p" 
+                                   (if (consp x) 
+                                       (format nil "~A:~A" (car x) (cdr x))
+                                       x)))
+                           ports)))
            ,@(when systemd '("--systemd=true"))
            ,container
            ,@(if (atom args) `(,args) args))))
