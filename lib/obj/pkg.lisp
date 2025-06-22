@@ -363,14 +363,15 @@
    #:define-simple-schema
    #:not-a-database
    #:db-condition
+   #:apply-schema-change-fn
    #:match-schemas
    #:schema-diff
    #:default-class-constructor
    #:classname
    #:slot-field
-   :slot-field-type
-   :slot-field-args
-   :slot-field-name
+   #:slot-field-type
+   #:slot-field-args
+   #:slot-field-name
    #:slot-field-eq
    #:class-instance-schema
    #:compute-transient-schema
@@ -378,6 +379,7 @@
    #:compute-slot-fields
    #:compute-transient-slot-fields
    #:dump-schema
+   #:upgradable-schema
    #:dump-slots
    #:sorted-slots
    #:slot-defs-from-schema
@@ -412,11 +414,11 @@
    #:make-schema
    #:row-count
    #:column-count
-   :make-df
-   :df-col
-   :df
-   :data-frame
-   :data-frame-plan
+   #:make-df
+   #:df-col
+   #:df
+   #:data-frame
+   #:data-frame-plan
    #:schema-from-columns
    #:df-plan))
 
@@ -474,14 +476,10 @@
    :kv-key
    :kv-val
    :database-collection
-   :upgradable-schema
-   :upgrade
-   :version
    :remove-kv
    :with-transaction
    :with-batch-transaction
    :*txn*
-   :apply-schema-change-fn
    :transaction-object
    :current-transaction
    :transaction-store

@@ -423,6 +423,29 @@ SCHEMA."
                 :direct-slots (slot-defs-from-schema schema args)
                 :metaclass 'stored-class)))
 
+;;; Upgradable
+(defclass upgradable-schema (schema)
+  ((version :accessor version :initarg :version :initform 1)
+   (upgrade :accessor upgrade :initform nil))
+  (:documentation "A schema which may be upgraded in-place."))
+
+(defmethod print-object ((self upgradable-schema) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A ~A" (id self) (version self))))
+
+(defmethod dump-schema ((self upgradable-schema) &optional (stream t))
+  (awhen (upgrade self)
+    (format stream "upgrade:~%~A~%" it)))
+
+(defun apply-schema-change-fn (instance expr old-schema)
+  (cond ((functionp expr)
+         (funcall expr instance))
+        ((symbolp expr)
+         (funcall (symbol-function expr) instance))
+        ((consp expr)
+         (let ((fn (compile nil (eval expr))))
+           (setf (upgrade old-schema) fn)
+           (funcall fn instance)))))
 
 ;;; Macros
 

@@ -136,11 +136,11 @@ saved."
     `(let ((,opts ',(parse-database-backend-options initargs))
            (,var ,db))
        ;; ,@(when open (remf initargs :open) `((open-db ,var)))
-       (apply 'do-database-backend-init-options ,var opts)
+       (apply 'do-database-backend-init-options ,var ,opts)
        (unwind-protect (progn ,@body)
          ;; ,@(when close (remf initargs :close) `((close-db ,var)))
          ;; ,@(when destroy (remf initargs :destroy) `((destroy-db ,var)))
-         (apply 'do-database-backend-close-options ,var opts)))))
+         (apply 'do-database-backend-close-options ,var ,opts)))))
 
 ;;; Config
 (defconfig db-config ()
@@ -187,29 +187,6 @@ saved."
 (defclass database ()
   ((db :initform nil :initarg :db :accessor db))
   (:documentation "Base class for Database objects."))
-
-(defclass upgradable-schema (schema)
-  ((version :accessor version :initarg :version :initform 1)
-   (upgrade :accessor upgrade :initform nil))
-  (:documentation "A schema which may be upgraded in-place."))
-
-(defmethod print-object ((self upgradable-schema) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A ~A" (id self) (version self))))
-
-(defmethod dump-schema ((self upgradable-schema) &optional (stream t))
-  (awhen (upgrade self)
-    (format stream "upgrade:~%~A~%" it)))
-
-(defun apply-schema-change-fn (instance expr old-schema)
-  (cond ((functionp expr)
-         (funcall expr instance))
-        ((symbolp expr)
-         (funcall (symbol-function expr) instance))
-        ((consp expr)
-         (let ((fn (compile nil (eval expr))))
-           (setf (upgrade old-schema) fn)
-           (funcall fn instance)))))
 
 (defclass database-collection () ()
   (:documentation "A collection of DATABASE objects."))

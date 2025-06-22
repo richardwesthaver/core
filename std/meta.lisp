@@ -38,10 +38,16 @@
   (:documentation "Execute object SELF."))
 (defgeneric explore (self &key &allow-other-keys)
   (:documentation "Explore object SELF."))
-(defgeneric write-object (selfj stream &key &allow-other-keys)
+(defgeneric write-object (self stream &key &allow-other-keys)
   (:documentation "Write object SELF to STREAM.")
   (:method ((self t) (stream t) &key)
     (write self :stream stream)))
+
+(defgeneric version (self)
+  (:documentation "Return the version of object SELF."))
+
+(defgeneric upgrade (self)
+  (:documentation "Return the upgrade-function associated with object SELF."))
 
 (defun slot-boundp* (self slot)
   "Return T if SLOT is bound in object SELF, otherwise return NIL."

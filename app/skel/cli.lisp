@@ -116,6 +116,9 @@
                     (skel-simple-error "rule not found: ~A" a))))
         (sk-make sk (aref (sk-rules sk) 0)))))
 
+(defcmd skc-status ()
+  (vc:vc-status (sk-vc *skel-project*)))
+
 (defcmd skc-run ()
   (sb-ext:enable-debugger)
   (if *args*
@@ -197,6 +200,9 @@
     :description "show skel objects slots"
     :opts ((:name "file" :description "path to skelfile" :kind file))
     :thunk skc-show)
+   (:name status
+    :description "show the current project status"
+    :thunk skc-status)
    (:name list
     :description "list skel objects"
     :thunk skc-list)

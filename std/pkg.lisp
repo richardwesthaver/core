@@ -767,6 +767,7 @@
    :exec :copy-object :safe-superclasses :run-object
    :slot-boundp* :slot-values
    :explore :with-fslots
+   :upgrade :version
    :status :validate))
 
 (defpkg :std/spin
@@ -1131,11 +1132,12 @@
    :detabify))
 
 (pkg:defpkg :std/defsys
-  (:use :cl :asdf)
+  (:use :cl)
   (:nicknames :sys)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
   (:import-from :asdf :module-provide-asdf :compile-system :defsystem :load-system)
+  (:shadowing-import-from :std/meta :version)
   (:export 
    :defsys
    :find-system*

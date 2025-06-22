@@ -10,7 +10,7 @@
   (when codec (load-avcodec))
   (when format (load-avformat)))
 
-(deferror av-error (dsp-error std-error) ())
+(eval-always (deferror av-error (dsp-error std-error) ()))
 
 (defmacro with-av-handlers (&body body)
   `(handler-case (progn ,@body)
@@ -66,7 +66,7 @@
          (case #1=(avformat-open-input (addr ctx) (namestring path) nil nil)
                (0 (with-alien ((dict (* av-dictionary) (slot ctx 'ffmpeg::metadata)))
                     (prog1 (av-dictionary-coerce dict type))))
-               (t (av-error #1#)))
+               (t (error 'av-error :message #1#)))
       (avformat-close-input (addr ctx)))))
 
 (defun media-file-format (path)
