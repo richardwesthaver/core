@@ -7,6 +7,52 @@
 
 (define-alien-type ublksrv-ctrl-dev (struct ublksrv-ctrl-dev))
 
+(define-alien-enum (ublk-f unsigned)
+  :support-zero-copy +ublk-f-support-zero-copy+
+  :uring-cmd-comp-in-task +ublk-f-uring-cmd-comp-in-task+
+  :need-get-date +ublk-f-need-get-data+
+  :user-recovery +ublk-f-user-recovery+
+  :user-recover-reissue +ublk-f-user-recovery-reissue+
+  :unprivileged-dev +ublk-f-unprivileged-dev+
+  :cmd-ioctl-encode +ublk-f-cmd-ioctl-encode+
+  :user-copy +ublk-f-user-copy+)
+
+(define-alien-enum (ublksrv-f unsigned)
+  :need-eventfd +ublksrv-f-need-eventfd+)
+
+(define-alien-enum (ublk-s-dev unsigned)
+  :dead +ublk-s-dev-dead+
+  :live +ublk-s-dev-live+
+  :quiesced +ublk-s-dev-quiesced+)
+
+(define-alien-enum (ublk-io-op unsigned)
+  :read +ublk-io-op-read+
+  :write +ublk-io-op-write+
+  :flush +ublk-io-op-flush+
+  :discard +ublk-io-op-discard+
+  :write-same +ublk-io-op-write-same+
+  :write-zeroes +ublk-io-op-write-zeroes+)
+
+(define-alien-enum (ublk-io-f unsigned)
+  :failfast-dev +ublk-io-f-failfast-dev+
+  :failfast-transport +ublk-io-f-failfast-transport+
+  :failfast-driver +ublk-io-f-failfast-driver+
+  :meta +ublk-io-f-meta+
+  :fua +ublk-io-f-fua+
+  :nounmap +ublk-io-f-nounmap+
+  :swap +ublk-io-f-swap+)
+
+(define-alien-enum (ublk-attr unsigned)
+  :read-only +ublk-attr-read-only+
+  :rotational +ublk-attr-rotational+
+  :volatile-cache +ublk-attr-volatile-cache+
+  :fua +ublk-attr-fua+)
+
+(define-alien-enum (ublk-io-res unsigned)
+  :ok +ublk-io-res-ok+
+  :need-get-data +ublk-io-res-need-get-data+
+  :abort +ublk-io-res-abort+)
+
 ;; early def
 (define-alien-type ublksrv-tgt-info
   (struct ublksrv-tgt-info
@@ -87,6 +133,29 @@
           (flags unsigned-long)
           (ublksrv-flags unsigned-long)
           (reserved (array unsigned-long 7))))
+
+(defun make-ublksrv-dev-data (dev-id &key (max-io-buf-bytes (floor +max-buf-size+ 4))
+                                     (nr-hw-queues (floor +max-nr-hw-queues+ 4))
+                                     (queue-depth (floor +max-qd+ 4))
+                                     (type "loop")
+                                     ops
+                                     args
+                                     (dir (namestring *default-pathname-defaults*))
+                                     (flags 0)
+                                     (ublksrv-flags 0))
+    (let ((dat (make-alien ublksrv-dev-data)))
+      (setf (slot dat 'dev-id) dev-id
+            (slot dat 'max-io-buf-bytes) max-io-buf-bytes
+            (slot dat 'nr-hw-queues) nr-hw-queues
+            (slot dat 'queue-depth) queue-depth
+            (slot dat 'tgt-type) type
+            (slot dat 'tgt-ops) ops
+            (slot dat 'tgt-argc) (length args)
+            (slot dat 'tgt-argv) (clone-strings args t)
+            (slot dat 'run-dir) (make-alien-string dir)
+            (slot dat 'flags) flags
+            (slot dat 'ublksrv-flags) ublksrv-flags)
+      dat))
 
 (defar build-user-data (unsigned 64)
   (tag unsigned)

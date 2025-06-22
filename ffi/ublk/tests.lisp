@@ -15,5 +15,6 @@
 
 (load-ublksrv)
 
-(deftest sanity ())
+(deftest sanity ()
+  (= +max-nr-hw-queues+ 32))
 
