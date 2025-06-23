@@ -23,9 +23,6 @@
    :net-error
    :codec-error
    :protocol-error
-   :transport
-   :codec
-   :protocol
    :net-config
    :client
    :client-config
@@ -36,6 +33,7 @@
    :tunnel
    :codec-warning
    :protocol-warning
+   :connection
    :connect
    :disconnect
    :make-client

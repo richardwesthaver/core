@@ -9,5 +9,6 @@
   (:export :*net-modeline-fmt* :*net-stat-devices*))
 
 (in-package :stump/net)
+
 (add-screen-mode-line-formatter #\l 'net-mode-line)
 

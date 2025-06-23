@@ -27,16 +27,9 @@
 (defconfig net-config (id) 
   ())
 
-(defclass transport ()
-  ())
-
-(defclass connection () ())
-
-(defclass codec ()
-  ())
-
-(defclass protocol ()
-  ())
+(defclass connection () ()
+  (:documentation
+   "Generic connection object."))
 
 (defclass client (sb-bsd-sockets:inet-socket) ())
 
@@ -45,11 +38,15 @@
 (defclass server (sb-bsd-sockets:inet-socket) ())
 (defconfig server-config (net-config) ())
 
-(defclass peer () ())
+(defclass proxy (server)
+  ((client :type client :initarg :client :accessor client))
+  (:documentation
+   "An object which acts as a proxy between clients and an upstream server."))
 
-(defclass proxy (client server) ())
-
-(defclass tunnel (client server) ())  
+(defclass peer () ()
+  (:documentation 
+   "An object which designates a peer. Peers typically designate an implicit
+communication channel with a client/server."))
 
 ;;; Protocol
 (defgeneric connect (self &key &allow-other-keys))
