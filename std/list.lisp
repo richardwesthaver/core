@@ -373,6 +373,55 @@ every element of LIST2 matches some element of LIST1. Otherwise returns false."
            (or (member elt keylist1 :test test)
                (return nil))))))
 
+;;; ALIST
+(declaim (inline racons))
+(defun racons (key value ralist)
+  (acons value key ralist))
+
+(macrolet
+    ((define-alist-get (name get-entry get-value-from-entry add doc)
+       `(progn
+          (declaim (inline ,name))
+          (defun ,name (alist key &key (test 'eql))
+            ,doc
+            (let ((entry (,get-entry key alist :test test)))
+              (values (,get-value-from-entry entry) entry)))
+          (define-setf-expander ,name (place key &key (test ''eql)
+                                       &environment env)
+            (multiple-value-bind
+                  (temporary-variables initforms newvals setter getter)
+                (get-setf-expansion place env)
+              (when (cdr newvals)
+                (error "~A cannot store multiple values in one place" ',name))
+              (with-gensyms (new-value key-val test-val alist entry)
+                (values
+                 (append temporary-variables
+                         (list alist
+                               key-val
+                               test-val
+                               entry))
+                 (append initforms
+                         (list getter
+                               key
+                               test
+                               `(,',get-entry ,key-val ,alist :test ,test-val)))
+                 `(,new-value)
+                 `(cond
+                    (,entry
+                     (setf (,',get-value-from-entry ,entry) ,new-value))
+                    (t
+                     (let ,newvals
+                       (setf ,(first newvals) (,',add ,key ,new-value ,alist))
+                       ,setter
+                       ,new-value)))
+                 `(,',get-value-from-entry ,entry))))))))
+ (define-alist-get assoc-value assoc cdr acons
+"ASSOC-VALUE is an alist accessor very much like ASSOC, but it can
+be used with SETF.")
+ (define-alist-get rassoc-value rassoc car racons
+"RASSOC-VALUE is an alist accessor very much like RASSOC, but it can
+be used with SETF."))
+
 ;;; DLIST
 
 ;; Simple doubly-linked lists

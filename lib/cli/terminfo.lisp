@@ -24,16 +24,6 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 ;; USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 ;; DAMAGE.
-
-(defpackage :cli/terminfo
-  (:nicknames :ti :terminfo)
-  (:use :cl)
-  (:import-from :std :winsize :+tiocgwinsz+)
-  (:export
-   :*terminfo-directories* :*terminfo*
-   :capability :tparm :tputs :decode-padding
-   :set-terminal :capabilities))
-
 (in-package :cli/terminfo)
 
 (defvar *terminfo-directories* '("/etc/terminfo/"
@@ -171,8 +161,7 @@ that calls the capability from *terminfo*."
 (defcap semi-auto-right-margin boolean 34)
 (defcap cpi-changes-res boolean 35)
 (defcap lpi-changes-res boolean 36)
-
-(defcap columns integer 0)
+(defcap %columns integer 0)
 (defcap init-tabs integer 1)
 (defcap %lines integer 2)
 (defcap lines-of-memory integer 3)
@@ -991,7 +980,7 @@ apparently used 542 (#o1036) in practice.")
       (if (or (null fd) (integerp fd)) fd (sb-sys::fd-stream-fd fd))))
   )
 
-(defun terminal-size (&optional (stream *terminal-io*))
+(defun terminal-size (&optional (stream *standard-output*))
   (declare (type stream stream))
   (sb-alien:with-alien ((winsz winsize))
     (if (zerop (sb-posix:ioctl (sb-sys:fd-stream-fd stream) +TIOCGWINSZ+ (sb-alien:cast winsz (* t))))

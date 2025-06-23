@@ -289,6 +289,7 @@
   (:import-from :dat/mime :mime)
   (:import-from :chunky :input-chunking-p :make-chunked-stream :output-chunking-p)
   (:import-from :io/fast :make-output-buffer :finish-output-buffer)
+  (:import-from :log :trace-p)
   (:shadow :get :delete)
   (:import-from :sb-ext :string-to-octets)
   (:use :cl :std :uri
@@ -438,7 +439,7 @@
   (:package-local-nicknames
    :codec :net/codec/http
    :proto :net/proto/http)
-  (:export :http-service :https-service :http-server-config :https-server-config :tls-config))
+  (:export :http-service :https-service :http-server-config :https-server-config :tls-config :tls-server :http-server))
 
 (defpkg :net/srv/udp
   (:use :cl :std :net/udp :net/codec/tlv :net/core :srv)

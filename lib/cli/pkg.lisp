@@ -47,28 +47,28 @@
   (:nicknames :ansi)
   (:export
    ;; ESC sequences
-   :.ris :reset-to-initial-state
+   :.ris
    ;; CSI sequences | cursor control
-   :.cuu :cursor-up
-   :.cud :cursor-down
-   :.cuf :cursor-forward
-   :.cub :cursor-backward
-   :.cnl :cursor-next-line
-   :.cpl :cursor-preceding-line
-   :.cha :cursor-horizontal-absolute
-   :.cup :cursor-position
-   :.vpa :vertical-position-absolute
-   :.vpr :vertical-position-relative
-   :.vpb :vertical-position-backward
-   :.scosc :save-cursor-position
-   :.scorc :restore-cursor-position
-   :.ed :erase-in-display :erase-below :erase-above :erase :erase-saved-lines
-   :.el :erase-in-line :erase-right :erase-left :erase-line
-   :.sgr :select-graphic-rendition
-   :.dsr :device-status-report
+   :.cuu
+   :.cud
+   :.cuf
+   :.cub
+   :.cnl
+   :.cpl
+   :.cha
+   :.cup
+   :.vpa
+   :.vpr
+   :.vpb
+   :.scosc
+   :.scorc
+   :.ed :erase-below :erase-above :erase :erase-saved-lines
+   :.el :erase-right :erase-left :erase-line
+   :.sgr
+   :.dsr
    ;; DEC private mode set and reset
-   :.decset :dec-private-mode-set
-   :.decrst :dec-private-mode-reset
+   :.decset
+   :.decrst
    :show-cursor :hide-cursor
    :use-alternate-screen-buffer :use-normal-screen-buffer
    ;; common
@@ -76,6 +76,36 @@
    :home
    ;; stty
    :set-tty-mode))
+
+(defpkg :cli/terminfo
+  (:nicknames :ti :terminfo)
+  (:use :cl)
+  (:shadow :columns)
+  (:import-from :std :winsize :+tiocgwinsz+)
+  (:export
+   :*terminfo-directories* :*terminfo*
+   :capability :tparm :tputs :decode-padding
+   :set-terminal :capabilities))
+
+(defpkg :cli/linedit
+  (:nicknames :linedit)
+  (:use :cl :std)
+  (:import-from :sb-posix :getenv :ioctl :tcgetattr :tcsetattr :termios)
+  (:import-from :terminfo :tputs :set-terminal :tparm)
+  (:import-from :std
+   :with-gensyms :with-directory-iterator
+   :file-kind :current-directory
+   :relative-pathname-p :if-let
+   #:isatty #:winsize)
+  (:export
+   #:linedit
+   #:formedit
+   #:*default-columns*
+   #:*default-lines*
+   #:*highlight-color*
+   #:install-repl
+   #:uninstall-repl
+   #:*announce*))
 
 (defpkg :cli/prompt
   (:use :cl :std :obj/equiv)

@@ -79,16 +79,13 @@
     (setf (duration self) duration))
   (call-next-method))
 
-(defclass playlist (track)
+(defclass playlist (track id)
   ((pos
     :initform 0 :initarg :pos :accessor position-in-playlist
-    :type integer)
+    :type array-index)
    (duration
     :initform nil :initarg :duration)
-   (format :initform nil :initarg :format)
-   (id
-    :initform 0 :initarg :id :accessor id
-    :type integer)))
+   (format :initform nil :initarg :format)))
 
 (defclass status ()
   ((volume
@@ -408,11 +405,6 @@
       (send "play" (- song-number 1))
       (send "play")))
 
-(defcommand searchplay (type &optional query)
-  (check-args string type query)
-  "Search and play a song in the current playlist."
-  (send "searchplay" type query))
-
 (defcommand stop ()
   "Stop playing."
   (send "stop"))
@@ -505,20 +497,20 @@
   (check-args string scope query)
   (send "playlistsearch" scope query))
 
-(defgeneric add (connection what)
+(defgeneric mpc-add (connection what)
   (:documentation "Add file or directory to the current playlist."))
 
 (defmethod-command add ((what track))
-  (add connection (file what)))
+  (mpc-add connection (file what)))
 
 (defmethod-command add ((what string))
   (send "add" what))
 
-(defgeneric add-id (connection what)
+(defgeneric mpc-add-id (connection what)
   (:documentation "Like add, but returns a id."))
 
 (defmethod-command add-id ((what track))
-  (add connection (file what)))
+  (mpc-add connection (prin1-to-string (file what))))
 
 (defmethod-command add-id ((what string))
   (car (filter-keys (send "addid" what))))
@@ -529,11 +521,11 @@
   (unless (= from to)
     (send "move" from to)))
 
-(defgeneric move-id (connection id to)
+(defgeneric mpc-move-id (connection id to)
   (:documentation "Move track with `id' to `to' in the playlist."))
 
 (defmethod-command move-id ((track playlist) (to integer))
-  (move-id connection (id track) to))
+  (mpc-move-id connection (id track) to))
 
 (defmethod-command move-id ((id integer) (to integer))
   (check-args unsigned-byte id to)
@@ -545,11 +537,11 @@
   (unless (= first second)
     (send "swap" first second)))
 
-(defgeneric swap-id (connection first second)
+(defgeneric mpc-swap-id (connection first second)
   (:documentation "Swap positions of two tracks by id."))
 
 (defmethod-command swap-id ((first playlist) (second playlist))
-  (swap-id connection (id first) (id second)))
+  (mpc-swap-id connection (id first) (id second)))
 
 (defmethod-command swap-id ((first integer) (second integer))
   (check-args unsigned-byte first second)
@@ -560,11 +552,11 @@
   (check-args unsigned-byte number)
   (send "delete" number))
 
-(defgeneric delete-id (connection id)
+(defgeneric mpc-delete-id (connection id)
   (:documentation "Delete track with `id' from playlist."))
 
 (defmethod-command delete-id ((id playlist))
-  (delete-id connection (id id)))
+  (mpc-delete-id connection (id id)))
 
 (defmethod-command delete-id ((id integer))
   (check-args unsigned-byte id)
@@ -648,11 +640,11 @@ Return: (number playtime)."
   "Skip to a specified point in a song on the playlist."
   (send "seek" song time))
 
-(defgeneric seek-id (connection song time)
+(defgeneric mpc-seek-id (connection song time)
   (:documentation "Skip to a specified point in a song on the playlist."))
 
 (defmethod-command seek-id ((song playlist) (time integer))
-  (seek-id connection (id song) time))
+  (mpc-seek-id connection (id song) time))
 
 (defmethod-command seek-id ((song integer) (time integer))
   (check-args unsigned-byte song time)

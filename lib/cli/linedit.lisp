@@ -3,31 +3,6 @@
 ;; See https://github.com/sharplispers/linedit
 
 ;;; Code:
-(defpackage :cli/linedit
-  (:nicknames :linedit)
-  (:use :cl :std)
-  (:import-from :sb-posix :getenv :ioctl :tcgetattr :tcsetattr :termios)
-  (:import-from :std
-   :with-gensyms
-                :with-directory-iterator
-   :file-kind
-                :current-directory
-   :relative-pathname-p
-                :if-let
-                #:isatty
-                #:winsize)
-  (:export
-   #:linedit
-   #:formedit
-   #:*default-columns*
-   #:*default-lines*
-   #:*highlight-color*
-   #:install-repl
-   #:uninstall-repl
-   #:start-debug
-   #:end-debug
-   #:*announce*))
-
 (in-package :linedit)
 
 ;;; Utils
@@ -480,10 +455,10 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   ;;     (ti:tputs ti:column-address n)
   (cond ((< n current)
 	 (loop repeat (- current n) 
-	       do (ti:tputs ti:cursor-left)))
+	       do (tputs ti:cursor-left)))
 	((> n current)
 	 (loop repeat (- n current) 
-	       do (ti:tputs ti:cursor-right)))))
+	       do (tputs ti:cursor-right)))))
 
 (defun smart-terminal-p ()
   (and ti:cursor-up ti:cursor-down ti:clr-eos
@@ -519,13 +494,13 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 
 (defun place-point (&key up col)
   (loop repeat up do (ti:tputs ti:cursor-up))
-  (ti:tputs ti:column-address col))
+  (tputs ti:column-address col))
 
 (defun paren-style ()
   (concatenate
    'simple-string
    (when *highlight-color*
-     (ti:tparm
+     (tparm
       ti:set-a-foreground
       (or (position *highlight-color* '(:black :red :green :yellow :blue :magenta :cyan :white))
           (error "Unknown color: ~S" *highlight-color*))))
@@ -912,7 +887,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (setf (get-string editor) (copy-seq (get-string line))
 	  (get-point editor) (get-point line))))
 
-;; (defvar *debug-info* nil)
 (defvar *aux-prompt* nil)
 
 (defun redraw-line (editor &key markup)
@@ -932,7 +906,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 			   (if (characterp chord)
 			       'add-char
 			       'unknown-command))))
-    ;; (setf *debug-info* (list command chord editor))
     (funcall command chord editor)
     (setf *last-command* command))
   (save-state editor))
@@ -1132,16 +1105,16 @@ to the appropriate home directory."
 	    while entry
 	    do (let* ((full (funcall namefun entry))
 		      (diff (mismatch string full)))
-                 ;; (log:debug! "~& completed: ~A, diff: ~A~%" full diff)
+                 (log:trace! "~& completed: ~A, diff: ~A~%" full diff)
 		 (unless (and diff (< diff (length string)))
-                   ;; (log:debug! "~& common ~A mismatch ~A~&" common 
-                   ;;   (mismatch common full))
+                   (log:trace! "~& common ~A mismatch ~A~&" common 
+                               (mismatch common full))
 		   (setf common (if common
 				    (subseq common 0 (mismatch common full))
 				    full)
 			 max (max max (length full))
 			 all (cons full all))))))
-    ;; (log:debug! "~&common: ~A~%" common)
+    (log:trace! "~&common: ~A~%" common)
     (if (or (null common)
 	    (<= (length common) (length string)))
 	(values all max)

@@ -41,6 +41,7 @@
   (:import-from :sb-kernel :topological-sort)
   (:shadow :group)
   (:export
+   :assoc-value
    :ensure-car
    :ensure-cons
    :appendf
@@ -310,7 +311,7 @@
    :read-until-end
    ;; stream
    :copy-stream
-   :wrapped-stream
+   :wrapped-stream :wrapped-stream-p
    :wrapped-character-input-stream
    :wrapped-character-output-stream
    :counting-character-input-stream

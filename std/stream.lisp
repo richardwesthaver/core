@@ -79,6 +79,8 @@ compatible element-types."
 (defmethod close ((stream wrapped-stream) &key abort)
   (close (stream-of stream) :abort abort))
 
+(defun wrapped-stream-p (obj) (typep obj 'wrapped-stream))
+
 (defclass wrapped-character-input-stream (wrapped-stream fundamental-character-input-stream)
   ()
   (:documentation "A wrapped CHARACTER-INPUT-STREAM."))

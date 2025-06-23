@@ -10,7 +10,7 @@
 
 ;;; Code:
 (defpackage :mpk/mpd
-  (:use :cl :std :sb-bsd-sockets :net/core :config :time)
+  (:use :cl :std :sb-bsd-sockets :net/core :config :time :id)
   (:nicknames :mpd)
   (:export
    :with-mpc
@@ -21,7 +21,6 @@
    :mpc-playing
    :mpc-pause
    :mpc-play
-   :mpc-searchplay
    :mpc-previous
    :mpc-next
    :mpc-crossfade

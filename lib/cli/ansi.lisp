@@ -30,20 +30,11 @@
 ;; Bit:    7 6 5 4 3 2 1
 ;; Weight: 4 2 1 8 4 2 1
 
-;; 200530 add a stream argument to every function
-;; add windows as gray streams
-
-;;(defmacro define-control-function ())
-;;(defmacro define-control-sequence (name args))
-
 ;; ESC [ Pn1 ; Pn2 H
 ;; CSI Pn1 ; Pn2 H
 ;; CSI n ; m H
 ;; CUP
 ;; cursor-position
-
-;; TODO 200530 write csi in terms of esc?
-;; no because CSI params are separated with ; while esc params arent separated
 
 ;; See 5.4 for the overall format of control sequences
 
@@ -82,7 +73,7 @@
 ;; Parameters: none
 ;; Default:    none
 ;; Reference:  ANSI 5.72, ECMA 8.3.105
-(defun reset-to-initial-state ()
+(defun .ris ()
   "Reset the terminal to its initial state.
 
 In particular, turn on cooked and echo modes and newline translation,
@@ -91,8 +82,6 @@ turn off raw and cbreak modes, reset any unset special characters.
 A reset is useful after a program crashes and leaves the terminal in
 an undefined, unusable state."
   (esc "c"))
-
-(setf (fdefinition '.ris) #'reset-to-initial-state)
 
 ;;; CSI sequences ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -106,11 +95,9 @@ an undefined, unusable state."
 ;; Parameters: Pn = m
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.17, ECMA 8.3.22
-(defun cursor-up (&optional (m 1))
+(defun .cuu (&optional (m 1))
   "Move the cursor m lines up."
   (csi "A" m))
-
-(setf (fdefinition '.cuu) #'cursor-up)
 
 ;; Name:       Cursor down
 ;; Mnemonic:   CUD
@@ -120,11 +107,9 @@ an undefined, unusable state."
 ;; Parameters: Pn = m
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.14, ECMA 8.3.19
-(defun cursor-down (&optional (m 1))
+(defun .cud (&optional (m 1))
   "Move the cursor m lines down."
   (csi "B" m))
-
-(setf (fdefinition '.cud) #'cursor-down)
 
 ;; Name:       Cursor forward
 ;; Mnemonic:   CUF
@@ -135,11 +120,9 @@ an undefined, unusable state."
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.15, ECMA 8.3.20
 ;; Notice:     ECMA name: Cursor right
-(defun cursor-forward (&optional (n 1))
+(defun .cuf (&optional (n 1))
   "Move the cursor n columns in the forward direction (to the right)."
   (csi "C" n))
-
-(setf (fdefinition '.cuf) #'cursor-forward)
 
 ;; Name:       Cursor backward
 ;; Mnemonic:   CUB
@@ -150,11 +133,9 @@ an undefined, unusable state."
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.13, ECMA 8.3.18
 ;; Notice:     ECMA name: Cursor left
-(defun cursor-backward (&optional (n 1))
+(defun .cub (&optional (n 1))
   "Move the cursor n columns in the backward direction (to the left)."
   (csi "D" n))
-
-(setf (fdefinition '.cub) #'cursor-backward)
 
 ;; Name:       Cursor next line
 ;; Mnemonic:   CNL
@@ -164,11 +145,9 @@ an undefined, unusable state."
 ;; Parameters: Pn = m
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.7, ECMA 8.3.12
-(defun cursor-next-line (&optional (m 1))
+(defun .cnl (&optional (m 1))
   "Move the cursor m columns down to column 1."
   (csi "E" m))
-
-(setf (fdefinition '.cnl) #'cursor-next-line)
 
 ;; Name:       Cursor preceding line
 ;; Mnemonic:   CPL
@@ -178,11 +157,9 @@ an undefined, unusable state."
 ;; Parameters: Pn = m
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.8, ECMA 8.3.13
-(defun cursor-preceding-line (&optional (m 1))
+(defun .cpl (&optional (m 1))
   "Move the cursor m columns up to column 1."
   (csi "F" m))
-
-(setf (fdefinition '.cpl) #'cursor-preceding-line)
 
 ;; Name:       Cursor horizontal absolute
 ;; Mnemonic:   CHA
@@ -193,11 +170,9 @@ an undefined, unusable state."
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.5, ECMA 8.3.9
 ;; Notice:     ECMA name: Cursor character absolute
-(defun cursor-horizontal-absolute (&optional (n 1))
+(defun .cha (&optional (n 1))
   "Set the cursor horizontal position to the n-th column in the current line."
   (csi "G" n))
-
-(setf (fdefinition '.cha) #'cursor-horizontal-absolute)
 
 ;; Name:       Cursor position
 ;; Mnemonic:   CUP
@@ -207,7 +182,7 @@ an undefined, unusable state."
 ;; Parameters: Pn1 = m line, Pn2 = n column
 ;; Defaults:   Pn1 = 1; Pn2 = 1
 ;; Reference:  ANSI 5.16, ECMA 8.3.21
-(defun cursor-position (&optional (line 1) (column 1))
+(defun .cup (&optional (line 1) (column 1))
   "Move the cursor to m-th line and n-th column of the screen.
 
 The line and column numbering is one-based.
@@ -215,8 +190,6 @@ The line and column numbering is one-based.
 Without arguments, the cursor is placed in the home position (1 1),
 the top left corner."
   (csi "H" line column))
-
-(setf (fdefinition '.cup) #'cursor-position)
 
 ;; Name:       Vertical position absolute
 ;; Mnemonic:   VPA
@@ -227,11 +200,9 @@ the top left corner."
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.96, ECMA 8.3.158
 ;; Notice:     ECMA name: Line position absolute
-(defun vertical-position-absolute (&optional (m 1))
+(defun .vpa (&optional (m 1))
   "Set the cursor vertical position to the m-th line in the current column."
   (csi "d" m))
-
-(setf (fdefinition '.vpa) #'vertical-position-absolute)
 
 ;; Name:       Vertical position relative
 ;; Mnemonic:   VPR
@@ -242,13 +213,11 @@ the top left corner."
 ;; Default:    Pn = 1
 ;; Reference:  ANSI 5.97, ECMA 8.3.160
 ;; Notice:     ECMA name: Line position forward
-(defun vertical-position-relative (&optional (m 1))
+(defun .vpr (&optional (m 1))
   "Move the cursor vertical position down by m lines in the current column.
 
 This has the same effect as cursor-down (cud)."
   (csi "e" m))
-
-(setf (fdefinition '.vpr) #'vertical-position-relative)
 
 ;; Name:       Vertical position backward
 ;; Mnemonic:   VPB
@@ -259,25 +228,19 @@ This has the same effect as cursor-down (cud)."
 ;; Default:    Pn = 1
 ;; Reference:  ECMA 8.3.159
 ;; Notice:     ECMA name: Line position backward
-(defun vertical-position-backward (&optional (m 1))
+(defun .vpb (&optional (m 1))
   "Move the cursor vertical position up by m lines in the current column.
 
 This has the same effect as cursor-up (cuu)."
   (csi "k" m))
 
-(setf (fdefinition '.vpb) #'vertical-position-backward)
-
-(defun save-cursor-position ()
-  "Save cursor position. Move cursor to the saved position using restore-cursor-position."
+(defun .scosc ()
+  "Save cursor position. Move cursor to the saved position using .SCORC."
   (csi "s"))
 
-(setf (fdefinition '.scosc) #'save-cursor-position)
-
-(defun restore-cursor-position ()
-  "Move cursor to the position saved using save-cursor-position."
+(defun .scorc ()
+  "Move cursor to the position saved using .SCOSC."
   (csi "u"))
-
-(setf (fdefinition '.scorc) #'restore-cursor-position)
 
 ;; Name:       Erase in display
 ;; Mnemonic:   ED
@@ -288,7 +251,7 @@ This has the same effect as cursor-up (cuu)."
 ;; Defaults:   Ps = 0
 ;; Reference:  ANSI 5.29, ECMA 8.3.39
 ;; Notice:     ECMA name: Erase in page
-(defun erase-in-display (&optional (mode 0))
+(defun .ed (&optional (mode 0))
   "Erase some or all characters on the screen depending on the selected mode.
 
 Mode 0 (erase-below, default) erases all characters from the cursor to
@@ -303,23 +266,21 @@ Mode 3 (erase-saved-lines, xterm) erases all characters on the screen
 including the scrollback buffer."
   (csi "J" mode))
 
-(setf (fdefinition '.ed) #'erase-in-display)
-
 (defun erase-below ()
   "Erases all characters from the cursor to the end of the screen."
-  (erase-in-display 0))
+  (.ed 0))
 
 (defun erase-above ()
   "Erases all characters from the beginning of the screen to the cursor."
-  (erase-in-display 1))
+  (.ed 1))
 (eval-always
   (defun erase ()
     "Erase all characters on the screen."
-    (erase-in-display 2)))
+    (.ed 2)))
 
 (defun erase-saved-lines ()
   "Erase all characters on the screen including the scrollback buffer."
-  (erase-in-display 3))
+  (.ed 3))
 
 ;; Name:       Erase in line
 ;; Mnemonic:   EL
@@ -329,7 +290,7 @@ including the scrollback buffer."
 ;; Parameters: Ps = mode
 ;; Defaults:   Ps = 0
 ;; Reference:  ANSI 5.31, ECMA 8.3.41
-(defun erase-in-line (&optional (mode 0))
+(defun .el (&optional (mode 0))
   "Erase some or all characters on the current line depending on the selected mode.
 
 Mode 0 (erase-right, default) erases all characters from the cursor to
@@ -341,19 +302,17 @@ line to the cursor.
 Mode 2 (erase-line) erases all characters on the line."
   (csi "K" mode))
 
-(setf (fdefinition '.el) #'erase-in-line)
-
 (defun erase-right ()
   "Erases all characters from the cursor to the end of the line."
-  (erase-in-line 0))
+  (.el 0))
 
 (defun erase-left ()
   "Erases all characters from the beginning of the line to the cursor."
-  (erase-in-line 1))
+  (.el 1))
 
 (defun erase-line ()
   "Erases all characters on the current line."
-  (erase-in-line 2))
+  (.el 2))
 
 ;; Name:        Select Graphic Rendition
 ;; Mnemonic:    SGR
@@ -363,7 +322,7 @@ Mode 2 (erase-line) erases all characters on the line."
 ;; Parameters:  See documentation string.
 ;; Defaults:    Pm = 0
 ;; Reference:   ANSI 5.77, ECMA 8.3.117
-(defun select-graphic-rendition (&rest params)
+(defun .sgr (&rest params)
   "Set character attributes and foreground and background colors.
 
  0  turn off all previous attributes, set normal, default rendition
@@ -418,8 +377,6 @@ Background colors:
 48 2 r g b  set the color by directly giving its RGB components"
   (apply #'csi "m" params))
 
-(setf (fdefinition '.sgr) #'select-graphic-rendition)
-
 ;; Name:        Device Status Report
 ;; Mnemonic:    DSR
 ;; Final char:  n
@@ -428,12 +385,10 @@ Background colors:
 ;; Parameters:  Ps = status command to send to the terminal
 ;; Defaults:    n = 6
 ;; Reference:   ECMA 8.3.35
-(defun device-status-report (&optional (n 6))
+(defun .dsr (&optional (n 6))
   "The terminal responds by sending a Cursor Position Report (CPR) to the standard input
 as if we read it through read-line from the user."
   (csi "n" n))
-
-(setf (fdefinition '.dsr) #'device-status-report)
 
 ;; Name:        Cursor Position Report
 ;; Mnemonic:    CPR
@@ -450,7 +405,7 @@ as if we read it through read-line from the user."
 
 ;; Set (enable, turn on)
 
-(defun dec-private-mode-set (mode)
+(defun .decset (mode)
   "Set (turn on, enable) a DEC private mode.
 
 Implemented modes:
@@ -459,32 +414,28 @@ Implemented modes:
 1047 alternate or normal screen buffer"
   (csi "h" "?" mode))
 
-(setf (fdefinition '.decset) #'dec-private-mode-set)
-
 (defun show-cursor ()
-  (dec-private-mode-set 25))
+  (.decset 25))
 
 (defun use-alternate-screen-buffer ()
-  (dec-private-mode-set 1047))
+  (.decset 1047))
 
 ;; Reset (disable, turn off)
 
-(defun dec-private-mode-reset (mode)
+(defun .decrst (mode)
   "Reset (turn off, disable) a DEC private mode."
   (csi "l" "?" mode))
 
-(setf (fdefinition '.decrst) #'dec-private-mode-reset)
-
 (defun hide-cursor ()
-  (dec-private-mode-reset 25))
+  (.decrst 25))
 
 (defun use-normal-screen-buffer ()
-  (dec-private-mode-reset 1047))
+  (.decrst 1047))
 
 ;;; Common
 (defun home ()
   "Move the cursor to the home position, the top left corner."
-  (cursor-position))
+  (.cup))
 
 (defun clear ()
   "Erase the whole screen, then move the cursor to the home position."

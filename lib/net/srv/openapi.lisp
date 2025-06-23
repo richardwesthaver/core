@@ -260,3 +260,12 @@
 
 (defmethod deserialize ((self t) (format (eql :openapi)) &key)
   (deserialize (deserialize self :json) :openapi))
+
+;;; Client
+(defclass oapi-client (client) ())
+
+;;; Server
+(defclass oapi-server (http-server) ())
+
+;;; Service
+(defclass oapi-service (net-service oapi-server) ())

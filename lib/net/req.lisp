@@ -35,42 +35,45 @@
                           body))))))
 
 
-(defvar *request-failed-error* (make-hash-table :test 'eql))
-
-#.`(progn
-     ,@(loop for (name . code) in '(;; 4xx (Client Errors)
-                                    (bad-request                   . 400)
-                                    (unauthorized                  . 401)
-                                    (payment-required              . 402)
-                                    (forbidden                     . 403)
-                                    (not-found                     . 404)
-                                    (method-not-allowed            . 405)
-                                    (not-acceptable                . 406)
-                                    (proxy-authentication-required . 407)
-                                    (request-timeout               . 408)
-                                    (conflict                      . 409)
-                                    (gone                          . 410)
-                                    (length-required               . 411)
-                                    (precondition-failed           . 412)
-                                    (payload-too-large             . 413)
-                                    (uri-too-long                  . 414)
-                                    (unsupported-media-type        . 415)
-                                    (range-not-satisfiable         . 416)
-                                    (expectation-failed            . 417)
-                                    (misdirected-request           . 421)
-                                    (upgrade-required              . 426)
-                                    (too-many-requests             . 429)
-
-                                    ;; 5xx (Server Errors)
-                                    (internal-server-error      . 500)
-                                    (not-implemented            . 501)
-                                    (bad-gateway                . 502)
-                                    (service-unavailable        . 503)
-                                    (gateway-timeout            . 504)
-                                    (http-version-not-supported . 505))
-             collect `(define-request-failed-condition ,name ,code)
-             collect `(setf (gethash ,code *request-failed-error*)
-                            ',(intern (format nil "~A-~A" :http-request name)))))
+(defvar *request-failed-error* 
+  (let ((tbl (make-hash-table)))
+    (macrolet ((%fill (&body lst)
+                 `(progn
+                    ,@(loop for (name . code) in lst
+                            collect `(define-request-failed-condition ,name ,code)
+                            collect `(setf (gethash ,code tbl)
+                                           ',(intern (format nil "~A-~A" :http-request name)))))))
+      (%fill 
+       ;; 4xx (Client Errors)
+       (bad-request                   . 400)
+       (unauthorized                  . 401)
+       (payment-required              . 402)
+       (forbidden                     . 403)
+       (not-found                     . 404)
+       (method-not-allowed            . 405)
+       (not-acceptable                . 406)
+       (proxy-authentication-required . 407)
+       (request-timeout               . 408)
+       (conflict                      . 409)
+       (gone                          . 410)
+       (length-required               . 411)
+       (precondition-failed           . 412)
+       (payload-too-large             . 413)
+       (uri-too-long                  . 414)
+       (unsupported-media-type        . 415)
+       (range-not-satisfiable         . 416)
+       (expectation-failed            . 417)
+       (misdirected-request           . 421)
+       (upgrade-required              . 426)
+       (too-many-requests             . 429)
+       ;; 5xx (Server Errors)
+       (internal-server-error      . 500)
+       (not-implemented            . 501)
+       (bad-gateway                . 502)
+       (service-unavailable        . 503)
+       (gateway-timeout            . 504)
+       (http-version-not-supported . 505))
+      tbl)))
 
 (defun http-request-failed (status &key body headers uri method)
   (cerror
@@ -93,7 +96,6 @@
 ;;; utils
 (defvar *default-connect-timeout* 10)
 (defvar *default-read-timeout* 10)
-(defvar *verbose* nil)
 (defvar *default-proxy* (or #-windows (uiop:getenv "HTTPS_PROXY")
                             #-windows (uiop:getenv "HTTP_PROXY"))
   "If specified will be used as the default value of PROXY in calls to dexador.  Defaults to
@@ -568,12 +570,12 @@ keep-alive-stream), and should handle clean-up of it"
   (let ((var (intern (format nil "*~A*" cache-name))))
     `(progn
        (defvar ,var)
-       (defun ,(intern (format nil "LOOKUP-IN-~A" cache-name)) (elt)
+       (defun ,(intern (format nil "~A" cache-name)) (elt)
          (when (boundp ',var)
-           (alexandria:assoc-value ,var elt)))
-       (defun (setf ,(intern (format nil "LOOKUP-IN-~A" cache-name))) (val elt)
+           (assoc-value ,var elt)))
+       (defun (setf ,(intern (format nil "~A" cache-name))) (val elt)
          (when (boundp ',var)
-           (setf (alexandria:assoc-value ,var elt) val))
+           (setf (assoc-value ,var elt) val))
          val))))
 
 ;; If bound, an alist mapping content to content-type,
@@ -590,8 +592,8 @@ keep-alive-stream), and should handle clean-up of it"
 
 (defun content-type (value)
   (typecase value
-    (pathname (or (lookup-in-content-type-cache value)
-                  (setf (lookup-in-content-type-cache value) (mime value))))
+    (pathname (or (content-type-cache value)
+                  (setf (content-type-cache value) (mime value))))
     (otherwise nil)))
 
 (defun multipart-value-content-type (value)
@@ -603,8 +605,8 @@ keep-alive-stream), and should handle clean-up of it"
     (otherwise (content-type value))))
 
 (defun convert-to-octets (val)
-  (or (lookup-in-content-encoding-cache val)
-      (setf (lookup-in-content-encoding-cache val)
+  (or (content-encoding-cache val)
+      (setf (content-encoding-cache val)
             (typecase val
               (string (string-to-octets val))
               ((array (unsigned-byte 8) (*)) val)
@@ -617,7 +619,7 @@ keep-alive-stream), and should handle clean-up of it"
     ((array (unsigned-byte 8) (*)) (write-sequence val stream))
     (pathname
      (with-open-file (in val :element-type '(unsigned-byte 8))
-       (alexandria:copy-stream in stream)))
+       (copy-stream in stream)))
     (string
      (write-sequence (convert-to-octets val) stream))
     (cons (write-as-octets stream (first val)))
@@ -686,7 +688,6 @@ keep-alive-stream), and should handle clean-up of it"
      (if (streamp body)
          (io/flate:make-decompressing-stream :zlib body)
          (io/flate:decompress nil (io/deflate:make-dstate :zlib) body)))
-
     ((string= content-encoding "zstd")
      (if (streamp body)
          (io/flate:make-decompressing-stream :zstd body)
@@ -718,7 +719,7 @@ keep-alive-stream), and should handle clean-up of it"
 (defun make-connection-pool (&optional (max-active-connections *max-active-connections*))
   (make-lru-pool :hash-table (make-hash-table :test 'equal) :max-elts max-active-connections))
 
-(defvar *connection-pool* nil)
+(defvar *connection-pool* (make-connection-pool))
 
 (defun make-new-connection-pool (&optional (max-active-connections *max-active-connections*))
   (clear-connection-pool)
@@ -838,8 +839,6 @@ keep-alive-stream), and should handle clean-up of it"
               do (when eviction-callback (funcall eviction-callback evicted-element))
               while element-was-evicted)))))
 
-(make-new-connection-pool)
-
 ;;; backend
 (defun read-until-crlf*2 (stream)
   (with-fast-output (buf)
@@ -905,8 +904,8 @@ keep-alive-stream), and should handle clean-up of it"
   (let* ((http (make-http-response))
          body
          body-data
-         (headers-data (and collect-headers
-                            (make-output-buffer)))
+         (headers-data (when collect-headers
+                         (make-output-buffer)))
          (header-finished-p nil)
          (finishedp nil)
          (content-length nil)
@@ -1130,19 +1129,6 @@ keep-alive-stream), and should handle clean-up of it"
                                                       ssl-cert-file)
                                     :password ssl-key-password)))))
 
-(defstruct %wrapped-stream
-  stream)
-
-;; Forward methods the user might want to use on this.
-;; User is not meant to interact with this object except
-;; potentially to close it when they decide they don't
-;; need the :keep-alive connection anymore.
-(defmethod close ((u %wrapped-stream) &key abort)
-  (close (%wrapped-stream-stream u) :abort abort))
-
-(defmethod open-stream-p ((u %wrapped-stream))
-  (open-stream-p (%wrapped-stream-stream u)))
-
 (defun request (uri &rest args
                     &key (method :get) (version 1.1)
                          content headers
@@ -1153,7 +1139,7 @@ keep-alive-stream), and should handle clean-up of it"
                          (keep-alive t) (use-connection-pool t)
                          (max-redirects 5)
                          ssl-key-file ssl-cert-file ssl-key-password
-                         stream (verbose *verbose*)
+                         stream (verbose (trace-p))
                          force-binary
                          force-string
                          want-stream
@@ -1163,7 +1149,7 @@ keep-alive-stream), and should handle clean-up of it"
                     &aux
                     (proxy-uri (and proxy (uri proxy)))
                     (original-user-supplied-stream stream)
-                    (user-supplied-stream (if (%wrapped-stream-p stream) (%wrapped-stream-stream stream) stream)))
+                    (user-supplied-stream (if (wrapped-stream-p stream) (stream-of stream) stream)))
   (declare (ignorable ssl-key-file ssl-cert-file ssl-key-password
                       connect-timeout read-timeout)
            (type real version)
@@ -1549,15 +1535,15 @@ keep-alive-stream), and should handle clean-up of it"
                                              (not (equalp (gethash "connection" response-headers) "close"))
                                              (or (not use-connection-pool) user-supplied-stream))
                                     (or (and original-user-supplied-stream ;; user provided a stream
-					     (if (%wrapped-stream-p original-user-supplied-stream) ;; but, it came from us
-					         (eql (%wrapped-stream-stream original-user-supplied-stream) stream) ;; and we used it
+					     (if (wrapped-stream-p original-user-supplied-stream) ;; but, it came from us
+					         (eql (stream-of original-user-supplied-stream) stream) ;; and we used it
 					         (eql original-user-supplied-stream stream)) ;; user provided a bare stream
 					     original-user-supplied-stream) ;; return what the user sent without wrapping it
                                         (if want-stream ;; add a finalizer to the body to close the stream
                                             (progn
                                               (sb-ext:finalize body (lambda () (close stream)))
                                               stream)
-                                            (let ((wrapped-stream (make-%wrapped-stream :stream stream)))
+                                            (let ((wrapped-stream (make-instance 'wrapped-stream :stream stream)))
                                               (sb-ext:finalize wrapped-stream (lambda () (close stream)))
                                               wrapped-stream)))))))
                    (finalize-connection stream (gethash "connection" response-headers) uri))))))))))

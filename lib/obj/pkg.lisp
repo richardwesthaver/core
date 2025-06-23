@@ -155,17 +155,12 @@
   (:nicknames :color)
   (:use :cl :std)
   (:export
-   #:rgb #:rgb-red #:rgb-green #:rgb-blue #:gray #:&rgb
+   #:rgb #:rgb-red #:rgb-green #:rgb-blue #:gray
    #:hsv #:hsv-hue #:hsv-saturation #:hsv-value #:&hsv
    #:rgb-to-hsv #:hsv-to-rgb #:hex-to-rgb #:as-hsv #:as-rgb
    #:rgb-combination #:hsv-combination
    #:parse-hex-rgb #:print-hex-rgb
-   :color-palette :parse-and-write-color-definitions
-   :*x11-colors* :*x11-color-palette* :*default-color-palette* :color-palette
-   #:make-color-palette
-   #:color-palette-p
-   #:copy-color-palette
-   #:color-palette-table))
+   :*x11-colors* :*x11-color-palette* :*default-color-palette* :color-palette))
 
 (defpkg :obj/time
   (:nicknames :time)
