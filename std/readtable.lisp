@@ -179,6 +179,21 @@ indicates a recursive call (RCURRY instead of CURRY).
     (list 'the '(values function &optional)
           (cons 'compose (read-delimited-list #\] stream t)))))
 
+;; f-strings
+;; ref: https://realpython.com/python-f-strings/
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  ;; TODO 2025-06-23: 
+  (defun |#f-reader| (stream subchar num)
+    "Sharp-f reader - Python-like f-strings.
+
+#f\"foo: {foo}, bar: {bar}~%\" ;= (format nil \"foo: ~A, bar: ~A~%\" foo bar)"
+    (declare (ignore subchar))
+    (format (case num
+              (1 t)
+              (2 *debug-io*)
+              (t nil))
+            (read stream))))
+
 ;; Define the standard readtable with built-in functionality. We overwrite the
 ;; braces [] and {} but ! and ? are free for now.
 (defreadtable :std
@@ -193,6 +208,7 @@ copy if necessary."
   (:macro-char #\] (get-macro-character #\) ))
   ;; strings
   (:dispatch-macro-char #\# #\" #'|#"-reader|)
+  (:dispatch-macro-char #\# #\f #'|#f-reader|)
   ;; regex
   (:dispatch-macro-char #\# #\~ #'|#~-reader|)
   ;; lambdas

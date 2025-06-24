@@ -484,6 +484,30 @@ zero or more reference tokens prefixed by a '/'."
 (defun json-pointer-from-string (str)
   (mapcar 'json-pointer-token-decode (ssplit #\/ str :omit-nulls t)))
 
+;;; Json Reference
+;; https://datatracker.ietf.org/doc/html/draft-pbryan-zyp-json-ref-03
+(defvar *default-json-resolver* #'identity)
+
+(defun resolve-json-reference (obj resolver)
+  "Resolve a json reference of the form (\"$ref\" REF) where REF is either a uri
+or a string with support for json pointers. RESOLVER is a function which is
+passed the reference REF and is responsible for resolving it to a JSON value."
+  (let ((ref (etypecase obj
+               (json-object (json-getf obj "$ref"))
+               (cons (assoc "$ref" obj :test 'string=)))))
+    (funcall resolver 
+             (if (json-pointer-p ref) 
+                 (json-pointer-token-decode ref)
+                 (uri ref)))))
+
+(defun resolve-json-references (obj &optional (resolver *default-json-resolver*))
+  "Expand all json references contained in the AST slot of json-object
+OBJ. For each reference found RESOLVE-JSON-REFERENCE is called with OBJ and
+RESOLVER then replaced with the result."
+  (loop with ref = (json-getf obj "$ref")
+        while ref
+        do (json-setf obj "$ref" (resolve-json-reference ref resolver))))
+
 ;;; Json Schema
 ;; ref: https://json-schema.org/specification
 ;; examples: https://json-schema.org/learn/json-schema-examples

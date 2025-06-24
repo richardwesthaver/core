@@ -723,6 +723,16 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (when action
     `(setf (gethash ,command *commands*) ,action)))
 
+(defmacro defcommand-prefix (cmd &rest cmds)
+  "Define a prefix command on CMD which interprets the next sequence read with
+READ-CHORD according to CMDS."
+  (let ((tbl (make-hash-table :test 'equalp :size (length cmds))))
+    (dolist (c cmds tbl)
+      (destructuring-bind (key act) c
+        (setf (gethash key tbl) act)))
+    `(setf (gethash ,cmd *commands*) ,tbl)))
+
+(defcommand-prefix "C-X" ("C-X" move-to-bol))
 (defcommand "C-A" 'move-to-bol)
 (defcommand "C-B" 'move-char-left)
 (defcommand "C-C" 'interrupt-lisp)
@@ -743,7 +753,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defcommand "C-U" 'kill-to-bol)
 (defcommand "C-V")
 (defcommand "C-W" 'cut-region)
-(defcommand "C-X")
+;; (defcommand "C-X")
 (defcommand "C-Y" 'yank)
 (defcommand "C-Z" 'stop-lisp)
 (defcommand "C--" 'undo)
@@ -906,8 +916,20 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 			   (if (characterp chord)
 			       'add-char
 			       'unknown-command))))
-    (funcall command chord editor)
-    (setf *last-command* command))
+    (if (hash-table-p command)
+        ;; prefix command
+        (let* ((ch (read-chord editor))
+               (com
+                 (gethash chord command
+                          (if (characterp chord)
+                              'add-char
+                              'unknown-command))))
+          (setf *last-command* (cons chord com))
+          (funcall com ch editor))
+        ;; command
+        (progn
+          (funcall command chord editor)
+          (setf *last-command* command))))
   (save-state editor))
 
 (defun get-finished-string (editor)

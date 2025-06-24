@@ -70,6 +70,7 @@
      ;; TODO 2025-06-20: 
 
   ;; openapi-path
+  ;; TODO 2025-06-23: https://spec.openapis.org/oas/v3.1.0#path-templating
   (defoapi path-item ($ref summary description get put post delete options head patch trace servers parameters) (obj)
     (make-openapi-path-item
      :$ref (json-getf obj "$ref")))

@@ -619,6 +619,7 @@
    #:make-response
    #:make-request
    #:send-response
+   #:send-request
    #:handle-request
    #:process-request
    #:bad-request

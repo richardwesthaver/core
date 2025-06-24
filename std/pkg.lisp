@@ -38,9 +38,11 @@
    :ensure-list :recons :memq :assq
    :proper-list-of-length-p :proper-list-p :singleton-p)
   (:import-from :std/sym :with-gensyms)
+  (:import-from :sb-int :doplist)
   (:import-from :sb-kernel :topological-sort)
   (:shadow :group)
   (:export
+   :doplist
    :assoc-value
    :ensure-car
    :ensure-cons
@@ -390,6 +392,9 @@
    :|#`-reader|
    :|#f-reader|
    :|#$-reader|
+   :|[-reader|
+   :|{-reader|
+   :|#l-reader|
    :segment-reader
    :match-mode-ppcre-lambda-form
    :subst-mode-ppcre-lambda-form

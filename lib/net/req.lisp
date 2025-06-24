@@ -1724,4 +1724,14 @@ the second arg is an optional character encoding.")
   (declare (ignore kind))
   (apply 'make-instance 'http-client args))
 
-(defmethod make-client-request ((self http-client) (req http-request) &key) (nyi!))
+(defmethod make-client-request ((self http-client) (req uri) &key)
+  (declare (ignore self))
+  req)
+
+(defmethod make-client-request ((self http-client) (req uri) &key)
+  (declare (ignore self))
+  (uri req))
+
+(defmethod send-request ((self http-client) req &rest args)
+  ;; req is assumed to be a string or uri
+  (apply (kernel self) req args))

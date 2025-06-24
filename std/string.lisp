@@ -569,3 +569,5 @@ of a string."
                      (subseq full-string 0 subst-point)
                      (subseq full-string (+ subst-point (length rem-string))))
         full-string)))
+
+;;; Path Templating
