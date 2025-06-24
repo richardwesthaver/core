@@ -46,10 +46,12 @@
   (:documentation "Deserialize FROM into an object of type FORMAT, which is a
 DESERIALIZABLE-TYPE-DESIGNATOR."))
 
-(defgeneric ser (kind obj)
-  (:documentation "Convenience function for serializing OBJ into KIND."))
-(defgeneric de (kind obj)
-  (:documentation "Convenience function for deserializing OBJ of type KIND."))
+(defgeneric ser (self)
+  (:documentation "Access the serializer of SELF."))
+(defgeneric (setf ser) (new self))
+(defgeneric de (self)
+  (:documentation "Access the deserializer of SELF."))
+(defgeneric (setf de) (new self))
 
 (defgeneric serde (from to)
   (:documentation "Point-to-point serialization.

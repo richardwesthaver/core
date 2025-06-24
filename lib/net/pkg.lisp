@@ -37,7 +37,9 @@
    :connect
    :disconnect
    :make-client
-   :make-server)
+   :make-server
+   :make-client-request
+   :make-server-response)
   ;; utils
   (:export :get-address-by-name
    :with-client-server :*localhost*)
@@ -305,6 +307,8 @@
    :put
    :patch
    :delete
+   :fetch
+   :http-client
    :*default-connect-timeout*
    :*default-read-timeout*
    :*default-proxy*
@@ -317,8 +321,7 @@
    ;; Restarts
    :retry-request
    :ignore-and-continue
-   :decoding-stream-of
-   :fetch))
+   :decoding-stream-of))
 
 (defpkg :net/srv
   (:use :cl :obj/uri :log
@@ -454,8 +457,9 @@
 
 (defpkg :net/srv/openapi
   (:use :cl :std :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json :ast)
+  (:import-from :net/req :http-client :http-client-config)
   (:use-reexport :net/srv)
-  (:export :openapi-service))
+  (:export :openapi-service :openapi-document :oapi-client :oapi-server))
 
 (defpkg :net/srv/ext
   (:use :cl :std :net/core :cli/tools/net)
@@ -464,22 +468,24 @@
 (setq *defpkg-hook* nil)
 
 (eval-always
+  (when (sb-int:featurep :swank)
+    #+quicklisp (ql:quickload '(:swank :swank-client))
+    (load (asdf:system-relative-pathname :net "proto/swank.lisp"))
+    (load (asdf:system-relative-pathname :net "proto/crew.lisp"))
+    (use-package :net/proto/swank)
+    (use-package :net/proto/crew)))
+
+(eval-when (:load-toplevel)
+  (pushnew :net *features*))
+
+(in-package :std-user)
+
+(eval-always
   (defpkg :net
     (:use :cl :std)
     #.`(:use-reexport ,@(remove "NET/REQ" net/int:*net-packages* :test 'string=))
     (:import-from :net/req :http-client-config :http-client)
-    (:export :http-client-config :http-client)))
+    (:export :http-client-config :http-client))
 
-(defpkg :net-user
-  (:use :cl :std :net :uri :url))
-
-(in-package :net)
-(when (sb-int:featurep :swank)
-  #+quicklisp (ql:quickload '(:swank :swank-client))
-  (load (asdf:system-relative-pathname :net "proto/swank.lisp"))
-  (load (asdf:system-relative-pathname :net "proto/crew.lisp"))
-  (use-package :net/proto/swank)
-  (use-package :net/proto/crew))
-
-(eval-when (:load-toplevel)
-  (pushnew :net *features*))
+  (defpkg :net-user
+    (:use :cl :std :net :uri :url)))

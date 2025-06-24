@@ -23,9 +23,10 @@
              (let ((sname (symbolicate "OPENAPI-" name)))
                `(progn 
                   (defstruct ,sname ,@fields)
-                  (defun ,(symbolicate sname "-FROM-JSON") ,args
+                  (defun ,(symbolicate sname "-FROM-JSON") (,@args)
                     (declare (optimize (speed 3) (safety 0)))
-                    ,@body)))))
+                    (when ,(car args)
+                      ,@body))))))
   (defoapi info (title description terms contact license version) (obj)
     (make-openapi-info
      :title (json-getf obj "title")
@@ -43,8 +44,8 @@
      :name (json-getf obj "name")
      :url (when-let ((v (json-getf obj "url"))) (uri v))))
 
-  (defoapi server (url description variables) (obj)
-    (make-openapi-server
+  (defoapi server-object (url description variables) (obj)
+    (make-openapi-server-object
      :url (when-let ((v (json-getf obj "url"))) (uri v))
      :description (json-getf obj "description")
      :variables (json-getf obj "variables")))
@@ -158,7 +159,7 @@
      :parameters (json-getf obj "parameters")
      :request-body (openapi-request-body-from-json obj)
      :description (json-getf obj "description")
-     :server (openapi-server-from-json obj)))
+     :server (openapi-server-object-from-json obj)))
 
   (defoapi header (description required deprecated allow-empty style explode allow-reserved schema examples content)
     (obj)
@@ -234,7 +235,7 @@
 
 ;;; Document
 (defclass openapi-document (json-object) 
-  ((spec-version :initarg :spec-version :initform *default-openapi-version*)
+  ((version :initarg :version :initform *default-openapi-version*)
    (info :initarg :info :type openapi-info)
    (components :initarg :components :type openapi-components)
    (paths :initarg :paths)
@@ -249,7 +250,7 @@
            (when-let ((k (json-getf self key)))
              (funcall fn k))))
   (make-instance 'openapi-document
-    :spec-version (json-getf self "openapi")
+    :version (json-getf self "openapi")
     :info (openapi-info-from-json (json-getf self "info"))
     :paths (openapi-paths-from-json (json-getf self "paths"))
     :servers (%from "servers" #'openapi-servers-from-json)
@@ -261,11 +262,20 @@
 (defmethod deserialize ((self t) (format (eql :openapi)) &key)
   (deserialize (deserialize self :json) :openapi))
 
+;;; Spec
+
 ;;; Client
-(defclass oapi-client (client) ())
+(defclass openapi-client (http-client) ()
+  (:documentation "HTTP client based on an OpenAPI Spec."))
+
+(defun make-openapi-client (spec &key name)
+  "Generate a new openapi-client based on OAPI which is a deserialized
+openapi-document.
+
+Returns the client and a list of supported methods as separate values.")
 
 ;;; Server
-(defclass oapi-server (http-server) ())
+(defclass openapi-server (http-server) ())
 
 ;;; Service
-(defclass oapi-service (net-service oapi-server) ())
+(defclass openapi-service (net-service openapi-server) ())

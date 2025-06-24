@@ -44,7 +44,7 @@
    (saturation 0 :type unit-real :read-only t)))
     
 (define-color-type hsv
-  ((v nil :type unit-real :read-only t))
+  ((.value nil :type unit-real :read-only t))
     %hue)
 
 (define-color-type hsl
@@ -53,11 +53,11 @@
 (define-color-type hsi
   ((intensity nil :type unit-real :read-only t)))
 
-(define-color-type cmyk (cyan magenta yellow k))
+(define-color-type cmyk (cyan magenta yellow .key))
 ;; CEIXYZ
-(define-color-type xyz (x y z))
+(define-color-type xyz (.x .y .z))
 ;; L*A*B
-(define-color-type lab (l a b))
+(define-color-type lab (.l .a .b))
 
 (defun gray (value)
   "Create an RGB representation of a gray color (value in [0,1)."

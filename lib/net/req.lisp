@@ -220,6 +220,12 @@
      default)
     ((string-equal charset "utf-8")
      :utf-8)
+    ((string-equal charset "iso-8859-1")
+     :iso-8859-1)
+    ((string-equal charset "utf-16")
+     :utf-16)
+    ((string-equal charset "utf-32")
+     :utf-32)
     ((string-equal charset "euc-jp")
      :eucjp)
     ((or (string-equal charset "shift_jis")
@@ -286,8 +292,6 @@
                        (main end)))))))
     (main 0)))
 
-;;; config
-(defconfig http-client-config (http-config client-config) ())
 ;;; keep-alive-stream
 (defclass keep-alive-stream (fundamental-input-stream)
   ((stream :type (or null stream)
@@ -952,7 +956,7 @@ keep-alive-stream), and should handle clean-up of it"
              (= status 204)    ;; No Content
              (= status 304))) ;; Not Modified
        (setq body *empty-body*))
-      (T
+      (t
        (setq body-data (make-output-buffer))
        (loop for buf of-type octet-vector = (read-until-crlf*2 stream)
              do (funcall parser buf)
@@ -1691,4 +1695,33 @@ keep-alive-stream), and should handle clean-up of it"
             (invoke-restart restart)))))))
 
 ;;; Client
-(defclass http-client (tcp-client) ())
+(defconfig http-client-config (http-config client-config) ())
+
+(defclass http-client (tcp-client)
+  ((kernel :type function :accessor kernel
+           :initform #'request
+           :initarg :kernel
+           :documentation "A function which takes a single required argument and a set of keyword
+arguments. By default, a non-specialized HTTP-CLIENT object will expect a
+function of the following signature:
+
+(ftype (uri &key method headers content-type content) *)
+
+All return values are passed back to the caller following a call to
+MAKE-CLIENT-REQUEST.")
+   (de :type function :accessor de
+       :initarg :de
+       :documentation "Client deserializer function. This function should take two arguments and
+return a single value. The first argument is a partially decoded response and
+the second arg is an optional character encoding.")
+   (ser :type function :accessor ser
+        :initarg :ser
+        :documentation "Client serializer function. This function should take
+        a single argument and return a single value. The first argument is
+        passed to this function while preparing http requests.")))
+
+(defmethod make-client ((kind (eql :http)) &rest args)
+  (declare (ignore kind))
+  (apply 'make-instance 'http-client args))
+
+(defmethod make-client-request ((self http-client) (req http-request) &key) (nyi!))

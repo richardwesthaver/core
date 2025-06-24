@@ -53,3 +53,9 @@ communication channel with a client/server."))
 (defgeneric disconnect (self &key &allow-other-keys))
 (defgeneric make-client (kind &rest initargs &key &allow-other-keys))
 (defgeneric make-server (kind &rest initargs &key &allow-other-keys))
+
+(defgeneric make-client-request (self req &rest args &key &allow-other-keys)
+  (:method ((self client) req &key) (nyi!)))
+
+(defgeneric make-server-response (self res &rest args &key &allow-other-keys)
+  (:method ((self server) res &key) (nyi!)))

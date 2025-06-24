@@ -76,6 +76,8 @@
 
 (defclass response () ())
 
+(defgeneric make-response (&rest args &key &allow-other-keys))
+
 (defclass service-response (response)
   ((content-type :reader content-type)
    (content-length :reader content-length :initform nil)))
@@ -84,6 +86,8 @@
 
 (defclass request ()
   ((data :initarg :data :accessor data)))
+
+(defgeneric make-request (&rest args &key &allow-other-keys))
 
 (defclass service-request (request)
   ((content-stream :initarg :content-stream :reader content-stream)

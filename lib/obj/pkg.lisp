@@ -155,8 +155,14 @@
   (:nicknames :color)
   (:use :cl :std)
   (:export
-   #:rgb #:rgb-red #:rgb-green #:rgb-blue #:gray
-   #:hsv #:hsv-hue #:hsv-saturation #:hsv-value #:&hsv
+   #:color #:alpha
+   #:rgb #:red #:green #:blue #:gray
+   #:hsv #:hue #:saturation #:.value 
+   #:hsi #:intensity
+   #:hsl #:lightness 
+   #:cmyk #:cyan #:magenta #:yellow #:.key
+   #:xyz #:.x #:.y #:.z
+   #:lab #:.l #:.a #:.b
    #:rgb-to-hsv #:hsv-to-rgb #:hex-to-rgb #:as-hsv #:as-rgb
    #:rgb-combination #:hsv-combination
    #:parse-hex-rgb #:print-hex-rgb
@@ -610,6 +616,8 @@
    #:response-ok-p
    #:response-status
    #:dispatch-request
+   #:make-response
+   #:make-request
    #:send-response
    #:handle-request
    #:process-request
