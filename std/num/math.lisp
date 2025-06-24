@@ -95,8 +95,8 @@ Examples:
         do (funcall function i))
   n)
 
-(declaim (inline lerp))
-(defun lerp (v a b)
+(declaim (inline %lerp))
+(defun %lerp (v a b)
   "Returns the result of linear interpolation between A and B, using the
 interpolation coefficient V."
   ;; The correct version is numerically stable, at the expense of an
@@ -108,12 +108,12 @@ interpolation coefficient V."
   ;; many would prefer the stable version
   (+ (* (- 1.0 v) a) (* v b)))
 
-(declaim (inline mean))
-(defun mean (sample)
+(declaim (inline %mean))
+(defun %mean (sample)
   "Returns the mean of SAMPLE. SAMPLE must be a sequence of numbers."
   (/ (reduce #'+ sample) (length sample)))
 
-(defun median (sample)
+(defun %median (sample)
   "Returns median of SAMPLE. SAMPLE must be a sequence of real numbers."
   ;; Implements and uses the quick-select algorithm to find the median
   ;; https://en.wikipedia.org/wiki/Quickselect
@@ -163,7 +163,7 @@ interpolation coefficient V."
   "Variance of SAMPLE. Returns the biased variance if BIASED is true (the default),
 and the unbiased estimator of variance if BIASED is false. SAMPLE must be a
 sequence of numbers."
-  (let ((mean (mean sample)))
+  (let ((mean (%mean sample)))
     (/ (reduce (lambda (a b)
                  (+ a (expt (- b mean) 2)))
                sample

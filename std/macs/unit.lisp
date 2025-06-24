@@ -1,4 +1,4 @@
-;;; obj/unit.lisp
+;;; std/macs/unit.lisp
 
 ;;
 

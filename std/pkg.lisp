@@ -289,9 +289,9 @@
    :gaussian-random
    :iota
    :map-iota
-   :lerp
-   :mean
-   :median
+   :%lerp
+   :%mean
+   :%median
    :variance
    :standard-deviation
    :maxf 
