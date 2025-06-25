@@ -5,11 +5,13 @@
 ;;; Code:
 (in-package :vc/util)
 
-(defun make-repo (path &key (type *default-vc-kind*) init)
-  (case type
+(defun make-repo (path &key type init)
+  (ecase type
     (:hg (make-hg-repo path :init init))
     (:git (make-git-repo path :init init))
-    (t (error "invalid repo type: ~A" type))))
+    ('nil (multiple-value-bind (p ty) (find-repo-root path)
+            (when (and p ty)
+              (make-repo p :type ty))))))
 
 (defmacro with-current-vc-root ((sym &optional dir) &body body)
   `(let ((,sym
@@ -19,11 +21,10 @@
                  (error 'vc-error :message "Directory not under version control")))))
      ,@body))
 
-(defun directory-repos (path)
-  (let ((path (probe-file path)))
-    (assert (typep path 'directory-pathname))
-    (loop for p in (directory (merge-pathnames "*/" path))
-          collect (make-repo p))))
+(defun directory-repos (&optional (path *default-pathname-defaults*) type)
+  (let ((path (probe-directory path)))
+    (loop for p in (directory (merge-pathnames "*/" (namestring path)))
+          collect (make-repo p :type type))))
 
 (defun bundle-repo (path output)
   (vc-bundle (make-repo path) output))
@@ -37,10 +38,10 @@
   (when pull
     (vc-pull repo (when (stringp pull) pull)))
   (when push
-    (vc-push repo (when (stringp push) push))))
+    (vc-push repo :remote (when (stringp push) push))))
 
-(defun update-repos (path &key push (pull t))
-  (loop for repo in (directory-repos path)
+(defun update-repos (path &key push (pull t) type)
+  (loop for repo in (directory-repos path type)
         do (update-repo repo push pull)))
 
 (defmacro with-repo ((sym &rest args &key path init type &allow-other-keys) &body body)

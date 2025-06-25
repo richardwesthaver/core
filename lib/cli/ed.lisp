@@ -7,7 +7,6 @@
 
 (defvar *user-emacs-directory* (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
 
-
 (defmacro with-emacs-printer (&body body)
   "Eval BODY with Emacs Lisp printer settings."
   `(let ((*print-case* :downcase))
@@ -49,12 +48,6 @@
 (push #'run-emacsclient sb-ext:*ed-functions*)
 (push #'run-emacs sb-ext:*ed-functions*)
 
-(defmacro with-emacs ((var &key (eval t) (client t) create-frame file (wait t) args) &body body)
-  (if (eql t eval)
-      `(progn (eval-emacs '(progn ,@body) :client ,client :args ,args :wait ,wait))
-      `(let ((,var (run-emacs ,args :eval ,eval :file ,file :create-frame ,create-frame :wait ,wait)))
-         ,@body)))
-
 ;;; Config
 (defconfig editor-config (ast) ())
 
@@ -87,4 +80,8 @@
   (eval-emacs `(progn (find-file ,path) (goto-char ,position)) :wait wait :create-frame create-frame :client client))
 
 ;;; Macros
-
+(defmacro with-emacs ((var &key (eval t) (client t) create-frame file (wait t) args) &body body)
+  (if (eql t eval)
+      `(progn (eval-emacs '(progn ,@body) :client ,client :args ,args :wait ,wait))
+      `(let ((,var (run-emacs ,args :eval ,eval :file ,file :create-frame ,create-frame :wait ,wait)))
+         ,@body)))

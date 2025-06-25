@@ -36,6 +36,8 @@
   (compose-state nil)
   (keymap nil))
 
+(defaccessor sap ((self keyboard)) (keyboard-sap self))
+
 (defun evdev-bit-p (array bit)
   "Array elements should be unsigned-long."
   (let ((idx (/ bit +long-bit+)))

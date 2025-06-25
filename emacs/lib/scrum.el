@@ -218,7 +218,9 @@ block:
 :symbols      when nil don't include the symbols section.
 :tests        when nil don't include the tests section.
 :dependencies when nil don't include the dependencies section.
-:dependents   when nil don't include the dependents section."
+:dependents   when nil don't include the dependents section.
+:level        when non-nil insert sections as headings at the level indicated,
+              else sections returned as lists."
   (with-dblock-defaults
    (let ((files (if-let* ((val (plist-member params :files)))
 		    (cadr val)
@@ -232,39 +234,61 @@ block:
 	 (symbols (if-let* ((val (plist-member params :symbols)))
 		      (cadr val)
 		    t))
-	 (tests (if-let* ((val (plist-member params :symbols)))
+	 (tests (if-let* ((val (plist-member params :tests)))
 		    (cadr val)
 		  t))
-	 (dependencies (if-let* ((val (plist-member params :packages)))
+	 (dependencies (if-let* ((val (plist-member params :dependencies)))
 			   (cadr val)
 			 t))
-	 (dependents (if-let* ((val (plist-member params :symbols)))
+	 (level (if-let* ((val (plist-member params :level)))
+		    (cadr val)
+		  nil))
+	 (dependents (if-let* ((val (plist-member params :dependents)))
 			 (cadr val)
 		       t)))
      (message "Generating info for lisp-system: %s" location)
      (let* ((project (project-current nil location))
 	    (project-name (project-name project))
-	    (project-root (project-root project)))
+	    (project-root (project-root project))
+	    (section-prefix (if level (make-string level ?*) "-")))
        (dolist (i org-lisp-system-info-order)
 	 (pcase i
 	   ('dependents (when dependents
 			  (message "building lisp-system dependents...")
-			  (insert (format "- dependents\n#+CALL: lisp-system-dependents[:post transpose](\"%s\")" system) "\n")))
+			  (insert (format "%s dependents\n  #+CALL: lisp-system-dependents[:post transpose](\"%s\")" 
+					  section-prefix
+					  system)
+				  "\n")))
 	   ('dependencies (when dependencies
 			  (message "building lisp-system dependencies...")
-			  (insert (format "- dependencies\n#+CALL: lisp-system-dependencies[:post transpose](\"%s\")" system) "\n")))
+			  (insert (format "%s dependencies\n  #+CALL: lisp-system-dependencies[:post transpose](\"%s\")" 
+					  section-prefix
+					  system)
+				  "\n")))
 	   ('files (when files
 		     (message "building lisp-system files...")
-		     (insert (format "- files\n#+CALL: lisp-system-files[:post transpose](\"%s\")" system) "\n")))
+		     (insert (format "%s files\n  #+CALL: lisp-system-files[:post transpose](\"%s\")" 
+				     section-prefix
+				     system) 
+			     "\n")))
 	   ('packages (when packages
 		     (message "building lisp-system packages...")
-		     (insert (format "- packages\n#+CALL: lisp-system-packages[:post transpose](\"%s\")" system) "\n")))
+		     (insert (format "%s packages\n  #+CALL: lisp-system-packages[:post transpose](\"%s\")" 
+				     section-prefix
+				     system)
+			     "\n")))
 	   ('symbols (when symbols
 		     (message "building lisp-system symbols...")
-		     (insert (format "- symbols\n#+CALL: lisp-package-symbols[:post codify-transpose](\"%s\")" (upcase (format "%s" system))) "\n")))
+		     (insert (format "%s symbols\n  #+CALL: lisp-package-symbols[:post transpose](\"%s\")" 
+				     section-prefix
+				     (upcase (format "%s" system))) 
+			     "\n")))
 	   ('tests (when tests
 		     (message "building lisp-system tests...")
-		     (insert (format "- tests\n#+CALL: lisp-system-tests[:post transpose](\"%s\")" system) "\n")))))
+		     (insert (format "%s tests\n  #+CALL: lisp-system-tests[:post transpose](\"%s\")" 
+				     section-prefix
+				     system) 
+			     "\n")))))
        (org-babel-execute-region point (point))))))
 
 (defun org-lisp-system-info (&optional system)

@@ -181,7 +181,14 @@
 (defpackage :io/kbd
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error
-   :load-kbd-libs))
+   :load-kbd-libs
+   :keyboard
+   :device-read-event
+   :print-device-input-info
+   :make-keyboard-from-dev
+   :keyboard-device-p
+   :new-device-from-path
+   :evdev-bit-p))
 
 (defpackage io/xsubseq
   (:use :cl)

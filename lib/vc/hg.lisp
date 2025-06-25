@@ -95,13 +95,17 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
   (declare (ignore self))
   (make-instance 'hg-config :paths paths))
 
-(defun parse-hg-uri (str)
+(defun parse-hg-uri (obj)
   "Parse a URI which may be prefixed with '[stuff]' - the uri is returned as the
 first value and 'stuff' as the second."
-  (if (char= (schar str 0) #\[)
-      (let ((end (position #\] str)))
-        (values (uri (subseq str (1+ end))) (keywordicate (string-upcase (subseq str 1 end)))))
-      (values (uri str) :hg)))
+  (etypecase obj
+    (uri (values obj :hg))
+    (pathname (values obj :hg))
+    (string
+     (if (char= (schar obj 0) #\[)
+         (let ((end (position #\] obj)))
+           (values (uri (subseq obj (1+ end))) (keywordicate (string-upcase (subseq obj 1 end)))))
+         (values (uri obj) :hg)))))
 
 (defun find-hgrc (&optional (root *default-pathname-defaults*) (load t))
   (when-let ((config (probe-file (merge-pathnames ".hg/hgrc" root))))

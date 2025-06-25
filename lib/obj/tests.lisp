@@ -1,7 +1,7 @@
 (defpackage :obj/tests
   (:use :cl :std :rt 
    :obj :uuid :url :std/macs
-   :dynamic :fast :sealed :stealth :stored :store))
+   :dynamic :fast :sealed :stealth :stored :store :uri))
 
 (in-package :obj/tests)
 

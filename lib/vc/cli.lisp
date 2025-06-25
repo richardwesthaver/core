@@ -32,9 +32,6 @@
 (defcmd vc-unbundle-cmd ()
   (vc-unbundle (make-repo *default-pathname-defaults*) (car *args*)))
 
-;; (defcmd vc-diff-cmd ()
-;;   (vc-diff
-
 (define-cli *vc-cli*
   :name "vc"
   :package :vc

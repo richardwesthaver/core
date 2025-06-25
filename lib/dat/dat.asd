@@ -10,7 +10,6 @@
                (:file "dot")
                (:file "csv")
                (:file "json")
-               (:file "openapi")
 	       (:file "m3u")
                (:file "id3")
                (:module "parquet"
