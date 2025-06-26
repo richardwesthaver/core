@@ -67,7 +67,7 @@
 
 (defar xkb-keysym-get-name int
   (keysym xkb-keysym)
-  (buffer (* char))
+  (buffer (* unsigned-char))
   (size size-t))
 
 (defar xkb-keysym-from-name xkb-keysym
@@ -273,7 +273,7 @@
 (defar xkb-state-key-get-utf8 int
   (state (* xkb-state))
   (key xkb-keycode)
-  (buffer (* char))
+  (buffer (* unsigned-char))
   (size size-t))
 
 (defar xkb-state-key-get-utf32 int
@@ -308,7 +308,7 @@
 
 (defar xkb-state-mod-name-is-active int
   (state (* xkb-state))
-  (name (* char))
+  (name (* unsigned-char))
   (type xkb-state-component))
 
 (defar xkb-state-mod-names-are-active int
@@ -359,7 +359,7 @@
 
 (defar xkb-state-layout-name-is-active int
   (state (* xkb-state))
-  (name (* char))
+  (name (* unsigned-char))
   (type xkb-state-component))
 
 (defar xkb-state-layout-index-is-active int
@@ -369,7 +369,7 @@
 
 (defar xkb-state-led-name-is-active int
   (state (* xkb-state))
-  (name (* char)))
+  (name (* unsigned-char)))
 
 (defar xkb-state-led-index-is-active int
   (state (* xkb-state))
@@ -388,20 +388,20 @@
 
 (defar xkb-compose-table-new-from-locale (* xkb-compose-table)
   (context (* xkb-context))
-  (locale (* char))
+  (locale (* unsigned-char))
   (flags xkb-compose-compile-flags))
 
 (defar xkb-compose-table-new-from-file (* xkb-compose-table)
   (file (* t)) ;;FILE
-  (locale (* char))
+  (locale (* unsigned-char))
   (format xkb-compose-format)
   (flags xkb-compose-compile-flags))
 
 (defar xkb-compose-table-new-from-buffer (* xkb-compose-table)
   (context (* xkb-context))
-  (buffer (* char))
+  (buffer (* unsigned-char))
   (length size-t)
-  (locale (* char))
+  (locale (* unsigned-char))
   (format xkb-compose-format)
   (flags xkb-compose-compile-flags))
 
@@ -420,7 +420,7 @@
 (defar xkb-compose-table-entry-keysym xkb-keysym
   (entry (* xkb-compose-table-entry)))
 
-(defar xkb-compose-table-entry-utf8 (* char)
+(defar xkb-compose-table-entry-utf8 (* unsigned-char)
   (entry (* xkb-compose-table-entry)))
 
 (define-alien-type xkb-compose-table-iterator (struct xkb-compose-table-iterator))
@@ -472,7 +472,7 @@
 
 (defar xkb-compose-state-get-utf8 int
   (state (* xkb-compose-state))
-  (buffer (* char))
+  (buffer (* unsigned-char))
   (size size-t))
 
 (defar xkb-compose-state-get-one-sym xkb-keysym

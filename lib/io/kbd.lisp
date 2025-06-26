@@ -57,6 +57,11 @@
                 dev))))
     (error (c) (when error (error c)))))
 
+(defun kbd-code-name (code)
+  (with-alien ((str (* unsigned-char) (make-alien unsigned-char 11)))
+    (xkb::xkb-keysym-get-name code str 11)
+    (cast str c-string)))
+;; (kbd-code-name 400) ; "0x00000190"
 ;; evdev::+ev-cnt+ evdev::+key-cnt+
 (defun keyboard-device-p (path)
   (with-open-file (st path :element-type 'octet)

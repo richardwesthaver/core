@@ -188,7 +188,8 @@
    :make-keyboard-from-dev
    :keyboard-device-p
    :new-device-from-path
-   :evdev-bit-p))
+   :evdev-bit-p
+   :kbd-code-name))
 
 (defpackage io/xsubseq
   (:use :cl)
