@@ -291,6 +291,8 @@
   (:import-from :dat/mime :mime)
   (:import-from :chunky :input-chunking-p :make-chunked-stream :output-chunking-p)
   (:import-from :io/fast :make-output-buffer :finish-output-buffer)
+  (:import-from :io/stream :decoding-stream :needs-to-fill-buffer-p
+   :+buffer-size+ :make-decoding-stream :dec-fill-buffer)
   (:import-from :log :trace-p)
   (:shadow :get :delete)
   (:import-from :sb-ext :string-to-octets)

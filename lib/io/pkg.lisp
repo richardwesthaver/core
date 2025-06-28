@@ -33,7 +33,12 @@
    :bound-input-stream :ensure-file-position
    :peeking-input-stream :peeked
    :peeked-count
-   :peeked-size))
+   :peeked-size
+   :make-decoding-stream
+   :decoding-stream
+   :+buffer-size+
+   :dec-fill-buffer
+   :needs-to-fill-buffer-p))
 
 (defpackage :io/static
   (:use :cl :std :sb-alien :io/stream)

@@ -1,5 +1,3 @@
-.*Cargo.lock$
-.*target/.*
 .*system-index.txt$
 .*[.]fasl$
 .*[.]o$

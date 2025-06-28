@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :cli/tools/build)
 
-(define-cli-tool :make (args &key (wait t) (output t))
-  (let ((proc (sb-ext:run-program *make* args :wait wait :output output)))
+(define-cli-tool :make (args &key (wait t) (output t) (input))
+  (let ((proc (sb-ext:run-program *make* args :wait wait :output output :input input)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (make-error "MAKE command failed: ~A ~A" *make* (or args "")))))
 
