@@ -40,6 +40,8 @@
                (:file "tar")
                (:file "midi")
                (:file "png")
+               (:file "gif")
+               (:file "ttf")
                (:file "base64")
                (:file "qrcode"))
   :in-order-to ((test-op (test-op "dat/tests"))))

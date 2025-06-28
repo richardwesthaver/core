@@ -319,6 +319,78 @@
   (:use :cl :std :dat/proto)
   (:export))
 
+(defpkg :dat/ttf
+  (:nicknames :ttf)
+  (:use :cl :std :dat/proto)
+  (:export
+   ;; font loader
+   #:open-font-loader
+   #:close-font-loader
+   #:with-font-loader
+   #:glyph-count
+   #:name-entry-value
+   #:find-name-entry
+   #:value
+   #:collection-font-count
+   #:collection-font-index
+   ;; font typographic
+   #:italic-angle
+   #:underline-thickness
+   #:underline-position
+   #:fixed-pitch-p
+   #:units/em
+   #:ascender
+   #:descender
+   #:line-gap
+   #:max-width
+   #:vascender
+   #:vdescender
+   ;; other font attributes
+   #:postscript-name
+   #:full-name
+   #:family-name
+   #:subfamily-name
+   #:all-kerning-pairs
+   #:glyph-exists-p
+   #:index-glyph
+   #:find-glyph
+   ;; shared between font-loader and glyph
+   #:bounding-box
+   #:xmin
+   #:ymin
+   #:xmax
+   #:ymax
+   ;; control points
+   #:x
+   #:y
+   #:on-curve-p
+   ;; glyph contours
+   #:contour-count
+   #:contour
+   #:contours
+   #:do-contours
+   #:explicit-contour-points
+   #:do-contour-segments
+   #:do-contour-segments*
+   ;; glyph other
+   #:code-point
+   #:font-index
+   ;; glyph typographic
+   #:advance-width
+   #:advance-height
+   #:left-side-bearing
+   #:top-side-bearing
+   #:right-side-bearing
+   #:kerning-offset
+   #:string-bounding-box
+   ;; conditions
+   #:regrettable-value
+   #:regrettable-hex-value
+   #:bad-magic
+   #:unsupported-version
+   #:unsupported-format
+   #:unsupported-value))
+
 (defpkg :dat/tar
   (:nicknames :tar)
   (:use :cl :std :dat/proto 
