@@ -9,7 +9,8 @@
 
 (defmacro with-emacs-printer (&body body)
   "Eval BODY with Emacs Lisp printer settings."
-  `(let ((*print-case* :downcase))
+  `(let ((*print-case* :downcase)
+         (*print-readably* nil))
      ,@body))
 
 (defun run-emacs (args &key file create-frame eval client wait)
@@ -30,7 +31,7 @@
     (push "-a=" keys)
     (when eval
       (with-emacs-printer
-        (appendf keys (list "-e" (format nil "~A" eval)))))
+        (appendf keys (list "-e" (format nil "~S" eval)))))
     (sb-ext:run-program (find-exe "emacsclient")
                         (append (nreverse keys) args)
                         :wait wait
@@ -40,7 +41,7 @@
   (run-emacs args :eval form :file file :client client :wait wait :create-frame create-frame))
 
 (defun ielm (&optional buf-name)
-  (eval-emacs `(ielm ,buf-name)))
+  (eval-emacs `(ielm ,@(when buf-name `(,buf-name)))))
 
 (defun slime (&optional command coding-system)
   (eval-emacs `(slime ,command ,coding-system)))
