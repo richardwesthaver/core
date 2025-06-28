@@ -729,7 +729,7 @@ READ-CHORD according to CMDS."
   (let ((tbl (make-hash-table :test 'equalp :size (length cmds))))
     (dolist (c cmds tbl)
       (destructuring-bind (key act) c
-        (setf (gethash key tbl) act)))
+        (when act (setf (gethash key tbl) act))))
     `(setf (gethash ,cmd *commands*) ,tbl)))
 
 (defcommand-prefix "C-X" ("C-X" move-to-bol))

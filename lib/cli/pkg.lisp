@@ -144,6 +144,9 @@
    :eval-emacs
    :slime
    :ielm
+   :ediff
+   :ediff3
+   :vc-ediff
    :with-emacs
    :emacs-find-file))
 

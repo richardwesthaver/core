@@ -30,7 +30,7 @@
     (push "-a=" keys)
     (when eval
       (with-emacs-printer
-        (appendf keys (list "-e" (format nil "~S" eval)))))
+        (appendf keys (list "-e" (format nil "~A" eval)))))
     (sb-ext:run-program (find-exe "emacsclient")
                         (append (nreverse keys) args)
                         :wait wait
@@ -44,6 +44,28 @@
 
 (defun slime (&optional command coding-system)
   (eval-emacs `(slime ,command ,coding-system)))
+
+(defun ediff (a b)
+  (eval-emacs `(ediff ,(namestring a) ,(namestring b))))
+
+(defun ediff3 (a b c)
+  (eval-emacs `(ediff ,(namestring a) ,(namestring b) ,(namestring c))))
+
+(defun vc-ediff (&optional rev-a rev-b)
+  "Show differences between REV1 and REV2 of FILES using ediff.
+This compares two revisions of the files in FILES.  Currently,
+only a single file's revisions can be compared, i.e. FILES can
+specify only one file name.
+If REV1 is nil, it defaults to the current revision, i.e. revision
+of the last commit.
+If REV2 is nil, it defaults to the work tree, i.e. the current
+state of each file in FILES."
+  (eval-emacs
+   (if (or rev-a rev-b)
+       `(vc-version-ediff nil ,rev-a ,rev-b)
+       `(vc-ediff t))
+   :wait t
+   :create-frame t))
 
 (push #'run-emacsclient sb-ext:*ed-functions*)
 (push #'run-emacs sb-ext:*ed-functions*)
