@@ -84,3 +84,41 @@
 (defmethod deserialize ((from pathname) (format (eql :ini)) &key)
   (with-open-file (f from)
     (ini-read-document f)))
+
+;;; Desktop Entry
+(defclass desktop-entry (ini-document)
+  ((name :accessor name)
+   (type)
+   (exec :accessor exec)
+   (categories :initform nil)
+   (no-display :type boolean)
+   generic-name
+   comment
+   startup-wm-class
+   keywords
+   mime-type
+   try-exec
+   icon
+   (terminal :type boolean)))
+
+(defmethod load-ast ((self desktop-entry))
+  (when-let ((props (cdr (ast (car (ast self))))))
+    (flet ((dget (n) (cdr (assoc n props :key 'string-downcase :test 'equal)))
+           (bool (x) (when (equal (trim (string-downcase x)) "true") t)))
+      (setf (name self) (dget "name")
+            (slot-value self 'type) (dget "type")
+            (exec self) (dget "exec")
+            (slot-value self 'terminal) (bool (dget "terminal"))
+            (slot-value self 'categories) (when-let ((cats (dget "categories"))) (ssplit #\; cats))
+            (slot-value self 'no-display) (bool (dget "nodisplay"))
+            (slot-value self 'generic-name) (dget "genericname")
+            (slot-value self 'comment) (dget "comment")
+            (slot-value self 'startup-wm-class) (dget "startupwmclass")
+            (slot-value self 'keywords) (when-let ((kws (dget "keywords"))) (ssplit #\; kws))
+            (slot-value self 'mime-type) (when-let ((mts (dget "mimetype"))) (ssplit #\; mts))
+            (slot-value self 'try-exec) (dget "tryexec")
+            (slot-value self 'icon) (dget "icon"))
+    self)))
+
+(defmethod deserialize ((from pathname) (format (eql :desktop-entry)) &key)
+  (load-ast (change-class (deserialize from :ini) 'desktop-entry)))

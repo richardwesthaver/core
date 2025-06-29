@@ -60,7 +60,8 @@
    :ini-document
    :ini-read
    :ini-section
-   :ini-object))
+   :ini-object
+   :desktop-entry))
 
 (defpkg :dat/toml
   (:nicknames :toml)
