@@ -1,4 +1,4 @@
-;;; mpk.el --- MPK Emacs Support                     -*- lexical-binding: t; -*-
+;;; mpk.el --- MPK Emacs Support -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024  The Compiler Company
 

@@ -183,12 +183,12 @@ creating a repo object which is stored in *REPO-REGISTRY*."
                  (write `(,(vc-type self) ,(coerce (vc-remotes self) 'list)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
         (format stream ")"))))
 
-(defmethod print-object ((self vc-repo) stream)
-  (print-unreadable-object (self stream)
-    (write "vc-repo" :stream stream)
-    (std:when-let ((remotes (vc-remotes self)))
-      (write " " :stream stream)
-      (pprint-tabular stream remotes nil nil 2))))
+;; (defmethod print-object ((self vc-repo) stream)
+;;   (print-unreadable-object (self stream)
+;;     (write "vc-repo" :stream stream)
+;;     (std:when-let ((remotes (vc-remotes self)))
+;;       (write " " :stream stream)
+;;       (pprint-tabular stream remotes nil nil 2))))
 
 (defun find-repo-root (&optional (path *default-pathname-defaults*))
   "Check PATH for evidence of a VCS and continue walking up the filesystem until

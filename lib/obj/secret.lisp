@@ -21,18 +21,17 @@ leakage of sensitive data."))
         (princ (secret-name self) stream))
       (print-unreadable-object (self stream :type t :identity t))))
 
-(defgeneric conceal (self &key name &allow-other-keys)
+(defgeneric conceal (self &key name class &allow-other-keys)
   (:documentation"Conceals value into a SECRET object. An optional name can be
 provided to aid debugging.")
-  (:method ((self t) &key name)
-    (let ((secret (apply #'make-instance 'secret `(,@(when name `(:name ,name))
+  (:method ((self t) &key name (class 'secret))
+    (let ((secret (apply #'make-instance class `(,@(when name `(:name ,name))
                                                    ,@(when name `(:symbol ,(make-symbol name)))))))
-      (setf (get (secret-symbol secret) 'secret) (lambda () self))
+      (setf (get (secret-symbol secret) class) (lambda () self))
       secret)))
 
 (defgeneric reveal (self)
-  (:documentation "Returns the secret value of SELF. An error of type TYPE-ERROR is
- signalled if the argument is not of type SECRET.")
+  (:documentation "Returns the secret value of SELF.")
   (:method ((self secret))
     (funcall (get (secret-symbol self) 'secret))))
 

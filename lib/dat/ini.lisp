@@ -101,6 +101,10 @@
    icon
    (terminal :type boolean)))
 
+(defmethod print-object ((self desktop-entry) stream)
+  (format stream "(desktop-entry :name ~S :categories ~S :no-display ~S)"
+          (name self) (slot-value self 'categories) (slot-value self 'no-display)))
+
 (defmethod load-ast ((self desktop-entry))
   (when-let ((props (cdr (ast (car (ast self))))))
     (flet ((dget (n) (cdr (assoc n props :key 'string-downcase :test 'equal)))
@@ -120,5 +124,44 @@
             (slot-value self 'icon) (dget "icon"))
     self)))
 
-(defmethod deserialize ((from pathname) (format (eql :desktop-entry)) &key)
+(defmethod deserialize ((from t) (format (eql :desktop-entry)) &key)
   (load-ast (change-class (deserialize from :ini) 'desktop-entry)))
+
+(defmethod equiv:equiv ((a desktop-entry) (b desktop-entry))
+  (and (string= (name a) (name b))
+       (string= (slot-value a 'type) (slot-value b 'type))
+       (string= (slot-value a 'exec) (slot-value b 'exec))))
+
+(defmethod equiv:eqv ((a desktop-entry) (b desktop-entry))
+  (and (string= (name a) (name b))
+       (string= (slot-value a 'type) (slot-value b 'type))
+       (string= (slot-value a 'exec) (slot-value b 'exec))
+       (equalp (slot-value a 'categories) (slot-value b 'categories))
+       (equalp (slot-value a 'no-display) (slot-value b 'no-display))
+       (equalp (slot-value a 'only-show-in) (slot-value b 'only-show-in))
+       (equalp (slot-value a 'terminal) (slot-value b 'terminal))))
+
+(defun desktop-entry-in-categories-p (entry seq)
+  (every #'(lambda (c)
+             (some #'(lambda (e) (string= c e))
+                   (slot-value entry 'categories)))
+         seq))
+
+(defvar *desktop-entry-main-categories*
+  (list
+   "AudioVideo"
+   "Audio"
+   "Video"
+   "Development"
+   "Education"
+   "Game"
+   "Graphics"
+   "Network"
+   "Office"
+   "Settings"
+   "System"
+   "Utility"))
+(defvar *desktop-entry-favorite-category* "Favorite")
+(defvar *desktop-entry-paths*
+  '(#P"/usr/share/applications"
+    #P"~/.local/share/applications"))

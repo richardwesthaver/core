@@ -4,7 +4,6 @@
 :version "0.1.0"
 :license "MPL"
 :stash ".stash"
-:store ".store"
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "emacs" "c")
 :include ("emacs/emacs.sk")
@@ -291,16 +290,17 @@
  (dist () 
   (ensure-directories-exist ".stash/tmp/core/" :verbose t)
   (with-directory ".stash"
-   (mapc (lambda (x) (move-file x (merge-pathnames x "tmp/core/"))) (directory "*.so"))
-   (mapc (lambda (x) (move-file x (merge-pathnames x "tmp/core/"))) (remove-if 'directory-path-p (directory "*"))))
-  (with-directory ".stash/tmp"
-   (setf *shell-directory* *default-pathname-defaults*)
-   ;; (compress #p"core.tar" :zstd :output #p"core.tar.zst")
-   #$tar -I 'zstd' -cf core.tar.zst core/* && mv core.tar.zst ../$#))
+   (mapc (lambda (x) (move-file x (merge-pathnames (file-namestring x) "tmp/core/"))) (directory "*.so"))
+   (mapc (lambda (x) (move-file x (merge-pathnames (file-namestring x) "tmp/core/"))) (remove-if 'directory-path-p (directory "*")))
+   (with-directory "tmp/"
+    (setf *shell-directory* *default-pathname-defaults*)
+    ;; (compress #p"core.tar" :zstd :output #p"core.tar.zst")
+    #$tar -I 'zstd' -cf ./core.tar.zst core/$#))
+  (move-file ".stash/tmp/core.tar.zst" ".stash/core.tar.zst"))
  (dist-repo ()
   (vc-bundle (sk-vc *skel-project*) "/opt/store/packy/vc/core.hg"))
  (dist-source ()
-  (with-directory ".."
+  (with-directory "../"
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf core/core.tar.zst core/*$#))
  (deploy (default dist)
   (move-file ".stash/core.tar.zst" "/opt/store/packy/dist/x86_64-unknown-linux-gnu/core.tar.zst")

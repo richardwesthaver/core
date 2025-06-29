@@ -155,7 +155,8 @@
    :simple-rdb-warning
    :schema-from-rdb-column-families
    :rdb-write
-   :wbwi-put-kv-cf))
+   :wbwi-put-kv-cf
+   :init-rdbrc))
 
 (defpackage :rdb/cli
   (:use :cl :std :cli :clap :rdb :db :std/seq)

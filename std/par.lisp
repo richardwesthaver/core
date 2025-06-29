@@ -11,7 +11,7 @@
 
 ;; TODO 2025-04-27: 
 ;;; plet
-(defconstant +no-result+ 'no-result)
+(defconstant +no-result+ '+no-result+)
 (defmacro msetq (vars form)
   (if (= 1 (length vars))
       `(setq ,(first vars) ,form)

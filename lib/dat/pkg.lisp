@@ -285,6 +285,7 @@
            #:unknown-event #:data-byte #:dd #:bb #:cc #:nn))
 
 (defpkg :dat/png
+  (:nicknames :png)
   (:use :cl :std :dat/proto)
   (:export
    :png

@@ -404,5 +404,10 @@ This advice can make `other-window' skip `bar' window."
 	       (eq bar-window (selected-window)))
       (other-window count))))
 
+;; (speedbar-add-supported-extension "skelfile")
+(speedbar-add-supported-extension ".lisp")
+(speedbar-add-supported-extension ".rs")
+(speedbar-add-supported-extension ".el.gz")
+
 (provide 'bar)
 ;;; bar.el ends here

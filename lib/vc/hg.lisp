@@ -195,12 +195,13 @@ first value and 'stuff' as the second."
     (let ((proc (run-hg-command cmd args)))
       (if (eq 0 (sb-ext:process-exit-code proc)) nil (error 'hg-error :message (format nil "hg command failed: ~A" cmd))))))
 
-(defmethod print-object ((self hg-repo) stream)
-  (print-unreadable-object (self stream)
-    (format stream "hg-repo")
-    (unless (zerop (length (vc-remotes self)))
-      (format stream " ")
-      (pprint-tabular stream (coerce (vc-remotes self) 'list) nil nil 2))))
+;; NOTE 2025-06-29: this needs to be compatible with skel writers
+;; (defmethod print-object ((self hg-repo) stream)
+;;   (print-unreadable-object (self stream)
+;;     (format stream "hg-repo")
+;;     (unless (zerop (length (vc-remotes self)))
+;;       (format stream " ")
+;;       (pprint-tabular stream (coerce (vc-remotes self) 'list) nil nil 2))))
 
 ;; (defmethod vc-init ((self list))
 ;;   (when-let ((form self))

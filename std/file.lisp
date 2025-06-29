@@ -491,5 +491,5 @@ it only contains spaces or tab characters."
 
 (defun move-file (input output)
   "Move file INPUT to OUTPUT."
-  (prog1 (uiop:copy-file input output)
-    (delete-file input)))
+  (progn (uiop:copy-file input output)
+         (delete-file input)))

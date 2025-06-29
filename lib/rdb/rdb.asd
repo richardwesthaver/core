@@ -16,6 +16,7 @@
                (:file "log")
                (:file "query")
                (:file "store")
+               (:file "cfg")
                (:file "cli")
 	       (:file "rdb"))
   :in-order-to ((test-op (test-op :rdb/tests))))

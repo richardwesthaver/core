@@ -930,7 +930,8 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
   "A list of function signatures for symbols which are bound via FLET around the body of WITH-ITER.")
 
 (defmacro with-iter ((sym iter) &body body)
-  `(let ((,sym (setf *iter* ,iter)))
-     (flet ,*iterator-functions*
+  `(let ((,sym ,iter))
+     (setf *iter* ,sym)
+     (labels ,*iterator-functions*
        (declare (ignorable ,@(mapcar (lambda (x) `(function ,(car x))) *iterator-functions*)))
        ,@body)))

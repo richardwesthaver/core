@@ -20,8 +20,9 @@
    :id-factory))
 
 (defpkg :obj/equiv
+  (:nicknames :equiv)
   (:use :cl :std)
-  (:export :equiv :eqv :equivalence))
+  (:export :equiv :eqv :equivalence :equals))
 
 (defpkg :obj/uri/punycode
   (:nicknames :punycode)

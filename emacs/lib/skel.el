@@ -198,11 +198,8 @@ DOC, and NAME."
   "Project skeleton class."
   ((rules :initarg :rules :initform nil :accessor sk-project-rules :type list)))
 
-(defun skel-init ()
-  "Initialize the skel library."
-  (interactive)
-  (add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
-  (add-to-list 'auto-mode-alist '("\\.sk" . skel-mode)))
+(add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
+(add-to-list 'auto-mode-alist '("\\.sk" . skel-mode))
 
 (defun project-skelfile-path (&optional project)
   "Find skelfile associated with PROJECT. Defaults to current
