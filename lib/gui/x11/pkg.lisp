@@ -1,5 +1,6 @@
 (defpackage :gui/x11
   (:shadowing-import-from :std/type :array-index)
+  (:shadowing-import-from :xlib :draw-line)
   (:use :cl :std :gui/core :xlib)
   (:export
    #:display-extensions
