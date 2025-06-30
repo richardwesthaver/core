@@ -5,6 +5,11 @@
 ;;; Code:
 (in-package :std/seq)
 
+(defun sequencep (object)
+  (typecase object
+    (sequence t)
+    (t nil)))
+
 (defun take (n seq)
   "Return, at most, the first N elements of SEQ, as a *new* sequence
 of the same type as SEQ.

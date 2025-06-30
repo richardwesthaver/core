@@ -795,7 +795,7 @@
   (:import-from :std/sym :symbolicate)
   (:import-from :std/type :array-length :array-index)
   (:import-from :std/sys :get-internal-time-seconds :time-remaining :with-countdown)
-  (:export :take :starts-with-subseq :ends-with-subseq
+  (:export :sequencep :take :starts-with-subseq :ends-with-subseq
    :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
    :starts-with-one-of-p :copy-n
    :basic-queue :raw-queue-count :raw-queue :make-raw-queue

@@ -67,4 +67,3 @@
 			 :direction :output
 			 :if-does-not-exist :create)
       (write-ast cfg out :fmt :canonical))))
-(init-rdbrc)
