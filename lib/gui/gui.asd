@@ -3,7 +3,6 @@
   :depends-on (:std 
                :log :obj :xkb :parse
                (:feature :x11 :clx) 
-               (:feature :x11 :stumpwm)
                (:feature :clim :mcclim)
                (:feature :clim :mcclim-layouts/tab)
                (:feature :clim :clim-debugger)
@@ -27,15 +26,7 @@
                (:module "x11"
                 :if-feature :x11
                 :components 
-                ((:file "pkg")
-                 (:module "stump"
-                  :components
-                  ((:file "pkg")
-                   (:file "var")
-                   (:module "mod"
-                    :components 
-                    ((:file "disk")
-                     (:file "mode-line")))))))
+                ((:file "pkg")))
                (:file "gui"))
   :in-order-to ((test-op (test-op "gui/tests"))))
 
