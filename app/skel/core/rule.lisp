@@ -56,10 +56,9 @@ via the special form stored in RECIPE."
      (sk-rule-recipe self))))
 
 (defmethod sk-write ((self sk-rule) stream)
-  (with-slots (target source recipe) self
-    (write-string (sk-rule-target target) stream) ;; target isn't typep SK-OBJECT
-    (write (sk-rule-source self) :stream stream)
-    (write (sk-rule-recipe self) :stream stream)))
+  (write-string (sk-rule-target self) stream) ;; target isn't typep SK-OBJECT
+  (write (sk-rule-source self) :stream stream)
+  (write (sk-rule-recipe self) :stream stream))
 
 ;; FIX 2025-06-09: 
 (defun sk-make (obj &rest rules)
