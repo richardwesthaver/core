@@ -31,6 +31,7 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ;;; Code:
+(in-package :dat/ttf)
 ;;; Utils
 (defun read-uint32 (stream)
   (loop repeat 4
@@ -942,7 +943,7 @@ table.")
     :writer (setf value))
    (octets
     :reader %octets
-    :writer (setf octets))))
+    :writer (setf data))))
 
 (defmethod print-object ((name-entry name-entry) stream)
   (print-unreadable-object (name-entry stream :type t)
@@ -2541,3 +2542,178 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
            ,@body)
       (when ,loader
         (close-font-loader ,loader)))))
+
+;;; Font Cache
+(defun ttf-pathname-p (pathname)
+  (string-equal "ttf" (pathname-type pathname)))
+
+(defvar *font-dirs* 
+  (list "/usr/share/fonts/" 
+        (namestring (merge-pathnames ".fonts/" (user-homedir-pathname))))
+    "List of directories, which contain TrueType fonts.")
+
+(defparameter *font-cache* (make-hash-table :test 'equal)
+  "Hashmap for caching font families, subfamilies and files.")
+
+;;(pushnew (xlib:font-path *display*) *font-dirs*)
+(defun cache-font-file (pathname)
+  "Caches font file."
+  (handler-case
+      (with-font-loader (font pathname)
+        (let ((tbl (make-hash-table :test 'equal)))
+          (setf (gethash (subfamily-name font) tbl) pathname
+                (gethash (family-name font) *font-cache*) tbl)))
+    (error nil)))
+
+(defun cache-fonts ()
+  "Caches fonts from *font-dirs* directories."
+  (clrhash *font-cache*)
+  (dolist (font-dir *font-dirs*)
+    (walk-directory font-dir (constantly t) (constantly t) 
+                    (lambda (x)
+                      (dolist (f (directory-files x))
+                        (when (ttf-pathname-p f)
+                          (print (cache-font-file f))))))))
+
+(defun get-font-families ()
+  "Returns cached font families."
+  (declare (special *font-cache*))
+  (let ((result (list)))
+    (maphash (lambda (key value)
+               (declare (ignorable value))
+               (push key result)) 
+             *font-cache*)
+    (nreverse result)))
+
+(defun get-font-subfamilies (font-family)
+  "Returns font subfamilies for current @var{font-family}. For e.g. regular, italic, bold, etc."
+  (declare (special *font-cache*))
+  (let ((result (list)))
+    (maphash (lambda (family value)
+               (declare (ignorable family))
+               (when (string-equal font-family family)
+                 (maphash (lambda (subfamily pathname)
+                            (declare (ignorable pathname))
+                            (push subfamily result)) value)
+                 (return-from get-font-subfamilies 
+                   (nreverse result)))) *font-cache*)
+    (nreverse result)))
+
+(defclass font ()
+  ((family :type string :initarg :family :accessor font-family :documentation "Font family.")
+   (subfamily :type string :initarg :subfamily :accessor font-subfamily :documentation "Font subfamily. For e.g. regular, italic, bold, bold italib.")
+   (size :type real :initarg :size :accessor font-size :initform 12 :documentation "Font size in points.")
+   (underline :type boolean :initarg :underline :initform nil :accessor font-underline :documentation "Draw line under text string.")
+   (strikethrough :type boolean :initarg :strikethrough :initform nil :accessor font-strikethrough :documentation "Draw strike through text string.")
+   (overline :type boolean :initarg :overline :initform nil :accessor font-overline :documentation "Draw line over text string.")
+   (background :initarg :background :initform nil :accessor font-background :documentation "Background color.")
+   (foreground :initarg :foreground :initform nil :accessor font-foreground :documentation "Foreground color.")
+   (overwrite-gcontext :type boolean :initarg :overwrite-gcontext :initform nil 
+                       :accessor font-overwrite-gcontext :documentation "Use font values for background and foreground colors.")
+   (antialias :type boolean :initarg :antialias :initform t :accessor font-antialias :documentation "Antialias text string.")
+   (string-bboxes :type hash-table :accessor font-string-bboxes
+                  :documentation "Cache for text bboxes")
+   (string-line-bboxes :type hash-table :accessor font-string-line-bboxes
+                  :documentation "Cache for text line bboxes")
+   (string-alpha-maps :type hash-table :accessor font-string-alpha-maps
+                      :documentation "Cache for text alpha maps")
+   (string-line-alpha-maps :type hash-table :accessor font-string-line-alpha-maps
+                           :documentation "Cache for text line alpha maps"))
+  (:documentation "Class for representing font information."))
+
+(defun check-valid-font-families (family subfamily)
+  (when (or (null (gethash family *font-cache*))
+            (null (gethash subfamily (gethash family *font-cache*))))
+    (error "Font is not found: ~A ~A" family subfamily)))
+
+(defmethod initialize-instance :before 
+    ((instance font) &rest initargs &key family subfamily &allow-other-keys)
+  (declare (ignorable initargs))
+  (check-valid-font-families family subfamily))
+
+(defmethod (setf font-family) :before
+  (family (instance font))
+  (check-valid-font-families family (font-subfamily instance)))
+
+(defmethod (setf font-subfamily) :before
+  (subfamily (instance font))
+  (check-valid-font-families (font-family instance) subfamily))
+
+(defmethod (setf font-family) :after
+  (family (font font))
+  (clrhash (font-string-bboxes font))
+  (clrhash (font-string-line-bboxes font)))
+
+(defmethod (setf font-subfamily) :after
+  (subfamily (font font))
+  (clrhash (font-string-bboxes font))
+  (clrhash (font-string-line-bboxes font)))
+
+(defmethod (setf font-size) :after (value (font font))
+  (clrhash (font-string-bboxes font))
+  (clrhash (font-string-line-bboxes font)))
+
+(defmethod (setf font-underline) :after (value (font font))
+  (clrhash (font-string-bboxes font)))
+
+(defmethod (setf font-overline) :after (value (font font))
+  (clrhash (font-string-bboxes font)))
+
+(defgeneric font-equal (font1 font2)
+  (:documentation "Returns t if two font objects are equal, else returns nil.")
+  (:method ((font1 font) (font2 font))
+    (and (string-equal (font-family font1)
+                       (font-family font2))
+         (string-equal (font-subfamily font1)
+                       (font-subfamily font2))
+         (= (font-size font1) (font-size font2))
+         (eql (font-underline font1) (font-underline font2))
+         (eql (font-strikethrough font1) (font-strikethrough font2))
+         (eql (font-overline font1) (font-overline font2))
+         (equal (font-background font1) (font-background font2))
+         (equal (font-foreground font1) (font-foreground font2))
+         (eql (font-overwrite-gcontext font1) (font-overwrite-gcontext font2))
+         (eql (font-antialias font1) (font-antialias font2)))))
+
+(defmethod equiv:equiv ((a font) (b font)) (font-equal a b))
+
+(defmethod print-object ((instance font) stream)
+  "Pretty printing font object"
+  (with-slots (family subfamily underline strikethrough
+                   overline background foreground overwrite-gcontext
+                   antialias)
+      instance
+    (if *print-readably*
+        (format stream
+                "#.(~S '~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S)"
+                'cl:make-instance 'font
+                :family family :subfamily subfamily :underline underline 
+                :strikethrough strikethrough
+                :overline overline :background background :foreground foreground 
+                :overwrite-gcontext overwrite-gcontext
+                :antialias antialias)
+        (format stream
+                "#<'~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S ~S>"
+                'font
+                :family family :subfamily subfamily :underline underline 
+                :strikethrough strikethrough
+                :overline overline :background background :foreground foreground 
+                :overwrite-gcontext overwrite-gcontext
+                :antialias antialias))))
+
+;;; TTF font objects cache
+(defun get-font-pathname (font)
+  (gethash (font-subfamily font) (gethash (font-family font) *font-cache*)))
+
+(defvar *font-loader-cache* (make-hash-table :test 'equal))
+
+(defmacro with-font-loader-cache ((loader font) &body body)
+  (let ((exists-p (gensym))
+        (font-path (gensym)))
+    `(let ((,font-path (get-font-pathname ,font)))
+       (multiple-value-bind (,loader ,exists-p)
+           (gethash ,font-path *font-loader-cache*)
+         (unless ,exists-p
+           (setf ,loader (setf (gethash ,font-path *font-loader-cache*)
+                               (open-font-loader ,font-path))))
+         ,@body))))

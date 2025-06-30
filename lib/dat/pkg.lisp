@@ -325,6 +325,25 @@
   (:nicknames :ttf)
   (:use :cl :std :dat/proto)
   (:export
+   ;; font-cache
+   :*font-cache*
+   :font
+   :font-family
+   :font-subfamily
+   :font-size
+   :font-underline
+   :font-strikethrough
+   :font-overline
+   :font-background
+   :font-foreground
+   :font-overwrite-gcontext
+   :cache-font-file
+   :*font-dirs*
+   :get-font-families
+   :get-font-subfamilies
+   :font-antialias
+   :cache-fonts
+   :font-equal
    ;; font loader
    #:open-font-loader
    #:close-font-loader
