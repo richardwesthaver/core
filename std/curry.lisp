@@ -155,3 +155,14 @@ with and ARGUMENTS to FUNCTION."
          (multiple-value-call ,fun (values-list more) ,@rcurries)))))
 
 (declaim (notinline curry rcurry))
+
+(defun map-product (fn list &rest more-lists)                   
+  (labels ((%map-product (f lists)                              
+             (let ((more (cdr lists))                           
+                   (one (car lists)))                           
+               (if (not more)                                   
+                   (mapcar f one)                               
+                   (mappend (lambda (x)                         
+                              (%map-product (curry f x) more))  
+                            one)))))                            
+    (%map-product (ensure-function fn) (cons list more-lists))))

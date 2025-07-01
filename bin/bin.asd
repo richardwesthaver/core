@@ -4,7 +4,7 @@
 ;; (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
 ;;   (uiop:dump-image (asdf:output-file o c)
 ;;                    :executable t
-;;                    :compression 2))
+;;                    :compression t))
 
 (defsystem :bin
   :depends-on (:bin/organ :bin/homer 
@@ -12,15 +12,7 @@
 	       :bin/packy :bin/core
 	       :bin/vc :bin/skc
 	       :bin/pod :bin/gen
-               :bin/mpk #+x11 :bin/swm))
-
-#+x11
-(defsystem :bin/swm
-  :depends-on (:std :log :gui :cli)
-  :build-operation program-op
-  :build-pathname "swm"
-  :entry-point "bin/swm::start-swm"
-  :components ((:file "swm")))
+               :bin/mpk))
 
 (defsystem :bin/organ
   :build-operation program-op
@@ -100,8 +92,7 @@
   :depends-on 
   (:core :bin/skel :bin/organ :bin/homer 
    :bin/rdb :bin/packy :bin/vc :bin/gen
-   :bin/pod :bin/mpk
-   (:feature :x11 :bin/swm)))
+   :bin/pod :bin/mpk))
 
 (defsystem :bin/gui
   :build-operation program-op

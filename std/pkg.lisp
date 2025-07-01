@@ -42,6 +42,10 @@
   (:import-from :sb-kernel :topological-sort)
   (:shadow :group)
   (:export
+   :safe-endp
+   :circular-list-error
+   :proper-list-length
+   :lastcar
    :doplist
    :assoc-value
    :ensure-car
@@ -378,7 +382,8 @@
    :compose
    :multiple-value-compose
    :curry
-   :rcurry))
+   :rcurry
+   :map-product))
 
 (defpkg :std/readtable
   (:use :cl)
@@ -786,6 +791,8 @@
 (defpkg :std/seq
   (:use :cl)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
+  (:import-from :std/macs :once-only)
+  (:import-from :std/sym :with-gensyms)
   (:import-from :std/meta :data)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :std/list :firstn)
@@ -795,7 +802,8 @@
   (:import-from :std/sym :symbolicate)
   (:import-from :std/type :array-length :array-index)
   (:import-from :std/sys :get-internal-time-seconds :time-remaining :with-countdown)
-  (:export :sequencep :take :starts-with-subseq :ends-with-subseq
+  (:export :sequencep :take :starts-with-subseq 
+   :ends-with-subseq :nth-value-or
    :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
    :starts-with-one-of-p :copy-n
    :basic-queue :raw-queue-count :raw-queue :make-raw-queue

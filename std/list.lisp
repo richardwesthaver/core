@@ -180,6 +180,65 @@ Example:
 ;; (AND (= A 1) (= B 2) (= C 3))"
   `(,r ,@(apply #'mapcar #'(lambda (&rest atoms) (cons m atoms)) (mapcar #'ensure-list args))))
 
+(defun circular-list-error (list)
+  (error 'type-error
+         :datum list
+         :expected-type '(and list (not circular-list))))
+
+(declaim (inline safe-endp))
+(defun safe-endp (x)
+  (declare (optimize safety))
+  (endp x))
+
+(macrolet ((def (name lambda-list doc step declare ret1 ret2)                      
+             (assert (member 'list lambda-list))                                   
+             `(defun ,name ,lambda-list                                            
+                ,doc                                                               
+                (unless (listp list)                                               
+                  (error 'type-error :datum list :expected-type 'list))            
+                (do ((last list fast)                                              
+                     (fast list (cddr fast))                                       
+                     (slow (cons (car list) (cdr list)) (cdr slow))                
+                     ,@(when step (list step)))                                    
+                    (nil)                                                          
+                  (declare (dynamic-extent slow) ,@(when declare (list declare))   
+                           (ignorable last))                                       
+                  (when (safe-endp fast)                                           
+                    (return ,ret1))                                                
+                  (when (safe-endp (cdr fast))                                     
+                    (return ,ret2))                                                
+                  (when (eq fast slow)                                             
+                    (circular-list-error list))))))                                
+  (def proper-list-length (list)                                                   
+    "Returns length of LIST, signalling an error if it is not a proper list."      
+    (n 1 (+ n 2))                                                                  
+    ;; KLUDGE: Most implementations don't actually support lists with bignum       
+    ;; elements -- and this is WAY faster on most implementations then declaring   
+    ;; N to be an UNSIGNED-BYTE.                                                   
+    (fixnum n)                                                                     
+    (1- n)                                                                         
+    n)                                                                             
+                                                                                   
+  (def lastcar (list)                                                              
+      "Returns the last element of LIST. Signals a type-error if LIST is not a     
+proper list."                                                                      
+    nil                                                                            
+    nil                                                                            
+    (cadr last)                                                                    
+    (car fast))                                                                    
+                                                                                   
+  (def (setf lastcar) (object list)                                                
+      "Sets the last element of LIST. Signals a type-error if LIST is not a proper 
+list."                                                                             
+    nil                                                                            
+    nil                                                                            
+    (setf (cadr last) object)                                                      
+    (setf (car fast) object)))                                                     
+
+(defun mappend (fn &rest lists)
+  (loop for ret in (apply #'mapcar fn lists)
+        append ret))
+
 (defun cart (list &rest more-lists)
   "Returns the cartesian product of LIST and MORE-LISTS.
 

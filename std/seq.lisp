@@ -10,6 +10,33 @@
     (sequence t)
     (t nil)))
 
+(defmacro nth-value-or (nth-value &body forms)
+  "Evaluates FORM arguments one at a time, until the NTH-VALUE returned by one
+of the forms is true. It then returns all the values returned by evaluating
+that form. If none of the forms return a true nth value, this form returns
+NIL."
+  (once-only (nth-value)
+    (with-gensyms (values)
+      `(let ((,values (multiple-value-list ,(first forms))))
+         (if (nth ,nth-value ,values)
+             (values-list ,values)
+             ,(if (rest forms)
+                  `(nth-value-or ,nth-value ,@(rest forms))
+                  nil))))))
+
+(defun starts-with (object sequence &key (test #'eql) (key #'identity))
+  "Returns true if SEQUENCE is a sequence whose first element is EQL to OBJECT.
+Returns NIL if the SEQUENCE is not a sequence or is an empty sequence."
+  (let ((first-elt (typecase sequence
+                     (cons (car sequence))
+                     (sequence
+                      (if (sequence:emptyp sequence)
+                          (return-from starts-with nil)
+                          (elt sequence 0)))
+                     (t
+                      (return-from starts-with nil)))))
+    (funcall test (funcall key first-elt) object)))
+
 (defun take (n seq)
   "Return, at most, the first N elements of SEQ, as a *new* sequence
 of the same type as SEQ.

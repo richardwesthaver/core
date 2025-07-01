@@ -20,6 +20,4 @@
   (:organ (bin/organ::start-organ))
   (:homer (bin/homer::start-homer))
   (:mpk (bin/mpk:start-mpk))
-  #+swm
-  (:swm (bin/swm::start-swm))
   (:gen (bin/gen::start-gen)))
