@@ -12,7 +12,8 @@
                              (:file "lazy")
                              (:file "overloaded")
                              (:file "stored")
-                             (:file "dynamic")))
+                             (:file "dynamic")
+                             (:file "mixin")))
                (:file "pkg")
                (:file "id")
                (:module "uri"

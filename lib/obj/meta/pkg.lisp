@@ -4,7 +4,6 @@
 
 ;;; Commentary:
 
-
 ;;;; Notes:
 
 ;; ordered? https://www.reddit.com/r/lisp/comments/n88x59/metaclasses_using_structures_or_speeding_up_slot/
@@ -192,6 +191,14 @@
   (:use :cl :std :obj/meta :std/macs)
   (:export :dset :dref :dynamic-class
    :slot-dlet :slot-dvar :slot-dvar*))
+
+(defpackage :obj/meta/mixin
+  (:use #:cl #:std)
+  (:export 
+   #:mixin-class #:mixin-object #:mixin-classes
+   #:ensure-mix #:delete-from-mix #:mix
+   #:replace-class #:replace-class-in-mixin
+   #:set-mix-rule #:*class-ordering-rules*))
 
 (in-package :obj/meta)
 

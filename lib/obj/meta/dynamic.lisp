@@ -21,7 +21,6 @@
 (in-package :obj/meta/dynamic)
 
 ;;; Macros
-
 (defmacro dset (&rest pairs)
   "Like SETF but for dynamic slot bindings."
   `(setf ,@(loop for (var val) on pairs by #'cddr
@@ -33,7 +32,6 @@
   `(symbol-value ,variable))
 
 ;;; Low-Level
-
 ;; Accessing and binding symbols behind the slot. We don't use SLOT-VALUE,
 ;; because it will return the _value_ of the dynamic variable, and not the
 ;; variable itself.

@@ -55,6 +55,14 @@ order) from the end of SEQ."
        (subseq seq (max 0 (+ (length seq) n)))
        (subseq seq 0 (min n (length seq))))))
 
+(defun take* (n list)
+  "Returns a list with the first n elements of the given list, and the
+remaining tail of the list as a second value."
+  (loop for l on list
+        repeat n
+        collect (car l) into result
+        finally (return (values result l))))
+
 (defun starts-with-subseq (prefix sequence 
                            &rest args
                            &key return-suffix &allow-other-keys)

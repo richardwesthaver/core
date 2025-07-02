@@ -4,10 +4,10 @@
 
 ;;; Code:
 (defpackage :q/tests/fuzz
-  (:use :cl :std :rt/fuzz :q :log :plan :schema :query))
+  (:use :cl :std :rt/fuzz :q :log :plan :schema :q))
 
 (defpackage :q/tests
-  (:use :cl :std :rt :q :log :parse/pratt :query :ast :plan :schema))
+  (:use :cl :std :rt :q :log :parse/pratt :q :ast :plan :schema))
 
 (in-package :q/tests)
 (defsuite :q)
@@ -20,10 +20,10 @@
 (deftest query-basic ()
   "Test the simple query `SELECT * FROM employee WHERE state = 'CT'` by manually
 building a query-plan."
-  (make-query *basic-query*))
+  (istype 'query (make-query *basic-query*)))
 
 (deftest sanity ()
   (is (make-instance 'query-engine
-        :parser (make-instance 'query-parser)
+        :parser (make-instance 'sql-p)
         :optimizer (make-instance 'sql-optimizer)
         :sources nil)))

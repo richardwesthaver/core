@@ -175,10 +175,10 @@ element in the vector."
                 (defgeneric (setf ,name) (new-value object)
                   (:method (new-value object)
                     (setf (aref (bounding-box object) ,index) new-value))))))
-  (bbox-accessor xmin 0)
-  (bbox-accessor ymin 1)
-  (bbox-accessor xmax 2)
-  (bbox-accessor ymax 3))
+  (bbox-accessor bbox-xmin 0)
+  (bbox-accessor bbox-ymin 1)
+  (bbox-accessor bbox-xmax 2)
+  (bbox-accessor bbox-ymax 3))
 
 (defmethod bounding-box ((object array))
   object)
@@ -1780,8 +1780,8 @@ Ref: http://partners.adobe.com/public/developer/opentype/index_glyph.html"
 ;;; glyf
 ;; Loading data from the 'glyf' table.
 (defclass control-point ()
-  ((x :initarg :x :accessor x)
-   (y :initarg :y :accessor y)
+  ((x :initarg :x :accessor cp-x)
+   (y :initarg :y :accessor cp-y)
    (on-curve-p :initarg :on-curve-p :reader on-curve-p)))
 
 (defun make-control-point (x y on-curve-p)
@@ -1793,7 +1793,7 @@ Ref: http://partners.adobe.com/public/developer/opentype/index_glyph.html"
 (defmethod print-object ((control-point control-point) stream)
   (print-unreadable-object (control-point stream :type t)
     (format stream "~D,~D~:[~;*~]"
-            (x control-point) (y control-point) (on-curve-p control-point))))
+            (cp-x control-point) (cp-y control-point) (on-curve-p control-point))))
 
 (defmacro do-contour-segments* ((p1 p2) contour &body body)
   (let ((length (gensym))
@@ -1819,8 +1819,8 @@ Ref: http://partners.adobe.com/public/developer/opentype/index_glyph.html"
                   (when (< ,i ,length)
                     (prog1 (aref ,contour* ,i) (incf ,i))))
                 (,midpoint (p0 p1)
-                  (make-control-point (/ (+ (x p0) (x p1)) 2)
-                                      (/ (+ (y p0) (y p1)) 2)
+                  (make-control-point (/ (+ (cp-x p0) (cp-x p1)) 2)
+                                      (/ (+ (cp-y p0) (cp-y p1)) 2)
                                       t)))
            (tagbody
               ,loop
@@ -1864,8 +1864,8 @@ find and return previous (possibly implicit) point on the curve."
          (if (on-curve-p last)
              last
              ;; both are off curve, return the implicit on-curve point
-             (make-control-point (/ (+ (x first) (x last)) 2)
-                                 (/ (+ (y first) (y last)) 2)
+             (make-control-point (/ (+ (cp-x first) (cp-x last)) 2)
+                                 (/ (+ (cp-y first) (cp-y last)) 2)
                                  t))))))
 
 (defmacro do-contour-segments ((p0 p1 p2) contour &body body)
@@ -1968,8 +1968,8 @@ in the vector CONTOURS. FN should return two values, which are used to
 update the X and Y values of each point."
   (loop for contour across contours do
         (loop for p across contour do
-              (setf (values (x p) (y p))
-                    (funcall fn (x p) (y p))))))
+              (setf (values (cp-x p) (cp-y p))
+                    (funcall fn (cp-x p) (cp-y p))))))
 
 (defun merge-contours (contours-list)
   (let* ((total-contours (loop for contours in contours-list
@@ -2208,7 +2208,7 @@ to look up information in various structures in the truetype file.")
   (:method ((glyph glyph))
     (let ((loader (font-loader glyph)))
       (if (vmtx-missing-p loader)
-          (- (ascender loader) (ymax glyph))
+          (- (ascender loader) (bbox-ymax glyph))
           (bounded-aref (top-side-bearings (font-loader glyph))
                         (font-index glyph))))))
 
@@ -2323,8 +2323,8 @@ to look up information in various structures in the truetype file.")
 (defgeneric right-side-bearing (object)
   (:method ((glyph glyph))
     (- (advance-width glyph)
-       (- (+ (left-side-bearing glyph) (xmax glyph))
-          (xmin glyph)))))
+       (- (+ (left-side-bearing glyph) (bbox-xmax glyph))
+          (bbox-xmin glyph)))))
 
 ;;;; Producing a bounding box for a sequence of characters
 (defgeneric string-bounding-box (string loader &key kerning))
@@ -2341,10 +2341,10 @@ to look up information in various structures in the truetype file.")
                (xmin most-positive-fixnum) (ymin most-positive-fixnum)
                (xmax most-negative-fixnum) (ymax most-negative-fixnum))
            (flet ((update-bounds (glyph)
-                    (setf xmin (min (+ (xmin glyph) origin) xmin)
-                          xmax (max (+ (xmax glyph) origin) xmax)
-                          ymin (min (ymin glyph) ymin)
-                          ymax (max (ymax glyph) ymax))))
+                    (setf xmin (min (+ (bbox-xmin glyph) origin) xmin)
+                          xmax (max (+ (bbox-xmax glyph) origin) xmax)
+                          ymin (min (bbox-ymin glyph) ymin)
+                          ymax (max (bbox-ymax glyph) ymax))))
              (update-bounds left)
              (loop for i from 1 below (length string)
                    for glyph = (find-glyph (char string i) font-loader)

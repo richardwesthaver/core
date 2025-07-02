@@ -108,7 +108,8 @@
    :query-expr
    :project
    :select
-   :boolean-binary-expression))
+   :boolean-binary-expression
+   :query-parser))
 
 (defpackage :q/select
   (:use :cl :std :q/proto :plan :schema :ast)
@@ -174,11 +175,9 @@
    :dql-anonymous
    :dql-anonymous-p))
 
-;; (defpackage :q/e)
-
 (pkg:defpkg :q
   (:use :cl :std :plan :id :schema :ast :srv)
-  (:use-reexport :q/select)
+  (:use-reexport :q/proto)
   (:export
    :query-engine :query-parser
    :*query-engine*

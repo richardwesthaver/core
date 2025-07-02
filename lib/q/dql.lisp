@@ -176,9 +176,9 @@ and '?BAR."
   "Check if FUN is bound as a DQL-FUNCTOR in the given environment."
   (lexenv-find fun :user-data :lexenv env :test 'match-dql-function))
 
-(defmacro dquoty (form &environment env)
-  "Like QUOTY but builds DQL functors instead of functions from unknown lists."
-  )
+;; (defmacro dquoty (form &environment env)
+;;   "Like QUOTY but builds DQL functors instead of functions from unknown lists."
+;;   )
 
 (defun term-to-head (term)
   (etypecase term
@@ -284,7 +284,7 @@ of the predicate. On success returns the arity or T for varargs."
 ;; herbrand universe | ground-terms + pred(P) -> herbrand base | map(true) -> herbrand interpretation
 
 ;;;; Unification
-(defun unify (goal))
+;;(defun unify (goal))
   
 ;; optimistic vs pessimistic when presented with infinite recursion
 
@@ -298,10 +298,10 @@ of the predicate. On success returns the arity or T for varargs."
 ;; (defclass dql-parser (query-parser) ())
 
 ;;; Lisp Interface
-(defmacro *- (head &body body))
+;; (defmacro *- (head &body body))
 ;; bindings?
-(defmacro <- (head &body body))
-(defmacro <-- (head &body body))
+;; (defmacro <- (head &body body))
+;; (defmacro <-- (head &body body))
 
 (defmacro ?- (&body goals)
   "Enter the interactive DQL execution context, attempting to solve for
@@ -310,12 +310,12 @@ GOALS."
          (*auto-backtrack* nil))
      (dql-solve ,goals)))
 
-(defmacro leash (&body (functor arity))
-  "Prolog equivalent of CL:TRACE."
-  (print functor) (print arity))
+;; (defmacro leash (&body (functor arity))
+;;   "Prolog equivalent of CL:TRACE."
+;;   (print functor) (print arity))
 
-(defmacro unleash (&body (functor arity))
-  "Prolog equivalent of CL:UNTRACE."
-  (print functor) (print arity))
+;; (defmacro unleash (&body (functor arity))
+;;   "Prolog equivalent of CL:UNTRACE."
+;;   (print functor) (print arity))
 
-(defun compile-dql-symbols (&rest functors))
+;; (defun compile-dql-symbols (&rest functors))

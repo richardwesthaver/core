@@ -344,6 +344,11 @@
    :font-antialias
    :cache-fonts
    :font-equal
+   ;; font string
+   :font-string-alpha-maps
+   :font-string-bboxes
+   :font-string-line-alpha-maps
+   :font-string-line-bboxes
    ;; font loader
    #:open-font-loader
    #:close-font-loader
@@ -377,13 +382,13 @@
    #:find-glyph
    ;; shared between font-loader and glyph
    #:bounding-box
-   #:xmin
-   #:ymin
-   #:xmax
-   #:ymax
+   #:bbox-xmin
+   #:bbox-ymin
+   #:bbox-xmax
+   #:bbox-ymax
    ;; control points
-   #:x
-   #:y
+   #:cp-x
+   #:cp-y
    #:on-curve-p
    ;; glyph contours
    #:contour-count
