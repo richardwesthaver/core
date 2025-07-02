@@ -58,7 +58,7 @@ timestamp for a oneshot task, else it is a list."
 
 (define-task-kernel homer-collect-tasks () ())
 
-(defvar *homer-task-pool* (make-task-pool (num-cpus) :name :homer-tasks :alivep nil :tasks 8))
+(defvar *homer-task-pool* nil)
 
 ;;; Jobs
 (defstruct (homer-job (:include sk-rule)))
