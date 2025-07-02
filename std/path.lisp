@@ -139,3 +139,14 @@ their only argument."
   "Return non-nil if DIR is a DIRECTORY-PATHNAME which does not contain any files
 or directories."
   (and (directory-path-p dir) (not (directory (merge-pathnames "*" dir)))))
+
+;; from StumpWM 
+;; ref: stumpwm/pathnames.lisp
+(defun directory-wildcard (dirname)
+  "Returns a wild pathname designator that designates all files within
+the directory named by the non-wild pathname designator DIRNAME."
+  (when (wild-pathname-p dirname)
+    (error "Can only make wildcard directories from non-wildcard directories."))
+  (make-pathname :name :wild
+                 :type :wild
+                 :defaults (directory-path dirname)))

@@ -994,6 +994,7 @@
    :directory-files
    :subdirectories
    :path
+   :directory-wildcard
    :wild-pathname
    :file-pathname
    :non-wild-pathname
@@ -1075,7 +1076,9 @@
    :termios-oflag
    :termios-lflag
    :termios-cflag
-   :cc
+   :pathname-executable-p
+   :set-signal-handler
+   :open-pipe
    :+tiocgwinsz+
    :+tiocswinsz+
    :+tiocnotty+

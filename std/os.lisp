@@ -368,3 +368,47 @@ Signals an error if PATHSPEC is wild."
   (if-let ((%default (sb-posix:getenv default)))
     (merge-pathnames path (namestring (directory-path %default)))
     path))
+
+;;; StumpWM exec utils
+;; from stumpwm/wrappers.lisp
+(defun execv (program &rest arguments)
+  "Call the system execv() function, replacing the current process image with a
+new one."
+  (declare (ignorable program arguments))
+  (sb-alien:with-alien ((prg sb-alien:c-string program)
+                        (argv (array sb-alien:c-string 256)))
+    (loop
+       for i in arguments
+       for j below 255
+       do (setf (sb-alien:deref argv j) i))
+    (setf (sb-alien:deref argv (length arguments)) nil)
+    (sb-alien:alien-funcall (sb-alien:extern-alien "execv" (function sb-alien:int sb-alien:c-string (* sb-alien:c-string)))
+                            prg (sb-alien:cast argv (* sb-alien:c-string)))))
+
+(defun open-pipe (&key (element-type '(unsigned-byte 8)))
+  "Create a pipe and return two fd-streams. The first value is the input
+stream, and the second value is the output stream."
+  (multiple-value-bind (in-fd out-fd)
+      (sb-posix:pipe)
+    (let ((in-stream (sb-sys:make-fd-stream in-fd :input t :element-type element-type))
+          (out-stream (sb-sys:make-fd-stream out-fd :output t :element-type element-type)))
+      (values in-stream out-stream))))
+
+(defun pathname-executable-p (pathname)
+  "Return T if the pathname describes an executable file."
+  (let ((filename (coerce (sb-ext:native-namestring pathname) 'string)))
+    (and (or (pathname-name pathname)
+             (pathname-type pathname))
+         (sb-unix:unix-access filename sb-unix:x_ok))))
+
+;; based on cffi version of set-signal-handler from Andrew Lyon at https://stackoverflow.com/a/10442062
+;; rewritten to use SBCL's Foreign Function Interface directly by Max-Gerd Retzlaff
+(defmacro set-signal-handler (signo &body body)
+  `(sb-alien:alien-funcall
+    (sb-alien:extern-alien "signal" (function sb-alien:void
+                                              sb-alien:int sb-alien:system-area-pointer))
+    ,signo
+    ;; callback function
+    (sb-alien:alien-sap
+     (sb-alien::alien-lambda sb-alien:void ((signum sb-alien:int))
+       ,@body))))
