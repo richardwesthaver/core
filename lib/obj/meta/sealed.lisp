@@ -103,7 +103,7 @@ This example illustrates how one can implement a fast, generic version of cl:fin
 ;;; Code:
 (in-package :obj/meta/sealed)
 
-(defun starts-with (item)
+(defun %starts-with (item)
   (lambda (sequence)
     (typecase sequence
       (list (eql (first sequence) item))
@@ -530,9 +530,9 @@ Examples:
     (values
      method-lambda
      (list* '.method-properties.
-            (let* ((declare-forms (remove-if-not (starts-with 'declare) lambda))
+            (let* ((declare-forms (remove-if-not (%starts-with 'declare) lambda))
                    (declarations (apply #'append (mapcar #'rest declare-forms))))
-              (reduce #'union (remove-if-not (starts-with 'method-properties) declarations)
+              (reduce #'union (remove-if-not (%starts-with 'method-properties) declarations)
                       :key #'rest
                       :initial-value '()))
             initargs))))
