@@ -103,7 +103,15 @@
           
 (defgeneric access-entry (policy queue entry)
   (:method (policy (queue cons-queue) (entry cache-entry)) t)
-  (:method (policy (queue vector-queue) (entry cache-entry)) t))
+  (:method (policy (queue vector-queue) (entry cache-entry)) t)
+  (:method ((policy (eql :lru)) queue (entry cache-entry))
+    (unlink entry)
+    (link-after entry (next queue))
+    t)
+  (:method ((policy (eql :mru)) queue (entry cache-entry))
+    (unlink entry)
+    (link-after entry (next queue))
+    t))
 
 (defgeneric entry-removed (policy queue entry)
   (:method (policy (queue cons-queue) (entry cache-entry))
@@ -136,8 +144,14 @@
       (unless (eq first next)
         (unlink first)
         first)))
-  (:method ((policy (eql :lru)) queue))
-  (:method ((policy (eql :mru)) queue)))
+  (:method ((policy (eql :random)) queue)
+    (unless (queue-full-p queue)
+      (let ((e (loop for i = (random (raw-queue-capacity (queue queue)))
+                     for e = (aref (data queue) i)
+                     while (null e)
+                     finally (return e))))
+        (entry-removed policy queue e)
+        e))))
 
 ;;; Cache
 (defclass cache ()

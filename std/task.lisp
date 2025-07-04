@@ -53,9 +53,9 @@ and *result* is bound to the return value of BODY.
 
 This interface is experimental and subject to change."
   `(make-task-kernel ,name ,args 
-       ,(if lock lock '(make-semaphore))
+       ,(if lock lock '(sb-thread:make-semaphore))
        ,(if queue queue '(make-queue))
-       ,(if mailbox mailbox '(make-mailbox))
+       ,(if mailbox mailbox '(sb-concurrency:make-mailbox))
        ,timeout
      ,@body))
 
@@ -88,7 +88,7 @@ This interface is experimental and subject to change."
    ;; TODO: test weak-vector here
    (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
             :initarg :workers :accessor workers)
-   (results :initform (make-mailbox :name "results") :accessor results :initarg :results))
+   (results :initform (sb-concurrency:make-mailbox :name "results") :accessor results :initarg :results))
   (:documentation "A thread-pool which maintains a dynamic list of TASKS."))
 
 (defun task-pool-info (tp)
@@ -97,7 +97,7 @@ This interface is experimental and subject to change."
    (std/thread::thread-pool-info tp)
    (list
     :tasks (queue-count (tasks tp))
-    :results (mailbox-count (results tp)))))
+    :results (sb-concurrency:mailbox-count (results tp)))))
 
 (defmethod print-object ((self task-pool) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -238,12 +238,11 @@ is responsible for indicating in the state slot the result of the computation.")
       (declare (task-pool tp))
       (setf (tasks tp)
             (make-queue
-             :name "tasks"
              :initial-contents
              (make-array %tasks
                          :element-type task-class
                          :initial-element (or initial-task (make-instance task-class))))
-            (results tp) (make-mailbox :name "results"))
+            (results tp) (sb-concurrency:make-mailbox :name "results"))
       tp)))
 
 ;;; Macros

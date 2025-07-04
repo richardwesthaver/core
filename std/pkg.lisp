@@ -783,11 +783,11 @@
 
 (defpkg :std/seq
   (:use :cl)
+  (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
   (:import-from :std/macs :once-only)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/meta :data)
-  (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :std/list :firstn)
   (:import-from :sb-int :collect)
   (:import-from :std/prim :definline)
@@ -921,7 +921,7 @@
    :compute-special-bindings))
 
 (defpkg :std/task
-  (:use :cl :std/thread :sb-concurrency :std/meta :std/seq)
+  (:use :cl :std/thread :std/meta :std/seq)
   (:import-from :std/thread :%make-thread)
   (:import-from :std/type :positive-fixnum)
   (:import-from :std/macs :if-let)
