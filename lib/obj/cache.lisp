@@ -23,8 +23,8 @@
 - Random (:random): A randomly selected piece of data is discarded
 - Least Frequently Used (:lfu): Data with the lowest number of fetches is discarded
 - Least Frequently Used with Dynamic Aging (:lfuda): An aging variable is
-  introduced to LFU to prefer discarding data that has been used a lot in the
-  history but less often recently.
+introduced to LFU to prefer discarding data that has been used a lot in the
+history but less often recently.
 |#
 
 ;;; Code:
@@ -185,7 +185,7 @@
     (entry-added :lfu queue entry)
     (incf (entry-weight entry) policy)
     (sink-down (data queue) (index entry))))
-          
+
 (defgeneric access-entry (policy queue entry)
   (:method (policy (queue cons-queue) (entry cache-entry)) t)
   (:method (policy (queue vector-queue) (entry cache-entry)) t)
@@ -218,7 +218,7 @@
 		     (setf (index e) w
 			   (aref (data queue) w) e
 			   w (1+ w))))
-	  (setf (fill-pointer (data queue)) w))))
+	(setf (fill-pointer (data queue)) w))))
   (:method ((policy (eql :lfu)) (queue vector-queue) (entry heap-cache-entry))
     (let ((i (index entry)))
       (setf (index entry) nil)
@@ -324,12 +324,12 @@
   (with-slots (policy table) cache
     (let ((max (cache-size cache))
           (size (cache-count cache)))
-    (loop while (> max size)
-	  for old = (evict-entry policy (queue cache))
-	  while old
-	  do (progn
-	       ;; (decf size (slot-value old 'size))
-	       (prepare-cleanup old table))))))
+      (loop while (> max size)
+	    for old = (evict-entry policy (queue cache))
+	    while old
+	    do (progn
+	         ;; (decf size (slot-value old 'size))
+	         (prepare-cleanup old table))))))
 
 (defun cache-size (cache)
   "Returns the current size of the cache."
@@ -364,7 +364,7 @@ with the second value returned by GET-VAL."
 		    (when policy
 		      (entry-removed policy (queue cache) entry)))))
 	      (flet ((miss ()
-		       (let ((entry (make-instance 'cache-entry :key key :pending (bt:make-condition-variable))))
+		       (let ((entry (make-instance 'cache-entry :key key :pending (make-waitqueue))))
 		         (setf (gethash key table) entry)
 		         (values nil entry))))
 	        (loop

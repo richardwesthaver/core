@@ -13,7 +13,7 @@
 (setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *net-packages* :test 'string=))))
 
 (defpkg :net/core
-  (:use :cl :std :sb-thread :config :id)
+  (:use :cl :std :sb-thread :config :id :sb-bsd-sockets)
   (:recycle :sb-bsd-sockets)
   (:export
    ;; obj

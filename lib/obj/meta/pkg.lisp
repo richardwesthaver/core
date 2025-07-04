@@ -198,7 +198,11 @@
    #:mixin-class #:mixin-object #:mixin-classes
    #:ensure-mix #:delete-from-mix #:mix
    #:replace-class #:replace-class-in-mixin
-   #:set-mix-rule #:*class-ordering-rules*))
+   #:set-mix-rule #:*class-ordering-rules*
+   #:%find-class
+   #:ensure-mixin
+   #:make-mix-list
+   #:mix-list))
 
 (in-package :obj/meta)
 
