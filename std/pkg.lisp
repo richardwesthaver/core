@@ -369,7 +369,7 @@
    :pophash :*global-hasher*
    :*global-hash* :djb
    :hash-object :hash-object-address
-   :dumb-string-hash))
+   :dumb-string-hash :table))
 
 (defpkg :std/curry
   (:use :cl)
@@ -515,7 +515,7 @@
    :read-only-space-obj-p :dynamic-space-obj-p :tune-image-for-dump :get-external-format)
   (:import-from :sb-debug :untrace-all :untrace-package)
   (:import-from :sb-ext :fold-identical-code)
-  (:import-from :std/macs :if-let :defmacro!)
+  (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
    :*external-formats*
    :get-external-format
@@ -688,7 +688,7 @@
    :widetag-of :lowtag-of :primitive-type-of :backend-primitive-type-name
    :*backend-primitive-type-names* :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:export :define-io
-   :*simple-object-table* :*primitive-object-table* 
+   :*simple-objects* :*primitive-object-table* 
    :*core-object-table* :serde
    :prim-type
    :serializable-p :deserializable-p
@@ -781,13 +781,6 @@
    :upgrade :version
    :status :validate))
 
-(defpkg :std/spin
-  (:use :cl)
-  (:import-from :sb-ext :cas)
-  (:export :spin-queue :make-spin-queue :push-spin-queue
-   :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
-   :make-spin-lock))
-
 (defpkg :std/seq
   (:use :cl)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
@@ -809,21 +802,26 @@
    :starts-with-one-of-p :copy-n
    :basic-queue :raw-queue-count :raw-queue :make-raw-queue
    :pop-raw-queue :peek-raw-queue :raw-queue-empty-p :raw-queue-full-p
-   :raw-queue-capacity :cons-queue :push-cons-queue
+   :raw-queue-capacity :cons-queue :push-cons-queue :raw-queue
    :pop-cons-queue :make-cons-queue :peek-cons-queue :cons-queue-empty-p
    :push-queue :push-queue* :pop-queue :pop-queue* :peek-queue :peek-queue*
    :queue-count :queue-count* :queue-empty-p :queue-empty-p* :queue-full-p :queue-full-p*
    :try-pop-queue :try-pop-queue* :call-with-queue-lock :with-queue-lock
    :queue :make-queue
-   :priority-queue
+   :priority-queue :vector-queue
    :*default-priority* :*default-priority-queue-size*
    :push-priority-queue
    :pop-priority-queue
    :make-priority-queue
+   ;; spin queue
+   :spin-queue :make-spin-queue :push-spin-queue :make-spin-lock
+   :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
+   ;; accumulator
    :accumulated
    :accumulate
    :accumulator
    :max-accumulator
+   ;; iterator protocol
    :iterator 
    :next
    :key
@@ -842,7 +840,7 @@
 (defpkg :std/thread
   (:use :cl)
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
-  (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/spin :std/condition :std/seq)
+  (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
   (:import-from :sb-thread :*all-threads* :make-foreign-thread)
   (:import-from :std/list :flatten)
   (:import-from :std/prim :definline)
@@ -923,7 +921,7 @@
    :compute-special-bindings))
 
 (defpkg :std/task
-  (:use :cl :std/thread :sb-concurrency :std/meta :std/spin)
+  (:use :cl :std/thread :sb-concurrency :std/meta :std/seq)
   (:import-from :std/thread :%make-thread)
   (:import-from :std/type :positive-fixnum)
   (:import-from :std/macs :if-let)
@@ -1113,6 +1111,7 @@
   (:use :cl :std/array)
   (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
   (:import-from :std/sym :with-gensyms)
+  (:import-from :std/type :octet)
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/list :removef)
   (:import-from :std/file :file)
@@ -1157,14 +1156,13 @@
   (:import-from :asdf :module-provide-asdf :compile-system :defsystem :load-system)
   (:shadowing-import-from :std/meta :version)
   (:export 
-   :defsys
-   :find-system*
-   :defsystem*
    ;; re-exports from ASDF
    ;; :defsystem
    ;; :compile-system
    ;; :load-system
-   ))
+   :defsys
+   :find-system*
+   :defsystem*))
 
 (defpkg :std
   (:use :cl)
@@ -1175,7 +1173,7 @@
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/sys 
    :std/readtable :std/pipe :std/serde :std/rand 
-   :std/async :std/par :std/spin :std/seq
+   :std/async :std/par :std/seq
    :std/comp :std/defsys))
 
 (define-lisp-package :std)

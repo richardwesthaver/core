@@ -37,7 +37,7 @@
 
 ;; (defmethod :before initialize-instance ((self kernel-object) &key)
 ;;   (when *kernel* (set-funcallable-instance-function self *kernel*)))
-    
+
 ;; make-instance (set-funcallable-instance-function kernel)
 
 ;;; Types
@@ -121,13 +121,13 @@ threaded context.")
 
 ;;; Globals
 (sb-ext:defglobal *worker-threads* nil
-  "list of worker threads.")
+    "list of worker threads.")
 (sb-ext:defglobal *super-threads* nil
-  "List of threads with supervisor privileges.")
+    "List of threads with supervisor privileges.")
 (sb-ext:defglobal *oracle-table* (make-hash-table)
-  "Hashtable containining (ID . ORACLE-SCOPE).")
+    "Hashtable containining (ID . ORACLE-SCOPE).")
 (sb-ext:defglobal *thread-pool-table* (make-hash-table)
-  "Hashtable containing (NAME . THREAD-POOL).")
+    "Hashtable containing (NAME . THREAD-POOL).")
 ;;; Conditions
 (defvar *error-workers* nil
   "Track debugger popups in order to kill them.")
@@ -289,7 +289,7 @@ that was created in `body'."
       (sb-thread:make-thread
        (lambda ()
          (format *standard-output* "~A" msg)))
-    nil)))
+      nil)))
 
 (defun println-top-level (msg)
   "Print MSG to the top-level *STANDARD-OUTPUT* followed by a newline."
@@ -327,7 +327,7 @@ that was created in `body'."
 
 (defun make-ephemeral-thread (name)
   "Make a new 'ephemeral' thread called NAME."
-    (sb-thread::%make-thread name t (make-semaphore :name name)))
+  (sb-thread::%make-thread name t (make-semaphore :name name)))
 
 (defgeneric designate-oracle (host guest)
   (:documentation "Designate an oracle GUEST for HOST."))
@@ -384,7 +384,7 @@ keywords modify the bindings in effect."
   "Kill THREAD, ignoring all errors which may occur."
   (when (thread-alive-p thread)
     (ignore-errors
-      (terminate-thread thread))))
+     (terminate-thread thread))))
 
 ;; (sb-vm::primitive-object-slots (sb-vm::primitive-object 'sb-vm::thread))
 ;; (defun init-session (&optional (thread *current-thread*)) (sb-thread::new-session thread))
@@ -401,15 +401,15 @@ keywords modify the bindings in effect."
 ;;   (sb-vm::extern-alien "all_threads" sb-vm::system-area-pointer))
 
 ;; from sb-thread
-(defun dump-thread (&optional thread)
+(defun dump-thread ()
   "Dump the contents of THREAD."
   (let* ((slots (sb-vm::primitive-object-slots #1=(sb-vm::primitive-object 'sb-vm::thread)))
-	 (sap (if thread (thread-sap thread) (current-thread-sap)))
+	 (sap (current-thread-sap))
 	 (thread-obj-len (sb-vm::primitive-object-length #1#))
 	 (names (make-array thread-obj-len :initial-element "")))
     (loop for slot across slots
 	  do
-	  (setf (aref names (sb-vm::slot-offset slot)) (sb-vm::slot-name slot)))
+	     (setf (aref names (sb-vm::slot-offset slot)) (sb-vm::slot-name slot)))
     (flet ((safely-read (sap offset &aux (bits (sb-vm::sap-ref-word sap offset)))
 	     (cond ((eql bits sb-vm:no-tls-value-marker) :no-tls-value)
 		   ((eql (logand bits sb-vm:widetag-mask) sb-vm:unbound-marker-widetag) :unbound)
@@ -426,22 +426,22 @@ keywords modify the bindings in effect."
 		       val))))
       (format t "~&TLS: (base=~x)~%" (sb-vm::sap-int sap))
       (loop for tlsindex from sb-vm:n-word-bytes below
-	    #+sb-thread (ash sb-vm::*free-tls-index* sb-vm:n-fixnum-tag-bits)
-	    #-sb-thread (ash thread-obj-len sb-vm:word-shift)
+	       #+sb-thread (ash sb-vm::*free-tls-index* sb-vm:n-fixnum-tag-bits)
+	       #-sb-thread (ash thread-obj-len sb-vm:word-shift)
 	    by sb-vm:n-word-bytes
 	    do
-	 (unless (<= sb-vm::thread-allocator-histogram-slot
-		     (ash tlsindex (- sb-vm:word-shift))
-		     (1- sb-vm::thread-lisp-thread-slot))
-	   (let ((thread-slot-name
-		  (if (< tlsindex (ash thread-obj-len sb-vm:word-shift))
-			   (aref names (ash tlsindex (- sb-vm:word-shift))))))
-		 (if (and thread-slot-name (sb-vm::neq thread-slot-name 'sb-vm::lisp-thread))
-		     (format t " ~3d ~30a : #x~x~%" (ash tlsindex (- sb-vm:word-shift))
-			     thread-slot-name (sb-vm::sap-ref-word sap tlsindex))
-		     (let ((val (safely-read sap tlsindex)))
-		       (unless (eq val :no-tls-value)
-			 (show tlsindex val)))))))
+	       (unless (<= sb-vm::thread-allocator-histogram-slot
+		           (ash tlsindex (- sb-vm:word-shift))
+		           (1- sb-vm::thread-lisp-thread-slot))
+	         (let ((thread-slot-name
+		         (if (< tlsindex (ash thread-obj-len sb-vm:word-shift))
+			     (aref names (ash tlsindex (- sb-vm:word-shift))))))
+		   (if (and thread-slot-name (sb-vm::neq thread-slot-name 'sb-vm::lisp-thread))
+		       (format t " ~3d ~30a : #x~x~%" (ash tlsindex (- sb-vm:word-shift))
+			       thread-slot-name (sb-vm::sap-ref-word sap tlsindex))
+		       (let ((val (safely-read sap tlsindex)))
+		         (unless (eq val :no-tls-value)
+			   (show tlsindex val)))))))
       (let ((from (sb-vm::descriptor-sap sb-vm:*binding-stack-start*))
 	    (to (sb-vm::binding-stack-pointer-sap)))
 	(format t "~%Binding stack: (depth ~d)~%"
@@ -637,7 +637,7 @@ FUNCTION."
 (eval-always
   (defvar *worker-restarts* '((kill-errors #'kill-errors :report-function #'kill-errors-report))
     "A list of restarts available in the body of a WITH-WORKER-RESTARTS form."))
-                                        
+
 (defmacro with-worker-restarts (&body body)
   "Eval BODY in a worker context with restarts and a catch for
 +WORKER-SUICIDE-TAG+. See variable *WORKER-RESTARTS*."
@@ -792,7 +792,7 @@ WORKER threads."))
      (with-mutex (,mutex :wait-p ,wait-p :timeout ,timeout)
        (when ,predicate
          ,@body))))
-                         
+
 (defun maybe-wake-a-worker (sched)
   (declare (scheduler sched))
   (with-slots (wait-lock wait-cvar wait-count notify-count) sched
@@ -815,10 +815,10 @@ WORKER threads."))
     `(let ((,left (the fixnum ,count)))
        (declare (type fixnum ,left))
        (loop
-          (when (zerop ,left)
-            (return (values)))
-          (decf ,left)
-          ,@body))))
+         (when (zerop ,left)
+           (return (values)))
+         (decf ,left)
+         ,@body))))
 
 (defmacro do-indexes ((ivar size hindex from-hindex-p) &body body)
   ;; size is positive
@@ -828,12 +828,12 @@ WORKER threads."))
            (,hivar (the array-index ,hindex)))
        (declare (type array-index ,ivar ,svar ,hivar))
        (loop
-          ,(let ((next `(mod-incf ,ivar ,svar)))
-             (if from-hindex-p
-                 `(progn ,@body ,next)
-                 `(progn ,next ,@body)))
-          (when (= ,ivar ,hivar)
-            (return (values)))))))
+            ,(let ((next `(mod-incf ,ivar ,svar)))
+               (if from-hindex-p
+                   `(progn ,@body ,next)
+                   `(progn ,next ,@body)))
+            (when (= ,ivar ,hivar)
+              (return (values)))))))
 
 (defmacro do-workers ((wvar workers hindex from-hindex-p) &body body)
   (with-gensyms (wsvar ivar)
@@ -858,7 +858,7 @@ WORKER threads."))
              (values))
            (maybe-sleep ()
              (with-slots (wait-cvar wait-lock wait-count
-                                    notify-count low-priority-work) sched
+                          notify-count low-priority-work) sched
                (inc-counter wait-count)
                (unwind-protect 
                     (with-mutex (wait-lock)
@@ -872,11 +872,11 @@ WORKER threads."))
     (declare (dynamic-extent #'try-pop #'try-pop-all #'maybe-sleep))
     (with-slots (spin-count) sched
       (loop
-         (try-pop (work w))
-         (try-pop-all)
-         (%repeat spin-count
-           (try-pop-all))
-         (maybe-sleep)))))
+        (try-pop (work w))
+        (try-pop-all)
+        (%repeat spin-count
+          (try-pop-all))
+        (maybe-sleep)))))
 
 (defun steal-work (scheduler) 
   (declare (scheduler scheduler))
@@ -948,7 +948,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (setf (gethash name *thread-pool-table*) pool))
 
 (defun find-thread-pool (name) (gethash name *thread-pool-table*))
-  
+
 (defmethod initialize-instance :after ((self thread-pool) &key name &allow-other-keys)
   (when name (register-thread-pool name self)))
 
@@ -1064,13 +1064,13 @@ and execution of concurrent work using a pool of 'worker' threads."))
     (%fill-workers workers pool)
     (map nil #'send-worker-start workers)))
 
-    ;; (map nil #'receive-worker-start workers)))
-    ;; (map nil #'receive-worker-start workers)))
+;; (map nil #'receive-worker-start workers)))
+;; (map nil #'receive-worker-start workers)))
 
 
 (defun make-thread-pool (worker-count &key (name :default)
 					   (bind `((*standard-output* . ,*standard-output*)
-						       (*error-output* . ,*error-output*)))
+						    (*error-output* . ,*error-output*)))
 					   (worker-kernel *worker-kernel*)
 					   (spin-count *default-spin-count*)
 					   ;; (use-caller nil)
@@ -1143,7 +1143,7 @@ provided. *THREAD-POOL* is returned."
           :interactive (lambda () (print "Value for *THREAD-POOL*: ") (read))
           (check-type value thread-pool)
           (setf *thread-pool* value)))))
-                           
+
 (defun worker-count (pool)
   (length (workers pool)))
 

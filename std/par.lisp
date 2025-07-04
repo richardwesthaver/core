@@ -277,6 +277,8 @@
 (defun unsplice (form)
   (if form (list form) nil))
 
+(defvar *registration-lock* (make-mutex :name "registration"))
+
 (defmacro define-defpun (defpun doc defun &rest types)
   `(defmacro ,defpun (name lambda-list ,@types &body body)
      ,doc

@@ -292,7 +292,7 @@ TEST."
 
 ;;; Queues
 ;;;; Conditions
-(defun report-queue-size-limit-reached (condition stream)
+(defun queue-size-limit-reached (condition stream)
   (let ((queue (error-queue condition))
         (element (error-element condition)))
     (format stream "Size limit (~D) reached for non-extensible ~
@@ -302,7 +302,7 @@ TEST."
 (define-condition queue-size-limit-reached (error)
   ((queue :reader error-queue :initarg :queue)
    (element :reader error-element :initarg :element))
-  (:report report-queue-size-limit-reached)
+  (:report queue-size-limit-reached)
   (:documentation "Error signaled when a queue is saturated."))
 
 ;;;; Basic Queue
@@ -412,6 +412,7 @@ TEST."
   (length (raw-queue-data queue)))
 
 ;;;; Vector Queue
+;; A thread-safe queue backed by a vector
 (defstruct (vector-queue (:constructor %make-vector-queue))
   "A vector queue backed by a primitive queue - defaults to RAW-QUEUE."
   (impl (make-raw-queue 0) :type raw-queue)
@@ -539,6 +540,7 @@ TEST."
     queue))
 
 ;;;; Cons Queue
+;; A thread-safe queue backed by a linked list.
 (defstruct (cons-queue (:constructor %make-cons-queue))
   "A cons-based queue backed by a BASIC-QUEUE."
   (impl (make-basic-queue) :type basic-queue)
@@ -548,13 +550,18 @@ TEST."
 (defmethod data ((self cons-queue))
   (cons-queue-impl self))
 
+(defmethod next ((self cons-queue))
+  (head (data self)))
+
+(defmethod prev ((self cons-queue))
+  (tail (data self)))
+
 (defmacro with-cons-queue-lock (queue &body body)
   "Eval BODY while holding a lock on QUEUE."
   `(with-mutex ((cons-queue-lock ,queue))
      ,@body))
 
 (declaim (inline push-vector-queue* pop-vector-queue*))
-
 (defun push-cons-queue* (obj queue) 
   "Push OBJ to QUEUE without locking."
   (declare (cons-queue queue))
@@ -788,10 +795,98 @@ associated priority vector."
         (map nil #'push-elem initial-contents)))
     queue))
 
+;;; Spin Queue
+(defconstant +dummy+ :dummy
+  "Dummy SPIN-QUEUE value.")
+
+(defconstant +dead-end+ :dead-end
+  "Dead-end value for SPIN-QUEUEs.")
+
+(defun make-spin-lock () 
+  "Allocate a fresh 'spin-lock' which is simply NIL."
+  nil)
+
+(defstruct (spin-queue (:constructor %make-spin-queue (head tail)))
+  "CAS-based spin-lock queue."
+  (head (error "no head") :type cons)
+  (tail (error "no tail") :type cons))
+
+(defun make-spin-queue ()
+  "Make a fresh SPIN-QUEUE."
+  (let ((dummy (cons +dummy+ nil)))
+    (%make-spin-queue dummy dummy)))
+
+(defun push-spin-queue (value queue) 
+  "Push VALUE onto QUEUE."
+  (declare (ftype (function (t spin-queue) (values)) push-spin-queue))
+  ;; Attempt CAS, repeat upon failure. Upon success update QUEUE-TAIL.
+  (let ((new (cons value nil)))
+    (loop (when (sb-ext:cas (cdr (spin-queue-tail queue)) nil new)
+            (setf (spin-queue-tail queue) new)
+            (return (values))))))
+
+(defun pop-spin-queue (queue) 
+  "Attempt to CAS QUEUE-HEAD with the next node, repeat upon failure. Upon
+success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
+  (declare (ftype (function (spin-queue) (values t boolean))))
+  (loop (let* ((head (spin-queue-head queue))
+               (next (cdr head)))
+          ;; NEXT could be +DEAD-END+, whereupon we try again.
+          (typecase next
+            (null (return (values nil nil)))
+            (cons (when (sb-ext:cas (spin-queue-head queue) head next)
+                    (let ((value (car next)))
+                      (setf (cdr head) +dead-end+
+                            (car next) +dummy+)
+                      (return (values value t)))))))))
+
+(defun spin-queue-empty-p (queue)
+  "Return T if QUEUE is empty."
+  (null (cdr (spin-queue-head queue))))
+
+(defun try-each-elem (fun queue)
+  "Try FUN on each element of QUEUE."
+  (declare ((function (spin-queue) (values t boolean)) fun))
+  (let ((node (spin-queue-head queue)))
+    (loop
+      (let ((value (car node)))
+        (unless (eq value +dummy+)
+          (funcall fun value)))
+      (setf node (cdr node))
+      (cond 
+        ((eq node +dead-end+)
+         (return nil))
+        ((null node)
+         (return t))))))
+
+(defun spin-queue-count (queue)
+  "Return the count of QUEUE."
+  (tagbody
+   :retry
+     (let ((count 0))
+       (declare (fixnum count))
+       (unless (try-each-elem
+                (lambda (elem)
+                  (declare (ignore elem))
+                  (incf count))
+                queue)
+         (go :retry))
+       (return-from spin-queue-count count))))
+
+(defun peek-spin-queue (queue)
+  "Peek at the next element of QUEUE."
+  (declare (optimize (safety 0)))
+  (loop 
+    until (try-each-elem 
+           (lambda (elem)
+             (return-from peek-spin-queue (values elem t)))
+           queue))
+  (values nil nil))
+
 ;;;; Protocol
 (deftype queue () 
   "Queue type spec."
-  '(or cons-queue vector-queue raw-queue basic-queue priority-queue))
+  '(or cons-queue vector-queue raw-queue basic-queue priority-queue spin-queue))
 
 (defun make-queue (&key capacity initial-contents prioritize)
   "Make a new queue."

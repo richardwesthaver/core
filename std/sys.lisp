@@ -107,23 +107,24 @@ debug or die."
          (format t "~A" condition)
          (sb-ext:quit :unix-status 99))))))
 
-(defvar *core-image-revived-p* nil
-  "Set to T when the current image has been revived.")
-(defvar *core-image-revive-hooks* nil
-  "List of hooks to be evaluated when an image is revived.")
-(defvar *core-image-entry-point* nil
-  "Entrypoint associated with this core image.")
+(eval-always
+  (defvar *core-image-revived-p* nil
+    "Set to T when the current image has been revived.")
+  (defvar *core-image-revive-hooks* nil
+    "List of hooks to be evaluated when an image is revived.")
+  (defvar *core-image-entry-point* nil
+    "Entrypoint associated with this core image."))
 
 (defun revive-image (&key (interactive *interactive*)
                           (hooks *core-image-revive-hooks*)
                           (entry-point *core-image-entry-point*)
                           (if-already-revived '(cerror "Revive image anyway")))
   "Like UIOP:RESTORE-IMAGE but without a prelude."
-    (when *core-image-revived-p*
-      (if if-already-revived
-          (funcall if-already-revived "Image already ~:[being ~;~]revived"
-                   (eq *core-image-revived-p* t))
-          (return-from revive-image)))
+  (when *core-image-revived-p*
+    (if if-already-revived
+        (funcall if-already-revived "Image already ~:[being ~;~]revived"
+                 (eq *core-image-revived-p* t))
+        (return-from revive-image)))
   (handler-bind ((serious-condition #'handle-serious-condition))
     (setf *interactive* interactive)
     (setf *core-image-revive-hook* hooks)
@@ -202,8 +203,8 @@ debug or die."
 (defun save-lisp-tree-shake-and-die (path &rest args)
   "A naive tree-shaker for lisp."
   ;; https://gist.github.com/burtonsamograd/f08f561264ff94391300
-    (loop repeat 10
-          do (sb-ext:gc :full t))
+  (loop repeat 10
+        do (sb-ext:gc :full t))
   (apply #'sb-ext:save-lisp-and-die path args))
 
 (defparameter *gc-logfile* #P"gc.log")
@@ -284,26 +285,26 @@ regs. Returns 4 values containing the regs RAX RBX RCX and RDX respectively."
   (defun cpu-vendor ()
     "Return the vendor of the host CPU."
     (%with-cpuid 0
-     (declare (ignore a))
-     (coerce
-      (mapcan
-       #'(lambda (n)
-	   (mapcar #'code-char (word-byte-list n)))
-       (list b d c))
-      'string)))
+                 (declare (ignore a))
+                 (coerce
+                  (mapcan
+                   #'(lambda (n)
+	               (mapcar #'code-char (word-byte-list n)))
+                   (list b d c))
+                  'string)))
   ;; this is the same as MACHINE-VERSION
   (defun cpu-brand ()
     "Return the brand of the host CPU."
     (with-output-to-string (s)
       (dolist (n '#.(mapcar #'(lambda (x)
-			       (coerce x '(unsigned-byte 32)))
-		           (list #x80000002 #x80000003 #x80000004)))
+			        (coerce x '(unsigned-byte 32)))
+		            (list #x80000002 #x80000003 #x80000004)))
         (declare ((unsigned-byte 32) n))
         (%with-cpuid n
-	 (dolist (word (list a b c d))
-	   (dolist (code (word-byte-list word))
-	     (unless (zerop code)
-	       (write-char (code-char code) s)))))))))
+	             (dolist (word (list a b c d))
+	               (dolist (code (word-byte-list word))
+	                 (unless (zerop code)
+	                   (write-char (code-char code) s)))))))))
 
 ;; from stmx
 (declaim (ftype (function () boolean) transaction-supported-p lock-elision-supported-p))
@@ -337,10 +338,10 @@ As of June 2013, the only x86-64 CPUs supporting RTM are:
 
 Beware: at the time of writing all the known K models, as for example Intel
 Core i7 4770K, do **NOT** support RTM."
-    (let ((max-cpuid (cpuid 0)))
-      (when (>= max-cpuid 7)
-        (let ((ebx (nth-value 1 (cpuid 7))))
-          (not (zerop (logand ebx #x800)))))))
+  (let ((max-cpuid (cpuid 0)))
+    (when (>= max-cpuid 7)
+      (let ((ebx (nth-value 1 (cpuid 7))))
+        (not (zerop (logand ebx #x800)))))))
 
 (defparameter %little-endian nil
   "An internal flag which indicates the host is little-endian, in the event that

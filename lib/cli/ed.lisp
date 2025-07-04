@@ -13,32 +13,41 @@
          (*print-readably* nil))
      ,@body))
 
-(defun run-emacs (args &key file create-frame eval client wait)
-  (if client
+(defun run-emacs (args &key file create-frame eval client wait batch function)
+  (if (or client (not batch))
       (run-emacsclient args :file file :create-frame create-frame :eval eval :wait wait)
       (let ((keys))
         (when file (push (format nil "~S" file) keys))
         (when create-frame (push "-c" keys))
+        (when function (appendf keys (list "-f" (string-downcase function))))
+        (when batch (push "--batch" keys))
         (when eval 
           (with-emacs-printer
             (appendf keys (list "-e" (format nil "~S" eval)))))
-        (sb-ext:run-program (find-exe "emacs") (print (append (nreverse keys) args))))))
+        (sb-ext:run-program (find-exe "emacs") (append keys args)))))
 
-(defun run-emacsclient (args &key file (create-frame t) eval wait)
+(defun run-emacsclient (args &key file (create-frame t) function eval wait)
   (let ((keys))
     (when file (push (format nil "~S" file) keys))
     (when create-frame (push "-c" keys))
+    (when function (appendf keys (list "-f" (string-downcase function))))
     (push "-a=" keys)
     (when eval
       (with-emacs-printer
         (appendf keys (list "-e" (format nil "~S" eval)))))
     (sb-ext:run-program (find-exe "emacsclient")
-                        (append (nreverse keys) args)
+                        (append keys args)
                         :wait wait
                         :output nil)))
 
-(defun eval-emacs (form &key (client t) args file wait create-frame)
-  (run-emacs args :eval form :file file :client client :wait wait :create-frame create-frame))
+(defun eval-emacs (form &key (client t) args file wait create-frame batch function)
+  (run-emacs args :eval form 
+                  :file file 
+                  :client client 
+                  :wait wait 
+                  :create-frame create-frame 
+                  :batch batch
+                  :function function))
 
 (defun ielm (&optional buf-name)
   (eval-emacs `(ielm ,@(when buf-name `(,buf-name)))))
@@ -103,8 +112,13 @@ state of each file in FILES."
   (eval-emacs `(progn (find-file ,path) (goto-char ,position)) :wait wait :create-frame create-frame :client client))
 
 ;;; Macros
-(defmacro with-emacs ((var &key (eval t) (client t) create-frame file (wait t) args) &body body)
+(defmacro with-emacs ((var &key (eval t) (client t) create-frame file (wait t) batch function args) &body body)
   (if (eql t eval)
-      `(progn (eval-emacs '(progn ,@body) :client ,client :args ,args :wait ,wait))
-      `(let ((,var (run-emacs ,args :eval ,eval :file ,file :create-frame ,create-frame :wait ,wait)))
+      `(progn (eval-emacs '(progn ,@body) :client ,client :args ,args :wait ,wait :batch ,batch :function ,function))
+      `(let ((,var (run-emacs ,args :eval ,eval 
+                                    :file ,file 
+                                    :create-frame ,create-frame 
+                                    :wait ,wait 
+                                    :batch ,batch
+                                    :function ,function)))
          ,@body)))

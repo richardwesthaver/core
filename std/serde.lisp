@@ -69,7 +69,7 @@ method body."))
   "Primitive objects are defined by SBCL and will not change. Convenient as a
 non-unique ID prefix.")
 
-(defparameter *simple-object-table*
+(defparameter *simple-objects*
   (apply 'vector '(fixnum
                    character single-float 
                    double-float bignum
@@ -87,12 +87,12 @@ non-unique ID prefix.")
 
 (definline prim-type (obj)
   "Return the name of the primitive type of OBJ."
-  (primitive-type-name (primitive-type-of obj)))
+  (sb-vm::primitive-type-name (primitive-type-of obj)))
 
 (declaim (inline %lisp-object-id))
 (defun %lisp-object-id (obj)
   "Return the STD/SERDE 'id' of OBJ - which is its position in *SIMPLE-LISP-OBJECTS*."
-  (position obj *lisp-objects*))
+  (position obj *simple-objects*))
 
 (defmacro define-io (name &body body)
   "Define a set of readers and writers of category NAME.

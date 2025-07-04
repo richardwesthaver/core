@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :std/hash-table)
 
+(defgeneric table (self))
+
 (definline maphash-keys (function table)
   "Like MAPHASH, but calls FUNCTION with each key in the hash table TABLE."
   (maphash (lambda (k v)

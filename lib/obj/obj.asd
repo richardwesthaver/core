@@ -62,6 +62,7 @@
                (:file "db")
                (:file "secret")
                (:file "store")
+               (:file "cache")
                (:file "srv"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 

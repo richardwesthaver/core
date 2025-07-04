@@ -680,6 +680,12 @@
    #:with-store
    #:defstore))
 
+(defpkg :obj/cache
+  (:nicknames :cache)
+  (:use :cl :std :stored :id :db :store :schema :config)
+  (:import-from :std :queue :make-queue)
+  (:export))
+
 (setq *defpkg-hook* nil)
 
 (in-package :std-user)
