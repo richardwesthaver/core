@@ -684,7 +684,10 @@
   (:nicknames :cache)
   (:use :cl :std :stored :id :db :store :schema :config)
   (:import-from :std :queue :make-queue)
-  (:export))
+  (:export :cache :cache-cleanup :cache-policy
+   :cache-size :cache-count :make-cache :cache-release
+   :with-cache :cache-remove :cache-flush :cache-entry
+   :entry-expiry :entry-weight))
 
 (setq *defpkg-hook* nil)
 

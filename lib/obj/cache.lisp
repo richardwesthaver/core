@@ -11,6 +11,10 @@
 ;; that is used in an EQL hash-table, which provides storage for the cache
 ;; itself.
 
+;; CACLE supports a variety of replacement policies which we also support. The
+;; only major interface change is that we use keywords to indicate the policy
+;; instead of objects and the :LFUDA policy is inferred simply from fixnums.
+
 #| Cache Replacement
 - First In First Out (:fifo): Data that has been in the cache for the longest time is discarded
 - Last In First Out (:lifo): Most recently added data is discarded
@@ -30,6 +34,7 @@
 (defclass cache-entry ()
   ((key :accessor key)
    (data :accessor data)
+   (rc :accessor entry-rc :initform 0)
    (expiry :reader entry-expiry)))
 
 (defclass indexed-cache-entry (cache-entry)
@@ -88,8 +93,79 @@
 	  (slot-value entry 'prev) p)
     entry))
 
+(defclass heap-cache-entry (indexed-cache-entry)
+  ((weight :accessor entry-weight)))
+
+(defun heap-parent-idx (idx)
+  (floor (1- idx) 2))
+
+(defun heap-left-idx (idx)
+  (1+ (* idx 2)))
+
+(defun heap-right-idx (idx)
+  (* (1+ idx) 2))
+
+(defun heap-parent (heap idx)
+  (and (> idx 0)
+       (aref heap (heap-parent-idx idx))))
+
+(defun heap-left (heap idx)
+  (let ((left (heap-left-idx idx)))
+    (and (< left (length heap))
+	 (aref heap left))))
+
+(defun heap-right (heap idx)
+  (let ((right (heap-right-idx idx)))
+    (and (< right (length heap))
+	 (aref heap right))))
+
+(defun heap-swap (heap i1 i2)
+  (let ((e1 (aref heap i1))
+	(e2 (aref heap i2)))
+    (setf (index e1) i2
+	  (index e2) i1
+	  (aref heap i1) e2
+	  (aref heap i2) e1)
+    (values e2 e1)))
+
+(defun sink-down (heap idx &optional prefer-to-sink)
+  (let ((me (aref heap idx))
+	(left (heap-left heap idx))
+	(right (heap-right heap idx)))
+    (unless (and (or (null left)
+		     (< (entry-weight me)
+			(entry-weight left))
+		     (and (not prefer-to-sink)
+			  (= (entry-weight me)
+			     (entry-weight left))))
+		 (or (null right)
+		     (< (entry-weight me)
+			(entry-weight right))
+		     (and (not prefer-to-sink)
+			  (= (entry-weight me)
+			     (entry-weight right)))))
+      ;; heavier than (one of) children, do sink
+      (let ((lightest (if (and right
+			       (< (entry-weight right)
+				  (entry-weight left)))
+			  (heap-right-idx idx)
+			  (heap-left-idx idx))))
+	(heap-swap heap idx lightest)
+	(sink-down heap lightest prefer-to-sink)))))
+
+(defun bubble-up (heap idx)
+  (let ((me (aref heap idx))
+	(parent (heap-parent heap idx)))
+    (unless (or (null parent)
+		(>= (entry-weight me)
+		    (entry-weight parent)))
+      ;; lighter than parent, do bubble
+      (let ((p (heap-parent-idx idx)))
+	(heap-swap heap idx p)
+	(bubble-up heap p)))))
+
 ;;; Policy
-(deftype cache-policy () 'keyword)
+(deftype cache-policy () '(or keyword fixnum))
 
 (defgeneric entry-added (policy queue entry)
   (:method (policy (queue cons-queue) (entry cache-entry))
@@ -99,7 +175,16 @@
   (:method :before (policy (queue vector-queue) (entry cache-entry))
     (change-class entry 'indexed-cache-entry))
   (:method (policy (queue vector-queue) (entry cache-entry))
-    (setf (index entry) (push-queue entry queue))))
+    (setf (index entry) (push-queue entry queue)))
+  (:method ((policy (eql :lfu)) (queue vector-queue) (entry cache-entry))
+    (change-class entry 'heap-cache-entry)
+    (setf (entry-weight entry) 1
+          (index entry) (push-queue entry queue))
+    (bubble-up (data queue )(index entry)))
+  (:method ((policy fixnum) queue (entry cache-entry))
+    (entry-added :lfu queue entry)
+    (incf (entry-weight entry) policy)
+    (sink-down (data queue) (index entry))))
           
 (defgeneric access-entry (policy queue entry)
   (:method (policy (queue cons-queue) (entry cache-entry)) t)
@@ -111,6 +196,10 @@
   (:method ((policy (eql :mru)) queue (entry cache-entry))
     (unlink entry)
     (link-after entry (next queue))
+    t)
+  (:method ((policy (eql :lfu)) (queue vector-queue) (entry heap-cache-entry))
+    (incf (entry-weight entry))
+    (sink-down (data queue) (index entry) t)
     t))
 
 (defgeneric entry-removed (policy queue entry)
@@ -129,7 +218,14 @@
 		     (setf (index e) w
 			   (aref (data queue) w) e
 			   w (1+ w))))
-	  (setf (fill-pointer (data queue)) w)))))
+	  (setf (fill-pointer (data queue)) w))))
+  (:method ((policy (eql :lfu)) (queue vector-queue) (entry heap-cache-entry))
+    (let ((i (index entry)))
+      (setf (index entry) nil)
+      (unless (= i (1- (length (data queue))))
+        (setf (aref (data queue) i) (pop-queue queue)
+              (index (aref (data queue) i)) i)
+        (sink-down (data queue) i)))))
 
 (defgeneric evict-entry (policy queue)
   (:method ((policy (eql :fifo)) queue)
@@ -151,12 +247,274 @@
                      while (null e)
                      finally (return e))))
         (entry-removed policy queue e)
-        e))))
+        e)))
+  (:method ((policy (eql :lfu)) (queue vector-queue))
+    (when (> (length (data queue)) 0)
+      (let ((light (aref (data queue) 0))
+            (heavy (pop-queue queue)))
+        (when (> (length (data queue)) 0)
+          (setf (aref (data queue) 0) heavy
+                (index heavy) 0)
+          (sink-down (data queue) 0 t))
+        light)))
+  (:method ((policy fixnum) (queue vector-queue))
+    (when-let ((target (evict-entry :lfu queue)))
+      ;; CACLE updates the policy object here, we return the weight
+      ;; (entry-weight target)
+      target)))
 
 ;;; Cache
 (defclass cache ()
   ((policy :initarg :policy :accessor cache-policy)
    (kernel :initarg :kernel :accessor kernel)
+   (cleanup :initarg :cleanup :accessor cache-cleanup)
    (table :initarg :table :accessor table)
-   (queue :initarg :queue :accessor queue)
-   (lock :initarg :lock :accessor lock)))
+   (queue :initform nil :initarg :queue :accessor queue)))
+
+(defmethod initialize-instance ((cache cache) &key policy kernel (test 'eql) capacity &allow-other-keys)
+  (call-next-method)
+  (unless kernel (required-argument :kernel))
+  (setf (slot-value cache 'table) (make-hash-table :test test)
+        (slot-value cache 'queue) (make-queue :capacity capacity))
+  (cond ((and policy (not (typep (queue cache) 'vector-queue)))
+	 (error "Policy defined, but queue is possibly infinite"))
+	((null policy)
+	 (unless (not (typep (queue cache) 'vector-queue))
+	   (error "Queue size is defined, but policy missing")))
+	((typep policy '(or keyword fixnum null))
+	 (setf (slot-value cache 'policy) policy))
+	(t
+	 (error "Invalid policy ~s" policy))))
+
+(defun make-cache (capacity provider &key (test 'eql) (policy :fifo) cleanup)
+  "Create a new cache with the specified capacity, kernel function, and options."
+  (make-instance 'cache
+    :test test
+    :capacity capacity
+    :kernel provider
+    :policy policy
+    :cleanup cleanup))
+
+(defvar *cleanup-list*)
+(defmacro with-collected-cleanups ((cache) &body body)
+  (let ((i (gensym))
+	(fn (gensym)))
+    `(let* ((,fn (with-queue-lock (queue ,cache)
+		   (slot-value ,cache 'cleanup)))
+	    (*cleanup-list* (null ,fn)))
+       (unwind-protect
+	    (progn ,@body)
+	 (when ,fn
+	   (dolist (,i *cleanup-list*)
+	     (funcall ,fn ,i)))))))
+
+(defun prepare-cleanup (entry hash)
+  (cond ((eq *cleanup-list* t)
+	 (remhash (key entry) hash))
+	((zerop (entry-rc entry))
+	 (remhash (key entry) hash)
+	 (push (slot-value entry 'data) *cleanup-list*))
+	((< (entry-rc entry) 0)
+	 (error "Internal error: double prepare-cleanup for ~s" entry))
+	(t
+	 (setf (entry-rc entry) (- (entry-rc entry))))))
+
+;; REVIEW 2025-07-04: 
+(defun ensure-cache-size (cache)
+  (with-slots (policy table) cache
+    (let ((max (cache-size cache))
+          (size (cache-count cache)))
+    (loop while (> max size)
+	  for old = (evict-entry policy (queue cache))
+	  while old
+	  do (progn
+	       ;; (decf size (slot-value old 'size))
+	       (prepare-cleanup old table))))))
+
+(defun cache-size (cache)
+  "Returns the current size of the cache."
+  (raw-queue-capacity (queue cache)))
+
+(defun cache-count (cache)
+  "Returns the current count of items in the cache."
+  (with-queue-lock (lock (queue cache))
+    (hash-table-count (slot-value cache 'table))))
+
+(defmethod get-val ((cache cache) key &key shallow force)
+  "Return the value associated with KEY in CACHE.
+
+If the item is not currently in the cache, or has expired, it is fetched from
+the provider and stored in the cache.
+
+If FORCE is specified, a new value is fetched from the provider even if
+it already exists in the cache.
+
+If a cleanup function is defined for the cache, remember to call cache-release
+with the second value returned by GET-VAL."
+  (with-slots (table policy kernel) cache
+    (let ((lock (lock (queue cache))))
+      (with-collected-cleanups (cache)
+        (multiple-value-bind (hit data entry)
+	    (with-mutex (lock)
+	      (when force
+	        (let ((entry (gethash key table)))
+		  (when entry
+		    (prepare-cleanup entry table)
+		    (decf (slot-value cache 'size) (slot-value entry 'size))
+		    (when policy
+		      (entry-removed policy (queue cache) entry)))))
+	      (flet ((miss ()
+		       (let ((entry (make-instance 'cache-entry :key key :pending (bt:make-condition-variable))))
+		         (setf (gethash key table) entry)
+		         (values nil entry))))
+	        (loop
+		  (let ((entry (gethash key table)))
+		    (cond ((and (null entry)
+			        shallow)
+			   ;; cache miss, and no waiting
+			   (return (values t nil nil)))
+
+			  ((null entry)
+			   ;; cache miss - initialize fetch from source
+			   (return (miss)))
+
+			  ((and (slot-boundp entry 'pending)
+			        shallow)
+			   ;; cache hit - but data not yet ready, and no waiting
+			   (return (values t nil nil)))
+
+			  ((slot-boundp entry 'pending)
+			   ;; cache hit - but data not yet ready
+			   (let ((pending (slot-value entry 'pending)))
+			     (condition-wait pending lock)
+			     ;; note: the pending slot is no longer bound after the wait
+			     (condition-notify pending)
+			     ;; data now available
+			     (when (eq (gethash key table) entry)
+			       ;; ... and not immediately cleaned up
+			       (if (cache-cleanup cache)
+				   (progn
+				     (if (>= (entry-rc entry) 0)
+					 (incf (entry-rc entry))
+					 (decf (entry-rc entry)))
+				     (return (values t (slot-value entry 'data) entry)))
+				   (return (values t (slot-value entry 'data)))))))
+
+			  ((and entry policy
+			        (or (and (slot-boundp entry 'expiry)
+					 (<= (slot-value entry 'expiry)
+					     (get-universal-time)))
+				    (and (>= (entry-rc entry) 0)
+					 (not (access-entry policy (queue cache) entry)))))
+			   ;; cached data has expired or been invalidated
+			   (remhash key table)
+			   (prepare-cleanup entry table)
+			   (decf (slot-value cache 'size) (slot-value entry 'size))
+			   (entry-removed policy (queue cache) entry)
+			   (if shallow
+			       (return (values t nil nil)) ; no waiting
+			       (return (miss))))
+
+			  ((cache-cleanup cache)
+			   (if (>= (entry-rc entry) 0)
+			       (incf (entry-rc entry))
+			       (decf (entry-rc entry)))
+			   (return (values t (slot-value entry 'data) entry)))
+
+			  (t
+			   (return (values t (slot-value entry 'data) nil))))))))
+	  (if hit
+	      (values data entry)
+	      (multiple-value-bind (content size)
+		  (handler-case (funcall kernel key)
+		    (error (e)
+		      (with-mutex (lock)
+		        (remhash key table)
+		        (condition-notify (slot-value data 'pending))
+		        (slot-makunbound data 'pending))
+		      (error e)))
+	        (with-collected-cleanups (cache)
+		  (unless (typep size 'real)
+		    (setf size (if content 1 0))
+		    (warn "Cache provider did not return a proper size for the data - assuming size of ~d" size))
+		  (with-mutex (lock)
+		    (setf (slot-value data 'data) content
+			  (slot-value data 'size) size)
+		    (with-slots (lifetime) cache
+		      (when lifetime
+		        (setf (slot-value data 'expiry)
+			      (+ (get-universal-time) lifetime))))
+		    (condition-notify (slot-value data 'pending))
+		    (slot-makunbound data 'pending)
+		    (incf (slot-value cache 'size) size)
+		    (when policy
+		      (ensure-cache-size cache)
+		      (entry-added policy (queue cache) data))
+		    (if (cache-cleanup cache)
+		        (progn
+			  (incf (entry-rc data))
+			  (values content data))
+		        (values content nil)))))))))))
+
+(defmethod cache-release ((cache cache) entry)
+  "Releases a reference for an item fetched earlier.
+
+An item fetched from the cache with cache-fetch will not be cleaned up before
+it is released."
+  (when entry
+    (with-slots (table cleanup) cache
+      (let ((to-clean 
+              (with-queue-lock (lock (queue cache))
+		(let ((busy (entry-rc entry)))
+		  (cond ((zerop busy)
+			 (error "Double release for item with the key ~a" (key entry)))
+			((> busy 0)
+			 (decf (entry-rc entry))
+			 nil)
+			(t
+			 (when (zerop (incf (entry-rc entry)))
+			   (when (eq (gethash (key entry) table) entry)
+			     (remhash (key entry) table))
+			   (slot-value entry 'data))))))))
+	(when (and cleanup to-clean)
+	  (funcall cleanup to-clean)))))
+  nil)
+
+(defmacro with-cache (var (cache key &key shallow) &body body)
+  "Combines a cache-fetch and cache-release in a form."
+  (let ((c-var (gensym))
+	(tag (gensym)))
+    `(let ((,c-var ,cache))
+       (multiple-value-bind (,var ,tag)
+	   (cache-fetch ,c-var ,key ,@(and shallow '(:shallow t)))
+	 (unwind-protect
+	      (progn ,@body)
+	   (cache-release ,c-var ,tag))))))
+
+(defmethod cache-remove ((cache cache) key)
+  "Remove the item with the specified key from the cache."
+  (with-slots (table policy) cache
+    (with-collected-cleanups (cache)
+      (with-queue-lock (queue cache)
+	(let ((entry (gethash key table)))
+	  (when entry
+	    (prepare-cleanup entry table)
+	    ;; (decf size (slot-value entry 'size))
+	    (when policy
+	      (entry-removed policy (queue cache) entry))
+	    t))))))
+
+(defmethod cache-flush ((cache cache))
+  "Flush the cache, removing all items currently stored in it. If a cleanup
+function is defined for the cache, it is called for every item."
+  (with-slots (table policy cleanup) cache
+    (with-collected-cleanups (cache)
+      (with-queue-lock (queue cache)
+	(maphash #'(lambda (k v)
+		     (declare (ignore k))
+		     (prepare-cleanup v table)
+		     (entry-removed policy (queue cache) v))
+		 table)
+	;; (setf size 0)
+        ))
+    nil))
