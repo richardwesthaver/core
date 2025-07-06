@@ -2,9 +2,7 @@
 
 ;; Functions for writing and ingesting SST Files directly.
 
-;;; Refs:
-
-;; https://github.com/facebook/rocksdb/wiki/Creating-and-Ingesting-SST-files
+;; ref: https://github.com/facebook/rocksdb/wiki/Creating-and-Ingesting-SST-files
 
 ;;; Code:
 (in-package :rocksdb)

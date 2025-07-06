@@ -108,7 +108,7 @@
    #:*announce*))
 
 (defpkg :cli/prompt
-  (:use :cl :std :obj/equiv)
+  (:use :cl :std :obj/equiv :linedit)
   (:export
    :completing-read
    :defprompt))

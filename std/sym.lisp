@@ -24,8 +24,7 @@ in the package, which matches the secondary return value of INTERN.
 
 Example:
 
-  (ensure-symbol :cons :cl) => cl:cons, :external
-"
+  (ensure-symbol :cons :cl) => cl:cons, :external"
   (intern (string name) package))
 
 (defun maybe-intern (name package)

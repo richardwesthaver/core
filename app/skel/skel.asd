@@ -6,10 +6,8 @@
   :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std
                      :obj :dat :cli :organ :doc :vc
                      :pod :net :box :rdb :syn
-                     (:feature :ext :krypt)
-                     (:feature :ext :packy)
-                     (:feature :gui :gui)
-                     (:feature :clim :clouseau))
+                     (:feature :gui :clx)
+                     (:feature :gui :clouseau))
   :serial t
   :components 
   ((:module "core"
@@ -53,15 +51,8 @@
    (:module "tools"
     :components
     ((:file "pkg")
-     (:file "deploy" :if-feature :deploy)
-     (:file "view" :if-feature :clim)))
-   (:module "ext"
-    :components
-    ((:file "pkg")
-     (:file "asdf")
-     (:file "krypt")
-     (:file "packy"))
-    :if-feature :ext)
+     (:file "deploy")
+     (:file "view" :if-feature :gui)))
    (:file "cli")
    (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))

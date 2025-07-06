@@ -13,7 +13,7 @@
                              (:file "overloaded")
                              (:file "stored")
                              (:file "dynamic")
-                             (:file "mixin")))
+                             (:file "mix")))
                (:file "pkg")
                (:file "id")
                (:module "uri"

@@ -1,5 +1,7 @@
 ;;; defpkg.lisp --- defpackage extension macro
 
+;; DEFPKG is based on UIOP:DEFINE-PACKAGE
+
 ;;; Commentary:
 
 ;;
@@ -697,15 +699,21 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
 
 DEFPKG takes a PACKAGE and a number of CLAUSES, of the form (KEYWORD . ARGS).
 
-DEFPKG supports the following keywords:
+DEFPKG supports the following standard extensions:
 USE, SHADOW, SHADOWING-IMPORT-FROM, IMPORT-FROM, EXPORT, INTERN -- as per CL:DEFPACKAGE.
 
-DEFPKG also redefines the following extensions:
+As well as the common extensions:
 RECYCLE, MIX, REEXPORT, UNINTERN -- as per UIOP/PACKAGE:DEFINE-PACKAGE
 
-REEXPORT -- Takes a list of package designators. For each package in
-the list, export symbols with the same name as those exported from
-that package. In the case of shadowing, etc. They may not be EQL."
+Additionally, DEFPKG supports the following custom extensions:
+
+MIX-REEXPORT -- combination of MIX and REEXPORT
+
+USE-REEXPORT -- combination of USE and REEXPORT
+
+In addition to defining and returning a package, when *DEFPKG-HOOK* is
+non-nil, it is called as a function with a single argument - the package being
+defined."
   (let ((ensure-form
           `(apply 'ensure-package ',(parse-defpkg-form package clauses))))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
@@ -761,7 +769,8 @@ package."
         (let ((setf-name `(setf ,symbol)))
           (when (fboundp setf-name)
             (push setf-name symbols)))))
-    (set-difference symbols exceptions :key (lambda (x)
-                                              (if (consp x)
-                                                  (string (second x))
-                                                  (string x))) :test #'string-equal)))
+    (set-difference symbols exceptions 
+                    :key (lambda (x)
+                           (if (consp x)
+                               (string (second x))
+                               (string x))) :test #'string-equal)))

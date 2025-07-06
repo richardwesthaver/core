@@ -9,7 +9,7 @@
   (:export :*std-packages*))
 
 (in-package :std-int)
-(defparameter *std-packages* `(,(package-name *package*)))
+(defparameter *std-packages* nil)
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *std-packages* :test 'string=)))
 
 (defpkg :std/sym
@@ -1164,6 +1164,8 @@
    :find-system*
    :defsystem*))
 
+(setq *defpkg-hook* nil)
+
 (defpkg :std
   (:use :cl)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
@@ -1185,7 +1187,6 @@
 
 (asdf:register-system-packages "STD" *std-packages*)
 
-(setq *default-package* "STD-USER"
-      *defpkg-hook* nil)
+(setq *default-package* "STD-USER")
 
 (eval-when (:load-toplevel) (pushnew :std *features*))

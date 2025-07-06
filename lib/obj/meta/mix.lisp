@@ -1,4 +1,4 @@
-;;; mixin.lisp --- Dynamic Mixin Metaclasses
+;;; mix.lisp --- Dynamic Mixin Metaclasses
 
 ;; Originally taken from StumpWM (dynamic-mixins.lisp)
 
@@ -23,7 +23,7 @@ permutations.
 |#
 
 ;;; Code:
-(in-package :obj/meta/mixin)
+(in-package :obj/meta/mix)
 
 (defvar *mixin-classes* (make-hash-table :test 'equal))
 

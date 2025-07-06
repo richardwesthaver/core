@@ -16,6 +16,7 @@
 (defvar packy-url "https://packy.compiler.company")
 (defvar html-foot "<footer><p>updated %C</p></footer>")
 (defvar default-org-export-setupfile (join-paths company-org-directory "clean.theme"))
+
 ;; (setq org-protocol-project-alist
 ;;       '(("comp"
 ;;          :base-url url
@@ -59,8 +60,12 @@
 	 (buffer-list-update-hook nil))
      ,@body))
 
-(setq org-html-home/up-format "<nav id=\"org-div-home-and-up\"><a href=\"%s\" accesskey=\"u\"><button class=up>▲</button></a><a href=\"%s\" accesskey=\"h\"><button class=home>⌂</button></a>
-<button accesskey=\"s\" class=show onclick=open_all_sections()>show</button> <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></nav>")
+(setq org-html-home/up-format 
+      "<nav id=\"org-div-home-and-up\">
+<a href=\"%s\" accesskey=\"u\"><button class=up>▲</button></a>
+<a href=\"%s\" accesskey=\"h\"><button class=home>⌂</button></a>
+<button accesskey=\"s\" class=show onclick=open_all_sections()>show</button>
+<button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></nav>")
       
 (setq org-publish-project-alist
       `(("compiler.company" :components ("index" "meta" "blog" "docs" "graph" "plan" "notes" "archive"))

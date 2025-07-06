@@ -1,6 +1,6 @@
 ;;; rocksdb.lisp --- low-level bindings to the RocksDB C API
 
-;; for the high-level interface, see rdb.lisp.
+;; RocksDB FFI
 
 ;;; Commentary:
 
@@ -22,6 +22,7 @@
 ;; db/c.cc
 
 ;; here are some important notes to keepin mind (from the API header):
+
 #|
 C bindings for rocksdb.  May be useful as a stable ABI that can be
 used by programs that keep rocksdb in a shared library, or for

@@ -18,7 +18,7 @@
   "Open a WAV file."
   ;; read-only
   (with-alien ((info sf-info))
-    (let ((file (sf-open "/opt/store/packy/data/test/Weltschmerz.wav" (sf-flag :read) (addr info))))
+    (let ((file (sf-open (asdf:system-relative-pathname :core ".stash/Weltschmerz.wav") (sf-flag :read) (addr info))))
       (is= 1 (sf-format-check (addr info)))
       (let ((fmt (decode-sf-format (slot info 'format))))
         (iseq (car fmt) :wav)

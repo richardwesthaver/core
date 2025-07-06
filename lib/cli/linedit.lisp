@@ -27,7 +27,6 @@
 ;;;; QUOTES
 
 ;; FIXME: should checking for #\", "\"", et cetera.
-
 (defun quoted-p (string index)
   (let ((quoted-p nil))
     (dotimes (n (min index (length string)) quoted-p)
@@ -76,7 +75,6 @@
 ;; FIXME: This is not the Right Way to do paren matching.
 ;; * use stack, not counting
 ;; * don't count #\( #\) &co
-
 (defun after-close-p (string index)
   (and (array-in-bounds-p string (1- index))
        (find (schar string (1- index)) ")]}")))
@@ -632,7 +630,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 
 ;;; BUFFER offers a simple browsable from of storage. It is used to
 ;;; implement both the kill-ring and history.
-
 (defclass buffer ()
   ((prev :initarg :prev :accessor %buffer-prev :initform nil)
    (next :initarg :next :accessor %buffer-next :initform nil)
@@ -648,21 +645,25 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     :pathname (%buffer-pathname buffer)))
 
 (defun ensure-buffer (datum)
-  ;; DATUM may be a buffer, NIL, or a pathname designator
-  (if (typep datum 'buffer)
-      datum
-      (let ((buffer (make-instance 'buffer :pathname datum)))
-        (when datum
-          (with-open-file (f datum
-                             :direction :input
-                             :if-does-not-exist nil
-                             :external-format :utf-8)
-            (when f
-              (loop for line = (read-line f nil)
-                    while line
-                    do (push line (%buffer-list buffer)))
-              (setf (%buffer-prev buffer) (%buffer-list buffer)))))
-        buffer)))
+  "DATUM may be a buffer, a list, or a pathname designator."
+  (etypecase datum
+    (buffer datum)
+    ((or pathname string null)
+     (let ((buffer (make-instance 'buffer :pathname datum)))
+       (when datum
+         (with-open-file (f datum
+                            :direction :input
+                            :if-does-not-exist nil
+                            :external-format :utf-8)
+           (when f
+             (loop for line = (read-line f nil)
+                   while line
+                   do (push line (%buffer-list buffer)))
+             (setf (%buffer-prev buffer) (%buffer-list buffer)))))
+       buffer))
+    (list (let ((buffer (make-instance 'buffer :list datum)))
+            (setf (%buffer-prev buffer) (%buffer-list buffer))
+            buffer))))
 
 (defun buffer-push (string buffer)
   (unless (equal string (car (%buffer-list buffer)))
@@ -716,7 +717,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     t))
 
 ;;; Command Keys
-
 (defvar *commands* (make-hash-table :test #'equalp))
 
 (defmacro defcommand (command &optional action)
@@ -828,7 +828,7 @@ READ-CHORD according to CMDS."
   ((commands :reader editor-commands
 	     :initform *commands*
 	     :initarg :commands)
-   (completer :reader editor-completer
+   (completer :accessor editor-completer
 	      :initform 'lisp-complete
 	      :initarg :complete)
    (history :accessor editor-history)
@@ -846,7 +846,7 @@ READ-CHORD according to CMDS."
 	   :initform ""
 	   :initarg :prompt)))
 
-(defmethod initialize-instance :after ((editor editor) &rest initargs &key history killring)
+(defmethod initialize-instance :after ((editor editor) &rest initargs &key history killring completions)
   (declare (ignorable initargs))
   (let ((history (ensure-buffer (or history *history*))))
     (unless *history*
@@ -863,7 +863,7 @@ READ-CHORD according to CMDS."
 
 (defvar *announce* nil)
 (defvar *linedit-spec* nil)
-(defvar *version* "0.1.0-cc")
+(defvar *version* "0.1.1-cc")
 
 (defun make-editor (&rest args)
   (ti:set-terminal)
@@ -1142,6 +1142,10 @@ to the appropriate home directory."
 	(values all max)
 	(values (list common) (length common)))))
 
+(defun list-complete (string completions)
+  (when (plusp (length string))
+    (member-if (lambda (x) (uiop:string-prefix-p string x)) completions)))
+
 (defun lisp-complete (string editor)
   (declare (simple-string string))
   (when (plusp (length string))
@@ -1164,7 +1168,6 @@ to the appropriate home directory."
 	       (hash (make-hash-table :test #'equal))
 	       (common nil)
 	       (max-len 0))
-          
 	  (labels ((stringify (symbol)
 		     (if (upper-case-p (schar string 0))
 			 (string symbol)
@@ -1192,7 +1195,6 @@ to the appropriate home directory."
 				   (select-symbol sym match)))
 		      (:external (do-external-symbols (sym package)
 				   (select-symbol sym match)))))
-		  
 		  ;; Symbols without explicit package prefix + packges
 		  (dolist (package (list-all-packages))
 		    (if (eq *package* package)
@@ -1202,7 +1204,6 @@ to the appropriate home directory."
 			(dolist (name (cons (package-name package)
 					    (package-nicknames package)))
 			  (select-symbol name string))))))
-
 	    ;; Return list of matches to caller
 	    (if (> (length common) (length string))
 		(values (list common) (length common))
@@ -1216,7 +1217,7 @@ to the appropriate home directory."
 ;;; Main
 (defvar *editor* nil)
 
-(defun linedit (&rest keyword-args &key prompt history killring &allow-other-keys)
+(defun linedit (&rest keyword-args &key prompt history killring completions &allow-other-keys)
   "Reads a single line of input with line-editing from standard input
 of the process and returns it as a string.
 
@@ -1234,7 +1235,7 @@ topic, but if you're willing to dive into sources you can eg. use
 multiple kill-rings not shared between different invocations of
 LINEDIT, or change the function responsible for providing input
 completion."
-  (declare (ignore prompt history killring))
+  (declare (ignore prompt history killring completions))
   (flet ((edit ()
            (catch 'linedit-done
              (loop
@@ -1247,6 +1248,8 @@ completion."
         ;; editor object that shares the same backend, kill-ring, etc.
         (let* ((new (getf keyword-args :prompt))
                (old (editor-prompt *editor*))
+               (completions (getf keyword-args :completions))
+               (completer (editor-completer *editor*))
                (history (copy-buffer (editor-history *editor*)))
                (string (get-string *editor*))
                (point (get-point *editor*)))
@@ -1254,9 +1257,16 @@ completion."
                (progn
                  (when new
                    (setf (editor-prompt *editor*) new))
+                 (when completions
+                   (setf (editor-completer *editor*) 
+                         (lambda (str ed) 
+                           (declare (ignore ed))
+                           (list-complete str completions))))
                  (edit))
             (when new
               (setf (editor-prompt *editor*) old))
+            (when completions
+              (setf (editor-completer *editor*) completer))
             (setf (get-string *editor*) string
                   (get-point *editor*) point
                   (editor-history *editor*) history)))
@@ -1266,7 +1276,7 @@ completion."
 
 (defvar *level* 0)
 
-(defun formedit (&rest args &key (prompt1 "") (prompt2 "") history killring
+(defun formedit (&rest args &key (prompt1 "") (prompt2 "") history killring completions
 		 &allow-other-keys)
   "Reads a single form (s-expession) of input with line-editing from
 standard input of the process and returns it as a string.
@@ -1289,7 +1299,7 @@ topic, but if you're willing to dive into sources you can eg. use
 multiple kill-rings not shared between different invocations of
 FORMEDIT, or change the function responsible for providing input
 completion."
-  (declare (ignore history killring))
+  (declare (ignore history killring completions))
   (let ((args (copy-list args)))
     (dolist (key '(:prompt1 :prompt2))
       (remf args key))
@@ -1312,13 +1322,7 @@ completion."
                                                          ;; If we manage to get into a nested read,
                                                          ;; make sure we don't try to use the same package.
                                                          (format nil "LINEDIT-SCRATCH#~A" *level*))))
-					 ;; KLUDGE: This is needed to handle input that starts
-					 ;; with an empty line. (At least in the presense of
-					 ;; ACLREPL).
-					 (unwind-protect
-					      (if (find-if-not 'whitespacep str)
-						  (read-from-string str)
-						  (error 'end-of-file))
+					 (unwind-protect (read-from-string str)
 					   (delete-package *package*)))
 			   (end-of-file ()
 			     eof-marker))))
@@ -1336,14 +1340,13 @@ completion."
   (read stream t nil t))
 
 ;;; Command Functions
-;;; These functions are meant to be call throught the command table
-;;; of an editor. These functions should not explicitly call refresh, etc:
-;;; that is the responsibility of the editor -- but beeping is ok.
-;;;
-;;; The arguments passed are: CHORD EDITOR
+;; These functions are meant to be call throught the command table
+;; of an editor. These functions should not explicitly call refresh, etc:
+;; that is the responsibility of the editor -- but beeping is ok.
+
+;; The arguments passed are: CHORD EDITOR
 
 ;;; BASIC EDITING
-
 (defun add-char (char editor)
   (with-editor-point-and-string ((point string) editor)
     (setf (get-string editor)
@@ -1397,7 +1400,6 @@ completion."
   (throw 'linedit-done t))
 
 ;;; CASE CHANGES
-
 (flet ((frob-case (frob editor)
          (with-editor-point-and-string ((point string) editor)
            (let ((end (editor-next-word-end editor)))
@@ -1417,7 +1419,6 @@ completion."
     (funcall #'frob-case #'string-downcase editor)))
 
 ;;; MOVEMENT
-
 (defun move-to-bol (chord editor)
   (declare (ignore chord))
   (setf (get-point editor) 0))
@@ -1443,14 +1444,12 @@ completion."
   (setf (get-point editor) (editor-next-word-end editor)))
 
 ;;; UNDO
-
 (defun undo (chord editor)
   (declare (ignore chord))
   (rewind-state editor)
   (throw 'linedit-loop t))
 
 ;;; HISTORY
-
 (defun history-previous (chord editor)
   (declare (ignore chord))
   (std:aif (buffer-previous (get-string editor) (editor-history editor))
@@ -1507,7 +1506,6 @@ completion."
   (history-search editor :forwards))
 
 ;;; KILLING & YANKING
-
 (defun %yank (editor)
   (std:aif (buffer-peek (editor-killring editor))
            (with-editor-point-and-string ((point string) editor)
@@ -1572,7 +1570,6 @@ completion."
   (setf (editor-mark editor) (get-point editor)))
 
 ;;; SEXP MOTION
-
 (defun forward-sexp (chord editor)
   (declare (ignore chord))
   (setf (get-point editor) (editor-sexp-end editor)))
@@ -1606,7 +1603,6 @@ completion."
               editor)))
 
 ;;; SIGNALS
-
 (defun interrupt-lisp (chord editor)
   (declare (ignore chord))
   (editor-interrupt editor))
@@ -1616,7 +1612,6 @@ completion."
   (editor-stop editor))
 
 ;;; MISCELLANY
-
 (defun help (chord editor)
   (declare (ignore chord))
   (let ((pairs nil)
@@ -1718,7 +1713,7 @@ completion."
 		 (let ((prompt (with-output-to-string (s)
 				 (funcall prompt-fun s))))
 		   (handler-case
-		       (apply #'linedit:formedit
+		       (apply #'formedit
 			      :prompt1 prompt
 			      :prompt2 (make-string (length prompt) 
 						    :initial-element #\Space)

@@ -6,7 +6,7 @@
 (in-package :cli/prompt)
 (declaim (optimize (speed 3) (debug 1)))
 
-(defvar *completion-trigger* #\?)
+(defvar *completion-key* #\tab)
 
 (defun completing-read (prompt collection
 			&key (history nil) (default nil)
@@ -22,12 +22,7 @@ The Emacs completion framework includes a function called
 `completing-read' which prompts the user for input from the
 mini-buffer. It is a very flexible interface which can be used to read
 user input programatically. This is incredibly useful for building
-data entry interfaces -- for example see the `defprompt' macro.
-
-Obviously writing a completion framework is out-of-scope, but we can
-simulate one by embedding a DSL in our prompters if we choose. For
-example, perhaps we treat a single '?' character as a request from the
-user to list valid options while continue waiting for input."
+data entry interfaces -- for example see the `defprompt' macro."
   (declare (list collection)
            (function test reader)
            ((or function null) hook)

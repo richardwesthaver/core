@@ -932,6 +932,18 @@
   (opts (* rocksdb-options))
   (name c-string))
 
+;; https://github.com/facebook/rocksdb/wiki/Checkpoints
+(def-with-errptr rocksdb-checkpoint-object-create (* rocksdb-checkpoint)
+  (db (* rocksdb)))
+
+(def-with-errptr rocksdb-checkpoint-create void
+  (checkpoint (* rocksdb-checkpoint))
+  (checkpoint-dir c-string)
+  (log-size-for-flush (unsigned 64)))
+
+(defar rocksdb-checkpoint-object-destroy void
+  (checkpoint (* rocksdb-checkpoint)))
+
 (def-with-errptr rocksdb-optimistictransactiondb-open-column-families (* rocksdb-optimistictransactiondb)
   (opts (* rocksdb-options))
   (name c-string)

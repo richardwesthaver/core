@@ -192,7 +192,7 @@
   (:export :dset :dref :dynamic-class
    :slot-dlet :slot-dvar :slot-dvar*))
 
-(defpackage :obj/meta/mixin
+(defpackage :obj/meta/mix
   (:use #:cl #:std)
   (:export 
    #:mixin-class #:mixin-object #:mixin-classes

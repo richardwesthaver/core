@@ -362,7 +362,6 @@ Example:
   (loop repeat n for x in list collect x))
 
 ;;; cl-bench utils
-;; 
 ;; From Hansen's MS thesis.
 (defun merge! (a b predicate)
   "Destructively merge two sorted lists given comparison function PREDICATE."

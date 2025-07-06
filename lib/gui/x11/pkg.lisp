@@ -1,4 +1,4 @@
-(defpackage :gui/x11
+(defpackage :gui/xlib
   (:shadowing-import-from :std/type :array-index)
   (:shadowing-import-from :xlib :draw-line)
   (:use :cl :std :gui/core :xlib)
@@ -6,10 +6,10 @@
    #:display-extensions
    :open-default-display
    #:display-fonts
-   #:init-x11
-   #:*x11-display*))
+   #:init-xlib
+   #:*xlib-display*))
 
-(in-package :gui/x11)
+(in-package :gui/xlib)
 
 (defvar *display* nil)
 (defvar *screen* nil)
@@ -22,7 +22,7 @@
 (defvar *black* nil)
 (defvar *white* nil)
 
-(defun init-x11 ()
+(defun init-xlib ()
   (setf *display* (xlib:open-default-display)
         *screen* (xlib:display-default-screen *display*)
         *colormap* (xlib:screen-default-colormap *screen*)
@@ -57,7 +57,7 @@
    *black* (xlib:screen-black-pixel *screen*)))
    
 (defun display-fonts (&optional display (pattern "*"))
-  (xlib:list-fonts (or display *default-display*) pattern))
+  (xlib:list-fonts (or display *display*) pattern))
 
 (defun display-extensions (&optional display (result-type 'list))
-  (xlib:list-extensions (or display *default-display*) :result-type result-type))
+  (xlib:list-extensions (or display *display*) :result-type result-type))

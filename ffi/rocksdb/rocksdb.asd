@@ -1,8 +1,6 @@
 ;;; rocksdb.asd --- ROCKSDB SYSTEMS
 
-;; rocksdb for lisp.
-
-;;; Commentary:
+;; RocksDB for lisp.
 
 ;; inspired by Vee's cl-rocksdb: https://github.com/veer66/cl-rocksdb
 
@@ -17,7 +15,6 @@
                (:file "env")
                (:file "sst")
                (:file "db")
-               (:file "checkpoint")
                (:file "metadata")
                (:file "merge")
                (:file "compaction")

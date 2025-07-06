@@ -16,7 +16,6 @@
   (if length `(simple-array octet (,length))
       `(simple-vector octet)))
 
-
 (defun octet-vector-p (self &optional length)
   "Return T if SELF is an OCTET-VECTOR, optionally with a fixed LENGTH."
   (typep self (if length `(octet-vector ,length) 'octet-vector)))

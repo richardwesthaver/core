@@ -100,7 +100,6 @@ including data loss, unreported corruption, deadlocks, and more.
 (define-alien-callable rocksdb-create-compaction-filter-never (* rocksdb-compactionfilter)
     ((state (* t))
      (context (* rocksdb-compactionfiltercontext)))
-  (declare (ignore context))
   (rocksdb-compactionfilter-create
    state
    (alien-sap (alien-callable-function 'rocksdb-destructor))

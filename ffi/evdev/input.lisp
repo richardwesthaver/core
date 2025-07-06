@@ -7,7 +7,7 @@
 
 ;; (defun eviocgbit (ev len)
 ;;   ;; ioctl read
-;;   (sb-posix::ioctl 8 2 "E" (+ #x20 ev) len))
+;;   (ioctl 8 2 "E" (+ #x20 ev) len))
 
 (define-alien-type input-event
     (struct input-event
