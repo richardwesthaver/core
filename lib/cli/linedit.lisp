@@ -494,7 +494,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (loop repeat up do (ti:tputs ti:cursor-up))
   (tputs ti:column-address col))
 
-(defun paren-style ()
+(definline paren-style ()
   (concatenate
    'simple-string
    (when *highlight-color*
@@ -856,6 +856,7 @@ READ-CHORD according to CMDS."
     (unless *killring*
       (setf *killring* killring))
     (setf (editor-killring editor) killring))
+  (when completions (setf (editor-completer editor) (make-list-completer completions)))
   (save-state editor))
 
 (defclass smart-editor (editor smart-terminal) ())
@@ -1142,9 +1143,13 @@ to the appropriate home directory."
 	(values all max)
 	(values (list common) (length common)))))
 
-(defun list-complete (string completions)
-  (when (plusp (length string))
-    (member-if (lambda (x) (uiop:string-prefix-p string x)) completions)))
+(defun make-list-completer (completions)
+  (lambda (str ed)
+    (declare (ignore ed))
+    (if (zerop (length str))
+        (values completions (reduce 'max (mapcar 'length completions)))
+        (when-let ((matches (flatten (mapcar (lambda (x) (when (uiop:string-prefix-p str x) x)) completions))))
+          (values matches (reduce 'max (mapcar 'length matches)))))))
 
 (defun lisp-complete (string editor)
   (declare (simple-string string))
@@ -1235,7 +1240,7 @@ topic, but if you're willing to dive into sources you can eg. use
 multiple kill-rings not shared between different invocations of
 LINEDIT, or change the function responsible for providing input
 completion."
-  (declare (ignore prompt history killring completions))
+  (declare (ignore prompt history killring))
   (flet ((edit ()
            (catch 'linedit-done
              (loop
@@ -1248,7 +1253,6 @@ completion."
         ;; editor object that shares the same backend, kill-ring, etc.
         (let* ((new (getf keyword-args :prompt))
                (old (editor-prompt *editor*))
-               (completions (getf keyword-args :completions))
                (completer (editor-completer *editor*))
                (history (copy-buffer (editor-history *editor*)))
                (string (get-string *editor*))
@@ -1258,10 +1262,7 @@ completion."
                  (when new
                    (setf (editor-prompt *editor*) new))
                  (when completions
-                   (setf (editor-completer *editor*) 
-                         (lambda (str ed) 
-                           (declare (ignore ed))
-                           (list-complete str completions))))
+                   (setf (editor-completer *editor*) (make-list-completer completions)))
                  (edit))
             (when new
               (setf (editor-prompt *editor*) old))

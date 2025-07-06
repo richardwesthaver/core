@@ -7,7 +7,7 @@
 
 (defpkg :bin/vc
   (:use :cl :std :cli :clap :vc :sb-ext :log :cli/clap/util :obj/ast)
-  (:use :cli/tools/sbcl :cli/prompt)
+  (:use :cli/tools/sbcl)
   (:export :start-vc))
 (in-package :bin/vc)
 

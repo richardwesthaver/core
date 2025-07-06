@@ -4,26 +4,11 @@
 
 ;;; Code:
 (defpackage :cli/tests
-  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/prompt :cli/clap :cli/tools/sbcl :dat/sxp :obj/ast))
+  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/clap :cli/tools/sbcl :dat/sxp :obj/ast))
 
 (in-package :cli/tests)
 (defsuite :cli)
 (in-suite :cli)
-
-;; TODO: needs to be compiled outside scope of test - contender for
-;; fixture API
-(defprompt tpfoo :prompt "testing:")
-
-(deftest cli-prompt (:skip t)
-  "Test CLI prompts"
-  (defvar tcoll nil)
-  (defvar thist nil)
-  (let ((*standard-input* (make-string-input-stream 
-			   (format nil "~A~%~A~%~%" "foobar" "foobar"))))
-    ;; prompts 
-    (is (string= (tpfoo-prompt) "foobar"))
-    (is (string= "foobar"
-                 (completing-read "nothing: " tcoll :history thist :default "foobar")))))
 
 (deftest progress ()
   (flet ((%step () (cli/progress::update 1)))

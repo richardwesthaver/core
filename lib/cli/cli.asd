@@ -10,7 +10,6 @@
                (:file "linedit" :depends-on ("pkg" "terminfo"))
                (:file "repl" :depends-on ("pkg"))
                (:file "shell" :depends-on ("env"))
-               (:file "prompt" :depends-on ("env" "ansi"))
                (:file "ed" :depends-on ("env"))
                (:module
                 "tools"
@@ -42,7 +41,7 @@
                  (:file "cmd" :depends-on ("macs" "proto" "ast"))
                  (:file "cli" :depends-on ("opt" "cmd"))))
                (:file "multi" :depends-on ("repl" "clap"))
-               (:file "tui" :depends-on ("ansi" "progress" "spark" "prompt" "linedit"))
+               (:file "tui" :depends-on ("ansi" "progress" "spark" "linedit"))
                (:file "cli" :depends-on ("pkg" "clap")))
   :in-order-to ((test-op (test-op "cli/tests"))))
 

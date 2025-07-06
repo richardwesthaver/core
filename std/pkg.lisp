@@ -43,6 +43,7 @@
   (:shadow :group)
   (:export
    :safe-endp
+   :singleton-p
    :circular-list-error
    :proper-list-length
    :lastcar

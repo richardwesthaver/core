@@ -347,8 +347,7 @@ from /home/USER/.tmux.conf."
     :popup-status-line-y ;; bove or below the status line
     :popup-width ;; idth of menu or popup
     :popup-window-status-line-x ;; t the window position in status line
-    :popup-window-status-line-y ;; t the status line showing the window
-    ))
+    :popup-window-status-line-y)) ;; t the status line showing the window
 
 (defvar *tmux-variable-names*
   (coerce 

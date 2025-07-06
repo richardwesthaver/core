@@ -36,6 +36,7 @@
 
 (defpkg :cli/env
   (:use :cl :std)
+  (:nicknames :env)
   (:export :*default-global-env-var-names* :*default-local-env-var-names* :exec-path-list
    :program-list :find-exe :ld-library-path-list :concat-env-table
    :make-env-var
@@ -99,6 +100,7 @@
    #:isatty #:winsize)
   (:export
    #:linedit
+   #:yes-or-no
    #:formedit
    #:*default-columns*
    #:*default-lines*
@@ -107,14 +109,9 @@
    #:uninstall-repl
    #:*announce*))
 
-(defpkg :cli/prompt
-  (:use :cl :std :obj/equiv :linedit)
-  (:export
-   :completing-read
-   :defprompt))
-   
 (defpkg :cli/progress
   (:use :cl :std)
+  (:nicknames :progress)
   (:export
    :update-progress
    :with-progress-bar
@@ -129,6 +126,7 @@
 
 (defpkg :cli/spark
   (:use :cl :std)
+  (:nicknames :spark)
   (:export
    :spark :*ticks*
    :vspark :*vticks*))
@@ -157,7 +155,7 @@
    #:make-symlinks))
 
 (defpkg :cli/tui
-  (:use :cl :std :ansi)
-  (:export))
+  (:use :cl :std :ansi :linedit :progress :spark :terminfo :env)
+  (:export :completing-read :defprompt))
 
 (setq *defpkg-hook* nil)
