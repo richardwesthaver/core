@@ -34,5 +34,3 @@
             (tag-tree-filter :id :tag-filter) 
             (stream-sink :id :sink)))
     cfg))
-
-(log-message :trace nil "test")

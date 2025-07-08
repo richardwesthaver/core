@@ -20,10 +20,12 @@
 ;; themselves. 'Greater' elements can contain other elements - lesser
 ;; or greater.
 
-;; Finally we have two high-level classes -- Headings and
-;; Sections. Sections contain both lesser and greater elements, and
-;; headings contain an optional section and any number of child
-;; headings.
+;; We have two high-level classes -- Headings and Sections. Sections contain
+;; both lesser and greater elements, and headings contain an optional section
+;; and any number of child headings.
+
+;; Finally we have the Document class which contains a special 'zeroth'
+;; section in the META slot and the full tree of headings in the TREE slot.
 
 ;;; Code:
 (defpackage :organ

@@ -146,7 +146,6 @@ suggestions; otherwise `object-display' is used."
           (mapcar #'second pairs))
         suggestions)))
 
-;; (export-always 'file-suggestion-function)
 (defun file-suggestion-function (input files)
   "Fuzzy-match this list of files."
   (fuzzy-match input files))

@@ -69,8 +69,8 @@
   (:use :cl)
   (:export :fuzzy-match))
 
-(uiop:define-package :nlp/pkg
-  (:nicknames :nlp)
+(pkg:defpkg :nlp
+  (:use :cl)
   (:use-reexport
    :nlp/data
    :nlp/tokenize

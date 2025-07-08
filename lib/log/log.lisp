@@ -4,7 +4,7 @@
 (in-package :log)
 
 (eval-always
-  (defparameter *log-levels* (vector nil :trace :debug :info :warn :error :fatal t)))
+  (defparameter *log-levels* (vector t :trace :debug :info :warn :error :fatal nil)))
 
 (defun ilevel (name)
   (position name *log-levels*))
@@ -73,7 +73,7 @@ function 'NAME-P'."
          ,@(or pred `((eql *log-level* ,(sb-int:keywordicate name)))))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
          (cond 
-           ((and (boundp '*logger*) *logger* (started-p *logger*))
+           ((and *logger* (started-p *logger*))
             (log-message ,(keywordicate name) nil args))
            ((,(symbolicate (concatenate 'string %name "-P")))
             (fresh-line *trace-output*)

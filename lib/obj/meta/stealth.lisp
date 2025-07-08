@@ -6,7 +6,7 @@
 (in-package :obj/meta/stealth)
 
 ;;;; The following hack is due to Gilbert Baumann.  It allows us to
-;;;; dynamically mix in classes into a class without the latter being
+;;;; dynamically mix in super-classes into a class without the latter being
 ;;;; aware of it.
 
 ;;; Mixins are not intended to be directly instantiated, and instead
@@ -16,7 +16,6 @@
 ;;; First of all we need to keep track of added mixins, we use a hash
 ;;; table here. Better would be to stick this information to the
 ;;; victim class itself.
-
 (defvar *stealth-mixins* (make-hash-table))
 
 (defmacro class-stealth-mixins (class)
@@ -31,7 +30,6 @@
 							      (find-class victim-class)))
 							:test #'class-equalp)
 			   :metaclass (class-of (find-class victim-class)))
-
   ;; Register it as a new mixin for the victim class
   (pushnew mixin-name (class-stealth-mixins victim-class))
 

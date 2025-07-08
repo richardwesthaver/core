@@ -93,4 +93,5 @@
    :log-config
    :*simple-log-message-formatter*
    :*log-message-class*
-   :db-source))
+   :db-source
+   :logger-config))
