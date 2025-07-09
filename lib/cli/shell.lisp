@@ -20,7 +20,6 @@
 (in-readtable :std)
 
 (defparameter *shell* "/bin/bash")
-(defparameter *shell-directory* nil)
 (defparameter *shell-input* nil)
 (defparameter *shell-output* t)
 
@@ -117,7 +116,7 @@ An escaped form with parens like the following works fine:
         (cond
           ((= numarg 0)
            (let ((args (list "-c" (format nil "~a" str)))
-                 (directory (or *shell-directory* *default-pathname-defaults*)))
+                 (directory *default-pathname-defaults*))
              (lambda (&key input (output *standard-output*) (wait t) (status-hook))
                (case output
                  (:string (string-right-trim
@@ -151,13 +150,13 @@ An escaped form with parens like the following works fine:
                               (with-output-to-string (s)
                                 (sb-ext:run-program *shell*
                                                     (list "-c" (format nil "~a" str))
-                                                    :directory (or *shell-directory* *default-pathname-defaults*)
+                                                    :directory directory
                                                     :output s
                                                     :input *shell-input*))))
           (t (nyi!)))
         `(sb-ext:run-program *shell*
                              (list "-c" (format nil "~a" ,str))
-                             :directory (or *shell-directory* *default-pathname-defaults*)
+                             :directory directory
                              :input *shell-input*
                              :output *shell-output*))))
 

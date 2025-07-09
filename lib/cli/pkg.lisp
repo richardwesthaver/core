@@ -32,7 +32,7 @@
 (defpkg :cli/shell
   (:use :cl :std)
   (:nicknames :shell)
-  (:export :*shell* :*shell-directory* :*shell-input*))
+  (:export :*shell* :*shell-input*))
 
 (defpkg :cli/env
   (:use :cl :std)

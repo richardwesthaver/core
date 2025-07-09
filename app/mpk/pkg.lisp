@@ -10,7 +10,7 @@
 
 ;;; Code:
 (defpackage :mpk/mpd
-  (:use :cl :std :sb-bsd-sockets :net/core :config :time :id)
+  (:use :cl :std :sb-bsd-sockets :net/core :config :time :id :ast)
   (:nicknames :mpd)
   (:export
    :with-mpc
@@ -140,7 +140,8 @@
    :make-metadata-sst
    :get-metadata*
    :*mpk-db-table*
-   :update-music-metadata))
+   :update-music-metadata
+   :mpk-db-config))
 
 (pkg:defpkg :mpk-user
   (:use :core-lisp)

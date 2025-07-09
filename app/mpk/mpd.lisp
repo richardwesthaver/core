@@ -673,8 +673,18 @@ Parameters that take a file or directory as an argument should use absolute path
 
 (defvar *mpd-user-config-directory* (merge-homedir-pathnames ".config/mpd/"))
 
+(defconfig mpd-audio-output (ast)
+  ((type :initarg :type :initform nil)
+   (name :initarg :name :initform nil :accessor name)))
+
+(defun make-mpd-audio-output (ast)
+  (when-let ((type (assoc 'type ast))
+             (name (assoc 'name ast)))
+    (make-instance 'mpd-audio-output :name (cdr name) :type (cdr type)
+                   :ast (remove type (remove name ast)))))
+
 (defconfig mpd-config () 
-  ((audio-output :initarg :audio-output :initform nil)
+  ((audio-output :initarg :audio-output :initform nil :accessor mpd-audio-output)
    (music-directory :initarg :music-directory :initform nil)
    (playlist-directory :initarg :playlist-directory :initform nil)
    (pid-file :initarg :pid-file :initform nil)
@@ -728,18 +738,18 @@ Parameters that take a file or directory as an argument should use absolute path
     (if (char= c #\") ;string
         (read stream nil)
         (when (char= c #\{) ;struct
-          (print (read-char-no-hang stream))
+          (read-char-no-hang stream)
           (prog1 
               (let ((c (peek-char t stream nil)))
                 (loop while (not (char= c #\}))
                       if (char= #\# c)
                       do (progn (read-line stream nil) (setf c (peek-char t stream nil)))
-                      else if (whitespace-p (print c))
+                      else if (whitespace-p c)
                       do (progn (read-char stream nil) (setf c (peek-char t stream nil)))
                       else
                       collect (cons (read stream nil) (read stream nil))
                       and do (setf c (peek-char t stream nil))))
-            (print (read-char stream nil)))))))
+            (read-char stream nil))))))
 
 (defun read-mpd-pair (stream)
   "Read a key/value pair from an mpd-config STREAM. Return the result as a cons."
@@ -757,9 +767,10 @@ Parameters that take a file or directory as an argument should use absolute path
              (loop for l = (read-mpd-pair f)
                    while l
                    collect l)))
-         ;; (outputs (loop for a in ast if (eql (car a) 'audio-output)
-         ;;                collect (cdr a)
-         ;;                do (removef ast (print a) :test 'equalp)))
+         (outputs (loop for a in ast if (string= (car a) :audio-output)
+                        collect (make-mpd-audio-output (cdr a))))
          (ret (make-instance 'mpd-config)))
-    (dolist (a ast ret)
-      (setf (slot-value ret (intern (string (car a)) :mpk/mpd)) (cdr a)))))
+    (dolist (a ast)
+      (setf (slot-value ret (intern (string (car a)) :mpk/mpd)) (cdr a)))
+    (setf (slot-value ret (intern "AUDIO-OUTPUT" :mpk/mpd)) outputs)
+    ret))

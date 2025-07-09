@@ -14,9 +14,10 @@
    (alsa :initarg :alsa)
    (gstreamer :initarg :gstreamer)
    (metro :initarg :metro)
+   (db :initarg :db :type mpk/db:mpk-db-config)
    (picard :initarg :picard :type cli/tools/media:picard-config)
    (transmission :initarg :transmission :type cli/tools/net::transmission-config)
-   (ytdl :initarg :ytdl)))
+   (ytdl :initarg :ytdl :type cli/tools/net::ytdl-config)))
 
 (defmethod make-config ((self (eql :mpk)) &rest args &key &allow-other-keys)
   (apply 'make-instance 'mpk-config args))
@@ -41,9 +42,10 @@
 		(setf v
 		      (case k
 			(:logger (apply 'make-config :logger v))
-			(:mpd (apply 'make-config :mpd v))
+			(:mpd (apply 'make-instance 'mpk/mpd:mpd-config v))
                         (:picard (apply 'make-instance 'picard-config v))
                         (:transmission (apply 'make-config :transmission v))
+                        (:ytdl (make-instance 'ytdl-config :ast v))
 			(t v)))
 		(setf (slot-value self s) v))))
 	  (unless *keep-ast* (setf (ast self) nil))

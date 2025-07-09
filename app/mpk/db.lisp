@@ -58,6 +58,9 @@
 (defconfig mpk-db-config (db-config) ()
   (:default-initargs :backend :mpk))
 
+(defmethod make-config ((self (eql :mpk-db)) &rest args &key &allow-other-keys)
+  (apply 'make-instance 'mpk-db-config args))
+
 ;;; ID
 (defclass mpk-db-id (id) ()
   (:default-initargs :id (uuid:make-v4-uuid)))
@@ -233,7 +236,7 @@
 (defun get-metadata* ()
   (with-db (*db* :db (find-db :music.meta *mpk-db-table*) :open nil :close nil)
     (with-column (name (find-column :title *db*))
-      (std/seq:with-iter (it (iter *db* :column :id))
+      (with-iter (it (iter *db* :column :id))
         (seek-to-first it)
         (loop while (iter-valid-p it)
               do (let ((k (key it))

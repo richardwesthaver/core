@@ -8,7 +8,7 @@
    :vc :sb-ext :skel :log
    :obj/ast #+clim :skel/tools/view
    :db :rdb :schema :config :build :packy :krypt :skel/cli)
-  (:import-from :cli/shell :*shell-input* :*shell-directory*)
+  (:import-from :cli/shell :*shell-input*)
   (:use :cli/tools/sbcl))
 
 (in-package :bin/skel)
