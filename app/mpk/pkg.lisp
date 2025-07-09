@@ -131,7 +131,7 @@
    #:metadata-scan-directory))
 
 (defpackage :mpk/db
-  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config :std/seq)
+  (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
   (:import-from :sb-ext :string-to-octets)
   (:export :*mpk-db* :*mpk-db-schema* :mpk-db 
    :mpk-db-init :mpk-db-shutdown
@@ -142,6 +142,15 @@
    :*mpk-db-table*
    :update-music-metadata
    :mpk-db-config))
+
+(defpackage :mpk/metro
+  (:use :cl :std :log :mpk :schema :db :id :config :net/codec/osc :midi)
+  (:import-from :sb-ext :string-to-octets)
+  (:export :*mpk-metro*
+   :mpk-metro-init :mpk-metro-shutdown
+   :*mpk-metro-table*
+   :metro
+   :metro-config))
 
 (pkg:defpkg :mpk-user
   (:use :core-lisp)

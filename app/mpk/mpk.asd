@@ -10,6 +10,7 @@
                (:file "proto")
                (:file "util")
                (:file "db")
+               (:file "metro")
                (:file "cfg")
                (:file "net")
                (:file "mpk")

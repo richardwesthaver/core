@@ -172,8 +172,9 @@
       (apply 'make-instance 'ytdl-config :ast (remove-if (lambda (x) (char= #\# (schar x 0))) ast) args))
     (apply 'make-instance 'ytdl-config args)))
 
-(defun load-ytdl-config (&optional (path *ytdl-user-config-directory*))
-  (make-config :ytdl :ast (uiop:read-file-lines path)))
+(defun load-ytdl-config (&optional (path (merge-pathnames "yt-dlp.conf" *ytdl-user-config-directory*)))
+  (when (probe-file path)
+    (make-config :ytdl :ast (uiop:read-file-lines path))))
 
 (deferror ytdl-error (simple-error error) () (:auto t))
 
@@ -295,10 +296,11 @@ TR_TORRENT_TRACKERS ; A comma-delimited list of the torrent's trackers' announce
   (make-instance 'transmission-config :settings settings))
 
 (defun load-transmission-config (&optional (path *transmission-user-config-directory*))
-  (make-config :transmission 
-               :settings (change-class 
-                          (deserialize (merge-pathnames "settings.json" path) :json)
-                          'transmission-settings)))
+  (when (probe-file path)
+    (make-config :transmission 
+                 :settings (change-class 
+                            (deserialize (merge-pathnames "settings.json" path) :json)
+                            'transmission-settings))))
 
 (define-cli-tool :transmission-remote (args &key (wait t) (output t))
   (let ((proc (sb-ext:run-program *transmission-remote* args :wait wait :output output)))

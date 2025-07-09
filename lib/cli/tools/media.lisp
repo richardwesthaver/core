@@ -164,7 +164,8 @@
   self)
     
 (defun load-mpv-config (&optional (path *mpv-config-path*))
-  (make-config :mpv :path path))
+  (when (probe-file path)
+    (make-config :mpv :path path)))
 
 (define-cli-tool :wireplumber (&rest args)
   (let ((proc (sb-ext:run-program *wireplumber* args :wait t :output t)))
@@ -186,7 +187,8 @@
       (apply 'make-instance 'picard-config args)))
 
 (defun load-picard-config (&optional (path *picard-config-path*))
-  (make-config :picard :path path))
+  (when (probe-file path)
+    (make-config :picard :path path)))
 
 (defvar *picard-commands*
   '(:clear-logs

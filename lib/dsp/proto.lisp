@@ -37,3 +37,8 @@
 (defclass audio-file (av-meta media-file) ())
 (defclass video-file (av-meta media-file) ())
 (defclass image-file (media-file) ())
+
+(defconfig audio-config () ())
+(defconfig audio-system-config (audio-config) ())
+(defconfig video-config () ())
+(defconfig video-system-config (video-config) ())

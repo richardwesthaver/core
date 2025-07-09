@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :dsp/core
-  (:use :cl :std :log)
+  (:use :cl :std :log :config)
   (:export
    #:media-codec
    #:audio-codec
@@ -18,7 +18,11 @@
    #:*media-directory*
    #:*default-media-probe*
    #:dsp-condition
-   #:dsp-error))
+   #:dsp-error
+   #:audio-config
+   #:audio-system-config
+   #:video-config
+   #:video-system-config))
 
 (defpackage :dsp/av
   (:use :cl :std :dsp/core :ffmpeg :sb-alien :dat/mime :id)
