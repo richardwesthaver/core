@@ -32,7 +32,7 @@
 (defmethod make-db ((engine (eql :packy)) &rest initargs &key &allow-other-keys)
   (apply #'make-instance 'packy-db initargs))
 
-(defmethod get-db (dbs (name (eql :packy))))
+(defmethod find-db ((name (eql :packy)) dbs &key))
 
 (defun init-packy-db ()
   (setq *packy-db* (load-schema (make-db :packy) (make-instance 'packy-schema))))

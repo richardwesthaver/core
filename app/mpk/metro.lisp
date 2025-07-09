@@ -1,4 +1,4 @@
-;;; metro.lisp --- Metronomes
+;;; metro.lisp --- MIDI/OSC Client/Server
 
 ;; 
 

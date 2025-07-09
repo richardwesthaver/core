@@ -156,6 +156,7 @@
    :*ytdl*
    :run-ytdl
    :ytdl-error
+   :ytdl-config
    :browser-config
    :chromium-config
    :firefox-config

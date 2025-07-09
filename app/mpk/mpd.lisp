@@ -670,37 +670,96 @@ Parameters that take a file or directory as an argument should use absolute path
 |#
 
 ;;  NOTE 2024-12-22: input/output/database are structured objects too ^^
+
+(defvar *mpd-user-config-directory* (merge-homedir-pathnames ".config/mpd/"))
+
 (defconfig mpd-config () 
-  (audio-outputs
-   music-directory
-   playlist-directory
-   pid-file
-   db-file
-   log-file
-   state-file
-   sticker-file
-   user
-   group
-   bind-to-address
-   port
-   restore-paused
-   save-absolute-paths-in-playlists
-   metadata-to-use
-   auto-update
-   follow-outside-symlinks
-   follow-inside-symlinks
-   zeroconf-enabled
-   zeroconf-name
-   password
-   default-permissions
-   database
-   input
-   replaygain
-   replaygain-limit
-   replaygain-missing-preamp
-   replaygain-preamp
-   volume-normalization
-   filesystem-charset))
+  ((audio-output :initarg :audio-output :initform nil)
+   (music-directory :initarg :music-directory :initform nil)
+   (playlist-directory :initarg :playlist-directory :initform nil)
+   (pid-file :initarg :pid-file :initform nil)
+   (db-file :initarg :db-file :initform nil)
+   (log-file :initarg :log-file :initform nil)
+   (state-file :initarg :state-file :initform nil)
+   (sticker-file :initarg :sticker-file :initform nil)
+   (user :initarg :user :initform nil)
+   (group :initarg :group :initform nil)
+   (bind-to-address :initarg :bind-to-address :initform nil)
+   (port :initarg :port :initform nil)
+   (restore-paused :initarg :restore-paused :initform nil)
+   (save-absolute-paths-in-playlists :initarg :save-absolute-paths-in-playlists :initform nil)
+   (metadata-to-use :initarg :metadata-to-use :initform nil)
+   (auto-update :initarg :auto-update :initform nil)
+   (follow-outside-symlinks :initarg :follow-outside-symlinks :initform nil)
+   (follow-inside-symlinks :initarg :follow-inside-symlinks :initform nil)
+   (zeroconf-enabled :initarg :zeroconf-enabled :initform nil)
+   (zeroconf-name :initarg :zeroconf-name :initform nil)
+   (password :initarg :password :initform nil)
+   (log-level :initarg :log-level :initform nil)
+   (default-permissions :initarg :default-permissions :initform nil)
+   (database :initarg :database :initform nil)
+   (input :initarg :input :initform nil)
+   (replaygain :initarg :replaygain :initform nil)
+   (replaygain-limit :initarg :replaygain-limit :initform nil)
+   (replaygain-missing-preamp :initarg :replaygain-missing-preamp :initform nil)
+   (replaygain-preamp :initarg :replaygain-preamp :initform nil)
+   (volume-normalization :initarg :volume-normalization :initform nil)
+   (filesystem-charset :initarg :filesystem-charset :initform nil)))
+
+;; (defvar *mpd-keys*
+;;   (map 'vector (lambda (x) (substitute #\_ #\- (string-downcase x)))
+;;        '(AUDIO-OUTPUT MUSIC-DIRECTORY PLAYLIST-DIRECTORY PID-FILE DB-FILE LOG-FILE
+;;          STATE-FILE STICKER-FILE USER GROUP BIND-TO-ADDRESS PORT RESTORE-PAUSED
+;;          SAVE-ABSOLUTE-PATHS-IN-PLAYLISTS METADATA-TO-USE AUTO-UPDATE
+;;          FOLLOW-OUTSIDE-SYMLINKS FOLLOW-INSIDE-SYMLINKS ZEROCONF-ENABLED ZEROCONF-NAME
+;;          PASSWORD DEFAULT-PERMISSIONS DATABASE INPUT REPLAYGAIN REPLAYGAIN-LIMIT
+;;          REPLAYGAIN-MISSING-PREAMP REPLAYGAIN-PREAMP VOLUME-NORMALIZATION
+;;          FILESYSTEM-CHARSET)))
 
 (defmethod make-config ((self (eql :mpd)) &rest args)
   (apply 'make-instance 'mpd-config args))
+
+(defun read-mpd-value (stream)
+  "Read a mpd value from STREAM which may be a struct or a string."
+  (let ((c (peek-char t stream)))
+    (loop while (whitespace-p c)
+          do (read-char-no-hang stream nil)
+          do (setf c (peek-char t stream)))
+    (if (char= c #\") ;string
+        (read stream nil)
+        (when (char= c #\{) ;struct
+          (print (read-char-no-hang stream))
+          (prog1 
+              (let ((c (peek-char t stream nil)))
+                (loop while (not (char= c #\}))
+                      if (char= #\# c)
+                      do (progn (read-line stream nil) (setf c (peek-char t stream nil)))
+                      else if (whitespace-p (print c))
+                      do (progn (read-char stream nil) (setf c (peek-char t stream nil)))
+                      else
+                      collect (cons (read stream nil) (read stream nil))
+                      and do (setf c (peek-char t stream nil))))
+            (print (read-char stream nil)))))))
+
+(defun read-mpd-pair (stream)
+  "Read a key/value pair from an mpd-config STREAM. Return the result as a cons."
+  (when-let ((c (peek-char t stream nil)))
+    (loop while c
+          until (not (or (char= c #\#) (whitespace-p c)))
+          do (read-line stream nil)
+          do (setf c (peek-char t stream nil)))
+    (when-let ((k (read stream nil)))
+      (cons (intern (substitute #\- #\_ (symbol-name k))) (read-mpd-value stream)))))
+
+(defun load-mpd-config (&optional (path (merge-pathnames "mpd.conf" *mpd-user-config-directory*)))
+  (let* ((ast
+           (with-open-file (f path)
+             (loop for l = (read-mpd-pair f)
+                   while l
+                   collect l)))
+         ;; (outputs (loop for a in ast if (eql (car a) 'audio-output)
+         ;;                collect (cdr a)
+         ;;                do (removef ast (print a) :test 'equalp)))
+         (ret (make-instance 'mpd-config)))
+    (dolist (a ast ret)
+      (setf (slot-value ret (intern (string (car a)) :mpk/mpd)) (cdr a)))))

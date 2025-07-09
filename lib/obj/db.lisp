@@ -221,10 +221,10 @@ usually a key such as :ROCKSDB or :SQLITE."))
   (:documentation "Destroy all traces of a database, deleting any on-disk data and shutting down
 in-memory objects."))
 
-(defgeneric find-db (dbs name &key &allow-other-keys)
+(defgeneric find-db (name dbs &key &allow-other-keys)
   (:documentation "Return the db by NAME, from a collection of databases DBS."))
 
-(defgeneric insert-db (dbs name &key &allow-other-keys)
+(defgeneric insert-db (name dbs &key &allow-other-keys)
   (:documentation "Inserts a database by NAME into the database-collection DBS."))
 
 (defgeneric db-open-p (self)

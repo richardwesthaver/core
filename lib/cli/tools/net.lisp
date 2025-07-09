@@ -161,10 +161,23 @@
 
 ;;; YTDL
 ;; ref: https://github.com/yt-dlp/yt-dlp
+(defconfig ytdl-config (ast) ())
+
+(defvar *ytdl-user-config-directory* (merge-homedir-pathnames ".config/yt-dlp/"))
+
+(defmethod make-config ((self (eql :ytdl)) &rest args)
+  (if-let ((ast (getf args :ast)))
+    (progn
+      (remf args :ast)
+      (apply 'make-instance 'ytdl-config :ast (remove-if (lambda (x) (char= #\# (schar x 0))) ast) args))
+    (apply 'make-instance 'ytdl-config args)))
+
+(defun load-ytdl-config (&optional (path *ytdl-user-config-directory*))
+  (make-config :ytdl :ast (uiop:read-file-lines path)))
+
 (deferror ytdl-error (simple-error error) () (:auto t))
 
-(defvar *ytdl* (or (find-exe "yt-dlp")
-                   (find-exe "youtube-dl")))
+(defvar *ytdl* (find-exe "yt-dlp"))
 
 (defmacro with-ytdl ((args &optional output proc input) &body body)
   (with-gensyms (s)

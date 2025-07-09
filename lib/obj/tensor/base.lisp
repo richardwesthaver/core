@@ -137,8 +137,7 @@
           for s across strides
           with hd = 0
           if (not (consp sub.i))
-          do
-             (let ((idx (modproj (the (or index-type null) sub.i) d nil 0)))
+          do (let ((idx (modproj (the (or index-type null) sub.i) d nil 0)))
                (incf hd (* s idx)))
           else do
              (destructuring-bind (start end . inc) sub.i
@@ -157,10 +156,9 @@
 (definline slice (x axis &optional (idx 0) (preserve-rank-p (when (= (rank x) 1) t)))
   (let* ((axis (modproj axis (rank x) nil 0))
          (subs (loop for i from 0 below (rank x) 
-                        collect 
-                        (cond ((/= i axis) '(nil nil))
-                              (preserve-rank-p (list idx (1+ idx)))
-                              (t idx)))))
+                     collect (cond ((/= i axis) '(nil nil))
+                                   (preserve-rank-p (list idx (1+ idx)))
+                                   (t idx)))))
     (subtensor x subs)))
 
 (definline row-slice (x idx)

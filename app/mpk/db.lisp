@@ -73,7 +73,7 @@
    (apply 'make-db :rdb initargs)
    'mpk-db))
 
-(defmethod get-db ((dbs hash-table) name)
+(defmethod find-db (name (dbs hash-table) &key)
   (gethash name dbs))
 
 (defun ensure-mpk-db ()
@@ -196,10 +196,10 @@
 
 (defun mpk-db-info (db &key (schema t) stats log metadata)
   (when schema
-    (schema-from-rdb-column-families (columns (get-db *mpk-db-table* db)))))
+    (schema-from-rdb-column-families (columns (find-db db *mpk-db-table*)))))
 
 (defun update-music-metadata ()
-  (with-db (*db* :db (get-db *mpk-db-table* :music.meta) :open nil :close nil)
+  (with-db (*db* :db (find-db :music.meta *mpk-db-table*) :open nil :close nil)
     (with-wbwi (b)
       (let ((file-cf (find-column :file *db*)) (name-cf (find-column :title *db*)) (id-cf (find-column :id *db*)))
         (maphash-keys
@@ -231,7 +231,7 @@
     (ingest-db *db* (list (namestring name)) :column :title :opts opts)))
 
 (defun get-metadata* ()
-  (with-db (*db* :db (get-db *mpk-db-table* :music.meta) :open nil :close nil)
+  (with-db (*db* :db (find-db :music.meta *mpk-db-table*) :open nil :close nil)
     (with-column (name (find-column :title *db*))
       (std/seq:with-iter (it (iter *db* :column :id))
         (seek-to-first it)
