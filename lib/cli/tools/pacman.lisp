@@ -18,6 +18,14 @@
   (run-pacman "-Sy" "archlinux-keyring")
   (run-pacman "-Su"))
 
+(defconfig pacman-config (ini-document) ())
+
+(defmethod deserialize (self (format (eql :pacman-config)) &key)
+  (change-class (deserialize self :ini) 'pacman-config))
+
+(defun load-pacman-config (&optional (path #p"/etc/pacman.conf"))
+  (deserialize path :pacman-config))
+
 (define-cli-tool :makepkg (&rest args)
   (let ((proc (sb-ext:run-program *makepkg* (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))

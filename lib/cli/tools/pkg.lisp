@@ -179,7 +179,8 @@
 (defpkg :cli/tools/pacman
   (:use :cl :std :cli/tools/proto :cli/env :config :ast)
   (:export :*pacman* :run-pacman :pacman-error
-   :pacman-upgrade :makepkg :makepkg-error))
+   :pacman-upgrade :pacman-config :load-pacman-config :makepkg 
+   :makepkg-config :load-makepkg-config :makepkg-error))
 
 (defpkg :cli/tools/mail
   (:use :cl :std :cli/tools/proto :cli/env)
