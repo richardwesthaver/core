@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :packy/core)
+(in-package :packy)
 
 (define-condition packy-condition () ())
 (deferror packy-error (simple-error packy-condition) () (:auto t))
@@ -24,8 +24,6 @@
 (defmethod print-object ((self package-id) stream)
   (print-unreadable-object (self stream)
     (format stream "~A" (octet-vector-to-hex-string (id self)))))
-
-(defclass pack (ast id) ())
 
 (defclass package-stream (pack io-stream) ())
 

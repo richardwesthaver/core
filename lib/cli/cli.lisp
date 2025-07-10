@@ -9,7 +9,7 @@
   (:use :cl :std :log)
   (:import-from :time :format-timestring :timestamp)
   #.`(:use-reexport ,@cli/int:*cli-packages*)
-  (:export :sudop :call-with-sudo :with-sudo :pretty-log-message :*sudo-silent*))
+  (:export :sudop :call-with-sudo :with-sudo :pretty-log-message :*sudo-output* :ensure-sudo))
 
 (defpkg :cli/tools
   (:nicknames :tools)
@@ -29,17 +29,20 @@
 (in-readtable :shell)
 
 ;;; Sudo
-(defun sudop () 
-  "Return T if user appears to be root."
-  (equal (namestring (user-homedir-pathname))
-         (sb-unix::uid-homedir 0)))
+(definline sudop () 
+  "Return T if effective user appears to be root."
+  (zerop (sb-posix:geteuid)))
 
-(defvar *sudo-silent* nil)
+(defvar *sudo-output* t)
 
-(defun call-with-sudo (str &optional (silent *sudo-silent*))
-  ;; (when silent (princ "sudo password: "))
-  (sb-ext:run-program (find-exe "sudo") `("-S" ,@(split-sequence #\space str)) :input t :output (not silent)))
+(defun call-with-sudo (str &optional (output *sudo-output*))
+  (sb-ext:run-program (find-exe "sudo") `("-S" ,@(split-sequence #\space str)) :input t :output output))
 
+(defun ensure-sudo ()
+  "Run sudo with input from *standard-input*, validating the credential cache
+only."
+  (unless (sudop) (sb-ext:run-program (find-exe "sudo") '("-v") :input t :output *sudo-output*)))
+    
 (defmacro with-sudo (&body body)
   "Eval BODY, a list of shell command strings, with sudo privileges."
   `(progn ,@(mapcar (lambda (x) `(call-with-sudo ,x)) body)))

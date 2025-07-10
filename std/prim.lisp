@@ -6,34 +6,34 @@
 (in-package :std/prim)
 
 ;;; EARLY MACROS
-(defun g!-symbol-p (s)
-  "Return T if S is a G!-symbol (gensym'd)."
-  (and (symbolp s)
-       (> (length (symbol-name s)) 2)
-       (string= (symbol-name s)
-		"G!"
-		:start1 0
-		:end1 2)))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun g!-symbol-p (s)
+    "Return T if S is a G!-symbol (gensym'd)."
+    (and (symbolp s)
+         (> (length (symbol-name s)) 2)
+         (string= (symbol-name s)
+		  "G!"
+		  :start1 0
+		  :end1 2)))
 
-(defun o!-symbol-p (s)
-  "Return T if S is a O!-symbol (oneshot)."
-  (and (symbolp s)
-       (> (length (symbol-name s)) 2)
-       (string= (symbol-name s)
-		"O!"
-		:start1 0
-		:end1 2)))
+  (defun o!-symbol-p (s)
+    "Return T if S is a O!-symbol (oneshot)."
+    (and (symbolp s)
+         (> (length (symbol-name s)) 2)
+         (string= (symbol-name s)
+		  "O!"
+		  :start1 0
+		  :end1 2)))
 
-(defun o!-symbol-to-g!-symbol (s)
-  "Convert O!-symbol S to a G!-symbol."
-  (symb "G!"
-	(subseq (symbol-name s) 2)))
+  (defun o!-symbol-to-g!-symbol (s)
+    "Convert O!-symbol S to a G!-symbol."
+    (symb "G!" (subseq (symbol-name s) 2))))
 
 (defmacro defmacro/g! (name args &body body)
   "Define a macro with G!-symbols in ARGS automatically converted to gensyms."
   (let ((syms (remove-duplicates
 	       (remove-if-not #'g!-symbol-p
-			      (flatten body)))))
+			      (flatten* body)))))
     (multiple-value-bind (body declarations docstring)
 	(parse-body body :documentation t)
       `(defmacro ,name ,args
@@ -51,7 +51,7 @@
 (defmacro defmacro! (name args &body body)
   "Define a macro with G!-symbols in ARGS converted to gensyms and O!-symbols
 evaluated once and bound to a G!-symbol for use in BODY."
-  (let* ((os (remove-if-not #'o!-symbol-p (flatten args)))
+  (let* ((os (remove-if-not #'o!-symbol-p (flatten* args)))
 	 (gs (mapcar #'o!-symbol-to-g!-symbol os)))
     (multiple-value-bind (body declarations docstring)
 	(parse-body body :documentation t)
@@ -66,7 +66,7 @@ evaluated once and bound to a G!-symbol for use in BODY."
   "Define a function with G!-symbols in ARGS automatically converted."
   (let ((syms (remove-duplicates
 	       (remove-if-not #'g!-symbol-p
-			      (flatten body)))))
+			      (flatten* body)))))
     (multiple-value-bind (body declarations docstring)
 	(parse-body body :documentation t)
       `(defun ,name ,args
@@ -81,20 +81,18 @@ evaluated once and bound to a G!-symbol for use in BODY."
 
 ;;; Util
 (defun unquote-args (lst args)
-  "
-  Makes a list suitable for use inside macros (sort-of), by building a
-  new list quoting every symbol in @arg{lst} other than those in @arg{args}.
-  CAUTION: DO NOT use backquotes!
+  "Makes a list suitable for use inside macros (sort-of), by building a
+new list quoting every symbol in @arg{lst} other than those in @arg{args}.
+CAUTION: DO NOT use backquotes!
 
-  @lisp
-  Example:
-  > (unquote-args '(+ x y z) '(x y))
-  => (LIST '+ X Y 'Z)
+@lisp
+Example:
+> (unquote-args '(+ x y z) '(x y))
+=> (LIST '+ X Y 'Z)
 
-  > (unquote-args '(let ((x 1)) (+ x 1)) '(x))
-  => (LIST 'LET (LIST (LIST X '1)) (LIST '+ X '1))
-  @end lisp
-  "
+> (unquote-args '(let ((x 1)) (+ x 1)) '(x))
+=> (LIST 'LET (LIST (LIST X '1)) (LIST '+ X '1))
+@end lisp"
   (maptree-if #'(lambda (x) (or (symbolp x) (consp x)))
               #'(lambda (x) (etypecase x
                               (symbol (if (member x args) x `(quote ,x)))

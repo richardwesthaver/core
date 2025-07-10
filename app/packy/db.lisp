@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :packy/db)
+(in-package :packy)
 
 (defvar *packy-backend-options* rdb::*rdb-backend-options*)
 

@@ -1,4 +1,4 @@
-;;; packy/server.lisp --- Packy Server
+;;; packy/srv.lisp --- Packy Server
 
 ;; Packy Server API.
 
@@ -11,7 +11,7 @@
 
 ;;; Code:
 
-(in-package :packy/server)
+(in-package :packy)
 
 (defclass packy-service (service) ())
 

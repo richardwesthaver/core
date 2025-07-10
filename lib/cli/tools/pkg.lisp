@@ -177,9 +177,9 @@
    :*transmission-daemon*))
 
 (defpkg :cli/tools/pacman
-  (:use :cl :std :cli/tools/proto :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env :config :ast)
   (:export :*pacman* :run-pacman :pacman-error
-           :pacman-upgrade))
+   :pacman-upgrade :makepkg :makepkg-error))
 
 (defpkg :cli/tools/mail
   (:use :cl :std :cli/tools/proto :cli/env)

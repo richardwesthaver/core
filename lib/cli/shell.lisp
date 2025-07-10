@@ -115,15 +115,14 @@ An escaped form with parens like the following works fine:
     (if numarg
         (cond
           ((= numarg 0)
-           (let ((args (list "-c" (format nil "~a" str)))
-                 (directory *default-pathname-defaults*))
+           (let ((args (list "-c" (format nil "~a" str))))
              (lambda (&key input (output *standard-output*) (wait t) (status-hook))
                (case output
                  (:string (string-right-trim
                            '(#\Newline)
                            (with-output-to-string (s)
                              (sb-ext:run-program *shell* args
-                                                 :directory directory
+                                                 :directory *default-pathname-defaults*
                                                  :output s
                                                  :input input
                                                  :wait wait
@@ -133,14 +132,14 @@ An escaped form with parens like the following works fine:
                              '(#\Newline)
                              (with-output-to-string (s)
                                (sb-ext:run-program *shell* args
-                                                   :directory directory
+                                                   :directory *default-pathname-defaults*
                                                    :output s
                                                    :input input
                                                    :wait wait
                                                    :status-hook status-hook)))))
                  (t (sb-ext:run-program *shell*
                                         args
-                                        :directory directory
+                                        :directory *default-pathname-defaults*
                                         :output output
                                         :input input
                                         :wait wait
@@ -150,13 +149,13 @@ An escaped form with parens like the following works fine:
                               (with-output-to-string (s)
                                 (sb-ext:run-program *shell*
                                                     (list "-c" (format nil "~a" str))
-                                                    :directory directory
+                                                    :directory *default-pathname-defaults*
                                                     :output s
                                                     :input *shell-input*))))
           (t (nyi!)))
         `(sb-ext:run-program *shell*
                              (list "-c" (format nil "~a" ,str))
-                             :directory directory
+                             :directory *default-pathname-defaults*
                              :input *shell-input*
                              :output *shell-output*))))
 

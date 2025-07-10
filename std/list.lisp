@@ -120,12 +120,23 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                     (cons source acc))))))
     (if source (rec source nil) nil)))
 
-(eval-when (:compile-toplevel :execute :load-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defun flatten (x)
     "Flatten list X, removing nil elements."
+    (let (list)
+      (labels ((rec (tree)
+                 (when tree
+                   (if (consp tree)
+                       (progn 
+                         (rec (car tree))
+                         (rec (cdr tree)))
+                       (push tree list)))))
+        (rec x)
+        (nreverse list))))
+
+  (defun flatten* (x)
     (labels ((rec (x acc)
                (cond ((null x) acc)
-                     #+sbcl
                      ((typep x 'sb-impl::comma) (rec (sb-impl::comma-expr x) acc))
                      ((atom x) (cons x acc))
                      (t (rec

@@ -86,7 +86,7 @@
    :mpc-connect))
 
 (defpackage :mpk
-  (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp)
+  (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp :progress)
   (:export
    #:*mpk-directory*
    #:mpk-path

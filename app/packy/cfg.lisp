@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :packy/core)
+(in-package :packy)
 
 (defconfig packy-config (ast)
   ((path :initarg :path :accessor path)))

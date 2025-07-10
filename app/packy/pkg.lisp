@@ -3,8 +3,8 @@
 ;; 
 
 ;;; Code:
-(defpackage :packy/core
-  (:use :cl :std :id :dat/proto :io :ast :log :config)
+(defpackage :packy
+  (:use :cl :std :id :dat/proto :io :ast :log :config :db :rdb :schema :time :net/core :net/srv)
   (:export
    :*packy-url*
    :pack
@@ -37,35 +37,19 @@
    :packy-condition
    :packy-error
    :*packy-dist-targets*
-   :*default-packy-dist-targets*))
-
-(defpackage :packy/db
-  (:use :cl :std :packy/core :db :rdb :schema :time)
-  (:export :package-database
-           :init-packy-db))
-
-(defpackage :packy/client
-  (:use :cl :std :packy/core :net/core)
-  (:export :pk-index
-           :packy-client
-           :init-packy))
-
-(defpackage :packy/server
-  (:use :cl :std :packy/core :net/srv)
-  (:export
-   #:packy-service
-   #:packy-server))
+   :*default-packy-dist-targets*
+   :package-database
+   :init-packy-db
+   :package-id))
 
 (defpackage :packy/pkgbuild
-  (:use :cl :std :ast)
+  (:use :cl :std :ast :syn/ts :tree-sitter)
   (:export))
 
 (defpackage :packy/apkbuild
-  (:use :cl :std :ast)
+  (:use :cl :std :ast :syn/ts :tree-sitter)
   (:export))
 
 (defpackage :packy/cli
   (:use :cl :std :cli :clap :packy/client :packy/server :packy/db :packy/core)
   (:export :*packy-cli*))
-
-(in-package :packy/core)

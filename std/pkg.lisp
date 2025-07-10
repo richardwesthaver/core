@@ -42,6 +42,7 @@
   (:import-from :sb-kernel :topological-sort)
   (:shadow :group)
   (:export
+   :flatten*
    :safe-endp
    :singleton-p
    :circular-list-error

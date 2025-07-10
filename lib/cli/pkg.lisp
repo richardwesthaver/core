@@ -114,6 +114,7 @@
   (:nicknames :progress)
   (:export
    :update-progress
+   :update!
    :with-progress-bar
    :*progress-bar*
    :*progress-bar-enabled*

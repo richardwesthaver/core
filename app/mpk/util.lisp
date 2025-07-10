@@ -36,18 +36,20 @@
    (ensure-directories-exist *mpk-data-directory* :verbose t)
    (ensure-directories-exist *mpk-cache-directory* :verbose t)))
 
+(defvar *music-metadata* (make-hash-table :test 'equal))
+
 ;;  FIX 2025-04-18: takes a long time, do better
-(defun metadata-scan-directory (&optional (dir #l"mpk:media;music;") (table (make-hash-table)))
+(defun metadata-scan-directory (&optional (dir #l"mpk:media;music;") (table *music-metadata*))
   (log:info! "walking music directory: ~A" dir)
-  (walk-directory dir 
-    (constantly t) ; collectp
-    (constantly t) ; recursep
-    (lambda (x) ; collector
-      (dolist (y (directory-files x "*.*"))
-        (when-let ((meta (ignore-errors (media-file-metadata y :list)))
-                   (y y))
-          ;; (appendf meta (cons 'hash (cry/b3:b3sum y)))
-          (setf (gethash y table) meta)))))
+    (walk-directory dir 
+      (constantly t) ; collectp
+      (constantly t) ; recursep
+      (lambda (x) ; collector
+        (dolist (y (directory-files x "*.*"))
+          (when-let ((meta (ignore-errors (media-file-metadata y :list)))
+                     (y y))
+            ;; (appendf meta (cons 'hash (cry/b3:b3sum y)))
+            (setf (gethash y table) meta)))))
   table)
 
 (defun get-music-metadata (k tag)
@@ -59,6 +61,28 @@
      (lambda (k) (push (get-music-metadata k tag) ret))
      *music-metadata*)
     ret))
+
+(defvar *music-metadata-tags* nil)
+
+(defun normalize-metadata-tag (str)
+  "Normalize a metadata tag."
+  (declare (simple-string str))
+  (substitute #\- #\space (substitute #\- #\_ (string-downcase str))))
+
+(defun music-metadata-tags ()
+  (maphash-values
+   (lambda (x) 
+     (mapc (lambda (y) 
+             (pushnew (normalize-metadata-tag (car y)) *music-metadata-tags* :test 'string-equal)) 
+           x))
+   *music-metadata*)
+  (setf *music-metadata-tags* (sort *music-metadata-tags* 'string<)))
+
+(defun ab-hi-tags (&optional (list *music-metadata-tags*))
+  (let (ret)
+    (dolist (tag list ret)
+      (when (starts-with-p tag "ab:hi:")
+        (push (subseq tag 6) ret)))))
 
 ;; TODO 2025-04-30: 
 #+nil

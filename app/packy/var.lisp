@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :packy/core)
+(in-package :packy)
 
 (defvar *packy-url* (obj/uri:uri "https://packy.compiler.company"))
 (defvar *packy-home* (merge-pathnames ".stash/packy/" (user-homedir-pathname)))

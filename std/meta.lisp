@@ -127,7 +127,7 @@ non-nil, also include indirect (parent) methods."
               when (eq sn cn)
                 collect c))))
 
-(definline slot-values (obj slots)
+(definline slot-values (obj &optional (slots (mapcar 'slot-definition-name (class-slots (class-of obj)))))
   "Returns a list containing slot-values of OBJ corresponding to symbols in the list SLOTS.
 
 Example:
@@ -136,7 +136,7 @@ Example:
 (let ((thing (make-obj :a 1 :b 2)))
    (slot-values thing '(a b)))
 ;; (1 2)"
-  (mapcar #'(lambda (s) (slot-value obj s)) slots))
+  (mapcar #'(lambda (s) (when (slot-boundp obj s) (slot-value obj s))) slots))
 
 (defmacro with-fslots (slots instance &rest body)
   (with-gensyms (obj args)

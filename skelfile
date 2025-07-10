@@ -226,7 +226,7 @@
   (:install ()
    (with-sudo "install -C -m 755 .stash/core /usr/local/bin/core")
    (println "core -> /usr/local/bin/")
-   (loop for i in '("skel" "homer" "packy" "rdb" "organ" "vc" "gen" "swm" "mpk")
+   (loop for i in '("skel" "homer" "packy" "mpk")
     while i
     do (with-sudo (format nil "ln -sf /usr/local/bin/core /usr/local/bin/~A" i))
     do (println (format nil "~A -> core -> /usr/local/bin/" i))))

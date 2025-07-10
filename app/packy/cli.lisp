@@ -5,6 +5,19 @@
 ;;; Code:
 (in-package :packy/cli)
 
+(defvar *pk-target* nil)
+(defopt pk-version (print-version *cli*))
+(defopt pk-log-level 
+  (setq *log-level* (if *arg* (if (stringp *arg*)
+                                  (sb-int:keywordicate (string-upcase *arg*))
+                                  *arg*)
+                        :info)))
+(defopt pk-target (setq *pk-target* *arg*))
+(defcmd pk-show  ()
+  (println (clap:active-opts *packy-cli*))
+  (println (list :optc *optc* :argc *argc*
+                 :opts *opts* :args *args*)))
+
 (define-cli *packy-cli*
   :help t
   :name "packy"
@@ -16,3 +29,8 @@
   :cmds ((:name show
           :opts ((:name "target" :thunk pk-target))
           :thunk pk-show)))
+
+(defmain start-packy ()
+  (with-cli (*packy-cli* :args (args))
+    (do-cmd *packy-cli*)))
+

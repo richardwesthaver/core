@@ -9,10 +9,9 @@
 (defsystem :bin
   :depends-on (:bin/organ :bin/homer 
                :bin/rdb :bin/skel 
-	       :bin/packy :bin/core
+	       :bin/core :bin/mpk
 	       :bin/vc :bin/skc
-	       :bin/pod :bin/gen
-               :bin/mpk))
+	       :bin/pod :bin/gen))
 
 (defsystem :bin/organ
   :build-operation program-op
@@ -49,13 +48,6 @@
   :depends-on (:std :rdb :cli)
   :components ((:file "rdb")))
 
-(defsystem :bin/gen
-  :build-operation "program-op"
-  :build-pathname "gen"
-  :entry-point "bin/gen::start-gen"
-  :depends-on (:std :syn :cli)
-  :components ((:file "gen")))
-
 (defsystem :bin/vc
   :build-operation program-op
   :build-pathname "vc"
@@ -77,13 +69,6 @@
   :components ((:file "skc"))
   :depends-on (:std :skel))
 
-(defsystem :bin/packy
-  :build-operation program-op
-  :build-pathname "packy"
-  :entry-point "bin/packy::start-packy"
-  :depends-on (:std :cli :packy :rdb)
-  :components ((:file "packy")))
-
 (defsystem :bin/core
   :build-operation program-op
   :build-pathname "core"
@@ -91,12 +76,5 @@
   :components ((:file "core"))
   :depends-on 
   (:core :bin/skel :bin/organ :bin/homer 
-   :bin/rdb :bin/packy :bin/vc :bin/gen
-   :bin/pod :bin/mpk))
-
-(defsystem :bin/gui
-  :build-operation program-op
-  :build-pathname "gui"
-  :entry-point "bin/gui::gui-lisp"
-  :components ((:file "gui"))
-  :depends-on (:core :gui))
+   :bin/rdb :bin/vc :bin/pod :bin/mpk))
+         

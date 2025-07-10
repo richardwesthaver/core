@@ -139,8 +139,8 @@
     :initarg :units-per-char
     :accessor units-per-char))
   (:default-initargs
-   :total 0
-   :progress-char-index 0
+   :total nil
+   :progress-char-index 1
    :units-per-char (floor (expt 1024 2) 50)))
 
 (defmethod update-progress :after ((progress-bar uncertain-size-progress-bar)
@@ -173,7 +173,7 @@
 (defparameter *progress-bar-enabled* nil)
 
 (declaim (inline update))
-(defun update (unit-count &optional (progress-bar *progress-bar*))
+(defun update! (unit-count &optional (progress-bar *progress-bar*))
   (check-type unit-count (integer 1 *))
   (check-type progress-bar (or null progress-bar))
   (unless (null progress-bar)
@@ -203,6 +203,6 @@
 
 (defmacro with-progress-maybe (enabled (steps-count description &rest desc-args) &body body)
   (declare (ignorable steps-count description desc-args))
-  (if enabled
-      `(with-progress-bar (,steps-count ,description ,@desc-args) ,@body)
-      `(progn ,@body)))
+  `(if ,enabled 
+       (with-progress-bar (,steps-count ,description ,@desc-args) ,@body)
+       (progn ,@body)))
