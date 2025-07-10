@@ -39,19 +39,24 @@
 
 (defun read-makepkg-array (stream)
   (read-char stream nil) ;; (
-  (let ((c (peek-char t stream nil)))
+  (let ((c (peek-char t stream nil))
+        ret)
     (loop while (and c (not (char= c #\))))
           if (char= #\# c)
           do (progn (read-line stream nil) (setf c (peek-char t stream nil)))
           else if (whitespace-p c)
           do (progn (read-char stream nil) (setf c (peek-char t stream nil)))
           else if (or (char= c #\') (char= c #\"))
-          collect (read-makepkg-string stream) and do (setf c (peek-char t stream nil))
-          else collect (concatenate 'string
-                                    (loop while (and c (not (or (char= c #\)) (whitespace-p c))))
-                                          do (setf c (peek-char t stream nil))
-                                          collect (read-char stream)))
-          finally (read-char stream))))
+          do (progn (push (read-makepkg-string stream) ret) (setf c (peek-char t stream nil)))
+          else do (push
+                   (concatenate 'string
+                                (loop while (and c (not (char= c #\))) (not (whitespace-p c)))
+                                      collect (read-char stream nil)
+                                      do (setf c (peek-char nil stream nil))))
+                   ret))
+    ;; and do (setf c (peek-char t stream nil))
+    (read-char stream nil)
+    (nreverse ret)))
 
 (defun read-makepkg-value (stream)
   "Read a makepkg.conf value from STREAM which should be either a bash array or string."
@@ -80,7 +85,8 @@
 (defun load-makepkg-config (&optional (path #p"/etc/makepkg.conf"))
   (let ((ast (with-open-file (f path)
                (loop for l = (read-makepkg-pair f)
-                     while l collect l))))
+                     while l 
+                     collect l))))
     (make-instance 'makepkg-config :ast ast)))
     
     

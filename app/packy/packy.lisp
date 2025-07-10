@@ -10,4 +10,4 @@
 (in-package :packy)
 
 #+cli
-(clap:load-package-cli *packy-cli*)
+(clap:load-package-cli packy/cli:*packy-cli*)
