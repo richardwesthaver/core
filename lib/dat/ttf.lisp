@@ -2555,7 +2555,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
 (defparameter *font-cache* (make-hash-table :test 'equal)
   "Hashmap for caching font families, subfamilies and files.")
 
-;;(pushnew (xlib:font-path *display*) *font-dirs*)
+;; (pushnew (xlib:font-path *display*) *font-dirs*)
 (defun cache-font-file (pathname)
   "Caches font file."
   (handler-case
@@ -2573,7 +2573,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
                     (lambda (x)
                       (dolist (f (directory-files x))
                         (when (ttf-pathname-p f)
-                          (print (cache-font-file f))))))))
+                          (cache-font-file f)))))))
 
 (defun get-font-families ()
   "Returns cached font families."

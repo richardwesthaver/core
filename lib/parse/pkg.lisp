@@ -48,31 +48,32 @@
   (:import-from :std :with-gensyms :once-only
    :ensure-cons :ignore-some-conditions :octet-vector :octet)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
-  (:export :with-vector-parsing
-           :with-string-parsing
-           :with-octets-parsing
-           :eofp
-           :current
-           :peek
-           :eof-value
-           :pos
-           :advance
-           :advance*
-           :advance-to
-           :advance-to*
-           :skip
-           :skip*
-           :skip+
-           :skip?
-           :skip-until
-           :skip-while
-           :bind
-           :match
-           :match-i
-           :match?
-           :match-case
-           :match-i-case
-           :match-failed))
+  (:export 
+   :with-vector-parsing
+   :with-string-parsing
+   :with-octets-parsing
+   :eofp
+   :current
+   :peek
+   :eof-value
+   :pos
+   :advance
+   :advance*
+   :advance-to
+   :advance-to*
+   :skip
+   :skip*
+   :skip+
+   :skip?
+   :skip-until
+   :skip-while
+   :bind*
+   :match
+   :match-i
+   :match?
+   :match-case
+   :match-i-case
+   :match-failed))
 
 (defpackage :parse/pratt
   (:use :cl :parse/proto)

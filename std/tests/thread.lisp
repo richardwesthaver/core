@@ -70,10 +70,13 @@
 (deftest timers ()
   "Test various timer functionality."
   (sb-int:with-progressive-timeout (ttl :seconds 1)
-    (sleep 0.1)
+    (sleep 0.001)
     (is (/= (ttl) 1))))
 
 (deftest thread-pool ()
   "Test THREAD-POOLs."
   (let ((tp (make-thread-pool 8)))
+    (istype '(array worker) (workers tp))
+    (is= 8 (length (workers tp)))
     (istype 'thread-pool tp)))
+    

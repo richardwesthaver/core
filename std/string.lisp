@@ -570,4 +570,52 @@ of a string."
                      (subseq full-string (+ subst-point (length rem-string))))
         full-string)))
 
-;;; Path Templating
+;;; nconcat
+(defun make-growable-string (&optional (init ""))
+  "Make an adjustable string with a fill pointer.
+Given INIT, a string, return an adjustable version of it with the fill pointer
+at the end."
+  (let ((string
+          (make-array (max 5 (length init))
+                      :element-type 'character
+                      :adjustable t
+                      :fill-pointer (length init))))
+    (when init
+      (replace string init))
+    (the string string)))
+
+(defun nconcat (string &rest data)
+  "Destructively concatenate DATA (string designators) to STRING."
+  (declare (optimize speed)
+           (dynamic-extent string))
+  (unless (array-has-fill-pointer-p string)
+    (setf string (make-growable-string string)))
+  (labels ((conc (string x)
+             (typecase x
+               (character
+                (vector-push-extend x string))
+               (simple-string
+                (let ((len (length x)))
+                  (loop for c of-type character across x do
+                           (vector-push-extend c string len))))
+               (t (conc string (string x))))))
+    (dolist (x data string)
+      (conc string x))))
+
+(define-modify-macro nconcatf (&rest data) nconcat)
+
+(defun char-range (char1 char2)
+  (loop for i from (char-code char1) to (char-code char2)
+        collect (code-char i)))
+
+(defun ascii-ichar= (char1 char2)
+  "ASCII case-insensitive char="
+  (or (char= char1 char2)
+      (and (or (char<= #\A char1 #\Z)
+               (char<= #\A char2 #\Z))
+           (char= (char-downcase char1)
+                  (char-downcase char2)))))
+
+(defun ascii-istring= (string1 string2)
+  "ASCII case-insensitive string="
+  (every #'ascii-ichar= string1 string2))

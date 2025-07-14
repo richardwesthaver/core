@@ -124,7 +124,7 @@
    :run-dot :dot-error :*dot*))
 
 (defpkg :cli/tools/net
-  (:use :cl :std :cli/tools/proto :cli/env :uri :config :ast)
+  (:use :cl :std :cli/tools/proto :cli/env :uri :config :ast :ini)
   (:import-from :std/os :with-umask)
   (:export
    :*browser*

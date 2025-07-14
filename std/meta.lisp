@@ -44,12 +44,16 @@
   (:documentation "Write object SELF to STREAM.")
   (:method ((self t) (stream t) &key)
     (write self :stream stream)))
-
 (defgeneric version (self)
   (:documentation "Return the version of object SELF."))
-
+(defgeneric lock (self)
+  (:documentation "Return the lock associated with SELF."))
 (defgeneric upgrade (self)
   (:documentation "Return the upgrade-function associated with object SELF."))
+(defgeneric bind (self)
+  (:documentation "Return the bindings associated with object SELF."))
+(defgeneric (setf bind) (new self)
+  (:documentation "Set the bindings associated with object SELF to NEW."))
 
 (defun slot-boundp* (self slot)
   "Return T if SLOT is bound in object SELF, otherwise return NIL."

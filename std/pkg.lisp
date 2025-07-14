@@ -146,7 +146,7 @@
    :wrap-condition
    :wrapped-error
    :wrap-error))
-   
+
 (defpkg :std/type
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
@@ -156,35 +156,24 @@
   (:import-from :sb-int :unsigned-byte*)
   (:import-from :sb-c :integer-type-length :ctype-of :ctype)
   (:import-from :sb-kernel :*type-classes* :type-class 
-   :make-type-class :*type-cache-nonce* :type-class-name
-   :type-class-id
-   :classoid
-   :type-id->type-class
-   :type-hash-value
-   :*ctype-hashsets*
-   :find-classoid
-   :classoid-of
-   :ctype-of
-   :ctype
+   :make-type-class :*type-cache-nonce* :type-class-name :type-class-id
+   :classoid :type-id->type-class
+   :type-hash-value :*ctype-hashsets*
+   :find-classoid :classoid-of
+   :ctype-of :ctype
    :layout-of)
   (:shadowing-import-from :sb-ext :word)
   (:export :+default-element-type+
    :type-class-of :unsigned-byte*
-   :type-class-id
-   :find-classoid
-   :classoid
-   :type-class-id-of
-   :classoid-of
-   :layout-of
-   :type-id->type-class
-   :type-hash-value
-   :type-class-name-of
-   :type-class-name
-   :*ctype-hashsets*
+   :type-class-id :find-classoid
+   :classoid :type-class-id-of
+   :classoid-of :layout-of
+   :type-id->type-class :type-hash-value
+   :type-class-name-of :type-class-name
    :*type-cache-nonce* :make-type-class
    :*type-classes* :type-class
    :array-index :array-length
-   #:negative-double-float
+   #:negative-double-float :*ctype-hashsets*
    #:negative-fixnum-p
    #:negative-float
    #:negative-float-p
@@ -234,7 +223,7 @@
    #:positive-short-float-p
    #:positive-single-float
    #:positive-single-float-p
-   :negative-integer
+   #:negative-integer
    #:negative-double-float-p
    #:negative-fixnum
    #:negative-integer
@@ -253,22 +242,50 @@
    #:non-positive-long-float-p
    #:non-positive-rational-p
    #:non-positive-single-float
-   :integer-type-length
-   :coercef
-   :octet
-   :octet-vector
-   :octet-vector-p
+   #:integer-type-length
+   #:coercef
+   #:octet
+   #:octet-vector
+   #:octet-vector-p
    #:positive-integer-p
    #:positive-long-float
    #:positive-long-float-p
    #:positive-rational-p
-   :of-type
-   :type=
-   :word))
+   #:of-type
+   #:type=
+   #:word))
+
+(defpkg :std/string
+  (:use :cl)
+  (:use-reexport :sb-unicode)
+  (:import-from :sb-impl :ef-octets-to-string-fun :ef-string-to-octets-fun)
+  (:import-from :sb-kernel :character-coding-error :character-encoding-error :character-decoding-error)
+  (:export
+   :ef-octets-to-string-fun :ef-string-to-octets-fun
+   :character-coding-error :character-encoding-error
+   :character-decoding-error :*suppress-character-coding-errors*
+   :*omit-nulls*
+   :*whitespaces*
+   :*tab-width*
+   :string-designator
+   :ssplit
+   :remove-string
+   :trim
+   :collapse-whitespaces
+   :make-template-parser
+   :string-case
+   :detabify
+   :make-growable-string
+   :nconcat
+   :nconcatf
+   :char-range
+   :ascii-ichar=
+   :ascii-istring=))
 
 (defpkg :std/num
   (:use :cl)
   (:import-from :sb-int :power-of-two-ceiling)
+  (:import-from :std/string :*whitespaces*)
   (:export
    ;; num/parse
    :parse-number
@@ -354,7 +371,6 @@
   (:import-from :sb-lockless
    :make-so-map/fixnum :+hash-nbits+
    :node-hash :%node-next
-   :unbound-marker-p
    :get-next :node-hash
    :so-head :so-bins
    :so-key :so-data
@@ -363,7 +379,7 @@
    :so-find :so-find/string
    :so-maplist :make-so-map/string
    :make-so-set/string :make-so-set/fixnum :make-so-map/addr :make-marked-ref
-   :make-so-set/addr)
+   :make-so-set/addr :unbound-marker-p)
   (:export :hash-table-alist
    :maphash-keys :hash-table-keys
    :maphash-values :hash-table-values
@@ -649,13 +665,13 @@
   (:use :cl)
   (:import-from :std/prim :definline)
   (:import-from :sb-c :deftransform :defoptimizer 
-   :define-vop :parse-deftransform :defknown
+   :define-vop :parse-deftransform 
    :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
    :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
    :assemble :without-scheduling :inst :inst* 
    :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
    :make-file-source-info :make-lisp-source-info
-   :def-ir1-translator)
+   :def-ir1-translator :defknown)
   (:import-from :sb-c :vop)
   (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
    :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
@@ -666,17 +682,16 @@
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
   (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
-   :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions
-   :*primitive-objects* :def-ir1-translator
-   :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop :vop*
+   :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions :def-ir1-translator
    :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
+   :*primitive-objects* :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop*
    :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
    :*backend-predicate-types* :*backend-type-predicates* :emit :assemble
    :without-scheduling :dump-symbolic-asm :inst :inst* :primitive-type :primitive-type-of
    :primitive-type-name :primitive-object-name :primitive-object-lowtag :primitive-object-widetag
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
-   :primitive-type-name-of))
+   :vop :primitive-type-name-of))
 
 (defpkg :std/serde
   (:use :cl)
@@ -692,9 +707,9 @@
   (:export :define-io
    :*simple-objects* :*primitive-object-table* 
    :*core-object-table* :serde
-   :prim-type
-   :serializable-p :deserializable-p
-   :ser :de :serialize :deserialize :serde-condition :serde-error :serializer-error :deserializer-error))
+   :prim-type :serializable-p 
+   :deserializable-p :ser :de :serialize 
+   :deserialize :serde-condition :serde-error :serializer-error :deserializer-error))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)
@@ -772,8 +787,7 @@
   (:import-from :std/prim :definline)
   (:shadow :reset)
   (:export :list-slot-values-using-class
-   :list-class-methods :list-class-slots :ensure-finalized 
-   :subclassp :write-object :start :started-p
+   :list-class-methods :list-class-slots :ensure-finalized :subclassp :write-object :start 
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
@@ -781,7 +795,9 @@
    :slot-boundp* :slot-values
    :explore :with-fslots
    :upgrade :version
-   :status :validate))
+   :status :validate
+   :lock :bind
+   :started-p))
 
 (defpkg :std/seq
   (:use :cl)
@@ -789,7 +805,7 @@
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
   (:import-from :std/macs :once-only)
   (:import-from :std/sym :with-gensyms)
-  (:import-from :std/meta :data)
+  (:import-from :std/meta :data :defaccessor :lock)
   (:import-from :std/list :firstn)
   (:import-from :sb-int :collect)
   (:import-from :std/prim :definline)
@@ -812,37 +828,113 @@
    :queue :make-queue
    :priority-queue :vector-queue
    :*default-priority* :*default-priority-queue-size*
-   :push-priority-queue
-   :pop-priority-queue
-   :make-priority-queue
+   :push-priority-queue :pop-priority-queue
    ;; spin queue
    :spin-queue :make-spin-queue :push-spin-queue :make-spin-lock
    :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
    ;; accumulator
-   :accumulated
-   :accumulate
-   :accumulator
-   :max-accumulator
+   :accumulated :accumulate :accumulator :max-accumulator
    ;; iterator protocol
-   :iterator 
-   :next
-   :key
-   :val
-   :prev
-   :iter
-   :seek
-   :seek-to-first
-   :seek-to-last
-   :seek-for-prev
-   :iter-valid-p
-   :*iter*
-   :idx
-   :with-iter))
+   :iterator :next
+   :key :val
+   :prev :iter
+   :seek :seek-to-first
+   :seek-to-last :seek-for-prev
+   :iter-valid-p :*iter*
+   :idx :with-iter
+   :make-priority-queue))
+
+(defpkg :std/path
+  (:use :cl)
+  (:import-from :uiop :directory-files :subdirectories)
+  (:export
+   :directory-files
+   :subdirectories
+   :path
+   :directory-wildcard
+   :wild-pathname
+   :file-pathname
+   :non-wild-pathname
+   :absolute-pathname
+   :relative-pathname
+   :directory-pathname
+   :directory-empty-p
+   :symlink-pathname
+   :symlinkp
+   :directory-path
+   :directory-path-p
+   :merge-homedir-pathnames
+   :ensure-directory-truename
+   :absolute-directory-pathname
+   :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
+   :tmpize-pathname
+   :with-directory
+   :call-with-directory
+   :with-tmp
+   :walk-directory))
+
+(defpkg :std/file
+  (:use :cl)
+  (:import-from :std/macs :define-constant :eval-always :once-only :when-let)
+  (:import-from :std/condition :deferror)
+  (:import-from :std/path :directory-path :directory-path-p)
+  (:import-from :std/stream :copy-stream)
+  (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
+  (:import-from :sb-ext :delete-directory :delete-file-error)
+  (:import-from :uiop :delete-file-if-exists)
+  (:export
+   :delete-directory :delete-file-error
+   :unknown-file-type
+   :delete-file-if-exists
+   :probe-delete-file
+   :probe-delete-directory
+   :delete-directories
+   :read-file
+   :tmpfile
+   :dir
+   :file
+   :with-open-files
+   :write-stream-into-file
+   :write-file-into-stream
+   :file=
+   :file-size
+   :file-size-in-octets
+   :octet-vector=
+   :file-date
+   :file-timestamp
+   :*hidden-paths*
+   :hidden-path-p
+   :find-files
+   :count-file-lines
+   :probe-merge-file
+   :probe-directory
+   :move-file))
+
+(defpkg :std/pipe
+  (:use :cl :std/array)
+  (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
+  (:import-from :std/sym :with-gensyms)
+  (:import-from :std/type :octet)
+  (:import-from :std/macs :when-let :eval-always :once-only)
+  (:import-from :std/list :removef)
+  (:import-from :std/file :file)
+  (:export :sink :source :element 
+   :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate :filter
+   :element-stream :value :index :resolve-element
+   :find-element :find-parent-element :insert-element :withdraw-element
+   :remove-element :set-element-id :move-element :message
+   :event :buffer :bus :format-message
+   :condition-message :message-condition
+   :stream-sink :stream-source :file-sink :file-source
+   :add-element :insert-element*
+   :defpipe :make-pipe :simple-message :message-content
+   :defpipe*))
 
 (defpkg :std/thread
   (:use :cl)
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
+  (:import-from :std/pipe :index)
   (:import-from :sb-thread :*all-threads* :make-foreign-thread)
   (:import-from :std/list :flatten)
   (:import-from :std/prim :definline)
@@ -858,6 +950,8 @@
    :*all-threads*
    :*worker-class*
    :*worker*
+   :work
+   :scheduler
    :kernel-function
    :defkernel
    :kernel-object
@@ -877,11 +971,12 @@
    :broadcast-work
    :find-thread-pool
    :run-thread
-   :std-thread-error :thread-support-p
+   :thread-support-p
    :print-top-level :println-top-level
    :find-thread-by-id :thread-id-list
    :timed-join-thread :kill-thread
    :wait-for-threads :worker
+   :wait-for-worker
    :hang :finish-threads
    :make-oracle
    :kill-worker
@@ -910,7 +1005,6 @@
    :condition-wait*
    :sync-message
    :with-sync-message
-   :lock
    :schedule
    :+standard-io-bindings+
    :*default-special-bindings*
@@ -988,72 +1082,6 @@
    :plot-function :print-table :print-heading :print-in-box
    :print-boxed :smile :draw-one-in-chance :draw-chance))
 
-(defpkg :std/path
-  (:use :cl)
-  (:import-from :uiop :directory-files :subdirectories)
-  (:export
-   :directory-files
-   :subdirectories
-   :path
-   :directory-wildcard
-   :wild-pathname
-   :file-pathname
-   :non-wild-pathname
-   :absolute-pathname
-   :relative-pathname
-   :directory-pathname
-   :directory-empty-p
-   :symlink-pathname
-   :symlinkp
-   :directory-path
-   :directory-path-p
-   :merge-homedir-pathnames
-   :ensure-directory-truename
-   :absolute-directory-pathname
-   :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
-   :tmpize-pathname
-   :with-directory
-   :call-with-directory
-   :with-tmp
-   :walk-directory))
-
-(defpkg :std/file
-  (:use :cl)
-  (:import-from :std/macs :define-constant :eval-always :once-only :when-let)
-  (:import-from :std/condition :deferror)
-  (:import-from :std/path :directory-path :directory-path-p)
-  (:import-from :std/stream :copy-stream)
-  (:import-from :std/type :octet :octet-vector :array-index :array-length :+default-element-type+)
-  (:import-from :sb-ext :delete-directory :delete-file-error)
-  (:import-from :uiop :delete-file-if-exists)
-  (:export
-   :delete-directory :delete-file-error
-   :unknown-file-type
-   :delete-file-if-exists
-   :probe-delete-file
-   :probe-delete-directory
-   :delete-directories
-   :read-file
-   :tmpfile
-   :dir
-   :file
-   :with-open-files
-   :write-stream-into-file
-   :write-file-into-stream
-   :file=
-   :file-size
-   :file-size-in-octets
-   :octet-vector=
-   :file-date
-   :file-timestamp
-   :*hidden-paths*
-   :hidden-path-p
-   :find-files
-   :count-file-lines
-   :probe-merge-file
-   :probe-directory
-   :move-file))
-
 (defpkg :std/os
   (:use :cl :sb-alien)
   (:import-from :std/macs :with-gensyms :if-let)
@@ -1109,47 +1137,6 @@
    :file-kind
    :merge-env-pathnames))
 
-(defpkg :std/pipe
-  (:use :cl :std/array)
-  (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
-  (:import-from :std/sym :with-gensyms)
-  (:import-from :std/type :octet)
-  (:import-from :std/macs :when-let :eval-always :once-only)
-  (:import-from :std/list :removef)
-  (:import-from :std/file :file)
-  (:export :sink :source :element :filter
-   :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate
-   :element-stream :value :index :resolve-element
-   :find-element :find-parent-element :insert-element :withdraw-element
-   :remove-element :set-element-id :move-element :message
-   :event :buffer :bus :format-message
-   :condition-message :message-condition
-   :stream-sink :stream-source :file-sink :file-source
-   :add-element :insert-element*
-   :defpipe :make-pipe :simple-message :message-content
-   :defpipe*))
-
-(defpkg :std/string
-  (:use :cl)
-  (:use-reexport :sb-unicode)
-  (:import-from :sb-impl :ef-octets-to-string-fun :ef-string-to-octets-fun)
-  (:import-from :sb-kernel :character-coding-error :character-encoding-error :character-decoding-error)
-  (:export
-   :ef-octets-to-string-fun :ef-string-to-octets-fun
-   :character-coding-error :character-encoding-error
-   :character-decoding-error :*suppress-character-coding-errors*
-   :*omit-nulls*
-   :*whitespaces*
-   :*tab-width*
-   :string-designator
-   :ssplit
-   :remove-string
-   :trim
-   :collapse-whitespaces
-   :make-template-parser
-   :string-case
-   :detabify))
-
 (pkg:defpkg :std/defsys
   (:use :cl)
   (:nicknames :sys)
@@ -1171,19 +1158,21 @@
 (defpkg :std
   (:use :cl)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
-   :std/sym :std/list :std/type :std/num :std/prim
+   :std/sym :std/list :std/type :std/num 
    :std/stream :std/curry :std/array :std/hash-table
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/sys 
    :std/readtable :std/pipe :std/serde :std/rand 
-   :std/async :std/par :std/seq
+   :std/async :std/par :std/seq :std/prim
    :std/comp :std/defsys))
 
 (define-lisp-package :std)
 
 (defpkg :std-user
-  (:use :std-lisp :sb-ext :sb-alien :sb-thread :sb-bsd-sockets :sb-gray :sb-mop :sb-debug :std/defsys)
+  (:use :std-lisp :sb-ext :sb-alien 
+   :sb-thread :sb-bsd-sockets :sb-gray :sb-mop 
+   :sb-debug :std/defsys)
   (:shadowing-import-from :std/meta :reset)
   (:shadowing-import-from :cl-user :path))
 

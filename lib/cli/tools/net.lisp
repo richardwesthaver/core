@@ -119,6 +119,20 @@
 (defun wg-showconf (conf)
   (run-wg "showconf" conf))
 
+;;; DNSMASQ
+(define-cli-tool :dnsmasq (&rest args)
+  (let ((proc (sb-ext:run-program *dnsmasq* (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (dnsmasq-error "dnsmasq command failed: ~A" args))))
+
+(defconfig dnsmasq-config (ini-document) ())
+
+(defmethod deserialize ((self t) (fmt (eql :dnsmasq-config)) &key)
+  (change-class (deserialize self :ini) 'dnsmasq-config))
+
+(defun load-dnsmasq-config (&optional (path #p"/etc/dnsmasq.conf"))
+  (deserialize path :dnsmasq-config))
+
 ;;; EASYRSA
 (defvar *easy-rsa-directory* #p"/etc/easy-rsa/")
 (defvar *easy-rsa-vars-file* (merge-pathnames "vars" *easy-rsa-directory*))
@@ -157,7 +171,6 @@
   (run-nmap* args))
 
 (when *nmap* (pushnew :nmap *cli-tools*))
-  
 
 ;;; YTDL
 ;; ref: https://github.com/yt-dlp/yt-dlp

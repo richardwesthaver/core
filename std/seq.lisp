@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :std/seq)
 
-(defun sequencep (object)
+(definline sequencep (object)
   (typecase object
     (sequence t)
     (t nil)))
@@ -420,8 +420,11 @@ TEST."
   (%push nil)
   (%pop nil))
 
-(defmethod data ((self vector-queue))
+(defaccessor data ((self vector-queue))
   (raw-queue-data (vector-queue-impl self)))
+
+(defaccessor lock ((self vector-queue))
+  (vector-queue-lock self))
 
 (defun make-vector-queue* (capacity)
   "Return a fresh VECTOR-QUEUE with specified CAPACITY."
@@ -493,9 +496,9 @@ TEST."
 
 (defun %try-pop-vector-queue-with-timeout (queue timeout)
   (with-slots (impl) queue
-    (if (basic-queue-empty-p impl)
+    (if (raw-queue-empty-p impl)
 	(%try-pop-vector-queue queue timeout)
-	(pop-basic-queue impl))))
+	(pop-raw-queue impl))))
 
 (defun try-pop-vector-queue* (queue)
   "Attempt to pop the next element from QUEUE without locking."
@@ -796,10 +799,10 @@ associated priority vector."
     queue))
 
 ;;; Spin Queue
-(defconstant +dummy+ :dummy
+(defconstant +dummy+ :null
   "Dummy SPIN-QUEUE value.")
 
-(defconstant +dead-end+ :dead-end
+(defconstant +dead-end+ :dead
   "Dead-end value for SPIN-QUEUEs.")
 
 (defun make-spin-lock () 
@@ -846,7 +849,7 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
 
 (defun try-each-elem (fun queue)
   "Try FUN on each element of QUEUE."
-  (declare ((function (spin-queue) (values t boolean)) fun))
+  (declare ((function (t) (values t boolean)) fun))
   (let ((node (spin-queue-head queue)))
     (loop
       (let ((value (car node)))
@@ -985,14 +988,14 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
 ;; originally part of q/query, may serve useful in other contexts.
 
 (defclass accumulator ()
-  ((value :initarg :value :accessor accumulator-value))
+  ((value :initarg :value :accessor accumulated))
   (:documentation "Accumulator superclass."))
 
 (defgeneric accumulate (self val)
   (:documentation "Accumulate VAL into an ACCUMULATOR-like object SELF.")
   (:method ((self accumulator) val)
     (when val
-      (setf (accumulator-value self) (+ val (accumulator-value self)))))
+      (setf (accumulated self) (+ val (accumulated self)))))
   (:method ((self list) val)
     (push val self)))
 
@@ -1004,12 +1007,11 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
   (:documentation "Accumulator which tracks the maximum value observed."))
 
 (defmethod accumulate ((self max-accumulator) (val number))
-  (when (> val (accumulator-value self))
-    (setf (accumulator-value self) val)))
+  (when (> val (accumulated self))
+    (setf (accumulated self) val)))
 
 ;;; Iterator
 #|
-
 The iterator protocol allows subsequently accessing some or all elements of a
 sequence in forward or reverse direction. Users first call
 make-sequence-iterator to create an iteration state and receive functions to
@@ -1019,7 +1021,6 @@ of a state object, a limit object, a from-end indicator and the following six
 functions to query or mutate this state: step endp element (setf element) index copy
 
 See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-functions
-
 |#
 
 (defclass iterator ()

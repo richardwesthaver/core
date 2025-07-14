@@ -203,7 +203,7 @@
       (error "'match-case' takes only constant strings at the car position.~%  ~S" cases)))
 
 
-(defmacro bind ((symb &body bind-forms) &body body)
+(defmacro bind* ((symb &body bind-forms) &body body)
   (declare (ignore symb bind-forms body)))
 
 (defmacro subseq* (data start &optional end)
@@ -287,7 +287,7 @@
                                   `(,fn (get-elem ,',elem))
                                   `(funcall ,fn (get-elem ,',elem)))
                        do (or (advance*) (go :eof))))
-              (bind ((symb &body bind-forms) &body body)
+              (bind* ((symb &body bind-forms) &body body)
                 (with-gensyms (start)
                   `(let ((,start ,',p))
                      (tagbody

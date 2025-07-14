@@ -2,10 +2,6 @@
 
 ;; based on the re-implementation of https://github.com/rpgoldman/xmls
 
-;; our nodes are called XML-NODE and inherit from OBJ/TREE:NODE.
-
-;; XMLS:NODE-NAME == OBJ/TREE:NODE-KEY
-
 ;;; Code:
 (in-package :dat/xml)
 
@@ -27,20 +23,20 @@
 (defvar *char-escapes*
   (let ((table (make-array 256 :element-type 'string :initial-element "")))
     (loop
-     for code from 0 to 255
-     for char = (code-char code)
-     for entity = (first (find char *entities* :test #'char= :key #'second))
-     do (setf (svref table code)
-              (cond
-                (entity
-                 (concatenate 'string "&" entity))
-                ((and (or (< code 32) (> code 126))
-                      (not (= code 10))
-                      (not (= code 9)))
-                 (format nil "&#x~x;" code))
-                (t
-                 (format nil "~x" char))))
-     finally (return table))
+      for code from 0 to 255
+      for char = (code-char code)
+      for entity = (first (find char *entities* :test #'char= :key #'second))
+      do (setf (svref table code)
+               (cond
+                 (entity
+                  (concatenate 'string "&" entity))
+                 ((and (or (< code 32) (> code 126))
+                       (not (= code 10))
+                       (not (= code 9)))
+                  (format nil "&#x~x;" code))
+                 (t
+                  (format nil "~x" char))))
+      finally (return table))
     table))
 
 (defvar *parser-stream* nil
@@ -68,23 +64,25 @@ the line number.")
   ns
   attrs
   children)
-  
+
+(std:defaccessor ast:ast ((self xml-node)) (xml-node-children self))
+(std:defaccessor std:name ((self xml-node)) (xml-node-name self))
+
 (defun make-xml-node (&key name ns attrs child children)
   "Convenience function for creating a new xml node."
   (when (and child children)
     (error "Cannot specify both :child and :children for MAKE-NODE."))
   (let ((children (if child
                       (list child)
-                    children)))
+                      children)))
     (%make-xml-node :name name :ns ns
-                :children children
-                :attrs attrs)))
+                    :children children
+                    :attrs attrs)))
 
 ;;; Proc Inst
 (defstruct proc-inst
   (target "" :type string)
-  (contents "" :type string)
-  )
+  (contents "" :type string))
 
 ;;; Utilities
 (defun compress-whitespace (str)
@@ -228,17 +226,17 @@ character translation."
                            (setf eof-p t)
                            (throw 'char-return eof-value)))))
                 (common-lisp:read-char stream t nil recursive-p)))))
-    (when (and (eq stream *parser-stream*)
-               (not eof-p)
-               (char= c #\newline))
-      (incf *parser-line-number*))
-    c)))
+      (when (and (eq stream *parser-stream*)
+                 (not eof-p)
+                 (char= c #\newline))
+        (incf *parser-line-number*))
+      c)))
 
 (defun unread-char (char &optional (stream *standard-input*))
   (when (char= char #\newline)
     (decf *parser-line-number*))
   (common-lisp:unread-char char stream))
-    
+
 (define-symbol-macro next-char (peek-stream (state-stream s)))
 
 (defmacro eat ()
@@ -252,14 +250,14 @@ character translation."
 (defmacro match (&rest matchers)
   "Attempts to match the next input character with one of the supplied matchers."
   `(let ((c (peek-stream (state-stream s))))
-    (and c
-     (or ,@(loop for m in matchers
-                 collect (etypecase m
-                           (standard-char `(char= ,m c))
-                           (symbol `(,m c)))))
-     ;; cheat here a little bit - eat entire char entity instead
-     ;; of peeked char
-     (read-stream (state-stream s)))))
+     (and c
+          (or ,@(loop for m in matchers
+                      collect (etypecase m
+                                (standard-char `(char= ,m c))
+                                (symbol `(,m c)))))
+          ;; cheat here a little bit - eat entire char entity instead
+          ;; of peeked char
+          (read-stream (state-stream s)))))
 
 (defmacro match-seq (&rest sequence)
   "Tries to match the supplied matchers in sequence with characters in the input stream."
@@ -269,28 +267,28 @@ character translation."
 (defmacro match* (&rest sequence)
   "Matches any occurances of any of the supplied matchers."
   `(loop with data = (make-extendable-string 10)
-    for c = (match ,@sequence)
-    while c
-    do (push-string c data)
-    finally (return data)))
+         for c = (match ,@sequence)
+         while c
+         do (push-string c data)
+         finally (return data)))
 
 (defmacro match+ (&rest sequence)
   "Matches one or more occurances of any of the supplied matchers."
   `(and (peek ,@sequence)
-    (match* ,@sequence)))
+        (match* ,@sequence)))
 
 (defmacro peek (&rest matchers)
   "Looks ahead for an occurance of any of the supplied matchers."
   `(let ((c (peek-stream (state-stream s))))
-    (or ,@(loop for m in matchers
-                collect (etypecase m
-                          (standard-char `(char= ,m c))
-                          (symbol `(,m c)))))))
+     (or ,@(loop for m in matchers
+                 collect (etypecase m
+                           (standard-char `(char= ,m c))
+                           (symbol `(,m c)))))))
 
 (defmacro must (&rest body)
   "Throws a parse error if the supplied forms do not succeed."
   `(or (progn ,@body)
-    (error 'xml-parse-error)))
+       (error 'xml-parse-error)))
 
 ;;; Parser Internal
 (defstruct element
@@ -311,12 +309,12 @@ character translation."
 (defmacro defmatch (name &rest body)
   "Match definition macro that provides a common lexical environment for matchers."
   `(defun ,name (c)
-    ,@body))
+     ,@body))
 
 (defmacro defrule (name &rest body)
   "Rule definition macro that provides a common lexical environment for rules."
   `(defun ,name (s)
-    ,@body))
+     ,@body))
 
 (defmacro matchfn (name)
   "Convenience macro for creating an anonymous function wrapper around a matcher macro."
@@ -596,33 +594,33 @@ character translation."
 
 (defrule pi-contents ()
   (loop with data = (make-extendable-string 50)
-         with state = 0
-         for char = (eat)
-         do (push-string char data)
-         do (ecase state
-              (0
-               (case char
-                 (#\?
-                  (trace! :pi-contents "State 0 Match #\?, go to state 1.")
-                  (setf state 1))
-                 (otherwise
-                  (trace! :pi-contents "State 0 ~c, go to (remain in) state 0." char))))
-              (1
-               (case char
-                 (#\>
-                  (trace! :pi-contents "State 1 Match #\>, done.")
-                  (setf state 2))
-                 (otherwise
-                  (trace! :pi-contents "State 1, ~c, do not match #\>, return to 0." char)
-                  (setf state 0)))))
-         until (eql state 2)
-         finally (return (coerce
-                          ;; rip the ?> off the end of the data and return it...
-                          (subseq data 0 (max 0 (- (fill-pointer data) 2)))
-                          'simple-string))))
+        with state = 0
+        for char = (eat)
+        do (push-string char data)
+        do (ecase state
+             (0
+              (case char
+                (#\?
+                 (trace! :pi-contents "State 0 Match #\?, go to state 1.")
+                 (setf state 1))
+                (otherwise
+                 (trace! :pi-contents "State 0 ~c, go to (remain in) state 0." char))))
+             (1
+              (case char
+                (#\>
+                 (trace! :pi-contents "State 1 Match #\>, done.")
+                 (setf state 2))
+                (otherwise
+                 (trace! :pi-contents "State 1, ~c, do not match #\>, return to 0." char)
+                 (setf state 0)))))
+        until (eql state 2)
+        finally (return (coerce
+                         ;; rip the ?> off the end of the data and return it...
+                         (subseq data 0 (max 0 (- (fill-pointer data) 2)))
+                         'simple-string))))
 
 (defrule xmldecl ()
-    (let (name contents)
+  (let (name contents)
     (and
      (match #\?)
      (setf name (name s))
@@ -670,7 +668,7 @@ character translation."
                      ((and (eql (element-type c) 'pi)
                            (not *discard-processing-instructions*))
                       (return (setf elem c))))))
-                       
+    
     (and elem (element-val elem))))
 
 ;;; Public API
@@ -678,7 +676,7 @@ character translation."
   "Renders a lisp node tree to an xml stream.  Indents if indent is non-nil."
   (if (null s)
       (toxml e :indent indent)
-    (generate-xml e s (if indent 1 0))))
+      (generate-xml e s (if indent 1 0))))
 
 (defun write-prologue (xml-decl doctype s)
   "Render the leading <?xml ... ?> and <!DOCTYPE ... > tags to an xml stream."
@@ -797,14 +795,14 @@ character translation."
                  (xmlrep-children treenode)))
 
 (defun xmlrep-find-child-tag (tag treenode
-                                  &optional (if-unfound :error))
+                              &optional (if-unfound :error))
   "Find a single child of TREENODE with TAG.  Returns an error
 if there is more or less than one such child."
   (let ((matches (xmlrep-find-child-tags tag treenode)))
     (case (length matches)
       (0 (if (eq if-unfound :error)
              (error "Couldn't find child tag ~A in ~A"
-                tag treenode)
+                    tag treenode)
              if-unfound))
       (1 (first matches))
       (otherwise (error "Child tag ~A multiply defined in ~A"
@@ -831,7 +829,7 @@ the attrib name (a string) and its value."
   (find attrib (xmlrep-attribs treenode)
         :test #'string=
         :key #'car))
-  
+
 (defun (setf xmlrep-attrib-value) (value attrib treenode)
   ;; ideally, we would check this...
   (let ((old-val (xmlrep-attrib-value attrib treenode nil)))
@@ -930,14 +928,13 @@ the first two return values.)"
              ;; search for (attr-name attr-value) pairs from KEY-ATTRIBS-LIST on
              ;; XML-ATTRIBS-LIST.  true if all key pairs found.
              (loop
-                :with attribs-match-var := t
-                :for attrib-key-pair  :in key-attribs-list
-                :do
+               :with attribs-match-var := t
+               :for attrib-key-pair  :in key-attribs-list
+               :do
                   (setq attribs-match-var
                         (and attribs-match-var
                              (find attrib-key-pair xml-attribs-list :test #'equal)))
-                :finally (return attribs-match-var)))
-
+               :finally (return attribs-match-var)))
            (find-test ( key xml-form )
              ;; test whether the XML-FORM matches KEY
              (cond
@@ -946,11 +943,9 @@ the first two return values.)"
                ((and (stringp key)
                      (stringp (xmlrep-tag xml-form)))
                 (string-equal key (xmlrep-tag xml-form)))
-
                ;; key form (tag-name (attr-name attr-value) ...)
                ((and (find-test (car key) xml-form)
                      (attribs-match-p (cdr key) (xmlrep-attribs xml-form))))))
-
            (descend ( key-list xml-form )
              ;; recursive run down KEY-LIST.  If XML-FORM runs down to NIL before reaching
              ;; the end of KEY-LIST, it will be NIL at the end.  If not, what is
@@ -959,14 +954,12 @@ the first two return values.)"
                ;; KEY-LIST ends without dotted item, at the target XML form
                ((null (cdr key-list))
                 (values xml-form nil nil))
-
                ;; dotted item at the end of KEY-LIST, search attribute list of target XML form
                ((atom (cdr key-list))
                 (if (eq '* (cdr key-list))
                     (values (xmlrep-attribs xml-form) nil nil)
                     (find (cdr key-list)  (xmlrep-attribs xml-form)
                           :test (lambda (key item) (equal key (car item))))))
-
                ;; more tag names to match on KEY-LIST
                ('t
                 (if (eq '* (cadr key-list))
@@ -975,14 +968,11 @@ the first two return values.)"
                                                    :test #'find-test)))
                       (if selected-xml-form
                           (descend (cdr key-list) selected-xml-form)
-
                           ;; no matching sub-form, indicate what part of KEY-LIST did not match
                           (values nil key-list xml-form))))))))
-
     ;; empty list, degenerate usage
     (when (null key-list)
       (error "KEY-LIST is empty."))
-
     ;; search down after initial match
     (if (find-test (car key-list) xml)
         (descend  key-list xml)

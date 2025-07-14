@@ -203,10 +203,8 @@
     (declare (array-length chunk-offset) (chunk chunk))
     (with-output-to-string (data)
       (loop for end = (our-scan characters opposite-p chunk :start chunk-offset) do
-            ;; If nothing matched, and it wasn't because we ran out of chunk,
-            ;; then stop
-               (when (and (not end)
-                          (/= chunk-offset (length chunk)))
+            ;; If nothing matched then stop
+               (unless end
                  (return))
                ;; If not the whole chunk matched, return everything
                ;; up to the part that didn't match
@@ -250,7 +248,6 @@
         (setf (char chunk 0) #\Return)
         (setf start 1)
         (setf pending-cr nil))
-
       (setf (fill-pointer chunk) (array-dimension chunk 0))
       (handle-encoding-errors stream
         (setf (fill-pointer chunk) (read-sequence chunk char-stream :start start)))
@@ -280,12 +277,7 @@
                      (setf (char chunk offset) #\Newline))
                    (incf offset))
               finally (setf (fill-pointer chunk) offset))
-
         t))))
-
-(defun char-range (char1 char2)
-  (loop for i from (char-code char1) to (char-code char2)
-        collect (code-char i)))
 
 (defparameter *invalid-unicode*
   `(,@(char-range #\u0001 #\u0008)
@@ -293,7 +285,6 @@
     ,@(char-range #\u000E #\u001F)
     ,@(char-range #\u007F #\u009F)
     ;; The following are noncharacter as defined by Unicode.
-    ;; Clozure Common Lisp doesn't like them.
     ,@`(
         ,@(char-range #\uD800 #\uDFFF)
         ,@(char-range #\uFDD0 #\uFDEF)
@@ -357,6 +348,7 @@
    (temporary-buffer :initform nil)))
 
 (defun make-html-tokenizer (source &key encoding cdata-switch-helper)
+  "Convert SOURCE to a html-input-stream, wrap and return it in a html-tokenizer."
   (make-instance 'html-tokenizer
     :stream (make-html-input-stream source :override-encoding encoding)
     :cdata-switch-helper cdata-switch-helper))
@@ -372,9 +364,11 @@
                    do (funcall function (pop token-queue))))))
 
 (defun run-state (tokenizer)
+  "Run the current state of TOKENIZER."
   (run-state* tokenizer (slot-value tokenizer 'state)))
 
-(defgeneric run-state* (tokenizer state))
+(defgeneric run-state* (tokenizer state)
+  (:documentation "Complete the given STATE for TOKENIZER."))
 
 (defmacro defstate (state (&rest slots) &body body)
   `(defmethod run-state* (self (state (eql ,state)))
@@ -384,40 +378,9 @@
          t))))
 
 (defun push-token (self token)
+  "Push TOKEN to SELF."
   (with-slots (token-queue) self
     (push token token-queue)))
-
-(defun make-growable-string (&optional (init ""))
-  "Make an adjustable string with a fill pointer.
-Given INIT, a string, return an adjustable version of it with the fill
-pointer at the end."
-  (let ((string
-          (make-array (max 5 (length init))
-                      :element-type 'character
-                      :adjustable t
-                      :fill-pointer (length init))))
-    (when init
-      (replace string init))
-    string))
-
-(defun nconcat (string &rest data)
-  "Destructively concatenate DATA, string designators, to STRING."
-  (declare (optimize speed))
-  (unless (array-has-fill-pointer-p string)
-    (setf string (make-growable-string string)))
-  (labels ((conc (string x)
-             (typecase x
-               (character
-                (vector-push-extend x string))
-               (string
-                (let ((len (length x)))
-                  (loop for c across x do
-                           (vector-push-extend c string len))))
-               (symbol (conc string (string x))))))
-    (dolist (x data string)
-      (conc string x))))
-
-(define-modify-macro nconcatf (&rest data) nconcat)
 
 (defun push-token* (self type &rest data)
   "Push a token with :type type and :data the a string concatenation of data"
@@ -449,9 +412,8 @@ pointer at the end."
 
 (defun consume-number-entity (self is-hex)
   "This function returns either U+FFFD or the character based on the
-   decimal or hexadecimal representation. It also discards \";\" if present.
-   If not present a token (:type :parse-error) is emitted.
-  "
+decimal or hexadecimal representation. It also discards \";\" if present.
+If not present a token (:type :parse-error) is emitted."
   (with-slots (stream) self
     (let ((allowed +digits+)
           (radix 10)
@@ -462,17 +424,14 @@ pointer at the end."
       (when is-hex
         (setf allowed +hex-digits+)
         (setf radix 16))
-
       ;; Consume all the characters that are in range while making sure we
       ;; don't hit an EOF.
       (setf c (html5-stream-char stream))
       (loop while (and (find c allowed) (not (eql c +eof+))) do
                (push c char-stack)
                (setf c (html5-stream-char stream)))
-
       ;; Convert the set of characters consumed to an int.
       (setf char-as-int (parse-integer (coerce (nreverse char-stack) 'string) :radix radix))
-
       ;; Certain characters get replaced with others
       (cond ((find char-as-int +replacement-characters+)
              (setf char (getf +replacement-characters+ char-as-int))
@@ -506,13 +465,11 @@ pointer at the end."
                                   :datavars '(:char-as-int ,char-as-int))))
              ;; Assume char-code-limit >= 1114112
              (setf char (code-char char-as-int))))
-
       ;; Discard the ; if present. Otherwise, put it back on the queue and
       ;; invoke parseError on parser.
       (unless (eql c #\;)
         (push-token self `(:type :parse-error :data :numeric-entity-without-semicolon))
         (html5-stream-unget stream c))
-
       (string char))))
 
 (defun consume-entity (self &key allowed-char from-attribute)
@@ -589,10 +546,8 @@ pointer at the end."
   (consume-entity self :allowed-char allowed-char :from-attribute t))
 
 (defun emit-current-token (self)
-  "This method is a generic handler for emitting the tags. It also sets
-   the state to :data because that's what's needed after a token has been
-   emitted.
-  "
+  "This method is a generic handler for emitting the tags. It also sets the state
+to :data because that's what's needed after a token has been emitted."
   (with-slots (current-token state lowercase-element-name) self
     (let ((token current-token))
       ;; Add token to the queue to be yielded
@@ -607,10 +562,8 @@ pointer at the end."
       (push-token self token)
       (setf state :data-state))))
 
-;;;
-;;; Below are the various tokenizer states worked out.
-;;;
-
+;;; Tokenizer States
+;; Below are the various tokenizer states worked out.
 (defstate :data-state (stream state)
   (let ((data (html5-stream-char stream)))
     (cond ((eql data #\&)
@@ -1594,9 +1547,7 @@ pointer at the end."
 
 (defstate :before-doctype-name-state (stream state current-token)
   (let ((data (html5-stream-char stream)))
-    (cond ((find data +space-characters+)
-           ;; pass
-           )
+    (cond ((find data +space-characters+)) ; pass
           ((eql data #\>)
            (push-token self '(:type :parse-error :data :expected-doctype-name-but-got-right-bracket))
            (setf (getf current-token :correct) nil)
@@ -1639,9 +1590,7 @@ pointer at the end."
 
 (defstate :after-doctype-name-state (stream state current-token)
   (let ((data (html5-stream-char stream)))
-    (cond ((find data +space-characters+)
-           ;; pass
-           )
+    (cond ((find data +space-characters+)) ; pass
           ((eql data #\>)
            (push-token self current-token)
            (setf state :data-state))
@@ -1701,9 +1650,7 @@ pointer at the end."
 
 (defstate :before-doctype-public-identifier-state (stream state current-token)
   (let ((data (html5-stream-char stream)))
-    (cond ((find data +space-characters+)
-           ;; pass
-           )
+    (cond ((find data +space-characters+)) ; pass
           ((eql data #\")
            (setf (getf current-token :public-id) "")
            (setf state :doctype-public-identifier-double-quoted-state))
@@ -1792,9 +1739,7 @@ pointer at the end."
 
 (defstate :between-doctype-public-and-system-identifiers-state (stream state current-token)
   (let ((data (html5-stream-char stream)))
-    (cond ((find data +space-characters+)
-           ;; pass
-           )
+    (cond ((find data +space-characters+)) ; pass
           ((eql data #\>)
            (push-token self current-token)
            (setf state :data-state))
@@ -1833,9 +1778,7 @@ pointer at the end."
 
 (defstate :before-doctype-system-identifier-state (stream state current-token)
   (let ((data (html5-stream-char stream)))
-    (cond ((find data +space-characters+)
-           ;; pass
-           )
+    (cond ((find data +space-characters+)) ; pass
           ((eql data #\")
            (setf (getf current-token :system-id) "")
            (setf state :doctype-system-identifier-double-quoted-state))
@@ -1899,9 +1842,7 @@ pointer at the end."
 
 (defstate :after-doctype-system-identifier-state (stream state current-token)
   (let ((data (html5-stream-char stream)))
-    (cond ((find data +space-characters+)
-           ;; pass
-           )
+    (cond ((find data +space-characters+)) ; pass
           ((eql data #\>)
            (push-token self current-token)
            (setf state :data-state))
@@ -1924,9 +1865,7 @@ pointer at the end."
            (html5-stream-unget stream data)
            (push-token self current-token)
            (setf state :data-state))
-          (t
-           ;; pass
-           ))))
+          (t)))) ; pass
 
 (defstate :cdata-section-state (stream state current-token)
   (let ((data '()))
@@ -1958,7 +1897,6 @@ pointer at the end."
 
 ;;; simple-tree
 ;; A basic implementation of a DOM-core like thing
-
 (defclass node ()
   ((type :initform :node :allocation :class :reader node-type)
    (name :initarg :name :initform nil :reader node-name)
@@ -1993,10 +1931,7 @@ pointer at the end."
 (defclass comment-node (node)
   ((type :initform :comment :allocation :class)))
 
-;;;
 ;;; Creating nodes
-;;;
-
 (defun make-document ()
   (make-instance 'document))
 
@@ -2020,10 +1955,7 @@ pointer at the end."
   (declare (ignore document))
   (make-instance 'text-node :value data))
 
-;;;
 ;;; Node methods
-;;;
-
 (defun node-first-child (node)
   (car (%node-child-nodes node)))
 
@@ -2082,10 +2014,7 @@ pointer at the end."
         (setf (cdr old-attr) new-value)
         (push (cons (cons attribute namespace) new-value) (%node-attributes node)))))
 
-;;;
 ;;; Traversing
-;;;
-
 (defun element-map-children (function node)
   (map nil function (%node-child-nodes node)))
 
@@ -2104,10 +2033,7 @@ pointer at the end."
               value))
    node))
 
-;;
 ;; Printing for the ease of debugging
-;;
-
 (defun node-count (tree)
   (typecase tree
     (element (1+ (apply #'+ (mapcar #'node-count (%node-child-nodes tree)))))
@@ -2165,11 +2091,8 @@ pointer at the end."
 (defmacro push-end (object place)
   "Push to the end of list"
   `(progn
-                                        ;(format t "~&push ~S to ~S" ',object ',place)
+     ;; (log:trace! "~&push ~S to ~S" ',object ',place)
      (setf ,place (append ,place (list ,object)))))
-
-
-(defvar *parser*)
 
 (defun document* ()
   (slot-value *parser* 'document))
@@ -2347,7 +2270,6 @@ pointer at the end."
     (let ((last-table (find "table" open-elements :key #'node-name :test #'string= :from-end t))
           (foster-parent nil)
           (insert-before nil))
-
       (cond (last-table
              ;; XXX - we should really check that this parent is actually a
              ;; node here
@@ -2375,18 +2297,15 @@ pointer at the end."
   ;; specification is not quite the same as the order of steps in the
   ;; code. It should still do the same though.
   (with-slots (active-formatting-elements open-elements) *parser*
-
     ;; Step 1: stop the algorithm when there's nothing to do.
     (unless active-formatting-elements
       (return-from reconstruct-active-formatting-elements))
-
     ;; Step 2 and step 3: we start with the last element. So i is -1.
     (let* ((i (1- (length active-formatting-elements)))
            (entry (elt active-formatting-elements i)))
       (when (or (eql entry :marker)
                 (member entry open-elements))
         (return-from reconstruct-active-formatting-elements))
-
       ;; Step 6
       (loop while (and (not (eql entry :marker))
                        (not (member entry open-elements))) do
@@ -2401,10 +2320,8 @@ pointer at the end."
       (loop
         ;; Step 7
         (incf i)
-
         ;; Step 8
         (setf entry (elt active-formatting-elements i))
-
         ;; Step 9
         (let* ((element (insert-element (list :type :start-tag
                                               :name (node-name entry)
@@ -2412,10 +2329,8 @@ pointer at the end."
           (element-map-attributes* (lambda (name namespace value)
                                      (setf (element-attribute element name namespace) value))
                                    entry)
-
           ;; Step 10
           (setf (elt active-formatting-elements i) element)
-
           ;; Step 11
           (when (eql element (car (last active-formatting-elements)))
             (return)))))))
@@ -2488,7 +2403,6 @@ pointer at the end."
             (setf found (not found)))
           (when found
             (return-from element-in-scope nil)))))
-
     (error "We should never reach this point")))
 
 ;;; Parser
@@ -2513,9 +2427,7 @@ pointer at the end."
   (:method (to-type node &key &allow-other-keys)
     (error "No TRANSFORM-HTML5-DOM method defined for dom type ~S." to-type)))
 
-
 ;; internal
-
 (defun parse-html5-from-source (source &key container encoding strictp dom)
   (let ((*parser* (make-instance 'html-parser
                     :strict strictp)))
@@ -2535,18 +2447,6 @@ pointer at the end."
                 (reverse errors))))))
 
 (defvar *phase*)
-
-(defun ascii-ichar= (char1 char2)
-  "ASCII case-insensitive char="
-  (or (char= char1 char2)
-      (and (or (char<= #\A char1 #\Z)
-               (char<= #\A char2 #\Z))
-           (char= (char-downcase char1)
-                  (char-downcase char2)))))
-
-(defun ascii-istring= (string1 string2)
-  "ASCII case-insensitive string="
-  (every #'ascii-ichar= string1 string2))
 
 (defun cdata-switch-helper ()
   (and (last-open-element)
@@ -2848,9 +2748,7 @@ pointer at the end."
     (setf phase :text)
     nil))
 
-
-;; Phases --------------------------------------------------------------------
-
+;; Phases
 (defun implied-tag-token (name &optional (type :end-tag))
   (list :type type :name name :data '() :self-closing nil))
 
@@ -3004,7 +2902,6 @@ pointer at the end."
                  ,@string-cases))))))
 
 ;; Default methods
-
 (defmethod %process-comment (*phase* token)
   ;; For most phases the following is correct. Where it's not it will be
   ;; overridden.
@@ -3038,9 +2935,7 @@ pointer at the end."
     (setf first-start-tag nil)
     nil))
 
-
 ;; InitialPhase
-
 (def :initial process-space-characters ()
   nil)
 
@@ -3121,9 +3016,7 @@ pointer at the end."
     (anything-else)
     t))
 
-
 ;; BeforeHtmlPhase
-
 (flet ((insert-html-element ()
          (insert-root (implied-tag-token "html" :start-tag))
          (setf (parser-phase *parser*) :before-head)))
@@ -3159,7 +3052,6 @@ pointer at the end."
            token))))
 
 ;; BeforeHeadPhase
-
 (tagname-dispatch :before-head process-start-tag
   ("html" start-tag-html)
   ("head" start-tag-head token)
@@ -3202,7 +3094,6 @@ pointer at the end."
   nil)
 
 ;; InHeadPhase
-
 (tagname-dispatch :in-head process-start-tag
   ("html" start-tag-html)
   ("title" start-tag-title)
@@ -3220,7 +3111,6 @@ pointer at the end."
 
 (flet ((anything-else ()
          (end-tag-head (implied-tag-token "head"))))
-
   ;; the real thing
   (def :in-head process-eof ()
     (anything-else)
@@ -3342,11 +3232,10 @@ pointer at the end."
 
 ;; XXX If we implement a parser for which scripting is disabled we need to
 ;; implement this phase.
-;;
+
 ;; InHeadNoScriptPhase
 
 ;; AfterHeadPhase
-
 (tagname-dispatch :after-head process-start-tag
   ("html" start-tag-html)
   ("body" start-tag-body)
@@ -3420,7 +3309,6 @@ pointer at the end."
     nil))
 
 ;; InBodyPhase
-
 (tagname-dispatch :in-body process-start-tag
   ("html" start-tag-html)
   (("base" "basefont" "bgsound" "command" "link"
@@ -3812,7 +3700,7 @@ pointer at the end."
   nil)
 
 (def :in-body start-tag-rawtext ()
-  ;;;iframe, noembed noframes, noscript(if scripting enabled)
+  ;; iframe, noembed noframes, noscript(if scripting enabled)
   (parse-rc-data-raw-text token :rawtext)
   nil)
 
@@ -3868,11 +3756,11 @@ pointer at the end."
   nil)
 
 (def :in-body start-tag-misplaced ()
-  ;;; Elements that should be children of other elements that have a
-  ;;; different insertion mode; here they are ignored
-  ;;; "caption", "col", "colgroup", "frame", "frameset", "head",
-  ;;; "option", "optgroup", "tbody", "td", "tfoot", "th", "thead",
-  ;;; "tr", "noscript"
+  ;; Elements that should be children of other elements that have a
+  ;; different insertion mode; here they are ignored
+  ;; "caption", "col", "colgroup", "frame", "frameset", "head",
+  ;; "option", "optgroup", "tbody", "td", "tfoot", "th", "thead",
+  ;; "tr", "noscript"
   (perror :unexpected-start-tag-ignored :name (getf token :name))
   nil)
 
@@ -3955,7 +3843,6 @@ pointer at the end."
 ;;   - A property is an alist.
 ;;   - A node is an object.
 ;;   - An element is a node.
-
 (def :in-body end-tag-list-item (open-elements)
   (let ((variant (if (string= (getf token :name) "li")
                      "list"
@@ -4019,7 +3906,6 @@ pointer at the end."
         while (< outer-loop-counter 8)
         do
            (incf outer-loop-counter)
-
            ;; Step 1 paragraph 1
            (setf formatting-element
                  (element-in-active-formatting-elements name))
@@ -4030,7 +3916,6 @@ pointer at the end."
                                  (node-name formatting-element)))))
                   (perror :adoption-agency-1.1 :name name)
                   (return-from outer nil))
-
                  ;; Step 1 paragraph 2
                  ((not (member formatting-element
                                open-elements))
@@ -4038,13 +3923,10 @@ pointer at the end."
                   (setf active-formatting-elements
                         (remove formatting-element active-formatting-elements))
                   (return-from outer nil)))
-
            ;; Step 1 paragraph 3
            (unless (eql formatting-element
                         (last-open-element))
              (perror :adoption-agency-1.3 :name name))
-
-
            ;; Step 2
            ;; Start of the adoption agency algorithm proper
            (setf afe-index (position formatting-element
@@ -4066,7 +3948,6 @@ pointer at the end."
                                          active-formatting-elements)))
              (return-from outer nil))
            (setf common-ancestor (elt open-elements (- afe-index 1)))
-
            ;; Step 5
            ;;if furthestBlock.parent:
            ;;    furthestBlock.parent.removeChild(furthestBlock)
@@ -4080,12 +3961,10 @@ pointer at the end."
            ;; move in step 7.4
            (setf bookmark (position formatting-element
                                     active-formatting-elements))
-
            ;; Step 6
            (setf node furthest-block)
            (setf last-node node)
            (setf inner-loop-counter 0)
-
            (setf index (position node open-elements))
            (loop named inner
                  while (< inner-loop-counter 3)
@@ -4115,19 +3994,14 @@ pointer at the end."
                         (setf (elt af (position node af)) clone)
                         (setf (elt oe (position node oe)) clone))
                       (setf node clone)
-
                       ;; Step 6.6
                       ;; Remove lastNode from its parents, if any
                       (when (node-parent last-node)
                         (node-remove-child (node-parent last-node)
                                            last-node))
                       (node-append-child node last-node)
-
                       ;; Step 7.7
-                      (setf last-node node)
-                      ;; End of inner loop
-                      ))
-
+                      (setf last-node node))) ; End of inner loop
            ;; Step 7
            ;; Foster parent lastNode if commonAncestor is a
            ;; table, tbody, tfoot, thead, or tr we need to
@@ -4143,22 +4017,17 @@ pointer at the end."
                    (get-table-misnested-nodeposition)
                  (node-insert-before* parent last-node insert-before))
                (node-append-child* common-ancestor last-node))
-
            ;; Step 8
            (setf clone (node-clone* formatting-element))
-
            ;; Step 9
            (node-reparent-children furthest-block clone)
-
            ;; Step 10
            (node-append-child* furthest-block clone)
-
            ;; Step 11
            (setf active-formatting-elements
                  (remove formatting-element
                          active-formatting-elements))
            (insert-elt-at clone bookmark active-formatting-elements)
-
            ;; Step 12
            (setf open-elements
                  (remove formatting-element
@@ -4207,9 +4076,7 @@ pointer at the end."
                     (return)))))
   nil)
 
-
 ;; TextPhase
-
 (tagname-dispatch :text process-start-tag
   (default start-tag-other))
 
@@ -4244,10 +4111,8 @@ pointer at the end."
   (setf phase original-phase)
   nil)
 
-
 ;; InTablePhase
 ;; http://www.whatwg.org/specs/web-apps/current-work/#in-table
-
 (tagname-dispatch :in-table process-start-tag
   ("html" start-tag-html)
   ("caption" start-tag-caption)
@@ -4401,9 +4266,7 @@ pointer at the end."
     (setf insert-from-table nil)
     nil))
 
-
 ;; InTableTextPhase
-
 (defun flush-characters ()
   (with-slots (character-tokens) *parser*
     (let ((data (apply #'concatenate 'string
@@ -4446,10 +4309,8 @@ pointer at the end."
   (setf phase original-phase)
   token)
 
-
 ;; InCaptionPhase
 ;; http://www.whatwg.org/specs/web-apps/current-work/#in-caption
-
 (tagname-dispatch :in-caption process-start-tag
   ("html" start-tag-html)
   (("caption" "col" "colgroup" "tbody" "td" "tfoot" "th"
@@ -4513,10 +4374,8 @@ pointer at the end."
   (def :in-caption end-tag-other ()
     (process-end-tag token :phase :in-body)))
 
-
 ;; InColumnGroupPhase
 ;; http://www.whatwg.org/specs/web-apps/current-work/#in-column
-
 (tagname-dispatch :in-column-group process-start-tag
   ("html" start-tag-html)
   ("col" start-tag-col)
@@ -4526,7 +4385,6 @@ pointer at the end."
   ("colgroup" end-tag-colgroup)
   ("col" end-tag-col)
   (default end-tag-other))
-
 
 (flet ((ignore-end-tag-colgroup ()
          (string= (node-name (last-open-element)) "html")))
@@ -4573,10 +4431,8 @@ pointer at the end."
              token)
       (end-tag-colgroup (implied-tag-token "colgroup")))))
 
-
 ;; InTableBodyPhase
 ;; http://www.whatwg.org/specs/web-apps/current-work/#in-table0
-
 (tagname-dispatch :in-table-body process-start-tag
   ("html" start-tag-html)
   ("tr" start-tag-tr)
@@ -4671,7 +4527,6 @@ pointer at the end."
 
 ;; InRowPhase
 ;; http://www.whatwg.org/specs/web-apps/current-work/#in-row
-
 (tagname-dispatch :in-row process-start-tag
   ("html" start-tag-html)
   (("td" "th") start-tag-table-cell)
@@ -4685,7 +4540,6 @@ pointer at the end."
   (("tbody" "tfoot" "thead") end-tag-table-row-group)
   (("body" "caption" "col" "colgroup" "html" "td" "th") end-tag-ignore)
   (default end-tag-other))
-
 
 ;; helper methods (XXX unify this with other table helper methods)
 (flet ((clear-stack-to-table-row-context ()
@@ -4762,10 +4616,8 @@ pointer at the end."
   (def :in-row end-tag-other ()
     (process-end-tag token :phase :in-table)))
 
-
 ;; InCellPhase
 ;; http://www.whatwg.org/specs/web-apps/current-work/#in-cell
-
 (tagname-dispatch :in-cell process-start-tag
   ("html" start-tag-html)
   (("caption" "col" "colgroup" "tbody" "td" "tfoot" "th" "thead" "tr")
@@ -4837,9 +4689,7 @@ pointer at the end."
   (def :in-cell end-tag-other ()
     (process-end-tag token :phase :in-body)))
 
-
 ;; InSelectPhase
-
 (tagname-dispatch :in-select process-start-tag
   ("html" start-tag-html)
   ("option" start-tag-option)
@@ -4938,9 +4788,7 @@ pointer at the end."
   (perror :unexpected-end-tag-in-select :name (getf token :name))
   nil)
 
-
 ;; InSelectInTablePhase
-
 (tagname-dispatch :in-select-in-table process-start-tag
   (("caption" "table" "tbody" "tfoot" "thead" "tr" "td" "th") start-tag-table)
   (default start-tag-other))
@@ -4975,9 +4823,7 @@ pointer at the end."
 (def :in-select-in-table end-tag-other ()
   (process-end-tag token :phase :in-select))
 
-
 ;; InForeignContentPhase
-
 (defparameter +breakout-elements+
   '("b" "big" "blockquote" "body" "br"
     "center" "code" "dd" "div" "dl" "dt"
@@ -4987,7 +4833,6 @@ pointer at the end."
     "ol" "p" "pre" "ruby" "s"  "small"
     "span" "strong" "strike"  "sub" "sup"
     "table" "tt" "u" "ul" "var"))
-
 
 (defun adjust-svg-tag-names (token)
   (let ((replacement (cdr
@@ -5031,7 +4876,6 @@ pointer at the end."
                              :test #'string=))))
     (when replacement
       (setf (getf token :name) replacement))))
-
 
 (defparameter +only-space-characters-regexp+
   (cl-ppcre:create-scanner `(:sequence :start-anchor
@@ -5101,7 +4945,6 @@ pointer at the end."
         (setf new-token nil)
         (return))
       (decf node-index)
-
       (setf node (elt open-elements node-index))
       (when (equal (node-namespace node)
                    html-namespace)
@@ -5110,7 +4953,6 @@ pointer at the end."
     new-token))
 
 ;; AfterBodyPhase
-
 (tagname-dispatch :after-body process-start-tag
   ("html" start-tag-html)
   (default start-tag-other))
@@ -5156,7 +4998,6 @@ pointer at the end."
   token)
 
 ;; InFramesetPhase
-
 (tagname-dispatch :in-frameset process-start-tag
   ("html" start-tag-html)
   ("frameset" start-tag-frameset)
@@ -5214,9 +5055,7 @@ pointer at the end."
                       `(:name ,(getf token :name)))
   nil)
 
-
 ;; AfterFramesetPhase
-
 (tagname-dispatch :after-frameset process-start-tag
   ("html" start-tag-html)
   ("noframes" start-tag-noframes)
@@ -5252,7 +5091,6 @@ pointer at the end."
   nil)
 
 ;; AfterAfterBodyPhase
-
 (tagname-dispatch :after-after-body process-start-tag
   ("html" start-tag-html)
   (default start-tag-other))
@@ -5288,7 +5126,6 @@ pointer at the end."
   token)
 
 ;; AfterAfterFramesetPhase
-
 (tagname-dispatch :after-after-frameset process-start-tag
   ("html" start-tag-html)
   ("noframes" start-tag-noframes)
@@ -5344,7 +5181,6 @@ See: https://www.w3.org/TR/html5/syntax.html#coercing-an-html-dom-into-an-infose
                      (princ c out)
                      (format out "U~:@(~6,'0X~)" (char-code c)))))))
 
-
 (defun xml-unescape-name (name)
   "Reverert escaping done by xml-unescape-name."
   (cl-ppcre:regex-replace-all
@@ -5353,7 +5189,6 @@ See: https://www.w3.org/TR/html5/syntax.html#coercing-an-html-dom-into-an-infose
    (lambda (u)
      (string (code-char (parse-integer u :start 1 :radix 16))))
    :simple-calls t))
-
 
 (defun xml-name-start-char-p (c)
   (or (char<= #\a c #\z)
@@ -5371,7 +5206,6 @@ See: https://www.w3.org/TR/html5/syntax.html#coercing-an-html-dom-into-an-infose
       (char<= (code-char #xF900) c (code-char #xFDCF))
       (char<= (code-char #xFDF0) c (code-char #xFFFD))
       (char<= (code-char #x10000) c (code-char #xEFFFF))))
-
 
 (defun xml-name-char-p (c)
   (or (xml-name-start-char-p c)
@@ -5445,4 +5279,3 @@ at. If the node is a document-fragement a list of XML trees is returned."
 (defmethod deserialize (from (fmt (eql :html)) &key encoding strictp container dom)
   (declare (ignore fmt))
   (parse-html5 from :encoding encoding :strictp strictp :container container :dom dom))
-

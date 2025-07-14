@@ -243,10 +243,6 @@
    :extract-path-list
    :extract-path))
 
-(defpkg :dat/fixml
-  (:nicknames :fixml)
-  (:use :cl :dat/xml :dat/proto))
-
 (defpkg :dat/svg
   (:nicknames :svg)
   (:use :cl :cl-ppcre :dat/xml :dat/proto)

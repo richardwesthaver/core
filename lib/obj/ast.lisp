@@ -123,8 +123,8 @@ output. If TAG is t, use the class-name symbol."
 CLASS. FORM is assumed to be the finalized lisp object which has
 already passed through `read' -- not a string or file-stream for
 example."
-  (declare (type class class)
-           (type form form)
+  (declare (class class)
+           (form form)
            (ignore class form)))
 
 ;;; AST Traversal
@@ -148,9 +148,7 @@ example."
   (:method ((self t) (item t) level)
     (declare (ignore level)))
   (:method ((self debug-traverser) (node t) level)
-    ;; TODO 2024-12-17: 
-    ;; (format (slot-value self 'stream) "~&  ~A~%" (class-name (class-of node)))
-    )
+    (format *trace-output* "~&traverse:  ~A~%" (class-name (class-of node))))
   (:method :before ((copy copy-traverser) (item node) level)
     (declare (ignore level))
     (with-slots (stack) copy

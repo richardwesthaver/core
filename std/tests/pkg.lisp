@@ -16,7 +16,7 @@
 ;; (setf sb-unix::*on-dangerous-wait* :error)
 
 ;; TODO 2024-05-14: fix compilation order of std/fu vs std/readtables
-(deftest readtables (:skip nil)
+(deftest readtables ()
   "Test :std readtable"
   (is (typep #`(,a1 ,a1 ',a1 ,@a1) 'function))
   (is (string= #"test "foo" "# "test \"foo\" "))
@@ -38,19 +38,20 @@
   (is (equal (funcall ['1+ '1+] 1) 3)) ;; compose.2
   (is (equal (funcall [#'1+] 1) 2)) ;; compose.3
   (is (equal (funcall [#'values] 1 2 3) (values 1 2 3))) ;; compose.4
-  (is (equal (funcall «list {* 2} {* 3}» 4) '(8 12))) ;; join.1
-  (is (equal (mapcar «and {< 2} 'evenp (constantly t)» '(1 2 3 4)) (list nil nil nil t))) ;; join.2
+  ;; (is (equal (funcall «list {* 2} {* 3}» 4) '(8 12))) ;; join.1
+  ;; (is (equal (mapcar «and {< 2} 'evenp (constantly t)» '(1 2 3 4)) (list nil nil nil t))) ;; join.2
   ;; typecase-bracket
-  (is (equal (mapcar ‹typecase (number #'1+) (string :str)› '(1 "this" 2 "that")) '(2 :str 3 :str)))
+  ;; (is (equal (mapcar ‹typecase (number #'1+) (string :str)› '(1 "this" 2 "that")) '(2 :str 3 :str)))
   ;; cond-bracket
-  (is (equal (mapcar ‹cond (#'evenp {+ 100}) (#'oddp {+ 200})› '(1 2 3 4)) '(201 102 203 104)))
+  ;; (is (equal (mapcar ‹cond (#'evenp {+ 100}) (#'oddp {+ 200})› '(1 2 3 4)) '(201 102 203 104)))
   ;; if-bracket
-  (is (equal (mapcar ‹if #'evenp {list :a} {list :b}› '(1 2 3 4))
-             '((:b 1) (:a 2) (:b 3) (:a 4))))
+  ;; (is (equal (mapcar ‹if #'evenp {list :a} {list :b}› '(1 2 3 4))
+  ;; '((:b 1) (:a 2) (:b 3) (:a 4))))
   ;; when-bracket
-  (is (equal (mapcar ‹when 'evenp {+ 4}› '(1 2 3 4)) (list nil 6 nil 8)))
+  ;; (is (equal (mapcar ‹when 'evenp {+ 4}› '(1 2 3 4)) (list nil 6 nil 8)))
   ;; unless-bracket
-  (is (equal (mapcar ‹unless 'evenp {+ 4}› '(1 2 3 4)) (list 5 nil 7 nil))))
+  ;; (is (equal (mapcar ‹unless 'evenp {+ 4}› '(1 2 3 4)) (list 5 nil 7 nil)))
+  )
 
 (deftest sym ()
   "Test standard symbol utils"

@@ -18,17 +18,12 @@
                      (invalid-number-reason c))))
   (:documentation "Error signaled when an invalid number is parsed."))
 
-(declaim (type (cons character) *white-space-characters*))
-(defparameter *white-space-characters*
-  (list #\Space #\Tab #\Return #\Linefeed)
-  "A list of all of the whitespace characters.")
-
 (declaim (inline white-space-p))
 (defun white-space-p (x)
   "Is the given character a whitespace character?"
   (declare (optimize (speed 3) (safety 0))
            (type character x))
-  (and (find x *white-space-characters*) t))
+  (and (find x *whitespaces*) t))
 
 (declaim (inline parse-integer-and-places))
 (defun parse-integer-and-places (string start end &key (radix 10))
@@ -52,7 +47,7 @@
     ;; beforehand we count it here
     (let* ((count (loop for pos from (- end-pos 1) downto start
                         while (member (char string pos)
-                                      *white-space-characters*
+                                      *whitespaces*
                                       :test 'char=)
                         :count 1))
            (relevant-digits (the fixnum (- end-pos start count))))
@@ -98,7 +93,8 @@
 (defun parse-number (string &key (start 0) (end nil) (radix 10)
                                  ((:float-format *read-default-float-format*)
                                   *read-default-float-format*))
-  "Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec."
+  "Given a string, and start, end, and radix parameters, produce a number
+according to the syntax definitions in the Common Lisp Hyperspec."
   (declare (type simple-string string))
   (flet ((invalid-number (reason)
            (error 'invalid-number
@@ -147,7 +143,9 @@
 (defun parse-real-number (string &key (start 0) (end nil) (radix 10)
                                       ((:float-format *read-default-float-format*)
                                        *read-default-float-format*))
-  "Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec -- except for complex numbers."
+  "Given a string, and start, end, and radix parameters, produce a number
+according to the syntax definitions in the Common Lisp Hyperspec -- except for
+complex numbers."
   (declare (simple-string string))
   (let ((end (or end (length string))))
     (case (char string start)
@@ -214,8 +212,8 @@
 
 (defun make-float/frac (radix exp-marker whole-place frac-place exp-place)
   "Create a float using EXP-MARKER as the exponent-marker and the
-   parsed-integers WHOLE-PLACE, FRAC-PLACE, and EXP-PLACE as the
-   integer part, fractional part, and exponent respectively."
+   parsed-integers WHOLE-PLACE, FRAC-PLACE, and EXP-PLACE as the integer part,
+   fractional part, and exponent respectively."
   (declare (fixnum radix))
   (let* ((base (base-for-exponent-marker exp-marker))
          (exp  (expt base (number-value exp-place))))
@@ -235,7 +233,9 @@
 (defun parse-positive-real-number (string &key (start 0) (end nil) (radix 10)
                                                ((:float-format *read-default-float-format*)
                                                 *read-default-float-format*))
-  "Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec -- except for complex numbers and negative numbers."
+  "Given a string, and start, end, and radix parameters, produce a number
+according to the syntax definitions in the Common Lisp Hyperspec -- except for
+complex numbers and negative numbers."
   (declare (simple-string string)
            (fixnum radix))
   (let ((end (or end (length string)))

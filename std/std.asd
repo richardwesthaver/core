@@ -26,6 +26,7 @@ that ASDF can find, or have quicklisp installed.")))
    (:file "list")
    (:file "prim")
    (:file "type")
+   (:file "string")
    (:module "num"
     :components
     ((:file "float")
@@ -64,7 +65,6 @@ that ASDF can find, or have quicklisp installed.")))
    (:file "path")
    (:file "os")
    (:file "file")
-   (:file "string")
    (:file "rand")
    (:file "defsys"))
   :build-pathname "../.stash/std"
@@ -80,6 +80,7 @@ that ASDF can find, or have quicklisp installed.")))
     :components
     ((:file "pkg")
      (:file "num")
+     (:file "seq")
      (:file "thread")
      (:file "task"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :std)))

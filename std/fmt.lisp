@@ -7,27 +7,31 @@
   "Print object X with indentation N to stream followed by a new line."
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))
 
-(defun printer-status ()
-  "Return the current printer status."
-  (format t ";;           *print-array* = ~a~%" *print-array*)
-  (format t ";;            *print-base* = ~a~%" *print-base*)
-  (format t ";;            *print-case* = ~a~%" *print-case*)
-  (format t ";;          *print-circle* = ~a~%" *print-circle*)
-  (format t ";;          *print-escape* = ~a~%" *print-escape*)
-  (format t ";;          *print-gensym* = ~a~%" *print-gensym*)
-  (format t ";;          *print-length* = ~a~%" *print-length*)
-  (format t ";;           *print-level* = ~a~%" *print-level*)
-  (format t ";;           *print-lines* = ~a~%" *print-lines*)
-  (format t ";;     *print-miser-width* = ~a~%" *print-miser-width*)
-  (format t ";; *print-pprint-dispatch* = ~a~%" *print-pprint-dispatch*)
-  (format t ";;          *print-pretty* = ~a~%" *print-pretty*)
-  (format t ";;           *print-radix* = ~a~%" *print-radix*)
-  (format t ";;        *print-readably* = ~a~%" *print-readably*)
-  (format t ";;    *print-right-margin* = ~a~%" *print-right-margin*))
-
 (defun fmt-row (data &optional stream)
   "Format DATA as a table row to STREAM."
   (format stream "| ~{~A~^ | ~} |~%" data))
+
+(defun printer-status ()
+  "Return the current printer status."
+  (macrolet ((fmt (var) `(list ',var ,var)))
+    (pprint-tabulary
+     t
+     (list
+      (fmt *print-array*)
+      (fmt *print-base*)
+      (fmt *print-case*)
+      (fmt *print-circle*)
+      (fmt *print-escape*)
+      (fmt *print-gensym*)
+      (fmt *print-length*)
+      (fmt *print-level*)
+      (fmt *print-lines*)
+      (fmt *print-miser-width*)
+      (fmt *print-pprint-dispatch*)
+      (fmt *print-pretty*)
+      (fmt *print-radix*)
+      (fmt *print-readably*)
+      (fmt *print-right-margin*)))))
 
 (defun format-sxhash (code &optional stream)
   "Turn the fixnum value CODE into a human-friendly string. CODE should
@@ -324,9 +328,7 @@ be produced by `sxhash'."
                    (aref bitmap y (1- width)) t)))
   (values))
 
-;;; Described in
 ;;; Computer Graphics - Principles and Practice by Donald Hearn and M. Pauline Baker
-
 (defun draw-circle (x-center y-center radius &optional (bitmap *bitmap*))
   (labels ((pixel (x y) (set-pixel (+ x-center x) (+ y-center y) bitmap))
            (draw-points (x y)

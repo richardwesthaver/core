@@ -114,10 +114,10 @@ threaded context.")
     args)))
 
 (defvar *kernel* nil
-  "The current thread's kernel, or nil. A kernel is simply a funcallable symbol.")
+  "The current thread's kernel, or nil.")
 
 (defvar *worker-kernel* '%worker
-  "A function which drives WORKERs.")
+  "A kernel which drives WORKERs.")
 
 ;;; Globals
 (sb-ext:defglobal *worker-threads* nil
@@ -128,15 +128,13 @@ threaded context.")
     "Hashtable containining (ID . ORACLE-SCOPE).")
 (sb-ext:defglobal *thread-pool-table* (make-hash-table)
     "Hashtable containing (NAME . THREAD-POOL).")
+
 ;;; Conditions
 (defvar *error-workers* nil
   "Track debugger popups in order to kill them.")
 
 (defvar *error-workers-lock* (make-mutex :name "error workers")
   "Lock for *ERROR-WORKERS*.")
-
-(define-condition std-thread-error (thread-error) ()
-  (:documentation "Error signaled while handling standard threads."))
 
 (defun invoke-transfer-error (error)
   "Equivalent to (invoke-restart 'transfer-error error)."
@@ -655,9 +653,9 @@ FUNCTION."
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
 	   :accessor worker-thread
 	   :initarg :thread)
-   (kernel :initform (make-kernel (compile-and-eval `(function ,*worker-kernel*))))
-   (index :reader worker-index :type array-index :initarg :index)
-   (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings*)))
+   (kernel :initform (make-kernel (compile-and-eval `(function ,*worker-kernel*))) :accessor kernel)
+   (index :reader worker-index :type array-index :initarg :index :accessor index)
+   (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings* :accessor bind)))
 
 (defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
   (push (worker-thread self) *worker-threads*))
@@ -707,10 +705,10 @@ FUNCTION."
       (deletef *worker-threads* th))))
 
 (defun send-worker-start (worker)
-  (assert (sb-concurrency:open-gate (slot-value worker '%rx))))
+  (assert (sb-concurrency:open-gate (slot-value worker '%rx)) nil "Failed to start worker ~A" worker))
 
 (defun receive-worker-start (worker)
-  (assert (sb-concurrency:gate-open-p (slot-value worker '%rx))))
+  (assert (sb-concurrency:gate-open-p (slot-value worker '%rx)) nil "Worker hijacked? ~A" worker))
 
 (defun receive-worker-status (worker)
   (ecase (pop-queue (slot-value worker '%tx))
@@ -730,7 +728,6 @@ FUNCTION."
 ;;;; Worker Protocol
 (defgeneric workers (self))
 (defgeneric work (self &key &allow-other-keys))
-(defgeneric lock (self))
 (defgeneric run-thread (self thunk &key name &allow-other-keys))
 
 (defun make-workers (count &key thread kernel bind (return-type 'vector))
@@ -878,22 +875,22 @@ WORKER threads."))
           (try-pop-all))
         (maybe-sleep)))))
 
-(defun steal-work (scheduler) 
+(defun steal-work (scheduler)
   (declare (scheduler scheduler))
   (with-slots (workers index low-priority-work) scheduler
     (let ((low-priority-work low-priority-work))
       (flet ((try-pop (work)
-               (declare (type spin-queue work low-priority-work))
+               (declare (spin-queue work low-priority-work))
                (with-pop-success w work
-                 (when w
+                 (when w ; don't steal nil, the end condition flag
                    (return-from steal-work w))
-                 ;; don't steal nil, the end condition flag
                  (push-spin-queue w low-priority-work))
                (values)))
         (declare (dynamic-extent #'try-pop))
         ;; Start with the worker that has the most recently submitted
         ;; work (approximately) and advance rightward.
         (do-workers (worker workers index t)
+          ;; FIX 2025-07-14: 
           (try-pop (kernel worker)))
         (try-pop low-priority-work))))
   nil)
@@ -1067,31 +1064,30 @@ and execution of concurrent work using a pool of 'worker' threads."))
 ;; (map nil #'receive-worker-start workers)))
 ;; (map nil #'receive-worker-start workers)))
 
-
 (defun make-thread-pool (worker-count &key (name :default)
 					   (bind `((*standard-output* . ,*standard-output*)
-						    (*error-output* . ,*error-output*)))
+						   (*error-output* . ,*error-output*)))
 					   (worker-kernel *worker-kernel*)
 					   (spin-count *default-spin-count*)
-					   ;; (use-caller nil)
                                            (alivep t)
 					   (kernel *kernel*)
                                            (class 'thread-pool))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
-NAME when non-nil is an EQL-unique identifier associated with the thread-pool in *THREAD-POOL-TABLE*.
+NAME when non-nil is an EQL-unique identifier associated with the thread-pool
+in *THREAD-POOL-TABLE*.
 
-BIND is an alist for establishing thread-local dynamic bindings inside worker threads.
+BIND is an alist for establishing thread-local dynamic bindings inside worker
+threads.
 
-WORKER-KERNEL is a function which must be funcalled. It begins the worker loop and does not return until the worker exits.
+WORKER-KERNEL which begins the worker loop and returns when the worker exits.
 
 KERNEL is a function which drives the THREAD-POOL.
 
 CLASS is the designated class of the returned THREAD-POOL object.
 
-SPIN-COUNT is the number of work-searching iterations done by the worker before going to sleep.
-
-When USE-CALLER is non-nil the calling thread may be enlisted to steal work from worker threads."
+SPIN-COUNT is the number of work-searching iterations done by the worker
+before going to sleep."
   (check-type worker-count positive-fixnum)
   (check-type spin-count array-index)
   (let ((*worker-kernel* worker-kernel)

@@ -25,8 +25,7 @@
                (:module "xml"
                 :components
                 ((:file "xml")
-                 (:file "svg")
-                 (:file "fixml")))
+                 (:file "svg")))
                (:module "html"
                 :components
                 ((:file "const")
