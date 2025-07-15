@@ -682,7 +682,7 @@ args) from PKG."
       :when (eq kw :mix) :append args :into mix :else
       :when (eq kw :package-local-nicknames) :collect args :into plns :else
       :when (eq kw :implements) :append args :into implements :else
-      :when (eq kw :prelude) :do (%defpkg* package args) :else
+      :when (eq kw :prelude) :collect args :into preludes :else
       :when (and (eq kw :lock) args) :do (setf lock t) :else
       :when (eq kw :reexport) :append args :into reexport :else
       :when (eq kw :use-reexport) :append args :into use :and :append args :into reexport
@@ -693,16 +693,18 @@ args) from PKG."
       :do (error "unrecognized defpkg keyword ~S" kw)
       :finally 
          (return 
-           `(,package
-             :nicknames ,nicknames :documentation ,documentation
-             :package-local-nicknames ,plns
-             :implements ,implements
-             :lock ,lock
-             :use ,(if use-p use '(:common-lisp))
-             :shadow ,shadow :shadowing-import-from ,shadowing-import-from
-             :import-from ,import-from :export ,export :intern ,intern
-             :recycle ,(if recycle-p recycle (cons package nicknames))
-             :mix ,mix :reexport ,reexport :unintern ,unintern)))))
+           (values
+            `(,package
+              :nicknames ,nicknames :documentation ,documentation
+              :package-local-nicknames ,plns
+              :implements ,implements
+              :lock ,lock
+              :use ,(if use-p use '(:common-lisp))
+              :shadow ,shadow :shadowing-import-from ,shadowing-import-from
+              :import-from ,import-from :export ,export :intern ,intern
+              :recycle ,(if recycle-p recycle (cons package nicknames))
+              :mix ,mix :reexport ,reexport :unintern ,unintern)
+            preludes)))))
 
 (defmacro defpkg (package &rest clauses)
   "Richard's Robust DEFPACKAGE macro. Based on UIOP:DEFINE-PACKAGE ymmv.
@@ -729,12 +731,14 @@ will be defined with the remaining symbols exported and only those symbols.
 In addition to defining and returning a package, when *DEFPKG-HOOK* is
 non-nil, it is called as a function with a single argument - the package being
 defined."
-  (let ((ensure-form
-          `(apply 'ensure-package ',(parse-defpkg-form package clauses))))
+  (multiple-value-bind (form preludes) (parse-defpkg-form package clauses)
+  (let ((pkg `(apply 'ensure-package ',form))
+        (prd (mapcar (lambda (x) `(%defpkg* ',(car form) ',x)) preludes)))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
+       ,@(when prd `(,@prd))
        (if #1=*defpkg-hook*
-           (funcall #1# ,ensure-form)
-           ,ensure-form))))
+           (funcall #1# ,pkg)
+           ,pkg)))))
 
 (defmacro define-lisp-package (package)
   "Define a lisp package based on target PACKAGE which transparently exports all
