@@ -18,7 +18,12 @@
 
 (defpkg :cli/clap
   (:nicknames :clap)
-  (:prelude :clap* :define-cli)
+  (:prelude :clap* 
+   :defcmd :defopt
+   :*argc* :*args* :*optc* :*opts* 
+   :args :arg0
+   :getopt :find-opt
+   :*cli* :define-cli)
   #.`(:use-reexport ,@cli/int:*cli-clap-packages*))
 
 (defpkg :cli-user 

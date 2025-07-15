@@ -76,5 +76,3 @@
 
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format cli SELF as a useful string."))
-
-(defgeneric cli-equal (a b))

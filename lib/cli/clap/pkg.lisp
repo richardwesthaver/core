@@ -39,19 +39,13 @@
    :find-cmd :find-opts :parse-args :print-help
    :print-usage :print-version :do-cmds :do-cmd
    :active-cmds :active-opts :call-opt :do-opt
-   :push-cmd :push-opt :cli-equal
-   :do-opts
-   :clap-simple-error
-   :clap-simple-warning
-   :clap-warning
-   :clap-unknown-argument
-   :clap-missing-argument
-   :clap-invalid-argument
-   :activate-cmd
-   :activate-opt
-   :find-opt
-   :cli-args
-   :opts
+   :push-cmd :push-opt
+   :do-opts :clap-simple-error
+   :clap-simple-warning :clap-warning
+   :clap-unknown-argument :clap-missing-argument
+   :clap-invalid-argument :activate-cmd
+   :activate-opt :find-opt
+   :cli-args :opts
    :cmds))
 
 (defpkg :cli/clap/ast
@@ -63,6 +57,7 @@
   (:use :cl :std :log
    :sb-ext :cli/clap/proto :cli/clap/macs :cli/clap/util
    :cli/clap/vars :cli/clap/ast :cli/clap/util)
+  (:import-from :equiv :equiv)
   (:import-from :obj/ast :ast :form :*ast*)
   (:export :make-cli :define-cli :defmain
    :make-opts :make-cmds :parse-bool-opt :parse-string-opt
@@ -91,13 +86,5 @@
    :version-opt
    :level-opt
    :keep-ast-opt))
-
-(defpkg :cli/clap/simple
-  (:use :cl :std :log :sb-ext)
-  (:import-from :cli/ansi :.ris)
-  (:import-from :uiop :println)
-  (:import-from :sb-ext :parse-native-namestring)
-  (:shadowing-import-from :sb-ext :exit)
-  (:export))
 
 (setq *defpkg-hook* nil)

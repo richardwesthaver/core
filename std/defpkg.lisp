@@ -220,7 +220,7 @@ exists and setting it if not."
   (defun ensure-package-unused (package)
     "Ensure that PACKAGE is unused by any other package."
     (loop :for p :in (package-used-by-list package) :do
-      (unuse-package package p)))
+             (unuse-package package p)))
   (defun delete-package* (package &key nuke)
     "Delete package PACKAGE, additionally ensuring it is unused by other packages
 and optionally nuking all symbols as well."
@@ -236,11 +236,11 @@ and optionally nuking all symbols as well."
     "Return packages associated with list NAMES, starting from the end and deleting all duplicates."
     (remove-duplicates (remove nil (mapcar #'find-package names)) :from-end t))
   (defun fresh-package-name (&key (prefix :%TO-BE-DELETED)
-                               separator
-                               (index (random most-positive-fixnum)))
+                                  separator
+                                  (index (random most-positive-fixnum)))
     (loop :for i :from index
           :for n = (format nil "~A~@[~A~D~]" prefix (and (plusp i) (or separator "")) i)
-            :thereis (and (not (find-package n)) n)))
+          :thereis (and (not (find-package n)) n)))
   (defun rename-package-away (p &rest keys &key prefix &allow-other-keys)
     (let ((new-name
             (apply 'fresh-package-name
@@ -253,8 +253,8 @@ and optionally nuking all symbols as well."
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun package-definition-form (package-designator
                                   &key (nicknamesp t) (usep t)
-                                    (shadowp t) (shadowing-import-p t)
-                                    (exportp t) (importp t) internp (error t))
+                                       (shadowp t) (shadowing-import-p t)
+                                       (exportp t) (importp t) internp (error t))
     (let* ((package (or (find-package* package-designator error)
                         (return-from package-definition-form nil)))
            (name (package-name package))
@@ -268,27 +268,27 @@ and optionally nuking all symbols as well."
       (when package
         (loop :for sym :being :the :symbols :in package
               :for status = (nth-value 1 (find-symbol* sym package)) :do
-                (ecase status
-                  ((nil :inherited))
-                  ((:internal :external)
-                   (let* ((name (symbol-name sym))
-                          (external (eq status :external))
-                          (home (symbol-package sym))
-                          (home-name (package-name home))
-                          (imported (not (eq home package)))
-                          (shadowing (symbol-shadowing-p sym package)))
-                     (cond
-                       ((and shadowing imported)
-                        (push name (gethash home-name shadowing-import)))
-                       (shadowing
-                        (push name shadow))
-                       (imported
-                        (push name (gethash home-name import))))
-                     (cond
-                       (external
-                        (push name export))
-                       (imported)
-                       (t (push name intern)))))))
+                 (ecase status
+                   ((nil :inherited))
+                   ((:internal :external)
+                    (let* ((name (symbol-name sym))
+                           (external (eq status :external))
+                           (home (symbol-package sym))
+                           (home-name (package-name home))
+                           (imported (not (eq home package)))
+                           (shadowing (symbol-shadowing-p sym package)))
+                      (cond
+                        ((and shadowing imported)
+                         (push name (gethash home-name shadowing-import)))
+                        (shadowing
+                         (push name shadow))
+                        (imported
+                         (push name (gethash home-name import))))
+                      (cond
+                        (external
+                         (push name export))
+                        (imported)
+                        (t (push name intern)))))))
         (labels ((sort-names (names)
                    (sort (copy-list names) #'string<))
                  (table-keys (table)
@@ -388,7 +388,7 @@ and optionally nuking all symbols as well."
     (check-type symbol symbol)
     (check-type to-package package)
     (check-type from-package package)
-    (check-type mixp (member nil t)) ; no cl:boolean on Genera
+    (check-type mixp boolean)
     (check-type shadowed hash-table)
     (check-type imported hash-table)
     (check-type inherited hash-table)
@@ -483,7 +483,7 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
   (defun ensure-symbol (name package intern recycle shadowed imported inherited exported)
     (check-type name string)
     (check-type package package)
-    (check-type intern (member nil t)) ; no cl:boolean on Genera
+    (check-type intern boolean)
     (check-type shadowed hash-table)
     (check-type imported hash-table)
     (check-type inherited hash-table)
@@ -544,11 +544,11 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
         (ensure-exported name symbol from-package recycle))))
 
   (defun ensure-package (name &key
-                                nicknames documentation use
-                                shadow shadowing-import-from
-                                import-from export intern
-                                recycle mix reexport
-                                unintern package-local-nicknames lock implements)
+                              nicknames documentation use
+                              shadow shadowing-import-from
+                              import-from export intern
+                              recycle mix reexport
+                              unintern package-local-nicknames lock implements)
     (let* ((package-name (string name))
 	   (nicknames (mapcar #'string nicknames))
            (names (cons package-name nicknames))
@@ -571,7 +571,6 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
            ;; string to list home package and use package:
            (inherited (make-hash-table :test 'equal)))
       (when-package-fishiness (record-fishy package-name))
-      #-genera 
       (when documentation (setf (documentation package t) documentation))
       (when lock (sb-ext:lock-package package))
       (loop for p in (set-difference implements (sb-ext:package-implements-list package))
@@ -629,19 +628,19 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
         (shadow* name package))
       (loop :for (p . syms) :in shadowing-import-from
             :for pp = (find-package* p) :do
-              (dolist (sym syms) (ensure-shadowing-import (string sym) package pp shadowed imported)))
+               (dolist (sym syms) (ensure-shadowing-import (string sym) package pp shadowed imported)))
       (loop :for p :in mix
             :for pp = (find-package* p) :do
-              (do-external-symbols (sym pp) (ensure-mix (symbol-name sym) sym package pp shadowed imported inherited)))
+               (do-external-symbols (sym pp) (ensure-mix (symbol-name sym) sym package pp shadowed imported inherited)))
       (loop :for (p . syms) :in import-from
             :for pp = (find-package p) :do
-              (dolist (sym syms) (ensure-import (symbol-name sym) package pp shadowed imported)))
+               (dolist (sym syms) (ensure-import (symbol-name sym) package pp shadowed imported)))
       (dolist (p (append use mix))
         (do-external-symbols (sym p) (ensure-inherited (string sym) sym package p nil shadowed imported inherited))
         (use-package p package))
       (loop :for name :being :the :hash-keys :of exported :do
-        (ensure-symbol name package t recycle shadowed imported inherited exported)
-        (ensure-export name package recycle))
+               (ensure-symbol name package t recycle shadowed imported inherited exported)
+               (ensure-export name package recycle))
       (dolist (name intern)
         (ensure-symbol name package t recycle shadowed imported inherited exported))
       (do-symbols (sym package)
@@ -652,11 +651,12 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
 (defmacro %defpkg* (pkg args)
   "Define a new 'prelude' package with NAME (car args) which exports SYMBOLS (cdr
 args) from PKG."
-  `(let ((name (car ,args))
-         (syms (cdr ,args)))
-     (eval `(defpackage ,name
-              (:import-from ,,pkg ,@syms)
-              (:export ,@syms)))))
+  (sb-int:once-only ((a args))
+    `(let ((name (car ,a))
+           (syms (cdr ,a)))
+       (eval `(defpackage ,name
+                (:import-from ,,pkg ,@syms)
+                (:export ,@syms))))))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun parse-defpkg-form (package clauses)
@@ -726,19 +726,20 @@ USE-REEXPORT -- combination of USE and REEXPORT
 and the following custom extensions:
 
 PRELUDE -- treat the first element as the name of a 'prelude' package which
-will be defined with the remaining symbols exported and only those symbols.
+will be defined with the remaining symbols re-exported from PACKAGE and only
+those symbols.
 
 In addition to defining and returning a package, when *DEFPKG-HOOK* is
 non-nil, it is called as a function with a single argument - the package being
 defined."
   (multiple-value-bind (form preludes) (parse-defpkg-form package clauses)
-  (let ((pkg `(apply 'ensure-package ',form))
-        (prd (mapcar (lambda (x) `(%defpkg* ',(car form) ',x)) preludes)))
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       ,@(when prd `(,@prd))
-       (if #1=*defpkg-hook*
-           (funcall #1# ,pkg)
-           ,pkg)))))
+    (let ((pkg `(apply 'ensure-package ',form))
+          (prd (mapcar (lambda (x) `(%defpkg* ',(car form) ',x)) preludes)))
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+         (prog1 (if #1=*defpkg-hook*
+                    (funcall #1# ,pkg)
+                    ,pkg)
+           ,@(when prd `(,@prd)))))))
 
 (defmacro define-lisp-package (package)
   "Define a lisp package based on target PACKAGE which transparently exports all
@@ -748,7 +749,7 @@ package."
            (loop for s being each external-symbol in pkg collect s)))
     (let* ((pkg-externs (externals-of package))
            (pkg-shadows (intersection (package-shadowing-symbols package)
-                                       pkg-externs))
+                                      pkg-externs))
            (cl-externs (externals-of "COMMON-LISP")))
       `(defpackage ,(sb-int:symbolicate package "-LISP")
          (:use "COMMON-LISP")
@@ -766,9 +767,9 @@ package."
 (defmacro defpackage* (name (&key shadow-symbols export-symbols) &body body)
   "defpackage with (:shadow ,@<symbols>) and (:export ,@<symbols>)"
   `(let ((shadow-list (loop for i in (remove-duplicates ,shadow-symbols) collect
-                        (intern (format nil "~a" i) :keyword)))
+                               (intern (format nil "~a" i) :keyword)))
          (export-list (loop for i in (remove-duplicates ,export-symbols) collect
-                        (intern (format nil "~a" i) :keyword)))
+                               (intern (format nil "~a" i) :keyword)))
          (body ',body))
      (eval `(defpackage ,,name
               ,@body

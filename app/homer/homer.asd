@@ -8,4 +8,5 @@
                (:file "task")
                (:file "cfg")
                (:file "srv")
+               (:file "cli")
                (:file "homer")))

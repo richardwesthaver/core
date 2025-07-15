@@ -130,7 +130,7 @@ and MAKE-CLI :CMD respectively."
 (defmethod print-help :before ((self cli) &optional (stream t))
   (println (format nil "~A v~A --- ~A~%" (cli-name self) (cli-version self) (cli-description self)) stream))
 
-(defmethod cli-equal :before ((a cli) (b cli))
+(defmethod equiv :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.
 
 Currently this function is intended only for instances of the CLI

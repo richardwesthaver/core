@@ -5,7 +5,4 @@
 ;;; Code:
 (in-package :homer)
 
-#+cli
-(progn
-  (clap:load-package-cli homer/cli:*homer-cli*)
-  (use-package :homer/cli))
+(clap:load-package-cli homer/cli:*homer-cli*)

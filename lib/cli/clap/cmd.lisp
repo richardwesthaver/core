@@ -94,7 +94,7 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod pop-opt ((self cli-opt))
   (vector-pop (opts self)))
 
-(defmethod cli-equal ((a cli-cmd) (b cli-cmd))
+(defmethod equiv ((a cli-cmd) (b cli-cmd))
   (with-slots (name opts cmds) a
     (with-slots ((bn name) (bo opts) (bc cmds)) b
       (and (string= name bn)
@@ -102,13 +102,13 @@ a CLI is called without arguments, and all subcommands."))
                t
                (unless (member nil (loop for oa across opts
                                          for ob across bo
-                                         collect (cli-equal oa ob)))
+                                         collect (equiv oa ob)))
                  t))
            (if (and (null cmds) (null bc))
                t
                (unless (member nil (loop for ca across cmds
                                          for cb across bc
-                                         collect (cli-equal ca cb)))
+                                         collect (equiv ca cb)))
                  t))))))
 
 (defmethod find-cmd (name (self cli-cmd) &key active default)
@@ -125,7 +125,7 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod (setf find-cmd) ((new cli-cmd) name (self cli-cmd))
   (let ((match (find-cmd name self)))
     (activate-cmd new)
-    (substitute new match (cmds self) :test 'cli-equal)))
+    (substitute new match (cmds self) :test 'equiv)))
 
 (defmethod active-cmds ((self cli-cmd))
   (remove-if-not #'cli-lock-p (cmds self)))
@@ -163,7 +163,7 @@ a CLI is called without arguments, and all subcommands."))
   (let ((match (find-opt name self)))
     (activate-opt new)
     (setf (opts self)
-          (substitute new match (opts self) :test 'cli-equal))))
+          (substitute new match (opts self) :test 'equiv))))
 
 (defmethod active-opts ((self cli-cmd))
   (remove-if-not 'cli-opt-lock (opts self)))

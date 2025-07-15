@@ -20,7 +20,6 @@
 
 ;; The following variables are derived from Emacs css-mode:
 ;; https://github.com/emacs-mirror/emacs/blob/master/lisp/textmodes/css-mode.el
-
 (defvar css-pseudo-class-ids
   '("active" "checked" "default" "disabled" "empty" "enabled" "first"
     "first-child" "first-of-type" "focus" "focus-within" "hover"
@@ -66,9 +65,8 @@
     "visual")
   "Identifiers for types of media.")
 
+;; CSS 2.1 properties (https://www.w3.org/TR/CSS21/propidx.html).
 (defvar *css-property-alist*
-  ;; CSS 2.1 properties (https://www.w3.org/TR/CSS21/propidx.html).
-  ;;
   ;; Properties duplicated by any of the CSS3 modules below have been
   ;; removed.
   '(("azimuth" angle "left-side" "far-left" "left" "center-left"
@@ -155,7 +153,6 @@
      "loud" "x-loud")
     ("width" length percentage "auto")
     ("z-index" "auto" integer)
-
     ;; CSS Animations
     ;; (https://www.w3.org/TR/css3-animations/#property-index)
     ("animation" single-animation-name time single-timing-function
@@ -169,7 +166,6 @@
     ("animation-name" single-animation-name)
     ("animation-play-state" single-animation-play-state)
     ("animation-timing-function" single-timing-function)
-
     ;; CSS Backgrounds and Borders Module Level 3
     ;; (https://www.w3.org/TR/css3-background/#property-index)
     ("background" bg-layer final-bg-layer)
@@ -214,7 +210,6 @@
     ("border-top-width" line-width)
     ("border-width" line-width)
     ("box-shadow" "none" shadow)
-
     ;; CSS Basic User Interface Module Level 3 (CSS3 UI)
     ;; (https://www.w3.org/TR/css3-ui/#property-index)
     ("box-sizing" "content-box" "border-box")
@@ -237,21 +232,17 @@
     ("outline-width" border-width)
     ("resize" "none" "both" "horizontal" "vertical")
     ("text-overflow" "clip" "ellipsis" string)
-
     ;; CSS Cascading and Inheritance Level 3
     ;; (https://www.w3.org/TR/css-cascade-3/#property-index)
     ("all")
-
     ;; CSS Color Module Level 3
     ;; (https://www.w3.org/TR/css3-color/#property)
     ("color" color)
     ("opacity" alphavalue)
-
     ;; CSS Containment Module Level 2
     ;; (https://www.w3.org/TR/css-contain-2/#property-index)
     ("contain" "none" "strict" "content" "size" "layout" "style" "paint")
     ("content-visibility" "visible" "auto" "hidden")
-
     ;; CSS Grid Layout Module Level 2
     ;; (https://www.w3.org/TR/css-grid-2/#property-index)
     ("grid" grid-template grid-template-rows "auto-flow" "dense"
@@ -274,7 +265,6 @@
     ("grid-template-areas" "none" string)
     ("grid-template-columns" "none" track-list auto-track-list "subgrid")
     ("grid-template-rows" "none" track-list auto-track-list "subgrid")
-
     ;; CSS Box Alignment Module Level 3
     ;; (https://www.w3.org/TR/css-align-3/#property-index)
     ("align-content" baseline-position content-distribution
@@ -295,7 +285,6 @@
     ("place-items" align-items justify-items)
     ("place-self" justify-self align-self)
     ("row-gap" "normal" length-percentage)
-
     ;; CSS Flexible Box Layout Module Level 1
     ;; (https://www.w3.org/TR/css-flexbox-1/#property-index)
     ("flex" "none" flex-grow flex-shrink flex-basis)
@@ -306,7 +295,6 @@
     ("flex-shrink" number)
     ("flex-wrap" "nowrap" "wrap" "wrap-reverse")
     ("order" integer)
-
     ;; CSS Fonts Module Level 3
     ;; (https://www.w3.org/TR/css3-fonts/#property-index)
     ("font" font-style font-variant-css21 font-weight font-stretch
@@ -348,7 +336,6 @@
     ("font-variant-position" "normal" "sub" "super")
     ("font-weight" "normal" "bold" "bolder" "lighter" "100" "200"
      "300" "400" "500" "600" "700" "800" "900")
-
     ;; CSS Fragmentation Module Level 3
     ;; (https://www.w3.org/TR/css-break-3/#property-index)
     ("box-decoration-break" "slice" "clone")
@@ -360,7 +347,6 @@
      "avoid-region")
     ("orphans" integer)
     ("widows" integer)
-
     ;; CSS Masking Module Level 1
     ;; (https://www.w3.org/TR/css-masking-1/#property-index)
     ("clip-path" clip-source basic-shape geometry-box "none")
@@ -385,7 +371,6 @@
      mask-border-mode)
     ("mask-type" "luminance" "alpha")
     ("clip" "rect()" "auto")
-
     ;; CSS Multi-column Layout Module Level 1
     ;; (https://www.w3.org/TR/css3-multicol/#property-index)
     ;; "break-after", "break-before", and "break-inside" are left out
@@ -401,7 +386,6 @@
     ("column-span" "none" "all")
     ("column-width" "auto" length)
     ("columns" column-width column-count)
-
     ;; CSS Overflow Module Level 3
     ;; (https://www.w3.org/TR/css-overflow-3/#property-index)
     ("max-lines" "none" integer)
@@ -411,7 +395,6 @@
      "paged-y" "paged-x-controls" "paged-y-controls" "fragments")
     ("overflow-y" "visible" "hidden" "scroll" "auto" "paged-x"
      "paged-y" "paged-x-controls" "paged-y-controls" "fragments")
-
     ;; CSS Text Decoration Module Level 3
     ;; (https://dev.w3.org/csswg/css-text-decor-3/#property-index)
     ("text-decoration" text-decoration-line text-decoration-style
@@ -430,7 +413,6 @@
      "double-circle" "triangle" "sesame" string)
     ("text-shadow" "none" length color)
     ("text-underline-position" "auto" "under" "left" "right")
-
     ;; CSS Text Module Level 3
     ;; (https://www.w3.org/TR/css3-text/#property-index)
     ("hanging-punctuation" "none" "first" "force-end" "allow-end"
@@ -452,7 +434,6 @@
     ("word-break" "normal" "keep-all" "break-all")
     ("word-spacing" "normal" length percentage)
     ("word-wrap" "normal" "break-word")
-
     ;; CSS Transforms Module Level 1
     ;; (https://www.w3.org/TR/css3-2d-transforms/#property-index)
     ("backface-visibility" "visible" "hidden")
@@ -463,7 +444,6 @@
     ("transform-origin" "left" "center" "right" "top" "bottom"
      percentage length)
     ("transform-style" "flat" "preserve-3d")
-
     ;; CSS Transitions
     ;; (https://www.w3.org/TR/css3-transitions/#property-index)
     ("transition" single-transition)
@@ -471,11 +451,9 @@
     ("transition-duration" time)
     ("transition-property" "none" single-transition-property "all")
     ("transition-timing-function" single-transition-timing-function)
-
     ;; CSS Will Change Module Level 1
     ;; (https://www.w3.org/TR/css-will-change-1/#property-index)
     ("will-change" "auto" animateable-feature)
-
     ;; CSS Writing Modes Level 3
     ;; (https://www.w3.org/TR/css-writing-modes-3/#property-index)
     ;; "glyph-orientation-vertical" is obsolete and left out.
@@ -485,7 +463,6 @@
     ("unicode-bidi" "normal" "embed" "isolate" "bidi-override"
      "isolate-override" "plaintext")
     ("writing-mode" "horizontal-tb" "vertical-rl" "vertical-lr")
-
     ;; Filter Effects Module Level 1
     ;; (https://www.w3.org/TR/filter-effects/#property-index)
     ("color-interpolation-filters" "auto" "sRGB" "linearRGB")
@@ -493,19 +470,17 @@
     ("flood-color" color)
     ("flood-opacity" number percentage)
     ("lighting-color" color)
-
     ;; Pointer Events
     ;; (https://www.w3.org/TR/pointerevents/#the-touch-action-css-property)
     ("touch-action" "auto" "none" "pan-x" "pan-y" "manipulation"))
   "Identifiers for properties and their possible values.
-The CAR of each entry is the name of a property, while the CDR is
-a list of possible values for that property.  String values in
-the CDRs represent literal values, while symbols represent one of
-the value classes found in `css-value-class-alist'.  If a symbol
-is not found in `css-value-class-alist', it's interpreted as a
-reference back to one of the properties in this list.  Some
-symbols, such as `number' or `identifier', don't produce any
-further value candidates, since that list would be infinite.")
+The CAR of each entry is the name of a property, while the CDR is a list of
+possible values for that property.  String values in the CDRs represent
+literal values, while symbols represent one of the value classes found in
+css-value-class-alist.  If a symbol is not found in css-value-class-alist,
+it's interpreted as a reference back to one of the properties in this list.
+Some symbols, such as 'number or 'identifier don't produce any further value
+candidates, since that list would be infinite.")
 
 (defvar *css-property-ids*
   (mapcar #'car *css-property-alist*)

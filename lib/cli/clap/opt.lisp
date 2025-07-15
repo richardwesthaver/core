@@ -104,16 +104,16 @@
           (when (fboundp (cli-thunk self))
             (documentation (symbol-function (cli-thunk self)) 'function))))
 
-(defmethod cli-equal ((a cli-opt) (b cli-opt))
+(defmethod equiv ((a cli-opt) (b cli-opt))
   (with-slots (name kind) a
     (with-slots ((bn name) (bk kind)) b
       (and (equal name bn)
            (equal kind bk)))))
 
-(defmethod cli-equal ((a t) (b cli-opt))
+(defmethod equiv ((a t) (b cli-opt))
   (equalp (cli-opt-val b) a))
 
-(defmethod cli-equal ((a cli-opt) (b t))
+(defmethod equiv ((a cli-opt) (b t))
   (equalp (cli-opt-val a) b))
 
 (defmethod call-opt ((self cli-opt) arg)
@@ -143,17 +143,17 @@
          found)
      default)))
 
-(defun getopt (name &optional (default :error) opts)
+(defun getopt (name &optional (default :error) (opts *opts*))
   "Retrieve a CLI-OPT-VAL by name from a vector of CLI-OPTs."
-  (let ((opts (or opts *opts* (opts *cli*))))
+  (let ((opts (or opts (opts *cli*))))
     (cli-opt-val (find-opt 
                   (string-downcase name) opts 
                   :default (if (eql default :error)
                                (clap-unknown-argument name 'opt)
                                default)))))
 
-(defun setopt (name val &optional (default :error) opts)
-  (let ((opts (or opts *opts* (opts *cli*))))
+(defun setopt (name val &optional (default :error) (opts *opts*))
+  (let ((opts (or opts (opts *cli*))))
     (setf (cli-opt-val 
            (find-opt 
             (string-downcase name) opts 
