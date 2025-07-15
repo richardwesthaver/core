@@ -18,6 +18,7 @@
 
 (defpkg :cli/clap
   (:nicknames :clap)
+  (:prelude :clap* :define-cli)
   #.`(:use-reexport ,@cli/int:*cli-clap-packages*))
 
 (defpkg :cli-user 

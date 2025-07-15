@@ -86,8 +86,7 @@
   (:use :cl :std :db 
    :store :build :config :skel/core/db 
    :skel/core :skel/core/log :skel/net :net/srv/udp :net/srv/http :srv)
-  (:export
-   #:sk-service))
+  (:export #:sk-service))
 
 (defpackage :skel/infer
   (:use :cl :std :db :skel/core :skel/srv :dat :nlp :id :config :vc :srv)

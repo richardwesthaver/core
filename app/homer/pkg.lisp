@@ -37,15 +37,10 @@
    #:systemd-stop
    #:systemd-status))
 
-#+cli
 (defpackage :homer/cli
   (:use :cl :std :log :homer/core :cli :ast :clap)
   (:export :*homer-cli*))
 
-#+gui
-(defpackage :homer/gui
-  (:use :cl :std :log :homer/core :gui))
-
 (pkg:defpkg :homer
   (:use :cl :std :log :cli)
-  (:use-reexport :homer/core #+cli :homer/cli #+gui :homer/gui))
+  (:use-reexport :homer/core :homer/cli))

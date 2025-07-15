@@ -26,23 +26,12 @@
 
 (progn
   (clap:defcmd skc-db ())
-  #+clim
-  (clap:defcmd skc-view ()
-    (if clap:*args* 
-        (let ((stuff (loop for a in clap:*args*
-                           collect (skel::sk-project-slot a))))
-          (skel/tools/view:sk-view (if (= 1 (length stuff)) (car stuff) stuff)))
-        (skel/tools/view:sk-view (if (boundp '*skel-project*) *skel-project*
-                     (if (boundp '*skel-user-config*) *skel-user-config*
-                         (if (boundp '*skel-system-config*) *skel-system-config*
-                             (skel-simple-error "skel config files not installed")))))))
   (clap:defcmd skc-net ())
   (clap:defcmd skc-serve ())
   (clap:load-package-cli 
    *skel-cli*
    :cmds 
    ((:name db :description "interact with the skel database" :thunk skc-db)
-    #+clim (:name view :description "view an object in a new window" :thunk skc-view)
     (:name net :description "communicate with skel clients and servers"
            :thunk skc-net))))
 

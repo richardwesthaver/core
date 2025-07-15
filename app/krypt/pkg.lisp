@@ -11,16 +11,22 @@
 ;; built on top of the CRY cryptography package and leveraging keyutils for
 ;; session-based visibility.
 
+;; Additionally we plan on building various forms of encrypted block storage
+;; based on BlobDB + LUKS. 
+
+;; Ultimately unsure how such an application should be delivered - probably
+;; should be a separate core image for server and ship client as plugin.
+
 ;;; Code:
+
 (defpackage :krypt
   (:use :cl :std :cry :cry/b3 :sxp :id :ast :config :secret :cli :clap)
-  (:export :krypt-error :*default-user-kryptrc*
-           :krypt-config :load-kryptrc
-           :krypt-condition
-           :krypt-error :simple-krypt-error
-           :init-krypt
-           :*krypt-directory*
-           :*krypt-user-config*
-           :*krypt-cli*
-           :b3-cmd))
+  (:export :krypt-error :*default-user-kryptrc* :krypt-config 
+   :load-kryptrc :*krypt-directory*
+   :krypt-error :simple-krypt-error
+   :init-krypt :krypt-condition
+   :*krypt-user-config* :*krypt-cli*
+   :b3-cmd))
 
+(defpackage :krypt/srv
+  (:use :cl :std :krypt :db :store :net/srv/udp :cry :srv :log :clap))

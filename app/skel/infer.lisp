@@ -1,6 +1,6 @@
 ;;; infer.lisp --- Inferred Projects
 
-;; Infer the structure and contents of a non-Skel project
+;; Infer the type of a project directory based on the contents
 
 ;;; Commentary:
 

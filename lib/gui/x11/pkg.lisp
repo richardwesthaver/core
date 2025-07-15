@@ -1,4 +1,4 @@
-(defpackage :gui/xlib
+(defpackage :gui
   (:shadowing-import-from :std/type :array-index)
   (:shadowing-import-from :xlib :draw-line)
   (:use :cl :std :gui/core :xlib)
@@ -9,18 +9,10 @@
    #:init-xlib
    #:*xlib-display*))
 
-(in-package :gui/xlib)
+(in-package :gui)
 
-(defvar *display* nil)
-(defvar *screen* nil)
-(defvar *window* nil)
-(defvar *colormap* nil)
-(defvar *font* nil)
-(defvar *gcontext* nil)
-(defvar *background* nil)
-(defvar *palette* nil)
-(defvar *black* nil)
-(defvar *white* nil)
+;; *palette*
+(declaim (special *display* *screen* *window* *colormap* *font* *gcontext* *background* *black* *white*))
 
 (defun init-xlib ()
   (setf *display* (xlib:open-default-display)

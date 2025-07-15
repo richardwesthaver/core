@@ -649,6 +649,15 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
       (map () 'delete-package* to-delete)
       package)))
 
+(defmacro %defpkg* (pkg args)
+  "Define a new 'prelude' package with NAME (car args) which exports SYMBOLS (cdr
+args) from PKG."
+  `(let ((name (car ,args))
+         (syms (cdr ,args)))
+     (eval `(defpackage ,name
+              (:import-from ,,pkg ,@syms)
+              (:export ,@syms)))))
+
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun parse-defpkg-form (package clauses)
     (loop
@@ -673,6 +682,7 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
       :when (eq kw :mix) :append args :into mix :else
       :when (eq kw :package-local-nicknames) :collect args :into plns :else
       :when (eq kw :implements) :append args :into implements :else
+      :when (eq kw :prelude) :do (%defpkg* package args) :else
       :when (and (eq kw :lock) args) :do (setf lock t) :else
       :when (eq kw :reexport) :append args :into reexport :else
       :when (eq kw :use-reexport) :append args :into use :and :append args :into reexport
@@ -705,11 +715,16 @@ USE, SHADOW, SHADOWING-IMPORT-FROM, IMPORT-FROM, EXPORT, INTERN -- as per CL:DEF
 As well as the common extensions:
 RECYCLE, MIX, REEXPORT, UNINTERN -- as per UIOP/PACKAGE:DEFINE-PACKAGE
 
-Additionally, DEFPKG supports the following custom extensions:
+Additionally, DEFPKG supports the following combinators:
 
 MIX-REEXPORT -- combination of MIX and REEXPORT
 
 USE-REEXPORT -- combination of USE and REEXPORT
+
+and the following custom extensions:
+
+PRELUDE -- treat the first element as the name of a 'prelude' package which
+will be defined with the remaining symbols exported and only those symbols.
 
 In addition to defining and returning a package, when *DEFPKG-HOOK* is
 non-nil, it is called as a function with a single argument - the package being

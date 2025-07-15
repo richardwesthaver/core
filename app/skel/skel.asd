@@ -3,11 +3,7 @@
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:uiop :asdf :sb-posix :sb-bsd-sockets :sb-concurrency :cl-ppcre :std
-                     :obj :dat :cli :organ :doc :vc
-                     :pod :net :box :rdb :syn
-                     (:feature :gui :clx)
-                     (:feature :gui :clouseau))
+  :depends-on (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
   :serial t
   :components 
   ((:module "core"
@@ -48,11 +44,6 @@
      (:file "proto")
      (:file "server")
      (:file "client")))
-   (:module "tools"
-    :components
-    ((:file "pkg")
-     (:file "deploy")
-     (:file "view" :if-feature :gui)))
    (:file "cli")
    (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))
