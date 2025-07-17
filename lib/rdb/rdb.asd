@@ -10,15 +10,14 @@
                (:file "macs")
                (:file "rocksdb")
                (:file "proto")
-               (:file "obj")
+               (:file "rdb")
                (:file "schema")
                (:file "db")
                (:file "log")
                (:file "query")
                (:file "store")
                (:file "cfg")
-               (:file "cli")
-	       (:file "rdb"))
+               (:file "cli"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 
 (defsystem :rdb/tests

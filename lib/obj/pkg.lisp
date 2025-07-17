@@ -651,12 +651,20 @@
    #:service-request
    #:service-response))
 
+(defpkg :obj/cache
+  (:nicknames :cache)
+  (:use :cl :std :stored :id :db :store :schema :config)
+  (:import-from :std :queue :make-queue)
+  (:export :cache :cache-cleanup :cache-policy
+   :cache-size :cache-count :make-cache :cache-release
+   :with-cache :cache-remove :cache-flush :cache-entry
+   :entry-expiry :entry-weight :make-cache-table))
+
 (defpkg :obj/store
   (:nicknames :store)
-  (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema :config)
+  (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema :config :cache)
   (:export
    #:store
-   #:make-cache-table
    #:next-oid
    #:next-cid
    #:*store*
@@ -682,15 +690,6 @@
    #:signal-cross-store-error
    #:with-store
    #:defstore))
-
-(defpkg :obj/cache
-  (:nicknames :cache)
-  (:use :cl :std :stored :id :db :store :schema :config)
-  (:import-from :std :queue :make-queue)
-  (:export :cache :cache-cleanup :cache-policy
-   :cache-size :cache-count :make-cache :cache-release
-   :with-cache :cache-remove :cache-flush :cache-entry
-   :entry-expiry :entry-weight))
 
 (setq *defpkg-hook* nil)
 

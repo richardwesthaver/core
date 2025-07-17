@@ -845,47 +845,6 @@ cache is needed because we cache in the class slots.")
   (awhen (assoc (spec st) (get-store-schemas class))
     (cdr it)))
 
-;;; Cache
-(defun make-cache-table (&rest args)
-  "Make a value-weak hashtable. When value gets collected so does the key."
-  (apply 'make-hash-table :weakness :value args))
-
-(defun get-cache (key cache)
-  "Get a value from a cache-table."
-  (let ((val (gethash key cache)))
-    (if val (values (sb-ext:weak-pointer-value val) t)
-        (values nil nil))))
-
-(defsetf get-cache setf-cache)
-
-(defun setf-cache (key cache value)
-  "Set a value in a cache-table."
-  (let ((w (sb-ext:make-weak-pointer value)))
-    (sb-ext:finalize value (make-finalizer key cache))
-    (setf (gethash key cache) w)
-    value))
-
-(defun make-finalizer (key cache)
-  (declare (ignorable key cache))
-  (lambda () (remhash key cache)))
-
-(defun remcache (key cache)
-  (remhash key cache))
-
-(defun map-cache (fn cache)
-  (with-hash-table-iterator (nextfn cache)
-    (loop  
-       (multiple-value-bind (valid? key value) (nextfn)
-         (when (not valid?)
-           (return-from map-cache))
-         (funcall fn key (sb-ext:weak-pointer-value value))))))
-
-(defun dump-cache (cache)
-  (format t "Dumping cache: ~A~%" cache)
-  (map-cache #'(lambda (k v) 
-                 (format t ":k ~A :v ~A~%" k v))
-             cache))
-
 (defmethod lookup-schema ((st store) (class stored-class))
   "Get the latest db class schema from caches, etc."
   ;; Lookup class cached version

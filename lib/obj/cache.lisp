@@ -30,6 +30,47 @@ history but less often recently.
 ;;; Code:
 (in-package :obj/cache)
 
+;;; Cache Table
+(defun make-cache-table (&rest args)
+  "Make a value-weak hashtable. When value gets collected so does the key."
+  (apply 'make-hash-table :weakness :value args))
+
+(defun get-cache (key cache)
+  "Get a value from a cache-table."
+  (let ((val (gethash key cache)))
+    (if val (values (sb-ext:weak-pointer-value val) t)
+        (values nil nil))))
+
+(defsetf get-cache setf-cache)
+
+(defun setf-cache (key cache value)
+  "Set a value in a cache-table."
+  (let ((w (sb-ext:make-weak-pointer value)))
+    (sb-ext:finalize value (make-finalizer key cache))
+    (setf (gethash key cache) w)
+    value))
+
+(defun make-finalizer (key cache)
+  (declare (ignorable key cache))
+  (lambda () (remhash key cache)))
+
+(defun remcache (key cache)
+  (remhash key cache))
+
+(defun map-cache (fn cache)
+  (with-hash-table-iterator (nextfn cache)
+    (loop  
+       (multiple-value-bind (valid? key value) (nextfn)
+         (when (not valid?)
+           (return-from map-cache))
+         (funcall fn key (sb-ext:weak-pointer-value value))))))
+
+(defun dump-cache (cache)
+  (format t "Dumping cache: ~A~%" cache)
+  (map-cache #'(lambda (k v) 
+                 (format t ":k ~A :v ~A~%" k v))
+             cache))
+
 ;;; Entry
 (defclass cache-entry ()
   ((key :accessor key)
@@ -297,8 +338,7 @@ history but less often recently.
 
 (defvar *cleanup-list*)
 (defmacro with-collected-cleanups ((cache) &body body)
-  (let ((i (gensym))
-	(fn (gensym)))
+  (with-gensym (i fn)
     `(let* ((,fn (with-queue-lock (queue ,cache)
 		   (slot-value ,cache 'cleanup)))
 	    (*cleanup-list* (null ,fn)))
@@ -482,8 +522,7 @@ it is released."
 
 (defmacro with-cache (var (cache key &key shallow) &body body)
   "Combines a cache-fetch and cache-release in a form."
-  (let ((c-var (gensym))
-	(tag (gensym)))
+  (with-gensym (c-var tag)
     `(let ((,c-var ,cache))
        (multiple-value-bind (,var ,tag)
 	   (cache-fetch ,c-var ,key ,@(and shallow '(:shallow t)))

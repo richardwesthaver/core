@@ -255,6 +255,11 @@
               (:name "George" :age 50 :father ,(get-instance-by-value 'person 'name "Bob")
                :school ,(get-instance-by-value 'school 'name "Cutler"))))))
 ;;; Store
+(defclass test-store (store) ())
+(deftest store ())
+
 ;;; Tensors
+(deftest simple-tensors ())
+
 ;;; Cache
 (deftest simple-cache ())
