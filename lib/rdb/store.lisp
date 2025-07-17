@@ -117,10 +117,10 @@ serialized object schemas."))
   (setf (index-cache-table instance) nil))
 
 (defmethod build-indexed-btree ((sc rdb-store))
-  (make-instance 'rdb-indexed-btree :sc sc))
+  (make-instance 'rdb-indexed-btree :store sc))
 
 (defmethod build-btree-index ((sc rdb-store) &key primary key-form &allow-other-keys)
-  (make-instance 'rdb-btree-index :primary primary :key-form key-form :sc sc))
+  (make-instance 'rdb-btree-index :primary primary :key-form key-form :store sc))
 
 (defmethod add-index ((bt rdb-indexed-btree) &key index-name key-form (populate t))
   (let ((sc (get-store bt)))
@@ -769,10 +769,10 @@ serialized object schemas."))
 
 (defclass rdb-dup-btree (dup-btree rdb-btree) ()
 ;;  (:metaclass persistent-metaclass)
-  (:documentation "A Berkeley Implementation of the duplicate btree"))
+  (:documentation "A RocksDB implementation of the duplicate btree"))
 
 (defmethod build-dup-btree ((sc rdb-store))
-  (make-instance 'rdb-dup-btree :sc sc))
+  (make-instance 'rdb-dup-btree :store sc))
 
 (defmethod get-value (key (bt rdb-dup-btree))
   (let ((sc (get-store bt)))

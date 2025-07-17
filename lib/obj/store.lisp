@@ -29,16 +29,291 @@
 (defun make-btree (&optional (st *store*))
   "Constructs a new BTree instance for use by the user.  Each backend
    returns its own internal type as appropriate and ensures that the 
-   btree is associated with the store-controller that created it."
+   btree is associated with the store that created it."
   (build-btree st))
 
 (defun make-indexed-btree (&optional (sc *store*))
   "Constructs a new indexed BTree instance for use by the user.
    Each backend returns its own internal type as appropriate and
-   ensures that the btree is associated with the store-controller
+   ensures that the btree is associated with the store
    that created it."
   (build-indexed-btree sc))
 
+;;; Dup Btrees
+(defclass dup-btree (btree) ())
+
+(defgeneric build-dup-btree (store)
+  (:documentation 
+   "Construct a btree of the appropriate type corresponding to this store."))
+
+(defun make-dup-btree (&optional (store *store*))
+  (build-dup-btree store))
+
+;;; Stored Set
+;; default implementation of simple sets using btrees
+(defclass pset (stored-collection) ()
+  (:documentation "An unordered stored collection of unique elements according to serializer
+equal comparison"))
+
+(defgeneric insert-item (item pset)
+  (:documentation "Insert a new item into the pset"))
+
+(defgeneric remove-item (item pset)
+  (:documentation "Remove specified item from pset"))
+
+(defgeneric map-pset (fn pset)
+  (:documentation "Map operator for psets"))
+
+(defgeneric find-item (item pset &key key test)
+  (:documentation "Find a an item in the pset using key and test"))
+
+(defgeneric pset-list (pset)
+  (:documentation "Convert items of pset into a list for processing"))
+
+(defgeneric build-pset (sc)
+  (:documentation "Construct an empty default pset or backend specific pset.
+                   This is an internal function used by make-pset"))
+
+(defgeneric drop-pset (pset)
+  (:documentation "Release pset storage to database for reuse"))
+
+(defsclass default-pset (pset)
+  ((btree :accessor pset-btree :initarg :btree)))
+
+
+(defmethod drop-instance ((pset pset))
+  (drop-pset pset)
+  (call-next-method))
+
+;;; Slot Access
+(defmethod slot-value-using-class ((class stored-class) (instance stored-object) (slot-def set-valued-slot-definition))
+  "Ensure that there is a slot-set in the slot (lazy instantiation)"
+  (handler-case
+      (call-next-method)
+    (unbound-slot ()
+      (setf (slot-value-using-class class instance slot-def)
+            (build-slot-set (get-store instance))))))
+
+(defmethod (setf slot-value-using-class) 
+    (new-value (class stored-class) (instance stored-object) (slot-def set-valued-slot-definition))
+  "Setting a value adds it to the slot set"
+  (if (or (null new-value)
+          (subtypep (type-of new-value) 'slot-set))
+      (progn
+        (slot-makunbound-using-class class instance slot-def)
+        (call-next-method))
+      (insert-item new-value (slot-value-using-class class instance slot-def))))
+
+(defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def set-valued-slot-definition))
+  "Make sure we reclaim the pset storage"
+  (awhen (and (slot-boundp-using-class class instance slot-def)
+              (slot-value-using-class class instance slot-def))
+    (drop-slot-set it))
+  (call-next-method))
+
+;;  Slot set helpers
+(defmacro set-list (object slotname)
+  "Sugar for getting a list from a set slot"
+  `(slot-set-list (slot-value ,object ,slotname)))
+
+(defmacro set-insert (item object slotname)
+  "Sugar for inserting items under #'equal from the set slot"
+  `(insert-item ,item (slot-value ,object ,slotname)))
+
+(defmacro set-remove (item object slotname)
+  "Sugar for removing items via #'equal from the set slot"
+  `(remove-item ,item (slot-value ,object ,slotname)))
+
+;;  A generic slot set implementation
+(defclass slot-set () ()
+  (:documentation "A proxy object for a set stored in a slot."))
+
+(defsclass stored-slot-set (slot-set stored-pset) ()
+  (:documentation "A default slot-set implementation"))
+
+(defgeneric build-slot-set (sc)
+  (:documentation "Construct an empty default pset or backend specific pset.
+                   This is an internal function used by make-pset"))
+
+(defgeneric slot-set-list (slot-set)
+  (:documentation "Convert items of pset into a list for processing")
+  (:method ((set stored-slot-set))
+    (pset-list set)))
+
+(defgeneric map-slot-set (fn slot-set)
+  (:documentation "Map operator for psets")
+  (:method (fn (set stored-slot-set))
+    (map-pset fn set)))
+
+(defgeneric drop-slot-set (pset)
+  (:documentation "Release pset storage to database for reuse")
+  (:method ((set stored-slot-set))
+    (drop-instance set)))
+
+;;; Associations
+(defmethod slot-value-using-class 
+    ((class stored-class) (instance stored-object) (slot-def association-slot-definition))
+  (if (eq (association-type slot-def) :ref)
+      (call-next-method)
+      (get-associated instance slot-def)))
+
+(defmethod (setf slot-value-using-class) 
+    (new-value (class stored-class) (instance stored-object) (slot-def association-slot-definition))
+  (add-association instance (slot-definition-name slot-def) new-value)
+  new-value)
+
+(defmethod slot-boundp-using-class 
+    ((class stored-class) (instance stored-object) (slot-def association-slot-definition))
+  (when (eq (association-type slot-def) :ref)
+    (call-next-method)))
+
+(defmethod slot-makunbound-using-class 
+    ((class stored-class) (instance stored-object) (slot-def association-slot-definition))
+  (when (eq (association-type slot-def) :ref)
+    (remove-association-end class instance slot-def nil)
+    (call-next-method))) ;; remove storage
+
+
+;; =========================
+;; Handling reads
+;; =========================
+
+(defun type-check-association (instance slot-def other-instance)
+  (when (null other-instance)
+    (return-from type-check-association t))
+  (unless (subtypep (type-of other-instance) (foreign-classname slot-def))
+    (cerror "Ignore and return"
+            "Value ~A written to association slot ~A of instance ~A 
+             of class ~A must be a subtype of ~A"
+            other-instance (foreign-slotname slot-def) instance
+            (type-of instance) (foreign-classname slot-def))
+    (return-from type-check-association nil))
+  (unless (equal (spec instance) (spec other-instance))
+    (cerror "Ignore and return"
+            "Cannot association objects from different stores:
+             ~A is in ~A and ~A is in ~A"
+            instance (get-store instance)
+            other-instance (get-store other-instance))
+    (return-from type-check-association nil))
+  t)
+
+(defun get-associated (instance slot-def)
+  (let* ((fclass (get-foreign-class slot-def))
+         (fslot (get-foreign-slot fclass slot-def))
+         (sc (get-store instance))
+         (index (get-association-index fslot sc)))
+    (flet ((map-obj (value oid)
+             (declare (ignore value))
+             (store-recreate-instance sc oid)))
+      (declare (dynamic-extent (function map-obj)))
+      (map-btree #'map-obj index :value (oid instance) :collect t))))
+
+
+;; ==========================
+;;  Handling updates
+;; ==========================
+
+(defun update-association-end (class instance slot-def target)
+  "Get the association index and add the target object as a key that
+   refers back to this instance so we can get the set of referrers to target"
+  (let ((index (get-association-index slot-def (get-store instance))))
+    (when (and (eq (association-type slot-def) :ref)
+               (slot-boundp-using-class class instance slot-def))
+      (remove-kv (oid (slot-value-using-class class instance slot-def)) (oid instance) index))
+    (when (not (null instance))
+      (setf (get-value (oid target) index) (oid instance)))))
+
+(defun remove-association-end (class instance slot-def associated)
+  (let ((index (get-association-index slot-def (get-store instance))))
+    (if (and (eq (association-type slot-def) :ref)
+             (slot-boundp-using-class class instance slot-def))
+        (remove-kv (oid (slot-value-using-class class instance slot-def)) (oid instance) index)
+        (when associated ;it is possible that the original association
+                         ;slot was not bound at the time of
+                         ;deletion. thus, remove the entry only when
+                         ;it is bound
+          (remove-kv (oid associated) (oid instance) index)))))
+
+(defun update-other-association-end (class instance slot-def other-instance)
+  "Update the association index for the other object so that it maps from
+   us to it.  Also add error handling."
+  (declare (ignore class))
+  (let* ((fclass (class-of other-instance))
+         (fslot (get-foreign-slot fclass slot-def))
+         (sc (get-store other-instance)))
+    (update-association-end fclass other-instance fslot instance)
+    (when (eq (association-type slot-def) :ref)
+      (stored-slot-writer sc instance other-instance (slot-definition-name fslot)))))
+
+(defun get-foreign-class (slot-def)
+  (find-class (foreign-classname slot-def)))
+
+(defun get-foreign-slot (fclass slot-def)
+  (find-slot-def-by-name fclass (foreign-slotname slot-def)))
+
+;; =============================
+;;  Late-binding Initialization
+;; =============================
+
+(defun get-association-index (slot-def sc)
+  (ifret (get-association-slot-index slot-def sc)
+    (aif (get-store-association-index slot-def sc)
+         (progn (add-association-slot-index it slot-def sc) it)
+         (let ((new-idx (make-dup-btree sc)))
+           (add-slot-index sc new-idx (association-slot-base slot-def) (slot-definition-name slot-def))
+           (add-association-slot-index new-idx slot-def sc)
+           new-idx))))
+
+(defun get-store-association-index (slot-def sc)
+  (let* ((master (index-table sc))
+         (base (association-slot-base slot-def))
+         (slotname (slot-definition-name slot-def)))
+    (get-value (cons base slotname) master)))
+
+;; ===============================
+;;  Association-specific slot API
+;; ===============================
+
+(defun add-association (instance slot associated)
+  (let* ((sc (get-store instance))
+         (class (class-of instance))
+         (slot-def (if (symbolp slot) (find-slot-def-by-name class slot) slot)))
+    (when (null slot-def)
+      (error "Slot ~A not found in class ~A for instance ~A" slot class instance))
+    (when (type-check-association instance slot-def associated)
+      (ensure-transaction (:store sc)
+        (case (association-type slot-def)
+          (:ref (update-association-end class instance slot-def associated)
+                (stored-slot-writer sc associated instance (slot-definition-name slot-def)))
+          (:m21 (update-other-association-end class instance slot-def associated))
+          (:m2m (update-association-end class instance slot-def associated)
+                (update-other-association-end class instance slot-def associated)))))))
+
+(defun remove-association (instance slotname associated)
+  (let* ((class (class-of instance))
+         (fclass (class-of associated))
+         (slot-def (if (symbolp slotname) (find-slot-def-by-name class slotname) slotname))
+         (fslot (get-foreign-slot fclass slot-def))
+         (sc (get-store associated)))
+    (when (null slot-def)
+      (error "Slot ~A not found in class ~A for instance ~A" slotname class instance))
+    (when (type-check-association instance slot-def associated)
+      (ensure-transaction (:store sc)
+        (case (association-type slot-def)
+          (:ref (when (slot-boundp-using-class class instance slot-def)
+                  (slot-makunbound-using-class class instance slot-def)))
+          (:m21 (when (slot-boundp-using-class fclass associated fslot)
+                  (slot-makunbound-using-class fclass associated fslot)))
+          (:m2m (remove-association-end fclass associated fslot instance)
+                (remove-association-end class instance slot-def associated)))))))
+
+(defun get-associations (instance slot)
+  (slot-value instance (if (symbolp slot) slot (slot-definition-name slot))))
+
+(defun associatedp (instance slot associated)
+  (find associated (get-associations instance slot)))
+
+;;; IDs
 (defgeneric next-oid (store)
   (:documentation
    "The source of unique object IDs."))
@@ -65,9 +340,9 @@
 
 (defmethod print-object ((schema stored-object-schema) stream)
   (print-unreadable-object (schema stream :type t)
-    (format stream "~A ~A (s: ~A p: ~A)" 
-            (id schema) (schema:schema-class-name schema)
-            (schema:schema-successor schema) (schema:schema-predecessor schema))))
+    (format stream "~A ~A (s: ~A p: ~A)"
+            (id schema) (schema-class-name schema)
+            (schema-successor schema) (schema-predecessor schema))))
 
 (defun make-stored-object-schema (cid class-schema)
   (let ((schema (logical-copy-schema 'stored-object-schema class-schema)))
@@ -77,11 +352,11 @@
 (defun logical-copy-schema (type schema)
   (assert (subtypep type 'schema:schema))
   (make-instance type
-    :class-name (schema:schema-class-name schema)
-    :fields (copy-list (schema:fields schema))))
+    :class-name (schema-class-name schema)
+    :fields (copy-list (fields schema))))
 
 (defun copy-schema (type schema)
-  (assert (subtypep type 'schema:schema))
+  (assert (subtypep type 'schema))
   (let ((new 
          (make-instance type
                         :name (schema:schema-class-name schema)
@@ -95,7 +370,7 @@
     new))
 
 ;;; DB Evolution
-(defmethod upgrade-db-instance ((instance stored:stored-object) (new-schema upgradable-schema) (old-schema upgradable-schema) old-values)
+(defmethod upgrade-db-instance ((instance stored-object) (new-schema upgradable-schema) (old-schema upgradable-schema) old-values)
   "Upgrade a database instance from the old-schema to the new-schema.
    This does mean loading it into memory (for now)!"
   (let ((st (get-store instance))
@@ -112,7 +387,7 @@
   (destructuring-bind (old-rec new-rec) recs
     (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
       (cond ;; If it was not indexed, and now is, we have to notify the index of the new value
-            ((and (member old-type '(:persistent :cached))
+            ((and (member old-type '(:stored :cached))
                   (eq (slot-field-type new-rec) :indexed)
                   (slot-boundp instance old-name))
              (setf (slot-value instance old-name) (slot-value instance old-name)))
@@ -124,9 +399,9 @@
                   (slot-boundp instance old-name))
              (let ((slot-value (slot-value instance old-name)))
                (unindex-slot-value sc slot-value (oid instance) old-name (getf old-args :base))))
-            ;; If it was a persistent slot and now isn't, drop it and add the new type back
-            ((and (member old-type '(:persistent :indexed :cached :derived))
-                  (not (member (slot-field-type new-rec) '(:persistent :indexed :cached :derived))))
+            ;; If it was a stored slot and now isn't, drop it and add the new type back
+            ((and (member old-type '(:stored :indexed :cached :derived))
+                  (not (member (slot-field-type new-rec) '(:stored :indexed :cached :derived))))
              (upgrade-instance-slot sc instance :rem (list old-rec) old-values)
              (upgrade-instance-slot sc instance :add (list new-rec) old-values))
             ;; If the old slot was indexed
@@ -139,7 +414,7 @@
 (defmethod upgrade-instance-slot (sc instance (type (eql :rem)) recs old-values)
   "Handle slot removal and cleanup of values, such as sets"
   (with-slots (type name args) (first recs)
-    (when (member type '(:persistent :cached :indexed :derived))
+    (when (member type '(:stored :cached :indexed :derived))
       (stored-slot-makunbound sc instance name))
     (when (member type '(:indexed :derived))
       (awhen (getf old-values name)
@@ -156,21 +431,21 @@
   nil)
 
 (defun initialize-new-slots (instance diff)
-  (labels ((adding-persistent? (entry)
+  (labels ((adding-stored? (entry)
              (when (and (eq :add (diff-type entry))
                         (member (slot-field-type (first (diff-recs entry)))
-                                '(:persistent :indexed :cached :set-valued)))
+                                '(:stored :indexed :cached :set-valued)))
                (slot-field-name (first (diff-recs entry)))))
-           (change-to-persistent? (entry)
+           (change-to-stored? (entry)
              (when (and (eq :change (diff-type entry))
                         (not (member (slot-field-type (first (diff-recs entry)))
-                                     '(:persistent :indexed :cached :set-valued)))
+                                     '(:stored :indexed :cached :set-valued)))
                         (member (slot-field-type (second (diff-recs entry)))
-                                '(:persistent :indexed :cached :set-valued)))
+                                '(:stored :indexed :cached :set-valued)))
                (slot-field-name (second (diff-recs entry)))))
            (init-slot? (entry)
-             (or (adding-persistent? entry)
-                 (change-to-persistent? entry)))
+             (or (adding-stored? entry)
+                 (change-to-stored? entry)))
            (compute-init-slots ()
              (remove-if #'null (mapcar #'init-slot? diff))))
     (apply #'shared-initialize instance (compute-init-slots) nil)))
@@ -182,7 +457,7 @@
   (let ((sc (get-store current))
         (oid (oid current))
         (diff (schema-diff new-schema old-schema)))
-      ;; do we need to pass the persistent object?  Transient ops require previous?
+      ;; do we need to pass the stored object?  Transient ops require previous?
       (awhen (upgrade old-schema)
         (apply-schema-change-fn current it old-schema))
       ;; Handle changed slots
@@ -283,7 +558,6 @@
 ;;    (unless (match-schemas (%class-schema class) current-schema))
       (prog1 
           (call-next-method)
-        #-openmcl
         (let ((prior-schema (aif (schema:schema-predecessor current-schema)
                                  (get-store-schema st it)
                                  (error "If the schemas mismatch, a derived store schema should have been computed"))))
@@ -299,7 +573,7 @@
          (previous-schema (lookup-schema sc (class-of previous))))
     (assert (eq sc (get-store previous)))
     (change-db-instance current previous current-schema previous-schema)
-    ;; Deal with new persistent slot, cached and transient initialization
+    ;; Deal with new stored slot, cached and transient initialization
     (let* ((diff-entries (schema-diff current-schema previous-schema))
            (add-entries (remove-if-not (lambda (entry) (eq :add (diff-type entry))) diff-entries))
            (add-names (when add-entries (mapcar #'field-name (mapcan #'diff-recs add-entries)))))
@@ -315,42 +589,48 @@
          expected to initialize :spec on the call to
          make-instance")
    ;; Generic support for the object, indexing and root protocols
-   (root :reader store-root 
-         :documentation "This is an instance of the data store
-         btree. It should have an OID that is fixed in the code and does not
-         change between sessions. Usually this is something like 0, 1 or -1")
-   (schema-table :reader schema-table
-                 :documentation "Schema id to schema database table")
-   (schema-name-index :reader schema-name-index
-                      :documentation "Schema name to schema database table")
-   (schema-cache :accessor schema-cache :initform (make-cache-table :test 'eq)
-                 :documentation "This is a cache of class schemas stored in the database indexed by classid")
-   (schema-classes :accessor schema-classes :initform nil
-                      :documentation "Maintains a list of all classes that have a cached schema value so we can shutdown cleanly")
-   (schema-cache-lock :accessor schema-cache-lock :initform (make-mutex :name "cache-lock")
-                        :documentation "Protection for updates to the cache from multiple threads.  
-                                        Do not override.")
+   (root 
+    :reader store-root 
+    :documentation "This is an instance of the data store btree. It should have an OID that is
+fixed in the code and does not change between sessions. Usually this is
+something like 0, 1 or -1")
+   (schema-table 
+    :reader schema-table
+    :documentation "Schema id to schema database table")
+   (schema-name-index 
+    :reader schema-name-index
+    :documentation "Schema name to schema database table")
+   (schema-cache 
+    :accessor schema-cache :initform (make-cache-table :test 'eq)
+    :documentation "This is a cache of class schemas stored in the database indexed by classid")
+   (schema-classes 
+    :accessor schema-classes :initform nil
+    :documentation "Maintains a list of all classes that have a cached schema value so we can shutdown cleanly")
+   (schema-cache-lock 
+    :accessor schema-cache-lock :initform (make-mutex :name "cache-lock")
+    :documentation "Protection for updates to the cache from multiple threads. Do not override.")
    ;; Instance storage
-   (instance-table :reader instance-table
-                  :documentation "Contains map of oid to class ids")
-   (instance-class-index :reader instance-class-index
-                         :documentation "A reverse map of class id to oid")
-   (instance-cache :accessor instance-cache :initform (make-cache-table :test 'eql)
-                   :documentation 
-                   "This is an instance cache and part of the
-                    metaclass protocol.  Data stores should not
-                    override the default behavior.")
-   (instance-cache-lock :accessor instance-cache-lock :initform (make-mutex :name "instance-cache")
-                        :documentation "Protection for updates to
-                        the cache from multiple threads.  Do not
-                        override.")
+   (instance-table 
+    :reader instance-table
+    :documentation "Contains map of oid to class ids")
+   (instance-class-index 
+    :reader instance-class-index
+    :documentation "A reverse map of class id to oid")
+   (instance-cache 
+    :accessor instance-cache :initform (make-cache-table :test 'eql)
+    :documentation 
+    "This is an instance cache and part of the metaclass protocol. Data stores
+should not override the default behavior.")
+   (instance-cache-lock 
+    :accessor instance-cache-lock :initform (make-mutex :name "instance-cache")
+    :documentation "Protection for updates to the cache from multiple threads. Do not override.")
    ;; Root table for all indices
-   (index-table :reader index-table
-               :documentation 
-               "This is another root for class indexing that is
-               also a data store specific stored btree instance
-               with a unique OID that persists between sessions.
-               No cache is needed because we cache in the class slots.")
+   (index-table 
+    :reader index-table
+    :documentation 
+    "This is another root for class indexing that is also a data store specific
+stored btree instance with a unique OID that persists between sessions. No
+cache is needed because we cache in the class slots.")
    (serializer :accessor serializer :initform nil)
    (deserializer :accessor deserializer :initform nil)))
 
@@ -367,7 +647,7 @@
   (initial-stored-setup instance :oid oid :store store))
 
 (defun initial-stored-setup (instance &key oid store)
-  ;; (assert store)
+  (assert store)
   (if oid
       (setf (oid instance) oid)
       (register-new-instance instance (class-of instance) store))
@@ -434,6 +714,11 @@
     (missing-stored-instance (e)
       (signal e))))
 
+(defmethod get-slot-def-index ((def association-effective-slot-definition) sc)
+  "Since endpoints of an association implement an index we should be able to perform
+   inverted-index relation functions on them directly"
+  (get-association-index def sc))
+
 (defun register-new-instance (instance class store)
   (setf (oid instance) (next-oid store))
   (register-instance store class instance))
@@ -442,6 +727,65 @@
   (if-let ((ok (subtypep (type-of store) 'store)))
     ok
     (error "This function requires a valid store")))
+
+(defmethod build-pset ((sc store))
+  "Default pset method; override if backend has better policy"
+  (let ((btree (make-dup-btree sc)))
+    (make-instance 'default-pset :btree btree :sc sc)))
+
+(defun make-pset (&key items pset (store *store*))
+  (let ((new-pset (build-pset store)))
+    (when (and items pset)
+      (error "Can only initialize a new pset with item list or pset to copy, not both"))
+    (when items
+      (mapc (lambda (item)
+              (insert-item item new-pset))
+            items))
+    (when pset
+      (map-pset (lambda (item)
+                  (insert-item item new-pset))
+                pset))
+    new-pset))
+
+(defmethod insert-item (item (pset default-pset))
+  (setf (get-value item (pset-btree pset)) t)
+  item)
+
+(defmethod remove-item (item (pset default-pset))
+  (delete-key (pset-btree pset) item)
+  item)
+
+(defmethod find-item (item (pset default-pset) &key key (test #'equal))
+  (if (not (or key test))
+      (get-value item (pset-btree pset))
+      (map-btree (lambda (elt dc)
+                   (declare (ignore dc))
+                   (let ((cmpval (if key (funcall key elt) elt)))
+                     (if (funcall test item cmpval)
+                         (return-from find-item elt))))
+                 (pset-btree pset))))
+
+(defmethod map-pset (fn (pset default-pset))
+  (map-btree (lambda (key value) 
+               (declare (ignore value))
+               (funcall fn key))
+             (pset-btree pset))
+  pset)
+
+(defmethod pset-list ((pset default-pset))
+  (map-btree #'(lambda (k v) 
+                 (declare (ignore v))
+                 k) 
+             (pset-btree pset) :collect t))
+
+(defmethod drop-pset ((pset default-pset))
+  (ensure-transaction (:store *store*)
+    (awhen (pset-btree pset)
+      (drop-btree it))))
+
+(defmethod build-slot-set ((sc store))
+  (let ((btree (make-btree sc)))
+    (make-instance 'stored-slot-set :btree btree :sc sc)))
 
 (defmethod drop-instance ((inst stored-object))
   (drop-instance-slots inst)
@@ -843,11 +1187,26 @@
 
 ;;; Controller Protocol
 (defgeneric open-store (st &key recover recover-fatal thread &allow-other-keys)
-  (:documentation ""))
+  (:documentation "Opens the underlying environment and all the necessary
+database tables. Different data stores may use different keys so all methods
+should &allow-other-keys. There are three standard keywords: :recover,
+:recover-fatal and :thread. Recover means that recovery should be checked for
+or performed on startup. Recover fatal means a full rebuild from log files is
+requested. Thread merely indicates to the data store that it is a threaded
+application and any steps that need to be taken (for example transaction
+implementation) are taken. :thread is usually true."))
 
-(defgeneric close-store (st))
+(defgeneric close-store (st)
+  (:documentation "Close the db handles and environment. Should be in a state where lisp could be
+shut down without causing an inconsistent state in the db. Also, the object
+could be used by open-store to reopen the database."))
 
-(defgeneric optimize-layout (st &key &allow-other-keys))
+(defgeneric optimize-layout (st &key &allow-other-keys)
+  (:documentation "If supported, speed up the index and allocation by freeing up any available
+storage and return it to the free list. See the methods of data stores to
+determine what options are valid. Supported both on stores (all btrees and
+stored slots) and specific btrees."))
+
 
 ;;; Controller User API
 
@@ -883,7 +1242,7 @@
 
 ;;; Root indexes
 (defun add-to-root (key value &key (st *store*))
-  "Add an arbitrary persistent thing to the root, so you can
+  "Add an arbitrary stored thing to the root, so you can
    retrieve it in a later session.  Anything referenced by an
    object added to the root is considered reachable and thus live"
   (declare (type store st))
@@ -976,7 +1335,6 @@
           :guest-store sc))
 
 ;;; Macros
-
 (defmacro defstore (name super spec &rest options)
   "Define a new STORE class.")
 

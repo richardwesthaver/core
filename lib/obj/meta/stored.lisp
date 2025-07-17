@@ -19,19 +19,20 @@
 
 (defvar *default-store* nil)
 
-;;; MOP
 (deftype oid () 'word)
 (deftype cid () '(unsigned-byte 32))
 
+;;; MOP
 (defclass stored ()
   ((oid :initarg :oid :accessor oid)
    (spec :accessor spec :initarg :spec
-         :documentation "Persistent objects use a spec pointer to identify which store
+         :documentation "Stored objects use a spec pointer to identify which store
                          they are connected to"))
   (:documentation "Slots which are implicitly bound to all STORED-CLASS metaobjects."))
 
 (defmethod print-object ((obj stored) stream)
-  "This is useful for debugging and being clear about what is persistent and what is not"
+  "This is useful for debugging and being clear about what is stored and what is
+not."
   (format stream "#<~A oid:~A>" (type-of obj) (when (slot-boundp obj 'oid) (oid obj))))
 
 (defun write-oid (i bs) (write-sequence (integer-to-octets i 32) bs))
@@ -349,6 +350,87 @@ STORE is reserved for a special method which operates on stored objects.")
                 e inst)
         (values nil nil)))))
 
+(defclass set-valued-slot-definition (stored-slot-definition) 
+  ((set-valued-p :accessor set-valued-p :initarg :set-valued :allocation :instance)))
+
+(defclass set-valued-direct-slot-definition (stored-direct-slot-definition set-valued-slot-definition) 
+  ())
+
+(defclass set-valued-effective-slot-definition (stored-effective-slot-definition set-valued-slot-definition) 
+  ())
+
+(defun set-valued-slot-defs (class)
+  (find-slot-defs-by-type class 'set-valued-effective-slot-definition nil))
+
+(defun set-valued-slot-names (class)
+  (find-slot-def-names-by-type class 'set-valued-effective-slot-definition nil))
+
+(defclass association-slot-definition (stored-slot-definition)
+  ((assoc :accessor association :initarg :associate :allocation :instance)
+   (inherit :accessor inherit-p :initarg :inherit :initform nil :allocation :instance)
+   (m2m :accessor many-to-many-p :initarg :many-to-many :initform nil :allocation :instance)))
+
+(defclass association-direct-slot-definition (stored-direct-slot-definition association-slot-definition) 
+  ())
+
+(defclass association-effective-slot-definition (stored-effective-slot-definition association-slot-definition) 
+  ((type :accessor association-type :initarg :association-type)
+   (base-class :accessor association-slot-base :initarg :base-class :allocation :instance
+               :documentation "The base class to use as an index")
+   (indices :accessor association-slot-indices :initform nil 
+            :documentation "Alist of actual indices by store")
+   (classname :accessor foreign-classname :initarg :foreign-classname)
+   (slotname :accessor foreign-slotname :initarg :foreign-slotname)
+   (class :accessor foreign-class :initarg :foreign-class :initform nil
+          :documentation "Direct pointer to foreign class; late binding")))
+
+(defmethod initialize-instance :after ((slot-def association-effective-slot-definition) &rest args)
+  (declare (ignore args))
+  (let ((assoc (association slot-def)))
+    (cond ((symbolp assoc)
+           (when (many-to-many-p slot-def)
+             (error "Cannot specify ~A in a many-to-many association, must be of form (class slotname)"
+                    assoc))
+           (setf (association-type slot-def) :ref
+                 (foreign-classname slot-def) assoc
+                 (foreign-slotname slot-def) nil))
+          (t 
+           (destructuring-bind (classname slotname) assoc
+             (setf (foreign-classname slot-def) classname)
+             (setf (foreign-slotname slot-def) slotname)
+             (if (many-to-many-p slot-def)
+                 (setf (association-type slot-def) :m2m)
+                 (setf (association-type slot-def) :m21)))))))
+
+(defun association-end-p (slot-def)
+  (not (eq (association-type slot-def) :m21)))
+
+(defun association-slot-defs (class)
+  (find-slot-defs-by-type class 'association-effective-slot-definition nil))
+
+(defun association-slot-names (class)
+  (find-slot-def-names-by-type class 'association-effective-slot-definition nil))
+
+(defun association-end-slot-names (class)
+  (let ((results nil))
+    (mapc #'(lambda (slot-def)
+              (when (association-end-p slot-def)
+                (push (slot-definition-name slot-def) results)))
+          (find-slot-defs-by-type class 'association-effective-slot-definition nil))
+    results))
+
+(defun get-association-slot-index (slot-def sc)
+  (awhen (assoc sc (association-slot-indices slot-def))
+    (cdr it)))
+
+(defun add-association-slot-index (idx slot-def sc)
+  (setf (association-slot-indices slot-def)
+        (acons sc idx (association-slot-indices slot-def))))
+
+(defun remove-association-slot-index (slot-def sc)
+  (setf (association-slot-indices slot-def)
+        (delete sc (association-slot-indices slot-def) :key #'car)))
+
 (defmacro bind-standard-init-arguments ((initargs) &body body)
   `(let ((allocation-key (getf ,initargs :allocation))
          (has-initarg-p (getf ,initargs :initargs))
@@ -357,12 +439,16 @@ STORE is reserved for a special method which operates on stored objects.")
                         (getf ,initargs :index)))
          (derived-p (or (getf ,initargs :derived-fn)
                         (getf ,initargs :fn)))
-         (cached-p (getf ,initargs :cached)))
+         (cached-p (getf ,initargs :cached))
+         (set-valued-p (getf ,initargs :set-valued))
+         (associate-p (getf ,initargs :associate)))
      (declare (ignorable allocation-key has-initarg-p))
      (when (consp transient-p) (setq transient-p (car transient-p)))
      (when (consp indexed-p) (setq indexed-p (car indexed-p)))
      (when (consp derived-p) (setq derived-p (car derived-p)))
      (when (consp cached-p) (setq cached-p (car cached-p)))
+     (when (consp set-valued-p) (setq set-valued-p (car set-valued-p)))
+     (when (consp associate-p) (setq associate-p (car associate-p)))
      ,@body))
 
 (defmethod direct-slot-definition-class ((class stored-class) &rest initargs)
@@ -373,12 +459,22 @@ STORE is reserved for a special method which operates on stored objects.")
            (error "Stored class slots are not supported, try :transient t."))
           ((> (count t (list (or indexed-p derived-p) transient-p)) 1)
            (error "Cannot declare a slot to be more than one of transient or indexed."))
+          ((and set-valued-p has-initarg-p)
+           (error "Cannot specify initargs for set-valued slots"))
+          ((and associate-p (or (not (member (type-of associate-p) '(cons symbol))) (eq associate-p t)))
+           (error "':associate' slot initarg must contain classname or a class / slot reference: (classname slotname)"))
+          ((and associate-p has-initarg-p (eq (type-of associate-p) 'cons))
+           (error "Can only specify initargs for association slots storing single instances of another class"))
           (derived-p
            (find-class 'derived-index-direct-slot-definition))
           (indexed-p 
            (find-class 'indexed-direct-slot-definition))
+          (set-valued-p
+           (find-class 'set-valued-direct-slot-definition))
           (cached-p
            (find-class 'cached-direct-slot-definition))
+          (associate-p
+           (find-class 'association-direct-slot-definition))
           (transient-p
            (find-class 'transient-direct-slot-definition))
           (t
@@ -392,8 +488,12 @@ definition class depending on the keyword."
            (find-class 'derived-index-effective-slot-definition))
           (indexed-p 
            (find-class 'indexed-effective-slot-definition))
+          (set-valued-p
+           (find-class 'set-valued-effective-slot-definition))
           (cached-p
            (find-class 'cached-effective-slot-definition))
+          (associate-p
+           (find-class 'association-effective-slot-definition))
           (transient-p
            (find-class 'transient-effective-slot-definition))
           (t
@@ -405,9 +505,20 @@ definition class depending on the keyword."
     (cond ((ensure-transient-chain slot-definitions initargs)
            (setf initargs (append initargs '(:transient t))))
           ((not (eq (type-of parent-direct-slot) 'cached-direct-slot-definition))
-           #-openmcl (setf (getf initargs :allocation) :database)))
+           (setf (getf initargs :allocation) :database)))
+    (when (eq (type-of parent-direct-slot) 'set-valued-direct-slot-definition)
+      (setf (getf initargs :set-valued) t))
     (when (eq (type-of parent-direct-slot) 'cached-direct-slot-definition)
       (setf (getf initargs :cached) t))
+    (when (eq (type-of parent-direct-slot) 'association-direct-slot-definition)
+      (setf (getf initargs :associate) (association parent-direct-slot))
+      (setf (getf initargs :inherit) 
+            (inherit-p parent-direct-slot))
+      (setf (getf initargs :many-to-many) (many-to-many-p parent-direct-slot))
+      (setf (getf initargs :base-class)
+            (if (inherit-p parent-direct-slot)
+                (find-class-for-direct-slot class parent-direct-slot)
+                (class-name class))))
     (when (eq (type-of parent-direct-slot) 'indexed-direct-slot-definition)
       (setf (getf initargs :indexed) t)
       (setf (getf initargs :inherit) 
@@ -455,9 +566,10 @@ definition class depending on the keyword."
 (defmacro defsclass (cname parents slot-defs &rest class-opts)
   "Shorthand for defining stored objects.  Wraps the main
    class definition with stored-class"
-  `(defclass ,cname ,parents
-     ,slot-defs
-     ,@(add-stored-metaclass-argument class-opts)))
+  `(eval-always
+     (defclass ,cname ,parents
+       ,slot-defs
+       ,@(add-stored-metaclass-argument class-opts))))
 
 (defun add-stored-metaclass-argument (class-opts)
   (when (assoc :metaclass class-opts)

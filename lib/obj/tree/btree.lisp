@@ -38,7 +38,7 @@ fashion."))
   (:documentation "Delete all key-value pairs from the btree and
    render it an invalid object in the data store"))
 
-(defgeneric build-indexed-btree (sc)
+(defgeneric build-indexed-btree (store)
   (:documentation 
    "Construct a btree of the appropriate type corresponding to this store-controller."))
 
@@ -123,6 +123,7 @@ the primary."
 lookup, updating ALL other secondary indices."
   (delete-key (get-primary-key key bt) (primary bt)))
 
+;;; Cursor
 (defclass cursor ()
   ((oid :accessor cursor-oid :type fixnum :initarg :oid)
    (initialized-p :accessor cursor-initialized-p
@@ -337,7 +338,7 @@ Returns has-tuple / secondary key / value / primary key."))
 (defgeneric cursor-pprev-nodup (cursor)
   (:documentation 
    "Move to the previous non-duplicate element (with
-different key.)  Returns has-tuple / secondary key / value /
+different key.) Returns has-tuple / secondary key / value /
 primary key."))
 
 (defmacro with-btree-cursor ((var bt) &body body)
@@ -368,14 +369,14 @@ not), evaluates the forms, then closes the cursor."
   (call-next-method))
 
 (defmethod drop-btree ((index btree-index))
-  "Btree indices don't need to have values removed,
-   this happens on the primary when remove-kv is called"
+  "Btree indices don't need to have values removed, this happens on the primary
+when remove-kv is called"
   nil)
 
 (defun compare<= (a b)
-  "A comparison function that mirrors the ordering of the data stores for <=
-   on all sortable types.  It does not provide ordering on non-sorted values
-   other than by type class (i.e. not serialized lexical values)"
+  "A comparison function that mirrors the ordering of the data stores for <= on
+all sortable types. It does not provide ordering on non-sorted values other
+than by type class (i.e. not serialized lexical values)"
   (declare (optimize (speed 3) (safety 2) (debug 0)))
   (handler-case 
       (typecase a
@@ -392,9 +393,9 @@ not), evaluates the forms, then closes the cursor."
       (type<= a b))))
 
 (defun compare< (a b)
-  "A comparison function that mirrors the ordering of the data stores for <
-   on all sortable types.  It does not provide ordering on non-sorted values
-   other than by type class (i.e. not serialized lexical values)"
+  "A comparison function that mirrors the ordering of the data stores for < on
+all sortable types. It does not provide ordering on non-sorted values other
+than by type class (i.e. not serialized lexical values)"
   (declare (optimize (speed 3) (safety 2) (debug 0)))
   (handler-case 
       (typecase a
@@ -412,7 +413,7 @@ not), evaluates the forms, then closes the cursor."
       (type< a b))))
 
 (defun compare-equal (a b)
-  "A lisp compare equal in same spirit as compare<.  Case insensitive for strings."
+  "A lisp compare equal in same spirit as compare<. Case insensitive for strings."
   (handler-case
       (typecase a
         (stored (eq (oid a) (oid b)))
@@ -424,10 +425,9 @@ not), evaluates the forms, then closes the cursor."
   (not (compare< a b)))
 
 (defvar *current-cursor* nil
-  "This dynamic variable is referenced only when deleting elements
-   using the following function.  This allows mapping functions to
-   delete elements as they map.  This is safe as we don't revisit
-   values during maps")
+  "This dynamic variable is referenced only when deleting elements using the
+following function. This allows mapping functions to delete elements as they
+map. This is safe as we don't revisit values during maps")
 
 (defmacro with-current-cursor ((cur) &body body)
   `(let ((*current-cursor* ,cur))
@@ -442,14 +442,13 @@ not), evaluates the forms, then closes the cursor."
 ;; The primary mapping function
 
 (defgeneric map-btree (fn btree &rest args &key start end value from-end collect &allow-other-keys)
-  (:documentation   "Map btree maps over a btree from the value start to the value of end.
-   If values are not provided, then it maps over all values.  BTrees 
-   do not have duplicates, but map-btree can also be used with indices
-   in the case where you don't want access to the primary key so we 
-   require a value argument as well for mapping duplicate value sets.
-   The collect keyword will accumulate the results from
-   each call of fn in a fresh list and return that list in the 
-   same order the calls were made (first to last)."))
+  (:documentation  "Map btree maps over a btree from the value start to the value of end. If
+values are not provided, then it maps over all values. BTrees do not have
+duplicates, but map-btree can also be used with indices in the case where you
+don't want access to the primary key so we require a value argument as well
+for mapping duplicate value sets. The collect keyword will accumulate the
+results from each call of fn in a fresh list and return that list in the same
+order the calls were made (first to last)."))
 
 (defun validate-map-call (start end)
   (unless (or (null start) (null end) (compare<= start end))
@@ -457,9 +456,8 @@ not), evaluates the forms, then closes the cursor."
            start end)))
 
 (defmacro with-map-collector ((fn collect-p) &body body)
-  "Binds free var results to the collected results of function in
-   symbol-argument fn based on boolean parameter collect-p,
-   otherwise result is nil"
+  "Binds free var results to the collected results of function in symbol-argument
+fn based on boolean parameter collect-p, otherwise result is nil"
   (with-gensyms (collector k v)
     `(let ((results nil))
        (flet ((,collector (,k ,v)
@@ -469,24 +467,24 @@ not), evaluates the forms, then closes the cursor."
            ,@body)))))
 
 (defmacro with-map-wrapper ((fn btree collect cur) &body body)
-  "Binds variable st to the store controller, overrieds fn with a collector
-   if dynamic value of collect is true and binds variable named cur to
-   the current cursor"
+  "Binds variable st to the store controller, overrieds fn with a collector if
+dynamic value of collect is true and binds variable named cur to the current
+cursor"
   `(with-map-collector (,fn ,collect)
      (with-btree-cursor (,cur ,btree)
        (with-current-cursor (,cur)
          ,@body))))
 
 (defmacro with-cursor-values (expr &body body)
-  "Binds exists?, skey, val and pkey from expression assuming
-   expression returns a set of cursor operation values or nil"
+  "Binds exists?, skey, val and pkey from expression assuming expression returns
+a set of cursor operation values or nil"
   `(multiple-value-bind (exists? skey val pkey)
        (the (values boolean t t t) ,expr)
      (declare (ignorable exists? skey val pkey))
      ,@body))
 
 (defmacro iterate-map-btree (&key start continue step)
-  "In context with bound variables: cur, sc, value, start, end, fn
+  "In context with bound variables: cur, store, value, start, end, fn
    Provide a start expression that returns index cursor values
    Provide a continue expression that uses the
      bound variables key, start, value or end to determine if 
@@ -516,8 +514,6 @@ not), evaluates the forms, then closes the cursor."
 ;; NOTE: the use of nil for the last element in a btree only works because the C comparison
 ;; function orders by type tag and nil is the highest valued type tag so nils are the last
 ;; possible element in a btree ordered by value.
-
-
 (defmethod map-btree (fn (btree btree) &rest args &key start end (value nil value-set-p) 
                       from-end collect &allow-other-keys)
   (declare (ignorable args))
@@ -584,7 +580,7 @@ not), evaluates the forms, then closes the cursor."
            ,@body)))))
 
 (defmacro iterate-map-index (&key start continue step)
-  "In context with bound variables: cur, sc, value, start, end, fn
+  "In context with bound variables: cur, store, value, start, end, fn
    Provide a start expression that returns index cursor values
    Provide a continue expression that uses the
      bound variables key, start, value or end to determine if 
@@ -604,7 +600,7 @@ not), evaluates the forms, then closes the cursor."
                   (return (nreverse results)))))))))
 
 (defmacro with-map-index-wrapper ((fn btree collect cur) &body body)
-  "Binds variable sc to the store controller, overrieds fn with a collector
+  "Binds variable store to the store controller, overrieds fn with a collector
    if dynamic value of collect is true and binds variable named cur to
    the current cursor"
   `(with-map-index-collector (,fn ,collect)
@@ -655,10 +651,7 @@ not), evaluates the forms, then closes the cursor."
      :continue (or (null start) (compare>= key start))
      :step (cursor-pprev cur))))
 
-;; ===============================
 ;; Some generic utility functions
-;; ===============================
-
 (defun print-btree-entry (k v) 
   (format t "key: ~A / value: ~A~%" k v))
 
@@ -728,4 +721,3 @@ not), evaluates the forms, then closes the cursor."
     (cursor-close cx1)
     (cursor-close cy1)
     rv))
-    

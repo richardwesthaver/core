@@ -93,23 +93,23 @@ zero), UNDEFINED-HUE will be assigned."
 (defun hsv-to-rgb (hsv)
   "Convert HSV to RGB representation.  When SATURATION is zero, HUE is
 ignored."
-  (with-slots (hue saturation value) hsv
+  (with-slots (hue saturation .value) hsv
     ;; if saturation=0, color is on the gray line
     (when (zerop saturation)
-      (return-from hsv-to-rgb (gray value)))
+      (return-from hsv-to-rgb (gray .value)))
     ;; nonzero saturation: normalize hue to [0,6)
     (let ((h (/ (normalize-hue hue) 60)))
       (multiple-value-bind (quotient remainder) (floor h)
-        (let ((p (* value (- 1 saturation)))
-              (q (* value (- 1 (* saturation remainder))))
-              (r (* value (- 1 (* saturation (- 1 remainder))))))
+        (let ((p (* .value (- 1 saturation)))
+              (q (* .value (- 1 (* saturation remainder))))
+              (r (* .value (- 1 (* saturation (- 1 remainder))))))
           (case quotient
-            (0 (rgb value r p))
-            (1 (rgb q value p))
-            (2 (rgb p value r))
-            (3 (rgb p q value))
-            (4 (rgb r p value))
-            (t (rgb value p q))))))))
+            (0 (rgb .value r p))
+            (1 (rgb q .value p))
+            (2 (rgb p .value r))
+            (3 (rgb p q .value))
+            (4 (rgb r p .value))
+            (t (rgb .value p q))))))))
 
 (defun hex-to-rgb (string)
   "Parse hexadecimal notation (eg ff0000 or f00 for red) into an RGB color."

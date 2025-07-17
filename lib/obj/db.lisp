@@ -446,9 +446,21 @@ column is already closed."))
 ;; - Implement a TRANSACTION-DB method which returns an instance of DATABASE
 
 ;; Simple transactions are non-nil lists which are handled according to the
-;; current database backend
+;; current database backend.
 
-;; 
+#| notes
+
+- *TXN* is bound to the current transaction being executed. A value of NIL
+   represents no transaction. The current *DATABASE-BACKEND* may modify this
+   variable within the EXECUTE-TRANSACTION method.
+   - should never be bound within the body of a transaction
+
+- The macros WITH-TRANSACTION and ENSURE-TRANSACTION will always abort the
+  transaction in response to any non-local exit.
+
+- WITH-TRANSACTION passes *TXN* to EXECUTE-TRANSACTION
+
+|#
 (deftype simple-transaction () `(and (not null) list))
 
 (defvar *default-txn* '(nil nil nil))
@@ -459,17 +471,26 @@ column is already closed."))
   (:documentation "Base class for transaction objects."))
 
 (defgeneric (setf transaction-opts) (new txn))
-(defgeneric make-transaction (self &key)
+
+(defgeneric make-transaction (self &key &allow-other-keys)
   (:documentation "Make a new transaction object.")
   (:method ((self null) &key) *default-txn*))
 
 (defgeneric prepare-transaction (self &key)
   (:documentation "Prepare a transaction."))
+
 (defgeneric rollback-transaction (self &key)
   (:documentation "Rollback a transaction."))
+
 (defgeneric commit-transaction (self &key)
   (:documentation "Commit a transaction."))
-(defgeneric execute-transaction (self txn &rest args &key &allow-other-keys))
+
+(defgeneric execute-transaction (self kernel &rest args &key &allow-other-keys)
+  (:documentation
+   "Interface to the backend transaction kernel (a function). The body of the
+kernel function should be executed in an environment that protects against
+non-local exits, provides ACIDic properties and binds any relevant parameters."))
+
 (defgeneric abort-transaction (self &key &allow-other-keys))
 
 (defgeneric transaction-object-p (self)
@@ -480,36 +501,58 @@ column is already closed."))
   (:method ((self transaction-object)) t))
 
 (defgeneric transaction-object (self)
-  (:documentation "Return the underlying object of a transaction."))
+  (:documentation "Return the underlying object of a transaction.")
+  (:method ((self list)) (second self)))
 (defgeneric transaction-store (self)
-  (:documentation "Return the underlying STORE of a transaction."))
+  (:documentation "Return the underlying STORE of a transaction.")
+  (:method ((self list)) (first self)))
 (defgeneric transaction-db (self)
   (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
 return the same value as DB depending on backend.")
   (:method ((self t)) *db*))
 (defgeneric transaction-prior (self)
-  (:documentation "Return the previous transaction of SELF if any."))
+  (:documentation "Return the previous transaction of SELF if any.")
+  (:method ((self list)) (third self)))
 
 (defun known-transaction (db txn)
   "Search for a prior TXN known by this DB."
   (when txn
     (or (and (transaction-object-p txn)
-             (eq db (transaction-db txn))
+             (or (eq db (transaction-db txn))
+                 (eq db (transaction-store txn)))
              txn
              (known-transaction db (transaction-prior txn))))))
 
+(define-condition transaction-retry-count-exceeded (error)
+  ((count :initarg :count :accessor retry-count :initform 0)))
+
+(defvar *default-txn-wait* 0.1)
+(defvar *default-txn-retry* 0)
+
 ;; From ELEPHANT
-(defmacro with-transaction ((sym &rest initargs 
-                                 &key (db '*db*)
-                                      (txn '*txn*)
-                                 &allow-other-keys)
+(defmacro with-transaction ((&rest initargs 
+                             &key (db '*db*)
+                                  (store '*store*)
+                                  (txn '*txn*)
+                                  retries
+                                  wait
+                             &allow-other-keys)
                             &body body)
-  "Execute a body with a transaction in place. On success,
-   the transaction is committed. Otherwise, the transaction is aborted."
-  (declare (ignorable db txn))
-  (remf initargs :db)
-  `(let ((,sym (make-transaction ,db ,@initargs)))
-     ,@body))
+  "Execute a body with a transaction in place. On success, the transaction is
+committed. Otherwise, the transaction is aborted."
+  (with-gensyms (%db %txn-fn)
+    (remf initargs :db)
+    (remf initargs :store)
+    (remf initargs :txn)
+    (remf initargs :retries)
+    (remf initargs :wait)
+    `(let* ((,%db (or ,db ,store))
+            (,%txn-fn (lambda () ,@body)))
+       (funcall #'execute-transaction ,%db ,%txn-fn 
+                :txn (awhen (known-transaction ,%db ,txn) (transaction-object it))
+                ,@(when retries `(:retries ,retries))
+                ,@(when wait `(:wait ,wait))
+                ,@initargs))))
 
 (defmacro current-transaction (db)
   "Return the current transaction associated with database DB."
@@ -520,12 +563,34 @@ return the same value as DB depending on backend.")
 
 (defmacro ensure-transaction ((&rest initargs &key
                                               (db '*db*)
+                                              (store '*store*)
                                               (txn '*txn*)
+                                              retries wait
                                &allow-other-keys)
                               &body body)
-  "Execute BODY with an existing transaction or a new transaction if one does not exist.
+  "Execute BODY with an existing transaction or a new transaction if one does not
+exist. This macro allows for the sequencing of database actions to be run
+atomically regardless of whether there is an existing transaction or not."
+  (with-gensyms (%db %txn-fn)
+    (remf initargs :db)
+    (remf initargs :store)
+    (remf initargs :txn)
+    (remf initargs :retries)
+    (remf initargs :wait)
+    `(let ((,%db (or ,db ,store))
+           (,%txn-fn (lambda () ,@body)))
+       (if (known-transaction ,%db ,txn)
+           (funcall ,%txn-fn)
+           (funcall #'execute-transaction ,%db
+                    ,%txn-fn
+                    :txn nil
+                    ,@(when retries `(:retries ,retries))
+                    ,@(when wait `(:wait ,wait)))))))
 
-This macro allows for the sequencing of database actions to be run atomically
-inside a single transaction - use WITH-TRANSACTION if you want to nest
-multiple transactions.")
-
+(defmacro with-batch-transaction ((batch size list &rest txn-options) &body body)
+  "Perform a set of DB operations over a sequence of elements LIST in batches of
+SIZE. Transaction keywords accepted by WITH-TRANSACTION are accepted
+immediately following LIST."
+  `(loop for ,batch in (group ,list ,size)
+         do (with-transaction ,txn-options
+              ,@body)))

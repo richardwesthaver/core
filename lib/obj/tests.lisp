@@ -1,7 +1,7 @@
 (defpackage :obj/tests
-  (:use :cl :std :rt 
-   :obj :uuid :url :std/macs
-   :dynamic :fast :sealed :stealth :stored :store :uri))
+  (:use :cl :std :rt :obj :uuid :url :std/macs :id :ast
+   :dynamic :fast :sealed :stealth :stored :store :uri :color 
+   :tree :db :store :schema))
 
 (in-package :obj/tests)
 
@@ -14,12 +14,12 @@
 
 (defun rgb= (rgb1 rgb2 &optional (eps 1e-10))
   "Compare RGB colors for (numerical) equality."
-  (let ((r1 (rgb-red rgb1))
-        (g1 (rgb-green rgb1))
-        (b1 (rgb-blue rgb1))
-        (r2 (rgb-red rgb2))
-        (g2 (rgb-green rgb2))
-        (b2 (rgb-blue rgb2)))
+  (let ((r1 (red rgb1))
+        (g1 (green rgb1))
+        (b1 (blue rgb1))
+        (r2 (red rgb2))
+        (g2 (green rgb2))
+        (b2 (blue rgb2)))
     (and (eps= r1 r2 eps)
          (eps= g1 g2 eps)
          (eps= b1 b2 eps))))
@@ -70,17 +70,13 @@
     (is-uuid (make-v1-uuid))
     (is-uuid (make-v4-uuid))))
 
-;;; Seq
-(deftest def-iter ())
-
-(deftest def-seq ())
 
 ;;; Trees
 (deftest generic-tree ()
   (let ((tree (make-binary-node
               0 
-              (make-binary-node 1 (make-node 0) (make-node 1))
-              (make-binary-node 2 (make-node 2) (make-node 3)))))
+              (make-binary-node 1 (make-tree-node 0) (make-tree-node 1))
+              (make-binary-node 2 (make-tree-node 2) (make-tree-node 3)))))
     (is (typep tree 'binary-node))))
 
 (deftest bro-tree ()
@@ -93,7 +89,7 @@
 
 (deftest btree (:skip t)
   ;; FIX 2025-02-27: 
-  (is (make-instance 'btree-index)))
+  (is (make-instance 'btree:btree-index)))
 
 ;;; Graphs
 (deftest basic-graph ()
@@ -177,10 +173,13 @@
   (:generic-function-class fast-generic-function))
 
 ;; can't be in same file :(
-;; (with-compilation-unit ()
-;;   (defmethod %test-+ ((a number) (b number))  
-;;     (+ a b))
-;;   (seal-domain #'test-+ '(number number)))
+(defmethod %test-+ ((a number) (b number))  
+  (+ a b))
+
+(seal-domain #'%test-+ '(number number))
+
+(deftest fast ()
+  (is= 42 (%test-+ 2 40)))
 
 ;;;; Dynamic
 (defclass dyno1 (id)
@@ -220,14 +219,24 @@
 ;; TODO
 
 ;;;; Stored
-(stored:defsclass person ()
-  ((name :accessor name :initarg :name)
+(defsclass person ()
+  ((name :accessor name :initarg :name :transient t)
    (id :accessor id :initarg :age)
    (father :accessor father :initarg :father)
    (school :accessor school :initarg :school)))
 
-(stored:defsclass school ()
-  ((name :accessor name :initarg :name :transient t)))
+(defsclass school ()
+  ((name :accessor name :initarg :name :allocation :instance))
+  (:schemas t))
+
+(defclass school-schema (store:stored-object-schema) ()
+  (:default-initargs
+   :class-name 'school
+   :version 1))
+
+;; (get-class-indexing (find-class 'school))
+;; (get-store-schemas (find-class 'school))
+(defvar *test-store* (make-instance 'store))
 
 (deftest stored (:skip t)
   (with-transaction (txn)
@@ -247,3 +256,5 @@
                :school ,(get-instance-by-value 'school 'name "Cutler"))))))
 ;;; Store
 ;;; Tensors
+;;; Cache
+(deftest simple-cache ())

@@ -430,6 +430,7 @@
   (:export
    :get-val
    :set-val
+   :ensure-transaction
    :dbs
    :get-db
    :add-db
@@ -660,6 +661,7 @@
    #:next-cid
    #:*store*
    #:spec
+   #:stored-object-schema
    #:temp-spec
    #:delete-spec
    #:copy-spec

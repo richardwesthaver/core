@@ -171,7 +171,25 @@
    :transient-p
    :transient-slot-names
    :database-allocation-p
-   :slot-definition-allocation))
+   :slot-definition-allocation
+   :association-slot-base
+   :association-type
+   :association-effective-slot-definition
+   :association-slot-definition
+   :association-slot-indices
+   :foreign-classname
+   :foreign-slotname
+   :foreign-class
+   :association-end-p
+   :association-slot-defs
+   :association-slot-names
+   :association-end-slot-names
+   :get-association-slot-index
+   :add-association-slot-index
+   :remove-association-slot-index
+   :set-valued-slot-definition
+   :set-valued-direct-slot-definition
+   :set-valued-effective-slot-definition))
 
 (defpackage :obj/meta/typed
   (:nicknames :meta/typed :typed)
