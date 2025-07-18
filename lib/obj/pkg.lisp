@@ -653,7 +653,7 @@
 
 (defpkg :obj/cache
   (:nicknames :cache)
-  (:use :cl :std :stored :id :db :store :schema :config)
+  (:use :cl :std :stored :id :db :schema :config)
   (:import-from :std :queue :make-queue)
   (:export :cache :cache-cleanup :cache-policy
    :cache-size :cache-count :make-cache :cache-release

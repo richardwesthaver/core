@@ -73,8 +73,9 @@ history but less often recently.
 
 ;;; Entry
 (defclass cache-entry ()
-  ((key :accessor key)
+  ((key :accessor key :initarg :key)
    (data :accessor data)
+   (pending :initarg :pending)
    (rc :accessor entry-rc :initform 0)
    (expiry :reader entry-expiry)))
 
@@ -216,12 +217,12 @@ history but less often recently.
   (:method :before (policy (queue vector-queue) (entry cache-entry))
     (change-class entry 'indexed-cache-entry))
   (:method (policy (queue vector-queue) (entry cache-entry))
-    (setf (index entry) (push-queue entry queue)))
+    (setf (index entry) (push-queue* entry queue)))
   (:method ((policy (eql :lfu)) (queue vector-queue) (entry cache-entry))
     (change-class entry 'heap-cache-entry)
     (setf (entry-weight entry) 1
-          (index entry) (push-queue entry queue))
-    (bubble-up (data queue )(index entry)))
+          (index entry) (push-queue* entry queue))
+    (bubble-up (data queue) (index entry)))
   (:method ((policy fixnum) queue (entry cache-entry))
     (entry-added :lfu queue entry)
     (incf (entry-weight entry) policy)
@@ -263,8 +264,8 @@ history but less often recently.
   (:method ((policy (eql :lfu)) (queue vector-queue) (entry heap-cache-entry))
     (let ((i (index entry)))
       (setf (index entry) nil)
-      (unless (= i (1- (length (data queue))))
-        (setf (aref (data queue) i) (pop-queue queue)
+      (unless (= i (1- (queue-count* queue)))
+        (setf (aref (data queue) i) (pop-queue* queue)
               (index (aref (data queue) i)) i)
         (sink-down (data queue) i)))))
 
@@ -290,10 +291,10 @@ history but less often recently.
         (entry-removed policy queue e)
         e)))
   (:method ((policy (eql :lfu)) (queue vector-queue))
-    (when (> (length (data queue)) 0)
+    (unless (queue-empty-p* queue)
       (let ((light (aref (data queue) 0))
-            (heavy (pop-queue queue)))
-        (when (> (length (data queue)) 0)
+            (heavy (pop-queue* queue)))
+        (unless (queue-empty-p* queue)
           (setf (aref (data queue) 0) heavy
                 (index heavy) 0)
           (sink-down (data queue) 0 t))
@@ -338,7 +339,7 @@ history but less often recently.
 
 (defvar *cleanup-list*)
 (defmacro with-collected-cleanups ((cache) &body body)
-  (with-gensym (i fn)
+  (with-gensyms (i fn)
     `(let* ((,fn (with-queue-lock (queue ,cache)
 		   (slot-value ,cache 'cleanup)))
 	    (*cleanup-list* (null ,fn)))
@@ -362,22 +363,16 @@ history but less often recently.
 ;; REVIEW 2025-07-04: 
 (defun ensure-cache-size (cache)
   (with-slots (policy table) cache
-    (let ((max (cache-size cache))
-          (size (cache-count cache)))
-      (loop while (> max size)
+      (loop while (not (queue-full-p* (queue cache)))
 	    for old = (evict-entry policy (queue cache))
 	    while old
 	    do (progn
 	         ;; (decf size (slot-value old 'size))
-	         (prepare-cleanup old table))))))
-
-(defun cache-size (cache)
-  "Returns the current size of the cache."
-  (raw-queue-capacity (queue cache)))
+	         (prepare-cleanup old table)))))
 
 (defun cache-count (cache)
   "Returns the current count of items in the cache."
-  (with-queue-lock (lock (queue cache))
+  (with-queue-lock (queue cache)
     (hash-table-count (slot-value cache 'table))))
 
 (defmethod get-val ((cache cache) key &key shallow force)
@@ -400,7 +395,7 @@ with the second value returned by GET-VAL."
 	        (let ((entry (gethash key table)))
 		  (when entry
 		    (prepare-cleanup entry table)
-		    (decf (slot-value cache 'size) (slot-value entry 'size))
+		    ;; (decf (cache-size cache) (slot-value entry 'size))
 		    (when policy
 		      (entry-removed policy (queue cache) entry)))))
 	      (flet ((miss ()
@@ -478,15 +473,15 @@ with the second value returned by GET-VAL."
 		    (setf size (if content 1 0))
 		    (warn "Cache provider did not return a proper size for the data - assuming size of ~d" size))
 		  (with-mutex (lock)
-		    (setf (slot-value data 'data) content
-			  (slot-value data 'size) size)
-		    (with-slots (lifetime) cache
-		      (when lifetime
-		        (setf (slot-value data 'expiry)
-			      (+ (get-universal-time) lifetime))))
+		    (setf (slot-value data 'data) content)
+			  ;; (slot-value data 'size) size)
+		    ;; (with-slots (lifetime) cache
+		    ;;   (when lifetime
+		    ;;     (setf (slot-value data 'expiry)
+		    ;;           (+ (get-universal-time) lifetime))))
 		    (condition-notify (slot-value data 'pending))
 		    (slot-makunbound data 'pending)
-		    (incf (slot-value cache 'size) size)
+		    ;; (incf (slot-value cache 'size) size)
 		    (when policy
 		      (ensure-cache-size cache)
 		      (entry-added policy (queue cache) data))
@@ -504,7 +499,7 @@ it is released."
   (when entry
     (with-slots (table cleanup) cache
       (let ((to-clean 
-              (with-queue-lock (lock (queue cache))
+              (with-queue-lock (queue cache)
 		(let ((busy (entry-rc entry)))
 		  (cond ((zerop busy)
 			 (error "Double release for item with the key ~a" (key entry)))
@@ -522,7 +517,7 @@ it is released."
 
 (defmacro with-cache (var (cache key &key shallow) &body body)
   "Combines a cache-fetch and cache-release in a form."
-  (with-gensym (c-var tag)
+  (with-gensyms (c-var tag)
     `(let ((,c-var ,cache))
        (multiple-value-bind (,var ,tag)
 	   (cache-fetch ,c-var ,key ,@(and shallow '(:shallow t)))

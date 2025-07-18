@@ -364,9 +364,9 @@ TEST."
 (defmethod data ((self raw-queue))
   (raw-queue-data self))
 
-(defun make-raw-queue (capacity)
+(defun make-raw-queue (capacity &rest args)
   "Return a fresh queue with specified CAPACITY."
-  (%make-raw-queue :data (make-array capacity)))
+  (%make-raw-queue :data (apply 'make-array capacity args)))
 
 (defun push-raw-queue (val queue)
   "Push VAL to QUEUE."
@@ -426,9 +426,9 @@ TEST."
 (defaccessor lock ((self vector-queue))
   (vector-queue-lock self))
 
-(defun make-vector-queue* (capacity)
+(defun make-vector-queue* (capacity &rest args)
   "Return a fresh VECTOR-QUEUE with specified CAPACITY."
-  (%make-vector-queue :impl (make-raw-queue capacity)))
+  (%make-vector-queue :impl (apply 'make-raw-queue capacity args)))
 
 (defmacro with-vector-queue-lock (queue &body body)
   "Eval BODY while holding a lock on QUEUE."
@@ -438,18 +438,20 @@ TEST."
 ;; no lock
 (declaim (inline push-vector-queue* pop-vector-queue*))
 (defun push-vector-queue* (obj queue)
-  "Push OBJ to QUEUE without locking."
+  "Push OBJ to QUEUE without locking Returns the current count of QUEUE before
+push."
   (with-slots (impl lock %push %pop) queue
-    (loop (cond ((< (raw-queue-count impl) (raw-queue-capacity impl))
-		 (push-raw-queue obj impl)
-		 (when %push
-		   (condition-notify %push))
-		 (return))
-		(t
-		 (condition-wait
-		  (or %pop
-		      (setf %pop (make-waitqueue)))
-		  lock))))))
+    (let ((count (raw-queue-count impl)))
+      (loop (cond ((< count (raw-queue-capacity impl))
+		   (push-raw-queue obj impl)
+		   (when %push
+		     (condition-notify %push))
+		   (return count))
+		  (t
+		   (condition-wait
+		    (or %pop
+		        (setf %pop (make-waitqueue)))
+		    lock)))))))
 
 (defun push-vector-queue (obj queue)
   "Push OBJ to QUEUE with locking."
@@ -529,9 +531,10 @@ TEST."
   (define-queue-fn vector-queue-full-p vector-queue raw-queue-full-p)
   (define-queue-fn peek-vector-queue vector-queue peek-raw-queue))
 
-(defun make-vector-queue (capacity &key initial-contents)
+(defun make-vector-queue (capacity &rest args &key initial-contents &allow-other-keys)
   "Make a new VECTOR-QUEUE with specified CAPACITY and INITIAL-CONTENTS."
-  (let ((queue (make-vector-queue* capacity)))
+  (remf args :initial-contents)
+  (let ((queue (apply 'make-vector-queue* capacity args)))
     (when initial-contents
       (block done
         (flet ((push-elem (elem)
@@ -564,7 +567,7 @@ TEST."
   `(with-mutex ((cons-queue-lock ,queue))
      ,@body))
 
-(declaim (inline push-vector-queue* pop-vector-queue*))
+(declaim (inline push-cons-queue* pop-cons-queue*))
 (defun push-cons-queue* (obj queue) 
   "Push OBJ to QUEUE without locking."
   (declare (cons-queue queue))
@@ -785,10 +788,10 @@ associated priority vector."
                   (aref prio-vector 0) old-prio))
           (heapify-downwards data-vector prio-vector (priority-queue-size queue))))))
 
-(defun make-priority-queue (capacity &key initial-contents prioritize (element-type t))
+(defun make-priority-queue (capacity &key initial-contents prioritize (element-type t) initial-element)
   "Make a new PRIORITY-QUEUE with specified CAPACITY."
   (let ((queue (%make-priority-queue
-                :data (make-array capacity :element-type element-type)
+                :data (make-array capacity :element-type element-type :initial-element initial-element)
                 :priorities (make-array capacity :element-type 'priority))))
     (setf (priority-queue-size queue) capacity)
     (when initial-contents
@@ -891,12 +894,12 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
   "Queue type spec."
   '(or cons-queue vector-queue raw-queue basic-queue priority-queue spin-queue))
 
-(defun make-queue (&key capacity initial-contents prioritize)
+(defun make-queue (&key capacity initial-contents prioritize initial-element element-type)
   "Make a new queue."
   (cond 
-    ((and capacity (not prioritize)) (make-vector-queue capacity :initial-contents initial-contents))
+    ((and capacity (not prioritize)) (make-vector-queue capacity :initial-contents initial-contents :initial-element initial-element))
     ((not prioritize) (make-cons-queue :initial-contents initial-contents))
-    (prioritize (make-priority-queue (or capacity *default-priority-queue-size*) :initial-contents initial-contents :prioritize prioritize))))
+    (prioritize (make-priority-queue (or capacity *default-priority-queue-size*) :initial-contents initial-contents :prioritize prioritize :initial-element initial-element :element-type element-type))))
 
 (defun call-with-cons-queue-lock (fn queue)
   "Call FN with a lock on QUEUE."

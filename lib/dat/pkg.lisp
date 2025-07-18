@@ -349,6 +349,7 @@
    #:open-font-loader
    #:close-font-loader
    #:with-font-loader
+   #:with-font
    #:glyph-count
    #:name-entry-value
    #:find-name-entry

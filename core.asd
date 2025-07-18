@@ -19,7 +19,7 @@
 (defsystem :core/tests
   :depends-on (:rt :std/tests :log/tests :rt/tests :cli/tests
                :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
-               :doc/tests :nlp/tests :skel/tests
+               :doc/tests :nlp/tests :skel/tests :box/tests
                :syn/tests :organ/tests :packy/tests :obj/tests 
                :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
                :zstd/tests :uring/tests :blake3/tests :ublk/tests

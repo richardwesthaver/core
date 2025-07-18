@@ -440,7 +440,6 @@ distance between the pair."
            (version 0)
            (table-count 0)
            (apple-p nil))
-
       ;; These shenanegins are because Apple documents one style of
       ;; kern table and Microsoft documents another. This code
       ;; tries to support both.
@@ -2560,10 +2559,15 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
   "Caches font file."
   (handler-case
       (with-font-loader (font pathname)
-        (let ((tbl (make-hash-table :test 'equal)))
-          (setf (gethash (subfamily-name font) tbl) pathname
-                (gethash (family-name font) *font-cache*) tbl)))
-    (error nil)))
+        (multiple-value-bind (hash-table exists-p)
+            (gethash (family-name font) *font-cache*
+                     (make-hash-table :test 'equal))
+          (setf (gethash (subfamily-name font) hash-table)
+                pathname)
+          (unless exists-p
+            (setf (gethash (family-name font) *font-cache*)
+                  hash-table))))
+    (condition () (return-from cache-font-file))))
 
 (defun cache-fonts ()
   "Caches fonts from *font-dirs* directories."
@@ -2611,13 +2615,13 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
    (overwrite-gcontext :type boolean :initarg :overwrite-gcontext :initform nil 
                        :accessor font-overwrite-gcontext :documentation "Use font values for background and foreground colors.")
    (antialias :type boolean :initarg :antialias :initform t :accessor font-antialias :documentation "Antialias text string.")
-   (string-bboxes :type hash-table :accessor font-string-bboxes
+   (string-bboxes :type cache:cache :accessor font-string-bboxes
                   :documentation "Cache for text bboxes")
-   (string-line-bboxes :type hash-table :accessor font-string-line-bboxes
+   (string-line-bboxes :type cache:cache :accessor font-string-line-bboxes
                   :documentation "Cache for text line bboxes")
-   (string-alpha-maps :type hash-table :accessor font-string-alpha-maps
+   (string-alpha-maps :type cache:cache :accessor font-string-alpha-maps
                       :documentation "Cache for text alpha maps")
-   (string-line-alpha-maps :type hash-table :accessor font-string-line-alpha-maps
+   (string-line-alpha-maps :type cache:cache :accessor font-string-line-alpha-maps
                            :documentation "Cache for text line alpha maps"))
   (:documentation "Class for representing font information."))
 
@@ -2641,23 +2645,23 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
 
 (defmethod (setf font-family) :after
   (family (font font))
-  (clrhash (font-string-bboxes font))
-  (clrhash (font-string-line-bboxes font)))
+  (cache:cache-flush (font-string-bboxes font))
+  (cache:cache-flush (font-string-line-bboxes font)))
 
 (defmethod (setf font-subfamily) :after
   (subfamily (font font))
-  (clrhash (font-string-bboxes font))
-  (clrhash (font-string-line-bboxes font)))
+  (cache:cache-flush (font-string-bboxes font))
+  (cache:cache-flush (font-string-line-bboxes font)))
 
 (defmethod (setf font-size) :after (value (font font))
-  (clrhash (font-string-bboxes font))
-  (clrhash (font-string-line-bboxes font)))
+  (cache:cache-flush (font-string-bboxes font))
+  (cache:cache-flush (font-string-line-bboxes font)))
 
 (defmethod (setf font-underline) :after (value (font font))
-  (clrhash (font-string-bboxes font)))
+  (cache:cache-flush (font-string-bboxes font)))
 
 (defmethod (setf font-overline) :after (value (font font))
-  (clrhash (font-string-bboxes font)))
+  (cache:cache-flush (font-string-bboxes font)))
 
 (defgeneric font-equal (font1 font2)
   (:documentation "Returns t if two font objects are equal, else returns nil.")
@@ -2707,7 +2711,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
 
 (defvar *font-loader-cache* (make-hash-table :test 'equal))
 
-(defmacro with-font-loader-cache ((loader font) &body body)
+(defmacro with-font ((loader font) &body body)
   (let ((exists-p (gensym))
         (font-path (gensym)))
     `(let ((,font-path (get-font-pathname ,font)))
