@@ -136,7 +136,7 @@ history but less often recently.
     entry))
 
 (defclass heap-cache-entry (indexed-cache-entry)
-  ((weight :accessor entry-weight)))
+  ((weight :accessor entry-weight :initform 0 :initarg :weight)))
 
 (defun heap-parent-idx (idx)
   (floor (1- idx) 2))
@@ -311,13 +311,14 @@ history but less often recently.
    (kernel :initarg :kernel :accessor kernel)
    (cleanup :initarg :cleanup :accessor cache-cleanup)
    (table :initarg :table :accessor table)
-   (queue :initform nil :initarg :queue :accessor queue)))
+   (queue :initform (make-queue) :initarg :queue :accessor queue)))
 
-(defmethod initialize-instance ((cache cache) &key policy kernel (test 'eql) capacity &allow-other-keys)
+(defmethod initialize-instance ((cache cache) &key policy kernel (test 'eql) capacity element-type
+                                              &allow-other-keys)
   (call-next-method)
   (unless kernel (required-argument :kernel))
   (setf (slot-value cache 'table) (make-hash-table :test test)
-        (slot-value cache 'queue) (make-queue :capacity capacity))
+        (slot-value cache 'queue) (make-queue :capacity capacity :element-type element-type))
   (cond ((and policy (not (typep (queue cache) 'vector-queue)))
 	 (error "Policy defined, but queue is possibly infinite"))
 	((null policy)
@@ -328,14 +329,15 @@ history but less often recently.
 	(t
 	 (error "Invalid policy ~s" policy))))
 
-(defun make-cache (capacity provider &key (test 'eql) (policy :fifo) cleanup)
+(defun make-cache (capacity provider &key (test 'eql) (policy :fifo) cleanup (element-type 'cache-entry))
   "Create a new cache with the specified capacity, kernel function, and options."
   (make-instance 'cache
     :test test
     :capacity capacity
     :kernel provider
     :policy policy
-    :cleanup cleanup))
+    :cleanup cleanup
+    :element-type element-type))
 
 (defvar *cleanup-list*)
 (defmacro with-collected-cleanups ((cache) &body body)
