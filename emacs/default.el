@@ -330,18 +330,33 @@ function: '(ql:quickload :clouseau)'."
           ;; Return nothing.
           (cl:values)))))
 
-(define-common-lisp-style "core" "Core Common Lisp Indentation Style"
-                          (:inherit "sbcl")
-                          (:indentation
-                           (defpkg (as defpackage))
-			               (blasfunc 2)
-			               (deferror (as define-condition))
-			               (defwarning (as define-condition))
-			               (make-db (as make-instance))
-                           (define-package (as defpackage))
-			               (walk-directory 1)
-			               (with-db 1)
-                           (defconfig (as defclass))))
+(define-common-lisp-style 
+ "core" 
+ "Core Common Lisp Indentation Style"
+ (:inherit "sbcl")
+ (:indentation
+  (defpkg (as defpackage))
+  (blasfunc 2)
+  (deferror (as define-condition))
+  (defwarning (as define-condition))
+  (make-db (as make-instance))
+  (define-package (as defpackage))
+  (walk-directory 1)
+  (with-db 1)
+  (defconfig (as defclass))
+  (defclass* (as defclass))
+  (defsclass (as defclass))))
+
+(defun slime-connect-file (file &optional host)
+  "Connect to the port number stored in FILE which should be the same value
+as the first argument to SWANK:START-SERVER on the Lisp side."
+  (interactive "fswank file: ")
+  (slime-connect 
+   (or host "localhost")
+   (string-to-number
+    (with-temp-buffer 
+      (insert-file-contents file)
+      (buffer-string)))))
 
 ;; lisp font-lock defaults: https://www.n16f.net/blog/custom-font-lock-configuration-in-emacs/
 ;; (defface cl-character-face

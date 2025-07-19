@@ -1,6 +1,6 @@
 ;;; dat/png.lisp --- PNG image format
 
-;;
+;; based on ZPNG by Zachary Beane
 
 ;;; Code:
 (in-package :dat/png)
