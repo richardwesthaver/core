@@ -8,6 +8,7 @@
 (in-package :jpeg/tests)
 (defsuite :jpeg)
 (in-suite :jpeg)
-(jpeg::load-turbojpeg)
+(load-jpeg)
+(load-turbojpeg)
 (deftest sanity () 
   (istype 'alien (jpeg::tj3init 0)))
