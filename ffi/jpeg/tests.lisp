@@ -9,4 +9,5 @@
 (defsuite :jpeg)
 (in-suite :jpeg)
 (jpeg::load-turbojpeg)
-(deftest sanity () )
+(deftest sanity () 
+  (istype 'alien (jpeg::tj3init 0)))

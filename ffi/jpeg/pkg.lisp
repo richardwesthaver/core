@@ -216,4 +216,242 @@
 (defar ("tj3Init" tj3init) (* t)
   (type init-type))
 
-(tj3init (init-type :compress))
+(defar ("tj3Destroy" tj3destroy) void
+  (handle (* t)))
+
+(defar ("tj3GetErrorStr" tj3geterrorstr) c-string (handle (* t)))
+
+(defar ("tj3GetErrorCode" tj3geterrorcode) int (handle (* t)))
+
+(defar ("tj3Set" tj3set) int 
+  (handle (* t))
+  (param int)
+  (value int))
+
+(defar ("tj3Get" tj3get) int
+  (handle (* t))
+  (param int))
+
+(defar ("tj3Alloc" tj3alloc) void
+  (bytes size-t))
+
+(defar ("tj3Free" tj3free) void
+  (buffer (* t)))
+
+(defar ("tj3JPEGBufSize" tj3jpegbufsize) size-t (width int) (height int) (jpegsubsamp int))
+
+(defar ("tj3YUVBufSize" tj3yuvbufsize) size-t (width int) (align int) (height int) (subsamp int))
+
+(defar ("tj3YUVPlaneSize" tj3yuvplanesize) size-t 
+  (component-id int) (width int) (stride int) (height int) (subsamp int))
+
+(defar ("tj3YUVPlaneWidth" tj3yuvplanewidth) int (component-id int) (width int) (subsamp int))
+
+(defar ("tj3YUVPlaneHeight" tj3yuvplaneheight) int (component-id int) (height int) (subsamp int))
+
+(defar ("tj3SetICCProfile" tj3seticcprofile) int (handle (* t)) (iccbuf (* unsigned-char)) (icc-size size-t))
+
+(defar ("tj3Compress8" tj3compress8) int 
+  (handle (* t))
+  (src-buf (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int)
+  (jpeg-buf (* (* unsigned-char)))
+  (jpeg-size (* size-t)))
+
+(defar ("tj3Compress12" tj3compress12) int 
+  (handle (* t))
+  (src-buf (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int)
+  (jpeg-buf (* (* unsigned-char)))
+  (jpeg-size (* size-t)))
+
+(defar ("tj3Compress16" tj3compress16) int 
+  (handle (* t))
+  (src-buf (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int)
+  (jpeg-buf (* (* unsigned-char)))
+  (jpeg-size (* size-t)))
+
+(defar ("tj3CompressFromYUVPlanes8" tj3compressfromyuvplanes8) int
+  (handle (* t))
+  (src-planes (* (* unsigned-char)))
+  (width int)
+  (strides (* int))
+  (height int)
+  (jpeg-buf (* (* unsigned-char)))
+  (jpeg-size (* size-t)))
+
+(defar ("tj3CompressFromYUV8" tj3compressfromyuv8) int
+  (handle (* t))
+  (src-buf (* unsigned-char))
+  (width int)
+  (align int)
+  (height int)
+  (jpeg-buf (* (* unsigned-char)))
+  (jpeg-size (* size-t)))
+
+(defar ("tj3EncodeYUVPlanes8" tj3encodeyuvplanes8) int
+  (handle (* t))
+  (src-buf (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int)
+  (dst-planes (* (* unsigned-char)))
+  (strides (* int)))
+
+(defar ("tj3EncodeYUV8" tj3encodeyuv8) int
+  (handle (* t))
+  (src-buf (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int)
+  (dst-buf (* unsigned-char))
+  (align int))
+  
+(defar ("tj3DecompressHeader" tj3decompressheader) int
+  (handle (* t))
+  (jpeg-buf (* unsigned-char))
+  (jpeg-size size-t))
+
+(defar ("tj3GetICCProfile" tj3geticcprofile) int
+  (handle (* t))
+  (icc-buf (* (* unsigned-char)))
+  (icc-size (* size-t)))
+
+(defar ("tj3GetScalingFactors" tj3getscalingfactors) (* scaling-factor) (num-scaling-factors (* int)))
+
+;; (defar ("tj3SetScalingFactor" tj3setscalingfactor) int (handle (* t)) (scaling-factor scaling-factor))
+;; tj3SetCroppingRegion
+
+(defar ("tj3Decompress8" tj3decompress8) int
+  (handle (* t))
+  (jpeg-buf (* unsigned-char))
+  (jpeg-size size-t)
+  (dst-buf (* unsigned-char))
+  (pitch int)
+  (pixel-format int))
+
+(defar ("tj3Decompress12" tj3decompress12) int
+  (handle (* t))
+  (jpeg-buf (* unsigned-char))
+  (jpeg-size size-t)
+  (dst-buf (* unsigned-char))
+  (pitch int)
+  (pixel-format int))
+
+(defar ("tj3Decompress16" tj3decompress16) int
+  (handle (* t))
+  (jpeg-buf (* unsigned-char))
+  (jpeg-size size-t)
+  (dst-buf (* unsigned-char))
+  (pitch int)
+  (pixel-format int))
+
+(defar ("tj3DecompressToYUVPlanes8" tj3decompresstoyuvplanes8) int
+  (handle (* t))
+  (jpeg-buf (* unsigned-char))
+  (jpeg-size size-t)
+  (dst-planes (* (* unsigned-char)))
+  (strides (* int)))
+
+(defar ("tj3DecompressToYUV8" tj3decompresstoyuv8) int
+  (handle (* t))
+  (jpeg-buf (* unsigned-char))
+  (jpeg-size size-t)
+  (dst-buf (* unsigned-char))
+  (align int))
+
+(defar ("tj3DecodeYUVPlanes8" tj3decodeyuvplanes8) int
+  (handle (* t))
+  (src-planes (* (* unsigned-char)))
+  (stides (* int))
+  (dst-buf (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int))
+  
+(defar ("tj3DecodeYUV8" tj3decodeyuv8) int
+  (handle (* t))
+  (src-buf (* unsigned-char))
+  (align int)
+  (dst-buf (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int))
+
+(defar ("tj3TransformBufSize" tj3transformbufsize) size-t
+  (handle (* t))
+  (transform (* transform)))
+
+(defar ("tj3Transform" tj3transform) int
+  (handle (* t))
+  (jpeg-buf (* unsigned-char))
+  (jpeg-size size-t)
+  (n int)
+  (dst-bufs (* (* unsigned-char)))
+  (dst-sizes (* size-t))
+  (transforms (* transform)))
+
+(defar ("tj3LoadImage8" tj3loadimage8) (* unsigned-char)
+  (handle (* t))
+  (filename c-string)
+  (width (* int))
+  (align (* int))
+  (height (* int))
+  (pixel-format (* int)))
+
+(defar ("tj3LoadImage12" tj3loadimage12) (* short)
+  (handle (* t))
+  (filename c-string)
+  (width (* int))
+  (align (* int))
+  (height (* int))
+  (pixel-format (* int)))
+         
+(defar ("tj3LoadImage16" tj3loadimage16) (* unsigned-short)
+  (handle (* t))
+  (filename c-string)
+  (width (* int))
+  (align (* int))
+  (height (* int))
+  (pixel-format (* int)))
+
+(defar ("tj3SaveImage8" tj3saveimage8) int
+  (handle (* t))
+  (filename c-string)
+  (buffer (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int))
+
+(defar ("tj3SaveImage12" tj3saveimage12) int
+  (handle (* t))
+  (filename c-string)
+  (buffer (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int))
+
+(defar ("tj3SaveImage16" tj3saveimage16) int
+  (handle (* t))
+  (filename c-string)
+  (buffer (* unsigned-char))
+  (width int)
+  (pitch int)
+  (height int)
+  (pixel-format int))
