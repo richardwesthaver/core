@@ -132,17 +132,27 @@
 ;; TODO 2025-07-19: 
 (defun save-jpeg-image (dst buf width height jpeg 
                         &key (pixel-format :rgb) pitch (bit-depth 8) size)
+  ;; (etypecase dst
+  ;;   ((or pathname string) 
+  ;;    (with-open-file (f dst :element-type 'octet :direction :output)
+  ;;      (write-sequence buf f))))
   (unless pitch
-    (setf pitch (* (pixel-size pixel-format) (jpeg-get jpeg :width))))
-  (with-alien ((dst* (* unsigned-char) dst)
+    (setf pitch (* (pixel-size pixel-format) width)))
+  (with-alien ((dst* (* unsigned-char) (make-alien unsigned-char size))
                (size* size-t (if dst size 0)))
-    (let ((res (ecase bit-depth
-                 (8 (tj3compress8 (sap jpeg) buf width pitch height pixel-format (addr dst*) (addr size*)))
-                 (12 (tj3compress12 (sap jpeg) buf width pitch height pixel-format (addr dst*) (addr size*)))
-                 (16 (tj3compress16 (sap jpeg) buf width pitch height pixel-format (addr dst*) (addr size*))))))
+    (let* ((pxf (pixel-format pixel-format))
+           (res (ecase bit-depth
+                 (8 (tj3compress8 (sap jpeg) buf width pitch height pxf (addr dst*) (addr size*)))
+                 (12 (tj3compress12 (sap jpeg) buf width pitch height pxf (addr dst*) (addr size*)))
+                 (16 (tj3compress16 (sap jpeg) buf width pitch height pxf (addr dst*) (addr size*))))))
       (if (< res 0) 
           (jpeg-report jpeg)
-          (values dst* size*)))))
+          (let ((out (make-array size :element-type 'octet)))
+            (etypecase dst
+              (vector (clone-octets-from-alien dst* out size))
+              ((or pathname string)
+               (with-open-file (f dst :element-type 'octet :direction :output)
+                 (write-sequence (clone-octets-from-alien dst* out size) f)))))))))
 
 (defun load-jpeg-image (src jpeg
                         &key (pixel-format :rgb) pitch (bit-depth 8)
@@ -204,5 +214,18 @@
     (values buf* size*)))
 
 ;;; Serde
+(defmethod deserialize ((self jpeg-decompressor) (format (eql :jpeg)) 
+                        &key path pixel-format pitch (bit-depth 8) size buffer)
+  (apply 'load-jpeg-image path self 
+         :pixel-format pixel-format :pitch pitch :bit-depth bit-depth :size size :buffer buffer))
+
 (defmethod deserialize (self (format (eql :jpeg)) &rest args)
   (apply 'load-jpeg-image self (make-instance 'jpeg-decompressor) args))
+
+(defmethod serialize ((self jpeg-compressor) (format (eql :jpeg))
+                      &key buffer width height path pixel-format pitch (bit-depth 8) size)
+  (save-jpeg-image path buffer width height self 
+                   :pixel-format pixel-format 
+                   :pitch pitch 
+                   :bit-depth bit-depth 
+                   :size size))

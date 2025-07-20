@@ -64,6 +64,8 @@
 ;; (kbd-code-name 400) ; "0x00000190"
 ;; evdev::+ev-cnt+ evdev::+key-cnt+
 (defun keyboard-device-p (path)
+  "Read some input on device at PATH returning T if it appears to be a keyboard
+device."
   (with-open-file (st path :element-type 'octet)
     (let ((evbits (make-array evdev::+ev-cnt+))
           (keybits (make-array evdev::+key-cnt+)))
@@ -81,11 +83,12 @@ ERROR when non-nil (the default) causes an error to be signaled if the device
 can't be opened, else returns nil."
   (make-keyboard :sap dev :keymap keymap))
 
-(defun get-keyboards (keymap compose-table &optional (dir "/dev/input"))
-  (let ((devices (directory dir)))
-    (dolist (dev devices)
-      (let ((ret (make-keyboard-from-dev dev keymap compose-table)))
-        ret))))
+(defun get-keyboards (&optional (dir "/dev/input/"))
+  (let ((devices (directory-files dir))
+        ret)
+    (dolist (dev devices ret)
+      (push (make-keyboard-from-dev (new-device-from-path dev))
+            ret))))
 
 ;; (with-open-file (file "/dev/input/event4")
 ;;   (let ((fd (sb-sys:fd-stream-fd file))
@@ -108,5 +111,6 @@ can't be opened, else returns nil."
       (println "has event pending")
       (evdev::libevdev-next-event dev (libevdev-read-flag :normal) (addr ev)))
     (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
-      (list (cons (sb-posix::alien-timeval-sec time) (sb-posix::alien-timeval-usec time))
-            type code value))))
+      (values 
+       (cons (sb-posix::alien-timeval-sec time) (sb-posix::alien-timeval-usec time))
+       type code value))))

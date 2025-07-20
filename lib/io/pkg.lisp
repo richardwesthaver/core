@@ -194,7 +194,8 @@
    :keyboard-device-p
    :new-device-from-path
    :evdev-bit-p
-   :kbd-code-name))
+   :kbd-code-name
+   :get-keyboards))
 
 (defpackage io/xsubseq
   (:use :cl)

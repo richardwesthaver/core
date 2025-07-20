@@ -10,5 +10,18 @@
 (in-suite :jpeg)
 (load-jpeg)
 (load-turbojpeg)
-(deftest sanity () 
-  (istype 'alien (jpeg::tj3init 0)))
+(defvar *test-file* (asdf:system-relative-pathname :core ".stash/egypt.jpg"))
+(deftest load-image () 
+  (istype '(alien (* unsigned-char)) (load-jpeg-image *test-file* (make-instance 'jpeg-decompressor))))
+
+(deftest save-image ()
+  (time
+   (let ((path (tmpize-pathname "save.jpg")))
+     (multiple-value-bind (buf w h fmt size) (load-jpeg-image *test-file* (make-instance 'jpeg-decompressor))
+       (save-jpeg-image 
+        path buf w h 
+        (make-instance 'jpeg-compressor :quality 1 :subsampling :440) :size size))
+     (delete-file path))))
+
+(deftest transform-image (:skip t)
+  (transform-jpeg-image *test-file* (tmpize-pathname "transform.jpg") 0 (make-instance 'jpeg-transformer)))
