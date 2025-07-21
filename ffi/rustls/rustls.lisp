@@ -54,7 +54,7 @@
 
 (defar rustls-acceptor-read-tls rustls-io-result
   (acceptor (* rustls-acceptor))
-  (callback #+nil rustls-read-callback (* t))
+  (callback (* rustls-read-callback))
   (userdata (* t))
   (out-n (* size-t)))
 
@@ -264,8 +264,21 @@
   (log-cb (* rustls-keylog-log-callback))
   (will-log-cb (* rustls-keylog-will-log-callback)))
 
+(defar rustls-client-config-builder-enable-ech rustls-result
+  (builder (* rustls-client-config-builder))
+  (ech-config-list-bytes (* unsigned-char))
+  (ech-config-list-bytes-size size-t)
+  (hpke (* rustls-hpke)))
+
+(defar rustls-client-config-builder-enable-ech-grease rustls-result
+  (builder (* rustls-client-config-builder))
+  (hpke (* rustls-hpke)))
+
 (defar rustls-client-config-free void
   (c (* rustls-client-config)))
+
+(defar rustls-client-config-fips boolean
+  (config (* rustls-client-config)))
 
 ;; (defar rustls-client-config-builder-dangerous-set-server-verifier rustls-result
 ;;   (builder (* rustls-client-config-builder))

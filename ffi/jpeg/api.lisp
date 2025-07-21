@@ -227,5 +227,5 @@
   (save-jpeg-image path buffer width height self 
                    :pixel-format pixel-format 
                    :pitch pitch 
-                   :bit-depth bit-depth 
+                   :bit-depth bit-depth
                    :size size))

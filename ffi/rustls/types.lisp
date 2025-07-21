@@ -149,6 +149,8 @@
 
 (define-alien-type rustls-certificate (struct rustls-certificate))
 
+(define-alien-type rustls-hpke (struct rustls-hpke))
+
 (define-alien-type rustls-certified-key (struct rustls-certified-key))
 
 (define-alien-type rustls-client-cert-verifier (struct rustls-client-cert-verifier))
@@ -207,8 +209,8 @@
 
 (define-alien-type rustls-verify-server-cert-callback
     (function unsigned-int
-        rustls-verify-server-cert-user-data
-        (* rustls-verify-server-cert-params)))
+        rustls-verify-server-cert-user-data ; userdata
+        (* rustls-verify-server-cert-params))) ; params
 
 (define-alien-type rustls-log-level size-t)
 
@@ -219,18 +221,20 @@
 
 (define-alien-type rustls-log-callback
     (function void
-        (* t)
-        (* rustls-log-params)))
+        (* t) ; userdata
+        (* rustls-log-params))) ; params
 
 (define-alien-type rustls-keylog-log-callback
     (function void
-        rustls-str
-        (* unsigned-char)
-      size-t
-      (* unsigned-char)
-      size-t))
+        rustls-str ; label
+        (* unsigned-char) ; client-random
+      size-t ; client-random-len
+      (* unsigned-char) ; secret
+      size-t)) ; secret-len
 
-(define-alien-type rustls-keylog-will-log-callback (function int rustls-str))
+(define-alien-type rustls-keylog-will-log-callback 
+    (function int 
+        rustls-str)) ; label
         
 (define-alien-type rustls-client-hello-userdata (* t))
 
@@ -257,25 +261,25 @@
 |#
 (define-alien-type rustls-client-hello-callback 
     (function (* rustls-certified-key)
-        rustls-client-hello-userdata
-        (* rustls-client-hello)))
+        rustls-client-hello-userdata ; userdata
+        (* rustls-client-hello))) ; hello
 
 (define-alien-type rustls-session-store-userdata (* t))
 
 (define-alien-type rustls-session-store-get-callback
     (function unsigned-int
-        rustls-session-store-userdata
-        (* rustls-slice-bytes)
-      int
-      (* unsigned-char)
-      size-t
-      (* size-t)))
+        rustls-session-store-userdata ; userdata
+        (* rustls-slice-bytes) ; key
+      int ; remove-after
+      (* unsigned-char) ; buf
+      size-t ; count
+      (* size-t))) ; out-n
 
 (define-alien-type rustls-session-store-put-callback
     (function unsigned-int
-        rustls-session-store-userdata
-        (* rustls-slice-bytes)
-      (* rustls-slice-bytes)))
+        rustls-session-store-userdata ; userdata
+        (* rustls-slice-bytes) ; key
+      (* rustls-slice-bytes))) ; val
 
 (define-alien-type rustls-supported-ciphersuite (struct rustls-supported-ciphersuite))
 
@@ -285,21 +289,22 @@
 
 (define-alien-type rustls-read-callback
     (function rustls-io-result
-        (* t)
-        (* unsigned-char)
-      size-t
-      (* size-t)))
+        (* t) ; userdata
+        (* unsigned-char) ; buf
+      size-t ; n
+      (* size-t))) ; out-n
 
 (define-alien-type rustls-write-callback
     (function rustls-io-result
-        (* t)
-        (* unsigned-char)
-      size-t
-      (* size-t)))
+        (* t) ; userdata
+        (* unsigned-char) ; buf
+      size-t ; n
+      (* size-t))) ; out-n
 
 (define-alien-type rustls-write-vectored-callback
     (function rustls-io-result
-        (* t)
-        (* rustls-iovec)
-      size-t
-      (* size-t)))
+        (* t) ; userdata
+        (* rustls-iovec) ; iov
+      size-t ; count
+      (* size-t))) ; out-n
+

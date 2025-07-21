@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :rustls/tests
-  (:use :cl :std :rt :rustls))
+  (:use :cl :std :rt :rustls :sb-alien))
 
 (in-package :rustls/tests)
 
@@ -18,10 +18,12 @@
   (let ((acceptor (rustls::rustls-acceptor-new))
         (scbuilder (rustls::rustls-server-config-builder-new))
         (sbuilder (rustls::rustls-root-cert-store-builder-new)))
-    (sb-alien:with-alien ((sc (* rustls::rustls-root-cert-store))
+    (with-alien ((sc (* rustls::rustls-root-cert-store))
                           (accepted (* rustls::rustls-accepted))
-                          (accepted-alert (* rustls::rustls-accepted-alert)))
+                          (accepted-alert (* rustls::rustls-accepted-alert))
+                          (out-n size-t))
       (rustls::rustls-root-cert-store-builder-build sbuilder (sb-alien:addr sc))
+      (rustls::rustls-acceptor-read-tls acceptor nil nil (addr out-n))
       (rustls::rustls-acceptor-accept acceptor (sb-alien:addr accepted) (sb-alien:addr accepted-alert))
       (rustls::rustls-server-config-builder-free scbuilder)
       (rustls::rustls-root-cert-store-builder-free sbuilder)
