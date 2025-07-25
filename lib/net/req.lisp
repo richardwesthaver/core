@@ -34,7 +34,6 @@
                           (render-uri uri nil)
                           body))))))
 
-
 (defvar *request-failed-error* 
   (let ((tbl (make-hash-table)))
     (macrolet ((%fill (&body lst)
@@ -302,6 +301,7 @@
    set this slot to nil.")
    (end :initarg :end
         :initform nil
+        :type (or null fixnum)
         :accessor keep-alive-stream-end)
    (close-action :initarg :on-close-or-eof :reader close-action
                  :documentation "A (lambda (stream abort)) which will be called with keep-alive-stream-stream
@@ -360,21 +360,22 @@ keep-alive-stream), and should handle clean-up of it"
                 byte))
           (or (maybe-close stream t) :eof))))
 
-(defmethod stream-read-sequence ((stream keep-alive-stream) sequence &optional start end)
+(defmethod stream-read-sequence ((stream keep-alive-stream) (sequence vector) &optional start end)
   (declare (optimize speed))
   (let ((start (or start 0))
         (end (or end (length sequence))))
+    (declare (fixnum start end))
     (if (null (keep-alive-stream-stream stream)) ;; we already closed it
         start
-        (let* ((to-read (min (- end start) (keep-alive-stream-end stream)))
+        (let* ((to-read (the fixnum (min (- end start) (the fixnum (keep-alive-stream-end stream)))))
                (n (read-sequence sequence (keep-alive-stream-stream stream)
                                  :start start
                                  :end (+ start to-read))))
-          (decf (keep-alive-stream-end stream) (- n start))
-          (maybe-close stream (<= (keep-alive-stream-end stream) 0))
+          (decf (the fixnum (keep-alive-stream-end stream)) (- n start))
+          (maybe-close stream (<= (the fixnum (keep-alive-stream-end stream)) 0))
           n))))
 
-(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) sequence &optional start end)
+(defmethod stream-read-sequence ((stream keep-alive-chunked-stream) (sequence vector) &optional start end)
   (declare (optimize speed))
   (let ((start (or start 0))
         (end (or end (length sequence))))

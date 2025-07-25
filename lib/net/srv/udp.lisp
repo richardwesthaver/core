@@ -24,7 +24,9 @@ contain a list of packet specifications used to advise the algorithm on how to
 read packets. The spec list should be ordered by descending priority with the
 highest priority packet spec first.
 
-On success two values are returned: (PROTO HEADERS).")
+On success two values are returned: (PROTO HEADERS)."
+  ;; TODO 2025-07-24: 
+  (declare (ignore stream spec)))
 
 ;;; Service
 (defclass udp-service (net-service udp-server) ()

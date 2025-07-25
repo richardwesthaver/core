@@ -1,9 +1,9 @@
-;;; /home/ellis/comp/core/lib/obj/color/x11.lisp --- X11 Colors -*- buffer-read-only:t -*-
+;;; lib/obj/color/x11.lisp --- X11 Colors -*- buffer-read-only:t -*-
 
-;; input = /home/ellis/comp/core/.stash/rgb.txt
+;; input = .stash/rgb.txt
 
 ;; This file was generated automatically by
-;; OBJ/COLOR:PARSE-X11-COLOR-DEFINITIONS.
+;; OBJ/COLOR:PARSE-X11-PALETTE.
 
 ;; Do not modify.
 

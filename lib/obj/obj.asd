@@ -46,8 +46,9 @@
                (:file "equiv")
                (:module "color"
                 :components ((:file "color")
+                             (:file "palette")
                              (:file "x11")
-                             (:file "palette")))
+                             (:file "theme")))
                (:module "time"
                 :components ((:file "local")
                              (:file "util")))

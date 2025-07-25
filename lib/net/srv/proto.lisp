@@ -655,4 +655,5 @@ destructuring lambda list
 ARGS is a list the elements of which are either a symbol
 VAR or a list matching the destructuring lambda list
 
-  (var &key real-name parameter-type init-form request-type).")
+  (var &key real-name parameter-type init-form request-type)."
+  (declare (ignore spec args body)))

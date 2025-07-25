@@ -276,10 +276,12 @@ Returns the stream that is connected to the client."
                (not content-modified-p)
                (starts-with-one-of-p (or (content-type*) "")
                                      *content-types-for-url-rewrite*))
+      ;; TODO 2025-07-24: 
       ;; if the Content-Type header starts with one of the strings
       ;; in *CONTENT-TYPES-FOR-URL-REWRITE* then maybe rewrite the
       ;; content
-      (setq content (maybe-rewrite-urls-for-session content)))
+      ;; (setq content (maybe-rewrite-urls-for-session content))
+      )
     (when (stringp content)
       ;; if the content is a string, convert it to the proper external format
       (setf content (sb-ext:string-to-octets content :external-format *http-external-format*)
@@ -511,7 +513,7 @@ can be parsed by most log analysis tools."
                            (parse-integer (car len) :junk-allowed t)))
          (content-stream (content-stream request)))
     (setf (slot-value request 'data)
-          (cond (want-stream (net/req::make-decoding-stream content-stream :encoding *http-external-format*))
+          (cond (want-stream (io/stream:make-decoding-stream content-stream :external-format *http-external-format*))
                 ((and content-length (> content-length position))
                  (decf content-length position)
                  (when (input-chunking-p *service-stream*)
@@ -663,7 +665,7 @@ protocol of the request."
                (when (shutdown-p *service*)
                  (return))
                (multiple-value-bind (headers-in method url-string protocol)
-                   (print (get-http-request-data *service-stream*))
+                   (get-http-request-data *service-stream*)
                  ;; check if there was a request at all
                  (unless method
                    (return))

@@ -20,8 +20,9 @@
 ;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
 ;; sb-thread:interrupt-thread
 ;;; Kernel Classes
-(defclass kernel-class (funcallable-standard-class)
+(defclass kernel-class ()
   ()
+  (:metaclass funcallable-standard-class)
   (:documentation "Standard kernel class."))
 
 (defclass kernel-object (funcallable-standard-object)
@@ -31,8 +32,9 @@
 
 (definline make-kernel (fn)
   "Return a new KERNEL-OBJECT and set the instance function to FN."
+  (declare (function fn))
   (let ((fin (make-instance 'kernel-object)))
-    (set-funcallable-instance-function fin fn)
+    (set-funcallable-instance-function fin (compile nil fn))
     fin))
 
 ;; (defmethod :before initialize-instance ((self kernel-object) &key)
@@ -97,9 +99,9 @@ killed workers during shutdown.")
 ;; TODO 2025-06-17: 
 (defun %pool (state)
   "An empty pool kernel."
-  (apply 'funcall args))
+  (declare (ignore state)))
 
-(defvar *pool-kernel* '%pool
+(defvar *pool-kernel* (make-kernel #'%pool)
   "A function which drives THREAD-POOLs.")
 
 ;; TODO 2025-06-17: 
@@ -117,7 +119,7 @@ killed workers during shutdown.")
 (defvar *kernel* nil
   "The current thread's kernel, or nil.")
 
-(defvar *worker-kernel* '%worker
+(defvar *worker-kernel* (make-kernel #'%worker)
   "A kernel which drives WORKERs.")
 
 ;;; Globals
@@ -654,7 +656,7 @@ FUNCTION."
   ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
 	   :accessor worker-thread
 	   :initarg :thread)
-   (kernel :initform (make-kernel (compile-and-eval `(function ,*worker-kernel*))) :accessor kernel)
+   (kernel :initform *worker-kernel* :accessor kernel)
    (index :reader worker-index :type array-index :initarg :index :accessor index)
    (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings* :accessor bind)))
 
@@ -696,8 +698,9 @@ FUNCTION."
 (defun kill-worker (worker) 
   (declare (worker worker))
   (let ((th (worker-thread worker)))
-    (unwind-protect (kill-thread th)
-      (deletef *worker-threads* th))))
+    (unless (null th)
+      (remove th *worker-threads*)
+      (kill-thread th))))
 
 (defun join-worker (worker)
   (declare (worker worker))
@@ -709,15 +712,17 @@ FUNCTION."
   (assert (sb-concurrency:open-gate (slot-value worker '%rx)) nil "Failed to start worker ~A" worker))
 
 (defun receive-worker-start (worker)
+  (println-top-level (format nil "worker ~A starting..." (worker-index worker)))
   (assert (sb-concurrency:gate-open-p (slot-value worker '%rx)) nil "Worker hijacked? ~A" worker))
 
 (defun receive-worker-status (worker)
   (ecase (pop-queue (slot-value worker '%tx))
-    (ok)
+    (ok (println-top-level (format nil "worker ~A OK." (worker-index worker))))
     (error (error 'kernel-init-error))))
 
 (defun send-worker-status (worker status)
   (check-type status (member ok error))
+  (println-top-level (format nil "worker ~A status: ~A" (worker-index worker) status))
   (push-queue status (slot-value worker '%tx)))
 
 (defun notify-exit (worker)
@@ -933,7 +938,7 @@ within their DOMAIN and SCOPE."))
    (name :accessor name :initarg :name)))
 
 (defclass thread-pool (thread-limiter thread-pool-context)
-  ((kernel :initform (make-kernel (compile-and-eval `(function ,*pool-kernel*))) :type kernel :accessor kernel :initarg :kernel)
+  ((kernel :initform *pool-kernel* :type kernel :accessor kernel :initarg :kernel)
    (scheduler :initarg :scheduler :accessor scheduler)
    (workers :initarg :workers :accessor workers :type (simple-array worker))
    (lock :initarg :lock :initform (make-mutex :name "workers") :type mutex :accessor lock)
@@ -1050,7 +1055,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
      (map 'simple-vector
           (lambda (w)
             (when (typep w 'worker)
-              (ignore-errors (terminate-thread (worker-thread w)))))
+              (terminate-thread (worker-thread w))))
           ,workers)))
 
 (defun %fill-workers (workers pool)
@@ -1071,7 +1076,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
 					   (worker-kernel *worker-kernel*)
 					   (spin-count *default-spin-count*)
                                            (alivep t)
-					   (kernel *kernel*)
+					   (kernel *pool-kernel*)
                                            (class 'thread-pool))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
@@ -1264,7 +1269,8 @@ bound to RET."
 (defun thread-pool-info (pool)
   (list :workers (worker-count pool)
         :alive (alivep pool)
-        :spin-count (slot-value (scheduler pool) 'spin-count)))
+        :spin-count (slot-value (scheduler pool) 'spin-count)
+        :limiter-count (limiter-count pool)))
 
 (defmethod print-object ((pool thread-pool) stream)
   (print-unreadable-object (pool stream :type t :identity t)

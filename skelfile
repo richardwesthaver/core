@@ -89,7 +89,7 @@
    ".stash/rgb.txt"
    :if-exists :supersede))
  (x11.lisp (rgb.txt)
-  (color::parse-x11-color-definitions
+  (color::parse-x11-palette
    :input ".stash/rgb.txt"
    :output "lib/obj/color/x11.lisp"))
  (lapack-ffi.lisp ()

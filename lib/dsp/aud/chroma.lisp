@@ -28,9 +28,11 @@
                   do (setf (aref fp i) (deref fpa i)))
             (values fp fp-size)))))))
 
+;; TODO 2025-07-24: 
 (defun chromaprint-file (file &optional (default :error))
   "Return a chromaprint associated with the audio data contained in FILE."
   ;; TODO: retrieve channel-count, samplerate, and audio data buffer - may
   ;; want to take advantage of buffering here to stream directly to
   ;; CHROMAPRINT-FEED
-  )
+  (declare (ignore file default)))
+

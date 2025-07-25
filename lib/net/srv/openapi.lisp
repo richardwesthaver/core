@@ -269,11 +269,13 @@
 (defclass openapi-client (http-client) ()
   (:documentation "HTTP client based on an OpenAPI Spec."))
 
+;; TODO 2025-07-24: 
 (defun make-openapi-client (spec &key name)
   "Generate a new openapi-client based on OAPI which is a deserialized
 openapi-document.
 
-Returns the client and a list of supported methods as separate values.")
+Returns the client and a list of supported methods as separate values."
+  (declare (ignore spec name)))
 
 ;;; Server
 (defclass openapi-server (http-server) ())
