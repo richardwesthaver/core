@@ -12,9 +12,9 @@
 (defun subfieldp (a b)
   (subtypep (field-type a) (field-type b)))
 
-(defun t.zeros (ty dims &optional initial-element)
+(defun t.zeros (ty dims &optional (initial-element 0))
   (let* ((adims (make-index-store dims)))
-    (declare (type index-store-vector adims))
+    (declare (index-store-vector adims))
     (multiple-value-bind (astrs sizs) (make-stride adims)
       (declare (type index-store-vector astrs))
       (make-instance ty
@@ -52,14 +52,14 @@
             (t.zeros dtype dims initial-element)
             (t.zeros dtype dims))))
 
-(definline zeros (dims &key (type *default-tensor-type*) (initial-element 0))
+(definline zeros (dims &optional (type *default-tensor-type*) (initial-element 0))
 "Create a tensor with dimensions @arg{dims} of class @arg{dtype}.
 The optional argument @arg{initial-element} is used in two completely
 incompatible ways.
 
-If @arg{dtype} is a dense tensor, then @arg{initial-element}, is used to
-initialize all the elements. If @arg{dtype} is however, a sparse tensor,
-it is used for computing the number of nonzeros slots in the store.
+If TYPE is a dense tensor, then INITIAL-ELEMENT, is used to initialize all the
+elements. If TYPE is however, a sparse tensor, it is used for computing the
+number of nonzeros slots in the store.
 
 Example:
 (zeros 3)
@@ -83,7 +83,7 @@ Example:
       (fixnum
        (%zeros (list dims) type initial-element)))))
 
-(declaim (ftype (function ((or cons vector fixnum) &key (type t) (initial-element t)) base-tensor) zeros))
+(declaim (ftype (function ((or cons vector fixnum) &optional t t) base-tensor) zeros))
 
 (defmacro with-rowm (&rest body)
   `(let ((*default-stride-ordering* :row-major))

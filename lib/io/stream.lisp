@@ -41,10 +41,10 @@
 
 (defmethod initialize-instance :after ((stream decoding-stream) &rest initargs)
   (declare (ignore initargs))
-  (with-slots (encoding) stream
-    (when encoding
+  (with-slots (external-format) stream
+    (when external-format
       ;; REVIEW 2025-06-12: was babel fn
-      (setf encoding (sb-int:get-external-format (sb-int:keywordicate encoding))))))
+      (setf external-format (sb-int:get-external-format (sb-int:keywordicate external-format))))))
 
 (defun make-decoding-stream (stream &key (external-format :utf-8)
                                          (on-close))

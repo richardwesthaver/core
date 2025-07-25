@@ -100,7 +100,22 @@
    :rustls-crypto-provider-builder-build
    :rustls-crypto-provider-builder-set-cipher-suites
    :rustls-crypto-provider-builder-new-with-base
-   :rustls-crypto-provider-builder-new-from-default))
+   :rustls-crypto-provider-builder-new-from-default
+   :rustls-client-config-builder-set-key-log-file
+   :rustls-client-config-builder-set-key-log
+   :rustls-client-config-builder-enable-ech
+   :rustls-client-config-builder-enable-ech-grease
+   :rustls-client-config-fips
+   :rustls-web-pki-server-cert-verifier-builder-new
+   :rustls-web-pki-server-cert-verifier-builder-new-with-provider
+   :rustls-web-pki-server-cert-verifier-builder-add-crl
+   :rustls-web-pki-server-cert-verifier-only-check-end-entity-revocation
+   :rustls-web-pki-server-cert-verifier-enforce-revocation-expir
+   :rustls-web-pki-server-cert-verifier-builder-build
+   :rustls-web-pki-server-cert-verifier-builder-free
+   :rustls-platform-server-cert-verifier
+   :rustls-platform-server-cert-verifier-with-provider
+   :rustls-server-cert-verifier-free))
 
 (in-package :rustls)
 

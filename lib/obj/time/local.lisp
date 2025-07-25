@@ -1104,7 +1104,7 @@ The currently supported values in obj/time are:
   (clock-now *clock*))
 
 (defun today ()
-  "Returns a timestamp representing the present day."
+  "Returns a timestamp representing the present day (assuming UTC)."
   (clock-today *clock*))
 
 (defun format-date-simple (&optional dest timestamp)
@@ -1118,8 +1118,8 @@ The currently supported values in obj/time are:
 
 (defgeneric clock-today (clock)
   (:documentation "Returns a timestamp for the current date given a
-  clock.  The date is encoded by convention as a timestamp with the
-  time set to 00:00:00UTC."))
+  clock. The date is encoded by convention as a timestamp with the time set to
+  00:00:00UTC."))
 
 (defgeneric date (self)
   (:documentation "Return the date of object SELF."))
@@ -1228,7 +1228,8 @@ The currently supported values in obj/time are:
   t)
 
 (defun contest (test list)
-  "Applies TEST to pairs of elements in list, keeping the element which last tested T.  Returns the winning element."
+  "Applies TEST to pairs of elements in list, keeping the element which last
+tested T. Returns the winning element."
   (reduce (lambda (a b) (if (funcall test a b) a b)) list))
 
 (defun timestamp-minimum (time &rest times)

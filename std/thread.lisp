@@ -91,10 +91,11 @@ a lambda expression, a symbol which names a function, or a compiled-function."
 threaded context.")
 
 (defvar *lisp-exiting-p* nil
-  "True if the Lisp process is exiting - used for skipping auto-replacement of killed workers during shutdown.")
+  "True if the Lisp process is exiting - used for skipping auto-replacement of
+killed workers during shutdown.")
 
 ;; TODO 2025-06-17: 
-(defun %pool (&rest args) 
+(defun %pool (state)
   "An empty pool kernel."
   (apply 'funcall args))
 
@@ -918,7 +919,7 @@ within their DOMAIN and SCOPE."))
 (defun oracle-of-id (id)
   (gethash id *oracle-table*))
 
-(defun make-oracle (thread)
+(defun make-oracle (&optional (thread *current-thread*))
   (let ((id (thread-os-tid thread)))
     (if-let ((found (oracle-of-id id)))
       (values id found)
@@ -1141,9 +1142,11 @@ provided. *THREAD-POOL* is returned."
           (setf *thread-pool* value)))))
 
 (defun worker-count (pool)
+  "Return the worker count of POOL."
   (length (workers pool)))
 
 (defun worker-count* ()
+  "Return the worker count of *THREAD-POOL*."
   (worker-count *thread-pool*))
 
 (defun worker-index* ()
@@ -1152,6 +1155,8 @@ provided. *THREAD-POOL* is returned."
     (worker-index worker)))
 
 (defmacro work-lambda (&body body)
+  "Generate a 'work-lambda' with BODY. *HANDLERS* will be bound for the duration
+of the returned lambda."
   (with-gensyms (body-fn handlers)
     `(flet ((,body-fn () ,@body))
        (declare (optimize (speed 3) (safety 0)))
@@ -1164,10 +1169,13 @@ provided. *THREAD-POOL* is returned."
 
 ;; TODO 2025-04-30: 
 (defmacro pool-lambda (state &body body)
+  "Generate a 'pool-lambda' with provided BODY. *THREAD-POOL* and *HANDLERS* are
+bound for the duration of the returned lambda and STATE is the name of the
+single required argument of the lambda. The lambda should run all code
+assigned to the input state and then return two values."
   (with-gensyms (body-fn handlers pool)
-    `(flet ((,body-fn (,state) ,@body))
-       (declare (optimize (speed 3) (safety 0))
-                (type (function (t) (values t t)) ,body-fn))
+    `(labels ((,body-fn (,state) ,@body))
+       (declare (optimize (speed 3) (safety 0)))
        (let ((,handlers *handlers*)
              (,pool *thread-pool*))
 	 (if ,handlers

@@ -70,7 +70,6 @@
     (is-uuid (make-v1-uuid))
     (is-uuid (make-v4-uuid))))
 
-
 ;;; Trees
 (deftest generic-tree ()
   (let ((tree (make-binary-node
@@ -172,13 +171,11 @@
 (defgeneric %test-+ (a b)
   (:generic-function-class fast-generic-function))
 
-;; can't be in same file :(
-(defmethod %test-+ ((a number) (b number))  
-  (+ a b))
-
-(seal-domain #'%test-+ '(number number))
-
 (deftest fast ()
+  ;; can't be in same file
+  (defmethod %test-+ ((a number) (b number))
+    (+ a b))
+  (seal-domain #'%test-+ '(number number))
   (is= 42 (%test-+ 2 40)))
 
 ;;;; Dynamic

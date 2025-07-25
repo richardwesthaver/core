@@ -89,8 +89,11 @@ key, passed to RUSTLS-CRYPTO-PROVIDER-LOAD-KEY using the PROVIDER."
      conn
      (rustls::rustls-result* (rustls::rustls-client-connection-new (sap self) server-name (addr conn))))))
             
-(defmethod build ((self rls-client-config) &key root-store certified-keys)
+(defmethod build ((self rls-client-config) &key root-store certified-keys key-log-file)
   (let ((cbuilder (rustls::rustls-client-config-builder-new)))
+    (when key-log-file
+      (sb-posix:setenv "SSLKEYLOGFILE" key-log-file 1)
+      (rustls:rustls-client-config-builder-set-key-log-file cbuilder))
     (with-alien ((cout (* rustls::rustls-client-config))
                  (ver (* rustls::rustls-server-cert-verifier)))
       (rustls::rustls-result* (rustls::rustls-platform-server-cert-verifier (addr ver)))
@@ -212,7 +215,6 @@ secrets persistence."
       (unwind-protect (values sc (rustls::rustls-root-cert-store-builder-build sbuilder (sb-alien:addr sc)))
         (rustls::rustls-root-cert-store-builder-free sbuilder)))))
 
-
 ;;; Client Cert Verifier
 (defclass rls-client-cert-verifier ()
   ((sap :initform nil :initarg :sap :accessor sap)
@@ -232,3 +234,14 @@ secrets persistence."
                                      builder
                                      (addr out))))
         (rustls::rustls-web-pki-client-cert-verifier-builder-free builder)))))
+
+(defclass rls-server-cert-verifier ()
+  ((sap :initform nil :initarg :sap :accessor sap)
+   (crls :initform nil :initarg :crls)
+   (end-entity-only :initform nil :initarg :end-entity-only :type boolean)
+   (allow-unknown-revocation-status :initform nil :initarg :allow-unknown-revocation-status :type boolean)
+   (allow-unauthenticated :initform nil :initarg :allow-unauthenticated)))
+
+(defclass rls-web-pki-server-cert-verifier (rls-server-cert-verifier) ())
+
+(defclass rls-platform-server-cert-verifier (rls-server-cert-verifier) ())

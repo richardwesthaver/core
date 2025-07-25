@@ -47,32 +47,19 @@
   `(member ,@*tag-types*))
 
 (defclass track ()
-  ((file
-    :initform nil :initarg :file :accessor file)
-   (title
-    :initform nil :initarg :title :accessor title)
-   (artist
-    :initform nil :initarg :artist :accessor artist)
-   (albumartist
-    :initform nil :initarg :albumartist :accessor albumartist)
-   (album
-    :initform nil :initarg :album :accessor album)
-   (genre
-    :initform nil :initarg :genre :accessor genre)
-   (date
-    :initform nil :initarg :date :accessor date)
-   (performer
-    :initform nil :initarg :performer :accessor performer)
-   (composer
-    :initform nil :initarg :composer :accessor composer)
-   (disc
-    :initform nil :initarg :disc :accessor disc)
-   (track
-    :initform nil :initarg :track :accessor track-number)
-   (time
-    :initform nil :initarg :time :accessor duration)
-   (last-modified
-    :initform nil :initarg :last-modified :accessor last-modified)))
+  ((file :initform nil :initarg :file :accessor file)    
+   (title :initform nil :initarg :title :accessor title)
+   (artist :initform nil :initarg :artist :accessor artist)
+   (albumartist :initform nil :initarg :albumartist :accessor albumartist)
+   (album :initform nil :initarg :album :accessor album)
+   (genre :initform nil :initarg :genre :accessor genre)
+   (date :initform nil :initarg :date :accessor date)
+   (performer :initform nil :initarg :performer :accessor performer)
+   (composer :initform nil :initarg :composer :accessor composer)
+   (disc :initform nil :initarg :disc :accessor disc)
+   (track :initform nil :initarg :track :accessor track-number)
+   (time :initform nil :initarg :time :accessor duration)
+   (last-modified :initform nil :initarg :last-modified :accessor last-modified)))
 
 (defmethod initialize-instance :around ((self track) &key duration &allow-other-keys)
   (when duration
@@ -88,46 +75,27 @@
    (format :initform nil :initarg :format)))
 
 (defclass status ()
-  ((volume
-    :reader volume :initarg :volume :initform nil)
-   (repeat
-    :reader repeat :initarg :repeat :initform nil)
-   (random
-    :reader randomized :initarg :random :initform nil)
+  ((volume :reader volume :initarg :volume :initform nil)
+   (repeat :reader repeat :initarg :repeat :initform nil)
+   (random :reader randomized :initarg :random :initform nil)
    (last-loaded-playlist :reader last-loaded-playlist :initarg :lastloadedplaylist :initform nil)
-   (playlist-version
-    :reader playlist-version :initarg :playlist :initform nil)
-   (playlist-length
-    :reader playlist-length :initarg :playlistlength :initform nil)
-   (xfade
-    :reader xfade :initarg :xfade :initform nil)
-   (state
-    :reader state :initarg :state :initform nil)
-   (partition
-    :reader partition :initarg :partition :initform nil)
-   (audio
-    :reader audio :initarg :audio :initform nil)
-   (bitrate
-    :reader bitrate :initarg :bitrate :initform nil)
-   (duration
-    :reader obj/time:duration :initarg :duration :initform nil)
-   (time
-    :reader %time :initarg :time :initform nil)
-   (songid
-    :reader songid :initarg :songid :initform nil)
+   (playlist-version :reader playlist-version :initarg :playlist :initform nil)
+   (playlist-length :reader playlist-length :initarg :playlistlength :initform nil)
+   (xfade :reader xfade :initarg :xfade :initform nil)
+   (state :reader state :initarg :state :initform nil)
+   (partition :reader partition :initarg :partition :initform nil)
+   (audio :reader audio :initarg :audio :initform nil)
+   (bitrate :reader bitrate :initarg :bitrate :initform nil)
+   (duration :reader obj/time:duration :initarg :duration :initform nil)
+   (time :reader %time :initarg :time :initform nil)
+   (songid :reader songid :initarg :songid :initform nil)
    (song :reader song :initarg :song :initform nil)
-   (nextsongid
-    :reader nextsongid :initarg :nextsongid :initform nil)
-   (nextsong 
-    :reader nextsong :initarg :nextsong :initform nil)
-   (elapsed
-    :reader elapsed :initarg :elapsed :initform nil)
-   (mixrampdb 
-    :reader mixrampdb :initarg :mixrampdb :initform nil)
-   (consume 
-    :reader consume :initarg :consume :initform nil)
-   (single 
-    :reader single :initarg :single :initform nil)
+   (nextsongid :reader nextsongid :initarg :nextsongid :initform nil)
+   (nextsong :reader nextsong :initarg :nextsong :initform nil)
+   (elapsed :reader elapsed :initarg :elapsed :initform nil)
+   (mixrampdb :reader mixrampdb :initarg :mixrampdb :initform nil)
+   (consume :reader consume :initarg :consume :initform nil)
+   (single :reader single :initarg :single :initform nil)
    (updating :reader updating :initarg :updating_db :initform nil)))
 
 (defclass stats ()
@@ -295,8 +263,6 @@
                list)
        (create-track)))))
 
-;;;
-
 (defun process-string (string)
   "Check for emtpy strings, and escape strings when needed."
   (when string
@@ -309,7 +275,6 @@
           string))))
 
 ;;; Macros
-
 (defmacro send (&rest commands)
   "Macro for using inside `defcommand'."
   `(send-command connection
@@ -393,7 +358,6 @@
    (send "notcommands")))
 
 ;;; Control
-
 (defcommand pause ()
   "Toggle pause / resume playing."
   (send "pause"))

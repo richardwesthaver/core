@@ -26,15 +26,16 @@
   (when (member (first qualifiers) '(:before :after :around))
     (pop qualifiers))
   (when (eq (first qualifiers) :cache)
-    (pop qualifiers)
+    (print (pop qualifiers))
     (unless qualifiers
       (error "Cache qualifier is not followed by a cache designator in method ~S." method))
     (unless (first qualifiers)
       (error "NIL is not a valid cache designator in method ~S." method))
     (setf (slot-value method 'cache)
-          (pop qualifiers))))
+          (pop qualifiers)
+          qualifiers qualifiers)))
 
 #+nil
-(progn
-  (defgeneric c1 (self) (:generic-function-class cached-function) (:method-class cached-method))
-  (defmethod c1 :cache (make-hash-table) ((self t)) t))
+(defgeneric c1 (self) (:generic-function-class cached-function) (:method-class cached-method))
+(defvar *cac* (make-hash-table))
+(defmethod c1 :cache *cac* ((self t)) t)

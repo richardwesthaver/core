@@ -257,7 +257,8 @@
 (defar rustls-client-config-builder-free void
   (c (* rustls-client-config-builder)))
 
-(defar rustls-client-config-builder-set-key-log-file rustls-result (builder (* rustls-client-config-builder)))
+(defar rustls-client-config-builder-set-key-log-file rustls-result 
+  (builder (* rustls-client-config-builder)))
 
 (defar rustls-client-config-builder-set-key-log rustls-result 
   (builder (* rustls-client-config-builder))

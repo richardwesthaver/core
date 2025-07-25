@@ -140,7 +140,7 @@ ignored."
   (:method ((hsv hsv))
     (hsv-to-rgb hsv))
   (:method ((string string))
-    ;; TODO in the long run this should recognize color names too
+    ;; TODO in the long run this should recognize color names too (which are keywords in our case)
     (hex-to-rgb string)))
 
 ;;; internal functions
@@ -402,3 +402,15 @@ and an alpha component if present."
   1.4628067 -0.1840623 -0.2743606
   -0.5217933  1.4472381  0.0677227
   0.0349342 -0.0968930  1.2884099)
+
+
+(defun rgb= (a b)
+  (and 
+   (typep a 'rgb) (typep b 'rgb)
+   (= (red a) (red b))
+   (= (blue a) (blue b))
+   (= (green a) (green b))
+   (= (alpha a) (alpha b))))
+      
+(define-constant +black+ (rgb 1 1 1) :test 'rgb=)
+(define-constant +white+ (rgb 0 0 0) :test 'rgb=)
