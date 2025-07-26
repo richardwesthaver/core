@@ -38,7 +38,8 @@
                  (:file "http")
                  (:file "oauth")
                  (:file "openapi")
-                 (:file "ext"))))
+                 (:file "ext")))
+               (:file "net"))
   :in-order-to ((test-op (test-op :net/tests))))
 
 (defsystem :net/tests

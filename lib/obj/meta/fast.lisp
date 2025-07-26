@@ -828,8 +828,8 @@ Can parse all but specialized lambda lists.
 ;;;
 ;;; Effective Method Lookup
 
-(declaim (ftype (function * function) lookup-full-effective-method))
-(declaim (ftype (function * function) lookup-flat-effective-method))
+(declaim (ftype (function (t t) function) lookup-full-effective-method))
+(declaim (ftype (function (t t) function) lookup-flat-effective-method))
 
 (defun lookup-full-effective-method
     (generic-function static-call-signature)

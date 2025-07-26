@@ -24,12 +24,13 @@
 	(with-rdb (db (create-rdb db-path :open t))
 	  (println (hash-table-alist (backfill-opts db)))
 	  (with-iter (it (iter db))
-	    (seek-to-first)
+	    seek-to-first
 	    (loop while (iter-valid-p it)
-		  do (format t "~A : ~A~%"
-			     (sb-ext:octets-to-string (key) :external-format '(:ascii :replacement #\_))
-			     (val))
-		     (next)))))))
+		  do (progn
+                       (format t "~A : ~A~%"
+			       (sb-ext:octets-to-string key :external-format '(:ascii :replacement #\_))
+			       val)
+		       next)))))))
 
 (defcmd rdb-set ()
   (if (> 2 *argc*)

@@ -68,12 +68,13 @@
     (open-db tmp)
     (create-columns tmp)
     (with-iter (it (iter tmp))
-      (seek-to-first it)
-      (is (sequence:emptyp (key it)))
-      (is (sequence:emptyp (val it)))
+      (is (sap it))
+      seek-to-first
+      (is (sequence:emptyp key))
+      (is (sequence:emptyp val))
       (is (zerop (nth 1 (multiple-value-list (timestamp it)))))
-      (is (not (iter-valid-p it)))
-      (seek-to-last it)
+      (is (not iter-valid-p))
+      seek-to-last
       (is (typep (kv it) 'kv))
       (is (sequence:emptyp (key it)))
       (is (sequence:emptyp (val it)))

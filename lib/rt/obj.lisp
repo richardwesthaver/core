@@ -246,6 +246,9 @@
            (type function test))
   (find name (tests self) :test test))
 
+(defmethod find-test ((self symbol) name &key (test #'test-name=))
+  (find-test (find-suite self) name :test test))
+
 (defmethod do-test ((self test-suite) &optional test)
   (push-result 
    (if (log:info! test)

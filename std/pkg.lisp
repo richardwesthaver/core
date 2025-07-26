@@ -30,7 +30,10 @@
    :symbolicate
    :keywordicate
    :gensymify
-   :gensymify* :fboundp! :vboundp!))
+   :gensymify* 
+   :fboundp! :vboundp!
+   :alias-macro
+   :alias-function))
 
 (defpkg :std/list
   (:use :cl)
@@ -488,6 +491,7 @@
    :pandoric-eval
    :with-collectors
    :collecting
+   :collect
    :switch
    :eswitch
    :cswitch
@@ -833,7 +837,9 @@
    :spin-queue :make-spin-queue :push-spin-queue :make-spin-lock
    :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
    ;; accumulator
-   :accumulated :accumulate :accumulator :max-accumulator
+   :accumulated :accumulate :accumulator :max-accumulator :min-accumulator
+   :counter :make-counter :counter-value :inc-counter 
+   :dec-counter
    ;; iterator protocol
    :iterator :next
    :key :val
@@ -964,6 +970,8 @@
    :*thread-pool-table*
    :worker-count*
    :worker-index*
+   :find-work
+   :do-workers
    :submit-work
    :receive-result
    :try-receive-result

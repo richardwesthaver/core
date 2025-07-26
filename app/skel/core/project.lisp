@@ -12,8 +12,9 @@
    (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) 
        :type vc-repo :accessor sk-vc)
    (src :initarg :src :type pathname :accessor sk-src)
-   (stash :initarg :stash :accessor sk-stash :type pathname)
-   (store :initarg :store :accessor sk-store :type pathname)
+   (stash :initarg :stash :accessor sk-stash :initform ".stash/")
+   (store :initarg :store :accessor sk-store :initform ".stash/store/")
+   (cache :initarg :store :accessor sk-cache :initform ".stash/cache/")
    (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component)
                :documentation "A vector of child components belonging to this project.")
    (bind :initarg :bind :initform *default-skel-bindings* :accessor sk-bind :type list
@@ -118,14 +119,15 @@ directory."))
 	  ;;; SRC
 	  (if (bound-string-p self 'src)
 	      (setf (sk-src self) (or (probe-file (sk-src self))
-				      (probe-file (merge-pathnames (sk-src self) skel-path))
+				      (probe-file (merge-pathnames (sk-src self) *skel-path*))
 				      (error 'invalid-argument :reason "project source not found"
 							       :item (sk-src self))))
 	      (setf (sk-src self) (sk-dir self)))
-	  (setq skel-path (or (sk-src self) *default-pathname-defaults*))
-	  (let ((*default-pathname-defaults* (make-pathname :defaults (namestring skel-path))))
+	  (setq *skel-path* (or (sk-src self) *default-pathname-defaults*))
+	  (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
 	    (when (bound-string-p self 'stash) (setf (sk-stash self) (pathname (the simple-string (sk-stash self)))))
-	    (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
+            (when (bound-string-p self 'store) (setf (sk-store self) (pathname (the simple-string (sk-store self)))))
+            (when (bound-string-p self 'cache) (setf (sk-cache self) (pathname (the simple-string (sk-cache self)))))
 	    ;; VC
 	    (when-let ((vc (sk-vc self)))
 	      (etypecase vc

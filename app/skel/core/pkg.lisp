@@ -51,13 +51,13 @@
    :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
    :*skel-init-hook*)
   (:export
-   #:skel-stash
-   #:skel-store
-   #:skel-cache
-   #:skel-path
-   #:user-skelrc
-   #:system-skelrc
-   #:skel-data
+   #:*skel-stash*
+   #:*skel-store*
+   #:*skel-cache*
+   #:*skel-path*
+   #:*user-skelrc*
+   #:*system-skelrc*
+   #:*skel-data*
    #:*default-skel-bindings*
    #:*skel-project-functions*
    #:*skel-project-symbol-macros*
@@ -94,7 +94,8 @@
    :*skel-user-config* :*skel-system-config*
    :sk-src :sk-component :sk-components :sk-mod
    :sk-parent
-   :sk-phases))
+   :sk-phases
+   :skel-store))
 
 (defpackage :skel/core/schema
   (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :schema :rdb)

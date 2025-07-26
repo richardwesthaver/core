@@ -225,13 +225,13 @@ is responsible for indicating in the state slot the result of the computation.")
 (defun make-task-pool (worker-count &key (name :default) (kernel *kernel*) 
                                          (task-class *task-class*) initial-task
                                          tasks
-                                         alivep)
+                                         alive)
   "Make a new TASK-POOL with a worker capacity of WORKER-COUNT."
   (let ((*worker-class* 'task-worker))
     (let ((tp (make-thread-pool
                worker-count 
                :class 'task-pool
-               :alivep alivep
+               :alive alive
                :name name
                :kernel kernel))
           (%tasks (or tasks worker-count)))

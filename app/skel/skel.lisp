@@ -46,7 +46,6 @@
                                :cache *skel-cache*
                                :store *skel-store*
                                :stash *skel-stash*
-                               :registry *skel-registry*
                                :cd *default-pathname-defaults*))
 
 (defun skel-keywordp (kw)

@@ -163,4 +163,4 @@
   (:export :*rdb-cli*))
 
 (in-package :rdb)
-(rocksdb:load-rocksdb nil)
+(load-rocksdb nil)

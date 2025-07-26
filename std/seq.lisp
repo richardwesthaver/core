@@ -996,11 +996,12 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
 
 (defgeneric accumulate (self val)
   (:documentation "Accumulate VAL into an ACCUMULATOR-like object SELF.")
-  (:method ((self accumulator) val)
-    (when val
-      (setf (accumulated self) (+ val (accumulated self)))))
+  (:method ((self accumulator) (val number))
+    (setf (accumulated self) (+ val (accumulated self))))
   (:method ((self list) val)
-    (push val self)))
+    (push val self))
+  (:method ((self vector) val)
+    (vector-push val self)))
 
 (defgeneric make-accumulator (self)
   (:documentation "Make a new ACCUMULATOR based on SELF."))
@@ -1012,6 +1013,23 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
 (defmethod accumulate ((self max-accumulator) (val number))
   (when (> val (accumulated self))
     (setf (accumulated self) val)))
+
+(defclass min-accumulator (accumulator) ()
+  (:documentation "Accumulator which tracks the minimum value observed."))
+
+(defmethod accumulate ((self min-accumulator) (val fixnum))
+  (when (< val (accumulated self))
+    (setf (accumulated self) val)))
+
+;; simple atomic counter
+(defstruct (counter (:constructor make-counter (&optional value)))
+  (value 0 :type sb-ext:word))
+(defun inc-counter (c &optional (diff 1))
+  (declare (counter c) (fixnum diff))
+  (sb-ext:atomic-incf (counter-value c) diff))
+(defun dec-counter (c &optional (diff 1))
+  (declare (counter c) (fixnum diff))
+  (sb-ext:atomic-decf (counter-value c) diff))
 
 ;;; Iterator
 #|
@@ -1057,20 +1075,20 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
 (defvar *iter*)
 
 (defvar *iterator-functions*
-  '((next (&optional (s *iter*)) (next s))
-    (prev (&optional (s *iter*)) (prev s))
-    (seek-to-first (&optional (s *iter*)) (seek-to-first s))
-    (seek-to-last (&optional (s *iter*)) (seek-to-last s))
-    (seek-for-prev (key &optional (s *iter*)) (seek-for-prev s key))
-    (iter-valid-p (&optional (s *iter*)) (iter-valid-p s))
-    (seek (key &optional (s *iter*)) (seek s key))
-    (val (&optional (s *iter*)) (val s))
-    (key (&optional (s *iter*)) (key s)))
+  '((next (next *iter*))
+    (prev (prev *iter*))
+    (seek-to-first (seek-to-first *iter*))
+    (seek-to-last (seek-to-last *iter*))
+    ;; (seek-for-prev (key &optional (s *iter*)) (seek-for-prev s key))
+    (iter-valid-p (iter-valid-p *iter*))
+    ;; (seek (key &optional (s *iter*)) (seek s key))
+    (val (val *iter*))
+    (key (key *iter*)))
   "A list of function signatures for symbols which are bound via FLET around the body of WITH-ITER.")
 
 (defmacro with-iter ((sym iter) &body body)
   `(let ((,sym ,iter))
      (setf *iter* ,sym)
-     (labels ,*iterator-functions*
-       (declare (ignorable ,@(mapcar (lambda (x) `(function ,(car x))) *iterator-functions*)))
+     (symbol-macrolet ,*iterator-functions*
+       ;; (declare (ignorable ,@(mapcar (lambda (x) `(function ,(car x))) *iterator-functions*)))
        ,@body)))

@@ -30,6 +30,7 @@ process of building a compliant database population as simple as possible.
   (:import-from :obj/time :date)                       
   (:import-from :tpc-h                                 
    :+tpc-h-region-count+ :+tpc-h-nation-count+         
+   :*tpc-h-data-directory*
    :write-nation-table :write-region-table             
    :write-part-table :write-supplier-table             
    :write-partsupp-table :write-customer-table         
@@ -83,7 +84,7 @@ written with a .tbl extension to *TPC-H-DATA-DIRECTORY*."
     (declare (fixnum part-count supplier-count partsupp-count customer-count lineitem-count order-count))
     (info! "Generating new TPC-H database:" *tpc-h-data-directory*)
     (debug! (format nil "scale-factor=~A~%" scale-factor))
-    (is
+    (rt:is
      (wait-for-threads
       (loop for args in `((:region ,region-count)
                           (:nation ,nation-count)
@@ -96,7 +97,7 @@ written with a .tbl extension to *TPC-H-DATA-DIRECTORY*."
             collect (make-thread (dbgen-kernel) :name (string-downcase (symbol-name (car args)))
                                                 :arguments args))))))
 
-(defun tpc-h-benchmark () (dbgen))
+(defun tpc-h-benchmark () (dbgen:dbgen))
 ;; (length (read-orders-table))
 ;; (make-region-table-batch #(1 2 3))
 ;; (write-region-row :regionkey 0 :name "USA" :comment "OORAH")

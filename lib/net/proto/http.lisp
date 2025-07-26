@@ -59,6 +59,42 @@
      (format stream "~A: ~A" (type-of condition) (slot-value condition 'description)))))
 
 ;;
+;; Callbacks
+
+(defstruct callbacks
+  (message-begin nil :type (or null function))     ;; 1 arg
+  (url nil :type (or null function))
+  (first-line nil :type (or null function))
+  (status nil :type (or null function))
+  (header-field nil :type (or null function))
+  (header-value nil :type (or null function))
+  (headers-complete nil :type (or null function))  ;; 1 arg
+  (body nil :type (or null function))
+  (message-complete nil :type (or null function)))
+
+(defmacro callback-data (name http callbacks data start end)
+  (with-gensyms (callback e)
+    `(when-let ((,callback (,(format-symbol t "~A-~A" :callbacks name) ,callbacks)))
+       (handler-bind ((error
+                        (lambda (,e)
+                          (unless (typep ,e 'http-error)
+                            (error ',(format-symbol t "~A-~A" :cb name)
+                                   :error ,e)
+                            (abort ,e)))))
+         (funcall ,callback ,http ,data ,start ,end)))))
+
+(defmacro callback-notify (name http callbacks)
+  (with-gensyms (callback e)
+    `(when-let ((,callback (,(format-symbol t "~A-~A" :callbacks name) ,callbacks)))
+       (handler-bind ((error
+                        (lambda (,e)
+                          (unless (typep ,e 'http-error)
+                            (error ',(format-symbol t "~A-~A" :cb name)
+                                   :error ,e)
+                            (abort ,e)))))
+         (funcall ,callback ,http)))))
+
+;;
 ;; Callback-related errors
 
 (define-condition callback-error (http-error)
@@ -954,44 +990,6 @@ us a never-ending header that the application keeps buffering.")
 ;; Types
 
 (deftype pointer () 'integer)
-
-
-;;
-;; Callbacks
-
-(defstruct callbacks
-  (message-begin nil :type (or null function))     ;; 1 arg
-  (url nil :type (or null function))
-  (first-line nil :type (or null function))
-  (status nil :type (or null function))
-  (header-field nil :type (or null function))
-  (header-value nil :type (or null function))
-  (headers-complete nil :type (or null function))  ;; 1 arg
-  (body nil :type (or null function))
-  (message-complete nil :type (or null function)))
-
-(defmacro callback-data (name http callbacks data start end)
-  (with-gensyms (callback e)
-    `(when-let ((,callback (,(format-symbol t "~A-~A" :callbacks name) ,callbacks)))
-       (handler-bind ((error
-                        (lambda (,e)
-                          (unless (typep ,e 'http-error)
-                            (error ',(format-symbol t "~A-~A" :cb name)
-                                   :error ,e)
-                            (abort ,e)))))
-         (funcall ,callback ,http ,data ,start ,end)))))
-
-(defmacro callback-notify (name http callbacks)
-  (with-gensyms (callback e)
-    `(when-let ((,callback (,(format-symbol t "~A-~A" :callbacks name) ,callbacks)))
-       (handler-bind ((error
-                        (lambda (,e)
-                          (unless (typep ,e 'http-error)
-                            (error ',(format-symbol t "~A-~A" :cb name)
-                                   :error ,e)
-                            (abort ,e)))))
-         (funcall ,callback ,http)))))
-
 
 ;;
 ;; Parser utilities

@@ -692,10 +692,3 @@
    #:defstore))
 
 (setq *defpkg-hook* nil)
-
-(in-package :std-user)
-
-(eval-always
-  (defpkg :obj
-    (:use :cl :std)
-    #.`(:use-reexport ,@obj/int:*obj-packages*)))

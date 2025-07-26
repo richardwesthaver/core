@@ -19,7 +19,7 @@
 (defvar *skel-init-hook* nil)
 
 (defvar *skel-project* nil)
-
+(defvar *skel-registry* nil)
 (defvar *skel-env* (make-hash-table :test 'equal)
   "A hash-table containing active SKEL environment variables. Keys and values are
 strings.

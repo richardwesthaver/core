@@ -168,8 +168,10 @@
 ;;; Meta
 
 ;;;; Fast
-(defgeneric %test-+ (a b)
-  (:generic-function-class fast-generic-function))
+(with-compilation-unit ()
+  (defgeneric %test-+ (a b)
+    (:generic-function-class fast-generic-function) 
+    (:method-class fast-method)))
 
 (deftest fast ()
   ;; can't be in same file

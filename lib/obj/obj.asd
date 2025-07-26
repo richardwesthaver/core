@@ -63,7 +63,8 @@
                (:file "secret")
                (:file "store")
                (:file "cache")
-               (:file "srv"))
+               (:file "srv")
+               (:file "obj"))
   :in-order-to ((test-op (test-op "obj/tests"))))
 
 (defsystem :obj/tests

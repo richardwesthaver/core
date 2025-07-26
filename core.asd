@@ -6,7 +6,8 @@
    :rdb :cry :io)
   :components ((:file "core"))
   :build-pathname "core-source"
-  :build-operation monolithic-concatenate-source-op)
+  :build-operation monolithic-concatenate-source-op
+  :in-order-to ((test-op (test-op "core/tests"))))
 
 (defsystem :core/user
   :depends-on 
@@ -23,12 +24,13 @@
                :syn/tests :organ/tests :packy/tests :obj/tests 
                :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
                :zstd/tests :uring/tests :blake3/tests :ublk/tests
-               :parse/tests :pod/tests :rdb/tests :rt/tests
+               :parse/tests :pod/tests :rt/tests :rdb/tests
                :dsp/tests :cry/tests :krypt/tests :io/tests
                :gui/tests :net/tests :vc/tests :math/tests)
   :components ((:file "tests"))
   :build-pathname "tests"
-  :build-operation monolithic-compile-bundle-op)
+  :build-operation monolithic-compile-bundle-op
+  :perform (test-op (o c) (symbol-call :rt :run-all-tests)))
 
 (defsystem :core/bench
   :depends-on (:std :rt :core)

@@ -476,18 +476,3 @@
     (load (asdf:system-relative-pathname :net "proto/crew.lisp"))
     (use-package :net/proto/swank)
     (use-package :net/proto/crew)))
-
-(eval-when (:load-toplevel)
-  (pushnew :net *features*))
-
-(in-package :std-user)
-
-(eval-always
-  (defpkg :net
-    (:use :cl :std)
-    #.`(:use-reexport ,@(remove "NET/REQ" net/int:*net-packages* :test 'string=))
-    (:import-from :net/req :http-client-config :http-client)
-    (:export :http-client-config :http-client))
-
-  (defpkg :net-user
-    (:use :cl :std :net :uri :url)))

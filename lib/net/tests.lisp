@@ -41,11 +41,11 @@
              #(47 116 101 115 116 47 105 110 116 0 0 0 44 105 0 0 255 255 255 255))))
 
 (deftest http ()
-  (let ((req (make-http-request))
-      (cb (make-callbacks)))
-  (parse-request
-   req cb
-   (sb-ext:string-to-octets #"GET /cookies HTTP/1.1
+  (let ((req (http:make-http-request))
+        (cb (http:make-callbacks)))
+    (http:parse-request
+     req cb
+     (sb-ext:string-to-octets #"GET /cookies HTTP/1.1
 Host: 127.0.0.1:8080
 Connection: keep-alive
 Cache-Control: max-age=0Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
@@ -61,9 +61,9 @@ Cookie: name=wookie
 
 (deftest req ()
   (istype 'net/req::keep-alive-chunked-stream
-          (req:get (uri:uri "https://google.com") :force-binary t :want-stream t :keep-alive t))
-  (istype 'string (req:get (uri:uri "https://example.com")))
-  (istype 'octet-vector (req:get (uri:uri "https://example.com") :force-binary t)))
+          (req:get (uri:uri "https://compiler.company") :force-binary t :want-stream t :keep-alive t))
+  (istype 'string (req:get (uri:uri "https://compiler.company")))
+  (istype 'octet-vector (req:get (uri:uri "https://compiler.company") :force-binary t)))
 
 (deftest cookies ()
   (let ((cookies (net/cookie:make-cookie-jar))
@@ -74,8 +74,8 @@ Cookie: name=wookie
     (is (stringp (net/cookie:write-cookie-header (list cookie))))))
 
 (deftest srv ()
-  (let ((srv (make-instance 'net-service)))
-    (istype 'net-service srv)
+  (let ((srv (make-instance 'udp-service)))
+    (issubtype 'net-service (type-of srv))
     (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
     (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service))
     (istype 'net/srv/udp:udp-service (make-instance 'net/srv/udp:udp-service))))
