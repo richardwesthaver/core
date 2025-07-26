@@ -1056,7 +1056,6 @@
    :*stages*
    :*task*
    :*result*
-   :define-task-kernel
    :task :job :scheduled-task
    :make-job
    :jobp :taskp :task))

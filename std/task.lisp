@@ -25,40 +25,6 @@
   "Signal a TASK-ERROR associated with THREAD."
   (error 'task-error :thread thread))
 
-;;; Kernel
-(defmacro make-task-kernel (name args lock queue mailbox timeout &body body &environment env)
-  (declare (ignorable env))
-  `(compile ',name
-            (lambda ,args 
-              (wait-on-semaphore ,lock ,@(when timeout `((:timeout ,timeout))))
-              (let ((*task* (dequeue ,queue)))
-                (unwind-protect 
-                     (handler-case (setf *result* (progn ,@body))
-                       (error () (task-error *current-thread*)))
-                  (send-message ,mailbox *result*)
-                  (release-foreground))))))
-
-(defmacro define-task-kernel (name (&key lock timeout mailbox queue) args &body body)
-  "Define a task kernel.
-
-The kernel should process all options and return a function - the
-'kernel function'.
-
-The kernel function is installed in worker threads by passing it to
-SB-THREAD:MAKE-THREAD. It may accept a varying number of arguments
-specified by ARGS.
-
-Within the BODY the variable *task* is bound to the result of (DEQUEUE QUEUE)
-and *result* is bound to the return value of BODY.
-
-This interface is experimental and subject to change."
-  `(make-task-kernel ,name ,args 
-       ,(if lock lock '(sb-thread:make-semaphore))
-       ,(if queue queue '(make-queue))
-       ,(if mailbox mailbox '(sb-concurrency:make-mailbox))
-       ,timeout
-     ,@body))
-
 ;;; Proto
 (defgeneric task (self)
   (:documentation "Return the task associated with SELF."))
@@ -163,3 +129,6 @@ is responsible for indicating in the state slot the result of the computation.")
 (defmethod print-object ((self work-scope) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (tasks self))))
+
+;; RESEARCH 2025-07-26: 
+;;; Task Scheduler?
