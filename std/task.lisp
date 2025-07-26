@@ -12,7 +12,7 @@
 (defvar *stage*)
 (defvar *task*)
 (defvar *task-class* 'task)
-(defvar *task-priority* nil)
+(defvar *task-priority* :low)
 (defvar *result* nil)
 
 (define-condition task-error (thread-error) ()
@@ -82,69 +82,11 @@ This interface is experimental and subject to change."
   ((tasks :accessor tasks :initarg :tasks :type spin-queue))
   (:documentation "A Worker which stores a queue of TASKS."))
 
-;;; Task Pool
-(defclass task-pool (thread-pool)
-  ((tasks :initform (if (boundp '*tasks*) *tasks*) :initarg :tasks :accessor tasks)
-   ;; TODO: test weak-vector here
-   (workers :initform (make-array 0 :element-type 'task-worker :adjustable t) :type (vector worker)
-            :initarg :workers :accessor workers)
-   (results :initform (sb-concurrency:make-mailbox :name "results") :accessor results :initarg :results))
-  (:documentation "A thread-pool which maintains a dynamic list of TASKS."))
-
-(defun task-pool-info (tp)
-  "Return a plist of info about task-pool TP."
-  (append
-   (std/thread::thread-pool-info tp)
-   (list
-    :tasks (queue-count (tasks tp))
-    :results (sb-concurrency:mailbox-count (results tp)))))
-
-(defmethod print-object ((self task-pool) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~(~A ~^~)~{~s~^ ~}" (name self) (task-pool-info self))))
-
-(defun kill-workers (pool)
-  "Call FINISH-THREADS on task-pool's workers."
-  (dotimes (i (length (workers pool)))
-    (kill-worker (vector-pop (workers pool)))))
-
-(defmethod designate-oracle ((self task-pool) (guest thread))
-  (let ((id (make-oracle guest)))
-    (setf (gethash id *oracle-table*)
-          (vector-push-extend (sb-ext:make-weak-pointer self) (gethash id *oracle-table*)))))
-
-(defmethod designate-oracle ((self task-pool) (guest (eql t)))
-  (designate-oracle self *current-thread*))
-
-(declaim (inline push-worker push-workers pop-worker))
-(defun push-worker (worker pool)
-  (vector-push-extend worker (workers pool)))
-
-(defun push-workers (threads pool)
-  "Push a list of THREADS to POOL."
-  (with-slots (workers) pool
-    (dolist (w threads)
-      (vector-push-extend w workers))))
-
-(defmethod pop-worker (pool)
-  "Pop the next worker from POOL."
-  (vector-pop (workers pool)))
-
-(defun start-task-worker (pool index)
-  "Start the TASK-WORKER at INDEX of POOL."
-  ;; (with-recursive-lock
-  (start-worker (aref (workers pool) index)))
-
-(defun start-task-workers (pool)
-  "Start all workers in the given task POOL."
-  (loop for w across (workers pool)
-        do (start-worker w)))
-
 ;;; Task
 (defclass task ()
   ((state :initform nil :initarg :state :accessor task-state))
   (:documentation "This object represents a single unit of work to be done by some
-worker. Tasks are typically distributed from the task-pool, but workers may
+worker. Tasks are typically distributed from the pool, but workers may
 also be granted the ability to create and distribute their own tasks. Once a
 task is assigned, the 'owner', i.e. the worker that is assigned this task, may
 modify the object. When the work associated with a task is complete, the owner
@@ -221,34 +163,3 @@ is responsible for indicating in the state slot the result of the computation.")
 (defmethod print-object ((self work-scope) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (tasks self))))
-
-(defun make-task-pool (worker-count &key (name :default) (kernel *kernel*) 
-                                         (task-class *task-class*) initial-task
-                                         tasks
-                                         alive)
-  "Make a new TASK-POOL with a worker capacity of WORKER-COUNT."
-  (let ((*worker-class* 'task-worker))
-    (let ((tp (make-thread-pool
-               worker-count 
-               :class 'task-pool
-               :alive alive
-               :name name
-               :kernel kernel))
-          (%tasks (or tasks worker-count)))
-      (declare (task-pool tp))
-      (setf (tasks tp)
-            (make-queue
-             :initial-contents
-             (make-array %tasks
-                         :element-type task-class
-                         :initial-element (or initial-task (make-instance task-class))))
-            (results tp) (sb-concurrency:make-mailbox :name "results"))
-      tp)))
-
-;;; Macros
-(defmacro with-task-pool ((sym &key (tasks (std/alien:num-cpus)) (workers (std/alien:num-cpus)) #+nil start)
-                          &body body)
-  "Eval BODY with SYM bound to a new TASK-POOL."
-  `(let ((,sym (make-task-pool ,workers :tasks ,tasks)))
-     ;; ,@(when start `((start-task-workers ,sym)))
-     ,@body))

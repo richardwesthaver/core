@@ -321,12 +321,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
     :reader wait-queue)
    (wait-lock
     :initform (make-mutex :name "wait-queue")
-    :reader wait-lock)
-   (worker-thread-name-format
-    :type (or string null)
-    :initarg :worker-thread-name-format
-    :initform "srv-worker-~A"
-    :accessor worker-thread-name-format))
+    :reader wait-lock))
   (:default-initargs
    :max-thread-count *default-max-thread-count*
    :max-accept-count *default-max-accept-count*))
@@ -372,9 +367,9 @@ had returned RESULT.  See the source code of REDIRECT for an example."
       (decf (thread-count self)))))
 
 (defmethod wait-for-free-connection ((self thread-per-connection-engine))
-  (with-mutex ((wait-queue self))
+  (with-mutex ((wait-lock self))
     (loop until (< (thread-count self) (max-thread-count self))
-          do (sb-thread:condition-wait (wait-lock self) (wait-queue self)))))
+          do (sb-thread:condition-wait (wait-queue self) (wait-lock self)))))
 
 (defmethod %handle-connection ((self thread-per-connection-engine) socket)
   (increment-accept-count self)
@@ -387,7 +382,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
           ((if (max-accept-count self)
                (>= (accept-count self) (max-accept-count self))
                (>= (thread-count self) (max-thread-count self)))
-           (too-many-engine-requests self socket)
+           (too-many-engine-requests self)
            (send-service-unavailable-response self socket))
           ((and (max-accept-count self)
                 (>= (thread-count self) (max-thread-count self)))
@@ -402,17 +397,17 @@ had returned RESULT.  See the source code of REDIRECT for an example."
       (run-thread
        self
        (lambda () (%handle-connection self socket))
-       :name (format nil (worker-thread-name-format self) (socket-peername socket)))
+       :name (format nil "worker:~A" (socket-peername socket)))
     (error (c)
       (let ((*service* (service self)))
         (ignore-errors
          (close (socket-make-stream (socket *service*)) :abort t))
         (service-log :error "Error while creating worker thread for new connection: ~A" c)))))
 
-(defun too-many-engine-requests (self socket)
-  (declare (ignore socket))
-  (service-log-message (service self)
-                       :warning "Unable to handle new request, too many active request threads"))
+(defun too-many-engine-requests (self)
+  (service-log-message 
+   (service self)
+   :warning "Unable to handle new request, too many active request threads"))
 
 (defun send-service-unavailable-response (engine socket)
   (let* ((service (service engine))

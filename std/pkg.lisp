@@ -973,6 +973,14 @@
    :find-work
    :do-workers
    :submit-work
+   :submit-indexed
+   :with-temp-pool
+   :call-with-temp-pool
+   :receive-indexed
+   :with-submit-indexed
+   :with-submit-cancellable
+   :submit-cancelable
+   :receive-cancelables
    :receive-result
    :try-receive-result
    :shutdown-channel
@@ -988,8 +996,12 @@
    :hang :finish-threads
    :make-oracle
    :kill-worker
+   :kill-workers
+   :kill
    :join-worker
    :start-worker
+   :start-workers
+   :start-workers*
    :run-worker
    :with-default-special-bindings
    :worker-thread
@@ -1002,12 +1014,15 @@
    :oracle-id :find-thread
    :make-threads :with-threads 
    :with-thread
+   :with-temp-pool
    :thread-count :dump-thread
    :channel
    :channel-pool
    :channel-queue
    :thread-pool :workers
    :make-thread-pool :end-thread-pool
+   :pop-worker
+   :make-worker*
    :make-worker :designate-oracle
    :make-workers
    :condition-wait*
@@ -1030,15 +1045,10 @@
   (:import-from :std/type :positive-fixnum)
   (:import-from :std/macs :if-let)
   (:export
-   :push-worker
    :task-schedule
    :jobs
    :tasks
    :results
-   :kill-workers
-   :start-task-worker
-   :start-task-workers
-   :pop-worker
    :*task-class*
    :*task-priority*
    :*tasks*
@@ -1047,9 +1057,9 @@
    :*task*
    :*result*
    :define-task-kernel
-   :task :job :task-pool :scheduled-task
-   :make-job :make-task-pool
-   :jobp :taskp :task :with-task-pool))
+   :task :job :scheduled-task
+   :make-job
+   :jobp :taskp :task))
 
 (defpkg :std/async
   (:use :cl :std/task :std/thread)
