@@ -18,7 +18,7 @@
 
 (defpkg :cli/clap
   (:nicknames :clap)
-  (:prelude :clap* 
+  (:prelude :clap*
    :defcmd :defopt
    :*argc* :*args* :*optc* :*opts* 
    :args :arg0

@@ -5,11 +5,9 @@
 ;;; Code:
 (in-package :skel/net/server)
 
-(defclass sk-request (request) ())
-(defclass sk-response (response) ())
-
-(defclass sk-service (udp-service) ()
+(defservice sk-server (sk-service udp-service) ()
   (:default-initargs
-   :port *skel-service-port*
-   :request-class 'sk-request
-   :response-class 'sk-response))
+   :port *skel-service-port*))
+
+(defmethod make-service ((self (eql :sk-server)) &rest args)
+  (apply 'make-instance 'sk-server args))

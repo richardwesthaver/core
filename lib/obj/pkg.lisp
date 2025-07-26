@@ -615,7 +615,8 @@
   (:nicknames :srv)
   (:use :cl :std :config :id)
   (:export
-   :service
+   #:service
+   #:make-service
    #:response-ok-p
    #:response-status
    #:dispatch-request

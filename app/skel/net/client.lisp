@@ -5,3 +5,4 @@
 ;;; Code:
 (in-package :skel/net/client)
 
+(defservice sk-client (udp-client sk-service) ())

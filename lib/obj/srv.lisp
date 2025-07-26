@@ -74,6 +74,8 @@
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
    (engine :type engine :accessor engine :initarg :engine)))
 
+(defgeneric make-service (self &rest args &key &allow-other-keys))
+
 (defclass response () ())
 
 (defgeneric make-response (&rest args &key &allow-other-keys))

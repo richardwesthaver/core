@@ -35,20 +35,22 @@
 ;; - DEPLOY enables CI/Deploy features.
 
 ;;; Code:
-(pkg:defpkg :skel/core
+(in-package :std-user)
+
+(defpkg :skel/core
   (:nicknames :sk-core)
   (:use :cl :std)
   (:import-from :ast :*keep-ast*)
   (:use-reexport :skel/core/proto :skel/core/int
    :skel/core/header :skel/core/obj :skel/core/util :skel/core/db :skel/core/log))
 
-(pkg:defpkg :skel/comp
+(defpkg :skel/comp
   (:nicknames :sk-comp)
   (:use :cl :std)
   (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile
    :skel/comp/container :skel/comp/dir-locals :skel/comp/org))
 
-(pkg:defpkg :skel/cli
+(defpkg :skel/cli
   (:nicknames :sk-cli)
   (:use :cl :std :log :skel/core :sb-ext :cli/clap)
   (:export :*skel-cli* :sk-shell))
@@ -67,26 +69,28 @@
    #:*skel-service-port*
    #:*default-skel-service-port*))
 
+(defpackage :skel/srv
+  (:use :cl :std :db 
+   :store :build :config :skel/core/db 
+   :skel/core :skel/core/log :net/srv/udp :net/srv/http :srv)
+  (:export #:sk-service
+           #:sk-request
+           #:sk-response))
+
 (defpackage :skel/net/client
   (:nicknames :sk-client)
-  (:use :cl :std :net :skel/net/core)
+  (:use :cl :std :net :skel/net/core :net/srv/udp :srv :skel/core/log :log :skel/srv)
   (:export))
 
 (defpackage :skel/net/server
   (:nicknames :sk-server)
-  (:use :cl :std :net/srv/udp :net/srv/http :sk-net-core :log :skel/core/log :srv)
-  (:export))
+  (:use :cl :std :net/srv/udp :net/srv/http :sk-net-core :log :skel/core/log :srv :skel/srv)
+  (:export :sk-server))
 
-(pkg:defpkg :skel/net
+(defpkg :skel/net
   (:nicknames :sk-net)
-  (:use :cl :std)
+  (:use :cl :std :net/srv/udp :skel/core/log :srv :log :skel/srv)
   (:use-reexport :skel/net/client :skel/net/server))
-
-(defpackage :skel/srv
-  (:use :cl :std :db 
-   :store :build :config :skel/core/db 
-   :skel/core :skel/core/log :skel/net :net/srv/udp :net/srv/http :srv)
-  (:export #:sk-service))
 
 (defpackage :skel/infer
   (:use :cl :std :db :skel/core :skel/srv :dat :nlp :id :config :vc :srv)

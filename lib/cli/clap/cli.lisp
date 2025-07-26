@@ -19,7 +19,9 @@
 (defopt help-opt 
   "Print help and exit."
   (if *arg*
-      (print-help (find-cmd *arg* *cli* :default :error) t)
+      (progn
+        (print-help (find-cmd *arg* *cli* :default :error) t)
+        (terpri t))
       (print-help *cli*))
   (exit :code 0))
 

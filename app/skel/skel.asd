@@ -41,9 +41,9 @@
    (:module "net"
     :components
     ((:file "var")
-     (:file "proto")
      (:file "server")
-     (:file "client")))
+     (:file "client")
+     (:file "endpoint")))
    (:file "cli")
    (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))

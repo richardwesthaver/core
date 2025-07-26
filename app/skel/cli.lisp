@@ -138,9 +138,14 @@
   (println *opts*))
 
 (defcmd skc-search ()
-  "Search the current project and return a date-frame of results."
+  "Search the current project."
   (dolist (a *args*)
     (println (sk-search-project a))))
+
+(defcmd skc-start ()
+  "Start a service."
+  (dolist (a *args*)
+    (println (srv:make-service (keywordicate (string-upcase a))))))
 
 (defun sk-shell ()
   (trace! "starting skel shell")
@@ -179,6 +184,9 @@
     :description "initialize a skelfile in the current directory"
     :opts ((:name "name" :description "project name" :kind string))
     :thunk skc-init)
+   (:name start
+    :description "start a skel service"
+    :thunk skc-start)
    (:name id
     :description "print the current project id"
     :thunk skc-id)
