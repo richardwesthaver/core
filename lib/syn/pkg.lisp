@@ -63,6 +63,9 @@
 (defpackage :syn/tempo
   (:use :cl :std :syn/ts :syn/lang :syn/gen))
 
+(defpackage :syn/grovel
+  (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint))
+
 (pkg:defpkg :syn
   (:use :cl :std)
   (:use-reexport :syn/lint :syn/ts :syn/lang :syn/gen :syn/tempo))

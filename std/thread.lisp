@@ -95,7 +95,6 @@ threaded context.")
   "True if the Lisp process is exiting - used for skipping auto-replacement of
 killed workers during shutdown.")
 
-;; TODO 2025-06-17: 
 (declaim (pool-kernel-function %pool))
 (definline %pool (state)
   "Default pool-kernel-function, assumes *THREAD-POOL* is bound."
@@ -123,7 +122,7 @@ killed workers during shutdown.")
 (defvar *kernel* nil
   "The current thread's kernel, or nil.")
 
-(defvar *worker-kernel* (disassemble (make-kernel #'%work))
+(defvar *worker-kernel* (make-kernel #'%work)
   "A kernel which drives WORKERs.")
 
 ;;; Globals
@@ -607,25 +606,6 @@ FUNCTION."
 ;;; Kill
 (defconstant +worker-suicide-tag+ 'worker-suicide-tag)
 
-(definline kill-workers (pool)
-  "Call FINISH-THREADS on POOL's workers."
-  (declare (thread-pool pool)
-           (optimize (speed 3) (safety 0)))
-  (dotimes (i (length (the (vector worker) (workers pool))))
-    (kill-worker (svref (workers pool) i))))
-
-(defun kill (pool)
-  (assert pool)
-  (let ((count (worker-count pool)))
-    (with-slots (lock workers) pool
-      (with-mutex (lock)
-        (kill-workers pool))
-      (prog1 count
-        (when *worker*
-	  (assert (eq (worker-thread *worker*) *current-thread*))
-	  ;; (when (eql category (running-category *worker*))
-	  (throw '#.+worker-suicide-tag+ nil))))))
-
 (defun kill-errors ()
   (let ((suicide nil))
     (with-mutex (*error-workers-lock*)
@@ -966,6 +946,25 @@ and execution of concurrent work using a pool of 'worker' threads."))
 
 (defmethod initialize-instance :after ((self thread-pool) &key name &allow-other-keys)
   (when name (register-thread-pool name self)))
+
+(definline kill-workers (pool)
+  "Call FINISH-THREADS on POOL's workers."
+  (declare (thread-pool pool)
+           (optimize (speed 3) (safety 0)))
+  (dotimes (i (length (the (vector worker) (workers pool))))
+    (kill-worker (svref (workers pool) i))))
+
+(defun kill (pool)
+  (assert pool)
+  (let ((count (worker-count pool)))
+    (with-slots (lock workers) pool
+      (with-mutex (lock)
+        (kill-workers pool))
+      (prog1 count
+        (when *worker*
+          (assert (eq (worker-thread *worker*) *current-thread*))
+          ;; (when (eql category (running-category *worker*))
+          (throw '#.+worker-suicide-tag+ nil))))))
 
 (defmacro ensure-working-p (pool)
   `(locally (declare (optimize (speed 3) (safety 0)))

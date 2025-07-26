@@ -46,6 +46,7 @@
                   :components ((:file "pkg")))))
                (:file "lint")
                (:file "tempo")
+               (:file "grovel")
 	       (:file "cli"))
   :in-order-to ((test-op (test-op "syn/tests"))))
 

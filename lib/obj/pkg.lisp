@@ -648,7 +648,6 @@
    #:request-protocol
    #:session
    #:service-config
-   #:service-task-kernel
    #:service-request
    #:service-response))
 

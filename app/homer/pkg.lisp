@@ -22,7 +22,6 @@
    #:homer-maybe-install
    :homer-user-init
    #:homer-task
-   #:*homer-task-pool*
    #:*homer-logger*
    #:home-config
    :home-config-slot

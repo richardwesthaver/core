@@ -76,3 +76,6 @@
                   (sb-mop:class-direct-slots (class-of self))
                   (sb-mop:class-slots (class-of self)))))
   self)
+
+(defmethod sk-print ((self t) &key (stream *standard-output*))
+  (println self stream))

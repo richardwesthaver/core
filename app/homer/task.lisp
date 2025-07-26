@@ -52,14 +52,6 @@ timestamp for a oneshot task, else it is a list."
 
 ;; (build-ast (load-ast (make-instance 'homer-task :ast '(mail-update (:repeat (:every (:min 15))) 1 2 3))))
   
-(define-task-kernel homer-idle () ())
-
-(define-task-kernel homer-compact () ())
-
-(define-task-kernel homer-collect-tasks () ())
-
-(defvar *homer-task-pool* nil)
-
 ;;; Jobs
 (defstruct (homer-job (:include sk-rule)))
 

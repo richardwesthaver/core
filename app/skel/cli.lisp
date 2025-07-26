@@ -72,13 +72,14 @@
       (mapc (lambda (x) 
               (let ((y (string-left-trim ":" x)))
                 (if (sk-project-slot y nil)
-                    (skel/core/print::sk-print-slot
-                     (find y 
-                           (sb-mop:class-slots (class-of *skel-project*)) 
-                           :test 'string=
-                           :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))
-                     *skel-project*
-                     :limit nil)
+                    (sk-print
+                     (slot-value
+                      *skel-project*
+                      (sb-mop:slot-definition-name
+                       (find y 
+                             (sb-mop:class-slots (class-of *skel-project*))
+                             :test 'string=
+                             :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x)))))))
                     (log:fatal! "unknown argument: ~A~%" x))))
             *args*)
       (cond

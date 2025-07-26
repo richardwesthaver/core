@@ -131,7 +131,3 @@ logging, etc."))
 (defgeneric response-ok-p (res))
 (defgeneric response-status (res))
 (defgeneric (setf response-status) (new res))
-
-;;; Tasks
-(define-task-kernel service-task-kernel () ()
-  "Default task kernel for service-based tasks.")
