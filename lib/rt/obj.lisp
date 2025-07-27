@@ -134,6 +134,13 @@
       ,@(when declare `((declare ,declare)))
       ,@(test-form self))))
 
+(defmethod compile-test ((self symbol) &key declare (suite *test-suite*) &allow-other-keys)
+  (compile-test (find-test suite self) :declare declare))
+
+(defun compile-suite (&optional (suite *test-suite*))
+  (loop for test in (tests suite)
+        do (compile-test test)))
+
 (defun fail! (form &optional fmt &rest args)
   (let ((reason (and fmt (apply #'format nil fmt args))))
     (with-simple-restart (ignore-fail "Continue testing.")

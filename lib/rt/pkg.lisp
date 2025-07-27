@@ -79,6 +79,7 @@
    :in-suite
    :eval-test
    :compile-test
+   :compile-suite
    :locked-tests
    :push-test
    :pop-test

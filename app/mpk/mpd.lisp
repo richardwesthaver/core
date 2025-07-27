@@ -76,7 +76,7 @@
 
 (defclass status ()
   ((volume :reader volume :initarg :volume :initform nil)
-   (repeat :reader repeat :initarg :repeat :initform nil)
+   (repeat :reader repeatp :initarg :repeat :initform nil)
    (random :reader randomized :initarg :random :initform nil)
    (last-loaded-playlist :reader last-loaded-playlist :initarg :lastloadedplaylist :initform nil)
    (playlist-version :reader playlist-version :initarg :playlist :initform nil)
@@ -121,7 +121,7 @@
                                (,name (,class stream))))
                           names))))
   (generate-commands mpc-status
-                     (volume repeat randomized last-loaded-playlist playlist-version playlistlength
+                     (volume repeatp randomized last-loaded-playlist playlist-version playlistlength
                       xfade state audio bitrate duration songid song updating))
   (generate-commands mpc-stats
                      (artists albums songs uptime playtime db-playtime db-update)))
@@ -596,7 +596,7 @@ Return: (number playtime)."
   "NIL---turn off random mode, non-nil---turn on random mode."
   (send "random" (if value 1 0)))
 
-(defun (setf mpc-repeat) (value connection)
+(defun (setf mpc-repeatp) (value connection)
   "NIL---turn off repeat mode, non-nil---turn on repeat mode."
   (send "repeat" (if value 1 0)))
 

@@ -433,9 +433,10 @@
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
-  (:import-from :std/list :flatten :recursive-append :zip-tree :group)
+  (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform)
   (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
   (:export
+   :this :self
    :make-macro-lambda
    :parse-lambda-list
    :once-only
@@ -483,11 +484,13 @@
    :pandoriclet
    :pandoriclet-get
    :pandoriclet-set
+   :pandoric-get
    :get-pandoric
    :with-pandoric
-   ;; :pandoric-hotpatch
+   :pandoric-hotpatch
    :pandoric-recode
    :plambda
+   :defpan
    :pandoric-eval
    :with-collectors
    :collecting
@@ -807,7 +810,7 @@
   (:use :cl)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
-  (:import-from :std/macs :once-only)
+  (:import-from :std/macs :once-only :when-let)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/meta :data :defaccessor :lock)
   (:import-from :std/list :firstn)
@@ -848,7 +851,8 @@
    :seek-to-last :seek-for-prev
    :iter-valid-p :*iter*
    :idx :with-iter
-   :make-priority-queue))
+   :make-priority-queue
+   :do-indexes :repeat))
 
 (defpkg :std/path
   (:use :cl)
@@ -940,6 +944,7 @@
   (:use :cl)
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
+  (:import-from :std/seq :do-indexes :repeat)
   (:import-from :std/pipe :index)
   (:import-from :sb-thread :*all-threads* :make-foreign-thread)
   (:import-from :std/list :flatten)
@@ -1002,6 +1007,10 @@
    :start-worker
    :start-workers
    :start-workers*
+   :workers*
+   :scheduler*
+   :biased-scheduler
+   :make-channel
    :run-worker
    :with-default-special-bindings
    :worker-thread

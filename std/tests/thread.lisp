@@ -75,8 +75,61 @@
 
 (deftest thread-pool ()
   "Test THREAD-POOLs."
-  (let ((tp (make-thread-pool 8)))
-    (istype '(array worker) (workers tp))
-    (is= 8 (length (workers tp)))
-    (istype 'thread-pool tp)))
-    
+  (with-temp-pool (4 :alive t)
+    (istype '(array worker) (workers*))
+    (istype 'biased-scheduler (scheduler*))
+    (is= 4 (length (workers*)))
+    (istype 'thread-pool *thread-pool*)
+    ;; (with-submit-indexed 4 
+    ;;   (dotimes (i 4)
+    ;;     (submit-indexed i #'print 1)
+    ;;     (print (receive-indexed))))
+    ))
+
+(deftest basic-threading-test ()
+  (let ((num-threads 10)
+        (num-objects 1000)
+        (num-iterations 5)
+        (from-workers (make-queue))
+        (to-workers (make-queue)))
+    (repeat num-threads
+      (with-thread ()
+        (loop (let ((object (pop-queue to-workers)))
+                (if object
+                    (push-queue object from-workers)
+                    (return))))))
+    (repeat num-iterations
+      (repeat num-objects
+        (push-queue 99 to-workers))
+      (repeat num-objects
+        (pop-queue from-workers)))
+    (repeat num-threads
+      (push-queue nil to-workers))
+    (sleep 0.5)
+    (is (= 0 (queue-count from-workers)))
+    (is (= 0 (queue-count to-workers)))))
+
+(defparameter *memo* t)
+
+(deftest thread-bindings-test ()
+  (setf *memo* :main)
+  (with-thread ()
+    (setf *memo* :child))
+  (sleep 0.2)
+  (is (eq :child *memo*))
+
+  (setf *memo* :main)
+  (with-thread (:bindings (list (cons '*memo* *memo*)))
+    (setf *memo* :child))
+  (sleep 0.2)
+  (is (eq :main *memo*)))
+
+(deftest destroy-thread-cleanup-test ()
+  (let* ((cleanedp nil)
+         (thread (with-thread ()
+                   (unwind-protect (sleep 999999)
+                     (setf cleanedp t)))))
+    (sleep 0.2)
+    (terminate-thread thread)
+    (sleep 0.2)
+    (is (eq t cleanedp))))

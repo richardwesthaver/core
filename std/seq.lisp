@@ -321,9 +321,9 @@ TEST."
   (declare (basic-queue queue))
   (let ((new (cons val nil)))
     (if (head queue)
-	(setf (cdr (tail queue)) new
-	      (head queue) new)
-	(setf (tail queue) new))))
+	(setf (cdr (tail queue)) new)
+	(setf (head queue) new))
+    (setf (tail queue) new)))
 
 (defun pop-basic-queue (queue)
   "Pop the next value off of QUEUE."
@@ -338,13 +338,15 @@ TEST."
 		(cdr node) nil))
 	(values nil nil))))
 
-(defun basic-queue-count (queue) 
+(definline basic-queue-count (queue) 
   "Return the count of QUEUE."
   (length (the list (head queue))))
-(defun basic-queue-empty-p (queue) 
+
+(definline basic-queue-empty-p (queue) 
   "Return T if QUEUE is empty."
   (not (head queue)))
-(defun peek-basic-queue (queue) 
+
+(definline peek-basic-queue (queue) 
   "Peek at the next value of QUEUE."
   (let ((node (head queue)))
     (values (car node)
@@ -624,12 +626,12 @@ push."
   (with-slots (impl lock) queue
     (cond ((plusp timeout)
            (with-mutex (lock)
-             (try-pop-cons-queue queue timeout)))
+             (try-pop-cons-queue-with-timeout queue timeout)))
           (t
            ;; optimization: don't lock if nothing is there
-           (with-mutex (lock :wait-p nil) 
-             (when (not (basic-queue-empty-p impl))
-               (return-from try-pop-cons-queue (pop-basic-queue impl))))
+           (if (basic-queue-empty-p impl)
+               (return-from try-pop-cons-queue (pop-basic-queue impl))
+               (pop-cons-queue queue))
            (values nil nil)))))
 
 (defun try-pop-cons-queue* (queue timeout)
@@ -894,7 +896,7 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
   "Queue type spec."
   '(or cons-queue vector-queue raw-queue basic-queue priority-queue spin-queue))
 
-(defun make-queue (&key capacity initial-contents prioritize initial-element element-type)
+(defun make-queue (&key capacity initial-contents prioritize initial-element (element-type t))
   "Make a new queue."
   (cond 
     ((and capacity (not prioritize)) (make-vector-queue capacity :initial-contents initial-contents :initial-element initial-element))
@@ -1008,14 +1010,16 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
 
 ;; max-accumulator
 (defclass max-accumulator (accumulator) ()
-  (:documentation "Accumulator which tracks the maximum value observed."))
+  (:documentation "Accumulator which tracks the maximum value observed.")
+  (:default-initargs :value 0))
 
 (defmethod accumulate ((self max-accumulator) (val number))
   (when (> val (accumulated self))
     (setf (accumulated self) val)))
 
 (defclass min-accumulator (accumulator) ()
-  (:documentation "Accumulator which tracks the minimum value observed."))
+  (:documentation "Accumulator which tracks the minimum value observed.")
+  (:default-initargs :value 0))
 
 (defmethod accumulate ((self min-accumulator) (val fixnum))
   (when (< val (accumulated self))
@@ -1054,23 +1058,59 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
   (defgeneric next (self)
     (:method ((self array))
       (prog1 (aref self *idx*)
+        (incf *idx*)))
+    (:method ((self list))
+      (prog1 (nth *idx* self)
         (incf *idx*))))
   (defgeneric idx (self)
     (:method ((self t)) *idx*))
   (defgeneric prev (self)
     (:method ((self array))
-      (decf *idx*)
-      (aref self *idx*))))
-(defgeneric key (self))
-(defgeneric (setf key) (new self))
-(defgeneric val (self))
-(defgeneric (setf val) (new self))
-(defgeneric iter (self &key &allow-other-keys))
-(defgeneric iter-valid-p (self))
-(defgeneric seek (self key &key))
-(defgeneric seek-to-first (self))
-(defgeneric seek-to-last (self))
-(defgeneric seek-for-prev (self key &key))
+      (if (zerop *idx*)
+          (aref self (length self))
+          (aref self (- (decf *idx*) 1))))
+    (:method ((self list))
+      (if (zerop *idx*)
+          (elt self (length self))
+          (elt self (- (decf *idx*) 1)))))
+  (defgeneric key (self))
+  (defgeneric (setf key) (new self))
+  (defgeneric val (self))
+  (defgeneric (setf val) (new self))
+  (defgeneric iter (self &key &allow-other-keys))
+  (defgeneric iter-valid-p (self)
+    (:method ((self sequence))
+      (and *idx* (> (length self) *idx*))))
+  (defgeneric seek (self key &key)
+    (:method ((self array) key &key test)
+      (when-let ((i (position key self :test test :start *idx*)))
+        (setf *idx* i)
+        (aref self *idx*)))
+    (:method ((self list) key &key test)
+      (when-let ((i (position key self :test test :start *idx*)))
+        (setf *idx* i)
+        (elt self *idx*))))
+  (defgeneric seek-to-first (self)
+    (:method ((self sequence))
+      (setf *idx* 0)
+      (values)))
+  (defgeneric seek-to-last (self)
+    (:method ((self array))
+      (setf *idx* (length self))
+      (aref self *idx*))
+    (:method ((self list))
+      (setf *idx* (length self))
+      (elt self *idx*)))
+  (defgeneric seek-for-prev (self key &key)
+    (:method ((self array) key &key test)
+      (when-let ((i (position key self :end *idx* :test test)))
+        (setf *idx* i)
+        (aref self *idx*)))
+    (:method ((self list) key &key test)
+      (when-let ((i (position key self :end *idx* :test test)))
+        (setf *idx* i)
+        (elt self *idx*)))))
+    
 
 (defvar *iter*)
 
@@ -1083,8 +1123,10 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
     (iter-valid-p (iter-valid-p *iter*))
     ;; (seek (key &optional (s *iter*)) (seek s key))
     (val (val *iter*))
-    (key (key *iter*)))
-  "A list of function signatures for symbols which are bound via FLET around the body of WITH-ITER.")
+    (key (key *iter*))
+    (idx (idx *iter*)))
+  "A list of function signatures for symbols which are bound via SYMBOL-MACROLET
+around the body of WITH-ITER.")
 
 (defmacro with-iter ((sym iter) &body body)
   `(let ((,sym ,iter))
@@ -1092,3 +1134,29 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
      (symbol-macrolet ,*iterator-functions*
        ;; (declare (ignorable ,@(mapcar (lambda (x) `(function ,(car x))) *iterator-functions*)))
        ,@body)))
+
+;;; Util
+(defmacro repeat (count &body body)
+  (with-gensyms (left)
+    `(let ((,left (the fixnum ,count)))
+       (declare (type fixnum ,left))
+       (loop
+         (when (zerop ,left)
+           (return (values)))
+         (decf ,left)
+         ,@body))))
+
+(defmacro do-indexes ((ivar size hindex from-hindex-p) &body body)
+  ;; size is positive
+  (with-gensyms (svar hivar)
+    `(let ((,ivar (the array-index ,hindex))
+           (,svar (the array-index ,size))
+           (,hivar (the array-index ,hindex)))
+       (declare (type array-index ,ivar ,svar ,hivar))
+       (loop
+            ,(let ((next `(mod-incf ,ivar ,svar)))
+               (if from-hindex-p
+                   `(progn ,@body ,next)
+                   `(progn ,next ,@body)))
+            (when (= ,ivar ,hivar)
+              (return (values)))))))

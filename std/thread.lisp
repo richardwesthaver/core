@@ -595,6 +595,8 @@ FUNCTION."
    (pool :initform *thread-pool* :type kernel :initarg :kernel :accessor channel-pool))
   (:metaclass funcallable-standard-class))
 
+(definline make-channel (&optional (pool *thread-pool*)) (make-instance 'channel :pool pool))
+
 ;;; Limiter
 (defclass thread-limiter ()
   ((accept-work-p :accessor accept-work-p :type boolean :initarg :accept-work-p)
@@ -798,31 +800,6 @@ WORKER threads."))
   (maybe-wake-a-worker sched)
   (values))
 
-(defmacro %repeat (count &body body)
-  (with-gensyms (left)
-    `(let ((,left (the fixnum ,count)))
-       (declare (type fixnum ,left))
-       (loop
-         (when (zerop ,left)
-           (return (values)))
-         (decf ,left)
-         ,@body))))
-
-(defmacro do-indexes ((ivar size hindex from-hindex-p) &body body)
-  ;; size is positive
-  (with-gensyms (svar hivar)
-    `(let ((,ivar (the array-index ,hindex))
-           (,svar (the array-index ,size))
-           (,hivar (the array-index ,hindex)))
-       (declare (type array-index ,ivar ,svar ,hivar))
-       (loop
-            ,(let ((next `(mod-incf ,ivar ,svar)))
-               (if from-hindex-p
-                   `(progn ,@body ,next)
-                   `(progn ,next ,@body)))
-            (when (= ,ivar ,hivar)
-              (return (values)))))))
-
 (defmacro do-workers ((wvar workers hindex &optional from-hindex-p) &body body)
   (with-gensyms (wsvar ivar)
     `(let ((,wsvar ,workers))
@@ -862,7 +839,7 @@ WORKER threads."))
       (loop
         (try-pop (work w))
         (try-pop-all)
-        (%repeat spin-count
+        (repeat spin-count
           (try-pop-all))
         (maybe-sleep)))))
 
@@ -1291,7 +1268,7 @@ bound to RET."
 (defun receive-results (channel count fn)
   (let ((worker *worker*))
     (if worker
-        (%repeat count
+        (repeat count
           (steal-until-receive-result channel worker fn))
         (if fn
             (do-fast-receives (result channel count)
@@ -1388,15 +1365,16 @@ Calling `broadcast-work' from inside a worker is an error."
 (defun indexing-wrapper (array index function args)
   (setf (aref array index) (apply function args)))
 
-(defmacro! with-submit-indexed (o!count o!array &body body)
-  (with-gensyms (channel)
-    `(let ((,channel (make-instance 'channel)))
+(defmacro! with-submit-indexed (o!count &body body)
+  (with-gensyms (channel array)
+    `(let ((,channel (make-instance 'channel))
+           (,array (make-array ,g!count)))
        (flet ((submit-indexed (index function &rest args)
 		(submit-work
-		 ,channel #'indexing-wrapper ,g!array index function args))
+		 ,channel #'indexing-wrapper ,array index function args))
 	      (receive-indexed ()
 		(receive-results ,channel ,g!count nil)
-		,g!array))
+		,array))
 	 (declare (inline submit-indexed receive-indexed))
 	 ,@body))))
 
@@ -1424,8 +1402,7 @@ Calling `broadcast-work' from inside a worker is an error."
     (unwind-protect
          (let ((*thread-pool* pool))
            (funcall fn))
-      (let ((*thread-pool* pool))
-        (end-thread-pool :wait t)))))
+      (shutdown pool))))
 
 (defmacro with-temp-pool ((&rest make-pool-args) &body body)
   "Create a temporary pool for the duration of `body', ensuring that

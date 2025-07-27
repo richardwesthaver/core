@@ -13,9 +13,8 @@
 (in-suite :std)
 (in-readtable :std)
 ;; prevent threadlocks
-;; (setf sb-unix::*on-dangerous-wait* :error)
+(setf sb-unix::*on-dangerous-wait* :error)
 
-;; TODO 2024-05-14: fix compilation order of std/fu vs std/readtables
 (deftest readtables ()
   "Test :std readtable"
   (is (typep #`(,a1 ,a1 ',a1 ,@a1) 'function))
@@ -38,19 +37,6 @@
   (is (equal (funcall ['1+ '1+] 1) 3)) ;; compose.2
   (is (equal (funcall [#'1+] 1) 2)) ;; compose.3
   (is (equal (funcall [#'values] 1 2 3) (values 1 2 3))) ;; compose.4
-  ;; (is (equal (funcall «list {* 2} {* 3}» 4) '(8 12))) ;; join.1
-  ;; (is (equal (mapcar «and {< 2} 'evenp (constantly t)» '(1 2 3 4)) (list nil nil nil t))) ;; join.2
-  ;; typecase-bracket
-  ;; (is (equal (mapcar ‹typecase (number #'1+) (string :str)› '(1 "this" 2 "that")) '(2 :str 3 :str)))
-  ;; cond-bracket
-  ;; (is (equal (mapcar ‹cond (#'evenp {+ 100}) (#'oddp {+ 200})› '(1 2 3 4)) '(201 102 203 104)))
-  ;; if-bracket
-  ;; (is (equal (mapcar ‹if #'evenp {list :a} {list :b}› '(1 2 3 4))
-  ;; '((:b 1) (:a 2) (:b 3) (:a 4))))
-  ;; when-bracket
-  ;; (is (equal (mapcar ‹when 'evenp {+ 4}› '(1 2 3 4)) (list nil 6 nil 8)))
-  ;; unless-bracket
-  ;; (is (equal (mapcar ‹unless 'evenp {+ 4}› '(1 2 3 4)) (list 5 nil 7 nil)))
   )
 
 (deftest sym ()
@@ -77,9 +63,11 @@
   (is (not (eq (ensure-cons 0) (ensure-cons 0))))
   (is (equal (ensure-cons 0) (ensure-cons 0))))
 
+(deferror testing-error (std-error) nil (:auto t) (:documentation "testing"))
+
 (deftest err ()
   "Test standard error handlers"
-  (is (eql 'testing-err (deferror testing-err (std-error) nil (:auto t) (:documentation "testing")))))
+  (signals testing-error (testing-error)))
 
 (deftest fmt ()
   "Test standard formatters"
@@ -119,18 +107,21 @@
 
 (deftest pan ()
   "Test standard pandoric macros"
+  (is= 2 (let ((x 1)) (pandoric-eval (x) '(+ 1 x))))
+  (is= 2 (let ((x 1)) (pandoric-eval (x) '(incf x))))
   (let ((p
-	  (plambda (a) (b c)
-		   (if (not a)
-		       (setq b 0
-			     c 0)
-		       (progn (incf b a) (incf c a))))))
-    (with-pandoric (b c) p
-      (is (= 0 (funcall p nil)))
-      (is (= 1 (funcall p 1)))
-      (is (= 11 (funcall p 10)))
-      (is (= 0 (funcall p nil)))
-      )))
+          (let ((a 0))
+            (let ((b 1))
+              (plambda (n) (a b)
+                       (incf a n)
+                       (setq b (* b n)))))))
+    (with-pandoric (a b) p
+      (is (= 0 (funcall p 0)))
+      (setf b 4)
+      (is= 16 (funcall p 4) b)
+      (is= 4 a)
+      (is= 16 (funcall p 1) b)
+      (is= 5 a))))
 
 (deftest alien ()
   "Test standard alien utils"

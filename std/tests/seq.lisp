@@ -23,10 +23,10 @@
     (istype 'cons-queue q)
     (istype 'list (data q))
     (is (queue-empty-p* q))
-    (dotimes (i 10) 
-      (is= (push-queue i q) i)
-      (is= (pop-queue i q) i))
-    (is queue-empty-p* q)))
+    (dotimes (i 10)
+      (push-queue i q)
+      (is= (pop-queue q) i))
+    (is (queue-empty-p q))))
 
 (deftest spin-queue ()
   (let ((q (make-spin-queue)))
@@ -50,7 +50,18 @@
     (accumulate acc 2)
     (is= (accumulated acc) 40)))
 
-;; TODO 2025-07-14: 
 (deftest iter ()
   (with-iter (it (make-instance 'iterator))
-    (iszero (idx it))))
+    (iszero (idx it)))
+  (with-iter (it (iota 20))
+    seek-to-first
+    (iszero next)
+    (is= 1 next)
+    (iszero prev)
+    (is= 13 (seek it 13) idx)
+    (is= 8 (seek-for-prev *iter* 8) idx)
+    (is iter-valid-p)
+    seek-to-last
+    (is= idx (length it))
+    (isnt next)
+    (isnt iter-valid-p)))
