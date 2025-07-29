@@ -73,18 +73,25 @@
     (sleep 0.001)
     (is (/= (ttl) 1))))
 
-(deftest thread-pool ()
+(deftest temp-pool ()
   "Test THREAD-POOLs."
-  (with-temp-pool (4 :alive t)
+  (with-temp-pool (100 :alive t)
     (istype '(array worker) (workers*))
     (istype 'biased-scheduler (scheduler*))
     (is= 4 (length (workers*)))
     (istype 'thread-pool *thread-pool*)
-    ;; (with-submit-indexed 4 
-    ;;   (dotimes (i 4)
-    ;;     (submit-indexed i #'print 1)
-    ;;     (print (receive-indexed))))
-    ))
+    (is= 100 (reduce '+ (broadcast-work (lambda () 1))))
+    (let ((ch (make-channel)))
+      (submit-work ch (lambda () :foo))
+      (iseql :foo (receive-result ch)))
+    (with-submit-indexed 10 (make-array 10)
+      (dotimes (i 10)
+        (submit-indexed i (lambda () (is= 4 (+ 2 2)))))
+      (receive-indexed))
+    (submit-with-cancel
+      (submit-cancelable (lambda () (is t)))
+      (submit-cancelable (lambda () (isnt nil)))
+      (receive-cancelables))))
 
 (deftest basic-threading-test ()
   (let ((num-threads 10)

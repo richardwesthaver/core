@@ -1136,6 +1136,20 @@ around the body of WITH-ITER.")
        ,@body)))
 
 ;;; Util
+(defmacro mod-inc (k n)
+  `(the array-index (mod (the array-index (1+ (the array-index ,k)))
+                         (the array-index ,n))))
+
+(defmacro mod-dec (k n)
+  `(the array-index (mod (the fixnum (1- (the array-index ,k)))
+                         (the array-index ,n))))
+
+(defmacro mod-incf (place n)
+  `(the array-index (setf ,place (mod-inc ,place ,n))))
+
+(defmacro mod-decf (place n)
+  `(the array-index (setf ,place (mod-dec ,place ,n))))
+
 (defmacro repeat (count &body body)
   (with-gensyms (left)
     `(let ((,left (the fixnum ,count)))

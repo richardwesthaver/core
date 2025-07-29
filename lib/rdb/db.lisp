@@ -645,8 +645,10 @@ only get their type slots updated on non-nil values."
         (when name (setf (name obj) name))
         obj))))
 
-(defmethod execute-transaction ((self rdb-database) txn &key)
-  (prog1 (commit-transaction txn)
+(defmethod execute-transaction ((self rdb-database) (fn function) &key (txn *txn*))
+  (funcall fn)
+  (when txn
+    (commit-transaction txn)
     (rocksdb-transaction-destroy txn)))
 
 ;;; Collections

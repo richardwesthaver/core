@@ -852,7 +852,8 @@
    :iter-valid-p :*iter*
    :idx :with-iter
    :make-priority-queue
-   :do-indexes :repeat))
+   :do-indexes :repeat
+   :mod-incf :mod-decf))
 
 (defpkg :std/path
   (:use :cl)
@@ -963,6 +964,7 @@
    :*worker*
    :work
    :scheduler
+   :make-scheduler
    :kernel-function
    :defkernel
    :kernel-object
@@ -983,7 +985,7 @@
    :call-with-temp-pool
    :receive-indexed
    :with-submit-indexed
-   :with-submit-cancellable
+   :submit-with-cancel
    :submit-cancelable
    :receive-cancelables
    :receive-result

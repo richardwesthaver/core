@@ -153,8 +153,8 @@
       (rocksdb-transaction-set-savepoint (sap txn2))
       (isequal (name txn2) "foofn")
       (rocksdb-transaction-destroy (sap txn2)))
-    (with-transaction (txn :db db)
-      (istype 'rdb-transaction txn))))
+    (with-transaction (:db db :txn (make-transaction (transaction-db db)))
+      (print (istype 'rdb-transaction *txn*)))))
 
 (deftest merge-op ()
   "Test custom RocksDB merge operator."

@@ -470,6 +470,10 @@ column is already closed."))
 (defclass transaction-object () ()
   (:documentation "Base class for transaction objects."))
 
+(defclass transaction-kernel (kernel-object transaction-object) ()
+  (:documentation "Kernel object for transactions.")
+  (:metaclass funcallable-standard-class))
+
 (defgeneric (setf transaction-opts) (new txn))
 
 (defgeneric make-transaction (self &key &allow-other-keys)
@@ -505,22 +509,26 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
   (:method ((self list)) (second self)))
 (defgeneric transaction-store (self)
   (:documentation "Return the underlying STORE of a transaction.")
-  (:method ((self list)) (first self)))
+  (:method ((self list)) (first self))
+  (:method ((self t)) nil))
 (defgeneric transaction-db (self)
   (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
 return the same value as DB depending on backend.")
   (:method ((self t)) *db*))
 (defgeneric transaction-prior (self)
   (:documentation "Return the previous transaction of SELF if any.")
-  (:method ((self list)) (third self)))
+  (:method ((self list)) (third self))
+  (:method ((self t)) nil))
 
 (defun known-transaction (db txn)
   "Search for a prior TXN known by this DB."
   (when txn
-    (or (and (transaction-object-p txn)
+    (or (and txn
+             (transaction-object-p txn)
              (or (eq db (transaction-db txn))
-                 (eq db (transaction-store txn)))
-             txn
+                 (eq (transaction-db db) (transaction-db txn))
+                 (eq db (transaction-store txn))
+                 (eq (transaction-store db) (transaction-store txn)))
              (known-transaction db (transaction-prior txn))))))
 
 (define-condition transaction-retry-count-exceeded (error)
@@ -534,25 +542,22 @@ return the same value as DB depending on backend.")
                              &key (db '*db*)
                                   (store '*store*)
                                   (txn '*txn*)
-                                  retries
-                                  wait
+                                  ;; retries wait
                              &allow-other-keys)
                             &body body)
   "Execute a body with a transaction in place. On success, the transaction is
 committed. Otherwise, the transaction is aborted."
-  (with-gensyms (%db %txn-fn)
+  (with-gensyms (%txn-fn)
     (remf initargs :db)
     (remf initargs :store)
     (remf initargs :txn)
-    (remf initargs :retries)
-    (remf initargs :wait)
-    `(let* ((,%db (or ,db ,store))
-            (,%txn-fn (lambda () ,@body)))
-       (funcall #'execute-transaction ,%db ,%txn-fn 
-                :txn (awhen (known-transaction ,%db ,txn) (transaction-object it))
-                ,@(when retries `(:retries ,retries))
-                ,@(when wait `(:wait ,wait))
-                ,@initargs))))
+    `(let ((*db* ,db)
+           (*store* ,store)
+           (*txn* ,txn))
+       (let ((,%txn-fn (lambda () ,@body)))
+         (funcall #'execute-transaction *db* ,%txn-fn 
+                  :txn (aif (known-transaction *db* *txn*) (transaction-object it) it)
+                  ,@initargs)))))
 
 (defmacro current-transaction (db)
   "Return the current transaction associated with database DB."

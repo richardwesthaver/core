@@ -17,8 +17,6 @@
 ;;; Code:
 (in-package :std/thread)
 
-;; (sb-thread:thread-os-tid sb-thread:*current-thread*)
-;; sb-thread:interrupt-thread
 ;;; Kernel Classes
 (defclass kernel-class ()
   ()
@@ -50,13 +48,10 @@ a lambda expression, a symbol which names a function, or a compiled-function."
 
 (deftype kernel-function ()
   "A function of at least one argument with no return value."
-  '(function (t &rest args) (values)))
+  '(function (t &rest args) t))
 (deftype worker-kernel-function ()
   "A function which is suitable as a kernel for KIND workers."
-  `(function (&optional t) (values)))
-(deftype channel-kernel-function (&optional (kind 'channel))
-  "A function which is suitable as a kernel for KIND channels."
-  `(function (,kind t) (values)))
+  `(function (&optional t) t))
 (deftype pool-kernel-function ()
   "A function which is suitable as a thread-pool kernel. Accepts a single keyword argument."
   `(function (keyword) (values)))
@@ -101,7 +96,9 @@ killed workers during shutdown.")
   (declare (optimize (speed 3) (safety 0)))
   (ecase state
     (:start (start-workers*))
-    (:stop (end-thread-pool))
+    (:stop (stop-thread-pool *thread-pool*))
+    (:reset (reset-thread-pool *thread-pool*))
+    (:shutdown (end-thread-pool))
     (:kill (kill *thread-pool*)))
   (values))
 
@@ -112,12 +109,12 @@ killed workers during shutdown.")
 (definline %work (&optional work)
   "Default worker-kernel-function."
   (declare (optimize (speed 3) (safety 0)))
-  (let ((work (or work (pop-spin-queue (work *worker*)))))
+  (let ((work (or work (when-let ((w (work *worker*))) (pop-spin-queue w)))))
     (typecase work
       (function (funcall work))
+      (null)
       (cons (apply (the function (car work)) (cdr work)))
-      (t (print-top-level work)))
-    (values)))
+      (t work))))
 
 (defvar *kernel* nil
   "The current thread's kernel, or nil.")
@@ -132,7 +129,7 @@ killed workers during shutdown.")
     "List of threads with supervisor privileges.")
 (sb-ext:defglobal *oracle-table* (make-hash-table)
     "Hashtable containining (ID . ORACLE-SCOPE).")
-(sb-ext:defglobal *thread-pool-table* (make-hash-table)
+(sb-ext:defglobal *thread-pool-table* (make-hash-table :weakness :value)
     "Hashtable containing (NAME . THREAD-POOL).")
 
 ;;; Conditions
@@ -268,20 +265,6 @@ that was created in `body'."
    "Error signaled when a kernel object is invalid."))
 
 ;;; Utils
-(defmacro mod-inc (k n)
-  `(the array-index (mod (the array-index (1+ (the array-index ,k)))
-                         (the array-index ,n))))
-
-(defmacro mod-dec (k n)
-  `(the array-index (mod (the fixnum (1- (the array-index ,k)))
-			 (the array-index ,n))))
-
-(defmacro mod-incf (place n)
-  `(the array-index (setf ,place (mod-inc ,place ,n))))
-
-(defmacro mod-decf (place n)
-  `(the array-index (setf ,place (mod-dec ,place ,n))))
-
 (defun thread-support-p () 
   "Return Non-nil if threads are supported on this system. (:THREAD-SUPPORT feature)"
   (member :thread-support *features*))
@@ -559,43 +542,24 @@ FUNCTION."
 		       (with-mutex (%lock)
 			 (setf %return-values retval))
 		       retval))))
-	    (unwind-protect
-		 (if trap-conditions
-		     (handler-case
-			 (values-list (run-function))
-		       (condition (c)
-			 (record-condition c)))
-		     (handler-bind
-			 ((condition #'record-condition))
-		       (values-list (run-function)))))))))))
-
-;;; Queues
-;;;; Biased Queue
-(defstruct (biased-queue (:conc-name queue-))
-  (lock (make-mutex :name "queue-lock"))
-  (cvar (make-waitqueue :name "queue-cvar"))
-  (high (make-queue) :type queue)
-  (low (make-queue) :type queue))
-
-(defun push-biased-queue (obj queue)
-  (declare (biased-queue queue))
-  (push-queue obj (queue-high queue))
-  (condition-notify (queue-cvar queue))
-  (values))
-
-(defun push-biased-queue-low (obj queue)
-  (declare (biased-queue queue))
-  (push-queue obj (queue-low queue))
-  (condition-notify (queue-cvar queue))
-  (values))
+	    (if trap-conditions
+		(handler-case
+		    (values-list (run-function))
+		  (condition (c)
+		    (record-condition c)))
+		(handler-bind
+		    ((condition #'record-condition))
+		  (values-list (run-function))))))))))
 
 ;;; Channel
-(defclass channel (funcallable-standard-object)
-  ((queue :initform (make-queue) :type queue :initarg :queue :accessor channel-queue)
-   (pool :initform *thread-pool* :type kernel :initarg :kernel :accessor channel-pool))
-  (:metaclass funcallable-standard-class))
+(defstruct (channel (:constructor %make-channel))
+  (queue (make-queue) :type queue)
+  (pool *thread-pool*))
 
-(definline make-channel (&optional (pool *thread-pool*)) (make-instance 'channel :pool pool))
+(defaccessor queue ((self channel)) (channel-queue self))
+
+(definline make-channel (&key (pool *thread-pool*) capacity)
+  (%make-channel :queue (make-queue :capacity capacity) :pool pool))
 
 ;;; Limiter
 (defclass thread-limiter ()
@@ -656,7 +620,7 @@ FUNCTION."
 (defun make-worker* (&key thread kernel bind index)
   (apply #'make-instance *worker-class*
 	 `(,@(when thread `(:thread ,thread))
-	   ,@(when index `(:index ,index))
+           :index ,(or index (random 1024))
 	   ,@(when kernel `(:kernel ,kernel))
 	   ,@(when bind `(:bind ,bind)))))
 
@@ -705,21 +669,25 @@ FUNCTION."
     (remove th *worker-threads* :test 'thread=)
     (join-thread th)))
 
+;; from pool
 (defun send-worker-start (worker)
   (assert (sb-concurrency:open-gate (slot-value worker '%rx)) nil "Failed to start worker ~A" worker))
-
-(defun receive-worker-start (worker)
-  (print-top-level (format nil "worker ~A starting...~%" (worker-index worker)))
-  (assert (sb-concurrency:gate-open-p (slot-value worker '%rx)) nil "Worker hijacked? ~A" worker))
 
 (defun receive-worker-status (worker)
   (ecase (pop-queue (slot-value worker '%tx))
     (ok)
     (error (error 'kernel-init-error))))
 
+;; from worker
+(defun receive-worker-start (worker)
+  ;; (print-top-level (format nil "worker ~A starting...~%" (worker-index worker)))
+  (let ((gate (slot-value worker '%rx)))
+    (sb-concurrency:wait-on-gate gate)
+    (assert (sb-concurrency:close-gate gate) nil "Worker hijacked? ~A" worker)))
+
 (defun send-worker-status (worker status)
   (check-type status (member ok error))
-  (print-top-level (format nil "worker ~A status: ~A~%" (worker-index worker) status))
+  ;; (print-top-level (format nil "worker ~A status: ~A~%" (worker-index worker) status))
   (push-queue status (slot-value worker '%tx)))
 
 (defun notify-exit (worker)
@@ -730,7 +698,8 @@ FUNCTION."
 
 ;;;; Worker Protocol
 (defgeneric workers (self))
-(defgeneric work (self))
+(defgeneric work (self)
+  (:method ((self null)) nil))
 (defgeneric run-thread (self thunk &key name &allow-other-keys))
 
 (defun make-workers (count &key thread kernel bind (return-type 'vector))
@@ -759,7 +728,7 @@ WORKER threads."))
     :type spin-queue 
     :accessor low-priority-work
     :initarg :low-priority-work))
-  (:documentation "A 'biased' scheduler with an additional spin-queue for 'low priority' work."))
+  (:documentation "A biased scheduler with an additional spin-queue for 'low priority' work."))
 
 (defun make-scheduler (workers spin-count)
   (make-instance *scheduler-class* :workers workers :spin-count spin-count))
@@ -972,38 +941,41 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (check-kernel)
   (call-with-work-handler (funcall *kernel* work)))
 
-(defun replace-worker (pool worker &optional (kernel *worker-kernel*))
+(defun replace-worker (pool worker)
   (with-slots (workers lock) pool
     (with-mutex (lock)
       (let ((i (position worker workers :test #'worker=)))
 	(assert i)
 	(assert (eql i (worker-index worker)))
 	(warn "Replacing lost or dead worker")
-	(let ((new-worker 
-                (make-instance 'worker
-                  :kernel kernel 
-                  :index i 
-                  :bind (worker-bind worker)
-                  :work (make-spin-queue))))
-	  (setf (svref workers i) new-worker)
-	  (send-worker-start new-worker)
-	  (receive-worker-start new-worker))))))
+        (unwind-protect-case ()
+	                     (let ((new-worker 
+                                     (make-instance 'worker
+                                       :kernel (kernel worker)
+                                       :index i 
+                                       :bind (worker-bind worker)
+                                       :work (work worker))))
+	                       (setf (svref workers i) new-worker)
+	                       (send-worker-start new-worker)
+	                       (receive-worker-status new-worker))
+          (:abort (warn "Failed to replace worker - thread-pool is corrupt")))))))
 
 (defun worker-loop (pool worker)
   (declare (thread-pool pool) (worker worker))
   (let ((sched (scheduler pool)))
-    (unwind-protect
-	 (loop (let ((work (print (find-work sched worker))))
-		 (if work
-		     (exec-with-worker work worker)
-		     (return))))
-      (unless *lisp-exiting-p*
-	(replace-worker pool worker)))))
+    (declare (scheduler sched))
+    (unwind-protect-case ()
+	                 (loop (let ((work (find-work sched worker)))
+		                 (if work
+		                     (exec-with-worker work worker)
+		                     (return))))
+      (:abort (unless *lisp-exiting-p*
+	        (replace-worker pool worker))))))
 
 (defun call-with-worker-context (fn context pool worker)
   (receive-worker-start worker)
   (unwind-protect
-       (funcall (print context)
+       (funcall context ; kernel
                 (lambda ()
                   (let ((*worker* (find *current-thread* (workers pool)
                                         :key #'worker-thread)))
@@ -1043,12 +1015,13 @@ and execution of concurrent work using a pool of 'worker' threads."))
     worker))
 
 (defmacro with-fill-workers-handler (workers &body body)
-  `(unwind-protect (progn ,@body)
-     (map 'simple-vector
-          (lambda (w)
-            (when (typep w 'worker)
-              (terminate-thread (worker-thread w))))
-          ,workers)))
+  `(unwind-protect-case () (progn ,@body)
+     (:abort
+      (map 'simple-vector
+           (lambda (w)
+             (when (typep w 'worker)
+               (terminate-thread (worker-thread w))))
+           ,workers))))
 
 (defun %fill-workers (workers pool)
   (dotimes (i (length workers))
@@ -1057,7 +1030,8 @@ and execution of concurrent work using a pool of 'worker' threads."))
 (defun fill-workers (workers pool)
   (with-fill-workers-handler workers
     (%fill-workers workers pool)
-    (map nil #'send-worker-start workers)))
+    (map nil #'send-worker-start workers)
+    (map nil #'receive-worker-status workers)))
 
 ;; (map nil #'receive-worker-start workers)))
 ;; (map nil #'receive-worker-start workers)))
@@ -1213,9 +1187,10 @@ assigned to the input state and then return two values."
   (declare (channel channel) (function fn) (list args))
   (let ((queue (channel-queue channel)))
     (work-lambda
-      (unwind-protect (push-queue (with-work-context (apply fn args)) queue) ; work handler handles everything
+      (unwind-protect-case () 
+                           (push-queue (with-work-context (apply fn args)) queue) ; work handler handles everything
         ;; unwind on kill
-        (push-queue (wrap-error 'worker-killed-error) queue)))))
+        (:abort (push-queue (wrap-error 'worker-killed-error) queue))))))
 
 ;; make-work 
 (defun submit-raw-work (work pool &optional (priority *work-priority*))
@@ -1301,25 +1276,39 @@ bound to RET."
     (map nil #'wait-for-worker workers)
     (setf alive nil)))
 
-(defmethod shutdown ((pool thread-pool))
-  (let ((name (when (slot-boundp pool 'name) (name pool))))
-    (when name (remhash name *thread-pool-table*))
-    (setf *thread-pool* nil
-          *worker-threads* (flatten *worker-threads*))))
+(definline stop-thread-pool (pool &key wait)
+  (declare (thread-pool pool))
+  (when (alive pool)
+    (let ((channel (let ((*thread-pool* pool)) (make-instance 'channel)))
+          (threads (map 'list #'worker-thread (workers pool))))
+      (cond (wait
+             (shutdown-channel channel pool)
+             threads)
+            (t
+             (cons (with-thread (:name (format nil "%shutdown-pool"))
+                     (shutdown-channel channel pool))
+                   threads))))))
+
+(definline reset-thread-pool (pool)
+  (declare (thread-pool pool))
+  (stop-thread-pool pool)
+  pool)
+  
+(defmethod shutdown ((pool thread-pool)) (funcall (kernel pool) :shutdown))
+
+(defmethod start ((pool thread-pool)) (funcall (kernel pool) :start))
+
+(defmethod stop ((pool thread-pool) &key) (funcall (kernel pool) :stop))
+
+(defmethod reset ((pool thread-pool) &key) (funcall (kernel pool) :reset))
 
 (defun end-thread-pool (&key wait)
   (when-let ((pool *thread-pool*))
-    (shutdown pool)
-    (when (alive pool)
-      (let ((channel (let ((*thread-pool* pool)) (make-instance 'channel)))
-            (threads (map 'list #'worker-thread (workers pool))))
-        (cond (wait
-               (shutdown-channel channel pool)
-               threads)
-              (t
-               (cons (with-thread (:name (format nil "%shutdown-pool"))
-                       (shutdown-channel channel pool))
-                     threads)))))))
+    (let ((name (when (slot-boundp pool 'name) (name pool))))
+      (when name (remhash name *thread-pool-table*))
+      (setf *thread-pool* nil
+            *worker-threads* (flatten *worker-threads*)))
+    (stop-thread-pool pool :wait wait)))
 
 (defun thread-pool-info (pool)
   (list :workers (worker-count pool)
@@ -1365,20 +1354,19 @@ Calling `broadcast-work' from inside a worker is an error."
 (defun indexing-wrapper (array index function args)
   (setf (aref array index) (apply function args)))
 
-(defmacro! with-submit-indexed (o!count &body body)
-  (with-gensyms (channel array)
-    `(let ((,channel (make-instance 'channel))
-           (,array (make-array ,g!count)))
+(defmacro! with-submit-indexed (o!count o!array &body body)
+  (with-gensyms (channel)
+    `(let ((,channel (make-instance 'channel)))
        (flet ((submit-indexed (index function &rest args)
 		(submit-work
-		 ,channel #'indexing-wrapper ,array index function args))
+		 ,channel #'indexing-wrapper ,g!array index function args))
 	      (receive-indexed ()
 		(receive-results ,channel ,g!count nil)
-		,array))
+		,g!array))
 	 (declare (inline submit-indexed receive-indexed))
 	 ,@body))))
 
-(defmacro with-submit-cancelable (&body body)
+(defmacro submit-with-cancel (&body body)
   (with-gensyms (canceledp channel count)
     `(let ((,canceledp nil)
            (,count 0)
@@ -1387,12 +1375,11 @@ Calling `broadcast-work' from inside a worker is an error."
                 (submit-work ,channel
                              (lambda ()
                                (if ,canceledp
-                                   'task-canceled
+                                   'work-canceled
                                    (apply fn args))))
                 (incf ,count)))
-         (macrolet ((receive-cancelables (result &body body)
-                      `(receive-results
-                        ,',channel ,',count (lambda (,result) ,@body))))
+         (macrolet ((receive-cancelables (&optional fn)
+                      `(receive-results ,',channel ,',count ,fn)))
            (unwind-protect (progn ,@body)
              (setf ,canceledp t)))))))
 

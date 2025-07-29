@@ -153,9 +153,6 @@ PLIST. Hash table is initialized using the HASH-TABLE-INITARGS."
 
 ;; concurrent hash-tables
 
-;; API compatible with:
-;; https://github.com/no-defun-allowed/concurrent-hash-tables
-
 ;; refs:
 
 ;; https://dspace.mit.edu/bitstream/handle/1721.1/130693/1251799942-MIT.pdf
@@ -280,6 +277,3 @@ PLIST. Hash table is initialized using the HASH-TABLE-INITARGS."
     (format t "~16x~@[ ~s~]~%"
             (node-hash node)
             (if (so-key-node-p node) (type-of (so-key node))))))
-(sb-lockless:lfl-insert (sb-lockless:make-ordered-list :key-type 'fixnum) 5 'five)
-
-;;; Castable

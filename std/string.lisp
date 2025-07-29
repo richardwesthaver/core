@@ -155,7 +155,6 @@ of a string."
 ;;; like it could be useful to someone.
 
 ;;;# Some utility code
-
 (defun split-tree (list &key (test 'eql) (key 'identity))
   "Splits input list into sublists of elements
    whose elements are all such that (key element)
@@ -175,10 +174,6 @@ of a string."
                 (push (nreverse cur-list) lists)
                 (setf cur-list (list elt)
                       cur-key  new-key))))))))
-
-(defun iota (n)
-  "Return a list of positive integers below N."
-  (loop for i below n collect i))
 
 (defun hash-table->list (table &key (keep-keys t) (keep-values t))
   "Saves the keys and/or values in table to a list.
@@ -473,8 +468,7 @@ of a string."
 ;;; few candidates left, and finally make sure
 ;;; the input string actually matches the one 
 ;;; candidate left at the leaf.
-
-(defun emit-string-case (cases input-var no-match)
+(defun %emit-string-case (cases input-var no-match)
   (flet ((case-string-length (x)
            (length (first x))))
     (let ((*input-string*  input-var)
@@ -495,17 +489,14 @@ of a string."
                                                      ,input-var))
                                ,(make-search-tree (mapcar 'first cases)
                                                   (mapcar 'rest  cases)
-                                                  (iota length)))))
+                                                  (loop for i below length collect i)))))
            (t ,no-match))))))
 
-;;; Just wrapping the previous function in a macro,
-;;; and adding some error checking (the rest of the code
-;;; just assumes there won't be duplicate patterns).
-;;; Note how we use a local function instead of passing
-;;; the default form directly. This can save a lot on
-;;; code size, especially when the default form is
-;;; large.
-
+;;; Just wrapping the previous function in a macro, and adding some error
+;;; checking (the rest of the code just assumes there won't be duplicate
+;;; patterns).  Note how we use a local function instead of passing the
+;;; default form directly. This can save a lot on code size, especially when
+;;; the default form is large.
 (defmacro string-case ((string &key (default '(error "No match")))
                        &body cases)
   "(string-case (string &key default)
@@ -525,17 +516,17 @@ of a string."
                   (rest case))
             (setf (gethash (first case) cases-table)
                   (rest case)))))
-    (let ((input-var    (gensym "INPUT"))
-          (default-fn   (gensym "ON-ERROR"))
+    (let ((input-var (gensym "INPUT"))
+          (default-fn (gensym "ON-ERROR"))
           (default-body (gethash t cases-table (list default))))
       `(let ((,input-var ,string))
          (flet ((,default-fn ()
                   ,@default-body))
-           ,(emit-string-case (progn
-                                (remhash t cases-table)
-                                (hash-table->list cases-table))
-                              input-var
-                              `(,default-fn)))))))
+           ,(%emit-string-case (progn
+                                 (remhash t cases-table)
+                                 (hash-table->list cases-table))
+                               input-var
+                               `(,default-fn)))))))
 
 (defvar *tab-width* 4
   "The number of spaces to replace all #\Tab characters with in DETABIFY.")
@@ -559,7 +550,6 @@ of a string."
                        (return))
                      (setf col -1))
                    (write-char char stream))))))
-
 
 (defun remove-string (rem-string full-string &rest args &key &allow-other-keys)
   "returns full-string with rem-string removed"
@@ -605,6 +595,7 @@ at the end."
 (define-modify-macro nconcatf (&rest data) nconcat)
 
 (defun char-range (char1 char2)
+  "Return the range of characters between CHAR1 and CHAR2 as a list."
   (loop for i from (char-code char1) to (char-code char2)
         collect (code-char i)))
 
