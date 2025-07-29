@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 
-;; TODO: fix false positives when using (eval-test)
+;;
 
 ;;; Code:
 (in-package :std-int)
@@ -44,15 +44,29 @@
   ;; gensyms
   (is (not (equalp (make-gensym 'a) (make-gensym 'a))))
   (is (eq 'std/tests::foo (format-symbol :std/tests "~A" 'foo)))
-  (is (eq (make-keyword 'fizz) :fizz)))
+  (is (eq (make-keyword 'fizz) :fizz))
+  (iseql 'foo (ensure-symbol "FOO"))
+  (iseql 'abc (symb 'a 'b 'c))
+  (iseq :function (fboundp! 'car))
+  (iseq :special (vboundp! '*standard-output*))
+  (alias-function foo-car car)
+  (is= (foo-car (list 1 2)) 1))
 
-;;;; TODO
 (deftest string ()
   "Test standard string utils"
   (is (typep "test" 'string-designator))
   (is (typep 'test 'string-designator))
   (is (typep #\C 'string-designator))
-  (is (not (typep 0 'string-designator))))
+  (is (not (typep 0 'string-designator)))
+  (isequal "abc" (concatenate 'string (char-range #\a #\c)))
+  (is (ascii-ichar= #\A #\a))
+  (is (ascii-istring= "foObAr" "foobar"))
+  (let ((str "abc"))
+    (isequal (nconcat str "def" str) "abcdefabc")
+    (is
+     (string-case (str)
+       ("def")
+       ("abc" t)))))
 
 (deftest list ()
   "Test standard list utils"

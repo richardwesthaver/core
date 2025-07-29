@@ -8,7 +8,3 @@
   (:export))
 
 (in-package :edi)
-
-(defmain edi-cli ())
-
-(defmain edi-gui ())

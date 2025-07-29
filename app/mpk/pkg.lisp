@@ -160,6 +160,3 @@
   (:use :cl :std :log :mpk :cli :clap)
   (:export
    #:*mpk-cli*))
-
-(defpackage :mpk/gui
-  (:use :cl :std :log :mpk :gui))

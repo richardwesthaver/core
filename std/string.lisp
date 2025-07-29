@@ -1,18 +1,6 @@
 ;;; std/str.lisp --- String utilities
 
 ;;; Code:
-
-;; (defvar sb-unicode-syms 
-;;   '(words lines sentences whitespace-p uppercase lowercase titlecase
-;;     word-break-class line-break-class sentence-break-class char-block
-;;     cased-p uppercase-p lowercase-p titlecase-p casefold
-;;     graphemes grapheme-break-class
-;;     bidi-mirroring-glyph bidi-class
-;;     normalize-string normalized-p default-ignorable-p
-;;     confusable-p hex-digit-p mirrored-p alphabetic-p math-p
-;;     decimal-value digit-value
-;;     unicode< unicode> unicode= unicode-equal
-;;     unicode<= unicode>=))
 (in-package :std/string)
 
 (defparameter *suppress-character-coding-errors* nil
@@ -23,16 +11,12 @@
 (sb-int:defconstant-eqx +crlf+ (coerce #(+cr+ +lf+) 'simple-array) #'equalp
   "Character sequcne #(Return Linefeed) = '\\r\\n'")
 
-;; (mapc (lambda (s) (export s)) sb-unicode-syms)
-;; (reexport-from 
-;;  :sb-unicode
-;;  :include sb-unicode-syms)
 (defparameter *omit-nulls* nil
   "When Non-nil, omit null values returned by SSPLIT.")
 
 (defvar *whitespaces* (list #\Backspace #\Tab #\Linefeed #\Newline #\Vt #\Page
                             #\Return #\Space #\Rubout
-                            #+sbcl #\Next-Line #-sbcl (code-char 133)
+                            #+sbcl #\Next-Line
                             #\No-break_space)
   "On some implementations, linefeed and newline represent the same character (code).")
 
@@ -75,7 +59,6 @@ of a string."
     (string-trim char-bag s)))
 
 ;;;  TODO 2023-08-27: camel snake kebab
-
 (defun make-template-parser (start-delimiter end-delimiter &key (ignore-case nil))
   "Returns a closure than can substitute variables
   delimited by \"start-delimiter\" and \"end-delimiter\"
@@ -116,45 +99,44 @@ of a string."
           finally (write-string (subseq string prev) stream))))))
 
 ;;; STRING-CASE
-;;; Implementing an efficient string= case in Common Lisp
-;;;
-;;; 2015-11-15: Defknown don't have explicit-check in SBCL 1.3.0
-;;;  Remove the declaration.  It's never useful the way we use
-;;;  numeric-char=.
-;;;
-;;; 2015-11-15: Make this a real ASDF system for Xach
-;;;  I copied the system definition from Quicklisp and mangled as
-;;;  necessary.
-;;;
-;;; 2010-06-30: Tiny bugfix
-;;;  Widen the type declarations inside cases to allow vectors that
-;;;  have a length that's shorter than the total size (due to fill-
-;;;  pointers).
+;; Implementing an efficient string= case in Common Lisp
 
-;;;
-;;;# Introduction
-;;;
-;;; In `<http://neverfriday.com/blog/?p=10>', OMouse asks how
-;;; best to implement a `string= case' (in Scheme). I noted that
-;;; naively iterating through the cases with `string=' at runtime
-;;; is suboptimal. Seeing the problem as a simplistic pattern
-;;; matching one makes an efficient solution obvious.
-;;; Note that, unlike Haskell, both Scheme and CL have random-
-;;; access on strings in O(1), something which I exploit to
-;;; generate better code.
-;;;
-;;; This is also a pbook.el file (the pdf can be found at
-;;; `<http://www.discontinuity.info/~pkhuong/string-case.pdf>' ).
-;;; I'm new at this not-quite-illiterate programming thing, so
-;;; please bear with me (: I'm also looking for comments on the
-;;; formatting. I'm particularly iffy with the way keywords look
-;;; like. It just looks really fuzzy when you're not really zoomed
-;;; in (or reading it on paper).
+;; 2015-11-15: Defknown don't have explicit-check in SBCL 1.3.0
+;;  Remove the declaration.  It's never useful the way we use
+;;  numeric-char=.
 
-;;; I usually don't use packages for throw-away code, but this looks
-;;; like it could be useful to someone.
+;; 2015-11-15: Make this a real ASDF system for Xach
+;;  I copied the system definition from Quicklisp and mangled as
+;;  necessary.
 
-;;;# Some utility code
+;; 2010-06-30: Tiny bugfix
+;;  Widen the type declarations inside cases to allow vectors that
+;;  have a length that's shorter than the total size (due to fill-
+;;  pointers).
+
+;;;; Introduction
+
+;; In `<http://neverfriday.com/blog/?p=10>', OMouse asks how
+;; best to implement a `string= case' (in Scheme). I noted that
+;; naively iterating through the cases with `string=' at runtime
+;; is suboptimal. Seeing the problem as a simplistic pattern
+;; matching one makes an efficient solution obvious.
+;; Note that, unlike Haskell, both Scheme and CL have random-
+;; access on strings in O(1), something which I exploit to
+;; generate better code.
+
+;; This is also a pbook.el file (the pdf can be found at
+;; `<http://www.discontinuity.info/~pkhuong/string-case.pdf>' ).
+;; I'm new at this not-quite-illiterate programming thing, so
+;; please bear with me (: I'm also looking for comments on the
+;; formatting. I'm particularly iffy with the way keywords look
+;; like. It just looks really fuzzy when you're not really zoomed
+;; in (or reading it on paper).
+
+;; I usually don't use packages for throw-away code, but this looks
+;; like it could be useful to someone.
+
+;;;; Some utility code
 (defun split-tree (list &key (test 'eql) (key 'identity))
   "Splits input list into sublists of elements
    whose elements are all such that (key element)
@@ -223,12 +205,12 @@ of a string."
         (setf cur-list '()
               counter   0)))))
 
-;;;# The string matching compiler per se
-;;;
-;;; I use special variables here because I find that
-;;; preferable to introducing noise everywhere to thread
-;;; these values through all the calls, especially
-;;; when `*no-match-form*' is only used at the very end.
+;;; The string matching compiler per se
+
+;; I use special variables here because I find that
+;; preferable to introducing noise everywhere to thread
+;; these values through all the calls, especially
+;; when `*no-match-form*' is only used at the very end.
 
 (defparameter *input-string* nil
   "Symbol of the variable holding the input string")
@@ -236,48 +218,47 @@ of a string."
 (defparameter *no-match-form* nil
   "Form to insert when no match is found.")
 
-;;; The basic idea of the pattern matching process here is
-;;; to first discriminate with the input string's length;
-;;; once that is done, it is very easy to safely use random
-;;; access until only one candidate string (pattern) remains.
-;;; However, even if we determine that only one case might be
-;;; a candidate, it might still be possible for another string
-;;; (not in the set of cases) to match the criteria. So we also
-;;; have to make sure that *all* the indices match. A simple
-;;; way to do this would be to emit the remaining checks at the
-;;; every end, when only one candidate is left. However, that
-;;; can result in a lot of duplicate code, and some useless
-;;; work on mismatches. Instead, the code generator always
-;;; tries to find (new) indices for which all the candidates
-;;; left in the branch share the same character, and then emits
-;;; a guard, checking the character at that index as soon as possible.
+;; The basic idea of the pattern matching process here is
+;; to first discriminate with the input string's length;
+;; once that is done, it is very easy to safely use random
+;; access until only one candidate string (pattern) remains.
+;; However, even if we determine that only one case might be
+;; a candidate, it might still be possible for another string
+;; (not in the set of cases) to match the criteria. So we also
+;; have to make sure that *all* the indices match. A simple
+;; way to do this would be to emit the remaining checks at the
+;; every end, when only one candidate is left. However, that
+;; can result in a lot of duplicate code, and some useless
+;; work on mismatches. Instead, the code generator always
+;; tries to find (new) indices for which all the candidates
+;; left in the branch share the same character, and then emits
+;; a guard, checking the character at that index as soon as possible.
 
-;;; In my experience, there are two main problems when writing
-;;; pattern matchers: how to decide what to test for at each
-;;; fork, and how to ensure the code won't explode exponentially.
-;;; Luckily, for our rather restricted pattern language (equality
-;;; on strings), patterns can't overlap, and it's possible to guarantee
-;;; that no candidate will ever be possible in both branches of a
-;;; fork.
+;; In my experience, there are two main problems when writing
+;; pattern matchers: how to decide what to test for at each
+;; fork, and how to ensure the code won't explode exponentially.
+;; Luckily, for our rather restricted pattern language (equality
+;; on strings), patterns can't overlap, and it's possible to guarantee
+;; that no candidate will ever be possible in both branches of a
+;; fork.
 
-;;; Due to the the latter guarantee, we have a simple fitness
-;;; measure for tests: simply maximising the number of
-;;; candidates in the smallest branch will make our search tree
-;;; as balanced as possible. Of course, we don't know whether
-;;; the subtrees will be balanced too, but I don't think it'll
-;;; be much of an issue.
+;; Due to the the latter guarantee, we have a simple fitness
+;; measure for tests: simply maximising the number of
+;; candidates in the smallest branch will make our search tree
+;; as balanced as possible. Of course, we don't know whether
+;; the subtrees will be balanced too, but I don't think it'll
+;; be much of an issue.
 
-;;; Note that, if we had access, whether via annotations or profiling,
-;;; to the probability of each case, the situation would be very
-;;; different. In fact, on a pipelined machine where branch
-;;; mispredictions are expensive, an unbalanced tree will yield
-;;; better expected runtimes. There was a very interesting and rather
-;;; sophisticated Google lecture on that topic on Google video
-;;; (the speaker used markov chains to model dynamic predictors,
-;;; for example), but I can't seem to find the URL.
+;; Note that, if we had access, whether via annotations or profiling,
+;; to the probability of each case, the situation would be very
+;; different. In fact, on a pipelined machine where branch
+;; mispredictions are expensive, an unbalanced tree will yield
+;; better expected runtimes. There was a very interesting and rather
+;; sophisticated Google lecture on that topic on Google video
+;; (the speaker used markov chains to model dynamic predictors,
+;; for example), but I can't seem to find the URL.
 
-;;; TODO: Find bounds on the size of the code!
-
+;; TODO: Find bounds on the size of the code!
 (defun find-best-split (strings to-check)
   "Iterate over all the indices left to check to find
    which index (and which character) to test for equality
@@ -307,40 +288,40 @@ of a string."
                     best-posn  i
                     best-char  char))))))))
 
-;;; We sometimes have to execute sequences of checks for
-;;; equality. The natural way to express this is via a
-;;; sequence of checks, wrapped in an `and'. However, that
-;;; translates to a sequence of conditional branches, predicated
-;;; on very short computations. On (not so) modern architectures,
-;;; it'll be faster to coalesce a sequence of such checks together
-;;; as straightline code (e.g. via `or' of `xor'), and only branch
-;;; at the very end. The code doesn't become much more complex,
-;;; and benchmarks have shown it to be beneficial (giving a speed
-;;; up of 2-5% for both predictable and unpredictable workloads,
-;;; on a Core 2).
+;; We sometimes have to execute sequences of checks for
+;; equality. The natural way to express this is via a
+;; sequence of checks, wrapped in an `and'. However, that
+;; translates to a sequence of conditional branches, predicated
+;; on very short computations. On (not so) modern architectures,
+;; it'll be faster to coalesce a sequence of such checks together
+;; as straightline code (e.g. via `or' of `xor'), and only branch
+;; at the very end. The code doesn't become much more complex,
+;; and benchmarks have shown it to be beneficial (giving a speed
+;; up of 2-5% for both predictable and unpredictable workloads,
+;; on a Core 2).
 
-;;; Benchmarks (and experience) have shown that, instead of executing
-;;; a cascade of comparison/conditional branch, it's slightly
-;;; faster, both for predictable and unpredictable workloads,
-;;; to `or' together a bunch of comparisons (e.g. `xor'). On a Core 2
-;;; processor, it seems that doing so for sequences of around 4
-;;; comparisons is the sweetspot. On perfectly predictable input,
-;;; aborting early (on the first check) saves as much time as
-;;; the 4 test/conditional branch add, compared to a sequence of
-;;; `xor' and `or'. 
+;; Benchmarks (and experience) have shown that, instead of executing
+;; a cascade of comparison/conditional branch, it's slightly
+;; faster, both for predictable and unpredictable workloads,
+;; to `or' together a bunch of comparisons (e.g. `xor'). On a Core 2
+;; processor, it seems that doing so for sequences of around 4
+;; comparisons is the sweetspot. On perfectly predictable input,
+;; aborting early (on the first check) saves as much time as
+;; the 4 test/conditional branch add, compared to a sequence of
+;; `xor' and `or'. 
 
-;;; Numeric char= abstracts out the xor check, and, on SBCL,
-;;; is replaced by a short assembly sequence when the first
-;;; argument is a constant. The declared return type is then
-;;; wider than strictly necessary making it fit in a machine
-;;; register, but not as a fixnum ensures that the compiler
-;;; won't repeatedly convert the values to fixnums, when all
-;;; we'll do is `or' them together and check for zero-ness.
-;;; This function is the only place where the macro isn't
-;;; generic over the elements stored in the cases. It shouldn't
-;;; be too hard to implement a numeric-eql, which would
-;;; restore genericity to the macro, while keeping the 
-;;; speed-up.
+;; Numeric char= abstracts out the xor check, and, on SBCL,
+;; is replaced by a short assembly sequence when the first
+;; argument is a constant. The declared return type is then
+;; wider than strictly necessary making it fit in a machine
+;; register, but not as a fixnum ensures that the compiler
+;; won't repeatedly convert the values to fixnums, when all
+;; we'll do is `or' them together and check for zero-ness.
+;; This function is the only place where the macro isn't
+;; generic over the elements stored in the cases. It shouldn't
+;; be too hard to implement a numeric-eql, which would
+;; restore genericity to the macro, while keeping the 
+;; speed-up.
 
 ;; (progn
 ;;   (defknown numeric-char= (character character)
@@ -369,14 +350,13 @@ of a string."
   (logxor (char-code x)
           (char-code y)))
 
-;;; At each step, we may be able to find positions for which
-;;; there can only be one character. If we emit the check for
-;;; these positions as soon as possible, we avoid duplicating
-;;; potentially a lot of code. Since benchmarks have shown
-;;; it to be useful, this function implements the checks
-;;; as a series of (zerop (logior (numeric-char= ...)...)),
-;;; if there is more than one such check to emit.
-
+;; At each step, we may be able to find positions for which
+;; there can only be one character. If we emit the check for
+;; these positions as soon as possible, we avoid duplicating
+;; potentially a lot of code. Since benchmarks have shown
+;; it to be useful, this function implements the checks
+;; as a series of (zerop (logior (numeric-char= ...)...)),
+;; if there is more than one such check to emit.
 (defun emit-common-checks (strings to-check)
   (labels ((emit-char= (pairs)
              (mapcar (lambda (pair)
@@ -415,14 +395,13 @@ of a string."
                   common-chars)
             (push posn left-to-check))))))
 
-;;; The driving function: First, emit any test that is
-;;; common to all the candidates. If there's only one
-;;; candidate, then we just have to execute the body;
-;;; if not, we look for the `best' test and emit the
-;;; corresponding code: execute the test, and recurse
-;;; on the candidates that match the test and on those
-;;; that don't.
-
+;; The driving function: First, emit any test that is
+;; common to all the candidates. If there's only one
+;; candidate, then we just have to execute the body;
+;; if not, we look for the `best' test and emit the
+;; corresponding code: execute the test, and recurse
+;; on the candidates that match the test and on those
+;; that don't.
 (defun make-search-tree (strings bodies to-check)
   (multiple-value-bind (guard to-check)
       (emit-common-checks strings to-check)
@@ -462,12 +441,12 @@ of a string."
                        ,*no-match-form*)
                   tree)))))))
 
-;;; Finally, we can glue it all together.
-;;; To recapitulate, first, dispatch on string
-;;; length, then execute a search tree for the
-;;; few candidates left, and finally make sure
-;;; the input string actually matches the one 
-;;; candidate left at the leaf.
+;; Finally, we can glue it all together.
+;; To recapitulate, first, dispatch on string
+;; length, then execute a search tree for the
+;; few candidates left, and finally make sure
+;; the input string actually matches the one 
+;; candidate left at the leaf.
 (defun %emit-string-case (cases input-var no-match)
   (flet ((case-string-length (x)
            (length (first x))))
@@ -492,11 +471,11 @@ of a string."
                                                   (loop for i below length collect i)))))
            (t ,no-match))))))
 
-;;; Just wrapping the previous function in a macro, and adding some error
-;;; checking (the rest of the code just assumes there won't be duplicate
-;;; patterns).  Note how we use a local function instead of passing the
-;;; default form directly. This can save a lot on code size, especially when
-;;; the default form is large.
+;; Just wrapping the previous function in a macro, and adding some error
+;; checking (the rest of the code just assumes there won't be duplicate
+;; patterns).  Note how we use a local function instead of passing the
+;; default form directly. This can save a lot on code size, especially when
+;; the default form is large.
 (defmacro string-case ((string &key (default '(error "No match")))
                        &body cases)
   "(string-case (string &key default)

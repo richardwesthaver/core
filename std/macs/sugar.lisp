@@ -48,27 +48,28 @@ default values unless overwritten at runtime:
 :INITARG
 :ACCESSOR"
   `(defclass ,name ,direct-superclasses 
-     ,(mapcar (lambda (x) 
-                (etypecase x
-                  (atom `(,x :initarg ,(sb-int:keywordicate x) :accessor ,(sb-int:symbolicate name '- x)))
-                  (cons 
-                   (let ((%name (car x))
-                         (%args (cdr x)))
-                     `(,%name ,@(std:acond
-                                 ((getf x :initarg)
-                                  (remf x :initarg)
-                                  (if-let ((acc (getf x :accessor)))
-                                    (progn
-                                      (remf x :accessor)
-                                      `(:initarg ,it :accessor ,acc ,@%args))
-				    `(:initarg ,it :accessor ,(sb-int:symbolicate name '- x) ,@%args)))
-				 ((getf x :accessor)
-				  (remf x :accessor)
-				  (if-let ((acc (getf x :intargr)))
-				    (progn
-				      (remf x :initarg)
-				      `(:accessor ,it :initarg ,acc ,@%args))
-				    `(:accessor ,it :initarg ,%name ,@%args)))))))))
+     ,(mapcar 
+       (lambda (x) 
+         (etypecase x
+           (atom `(,x :initarg ,(sb-int:keywordicate x) :accessor ,(sb-int:symbolicate name '- x)))
+           (cons 
+            (let ((%name (car x))
+                  (%args (cdr x)))
+              `(,%name ,@(std:acond
+                          ((getf x :initarg)
+                           (remf x :initarg)
+                           (if-let ((acc (getf x :accessor)))
+                             (progn
+                               (remf x :accessor)
+                               `(:initarg ,it :accessor ,acc ,@%args))
+			     `(:initarg ,it :accessor ,(sb-int:symbolicate name '- x) ,@%args)))
+			  ((getf x :accessor)
+			   (remf x :accessor)
+			   (if-let ((acc (getf x :intargr)))
+			     (progn
+			       (remf x :initarg)
+			       `(:accessor ,it :initarg ,acc ,@%args))
+			     `(:accessor ,it :initarg ,%name ,@%args)))))))))
        direct-slots)
      ,@opts))
 

@@ -94,4 +94,5 @@
    :*simple-log-message-formatter*
    :*log-message-class*
    :db-source
-   :logger-config))
+   :logger-config
+   :rotate-file-sink))

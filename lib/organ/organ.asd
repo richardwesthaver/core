@@ -1,7 +1,7 @@
 (defsystem :organ
   :version "0.1.0"
   :description "org-mode utils"
-  :depends-on (:cl-ppcre :std :nlp :parse :cry :obj :rdb :log (:feature :gui :gui))
+  :depends-on (:cl-ppcre :std :nlp :parse :cry :obj :rdb :log)
   :components ((:file "pkg")
                (:file "vars")
                (:file "condition")
@@ -52,8 +52,7 @@
                (:file "heading")
                (:file "document")
                (:file "graph")
-               (:file "cli")
-               (:file "gui" :if-feature :clim))
+               (:file "cli"))
   :in-order-to ((test-op (test-op :organ/tests))))
 
 (defsystem :organ/tests

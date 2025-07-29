@@ -13,7 +13,6 @@
 (defvar *task*)
 (defvar *task-class* 'task)
 (defvar *task-priority* :low)
-(defvar *result* nil)
 
 (define-condition task-error (thread-error) ()
   (:report (lambda (condition stream)
@@ -45,18 +44,18 @@
 
 ;;; Task Worker
 (defclass task-worker (worker)
-  ((tasks :accessor tasks :initarg :tasks :type spin-queue))
-  (:documentation "A Worker which stores a queue of TASKS."))
+  ((tasks :accessor tasks :initarg :tasks :type priority-queue))
+  (:documentation "A Worker which stores an additional priority-queue of TASKS."))
 
 ;;; Task
 (defclass task ()
   ((state :initform nil :initarg :state :accessor task-state))
   (:documentation "This object represents a single unit of work to be done by some
-worker. Tasks are typically distributed from the pool, but workers may
-also be granted the ability to create and distribute their own tasks. Once a
-task is assigned, the 'owner', i.e. the worker that is assigned this task, may
-modify the object. When the work associated with a task is complete, the owner
-is responsible for indicating in the state slot the result of the computation."))
+worker. Tasks are typically distributed from the pool, but workers may also be
+granted the ability to create and distribute their own tasks. Once a task is
+assigned, the 'owner', i.e. the worker that is assigned this task, may modify
+the object. When the work associated with a task is complete, the owner is
+responsible for indicating in the state slot the result of the computation."))
 
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)
@@ -66,7 +65,7 @@ is responsible for indicating in the state slot the result of the computation.")
 
 (defun run-task (worker task)
   "Run TASK on WORKER."
-  (push task (tasks worker))
+  (push-priority-queue (tasks worker) task *task-priority*)
   (run-worker worker))
 
 (defmethod run-object ((self task) &key worker)
@@ -111,7 +110,7 @@ is responsible for indicating in the state slot the result of the computation.")
 
 (defun run-job (worker job)
   "Run JOB on WORKER."
-  (setf (tasks worker) (coerce 'list (tasks job)))
+  (setf (tasks worker) (make-priority-queue (length (tasks job)) :initial-contents (tasks job)))
   (run-worker worker))
 
 (defmethod run-object ((self job) &key worker)

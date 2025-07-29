@@ -491,7 +491,6 @@ corresponding function."
   `(let ((it ,test))
      (if it ,then ,else)))
 
-;; ;; TODO 2023-09-05: wrap, document, optimize, hack
 ;; re-exported from SB-INT
 (defmacro awhen (test &body body)
   "Anaphoric WHEN with IT bound to the result of TEST."

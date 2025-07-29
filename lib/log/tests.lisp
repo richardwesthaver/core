@@ -52,7 +52,7 @@
           (log-pipe (make-instance 'rotating-file-sink :path tmpfile))
           (is (probe-file (file (aref (aref (pipe *logger*) 0) 0))))
           (log-message :info nil "rotating log test")
-          (log-rotate (aref (aref (pipe *logger*) 0) 0))
+          (log::rotate-file-sink (aref (aref (pipe *logger*) 0) 0))
           (log-message :info nil "rotating test2")
           (is> 0 (file-size (print (file (aref (aref (pipe *logger*) 0) 0)))))
           (is (delete-file (file (aref (aref (pipe *logger*) 0) 0)))))))))

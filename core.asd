@@ -11,8 +11,8 @@
 
 (defsystem :core/user
   :depends-on 
-  (:core :pod :box :gui
-   :web :vc :syn :rt)
+  (:core :pod :box :web 
+   :vc :syn :rt)
   :components ((:file "user"))
   :build-operation monolithic-compile-bundle-op
   :build-pathname "user-source")
@@ -26,7 +26,7 @@
                :zstd/tests :uring/tests :blake3/tests :ublk/tests
                :parse/tests :pod/tests :rt/tests :rdb/tests
                :dsp/tests :cry/tests :krypt/tests :io/tests
-               :gui/tests :net/tests :vc/tests :math/tests)
+               :net/tests :vc/tests :math/tests)
   :components ((:file "tests"))
   :build-pathname "tests"
   :build-operation monolithic-compile-bundle-op
