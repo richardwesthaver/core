@@ -17,38 +17,7 @@
 ;;; Code:
 (in-package :std/thread)
 
-;;; Kernel Classes
-(defclass kernel-class ()
-  ()
-  (:metaclass funcallable-standard-class)
-  (:documentation "Standard kernel class."))
-
-(defclass kernel-object (funcallable-standard-object)
-  ()
-  (:metaclass funcallable-standard-class)
-  (:documentation "Standard kernel object."))
-
-(definline make-kernel (fn)
-  "Return a new KERNEL-OBJECT and set the instance function to FN."
-  (declare (function fn))
-  (let ((fin (make-instance 'kernel-object)))
-    (set-funcallable-instance-function fin (compile nil fn))
-    fin))
-
-;; (defmethod :before initialize-instance ((self kernel-object) &key)
-;;   (when *kernel* (set-funcallable-instance-function self *kernel*)))
-
-;; make-instance (set-funcallable-instance-function kernel)
-
 ;;; Types
-(deftype kernel () 
-  "A type which specifies kernels. A kernel may be a list which is interpreted as
-a lambda expression, a symbol which names a function, or a compiled-function."
-  '(or cons symbol compiled-function kernel-object))
-
-(deftype kernel-function ()
-  "A function of at least one argument with no return value."
-  '(function (t &rest args) t))
 (deftype worker-kernel-function ()
   "A function which is suitable as a kernel for KIND workers."
   `(function (&optional t) t))
@@ -115,9 +84,6 @@ killed workers during shutdown.")
       (null)
       (cons (apply (the function (car work)) (cdr work)))
       (t work))))
-
-(defvar *kernel* nil
-  "The current thread's kernel, or nil.")
 
 (defvar *worker-kernel* (make-kernel #'%work)
   "A kernel which drives WORKERs.")
@@ -246,17 +212,6 @@ that was created in `body'."
    "The worker was killed.")
   (:documentation
    "Error signaled when attempting to obtain a result from a killed worker."))
-
-(define-condition kernel-init-error (error) ()
-  (:report
-   "The kernel failed to initialize.")
-  (:documentation
-   "Error signaled when a kernel object fails to initialize."))
-
-(define-condition no-kernel-error (error) ()
-  (:report "invalid *KERNEL*")
-  (:documentation
-   "Error signaled when a kernel object is invalid."))
 
 (define-condition no-thread-pool-error () ()
   (:report
@@ -1078,22 +1033,6 @@ before going to sleep."
       (fill-workers workers pool)
       pool)))
 
-(defun check-kernel ()
-  "Check the current value of *KERNEL*, ensuring it is bound appropriately
-according to the current thread (worker, pool, super). STORE-VALUE
-restarts is provided. *KERNEL* is returned."
-  ;; TODO 2025-04-21: 
-  (or (and *worker* (eql *kernel* *worker-kernel*))
-      (and (not *worker*) (not *kernel*))
-      (and (eql *pool-kernel* *kernel*))
-      (restart-case (error 'no-kernel-error)
-        (store-value (value)
-          :report "Assign a value to *KERNEL*."
-          :interactive (lambda () (print "Value: ") (read t ))
-          (check-type value kernel)
-          (setf *kernel* value))))
-  *kernel*)
-
 (defun check-thread-pool ()
   "Check the current value of *THREAD-POOL*, ensuring it is bound to a
 THREAD-POOL object. STORE-VALUE and MAKE-THREAD-POOL restarts are
@@ -1411,12 +1350,6 @@ While using `with-temp-pool' is generally a bad idea, there are a
 few valid uses, such as for testing, where the code is non-critical or
 where convenience trumps other concerns."
   `(call-with-temp-pool (lambda () ,@body) ,@make-pool-args))
-
-(defmacro defkernel (name-and-opts (&rest args) &body body)
-  "Define a new kernel function with NAME ARGS and BODY."
-  (typecase name-and-opts
-    (cons `(definline ,(car name-and-opts) ,args ,@body))
-    (t `(definline ,name-and-opts ,args ,@body))))
 
 ;;; Pipes
 ;; From Shinmera's VERBOSE

@@ -58,7 +58,7 @@ modify the object. When the work associated with a task is complete, the owner
 is responsible for indicating in the state slot the result of the computation.
 
 CURRENTLY, tasks are funcallable kernels.")
-  (:metaclass funcallable-standard-class))
+  (:metaclass kernel-class))
 
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)

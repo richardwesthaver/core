@@ -4,6 +4,11 @@
 
 ;;; Code:
 (in-package :std/macs)
+
+(defclass loop-kernel (kernel-object)
+  ((universe :initform *loop-ansi-universe* :accessor universe))
+  (:metaclass kernel-class))
+
 ;; ref: https://github.com/bendudson/array-operations
 (defmacro nested-loop (syms dimensions &body body)
   "Iterates over a multidimensional range of indices.

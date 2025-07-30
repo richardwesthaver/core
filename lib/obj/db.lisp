@@ -472,7 +472,7 @@ column is already closed."))
 
 (defclass transaction-kernel (kernel-object transaction-object) ()
   (:documentation "Kernel object for transactions.")
-  (:metaclass funcallable-standard-class))
+  (:metaclass kernel-class))
 
 (defgeneric (setf transaction-opts) (new txn))
 

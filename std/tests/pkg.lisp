@@ -39,6 +39,8 @@
   (is (equal (funcall [#'values] 1 2 3) (values 1 2 3))) ;; compose.4
   )
 
+(alias-function foo-car car)
+
 (deftest sym ()
   "Test standard symbol utils"
   ;; gensyms
@@ -49,7 +51,6 @@
   (iseql 'abc (symb 'a 'b 'c))
   (iseq :function (fboundp! 'car))
   (iseq :special (vboundp! '*standard-output*))
-  (alias-function foo-car car)
   (is= (foo-car (list 1 2)) 1))
 
 (deftest string ()

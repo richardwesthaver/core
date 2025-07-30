@@ -76,8 +76,8 @@ method body."))
                    short-float complex
                    rational string
                    pathname symbol
-                   cons hash-table 
-                   standard-object struct
+                   cons hash-table
+                   standard-object structure-object
                    array class
                    null boolean t))
   "A vector containing the simple set of lisp objects.")
@@ -90,9 +90,16 @@ method body."))
   (sb-vm::primitive-type-name (primitive-type-of obj)))
 
 (declaim (inline %lisp-object-id))
-(defun %lisp-object-id (obj)
-  "Return the STD/SERDE 'id' of OBJ - which is its position in *SIMPLE-LISP-OBJECTS*."
-  (position (type-of obj) *simple-objects*))
+(defun %lisp-class-id (obj)
+  "Return the 'class-id' of OBJ which is a single 64-bit integer containing type
+information. The first 8 bits are the associated object widetag followed by 56
+bits of additional type info based on the type of OBJ.
+
+This function should always return the same value for objects of the same type
+or class."
+  (widetag-of obj))
+
+;; (defun %lisp-metaclass-id (obj))
 
 (defmacro define-io (name &body body)
   "Define a set of readers and writers of category NAME.

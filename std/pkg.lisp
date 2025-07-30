@@ -91,6 +91,16 @@
   (:import-from :std/sym :symb :with-gensyms)
   (:import-from :std/named-readtables :parse-body)
   (:export 
+   :kernel-class
+   :kernel-function
+   :defkernel
+   :kernel-object
+   :*kernel*
+   :kernel
+   :check-kernel
+   :make-kernel
+   :kernel-init-error
+   :no-kernel-error
    :g!-symbol-p
    :defmacro/g!
    :o!-symbol-p
@@ -371,7 +381,8 @@
   (:import-from :sb-int 
    :ensure-gethash :map-hashset 
    :hashset-find :hashset-remove 
-   :hashset-insert :hashset-count)
+   :hashset-insert :hashset-count
+   :psxhash)
   (:import-from :std/prim :definline)
   (:shadowing-import-from :sb-lockless :endp)
   (:import-from :sb-lockless
@@ -394,7 +405,7 @@
    :*global-hash* :djb
    :hash-object :hash-object-address
    :dumb-string-hash :table
-   :map-hashset :hashset-find :hashset-remove :hashset-insert :hashset-count))
+   :map-hashset :hashset-find :hashset-remove :hashset-insert :hashset-count :psxhash))
 
 (defpkg :std/curry
   (:use :cl)
@@ -439,7 +450,11 @@
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform)
   (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
+  (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:export
+   :*loops-ansi-universe*
+   :loop-standard-expansion
+   :loop-kernel
    :this :self
    :make-macro-lambda
    :parse-lambda-list
@@ -527,17 +542,19 @@
    :lowtag-of :widetag-of :hexdump :print-allocated-objects)
   (:import-from :sb-sys :int-sap)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
-   :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr :check-fasl-header :*show-fops-p*)
+   :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr :check-fasl-header 
+   :*show-fops-p*)
   (:use-reexport :sb-cltl2)
   (:recycle :sb-assem)
+  (:recycle :sb-ext)
   (:import-from :sb-c :lexenv-user-data :lexenv-find 
-   :make-null-lexenv :name-reserved-by-ansi-p :default-gc-strategy)
+   :make-null-lexenv :name-reserved-by-ansi-p :default-gc-strategy :open-fasl-output 
+   :close-fasl-output :fasl-output)
   (:import-from :sb-c :parse-eval-when-situations :source-location :*backend-byte-order*)
   (:recycle :sb-sys)
   (:import-from :sb-ext :maybe-inline :defglobal :define-load-time-global :finalize :cancel-finalization)
   (:import-from :std/sym :with-gensyms :search-roots :vboundp!)
   (:import-from :std/list :appendf)
-  (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:import-from :sb-assem :*backend-instruction-set-package*)
   (:import-from :sb-impl :*logical-hosts* :make-logical-host 
    :logical-host :info :show-info :*info-types*
@@ -548,6 +565,7 @@
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
    :+lowtags+ :+widetags+
+   :open-fasl-output :close-fasl-output
    :check-fasl-header
    :*show-fops-p*
    :make-unbound-marker
@@ -572,8 +590,6 @@
    :ldb-monitor
    :read-only-space-obj-p
    :dynamic-space-obj-p
-   :*loops-ansi-universe*
-   :loop-standard-expansion
    :asm-routine-index-from-addr
    :*assembler-routines*
    :+fasl-file-version+
@@ -693,7 +709,7 @@
    :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
    :*backend-predicate-types* :*backend-type-predicates*
    :*compile-progress* :*compile-component-hook* :primitive-type :primitive-type-of
-   :primitive-type-name)
+   :primitive-type-name :primitive-object-size)
   (:import-from :sb-vm :*register-arg-tns* :*primitive-objects*
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
@@ -707,18 +723,19 @@
    :primitive-type-name :primitive-object-name :primitive-object-lowtag :primitive-object-widetag
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
-   :vop :primitive-type-name-of :ctype-of :type-specifier))
+   :vop :primitive-type-name-of :ctype-of :type-specifier
+   :primitive-object-size :backend-primitive-type))
 
 (defpkg :std/serde
-  (:use :cl)
+  (:use :cl :std/sys)
   (:import-from :std/named-readtables :parse-body)
   (:import-from :std/prim :definline)
   (:import-from :std/condition :deferror)
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/sym :symbolicate :with-gensyms)
   (:import-from :std/type :octet-vector :*type-classes* :type-class-name-of :type-class-name :type=)
-  (:import-from :std/comp :*primitive-objects* :primitive-object-size 
-   :widetag-of :lowtag-of :primitive-type-of :backend-primitive-type-name
+  (:import-from :std/comp :*primitive-objects* :primitive-object-size
+   :primitive-type-of :backend-primitive-type
    :*backend-primitive-type-names* :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:export :define-io
    :*simple-objects* :*primitive-object-table* 
@@ -951,7 +968,7 @@
    :defpipe*))
 
 (defpkg :std/thread
-  (:use :cl)
+  (:use :cl :std/prim)
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
   (:import-from :std/seq :do-indexes :repeat)
@@ -974,9 +991,6 @@
    :work
    :scheduler
    :make-scheduler
-   :kernel-function
-   :defkernel
-   :kernel-object
    :worker-kernel-function
    :pool-kernel-function
    :channel-kernel-function
@@ -1051,16 +1065,14 @@
    :schedule
    :+standard-io-bindings+
    :*default-special-bindings*
-   :*kernel*
-   :kernel
-   :check-thread-pool :check-kernel
+   :check-thread-pool 
    :*oracle-table*
    :*worker-threads*
    :*super-threads*
    :compute-special-bindings))
 
 (defpkg :std/task
-  (:use :cl :std/thread :std/meta :std/seq)
+  (:use :cl :std/thread :std/meta :std/seq :std/prim)
   (:import-from :std/thread :%make-thread)
   (:import-from :std/type :positive-fixnum)
   (:import-from :std/macs :if-let)

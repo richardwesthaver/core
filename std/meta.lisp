@@ -7,7 +7,6 @@
 
 ;; make-specializer-form-using-class
 ;; make-method-lambda-using-specializers
-
 (defgeneric start (self)
   (:documentation "Start object SELF."))
 (defgeneric started-p (self)

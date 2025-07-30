@@ -25,6 +25,7 @@ that ASDF can find, or have quicklisp installed.")))
    (:file "sym")
    (:file "list")
    (:file "prim")
+   (:file "kernel")
    (:file "type")
    (:file "string")
    (:module "num"

@@ -5,35 +5,6 @@
 ;;; Code:
 (in-package :std/sys)
 
-;;; Object Tagging
-(defun %sbcl-tagp (sfx)
-  (lambda (x) 
-    (let* ((s (string x))
-           (l (length s)))
-      (and (> l (length sfx))
-           (equal sfx (subseq s (- l (length sfx)) l))
-           (eql (vboundp! x) :constant)))))
-
-(defconstant-eqx +widetags+
-    (coerce 
-     (sort
-      (package-symbols 
-       "SB-VM" 
-       (%sbcl-tagp "-WIDETAG"))
-      (lambda (x y) (< (symbol-value x) (symbol-value y))))
-      'vector)
-  (lambda (x y) (every 'eql x y)))
-
-(defconstant-eqx +lowtags+
-    (coerce
-     (sort
-      (package-symbols 
-       "SB-VM" 
-       (%sbcl-tagp "-LOWTAG"))
-      (lambda (x y) (< (symbol-value x) (symbol-value y))))
-     'vector)
-  (lambda (x y) (every 'eql x y)))
-
 ;;; Introspection
 ;; (reexport-from :sb-introspect
 ;; 	       :include '(:function-lambda-list :lambda-list-keywords :lambda-parameters-limit
@@ -92,15 +63,16 @@ and we may query the user for input.")
     (dolist (p (list-all-packages) r) 
       (appendf r (list-package-symbols p)))))
 
-(defun package-symbols (&optional (package *package*) test)
-  "List the symbols of PACKAGE which satisfy TEST if present."
-  (let ((symbols))
-    (do-external-symbols (symbol package)
-      (if test
-          (when (funcall test symbol)
-            (push symbol symbols))
-          (push symbol symbols)))
-    symbols))
+(eval-always
+  (defun package-symbols (&optional (package *package*) test)
+    "List the symbols of PACKAGE which satisfy TEST if present."
+    (let ((symbols))
+      (do-external-symbols (symbol package)
+        (if test
+            (when (funcall test symbol)
+              (push symbol symbols))
+            (push symbol symbols)))
+      symbols)))
 
 (defun package-symbol-names (&optional (package *package*) test)
   "List the symbol names of PACKAGE which satisfy test if present."
@@ -479,3 +451,33 @@ work is done by sb-vm:hexdump in the interesting cases."
 ;;; FASLs
 (definline check-fasl-file-header (path)
   (with-open-file (f path :element-type 'unsigned-byte) (sb-fasl::check-fasl-header f)))
+
+;;; Tags
+(eval-always
+  (defun %sbcl-tagp (sfx)
+    (lambda (x) 
+      (let* ((s (string x))
+             (l (length s)))
+        (and (> l (length sfx))
+             (equal sfx (subseq s (- l (length sfx)) l))
+             (eql (vboundp! x) :constant))))))
+
+(defconstant-eqx +widetags+
+    (coerce 
+     (sort
+      (package-symbols 
+       "SB-VM" 
+       (%sbcl-tagp "-WIDETAG"))
+      (lambda (x y) (< (symbol-value x) (symbol-value y))))
+      'vector)
+  (lambda (x y) (every 'eql x y)))
+
+(defconstant-eqx +lowtags+
+    (coerce
+     (sort
+      (package-symbols 
+       "SB-VM" 
+       (%sbcl-tagp "-LOWTAG"))
+      (lambda (x y) (< (symbol-value x) (symbol-value y))))
+     'vector)
+  (lambda (x y) (every 'eql x y)))

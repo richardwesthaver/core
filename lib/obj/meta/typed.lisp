@@ -25,8 +25,6 @@
 (declaim (type hash-table array-type-to-byte byte-to-array-type))
 (defvar array-type-to-byte (make-hash-table :test 'equalp))
 (defvar byte-to-array-type (make-hash-table :test 'equalp))
-(sb-impl::robinhood-hashset-storage sb-kernel::*array-type-hashset*
-*ctype-hashsets*
 (setf (gethash 't array-type-to-byte) #x00)
 (setf (gethash 'base-char array-type-to-byte) #x01)
 (setf (gethash 'character array-type-to-byte) #x02)
