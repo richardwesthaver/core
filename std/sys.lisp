@@ -475,3 +475,7 @@ work is done by sb-vm:hexdump in the interesting cases."
       ;; can't happen
       (t (error "mutant"))))
   (values))
+
+;;; FASLs
+(definline check-fasl-file-header (path)
+  (with-open-file (f path :element-type 'unsigned-byte) (sb-fasl::check-fasl-header f)))

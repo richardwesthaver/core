@@ -527,7 +527,7 @@
    :lowtag-of :widetag-of :hexdump :print-allocated-objects)
   (:import-from :sb-sys :int-sap)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
-   :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr)
+   :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr :check-fasl-header :*show-fops-p*)
   (:use-reexport :sb-cltl2)
   (:recycle :sb-assem)
   (:import-from :sb-c :lexenv-user-data :lexenv-find 
@@ -548,6 +548,8 @@
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
    :+lowtags+ :+widetags+
+   :check-fasl-header
+   :*show-fops-p*
    :make-unbound-marker
    :*external-formats*
    :get-external-format
