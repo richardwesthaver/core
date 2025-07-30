@@ -511,7 +511,6 @@ RESOLVER then replaced with the result."
 ;;; Json Schema
 ;; ref: https://json-schema.org/specification
 ;; examples: https://json-schema.org/learn/json-schema-examples
-
 (defclass json-schema-object (json-object id)
   ((id :type uri)))
 

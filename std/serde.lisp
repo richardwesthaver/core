@@ -62,12 +62,12 @@ Calling this function requires you to initialize the arguments instead
 of relying on a type-designator format and generating an object in the
 method body."))
 
-(defparameter *primitive-object-table*
-  (let ((tbl (make-hash-table)))
-    (dolist (obj *primitive-objects* tbl)
-      (setf (gethash (primitive-object-name obj) tbl) (cons (symbol-value (primitive-object-lowtag obj)) (symbol-value (primitive-object-widetag obj))))))
-  "Primitive objects are defined by SBCL and will not change. Convenient as a
-non-unique ID prefix.")
+;; (defparameter *primitive-object-table*
+;;   (let ((tbl (make-hash-table)))
+;;     (dolist (obj *primitive-objects* tbl)
+;;       (setf (gethash (primitive-object-name obj) tbl) (cons (symbol-value (primitive-object-lowtag obj)) (symbol-value (primitive-object-widetag obj))))))
+;;   "Primitive objects are defined by SBCL and will not change. Convenient as a
+;; non-unique ID prefix.")
 
 (defparameter *simple-objects*
   (apply 'vector '(fixnum
@@ -75,11 +75,11 @@ non-unique ID prefix.")
                    double-float bignum
                    short-float complex
                    rational string
-                   pathname symbol 
+                   pathname symbol
                    cons hash-table 
                    standard-object struct
-                   array class 
-                   null t))
+                   array class
+                   null boolean t))
   "A vector containing the simple set of lisp objects.")
 
 (defvar *core-object-table* (make-hash-table)
@@ -92,7 +92,7 @@ non-unique ID prefix.")
 (declaim (inline %lisp-object-id))
 (defun %lisp-object-id (obj)
   "Return the STD/SERDE 'id' of OBJ - which is its position in *SIMPLE-LISP-OBJECTS*."
-  (position obj *simple-objects*))
+  (position (type-of obj) *simple-objects*))
 
 (defmacro define-io (name &body body)
   "Define a set of readers and writers of category NAME.

@@ -73,17 +73,21 @@
 
 (defpackage :cry/drm
   (:use :cl :std))
-  
-(in-package :cry)
 
-(defvar *password-db* nil
-  "The default password database.")
-(defvar *password-hasher* nil
-  "The default password hasher.")
-(defvar *password-store* nil
-  "The default password store.")
-(defvar *password-pepper* nil
-  "The default pepper value for password hashing. Make sure you change this.")
+(defpackage :cry/gpg
+  (:use :cl :std :config :ast)
+  (:export :*user-gpg-directory* :user-gpg-config-file :user-gpg-agent-config-file :gpg-config :gpg-agent-config))
+
+(defpackage :cry/ssh
+  (:use :cl :std :config :ast)
+  (:export :*user-ssh-directory* :user-ssh-config-file :system-ssh-config-file 
+   :ssh-config :sshd-config :system-sshd-config-file))
+  
+(defpackage :cry/auth
+  (:use :cl :std)
+  (:export))
+
+(in-package :cry)
 
 (defclass token (id) ())
 
@@ -93,39 +97,52 @@
       (vector-push (random 128) id))
     (make-instance 'token :id id)))
 
-(defgeneric token-bytes (self)
-  (:method ((self token))
-    (id self)))
+(defvar *password-db* nil
+  "The current password database.")
+(defvar *password-hasher* nil
+  "The current password hasher.")
+(defvar *password-store* nil
+  "The current password store.")
+(defvar *password-pepper* (random-token)
+  "pepper value for password hashing. Make sure you change this.")
 
-(defgeneric token-string (self)
-  (:method ((self token))
-    (sb-ext:octets-to-string (obj/id:id self))))
+(defun token-bytes (self)
+  (declare (token self))
+  (id self))
+
+(defun token-string (self)
+  (declare (token self))
+  (sb-ext:octets-to-string (id self)))
+
+(defun token-hex (self)
+  (declare (token self))
+  (octet-vector-to-hex-string (id self)))
 
 (defclass crypto-token (token) ())
-(defclass crypto-key (id) ())
+(defclass crypto-key (token) ())
 (defclass password-db (database) ())
 (defclass password-store (store) ())
 
 ;;; Proto
 (defgeneric register-user (user &key store password deadline)
-  (:documentation "Register user identified by TOKEN in store specified by STORE. Returns
-the user object and an optionally a confirmation token."))
+  (:documentation "Register USER in STORE. Returns a confirmation token."))
 (defgeneric get-confirmation-token (user &key store duration)
   (:documentation "Create a new user confirmation token which must be
-  validated within DURATION if non-nil. Register it for USER in STORE."))
+  validated within DURATION if non-nil."))
 (defgeneric confirm-registration (user confirmation &key store)
-  (:documentation "Confirm USER using CONFIRMATION in STORE."))
+  (:documentation "Confirm USER using token response CONFIRMATION."))
 (defgeneric user-pending-p (user &key store)
   (:documentation "Return non-nil if USER isn't pending confirmation, else nil."))
 (defgeneric user-known-p (user &key store)
   (:documentation "Return non-nil if USER is known in STORE."))
 (defgeneric authenticate-user (user password &key store)
-  (:documentation "Check whether USER successfully authenticates with PASSWORD in STORE. If user had a reset-token pending, clear it upon success."))
+  (:documentation "Check whether USER successfully authenticates with PASSWORD. If user
+had a reset-token pending, clear it upon success."))
 (defgeneric get-reset-token (user &key store duration)
-  (:documentation "Create a new reset token, register it for USER in STORE for DURATION."))
+  (:documentation "Create a new reset token for USER."))
 (defgeneric clear-reset-token (user &key store)
   (:documentation "Clear reset token of USER."))
 (defgeneric reset-password (user reset new &key store)
-  (:documentation "Reset password of USER in STORE to NEW, authenticating with RESET."))
+  (:documentation "Reset password of USER to NEW, authenticating with token RESET."))
 (defgeneric delete-user (user &key store error-p)
-  (:documentation "Delete user identified by USER in STORE. Signal an error if user can't be found and ERROR-P is non-nil."))
+  (:documentation "Delete USER. Signal an error if user can't be found and ERROR-P is non-nil."))

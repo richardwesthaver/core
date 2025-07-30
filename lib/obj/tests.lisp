@@ -190,7 +190,7 @@
     (slot-dvar* obj 'id)
     (slot-dlet (((obj 'id) 0))
       (iszero (id:id obj)))
-    (is> 0 (id:id obj))))
+    (is= 1 (id:id obj))))
 
 ;;;; Stealth
 (defclass stealth-target () ())

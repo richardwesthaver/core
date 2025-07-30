@@ -27,8 +27,8 @@
    (credentials :type list :initarg :credentials :accessor credentials)))
 
 ;; TODO 2024-06-30: 
-(defmethod serde ((from authinfo) (to pathname)))
-(defmethod serde ((from stream) (to authinfo)))
+;; (defmethod serde ((from authinfo) (to pathname)))
+;; (defmethod serde ((from stream) (to authinfo)))
 
 (defmethod deserialize ((from pathname) (format (eql :authinfo)) &key)
   (make-instance 'authinfo

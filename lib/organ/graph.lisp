@@ -157,12 +157,6 @@
 		(uuid-octets* (edge-out e))
 		:column "edge")))
 
-;; (loop with i = 0
-;; while (iter-valid-p it)
-;; do (log:info! (iter-key it) (iter-val it))
-;; do (iter-next it)
-;; do (print (incf i))))
-
 ;;; Org Graph DB
 (defvar *org-graph-db-directory* (merge-pathnames ".store/db/graph/" (user-homedir-pathname)))
 

@@ -48,14 +48,17 @@
   (:documentation "A Worker which stores an additional priority-queue of TASKS."))
 
 ;;; Task
-(defclass task ()
+(defclass task (kernel-object)
   ((state :initform nil :initarg :state :accessor task-state))
-  (:documentation "This object represents a single unit of work to be done by some
-worker. Tasks are typically distributed from the pool, but workers may also be
-granted the ability to create and distribute their own tasks. Once a task is
-assigned, the 'owner', i.e. the worker that is assigned this task, may modify
-the object. When the work associated with a task is complete, the owner is
-responsible for indicating in the state slot the result of the computation."))
+  (:documentation "This object represents a single unit of work to be done in a single thread by
+some worker. Tasks are typically distributed from the pool, but workers may
+also be granted the ability to create and distribute their own tasks. Once a
+task is assigned, the 'owner', i.e. the worker that is assigned this task, may
+modify the object. When the work associated with a task is complete, the owner
+is responsible for indicating in the state slot the result of the computation.
+
+CURRENTLY, tasks are funcallable kernels.")
+  (:metaclass funcallable-standard-class))
 
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)
@@ -63,12 +66,12 @@ responsible for indicating in the state slot the result of the computation."))
 
 (defmethod taskp ((self task)) t)
 
-(defun run-task (worker task)
-  "Run TASK on WORKER."
-  (push-priority-queue (tasks worker) task *task-priority*)
+(defun run-task (worker task &optional (priority *task-priority*))
+  "Run TASK in WORKER, which must be a task-worker."
+  (push-priority-queue (tasks worker) task priority)
   (run-worker worker))
 
-(defmethod run-object ((self task) &key worker)
+(defmethod run-object ((self task) &key (worker *worker*))
   (run-task worker self))
 
 ;;;; Scheduled Tasks
@@ -77,9 +80,10 @@ responsible for indicating in the state slot the result of the computation."))
   (:documentation "A task object with an associated schedule."))
 
 (defmethod run-object ((self scheduled-task) &key time repeat absolute-p catch-up worker name)
-  (sb-ext:schedule-timer 
+  (sb-ext:schedule-timer
    (sb-ext:make-timer (task-state self) :thread worker :name name)
-   time :repeat-interval repeat :absolute-p absolute-p :catch-up catch-up))
+   time 
+   :repeat-interval repeat :absolute-p absolute-p :catch-up catch-up))
 
 ;;; Job
 (defclass job (task)
@@ -93,6 +97,7 @@ responsible for indicating in the state slot the result of the computation."))
 
 (defgeneric jobs (self)
   (:documentation "Return the jobs associated with SELF."))
+
 (defmethod jobp ((self job)) t)
 (defmethod taskp ((self job)) t)
   
@@ -115,19 +120,6 @@ responsible for indicating in the state slot the result of the computation."))
 
 (defmethod run-object ((self job) &key worker)
   (run-job worker self))
-
-;;; Work Scope
-(defclass work-scope ()
-  ((tasks  :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
-           :initarg :tasks
-           :accessor tasks
-           :type (vector task))
-   (lock :initform (make-mutex :name "work-scope") :initarg :lock :accessor work-scope-lock :type mutex))
-  (:documentation "A scope of work containing TASKS and a LOCK."))
-
-(defmethod print-object ((self work-scope) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A" (tasks self))))
 
 ;; RESEARCH 2025-07-26: 
 ;;; Task Scheduler?

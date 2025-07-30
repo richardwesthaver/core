@@ -5,6 +5,35 @@
 ;;; Code:
 (in-package :std/sys)
 
+;;; Object Tagging
+(defun %sbcl-tagp (sfx)
+  (lambda (x) 
+    (let* ((s (string x))
+           (l (length s)))
+      (and (> l (length sfx))
+           (equal sfx (subseq s (- l (length sfx)) l))
+           (eql (vboundp! x) :constant)))))
+
+(defconstant-eqx +widetags+
+    (coerce 
+     (sort
+      (package-symbols 
+       "SB-VM" 
+       (%sbcl-tagp "-WIDETAG"))
+      (lambda (x y) (< (symbol-value x) (symbol-value y))))
+      'vector)
+  (lambda (x y) (every 'eql x y)))
+
+(defconstant-eqx +lowtags+
+    (coerce
+     (sort
+      (package-symbols 
+       "SB-VM" 
+       (%sbcl-tagp "-LOWTAG"))
+      (lambda (x y) (< (symbol-value x) (symbol-value y))))
+     'vector)
+  (lambda (x y) (every 'eql x y)))
+
 ;;; Introspection
 ;; (reexport-from :sb-introspect
 ;; 	       :include '(:function-lambda-list :lambda-list-keywords :lambda-parameters-limit
@@ -127,7 +156,7 @@ debug or die."
         (return-from revive-image)))
   (handler-bind ((serious-condition #'handle-serious-condition))
     (setf *interactive* interactive)
-    (setf *core-image-revive-hook* hooks)
+    (setf *core-image-revive-hooks* hooks)
     (setf *core-image-revived-p* :in-progress)
     (dolist (f *core-image-revive-hooks*)
       (funcall f))

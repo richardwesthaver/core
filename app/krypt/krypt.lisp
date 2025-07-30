@@ -8,9 +8,9 @@
 ;;; Vars
 (defparameter *kryptrc* (merge-pathnames ".kryptrc" (user-homedir-pathname)))
 (defvar *krypt-directory* (merge-pathnames ".stash/krypt/" (user-homedir-pathname)))
-(defvar *krypt-key-directory* (merge-pathnames "keys/" *krypt-directory*))
-(defvar *krypt-token-directory* (merge-pathnames "keys/" *krypt-directory*))
-(defvar *krypt-password-directory* (merge-pathnames "keys/" *krypt-directory*))
+(defvar *krypt-key-directory* (merge-pathnames "key/" *krypt-directory*))
+(defvar *krypt-token-directory* (merge-pathnames "token/" *krypt-directory*))
+(defvar *krypt-password-directory* (merge-pathnames "pw/" *krypt-directory*))
 (defvar *krypt-net-directory* (merge-pathnames "net/" *krypt-directory*))
 (defvar *krypt-user-config* nil)
 
@@ -21,8 +21,8 @@
    (passwords :initform *krypt-password-directory* :initarg :passwords)
    (tokens :initform *krypt-token-directory* :initarg :tokens)
    (keys :initform *krypt-key-directory* :initarg :keys)
-   #| gpg, ssh |#
-))
+   (ssh :initform *user-ssh-directory* :initarg :ssh)
+   (gpg :initform *user-gpg-directory* :initarg :gpg)))
 
 (defmethod print-object ((self krypt-config) stream)
   (print-unreadable-object (self stream :type t)

@@ -368,7 +368,10 @@
   (:use :cl)
   (:nicknames :std/ht)
   (:recycle :sb-int)
-  (:import-from :sb-int :ensure-gethash)
+  (:import-from :sb-int 
+   :ensure-gethash :map-hashset 
+   :hashset-find :hashset-remove 
+   :hashset-insert :hashset-count)
   (:import-from :std/prim :definline)
   (:shadowing-import-from :sb-lockless :endp)
   (:import-from :sb-lockless
@@ -390,7 +393,8 @@
    :pophash :*global-hasher*
    :*global-hash* :djb
    :hash-object :hash-object-address
-   :dumb-string-hash :table))
+   :dumb-string-hash :table
+   :map-hashset :hashset-find :hashset-remove :hashset-insert :hashset-count))
 
 (defpkg :std/curry
   (:use :cl)
@@ -510,7 +514,8 @@
   (:use :cl :sb-int)
   (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects 
    :unbound-marker-p :generation-of
-   :current-sp :current-fp)
+   :current-sp :current-fp 
+   :make-unbound-marker)
   (:import-from :std/prim :definline)
   (:import-from :sb-impl :*external-formats*)
   (:import-from :sb-vm :list-allocated-objects :fun-signature= 
@@ -530,7 +535,7 @@
   (:import-from :sb-c :parse-eval-when-situations :source-location :*backend-byte-order*)
   (:recycle :sb-sys)
   (:import-from :sb-ext :maybe-inline :defglobal :define-load-time-global :finalize :cancel-finalization)
-  (:import-from :std/sym :with-gensyms :search-roots)
+  (:import-from :std/sym :with-gensyms :search-roots :vboundp!)
   (:import-from :std/list :appendf)
   (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:import-from :sb-assem :*backend-instruction-set-package*)
@@ -542,6 +547,8 @@
   (:import-from :sb-ext :fold-identical-code)
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
+   :+lowtags+ :+widetags+
+   :make-unbound-marker
    :*external-formats*
    :get-external-format
    :revive-image
@@ -678,7 +685,7 @@
    :assemble :without-scheduling :inst :inst* 
    :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
    :make-file-source-info :make-lisp-source-info
-   :def-ir1-translator :defknown)
+   :def-ir1-translator :defknown :ctype-of :type-specifier)
   (:import-from :sb-c :vop)
   (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
    :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
@@ -698,7 +705,7 @@
    :primitive-type-name :primitive-object-name :primitive-object-lowtag :primitive-object-widetag
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
-   :vop :primitive-type-name-of))
+   :vop :primitive-type-name-of :ctype-of :type-specifier))
 
 (defpkg :std/serde
   (:use :cl)
@@ -958,7 +965,7 @@
   (:import-from :std/list :deletef)
   (:export
    :*default-spint-count*
-   :make-foreign-thread
+   :make-ephemerial-thread
    :*all-threads*
    :*worker-class*
    :*worker*

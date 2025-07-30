@@ -21,7 +21,11 @@
                (:file "keyring" :depends-on ("condition"))
                (:file "jwt" :depends-on ("condition"))
                (:file "hotp" :depends-on ("condition"))
-               (:file "totp" :depends-on ("hotp")))
+               (:file "totp" :depends-on ("hotp"))
+               (:file "drm" :depends-on ("condition"))
+               (:file "gpg" :depends-on ("condition"))
+               (:file "ssh" :depends-on ("condition"))
+               (:file "auth" :depends-on ("password" "gpg" "jwt" "authinfo" "keyring" "hotp" "totp")))
   :in-order-to ((test-op (test-op :cry/tests))))
 
 (defsystem :cry/tests

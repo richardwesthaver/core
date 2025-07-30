@@ -2,7 +2,7 @@
   (:use :rt :std :cl 
    :cry :cry/hotp :cry/totp :cry/crc64 
    :cry/jwt :cry/b3 :cry/keyring :cry/authinfo 
-   :cry/password :cry/drm :cry/ssl)
+   :cry/password :cry/drm :cry/ssl :config)
   (:shadowing-import-from :rt :random-bytes))
 
 (in-package :cry/tests)
@@ -55,4 +55,9 @@
       (istype 'password pw)
       (is (auth pw secret)))))
 
+(deftest ssh ()
+  ;; config
+  (istype 'cry/ssh:ssh-config (make-config :ssh :path (cry/ssh:system-ssh-config-file))))
 
+(deftest gpg ()
+  (istype 'cry/gpg:gpg-agent-config (make-config :gpg-agent)))
