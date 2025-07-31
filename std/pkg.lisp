@@ -92,7 +92,6 @@
   (:import-from :std/named-readtables :parse-body)
   (:export 
    :kernel-class
-   :kernel-function
    :defkernel
    :kernel-object
    :*kernel*

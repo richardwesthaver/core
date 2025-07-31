@@ -77,7 +77,8 @@ CURRENTLY, tasks are funcallable kernels.")
 ;;;; Scheduled Tasks
 (defclass scheduled-task (task)
   ((schedule :initarg :schedule :initform (get-universal-time) :accessor task-schedule))
-  (:documentation "A task object with an associated schedule."))
+  (:documentation "A task object with an associated schedule.")
+  (:metaclass kernel-class))
 
 (defmethod run-object ((self scheduled-task) &key time repeat absolute-p catch-up worker name)
   (sb-ext:schedule-timer

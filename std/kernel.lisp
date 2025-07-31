@@ -54,10 +54,7 @@
 (deftype kernel () 
   "A type which specifies kernels. A kernel may be a list which is interpreted as
 a lambda expression, a symbol which names a function, or a compiled-function."
-  '(or cons symbol compiled-function kernel-object))
-(deftype kernel-function ()
-  "A compiled function suitable for use as the funcallable slot of a kernel."
-  '(compiled-function * *))
+  '(or cons symbol function kernel-object))
 
 (defun check-kernel ()
   "Check the current value of *KERNEL*, ensuring it is bound appropriately

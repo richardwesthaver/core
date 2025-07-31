@@ -15,7 +15,8 @@
 ;;; Code:
 (in-package :homer/core)
 
-(defclass homer-task (scheduled-task ast id) ())
+(defclass homer-task (scheduled-task ast id) ()
+  (:metaclass kernel-class))
 
 ;; :sec :min :hour :day :day-of-week :month
 

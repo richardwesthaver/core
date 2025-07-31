@@ -20,7 +20,7 @@
 ;;; Code:
 
 (defpackage :krypt
-  (:use :cl :std :cry :cry/b3 :sxp :id :ast :config :secret :cli :clap)
+  (:use :cl :std :cry :cry/b3 :sxp :id :ast :config :secret :cli :clap :cry/ssh :cry/gpg)
   (:export :krypt-error :*default-user-kryptrc* :krypt-config 
    :load-kryptrc :*krypt-directory*
    :krypt-error :simple-krypt-error

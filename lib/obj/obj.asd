@@ -69,5 +69,8 @@
 
 (defsystem :obj/tests
   :depends-on (:rt :obj)
-  :components ((:file "tests"))
+  :components ((:module "tests" 
+                :components ((:file "pkg")
+                             (:file "sealed")
+                             (:file "meta"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :obj)))
