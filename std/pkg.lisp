@@ -265,7 +265,9 @@
    #:positive-rational-p
    #:of-type
    #:type=
-   #:word))
+   #:word
+   :u1 :u2 :u3 :u4 :u5 :u6 :u7 :u8 :u16 :u24 :u32 :u64
+   :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64))
 
 (defpkg :std/string
   (:use :cl)

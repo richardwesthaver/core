@@ -83,6 +83,10 @@
   (:export :*user-ssh-directory* :user-ssh-config-file :system-ssh-config-file 
    :ssh-config :sshd-config :system-sshd-config-file))
   
+(defpackage :cry/sign
+  (:use :cl :std :config :ast :secret)
+  (:export))
+
 (defpackage :cry/auth
   (:use :cl :std)
   (:export))

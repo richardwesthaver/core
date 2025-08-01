@@ -25,6 +25,7 @@
                (:file "drm" :depends-on ("condition"))
                (:file "gpg" :depends-on ("condition"))
                (:file "ssh" :depends-on ("condition"))
+               (:file "sign" :depends-on ("condition"))
                (:file "auth" :depends-on ("password" "gpg" "jwt" "authinfo" "keyring" "hotp" "totp")))
   :in-order-to ((test-op (test-op :cry/tests))))
 

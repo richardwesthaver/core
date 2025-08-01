@@ -21,11 +21,27 @@ approval status.
 (defun mp3-p (file)
   (string-equal "mp3" (pathname-type file)))
 
-;; (simple-array (unsigned-byte 7) (4))
+(defun id3-p (file)
+  (let ((out (make-octets 3)))
+    (with-open-file (in file)
+      (read-n-bytes in out 0 2)
+      (string= "ID3" (sb-ext:octets-to-string out)))))
+
 (deftype u28 () '(unsigned-byte 28))
+(define-io id3
+  (u28
+   (:read (in)
+          (loop with val = 0
+                for lbit downfrom 21 to 0 by 7 do
+                (setf (ldb (byte 7 lbit) val) (read-byte in))
+                finally (return val)))
+   (:write (out val)
+           (loop for lbit downfrom 21 to 0 by 7 do
+                    (write-byte (ldb (byte 7 lbit) val) out))))
+  (u1
 
 (defstruct id3-header 
-  (version 0 :type octet) 
+  (version 3 :type octet) 
   (revision 0 :type octet)
   (flags 0 :type octet)
   (size 0 :type u28))
@@ -52,8 +68,6 @@ approval status.
         (setf (id3-header-size header) (decode-u28 size))
         header))))
 
-;; (read-id3-header "/mnt/z/music/05 - Clear.mp3")
-
 (defun show-id3-header (file)
   (with-slots (major-version revision flags size) (read-id3-header file)
     (format t "ID3 ~d.~d ~8,'0b ~d bytes -- ~a~%"
@@ -74,3 +88,116 @@ approval status.
 (defun find-id3-frame-class (id)
   (declare (ignore id))
   'id3-frame)
+
+(defun frame-compressed-p (flags) (logbitp 7 flags))
+
+(defun frame-encrypted-p (flags) (logbitp 6 flags))
+
+(defun frame-grouped-p (flags) (logbitp 5 flags))
+
+(defun frame-name-member (id)
+  (cond
+    ((member id '("COM" "COMM") :test #'string=) "Comment")
+    ((member id '("TAL" "TALB") :test #'string=) "Album")
+    ((member id '("TCM" "TCOM") :test #'string=) "Composer")
+    ((member id '("TCO" "TCON") :test #'string=) "Genre")
+    ((member id '("TEN" "TENC") :test #'string=) "Encoding program")
+    ((member id '("TP1" "TPE1") :test #'string=) "Artist")
+    ((member id '("TPA" "TPOS") :test #'string=) "Part of set")
+    ((member id '("TRK" "TRCK") :test #'string=) "Track")
+    ((member id '("TT2" "TIT2") :test #'string=) "Song")
+    ((member id '("TYE" "TYER") :test #'string=) "Year")
+    (t id)))
+
+(defclass id3-tag (id)
+  ((extended-header-size)
+   (extra-flags)
+   (padding-size)
+   (crc)
+   (frames)))
+
+(defun extended-p (flags) (logbitp 6 flags))
+
+(defun crc-p (flags extra-flags)
+  (and (extended-p flags) (logbitp 15 extra-flags)))
+
+(defun upto-null (string)
+  (subseq string 0 (position (code-char 0) string)))
+
+(defun find-frame (id3 ids)
+  (find-if #'(lambda (x) (find (id x) ids :test #'string=)) (frames id3)))
+
+(defun get-text-info (id3 &rest ids)
+  (let ((frame (find-frame id3 ids)))
+    (when frame (upto-null (information frame)))))
+
+(defmethod information ((frame id3-frame))
+  (with-output-to-string (s)
+    (loop for byte across (data frame) do
+          (format s "~2,'0x" byte))))
+
+(defun album (id3) (get-text-info id3 "TAL" "TALB"))
+
+(defun composer (id3) (get-text-info id3 "TCM" "TCOM"))
+
+(defun genre (id3) (get-text-info id3 "TCO" "TCON"))
+
+(defun encoding-program (id3) (get-text-info id3 "TEN" "TENC"))
+
+(defun artist (id3) (get-text-info id3 "TP1" "TPE1"))
+
+(defun part-of-set (id3) (get-text-info id3 "TPA" "TPOS"))
+
+(defun track (id3) (get-text-info id3 "TRK" "TRCK"))
+
+(defun song (id3) (get-text-info id3 "TT2" "TIT2"))
+
+(defun year (id3) (get-text-info id3 "TYE" "TYER" "TDRC"))
+
+(defun translated-genre (id3)
+  (let ((genre (genre id3)))
+    (if (and genre (char= #\( (schar genre 0)))
+        (translate-v1-genre genre)
+        genre)))
+
+(defparameter *id3-v1-genres*
+  #(
+    ;; These are the official ID3v1 genres.
+    "Blues" "Classic Rock" "Country" "Dance" "Disco" "Funk" "Grunge"
+    "Hip-Hop" "Jazz" "Metal" "New Age" "Oldies" "Other" "Pop" "R&B" "Rap"
+    "Reggae" "Rock" "Techno" "Industrial" "Alternative" "Ska"
+    "Death Metal" "Pranks" "Soundtrack" "Euro-Techno" "Ambient"
+    "Trip-Hop" "Vocal" "Jazz+Funk" "Fusion" "Trance" "Classical"
+    "Instrumental" "Acid" "House" "Game" "Sound Clip" "Gospel" "Noise"
+    "AlternRock" "Bass" "Soul" "Punk" "Space" "Meditative"
+    "Instrumental Pop" "Instrumental Rock" "Ethnic" "Gothic" "Darkwave"
+    "Techno-Industrial" "Electronic" "Pop-Folk" "Eurodance" "Dream"
+    "Southern Rock" "Comedy" "Cult" "Gangsta" "Top 40" "Christian Rap"
+    "Pop/Funk" "Jungle" "Native American" "Cabaret" "New Wave"
+    "Psychadelic" "Rave" "Showtunes" "Trailer" "Lo-Fi" "Tribal"
+    "Acid Punk" "Acid Jazz" "Polka" "Retro" "Musical" "Rock & Roll"
+    "Hard Rock"
+
+    ;; These were made up by the authors of Winamp but backported into
+    ;; the ID3 spec.
+    "Folk" "Folk-Rock" "National Folk" "Swing" "Fast Fusion"
+    "Bebob" "Latin" "Revival" "Celtic" "Bluegrass" "Avantgarde"
+    "Gothic Rock" "Progressive Rock" "Psychedelic Rock" "Symphonic Rock"
+    "Slow Rock" "Big Band" "Chorus" "Easy Listening" "Acoustic" "Humour"
+    "Speech" "Chanson" "Opera" "Chamber Music" "Sonata" "Symphony"
+    "Booty Bass" "Primus" "Porn Groove" "Satire" "Slow Jam" "Club"
+    "Tango" "Samba" "Folklore" "Ballad" "Power Ballad" "Rhythmic Soul"
+    "Freestyle" "Duet" "Punk Rock" "Drum Solo" "A capella" "Euro-House"
+    "Dance Hall"
+
+    ;; These were also invented by the Winamp folks but ignored by the
+    ;; ID3 authors.
+    "Goa" "Drum & Bass" "Club-House" "Hardcore" "Terror" "Indie"
+    "BritPop" "Negerpunk" "Polsk Punk" "Beat" "Christian Gangsta Rap"
+    "Heavy Metal" "Black Metal" "Crossover" "Contemporary Christian"
+    "Christian Rock" "Merengue" "Salsa" "Thrash Metal" "Anime" "Jpop"
+    "Synthpop"))
+
+
+(defun translate-v1-genre (genre)
+  (aref *id3-v1-genres* (parse-integer genre :start 1 :junk-allowed t)))

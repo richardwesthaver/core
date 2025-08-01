@@ -10,7 +10,22 @@
 (deftype octet () 
   "An 8-bit unsigned-byte."
   '(unsigned-byte 8))
-  
+
+(macrolet ((def (name)
+               `(deftype ,name () ,@(let* ((s (string name))
+                                           (c (ecase (schar s 0)
+                                                (#\U ''unsigned-byte)
+                                                (#\S ''signed-byte)))
+                                           (n (parse-integer (subseq s 1)))
+                                           (d (format nil "~A-bit ~A." n (eval c))))
+                                      `(,d `(,,c ,,n)))))
+           (defs (&rest names)
+             `(progn
+                ,@(loop for n in names collect `(def ,n)))))
+  (defs u1 u2 u3 u4 u5 u6 u7 u8 u16 u24 u32 u64)
+  (defs s1 s2 s3 s4 s5 s6 s7 s8 s16 s24 s32 s64))
+                                         
+
 (deftype octet-vector (&optional length)
   "A simple-array of OCTETs."
   (if length `(simple-array octet (,length))

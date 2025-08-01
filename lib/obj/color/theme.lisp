@@ -25,4 +25,3 @@
 (defgeneric theme (self))
 (defgeneric (setf theme) (new self))
 (defmacro define-theme (name direct-superclasses direct-slots &rest opts))
-

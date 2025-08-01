@@ -580,3 +580,35 @@ WHITESPACE can be one of:
 
 ;; input-mode can be :string or :stream
 ;; input-format can be :character or :octet-vector
+
+;;; Serde
+(defmethod serialize ((self string) (fmt (eql :base64)) &key type output uri (columns 0))
+  (case type
+    (:stream (string-to-base64-stream self output :uri uri :columns columns))
+    (t (string-to-base64-string self :uri uri :columns columns))))
+
+(defmethod serialize ((self vector) (fmt (eql :base64)) &key type output uri (columns 0))
+  (case type
+    (:stream (octet-vector-to-base64-stream self output :uri uri :columns columns))
+    (t (octet-vector-to-base64-string self :uri uri :columns columns))))
+     
+(defmethod serialize ((self integer) (fmt (eql :base64)) &key type output uri (columns 0))
+  (case type
+    (:stream (integer-to-base64-stream self output :uri uri :columns columns))
+    (t (integer-to-base64-string self :uri uri :columns columns))))
+
+(defmethod deserialize ((self string) (fmt (eql :base64)) 
+                        &key (table +decode-table+) type output uri (whitespace :ignore))
+  (case type
+    (:stream (base64-string-to-stream self :stream output :uri uri :whitespace whitespace :table table))
+    (:integer (base64-string-to-integer self :uri uri :whitespace whitespace :table table))
+    (:octet-vector (base64-string-to-octet-vector self :uri uri :whitespace whitespace :table table))
+    (t (base64-string-to-string self :uri uri :whitespace whitespace :table table))))
+
+(defmethod deserialize ((self stream) (fmt (eql :base64)) 
+                        &key type (table +decode-table+) output uri (whitespace :whitespace))
+  (case type
+    (:string (base64-stream-to-string self :uri uri :whitespace whitespace :table table))
+    (:integer (base64-stream-to-integer self :uri uri :whitespace whitespace :table table))
+    (:octet-vector (base64-stream-to-octet-vector self :uri uri :whitespace whitespace :table table))
+    (t (base64-stream-to-stream self :table table :uri uri :stream output :whitespace whitespace))))

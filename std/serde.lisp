@@ -1,6 +1,6 @@
 ;;; std/serde.lisp --- Basic Lisp Serializer API
 
-;; Read/Write Lisp Objects.
+;; Read/Write Lisp Objects. Binary object de/serialization.
 
 ;;; Commentary:
 
