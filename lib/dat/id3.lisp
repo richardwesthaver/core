@@ -21,13 +21,8 @@ approval status.
 (defun mp3-p (file)
   (string-equal "mp3" (pathname-type file)))
 
-(defun id3-p (file)
-  (let ((out (make-octets 3)))
-    (with-open-file (in file)
-      (read-n-bytes in out 0 2)
-      (string= "ID3" (sb-ext:octets-to-string out)))))
-
 (deftype u28 () '(unsigned-byte 28))
+
 (define-io id3
   (u28
    (:read (in)
@@ -37,8 +32,7 @@ approval status.
                 finally (return val)))
    (:write (out val)
            (loop for lbit downfrom 21 to 0 by 7 do
-                    (write-byte (ldb (byte 7 lbit) val) out))))
-  (u1
+                    (write-byte (ldb (byte 7 lbit) val) out)))))
 
 (defstruct id3-header 
   (version 3 :type octet) 

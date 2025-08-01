@@ -476,6 +476,17 @@ be produced by `sxhash'."
       (draw-border)
       (draw))))
 
+(defun draw-one-in-chance (&optional (chance 3))
+  "Show a 32x32 bitmap with pixels on with a one in CHANCE probability."
+  (draw-from-list (random-booleans (* 32 32) chance) 32))
+
+(defun draw-chance (&optional (steps 80))
+  "Show a bitmap with each columns pixels with decreasing probability."
+  (draw (make-bitmap steps 32
+                     (loop for y from 1 to 32
+                           collect (loop for i from 1 to steps
+                                         collect (>= (random steps) i))))))
+
 (defun rotate-rows-to-columns (rows)
   (loop for remaining = rows then (mapcar #'cdr remaining)
         while (not (every #'null remaining))
@@ -526,22 +537,57 @@ be produced by `sxhash'."
       (princ "└") (print-times columns "─") (princ "┘")
       (fresh-line))))
 
-(defmacro print-boxed (&rest body)
-  `(print-in-box
-    (with-output-to-string (*standard-output*)
-      ,@body)))
-
 ;;; Box
 ;; TODO 2025-04-04: 
-;; APL Box Formatting (BQN/Dyalog/J)
+;; APL Box Formatting (Dyalog)
+(sb-int:defconstant-eqx +lead-axis-markers+ "⌽↓⍒" #'string=)
+(sb-int:defconstant-eqx +trail-axis-markers+ "⊖→" #'string=)
+(sb-int:defconstant-eqx +type-markers+ "+~─#∊" #'string=)
 
-(defun draw-one-in-chance (&optional (chance 3))
-  "Show a 32x32 bitmap with pixels on with a one in CHANCE probability."
-  (draw-from-list (random-booleans (* 32 32) chance) 32))
+(defvar *box-fold* 5
+  "A positive integer indicating the number of elements from the head and tail of
+array to display when wrapping the middle elements.")
 
-(defun draw-chance (&optional (steps 80))
-  "Show a bitmap with each columns pixels with decreasing probability."
-  (draw (make-bitmap steps 32
-                     (loop for y from 1 to 32
-                           collect (loop for i from 1 to steps
-                                         collect (>= (random steps) i))))))
+(defvar *box-dot-char* #\∙
+  "The character used to represent truncated box output.")
+
+(defun lead-axis-marker (n)
+  (schar +lead-axis-markers+
+         (cond ((> n 1) 2)
+               (t n))))
+(defun trail-axis-marker (n)
+  (schar +lead-axis-markers+
+         (if (> n 1) 1 0)))
+(deftype box-style () '(member :min :mid :max))
+
+(defun fmt-box (stream seq &key (style :mid))
+  "Print sequence SEQ to STREAM with borders indicating shape, type and
+structure.
+
+STYLE indicates the level of decoration to apply to the output:
+
+:MIN means no border decoration
+
+:MID applies indicators to the axes as follows:
+    ↓  leading axis   (length>0)                                                        
+    →  trailing axis  (length>0)                                                        
+    ⌽  leading axis   (length=0)                                                        
+    ⊖  trailing axis  (length=0)                                                        
+    ⍒  multiple leading axes                                                            
+  content types are indicated as follows:                                               
+    ~  numeric                                                                          
+    ─  character                                                                        
+    #  object
+    +  t
+
+:MAX likewise:
+    ↓  leading axes   (length>0)                                                        
+    →  trailing axis  (length>0)                                                        
+    ⌽  leading axes   (length=0)                                                        
+    ⊖  trailing axis  (length=0)                                                        
+  content types are indicated as follows:                                               
+    ∊  nested                                                                           
+    ~  numeric                                                                          
+    ─  character                                                                        
+    #  object
+    +  t")

@@ -1130,7 +1130,7 @@
    :moire :draw-line :sunbeam :fill-bitmap 
    :draw-filled-circle :sun :peace :with-comic-strip
    :plot-function :print-table :print-heading :print-in-box
-   :print-boxed :smile :draw-one-in-chance :draw-chance))
+   :smile :draw-one-in-chance :draw-chance))
 
 (defpkg :std/os
   (:use :cl :sb-alien)
