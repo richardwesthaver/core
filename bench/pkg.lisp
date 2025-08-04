@@ -6,5 +6,5 @@
 (in-package :std-user)
 
 (defpkg :core/bench
-  (:use :std-lisp :rt :log :rt/bench :rt/cover)
+  (:use :std-lisp :rt :log :rt/cover)
   (:export :run-benchmark))

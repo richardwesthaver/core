@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :rt/tests
-  (:use :cl :std :rt :rt/flamegraph :rt/tracing :rt/cover :rt/bench :rt/fuzz))
+  (:use :cl :std :rt :rt/flamegraph :rt/tracing :rt/cover :rt/fuzz))
 
 (in-package :rt/tests)
 

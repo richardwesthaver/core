@@ -707,7 +707,7 @@ WORKER threads."))
        (when ,predicate
          ,@body))))
 
-(defun maybe-wake-a-worker (sched)
+(defun maybe-wake-worker (sched)
   (declare (scheduler sched))
   (with-slots (wait-lock wait-cvar wait-count notify-count) sched
     (with-mutex-p (wait-lock (plusp (counter-value wait-count)))
@@ -721,7 +721,7 @@ WORKER threads."))
     (:low (with-slots (low-priority-work) sched (push-spin-queue work low-priority-work)))
     (:default (push-to-random-worker work sched))
     (t (push-to-random-worker work sched)))
-  (maybe-wake-a-worker sched)
+  (maybe-wake-worker sched)
   (values))
 
 (defmacro do-workers ((wvar workers hindex &optional from-hindex-p) &body body)
@@ -782,7 +782,6 @@ WORKER threads."))
         ;; Start with the worker that has the most recently submitted
         ;; work (approximately) and advance rightward.
         (do-workers (worker workers index t)
-          ;; FIX 2025-07-14: 
           (try-pop (work worker)))
         (try-pop low-priority-work))))
   nil)
@@ -998,6 +997,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
 					   (spin-count *default-spin-count*)
                                            (alive t)
 					   (kernel *pool-kernel*)
+                                           enlist
                                            (class 'thread-pool))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
@@ -1014,12 +1014,16 @@ KERNEL is a function which drives the THREAD-POOL.
 CLASS is the designated class of the returned THREAD-POOL object.
 
 SPIN-COUNT is the number of work-searching iterations done by the worker
-before going to sleep."
+before going to sleep.
+
+When ENLIST is non-nil, the calling thread may be enlisted to steal work from
+worker threads in certain situations."
   (check-type worker-count positive-fixnum)
   (check-type spin-count array-index)
   (let ((*worker-kernel* worker-kernel)
         (*pool-kernel* kernel))
     (let* ((workers (make-array worker-count))
+           (count (if enlist (1+ worker-count) worker-count))
            (pool (make-instance class
                    :name name
 		   :bind bind
@@ -1028,7 +1032,7 @@ before going to sleep."
                    :alive alive
                    :workers workers
 	           :scheduler (make-scheduler workers spin-count)
-	           :limiter-count (initial-limiter-count worker-count)
+	           :limiter-count (initial-limiter-count count)
 	           :limiter-lock (make-spin-lock))))
       (fill-workers workers pool)
       pool)))

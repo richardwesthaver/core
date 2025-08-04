@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; hashtable and READ-LINE benchmarking code
+;; hash-table benchmarking code
 ;;
 ;; some code by Paul Foley
 ;; Time-stamp: <2016-05-10 13:11:57 jack>

@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :blas/tests
-  (:use :cl :log :std :rt :blas :sb-alien :io/static :rt/bench))
+  (:use :cl :log :std :rt :blas :sb-alien :io/static))
 (in-package :blas/tests)
 (defsuite :blas)
 (in-suite :blas)

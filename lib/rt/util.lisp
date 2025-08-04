@@ -38,9 +38,7 @@
   (defun make-suite (&rest slots)
     (apply #'make-instance 'test-suite slots)))
 
-;; TODO 2023-09-04: optimize
-;;(declaim (inline do-tests))
-(defun do-tests (&optional (suite *test-suite*) force (output *standard-output*))
+(definline do-tests (&optional (suite *test-suite*) force (output *standard-output*))
   (if (pathnamep output)
       (with-open-file (stream output :direction :output)
         (do-suite (ensure-suite suite) :stream stream :force force))
@@ -118,3 +116,16 @@
 (defun assert-suite (name)
   (check-suite-designator name)
   (assert (ensure-suite name)))
+
+(defmacro time-total (n &body body)
+  "N-average the execution time of BODY in seconds"
+  (declare (optimize (speed 0)))
+  (with-gensyms (start end)
+    `(let (,start ,end)
+       (sb-ext:gc :full t)
+       (setf ,start (get-internal-real-time))
+       (loop for i below ,n
+             do ,@body)
+       (setf ,end (get-internal-real-time))
+       (coerce (/ (- ,end ,start) internal-time-units-per-second)
+               'float))))

@@ -8,7 +8,6 @@
                (:file "proto" :depends-on ("pkg"))
                (:file "obj" :depends-on ("proto" "util"))
                (:file "rt" :depends-on ("obj"))
-               (:file "bench" :depends-on ("rt"))
                (:file "tracing" :depends-on ("rt"))
                (:file "flamegraph" :depends-on ("rt"))
                (:file "cover" :depends-on ("rt"))

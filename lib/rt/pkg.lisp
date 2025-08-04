@@ -20,8 +20,6 @@
 ;;; TODO:
 #|
 
-- [ ] benchmark support: do-bench, test-count, 
-
 - [ ] fixtures api
 
 - [ ] profiling 
@@ -41,6 +39,7 @@
    :*default-test-suite-name*
    :*test-suite*
    :*test-suite-list*
+   :time-total
    ;;  TODO 2023-09-04: :*test-profiler-list* not yet
    :*testing*
    :test-declare
@@ -123,16 +122,6 @@
    :is<=
    :isor
    :run-all-tests))
-
-(defpackage :rt/bench
-  (:nicknames :bench)
-  (:use :cl :std :log :rt)
-  (:export
-   :*bench-count*
-   :defbench
-   :do-bench
-   :bench
-   :time-total))
 
 (defpkg :rt/cover
   (:nicknames :cover)
