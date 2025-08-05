@@ -260,6 +260,12 @@ a default value for required keyword arguments."
     (format stream "Unknown token: ~A.~%" (error-token c)))
   (call-next-method))
 
+(defun interact (&rest prompt)
+  "Read from user and eval."
+  (apply #'format *query-io* prompt)
+  (finish-output *query-io*)
+  (multiple-value-list (eval (read *query-io*))))
+
 ;;; Macros
 (defmacro ignore-some-conditions ((&rest conditions) &body body)
   "Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS

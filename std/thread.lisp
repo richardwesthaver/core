@@ -1294,6 +1294,24 @@ Calling `broadcast-work' from inside a worker is an error."
 (pushnew '%exit-threads sb-ext:*exit-hooks*)
 
 ;;; Utils
+(defmacro with-lock-no-wait (lock predicate &body body)
+  ;; predicate intentionally evaluated twice
+  (with-gensyms (lock-var)
+    `(when ,predicate
+       (let ((,lock-var ,lock))
+         (when (grab-mutex ,lock-var :waitp nil)
+           (unwind-protect
+                (when ,predicate
+                  ,@body)
+             (release-mutex ,lock-var)))))))
+
+(defmacro with-lock-wait (lock predicate &body body)
+  ;; predicate intentionally evaluated twice
+  `(when ,predicate
+     (with-mutex (,lock)
+       (when ,predicate
+         ,@body))))
+
 (defun indexing-wrapper (array index function args)
   (setf (aref array index) (apply function args)))
 

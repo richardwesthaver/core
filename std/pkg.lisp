@@ -120,6 +120,7 @@
   (:shadowing-import-from :asdf :error-name)
   (:import-from :std/list :flatten :removef)
   (:export
+   :interact
    :*error-message*
    :*handlers*
    :std-error :error-message
@@ -1072,8 +1073,15 @@
    :*super-threads*
    :compute-special-bindings))
 
+(defpkg :std/async
+  (:use :cl :std/thread :std/prim :std/seq)
+  (:import-from :std/macs :with-gensyms :when-let)
+  (:export :future :promise :await
+   :future-kernel :fulfill :fulfilledp :while-waiting-for
+   :speculate))
+
 (defpkg :std/task
-  (:use :cl :std/thread :std/meta :std/seq :std/prim)
+  (:use :cl :std/thread :std/meta :std/seq :std/prim :std/async)
   (:import-from :std/thread :%make-thread)
   (:import-from :std/type :positive-fixnum)
   (:import-from :std/macs :if-let)
@@ -1089,19 +1097,14 @@
    :*stages*
    :*task*
    :*result*
-   :task :job :scheduled-task
+   :task :job 
+   :scheduled-task
    :make-job
    :jobp :taskp :task))
 
-(defpkg :std/async
-  (:use :cl :std/task :std/thread)
-  (:import-from :std/macs :with-gensyms :when-let)
-  (:export :future :promise :await 
-   :fulfill :fulfilledp :while-waiting-for))
-
 (defpkg :std/par
-  (:use :cl :std/task :std/thread :std/macs :std/sym)
-  (:export))
+  (:use :cl :std/task :std/thread :std/macs :std/sym :std/prim)
+  (:export :defpun :defpun*))
 
 (defpkg :std/rand
   (:use :cl)

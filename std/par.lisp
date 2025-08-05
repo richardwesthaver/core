@@ -11,7 +11,6 @@
 
 ;; TODO 2025-04-27: 
 ;;; plet
-(defconstant +no-result+ '+no-result+)
 (defmacro msetq (vars form)
   (if (= 1 (length vars))
       `(setq ,(first vars) ,form)
@@ -30,7 +29,7 @@
 (defmacro with-temp-bindings (here-binding-datum spawn-binding-data &body body)
   `(let (,@(temp-vars (list here-binding-datum))
          ,@(loop for var in (temp-vars spawn-binding-data)
-                 collect `(,var +no-result+)))
+                 collect `(,var std/async::+no-result+)))
      ,@body))
 
 (defmacro with-client-bindings (binding-data null-bindings &body body)
@@ -42,15 +41,14 @@
 
 (defmacro spawn (kernel temp-vars form)
   (check-type kernel symbol)
-  `(submit-raw-task
-    (make-task
-     (task-lambda
-       ;; task handler already established
-       (unwind-protect (msetq ,temp-vars (with-task-context ,form))
-         (locally (declare (optimize (speed 3) (safety 0)))
-           (update-limiter-count (the kernel ,kernel) 1)))
-       (values)))
-    ,kernel))
+  `(std/thread::submit-raw-work
+    (std/thread::work-lambda
+      ;; task handler already established
+      (unwind-protect (msetq ,temp-vars (std/thread::with-work-context ,form))
+        (locally (declare (optimize (speed 3) (safety 0)))
+          (std/thread::update-limiter-count (the thread-pool ,kernel) 1))
+       (values))
+    ,kernel)))
 
 (defmacro spawn-tasks (kernel spawn-binding-data)
   (check-type kernel symbol)
@@ -70,7 +68,7 @@
     `(locally (declare (optimize (speed 3) (safety 3)))
        (loop with worker = *worker*
              while (or ,@(loop for temp-var in temp-vars
-                               collect `(eq ,temp-var +no-result+)))
+                               collect `(eq ,temp-var std/async::+no-result+)))
              do #+lparallel.with-green-threads (thread-yield)
                 (steal-work (the kernel ,kernel) worker)))))
 
@@ -80,6 +78,18 @@
      ,@(loop for temp-var in (primary-temp-vars binding-data)
              collect `(when (typep ,temp-var 'wrapped-error)
                         (unwrap-result ,temp-var)))))
+
+(defun make-temp-var (var)
+  (gensym (symbol-name var)))
+
+(defun make-binding-datum (mv-binding)
+  (destructuring-bind (vars form) mv-binding
+    `(,vars ,(mapcar #'make-temp-var vars) ,form)))
+
+(defun make-binding-data (bindings)
+  (multiple-value-bind (mv-bindings null-bindings) (parse-bindings bindings)
+    (values (mapcar #'make-binding-datum mv-bindings)
+            null-bindings)))
 
 (defmacro %%%%plet (kernel bindings body)
   (multiple-value-bind (binding-data null-bindings) (make-binding-data bindings)
@@ -106,6 +116,21 @@
             (return-from ,top ,succeed/no-lock))
         ,fail-tag
           (return-from ,top ,fail)))))
+
+(defun parse-bindings (bindings)
+  (let ((mv-bindings nil)
+        (null-bindings nil))
+    (dolist (binding bindings)
+      (etypecase binding
+        (cons (if (= 1 (length binding))
+                  (dolist (var (std/list:ensure-list (first binding)))
+                    (push var null-bindings))
+                  (destructuring-bind (var-or-vars form) binding
+                    (push `(,(std/list:ensure-list var-or-vars) ,form)
+                          mv-bindings))))
+        (symbol (push binding null-bindings))))
+    (values (reverse mv-bindings)
+            (reverse null-bindings))))
 
 (defmacro %%%plet (kernel predicate spawn-count bindings body)
   ;; Putting the body code into a shared dynamic-extent function
@@ -259,19 +284,19 @@
       (std/thread::unwrap-result first))
     (values-list results)))
 
-(defun call-inside-worker (kernel fn)
+(defun call-inside-worker (pool fn)
   (declare (optimize (speed 3) (safety 3)))
   (declare (type function fn))
-  (let ((channel (let ((*kernel* kernel)) (make-instance 'channel))))
+  (let ((channel (make-instance 'channel :pool pool)))
     (std/thread::submit-work channel (lambda () (multiple-value-list (funcall fn))))
     (values-list (std/thread::receive-result channel))))
 
-(defun call-impl-fn (kernel impl)
+(defun call-impl-fn (pool impl)
   (declare (optimize (speed 3) (safety 3)))
   (declare (type function impl))
-  (if (or std/thread::*worker* (use-caller-p kernel))
+  (if (or std/thread::*worker* (boundp '*kernel*))
       (call-with-toplevel-handler impl)
-      (call-inside-worker kernel impl)))
+      (call-inside-worker pool impl)))
 
 (declaim (inline unsplice))
 (defun unsplice (form)
@@ -279,11 +304,88 @@
 
 (defvar *registration-lock* (make-mutex :name "registration"))
 
+(defconstant +checked-key+ 'checked-key)
+(defconstant +unchecked-key+ 'unchecked-key)
+
+(defvar *registered-names* nil)
+
+(defun symbolicate/package (package &rest string-designators)
+  "Concatenate `string-designators' then intern the result into `package'."
+  (let ((*package* (find-package package)))
+    (apply #'symbolicate string-designators)))
+
+(defun symbolicate/no-intern (&rest string-designators)
+  "Concatenate `string-designators' then make-symbol the result."
+  (format-symbol nil "~{~a~}" string-designators))
+
+(defun unchecked-name (name)
+  ;; We could intern this into a private package and maintain an alist
+  ;; of (public . private) package pairs, but that seems
+  ;; over-engineered. Anonymous packages don't exist anyway.
+  (sb-int:symbolicate (symbol-package name) '#:%%%%.defpun. name) )
+
+(defun register-name (name)
+  (pushnew name *registered-names*))
+
+(defun register-fn (name)
+  (setf (get name +checked-key+) (symbol-function name))
+  (setf (get name +unchecked-key+) (symbol-function (unchecked-name name))))
+
+(defun registered-fn-p (name)
+  (get name +checked-key+))
+
+(defun valid-registered-fn-p (name)
+  (and (fboundp name)
+       (eq (symbol-function name)
+           (get name +checked-key+))
+       (fboundp (unchecked-name name))
+       (eq (symbol-function (unchecked-name name))
+           (get name +unchecked-key+))))
+
+;;; a name may be registered without having a corresponding function
+(defun valid-registered-name-p (name)
+  (and (symbol-package name)
+       (or (not (registered-fn-p name))
+           (valid-registered-fn-p name))))
+
+(defun delete-stale-registrations ()
+  (setf *registered-names*
+        (remove-if-not #'valid-registered-name-p *registered-names*)))
+
+(defun registered-macrolets (kernel)
+  (loop for name in *registered-names*
+        collect `(,name (&rest args)
+                   `(,',(unchecked-name name) ,',kernel ,@args))))
+
+(defmacro declaim-defpun (&rest names)
+  "See `defpun'."
+  ;; This is used outside of the defpun macro.
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (with-mutex (*registration-lock*)
+       ,@(loop for name in names
+               collect `(register-name ',name)))))
+
+(defun delete-registered-names (names)
+  ;; This is used outside of the defpun macro.
+  (with-mutex (*registration-lock*)
+    (setf *registered-names* (set-difference *registered-names* names))))
+
+(defmacro with-parsed-body ((body declares &optional docstring) &body own-body)
+  "Pop docstring and declarations off `body' and assign them to the
+variables `docstring' and `declares' respectively. If `docstring' is
+not present then no docstring is parsed."
+  (if docstring
+      `(multiple-value-bind (,body ,declares ,docstring)
+           (sb-int:parse-body ,body t)
+         ,@own-body)
+      `(multiple-value-bind (,body ,declares) (parse-body ,body)
+         ,@own-body)))
+
 (defmacro define-defpun (defpun doc defun &rest types)
   `(defmacro ,defpun (name lambda-list ,@types &body body)
      ,doc
      (with-parsed-body (body declares docstring)
-       (with-lock-held (*registration-lock*)
+       (with-mutex (*registration-lock*)
          ;; these two calls may affect the registered macrolets in the
          ;; return form below
          (delete-stale-registrations)
@@ -306,7 +408,7 @@
                 (let ((,kernel (check-kernel)))
                   (call-impl-fn ,kernel (lambda () (call-impl ,kernel)))))
               (eval-when (:load-toplevel :execute)
-                (with-lock-held (*registration-lock*)
+                (with-mutex (*registration-lock*)
                   (register-fn ',name)))
               ',name))))))
 
