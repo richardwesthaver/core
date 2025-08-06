@@ -55,6 +55,7 @@
      ,@body))
 
 (defun fulfill-promise (obj fn)
+  (declare (function fn))
   (loop while (and (promise-availablep obj) (eq (promise-result obj) +no-result+))
         do (with-unfulfilled* obj
              (setf (promise-availablep obj) nil)
@@ -87,6 +88,7 @@
   (fulfill-future-values fut (list (std/condition:wrap-error err))))
 
 (defun fulfill-future (obj fn)
+  (declare (function fn))
   (with-unfulfilled* obj
     ;; task has been stolen from pool
     (setf (future-canceledp obj) t)
@@ -191,55 +193,3 @@ immediately, with `body' being ignored."
           :report "Set promise value(s)."
           :interactive (lambda () (std/condition::interact "Promise value(s): "))
           (setf result values))))))
-
-;;; Async Tree
-(define-condition async-tree-error (error)
-  ((id :initarg :id :reader async-tree-error-id)))
-
-(define-condition async-tree-redefinition-error (async-tree-error)
-  ()
-  (:report
-   (lambda (err stream)
-     (format stream "async-tree function redefined: ~a" (async-tree-error-id err))))
-  (:documentation
-   "Attempted to redefine a node's function."))
-
-(define-condition async-tree-undefined-function-error (async-tree-error)
-  ((refs :initarg :refs :initform nil :reader async-tree-error-refs))
-  (:report
-   (lambda (err stream)
-     (format stream "Function not found in async-tree: ~a" (async-tree-error-id err))
-     (when-let ((refs (async-tree-error-refs err)))
-       (format stream "~%Referenced by: ~{~a~^ ~}" refs))))
-  (:documentation
-   "Attempted to execute a node which had no function."))
-
-(define-condition async-tree-lambda-list-keyword-error (async-tree-error)
-  ((llks :initarg :llks :reader async-tree-error-llks))
-  (:report
-   (lambda (err stream)
-     (format stream
-             "Function arguments in `async-tree' cannot contain lambda list ~
-              keywords.~%In definition of ~a found: ~{~s~^ ~}"
-             (async-tree-error-id err)
-             (async-tree-error-llks err))))
-  (:documentation
-   "Lambda list keywords found in function definition."))
-
-(defstruct async-node
-  id
-  (kernel nil)
-  (children nil)
-  (parents nil)
-  (lock-level 0)
-  (children-done-p nil)
-  (result +no-result+))
-
-;; ...
-
-(declaim (inline async-tree))
-(defstruct async-tree
-  (nodes (make-hash-table :test 'eql) :type hash-table)
-  (queue (make-queue) :type queue)
-  (pending 0 :type integer)
-  (lock (make-mutex) :type mutex))

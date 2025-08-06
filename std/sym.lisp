@@ -31,7 +31,7 @@ Example:
   "Intern NAME in PACKAGE if it exists, else return a fresh symbol of the same name."
   (values
    (if package
-       (intern name (if (eq t package) *package* package))
+       (intern name (if (eq t package) *package* (string package)))
        (make-symbol name))))
 
 (declaim (inline format-symbol))

@@ -322,7 +322,7 @@
   ;; We could intern this into a private package and maintain an alist
   ;; of (public . private) package pairs, but that seems
   ;; over-engineered. Anonymous packages don't exist anyway.
-  (sb-int:symbolicate (symbol-package name) '#:%%%%.defpun. name) )
+  (sb-int:symbolicate (package-name (symbol-package name)) '#:%%%%.defpun. name))
 
 (defun register-name (name)
   (pushnew name *registered-names*))
