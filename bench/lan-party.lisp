@@ -4,10 +4,8 @@
 
 ;;; Code:
 (in-package :std-user)
-(defpkg :bench/net/lan-party
-  (:nicknames :bench/lan-party)
+(defpkg :bench/lan-party
   (:use :cl :std :net/srv/udp :log :json :obj :srv))
-(in-package :bench/net/lan-party)
-
+(in-package :bench/lan-party)
 ;; (make-instance 'udp-server)
 (defclass lan-node (udp-service) ())

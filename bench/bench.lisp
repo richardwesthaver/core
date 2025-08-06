@@ -8,8 +8,7 @@
 ;; (setf (sb-ext:bytes-consed-between-gcs) 25000000)
 (defun run-benchmark (bench)
   (ecase bench
-    (:db-stress (in-package :bench/db/stress))
+    (:stress (in-package :bench/stress))
     (:tpc-h (bench/tpc-h:tpc-h-benchmark))
-    (:db-log (in-package :bench/db/log))
-    (:lan-party 
-     (start (make-instance 'bench/net/lan-party::lan-node)))))
+    (:lan-party (start (make-instance 'bench/lan-party::lan-node)))))
+     

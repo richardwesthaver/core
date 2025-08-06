@@ -1,4 +1,4 @@
-;;; json.lisp --- DAT/JSON Benchmarks
+;;; serde.lisp --- Serialization Benchmarks
 
 ;;; Code:
 (defpackage :core/bench/json

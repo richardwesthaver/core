@@ -36,21 +36,14 @@
   :depends-on (:std :rt :core)
   :components ((:module "bench"
                 :components ((:file "pkg")
-                             (:module "net"
+                             (:file "lan-party")
+                             (:file "stress")
+                             (:module "tpc-h"
                               :components
-                              ((:file "lan-party")))
-                             (:module "db"
-                              :components
-                              ((:file "log")
-                               (:file "stress")
-                               (:module "tpc-h"
-                                :components
-                                ((:file "pkg")
-                                 (:file "dbgen")
-                                 (:file "tpc-h")))))
-                             (:module "dat"
-                              :components
-                              ((:file "json")))
+                              ((:file "pkg")
+                               (:file "dbgen")
+                               (:file "tpc-h")))
+                             (:file "serde")
                              (:module "trivial"
                               :components
                               ((:file "array")
