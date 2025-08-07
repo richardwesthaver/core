@@ -1,4 +1,5 @@
 ;;; std.asd --- standard library
+(require :sb-cover)
 (defsystem :rt
   :depends-on (:std :log :dat :sb-sprof)
   :components ((:file "pkg")

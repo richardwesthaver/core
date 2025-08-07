@@ -341,6 +341,12 @@ consing."
        do (%checked-compile-and-assert-one-case
            form optimize function args-thunk values test allow-conditions))))
 
+(sb-int:defconstant-eqx +optimization-quality-names+
+    '(speed safety debug compilation-speed space) #'equal)
+
+(sb-int:defconstant-eqx +optimization-quality-keywords+
+    '(:speed :safety :debug :compilation-speed :space) #'equal)
+
 (declaim (ftype (function #.`(function
                               &key
                               ,@(mapcar #'list +optimization-quality-keywords+
@@ -348,12 +354,6 @@ consing."
                               (:filter function)))
                 map-optimization-quality-combinations
                 map-optimize-declarations))
-
-(sb-int:defconstant-eqx +optimization-quality-names+
-    '(speed safety debug compilation-speed space) #'equal)
-
-(sb-int:defconstant-eqx +optimization-quality-keywords+
-    '(:speed :safety :debug :compilation-speed :space) #'equal)
 
 (deftype optimization-quality-range-designator ()
   '(or (eql nil)                                ; skip quality

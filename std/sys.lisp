@@ -450,7 +450,12 @@ work is done by sb-vm:hexdump in the interesting cases."
 
 ;;; FASLs
 (definline check-fasl-file-header (path)
+  "Return the fasl-header of file at PATH."
   (with-open-file (f path :element-type 'unsigned-byte) (sb-fasl::check-fasl-header f)))
+
+(defun fasl-file-header= (a b)
+  "Return T if A and B are paths to fasl files with equivalent headers."
+  (equal (check-fasl-file-header a) (check-fasl-file-header b)))
 
 ;;; Tags
 (eval-always

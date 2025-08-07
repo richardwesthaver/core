@@ -158,6 +158,7 @@
     (use-package :std-user)
     (println "Welcome to SKEL")
     (cli/linedit:install-repl :wrap-current t :history "/tmp/skel.history" :killring "/tmp/skel.killring")
+    (init-skel)
     (sb-impl::toplevel-repl nil)))
 
 (defcmd skc-shell () (sk-shell))

@@ -570,6 +570,7 @@
    :+lowtags+ :+widetags+
    :open-fasl-output :close-fasl-output
    :check-fasl-header
+   :check-fasl-file-header
    :*show-fops-p*
    :make-unbound-marker
    :*external-formats*
