@@ -48,7 +48,7 @@
   (:documentation "A Worker which stores an additional priority-queue of TASKS."))
 
 ;;; Task
-(defclass task (kernel-object)
+(defkernel task (kernel-object)
   ((state :initform nil :initarg :state :accessor task-state))
   (:documentation "This object represents a single unit of work to be done in a single thread by
 some worker. Tasks are typically distributed from the pool, but workers may
@@ -57,8 +57,7 @@ task is assigned, the 'owner', i.e. the worker that is assigned this task, may
 modify the object. When the work associated with a task is complete, the owner
 is responsible for indicating in the state slot the result of the computation.
 
-CURRENTLY, tasks are funcallable kernels.")
-  (:metaclass kernel-class))
+CURRENTLY, tasks are funcallable kernels."))
 
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)
@@ -75,10 +74,9 @@ CURRENTLY, tasks are funcallable kernels.")
   (run-task worker self))
 
 ;;;; Scheduled Tasks
-(defclass scheduled-task (task)
+(defkernel scheduled-task (task)
   ((schedule :initarg :schedule :initform (get-universal-time) :accessor task-schedule))
-  (:documentation "A task object with an associated schedule.")
-  (:metaclass kernel-class))
+  (:documentation "A task object with an associated schedule."))
 
 (defmethod run-object ((self scheduled-task) &key time repeat absolute-p catch-up worker name)
   (sb-ext:schedule-timer
@@ -124,3 +122,8 @@ CURRENTLY, tasks are funcallable kernels.")
 
 ;; RESEARCH 2025-07-26: 
 ;;; Task Scheduler?
+;;; Async-*
+(defkernel async-task (task) ()
+  (:documentation "Asynchronous tasks compatible with the future/promise API in STD/ASYNC. Tasks
+are scheduled and executed with the current *THREAD-POOL*."))
+

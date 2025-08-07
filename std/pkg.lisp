@@ -382,9 +382,9 @@
   (:recycle :sb-int)
   (:import-from :sb-int 
    :ensure-gethash :map-hashset 
-   :hashset-find :hashset-remove 
+   :hashset-find :hashset-remove
    :hashset-insert :hashset-count
-   :psxhash)
+   :psxhash :make-hashset)
   (:import-from :std/prim :definline)
   (:shadowing-import-from :sb-lockless :endp)
   (:import-from :sb-lockless
@@ -407,7 +407,8 @@
    :*global-hash* :djb
    :hash-object :hash-object-address
    :dumb-string-hash :table
-   :map-hashset :hashset-find :hashset-remove :hashset-insert :hashset-count :psxhash))
+   :map-hashset :hashset-find :hashset-remove :hashset-insert :hashset-count :psxhash
+   :make-hashset))
 
 (defpkg :std/curry
   (:use :cl)
@@ -711,7 +712,7 @@
    :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
    :*backend-predicate-types* :*backend-type-predicates*
    :*compile-progress* :*compile-component-hook* :primitive-type :primitive-type-of
-   :primitive-type-name :primitive-object-size)
+   :primitive-type-name :primitive-object-size :find-saetp :find-saetp-by-ctype)
   (:import-from :sb-vm :*register-arg-tns* :*primitive-objects*
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
@@ -726,7 +727,8 @@
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
    :vop :primitive-type-name-of :ctype-of :type-specifier
-   :primitive-object-size :backend-primitive-type))
+   :primitive-object-size :backend-primitive-type :find-saetp :find-saetp-by-ctype)
+  (:recycle :sb-c))
 
 (defpkg :std/serde
   (:use :cl :std/sys)
@@ -817,11 +819,13 @@
   (:use :cl :sb-pcl)
   (:use-reexport :sb-mop)
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
+  (:import-from :std/hash-table :make-hashset :hashset-find :hashset-insert :psxhash)
   (:import-from :sb-ext :without-package-locks)
   (:import-from :std/macs :eval-always)
   (:import-from :std/prim :definline)
   (:shadow :reset)
   (:export :list-slot-values-using-class
+   :defverb :*verbs*
    :list-class-methods :list-class-slots :ensure-finalized :subclassp :write-object :start 
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
@@ -832,7 +836,8 @@
    :upgrade :version
    :status :validate
    :lock :bind
-   :started-p))
+   :assignee :started-p
+   :verbp))
 
 (defpkg :std/seq
   (:use :cl)

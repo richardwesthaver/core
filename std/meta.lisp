@@ -5,54 +5,108 @@
 ;;; Code:
 (in-package :std/meta)
 
+;;; Defverb
+(sb-ext:defglobal *verbs* nil)
+
+(defun register-verb (v) (pushnew v *verbs* :test #'equal :key #'generic-function-name))
+
+(defmacro defverb (name args &rest props)
+  "Like DEFGENERIC but specifically designed for verbs. The resulting function
+object is pushed to *VERBS* and PROPS may contain the following additional
+properties:
+
+:ACCESSOR - when non-nil automatically define and register (setf NAME) as a
+generic function too. Any :METHOD properties will only apply to the generic
+function NAME and be skipped for (setf NAME)."
+  (let* ((a (find :accessor props :key #'car)))
+    (setf props (remove a props))
+    `(progn
+       (defgeneric ,name ,args ,@props)
+       (register-verb (function ,name))
+     ,@(when a
+         `((defgeneric (setf ,name) ,(cons 'new args) ,@(remove :method props :key #'car))
+           (register-verb (function (setf ,name))))))))
+
+(definline map-verbs (f)
+  "Map F over *VERBS*."
+  (mapcar f *verbs*))
+
+(defun verbp (v)
+  "Return T if V is the name of a verb."
+  (when (member v *verbs* :key 'generic-function-name :test 'equal) t))
+
+(defun setf-verbp (v)
+  "Return T if V is a setf-able verb."
+  (when (member `(setf ,v) *verbs* :key 'generic-function-name :test 'equal) t))
+
 ;; make-specializer-form-using-class
 ;; make-method-lambda-using-specializers
-(defgeneric start (self)
+(defverb start (self)
   (:documentation "Start object SELF."))
-(defgeneric started-p (self)
+(defverb started-p (self)
   (:documentation "Return non-nil if object SELF has been started."))
-(defgeneric stop (self &key &allow-other-keys)
+(defverb stop (self &key &allow-other-keys)
   (:documentation "Stop object SELF."))
-(defgeneric stopped-p (self)
+(defverb stopped-p (self)
   (:documentation "Return non-nil if object SELF has been stopped."))
-(defgeneric shutdown (self)
+(defverb shutdown (self)
   (:documentation "Shutdown object SELF."))
-(defgeneric reset (self &rest args &key &allow-other-keys)
+(defverb reset (self &rest args &key &allow-other-keys)
   (:documentation "Reset object SELF."))
-(defgeneric data (self)
+(defverb data (self)
+  (:accessor t)
   (:documentation "Return the data associated with SELF."))
-(defgeneric (setf data) (new self))
-(defgeneric name (self)
+(defverb name (self)
+  (:accessor t)
   (:method ((self t))
     (string self))
   (:documentation "Return the name of object SELF."))
-(defgeneric (setf name) (new self))
-(defgeneric validate (obj self &key &allow-other-keys)
+(defverb validate (obj self &key &allow-other-keys)
   (:documentation "Validate OBJ against SELF."))
-(defgeneric status (self &key &allow-other-keys)
+(defverb status (self &key &allow-other-keys)
   (:documentation "Return the status of SELF."))
-(defgeneric tags (self)
+(defverb tags (self)
   (:documentation "Return the tags associated with object SELF."))
+(defverb exec (self)
+  (:documentation "Execute object SELF."))
+(defverb explore (self &key &allow-other-keys)
+  (:documentation "Explore object SELF."))
+(defverb version (self)
+  (:documentation "Return the version of object SELF."))
+(defverb lock (self)
+  (:documentation "Return the lock associated with SELF."))
+(defverb upgrade (self)
+  (:documentation "Return the upgrade-function associated with object SELF."))
+(defverb bind (self)
+  (:accessor t)
+  (:documentation "Return the bindings associated with object SELF."))
+(defverb assign (self assignee)
+  (:documentation "Assign SELF to ASSIGNEE."))
+(defverb copy (from to)
+  (:documentation "Copy the contents of FROM into TO. Returns TO.")
+  (:method :before ((x array) (y array))
+    (assert (tree-equal (array-dimensions x) (array-dimensions y))
+            nil 'dimension-mismatch))
+  (:method ((from cons) (to cons))
+    (do ((flst from (cdr flst))
+         (tlst to (cdr tlst)))
+        ((or (null flst) (null tlst)))
+      (setf (car tlst) (car flst)))
+    to)
+  (:method ((from t) (to cons))
+    (mapl #'(lambda (lst) (rplaca lst from)) to)
+    to))
+
+(defverb swap (from to)
+  (:documentation "Swap the contents of FROM with the contents of TO, returning TO."))
+
 (defgeneric run-object (self &key &allow-other-keys)
   (:documentation "Explicitly run the object SELF."))
-(defgeneric exec (self)
-  (:documentation "Execute object SELF."))
-(defgeneric explore (self &key &allow-other-keys)
-  (:documentation "Explore object SELF."))
+
 (defgeneric write-object (self stream &key &allow-other-keys)
   (:documentation "Write object SELF to STREAM.")
   (:method ((self t) (stream t) &key)
     (write self :stream stream)))
-(defgeneric version (self)
-  (:documentation "Return the version of object SELF."))
-(defgeneric lock (self)
-  (:documentation "Return the lock associated with SELF."))
-(defgeneric upgrade (self)
-  (:documentation "Return the upgrade-function associated with object SELF."))
-(defgeneric bind (self)
-  (:documentation "Return the bindings associated with object SELF."))
-(defgeneric (setf bind) (new self)
-  (:documentation "Set the bindings associated with object SELF to NEW."))
 
 (defun slot-boundp* (self slot)
   "Return T if SLOT is bound in object SELF, otherwise return NIL."
@@ -74,24 +128,6 @@
   (:documentation "Return a copy of object SELF.")
   (:method ((self standard-object))
     (shallow-copy-object self)))
-
-(defgeneric copy (from to)
-  (:documentation "Copy the contents of FROM into TO. Returns TO.")
-  (:method :before ((x array) (y array))
-    (assert (tree-equal (array-dimensions x) (array-dimensions y))
-            nil 'dimension-mismatch))
-  (:method ((from cons) (to cons))
-    (do ((flst from (cdr flst))
-         (tlst to (cdr tlst)))
-        ((or (null flst) (null tlst)))
-      (setf (car tlst) (car flst)))
-    to)
-  (:method ((from t) (to cons))
-    (mapl #'(lambda (lst) (rplaca lst from)) to)
-    to))
-  
-(defgeneric swap (from to)
-  (:documentation "Swap the contents of FROM with the contents of TO, returning TO."))
 
 (defun list-indirect-class-methods (class)
   "List all indirect methods of CLASS."
@@ -151,6 +187,9 @@ Example:
          ,@body))))
 
 ;; TODO 2023-09-09: slot exclusion from dynamic var
+(defvar *ignored-slots* nil
+  "A list of slot names which may be ignored. See the function LIST-SLOT-VALUES-USING-CLASS.")
+
 (defun list-slot-values-using-class (class obj slots &optional nullp unboundp)
   "List the values of SLOTS bound in OBJ according to CLASS. When NULLP is T also
 include NIL values. Likewise with UNBOUNDP for unbound slot values."

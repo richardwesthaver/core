@@ -69,3 +69,7 @@ restarts is provided. *KERNEL* is returned."
           (check-type value kernel)
           (setf *kernel* value))))
   *kernel*)
+
+(defmacro defkernel (name supers slots &rest opts)
+  "Like DEFCLASS but for the KERNEL-CLASS metaclass."
+  `(defclass ,name ,supers ,slots ,@`((:metaclass kernel-class) ,@opts)))

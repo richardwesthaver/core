@@ -38,8 +38,8 @@
  (all
   (%stash
    psl.dat x11.lisp lapack-ffi.lisp parquet.thrift
-   build-c
-   build-gui-core))
+   build-c build-core
+   deploy))
  (upstream () 
   (let ((tmp "/tmp/core/"))
    (probe-delete-directory tmp)
@@ -212,27 +212,19 @@
     (asdf:make :bin/skc))
    (move-file "bin/skc" ".stash/skc")))
  (core ()
-  (:build (%stash) 
+  (:build (%stash)
    (with-sbcl (:noinform t :quit t :input t)
     (let ((sb-ext:*block-compile-default* t))
-     (asdf:make :bin/core)))
-   (move-file "bin/core" ".stash/core"))
-  (:build-gui (%stash)
-   (with-sbcl (:noinform t :quit t :input t)
-    (let ((sb-ext:*block-compile-default* t))
-     (push :gui *features*)
      (asdf:make :bin/core)))
    (move-file "bin/core" ".stash/core"))
   (:compile () (std:compile-lisp :core :force t :verbose t))
   (:install ()
    (with-sudo "install -C -m 755 .stash/core /usr/local/bin/core")
    (println "core -> /usr/local/bin/")
-   (loop for i in '("skel" "homer" "packy" "mpk")
+   (loop for i in '("skel" "homer" "packy" "mpk" "pod")
     while i
     do (with-sudo (format nil "ln -sf /usr/local/bin/core /usr/local/bin/~A" i))
-    do (println (format nil "~A -> core -> /usr/local/bin/" i))))
-  (:link-pod () 
-   (with-sudo "ln -sf /usr/local/bin/core /usr/local/bin/pod")))
+    do (println (format nil "~A -> core -> /usr/local/bin/" i)))))
  (tests ()
   (:run ()
    (asdf:load-system :core/tests)
@@ -285,7 +277,7 @@
  (dist-source ()
   (with-directory ".."
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf ./core/core.tar.zst core/$#))
- (deploy (default dist)
+ (deploy (dist)
   (move-file ".stash/core.tar.zst" "/opt/store/packy/dist/x86_64-unknown-linux-gnu/core.tar.zst")
   (sk-make *skel-project* :dist-source)
   (move-file "core.tar.zst" "/opt/store/packy/src/core.tar.zst")))
