@@ -716,6 +716,7 @@
   (:import-from :sb-vm :*register-arg-tns* :*primitive-objects*
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
+  (:import-from :sb-x86-64-asm :ea :machine-ea)
   (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
    :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions :def-ir1-translator
    :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
@@ -727,7 +728,10 @@
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
    :vop :primitive-type-name-of :ctype-of :type-specifier
-   :primitive-object-size :backend-primitive-type :find-saetp :find-saetp-by-ctype)
+   :primitive-object-size :backend-primitive-type :find-saetp :find-saetp-by-ctype
+   :deep-size :get-simple-fun-instruction-model :asm
+   :checked-compile :runtime :asm-search :inspect-ir
+   :ea :machine-ea)
   (:recycle :sb-c))
 
 (defpkg :std/serde
@@ -1115,6 +1119,7 @@
   (:use :cl)
   (:import-from :std/type :octet)
   (:export
+   :shuffle
    :random-elt
    :random-ref
    :random-char

@@ -47,3 +47,17 @@
        ,@(loop for x from 0 to length
                for statement in statements
                collect `(,x ,statement)))))
+
+;; from SBCL tests
+(defun shuffle (sequence)
+  "Shuffle the elements of SEQUENCE."
+  (typecase sequence
+    (list
+     (coerce (shuffle (coerce sequence 'vector)) 'list))
+    (vector ; destructive
+     (let ((vector sequence))
+       (loop for lim from (1- (length vector)) downto 0
+             for chosen = (random (1+ lim))
+             unless (= chosen lim)
+             do (rotatef (aref vector chosen) (aref vector lim)))
+       vector))))
