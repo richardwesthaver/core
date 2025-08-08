@@ -273,6 +273,7 @@ that was created in `body'."
 
 (defgeneric designate-oracle (host guest)
   (:documentation "Designate an oracle GUEST for HOST."))
+
 (defgeneric assign-supervisor (worker supervisor)
   (:documentation "Assign a SUPERVISOR for WORKER."))
 
@@ -335,7 +336,7 @@ keywords modify the bindings in effect."
 
 ;; (describe sb-thread::*session*)
 
-;; make-listener-thread 
+;; make-listener-thread
 
 ;; with-progressive-timeout
 
@@ -358,7 +359,7 @@ keywords modify the bindings in effect."
 		   (t (sb-vm::sap-ref-lispobj sap offset))))
 	   (show (sym val)
 	     (declare (type fixnum sym))
-	     (let ((*print-right-margin* 128)
+	     (let ((*print-right-margin* 80)
 		   (*print-lines* 4))
 	       (format t " ~3d ~30a : ~s~%"
 		       #+sb-thread (ash sym (- sb-vm:word-shift))
@@ -431,7 +432,6 @@ keywords modify the bindings in effect."
     (remhash native-thread .known-threads.)))
 
 ;; Forms are evaluated in the new thread or in the calling thread?
-
 (macrolet
     ((defbindings (name docstring &body initforms)
 	 (check-type docstring string)
@@ -465,46 +465,13 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
     (*read-default-float-format* 'double-float)
     (*read-eval*                 nil)
     (*read-suppress*             nil)
+    (sb-ext:*suppress-print-errors* nil)
+    (sb-ext:*print-vector-length* nil)
     (*readtable*                 (copy-readtable nil))))
 
 (defun compute-special-bindings (bindings)
   (remove-duplicates (append bindings +standard-io-bindings+)
 		     :from-end t :key #'car))
-
-(defvar *%current-thread*)
-
-(defun establish-dynamic-env (thread function special-bindings trap-conditions)
-  "Return a closure that binds the symbols in SPECIAL-BINDINGS and calls
-FUNCTION."
-  (let* ((bindings (compute-special-bindings special-bindings))
-	 (specials (mapcar #'car bindings))
-	 (values (mapcar (lambda (f) (eval (cdr f))) bindings)))
-    (std/macs:named-lambda %establish-dynamic-env-wrapper ()
-      (progv specials values
-	(with-slots (%lock %return-values %exit-condition)
-	    thread
-	  (flet ((record-condition (c)
-		   (with-mutex (%lock)
-		     (setf %exit-condition c)))
-		 (run-function ()
-		   (let ((*%current-thread* nil))
-		     ;; Wait until the thread creator has finished creating
-		     ;; the wrapper.
-		     (with-mutex (%lock)
-		       (setf *%current-thread* (%get-thread-wrapper *%current-thread*)))
-		     (let ((retval
-			     (multiple-value-list (funcall function))))
-		       (with-mutex (%lock)
-			 (setf %return-values retval))
-		       retval))))
-	    (if trap-conditions
-		(handler-case
-		    (values-list (run-function))
-		  (condition (c)
-		    (record-condition c)))
-		(handler-bind
-		    ((condition #'record-condition))
-		  (values-list (run-function))))))))))
 
 ;;; Channel
 (defstruct (channel (:constructor %make-channel))

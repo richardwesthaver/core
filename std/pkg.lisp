@@ -536,7 +536,7 @@
    :make-unbound-marker)
   (:import-from :std/prim :definline)
   (:import-from :sb-impl :*external-formats*)
-  (:import-from :sb-vm :list-allocated-objects :fun-signature= 
+  (:import-from :sb-vm :list-allocated-objects :fun-signature=
    :map-allocated-objects :fset :*linkage-name-map* :ldb-monitor
    :map-immobile-objects :memory-usage :references-p :show-ctype-ctor-cache-metrics
    :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
@@ -655,7 +655,9 @@
    :cpu-vendor
    :get-real-time-seconds 
    :time-remaining 
-   :with-countdown))
+   :with-countdown
+   :*stash*
+   :*store*))
 
 (defpkg :std/bit
   (:use :cl)
@@ -997,7 +999,7 @@
   (:import-from :std/list :deletef)
   (:export
    :*default-spint-count*
-   :make-ephemerial-thread
+   :make-ephemeral-thread
    :*all-threads*
    :*worker-class*
    :*worker*
