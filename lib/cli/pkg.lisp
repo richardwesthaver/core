@@ -134,8 +134,7 @@
 
 (defpkg :cli/repl
   (:use :cl :std :cli/progress :cli/spark)
-  (:export :load-acl-repl :start-rl-repl
-           :default-toplevel-init))
+  (:export :load-acl-repl :start-rl-repl :make-toplevel-init))
 
 (defpkg :cli/ed
   (:use :cl :std :cli/env :ast :config)

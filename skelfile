@@ -194,7 +194,7 @@
  (ssl-certs () 
   #$openssl req -new -x509 -days 365 -subj / -keyout .stash/private-key.pem \
   -passout pass:1234 -out .stash/certificate.pem -outform PEM$#)
- (ssl-client-certs () 
+ (ssl-client-certs ()
   #$openssl req -new -nodes -x509 -days 365 -subj / \
   -keyout .stash/client-key.pem -outform PEM \
   -out .stash/client-cert.pem$#)
@@ -221,10 +221,10 @@
   (:install ()
    (with-sudo "install -C -m 755 .stash/core /usr/local/bin/core")
    (println "core -> /usr/local/bin/")
-   (loop for i in '("skel" "homer" "packy" "mpk" "pod")
+   (loop for i in '("skel" "homer" "mpk" "pod")
     while i
     do (with-sudo (format nil "ln -sf /usr/local/bin/core /usr/local/bin/~A" i))
-    do (println (format nil "~A -> core -> /usr/local/bin/" i)))))
+    do (println (format nil "~A -> /usr/local/bin/core" i)))))
  (tests ()
   (:run ()
    (asdf:load-system :core/tests)

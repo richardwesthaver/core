@@ -22,7 +22,12 @@ REPL."
 ;; (defmacro define-toplevel-init (name (props opts) &body body))
 ;; (defmacro define-toplevel-repl (name (props opts) &body body))
 
-(defun default-toplevel-init (&optional (package *package*))
+(defun make-toplevel-init (&key (package *package*) 
+                                (userinit #'sb-impl::userinit-pathname)
+                                (sysinit #'sb-impl::sysinit-pathname)
+                                default)
   "Default toplevel initializer - wraps SBCL init."
-  (with-package package
-    (sb-impl::toplevel-init)))
+  (setq *package* (find-package package)
+        sb-ext:*userinit-pathname-function* userinit
+        sb-ext:*sysinit-pathname-function* sysinit)
+  (when default (sb-impl::toplevel-init)))

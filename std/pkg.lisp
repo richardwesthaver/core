@@ -571,6 +571,7 @@
    :open-fasl-output :close-fasl-output
    :check-fasl-header
    :check-fasl-file-header
+   :featurep
    :*show-fops-p*
    :make-unbound-marker
    :*external-formats*
@@ -581,7 +582,7 @@
    :hexdump :hexdump-object
    :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
    :fixnum-tag-mask :n-fixnum-bits :word-shift :n-word-bytes
-   :n-machine-word-bytes :n-widetag-bits :widetag-mask :shake-packages
+   :n-machine-word-bytes :n-widetag-bits :widetag-mask
    :lowtag-of :widetag-of
    :most-positive-word
    :tune-image-for-dump

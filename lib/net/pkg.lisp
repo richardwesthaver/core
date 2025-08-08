@@ -470,7 +470,7 @@
 (setq *defpkg-hook* nil)
 
 (eval-always
-  (when (sb-int:featurep :swank)
+  (when (featurep :swank)
     #+quicklisp (ql:quickload '(:swank :swank-client))
     (load (asdf:system-relative-pathname :net "proto/swank.lisp"))
     (load (asdf:system-relative-pathname :net "proto/crew.lisp"))

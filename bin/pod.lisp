@@ -8,7 +8,6 @@
 (in-package :bin/pod)
 
 (defmain start-pod ()
-  (let ((sb-debug:*backtrace-frame-count* 8))
-    (with-cli ((package-cli :pod) :args (args))
-      (do-opts *cli*)
-      (do-cmd *cli*))))
+  (with-cli ((package-cli :pod) :args (args))
+    (do-opts *cli*)
+    (do-cmd *cli*)))

@@ -197,8 +197,11 @@ debug or die."
         (when verbose
           (format t "~&Dropped ~D symbols~%" n-dropped))
         (force-output)))))
-
+(export '(sb-impl::shake-packages))
 (in-package :std/sys)
+(sb-ext:without-package-locks 
+  (shadowing-import '(sb-impl::shake-packages))
+  (export '(sb-impl::shake-packages) :std/sys))
 
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)
