@@ -9,6 +9,7 @@
   (:use :cl :std :tree-sitter)
   (:export 
    :parse-file
+   :parse-string
    :lang-counts))
 
 (defpackage :syn/lang

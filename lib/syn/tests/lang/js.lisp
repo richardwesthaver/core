@@ -4,10 +4,21 @@
 
 ;;; Code:
 (in-package :syn/tests/lang)
-(defpackage :syn/tests/lang/js
-  (:use :cl :syn/tests/lang :syn/lang/js :syn/ts :std :rt))
-(in-package :syn/tests/lang/js)
-(defsuite :syn/lang/js)
-(in-suite :syn/lang/js)
+(in-suite :syn)
+(in-readtable :std)
+
+(defparameter *js-src*
+  #"(function() {
+        if (typeof URL === 'undefined' || typeof URLSearchParams === 'undefined') {
+            return;
+        }
+        if (!document.documentElement) {
+            return;
+        }
+        var defaultAtbWeeks = ['*']
+        var atbWeeks = typeof $STATS_ATB_WEEKS$ !== "undefined" ? $STATS_ATB_WEEKS$ : defaultAtbWeeks
+        document.documentElement.dataset.ntpStatsAtbWeeks = atbWeeks;
+    })();"#)
+
 (deftest js-src ()
-  (istype 'cons (parse-file :javascript (asdf:system-relative-pathname :core "../rust/ui/alik/sw.js"))))
+  (istype 'sb-alien::alien-value (parse-string :javascript *js-src*)))

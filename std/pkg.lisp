@@ -542,7 +542,18 @@
    :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
    :fixnum-tag-mask :n-fixnum-bits :word-shift :n-word-bytes
    :n-machine-word-bytes :n-widetag-bits :widetag-mask :most-positive-word
-   :lowtag-of :widetag-of :hexdump :print-allocated-objects)
+   :lowtag-of :widetag-of :hexdump :print-allocated-objects
+   :c-find-heap->arena :*arena-exhaustion-handler*
+   :arena :arena-p
+   :arena-bytes-used :arena-bytes-wasted
+   :arena-length :arena-userdata
+   :new-arena :destroy-arena
+   :hide-arena :unhide-arena
+   :switch-to-arena :rewind-arena
+   :unuse-arena :in-same-arena
+   :dump-arena-objects :arena-contents
+   :points-to-arena
+   :show-heap->arena)
   (:import-from :sb-sys :int-sap)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
    :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr :check-fasl-header 
@@ -656,6 +667,19 @@
    :get-real-time-seconds 
    :time-remaining 
    :with-countdown
+   ;; arenas
+   :c-find-heap->arena :*arena-exhaustion-handler*
+   :arena :arena-p
+   :arena-bytes-used :arena-bytes-wasted
+   :arena-length :arena-userdata
+   :new-arena :destroy-arena
+   :hide-arena :unhide-arena
+   :switch-to-arena :rewind-arena
+   :unuse-arena :in-same-arena
+   :dump-arena-objects :arena-contents
+   :points-to-arena
+   :show-heap->arena
+   ;; system paths
    :*stash*
    :*store*))
 

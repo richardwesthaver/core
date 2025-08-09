@@ -254,8 +254,8 @@
 
 ;;; Readers
 (define-code-reader
-  :file-reader read-gen-c-file
-  :string-reader read-gen-c-string
+  :file-reader read-c-file
+  :string-reader read-c-string
   :macro-character
   ((set-macro-character #\Space #'pre-process)
    (set-macro-character #\Tab #'pre-process)
@@ -264,8 +264,8 @@
 
 ;; Define a start-up function
 (define-code-processor gen-c
-  :file-reader   read-gen-c-file
-  :string-reader read-gen-c-string
+  :file-reader   read-c-file
+  :string-reader read-c-string
   :traverse
   (nested-ast-remover
    else-if-traverser

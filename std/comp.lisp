@@ -66,7 +66,7 @@ consing."
 ;;; to use the INST macro in front of each list.
 ;;; As a special case, if an atom is the symbol LABEL, it will be
 ;;; changed to a generated label. At most one such atom may appear.
-(defun asm (instructions)
+(defun %asm (instructions)
   (let ((segment (sb-assem:make-segment))
         (label))
     (sb-assem:assemble (segment 'nil)

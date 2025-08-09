@@ -18,7 +18,7 @@
 (defexpr dyadic-function (binary-expr) (op))
 
 ;; structure = (rank shape depth)
-(deftype apl-array-type () `(member :number :character :mixed))
+(deftype apl-array-type () `(member number character t))
 
 (defconstant +zilde+ :⍬)
 

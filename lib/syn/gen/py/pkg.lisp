@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; Only Python 3+ is supported.
+;; Python 3+ only
 
 ;;; Code:
 (defpackage :syn/gen/py

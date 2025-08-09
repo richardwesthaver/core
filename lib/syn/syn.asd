@@ -10,7 +10,8 @@
                 :components
                 ((:file "c")
                  (:file "js")
-                 (:file "rs")))
+                 (:file "rs")
+                 (:file "py")))
                (:module "gen"
                 :components
                 ((:file "pkg")
@@ -66,5 +67,7 @@
                   :components
                   ((:file "pkg")
                    (:file "c")
-                   (:file "rs"))))))
+                   (:file "rs")
+                   (:file "js")
+                   (:file "py"))))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :syn)))
