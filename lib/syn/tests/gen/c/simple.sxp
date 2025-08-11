@@ -1,5 +1,0 @@
-(in-package :c)
-(include <stdio.h>)
-(fn hello_world void () (printf "Hello, World!\\n"))
-(fn main int ()
- (hello_world))

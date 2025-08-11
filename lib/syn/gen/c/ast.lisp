@@ -375,8 +375,8 @@
                `(make-declaration-node (,type ,name))
                ;; type is list with type information
                `(make-declaration-node (,@type ,name))))
-         ;; type is single symbol
-         `(make-declaration-node (,name ,type)))
+          ;; type is single symbol
+          `(make-declaration-node (,name ,type)))
      :parameter
      (make-instance 'parameter-list
        :parameters

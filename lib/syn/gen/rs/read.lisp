@@ -54,5 +54,5 @@
   (rs-reader))
 (defmethod unload-gen ((self (eql :rs)))
   (init-gen nil)
-  (cl-reader))
+  (syn/gen/c:cl-reader))
 (defmethod gen-package ((self (eql :rs))) (find-package :syn/gen/rs/sym))

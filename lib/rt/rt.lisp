@@ -97,15 +97,18 @@ PROPS is a plist which currently accepts the following parameters:
 
 :BENCH - enable benchmarking of this test
 
-BODY is parsed with SB-INT:PARSE-BODY and will fill in documentation
-and declarations for the test body."
+:USE - a fixture name or object. If the value is a list then the car is a
+symbol which is bound to the CDR during BODY.
+
+BODY is parsed with SB-INT:PARSE-BODY and will fill in documentation and
+declarations for the test body."
   (destructuring-bind (pr documentation dec fn)
       (multiple-value-bind (forms dec documentation)
           ;; parse body with docstring allowed
           (parse-body (or body) :documentation t :whole t)
         `(,props ,documentation ,dec 
-                 ',(if-let ((fx (getf props :fx)))
-                     `((let ((*fx* (find-fixture ,fx)))
+                 ',(if-let ((fx (getf props :use)))
+                     `((with-fixture (,@fx)
                          ,@forms))
                      forms)))
     ;; TODO 2023-09-21: parse plist

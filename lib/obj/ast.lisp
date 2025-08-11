@@ -195,7 +195,7 @@ example."
   `(defclass! ,name ,(safe-superclasses 'expr supers) ,slots ,@opts))
 
 (defclass literal-expr (expr) 
-  ((val :initarg :val :accessor literal-val)))
+  ((val :initarg :val :accessor val)))
 (defmethod ast ((self literal-expr)) (literal-val self))
 (defclass logical-expr (expr) ())
 (defclass physical-expr (expr) ())

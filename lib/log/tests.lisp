@@ -20,9 +20,9 @@
     (istype 'thread (start fx))
     (istype 'string (format-message nil (log-message :error nil "test")))))
 
-(deftest simple-logger (:fx :logger)
+(deftest simple-logger (:use (fx :logger))
   "Test a simple LOGGER."
-  (issubclass 'pipe (class-of *fx*))
+  (istype 'logger-fixture fx)
   (log-message :info '(:foo :bar) "this is a test"))
 
 ;; TODO 2024-10-29: fix file loggers

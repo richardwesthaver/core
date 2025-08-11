@@ -29,7 +29,7 @@
    :*backup-readtable* :define-code-switches
    :define-code-switch :print-code
    :define-code-processor :define-code-reader
-   ;; :make-nodes :make-node
+   :make-nodes :make-node
    :build-swap-package
    :build-context-switches :*gen-warnings*
    :ast-traverser :with-code-printer

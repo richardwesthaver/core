@@ -79,7 +79,7 @@ case."
              (setf *code-reader* 'cl
                    *readtable* *backup-readtable*
                    (readtable-case *readtable*) *print-case*
-                   *package* *default-package*))))
+                   *package* (find-package *default-package*)))))
      (defun ,code-reader ()
        (setf *code-reader* 'gen)
        ,@macro-character

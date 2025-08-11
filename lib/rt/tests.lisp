@@ -46,7 +46,7 @@
   ;; todo
   (coverage-report))
 
-(deftest fixture (:fx "fx1")
+(deftest fixture (:use "fx1")
   (print *fx*))
 
 (deftest tmp ()

@@ -21,11 +21,10 @@
 ;;; Code:
 (defpackage :syn/gen/rs
   (:nicknames :gen/rs)
-  (:use :cl :syn/gen :cli/tools/rust :ast :id :std/pipe :std/meta :syn/gen/c)
+  (:use :cl :syn/gen :cli/tools/rust :ast :id :std/pipe :std/meta :std/seq :syn/gen/c)
   (:import-from :std :in-readtable :eval-always)
   (:import-from :doc :file-header)
   (:import-from :syn/gen/c :c-type)
-  (:shadow :cl-reader :else :body)
   (:export
    #:*rs-backend*
    #:*rs-symbols*

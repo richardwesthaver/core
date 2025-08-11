@@ -19,7 +19,7 @@
 ;;; Code:
 (defpackage :syn/gen/c
   (:nicknames :gen/c)
-  (:use :cl :syn/gen :std/pipe :std/meta :cli/tools/cc :cli/env :id :ast)
+  (:use :cl :syn/gen :std/pipe :std/seq :std/meta :cli/tools/cc :cli/env :id :ast)
   ;; (:shadowing-import-from :cl :type :float)
   (:export
    #:*c-backend*

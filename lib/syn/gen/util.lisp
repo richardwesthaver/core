@@ -11,8 +11,9 @@
 
 (defmacro with-codegen (lang &body body)
   "Enable the *GEN* reader for the duration of BODY."
-  `(unwind-protect (progn
-                     (load-gen ,lang)
-                     (funcall (gen-reader *gen*))
-                     ,@body)
+  `(unwind-protect
+        (progn
+          (load-gen ,lang)
+          (funcall (gen-reader *gen*))
+          ,@body)
      (unload-gen ,lang)))

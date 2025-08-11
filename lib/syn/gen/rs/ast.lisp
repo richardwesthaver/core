@@ -20,7 +20,9 @@
 (defexpr match (prefix-expression) ())
 (defexpr range () ())
 
-(defnode rs-function-definition (gen/c::function-definition) ())
+(defnode rs-function-definition (gen/c::function-definition) 
+  (visibility))
+
 ;;; Context Switches
 (build-context-switches
  :package :syn/gen/rs/sym
@@ -48,24 +50,30 @@
       `(make-instance 'infix-expression :op ',syn/gen::tag :members (make-nodes ,rest))))
 
 ;; FIX 2025-03-06: 
+(defun parse-rs-name-props (name)
+  (if (listp name) ; has props list
+      (values (car name) (cdr name))
+      (values name nil)))
+    
 (rs-syntax fn (name params type &body body &environment env)
   "Define a Rust function"
-  `(make-instance 'syn/gen/c::function-definition
+  (multiple-value-bind (name props) (parse-rs-name-props name)
+    `(make-instance 'syn/gen/c::function-definition
      ;; function name + type
-     :item ,(if (listp type)
-	        (let ((first (first type)))
-	          (if (and (not (listp first)) (std:fboundp! first env))
-	              ;; type is macro or function
-	              `(gen/c::make-declaration-node (,type ,name))
-	              ;; type is list with type information
-	              `(gen/c::make-declaration-node (,@type ,name))))
-                `(gen/c::make-declaration-node (,name ,type)))
-                
-     :parameter
-     (make-instance 'syn/gen/c::parameter-list
-       :parameters
-       (make-nodes ,params :prepend syn/gen/c::make-declaration-node))
-     :body
-     ,(when body
-	`(make-block ,body))))
+       ,@props
+       :item ,(if (listp type)
+	          (let ((first (first type)))
+	            (if (and (not (listp first)) (std:fboundp! first env))
+	                ;; type is macro or function
+	                `(gen/c::make-declaration-node (,type ,name))
+	                ;; type is list with type information
+	                `(gen/c::make-declaration-node (,@type ,name))))
+                  `(gen/c::make-declaration-node (,name ,type)))
+       :parameter
+       (make-instance 'syn/gen/c::parameter-list
+         :parameters
+         (make-nodes ,params :prepend syn/gen/c::make-declaration-node))
+       :body
+       ,(when body
+	  `(make-block ,body)))))
 

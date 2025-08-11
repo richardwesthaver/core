@@ -8,5 +8,6 @@
 .*[.]core$
 .*[.]elc$
 .*[.]zst$
+lib/syn/tests/gen/.*[.](c|rs|cu|cpp|js|py)$
 emacs/.*[.]html$
 [.]stash/.*

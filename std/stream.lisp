@@ -232,3 +232,10 @@ FILE-NAME."
     (error "Can't specify :DIRECTION for WITH-OUTPUT-TO-FILE."))
   `(with-open-file (,stream-name ,file-name :direction :output ,@args)
      ,@body))
+
+(defclass timestamped-stream (prefixed-character-output-stream) ()
+  (:default-initargs 
+   :prefix (lambda ()
+             (multiple-value-bind (secs us)
+                 (floor (get-internal-real-time) internal-time-units-per-second)
+               (format nil "~6,'0D.~6,'0D: " secs us)))))

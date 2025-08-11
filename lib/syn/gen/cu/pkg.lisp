@@ -14,7 +14,15 @@
 
 (in-package :syn/gen/cu)
 
-(defmethod load-gen ((self (eql :cu))) :cu)
+(defmethod load-gen ((self (eql :cu))) 
+  (init-gen :cu)
+  ;; (cu-reader)
+  )
+
+(defmethod unload-gen ((self (eql :cu))) 
+  (init-gen nil) 
+  (syn/gen/c:cl-reader))
+
 (defmethod gen-package ((self (eql :cu))) (find-package :syn/gen/cu))
 
 (defparameter *cu-backend*

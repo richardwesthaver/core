@@ -29,6 +29,10 @@
 
 ;; ref: https://www.flashforth.com/
 
+;; ref: http://krue.net/avrforth/
+
+;; ref: https://forth-standard.org/
+
 ;;; Code:
 (defpackage :syn/gen/forth
   (:nicknames :syn/forth)
@@ -45,7 +49,7 @@
 
 (defvar *forth-backend*
   (append *cl-symbols*
-          '(forth-word)))
+          '()))
 
 (export *forth-backend*)
 
@@ -62,4 +66,15 @@
   (:use :cl)
   (:import-from :syn/forth :forth-reader :read-forth-string :read-forth-file))
 
-(defclass forth-program (ast) ((env)))
+(defclass forth-stack () ())
+
+(defclass forth-data-stack (forth-stack) ())
+
+(defclass forth-control-stack (forth-stack) ())
+
+(defclass forth-return-stack (forth-stack) ())
+
+(defclass forth-program (ast) 
+  ((env)))
+
+;; @ !

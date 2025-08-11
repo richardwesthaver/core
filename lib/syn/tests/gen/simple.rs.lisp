@@ -1,3 +1,3 @@
 (in-package :rs)
 (fn main () ()
-    (+ 1 2))
+  (+ 1 2))

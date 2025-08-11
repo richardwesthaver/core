@@ -3,17 +3,18 @@
 ;; 
 
 ;;; Code:
-(in-package :syn/tests)
-
 (defpackage :syn/tests/gen
   (:use :cl :std :rt :syn/gen)
   (:export
    #:with-gen-test
    #:%in
    #:%out
-   #:%bin))
+   #:%bin
+   #:*gen-test-files*))
 
 (in-package :syn/tests/gen)
+
+(defvar *gen-test-files* (asdf:system-relative-pathname :syn "tests/gen/"))
 
 (defmacro with-gen-test (file &body body)
   `(let ((%in ,file)

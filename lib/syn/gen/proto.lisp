@@ -7,7 +7,10 @@
 
 (defvar *indent* "  ")
 (defgeneric load-gen (self))
-(defgeneric unload-gen (self))
+(defgeneric unload-gen (self)
+  (:method ((self t)) 
+    (setq *gen* nil)))
+
 (defgeneric gen-package (self))
 (defgeneric gen-reader (self))
 (defgeneric gen-reader-switch (self))
