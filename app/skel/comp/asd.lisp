@@ -61,7 +61,7 @@
 (defun sk-write-asd-components (module)
   (etypecase module
     (asdf:file-component
-     `(,(keywordicate (string-upcase (asdf:file-type module)))
+     `(,(std:keywordicate (string-upcase (asdf:file-type module)))
        ,(pathname-name (asdf:component-relative-pathname module))
        ,@(when-let ((x (asdf::component-if-feature module)))
            `(:if-feature ,x))

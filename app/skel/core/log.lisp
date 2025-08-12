@@ -41,15 +41,15 @@
             (open-columns* db)))
       (setq *skel-logger* lgr))))
 
-;; (funcall 'init-skel-db-logger)
+;; (funcall 'init-skel-logger)
 (defun sk-log-list (&optional level)
   (with-db (db :db (sink *skel-logger*) :open nil :close nil)
     (with-iter (it (iter db :column (find-column level db)))
-      (seek-to-first)
-      (loop while (iter-valid-p)
-            collect (cons (time:octets-to-timestamp (key)) 
-                          (sb-ext:octets-to-string (val)))
-            do (next)))))
+      seek-to-first
+      (loop while iter-valid-p
+            collect (cons (time:octets-to-timestamp key) 
+                          (sb-ext:octets-to-string val))
+            do (progn next)))))
 
 (defun sk-log-repair ()
   (if (and (boundp '*skel-logger*) *skel-logger*)

@@ -4,4 +4,4 @@
 (function hello_world void () (printf "Hello, World!\\n"))
 
 (function main int ()
- (hello_world))
+  (hello_world))

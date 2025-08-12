@@ -18,6 +18,7 @@
 (defnode function-call () (function arguments))
 (defmethod ast ((self function-call)) 
   (list (slot-value self 'function) (slot-value self 'arguments)))
+(defmethod val ((self function-call)) (ast self))
 (defnode src-location (ast) (line file info))
 (defexpr ident (literal-expr) ())
 (defmethod id ((self ident)) (val self))

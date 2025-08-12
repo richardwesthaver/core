@@ -61,15 +61,23 @@
   (slot-value self 'members))
 ;; - + -- ++ ! * &
 (defexpr prefix-expression () (op object))
+(defmethod val ((self prefix-expression)) 
+  (intern
+   (concatenate 
+    'string 
+    (string (val (slot-value self 'syn/gen/c::object)))
+    (string (slot-value self 'syn/gen/c::op)))))
 ;; - + -- ++ *
 (defexpr postfix-expression () (op object))
+(defaccessor val ((self postfix-expression)) (slot-value self 'syn/gen/c::object))
 ;; not ('!' defined as prefix)
 (defexpr not-expression () (value))
+(defaccessor val ((self not-expression)) (slot-value self 'syn/gen/c::value))
 ;; ? : 
 (defexpr conditional-expression () (test then else))
 ;; cast
 (defexpr cast-expression () (type object))
-
+(defaccessor val ((self cast-expression)) (slot-value self 'syn/gen/c::object))
 ;;; Statements
 ;; goto, continue, break return
 (defstmt jump-statement () (kind members))
