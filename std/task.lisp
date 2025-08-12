@@ -85,7 +85,7 @@ CURRENTLY, tasks are funcallable kernels."))
    :repeat-interval repeat :absolute-p absolute-p :catch-up catch-up))
 
 ;;; Job
-(defclass job (task)
+(defkernel job (task)
   ((tasks :initform (make-array 0 :element-type 'task :fill-pointer 0 :adjustable t)
           :type (array task *)
           :initarg :tasks
@@ -127,3 +127,6 @@ CURRENTLY, tasks are funcallable kernels."))
   (:documentation "Asynchronous tasks compatible with the future/promise API in STD/ASYNC. Tasks
 are scheduled and executed with the current *THREAD-POOL*."))
 
+;;; Simple Tasks
+(defkernel simple-task (task) ()
+  (:documentation "Simple Tasks support sync/async variants of task objects."))

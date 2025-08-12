@@ -1135,6 +1135,7 @@
    :*task*
    :*result*
    :task :job 
+   :async-task
    :scheduled-task
    :make-job
    :jobp :taskp :task))

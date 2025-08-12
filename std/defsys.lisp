@@ -16,8 +16,9 @@
 (in-package :std/defsys)
 (declaim (optimize speed))
 ;;; Conditions
-(define-condition defsys-error (error) ())
-(define-condition simple-defsys-error (simple-error) ())
+(define-condition defsys-condition () ())
+(define-condition defsys-error (error defsys-condition) ())
+(define-condition simple-defsys-error (simple-error defsys-condition) ())
 (defun defsys-error (format &rest args)
   (error 'simple-defsys-error :format-control format :format-arguments args))
 
@@ -26,9 +27,17 @@
 ;;; Actions
 ;;; Dependencies
 ;;; Systems
-(defclass sysdef () ())
+(defclass sysdef () ()
+  (:documentation "System Definition"))
 
 (defmacro defsys (name &body body)
+  "Define a SYS with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
+
+SYS objects register their own ASDF:SYSTEM objects as needed and provide the following extensions:
+
+- :MODULES     list of system-provided modules
+- :FEATURES    list of system-provided features
+"
   `(defsystem ,name ,@body))
 
 ;;; Plan

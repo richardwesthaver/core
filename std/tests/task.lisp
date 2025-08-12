@@ -6,19 +6,19 @@
 (in-package :std/tests)
 (in-suite :std)
 
-(deftest task-pool (:skip t)
-  "Task Pool tests."
-  (with-task-pool (tp :workers 4 :tasks 10)
-    (is (= 4 (length (workers tp))))
-    (is (> (std/task::mailbox-count (results tp)) 0))
-    (dotimes (i 4)
-      (is (null (std/task::receive-message (results tp)))))
-    (is (null (std/task::receive-message-no-hang (results tp))))
-    (kill-workers tp)
-    (is (zerop (worker-count tp))))
-  (with-task-pool (tp :workers 4 :tasks 4)
-    (is (zerop (sb-concurrency:mailbox-count (results tp))))
-    (start-task-workers tp)
-    (loop for w across (workers tp)
-          do (join-worker w))
-    (is (= 4 (sb-concurrency:mailbox-count (results tp))))))
+(deftest task ()
+  "Basic TASK functionality."
+  (let ((t1 (make-instance 'task))
+        (t2 (make-instance 'scheduled-task))
+        (t3 (make-instance 'async-task)))
+    (is (taskp t1))
+    (is (taskp t2))
+    (is (taskp t3))))
+
+(deftest simple-task ()
+  "Test simple tasks in sync/async contexts.")
+    
+(deftest job ()
+  "Basic JOB functionality."
+  (let ((j1 (make-instance 'job)))
+    (is (jobp j1))))
