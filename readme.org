@@ -14,9 +14,9 @@
 | skel-id     | 1566328410216733941                |
 | root        | ~/comp/core/                       |
 | tags        | (core lisp emacs c)                |
-| updated     | Mon Aug 11 22:02:31 2025 -0400     |
+| updated     | Mon Aug 11 23:07:27 2025 -0400     |
 | langs       | c elisp lisp org text              |
-| lines       | 146621 :λ 115671 :# 13857 :_ 17093 |
+| lines       | 146690 :λ 115730 :# 13856 :_ 17104 |
 |-------------+------------------------------------|
 
 #+END:
@@ -29,5 +29,5 @@
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
-The core is a deeply opinionated development environment intended for
-advanced Lisp hackers building next-gen applications.
+The core is a deeply opinionated development environment built for
+Lisp hackers.

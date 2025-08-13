@@ -36,8 +36,7 @@
   (is (equal (funcall [{* 3} #'1+] 1) 6)) ;; compose.1
   (is (equal (funcall ['1+ '1+] 1) 3)) ;; compose.2
   (is (equal (funcall [#'1+] 1) 2)) ;; compose.3
-  (is (equal (funcall [#'values] 1 2 3) (values 1 2 3))) ;; compose.4
-  )
+  (is (equal (funcall [#'values] 1 2 3) (values 1 2 3))) #|compose.4|#)
 
 (alias-function foo-car car)
 
@@ -98,7 +97,7 @@
 "#))
   ;; with plist option
   (is (string= 
-       #.(std:fmt-tree nil '(sk-project :name "foobar" :path "/a/b/c.asd" :vc :hg) :layout :down :plist t)
+       #.(fmt-tree nil '(sk-project :name "foobar" :path "/a/b/c.asd" :vc :hg) :layout :down :plist t)
        #"SK-PROJECT
  ├─ :NAME
  │   ╰─ "foobar"
@@ -106,37 +105,9 @@
  │   ╰─ "/a/b/c.asd"
  ╰─ :VC
      ╰─ :HG
-"#)))
-
-(deftest ana ()
-  "Test standard anaphoric macros"
-  (is (= 8 
-	 (aif (+ 2 2)
-	      (+ it it))))
-  (is (= 42 (awhen 42 it)))
-  (is (= 3 (acond ((1+ 1) (1+ it)))))
-  (loop for x in '(1 2 3)
-        for y in (funcall (alet* ((a 1) (b 2) (c 3))
-                                 (lambda () (mapc #'1+ (list a b c)))))
-        collect (is (= x y))))
-
-(deftest pan ()
-  "Test standard pandoric macros"
-  (is= 2 (let ((x 1)) (pandoric-eval (x) '(+ 1 x))))
-  (is= 2 (let ((x 1)) (pandoric-eval (x) '(incf x))))
-  (let ((p
-          (let ((a 0))
-            (let ((b 1))
-              (plambda (n) (a b)
-                       (incf a n)
-                       (setq b (* b n)))))))
-    (with-pandoric (a b) p
-      (is (= 0 (funcall p 0)))
-      (setf b 4)
-      (is= 16 (funcall p 4) b)
-      (is= 4 a)
-      (is= 16 (funcall p 1) b)
-      (is= 5 a))))
+"#))
+  (is (string= "| A | B | C |
+" (fmt-row '(a b c)))))
 
 (deftest alien ()
   "Test standard alien utils"

@@ -12,8 +12,8 @@
   (is= 2800 (reduce #'+ (collecting (nested-loop (i j) '(10 20) (collect (+ i j)))))))
     
 (deftest units ()
-  (istypep :km 'distance-designator)
-  (istypep :light-year 'distance-designator))
+  (istype 'distance-designator :km)
+  (istype 'distance-designator :light-year))
 
 (deftest defvars ()
   (defvar-unbound frobz)
@@ -28,10 +28,47 @@
   (is (constantp %%frob1$$)))
 
 ;; TODO 2025-08-11: 
+(deftest switch ())
 (deftest xor ())
 
-(deftest switch ())
+(deftest lets ()
+  (lety ((foo 0 :type fixnum)
+         (arr #(0 0 0) :type 'octet-vector))
+   (istype 'fixnum foo)
+   (istype 'octet-vector arr)))
 
-(deftest lets ())
+(deftest defs ()
+  (defityped %%froyo ((self string)) simple-string "bar")
+  (deftyped* %%froyo1 ((self string)) self)
+  (is (string= "bar" (%%froyo "foo")))
+  (is (string= "baz" (%%froyo1 "baz"))))
 
-(deftest classy ())
+(deftest pan ()
+  "Test standard pandoric macros"
+  (is= 2 (let ((x 1)) (pandoric-eval (x) '(+ 1 x))))
+  (is= 2 (let ((x 1)) (pandoric-eval (x) '(incf x))))
+  (let ((p
+          (let ((a 0))
+            (let ((b 1))
+              (plambda (n) (a b)
+                       (incf a n)
+                       (setq b (* b n)))))))
+    (with-pandoric (a b) p
+      (is (= 0 (funcall p 0)))
+      (setf b 4)
+      (is= 16 (funcall p 4) b)
+      (is= 4 a)
+      (is= 16 (funcall p 1) b)
+      (is= 5 a))))
+
+(deftest ana ()
+  "Test standard anaphoric macros"
+  (is (= 8 
+         (aif (+ 2 2)
+              (+ it it))))
+  (is (= 42 (awhen 42 it)))
+  (is (= 3 (acond ((1+ 1) (1+ it)))))
+  (loop for x in '(1 2 3)
+        for y in (funcall (alet* ((a 1) (b 2) (c 3))
+                                 (lambda () (mapc #'1+ (list a b c)))))
+        collect (is (= x y))))

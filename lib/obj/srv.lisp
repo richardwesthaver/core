@@ -100,7 +100,11 @@
    (protocol :initarg :request-protocol :reader request-protocol)))
 
 (defconfig service-config () ())
-  
+
+(defmethod make-config ((self (eql :service)) &rest args &key (class 'service-config))
+  (remf args class)
+  (apply 'make-instance class args))
+
 ;;; Protocol
 (defgeneric service (self)
   (:method ((self t)) (when (boundp '*service*) *service*))

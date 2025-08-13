@@ -265,6 +265,11 @@
 
 ;;; Spec
 
+(defconfig openapi-service-config (http-service-config) ())
+
+(defmethod make-config ((self (eql :openapi)) &rest args &key)
+  (apply 'make-instance 'openapi-service-config args))
+
 ;;; Client
 (defclass openapi-client (http-client) ()
   (:documentation "HTTP client based on an OpenAPI Spec."))

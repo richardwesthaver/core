@@ -88,6 +88,14 @@ had returned RESULT.  See the source code of REDIRECT for an example."
 ;;; Config
 (defconfig net-service-config (service-config) ())
 
+(defmethod make-config ((self (eql :net)) &rest args &key (class 'net-service-config) path)
+  (remf args :class)
+  (remf args path)
+  (apply 'make-instance class args))
+
+(defmethod load-config ((self (eql :net)) (from t) &key)
+  (apply 'make-config (deserialize from :sxp)))
+
 ;;; Classes
 (defclass net-response (response) ())
 

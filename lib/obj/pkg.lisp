@@ -363,7 +363,7 @@
    #:defschema
    #:list-to-fields
    #:define-simple-schema
-   #:not-a-database
+   #:invalid-database
    #:db-condition
    #:apply-schema-change-fn
    #:match-schemas

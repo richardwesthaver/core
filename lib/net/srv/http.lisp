@@ -38,10 +38,14 @@ session-management.")
        (eql :https (sb-bsd-sockets:socket-protocol (sb-bsd-sockets:socket service)))))
 
 ;;; Config
-(defconfig http-server-config (http-config server-config) ())
+(defconfig http-service-config (service-config) ())
+
+(defmethod make-config ((self (eql :http)) &rest args &key)
+  (apply 'make-instance 'http-service-config args))
 
 ;;; Server
 (defclass http-server (tcp-server) ())
+
 ;;; Response
 (defclass http-service-response (net-service-response)
   ((http :type http-response)

@@ -233,7 +233,7 @@ object. (SAP CF) is the raw pointer."))
 
 ;;; Database
 (defclass rdb-database (database)
-  ((txn :initform nil :type (or null rdb-transaction-db) :initarg :txn :accessor transaction-db)
+  ((txn :initform nil :type (or null rdb-optimistic-transaction-db) :initarg :txn :accessor transaction-db)
    (backup :initform nil :type (or null rdb-backup-engine) :initarg :backup :accessor db-backup)
    (snapshots :initform (make-array 0 :element-type 'rdb-snapshot :adjustable t)
               :type (vector rdb-snapshot)

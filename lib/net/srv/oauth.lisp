@@ -6,6 +6,11 @@
 ;;; Code:
 (in-package :net/srv/oauth)
 
+(defconfig oauth-service-config (http-service-config) ())
+
+(defmethod make-config ((self (eql :oauth)) &rest args &key)
+  (apply 'make-instance 'oauth-service-config args))
+
 (defstruct (oauth2-endpoint
             (:conc-name oauth2-))
   auth-url

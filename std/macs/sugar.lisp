@@ -9,6 +9,33 @@
   "`defun' without args."
   `(defun ,name () ,@body))
 
+(defmacro deftyped* (name args &body body)
+  "function definition with typed args."
+  `(progn
+     (declare (ftype (function ,args) ,name))
+     (defun ,name ,args ,@body)))
+
+(defmacro deftyped (name args ret &body body)
+  "function definition with typed args and return value."
+  `(progn
+     (declare (ftype (function ,args ,ret) ,name))
+     (defun ,name ,args ,@body)))
+
+(defmacro defityped* (name args &body body)
+  "inline function definition with typed args."
+  `(definline ,name ,args 
+     (declare (ftype (function ,args) ,name))
+     ,@body))
+
+(defmacro defityped (name args ret &body body)
+  "function definition with typed args and return value."
+  `(definline ,name ,args 
+     (declare (ftype (function ,args ,ret) ,name))
+     ,@body))
+
+;; TODO 2025-08-12: 
+;; (defmacro defcall/ (name args &body body)
+;;  "Define CALL-WITH-* and WITH-* macros for NAME.")
 (defmacro eval-always (&body body)
   "Eval BODY in all contexts (:compile-toplevel :load-toplevel :execute)."
   `(eval-when (:compile-toplevel :load-toplevel :execute) ,@body))
@@ -46,7 +73,13 @@
 default values unless overwritten at runtime:
 
 :INITARG
-:ACCESSOR"
+:ACCESSOR
+
+The following additional options are supported:
+:METHOD/S - define methods with default bindings
+:SER - serializer
+:DE - deserializer
+:KERNEL"
   `(defclass ,name ,direct-superclasses 
      ,(mapcar 
        (lambda (x) 

@@ -329,12 +329,12 @@
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets :obj/db 
-   :obj/schema :config :build :srv)
+   :obj/schema :config :build :srv :ast)
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
    :eval-always :define-task-kernel :when-let :stream-of
-   :symbolicate :defaccessor :data)
+   :symbolicate :defaccessor :data :deserialize)
   (:import-from :rt :random-chars)
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)
@@ -444,27 +444,27 @@
   (:package-local-nicknames
    :codec :net/codec/http
    :proto :net/proto/http)
-  (:export :http-service :https-service :http-server-config :https-server-config :tls-config :tls-server :http-server))
+  (:export :http-service :https-service :http-service-config))
 
 (defpkg :net/srv/udp
-  (:use :cl :std :net/udp :net/codec/tlv :net/core :srv)
+  (:use :cl :std :net/udp :net/codec/tlv :net/core :srv :config)
   (:use-reexport :net/srv)
-  (:export :udp-service :echo-service))
+  (:export :udp-service :echo-service :udp-service-config))
 
 (defpkg :net/srv/oauth
-  (:use :cl :std :net/codec/http :net/cookie :net/core :id :secret :uri :net/srv/http :srv)
+  (:use :cl :std :net/codec/http :net/cookie :net/core :id :secret :uri :net/srv/http :srv :config)
   (:import-from :cli/tools/net :browse-url)
   (:use-reexport :net/srv)
-  (:export :oauth-service))
+  (:export :oauth-service :oauth-service-config))
 
 (defpkg :net/srv/openapi
-  (:use :cl :std :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json :ast)
+  (:use :cl :std :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json :ast :config)
   (:import-from :net/req :http-client :http-client-config)
   (:use-reexport :net/srv)
-  (:export :openapi-service :openapi-document :oapi-client :oapi-server))
+  (:export :openapi-service :openapi-document :oapi-client :oapi-server :openapi-service-config))
 
 (defpkg :net/srv/ext
-  (:use :cl :std :net/core :cli/tools/net)
+  (:use :cl :std :net/core :cli/tools/net :config)
   (:export :caddy-service :nginx-service))
 
 (setq *defpkg-hook* nil)

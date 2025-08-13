@@ -522,6 +522,10 @@
    :cswitch
    :xor
    :ifret
+   :deftyped
+   :deftyped*
+   :defityped
+   :defityped*
    :letv*
    :lety
    :lety*

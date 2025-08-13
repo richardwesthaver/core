@@ -128,6 +128,17 @@ saved."
                 (not (member (car x) *database-backend-close-options*))))
           options)))
 
+;;; Conditions
+(define-condition db-condition () ()
+  (:documentation "Superclass for DB conditions."))
+
+(deferror invalid-database (db-condition invalid-argument) ()
+  (:documentation "Error signaled when an invalid DB is detected.")
+  (:default-initargs
+   :reason "Object is not a database")
+  (:auto t))
+
+;; TODO 2025-08-12: call-with
 (defmacro with-db ((var &rest initargs &key (db '*db*) &allow-other-keys) 
                    &body body)
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
@@ -146,16 +157,6 @@ saved."
 (defconfig db-config ()
   ((backend :initform :rdb :type database-backend-designator)
    (options)))
-
-;;; Conditions
-(define-condition db-condition () ()
-  (:documentation "Superclass for DB conditions."))
-
-(deferror not-a-database (db-condition invalid-argument) ()
-  (:documentation "Error signaled when an illegal DB is detected.")
-  (:default-initargs
-   :reason "Object is not a database")
-  (:auto t))
 
 ;;; Database
 (defgeneric db (self)
@@ -229,12 +230,12 @@ in-memory objects."))
 
 (defgeneric db-open-p (self)
   (:documentation "Return T when database SELF is open.")
-  (:method ((self t)) (not-a-database self))
+  (:method ((self t)) (invalid-database self))
   (:method ((self database)) (when (db self) t)))
 
 (defgeneric db-closed-p (self)
   (:documentation "Return T when database SELF is closed.")
-  (:method ((self t)) (not-a-database self))
+  (:method ((self t)) (invalid-database self))
   (:method ((self database)) (unless (db self) t)))
 
 ;;; Common

@@ -383,7 +383,7 @@ when the slot is already filled."
                        when id collect (list i id))))
       `(let ((,parent ,pipeline)
              (,pipe (make-pipe)))
-         ,@(loop for (ty . args) in elements
+         ,@(loop for (ty &rest args) in elements
                  collect `(insert-element* (make-instance 
                                                ',ty
                                              ,@(remf args :id))

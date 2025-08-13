@@ -14,6 +14,11 @@
 ;;; Code:
 (in-package :net/srv/udp)
 
+(defconfig udp-service-config (net-service-config) ())
+
+(defmethod make-config ((self (eql :udp)) &rest args &key)
+  (apply 'make-instance 'udp-service-config args))
+
 (defclass udp-service-request (net-request) ())
 
 (defclass udp-service-response (net-response) ())

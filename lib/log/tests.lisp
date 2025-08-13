@@ -103,5 +103,5 @@
 
 (defmethod schema:column ((self faux-db-sink) (col integer)) (faux-level (* 100 col)))
 
-(deftest database-logger ())
+(deftest db-logger ())
 

@@ -24,7 +24,8 @@
     (typecase ast
       (list (make-config (car ast) :path (cadr ast)))
       (atom (make-config ast)))))
-
+(defgeneric load-config (kind from &key &allow-other-keys)
+  (:documentation "Load a configuration."))
 (defgeneric find-config (obj &rest args &key &allow-other-keys)
   (:documentation "Find an existing configuration."))
 (defgeneric config-find (obj key &key &allow-other-keys)
