@@ -172,3 +172,8 @@ These tests are copied directly from the Alexandria test suite."
     (is (= 1 (testbits-c bits)))
     (is (= -100 (testbits-d bits)))
     (is (eql 'foo (testbits-e bits)))))
+
+(deftest comp ()
+  (inspect-ir '(lambda (a b c) a b c) (lambda (x) (istype 'sb-c:component x)))
+  (isnt (zerop (length (asm-search "MOV" #'car))))
+  (istype 'vector (std/comp::%asm '())))

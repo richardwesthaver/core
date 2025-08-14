@@ -493,6 +493,7 @@
    :awhen
    :acond
    :acase
+   :atypecase
    :alambda
    :nlet-tail
    :alet*
@@ -568,7 +569,7 @@
   (:import-from :sb-c :lexenv-user-data :lexenv-find 
    :make-null-lexenv :name-reserved-by-ansi-p :default-gc-strategy :open-fasl-output 
    :close-fasl-output :fasl-output)
-  (:import-from :sb-c :parse-eval-when-situations :source-location :*backend-byte-order*)
+  (:import-from :sb-c :parse-eval-when-situations :source-location :*backend-byte-order* :*backend-primitive-type-names* :*backend-primitive-type-aliases* :*backend-predicate-types* :*backend-type-predicates* :primitive-type-name :primitive-type)
   (:recycle :sb-sys)
   (:import-from :sb-ext :maybe-inline :defglobal :define-load-time-global :finalize :cancel-finalization)
   (:import-from :std/sym :with-gensyms :search-roots :vboundp!)
@@ -582,6 +583,13 @@
   (:import-from :sb-ext :fold-identical-code)
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
+   :*backend-primitive-type-names* 
+   :*backend-primitive-type-aliases* 
+   :*backend-predicate-types* 
+   :*backend-type-predicates* 
+   :primitive-type-name 
+   :primitive-type 
+   :primitive-type-of
    :+lowtags+ :+widetags+
    :open-fasl-output :close-fasl-output
    :check-fasl-header
@@ -683,6 +691,7 @@
    :dump-arena-objects :arena-contents
    :points-to-arena
    :show-heap->arena
+   :lisp-object-info
    ;; system paths
    :*stash*
    :*store*))
@@ -741,10 +750,9 @@
    :def-ir1-translator :defknown :ctype-of :type-specifier)
   (:import-from :sb-c :vop)
   (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
-   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
-   :*backend-predicate-types* :*backend-type-predicates*
-   :*compile-progress* :*compile-component-hook* :primitive-type :primitive-type-of
-   :primitive-type-name :primitive-object-size :find-saetp :find-saetp-by-ctype)
+   :*backend-sbs* :*backend-sc-names* 
+   :*compile-progress* :*compile-component-hook*
+   :primitive-object-size :find-saetp :find-saetp-by-ctype)
   (:import-from :sb-vm :*register-arg-tns* :*primitive-objects*
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
@@ -753,17 +761,18 @@
    :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions :def-ir1-translator
    :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
    :*primitive-objects* :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop*
-   :*backend-sbs* :*backend-sc-names* :*backend-primitive-type-names* :*backend-primitive-type-aliases*
-   :*backend-predicate-types* :*backend-type-predicates* :emit :assemble
-   :without-scheduling :dump-symbolic-asm :inst :inst* :primitive-type :primitive-type-of
-   :primitive-type-name :primitive-object-name :primitive-object-lowtag :primitive-object-widetag
+   :*backend-sbs* :*backend-sc-names* :emit :assemble
+   :without-scheduling :dump-symbolic-asm :inst :inst*
+   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
    :vop :primitive-type-name-of :ctype-of :type-specifier
-   :primitive-object-size :backend-primitive-type :find-saetp :find-saetp-by-ctype
+   :primitive-object-size :find-saetp :find-saetp-by-ctype
    :deep-size :get-simple-fun-instruction-model :asm
+   :print-form-and-optimize :print-signaled-conditions
+   :print-arguments
    :checked-compile :runtime :asm-search :inspect-ir
-   :ea :machine-ea)
+   :ea)
   (:recycle :sb-c))
 
 (defpkg :std/serde
@@ -773,10 +782,10 @@
   (:import-from :std/condition :deferror)
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/sym :symbolicate :with-gensyms)
-  (:import-from :std/type :octet-vector :*type-classes* :type-class-name-of :type-class-name :type=)
-  (:import-from :std/comp :*primitive-objects* :primitive-object-size
-   :primitive-type-of :backend-primitive-type
-   :*backend-primitive-type-names* :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
+  (:import-from :std/type :octet-vector :*type-classes* 
+   :type-class-name-of :type-class-name :type=)
+  (:import-from :std/comp :*primitive-objects* :primitive-object-size 
+   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:export :define-io
    :*simple-objects* :*primitive-object-table* 
    :*core-object-table* :serde
@@ -791,8 +800,10 @@
   (:import-from :std/bit :make-octets)
   (:import-from :std/type :octet-vector :octet)
   (:import-from :std/serde :define-io)
-  (:import-from :sb-alien :sap+ :*linkage-info* :*shared-objects*)
+  (:import-from :sb-alien :sap+ :*linkage-info* :*shared-objects* :*alien-type-classes*)
   (:export
+   :alien-size*
+   :*alien-type-classes*
    :*linkage-info*
    :*shared-objects*
    :with-vector-sap

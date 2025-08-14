@@ -25,6 +25,3 @@
   (data (* rocksdb-statistics-histogram-data)))
 (defar rocksdb-statistics-histogram-data-get-min double
   (data (* rocksdb-statistics-histogram-data)))
-
-
-

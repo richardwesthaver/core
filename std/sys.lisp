@@ -5,6 +5,12 @@
 ;;; Code:
 (in-package :std/sys)
 
+(definline primitive-type-name-of (obj)
+  (primitive-type-name (primitive-type-of obj)))
+
+(defun backend-primitive-type (name)
+  (gethash name *backend-primitive-type-names*))
+
 ;;; Introspection
 ;; (reexport-from :sb-introspect
 ;; 	       :include '(:function-lambda-list :lambda-list-keywords :lambda-parameters-limit
@@ -450,6 +456,15 @@ work is done by sb-vm:hexdump in the interesting cases."
       ;; can't happen
       (t (error "mutant"))))
   (values))
+
+(defun lisp-object-info (obj)
+  "Take an object and return a list of type and allocation information."
+  (std:hexdump-object obj)
+  (list 
+   :type (type-of obj)
+   :type-class (std/type:type-class-name-of obj)
+   :prim-type (primitive-type-name-of obj)
+   :alloc (sb-ext:heap-allocated-p obj)))
 
 ;;; FASLs
 (definline check-fasl-file-header (path)

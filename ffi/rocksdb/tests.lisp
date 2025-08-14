@@ -584,24 +584,25 @@ DB where K and V are both Lisp strings."
   "Test low-level compactionfilter API."
   (with-alien ((state (* t))
                (context (* rocksdb-compactionfiltercontext)))
-    (is (typep
-         (rocksdb-compactionfilter-create state
-                                          (alien-sap (alien-callable-function 'rocksdb-destructor))
-                                          (alien-sap (alien-callable-function 'rocksdb-filter-never))
-                                          (alien-sap (alien-callable-function 'rocksdb-name)))
-         '(alien (* rocksdb-compactionfilter))))
-    (is (typep
-         (rocksdb-compactionfilterfactory-create state
-                                                 (alien-sap (alien-callable-function 'rocksdb-destructor))
-                                                 (alien-sap (alien-callable-function
-                                                             'rocksdb-create-compaction-filter-never))
-                                                 (alien-sap (alien-callable-function 'rocksdb-name)))
-         '(alien (* rocksdb-compactionfilterfactory)))))
-
-  ;; TODO 2024-11-07: 
-  (with-opt (o (test-opts) nil)
-    (with-temp-db db (o)
-      )))
+    (with-alien ((cfilter (* rocksdb-compactionfilter)
+                          (rocksdb-compactionfilter-create state
+                                                           (alien-sap (alien-callable-function 'rocksdb-destructor))
+                                                           (alien-sap (alien-callable-function 'rocksdb-filter-never))
+                                                           (alien-sap (alien-callable-function 'rocksdb-name))))
+                 (cff (* rocksdb-compactionfilterfactory)
+                      (rocksdb-compactionfilterfactory-create 
+                       state
+                       (alien-sap (alien-callable-function 'rocksdb-destructor))
+                       (alien-sap (alien-callable-function
+                                   'rocksdb-create-compaction-filter-never))
+                       (alien-sap (alien-callable-function 'rocksdb-name)))))
+      (is (typep cfilter '(alien (* rocksdb-compactionfilter))))
+      (is (typep cff '(alien (* rocksdb-compactionfilterfactory))))
+      (with-opt (o (test-opts) t)
+        (let ((uco (rocksdb-universal-compaction-options-create)))
+          (rocksdb-universal-compaction-options-set-size-ratio uco 20)
+          (rocksdb-options-set-universal-compaction-options o uco)
+          (is= 20 (rocksdb-universal-compaction-options-get-size-ration uco)))))))
 
 (deftest logger ()
   "Test logging functionality."

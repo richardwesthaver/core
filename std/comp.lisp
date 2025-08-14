@@ -5,12 +5,7 @@
 ;;; Code:
 (in-package :std/comp)
 
-(definline primitive-type-name-of (obj)
-  (primitive-type-name (primitive-type-of obj)))
-
-(defun backend-primitive-type (name)
-  (gethash name *backend-primitive-type-names*))
-
+;; from SBCL
 (defun deep-size (obj &optional (leafp (lambda (x)
                                          (typep x '(or package symbol sb-kernel:fdefn
                                                        function sb-kernel:code-component
@@ -21,7 +16,6 @@ symbols as leaves, otherwise you reach a package and then the result just
 explodes to beyond the point of being useful. (It works, but might reach the
 entire heap) To turn this into an actual thing, we'd want to reduce the
 consing."
-
   (let ((worklist (list obj))
         (seen (make-hash-table :test 'eq))
         (tot-bytes 0))
@@ -61,25 +55,24 @@ consing."
               (return)))
       (result))))
 
-;;; Take a list of lists and assemble them as though they are
-;;; instructions inside the body of a vop. There is no need
-;;; to use the INST macro in front of each list.
-;;; As a special case, if an atom is the symbol LABEL, it will be
-;;; changed to a generated label. At most one such atom may appear.
 (defun %asm (instructions)
+  "Take a list of lists and assemble them as though they are instructions inside
+the body of a vop. There is no need to use the INST macro in front of each
+list. As a special case, if an atom is the symbol LABEL, it will be changed to
+a generated label. At most one such atom may appear."
   (let ((segment (sb-assem:make-segment))
         (label))
     (sb-assem:assemble (segment 'nil)
-       (dolist (inst instructions)
-         (setq inst (copy-list inst))
-         (mapl (lambda (cell &aux (x (car cell)))
-                 (when (and (symbolp x) (string= x "LABEL"))
-                   (setq label (sb-assem:gen-label))
-                   (rplaca cell label)))
-               inst)
-         (apply #'sb-assem:inst* (car inst) (cdr inst)))
-       (when label
-         (sb-assem::%emit-label segment nil label)))
+      (dolist (inst instructions)
+        (setq inst (copy-list inst))
+        (mapl (lambda (cell &aux (x (car cell)))
+                (when (and (symbolp x) (string= x "LABEL"))
+                  (setq label (sb-assem:gen-label))
+                  (rplaca cell label)))
+              inst)
+        (apply #'sb-assem:inst* (car inst) (cdr inst)))
+      (when label
+        (sb-assem::%emit-label segment nil label)))
     (sb-assem:segment-buffer
      (sb-assem:finalize-segment segment))))
 
@@ -140,7 +133,7 @@ consing."
   (destructuring-bind (form . optimize) form-and-optimize
     (format stream "~@:_~@:_~2@T~S~@:_~@:_~
                     with ~:[~
-                      default optimization policy~
+                      default optimization policy ~
                     ~;~
                       ~:*~@:_~@:_~2@T~S~@:_~@:_~
                       optimization policy~
@@ -154,27 +147,6 @@ consing."
                     (list (type-of condition) condition))
                   conditions)))
 
-;;; Compile FORM capturing and muffling all [style-]warnings and notes
-;;; and return six values: 1) the compiled function 2) a Boolean
-;;; indicating whether compilation failed 3) a list of warnings 4) a
-;;; list of style-warnings 5) a list of notes 6) a list of
-;;; SB-C:COMPILER-ERROR conditions.
-;;;
-;;; An error can be signaled when COMPILE indicates failure as well as
-;;; in case [style-]warning or note conditions are signaled. The
-;;; keyword parameters
-;;; ALLOW-{FAILURE,[STYLE-]WARNINGS,NOTES,COMPILER-ERRORS} control
-;;; this behavior. All but ALLOW-NOTES default to NIL.
-;;;
-;;; Arguments to the
-;;; ALLOW-{FAILURE,[STYLE-]WARNINGS,NOTES,COMPILER-ERRORS} keyword
-;;; parameters are interpreted as type specifiers restricting the
-;;; allowed conditions of the respective kind.
-;;;
-;;; When supplied, the value of CONDITION-TRANSFORM has to be a
-;;; function of one argument, the condition currently being
-;;; captured. The returned value is captured and later returned in
-;;; place of the condition.
 (defun checked-compile (form
                         &key
                         name
@@ -185,6 +157,23 @@ consing."
                         (allow-compiler-errors allow-failure)
                         condition-transform
                         optimize)
+  "Compile FORM capturing and muffling all [style-]warnings and notes and
+return six values: 1) the compiled function 2) a Boolean indicating whether
+compilation failed 3) a list of warnings 4) a list of style-warnings 5) a list
+of notes 6) a list of SB-C:COMPILER-ERROR conditions.
+
+An error can be signaled when COMPILE indicates failure as well as in case
+[style-]warning or note conditions are signaled. The keyword parameters
+ALLOW-{FAILURE,[STYLE-]WARNINGS,NOTES,COMPILER-ERRORS} control this
+behavior. All but ALLOW-NOTES default to NIL.
+
+Arguments to the ALLOW-{FAILURE,[STYLE-]WARNINGS,NOTES,COMPILER-ERRORS}
+keyword parameters are interpreted as type specifiers restricting the allowed
+conditions of the respective kind.
+
+When supplied, the value of CONDITION-TRANSFORM has to be a function of one
+argument, the condition currently being captured. The returned value is
+captured and later returned in place of the condition."
   (sb-int:binding* ((prepared-form (prepare-form form :optimize optimize))
                     ((function nil failure-p
                       warnings style-warnings notes compiler-errors
@@ -192,8 +181,8 @@ consing."
                      (compile-capturing-output-and-conditions
                       prepared-form :name name :condition-transform condition-transform)))
     (labels ((fail (kind conditions &optional allowed-type)
-               (error "~@<Compilation of~/test-util::print-form-and-optimize/ ~
-                       signaled ~A~P:~/test-util::print-signaled-conditions/~
+               (error "~@<Compilation of ~/std::print-form-and-optimize/~
+                       signaled ~A~P:~/std::print-signaled-conditions/~
                        ~@[~@:_~@:_Allowed type is ~
                       ~/sb-impl:print-type-specifier/.~]~@:>"
                       (cons form optimize) kind (length conditions) conditions
@@ -208,10 +197,9 @@ consing."
                       (fail kind offenders allow))))
                  (conditions
                   (fail kind conditions)))))
-
       (when (and (not allow-failure) failure-p)
         (let ((output (get-output-stream-string error-output)))
-          (error "~@<Compilation of~/test-util::print-form-and-optimize/ ~
+          (error "~@<Compilation of~/std::print-form-and-optimize/ ~
                   failed~@[ with output~
                   ~@:_~@:_~2@T~@<~@;~A~:>~@:_~@:_~].~@:>"
                  (cons form optimize) (when (plusp (length output)) output))))
@@ -238,7 +226,7 @@ consing."
           arguments))
 
 (defun call-capturing-values-and-conditions (function &rest args)
-  (let ((values     nil)
+  (let ((values nil)
         (conditions '()))
     (block nil
       (handler-bind ((condition (lambda (condition)
@@ -269,7 +257,7 @@ consing."
                           '(member '(debug 3) optimize :test #'equal))
                    (type-specifiers-equal (caddr type) expected))
          (error "~@<The derived type of~
-                   ~/test-util::print-form-and-optimize/ ~
+                   ~/print-form-and-optimize/ ~
                    is ~/sb-impl:print-type-specifier/
                    while
                     ~/sb-impl:print-type-specifier/
@@ -278,24 +266,24 @@ consing."
       (let ((args (multiple-value-list (funcall args-thunk))))
         (flet ((failed-to-signal (expected-type)
                  (error "~@<Calling the result of compiling~
-                      ~/test-util::print-form-and-optimize/ ~
-                      ~/test-util::print-arguments/~
+                      ~/std::print-form-and-optimize/ ~
+                      ~/std::print-arguments/~
                       returned normally instead of signaling a ~
                       condition of type ~
                       ~/sb-impl:print-type-specifier/.~@:>"
                         (cons form optimize) args expected-type))
                (signaled-unexpected (conditions)
                  (error "~@<Calling the result of compiling~
-                      ~/test-util::print-form-and-optimize/ ~
-                      ~/test-util::print-arguments/~
+                      ~/std::print-form-and-optimize/ ~
+                      ~/std::print-arguments/~
                       signaled unexpected condition~P~
-                      ~/test-util::print-signaled-conditions/~
+                      ~/print-signaled-conditions/~
                       .~@:>"
                         (cons form optimize) args (length conditions) conditions))
                (returned-unexpected (values expected test)
                  (error "~@<Calling the result of compiling~
-                     ~/test-util::print-form-and-optimize/ ~
-                     ~/test-util::print-arguments/~
+                     ~/std::print-form-and-optimize/ ~
+                     ~/std::print-arguments/~
                      returned values~@:_~@:_~
                      ~2@T~<~{~S~^~@:_~}~:>~@:_~@:_~
                      which is not ~S to~@:_~@:_~
@@ -543,21 +531,21 @@ consing."
                        :condition-transform #'push-source-path))
     (nreverse source-paths)))
 
-;;; Repeat calling THUNK until its cumulated runtime, measured using
-;;; GET-INTERNAL-RUN-TIME, is larger than PRECISION. Repeat this
-;;; REPETITIONS many times and return the time one call to THUNK took
-;;; in seconds as a float, according to the minimum of the cumulated
-;;; runtimes over the repetitions.
-;;; This allows to easily measure the runtime of expressions that take
-;;; much less time than one internal time unit. Also, the results are
-;;; unaffected, modulo quantization effects, by changes to
-;;; INTERNAL-TIME-UNITS-PER-SECOND.
-;;; Taking the minimum is intended to reduce the error introduced by
-;;; garbage collections occurring at unpredictable times. The inner
-;;; loop doubles the number of calls to THUNK each time before again
-;;; measuring the time spent, so that the time measurement overhead
-;;; doesn't distort the result if calling THUNK takes very little time.
 (defun runtime* (thunk repetitions precision)
+  "Repeat calling THUNK until its cumulated runtime, measured using
+GET-INTERNAL-RUN-TIME, is larger than PRECISION. Repeat this REPETITIONS many
+times and return the time one call to THUNK took in seconds as a float,
+according to the minimum of the cumulated runtimes over the repetitions.
+
+This allows to easily measure the runtime of expressions that take much less
+time than one internal time unit. Also, the results are unaffected, modulo
+quantization effects, by changes to INTERNAL-TIME-UNITS-PER-SECOND.
+
+Taking the minimum is intended to reduce the error introduced by garbage
+collections occurring at unpredictable times. The inner loop doubles the
+number of calls to THUNK each time before again measuring the time spent, so
+that the time measurement overhead doesn't distort the result if calling THUNK
+takes very little time."
   (loop repeat repetitions
         minimize
         (loop with start = (get-internal-run-time)

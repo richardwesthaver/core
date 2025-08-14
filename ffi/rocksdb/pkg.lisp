@@ -494,15 +494,34 @@ set *errptr to a malloc()ed error message.
    :rocksdb-sst-file-manager
    :*rocksdb-ingestexternalfileoptions*
    :rocksdb-writebatch-wi-create-iterator-with-base-readopts
-   :rocksdb-writebatch-wi-create-iterator-with-base-cf-readopts))
+   :rocksdb-writebatch-wi-create-iterator-with-base-cf-readopts
+   :rocksdb-options-optimize-universal-style-compaction
+   :rocksdb-universal-compaction-options-get-min-merge-width
+   :rocksdb-universal-compaction-options-set-min-merge-width
+   :rocksdb-universal-compaction-options-get-size-ratio
+   :rocksdb-universal-compaction-options-set-size-ratio
+   :rocksdb-universal-compaction-options-set-max-size-amplification-percent
+   :rocksdb-universal-compaction-options-get-max-size-amplification-percent
+   :rocksdb-livefiles-count
+   :rocksdb-livefiles-deletions
+   :rocksdb-livefiles-entries
+   :rocksdb-livefiles-largest-key
+   :rocksdb-livefiles-smallest-key
+   :rocksdb-livefiles-size
+   :rocksdb-livefiles-level
+   :rocksdb-livefiles-name
+   :rocksdb-livefiles-column-family-name
+   :rocksdb-list-column-families))
 
 (in-package :rocksdb)
 
 (define-alien-loader rocksdb)
 
-(define-condition rocksdb-condition () ())
+(define-condition rocksdb-condition () ()
+  (:documentation "A condition signaled from the RocksDB C FFI."))
 
 (define-condition rocksdb-c-error (rocksdb-condition std:std-error) ())
 
 (defun rocksdb-c-error (errptr)
+  "Signal a rocksdb-c-error, extracting the error message from ERRPTR."
   (error 'rocksdb-c-error :message (deref (sap-alien errptr (* c-string)))))

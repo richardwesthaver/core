@@ -11,26 +11,26 @@
 
 (defmacro deftyped* (name args &body body)
   "function definition with typed args."
-  `(progn
-     (declare (ftype (function ,args) ,name))
-     (defun ,name ,args ,@body)))
+  `(defun ,name ,(mapcar (lambda (x) (if (atom x) x (car x))) args) 
+     (declare (ftype (function ,(mapcar (lambda (x) (or (cdr x) t)) args)) ,name))
+     ,@body))
 
 (defmacro deftyped (name args ret &body body)
   "function definition with typed args and return value."
-  `(progn
-     (declare (ftype (function ,args ,ret) ,name))
-     (defun ,name ,args ,@body)))
+  `(defun ,name ,(mapcar (lambda (x) (if (atom x) x (car x))) args) 
+     (declare (ftype (function ,(mapcar (lambda (x) (or (cdr x) t)) args) ,ret) ,name))
+     ,@body))
 
 (defmacro defityped* (name args &body body)
   "inline function definition with typed args."
-  `(definline ,name ,args 
-     (declare (ftype (function ,args) ,name))
+  `(definline ,name ,(mapcar (lambda (x) (if (atom x) x (car x))) args)
+     (declare (ftype (function ,(mapcar (lambda (x) (or (cdr x) t)) args)) ,name))
      ,@body))
 
 (defmacro defityped (name args ret &body body)
   "function definition with typed args and return value."
-  `(definline ,name ,args 
-     (declare (ftype (function ,args ,ret) ,name))
+  `(definline ,name ,(mapcar (lambda (x) (if (atom x) x (car x))) args)
+     (declare (ftype (function ,(mapcar (lambda (x) (if (atom x) t (cadr x))) args) ,ret) ,name))
      ,@body))
 
 ;; TODO 2025-08-12: 

@@ -27,18 +27,32 @@
   (define-constant %%frob1$$ 0 :documentation "a dummy constant")
   (is (constantp %%frob1$$)))
 
-;; TODO 2025-08-11: 
-(deftest switch ())
-(deftest xor ())
+(deftest switch ()
+  (is
+   (switch (123 :test 'typep)
+     ('float nil)
+     ('integer t)
+     (t nil))))
+
+(deftest xor ()
+  (multiple-value-bind (x y) (xor nil t nil)
+    (is x)
+    (is y))
+  (multiple-value-bind (x y) (xor nil nil)
+    (isnt x)
+    (is y))
+  (multiple-value-bind (x y) (xor t t t t t)
+    (isnt x)
+    (isnt y)))
 
 (deftest lets ()
   (lety ((foo 0 :type fixnum)
-         (arr #(0 0 0) :type 'octet-vector))
+         (arr (make-octets 3) :type octet-vector))
    (istype 'fixnum foo)
    (istype 'octet-vector arr)))
 
 (deftest defs ()
-  (defityped %%froyo ((self string)) simple-string "bar")
+  (defityped %%froyo ((self string)) simple-string (declare (ignore self)) "bar")
   (deftyped* %%froyo1 ((self string)) self)
   (is (string= "bar" (%%froyo "foo")))
   (is (string= "baz" (%%froyo1 "baz"))))

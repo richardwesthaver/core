@@ -1,4 +1,4 @@
-;;; rdb/raw.lisp --- Intermediate API to ROCKSDB aliens
+;;; rdb/low.lisp --- Intermediate API to ROCKSDB aliens
 
 ;;; Code:
 (in-package :rdb)

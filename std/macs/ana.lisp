@@ -567,3 +567,14 @@ values as opposed to one."
   `(let ((it ,form))
      (case it
        ,@cases)))
+
+(defmacro atypecase (form &rest cases)
+  "Anaphoric typecase with the car of each list in CASES bound to IT."
+  `(typecase ,form
+     ,@(mapcar (lambda (x) 
+                 (if (atom x)
+                     x 
+                     `(,#1=(car x)
+                       (let ((it ',#1#))
+                         ,@(cdr x)))))
+        cases)))

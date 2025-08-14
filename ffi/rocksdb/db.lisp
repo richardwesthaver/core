@@ -261,10 +261,23 @@
 ;;   (db (* rocksdb))
 ;;   (name c-string))
 
+(defar rocksdb-livefiles-count int (lf (* rocksdb-livefiles)))
+
+(defar rocksdb-livefiles (* rocksdb-livefiles)
+  (db (* rocksdb)))
+
 (defar rocksdb-livefile (* rocksdb-livefiles)
   (db (* rocksdb))
   (name c-string))
 
+(defar rocksdb-livefiles-column-family-name c-string (lf (* rocksdb-livefiles)) (index int))
+(defar rocksdb-livefiles-name c-string (lf (* rocksdb-livefiles)) (index int))
+(defar rocksdb-livefiles-level int (lf (* rocksdb-livefiles)) (index int))
+(defar rocksdb-livefiles-size size-t (lf (* rocksdb-livefiles)) (index int))
+(defar rocksdb-livefiles-smallest-key c-string (lf (* rocksdb-livefiles)) (index int) (size (* size-t)))
+(defar rocksdb-livefiles-largest-key c-string (lf (* rocksdb-livefiles)) (index int) (size (* size-t)))
+(defar rocksdb-livefiles-entries unsigned-long (lf (* rocksdb-livefiles)) (index int))
+(defar rocksdb-livefiles-deletions unsigned-long (lf (* rocksdb-livefiles)) (index int))
 ;; return NULL if prop name is unknown, else return pointer to
 ;; malloc-ed null-term value.
 (defar rocksdb-property-value c-string

@@ -40,6 +40,7 @@
 
 (defclass sink (element) ()
   (:documentation "Superclass of sink elements."))
+
 (defmethod print-object ((obj sink) stream)
   (format stream ">>~a" (type-of obj))
   obj)
@@ -228,9 +229,10 @@ If place is set, the element is added to the specified place as per INSERT-ELEME
 
 (defgeneric insert-element (self elt place)
   (:documentation "Insert the segment at the given place.
-Note that the segment is always inserted into the parent as specified by the place
-and found by FIND-PARENT and inserted into the position as per INSERT. PLACE can be a
-name, as in FIND-ELEMENT.
+
+Note that the segment is always inserted into the parent as specified by the
+place and found by FIND-PARENT and inserted into the position as per
+INSERT. PLACE can be a name, as in FIND-ELEMENT.
 
 Returns the segment.")
   (:method ((self pipe) (elt element) place)
@@ -307,13 +309,13 @@ Returns the segment.")
   (:method ((elt pipe) msg)
     (msg (pipe elt) msg))
   (:method ((elt pipe) (msg string))
-    (msg (pipe elt) (make-instance 'simple-message :content msg)))
+    (msg (slot-value elt 'pipe) (make-instance 'simple-message :content msg)))
   (:method ((elt vector) msg)
-    (let ((msg msg))
+    (let ((%msg msg))
       (loop for i across elt
-            do (setf msg (msg i msg))
-            while msg))
-    msg)
+            while %msg
+            do (setf %msg (msg i %msg)))
+      msg))
   (:method ((elt element) msg)
     msg)
   (:method ((elt predicate-filter) msg)
@@ -326,8 +328,7 @@ Returns the segment.")
     (msg (aref (pipe elt) (value elt)) msg))
   (:method ((elt stream-sink) msg)
     (when (output elt)
-      (format-message elt msg))
-    msg))
+      (format-message elt msg))))
 
 (defclass message () ())
 (defclass event () ())
@@ -347,9 +348,9 @@ Returns the segment.")
   (:method ((stream null) (message message))
     (with-output-to-string (stream)
       (format-message stream message)))
-  (:method :before ((stream stream-sink) message)
-    (fresh-line (output stream)))
-  (:method :after ((stream stream-sink) message)
+  (:method :around ((stream stream-sink) message)
+    (fresh-line (output stream))
+    (call-next-method)
     (terpri (output stream))
     (force-output (output stream)))
   (:method ((stream stream-sink) (message message))
@@ -364,11 +365,17 @@ Returns the segment.")
             :accessor message-content))
   (:documentation "Simple message objects."))
 
+(defmethod format-message (stream (message simple-message))
+  (format stream "~A" (message-content message)))
+
 (defclass condition-message (message)
   ((condition :initarg :condition
               :initform (required-argument "CONDITION")
               :accessor message-condition))
   (:documentation "Messages containing a condition."))
+
+(defmethod format-message (stream (message condition-message))
+  (print (message-condition message) stream))
 
 ;;; Macros
 ;; This is from Shinmera's VERBOSE

@@ -71,6 +71,41 @@
 (define-opt rocksdb-optimistictransaction-options)
 (define-opt rocksdb-envoptions)
 (define-opt rocksdb-universal-compaction-options)
+(defar rocksdb-universal-compaction-options-set-size-ratio void
+  (opt (* rocksdb-universal-compaction-options))
+  (val int))
+(defar rocksdb-universal-compaction-options-get-size-ratio int
+  (opt (* rocksdb-universal-compaction-options)))
+
+(defar rocksdb-universal-compaction-options-set-min-merge-width void
+  (opt (* rocksdb-universal-compaction-options))
+  (val int))
+(defar rocksdb-universal-compaction-options-get-min-merge-width int
+  (opt (* rocksdb-universal-compaction-options)))
+
+(defar rocksdb-universal-compaction-options-set-max-merge-width void
+  (opt (* rocksdb-universal-compaction-options))
+  (val int))
+(defar rocksdb-universal-compaction-options-get-max-merge-width int
+  (opt (* rocksdb-universal-compaction-options)))
+
+(defar rocksdb-universal-compaction-options-set-max-size-amplification-percent void
+  (opt (* rocksdb-universal-compaction-options))
+  (val int))
+(defar rocksdb-universal-compaction-options-get-max-size-amplification-percent int
+  (opt (* rocksdb-universal-compaction-options)))
+
+(defar rocksdb-universal-compaction-options-set-compression-size-percent void
+  (opt (* rocksdb-universal-compaction-options))
+  (val int))
+(defar rocksdb-universal-compaction-options-get-compression-size-percent-percent int
+  (opt (* rocksdb-universal-compaction-options)))
+
+(defar rocksdb-universal-compaction-options-set-stop-style void
+  (opt (* rocksdb-universal-compaction-options))
+  (val int))
+(defar rocksdb-universal-compaction-options-get-stop-style int
+  (opt (* rocksdb-universal-compaction-options)))
 
 ;;; WAL Read Options
 (define-opaque rocksdb-wal-readoptions)
@@ -326,6 +361,10 @@ rocksdb_k_round_robin_compaction_pri = 4
   (opt (* rocksdb-options)) (total-threads int))
 
 (defar rocksdb-options-optimize-level-style-compaction void 
+  (opt (* rocksdb-options))
+  (memtable-memory-budget unsigned-long))
+
+(defar rocksdb-options-optimize-universal-style-compaction void 
   (opt (* rocksdb-options))
   (memtable-memory-budget unsigned-long))
 

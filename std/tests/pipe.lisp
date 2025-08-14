@@ -7,8 +7,9 @@
 (in-suite :std)
 
 (deftest basic-pipes ()
-  (let* ((p (defpipe ((make-instance 'pipe)) (stream-sink :output nil)))
+  (let* ((p (defpipe* (make-instance 'pipe) '(stream-sink :output nil)))
          (m (make-instance 'simple-message :content "foo")))
     (istype 'vector (pipe p))
-    (istype 'simple-message m)))
+    (istype 'simple-message (msg p m))))
+
 

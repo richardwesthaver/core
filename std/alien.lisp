@@ -54,7 +54,10 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
     `(defun ,fname (&optional save)
        (prog1 (sb-alien:load-shared-object (shared-object-name ,(or path (string-downcase name)) ,root) :dont-save (not save))
          (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))))
-       
+
+(defmacro alien-size* (ty &optional (units :bits))
+  `(alien-size ,(eval ty) ,units))
+
 (defmacro define-opaque (ty &optional foreign-type)
   "Define an 'opaque' alien type. This is an internal convenience function for
 types which are effectively aliases for other types. The default target type
