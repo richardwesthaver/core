@@ -485,6 +485,7 @@
    :define-constant
    :defvar-unbound
    :def!
+   :defonce
    :eval-always
    :compile-and-eval
    :compile-and-eval*
@@ -559,7 +560,7 @@
    :dump-arena-objects :arena-contents
    :points-to-arena
    :show-heap->arena)
-  (:import-from :sb-sys :int-sap)
+  (:import-from :sb-sys :int-sap :find-foreign-symbol-address)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
    :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr :check-fasl-header 
    :*show-fops-p*)
@@ -800,8 +801,10 @@
   (:import-from :std/bit :make-octets)
   (:import-from :std/type :octet-vector :octet)
   (:import-from :std/serde :define-io)
+  (:import-from :sb-posix :lisp-for-c-symbol)
   (:import-from :sb-alien :sap+ :*linkage-info* :*shared-objects* :*alien-type-classes*)
   (:export
+   :lisp-for-c-symbol
    :alien-size*
    :*alien-type-classes*
    :*linkage-info*
@@ -890,7 +893,7 @@
   (:use :cl)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
-  (:import-from :std/macs :once-only :when-let)
+  (:import-from :std/macs :once-only :when-let :defonce :unwind-protect-case)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/meta :data :defaccessor :lock)
   (:import-from :std/list :firstn)
@@ -918,6 +921,7 @@
    :push-priority-queue :pop-priority-queue
    ;; spin queue
    :spin-queue :make-spin-queue :push-spin-queue :make-spin-lock
+   :with-spin-lock
    :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
    ;; accumulator
    :accumulated :accumulate :accumulator :max-accumulator :min-accumulator
@@ -1026,7 +1030,7 @@
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
   (:import-from :std/seq :do-indexes :repeat)
-  (:import-from :std/pipe :index)
+  (:import-from :std/pipe :index :make-pipe :source :sink :filter :event :message)
   (:import-from :sb-thread :*all-threads* :make-foreign-thread)
   (:import-from :std/list :flatten)
   (:import-from :std/prim :definline)
@@ -1123,7 +1127,10 @@
    :*oracle-table*
    :*worker-threads*
    :*super-threads*
-   :compute-special-bindings))
+   :compute-special-bindings
+   :thread-pipe :source-worker
+   :sink-worker :filter-worker
+   :worker-message :worker-event))
 
 (defpkg :std/async
   (:use :cl :std/thread :std/prim :std/seq)
@@ -1198,7 +1205,10 @@
    :termios :termios-cc :termios-cflag :termios-iflag 
    :termios-oflag :termios-lflag)
   (:import-from :std/alien :defar)
+  (:import-from :sb-impl :find-a-pty :open-pty)
   (:export
+   :find-a-pty
+   :open-pty
    :sudo-p
    :user-info
    :user-add
@@ -1208,6 +1218,7 @@
    :with-umask
    :with-fd
    :cfmakeraw
+   :ioctl
    :termios-iflag
    :termios-oflag
    :termios-lflag

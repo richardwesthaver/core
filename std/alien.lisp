@@ -41,6 +41,32 @@
       (merge-pathnames name path)
       (pathname name)))
 
+(defun lisp-name-from-c (name &optional (package *package*))
+  "Convert a C symbol NAME as a string into a lisp symbol, interning it in PACKAGE."
+  (let ((n name))
+  (etypecase n
+    (list
+     (lisp-name-from-c (car n)))
+    (string
+     ;; set prefix to %
+     (when (eql #\_ (char n 0)) (setf (char n 0) #\%))
+     (intern (substitute #\- #\_ (string-upcase n)) package)))))
+
+(defun c-name-from-lisp (name)
+  "Convert a lisp symbol or string NAME instead a C symbol name as a string."
+  (etypecase name
+    (list
+     (c-name-from-lisp (cadr name)))
+    ((or symbol string)
+     (let ((n (string name)))
+       ;; reset prefix to _
+       (when (eql #\% (char n 0)) (setf (char n 0) #\_))
+       (substitute 
+        #\_ #\- 
+        (if (every #'upper-case-p n) ; only apply case conversion on all-caps, else use the string as is
+            (string-downcase n)
+            n))))))
+
 (defun list-all-shared-objects ()
   "Return the current value of SB-ALIEN::*SHARED-OBJECTS*."
   *shared-objects*)
@@ -532,32 +558,6 @@ newly allocated memory."
   (struct timespec
           (tv-sec (signed 64))
           (tv-nsec (signed 64))))
-
-;;; Linux
-;; based on functions from Shinmera's CL-SPIDEV
-;; TODO 2025-04-27: 
-(defun ioctl (fd cmd)
-  (sb-alien:with-alien ((result sb-alien:int))
-    (multiple-value-bind (wonp error)
-        (sb-unix:unix-ioctl fd
-                            (if (< cmd (expt 2 31)) cmd (- cmd (expt 2 32)))
-                            (sb-alien:alien-sap (sb-alien:addr result)))
-      (unless wonp
-        (error "IOCTL ~a failed: ~a" cmd (sb-impl::strerror error))))
-    result))
-
-(defun (setf ioctl) (arg fd cmd)
-  (sb-alien:with-alien ((value sb-alien:int))
-    (setf value arg)
-    (multiple-value-bind (wonp error)
-        (sb-unix:unix-ioctl fd 
-                            (if (< cmd (expt 2 31)) cmd (- cmd (expt 2 32)))
-                            (sb-alien:alien-sap (sb-alien:addr value)))
-      (unless wonp
-        (error "IOCTL ~a failed: ~a" cmd (sb-impl::strerror error))))
-    arg))
-
-;; (defmacro define-ioctl (name fd cmd))
 
 ;;; CLOS
 (defgeneric sap (self)

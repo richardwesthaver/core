@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :homer/core)
 
+;;; Systemd Services
 (defvar *systemd-config-directory* (merge-homedir-pathnames ".config/systemd/"))
 
 (defconfig homer-service-config (ast id) ()
@@ -17,26 +18,44 @@
    (install))
   (:documentation "HOMER-SERVICE configuration from systemd unit files."))
 
+(defun systemd-service-name (name)
+  (format nil "~A.service" (string-downcase name)))
+
+(defun load-systemd-unit-file (name 
+                               &optional (path (merge-pathnames 
+                                                "user/default.target.wants/" 
+                                                *systemd-config-directory*)))
+  (deserialize (merge-pathnames (systemd-service-name name) path) :ini))
+
+(defun systemd-start (self &optional args)
+  (apply 'systemctl-start "--user" (systemd-service-name (id self)) args))
+
+(defun systemd-restart (self &optional args)
+  (apply 'systemctl-restart "--user" (systemd-service-name (id self)) args))
+
+(defun systemd-stop (self &optional args)
+  (apply 'systemctl-stop "--user" (systemd-service-name (id self)) args))
+
+(defun systemd-status (self)
+  (systemctl-status (string-downcase (id self))))
+
+;;; Request/Response
+(defclass homer-request (request) ())
+(defclass homer-response (response) ())
+obj/srv:engine
+;;; Service
 (defclass homer-service (service ast id)
   ((engine :initarg :engine :initform nil)
    (config :initarg :config :type homer-service-config))
   (:default-initargs 
-   :request-class 'homer-service-request
-   :response-class 'homer-service-response)
-  (:documentation "Base class for HOMER services. Services are similar to Systemd units - they
-may be individually controlled by an ORACLE thread (usually the default
-toplevel)."))
+   :request-class 'homer-request
+   :response-class 'homer-response)
+  (:documentation "Base class for HOMER services."))
 
-(defmethod name ((self homer-service)) 
+(defmethod name ((self homer-service))
   (typecase (engine self)
     ((eql :systemd) (systemd-service-name (id self)))
     (t (id self))))
-
-(defun systemd-service-name (name)
-  (format nil "~A.service" (string-downcase name)))
-
-(defun load-systemd-unit-file (name &optional (path (merge-pathnames "user/default.target.wants/" *systemd-config-directory*)))
-  (deserialize (merge-pathnames (systemd-service-name name) path) :ini))
 
 (defmethod load-ast ((self homer-service))
   (with-slots (ast) self
@@ -57,18 +76,6 @@ toplevel)."))
 
 (defmethod write-ast ((self homer-service) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(id self) (:engine ,(slot-value self 'engine)) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
-
-(defun systemd-start (self &optional args)
-  (apply 'systemctl-start "--user" (systemd-service-name (id self)) args))
-
-(defun systemd-restart (self &optional args)
-  (apply 'systemctl-restart "--user" (systemd-service-name (id self)) args))
-
-(defun systemd-stop (self &optional args)
-  (apply 'systemctl-stop "--user" (systemd-service-name (id self)) args))
-
-(defun systemd-status (self)
-  (systemctl-status (string-downcase (id self))))
 
 (defmethod start ((self homer-service))
   (case (slot-value self 'engine)

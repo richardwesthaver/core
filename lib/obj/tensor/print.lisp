@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :obj/tensor)
 ;;; PRINT
+;; FIX 2025-08-16: 
 (defun print-tensor (tensor stream)
   (let ((rank (rank tensor))
         (dims (dimensions tensor))
@@ -75,13 +76,12 @@
          (rec-print tensor (1- (rank tensor)) nil))))))
 
 (defmethod print-object ((tensor standard-tensor) stream)
-  (declare (optimize (safety 0) (debug 1)))
   (print-unreadable-object (tensor stream :type t)
     (let ((dims (dimensions tensor)))
       ;; (if ;; (and (slot-value tensor 'parent-tensor) dims)
       ;; dims
       ;; (format stream "~A~,4T:DISPLACED" dims)
-       (format stream "~A" dims)
+      (format stream "~A" dims)
       ;; )
       (when (> (size tensor) 0)
         (format stream "~%")

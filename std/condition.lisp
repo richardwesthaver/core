@@ -365,7 +365,7 @@ the 'current' error."
 
 ;;;; Wrapped
 (define-condition wrapped-condition ()
-  ((value :type condition :reader wrapped-condition-value))
+  ((value :type condition :reader wrapped-condition-value :initarg :value))
   (:documentation 
    "A container for transporting conditions - usually to another thread."))
 

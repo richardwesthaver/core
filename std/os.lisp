@@ -97,6 +97,7 @@ arrange for FVAR to be closed after BODY."
 
 (defar hasmntopt c-string (mnt (* mntent)) (opt c-string))
 
+;; also defined in sb-unix
 (defar isatty int (fd int))
 
 (defar ("tcgetattr" tcgetattr*) int (fd int) (term (* sb-posix::alien-termios)))
@@ -120,8 +121,35 @@ arrange for FVAR to be closed after BODY."
 (defconstant +tcsaflush+ 2)
 (defconstant +opost+ #x01)
 
-;;; XDG
+;;;; IOCTLs
+;; based on functions from Shinmera's CL-SPIDEV
+;; TODO 2025-04-27: 
+(defun ioctl (fd cmd)
+  (sb-alien:with-alien ((result sb-alien:int))
+    (multiple-value-bind (wonp error)
+        (sb-unix:unix-ioctl fd
+                            (if (< cmd (expt 2 31)) cmd (- cmd (expt 2 32)))
+                            (sb-alien:alien-sap (sb-alien:addr result)))
+      (unless wonp
+        (error "IOCTL ~a failed: ~a" cmd (sb-impl::strerror error))))
+    result))
 
+(defun (setf ioctl) (arg fd cmd)
+  (sb-alien:with-alien ((value sb-alien:int))
+    (setf value arg)
+    (multiple-value-bind (wonp error)
+        (sb-unix:unix-ioctl fd 
+                            (if (< cmd (expt 2 31)) cmd (- cmd (expt 2 32)))
+                            (sb-alien:alien-sap (sb-alien:addr value)))
+      (unless wonp
+        (error "IOCTL ~a failed: ~a" cmd (sb-impl::strerror error))))
+    arg))
+
+;; (defmacro define-ioctl (name fd cmd))
+
+;;;; SYSCALLs
+;; 
+;;; XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
 (defvar *xdg-user-dirs* 
   (let ((tbl (make-hash-table)))

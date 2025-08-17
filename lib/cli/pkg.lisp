@@ -91,7 +91,8 @@
 (defpkg :cli/linedit
   (:nicknames :linedit)
   (:use :cl :std)
-  (:import-from :sb-posix :getenv :ioctl :tcgetattr :tcsetattr :termios)
+  (:shadowing-import-from :sb-posix :ioctl)
+  (:import-from :sb-posix :getenv :tcgetattr :tcsetattr :termios)
   (:import-from :terminfo :tputs :set-terminal :tparm)
   (:import-from :std
    :with-gensyms :with-directory-iterator

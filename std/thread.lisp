@@ -48,7 +48,7 @@
 (defvar *thread-pool* nil
   "The current THREAD-POOL or nil.")
 ;; on core-i7 3.4ghz, a single spin takes ~ 2.5 microseconds.
-(defvar *default-spin-count* 2000
+(defvar *default-spin-count* 1000
   "Default value of the 'spin-count' argument to MAKE-THREAD-POOL.")
 
 (defvar *debug-threads-p* t
@@ -61,17 +61,18 @@ killed workers during shutdown.")
 
 (declaim (pool-kernel-function %pool))
 (definline %pool (state)
-  "Default pool-kernel-function, assumes *THREAD-POOL* is bound."
+  "Default pool-kernel-function, user is responsible for ensuring *THREAD-POOL*
+is bound to the correct target THREAD-POOL before calling."
   (declare (optimize (speed 3) (safety 0)))
   (ecase state
-    (:start (start-workers*))
+    (:start (start-thread-pool *thread-pool*))
     (:stop (stop-thread-pool *thread-pool*))
     (:reset (reset-thread-pool *thread-pool*))
     (:shutdown (end-thread-pool))
-    (:kill (kill *thread-pool*)))
+    (:kill (kill-thread-pool *thread-pool*)))
   (values))
 
-(defvar *pool-kernel* (make-kernel #'%pool)
+(defparameter *pool-kernel* (make-kernel #'%pool)
   "A function which drives THREAD-POOLs.")
 
 (declaim (worker-kernel-function %work))
@@ -85,7 +86,7 @@ killed workers during shutdown.")
       (cons (apply (the function (car work)) (cdr work)))
       (t work))))
 
-(defvar *worker-kernel* (make-kernel #'%work)
+(defparameter *worker-kernel* (make-kernel #'%work)
   "A kernel which drives WORKERs.")
 
 ;;; Globals
@@ -187,7 +188,7 @@ that was created in `body'."
 
 (defmacro with-work-context (&body body)
   "Eval BODY in a context where throw to +WORK-TAG+ will be caught."
-  `(catch +work-tag+ ,@body))
+  `(catch '#.+work-tag+ ,@body))
 
 (defun %call-with-work-handler (fn)
   "Call FN with worker conditions handled."
@@ -485,8 +486,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 
 ;;; Limiter
 (defclass thread-limiter ()
-  ((accept-work-p :accessor accept-work-p :type boolean :initarg :accept-work-p)
-   (limiter-lock :accessor limiter-lock :initarg :limiter-lock)
+  ((limiter-lock :accessor limiter-lock :initarg :limiter-lock)
    (limiter-count :accessor limiter-count :initarg :limiter-count :type fixnum)))
 
 (defun initial-limiter-count (thread-count) (+ thread-count 1))
@@ -517,7 +517,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 (defmacro with-worker-restarts (&body body)
   "Eval BODY in a worker context with restarts and a catch for
 +WORKER-SUICIDE-TAG+. See variable *WORKER-RESTARTS*."
-  `(catch +worker-suicide-tag+ 
+  `(catch +worker-suicide-tag+
      (restart-bind ,*worker-restarts*
        ,@body)))
 
@@ -536,8 +536,24 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
    (index :reader worker-index :type array-index :initarg :index :accessor index)
    (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings* :accessor bind)))
 
+(defmethod name ((self worker)) (thread-name (worker-thread self)))
+
 (defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
   (push (worker-thread self) *worker-threads*))
+
+(defmethod print-object ((self worker) stream)
+  (let* ((thread (worker-thread self))
+         (state (cond ((thread-alive-p thread) :running)
+                       ;; don't call JOIN-THREAD, just read the result if ALIVE-P is NIL
+                       ((listp (sb-thread::thread-result thread)) 
+                        (cons :finished (sb-thread::thread-result thread)))
+                       (t :aborted)))
+         (*print-array* nil)
+         ;; Don't want to see 10,000 strings or something
+         (*print-length* 2)
+         (*print-level* 4))
+    (print-unreadable-object (self stream :type t :identity t)
+      (format stream "~@[~A ~]~X~@[ ~S~]" (name self) (index self) state))))
 
 (defun make-worker* (&key thread kernel bind index)
   (apply #'make-instance *worker-class*
@@ -582,7 +598,6 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
   (declare (worker worker))
   (let ((th (worker-thread worker)))
     (unless (null th)
-      (remove th *worker-threads* :test 'thread=)
       (kill-thread th))))
 
 (defun join-worker (worker)
@@ -597,26 +612,31 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 
 (defun receive-worker-status (worker)
   (ecase (pop-queue (slot-value worker '%tx))
-    (ok)
-    (error (error 'kernel-init-error))))
+    (:ok :ok)
+    (:exit :exit)
+    (:error (error 'kernel-init-error))))
 
 ;; from worker
 (defun receive-worker-start (worker)
   ;; (print-top-level (format nil "worker ~A starting...~%" (worker-index worker)))
   (let ((gate (slot-value worker '%rx)))
-    (sb-concurrency:wait-on-gate gate)
-    (assert (sb-concurrency:close-gate gate) nil "Worker hijacked? ~A" worker)))
+    (sb-concurrency:wait-on-gate gate)))
+    ;; (assert (sb-concurrency:close-gate gate) nil "Worker hijacked? ~A" worker))
 
 (defun send-worker-status (worker status)
-  (check-type status (member ok error))
+  (check-type status (member :ok :error :exit))
   ;; (print-top-level (format nil "worker ~A status: ~A~%" (worker-index worker) status))
   (push-queue status (slot-value worker '%tx)))
 
 (defun notify-exit (worker)
-  (sb-concurrency:close-gate (slot-value worker '%rx)))
+  (print-top-level (format nil "worker ~A exiting...~%" (worker-index worker)))
+  (sb-concurrency:close-gate (slot-value worker '%rx))
+  (send-worker-status worker :exit))
 
-(defun wait-for-worker (worker &optional timeout)
-  (assert (sb-concurrency:wait-on-gate (slot-value worker '%rx) :timeout timeout)))
+(defun wait-for-worker (worker)
+  (format t "waiting on worker ~A...~%" (worker-index worker))
+  (unless (null (thread-alive-p (worker-thread worker)))
+    (assert (eql :exit (receive-worker-status worker)))))
 
 ;;;; Worker Protocol
 (defgeneric workers (self))
@@ -797,11 +817,11 @@ within their DOMAIN and SCOPE."))
    (name :accessor name :initarg :name)))
 
 (defclass thread-pool (thread-limiter thread-pool-context)
-  ((kernel :initform *pool-kernel* :type kernel :accessor kernel :initarg :kernel)
+  ((kernel :type kernel :accessor kernel :initarg :kernel)
    (scheduler :initarg :scheduler :accessor scheduler)
    (workers :initarg :workers :accessor workers :type (simple-array worker))
    (lock :initarg :lock :initform (make-mutex :name "workers") :type mutex :accessor lock)
-   (alive :initform t :reader alive :type boolean :initarg :alive))
+   (alive :initform t :accessor alive :type boolean :initarg :alive))
   (:documentation "Thread pools are similar to LPARALLEL kernels - they encompass the scheduling
 and execution of concurrent work using a pool of 'worker' threads."))
 
@@ -821,27 +841,26 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (dotimes (i (length (the (vector worker) (workers pool))))
     (kill-worker (svref (workers pool) i))))
 
-(defun kill (pool)
+(defun kill-thread-pool (pool)
   (assert pool)
   (let ((count (worker-count pool)))
     (with-slots (lock workers) pool
-      (with-mutex (lock)
-        (kill-workers pool))
+      ;; (with-mutex (lock)
+      (kill-workers pool)
       (prog1 count
         (when *worker*
           (assert (eq (worker-thread *worker*) *current-thread*))
           ;; (when (eql category (running-category *worker*))
           (throw '#.+worker-suicide-tag+ nil))))))
 
-(defmacro ensure-working-p (pool)
-  `(locally (declare (optimize (speed 3) (safety 0)))
-     (accept-work-p (the thread-pool ,pool))))
+(defun ensure-working-p (pool)
+  (setf (alive (the thread-pool pool)) t))
 
 (defun update-limiter-count* (pool delta)
   (declare (thread-pool pool) (fixnum delta) 
            (optimize (speed 3) (safety 0)))
   (incf (the fixnum (limiter-count pool)) delta)
-  (setf (accept-work-p pool)
+  (setf (alive pool)
         (plusp (the fixnum (limiter-count pool))))
   (values))
 
@@ -895,18 +914,18 @@ and execution of concurrent work using a pool of 'worker' threads."))
 
 (defun call-with-worker-context (fn context pool worker)
   (receive-worker-start worker)
-  (unwind-protect
-       (funcall context ; kernel
-                (lambda ()
-                  (let ((*worker* (find *current-thread* (workers pool)
-                                        :key #'worker-thread)))
-                    (assert *worker*)
-                    (send-worker-status worker 'ok)
-                    (with-worker-restarts
-                      (%call-with-work-handler fn)))))
+  (unwind-protect-case ()
+                       (funcall context ; kernel
+                                (lambda ()
+                                  (let ((*worker* (find *current-thread* (workers pool)
+                                                        :key #'worker-thread)))
+                                    (assert *worker*)
+                                    (send-worker-status worker :ok)
+                                    (with-worker-restarts
+                                      (%call-with-work-handler fn)))))
     ;; This error notification is seen when `worker-context' does not
     ;; call its worker-loop parameter, otherwise it's ignored.
-    (send-worker-status worker 'error)))
+    (:abort (send-worker-status worker :error))))
 
 (defun enter-worker-loop (pool worker)
   (call-with-worker-context
@@ -952,7 +971,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (with-fill-workers-handler workers
     (%fill-workers workers pool)
     (map nil #'send-worker-start workers)
-    (map nil #'receive-worker-status workers)))
+    (assert (every (lambda (x) (eql :ok x)) (map nil #'receive-worker-status workers)))))
 
 ;; (map nil #'receive-worker-start workers)))
 ;; (map nil #'receive-worker-start workers)))
@@ -995,12 +1014,11 @@ worker threads in certain situations."
                    :name name
 		   :bind bind
 	           :kernel *pool-kernel*
-	           :accept-work-p alive
                    :alive alive
                    :workers workers
 	           :scheduler (make-scheduler workers spin-count)
 	           :limiter-count (initial-limiter-count count)
-	           :limiter-lock (make-spin-lock))))
+	           :limiter-lock (make-mutex :name "limiter"))))
       (fill-workers workers pool)
       pool)))
 
@@ -1095,12 +1113,17 @@ assigned to the input state and then return two values."
 
 (defun make-channeled-work (channel fn args)
   (declare (channel channel) (function fn) (list args))
-  (let ((queue (channel-queue channel)))
+  (let ((queue (channel-queue channel))
+        (ret))
     (work-lambda
-      (unwind-protect-case () 
-                           (push-queue (with-work-context (apply fn args)) queue) ; work handler handles everything
+      (unwind-protect-case 
+          ()
+          (progn
+            (with-work-context (setf ret (apply fn args))) ; work handler handles everything
+            ret)
+        (:normal (push-queue ret queue))
         ;; unwind on kill
-        (:abort (push-queue (wrap-error 'worker-killed-error) queue))))))
+        (:abort (push-queue* (wrap-error 'worker-killed-error) queue))))))
 
 ;; make-work 
 (defun submit-raw-work (work pool &optional (priority *work-priority*))
@@ -1180,29 +1203,38 @@ bound to RET."
   (let ((*work-priority* :low))
     (submit-work channel (lambda ())))
   (receive-result channel)
-  (with-slots (scheduler workers alive) pool
-    (loop for i below (length workers)
-          do (schedule-work scheduler nil :low))
+  (with-slots (workers scheduler alive) pool
+    (repeat (length workers)
+      (schedule-work scheduler nil :low))
     (map nil #'wait-for-worker workers)
     (setf alive nil)))
 
 (definline stop-thread-pool (pool &key wait)
   (declare (thread-pool pool))
   (when (alive pool)
-    (let ((channel (let ((*thread-pool* pool)) (make-instance 'channel)))
+    (let ((channel (make-channel :pool pool))
           (threads (map 'list #'worker-thread (workers pool))))
-      (cond (wait
-             (shutdown-channel channel pool)
-             threads)
-            (t
-             (cons (with-thread (:name (format nil "%shutdown-pool"))
-                     (shutdown-channel channel pool))
-                   threads))))))
+      (cond
+        (wait
+         (shutdown-channel channel pool)
+         threads)
+        (t
+         (cons
+          (with-thread (:name (format nil "%shutdown-pool"))
+            (shutdown-channel channel pool))
+          threads))))))
+
+(definline start-thread-pool (pool)
+  (declare (thread-pool pool))
+  (setf (alive pool) t)
+  (ensure-working-p *thread-pool*)
+  (start-workers pool)
+  pool)
 
 (definline reset-thread-pool (pool)
   (declare (thread-pool pool))
-  (stop-thread-pool pool)
-  pool)
+  (stop-thread-pool pool :wait t)
+  (start-thread-pool pool))
   
 (defmethod shutdown ((pool thread-pool)) (funcall (kernel pool) :shutdown))
 
@@ -1214,11 +1246,8 @@ bound to RET."
 
 (defun end-thread-pool (&key wait)
   (when-let ((pool *thread-pool*))
-    (let ((name (when (slot-boundp pool 'name) (name pool))))
-      (when name (remhash name *thread-pool-table*))
-      (setf *thread-pool* nil
-            *worker-threads* (flatten *worker-threads*)))
-    (stop-thread-pool pool :wait wait)))
+    (stop-thread-pool pool :wait wait)
+    (setf *thread-pool* nil)))
 
 (defun thread-pool-info (pool)
   (list :workers (worker-count pool)
@@ -1340,6 +1369,21 @@ few valid uses, such as for testing, where the code is non-critical or
 where convenience trumps other concerns."
   `(call-with-temp-pool (lambda () ,@body) ,@make-pool-args))
 
+(defmacro with-thread-pool ((name &key kernel shutdown) &body body)
+  "Lookup NAME in *THREAD-POOL-TABLE* and bind it to *THREAD-POOL* for the
+duration of BODY.
+
+When KERNEL is non-nil it will be installed in the kernel slot of the target
+thread-pool.
+
+When SHUTDOWN is T the thread-pool will be destroyed at the end of BODY, when
+it is (eql :WAIT) the calling thread will wait for the thread-pool to finish
+before returning."
+  `(let ((*thread-pool* (find-thread-pool ,name)))
+     ,@(when kernel `((setf (kernel *thread-pool*) ,kernel)))
+     (unwind-protect (progn ,@body)
+       ,@(when shutdown `((end-thread-pool ,@(when (eql shutdown :wait) '(:wait t))))))))
+
 ;;; Pipes
 ;; From Shinmera's VERBOSE
 (defstruct sync-message
@@ -1350,11 +1394,30 @@ where convenience trumps other concerns."
 
 (defmethod msg ((vector vector) (msg sync-message))
   ;; ensure we're waiting on the condition..
-  (with-mutex ((sync-message-lock msg)))
-  (condition-notify (sync-message-condition msg)))
+  (with-mutex ((sync-message-lock msg))
+    (condition-notify (sync-message-condition msg))))
 
 (defmacro with-sync-message (s &body body)
   `(let ((,s (make-sync-message)))
      (with-mutex ((sync-message-lock ,s))
        ,@body
        (condition-wait* (sync-message-condition ,s) (sync-message-lock ,s)))))
+
+(defclass thread-pipe (thread-pool) ()
+  (:default-initargs :workers (make-pipe))
+  (:documentation "A cross between a THREAD-POOL and a PIPE. The WORKERS slot
+  is a pipe which gets passed messages and events directly."))
+
+(defclass source-worker (worker source) ()
+  (:documentation "A worker which is also the source of a PIPE."))
+
+(defclass sink-worker (worker sink) ()
+  (:documentation "A worker which is also a sink element of a PIPE."))
+
+(defclass filter-worker (worker filter) ()
+  (:documentation "A worker which acts as a filter element of a PIPE."))
+
+(defclass worker-message (message) ()
+  (:documentation "A message which may be passed between worker threads."))
+
+(defclass worker-event (event) ())

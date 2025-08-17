@@ -69,14 +69,15 @@ method body."))
   "Primitive objects are defined by SBCL and will not change. Convenient as a
 non-unique ID prefix.")
 
-(defvar *simple-type-table* (make-hash-table :test 'equal)
-  "A hash-table mapping simple type names to integers.")
+(eval-always
+  (defvar *simple-type-table* (make-hash-table :test 'equal)
+    "A hash-table mapping simple type names to integers.")
 
-(defvar *simple-types* (make-array 128 :adjustable nil)
-  "A vector containing the simple set of lisp objects .")
+  (defvar *simple-types* (make-array 128 :adjustable nil)
+    "A vector containing the simple set of lisp objects .")
 
-(defvar *core-type-table*)
-(defvar *core-types*)
+  (defvar *core-type-table*)
+  (defvar *core-types*))
 
 (defun reinitialize-core-types ()
   (setq *core-type-table* *simple-type-table*

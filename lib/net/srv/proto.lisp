@@ -299,6 +299,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
 ;;    and it's not clear how many Lisp implementations can do this.
 ;; If you're still interested, use the quux-hunchentoot extension to hunchentoot.
 |#
+;; NOTE 2025-08-16: see STD:THREAD-POOL for 
 (defclass thread-per-connection-engine (multi-threaded-engine)
   ((max-thread-count
     :type (or integer null)

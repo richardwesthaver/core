@@ -41,7 +41,7 @@ carful when doing, much of Matlisp's code is written on the assumption that
 the fields of a tensor don't take invalid values; failing which case, may lead
 to memory error. Use at your own risk.")
 
-(defparameter *print-tensor-max-len* 10
+(defparameter *print-tensor-max-len* t
   "Maximum number of elements in any particular argument to print.
 Set this to T to print all the elements.")
 

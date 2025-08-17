@@ -419,8 +419,8 @@ TEST."
   "A vector queue backed by a primitive queue - defaults to RAW-QUEUE."
   (impl (make-raw-queue 0) :type raw-queue)
   (lock (make-mutex))
-  (%push nil)
-  (%pop nil))
+  (%push (make-waitqueue :name "%vector-queue-push"))
+  (%pop (make-waitqueue :name "%vector-queue-pop")))
 
 (defaccessor data ((self vector-queue))
   (raw-queue-data (vector-queue-impl self)))
@@ -438,22 +438,18 @@ TEST."
      ,@body))
 
 ;; no lock
-(declaim (inline push-vector-queue* pop-vector-queue*))
-(defun push-vector-queue* (obj queue)
+(definline push-vector-queue* (obj queue)
   "Push OBJ to QUEUE without locking Returns the current count of QUEUE before
 push."
   (with-slots (impl lock %push %pop) queue
     (let ((count (raw-queue-count impl)))
       (loop (cond ((< count (raw-queue-capacity impl))
 		   (push-raw-queue obj impl)
-		   (when %push
-		     (condition-notify %push))
+		   (sb-thread:condition-notify %push)
 		   (return count))
 		  (t
-		   (condition-wait
-		    (or %pop
-		        (setf %pop (make-waitqueue)))
-		    lock)))))))
+		   (condition-wait %pop lock)))))))
+		                   
 
 (defun push-vector-queue (obj queue)
   "Push OBJ to QUEUE with locking."
@@ -462,20 +458,16 @@ push."
     (push-vector-queue* obj queue)
     (values)))
 
-(defun pop-vector-queue* (queue)
+(definline pop-vector-queue* (queue)
   "Pop the next element from QUEUE without locking."
   (declare (vector-queue queue))
   (with-slots (impl lock %push %pop) queue
     (loop (multiple-value-bind (value presentp) (pop-raw-queue impl)
 	    (cond (presentp
-		   (when %pop
-		     (condition-notify %pop))
+		   (sb-thread:condition-notify %pop)
 		   (return value))
 		  (t 
-		   (condition-wait
-		    (or %push
-			(setf %push (make-waitqueue)))
-		    lock)))))))
+		   (condition-wait %push lock)))))))
 
 (defun pop-vector-queue (queue)
   "Pop the next element from QUEUE with locking."
@@ -494,7 +486,7 @@ push."
 	      (let ((time-remaining (time-remaining)))
 		(when (or (not (plusp time-remaining))
 			  (null (condition-wait
-				 (or %push (setf %push (make-waitqueue)))
+                                 %push
 				 lock :timeout time-remaining)))
 		  (return (values nil nil)))))))))
 
@@ -823,6 +815,12 @@ associated priority vector."
   "Make a fresh SPIN-QUEUE."
   (let ((dummy (cons +dummy+ nil)))
     (%make-spin-queue dummy dummy)))
+
+(defonce with-spin-lock ((access &once container) &body body)
+  `(locally (declare (optimize (speed 3) (safety 0)))
+     (loop until (cas (,access ,container) nil t))
+     (unwind-protect (progn ,@body)
+       (setf (,access ,container) nil))))
 
 (defun push-spin-queue (value queue) 
   "Push VALUE onto QUEUE."

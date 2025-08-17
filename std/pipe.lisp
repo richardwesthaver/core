@@ -119,7 +119,7 @@
    (pipe :initarg :pipe :accessor pipe))
   (:documentation "A filter which holds a 'switch' value."))
 
-(defclass pipe () 
+(defclass pipe ()
   ((pipe :initarg :pipe :initform (make-pipe) :accessor pipe)
    (index :initarg :index :initform (make-hash-table :test 'eql) :accessor index))
   (:documentation "Superclass of pipe objects containing a PIPE and INDEX slot."))

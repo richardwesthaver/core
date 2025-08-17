@@ -33,6 +33,40 @@
      (declare (ftype (function ,(mapcar (lambda (x) (if (atom x) t (cadr x))) args) ,ret) ,name))
      ,@body))
 
+(defmacro defonce (name params &body body)
+  "Like `defmacro' except that params which are immediately preceded
+by `&once' are passed to a `once-only' call which surrounds `body'."
+  (labels ((once-keyword-p (obj)
+             (and (symbolp obj) (equalp (symbol-name obj) "&once")))
+           (remove-once-keywords (params)
+             (mapcar (lambda (x) (if (consp x) (remove-once-keywords x) x))
+                     (remove-if #'once-keyword-p params)))
+           (grab-once-param (list)
+             (let ((target (first list)))
+               (when (or (null list)
+                         (consp target)
+                         (find target lambda-list-keywords)
+                         (once-keyword-p target))
+                 (error "`&once' without parameter in ~a" name))
+               target))
+           (find-once-params (params)
+             (mapcon (lambda (cell)
+                       (destructuring-bind (elem &rest rest) cell
+                         (cond ((consp elem)
+                                (find-once-params elem))
+                               ((once-keyword-p elem)
+                                (list (grab-once-param rest)))
+                               (t
+                                nil))))
+                     params)))
+    (multiple-value-bind (body declares docstring) 
+        (parse-body body :documentation t)
+      `(defmacro ,name ,(remove-once-keywords params)
+         ,@docstring
+         ,@declares
+         (once-only ,(find-once-params params)
+           ,@body)))))
+
 ;; TODO 2025-08-12: 
 ;; (defmacro defcall/ (name args &body body)
 ;;  "Define CALL-WITH-* and WITH-* macros for NAME.")
