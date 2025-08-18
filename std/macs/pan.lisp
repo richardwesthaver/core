@@ -87,8 +87,13 @@
               ,,expr))))
 
 (defmacro defpan (name args &rest body)
+  "Define a pandoric function NAME. ARGS (which shouldn't be an empty list) is
+passed to WITH-PANDORIC and wrapped around BODY. The symbol SELF is bound fo
+the duration of BODY."
   `(defun ,name (self)
      ,(if args
         `(with-pandoric ,args self
            ,@body)
-        `(progn ,@body))))
+        (progn
+          (std/condition:simple-style-warning "DEFPAN used instead of DEFUN.")
+          `(progn ,@body)))))

@@ -49,9 +49,9 @@ Set this to T to print all the elements.")
   "Maximum number of arguments of the tensor to print.
 Set this to T to print all the arguments.")
 
-(defparameter *print-tensor-indent* 0
+(defparameter *print-tensor-indent* 2
   "Determines how many spaces will be printed before each row
-of a matrix (default 0)")
+of a matrix (default 2)")
 
 ;;; Conditions
 (define-condition tensor-invalid-dimension-value (error)

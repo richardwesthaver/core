@@ -78,17 +78,9 @@
               (make-binary-node 2 (make-tree-node 2) (make-tree-node 3)))))
     (is (typep tree 'binary-node))))
 
-(deftest bro-tree ()
-  (is (sb-brothertree::make-binary-node 0 nil nil)))
-
-(deftest rb-tree ())
-
-(deftest avl-tree ()
-  (is (make-avl-node 0 0 nil nil)))
-
 (deftest btree (:skip t)
   ;; FIX 2025-02-27: 
-  (is (make-instance 'btree:btree-index)))
+  (is (make-instance 'btree:btree-index :store (make-array 100))))
 
 ;;; Graphs
 (deftest basic-graph ()

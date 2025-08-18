@@ -33,6 +33,7 @@
      (declare (ftype (function ,(mapcar (lambda (x) (if (atom x) t (cadr x))) args) ,ret) ,name))
      ,@body))
 
+;; from lparallel
 (defmacro defonce (name params &body body)
   "Like `defmacro' except that params which are immediately preceded
 by `&once' are passed to a `once-only' call which surrounds `body'."
@@ -67,6 +68,54 @@ by `&once' are passed to a `once-only' call which surrounds `body'."
          (once-only ,(find-once-params params)
            ,@body)))))
 
+;;; Constants
+(defun %reevaluate-constant (name value test)
+  (if (not (boundp name))
+      value
+      (let ((old (symbol-value name))
+            (new value))
+        (if (not (constantp name))
+            (prog1 new
+              (cerror "Try to redefine the variable as a constant."
+                      "~@<~S is an already bound non-constant variable ~
+                       whose value is ~S.~:@>" name old))
+            (if (funcall test old new)
+                old
+                (restart-case
+                    (error "~@<~S is an already defined constant whose value ~
+                              ~S is not equal to the provided initial value ~S ~
+                              under ~S.~:@>" name old new test)
+                  (ignore ()
+                    :report "Retain the current value."
+                    old)
+                  (continue ()
+                    :report "Try to redefine the constant."
+                    new)))))))
+
+(defmacro define-constant (name initial-value &key (test #'eql) documentation)
+  "Ensures that the global variable named by NAME is a constant with a value
+that is equal under TEST to the result of evaluating INITIAL-VALUE. TEST is a
+/function designator/ that defaults to EQL. If DOCUMENTATION is given, it
+becomes the documentation string of the constant.
+
+Signals an error if NAME is already a bound non-constant variable.
+
+Signals an error if NAME is already a constant variable whose value is not
+equal under TEST to result of evaluating INITIAL-VALUE."
+  `(defconstant ,name (%reevaluate-constant ',name ,initial-value ,test)
+     ,@(when documentation `(,documentation))))
+
+;;; Vars
+;; from HUNCHENTOOT
+(defmacro defvar-unbound (name &optional (doc-string ""))
+  "Convenience macro to declare unbound special variables with a
+documentation string."
+  `(progn
+     (defvar ,name)
+     (setf (documentation ',name 'variable) ,doc-string)
+     ',name))
+
+;;; Eval
 ;; TODO 2025-08-12: 
 ;; (defmacro defcall/ (name args &body body)
 ;;  "Define CALL-WITH-* and WITH-* macros for NAME.")
@@ -110,7 +159,7 @@ default values unless overwritten at runtime:
 :ACCESSOR
 
 The following additional options are supported:
-:METHOD/S - define methods with default bindings
+:METHOD - define methods with default bindings
 :SER - serializer
 :DE - deserializer
 :KERNEL"

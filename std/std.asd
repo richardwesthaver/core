@@ -43,8 +43,6 @@ that ASDF can find, or have quicklisp installed.")))
     :components
     ((:file "ana")
      (:file "pan")
-     (:file "const")
-     (:file "var")
      (:file "collecting")
      (:file "loop")
      (:file "control")

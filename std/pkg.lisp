@@ -1064,6 +1064,7 @@
    :submit-indexed
    :with-temp-pool
    :call-with-temp-pool
+   :with-thread-pool
    :receive-indexed
    :with-submit-indexed
    :submit-with-cancel

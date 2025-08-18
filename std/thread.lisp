@@ -96,7 +96,7 @@ is bound to the correct target THREAD-POOL before calling."
     "List of threads with supervisor privileges.")
 (sb-ext:defglobal *oracle-table* (make-hash-table)
     "Hashtable containining (ID . ORACLE-SCOPE).")
-(sb-ext:defglobal *thread-pool-table* (make-hash-table :weakness :value)
+(sb-ext:defglobal *thread-pool-table* (make-hash-table)
     "Hashtable containing (NAME . THREAD-POOL).")
 
 ;;; Conditions

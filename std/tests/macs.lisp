@@ -20,11 +20,13 @@
   (isnt (boundp 'frobz)))
 
 (deftest ifret ()
-  (is (ifret t (error)))
+  (is (ifret t (error "ifret failed")))
   (iseq :abc (ifret nil :abc)))
 
+
+(define-constant %%frob1$$ 0 :documentation "a dummy constant")
+
 (deftest define-constant ()
-  (define-constant %%frob1$$ 0 :documentation "a dummy constant")
   (is (constantp %%frob1$$)))
 
 (deftest switch ()

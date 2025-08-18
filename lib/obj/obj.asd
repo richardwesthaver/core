@@ -39,9 +39,6 @@
                  (:file "readtable")))
                (:module "tree"
                 :components ((:file "node")
-                             (:file "avl")
-                             (:file "redblack")
-                             (:file "brother")
                              (:file "btree")))
                (:file "equiv")
                (:module "color"
