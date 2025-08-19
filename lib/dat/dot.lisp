@@ -175,6 +175,7 @@ dot executable."
       graph)))
 
 
+;;; Serde
 (defmethod serialize ((self graph) (fmt (eql :dot))
                       &key stream path attributes node-attrs edge-attrs
                            subgraphs ranks)
@@ -201,6 +202,3 @@ dot executable."
 
 ;; (defun read-dot-file (path)
 ;;   "Read from file PATH in Graphviz DOT format.")
-
-;;; Serde
-;; TODO 2025-03-27: 

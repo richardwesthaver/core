@@ -39,38 +39,38 @@
                    (temp-vars binding-data)))
      ,@body))
 
-(defmacro spawn (kernel temp-vars form)
-  (check-type kernel symbol)
+(defmacro spawn (pool temp-vars form)
+  (check-type pool symbol)
   `(std/thread::submit-raw-work
     (std/thread::work-lambda
-      ;; task handler already established
+      ;; work handler already established
       (unwind-protect (msetq ,temp-vars (std/thread::with-work-context ,form))
         (locally (declare (optimize (speed 3) (safety 0)))
-          (std/thread::update-limiter-count (the thread-pool ,kernel) 1))
+          (std/thread::update-limiter-count (the thread-pool ,pool) 1))
        (values))
-    ,kernel)))
+    ,pool)))
 
-(defmacro spawn-tasks (kernel spawn-binding-data)
-  (check-type kernel symbol)
+(defmacro spawn-work (pool spawn-binding-data)
+  (check-type pool symbol)
   `(progn
      ,@(loop for (nil temp-vars form) in spawn-binding-data
-             collect `(spawn ,kernel ,temp-vars ,form))))
+             collect `(spawn ,pool ,temp-vars ,form))))
 
-(defmacro exec-task (here-binding-datum)
+(defmacro exec-work (here-binding-datum)
   (destructuring-bind (client-vars temp-vars form) here-binding-datum
     (declare (ignore client-vars))
     `(msetq ,temp-vars ,form)))
 
-(defmacro sync (kernel spawn-binding-data)
-  (check-type kernel symbol)
+(defmacro sync (pool spawn-binding-data)
+  (check-type pool symbol)
   ;; reverse to check last spawn first
   (let ((temp-vars (reverse (temp-vars spawn-binding-data))))
     `(locally (declare (optimize (speed 3) (safety 3)))
        (loop with worker = *worker*
              while (or ,@(loop for temp-var in temp-vars
                                collect `(eq ,temp-var std/async::+no-result+)))
-             do #+lparallel.with-green-threads (thread-yield)
-                (steal-work (the kernel ,kernel) worker)))))
+             do (thread-yield)
+                (std/thread::steal-work* (the thread-pool ,pool) worker)))))
 
 (defmacro scan-for-errors (binding-data)
   ;; a wrapped error would only appear as the primary return value
@@ -91,14 +91,14 @@
     (values (mapcar #'make-binding-datum mv-bindings)
             null-bindings)))
 
-(defmacro %%%%plet (kernel bindings body)
+(defmacro %%%%plet (pool bindings body)
   (multiple-value-bind (binding-data null-bindings) (make-binding-data bindings)
     (destructuring-bind
           (here-binding-datum &rest spawn-binding-data) binding-data
       `(with-temp-bindings ,here-binding-datum ,spawn-binding-data
-         (spawn-tasks ,kernel ,spawn-binding-data)
-         (exec-task ,here-binding-datum)
-         (sync ,kernel ,spawn-binding-data)
+         (spawn-work ,pool ,spawn-binding-data)
+         (exec-work ,here-binding-datum)
+         (sync ,pool ,spawn-binding-data)
          (scan-for-errors ,spawn-binding-data)
          (with-client-bindings ,binding-data ,null-bindings
            ,@body)))))
@@ -132,32 +132,32 @@
     (values (reverse mv-bindings)
             (reverse null-bindings))))
 
-(defmacro %%%plet (kernel predicate spawn-count bindings body)
+(defmacro %%%plet (pool predicate spawn-count bindings body)
   ;; Putting the body code into a shared dynamic-extent function
   ;; caused some slowdown, so reluctantly duplicate the body.
   `(with-lock-predicates
-       :lock            (limiter-lock (the kernel ,kernel))
-       :predicate1      ,predicate
-       :predicate2      (accept-task-p ,kernel)
-       :succeed/lock    (update-limiter-count/no-lock ,kernel ,(- spawn-count))
-       :succeed/no-lock (%%%%plet ,kernel ,bindings ,body)
-       :fail            (slet ,bindings ,@body)))
+     :lock            (limiter-lock (the thread-pool ,pool))
+     :predicate1      ,predicate
+     :predicate2      (alive ,pool)
+     :succeed/lock    (update-limiter-count/no-lock ,pool ,(- spawn-count))
+     :succeed/no-lock (%%%%plet ,pool ,bindings ,body)
+     :fail            (slet ,bindings ,@body)))
 
-(defmacro %%plet (kernel predicate bindings body)
+(defmacro %%plet (pool predicate bindings body)
   (let ((spawn-count (- (length (parse-bindings bindings)) 1)))
     (if (plusp spawn-count)
-        `(%%%plet ,kernel ,predicate ,spawn-count ,bindings ,body)
+        `(%%%plet ,pool ,predicate ,spawn-count ,bindings ,body)
         `(slet ,bindings ,@body))))
 
-(defmacro %plet (kernel bindings &body body)
-  `(%%plet ,kernel
-           (accept-task-p ,kernel)
+(defmacro %plet (pool bindings &body body)
+  `(%%plet ,pool
+           (alive ,pool)
            ,bindings
            ,body))
 
-(defmacro %plet-if (kernel predicate bindings &body body)
-  `(%%plet ,kernel
-           (and (accept-task-p ,kernel) ,predicate)
+(defmacro %plet-if (pool predicate bindings &body body)
+  `(%%plet ,pool
+           (and (alive ,pool) ,predicate)
            ,bindings
            ,body))
 
@@ -264,15 +264,15 @@
 
 ;;;; defpun
 (defmacro defun/wrapper (wrapper-name impl-name lambda-list &body body)
-  (with-gensyms (args kernel)
+  (with-gensyms (args pool)
     (multiple-value-bind (wrapper-lambda-list expansion)
         (if (intersection lambda-list lambda-list-keywords)
             (values `(&rest ,args)
-                    ``(apply (function ,',impl-name) ,,kernel ,',args))
+                    ``(apply (function ,',impl-name) ,,pool ,',args))
             (values lambda-list
-                    ``(,',impl-name ,,kernel ,@',lambda-list)))
+                    ``(,',impl-name ,,pool ,@',lambda-list)))
       `(defun ,wrapper-name ,wrapper-lambda-list
-         (macrolet ((call-impl (,kernel) ,expansion))
+         (macrolet ((call-impl (,pool) ,expansion))
            ,@body)))))
 
 (defun call-with-toplevel-handler (fn)
@@ -294,7 +294,7 @@
 (defun call-impl-fn (pool impl)
   (declare (optimize (speed 3) (safety 3)))
   (declare (type function impl))
-  (if (or std/thread::*worker* (boundp '*kernel*))
+  (if (or std/thread::*worker* (boundp '*thread-pool*))
       (call-with-toplevel-handler impl)
       (call-inside-worker pool impl)))
 
@@ -302,12 +302,12 @@
 (defun unsplice (form)
   (if form (list form) nil))
 
-(defvar *registration-lock* (make-mutex :name "registration"))
+(defvar *defpun-registration-lock* (make-mutex :name "defpun"))
 
 (defconstant +checked-key+ 'checked-key)
 (defconstant +unchecked-key+ 'unchecked-key)
 
-(defvar *registered-names* nil)
+(defvar *defpun-names* nil)
 
 (defun symbolicate/package (package &rest string-designators)
   "Concatenate `string-designators' then intern the result into `package'."
@@ -325,7 +325,7 @@
   (sb-int:symbolicate (package-name (symbol-package name)) '#:%%%%.defpun. name))
 
 (defun register-name (name)
-  (pushnew name *registered-names*))
+  (pushnew name *defpun-names*))
 
 (defun register-fn (name)
   (setf (get name +checked-key+) (symbol-function name))
@@ -349,13 +349,13 @@
            (valid-registered-fn-p name))))
 
 (defun delete-stale-registrations ()
-  (setf *registered-names*
-        (remove-if-not #'valid-registered-name-p *registered-names*)))
+  (setf *defpun-names*
+        (remove-if-not #'valid-registered-name-p *defpun-names*)))
 
-(defun registered-macrolets (kernel)
-  (loop for name in *registered-names*
+(defun registered-macrolets (pool)
+  (loop for name in *defpun-names*
         collect `(,name (&rest args)
-                   `(,',(unchecked-name name) ,',kernel ,@args))))
+                   `(,',(unchecked-name name) ,',pool ,@args))))
 
 (defmacro declaim-defpun (&rest names)
   "See `defpun'."
@@ -367,8 +367,8 @@
 
 (defun delete-registered-names (names)
   ;; This is used outside of the defpun macro.
-  (with-mutex (*registration-lock*)
-    (setf *registered-names* (set-difference *registered-names* names))))
+  (with-mutex (*defpun-registration-lock*)
+    (setf *defpun-names* (set-difference *defpun-names* names))))
 
 (defmacro with-parsed-body ((body declares &optional docstring) &body own-body)
   "Pop docstring and declarations off `body' and assign them to the
@@ -390,25 +390,25 @@ not present then no docstring is parsed."
          ;; return form below
          (delete-stale-registrations)
          (register-name name)
-         (with-gensyms (kernel)
+         (with-gensyms (pool)
            `(progn
-              (,',defun ,(unchecked-name name) (,kernel ,@lambda-list)
-                  ,,@(unsplice (when types ``(kernel ,@,(first types))))
+              (,',defun ,(unchecked-name name) (,pool ,@lambda-list)
+                  ,,@(unsplice (when types ``(pool ,@,(first types))))
                   ,,@(unsplice (when types (second types)))
                 ,@declares
-                (declare (ignorable ,kernel))
+                (declare (ignorable ,pool))
                 (macrolet ((plet (bindings &body body)
-                             `(%plet ,',kernel ,bindings ,@body))
+                             `(%plet ,',pool ,bindings ,@body))
                            (plet-if (predicate bindings &body body)
-                             `(%plet-if ,',kernel ,predicate ,bindings ,@body))
-                           ,@(registered-macrolets kernel))
+                             `(%plet-if ,',pool ,predicate ,bindings ,@body))
+                           ,@(registered-macrolets pool))
                   ,@body))
               (defun/wrapper ,name ,(unchecked-name name) ,lambda-list
                 ,@(unsplice docstring)
-                (let ((,kernel (check-kernel)))
-                  (call-impl-fn ,kernel (lambda () (call-impl ,kernel)))))
+                (let ((,pool (check-thread-pool)))
+                  (call-impl-fn ,pool (lambda () (call-impl ,pool)))))
               (eval-when (:load-toplevel :execute)
-                (with-mutex (*registration-lock*)
+                (with-mutex (*defpun-registration-lock*)
                   (register-fn ',name)))
               ',name))))))
 
@@ -437,7 +437,8 @@ intent:
 "
   defun)
 
-(define-defpun defpun*
+;; FIX 2025-08-18: 
+(define-defpun defptyped
   "Typed version of DEFPUN.
 
 ARG-TYPES is an unevaluated list of argument types.
@@ -448,6 +449,8 @@ multiple values as in (values fixnum float).
 (As a technical point, if RETURN-TYPE contains no lambda list keywords then
 the return type given to ftype will be additionally constrained to match the
 number of return values specified.)"
-  defun*
+  deftyped
   arg-types
   return-type)
+
+;; TODO 2025-08-18: cltl2 functions, declare sync/async

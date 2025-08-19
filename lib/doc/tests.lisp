@@ -53,5 +53,8 @@
 (deftest image-documentation ()
   (is t))
 
+;; TODO 2025-08-18: 
 (deftest doc-db ()
-  (rocksdb:load-rocksdb))
+  (db:load-database-backend :rdb))
+
+  

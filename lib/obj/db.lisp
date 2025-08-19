@@ -139,6 +139,8 @@ saved."
   (:auto t))
 
 ;; TODO 2025-08-12: call-with
+;; (defun call-with-db (db fn &rest args))
+
 (defmacro with-db ((var &rest initargs &key (db '*db*) &allow-other-keys) 
                    &body body)
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
@@ -155,7 +157,7 @@ saved."
 
 ;;; Config
 (defconfig db-config ()
-  ((backend :initform :rdb :type database-backend-designator)
+  ((backend :initform nil :type database-backend-designator)
    (options)))
 
 ;;; Database

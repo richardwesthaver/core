@@ -1166,7 +1166,7 @@
 
 (defpkg :std/par
   (:use :cl :std/task :std/thread :std/macs :std/sym :std/prim)
-  (:export :defpun :defpun*))
+  (:export :defpun :defptyped))
 
 (defpkg :std/rand
   (:use :cl)

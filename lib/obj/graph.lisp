@@ -402,3 +402,20 @@ implementation of A*.")
         (values (sort cut #'< :key #'length) (weigh-cut graph cut))))))
 
 ;; https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
+
+;;; MOP utils
+;; it's often useful to convert a class hierarchy into a GRAPH so that it may
+;; easily be printed to DOT (using the DAT/DOT package)
+
+;; TODO 2025-08-18: 
+(defun metaclass-graph (metaclass)
+  "Return a new GRAPH object containing all instances of METACLASS.")
+
+(defun class-graph (class)
+  "Return a new GRAPH object containing all instances of CLASS."
+  (let ((root class)
+        (classes (sb-mop:class-direct-subclasses class)))
+    (loop while classes
+          collect classes
+          do (setf classes (flatten (mapcar 'sb-mop:class-direct-subclasses classes))))))
+
