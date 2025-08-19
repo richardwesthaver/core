@@ -124,7 +124,7 @@ control (or not)."
   (when (typep condition 'error)
     (invoke-transfer-error condition)))
 
-(defconstant +work-tag+ 'my-work)
+(defconstant +work-tag+ '%work)
 
 (defvar *debugger-error* nil
   "Track the error inside the debugger for the `transfer-error' restart.")

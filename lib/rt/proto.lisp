@@ -6,21 +6,21 @@
 (in-package :rt)
 
 (defgeneric eval-test (self)
-  (:documentation "Eval a `test'."))
+  (:documentation "Eval a TEST."))
+
+(defgeneric funcall-test (self &key &allow-other-keys)
+  (:documentation "Funcall a TEST."))
 
 (defgeneric compile-test (self &key &allow-other-keys)
-  (:documentation "Compile a `test'."))
-
-(defgeneric locked-tests (self)
-  (:documentation "Return a list of locked tests in `test-suite' object SELF."))
+  (:documentation "Compile a TEST."))
 
 (defgeneric push-test (self place)
   (:documentation
-   "Push `test' SELF to the value of slot ':tests' in `test-suite' object PLACE."))
+   "Push SELF to the value of slot ':tests' in PLACE."))
 
 (defgeneric pop-test (self)
   (:documentation
-   "Pop the first `test' from the slot-value of ':tests' in `test-suite' object SELF."))
+   "Pop the first TEST from the slot-value of ':tests' in TEST-SUITE object SELF."))
 
 (defgeneric push-result (self place)
   (:documentation
@@ -35,10 +35,10 @@
    "Push object SELF to the value of slot ':results' in object PLACE."))
 
 (defgeneric delete-test (self &key &allow-other-keys)
-  (:documentation "Delete `test' object specified by `test-object' SELF and optional keys."))
+  (:documentation "Delete  TEST-OBJECT specified by SELF."))
 
 (defgeneric find-test (self name &key &allow-other-keys)
-  (:documentation "Find `test' object specified by name and optional keys."))
+  (:documentation "Find TEST-OBJECT specified by name."))
 
 (defgeneric do-test (self &optional context)
   (:documentation "Run test SELF, printing results to *standard-output*. The second

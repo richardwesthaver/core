@@ -6,7 +6,7 @@
 (defpackage :core/bench/tpc-h                 
   (:nicknames :bench/tpc-h :tpc-h)            
   (:import-from :obj/time :date)              
-  (:use :cl :std :rt :rt/cover :log :schema)
+  (:use :cl :std :rt :log :schema)
   (:export :*tpc-h-data-directory*            
    :tpc-h-schema :tpc-h-benchmark             
    :+tpc-h-region-count+ :+tpc-h-nation-count+

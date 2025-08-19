@@ -67,7 +67,7 @@
 ;; correct test-suite object.
 (defun continue-testing ()
   (if-let ((test *testing*))
-    (throw '%in-test test)
+    (throw #.+test-tag+ test)
     (do-suite *test-suite*)))
 
 ;; NOTE 2023-09-01: `pushnew' does not return an indication of whether

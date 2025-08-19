@@ -147,7 +147,7 @@
       (error 'test-failed :reason reason :form form))))
 
 (defmacro with-test-env (self &body body)
-  `(catch '%in-test
+  `(catch #.+test-tag+
      (setf (test-lock-p ,self) t)
      (let* ((*testing* ,self)
             (*log-level* (level *test-suite*))

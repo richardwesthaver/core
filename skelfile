@@ -246,8 +246,8 @@
    (asdf:compile-system :core :force t)
    (asdf:test-system :core :force t)
    (declaim (optimize sb-cover:store-coverage-data))
-   (rt/cover:report ".stash/coverage/")
-   (rt/cover:clear-coverage)))
+   (sb-cover:report ".stash/coverage/")
+   (sb-cover:clear-coverage)))
  ;; install
  (install (install-core)
   (with-directory ".stash/"

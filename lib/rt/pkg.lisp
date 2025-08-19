@@ -29,16 +29,19 @@
 
 (defpackage :rt
   (:use 
-   :cl :std :sxp :log :obj/ast
-   :sb-aprof)
+   :cl :std :sxp :log 
+   :ast :config :sb-aprof)
   (:export
    :test-error
    :*compile-tests*
    :*catch-test-errors*
+   :*test-on-def*
    :*test-suffix*
    :*default-test-suite-name*
    :*test-suite*
    :*test-suite-list*
+   :*coverage-directory*
+   :+test-tag+
    :time-total
    ;;  TODO 2023-09-04: :*test-profiler-list* not yet
    :*testing*
@@ -79,7 +82,6 @@
    :eval-test
    :compile-test
    :compile-suite
-   :locked-tests
    :push-test
    :pop-test
    :delete-test
@@ -122,15 +124,6 @@
    :is<=
    :isor
    :run-all-tests))
-
-(defpkg :rt/cover
-  (:nicknames :cover)
-  (:use :cl :std :log :rt)
-  (:use-reexport :sb-cover)
-  (:export
-   :enable-coverage :disable-coverage
-   :*coverage-directory*
-   :coverage-report))
 
 (defpackage :rt/tracing
   (:nicknames :tracing)

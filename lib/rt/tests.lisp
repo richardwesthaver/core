@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :rt/tests
-  (:use :cl :std :rt :rt/flamegraph :rt/tracing :rt/cover :rt/fuzz))
+  (:use :cl :std :rt :rt/flamegraph :rt/tracing :rt/fuzz))
 
 (in-package :rt/tests)
 
@@ -41,10 +41,6 @@
     (save-report f)
     (is (probe-file f))
     (delete-file f)))
-
-(deftest cover (:profile t :skip t)
-  ;; todo
-  (coverage-report))
 
 (deftest fixture (:use "fx1")
   (print *fx*))

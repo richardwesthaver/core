@@ -21,17 +21,17 @@
 
 (defansi-test ansi-t01 ()
   (erase)
-  (cursor-position 0 0)
+  (.cup 0 0)
   (princ "0")
-  (cursor-position 2 2)
+  (.cup 2 2)
   (princ "1")
-  (cursor-position 5 15)
+  (.cup 5 15)
   (princ "test")
-  (cursor-position 10 15)
+  (.cup 10 15)
   (force-output)
   (with-input-from-string (in (format nil "test~%~%"))
     (let ((a (read-line in)))
-      (cursor-position 12 15)
+      (.cup 12 15)
       (princ a)
       (force-output))))
 
@@ -124,10 +124,10 @@
                   :vmin 1
                   :vtime 0)
   (erase)
-  (cursor-position 1 1)
+  (.cup 1 1)
   (force-output)
   (let ((a (read-char)))
-    (cursor-position 10 5)
+    (.cup 10 5)
     (princ a)
     (force-output))
 
@@ -145,10 +145,10 @@
 (defansi-test ansi-t07 ()
   (set-tty-mode t :cooked nil)
   (erase)
-  (cursor-position 1 1)
+  (.cup 1 1)
   (force-output)
   (let ((a (read-char)))
-    (cursor-position 3 1)
+    (.cup 3 1)
     (princ a)
     (force-output))
   (set-tty-mode t :raw nil))
@@ -156,10 +156,10 @@
 (defansi-test ansi-t08 ()
   ;; (uiop:run-program "stty raw -echo")
   (erase)
-  (cursor-position 1 1)
+  (.cup 1 1)
   (force-output)
   (let ((a (read-char)))
-    (cursor-position 2 1)
+    (.cup 2 1)
     (princ a)
     (force-output))
   ;; (uiop:run-program "stty -raw echo" :ignore-error-status t)
@@ -170,10 +170,10 @@
   ;; of the reply char by char
   ;; Turn off the echo or the sequence will be displayed
   (set-tty-mode t :cooked nil :echo nil)
-  (save-cursor-position)
+  (.scosc)
   ;; Go to the bottom right corner of the terminal by attempting
   ;; to go to some high value of row and column
-  (cursor-position 999 999)
+  (.cup 999 999)
   (let (chars)
     ;; The terminal returns an escape sequence to the standard input
     (.dsr)
@@ -187,10 +187,7 @@
           do (push i chars))
     ;; Put the terminal back into its initial cooked state
     (set-tty-mode t :raw nil :echo t)
-    (restore-cursor-position)
-    ;; Return the read sequence as a list of characters.
-    ;; (nreverse chars)
-    ))
+    (.scorc)))
 
 (deftest ansi ()
   (with-input-from-string (in (format nil "~%~%"))

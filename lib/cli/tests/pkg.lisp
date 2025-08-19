@@ -11,7 +11,7 @@
 (in-suite :cli)
 
 (deftest progress ()
-  (flet ((%step () (cli/progress::update 1)))
+  (flet ((%step () (update! 1)))
     (let ((*progress-bar-enabled* t)
           (n 100))
       (with-progress-bar (n "TEST: # of steps = ~a" n)

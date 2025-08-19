@@ -1046,6 +1046,7 @@
    :*all-threads*
    :*worker-class*
    :*worker*
+   :+work-tag+
    :work
    :scheduler
    :make-scheduler
