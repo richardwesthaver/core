@@ -8,7 +8,7 @@
 (defvar *pk-target* nil)
 (defopt pk-version (print-version *cli*))
 (defopt pk-log-level 
-  (setq *log-level* (if *arg* (if (stringp *arg*)
+  (setq log:*log-level* (if *arg* (if (stringp *arg*)
                                   (sb-int:keywordicate (string-upcase *arg*))
                                   *arg*)
                         :info)))

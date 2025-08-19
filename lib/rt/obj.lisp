@@ -147,7 +147,7 @@
       (error 'test-failed :reason reason :form form))))
 
 (defmacro with-test-env (self &body body)
-  `(catch #.+test-tag+
+  `(catch '#.+test-tag+
      (setf (test-lock-p ,self) t)
      (let* ((*testing* ,self)
             (*log-level* (level *test-suite*))
@@ -164,13 +164,15 @@
   (with-test-env self
     (trace! "running test: ~A" *testing*)
     (flet ((%do ()
-             ;; (when (test-profile self)
-             ;;   (sb-sprof:start-profiling))
+             (when (test-profile self)
+               (sb-sprof:start-profiling))
              (if *compile-tests*
                  (with-compilation-unit (:override t :policy (or (and *test-suite* (test-policy *test-suite*)) *test-policy*))
                    ;; TODO 2023-09-21: handle failures here
-                   (funcall (compile-test self :declare (test-declare self)))
-                   (setf %test-result (make-test-result :pass (test-fn self))))
+                   (unwind-protect-case ()
+                       (funcall (compile-test self :declare (test-declare self)))
+                     (:normal (setf %test-result (make-test-result :pass (test-fn self))))
+                     (:abort (setf %test-result (make-test-result :fail (test-fn self))))))
                  (progn
                    (funcall-test self :declare (test-declare self))
                    (setf %test-result (make-test-result :pass self))))
