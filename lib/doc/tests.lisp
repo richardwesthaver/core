@@ -50,11 +50,6 @@
 (deftest doc-dist ()
   (is-doc-typep dist-documentation (dist-documentation :quicklisp)))
 
-(deftest image-documentation ()
-  (is t))
-
 ;; TODO 2025-08-18: 
 (deftest doc-db ()
   (db:load-database-backend :rdb))
-
-  

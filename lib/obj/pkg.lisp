@@ -323,7 +323,8 @@
    :edge-value :edge-weight :node-edges
    :edgex
    :edge-out
-   :edge-in))
+   :edge-in
+   :class-graph))
 
 (defpkg :obj/config
   (:nicknames :config)

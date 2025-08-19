@@ -10,8 +10,7 @@
                (:file "package")
                (:file "system")
                (:file "dist")
-               (:file "reprex")
-               (:file "image"))
+               (:file "reprex"))
   :in-order-to ((test-op (test-op :doc/tests))))
 
 (defsystem :doc/tests

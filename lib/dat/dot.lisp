@@ -131,7 +131,8 @@ structures.  RANKS is a list of RANK structures."
            (mapcar {node-to-dot _ node-attrs} (hash-table-keys (nodes graph)))
            (mapcar {edge-to-dot _ graph edge-attrs} (hash-table-keys (edges graph)))
            (mapcar #'subgraph-print subgraphs)
-           (mapcar #'rank-print ranks))))
+           (mapcar #'rank-print ranks)))
+  (values))
 
 (defun graph-to-dot-file (graph path 
                               &key attributes node-attrs edge-attrs

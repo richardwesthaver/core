@@ -216,7 +216,7 @@ of value NEW.  Edges between only NODE1 and NODE2 will be removed."))
   ;; replace all removed edges with NEW instead of NODE1 or NODE2
   (mapcar
    (lambda (l)
-     (destructuring-bind(edge . value) l
+     (destructuring-bind (edge . value) l
        (let ((e (mapcar (lambda (n) (if (member n (list node1 node2)) new n)) edge)))
          (if (has-edge-p graph e)
              (when (and (edge-value graph e) value)
@@ -254,7 +254,7 @@ EDGE2 will be combined."))
   ;; NOTE: This is where our implementation breaks character from Eschulte's
   ;; implementation. We currently accept strings in addition to numbers and symbols.
   (assert (or (numberp node) (symbolp node) (stringp node)) (node)
-          "Nodes must be numbers, symbols or keywords, not ~S.~%Invalid node:~S"
+          "Nodes must be numbers, symbols, strings or keywords, not ~S.~%Invalid node:~S"
           (type-of node) node)
   (unless (has-node-p graph node)
     (setf (gethash node (nodes graph)) nil)
@@ -288,7 +288,7 @@ function which returns an estimated heuristic cost from an node to the
 target B.  The default value for HEURISTIC is the constant function of
 0, reducing this implementation to Dijkstra's algorithm.  The
 HEURISTIC function must satisfy HEURITIC(x)≤d(x,y)+HEURITIC(y) ∀ x,y
-in GRAPH allowing the more efficient monotonic or \"consistent\"
+in GRAPH allowing the more efficient monotonic or 'consistent'
 implementation of A*.")
   (:method ((graph graph) a b
             &optional
@@ -308,7 +308,7 @@ implementation of A*.")
             (gethash a f) (funcall heuristic a)
             (gethash a open) t)
 
-      (sb-concurrency:enqueue fringe (gethash a f))
+      (sb-concurrency:enqueue (gethash a f) fringe)
 
       (do ((current (sb-concurrency:dequeue fringe) (sb-concurrency:dequeue fringe)))
           ((zerop (hash-table-count open))
@@ -352,7 +352,6 @@ implementation of A*.")
 ;; Theorem: Let s,t ∈ (nodes G), let G' be the result of merging s and
 ;;          t in G.  Then (min-cut G) is equal to the minimum of the
 ;;          min cut of s and t in G and (min-cut G').
-;;
 (defun weigh-cut (graph cut)
   (reduce #'+ (mapcar {edge-value graph}
                       (remove-if-not (lambda (edge)
@@ -403,19 +402,33 @@ implementation of A*.")
 
 ;; https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
 
-;;; MOP utils
+;;; CLOS utils
 ;; it's often useful to convert a class hierarchy into a GRAPH so that it may
 ;; easily be printed to DOT (using the DAT/DOT package)
 
-;; TODO 2025-08-18: 
-(defun metaclass-graph (metaclass)
-  "Return a new GRAPH object containing all instances of METACLASS.")
-
+;; TODO 2025-08-19: accept optional direction arg (up = class-direct-superclasses)
 (defun class-graph (class)
   "Return a new GRAPH object containing all instances of CLASS."
-  (let ((root class)
-        (classes (sb-mop:class-direct-subclasses class)))
-    (loop while classes
-          collect classes
-          do (setf classes (flatten (mapcar 'sb-mop:class-direct-subclasses classes))))))
-
+  (let ((graph (make-instance 'graph)))
+    (flet ((.insert (x y)
+             (when y
+               (mapc
+                (lambda (z)
+                  (add-edge graph `(,x ,z)))
+                y)))
+           (.map (x)
+             (mapcar
+              (lambda (y) (when y (mapcar 'class-name (sb-mop:class-direct-subclasses (find-class y)))))
+               x)))
+      (let* ((classes (mapcar 'class-name (sb-mop:class-direct-subclasses (find-class class))))
+             (subs (.map classes))) ; 2nd level
+        (add-node graph class)
+        (.insert class classes)
+        (loop while subs
+              do (loop
+                   for c in classes
+                   for s in subs
+                   do (.insert c s))
+              do (setf classes (flatten subs))
+              do (setf subs (.map classes)))
+      graph))))

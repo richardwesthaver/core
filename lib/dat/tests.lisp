@@ -7,6 +7,7 @@
 (defsuite :dat)
 (in-suite :dat)
 (in-readtable :shell)
+
 (deftest dot ()
   "Test Graphviz DOT functionality."
   (let ((g1 (make-instance 'graph:graph)))
@@ -21,7 +22,11 @@
     (is (probe-file "/tmp/test"))
     #$dot -Tsvg /tmp/test -o/tmp/test.svg$#
     (is (delete-file "/tmp/test"))
-    (is (delete-file "/tmp/test.svg"))))
+    (is (delete-file "/tmp/test.svg")))
+  (serialize (graph:class-graph 'id:id) :dot :path "/tmp/class-graph-test")
+  #$dot -Tsvg /tmp/test -o/tmp/class-graph-test.svg$#
+  (is (delete-file "/tmp/class-graph-test")))
+
 
 (deftest csv ()
   "Test CSV functionality."
