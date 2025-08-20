@@ -788,11 +788,14 @@
   (:import-from :std/comp :*primitive-objects* :primitive-object-size 
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:export :define-io
-   :*simple-objects* :*primitive-object-table* 
-   :*core-object-table* :serde
+   :*simple-types* :*primitive-object-table* 
+   :*simple-type-table* :*core-types*
+   :*core-type-table* :register-type-id
+   :serde :reset-core-types
    :prim-type :serializable-p 
    :deserializable-p :ser :de :serialize 
-   :deserialize :serde-condition :serde-error :serializer-error :deserializer-error))
+   :deserialize :serde-condition :serde-error :serializer-error :deserializer-error
+   :core-type-id :simple-type-id))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)
@@ -1296,8 +1299,6 @@
   (:shadowing-import-from :std/meta :reset)
   (:shadowing-import-from :cl-user :path))
 
-(asdf:register-system-packages "STD" *std-packages*)
-
-(setq *default-package* "STD-USER")
-
-(eval-when (:load-toplevel) (pushnew :std *features*))
+(eval-when (:load-toplevel) 
+  (pushnew :std *features*)
+  (setq *default-package* "STD-USER"))

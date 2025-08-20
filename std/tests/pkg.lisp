@@ -177,3 +177,8 @@ These tests are copied directly from the Alexandria test suite."
   (inspect-ir '(lambda (a b c) a b c) (lambda (x) (istype 'sb-c:component x)))
   (isnt (zerop (length (asm-search "MOV" #'car))))
   (istype 'vector (std/comp::%asm '())))
+
+(deftest serde ()
+  (is= (core-type-id t) 3117)
+  (is= (simple-type-id t) 12))
+  

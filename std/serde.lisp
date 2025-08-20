@@ -36,15 +36,14 @@
   (:documentation "Return non-nil of object SELF is serializable."))
 
 (defgeneric serialize (obj format &key &allow-other-keys)
-  (:documentation "Serialize OBJ to FORMAT, which is a SERIALIZABLE-TYPE-DESIGNATOR."))
+  (:documentation "Serialize OBJ to FORMAT."))
 ;;; Deserialize
 (defgeneric deserializable-p (self)
   (:method ((self t)) nil)
   (:documentation "Return non-nil if object SELF is deserializable."))
 
 (defgeneric deserialize (from format &key &allow-other-keys)
-  (:documentation "Deserialize FROM into an object of type FORMAT, which is a
-DESERIALIZABLE-TYPE-DESIGNATOR."))
+  (:documentation "Deserialize FROM into an object of type FORMAT."))
 
 (defgeneric ser (self)
   (:documentation "Access the serializer of SELF."))
@@ -58,14 +57,15 @@ DESERIALIZABLE-TYPE-DESIGNATOR."))
 
 FROM and TO should both specialize on object instances.
 
-Calling this function requires you to initialize the arguments instead
-of relying on a type-designator format and generating an object in the
-method body."))
+Calling this function requires you to initialize the arguments instead of
+relying on a designated format and generating an object in the method body."))
 
 (defparameter *primitive-object-table*
   (let ((tbl (make-hash-table)))
     (dolist (obj *primitive-objects* tbl)
-      (setf (gethash (primitive-object-name obj) tbl) (cons (symbol-value (primitive-object-lowtag obj)) (symbol-value (primitive-object-widetag obj))))))
+      (setf (gethash (primitive-object-name obj) tbl) 
+            (cons (symbol-value (primitive-object-lowtag obj)) 
+                  (symbol-value (primitive-object-widetag obj))))))
   "Primitive objects are defined by SBCL and will not change. Convenient as a
 non-unique ID prefix.")
 
@@ -79,16 +79,16 @@ non-unique ID prefix.")
   (defvar *core-type-table*)
   (defvar *core-types*))
 
-(defun reinitialize-core-types ()
+(defun reset-core-types ()
   (setq *core-type-table* *simple-type-table*
         *core-types* *simple-types*))
 
-(defun register-object-id (type id &optional (table *core-type-table*) (vector *core-types*))
+(defun register-type-id (type id &optional (table *core-type-table*) (vector *core-types*))
   (setf (gethash type table) id
         (aref vector id) type))
 
 (macrolet ((simple-id (type id)
-             `(register-object-id ,type ,id *simple-type-table* *simple-types*))
+             `(register-TYPE-id ,type ,id *simple-type-table* *simple-types*))
            (simple-id-order (&rest types &aux (i 0))
              `(progn
                 ,@(mapcar (lambda (x) (prog1 `(simple-id ',x ,i) (incf i))) types))))
@@ -111,16 +111,17 @@ non-unique ID prefix.")
    simple-array simple-vector 
    simple-string base-string
    octet-vector)
-  (reinitialize-core-types))
+  (reset-core-types))
 
 ;; TODO 2025-08-14: 
 (defmacro simple-type-id (obj)
   `(typecase ,obj
-     ,@(mapcar (lambda (x) (list (car x) (cdr x))) (std/hash-table:hash-table-alist *simple-type-table*))))
+     ,@(mapcar (lambda (x) (list (car x) (cdr x))) 
+        (std/hash-table:hash-table-alist *simple-type-table*))))
 
 (defun get-core-type-id (obj)
   (or (gethash (type-of obj) *core-type-table*)
-      (gethash (simple-type-id obj) *core-type-table*)))
+      (gethash (aref *simple-types* (simple-type-id obj)) *core-type-table*)))
 
 (definline prim-type (obj)
   "Return the name of the primitive type of OBJ."
@@ -130,11 +131,11 @@ non-unique ID prefix.")
   "Return the 'core-type-id' of OBJ which is a 16-bit integer containing type
 information. The first 8 bits are the associated object widetag followed by an
 8-bit tag corresponding to an index of the *CORE-OBJECTS* vector, which may be
-extended by the user using the REGISTER-OBJECT-ID function. "
+extended by the user using the REGISTER-TYPE-ID function. "
   (let ((id 0))
     (declare ((unsigned-byte 16) id) (dynamic-extent id))
     (setf (ldb (byte 8 0) id) (widetag-of obj)) ;; 8 bits
-    (setf (ldb (byte 4 1) id) (get-core-type-id obj))
+    (setf (ldb (byte 4 8) id) (get-core-type-id obj))
     id))
 
 ;; (defun %lisp-metaclass-id (obj))

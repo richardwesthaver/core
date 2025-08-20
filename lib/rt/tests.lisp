@@ -23,7 +23,7 @@
     (istype 'tmp-fixture fx))
   (signals (error t) (test-form (make-instance 'test-result))))
 
-(deftest flamegraph (:profile t :cover t)
+(deftest flamegraph (:cover t)
   (let ((f "/tmp/test.txt")) ;; open with https://speedscope.app or
                              ;; output svg with flamegraph.pl >>
                              ;; test.svg

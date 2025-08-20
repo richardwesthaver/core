@@ -9,10 +9,14 @@
 (in-package :bin/core)
 
 (define-multi-main dispatch-core
-    (make-toplevel-init 
-     :package :user 
-     :userinit (lambda () (merge-homedir-pathnames ".corerc"))
-     :default t)
+  (let ((args (args)))
+    (in-package :user)
+    (if (and args (car args) (probe-file (car args)))
+        (load (car args))
+        (make-toplevel-init 
+         :package :user 
+         :userinit (lambda () (merge-homedir-pathnames ".corerc"))
+         :default t)))
   (:sbcl (sb-impl::toplevel-init))
   (:skel (bin/skel::start-skel))
   (:pod (bin/pod::start-pod))
