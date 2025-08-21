@@ -8,7 +8,11 @@
 ;;; Defverb
 (sb-ext:defglobal *verbs* nil)
 
-(defun register-verb (v) (pushnew v *verbs* :test #'equal :key #'generic-function-name))
+(defun register-verb (v) 
+  ;; (let ((name (generic-function-name v)))
+  ;;   (when (atom name)
+  ;;     (setf (get (generic-function-name v) 'verb) t)))
+  (pushnew v *verbs* :test #'equal :key #'generic-function-name))
 
 (defmacro defverb (name args &rest props)
   "Like DEFGENERIC but specifically designed for verbs. The resulting function

@@ -160,6 +160,44 @@
    :wrapped-error
    :wrap-error))
 
+(defpkg :std/comp
+  (:use :cl)
+  (:import-from :std/prim :definline)
+  (:import-from :sb-c :deftransform :defoptimizer 
+   :define-vop :parse-deftransform 
+   :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
+   :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
+   :assemble :without-scheduling :inst :inst* 
+   :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
+   :make-file-source-info :make-lisp-source-info
+   :def-ir1-translator :defknown :ctype-of :type-specifier)
+  (:import-from :sb-c :vop)
+  (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
+   :*backend-sbs* :*backend-sc-names* 
+   :*compile-progress* :*compile-component-hook*
+   :primitive-object-size :find-saetp :find-saetp-by-ctype)
+  (:import-from :sb-vm :*register-arg-tns* :*primitive-objects*
+   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
+  (:import-from :sb-ext :*compiler-print-variable-alist*)
+  (:import-from :sb-x86-64-asm :ea :machine-ea)
+  (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
+   :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions :def-ir1-translator
+   :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
+   :*primitive-objects* :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop*
+   :*backend-sbs* :*backend-sc-names* :emit :assemble
+   :without-scheduling :dump-symbolic-asm :inst :inst*
+   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
+   :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
+   :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
+   :vop :primitive-type-name-of :ctype-of :type-specifier
+   :primitive-object-size :find-saetp :find-saetp-by-ctype
+   :deep-size :get-simple-fun-instruction-model :asm
+   :print-form-and-optimize :print-signaled-conditions
+   :print-arguments
+   :checked-compile :runtime :asm-search :inspect-ir
+   :ea)
+  (:recycle :sb-c))
+
 (defpkg :std/type
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
@@ -167,7 +205,9 @@
   (:import-from :std/prim :definline)
   (:import-from :sb-impl :sfunction)
   (:import-from :sb-int :unsigned-byte*)
-  (:import-from :sb-c :integer-type-length :ctype-of :ctype)
+  (:import-from :std/comp :*primitive-objects* :primitive-object-size 
+   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
+  (:import-from :sb-c :integer-type-length :ctype-of :ctype :widetag-of :lowtag-of)
   (:import-from :sb-kernel :*type-classes* :type-class 
    :make-type-class :*type-cache-nonce* :type-class-name :type-class-id
    :classoid :type-id->type-class
@@ -268,7 +308,12 @@
    #:type=
    #:word
    :u1 :u2 :u3 :u4 :u5 :u6 :u7 :u8 :u16 :u24 :u32 :u64
-   :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64))
+   :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
+   :*simple-types* :*primitive-object-table* 
+   :*simple-type-table* :*core-types*
+   :*core-type-table* :register-type-id
+   :reset-core-types :prim-type 
+   :core-type-id :simple-type-id))
 
 (defpkg :std/string
   (:use :cl)
@@ -376,7 +421,7 @@
    :vector-to-list :copy-vector-to-list
    :modproj :simplify-array :array-rank-limit))
 
-(defpkg :std/hash-table
+(defpkg :std/hash
   (:use :cl)
   (:nicknames :std/ht)
   (:recycle :sb-int)
@@ -607,7 +652,6 @@
    :n-lowtag-bits :lowtag-mask :lowtag-limit :n-fixnum-tag-bits
    :fixnum-tag-mask :n-fixnum-bits :word-shift :n-word-bytes
    :n-machine-word-bytes :n-widetag-bits :widetag-mask
-   :lowtag-of :widetag-of
    :most-positive-word
    :tune-image-for-dump
    :show-ctype-ctor-cache-metrics
@@ -738,44 +782,6 @@
    :make-octets
    :octets))
 
-(defpkg :std/comp
-  (:use :cl)
-  (:import-from :std/prim :definline)
-  (:import-from :sb-c :deftransform :defoptimizer 
-   :define-vop :parse-deftransform 
-   :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
-   :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
-   :assemble :without-scheduling :inst :inst* 
-   :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
-   :make-file-source-info :make-lisp-source-info
-   :def-ir1-translator :defknown :ctype-of :type-specifier)
-  (:import-from :sb-c :vop)
-  (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
-   :*backend-sbs* :*backend-sc-names* 
-   :*compile-progress* :*compile-component-hook*
-   :primitive-object-size :find-saetp :find-saetp-by-ctype)
-  (:import-from :sb-vm :*register-arg-tns* :*primitive-objects*
-   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
-  (:import-from :sb-ext :*compiler-print-variable-alist*)
-  (:import-from :sb-x86-64-asm :ea :machine-ea)
-  (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
-   :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions :def-ir1-translator
-   :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
-   :*primitive-objects* :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop*
-   :*backend-sbs* :*backend-sc-names* :emit :assemble
-   :without-scheduling :dump-symbolic-asm :inst :inst*
-   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
-   :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
-   :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
-   :vop :primitive-type-name-of :ctype-of :type-specifier
-   :primitive-object-size :find-saetp :find-saetp-by-ctype
-   :deep-size :get-simple-fun-instruction-model :asm
-   :print-form-and-optimize :print-signaled-conditions
-   :print-arguments
-   :checked-compile :runtime :asm-search :inspect-ir
-   :ea)
-  (:recycle :sb-c))
-
 (defpkg :std/serde
   (:use :cl :std/sys)
   (:import-from :std/named-readtables :parse-body)
@@ -785,17 +791,11 @@
   (:import-from :std/sym :symbolicate :with-gensyms)
   (:import-from :std/type :octet-vector :*type-classes* 
    :type-class-name-of :type-class-name :type=)
-  (:import-from :std/comp :*primitive-objects* :primitive-object-size 
-   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:export :define-io
-   :*simple-types* :*primitive-object-table* 
-   :*simple-type-table* :*core-types*
-   :*core-type-table* :register-type-id
-   :serde :reset-core-types
-   :prim-type :serializable-p 
+   :serde 
+   :serializable-p 
    :deserializable-p :ser :de :serialize 
-   :deserialize :serde-condition :serde-error :serializer-error :deserializer-error
-   :core-type-id :simple-type-id))
+   :deserialize :serde-condition :serde-error :serializer-error :deserializer-error))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)
@@ -872,7 +872,7 @@
   (:use :cl :sb-pcl)
   (:use-reexport :sb-mop)
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
-  (:import-from :std/hash-table :make-hashset :hashset-find :hashset-insert :psxhash)
+  (:import-from :std/hash :make-hashset :hashset-find :hashset-insert :psxhash)
   (:import-from :sb-ext :without-package-locks)
   (:import-from :std/macs :eval-always)
   (:import-from :std/prim :definline)
@@ -1282,7 +1282,7 @@
   (:use :cl)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num 
-   :std/stream :std/curry :std/array :std/hash-table
+   :std/stream :std/curry :std/array :std/hash
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/fmt :std/path
    :std/os :std/file :std/string :std/sys 

@@ -104,7 +104,7 @@
 
 (eval-always
   (defparameter *default-user-agent*
-    (format nil "CC/req (~A~@[ ~A~]); ~A;~@[ ~A~]"
+    (format nil "req (~A~@[ ~A~]); ~A;~@[ ~A~]"
             (lisp-implementation-type)
             (lisp-implementation-version)
             (software-type)

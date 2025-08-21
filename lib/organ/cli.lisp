@@ -20,7 +20,7 @@
 
 (defcmd organ-show ()
   (if *args*
-      (print (org-parse-lines t (uiop:read-file-string (car *args*))))
+      (print (org-parse-lines t (read-file (car *args*))))
       (log:error! "missing file arg")))
 
 (defcmd organ-parse ()

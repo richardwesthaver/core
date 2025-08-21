@@ -102,8 +102,9 @@ Signals an error if NAME is already a bound non-constant variable.
 
 Signals an error if NAME is already a constant variable whose value is not
 equal under TEST to result of evaluating INITIAL-VALUE."
-  `(defconstant ,name (%reevaluate-constant ',name ,initial-value ,test)
-     ,@(when documentation `(,documentation))))
+  `(progn
+     (defconstant ,name (%reevaluate-constant ',name ,initial-value ,test)
+       ,@(when documentation `(,documentation)))))
 
 ;;; Vars
 ;; from HUNCHENTOOT

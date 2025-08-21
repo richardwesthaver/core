@@ -58,9 +58,7 @@
    (lambda (condition stream)
      (format stream "~A: ~A" (type-of condition) (slot-value condition 'description)))))
 
-;;
 ;; Callbacks
-
 (defstruct callbacks
   (message-begin nil :type (or null function))     ;; 1 arg
   (url nil :type (or null function))
@@ -94,9 +92,7 @@
                             (abort ,e)))))
          (funcall ,callback ,http)))))
 
-;;
 ;; Callback-related errors
-
 (define-condition callback-error (http-error)
   ((error :initarg :error
           :initform nil))
@@ -125,9 +121,7 @@
 (define-condition cb-status (callback-error)
   ((description :initform "the status callback failed")))
 
-;;
 ;; Parsing-related errors
-
 (define-condition parsing-error (http-error) ())
 
 (define-condition invalid-eof-state (parsing-error)

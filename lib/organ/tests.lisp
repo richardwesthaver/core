@@ -1,5 +1,5 @@
 (defpackage :organ/tests
-  (:use :cl :organ :std :rt :rt/fuzz)
+  (:use :cl :organ :organ/graph :std :rt :rt/fuzz)
   (:export *test-org-file*))
 
 (in-package :organ/tests)
@@ -70,11 +70,11 @@ _underline_
     (> (length (organ::hl-tags hl)) 0))))
 
 ;;; Elements
-(deftest org-headline () (is (headline-ok (org-parse :headline "** DONE [#A] testing stuff :foo:bar:"))))
+(deftest org-headline () (headline-ok (org-parse :headline "** DONE [#A] testing stuff :foo:bar:")))
 
 ;;; API
 (deftest org-heading ()
-  (is (headline-ok (org-headline (org-parse :heading *test-org-heading*)))))
+  (headline-ok (org-headline (org-parse :heading *test-org-heading*))))
 
 (deftest org-section ())
 

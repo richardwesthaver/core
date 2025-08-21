@@ -37,7 +37,7 @@ that ASDF can find, or have quicklisp installed.")))
    (:file "stream")
    (:file "curry")
    (:file "array")
-   (:file "hash-table")
+   (:file "hash")
    (:file "readtable")
    (:module "macs"
     :components

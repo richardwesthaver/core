@@ -548,7 +548,7 @@
 
 (defpkg :obj/tree/btree
   (:nicknames :obj/btree :btree)
-  (:use :cl :std :obj/tree :stored :db :typed)
+  (:use :cl :std :obj/tree :stored :db)
   (:export
    #:existsp
    #:btree

@@ -39,7 +39,7 @@ that a vertex always carries an ID slot."))
 
 (defclass directed-edge (edge)
   ()
-  (:documentation "An edge with an implicit direction from node A to B."))
+  (:documentation "An edge with an implicit direction from IN to OUT."))
 
 (defclass weighted-edge (edge)
   ((weight :initform 1d0 :initarg :weight :accessor weight-of)))
@@ -65,8 +65,9 @@ to a new equality test specified with TEST."
   (set-equal (hash-table-alist hash1)
              (hash-table-alist hash2)
              :test (lambda (a b)
-                     (and (equalp (car a) (car b))
-                          (set-equal (cdr a) (cdr b) :test 'tree-equal)))))
+                     (or (and (atom a) (atom b) (equalp a b))
+                         (and (equalp (car a) (car b))
+                              (set-equal (cdr a) (cdr b) :test 'tree-equal))))))
 
 (defun edge-hash-equal (hash1 hash2)
   "Test edge hashes HASH1 and HASH2 for equality."
@@ -75,22 +76,29 @@ to a new equality test specified with TEST."
              :test 'equalp))
 
 (defun edge-equalp (edge1 edge2)
-  (set-equal edge1 edge2 :test 'equal))
+  (when (atom edge1) (setf edge1 (list edge1)))
+  (when (atom edge2) (setf edge2 (list edge2)))
+  (set-equal (flatten edge1) (flatten edge2) :test 'equal))
 
 (defun directed-edge-equalp (edge1 edge2)
   (tree-equal edge1 edge2))
 
 (defun sxhash-edge (edge)
-  (sxhash (sort (copy-tree edge)
-                (cond
-                  ((and (numberp (car edge)) (numberp (cdr edge)))
-                   (lambda (a b)
-                     (or (< (imagpart a) (imagpart b))
-                         (and (= (imagpart a) (imagpart b))
-                              (< (realpart a) (realpart b))))))
-                  ((or (numberp (car edge)) (numberp (second edge)))
-                   (lambda (a b) (declare (ignore a b)) t))
-                  (t #'string<)))))
+  (sxhash 
+   (if (atom edge)
+       edge
+       (sort
+        (flatten (copy-tree edge))
+        (cond
+          ((and (numberp (car edge)) (numberp (cdr edge)))
+           (lambda (a b)
+             (or (< (imagpart a) (imagpart b))
+                 (and (= (imagpart a) (imagpart b))
+                      (< (realpart a) (realpart b))))))
+          ((and (stringp (car edge)) (stringp (cdr edge)))
+           #'string<)
+          (t
+           (lambda (a b) (declare (ignore a b)) t)))))))
 
 (sb-ext:define-hash-table-test edge-equalp sxhash-edge)
 
@@ -187,7 +195,7 @@ Delete and return the old edges of NODE in GRAPH."))
   (prog1 (mapc {delete-edge graph} (gethash node (nodes graph)))
     (mapc {add-edge graph} new)))
 
-(defmethod add-edge ((graph graph) edge &optional value)
+(defmethod add-edge ((graph graph) (edge list) &optional value)
   (mapc (lambda (node)
           (add-node graph node)
           (pushnew (case (type-of graph)
@@ -199,9 +207,24 @@ Delete and return the old edges of NODE in GRAPH."))
   (setf (gethash edge (edges graph)) value)
   edge)
 
+(defmethod add-edge ((graph graph) (edge edge) &optional value)
+  (dolist (n (list (edge-in edge) (edge-out edge)))
+    (add-node graph n)
+    (pushnew (case (type-of graph)
+               (graph (remove-duplicates edge))
+               (directed-graph edge))
+             (gethash n (nodes graph))
+             :test 'edge-equalp))
+  (setf (gethash (name edge) (edges graph)) (or value edge))
+  edge)
+
+(defmethod add-edge ((graph graph) (edge id) &optional value)
+  (add-edge graph (id edge) (or value edge)))
+
 (defmethod edge-value ((graph graph) edge)
   (multiple-value-bind (value included) (gethash edge (edges graph))
-    (assert included (edge graph) "~S doesn't include ~S" graph edge)
+    (declare (ignore included))
+    ;; (assert included (edge graph) "~S doesn't include ~S" graph edge)
     value))
 
 (defmethod (setf edge-value) (new (graph graph) edge)
@@ -259,6 +282,9 @@ EDGE2 will be combined."))
   (unless (has-node-p graph node)
     (setf (gethash node (nodes graph)) nil)
     node))
+
+(defmethod add-node ((graph graph) (node id))
+  (add-node graph (id node)))
 
 ;;; Directed Graph
 (defclass directed-graph (graph)

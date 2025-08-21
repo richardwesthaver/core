@@ -165,8 +165,7 @@ a default value for required keyword arguments."
          :format-control message
          :format-arguments args))
 
-(define-condition simple-parse-error (simple-error parse-error)
-  ()
+(define-condition simple-parse-error (simple-error parse-error) ()
   (:documentation "Simple parse errors."))
 
 (defun simple-parse-error (message &rest args)
@@ -190,9 +189,7 @@ a default value for required keyword arguments."
     :initarg :items
     :initform (error "Must specify items")
     :reader error-items))
-  (:report (lambda (condition stream)
-             (declare (ignore condition))
-             (format stream "Circular dependency detected")))
+  (:report (lambda (c s) (format s "Circular dependency detected in list ~a" (error-items c))))
   (:documentation "A condition which is signalled when a circular dependency is encountered."))
 
 (define-condition unknown-argument (error)
@@ -200,14 +197,11 @@ a default value for required keyword arguments."
     :initarg :name
     :initform (error "Must specify argument name")
     :reader error-name)
-   (kind
-    :initarg :kind
-    :initform (error "Must specify argument kind")
-    :reader error-kind))
-  (:report (lambda (condition stream)
-             (format stream "Unknown argument ~A of kind ~A"
-                     (error-name condition)
-                     (error-kind condition))))
+   (type
+    :initarg :type
+    :initform (error "Must specify argument type")
+    :reader error-type))
+  (:report (lambda (c s) (format s "Unknown argument ~A of type ~A" (error-name c) (error-type c))))
   (:documentation "A condition which is signalled when an unknown argument is encountered."))
 
 (defun unknown-argument-p (value)
@@ -219,10 +213,9 @@ a default value for required keyword arguments."
     :initarg :item
     :initform (error "Must specify argument item")
     :reader error-item))
-   (:report (lambda (condition stream)
-              (declare (ignore condition))
-              (format stream "Missing argument")))
-   (:documentation "A condition which is signalled when an option expects an argument, but none was provided"))
+   (:report (lambda (c s) (format s "Missing argument ~a." (error-item c))))
+   (:documentation "A condition which is signalled when an option expects an argument, but none
+was provided."))
 
 (defun missing-argument-p (value)
   "Return T if VALUE is a condition of type MISSING-ARGUMENT."
@@ -239,25 +232,26 @@ a default value for required keyword arguments."
     :initform (error "Must specify reason")
     :reader error-reason
     :documentation "The reason why this item is invalid"))
+  (:report (lambda (c s) (format s "Invalid item: ~A~%Reason: ~A" (error-item c) (error-reason c))))
   (:documentation "A condition which is signalled when an argument is identified as invalid."))
 
 (define-condition invalid-argument (simple-error invalid-item) ()
-  (:report (lambda (condition stream)
-             (format stream "Invalid argument: ~A~%Reason: ~A" (error-item condition) (error-reason condition))))
+  (:report (lambda (c s) (format s "Invalid argument: ~A~%Reason: ~A" (error-item c) (error-reason c))))             
   (:documentation "Invalid argument errors."))
 
 (define-condition conflicting-arguments (simple-error invalid-item) ()
-  (:report (lambda (condition stream)
-             (format stream "Conflicting arguments: ~A~%Reason: ~A" (error-item condition) (error-reason condition))))
+  (:report (lambda (c s)
+             (format s "Conflicting arguments: ~A~%Reason: ~A" (error-item c) (error-reason c))))
   (:documentation "Conflicting argument errors."))
 
 (define-condition unknown-token (std-error)
-  ((token :reader error-token :initarg :token))
+  ((token :reader error-item :initarg :token))
+  (:report (lambda (c s) (format s "Unknown token: ~a" (error-item c))))
   (:documentation "Unknown token errors."))
 
 (defmethod print-object ((c unknown-token) stream)
   (when (slot-boundp c 'token)
-    (format stream "Unknown token: ~A.~%" (error-token c)))
+    (format stream "Unknown token: ~A~%" (error-item c)))
   (call-next-method))
 
 (defun interact (&rest prompt)
@@ -356,11 +350,13 @@ the 'current' error."
   (:documentation "A condition which is signalled somewhere within the CLOS/MOP machinery."))
 
 (define-condition missing-method (error meta-condition)
-  ((method))
+  ((method :initarg :method :reader error-item))
+  (:report (lambda (c s) (format s "Missing method ~a." (error-item c))))
   (:documentation "Missing CLOS method errors."))
 
 (define-condition missing-methods (error meta-condition)
-  ((methods))
+  ((methods :initarg :methods :reader error-items))
+  (:report (lambda (c s) (format s "The following methods are missing: ~{~a~^, ~}" (error-items c))))
   (:documentation "Multiple missing CLOS methods errors."))
 
 ;;;; Wrapped

@@ -191,19 +191,6 @@
    :set-valued-direct-slot-definition
    :set-valued-effective-slot-definition))
 
-(defpackage :obj/meta/typed
-  (:nicknames :meta/typed :typed)
-  (:use :cl :std :obj/meta :sb-mop :stored)
-  (:export
-   #:type-num
-   #:type<=
-   #:type<
-   #:type=
-   #:array-type=
-   #:array-type-from-byte
-   #:byte-from-array-type
-   #:int-byte-spec))
-
 (defpackage :obj/meta/dynamic
   (:nicknames :meta/dynamic :dynamic)
   (:use :cl :std :obj/meta :std/macs)

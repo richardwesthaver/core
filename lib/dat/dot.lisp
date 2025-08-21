@@ -70,6 +70,9 @@ SUBGRAPH structure."
       (format out "  }~%"))))
 
 (defun edge-to-dot (edge graph attrs &optional stream)
+  (cond 
+    ((atom edge) (setf edge (list edge)))
+    ((consp edge) (setf edge (flatten edge))))
   (format stream "  \"~a\" ~a \"~a\" ~{~a~^ ~};~%"
           (first edge)
           (etypecase graph
@@ -174,7 +177,6 @@ dot executable."
                       (if (cl-ppcre:scan number-re (aref regs 1))
                           (read-from-string (aref regs 1)))))))
       graph)))
-
 
 ;;; Serde
 (defmethod serialize ((self graph) (fmt (eql :dot))

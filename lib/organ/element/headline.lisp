@@ -74,6 +74,15 @@
   summarized as a list of at most four elements: The headline,
   properties, logbook and body.")
 
+(defmethod print-object ((self org-headline) stream)
+  (print-unreadable-object (self stream :type t)
+    (write-string (make-string (hl-stars self) :initial-element #\*) stream)
+    (write-char #\space stream)
+    (when-let ((kw (hl-kw self)))
+      (princ (todo-keyword-type kw) stream)
+      (write-char #\space stream))
+    (write-string (hl-title self) stream)))
+    
 (defmethod org-parse ((type (eql :headline)) (input string))
   (let ((res (org-create type)))
     (with-input-from-string (s input)

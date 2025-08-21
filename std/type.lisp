@@ -203,3 +203,85 @@ types are not equivalent."
 
 (define-modify-macro coercef (type-spec) coerce
   "Modify-macro for COERCE.")
+
+(defparameter *primitive-object-table*
+  (let ((tbl (make-hash-table)))
+    (dolist (obj *primitive-objects* tbl)
+      (setf (gethash (primitive-object-name obj) tbl) 
+            (cons (symbol-value (primitive-object-lowtag obj)) 
+                  (symbol-value (primitive-object-widetag obj))))))
+  "Primitive objects are defined by SBCL and will not change. Convenient as a
+non-unique ID prefix.")
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defvar *simple-type-table* (make-hash-table :test 'equal)
+    "A hash-table mapping simple type names to integers.")
+
+  (defvar *simple-types* (make-array 128 :adjustable nil)
+    "A vector containing the simple set of lisp objects .")
+
+  (defvar *core-type-table*)
+  (defvar *core-types*))
+
+(definline next-type-id (&optional (table *core-type-table*))
+  (hash-table-count table))
+
+(defun reset-core-types ()
+  (setq *core-type-table* *simple-type-table*
+        *core-types* *simple-types*))
+
+(defun register-type-id (type &optional id (table *core-type-table*) (vector *core-types*))
+  (unless id (setf id (next-type-id table)))
+  (setf (gethash type table) id
+        (aref vector id) type))
+
+(macrolet ((simple-id (type id)
+             `(register-type-id ,type ,id *simple-type-table* *simple-types*))
+           (simple-id-order (&rest types &aux (i 0))
+             `(progn
+                ,@(mapcar (lambda (x) (prog1 `(simple-id ',x ,i) (incf i))) types))))
+  (simple-id-order 
+   t
+   character base-char 
+   double-float  single-float 
+   (complex double-float) (complex single-float) 
+   integer
+   bignum
+   fixnum
+   bit 
+   symbol 
+   boolean
+   null cons 
+   standard-object structure-object
+   pathname hash-table
+   array vector 
+   string
+   simple-array simple-vector 
+   simple-string base-string
+   octet-vector)
+  (reset-core-types))
+
+;; TODO 2025-08-14: 
+(defmacro simple-type-id (obj)
+  `(typecase ,obj
+     ,@(mapcar (lambda (x) (list (car x) (cdr x))) 
+        (std/hash:hash-table-alist *simple-type-table*))))
+
+(defun get-core-type-id (obj)
+  (or (gethash (type-of obj) *core-type-table*)
+      (gethash (aref *simple-types* (simple-type-id obj)) *core-type-table*)))
+
+(definline prim-type (obj)
+  "Return the name of the primitive type of OBJ."
+  (sb-vm::primitive-type-name (sb-vm::primitive-type-of obj)))
+
+(definline core-type-id (obj)
+  "Return the 'core-type-id' of OBJ which is a 16-bit integer containing type
+information. The first 8 bits are the associated object widetag followed by an
+8-bit tag corresponding to an index of the *CORE-OBJECTS* vector, which may be
+extended by the user using the REGISTER-TYPE-ID function. "
+  (let ((id 0))
+    (declare ((unsigned-byte 16) id) (dynamic-extent id))
+    (setf (ldb (byte 8 0) id) (widetag-of obj)) ;; 8 bits
+    (setf (ldb (byte 4 8) id) (get-core-type-id obj))
+    id))

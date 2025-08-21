@@ -179,7 +179,7 @@ arrange for FVAR to be closed after BODY."
    (lambda (k)
      (std/macs:when-let ((e (sb-posix:getenv (concatenate 'string "XDG_" (substitute #\_ #\- (string k)) "DIR"))))
        (setf (xdg-user-dir k) (pathname e))))
-   (std/hash-table:hash-table-keys *xdg-user-dirs*))
+   (std/hash:hash-table-keys *xdg-user-dirs*))
   *xdg-user-dirs*)
 
 ;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
@@ -209,7 +209,7 @@ arrange for FVAR to be closed after BODY."
    (lambda (k)
      (std/macs:when-let ((e (sb-posix:getenv (concatenate 'string "XDG_" (substitute #\_ #\- (string k))))))
        (setf (xdg-base-dir k) (pathname e))))
-   (std/hash-table:hash-table-keys *xdg-base-dirs*)))
+   (std/hash:hash-table-keys *xdg-base-dirs*)))
 
 ;;; user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))

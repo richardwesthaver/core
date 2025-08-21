@@ -21,7 +21,7 @@
         (simple-browser-error "browser command failed: ~A ~A" args))))
 
 (defun browse-url (url)
-  (run-browser (render-uri url)))
+  (run-browser (if (uri-p url) (render-uri url) url)))
 
 (defconfig browser-config (ast) ())
 

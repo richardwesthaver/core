@@ -1,9 +1,9 @@
-;;; std/hash-table.lisp --- Standard Hash Tables
+;;; std/hash.lisp --- Standard Hash Utilities
 
 ;;
 
 ;;; Code:
-(in-package :std/hash-table)
+(in-package :std/hash)
 
 (defgeneric table (self))
 

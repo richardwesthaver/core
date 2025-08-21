@@ -53,35 +53,46 @@
 
 ;;; Org Graph
 (defvar *org-graph* nil)
+(defvar *org-graph-nodes*)
+(defvar *org-graph-edges*)
 
-(defstruct org-graph nodes edges)
+(defclass org-graph (directed-graph) ())
 
 (defmethod read-ast ((fmt (eql :org-graph)) stream &key)
-  (let ((graph (apply 'make-org-graph (read stream))))
-    (setf #1=(org-graph-nodes graph) 
-	  (mapcar (lambda (x) (wrap (make-instance 'org-graph-node) x)) #1#)
-	  #2=(org-graph-edges graph) 
-	  (mapcar (lambda (x) (wrap (make-instance 'org-graph-edge) x)) #2#))
-    graph))
+  (let* ((graph (make-instance 'org-graph))
+         (ast (read stream))
+         (nodes (mapcar (lambda (x) (add-node graph (wrap-node x))) (getf ast :nodes)))
+         (edges (mapcar (lambda (x) (add-edge graph (wrap-edge x))) (getf ast :edges))))
+    (values graph nodes edges)))
 
 (defmethod build-ast ((self org-graph) &key)
-  `(:nodes ,(mapcar 'build-ast (org-graph-nodes self))
-    :edges ,(mapcar 'build-ast (org-graph-edges self))))
+  `(:nodes ,(mapcar 'build-ast (nodes self))
+    :edges ,(mapcar 'build-ast (edges self))))
 
 (defun read-org-graph-file (&optional (file *org-graph-file*))
-  (with-open-file (f file) (read-ast :org-graph f)))
+  (with-open-file (f file) 
+    (read-ast :org-graph f)))
 
 (defun init-org-graph ()
-  (setf *org-graph* (read-org-graph-file)))
+  (multiple-value-bind (graph nodes edges) (read-org-graph-file)
+    (setf *org-graph* graph
+          *org-graph-nodes* (make-array (length nodes) :initial-contents nodes :adjustable nil)
+          *org-graph-edges* (make-array (length edges) :initial-contents edges :adjustable nil))))
 
 (defclass org-graph-node (vertex) 
   ((name :initarg :name :accessor name) 
    (path :initarg :path :accessor path)
    (point :initarg :point :accessor idx)))
 
-(defmethod wrap ((self org-graph-node) form)
+(defun wrap-node (form)
   (make-instance 'org-graph-node 
-    :id (make-uuid-from-string (pop form)) :name (pop form) :path (pop form) :point (pop form)))
+    :id (make-uuid-from-string (pop form)) 
+    :name (pop form) 
+    :path (pop form) 
+    :point (pop form)))
+
+(defmethod add-node ((graph graph) (node org-graph-node))
+  (add-node graph (uuid-to-string (id node))))
 
 (defmethod build-ast ((self org-graph-node) &key)
   `(,(uuid-to-string (id self)) ,(name self) ,(path self) ,(idx self)))
@@ -92,11 +103,11 @@
    (timestamp :initarg :timestamp :accessor timestamp)
    (point :initarg :point :accessor idx)))
 
-(defmethod wrap ((self org-graph-edge) form)
+(defun wrap-edge (form)
   (make-instance 'org-graph-edge
-    :type (pop form) 
-    :in (make-uuid-from-string (pop form))
-    :properties (pop form) 
+    :type (pop form)
+    :in (pop form)
+    :properties (pop form)
     :timestamp 
     (destructuring-bind (sec minute hour day month year timezone a1 a2) (pop form)
       (declare (ignore a1 a2))
@@ -114,7 +125,7 @@
 
 (defun org-graph-extract-files (&optional (graph *org-graph*))
   (let ((ret))
-    (dolist (n (remove-duplicates (org-graph-nodes graph) :test 'string= :key 'path) ret)
+    (dolist (n (remove-duplicates (nodes graph) :test 'string= :key 'path) ret)
       (push (wrap (make-org-graph-file) (probe-file (path n))) ret))))
 
 (defmethod id ((self org-graph-file))
@@ -138,11 +149,11 @@
   (log:info! "inserting org files")
   (mapcar 
    (lambda (n) (insert-key *org-graph-db* (uuid-octets* (id n)) (path n) :column "file"))
-   (org-graph-nodes *org-graph*)))
+   (nodes *org-graph*)))
 
 (defun insert-org-nodes ()
   (log:info! "inserting org nodes")
-  (dolist (id (mapcar 'id (org-graph-nodes *org-graph*)))
+  (dolist (id (mapcar 'id (nodes *org-graph*)))
     (insert-key *org-graph-db*
 		(uuid-octets* id)
 		;; TODO 2024-12-30: 
@@ -151,7 +162,7 @@
 
 (defun insert-org-edges ()
   (log:info! "inserting org edges")
-  (dolist (e (org-graph-edges *org-graph*))
+  (dolist (e (edges *org-graph*))
     (insert-key *org-graph-db* 
 		(uuid-octets* (edge-in e)) 
 		(uuid-octets* (edge-out e))
@@ -203,12 +214,12 @@
 
 (defun og-values (column)
   (with-iter (it (iter *org-graph-db* :column (find-column column *org-graph-db*)))
-    (seek-to-first)
-    (loop while (iter-valid-p)
-	  collect (cons (handler-case (octet-vector-to-uuid (key))
-			  (simple-type-error () (sb-ext:octets-to-string (key))))
-			(sb-ext:octets-to-string (val)))
-	  do (next))))
+    seek-to-first
+    (loop while iter-valid-p
+	  collect (cons (handler-case (octet-vector-to-uuid key)
+			  (simple-type-error () (sb-ext:octets-to-string key)))
+			(sb-ext:octets-to-string val))
+	  do (progn next))))
 
 ;;; Files
 (defun org-graph-file-search (path &rest ids)

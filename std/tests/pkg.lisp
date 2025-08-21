@@ -77,11 +77,18 @@
   (is (not (eq (ensure-cons 0) (ensure-cons 0))))
   (is (equal (ensure-cons 0) (ensure-cons 0))))
 
+;; STD-* prints all arguments
 (deferror testing-error (std-error) nil (:auto t) (:documentation "testing"))
 
-(deftest err ()
+;; simple-* prints a control string and format args
+(defwarning testing-warning (simple-warning) () (:auto t))
+
+(deftest conditions ()
   "Test standard error handlers"
-  (signals testing-error (testing-error)))
+  (signals testing-error (testing-error "foo"))
+  (signals testing-warning (testing-warning "foo:~A" 'bar))
+  (istype 'wrapped-error (wrap-error (make-condition 'testing-error)))
+  (signals simple-error (std/condition:nyi!)))
 
 (deftest fmt ()
   "Test standard formatters"

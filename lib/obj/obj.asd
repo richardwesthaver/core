@@ -6,7 +6,6 @@
                 :components ((:file "pkg")
                              (:file "sealed")
                              (:file "stealth")
-                             (:file "typed")
                              (:file "filtered")
                              (:file "fast")
                              (:file "lazy")
