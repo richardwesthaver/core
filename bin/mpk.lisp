@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :bin/mpk
-  (:use :cl :std :log :cli :clap :mpk :homer/core)
+  (:use :cl :std :log :cli :clap :mpk :skel/homer/core)
   (:export
    #:start-mpk))
 (in-package :bin/mpk)

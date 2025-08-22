@@ -106,31 +106,32 @@
         *default-pathname-defaults*
         (pathname str))))
 
+(defmacro with-skel-ast (sym obj &body body)
+  `(with-slots ((,sym ast)) ,obj
+     (if (formp ,sym)
+         (progn ,@body)
+         (invalid-skel-ast ast))))
+
 (defmethod load-ast ((self sk-config))
   ;; internal ast is never tagged
-  (with-slots (ast) self
-    (if (formp ast)
-        ;; ast is valid, modify object, set ast nil
-        (progn
-          (sb-int:doplist (k v) ast
-            (when-let ((s (find-sk-symbol k)))
-              (setf (slot-value self s) v))) ;; needs to be the correct package
-          (when (bound-string-p self 'stash) (setf (sk-stash self) (merge-pathnames (sk-stash self) (sk-dir self))))
-          (when (bound-string-p self 'store) (setf (sk-store self) (merge-pathnames (sk-store self) (sk-dir self))))
-          (when (bound-string-p self 'cache) (setf (sk-cache self) (merge-pathnames (sk-cache self) (sk-dir self))))
-          (when (bound-string-p self 'data) (setf (sk-data self) (sk-data self)))
-          ;; SCRIPTS
-          (if (bound-string-p self 'scripts)
-              (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
-                       (setf (sk-scripts self)
-                             (if (directory-path-p path)
-                                 (find-files path)
-                                 (list path)))
-                       (warn! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
-          (unless *keep-ast* (setf (ast self) nil))
-          self)
-        ;; invalid ast, signal error
-        (invalid-skel-ast ast))))
+  (with-skel-ast ast self
+    (sb-int:doplist (k v) ast
+      (when-let ((s (find-sk-symbol k)))
+        (setf (slot-value self s) v))) ;; needs to be the correct package
+    (when (bound-string-p self 'stash) (setf (sk-stash self) (merge-pathnames (sk-stash self) (sk-dir self))))
+    (when (bound-string-p self 'store) (setf (sk-store self) (merge-pathnames (sk-store self) (sk-dir self))))
+    (when (bound-string-p self 'cache) (setf (sk-cache self) (merge-pathnames (sk-cache self) (sk-dir self))))
+    (when (bound-string-p self 'data) (setf (sk-data self) (sk-data self)))
+    ;; SCRIPTS
+    (if (bound-string-p self 'scripts)
+        (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
+                 (setf (sk-scripts self)
+                       (if (directory-path-p path)
+                           (find-files path)
+                           (list path)))
+                 (warn! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
+    (unless *keep-ast* (setf (ast self) nil))
+    self))
 
 (defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id author version user)))
   (setf (ast self)

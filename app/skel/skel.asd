@@ -3,7 +3,7 @@
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
+  :depends-on (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn (:feature :mpk :mpk))
   :serial t
   :components 
   ((:module "core"
@@ -19,12 +19,10 @@
      (:file "rule")
      (:file "project")
      (:file "print")
-     (:file "fs")
      (:file "schema")
      (:file "db")
      (:file "log")
-     (:file "util")
-     (:file "vm")))
+     (:file "util")))
    (:module "comp"
     :components
     ((:file "pkg")
@@ -34,8 +32,40 @@
      (:file "container")
      (:file "org")
      (:file "dir-locals")
-     (:file "makefile")))
+     (:file "makefile")
+     (:file "sys")))
+   (:module "packy"
+    :components
+    ((:file "pkg")
+     (:file "var")
+     (:file "proto")
+     (:file "pack")
+     (:file "pkgbuild")
+     (:file "apkbuild")
+     (:file "db")
+     (:file "client")
+     (:file "srv")
+     (:file "cfg")
+     (:file "cli")
+     (:file "packy")))
+   (:module "krypt"
+    :components 
+    ((:file "pkg")
+     (:file "condition")
+     (:file "krypt")
+     (:file "cli")))
    (:file "pkg")
+   (:module "homer"
+    :components 
+    ((:file "pkg")
+     (:file "var")
+     (:file "log")
+     (:file "util")
+     (:file "task")
+     (:file "cfg")
+     (:file "srv")
+     (:file "cli")
+     (:file "homer")))
    (:file "srv")
    (:file "infer")
    (:module "net"

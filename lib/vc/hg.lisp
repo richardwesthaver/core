@@ -120,21 +120,27 @@ first value and 'stuff' as the second."
           cfg))))
 
 (defun find-hg-bookmarks (&optional (root *default-pathname-defaults*))
-  (when-let ((bkm (probe-file (merge-pathnames ".hg/bookmarks" root))))
-    (mapcar (lambda (x) (nreverse (mapcar 'trim (ssplit #\space x)))) (lines (read-file bkm)))))
+  (let ((bkm (merge-pathnames ".hg/bookmarks" root)))
+    (when (probe-file bkm)
+      (mapcar (lambda (x) (let ((r (nreverse (ssplit #\space x)))) (cons (trim (car r)) (cadr r))))
+              (lines (read-file bkm))))))
 
 (defun find-hg-submodules (&optional (root *default-pathname-defaults*))
   (when-let ((subs (probe-file (merge-pathnames ".hgsub" root))))
     (mapcar (lambda (x) (mapcar 'trim (ssplit #\= x)))
             (lines (read-file subs)))))
 
+(defun find-hg-requires (&optional (root *default-pathname-defaults*))
+  (when-let ((reqs (probe-file (merge-pathnames ".hg/requires" root))))
+    (mapcar 'trim (lines (read-file reqs)))))
+
 ;;; Repo
 ;; (describe (make-instance 'hg-repo))
 ;; https://repo.mercurial-scm.org/hg/file/tip/mercurial/interfaces/repository.py
 (defclass hg-repo (vc-repo)
-  ((dirstate :accessor vc-dirstate) ;; working-directory
-   (bookmarks :accessor vc-bookmarks)
-   (requires :accessor vc-requires)))
+  ((dirstate :reader vc-dirstate) ;; working-directory
+   (bookmarks :accessor vc-bookmarks :initarg :bookmarks :initform nil)
+   (requires :accessor vc-requires :initform nil)))
 
 (defmethod vc-init ((self (eql :hg)))
   (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
@@ -389,6 +395,3 @@ variable length entry (length given by the previous length field) with:
 (defstruct dirstate-entry status mode size mtime length filename)
 
 ;; (defmethod read-dirstate-file ((self hg-repo)))
-
-(defstruct dirstate 
-  (entries (make-array 0 :element-type 'dirstate-entry :fill-pointer 0 :adjustable t) :type (vector dirstate-entry)))

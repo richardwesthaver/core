@@ -24,7 +24,7 @@
   :build-operation program-op
   :build-pathname "homer"
   :entry-point "bin/homer::start-homer"
-  :depends-on (:std :cli :organ :skel :nlp :rdb :homer)
+  :depends-on (:std :cli :organ :skel :nlp :rdb)
   :components ((:file "homer")))
 
 (defsystem :bin/mpk
@@ -60,7 +60,7 @@
   :build-pathname "skel"
   :entry-point "bin/skel::start-skel"
   :components ((:file "skel"))
-  :depends-on (:std :cli :skel :packy :krypt :swank))
+  :depends-on (:std :cli :skel :swank))
 
 (defsystem :bin/skc
   :build-operation program-op

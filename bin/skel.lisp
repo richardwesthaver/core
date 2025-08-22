@@ -7,7 +7,7 @@
   (:use :cl :std :cli :clap
    :vc :sb-ext :skel :log
    :obj/ast #+clim :skel/tools/view
-   :db :rdb :schema :config :build :packy :krypt :skel/cli)
+   :db :rdb :schema :config :build :skel/packy :skel/krypt :skel/cli)
   (:import-from :cli/shell :*shell-input*)
   (:use :cli/tools/sbcl))
 

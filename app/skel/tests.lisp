@@ -1,6 +1,6 @@
 ;;; skel/tests.lisp --- skel tests
 (defpackage :skel/tests
-  (:use :cl :skel :rt :log :obj :dat/sxp :std/path)
+  (:use :cl :skel :rt :log :obj :dat/sxp :std/path :skel/packy :skel/krypt)
   (:import-from :uiop :file-exists-p))
 
 (in-package :skel/tests)
@@ -74,3 +74,9 @@ endif")
   (let ((sk (make-instance 'sk-project :components '((:lisp "test")
                                                      (:lisp-system "test")))))
     (is sk)))
+
+(load-database-backend :packy)
+
+(deftest packy-db ()
+  (with-db (db :db (make-db :packy) :open t :close t)
+    (is (db-open-p db))))

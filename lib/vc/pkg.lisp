@@ -57,7 +57,8 @@
    :hg-fast-export
    :find-hgrc
    :make-hg-repo
-   :find-hg-bookmarks))
+   :find-hg-bookmarks
+   :find-hg-requires))
 
 (defpackage :vc/util
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :config)

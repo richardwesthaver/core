@@ -2,14 +2,14 @@
 
 ;;; Code:
 (defpackage :bin/homer
-  (:use :cl :std :log :ast :sxp :rdb :skel :packy :cli :clap :id :krypt :vc :homer :homer/cli))
+  (:use :cl :std :log :ast :sxp :rdb :skel :skel/packy :cli :clap :id :skel/krypt :vc :skel/homer :skel/homer/cli))
 
 (in-package :bin/homer)
 
-(load-package-cli :homer)
-                  
+(load-package-cli :skel/homer)
+
 (defun run ()
-  (in-package :homer)
+  (in-package :skel/homer)
   (homer-user-init)
   (load-homerc)
   (with-cli (*homer-cli* :args (args))

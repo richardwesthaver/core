@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; The SYN/GEN system contains code generators for Blub langs.
+;; The SYN/GEN system contains code generators for non-Lisp langs.
 
 ;;; Code:
 

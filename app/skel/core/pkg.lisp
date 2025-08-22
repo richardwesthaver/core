@@ -80,22 +80,19 @@
    :dat/sxp :skel/core/header :vc :log
    :config :id :ast)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
-  (:export :sk-license :sk-author :sk-stash :sk-cache :sk-data :sk-user
+  (:export :sk-license :sk-author :sk-stash :sk-cache :sk-data :sk-user :sk-version
    :sk-store :sk-push :sk-pull :sk-include
    :sk-tags :edit-skelrc :sk-target :skel
    :sk-meta :def-sk-class :sk-project :sk-source
    :sk-vc :sk-bind :sk-env :make-sk-rule
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
    :sk-make :sk-description :sk-kind :sk-rules
-   :sk-version
    :sk-command :sk-scripts :sk-script :sk-config
    :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
    :sk-user-config :sk-system-config
    :*skel-user-config* :*skel-system-config*
    :sk-src :sk-component :sk-components :sk-mod
-   :sk-parent
-   :sk-phases
-   :skel-store))
+   :sk-parent :sk-phases :skel-store :with-skel-ast))
 
 (defpackage :skel/core/schema
   (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :schema :rdb)
@@ -147,38 +144,6 @@
    :sk-search-project
    :project-root))
 
-(defpackage :skel/core/vm
-  (:use :cl :std :skel/core/int :sb-vm)
-  (:export :make-stack-slot :make-sk-vm :sks-ref :sks-pop :sks-push
-           :skel-vm
-           :make-skel-vm
-           :skel-vm-p
-           :copy-skel-vm
-           :skel-vm-ip
-           :skel-vm-stack
-           :*stack-slot-types*
-           :stack-slot-type
-           :stack-slot
-           :*stack-op-types*
-           :stack-op-type
-           :*skel-op-types*
-           :skel-op-type
-           :new-skel-arena
-           :with-skel-vm
-           :skel-op
-           :make-skel-op
-           :skel-op-p
-           :copy-skel-op
-           :skel-op-scope
-           :skel-op-body
-           :*skel-stack-size*
-           :*skel-arena*
-           :*skel-scope*
-           :init-skel-op-scope
-           :*skel-arena-size*
-           :init-skel-scope
-           :init-skel-value-scope
-           :init-skel-function-scope))
 
 (defpackage :skel/core/print
   (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto)

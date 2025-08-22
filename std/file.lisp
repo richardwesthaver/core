@@ -22,11 +22,9 @@
 (defgeneric (setf dir) (new self)
   (:documentation "Set the value of the directory associated with SELF to NEW."))
 
-(declaim (ftype (function (t) string) read-file))
-(defun read-file (path)
-  (declare (optimize (speed 3)))
+(defun read-file (path &key if-does-not-exist (external-format :default))
   (with-output-to-string (s)
-    (write-file-into-stream path s)))
+    (write-file-into-stream path s :if-does-not-exist if-does-not-exist :external-format external-format)))
 
 (defun tmpfile (size)
   "Create an anonymous temporary file of the given size. Returns a file descriptor."

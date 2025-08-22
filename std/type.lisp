@@ -263,9 +263,10 @@ non-unique ID prefix.")
 
 ;; TODO 2025-08-14: 
 (defmacro simple-type-id (obj)
-  `(typecase ,obj
-     ,@(mapcar (lambda (x) (list (car x) (cdr x))) 
-        (std/hash:hash-table-alist *simple-type-table*))))
+  (let ((cases))
+    (maphash (lambda (x y) (push (list x y) cases)) *simple-type-table*)
+    `(typecase ,obj
+       ,@cases)))
 
 (defun get-core-type-id (obj)
   (or (gethash (type-of obj) *core-type-table*)

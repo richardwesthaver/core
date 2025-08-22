@@ -109,132 +109,134 @@ directory."))
 ;; ast -> obj
 (defmethod load-ast ((self sk-project))
   ;; internal ast is never tagged
-  (with-slots (ast) self
-    (if (formp ast)
-	;; ast is valid, modify object, set ast nil
-	(progn
-	  (sb-int:doplist (k v) ast
-	    (when-let ((s (find-sk-symbol k)))
-	      (setf (slot-value self s) v))) ;; needs to be correct package
+  (with-skel-ast ast self
+    ;; ast is valid, modify object, set ast nil
+    (progn
+      (sb-int:doplist (k v) ast
+	(when-let ((s (find-sk-symbol k)))
+	  (setf (slot-value self s) v))) ;; needs to be correct package
 	  ;;; SRC
-	  (if (bound-string-p self 'src)
-	      (setf (sk-src self) (or (probe-file (sk-src self))
-				      (probe-file (merge-pathnames (sk-src self) *skel-path*))
-				      (error 'invalid-argument :reason "project source not found"
-							       :item (sk-src self))))
-	      (setf (sk-src self) (sk-dir self)))
-	  (setq *skel-path* (or (sk-src self) *default-pathname-defaults*))
-	  (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
-	    (when (bound-string-p self 'stash) 
-              (setf (sk-stash self) (ensure-directory-truename (the simple-string (sk-stash self)))))
-            (when (bound-string-p self 'store) 
-              (setf (sk-store self) (ensure-directory-truename (the simple-string (sk-store self)))))
-            (when (bound-string-p self 'cache)
-              (setf (sk-cache self) (ensure-directory-truename (the simple-string (sk-cache self)))))
-	    ;; VC
-	    (when-let ((vc (sk-vc self)))
-	      (etypecase vc
-		((or vc-repo null) nil)
-		(vc-designator (setf (sk-vc self) (vc-init vc)))
-		(list
-		 (flet ((%vc-scan (lst)
-			  (let* ((%type (if (typep (car lst) 'vc-designator)
-					    (pop lst)
-					    *default-vc-kind*))
-				 (repo (vc-init %type)))
-			    (setf (vc-remotes repo)
-				  (map 'vector
-				       (lambda (v)
-					 (etypecase v
-					   (string (vc::make-vc-remote :name 'default :url v))
-					   (list 
-					    (let ((name (pop v))
-						  (val (pop v)))
-					      (if (consp val)
-						  (vc::make-vc-remote :name name
-								      :type (pop val)
-								      :url (pop val))
-						  (vc::make-vc-remote :name name
-								      :url val))))))
-				       lst))
-			    repo)))
-		   (setf (sk-vc self) (%vc-scan vc))))))
-	    ;; INCLUDE
-	    (when-let ((include (sk-include self)))
-	      (setf (sk-include self) (map 'vector
-					   ;; recursively load included projects
-					   (lambda (i) 
-                                             (load-ast
-					      (sk-read-file
-					       (make-instance 'sk-project)
-					       i)))
-					   include)))
-	    ;; COMPONENTS
-	    (when (slot-boundp self 'components)
-	      (setf (sk-components self) (map 'vector
-					      (lambda (c)
-						(sk-load-component
-						 (pop c)
-                                                 (if (= 1 (length c))
-                                                     (pathname (car c))
-                                                     c)
-						 *default-pathname-defaults*))
-					      (sk-components self)))))
-	  ;; BIND contains a list of forms which are bound dynamically based
-	  ;; on the contents of the cdr
-	  (when-let ((bind (sk-bind self)))
-	    (setf (sk-bind self)
-		  (let ((ret))
-		    ;; TODO 2024-09-21: 
-		    (dolist (b bind ret)
-		      ;; if this is a list of length > 2 we parse the form as either
-		      ;; (key &rest val) or (var param &rest val)
-		      (let ((sym (car b))
-			    (form (cdr b)))
-			;; (form (cddr b)))
-			(let ((key (car form))
-			      (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
-			  (if (keywordp key)
-			      (sk-case-bind key val sym)
-			      (cond
-				;; (sym param &rest val) detected
-				((> (length (cdr form)) 0)
-				 (let ((key (cadr b)))
-				   (if (keywordp key)
-				       (sk-case-bind key (cdr form) sym)
-				       ;; if nothing else must be a lambda
-				       (push `(,sym 
-					       ,(compile sym `(lambda ,(car b) ,@(cddr b))))
-					     ret))))
-				(t
-				 (push b ret))))))))))
-	  ;; RULES
-	  (when-let ((rules (sk-rules self)))
-	    (setf (sk-rules self)
-		  (coerce
-		   (flatten
-		    (mapcar
-		     (lambda (x)
-		       (destructuring-bind (target source &rest recipe) x
-			 ;; TODO 2024-07-30: check for phases
-			 (if (sk-multi-recipe-p recipe)
-			     (flatten
-			      (mapcar
-			       (lambda (y)
-				 (destructuring-bind (phase source &rest recipe) y
-				   (let ((%target (keywordicate phase '- (string-upcase target))))
-				     (let ((ph (gethash phase (sk-phases self))))
-				       (setf (gethash phase (sk-phases self))
-					     (push (make-sk-rule %target source recipe) ph))))))
-			       recipe))
-			     (make-sk-rule target source recipe))))
-		     (coerce rules 'list)))
-		   '(vector sk-rule))))          
-	  (unless *keep-ast* (setf (ast self) nil))
-	  (setf (id self) (sxhash (cons (name self) (sk-version self))))
-	  self)
-	;; invalid ast, signal error
-	(invalid-skel-ast ast))))
+      (if (bound-string-p self 'src)
+	  (setf (sk-src self) (or (probe-file (sk-src self))
+				  (probe-file (merge-pathnames (sk-src self) *skel-path*))
+				  (error 'invalid-argument :reason "project source not found"
+							   :item (sk-src self))))
+	  (setf (sk-src self) (sk-dir self)))
+      (setq *skel-path* (or (sk-src self) *default-pathname-defaults*))
+      (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
+	(when (bound-string-p self 'stash) 
+          (setf (sk-stash self) (ensure-directory-truename (the simple-string (sk-stash self)))))
+        (when (bound-string-p self 'store) 
+          (setf (sk-store self) (ensure-directory-truename (the simple-string (sk-store self)))))
+        (when (bound-string-p self 'cache)
+          (setf (sk-cache self) (ensure-directory-truename (the simple-string (sk-cache self)))))
+	;; VC
+	(when-let ((vc (sk-vc self)))
+	  (etypecase vc
+	    ((or vc-repo null) nil)
+	    (vc-designator (setf (sk-vc self) (vc-init vc)))
+	    (list
+	     (flet ((%vc-scan (lst)
+		      (let* ((%type (if (typep (car lst) 'vc-designator)
+					(pop lst)
+					*default-vc-kind*))
+			     (repo (vc-init %type)))
+			(setf (vc-remotes repo)
+			      (map 'vector
+				   (lambda (v)
+				     (etypecase v
+				       (string (vc::make-vc-remote :name 'default :url v))
+				       (list 
+					(let ((name (pop v))
+					      (val (pop v)))
+					  (if (consp val)
+					      (vc::make-vc-remote :name name
+								  :type (pop val)
+								  :url (pop val))
+					      (vc::make-vc-remote :name name
+								  :url val))))))
+				   lst))
+                        (when (eql (vc-type repo) :hg)
+                          (setf (vc/hg::vc-bookmarks repo) (find-hg-bookmarks (path repo))
+                                (vc/hg::vc-requires repo) (vc/hg:find-hg-requires (path repo))
+                                (vc-submodules repo) (vc/hg::find-hg-submodules (path repo))))
+			repo)))
+	       (setf (sk-vc self) (%vc-scan vc))))))
+	;; INCLUDE
+	(when-let ((include (sk-include self)))
+	  (setf (sk-include self) 
+                (map 'vector
+		     ;; recursively load included projects
+		     (lambda (i) 
+                       (load-ast
+			(sk-read-file
+			 (make-instance 'sk-project)
+			 i)))
+		     include)))
+	;; COMPONENTS
+	(when (slot-boundp self 'components)
+	  (setf (sk-components self) (map 'vector
+					  (lambda (c)
+					    (sk-load-component
+					     (pop c)
+                                             (if (= 1 (length c))
+                                                 (pathname (car c))
+                                                 c)
+					     *default-pathname-defaults*))
+					  (sk-components self)))))
+      ;; BIND contains a list of forms which are bound dynamically based
+      ;; on the contents of the cdr
+      (when-let ((bind (sk-bind self)))
+	(setf (sk-bind self)
+	      (let ((ret))
+		;; TODO 2024-09-21: 
+		(dolist (b bind ret)
+		  ;; if this is a list of length > 2 we parse the form as either
+		  ;; (key &rest val) or (var param &rest val)
+		  (let ((sym (car b))
+			(form (cdr b)))
+		    ;; (form (cddr b)))
+		    (let ((key (car form))
+			  (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
+		      (if (keywordp key)
+			  (sk-case-bind key val sym)
+			  (cond
+			    ;; (sym param &rest val) detected
+			    ((> (length (cdr form)) 0)
+			     (let ((key (cadr b)))
+			       (if (keywordp key)
+				   (sk-case-bind key (cdr form) sym)
+				   ;; if nothing else must be a lambda
+				   (push `(,sym 
+					   ,(compile sym `(lambda ,(car b) ,@(cddr b))))
+					 ret))))
+			    (t
+			     (push b ret))))))))))
+      ;; RULES
+      (when-let ((rules (sk-rules self)))
+	(setf (sk-rules self)
+	      (coerce
+	       (flatten
+		(mapcar
+		 (lambda (x)
+		   (destructuring-bind (target source &rest recipe) x
+		     ;; TODO 2024-07-30: check for phases
+		     (if (sk-multi-recipe-p recipe)
+			 (flatten
+			  (mapcar
+			   (lambda (y)
+			     (destructuring-bind (phase source &rest recipe) y
+			       (let ((%target (keywordicate phase '- (string-upcase target))))
+				 (let ((ph (gethash phase (sk-phases self))))
+				   (setf (gethash phase (sk-phases self))
+					 (push (make-sk-rule %target source recipe) ph))))))
+			   recipe))
+			 (make-sk-rule target source recipe))))
+		 (coerce rules 'list)))
+	       '(vector sk-rule))))          
+      (unless *keep-ast* (setf (ast self) nil))
+      (setf (id self) (sxhash (cons (name self) (sk-version self))))
+      self)))
 
 ;; obj -> ast
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id phases)))
