@@ -134,8 +134,7 @@ Example:
      ,@(if (and (consp (car body)) (eq (caar body) 'declare)) (cdr body) body)))
 
 (defmacro macrofy (lambda-func)
-  "Macrofies a lambda function, for use later inside macros. Returns a
-macro-function like function which can be called later for use
+  "Returns a MACRO-FUNCTION-like function which can be called later for use
 inside macros.
 
 DO NOT USE backquotes in the lambda function!
@@ -153,8 +152,7 @@ Example:
     `(lambda ,args ,@(cdr (unquote-args body args)))))
 
 (defmacro with-marking (&rest body)
-  "
- This macro basically declares local-variables globally,
+  "This macro basically declares local-variables globally,
  while keeping semantics and scope local.
 
 Example:
@@ -167,15 +165,15 @@ Example:
     		 (if (= i 10)
     		     (return sum))))))
 
-;; (LET* ((#:G1083 (* 10 2)) (#:SUM1082 0) (#:XI1081 (* 10 2)))
-;;   (DECLARE (TYPE INDEX-TYPE #:SUM1082)
-;;   	 (TYPE INDEX-TYPE #:XI1081))
-;;   (LOOP :FOR I := 0 :THEN (1+ I)
-;;         :DO (SYMBOL-MACROLET ((XI #:XI1081) (SUM #:SUM1082))
-;;   	    (INCF SUM #:G1083)
-;;   	    (IF (= I 10)
-;;   		(RETURN SUM)))))
-;; T"
+; (LET* ((#:G1083 (* 10 2)) (#:SUM1082 0) (#:XI1081 (* 10 2)))
+;   (DECLARE (TYPE INDEX-TYPE #:SUM1082)
+;   	 (TYPE INDEX-TYPE #:XI1081))
+;   (LOOP :FOR I := 0 :THEN (1+ I)
+;         :DO (SYMBOL-MACROLET ((XI #:XI1081) (SUM #:SUM1082))
+;   	    (INCF SUM #:G1083)
+;   	    (IF (= I 10)
+;   		(RETURN SUM)))))
+; T"
   (let* ((decls nil)
 	 (types nil)
 	 (code (maptree '(:mark* :mark :memo)

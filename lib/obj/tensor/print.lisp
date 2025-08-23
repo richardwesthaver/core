@@ -6,7 +6,7 @@
 (in-package :obj/tensor)
 
 ;;; PRINT
-(defun print-tensor (tensor stream)
+(defun print-tensor (stream tensor)
   (let ((rank (rank tensor))
         (dims (dimensions tensor))
         (two-print-calls 0))
@@ -82,7 +82,7 @@
       ;; )
       (when (> (size tensor) 0)
         (format stream "~%")
-        (print-tensor tensor stream)))))
+        (print-tensor stream tensor)))))
 
 (defmethod print-object ((tensor sparse-tensor) stream)
   (declare (optimize (safety 0) (debug 1)))

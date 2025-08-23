@@ -113,7 +113,8 @@
    :macrofy
    :with-marking
    :using-gensyms
-   :binding-gensyms))
+   :binding-gensyms
+   :hook))
 
 (defpkg :std/condition
   (:use :cl)
@@ -1184,7 +1185,7 @@
    :random-booleans
    :random-do))
 
-(defpkg :std/fmt
+(defpkg :std/print
   (:use :cl)
   (:import-from :std/list :group :ensure-cons)
   (:import-from :std/rand :random-booleans)
@@ -1272,7 +1273,17 @@
    ;; :defsystem
    ;; :compile-system
    ;; :load-system
+   :sysdef
    :defsys
+   :sys
+   :*module*
+   :*core-module-table*
+   :core-module
+   :load-core-module
+   :load-module
+   :unload-module
+   :provide-core-module
+   :with-module
    :find-system*
    :defsystem*))
 
@@ -1284,7 +1295,7 @@
    :std/sym :std/list :std/type :std/num 
    :std/stream :std/curry :std/array :std/hash
    :std/alien :std/meta :std/thread :std/task
-   :std/macs :std/bit :std/fmt :std/path
+   :std/macs :std/bit :std/print :std/path
    :std/os :std/file :std/string :std/sys 
    :std/readtable :std/pipe :std/serde :std/rand 
    :std/async :std/par :std/seq :std/prim

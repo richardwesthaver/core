@@ -1,7 +1,7 @@
-;;; std/fmt.lisp --- printer and format utils
+;;; std/print.lisp --- printer and format utils
 
 ;;; Code:
-(in-package :std/fmt)
+(in-package :std/print)
 
 (defun iprintln (x &optional (n 2) stream)
   "Print object X with indentation N to stream followed by a new line."

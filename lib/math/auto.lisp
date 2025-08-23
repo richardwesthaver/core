@@ -66,9 +66,9 @@
   (let ((grid (make-bitmap size size)))
     (cond
       ((consp pattern)
-       (std/fmt::center-on-bitmap grid pattern))
+       (std/print::center-on-bitmap grid pattern))
       ((arrayp pattern)
-       (std/fmt::center-bitmap-onto-bitmap pattern grid)))
+       (std/print::center-bitmap-onto-bitmap pattern grid)))
     (draw grid)
     (dotimes (x steps)
       (setf grid (age-bitmap grid))

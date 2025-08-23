@@ -270,7 +270,9 @@ non-unique ID prefix.")
 
 (defun get-core-type-id (obj)
   (or (gethash (type-of obj) *core-type-table*)
-      (gethash (aref *simple-types* (simple-type-id obj)) *core-type-table*)))
+      (let ((id (simple-type-id obj)))
+        (when id
+          (gethash (aref *simple-types* id) *core-type-table*)))))
 
 (definline prim-type (obj)
   "Return the name of the primitive type of OBJ."

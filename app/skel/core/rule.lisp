@@ -8,8 +8,8 @@
 ;;; Rule
 (declaim (inline %make-sk-rule))
 (defstruct (sk-rule (:constructor %make-sk-rule (target source recipe)))
-"Maps a SOURCE to a corresponding TARGET
-via the special form stored in RECIPE."
+"Skel Rule Objects consist of a named TARGET, SOURCE parameters, and a RECIPE
+which is executed in order to fulfill the rule."
   (target "" :type string)
   (source nil :type list)
   (recipe nil :type list))

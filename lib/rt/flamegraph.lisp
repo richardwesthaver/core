@@ -26,7 +26,7 @@ mean to use the default value specified for OPEN."
                             (list :external-format ,external-format)))))
        ,@body)))
 
-(defmacro with-output-to-file ((stream-name file-name &rest args
+(defmacro %with-output-to-file ((stream-name file-name &rest args
                                             &key (direction nil direction-p)
                                             &allow-other-keys)
                                &body body)
@@ -35,7 +35,7 @@ FILE-NAME. ARGS is sent as is to the call to OPEN except EXTERNAL-FORMAT,
 which is only sent to WITH-OPEN-FILE when it's not NIL."
   (declare (ignore direction))
   (when direction-p
-    (error "Can't specify :DIRECTION for WITH-OUTPUT-TO-FILE."))
+    (error "Can't specify :DIRECTION for %WITH-OUTPUT-TO-FILE."))
   `(with-open-file* (,stream-name ,file-name :direction :output ,@args)
      ,@body))
 
@@ -165,7 +165,7 @@ which is only sent to WITH-OPEN-FILE when it's not NIL."
            (setf ,result-var
                  (multiple-value-list
                   (progn ,@body)))))
-       (with-output-to-file (s ,filename :if-exists :supersede)
+       (%with-output-to-file (s ,filename :if-exists :supersede)
          (print-graph (make-graph)
                       :stream s))
        (values-list ,result-var))))

@@ -8,9 +8,11 @@
 ;; - default to asdf (wrap)
 ;; - replace quicklisp (will need to be in lib/sys)
 ;; - share resources between system and dependency manager
-;; - integrate with lib/packy (package distributor)
+;; - integrate with skel/packy (package distributor)
 ;; - multi-threaded by default
 ;; - parallel compilation (completely short-circuiting asdf)
+
+;; notes:
 
 ;;; Code:
 (in-package :std/defsys)
@@ -23,34 +25,28 @@
   (error 'simple-defsys-error :format-control format :format-arguments args))
 
 ;;; Components
+(defclass component () ())
+(defclass module (component) ())
 ;;; Ops
 ;;; Actions
 ;;; Dependencies
-;;; Systems
-(defclass sysdef () ()
-  (:documentation "System Definition"))
-
-(defmacro defsys (name &body body)
-  "Define a SYS with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
-
-SYS objects register their own ASDF:SYSTEM objects as needed and provide the following extensions:
-
-- :MODULES     list of system-provided modules
-- :FEATURES    list of system-provided features
-"
-  `(defsystem ,name ,@body))
-
-;;; Plan
-
+;;; System
+(defclass system () ())
 ;;; Modules
+;; Unlike the MODULE object which is merely a container for other COMPONENTs,
+;; Lisp Modules in the Core support the ANSI CL notion of Modules and are
+;; further extended
+
 (defvar *module* nil)
+(defvar *module-stack* nil)
 (defparameter *core-module-table* (make-hash-table :test 'equal))
 
-(defclass core-module () ())
+(defclass core-module () 
+  ((hook :type hook)))
 
 (defun load-core-module (name)
   (let ((cmod (gethash name *core-module-table*)))
-    (with-slots (load-hook exit-hook) cmod
+    (with-slots (hook) cmod
       (when exit-hook
         (pushnew exit-hook sb-ext:*exit-hooks*))
       (funcall load-hook))))
@@ -66,7 +62,7 @@ SYS objects register their own ASDF:SYSTEM objects as needed and provide the fol
 
 (defun unload-module () (setf *module* nil))
 
-(defun module-provide-core (name)
+(defun provide-core-module (name)
   "Provide a CORE-MODULE, adding valid entries to the *MODULES*
   variable. The function USE should be called in order to load and activate a
   module, but the deprecated PROVIDE function is also supported."
@@ -78,3 +74,19 @@ SYS objects register their own ASDF:SYSTEM objects as needed and provide the fol
      ,@body))
 
 ;; (with-eval-after-load (module &body body))
+
+;;; Plan
+
+;;; System Definition
+(defclass sysdef () ()
+  (:documentation "System Definition"))
+
+(defmacro defsys (name &body body)
+  "Define a SYS with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
+
+SYS objects register their own ASDF:SYSTEM objects as needed and provide the following extensions:
+
+- :MODULES     list of system-provided modules
+- :FEATURES    list of system-provided features
+"
+  `(defsystem ,name ,@body))

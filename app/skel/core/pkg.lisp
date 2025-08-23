@@ -92,7 +92,8 @@
    :sk-user-config :sk-system-config
    :*skel-user-config* :*skel-system-config*
    :sk-src :sk-component :sk-components :sk-mod
-   :sk-parent :sk-phases :skel-store :with-skel-ast))
+   :sk-parent :sk-phases :skel-store :with-skel-ast
+   :sk-pack))
 
 (defpackage :skel/core/schema
   (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :schema :rdb)
