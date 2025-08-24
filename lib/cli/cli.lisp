@@ -8,13 +8,13 @@
 (defpkg :cli
   (:use :cl :std :log)
   (:import-from :time :format-timestring :timestamp)
-  #.`(:use-reexport ,@cli/int:*cli-packages*)
+  (:use-reexport . #.cli/int:*cli-packages*)
   (:export :sudop :call-with-sudo :with-sudo :pretty-log-message :*sudo-output* :ensure-sudo))
 
 (defpkg :cli/tools
   (:nicknames :tools)
   (:use :cl :std)
-  #.`(:use-reexport ,@cli/int:*cli-tool-packages*))
+  (:use-reexport . #.cli/int:*cli-tool-packages*))
 
 (defpkg :cli/clap
   (:nicknames :clap)
@@ -24,7 +24,7 @@
    :args :arg0
    :getopt :find-opt
    :*cli* :define-cli)
-  #.`(:use-reexport ,@cli/int:*cli-clap-packages*))
+  (:use-reexport . #.cli/int:*cli-clap-packages*))
 
 (defpkg :cli-user 
   (:use :cl :std :cli :tools :clap))

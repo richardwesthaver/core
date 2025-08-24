@@ -298,7 +298,6 @@ update the date."
 	 d-time d-hour timestr)
     (when (or (null d) arg)
       ;; update if no date or non-nil prefix argument
-      ;; FIXME Use `org-time-string-to-time'
       (setq d-time (if d (org-time-string-to-time d)
 		     (current-time)))
       (setq d-hour (format-time-string "%H:%M" d-time))
@@ -362,8 +361,6 @@ and insert today's date."
 	  (if (called-interactively-p 'any)
 	      (message "Entry at point is not expired."))))
     (error "\"%s\" is not a to-do keyword in this buffer" keyword)))
-
-;; FIXME what about using org-refile ?
 
 (provide 'org-expiry)
 

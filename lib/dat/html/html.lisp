@@ -187,7 +187,7 @@
     (prog1 (char chunk chunk-offset)
       (incf chunk-offset))))
 
-(defun our-scan (chars opposite-p chunk &key start)
+(std:definline %scan (chars opposite-p chunk &key start)
   (loop for i from start below (length chunk)
         for char = (char chunk i)
         while (if opposite-p
@@ -197,12 +197,11 @@
 
 (defun html5-stream-chars-until (stream characters &optional opposite-p)
   "Returns a string of characters from the stream up to but not
-   including any character in characters or end of file.
-   "
+   including any character in characters or end of file."
   (with-slots (chunk chunk-offset) stream
     (declare (array-length chunk-offset) (chunk chunk))
     (with-output-to-string (data)
-      (loop for end = (our-scan characters opposite-p chunk :start chunk-offset) do
+      (loop for end = (%scan characters opposite-p chunk :start chunk-offset) do
             ;; If nothing matched then stop
                (unless end
                  (return))
@@ -1096,7 +1095,7 @@ to :data because that's what's needed after a token has been emitted."
            (push-token* self :characters data)
            (setf state :script-data-double-escaped-state)))))
 
-;; FIXME: Incorrectly named in Python code: scriptDataDoubleEscapedDashState (same the one above)
+;; NOTE: Incorrectly named in Python code: scriptDataDoubleEscapedDashState (same as the one above)
 (defstate :script-data-double-escaped-dash-dash-state (stream state)
   (let ((data (html5-stream-char stream)))
     (cond ((eql data #\-)

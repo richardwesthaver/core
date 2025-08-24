@@ -43,6 +43,10 @@
     (loop for n from (1+ index) below (length string)
 	  when (eql (schar string n) #\") return n)))
 
+;; (defun dwim-match-quotes (string index))
+
+;; (defun dwim-mark-quotes (string index &key pre post))
+
 (defun yes-or-no (control &rest args)
   "Like Y-OR-N-P, but using linedit functionality."
   ;; Don't save the query response.
@@ -109,19 +113,19 @@
 	(t 
 	 (values nil nil))))
 
-(defun dwim-mark-parens (string index &key pre-mark post-mark)
+(defun dwim-mark-parens (string index &key pre post)
   (multiple-value-bind (open close) (dwim-match-parens string index)
     (values 
      (if (and open close)
 	 (concatenate 'simple-string
                       (subseq string 0 open)
-		      pre-mark
+		      pre
 		      (string (schar string open))
-		      post-mark
+		      post
 		      (subseq string (1+ open) close)
-		      pre-mark
+		      pre
 		      (string (schar string close))
-		      post-mark
+		      post
 		      (if (> (length string) (1+ close))
 		          (subseq string (1+ close))
 		          ""))
@@ -526,8 +530,8 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (multiple-value-bind (marked-line markup)
 	(if markup
 	    (dwim-mark-parens line point
-			      :pre-mark (paren-style)
-			      :post-mark ti:exit-attribute-mode)
+			      :pre (paren-style)
+			      :post ti:exit-attribute-mode)
 	    (values line point))
       (let* ((full (concatenate 'simple-string prompt marked-line))
 	     (point (+ point (length prompt)))
@@ -542,7 +546,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 	;; (dbg-values rows point point-row point-col start start-row start-col
 	;;             old-point old-row old-col end diff)
 	(move-in-column
-	 :col start-col 
+	 :col start-col
 	 :vertical (- old-row start-row)
 	 :clear-to-eos t
 	 :current-col old-col)
@@ -584,24 +588,24 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (with-compilation-unit
     (:policy '(optimize (debug 3) (safety 3)))
   (defclass rewindable ()
-    ((rewind-store :reader %rewind-store
-		   :initform (make-array 12 :fill-pointer 0 :adjustable t))
+    ((data :reader data
+	   :initform (make-array 12 :fill-pointer 0 :adjustable t))
      ;; Index is the number of rewinds we've done.
-     (rewind-index :accessor %rewind-index
-		   :initform 0)))
+     (index :accessor idx
+	    :initform 0)))
 
   (defun %rewind-count (rewindable)
-    (fill-pointer (%rewind-store rewindable)))
+    (fill-pointer (data rewindable)))
 
   (defun last-state (rewindable)
     (let ((size (%rewind-count rewindable)))
       (if (zerop size)
 	  (values nil nil)
-	  (values (aref (%rewind-store rewindable) (1- size)) t))))
+	  (values (aref (data rewindable) (1- size)) t))))
 
   (defun save-rewindable-state (rewindable object)
-    (let ((index (%rewind-index rewindable))
-	  (store (%rewind-store rewindable)))
+    (let ((index (idx rewindable))
+	  (store (data rewindable)))
       (unless (zerop index)
         ;; Reverse the tail of pool, since we've
         ;; gotten to the middle by rewinding.
@@ -610,10 +614,10 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 
   (defmethod rewind-state ((rewindable rewindable))
     (assert (not (zerop (%rewind-count rewindable))))
-    (setf (%rewind-index rewindable) 
-	  (mod (1+ (%rewind-index rewindable)) (%rewind-count rewindable)))
-    (aref (%rewind-store rewindable) 
-	  (- (%rewind-count rewindable) (%rewind-index rewindable) 1))))
+    (setf (idx rewindable) 
+	  (mod (1+ (idx rewindable)) (%rewind-count rewindable)))
+    (aref (data rewindable) 
+	  (- (%rewind-count rewindable) (idx rewindable) 1))))
 
 (defclass line ()
   ((string :accessor get-string :initform "" :initarg :string)

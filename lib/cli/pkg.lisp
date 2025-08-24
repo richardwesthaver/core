@@ -44,7 +44,7 @@
    :*env-table*))
 
 (defpkg :cli/ansi
-  (:use :cl :std)
+  (:use :cl :std :color)
   (:nicknames :ansi)
   (:export
    ;; ESC sequences
@@ -78,9 +78,9 @@
    ;; stty
    :set-tty-mode))
 
-(defpkg :cli/terminfo
+(defpkg :cli/term
   (:nicknames :ti :terminfo)
-  (:use :cl)
+  (:use :cl :config)
   (:shadow :columns)
   (:import-from :std :winsize :+tiocgwinsz+)
   (:export
@@ -134,7 +134,7 @@
    :vspark :*vticks*))
 
 (defpkg :cli/repl
-  (:use :cl :std :cli/progress :cli/spark)
+  (:use :cl :std :cli/progress :cli/spark :config :ast :color)
   (:export :load-acl-repl :start-rl-repl :make-toplevel-init))
 
 (defpkg :cli/ed
