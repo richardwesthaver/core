@@ -169,7 +169,7 @@
 ;;; Query
 (defar ts-query-new (* ts-query)
   (lang (* ts-language))
-  (source (* char))
+  (source c-string)
   (source-len unsigned-int)
   (error-offset (* unsigned-int))
   (error-type (* ts-query-error)))

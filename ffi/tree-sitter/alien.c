@@ -1,4 +1,4 @@
-//! tree-sitter/alien.c --- Tree-sitter C wrapper
+/// tree-sitter/alien.c --- Tree-sitter C wrapper
 
 // based on https://github.com/death/cl-tree-sitter
 

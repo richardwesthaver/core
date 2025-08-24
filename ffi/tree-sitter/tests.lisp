@@ -11,6 +11,7 @@
 (load-tree-sitter-alien)
 (load-tree-sitter-json)
 (load-tree-sitter-rust)
+(load-tree-sitter-c)
 
 ;; the following tests require the TREE-SITTER-LANGS pack to be installed
 (deftest ts-json ()
@@ -38,3 +39,16 @@ pub fn main {} " 15)))
         (let ((cursor (ts-tree-cursor-new-pointer root-node)))
           (ts-tree-cursor-delete cursor)
           (ts-tree-delete new-tree))))))
+
+(deftest ts-query-c ()
+  (let ((src (read-file (asdf:system-relative-pathname :tree-sitter "alien.c"))))
+    (with-ts-query :c (q (binary_expression (string_literal)))
+      (istype 'sb-alien::alien-value q)
+      (with-ts-query-cursor c
+        (istype 'sb-alien::alien-value c)
+        (let ((m (sb-alien:make-alien tree-sitter::ts-query-match)))
+          (ts-query-cursor-delete c)))
+      (is= 1 (tree-sitter::ts-query-pattern-count q))
+      (iszero (tree-sitter::ts-query-capture-count q))
+      (ts-query-delete q))))
+

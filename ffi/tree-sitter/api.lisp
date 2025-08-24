@@ -76,14 +76,16 @@
             (progn ,@forms)
          (ts-tree-cursor-delete ,var)))))
 
-(defmacro with-ts-query ((var lang string &optional (length '(length string))) &body body)
+(defmacro with-ts-query (lang (var expr) &body body)
   (with-gensyms (eoff etype)
-    `(with-alien ((,eoff unsigned-int)
-                  (,etype ts-query-error))
-       (let ((,var (ts-query-new (language-module ,lang) (make-alien-string ,string) ,length
-                                 (addr ,eoff) (addr ,etype))))
-         (check-ts-query-error ,etype ,eoff)
-         ,@body))))
+    (let* ((expr (with-output-to-string (s) (write expr :stream s :pretty nil :case :downcase)))
+           (len (length expr)))
+      `(with-alien ((,eoff unsigned-int 0)
+                    (,etype ts-query-error 0))
+         (let ((,var (ts-query-new (language-module ,lang) ,expr ,len
+                                   (addr ,eoff) (addr ,etype))))
+           (check-ts-query-error ,etype ,eoff)
+           ,@body)))))
 
 (defmacro with-ts-query-cursor (var &body body)
   `(let ((,var (ts-query-cursor-new)))
