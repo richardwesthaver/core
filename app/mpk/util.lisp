@@ -36,9 +36,8 @@
    (ensure-directories-exist *mpk-data-directory* :verbose t)
    (ensure-directories-exist *mpk-cache-directory* :verbose t)))
 
-(defvar *music-metadata* (make-hash-table :test 'equal))
+(defvar *music-metadata* (make-hash-table :test 'equal :synchronized t))
 
-;;  FIX 2025-04-18: takes a long time, do better
 (defun metadata-scan-directory (&optional (dir #l"mpk:media;music;") (table *music-metadata*))
   (log:info! "walking music directory: ~A" dir)
     (walk-directory dir 
@@ -84,11 +83,21 @@
       (when (starts-with-p tag "ab:hi:")
         (push (subseq tag 6) ret)))))
 
-;; TODO 2025-04-30: 
-#+nil
-(defun mpk-music-metadata-scan-parallel (&optional (dir #l"mpk:media;music;"))
-  (with-task-pool (tp)
-    (nyi!)))
+(defun mpk-music-metadata-scan-parallel (&optional (dir #l"mpk:media;music;") (table *music-metadata*))
+  (with-submit-counted
+    (walk-directory dir 
+      (constantly t) ; collectp
+      (constantly t) ; recursep
+      (lambda (x) ; collector
+        (submit-counted
+         (lambda ()
+           (dolist (y (directory-files x "*.*"))
+             (when-let ((meta (ignore-errors (media-file-metadata y :list)))
+                        (y y))
+               (log:info! "adding metadata for ~A" y)
+               ;; (appendf meta (cons 'hash (cry/b3:b3sum y)))
+               (setf (gethash y table) meta)))))))
+    (receive-counted)))
 
 ;;  REVIEW 2025-04-18: good case for threading
 #|

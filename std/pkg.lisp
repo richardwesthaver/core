@@ -890,6 +890,7 @@
    :upgrade :version
    :status :validate
    :lock :bind
+   :head :tail
    :assignee :started-p
    :verbp))
 
@@ -1073,6 +1074,9 @@
    :receive-indexed
    :with-submit-indexed
    :submit-with-cancel
+   :with-submit-counted
+   :submit-counted
+   :receive-counted
    :submit-cancelable
    :receive-cancelables
    :receive-result

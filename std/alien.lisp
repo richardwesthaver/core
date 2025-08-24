@@ -524,11 +524,12 @@ newly allocated memory."
         (t form))
       form))
 
-(defun num-cpus ()
-  "Return the number of CPU threads online."
-  (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun num-cpus ()
+    "Return the number of CPU threads online."
+    (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln)))
 
-(defparameter *cpus* (num-cpus)
+(sb-ext:defglobal *cpus* (num-cpus)
   "The number of unique processors (cores) reported by the OS.")
 
 ;;; Non-standard types
@@ -537,8 +538,8 @@ newly allocated memory."
                                    (alien (array char))
                                    (alien (* unsigned-char))
                                    (alien (array unsigned-char))))
-;;; C Standard
 
+;;; C Standard
 ;; types
 (define-alien-type pid-t int)
 (define-alien-type uid-t unsigned-int)

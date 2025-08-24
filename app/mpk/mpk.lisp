@@ -8,4 +8,5 @@
 (defun mpk-init (&key (db t))
   (load-mpkrc)
   (load-av)
-  (when db (db:load-database-backend :mpk)))
+  (when db (db:load-database-backend :mpk))
+  (setf *thread-pool* (make-thread-pool (num-cpus) :name :mpk)))

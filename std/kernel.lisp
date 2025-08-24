@@ -80,6 +80,21 @@ restarts is provided. *KERNEL* is returned."
   "Like DEFCLASS but for the KERNEL-CLASS metaclass."
   `(defclass ,name ,supers ,slots ,@`((:metaclass kernel-class) ,@opts)))
 
-(defkernel hook () ()
+(defkernel hook (kernel-object) ()
   (:documentation "Hooks are Kernel objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
+
+(defkernel list-hook (hook) 
+  ((value :initform nil :initarg :value :accessor hook-value)))
+
+(defkernel table-hook (hook) 
+  ((value :initform (make-hash-table) :type hash-table :initarg :value :accessor hook-value)))
+  
+(defkernel vector-hook (hook) 
+  ((value :initform (make-array 0 :adjustable t) :type vector :initarg :value :accessor hook-value)))
+
+(defgeneric add-hook (hook function))
+(defgeneric remove-hook (hook function))
+
+(defmacro defhook (name supers slots &rest opts)
+  `(defkernel ,name ,supers ,slots ,@opts))
