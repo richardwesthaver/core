@@ -13,11 +13,11 @@
   (logger (* rocksdb-logger)))
 
 (define-alien-type rocksdb-log-function
-  (function void
-            (* t)
-            unsigned
-            c-string
-            size-t))
+    (function void
+        (* t)
+        unsigned
+      c-string
+      size-t))
 
 (defar rocksdb-logger-create-stderr-logger (* rocksdb-logger)
   (log-level int)
@@ -29,10 +29,12 @@
   (priv (* t)))
 
 ;; logger callback
-(define-alien-callable rocksdb-log-default void
-    ((priv (* t))
-     (lev unsigned)
-     (msg c-string)
-     (len size-t))
-  (declare (ignore priv len lev))
-  (log:log-message :info nil msg))
+(locally
+    (declare (sb-ext:muffle-conditions style-warning))
+  (define-alien-callable rocksdb-log-default void
+      ((priv (* t))
+       (lev unsigned)
+       (msg c-string)
+       (len size-t))
+    (log:log-message :info nil msg)
+    (values)))

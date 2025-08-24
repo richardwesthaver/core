@@ -7,26 +7,26 @@
 
 ;;; Early Macros
 #|
-  note: 
-    unable to
-      optimize away %SAP-ALIEN
-    because:
-      forced to do runtime allocation of alien-value structure
-    --> STD/ALIEN:DEFAR PROGN LOCALLY DEFINE-ALIEN-ROUTINE PROGN DEFUN 
-    --> PROGN SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA FUNCTION 
-    --> BLOCK WITH-ALIEN SYMBOL-MACROLET SYMBOL-MACROLET SYMBOL-MACROLET 
-    --> VALUES 
-    ==>
-      1
+note: 
+unable to
+optimize away %SAP-ALIEN
+because:
+forced to do runtime allocation of alien-value structure
+--> STD/ALIEN:DEFAR PROGN LOCALLY DEFINE-ALIEN-ROUTINE PROGN DEFUN 
+--> PROGN SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA FUNCTION 
+--> BLOCK WITH-ALIEN SYMBOL-MACROLET SYMBOL-MACROLET SYMBOL-MACROLET 
+--> VALUES 
+==>
+1
 
-  note: 
-    doing SAP to pointer coercion (cost 20)
-    --> STD/ALIEN:DEFAR PROGN LOCALLY DEFINE-ALIEN-ROUTINE PROGN DEFUN 
-    --> PROGN SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA FUNCTION 
-    --> BLOCK WITH-ALIEN SYMBOL-MACROLET SYMBOL-MACROLET SYMBOL-MACROLET 
-    --> VALUES 
-    ==>
-      1
+note: 
+doing SAP to pointer coercion (cost 20)
+--> STD/ALIEN:DEFAR PROGN LOCALLY DEFINE-ALIEN-ROUTINE PROGN DEFUN 
+--> PROGN SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA FUNCTION 
+--> BLOCK WITH-ALIEN SYMBOL-MACROLET SYMBOL-MACROLET SYMBOL-MACROLET 
+--> VALUES 
+==>
+1
 |#
 (defmacro def-with-errptr (name result-type &rest args)
   `(progn

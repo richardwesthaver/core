@@ -51,7 +51,7 @@
   (keylen size-t)
   (val (* char))
   (vallen size-t))
-  
+
 (def-with-errptr rocksdb-sstfilewriter-delete void
   (writer (* rocksdb-sstfilewriter))
   (key (* char))

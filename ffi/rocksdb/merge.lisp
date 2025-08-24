@@ -70,16 +70,16 @@ Return true on success. Return false failure / error / corruption.
 ;; FullMerge() is used when a Put/Delete is the *existing_value (or null)
 (define-alien-type rocksdb-full-merge-function
     (function (* char)
-              (* t)
-              (* unsigned-char)
-              size-t
-              (* unsigned-char)
-              size-t
-              (* (* unsigned-char))
-              (* size-t)
-              int
-              (* unsigned-char)
-              (* size-t)))
+        (* t)
+        (* unsigned-char)
+      size-t
+      (* unsigned-char)
+      size-t
+      (* (* unsigned-char))
+      (* size-t)
+      int
+      (* unsigned-char)
+      (* size-t)))
 
 #|
 This function performs merge(left_op, right_op)
@@ -90,22 +90,22 @@ or infeasible to combine the two operations, return false instead.
 ;; PartialMerge() is used to combine two-merge operands (if possible)
 (define-alien-type rocksdb-partial-merge-function
     (function (* char)
-              (* t)
-              (* unsigned-char)
-              size-t
-              (* (* unsigned-char))
-              (* size-t)
-              int
-              (* unsigned-char)
-              (* size-t)))
+        (* t)
+        (* unsigned-char)
+      size-t
+      (* (* unsigned-char))
+      (* size-t)
+      int
+      (* unsigned-char)
+      (* size-t)))
 
 (define-alien-type rocksdb-delete-value-function
-  (function void
-            (* unsigned-char)
-            size-t))
+    (function void
+        (* unsigned-char)
+        size-t))
 
 (define-alien-type rocksdb-destructor-function
-  (function void (* t)))
+    (function void (* t)))
 
 #|
 The name of the MergeOperator. Used to check for MergeOperator
@@ -133,85 +133,81 @@ accessed using a different MergeOperator)
   (free-alien self)
   (values))
 
-(define-alien-callable rocksdb-name c-string () (make-alien-string #.(symbol-name (gensym "rocksdb:"))))
+(define-alien-callable rocksdb-name c-string () #.(symbol-name (gensym "rocksdb:")))
 
 ;;; Associative Merge Ops
 ;;;; Concat Merge
-(define-alien-callable rocksdb-concat-merge-name c-string () (make-alien-string "cc:concat"))
+(define-alien-callable rocksdb-concat-merge-name c-string () "core:concat")
 
-(define-alien-callable rocksdb-concat-full-merge (* char) #.*rocksdb-full-merge-lambda-list*
-  (declare (ignore state))
-  (log:trace!
-   (format nil "Applying CC:CONCAT full merge with ~A operands" num-ops))
-  (log:trace! :key key :klen klen)
-  (let ((len existing-vlen)
-        (opslen (alien-sap ops-length))
-        (ret (make-alien char)))
-    (unless (null-alien existing-val)
+(locally
+    (declare (sb-ext:muffle-conditions style-warning))
+  (define-alien-callable rocksdb-concat-full-merge (* char) #.*rocksdb-full-merge-lambda-list*
+    (log:trace!
+     (format nil "Applying CC:CONCAT full merge with ~A operands" num-ops))
+    (log:trace! :key key :klen klen)
+    (let ((len existing-vlen)
+          (opslen (alien-sap ops-length))
+          (ret (make-alien char)))
+      (unless (null-alien existing-val)
         (loop for i below existing-vlen
-            do (setf (deref ret i) (deref existing-val i))))
-    (unless (zerop num-ops)
-      (loop for i below num-ops
-            with slen = #.(alien-size (* size-t) :bytes)
-            with s = #.(alien-size (* (* unsigned-char)) :bytes)
-            with olen = (deref (sap-alien (sb-alien::sap+ opslen (* slen i)) (* size-t)))
-            do (loop for l below olen
-                     do (setf (deref ret (+ len l)) (deref (deref ops i) l)))
-            do (incf len olen)))
-    (setf (deref new-vlen) len
-          (deref success) 1)
-    ret))
-
-(define-alien-callable rocksdb-concat-partial-merge (* char) #.*rocksdb-partial-merge-lambda-list*
-  (declare (ignore state))
-  (log:trace! 
-   "Applying CC:CONCAT partial merge..."
-   (list key klen ops ops-length num-ops success new-vlen))
+              do (setf (deref ret i) (deref existing-val i))))
+      (unless (zerop num-ops)
+        (loop for i below num-ops
+              with slen = #.(alien-size (* size-t) :bytes)
+              with s = #.(alien-size (* (* unsigned-char)) :bytes)
+              with olen = (deref (sap-alien (sb-alien::sap+ opslen (* slen i)) (* size-t)))
+              do (loop for l below olen
+                       do (setf (deref ret (+ len l)) (deref (deref ops i) l)))
+              do (incf len olen)))
+      (setf (deref new-vlen) len
+            (deref success) 1)
+      ret))
+  (define-alien-callable rocksdb-concat-partial-merge (* char) #.*rocksdb-partial-merge-lambda-list*
+    (log:trace! 
+     "Applying CC:CONCAT partial merge..."
+     (list key klen ops ops-length num-ops success new-vlen))
     (setf (deref success) 0)
-  nil)
-
-(define-alien-callable rocksdb-delete-value void
-    ((state (* t))
-     (value (* unsigned-char))
-     (value-length size-t))
-  (declare (ignore state value-length))
-  (unless (null-alien value)
-    (setf value nil))
-  (values))
-
-;;;; Index Merge
-(define-alien-callable rocksdb-index-merge-name c-string () (make-alien-string "cc:index"))
-
+    nil)
+  (define-alien-callable rocksdb-delete-value void
+      ((state (* t))
+       (value (* unsigned-char))
+       (value-length size-t))
+    (unless (null-alien value)
+      (setf value nil))
+    (values))
 (define-alien-callable rocksdb-index-full-merge (* unsigned-char) #.*rocksdb-full-merge-lambda-list*
-  (declare (ignore state))
   (log:trace! "Applying CC:INDEX full merge with ~A operands" num-ops)
-  (log:trace! :key key :klen klen)
-  (let ((len (if (zerop existing-vlen) 1 existing-vlen))
+  (log:trace! :key key :klen (the fixnum klen))
+  (let ((len (the fixnum (if (zerop existing-vlen) 1 existing-vlen)))
         (opslen (alien-sap ops-length))
-        (ret 0))
+        (ret (the fixnum 0)))
     (unless (null-alien existing-val)
       (incf ret
-            (std:octets-to-integer
-             (coerce
-              (loop for i below existing-vlen
-                    collect (deref existing-val i))
-              'std:octet-vector))))
+            (the fixnum
+                 (std:octets-to-integer
+                  (coerce
+                   (loop for i below existing-vlen
+                         collect (deref existing-val i))
+                   'std:octet-vector)))))
     (unless (zerop num-ops)
       (loop for i below num-ops
             with slen = #.(alien-size (* size-t) :bytes)
             with s = #.(alien-size (* (* unsigned-char)) :bytes)
             with olen = (deref (sap-alien (sb-alien::sap+ opslen (* slen i)) (* size-t)))
-            do (incf ret
-                     (std:octets-to-integer
-                      (coerce
-                       (loop for l below olen
-                             collect (deref (deref ops i) l))
-                       'std:octet-vector)))))
+            do (incf (the fixnum ret)
+                     (the fixnum
+                          (std:octets-to-integer
+                           (coerce
+                            (loop for l below olen
+                                  collect (deref (deref ops i) l))
+                            'std:octet-vector))))))
     (setf (deref new-vlen) len
           (deref success) 1)
-    (octets-to-alien (std:integer-to-octets ret (* 8 len)))))
+    (octets-to-alien (std:integer-to-octets ret (the fixnum (* 8 len))))))
 
 (define-alien-callable rocksdb-index-partial-merge boolean #.*rocksdb-partial-merge-lambda-list*
-  (declare (ignore state key klen ops ops-length num-ops new-vlen))
   (setf (deref success) 0)
-  0)
+  0))
+
+;;;; Index Merge
+(define-alien-callable rocksdb-index-merge-name c-string () "core:index")

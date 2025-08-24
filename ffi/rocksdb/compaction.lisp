@@ -37,21 +37,21 @@ including data loss, unreported corruption, deadlocks, and more.
 (in-package :rocksdb)
 
 (define-alien-type rocksdb-filter-function
-  (function unsigned-char
-            (* t)
-            int
-            c-string
-            size-t
-            c-string
-            size-t
-            (* (array unsigned-char))
-            (* size-t)
-            (* unsigned-char)))
+    (function unsigned-char 
+        (* t) 
+        int
+      c-string
+      size-t
+      c-string
+      size-t
+      (* (array unsigned-char))
+      (* size-t)
+      (* unsigned-char)))
 
 (define-alien-type rocksdb-create-compaction-filter-function
     (function (* rocksdb-compactionfilter)
-              (* t)
-              (* rocksdb-compactionfiltercontext)))
+        (* t)
+        (* rocksdb-compactionfiltercontext)))
 
 (defar rocksdb-compactionfilter-create (* rocksdb-compactionfilter)
   (state (* t))
@@ -82,21 +82,20 @@ including data loss, unreported corruption, deadlocks, and more.
 (defar rocksdb-compacitonfilterfactory-destroy void
   (factory (* rocksdb-compactionfilterfactory)))
 
-(define-alien-callable rocksdb-filter-never unsigned-char
-    ((state (* t))
-     (level int)
-     (key (array unsigned-char))
-     (key-length size-t)
-     (existing-val (array unsigned-char))
-     (existing-val-length size-t)
-     (new-val (* (array unsigned-char)))
-     (new-val-length (* size-t))
-     (value-changed (* unsigned-char)))
-  (declare (ignore state level key key-length existing-val existing-val-length new-val new-val-length value-changed))
-  0)
-
-(define-alien-callable rocksdb-filter-never-name c-string () (make-alien-string "cc:never"))
-
+(locally
+    (declare (sb-ext:muffle-conditions style-warning))
+  (define-alien-callable rocksdb-filter-never unsigned-char
+      ((state (* t))
+       (level int)
+       (key (array unsigned-char))
+       (key-length size-t)
+       (existing-val (array unsigned-char))
+       (existing-val-length size-t)
+       (new-val (* (array unsigned-char)))
+       (new-val-length (* size-t))
+       (value-changed (* unsigned-char)))
+    (declare (ignore state level key key-length existing-val existing-val-length new-val new-val-length value-changed))
+    0)
 (define-alien-callable rocksdb-create-compaction-filter-never (* rocksdb-compactionfilter)
     ((state (* t))
      (context (* rocksdb-compactionfiltercontext)))
@@ -104,4 +103,7 @@ including data loss, unreported corruption, deadlocks, and more.
    state
    (alien-sap (alien-callable-function 'rocksdb-destructor))
    (alien-sap (alien-callable-function 'rocksdb-filter-never))
-   (alien-sap (alien-callable-function 'rocksdb-filter-never-name))))
+   (alien-sap (alien-callable-function 'rocksdb-filter-never-name)))))
+
+(define-alien-callable rocksdb-filter-never-name c-string () "core:never")
+

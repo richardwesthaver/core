@@ -55,7 +55,7 @@
   (secondary-path c-string))
 
 (defar rocksdb-close void 
-      (db (* rocksdb)))
+  (db (* rocksdb)))
 
 (defar rocksdb-cancel-all-background-work void 
   (db (* rocksdb))
@@ -82,7 +82,7 @@
   (batch (* rocksdb-writebatch)))
 
 (def-with-errptr rocksdb-get 
-  (* unsigned-char)
+    (* unsigned-char)
   (db (* rocksdb))
   (options (* rocksdb-readoptions))
   (key (* unsigned-char))
@@ -125,7 +125,7 @@
   (vallen size-t))
 
 (def-with-errptr rocksdb-get-cf 
-  (* unsigned-char)
+    (* unsigned-char)
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
@@ -227,7 +227,7 @@
   (timestamp c-string)
   (timestamp-len size-t)
   (value-found (* unsigned-char)))
-      
+
 (defar rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
 
 (defar rocksdb-cache-create-hyper-clock (* rocksdb-cache)
@@ -342,7 +342,7 @@
   (db (* rocksdb)))
 
 (def-with-errptr rocksdb-list-column-families 
-  (* c-string)
+    (* c-string)
   (opt (* rocksdb-options))
   (name c-string)
   (lencf (* size-t)))
@@ -465,7 +465,7 @@
 
 (def-with-errptr rocksdb-enable-file-deletions void
   (db (* rocksdb)))
-  
+
 (def-with-errptr rocksdb-destroy-db void
   (opts (* rocksdb-options))
   (name c-string))
@@ -493,13 +493,13 @@
   (opts (* rocksdb-readoptions))
   (cfs (* (* rocksdb-column-family-handle)))
   (iters (* (* rocksdb-iterator))))
-  
+
 (defar rocksdb-iter-destroy void 
-      (iter (* rocksdb-iterator)))
+  (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-seek-to-first void 
-      (iter (* rocksdb-iterator)))
+  (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-seek-to-last void 
-      (iter (* rocksdb-iterator)))
+  (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-seek void 
   (iter (* rocksdb-iterator))
   (k (* unsigned-char))
@@ -540,7 +540,7 @@
   (backup-id (unsigned 32)))
 
 (def-with-errptr rocksdb-backup-engine-open
-  (* rocksdb-backup-engine)
+    (* rocksdb-backup-engine)
   (opts (* rocksdb-options))
   (path c-string))
 

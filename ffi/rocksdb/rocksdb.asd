@@ -7,6 +7,7 @@
 ;;; Code:
 (defsystem "rocksdb"
   :depends-on (:std :log)
+  :version "0.2.0"
   :serial t
   :components ((:file "pkg")
                (:file "prim")

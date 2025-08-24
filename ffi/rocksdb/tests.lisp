@@ -602,7 +602,7 @@ DB where K and V are both Lisp strings."
         (let ((uco (rocksdb-universal-compaction-options-create)))
           (rocksdb-universal-compaction-options-set-size-ratio uco 20)
           (rocksdb-options-set-universal-compaction-options o uco)
-          (is= 20 (rocksdb-universal-compaction-options-get-size-ration uco)))))))
+          (is= 20 (rocksdb-universal-compaction-options-get-size-ratio uco)))))))
 
 (deftest logger ()
   "Test logging functionality."

@@ -35,21 +35,21 @@ by setting prefix_extractor in ColumnFamilyOptions.
 
 (define-alien-type rocksdb-transform-function
     (function (* unsigned-char)
-              (* unsigned-char)
-              size-t
-              (* size-t)))
+        (* unsigned-char)
+        size-t
+      (* size-t)))
 
 (define-alien-type rocksdb-in-domain-function
-  (function boolean
-            (* t) ;;state
-            (array unsigned-char) ;;key
-            size-t)) ;;len
+    (function boolean
+        (* t) ;;state
+        (array unsigned-char) ;;key
+      size-t)) ;;len
 
 (define-alien-type rocksdb-in-range-function
-  (function unsigned-char
-            (* t) ;;state
-            (array unsigned-char) ;;key 
-            size-t)) ;;len
+    (function unsigned-char
+        (* t) ;;state
+        (array unsigned-char) ;;key 
+      size-t)) ;;len
 
 (defar rocksdb-slicetransform-create (* rocksdb-slicetransform)
   (state (* t))
@@ -66,21 +66,22 @@ by setting prefix_extractor in ColumnFamilyOptions.
 
 (defar rocksdb-slicetransform-destroy void (st (* rocksdb-slicetransform)))
 
-(define-alien-callable rocksdb-transform-default (* unsigned-char)
-    ((key (* unsigned-char))
-     (isize size-t)
-     (osize (* size-t)))
-  key)
+(locally
+    (declare (sb-ext:muffle-conditions style-warning))
+  (define-alien-callable rocksdb-transform-default (* unsigned-char)
+      ((key (* unsigned-char))
+       (isize size-t)
+       (osize (* size-t)))
+    key)
 
-(define-alien-callable rocksdb-in-domain-default boolean
-    ((state (* t))
-     (key (array unsigned-char))
-     (len size-t))
-  1)
+  (define-alien-callable rocksdb-in-domain-default boolean
+      ((state (* t))
+       (key (array unsigned-char))
+       (len size-t))
+    1)
 
-(define-alien-callable rocksdb-in-range-default boolean
-    ((state (* unsigned))
-     (key (* unsigned-char))
-     (len size-t))
-  ;; (declare (ignore state key len))
-  1)
+  (define-alien-callable rocksdb-in-range-default boolean
+      ((state (* unsigned))
+       (key (* unsigned-char))
+       (len size-t))
+    1))

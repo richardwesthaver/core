@@ -11,48 +11,48 @@
 
 ;;; Types
 (define-alien-type rocksdb-put-function
-  (function void
-            (* t)
-            (array unsigned-char)
-            size-t
-            (array unsigned-char)
-            size-t))
+    (function void
+        (* t)
+        (array unsigned-char)
+      size-t
+      (array unsigned-char)
+      size-t))
 
 (define-alien-type rocksdb-delete-function
-  (function void
-            (* t)
-            (array unsigned-char)
-            size-t))
+    (function void
+        (* t)
+        (array unsigned-char)
+      size-t))
 
 (define-alien-type rocksdb-put-cf-function
-  (function void
-            (* t)
-            (unsigned 32)
-            (array unsigned-char)
-            size-t
-            (array unsigned-char)
-            size-t))
+    (function void
+        (* t)
+        (unsigned 32)
+      (array unsigned-char)
+      size-t
+      (array unsigned-char)
+      size-t))
 
 (define-alien-type rocksdb-delete-cf-function
-  (function void
-            (* t)
-            (unsigned 32)
-            (array unsigned-char)
-            size-t))
-            
+    (function void
+        (* t)
+        (unsigned 32)
+      (array unsigned-char)
+      size-t))
+
 (define-alien-type rocksdb-merge-cf-function
-  (function void
-            (* t)
-            (unsigned 32)
-            (array unsigned-char)
-            size-t
-            (array unsigned-char)
-            size-t))
+    (function void
+        (* t)
+        (unsigned 32)
+      (array unsigned-char)
+      size-t
+      (array unsigned-char)
+      size-t))
 
 (define-alien-type rocksdb-get-ts-size-function
-  (function size-t
-            (* t)
-            (unsigned 32)))
+    (function size-t
+        (* t)
+        (unsigned 32)))
 
 ;;; Alien Functions
 (defar rocksdb-writebatch-create (* rocksdb-writebatch))
@@ -272,7 +272,7 @@
   (num-values int)
   (values-list (array (array unsigned-char)))
   (values-list-sizes (array size-t)))
-  
+
 ;;; with-index (wi)
 (defar rocksdb-writebatch-wi-create (* rocksdb-writebatch-wi)
   (reserved-bytes size-t)
