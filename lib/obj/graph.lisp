@@ -458,3 +458,12 @@ implementation of A*.")
               do (setf classes (flatten subs))
               do (setf subs (.map classes)))
       graph))))
+
+;; TODO 2025-08-24: 
+(defun g-reader (stream sub-char numarg)
+  "Parse the next form as a GRAPH object.")
+
+(defreadtable :graph
+  "The graph readtable"
+  (:merge :std)
+  (:dispatch-macro-char #\# #\g #'g-reader))

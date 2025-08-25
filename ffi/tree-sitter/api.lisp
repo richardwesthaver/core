@@ -119,7 +119,6 @@ desired name for use in lisp."
     (error 'cant-set-language :language language))
   (let* ((string-start start)
          (string-end (or end (length string)))
-         ;; TODO: this might need to be +1 if it's actually a c-string for null
          (string-length (- string-end string-start))
          (string-to-pass (if (plusp string-start)
                              (subseq string string-start string-end)
@@ -162,9 +161,8 @@ desired name for use in lisp."
 (defun convert-foreign-tree-to-list (tree &key produce-cst name-generator
                                      &aux did-visit-children parse-stack)
   (with-ts-cursor (cursor tree)
-    ;; Closely follows tree-sitter-cli parse
-    ;; implementation with a modification to
-    ;; allow for production of the full CST.
+    ;; Closely follows tree-sitter-cli parse implementation with a
+    ;; modification to allow for production of the full CST.
     (loop
       (with-ts-node (node (ts-tree-cursor-current-node-pointer cursor))
         (let ((is-named (or produce-cst (ts-node-is-named-pointer node))))

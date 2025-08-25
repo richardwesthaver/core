@@ -87,12 +87,40 @@
 (defclass sysdef () ()
   (:documentation "System Definition"))
 
+(defun %sys-get (form name)
+  (std:when-let ((v (getf form name)))
+    (remf form name)
+    v))
+
 (defmacro defsys (name &body body)
-  "Define a SYS with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
+  "Define a SYSTEM with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
 
-SYS objects register their own ASDF:SYSTEM objects as needed and provide the following extensions:
+SYSTEM objects register their own ASDF:SYSTEM objects as needed and provide
+the following extensions:
+- :PROVIDE    system-provided features, modules, readtables
+- :HOOKS       hooks to load with this system
+- :METHODS     custom method definitions to apply to this system
+- :REQUIRE    system-required modules and features"
+  (let ((prov (%sys-get body :provide)) (hooks (%sys-get body :hooks))
+        (meth (%sys-get body :methods)) (req (%sys-get body :require)))
+    (declare (ignore meth))
+    (std:with-gensyms (sys)
+      `(let ((,sys (defsystem ,name ,@body)))
+         ;; todo: convert to system
+         (mapc (lambda (x) (pushnew x *features*)) ',prov)
+         (mapc (lambda (x) (assert (member x *features*))) ',req)
+         (mapc (lambda (x) (std:add-hook ,sys x)) ',hooks)
+         ,sys))))
 
-- :MODULES     list of system-provided modules
-- :FEATURES    list of system-provided features
-"
-  `(defsystem ,name ,@body))
+;;; Protocol
+(defgeneric register-system (name self))
+
+(defgeneric find-system (self &key &allow-other-keys))
+
+(defgeneric remove-system (self &key &allow-other-keys))
+
+(defgeneric load-system (self &key &allow-other-keys))
+
+(defgeneric compile-system (self &key &allow-other-keys))
+
+(defgeneric make-system (self &key &allow-other-keys))
