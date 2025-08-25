@@ -41,12 +41,6 @@
                                (:file "dbgen")
                                (:file "tpc-h")))
                              (:file "serde")
-                             (:module "trivial"
-                              :components
-                              ((:file "array")
-                               (:file "hash")
-                               (:file "simd")
-                               (:file "alien")))
                              (:file "bench"))))
   :build-pathname "bench"
   :build-operation monolithic-compile-bundle-op)
