@@ -1,8 +1,10 @@
 ;;; defsys.lisp --- defsystem extension macros
 
-;; Intended to serve as a replacement for asdf:system utilities and quicklisp.
+;; The Core System Definition facility.
 
 ;;; Commentary:
+
+;; replacement/wrapper for ASDF
 
 ;; goals:
 ;; - default to asdf (wrap)
@@ -11,12 +13,12 @@
 ;; - integrate with skel/packy (package distributor)
 ;; - multi-threaded by default
 ;; - parallel compilation (completely short-circuiting asdf)
-
+;; - LISP ONLY -- multi-lang systems are handled by skel
 ;; notes:
 
 ;;; Code:
 (in-package :std/defsys)
-(declaim (optimize speed))
+
 ;;; Conditions
 (define-condition defsys-condition () ())
 (define-condition defsys-error (error defsys-condition) ())
@@ -26,12 +28,15 @@
 
 ;;; Components
 (defclass component () ())
-(defclass module (component) ())
+(defclass module (component) 
+  ((components :accessor components)))
+
 ;;; Ops
 ;;; Actions
 ;;; Dependencies
 ;;; System
-(defclass system () ())
+(defclass system (module)
+  ((modules)))
 ;;; Modules
 ;; Unlike the MODULE object which is merely a container for other COMPONENTs,
 ;; Lisp Modules in the Core support the ANSI CL notion of Modules and are
@@ -42,14 +47,15 @@
 (defparameter *core-module-table* (make-hash-table :test 'equal))
 
 (defclass core-module () 
-  ((hook :type hook)))
+  ((hook :type hook :accessor hook)))
 
 (defun load-core-module (name)
   (let ((cmod (gethash name *core-module-table*)))
     (with-slots (hook) cmod
-      (when exit-hook
-        (pushnew exit-hook sb-ext:*exit-hooks*))
-      (funcall load-hook))))
+      (when hook
+        (pushnew (funcall hook :exit) sb-ext:*exit-hooks*)
+        (funcall (funcall hook :load))))
+    cmod))
 
 (defmacro load-module (name)
   "Load module NAME from the global list *MODULES*."

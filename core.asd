@@ -18,18 +18,15 @@
   :build-pathname "user-source")
 
 (defsystem :core/tests
-  :depends-on (:rt :std/tests :log/tests :rt/tests :cli/tests
+  :depends-on (:rt :std/tests :log/tests :rt/tests
                :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
                :doc/tests :nlp/tests :skel/tests :box/tests
-               :syn/tests :organ/tests :packy/tests :obj/tests 
+               :syn/tests :organ/tests :obj/tests :math/tests
                :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
                :zstd/tests :uring/tests :blake3/tests :ublk/tests
                :parse/tests :pod/tests :rt/tests :rdb/tests
-               :dsp/tests :cry/tests :krypt/tests :io/tests
-               :net/tests :vc/tests :math/tests)
-  :components ((:file "tests"))
-  :build-pathname "tests"
-  :build-operation monolithic-compile-bundle-op
+               :dsp/tests :cry/tests :io/tests :net/tests 
+               :vc/tests :cli/tests)
   :perform (test-op (o c) (symbol-call :rt :run-all-tests)))
 
 (defsystem :core/bench

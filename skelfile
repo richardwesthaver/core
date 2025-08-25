@@ -215,6 +215,7 @@
   (:build (%stash)
    (with-sbcl (:noinform t :quit t :input t)
     (let ((sb-ext:*block-compile-default* t))
+     (pushnew 'asdf::clear-configuration *save-hooks*)
      (asdf:make :bin/core)))
    (move-file "bin/core" ".stash/core"))
   (:compile () (std:compile-lisp :core :force t :verbose t))

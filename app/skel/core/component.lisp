@@ -65,9 +65,8 @@
 
 ;; Scripts are always assumed to point to an executable file. They can be ran
 ;; directly with SK-RUN.
-
 (defclass sk-script (sk-component sk-meta ast)
-  ((kind :initform nil :initarg :kind :type (or null script-designator) :accessor sk-kind)))
+  ((kind :initform nil :initarg :kind :accessor sk-kind)))
 
 (defmethod sk-new ((self (eql :script)) &key form path)
   (let ((script (make-sk-script form)))

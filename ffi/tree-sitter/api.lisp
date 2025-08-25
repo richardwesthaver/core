@@ -77,15 +77,15 @@
          (ts-tree-cursor-delete ,var)))))
 
 (defmacro with-ts-query (lang (var expr) &body body)
-  (with-gensyms (eoff etype)
-    (let* ((expr (with-output-to-string (s) (write expr :stream s :pretty nil :case :downcase)))
-           (len (length expr)))
-      `(with-alien ((,eoff unsigned-int 0)
-                    (,etype ts-query-error 0))
-         (let ((,var (ts-query-new (language-module ,lang) ,expr ,len
-                                   (addr ,eoff) (addr ,etype))))
-           (check-ts-query-error ,etype ,eoff)
-           ,@body)))))
+  (with-gensyms (eoff etype exp len)
+      `(let* ((,exp (with-output-to-string (s) (write ,expr :stream s :pretty nil :case :downcase)))
+              (,len (length ,exp)))
+         (with-alien ((,eoff unsigned-int 0)
+                      (,etype ts-query-error 0))
+           (let ((,var (ts-query-new (language-module ,lang) ,exp ,len
+                                     (addr ,eoff) (addr ,etype))))
+             (check-ts-query-error ,etype ,eoff)
+             ,@body)))))
 
 (defmacro with-ts-query-cursor (var &body body)
   `(let ((,var (ts-query-cursor-new)))

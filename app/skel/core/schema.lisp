@@ -25,5 +25,5 @@
      :hash '((octet-vector 32) . fixnum)
      :updated '(fixnum . octet-vector))))
 
-(defclass sk-object-schema (rdb-object-schema) ()
+(defschema sk-object-schema (rdb-object-schema) ()
   (:default-initargs :class-name 'skel))

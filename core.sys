@@ -1,0 +1,10 @@
+;;; core.sys --- Core System Definitions
+(defsys :core
+  :version "0.1.0"
+  :depends-on
+  (:std :cli :log :obj
+   :net :nlp :dat :doc
+   :q :dsp :math :parse 
+   :rdb :cry :io)
+  :components nil)
+

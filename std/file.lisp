@@ -409,7 +409,9 @@ consider FILE-SIZE-IN-OCTETS instead."
     (declare (ignore sec min hr))
     (format nil "~4d~2,'0d~2,'0d" yr mon day)))
 
-;; see https://www.n16f.net/blog/counting-lines-with-common-lisp/
+(defun file-write-date* (file)
+  "Like FILE-WRITE-DATE but return NIL when file does not exist."
+  (when (probe-file file) (file-write-date file)))
 
 (defvar *hidden-paths* (list ".hg" ".git"))
 

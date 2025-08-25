@@ -1,8 +1,6 @@
 (defpackage :skel/core/proto
   (:use :cl :std)
   (:export
-   ;; types
-   :license-designator :script-designator :contact-designator
    ;; generics
    :sk-run :sk-new 
    :sk-tangle :sk-weave

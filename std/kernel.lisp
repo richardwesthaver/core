@@ -84,14 +84,12 @@ restarts is provided. *KERNEL* is returned."
   (:documentation "Hooks are Kernel objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
 
-(defkernel list-hook (hook) 
+(defkernel value-hook (hook) 
   ((value :initform nil :initarg :value :accessor hook-value)))
 
-(defkernel table-hook (hook) 
-  ((value :initform (make-hash-table) :type hash-table :initarg :value :accessor hook-value)))
-  
-(defkernel vector-hook (hook) 
-  ((value :initform (make-array 0 :adjustable t) :type vector :initarg :value :accessor hook-value)))
+(defkernel key-hook (value-hook) ()
+  (:documentation "A hook which accepts a keyword as argument and returns the associated function
+from the HOOK-VALUE."))
 
 (defgeneric add-hook (hook function))
 (defgeneric remove-hook (hook function))

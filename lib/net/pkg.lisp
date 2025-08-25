@@ -294,7 +294,7 @@
   (:import-from :io/stream :decoding-stream :needs-to-fill-buffer-p
    :+buffer-size+ :make-decoding-stream :dec-fill-buffer)
   (:import-from :log :trace-p)
-  (:shadow :get :delete)
+  (:shadow :get :delete :head)
   (:import-from :sb-ext :string-to-octets)
   (:use :cl :std :uri
    :url :http :net/cookie :net/core

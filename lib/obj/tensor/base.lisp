@@ -220,7 +220,7 @@ Checking for a matrix with 2 columns:
               :do (unless (= (aref dims i) (aref dims 0))
                     (return nil))
               :finally (return t))))
-;;
+
 (defun tensor-append (axis tensor &rest more-tensors)
   (if (null tensor)
       (when more-tensors

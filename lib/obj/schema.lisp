@@ -474,16 +474,19 @@ from defaulting to SIMPLE-SCHEMA. FIELDS
 are a list of field forms passed through LIST-TO-FIELDS and initialized in the
 appropriate slot of the new class given by NAME. OPTIONS are the same as
 DEFCLASS."
-  `(eval-always
-     (defclass ,name ,(or super `(simple-schema)) ()
-       (:default-initargs 
-        :fields (apply 'concatenate 'field-vector
-                       (list-to-fields ',fields)
-                       (let ((ret))
-                         (dolist (x ',super ret)
-                           (when x
-                             (push (class-default-fields x) ret))))))
-       ,@options)))
+  (let ((%default-initargs (cdr (find :default-initargs options :key #'car)))
+        (opts (remove :default-initargs options :key #'car)))
+    `(eval-always
+       (defclass ,name ,(or super `(simple-schema)) ()
+         (:default-initargs
+          :fields (apply 'concatenate 'field-vector
+                         (list-to-fields ',fields)
+                         (let ((ret))
+                           (dolist (x ',super ret)
+                             (when x
+                               (push (class-default-fields x) ret)))))
+          ,@%default-initargs)
+         ,@opts))))
 
 ;;; Dataframes
 ;; minimal data-frame abstraction. methods are prefixed with 'DF-'.

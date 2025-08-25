@@ -114,7 +114,11 @@
    :with-marking
    :using-gensyms
    :binding-gensyms
-   :hook))
+   :hook
+   :value-hook
+   :hook-value
+   :add-hook
+   :remove-hook))
 
 (defpkg :std/condition
   (:use :cl)
@@ -703,7 +707,7 @@
    :make-logical-host
    :logical-host :info 
    :show-info :*info-types*
-   :hooks
+   :system-hooks
    :*default-arena-size*
    :current-lisp-implementation
    :current-machine
@@ -1001,6 +1005,7 @@
    :file-size-in-octets
    :octet-vector=
    :file-date
+   :file-write-date*
    :file-timestamp
    :*hidden-paths*
    :hidden-path-p

@@ -5,15 +5,6 @@
 ;;; Code:
 (in-package :skel/core/proto)
 
-;; ref: https://spdx.org/licenses/
-(deftype license-designator () `(or null string pathname (member :mpl2 :wtfpl :lgpg :llgpl :gpl :mit :mit0)))
-
-(deftype script-designator () '(member :bin :sh :bash :zsh :nu :lisp :python))
-
-(deftype document-designator () '(member :org :txt :pdf :html :md))
-
-(deftype contact-designator () '(or string (cons string string)))
-
 (defgeneric sk-run (self)
   (:documentation "Run the object SELF."))
 (defgeneric sk-new (self &rest args &key &allow-other-keys)

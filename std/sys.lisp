@@ -30,7 +30,7 @@ and we may query the user for input.")
 
 (define-symbol-macro .i sb-ext:*inspected*)
 
-(defun hooks ()
+(defun system-hooks ()
   "Return the standard list of system hooks."
   (list 
    :init sb-ext:*init-hooks*
