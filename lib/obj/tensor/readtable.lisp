@@ -15,4 +15,4 @@
 (defreadtable :tensor
   "The tensor readtable, enabling tensor indexing notation."
   (:merge :modern)
-  (:macro-char #\t #'t-reader))
+  (:dispatch-macro-char #\# #\t #'t-reader))

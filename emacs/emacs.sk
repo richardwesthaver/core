@@ -1,4 +1,5 @@
 :name "core/emacs"
+:version "0.1.0"
 :bind 
 ((dotemacs (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
  (config (directory "emacs/*.el"))

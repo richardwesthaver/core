@@ -1,8 +1,8 @@
 ;;; skelfile --- CC/core skelfile -*- mode: skel; -*-
-:name "core"
+:name core
 :author ("Richard Westhaver" . "ellis@rwest.io")
 :version "0.1.0"
-:license "MPL"
+:license mpl
 :stash ".stash"
 :description "The Compiler Company Core"
 :tags ("core" "lisp" "emacs" "c")

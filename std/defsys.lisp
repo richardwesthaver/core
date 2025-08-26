@@ -19,6 +19,14 @@
 ;;; Code:
 (in-package :std/defsys)
 
+(std/prim::defhook *sys-hooks* 
+  ((:load)
+   (:compile)
+   (:register)
+   (:make)))
+
+(defvar *system-table* (make-hash-table))
+
 ;;; Conditions
 (define-condition defsys-condition () ())
 (define-condition defsys-error (error defsys-condition) ())
@@ -44,7 +52,7 @@
 
 (defvar *module* nil)
 (defvar *module-stack* nil)
-(defparameter *core-module-table* (make-hash-table :test 'equal))
+(defparameter *module-table* (make-hash-table :test 'equal))
 
 (defclass core-module () 
   ((hook :type hook :accessor hook)))
@@ -81,6 +89,9 @@
 
 ;; (with-eval-after-load (module &body body))
 
+;;; Session
+(defvar *system-session* nil)
+
 ;;; Plan
 
 ;;; System Definition
@@ -113,11 +124,17 @@ the following extensions:
          ,sys))))
 
 ;;; Protocol
-(defgeneric register-system (name self))
+(defgeneric register-system (name self)
+  (:method (name (self system))
+    (setf (gethash name *system-table*) self)))
 
-(defgeneric find-system (self &key &allow-other-keys))
+(defgeneric find-system (self &key &allow-other-keys)
+  (:method ((self symbol) &key)
+    (gethash self *system-table*)))
 
-(defgeneric remove-system (self &key &allow-other-keys))
+(defgeneric remove-system (self &key &allow-other-keys)
+  (:method ((self symbol) &key)
+    (remhash self *system-table*)))
 
 (defgeneric load-system (self &key &allow-other-keys))
 

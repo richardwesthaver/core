@@ -8,4 +8,4 @@
 
 (defreadtable :q
   (:merge :std)
-  (:macro-char #\q #'q-reader))
+  (:dispatch-macro-char #\# #\q #'q-reader))

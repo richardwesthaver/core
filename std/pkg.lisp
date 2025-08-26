@@ -116,6 +116,8 @@
    :binding-gensyms
    :hook
    :value-hook
+   :key-hook
+   :defhook
    :hook-value
    :add-hook
    :remove-hook))
@@ -1275,6 +1277,7 @@
   (:nicknames :sys)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
+  (:shadow :load-system :compile-system)
   (:import-from :asdf :module-provide-asdf :defsystem)
   (:shadowing-import-from :std/meta :version)
   (:export 

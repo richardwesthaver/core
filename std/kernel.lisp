@@ -78,21 +78,61 @@ restarts is provided. *KERNEL* is returned."
 
 (defmacro defkernel (name supers slots &rest opts)
   "Like DEFCLASS but for the KERNEL-CLASS metaclass."
-  `(defclass ,name ,supers ,slots ,@`((:metaclass kernel-class) ,@opts)))
+  (let ((k (find :kernel opts :key #'car)))
+    `(progn
+       (defclass ,name ,supers ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
+       ,@(when k 
+           `((defmethod initialize-instance :after ((self ,name) &key (kernel ,(second k)) &allow-other-keys)
+               (when kernel
+                 (sb-mop:set-funcallable-instance-function 
+                  self 
+                  (lambda (&rest args) (apply kernel self args))))))))))
 
 (defkernel hook (kernel-object) ()
   (:documentation "Hooks are Kernel objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
 
 (defkernel value-hook (hook) 
-  ((value :initform nil :initarg :value :accessor hook-value)))
+  ((value :initform nil :initarg :value :accessor hook-value))
+  (:kernel (lambda (self function &rest args) (apply 'add-hook self function args)))
+  (:documentation "A hook which pushes and pops functions from a VALUE slot."))
 
 (defkernel key-hook (value-hook) ()
-  (:documentation "A hook which accepts a keyword as argument and returns the associated function
-from the HOOK-VALUE."))
+  (:default-initargs :value (make-hash-table))
+  (:documentation "A hook which stores separate categories of hook functions in a hash-table. The
+key of each record is a category name and the value is a list of functions."))
 
-(defgeneric add-hook (hook function))
-(defgeneric remove-hook (hook function))
+(defgeneric add-hook (hook function &key &allow-other-keys)
+  (:documentation "Add a FUNCTION to HOOK. The hook is checked to see if FUNCTION is already
+present, but this will only work if you pass a symbol instead of an actual
+function which we can't check the name of.")
+  (:method ((hook value-hook) function &key append (test #'eql))
+    (if append
+        (when (not (find function (hook-value hook) :test test))
+          (appendf (hook-value hook) (list function)))
+        (pushnew function (hook-value hook) :test test)))
+  (:method ((hook key-hook) function &key name (test #'eql))
+    (multiple-value-bind (val found) (gethash name (hook-value hook))
+      (if found
+          (let ((new val))
+            (pushnew function new :test test)
+            (setf (gethash name (hook-value hook)) new))
+          (setf (gethash name (hook-value hook)) (list function)))))
+  (:method ((hook key-hook) (function list) &key)
+    (setf (gethash (car function) (hook-value hook)) (cdr function))))
 
-(defmacro defhook (name supers slots &rest opts)
-  `(defkernel ,name ,supers ,slots ,@opts))
+(defgeneric remove-hook (hook function)
+  (:documentation "Remove a FUNCTION from HOOK. This will only work on function symbols, not
+functions themselves.")
+  (:method ((hook value-hook) item)
+    (removef (hook-value hook) item))
+  (:method ((hook key-hook) item)
+    (remhash item (hook-value hook))))
+
+(defmacro defhook (name forms &key (class ''key-hook) documentation)
+  (with-gensyms (val)
+    `(defparameter ,name 
+       (let ((,val (make-instance ,class)))
+         (mapcar ,val '(,@forms))
+         ,val)
+       ,@(or documentation))))

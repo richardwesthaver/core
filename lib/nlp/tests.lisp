@@ -32,3 +32,6 @@
 
 (deftest dbscan ()
   (dbscan (extract-sections "This is a test which will be summarized by the 'SUMMARIZE-TEXT' function. Yada yada. Test 1 2 3.")))
+
+(deftest fuzzy ()
+  (isequal '("foobar" "barfoo") (nlp:fuzzy-match "foo bar" '("asdfasdoo" "barfoo" "foobar"))))

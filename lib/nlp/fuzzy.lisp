@@ -117,11 +117,12 @@ then all suggestions that are not exactly matched by at least one substring are 
 ; TODO: Make score functions customizable, e.g. for global history.
 (defun fuzzy-match (input suggestions &key suggestions-display (score-suggestion 'score-suggestion))
   "From the user input and a list of suggestions, return a filtered list of
-suggestions that have all the input words in them, and sort this list to have the
-'most relevant' first.
-The match is case-sensitive if INPUT contains at least one uppercase character.
-SUGGESTIONS-DISPLAY can be used to pass the pre-computed display strings of the
-suggestions; otherwise `object-display' is used."
+suggestions that have all the input words in them, and sort this list to have
+the 'most relevant' first.
+
+The match is case-sensitive if INPUT contains at least one uppercase
+character.  SUGGESTIONS-DISPLAY can be used to pass the pre-computed display
+strings of the suggestions; otherwise `object-display' is used."
   ;; To sort by the display value, we store all the suggestions in a
   ;; (display-value real-value) list or pairs.
   (let ((pairs (if suggestions-display
@@ -146,6 +147,6 @@ suggestions; otherwise `object-display' is used."
           (mapcar #'second pairs))
         suggestions)))
 
-(defun file-suggestion-function (input files)
-  "Fuzzy-match this list of files."
+(defun file-match (input files)
+  "Fuzzy-match INPUT against a list of FILE."
   (fuzzy-match input files))

@@ -67,7 +67,7 @@
 
 (defpackage :nlp/fuzzy
   (:use :cl)
-  (:export :fuzzy-match))
+  (:export :fuzzy-match :file-match))
 
 (pkg:defpkg :nlp
   (:use :cl)
