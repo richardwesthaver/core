@@ -20,7 +20,6 @@
            ,@(when no-cache `("--no-cache")))))
 
 (defun podman-exec (cmd &key dir (container *container*))
-  (check-container container)
   (apply 'run-podman "exec"
          `(,@(when dir `("-w" ,(namestring dir)))
            ,container
@@ -36,14 +35,13 @@
   ;; replace restart requires rm
   ;; secret systemd timeout tty
   ;; tz ulimit user volume
-  (check-container container)
-  (apply 'run-podman "exec"
+  (apply 'run-podman "run"
          `(,@(when dir `("-w" ,(namestring dir)))
            ,@(when name `("--name" ,name))
-           ,@(when tty `("--tty" ,tty))
-           ,@(when detach `("--detach" ,detach))
+           ,@(when tty '("--tty"))
+           ,@(when detach '("--detach"))
            ,@(when cmd `("--cmd" ,cmd))
-           ,@(when replace '("--replace"))
+           ,@(when (and name replace) '("--replace"))
            ,@(when ports (flatten
                           (mapcar 
                            (lambda (x) 
@@ -60,20 +58,19 @@
   (apply 'run-podman "cp" `(,@(when overwrite '("--overwrite")) ,(namestring src) ,(namestring dst))))
 
 (defun podman-stop (&optional (container *container*))
-  (check-container container)
   (run-podman "stop" container))
 
 (defmacro with-container ((sym container &key run stop name dir tty detach cmd)
                           &body body)
-  `(let ((,sym ,(if run 
+  `(let ((,sym ,(if run
                     `(podman-run ,run 
                                  ,@(when dir `(:dir ,dir))
-                                 ,@(when tty `(:dir ,tty))
-                                 ,@(when detach `(:dir ,detach))
+                                 ,@(when tty `(:tty ,tty))
+                                 ,@(when detach `(:detach ,detach))
                                  ,@(when cmd `(:cmd ,cmd))
                                  ,@(when name `(:name ,name))
                                  :container ,container)
-                    container)))
+                    name)))
      (setf *container* ,sym)
-     ,@body
-     ,@(when stop `((podman-stop ,sym)))))
+     (unwind-protect (progn ,@body)
+       ,@(when stop `((podman-stop ,sym))))))

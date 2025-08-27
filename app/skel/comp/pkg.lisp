@@ -37,7 +37,7 @@
 (defpackage :skel/comp/lisp
   (:import-from :skel/core/int :*skel-project*)
   (:shadowing-import-from :std :version)
-  (:use :cl :std :skel/core/obj :skel/core/proto :id :asdf :skel/core/util)
+  (:use :cl :std :skel/core/obj :skel/core/proto :id :skel/core/util)
   (:import-from :ast :ast :read-ast :write-ast :load-ast)
   (:export :sk-lisp-file))
 

@@ -5,9 +5,9 @@
 ;; The problem with ASD files is that they're read-only afaik - eg there's no
 ;; 'write' methods implemented on ASD:SYSTEM objects. This makes it a bit
 ;; tedious because we obviously want to transform SK-LISP-SYSTEM objects
-;; directly to SYSTEM, but also need to be able to write them out as discrete
-;; files for portability. Probably will end up violating all that is DRY and
-;; holy.
+;; directly to ASDF:SYSTEM, but also need to be able to write them out as
+;; discrete files for portability. Probably will end up violating all that is
+;; DRY and holy.
 
 ;;; Code:
 (in-package :skel/comp/asd)

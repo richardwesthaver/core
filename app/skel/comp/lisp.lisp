@@ -11,7 +11,7 @@
 (defmethod sk-new ((self (eql :lisp)) &rest args)
   (apply #'make-instance 'sk-lisp-file args))
 
-(defmethod sk-convert ((self cl-source-file))
+(defmethod sk-convert ((self asdf:cl-source-file))
   (make-instance 'sk-lisp-file 
     :path #1=(component-pathname self)
     :name (component-name self)

@@ -6,5 +6,5 @@
    :net :nlp :dat :doc
    :q :dsp :math :parse 
    :rdb :cry :io)
-  :components nil)
-
+  :components nil
+  :hooks ((:load (lambda () (print "loading core")))))

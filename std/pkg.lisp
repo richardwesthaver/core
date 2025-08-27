@@ -1273,18 +1273,17 @@
    :merge-env-pathnames))
 
 (pkg:defpkg :std/defsys
-  (:use :cl)
+  (:use :cl :std/prim :std/meta :std/macs :std/thread :std/task)
   (:nicknames :sys)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
-  (:shadow :load-system :compile-system)
+  (:shadow :load-system :compile-system :find-system :system)
   (:import-from :asdf :module-provide-asdf :defsystem)
   (:shadowing-import-from :std/meta :version)
   (:export 
-   ;; re-exports from ASDF
-   :sysdef
    :defsys
-   :sys
+   :find-system
+   ;; :system
    :*module*
    :*core-module-table*
    :core-module
@@ -1292,9 +1291,7 @@
    :load-module
    :unload-module
    :provide-core-module
-   :with-module
-   :find-system*
-   :defsystem*))
+   :with-module))
 
 (setq *defpkg-hook* nil)
 

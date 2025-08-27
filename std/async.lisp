@@ -27,14 +27,14 @@
 
 ;;; Promise/Future
 (defstruct (promise (:constructor promise))
-  "An placeholder object for a result which is not-yet-known."
+  "A placeholder object for a result which is TBD."
   (result +no-result+)
   (lock (make-mutex))
   (cvar nil)
   (availablep t :type boolean))
 
 (defstruct (future (:constructor %future))
-  "A promise which is fulfilled in parallel by evaluating the FN slot."
+  "A promise which is fulfilled in parallel by evaluating the KERNEL slot."
   (result +no-result+)
   (lock (make-mutex))
   (canceledp nil :type boolean)

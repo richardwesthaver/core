@@ -19,11 +19,7 @@
 ;;; Code:
 (in-package :std/defsys)
 
-(std/prim::defhook *sys-hooks* 
-  ((:load)
-   (:compile)
-   (:register)
-   (:make)))
+(defhook *system-hooks* nil)
 
 (defvar *system-table* (make-hash-table))
 
@@ -35,16 +31,36 @@
   (error 'simple-defsys-error :format-control format :format-arguments args))
 
 ;;; Components
-(defclass component () ())
-(defclass module (component) 
-  ((components :accessor components)))
+(defclass component () 
+  ((name :initarg :name :accessor name)
+   (path :initarg :path :accessor path)
+   (properties :initarg :properties :accessor component-properties)))
+
+(defmethod change-class ((instance asdf:component) (new-class-name (eql 'component)) &key)
+  (make-instance new-class-name
+    :name (asdf:component-name instance)))
+
+(defclass module-component (component) 
+  ((components :initarg :components :initform nil :accessor components)))
 
 ;;; Ops
 ;;; Actions
 ;;; Dependencies
 ;;; System
-(defclass system (module)
-  ((modules)))
+(defclass system (module-component)
+  ((version :initarg :version :accessor system-version)
+   (description :initarg :description :accessor system-description)
+   (provides :initarg :provides :accessor system-provides)
+   (requires :initarg :requires :accessor system-requires)
+   (hooks :initform (make-instance 'key-hook) :initarg :hooks :accessor system-hooks)))
+
+(defmethod change-class ((instance asdf:system) (new-class-name (eql 'system)) &key)
+  (make-instance new-class-name
+    :version (asdf:component-version instance)
+    :name (asdf:component-name instance)
+    :description (asdf:system-description instance)
+    :components (asdf:component-children instance)))
+
 ;;; Modules
 ;; Unlike the MODULE object which is merely a container for other COMPONENTs,
 ;; Lisp Modules in the Core support the ANSI CL notion of Modules and are
@@ -58,7 +74,7 @@
   ((hook :type hook :accessor hook)))
 
 (defun load-core-module (name)
-  (let ((cmod (gethash name *core-module-table*)))
+  (let ((cmod (gethash name *module-table*)))
     (with-slots (hook) cmod
       (when hook
         (pushnew (funcall hook :exit) sb-ext:*exit-hooks*)
@@ -69,7 +85,7 @@
   "Load module NAME from the global list *MODULES*."
   (let ((mod (find name *modules* :test 'string-equal)))
     (if (null mod) (warn "Module not found: ~A" name)
-        (let ((core-mod (gethash mod *core-module-table*)))
+        (let ((core-mod (gethash mod *module-table*)))
            (if core-mod
                `(load-core-module ,core-mod)
                `(require ,mod))))))
@@ -89,15 +105,23 @@
 
 ;; (with-eval-after-load (module &body body))
 
-;;; Session
-(defvar *system-session* nil)
-
 ;;; Plan
+(defstruct system-plan
+  "A set of parallel operations which are executed as a means of fulfilling a
+specific method on a SYSTEM.")
+
+;;; Session
+(sb-ext:defglobal *system-session* nil
+  "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
+
+(defstruct system-session
+  "A reusable session in which SYSTEMs may be processed."
+  (lock (make-mutex))
+  (cache (make-hash-table))
+  (pool *thread-pool*)
+  (plan))
 
 ;;; System Definition
-(defclass sysdef () ()
-  (:documentation "System Definition"))
-
 (defun %sys-get (form name)
   (std:when-let ((v (getf form name)))
     (remf form name)
@@ -116,12 +140,12 @@ the following extensions:
         (meth (%sys-get body :methods)) (req (%sys-get body :require)))
     (declare (ignore meth))
     (std:with-gensyms (sys)
-      `(let ((,sys (defsystem ,name ,@body)))
+      `(let ((,sys (change-class (defsystem ,name ,@body) 'system)))
          ;; todo: convert to system
          (mapc (lambda (x) (pushnew x *features*)) ',prov)
          (mapc (lambda (x) (assert (member x *features*))) ',req)
-         (mapc (lambda (x) (std:add-hook ,sys x)) ',hooks)
-         ,sys))))
+         (mapc (lambda (x) (add-hook (system-hooks ,sys) x)) ',hooks)
+         (register-system ,name ,sys)))))
 
 ;;; Protocol
 (defgeneric register-system (name self)

@@ -233,7 +233,6 @@
   (:save () 
    (with-sbcl (:noinform t :quit t)
     (ql:quickload :core/tests)
-    (in-package :core/tests)
     (std:compile-lisp :core/tests :save ".stash/tests.core")))
   (:compile () 
    (std:compile-lisp :core/tests :force t :verbose t)))
