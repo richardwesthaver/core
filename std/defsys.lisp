@@ -21,7 +21,10 @@
 
 (defhook *system-hooks* nil)
 
+(defvar *system-definitions* nil)
 (defvar *system-table* (make-hash-table))
+
+(define-constant +system-file-extension+ "sys" :test 'equal)
 
 ;;; Conditions
 (define-condition defsys-condition () ())
@@ -44,15 +47,18 @@
   ((components :initarg :components :initform nil :accessor components)))
 
 ;;; Ops
-;;; Actions
+;;; Tasks
 ;;; Dependencies
 ;;; System
 (defclass system (module-component)
-  ((version :initarg :version :accessor system-version)
+  ((version :initarg :version :accessor version)
    (description :initarg :description :accessor system-description)
    (provides :initarg :provides :accessor system-provides)
    (requires :initarg :requires :accessor system-requires)
    (hooks :initform (make-instance 'key-hook) :initarg :hooks :accessor system-hooks)))
+
+(defmethod add-hook ((self system) function &rest args)
+  (apply 'add-hook (system-hooks self) function args))
 
 (defmethod change-class ((instance asdf:system) (new-class-name (eql 'system)) &key)
   (make-instance new-class-name
@@ -106,9 +112,9 @@
 ;; (with-eval-after-load (module &body body))
 
 ;;; Plan
-(defstruct system-plan
-  "A set of parallel operations which are executed as a means of fulfilling a
-specific method on a SYSTEM.")
+;; (defstruct system-plan
+;;   "A set of parallel operations which are executed as a means of fulfilling a
+;; specific method on a SYSTEM.")
 
 ;;; Session
 (sb-ext:defglobal *system-session* nil
@@ -147,6 +153,14 @@ the following extensions:
          (mapc (lambda (x) (add-hook (system-hooks ,sys) x)) ',hooks)
          (register-system ,name ,sys)))))
 
+(defun load-sys (path)
+  "Load a system definition from PATH."
+  (when (load path :verbose t)
+    (pushnew (namestring path) *system-definitions* :test 'equal)
+    t))
+
+(defmethod serde ((from system) (to stream)))
+
 ;;; Protocol
 (defgeneric register-system (name self)
   (:method (name (self system))
@@ -165,3 +179,5 @@ the following extensions:
 (defgeneric compile-system (self &key &allow-other-keys))
 
 (defgeneric make-system (self &key &allow-other-keys))
+
+;; fetch-system

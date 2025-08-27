@@ -1273,7 +1273,7 @@
    :merge-env-pathnames))
 
 (pkg:defpkg :std/defsys
-  (:use :cl :std/prim :std/meta :std/macs :std/thread :std/task)
+  (:use :cl :std/prim :std/meta :std/macs :std/thread :std/task :std/serde)
   (:nicknames :sys)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)

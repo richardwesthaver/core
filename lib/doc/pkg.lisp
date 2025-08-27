@@ -39,7 +39,7 @@
 (defpackage :doc
   (:use :cl :std :organ :sb-mop :sb-introspect :obj/id :log)
   (:import-from :uiop :string-prefix-p)
-  (:import-from :asdf :component-name :component-children
+  (:shadowing-import-from :asdf :component-name :component-children
    :system :component-pathname :find-system :system-description
    :system-depends-on)
   (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)
