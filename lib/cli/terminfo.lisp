@@ -626,10 +626,7 @@ that calls the capability from *terminfo*."
   (defcap box-chars-1 string 413))
 
 (defconstant +16-bit-magic+ #o432)
-(defconstant +32-bit-magic+ #o1036
-  "Per the term(5) man page, 32-bit magic
-should be #o542, however, everyone 
-apparently used 542 (#o1036) in practice.")
+(defconstant +32-bit-magic+ #o1036)
 
 (defun read-short (stream)
   (let ((n (+ (read-byte stream)

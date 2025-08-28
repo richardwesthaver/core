@@ -117,9 +117,6 @@ documentation string."
      ',name))
 
 ;;; Eval
-;; TODO 2025-08-12: 
-;; (defmacro defcall/ (name args &body body)
-;;  "Define CALL-WITH-* and WITH-* macros for NAME.")
 (defmacro eval-always (&body body)
   "Eval BODY in all contexts (:compile-toplevel :load-toplevel :execute)."
   `(eval-when (:compile-toplevel :load-toplevel :execute) ,@body))
@@ -150,6 +147,22 @@ documentation string."
   (loop for (options value) on plist by #'cddr
         append (unless (member options props)
                  (list options value))))
+
+;;; Definitions
+;; TODO 2025-08-12: 
+;; inspired by LFARM
+(defmacro defwith (name args bind)
+  "Define a call-with-NAME function and with-NAME macro which accept ARGS."
+  (let ((wname (symbolicate "WITH-" name))
+        (cwname (symbolicate "CALL-WITH-" name)))
+    `(progn
+       (defun ,cwname (,@args body-fn)
+         (let (,@bind)
+           (declare (special ,@(mapcar 'car bind)))
+           (funcall body-fn)))
+       (defmacro ,wname (,@args &body body)
+         `(,',cwname ',,@args (lambda () ,@body))))))
+
 
 ;; TODO 2024-10-24: 
 (defmacro defclass* (name direct-superclasses direct-slots &rest opts)

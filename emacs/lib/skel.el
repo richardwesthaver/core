@@ -200,6 +200,7 @@ DOC, and NAME."
 
 (add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
 (add-to-list 'auto-mode-alist '("\\.sk" . skel-mode))
+(add-to-list 'auto-mode-alist '("\\.sys" . skel-mode))
 
 (defun project-skelfile-path (&optional project)
   "Find skelfile associated with PROJECT. Defaults to current

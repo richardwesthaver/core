@@ -584,7 +584,8 @@
    :lety
    :lety*
    :defunits :unit-of-distance 
-   :distance-designator))
+   :distance-designator
+   :defwith))
 
 (defpkg :std/sys
   (:use :cl :sb-int)
@@ -709,7 +710,7 @@
    :make-logical-host
    :logical-host :info 
    :show-info :*info-types*
-   :system-hooks
+   :sbcl-hooks
    :*default-arena-size*
    :current-lisp-implementation
    :current-machine
@@ -720,6 +721,8 @@
    :package-symbol-names
    :define-logical-pathname
    :logical-host-names
+   :check-logical-host
+   :check-logical-hosts
    :save-lisp-tree-shake-and-die
    :forget-shared-object
    :forget-shared-objects
@@ -728,6 +731,7 @@
    :little-endian-p
    :cpuid
    :cpu-vendor
+   :cpu-brand
    :get-real-time-seconds 
    :time-remaining 
    :with-countdown
@@ -1211,7 +1215,8 @@
    :moire :draw-line :sunbeam :fill-bitmap 
    :draw-filled-circle :sun :peace :with-comic-strip
    :plot-function :print-table :print-heading :print-in-box
-   :smile :draw-one-in-chance :draw-chance))
+   :smile :draw-one-in-chance :draw-chance :mumble
+   :*mumble-timestamp*))
 
 (defpkg :std/os
   (:use :cl :sb-alien)
@@ -1227,6 +1232,7 @@
    :find-a-pty
    :open-pty
    :sudo-p
+   :forkable-p
    :user-info
    :user-add
    :group-add
@@ -1273,8 +1279,11 @@
    :merge-env-pathnames))
 
 (pkg:defpkg :std/defsys
-  (:use :cl :std/prim :std/meta :std/macs :std/thread :std/task :std/serde)
+  (:use :cl :std/prim :std/meta 
+   :std/macs :std/thread :std/task :std/serde 
+   :std/seq :std/pipe :std/prim :std/condition)
   (:nicknames :sys)
+  (:import-from :std/print :mumble)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
   (:shadow :load-system :compile-system :find-system :system)
@@ -1282,11 +1291,14 @@
   (:shadowing-import-from :std/meta :version)
   (:export 
    :defsys
+   :load-sys
+   :system
+   :component
+   :module-component
    :find-system
-   ;; :system
    :*module*
    :*core-module-table*
-   :core-module
+   :module
    :load-core-module
    :load-module
    :unload-module

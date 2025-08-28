@@ -30,13 +30,27 @@ and we may query the user for input.")
 
 (define-symbol-macro .i sb-ext:*inspected*)
 
-(defun system-hooks ()
-  "Return the standard list of system hooks."
-  (list 
-   :init sb-ext:*init-hooks*
-   :after-gc sb-ext:*after-gc-hooks*
-   :save sb-ext:*save-hooks*
-   :exit sb-ext:*exit-hooks*))
+(defun sbcl-hooks ()
+  "Return the available SBCL hook symbols as an unevaluated plist."
+  '(:init sb-ext:*init-hooks*
+    :after-gc sb-ext:*after-gc-hooks*
+    :run-gc sb-impl::*run-gc-hooks*
+    :compile-component sb-c::*compile-component-hook*
+    :macroexpand *macroexpand-hook*
+    :setf-fdefinition sb-impl::*setf-fdefinition-hook*
+    :setf-compiler-macro-function sb-int:*setf-compiler-macro-function-hook*
+    :setf-macro-function sb-int:*setf-macro-function-hook*
+    :default-dstate sb-disassem:*default-dstate-hooks*
+    :debugger *debugger-hook*
+    :debugger sb-ext:*invoke-debugger-hook*
+    :executing-breakpoint sb-di::*executing-breakpoint-hooks*
+    :defstruct sb-kernel::*defstruct-hooks*
+    :define-condition sb-kernel::*define-condition-hooks*
+    #+sb-fasteval :apply #+sb-fasteval sb-interpreter::*applyhook*
+    #+sb-fasteval :self-apply #+sb-fasteval sb-interpreter::*self-applyhook*
+    :stepper sb-ext:*stepper-hook*
+    :save sb-ext:*save-hooks*
+    :exit sb-ext:*exit-hooks*))
 
 (defparameter *default-arena-size* (* 10 1024 1024 1024)
   "The default size of freshly allocated arenas.")
@@ -396,7 +410,7 @@ long as ASDF is non-nil)."
 
 ;;; Logical Pathnames
 (defun logical-host-names ()
-  "Print a list of currently available logical hosts."
+  "Return a list of currently available logical hosts."
   (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
 
 (defmacro define-logical-pathname (host path &rest translations)
@@ -412,6 +426,23 @@ PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
                      x)
                    translations)))
 
+(defun check-logical-host (host)
+  "Check a single LOGICAL-HOST, making sure all directories exist and are
+accessible."
+  (mapc (lambda (x) (ensure-directories-exist x :verbose t))
+        (mapcar 
+         (lambda (y)
+           (let ((z (second y)))
+             (if (wild-pathname-p z)
+                 (make-pathname :directory (remove :wild-inferiors (pathname-directory z) :from-end t :count 2))
+                 z)))
+         (logical-pathname-translations host))))
+
+(defun check-logical-hosts (&optional (hosts *logical-hosts*))
+  "Check each member of *LOGICAL-HOSTS*, ensuring all directories exist and are
+accessible."
+  (map nil #'check-logical-host hosts))
+
 (define-logical-pathname "STASH" "/opt/stash/"
   ("**;*.*.*" "/opt/stash/**/*.*"))
 (define-logical-pathname "STORE" "/opt/store/"
@@ -424,7 +455,7 @@ PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
   ("CONTRIB;**;*.*.*"
    #P"/usr/local/src/sbcl/contrib/**/*.*")
   ("OUTPUT;**;*.*.*"
-   (translate-logical-pathname "STASH:OUTPUT;sbcl;**;*.*.*"))
+   (translate-logical-pathname "STASH:DATA;sbcl;**;*.*.*"))
   ("TMP;**;*.*.*" "/tmp/**/*.*"))
 
 ;;; Hexdump

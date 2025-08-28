@@ -17,6 +17,10 @@
   "Return T if effective user is root."
   (zerop (parse-integer (with-output-to-string (str) (sb-ext:process-output (sb-ext:run-program "id" (list "-u") :search t :output str)) 0))))
 
+(defun forkable-p ()
+  "Return T if it is possible to fork the current process (must have only one thread running)."
+  (null (cdr (sb-thread:list-all-threads))))
+
 (defun user-info (&optional (id (sb-posix:getuid)))
   "USER-INFO returns the password entry for the given name or
 numerical user ID, as an assoc-list."

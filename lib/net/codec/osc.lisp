@@ -123,10 +123,9 @@
   "Returns a fixed-point 64 bit NTP-style timetag, where the top 32
 bits represent seconds since midnight 19000101, and the bottom 32 bits
 represent the fractional parts of a second."
-  #+sbcl (multiple-value-bind (secs usecs)
-             (sb-ext:get-time-of-day)
-           (the timetag (unix-secs+usecs->timetag secs usecs)))
-  #-sbcl (error "Can't encode timetags using this implementation."))
+  (multiple-value-bind (secs usecs)
+      (sb-ext:get-time-of-day)
+    (the timetag (unix-secs+usecs->timetag secs usecs))))
 
 (defun timetag+ (original seconds-offset)
   (declare (type timetag original))

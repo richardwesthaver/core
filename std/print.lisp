@@ -591,3 +591,21 @@ STYLE indicates the level of decoration to apply to the output:
     ─  character                                                                        
     #  object
     +  t")
+
+(defvar *mumble-timestamp* t)
+
+(defun mumble (control &rest args)
+  "Politically correct way to print compiler output."
+  (let ((stream *standard-output*))
+    (format stream "~&;~@[ ~A~] ~A~&" (run-time-to-string (get-internal-run-time)) 
+            (apply #'format nil control args))
+    (force-output stream)
+    (values)))
+
+(defun internal-time-to-string (internal-time-delta)
+  (multiple-value-bind (tsec remainder)
+      (truncate internal-time-delta internal-time-units-per-second)
+    (let ((ms (truncate remainder (/ internal-time-units-per-second 1000))))
+      (multiple-value-bind (tmin sec) (truncate tsec 60)
+        (multiple-value-bind (thr min) (truncate tmin 60)
+          (format nil "~D:~2,'0D:~2,'0D.~3,'0D" thr min sec ms))))))

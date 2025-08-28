@@ -20,11 +20,16 @@
    :delete-package* :package-names :packages-from-names :fresh-package-name 
    :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
    :with-package :define-lisp-package
-   :defpackage* :*default-package* :*defpkg-hook* :package-symbols-except))
+   :defpackage* :*default-package* :*defpkg-hook* :package-symbols-except
+   :*default-package-file-name*))
 
 (in-package :std/defpkg)
 
 (defvar *default-package* "CL-USER")
+
+(defvar *default-package-file-name* "pkg"
+  "The file-name in a system definition which is expected to contain package
+definitions.")
 
 (defparameter *defpkg-hook* nil)
 

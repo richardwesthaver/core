@@ -19,19 +19,32 @@
 ;;; Code:
 (in-package :std/defsys)
 
-(defhook *system-hooks* nil)
+(defvar *system-definitions* nil
+  "A list of files containing DEFSYS forms.")
 
-(defvar *system-definitions* nil)
-(defvar *system-table* (make-hash-table))
+(defvar *system-cache-directory* std/sys:*stash*)
+(defvar *system-data-directory* nil)
 
-(define-constant +system-file-extension+ "sys" :test 'equal)
+(defvar *system-table* (make-hash-table)
+  "An EQL hash-table containing NAME:SYSTEM pairs.")
+
+(define-constant +system-definition-extension+ "sys" 
+  :test 'equal
+  :documentation "The default file extension used in system definitions.")
 
 ;;; Conditions
-(define-condition defsys-condition () ())
-(define-condition defsys-error (error defsys-condition) ())
-(define-condition simple-defsys-error (simple-error defsys-condition) ())
-(defun defsys-error (format &rest args)
-  (error 'simple-defsys-error :format-control format :format-arguments args))
+(define-condition system-condition () ())
+(define-condition system-error (error system-condition) ())
+(define-condition system-warning (warning system-condition) ())
+(eval-always
+  (defwarning simple-system-warning (simple-warning system-warning) () (:auto t))
+  (deferror simple-system-error (simple-error system-condition) () (:auto t)))
+
+(define-condition sysdef-error (system-error file-error)
+  ((system-name :initarg :name :accessor error-system-name))
+  (:report (lambda (c s) 
+             (format s "System ~A not found after loading file ~A" 
+                     (error-system-name c) (file-error-pathname c)))))
 
 ;;; Components
 (defclass component () 
@@ -39,15 +52,36 @@
    (path :initarg :path :accessor path)
    (properties :initarg :properties :accessor component-properties)))
 
-(defmethod change-class ((instance asdf:component) (new-class-name (eql 'component)) &key)
-  (make-instance new-class-name
-    :name (asdf:component-name instance)))
-
 (defclass module-component (component) 
   ((components :initarg :components :initform nil :accessor components)))
 
-;;; Ops
+(defmethods change-class 
+  (((instance asdf:component) (new-class-name (eql 'component)) &key)
+   (make-instance new-class-name
+     :name (asdf:component-name instance)
+     :properties (asdf::component-properties instance)))
+  (((instance component) (new-class-name (eql 'asdf:component)) &key)
+   (make-instance new-class-name
+     :name (name instance)
+     :properties (component-properties instance)))
+  (((instance asdf:module) (new-class-name (eql 'module-component)) &key)
+   (make-instance new-class-name
+     :name (asdf:component-name instance)
+     :properties (asdf::component-properties instance)
+     :components (mapcar #'change-component-class (asdf:component-children instance))))
+  (((instance module-component) (new-class-name (eql 'asdf:module)) &key)
+   (make-instance new-class-name
+     :name (name instance)
+     :properties (component-properties instance)
+     :components (mapcar #'revert-component-class (components instance)))))
+
 ;;; Tasks
+;; System Tasks are simple function which take a single component as an argument
+(defkernel system-task (task) ())
+;;; Jobs
+;; System Jobs are effectively plans composed of system tasks
+(defkernel system-job (job) ())
+
 ;;; Dependencies
 ;;; System
 (defclass system (module-component)
@@ -57,15 +91,49 @@
    (requires :initarg :requires :accessor system-requires)
    (hooks :initform (make-instance 'key-hook) :initarg :hooks :accessor system-hooks)))
 
+(defun system-equal (a b)
+  "Return T if systems A and B refer to the same SYSTEM."
+  (and (equal (name a) (name b))
+       (equal (version a) (version b))
+       (equal (path a) (path b))))
+
 (defmethod add-hook ((self system) function &rest args)
   (apply 'add-hook (system-hooks self) function args))
 
-(defmethod change-class ((instance asdf:system) (new-class-name (eql 'system)) &key)
-  (make-instance new-class-name
-    :version (asdf:component-version instance)
-    :name (asdf:component-name instance)
-    :description (asdf:system-description instance)
-    :components (asdf:component-children instance)))
+(definline change-component-class (self)
+  "Change class of SELF to its associated STD/DEFSYS class."
+  (etypecase self
+    (asdf:system (change-class self 'system))
+    (asdf:module (change-class self 'module-component))
+    (asdf:component (change-class self 'component))))
+
+(definline revert-component-class (self)
+  "Revert std/defsys class SELF to its associated ASDF class."
+  (etypecase self
+    (system (change-class self 'asdf:system))
+    (module (change-class self 'asdf:module))
+    (component (change-class self 'asdf:component))))
+
+(defmethods change-class 
+  (((instance asdf:system) (new-class-name (eql 'system)) &key)
+   (make-instance new-class-name
+     :version (asdf:component-version instance)
+     :name (asdf:component-name instance)
+     :properties (asdf::component-properties instance)
+     :description (asdf::component-description instance)
+     :components (mapcar #'change-component-class (asdf:component-children instance))))
+  (((instance system) (new-class-name (eql 'asdf:system)) &key)
+   (simple-system-warning "Erasing system slots (:requires :provides :hooks) from system ~A." (name instance))
+   (make-instance new-class-name
+     :version (version instance)
+     :name (name instance)
+     :properties (component-properties instance)
+     :description (system-description instance)
+     :components (mapcar #'revert-component-class (components instance)))))
+
+(defmethod print-object ((self system) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A~@[ ~A~]" (name self) (version self))))
 
 ;;; Modules
 ;; Unlike the MODULE object which is merely a container for other COMPONENTs,
@@ -76,7 +144,7 @@
 (defvar *module-stack* nil)
 (defparameter *module-table* (make-hash-table :test 'equal))
 
-(defclass core-module () 
+(defclass module () 
   ((hook :type hook :accessor hook)))
 
 (defun load-core-module (name)
@@ -111,21 +179,25 @@
 
 ;; (with-eval-after-load (module &body body))
 
-;;; Plan
-;; (defstruct system-plan
-;;   "A set of parallel operations which are executed as a means of fulfilling a
-;; specific method on a SYSTEM.")
-
 ;;; Session
 (sb-ext:defglobal *system-session* nil
   "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
 
+(defvar *system-session-capacity* 64)
+
 (defstruct system-session
   "A reusable session in which SYSTEMs may be processed."
-  (lock (make-mutex))
-  (cache (make-hash-table))
+  (queue (make-queue :capacity *system-session-capacity* :element-type 'system))
+  (task-cache (make-hash-table))
+  (file-cache (make-hash-table :test 'equal))
   (pool *thread-pool*)
-  (plan))
+  (tasks))
+
+(defmacro with-system-session (&body body)
+  "Bind *SYSTEM-SESSION* to a fresh value around BODY."
+  `(progn
+     (unless *system-session* (setf *system-session* (make-system-session)))
+     ,@body))
 
 ;;; System Definition
 (defun %sys-get (form name)
@@ -153,31 +225,81 @@ the following extensions:
          (mapc (lambda (x) (add-hook (system-hooks ,sys) x)) ',hooks)
          (register-system ,name ,sys)))))
 
-(defun load-sys (path)
-  "Load a system definition from PATH."
-  (when (load path :verbose t)
-    (pushnew (namestring path) *system-definitions* :test 'equal)
-    t))
+(defun load-sys (path &optional name)
+  "Load a system definition from PATH. Unlike LOAD-ASD this function calls LOAD
+internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
+  (with-system-session
+    (when (load path)
+      (setf (gethash path (system-session-file-cache *system-session*))
+            (sb-ext:get-time-of-day))
+      (pushnew (namestring (truename path)) *system-definitions* :test 'equal)
+      (when name (find-system name :default (lambda () (error 'sysdef-error :name name :pathname path)))))))
 
 (defmethod serde ((from system) (to stream)))
 
 ;;; Protocol
 (defgeneric register-system (name self)
+  (:documentation "Register system SELF as NAME. This is called during DEFSYS.")
   (:method (name (self system))
-    (setf (gethash name *system-table*) self)))
+    (with-system-session
+      (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
-  (:method ((self symbol) &key)
-    (gethash self *system-table*)))
+  (:method ((self symbol) &key default)
+    (multiple-value-bind (val found) (gethash self *system-table*)
+      (cond
+        (found (values val found))
+        ((eql default :error) (simple-system-error "System ~A not found." self))
+        ((functionp default) (funcall default))
+        (t default)))))
 
 (defgeneric remove-system (self &key &allow-other-keys)
   (:method ((self symbol) &key)
-    (remhash self *system-table*)))
+    (with-system-session
+      ;; freeze the session by acquiring the queue lock
+      (with-queue-lock (system-session-queue *system-session*) 
+        (remhash self *system-table*)))))
 
-(defgeneric load-system (self &key &allow-other-keys))
+(defgeneric load-system (self &key &allow-other-keys)
+  (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
+  (:method ((self symbol) &key)
+    (let ((sys (find-system self :default :error)))
+      (mumble "Loading system ~A" (name sys))
+      (asdf:load-system self :verbose nil))))
 
-(defgeneric compile-system (self &key &allow-other-keys))
+(defgeneric compile-system (self &key &allow-other-keys)
+  (:documentation "Compile system SELF.")
+  (:method ((self symbol) &key)
+    (let ((sys (find-system self :default :error)))
+      (mumble "Compiling system ~A" (name sys))
+      (asdf:compile-system self :verbose nil))))
 
-(defgeneric make-system (self &key &allow-other-keys))
+(defgeneric save-system (self &key &allow-other-keys)
+  (:documentation "Save the system SELF."))
 
-;; fetch-system
+(defgeneric make-system (self &key &allow-other-keys)
+  (:documentation "Make the system SELF which usually entails loading, compiling, and then saving
+an image.")
+  (:method ((self symbol) &key)
+    (let ((sys (find-system self :default :error)))
+      (mumble "Making system ~A" (name sys))
+      (asdf:make self :verbose nil))))
+
+(defgeneric fetch-system (self &key &allow-other-keys)
+  (:documentation "Fetch a system SELF from a remote location."))
+
+(defgeneric update-system (self &key &allow-other-keys)
+  (:documentation "Update the system SELF."))
+
+(defgeneric delete-system (self &key &allow-other-keys)
+  (:documentation "Delete the system SELF from the local filesystem."))
+
+(defgeneric test-system (self &key &allow-other-keys)
+  (:documentation "Test the system SELF.")
+  (:method ((self symbol) &key)
+    (let ((sys (find-system self :default :error)))
+      (mumble "Testing system ~A" (name sys))
+      (asdf:test-system self :verbose nil))))
+
+(defgeneric bench-system (self &key &allow-other-keys)
+  (:documentation "Benchmark the system SELF."))

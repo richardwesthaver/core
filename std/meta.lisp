@@ -81,7 +81,6 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Execute object SELF."))
 (defverb explore (self &key &allow-other-keys)
   (:documentation "Explore object SELF."))
-
 (defverb version (self)
   (:documentation "Return the version of object SELF."))
 (defverb lock (self)

@@ -94,11 +94,36 @@ collection of functions at a pre-arranged point in time."))
 
 (defkernel value-hook (hook) 
   ((value :initform nil :initarg :value :accessor hook-value))
-  (:kernel (lambda (self function &rest args) (apply 'add-hook self function args)))
+  (:kernel 
+   (lambda (self item &rest args)
+     (case item
+       (:add (apply 'add-hook self args))
+       (:remove (apply 'remove-hook self args))
+       (t
+        (let ((val (hook-value self)))
+          (mapcar 
+           (lambda (x) (apply 'funcall x args))
+           (if item
+               (getf val item)
+               val)))))))
   (:documentation "A hook which pushes and pops functions from a VALUE slot."))
 
 (defkernel key-hook (value-hook) ()
   (:default-initargs :value (make-hash-table))
+  (:kernel 
+   (lambda (self item &rest args)
+     (case item
+       (:add (apply 'add-hook self args))
+       (:remove (apply 'remove-hook self args))
+       (t
+        (let ((val (hook-value self)))
+          (mapcar 
+           (lambda (x) (apply 'funcall x args))
+           (if item
+               (gethash item val)
+               (let ((vals))
+                 (maphash (lambda (k v) (declare (ignore k)) (push v vals)) val)
+                 vals))))))))
   (:documentation "A hook which stores separate categories of hook functions in a hash-table. The
 key of each record is a category name and the value is a list of functions."))
 
@@ -133,6 +158,6 @@ functions themselves.")
   (with-gensyms (val)
     `(defparameter ,name 
        (let ((,val (make-instance ,class)))
-         (mapcar ,val '(,@forms))
+         (mapcar (lambda (x) (add-hook ,val x)) '(,@forms))
          ,val)
        ,@(or documentation))))
