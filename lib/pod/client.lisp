@@ -17,7 +17,7 @@
 (defclass libpod-tcp-socket (inet-socket) ())
 
 ;;; Client
-(defclass libpod-client ()
+(defclass libpod-client (net/req:http-client)
   ((socket :initarg :socket 
            :initform (make-instance 'local-socket :type :stream)
            :type (or local-socket null)
@@ -27,7 +27,11 @@
          :accessor client-addr)
    (peer :initarg :peer
          :initform (podman-local-user-socket)
-         :accessor client-peer)))
+         :accessor client-peer))
+  (:default-initargs 
+   :kernel #'libpod-request
+   :ser #'json:json-encode
+   :de #'json:json-decode))
 
 (defmethod make-load-form ((self libpod-client) &optional env)
   (declare (ignore env))
@@ -112,3 +116,26 @@
        (socket-connect ,cvar)
        (unwind-protect (progn ,@body)
          (socket-close ,cvar)))))
+
+(defun format-libpod-api-local (path)
+  (format nil "http://localhost/v~a/libpod/~a" *libpod-api-version* path))
+
+(defun libpod-request (client path &optional (method :get) timeout)
+  (let ((stream (socket-make-stream client
+                                    :element-type 'octet
+                                    :input t
+                                    :output t
+                                    :buffering :none)))
+    (let ((wrapped-stream (make-chunked-stream stream)))
+      (funcall (kernel client) 
+               (format-libpod-api-local path)
+               :method method
+               :stream wrapped-stream
+               :connect-timeout #1=(or timeout t)
+               :read-timeout #1#))))
+
+(defun libpod-request-json (client path &optional (method :get) timeout)
+  (dat/json:json-decode (libpod-request client path method timeout)))
+
+(defmethod net/req::send-request ((self libpod-client) req &rest args)
+  (apply (kernel self) self req args))

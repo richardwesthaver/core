@@ -23,4 +23,4 @@
       (make-config :podman :containers containers :machine machine :registries registries :storage storage))))
 
 (defun default-podman-config ()
- (load-pod-config))
+ (load-podman-config))

@@ -1028,10 +1028,19 @@ THREAD-POOL object. STORE-VALUE and MAKE-THREAD-POOL restarts are
 provided. *THREAD-POOL* is returned."
   (or *thread-pool*
       (restart-case (error 'no-thread-pool-error)
-        (make-thread-pool (worker-count)
-          :report "Make a thread-pool now, prompting for number of workers."
-          :interactive (lambda () (princ "Worker count: ") (list (read)))
-          (setf *thread-pool* (make-thread-pool worker-count)))
+        (make-thread-pool (name worker-count spin-count enlist alive)
+          :report "Make a thread-pool now, prompting for arguments."
+          :interactive (lambda () 
+                         (list
+                          (interact* "Name: ")
+                          (interact* "Worker count: ")
+                          (interact* "Spin count: ")
+                          (y-or-n-p "Enlist calling thread?: ")
+                          (y-or-n-p "Start?: ")))
+          (setf *thread-pool* (make-thread-pool worker-count :name name :spin-count spin-count :enlist enlist :alive alive)))
+        (make-default-thread-pool ()
+          :report "Make a thread-pool named :DEFAULT, using (NUM-CPUS) as the worker count."
+          (setf *thread-pool* (make-thread-pool (std/alien:num-cpus))))
         (store-value (value)
           :report "Assigne a value to *THREAD-POOL*."
           :interactive (lambda () (print "Value for *THREAD-POOL*: ") (read))

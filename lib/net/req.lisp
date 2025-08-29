@@ -1598,7 +1598,7 @@ the second arg is an optional character encoding.")
   (declare (ignore self))
   req)
 
-(defmethod make-client-request ((self http-client) (req uri) &key)
+(defmethod make-client-request ((self http-client) req &key)
   (declare (ignore self))
   (uri req))
 

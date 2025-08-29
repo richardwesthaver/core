@@ -128,6 +128,7 @@
   (:import-from :std/list :flatten :removef)
   (:export
    :interact
+   :interact*
    :*error-message*
    :*handlers*
    :std-error :error-message

@@ -260,6 +260,12 @@ was provided."))
   (finish-output *query-io*)
   (multiple-value-list (eval (read *query-io*))))
 
+(defun interact* (&rest prompt)
+  "Read from user."
+  (apply #'format *query-io* prompt)
+  (finish-output *query-io*)
+  (read *query-io*))
+
 ;;; Macros
 (defmacro ignore-some-conditions ((&rest conditions) &body body)
   "Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS

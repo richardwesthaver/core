@@ -1,18 +1,24 @@
-;;; lib/pod/api.lisp --- Libpod API model
+;;; lib/pod/srv.lisp --- Libpod API Service
 
 ;;
+
+;;; Commentary:
+
+;; ref: https://docs.podman.io/en/latest/_static/api.html
+
+;; Eventually we should be generating based on the openapi spec
 #|
 'podman info'
 
-curl --unix-socket /run/podman/podman.sock http://d/v4.0.0/libpod/info
+curl --unix-socket /run/podman/podman.sock http://d/v5.0.0/libpod/info
 
 'podman pull quay.io/containers/podman'
 
-curl -XPOST --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/images/create?fromImage=quay.io%2Fcontainers%2Fpodman'
+curl -XPOST --unix-socket /run/podman/podman.sock -v 'http://d/v5.0.0/images/create?fromImage=quay.io%2Fcontainers%2Fpodman'
 
 'podman list images'
 
-curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/json' | jq
+curl --unix-socket /run/podman/podman.sock -v 'http://d/v5.0.0/libpod/images/json' | jq
 |#
 ;;; Code:
 (in-package :pod)
@@ -106,7 +112,7 @@ curl --unix-socket /run/podman/podman.sock -v 'http://d/v4.0.0/libpod/images/jso
  ;; network
  ("libpod networks/json" (:get (filters))))
 
-(defstruct (libpod-request (:conc-name "REQUEST-"))
+(defstruct libpod-request
   (path "" :type string)
   (method :get :type keyword)
   (params (make-array 0 :fill-pointer 0 :adjustable t) :type vector)

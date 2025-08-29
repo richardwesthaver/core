@@ -294,13 +294,13 @@
 (defun call-impl-fn (pool impl)
   (declare (optimize (speed 3) (safety 3)))
   (declare (type function impl))
-  (if (or std/thread::*worker* (boundp '*thread-pool*))
+  (if (or *worker* (boundp '*thread-pool*))
       (call-with-toplevel-handler impl)
       (call-inside-worker pool impl)))
 
-(declaim (inline unsplice))
-(defun unsplice (form)
-  (if form (list form) nil))
+(eval-always
+  (definline unsplice (form)
+    (if form (list form) nil)))
 
 (defvar *defpun-registration-lock* (make-mutex :name "defpun"))
 
@@ -361,7 +361,7 @@
   "See `defpun'."
   ;; This is used outside of the defpun macro.
   `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (with-mutex (*registration-lock*)
+     (with-mutex (*defpun-registration-lock*)
        ,@(loop for name in names
                collect `(register-name ',name)))))
 
@@ -385,7 +385,7 @@ not present then no docstring is parsed."
   `(defmacro ,defpun (name lambda-list ,@types &body body)
      ,doc
      (with-parsed-body (body declares docstring)
-       (with-mutex (*registration-lock*)
+       (with-mutex (*defpun-registration-lock*)
          ;; these two calls may affect the registered macrolets in the
          ;; return form below
          (delete-stale-registrations)
