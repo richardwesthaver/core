@@ -3,18 +3,24 @@
 ;;; Code:
 (in-package :std/print)
 
+(defmacro deffmt (name control-string &optional doc)
+  (std/sym:with-gensyms (fmt)
+  `(let ((,fmt (formatter ,control-string)))
+     (setf (fdefinition ',name) ,fmt)
+     ,@(when doc `((setf (documentation ',name 'function) ,doc)))
+     ',name)))
+
 (defun iprintln (x &optional (n 2) stream)
   "Print object X with indentation N to stream followed by a new line."
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))
 
-(defun fmt-row (data &optional stream)
-  "Format DATA as a table row to STREAM."
-  (format stream "| ~{~A~^ | ~} |~%" data))
+(deffmt fmt-row "~&| ~{~A~^ | ~} |~&"
+  "Format DATA as a table row to STREAM. When PRETTY is non-nil use box-chars.")
 
 (defun printer-status ()
   "Return the current printer status."
   (macrolet ((fmt (var) `(list ',var ,var)))
-    (pprint-tabulary
+    (pprint-tabular
      t
      (list
       (fmt *print-array*)
@@ -594,13 +600,7 @@ STYLE indicates the level of decoration to apply to the output:
 
 (defvar *mumble-timestamp* t)
 
-(defun mumble (control &rest args)
-  "Politically correct way to print compiler output."
-  (let ((stream *standard-output*))
-    (format stream "~&;~@[ ~A~] ~A~&" (run-time-to-string (get-internal-run-time)) 
-            (apply #'format nil control args))
-    (force-output stream)
-    (values)))
+(deffmt fmt-time "~D:~2,'0D:~2,'0D.~3,'0D")
 
 (defun internal-time-to-string (internal-time-delta)
   (multiple-value-bind (tsec remainder)
@@ -608,4 +608,16 @@ STYLE indicates the level of decoration to apply to the output:
     (let ((ms (truncate remainder (/ internal-time-units-per-second 1000))))
       (multiple-value-bind (tmin sec) (truncate tsec 60)
         (multiple-value-bind (thr min) (truncate tmin 60)
-          (format nil "~D:~2,'0D:~2,'0D.~3,'0D" thr min sec ms))))))
+          (with-output-to-string (s)
+            (fmt-time s thr min sec ms)))))))
+
+(deffmt fmt-mumble "~&; ~A~@[ ~A~]~&")
+
+(defun mumble (control &rest args)
+  "Politically correct way to print compiler output."
+  (let ((stream *standard-output*))
+    (fmt-mumble stream 
+                (internal-time-to-string (get-internal-real-time))
+                (apply #'format nil control args))
+    (force-output stream)
+    (values)))

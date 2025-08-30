@@ -129,6 +129,7 @@
   (:export
    :interact
    :interact*
+   :interact-line
    :*error-message*
    :*handlers*
    :std-error :error-message
@@ -409,6 +410,8 @@
    :wrapped-character-output-stream
    :counting-character-input-stream
    :prefixed-character-output-stream
+   :timestamped-stream
+   :mumble-stream :fmt-stream
    :stream-of :char-count-of :line-count-of :col-count-of
    :prev-col-count-of :col-index-of :write-prefix
    :prefix-of
@@ -1202,7 +1205,7 @@
    :random-do))
 
 (defpkg :std/print
-  (:use :cl)
+  (:use :cl :std/stream)
   (:import-from :std/list :group :ensure-cons)
   (:import-from :std/rand :random-booleans)
   (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors*)
@@ -1282,7 +1285,8 @@
 (pkg:defpkg :std/defsys
   (:use :cl :std/prim :std/meta 
    :std/macs :std/thread :std/task :std/serde 
-   :std/seq :std/pipe :std/prim :std/condition)
+   :std/seq :std/pipe :std/prim :std/condition
+   :std/print)
   (:nicknames :sys)
   (:import-from :std/print :mumble)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)

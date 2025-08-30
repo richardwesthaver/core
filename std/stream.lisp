@@ -197,6 +197,7 @@ a designated prefix accessible via PREFIX-OF."))
 
 (defgeneric write-prefix (prefix stream)
   (:method ((prefix string) stream) (write-string prefix stream))
+  (:method ((prefix character) stream) (write-char prefix stream))
   (:method ((prefix function) stream) (funcall prefix stream))
   (:documentation "Write a PREFIX to STREAM."))
 
@@ -238,4 +239,15 @@ FILE-NAME."
    :prefix (lambda ()
              (multiple-value-bind (secs us)
                  (floor (get-internal-real-time) internal-time-units-per-second)
-               (format nil "~6,'0D.~6,'0D: " secs us)))))
+               (format nil "~6,'0D.~6,'0D: " secs us))))
+  (:documentation "A stream which prints all output prefixed by the interanl-real-time timestamp."))
+
+(defclass mumble-stream (prefixed-character-output-stream) ()
+  (:default-initargs
+   :prefix "; ")
+  (:documentation "A stream which prints all lines with a string prefix of '; '."))
+
+(defclass fmt-stream (wrapped-character-output-stream) 
+  ((formatter :initarg :formatter :accessor stream-formatter))
+  (:default-initargs :stream (make-synonym-stream '*standard-output*))
+  (:documentation "A wrapped stream which prints output to STREAM using a FORMATTER."))

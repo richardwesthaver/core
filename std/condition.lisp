@@ -61,8 +61,7 @@
       (setf options (remove (car fun) options))
       (setf fun (cadar fun)))
     `(prog1
-         (eval-when (:compile-toplevel :execute)
-           (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))
+         (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
        (when ',fun
          (cond 
            ((or (member 'simple-error ',%ancestors)
@@ -109,8 +108,7 @@
   (let ((fun (member :auto options :test #'car-eql)))
     (when fun (setq options (remove (car fun) options)))
     `(prog1
-         (eval-when (:compile-toplevel :execute)
-           (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))
+         (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options)
        (when ',fun
          (if (or (find 'simple-warning ',parent-types)
                  (find 'simple-condition ',parent-types))
@@ -265,6 +263,12 @@ was provided."))
   (apply #'format *query-io* prompt)
   (finish-output *query-io*)
   (read *query-io*))
+
+(defun interact-line (&rest prompt)
+  "Read a line from user, return a string."
+  (apply #'format *query-io* prompt)
+  (finish-output *query-io*)
+  (read-line *query-io*))
 
 ;;; Macros
 (defmacro ignore-some-conditions ((&rest conditions) &body body)

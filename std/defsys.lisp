@@ -36,9 +36,8 @@
 (define-condition system-condition () ())
 (define-condition system-error (error system-condition) ())
 (define-condition system-warning (warning system-condition) ())
-(eval-always
-  (defwarning simple-system-warning (simple-warning system-warning) () (:auto t))
-  (deferror simple-system-error (simple-error system-condition) () (:auto t)))
+(defwarning simple-system-warning (simple-warning system-warning) () (:auto t))
+(deferror simple-system-error (simple-error system-condition) () (:auto t))
 
 (define-condition sysdef-error (system-error file-error)
   ((system-name :initarg :name :accessor error-system-name))
@@ -52,28 +51,11 @@
    (path :initarg :path :accessor path)
    (properties :initarg :properties :accessor component-properties)))
 
+(defclass file-component (component) 
+  ((type :initarg :type :reader component-type)))
+
 (defclass module-component (component) 
   ((components :initarg :components :initform nil :accessor components)))
-
-(defmethods change-class 
-  (((instance asdf:component) (new-class-name (eql 'component)) &key)
-   (make-instance new-class-name
-     :name (asdf:component-name instance)
-     :properties (asdf::component-properties instance)))
-  (((instance component) (new-class-name (eql 'asdf:component)) &key)
-   (make-instance new-class-name
-     :name (name instance)
-     :properties (component-properties instance)))
-  (((instance asdf:module) (new-class-name (eql 'module-component)) &key)
-   (make-instance new-class-name
-     :name (asdf:component-name instance)
-     :properties (asdf::component-properties instance)
-     :components (mapcar #'change-component-class (asdf:component-children instance))))
-  (((instance module-component) (new-class-name (eql 'asdf:module)) &key)
-   (make-instance new-class-name
-     :name (name instance)
-     :properties (component-properties instance)
-     :components (mapcar #'revert-component-class (components instance)))))
 
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
@@ -100,30 +82,69 @@
 (defmethod add-hook ((self system) function &rest args)
   (apply 'add-hook (system-hooks self) function args))
 
+(defmethod print-object ((self system) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A~@[ ~A~]" (name self) (version self))))
+
+;;; ASDF Compat
 (definline change-component-class (self)
   "Change class of SELF to its associated STD/DEFSYS class."
   (etypecase self
     (asdf:system (change-class self 'system))
     (asdf:module (change-class self 'module-component))
+    (asdf:file-component (change-class self 'file-component))
     (asdf:component (change-class self 'component))))
 
 (definline revert-component-class (self)
   "Revert std/defsys class SELF to its associated ASDF class."
   (etypecase self
     (system (change-class self 'asdf:system))
-    (module (change-class self 'asdf:module))
+    (module-component (change-class self 'asdf:module))
+    (file-component (change-class self 'asdf:file-component))
     (component (change-class self 'asdf:component))))
 
 (defmethods change-class 
+  ;; components
+  (((instance asdf:component) (new-class-name (eql 'component)) &key)
+   (make-instance new-class-name
+     :name (asdf:component-name instance)
+     :properties (asdf::component-properties instance)))
+  (((instance component) (new-class-name (eql 'asdf:component)) &key)
+   (make-instance new-class-name
+     :name (name instance)
+     :properties (component-properties instance)))
+  (((instance asdf:file-component) (new-class-name (eql 'file-component)) &key)
+   (make-instance new-class-name
+     :name (asdf:component-name instance)
+     :properties (asdf::component-properties instance)
+     :type (asdf:file-type instance)))
+  (((instance file-component) (new-class-name (eql 'asdf:file-component)) &key)
+   (make-instance new-class-name
+     :name (name instance)
+     :properties (component-properties instance)
+     :type (component-type instance)))
+  (((instance asdf:module) (new-class-name (eql 'module-component)) &key)
+   (make-instance new-class-name
+     :name (asdf:component-name instance)
+     :properties (asdf::component-properties instance)
+     :components (mapcar #'change-component-class (asdf:component-children instance))))
+  (((instance module-component) (new-class-name (eql 'asdf:module)) &key)
+   (make-instance new-class-name
+     :name (name instance)
+     :properties (component-properties instance)
+     :components (mapcar #'revert-component-class (components instance))))
+  ;; system
   (((instance asdf:system) (new-class-name (eql 'system)) &key)
    (make-instance new-class-name
      :version (asdf:component-version instance)
-     :name (asdf:component-name instance)
+     :name (std/sym:keywordicate (string-upcase (asdf:component-name instance)))
      :properties (asdf::component-properties instance)
      :description (asdf::component-description instance)
      :components (mapcar #'change-component-class (asdf:component-children instance))))
   (((instance system) (new-class-name (eql 'asdf:system)) &key)
-   (simple-system-warning "Erasing system slots (:requires :provides :hooks) from system ~A." (name instance))
+   (warn 'simple-system-warning 
+         :format-control "Erasing system slots (:requires :provides :hooks) from system ~A." 
+         :format-arguments (name instance))
    (make-instance new-class-name
      :version (version instance)
      :name (name instance)
@@ -131,21 +152,21 @@
      :description (system-description instance)
      :components (mapcar #'revert-component-class (components instance)))))
 
-(defmethod print-object ((self system) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A~@[ ~A~]" (name self) (version self))))
-
 ;;; Modules
-;; Unlike the MODULE object which is merely a container for other COMPONENTs,
-;; Lisp Modules in the Core support the ANSI CL notion of Modules and are
-;; further extended
+;; Unlike MODULE-COMPONENT, based on ASDF:MODULE which is merely a container
+;; for other COMPONENTs, Lisp Modules in the Core support the ANSI CL notion
+;; of Modules and are further extended
+(defvar *load-module* nil "The name of the module being loaded or NIL.")
+(defvar *compile-module* nil "The name of the module being compiled or NIL.")
+(defvar *module-stack* nil "A list of the most recently visited modules.")
+(defvar *module* nil "The name of the current module or NIL.")
+(defparameter *module-table* (make-hash-table :test 'equal)
+  "A table which maps modules names to objects.")
 
-(defvar *module* nil)
-(defvar *module-stack* nil)
-(defparameter *module-table* (make-hash-table :test 'equal))
-
-(defclass module () 
-  ((hook :type hook :accessor hook)))
+(defclass module ()
+  ((name :initarg :name :accessor name)
+   (hook :initarg :hook :type hook :accessor hook))
+  (:documentation "All Lisp Modules contain at least a NAME and HOOK slot."))
 
 (defun load-core-module (name)
   (let ((cmod (gethash name *module-table*)))
@@ -219,6 +240,7 @@ the following extensions:
     (declare (ignore meth))
     (std:with-gensyms (sys)
       `(let ((,sys (change-class (defsystem ,name ,@body) 'system)))
+         (setf (path ,sys) *load-truename*)
          ;; todo: convert to system
          (mapc (lambda (x) (pushnew x *features*)) ',prov)
          (mapc (lambda (x) (assert (member x *features*))) ',req)
@@ -229,11 +251,19 @@ the following extensions:
   "Load a system definition from PATH. Unlike LOAD-ASD this function calls LOAD
 internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
   (with-system-session
-    (when (load path)
+    (when 
+        (restart-case (load path)
+          (load-file (p)
+            :report "Load a different file." 
+            :interactive (lambda () 
+                           (list (setf path (interact-line "File: "))))
+            (load p)))
       (setf (gethash path (system-session-file-cache *system-session*))
             (sb-ext:get-time-of-day))
       (pushnew (namestring (truename path)) *system-definitions* :test 'equal)
-      (when name (find-system name :default (lambda () (error 'sysdef-error :name name :pathname path)))))))
+      (if name 
+          (find-system name :default (lambda () (error 'sysdef-error :name name :pathname path)))
+          t))))
 
 (defmethod serde ((from system) (to stream)))
 
@@ -264,7 +294,7 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
-      (mumble "Loading system ~A" (name sys))
+      (mumble "Loading system ~A~@[ from ~A~]" (name sys) (path sys))
       (asdf:load-system self :verbose nil))))
 
 (defgeneric compile-system (self &key &allow-other-keys)
