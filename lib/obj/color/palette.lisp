@@ -6,10 +6,8 @@
 (in-package :obj/color)
 
 ;;; Vars
-;; place-holder definition incase x11.lisp doesn't exist
-(defvar *x11-palette* (make-hash-table))
-
-(defvar *palette* *x11-palette*)
+(defvar *color-palettes* (make-hash-table))
+(defvar *palette* nil)
 
 ;;; Types
 (deftype palette () 'hash-table)
@@ -21,15 +19,40 @@
 
 ;;; Proto
 (defgeneric palette (self)
-  (:method ((self null)) *palette*))
+  (:documentation "Return the palette associated with SELF, defaults to *PALETTE*.")
+  (:method (self) (if self (palette self) *palette*)))
 
 (defgeneric (setf palette) (new self)
-  (:method (new (self null)) (setf *palette* new)))
+  (:documentation "Set the palette associated with SELF, defaults to *PALETTE*.")
+  (:method (new (self hash-table)) (setf self new)))
+
+(defgeneric get-color (key &optional self)
+  (:documentation "Get the color associated with KEY in SELF which defaults to *PALETTE*.")
+  (:method (key &optional (self *palette*))
+    (gethash key self)))
+(defgeneric (setf get-color) (new key &optional self)
+  (:documentation "Set the color associated with KEY in SELF to NEW. SELF defaults to *PALETTE*.")
+  (:method (new key &optional (self *palette*))
+    (setf (gethash key self) new)))
 
 ;;; Utils
-(defun parse-x11-palette (&key (name '*x11-palette*)
-                               (input #.(asdf:system-relative-pathname :core ".stash/rgb.txt"))
-                               (output #.(asdf:system-relative-pathname :core "lib/obj/color/x11.lisp")))
+(definline base-color-palette-p (palette)
+  "Return T if all keys of PALETTE are of type base-color-key."
+  (every (lambda (x) (typep x 'base-color-key)) (hash-table-keys palette)))
+
+(defun make-palette (name &rest colors &aux (tbl (make-hash-table)))
+  (let ((*palette* tbl))
+    (doplist (k color) colors
+      (setf (get-color k) color))
+    (setf (gethash name *color-palettes*) *palette*)
+    *palette*))
+
+(definline find-palette (name)
+  (gethash name *color-palettes*))
+
+(defun parse-x11-palette (&key
+                          (input #.(asdf:system-relative-pathname :core ".stash/rgb.txt"))
+                          (output #.(asdf:system-relative-pathname :core "lib/obj/color/x11.lisp")))
   "Parse X11 color definitions and write them into a file. Return the
 list of colors.
 
@@ -59,9 +82,9 @@ with a quick google search."
 ;; Do not modify.
 
 ;;; Code:
-(in-package :obj/color)"
+(in-package :obj/color)
+(make-palette :x11"
                 output input)
-        (format colordefs "~2%")
         (labels ((parse-channel (string)
                    (let ((i (read-from-string string)))
                      (assert (and (typep i 'integer) (<= i 255)))
@@ -77,11 +100,11 @@ with a quick google search."
                 (when (and match (not (find #\space (aref registers 3))))
                   (let ((colorname (string-downcase (aref registers 3))))
                     (format colordefs
-                            "(setf (gethash :~A ~A) (rgb ~A ~A ~A))~%"
+                            "~% :~A (rgb ~A ~A ~A)"
                             colorname
-                            (string-downcase name)
                             (parse-channel (aref registers 0))
                             (parse-channel (aref registers 1))
                             (parse-channel (aref registers 2)))
-                    (push colorname colornames))))))))
+                    (push colorname colornames))))))
+          (write-char #\) colordefs)))
       (nreverse colornames))))
