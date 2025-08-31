@@ -167,7 +167,8 @@
    #:rgb-to-hsv #:hsv-to-rgb #:hex-to-rgb #:as-hsv #:as-rgb
    #:rgb-combination #:hsv-combination
    #:parse-hex-rgb #:print-hex-rgb
-   :*x11-palette* :*palette* :palette))
+   :*x11-palette* :*palette* :palette :base-color-key
+   :style :theme))
 
 (defpkg :obj/time
   (:nicknames :time)
