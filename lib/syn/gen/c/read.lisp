@@ -97,15 +97,15 @@
             ((and not2 >1)    `(~  ,(dissect (intern (subseq name 1 len)) :quoty t)))
             (t item))))))
 
-(defun split-addrof (name)
-  "prepare addr-of node: &foo => (addr-of foo)"
+(defun split-addr (name)
+  "prepare addr node: &foo => (addr foo)"
   (let ((name (symbol-name name)))
-    `(addr-of ,(dissect (intern (subseq name 1 (length name))) :quoty t))))
+    `(addr ,(dissect (intern (subseq name 1 (length name))) :quoty t))))
 
-(defun split-targof (name)
-  "prepare targ-of node: *foo => (targ-of foo)"
+(defun split-deref (name)
+  "prepare deref node: *foo => (deref foo)"
   (let ((name (symbol-name name)))
-    `(targ-of ,(dissect (intern (subseq name 1 (length name))) :quoty t))))
+    `(deref ,(dissect (intern (subseq name 1 (length name))) :quoty t))))
 
 (defun split-oref (name)
   "prepare oref node: foo.baz => (oref foo baz)"
@@ -216,11 +216,11 @@
         form)
        ((and (> (length (symbol-name form)) 1)
              (eql (first (coerce (symbol-name form) 'list)) #\&))
-        (split-addrof form))
+        (split-addr form))
        ((and (> (length (symbol-name form)) 1)
              (eql (first (coerce (symbol-name form) 'list)) #\*)
              (not (eql (first (reverse (coerce (symbol-name form) 'list))) #\*)))
-        (split-targof form))
+        (split-deref form))
        (t 
         (let* ((name-string (symbol-name form))
                (num-pos (position-if #'numberp (mapcar #'digit-char-p (coerce name-string 'list))))

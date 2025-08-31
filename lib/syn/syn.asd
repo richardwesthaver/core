@@ -14,8 +14,7 @@
                  (:file "py")))
                (:module "gen"
                 :components
-                ((:file "pkg")
-                 (:file "condition")
+                ((:file "condition")
                  (:file "var")
                  (:file "proto")
                  (:file "util")

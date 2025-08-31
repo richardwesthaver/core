@@ -65,14 +65,14 @@
 (deferror bad-request (service-error) ())
 
 ;;; Objects
-(defclass engine () 
-  ((service :accessor service :initarg :service 
-            :documentation "A link to the SERVICE which owns this instance.")))
-
 (defclass service (id)
   ((request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
    (engine :type engine :accessor engine :initarg :engine)))
+
+(defclass engine () 
+  ((service :accessor service :initarg :service 
+            :documentation "A link to the SERVICE which owns this instance.")))
 
 (defgeneric make-service (self &rest args &key &allow-other-keys))
 

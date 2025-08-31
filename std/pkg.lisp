@@ -905,6 +905,8 @@
    :status :validate
    :lock :bind
    :head :tail
+   :call :swap
+   :copy :assign
    :assignee :started-p
    :verbp))
 

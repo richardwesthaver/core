@@ -25,9 +25,9 @@
    #:*c-backend*
    #:split-aref
    #:split-pref
-   #:split-targof
+   #:split-deref
    #:split-oref
-   #:split-addrof
+   #:split-addr
    #:split-unary
    #:read-float
    #:fix-case
@@ -115,6 +115,7 @@
     if cond when
     fn
     array aref
+    deref addr
     union
     function
     progn block
@@ -129,9 +130,10 @@
 (defparameter *c-syntax*
   '(set *= %= += -= >>= <<= &= ^= \|=
     == != \| \|\| % << >> ^ & && ~ ! ?
-    addr-of targ-of dref switch
+    switch
     prefix++ prefix--
     postfix-- postfix++ postfix*
+    deref addr
     struct enum oref pref specifier
     include comment decl
     fpointer for while
@@ -154,6 +156,6 @@
     (:shadow-symbols *c-swap* :export-symbols *c-exports*)
   (:nicknames :c)
   (:use :cl)
-  (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package)
-  (:import-from :syn/gen/c :c-reader :read-gen-c-string :read-gen-c-file :simple-print
+  (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package :code-print)
+  (:import-from :syn/gen/c :c-reader :read-gen-c-string :read-gen-c-file
    :cl-reader :switch-reader :decompose-declaration))

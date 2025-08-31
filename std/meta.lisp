@@ -106,9 +106,10 @@ function NAME and be skipped for (setf NAME)."
   (:method ((from t) (to cons))
     (mapl #'(lambda (lst) (rplaca lst from)) to)
     to))
-
 (defverb swap (from to)
   (:documentation "Swap the contents of FROM with the contents of TO, returning TO."))
+(defverb call (self &rest args)
+  (:documentation "Call SELF with ARGS."))
 
 (defgeneric run-object (self &key &allow-other-keys)
   (:documentation "Explicitly run the object SELF."))

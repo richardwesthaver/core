@@ -146,6 +146,20 @@
     (traverse d tree 0)
     (traverse pp tree 0)))
 
+(defun code-print (tree)
+  "Pretty prints C ast"
+  (let ((ei (make-instance 'else-if-traverser))
+        (ib (make-instance 'if-blocker))
+        (db (make-instance 'decl-blocker))
+        (rn (make-instance 'renamer))
+        (pp (make-instance 'code-printer)))
+    (progn
+      (traverse ei tree 0)
+      (traverse ib tree 0)
+      (traverse db tree 0)
+      (traverse rn tree 0)
+      (traverse pp tree 0))))
+
 (defmacro define-code-printer (qual node &body body)
   (if (eql :self qual)
       `(defmethod traverse ((self code-printer)

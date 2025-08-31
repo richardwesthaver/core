@@ -5,21 +5,6 @@
 ;;; Code:
 (in-package :syn/gen/c)
 
-;;; Simply prints the ast, useful in REPL.
-(defun simple-print (tree)
-  "Pretty prints C ast"
-  (let ((ei (make-instance 'else-if-traverser))
-        (ib (make-instance 'if-blocker))
-        (db (make-instance 'decl-blocker))
-        (rn (make-instance 'renamer))
-        (pp (make-instance 'code-printer)))
-    (progn
-      (traverse ei tree 0)
-      (traverse ib tree 0)
-      (traverse db tree 0)
-      (traverse rn tree 0)
-      (traverse pp tree 0))))
-
 (with-code-printer
   (define-code-printer :before expression-statement
     (push-info 'expression-statement)

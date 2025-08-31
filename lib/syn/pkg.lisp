@@ -28,6 +28,7 @@
    :*cl-symbols* :*code-reader*
    :*backup-readtable* :define-code-switches
    :define-code-switch :print-code
+   :code-print
    :define-code-processor :define-code-reader
    :make-nodes :make-node
    :build-swap-package

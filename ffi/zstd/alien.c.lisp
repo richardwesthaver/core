@@ -11,4 +11,4 @@
      (nbSamples unsigned)
      (parameters (* ZDICT_params_t)))
   (ZDICT_finalizeDictionary
-   dstDictBuffer maxDictSize dictContent dictContentSize samplesBuffer samplesSizes nbSamples (* parameters)))
+   dstDictBuffer maxDictSize dictContent dictContentSize samplesBuffer samplesSizes nbSamples (deref parameters)))

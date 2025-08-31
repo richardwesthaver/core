@@ -60,16 +60,16 @@ threaded context.")
 killed workers during shutdown.")
 
 (declaim (pool-kernel-function %pool))
-(definline %pool (state)
+(definline %pool (state &optional (self *thread-pool*))
   "Default pool-kernel-function, user is responsible for ensuring *THREAD-POOL*
 is bound to the correct target THREAD-POOL before calling."
   (declare (optimize (speed 3) (safety 0)))
   (ecase state
-    (:start (start-thread-pool *thread-pool*))
-    (:stop (stop-thread-pool *thread-pool*))
-    (:reset (reset-thread-pool *thread-pool*))
-    (:shutdown (end-thread-pool))
-    (:kill (kill-thread-pool *thread-pool*)))
+    (:start (start-thread-pool self))
+    (:stop (stop-thread-pool self))
+    (:reset (reset-thread-pool self))
+    (:shutdown (stop-thread-pool self :wait t))
+    (:kill (kill-thread-pool self)))
   (values))
 
 (defparameter *pool-kernel* (make-kernel #'%pool)
@@ -831,6 +831,11 @@ and execution of concurrent work using a pool of 'worker' threads."))
 
 (defun find-thread-pool (name) (gethash name *thread-pool-table*))
 
+(defmethod call ((self thread-pool) &rest args)
+  (if (sb-int:singleton-p args)
+      (funcall (kernel self) (car args) self)
+      (apply (kernel self) args)))
+
 (defmethod initialize-instance :after ((self thread-pool) &key name &allow-other-keys)
   (when name (register-thread-pool name self)))
 
@@ -1245,7 +1250,9 @@ bound to RET."
   (stop-thread-pool pool :wait t)
   (start-thread-pool pool))
   
-(defmethod shutdown ((pool thread-pool)) (funcall (kernel pool) :shutdown))
+(defmethod shutdown ((pool thread-pool)) 
+  (remhash (name pool) *thread-pool-table*)
+  (funcall (kernel pool) :shutdown))
 
 (defmethod start ((pool thread-pool)) (funcall (kernel pool) :start))
 
@@ -1256,6 +1263,7 @@ bound to RET."
 (defun end-thread-pool (&key wait)
   (when-let ((pool *thread-pool*))
     (stop-thread-pool pool :wait wait)
+    (remhash (name pool) *thread-pool-table*)
     (setf *thread-pool* nil)))
 
 (defun thread-pool-info (pool)

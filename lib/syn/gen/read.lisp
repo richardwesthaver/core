@@ -42,21 +42,22 @@
   (let ((extras (loop for i in traverse collect
                          `(traverse (make-instance ',i) tree 0))))
     `(defun ,name (in &optional out)
-     (let ((tree)
-           (printer (make-instance 'code-printer)))
-       (setf tree (if (pathnamep in) (,file-reader in) (,string-reader in)))
-       ,@extras
-       (if out
-           (with-open-file
-               (stream out :direction :output
-                           :if-exists :supersede
-                           :if-does-not-exist :create)
-             (setf (slot-value printer 'stream) stream)
-             (traverse printer tree 0))
-           (progn
-             (setf (slot-value printer 'stream) *standard-output*)
-             (traverse printer tree 0)
-             (format t "~&")))))))
+       (let ((tree)
+             (printer (make-instance 'code-printer))
+             (*package* ,*package*))
+         (setf tree (if (pathnamep in) (,file-reader in) (,string-reader in)))
+         ,@extras
+         (if out
+             (with-open-file
+                 (stream out :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create)
+               (setf (slot-value printer 'stream) stream)
+               (traverse printer tree 0))
+             (progn
+               (setf (slot-value printer 'stream) *standard-output*)
+               (traverse printer tree 0)
+               (format t "~&")))))))
 
 (defmacro define-code-switch (name &key macro-character)
   "Define a syn/gen reader switch (in repl) allowing preprocessing and mixed
