@@ -3,22 +3,16 @@
   (:std :cli :log :obj
    :net :nlp :dat :doc
    :q :dsp :math :parse 
-   :rdb :cry :io)
+   :rdb :cry :io :pod
+   :box :web :vc :syn
+   :rt)
   :components ((:file "core"))
   :build-pathname "core-source"
   :build-operation monolithic-concatenate-source-op
   :in-order-to ((test-op (test-op "core/tests"))))
 
-(defsystem :core/user
-  :depends-on 
-  (:core :pod :box :web 
-   :vc :syn :rt)
-  :components ((:file "user"))
-  :build-operation monolithic-compile-bundle-op
-  :build-pathname "user-source")
-
 (defsystem :core/tests
-  :depends-on (:rt :std/tests :log/tests :rt/tests
+  :depends-on (:core :std/tests :log/tests :rt/tests
                :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
                :doc/tests :nlp/tests :skel/tests :box/tests
                :syn/tests :organ/tests :obj/tests :math/tests
@@ -30,7 +24,7 @@
   :perform (test-op (o c) (symbol-call :rt :run-all-tests)))
 
 (defsystem :core/bench
-  :depends-on (:std :rt :core)
+  :depends-on (:core)
   :components ((:module "bench"
                 :components ((:file "pkg")
                              (:file "lan-party")

@@ -19,11 +19,23 @@
 ;;   (declare (ignore inchar)))
 
 (defreadtable :core
-  (:merge :modern :std :shell :graph :tensor)
-  ;; (:macro-char #\? #'question-mark-reader)
-  ;; (:macro-char #\! #'exclamation-mark-reader)
-  )
+  (:merge :modern :std :shell :graph :tensor))
 
 (define-lisp-package :core)
 
-;; (with-core-lisp
+(pkg:defpkg :core/user 
+  (:nicknames :user)
+  (:use :cl :cl-user :std :std-user :core)
+  (:import-from :tree-sitter :load-tree-sitter :load-tree-sitter-alien :load-tree-sitter-c)
+  (:import-from :cli/tools/sbcl :with-sbcl))
+(in-package :user)
+
+(defpkg lib/prelude)
+(defpkg ffi/prelude)
+(defpkg prelude)
+
+(eval-when (:compile-toplevel)
+  (setq *default-package* "USER"))
+
+(eval-when (:load-toplevel)
+  (pushnew :user *features*))

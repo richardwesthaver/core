@@ -69,9 +69,9 @@
 (defclass system (module-component)
   ((version :initarg :version :accessor version)
    (description :initarg :description :accessor system-description)
-   (provides :initarg :provides :accessor system-provides)
-   (requires :initarg :requires :accessor system-requires)
-   (hooks :initform (make-instance 'key-hook) :initarg :hooks :accessor system-hooks)))
+   (provide :initarg :provides :accessor system-provide)
+   (require :initarg :requires :accessor system-require)
+   (hook :initform (make-instance 'key-hook) :initarg :hooks :accessor hook)))
 
 (defun system-equal (a b)
   "Return T if systems A and B refer to the same SYSTEM."
@@ -80,7 +80,7 @@
        (equal (path a) (path b))))
 
 (defmethod add-hook ((self system) function &rest args)
-  (apply 'add-hook (system-hooks self) function args))
+  (apply 'add-hook (hook self) function args))
 
 (defmethod print-object ((self system) stream)
   (print-unreadable-object (self stream :type t)
@@ -108,29 +108,35 @@
   (((instance asdf:component) (new-class-name (eql 'component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
+     :path (asdf:component-pathname instance)
      :properties (asdf::component-properties instance)))
   (((instance component) (new-class-name (eql 'asdf:component)) &key)
    (make-instance new-class-name
      :name (name instance)
+     :path (asdf:component-pathname instance)
      :properties (component-properties instance)))
   (((instance asdf:file-component) (new-class-name (eql 'file-component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
+     :path (asdf:component-pathname instance)
      :properties (asdf::component-properties instance)
      :type (asdf:file-type instance)))
   (((instance file-component) (new-class-name (eql 'asdf:file-component)) &key)
    (make-instance new-class-name
      :name (name instance)
+     :path (asdf:component-pathname instance)
      :properties (component-properties instance)
      :type (component-type instance)))
   (((instance asdf:module) (new-class-name (eql 'module-component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
+     :path (asdf:component-pathname instance)
      :properties (asdf::component-properties instance)
      :components (mapcar #'change-component-class (asdf:component-children instance))))
   (((instance module-component) (new-class-name (eql 'asdf:module)) &key)
    (make-instance new-class-name
      :name (name instance)
+     :path (asdf:component-pathname instance)
      :properties (component-properties instance)
      :components (mapcar #'revert-component-class (components instance))))
   ;; system
@@ -138,12 +144,13 @@
    (make-instance new-class-name
      :version (asdf:component-version instance)
      :name (std/sym:keywordicate (string-upcase (asdf:component-name instance)))
+     :path (asdf:component-pathname instance)
      :properties (asdf::component-properties instance)
      :description (asdf::component-description instance)
      :components (mapcar #'change-component-class (asdf:component-children instance))))
   (((instance system) (new-class-name (eql 'asdf:system)) &key)
    (warn 'simple-system-warning 
-         :format-control "Erasing system slots (:requires :provides :hooks) from system ~A." 
+         :format-control "Erasing system slots (:require :provide :hook) from system ~A." 
          :format-arguments (name instance))
    (make-instance new-class-name
      :version (version instance)
@@ -232,10 +239,10 @@
 SYSTEM objects register their own ASDF:SYSTEM objects as needed and provide
 the following extensions:
 - :PROVIDE    system-provided features, modules, readtables
-- :HOOKS       hooks to load with this system
-- :METHODS     custom method definitions to apply to this system
+- :HOOK       hook-spec to load with this system
+- :METHODS    custom method definitions to apply to this system
 - :REQUIRE    system-required modules and features"
-  (let ((prov (%sys-get body :provide)) (hooks (%sys-get body :hooks))
+  (let ((prov (%sys-get body :provide)) (hooks (%sys-get body :hook))
         (meth (%sys-get body :methods)) (req (%sys-get body :require)))
     (declare (ignore meth))
     (std:with-gensyms (sys)
@@ -244,26 +251,28 @@ the following extensions:
          ;; todo: convert to system
          (mapc (lambda (x) (pushnew x *features*)) ',prov)
          (mapc (lambda (x) (assert (member x *features*))) ',req)
-         (mapc (lambda (x) (add-hook (system-hooks ,sys) x)) ',hooks)
+         (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
          (register-system ,name ,sys)))))
 
 (defun load-sys (path &optional name)
   "Load a system definition from PATH. Unlike LOAD-ASD this function calls LOAD
 internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
-  (with-system-session
-    (when 
-        (restart-case (load path)
-          (load-file (p)
-            :report "Load a different file." 
-            :interactive (lambda () 
-                           (list (setf path (interact-line "File: "))))
-            (load p)))
-      (setf (gethash path (system-session-file-cache *system-session*))
-            (sb-ext:get-time-of-day))
-      (pushnew (namestring (truename path)) *system-definitions* :test 'equal)
-      (if name 
-          (find-system name :default (lambda () (error 'sysdef-error :name name :pathname path)))
-          t))))
+  (let ((path (truename path)))
+    (with-system-session
+      (let ((*default-pathname-defaults* (std/path:directory-path path)))
+        (when 
+            (restart-case (load path)
+              (load-file (p)
+                :report "Load a different file." 
+                :interactive (lambda () 
+                               (list (setf path (interact-line "File: "))))
+                (load p)))
+          (setf (gethash path (system-session-file-cache *system-session*))
+                (sb-ext:get-time-of-day))
+          (pushnew (namestring (truename path)) *system-definitions* :test 'equal)
+          (if name 
+              (find-system name :default (lambda () (error 'sysdef-error :name name :pathname path)))
+              t))))))
 
 (defmethod serde ((from system) (to stream)))
 
@@ -292,17 +301,21 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
+  (:method ((self system) &key)
+    (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self))
+    (asdf:load-system self :verbose nil))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
-      (mumble "Loading system ~A~@[ from ~A~]" (name sys) (path sys))
-      (asdf:load-system self :verbose nil))))
+      (load-system sys))))
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
+  (:method ((self system) &key)
+    (mumble "Compiling system ~A" (name self))
+    (asdf:compile-system self :verbose nil))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
-      (mumble "Compiling system ~A" (name sys))
-      (asdf:compile-system self :verbose nil))))
+      (compile-system sys))))
 
 (defgeneric save-system (self &key &allow-other-keys)
   (:documentation "Save the system SELF."))
@@ -310,10 +323,12 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
 (defgeneric make-system (self &key &allow-other-keys)
   (:documentation "Make the system SELF which usually entails loading, compiling, and then saving
 an image.")
+  (:method ((self system) &key)
+    (mumble "Making system ~A" (name self))
+    (asdf:make self :verbose nil))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
-      (mumble "Making system ~A" (name sys))
-      (asdf:make self :verbose nil))))
+      (make-system sys))))
 
 (defgeneric fetch-system (self &key &allow-other-keys)
   (:documentation "Fetch a system SELF from a remote location."))
@@ -324,12 +339,14 @@ an image.")
 (defgeneric delete-system (self &key &allow-other-keys)
   (:documentation "Delete the system SELF from the local filesystem."))
 
-(defgeneric test-system (self &key &allow-other-keys)
+(defgeneric test-system (self &rest args)
   (:documentation "Test the system SELF.")
+  (:method ((self system) &key)
+    (mumble "Testing system ~A" (name self))
+    (asdf:test-system self :verbose nil))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
-      (mumble "Testing system ~A" (name sys))
-      (asdf:test-system self :verbose nil))))
+      (test-system sys))))
 
 (defgeneric bench-system (self &key &allow-other-keys)
   (:documentation "Benchmark the system SELF."))
