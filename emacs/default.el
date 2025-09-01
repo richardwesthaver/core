@@ -340,6 +340,7 @@ function: '(ql:quickload :clouseau)'."
   (deferror (as define-condition))
   (defwarning (as define-condition))
   (make-db (as make-instance))
+  (make-palette (as defpackage))
   (define-package (as defpackage))
   (walk-directory 1)
   (with-db 1)

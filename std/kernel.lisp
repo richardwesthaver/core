@@ -27,16 +27,12 @@
   ()
   (:documentation "Standard kernel class."))
 
-(defmethod sb-mop:validate-superclass ((class standard-class)
-                                       (super kernel-class))
+(defmethod sb-mop:validate-superclass ((class kernel-class)
+                                       (super sb-mop:funcallable-standard-class))
   t)
 
 (defmethod sb-mop:validate-superclass ((class kernel-class)
                                        (super standard-class))
-  t)
-
-(defmethod sb-mop:validate-superclass ((class kernel-class)
-                                       (super sb-mop:funcallable-standard-class))
   t)
 
 (defclass kernel-object (sb-mop:funcallable-standard-object)

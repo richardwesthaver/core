@@ -215,10 +215,11 @@
 
 (defstruct system-session
   "A reusable session in which SYSTEMs may be processed."
-  (queue (make-queue :capacity *system-session-capacity* :element-type 'system))
+  (systems (make-queue :capacity *system-session-capacity* :element-type 'system))
+  (plans (make-priority-queue *system-session-capacity* :prioritize t :extend nil))
   (task-cache (make-hash-table))
   (file-cache (make-hash-table :test 'equal))
-  (pool *thread-pool*)
+  (pool (find-thread-pool :system-session))
   (tasks))
 
 (defmacro with-system-session (&body body)
@@ -229,7 +230,7 @@
 
 ;;; System Definition
 (defun %sys-get (form name)
-  (std:when-let ((v (getf form name)))
+  (std/macs:when-let ((v (getf form name)))
     (remf form name)
     v))
 
@@ -245,7 +246,7 @@ the following extensions:
   (let ((prov (%sys-get body :provide)) (hooks (%sys-get body :hook))
         (meth (%sys-get body :methods)) (req (%sys-get body :require)))
     (declare (ignore meth))
-    (std:with-gensyms (sys)
+    (std/sym:with-gensyms (sys)
       `(let ((,sys (change-class (defsystem ,name ,@body) 'system)))
          (setf (path ,sys) *load-truename*)
          ;; todo: convert to system
@@ -296,14 +297,15 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
   (:method ((self symbol) &key)
     (with-system-session
       ;; freeze the session by acquiring the queue lock
-      (with-queue-lock (system-session-queue *system-session*) 
+      (with-queue-lock (system-session-systems *system-session*) 
         (remhash self *system-table*)))))
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
   (:method ((self system) &key)
     (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self))
-    (asdf:load-system self :verbose nil))
+    ;; TODO 2025-08-31: 
+    (asdf:load-system (name self) :verbose nil))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
       (load-system sys))))

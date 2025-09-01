@@ -471,7 +471,7 @@
 
 (eval-always
   (when (featurep :swank)
-    #+quicklisp (ql:quickload '(:swank :swank-client))
+    (asdf:load-systems :swank :swank-client)
     (load (asdf:system-relative-pathname :net "proto/swank.lisp"))
     (load (asdf:system-relative-pathname :net "proto/crew.lisp"))
     (use-package :net/proto/swank)

@@ -700,8 +700,8 @@ associated priority vector."
                       (aref data-vector child-index)))
             (t (return))))))
 
-(declaim (ftype (function (queue t priority) (values null &optional)) push-priority-queue))
-(definline push-priority-queue (queue object priority)
+(declaim (ftype (function (t priority-queue &optional priority) (values null &optional)) push-priority-queue))
+(definline push-priority-queue (object queue &optional (priority *default-priority*))
   "Push OBJECT to QUEUE with supplied PRIORITY."
   (symbol-macrolet ((data-vector (priority-queue-data queue))
                     (prio-vector (priority-queue-priorities queue)))
@@ -782,11 +782,12 @@ associated priority vector."
                   (aref prio-vector 0) old-prio))
           (heapify-downwards data-vector prio-vector (priority-queue-size queue))))))
 
-(defun make-priority-queue (capacity &key initial-contents prioritize (element-type t) initial-element)
+(defun make-priority-queue (capacity &key initial-contents prioritize (element-type t) initial-element extend)
   "Make a new PRIORITY-QUEUE with specified CAPACITY."
   (let ((queue (%make-priority-queue
                 :data (make-array capacity :element-type element-type :initial-element initial-element)
-                :priorities (make-array capacity :element-type 'priority))))
+                :priorities (make-array capacity :element-type 'priority)
+                :extend-p extend)))
     (setf (priority-queue-size queue) capacity)
     (when initial-contents
       (flet ((push-elem (elem)
