@@ -92,7 +92,7 @@ by `&once' are passed to a `once-only' call which surrounds `body'."
                     :report "Try to redefine the constant."
                     new)))))))
 
-(defmacro define-constant (name initial-value &key (test #'eql) documentation)
+(defmacro define-constant (name initial-value &key (test ''eql) documentation)
   "Ensures that the global variable named by NAME is a constant with a value
 that is equal under TEST to the result of evaluating INITIAL-VALUE. TEST is a
 /function designator/ that defaults to EQL. If DOCUMENTATION is given, it
@@ -141,12 +141,6 @@ documentation string."
         collect val into vals
         finally (return `(progv (list ,@vars) (list ,@vals)
                            ,@body))))
-
-(defun without-props (plist props)
-  "Return a new PLIST with all keys in PROPS dropped."
-  (loop for (options value) on plist by #'cddr
-        append (unless (member options props)
-                 (list options value))))
 
 ;;; Definitions
 ;; TODO 2025-08-12: 
@@ -211,8 +205,8 @@ definitions."
     (labels ((slot-definition (x)
                (if (listp x)
                    (cons (first x)
-                         (without-props (rest x)
-                           '(:reader :writer :accessor)))
+                         (remove-from-plist (rest x)
+                                            :reader :writer :accessor))
                    x))
              (slot-accessor-definition (x)
                (destructuring-bind (slot-name &rest options) x

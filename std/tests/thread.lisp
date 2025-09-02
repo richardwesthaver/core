@@ -124,14 +124,13 @@
     (setf *memo* :child))
   (sleep 0.2)
   (is (eq :child *memo*))
-
   (setf *memo* :main)
   (with-thread (:bindings (list (cons '*memo* *memo*)))
     (setf *memo* :child))
   (sleep 0.2)
   (is (eq :main *memo*)))
 
-(deftest destroy-thread-cleanup-test ()
+(deftest terminate-thread-cleanup-test ()
   (let* ((cleanedp nil)
          (thread (with-thread ()
                    (unwind-protect (sleep 999999)

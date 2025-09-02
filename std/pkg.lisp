@@ -45,6 +45,7 @@
   (:import-from :sb-kernel :topological-sort)
   (:shadow :group)
   (:export
+   :remove-from-plist
    :flatten*
    :safe-endp
    :singleton-p
@@ -1160,11 +1161,18 @@
    :worker-message :worker-event))
 
 (defpkg :std/async
-  (:use :cl :std/thread :std/prim :std/seq)
+  (:use :cl :std/thread :std/prim :std/seq :std/sym :std/list :std/macs)
   (:import-from :std/macs :with-gensyms :when-let)
   (:export :future :promise :await
    :future-kernel :fulfill :fulfilledp :while-waiting-for
-   :speculate))
+   :speculate :defpun :defptyped :plet 
+   :plet-if :pcount :pcount-if :pcount-if-not
+   :pdotimes :por :pand :pnotany
+   :pnotevery :psome :pevery :pmap-reduce
+   :pmapcon :pmapcan :pmapc :pmapl
+   :pmaplist :pmaplist-into :pmapcar :pmap
+   :pmap-into :preduce-partial :preduce :pfind
+   :pfind-if :pfind-if-not))
 
 (defpkg :std/task
   (:use :cl :std/thread :std/meta :std/seq :std/prim :std/async)
@@ -1188,10 +1196,6 @@
    :scheduled-task
    :make-job
    :jobp :taskp :task))
-
-(defpkg :std/par
-  (:use :cl :std/task :std/thread :std/macs :std/sym :std/prim)
-  (:export :defpun :defptyped))
 
 (defpkg :std/rand
   (:use :cl)
@@ -1323,8 +1327,8 @@
    :std/macs :std/bit :std/print :std/path
    :std/os :std/file :std/string :std/sys 
    :std/readtable :std/pipe :std/serde :std/rand 
-   :std/async :std/par :std/seq :std/prim
-   :std/comp :std/defsys))
+   :std/async :std/seq :std/prim :std/comp 
+   :std/defsys))
 
 (define-lisp-package :std)
 

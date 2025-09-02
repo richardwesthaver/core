@@ -42,8 +42,8 @@
     (is (probe-file f))
     (delete-file f)))
 
-(deftest fixture (:use "fx1")
-  (print *fx*))
+(deftest fixture (:use (fx :tmp :directory "/tmp/fx1"))
+  (is fx))
 
 (deftest tmp ()
   (is (null (with-tmp-directory ())))

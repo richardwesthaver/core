@@ -151,8 +151,6 @@ arrange for FVAR to be closed after BODY."
 
 ;; (defmacro define-ioctl (name fd cmd))
 
-;;;; SYSCALLs
-;; 
 ;;; XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
 (defvar *xdg-user-dirs* 
@@ -191,11 +189,11 @@ arrange for FVAR to be closed after BODY."
   (let ((tbl (make-hash-table)))
     (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
           `((:data-home . ".data")
-            (:config-home ".config")
+            (:config-home . ".config")
             (:state-home . ".local/state")
             (:data-dirs . (#p"/usr/local/share/" #p"/usr/share/"))
             (:config-dirs . (#P"/etc/xdg"))
-            (:cache-home . (".cache"))
+            (:cache-home . ".cache")
             (:runtime-dir)))
     tbl))
 

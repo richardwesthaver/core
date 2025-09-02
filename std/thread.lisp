@@ -629,12 +629,12 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
   (push-queue status (slot-value worker '%tx)))
 
 (defun notify-exit (worker)
-  (print-top-level (format nil "worker ~A exiting...~%" (worker-index worker)))
+  ;; (print-top-level (format nil "worker ~A exiting...~%" (worker-index worker)))
   (sb-concurrency:close-gate (slot-value worker '%rx))
   (send-worker-status worker :exit))
 
 (defun wait-for-worker (worker)
-  (format t "waiting on worker ~A...~%" (worker-index worker))
+  ;; (std/print:mumble "waiting on worker ~A...~%" (worker-index worker))
   (unless (null (thread-alive-p (worker-thread worker)))
     (assert (eql :exit (receive-worker-status worker)))))
 
@@ -1360,10 +1360,9 @@ Calling `broadcast-work' from inside a worker is an error."
 (defun call-with-temp-pool (fn &rest args)
   ;; ensure that we end the same pool we create
   (let ((pool (apply #'make-thread-pool args)))
-    (unwind-protect
-         (let ((*thread-pool* pool))
-           (funcall fn))
-      (shutdown pool))))
+    (let ((*thread-pool* pool))
+      (funcall fn))
+    (stop-thread-pool pool)))
 
 (defmacro with-temp-pool ((&rest make-pool-args) &body body)
   "Create a temporary pool for the duration of `body', ensuring that

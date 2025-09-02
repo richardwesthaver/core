@@ -16,15 +16,19 @@
 (defvar *theme* nil
   "The currently active theme.")
 
+(defvar *theme-table* (make-hash-table)
+  "A global table containing a mapping of names to themes.")
+
 ;;; Style
 (defkernel style () 
-  ((attributes :initarg :attributes :initform nil)))
+  ((attributes :initarg :attributes :initform nil :accessor style-attributes)))
 
 (defgeneric style (self))
 (defgeneric (setf style) (new self))
-(defmacro define-style (name direct-superclasses direct-slots &rest opts))
+(defmacro defstyle (name direct-superclasses direct-slots &rest opts)
+  `(defkernel ,name ,(or direct-superclasses '(style)) ,direct-slots ,@opts))
 ;; (defmacro with-style ((medium style &rest opts) &body body))
-;; (defun apply-style (style object &rest args))
+
 ;;; Theme
 (defgeneric theme (self)
   (:documentation "Return the theme associated with SELF."))
@@ -36,9 +40,14 @@
    (style :initarg :style :accessor style :initform (make-hash-table)
           :documentation "A map of names to styles.")))
 
-(defmacro define-theme (name direct-superclasses direct-slots &rest opts))
+(defmacro deftheme (name direct-superclasses direct-slots &rest opts)
+  `(defclass ,name ,(or direct-superclasses '(theme)) ,direct-slots ,@opts))
 
-;; (defun load-theme (name))
-;; (defun find-theme (name))
-;; (defun apply-theme (name))
+(defun find-theme (name)
+  (gethash name *theme-table*))
+
+(defun load-theme (name)
+  (setf *theme* (find-theme name)))
+
+;; (defun apply-theme (name obj &rest args))
 ;; (defun apply-style (style a &rest b))

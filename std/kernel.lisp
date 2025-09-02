@@ -67,7 +67,7 @@ restarts is provided. *KERNEL* is returned."
       (restart-case (error 'no-kernel-error)
         (store-value (value)
           :report "Assign a value to *KERNEL*."
-          :interactive (lambda () (print "Value: ") (read t ))
+          :interactive (lambda () (print "Kernel: ") (read *query-io*))
           (check-type value kernel)
           (setf *kernel* value))))
   *kernel*)
@@ -76,7 +76,7 @@ restarts is provided. *KERNEL* is returned."
   "Like DEFCLASS but for the KERNEL-CLASS metaclass."
   (let ((k (find :kernel opts :key #'car)))
     `(progn
-       (defclass ,name ,supers ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
+       (defclass ,name ,(or supers '(kernel-object)) ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
        ,@(when k 
            `((defmethod initialize-instance :after ((self ,name) &key (kernel ,(second k)) &allow-other-keys)
                (when kernel
@@ -84,7 +84,7 @@ restarts is provided. *KERNEL* is returned."
                   self 
                   (lambda (&rest args) (apply kernel self args))))))))))
 
-(defkernel hook (kernel-object) ()
+(defkernel hook () ()
   (:documentation "Hooks are Kernel objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
 
@@ -151,6 +151,8 @@ functions themselves.")
     (remhash item (hook-value hook))))
 
 (defmacro defhook (name forms &key (class ''key-hook) documentation)
+  "Define a new hook with NAME bound to a hook specified by CLASS and FORMS
+  being a list where each element is passed to ADD-HOOK."
   (with-gensyms (val)
     `(defparameter ,name 
        (let ((,val (make-instance ,class)))

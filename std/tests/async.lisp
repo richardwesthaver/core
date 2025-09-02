@@ -61,5 +61,6 @@
       (sleep 1.0)
       ;; FIX 2025-08-11: 
       (is (every #'fulfilledp futures))
-      ;; (is (every (lambda (x) (= x 4)) (mapcar #'await futures)))
+      ;; (isevery (lambda (x) (= x 4)) (mapcar #'await futures))
       )))
+      

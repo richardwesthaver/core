@@ -23,9 +23,9 @@
   (is (ifret t (error "ifret failed")))
   (iseq :abc (ifret nil :abc)))
 
+(define-constant %%frob1$$ 0 :documentation "a dummy constant")
+
 (deftest define-constant ()
-  (eval-always
-    (define-constant %%frob1$$ 0 :documentation "a dummy constant"))
   (is (constantp %%frob1$$)))
 
 (deftest switch ()
@@ -52,9 +52,10 @@
    (istype 'fixnum foo)
    (istype 'octet-vector arr)))
 
+(defityped %%froyo ((self string)) simple-string (declare (ignore self)) "bar")
+(deftyped* %%froyo1 ((self string)) self)
+
 (deftest defs (:declare (sb-ext:muffle-conditions style-warning))
-  (defityped %%froyo ((self string)) simple-string (declare (ignore self)) "bar")
-  (deftyped* %%froyo1 ((self string)) self)
   (is (string= "bar" (%%froyo "foo")))
   (is (string= "baz" (%%froyo1 "baz"))))
 

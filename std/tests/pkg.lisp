@@ -92,10 +92,10 @@
 
 (deftest fmt ()
   "Test standard formatters"
-  (is (string= (format nil "| 1 | 2 | 3 |~%") (fmt-row '(1 2 3))))
+  (is (string= (format nil "| 1 | 2 | 3 |~%") (with-output-to-string (s) (fmt-row s '(1 2 3)))))
   (is (string= 
        ;; note the read-time-eval..
-       #.(fmt-tree nil '(foobar (:a) (:b) (c) (d)) :layout :down)
+       #.(with-output-to-string (s) (fmt-tree s '(foobar (:a) (:b) (c) (d)) :layout :down))
        #"FOOBAR
  ├─ :A
  ├─ :B
@@ -104,7 +104,8 @@
 "#))
   ;; with plist option
   (is (string= 
-       #.(fmt-tree nil '(sk-project :name "foobar" :path "/a/b/c.asd" :vc :hg) :layout :down :plist t)
+       #.(with-output-to-string (s) 
+           (fmt-tree s '(sk-project :name "foobar" :path "/a/b/c.asd" :vc :hg) :layout :down :plist t))
        #"SK-PROJECT
  ├─ :NAME
  │   ╰─ "foobar"
@@ -114,7 +115,7 @@
      ╰─ :HG
 "#))
   (is (string= "| A | B | C |
-" (fmt-row '(a b c)))))
+" (with-output-to-string (s) (fmt-row s '(a b c))))))
 
 (deftest alien ()
   "Test standard alien utils"

@@ -621,3 +621,9 @@ be used with SETF."))
 		  (and (lst-walker (car a) (car b))
 		       (lst-walker (cdr a) (cdr b)))))))
       (lst-walker lsta lstb))))
+
+(defun remove-from-plist (plist &rest props)
+  "Return a new PLIST with all keys in PROPS dropped."
+  (loop for (options value) on plist by #'cddr
+        append (unless (member options props)
+                 (list options value))))

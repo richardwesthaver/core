@@ -30,4 +30,12 @@
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
 The core is a deeply opinionated development environment built for
-Lisp hackers.
+Lisp hackers. It is based on /non-portable/ Common Lisp and no
+guarantees are made with respect to compatibility with other packages.
+
+To successfully bootstrap the core you must have the following
+dependencies accessible to ASDF:
+- cl-ppcre
+- ironclad
+- cl-plus-ssl (for now)
+- swank (optional)

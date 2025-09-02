@@ -48,7 +48,7 @@
   (:documentation "A Worker which stores an additional priority-queue of TASKS."))
 
 ;;; Task
-(defkernel task (kernel-object)
+(defkernel task ()
   ((state :initform nil :initarg :state :accessor task-state))
   (:documentation "This object represents a single unit of work to be done in a single thread by
 some worker. Tasks are typically distributed from the pool, but workers may
