@@ -21,7 +21,7 @@
    "Error signaled when a kernel object is invalid."))
 
 (defvar *kernel* nil
-  "The current kernel, or nil.")
+  "The current kernel.")
 
 (defclass kernel-class (sb-mop:funcallable-standard-class)
   ()

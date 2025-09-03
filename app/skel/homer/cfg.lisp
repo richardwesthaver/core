@@ -6,7 +6,7 @@
 (in-package :skel/homer/core)
 
 (defconfig home-config (ast id)
-  ((user :initform *user* :initarg :user :type string)
+  ((user :initform (current-user) :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
    (src :initform nil :initarg :src :type (or null pathname vc-repo))
    (skel :initform (load-user-skelrc) :initarg :skel :type (or null pathname sk-config))

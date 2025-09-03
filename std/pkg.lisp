@@ -1064,6 +1064,8 @@
   (:import-from :std/macs :if-let :eval-always)
   (:import-from :std/list :deletef)
   (:export
+   :limiter-lock :limiter-count
+   :alive
    :*default-spint-count*
    :make-ephemeral-thread
    :*all-threads*
@@ -1145,6 +1147,7 @@
    :make-worker*
    :make-worker :designate-oracle
    :make-workers
+   :unwrap-result
    :condition-wait*
    :sync-message
    :with-sync-message
@@ -1172,7 +1175,7 @@
    :pmapcon :pmapcan :pmapc :pmapl
    :pmaplist :pmaplist-into :pmapcar :pmap
    :pmap-into :preduce-partial :preduce :pfind
-   :pfind-if :pfind-if-not))
+   :pfind-if :pfind-if-not :*defpuns* :declaim-defpun))
 
 (defpkg :std/task
   (:use :cl :std/thread :std/meta :std/seq :std/prim :std/async)
@@ -1266,7 +1269,7 @@
    :+tcsaflush+
    :+tcsadrain+
    :+opost+
-   :*user*
+   :current-user
    :*xdg-user-dirs*
    :xdg-user-dir
    :xdg-base-dir

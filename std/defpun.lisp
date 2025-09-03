@@ -87,8 +87,8 @@
       (unwind-protect (msetq ,temp-vars (std/thread::with-work-context ,form))
         (locally (declare (optimize (speed 3) (safety 0)))
           (std/thread::update-limiter-count (the thread-pool ,pool) 1))
-       (values))
-    ,pool)))
+       (values)))
+    ,pool))
 
 (defmacro spawn-work (pool spawn-binding-data)
   (check-type pool symbol)
@@ -116,7 +116,7 @@
   ;; a wrapped error would only appear as the primary return value
   `(locally (declare (optimize (speed 3) (safety 3)))
      ,@(loop for temp-var in (primary-temp-vars binding-data)
-             collect `(when (typep ,temp-var 'wrapped-error)
+             collect `(when (typep ,temp-var 'std/condition:wrapped-error)
                         (unwrap-result ,temp-var)))))
 
 (defun make-temp-var (var)
@@ -149,7 +149,7 @@
     `(block ,top
        (tagbody
           (when ,predicate1
-            (with-spin-lock-held (,lock)
+            (with-mutex (,lock)
               (if ,predicate2
                   ,succeed/lock
                   (go ,fail-tag)))
@@ -172,6 +172,32 @@
     (values (reverse mv-bindings)
             (reverse null-bindings))))
 
+(defmacro bind ((vars form) &body body)
+  (if (= 1 (length vars))
+      `(let ((,(first vars) ,form))
+         ,@body)
+      `(multiple-value-bind ,vars ,form
+         ,@body)))
+
+(defmacro %slet (binding-data full-binding-data null-bindings body)
+  (if binding-data
+      (destructuring-bind
+            ((vars temp-vars form) &rest more-binding-data) binding-data
+        (declare (ignore vars))
+        `(bind (,temp-vars ,form)
+           (%slet ,more-binding-data ,full-binding-data ,null-bindings ,body)))
+      `(let (,@null-bindings
+             ,@(loop for (vars temp-vars nil) in full-binding-data
+                     append (mapcar #'list vars temp-vars)))
+         ,@body)))
+
+(defmacro slet (bindings &body body)
+  "`slet' (serial let) is the non-parallel counterpart to `plet'.
+
+The syntax of `slet' matches that of `plet', which includes the
+ability to bind multiple values."
+  (multiple-value-bind (binding-data null-bindings) (make-binding-data bindings)
+    `(%slet ,binding-data ,binding-data ,null-bindings ,body)))
 (defmacro %%%plet (pool predicate spawn-count bindings body)
   ;; Putting the body code into a shared dynamic-extent function
   ;; caused some slowdown, so reluctantly duplicate the body.
@@ -179,7 +205,7 @@
      :lock            (limiter-lock (the thread-pool ,pool))
      :predicate1      ,predicate
      :predicate2      (alive ,pool)
-     :succeed/lock    (update-limiter-count/no-lock ,pool ,(- spawn-count))
+     :succeed/lock    (std/thread::update-limiter-count* ,pool ,(- spawn-count))
      :succeed/no-lock (%%%%plet ,pool ,bindings ,body)
      :fail            (slet ,bindings ,@body)))
 
@@ -762,9 +788,9 @@ evaluate to true, then the result of any form may be returned."
     `(block ,done
        (with-forms-submitted ,forms
          (let ((,result nil))
-           (receive-cancelables ,next-result
-             (unless (setf ,result ,next-result)
-               (return-from ,done nil)))
+           (receive-cancelables (lambda (,next-result)
+                                  (unless (setf ,result ,next-result)
+                                    (return-from ,done nil))))
            ,result)))))
 
 (defmacro por (&rest forms)
@@ -774,9 +800,9 @@ evaluates to non-nil may be returned."
   (with-gensyms (done result)
     `(block ,done
        (with-forms-submitted ,forms
-         (receive-cancelables ,result
-           (when ,result
-             (return-from ,done ,result)))
+         (receive-cancelables (lambda (,result)
+                                (when ,result
+                                  (return-from ,done ,result))))
          nil))))
 
 (defun pcount-if (predicate sequence &key from-end (start 0) end key parts)
@@ -987,7 +1013,7 @@ Default is (kernel-worker-count)."
 (defconstant +checked-key+ 'checked-key)
 (defconstant +unchecked-key+ 'unchecked-key)
 
-(defvar *defpun-names* nil)
+(defvar *defpuns* nil)
 
 (defun symbolicate/package (package &rest string-designators)
   "Concatenate `string-designators' then intern the result into `package'."
@@ -1005,7 +1031,7 @@ Default is (kernel-worker-count)."
   (sb-int:symbolicate (package-name (symbol-package name)) '#:%%%%.defpun. name))
 
 (defun register-name (name)
-  (pushnew name *defpun-names*))
+  (pushnew name *defpuns*))
 
 (defun register-fn (name)
   (setf (get name +checked-key+) (symbol-function name))
@@ -1029,11 +1055,11 @@ Default is (kernel-worker-count)."
            (valid-registered-fn-p name))))
 
 (defun delete-stale-registrations ()
-  (setf *defpun-names*
-        (remove-if-not #'valid-registered-name-p *defpun-names*)))
+  (setf *defpuns*
+        (remove-if-not #'valid-registered-name-p *defpuns*)))
 
 (defun registered-macrolets (pool)
-  (loop for name in *defpun-names*
+  (loop for name in *defpuns*
         collect `(,name (&rest args)
                    `(,',(unchecked-name name) ,',pool ,@args))))
 
@@ -1048,7 +1074,7 @@ Default is (kernel-worker-count)."
 (defun delete-registered-names (names)
   ;; This is used outside of the defpun macro.
   (with-mutex (*defpun-registration-lock*)
-    (setf *defpun-names* (set-difference *defpun-names* names))))
+    (setf *defpuns* (set-difference *defpuns* names))))
 
 (defmacro with-parsed-body ((body declares &optional docstring) &body own-body)
   "Pop docstring and declarations off `body' and assign them to the

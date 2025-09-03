@@ -215,6 +215,7 @@
    (with-sbcl (:noinform t :quit t :input t)
     (let ((sb-ext:*block-compile-default* t))
      (pushnew 'asdf::clear-configuration *save-hooks*)
+     (setf asdf:*central-registry* nil)
      (asdf:make :bin/core)))
    (move-file "bin/core" ".stash/core"))
   (:compile () (compile-lisp :core :force t :verbose t))
@@ -262,7 +263,7 @@
                    :if-does-not-exist :create)
    (dolist (s (list-all-symbols))
     (print s f))))
- (dist () 
+ (dist ()
   (ensure-directories-exist ".stash/tmp/core/" :verbose t)
   (with-directory ".stash"
    (mapc (lambda (x) (move-file x (merge-pathnames (file-namestring x) "tmp/core/"))) (directory "*.so"))

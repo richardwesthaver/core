@@ -1360,9 +1360,9 @@ Calling `broadcast-work' from inside a worker is an error."
 (defun call-with-temp-pool (fn &rest args)
   ;; ensure that we end the same pool we create
   (let ((pool (apply #'make-thread-pool args)))
-    (let ((*thread-pool* pool))
-      (funcall fn))
-    (stop-thread-pool pool)))
+    (prog1 (let ((*thread-pool* pool))
+             (funcall fn))
+      (stop-thread-pool pool))))
 
 (defmacro with-temp-pool ((&rest make-pool-args) &body body)
   "Create a temporary pool for the duration of `body', ensuring that

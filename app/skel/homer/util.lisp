@@ -6,8 +6,7 @@
 (in-package :skel/homer/core)
 
 (defun homer-user-init ()
-  (setq *user* (or (sb-posix:getenv "USER") "root")
-        *user-homerc* (merge-homedir-pathnames ".homerc")
+  (setq *user-homerc* (merge-homedir-pathnames ".homerc")
         *log-level* :info))
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))

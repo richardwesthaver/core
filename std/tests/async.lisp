@@ -64,3 +64,23 @@
       ;; (isevery (lambda (x) (= x 4)) (mapcar #'await futures))
       )))
       
+(defpun async-test-foo ()
+  "An asynchronous test function."
+  (plet-if #'numberp ((a 1) (b 1))
+           (is= 2 (+ a b))))
+
+(deftest defpuns ()
+  (with-temp-pool (2)
+    (async-test-foo)))
+
+(deftest cognates ()
+  (with-temp-pool ((num-cpus))
+    (is= 10 (preduce '+ #(1 2 3 4)))
+    (is (por nil nil nil t))
+    (isnt (pand t 1 #() 'foo nil))
+    (is= 99 (pfind 99 (iota 100)))
+    (is= 14 (pmap-reduce #'1+ #'+ #(1 2 3 4)))
+    (is= 1 (aref (pmap 'vector #'1+ '(0 0)) 0))
+    ;; FIX 2025-09-02: pquantifier
+    ;; (psome #'atom '(1) '(2) '(3) '(4))
+    ))

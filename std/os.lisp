@@ -10,8 +10,9 @@
 (in-package :std/os)
 (require 'sb-posix)
 
-(defparameter *user* (sb-posix:getenv "USER")
-  "The name of the currently logged-in user.")
+(defun current-user () 
+  "The name of the currently logged-in user."
+  (sb-posix::getenv "USER"))
 
 (defun sudo-p ()
   "Return T if effective user is root."

@@ -188,7 +188,7 @@
   (make-instance 'sk-system-config))
 
 (defclass sk-user-config (sk-config sk-meta)
-  ((user :initarg :user :type string :accessor sk-user :initform *user*)
+  ((user :initarg :user :type string :accessor sk-user :initform (current-user))
    (name :initarg :name :type string :accessor name)
    (email :initarg :email :type string :accessor sk-email))
   (:documentation "User configuration object, typically written to ~/.skelrc."))

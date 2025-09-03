@@ -338,6 +338,7 @@ function: '(ql:quickload :clouseau)'."
   (defpkg (as defpackage))
   (blasfunc 2)
   (deferror (as define-condition))
+  (plet (as let))
   (defwarning (as define-condition))
   (make-db (as make-instance))
   (make-palette (as defpackage))
