@@ -138,7 +138,7 @@
    :org-graph-schema :*org-graph-schema* :*org-graph-db-directory* :init-org-graph-db 
    :org-graph-db :*org-graph-file* :*org-id-locations-file* :*org-graph*
    :org-graph-node :org-graph-edge :org-graph-extract-files :close-org-graph-db
-   :open-org-graph-db :og-get :org-graph-values :org-graph-files-scrape))
+   :open-org-graph-db :og-get :org-graph-values))
 
 (defpackage :organ/cli
   (:use :cl :std :organ :cli :clap)

@@ -12,7 +12,7 @@
    (contents :initarg :contents :initform nil :type (or null (vector (or org-section org-heading))) 
              :accessor org-contents)))
 
-(defmethod org-create ((type (eql :header)) &rest initargs &key &allow-other-keys)
+(defmethod org-create ((type (eql :heading)) &rest initargs &key &allow-other-keys)
   (apply #'make-instance (sym-to-org-class-name type) initargs))
 
 ;; TODO 2024-03-17: fix org-parse-planning-properties -- hangs

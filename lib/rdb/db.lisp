@@ -286,8 +286,8 @@ extractor."
              (setf (aref (columns self) (position found (columns self))) c)
              (vector-push-extend c (columns self)))))
 
-(defmethod backfill-opts ((self rdb-database) &key)
-  (backfill-opts (db-opts self)))
+(defmethod backfill-opts ((self rdb-database) &key (full t))
+  (backfill-opts (db-opts self) :full full))
 
 (defmethod reset ((self rdb-database) &key (columns t) (opts t))
   (when columns 

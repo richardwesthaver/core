@@ -59,9 +59,9 @@
 (defclass org-graph (directed-graph) ())
 
 (defmethod read-ast ((fmt (eql :org-graph)) stream &key)
-  (let* ((graph (make-instance 'org-graph))
-         (ast (read stream))
-         (nodes (mapcar (lambda (x) (add-node graph (wrap-node x))) (getf ast :nodes)))
+  (let* ((ast (read stream))
+         (nodes (map 'simple-vector 'wrap-node (getf ast :nodes)))
+         (graph (make-instance 'org-graph :nodes nodes))
          (edges (mapcar (lambda (x) (add-edge graph (wrap-edge x))) (getf ast :edges))))
     (values graph nodes edges)))
 
@@ -77,7 +77,8 @@
   (multiple-value-bind (graph nodes edges) (read-org-graph-file)
     (setf *org-graph* graph
           *org-graph-nodes* (make-array (length nodes) :initial-contents nodes :adjustable nil)
-          *org-graph-edges* (make-array (length edges) :initial-contents edges :adjustable nil))))
+          *org-graph-edges* (make-array (length edges) :initial-contents edges :adjustable nil))
+    graph))
 
 (defclass org-graph-node (vertex) 
   ((name :initarg :name :accessor name) 
@@ -125,7 +126,7 @@
 
 (defun org-graph-extract-files (&optional (graph *org-graph*))
   (let ((ret))
-    (dolist (n (remove-duplicates (nodes graph) :test 'string= :key 'path) ret)
+    (std/async::dosequence (n (remove-duplicates (nodes graph) :test 'string= :key 'path) ret)
       (push (wrap (make-org-graph-file) (probe-file (path n))) ret))))
 
 (defmethod id ((self org-graph-file))
@@ -177,7 +178,7 @@
 		 :opts (default-rdb-opts))
    *org-graph-schema*))
 
-(defvar *org-graph-db* nil)
+(defvar *org-graph-db* (make-db :rdb :path *org-graph-db-directory*))
 
 (defun close-org-graph-db ()
   (when (db-open-p *org-graph-db*)
@@ -201,7 +202,7 @@
   (if (and *org-graph-db* (db-open-p *org-graph-db*))
       *org-graph-db*
       (progn
-	(load-opts *org-graph-db*)
+	(rdb:load-opts *org-graph-db*)
 	(open-columns* *org-graph-db*))))
 
 (defun destroy-org-graph-db ()
@@ -223,26 +224,33 @@
 
 ;;; Files
 (defun org-graph-file-search (path &rest ids)
-  "Return a list of org headings corresponding to IDS in PATH."
+  "Return a list of org headings corresponding to IDS in PATH. If no IDS are
+provided then all are returned."
   ;; first get an org-document and list of headings
   (let* ((doc (organ:org-parse :document path))
 	 (headings (organ:doc-tree doc))
-	 (ret))
+	 (ret)
+         (ids-p (when ids t)))
     ;; map over IDs, searching for matches
     (loop for h across headings
 	  if (typep h 'organ:org-heading)
 	  do
-	     (push
-	      (when-let* ((prop (organ::org-properties h))
-			  (id (find (print (value (find "ID" (print (organ:org-contents prop))
-							:key (lambda (x) (string-upcase (name x))))))
-				    ids
-				    :test 'equal)))
-		(removef ids id :test 'equal)
-		h)
-	      ret)
+	     (when-let* ((prop (organ::org-properties h))
+			 (id (find "ID" (organ:org-contents prop)
+                                   :key (lambda (x) (string-upcase (name x)))
+                                   :test 'equal)))
+               (if ids-p
+                   (when-let ((found (find (value id) ids :test 'equal)))
+		     (removef ids found :test 'equal)
+                     (push h ret))
+                   (push h ret)))
 	  finally (return ret))))
 
 ;;; Serde
 (defmethod serialize ((self org-graph) format &key stream)
   (serialize (build-ast self) format :stream stream))
+
+(defmethod serialize ((self org-graph) (format (eql :dot)) &key path)
+  (dat/dot:graph-to-dot-file self path :attributes '((layout . "sfdp") (beautify . "true"))))
+
+

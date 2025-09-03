@@ -135,8 +135,10 @@ saved."
 (deferror invalid-database (db-condition invalid-argument) ()
   (:documentation "Error signaled when an invalid DB is detected.")
   (:default-initargs
-   :reason "Object is not a database")
-  (:auto t))
+   :reason "Object is not a database"))
+
+(defun invalid-database (item)
+  (error 'invalid-database :item item))
 
 ;; TODO 2025-08-12: call-with
 ;; (defun call-with-db (db fn &rest args))

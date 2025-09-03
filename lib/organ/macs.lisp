@@ -1,6 +1,7 @@
 (in-package :organ)
 
 (defmacro define-org-element (name slots &key documentation greater lesser)
+  "Define a new org-element class."
   (let ((docstring (or documentation (format nil "Org ~a element class." name)))
         (sname (sym-to-org-class-name name)))
     (eval-always
@@ -15,6 +16,7 @@
          (export '(,sname) :organ)))))
 
 (defmacro define-org-object (name slots &key include documentation)
+  "Define a new org-object class."
   (let ((docstring (or documentation (format nil "Org ~a object structure." name)))
         (obj (sym-to-org-class-name name)))
     `(progn
@@ -25,7 +27,8 @@
 
 ;; (macroexpand '(define-org-parser (headline) (print headline)))
 (defmacro define-org-parser ((name &key (from 'string)) &body body)
-  "Define an ORG-PARSE method specializer for org type specifier NAME with body BODY."
+  "Define an ORG-PARSE method specializer for org type specifier NAME with body
+BODY."
   (let ((elt (sb-int:keywordicate name)))
     `(progn
        (defmethod org-parse ((type (eql ,elt)) (input ,from))

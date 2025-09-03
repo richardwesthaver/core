@@ -76,9 +76,19 @@ _underline_
 (deftest org-heading ()
   (headline-ok (org-headline (org-parse :heading *test-org-heading*))))
 
-(deftest org-section ())
+(deftest org-section ()
+  (istype 'organ::org-section (org-parse :section "foo")))
 
-(deftest org-document ())
+(deftest org-document ()
+  (istype 'organ::org-document (org-parse :document *test-org-heading*)))
 
 (deftest org-lines ()
   (is (vectorp (read-org-lines-from-string *test-org-heading*))))
+
+(deftest org-planning ()
+  ;; FIX 2025-09-03: should return two separate planning lines in contents
+  (let ((multi (org-parse :planning "SCHEDULED: <2025-02-27 Thu> DEADLINE: <2025-03-03 Mon>")))
+    (istype 'org-planning multi)
+    (isequal "SCHEDULED"
+             (organ::org-planning-line-keyword
+              (aref (org-contents (org-parse :planning "SCHEDULED: <2025-06-17 Tue>")) 0)))))

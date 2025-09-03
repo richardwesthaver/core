@@ -19,16 +19,23 @@
 (defmethod org-create ((type (eql :document)) &rest initargs)
   (apply #'make-instance (sym-to-org-class-name type) initargs))
 
+(defmethod org-parse ((type (eql :document)) (input stream))
+  (let ((res (org-create type)))
+    (setf (doc-meta res) (org-parse :meta input)
+          (doc-tree res)
+          (coerce
+           (loop for c = (peek-char nil input nil nil)
+                 while (and c (char= c #\*))
+                 collect (org-parse :heading input))
+           '(vector org-heading)))
+    res))
+
 (defmethod org-parse ((type (eql :document)) (input pathname))
   (if (probe-file input)
-      (let ((res (org-create type)))
-        (with-open-file (fstream input)
-          (setf (doc-meta res) (org-parse :meta fstream)
-                (doc-tree res)
-                (coerce
-                 (loop for c = (peek-char nil fstream nil nil)
-                       while (and c (char= c #\*))
-                       collect (org-parse :heading fstream))
-                 '(vector org-heading)))
-          res))
+      (with-open-file (fstream input)
+        (org-parse :document fstream))
       (org-file-missing input)))
+
+(defmethod org-parse ((type (eql :document)) (input string))
+  (with-input-from-string (s input)
+    (org-parse :document s)))

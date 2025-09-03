@@ -999,11 +999,10 @@ table.")
       (setf (value name-entry) value
             (data name-entry) octets))))
 
-(defgeneric value (name-entry)
-  (:method (name-entry)
-    (unless (slot-boundp name-entry 'value)
-      (initialize-name-entry name-entry))
-    (%value name-entry)))
+(defmethod value ((name-entry name-entry))
+  (unless (slot-boundp name-entry 'value)
+    (initialize-name-entry name-entry))
+  (%value name-entry))
 
 (defun load-name-info (loader)
   (seek-to-table "name" loader)
