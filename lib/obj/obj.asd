@@ -56,6 +56,7 @@
                (:file "config")
                (:file "plan")
                (:file "schema")
+               (:file "project")
                (:file "db")
                (:file "secret")
                (:file "store")

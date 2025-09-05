@@ -1,6 +1,6 @@
 ;;; cli/clap/ast.lisp --- Clap AST
 
-;; 
+;; Internal SXP representation of CLI objects
 
 ;;; Code:
 (in-package :cli/clap/ast)

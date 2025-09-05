@@ -179,7 +179,7 @@
                         (write-ast v stream :fmt fmt)
                         (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
                     (write-char #\newline st)))
-         (skel-io-error)))
+         (invalid-skel-ast (ast self))))
     (:canonical (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
 (defclass sk-system-config (sk-config sk-meta) ())

@@ -427,6 +427,12 @@
    #:schema-from-columns
    #:df-plan))
 
+(defpkg :obj/project
+  (:nicknames :project)
+  (:use :cl :std :id :schema :plan :config :ast)
+  (:export :project :project-config :make-project
+   :*default-project-class*))
+
 (defpkg :obj/db
   (:nicknames :db)
   (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :plan :config)

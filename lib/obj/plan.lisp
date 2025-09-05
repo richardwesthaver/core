@@ -1,8 +1,9 @@
-;;; plan.lisp --- Generic Plans
+;;; plan.lisp --- Planning Protocols
 
-;; This package provides base classes for various 'Plans' such as Query Plans
-;; in OBJ/QUERY and other various Execution Contexts throughout the core.
+;; This package provides base classes for various Planning Protocols such as
+;; Query Plans in OBJ/QUERY.
 
+;;; Commentary:
 ;; ref: https://github.com/postgres/postgres/tree/master/src/backend/executor
 
 #| postgres query processing
@@ -98,6 +99,7 @@ current state of an action's progress:
 
 ;;;; High-level interface: make-plan, perform-plan
 |#
+
 ;;; Code:
 (in-package :obj/plan)
 
@@ -109,10 +111,6 @@ current state of an action's progress:
 (defclass physical-plan (plan) ())
 
 (defclass planner () ())
-
-(defgeneric plan-state (self))
-(defgeneric (setf plan-state) (new-state self))
-(defgeneric plan-nodes (self))
 
 (defgeneric make-physical-plan (plan)
   (:documentation "Create a physical plan from logical plan."))

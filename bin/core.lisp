@@ -18,4 +18,5 @@
          :userinit (lambda () (merge-homedir-pathnames ".corerc"))
          :default t)))
   (:skel (bin/skel::start-skel))
+  (:homer (bin/homer::start-homer))
   (:mpk (bin/mpk:start-mpk)))
