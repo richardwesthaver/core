@@ -285,8 +285,8 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
       (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
-  (:method ((self symbol) &key default)
-    (multiple-value-bind (val found) (gethash self *system-table*)
+  (:method ((self t) &key default)
+    (multiple-value-bind (val found) (gethash (std/sym:keywordicate self) *system-table*)
       (cond
         (found (values val found))
         ((eql default :error) (simple-system-error "System ~A not found." self))

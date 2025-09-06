@@ -424,7 +424,7 @@
    #:df-col
    #:df
    #:data-frame
-   #:data-frame-plan
+   #:df-plan
    #:schema-from-columns
    #:df-plan))
 
@@ -432,7 +432,7 @@
   (:nicknames :project)
   (:use :cl :std :id :schema :plan :config :ast)
   (:export :project :project-config :make-project
-   :*default-project-class*))
+   :*default-project-class* :simple-project))
 
 (defpkg :obj/db
   (:nicknames :db)

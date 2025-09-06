@@ -139,7 +139,7 @@
   (println *opts*))
 
 (defcmd skc-search ()
-  "Search the current project."
+  "Search in the current project."
   (dolist (a *args*)
     (println (sk-search-project a))))
 
