@@ -1,6 +1,6 @@
 ;;; log.asd --- logging system
 (defsystem :log
-  :depends-on (:std :io :obj)
+  :depends-on (:std :io :obj :syslog)
   :serial t
   :components ((:file "pkg")
                (:file "condition")

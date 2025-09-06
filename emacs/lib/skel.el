@@ -257,5 +257,10 @@ project's skelfile, if any. Typically added to
       (push (skel-dir-local--get-variables) dir-locals-class-alist))))
 
 ;; (add-hook 'skel-minor-mode-hook '%skel-dir-local--get-variables)
+
+(defun run-skel-shell ()
+  (interactive)
+  (comint-run "skel" '("shell")))
+
 (provide 'skel)
 ;;; skel.el ends here

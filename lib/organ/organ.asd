@@ -51,6 +51,7 @@
                (:file "section")
                (:file "heading")
                (:file "document")
+               (:file "readtable")
                (:file "graph")
                (:file "cli"))
   :in-order-to ((test-op (test-op :organ/tests))))

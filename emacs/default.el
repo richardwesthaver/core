@@ -337,6 +337,7 @@ function: '(ql:quickload :clouseau)'."
  (:indentation
   (defpkg (as defpackage))
   (blasfunc 2)
+  (org-parse 2)
   (deferror (as define-condition))
   (plet (as let))
   (defwarning (as define-condition))

@@ -13,7 +13,7 @@
 
 ;;  TODO 2023-09-12: Parsing restarts at the *cli-group-separator*
 ;; if present, or stops at EOI.
-(defstruct (cli-node (:constructor make-cli-node (kind form))) kind form)
+(defstruct (cli-node (:constructor make-cli-node (type form))) type form)
 
 (defstruct (cli-ast (:constructor make-cli-ast (ast))) ast)
 

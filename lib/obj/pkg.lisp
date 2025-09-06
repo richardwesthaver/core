@@ -424,7 +424,6 @@
    #:df-col
    #:df
    #:data-frame
-   #:df-plan
    #:schema-from-columns
    #:df-plan))
 

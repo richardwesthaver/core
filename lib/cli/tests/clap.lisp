@@ -6,14 +6,8 @@
 (in-package :cli/tests)
 (in-suite :cli)
 
+;; make sure we don't quit lisp in the middle of a test
 (setf *no-exit* t)
-
-(defcmd flub-thunk ()
-  ;; FIX 2024-10-01: 
-  (println *optc*)
-  (println *argc*)
-  (print *opts*)
-  (print *args*))
 
 (defparameter *test-opts* '((:name "foo" :description "bar" :kind string)
                             (:name "bar" :description "foo" :kind string)))

@@ -77,11 +77,6 @@
 (in-package :q/dql)
 
 ;;; Vars
-
-(declaim (fixnum *lips*))
-(defvar *lips* 0
-  "Count of logical inferences performed.")
-
 (defvar *leash-limit* nil)
 
 (defvar *leash-indent-wrap* 20

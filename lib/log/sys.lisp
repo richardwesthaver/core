@@ -10,7 +10,10 @@
 ;;; Code:
 (in-package :log)
 
+;;; Journald interface
+
+
+;;; Objects
 (defclass journal-sink (sink) ())
 (defclass syslog-sink (sink) ())
-
 (defclass sys-logger (logger) ())

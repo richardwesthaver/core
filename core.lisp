@@ -4,28 +4,18 @@
 
 ;;; Code:
 (pkg:defpkg :core 
-  (:use :cl)
-  (:use-reexport :std :log :io :obj :net :cry :parse :dat :cl-user :sb-ext :sb-debug))
+  (:use-reexport :std-lisp :log :io :obj :net :cry :parse :dat :sb-ext :sb-debug :math))
 (in-package :core)
 (pushnew :core *features*)
 
-;; (defun exclamation-mark-reader (stream inchar)
-;;   (declare (ignore inchar))
-;;   (read stream))
-
-;; (defun question-mark-reader (stream inchar)
-;;   "Reader function for the #\? macro character in the :CORE readtable. Processes
-;; a query from input STREAM."
-;;   (declare (ignore inchar)))
-
 (defreadtable :core
-  (:merge :modern :std :shell :graph :tensor))
+  (:merge :modern :std :shell :graph :tensor :q))
 
 (define-lisp-package :core)
 
 (pkg:defpkg :core/user 
   (:nicknames :user)
-  (:use :cl :cl-user :std :std-user :core)
+  (:use :std-lisp :core)
   (:import-from :tree-sitter :load-tree-sitter :load-tree-sitter-alien :load-tree-sitter-c)
   (:import-from :cli/tools/sbcl :with-sbcl))
 (in-package :user)

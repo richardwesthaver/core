@@ -490,14 +490,11 @@ DEFCLASS."
 
 ;;; Dataframes
 ;; minimal data-frame abstraction. methods are prefixed with 'DF-'.
-(defgeneric df-plan (df)
-  (:documentation "Return the logical plan associated with this data-frame."))
-(defgeneric (setf df-plan) (new df))
 (defgeneric df (self &rest args &key &allow-other-keys))
 (defgeneric df-col (self))
 
 (defstruct (data-frame (:constructor make-df (&optional plan))
-                       (:conc-name df))
+                       (:conc-name df-))
   (plan (make-instance 'logical-plan) :type logical-plan))
 
 (defaccessor schema ((self data-frame)) (schema (df-plan self)))

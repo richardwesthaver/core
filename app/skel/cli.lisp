@@ -139,12 +139,10 @@
   (println *opts*))
 
 (defcmd skc-search ()
-  "Search in the current project."
   (dolist (a *args*)
     (println (sk-search-project a))))
 
 (defcmd skc-start ()
-  "Start a service."
   (dolist (a *args*)
     (println (srv:make-service (keywordicate (string-upcase a))))))
 

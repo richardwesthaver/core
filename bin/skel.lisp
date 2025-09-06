@@ -18,17 +18,17 @@
 (defcmd skc-vc* ()
   (with-cli (*vc-cli* :args (cdr (args)))
     (with-current-vc-root (*repo* *default-pathname-defaults*)
-      (do-opts *vc-cli*)
+      ;; (do-opts *vc-cli*)
       (do-cmd *vc-cli*))))
 
 (defcmd skc-pk* ()
   (with-cli (*packy-cli* :args (cdr (args)))
-    (do-opts *packy-cli*)
+    ;; (do-opts *packy-cli*)
     (do-cmd *packy-cli*)))
 
 (defcmd skc-kr* ()
   (with-cli (*krypt-cli* :args (cdr (args)))
-    (do-opts *krypt-cli*)
+    ;; (do-opts *krypt-cli*)
     (blake3::load-blake3)
     (do-cmd *krypt-cli*)))
 

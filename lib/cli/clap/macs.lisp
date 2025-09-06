@@ -151,6 +151,8 @@ evaluation of BODY."
 
 #+nil (parse-cli-lambda-list '(arg1 arg2 &optional (arg3 "foo") &rest rest &opt opt1 opt2 &key key1 key2))
 
+;; TODO 2025-09-05: Luke.. use the lambda-list, Luke..
+
 ;; DEFCMD always returns a function of two argument ARGS and OPTS - the
 ;; cli-lambda-list is applied to the BODY instead of closing over the
 ;; function.
@@ -159,16 +161,19 @@ evaluation of BODY."
 specialized lambda-list with the following keywords:
 
 - &OPTIONAL is an optional positional argument in ARGS
-- &REST specifies the remainder of the ARGS passed at the CLI
-- &OPT specifies a set of cli options
-- &KEY specifies a set of cli keywords
+- &OPT specifies a set of cli options (--foo val, -f)
+- &KEY specifies a set of cli keywords (:bar val)
+- &REST specifies the remainder of the ARGS passed to the CLI after all args,
+  options, and keywords
 
-CLI-LAMBDA-LIST is a list which automatically selects and binds the values of
-parsed CLI-OPTs to a name via SYMBOL-MACROLET. The forms accepted are the same
-as the SLOTS args to WITH-SLOTS - the CAR is used as the name of the local
-symbol binding and the CDR is the actual name of the CLI-OPT.
+CLI-LAMBDA-LIST is a list which automatically destructures and binds the
+values of parsed CLI objects for the duration of BODY. The forms accepted are
+the same as the SLOTS args to WITH-SLOTS - the CAR is used as the name of the
+local symbol binding and the CDR is the actual name of the CLI-OPT. An atom
+counts as both.
 
-The following special variables are bound for the duration of BODY:
+Additionally, the following special variables are bound for the duration of
+BODY:
 
 - *ARGC* : the count of arguments passed to this command
 - *ARGS* : the actual list of args
@@ -204,6 +209,7 @@ The following special variables are bound for the duration of BODY:
 ;; DEFOPTS are much simpler - they always take a single optional argument and
 ;; have no lambda-list that needs to be applied.
 (defmacro defopt (name &body body)
+  "Define a CLI-OPT."
   (multiple-value-bind (body decl doc-string) (parse-body body :documentation t)
     `(defun ,name (&optional arg)
        ,(let ((%d '(ignorable arg)))
@@ -215,6 +221,7 @@ The following special variables are bound for the duration of BODY:
          ,@body))))
 
 (defmacro defopts (&body body)
+  "Define multiple CLI-OPTs."
   (unless (null body)
     `(progn ,@(mapcar (lambda (x) `((defopt ,@x))) body))))
 
@@ -223,13 +230,13 @@ The following special variables are bound for the duration of BODY:
 ;;   "Generate and return a function based on THUNK suitable for the :thunk
 ;; slot of cli objects with pandoric bindings PVARS.")
 
-(defmacro make-opt-parser (kind-spec &body body)
-  "Return a KIND-opt-parser function based on KIND-SPEC which is either a
-symbol from *CLI-OPT-KINDS* or a list, and optional BODY which
+(defmacro make-opt-parser (spec &body body)
+  "Return a TYPE-opt-parser function based on SPEC which is either a
+symbol from *CLI-OPT-TYPES* or a list, and optional BODY which
 is a list of handlers for the opt-val."
-  (let* ((kind (if (consp kind-spec) (car kind-spec) kind-spec))
-         (super (when (consp kind-spec) (cadr kind-spec)))
-         (fn-name (symbolicate 'parse- kind '-opt)))
+  (let* ((type (if (consp spec) (car spec) spec))
+         (super (when (consp spec) (cadr spec)))
+         (fn-name (symbolicate 'parse- type '-opt)))
     ;; thread em
     (let ((fn1 (unless (null super) (symbolicate "PARSE-" super "-OPT"))))
       `(defun ,fn-name (&optional arg)

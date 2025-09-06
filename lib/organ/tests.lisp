@@ -56,10 +56,6 @@ _underline_
   ;; should return vector of ORG-OBJECTs
   (is (typep (org-contents (org-parse :paragraph *test-org-lines*)) 'vector)))
 
-(deftest org-minimal ())
-
-(deftest org-standard ())
-
 (defun headline-ok (hl)
   (is
    (and

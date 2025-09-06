@@ -10,7 +10,7 @@
 (defpkg :cli/clap/vars
   (:use :cl)
   (:export :*cli-group-separator* :*no-exit* :*default-cli-def*
-   :*default-cli-class* :*cli-opt-kinds* :*cli* :*opts*
+   :*default-cli-class* :*cli-opt-types* :*cli* :*opts*
    :*args* :*argc* :*arg* :*optc*
    :*cli-package-table*
    :*no-debug*))
@@ -18,7 +18,7 @@
 (defpkg :cli/clap/util
   (:use :cl :std :log :sb-ext :cli/clap/vars)
   (:export :args :arg0 :long-opt-p
-   :short-opt-p :group-opt-p :opt-string-prefix-eq :cli-opt-kind-p
+   :short-opt-p :group-opt-p :opt-string-prefix-eq :cli-opt-type-p
    :long-opt-has-eq-p
    :opt-keyword-p
    :short-opt-has-eq-p
@@ -51,7 +51,7 @@
 (defpkg :cli/clap/ast
   (:use :cl :std :log :obj/ast)
   (:export :cli-node :make-cli-node :cli-ast
-   :make-cli-ast :cli-node-kind :cli-node-form))
+   :make-cli-ast :cli-node-type :cli-node-form))
 
 (defpkg :cli/clap/obj
   (:use :cl :std :log

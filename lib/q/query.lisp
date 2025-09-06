@@ -484,10 +484,8 @@
   (make-instance 'max-accumulator))
 
 ;;; Physical Plan
-(defgeneric execute (self)
-  (:documentation "Execute the PHYSICAL-QUERY-PLAN represented by object SELF.")
-  (:method ((self data-frame))
-    (execute (df-plan self))))
+(defmethod exec ((self data-frame))
+  (exec (df-plan self)))
 
 (defclass scan-exec (physical-query-plan)
   ((data-source :type data-source :initarg :data-source)
@@ -496,14 +494,14 @@
 ;; (defmethod schema ((self scan-exec))
 ;;   (select (schema (slot-value self 'data-source)) (slot-value self 'projection)))
 
-;; (defmethod execute ((self scan-exec))
+;; (defmethod exec ((self scan-exec))
 ;;   (scan-data (slot-value self 'data-source) (slot-value self 'projection)))
 
 (defclass projection-exec (physical-query-plan)
   ((input :type physical-query-plan :initarg :input)
    (expr :type (vector physical-expr) :initarg :expr)))
 
-;; (defmethod execute ((self projection-exec))
+;; (defmethod exec ((self projection-exec))
 ;;   (coerce
 ;;    (loop for batch across (fields (execute (slot-value self 'input)))
 ;;          collect (make-record-batch :schema (slot-value self 'schema)
@@ -521,9 +519,9 @@
 ;; (defmethod schema ((self selection-exec))
 ;;   (schema (slot-value self 'input)))
 
-;; (defmethod execute ((self selection-exec))
+;; (defmethod exec ((self selection-exec))
 ;;   (coerce
-;;    (loop for batch across (execute (slot-value self 'input))
+;;    (loop for batch across (exec (slot-value self 'input))
 ;;          with res = (coerce (evaluate (slot-value self 'expr) batch) 'bit-vector)
 ;;          with schema = (schema batch)
 ;;          with count = (column-count (fields (schema batch)))
@@ -545,9 +543,9 @@
    (group-expr :type (vector physical-query-plan) :initarg :group-expr)
    (agg-expr :type (vector aggregate-physical-expression) :initarg :agg-expr)))
 
-;; (defmethod execute ((self hash-aggregate-exec))
+;; (defmethod exec ((self hash-aggregate-exec))
 ;;   (coerce 
-;;    (loop for batch across (execute (slot-value self 'input))
+;;    (loop for batch across (exec (slot-value self 'input))
 ;;          with map = (make-hash-table :test 'equal)
 ;;          with groupkeys = (map 'vector  (lambda (x) (evaluate x batch)) (slot-value self 'group-expr))
 ;;          with aggr-inputs = (map 'vector (lambda (x) (evaluate (slot-value x 'input) batch))
@@ -749,13 +747,13 @@ accumulator."
 (defgeneric register-file (self name path &key type &allow-other-keys)
   (:documentation "Register a DATA-SOURCE contained in a file of type TYPE at PATH."))
 
-(defgeneric execute* (self df)
-  (:documentation "Execute the DATA-FRAME DF in CONTEXT. This is the stateful version of EXECUTE.")
+(defgeneric execute (self df)
+  (:documentation "Execute the DATA-FRAME DF given context SELF.")
   (:method ((self execution-context) (df data-frame))
-    (declare (ignore self))
-    (execute df)))
+    (declare (ignorable self))
+    (exec df)))
 
-(defmethod execute ((self logical-query-plan))
-  (execute
+(defmethod exec ((self logical-query-plan))
+  (exec
    (make-physical-plan
     (optimize-query (make-instance 'projection-pushdown-optimizer) self))))

@@ -12,18 +12,18 @@
   (deferror clap-simple-error (simple-error clap-error) () (:auto t))
   (deferror clap-unknown-argument (clap-error unknown-argument) ())
   (deferror clap-missing-argument (clap-error missing-argument)
-      ((kind :initarg :kind :initform nil)))
+      ((type :initarg :type :initform nil)))
   (deferror clap-invalid-argument (clap-error invalid-argument) ())
   (defwarning clap-simple-warning (simple-warning clap-warning) () (:auto t)))
 
-(defun clap-unknown-argument (arg kind)
-  (error 'clap-unknown-argument :name arg :kind kind))
+(defun clap-unknown-argument (arg type)
+  (error 'clap-unknown-argument :name arg :type type))
 
-(defun clap-missing-argument (arg kind)
-  (error 'clap-missing-argument :item arg :kind kind))
+(defun clap-missing-argument (arg type)
+  (error 'clap-missing-argument :item arg :type type))
 
-(defun clap-invalid-argument (arg &key reason kind)
-  (error 'clap-invalid-argument :name arg :kind kind :reason reason))
+(defun clap-invalid-argument (arg &key reason type)
+  (error 'clap-invalid-argument :name arg :type type :reason reason))
 
 (defgeneric cmds (self))
 (defgeneric opts (self))

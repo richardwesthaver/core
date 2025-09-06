@@ -91,7 +91,6 @@
    :to-field
    :column-name
    :cast-expression
-   :df-plan
    :df-exec
    :execute*
    :register-file
