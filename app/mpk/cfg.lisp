@@ -63,7 +63,7 @@
   "Load a mpkrc configuration from FILE. Defaults to ~/.mpkrc."
   (flet ((%load ()
 	   (with-readtable :shell
-	     (let ((form (sxp:file-read-forms file)))
+	     (let ((form (std:file-read-forms file)))
 	       (setq *mpk-user-config*
                      (load-ast (make-instance 'mpk-config :ast form :path file :id (sxhash form))))))))
     (if (not init)

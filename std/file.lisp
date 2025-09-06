@@ -26,6 +26,13 @@
   (with-output-to-string (s)
     (write-file-into-stream path s :if-does-not-exist if-does-not-exist :external-format external-format)))
 
+(defun file-read-forms (file)
+  (declare (sb-kernel:pathname-designator file))
+  (std/macs:awhen (the list (uiop:read-file-forms file))
+    (if (> (length std/macs:it) 1)
+        std/macs:it
+        (car std/macs:it))))
+
 (defun tmpfile (size)
   "Create an anonymous temporary file of the given size. Returns a file descriptor."
   (let (done fd pathname)

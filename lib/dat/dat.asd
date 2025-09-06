@@ -6,7 +6,6 @@
   :components ((:file "pkg")
                (:file "condition")
                (:file "asn1")
-               (:file "sxp")
                (:file "dot")
                (:file "csv")
                (:file "json")

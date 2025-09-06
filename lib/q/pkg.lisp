@@ -164,7 +164,7 @@
 
 (defpackage :q/dql
   (:nicknames :dql)
-  (:use :cl :std :q/proto :id :sxp :dat/proto :ast :schema :plan)
+  (:use :cl :std :q/proto :id :dat/proto :ast :schema :plan)
   (:export
    :dql-error
    :dql-data-source

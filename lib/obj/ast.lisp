@@ -25,8 +25,16 @@
 
 (define-condition syntax-condition () ((ast :initarg :ast :initform nil :accessor ast)))
 
-(deferror syntax-error (syntax-condition error) ())
-(defwarning syntax-warning (syntax-condition warning) ())
+(eval-always
+  (deferror syntax-error (syntax-condition error) ())
+  (defwarning syntax-warning (syntax-condition warning) ())
+  (deferror invalid-ast (syntax-error)
+    ((ast :initform nil :initarg :ast :accessor ast))
+    (:report (lambda (c s)
+               (format s "Invalid Skel AST: ~A" (ast c))))))
+
+(defun invalid-ast (ast)
+  (error 'invalid-ast :ast ast))
 
 (defvar *ast* nil)
 
@@ -40,23 +48,6 @@ that it can be GC'd.")
 (deftype form ()
   '(satisfies formp))
 
-(defgeneric build-ast (self &key &allow-other-keys)
-  (:documentation "Build an AST of SELF and store it in the :ast
-slot."))
-
-(defgeneric load-ast (self)
-  (:documentation "Load the object SELF from the :ast slot."))
-
-(defgeneric load-ast* (self context)
-  (:documentation "load the object SELF from the :ast slot with additional CONTEXT."))
-
-(defgeneric wrap (self form)
-  (:documentation "Wrap object FORM using SELF, usually sets the AST slot."))
-
-(defgeneric unwrap (self)
-  (:documentation "Unwrap object SELF, usually returns the AST slot."))
-(defgeneric (setf unwrap) (new self))
-
 ;;; NODE objects
 
 ;; The 'DEF*' macros defined here are from C-MERA.
@@ -68,14 +59,6 @@ slot."))
 (defmacro defnode (name supers slots &rest opts)
   "Define a new subclass of NODE."
   `(defclass! ,name ,(safe-superclasses 'node supers) ,slots ,@opts))
-
-;;; AST Object
-(defclass ast (node)
-  ((ast :initarg :ast :accessor ast)))
-
-(defmethod wrap ((self ast) form) (setf (slot-value self 'ast) form))
-
-(defmethod unwrap ((self ast)) (slot-value self 'ast))
 
 ;;; WRAP-OBJECT/UNWRAP-OBJECT
 (declaim (inline unwrap-object)) ;; inline -200
@@ -126,6 +109,40 @@ example."
   (declare (class class)
            (form form)
            (ignore class form)))
+
+;;; AST Object
+(defclass ast (node)
+  ((ast :initarg :ast :accessor ast)))
+
+(defgeneric build-ast (self &key &allow-other-keys)
+  (:documentation "Build an AST of SELF and store it in the :ast
+slot.")
+  (:method ((self ast) &key (nullp nil) (exclude '(ast id)))
+    (setf (ast self)
+          (unwrap-object self
+                         :slots t
+                         :methods nil
+                         :nullp nullp
+                         :exclude exclude))
+    self))
+
+(defgeneric load-ast (self)
+  (:documentation "Load the object SELF from the :ast slot.")
+  (:method ((self ast))
+    (with-slots (ast) self
+      (sb-int:doplist (k v) ast
+        (setf (slot-value self k) v)))))
+
+(defgeneric load-ast* (self context)
+  (:documentation "load the object SELF from the :ast slot with additional CONTEXT."))
+
+(defgeneric wrap (self form)
+  (:documentation "Wrap object FORM using SELF, usually sets the AST slot.")
+  (:method ((self ast) form) (setf (slot-value self 'ast) form)))
+
+(defgeneric unwrap (self)
+  (:documentation "Unwrap object SELF, usually returns the AST slot.")
+  (:method ((self ast)) (slot-value self 'ast)))
 
 ;;; AST Traversal
 (defclass debug-traverser () ())
@@ -196,13 +213,13 @@ example."
 
 (defclass literal-expr (expr) 
   ((val :initarg :val :accessor val)))
-(defmethod ast ((self literal-expr)) (literal-val self))
+(defmethod ast ((self literal-expr)) (val self))
 (defclass logical-expr (expr) ())
 (defclass physical-expr (expr) ())
 
 (defclass unary-expr (expr)
   ((expr :initarg :expr :accessor expr)))
-(defmethod ast ((self unary-expr)) (literal-val self))
+(defmethod ast ((self unary-expr)) (val self))
 (defclass binary-expr (expr)
   ((lhs :initarg :lhs :accessor lhs)
    (rhs :initarg :rhs :accessor rhs)))
@@ -214,9 +231,42 @@ example."
   `(defclass! ,name ,(safe-superclasses 'stmt supers) ,slots ,@opts))
 
 ;;; Read/Write
-(defgeneric read-ast (self stream &key &allow-other-keys))
+(defgeneric read-ast (self stream)
+  (:method ((self ast) stream)
+    (setf (ast self) (read-lisp-until-end stream)))
+  (:method ((self ast) (stream pathname))
+    (read-ast self (open stream)))
+  (:method ((self ast) (stream string))
+    (read-ast self (open stream))))
 
-(defgeneric write-ast (self stream &key &allow-other-keys))
+(defgeneric write-ast (self stream &key)
+  (:method ((self ast) stream &key pretty case)
+    (with-open-stream (st stream)
+      (flet ((.write (x) (write x :stream st :pretty pretty :case case :readably t :array t :escape t)))
+        (if pretty
+            (loop for (k v . rest) on (ast self)
+                  by #'cddr
+                  do
+                     (.write k)
+                     (write-char #\space st)
+                     (typecase v
+                       (ast (write-ast v st :pretty pretty :case case))
+                       (t (.write v)))
+                     (write-char #\newline st))
+            (.write (ast self))))))
+  (:method ((self ast) (stream pathname) &rest args)
+    (apply 'write-ast self (open stream) args))
+  (:method ((self ast) (stream string) &rest args)
+    (apply 'write-ast self (open stream) args)))
+
+(defun read-ast-string (self str) (with-input-from-string (s str) (read-ast self s)))
+
+(defun write-ast-string (self) 
+  (let ((ast (ast:ast self)))
+    (declare (list ast))
+    (if (> (length ast) 1)
+        (write-to-string ast)
+        (write-to-string (car ast)))))
 
 ;;; Printer
 

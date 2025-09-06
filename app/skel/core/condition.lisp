@@ -16,12 +16,4 @@
 (defun skel-simple-error (fmt &rest args)
   (error 'skel-simple-error :format-control fmt :format-arguments args))
 
-(deferror invalid-skel-ast (skel-syntax-error)
-    ((ast :initform nil :initarg :ast :accessor ast))
-    (:report (lambda (c s)
-               (format s "Invalid Skel AST: ~A" (ast c)))))
-
-(defun invalid-skel-ast (ast)
-  (error 'invalid-skel-ast :ast ast))
-
 (deferror invalid-skel-bind (invalid-argument skel-compile-error) () (:auto t))

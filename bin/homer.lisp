@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :bin/homer
-  (:use :cl :std :log :ast :sxp :rdb :skel :skel/packy :cli :clap :id :skel/krypt :vc :skel/homer :skel/homer/cli))
+  (:use :cl :std :log :ast :rdb :skel :skel/packy :cli :clap :id :skel/krypt :vc :skel/homer :skel/homer/cli))
 
 (in-package :bin/homer)
 

@@ -94,7 +94,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
   (apply 'make-instance class args))
 
 (defmethod load-config ((self (eql :net)) (from t) &key)
-  (apply 'make-config (deserialize from :sxp)))
+  (apply 'make-config (std/file::file-read-forms from)))
 
 ;;; Classes
 (defclass net-response (response) ())

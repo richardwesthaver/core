@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :web/wasm/text
-  (:use :cl :std :dat/proto :dat/sxp))
+  (:use :cl :std :dat/proto))
 
 (defpackage :web/wasm/binary
   (:use :cl :std :dat/proto))

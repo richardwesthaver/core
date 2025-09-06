@@ -62,7 +62,7 @@
    :skel/core/obj :net/udp :net/tcp :obj/id 
    :skel/core/db :net/srv/udp
    :skel/core/log
-   :dat/proto :dat/sxp :dat/json)
+   :dat/proto :dat/json)
   (:export
    #:*skel-client-port-range*
    #:*skel-port*

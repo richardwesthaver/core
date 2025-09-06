@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; Objects <-> SXP <-> JSON
+;; Objects <-> AST <-> JSON
 
 ;; I really have no interest in reading or writing YAML, so instead we'll read
 ;; and write lisp. This package provides the role of Butane.

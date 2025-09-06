@@ -1007,6 +1007,7 @@
    :probe-delete-directory
    :delete-directories
    :read-file
+   :file-read-forms
    :tmpfile
    :dir
    :file

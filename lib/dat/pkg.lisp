@@ -23,18 +23,6 @@
    #:try-get-asn1-string-data
    #:decode-asn1-time))
 
-(defpkg :dat/sxp
-  (:nicknames :sxp)
-  (:use :cl :sb-mop :std :ast)
-  (:import-from :uiop :read-file-forms :slurp-stream-forms :with-output-file)
-  (:import-from :std/named-readtables :defreadtable :in-readtable)
-  (:export
-   :sxp-fmt-designator
-   :sxpp
-   :read-sxp-file :write-sxp-file
-   :read-sxp-string :write-sxp-string
-   :file-read-forms :make-sxp))
-
 (defpkg :dat/dot
   (:nicknames :dot)
   (:use :cl :std :dat/proto :obj/graph)

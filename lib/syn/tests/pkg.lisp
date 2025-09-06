@@ -5,5 +5,4 @@
 (defsuite :syn)
 (in-suite :syn)
 
-(deftest sxp (:skip t))
 (deftest file-headers (:skip t))

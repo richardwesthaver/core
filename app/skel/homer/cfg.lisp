@@ -105,7 +105,7 @@
   (flet ((%load ()
            (with-readtable :shell
              (let ((form
-                     (sxp:file-read-forms file)))
+                     (file-read-forms file)))
                (setq *home-config* (load-ast (make-instance 'home-config :ast form :path file :id (sxhash form))))
                (with-slots (src) *home-config*
                  (if src

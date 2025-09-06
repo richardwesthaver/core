@@ -33,7 +33,7 @@
 
 (define-condition org-id-locations-out-of-sync (simple-error) ())
 
-(defvar *org-graph-file* (merge-pathnames ".emacs.d/graph.sxp" (user-homedir-pathname)))
+(defvar *org-graph-file* (merge-pathnames ".emacs.d/graph.dat" (user-homedir-pathname)))
 (defvar *org-id-locations-file* (merge-pathnames ".emacs.d/.org-id-locations" (user-homedir-pathname)))
 
 ;;; Org IDs
@@ -58,7 +58,7 @@
 
 (defclass org-graph (directed-graph) ())
 
-(defmethod read-ast ((fmt (eql :org-graph)) stream &key)
+(defmethod read-ast ((fmt (eql :org-graph)) stream)
   (let* ((ast (read stream))
          (nodes (map 'simple-vector 'wrap-node (getf ast :nodes)))
          (graph (make-instance 'org-graph :nodes nodes))

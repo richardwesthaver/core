@@ -239,38 +239,21 @@ directory."))
       self)))
 
 ;; obj -> ast
+
+;; need to define a method for SK-PROJECT to add PHASES to the exclusion list.
 (defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id phases)))
   (setf (ast self)
-	(unwrap-object self
-		       :slots t
-		       :methods nil
-		       :nullp nullp
-		       :exclude exclude)))
-
-;; TODO 2023-09-26: This belongs in AST
-(defmethod write-ast ((self sk-project) stream &key (pretty t) (case :downcase) (fmt :pretty))
-  (case fmt
-    (:pretty
-     (if (listp (ast self))
-	 (with-open-stream (st stream)
-	   (loop for (k v . rest) on (ast self)
-		 by #'cddr
-		 unless (or (null v) (null k))
-		 do 
-		    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
-		    (write-char #\space st)
-		    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
-			(write-ast v stream :pretty pretty :case case)
-			(write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
-		    (write-char #\newline st)))
-	 (skel-io-error)))
-    (t (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude))
+  self)
 
 ;; file -> ast
 (defmethod sk-read-file ((self sk-project) path)
   (wrap self (file-read-forms path))
   (setf (path self) (ensure-absolute-pathname path *default-pathname-defaults*))
-  ;; TODO 2024-04-18: make generic
   self)
 
 ;; ast -> file
@@ -330,9 +313,6 @@ directory."))
 (defmethod sk-call ((self sk-project) (arg (eql :load)))
   (loop for c across (sk-components self)
 	collect (sk-load self)))
-
-(defmethod sk-call* ((self sk-project) &rest args)
-  (mapcar (lambda (arg) (sk-call self arg)) args))
 
 (defmethod sk-build ((self sk-project) &key)
   (loop for c across (sk-components self)

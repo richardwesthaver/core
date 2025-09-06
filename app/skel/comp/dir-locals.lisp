@@ -15,5 +15,5 @@
 
 (defmethod sk-load-component ((kind (eql :dir-locals)) (form pathname) &optional (path (project-root)))
   (declare (ignore kind))
-  (sk-new :dir-locals :ast (read-sxp-file (make-pathname :name (namestring form) :type "el"
-                                                         :directory (namestring path)))))
+  (sk-new :dir-locals :ast (file-read-forms (make-pathname :name (namestring form) :type "el"
+                                                           :directory (namestring path)))))

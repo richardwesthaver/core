@@ -54,7 +54,7 @@
   (name (symbol-name (gensym "#")))
   (type t :type (or symbol list)))
 
-(defmethod read-ast ((self field) stream &key)
+(defmethod read-ast ((self field) stream)
   (apply 'make-fields (read stream))
   self)
 
@@ -163,7 +163,7 @@ SCHEMA."
   ((fields :initform (make-fields) :initarg :fields :accessor fields))
   (:documentation "Base class for all schema objects. At minimum a FIELDS slot is required."))
 
-(defmethod read-ast ((self schema) stream &key)
+(defmethod read-ast ((self schema) stream)
   (setf (fields self) (apply 'make-fields (read stream)))
   self)
 

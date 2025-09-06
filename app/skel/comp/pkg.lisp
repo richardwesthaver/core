@@ -50,7 +50,7 @@
   (:export :sk-ignition))
 
 (defpackage :skel/comp/dir-locals
-  (:use :cl :std :skel/core/obj :skel/core/proto :dat/sxp :skel/core/util)
+  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/util)
   (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals))
 
 (defpackage :skel/comp/org

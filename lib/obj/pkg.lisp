@@ -313,7 +313,8 @@
    :read-ast
    :debug-traverser :copy-traverser
    :*keep-ast* :syntax-error
-   :syntax-warning :syntax-condition))
+   :syntax-warning :syntax-condition
+   :invalid-ast))
 
 (defpkg :obj/graph
   (:nicknames :graph)

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :cli/tests
-  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/clap :cli/tools/sbcl :dat/sxp :obj/ast))
+  (:use :cl :std :rt :cli :cli/shell :cli/progress :cli/spark :cli/repl :cli/ansi :cli/clap :cli/tools/sbcl :obj/ast))
 
 (in-package :cli/tests)
 (defsuite :cli)

@@ -55,7 +55,7 @@
   (print-unreadable-object (object stream :type t)
     (format stream ":ID ~A" (format-sxhash (id object)))))
 
-(defmethod read-ast ((self sk-lisp-component) stream &key)
+(defmethod read-ast ((self sk-lisp-component) stream)
   (setf (ast self) (read-lisp-until-end stream)))
 
 (defmethod sk-read-file ((self sk-lisp-component) path)

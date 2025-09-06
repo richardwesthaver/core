@@ -98,7 +98,6 @@
 (define-source-file* emacs-lisp "el")
 (define-source-file* scheme "scm")
 (define-source-file* skel "sk")
-(define-source-file* sxp "sxp")
 
 (defconstant +max-file-heading-level+ 8)
 (defconstant +min-file-heading-level+ 3)

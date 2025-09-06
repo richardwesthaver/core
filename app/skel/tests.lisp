@@ -1,6 +1,6 @@
 ;;; skel/tests.lisp --- skel tests
 (defpackage :skel/tests
-  (:use :cl :skel :rt :log :obj :dat/sxp :std/path :skel/packy :skel/krypt)
+  (:use :cl :skel :rt :log :obj :std/path :skel/packy :skel/krypt)
   (:import-from :uiop :file-exists-p))
 
 (in-package :skel/tests)
@@ -30,10 +30,10 @@ make-shebang-comment, and make-shebang-file-header."
   "Ensure skelfiles are created and loaded correctly and that they signal
 the appropriate restarts."
   (with-tmp-file (f :type "sk")
-    (is (sk-write-file
-         (make-instance 'sk-project :name "nada" :path "test" :vc :hg) :path *tmp* :if-exists :supersede))
-    (is (load-skelfile *tmp*))
-    (is (build-ast (sk-read-file (make-instance 'sk-project) *tmp*)))))
+    (let ((p (make-instance 'sk-project :name "nada" :path "test" :vc :hg)))
+      (is (sk-write-file p :path *tmp* :if-exists :supersede))
+      (is (load-skelfile *tmp*))
+      (is (build-ast (apply 'make-instance 'sk-project (std:file-read-forms *tmp*)))))))
 
 (deftest skelrc ()
   "Ensure skelrc files are created and loaded correctly."

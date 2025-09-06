@@ -1,6 +1,6 @@
 ;;; cli/clap/ast.lisp --- Clap AST
 
-;; Internal SXP representation of CLI objects
+;; Internal AST representation of CLI objects
 
 ;;; Code:
 (in-package :cli/clap/ast)
@@ -11,7 +11,7 @@
 ;; arguments to this function, which can pass additonal arguments to
 ;; nested commands.
 
-;;  TODO 2023-09-12: Parsing restarts at the `*cli-group-separator*'
+;;  TODO 2023-09-12: Parsing restarts at the *cli-group-separator*
 ;; if present, or stops at EOI.
 (defstruct (cli-node (:constructor make-cli-node (kind form))) kind form)
 

@@ -17,7 +17,7 @@
   (:export :language :lang :*language*))
 
 (defpackage :syn/gen
-  (:use :cl :std :doc :id :graph :sxp :ast)
+  (:use :cl :std :doc :id :graph :ast)
   (:export :gen-designator :gen-condition :gen-condition
    :simple-gen-error :defsyntax
    :function-call :src-location

@@ -55,16 +55,16 @@ a CLI is called without arguments, and all subcommands."))
 
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
-    (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~%~4t:doc ~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]"
+    (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~%~4t:doc ~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]~&"
             (cli-name self)
             (when *cli*
               (equal (string (cli-thunk *cli*)) (string (cli-thunk self))))
             (and (slot-boundp self 'description) (cli-description self))
             (when (fboundp (cli-thunk self))
               (documentation (symbol-function (cli-thunk self)) 'function))
-            (unless (null opts)
+            (unless (sequence:emptyp opts)
               (loop for o across opts collect (with-output-to-string (s) (print-usage o s))))
-            (unless (null cmds)
+            (unless (sequence:emptyp cmds)
               (loop for c across cmds collect (with-output-to-string (s) (print-usage c s)))))))
 
 (defmethod print-help ((self cli-cmd) &optional stream)
@@ -72,12 +72,12 @@ a CLI is called without arguments, and all subcommands."))
     (print-usage self stream))
   (let ((opts (opts self))
         (cmds (cmds self)))
-    (unless (null opts)
+    (unless (sequence:emptyp opts)
       (println "options:" stream)
       (loop for o across opts
             do (iprintln (with-output-to-string (s) (print-usage o s)) 2 stream)))
     (terpri stream)
-    (unless (null cmds)
+    (unless (sequence:emptyp cmds)
       (println "commands:" stream)
       (loop for c across cmds
             do (iprintln (with-output-to-string (s) (print-usage c s)) 2 stream)))))

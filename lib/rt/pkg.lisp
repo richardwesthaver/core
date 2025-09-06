@@ -28,9 +28,7 @@
 (in-package :std-user)
 
 (defpackage :rt
-  (:use 
-   :cl :std :sxp :log 
-   :ast :config :sb-aprof)
+  (:use :cl :std :log :ast :config :sb-aprof)
   (:export
    :test-error
    :*compile-tests*

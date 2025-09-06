@@ -4,7 +4,7 @@
    ;; generics
    :sk-run :sk-new 
    :sk-tangle :sk-weave
-   :sk-call :sk-call*
+   :sk-call
    :sk-load :sk-save
    :sk-print :sk-read
    :sk-build
@@ -25,7 +25,7 @@
    :sk-register))
 
 (defpackage :skel/core/int
-  (:use :cl :std/condition :dat/sxp :obj/ast :skel/core/proto)
+  (:use :cl :std/condition :obj/ast :skel/core/proto)
   (:import-from :std/macs :eval-always)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :ast :*keep-ast*)
@@ -37,7 +37,6 @@
    :skel-error
    :skel-simple-error
    :skel-syntax-error
-   :invalid-skel-ast
    :skel-io-error
    :skel-compile-error)
   ;; vars
@@ -75,8 +74,7 @@
 (defpackage :skel/core/obj
   (:use :cl :std :obj
    :skel/core/proto :skel/core/int
-   :dat/sxp :skel/core/header :vc :log
-   :config :id :ast)
+   :skel/core/header :vc :log :config :id :ast)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-stash :sk-cache :sk-data :sk-user :sk-version
    :sk-store :sk-push :sk-pull :sk-include
@@ -123,7 +121,7 @@
    :skel-db-sink))
 
 (defpackage :skel/core/util
-  (:use :cl :std :skel/core/obj :skel/core/proto :dat/sxp :skel/core/int :obj/ast)
+  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :obj/ast)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :cli :find-exe)
   (:export

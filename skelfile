@@ -27,7 +27,6 @@
  (:mod "bin" (:asd "bin"))
  (:mod "app"
   (:mod "mpk" (:asd "mpk"))
-  (:mod "homer" (:asd "homer"))
   (:mod "skel" (:asd "skel")))
  (:mod "emacs"))
 :rules

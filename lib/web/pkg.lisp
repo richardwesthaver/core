@@ -7,7 +7,7 @@
   (:use :cl :std))
 
 (defpackage :web/html
-  (:use :cl :std :dat/html :dat/xml :dat/sxp :obj/ast)
+  (:use :cl :std :dat/html :dat/xml :obj/ast)
   (:export :with-html-output
            :with-html
            :html-output-stream

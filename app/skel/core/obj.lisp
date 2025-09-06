@@ -110,7 +110,7 @@
   `(with-slots ((,sym ast)) ,obj
      (if (formp ,sym)
          (progn ,@body)
-         (invalid-skel-ast ast))))
+         (invalid-ast ast))))
 
 (defmethod load-ast ((self sk-config))
   ;; internal ast is never tagged
@@ -179,7 +179,7 @@
                         (write-ast v stream :fmt fmt)
                         (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
                     (write-char #\newline st)))
-         (invalid-skel-ast (ast self))))
+         (invalid-ast (ast self))))
     (:canonical (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
 
 (defclass sk-system-config (sk-config sk-meta) ())

@@ -19,20 +19,35 @@
 ;;; Code:
 (in-package :obj/project)
 
-(defclass project (id ast)
-  ((name :initarg :name :accessor name)
-   (src :initarg :src))
-  (:documentation "A generic project."))
+;; TODO 2023-09-11: research other hashing strategies - maybe use the
+;; sxhash as a nonce for UUID
+;; note that the sk-meta class does not inherit from skel or ast.
+;;; Meta
+(defclass project-metadata ()
+  ((name :initarg :name :initform nil :type (or null string) :accessor name)
+   (path :initarg :path :initform nil :type (or null pathname) :accessor path)
+   (author :initarg :author :accessor author)
+   (version :initform nil :initarg :version :accessor version)
+   (tags :initform nil :initarg :tags :accessor tags)
+   (description :initarg :description :initform nil :type (or null string) :accessor description)
+   (license :initform nil :initarg :license :accessor license))
+  (:documentation "Project Metadata contains optional slots which may be inherited by
+project-like objects."))
 
-(defvar *default-project-class* 'project)
+(defclass project (id ast) ()
+  (:documentation "A generic project (without metadata)."))
+
+(defclass simple-project (project project-metadata) ()
+  (:documentation "A PROJECT with optional metadata."))
+
+(defvar *default-project-class* 'simple-project)
 
 (defconfig project-config () ()
   (:documentation "A generic project configuration."))
 
-(defun make-project (name &rest args &key (class *default-project-class*))
+(defun make-project (name &rest args &key (class *default-project-class*) &allow-other-keys)
   (apply 'make-instance class :name name (remove-from-plist args :class)))
 
 (defmethod print-object ((self project) stream)
   (print-unreadable-object (self stream :type t)
     (princ (name self) stream)))
-
