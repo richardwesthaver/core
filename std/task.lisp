@@ -52,12 +52,13 @@
   ((state :initform nil :initarg :state :accessor task-state))
   (:documentation "This object represents a single unit of work to be done in a single thread by
 some worker. Tasks are typically distributed from the pool, but workers may
-also be granted the ability to create and distribute their own tasks. Once a
-task is assigned, the 'owner', i.e. the worker that is assigned this task, may
-modify the object. When the work associated with a task is complete, the owner
-is responsible for indicating in the state slot the result of the computation.
+also be granted the ability to create and distribute their own tasks, or be
+assigned a single task to call repeatedly until told to stop. Once a task is
+assigned, the 'owner', i.e. the worker that is assigned this task, may modify
+the object. When the work associated with a task is complete, the owner is
+responsible for indicating in the state slot the result of the computation.
 
-CURRENTLY, tasks are funcallable kernels."))
+Tasks are _currently_ funcallable kernels.."))
 
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)

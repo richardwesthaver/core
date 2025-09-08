@@ -145,7 +145,7 @@
                           &key (path *default-skelfile*) 
                                nullp
                                comment
-                               (fmt :canonical)
+                               (pretty t)
                                (if-exists :error))
   (build-ast self :nullp nullp)
   (prog1 
@@ -161,26 +161,25 @@
                        :description (sk-description self)
                        :opts '("mode:skel;"))
                       out))
-        (write-ast self out :fmt fmt))
+        (write-ast self out :pretty pretty))
     (unless *keep-ast* (setf (ast self) nil))))
 
-(defmethod write-ast ((self sk-config) stream &key (pretty t) (case :downcase) (fmt :pretty))
-  (ecase fmt
-    (:pretty
-     (if (listp (ast self))
-         (with-open-stream (st stream)
-           (loop for (k v . rest) on (ast self)
-                 by #'cddr
-                 unless (or (null v) (null k))
-                 do 
-                    (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
-                    (write-char #\space st)
-                    (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
-                        (write-ast v stream :fmt fmt)
-                        (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
-                    (write-char #\newline st)))
-         (invalid-ast (ast self))))
-    (:canonical (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t))))
+(defmethod write-ast ((self sk-config) stream &key (pretty t) (case :downcase))
+  (if pretty
+      (if (listp (ast self))
+          (with-open-stream (st stream)
+            (loop for (k v . rest) on (ast self)
+                  by #'cddr
+                  unless (or (null v) (null k))
+                  do 
+                     (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
+                     (write-char #\space st)
+                     (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
+                         (write-ast v stream :pretty pretty)
+                         (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
+                     (write-char #\newline st)))
+          (invalid-ast (ast self)))
+      (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t)))
 
 (defclass sk-system-config (sk-config sk-meta) ())
 

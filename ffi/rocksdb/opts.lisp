@@ -413,6 +413,17 @@ rocksdb_k_round_robin_compaction_pri = 4
   (self (* rocksdb-options))
   (val (* rocksdb-slicetransform)))
 
+(defar rocksdb-options-set-sst-file-manager void
+  (opt (* rocksdb-options))
+  (sfm (* rocksdb-sst-file-manager)))
+
+(defar rocksdb-options-add-compact-on-deletion-collector-factory-min-file-size void
+  (opt (* rocksdb-options))
+  (window-size size-t)
+  (num-dels-trigger size-t)
+  (deletion-ration double)
+  (min-file-size unsigned-long))
+
 ;;; RocksDB Write Options
 (define-opt rocksdb-writeoptions)
 (define-opt-accessor rocksdb-writeoptions sync)

@@ -1296,7 +1296,7 @@
   (:use :cl :std/prim :std/meta 
    :std/macs :std/thread :std/task :std/serde 
    :std/seq :std/pipe :std/prim :std/condition
-   :std/print)
+   :std/print :std/meta :std/path)
   (:nicknames :sys)
   (:import-from :std/print :mumble)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
@@ -1310,6 +1310,9 @@
    :system
    :component
    :module-component
+   :file-component
+   :component-properties
+   :component-type
    :find-system
    :*module*
    :*core-module-table*

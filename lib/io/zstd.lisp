@@ -84,7 +84,7 @@
 
 (defmethod stream-write-sequence ((stream zstd-compressing-stream) seq &optional start end))
     
-(defmethod close ((stream zstd-compressing-stream) &key &allow-other-keys)
+(defmethod close ((stream zstd-compressing-stream) &key abort &allow-other-keys)
   ;; (sb-alien:free-alien (input stream))
   ;; (sb-alien:free-alien (output stream))
   ;; (zstd-freecstream (cstream stream))
@@ -150,7 +150,7 @@
   ;; returns recommended
   (print (zstd-initdstream (dstream self))))
 
-(defmethod close ((stream zstd-decompressing-stream) &key &allow-other-keys)
+(defmethod close ((stream zstd-decompressing-stream) &key abort &allow-other-keys)  
   ;; (sb-alien:free-alien (input stream))
   ;; (sb-alien:free-alien (output stream))
   (zstd-freedstream (dstream stream)))
@@ -166,7 +166,7 @@
 
 (defclass zstd-compressor (compressor) ()
   (:default-initargs
-   :stream (make-instance 'zstd-compressing-stream)))
+   :output (make-instance 'zstd-compressing-stream)))
 
 (defmethod cstream ((self zstd-compressor))
   (cstream (stream-of self)))
@@ -240,7 +240,7 @@
 (defclass zstd-decompressor (decompressor)
   ()
    (:default-initargs
-    :stream (make-instance 'zstd-decompressing-stream)))
+    :input (make-instance 'zstd-decompressing-stream)))
 
 (defmethod dstream ((self zstd-decompressor))
   (dstream (stream-of self)))

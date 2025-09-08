@@ -40,6 +40,9 @@
   (:metaclass kernel-class)
   (:documentation "Standard kernel object."))
 
+(defmethod kernel ((self kernel-object))
+  (sb-pcl::%funcallable-instance-fun self))
+
 (defmethod print-object ((self kernel-object) stream)
   (multiple-value-bind (expr closure-p name) (function-lambda-expression self)
     (declare (ignore expr))
@@ -78,11 +81,9 @@ restarts is provided. *KERNEL* is returned."
     `(progn
        (defclass ,name ,(or supers '(kernel-object)) ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
        ,@(when k 
-           `((defmethod initialize-instance :after ((self ,name) &key (kernel ,(second k)) &allow-other-keys)
+           `((defmethod initialize-instance :after ((self ,name) &key kernel &allow-other-keys)
                (when kernel
-                 (sb-mop:set-funcallable-instance-function 
-                  self 
-                  (lambda (&rest args) (apply kernel self args))))))))))
+                 (sb-mop:set-funcallable-instance-function self kernel))))))))
 
 (defkernel hook () ()
   (:documentation "Hooks are Kernel objects which call an instance-specific

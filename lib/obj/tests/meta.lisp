@@ -48,9 +48,6 @@
 (deftest filtered-function ()
   (is= 362880 (fac 10)))
 
-;;;; Typed
-;; TODO
-
 ;;;; Stored
 (defsclass person ()
   ((name :accessor name :initarg :name :transient t)

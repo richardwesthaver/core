@@ -511,7 +511,49 @@ set *errptr to a malloc()ed error message.
    :rocksdb-livefiles-level
    :rocksdb-livefiles-name
    :rocksdb-livefiles-column-family-name
-   :rocksdb-list-column-families))
+   :rocksdb-list-column-families
+   :rocksdb-eventlistener-create
+   :rocksdb-eventlistener-destroy
+   :rocksdb-options-add-eventlistener
+   :rocksdb-memtableinfo-cf-name
+   :rocksdb-memtableinfo-first-seqno
+   :rocksdb-memtableinfo-earliest-seqno
+   :rocksdb-memtableinfo-num-entries
+   :rocksdb-memtableinfo-num-deletes
+   :rocksdb-writestallinfo-cf-name
+   :rocksdb-writestallinfo-cur
+   :rocksdb-writestallinfo-prev
+   :rocksdb-externalfileingestioninfo-internal-file-path
+   :rocksdb-externalfileingestioninfo-cf-name
+   :rocksdb-subcompactionjobinfo-status
+   :rocksdb-subcompactionjobinfo-cf-name
+   :rocksdb-subcompactionjobinfo-thread-id
+   :rocksdb-subcompactionjobinfo-base-input-level
+   :rocksdb-subcompactionjobinfo-output-level
+   :rocksdb-flushjobinfo-cf-name
+   :rocksdb-flushjobinfo-file-path
+   :rocksdb-flushjobinfo-triggered-writes-slowdown
+   :rocksdb-flushjobinfo-triggered-writes-stop
+   :rocksdb-flushjobinfo-largest-seqno
+   :rocksdb-flushjobinfo-smallest-seqno
+   :rocksdb-reset-status
+   :rocksdb-compactionjobinfo-status
+   :rocksdb-compactionjobinfo-cf-name
+   :rocksdb-compactionjobinfo-input-files-count
+   :rocksdb-compactionjobinfo-input-file-at
+   :rocksdb-compactionjobinfo-output-files-count
+   :rocksdb-compactionjobinfo-output-file-at
+   :rocksdb-compactionjobinfo-elapsed-micros
+   :rocksdb-compactionjobinfo-num-corrupt-keys
+   :rocksdb-compactionjobinfo-base-input-level
+   :rocksdb-compactionjobinfo-output-level
+   :rocksdb-compactionjobinfo-num-input-files
+   :rocksdb-compactionjobinfo-num-input-files-at-output-level
+   :rocksdb-compactionjobinfo-input-records
+   :rocksdb-compactionjobinfo-output-records
+   :rocksdb-compactionjobinfo-total-input-bytes
+   :rocksdb-compactionjobinfo-total-output-bytes
+   :rocksdb-compactionjobinfo-compaction-reason))
 
 (in-package :rocksdb)
 

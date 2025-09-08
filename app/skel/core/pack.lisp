@@ -11,7 +11,7 @@
   "Skel Package Object"
   (name (gensym "PKG"))
   (version 0 :type fixnum :read-only t)
-  (sys nil :type (or null sys)))
+  (sys nil :type (or null system)))
 
 (defmethod id ((self sk-pack))
   (sxhash (cons (sk-pack-name self) (sk-pack-version self))))

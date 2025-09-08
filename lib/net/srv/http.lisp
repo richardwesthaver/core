@@ -571,10 +571,10 @@ Returns STREAM."
     (format hstream "HTTP/1.1 ~D ~A~C~C" status-code (http-status-message status-code) #\Return #\Linefeed)
     (loop for (k . v) in headers
           when v
-          do (write-header-line (string-upcase k) v hstream))
+          do (req::write-header (string-upcase k) v hstream))
     ;; cookies
     (loop for (nil . cookie) in cookies
-          do (write-header-line "Set-Cookie" (stringify-cookie cookie) hstream))
+          do (req::write-header "Set-Cookie" (stringify-cookie cookie) hstream))
     (format hstream "~C~C" #\Return #\Linefeed))
   (when content
     (write-sequence content stream)

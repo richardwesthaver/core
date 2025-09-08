@@ -35,7 +35,6 @@
           (pop qualifiers)
           qualifiers qualifiers)))
 
-#+nil
-(defgeneric c1 (self) (:generic-function-class cached-function) (:method-class cached-method))
-(defvar *cac* (make-hash-table))
-(defmethod c1 :cache *cac* ((self t)) t)
+;; (defgeneric c1 (self) (:generic-function-class cached-function) (:method-class cached-method))
+;; (defvar *cac* (make-hash-table))
+;; (defmethod c1 :cache *cac* ((self t)) t)

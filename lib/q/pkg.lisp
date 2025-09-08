@@ -74,7 +74,7 @@
    :neq-expression
    :eq-expression
    :aggregate-expression-p
-   :df-project
+   :df-proj
    :df-filter
    :df-aggregate
    :df-select
@@ -105,7 +105,7 @@
    :physical-query-plan
    :query-plan
    :query-expr
-   :project
+   :proj
    :select
    :boolean-binary-expression
    :query-parser))

@@ -5,18 +5,17 @@
 ;;; Code:
 (in-package :skel/comp/lisp)
 
-(defclass sk-lisp-component (sk-component ast) ())
-(defclass sk-lisp-file (sk-lisp-component sk-meta) ())
+(defclass sk-lisp-component (sk-component component) ())
+(defclass sk-lisp-file (sk-lisp-component file-component) ())
 
 (defmethod sk-new ((self (eql :lisp)) &rest args)
   (apply #'make-instance 'sk-lisp-file args))
 
-(defmethod sk-convert ((self asdf:cl-source-file))
+(defmethod sk-convert ((self file-component))
   (make-instance 'sk-lisp-file 
-    :path #1=(component-pathname self)
-    :name (component-name self)
-    :parent (component-parent self)
-    :version (component-version self)))
+    :path (path self)
+    :name (name self)
+    :properties (component-properties self)))
 
 (defmethod sk-compile ((self sk-lisp-file) &rest args)
   (apply 'compile-file (path self) args))

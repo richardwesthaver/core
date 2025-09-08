@@ -96,8 +96,8 @@
         compressed-data)
     (setf compressed-data
           (with-output-to-string (s)
-            (with-open-stream (out-stream (make-compressing-stream :gzip s))
-              (write-sequence data out-stream))))
+            (let ((c (make-compressing-stream 'gzip-compressor s)))
+              (write-sequence data c))))
     (with-input-from-string (s compressed-data)
       (with-open-stream (in-stream (make-decompressing-stream :gzip s))
         (read-sequence round-trip-data in-stream)
@@ -105,11 +105,9 @@
     (is equalp data round-trip-data)))
 
 (deftest gzip-stream-closed-error ()
-  (with-output-to-string (s)
-    (let ((out-stream (make-compressing-stream :gzip s)))
-      (write-byte 1 out-stream)
-      (close out-stream)
-      (signals 'error (write-byte 2 out-stream)))))
+  (let ((out-stream (make-compressing-stream 'gzip-compressor nil)))
+    (close out-stream)
+    (signals error (write-byte 2 out-stream))))
 
 (deftest bzip2 ())
 (deftest zlib ())

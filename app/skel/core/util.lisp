@@ -81,10 +81,9 @@ overwritten with the AUTO flag."
     "Initialize a skelfile."
     (let ((sk (make-instance 'sk-project 
 		:name (or name (pathname-name (sb-posix:getcwd)))))
-	  (path (or file *default-skelfile*))
-	  (fmt :pretty))
+	  (path (or file *default-skelfile*)))
       (when config (setf sk (sk-install-user-config sk config)))
-      (sk-write-file sk :path path :fmt fmt))))
+      (sk-write-file sk :path path :pretty t))))
 
 (defun find-skelfile (start &key (load nil) (name *default-skelfile*) (ext "sk") (walk t) error)
   "Walk up the current directory returning the path to a 'skelfile' by NAME or a

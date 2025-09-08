@@ -259,7 +259,7 @@ directory."))
 ;; ast -> file
 (defmethod sk-write-file ((self sk-project) 
 			  &key 
-			  (path *default-skelfile*) (nullp nil) (comment t) (fmt :canonical)
+			  (path *default-skelfile*) (nullp nil) (comment t) (pretty t)
 			  (if-exists :error))
   (build-ast self :nullp nullp)
   (prog1 
@@ -275,7 +275,7 @@ directory."))
 		        :description (sk-description self)
 		        :opts '("mode:skel;"))
 		       out))
-	(write-ast self out :fmt fmt))
+	(write-ast self out :pretty pretty))
     (unless *keep-ast* (setf (ast self) nil))))
 
 (defmethod sk-install-user-config ((self sk-project) (config sk-user-config))

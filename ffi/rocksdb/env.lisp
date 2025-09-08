@@ -48,3 +48,7 @@
 (def-with-errptr rocksdb-create-dir-if-missing void
   (env (* rocksdb-env))
   (path c-string))
+
+(def-with-errptr rocksdb-status-ptr-get-error void (status (* rocksdb-status-ptr)))
+
+(defar rocksdb-reset-status void (status-ptr (* rocksdb-status-ptr)))

@@ -1,3 +1,8 @@
+;;; db.lisp --- RocksDB Alien Database Functions
+
+;; 
+
+;;; Code:
 (in-package :rocksdb)
 
 ;;; DB

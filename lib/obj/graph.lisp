@@ -463,8 +463,13 @@ implementation of A*.")
       graph))))
 
 ;; TODO 2025-08-24: 
-(defun g-reader (stream sub-char numarg)
-  "Parse the next form as a GRAPH object.")
+(defun g-reader (stream sub num)
+  "Parse the next form as a GRAPH object.
+
+#g(:nodes () :edges ()) ;=> #s(graph ...)"
+  (declare (ignore sub num))
+  (let ((form (print (read stream))))
+    (apply 'make-instance 'graph form)))
 
 (defreadtable :graph
   "The graph readtable"

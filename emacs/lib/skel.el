@@ -262,5 +262,44 @@ project's skelfile, if any. Typically added to
   (interactive)
   (comint-run "skel" '("shell")))
 
+;;; organ-minor-mode
+;; support ORGAN reader syntax in lisp files :prefix #& :suffix &#
+(defun organ-minor-mode-setup ()
+  (make-local-variable 'post-command-hook)
+  (add-hook 'post-command-hook 'organ-update-mode nil t)
+  (make-local-variable 'minor-mode-alist)
+  (or (assq 'organ-minor-mode minor-mode-alist)
+      (setq minor-mode-alist
+	    (cons '(organ-minor-mode " organ") minor-mode-alist))))
+
+(defun organ-change-mode (to)
+  (if (eql to major-mode)
+      t
+    (progn
+      (if (eql to 'org-mode)
+	  (org-mode)
+	(lisp-mode))
+      (organ-minor-mode-setup))))
+
+(defun organ-update-mode ()
+  (let ((lm -1)
+        (rm -1))
+    (save-excursion 
+      (if (search-backward "#&" nil t)
+          (setq lm (point))
+        (setq lm -1)))
+    (save-excursion
+      (if (search-backward "&#" nil t)
+          (setq rm (point))
+        (setq rm -1)))
+    (if (and (= lm -1) (= rm -1))
+        (organ-change-mode nil)
+      (if (>= lm rm)
+          (organ-change-mode 'org-mode)))))
+
+(define-minor-mode organ-minor-mode nil
+  :lighter " organ"
+  :after-hook (organ-minor-mode-setup))
+
 (provide 'skel)
 ;;; skel.el ends here

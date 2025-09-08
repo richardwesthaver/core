@@ -56,7 +56,7 @@
                            (error 'invalid-argument :item n :reason "Invalid column name"))
                       finally (return ret))))))
 
-(defgeneric project (self indices)
+(defgeneric proj (self indices)
   (:method ((self schema) (indices list))
     (make-instance 'schema
       :fields (coerce (mapcar (lambda (i) (aref (fields self) i)) indices) 'field-vector)))
@@ -361,9 +361,9 @@
 ;; NOTE 2024-08-02: EXISTS, IN, NOT EXISTS, and NOT IN are also subqueries
 
 ;;; Dataframes
-(defgeneric df-project (df exprs)
+(defgeneric df-proj (df exprs)
   (:method ((df data-frame) (expr list))
-    (df-project df (coerce expr 'vector)))
+    (df-proj df (coerce expr 'vector)))
   (:method ((df data-frame) (expr vector))
     (setf (df-plan df)
           (make-instance 'projection

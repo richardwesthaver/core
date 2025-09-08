@@ -738,7 +738,7 @@
 (defun plan-non-aggregate-query (select df projection-expr column-names-in-selection column-names-in-projection)
   (let ((plan df))
     (unless (slot-value select 'selection)
-      (return-from plan-non-aggregate-query (df-project plan projection-expr)))
+      (return-from plan-non-aggregate-query (df-proj plan projection-expr)))
     (let ((missing (member-if-not
                     (lambda (x) (member x column-names-in-projection :test 'string-equal))
                     column-names-in-selection)))
@@ -747,13 +747,13 @@
                       plan
                       (make-sql-logical-expression
                        (slot-value select 'selection)
-                       (setf plan (df-project plan projection-expr)))))
+                       (setf plan (df-proj plan projection-expr)))))
           (let ((n (length projection-expr)))
             (setq plan (df-filter plan
                                   (make-sql-logical-expression
                                    (slot-value select 'selection)
                                    (setf plan
-                                         (df-project plan
+                                         (df-proj plan
                                                      (merge 'vector
                                                             projection-expr
                                                             (mapcar
@@ -761,7 +761,7 @@
                                                              missing)
                                                             (lambda (x y) (declare (ignore y)) x)))))))
             
-            (df-project plan
+            (df-proj plan
                         (coerce
                          (loop for i below n
                                collect (make-instance 'column-expression
@@ -782,13 +782,13 @@
                         plan
                         (make-sql-logical-expression
                          (slot-value select 'selection)
-                         (setf plan (df-project plan proj-no-agg)))))
+                         (setf plan (df-proj plan proj-no-agg)))))
             (setq plan (df-filter
                         plan
                         (make-sql-logical-expression
                          (slot-value select 'selection)
                          (setf plan
-                               (df-project plan
+                               (df-proj plan
                                            (merge 'vector
                                                   proj-no-agg
                                                   (mapcar (lambda (x) (make-instance 'column-expression :name x))
@@ -841,7 +841,7 @@ string:data-frame. Returns a data-frame."
                             (push group-count pro)
                             (incf group-count)))))
             (let ((plan
-                    (df-project
+                    (df-proj
                      (plan-aggregate-query proj select cols-in-sel plan agg)
                      pro)))
               (if-let ((having (slot-value select 'having)))

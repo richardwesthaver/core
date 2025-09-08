@@ -410,16 +410,13 @@ with the second value returned by GET-VAL."
 			        shallow)
 			   ;; cache miss, and no waiting
 			   (return (values t nil nil)))
-
 			  ((null entry)
 			   ;; cache miss - initialize fetch from source
 			   (return (miss)))
-
 			  ((and (slot-boundp entry 'pending)
 			        shallow)
 			   ;; cache hit - but data not yet ready, and no waiting
 			   (return (values t nil nil)))
-
 			  ((slot-boundp entry 'pending)
 			   ;; cache hit - but data not yet ready
 			   (let ((pending (slot-value entry 'pending)))
@@ -436,7 +433,6 @@ with the second value returned by GET-VAL."
 					 (decf (entry-rc entry)))
 				     (return (values t (slot-value entry 'data) entry)))
 				   (return (values t (slot-value entry 'data)))))))
-
 			  ((and entry policy
 			        (or (and (slot-boundp entry 'expiry)
 					 (<= (slot-value entry 'expiry)

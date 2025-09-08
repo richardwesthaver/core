@@ -2354,7 +2354,7 @@ the input and the number of bytes written to the output."
           ((:bzip2 bzip2)
            (values (make-bzip2-state) #'%bzip2-decompress)))
       (make-instance 'decompressing-stream
-        :stream stream
+        :decompressor (make-instance 'decompressor :input stream)
         :dstate state
         :dfun dfun)))
 
