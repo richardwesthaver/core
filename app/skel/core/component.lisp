@@ -15,7 +15,7 @@
 ;;; Code:
 (in-package :skel/core/obj)
 
-(defclass sk-component (skel)
+(defclass sk-component (skel component ast)
   ((parent :initarg :parent :accessor sk-parent)))
 
 (defmethod print-object ((self sk-component) stream)

@@ -553,7 +553,30 @@ set *errptr to a malloc()ed error message.
    :rocksdb-compactionjobinfo-output-records
    :rocksdb-compactionjobinfo-total-input-bytes
    :rocksdb-compactionjobinfo-total-output-bytes
-   :rocksdb-compactionjobinfo-compaction-reason))
+   :rocksdb-compactionjobinfo-compaction-reason
+   :on-memtable-sealed-cb
+   :on-logger-logv-cb
+   :on-stall-conditions-changed-cb
+   :on-background-error-cb
+   :on-external-file-ingested-cb
+   :on-subcompaction-completed-cb
+   :on-subcompaction-begin-cb
+   :on-compaction-completed-cb
+   :on-compaction-begin-cb
+   :on-flush-completed-cb
+   :on-flush-begin-cb
+   :default-on-memtable-sealed-cb
+   :default-rocksdb-logger-logv-callback
+   :default-on-stall-conditions-changed-cb
+   :default-on-background-error-cb
+   :default-on-external-file-ingested-cb
+   :default-on-subcompaction-completed-cb
+   :default-on-subcompaction-begin-cb
+   :default-on-compaction-completed-cb
+   :default-on-compaction-begin-cb
+   :default-on-flush-completed-cb
+   :default-on-flush-begin-cb
+   :default-rocksdb-event-listener))
 
 (in-package :rocksdb)
 

@@ -70,7 +70,8 @@
 
 (defmethod load-ast ((self sk-lisp-component))
   (if (ast self)
-      (sk-run (ast self))
+      (prog1 (sk-run self)
+        (setf (ast self) nil))
       (sk-load self)))
       
       
