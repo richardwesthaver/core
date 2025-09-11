@@ -242,7 +242,7 @@ non-unique ID prefix.")
                 ,@(mapcar (lambda (x) (prog1 `(simple-id ',x ,i) (incf i))) types))))
   (simple-id-order 
    t
-   character base-char 
+   character base-char
    double-float  single-float 
    (complex double-float) (complex single-float) 
    integer
@@ -254,14 +254,30 @@ non-unique ID prefix.")
    null cons 
    standard-object structure-object
    pathname hash-table
-   array vector 
+   array
+   (array character)
+   (array base-char)
+   (array double-float)
+   (array single-float)
+   (array (complex double-float))
+   (array (complex single-float))
+   (array fixnum)
+   (array bit)
+   vector
+   (vector character)
+   (vector base-char)
+   (vector double-float)
+   (vector single-float)
+   (vector (complex double-float))
+   (vector (complex single-float))
+   (vector fixnum)
+   (vector bit)
    string
    simple-array simple-vector 
    simple-string base-string
    octet-vector)
   (reset-core-types))
 
-;; TODO 2025-08-14: 
 (defmacro simple-type-id (obj)
   (let ((cases))
     (maphash (lambda (x y) (push (list x y) cases)) *simple-type-table*)
@@ -288,3 +304,15 @@ extended by the user using the REGISTER-TYPE-ID function. "
     (setf (ldb (byte 8 0) id) (widetag-of obj)) ;; 8 bits
     (setf (ldb (byte 4 8) id) (get-core-type-id obj))
     id))
+
+(defun type<= (obj1 obj2)
+  (<= (core-type-id obj1) (core-type-id obj2)))
+
+(defun type< (obj1 obj2)
+  (< (core-type-id obj1) (core-type-id obj2)))
+
+(defun type= (obj1 obj2)
+  (= (core-type-id obj1) (core-type-id obj2)))
+
+(defun array-type= (t1 t2)
+  (and (subtypep t1 t2) (subtypep t2 t1)))

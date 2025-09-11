@@ -60,13 +60,13 @@ history but less often recently.
 (defun map-cache (fn cache)
   (with-hash-table-iterator (nextfn cache)
     (loop  
-       (multiple-value-bind (valid? key value) (nextfn)
-         (when (not valid?)
+       (multiple-value-bind (validp key value) (nextfn)
+         (when (not validp)
            (return-from map-cache))
          (funcall fn key (sb-ext:weak-pointer-value value))))))
 
 (defun dump-cache (cache)
-  (format t "Dumping cache: ~A~%" cache)
+  (mumble "Dumping cache: ~A~%" cache)
   (map-cache #'(lambda (k v) 
                  (format t ":k ~A :v ~A~%" k v))
              cache))
@@ -324,7 +324,7 @@ history but less often recently.
 	((null policy)
 	 (unless (not (typep (queue cache) 'vector-queue))
 	   (error "Queue size is defined, but policy missing")))
-	((typep policy '(or keyword fixnum null))
+	((typep policy '(or keyword fixnum))
 	 (setf (slot-value cache 'policy) policy))
 	(t
 	 (error "Invalid policy ~s" policy))))
@@ -397,7 +397,7 @@ with the second value returned by GET-VAL."
 	        (let ((entry (gethash key table)))
 		  (when entry
 		    (prepare-cleanup entry table)
-		    ;; (decf (cache-size cache) (slot-value entry 'size))
+		    ;; (decf (cache-size cache)) ;; (slot-value entry 'size)
 		    (when policy
 		      (entry-removed policy (queue cache) entry)))))
 	      (flet ((miss ()
@@ -442,7 +442,7 @@ with the second value returned by GET-VAL."
 			   ;; cached data has expired or been invalidated
 			   (remhash key table)
 			   (prepare-cleanup entry table)
-			   (decf (slot-value cache 'size) (slot-value entry 'size))
+			   (decf (slot-value cache 'size)) ;;  (slot-value entry 'size)
 			   (entry-removed policy (queue cache) entry)
 			   (if shallow
 			       (return (values t nil nil)) ; no waiting
@@ -468,7 +468,7 @@ with the second value returned by GET-VAL."
 		      (error e)))
 	        (with-collected-cleanups (cache)
 		  (unless (typep size 'real)
-		    (setf size (if content 1 0))
+		    (setf size 1)
 		    (warn "Cache provider did not return a proper size for the data - assuming size of ~d" size))
 		  (with-mutex (lock)
 		    (setf (slot-value data 'data) content)

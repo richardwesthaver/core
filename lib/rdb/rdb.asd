@@ -3,7 +3,7 @@
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :rocksdb :obj :log :q :dat :cli)
+  :depends-on (:std :rocksdb :obj :log :q :dat :cli :net)
   :serial t
   :components ((:file "pkg")
                (:file "condition") 
@@ -17,6 +17,7 @@
                (:file "query")
                (:file "store")
                (:file "cfg")
+               (:file "srv")
                (:file "cli"))
   :in-order-to ((test-op (test-op :rdb/tests))))
 

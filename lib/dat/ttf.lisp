@@ -2584,7 +2584,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
   (let ((result (list)))
     (maphash (lambda (key value)
                (declare (ignorable value))
-               (push key result)) 
+               (push key result))
              *font-cache*)
     (nreverse result)))
 
@@ -2614,6 +2614,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
    (overwrite-gcontext :type boolean :initarg :overwrite-gcontext :initform nil 
                        :accessor font-overwrite-gcontext :documentation "Use font values for background and foreground colors.")
    (antialias :type boolean :initarg :antialias :initform t :accessor font-antialias :documentation "Antialias text string.")
+   ;; These slots use the OBJ/CACHE protocol
    (string-bboxes :type cache:cache :accessor font-string-bboxes
                   :documentation "Cache for text bboxes")
    (string-line-bboxes :type cache:cache :accessor font-string-line-bboxes
@@ -2629,26 +2630,21 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
             (null (gethash subfamily (gethash family *font-cache*))))
     (error "Font is not found: ~A ~A" family subfamily)))
 
-(defmethod initialize-instance :before 
-    ((instance font) &rest initargs &key family subfamily &allow-other-keys)
+(defmethod initialize-instance :before ((instance font) &rest initargs &key family subfamily &allow-other-keys)
   (declare (ignorable initargs))
   (check-valid-font-families family subfamily))
 
-(defmethod (setf font-family) :before
-  (family (instance font))
+(defmethod (setf font-family) :before (family (instance font))
   (check-valid-font-families family (font-subfamily instance)))
 
-(defmethod (setf font-subfamily) :before
-  (subfamily (instance font))
+(defmethod (setf font-subfamily) :before (subfamily (instance font))
   (check-valid-font-families (font-family instance) subfamily))
 
-(defmethod (setf font-family) :after
-  (family (font font))
+(defmethod (setf font-family) :after (family (font font))
   (cache:cache-flush (font-string-bboxes font))
   (cache:cache-flush (font-string-line-bboxes font)))
 
-(defmethod (setf font-subfamily) :after
-  (subfamily (font font))
+(defmethod (setf font-subfamily) :after (subfamily (font font))
   (cache:cache-flush (font-string-bboxes font))
   (cache:cache-flush (font-string-line-bboxes font)))
 

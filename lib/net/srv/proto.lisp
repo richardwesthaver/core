@@ -641,9 +641,9 @@ similar to HUNCHENTOOT:ACCEPTOR."))
           *close-service-stream* nil)))
 
 ;;; Macros
-(defmacro defservice (name &rest initargs)
+(defmacro defservice (name super slots &rest opts)
   "Define a subclass of NET/SRV:SERVICE."
-  `(defclass ,name ,@initargs))
+  `(defclass ,name ,(or super '(service)) ,slots ,@opts))
 
 (defmacro defroute (spec args &body body)
   "Define a new ROUTE with BODY and optionally register it with a URI. The
