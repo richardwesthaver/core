@@ -344,60 +344,6 @@ keywords modify the bindings in effect."
 ;; (definline all-threads-sap ()
 ;;   (sb-vm::extern-alien "all_threads" sb-vm::system-area-pointer))
 
-;; from sb-thread
-(defun dump-thread ()
-  "Dump the contents of THREAD."
-  (let* ((slots (sb-vm::primitive-object-slots #1=(sb-vm::primitive-object 'sb-vm::thread)))
-	 (sap (current-thread-sap))
-	 (thread-obj-len (sb-vm::primitive-object-length #1#))
-	 (names (make-array thread-obj-len :initial-element "")))
-    (loop for slot across slots
-	  do
-	     (setf (aref names (sb-vm::slot-offset slot)) (sb-vm::slot-name slot)))
-    (flet ((safely-read (sap offset &aux (bits (sb-vm::sap-ref-word sap offset)))
-	     (cond ((eql bits sb-vm:no-tls-value-marker) :no-tls-value)
-		   ((eql (logand bits sb-vm:widetag-mask) sb-vm:unbound-marker-widetag) :unbound)
-		   (t (sb-vm::sap-ref-lispobj sap offset))))
-	   (show (sym val)
-	     (declare (type fixnum sym))
-	     (let ((*print-right-margin* 80)
-		   (*print-lines* 4))
-	       (format t " ~3d ~30a : ~s~%"
-		       #+sb-thread (ash sym (- sb-vm:word-shift))
-		       #-sb-thread 0
-		       #+sb-thread (sb-vm:symbol-from-tls-index sym)
-		       #-sb-thread sym
-		       val))))
-      (format t "~&TLS: (base=~x)~%" (sb-vm::sap-int sap))
-      (loop for tlsindex from sb-vm:n-word-bytes below
-	       #+sb-thread (ash sb-vm::*free-tls-index* sb-vm:n-fixnum-tag-bits)
-	       #-sb-thread (ash thread-obj-len sb-vm:word-shift)
-	    by sb-vm:n-word-bytes
-	    do
-	       (unless (<= sb-vm::thread-allocator-histogram-slot
-		           (ash tlsindex (- sb-vm:word-shift))
-		           (1- sb-vm::thread-lisp-thread-slot))
-	         (let ((thread-slot-name
-		         (if (< tlsindex (ash thread-obj-len sb-vm:word-shift))
-			     (aref names (ash tlsindex (- sb-vm:word-shift))))))
-		   (if (and thread-slot-name (sb-vm::neq thread-slot-name 'sb-vm::lisp-thread))
-		       (format t " ~3d ~30a : #x~x~%" (ash tlsindex (- sb-vm:word-shift))
-			       thread-slot-name (sb-vm::sap-ref-word sap tlsindex))
-		       (let ((val (safely-read sap tlsindex)))
-		         (unless (eq val :no-tls-value)
-			   (show tlsindex val)))))))
-      (let ((from (sb-vm::descriptor-sap sb-vm:*binding-stack-start*))
-	    (to (sb-vm::binding-stack-pointer-sap)))
-	(format t "~%Binding stack: (depth ~d)~%"
-		(/ (sb-vm::sap- to from) (* sb-vm:binding-size sb-vm:n-word-bytes)))
-	(loop
-	  (when (sb-vm::sap>= from to) (return))
-	  (let ((val (safely-read from 0))
-		(sym #+sb-thread (sb-vm::sap-ref-word from sb-vm:n-word-bytes) ; a TLS index
-		     #-sb-thread (sb-vm::sap-ref-lispobj from sb-vm:n-word-bytes)))
-	    (show sym val))
-	  (setq from (sb-vm::sap+ from (* sb-vm:binding-size sb-vm:n-word-bytes))))))))
-
 (definline wait-for-threads (threads)
   (map 'list (lambda (thread) (sb-thread:join-thread thread :default nil)) threads))
 
@@ -785,9 +731,9 @@ WORKER threads."))
 
 ;;; Supervisor
 (defclass supervisor ()
-  ((thread :initform (make-ephemeral-thread (symbol-name (gensym "supervisor"))) :accessor supervisor-thread)
-   (domain)
-   (scope))
+  ((thread :initform (make-ephemeral-thread (symbol-name (gensym "supervisor"))) 
+           :accessor supervisor-thread :initarg :thread)
+   (scope :initarg :scope))
   (:documentation "Supervisors are threads which are responsible for a set of worker threads
 within their DOMAIN and SCOPE."))
 

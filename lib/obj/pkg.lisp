@@ -311,6 +311,7 @@
    :traverse :op
    :*ast-dispatch-table* :write-ast
    :read-ast
+   :with-ast :call-with-ast
    :debug-traverser :copy-traverser
    :*keep-ast* :syntax-error
    :syntax-warning :syntax-condition
@@ -622,7 +623,7 @@
 
 (defpkg :obj/srv
   (:nicknames :srv)
-  (:use :cl :std :config :id)
+  (:use :cl :std :config :id :ast :build)
   (:export
    #:service
    #:make-service

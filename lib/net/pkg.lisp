@@ -330,7 +330,7 @@
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :sb-bsd-sockets :obj/db 
-   :obj/schema :config :build :srv :ast)
+   :obj/schema :config :build :srv :ast :std/thread)
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :define-task-kernel :with-gensyms
@@ -440,6 +440,7 @@
    :net/codec/http :net/core :net/cookie :io/chunky 
    :srv :net/tcp :config)
   (:import-from :net/srv :service-log)
+  (:import-from :io/chunky :trim-whitespace)
   (:use-reexport :net/srv)
   (:package-local-nicknames
    :codec :net/codec/http

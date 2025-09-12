@@ -49,9 +49,8 @@
 ;;; Code:
 (defpackage :log
   (:use :cl :std :std/meta :std/thread :time :db :config :ast :id :build :schema)
-  (:export :*log-level* :*logger* :log-router
-   :make-log-router :log-router-p
-   :get-real-time-since :init-log-timestamp
+  (:export :*log-level* :*logger* :get-real-time-since 
+   :init-log-timestamp
    :*log-timestamp* :log-level-designator :log-timestamp-source :logger
    :logger-p :log-error
    :define-log-level :log! :warn! :info! :debug! :trace! :fatal! :error!

@@ -280,3 +280,7 @@ slot.")
 (defvar *ast-dispatch-table* (copy-pprint-dispatch))
 (defun pprint-ast (sexpr &rest args)
   (apply 'write sexpr :pretty t :pprint-dispatch *ast-dispatch-table* args))
+
+(defwith ast (self) (*ast* (ast (eval self))))
+
+;; (with-ast (make-instance 'ast :ast t) (rt:is *ast*))

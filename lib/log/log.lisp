@@ -52,18 +52,6 @@ function in which case it is used as the function value of
     (number (/ (get-real-time-since *log-timestamp*) #.internal-time-units-per-second))
     (t (/ (get-internal-real-time) #.internal-time-units-per-second))))
 
-(defun universal-timestamp () (get-universal-time))
-
-;; the purpose of this struct is to route log messages to the appropriate
-;; output stream.
-(defstruct log-router
-  (fatal *error-output*)
-  (error *error-output*)
-  (warn *debug-io*)
-  (info *terminal-io*)
-  (debug *debug-io*)
-  (trace *trace-output*))
-
 (defmacro define-log-level (name &body pred)
   "Define a log-level of NAME with PRED being the body of the predicate
 function 'NAME-P'."

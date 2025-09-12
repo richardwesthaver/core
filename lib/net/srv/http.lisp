@@ -38,7 +38,7 @@ session-management.")
        (eql :https (sb-bsd-sockets:socket-protocol (sb-bsd-sockets:socket service)))))
 
 ;;; Config
-(defconfig http-service-config (service-config) ())
+(defconfig http-service-config (net-service-config) ())
 
 (defmethod make-config ((self (eql :http)) &rest args &key)
   (apply 'make-instance 'http-service-config args))
@@ -534,6 +534,9 @@ RESPONSE object. If a cookie with the same name
    (chunk-input-p :type boolean :initarg :chunk-input-p)
    (document-root :type pathname :initarg :document-root :accessor service-document-root))
   (:default-initargs
+   :type :stream
+   :protocol :tcp
+   :engine (make-instance 'thread-per-connection-engine :name :http)
    :connection-max *default-connection-max*
    :request-class 'http-service-request
    :response-class 'http-service-response
@@ -1041,4 +1044,6 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
 (defun get-peer-ssl-certificate ()
   (ssl:ssl-stream-x509-certificate *service-stream*))
 
-(defclass https-service (http-service ssl-service) ())
+(defclass https-service (http-service ssl-service) ()
+  (:default-initargs
+   :engine (make-instance 'thread-per-connection-engine :name :https)))

@@ -469,6 +469,7 @@
 
 (defpkg :std/curry
   (:use :cl)
+  (:import-from :std/list :mappend)
   (:import-from :std/sym :make-gensym-list)
   (:export
    :ensure-function
@@ -508,7 +509,7 @@
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
-  (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform)
+  (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform :remove-from-plist)
   (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
   (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:export
@@ -640,6 +641,7 @@
    :read-only-space-obj-p :dynamic-space-obj-p :tune-image-for-dump :get-external-format)
   (:import-from :sb-debug :untrace-all :untrace-package)
   (:import-from :sb-ext :fold-identical-code)
+  (:import-from :sb-vm :primitive-type-of)
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
    :*backend-primitive-type-names* 
@@ -1056,7 +1058,7 @@
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
   (:import-from :std/seq :do-indexes :repeat)
   (:import-from :std/pipe :index :make-pipe :source :sink :filter :event :message)
-  (:import-from :sb-thread :*all-threads* :make-foreign-thread)
+  (:import-from :sb-thread :*all-threads*)
   (:import-from :std/list :flatten)
   (:import-from :std/prim :definline)
   (:import-from :std/prim :defmacro!)
@@ -1067,6 +1069,7 @@
   (:import-from :std/list :deletef)
   (:export
    :limiter-lock :limiter-count
+   :update-limiter-count
    :alive
    :*default-spint-count*
    :make-ephemeral-thread
@@ -1139,7 +1142,7 @@
    :make-threads :with-threads 
    :with-thread
    :with-temp-pool
-   :thread-count :dump-thread
+   :thread-count
    :channel
    :channel-pool
    :channel-queue
@@ -1154,6 +1157,8 @@
    :sync-message
    :with-sync-message
    :schedule
+   :supervisor :supervisor-thread
+   :domain :scope
    :+standard-io-bindings+
    :*default-special-bindings*
    :check-thread-pool 

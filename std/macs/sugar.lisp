@@ -145,8 +145,11 @@ documentation string."
 ;;; Definitions
 ;; TODO 2025-08-12: 
 ;; inspired by LFARM
-(defmacro defwith (name args bind)
-  "Define a call-with-NAME function and with-NAME macro which accept ARGS."
+(defmacro defwith (name args &rest bind)
+  "Define a call-with-NAME function and with-NAME macro which accept ARGS.
+
+NOTE: currently the bindings are completely unevaluated - if you pass (SELF)
+to ARGS you should have something like (FOO (EVAL SELF)) in BIND."
   (let ((wname (symbolicate "WITH-" name))
         (cwname (symbolicate "CALL-WITH-" name)))
     `(progn
@@ -156,7 +159,6 @@ documentation string."
            (funcall body-fn)))
        (defmacro ,wname (,@args &body body)
          `(,',cwname ',,@args (lambda () ,@body))))))
-
 
 ;; TODO 2024-10-24: 
 (defmacro defclass* (name direct-superclasses direct-slots &rest opts)

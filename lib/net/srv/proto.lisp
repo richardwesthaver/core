@@ -47,7 +47,7 @@
 (defvar-unbound *service-stream*)
 (defvar-unbound *finish-processing-socket*)
 (defvar-unbound *close-service-stream*)
-
+(defconstant +handler-tag+ 'handler-tag)
 ;;; Utils
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun default-web-directory (&optional sub-directory)
@@ -95,15 +95,16 @@
   "This function can be called by a request handler at any time to
 immediately abort handling the request.  This works as if the handler
 had returned RESULT.  See the source code of REDIRECT for an example."
-  (throw 'handler-done result))
+  (throw '#.+handler-tag+ result))
 
 ;;; Config
-(defconfig net-service-config (service-config) ())
+(defconfig net-service-config (service-config) ()
+  (:default-initargs
+   :request-class 'net-service-request
+   :response-class 'net-service-response))
 
-(defmethod make-config ((self (eql :net)) &rest args &key (class 'net-service-config) path)
-  (remf args :class)
-  (remf args path)
-  (apply 'make-instance class args))
+(defmethod make-config ((self (eql :net)) &rest args)
+  (apply 'make-instance 'net-service-config args))
 
 (defmethod load-config ((self (eql :net)) (from t) &key)
   (apply 'make-config (std/file::file-read-forms from)))
@@ -265,151 +266,11 @@ had returned RESULT.  See the source code of REDIRECT for an example."
    :message-log-output *error-output*))
 
 ;;; Engine
+;; TODO 2025-09-12: kernels?
 (defclass single-threaded-engine (engine) ())
 
-;; Multithreaded runtime for services
-(defclass multi-threaded-engine (engine)
-  ((process :accessor process)))
-
-(defmethod run-thread ((self multi-threaded-engine) thunk &key name)
-  (sb-thread:make-thread thunk :name name))
-
-(defmethod exec ((self multi-threaded-engine))
-  (setf (process self)
-        (run-thread 
-         self
-         (lambda () (accept (service self)))
-         :name (format nil "~A ~A ~A"
-                       (name (service self))
-                       (or (address (service self)) "*")
-                       (port (service self)))))
-  (values))
-
-(defmethod stop ((self multi-threaded-engine) &key)
-  (sb-thread:join-thread (process self)))
-                    
-;; Note from Hunchentoot:
-#|
-;; You might think it would be nice to provide a taskmaster that takes
-;; threads out of a thread pool.  There are two things to consider:
-;;  - On a 2010-ish Linux box, thread creation takes less than 250 microseconds.
-;;  - Bordeaux Threads doesn't provide a way to "reset" and restart a thread,
-;;    and it's not clear how many Lisp implementations can do this.
-;; If you're still interested, use the quux-hunchentoot extension to hunchentoot.
-|#
-;; NOTE 2025-08-16: see STD:THREAD-POOL for 
-(defclass thread-per-connection-engine (multi-threaded-engine)
-  ((max-thread-count
-    :type (or integer null)
-    :initarg :max-thread-count
-    :initform nil
-    :accessor max-thread-count)
-   (thread-count
-    :type integer
-    :initform 0
-    :accessor thread-count)
-   (thread-count-lock
-    :initform (make-mutex :name "thread-count")
-    :accessor thread-count-lock)
-   (max-accept-count
-    :type (or integer null)
-    :initarg :max-accept-count
-    :initform nil
-    :accessor max-accept-count)
-   (accept-count
-    :type integer
-    :initform 0
-    :accessor accept-count)
-   (accept-count-lock
-    :initform (make-mutex :name "accept-count")
-    :reader accept-count-lock)
-   (wait-queue
-    :initform (sb-concurrency:make-queue)
-    :reader wait-queue)
-   (wait-lock
-    :initform (make-mutex :name "wait-queue")
-    :reader wait-lock))
-  (:default-initargs
-   :max-thread-count *default-max-thread-count*
-   :max-accept-count *default-max-accept-count*))
-
-(defmethod initialize-instance :after ((self thread-per-connection-engine) &rest args)
-  "Ensure MAX-ACCEPT-COUNT > MAX-THREAD-COUNT."
-  (declare (ignore args))
-  (when (max-accept-count self)
-    (unless (max-thread-count self)
-      (error "MAX-THREAD-COUNT must be supplied if MAX-ACCEPT-COUNT is."))
-    (unless (> (max-accept-count self) (max-thread-count self))
-      (error "MAX-ACCEPT-COUNT must be greater than MAX-THREAD-COUNT"))))
-
-(defmethod exec ((self thread-per-connection-engine))
-  (setf (process self)
-        (run-thread 
-         self
-         (lambda () (accept (service self)))
-         :name (format nil "~A ~A ~A"
-                       (name (service self))
-                       (or (address (service self)) "*")
-                       (port (service self)))))
-  (values))
-
-(defmethod increment-accept-count ((self thread-per-connection-engine))
-  (when (max-accept-count self)
-    (with-mutex ((accept-count-lock self))
-      (incf (accept-count self)))))
-
-(defmethod decrement-accept-count ((self thread-per-connection-engine))
-  (when (max-accept-count self)
-    (with-mutex ((accept-count-lock self))
-      (decf (accept-count self)))))
-
-(defmethod increment-thread-count ((self thread-per-connection-engine))
-  (when (max-thread-count self)
-    (with-mutex ((thread-count-lock self))
-      (incf (thread-count self)))))
-
-(defmethod decrement-thread-count ((self thread-per-connection-engine))
-  (when (max-thread-count self)
-    (with-mutex ((thread-count-lock self))
-      (decf (thread-count self)))))
-
-(defmethod wait-for-free-connection ((self thread-per-connection-engine))
-  (with-mutex ((wait-lock self))
-    (loop until (< (thread-count self) (max-thread-count self))
-          do (sb-thread:condition-wait (wait-queue self) (wait-lock self)))))
-
-(defmethod %handle-connection ((self thread-per-connection-engine) socket)
-  (increment-accept-count self)
-  (flet ((pconn (service socket)
-           (increment-thread-count self)
-           (unwind-protect (process-connection service socket)
-             (decrement-thread-count self))))
-    (cond ((null (max-thread-count self))
-           (process-connection (service self) socket))
-          ((if (max-accept-count self)
-               (>= (accept-count self) (max-accept-count self))
-               (>= (thread-count self) (max-thread-count self)))
-           (too-many-engine-requests self)
-           (send-service-unavailable-response self socket))
-          ((and (max-accept-count self)
-                (>= (thread-count self) (max-thread-count self)))
-           (wait-for-free-connection self)
-           (pconn (service self) socket))
-          (t
-           (pconn (service self) socket)))))
-
-(defmethod create-request-worker-thread ((self thread-per-connection-engine) socket)
-  "Create a thread which handles a request."
-  (handler-case
-      (run-thread
-       self
-       (lambda () (%handle-connection self socket))
-       :name (format nil "worker:~A" (socket-peername socket)))
-    (error (c)
-      (let ((*service* (service self)))
-        (ignore-errors
-         (close (socket-make-stream (socket *service*)) :abort t))
-        (service-log :error "Error while creating worker thread for new connection: ~A" c)))))
+(defmethod handle-connection ((self single-threaded-engine) socket)
+  (process-connection (service self) socket))
 
 (defun too-many-engine-requests (self)
   (service-log-message 
@@ -435,8 +296,128 @@ had returned RESULT.  See the source code of REDIRECT for an example."
         (ignore-errors
          (close *service-stream* :abort t))))))
 
-(defmethod handle-connection ((self engine) socket)
-  (create-request-worker-thread self socket))
+;; Multithreaded runtime for services
+(defclass multi-threaded-engine (engine supervisor) ()
+  (:default-initargs :thread nil)
+  (:documentation "A multi-threaded ENGINE with a dedicated thread. This class is technically a
+SUPERVISOR where the SCOPE is bound to a value based on the current SERVICE at
+runtime (a call to RUN-THREAD)."))
+
+(defmethod run-thread ((self multi-threaded-engine) thunk &key name scope)
+  (when scope (setf (slot-value self 'scope) scope))
+  (setf (supervisor-thread self) (make-thread thunk :name name)))
+
+(defmethod handle-connection ((self multi-threaded-engine) socket)
+  (run-thread self (lambda () (process-connection (service self) socket))))
+
+(defmethod exec ((self multi-threaded-engine))
+  "Execute the engine SELF which is assumped to have a bound SERVICE slot. ACCEPT
+is called on the service in a separate supervisor thread."
+  (run-thread 
+   self
+   (lambda () (accept (service self)))
+   :name (format nil "~A ~A ~A"
+                 (name (service self))
+                 (or (address (service self)) "*")
+                 (port (service self)))
+   :scope (service self))
+  (values))
+
+(defmethod stop ((self multi-threaded-engine) &key)
+  "Stop the engine SELF by joining its THREAD if it exists, else return NIL."
+  (when-let ((th (supervisor-thread self)))
+    (join-thread th)))
+                    
+;; Note from Hunchentoot:
+#|
+;; You might think it would be nice to provide a taskmaster that takes
+;; threads out of a thread pool.  There are two things to consider:
+;;  - On a 2010-ish Linux box, thread creation takes less than 250 microseconds.
+;;  - Bordeaux Threads doesn't provide a way to "reset" and restart a thread,
+;;    and it's not clear how many Lisp implementations can do this.
+;; If you're still interested, use the quux-hunchentoot extension to hunchentoot.
+|#
+;; NOTE 2025-08-16: see STD:THREAD-POOL
+(defclass thread-per-connection-engine (multi-threaded-engine thread-pool)
+  ((max-accept-count
+    :type (or integer null)
+    :initarg :max-accept-count
+    :initform nil
+    :accessor max-accept-count)
+   (accept-count
+    :type counter
+    :initform (std:make-counter)
+    :accessor accept-count)
+   ;; (accept-count-lock
+   ;;  :initform (make-mutex :name "accept-count")
+   ;;  :reader accept-count-lock)
+   (wait-queue
+    :initform (sb-concurrency:make-queue)
+    :reader wait-queue)
+   (wait-lock
+    :initform (make-mutex :name "wait-queue")
+    :reader wait-lock))
+  (:default-initargs
+   :limiter-count *default-max-thread-count*
+   :workers #() ;; workers are initialized so that WORKER-COUNT may be used
+   :max-accept-count *default-max-accept-count*))
+
+(defaccessor name ((self multi-threaded-engine)) (thread-name (supervisor-thread self)))
+
+(defmethod initialize-instance :after ((self thread-per-connection-engine) &rest args)
+  "Ensure MAX-ACCEPT-COUNT > LIMITER-COUNT."
+  (declare (ignore args))
+  (when (max-accept-count self)
+    (unless (limiter-count self)
+      (error "LIMITER-COUNT must be supplied if MAX-ACCEPT-COUNT is."))
+    (unless (> (max-accept-count self) (limiter-count self))
+      (error "MAX-ACCEPT-COUNT must be greater than LIMITER-COUNT"))))
+
+(std:definline increment-accept-count (eng)
+  (std:inc-counter (accept-count eng)))
+
+(std:definline decrement-accept-count (eng)
+  (std:dec-counter (accept-count eng)))
+
+(defun wait-for-free-connection (self)
+  "Wait until a connection is available (< WORKER-COUNT LIMITER-COUNT)."
+  (declare (thread-per-connection-engine self))
+  (with-mutex ((wait-lock self))
+    (loop until (< (worker-count self) (limiter-count self))
+          do (sb-thread:condition-wait (wait-queue self) (wait-lock self)))))
+
+(defmethod handle-connection ((self thread-per-connection-engine) socket)
+  (increment-accept-count self)
+  (flet ((pconn (service socket)
+           (update-limiter-count self 1)
+           (unwind-protect (process-connection service socket)
+             (update-limiter-count self -1))))
+    (cond ((null (limiter-count self))
+           (process-connection (service self) socket))
+          ((if (max-accept-count self)
+               (>= (accept-count self) (max-accept-count self))
+               (>= (worker-count self) (limiter-count self)))
+           (too-many-engine-requests self)
+           (send-service-unavailable-response self socket))
+          ((and (max-accept-count self)
+                (>= (worker-count self) (limiter-count self)))
+           (wait-for-free-connection self)
+           (pconn (service self) socket))
+          (t
+           (pconn (service self) socket)))))
+
+(defmethod create-request-worker-thread ((self thread-per-connection-engine) socket)
+  "Create a thread which handles a request from SOCKET."
+  (handler-case
+      (run-thread
+       self
+       (lambda () (handle-connection self socket))
+       :name (format nil "worker:~A" (socket-peername socket)))
+    (error (c)
+      (let ((*service* (service self)))
+        (ignore-errors
+         (close (socket-make-stream (socket *service*)) :abort t))
+        (service-log :error "Error while creating worker for new connection: ~A" c)))))
 
 ;; supervisor, worker, task, kernel
 
@@ -474,14 +455,16 @@ had returned RESULT.  See the source code of REDIRECT for an example."
   (:documentation "The service class is designed primarily for webservers and functionally
 similar to HUNCHENTOOT:ACCEPTOR."))
 
-(defmethod shared-initialize :after ((self net-service) slots &key port address)
+(defmethod shared-initialize :after ((self net-service) slots &key port address name)
+  (when name (register-service name self))
   (when (consp port) ; assumed to be a port range - we select one at random, ensure it is free, and replace
     (destructuring-bind (lo . hi) port
       (setf (port self) (find-port :min (+ lo (random (- hi lo))) :max hi :host (or address *localhost*))))))
 
 (defaccessor name ((self net-service)) (id:id self))
-(defmethod std/thread:alive ((self net-service)) (not (shutdown-p self)))
-(defmethod (setf std/thread:alive) (new (self net-service)) (setf (shutdown-p self) (not new)))
+
+(defmethod alive ((self net-service)) (not (shutdown-p self)))
+(defmethod (setf alive) (new (self net-service)) (setf (shutdown-p self) (not new)))
 
 (defmethod message-log-output ((self net-service))
   (message-log-output (logger self)))
@@ -675,5 +658,5 @@ available."
         do (return router)))
   
 (defmacro with-service ((name) &body body)
-  `(let ((*service* (find-service ,name)))
+  `(let ((*service* (gethash ,name *service-table*)))
      ,@body))

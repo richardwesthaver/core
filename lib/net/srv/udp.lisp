@@ -38,15 +38,19 @@ On success two values are returned: (PROTO HEADERS)."
   (:default-initargs
    :request-class 'udp-service-request
    :response-class 'udp-service-response
-   :engine (make-instance 'multi-threaded-engine)))
+   :type :datagram
+   :protocol :udp
+   :engine (make-instance 'thread-per-connection-engine :name :udp)))
 
 (defmethod accept ((self udp-service)) 
   ())
 
 (defmethod process-connection ((*service* udp-service) (socket t))
-  "UDP does not maintain connections between peers. We implement this function
-  for UDP-SERVICE to allow deeper inspection of the first packet which we can
-  then use to infer the next sequence of packets to be expected."
+  "UDP does not maintain connections between peers, but the default engine
+type (THREAD-PER-CONNECTION-ENGINE) expects the connection protocol to be
+  implemented. We implement this function for UDP-SERVICE to allow a simple
+  handshake to be performed which registers a connection from the peer on
+  SOCKET."
   (let* ((socket-stream (sb-bsd-sockets:socket-make-stream socket))
          (*service-stream*)
          (*close-service-stream* t)

@@ -25,7 +25,8 @@
       (list (make-config (car ast) :path (cadr ast)))
       (atom (make-config ast)))))
 (defgeneric load-config (kind from &key &allow-other-keys)
-  (:documentation "Load a configuration."))
+  (:documentation "Load a configuration.")
+  (:method ((self t) (from t) &rest args) (load-ast (apply 'read-ast self from args))))
 (defgeneric find-config (obj &rest args &key &allow-other-keys)
   (:documentation "Find an existing configuration."))
 (defgeneric config-find (obj key &key &allow-other-keys)
@@ -38,7 +39,7 @@
 
 (defmacro defconfig (name direct-superclasses direct-slots &rest options)
   "DEFCLASS sugar for CONFIG objects."
-  `(eval-always
+  `(progn
      (defclass ,name ,(append direct-superclasses '(obj/config::config))
        ,direct-slots
        ,@options)))

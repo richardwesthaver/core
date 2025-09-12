@@ -99,11 +99,40 @@
 	    :accessor session)
    (protocol :initarg :request-protocol :reader request-protocol)))
 
-(defconfig service-config () ())
+(defconfig service-config (id:id ast:ast) 
+  ((request-class :initarg :request-class)
+   (response-class :initarg :response-class))
+  (:default-initargs
+   :request-class 'request
+   :response-class 'response))
+
+(defmethod service ((self service-config))
+  "Try to find a suitable SERVICE class matching the class-name of a SERVICE-CONFIG."
+  (let ((name (remove-string "-CONFIG" (string (class-name (class-of self))))))
+    (find-class (symbolicate name))))
+
+(defmethod load-ast ((self service-config))
+  (with-slots (ast) self
+    (doplist (k v) ast
+      (unless (null v) (setf (slot-value self (symbolicate k)) v)))
+    (setf ast nil)
+    self))
+
+(defmethod build-ast ((self service-config) &key (nullp nil) (exclude '(ast id)))
+  (setf (ast self)
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude)))
+
+(defmethod build ((self service-config) &key)
+  (make-instance (service self)
+    :request-class (slot-value self 'request-class)
+    :response-class (slot-value self 'response-class)))
 
 (defmethod make-config ((self (eql :service)) &rest args &key (class 'service-config))
-  (remf args class)
-  (apply 'make-instance class args))
+  (apply 'make-instance class (remove-from-plist args class)))
 
 ;;; Protocol
 (defgeneric service (self)
