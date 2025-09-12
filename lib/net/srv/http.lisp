@@ -728,13 +728,78 @@ Returns STREAM."
     (finish-output stream))
   stream)
 
-(defconstant +http-bad-request+ 400)
+(defun aux-request-value (symbol &optional (request *request*))
+  "Returns the value associated with SYMBOL from the request object
+REQUEST \(the default is the current request) if it exists.  The
+second return value is true if such a value was found."
+  (when request
+    (let ((found (assoc symbol (aux-data request) :test #'eq)))
+      (values (cdr found) found))))
+
+(defsetf aux-request-value (symbol &optional request)
+    (new-value)
+  "Sets the value associated with SYMBOL from the request object
+REQUEST \(default is *REQUEST*).  If there is already a value
+associated with SYMBOL it will be replaced."
+  (once-only (symbol)
+    (with-gensyms (place %request)
+      `(let* ((,%request (or ,request *request*))
+              (,place (assoc ,symbol (aux-data ,%request) :test #'eq)))
+         (cond
+           (,place
+            (setf (cdr ,place) ,new-value))
+           (t
+            (push (cons ,symbol ,new-value)
+                  (aux-data ,%request))
+            ,new-value))))))
+
+(defun delete-aux-request-value (symbol &optional (request *request*))
+  "Removes the value associated with SYMBOL from the request object
+REQUEST."
+  (when request
+    (setf (aux-data request)
+            (delete symbol (aux-data request)
+                    :key #'car :test #'eq)))
+  (values))
+
+(defun parse-path (path)
+  "Return a relative pathname that has been verified to not contain
+  any directory traversals or explicit device or host fields.  Returns
+  NIL if the path is not acceptable."
+  (when (every #'graphic-char-p path)
+    (let* ((pathname (sb-ext:parse-native-namestring
+                      ;; Just disallow anything with :wild components later.
+                      (remove #\\ (cl-ppcre:regex-replace "^/*" path ""))))
+           (directory (pathname-directory pathname)))
+      (when (and (or (null (pathname-host pathname))
+                     (equal (pathname-host pathname)
+                            (pathname-host *default-pathname-defaults*)))
+                 (or (null (pathname-device pathname))
+                     (equal (pathname-device pathname)
+                            (pathname-device *default-pathname-defaults*)))
+                 (or (null directory)
+                     (and (eql (first directory) :relative)
+                          ;; only string components, no :UP traversals or :WILD
+                          (every #'stringp (rest directory))))
+                 (not (equal (file-namestring pathname) "..")))
+        pathname))))
+
+(defun request-pathname (&optional (request *request*) drop-prefix)
+  "Construct a relative pathname from the request's SCRIPT-NAME.
+If DROP-PREFIX is given, pathname construction starts at the first path
+segment after the prefix.
+"
+  (let ((path (script-name request)))
+    (if drop-prefix
+        (when (starts-with-p path drop-prefix)
+          (parse-path (subseq path (length drop-prefix))))
+        (parse-path path))))
 
 (defun send-bad-request-response (stream &optional additional-info)
   "Send a ``Bad Request'' response to the client."
   (write-sequence (flex:string-to-octets
 		   (format nil "HTTP/1.0 ~D ~A~C~CConnection: close~C~C~C~CYour request could not be interpreted by this HTTP server~C~C~@[~A~]~C~C"
-			   +http-bad-request+ (http-status-message +http-bad-request+) #\Return #\Linefeed
+			   codec::+http-bad-request+ (http-status-message codec::+http-bad-request+) #\Return #\Linefeed
 			   #\Return #\Linefeed #\Return #\Linefeed #\Return #\Linefeed additional-info #\Return #\Linefeed))
 		  stream))
 

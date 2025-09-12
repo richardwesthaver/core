@@ -31,6 +31,7 @@
 ;;; Vars
 (defvar *router*)
 (defvar *session-db* nil)
+(defvar *routes* '(dispatch-routes))
 (defvar *global-session-db-lock* (load-time-value (make-mutex :name "global-session-db")))
 (defvar *log-service-errors* t)
 (defvar *access-log-lock* (make-mutex :name "access-log"))
@@ -59,6 +60,9 @@
                                       :type nil
                                       :defaults source-directory)))))
 
+(std:definline register-service (name srv)
+  (setf (gethash name *service-table*) srv))
+
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
 (defgeneric find-route (self uri))
@@ -73,7 +77,16 @@
   (:method ((self t)) 
     (declare (ignore self))
     nil))
-
+(defgeneric remove-session-hook (service session))
+(defgeneric session-db (self)
+  (:method ((self t))
+    *session-db*)
+  (:method ((self db:database))
+    (db:db self)))
+(defgeneric (setf session-db) (new self)
+  (:method (new (self db:database))
+    (setf (db:db self) new)))
+(defgeneric next-session-id (service))
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
 
@@ -135,20 +148,6 @@ had returned RESULT.  See the source code of REDIRECT for an example."
       `(flet ((,th () ,@body))
          (cond (,lock (with-mutex (,lock) (,th)))
                (t (,th)))))))
-
-(defgeneric remove-session-hook (service session))
-
-(defgeneric session-db (self)
-  (:method ((self t))
-    *session-db*)
-  (:method ((self db:database))
-    (db:db self)))
-
-(defgeneric (setf session-db) (new self)
-  (:method (new (self db:database))
-    (setf (db:db self) new)))
-
-(defgeneric next-session-id (service))
 
 (let ((session-id-counter 0))
   (defmethod next-session-id ((service t))
@@ -658,3 +657,23 @@ VAR or a list matching the destructuring lambda list
 
   (var &key real-name parameter-type init-form request-type)."
   (declare (ignore spec args body)))
+
+(defun dispatch-routes (req)
+  "A dispatcher which returns the appropriate handler defined with DEFROUTE, if
+available."
+  (loop for (uri routes router host) in *routes*
+        when (and (or (eq routes t)
+                      (find (name *service*) routes :test #'eq))
+                  (cond ((stringp uri)
+                         (and (or (null host)
+                                  (string= (or (address req) "unknown")
+                                           host))
+                              ;; Support RE for matching host names as well (wildcards)?
+                              ;; (string= (script-name req) uri) ; http-request only
+                              ))
+                        (t (funcall uri req))))
+        do (return router)))
+  
+(defmacro with-service ((name) &body body)
+  `(let ((*service* (find-service ,name)))
+     ,@body))
