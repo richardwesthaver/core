@@ -116,7 +116,9 @@
    #:peek-char*
    #:assert-char
    #:assert-crlf
-   #:with-character-stream-semantics))
+   #:with-character-stream-semantics
+   #:*accept-bogus-eols*
+   #:*treat-semicolon-as-continuation*))
 
 (defpackage :io/socket
   (:use :cl :io/proto :sb-alien)

@@ -989,7 +989,8 @@ and execution of concurrent work using a pool of 'worker' threads."))
                                            (alive t)
 					   (kernel *pool-kernel*)
                                            enlist
-                                           (class 'thread-pool))
+                                           (class 'thread-pool)
+                                           (worker-class *worker-class*))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
 NAME when non-nil is an EQL-unique identifier associated with the thread-pool
@@ -1012,7 +1013,8 @@ worker threads in certain situations."
   (check-type worker-count positive-fixnum)
   (check-type spin-count array-index)
   (let ((*worker-kernel* worker-kernel)
-        (*pool-kernel* kernel))
+        (*pool-kernel* kernel)
+        (*worker-class* worker-class))
     (let* ((workers (make-array worker-count))
            (count (if enlist (1+ worker-count) worker-count))
            (pool (make-instance class

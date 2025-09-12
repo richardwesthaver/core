@@ -95,7 +95,7 @@
 (pkg:defpkg :obj/url
   (:nicknames :url)
   (:use :cl :std :obj/uri :sb-ext)
-  (:export :url-encode :url-decode :url-encode-params :url-decode-params))
+  (:export :url-encode :url-decode :url-encode-params :url-decode-params :rewrite-urls))
 
 (defpkg :obj/tensor
   (:nicknames :tensor)

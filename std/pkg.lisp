@@ -927,6 +927,7 @@
   (:import-from :std/sys :get-internal-time-seconds :time-remaining :with-countdown)
   (:export :sequencep :take :starts-with-subseq 
    :take* :starts-with
+   :ends-with
    :ends-with-subseq :nth-value-or
    :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
    :starts-with-one-of-p :copy-n

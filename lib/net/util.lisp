@@ -38,6 +38,13 @@
 ;; (get-address-by-name "localhost")
 
 ;;; Macros
+(defmacro with-open-socket ((var socket) &body body)
+  "Bind SOCKET to VAR and eval BODY followed by calling SOCKET-CLOSE on SOCKET."
+  (once-only (socket)
+    `(let ((,var ,socket))
+       (unwind-protect (when ,var ,@body)
+         (when ,var (socket-close ,var))))))
+
 (defmacro with-client-server (((socket-class &rest common-initargs)
                                    (listen-socket-var &rest listen-address)
                                    (client-socket-var &rest client-address)

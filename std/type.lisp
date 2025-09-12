@@ -305,13 +305,13 @@ extended by the user using the REGISTER-TYPE-ID function. "
     (setf (ldb (byte 4 8) id) (get-core-type-id obj))
     id))
 
-(defun type<= (obj1 obj2)
+(defun type-id<= (obj1 obj2)
   (<= (core-type-id obj1) (core-type-id obj2)))
 
-(defun type< (obj1 obj2)
+(defun type-id< (obj1 obj2)
   (< (core-type-id obj1) (core-type-id obj2)))
 
-(defun type= (obj1 obj2)
+(defun type-id= (obj1 obj2)
   (= (core-type-id obj1) (core-type-id obj2)))
 
 (defun array-type= (t1 t2)

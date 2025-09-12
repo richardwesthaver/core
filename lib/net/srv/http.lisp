@@ -114,24 +114,6 @@ object RES."
 handle are defined in specials.lisp."
   (response-status res))
 
-(defun request-method* (&optional (req *request*))
-  (http-method (http req)))
-
-(defun script-name* (&optional (req *request*))
-  (script-name req))
-
-(defun query-string* (&optional (req *request*))
-  (query-string req))
-
-(defun user-agent* (&optional (req *request*))
-  (user-agent (session req)))
-
-(defun referer* (&optional (req *request*))
-  (header-in* :referer req))
-
-(defun authorization* (&optional (req *request*))
-  (header-in* :authorization req))
-
 (defun (setf response-status*) (new-value &optional (res *response*))
   "Sets the http return code of RES."
   (setf (response-status res) new-value))
@@ -156,27 +138,98 @@ NAME. Search is case-sensitive."
 header named NAME \(a keyword or a string).  If a header with this
 name doesn't exist, it is created.")
   (:method (new-value (name symbol) &optional (res *response*))
-   ;; the default method
-   (let ((entry (assoc name (headers-out res))))
-     (if entry
-       (setf (cdr entry) new-value)
-       (setf (slot-value res 'headers-out)
-             (acons name new-value (headers-out res))))
-     new-value))
+    ;; the default method
+    (let ((entry (assoc name (headers-out res))))
+      (if entry
+          (setf (cdr entry) new-value)
+          (setf (slot-value res 'headers-out)
+                (acons name new-value (headers-out res))))
+      new-value))
   (:method (new-value (name string) &optional (res *response*))
-   "If NAME is a string, it is converted to a keyword first."
-   (setf (header-out (keywordicate name) res) new-value))
+    "If NAME is a string, it is converted to a keyword first."
+    (setf (header-out (keywordicate name) res) new-value))
   (:method :after (new-value (name (eql :content-length)) &optional (res *response*))
-   "Special case for the `Content-Length' header."
-   (check-type new-value integer)
-   (setf (slot-value res 'content-length) new-value))
+    "Special case for the `Content-Length' header."
+    (check-type new-value integer)
+    (setf (slot-value res 'content-length) new-value))
   (:method :after (new-value (name (eql :content-type)) &optional (res *response*))
-   "Special case for the `Content-Type' header."
-   (check-type new-value (or null string))
-   (setf (slot-value res 'content-type) new-value)))
+    "Special case for the `Content-Type' header."
+    (check-type new-value (or null string))
+    (setf (slot-value res 'content-type) new-value)))
 
-;; content-type
-;; content-length *
+
+(let ((scanner-hash (make-hash-table :test #'equal)))
+  (defun scanner-for-get-param (param-name)
+    "Returns a CL-PPCRE scanner which matches a GET parameter in a
+URL.  Scanners are memoized in SCANNER-HASH once they are created."
+    (or (gethash param-name scanner-hash)
+        (setf (gethash param-name scanner-hash)
+              (cl-ppcre:create-scanner
+               `(:alternation
+                 ;; session=value at end of URL
+                 (:sequence
+                  (:char-class #\? #\&)
+                  ,param-name
+                  #\=
+                  (:greedy-repetition 0 nil (:inverted-char-class #\&))
+                  :end-anchor)
+                 ;; session=value with other parameters following
+                 (:sequence
+                  (:register (:char-class #\? #\&))
+                  ,param-name
+                  #\=
+                  (:greedy-repetition 0 nil (:inverted-char-class #\&))
+                  #\&))))))
+  (defun add-cookie-value-to-url (url &key
+                                      (cookie-name (session-cookie-name *service*))
+                                      (value (when-let ((session (session *request*)))
+                                               (session-cookie-value session)))
+                                      (replace-ampersands-p t))
+    "Removes all GET parameters named COOKIE-NAME from URL and then
+adds a new GET parameter with the name COOKIE-NAME and the value
+VALUE.  If REPLACE-AMPERSANDS-P is true all literal ampersands in URL
+are replaced with '&amp;'. The resulting URL is returned."
+    (unless url
+      ;; see URL-REWRITE:*URL-REWRITE-FILL-TAGS*
+      (setq url (uri:uri *request*)))
+    (setq url (cl-ppcre:regex-replace-all (scanner-for-get-param cookie-name) url "\\1"))
+    (when value
+      (setq url (format nil "~A~:[?~;&~]~A=~A"
+                        url
+                        (find #\? url)
+                        cookie-name
+                        (url:url-encode value))))
+    (when replace-ampersands-p
+      (setq url (cl-ppcre:regex-replace-all "&" url "&amp;")))
+    url))
+
+(defun maybe-rewrite-urls-for-session (html &key
+                                            (cookie-name (session-cookie-name *service*))
+                                            (value (when-let ((session (session *request*)))
+                                                     (session-cookie-value session))))
+  "Rewrites the HTML page HTML such that the name/value pair
+COOKIE-NAME/COOKIE-VALUE is inserted if the client hasn't sent a
+cookie of the same name but only if *REWRITE-FOR-SESSION-URLS* is
+true.  See the docs for URL-REWRITE:REWRITE-URLS."
+  (cond ((or (not *rewrite-for-session-urls*)
+             (null value)
+             (cookie-out cookie-name))
+         html)
+        (t
+         (with-input-from-string (*standard-input* html)
+           (with-output-to-string (*standard-output*)
+             (url:rewrite-urls
+              (lambda (url)
+                (add-cookie-value-to-url url
+                                         :cookie-name cookie-name
+                                         :value value))))))))
+
+(defun maybe-add-charset-to-content-type-header (content-type external-format)
+  (if (and (cl-ppcre:scan "(?i)^text" content-type)
+           (not (cl-ppcre:scan "(?i);\\s*charset=" content-type)))
+      (format nil "~A; charset=~(~A~)" content-type external-format)
+      content-type))
+
 ;; headers-out
 ;; return-code * status-code
 ;; external-format //
@@ -197,6 +250,9 @@ name doesn't exist, it is created.")
 (defclass http-service-request (net-service-request)
   ((http :type http-request :initarg :http :accessor http)
    (headers-in :initarg :headers-in :reader headers-in)
+   (cookies-in :initform nil
+               :documentation "cookies sent by the client."
+               :reader cookies-in)
    (get-parameters :initform nil
                    :documentation "An alist of the GET parameters sent
 by the client."
@@ -220,6 +276,29 @@ request.")
              :accessor aux-data
              :documentation "Used to keep a user-modifiable alist with
 arbitrary data during the request.")))
+
+(defun request-method* (&optional (req *request*))
+  (http-method (http req)))
+
+(defun script-name* (&optional (req *request*))
+  (script-name req))
+
+(defun query-string* (&optional (req *request*))
+  (query-string req))
+
+(defun user-agent* (&optional (req *request*))
+  (user-agent (session req)))
+
+(defun referer* (&optional (req *request*))
+  (header-in* :referer req))
+
+(defun authorization* (&optional (req *request*))
+  (header-in* :authorization req))
+
+(defun cookie-in (name &optional (req *request*))
+  "Returns the current value of the incoming cookie named
+NAME. Search is case-sensitive."
+  (cdr (assoc name (cookies-in req) :test #'string=)))
 
 (defun start-http-output (status &optional (content nil contentp))
   "Sends all headers and maybe the content body to *SERVICE-STREAM*. Returns
@@ -322,7 +401,7 @@ Returns the stream that is connected to the client."
 
 (defmethod process-request ((req http-service-request))
   (catch 'request-processed ;; used by HTTP HEAD handling to end request
-                            ;; processing in a HEAD request (see START-HTTP-OUTPUT)
+    ;; processing in a HEAD request (see START-HTTP-OUTPUT)
     (let ((*request* req)
           ;; *tmp-files*
           *headers-sent*)
@@ -330,13 +409,13 @@ Returns the stream that is connected to the client."
           ((report-error-to-client (error &optional backtrace)
              (when *log-service-errors*
                (service-log log:*log-level* "~A~@[~%~A~]" error (when log:*log-show-backtrace*
-                                                               backtrace)))
-                    (start-http-output codec::+http-internal-server-error+
-                                       (service-status-message 
-                                        *service*
-                                        codec::+http-internal-server-error+
-                                        :error (princ-to-string error)
-                                        :backtrace (princ-to-string backtrace)))))
+                                                                  backtrace)))
+             (start-http-output codec::+http-internal-server-error+
+                                (service-status-message 
+                                 *service*
+                                 codec::+http-internal-server-error+
+                                 :error (princ-to-string error)
+                                 :backtrace (princ-to-string backtrace)))))
         (multiple-value-bind (contents error backtrace)
             ;; skip dispatch if bad request
             (when (response-ok-p *response*)
@@ -352,6 +431,7 @@ Returns the stream that is connected to the client."
                                    (service-status-message 
                                     *service*
                                     (response-status *response*))))))))))
+
 ;;; Session
 (defclass http-session (session)
   ((id :type integer :initarg :id)
@@ -413,10 +493,10 @@ RESPONSE object. If a cookie with the same name
          (place (assoc name (cookies-out res) :test #'string=)))
     (cond
       (place
-        (setf (cdr place) cookie))
+       (setf (cdr place) cookie))
       (t
-        (push (cons name cookie) (cookies-out res))
-        cookie))))
+       (push (cons name cookie) (cookies-out res))
+       cookie))))
 
 (defgeneric session-cookie-value (session)
   (:method ((session session))
@@ -446,9 +526,9 @@ RESPONSE object. If a cookie with the same name
 
 ;;; Service
 (defclass http-service (net-service http-server) 
-   ;; RESEARCH 2024-07-18: 
-   ;; may need to start dealing with this
-   ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
+  ;; RESEARCH 2024-07-18: 
+  ;; may need to start dealing with this
+  ;; https://datatracker.ietf.org/doc/html/rfc2616#section-3.6.1
   ((connection-max :type (or fixnum null) :initarg :connection-max)
    (chunk-output-p :type boolean :initarg :chunk-output-p)
    (chunk-input-p :type boolean :initarg :chunk-input-p)
@@ -465,7 +545,7 @@ RESPONSE object. If a cookie with the same name
          (setf (output-chunking-p stream) nil
                (input-chunking-p stream) nil)
          (stream-of stream))
-         (t stream)))
+        (t stream)))
 
 (defmethod service-log-access ((self http-service) &optional code)
   "Default method for access logging.  It logs the information to the
@@ -496,6 +576,73 @@ can be parsed by most log analysis tools."
                        (values nil c (sb-debug:list-backtrace))))))
     (dispatch-request *service* *request*)))
 
+;;; Default HTTP Handlers
+(defun maybe-handle-range-header (file)
+  "Helper function for handle-static-file.  Determines whether the
+  requests specifies a Range header.  If so, parses the header and
+  position the already opened file to the location specified.  Returns
+  the number of bytes to transfer from the file.  Invalid specified
+  ranges are reported to the client with a HTTP 416 status code."
+  (let ((bytes-to-send (file-length file)))
+    (cl-ppcre:register-groups-bind
+        (start end)
+        ("^bytes=(\\d+)-(\\d*)$" (header-in* :range) :sharedp t)
+      ;; body won't be executed if regular expression does not match
+      (setf start (parse-integer start))
+      (setf end (if (> (length end) 0)
+                    (parse-integer end)
+                    (1- (file-length file))))
+      (when (or (< start 0)
+                (>= end (file-length file)))
+        (setf (http-status *response*) codec::+http-requested-range-not-satisfiable+
+              (header-out :content-range) (format nil "bytes 0-~D/~D" (1- (file-length file)) (file-length file)))
+        (throw 'handler-done
+          (format nil "invalid request range (requested ~D-~D, accepted 0-~D)"
+                  start end (1- (file-length file)))))
+      (file-position file start)
+      (setf (http-status *response*) codec::+http-partial-content+
+            bytes-to-send (1+ (- end start))
+            (header-out :content-range) (format nil "bytes ~D-~D/~D" start end (file-length file))))
+    bytes-to-send))
+
+(defun handle-static-file (path &optional content-type callback)
+  "An HTTP handler for the file PATH. Sends a CONTENT-TYPE header or tries to determine it from the file suffix.
+
+CALLBACK is a function which is called just before sending the file to a
+socket and can be used to set headers and check authorization. Arguments are
+PATH and CONTENT-TYPE."
+  (when (or (wild-pathname-p path)
+            (not (uiop:file-exists-p path))
+            (uiop:directory-exists-p path))
+    ;; file doesn't exist
+    (setf (http-status *response*) codec::+http-not-found+)
+    (abort-request-handler))
+  (unless content-type
+    (setf content-type (dat/mime:get-mime path)))
+  (let ((time (or (file-write-date path) (get-universal-time)))
+        bytes)
+    (setf (content-type*) (or (and content-type
+                                   (maybe-add-charset-to-content-type-header content-type :utf-8))
+                              "application/octet-stream")
+          (header-out :last-modified) (time:date time)
+          (header-out :accept-ranges) "bytes")
+    ;; (handle-if-modified-since time)
+    (unless (null callback)
+      (funcall callback path content-type))
+    (with-open-file (file path :direction :input :element-type 'octet)
+      (setf bytes (maybe-handle-range-header file)
+            (content-length*) bytes)
+      (let ((out (send-http-headers))
+            (buf (make-octets +default-chunked-output-size+)))
+        (loop (when (zerop bytes) (return))
+              (let ((chunk-size (min +default-chunked-output-size+ bytes)))
+                (unless (eql chunk-size (read-sequence buf file :end chunk-size))
+                  (error 'file-error :pathname file))
+                (write-sequence buf out :end chunk-size)
+                (decf bytes chunk-size)))
+        (finish-output out)))))
+
+;;; Dispatch
 (defmethod dispatch-request ((service http-service) request)
   "Default implementation of the HTTP request dispatch method, generates an
 +HTTP-NOT-FOUND+ error."
@@ -535,8 +682,8 @@ can be parsed by most log analysis tools."
 			  (replace content buffer :start1 index :end2 pos)
 		       while (= pos net/req::+buffer-size+)
 		       finally (return content)))))))
-                 
-                         
+
+
 (defun raw-post-data (&key (request *request*) want-stream force-binary force-string)
   (when (and force-binary force-string)
     (std-error "FORCE-BINARY and FORCE-STRING are mutually exclusive."))
@@ -603,6 +750,61 @@ Returns STREAM."
 
 (defun printable-ascii-char-p (char)
   (<= 32 (char-code char) 126))
+
+(defun read-http-headers (stream &optional log-stream)
+  "Reads HTTP header lines from STREAM \(except for the initial
+status line which is supposed to be read already) and returns a
+corresponding alist of names and values where the names are
+keywords and the values are strings.  Multiple lines with the
+same name are combined into one value, the individual values
+separated by commas.  Header lines which are spread across
+multiple lines are recognized and treated correctly.  Additonally
+logs the header lines to LOG-STREAM if it is not NIL."
+  (let (headers)
+    (labels ((read-header-line ()
+               "Reads one header line, considering continuations."
+               (with-output-to-string (header-line)
+                 (loop
+                   (let ((line (trim-whitespace (io/chunky::read-line* stream log-stream))))
+                     (when (zerop (length line))
+                       (return))
+                     (write-sequence line header-line)
+                     (let ((next (peek-char* stream)))
+                       (unless (io/chunky::whitespacep next)
+                         (return)))
+                     ;; we've seen whitespace starting a continutation,
+                     ;; so we loop
+                     (write-char #\Space header-line)))))
+             (split-header (line)
+               "Splits line at colon and converts it into a cons.
+Returns NIL if LINE consists solely of whitespace."
+               (unless (zerop (length (trim-whitespace line)))
+                 (let ((colon-pos (or (position #\: line :test #'char=)
+                                      (error 'syntax-error
+                                             :stream stream
+                                             :format-control "Couldn't find colon in header line ~S."
+                                             :format-arguments (list line)))))
+                   (cons (codec::http-keyword* (subseq line 0 colon-pos))
+                         (trim-whitespace (subseq line (1+ colon-pos)))))))
+             (add-header (pair)
+               "Adds the name/value cons PAIR to HEADERS.  Takes
+care of multiple headers with the same name."
+               (let* ((name (car pair))
+                      (existing-header (assoc name headers :test #'eq))
+                      (existing-value (cdr existing-header)))
+                 (cond (existing-header
+                        (setf (cdr existing-header)
+                              (format nil "~A~:[,~;~]~A"
+                                      existing-value
+                                      (and *treat-semicolon-as-continuation*
+                                           (eq name :set-cookie)
+                                           (std/seq::ends-with-p (trim-whitespace existing-value) ";"))
+                                      (cdr pair))))
+                       (t (push pair headers))))))
+      (loop for header-pair = (split-header (read-header-line))
+            while header-pair
+            do (add-header header-pair)))
+    (nreverse headers)))
 
 (defun get-http-request-data (stream)
   "Reads incoming headers from the client via STREAM.  Returns as
@@ -694,8 +896,8 @@ protocol of the request."
                                             :protocol protocol))))
                  (finish-output *service-stream*)
                  (setq *service-stream* (reset-connection-stream *service* *service-stream*))
-                  (when *finish-processing-socket*
-                    (return))))))
+                 (when *finish-processing-socket*
+                   (return))))))
       (when *close-service-stream*
         (flet ((close-stream (stream)
                  ;; as we are at the end of the request here, we ignore all

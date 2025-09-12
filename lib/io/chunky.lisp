@@ -104,12 +104,168 @@ into *CHAR-BUFFER*."
   ;; no error checking, only used internally  
   (setq *char-buffer* (read-char* stream eof-error-p eof-value)))
 
+(defvar *accept-bogus-eols* nil)
+
+(defvar *treat-semicolon-as-continuation* nil
+  "According to John Foderaro, Netscape v3 web servers bogusly split
+Set-Cookie headers over multiple lines which means that we'd have to
+treat Set-Cookie headers ending with a semicolon as incomplete and
+combine them with the next header.  This will only be done if this
+variable has a true value, though.")
+
+(defun read-line* (stream &optional log-stream)
+  "Reads and assembles characters from the binary stream STREAM until
+a carriage return is read.  Makes sure that the following character is
+a linefeed.  If *ACCEPT-BOGUS-EOLS* is not NIL, then the function will
+also accept a lone carriage return or linefeed as an acceptable line
+break.  Returns the string of characters read excluding the line
+break.  Returns NIL if input ends before one character was read.
+Additionally logs this string to LOG-STREAM if it is not NIL."
+  (let ((result
+         (with-output-to-string (line)
+           (loop for char-seen-p = nil then t
+                 for char = (read-char* stream nil)
+                 for is-cr-p = (and char (char= char #\Return))
+                 until (or (null char)
+                           is-cr-p
+                           (and *accept-bogus-eols*
+                                (char= char #\Linefeed)))
+                 do (write-char char line)
+                 finally (cond ((and (not char-seen-p)
+                                     (null char))
+                                (return-from read-line* nil))
+                               ((not *accept-bogus-eols*)
+                                (assert-char stream #\Linefeed))
+                               (is-cr-p
+                                (when (eql (peek-char* stream) #\Linefeed)
+                                  (read-char* stream))))))))
+    (when log-stream
+      (write-line result log-stream)
+      (finish-output log-stream))
+    result))
+
 (defmacro with-character-stream-semantics (&body body)
   "Binds *CHAR-BUFFER* around BODY so that within BODY we can use
 READ-CHAR* and friends \(see above) to simulate a character stream
 although we're reading from a binary stream."
   `(let ((*char-buffer* nil))
      ,@body))
+
+(defun trim-whitespace (string &key (start 0) (end (length string)))
+  "Returns a version of the string STRING (between START and END)
+where spaces and tab characters are trimmed from the start and the
+end. Might return STRING."
+  ;; optimized version to replace STRING-TRIM, suggested by Jason Kantz
+  (declare (optimize
+            speed
+            (space 0)
+            (debug 1)
+            (compilation-speed 0)
+            #+:lispworks (hcl:fixnum-safety 0)))
+  (declare (string string))
+  (let* ((start% (loop for i of-type fixnum from start below end
+                       while (or (char= #\space (char string i))
+                                 (char= #\tab (char string i)))
+                       finally (return i)))
+         (end% (loop for i of-type fixnum downfrom (1- end) to start
+                     while (or (char= #\space (char string i))
+                               (char= #\tab (char string i)))
+                     finally (return (1+ i)))))
+    (declare (fixnum start% end%))
+    (cond ((and (zerop start%) (= end% (length string))) string)
+          ((> start% end%) "")
+          (t (subseq string start% end%)))))
+
+(defun skip-whitespace (stream)
+  "Consume characters from STREAM until an END-OF-FILE is
+encountered or a non-whitespace (according to RFC 2616)
+characters is seen. This character is returned (or NIL in case
+of END-OF-FILE)."
+  (loop for char = (peek-char* stream nil)
+        while (and char (whitespacep char))
+        do (read-char* stream)
+        finally (return char)))
+
+(defun read-token (stream)
+  "Read characters from STREAM while they are token constituents
+(according to RFC 2616). It is assumed that there's a token
+character at the current position. The token read is returned as
+a string.  Doesn't signal an error (but simply stops reading) if
+END-OF-FILE is encountered after the first character."
+  (with-output-to-string (out)
+    (loop for first = t then nil
+          for char = (if first
+                       (peek-char* stream)
+                       (or (peek-char* stream nil) (return)))
+          while (token-char-p char)
+          do (write-char (read-char* stream) out))))
+
+(defun read-quoted-string (stream)
+  "Reads a quoted string (according to RFC 2616). It is assumed
+that the character at the current position is the opening quote
+character.  Returns the string read without quotes and escape
+characters."
+  (read-char* stream)
+  (with-output-to-string (out)
+    (loop for char = (read-char* stream)
+          until (char= char #\")
+          do (case char
+               (#\\ (write-char (read-char* stream) out))
+               (#\Return (assert-char stream #\Linefeed)
+                         (let ((char (read-char* stream)))
+                           (unless (whitespacep char)
+                             (unexpected-chars stream char '(#\Space #\Tab)))))
+               (otherwise (write-char char out))))))
+
+(defun read-cookie-value (stream &key (separators ";"))
+  "Reads a cookie parameter value from STREAM which is returned as a
+string.  Simply reads until a semicolon is seen \(or an element of
+SEPARATORS).  Also reads quoted strings if the first non-whitespace
+character is a quotation mark \(as in RFC 2109)."
+  (if (char= #\" (peek-char* stream))
+      (read-quoted-string stream)
+      (trim-whitespace
+       (with-output-to-string (out)
+         (loop for char = (peek-char* stream nil)
+               until (or (null char) (find char separators :test #'char=))
+               do (write-char (read-char* stream) out))))))
+
+(defun read-name-value-pair (stream &key (value-required-p t) cookie-syntax)
+  "Reads a typical \(in RFC 2616) name/value or attribute/value
+combination from STREAM - a token followed by a #\\= character and
+another token or a quoted string.  Returns a cons of name and value,
+both as strings.  If VALUE-REQUIRED-P is NIL, the #\\= sign and the
+value are optional.  If COOKIE-SYNTAX is true, uses READ-COOKIE-VALUE
+internally."
+  (skip-whitespace stream)
+  (let ((name (if cookie-syntax
+                (read-cookie-value stream :separators "=;")
+                (read-token stream))))
+    (skip-whitespace stream)
+    (cons name
+          (when (or value-required-p
+                    (eql (peek-char* stream nil) #\=))
+            (assert-char stream #\=)
+            (skip-whitespace stream)
+            (cond (cookie-syntax (read-cookie-value stream))
+                  ((char= (peek-char* stream) #\") (read-quoted-string stream))
+                  (t (read-token stream)))))))
+
+(defun read-name-value-pairs (stream &key (value-required-p t) cookie-syntax)
+  "Uses READ-NAME-VALUE-PAIR to read and return an alist of
+name/value pairs from STREAM.  It is assumed that the pairs are
+separated by semicolons and that the first char read \(except for
+whitespace) will be a semicolon.  The parameters are used as in
+READ-NAME-VALUE-PAIR.  Stops reading in case of END-OF-FILE
+\(instead of signaling an error)."
+  (loop for char = (skip-whitespace stream)
+        while (and char (char= char #\;))
+        do (read-char* stream)
+        ;; guard against a stray semicolon at the end
+        when (skip-whitespace stream)
+        collect (read-name-value-pair stream
+                                      :value-required-p value-required-p
+                                      :cookie-syntax cookie-syntax)))
 
 ;;; Conditions
 (eval-always
@@ -226,17 +382,17 @@ of simply switching chunking off.")))
         ;;            :last-char last-char
         ;;            :expected-chars expected-chars))))
     (labels (
-;;              (add-extensions ()
-;;                "Reads chunk extensions \(if there are any) and stores
-;; them into the corresponding slot of the stream."
-;;                (when-let ((extensions (read-name-value-pairs inner-stream)))
-;;                  (warn 'chunky-warning
-;;                        :stream stream
-;;                        :format-control "Adding uninterpreted extensions to stream ~S."
-;;                        :format-arguments (list stream))
-;;                  (setf (slot-value stream 'extensions)
-;;                        (append (extensions stream) extensions)))
-;;                (assert-crlf inner-stream))
+             (add-extensions ()
+               "Reads chunk extensions \(if there are any) and stores
+them into the corresponding slot of the stream."
+               (when-let ((extensions (read-name-value-pairs inner-stream)))
+                 (warn 'chunky-warning
+                       :stream stream
+                       :format-control "Adding uninterpreted extensions to stream ~S."
+                       :format-arguments (list stream))
+                 (setf (slot-value stream 'extensions)
+                       (append (extensions stream) extensions)))
+               (assert-crlf inner-stream))
              (get-chunk-size ()
                "Reads chunk size header \(including optional
 extensions) and returns the size."

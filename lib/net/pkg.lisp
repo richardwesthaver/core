@@ -42,7 +42,8 @@
    :make-server-response)
   ;; utils
   (:export :get-address-by-name
-   :with-client-server :*localhost*)
+   :with-client-server :*localhost*
+   :with-open-socket :find-port)
   ;; pkg
   (:export :*net-packages*))
 
@@ -368,7 +369,6 @@
    #:*global-session-db-lock*
    #:*session-db*
    #:*session*
-   #:*services*
    #:*session-secret*
    #:*service-stream*
    #:*finish-processing-socket*
@@ -420,7 +420,7 @@
    #:access-log-output
    #:with-open-socket
    #:wake-service-for-shutdown
-   #:do-with-request-count-incf
+   #:call-with-request-count-incf
    #:detach-socket
    #:session-timeout
    #:service-timeout

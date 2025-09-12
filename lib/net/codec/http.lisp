@@ -211,6 +211,10 @@ is optimized to not call INTERN for these."
   (or (gethash string +http-keyword-table+)
       (make-keyword string destructivep)))
 
+(std:definline http-keyword* (string)
+  (or (find-symbol (string-upcase string) (find-package "KEYWORD"))
+      string))
+
 (define-constant +known-http-methods+
     #(:get :post :head :put :delete :connect :options :trace :patch)
   :test 'equalp)

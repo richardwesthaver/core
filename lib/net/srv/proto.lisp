@@ -59,7 +59,6 @@
                                       :type nil
                                       :defaults source-directory)))))
 
-(defgeneric make-service (self &rest args &key &allow-other-keys))
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
 (defgeneric find-route (self uri))
@@ -444,7 +443,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
 
 ;;; Service
 (defclass net-service (service server)
-  ((port :reader port :initarg :port)
+  ((port :accessor port :initarg :port)
    (address :reader address :initarg :address)
    (request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
@@ -458,12 +457,12 @@ had returned RESULT.  See the source code of REDIRECT for an example."
    (request-count :type integer :accessor request-count :initarg :request-count)
    (shutdown-p :type boolean :accessor shutdown-p :initarg :shutdown-p)
    (shutdown-lock :type mutex :accessor shutdown-lock :initarg :shutdown-lock)
-   (shutdown-queue :type waitqueue :accessor shutdown-queue :initarg :shutdown-queue))
+   (shutdown-queue :type sb-thread:waitqueue :accessor shutdown-queue :initarg :shutdown-queue))
   (:default-initargs
    :id (symbol-name (gensym "service"))
    :port *default-service-port*
    :engine (make-instance 'thread-per-connection-engine)
-   :address nil
+   :address *localhost*
    :request-class 'net-service-request
    :response-class 'net-service-response
    :timeout *default-connection-timeout*
@@ -476,7 +475,14 @@ had returned RESULT.  See the source code of REDIRECT for an example."
   (:documentation "The service class is designed primarily for webservers and functionally
 similar to HUNCHENTOOT:ACCEPTOR."))
 
+(defmethod shared-initialize :after ((self net-service) slots &key port address)
+  (when (consp port) ; assumed to be a port range - we select one at random, ensure it is free, and replace
+    (destructuring-bind (lo . hi) port
+      (setf (port self) (find-port :min (+ lo (random (- hi lo))) :max hi :host (or address *localhost*))))))
+
 (defaccessor name ((self net-service)) (id:id self))
+(defmethod std/thread:alive ((self net-service)) (not (shutdown-p self)))
+(defmethod (setf std/thread:alive) (new (self net-service)) (setf (shutdown-p self) (not new)))
 
 (defmethod message-log-output ((self net-service))
   (message-log-output (logger self)))
@@ -529,13 +535,6 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   (socket-listen (socket self)
                  (backlog self))
   (values))
-
-(defmacro with-open-socket ((var socket) &body body)
-  "Bind SOCKET to VAR and eval BODY followed by calling SOCKET-CLOSE on SOCKET."
-  (once-only (socket)
-    `(let ((,var ,socket))
-       (unwind-protect (when ,var ,@body)
-         (when ,var (socket-close ,var))))))
        
 (defmethod accept ((self net-service))
   (with-open-socket (sock (socket self))
@@ -573,7 +572,6 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defmethod stop ((self net-service) &key graceful)
   (sb-thread:with-recursive-lock ((shutdown-lock self))
     (setf (shutdown-p self) t)
-    ;; (call-next-method)
     (when graceful
       (when (plusp (request-count self))
         (sb-thread:condition-wait (shutdown-queue self)
@@ -595,7 +593,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
     ;; (with-mapped-conditions ()
     (call-next-method))) ;; )
 
-(defun do-with-request-count-incf (*service* function)
+(defun call-with-request-count-incf (*service* function)
   (with-mutex ((shutdown-lock *service*))
     (incf (request-count *service*)))
   (unwind-protect
@@ -611,7 +609,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   the BODY has been executed, the SHUTDOWN-QUEUE condition
   variable of the SERVICE is signalled in order to finish shutdown
   processing."
-  `(do-with-request-count-incf ,service (lambda () ,@body)))
+  `(call-with-request-count-incf ,service (lambda () ,@body)))
 
 (defmethod remove-session-hook ((service net-service) (session t))
   nil)
@@ -633,7 +631,6 @@ similar to HUNCHENTOOT:ACCEPTOR."))
              :remote-addr raddr
              :remote-port rport
              args))))
-
 
 (defgeneric detach-socket (self)
   (:method ((self net-service))

@@ -97,6 +97,13 @@ or displaced array pointing to the sequence after PREFIX."
               ((= mismatch prefix-length) (values t (make-suffix mismatch)))
               (t (values nil nil)))))))
 
+(defun ends-with-p (seq suffix &key (test #'char-equal))
+  "Returns true if the sequence SEQ ends with the sequence
+SUFFIX.  Individual elements are compared with TEST."
+  (let ((mismatch (mismatch seq suffix :from-end t :test test)))
+    (or (null mismatch)
+        (= mismatch (- (length seq) (length suffix))))))
+
 (defun ends-with-subseq (suffix sequence &key (test #'eql))
   "Test whether SEQUENCE ends with SUFFIX. In other words: return true if
 the last (length SUFFIX) elements of SEQUENCE are equal to SUFFIX."

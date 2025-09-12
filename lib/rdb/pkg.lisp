@@ -156,7 +156,8 @@
    :schema-from-rdb-column-families
    :rdb-write
    :wbwi-put-kv-cf
-   :init-rdbrc))
+   :init-rdbrc
+   :rdb-service))
 
 (defpackage :rdb/cli
   (:use :cl :std :cli :clap :rdb :db :std/seq)

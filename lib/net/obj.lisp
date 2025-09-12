@@ -49,8 +49,8 @@
 communication channel with a client/server."))
 
 ;;; Protocol
-(defgeneric connect (self &key &allow-other-keys))
-(defgeneric disconnect (self &key &allow-other-keys))
+(defverb connect (self &key &allow-other-keys))
+(defverb disconnect (self &key &allow-other-keys))
 (defgeneric make-client (kind &rest initargs &key &allow-other-keys))
 (defgeneric make-server (kind &rest initargs &key &allow-other-keys))
 
