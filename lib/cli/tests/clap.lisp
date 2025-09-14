@@ -9,8 +9,8 @@
 ;; make sure we don't quit lisp in the middle of a test
 (setf *no-exit* t)
 
-(defparameter *test-opts* '((:name "foo" :description "bar" :kind string)
-                            (:name "bar" :description "foo" :kind string)))
+(defparameter *test-opts* '((:name "foo" :description "bar" :type string)
+                            (:name "bar" :description "foo" :type string)))
 (defparameter *cmd1* (make-cli :cmd :name "holla" :opts *test-opts* :description "cmd1 description"))
 (defparameter *cmd2* (make-cli :cmd :name "ayo" :cmds (vector *cmd1*) :opts *test-opts* :description "cmd1 description"))
 (defparameter *cmd3* (make-cli :cmd :name "flub" :opts *test-opts* :thunk 'flub-thunk))
@@ -61,6 +61,6 @@
 (deftest clap-opts ()
   "CLAP opt tests."
   (is (reduce (lambda (x y) (and x y))
-              (loop for k across *cli-opt-kinds* collect (cli-opt-kind-p k))))
+              (loop for k across *cli-opt-types* collect (cli-opt-type-p k))))
   (is (parse-trivial-opt t))
   (is (null (parse-trivial-opt nil))))

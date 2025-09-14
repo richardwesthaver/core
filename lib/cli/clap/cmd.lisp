@@ -119,7 +119,7 @@ a CLI is called without arguments, and all subcommands."))
           c)
         c)
     (if (eql default :error)
-        (error 'unknown-argument :name name :kind :cmd)
+        (error 'unknown-argument :name name :type :cmd)
         default)))
 
 (defmethod (setf find-cmd) ((new cli-cmd) name (self cli-cmd))
@@ -153,7 +153,7 @@ a CLI is called without arguments, and all subcommands."))
         (when (cli-opt-lock ret) ret)
         ret)
     (if (eql default :error)
-        (error 'unknown-argument :name name :kind :opt)
+        (error 'unknown-argument :name name :type :opt)
         default)))
 
 (defun cli-name= (a b)
@@ -201,7 +201,7 @@ are only OPTS and ARGS which should be used with the default command."
 
 (defmethod proc-args ((self cli-cmd) args)
   "Process ARGS into an ast. Each element of the ast is a node with a
-:kind slot, indicating the type of node and a :form slot which stores
+:type slot, indicating the type of node and a :form slot which stores
 an object."
   (make-cli-ast
    (flatten
@@ -223,7 +223,7 @@ an object."
            (cond
              ((and (= (length opts) 1) (not has-eq))
               (let ((o (car opts)))
-                (if (eql (cli-opt-kind o) 'boolean)
+                (if (eql (cli-opt-type o) 'boolean)
                     (%compose-flag-opt o)
                     (prog1
                         (%compose-value-opt o (pop args))

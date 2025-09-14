@@ -142,10 +142,6 @@
   (dolist (a *args*)
     (println (sk-search-project a))))
 
-(defcmd skc-start ()
-  (dolist (a *args*)
-    (println (srv:make-service (keywordicate (string-upcase a))))))
-
 (defun sk-shell ()
   (trace! "starting skel shell")
   (setq *no-exit* t)
@@ -172,33 +168,30 @@
   :opts 
   ((:name "version" 
     :description "print version"
-    :kind boolean
+    :type boolean
     :thunk version-opt)
    (:name "ast" :description "save the intermediate skel AST" 
-    :thunk keep-ast-opt :kind boolean)
+    :thunk keep-ast-opt :type boolean)
    (:name "level" :description "set log level (warn,info,debug,trace)"
     :thunk level-opt)
    (:name "config" :description "set a custom skel user config" 
-    :kind file 
+    :type file 
     :thunk skc-config))
   :cmds 
   ((:name init
     :description "initialize a skelfile in the current directory"
-    :opts ((:name "name" :description "project name" :kind string))
+    :opts ((:name "name" :description "project name" :type string))
     :thunk skc-init)
-   (:name start
-    :description "start a skel service"
-    :thunk skc-start)
    (:name id
     :description "print the current project id"
     :thunk skc-id)
    (:name inspect
     :description "inspect the project skelfile"
-    :opts ((:name "file" :description "path to skelfile" :kind file))
+    :opts ((:name "file" :description "path to skelfile" :type file))
     :thunk skc-inspect)
    (:name new
     :description "make a new skel project"
-    :opts ((:name "name" :description "project name" :kind string))
+    :opts ((:name "name" :description "project name" :type string))
     :thunk skc-new)
    (:name describe
     :description "describe a skelfile"
@@ -208,7 +201,7 @@
     :thunk skc-edit)
    (:name show
     :description "show skel objects slots"
-    :opts ((:name "file" :description "path to skelfile" :kind file))
+    :opts ((:name "file" :description "path to skelfile" :type file))
     :thunk skc-show)
    (:name status
     :description "show the current project status"

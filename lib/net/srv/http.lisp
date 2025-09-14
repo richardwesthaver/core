@@ -419,7 +419,7 @@ Returns the stream that is connected to the client."
         (multiple-value-bind (contents error backtrace)
             ;; skip dispatch if bad request
             (when (response-ok-p *response*)
-              (catch 'handler-done
+              (catch +handler-tag+
                 (values (handle-request *service* *request*))))
           (declare (ignorable error backtrace))
           (when error
@@ -532,7 +532,7 @@ RESPONSE object. If a cookie with the same name
   ((connection-max :type (or fixnum null) :initarg :connection-max)
    (chunk-output-p :type boolean :initarg :chunk-output-p)
    (chunk-input-p :type boolean :initarg :chunk-input-p)
-   (document-root :type pathname :initarg :document-root :accessor service-document-root))
+   (path :type pathname :initarg :path :accessor path))
   (:default-initargs
    :type :stream
    :protocol :tcp
@@ -575,7 +575,7 @@ can be parsed by most log analysis tools."
                    (lambda (c)
                      (when *headers-sent*
                        (setq *finish-processing-socket* t))
-                     (throw 'handler-done
+                     (throw '#.+handler-tag+
                        (values nil c (sb-debug:list-backtrace))))))
     (dispatch-request *service* *request*)))
 
@@ -599,7 +599,7 @@ can be parsed by most log analysis tools."
                 (>= end (file-length file)))
         (setf (http-status *response*) codec::+http-requested-range-not-satisfiable+
               (header-out :content-range) (format nil "bytes 0-~D/~D" (1- (file-length file)) (file-length file)))
-        (throw 'handler-done
+        (throw '#.+handler-tag+
           (format nil "invalid request range (requested ~D-~D, accepted 0-~D)"
                   start end (1- (file-length file)))))
       (file-position file start)
@@ -647,16 +647,16 @@ PATH and CONTENT-TYPE."
 
 ;;; Dispatch
 (defmethod dispatch-request ((service http-service) request)
-  "Default implementation of the HTTP request dispatch method, generates an
+  "Default implementation of the HTTP request dispatch method - generates an
 +HTTP-NOT-FOUND+ error."
-  (let ((path (and (service-document-root service)
+  (let ((path (and (path service)
                    ;; request-pathname?
                    (path request))))
     (cond
       (path
        (handle-static-file
         (merge-pathnames (if (equal "/" (script-name request)) #P"index.html" path)
-                         (service-document-root service))))
+                         (path service))))
       (t (setf (http-status *response*) codec::+http-not-found+)
          (abort-request-handler)))))
 
@@ -685,7 +685,6 @@ PATH and CONTENT-TYPE."
 			  (replace content buffer :start1 index :end2 pos)
 		       while (= pos net/req::+buffer-size+)
 		       finally (return content)))))))
-
 
 (defun raw-post-data (&key (request *request*) want-stream force-binary force-string)
   (when (and force-binary force-string)

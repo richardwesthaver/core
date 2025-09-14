@@ -17,13 +17,7 @@
 
 ;;;; TODO:
 
-;; request/response? here
-;; engine? either here or obj/eng.lisp, build on std/task, std/thread
-
 ;; %service-protocol
-
-;; session? prob here or in HTTP/S impl
-;; connection? lower-level than session
 
 ;; endpoint? closer to service
 ;; transport? closer to socket
@@ -68,17 +62,21 @@
 (defclass service (id)
   ((request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
-   (engine :type engine :accessor engine :initarg :engine)))
+   (engine :type engine :accessor engine :initarg :engine))
+  (:documentation "Base Class shared by all services. A service must specify the request and
+response classes it uses for communication as well as the engine which drives it."))
 
-(defclass engine () 
+(defclass engine ()
   ((service :accessor service :initarg :service 
-            :documentation "A link to the SERVICE which owns this instance.")))
+            :documentation "A link to the SERVICE which owns this instance."))
+  (:documentation "An engine provides an execution context for a SERVICE. Engines are responsible
+for managing the work done by a service and distributing work to compute
+resources. Different engines may use the main thread for execution, a
+dedicated thread, their own THREAD-POOL, or a combination of threading
+strategies."))
 
-(defgeneric make-service (self &rest args &key &allow-other-keys))
-
-(defclass response () ())
-
-(defgeneric make-response (&rest args &key &allow-other-keys))
+(defclass response () ()
+  (:documentation "Base class for response objects, usually generated in reply to a REQUEST."))
 
 (defclass service-response (response)
   ((content-type :reader content-type)
@@ -87,9 +85,8 @@
 (defmethod response-ok-p ((res response)) t)
 
 (defclass request ()
-  ((data :initarg :data :accessor data)))
-
-(defgeneric make-request (&rest args &key &allow-other-keys))
+  ((data :initarg :data :accessor data))
+  (:documentation "Base class for request objects, often paired with RESPONSE objects."))
 
 (defclass service-request (request)
   ((content-stream :initarg :content-stream :reader content-stream)
@@ -99,6 +96,38 @@
 	    :accessor session)
    (protocol :initarg :request-protocol :reader request-protocol)))
 
+;;; Protocol
+(defgeneric service (self)
+  (:method ((self t)) (when (boundp '*service*) *service*))
+  (:method ((self symbol)) (gethash self *service-table*))
+  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
+
+(defgeneric restart-service (self)
+  (:documentation "Restart a service.")
+  (:method ((self t))
+    (stop self)
+    (start self)))
+
+(defgeneric handle-request (self request)
+  (:documentation "Function called after fetching a request. Used to establish error handling,
+logging, etc."))
+
+(defgeneric dispatch-request (self request)
+  (:documentation "Function called after 'handle-request' which routes a request to a service."))
+
+(defgeneric send-response (service stream &key content &allow-other-keys))
+(defgeneric send-request (client req &key &allow-other-keys))
+
+(defgeneric receive-response (service stream &key))
+(defgeneric receive-request (client res &key))
+
+(defgeneric response-ok-p (res))
+
+(defgeneric response-status (res))
+
+(defgeneric (setf response-status) (new res))
+
+;;; Config
 (defconfig service-config (id:id ast:ast) 
   ((request-class :initarg :request-class)
    (response-class :initarg :response-class))
@@ -133,34 +162,3 @@
 
 (defmethod make-config ((self (eql :service)) &rest args &key (class 'service-config))
   (apply 'make-instance class (remove-from-plist args class)))
-
-;;; Protocol
-(defgeneric service (self)
-  (:method ((self t)) (when (boundp '*service*) *service*))
-  (:method ((self symbol)) (gethash self *service-table*))
-  (:method ((self string)) (gethash (symbolicate (string-upcase self)) *service-table*)))
-
-(defgeneric restart-service (self)
-  (:documentation "Restart a service.")
-  (:method ((self t))
-    (stop self)
-    (start self)))
-
-(defgeneric process-request (req)
-  (:documentation "Function called by PROCESS-CONNECTION after reading incoming headers. Calls
-HANDLE-REQUEST to dispatch to a route and return output to the client using
-START-OUTPUT.
-
-Return value is ignored."))
-
-(defgeneric handle-request (self request)
-  (:documentation "Function called after fetching a request. Used to establish error handling,
-logging, etc."))
-(defgeneric dispatch-request (self request)
-  (:documentation "Function called after 'handle-request' which routes a request to a service."))
-
-(defgeneric send-response (service stream &key content &allow-other-keys))
-(defgeneric send-request (client req &key &allow-other-keys))
-(defgeneric response-ok-p (res))
-(defgeneric response-status (res))
-(defgeneric (setf response-status) (new res))

@@ -26,8 +26,8 @@
   :description "code generator"
   :version 0
   :help t
-  :opts ((:name "output" :kind file)
-	 (:name "syntax" :kind string :default "c" :thunk gen-syntax-opt)
+  :opts ((:name "output" :type file)
+	 (:name "syntax" :type string :default "c" :thunk gen-syntax-opt)
 	 (:name "level" :thunk level-opt))
   :cmds ((:name "print" :description "Read GEN-C S expressions from a file or string." :thunk gen-print-cmd))
   :thunk gen-cmd)

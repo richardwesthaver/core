@@ -119,7 +119,7 @@ approval status.
   (subseq string 0 (position (code-char 0) string)))
 
 (defun find-frame (id3 ids)
-  (find-if #'(lambda (x) (find (id x) ids :test #'string=)) (frames id3)))
+  (find-if #'(lambda (x) (find (id x) ids :test #'string=)) (slot-value id3 'frames)))
 
 (defun get-text-info (id3 &rest ids)
   (let ((frame (find-frame id3 ids)))

@@ -231,6 +231,7 @@
    :type-class-id :find-classoid
    :classoid :type-class-id-of
    :classoid-of :layout-of
+   :type-id<= :type-id< :type-id= :array-type=
    :type-id->type-class :type-hash-value
    :type-class-name-of :type-class-name
    :*type-cache-nonce* :make-type-class

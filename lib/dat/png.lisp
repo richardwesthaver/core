@@ -35,7 +35,7 @@
 (defun checksum (data count)
   (let ((checksum (ironclad:make-digest :crc32)))
     (ironclad:update-digest checksum data :start 0 :end count)
-    (ironclad:produce-digest checksum)))
+    (octets-to-integer (ironclad:produce-digest checksum))))
 
 (defclass chunk ()
   ((buffer :initarg :buffer :reader buffer)
@@ -65,7 +65,7 @@ data size SIZE."
           (aref buffer 2) c
           (aref buffer 3) d)
     (make-instance 'chunk
-                   :buffer buffer)))
+      :buffer buffer)))
 
 (defun write-chunk (chunk stream)
   (write-uint32 (- (pos chunk) 4) stream)
@@ -290,31 +290,30 @@ data size SIZE."
   (let ((chunk (make-chunk 73 69 78 68 0)))
     (write-chunk chunk stream)))
 
-
 (defmethod write-png-stream (png stream)
   (check-size png)
   (write-png-header png stream)
   (write-ihdr png stream)
   (write-idat png stream)
   (write-iend png stream))
-  
+
 (defmethod write-png (png file &key (if-exists :supersede))
   (check-size png)
   (with-open-file (stream file
-                   :direction :output
-                   :if-exists if-exists
-                   :if-does-not-exist :create
-                   :element-type '(unsigned-byte 8))
+                          :direction :output
+                          :if-exists if-exists
+                          :if-does-not-exist :create
+                          :element-type '(unsigned-byte 8))
     (write-png-stream png stream)
     (truename file)))
 
 (defmethod copy-png (orig)
   (make-instance 'png
-                 :width (width orig)
-                 :height (height orig)
-                 :color-type (color-type orig)
-                 :bpp (bpp orig)
-                 :image-data (copy-seq (image-data orig))))
+    :width (width orig)
+    :height (height orig)
+    :color-type (color-type orig)
+    :bpp (bpp orig)
+    :image-data (copy-seq (image-data orig))))
 
 (defmethod png= (png1 png2)
   (or (eq png1 png2)
@@ -326,12 +325,10 @@ data size SIZE."
                  (png2.data (image-data png2)))
              (not (mismatch png1.data png2.data))))))
 
-
 ;;; Streamed PNG methods
-
 (defmethod slot-unbound (class (png streamed-png) (slot (eql 'row-data)))
   (let ((data (make-array (rowstride png) :element-type '(unsigned-byte 8)
-                          :initial-element 0)))
+                                          :initial-element 0)))
     (setf (row-data png) data)))
 
 (defmethod start-png ((png streamed-png) stream)
@@ -339,8 +336,8 @@ data size SIZE."
   (write-png-header png stream)
   (write-ihdr png stream)
   (setf (compressor png)
-        (make-instance 'zlib-compressor
-                       :callback (make-idat-callback stream)))
+        (make-instance 'io/deflate:zlib-compressor
+          :callback (make-idat-callback stream)))
   stream)
 
 (defmethod start-png ((png pixel-streamed-png) stream)

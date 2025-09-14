@@ -209,25 +209,24 @@
   #(16 17 18 0 8 7 9 6 10 5 11 4 12 3 13 2 14 1 15))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-(defstruct (code-range-descriptor
-             (:conc-name code-)
-             (:constructor make-crd (n-bits start-value end-value)))
-  (n-bits 0 :type deflate-code-length)
-  (start-value 0 :type deflate-code-value)
-  (end-value 0 :type deflate-code-value))
+  (defstruct (code-range-descriptor
+              (:conc-name code-)
+              (:constructor make-crd (n-bits start-value end-value)))
+    (n-bits 0 :type deflate-code-length)
+    (start-value 0 :type deflate-code-value)
+    (end-value 0 :type deflate-code-value))
 
-(defstruct (huffman-decode-table
-             (:conc-name hdt-)
-             (:constructor make-hdt (counts offsets symbols bits)))
-  ;; FIXME: look into combining these two into one array for speed.
-  (counts #1=(error "required parameter")
-          :type (simple-array (unsigned-byte 16) (#.+max-code-length+))
-          :read-only t)
-  (offsets #1# :type (simple-array (unsigned-byte 16) (#.(1+ +max-code-length+)))
-           :read-only t)
-  (symbols nil :read-only t :type (simple-array fixnum (*)))
-  (bits nil :read-only t))
-) ; EVAL-WHEN
+  (defstruct (huffman-decode-table
+              (:conc-name hdt-)
+              (:constructor make-hdt (counts offsets symbols bits)))
+    ;; FIXME: look into combining these two into one array for speed.
+    (counts #1=(error "required parameter")
+     :type (simple-array (unsigned-byte 16) (#.+max-code-length+))
+     :read-only t)
+    (offsets #1# :type (simple-array (unsigned-byte 16) (#.(1+ +max-code-length+)))
+                 :read-only t)
+    (symbols nil :read-only t :type (simple-array fixnum (*)))
+    (bits nil :read-only t))) ; EVAL-WHEN
 
 ;;;;; decode table construction
 (defun construct-huffman-decode-table (code-lengths &optional n-syms start)
@@ -2225,7 +2224,7 @@ the input and the number of bytes written to the output."
 
 (defun %decompress/null-stream (state input fun buffer-size)
   (declare (type function fun))
-  (let ((input-buffer (make-array 8192 :element-type '(unsigned-byte 8))))
+  (let ((input-buffer (make-array +default-deflate-buffer-size+ :element-type '(unsigned-byte 8))))
     (declare (dynamic-extent input-buffer))
     (loop
        with input-start = 0
@@ -2295,7 +2294,7 @@ the input and the number of bytes written to the output."
 
 (defun %decompress/stream-vector (output state input fun input-start input-end)
   (declare (type function fun))
-  (let ((buffer (make-array 8192 :element-type '(unsigned-byte 8))))
+  (let ((buffer (make-array +default-deflate-buffer-size+ :element-type '(unsigned-byte 8))))
     (declare (dynamic-extent buffer))
     (loop (multiple-value-bind (consumed produced)
               (funcall fun state input buffer
@@ -2316,8 +2315,8 @@ the input and the number of bytes written to the output."
 
 (defun %decompress/stream-stream (output state input fun)
   (declare (type function fun))
-  (let ((input-buffer (make-array 8192 :element-type '(unsigned-byte 8)))
-        (output-buffer (make-array 8192 :element-type '(unsigned-byte 8))))
+  (let ((input-buffer (make-array +default-deflate-buffer-size+ :element-type '(unsigned-byte 8)))
+        (output-buffer (make-array +default-deflate-buffer-size+ :element-type '(unsigned-byte 8))))
     (declare (dynamic-extent input-buffer output-buffer))
     (loop
        with input-start = 0
@@ -2635,6 +2634,9 @@ check if reached."
         (buffer (buffer bitstream))
         (callback (callback bitstream)))
     (lambda (value)
+      (print value)
+      (print codes)
+      (print sizes)
       (setf (bits bitstream)
             (merge-bits (aref codes value)
                         (aref sizes value)
@@ -2750,6 +2752,29 @@ with OUTPUT, a starting offset, and the count of pending data."
    :octet-buffer (make-octets 1)))
 
 ;;;; Compressor
+(defun deflate (input chains start end
+                 literal-fun length-fun distance-fun)
+  (declare (deflate-buffer input)
+           (chains-buffer chains)
+           (input-index start end)
+           (function literal-fun length-fun distance-fun)
+           (optimize speed))
+  (let ((p start))
+    (loop
+     (when (= p end)
+       (return))
+     (multiple-value-bind (length distance)
+         (longest-match p input chains end 4)
+       (declare (type (integer 0 258) length)
+                (type (integer 0 32768) distance))
+       (cond ((zerop length)
+              (funcall literal-fun (aref input p))
+              (setf p (logand (+ p 1) #xFFFF)))
+             (t
+              (funcall length-fun length)
+              (funcall distance-fun distance)
+              (setf p (logand (+ p length) #xFFFF))))))))
+
 ;;;;; Public protocol GFs
 (defgeneric start-data-format (compressor)
   (:documentation "Add any needed prologue data to the output bitstream."))
@@ -2797,7 +2822,6 @@ with OUTPUT, a starting offset, and the count of pending data."
     (start-data-format compressor)))
 
 ;;;;; A few methods defer to the bitstream
-
 (defmethod (setf callback) (new-fun (compressor deflate-compressor))
   (let ((bitstream (bitstream compressor)))
     (prog1
@@ -2816,7 +2840,6 @@ with OUTPUT, a starting offset, and the count of pending data."
                       :start start
                       :end end))
                                
-
 (defmethod start-data-format ((compressor deflate-compressor))
   (let ((bitstream (bitstream compressor)))
     (write-bits +final-block+ 1 bitstream)
@@ -2832,10 +2855,10 @@ with OUTPUT, a starting offset, and the count of pending data."
          (end (or end (length vector)))
          (count (- end start)))
     (let ((end
-           (merge-input vector start count
-                        (input compressor)
-                        (end compressor)
-                        closure)))
+            (merge-input vector start count
+                         (input compressor)
+                         (end compressor)
+                         closure)))
       (setf (end compressor) end
             (start compressor) (logand #x8000 end)
             (counter compressor) (logand #x7FFF end)))))
@@ -2861,12 +2884,12 @@ with OUTPUT, a starting offset, and the count of pending data."
         (length-fun (length-fun compressor))
         (distance-fun (distance-fun compressor)))
     (process-input compressor input start counter)
-    (compress input chains 
-              :start start 
-              :end end
-              :literal-fun literal-fun
-              :length-fun length-fun
-              :distance-fun distance-fun)))
+    (deflate input chains 
+      start 
+      end
+      literal-fun
+      length-fun
+      distance-fun)))
 
 (defmethod make-compress-fun ((compressor deflate-compressor))
   (let ((literal-fun (literal-fun compressor))
@@ -2875,12 +2898,12 @@ with OUTPUT, a starting offset, and the count of pending data."
     (lambda (input start count)
       (process-input compressor input start count)
       (let ((end (+ start count)))
-        (compress input (chains compressor) 
-                  :start start 
-                  :end (logand #xFFFF end)
-                  :literal-fun literal-fun
-                  :length-fun length-fun
-                  :distance-fun distance-fun)))))
+        (deflate input (chains compressor) 
+          start 
+          (logand #xFFFF end)
+          literal-fun
+          length-fun
+          distance-fun)))))
 
 (defmethod reset ((compressor deflate-compressor) &key)
   (fill (chains compressor) 0)
@@ -2990,7 +3013,7 @@ writes all compressed data to STREAM."
 
 (defun gzip-stream (input output)
   (let ((callback (make-stream-output-callback output))
-        (buffer (make-array 8192 :element-type '(unsigned-byte 8))))
+        (buffer (make-array +default-deflate-buffer-size+ :element-type '(unsigned-byte 8))))
     (%with-compressor (compressor 'gzip-compressor
                                  :callback callback)
       (loop

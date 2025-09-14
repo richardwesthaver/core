@@ -308,6 +308,11 @@ within its dynamic extent. The vector is freed upon exit."
   (:documentation
    "A stream backed by a STATIC-VECTOR."))
 
+(definline reset-static-stream (s)
+  (declare (static-stream s))
+  (setf (offset s) 0
+        (buffer s) (make-static-vector (length (buffer s)))))
+
 (defmethod sap ((self static-stream))
   (static-vector-address (buffer self)))
 

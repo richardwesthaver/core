@@ -66,7 +66,7 @@ and MAKE-CLI :CMD respectively."
           (if help
               (make-opts
                (append
-                `((:name "help" :description "print help" :kind string
+                `((:name "help" :description "print help" :type string
                    :thunk cli/clap/obj::help-opt))
                 opts))
               (make-opts opts)))

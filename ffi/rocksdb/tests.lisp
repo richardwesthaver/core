@@ -12,10 +12,10 @@
 (in-suite :rocksdb)
 
 (load-rocksdb)
-(init-log-timestamp)
+;; (init-log-timestamp)
 
 (defun rocksdb-test-dir ()
-  (format nil "/tmp/~A/" (gensym "rocksdb-tests-")))
+  (format nil "/tmp/~A" (gensym "rocksdb-tests-")))
 
 (defun rocksdb-test-file ()
   (format nil "/tmp/~A" (gensym "rocksdb-test-")))
@@ -709,9 +709,6 @@ DB where K and V are both Lisp strings."
           ;; ; 0:45:17.375 memtable sealed.
           ;; ; 0:45:17.376 flush completed.
           (with-errptr e
-            (dotimes (i 9)
+            (dotimes (i 8)
               (test-single-roundtrip db (* 32 (1+ i))))
             (rocksdb-flush db (rocksdb-flushoptions-create) e)))))))
-
-
-

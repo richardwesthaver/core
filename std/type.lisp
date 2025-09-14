@@ -288,7 +288,7 @@ non-unique ID prefix.")
   (or (gethash (type-of obj) *core-type-table*)
       (let ((id (simple-type-id obj)))
         (when id
-          (gethash (aref *simple-types* id) *core-type-table*)))))
+          (gethash (aref *core-types* id) *core-type-table*)))))
 
 (definline prim-type (obj)
   "Return the name of the primitive type of OBJ."

@@ -29,7 +29,8 @@
                 :components
                 ((:file "const")
                  (:file "entity")
-                 (:file "html")))
+                 (:file "parse")
+                 (:file "macs")))
                (:file "yaml")
                (:file "mime")
                (:file "ini")

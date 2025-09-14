@@ -70,6 +70,6 @@ containing multiple characters."
 (defun default-opt-thunk (arg)
   (identity arg))
 
-(defun cli-opt-kind-p (s)
+(defun cli-opt-type-p (s)
   (declare (type symbol s))
-  (find s *cli-opt-kinds* :test 'string-equal))
+  (find s *cli-opt-types* :test 'string-equal))

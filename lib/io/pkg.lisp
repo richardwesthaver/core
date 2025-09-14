@@ -59,7 +59,8 @@
    :static-stream
    :*default-static-stream-size*
    :with-static-stream
-   :with-static-streams))
+   :with-static-streams
+   :reset-static-stream))
 
 (defpackage :io/fast
   (:use :cl :std :io/proto :io/stream)

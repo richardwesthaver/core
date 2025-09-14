@@ -20,7 +20,7 @@
 
 ;; The following variables are derived from Emacs css-mode:
 ;; https://github.com/emacs-mirror/emacs/blob/master/lisp/textmodes/css-mode.el
-(defvar css-pseudo-class-ids
+(defvar *css-pseudo-class-ids*
   '("active" "checked" "default" "disabled" "empty" "enabled" "first"
     "first-child" "first-of-type" "focus" "focus-within" "hover"
     "in-range" "indeterminate" "invalid" "lang" "last-child"

@@ -1,15 +1,17 @@
-;;; html.lisp --- HTML Generator
+;;; macs.lisp --- HTML macros
 
-;; HTML Generator a la CL-WHO or SPINNERET
+;; WITH-HTML-OUTPUT and friends
 
 ;;; Commentary:
 
-;;
+;; see https://github.com/edicl/cl-who
+
+;; also SPINNERET
 
 ;;; Code:
-(in-package :web/html)
+(in-package :dat/html)
 
-;; (describe 
+;; (describe
 ;;  (dat/html:make-element (dat/html:make-document) "foo" nil))
 ;; (describe (dat/html:make-fragment (dat/html:make-document)))
 (define-condition html-condition () ())
@@ -20,7 +22,7 @@
 
 (defvar *html-output* (make-instance 'html-output-stream))
 (defvar *html-lang* "en")
-(defvar *html-charset* "UTF-8")
+(defvar *html-charset* (string *default-encoding*))
 (defvar *html-path* nil)
 
 (defmacro with-html ((out &optional (stream *html-output*)) &body body)

@@ -70,7 +70,7 @@
   :version "0.1.0"
   :help t
   :description "Media Production Kit"
-  :opts #1=((:name "mpd" :description "include MPD stats" :kind boolean :thunk mpd-stats-opt))
+  :opts #1=((:name "mpd" :description "include MPD stats" :type boolean :thunk mpd-stats-opt))
   :cmds ((:name play :thunk mpk-play-cmd)
 	 (:name toggle :thunk mpk-toggle-cmd)
 	 (:name pause :thunk mpk-pause-cmd)

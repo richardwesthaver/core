@@ -343,6 +343,8 @@
    :service-make-request
    :with-request-count-incf
    :shutdown-p
+   #:+handler-tag+
+   #:process-request
    #:default-web-directory
    #:add-route
    #:delete-route

@@ -713,8 +713,8 @@ character translation."
         (document (make-state :stream stream)))))
 
 ;;; Xmlrep
-(defun make-xmlrep (tag &key (representation-kind :node) namespace attribs children)
-  (case representation-kind
+(defun make-xmlrep (tag &key (type :node) namespace attribs children)
+  (case type
     ((:list)
      (cond
        (namespace
@@ -724,7 +724,7 @@ character translation."
     ((:node)
      (make-xml-node :name tag :ns namespace :attrs attribs :children children))
     (otherwise
-     (error "REPRESENTATION-KIND must be :LIST or :NODE, got ~s" representation-kind))))
+     (error "TYPE must be :LIST or :NODE, got ~s" type))))
 
 (defgeneric xmlrep-add-child! (xmlrep child)
   (:method ((xmlrep xml-node) child)
@@ -935,7 +935,7 @@ the first two return values.)"
                         (and attribs-match-var
                              (find attrib-key-pair xml-attribs-list :test #'equal)))
                :finally (return attribs-match-var)))
-           (find-test ( key xml-form )
+           (find-test (key xml-form)
              ;; test whether the XML-FORM matches KEY
              (cond
                ;; just the XML tag name in key

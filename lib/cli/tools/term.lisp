@@ -60,4 +60,4 @@
 (define-cli-tool :fbterm (&rest args)
   (let ((proc (sb-ext:run-program *fbterm* (or args nil) :output t)))
     (unless (not (eq 0 (sb-ext:process-exit-code proc)))
-      (fbter-error "FBTERM command failed: ~A ~A" *fbterm* args))))
+      (fbterm-error "FBTERM command failed: ~A ~A" *fbterm* args))))

@@ -12,7 +12,7 @@
 (in-package :bin/vc)
 
 (load-package-cli 
- :vc :opts ((:name "version" :kind boolean :thunk clap::version-opt)))
+ :vc :opts ((:name "version" :type boolean :thunk clap::version-opt)))
 
 (defmain start-vc ()
   (in-package :vc)

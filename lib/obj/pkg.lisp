@@ -626,16 +626,14 @@
   (:use :cl :std :config :id :ast :build)
   (:export
    #:service
-   #:make-service
    #:response-ok-p
    #:response-status
    #:dispatch-request
-   #:make-response
-   #:make-request
    #:send-response
    #:send-request
+   #:receive-response
+   #:receive-request
    #:handle-request
-   #:process-request
    #:bad-request
    #:simple-service-warning
    #:service-warning
@@ -668,7 +666,8 @@
   (:export :cache :cache-cleanup :cache-policy
    :cache-size :cache-count :make-cache :cache-release
    :with-cache :cache-remove :cache-flush :cache-entry
-   :entry-expiry :entry-weight :make-cache-table))
+   :entry-expiry :entry-weight :make-cache-table :remcache
+   :get-cache))
 
 (defpkg :obj/store
   (:nicknames :store)

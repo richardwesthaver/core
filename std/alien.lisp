@@ -115,8 +115,9 @@ is TY with a -T prepended as is customary in many C codebases."
   "Copy a C-allocated string SRC into lisp string DEST."
   (declare (type sb-int:index index))
   (loop (let ((b (sb-sys:sap-ref-8 src index)))
-          (when (= b 0)
-            (setf (fill-pointer dest) index)
+          (when (= b 0) 
+            (when (array-has-fill-pointer-p dest)
+              (setf (fill-pointer dest) index))
             (return))
           (setf (char dest index) (code-char b))
           (incf index))))

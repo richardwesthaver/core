@@ -77,6 +77,7 @@
   (with-temp-pool ((num-cpus))
     (is= 10 (preduce '+ #(1 2 3 4)))
     (is (por nil nil nil t)))
+  (sleep 0.5)
   (with-temp-pool ((num-cpus))
     (isnt (pand t 1 #() 'foo nil))
     (is= 99 (pfind 99 (iota 100)))

@@ -27,14 +27,14 @@
 
 (defparameter *default-encoding* :utf-8)
 
-(defclass html-input-stream ()
+(defclass html-input-stream (wrapped-stream)
   ((source :initarg :source)
    (encoding :reader html5-stream-encoding)
-   (char-stream :initform nil)
    (chunk)
    (chunk-offset)
    (pending-cr)
-   (errors :initform nil :accessor html5-stream-errors)))
+   (errors :initform nil :accessor html5-stream-errors))
+  (:documentation "A stream of HTML tokens with an underlying character stream."))
 
 (defun make-html-input-stream (source &key override-encoding fallback-encoding)
   (when (stringp source)
@@ -100,14 +100,14 @@
      ,@body))
 
 (defun open-char-stream (self)
-  (with-slots (source encoding char-stream chunk chunk-offset pending-cr) self
+  (with-slots (source encoding stream chunk chunk-offset pending-cr) self
     (setf chunk (make-array (* 10 1024) :element-type 'character :fill-pointer 0))
     (setf chunk-offset 0)
     (setf pending-cr nil)
-    (when char-stream
-      (close char-stream))
+    (when stream
+      (close stream))
 
-    (setf char-stream
+    (setf stream
           (if (stringp source)
               ;; REVIEW 2025-06-11: this used to be flexi-streams stuff - test
               ;; because we probably broke something..
@@ -124,9 +124,9 @@
                    s)))))
     ;; 12.2.2.4 says we should always skip the first byte order mark
     (handle-encoding-errors self
-      (let ((first-char (peek-char nil char-stream nil)))
+      (let ((first-char (peek-char nil stream nil)))
         (when (eql first-char #\ufeff)
-          (read-char char-stream))))))
+          (read-char stream))))))
 
 (defun detect-bom (self)
   (with-slots (source) self
@@ -155,9 +155,9 @@
              :utf-8)))))
 
 ;; 12.2.2.3 Changing the encoding while parsing
-(defun html5-stream-change-encoding (stream new-encoding)
+(defun html5-stream-change-encoding (s new-encoding)
   (setf new-encoding (find-encoding new-encoding))
-  (with-slots (encoding char-stream) stream
+  (with-slots (encoding stream) s
     ;; 1.
     (when (member (car encoding) '(:utf-16le :utf-16be))
       (setf encoding (cons (car encoding) :certain))
@@ -176,7 +176,7 @@
 
     ;; 5. Restart paring from scratch
     (setf encoding (cons new-encoding :certain))
-    (open-char-stream stream)
+    (open-char-stream s)
     (throw 'please-reparse t)))
 
 (defun html5-stream-char (stream)
@@ -238,24 +238,24 @@
 
 (defun read-chunk (stream)
   (declare (optimize speed))
-  (with-slots (char-stream chunk chunk-offset pending-cr) stream
+  (with-slots ((%stream stream) chunk chunk-offset pending-cr) stream
     (declare (array-length chunk-offset)
              (chunk chunk))
     (setf chunk-offset 0)
     (let ((start 0))
       (when pending-cr
-        (setf (char chunk 0) #\Return)
+        (setf (schar chunk 0) #\Return)
         (setf start 1)
         (setf pending-cr nil))
       (setf (fill-pointer chunk) (array-dimension chunk 0))
       (handle-encoding-errors stream
-        (setf (fill-pointer chunk) (read-sequence chunk char-stream :start start)))
+        (setf (fill-pointer chunk) (read-sequence chunk %stream :start start)))
 
       (unless (zerop (length chunk))
 
         ;; check if last char is CR and EOF was not reached
         (when (and (= (length chunk) (array-dimension chunk 0))
-                   (eql (char chunk (1- (length chunk))) #\Return))
+                   (eql (schar chunk (1- (length chunk))) #\Return))
           (setf pending-cr t)
           (decf (fill-pointer chunk)))
 
@@ -271,9 +271,9 @@
               do (unless (and (eql previous #\Return)
                               (eql current #\Newline))
                    (unless (= index offset)
-                     (setf (char chunk offset) current))
+                     (setf (schar chunk offset) current))
                    (when (eql current #\Return)
-                     (setf (char chunk offset) #\Newline))
+                     (setf (schar chunk offset) #\Newline))
                    (incf offset))
               finally (setf (fill-pointer chunk) offset))
         t))))
@@ -1896,17 +1896,16 @@ to :data because that's what's needed after a token has been emitted."
 
 ;;; simple-tree
 ;; A basic implementation of a DOM-core like thing
-(defclass node ()
+(defclass node (ast:ast)
   ((type :initform :node :allocation :class :reader node-type)
    (name :initarg :name :initform nil :reader node-name)
    (namespace :initarg :namespace :initform nil :reader node-namespace)
    (parent :initform nil :reader node-parent)
    (value :initform nil :initarg :value
           :accessor node-value)
-   (child-nodes :initform nil :accessor %node-child-nodes)
    (last-child :initform nil :accessor last-child)))
 
-(defmethod (setf %node-child-nodes) :after (value (node node))
+(defmethod (setf ast) :after (value (node node))
   (setf (last-child node) (last value)))
 
 (defclass document (node)
@@ -1956,37 +1955,37 @@ to :data because that's what's needed after a token has been emitted."
 
 ;;; Node methods
 (defun node-first-child (node)
-  (car (%node-child-nodes node)))
+  (car (ast node)))
 
 (defun node-last-child (node)
   (car (last-child node)))
 
 (defun node-previous-sibling (node)
-  (loop for (this next) on (%node-child-nodes (node-parent node))
+  (loop for (this next) on (ast (node-parent node))
         when (eql next node) do (return this)))
 
 (defun node-next-sibling (node)
-  (loop for (this next) on (%node-child-nodes (node-parent node))
+  (loop for (this next) on (ast (node-parent node))
         when (eql this node) do (return next)))
 
 (defun node-remove-child (node child)
-  (setf (%node-child-nodes node)
-        (remove child (%node-child-nodes node)))
+  (setf (ast node)
+        (remove child (ast node)))
   (setf (slot-value child 'parent) nil))
 
 (defun node-append-child (node child)
   (when (node-parent child)
     (node-remove-child (node-parent child) child))
   (setf (slot-value child 'parent) node)
-  (if (%node-child-nodes node)
+  (if (ast node)
       (setf (last-child node)
             (push child (cdr (last-child node))))
-      (setf (%node-child-nodes node)
+      (setf (ast node)
             (list child)))
-  (%node-child-nodes node))
+  (ast node))
 
 (defun node-insert-before (node child insert-before)
-  (let ((child-nodes (%node-child-nodes node)))
+  (let ((child-nodes (ast node)))
     (setf (slot-value child 'parent) node)
     (labels ((insert-before (child-nodes)
                (cond ((endp child-nodes)
@@ -1994,7 +1993,7 @@ to :data because that's what's needed after a token has been emitted."
                      ((eql (car child-nodes) insert-before)
                       (cons child child-nodes))
                      (t (rplacd child-nodes (insert-before (cdr child-nodes)))))))
-      (setf (%node-child-nodes node)
+      (setf (ast node)
             (insert-before child-nodes)))))
 
 (defun element-attribute (node attribute &optional namespace)
@@ -2015,7 +2014,7 @@ to :data because that's what's needed after a token has been emitted."
 
 ;;; Traversing
 (defun element-map-children (function node)
-  (map nil function (%node-child-nodes node)))
+  (map nil function (ast node)))
 
 (defun element-map-attributes* (function node)
   (loop for ((name . namespace) . value) in (%node-attributes node)
@@ -2035,9 +2034,9 @@ to :data because that's what's needed after a token has been emitted."
 ;; Printing for the ease of debugging
 (defun node-count (tree)
   (typecase tree
-    (element (1+ (apply #'+ (mapcar #'node-count (%node-child-nodes tree)))))
+    (element (1+ (apply #'+ (mapcar #'node-count (ast tree)))))
     ((or document document-fragment)
-     (apply #'+ (mapcar #'node-count (%node-child-nodes tree))))
+     (apply #'+ (mapcar #'node-count (ast tree))))
     (t 1)))
 
 (defmethod print-object ((node document) stream)
@@ -5218,8 +5217,8 @@ See: https://www.w3.org/TR/html5/syntax.html#coercing-an-html-dom-into-an-infose
 ;;; XML DOM
 (defmethod transform-html5-dom ((to-type (eql :xml)) node
                                 &key namespace comments)
-  "Convert a node into an DAT/XML-compatible tree of conses, starting
-at. If the node is a document-fragement a list of XML trees is returned."
+  "Convert a node into a DAT/XML-compatible tree of conses, starting
+at NODE. If the node is a document-fragement a list of XML trees is returned."
   (labels ((node-to-xml (node parent-ns xlink-defined)
              (ecase (node-type node)
                (:document
@@ -5278,3 +5277,6 @@ at. If the node is a document-fragement a list of XML trees is returned."
 (defmethod deserialize (from (fmt (eql :html)) &key encoding strictp container dom)
   (declare (ignore fmt))
   (parse-html5 from :encoding encoding :strictp strictp :container container :dom dom))
+
+(defmethod serialize ((from node) fmt &key namespace comments)
+  (transform-html5-dom fmt from :namespace namespace :comments comments))

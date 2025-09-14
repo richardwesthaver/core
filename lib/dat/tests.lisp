@@ -50,11 +50,19 @@
     (is (equal str2 (with-output-to-string (s) (serialize (list 1 2 3) :json :stream s))))))
 
 (deftest xml ()
-  (is (equal "foo" (xml-node-name (deserialize "<foo></foo>" :xml)))))
+  (isequal "foo" (name (deserialize "<foo>foo</foo>" :xml))))
 
-(deftest html ()
-  (istype 'dat/html::document 
-          (deserialize "<!DOCTYPE html><html lang=\"ulang\"></html>" :html)))
+(deftest html-to-xml ()
+  (let ((test-doc (deserialize 
+                   "<!DOCTYPE html><html lang=\"ulang\"><body><div><p>henlo</p></div></body></html>"
+                   :html)))
+    (istype 'dat/html::document test-doc)
+    (let ((sxp (serialize test-doc :xml)))
+      (istype 'list sxp)
+      (let ((xmlrep (dat/xml::make-xmlrep "html" :children sxp)))
+        (istype 'dat/xml:xml-node xmlrep)
+        (is (dat/xml:xmlrep-find-child-tag :body xmlrep))
+        (is (dat/xml:xmlrep-tagmatch :html xmlrep))))))
 
 (deftest toml ()
   (istype 'dat/toml::toml-document
@@ -95,7 +103,26 @@
 
 ;;; PNG
 ;; TODO 2024-10-26: 
-(deftest png ())
+(defun draw-rgb (file)
+  (let ((png (make-instance 'png:pixel-streamed-png
+                             :color-type :truecolor-alpha
+                             :width 200
+                             :height 200)))
+    (with-open-file (stream file
+			    :direction :output
+			    :if-exists :supersede
+			    :if-does-not-exist :create
+			    :element-type '(unsigned-byte 8))
+      (png:start-png png stream)
+      (loop for a from 38 to 255 by 31
+	do (loop for b from 10 to 255 by 10
+	     do (loop for g from 38 to 255 by 31
+		  do (loop for r from 10 to 255 by 10
+			do (png::write-pixel (list r g b a) png)))))
+      (png:finish-png png))))
+
+(deftest png (:skip t)
+  (draw-rgb "/tmp/foo.png"))
 
 ;;; SVG
 (defparameter *svg-circle* 

@@ -89,6 +89,12 @@
 (defgeneric next-session-id (service))
 (defgeneric service-log-message (self level format-string &rest arguments))
 (defgeneric service-log-access (self &optional code))
+(defgeneric process-request (req)
+  (:documentation "Function called by PROCESS-CONNECTION after reading incoming headers. Calls
+HANDLE-REQUEST to dispatch to a route and return output to the client using
+START-OUTPUT.
+
+Return value is ignored."))
 
 ;;; Conditions
 (defun abort-request-handler (&optional result)
@@ -303,6 +309,8 @@ had returned RESULT.  See the source code of REDIRECT for an example."
 SUPERVISOR where the SCOPE is bound to a value based on the current SERVICE at
 runtime (a call to RUN-THREAD)."))
 
+(defaccessor name ((self multi-threaded-engine)) (thread-name (supervisor-thread self)))
+
 (defmethod run-thread ((self multi-threaded-engine) thunk &key name scope)
   (when scope (setf (slot-value self 'scope) scope))
   (setf (supervisor-thread self) (make-thread thunk :name name)))
@@ -328,16 +336,7 @@ is called on the service in a separate supervisor thread."
   (when-let ((th (supervisor-thread self)))
     (join-thread th)))
                     
-;; Note from Hunchentoot:
-#|
-;; You might think it would be nice to provide a taskmaster that takes
-;; threads out of a thread pool.  There are two things to consider:
-;;  - On a 2010-ish Linux box, thread creation takes less than 250 microseconds.
-;;  - Bordeaux Threads doesn't provide a way to "reset" and restart a thread,
-;;    and it's not clear how many Lisp implementations can do this.
-;; If you're still interested, use the quux-hunchentoot extension to hunchentoot.
-|#
-;; NOTE 2025-08-16: see STD:THREAD-POOL
+;; default class
 (defclass thread-per-connection-engine (multi-threaded-engine thread-pool)
   ((max-accept-count
     :type (or integer null)
@@ -361,8 +360,6 @@ is called on the service in a separate supervisor thread."
    :limiter-count *default-max-thread-count*
    :workers #() ;; workers are initialized so that WORKER-COUNT may be used
    :max-accept-count *default-max-accept-count*))
-
-(defaccessor name ((self multi-threaded-engine)) (thread-name (supervisor-thread self)))
 
 (defmethod initialize-instance :after ((self thread-per-connection-engine) &rest args)
   "Ensure MAX-ACCEPT-COUNT > LIMITER-COUNT."

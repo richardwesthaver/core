@@ -36,7 +36,7 @@
   :thunk organ-describe
   :opts ((:name "level" :description "set the log level" :thunk organ-log-level)
 	 (:name "version" :description "print version" :thunk organ-version)
-	 ;; (:name "output" :description "output file" :kind file :thunk organ-output)
+	 ;; (:name "output" :description "output file" :type file :thunk organ-output)
 	 )
   :cmds ((:name inspect 
 	  :description "inspect an org file"

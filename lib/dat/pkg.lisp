@@ -165,9 +165,16 @@
    :compile-css-block))
 
 (defpkg :dat/html
-  (:use :cl :dat/proto :std/macs :std/string :std/serde)
+  (:use :cl :dat/proto :std/macs :std/string :std/serde :std/condition :std/stream)
   (:import-from :sb-ext :defglobal)
+  (:import-from :ast :ast)
   (:export
+   :with-html-output
+   :with-html
+   :html-output-stream
+   :*html-output*
+   :*html-lang*
+   :*html-charset*
    :parse-html5
    :parse-html5-fragment
    :transform-html5-dom

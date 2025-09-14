@@ -35,7 +35,7 @@
 (defstruct cli-opt
   ;; note that cli-opts can have a nil or unbound name slot
   (name "" :type string)
-  (kind 'boolean :type (or symbol list))
+  (type 'boolean :type (or symbol list))
   (thunk 'default-opt-thunk :type symbol)
   (val nil)
   (description nil :type (or null string))

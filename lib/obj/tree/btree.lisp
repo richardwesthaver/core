@@ -390,7 +390,7 @@ than by type class (i.e. not serialized lexical values)"
                   (compare<= (cdr a) (cdr b))))
         (t nil))
     (error ()
-      (type<= a b))))
+      (type-id<= a b))))
 
 (defun compare< (a b)
   "A comparison function that mirrors the ordering of the data stores for < on
@@ -410,7 +410,7 @@ than by type class (i.e. not serialized lexical values)"
                   (compare< (car a) (car b))))
         (t nil))
     (error () 
-      (type< a b))))
+      (type-id< a b))))
 
 (defun compare-equal (a b)
   "A lisp compare equal in same spirit as compare<. Case insensitive for strings."

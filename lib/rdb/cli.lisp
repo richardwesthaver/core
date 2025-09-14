@@ -73,6 +73,6 @@
   :thunk rdb-show
   :opts ((:name "level" :description "set log level" :thunk level-opt)
          (:name "version" :description "print version" :thunk version-opt)
-         (:name "path" :description "database path" :thunk rdb-path-opt :kind dir)
-         (:name "config" :description "database configuration" :thunk rdb-config-opt :kind file))
+         (:name "path" :description "database path" :thunk rdb-path-opt :type dir)
+         (:name "config" :description "database configuration" :thunk rdb-config-opt :type file))
   :cmds ((:name new :thunk rdb-new)))
