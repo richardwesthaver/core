@@ -576,7 +576,7 @@ set *errptr to a malloc()ed error message.
    :default-on-compaction-begin-cb
    :default-on-flush-completed-cb
    :default-on-flush-begin-cb
-   :default-rocksdb-event-listener))
+   :make-rocksdb-event-listener))
 
 (in-package :rocksdb)
 

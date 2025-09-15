@@ -31,7 +31,7 @@
                 *cloudflare-servers* *opendns-servers*
                 *google-servers*)))
 
-(defun try-server (server send send-length recv recv-length &key (attempts 1) (timeout 10))
+(defun try-server (server send send-length recv recv-length &key (attempts 4) (timeout 1))
   (handler-case
       (let ((socket (sb-bsd-sockets:socket-connect
                      (make-instance 'inet-socket
@@ -46,6 +46,8 @@
                             (return received)))))
           (socket-close socket)))
     (socket-error (e)
+      (values nil e))
+    (sb-ext:timeout (e)
       (values nil e))))
 
 (defmacro with-query-buffer ((send pos hostname type &rest header-args) &body body)
@@ -55,7 +57,7 @@
      (declare (dynamic-extent ,send))
      ,@body))
 
-(defun dns-query (hostname &key (type T) (dns-servers *dns-servers*) (attempts 1) (timeout 10))
+(defun dns-query (hostname &key (type T) (dns-servers *dns-servers*) (attempts 8) (timeout 1))
   (with-simple-restart (abort "Abort the DNS query.")
     (let ((recv (make-array +dns-buffer-length+ :element-type '(unsigned-byte 8) :initial-element 0)))
       (declare (dynamic-extent recv))
@@ -68,13 +70,15 @@
               finally (with-simple-restart (continue "Return NIL instead.")
                         (error 'dns-servers-exhausted)))))))
 
-(defun query-data (hostname &rest args &key type dns-servers attempts timeout)
+(defun query-data (hostname &rest args &key type dns-servers (attempts 8) (timeout 1))
   (declare (ignore dns-servers attempts timeout))
   (loop for record in (getf (apply #'dns-query hostname args) :answers)
         when (eql type (getf record :type))
         collect (getf record :data)))
 
 (defun resolve (hostname &rest args &key type dns-servers attempts timeout)
+  "Resolve HOSTNAME and return an ip-address as a string. Returns the top
+candidate as the first value and all candidates as the second."
   (declare (ignore dns-servers attempts timeout))
   (handler-case
       (handler-bind ((dns-server-failure #'continue))
@@ -82,11 +86,12 @@
                         (apply #'query-data hostname args)
                         (append (apply #'query-data hostname :type :A args)
                                 (apply #'query-data hostname :type :AAAA args)))))
-          (values (first list) list T)))
+          (values (first list) list)))
     (dns-servers-exhausted ()
-      (values NIL NIL NIL))))
+      (values nil nil))))
 
 (defun hostname (ip &rest args &key type dns-servers attempts timeout)
+  "Return the hostname of IP."
   (declare (ignore type dns-servers attempts timeout))
   (handler-case
       (handler-bind ((dns-server-failure #'continue))
@@ -97,6 +102,6 @@
                                 collect (format NIL "~x" (ldb (byte 4 0) byte)))
                           (ssplit #\. ip)))
                (list (apply #'query-data (format NIL "~{~a.~}~:[in-addr~;ip6~].arpa" (nreverse parts) ipv6-p) :type :PTR args)))
-          (values (first list) list T)))
+          (values (first list) list)))
     (dns-condition ()
-      (values NIL NIL NIL))))
+      (values NIL NIL))))

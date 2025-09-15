@@ -159,6 +159,7 @@ extractor."
                     merge-op
                     prefix-op
                     logger
+                    event-listener
                     (opts (default-rdb-opts))
                     path)
   (declare (ignore engine initargs))
@@ -168,6 +169,8 @@ extractor."
     (set-db-opt opts :prefix-extractor prefix-op :push t))
   (when logger
     (set-db-opt opts :info-log logger :push t))
+  (when event-listener
+    (set-db-opt opts :event-listener event-listener :push t))
   (let ((db (make-rdb 
              :name (or name (namestring path) (string-downcase (gensym "rocksdb"))) 
              :opts opts)))

@@ -8,7 +8,9 @@
                        collect (cons y (format nil "~:@(~A-set-~x~)" accessor y))))
            table)))
   (defvar *rdb-opts-table*
-    (%mktbl 'rocksdb-options *rocksdb-options*))
+    (let ((tbl (%mktbl 'rocksdb-options *rocksdb-options*)))
+      (setf (gethash "event-listener" tbl) "ROCKSDB-OPTIONS-ADD-EVENTLISTENER")
+      tbl))
   (defvar *rdb-readopts-table*
     (%mktbl 'rocksdb-readoptions *rocksdb-readoptions*))
   (defvar *rdb-writeopts-table*
@@ -37,7 +39,7 @@
                       (memq t (mapcar
                                (lambda (x) (equal k x))
                                ',set-only)))))))
-    (%def-opt rdb-opt "parallelism" "enable-statistics")
+    (%def-opt rdb-opt "parallelism" "enable-statistics" "event-listener")
     (%def-opt rdb-readopt)
     (%def-opt rdb-writeopt)
     (%def-opt rdb-backupopt)

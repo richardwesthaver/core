@@ -19,13 +19,14 @@ ERR with initargs PARAMS for the duration of BODY."
        (progn ,@body))))
 
 ;;; opts
-
 ;; These expand into lookup macros for the pre-defined option GET and SET
 ;; functions - for example RDB-OPT-SETTER and RDB-OPT-GETTER.
 (macrolet ((%def-opt-finders (name opt)
              `(progn 
                 (defmacro ,(symbolicate name '-setter) (key)
-                  `(find-symbol (format nil "~:@(~A-SET-~A~)" ',',opt ,key) :rocksdb))
+                  `(or (find-symbol (format nil "~:@(~A-SET-~A~)" ',',opt ,key) :rocksdb)
+                       (when (string= (string-downcase ,key) "event-listener")
+                         (print 'rocksdb:rocksdb-options-add-eventlistener))))
                 (defmacro ,(symbolicate name '-getter) (key)
                   `(find-symbol (format nil "~:@(~A-GET-~A~)" ',',opt ,key) :rocksdb)))))
   (%def-opt-finders rdb-opt rocksdb-options)

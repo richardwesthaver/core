@@ -680,35 +680,14 @@ DB where K and V are both Lisp strings."
 
 (deftest event-listener ()
   "Test RocksDB Event Listener API."
-  (let ((flush-begin (alien-sap (alien-callable-function 'rocksdb-destructor)))
-        (flush-completed (alien-sap (alien-callable-function 'default-on-flush-completed-cb)))
-        (compaction-begin (alien-sap (alien-callable-function 'default-on-compaction-begin-cb)))
-        (compaction-completed (alien-sap (alien-callable-function 'default-on-compaction-completed-cb)))
-        (subcompaction-begin (alien-sap (alien-callable-function 'default-on-subcompaction-begin-cb)))
-        (subcompaction-completed (alien-sap (alien-callable-function 'default-on-subcompaction-completed-cb)))
-        (external-file-ingested (alien-sap (alien-callable-function 'default-on-external-file-ingested-cb)))
-        (background-error (alien-sap (alien-callable-function 'default-on-background-error-cb)))
-        (stall-conditions-changed (alien-sap (alien-callable-function 'default-on-stall-conditions-changed-cb)))
-        (memtable-sealed (alien-sap (alien-callable-function 'default-on-memtable-sealed-cb))))
-    (let ((listener (rocksdb-eventlistener-create 
-                     nil (alien-sap (alien-callable-function 'rocksdb-destructor))
-                     flush-begin
-                     flush-completed
-                     compaction-begin
-                     compaction-completed
-                     subcompaction-begin
-                     subcompaction-completed
-                     external-file-ingested
-                     background-error
-                     stall-conditions-changed
-                     memtable-sealed)))
-      (with-opt (o (test-opts) (rocksdb-options-destroy o))
-        (rocksdb-options-add-eventlistener o listener)
-        (with-temp-db db (o)
-          ;; should see some messages pop up:
-          ;; ; 0:45:17.375 memtable sealed.
-          ;; ; 0:45:17.376 flush completed.
-          (with-errptr e
-            (dotimes (i 8)
-              (test-single-roundtrip db (* 32 (1+ i))))
-            (rocksdb-flush db (rocksdb-flushoptions-create) e)))))))
+  (let ((listener (make-rocksdb-event-listener)))
+    (with-opt (o (test-opts) (rocksdb-options-destroy o))
+      (rocksdb-options-add-eventlistener o listener)
+      (with-temp-db db (o)
+        ;; should see some messages pop up:
+        ;; ; 0:45:17.375 memtable sealed.
+        ;; ; 0:45:17.376 flush completed.
+        (with-errptr e
+          (dotimes (i 8)
+            (test-single-roundtrip db (* 32 (1+ i))))
+          (rocksdb-flush db (rocksdb-flushoptions-create) e))))))

@@ -73,7 +73,7 @@
 (define-alien-type on-external-file-ingested-cb (function void (* t) (* rocksdb) (* rocksdb-externalfileingestioninfo)))
 (define-alien-type on-background-error-cb (function void (* t) unsigned-int c-string))
 (define-alien-type on-stall-conditions-changed-cb (function void (* t) (* rocksdb-writestallinfo)))
-(define-alien-type rocksdb-logger-logv-callback (function void (* t) unsigned-int c-string))
+(define-alien-type rocksdb-logger-logv-cb (function void (* t) unsigned-int c-string))
 (define-alien-type on-memtable-sealed-cb (function void (* t) (* rocksdb-memtableinfo)))
 
 (defmacro rocksdb-info-str (info fn)
@@ -149,7 +149,7 @@
   (std:mumble "stall conditions changed on ~A"
               (rocksdb-info-str info rocksdb-writestallinfo-cf-name)))
 
-(define-alien-callable default-rocksdb-logger-logv-callback void 
+(define-alien-callable default-rocksdb-logger-logv-cb void 
     ((state (* t)) 
      (level unsigned-int) 
      (msg c-string))
@@ -179,31 +179,33 @@
   (on-stall-conditions-changed (* on-stall-conditions-changed-cb))
   (on-memtable-sealed (* on-memtable-sealed-cb)))
 
-(std:definline default-rocksdb-event-listener ()
-  "The default RocksDB event listener used for basic debugging via Lisp. All of
-the default callbacks used the MUMBLE function and print to *STANDARD-OUTPUT*."
-  (let ((flush-begin (alien-sap (alien-callable-function 'rocksdb-destructor)))
-        (flush-completed (alien-sap (alien-callable-function 'default-on-flush-completed-cb)))
-        (compaction-begin (alien-sap (alien-callable-function 'default-on-compaction-begin-cb)))
-        (compaction-completed (alien-sap (alien-callable-function 'default-on-compaction-completed-cb)))
-        (subcompaction-begin (alien-sap (alien-callable-function 'default-on-subcompaction-begin-cb)))
-        (subcompaction-completed (alien-sap (alien-callable-function 'default-on-subcompaction-completed-cb)))
-        (external-file-ingested (alien-sap (alien-callable-function 'default-on-external-file-ingested-cb)))
-        (background-error (alien-sap (alien-callable-function 'default-on-background-error-cb)))
-        (stall-conditions-changed (alien-sap (alien-callable-function 'default-on-stall-conditions-changed-cb)))
-        (memtable-sealed (alien-sap (alien-callable-function 'default-on-memtable-sealed-cb))))
-    (rocksdb-eventlistener-create 
-     nil (alien-sap (alien-callable-function 'rocksdb-destructor))
-     flush-begin
-     flush-completed
-     compaction-begin
-     compaction-completed
-     subcompaction-begin
-     subcompaction-completed
-     external-file-ingested
-     background-error
-     stall-conditions-changed
-     memtable-sealed)))
+(defun make-rocksdb-event-listener 
+    (&key 
+     state
+     (destructor (alien-sap (alien-callable-function 'rocksdb-destructor)))
+     (flush-begin (alien-sap (alien-callable-function 'rocksdb-destructor)))
+     (flush-completed (alien-sap (alien-callable-function 'default-on-flush-completed-cb)))
+     (compaction-begin (alien-sap (alien-callable-function 'default-on-compaction-begin-cb)))
+     (compaction-completed (alien-sap (alien-callable-function 'default-on-compaction-completed-cb)))
+     (subcompaction-begin (alien-sap (alien-callable-function 'default-on-subcompaction-begin-cb)))
+     (subcompaction-completed (alien-sap (alien-callable-function 'default-on-subcompaction-completed-cb)))
+     (external-file-ingested (alien-sap (alien-callable-function 'default-on-external-file-ingested-cb)))
+     (background-error (alien-sap (alien-callable-function 'default-on-background-error-cb)))
+     (stall-conditions-changed (alien-sap (alien-callable-function 'default-on-stall-conditions-changed-cb)))
+     (memtable-sealed (alien-sap (alien-callable-function 'default-on-memtable-sealed-cb))))
+  (rocksdb-eventlistener-create 
+   state
+   destructor
+   flush-begin
+   flush-completed
+   compaction-begin
+   compaction-completed
+   subcompaction-begin
+   subcompaction-completed
+   external-file-ingested
+   background-error
+   stall-conditions-changed
+   memtable-sealed))
 
 (defar rocksdb-eventlistener-destroy void (self (* rocksdb-eventlistener)))
 (defar rocksdb-options-add-eventlistener void (opts (* rocksdb-options)) (listener (* rocksdb-eventlistener)))
