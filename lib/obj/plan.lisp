@@ -106,10 +106,6 @@ current state of an action's progress:
 ;; RESEARCH 2024-10-27: dynamic plans
 (defclass plan () ())
 
-(defclass logical-plan (plan) ())
-
-(defclass physical-plan (plan) ())
-
 (defclass planner () ())
 
 (defgeneric make-physical-plan (plan)

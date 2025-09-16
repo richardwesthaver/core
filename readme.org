@@ -14,9 +14,9 @@
 | skel-id     | (("When" "attempting" "to" "read" "the" "slot's" "value" "(slot-value)," "the" "slot") ("CLI/CLAP/OBJ::KIND" "is" "missing" "from" "the" "object" "" "" "" "") ("#<CLI-OPT" "file" ":active" "NIL" ":val" "NIL>." "" "" "" "")) |
 | root        | ~/comp/core/                                                                                                                                                                                                                    |
 | tags        | (("When" "attempting" "to" "read" "the" "slot's" "value" "(slot-value)," "the" "slot") ("CLI/CLAP/OBJ::KIND" "is" "missing" "from" "the" "object" "" "" "" "") ("#<CLI-OPT" "file" ":active" "NIL" ":val" "NIL>." "" "" "" "")) |
-| updated     | Sat Sep 13 22:56:40 2025 -0400                                                                                                                                                                                                  |
+| updated     | Sun Sep 14 21:09:21 2025 -0400                                                                                                                                                                                                  |
 | langs       | c elisp lisp org text                                                                                                                                                                                                           |
-| lines       | 149470 :λ 118372 :# 13819 :_ 17279                                                                                                                                                                                              |
+| lines       | 149465 :λ 118463 :# 13726 :_ 17276                                                                                                                                                                                              |
 |-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 
 #+END:

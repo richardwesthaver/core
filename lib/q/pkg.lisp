@@ -92,7 +92,6 @@
    :column-name
    :cast-expression
    :df-exec
-   :execute*
    :register-file
    :register-data-source
    :register-df

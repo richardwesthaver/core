@@ -70,14 +70,14 @@
 ;;; Expressions
 (defclass query-expr (expr) ())
 
-(defclass query-plan (ast)
+(defclass query-plan (ast plan)
   ((schema :type schema :accessor schema :initarg :schema)
    (ast :type (vector query-plan))))
 
-(defclass logical-query-plan (query-plan logical-plan)
+(defclass logical-query-plan (query-plan)
   ((ast :type (vector logical-query-plan) :accessor ast :initarg :ast)))
 
-(defclass physical-query-plan (query-plan physical-plan)
+(defclass physical-query-plan (query-plan)
   ((ast :type (vector physical-query-plan))))
 
 ;;; Logical Expressions
@@ -173,10 +173,10 @@
   ((name :initarg :name :type string :accessor name)
    (op :initarg :op :type symbol :accessor expr-op)))
 
-;; ;; TODO 2024-08-03: ???
-;; (defmethod to-field ((self math-expression) (input logical-query-plan))
-;;   (declare (ignorable input))
-;;   (make-field :name "*" :type (field-type (to-field (lhs self) input))))
+;; TODO 2024-08-03: ???
+(defmethod to-field ((self math-expression) (input logical-query-plan))
+  (declare (ignorable input))
+  (make-field :name "*" :type (field-type (to-field (lhs self) input))))
 
 (defclass add-expression (math-expression) ()
   (:default-initargs
@@ -253,11 +253,11 @@
    (data-source :type data-source :initarg :data-source)
    (projection :type (vector string) :initarg :projection)))
 
-;; (defmethod derive-schema ((self scan-data))
-;;   (let ((proj (slot-value self 'projection)))
-;;     (if (= 0 (length proj))
-;;         (schema self)
-;;         (select (slot-value self 'schema) proj))))
+(defmethod derive-schema ((self scan-data))
+  (let ((proj (slot-value self 'projection)))
+    (if (= 0 (length proj))
+        (schema self)
+        (select (slot-value self 'schema) proj))))
 
 (defmethod schema ((self scan-data))
   (derive-schema self))
@@ -267,16 +267,16 @@
   ((input :type logical-query-plan :initarg :input)
    (expr :type (vector logical-expr) :initarg :expr)))
 
-;; (defmethod schema ((self projection))
-;;   (schema (slot-value self 'input)))
+(defmethod schema ((self projection))
+  (schema (slot-value self 'input)))
 
 ;;;;; Selection
 (defclass selection (logical-query-plan)
   ((input :type logical-query-plan :initarg :input)
    (expr :type logical-expr :initarg :expr)))
 
-;; (defmethod schema ((self selection))
-;;   (schema (slot-value self 'input)))
+(defmethod schema ((self selection))
+  (schema (slot-value self 'input)))
 
 ;;;;; Aggregate
 (defclass aggregate (logical-query-plan)
@@ -284,27 +284,27 @@
    (group-expr :type (vector logical-expr) :initarg :group-expr)
    (agg-expr :type (vector aggregate-expression) :initarg :agg-expr)))
 
-;; (defmethod schema ((self aggregate))
-;;   (let ((input (slot-value self 'input))
-;;         (ret))
-;;     (loop for g across (slot-value self 'group-expr)
-;;           do (push (to-field g input) ret))
-;;     (loop for a across (slot-value self 'agg-expr)
-;;           do (push (to-field a input) ret))
-;;     (apply 'make-simple-schema ret)))
+(defmethod schema ((self aggregate))
+  (let ((input (slot-value self 'input))
+        (ret))
+    (loop for g across (slot-value self 'group-expr)
+          do (push (to-field g input) ret))
+    (loop for a across (slot-value self 'agg-expr)
+          do (push (to-field a input) ret))
+    (apply 'make-simple-schema ret)))
 
 ;;;;; Limit
 (defclass limit (logical-query-plan)
   ((input :type logical-query-plan :initarg :input)
    (limit :type integer)))
 
-;; (defmethod schema ((self limit))
-;;   (setf (slot-value self 'schema)
-;;         (schema (slot-value self 'input))))
+(defmethod schema ((self limit))
+  (setf (slot-value self 'schema)
+        (schema (slot-value self 'input))))
 
-;; (defmethod ast ((self limit))
-;;   (setf (slot-value self 'ast)
-;;         (ast (slot-value self 'input))))
+(defmethod ast ((self limit))
+  (setf (slot-value self 'ast)
+        (ast (slot-value self 'input))))
 
 ;;;;; Joins
 (defclass join (logical-query-plan)
@@ -491,44 +491,43 @@
   ((data-source :type data-source :initarg :data-source)
    (projection :type (vector string) :initarg :projection)))
 
-;; (defmethod schema ((self scan-exec))
-;;   (select (schema (slot-value self 'data-source)) (slot-value self 'projection)))
+(defmethod schema ((self scan-exec))
+  (select (schema (slot-value self 'data-source)) (slot-value self 'projection)))
 
-;; (defmethod exec ((self scan-exec))
-;;   (scan-data (slot-value self 'data-source) (slot-value self 'projection)))
+(defmethod exec ((self scan-exec))
+  (scan-data (slot-value self 'data-source) (slot-value self 'projection)))
 
 (defclass projection-exec (physical-query-plan)
   ((input :type physical-query-plan :initarg :input)
    (expr :type (vector physical-expr) :initarg :expr)))
 
-;; (defmethod exec ((self projection-exec))
-;;   (coerce
-;;    (loop for batch across (fields (execute (slot-value self 'input)))
-;;          collect (make-record-batch :schema (slot-value self 'schema)
-;;                                     :fields (coerce
-;;                                              (loop for e across (slot-value self 'expr)
-;;                                                    collect (evaluate e batch))
-;;                                              'field-vector)))
-;;    '(vector record-batch)))
-                                                 
+(defmethod exec ((self projection-exec))
+  (coerce
+   (loop for batch across (fields (exec (slot-value self 'input)))
+         collect (make-record-batch :schema (slot-value self 'schema)
+                                    :fields (coerce
+                                             (loop for e across (slot-value self 'expr)
+                                                   collect (evaluate e batch))
+                                             'field-vector)))
+   '(vector record-batch)))
 
 (defclass selection-exec (physical-query-plan)
   ((input :type physical-query-plan :initarg :input)
    (expr :type physical-expr :initarg :expr)))
 
-;; (defmethod schema ((self selection-exec))
-;;   (schema (slot-value self 'input)))
+(defmethod schema ((self selection-exec))
+  (schema (slot-value self 'input)))
 
-;; (defmethod exec ((self selection-exec))
-;;   (coerce
-;;    (loop for batch across (exec (slot-value self 'input))
-;;          with res = (coerce (evaluate (slot-value self 'expr) batch) 'bit-vector)
-;;          with schema = (schema batch)
-;;          with count = (column-count (fields (schema batch)))
-;;          with filtered = (loop for i from 0 below count
-;;                                collect (filter self (field batch i) res))
-;;          collect (make-record-batch :schema schema :fields (coerce filtered 'field-vector)))
-;;    '(vector record-batch)))
+(defmethod exec ((self selection-exec))
+  (coerce
+   (loop for batch across (exec (slot-value self 'input))
+         with res = (coerce (evaluate (slot-value self 'expr) batch) 'bit-vector)
+         with schema = (schema batch)
+         with count = (column-count (fields (schema batch)))
+         with filtered = (loop for i from 0 below count
+                               collect (filter self (field batch i) res))
+         collect (make-record-batch :schema schema :fields (coerce filtered 'field-vector)))
+   '(vector record-batch)))
 
 (defgeneric filter (self columns selection)
   (:method ((self selection-exec) (columns column-vector) (selection simple-bit-vector))
@@ -543,50 +542,50 @@
    (group-expr :type (vector physical-query-plan) :initarg :group-expr)
    (agg-expr :type (vector aggregate-physical-expression) :initarg :agg-expr)))
 
-;; (defmethod exec ((self hash-aggregate-exec))
-;;   (coerce 
-;;    (loop for batch across (exec (slot-value self 'input))
-;;          with map = (make-hash-table :test 'equal)
-;;          with groupkeys = (map 'vector  (lambda (x) (evaluate x batch)) (slot-value self 'group-expr))
-;;          with aggr-inputs = (map 'vector (lambda (x) (evaluate (slot-value x 'input) batch))
-;;                                  (slot-value self 'agg-expr))
-;;          do (loop for row-idx from 0 below (row-count batch)
-;;                   with row-key = (map 'vector
-;;                                       (lambda (x)
-;;                                         (when-let ((val (column-value x row-idx)))
-;;                                           (typecase val
-;;                                             (octet-vector (sb-ext:octets-to-string val))
-;;                                             (t val))))
-;;                                       groupkeys)
-;;                   with accs = (if-let ((val (gethash row-key map)))
-;;                                 val
-;;                                 (setf
-;;                                  (gethash row-key map)
-;;                                  (map 'vector
-;;                                       #'make-accumulator
-;;                                       (slot-value self 'agg-expr))))
-;;                   ;; start accumulating
-;;                   do (loop for i from 0 below (length accs)
-;;                            for accum across accs
-;;                            with val = (column-value (aref aggr-inputs i) row-idx)
-;;                            return (accumulate accum val))
-;;                      ;; collect results in array
-;;                   with ret = (make-record-batch :schema (slot-value self 'schema)
-;;                                                 :fields (make-array (hash-table-size map)
-;;                                                                     :element-type 'field
-;;                                                                     :initial-element (make-field)))
-;;                   do (loop for row-idx from 0 below (hash-table-size map)
-;;                            for gkey being the hash-keys of map
-;;                            using (hash-value accums)
-;;                            with glen = (length (slot-value self 'group-expr))
-;;                            do (loop for i from 0 below glen
-;;                                     do (setf (aref (aref (fields ret) i) row-idx)
-;;                                              (aref gkey i)))
-;;                            do (loop for i from 0 below (length (slot-value self 'agg-expr))
-;;                                     do (setf (aref (aref (fields ret) (+ i glen)) row-idx)
-;;                                              (accumulator-value (aref accums i)))))
-;;                   collect ret))
-;;    '(vector record-batch)))
+(defmethod exec ((self hash-aggregate-exec))
+  (coerce 
+   (loop for batch across (exec (slot-value self 'input))
+         with map = (make-hash-table :test 'equal)
+         with groupkeys = (map 'vector  (lambda (x) (evaluate x batch)) (slot-value self 'group-expr))
+         with aggr-inputs = (map 'vector (lambda (x) (evaluate (slot-value x 'input) batch))
+                                 (slot-value self 'agg-expr))
+         do (loop for row-idx from 0 below (row-count batch)
+                  with row-key = (map 'vector
+                                      (lambda (x)
+                                        (when-let ((val (column-value x row-idx)))
+                                          (typecase val
+                                            (octet-vector (sb-ext:octets-to-string val))
+                                            (t val))))
+                                      groupkeys)
+                  with accs = (if-let ((val (gethash row-key map)))
+                                val
+                                (setf
+                                 (gethash row-key map)
+                                 (map 'vector
+                                      #'make-accumulator
+                                      (slot-value self 'agg-expr))))
+                  ;; start accumulating
+                  do (loop for i from 0 below (length accs)
+                           for accum across accs
+                           with val = (column-value (aref aggr-inputs i) row-idx)
+                           return (accumulate accum val))
+                     ;; collect results in array
+                  with ret = (make-record-batch :schema (slot-value self 'schema)
+                                                :fields (make-array (hash-table-size map)
+                                                                    :element-type 'field
+                                                                    :initial-element (make-field)))
+                  do (loop for row-idx from 0 below (hash-table-size map)
+                           for gkey being the hash-keys of map
+                           using (hash-value accums)
+                           with glen = (length (slot-value self 'group-expr))
+                           do (loop for i from 0 below glen
+                                    do (setf (aref (aref (fields ret) i) row-idx)
+                                             (aref gkey i)))
+                           do (loop for i from 0 below (length (slot-value self 'agg-expr))
+                                    do (setf (aref (aref (fields ret) (+ i glen)) row-idx)
+                                             (accumulated (aref accums i)))))
+                  collect ret))
+   '(vector record-batch)))
 
 ;;; Planner
 
@@ -724,7 +723,8 @@ accumulator."
   (%pushdown plan))
 
 ;;; Query
-(defclass query () ())
+(defclass query () ()
+  (:documentation "Base class of query objects."))
 
 (defclass simple-query (query ast id) ())
 

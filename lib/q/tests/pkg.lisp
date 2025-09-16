@@ -4,10 +4,10 @@
 
 ;;; Code:
 (defpackage :q/tests/fuzz
-  (:use :cl :std :rt/fuzz :q :log :plan :schema :q))
+  (:use :cl :std :rt/fuzz :q :log :plan :schema :sql :dql))
 
 (defpackage :q/tests
-  (:use :cl :std :rt :q :log :parse/pratt :q :ast :plan :schema))
+  (:use :cl :std :rt :q :log :parse/pratt :sql :dql :ast :plan :schema))
 
 (in-package :q/tests)
 (defsuite :q)
@@ -24,6 +24,6 @@ building a query-plan."
 
 (deftest sanity ()
   (is (make-instance 'query-engine
-        :parser (make-instance 'sql-p)
+        :parser (make-instance 'sql-parser)
         :optimizer (make-instance 'sql-optimizer)
         :sources nil)))

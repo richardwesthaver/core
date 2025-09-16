@@ -30,14 +30,14 @@
 (defgeneric dql (self input)
   (:documentation "Process dql input and return a DATA-FRAME."))
 
-(defmethod execute* ((self query-engine) (plan data-frame))
+(defmethod execute ((self query-engine) (plan data-frame))
   (declare (ignore self))
-  (execute plan))
+  (exec plan))
 
-(defmethod optimize-query ((self query-engine) (plan logical-plan))
+(defmethod optimize-query ((self query-engine) (plan logical-query-plan))
   (optimize-query (slot-value self 'query-optimizer) plan))
 
-(defmethod execute* ((self query-engine) (plan logical-plan))
-  (execute
+(defmethod execute ((self query-engine) (plan logical-query-plan))
+  (exec
    (make-physical-plan
     (optimize-query self plan))))

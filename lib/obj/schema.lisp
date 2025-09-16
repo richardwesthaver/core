@@ -495,6 +495,6 @@ DEFCLASS."
 
 (defstruct (data-frame (:constructor make-df (&optional plan))
                        (:conc-name df-))
-  (plan (make-instance 'logical-plan) :type logical-plan))
+  plan)
 
 (defaccessor schema ((self data-frame)) (schema (df-plan self)))
