@@ -4,18 +4,16 @@
 (in-package :std/print)
 
 (defmacro deffmt (name control-string &optional doc)
-  (std/sym:with-gensyms (fmt)
-  `(let ((,fmt (formatter ,control-string)))
-     (setf (fdefinition ',name) ,fmt)
+  `(progn
+     (setf (fdefinition ',name) (formatter ,control-string))
      ,@(when doc `((setf (documentation ',name 'function) ,doc)))
-     ',name)))
+     ',name))
 
 (defun iprintln (x &optional (n 2) stream)
   "Print object X with indentation N to stream followed by a new line."
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))
 
-(deffmt fmt-row "~&| ~{~A~^ | ~} |~&"
-  "Format DATA as a table row to STREAM. When PRETTY is non-nil use box-chars.")
+(deffmt fmt-row "~&| ~{~A~^ | ~} |~%" "Format a single row of data delimited by '|'.")
 
 (defun printer-status ()
   "Return the current printer status."
@@ -564,6 +562,7 @@ array to display when wrapping the middle elements.")
 (defun trail-axis-marker (n)
   (schar +lead-axis-markers+
          (if (> n 1) 1 0)))
+
 (deftype box-style () '(member :min :mid :max))
 
 (defun fmt-box (stream seq &key (style :mid))
@@ -598,6 +597,7 @@ STYLE indicates the level of decoration to apply to the output:
     #  object
     +  t")
 
+;;; Mumble
 (defvar *mumble-timestamp* t)
 
 (deffmt fmt-time "~D:~2,'0D:~2,'0D.~3,'0D")
@@ -615,9 +615,33 @@ STYLE indicates the level of decoration to apply to the output:
 
 (defun mumble (control &rest args)
   "Politically correct way to print compiler output."
+  (declare (optimize (speed 3) (safety 0)))
   (let ((stream *standard-output*))
     (fmt-mumble stream 
                 (internal-time-to-string (get-internal-real-time))
-                (apply #'format nil control args))
+                (apply 'format nil control args))
     (force-output stream)
     (values)))
+
+;;; Print Tables
+
+;; Common Lisp provides the ability to bind and modify the
+;; *PRINT-PPRINT-DISPATCH* variable to achieve dynamic pretty printing based
+;; on the mapping from predicates to print functions defined in a
+;; PPRINT-DISPATCH-TABLE.
+
+;; This module provides utilities for working with SBCL's
+;; SB-PRETTY:PPRINT-DISPATCH-TABLEs in a manner similar to
+;; STD:NAMED-READTABLES.
+
+;; NOTE: PPD = Pretty Print Dispatch
+;; (inspect *print-pprint-dispatch*)
+;; (set-pprint-dispatch t nil)
+(defmacro defprint (name type args &body body)
+  "Define a (pretty) printer function which interprets the forms in OPTS for
+  insertion into a specified PPRINT-DISPATCH-TABLE via SET-PPRINT-DISPATCH."
+  `(prog1 (defun ,name ,args ,@body)
+     (set-pprint-dispatch ,type #',name)))
+
+#+nil
+(let ((ppdt (copy-pprint-dispatch nil))))

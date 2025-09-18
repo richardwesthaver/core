@@ -330,6 +330,10 @@ function: '(ql:quickload :clouseau)'."
           ;; Return nothing.
           (cl:values)))))
 
+;; rebind the defpackage-regexp function to include DEFPKG
+(setq slime-defpackage-regexp
+      "^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*")
+
 (define-common-lisp-style 
  "core" 
  "Core Common Lisp Indentation Style"

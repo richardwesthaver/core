@@ -146,7 +146,8 @@ saved."
 (defmacro with-db ((var &rest initargs &key (db '*db*) &allow-other-keys) 
                    &body body)
   "Bind VAR to a DATABASE instance produced by parsing INITARGS for the extent
-  of BODY."
+  of BODY which may contain any of the *DATABASE-BACKEND-OPTIONS* available
+  for the current *DATABASE-BACKEND*."
   (with-gensyms (opts)
     `(let ((,opts ',(parse-database-backend-options initargs))
            (,var ,db))
@@ -156,11 +157,6 @@ saved."
          ;; ,@(when close (remf initargs :close) `((close-db ,var)))
          ;; ,@(when destroy (remf initargs :destroy) `((destroy-db ,var)))
          (apply 'do-database-backend-close-options ,var ,opts)))))
-
-;;; Config
-(defconfig db-config ()
-  ((backend :initform nil :type database-backend-designator)
-   (options)))
 
 ;;; Database
 (defgeneric db (self)
@@ -365,6 +361,11 @@ hints.")
   (:documentation "Shutdown database SELF."))
 (defgeneric ingest-into-db (self file &key)
   (:documentation "Ingest an external file into the database"))
+
+;;; Config
+(defconfig db-config ()
+  ((backend :initform nil :type database-backend-designator :initarg :backend)
+   (options :initarg :options :accessor db-opts)))
 
 ;; Merge Ops
 (defgeneric merge-key (self key val &key)

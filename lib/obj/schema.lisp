@@ -59,7 +59,7 @@
   self)
 
 (defmethod build-ast ((self field) &key)
-  `(,(keywordicate (field-name self)) ,(field-type self)))
+  `(,(keywordicate (string-upcase (field-name self))) ,(field-type self)))
 
 (defmethod write-ast ((self field) stream &key)
   (write (build-ast self) :stream stream))
@@ -168,10 +168,16 @@ SCHEMA."
   self)
 
 (defmethod build-ast ((self schema) &key)
-  (map 'list 'build-ast (fields self)))
+  (let ((ret))
+    (map nil (lambda (x) (appendf ret (build-ast x))) (fields self))
+    ret))
 
 (defmethod write-ast ((self schema) stream &key)
   (write (build-ast self) :stream stream))
+
+(defmethod ast ((self schema))
+  "SCHEMA does not have an AST slot, so instead the accessor always builds a fresh list."
+  (build-ast self))
 
 (defun make-schema (&rest fields)
   (make-instance 'schema :fields (coerce fields 'vector)))
@@ -213,6 +219,7 @@ SCHEMA."
   (:documentation "Wrapper for a file which acts as a single data source."))
 
 ;;; Schema Metadata
+;; REVIEW 2025-09-17: do we need this? currently unused.
 (defclass schema-metadata ()
   ((metadata :initarg :metadata :accessor schema-metadata)))
 
@@ -223,7 +230,7 @@ SCHEMA."
 ;;; Simple Schema
 (defclass simple-schema (schema) 
   ((name :accessor name :initarg :name))
-  (:documentation "Base class for simple schemas."))
+  (:documentation "A simple schema contains at least a NAME slot and supports the ID protocol."))
 
 (defun make-simple-schema (name &rest fields)
   (make-instance 'simple-schema :name name :fields (coerce fields 'field-vector)))
@@ -232,16 +239,21 @@ SCHEMA."
 (defmethod (setf id) (new (self simple-schema)) (setf (name self) new))
 
 ;;; Dynamic Schema
+;; RESEARCH 2025-09-17: 
 (defclass dynamic-schema (schema id) 
   ((fields :initarg :fields :accessor fields :dynamic t))
-  (:metaclass dynamic-class))
+  (:metaclass dynamic-class)
+  (:documentation "A schema which binds fields dynamically and prevents excessive thread-local
+binding of field values."))
 
 ;;; Object Schema
 (defclass object-schema (schema)
   ((class-name :initarg :class-name :accessor schema-class-name)
    (successor :accessor schema-successor :initarg :successor :initform nil)
    (predecessor :accessor schema-predecessor :initarg :predecessor :initform nil))
-  (:documentation "Keep a doubly linked list of schemas in the db"))
+  (:documentation "A schema associated with instances of a specified CLASS-NAME. This schema
+supports class modification at runtime by maintaining doubly linked list which
+gets updated when the class changes."))
 
 (defmethod print-object ((schema object-schema) stream)
   (print-unreadable-object (schema stream :type t) (format stream "~A" (schema-class-name schema))))
@@ -427,7 +439,7 @@ SCHEMA."
 (defclass upgradable-schema (schema)
   ((version :accessor version :initarg :version :initform 1)
    (upgrade :accessor upgrade :initform nil))
-  (:documentation "A schema which may be upgraded in-place."))
+  (:documentation "A schema which may be upgraded in-place using the UPGRADE slot."))
 
 (defmethod print-object ((self upgradable-schema) stream)
   (print-unreadable-object (self stream :type t)
@@ -448,7 +460,6 @@ SCHEMA."
            (funcall fn instance)))))
 
 ;;; Macros
-
 (defun list-to-fields (fields)
   "FIELDS is assumed to be a list of lists where each element is of the form:
 (name type &keys)"

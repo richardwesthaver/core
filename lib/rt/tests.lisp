@@ -13,6 +13,10 @@
 
 (in-suite :rt)
 
+;; FIX 2025-09-17: 
+(deftest sanity ()
+  (isnt t))
+
 (defun %foo (input)
   (loop for x below input
         collect (loop for y in (%foo x)

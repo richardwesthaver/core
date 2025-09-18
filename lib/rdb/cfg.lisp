@@ -14,46 +14,53 @@
 (in-package :rdb)
 
 (defconfig rdb-config (ast id db-config)
-  ((path :initform (std::tmpize-pathname "/tmp/rdb") :initarg :path :type (or pathname string))
+  ((path :initarg :path :type (or pathname string))
    (logger :initform (default-logger-config) :initarg :logger :type (or null log::logger-config))
-   (schema :initform (make-instance 'rdb-schema) :initarg :schema :type rdb-schema)))
+   (schema :initform (make-instance 'rdb-schema) :initarg :schema :type rdb-schema))
+  (:default-initargs 
+   :backend :rdb
+   :options *default-rdb-opts*))
 
 (defmethod print-object ((self rdb-config) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~S ~A" :id (format-sxhash (id:id self)))))
-
-(defun find-rdb-symbol (s)
-  (find-symbol* (symbol-name s) :rdb nil))
+    (format stream "~S ~A" :id (id:id self))))
 
 (defmethod load-ast ((self rdb-config))
   (with-slots (ast) self
     (if (formp ast)
         ;; ast is valid, modify object, set ast nil
-        (progn
+        (let ((new-ast))
           (sb-int:doplist (k v) ast
-            (when-let ((s (find-rdb-symbol k))) ;; needs to be correct package
-              (unless (null v)
-                (setf v
-                      (case k
-                        (:logger (make-config :logger :ast v))
-                        (t v)))
-                (setf (slot-value self s) v))))
-          (setf (ast:ast self) nil)
+            (when-let ((s (find-symbol (string k)))) ;; needs to be correct package
+              (case k
+                (:logger (setf (slot-value self s) (make-config :logger :ast v)))
+                (:schema (setf (slot-value self s) (apply 'make-schema v)))
+                (:id (setf (slot-value self s) v))
+                (:options (setf (ast (slot-value self s)) v))
+                (t (nconsc new-ast (list k v))))))
+          (setf (ast self) new-ast)
           self)
         ;; invalid ast, signal error
-        (error 'syntax-error))))
-  
-(defmethod build-ast ((self rdb-config) &key (nullp nil) (exclude '(ast id logger)))
+        (error 'syntax-error :ast ast))))
+
+(defmethod build-ast ((self rdb-config) &key (nullp nil) (exclude '(ast id schema logger options)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
                        :methods nil
                        :nullp nullp
-                       :exclude exclude)))
+                       :exclude exclude))
+  (when (slot-boundp self 'schema) 
+    (appendf (ast self) (list :schema (ast (slot-value self 'schema)))))
+  (when (slot-boundp self 'logger) 
+    (appendf (ast self) (list :logger (ast (build-ast (slot-value self 'logger))))))
+  (when (slot-boundp self 'options)
+    (appendf (ast self) (list :options (ast (slot-value self 'options)))))
+  self)
 
 (defmethod build ((self rdb-config) &key)
-  (make-db (slot-value self 'backend) 
-           :opts (slot-value self 'options) 
+  (make-db (slot-value self 'backend)
+           :opts (slot-value self 'options)
            :logger (when-let ((l (slot-value self 'logger))) (build l))
            :name (slot-value self 'path)))
 
@@ -66,4 +73,4 @@
     (with-open-file (out file
 			 :direction :output
 			 :if-does-not-exist :create)
-      (write-ast cfg out :fmt :canonical))))
+      (write-ast cfg out :pretty t :case :downcase))))

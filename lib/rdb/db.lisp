@@ -108,7 +108,7 @@ utility classes.
 ;;; Backend
 (defvar *rocksdb-backend-options* '(columns temp path (open . t) 
                                     destroy (close . t) 
-                                    sap merge-op comparator prefix-op logger))
+                                    sap merge-op comparator prefix-op logger event-listener))
 
 ;; TODO 2024-12-31: may want to have a :STORE backend-option to allow a fresh
 ;; db to be backlined to a parent store instance.
@@ -130,6 +130,9 @@ utility classes.
    "Assign a custom SLICETRANSFORM to this database to be used as a prefix
 extractor."
    (setf (db-opt db :prefix-extractor :push t) val))
+  (((db rdb) (key (eql :event-listener)) val)
+   "Assign an EVENT-LISTENER to this database."
+   (setf (db-opt db :event-listener :push t) val))
   (((db rdb) (key (eql :logger)) val)
    (setf (db-opt db :info-log :push t) val)))
 
@@ -271,7 +274,10 @@ object. (SAP CF) is the raw pointer."))
   (((db rdb-database) (key (eql :prefix-op)) val)
    "Assign a custom SLICETRANSFORM to this database to be used as a prefix
 extractor."
-   (setf (db-opt (db db) :prefix-extractor :push t) val)))
+   (setf (db-opt (db db) :prefix-extractor :push t) val))
+  (((db rdb-database) (key (eql :event-listener)) val)
+   "Assign an EVENT-LISTENER to this database."
+   (setf (db-opt (db db) :event-listener :push t) val)))
 
 (defmethod load-opts ((self rdb-database) &key (backfill t))
   ;; order is determined by RocksDB

@@ -68,12 +68,28 @@
                         ,(format nil "Coerce ALIEN into a ~A struct. This function doesn't populate the
 values in Lisp, just binds the sap." name)
                         (,%make :sap alien))
-                      (defaccessor* db-opt 
+                      ;; db-opt accessors
+                      (defaccessor* db-opt
                           ((self ,name) key)
                           (gethash key (db-opts self))
                           (val (self ,name) key &key push)
                         (prog1 (setf (gethash key (db-opts self)) val)
                           (when push (push-sap self key))))
+                      (defaccessor db-opts ((self ,name)) (,(symbolicate name '-table) self))
+                      ;; ast accessors
+                      (defmethod ast ((self ,name))
+                        (let ((lst))
+                          (maphash 
+                           (lambda (k v) (nconsc lst (list (keywordicate (string-upcase k)) v)))
+                           (db-opts self))
+                          lst))
+                      (defmethod (setf ast) (new (self ,name))
+                        (setf (db-opts self) 
+                              (let ((tbl (make-hash-table :test 'equal)))
+                                (doplist (k v) new
+                                  (setf (gethash k tbl) v))
+                                tbl)))
+                      ;; sap accessors
                       (defmethod push-sap ((self ,name) key)
                         "Push KEY from slot :TABLE to the instance :SAP."
                         (,(symbolicate '%set- %name) (sap self) key (db-opt self key)))
@@ -102,9 +118,8 @@ just the keys currently present in TABLE."
                                   do (pull-sap self k))
                             (pull-sap* self))
                         (db-opts self))
-                      ;; (defun ,(symbolicate 'default- name) ())
                       (defaccessor sap ((self ,name)) (,(symbolicate name '-sap) self))
-                      (defaccessor db-opts ((self ,name)) (,(symbolicate name '-table) self))
+                      ;; default function and special var
                       (defun ,(symbolicate 'default- name) ()
                         (,(symbolicate 'make- name) ,@defaults))
                       (defvar ,(symbolicate '*default- name '*) (,(symbolicate 'default- name))))))))
@@ -515,7 +530,7 @@ internal sap slots are initialized."
                               (create-iter-raw sap opts))))))
 
 (defmethod print-stats ((self rdb) &optional stream)
-  (print (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream))
+  (println (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream))
 
 (defmethod flush-db ((self rdb) &key wait)
   (flush-db-raw (rdb-sap self) wait))

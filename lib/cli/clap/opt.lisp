@@ -78,7 +78,7 @@
 (defmethod make-load-form ((obj cli-opt) &optional env)
   (make-load-form-saving-slots
    obj
-   :slot-names '(name kind thunk val description lock)
+   :slot-names '(name type thunk val description lock)
    :environment env))
 
 (defmethod install-thunk ((self cli-opt) (lambda function) &optional compile)
@@ -105,10 +105,10 @@
             (documentation (symbol-function (cli-thunk self)) 'function))))
 
 (defmethod equiv ((a cli-opt) (b cli-opt))
-  (with-slots (name kind) a
-    (with-slots ((bn name) (bk kind)) b
+  (with-slots (name type) a
+    (with-slots ((bn name) (bk type)) b
       (and (equal name bn)
-           (equal kind bk)))))
+           (equal type bk)))))
 
 (defmethod equiv ((a t) (b cli-opt))
   (equalp (cli-opt-val b) a))

@@ -1224,6 +1224,7 @@
 (defpkg :std/print
   (:use :cl :std/stream)
   (:import-from :std/list :group :ensure-cons)
+  (:import-from :std/sym :with-gensyms)
   (:import-from :std/rand :random-booleans)
   (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors*)
   (:import-from :sb-impl :prin1-to-line)

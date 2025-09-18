@@ -5,16 +5,16 @@
 ;;; Code:
 (in-package :cli/clap/obj)
 
-(defun make-cli (kind &rest slots)
-  "Creates a new CLI object of the given kind."
-  (declare (type (member :opt :cmd :cli t) kind))
+(defun make-cli (type &rest slots)
+  "Creates a new CLI object of the given cli type."
+  (declare ((member :opt :cmd :cli t) type))
   ;; (print (getf slots :thunk))
   (cond
-    ((eql kind :cli) (apply #'make-instance 'cli slots))
+    ((eql type :cli) (apply #'make-instance 'cli slots))
     ;; replace :DEFAULT with :VAL
-    ((eql kind :opt) (apply #'make-cli-opt (substitute :val :default slots)))
-    ((eql kind :cmd) (apply #'make-instance 'cli-cmd slots))
-    (t (apply #'make-instance kind slots))))
+    ((eql type :opt) (apply #'make-cli-opt (substitute :val :default slots)))
+    ((eql type :cmd) (apply #'make-instance 'cli-cmd slots))
+    (t (apply #'make-instance type slots))))
 
 (defopt help-opt 
   "Print help and exit."

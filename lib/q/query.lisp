@@ -316,11 +316,11 @@
 (defclass outer-join (join) ())
 (defclass left-join (join) ())
 (defclass right-join (join) ())
-;; left-outer-join
-;; right-outer-join
-;; semi-join
-;; anti-join
-;; cross-join
+;; (defclass left-outer-join (join) ())
+;; (defclass right-outer-join (join) ())
+;; (defclass semi-join (join) ())
+;; (defclass anti-join (join) ())
+;; (defclass cross-join (join) ())
 
 (defmethod schema ((self join))
   ;; TODO 2024-08-04: test better dupe impl

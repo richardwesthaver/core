@@ -240,20 +240,19 @@ slot.")
     (read-ast self (open stream))))
 
 (defgeneric write-ast (self stream &key)
-  (:method ((self ast) stream &key pretty case)
-    (with-open-stream (st stream)
-      (flet ((.write (x) (write x :stream st :pretty pretty :case case :readably t :array t :escape t)))
+  (:method ((self ast) stream &key (pretty *print-pretty*) (case *print-case*))
+      (flet ((.write (x) (write x :stream stream :pretty pretty :case case :readably t :array t :escape t)))
         (if pretty
             (loop for (k v . rest) on (ast self)
                   by #'cddr
                   do
                      (.write k)
-                     (write-char #\space st)
+                     (write-char #\space stream)
                      (typecase v
-                       (ast (write-ast v st :pretty pretty :case case))
+                       (ast (write-ast v stream :pretty pretty :case case))
                        (t (.write v)))
-                     (write-char #\newline st))
-            (.write (ast self))))))
+                     (write-char #\newline stream))
+            (.write (ast self)))))
   (:method ((self ast) (stream pathname) &rest args)
     (apply 'write-ast self (open stream) args))
   (:method ((self ast) (stream string) &rest args)

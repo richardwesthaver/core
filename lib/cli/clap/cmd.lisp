@@ -292,9 +292,9 @@ an object."
           for (node . tail) on (ast ast)
           while node
           do 
-             (let ((kind (cli-node-type node))
+             (let ((type (cli-node-type node))
                    (form (cli-node-form node)))
-               (case kind
+               (case type
                  ;; opts
                  (opt
                   (setf (find-opt (cli-name form) self) form))

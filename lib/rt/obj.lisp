@@ -110,8 +110,7 @@
             (name self))))
 
 (defmethod push-result ((self test-result) (place test))
-  (with-slots (results) place
-    (push self results)))
+  (push self (test-results place)))
 
 (defmethod pop-result ((self test))
   (pop (test-results self)))
@@ -184,7 +183,7 @@
                  (lambda (c)
                    (setf %test-bail t)
                    (setf %test-result (make-test-result :fail c))
-                   (return-from %test-bail %test-result))))
+                   (return-from do-test %test-result))))
             (%do))
           (%do)))))
 

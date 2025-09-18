@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; Peers are 
+;; ref: https://github.com/msgpack/msgpack/blob/master/spec.md
 
 ;;; Code:
 (in-package :net/proto/dm)

@@ -6,9 +6,12 @@
 (in-package :rdb)
 
 (defschema rdb-schema (schema)
-  ((:default (octet-vector . octet-vector))))
+  ((:default (octet-vector . octet-vector)))
+  (:documentation "A schema which may be read from a simple s-expression and ingested by a
+RDB-DATABASE instance via LOAD-SCHEMA."))
 
-(defschema rdb-object-schema (object-schema) ())
+(defschema rdb-object-schema (object-schema) ()
+  (:documentation "An object schema which may be ingested by a RDB-STORE."))
 
 ;; Note that we don't use SIMPLE-CONS-COLUMN here because the NAME slot of
 ;; columns is stored in the underlying RDB-CF structure object.

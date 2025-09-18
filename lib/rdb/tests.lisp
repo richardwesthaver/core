@@ -1,4 +1,9 @@
-(defpackage :rdb/tests
+;;; tests.lisp --- RDB Tests
+
+;; 
+
+;;; Code:
+(defpkg :rdb/tests
   (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :q :db :schema :store)
   (:import-from :rdb :open-db-raw :get-kv-str-raw :iter-key-str-raw
    :destroy-db-raw :close-db-raw :create-cf-raw :get-cf-str-raw
