@@ -379,7 +379,6 @@ associated EDGE-TYPE.")
   "Reverse lookup of edge arrow symbol."
   (car (rassoc str org-graph-edge-indicator-alist)))
 
-;; TODO 2025-09-18: 
 (defun org-graph-get-node (id) (gethash id (org-graph-nodes org-graph)))
 (defun org-graph-get-edges (id) (gethash id (org-graph-edges org-graph)))
 

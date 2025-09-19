@@ -21,7 +21,7 @@ PLANNING
 (define-constant +org-planning-keywords+ '("DEADLINE" "SCHEDULED" "CLOSED") :test #'equal)
 
 ;; helper object, not public API
-(define-org-object planning-line ((keyword "" :type string) (timestamp "" :type string)))
+(define-org-object planning-line ((keyword :scheduled :type keyword) (timestamp "" :type string)))
 
 ;; always consume the string
 (define-org-parser (planning-line :from stream)
@@ -35,15 +35,19 @@ PLANNING
               (declare (ignore _))
               (when .rbeg
                 (let* ((..end (aref .rend 0)))
-                  (setf (org-planning-line-keyword pl) kw
+                  (setf (org-planning-line-keyword pl) (keywordicate (string-upcase (string-right-trim ":" kw)))
                         (org-planning-line-timestamp pl) (subseq l (aref .rbeg 0) ..end))
                   (if (eql ..end .end)
+                      pl
                       (let ((rest (trim (subseq l ..end))))
                         (if (zerop (length rest))
                             pl
-                            (vector
+                            (list
                              pl
-                             (with-input-from-string (s rest) (org-parse :planning-line s))))))))))
+                             (with-input-from-string (s rest)
+                               ;; FIX 2025-09-18: 
+                               (print rest) ;=> "-02-27 Thu> DEADLINE: <2025-03-03 Mon>" 
+                               (org-parse :planning s))))))))))
           (progn
             (file-position input pos)
             nil)))))
@@ -54,7 +58,10 @@ PLANNING
 (define-org-parser (planning :from stream)
   (when-let ((pl1 (org-parse :planning-line input)))
     (let ((p (org-create :planning)))
-      (vector-push-extend pl1 (org-contents p))
+      (if (consp pl1)
+          (dolist (.p pl1)
+            (vector-push-extend .p (org-contents p)))
+          (vector-push-extend pl1 (org-contents p)))
       (loop with pl = (org-parse :planning-line input)
             until (not pl)
             do (vector-push-extend pl (org-contents p)))

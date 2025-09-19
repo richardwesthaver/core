@@ -28,13 +28,11 @@
   :components ((:module "bench"
                 :components ((:file "pkg")
                              (:file "lan-party")
-                             (:file "stress")
                              (:module "tpc-h"
                               :components
                               ((:file "pkg")
                                (:file "dbgen")
                                (:file "tpc-h")))
-                             (:file "serde")
                              (:file "bench"))))
   :build-pathname "bench"
   :build-operation monolithic-compile-bundle-op)

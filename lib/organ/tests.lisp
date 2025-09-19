@@ -85,6 +85,6 @@ _underline_
   ;; FIX 2025-09-03: should return two separate planning lines in contents
   (let ((multi (org-parse :planning "SCHEDULED: <2025-02-27 Thu> DEADLINE: <2025-03-03 Mon>")))
     (istype 'org-planning multi)
-    (isequal "SCHEDULED"
+    (isequal :scheduled
              (organ::org-planning-line-keyword
               (aref (org-contents (org-parse :planning "SCHEDULED: <2025-06-17 Tue>")) 0)))))
