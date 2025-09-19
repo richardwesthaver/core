@@ -251,6 +251,11 @@ profile/
    timezone
    (version :initform "2.6.0" :type string)))
 
+(defmethod make-config ((fmt (eql :archiso)) &rest args &key ast &allow-other-keys)
+  (let ((cfg (apply 'make-instance 'archiso-config args)))
+    (when ast (load-ast cfg))
+    cfg))
+
 ;;; CLI
 (defun mkarchiso (profile-dir 
                   &key config install-dir out-dir work-dir

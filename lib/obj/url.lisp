@@ -819,3 +819,13 @@ input."
             (t
               ;; anything else means this is just #\<, no markup
               (write-char (read-char)))))))
+
+;;; Multiaddr (mURL)
+
+;; a ground-up implementation of libp2p multiaddr.
+;; ref: https://github.com/multiformats/multiaddr
+
+;; piping?
+
+;; A multiaddr is represented internally as a list of KV pairs - 
+;; ((ip4 . "0.0.0.0") (udp . 44200) (dm . "ping")) ;= dm://0.0.0.0:44200/ping

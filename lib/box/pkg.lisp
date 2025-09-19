@@ -12,21 +12,16 @@
 
 ;;; Code:
 (defpackage :box
-  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :config)
+  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :config :obj)
   (:export
    :box-config))
 
 (defpackage :box/archiso
   (:nicknames :archiso)
-  (:use :cl :std :cli/shell :dat/json :obj/config :box)
+  (:use :cl :std :cli/shell :dat/json :obj/config :box :ast)
   (:export :*archiso-config* :*archiso-creds* :archiso-config
            :mkarchiso
            :run-archiso))
-
-(defpackage :box/ignition
-  (:nicknames :ignition)
-  (:use :cl :std :shell :json :config :box :ast)
-  (:export :*ignition-config* :ignition-config))
 
 (defpackage :box/qemu
   (:nicknames :qemu)

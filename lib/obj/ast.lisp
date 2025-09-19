@@ -131,7 +131,7 @@ slot.")
   (:method ((self ast))
     (with-slots (ast) self
       (sb-int:doplist (k v) ast
-        (setf (slot-value self k) v)))))
+        (setf (slot-value self (symbolicate k)) v)))))
 
 (defgeneric load-ast* (self context)
   (:documentation "load the object SELF from the :ast slot with additional CONTEXT."))

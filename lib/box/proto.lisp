@@ -7,4 +7,6 @@
 ;;; Code:
 (in-package :box)
 
-(defconfig box-config () ())
+(defconfig box-config (ast) ()
+  (:documentation "Base configuration class for BOX objects."))
+

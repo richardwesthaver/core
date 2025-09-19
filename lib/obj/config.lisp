@@ -38,10 +38,18 @@
   (:documentation "Configure an object with supplied args."))
 
 (defmacro defconfig (name direct-superclasses direct-slots &rest options)
-  "DEFCLASS sugar for CONFIG objects."
+  "DEFCLASS sugar for CONFIG objects. INITARGS are automatically populated based
+on the slot name."
   `(progn
      (defclass ,name ,(append direct-superclasses '(obj/config::config))
-       ,direct-slots
+       ,(mapcar (lambda (x) 
+                  (if (atom x) 
+                      `(,x :initarg ,(keywordicate x))
+                      (destructuring-bind (sym &rest rest) x
+                        (if (getf rest :initarg)
+                            x
+                            `(,sym ,@rest :initarg ,(keywordicate sym))))))
+         direct-slots)
        ,@options)))
 
 ;;; TODO 2024-10-27: Simple Config AST

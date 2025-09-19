@@ -4,7 +4,6 @@
   :components ((:file "pkg")
                (:file "proto")
                (:file "archiso")
-               (:file "ignition")
                (:file "qmp")
                (:file "qga"))
   :in-order-to ((test-op (test-op :box/tests))))

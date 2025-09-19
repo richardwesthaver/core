@@ -119,6 +119,7 @@
 	("archwiki" . "https://wiki.archlinux.org/title/%s")
         ("reddit" . "https://reddit.com/%s")
         ("hn" . "https://news.ycombinator.com/%s")
+	("archive" . "https://web.archive.org/web/%s")
         ("so" . "https://stackoverflow.com/%s")))
 
 ;;; IDs

@@ -32,8 +32,7 @@
        (urn-nss-equal (urn-nss urn1) (urn-nss urn2))))
 
 (defun make-uri-space (&rest keys &key (size 777) &allow-other-keys)
-  (apply #'make-hash-table :size size :hash-function 'uri-hash
-                           :test 'uri= keys))
+  (apply 'std/hash:make-hashset size #'uri= #'uri-hash keys))
 
 (defun uri-hash (uri)
   (if* (uri-hashcode uri)
@@ -74,10 +73,10 @@
        (setq state :char)))))
 
 (defmethod intern-uri ((xuri uri) &optional (uri-space *uris*))
-  (let ((uri (gethash xuri uri-space)))
+  (let ((uri (hashset-find uri-space xuri)))
     (if* uri
        thenret
-       else (nyi!))))
+       else (hashset-insert uri-space xuri))))
 
 (defmethod intern-uri ((uri string) &optional (uri-space *uris*))
   (intern-uri (parse-uri uri) uri-space))
@@ -86,7 +85,7 @@
   (if* (eq t uri)
      then (clrhash uri-space)
    elseif (uri-p uri)
-     then (remhash uri uri-space)
+     then (hashset-remove uri-space uri)
      else (error "bad uri: ~s." uri)))
 
 (defmacro do-all-uris ((var &optional uri-space result-form)
@@ -95,12 +94,11 @@
   		    {declaration}* {tag | statement}*
 Executes the forms once for each uri with var bound to the current uri"
   (let ((f (gensym))
-	(g-ignore (gensym))
 	(g-uri-space (gensym)))
     `(let ((,g-uri-space (or ,uri-space *uris*)))
        (prog nil
-	  (flet ((,f (,var &optional ,g-ignore)
-		   (declare (ignorable ,var ,g-ignore))
+	  (flet ((,f (,var)
+		   (declare (ignorable ,var))
 		   (tagbody ,@body)))
-	    (maphash #',f ,g-uri-space))
+	    (map-hashset #',f ,g-uri-space))
 	  (return ,result-form)))))
