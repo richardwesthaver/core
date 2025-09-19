@@ -7,17 +7,17 @@
 #+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
-|-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| name        | core                                                                                                                                                                                                                            |
-| version     | (("When" "attempting" "to" "read" "the" "slot's" "value" "(slot-value)," "the" "slot") ("CLI/CLAP/OBJ::KIND" "is" "missing" "from" "the" "object" "" "" "" "") ("#<CLI-OPT" "file" ":active" "NIL" ":val" "NIL>." "" "" "" "")) |
-| description | (("When" "attempting" "to" "read" "the" "slot's" "value" "(slot-value)," "the" "slot") ("CLI/CLAP/OBJ::KIND" "is" "missing" "from" "the" "object" "" "" "" "") ("#<CLI-OPT" "file" ":active" "NIL" ":val" "NIL>." "" "" "" "")) |
-| skel-id     | (("When" "attempting" "to" "read" "the" "slot's" "value" "(slot-value)," "the" "slot") ("CLI/CLAP/OBJ::KIND" "is" "missing" "from" "the" "object" "" "" "" "") ("#<CLI-OPT" "file" ":active" "NIL" ":val" "NIL>." "" "" "" "")) |
-| root        | ~/comp/core/                                                                                                                                                                                                                    |
-| tags        | (("When" "attempting" "to" "read" "the" "slot's" "value" "(slot-value)," "the" "slot") ("CLI/CLAP/OBJ::KIND" "is" "missing" "from" "the" "object" "" "" "" "") ("#<CLI-OPT" "file" ":active" "NIL" ":val" "NIL>." "" "" "" "")) |
-| updated     | Sun Sep 14 21:09:21 2025 -0400                                                                                                                                                                                                  |
-| langs       | c elisp lisp org text                                                                                                                                                                                                           |
-| lines       | 149465 :λ 118463 :# 13726 :_ 17276                                                                                                                                                                                              |
-|-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|-------------+------------------------------------|
+| name        | core                               |
+| version     | 0.1.0                              |
+| description | The Compiler Company Core          |
+| skel-id     | 4611004031065916102                |
+| root        | ~/comp/core/                       |
+| tags        | (core lisp emacs c)                |
+| updated     | Wed Sep 17 20:15:38 2025 -0400     |
+| langs       | c elisp lisp org text              |
+| lines       | 149560 :λ 118524 :# 13749 :_ 17287 |
+|-------------+------------------------------------|
 
 #+END:
 

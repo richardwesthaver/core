@@ -434,7 +434,7 @@ extensions) and returns the size."
                  (setq input-buffer (make-array chunk-size :element-type '(unsigned-byte 8)))))
           (unless (= (read-sequence input-buffer inner-stream :start 0 :end chunk-size)
                      chunk-size)
-            (error 'input-chunking-unexpected-end-of-file
+            (error 'chunky-input-unexpected-eof
                    :stream stream))
           chunk-size)))))
 

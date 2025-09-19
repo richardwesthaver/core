@@ -342,7 +342,7 @@ function will be called for every link.
 
 Default is the variable `org-make-link-desciption-function'.")
 
-(defvar org-graph-edge-search-function 'org-graph-edge-get-location
+(defvar org-graph-edge-search-function 'org-graph-get-location
   "The interface to use for finding target links. If you provide a custom
 function it will be called with the `point` at the location the link
 should be inserted.  The only other requirement is that it should call
@@ -379,9 +379,24 @@ associated EDGE-TYPE.")
   "Reverse lookup of edge arrow symbol."
   (car (rassoc str org-graph-edge-indicator-alist)))
 
-(defun org-graph-edge-get-location ()
-  "Default for function `org-graph-edge-search-function' that reuses the `org-refile' machinery."
-  (org-refile-get-location "Node"))
+;; TODO 2025-09-18: 
+(defun org-graph-get-node (id) (gethash id (org-graph-nodes org-graph)))
+(defun org-graph-get-edges (id) (gethash id (org-graph-edges org-graph)))
+
+(defun org-graph-get-location ()
+  "Prompt the user for a graph node location using PROMPT."
+  (let ((names) (ids))
+    (maphash (lambda (k v) 
+	       (push (org-graph-node-name v) names)
+	       (push (org-graph-node-id v) ids))
+	     (org-graph-nodes org-graph))
+    (let ((node (org-graph-get-node 
+		 (elt ids (cl-position (completing-read "refile node to: " names) names :test 'string=)))))
+      (set-marker (make-marker) (org-graph-node-point node) (find-file-noselect (org-graph-node-file node))))))
+	   
+(defun org-graph-refile-get-location ()
+  "`org-graph-edge-search-function' that reuses the `org-refile' machinery."
+  (car (cdddr (org-refile-get-location "Node"))))
 
 (cl-defmacro with-org-graph-edge-drawer ((start &optional create) &rest body)
   "START is a symbol which is bound to the start of the edge drawer."
@@ -728,16 +743,17 @@ either side, and deletes both sides of a link."
 
 (defun org-graph-install-refile-targets ()
   (cl-pushnew (org-graph--targets) org-refile-targets 
-	      :test (lambda (a b) (equal (car a) (car b)))))
+	      :test (lambda (a b) (equal (car a) (car b))))
+  (org-refile-get-targets))
 
 ;; TODO 2025-03-01: babel-mode or only no-readme?
 ;;;###autoload
 (defun org-graph-init (&optional no-readme)
   (interactive)
-  (org-graph-kill-all no-readme)
-  (org-id-update-id-locations (org-graph-files))
-  (prog1 (org-graph-from-id-locations t)
-    (org-graph-install-refile-targets)))
+  (unless org-graph
+    (org-graph-kill-all no-readme)
+    (org-id-update-id-locations (org-graph-files))
+    (org-graph-from-id-locations t)))
 
 ;;;###autoload
 (defun org-graph-load ()
