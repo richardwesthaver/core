@@ -5,7 +5,6 @@
 ;;; Code:
 (in-package :io/disk)
 
-;;; Unix Mntent
 (define-constant +option-separator+    "," :test #'string=)
 
 (define-constant +suboption-separator+ "=" :test #'string=)

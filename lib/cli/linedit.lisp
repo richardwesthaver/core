@@ -871,7 +871,7 @@ READ-CHORD according to CMDS."
 (defvar *version* "0.1.1-cc")
 
 (defun make-editor (&rest args)
-  (ti:set-terminal)
+  (set-terminal)
   (let* ((type (if (smart-terminal-p)
                    'smart-editor
                    'dumb-editor))

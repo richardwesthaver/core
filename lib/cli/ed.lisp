@@ -122,3 +122,7 @@ state of each file in FILES."
                                     :batch ,batch
                                     :function ,function)))
          ,@body)))
+
+;; TODO 2025-09-19: 
+;; (defun edit-line (file &key line start end)
+;;   "A simple lisp line editor.")

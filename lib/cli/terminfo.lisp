@@ -1147,6 +1147,5 @@ String must already have been operated upon by tparm if necessary."
   "Load the terminfo database specified, or defined per 
 the TERM environment variable."
   (setf *terminfo* (load-terminfo (or name
-				      #+SBCL
 				      (sb-ext:posix-getenv "TERM")
 				      "dumb"))))
