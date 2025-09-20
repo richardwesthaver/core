@@ -18,7 +18,7 @@
 ;;; Code:
 (defpackage :ssl/x509
   (:nicknames :x509)
-  (:use :cl :std :aws-lc :dat/asn1 :sb-alien)
+  (:use :cl :std :openssl :dat/asn1 :sb-alien)
   (:export
    #:decode-der-octet-vector
    #:decode-certificate-from-file))
@@ -27,19 +27,19 @@
 
 (defun decode-der-octet-vector (bytes)
   (with-vector-sap (buffer bytes)
-    (with-alien ((buf (* unsigned-char)))
-      (setfa buf buffer)
+    (with-alien ((buf (* unsigned-char) (sap-alien buffer (* unsigned-char))))
       (let ((cert (d2i-x509 nil (addr buf) (length bytes))))
         (when (null-alien cert)
-          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))))))
+          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))
+        cert))))
 
 (defun decode-pem-octet-vector (bytes)
   (with-vector-sap (buffer bytes)
-    (with-alien ((buf (* unsigned-char)))
-      (setfa buf buffer)
-      ;; (let ((cert ..))
-      ;; (when (null-alien cert)
-      (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))))
+    (with-alien ((buf (* unsigned-char) (sap-alien buffer (* unsigned-char))))
+      (let ((cert (d2i-x509 nil (addr buf) (length bytes))))
+        (when (null-alien cert)
+          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))
+        cert))))
 
 (defun cert-format-from-path (path)
   "Return the assumed format of PATH - :DER if it is specified as the extension
@@ -58,6 +58,8 @@ therefore it can safely be passed to
     seq))
 
 (defun decode-certificate-from-file (path &key format)
+  "Decode a X.509 certificate from PATH. The FORMAT is interpreted from the path
+extension when NIL (:DER or :PEM)."
   (let ((bytes (with-open-file (stream path :element-type '(unsigned-byte 8))
                  (slurp-stream stream)))
         (format (or format (cert-format-from-path path))))

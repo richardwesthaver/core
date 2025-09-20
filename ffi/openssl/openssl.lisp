@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :aws-lc)
+(in-package :openssl)
 
 (defar ("ASN1_STRING_data" asn1-string-data) (* unsigned-char)
   (str (* t)))
@@ -35,3 +35,23 @@
   (buf (* char)))
 
 (defconstant +err-error-string-buf-len+ 120)
+
+(defar ("PEM_read" pem-read) int
+  (fp (* int)) 
+  (name (* c-string)) 
+  (header (* c-string)) 
+  (data (* (* unsigned-char))) 
+  (len (* long)))
+
+(defar ("PEM_write" pem-write) int
+  (fp (* int))
+  (name c-string)
+  (header c-string)
+  (data (* unsigned-char))
+  (len long))
+
+(defar ("PEM_def_callback" pem-def-callback) int
+  (buf (* char)) 
+  (size int) 
+  (rwflag int) 
+  (userdata (* t)))

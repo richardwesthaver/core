@@ -1,4 +1,6 @@
-;;; pkg.lisp --- low-level bindings to librustls
+;;; pkg.lisp --- low-level bindings to AWS_LC (libcrypto)
+
+;; OpenSSL
 
 ;;; Commentary:
 
@@ -15,7 +17,7 @@
 ;; mozilla exclusion? "9A296A5182D1D451A2E37F439B74DAAFA267523329F90F9A0D2007C334E23C9A"
 
 ;;; Code:
-(defpackage :aws-lc
+(defpackage :openssl
   (:use :cl :sb-alien :std/alien)
   (:export 
    :load-crypto :load-ssl
@@ -31,9 +33,14 @@
    :aws-lc-c-error
    :aws-lc-condition
    :read-aws-lc-error-queue
-   :aws-lc-error-call))
+   :aws-lc-error-call
+   :pem-write
+   :pem-read
+   :openssl-add-all-algorithms
+   :openssl-config))
 
-(in-package :aws-lc)
+(in-package :openssl)
 
-(define-alien-loader crypto "/usr/local/lib/")
 (define-alien-loader ssl "/usr/local/lib/")
+(define-alien-loader crypto "/usr/local/lib/")
+

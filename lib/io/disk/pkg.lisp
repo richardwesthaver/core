@@ -29,7 +29,6 @@
    #:mnt-opts
    #:mnt-freq
    #:mnt-passno
-   #:mntent
    #:mountpoint-get
    #:mountpoint-device
    #:mountpoint-fstype

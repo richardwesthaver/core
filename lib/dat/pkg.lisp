@@ -17,11 +17,10 @@
 
 (defpkg :dat/asn1
   (:nicknames :asn1)
-  (:use :cl :std :dat/proto :aws-lc)
-  (:export
-   #:decode-asn1-string
-   #:try-get-asn1-string-data
-   #:decode-asn1-time))
+  (:use :cl :std :dat/proto)
+  (:import-from :openssl :v-asn1 :asn1-string-type
+   :asn1-time-check :asn1-utctime-check :asn1-string-data :asn1-string-length)
+  (:export #:decode-asn1-string #:try-get-asn1-string-data #:decode-asn1-time))
 
 (defpkg :dat/dot
   (:nicknames :dot)

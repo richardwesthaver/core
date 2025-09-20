@@ -22,7 +22,7 @@
  has stricter requirements for how data must be encoded.
 
  Each ASN.1 structure has a tag (a byte identifying the ASN.1 structure type)
- and a byte array for the value of this ASN1 structure which may be data or a
+ and a byte array for the value of this xbASN1 structure which may be data or a
  list of ASN.1 structures.
 
  Each ASN.1 structure using BER is (Tag-Length-Value):

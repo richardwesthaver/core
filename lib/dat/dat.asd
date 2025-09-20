@@ -1,6 +1,6 @@
 (defsystem :dat
   :description "Data Systems"
-  :depends-on (:obj :io :log :aws-lc)
+  :depends-on (:obj :io :log :openssl)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")

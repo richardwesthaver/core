@@ -33,6 +33,7 @@
 
 (defclass ssl-server-stream (ssl-stream)
   (certificate key))
+
 (defun make-ssl-server-stream-from-fd (stream))
 ;; (defun make-ssl-server-stream (socket &rest args
 ;;                                       &key

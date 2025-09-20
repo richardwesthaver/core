@@ -6,19 +6,6 @@
 (in-package :io/disk)
 
 ;;; Unix Mntent
-(define-alien-type mntent
-    (struct mntent
-      (mnt-fsname c-string)
-      (mnt-dir c-string)
-      (mnt-type c-string)
-      (mnt-opts c-string)
-      (mnt-freq int)
-      (mnt-passno int)))
-
-(define-alien-routine setmntent (* mntent) (filename c-string) (type c-string))
-(define-alien-routine getmntent (* mntent) (stream (* t)))
-(define-alien-routine endmntent int (stream (* t)))
-
 (define-constant +option-separator+    "," :test #'string=)
 
 (define-constant +suboption-separator+ "=" :test #'string=)

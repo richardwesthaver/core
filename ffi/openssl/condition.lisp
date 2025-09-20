@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :aws-lc)
+(in-package :openssl)
 
 (define-alien-enum (err-r int)
   :sys-lib (err-lib :sys)
