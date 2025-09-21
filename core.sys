@@ -27,11 +27,11 @@
   (:bench core/bench
    :depends-on (:std :rt :core)
    :components 
-   ((:module "bench"
+   ((:mod "bench"
      :components 
      ((:file "pkg")
       (:file "lan-party")
-      (:module "tpc-h"
+      (:mod "tpc-h"
        :components
        ((:file "pkg")
         (:file "dbgen")

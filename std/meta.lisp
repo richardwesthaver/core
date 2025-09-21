@@ -45,6 +45,8 @@ function NAME and be skipped for (setf NAME)."
 
 ;; make-specializer-form-using-class
 ;; make-method-lambda-using-specializers
+(defverb init (self &key &allow-other-keys)
+  (:documentation "Intiailize SELF."))
 (defverb start (self)
   (:documentation "Start object SELF."))
 (defverb started-p (self)

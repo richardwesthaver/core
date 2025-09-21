@@ -24,7 +24,7 @@
 
 (defvar *system-cache-directory* std/sys:*stash*)
 (defvar *system-data-directory* nil)
-
+(defvar *component-class-table* (make-hash-table))
 (defvar *system-table* (make-hash-table)
   "An EQL hash-table containing NAME:SYSTEM pairs.")
 
@@ -45,17 +45,47 @@
              (format s "System ~A not found after loading file ~A" 
                      (error-system-name c) (file-error-pathname c)))))
 
+
 ;;; Components
 (defclass component () 
   ((name :initarg :name :accessor name)
    (path :initarg :path :accessor path)
    (properties :initarg :properties :accessor component-properties)))
 
-(defclass file-component (component) 
-  ((type :initarg :type :reader component-type)))
+(defmethod make-load-form ((self component) &optional env)
+  (declare (ignore env))
+  (make-load-form-saving-slots self 
+    :slot-names (mapcar 'sb-mop:slot-definition-name (class-slots (class-of self)))))
 
-(defclass module-component (component) 
-  ((components :initarg :components :initform nil :accessor components)))
+(defmethod print-object ((self component) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A ~A" (name self) (path self))))
+
+(defun register-component-class (name class)
+  (setf (gethash name *component-class-table*) class))
+
+(defmacro defcomponent (name supers slots &rest opts)
+  (let ((kw (find :keyword opts :key #'car)))
+    (setf opts (delete :keyword opts :key #'car))
+    `(prog1 (defclass* ,name ,(or (safe-superclasses 'component supers) '(component)) ,slots ,@opts)
+       (register-component-class ,(cadr kw) (find-class ',name)))))
+
+(defcomponent file-component (component) ((type :accessor component-type))
+  (:keyword :file))
+
+(defcomponent pkg-component (file-component) ()
+  (:documentation "A FILE-COMPONENT which contains DEFPACKAGE-like forms.")
+  (:keyword :pkg))
+
+(defcomponent module-component (component) 
+  ((components :accessor components))
+  (:keyword :mod))
+
+(defmethod print-object ((self module-component) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A ~A :components ~{~A~^ ~}" (name self) (path self) 
+            (when (slot-boundp self 'components)
+              (mapcar 'name (components self))))))
 
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
@@ -66,12 +96,13 @@
 
 ;;; Dependencies
 ;;; System
-(defclass system (module-component)
-  ((version :initarg :version :accessor version)
-   (description :initarg :description :accessor system-description)
-   (provide :initarg :provides :accessor system-provide)
-   (require :initarg :requires :accessor system-require)
-   (hook :initform (make-instance 'key-hook) :initarg :hooks :accessor hook)))
+(defcomponent system (module-component)
+  ((version :accessor version)
+   description
+   provide
+   require
+   (hook :initform (make-instance 'key-hook) :accessor hook))
+  (:keyword :sys))
 
 (defun system-equal (a b)
   "Return T if systems A and B refer to the same SYSTEM."
@@ -143,7 +174,7 @@
   (((instance asdf:system) (new-class-name (eql 'system)) &key)
    (make-instance new-class-name
      :version (asdf:component-version instance)
-     :name (std/sym:keywordicate (string-upcase (asdf:component-name instance)))
+     :name (keywordicate (string-upcase (asdf:component-name instance)))
      :path (asdf:component-pathname instance)
      :properties (asdf::component-properties instance)
      :description (asdf::component-description instance)
@@ -158,6 +189,22 @@
      :properties (component-properties instance)
      :description (system-description instance)
      :components (mapcar #'revert-component-class (components instance)))))
+
+;;; Test System
+(defclass test-system (system) ())
+
+(defmethod print-object ((self test-system) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A~@[ ~A~]" (name self) (version self))))
+
+(defmethod change-class ((instance asdf:system) (new-class-name (eql 'test-system)) &key)
+  (make-instance new-class-name
+    :version (asdf:component-version instance)
+    :name (keywordicate (string-upcase (asdf:component-name instance)))
+    :path (asdf:component-pathname instance)
+    :properties (asdf::component-properties instance)
+    :description (asdf::component-description instance)
+    :components (mapcar #'change-component-class (asdf:component-children instance))))
 
 ;;; Modules
 ;; Unlike MODULE-COMPONENT, based on ASDF:MODULE which is merely a container
@@ -175,7 +222,7 @@
    (hook :initarg :hook :type hook :accessor hook))
   (:documentation "All Lisp Modules contain at least a NAME and HOOK slot."))
 
-(defun load-core-module (name)
+(defun load-mod (name)
   (let ((cmod (gethash name *module-table*)))
     (with-slots (hook) cmod
       (when hook
@@ -188,9 +235,14 @@
   (let ((mod (find name *modules* :test 'string-equal)))
     (if (null mod) (warn "Module not found: ~A" name)
         (let ((core-mod (gethash mod *module-table*)))
-           (if core-mod
-               `(load-core-module ,core-mod)
-               `(require ,mod))))))
+          (if core-mod
+              `(load-mod ,core-mod)
+              `(require ,mod))))))
+
+;; TODO 2025-09-20: 
+(defun partial-load-module (name &rest opts)
+  (declare (ignore opts))
+  (load-mod name))
 
 (defun unload-module () (setf *module* nil))
 
@@ -198,7 +250,7 @@
   "Provide a CORE-MODULE, adding valid entries to the *MODULES*
   variable. The function USE should be called in order to load and activate a
   module, but the deprecated PROVIDE function is also supported."
-  (load-core-module name))
+  (load-mod name))
 
 (defmacro with-module (name &body body)
   "Load the module named NAME, binding it to *MODULE* and eval BODY."
@@ -211,16 +263,23 @@
 (sb-ext:defglobal *system-session* nil
   "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
 
-(defvar *system-session-capacity* 64)
+(defvar *system-session-capacity* 64
+  "The maximum count of systems which are allowed to wait in the systems queue for processing.")
 
 (defstruct system-session
   "A reusable session in which SYSTEMs may be processed."
+  ;; A queue of SYSTEMs to be processed, effectively a global stack.
   (systems (make-queue :capacity *system-session-capacity* :element-type 'system))
+  ;; The set of PLAN objects which determine the work to be done on systems in the queue.
   (plans (make-priority-queue *system-session-capacity* :prioritize t :extend nil))
+  ;; A simple cache of TASK results
   (task-cache (make-hash-table))
+  ;; A simple cache of file operation times
   (file-cache (make-hash-table :test 'equal))
-  (pool (find-thread-pool :system-session))
-  (tasks))
+  ;; A thread-pool which is dedicated to running system tasks
+  (pool (find-thread-pool :sys))
+  ;; A queue of system tasks.
+  tasks)
 
 (defmacro with-system-session (&body body)
   "Bind *SYSTEM-SESSION* to a fresh value around BODY."
@@ -229,10 +288,52 @@
      ,@body))
 
 ;;; System Definition
-(defun %sys-get (form name)
-  (std/macs:when-let ((v (getf form name)))
-    (remf form name)
-    v))
+(defun %parse-provide-form (form)
+  (mapcar
+   (lambda (x)
+     (if (atom x) ; assumed to be a *FEATURE* keyword
+         (progn (pushnew x *features*) 
+                x)
+         (ecase (car x)
+           (:tests ; define a test system
+            (destructuring-bind (n . body) (cdr x)
+              `(defsys ,n ,@body :class 'test-system)))
+           (:pkg)
+           (:ffi ) ; grovel?
+           (:prelude))))
+   form))
+
+(defun %parse-require-form (form)
+  (mapcar
+   (lambda (x)
+     (if (atom x) ; default case, load the module
+         (load-mod x)
+         (apply 'partial-load-module x)))
+   form))
+
+(defun %parse-component-form (form)
+  (let ((n (cadr form))
+        (kind (gethash (car form) *component-class-table*))
+        (props (cddr form)))
+    (ecase (car form)
+      ((or :file :pkg) 
+       (let ((ty (or (pathname-type n) "lisp")))
+         (make-instance kind
+           :type (keywordicate (string-upcase ty))
+           :name n
+           :path (truename (if ty (make-pathname :name n :type ty)))
+           :properties props)))
+      (:mod (make-instance kind 
+              :name n 
+              :properties props 
+              :path #1=(truename n)
+              :components 
+              (let ((*default-pathname-defaults* #1#))
+                (mapcar '%parse-component-form (getf props :components))))))))
+
+(defun %parse-components-form (form)
+  (mapcar #'%parse-component-form form))
+
 
 (defmacro defsys (name &body body)
   "Define a SYSTEM with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
@@ -243,24 +344,32 @@ the following extensions:
 - :HOOK       hook-spec to load with this system
 - :METHODS    custom method definitions to apply to this system
 - :REQUIRE    system-required modules and features"
-  (let ((prov (%sys-get body :provide)) (hooks (%sys-get body :hook))
-        (meth (%sys-get body :methods)) (req (%sys-get body :require)))
-    (declare (ignore meth))
-    (std/sym:with-gensyms (sys)
-      `(let ((,sys (change-class (defsystem ,name ,@body) 'system)))
-         (setf (path ,sys) *load-truename*)
-         ;; todo: convert to system
-         (mapc (lambda (x) (pushnew x *features*)) ',prov)
-         (mapc (lambda (x) (assert (member x *features*))) ',req)
-         (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
-         (register-system ,name ,sys)))))
+  (flet ((%sys-get (n) 
+           (when-let ((v (getf body n)))
+             (remf body n)
+             v)))
+    (let ((prov (%sys-get :provide)) (hooks (%sys-get :hook))
+          (meth (%sys-get :methods)) (req (%sys-get :require))
+          (class (or (%sys-get :class) ''system))
+          (comp (%sys-get :components)))
+      (declare (ignore meth))
+      (std/sym:with-gensyms (sys)
+        `(let ((,sys (change-class (defsystem ,name ,@body) ,class)))
+           (setf (path ,sys) *load-truename*
+                 (slot-value ,sys 'components) `(,,@(%parse-components-form comp))
+                 (slot-value ,sys 'provide) `(,,@(%parse-provide-form prov))
+                 (slot-value ,sys 'require) `(,,@(%parse-require-form req)))
+           (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
+           (register-system ,name ,sys)
+           (eval-when (:execute)
+             ,sys))))))
 
 (defun load-sys (path &optional name)
   "Load a system definition from PATH. Unlike LOAD-ASD this function calls LOAD
 internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
   (let ((path (truename path)))
     (with-system-session
-      (let ((*default-pathname-defaults* (std/path:directory-path path)))
+      (let ((*default-pathname-defaults* (pathname (directory-namestring (namestring path)))))
         (when 
             (restart-case (load path)
               (load-file (p)
@@ -278,6 +387,15 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
 (defmethod serde ((from system) (to stream)))
 
 ;;; Protocol
+(defmethod init ((self (eql :sys)) &key)
+  (setq *system-table* (make-hash-table)
+        *system-session* nil
+        *system-definitions* nil
+        *module* nil
+        *module-stack* nil
+        *module-table* (make-hash-table :test 'equal))
+  (values))
+
 (defgeneric register-system (name self)
   (:documentation "Register system SELF as NAME. This is called during DEFSYS.")
   (:method (name (self system))
@@ -286,7 +404,7 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
 
 (defgeneric find-system (self &key &allow-other-keys)
   (:method ((self t) &key default)
-    (multiple-value-bind (val found) (gethash (std/sym:keywordicate self) *system-table*)
+    (multiple-value-bind (val found) (gethash (keywordicate self) *system-table*)
       (cond
         (found (values val found))
         ((eql default :error) (simple-system-error "System ~A not found." self))
@@ -297,15 +415,15 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
   (:method ((self symbol) &key)
     (with-system-session
       ;; freeze the session by acquiring the queue lock
-      (with-queue-lock (system-session-systems *system-session*) 
+      (with-queue-lock (system-session-systems *system-session*)
         (remhash self *system-table*)))))
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
-  (:method ((self system) &key)
+  (:method ((self system) &key force)
     (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self))
     ;; TODO 2025-08-31: 
-    (asdf:load-system (name self) :verbose nil))
+    (asdf:load-system (name self) :verbose nil :force force))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
       (load-system sys))))
@@ -338,17 +456,14 @@ an image.")
 (defgeneric update-system (self &key &allow-other-keys)
   (:documentation "Update the system SELF."))
 
-(defgeneric delete-system (self &key &allow-other-keys)
+(defgeneric delete-system (self &key force &allow-other-keys)
   (:documentation "Delete the system SELF from the local filesystem."))
 
 (defgeneric test-system (self &rest args)
   (:documentation "Test the system SELF.")
-  (:method ((self system) &key)
+  (:method ((self system) &rest args)
     (mumble "Testing system ~A" (name self))
-    (asdf:test-system self :verbose nil))
-  (:method ((self symbol) &key)
+    (apply 'std:symbol-call :rt :do-suite (name self) args))
+  (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
-      (test-system sys))))
-
-(defgeneric bench-system (self &key &allow-other-keys)
-  (:documentation "Benchmark the system SELF."))
+      (apply 'test-system sys args))))

@@ -11,7 +11,7 @@
 ;;; Code:
 (in-package :q/sql)
 
-(declaim (optimize (speed 3)))
+;; (declaim (optimize (speed 3)))
 
 ;;; Conditions
 (define-condition sql-error (error) ())

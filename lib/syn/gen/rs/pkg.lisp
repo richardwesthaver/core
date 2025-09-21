@@ -76,5 +76,7 @@
     (:shadow-symbols *rs-swap* :export-symbols *rs-exports*)
   (:nicknames :rs)
   (:use :cl)
-  (:import-from :syn/gen :gen-package)
-  (:import-from :syn/gen/c :cl-reader :switch-reader :decompose-declaration))
+  (:import-from :syn/gen :gen-package :cl-reader)
+  (:import-from :syn/gen/c :switch-reader :decompose-declaration))
+
+(define-gen-backend :rs :syn/gen/rs :sym :syn/gen/rs/sym :swap :syn/gen/rs/swap)

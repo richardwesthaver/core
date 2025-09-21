@@ -234,3 +234,20 @@
 ;; TODO 2024-10-20: gen-file-header
 ;; (defclass gen-file-header (file-header)
 ;;   ())
+;;; Backend
+(defstruct gen-backend
+  name
+  package 
+  sym-package 
+  swap-package)
+
+(defun gen-backend (name)
+  (gethash name *gen-backend-table*))
+
+(defmacro define-gen-backend (name package &key sym swap)
+  `(setf (gethash ,name *gen-backend-table*)
+         (make-gen-backend 
+          :name ,name 
+          :package (find-package ,package)
+          :sym-package (find-package ,sym)
+          :swap-package (find-package ,swap))))

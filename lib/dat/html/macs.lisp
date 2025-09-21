@@ -1,6 +1,6 @@
 ;;; macs.lisp --- HTML macros
 
-;; WITH-HTML-OUTPUT and friends
+;; WITH-HTML and friends
 
 ;;; Commentary:
 

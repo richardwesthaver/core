@@ -5,6 +5,11 @@
 ;;; Code:
 (in-package :std/sys)
 
+;;; System Paths
+;; These paths may be rebound based on application context.
+(defvar *stash* (merge-pathnames ".stash/" (user-homedir-pathname)))
+(defvar *store* (merge-pathnames ".store/" (user-homedir-pathname)))
+
 (definline primitive-type-name-of (obj)
   (primitive-type-name (primitive-type-of obj)))
 
@@ -535,8 +540,3 @@ work is done by sb-vm:hexdump in the interesting cases."
       (lambda (x y) (< (symbol-value x) (symbol-value y))))
      'vector)
   (lambda (x y) (every 'eql x y)))
-
-;;; System Paths
-;; These paths may be rebound based on application context.
-(defvar *stash* (merge-pathnames ".stash" (user-homedir-pathname)))
-(defvar *store* (merge-pathnames ".store" (user-homedir-pathname)))

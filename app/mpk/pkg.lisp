@@ -123,7 +123,7 @@
    #:*mpk-db-meta-directory*
    #:*mpk-db-directory*
    #:mpk-cache-path
-   #:mpk-init
+   #:init-mpk
    #:get-music-metadata
    #:get-music-metadata*
    #:mpk-db-path

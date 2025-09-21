@@ -21,7 +21,7 @@
   ;; (cpp-reader)
   )
 
-(defmethod unload-gen ((self (eql :cpp))) (init-gen nil) (syn/gen/c:cl-reader))
+(defmethod unload-gen ((self (eql :cpp))) (init-gen nil) (cl-reader))
 (defmethod gen-package ((self (eql :cpp))) (find-package :syn/gen/cpp))
 (defparameter *cpp-backend*
   (append *c-backend*
@@ -30,3 +30,5 @@
             access-specifier initializer constructor
             superclasses class attribute superclass
             declaration-list-initializer list-items)))
+
+(define-gen-backend :cpp :syn/gen/cpp :sym :syn/gen/cpp/sym :swap :syn/gen/cpp/swap)

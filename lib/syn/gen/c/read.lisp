@@ -282,7 +282,6 @@
    (set-macro-character #\( #'pre-process-heads)))
 
 (define-code-switches
-  :cl-reader cl-reader
   :code-reader c-reader
   :macro-character
   ((set-macro-character #\Space #'pre-process)

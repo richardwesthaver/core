@@ -354,6 +354,7 @@ function: '(ql:quickload :clouseau)'."
   (define-package (as defpackage))
   (walk-directory 1)
   (with-db 1)
+  (make-load-form-saving-slots 1)
   (defconfig (as defclass))
   (defclass* (as defclass))
   (defsclass (as defclass))))

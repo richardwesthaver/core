@@ -72,15 +72,22 @@ case."
             (setf *readtable* *backup-readtable*))
            (t (error "Unknown code reader status: ~A" *code-reader*)))))
 
+(eval-when (:compile-toplevel)
+  (defmacro make-cl-reader (name)
+    `(defun ,name ()
+       (setf *code-reader* 'cl
+             *readtable* *backup-readtable*
+             (readtable-case *readtable*) *print-case*
+             *package* (find-package *default-package*)))))
+
+;; default
+(make-cl-reader cl-reader)
+
 (defmacro define-code-switches (&key cl-reader code-reader macro-character)
   "Define syn/gen and common-lisp reader switches."
   `(progn
      ,@(when cl-reader
-         `((defun ,cl-reader ()
-             (setf *code-reader* 'cl
-                   *readtable* *backup-readtable*
-                   (readtable-case *readtable*) *print-case*
-                   *package* (find-package *default-package*)))))
+         `((make-cl-reader ,cl-reader)))
      (defun ,code-reader ()
        (setf *code-reader* 'gen)
        ,@macro-character

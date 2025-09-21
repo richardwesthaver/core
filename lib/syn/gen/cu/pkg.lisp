@@ -21,7 +21,7 @@
 
 (defmethod unload-gen ((self (eql :cu))) 
   (init-gen nil) 
-  (syn/gen/c:cl-reader))
+  (cl-reader))
 
 (defmethod gen-package ((self (eql :cu))) (find-package :syn/gen/cu))
 
@@ -29,3 +29,5 @@
   (append *cpp-backend*
           '(size cuda-alignment shared threads
             blocks cuda-funcall)))
+
+(define-gen-backend :cu :syn/gen/cu)

@@ -69,7 +69,6 @@
    #:make-block
    #:make-simple-block
    #:switch-reader
-   #:cl-reader
    #:decompose-declaration
    #:else-if-traverser
    #:nested-ast-remover
@@ -156,6 +155,8 @@
     (:shadow-symbols *c-swap* :export-symbols *c-exports*)
   (:nicknames :c)
   (:use :cl)
-  (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package :code-print)
+  (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package :code-print :cl-reader)
   (:import-from :syn/gen/c :c-reader :read-gen-c-string :read-gen-c-file
-   :cl-reader :switch-reader :decompose-declaration))
+   :switch-reader :decompose-declaration))
+
+(define-gen-backend :c :syn/gen/c :sym :syn/gen/c/sym :swap :syn/gen/c/swap)

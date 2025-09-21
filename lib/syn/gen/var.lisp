@@ -11,6 +11,8 @@
 
 (deftype gen-designator () `(or (member ,@*gen-designators*) null))
 
+(defparameter *gen-backend-table* (make-hash-table))
+
 (defparameter *code-reader* 'gen)
 (defvar *backup-readtable* (copy-readtable nil))
 

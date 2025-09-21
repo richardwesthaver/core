@@ -912,7 +912,8 @@
    :call :swap
    :copy :assign
    :assignee :started-p
-   :verbp))
+   :verbp :init
+   :reset))
 
 (defpkg :std/seq
   (:use :cl)
@@ -1304,9 +1305,9 @@
   (:use :cl :std/prim :std/meta 
    :std/macs :std/thread :std/task :std/serde 
    :std/seq :std/pipe :std/prim :std/condition
-   :std/print :std/meta :std/path)
+   :std/print :std/meta :std/path :std/sym
+   :std/macs)
   (:nicknames :sys)
-  (:import-from :std/print :mumble)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
   (:shadow :load-system :compile-system :find-system :system)
@@ -1354,6 +1355,6 @@
   (:shadowing-import-from :std/meta :reset)
   (:shadowing-import-from :cl-user :path))
 
-(eval-when (:load-toplevel) 
+(eval-when (:load-toplevel)
   (pushnew :std *features*)
   (setq *default-package* "STD-USER"))

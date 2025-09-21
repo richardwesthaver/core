@@ -56,7 +56,11 @@
    :*indent*
    :tag
    :gen
-   :lisp))
+   :lisp
+   :*gen-backend-table*
+   :define-gen-backend
+   :gen-backend
+   :cl-reader))
 
 (defpackage :syn/lint
   (:use :cl :std)

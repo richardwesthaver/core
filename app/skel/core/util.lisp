@@ -187,6 +187,7 @@ ASDF:*USER-CACHE*"
   (defun setf-skel-vars () (%init setf)))
 
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
+(defmethod init ((self (eql :skel)) &key) (init-skel))
 
 (defun list-all-projects ())
 

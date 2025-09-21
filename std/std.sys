@@ -1,0 +1,83 @@
+;;; std.sys --- standard library
+
+;; Standard library system definition
+
+;;; Commentary:
+
+;; Note that this file should ONLY be loaded after the STD/DEFSYS package has
+;; been defined. To load the STD system on a fresh SBCL, load it from the ASD
+;; file.
+
+;;; Code:
+(defsys :std
+ :version "0.1.0"
+ :description "CC Standard Library"
+ :serial t
+ :depends-on (:cl-ppcre)
+ :components 
+ ((:file "named-readtables")
+  (:file "defpkg")
+  (:pkg "pkg")
+  (:file "condition")
+  (:file "sym")
+  (:file "list")
+  (:file "prim")
+  (:file "kernel")
+  (:file "type")
+  (:file "string")
+  (:mod "num"
+   :components
+   ((:file "float")
+    (:file "parse")
+    (:file "leb128")
+    (:file "math")))
+  (:file "stream")
+  (:file "curry")
+  (:file "array")
+  (:file "hash")
+  (:file "readtable")
+  (:mod "macs"
+   :components
+   ((:file "ana")
+    (:file "pan")
+    (:file "collecting")
+    (:file "loop")
+    (:file "control")
+    (:file "unit")
+    (:file "sugar")))
+  (:file "pipe")
+  (:file "sys")
+  (:file "serde")
+  (:file "alien")
+  (:file "comp")
+  (:file "meta")
+  (:file "bit")
+  (:file "seq")
+  (:file "thread")
+  (:file "async")
+  (:file "defpun")
+  (:file "task")
+  (:file "print")
+  (:file "path")
+  (:file "os")
+  (:file "file")
+  (:file "rand")
+  (:file "defsys"))
+ :provide
+ ((:tests :std/tests
+   :depends-on (:std :rt)
+   :description "CC Standard Library Tests"
+   :serial t
+   :components 
+   ((:mod "tests"
+     :components
+     ((:file "pkg")
+      (:file "num")
+      (:file "seq")
+      (:file "pipe")
+      (:file "thread")
+      (:file "async")
+      (:file "task")
+      (:file "macs")))))
+  (:prelude :alien)
+  (:prelude :meta)))

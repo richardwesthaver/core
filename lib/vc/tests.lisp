@@ -13,7 +13,7 @@
        (:git (sb-mop::change-class repo 'git-repo))
        (t nil))
      (vc-init repo)
-     (let ((*default-pathname-defaults* (path repo)))
+     (let ((*default-pathname-defaults* (directory-path (path repo))))
        ,@body)))
 
 (deftest git-simple ()
@@ -39,6 +39,10 @@ vc.nu; vc mirrors update;'"
 
 (deftest vc-bundle ()
   (with-temp-repo :hg
+    (close
+     (open ".hgignore" :direction :output))
+    (vc-add repo ".hgignore")
+    (vc-commit repo "dummy commit")
     (let ((out #p"/tmp/bundle.hg.zst"))
       (isequal out (vc-bundle repo out :type "zstd-v2"))
       (delete-file out))))

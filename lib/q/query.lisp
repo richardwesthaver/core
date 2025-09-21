@@ -74,11 +74,9 @@
   ((schema :type schema :accessor schema :initarg :schema)
    (ast :type (vector query-plan))))
 
-(defclass logical-query-plan (query-plan)
-  ((ast :type (vector logical-query-plan) :accessor ast :initarg :ast)))
+(defclass logical-query-plan (query-plan) ())
 
-(defclass physical-query-plan (query-plan)
-  ((ast :type (vector physical-query-plan))))
+(defclass physical-query-plan (query-plan) ())
 
 ;;; Logical Expressions
 (defgeneric to-field (self input)

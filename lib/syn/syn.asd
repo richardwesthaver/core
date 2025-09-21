@@ -43,7 +43,9 @@
                  (:module "py"
                   :components ((:file "pkg")))
                  (:module "js"
-                  :components ((:file "pkg")))))
+                  :components 
+                  ((:file "pkg")
+                   (:file "macs")))))
                (:file "lint")
                (:file "tempo")
                (:file "grovel")

@@ -21,11 +21,11 @@
   (:documentation "Length error"))
 
 (defun mntent-all-infos (&optional (mount-info-file "/etc/mtab"))
-  (let ((root-info (setmntent mount-info-file "ro"))
+  (let ((root-info (std/os::setmntent mount-info-file "ro"))
         (infos))
     (if (not (null-alien root-info))
         (labels ((get-info ()
-                   (let ((info (getmntent root-info)))
+                   (let ((info (std/os::getmntent root-info)))
                      (if (not (null-alien info))
                          (progn 
                            (push info infos)
@@ -33,7 +33,7 @@
                          infos))))
           (prog1
               (get-info)
-            (endmntent root-info)))
+            (std/os::endmntent root-info)))
         (error 'open-file-failed :file-path mount-info-file))))
 
 (defun mntent-info (mtab plist-key looking-for-value)
@@ -62,10 +62,10 @@
 
 (defun mountpoint-options (mountpoint &optional (mount-info-file "/etc/mtab"))
   (let* ((raw            (mountpoint-get mount-info-file mountpoint 'mnt-opts))
-         (comma-splitted (cl-ppcre:split +option-separator+ raw)))
+         (comma-splitted (ssplit +option-separator+ raw)))
     (loop for i in comma-splitted collect
-         (if (cl-ppcre:scan  +suboption-separator+ i)
-             (cl-ppcre:split +suboption-separator+ i)
+         (if (cl-ppcre:scan  #.(format nil "[~A]" +suboption-separator+) i)
+             (ssplit +suboption-separator+ i)
              i))))
 
 (defun all-mountpoints (&optional (mount-info-file "/etc/mtab"))

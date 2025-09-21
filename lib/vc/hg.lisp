@@ -197,7 +197,6 @@ first value and 'stuff' as the second."
 
 (defmethod vc-run ((self hg-repo) (cmd string) &rest args)
   (with-directory (path self)
-    (current-directory)
     (let ((proc (run-hg-command cmd args)))
       (if (eq 0 (sb-ext:process-exit-code proc)) nil (error 'hg-error :message (format nil "hg command failed: ~A" cmd))))))
 
@@ -232,7 +231,7 @@ first value and 'stuff' as the second."
   (vc-run self "commit" "-m" msg))
 
 (defmethod vc-add ((self hg-repo) &rest files)
-  (vc-run self "add" files))
+  (apply 'vc-run self "add" files))
 
 (defmethod vc-remove ((self hg-repo) &rest files)
   (vc-run self "remove" files))
@@ -263,6 +262,7 @@ first value and 'stuff' as the second."
       (appendf args `("--type" ,type)))
     (unless (or rev branch)
       (push "--all" args))
+    (mumble "~A ~A" args output)
     (apply #'vc-run self `("bundle" ,@args ,output))
     output))
 
