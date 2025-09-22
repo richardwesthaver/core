@@ -2,7 +2,7 @@
   :version "0.1.0"
   :maintainer "Richard Westhaver <richard.westhaver@gmail.com>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :obj :parse :tree-sitter :doc :cli)
+  :depends-on (:std :obj :parse :tree-sitter :doc :cli :io :dat)
   :serial t
   :components ((:file "pkg")
                (:file "ts")
@@ -45,6 +45,10 @@
                  (:module "js"
                   :components 
                   ((:file "pkg")
+                   (:file "read")
+                   (:file "ast")
+                   (:file "sym")
+                   (:file "print")
                    (:file "macs")))))
                (:file "lint")
                (:file "tempo")

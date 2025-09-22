@@ -14,9 +14,9 @@
 | skel-id     | 4611004031065916102                |
 | root        | ~/comp/core/                       |
 | tags        | (core lisp emacs c)                |
-| updated     | Fri Sep 19 22:42:53 2025 -0400     |
+| updated     | Sat Sep 20 23:31:17 2025 -0400     |
 | langs       | c elisp lisp org text              |
-| lines       | 149757 :λ 118708 :# 13754 :_ 17295 |
+| lines       | 150534 :λ 119327 :# 13835 :_ 17372 |
 |-------------+------------------------------------|
 
 #+END:
@@ -39,3 +39,4 @@ dependencies accessible to ASDF:
 - ironclad
 - cl-plus-ssl (for now)
 - swank (optional)
+

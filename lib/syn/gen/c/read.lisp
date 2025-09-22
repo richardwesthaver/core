@@ -60,7 +60,7 @@
         (list parent child)))))
 
 (defun read-float (item)
-  "perace correct float print"
+  "correct float print"
   (let* ((name (symbol-name item))
          (len (length name)))
     ;; Inspired by:  Bozhidar Batsov, batsov.com/articles/2011/04/30/parsing-numbers-from-string-in-lisp
@@ -113,7 +113,7 @@
          (pos (search "." name-string :from-end t))
          (names (fix-case (subseq name-string 0 pos) (subseq name-string (+ 1 pos)))))
     `(oref ,(dissect (first names) :quoty t)
-                  ,(dissect (second names) :quoty t))))
+           ,(dissect (second names) :quoty t))))
 
 (defun split-pref (name)
   "prepare pref node: a->b => (pref a b)"
@@ -123,7 +123,7 @@
     (if (eql pos 0)
         name ;; function definition arrow, dont touch
         `(pref ,(dissect (first names) :quoty t)
-                      ,(dissect (second names) :quoty t)))))
+               ,(dissect (second names) :quoty t)))))
 
 (defun split-aref (name)
   "make aref node: a[b][c] => (aref (aref a b) c)"
@@ -132,23 +132,22 @@
     (let ((pos 0)
           (counter 0)
           (names nil))
-
       ;; get position of matching '[ for last ']
       (loop for i in name-list do
-        (progn
-          (cond 
-            ((eql i #\]) (incf counter))
-            ((eql i #\[) (decf counter)))
-          (incf pos)
-          (when (eql  counter 0)
-            (return))))
+               (progn
+                 (cond 
+                   ((eql i #\]) (incf counter))
+                   ((eql i #\[) (decf counter)))
+                 (incf pos)
+                 (when (eql  counter 0)
+                   (return))))
       (setf pos (- (length name-string) pos))
       (setf names (fix-case (subseq name-string 0 pos)
                             (subseq name-string (1+ pos) (1- (length name-string)))))
       (if (not (equal "" (symbol-name (second names))))
           ;; index not empty
           `(aref ,(dissect (first names) :quoty t)
-                        ,(dissect (second names) :quoty t))
+                 ,(dissect (second names) :quoty t))
           ;; index empty
           `(aref ,(dissect (first names) :quoty t))))))
 
@@ -207,7 +206,7 @@
        ((and (eql (first (coerce (symbol-name form) 'list)) #\*)
              (eql (first (reverse (coerce (symbol-name form) 'list))) #\*))
         form)
-       ;; check/(fix package 
+       ;; check/fix package 
        ((or (eql form '&optional)
             (eql form '&key)
             (eql form '&environment)
@@ -254,7 +253,7 @@
 
 ;;; Readers
 (define-code-reader
-  :file-reader read-c-file
+    :file-reader read-c-file
   :string-reader read-c-string
   :macro-character
   ((set-macro-character #\Space #'pre-process)
@@ -282,7 +281,7 @@
    (set-macro-character #\( #'pre-process-heads)))
 
 (define-code-switches
-  :code-reader c-reader
+    :code-reader c-reader
   :macro-character
   ((set-macro-character #\Space #'pre-process)
    (set-macro-character #\Tab #'pre-process)

@@ -253,7 +253,7 @@ buffer should appear."
   (interactive)
   (let ((buffer (slime-output-buffer)))
     (if same-window
-	    (pop-to-buffer-same-window buffer)
+	(pop-to-buffer-same-window buffer)
       (pop-to-buffer buffer))))
 
 (defun slime-toggle ()
@@ -279,10 +279,10 @@ buffer should appear."
        (or lisp-toggle (read-buffer "lisp buffer: ")))
     (if inferior-lisp-buffer
         (progn
-	      (setq lisp-toggle (current-buffer))
-	      (inferior-lisp (or cmd inferior-lisp-program)))
 	  (setq lisp-toggle (current-buffer))
-	  (inferior-lisp (or cmd inferior-lisp-program)))))
+	  (inferior-lisp (or cmd inferior-lisp-program)))
+      (setq lisp-toggle (current-buffer))
+      (inferior-lisp (or cmd inferior-lisp-program)))))
 
 (setq slime-contribs '(slime-fancy
                        slime-quicklisp
@@ -340,6 +340,7 @@ function: '(ql:quickload :clouseau)'."
  (:inherit "sbcl")
  (:indentation
   (defpkg (as defpackage))
+  (defpackage* (as defpackage))
   (blasfunc 2)
   (org-parse 2)
   (lety (as let))
@@ -354,6 +355,8 @@ function: '(ql:quickload :clouseau)'."
   (define-package (as defpackage))
   (walk-directory 1)
   (with-db 1)
+  (incf 1)
+  (decf 1)
   (make-load-form-saving-slots 1)
   (defconfig (as defclass))
   (defclass* (as defclass))
@@ -810,13 +813,13 @@ If ARG is negative move backwards, ARG defaults to 1."
     (dotimes (_ (abs arg))
       (when (> arg 0) (end-of-line))
       (if-let* ((match
-                (funcall (if (> arg 0)
-                             #'text-property-search-forward
-                           #'text-property-search-backward)
-                         'face '(shr-h1 shr-h2 shr-h3 shr-h4)
-                         (lambda (tags face)
-                           (cl-loop for x in (if (consp face) face (list face))
-                                    thereis (memq x tags))))))
+                 (funcall (if (> arg 0)
+                              #'text-property-search-forward
+                            #'text-property-search-backward)
+                          'face '(shr-h1 shr-h2 shr-h3 shr-h4)
+                          (lambda (tags face)
+                            (cl-loop for x in (if (consp face) face (list face))
+                                     thereis (memq x tags))))))
           (goto-char
            (if (> arg 0) (prop-match-beginning match) (prop-match-end match)))
         (throw 'return nil))
@@ -932,13 +935,13 @@ Add this function to appropriate major mode hooks such as
     (unless (stringp name)
       (setq name (symbol-name name)))
     (let ((result (%org-sbx name header args)))
-       (org-trim (if (stringp result) result (format "%S" result))))))
+      (org-trim (if (stringp result) result (format "%S" result))))))
 
 (defun org-babel-execute-region (beg end &optional arg)
-   (interactive "r")
-   (narrow-to-region beg end)
-   (org-babel-execute-buffer arg)
-   (widen))
+  (interactive "r")
+  (narrow-to-region beg end)
+  (org-babel-execute-buffer arg)
+  (widen))
 
 (defun org-schedule-effort ()
   (interactive)

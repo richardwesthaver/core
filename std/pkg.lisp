@@ -347,6 +347,7 @@
    :string-case
    :detabify
    :make-growable-string
+   :parse-simple-semver
    :nconcat
    :nconcatf
    :char-range
@@ -734,7 +735,7 @@
    :save-lisp-tree-shake-and-die
    :forget-shared-object
    :forget-shared-objects
-   :compile-lisp
+   :save-lisp
    :without-fp-traps
    :little-endian-p
    :cpuid

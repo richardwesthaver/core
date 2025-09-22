@@ -67,8 +67,8 @@ of a string."
   (check-type end-delimiter string)
   (when (or (string= start-delimiter "")
             (string= end-delimiter ""))
-      (error 'simple-type-error
-              :format-control "The empty string is not a valid delimiter."))
+    (error 'simple-type-error
+           :format-control "The empty string is not a valid delimiter."))
   (let ((start-len (length start-delimiter))
         (end-len (length end-delimiter))
         (test (if ignore-case
@@ -84,19 +84,27 @@ of a string."
       (with-output-to-string (stream)
         (loop for prev = 0 then (+ j end-len)
               for i = (search start-delimiter string)
-                      then (search start-delimiter string :start2 j)
+              then (search start-delimiter string :start2 j)
               for j = (if i (search end-delimiter string :start2 i))
-                      then (if i (search end-delimiter string :start2 i))
+              then (if i (search end-delimiter string :start2 i))
               while (and i j)
-          do (write-string (subseq string prev i) stream)
-             (let ((instance (rest (assoc (subseq string (+ i start-len) j)
-                                          values
-                                          :test test))))
-               (if instance
-                (princ instance stream)
-                (write-string (subseq string i (+ j end-len)) stream)))
+              do (write-string (subseq string prev i) stream)
+                 (let ((instance (rest (assoc (subseq string (+ i start-len) j)
+                                              values
+                                              :test test))))
+                   (if instance
+                       (princ instance stream)
+                       (write-string (subseq string i (+ j end-len)) stream)))
 
-          finally (write-string (subseq string prev) stream))))))
+              finally (write-string (subseq string prev) stream))))))
+
+(defun parse-simple-semver (str)
+  (let ((v (ssplit #\. str))
+        (x 0))
+    (dotimes (i 3 x)
+      (incf x 
+        (* (expt 1000 (- 2 i))
+           (parse-integer (or (nth i v) "0")))))))
 
 ;;; STRING-CASE
 ;; Implementing an efficient string= case in Common Lisp
@@ -421,15 +429,15 @@ of a string."
                 (/=strings ())
                 (/=bodies  ()))
             (loop
-               for string in strings
-               for body   in bodies
-               do (if (eql char (aref string posn))
-                      (progn
-                        (push string =strings)
-                        (push body   =bodies))
-                      (progn
-                        (push string /=strings)
-                        (push body   /=bodies))))
+              for string in strings
+              for body   in bodies
+              do (if (eql char (aref string posn))
+                     (progn
+                       (push string =strings)
+                       (push body   =bodies))
+                     (progn
+                       (push string /=strings)
+                       (push body   /=bodies))))
             (let ((tree `(if (eql ,char (aref ,*input-string* ,posn))
                              ,(make-search-tree  =strings   =bodies
                                                  (remove posn to-check))
@@ -453,8 +461,8 @@ of a string."
     (let ((*input-string*  input-var)
           (*no-match-form* no-match)
           (cases-lists     (split-tree (sort cases '<
-                                        :key #'case-string-length)
-                                  :key #'case-string-length)))
+                                             :key #'case-string-length)
+                                       :key #'case-string-length)))
       `(locally (declare (type vector ,input-var))
          (case (length ,input-var)
            ,@(loop for cases in cases-lists
@@ -512,7 +520,7 @@ of a string."
 
 ;; pulled from SB-COVER
 (defun detabify (string)
-"Read STRING and replace all #\Tab characters with *TAB-WIDTH* spaces."
+  "Read STRING and replace all #\Tab characters with *TAB-WIDTH* spaces."
   (with-output-to-string (stream)
     (loop for char across string
           for col from 0

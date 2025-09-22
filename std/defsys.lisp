@@ -52,6 +52,15 @@
    (path :initarg :path :accessor path)
    (properties :initarg :properties :accessor component-properties)))
 
+(defun register-component-class (name class)
+  (setf (gethash name *component-class-table*) class))
+
+(defmacro defcomponent (name supers slots &rest opts)
+  (let ((kw (find :keyword opts :key #'car)))
+    (setf opts (delete :keyword opts :key #'car))
+    `(prog1 (defclass* ,name ,(or supers '(component)) ,slots ,@opts)
+       (register-component-class ,(cadr kw) (find-class ',name)))))
+
 (defmethod make-load-form ((self component) &optional env)
   (declare (ignore env))
   (make-load-form-saving-slots self 
@@ -61,16 +70,8 @@
   (print-unreadable-object (self stream :type t)
     (format stream "~A ~A" (name self) (path self))))
 
-(defun register-component-class (name class)
-  (setf (gethash name *component-class-table*) class))
-
-(defmacro defcomponent (name supers slots &rest opts)
-  (let ((kw (find :keyword opts :key #'car)))
-    (setf opts (delete :keyword opts :key #'car))
-    `(prog1 (defclass* ,name ,(or (safe-superclasses 'component supers) '(component)) ,slots ,@opts)
-       (register-component-class ,(cadr kw) (find-class ',name)))))
-
-(defcomponent file-component (component) ((type :accessor component-type))
+(defcomponent file-component (component) 
+  ((type :accessor component-type))
   (:keyword :file))
 
 (defcomponent pkg-component (file-component) ()
@@ -90,11 +91,13 @@
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
 (defkernel system-task (task) ())
+
 ;;; Jobs
 ;; System Jobs are effectively plans composed of system tasks
 (defkernel system-job (job) ())
 
 ;;; Dependencies
+
 ;;; System
 (defcomponent system (module-component)
   ((version :accessor version)
@@ -196,6 +199,12 @@
 (defmethod print-object ((self test-system) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A~@[ ~A~]" (name self) (version self))))
+
+(defun test-system-name-p (name)
+  (std/seq:ends-with-subseq "/TESTS" (string-upcase name)))
+
+(definline %test-system-name (name)
+  (concatenate 'simple-base-string (string-upcase name) "/TESTS"))
 
 (defmethod change-class ((instance asdf:system) (new-class-name (eql 'test-system)) &key)
   (make-instance new-class-name
@@ -334,7 +343,6 @@
 (defun %parse-components-form (form)
   (mapcar #'%parse-component-form form))
 
-
 (defmacro defsys (name &body body)
   "Define a SYSTEM with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
 
@@ -460,10 +468,12 @@ an image.")
   (:documentation "Delete the system SELF from the local filesystem."))
 
 (defgeneric test-system (self &rest args)
-  (:documentation "Test the system SELF.")
-  (:method ((self system) &rest args)
-    (mumble "Testing system ~A" (name self))
-    (apply 'std:symbol-call :rt :do-suite (name self) args))
-  (:method ((self symbol) &rest args)
-    (let ((sys (find-system self :default :error)))
-      (apply 'test-system sys args))))
+  (:documentation "Test the system SELF."))
+
+(defmethod test-system ((self system) &rest args)
+  (mumble "Testing system ~A" (name self))
+  (apply 'std:symbol-call :rt :do-suite (name self) args))
+
+(defmethod test-system ((self symbol) &rest args)
+  (let ((sys (find-system self :default :error)))
+    (apply #'test-system sys args)))

@@ -169,6 +169,8 @@
     #\Space
     #\Return))
 
+(define-constant +newline+ (make-string 1 :initial-element #\newline) :test #'string=)
+
 (defglobal +table-insert-mode-elements+
   '("table"
     "tbody"

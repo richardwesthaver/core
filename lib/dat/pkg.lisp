@@ -155,20 +155,19 @@
   (:export
    :parse-css
    :*minify-css*
-   :*css-indent-offset*
    :parse-css-selector
    :parse-css-fragment
-   :generate-css
-   :compile-css-selector
-   :compile-css
-   :compile-css-block))
+   :css
+   :inline-css
+   ;; :compile-css-selector
+   ;; :compile-css-block
+   :compile-css))
 
 (defpkg :dat/html
   (:use :cl :dat/proto :std/macs :std/string :std/serde :std/condition :std/stream)
   (:import-from :sb-ext :defglobal)
   (:import-from :ast :ast)
   (:export
-   :with-html-output
    :with-html
    :html-output-stream
    :*html-output*

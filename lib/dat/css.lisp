@@ -9,7 +9,7 @@
 
 ;; for other web data: https://github.com/mdn/data/tree/main
 
-;; ref: 
+;; ref: https://github.com/inaimathi/cl-css
 
 ;;; Code:
 (in-package :dat/css)
@@ -20,6 +20,10 @@
 ;; PROPERTY  ::= (:PROPERTY string string)
 
 ;;; Vars
+(defvar *minify-css* nil
+  "When non-nil, CSS output is minified.")
+(defvar *css-indent* nil
+  "When non-nil, indicates the number of spaces to use for indentation.")
 
 ;; The following variables are derived from Emacs css-mode:
 ;; https://github.com/emacs-mirror/emacs/blob/master/lisp/textmodes/css-mode.el
@@ -778,3 +782,141 @@ The following classes have been left out above because they
 cannot be completed sensibly: `custom-ident',
 `element-reference', `flex', `id', `identifier',
 `length-percentage', `percentage', and `string'.")
+
+;;; Utils
+(defun %-or-word (v) 
+  (etypecase v
+    (number (concatenate 'string (write-to-string v) "%"))
+    (null nil)
+    (symbol (symbol-name v))
+    (string v)))
+
+(defmacro split-directive (directive-name value &optional (prefix-list '(-ms- -o- -webkit- -moz-)))
+  (with-gensyms (val)
+    `(let ((,val ,value)) 
+       (list ,directive-name ,val
+	     ,@(loop 
+		 for p in prefix-list
+		 collect (keywordicate p directive-name)
+		 collect val)))))
+
+;; unit helpers
+(defun px (val) (format nil "~apx" val))
+(defun % (val) (format nil "~a%" val))
+(defun em (val) (format nil "~aem" val))
+
+;;; transform
+(defun transform-origin (x y &optional z)
+  "Takes x, y, z percentages, returns a cross-browser CSS3 transform-origin directive"
+  (split-directive :transform (apply #'format nil "~a ~a~@[ ~a~]" (mapcar #'%-or-word (list x y z)))))
+
+(defun rotate (degrees)
+  "Takes a number of degrees, returns a cross-browser CSS3 rotate directive"
+  (split-directive :transform (format nil "rotate(~adeg)" degrees)))
+
+(defun scale (scale-x &optional (scale-y scale-x))
+  "Takes an x and y scale factor, returns x-browser CSS3 scale directive"
+  (split-directive :transform (format nil "scale(~a,~a)" scale-x scale-y)))
+
+(defun skew (x-deg y-deg)
+  (split-directive :transform (format nil "skew(~adeg, ~adeg)" x-deg y-deg)))
+
+(defun translate (x y &key (units :px))
+  "Takes an x and y, returns a x-browser CSS3 translate directive.
+units should be either :px (the default) or :%."
+  (split-directive :transform (format nil "translate(~a~a, ~a~a)" x units y units)))
+
+(defun matrix (&rest 6-numbers)
+  "Takes six numbers and uses them to build a CSS3 transformation matrix directive"
+  (split-directive :transform (format nil "matrix(~{~a~^,~})" 6-numbers)))
+
+;;; 3d-transform
+(defun perspective (n)
+  (split-directive :perspective n (-webkit-)))
+
+(defun perspective-origin (x y)
+  (split-directive :perspective-origin 
+      (concatenate 'string (%-or-word x) " " (%-or-word y)) (-webkit-)))
+
+(defun backface-visibility (visible/hidden)
+  (split-directive :backface-visibility visible/hidden (-webkit- -moz-)))
+
+(defun transform-style (flat/preserve-3d)
+  (split-directive :transform-style flat/preserve-3d (-webkit-)))
+
+(defun matrix3d (&rest 16-numbers)
+  (split-directive :transform (format nil "matrix3d(~{~a~^,~})" 16-numbers) (-webkit- -moz-)))
+
+(defun translate3d (x y z &key (units :px))
+  "Takes an x and y, returns a x-browser CSS3 translate directive.
+units should be either :px (the default) or :%."
+  (split-directive :transform 
+      (format nil "translate3d(~a~a, ~a~a, ~a~a)" x units y units z units) (-webkit- -moz-)))
+
+(defun scale3d (scale-x &optional (scale-y scale-x) (scale-z scale-x))
+  "Takes an x and y scale factor, returns x-browser CSS3 scale directive"
+  (split-directive :transform (format nil "scale3d(~a,~a,~a)" scale-x scale-y scale-z) (-webkit- -moz-)))
+
+(defun rotate3d (degrees)
+  "Takes a number of degrees, returns a cross-browser CSS3 rotate directive"
+  (split-directive :transform (format nil "rotate3d(~adeg)" degrees) (-webkit- -moz-)))
+
+;;; animations/transitions
+(defun keyframes (animation-name &rest keyframes)
+  (flet ((sel (browser-type) 
+	   (list (format nil "@~@[~(~a~)~]keyframes ~a" browser-type (format-selector animation-name)) 
+		 keyframes)))
+    `(,(sel nil) ,(sel :-moz-) ,(sel :-webkit-))))
+
+(defun animation (name &key (duration 0) (timing-function :linear) (delay 0) (iteration-count 1) (direction :normal) (play-state :running))
+  (split-directive 
+      :animation 
+      (format nil "~a ~as ~a ~as ~a ~a ~a"
+	      name duration timing-function delay iteration-count direction play-state)
+      (-webkit- -moz-)))
+
+(defun transition (property &key (duration 0) (timing-function :ease) (delay 0))
+  (split-directive
+      :transition
+      (format nil "~a ~as ~a ~as" property duration timing-function delay)
+      (-webkit- -moz- -o-)))
+
+;;; format
+(defun format-selector (s)
+  (if (stringp s) s (string-downcase s)))
+
+(defun format-declaration (k v)
+  (etypecase v
+    (null (format-declarations-list k))
+    (number (format nil "~(~A~): ~A;" k v))
+    (symbol (concatenate 'string (string-downcase k) ": " (string-downcase v) ";"))
+    (string (concatenate 'string (string-downcase k) ": " v ";"))
+    (list (concatenate 'string (string-downcase k) " { " (format-declarations-list v) "}"))))
+
+(defun format-declarations-list (list-of-declarations)
+  (apply #'concatenate 
+	 'string 
+	 (loop with remaining = list-of-declarations
+	    for head = (pop remaining) 
+	    if (consp head) collect (format-rule (car head) (cdr head))
+	    else if head collect (format-declaration head (pop remaining))
+	    collect " "
+	    while remaining)))
+
+(defun format-rule (selector declarations)
+  (concatenate 'string (format-selector selector) 
+	       " { " (format-declarations-list declarations) "}"))
+;;; generator
+(defun inline-css (rule) (format-declarations-list rule))
+
+(defun css (rules)
+  (apply #'concatenate 
+	 'string 
+	 (loop for r in rules
+	    collect (format-rule (car r) (cdr r))
+	    collect (list #\Newline))))
+
+(defun compile-css (file-path directives)
+  (ensure-directories-exist file-path)
+  (with-open-file (stream file-path :direction :output :if-exists :supersede :if-does-not-exist :create) 
+    (format stream (css directives))))

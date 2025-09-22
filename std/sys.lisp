@@ -68,7 +68,8 @@ and we may query the user for input.")
   (list 
    (lisp-implementation-type)
    (lisp-implementation-version)
-   *features*))
+   *features*
+   *modules*))
 
 (defun current-machine ()
   "Return the current machine spec as a list: (HOST TYPE VERSION)"
@@ -166,68 +167,6 @@ debug or die."
           (values-list results)
           (sb-ext:exit :code (if (first results) 0 1))))))
 
-;; HACK 2025-06-10: this attempts to modify read-only memory - can we arrange
-;; for the read-only mem to be replaced on save?
-
-;; Remove all symbols from all packages, storing them in weak pointers,
-;; then collect garbage, and re-intern all symbols that survived GC.
-;; Any symbol satisfying PREDICATE will be strongly referenced during GC
-;; so that it doesn't disappear, regardless of whether it appeared unused.
-(in-package :sb-impl)
-(defun shake-packages (predicate &key print verbose query)
-  "WIP Tree Shaker"
-  (declare (function predicate))
-  (let (list)
-    (flet ((weaken (table accessibility)
-             (let ((cells (symtbl-cells table))
-                   (result))
-               (dovector (x cells)
-                 (when (symbolp x)
-                   (if (funcall predicate x accessibility)
-                       (push x result) ; keep a strong reference to this symbol
-                       (push (cons (string x) (make-weak-pointer x)) result))))
-               (fill cells 0)
-               (resize-symbol-table table 0 'intern)
-               result)))
-      (dolist (package (list-all-packages))
-        ;; Never discard standard symbols
-        (unless (eq package sb-int:*cl-package*)
-          (push (list* (weaken (package-internal-symbols package) :internal)
-                       (weaken (package-external-symbols package) :external)
-                       package)
-                list))))
-    (gc :gen 7)
-    (when query
-      (sb-ext:search-roots query :criterion :static))
-    (let ((n-dropped 0))
-      (flet ((reintern (symbols table package access)
-               (declare (ignore package))
-               (dolist (item symbols)
-                 (if (symbolp item)
-                     (add-symbol table item 'intern)
-                     (let ((symbol (weak-pointer-value (cdr item))))
-                       (cond (symbol
-                              (add-symbol table symbol 'intern))
-                             (t
-                              (when print
-                                (format t "  (~a)~A~%" access (car item)))
-                              (incf n-dropped))))))))
-        (loop for (internals externals . package) in list
-              do (when print
-                   (format t "~&Package ~A~%" package))
-                 (reintern internals (package-internal-symbols package)
-                           package #\i)
-                 (reintern externals (package-external-symbols package)
-                           package #\e))
-        (when verbose
-          (format t "~&Dropped ~D symbols~%" n-dropped))
-        (force-output)))))
-(export '(sb-impl::shake-packages))
-(in-package :std/sys)
-(sb-ext:without-package-locks 
-  (shadowing-import '(sb-impl::shake-packages))
-  (export '(sb-impl::shake-packages) :std/sys))
-
 ;; TODO
 (defun save-lisp-tree-shake-and-die (path &rest args)
   "A naive tree-shaker for lisp."
@@ -258,7 +197,7 @@ debug or die."
   "Set the DONT-SAVE slot of OBJECTS to T."
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) nil)) objects))
 
-(defun compile-lisp (name &key force save make package compression verbose version callable-exports executable (toplevel #'sb-impl::toplevel-init) forget save-runtime-options root-structures (purify t))
+(defun save-lisp (name &key force save make package compression verbose version callable-exports executable (toplevel #'sb-impl::toplevel-init) forget save-runtime-options root-structures (purify t))
   "Process NAME and keyword arguments then pass options to the underlying build
 system - eventually terminating on SAVE-LISP-AND-DIE."
   (pkg:with-package (or package *package*)
