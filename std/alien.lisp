@@ -71,15 +71,22 @@
   "Return the current value of SB-ALIEN::*SHARED-OBJECTS*."
   *shared-objects*)
 
-(defmacro define-alien-loader (name &optional (root "/usr/local/lib/") path)
+(defvar *alien-load-table* (make-hash-table))
+
+(std/prim:definline load-alien (name) (funcall (gethash name *alien-load-table*)))
+
+(defmacro define-alien-loader (name &optional (root "/usr/local/lib/") path (package *package*))
   "Define a default loader function named load-NAME which calls
 SB-ALIEN:LOAD-SHARED-OBJECT."
-  (let ((fname (sb-int:symbolicate (format nil "~@:(LOAD-~a~)" name))))
+  (let ((fname (intern (format nil "~@:(LOAD-~a~)" name) package))
+        (%name (sb-int:keywordicate (string-upcase name))))
     (when (symbolp name)
       (setf name (symbol-name name)))
-    `(defun ,fname (&optional save)
-       (prog1 (sb-alien:load-shared-object (shared-object-name ,(or path (string-downcase name)) ,root) :dont-save (not save))
-         (pushnew ,(sb-int:keywordicate (string-upcase name)) *features*)))))
+    `(progn
+       (defun ,fname (&optional save)
+         (prog1 (sb-alien:load-shared-object (shared-object-name ,(or path (string-downcase name)) ,root) :dont-save (not save))
+           (pushnew ,%name *features*)))
+       (setf (gethash ,%name *alien-load-table*) (function ,fname)))))
 
 (defmacro alien-size* (ty &optional (units :bits))
   `(alien-size ,(eval ty) ,units))

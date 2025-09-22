@@ -27,6 +27,8 @@
 (defvar *component-class-table* (make-hash-table))
 (defvar *system-table* (make-hash-table)
   "An EQL hash-table containing NAME:SYSTEM pairs.")
+(defvar *provider-table* (make-hash-table)
+  "A hash-table containing PROVIDER functions.")
 
 (define-constant +system-definition-extension+ "sys" 
   :test 'equal
@@ -44,7 +46,6 @@
   (:report (lambda (c s) 
              (format s "System ~A not found after loading file ~A" 
                      (error-system-name c) (file-error-pathname c)))))
-
 
 ;;; Components
 (defclass component () 
@@ -97,6 +98,9 @@
 (defkernel system-job (job) ())
 
 ;;; Dependencies
+
+;;; Providers
+;; TODO 2025-09-21: 
 
 ;;; System
 (defcomponent system (module-component)
@@ -307,9 +311,10 @@
            (:tests ; define a test system
             (destructuring-bind (n . body) (cdr x)
               `(defsys ,n ,@body :class 'test-system)))
-           (:pkg)
-           (:ffi ) ; grovel?
-           (:prelude))))
+           (:alien
+            (destructuring-bind (n . body) (cdr x)
+              `(std/alien:define-alien-loader ,n ,@body)))
+           (:prelude (std/condition:nyi!)))))
    form))
 
 (defun %parse-require-form (form)

@@ -828,6 +828,8 @@
   (:import-from :sb-alien :sap+ :*linkage-info* :*shared-objects* :*alien-type-classes*)
   (:export
    :lisp-for-c-symbol
+   :*alien-load-table*
+   :load-alien
    :alien-size*
    :*alien-type-classes*
    :*linkage-info*
