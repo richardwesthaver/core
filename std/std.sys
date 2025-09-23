@@ -79,5 +79,23 @@
       (:file "async")
       (:file "task")
       (:file "macs")))))
-  (:prelude :alien)
-  (:prelude :meta)))
+  (:readtable :std)
+  (:prelude :alien* 
+   :defar :define-alien-enum :sap :free)
+  (:prelude :os*
+   :current-user :sudo-p
+   :forkable-p :user-info
+   :list-all-users :list-all-groups
+   :with-umask :with-fd :ioctl :xdg-user-dir
+   :init-xdg-user-dirs :init-xdg-base-dirs
+   :xdg-base-dir :user-add :group-add :file-kind
+   :unmerge-pathnames :current-directory
+   :with-directory-iterator :merge-env-pathnames
+   :open-pipe :pathname-executable-p
+   :set-signal-handler)
+  (:prelude :meta* 
+   :defverb :*verbs* :verbp :safe-superclasses
+   :list-class-methods :list-class-slots
+   :slot-values :defclass!
+   :defmethods :defaccessor
+   :defaccessor* :subclassp)))

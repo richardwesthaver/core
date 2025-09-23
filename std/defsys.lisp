@@ -29,7 +29,8 @@
   "An EQL hash-table containing NAME:SYSTEM pairs.")
 (defvar *provider-table* (make-hash-table)
   "A hash-table containing PROVIDER functions.")
-
+(defvar *defining-system* nil
+  "When non-nil, indicates the name of the system currently being defined.")
 (define-constant +system-definition-extension+ "sys" 
   :test 'equal
   :documentation "The default file extension used in system definitions.")
@@ -101,6 +102,7 @@
 
 ;;; Providers
 ;; TODO 2025-09-21: 
+(defmacro defprovider (name args &body body))
 
 ;;; System
 (defcomponent system (module-component)
@@ -198,7 +200,7 @@
      :components (mapcar #'revert-component-class (components instance)))))
 
 ;;; Test System
-(defclass test-system (system) ())
+(defcomponent test-system (system) ())
 
 (defmethod print-object ((self test-system) stream)
   (print-unreadable-object (self stream :type t)
@@ -218,6 +220,23 @@
     :properties (asdf::component-properties instance)
     :description (asdf::component-description instance)
     :components (mapcar #'change-component-class (asdf:component-children instance))))
+
+(defcomponent bench-system (system) ())
+
+(defmethod change-class ((instance asdf:system) (new-class-name (eql 'bench-system)) &key)
+  (make-instance new-class-name
+    :version (asdf:component-version instance)
+    :name (keywordicate (string-upcase (asdf:component-name instance)))
+    :path (asdf:component-pathname instance)
+    :properties (asdf::component-properties instance)
+    :description (asdf::component-description instance)
+    :components (mapcar #'change-component-class (asdf:component-children instance))))
+
+(defun bench-system-name-p (name)
+  (std/seq:ends-with-subseq "/BENCH" (string-upcase name)))
+
+(definline %bench-system-name (name)
+  (concatenate 'simple-base-string (string-upcase name) "/BENCH"))
 
 ;;; Modules
 ;; Unlike MODULE-COMPONENT, based on ASDF:MODULE which is merely a container
@@ -305,16 +324,28 @@
   (mapcar
    (lambda (x)
      (if (atom x) ; assumed to be a *FEATURE* keyword
-         (progn (pushnew x *features*) 
-                x)
+         (progn 
+           (pushnew x *features*) 
+           x)
          (ecase (car x)
            (:tests ; define a test system
             (destructuring-bind (n . body) (cdr x)
               `(defsys ,n ,@body :class 'test-system)))
+           (:bench
+            (destructuring-bind (n . body) (cdr x)
+              `(defsys ,n ,@body :class 'bench-system)))
            (:alien
             (destructuring-bind (n . body) (cdr x)
               `(std/alien:define-alien-loader ,n ,@body)))
-           (:prelude (std/condition:nyi!)))))
+           ;; should be the name of the readtable
+           (:readtable 
+            (let ((n (cadr x)))
+              `(or (std/named-readtables:find-readtable ,n) ,n)))
+           (:prelude 
+            (if-let ((sys *defining-system*))
+              (destructuring-bind (n . body) (cdr x)
+                `(pkg::%defpkg* ,sys (list ,n ,@body)))
+              (cadr x))))))
    form))
 
 (defun %parse-require-form (form)
@@ -337,13 +368,14 @@
            :name n
            :path (truename (if ty (make-pathname :name n :type ty)))
            :properties props)))
-      (:mod (make-instance kind 
-              :name n 
-              :properties props 
-              :path #1=(truename n)
-              :components 
-              (let ((*default-pathname-defaults* #1#))
-                (mapcar '%parse-component-form (getf props :components))))))))
+      (:mod 
+       (let* ((path (truename n))
+              (*default-pathname-defaults* path))
+         (make-instance kind 
+           :name n 
+           :properties props 
+           :path path
+           :components (mapcar '%parse-component-form (getf props :components))))))))
 
 (defun %parse-components-form (form)
   (mapcar #'%parse-component-form form))
@@ -364,7 +396,8 @@ the following extensions:
     (let ((prov (%sys-get :provide)) (hooks (%sys-get :hook))
           (meth (%sys-get :methods)) (req (%sys-get :require))
           (class (or (%sys-get :class) ''system))
-          (comp (%sys-get :components)))
+          (comp (%sys-get :components))
+          (*defining-system* name))
       (declare (ignore meth))
       (std/sym:with-gensyms (sys)
         `(let ((,sys (change-class (defsystem ,name ,@body) ,class)))

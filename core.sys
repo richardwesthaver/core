@@ -11,7 +11,7 @@
  :components ((:file "core"))
  :hook ((:load (lambda () (mumble "loading core"))))
  :provide 
- ((:tests core/tests
+ ((:tests :core/tests
    :depends-on
    (:rt :std/tests :log/tests :rt/tests
     :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
@@ -21,19 +21,17 @@
     :zstd/tests :uring/tests :blake3/tests :ublk/tests
     :parse/tests :pod/tests :rt/tests :rdb/tests
     :dsp/tests :cry/tests :io/tests :net/tests 
-    :vc/tests :cli/tests)
-   :components
-   ((:file "tests")))
-  (:bench core/bench
+    :vc/tests :cli/tests))
+  (:bench :core/bench
    :depends-on (:std :rt :core)
-   :components 
+   :components
    ((:mod "bench"
      :components 
-     ((:file "pkg")
+     ((:pkg "pkg")
       (:file "lan-party")
       (:mod "tpc-h"
        :components
-       ((:file "pkg")
+       ((:pkg "pkg")
         (:file "dbgen")
         (:file "tpc-h")))
       (:file "bench")))))))
