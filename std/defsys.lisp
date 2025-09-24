@@ -101,8 +101,30 @@
 ;;; Dependencies
 
 ;;; Providers
-;; TODO 2025-09-21: 
-(defmacro defprovider (name args &body body))
+(eval-when (:compile-toplevel :load-toplevel)
+  (defun register-provider (name function)
+    (setf (gethash name *provider-table*) function)))
+
+(defmacro defprovider (key args &body body)
+  "Define a provider function which processes forms where the car is (eql KEY)."
+  `(register-provider ,key (lambda ,args ,@body)))
+
+(defun call-provider (name form)
+  (when-let ((x (the function (gethash name *provider-table*))))
+    (apply x form)))
+
+(defprovider :tests (name &rest args)
+  `(defsys ,name ,@args :class 'test-system))
+(defprovider :bench (name &rest args)
+  `(defsys ,name ,@args :class 'bench-system))
+(defprovider :alien (name &rest args)
+  `(std/alien:define-alien-loader ,name ,@args))
+(defprovider :readtable (name)
+  `(or (std/named-readtables:find-readtable ,name) ,name))
+(defprovider :prelude (name &rest args)
+  (if-let ((sys *defining-system*))
+    `(pkg::%defpkg* ,sys (list ,name ,@args))
+    name))
 
 ;;; System
 (defcomponent system (module-component)
@@ -327,25 +349,7 @@
          (progn 
            (pushnew x *features*) 
            x)
-         (ecase (car x)
-           (:tests ; define a test system
-            (destructuring-bind (n . body) (cdr x)
-              `(defsys ,n ,@body :class 'test-system)))
-           (:bench
-            (destructuring-bind (n . body) (cdr x)
-              `(defsys ,n ,@body :class 'bench-system)))
-           (:alien
-            (destructuring-bind (n . body) (cdr x)
-              `(std/alien:define-alien-loader ,n ,@body)))
-           ;; should be the name of the readtable
-           (:readtable 
-            (let ((n (cadr x)))
-              `(or (std/named-readtables:find-readtable ,n) ,n)))
-           (:prelude 
-            (if-let ((sys *defining-system*))
-              (destructuring-bind (n . body) (cdr x)
-                `(pkg::%defpkg* ,sys (list ,n ,@body)))
-              (cadr x))))))
+         (call-provider (car x) (cdr x))))
    form))
 
 (defun %parse-require-form (form)
