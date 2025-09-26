@@ -17,7 +17,7 @@
 (defvar *default-kv-size* 8)
 (defparameter *save-database-backend-on-load* nil)
 ;;; Backends
-(defvar *database-backends* (make-hash-table)
+(defvar *database-backend-table* (make-hash-table)
   "Hash Table where keys are a database backend designator and values
 are a list of functions which are responsible for doing all initialization
 such as loading shared libraries and setting variables.")
@@ -30,8 +30,8 @@ the body of WITH-DB forms.")
 (defvar *database-backend-close-options* '(close destroy))
 
 (defun add-database-loader (backend thunk)
-  (let ((flist (gethash backend *database-backends*)))
-    (setf (gethash backend *database-backends*) (pushnew thunk flist :test 'equalp))))
+  (let ((flist (gethash backend *database-backend-table*)))
+    (setf (gethash backend *database-backend-table*) (pushnew thunk flist :test 'equalp))))
 
 (defun add-database-backend-option (backend option)
   "Add a new database backend option."
@@ -41,12 +41,12 @@ the body of WITH-DB forms.")
 (defun set-database-backend (backend options &rest thunks)
   "Set the loaders (a sequence of thunks) and options for the designated database
 backend keyword BACKEND."
-  (setf (gethash backend *database-backends*) thunks
+  (setf (gethash backend *database-backend-table*) thunks
         (gethash backend *database-backend-options*) options))
 
 (declaim (inline %load-database-backend))
 (defun %load-database-backend (backend)
-  (when-let ((be (gethash backend *database-backends*)))
+  (when-let ((be (gethash backend *database-backend-table*)))
     (dolist (th be)
       (funcall th))))
 

@@ -642,6 +642,7 @@
    #:service-condition
    #:*service*
    #:*service-table*
+   #:register-service
    #:*request*
    #:*response*
    #:in-request-p

@@ -125,6 +125,7 @@
   (if-let ((sys *defining-system*))
     `(pkg::%defpkg* ,sys (list ,name ,@args))
     name))
+;; (defprovider :proto (name &rest args))
 
 ;;; System
 (defcomponent system (module-component)

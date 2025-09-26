@@ -60,9 +60,6 @@
                                       :type nil
                                       :defaults source-directory)))))
 
-(std:definline register-service (name srv)
-  (setf (gethash name *service-table*) srv))
-
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
 (defgeneric find-route (self uri))

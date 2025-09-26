@@ -46,6 +46,9 @@
 (defun in-request-p () (and (boundp '*request*) *request*))
 (defun in-response-p () (and (boundp '*response*) *response*))
 
+(std:definline register-service (name srv)
+  (setf (gethash name *service-table*) srv))
+
 ;;; Conditions
 (define-condition service-condition (condition) ())
 (eval-always

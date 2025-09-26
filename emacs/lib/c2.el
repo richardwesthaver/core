@@ -23,29 +23,13 @@
 ;; emacs instance remotely.
 ;; 
 ;;; Code:
+(require 'bindat)
 (defgroup c2 nil
   "elisp server")
-
-(defcustom c2-directory (join-paths user-stash-directory "c2") "c2 directory."
-  :group 'c2)
-
-(defcustom c2-after-make-frame-hook nil
-  "Hook run when c2 creates a client frame.
-The created frame is selected when the hook is called."
-  :type 'hook
-  :group 'c2)
-
-(defcustom c2-done-hook nil
-  "Hook run when done editing a buffer with c2."
-  :type 'hook
-  :group 'c2)
 
 (defcustom c2-port 8284
   "port of the c2 broadcaster"
   :group 'c2)
-
-(defvar c2-process nil
-  "The c2 process handle.")
 
 (defvar c2-clients nil
   "List of current c2 clients.
@@ -198,7 +182,7 @@ Each element is a process.")
     (setq c2-clients '())
     ;; setup additional filters
     (add-function :after (process-filter (get-process "c2")) #'c2-eval-response-filter))
-  (message "c2: ONLINE"))
+  (message "c2: ONLINE %s" c2-port))
 
 ;;;###autoload
 (defun c2-stop ()
@@ -232,7 +216,7 @@ Each element is a process.")
 
 (defun c2-packet-filter (proc string)
   "process-filter for decoding 'c2-packet-bindat-spec'"
-  (bindat-unpack packet-spec string))
+  (bindat-unpack c2-packet-bindat-spec string))
 
 (defun ordinary-insertion-filter (proc string)
   (when (buffer-live-p (process-buffer proc))

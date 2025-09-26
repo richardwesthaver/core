@@ -13,9 +13,24 @@
 (in-package :std-user)
 
 (defpkg :sys
-  (:use :std-lisp :obj/id)
+  (:use :std-lisp)
   (:use-reexport :std/defsys))
 
 (in-package :sys)
 (in-readtable :core)
 
+(defprovider :cli (name &key package)
+  `(clap:load-package-cli ,name . ,(when package '(:package package))))
+
+(defprovider :db (name)
+  `(gethash ,name db:*database-backend-table*))
+
+(defprovider :srv (name)
+  `(gethash ,name srv:*service-table*))
+
+;; (defprovider :pod (name))
+;; (defprovider :box (name))
+
+;; (defprovider :doc (name &rest args))
+
+;; (defprovider :logger (name &rest args))
