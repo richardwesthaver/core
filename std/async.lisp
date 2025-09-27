@@ -127,21 +127,21 @@
     (future (fulfill-future obj fn))))
 
 (defmacro fulfill (object &body body)
-  "Attempt to give `object' a value.
+  "Attempt to give OBJECT a value.
 
-If `object' is a promise which is not fulfilled and not currently
-being fulfilled, then the implicit progn `body' will be executed and
-the promise will store the result. In this case `fulfill' returns
+If OBJECT is a promise which is not fulfilled and not currently
+being fulfilled, then the implicit progn BODY will be executed and
+the promise will store the result. In this case FULFILL returns
 true.
 
-If `object' is a promise that is either already fulfilled or actively
-being fulfilled, then `body' will not be executed and `fulfill'
+If OBJECT is a promise that is either already fulfilled or actively
+being fulfilled, then BODY will not be executed and FULFILL
 returns false.
 
-If `object' is a chain, call `fulfill' on the chained object.
+If OBJECT is a chain, call FULFILL on the chained object.
 
-If `object' is not a promise and not a chain then false is returned
-immediately, with `body' being ignored."
+If OBJECT is not a promise and not a chain then false is returned
+immediately, with BODY being ignored."
   `(fulfill-object ,object (lambda () ,@body)))
 
 (defun result (obj)
@@ -179,7 +179,7 @@ immediately, with `body' being ignored."
     (t object)))
 
 (defun replace-error (promise)
-  ;; It is not possible to return from `force' while the promise
+  ;; It is not possible to return from AWAIT while the promise
   ;; contains an error. Therefore we do not violate the
   ;; one-result-only constraint by replacing a wrapped error result
   ;; with value(s).

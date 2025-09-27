@@ -36,3 +36,5 @@
   (:nicknames :qga)
   (:use :cl :std :dat/json :net/srv :box/qemu))
 
+;;; DEFSYS Providers
+;; (defprovider :box (name))

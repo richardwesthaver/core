@@ -53,3 +53,6 @@
    :buildah-copy
    :with-container
    :podman-run))
+
+;;; DEFSYS Providers
+;; (defprovider :pod (name))

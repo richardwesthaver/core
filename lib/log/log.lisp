@@ -405,3 +405,6 @@ be implemented for a specific application."))
             (lambda (c)
               (log-message* :warn "Warning signalled: ~A" c))))
        ,@body)))
+
+;;; DEFSYS Providers
+;; (defprovider :logger (name &rest args))

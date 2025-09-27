@@ -119,3 +119,6 @@
                    do (push (make-dspec type name defsrc) dspecs)
                       (dolist (d (sb-introspect:find-definition-sources-by-name name type)) (push d defs))))
     (values defs dspecs)))
+
+;;; DEFSYS Providers
+;; (defprovider :doc (name &rest args))

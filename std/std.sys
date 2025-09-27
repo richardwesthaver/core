@@ -13,10 +13,9 @@
  :version "0.1.0"
  :description "CC Standard Library"
  :serial t
- :depends-on (:cl-ppcre)
+ :require (:cl-ppcre :std)
  :components 
- ((:file "named-readtables")
-  (:file "defpkg")
+ ("named-readtables" "defpkg"
   (:pkg "pkg")
   (:file "condition")
   (:file "sym")
@@ -64,7 +63,8 @@
   (:file "rand")
   (:file "defsys"))
  :provide
- ((:tests :std/tests
+ (:std :defsys
+  (:tests :std/tests
    :depends-on (:std :rt)
    :description "CC Standard Library Tests"
    :serial t

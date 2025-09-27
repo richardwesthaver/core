@@ -18,7 +18,6 @@
 
 ;;; Code:
 (in-package :std/defsys)
-
 (defvar *system-definitions* nil
   "A list of files containing DEFSYS forms.")
 
@@ -51,8 +50,7 @@
 ;;; Components
 (defclass component () 
   ((name :initarg :name :accessor name)
-   (path :initarg :path :accessor path)
-   (properties :initarg :properties :accessor component-properties)))
+   (path :initarg :path :accessor path)))
 
 (defun register-component-class (name class)
   (setf (gethash name *component-class-table*) class))
@@ -70,7 +68,7 @@
 
 (defmethod print-object ((self component) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A ~A" (name self) (path self))))
+    (format stream "~A" (name self))))
 
 (defcomponent file-component (component) 
   ((type :accessor component-type))
@@ -83,6 +81,14 @@
 (defcomponent module-component (component) 
   ((components :accessor components))
   (:keyword :mod))
+
+;; TODO 2025-09-27: regexp reader
+(defcomponent dir-component (module-component) 
+  ((include :accessor component-include)
+   (exclude :accessor component-exclude))
+  (:documentation "A MODULE-COMPONENT which matches regexp patterns against all files in a
+directory recursively.")
+  (:keyword :dir))
 
 (defmethod print-object ((self module-component) stream)
   (print-unreadable-object (self stream :type t)
@@ -115,25 +121,87 @@
 
 (defprovider :tests (name &rest args)
   `(defsys ,name ,@args :class 'test-system))
+
 (defprovider :bench (name &rest args)
   `(defsys ,name ,@args :class 'bench-system))
+
 (defprovider :alien (name &rest args)
   `(std/alien:define-alien-loader ,name ,@args))
+
 (defprovider :readtable (name)
   `(or (std/named-readtables:find-readtable ,name) ,name))
+
 (defprovider :prelude (name &rest args)
   (if-let ((sys *defining-system*))
     `(pkg::%defpkg* ,sys (list ,name ,@args))
     name))
-;; (defprovider :proto (name &rest args))
+
+(defprovider :io (name)
+  name)
+
+(defprovider :proto (name)
+  name)
+
+(defprovider :pool (name)
+  `(find-thread-pool ,name))
+
+(defprovider :pun (name)
+  `(find-thread-pool ,name))
+
+;;; Modules
+;; Unlike MODULE-COMPONENT, based on ASDF:MODULE which is merely a container
+;; for other COMPONENTs, Lisp Modules in the Core support the ANSI CL notion
+;; of Modules and are further extended
+(defvar *load-module* nil "The name of the module being loaded or NIL.")
+(defvar *compile-module* nil "The name of the module being compiled or NIL.")
+(defvar *module-stack* nil "A list of the most recently visited modules.")
+(defvar *module* nil "The name of the current module or NIL.")
+(defparameter *module-table* (make-hash-table :test 'equal)
+  "A table which maps modules names to objects.")
+
+(defclass module ()
+  ((name :initarg :name :accessor name)
+   (hook :initarg :hook :type hook :accessor hook)
+   provide
+   require)
+  (:documentation "All Lisp Modules contain at least a NAME, HOOK, PROVIDE and REQUIRE slot."))
+
+(defun load-module (name)
+  (when-let ((*load-module* (gethash name *module-table*)))
+    (with-slots (hook) *load-module*
+      (when hook
+        (pushnew (funcall hook :exit) sb-ext:*exit-hooks*)
+        (funcall (funcall hook :load))))
+    *load-module*))
+
+;; TODO 2025-09-20: 
+(defun partial-load-module (name &rest args)
+  (declare (ignore args))
+  (load-module name))
+
+(defun unload-module () (setf *module* nil))
+
+(defun module-provide-system (name)
+  "Provide a SYSTEM, adding valid entries to the *MODULES*
+  variable. The function USE should be called in order to load and activate a
+  module, but the deprecated PROVIDE function is also supported."
+  (when-let ((sys (find-system name)))
+    (load-system sys)
+    t))
+
+(pushnew 'module-provide-system sb-ext:*module-provider-functions*)
+
+(defmacro with-module (name &body body)
+  "Load the module named NAME, binding it to *MODULE* and eval BODY."
+  `(let ((*module* (or (require ,name) ,name)))
+     ,@body))
+
+;; (with-eval-after-load (module &body body))
 
 ;;; System
-(defcomponent system (module-component)
+(defcomponent system (module-component module)
   ((version :accessor version)
-   description
-   provide
-   require
-   (hook :initform (make-instance 'key-hook) :accessor hook))
+   description)
   (:keyword :sys))
 
 (defun system-equal (a b)
@@ -171,36 +239,30 @@
   (((instance asdf:component) (new-class-name (eql 'component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
-     :path (asdf:component-pathname instance)
-     :properties (asdf::component-properties instance)))
+     :path (asdf:component-pathname instance)))
   (((instance component) (new-class-name (eql 'asdf:component)) &key)
    (make-instance new-class-name
      :name (name instance)
-     :path (asdf:component-pathname instance)
-     :properties (component-properties instance)))
+     :path (asdf:component-pathname instance)))
   (((instance asdf:file-component) (new-class-name (eql 'file-component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
      :path (asdf:component-pathname instance)
-     :properties (asdf::component-properties instance)
      :type (asdf:file-type instance)))
   (((instance file-component) (new-class-name (eql 'asdf:file-component)) &key)
    (make-instance new-class-name
      :name (name instance)
      :path (asdf:component-pathname instance)
-     :properties (component-properties instance)
      :type (component-type instance)))
   (((instance asdf:module) (new-class-name (eql 'module-component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
      :path (asdf:component-pathname instance)
-     :properties (asdf::component-properties instance)
      :components (mapcar #'change-component-class (asdf:component-children instance))))
   (((instance module-component) (new-class-name (eql 'asdf:module)) &key)
    (make-instance new-class-name
      :name (name instance)
      :path (asdf:component-pathname instance)
-     :properties (component-properties instance)
      :components (mapcar #'revert-component-class (components instance))))
   ;; system
   (((instance asdf:system) (new-class-name (eql 'system)) &key)
@@ -208,7 +270,6 @@
      :version (asdf:component-version instance)
      :name (keywordicate (string-upcase (asdf:component-name instance)))
      :path (asdf:component-pathname instance)
-     :properties (asdf::component-properties instance)
      :description (asdf::component-description instance)
      :components (mapcar #'change-component-class (asdf:component-children instance))))
   (((instance system) (new-class-name (eql 'asdf:system)) &key)
@@ -218,7 +279,6 @@
    (make-instance new-class-name
      :version (version instance)
      :name (name instance)
-     :properties (component-properties instance)
      :description (system-description instance)
      :components (mapcar #'revert-component-class (components instance)))))
 
@@ -240,7 +300,6 @@
     :version (asdf:component-version instance)
     :name (keywordicate (string-upcase (asdf:component-name instance)))
     :path (asdf:component-pathname instance)
-    :properties (asdf::component-properties instance)
     :description (asdf::component-description instance)
     :components (mapcar #'change-component-class (asdf:component-children instance))))
 
@@ -251,7 +310,6 @@
     :version (asdf:component-version instance)
     :name (keywordicate (string-upcase (asdf:component-name instance)))
     :path (asdf:component-pathname instance)
-    :properties (asdf::component-properties instance)
     :description (asdf::component-description instance)
     :components (mapcar #'change-component-class (asdf:component-children instance))))
 
@@ -260,59 +318,6 @@
 
 (definline %bench-system-name (name)
   (concatenate 'simple-base-string (string-upcase name) "/BENCH"))
-
-;;; Modules
-;; Unlike MODULE-COMPONENT, based on ASDF:MODULE which is merely a container
-;; for other COMPONENTs, Lisp Modules in the Core support the ANSI CL notion
-;; of Modules and are further extended
-(defvar *load-module* nil "The name of the module being loaded or NIL.")
-(defvar *compile-module* nil "The name of the module being compiled or NIL.")
-(defvar *module-stack* nil "A list of the most recently visited modules.")
-(defvar *module* nil "The name of the current module or NIL.")
-(defparameter *module-table* (make-hash-table :test 'equal)
-  "A table which maps modules names to objects.")
-
-(defclass module ()
-  ((name :initarg :name :accessor name)
-   (hook :initarg :hook :type hook :accessor hook))
-  (:documentation "All Lisp Modules contain at least a NAME and HOOK slot."))
-
-(defun load-mod (name)
-  (let ((cmod (gethash name *module-table*)))
-    (with-slots (hook) cmod
-      (when hook
-        (pushnew (funcall hook :exit) sb-ext:*exit-hooks*)
-        (funcall (funcall hook :load))))
-    cmod))
-
-(defmacro load-module (name)
-  "Load module NAME from the global list *MODULES*."
-  (let ((mod (find name *modules* :test 'string-equal)))
-    (if (null mod) (warn "Module not found: ~A" name)
-        (let ((core-mod (gethash mod *module-table*)))
-          (if core-mod
-              `(load-mod ,core-mod)
-              `(require ,mod))))))
-
-;; TODO 2025-09-20: 
-(defun partial-load-module (name &rest opts)
-  (declare (ignore opts))
-  (load-mod name))
-
-(defun unload-module () (setf *module* nil))
-
-(defun provide-core-module (name)
-  "Provide a CORE-MODULE, adding valid entries to the *MODULES*
-  variable. The function USE should be called in order to load and activate a
-  module, but the deprecated PROVIDE function is also supported."
-  (load-mod name))
-
-(defmacro with-module (name &body body)
-  "Load the module named NAME, binding it to *MODULE* and eval BODY."
-  `(let ((*module* (or (load-module ,name) ,name)))
-     ,@body))
-
-;; (with-eval-after-load (module &body body))
 
 ;;; Session
 (sb-ext:defglobal *system-session* nil
@@ -356,31 +361,32 @@
 (defun %parse-require-form (form)
   (mapcar
    (lambda (x)
-     (if (atom x) ; default case, load the module
-         (load-mod x)
-         (apply 'partial-load-module x)))
+     (if (atom x) ; default case, require the module
+         (load-module x)
+         (apply 'partial-load-module x))
+     x)
    form))
 
 (defun %parse-component-form (form)
-  (let ((n (cadr form))
-        (kind (gethash (car form) *component-class-table*))
-        (props (cddr form)))
-    (ecase (car form)
-      ((or :file :pkg) 
-       (let ((ty (or (pathname-type n) "lisp")))
-         (make-instance kind
-           :type (keywordicate (string-upcase ty))
-           :name n
-           :path (truename (if ty (make-pathname :name n :type ty)))
-           :properties props)))
-      (:mod 
-       (let* ((path (truename n))
-              (*default-pathname-defaults* path))
-         (make-instance kind 
-           :name n 
-           :properties props 
-           :path path
-           :components (mapcar '%parse-component-form (getf props :components))))))))
+  (if (atom form)
+      (make-instance 'file-component :type "lisp" :name form)
+      (let ((n (cadr form))
+            (kind (gethash (car form) *component-class-table*))
+            (props (cddr form)))
+        (ecase (car form)
+          ((or :file :pkg) 
+           (let ((ty (or (pathname-type n) "lisp")))
+             (make-instance kind
+               :type (keywordicate (string-upcase ty))
+               :name n
+               :path (truename (if ty (make-pathname :name n :type ty))))))
+          (:mod 
+           (let* ((path (truename n))
+                  (*default-pathname-defaults* path))
+             (make-instance kind 
+               :name n 
+               :path path
+               :components (mapcar '%parse-component-form (getf props :components)))))))))
 
 (defun %parse-components-form (form)
   (mapcar #'%parse-component-form form))
@@ -511,12 +517,10 @@ an image.")
   (:documentation "Delete the system SELF from the local filesystem."))
 
 (defgeneric test-system (self &rest args)
-  (:documentation "Test the system SELF."))
-
-(defmethod test-system ((self system) &rest args)
-  (mumble "Testing system ~A" (name self))
-  (apply 'std:symbol-call :rt :do-suite (name self) args))
-
-(defmethod test-system ((self symbol) &rest args)
-  (let ((sys (find-system self :default :error)))
-    (apply #'test-system sys args)))
+  (:documentation "Test the system SELF.")
+  (:method ((self system) &rest args)
+    (mumble "Testing system ~A" (name self))
+    (apply 'pkg:symbol-call :rt :do-suite (name self) args))
+  (:method ((self symbol) &rest args)
+    (let ((sys (find-system self :default :error)))
+      (apply #'test-system sys args))))

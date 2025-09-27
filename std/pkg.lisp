@@ -1318,6 +1318,8 @@
   (:shadowing-import-from :std/meta :version)
   (:export 
    :defsys
+   :defprovider
+   :defcomponent
    :load-sys
    :system
    :component
@@ -1329,10 +1331,8 @@
    :*module*
    :*core-module-table*
    :module
-   :load-core-module
    :load-module
    :unload-module
-   :provide-core-module
    :with-module))
 
 (setq *defpkg-hook* nil)

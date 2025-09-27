@@ -74,3 +74,9 @@ only."
               (print (log::tags message) *standard-output*)
               (.sgr 0))
             (format-message nil (log::content message)))))
+
+;;; DEFSYS Providers
+(std/defsys::defprovider :cli (name &key package)
+  `(clap:load-package-cli ,name . ,(when package '(:package package))))
+
+;; (defprovider :keymap (name &key package))

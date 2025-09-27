@@ -1,5 +1,0 @@
-(defsys :sys
- :description "The SYS System Definition API"
- :depends-on (:std :obj :net :log :cli :pod :box :syn :organ :doc :io :rt :q)
- :components ((:file "sys")))
- 
