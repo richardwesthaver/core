@@ -14,9 +14,9 @@
 | skel-id     | 4611004031065916102                |
 | root        | ~/comp/core/                       |
 | tags        | (core lisp emacs c)                |
-| updated     | Thu Sep 25 23:43:46 2025 -0400     |
+| updated     | Sat Sep 27 00:10:15 2025 -0400     |
 | langs       | c elisp lisp org text              |
-| lines       | 150607 :λ 119362 :# 13856 :_ 17389 |
+| lines       | 150612 :λ 119367 :# 13856 :_ 17389 |
 |-------------+------------------------------------|
 
 #+END:
@@ -24,8 +24,8 @@
 #+call: project-links()
 
 #+RESULTS:
-- [[https://compiler.company/docs/core/index.html][Docs]]
-- [[https://compiler.company/plan/tasks/core.html][Tasks]]
+- [[https://otom8.dev/docs/core/index.html][Docs]]
+- [[https://otom8.dev/plan/tasks/core.html][Tasks]]
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 

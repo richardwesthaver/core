@@ -62,7 +62,7 @@
 
 (setq org-html-home/up-format 
       "<nav id=\"org-div-home-and-up\">
-<a href=\"%s\" accesskey=\"u\"><button class=up>⋱</button></a>
+<a href=\"%s\" accesskey=\"u\"><button class=up>↩</button></a>
 <a href=\"%s\" accesskey=\"h\"><button class=home>⌂</button></a>
 <button accesskey=\"s\" class=show onclick=open_all_sections()>show</button>
 <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></nav>")

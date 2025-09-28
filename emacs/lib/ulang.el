@@ -66,7 +66,7 @@
 
 (org-dynamic-block-define "links" 'dblock-insert-links)
 
-;; (org-export-translate-to-lang (list '("Table of Contents" "Index")) "ulang")
+(org-export-translate-to-lang (list '("Table of Contents" "⇝")) "ulang")
 ;; (setq org-export-global-macros nil)
 
 ;; todo keywords
@@ -109,9 +109,9 @@
 ;; link abbrevs
 (setq org-link-abbrev-alist
       `(("vc" . ,(concat (string-trim-right company-vc-url "[/]") "/%s"))
-        ("comp" . "https://compiler.company/%s")
-	("cdn" . "https://cdn.compiler.company/%s")
-        ("packy" . "https://packy.compiler.company/%s")
+        ("comp" . ,(format "https://%s/%%s" company-domain))
+	("cdn" . ,(format "%s/%%s" company-cdn-url))
+        ("packy" . ,(format "%s/%%s" packy-url))
         ("yt" . "https://youtube.com/watch?v=%s")
 	("gh" . "https://github.com/%s")
 	("cb" . "https://codeberg.org/%s")
@@ -123,7 +123,6 @@
         ("so" . "https://stackoverflow.com/%s")))
 
 ;;; IDs
-
 (defun org-title-to-filename (title)
   "Convert TITLE to a reasonable filename."
   ;; Based on the slug logic in org-roam, but org-roam also uses a
