@@ -1,0 +1,17 @@
+;;; log.sys --- logging system
+(defsys :log
+  :depends-on (:std :io :obj :syslog)
+  :serial t
+  :components ((:file "pkg")
+               (:file "condition")
+               (:file "log")
+               (:file "db")
+               (:file "stream")
+               (:file "cfg")
+               (:file "sys"))
+ :provide
+ ((:proto :log)
+  (:tests :log/tests
+   :depends-on (:rt :std :log :io)
+   :components ((:file "tests")))))
+
