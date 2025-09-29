@@ -1,0 +1,13 @@
+;;; ffi/zstd/zstd.sys --- Zstd Sytem
+(defsys :zstd
+ :depends-on (:sb-grovel :std)
+ :components ((:pkg "pkg")
+              (:grovel "constants")
+              (:file "simple")
+              (:file "stream")
+              (:file "dict")
+              (:file "util"))
+ :provide
+ ((:tests :zstd/tests
+   :depends-on (:rt :zstd)
+   :components ((:file "tests")))))

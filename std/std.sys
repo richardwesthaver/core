@@ -15,7 +15,7 @@
  :serial t
  :require (:cl-ppcre :std)
  :components 
- ("named-readtables" "defpkg"
+ ("named-readtables" "defpkg" (:dir "num")
   (:pkg "pkg")
   (:file "condition")
   (:file "sym")
@@ -63,7 +63,13 @@
   (:file "rand")
   (:file "defsys"))
  :provide
- (:std :defsys
+ (:std :defsys :defpkg :named-readtables ; features
+  (:readtable :std)
+  (:proto :serde)
+  (:proto :pipe)
+  (:proto :kernel)
+  (:proto :verb)
+  (:io :alien)
   (:tests :std/tests
    :depends-on (:std :rt)
    :description "CC Standard Library Tests"
@@ -79,7 +85,6 @@
       (:file "async")
       (:file "task")
       (:file "macs")))))
-  (:readtable :std)
   (:prelude :alien* 
    :defar :define-alien-enum :sap :free)
   (:prelude :os*

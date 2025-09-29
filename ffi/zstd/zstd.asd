@@ -1,4 +1,4 @@
-;;; uring.asd-*- mode: lisp; -*-
+;;; zstd.asd -*- mode: lisp; -*-
 (defpackage :zstd.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 

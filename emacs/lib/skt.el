@@ -220,7 +220,6 @@ BODY is an arbitrary argument passed to DEFINE-FUNCTION."
          (modes (or modes '(nil))))
     (funcall define-function function-symbol body docstring)
     (put function-symbol 'no-self-insert t)
-
     (when tag
       (let ((tag-symbol (gensym (symbol-name function-symbol))))
         (if (eq #'skt--define-template define-function)
@@ -237,7 +236,6 @@ BODY is an arbitrary argument passed to DEFINE-FUNCTION."
                        skt-minor-mode)
               (skt-minor-mode -1)
               (skt-minor-mode 1))))))
-
     (when abbrev
       (dolist (mode modes)
         (let ((mode-table (skt--mode-abbrev-table mode))
@@ -260,6 +258,7 @@ BODY is an arbitrary argument passed to DEFINE-FUNCTION."
 ;;;###autoload
 (cl-defmacro skt-define-template (name (&key mode tag abbrev docstring) &body body)
   "Define a tempo template.
+
 This macro defines a new tempo template or updates the old one.
 NAME is a symbol.  ARGS is a list of the form ([KEY VALUE]...)
 where each KEY can be one of :tag, :abbrev, :docstring or :mode.

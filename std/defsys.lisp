@@ -78,23 +78,27 @@
   (:documentation "A FILE-COMPONENT which contains DEFPACKAGE-like forms.")
   (:keyword :pkg))
 
-(defcomponent module-component (component) 
+(defcomponent mod-component (component) 
   ((components :accessor components))
   (:keyword :mod))
 
-;; TODO 2025-09-27: regexp reader
-(defcomponent dir-component (module-component) 
-  ((include :accessor component-include)
-   (exclude :accessor component-exclude))
-  (:documentation "A MODULE-COMPONENT which matches regexp patterns against all files in a
-directory recursively.")
-  (:keyword :dir))
-
-(defmethod print-object ((self module-component) stream)
+(defmethod print-object ((self mod-component) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A ~A :components ~{~A~^ ~}" (name self) (path self) 
             (when (slot-boundp self 'components)
               (mapcar 'name (components self))))))
+
+(defcomponent dir-component (mod-component) 
+  ((include :accessor component-include)
+   (exclude :accessor component-exclude))
+  (:documentation "A MOD-COMPONENT which matches regexp patterns against all files in a
+directory recursively.")
+  (:keyword :dir))
+
+(defcomponent grovel-component (file-component) 
+  (package)
+  (:documentation "A FILE-COMPONENT which matches a SB-GROVEL constants file.")
+  (:keyword :grovel))
 
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
@@ -104,9 +108,7 @@ directory recursively.")
 ;; System Jobs are effectively plans composed of system tasks
 (defkernel system-job (job) ())
 
-;;; Dependencies
-
-;;; Providers
+;;; Provider
 (eval-when (:compile-toplevel :load-toplevel)
   (defun register-provider (name function)
     (setf (gethash name *provider-table*) function)))
@@ -146,12 +148,24 @@ directory recursively.")
   `(find-thread-pool ,name))
 
 (defprovider :pun (name)
-  `(find-thread-pool ,name))
+  name)
 
-;;; Modules
-;; Unlike MODULE-COMPONENT, based on ASDF:MODULE which is merely a container
-;; for other COMPONENTs, Lisp Modules in the Core support the ANSI CL notion
-;; of Modules and are further extended
+;; TODO 2025-09-28: 
+(defprovider :module (name &rest args)
+  `(defmodule ,name ,@args))
+
+;;; Module
+;; Unlike MOD-COMPONENT/DIR-COMPONENT, based on ASDF:MODULE which is merely a
+;; container for other COMPONENTs, Lisp Modules in the Core support the ANSI
+;; CL notion of Modules and are further extended.
+
+;; Modules in the core are essentially a 1:N mapping from an arbitrary name
+;; (string or symbol) to tagged lisp objects we call providers. Providers are
+;; designated by a keyword (the tag) and are responsible for calling a
+;; function which provisions the associated lisp object.
+
+;; The REQUIRE slot is a list of provider forms which indicate the
+;; dependencies of the module.
 (defvar *load-module* nil "The name of the module being loaded or NIL.")
 (defvar *compile-module* nil "The name of the module being compiled or NIL.")
 (defvar *module-stack* nil "A list of the most recently visited modules.")
@@ -196,12 +210,23 @@ directory recursively.")
   `(let ((*module* (or (require ,name) ,name)))
      ,@body))
 
+;; TODO 2025-09-28: 
+(defmacro use (name &body body)
+  "Load and activate module NAME with the provider forms in BODY."
+  `(with-module ,name ,@body))
+
+;; HACK 2025-09-28: 
+;; refuse?
+
 ;; (with-eval-after-load (module &body body))
 
 ;;; System
-(defcomponent system (module-component module)
+(defcomponent system (mod-component module)
   ((version :accessor version)
-   description)
+   description
+   (plan :description "The default plan associated with this object which specifies the ordering of
+components to be processed in an async context."
+         :initform :serial))
   (:keyword :sys))
 
 (defun system-equal (a b)
@@ -222,7 +247,7 @@ directory recursively.")
   "Change class of SELF to its associated STD/DEFSYS class."
   (etypecase self
     (asdf:system (change-class self 'system))
-    (asdf:module (change-class self 'module-component))
+    (asdf:module (change-class self 'mod-component))
     (asdf:file-component (change-class self 'file-component))
     (asdf:component (change-class self 'component))))
 
@@ -230,7 +255,8 @@ directory recursively.")
   "Revert std/defsys class SELF to its associated ASDF class."
   (etypecase self
     (system (change-class self 'asdf:system))
-    (module-component (change-class self 'asdf:module))
+    (mod-component (change-class self 'asdf:module))
+    (grovel-component (change-class self 'sb-grovel:grovel-constants-file))
     (file-component (change-class self 'asdf:file-component))
     (component (change-class self 'asdf:component))))
 
@@ -252,14 +278,26 @@ directory recursively.")
   (((instance file-component) (new-class-name (eql 'asdf:file-component)) &key)
    (make-instance new-class-name
      :name (name instance)
-     :path (asdf:component-pathname instance)
+     :path (path instance)
      :type (component-type instance)))
-  (((instance asdf:module) (new-class-name (eql 'module-component)) &key)
+  (((instance grovel-component) (new-class-name (eql 'sb-grovel:grovel-constants-file)) &key)
+   (make-instance new-class-name
+     :name (name instance)
+     :path (path instance)
+     :type (component-type instance)
+     :package (grovel-component-package instance)))
+  (((instance sb-grovel:grovel-constants-file) (new-class-name (eql 'grovel-component)) &key)
+   (make-instance new-class-name
+     :name (asdf:component-name instance)
+     :path (asdf:component-pathname instance)
+     :type (asdf:file-type instance)
+     :package (grovel-component-package instance)))
+  (((instance asdf:module) (new-class-name (eql 'mod-component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
      :path (asdf:component-pathname instance)
      :components (mapcar #'change-component-class (asdf:component-children instance))))
-  (((instance module-component) (new-class-name (eql 'asdf:module)) &key)
+  (((instance mod-component) (new-class-name (eql 'asdf:module)) &key)
    (make-instance new-class-name
      :name (name instance)
      :path (asdf:component-pathname instance)
@@ -283,7 +321,8 @@ directory recursively.")
      :components (mapcar #'revert-component-class (components instance)))))
 
 ;;; Test System
-(defcomponent test-system (system) ())
+(defcomponent test-system (system) ()
+  (:keyword :tests))
 
 (defmethod print-object ((self test-system) stream)
   (print-unreadable-object (self stream :type t)
@@ -303,7 +342,8 @@ directory recursively.")
     :description (asdf::component-description instance)
     :components (mapcar #'change-component-class (asdf:component-children instance))))
 
-(defcomponent bench-system (system) ())
+(defcomponent bench-system (system) ()
+  (:keyword :bench))
 
 (defmethod change-class ((instance asdf:system) (new-class-name (eql 'bench-system)) &key)
   (make-instance new-class-name
@@ -320,26 +360,30 @@ directory recursively.")
   (concatenate 'simple-base-string (string-upcase name) "/BENCH"))
 
 ;;; Session
+(eval-always
+  (defvar *system-session-capacity* 64
+    "The maximum count of systems which are allowed to wait in the systems queue for processing.")
+  (defstruct system-session
+    "A reusable session in which SYSTEMs may be processed."
+    ;; A queue of SYSTEMs to be processed, effectively a global stack.
+    (systems (make-queue :capacity *system-session-capacity* :element-type 'system))
+    ;; A simple cache of TASK results
+    (task-cache (make-hash-table))
+    ;; A simple cache of file operation times
+    (file-cache (make-hash-table :test 'equal))
+    ;; A thread-pool which is dedicated to running system tasks
+    (pool (make-thread-pool (std/alien:num-cpus) :name :sys :alive nil))
+    ;; A queue of system tasks.
+    tasks))
+
+(defmethod start ((self system-session))
+  (start (system-session-pool self)))
+
+(defmethod stop ((self system-session) &key)
+  (stop (system-session-pool self)))
+
 (sb-ext:defglobal *system-session* nil
   "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
-
-(defvar *system-session-capacity* 64
-  "The maximum count of systems which are allowed to wait in the systems queue for processing.")
-
-(defstruct system-session
-  "A reusable session in which SYSTEMs may be processed."
-  ;; A queue of SYSTEMs to be processed, effectively a global stack.
-  (systems (make-queue :capacity *system-session-capacity* :element-type 'system))
-  ;; The set of PLAN objects which determine the work to be done on systems in the queue.
-  (plans (make-priority-queue *system-session-capacity* :prioritize t :extend nil))
-  ;; A simple cache of TASK results
-  (task-cache (make-hash-table))
-  ;; A simple cache of file operation times
-  (file-cache (make-hash-table :test 'equal))
-  ;; A thread-pool which is dedicated to running system tasks
-  (pool (find-thread-pool :sys))
-  ;; A queue of system tasks.
-  tasks)
 
 (defmacro with-system-session (&body body)
   "Bind *SYSTEM-SESSION* to a fresh value around BODY."
@@ -347,7 +391,7 @@ directory recursively.")
      (unless *system-session* (setf *system-session* (make-system-session)))
      ,@body))
 
-;;; System Definition
+;;; Defsys
 (defun %parse-provide-form (form)
   (mapcar
    (lambda (x)
@@ -369,24 +413,51 @@ directory recursively.")
 
 (defun %parse-component-form (form)
   (if (atom form)
-      (make-instance 'file-component :type "lisp" :name form)
+      (if (directory-path-p form)
+          (make-instance 'dir-component 
+            :include ".*" 
+            :name (last (pathname-directory form))
+            :path form)
+          (make-instance 'file-component 
+            :type (or (pathname-type form) "lisp") 
+            :name (pathname-name form)
+            :path form))
       (let ((n (cadr form))
             (kind (gethash (car form) *component-class-table*))
             (props (cddr form)))
         (ecase (car form)
-          ((or :file :pkg) 
+          ((or :file :pkg :grovel)
            (let ((ty (or (pathname-type n) "lisp")))
              (make-instance kind
                :type (keywordicate (string-upcase ty))
                :name n
                :path (truename (if ty (make-pathname :name n :type ty))))))
-          (:mod 
+          (:mod
            (let* ((path (truename n))
                   (*default-pathname-defaults* path))
-             (make-instance kind 
+             (make-instance kind
                :name n 
                :path path
-               :components (mapcar '%parse-component-form (getf props :components)))))))))
+               :components (mapcar '%parse-component-form (getf props :components)))))
+          (:dir
+           (let* ((path (truename n))
+                  (*default-pathname-defaults* path)
+                  (inc (or (getf props :include) (cl-ppcre:create-scanner ".*")))
+                  (exc (getf props :exclude))
+                  (c (make-instance kind
+                       :name n
+                       :path path
+                       :include inc
+                       :exclude exc
+                       :components (mapcar '%parse-component-form (getf props :components)))))
+             (walk-directory (path c)
+               (constantly t) (constantly t)
+               (lambda (x)
+                 (dolist (f (directory-files x))
+                   (let ((f (namestring f)))
+                     (when (and (cl-ppcre:scan inc f) (or (not exc) (not (cl-ppcre:scan exc f))))
+                       (push (%parse-component-form f) (components c)))))))
+             c))))))
 
 (defun %parse-components-form (form)
   (mapcar #'%parse-component-form form))
@@ -406,6 +477,7 @@ the following extensions:
              v)))
     (let ((prov (%sys-get :provide)) (hooks (%sys-get :hook))
           (meth (%sys-get :methods)) (req (%sys-get :require))
+          (plan (or (%sys-get :plan) :serial))
           (class (or (%sys-get :class) ''system))
           (comp (%sys-get :components))
           (*defining-system* name))
@@ -413,16 +485,15 @@ the following extensions:
       (std/sym:with-gensyms (sys)
         `(let ((,sys (change-class (defsystem ,name ,@body) ,class)))
            (setf (path ,sys) *load-truename*
+                 (slot-value ,sys 'plan) ,plan
                  (slot-value ,sys 'components) `(,,@(%parse-components-form comp))
                  (slot-value ,sys 'provide) `(,,@(%parse-provide-form prov))
                  (slot-value ,sys 'require) `(,,@(%parse-require-form req)))
            (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
-           (register-system ,name ,sys)
-           (eval-when (:execute)
-             ,sys))))))
+           (register-system ,name ,sys))))))
 
 (defun load-sys (path &optional name)
-  "Load a system definition from PATH. Unlike LOAD-ASD this function calls LOAD
+  "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD
 internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
   (let ((path (truename path)))
     (with-system-session
@@ -440,8 +511,6 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
           (if name 
               (find-system name :default (lambda () (error 'sysdef-error :name name :pathname path)))
               t))))))
-
-(defmethod serde ((from system) (to stream)))
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key)
@@ -491,8 +560,7 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
     (mumble "Compiling system ~A" (name self))
     (asdf:compile-system self :verbose nil))
   (:method ((self symbol) &key)
-    (let ((sys (find-system self :default :error)))
-      (compile-system sys))))
+    (compile-system (find-system self :default :error))))
 
 (defgeneric save-system (self &key &allow-other-keys)
   (:documentation "Save the system SELF."))

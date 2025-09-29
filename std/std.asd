@@ -16,6 +16,7 @@ that ASDF can find, or have quicklisp installed.")))
 (defsystem :std
   :version "0.1.0"
   :description "CC Standard Library"
+  :depends-on (:cl-ppcre :sb-grovel)
   :serial t
   :components 
   ((:file "named-readtables")

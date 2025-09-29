@@ -1173,7 +1173,7 @@ bound to RET."
 
 (definline stop-thread-pool (pool &key wait)
   (declare (thread-pool pool))
-  (when (alive pool)
+  (when (and pool (alive pool))
     (let ((channel (make-channel :pool pool))
           (threads (map 'list #'worker-thread (workers pool))))
       (cond
@@ -1199,8 +1199,8 @@ bound to RET."
   (start-thread-pool pool))
   
 (defmethod shutdown ((pool thread-pool)) 
-  (remhash (name pool) *thread-pool-table*)
-  (funcall (kernel pool) :shutdown))
+  (funcall (kernel pool) :shutdown)
+  (remhash (name pool) *thread-pool-table*))
 
 (defmethod start ((pool thread-pool)) (funcall (kernel pool) :start))
 
@@ -1249,10 +1249,15 @@ Calling `broadcast-work' from inside a worker is an error."
           do (signal-semaphore to-workers))
     (map-into (make-array worker-count) (lambda () (receive-result channel)))))
 
-(defun %exit-threads ()
+(defun exit-workers ()
   (setf *lisp-exiting-p* t))
 
-(pushnew '%exit-threads sb-ext:*exit-hooks*)
+(defun exit-thread-pools ()
+  (std/hash:maphash-values (lambda (x) (stop-thread-pool x :wait t)) *thread-pool-table*))
+
+(pushnew 'exit-workers sb-ext:*exit-hooks*)
+(pushnew 'exit-thread-pools sb-ext:*save-hooks*)
+(pushnew 'exit-workers sb-ext:*save-hooks*)
 
 ;;; Utils
 (defmacro with-lock-no-wait (lock predicate &body body)

@@ -1075,6 +1075,7 @@
   (:export
    :limiter-lock :limiter-count
    :update-limiter-count
+   :exit-thread-pools
    :alive
    :*default-spint-count*
    :make-ephemeral-thread
@@ -1323,9 +1324,11 @@
    :load-sys
    :system
    :component
-   :module-component
+   :mod-component
    :file-component
-   :component-properties
+   :pkg-component
+   :dir-component
+   :grovel-component
    :component-type
    :find-system
    :*module*

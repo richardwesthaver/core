@@ -192,7 +192,7 @@ TABLE."
 (defun load-default-theme (&optional theme)
   (interactive)
   (when theme (setq default-theme theme))
-  (load-theme default-theme))
+  (load-theme default-theme t))
 
 (provide 'util)
 ;; util.el ends here
