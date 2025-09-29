@@ -165,14 +165,18 @@
 
 (defpkg :dat/html
   (:use :cl :dat/proto :std/macs :std/string :std/serde :std/condition :std/stream)
+  (:import-from :std :with-gensyms)
   (:import-from :sb-ext :defglobal)
   (:import-from :ast :ast)
   (:export
    :with-html
+   :with-html-string
+   :htm :fmt :esc :str
    :html-output-stream
    :*html-output*
    :*html-lang*
    :*html-charset*
+   :*html-indent*
    :parse-html5
    :parse-html5-fragment
    :transform-html5-dom

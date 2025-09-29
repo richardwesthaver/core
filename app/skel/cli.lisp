@@ -84,7 +84,7 @@
             *args*)
       (cond
         ((boundp '*skel-project*)
-         (sk-print *skel-project* :exclude (if ast:*keep-ast* '(:ast :rules) '(:rules))))
+         (sk-print *skel-project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
         ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
         (t (skel-simple-error "skel not installed")))))

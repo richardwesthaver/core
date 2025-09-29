@@ -1,5 +1,5 @@
 (defpackage :dat/tests
-  (:use :cl :std :rt :dat :log :ast)
+  (:use :cl :std :rt :dat :log :ast :dat/html :dat/css :dat/tar)
   (:export))
 
 (in-package :dat/tests)
@@ -26,7 +26,6 @@
   (serialize (graph:class-graph 'id:id) :dot :path "/tmp/class-graph-test")
   #$dot -Tsvg /tmp/test -o/tmp/class-graph-test.svg$#
   (is (delete-file "/tmp/class-graph-test")))
-
 
 (deftest csv ()
   "Test CSV functionality."
@@ -63,6 +62,25 @@
         (istype 'dat/xml:xml-node xmlrep)
         (is (dat/xml:xmlrep-find-child-tag :body xmlrep))
         (is (dat/xml:xmlrep-tagmatch :html xmlrep))))))
+
+;; TODO 2025-09-29: 
+(deftest with-html ()
+  (setf *html-indent* 0)
+  (isequal (with-html-string (:a :href "foo"))
+           "<!DOCTYPE html>
+<a href='foo'></a>")
+  (setf *html-indent* 2)
+  (isequal
+   (with-html-string 
+     (htm (:a :href "foo")))
+   "<!DOCTYPE html>
+  <a href='foo'></a>"))
+
+(deftest css ()
+  (isequal 
+   ".PROJECT { color: lighseagreen; font-weight: bold; }
+" 
+   (css '((".PROJECT" :color lighseagreen :font-weight bold)))))
 
 (deftest toml ()
   (istype 'dat/toml::toml-document
@@ -149,7 +167,7 @@
     (is (delete-file path))))
 
 ;; FIX 2024-12-27: 
-(deftest tar-zst (:skip t)
+(deftest tar-zst ()
   (let ((path (format nil "/tmp/~A.tar.zst" (gensym "foo"))))
     (with-open-tar-file (foo path :direction :output :type 'v7-tar-file
                          :if-exists :overwrite

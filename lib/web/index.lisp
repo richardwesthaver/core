@@ -36,8 +36,8 @@
   (setf (content-type*) "text/plain")
   (format nil "showing org-files for ~@[ ~A~]." user))
 
-(deftag link (link body)
-  `(:a :href ,@link ,@body))
+(defun link (link body)
+  `(:a :href ,link ,body))
 
 (defmacro with-index-page (&optional (title "local index") &body body)
     `(with-html 
@@ -48,10 +48,10 @@
          (:body 
           (:div :class "nav"
            "( "
-           (link "https://compiler.company" "~")
-           (link "https://compiler.company/blog" "blog")
-           (link "https://compiler.company/docs" "docs")
-           (link "https://compiler.company/code" "code")
+           ,(link "https://compiler.company" "~")
+           ,(link "https://compiler.company/blog" "blog")
+           ,(link "https://compiler.company/docs" "docs")
+           ,(link "https://compiler.company/code" "code")
            " )")
           ,@body
           (:footer ("Last update: ~A" (now))))))))

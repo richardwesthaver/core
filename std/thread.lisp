@@ -1178,7 +1178,12 @@ bound to RET."
           (threads (map 'list #'worker-thread (workers pool))))
       (cond
         (wait
-         (shutdown-channel channel pool)
+         (join-thread
+          (make-thread 
+           (lambda ()
+             (shutdown-channel channel pool))
+           :name (format nil "%shutdown-pool"))
+          :timeout (and (numberp wait) wait))
          threads)
         (t
          (cons
@@ -1189,7 +1194,7 @@ bound to RET."
 (definline start-thread-pool (pool)
   (declare (thread-pool pool))
   (setf (alive pool) t)
-  (ensure-working-p *thread-pool*)
+  (ensure-working-p pool)
   (start-workers pool)
   pool)
 
@@ -1199,14 +1204,14 @@ bound to RET."
   (start-thread-pool pool))
   
 (defmethod shutdown ((pool thread-pool)) 
-  (funcall (kernel pool) :shutdown)
+  (stop-thread-pool pool :wait t)
   (remhash (name pool) *thread-pool-table*))
 
-(defmethod start ((pool thread-pool)) (funcall (kernel pool) :start))
+(defmethod start ((pool thread-pool)) (start-thread-pool pool))
 
-(defmethod stop ((pool thread-pool) &key) (funcall (kernel pool) :stop))
+(defmethod stop ((pool thread-pool) &key) (stop-thread-pool pool))
 
-(defmethod reset ((pool thread-pool) &key) (funcall (kernel pool) :reset))
+(defmethod reset ((pool thread-pool) &key) (reset-thread-pool pool))
 
 (defun end-thread-pool (&key wait)
   (when-let ((pool *thread-pool*))
@@ -1253,7 +1258,7 @@ Calling `broadcast-work' from inside a worker is an error."
   (setf *lisp-exiting-p* t))
 
 (defun exit-thread-pools ()
-  (std/hash:maphash-values (lambda (x) (stop-thread-pool x :wait t)) *thread-pool-table*))
+  (std/hash:maphash-values (lambda (x) (stop-thread-pool x :wait 2)) *thread-pool-table*))
 
 (pushnew 'exit-workers sb-ext:*exit-hooks*)
 (pushnew 'exit-thread-pools sb-ext:*save-hooks*)

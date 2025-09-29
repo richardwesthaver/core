@@ -27,8 +27,8 @@
 (defvar *html-prologue* "<!DOCTYPE html>"
   "A string which is printed as the first line of output when :PROLOGUE is T.")
 
-(declaim ((or null (integer 0 8)) *html-indent*))
-(defvar *html-indent* nil
+(declaim ((integer 0 8) *html-indent*))
+(defvar *html-indent* 2
   "Whether to insert line breaks and indent - when non-nil the value is assumed
 to be a positive integer indicating the number of whitespace chars to insert
 for indentation.")
@@ -107,7 +107,7 @@ mode and HTML5 mode).  For all other tags, it will always generate
 
 (defun n-spaces (n)
   "A string with N spaces - used by indentation."
-  (make-array n :element-type 'base-char))
+  (make-array n :element-type 'base-char :initial-element #\space))
 
 (defun escape-char-p (c)
   (or (some (lambda (x) (char= c x)) "<>&'\"")))
@@ -357,8 +357,9 @@ can use EQL specializers on the first argument."
   (let ((tag (maybe-downcase tag))
         (body-indent
           ;; increase *HTML-INDENT* by 2 for body -- or disable it
-          (when (and *html-indent* (not (member tag *html-no-indent-tags* :test #'string-equal)))
-            (+ 2 *html-indent*))))
+          (if (and *html-indent* (not (member tag *html-no-indent-tags* :test #'string-equal)))
+              (+ 2 *html-indent*)
+              0)))
     (declare ((integer 0 8) body-indent))
     (nconc
      (if *html-indent*
@@ -417,9 +418,7 @@ flattened list of strings. Utility function used by TREE-TO-COMMANDS-AUX."
   (let ((total-size 0))
     (dolist (string string-list)
       (incf total-size (length string)))
-    (let ((result-string (make-string total-size
-                                      #+:lispworks #+:lispworks
-                                      :element-type 'lw:simple-char))
+    (let ((result-string (make-string total-size :element-type 'base-char))
           (curr-pos 0))
       (dolist (string string-list)
         (replace result-string string :start1 curr-pos)
@@ -430,20 +429,19 @@ flattened list of strings. Utility function used by TREE-TO-COMMANDS-AUX."
   "Concatenates all arguments which should be string into one string."
   (funcall #'string-list-to-string string-list))
 
-(defun tree-to-commands (tree  &key (prologue *html-prologue*) (indent *html-indent*) (stream *html-output*))
+(defun tree-to-commands (tree  &key (prologue *html-prologue*) indent (stream *html-output*))
   (declare (optimize speed space))
-  (when (and indent
-             (not (integerp indent)))
-    (setq *html-indent* 0))
   (let ((in-string-p t)
         collector
         string-collector
         (template (tree-to-template tree)))
     (when prologue
-      (push +newline+ template)
+      ;; (push +newline+ template)
       (when (eq prologue t)
         (setq prologue *html-prologue*))
       (push prologue template))
+    (when indent
+      (setq *html-indent* indent))
     (flet ((emit-string-collector ()
              "Generate a WRITE-STRING statement for what is currently
 in STRING-COLLECTOR."
@@ -479,17 +477,20 @@ in STRING-COLLECTOR."
                         collector))
         (nreverse collector)))))
 
-(defmacro with-html ((out &key stream (indent *html-indent*) (prologue *html-prologue*))
+(defmacro with-html ((out 
+                      &key stream
+                           indent
+                           (prologue *html-prologue*))
                      &body body)
   "Transform the enclosed BODY consisting of HTML s-expressions
 into Lisp code to write the corresponding HTML as strings to OUT - which
 should either hold a stream or which'll be bound to STREAM if supplied."
   (multiple-value-bind (declarations forms) (extract-declarations body)
-    `(let ((,out ,(or stream '(make-synonym-stream '*standard-output*))))
+    `(let ((,out ,(or stream out)))
        ,@declarations
-       (check-type ,out stream)
+       (check-type ,out stream)       
        (macrolet ((htm (&body body)
-                    `(with-html (,',out nil :prologue nil :indent ,,indent)
+                    `(with-html (,',out :stream nil :prologue nil :indent ,',indent)
                        ,@body))
                   (fmt (&rest args)
                     `(format ,',out ,@args))
@@ -502,3 +503,8 @@ should either hold a stream or which'll be bound to STREAM if supplied."
                       `(let ((,result ,thing))
                          (when ,result (princ ,result ,',out))))))
          ,@(tree-to-commands forms :stream out :indent indent :prologue prologue)))))
+
+(defmacro with-html-string (&body body)
+  (with-gensyms (out stream)
+    `(with-output-to-string (,stream)
+       (with-html (,out :stream ,stream) ,@body))))

@@ -749,10 +749,9 @@ either side, and deletes both sides of a link."
 ;;;###autoload
 (defun org-graph-init (&optional no-readme)
   (interactive)
-  (unless org-graph
-    (org-graph-kill-all no-readme)
-    (org-id-update-id-locations (org-graph-files))
-    (org-graph-from-id-locations t)))
+  (org-graph-kill-all no-readme)
+  (org-id-update-id-locations (org-graph-files))
+  (org-graph-from-id-locations t))
 
 ;;;###autoload
 (defun org-graph-load ()

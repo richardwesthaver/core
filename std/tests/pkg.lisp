@@ -191,5 +191,5 @@ These tests are copied directly from the Alexandria test suite."
   (is= (simple-type-id t) 12)
   (is= (simple-type-id #\c)
        (ldb (byte 8 8) (core-type-id #\c)))
-  (isnt (= (core-type-id (make-array 42 :element-type 'character)) 
+  (isnt (= (core-type-id (make-array 42 :element-type 'character))
            (core-type-id (make-array 0 :element-type 'base-char)))))
