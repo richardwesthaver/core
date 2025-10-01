@@ -7,14 +7,14 @@
 (defvar *gen* nil)
 
 (eval-always
-  (defvar *gen-designators* (list :c :cpp :cu :rs :py :js :zig :cl :el :scm)))
+  (defvar *gen-designators* (list :c :cpp :cu :rs :py :js :apl :forth)))
 
 (deftype gen-designator () `(or (member ,@*gen-designators*) null))
 
 (defparameter *gen-backend-table* (make-hash-table))
 
 (defparameter *code-reader* 'gen)
-(defvar *backup-readtable* (copy-readtable nil))
+(defparameter *backup-readtable* (copy-readtable nil))
 
 (defvar *gen-warnings* '(:hyphen))
 
@@ -22,9 +22,3 @@
   (let ((syms))
     (do-external-symbols (s :common-lisp) (push s syms))
     syms))
-
-;; (defparameter *opencl-backend*
-;;   (append *cpp-backend* '(vector-initialization)))
-
-;; (defparameter *glsl-backend*
-;;   (append *c-backend* '(layout)))

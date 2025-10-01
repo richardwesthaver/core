@@ -51,7 +51,7 @@
                append
                   (loop for k in langs
                         collect
-                           `(let ((tag ',i))
+                           `(let ((tag ',i)) ; anaphor
                               (declare (ignorable tag))
                               (defmacro ,(intern (format nil "~:@(~a~)" i) (gen-package k)) ,lambda-list
                                 ,@body)))))))

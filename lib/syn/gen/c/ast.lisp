@@ -509,7 +509,7 @@
   "Jump statements with optional item"
   `(make-instance 'jump-statement
      :kind
-     (make-node ,syn/gen::tag)
+     (make-node ,tag)
      :members
      ,(when item `(make-node ,item))))
 
@@ -548,7 +548,7 @@
 ;;; Traversal
 ;;; A traverser which checks the identifier for c-conformity
 ;;; and automatically solves naming problems.
-(defclass renamer ()
+(defclass renamer (ast-traverser)
   ((used-names :initform (make-hash-table :test 'equal))
    (name-map :initform (make-hash-table :test 'equal))))
 (defgeneric check-and-get-name (renamer check-name))
@@ -610,7 +610,7 @@
         (check-and-get-name rn (val item))))
 
 ;;; This Traverser checks whether braces really are necessary.
-(defclass decl-blocker ()
+(defclass decl-blocker (ast-traverser)
   ((names :initform `(,(make-hash-table)))
    (delta-names :initform '(nil))
    (in-decl :initform '(nil))
@@ -680,7 +680,7 @@
 (decl-blocker-extra-nodes function-definition struct-definition for-statement compound-statement)
 
 ;;; This traverser hides "{}" in ifs where possible
-(defclass if-blocker ()
+(defclass if-blocker (ast-traverser)
   ((parent-node :initform '())
    (statement-count :initform '(0))
    (first-statement :initform '(nil))
@@ -774,11 +774,11 @@
 
 ;;; This traveser removes ambiguous nested compound-statements in else-if
 ;;; to reduce indentation.
-(defclass else-if-traverser ()())
+(defclass else-if-traverser (ast-traverser) ())
 
 ;;; Remove nested ast (progn (progn (progn ...)))
 ;;; Required for proper placement of curly braces (esp. for if-else)
-(defclass nested-ast-remover () ())
+(defclass nested-ast-remover (ast-traverser) ())
 (defmethod traverse :after ((nar nested-ast-remover) (item ast) level)
   (with-slots (ast) item
     (when (and (eql (length ast) 1)
