@@ -237,8 +237,8 @@ element in the vector."
 
 (defclass table-info ()
   ((name :initarg :name :reader name)
-   (offset :initarg :offset :reader offset)
-   (size :initarg :size :reader size)))
+   (offset :initarg :offset :reader io::offset)
+   (size :initarg :size :reader io::size)))
 
 (defmethod print-object ((object table-info) stream)
   (print-unreadable-object (object stream :type t)

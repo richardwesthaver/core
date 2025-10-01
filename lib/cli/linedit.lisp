@@ -1127,8 +1127,8 @@ to the appropriate home directory."
     (unless (and (underlying-directory-p dir)
 		 (not (wild-pathname-p dir)))
       (return-from directory-complete (values nil 0)))
-    (with-directory-iterator (next dir)
-      (loop for entry = (next)
+    (with-directory-iterator (%next dir)
+      (loop for entry = (%next)
 	    while entry
 	    do (let* ((full (funcall namefun entry))
 		      (diff (mismatch string full)))

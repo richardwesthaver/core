@@ -1,7 +1,26 @@
 (in-package :c)
 (include <stdio.h>)
 
+(function testit int ((i int))
+  (cond ((== i 0))
+	((== i 1) (comment "do nothing"))
+	((== i 2) 2)
+	((== i 3) (comment "do nothing")))
+  (comment "first block")
+  (if (== i 4) 
+      4
+      (comment "do nothing"))
+  (comment "second block")
+  (if (!= i 5)
+      (comment "do nothing")
+      5)
+  0)
+
 (function hello_world void () (printf "Hello, World!\\n"))
 
 (function main int ()
+  (printf "%i\\n" (testit 0))
+  (printf "%i\\n" (testit 1))
+  (printf "%i\\n" (testit 2))
+  (printf "%i\\n" (testit 3))
   (hello_world))

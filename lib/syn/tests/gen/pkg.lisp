@@ -20,4 +20,5 @@
   `(let ((%in ,file)
          (%out (make-pathname :defaults ,file :type (string-downcase *gen*)))
          (%bin (make-pathname :defaults ,file :type "bin")))
-     ,@body))
+     ,@body
+     (unload-gen :c)))

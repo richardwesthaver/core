@@ -126,14 +126,14 @@
                            ,@(test-form self))))))
   (funcall (test-fn self)))
 
-(defmethod compile-test ((self test) &key declare &allow-other-keys)
+(defmethod compile-test ((self test) &key declare)
   (compile
    (test-fn self)
    `(lambda ()
       ,@(when declare `((declare ,declare)))
       ,@(test-form self))))
 
-(defmethod compile-test ((self symbol) &key declare (suite *test-suite*) &allow-other-keys)
+(defmethod compile-test ((self symbol) &key declare (suite *test-suite*))
   (compile-test (find-test suite self) :declare declare))
 
 (defun compile-suite (&optional (suite *test-suite*))

@@ -337,7 +337,7 @@
     (when (node-slot linebreak)
       (format stream "~&~A" indent))
     (format stream "~A" (node-slot chars))
-    (format stream "~A" (node-slot comment)))
+    (format stream "~A~%" (node-slot comment)))
   ;; attr
   (define-code-printer :before attribute-expression
     (push-sign 'skip-first-attribute)

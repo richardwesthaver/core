@@ -20,9 +20,11 @@
 
 If TEST returns a truthy value, return a PASS test-result, else return
 a FAIL."
-  `(if *testing*
-       (push-result (funcall #'rt::%test ,test ',test) *testing*)
-       (funcall #'rt::%test ,test ',test)))
+  (with-gensyms (ret)
+    `(let ((,ret (funcall #'rt::%test ,test ',test))) 
+       (when *testing*
+         (push-result ,ret *testing*))
+       (mumble "~A" ,ret))))
 
 ;; convenience functions wrapping IS
 (macrolet ((defis (name op args)
