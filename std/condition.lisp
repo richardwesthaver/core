@@ -10,15 +10,15 @@
   "A list of condition handlers - often useful in asynchronous contexts.")
 
 ;;; Utils
-(declaim (inline car-eql))
-(defun car-eql (a cons)
-  "Return T if the CAR of CONS is EQL to A."
-  (eql a (car cons)))
-
 (defmacro nyi! (&optional comment)
   `(prog1
        (error "Not Yet Implemented!")
      (when ',comment (print ',comment))))
+
+(declaim (inline car-eql))
+(defun car-eql (a cons)
+  "Return T if the CAR of CONS is EQL to A."
+  (eql a (car cons)))
 
 ;;; Standard Conditions
 (define-condition std-error (error)

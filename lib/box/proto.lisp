@@ -9,4 +9,3 @@
 
 (defconfig box-config (ast) ()
   (:documentation "Base configuration class for BOX objects."))
-

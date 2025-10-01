@@ -136,6 +136,7 @@
    :std-error :error-message
    :define-error-reporter
    :deferror
+   :car-eql
    :nyi!
    :required-argument
    :ignore-some-conditions

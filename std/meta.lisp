@@ -233,14 +233,20 @@ include NIL values. Likewise with UNBOUNDP for unbound slot values."
                      (if (consp slot)
                          `(,(car slot) :initarg ,(sb-int:keywordicate (car slot)) ,@(cdr slot))
                          `(,slot :initarg ,(sb-int:keywordicate slot)))))
-        (fun (member :auto options :test #'std/condition::car-eql)))
+        (fun (find :auto options :test #'std/condition:car-eql))
+        (meth (find :methods options :test #'std/condition:car-eql)))
     (when fun
-      (setq options (remove (car fun) options))
-      (setq fun (cadar fun)))
+      (setq options (remove :auto options :test #'std/condition:car-eql)
+            fun (cadr fun)))
+    (when meth
+      (setq options (remove :methods options :test #'std/condition:car-eql)
+            meth (cdr meth)))
     `(prog1
          (defclass ,name ,superclasses ,slots ,@options)
-       (when ',fun
-         (make-instance! ,name ,@(loop for s in slots collect (if (consp s) (car s) s)))))))
+       (when ,fun
+         (make-instance! ,name ,@(loop for s in slots collect (if (consp s) (car s) s))))
+       ,@(when meth
+           (mapcar (lambda (x) `(defmethod ,(car x) ,@(cdr x))) meth)))))
 
 (defmacro defmethods (name &body forms)
   "Define multiple methods for a generic function. Each member of FORMS is passed

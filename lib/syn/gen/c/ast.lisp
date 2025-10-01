@@ -43,11 +43,13 @@
 (defnode array-reference  () (array indizes))
 (defnode object-reference  () (object component))
 (defnode pointer-reference  () (pointer component))
-(defnode c-type  () (type))
-(defmethod ast ((self c-type)) (list (slot-value self 'type)))
+
+(defnode c-type () (type) (:ast (self) (list (slot-value self 'type))))
+
 (defnode float-type () (number))
-(defnode specifier () (specifier))
-(defmethod ast ((self specifier)) (list (slot-value self 'specifier)))
+
+(defnode specifier () (specifier) (:ast (self) (list (slot-value self 'specifier))))
+
 (defnode function-pointer () (identifier parameters))
 
 ;;; Expressions

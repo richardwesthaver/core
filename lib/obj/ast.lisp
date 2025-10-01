@@ -58,7 +58,12 @@ that it can be GC'd.")
 
 (defmacro defnode (name supers slots &rest opts)
   "Define a new subclass of NODE."
-  `(defclass! ,name ,(safe-superclasses 'node supers) ,slots ,@opts))
+  (let ((ast (find :ast opts :test #'std/condition:car-eql)))
+    (when ast
+      (setq opts (remove :ast opts :test #'std/condition:car-eql)
+            ast (cdr ast)))
+    `(prog1 (defclass! ,name ,(safe-superclasses 'node supers) ,slots ,@opts)
+       ,@(when ast `((defmethod ast ((,(caar ast) ,name)) ,@(cdr ast)))))))
 
 ;;; WRAP-OBJECT/UNWRAP-OBJECT
 (declaim (inline unwrap-object)) ;; inline -200

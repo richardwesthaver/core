@@ -19,9 +19,6 @@
 ;;; Code:
 (in-package :obj/project)
 
-;; TODO 2023-09-11: research other hashing strategies - maybe use the
-;; sxhash as a nonce for UUID
-;; note that the sk-meta class does not inherit from skel or ast.
 ;;; Meta
 (defclass project-metadata ()
   ((name :initarg :name :initform nil :type (or null string) :accessor name)

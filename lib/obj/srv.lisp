@@ -38,7 +38,7 @@
 
 ;;; Vars
 (defvar *service* nil)
-(defvar *service-table* (make-hash-table :weakness :value))
+(defvar *service-table* (make-hash-table))
 (defvar *request* nil)
 (defvar *response* nil)
 
