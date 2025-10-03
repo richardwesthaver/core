@@ -100,13 +100,37 @@ directory recursively.")
   (:documentation "A FILE-COMPONENT which matches a SB-GROVEL constants file.")
   (:keyword :grovel))
 
+;;; Component Ops
+;; Functions which are performed directly on instances of the COMPONENT class
+;; in the calling thread.
+(defun read-component (comp &key)
+  "Read a component from its PATH slot.")
+
+(defun compile-component (comp &key)
+  "Compile a component.")
+
+(defun load-component (comp &key)
+  "Load a component.")
+
+(defun find-component (path self)
+  "Find a component designated by PATH which is either an atom designating a
+component name or a list indicating a sequence of module component names
+ending with the target component name."
+  (declare (component self))
+  (if (atom path)
+      (find path (components self) :test 'string-equal :key 'name)
+      (let ((c self))
+        (loop for p in path
+              do (setf c (find p (components c) :test 'string-equal :key 'name))
+              finally (return c)))))
+
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
 (defkernel system-task (task) ())
 
 ;;; Jobs
 ;; System Jobs are effectively plans composed of system tasks
-(defkernel system-job (job) ())
+(defkernel system-job (job system-task) ())
 
 ;;; Provider
 (eval-when (:compile-toplevel :load-toplevel)
@@ -196,9 +220,8 @@ directory recursively.")
 (defun unload-module () (setf *module* nil))
 
 (defun module-provide-system (name)
-  "Provide a SYSTEM, adding valid entries to the *MODULES*
-  variable. The function USE should be called in order to load and activate a
-  module, but the deprecated PROVIDE function is also supported."
+  "Provide a SYSTEM, adding valid entries to the *MODULES* variable. The function
+USE should be called in order to load and activate a module."
   (when-let ((sys (find-system name)))
     (load-system sys)
     t))
@@ -225,7 +248,7 @@ directory recursively.")
   ((version :accessor version)
    description
    (plan :description "The default plan associated with this object which specifies the ordering of
-components to be processed in an async context."
+system jobs to be executed in an async context."
          :initform :serial))
   (:keyword :sys))
 

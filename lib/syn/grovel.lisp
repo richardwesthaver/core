@@ -1,6 +1,6 @@
 ;;; grovel.lisp --- Tree-sitter-based groveler
 
-;; Targeting C for now, but easily extensible to other tree-sitter-parseable
+;; Targeting C for now, but possibly extensible to other tree-sitter-parseable
 ;; langs.
 
 ;;; Code:

@@ -59,7 +59,3 @@
      (lambda (dir) (push (uiop:directory-files dir "*.json") res)) 
      *tree-sitter-language-directory*)
     (flatten res)))
-
-;;   (map 'list (lambda (x) (with-open-file (s x)
-;;                            (dat/json:json-read s)))
-;;        (tree-sitter-language-files))))

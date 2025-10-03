@@ -17,8 +17,7 @@
                :keyutils/tests :rocksdb/tests :rustls/tests :alsa/tests
                :sndfile/tests :ssh2/tests :tree-sitter/tests :ublk/tests
                :uring/tests :xkb/tests :zstd/tests :chromaprint/tests
-               :chromaprint/tests :jack/tests :blas/tests :jpeg/tests
-               :openssl/tests :wasmer/tests :ffmpeg/tests :syslog/tests)
+               :jack/tests :blas/tests :jpeg/tests :openssl/tests :wasmer/tests :ffmpeg/tests :syslog/tests)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :ffi)))
 

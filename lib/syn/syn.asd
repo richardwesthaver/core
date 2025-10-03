@@ -50,6 +50,7 @@
                    (:file "sym")
                    (:file "print")
                    (:file "macs")))))
+               (:file "fmt")
                (:file "lint")
                (:file "tempo")
                (:file "grovel")

@@ -11,6 +11,7 @@
                (:file "json")
 	       (:file "m3u")
                (:file "id3")
+               (:file "css")
                (:module "parquet"
                 :components
                 ((:file "gen")

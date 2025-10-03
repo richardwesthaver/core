@@ -67,8 +67,7 @@
      (remove-hook h 'slime-company-maybe-enable))
    (slime-company-disable)))
 
-;;; ----------------------------------------------------------------------------
-;;; * Customization
+;;; Customization
 
 (defgroup slime-company nil
   "Interaction between slime and the company completion mode."
@@ -171,8 +170,7 @@ be active in derived modes as well."
            ("\\b\\([A-Z0-9:+%<>#*\\.\\-]\\{2,\\}\\)\\b"
             . (1 font-lock-variable-name-face))))))
 
-;;; ----------------------------------------------------------------------------
-;;; * Activation
+;;; Activation
 
 (defun slime-company-maybe-enable ()
   (when (slime-company-active-p)
@@ -184,8 +182,7 @@ be active in derived modes as well."
 (defun slime-company-disable ()
   (setq company-backends (remove 'company-slime company-backends)))
 
-;;; ----------------------------------------------------------------------------
-;;; * Internals
+;;; Internals
 
 (defun slime-company--fetch-candidates-async (prefix)
   (when (slime-connected-p)
@@ -341,9 +338,7 @@ In the REPL we disregard anything not in the current input area."
                 (nth 4 sp))
         beg))))
 
-;;; ----------------------------------------------------------------------------
-;;; * Company backend function
-
+;;; Company backend function
 (defvar *slime-company--meta-request* nil
   "Workaround lock for company-quickhelp, which invokes 'quickhelp-string' or
 doc-buffer' while a 'meta' request is running, causing SLIME to cancel requests.")

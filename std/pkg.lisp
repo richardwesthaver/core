@@ -1016,6 +1016,7 @@
    :probe-delete-directory
    :delete-directories
    :read-file
+   :read-lisp-file
    :file-read-forms
    :tmpfile
    :dir

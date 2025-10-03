@@ -891,7 +891,25 @@ units should be either :px (the default) or :%."
     (number (format nil "~(~A~): ~A;" k v))
     (symbol (concatenate 'string (string-downcase k) ": " (string-downcase v) ";"))
     (string (concatenate 'string (string-downcase k) ": " v ";"))
-    (list (concatenate 'string (string-downcase k) " { " (format-declarations-list v) "}"))))
+    (vector (format nil "~(~A~): ~{~A~^, ~};"
+                    k
+                    (mapcar
+                     (lambda (x)
+                       (typecase x
+                         (list (eval x))
+                         (function (funcall x))
+                         (symbol (string-downcase x))
+                         (t (format nil "~A" x))))
+                     (coerce v 'list))))
+    (list 
+     (if (fboundp (car v))
+         (format nil "~(~A~): ~A;" 
+                 k 
+                 (let ((x (apply (car v) (cdr v))))
+                   (typecase x
+                     (color (print-hex-rgb x))
+                     (t x))))
+         (concatenate 'string (string-downcase k) " { " (format-declarations-list v) "}")))))
 
 (defun format-declarations-list (list-of-declarations)
   (apply #'concatenate 
@@ -906,6 +924,7 @@ units should be either :px (the default) or :%."
 (defun format-rule (selector declarations)
   (concatenate 'string (format-selector selector) 
 	       " { " (format-declarations-list declarations) "}"))
+
 ;;; generator
 (defun inline-css (rule) (format-declarations-list rule))
 
@@ -921,5 +940,5 @@ units should be either :px (the default) or :%."
   (with-open-file (stream file-path :direction :output :if-exists :supersede :if-does-not-exist :create) 
     (format stream (css directives))))
 
-;; (css '((".PROJECT" :color lighseagreen :font-weight bold)))
-                   
+(definline compile-css-file (input output)
+  (dat/css:compile-css output (read-lisp-file input)))

@@ -34,7 +34,7 @@
       org-export-with-date t
       org-export-with-drawers t
       org-export-async-debug t
-      org-export-in-background t
+      ;; org-export-in-background t
       org-html-doctype "html5"
       org-html-html5-fancy t
       org-src-fontify-natively t

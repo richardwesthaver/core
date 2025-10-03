@@ -16,6 +16,10 @@
   (:use :cl :std)
   (:export :language :lang :*language*))
 
+(defpackage :syn/fmt
+  (:use :cl :std :config :ast)
+  (:export :fmt :fmt-config))
+
 (defpackage :syn/gen
   (:use :cl :std :doc :id :graph :ast)
   (:export :gen-designator :gen-condition :gen-condition

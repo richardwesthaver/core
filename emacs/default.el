@@ -429,7 +429,8 @@ as the first argument to SWANK:START-SERVER on the Lisp side."
 (add-hook 'python-mode-hook 'eglot-ensure)
 
 ;;; Javascript
-(setq js-indent-level 2)
+(setq js-indent-level 2
+      css-indent-offset 2)
 
 ;;; Bash
 (setq sh-basic-offset 2)

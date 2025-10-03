@@ -146,7 +146,7 @@ to trigger `skel-actions' based on the `skel-behavior' value."
 be enabled. This function is added as a hook to
 `lisp-data-mode-hook'.")
 
-(defvar skel-hashtable (make-hash-table :test #'equal)
+(defvar skel-table (make-hash-table :test #'equal)
   "Internal table of available skeletons.")
 
 (defcustom skel-state 'passive

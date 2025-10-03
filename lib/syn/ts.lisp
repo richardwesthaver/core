@@ -20,10 +20,10 @@
   `(with-ts-lang syn/lang:*language* ,lang
      ,@body))
 
-(defun lang-stats (lang)
+(defun lang-stats (lang &optional names)
   (with-ts-lang lang l
-    (cons (ts-language-symbol-count l)
-          (ts-language-field-count l))))
+    `(:symbols ,(ts-language-symbol-count l)
+      :fields ,(ts-language-field-count l))))
 
 (defun parse-file (lang path &key (produce-cst t) (consume t) (start 0) (end))
   (parse-string 

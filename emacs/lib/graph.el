@@ -129,7 +129,7 @@ non-nil visit each node and collect all edges found."
                    (org-with-file-buffer v
                      (goto-char pos)
                      (org-graph-node-at-point graph)
-                     (when edges (org-graph-edges-at-point graph t))))
+                     (when edges (org-graph-edges-at-point graph))))
                (warn "couldn't find node %s %s" k v))))
 	 (org-graph-nodes graph))
 	(progress-reporter-done prog))

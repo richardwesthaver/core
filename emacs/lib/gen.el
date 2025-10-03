@@ -20,9 +20,40 @@
 
 ;;; Commentary:
 
-;; 
+;; Based on C-MERA's cm-mode.el which is quite simple. The mode
+;; searches for a 'cm.indent' file in the current
+;; directory/user-emacs-directory and reads it if it exists.
+
+;; In our case we prefer to statically define the supported keywords
+;; and indentation as much as possible and providing a configuration
+;; API intended for access via SKEL only.
 
 ;;; Code:
+(defvar gen-keywords
+  '(for decl function continue return sizeof typedef void int float
+     double long char unsigned signed short auto bool enum struct
+     while switch include pragma comment inline const volatile true
+     false private protected public class template instantiate
+     constructor destructor typename virtual pure cout endl
+     using-namespace from-namespace printf fn))
+
+(defvar gen-keywords-rx nil)
+
+;; TODO 2025-10-01: gen.fmt
+(define-minor-mode gen-minor-mode
+  "Support for SYN/GEN core syntax."
+  :lighter " Gen"
+  (let ((tail (apply #'concat (mapcar #'(lambda (s) (concat "\\|" (symbol-name s))) (cdr gen-keywords)))))
+    (setq gen-keywords-rx (concat "\\<\\(" (symbol-name (car gen-keywords)) tail "\\)\\>"))
+    (font-lock-fontify-buffer))
+  (message "Gen minor-mode enabled."))
+
+(add-hook 'gen-minor-mode-hook
+  (lambda ()
+    (when gen-keywords-rx
+      (font-lock-add-keywords 
+       nil
+       `((,gen-keywords-rx . font-lock-keyword-face))))))
 
 (provide 'gen)
 ;;; gen.el ends here

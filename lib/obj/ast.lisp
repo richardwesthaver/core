@@ -259,9 +259,9 @@ slot.")
                      (write-char #\newline stream))
             (.write (ast self)))))
   (:method ((self ast) (stream pathname) &rest args)
-    (apply 'write-ast self (open stream) args))
+    (apply 'write-ast self (open stream :direction :output) args))
   (:method ((self ast) (stream string) &rest args)
-    (apply 'write-ast self (open stream) args)))
+    (apply 'write-ast self (open stream :direction :output) args)))
 
 (defun read-ast-string (self str) (with-input-from-string (s str) (read-ast self s)))
 

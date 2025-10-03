@@ -64,11 +64,11 @@ Evaluation took:
   3,111,793,188 processor cycles
   0 bytes consed
 |#
-(defbench saxpy ()
-  (println :BLAS-SAXPY)
-  (test-saxpy 10000000)
-  (println :LISP-SAXPY)
-  (test-lisp-saxpy 10000000))
+;; (defbench saxpy ()
+;;   (println :BLAS-SAXPY)
+;;   (test-saxpy 10000000)
+;;   (println :LISP-SAXPY)
+;;   (test-lisp-saxpy 10000000))
 
 ;;; Level 2
 

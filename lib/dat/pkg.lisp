@@ -151,7 +151,7 @@
    :show-id3-headers))
 
 (defpkg :dat/css
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :color)
   (:export
    :parse-css
    :*minify-css*
@@ -161,7 +161,8 @@
    :inline-css
    ;; :compile-css-selector
    ;; :compile-css-block
-   :compile-css))
+   :compile-css
+   :compile-css-file))
 
 (defpkg :dat/html
   (:use :cl :dat/proto :std/macs :std/string :std/serde :std/condition :std/stream)

@@ -13,8 +13,7 @@
   (comment "second block")
   (if (!= i 5)
       (comment "do nothing")
-      5)
-  0)
+      5))
 
 (function hello_world void () (printf "Hello, World!\\n"))
 
