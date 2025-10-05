@@ -170,22 +170,22 @@
    :if-exists :supersede)
   #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json (%stash)
-  (req:fetch "https://packy.compiler.company/data/parquet.json"
+  (req:fetch "https://packy.otom8.dev/data/parquet.json"
    ".stash/parquet.json"
    :if-exists :supersede))
  (freedesktop.org.xml (%stash)
-  (req:fetch "https://packy.compiler.company/data/freedesktop.org.xml"
+  (req:fetch "https://packy.otom8.dev/data/freedesktop.org.xml"
    ".stash/freedesktop.org.xml"))
  (parquet-test-data (%stash) 
-  (req:fetch "https://packy.compiler.company/data/test/alltypes_plain.parquet"
+  (req:fetch "https://packy.otom8.dev/data/test/alltypes_plain.parquet"
    ".stash/alltypes_plain.parquet"
    :if-exists :supersede))
  (sndfile-test-data (%stash)
-  (req:fetch "https://packy.compiler.company/data/test/Weltschmerz.wav"
+  (req:fetch "https://packy.otom8.dev/data/test/Weltschmerz.wav"
    ".stash/Weltschmerz.wav"
    :if-exists :supersede))
  (ffmpeg-test-data (%stash)
-  (req:fetch "https://packy.compiler.company/data/test/my_seat_and_weep.flac"
+  (req:fetch "https://packy.otom8.dev/data/test/my_seat_and_weep.flac"
    ".stash/my_seat_and_weep.flac"
    :if-exists :supersede))
  (test-data (ffmpeg-test-data sndfile-test-data parquet-test-data))

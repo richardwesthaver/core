@@ -37,6 +37,7 @@
                (:file "ini")
                (:file "toml")
                (:file "arff")
+               (:file "bib")
                (:file "tar")
                (:file "midi")
                (:file "png")

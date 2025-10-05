@@ -25,7 +25,7 @@
 ;;          :working-suffix ".org")))
 
 (setq org-html-style-default ""
-      ;; org-html-scripts ""
+      org-html-scripts nil
       org-html-htmlize-output-type 'css
       org-export-htmlize-output-type 'css
       org-export-allow-bind-keywords t
@@ -35,10 +35,15 @@
       org-export-with-drawers t
       org-export-async-debug t
       ;; org-export-in-background t
+      org-html-divs '((preamble "section" "preamble") (content "main" "content") (postamble "section" "postamble"))
+      org-html-container-element "div"
+      org-html-viewport '((width "device-width") (initial-scale 1))
       org-html-doctype "html5"
       org-html-html5-fancy t
       org-src-fontify-natively t
       org-export-with-broken-links 'mark
+      org-html-checkbox-type 'unicode
+      ;; org-html-creator-string
       make-backup-files nil
       debug-on-error t
       org-id-link-to-org-use-id t)

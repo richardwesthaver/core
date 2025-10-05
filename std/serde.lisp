@@ -30,26 +30,20 @@
   ()
   (:documentation "An error which occurs during object deserialization."))
 
-;;; Serialize
-(defgeneric serializable-p (self)
-  (:method ((self t)) nil)
-  (:documentation "Return non-nil of object SELF is serializable."))
-
 (defgeneric serialize (obj format &key &allow-other-keys)
   (:documentation "Serialize OBJ to FORMAT."))
-;;; Deserialize
-(defgeneric deserializable-p (self)
-  (:method ((self t)) nil)
-  (:documentation "Return non-nil if object SELF is deserializable."))
 
 (defgeneric deserialize (from format &key &allow-other-keys)
   (:documentation "Deserialize FROM into an object of type FORMAT."))
 
 (defgeneric ser (self)
   (:documentation "Access the serializer of SELF."))
+
 (defgeneric (setf ser) (new self))
+
 (defgeneric de (self)
   (:documentation "Access the deserializer of SELF."))
+
 (defgeneric (setf de) (new self))
 
 (defgeneric serde (from to)
@@ -60,6 +54,12 @@ FROM and TO should both specialize on object instances.
 Calling this function requires you to initialize the arguments instead of
 relying on a designated format and generating an object in the method body."))
 
+;; (defmacro defde (fmt &body body))
+;; (defmacro defser (fmt &body body))
+;; (defmacro defserde (fmt &body body))
+
+(defglobal *io-table* (make-hash-table))
+
 (defmacro define-io (name &body body)
   "Define a set of readers and writers of category NAME.
 
@@ -68,6 +68,7 @@ BODY contains elements of the form:
 (OBJECT &KEY READ WRITE)"
   (when body
     `(progn
+       (setf (gethash ,(std/sym:keywordicate name) *io-table*) '(:read nil :write nil))
        (defmacro ,(symbolicate 'read- name) (ty from)
          `(,(intern (string (symbolicate 'read- ',name '- ty)) ,*package*) ,from))
        (defmacro ,(symbolicate 'write- name) (ty obj to)

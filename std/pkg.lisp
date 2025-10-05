@@ -813,10 +813,9 @@
   (:import-from :std/type :octet-vector :*type-classes* 
    :type-class-name-of :type-class-name :type=)
   (:export :define-io
-   :serde 
-   :serializable-p 
-   :deserializable-p :ser :de :serialize 
-   :deserialize :serde-condition :serde-error :serializer-error :deserializer-error))
+   :serde :ser :de :serialize 
+   :deserialize :serde-condition :serde-error :serializer-error 
+   :deserializer-error :*io-table*))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)

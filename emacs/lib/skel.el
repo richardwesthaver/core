@@ -262,6 +262,10 @@ project's skelfile, if any. Typically added to
   (interactive)
   (comint-run "skel" '("shell")))
 
+;;; UI
+;; TODO 2025-10-03: 
+;; skel project customization ui (overlays skelfile)
+
 ;;; organ-minor-mode
 ;; support ORGAN reader syntax in lisp files :prefix #& :suffix &#
 (defun organ-minor-mode-setup ()

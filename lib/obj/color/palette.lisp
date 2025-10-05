@@ -42,8 +42,12 @@
 
 (defun make-palette (name &rest colors &aux (tbl (make-hash-table)))
   (let ((*palette* tbl))
-    (doplist (k color) colors
-      (setf (get-color k) color))
+    (doplist (k v) colors
+      (setf (get-color k)
+            (etypecase v
+              (color v)
+              (string (parse-hex-rgb v))
+              (symbol (get-color v)))))
     (setf (gethash name *color-palettes*) *palette*)
     *palette*))
 

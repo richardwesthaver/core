@@ -75,6 +75,11 @@
    :parse-arff :parse-arff-string :parse-arff-stream
    :remove-attribute-by-name))
 
+(defpkg :dat/bib
+  (:nicknames :bib)
+  (:use :std-lisp :dat/proto :ast :id)
+  (:export :bibliography))
+
 (defpkg :dat/json
   (:nicknames :json)
   (:use :cl :std :dat/proto :uri :id)
@@ -151,6 +156,7 @@
    :show-id3-headers))
 
 (defpkg :dat/css
+  (:nicknames :css)
   (:use :cl :std :dat/proto :color)
   (:export
    :parse-css
@@ -158,6 +164,7 @@
    :parse-css-selector
    :parse-css-fragment
    :css
+   :px :em :% :ch
    :inline-css
    ;; :compile-css-selector
    ;; :compile-css-block
@@ -165,6 +172,7 @@
    :compile-css-file))
 
 (defpkg :dat/html
+  (:nicknames :html)
   (:use :cl :dat/proto :std/macs :std/string :std/serde :std/condition :std/stream)
   (:import-from :std :with-gensyms)
   (:import-from :sb-ext :defglobal)
