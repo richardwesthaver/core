@@ -18,7 +18,7 @@
   (:export 
    :id :reset-id :update-id :make-id
    :id-factory :*global-id-table* :global-id :global-id-value
-   :update-global-id :reset-global-id :identify))
+   :update-global-id :reset-global-id :identify :id=))
 
 (defpkg :obj/equiv
   (:nicknames :equiv)

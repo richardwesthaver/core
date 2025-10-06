@@ -770,7 +770,7 @@ either side, and deletes both sides of a link."
   (interactive)
   (with-temp-buffer
     (beginning-of-buffer)
-    (if json (insert (org-graph-json)) 
+    (if json (insert (org-graph-json))
       (pp (org-graph-plist) (current-buffer)))
     (write-file (or output org-graph-file))))
 

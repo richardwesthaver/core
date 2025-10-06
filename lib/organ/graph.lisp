@@ -8,8 +8,6 @@
 (load-database-backend :rdb)
 (blake3:load-blake3)
 
-(deftype org-id () `(octet-vector 16))
-
 ;;; Schema
 (defclass org-graph-schema (rdb-schema) ()
   (:default-initargs
@@ -31,36 +29,19 @@
 
 (defparameter *org-graph-schema* (make-instance 'org-graph-schema))
 
-(define-condition org-id-locations-out-of-sync (simple-error) ())
-
-(defvar *org-graph-file* (merge-pathnames ".emacs.d/graph.dat" (user-homedir-pathname)))
-(defvar *org-id-locations-file* (merge-pathnames ".emacs.d/.org-id-locations" (user-homedir-pathname)))
-
-;;; Org IDs
-(defun make-org-id-locations (&optional (file *org-id-locations-file*))
-  (let ((tbl (make-hash-table :test 'equal)))
-    (with-open-file (file file)
-      (dolist (entry (read file))
-	(if-let ((file (probe-file (car entry))))
-	  (setf (gethash (namestring file) tbl) (cdr entry))
-	  (signal 'org-id-locations-out-of-sync :format-control "~A" :format-arguments (list entry)))))
-    tbl))
-
-(defun uuid-octets* (id)
-  (handler-case (uuid-to-octet-vector id)
-    (simple-error () id)
-    (sb-pcl::missing-slot () id)))
+(defvar *org-graph-file* (merge-pathnames ".emacs.d/graph.sxp" (user-homedir-pathname)))
 
 ;;; Org Graph
 (defvar *org-graph* nil)
-(defvar *org-graph-nodes*)
-(defvar *org-graph-edges*)
+(defvar *org-graph-nodes* nil)
+(defvar *org-graph-edges* nil)
 
 (defclass org-graph (directed-graph) ())
 
 (defmethod read-ast ((fmt (eql :org-graph)) stream)
+  "Read an ORG-GRAPH specification from STREAM."
   (let* ((ast (read stream))
-         (nodes (map 'simple-vector 'wrap-node (getf ast :nodes)))
+         (nodes (mapcar 'wrap-node (getf ast :nodes)))
          (graph (make-instance 'org-graph :nodes nodes))
          (edges (mapcar (lambda (x) (add-edge graph (wrap-edge x))) (getf ast :edges))))
     (values graph nodes edges)))
@@ -76,14 +57,27 @@
 (defun init-org-graph ()
   (multiple-value-bind (graph nodes edges) (read-org-graph-file)
     (setf *org-graph* graph
-          *org-graph-nodes* (make-array (length nodes) :initial-contents nodes :adjustable nil)
-          *org-graph-edges* (make-array (length edges) :initial-contents edges :adjustable nil))
+          *org-graph-nodes* nodes
+          *org-graph-edges* edges)
     graph))
 
 (defclass org-graph-node (vertex) 
   ((name :initarg :name :accessor name) 
    (path :initarg :path :accessor path)
    (point :initarg :point :accessor idx)))
+
+(defclass org-graph-external-node (vertex)
+  ((name :initarg :name :accessor name)
+   (uri :initarg :uri :accessor uri)))
+
+(defun extract-external-node (edge)
+  "Extract an external node from EDGE which should have an EDGE-TYPE eql to
+:RELATION. External nodes share the same ID as the edges which they are
+extracted from."
+  (make-instance 'org-graph-external-node 
+    :id (id edge)
+    :name (name edge)
+    :uri (parse-uri (url:url-encode (edge-out edge)) :escape nil)))
 
 (defun wrap-node (form)
   (make-instance 'org-graph-node 
@@ -104,9 +98,18 @@
    (timestamp :initarg :timestamp :accessor timestamp)
    (point :initarg :point :accessor idx)))
 
+(defmethod name ((self org-graph-edge))
+  (when (slot-boundp self 'properties)
+    (getf (edge-properties self) :name)))
+
+(defclass org-graph-implicit-edge (org-graph-edge)
+  ()
+  (:documentation "A graph edge which is created as a result of EXPAND-NODES.")
+  (:default-initargs :timestamp (now)))
+
 (defun wrap-edge (form)
   (make-instance 'org-graph-edge
-    :type (pop form)
+    :type (keywordicate (pop form))
     :in (pop form)
     :properties (pop form)
     :timestamp 
@@ -120,6 +123,30 @@
   `(,(keywordicate (edge-type self)) ,(uuid-to-string (edge-in self)) ,(edge-properties self)
     ,(timestamp-to-universal (timestamp self)) ,(idx self) ,(format nil "~A" (edge-out self))))
 
+(defmethod equiv:equiv ((a org-graph-node) (b org-graph-node))
+  (uuid= (id a) (id b)))
+
+(defun expand-edges (&optional (edges *org-graph-edges*) (nodes *org-graph-nodes*))
+  "Expand a list of EDGES, returning a list of newly discovered nodes."
+  (dolist (x edges nodes)
+    (when (eql :relation (edge-type x))
+      (let ((i (edge-out x)))
+        (unless (typep i 'uuid) ;; if it's a uuid it's already a node
+          (pushnew
+           (extract-external-node x)
+           nodes
+           :test 'equiv:equiv))))))
+
+(defun expand-nodes (&optional (nodes *org-graph-nodes*) (edges *org-graph-edges*))
+  "Expand a list of NODES, returning a list of newly discovered edges."
+  (dolist (x nodes edges)))
+
+(defun expand-graph (&optional (graph *org-graph*))
+  (setf (edges graph) (expand-nodes (nodes graph))
+        (nodes graph) (expand-edges (edges graph)))
+  graph)
+
+;;; Files
 (defstruct org-graph-file 
   "Internal helper struct used while processing files in the *ORG-GRAPH*."
   path document timestamp hash)
@@ -145,29 +172,6 @@
 	  (org-graph-file-path self) file
 	  (org-graph-file-document self) (organ:org-parse :document file))
     self))
-
-(defun insert-org-files ()
-  (log:info! "inserting org files")
-  (mapcar 
-   (lambda (n) (insert-key *org-graph-db* (uuid-octets* (id n)) (path n) :column "file"))
-   (nodes *org-graph*)))
-
-(defun insert-org-nodes ()
-  (log:info! "inserting org nodes")
-  (dolist (id (mapcar 'id (nodes *org-graph*)))
-    (insert-key *org-graph-db*
-		(uuid-octets* id)
-		;; TODO 2024-12-30: 
-		#(1)
-		:column "node")))
-
-(defun insert-org-edges ()
-  (log:info! "inserting org edges")
-  (dolist (e (edges *org-graph*))
-    (insert-key *org-graph-db* 
-		(uuid-octets* (edge-in e)) 
-		(uuid-octets* (edge-out e))
-		:column "edge")))
 
 ;;; Org Graph DB
 (defvar *org-graph-db-directory* (merge-pathnames ".store/db/graph/" (user-homedir-pathname)))
@@ -221,6 +225,29 @@
 			  (simple-type-error () (sb-ext:octets-to-string key)))
 			(sb-ext:octets-to-string val))
 	  do (progn next))))
+
+(defun insert-org-files ()
+  (log:info! "inserting org files")
+  (mapcar 
+   (lambda (n) (insert-key *org-graph-db* (uuid-octets* (id n)) (path n) :column "file"))
+   (nodes *org-graph*)))
+
+(defun insert-org-nodes ()
+  (log:info! "inserting org nodes")
+  (dolist (id (mapcar 'id (nodes *org-graph*)))
+    (insert-key *org-graph-db*
+                (uuid-octets* id)
+                ;; TODO 2024-12-30: 
+                #(1)
+                :column "node")))
+
+(defun insert-org-edges ()
+  (log:info! "inserting org edges")
+  (dolist (e (edges *org-graph*))
+    (insert-key *org-graph-db* 
+                (uuid-octets* (edge-in e)) 
+                (uuid-octets* (edge-out e))
+                :column "edge")))
 
 ;;; Files
 (defun org-graph-file-search (path &rest ids)

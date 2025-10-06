@@ -5,14 +5,7 @@
 ;;; Code:
 (in-package :cli/tools/sbcl)
 
-(deferror sbcl-error (simple-error error) ())
-
-(defun sbcl-error (fmt &rest args)
-  (error 'sbcl-error :format-arguments args :format-control fmt))
-
-(defparameter *sbcl* (find-exe "sbcl"))
-
-(when *sbcl* (pushnew :sbcl *cli-tools*))
+(define-cli-tool :sbcl)
 
 ;; ref: section 3.3.1 of the manual
 (defvar *sbcl-runtime-options*

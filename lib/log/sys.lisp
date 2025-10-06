@@ -12,7 +12,6 @@
 
 ;;; Journald interface
 
-
 ;;; Objects
 (defclass journal-sink (sink) ())
 (defclass syslog-sink (sink) ())

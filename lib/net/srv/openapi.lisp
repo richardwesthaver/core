@@ -60,10 +60,10 @@
       (schemas responses parameters examples request-bodies headers security-schemes links callbacks) (obj)
     (make-openapi-components
      :schemas (mapcar (lambda (x) (cons (car x) (deserialize (cadr x) :json-schema))) (ast (json-getf obj "schemas")))
-     :responses (json-getf obj "responses")
-     :parameters (json-getf obj "parameters")
+     :responses (openapi-responses-from-json (json-getf obj "responses"))
+     :parameters (openapi-parameters-from-json (json-getf obj "parameters"))
      :examples (json-getf obj "examples")
-     :headers (json-getf obj "headers")
+     :headers  (openapi-headers-from-json (json-getf obj "headers"))
      :links (mapcar 'openapi-link-from-json (json-getf obj "links"))
      :security-schemes (mapcar (lambda (x) (cons (car x) (openapi-security-scheme-from-json (cadr x))))
                                (ast (json-getf obj "securitySchemes")))))
@@ -73,21 +73,35 @@
   ;; TODO 2025-06-23: https://spec.openapis.org/oas/v3.1.0#path-templating
   (defoapi path-item ($ref summary description get put post delete options head patch trace servers parameters) (obj)
     (make-openapi-path-item
-     :$ref (json-getf obj "$ref")))
+     :$ref (json-getf obj "$ref")
+     :summary (json-getf obj "summary")
+     :description (json-getf obj "description")
+     :get (openapi-operation-from-json (json-getf obj "get"))
+     :put (json-getf obj "put")
+     :post (json-getf obj "post")
+     :delete (json-getf obj "delete")
+     :head (json-getf obj "head")
+     :options (json-getf obj "options")
+     :trace (json-getf obj "trace")
+     :parameters (when-let ((params (json-getf obj "parameters")))
+                   (mapcar 'openapi-parameter-from-json params))
+     :servers (json-getf obj "servers")
+     :patch (json-getf obj "patch")))
 
   (defoapi operation 
       (tags summary description external-docs id parameters request-body responses callbacks deprecated security 
-            servers) 
+            servers)
     (obj)
     (make-openapi-operation
-     :tags (json-getf obj "tags")
+     :tags (openapi-tags-from-json (json-getf obj "tags"))
      :summary (json-getf obj "summary")
      :description (json-getf obj "description")
      :external-docs (openapi-external-documentation-from-json obj)
-     :id (json-getf obj "$id")
-     :parameters (json-getf obj "parameters")
+     :id (or (json-getf obj "$id") (json-getf obj "operationId"))
+     :parameters (when-let ((params (json-getf obj "parameters")))
+                   (mapcar 'openapi-parameter-from-json params))
      :request-body (openapi-request-body-from-json obj)
-     :responses (json-getf obj "responses")
+     :responses (openapi-responses-from-json (json-getf obj "responses"))
      :callbacks (json-getf obj "callbacks")
      :deprecated (json-getf obj "deprecated")
      :security (json-getf obj "security")))
@@ -127,7 +141,7 @@
   (defoapi encoding (content-type headers style explode allow-reserved) (obj)
     (make-openapi-encoding
      :content-type (json-getf obj "contentType")
-     :headers (json-getf obj "headers")
+     :headers (openapi-headers-from-json (json-getf obj "headers"))
      :style (json-getf obj "style")
      :explode (json-getf obj "explode")
      :allow-reserved (json-getf obj "allowReserved")))
@@ -140,28 +154,25 @@
   (defoapi response-object (description headers content links) (obj)
     (make-openapi-response-object
      :description (json-getf obj "description")
-     :headers (json-getf obj "headers")
+     :headers (openapi-headers-from-json (json-getf obj "headers"))
      :content (json-getf obj "content")
      :links (mapcar 'openapi-link-from-json (json-getf obj "links"))))
 
   ;; callback
-
   (defoapi example (summary description value external-value) (obj)
     (make-openapi-example
      :summary (json-getf obj "summary")
      :description (json-getf obj "description")
      :value (json-getf obj "value")
      :external-value (json-getf obj "externalValue")))
-
   (defoapi link (operation-ref operation-id parameters request-body description server) (obj)
     (make-openapi-link
      :operation-ref (json-getf obj "operationRef")
      :operation-id (json-getf obj "operationId")
-     :parameters (json-getf obj "parameters")
+     :parameters (openapi-parameters-from-json (json-getf obj "parameters"))
      :request-body (openapi-request-body-from-json obj)
      :description (json-getf obj "description")
      :server (openapi-server-object-from-json obj)))
-
   (defoapi header (description required deprecated allow-empty style explode allow-reserved schema examples content)
     (obj)
     (make-openapi-header
@@ -172,7 +183,7 @@
      :style (json-getf obj "style")
      :explode (json-getf obj "explode")
      :allow-reserved (json-getf obj "allowReserved")
-     :schema (deserialize (json-getf obj "scheme") :json-schema)
+     :schema (when-let ((o (json-getf obj "scheme"))) (deserialize o :json-schema))
      :examples (json-getf obj "examples")
      :content (json-getf obj "content")))
 
@@ -185,7 +196,6 @@
   ;; ref
 
   ;; openapi-schema
-
   (defoapi discriminator (name mapping) (obj)
     (make-openapi-discriminator :name (json-getf obj "name") :mapping (json-getf obj "mapping")))
 
@@ -226,10 +236,27 @@
   (mapcar (lambda (x) (cons (car x) (openapi-path-item-from-json (cadr x)))) (ast obj)))
 
 (defun openapi-servers-from-json (obj)
-  (mapcar 'openapi-server-from-json obj))
+  (mapcar 'openapi-server-object-from-json obj))
 
 (defun openapi-tags-from-json (obj)
   (mapcar 'openapi-tag-from-json obj))
+
+(defun openapi-parameters-from-json (obj)
+  (mapcar (lambda (x) (cons (car x) (openapi-parameter-from-json (cadr x)))) (ast obj)))
+
+(defun openapi-responses-from-json (obj)
+  (mapcar (lambda (x)
+            (let ((y (openapi-response-from-json (cadr x))))
+              (when (string-equal (car x) "default")
+                (setf (slot-value y 'default) t))
+              (cons (car x) y)))
+          (ast obj)))
+
+(defun openapi-headers-from-json (obj)
+  (mapcar 
+   (lambda (x)
+     (cons (car x) (openapi-header-from-json (cadr x))))
+   (ast obj)))
 
 ;; security-requirement
 
@@ -264,7 +291,6 @@
   (deserialize (deserialize self :json) :openapi))
 
 ;;; Spec
-
 (defconfig openapi-service-config (http-service-config) ())
 
 (defmethod make-config ((self (eql :openapi)) &rest args &key)

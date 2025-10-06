@@ -282,7 +282,8 @@ function 'NAME-P'."
    (queue-lock :initform (make-mutex :name "message-lock") :reader queue-lock))
   (:documentation "A class which implements logging functionality. An instance of this class may
 be designated as the 'global' logger by setting the value of *LOGGER*, or may
-be implemented for a specific application."))
+be implemented for a specific application. Loggers are async-friendly and will
+create their own dedicated thread when started."))
 
 (defaccessor sink ((self logger)) (aref #1=(pipe self) (1- (length #1#))))
 (defaccessor source ((self logger)) (aref (pipe self) 0))
@@ -333,7 +334,8 @@ be implemented for a specific application."))
   `(let ((*logger* ,logger))
      ,@body))
 
-(defmethod logger-loop ((self logger))
+(defun logger-loop (self)
+  (declare (logger self))
   (let* ((lock (queue-lock self))
          (condition (queue-condition self))
          (pipe (pipe self)))
@@ -368,6 +370,8 @@ be implemented for a specific application."))
 
 ;;; Commands
 (defun log-pipe (&rest elements)
+  "Insert ELEMENTS into their own pipe and then add that pipe to *LOGGER*. If the
+first element is of type LOGGER, insert into that object instead."
   (let ((logger (if (typep (first elements) 'logger)
                     (pop elements)
                     *logger*)))
@@ -378,6 +382,7 @@ be implemented for a specific application."))
         (add-element logger pipe)))))
 
 (defun default-logger (&rest args)
+  "Make a default logger instance (for the repl)."
   (let ((pipe (apply 'make-instance 'logger args)))
     (defpipe (pipe)
       (level-filter :id 'repl-level)
@@ -385,11 +390,13 @@ be implemented for a specific application."))
       (stream-sink :id 'repl-stream))))
 
 (defun remove-logger ()
+  "Disable and remove the currently active logger."
   (when *logger*
     (stop *logger*)
     (setf *logger* nil)))
 
 (defun restart-logger (&optional (logger (default-logger)))
+  "Restart *LOGGER* by removing it and then setting it to LOGGER."
   (remove-logger)
   (setf *logger* logger))
 

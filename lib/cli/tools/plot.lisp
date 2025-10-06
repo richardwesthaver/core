@@ -5,9 +5,11 @@
 ;;; Code:
 (in-package :cli/tools/plot)
 
+(define-cli-tool :gnuplot)
+
 (defvar *gnuplot-process* nil)
 
-(defun open-gnuplot (&key (gnuplot-binary (find-exe "gnuplot"))
+(defun open-gnuplot (&key (gnuplot-binary *gnuplot*)
 		          (terminal "wxt")
 		          hostname)
   (or *gnuplot-process*

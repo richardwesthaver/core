@@ -22,12 +22,9 @@
 (defparameter *tmux-user-config-path* (merge-pathnames ".tmux.conf" (user-homedir-pathname)))
 (defparameter *tmux-system-config-path* (merge-pathnames "tmux.conf" "/etc/"))
 
-(defparameter *tmux* (find-exe "tmux"))
-
 (defparameter *default-tmux-tmpdir* (pathname (format nil "/tmp/tmux-~A/" (sb-posix:getuid))))
 (defparameter *default-tmux-socket* (merge-pathnames "default" *default-tmux-tmpdir*))
 
-;;; Utils
 (define-cli-tool :tmux (&rest args)
   (let ((proc (sb-ext:run-program *tmux* (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))

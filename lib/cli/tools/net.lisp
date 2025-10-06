@@ -8,7 +8,9 @@
 ;;; Browser
 (deferror simple-browser-error (simple-error) () (:auto t))
 
-(defparameter *browser* (or (find-exe "chromium") (find-exe "firefox")))
+(define-cli-tool :chromium)
+(define-cli-tool :firefox)
+(defparameter *browser* (or *chromium* *firefox*))
 
 (defun run-browser (&rest args)
   (let ((proc (sb-ext:run-program *browser* (or args nil) :output :stream)))
@@ -56,9 +58,7 @@
   (apply 'run-ip "address" "add" "dev" dev addr (when peer (list "peer" peer))))
 
 ;;; Wireguard
-(deferror wg-error (simple-error error) () (:auto t))
-
-(defparameter *wg* (find-exe "wg"))
+(define-cli-tool :wg)
 
 (defun run-wg* (args &optional (output *standard-output*) input)
   (let ((proc (if input
@@ -74,8 +74,6 @@
 
 (defun run-wg (&rest args)
   (run-wg* args))
-
-(when *wg* (pushnew :wg *cli-tools*))
 
 (defun wg-private-key ()
   (with-output-to-string (s)
@@ -155,9 +153,7 @@
   (apply 'run-easyrsa "gen-req" name cmd-opts))
 
 ;;; NMAP
-(deferror nmap-error (simple-error error) () (:auto t))
-
-(defvar *nmap* (find-exe "nmap"))
+(define-cli-tool :nmap)
 
 (defun run-nmap* (args &optional (output *standard-output*) input)
   (let ((proc (if input
@@ -169,8 +165,6 @@
 
 (defun run-nmap (&rest args)
   (run-nmap* args))
-
-(when *nmap* (pushnew :nmap *cli-tools*))
 
 ;;; YTDL
 ;; ref: https://github.com/yt-dlp/yt-dlp
@@ -189,9 +183,9 @@
   (when (probe-file path)
     (make-config :ytdl :ast (uiop:read-file-lines path))))
 
-(deferror ytdl-error (simple-error error) () (:auto t))
-
 (defvar *ytdl* (find-exe "yt-dlp"))
+
+(define-cli-tool :ytdl)
 
 (defmacro with-ytdl ((args &optional output proc input) &body body)
   (with-gensyms (s)
@@ -237,9 +231,7 @@
    :json))
   
 ;;; Caddy
-(deferror caddy-error (simple-error error) () (:auto t))
-
-(defvar *caddy* (find-exe "caddy"))
+(define-cli-tool :caddy)
 
 (defun run-caddy* (args &optional (output *standard-output*))
   (let ((proc (sb-ext:run-program *caddy* (or (flatten args) nil) :output output)))
@@ -252,8 +244,6 @@
 
 (defun start-caddy (&rest args)
   (apply 'run-caddy "start" args))
-
-(when *caddy* (pushnew :caddy *cli-tools*))
 
 #|
 (start-caddy)

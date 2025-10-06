@@ -5,10 +5,8 @@
 ;;; Code:
 (in-package :cli/tools/mail)
 
-(deferror mail-error (simple-error) () (:auto t))
-
-(defvar *notmuch* (find-exe "notmuch"))
-(defvar *offlineimap* (find-exe "offlineimap"))
+(define-cli-tool :notmuch)
+(define-cli-tool :offlineimap)
 (defvar *mail-program* :emacs)
 
 (defun %notmuch (args output &optional (wait t))
@@ -18,7 +16,7 @@
   (let ((proc (%notmuch args output)))
     (if (eq 0 (sb-ext:process-exit-code proc))
         nil
-        (mail-error "NOTMUCH command failed: ~A ~A" *notmuch* (or args "")))))
+        (notmuch-error "NOTMUCH command failed: ~A ~A" *notmuch* (or args "")))))
 
 (defun run-notmuch (&rest args)
   (run-notmuch* args))
@@ -28,7 +26,7 @@
     (when wait
       (if (eq 0 (sb-ext:process-exit-code proc))
           nil
-          (mail-error "OFFLINEIMAP command failed: ~A ~A" *offlineimap* (or args ""))))))
+          (offlineimap-error "OFFLINEIMAP command failed: ~A ~A" *offlineimap* (or args ""))))))
 
 (defun run-offlineimap (&optional wait args)
   (run-offlineimap* args *standard-output* wait))

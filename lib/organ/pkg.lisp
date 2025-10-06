@@ -130,10 +130,13 @@
    :org-priority :org-property-drawer :org-plain-text
    :org-line-break :org-comment :org-greater-block
    :org-horizontal-rule :org-planning
-   :org-active-timestamp-range))
+   :org-active-timestamp-range
+   :*org-id-locations-file*
+   :make-org-id-locations
+   :org-id))
 
 (defpackage :organ/graph
-  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3)
+  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri)
   (:export :init-org-graph :org-graph :org-id 
    :org-graph-schema :*org-graph-schema* :*org-graph-db-directory* :init-org-graph-db 
    :org-graph-db :*org-graph-file* :*org-id-locations-file* :*org-graph*

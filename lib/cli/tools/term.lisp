@@ -12,7 +12,10 @@
 
 (defparameter *alacritty-config-path* (merge-pathnames ".config/alacritty.toml" (user-homedir-pathname)))
 
-(defparameter *term* (or (find-exe "alacritty") (find-exe "xterm")))
+(define-cli-tool :alacritty)
+(define-cli-tool :xterm)
+
+(defparameter *term* (or *alacritty* *xterm*))
 
 (deferror term-error (simple-error error) ())
 

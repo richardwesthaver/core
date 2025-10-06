@@ -5,12 +5,7 @@
 ;;; Code:
 (in-package :cli/tools/sys)
 
-(deferror systemd-error (simple-error error) ())
-
-(defun systemd-error (fmt &rest args)
-  (error 'systemd-error :format-arguments args :format-control fmt))
-
-(defparameter *systemctl* (find-exe "systemctl"))
+(define-cli-tool :systemctl)
 
 (defun run-systemctl (args &key (output t))
   (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output output)))
@@ -41,3 +36,9 @@
    :json))
 
 ;; (systemctl-json "--user")
+
+(define-cli-tool :journalctl (&rest args)
+  (let ((proc (sb-ext:run-program *journalctl* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (journalctl-error "Journalctl command failed: ~A ~A" *journalctl* (or args "")))))
+

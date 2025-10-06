@@ -60,3 +60,6 @@
 (defgeneric identify (self)
   (:documentation "Return the identity of object SELF - usually meant for objects which don't
 specialize on ID but should still sometimes return an ID."))
+
+(definline id= (a b)
+  (= (id a) (id b)))

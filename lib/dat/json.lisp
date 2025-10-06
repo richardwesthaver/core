@@ -536,7 +536,7 @@ ref: https://json-schema.org"))
     (flet ((add (key slot &optional fn push)
              (setf (gethash key tbl)
                    (lambda (x &optional consume)
-                     (declare (json-object x) (boolean consume))
+                     (declare (json-object x))
                      (when-let ((val (json-getf x key)))
                        (when consume (json-remf x key))
                        (let ((ret (ifret (when fn (funcall fn val))
@@ -550,15 +550,19 @@ ref: https://json-schema.org"))
       (add "type" 'type 'string)
       (add "properties" 'properties
            (lambda (x)
-             (mapcar 
-              (lambda (y) (cons (car y) (ast (cadr y))))
-              (print (ast x)))))
+             (if (and (atom x) (not (typep x 'ast)))
+                 x
+                 (mapcar 
+                  (lambda (y) (cons (car y) (ast (cadr y))))
+                  (ast x)))))
       (add "required" 'required
            (lambda (x)
-             (mapcar
-              (lambda (y)
-                (if (stringp y) y (ast y)))
-              x)))
+             (if (atom x)
+                 x
+                 (mapcar
+                  (lambda (y)
+                    (if (stringp y) y (ast y)))
+                  x))))
       (add "$defs" 'defs 'ast)
       (add "dependentRequired" 'required 'ast t))
     tbl))
@@ -573,7 +577,7 @@ ref: https://json-schema.org"))
 
 (defmethod deserialize ((obj t) (fmt (eql :json-schema)) &key)
   (declare (ignore fmt))
-  (deserialize (deserialize obj :json) :json-schema))
+  (deserialize (the json-object (deserialize obj :json)) :json-schema))
 
 (defmethod validate ((obj json-object) (schema json-schema) &key (default :error))
   "Check json-object OBJ against json-schema SCHEMA and return it if valid. If
@@ -585,5 +589,5 @@ returned as is."
         (error "JSON-OBJECT failed validation")
         default)))
   
-(defun json-schema (obj)
-  "Attempt to convert a json-object OBJ to a json-schema.")
+;; (defun json-schema (obj)
+;;   "Attempt to convert a json-object OBJ to a json-schema.")

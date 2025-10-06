@@ -240,7 +240,7 @@
 
 (define-condition cli-tool-error (simple-error) ())
 
-(defmacro define-cli-tool (name args &body body)
+(defmacro define-cli-tool (name &optional args &body body)
   "Define a new cli tool with a NAME-error condition, a *NAME* variable, and a
 run-NAME function.
 
@@ -250,7 +250,7 @@ ARGS and BODY are parsed as the args and body of the run-NAME function."
       (setf 
        var (symbolicate #\* %name #\*)
        err (symbolicate %name "-ERROR")
-       run (symbolicate "RUN-" %name))
+       run (when args (symbolicate "RUN-" %name)))
       `(eval-always
          (defvar ,var 
            (find-exe ,(etypecase name
@@ -258,4 +258,4 @@ ARGS and BODY are parsed as the args and body of the run-NAME function."
                         (symbol (string-downcase %name)))))
          ,@(when var `((pushnew ,name *cli-tools*)))
          (deferror ,err (cli-tool-error) () (:auto t))
-         (defun ,run ,args ,@body)))))
+         ,@(when args `((defun ,run ,args ,@body)))))))
