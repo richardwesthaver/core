@@ -83,35 +83,38 @@
       (write-char #\space stream))
     (write-string (hl-title self) stream)))
     
-(defmethod org-parse ((type (eql :headline)) (input string))
+(defmethod org-parse ((type (eql :headline)) (input stream))
   (let ((res (org-create type)))
-    (with-input-from-string (s input)
       ;; first we parse 'just' the headline
-      (when (peek-char #\* s) 
-        (let ((line (read-line s)))
-	  (multiple-value-bind (start _ reg-start reg-end)
-	      ;; scan for headline
-	      (cl-ppcre:scan org-headline-rx line)
-	    (declare (ignore _))
-	    (when start
-	      (loop for rs across reg-start
-		    for re across reg-end
-		    for i from 0
-		    do
-		       (if (= i 0)
-			   (setf (hl-stars res) (- re rs))
+        (let ((line (read-line input)))
+          (multiple-value-bind (start _ reg-start reg-end)
+              ;; scan for headline
+              (cl-ppcre:scan org-headline-rx line)
+            (declare (ignore _))
+            (when start
+              (loop for rs across reg-start
+                    for re across reg-end
+                    for i from 0
+                    do
+                       (if (= i 0)
+                           (setf (hl-stars res) (- re rs))
                            (multiple-value-bind (kw prio title) 
                                (org-parse-todo-keyword-and-priority (subseq line rs))
                              (setf (hl-kw res) kw
                                    (hl-priority res) prio
                                    (hl-title res) title))))))
-	  ;; scan for tags, modifies title slot
-	  (let ((tag-str (cl-ppcre:scan-to-strings org-tag-rx (hl-title res))))
-	    (when tag-str
-	      (setf (hl-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
+          ;; scan for tags, modifies title slot
+          (let ((tag-str (cl-ppcre:scan-to-strings org-tag-rx (hl-title res))))
+            (when tag-str
+              (setf (hl-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
                     ;;  Q 2023-12-27: should we preserve whitespace here?
-		    (hl-title res) (string-right-trim
+                    (hl-title res) (string-right-trim
                                     *whitespaces* 
-                                    (subseq (hl-title res) 0 (- (length (hl-title res)) 1 (length tag-str)))))))))
+                                    (subseq (hl-title res) 0 (- (length (hl-title res)) 1 (length tag-str))))))))
       ;; TODO 2023-07-24: cookies,priority,comment,footnote,archive
-      res)))
+      res))
+
+(defmethod org-parse ((type (eql :headline)) (input string))
+    (when (and (not (zerop (length input))) (char= #\* (char input 0)))
+      (with-input-from-string (s input)
+        (org-parse :headline s))))

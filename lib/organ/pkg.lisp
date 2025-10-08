@@ -136,12 +136,16 @@
    :org-id))
 
 (defpackage :organ/graph
-  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri)
+  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri :url)
   (:export :init-org-graph :org-graph :org-id 
    :org-graph-schema :*org-graph-schema* :*org-graph-db-directory* :init-org-graph-db 
-   :org-graph-db :*org-graph-file* :*org-id-locations-file* :*org-graph*
    :org-graph-node :org-graph-edge :org-graph-extract-files :close-org-graph-db
-   :open-org-graph-db :og-get :org-graph-values))
+   :open-org-graph-db :og-get :org-graph-values
+   :org-graph-stats :org-graph-db :*org-graph-file* :*org-graph*
+   :*org-graph-edges*
+   :*org-graph-nodes*
+   :*org-graph-headings*
+   :*org-graph-files*))
 
 (defpackage :organ/cli
   (:use :cl :std :organ :cli :clap)

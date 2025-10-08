@@ -56,10 +56,18 @@
 
 (defun init-org-graph ()
   (multiple-value-bind (graph nodes edges) (read-org-graph-file)
-    (setf *org-graph* graph
-          *org-graph-nodes* nodes
+    (setf *org-graph* graph)
+    (setf *org-graph-nodes* (sort nodes #'string< :key (lambda (x) (namestring (path x))))
           *org-graph-edges* edges)
+    (setf *org-graph-files* (org-graph-extract-files))
+    (setf *org-graph-headings* (expand-nodes))
+    (setf *org-graph-edges* (expand-headings))
     graph))
+
+(defun org-graph-stats ()
+  `(:node-count ,(length *org-graph-nodes*)
+    :edge-count ,(length *org-graph-edges*)
+    :file-count ,(length *org-graph-files*)))
 
 (defclass org-graph-node (vertex) 
   ((name :initarg :name :accessor name) 
@@ -77,7 +85,7 @@ extracted from."
   (make-instance 'org-graph-external-node 
     :id (id edge)
     :name (name edge)
-    :uri (parse-uri (url:url-encode (edge-out edge)) :escape nil)))
+    :uri (parse-uri (url-encode (edge-out edge)) :escape nil)))
 
 (defun wrap-node (form)
   (make-instance 'org-graph-node 
@@ -126,6 +134,11 @@ extracted from."
 (defmethod equiv:equiv ((a org-graph-node) (b org-graph-node))
   (uuid= (id a) (id b)))
 
+(defmethod equiv:equiv ((a org-graph-node) (b org-heading))
+  (when-let* ((props (organ::org-properties b))
+              (id (find "ID" (org-contents props) :test 'string-equal :key 'name)))
+    (uuid= (id a) (make-uuid-from-string (value id)))))
+
 (defun expand-edges (&optional (edges *org-graph-edges*) (nodes *org-graph-nodes*))
   "Expand a list of EDGES, returning a list of newly discovered nodes."
   (dolist (x edges nodes)
@@ -137,23 +150,45 @@ extracted from."
            nodes
            :test 'equiv:equiv))))))
 
-(defun expand-nodes (&optional (nodes *org-graph-nodes*) (edges *org-graph-edges*))
-  "Expand a list of NODES, returning a list of newly discovered edges."
-  (dolist (x nodes edges)))
+(defun path= (a b) (and a b (string= (namestring (path a)) (namestring (path b)))))
 
-(defun expand-graph (&optional (graph *org-graph*))
-  (setf (edges graph) (expand-nodes (nodes graph))
-        (nodes graph) (expand-edges (edges graph)))
-  graph)
+(defun expand-headings (&optional (headings *org-graph-headings*) (edges *org-graph-edges*))
+  (loop for h in headings
+        do (print (organ::hl-stars (organ::org-headline h)))
+        finally (return edges)))
+
+(defvar *org-graph-headings* nil)
+
+(defun expand-nodes (&optional (nodes *org-graph-nodes*) (files *org-graph-files*))
+  "Expand a list of NODES, returning a list of newly discovered edges."
+  ;; ensure files are collected
+  (flet ((.find (n) (find n files :test 'path=)))
+    (let* ((sorted  (copy-list nodes))
+           (p (.find (car sorted))))
+    (loop for x in sorted
+          with hl
+          unless (path= x p) do (setf p (.find x))
+          do (path p)
+          do (push (find x (org-graph-file-tree p) :test 'equiv:equiv) hl)
+          finally (return (nreverse hl))))))
+
+(defun expand-graph ()
+  (setf *org-graph-headings* (expand-nodes *org-graph-nodes*)
+        *org-graph-nodes* (expand-edges *org-graph-edges*)
+        *org-graph-edges* (expand-headings *org-graph-headings*)))
 
 ;;; Files
 (defstruct org-graph-file 
   "Internal helper struct used while processing files in the *ORG-GRAPH*."
-  path document timestamp hash)
+  path tree timestamp hash)
 
-(defun org-graph-extract-files (&optional (graph *org-graph*))
+(defaccessor path ((self org-graph-file)) (org-graph-file-path self))
+
+(defvar *org-graph-files* nil)
+
+(defun org-graph-extract-files (&optional (nodes *org-graph-nodes*))
   (let ((ret))
-    (std/async::dosequence (n (remove-duplicates (nodes graph) :test 'string= :key 'path) ret)
+    (std/async::dosequence (n (remove-duplicates nodes :test 'string= :key 'path) ret)
       (push (wrap (make-org-graph-file) (probe-file (path n))) ret))))
 
 (defmethod id ((self org-graph-file))
@@ -163,14 +198,14 @@ extracted from."
   (setf (org-graph-file-hash self) (b3sum file)
 	(org-graph-file-path self) file
 	(org-graph-file-timestamp self) (universal-to-timestamp (file-write-date file))
-	(org-graph-file-document self) (organ:org-parse :document file))
+	(org-graph-file-tree self) (doc-tree (organ:org-parse :document file)))
   self)
 
 (defmethod wrap ((self org-graph-file) (node org-graph-node))
   (let ((file (path node)))
     (setf (org-graph-file-hash self) (b3sum file)
 	  (org-graph-file-path self) file
-	  (org-graph-file-document self) (organ:org-parse :document file))
+	  (org-graph-file-tree self) (doc-tree (organ:org-parse :document file)))
     self))
 
 ;;; Org Graph DB

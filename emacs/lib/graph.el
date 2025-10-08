@@ -198,6 +198,12 @@ currently active org-graph."
     node))
 
 ;; TODO 2024-09-22: properties
+(defun org-link--description-at-point ()
+  (interactive)
+  (let ((link (org-element-context)))
+    (buffer-substring-no-properties (org-element-property :contents-begin link)
+				    (org-element-property :contents-end link))))
+
 (defun org-graph-collect-edge ()
   "Collect the edge at point which should be a line created with `org-graph-edge--insert'."
   (org-with-point-at (beginning-of-line)
@@ -212,7 +218,8 @@ currently active org-graph."
           (make-org-graph-edge :in (org-id-get)
                                :type arrow
                                :point ep
-                               :timestamp (org-parse-time-string ts t) 
+                               :timestamp (org-parse-time-string ts t)
+			       :properties `(:name ,(org-link--description-at-point))
                                :out (string-trim (org--link-at-point) "id:")))))))
 
 (defun org-graph-map-edges (function)
@@ -770,7 +777,7 @@ either side, and deletes both sides of a link."
   (interactive)
   (with-temp-buffer
     (beginning-of-buffer)
-    (if json (insert (org-graph-json))
+    (if json (insert (org-graph-json)) 
       (pp (org-graph-plist) (current-buffer)))
     (write-file (or output org-graph-file))))
 
