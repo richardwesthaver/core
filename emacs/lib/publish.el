@@ -37,16 +37,32 @@
       ;; org-export-in-background t
       org-html-divs '((preamble "section" "preamble") (content "main" "content") (postamble "section" "postamble"))
       org-html-container-element "div"
-      org-html-viewport '((width "device-width") (initial-scale 1))
+      ;; org-html-viewport '((width "device-width") (initial-scale 1))
       org-html-doctype "html5"
       org-html-html5-fancy t
       org-src-fontify-natively t
       org-export-with-broken-links 'mark
       org-html-checkbox-type 'unicode
+      org-html-mathjax-options
+      '((path "https://cdn.otom8.dev/js/tex-mml-chtml.js")
+	(scale 1.0) (align "center") (font "mathjax-modern")
+	(overflow "overflow") (tags "ams") (indent "0em")
+	(multlinewidth "85%") (tagindent ".8em") (tagside "right"))
       ;; org-html-creator-string
       make-backup-files nil
       debug-on-error t
       org-id-link-to-org-use-id t)
+
+;; TODO 2025-10-08: 
+(defun org-html-format-drawer (name contents)
+  "Default function used as value for `org-html-format-drawer-function'."
+  (with-output-to-string 
+    (princ "<details>")
+    (pcase name
+      ("edges" (princ contents))
+      ("notes" (princ contents))
+      ("properties" (princ contents)))
+    (princ "</details>")))
 
 (defmacro with-org-publish (&rest body)
   `(let (

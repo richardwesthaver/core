@@ -113,7 +113,6 @@
   (require 'inbox)
   (require 'graph)
   (require 'skel)
-  (require 'bar)
   (require 'c2))
 
 ;;; Env
@@ -212,6 +211,17 @@
     (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
+(setq dired-dwim-target t
+      dired-free-space 'separate)
+
+;;; Speedbar
+(require 'speedbar)
+(setq speedbar-sort-tags t
+      speedbar-prefer-window t
+      speedbar-track-mouse-flag t)
+
+(add-hook 'speedbar-after-create-hook 'turn-on-hide-mode-line-mode)
+
 ;;; Projects
 (setopt  project-list-file (expand-file-name "projects" user-emacs-directory)
          project-mode-line t

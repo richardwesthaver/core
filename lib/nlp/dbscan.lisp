@@ -1,4 +1,6 @@
-;;; dbscan --- Density-based spacial clustering of applications with noise (DBSCAN) algorithm
+;;; dbscan --- DBSCAN Algorithm
+
+;; Density-based spacial clustering of applications with noise (DBSCAN)
 
 ;;; Code:
 (in-package :nlp/dbscan)

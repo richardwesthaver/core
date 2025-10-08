@@ -197,6 +197,8 @@
 (defun % (val) (format nil "~a%" val))
 (defun em (val) (format nil "~aem" val))
 (defun ch (val) (format nil "~ach" val))
+(defun vw (val) (format nil "~avw" val))
+(defun vh (val) (format nil "~avh" val))
 
 ;;; transform
 (defun transform-origin (x y &optional z)

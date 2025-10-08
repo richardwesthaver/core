@@ -113,6 +113,7 @@
    :read-org-file
    :read-org-lines
    :read-org-lines-from-string
+   :uuid-octets*
    ;; TODO 2024-06-05: 
    :org-diary-sexp :org-footnote-reference :org-clock
    :org-bold :org-drawer :org-table-cell :org-citation

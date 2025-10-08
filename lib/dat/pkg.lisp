@@ -163,11 +163,10 @@
    :*minify-css*
    :parse-css-selector
    :parse-css-fragment
-   :css
    :px :em :% :ch
+   :vw :vh
    :inline-css
-   ;; :compile-css-selector
-   ;; :compile-css-block
+   :css
    :compile-css
    :compile-css-file))
 

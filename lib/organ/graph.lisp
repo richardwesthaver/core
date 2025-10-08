@@ -57,7 +57,7 @@
 (defun init-org-graph ()
   (multiple-value-bind (graph nodes edges) (read-org-graph-file)
     (setf *org-graph* graph)
-    (setf *org-graph-nodes* (sort nodes #'string< :key (lambda (x) (namestring (path x))))
+    (setf *org-graph-nodes* (sort (copy-list nodes) #'string< :key (lambda (x) (namestring (path x))))
           *org-graph-edges* edges)
     (setf *org-graph-files* (org-graph-extract-files))
     (setf *org-graph-headings* (expand-nodes))
@@ -152,6 +152,11 @@ extracted from."
 
 (defun path= (a b) (and a b (string= (namestring (path a)) (namestring (path b)))))
 
+;; TODO 2025-10-07: goal of this function is to expand headings and return
+;; edges - the edges we're targeting right now are parent/child relationships
+;; which can be auto-inferred based on HL-STARS of HEADLINE and POINT of NODE.
+
+;; may want to make batches per file.
 (defun expand-headings (&optional (headings *org-graph-headings*) (edges *org-graph-edges*))
   (loop for h in headings
         do (print (organ::hl-stars (organ::org-headline h)))
@@ -163,9 +168,8 @@ extracted from."
   "Expand a list of NODES, returning a list of newly discovered edges."
   ;; ensure files are collected
   (flet ((.find (n) (find n files :test 'path=)))
-    (let* ((sorted  (copy-list nodes))
-           (p (.find (car sorted))))
-    (loop for x in sorted
+    (let ((p (.find (car nodes))))
+    (loop for x in nodes
           with hl
           unless (path= x p) do (setf p (.find x))
           do (path p)
