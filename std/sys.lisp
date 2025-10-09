@@ -324,10 +324,13 @@ we can't determine endianness at compile-time.")
 
 (defun 64-bit-p () 
   "Return T on a 64-bit platform else NIL."
-  #+x86-64 t)
+  #+x86-64 t
+  #+x86 nil)
+
 (defun 32-bit-p () 
   "Return T on a 64-bit platform else NIL."
-  #+x86 t)
+  #+x86 t
+  #+x86-64 nil)
 
 (defun register-project-directory (path &optional (asdf t))
   "Add PATH to QL:*LOCAL-PROJECT-DIRECTORIES* and ASDF:*CENTRAL-REGISTRY* (as
@@ -389,10 +392,21 @@ accessible."
 
 (define-logical-pathname "STASH" "/opt/stash/"
   ("**;*.*.*" "/opt/stash/**/*.*"))
+
+(define-logical-pathname "USER" "~"
+  ("ORG;**;*.*.*" "~/org/**/*.*")
+  ("SRC;**;*.*.*" "~/src/**/*.*")
+  ("STASH;**;*.*.*" "~/.stash/**/*.*")
+  ("STORE;**;*.*.*" "~/.store/**/*.*")
+  ("**;*.*.*" "~/**/*.*"))
+
+
 (define-logical-pathname "STORE" "/opt/store/"
   ("**;*.*.*" "/opt/store/**/*.*"))
+
 (define-logical-pathname "SCRATCH" "/opt/scratch/"
   ("**;*.*.*" "/opt/scratch/**/*.*"))
+
 ;; redefine the sys table
 (define-logical-pathname "SYS" "/usr/local/lib/sbcl/"
   ("SRC;**;*.*.*" #P"/usr/local/src/sbcl/src/**/*.*")

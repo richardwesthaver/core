@@ -18,20 +18,27 @@
 
 ;;; Code:
 (in-package :std/defsys)
+(in-readtable :std)
+
 (defvar *system-definitions* nil
   "A list of files containing DEFSYS forms.")
 
-(defvar *system-cache-directory* std/sys:*stash*)
-(defvar *system-data-directory* nil)
+(defvar *system-cache-directory* #l"user:stash;cache;lisp;sys;")
+(defvar *system-data-directory* #l"user:stash;data;lisp;sys;")
+
 (defvar *component-class-table* (make-hash-table))
+
 (defvar *system-table* (make-hash-table)
   "An EQL hash-table containing NAME:SYSTEM pairs.")
+
 (defvar *provider-table* (make-hash-table)
   "A hash-table containing PROVIDER functions.")
+
 (defvar *defining-system* nil
   "When non-nil, indicates the name of the system currently being defined.")
-(define-constant +system-definition-extension+ "sys" 
-  :test 'equal
+
+(define-constant +sys-extension+ "sys" 
+  :test 'string=
   :documentation "The default file extension used in system definitions.")
 
 ;;; Conditions

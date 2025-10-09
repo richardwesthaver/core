@@ -1307,12 +1307,13 @@
    :merge-env-pathnames))
 
 (pkg:defpkg :std/defsys
+  (:nicknames :sys)
   (:use :cl :std/prim :std/meta 
    :std/macs :std/thread :std/task :std/serde 
    :std/seq :std/pipe :std/prim :std/condition
    :std/print :std/meta :std/path :std/sym
    :std/macs)
-  (:nicknames :sys)
+  (:import-from :std/named-readtables :in-readtable)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
   (:shadow :load-system :compile-system :find-system :system)

@@ -45,6 +45,7 @@
                              (:file "palette")
                              (:file "x11")
                              (:file "base16")
+                             (:file "modus")
                              (:file "theme")))
                (:module "time"
                 :components ((:file "local")
