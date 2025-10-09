@@ -8,6 +8,7 @@
                (:file "db")
                (:file "stream")
                (:file "cfg")
+               (:file "syslog")
                (:file "sys"))
   :in-order-to ((test-op (test-op "log/tests"))))
 

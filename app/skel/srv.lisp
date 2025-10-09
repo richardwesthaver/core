@@ -5,14 +5,21 @@
 ;;; Code:
 (in-package :skel/srv)
 
-(defclass sk-request (request) ())
-(defclass sk-response (response) ())
+(defclass sk-message (request response) 
+  ((type :initarg :type :initform :ack)
+   )
+  (:documentation "In-memory representation of a binary-encoded, unencrypted, uncompressed
+message sent over UDP.
+
+This object should have its DATA slot initialized with an octet-vector which
+the remaining slots will be serialized to/from. Messages never store header
+information. For a lower-level interface which preserves the header see SK-PACKET."))
 
 (defclass sk-service (skel service) ()
   (:documentation "Base class for SKEL services.")
   (:default-initargs
-   :request-class 'sk-request
-   :response-class 'sk-response))
+   :request-class 'sk-message
+   :response-class 'sk-message))
 
 (defclass sk-engine (multi-threaded-engine thread-pool) ())
 
