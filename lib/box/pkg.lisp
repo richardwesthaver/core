@@ -25,15 +25,11 @@
 
 (defpackage :box/qemu
   (:nicknames :qemu)
-  (:use :cl :std :cli/shell :dat/json :config :box)
+  (:use :cl :std :cli/shell :dat/json :config :box :ast)
   (:export :*qemu-config* :*qemu-creds*))
 
 (defpackage :box/qmp
   (:nicknames :qmp)
-  (:use :cl :std :dat/json :net/srv :box/qemu))
-
-(defpackage :box/qga
-  (:nicknames :qga)
   (:use :cl :std :dat/json :net/srv :box/qemu))
 
 ;;; DEFSYS Providers

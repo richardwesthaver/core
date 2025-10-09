@@ -197,7 +197,9 @@ profile/
 └── profiledef.sh
 |#
 ;;; Types
-(deftype archiso-profile-designator () '(member :releng :baseline))
+(defvar *archiso-releng-directory* #P"/usr/share/archiso/configs/releng/")
+(defvar *archiso-baseline-directory* #P"/usr/share/archiso/configs/baseline/")
+
 (deftype airootfs-image-type () '(member :squashfs :ext4+squashfs :erofs))
 (deftype archiso-build-mode () '(member :bootstrap :iso :netboot))
 (deftype archiso-boot-mode () 
@@ -218,7 +220,6 @@ profile/
 
 (defvar *archiso-creds*)
 
-(declaim (archiso-profile-designator *default-archiso-profile*))
 (defvar *default-archiso-profile* :releng)
 
 ;; TODO 2024-05-31: 
@@ -259,8 +260,7 @@ profile/
 ;;; CLI
 (defun mkarchiso (profile-dir 
                   &key config install-dir out-dir work-dir
-                       application label publisher
-                       cert gpg mbox modes packages
+                       name label publisher cert gpg mbox modes packages
                        delete verbose output)
   (sb-ext:run-program 
    (cli:find-exe "mkarchiso") 
@@ -268,7 +268,7 @@ profile/
      ,@(when install-dir `("-D" ,install-dir))
      ,@(when out-dir `("-o" ,out-dir))
      ,@(when work-dir `("-w" ,work-dir))
-     ,@(when application `("-A" ,application))
+     ,@(when name `("-A" ,name))
      ,@(when label `("-L" ,label))
      ,@(when publisher `("-P" ,publisher))
      ,@(when cert `("-c" ,cert))
