@@ -18,12 +18,11 @@
   (with-open-file (f path)
     (map 'list
          (lambda (x)
-           (mapcar #'trim (split-sequence #\space x :count 2)))
-         (loop for c = (peek-char t f nil nil)
-               when (null c) do (loop-finish)
-               if (char= c #\#) do (read-line f nil)
-               if (whitespace-p c) do (read-char f nil)
-               else collect (read-line f nil)))))
+           (mapcar #'trim (split-sequence #\space (string-trim '(#\tab #\space) x) :count 2)))
+         (loop for l = (read-line f nil nil)
+               until (null l)
+               unless (or (zerop (length l)) (char= (char l 0) #\#))
+               collect l))))
 
 (defmethod make-config ((self (eql :ssh)) &key (path (user-ssh-config-file)))
   (let ((cfg (load-ssh-config-file path))
@@ -48,4 +47,5 @@
                           (match (push (nreverse match) opts)))
                     (nreversef opts)))
     (make-instance 'ssh-config :ast opts)))
-    
+
+(defclass ssh-socket (tcp-socket) ())

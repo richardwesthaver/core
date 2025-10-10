@@ -58,3 +58,5 @@
   :LOCAL7 (ash 23 3)) ; reserved for local use 
 
 ;; openlog syslog closelog
+(defun syslog-socket-p (&optional (path "/dev/log"))
+  (sb-posix:s-issock (sb-posix::stat-mode (sb-posix:stat path))))

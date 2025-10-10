@@ -36,9 +36,14 @@
 
 ;;; Objects
 (defconfig tcp-config (net-config) ())
-(defclass tcp-socket (inet-socket) 
-  ()
+
+(defclass tcp-socket (socket) 
+  ((sb-bsd-sockets::family :initform sockint::af-inet))
   (:default-initargs :type :stream :protocol :tcp))
+
+(defmethod sb-bsd-sockets::make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
+  (apply 'net/core::%sockaddr sockaddr address))
+
 (defclass tcp-client (tcp-socket client) ())
 (defclass tcp-server (tcp-socket server) ())
 (defclass tcp-source (tcp-server source) ())

@@ -31,11 +31,12 @@
   (:documentation
    "Generic connection object."))
 
-(defclass client (sb-bsd-sockets:inet-socket) ())
+(defclass client (socket) ())
 
 (defconfig client-config (net-config) ())
 
-(defclass server (sb-bsd-sockets:inet-socket) ())
+(defclass server (socket) ())
+
 (defconfig server-config (net-config) ())
 
 (defclass proxy (server)
@@ -51,6 +52,7 @@ communication channel with a client/server."))
 ;;; Protocol
 (defverb connect (self &key &allow-other-keys))
 (defverb disconnect (self &key &allow-other-keys))
+
 (defgeneric make-client (kind &rest initargs &key &allow-other-keys))
 (defgeneric make-server (kind &rest initargs &key &allow-other-keys))
 

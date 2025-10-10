@@ -7,6 +7,7 @@
 
 (defun b3hash (in &optional (len +blake3-out-len+))
   "Hash the sequence IN using blake3 returning an OCTET-VECTOR of length LEN."
+  (declare (optimize (speed 3) (safety 0)))
     (let ((out (make-octets len)))
       (with-blake3-hasher h
         (with-alien ((input (* unsigned-char) (octets-to-alien in))
@@ -25,6 +26,7 @@ string instead of octets."
         hash)))
   
 (defun b3sum (path &key (hex t))
+  (declare (optimize (speed 3) (safety 0)))
   (with-open-file (f path :element-type 'octet)
     (let ((out (make-octets (file-length f))))
       (read-sequence out f)

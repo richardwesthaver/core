@@ -7,6 +7,48 @@
 
 (defvar *localhost* #(127 0 0 1))
 
+;; returns an alien struct pointer, allocated based on input
+(defun %sockaddr (&optional sockaddr &rest addr)
+  (check-type addr (or null (cons sequence (cons (unsigned-byte 16)))))
+  (let ((host (first addr))
+        (port (second addr)))
+    (when (and host port)
+      (ecase (length host)
+        (16 (let ((sockaddr (or sockaddr (sockint::allocate-sockaddr-in6))))
+              (setf (sockint::sockaddr-in6-family sockaddr)
+                    sockint::af-inet6
+                    (sb-alien:deref (sockint::sockaddr-in6-port sockaddr) 0)
+                    (ldb (byte 8 8) port)
+                    (sb-alien:deref (sockint::sockaddr-in6-port sockaddr) 1)
+                    (ldb (byte 8 0) port))
+              (dotimes (i 4)
+                (setf (sb-alien:deref (sockint::sockaddr-in6-flowinfo sockaddr) i) 0))
+              (dotimes (i 16)
+                (setf (sb-alien:deref (sockint::sockaddr-in6-addr sockaddr) i) (elt host i)))
+              (dotimes (i 4)
+                (setf (sb-alien:deref (sockint::sockaddr-in6-scope-id sockaddr) i) 0))
+              sockaddr))
+        (4 (let ((sockaddr (or sockaddr (sockint::allocate-sockaddr-in))))
+             (let ((in-port (sockint::sockaddr-in-port sockaddr))
+                   (in-addr (sockint::sockaddr-in-addr sockaddr)))
+               (declare (fixnum port))
+               ;; port and host are represented in C as "network-endian" unsigned
+               ;; integers of various lengths.  This is stupid.  The value of the
+               ;; integer doesn't matter (and will change depending on your
+               ;; machine's endianness); what the bind(2) call is interested in
+               ;; is the pattern of bytes within that integer.
+
+               ;; We have no truck with such dreadful type punning.  Octets to
+               ;; octets, dust to dust.
+               (setf (sockint::sockaddr-in-family sockaddr) sockint::af-inet)
+               (setf (sb-alien:deref in-port 0) (ldb (byte 8 8) port))
+               (setf (sb-alien:deref in-port 1) (ldb (byte 8 0) port))
+               (setf (sb-alien:deref in-addr 0) (elt host 0))
+               (setf (sb-alien:deref in-addr 1) (elt host 1))
+               (setf (sb-alien:deref in-addr 2) (elt host 2))
+               (setf (sb-alien:deref in-addr 3) (elt host 3)))
+             sockaddr))))))
+         
 ;; from usocket
 (defun get-address-by-name (name)
   "Return the address of a host by NAME."

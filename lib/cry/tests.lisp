@@ -61,3 +61,24 @@
 
 (deftest gpg ()
   (istype 'cry/gpg:gpg-agent-config (make-config :gpg-agent)))
+
+(defun checksum-bench ()
+  (blake3:load-blake3)
+  (labels ((.md5sum () (crypto:digest-file (crypto:make-digest :md5) *load-truename*))
+           (.sha1sum () (crypto:digest-file (crypto:make-digest :sha1) *load-truename*))
+           (.sha256sum () (crypto:digest-file (crypto:make-digest :sha256) *load-truename*))
+           (.sha512sum () (crypto:digest-file (crypto:make-digest :sha512) *load-truename*))
+           (.b3sum () (b3sum *load-truename* :hex nil))
+           (.crc64sum () (crc64-file *load-truename*)))
+    (init-crc64 +improved-polynomial+)
+    (let ((n 1000))
+      (time (dotimes (i n) (.sha1sum))) ;; 20 bytes
+      (time (dotimes (i n) (.sha256sum))) ;; 32 bytes
+      (time 
+       (sb-sprof:with-profiling (:report :graph)
+         (dotimes (i n) (.b3sum)))) ;; 32 bytes ; incredibly slow
+      (time (dotimes (i n) (.sha512sum))) ;; 64 bytes
+      (time (dotimes (i n) (.md5sum))) ;; 16 bytes
+      (time (dotimes (i n) (.crc64sum)));; 8 bytes
+      )))
+

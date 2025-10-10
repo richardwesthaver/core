@@ -126,5 +126,4 @@ simple-string or a simple-array with element-type \(unsigned-byte 8)"
       (setf crch (logxor (ash crch -8)  
 			 (the (unsigned-byte 32) 
 			   (aref *crc-table-h* table-index)))))
-
     (+ (ash crch 32) crcl)))

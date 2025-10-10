@@ -35,8 +35,14 @@
 
 ;;; Objects
 (defconfig udp-config (net-config) ())
-(defclass udp-socket (inet-socket) ()
+
+(defclass udp-socket (socket) 
+  ((sb-bsd-sockets::family :initform sockint::af-inet))
   (:default-initargs :type :datagram :protocol :udp))
+
+(defmethod sb-bsd-sockets::make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
+  (apply 'net/core::%sockaddr sockaddr address))
+
 (defclass udp-client (udp-socket client) ())
 (defclass udp-server (udp-socket server) ())
 (defclass udp-sink (udp-client sink) ())
@@ -47,3 +53,5 @@
 ;; ref: https://github.com/quinn-rs/quinn/blob/main/quinn-proto/src/config/transport.rs (MtuDiscoveryConfig)
 
 ;;; Multicast
+;; range 224.0.0.0 to 239.255.255.255
+;; don't use .1,2,22
