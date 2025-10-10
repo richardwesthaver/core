@@ -11,7 +11,7 @@
   (let ((proc (sb-ext:run-program *systemctl* (or args nil) :output output)))
     (unless (or (= 0 #1=(sb-ext:process-exit-code proc))
                 (= 3 #1#))
-      (systemd-error "SYSTEMCTL command failed: ~A ~A" *systemctl* (or args "")))))
+      (systemctl-error "SYSTEMCTL command failed: ~A ~A" *systemctl* (or args "")))))
 
 (defun systemctl-start (&rest args)
   (run-systemctl `("start" ,@args)))
@@ -42,3 +42,12 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (journalctl-error "Journalctl command failed: ~A ~A" *journalctl* (or args "")))))
 
+(define-cli-tool :networkctl (&rest args)
+  (let ((proc (sb-ext:run-program *networkctl* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (networkctl-error "Networkctl command failed: ~A ~A" *networkctl* (or args "")))))
+
+(define-cli-tool :resolvectl (&rest args)
+  (let ((proc (sb-ext:run-program *networkctl* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (resolvectl-error "Networkctl command failed: ~A ~A" *resolvectl* (or args "")))))

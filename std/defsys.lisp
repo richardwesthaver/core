@@ -257,7 +257,8 @@ USE should be called in order to load and activate a module."
    (plan :description "The default plan associated with this object which specifies the ordering of
 system jobs to be executed in an async context."
          :initform :serial))
-  (:keyword :sys))
+  (:keyword :sys)
+  (:default-initargs :hook (make-instance 'key-hook)))
 
 (defun system-equal (a b)
   "Return T if systems A and B refer to the same SYSTEM."

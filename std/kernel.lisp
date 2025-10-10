@@ -80,10 +80,8 @@ restarts is provided. *KERNEL* is returned."
   (let ((k (find :kernel opts :key #'car)))
     `(progn
        (defclass ,name ,(or supers '(kernel-object)) ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
-       ,@(when k 
-           `((defmethod initialize-instance :after ((self ,name) &key kernel &allow-other-keys)
-               (when kernel
-                 (sb-mop:set-funcallable-instance-function self kernel))))))))
+       (defmethod shared-initialize :after ((self ,name) slot-names &key &allow-other-keys)
+         (sb-mop:set-funcallable-instance-function self ',(cdr k))))))
 
 (defkernel hook () ()
   (:documentation "Hooks are Kernel objects which call an instance-specific

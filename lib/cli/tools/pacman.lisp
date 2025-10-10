@@ -96,5 +96,3 @@
                      while l 
                      collect l))))
     (make-instance 'makepkg-config :ast ast)))
-    
-    

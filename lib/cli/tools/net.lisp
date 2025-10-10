@@ -125,11 +125,8 @@
 
 (defconfig dnsmasq-config (ini-document) ())
 
-(defmethod deserialize ((self t) (fmt (eql :dnsmasq-config)) &key)
-  (change-class (deserialize self :ini) 'dnsmasq-config))
-
-(defun load-dnsmasq-config (&optional (path #p"/etc/dnsmasq.conf"))
-  (deserialize path :dnsmasq-config))
+(defmethod make-config ((self (eql :dnsmasq)) &key (path #p"/etc/dnsmasq.conf"))
+  (change-class (deserialize path :ini) 'dnsmasq-config))
 
 ;;; EASYRSA
 (defvar *easy-rsa-directory* #p"/etc/easy-rsa/")
@@ -315,6 +312,7 @@ TR_TORRENT_TRACKERS ; A comma-delimited list of the torrent's trackers' announce
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (transmission-daemon-error "TRANSMISSION-DAEMON command failed: ~A ~A" *transmission-daemon* (or args "")))))
 
+;;; Rsync
 (define-cli-tool :rsync (args &key (output t) (wait t) (input t))
   (let ((proc (sb-ext:run-program *rsync* args :wait wait :output output :input input)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
