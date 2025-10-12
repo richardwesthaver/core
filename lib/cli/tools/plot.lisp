@@ -52,3 +52,5 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (dot-error "DOT (graphviz) command failed: ~A ~A" *dot* args))))
 
+(defun dot-to-svg (file)
+  (run-dot `("-Tsvg" ,(format nil "-o~A.svg" (pathname-name file)) ,file)))

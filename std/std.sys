@@ -15,7 +15,8 @@
  :serial t
  :require (:cl-ppcre :std)
  :components 
- ("named-readtables" "defpkg" (:dir "num")
+ ("named-readtables" "defpkg" 
+  (:dir "num")
   (:pkg "pkg")
   (:file "condition")
   (:file "sym")
@@ -24,12 +25,6 @@
   (:file "kernel")
   (:file "type")
   (:file "string")
-  (:mod "num"
-   :components
-   ((:file "float")
-    (:file "parse")
-    (:file "leb128")
-    (:file "math")))
   (:file "stream")
   (:file "curry")
   (:file "array")

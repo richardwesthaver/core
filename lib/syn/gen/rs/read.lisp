@@ -7,8 +7,8 @@
 
 ;;; Readers
 (define-code-reader
-  :file-reader read-gen-rs-file
-  :string-reader read-gen-rs-string
+  :file-reader read-rs-file
+  :string-reader read-rs-string
   :macro-character
   ((set-macro-character #\Space #'pre-process)
    (set-macro-character #\Tab #'pre-process)
@@ -17,8 +17,8 @@
 
 ;; Define a start-up function
 (define-code-processor gen-rs
-  :file-reader   read-gen-rs-file
-  :string-reader read-gen-rs-string
+  :file-reader   read-rs-file
+  :string-reader read-rs-string
   :traverse
   (nested-ast-remover
    else-if-traverser

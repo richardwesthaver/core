@@ -35,4 +35,11 @@
  :provide
  ((:tests :io/tests
    :depends-on (:rt :io :uring :sb-bsd-sockets)
-   :components ((:file "tests")))))
+   :components ((:file "tests")))
+  (:proto :chunky)
+  (:proto :fast)
+  (:proto :flate)
+  (:proto :kbd)
+  (:proto :smart-buffer)
+  (:proto :static)
+  (:proto :disk)))

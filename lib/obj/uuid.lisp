@@ -258,8 +258,8 @@ characters.~@:>" string (length string)))
   "Helper function that produces a digest from a namespace (a byte array) and a string. Used for the
 generation of version 3 and 5 uuids."
   (declare (ignorable digest uuid name))
-  #+ironclad
-  (let ((digester (ironclad:make-digest digest)))
-    (ironclad:update-digest digester uuid)
-    (ironclad:update-digest digester (trivial-utf-8:string-to-utf-8-bytes name))
-    (ironclad:produce-digest digester)))
+  ;; FIX 2025-10-10: 
+  (let ((digester (symbol-call :ironclad 'make-digest digest)))
+    (symbol-call :ironclad 'update-digest digester uuid)
+    (symbol-call :ironclad 'update-digest digester (sb-ext:string-to-octets name))
+    (symbol-call :ironclad 'produce-digest digester)))

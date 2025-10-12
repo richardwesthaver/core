@@ -415,6 +415,18 @@ be an AST accessor present which points to the list."
                  (pprint-newline :mandatory)
                  (pprint-indent :current 0)))))))))
 
+(defmethod json-write ((value uuid:uuid) &optional stream)
+  "Encode a pathname as a stream."
+  (json-write (string-downcase (uuid:uuid-to-string value)) stream))
+
+(defmethod json-write ((value time:timestamp) &optional stream)
+  "Encode a pathname as a stream."
+  (json-write (time:format-rfc3339-timestring nil value) stream))
+
+(defmethod json-write ((value uri:uri) &optional stream)
+  "Encode a pathname as a stream."
+  (json-write (uri:uri-to-string value) stream))
+
 ;;; Reader Macro
 ;; not used, but maybe useful some day
 (defun json-enable-reader-macro ()

@@ -225,13 +225,16 @@ Delete and return the old edges of NODE in GRAPH."))
   (add-edge graph (id edge) (or value edge)))
 
 (defmethod edge-value ((graph graph) edge)
-  (multiple-value-bind (value included) (gethash edge (edges graph))
-    (declare (ignore included))
-    ;; (assert included (edge graph) "~S doesn't include ~S" graph edge)
-    value))
+  (etypecase (edges graph)
+    (hash-table
+     (name (gethash edge (edges graph))))
+    (sequence
+     (name (find edge (edges graph) :key 'id:id)))))
 
 (defmethod (setf edge-value) (new (graph graph) edge)
-  (setf (gethash edge (edges graph)) new))
+  (etypecase (edges graph)
+    (hash-table (setf (gethash edge (edges graph)) new))
+    (sequence (setf (nth (position edge (edges graph) :key 'id:id) (edges graph)) new))))
 
 (defgeneric merge-nodes (graph node1 node2 &key new)
   (:documentation "Combine NODE1 and NODE2 in GRAPH into the node NEW.

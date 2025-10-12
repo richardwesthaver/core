@@ -462,7 +462,9 @@
   (:export :hash-table-alist
    :maphash-keys :hash-table-keys
    :maphash-values :hash-table-values
-   :alist-hash-table :plist-hash-table :hash-table-plist :ensure-gethash
+   :alist-hash-table :plist-hash-table 
+   :plist-string-hash-table
+   :hash-table-plist :ensure-gethash
    :pophash :*global-hasher*
    :*global-hash* :djb
    :hash-object :hash-object-address
@@ -1324,6 +1326,7 @@
    :defprovider
    :defcomponent
    :load-sys
+   :compile-sys
    :system
    :component
    :mod-component

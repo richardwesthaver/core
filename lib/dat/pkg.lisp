@@ -15,6 +15,9 @@
   (:use :cl :std)
   (:export :dat-error))
 
+(defpkg :dat/sxp
+  (:use :cl :std :ast))
+
 (defpkg :dat/asn1
   (:nicknames :asn1)
   (:use :cl :std :dat/proto)

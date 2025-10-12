@@ -70,15 +70,12 @@ SUBGRAPH structure."
       (format out "  }~%"))))
 
 (defun edge-to-dot (edge graph attrs &optional stream)
-  (cond 
-    ((atom edge) (setf edge (list edge)))
-    ((consp edge) (setf edge (flatten edge))))
   (format stream "  \"~a\" ~a \"~a\" ~{~a~^ ~};~%"
-          (first edge)
+          (edge-in edge)
           (etypecase graph
             (directed-graph "->")
             (graph "--"))
-          (second edge)
+          (edge-out edge)
           (mapcar (lambda (l)
                     (destructuring-bind (attr . fn) l
                       (let ((val (funcall fn edge)))
@@ -114,11 +111,7 @@ structures.  RANKS is a list of RANK structures."
   ;; by default edges are labeled with their values
   (declare (graph graph))
   (unless (assoc :label edge-attrs)
-    (push (cons :label
-                (lambda (edge)
-                  (let ((value (edge-value graph edge)))
-                    (when value
-                      (format nil "\"~A\"" value)))))
+    (push (cons :label (lambda (x) (format nil "\"~A\"" (name x))))
           edge-attrs))
   (format stream "~a to_dot {~%~{~a~}}~%"
           (etypecase graph
@@ -131,8 +124,21 @@ structures.  RANKS is a list of RANK structures."
                            (format nil "  ~a=~a;~%" a b)
                            (format nil "  ~(~a~)=~a;~%" a b))))
                    attributes)
-           (mapcar {node-to-dot _ node-attrs} (hash-table-keys (nodes graph)))
-           (mapcar {edge-to-dot _ graph edge-attrs} (hash-table-keys (edges graph)))
+           (mapcar {node-to-dot _ node-attrs}
+                   (let ((n (nodes graph)))
+                     (etypecase n
+                       (hash-table (hash-table-keys n))
+                       (sequence (map 'list (lambda (x) 
+                                              (string-downcase 
+                                               (if (typep (id:id x) 'uuid:uuid)
+                                                   (uuid:uuid-to-string (id:id x))
+                                                   (id:id x))))
+                                      n)))))
+           (mapcar {edge-to-dot _ graph edge-attrs}
+                   (let ((e (edges graph)))
+                     (if (hash-table-p e)
+                         (hash-table-values e)
+                         e)))
            (mapcar #'subgraph-print subgraphs)
            (mapcar #'rank-print ranks)))
   (values))

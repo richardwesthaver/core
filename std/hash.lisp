@@ -70,6 +70,15 @@ PLIST. Hash table is initialized using the HASH-TABLE-INITARGS."
       (ensure-gethash (car tail) table (cadr tail)))
     table))
 
+(definline plist-string-hash-table (plist &rest hash-table-initargs)
+  "Returns a hash table containing the keys and values of the property list
+PLIST. Hash table is initialized using the HASH-TABLE-INITARGS."
+  (let ((table (apply #'make-hash-table :test 'equal hash-table-initargs)))
+    (do ((tail plist (cddr tail)))
+        ((not tail))
+      (ensure-gethash (string-downcase (car tail)) table (cadr tail)))
+    table))
+
 (defun pophash (key hash-table &optional default)
   (multiple-value-bind (value existsp) (gethash key hash-table default)
     (when existsp (remhash key hash-table))

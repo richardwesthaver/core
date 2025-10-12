@@ -59,6 +59,21 @@ Concat ARGS and return a newly interned symbol."
   (intern (apply #'mkstr args)))
 
 ;;; Config
+(defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
+
+;;;###autoload
+(defun edit-emacs-config (&optional src)
+  (interactive (list current-prefix-arg))
+  (let ((file (if src 
+		  (expand-file-name "default.el" emacs-config-source) 
+		user-custom-file)))
+    (find-file file)))
+
+(keymap-set user-map "e c" #'edit-emacs-config)
+(keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
+(keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
+(keymap-set user-map "v t" #'org-tags-view)
+
 (defun add-to-load-path (&rest paths)
   "Add PATHS to `load-path'."
   (mapc (lambda (x)
@@ -193,6 +208,20 @@ TABLE."
   (interactive)
   (when theme (setq default-theme theme))
   (load-theme default-theme t))
+
+
+;;; Tags
+;;;###autoload
+(defun refresh-tags ()
+  "Refresh TAGS database in `user-emacs-directory'."
+  (interactive)
+  (let ((default-directory user-emacs-directory))
+    (async-shell-command 
+     "etags ./*.el \\
+./lib/*.el \\
+~/comp/core/emacs/*.el \\
+~/comp/core/emacs/lib/*.el \\
+-o TAGS")))
 
 (provide 'util)
 ;; util.el ends here

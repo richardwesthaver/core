@@ -142,7 +142,7 @@
                       then (percent-encode-string host *reg-name-bitvector*)
                       else host))
            (when port ":")
-           (when port port)
+           (when port (format nil "~A" port))
            (if* path
               then path
             elseif (and *render-include-slash-on-null-path*

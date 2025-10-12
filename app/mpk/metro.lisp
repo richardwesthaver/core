@@ -17,7 +17,7 @@ should only use this to run high-precision clock functions with minimal
 latency. The KERNEL slot of a METRO instance is currently assumed to return
 two values - a boolean and a positive integer representing the tick count.
 The first value is T on a downbeat and may be NIL on upbeats.")
-  (:kernel (lambda (self) (values t (incf self)))))
+  (:kernel (self) (values t (incf self))))
 
 (defmethod print-object ((self metro) stream)
   (print-unreadable-object (self stream :type t)

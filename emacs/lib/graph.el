@@ -145,7 +145,7 @@ non-nil visit each node and collect all edges found."
 (defvar org-graph (make-org-graph)
   "The Emacs-native org-graph. Should be assigned to an `org-graph' instance.")
 
-(cl-defstruct org-graph-node id name file point)
+(cl-defstruct org-graph-node id name file point properties)
 (cl-defmethod unwrap ((self org-graph-node))
   (with-slots (id name file point) self
     (list id name file point)))

@@ -5,6 +5,7 @@
   :serial t
   :components ((:file "pkg")
                (:file "condition")
+               (:file "sxp")
                (:file "asn1")
                (:file "dot")
                (:file "csv")

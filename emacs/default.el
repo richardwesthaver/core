@@ -227,6 +227,19 @@
          project-mode-line t
          project-file-history-behavior 'relativize)
 
+(defun remember-project ()
+  (interactive)
+  (project-remember-project (project-current))
+  project--list)
+
+(defun remember-lab-projects ()
+  (interactive)
+  (project-remember-projects-under user-lab-directory t))
+
+(defun remember-comp-projects ()
+  (interactive)
+  (project-remember-projects-under company-source-directory t))
+
 ;;; Tabs
 (add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
@@ -867,6 +880,8 @@ Add this function to appropriate major mode hooks such as
 (add-hook 'eww-mode-hook 'shr-heading-setup-imenu)
 (add-hook 'eww-mode-hook (lambda () (define-key eww-mode-map "i" shr-heading-map)))
 
+;;; ERC
+
 ;;; Tramp
 (setopt tramp-default-method "ssh"
         tramp-default-user user-login-name
@@ -996,6 +1011,7 @@ Add this function to appropriate major mode hooks such as
         ;; org-agenda-files (list "inbox.org")
         org-agenda-include-diary t
         org-agenda-include-inactive-timestamps t
+        org-agenda-span 5
         org-confirm-babel-evaluate nil
         org-src-fontify-natively t
         org-src-tabs-act-natively t
@@ -1290,13 +1306,293 @@ inherited by a parent headline."
                                        :html translation-html
                                        :utf-8 translation-utf-8)))))))
 
+(defun org-word-count (beg end
+			   &optional count-latex-macro-args?
+			   count-footnotes?)
+  "Report the number of words in the Org mode buffer or selected region.
+Ignores:
+- comments
+- tables
+- source code blocks (#+BEGIN_SRC ... #+END_SRC, and inline blocks)
+- hyperlinks (but does count words in hyperlink descriptions)
+- tags, priorities, and TODO keywords in headers
+- sections tagged as 'not for export'.
+
+The text of footnote definitions is ignored, unless the optional argument
+COUNT-FOOTNOTES? is non-nil.
+
+If the optional argument COUNT-LATEX-MACRO-ARGS? is non-nil, the word count
+includes LaTeX macro arguments (the material between {curly braces}).
+Otherwise, and by default, every LaTeX macro counts as 1 word regardless
+of its arguments."
+  (interactive "r")
+  (unless mark-active
+    (setf beg (point-min)
+	  end (point-max)))
+  (let ((wc 0)
+	(latex-macro-regexp "\\\\[A-Za-z]+\\(\\[[^]]*\\]\\|\\){\\([^}]*\\)}"))
+    (save-excursion
+      (goto-char beg)
+      (while (< (point) end)
+	(cond
+	 ;; Ignore comments.
+	 ((or (org-at-comment-p) (org-at-table-p))
+	  nil)
+	 ;; Ignore hyperlinks. But if link has a description, count
+	 ;; the words within the description.
+	 ((looking-at org-bracket-link-analytic-regexp)
+	  (when (match-string-no-properties 5)
+	    (let ((desc (match-string-no-properties 5)))
+	      (save-match-data
+		(cl-incf wc (length (remove "" (org-split-string
+						desc "\\W")))))))
+	  (goto-char (match-end 0)))
+	 ((looking-at org-any-link-re)
+	  (goto-char (match-end 0)))
+	 ;; Ignore source code blocks.
+	 ((org-between-regexps-p "^#\\+BEGIN_SRC\\W" "^#\\+END_SRC\\W")
+	  nil)
+	 ;; Ignore inline source blocks, counting them as 1 word.
+	 ((save-excursion
+	    (backward-char)
+	    (looking-at org-babel-inline-src-block-regexp))
+	  (goto-char (match-end 0))
+	  (setf wc (+ 2 wc)))
+	 ;; Count latex macros as 1 word, ignoring their arguments.
+	 ((save-excursion
+	    (backward-char)
+	    (looking-at latex-macro-regexp))
+	  (goto-char (if count-latex-macro-args?
+			 (match-beginning 2)
+		       (match-end 0)))
+	  (setf wc (+ 2 wc)))
+	 ;; Ignore footnotes.
+	 ((and (not count-footnotes?)
+	       (or (org-footnote-at-definition-p)
+		   (org-footnote-at-reference-p)))
+	  nil)
+	 (t
+	  (let ((contexts (org-context)))
+	    (cond
+	     ;; Ignore tags and TODO keywords, etc.
+	     ((or (assoc :todo-keyword contexts)
+		  (assoc :priority contexts)
+		  (assoc :keyword contexts)
+		  (assoc :checkbox contexts))
+	      nil)
+	     ;; Ignore sections marked with tags that are
+	     ;; excluded from export.
+	     ((assoc :tags contexts)
+	      (if (intersection (org-get-tags-at) org-export-exclude-tags
+				:test 'equal)
+		  (org-forward-same-level 1)
+		nil))
+	     (t
+	      (cl-incf wc))))))
+	(re-search-forward "\\w+\\W*")))
+    (format "%d words in %s." wc
+	    (if mark-active "region" "buffer"))))
+
+(defun org-check-misformatted-subtree ()
+  "Check misformatted entries in the current buffer."
+  (interactive)
+  (show-all)
+  (org-map-entries
+   (lambda ()
+     (when (and (move-beginning-of-line 2)
+		(not (looking-at org-heading-regexp)))
+       (if (or (and (org-get-scheduled-time (point))
+		    (not (looking-at (concat "^.*" org-scheduled-regexp))))
+	       (and (org-get-deadline-time (point))
+		    (not (looking-at (concat "^.*" org-deadline-regexp)))))
+	   (when (y-or-n-p "Fix this subtree? ")
+	     (message "Call the function again when you're done fixing this subtree.")
+	     (recursive-edit))
+	 (message "All subtrees checked."))))))
+
+(defun org-sort-list-by-checkbox-type ()
+  "Sort list items according to Checkbox state."
+  (interactive)
+  (org-sort-list
+   nil ?f
+   (lambda ()
+     (if (looking-at org-list-full-item-re)
+	 (cdr (assoc (match-string 3)
+		     '(("[X]" . 1) ("[-]" . 2) ("[ ]" . 3) (nil . 4))))
+       4))))
+
+(defun org-time-string-to-seconds (s)
+  "Convert a string HH:MM:SS to a number of seconds."
+  (cond
+   ((and (stringp s)
+	 (string-match "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\)" s))
+    (let ((hour (string-to-number (match-string 1 s)))
+	  (min (string-to-number (match-string 2 s)))
+	  (sec (string-to-number (match-string 3 s))))
+      (+ (* hour 3600) (* min 60) sec)))
+   ((and (stringp s)
+	 (string-match "\\([0-9]+\\):\\([0-9]+\\)" s))
+    (let ((min (string-to-number (match-string 1 s)))
+	  (sec (string-to-number (match-string 2 s))))
+      (+ (* min 60) sec)))
+   ((stringp s) (string-to-number s))
+   (t s)))
+
+(defun org-time-seconds-to-string (secs)
+  "Convert a number of seconds to a time string."
+  (cond ((>= secs 3600) (format-seconds "%h:%.2m:%.2s" secs))
+	((>= secs 60) (format-seconds "%m:%.2s" secs))
+	(t (format-seconds "%s" secs))))
+
+(defmacro with-time (time-output-p &rest exprs)
+  "Evaluate an org-table formula, converting all fields that look
+like time data to integer seconds.  If TIME-OUTPUT-P then return
+the result as a time value."
+  (list
+   (if time-output-p 'org-time-seconds-to-string 'identity)
+   (cons 'progn
+	 (mapcar
+	  (lambda (expr)
+	    `,(cons (car expr)
+		    (mapcar
+		     (lambda (el)
+		       (if (listp el)
+			   (list 'with-time nil el)
+			 (org-time-string-to-seconds el)))
+		     (cdr expr))))
+	  `,@exprs))))
+
+(defun org-hex-strip-lead (str)
+  (if (and (> (length str) 2) (string= (substring str 0 2) "0x"))
+      (substring str 2) str))
+
+(defun org-hex-to-hex (int)
+  (format "0x%x" int))
+
+(defun org-hex-to-dec (str)
+  (cond
+   ((and (stringp str)
+	 (string-match "\\([0-9a-f]+\\)" (setf str (org-hex-strip-lead str))))
+    (let ((out 0))
+      (mapc
+       (lambda (ch)
+	 (setf out (+ (* out 16)
+		      (if (and (>= ch 48) (<= ch 57)) (- ch 48) (- ch 87)))))
+       (coerce (match-string 1 str) 'list))
+      out))
+   ((stringp str) (string-to-number str))
+   (t str)))
+
+(defmacro with-hex (hex-output-p &rest exprs)
+  "Evaluate an org-table formula, converting all fields that look
+    like hexadecimal to decimal integers.  If HEX-OUTPUT-P then
+    return the result as a hex value."
+  (list
+   (if hex-output-p 'org-hex-to-hex 'identity)
+   (cons 'progn
+	 (mapcar
+	  (lambda (expr)
+	    `,(cons (car expr)
+		    (mapcar (lambda (el)
+			      (if (listp el)
+				  (list 'with-hex nil el)
+				(org-hex-to-dec el)))
+			    (cdr expr))))
+	  `,@exprs))))
+
+(require 'mm-url) ; to include mm-url-decode-entities-string
+
+(cl-defun get-first-url (&optional (match (rx bol "http" (optional "s") "://")))
+  "Return URL in clipboard, or first URL in the `kill-ring' matching MATCH."
+  (cl-loop for item in (cons (current-kill 0) kill-ring)
+	   when (and item (string-match-p match item))
+	   return item))
+
+(defun get-html-title-from-url (url)
+  "Return content in <title> tag."
+  (interactive (list (get-first-url)))
+  (let (x1 x2 (download-buffer (url-retrieve-synchronously url)))
+    (save-excursion
+      (set-buffer download-buffer)
+      (beginning-of-buffer)
+      (setq x1 (search-forward "<title>"))
+      (search-forward "</title>")
+      (setq x2 (search-backward "<"))
+      (mm-url-decode-entities-string (buffer-substring-no-properties x1 x2)))))
+
+(defun org-insert-link-with-title (url)
+  "Insert org link where default description is set to html title."
+  (interactive (list (get-first-url match)))
+  (let ((title (get-html-title-from-url url)))
+    (org-insert-link nil url title)))
+
+(defun org-insert-so-link (url)
+  (interactive (list (get-first-url (rx bol "https://" (* anychar) "stackoverflow.com"))))
+  (let ((title (get-html-title-from-url url)))
+    (org-insert-link nil url title)))
+
+(defun org-remove-empty-propert-drawers ()
+  "*Remove all empty property drawers in current file."
+  (interactive)
+  (unless (eq major-mode 'org-mode)
+    (error "You need to turn on Org mode for this function."))
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward ":PROPERTIES:" nil t)
+      (save-excursion
+	(org-remove-empty-drawer-at "PROPERTIES" (match-beginning 0))))))
+
+(defun check-for-clock-out-note ()
+  (interactive)
+  (save-excursion
+    (org-back-to-heading)
+    (let ((tags (org-get-tags)))
+      (and tags (message "tags: %s " tags)
+	   (when (member "clocknote" tags)
+	     (org-add-note))))))
+
+(add-hook 'org-clock-out-hook 'check-for-clock-out-note)
+
+(defun org-list-files (dirs ext)
+  "Function to create list of org files in multiple subdirectories.
+This can be called to generate a list of files for
+org-agenda-files or org-refile-targets.
+
+DIRS is a list of directories.
+
+EXT is a list of the extensions of files to be included."
+  (let ((dirs (if (listp dirs)
+		  dirs
+		(list dirs)))
+	(ext (if (listp ext)
+		 ext
+	       (list ext)))
+	files)
+    (mapc
+     (lambda (x)
+       (mapc
+	(lambda (y)
+	  (setq files
+		(append files
+			(file-expand-wildcards
+			 (concat (file-name-as-directory x) "*" y)))))
+	ext))
+     dirs)
+    (mapc
+     (lambda (x)
+       (when (or (string-match "/.#" x)
+		 (string-match "#$" x))
+	 (setq files (delete x files))))
+     files)
+    files))
+
 ;;; Dictionary
 (setq dictionary-server "compiler.company"
       switch-to-buffer-obey-display-actions t)
 
 ;;; Ispell
 ;; requires aspell and a hunspell dictionary (hunspell-en_us)
-(setq-default ispell-program-name "aspell")
+(setq-default ispell-program-name "hunspell")
 (add-hook 'mail-send-hook  #'ispell-message)
 
 ;;; Skel

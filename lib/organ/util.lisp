@@ -35,6 +35,6 @@
     tbl))
 
 (defun uuid-octets* (id)
-  (handler-case (uuid-to-octet-vector id)
+  (handler-case (uuid:uuid-to-octet-vector id)
     (simple-error () id)
     (sb-pcl::missing-slot () id)))

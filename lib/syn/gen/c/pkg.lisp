@@ -40,8 +40,8 @@
    #:*c-symbols*
    #:c-reader
    #:c-processor
-   #:read-gen-c-file
-   #:read-gen-c-string
+   #:read-c-file
+   #:read-c-string
    #:assignment-expression
    #:infix-expression
    #:prefix-expression
@@ -156,7 +156,7 @@
   (:nicknames :c)
   (:use :cl)
   (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package :code-print :cl-reader)
-  (:import-from :syn/gen/c :c-reader :read-gen-c-string :read-gen-c-file
+  (:import-from :syn/gen/c :c-reader :read-c-string :read-c-file
    :switch-reader :decompose-declaration))
 
 (define-gen-backend :c :syn/gen/c :sym :syn/gen/c/sym :swap :syn/gen/c/swap)

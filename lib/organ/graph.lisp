@@ -74,18 +74,20 @@
    (path :initarg :path :accessor path)
    (point :initarg :point :accessor idx)))
 
-(defclass org-graph-external-node (vertex)
-  ((name :initarg :name :accessor name)
-   (uri :initarg :uri :accessor uri)))
+(defclass org-graph-external-node (org-graph-node)
+  ((name :initarg :name :accessor name)))
+
+(defaccessor uri ((self org-graph-external-node)) (path self))
 
 (defun extract-external-node (edge)
   "Extract an external node from EDGE which should have an EDGE-TYPE eql to
-:RELATION. External nodes share the same ID as the edges which they are
-extracted from."
+:RELATION. External nodes share the same NAME as the edges which they are
+extracted from and share the inherits an ID from the OUT slot."
   (make-instance 'org-graph-external-node 
-    :id (id edge)
+    :id (edge-out edge)
     :name (name edge)
-    :uri (parse-uri (url-encode (edge-out edge)) :escape nil)))
+    :path (or (ignore-errors (parse-uri (edge-out edge))) (url-decode (edge-out edge) :lenient t))
+    :point (idx edge)))
 
 (defun wrap-node (form)
   (make-instance 'org-graph-node 
@@ -134,6 +136,15 @@ extracted from."
 (defmethod equiv:equiv ((a org-graph-node) (b org-graph-node))
   (uuid= (id a) (id b)))
 
+(defmethod equiv:equiv ((a org-graph-node) (b org-graph-external-node))
+  nil)
+
+(defmethod equiv:equiv ((a org-graph-external-node) (b org-graph-node))
+  nil)
+
+(defmethod equiv:equiv ((a org-graph-external-node) (b org-graph-external-node))
+  (string-equal (id a) (id b)))
+
 (defmethod equiv:equiv ((a org-graph-node) (b org-heading))
   (when-let* ((props (organ::org-properties b))
               (id (find "ID" (org-contents props) :test 'string-equal :key 'name)))
@@ -150,7 +161,7 @@ extracted from."
            nodes
            :test 'equiv:equiv))))))
 
-(defun path= (a b) (and a b (string= (namestring (path a)) (namestring (path b)))))
+(defun path= (a b) (unless (or (consp a) (consp b)) (string= (namestring (path a)) (namestring (path b)))))
 
 ;; TODO 2025-10-07: goal of this function is to expand headings and return
 ;; edges - the edges we're targeting right now are parent/child relationships
@@ -319,4 +330,51 @@ provided then all are returned."
 (defmethod serialize ((self org-graph) (format (eql :dot)) &key path)
   (dat/dot:graph-to-dot-file self path :attributes '((layout . "sfdp") (beautify . "true"))))
 
+;; Json output is needed for web UI (JS)
+(defmethod json:json-write ((self org-graph-node) &optional stream)
+  (let ((obj (make-hash-table :test 'equal)))
+    (dolist (x '("name" "path" "point" "id"))
+      (setf (gethash x obj) (slot-value self (intern (string-upcase x) :organ/graph))))
+    (json:json-write obj stream)))
 
+(defmethod json:json-write ((self org-graph-edge) &optional stream)
+  (let ((obj (make-hash-table :test 'equal)))
+    (dolist (x '("type" "timestamp" "in" "out" "point"))
+      (setf (gethash x obj) (slot-value self (intern (string-upcase x) :organ/graph))))
+    (setf (gethash "properties" obj) (plist-string-hash-table (edge-properties self)))
+    (json:json-write obj stream)))
+
+(defmethod serialize ((self org-graph) (format (eql :json)) &key stream path)
+  (if stream
+      (let ((obj (make-hash-table :test 'equal)))
+        (setf (gethash "nodes" obj) *org-graph-nodes*
+              (gethash "links" obj) *org-graph-edges*)
+        (json:json-write obj stream))
+      (with-open-file (f path :direction :output :if-does-not-exist :create :external-format :utf-8)
+        (serialize self :json :stream f))))
+
+(defun org-graph-node-fix-path (node root)
+  (when (and (not (uri-p (path node))) (absolute-pathname-p (path node))) ; only apply to local pathnames
+    (setf (path node)
+          (let ((dir (pathname-directory (path node))))
+            (merge-uris
+             (concatenate 'string
+                          (namestring
+                           (make-pathname :name (pathname-name (path node))
+                                          :type nil
+                                          :directory (cons :relative (cdr (member "graph" dir :test 'equal)))))
+                          "#"
+                          (string-downcase (uuid-to-string (id node))))
+             root)))))
+
+(defun org-graph-fix-paths (&optional (nodes *org-graph-nodes*) (root "https://otom8.dev/graph/"))
+  (mapc (lambda (x) (org-graph-node-fix-path x root)) nodes))
+
+(defun org-graph-json (&optional (graph *org-graph*))
+  "Generate a json object containing the nodes and edges of GRAPH."
+  (org-graph-fix-paths)
+  (serialize graph :json :path "/opt/stash/data/web/cdn/data/org-graph.json"))
+
+(defun org-graph-index (&optional (files *org-graph-files*))
+  "Generate a json search index based on FILES."
+  (serialize files :json :path "/opt/stash/data/web/cdn/data/org-graph-index.json"))

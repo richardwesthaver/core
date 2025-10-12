@@ -462,16 +462,16 @@ system jobs to be executed in an async context."
              (make-instance kind
                :type (keywordicate (string-upcase ty))
                :name n
-               :path (truename (if ty (make-pathname :name n :type ty))))))
+               :path (make-pathname :name n :type ty))))
           (:mod
-           (let* ((path (truename n))
+           (let* ((path (directory-path n))
                   (*default-pathname-defaults* path))
              (make-instance kind
                :name n 
                :path path
                :components (mapcar '%parse-component-form (getf props :components)))))
           (:dir
-           (let* ((path (truename n))
+           (let* ((path (directory-path n))
                   (*default-pathname-defaults* path)
                   (inc (or (getf props :include) (cl-ppcre:create-scanner ".*")))
                   (exc (getf props :exclude))
@@ -515,20 +515,25 @@ the following extensions:
       (declare (ignore meth))
       (std/sym:with-gensyms (sys)
         `(let ((,sys (change-class (defsystem ,name ,@body) ,class)))
-           (setf (path ,sys) *load-truename*
+           (setf (path ,sys) (or *compile-file-truename* *load-truename*)
                  (slot-value ,sys 'plan) ,plan
-                 (slot-value ,sys 'components) `(,,@(%parse-components-form comp))
-                 (slot-value ,sys 'provide) `(,,@(%parse-provide-form prov))
-                 (slot-value ,sys 'require) `(,,@(%parse-require-form req)))
+                 (slot-value ,sys 'components) ',(%parse-components-form comp)
+                 (slot-value ,sys 'provide) ',(%parse-provide-form prov)
+                 (slot-value ,sys 'require) ',(%parse-require-form req))
            (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
            (register-system ,name ,sys))))))
+
+(defun compile-sys (path)
+  "Compile a SYS file at PATH. Default extension is FSYS."
+  (compile-file path :output-file (make-pathname :name (pathname-name path) :type "fsys") 
+                     :entry-points '(load-sys)))
 
 (defun load-sys (path &optional name)
   "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD
 internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
   (let ((path (truename path)))
     (with-system-session
-      (let ((*default-pathname-defaults* (pathname (directory-namestring (namestring path)))))
+      (let ((*default-pathname-defaults* (pathname (directory-namestring path))))
         (when 
             (restart-case (load path)
               (load-file (p)

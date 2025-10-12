@@ -10,8 +10,8 @@
   (when *args*
     (let ((f (car *args*)))
       (if (probe-file f)
-	  (print-code (syn/gen/c::read-gen-c-file f))
-	  (print-code (syn/gen/c::read-gen-c-string f)))
+	  (print-code (syn/gen/c::read-c-file f))
+	  (print-code (syn/gen/c::read-c-string f)))
       (terpri))))
 
 (defopt gen-syntax-opt ()

@@ -35,8 +35,8 @@
    #:rs-syntax
    :trait
    #:gen-rs
-   #:read-gen-rs-file
-   #:read-gen-rs-string
+   #:read-rs-file
+   #:read-rs-string
    #:rs-reader-switch
    #:rs-reader))
 
