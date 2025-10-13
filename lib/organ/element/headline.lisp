@@ -14,7 +14,7 @@
     (org-create :todo-keyword :type kw)))
 
 (define-org-element priority
-  ((level :accessor org-priority-level :initarg :level :type character)))
+    ((level :accessor org-priority-level :initarg :level :type character)))
 
 (define-org-parser (priority :from string)
   (with-lexer-environment (input)
@@ -54,7 +54,7 @@
     (values kw prio rest)))
 
 (define-org-element tag
-    ((name :initform "" :initarg :name :type string)))
+    ((name :initform "" :initarg :name :type string :accessor name)))
 
 (define-org-parser (tag :from string)
   (org-create type :name input))
@@ -62,11 +62,11 @@
 ;;; Headline
 ;; when level=0, headline is uninitialized
 (define-org-element headline
-    ((stars :initarg :stars :accessor hl-stars :initform 0)
-     (keyword :initarg :kw :accessor hl-kw :initform nil)
-     (priority :initarg :priority :accessor hl-priority :initform nil)
-     (title :initarg :title :accessor hl-title :initform "")
-     (tags :initarg :tags :accessor hl-tags :initform nil))
+    ((stars :initarg :stars :accessor org-stars :initform 0)
+     (keyword :initarg :kw :accessor org-kw :initform nil)
+     (priority :initarg :priority :accessor org-priority :initform nil)
+     (title :initarg :title :accessor org-title :initform "")
+     (tags :initarg :tags :accessor org-tags :initform nil))
   :documentation "Org Headline object without connection to other
   elements. This is a deviation from the org-element specification in
   the name of utility. Properties, Logbook, and Body objects are
@@ -76,45 +76,44 @@
 
 (defmethod print-object ((self org-headline) stream)
   (print-unreadable-object (self stream :type t)
-    (write-string (make-string (hl-stars self) :initial-element #\*) stream)
+    (write-string (make-string (org-stars self) :initial-element #\*) stream)
     (write-char #\space stream)
-    (when-let ((kw (hl-kw self)))
+    (when-let ((kw (org-kw self)))
       (princ (todo-keyword-type kw) stream)
       (write-char #\space stream))
-    (write-string (hl-title self) stream)))
-    
+    (write-string (org-title self) stream)))
+
 (defmethod org-parse ((type (eql :headline)) (input stream))
   (let ((res (org-create type)))
-      ;; first we parse 'just' the headline
-        (let ((line (read-line input)))
-          (multiple-value-bind (start _ reg-start reg-end)
-              ;; scan for headline
-              (cl-ppcre:scan org-headline-rx line)
-            (declare (ignore _))
-            (when start
-              (loop for rs across reg-start
-                    for re across reg-end
-                    for i from 0
-                    do
-                       (if (= i 0)
-                           (setf (hl-stars res) (- re rs))
-                           (multiple-value-bind (kw prio title) 
-                               (org-parse-todo-keyword-and-priority (subseq line rs))
-                             (setf (hl-kw res) kw
-                                   (hl-priority res) prio
-                                   (hl-title res) title))))))
-          ;; scan for tags, modifies title slot
-          (let ((tag-str (cl-ppcre:scan-to-strings org-tag-rx (hl-title res))))
-            (when tag-str
-              (setf (hl-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
-                    ;;  Q 2023-12-27: should we preserve whitespace here?
-                    (hl-title res) (string-right-trim
-                                    *whitespaces* 
-                                    (subseq (hl-title res) 0 (- (length (hl-title res)) 1 (length tag-str))))))))
-      ;; TODO 2023-07-24: cookies,priority,comment,footnote,archive
-      res))
+    ;; first we parse 'just' the headline
+    (let ((line (read-line input)))
+      (multiple-value-bind (start _ reg-start reg-end)
+          ;; scan for headline
+          (cl-ppcre:scan org-headline-rx line)
+        (declare (ignore _))
+        (when start
+          (loop for rs across reg-start
+                for re across reg-end
+                for i from 0
+                do
+                   (if (= i 0)
+                       (setf (org-stars res) (- re rs))
+                       (multiple-value-bind (kw prio title) 
+                           (org-parse-todo-keyword-and-priority (subseq line rs))
+                         (setf (org-kw res) kw
+                               (org-priority res) prio
+                               (org-title res) title))))))
+      ;; scan for tags, modifies title slot
+      (let ((tag-str (cl-ppcre:scan-to-strings org-tag-rx (org-title res))))
+        (when tag-str
+          (setf (org-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
+                (org-title res) (string-right-trim
+                                *whitespaces* 
+                                (subseq (org-title res) 0 (- (length (org-title res)) 1 (length tag-str))))))))
+    ;; TODO 2023-07-24: cookies,priority,comment,footnote,archive
+    res))
 
 (defmethod org-parse ((type (eql :headline)) (input string))
-    (when (and (not (zerop (length input))) (char= #\* (char input 0)))
-      (with-input-from-string (s input)
-        (org-parse :headline s))))
+  (when (and (not (zerop (length input))) (char= #\* (char input 0)))
+    (with-input-from-string (s input)
+      (org-parse :headline s))))

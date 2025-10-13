@@ -73,8 +73,10 @@
    :org-write
    :org-contents
    :org-property
+   :org-properties
    :org-get-element
    :org-insert-before
+   :org-stars
    ;; classes
    :org-element
    :text

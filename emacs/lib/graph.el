@@ -147,18 +147,18 @@ non-nil visit each node and collect all edges found."
 
 (cl-defstruct org-graph-node id name file point properties)
 (cl-defmethod unwrap ((self org-graph-node))
-  (with-slots (id name file point) self
-    (list id name file point)))
+  (with-slots (id name file point properties) self
+    (list id name file point properties)))
 (cl-defmethod wrap ((self org-graph-node) form)
-  (dolist (s '(id name file point) self)
+  (dolist (s '(id name file point properties) self)
     (oset self s (pop form))))
 
 (cl-defstruct org-graph-edge (type 'link) in properties timestamp point out)
 (cl-defmethod unwrap ((self org-graph-edge))
-  (with-slots (type in properties timestamp point out) self
-    (list type in properties timestamp point out)))
+  (with-slots (type in out timestamp point properties) self
+    (list type in out timestamp point properties)))
 (cl-defmethod wrap ((self org-graph-edge) form)
-  (dolist (s '(type in properties timestamp point out) self)
+  (dolist (s '(type in out timestamp point properties) self)
     (oset self s (pop form))))
 
 ;; TODO 2025-03-03: b3hash
@@ -193,6 +193,18 @@ currently active org-graph."
                   (org-graph-node-name node) (elt (org-heading-components) 4))))
       (setf (org-graph-node-id node) (org-graph--file-hash file)
             (org-graph-node-name node) (file-name-nondirectory file)))
+    (setf (org-graph-node-properties node) 
+	  `(,@(let ((ts (org-entry-get (point) "CREATED")))
+		(when ts `(:created ,(org-parse-time-string ts t))))
+            ,@(let ((tags (org-entry-get (point) "ALLTAGS"))) 
+		(when tags 
+		  `(:tags 
+		    ,(split-string 
+		      (substring-no-properties tags)
+		      ":" t))))
+	    ,@(let ((aka (org-entry-get (point) "AKA")))
+		(when aka
+		  `(:aka ,aka)))))
     (when update
       (puthash (org-graph-node-id node) node (org-graph-nodes (if (eql t update) org-graph update))))
     node))

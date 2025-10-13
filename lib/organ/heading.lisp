@@ -15,7 +15,10 @@
 (defmethod org-create ((type (eql :heading)) &rest initargs &key &allow-other-keys)
   (apply #'make-instance (sym-to-org-class-name type) initargs))
 
-;; TODO 2024-03-17: fix org-parse-planning-properties -- hangs
+(defmethod id:id ((self org-heading))
+  (when-let ((props (org-properties self)))
+    (find "ID" (org-contents props) :test 'string-equal :key 'name)))
+
 (define-org-parser (heading :from stream)
   (when-let* ((l (read-line input))
               (headline (org-parse :headline l)))

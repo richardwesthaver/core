@@ -19,7 +19,7 @@ CONTENTS
 
 (define-org-element property-drawer 
     ((contents :initform (make-array 0 :element-type 'org-node-property :adjustable t :fill-pointer 0)
-               :accessor org-contents :type (vector 'org-node-property)))
+               :accessor org-contents :type (vector org-node-property)))
   :greater t
   :documentation "A special type of ORG-DRAWER with a names of
   'PROPERTIES'. This class is built into the slot of ORG-HEADING,

@@ -85,13 +85,15 @@ such a key was present, else NIL."
   "Encodes a Lisp value into a stream."
   (json-write value stream))
 
-(defmethod serialize (obj (format (eql :json)) &key stream)
+(defmethod serialize (obj (format (eql :json)) &key stream path)
   (declare (ignore format))
   (if stream
       (json-encode obj stream)
-      (with-output-to-string (s)
-        (json-encode obj s)
-        s)))
+      (if path
+          (with-open-file (stream path :direction :output)
+            (json-encode obj stream))
+          (with-output-to-string (stream)
+            (json-encode obj stream)))))
 
 (defun json-read (stream &optional (eof-error-p t) eof-value)
   "Read a JSON object from a stream."
