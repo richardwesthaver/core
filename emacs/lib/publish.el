@@ -69,7 +69,7 @@ contextual information."
       make-backup-files nil
       debug-on-error t
       org-id-link-to-org-use-id t
-      org-html-self-link-headlines t
+      ;; org-html-self-link-headlines t
       org-html-format-drawer-function 'org-html-format-drawer)
 
 (defmacro with-org-publish (&rest body)
