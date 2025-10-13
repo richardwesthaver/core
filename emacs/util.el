@@ -58,6 +58,14 @@ Coerce ARGS into a single string and return it."
 Concat ARGS and return a newly interned symbol."
   (intern (apply #'mkstr args)))
 
+;; from slime
+(defun intersperse (element list)
+  "Intersperse ELEMENT between each element of LIST."
+  (if (null list)
+      '()
+    (cons (car list)
+          (cl-mapcan (lambda (x) (list element x)) (cdr list)))))
+
 ;;; Config
 (defun join-paths (root &rest dirs)
   "helper function for joining strings to a path."

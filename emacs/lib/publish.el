@@ -24,6 +24,23 @@
 ;;          :online-suffix ".html"
 ;;          :working-suffix ".org")))
 
+;; TODO 2025-10-08: 
+(defun org-html-format-drawer (name contents)
+  "Default function used as value for `org-html-format-drawer-function'."
+  (let ((name (downcase name)))
+    (format "<details><summary>%s</summary>%s</details>"
+	    name 
+	    (cl-case name
+	      ("edges" (apply 'concat (intersperse "<br>" (print (s-lines contents)))))
+	      (t contents)))))
+
+;; replace hardcoded value
+(defun org-html-property-drawer (_drawer contents _info)
+  "Transcode a PROPERTY-DRAWER element from Org to HTML.
+CONTENTS holds the contents of the drawer.  INFO is a plist holding
+contextual information."
+  (format "<details><summary>props</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
+
 (setq org-html-style-default ""
       org-html-scripts nil
       org-html-htmlize-output-type 'css
@@ -54,11 +71,6 @@
       org-id-link-to-org-use-id t
       org-html-self-link-headlines t
       org-html-format-drawer-function 'org-html-format-drawer)
-
-;; TODO 2025-10-08: 
-(defun org-html-format-drawer (name contents)
-  "Default function used as value for `org-html-format-drawer-function'."
-  (print (format "<details><summary>%s</summary>%s</details>" name contents)))
 
 (defmacro with-org-publish (&rest body)
   `(let (
@@ -264,7 +276,7 @@ targets and targets."
 	     (_ :name))
 	   datum))
 	 (user-label (or user-label
-			 (when-let ((path (org-element-property :ID datum)))
+			 (when-let* ((path (org-element-property :ID datum)))
 			   path))))
     (cond
      ((and user-label
@@ -295,7 +307,7 @@ targets and targets."
 	       (files (remove "index.org" (directory-files default-directory nil ".org$" t)))
 	       (entries))
 	  (delete-file "index.org")
-	  (when-let ((index-open (find-buffer-visiting "index.org")))
+	  (when-let* ((index-open (find-buffer-visiting "index.org")))
 	    (kill-buffer index-open))
 	  (while files
 	    (let* ((file (pop files)))
