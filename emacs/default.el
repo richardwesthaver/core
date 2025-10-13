@@ -103,7 +103,7 @@
 (defvar company-vc-url (format "https://%s" company-vc-domain))
 (defvar company-home "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
-
+(defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
 (add-to-load-path user-emacs-lib-directory (join-paths user-stash-directory "lisp/slime"))
 
 (with-eval-after-load 'default

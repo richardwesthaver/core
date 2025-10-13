@@ -120,12 +120,14 @@
   "SPC" toggle-map
   "." status-map
   "s" search-map
+  "v t" #'org-tags-view
   "r" review-map
   "q" server-map
   "(" parens-map
   "M-l" #'duplicate-dwim
   "d i" #'image-dired
   "e p" #'mpc
+  "e c" #'edit-emacs-config
   "TAB" #'outline-cycle
   "<backtab>" #'outline-cycle-buffer
   "z" #'scratch-buffer
@@ -161,6 +163,9 @@
    (keymap-set conf-toml-mode-map "C-c C-c C-r" #'rust-run)
    (keymap-set conf-toml-mode-map "C-c C-c C-u" #'rust-compile)
    (keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)))
+
+(keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
+(keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
 
 ;;; C-x
 (keymap-set ctl-x-map "C-b" #'ibuffer)

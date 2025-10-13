@@ -59,7 +59,12 @@ Concat ARGS and return a newly interned symbol."
   (intern (apply #'mkstr args)))
 
 ;;; Config
-(defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
+(defun join-paths (root &rest dirs)
+  "helper function for joining strings to a path."
+  (let ((result root))
+    (cl-loop for dir in dirs do
+             (setq result (concat (file-name-as-directory result) dir)))
+    result))
 
 ;;;###autoload
 (defun edit-emacs-config (&optional src)
@@ -68,11 +73,6 @@ Concat ARGS and return a newly interned symbol."
 		  (expand-file-name "default.el" emacs-config-source) 
 		user-custom-file)))
     (find-file file)))
-
-(keymap-set user-map "e c" #'edit-emacs-config)
-(keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
-(keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
-(keymap-set user-map "v t" #'org-tags-view)
 
 (defun add-to-load-path (&rest paths)
   "Add PATHS to `load-path'."
@@ -97,13 +97,6 @@ Concat ARGS and return a newly interned symbol."
 
 (defun darwin-p () (string= system-type "darwin"))
 (defun linux-p () (string= system-type "gnu/linux"))
-
-(defun join-paths (root &rest dirs)
-  "helper function for joining strings to a path."
-  (let ((result root))
-    (cl-loop for dir in dirs do
-             (setq result (concat (file-name-as-directory result) dir)))
-    result))
 
 (defun wc ()
   "Return a 3-element list with lines, words and characters in

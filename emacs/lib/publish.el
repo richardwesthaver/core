@@ -51,18 +51,14 @@
       ;; org-html-creator-string
       make-backup-files nil
       debug-on-error t
-      org-id-link-to-org-use-id t)
+      org-id-link-to-org-use-id t
+      org-html-self-link-headlines t
+      org-html-format-drawer-function 'org-html-format-drawer)
 
 ;; TODO 2025-10-08: 
 (defun org-html-format-drawer (name contents)
   "Default function used as value for `org-html-format-drawer-function'."
-  (with-output-to-string 
-    (princ "<details>")
-    (pcase name
-      ("edges" (princ contents))
-      ("notes" (princ contents))
-      ("properties" (princ contents)))
-    (princ "</details>")))
+  (print (format "<details><summary>%s</summary>%s</details>" name contents)))
 
 (defmacro with-org-publish (&rest body)
   `(let (
