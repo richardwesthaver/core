@@ -28,10 +28,18 @@
 (defun org-html-format-drawer (name contents)
   "Default function used as value for `org-html-format-drawer-function'."
   (let ((name (downcase name)))
-    (format "<details><summary>%s</summary>%s</details>"
-	    name 
-	    (cl-case name
-	      ("edges" (apply 'concat (intersperse "<br>" (print (s-lines contents)))))
+    (format "<details class='edges'><summary>%s</summary>%s</details>"
+	    name
+	    (pcase name
+	      ("edges"
+	       (unless (null contents)
+		 (let ((es (intersperse "<br>" (s-lines contents))))
+		   (if (> (length es) 3)
+		       (progn
+			 (setf (cadr es) nil
+			       (nth (1- (length es)) es) nil)
+			 (apply 'concat (flatten es)))
+		     (apply 'concat es)))))
 	      (t contents)))))
 
 ;; replace hardcoded value
@@ -39,7 +47,7 @@
   "Transcode a PROPERTY-DRAWER element from Org to HTML.
 CONTENTS holds the contents of the drawer.  INFO is a plist holding
 contextual information."
-  (format "<details><summary>props</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
+  (format "<details class='properties'><summary>props</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
 
 (setq org-html-style-default ""
       org-html-scripts nil

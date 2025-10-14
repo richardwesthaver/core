@@ -13,43 +13,6 @@
 ;;; Code:
 (in-package :std/async)
 
-;;; Utils
-(eval-always
-  (definline unsplice (form)
-    (if form (list form) nil))
-
-  (defun item-predicate (item test test-not)
-    (when (and test test-not)
-      (error "Both :TEST and :TEST-NOT options given."))
-    (when test-not
-      (setf test (complement (std/curry:ensure-function test-not)))
-      (setf test-not nil))
-    (if test
-        (let ((test (std/curry:ensure-function test)))
-          (lambda (x)
-            (funcall test item x)))
-        (typecase item
-          ((or number character)
-           (lambda (x)
-             (declare (optimize (speed 3) (safety 0)))
-             (eql item x)))
-          (otherwise
-           (lambda (x)
-             (declare (optimize (speed 3) (safety 0)))
-             (eq item x)))))))
-
-
-(defmacro dosequence ((var sequence &optional return) &body body)
-  (with-gensyms (body-fn)
-    `(block nil
-       (flet ((,body-fn (,var) ,@body))
-         (declare (dynamic-extent #',body-fn))
-         (map nil #',body-fn ,sequence)
-         ,@(unsplice (when return
-                       `(let ((,var nil))
-                          (declare (ignorable ,var))
-                          ,return)))))))
-
 ;;; plet
 (defmacro msetq (vars form)
   (if (= 1 (length vars))

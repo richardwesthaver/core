@@ -29,7 +29,7 @@
 
 ;;; Code:
 (defpackage :organ
-  (:use :cl :cl-ppcre :std :parse/lex :sb-gray)
+  (:use :cl :cl-ppcre :std :parse/lex :sb-gray :ast)
   (:import-from :uiop :read-file-string)
   (:export
    ;; vars
@@ -136,7 +136,10 @@
    :org-active-timestamp-range
    :*org-id-locations-file*
    :make-org-id-locations
-   :org-id))
+   :org-id
+   :org-keywords
+   :org-title
+   :org-tags))
 
 (defpackage :organ/graph
   (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri :url)
@@ -149,7 +152,9 @@
    :*org-graph-edges*
    :*org-graph-nodes*
    :*org-graph-headings*
-   :*org-graph-files*))
+   :*org-graph-files*
+   :org-graph-index
+   :org-graph-json))
 
 (defpackage :organ/cli
   (:use :cl :std :organ :cli :clap)

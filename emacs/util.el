@@ -74,14 +74,6 @@ Concat ARGS and return a newly interned symbol."
              (setq result (concat (file-name-as-directory result) dir)))
     result))
 
-;;;###autoload
-(defun edit-emacs-config (&optional src)
-  (interactive (list current-prefix-arg))
-  (let ((file (if src 
-		  (expand-file-name "default.el" emacs-config-source) 
-		user-custom-file)))
-    (find-file file)))
-
 (defun add-to-load-path (&rest paths)
   "Add PATHS to `load-path'."
   (mapc (lambda (x)

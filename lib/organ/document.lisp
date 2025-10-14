@@ -10,11 +10,11 @@
 ;;; Code:
 (in-package :organ)
 
-(defclass org-document ()
-  ((meta :initform nil :initarg :meta :type (or null org-zeroth-section) :accessor doc-meta)
-   (tree :initform nil :initarg :tree :type (or (vector org-heading) null) :accessor doc-tree)))
+(defclass org-document (ast)
+  ((meta :initform nil :initarg :meta :type (or null org-meta-section) :accessor doc-meta)))
 
-(defaccessor ast ((self org-document)) (doc-tree self))
+(defmethod org-title ((self org-document))
+  (org-title (doc-meta self)))
 
 (defmethod org-create ((type (eql :document)) &rest initargs)
   (apply #'make-instance (sym-to-org-class-name type) initargs))
@@ -22,7 +22,7 @@
 (defmethod org-parse ((type (eql :document)) (input stream))
   (let ((res (org-create type)))
     (setf (doc-meta res) (org-parse :meta input)
-          (doc-tree res)
+          (ast res)
           (coerce
            (loop for c = (peek-char nil input nil nil)
                  while (and c (char= c #\*))

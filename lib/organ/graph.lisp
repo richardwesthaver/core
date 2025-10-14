@@ -59,8 +59,7 @@
     (setf *org-graph-nodes* (sort (copy-list nodes) #'string< :key (lambda (x) (namestring (path x))))
           *org-graph-edges* edges)
     (setf *org-graph-files* (org-graph-extract-files))
-    (setf *org-graph-headings* (expand-nodes))
-    (setf *org-graph-edges* (expand-headings))
+    (expand-graph)
     graph))
 
 (defun org-graph-stats ()
@@ -74,9 +73,11 @@
    (point :initarg :point :accessor idx)
    (properties :initarg :properties :accessor node-properties)))
 
-(defclass org-graph-external-node (org-graph-node)
-  ((name :initarg :name :accessor name)))
+(defclass org-graph-external-node (org-graph-node) ())
 
+(defclass org-graph-file-node (org-graph-node ast) ()
+  (:default-initargs :point 0))
+  
 (defaccessor uri ((self org-graph-external-node)) (path self))
 
 (defun extract-external-node (edge)
@@ -119,7 +120,8 @@ extracted from and share the inherits an ID from the OUT slot."
 
 (defclass org-graph-implicit-edge (org-graph-edge)
   ()
-  (:documentation "A graph edge which is created as a result of EXPAND-NODES.")
+  (:documentation "A graph edge which is inferred and added to the graph as the result of a graph
+expansion. See EXPAND-FILES.")
   (:default-initargs :timestamp (now)))
 
 (defun org-parse-time (s)
@@ -152,6 +154,12 @@ extracted from and share the inherits an ID from the OUT slot."
 (defmethod equiv:equiv ((a org-graph-external-node) (b org-graph-external-node))
   (string-equal (id a) (id b)))
 
+(defmethod equiv:equiv ((a org-graph-file-node) (b org-graph-file-node))
+  (and (path a) (path b) (path= a b)))
+
+(defmethod equiv:equiv ((a org-graph-file-node) (b t))
+  nil)
+
 (defmethod equiv:equiv ((a org-graph-node) (b org-heading))
   (when-let* ((props (org-properties b))
               (id (find "ID" (org-contents props) :test 'string-equal :key 'name)))
@@ -170,18 +178,6 @@ extracted from and share the inherits an ID from the OUT slot."
 
 (defun path= (a b) (unless (or (consp a) (consp b)) (string= (namestring (path a)) (namestring (path b)))))
 
-;; TODO 2025-10-07: goal of this function is to expand headings and return
-;; edges - the edges we're targeting right now are parent/child relationships
-;; which can be auto-inferred based on ORG-STARS of HEADLINE and POINT of NODE.
-
-;; may want to make batches per file.
-(defun expand-headings (&optional (headings *org-graph-headings*) (edges *org-graph-edges*))
-  (loop for h in headings
-        do (org-stars (org-headline h))
-        finally (return edges)))
-
-(defvar *org-graph-headings* nil)
-
 (defun expand-nodes (&optional (nodes *org-graph-nodes*) (files *org-graph-files*))
   "Expand a list of NODES, returning a list of newly discovered edges."
   ;; ensure files are collected
@@ -191,44 +187,52 @@ extracted from and share the inherits an ID from the OUT slot."
           with hl
           unless (path= x p) do (setf p (.find x))
           do (path p)
-          do (push (find x (org-graph-file-tree p) :test 'equiv:equiv) hl)
+          do (push (find x (ast p) :test 'equiv:equiv) hl)
           finally (return (nreverse hl))))))
 
 (defun expand-graph ()
-  (setf *org-graph-headings* (expand-nodes *org-graph-nodes*)
-        *org-graph-nodes* (expand-edges *org-graph-edges*)
-        *org-graph-edges* (expand-headings *org-graph-headings*)))
+  (setf *org-graph-nodes* (expand-files *org-graph-files* (expand-edges *org-graph-edges*))))
 
 ;;; Files
-(defstruct org-graph-file 
-  "Internal helper struct used while processing files in the *ORG-GRAPH*."
-  path tree timestamp hash)
-
-(defaccessor path ((self org-graph-file)) (org-graph-file-path self))
-
 (defvar *org-graph-files* nil)
 
 (defun org-graph-extract-files (&optional (nodes *org-graph-nodes*))
   (let ((ret))
-    (std/async::dosequence (n (remove-duplicates nodes :test 'string= :key 'path) ret)
-      (push (wrap (make-org-graph-file) (probe-file (path n))) ret))))
+    (dosequence (n (remove-duplicates nodes :test 'string= :key 'path) ret)
+      (push (wrap (make-instance 'org-graph-file-node) (probe-file (path n))) ret))))
 
-(defmethod id ((self org-graph-file))
-  (org-graph-file-hash self))
+(defun %file-keywords (file doc)
+  (let ((props))
+    (loop for m across (org-keywords (doc-meta doc))
+          do (progn (push (val m) props) (push (keywordicate (string-upcase (key m))) props)))
+    (push (universal-to-timestamp (file-write-date file)) props)
+    (push :timestamp props)
+    props))
 
-(defmethod wrap ((self org-graph-file) (file pathname))
-  (setf (org-graph-file-hash self) (octet-vector-to-hex-string (crypto:digest-file (crypto:make-digest :md5) file))
-	(org-graph-file-path self) file
-	(org-graph-file-timestamp self) (universal-to-timestamp (file-write-date file))
-	(org-graph-file-tree self) (doc-tree (organ:org-parse :document file)))
-  self)
-
-(defmethod wrap ((self org-graph-file) (node org-graph-node))
-  (let ((file (path node)))
-    (setf (org-graph-file-hash self) (octet-vector-to-hex-string (crypto:digest-file (crypto:make-digest :md5) file))
-	  (org-graph-file-path self) file
-	  (org-graph-file-tree self) (doc-tree (organ:org-parse :document file)))
+(defmethod wrap ((self org-graph-file-node) (file pathname))
+  (let ((doc (org-parse :document file)))
+    (setf (id self) (octet-vector-to-hex-string (crypto:digest-file (crypto:make-digest :md5) file))
+	  (path self) file
+	  (ast self) (ast doc)
+          (name self) (org-title doc)
+          (node-properties self) (%file-keywords file doc))
     self))
+
+(defmethod wrap ((self org-graph-file-node) (node org-graph-node))
+  (let* ((file (path node))
+         (doc (org-parse :document file)))
+    (setf (id self) (octet-vector-to-hex-string (crypto:digest-file (crypto:make-digest :md5) file))
+	  (path self) file
+	  (ast self) (ast doc)
+          (name self) (org-title doc)
+          (node-properties self) (%file-keywords file doc))
+    self))
+
+(defun expand-files (&optional (files *org-graph-files*) (nodes *org-graph-nodes*))
+  (mapc (lambda (x) (pushnew x nodes :test 'equiv:equiv)) files)
+  nodes)
+
+;; (defun expand-headings (&optional (files *org-graph-files*) (edges *org-graph-edges*)))
 
 ;;; Org Graph DB
 (defvar *org-graph-db-directory* (merge-pathnames ".store/db/graph/" (user-homedir-pathname)))
@@ -311,13 +315,13 @@ extracted from and share the inherits an ID from the OUT slot."
   "Return a list of org headings corresponding to IDS in PATH. If no IDS are
 provided then all are returned."
   ;; first get an org-document and list of headings
-  (let* ((doc (organ:org-parse :document path))
-	 (headings (organ:doc-tree doc))
+  (let* ((doc (org-parse :document path))
+	 (headings (ast doc))
 	 (ret)
          (ids-p (when ids t)))
     ;; map over IDs, searching for matches
     (loop for h across headings
-	  if (typep h 'organ:org-heading)
+	  if (typep h 'org-heading)
 	  do
 	     (when-let ((id (id h)))
                (if ids-p
@@ -361,9 +365,9 @@ provided then all are returned."
 (definline %org-heading-hash-table (self)
   (let ((obj (make-hash-table :test 'equal)))
     (setf (gethash "contents" obj) (org-contents (org-contents (org-contents self)))) ; section -> paragraph -> string
-    (setf (gethash "title" obj) (slot-value (org-headline self) 'organ::title))
-    (setf (gethash "properties" obj) (%org-property-drawer-hash-table (organ::org-properties self)))
-    (setf (gethash "tags" obj) (map 'list 'name (slot-value (org-headline self) 'tags)))
+    (setf (gethash "title" obj) (org-title (org-headline self)))
+    (setf (gethash "properties" obj) (%org-property-drawer-hash-table (org-properties self)))
+    (setf (gethash "tags" obj) (map 'list 'name (org-tags (org-headline self))))
     obj))
 
 (defmethod json:json-write ((self org-heading) &optional stream)
@@ -382,43 +386,25 @@ provided then all are returned."
   (merge-uris
    (let* ((dir (pathname-directory (path obj)))
           (str
-            (concatenate 'string
-                         (namestring
-                          (make-pathname :name (pathname-name (path obj))
-                                         :type nil
-                                         :directory (cons :relative (cdr (member "graph" dir :test 'equal))))))))
+            (concatenate 
+             'string
+             (namestring
+              (make-pathname :name (pathname-name (path obj))
+                             :type nil
+                             :directory (cons :relative (cdr (member "graph" dir :test 'equal))))))))
      (if id
          (concatenate 'string str "#" id)
          str))
    root))
-                     
   
 (defun org-graph-node-fix-path (node root)
   (when (and (not (uri-p (path node))) (absolute-pathname-p (path node))) ; only apply to local pathnames
-    (setf (path node) (%fix-path node root (string-downcase (uuid-to-string (id node)))))
+    (setf (path node) (%fix-path node root (unless (typep node 'org-graph-file-node) 
+                                             (string-downcase (uuid-to-string (id node))))))
     node))
-
-(defun org-graph-file-fix-path (file root)
-  (unless (uri-p (path file))
-    (setf (path file) (%fix-path file root))
-    (map nil (lambda (x) 
-               (when-let ((props (organ::org-properties x)))
-                 (vector-push-extend 
-                  (org-create :node-property 
-                              :name "path" 
-                              :value (if-let ((id (id x)))
-                                       (let ((u (copy-uri (path file))))
-                                         (setf (uri-fragment u) (string-downcase (value id)))
-                                         u)
-                                       (path file)))
-                  (org-contents props))))
-         (org-graph-file-tree file))))
 
 (defun org-graph-node-fix-paths (&optional (nodes *org-graph-nodes*) (root "https://otom8.dev/graph/"))
   (mapc (lambda (x) (org-graph-node-fix-path x root)) nodes))
-
-(defun org-graph-file-fix-paths (&optional (files *org-graph-files*) (root "https://otom8.dev/graph/"))
-  (mapc (lambda (x) (org-graph-file-fix-path x root)) files))
 
 (defun org-graph-json (&optional (graph *org-graph*))
   "Generate a json object containing the nodes and edges of GRAPH."
@@ -427,6 +413,6 @@ provided then all are returned."
 
 (defun org-graph-index (&optional (files *org-graph-files*))
   "Generate a json search index based on FILES."
-  (org-graph-file-fix-paths)
-  (serialize (flatten (mapcar (lambda (x) (coerce (org-graph-file-tree x) 'list)) files)) :json
+  (org-graph-node-fix-paths)
+  (serialize (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)) :json
              :path "/opt/stash/data/web/cdn/data/org-graph-index.json"))

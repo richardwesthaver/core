@@ -25,7 +25,11 @@
 		 (write-line l content-stream))))
     (org-create :section :contents (org-parse :paragraph content))))
 
-(defclass org-meta-section (org-section) ((keywords :initform #() :initarg :keywords :type (vector org-keyword))))
+(defclass org-meta-section (org-section) ((keywords :initform #() :initarg :keywords :type (vector org-keyword) :accessor org-keywords)))
+
+(defmethod org-title ((self org-meta-section))
+  (when-let ((kw (find "TITLE" (org-keywords self) :test 'string-equal :key (lambda (x) (string-upcase (key x))))))
+    (val kw)))
 
 (defmethod org-create ((type (eql :meta)) &rest initargs)
   (apply #'make-instance 'org-meta-section initargs))

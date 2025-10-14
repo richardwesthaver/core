@@ -140,6 +140,15 @@
 (add-to-list 'exec-path "/usr/local/bin/")
 (add-to-list 'exec-path "/usr/local/share/lisp/bin/")
 
+;;; Util
+;;;###autoload
+(defun edit-emacs-config (&optional src)
+  (interactive (list current-prefix-arg))
+  (let ((file (if src 
+		  (expand-file-name "default.el" emacs-config-source) 
+		user-custom-file)))
+    (find-file file)))
+
 ;;; Completions
 (use-package marginalia :ensure t
   :config (marginalia-mode))

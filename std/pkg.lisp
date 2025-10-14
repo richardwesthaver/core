@@ -924,7 +924,7 @@
   (:use :cl)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
-  (:import-from :std/macs :once-only :when-let :defonce :unwind-protect-case)
+  (:import-from :std/macs :once-only :when-let :defonce :unwind-protect-case :eval-always)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/meta :data :defaccessor :lock)
   (:import-from :std/list :firstn)
@@ -936,6 +936,8 @@
   (:import-from :std/sys :get-internal-time-seconds :time-remaining :with-countdown)
   (:export :sequencep :take :starts-with-subseq 
    :take* :starts-with
+   :unsplice :item-predicate
+   :dosequence
    :ends-with
    :ends-with-subseq :nth-value-or
    :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
