@@ -29,5 +29,4 @@
 (defmethod stop ((self caddy-service) &key)
   (sb-ext:process-kill (process self) 0))
 
-;; not that useful
-(defclass nginx-service (external-network-service) ())
+;; (defclass nginx-service (external-network-service) ())

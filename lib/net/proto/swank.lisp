@@ -35,7 +35,7 @@
   (:documentation "Network problem while evaluating a form."))
 
 ;;; Connection
-(defclass swank-connection ()
+(defclass swank-connection (connection)
   ((host :reader host
          :type string
          :initarg :host

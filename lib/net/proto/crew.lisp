@@ -9,7 +9,6 @@
   (:import-from #:sb-thread
                 #:condition-notify
                 #:condition-wait
-                ;; #:make-condition-variable
                 #:make-mutex
                 #:make-thread
                 #:with-mutex)
@@ -32,11 +31,11 @@
 (in-package :net/proto/crew)
 
 (defclass crew-connection-info ()
-  ((host-name :initarg :host-name
-              :initform "localhost"
-              :type string
-              :documentation "Host this worker is running on."
-              :accessor host-name)
+  ((host :initarg :host
+         :initform "localhost"
+         :type string
+         :documentation "Host this worker is running on."
+         :accessor host)
    (port :initarg :port
          :type port
          :documentation "Port on which the worker's swank server is listening for connections."
@@ -137,16 +136,16 @@ WORKER-POOL, so it may output inconsistent information."
    evoked when the connection closes."))
 
 (defmethod connect-worker ((connect-info crew-connection-info) close-handler)
-  (slime-connect (host-name connect-info) (port connect-info) close-handler))
+  (slime-connect (host connect-info) (port connect-info) close-handler))
 
 (defun connect-workers (host/port-alist leader)
   "Makes Swank connections to all the workers in HOST/PORT-ALIST and returns a
-WORKER-POOL containing them.  HOST/PORT-ALIST is a list of (host-name . port)
-pairs.  MASTER-HOST-NAME and MASTER-SWANK-PORT are a host name and Swank port
+WORKER-POOL containing them.  HOST/PORT-ALIST is a list of (host . port)
+pairs.  MASTER-HOST and MASTER-SWANK-PORT are a host name and Swank port
 that workers can use to return results to the master."
   (let ((connect-infos
-          (loop for (host-name . port) in host/port-alist
-                collect (make-instance 'crew-connection-info :host-name host-name :port port))))
+          (loop for (host . port) in host/port-alist
+                collect (make-instance 'crew-connection-info :host host :port port))))
     (make-worker-pool leader connect-infos #'connect-worker)))
 
 (defun disconnect-workers (worker-pool)
@@ -322,10 +321,10 @@ REPLAY-REQUIRED indicates whether new workers must evaluate FORM before being
 considered to be caught up."
   (let ((forms-count (with-mutex ((replay-forms-lock worker-pool))
                        (length (replay-forms worker-pool))))
-        (master-host-name (host-name (leader worker-pool)))
+        (master-host (host (leader worker-pool)))
         (master-swank-port (port (leader worker-pool)))
         (worker-pool-id (id worker-pool)))
-    `(evaluate-form ',form ,master-host-name ,master-swank-port ,worker-pool-id ,forms-count
+    `(evaluate-form ',form ,master-host ,master-swank-port ,worker-pool-id ,forms-count
                     ,replay-required)))
 
 (defun dispatch-work (worker-pool make-work list result-done retain-workers replay-required)
@@ -538,10 +537,10 @@ continue to call RECORD-REPEATED-RESULT with additional results."
   "Returns a form for evaluation on a client of WORKER-POOL that ensures the
 client is caught up and then evaluates FORM for the repeated evaluation request
 identified by ID."
-  (let ((master-host-name (host-name (leader worker-pool)))
+  (let ((master-host (host (leader worker-pool)))
         (master-swank-port (port (leader worker-pool))))
     (ensure-caught-up-then-evaluate
-     `(repeatedly-evaluate ',form ,id ,master-host-name ,master-swank-port)
+     `(repeatedly-evaluate ',form ,id ,master-host ,master-swank-port)
      worker-pool
      nil)))
 
@@ -652,10 +651,10 @@ continue to call ASYNC-RESULT with additional results."
   "Returns a form for evaluation on a client of WORKER-POOL that ensures the
 client is caught up and then evaluates FORM for the async evaluation request
 identified by ID."
-  (let ((master-host-name (host-name (leader worker-pool)))
+  (let ((master-host (host (leader worker-pool)))
         (master-swank-port (port (leader worker-pool))))
     (ensure-caught-up-then-evaluate
-     `(async-evaluate ',form ',initial-state ,id ,master-host-name ,master-swank-port)
+     `(async-evaluate ',form ',initial-state ,id ,master-host ,master-swank-port)
      worker-pool
      nil)))
 

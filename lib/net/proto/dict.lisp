@@ -36,3 +36,11 @@
 
 ;;; Code:
 (in-package :net/proto/dict)
+
+(defclass dictionary-connection (connection) ())
+
+(defclass dictionary-request (obj:request) ())
+
+(defclass dictionary-response (obj:response) ())
+
+(defclass dictionary-client (tcp-client) ())
