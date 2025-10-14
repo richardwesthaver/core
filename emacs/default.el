@@ -374,6 +374,7 @@ function: '(ql:quickload :clouseau)'."
   (defpkg (as defpackage))
   (defpackage* (as defpackage))
   (blasfunc 2)
+  (symbol-call 2)
   (org-parse 2)
   (lety (as let))
   (lety* (as let*))

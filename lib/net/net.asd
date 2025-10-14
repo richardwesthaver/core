@@ -24,6 +24,7 @@
                              (:file "http")
                              (:file "dns")
                              (:file "whois")
+                             (:file "dict")
                              (:file "ssh")
                              (:file "dm")
                              (:file "sesh")

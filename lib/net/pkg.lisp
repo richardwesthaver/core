@@ -137,6 +137,10 @@
   (:nicknames :net/whois)
   (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :punycode))
 
+(defpkg :net/proto/dict
+  (:nicknames :net/dict)
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp))
+
 (defpkg :net/proto/dns
   (:nicknames :net/dns)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/dns)
@@ -473,7 +477,7 @@
 
 (eval-always
   (when (featurep :swank)
-    (asdf:load-systems :swank :swank-client)
+    (asdf:load-systems :swank-client)
     (load (asdf:system-relative-pathname :net "proto/swank.lisp"))
     (load (asdf:system-relative-pathname :net "proto/crew.lisp"))
     (use-package :net/proto/swank)
