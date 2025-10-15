@@ -362,12 +362,15 @@ provided then all are returned."
         (setf (gethash (string-downcase (name i)) tbl) (value i)))
       tbl)))
 
+(defvar *org-graph-export-id* -1)
+
 (definline %org-heading-hash-table (self)
   (let ((obj (make-hash-table :test 'equal)))
-    (setf (gethash "contents" obj) (org-contents (org-contents (org-contents self)))) ; section -> paragraph -> string
+    (setf (gethash "id" obj) (incf *org-graph-export-id*))
     (setf (gethash "title" obj) (org-title (org-headline self)))
-    (setf (gethash "properties" obj) (%org-property-drawer-hash-table (org-properties self)))
     (setf (gethash "tags" obj) (map 'list 'name (org-tags (org-headline self))))
+    (setf (gethash "properties" obj) (%org-property-drawer-hash-table (org-properties self)))
+    (setf (gethash "contents" obj) (org-contents (org-contents (org-contents self)))) ; section -> paragraph -> string
     obj))
 
 (defmethod json:json-write ((self org-heading) &optional stream)
@@ -413,6 +416,6 @@ provided then all are returned."
 
 (defun org-graph-index (&optional (files *org-graph-files*))
   "Generate a json search index based on FILES."
-  (org-graph-node-fix-paths)
+  (setf *org-graph-export-id* -1)
   (serialize (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)) :json
              :path "/opt/stash/data/web/cdn/data/org-graph-index.json"))

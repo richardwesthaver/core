@@ -16,8 +16,9 @@
   (apply #'make-instance (sym-to-org-class-name type) initargs))
 
 (defmethod id:id ((self org-heading))
-  (when-let ((props (org-properties self)))
-    (find "ID" (org-contents props) :test 'string-equal :key 'name)))
+  (when-let* ((props (org-properties self))
+              (id (find "ID" (org-contents props) :test 'string-equal :key 'name)))
+    (value id)))
 
 (define-org-parser (heading :from stream)
   (when-let* ((l (read-line input))
