@@ -530,7 +530,10 @@ internal sap slots are initialized."
                               (create-iter-raw sap opts))))))
 
 (defmethod print-stats ((self rdb) &optional stream)
-  (println (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream))
+  (if stream
+      (println (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream)
+      (with-output-to-string (s)
+        (print-stats self s))))
 
 (defmethod flush-db ((self rdb) &key wait)
   (flush-db-raw (rdb-sap self) wait))

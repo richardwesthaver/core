@@ -47,7 +47,8 @@
         (dolist (y (directory-files x "*.*"))
           (when-let ((meta (ignore-errors (media-file-metadata y :list)))
                      (y y))
-            ;; (appendf meta (cons 'hash (cry/b3:b3sum y)))
+            ;; TODO 2025-10-14: 
+            ;; (appendf meta (cons 'hash (cry/b3:b3sum y))) ; use ironclad instead
             (setf (gethash y table) meta)))))
   table)
 
@@ -84,20 +85,20 @@
         (push (subseq tag 6) ret)))))
 
 (defun mpk-music-metadata-scan-parallel (&optional (dir #l"mpk:media;music;") (table *music-metadata*))
-  (with-submit-counted
-    (walk-directory dir 
-      (constantly t) ; collectp
-      (constantly t) ; recursep
-      (lambda (x) ; collector
-        (submit-counted
-         (lambda ()
-           (dolist (y (directory-files x "*.*"))
-             (when-let ((meta (ignore-errors (media-file-metadata y :list)))
-                        (y y))
-               (log:info! "adding metadata for ~A" y)
-               ;; (appendf meta (cons 'hash (cry/b3:b3sum y)))
-               (setf (gethash y table) meta)))))))
-    (receive-counted)))
+  (with-thread-pool (:mpk)
+    (with-submit-counted
+      (walk-directory dir 
+        (constantly t) ; collectp
+        (constantly t) ; recursep
+        (lambda (x) ; collector
+          (submit-counted
+           (lambda ()
+             (dolist (y (directory-files x "*.*"))
+               (when-let ((meta (ignore-errors (media-file-metadata y :list))))
+                 ;; TODO 2025-10-14: 
+                 ;; (appendf meta (cons 'hash (cry/b3:b3sum y))) ; use ironclad instead
+                 (setf (gethash y table) meta)))))))
+      (receive-counted))))
 
 ;;  REVIEW 2025-04-18: good case for threading
 #|

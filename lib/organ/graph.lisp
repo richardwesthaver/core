@@ -305,7 +305,7 @@ expansion. See EXPAND-FILES.")
 (defun insert-org-edges ()
   (log:info! "inserting org edges")
   (dolist (e (edges *org-graph*))
-    (insert-key *org-graph-db* 
+    (insert-key *org-graph-db*
                 (uuid-octets* (edge-in e)) 
                 (uuid-octets* (edge-out e))
                 :column "edge")))
