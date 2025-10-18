@@ -142,37 +142,41 @@ expansion. See EXPAND-FILES.")
   `(,(keywordicate (edge-type self)) ,(uuid-to-string (edge-in self)) ,(edge-properties self)
     ,(timestamp-to-universal (timestamp self)) ,(idx self) ,(format nil "~A" (edge-out self))))
 
-(defmethod equiv:equiv ((a org-graph-node) (b org-graph-node))
+(defmethod equiv ((a org-graph-node) (b org-graph-node))
   (uuid= (id a) (id b)))
 
-(defmethod equiv:equiv ((a org-graph-node) (b org-graph-external-node))
+(defmethod equiv ((a org-graph-node) (b org-graph-external-node))
   nil)
 
-(defmethod equiv:equiv ((a org-graph-external-node) (b org-graph-node))
+(defmethod equiv ((a org-graph-external-node) (b org-graph-node))
   nil)
 
-(defmethod equiv:equiv ((a org-graph-external-node) (b org-graph-external-node))
+(defmethod equiv ((a org-graph-external-node) (b org-graph-external-node))
   (string-equal (id a) (id b)))
 
-(defmethod equiv:equiv ((a org-graph-file-node) (b org-graph-file-node))
+(defmethod equiv ((a org-graph-file-node) (b org-graph-file-node))
   (and (path a) (path b) (path= a b)))
 
-(defmethod equiv:equiv ((a org-graph-file-node) (b t))
+(defmethod equiv ((a org-graph-file-node) (b t))
   nil)
 
-(defmethod equiv:equiv ((a org-graph-node) (b org-heading))
+(defmethod equiv ((a org-graph-node) (b org-heading))
   (when-let* ((a (id a))
               (b (id b)))
     (when (stringp b) (setf b (make-uuid-from-string b)))
     (and (typep a 'uuid)
          (uuid= a b))))
 
-(defmethod equiv:equiv ((a org-heading) (b org-graph-node))
+(defmethod equiv ((a org-heading) (b org-graph-node))
   (when-let* ((a (id a))
               (b (id b)))
     (when (stringp a) (setf a (make-uuid-from-string a)))
     (and (typep b 'uuid)
          (uuid= a b))))
+
+(defmethod equiv ((a org-graph-edge) (b org-graph-edge))
+  (and (equal (edge-in a) (edge-in b))
+       (equal (edge-out a) (edge-out b))))
 
 (defun expand-edges (&optional (edges *org-graph-edges*) (nodes *org-graph-nodes*))
   "Expand a list of EDGES, returning a list of newly discovered nodes."
@@ -183,7 +187,7 @@ expansion. See EXPAND-FILES.")
           (pushnew
            (extract-external-node x)
            nodes
-           :test 'equiv:equiv))))))
+           :test 'equiv))))))
 
 (defun path= (a b) (unless (or (consp a) (consp b)) (string= (namestring (path a)) (namestring (path b)))))
 
@@ -196,11 +200,12 @@ expansion. See EXPAND-FILES.")
           with hl
           unless (path= x p) do (setf p (.find x))
           do (path p)
-          do (push (find x (ast p) :test 'equiv:equiv) hl)
+          do (push (find x (ast p) :test 'equiv) hl)
           finally (return (nreverse hl))))))
 
 (defun expand-graph ()
-  (setf *org-graph-nodes* (expand-files *org-graph-files* (expand-edges *org-graph-edges*))))
+  (multiple-value-setq (*org-graph-nodes* *org-graph-edges*)
+    (expand-files *org-graph-files* (expand-edges *org-graph-edges*) *org-graph-edges*)))
 
 ;;; Files
 (defvar *org-graph-files* nil)
@@ -237,9 +242,34 @@ expansion. See EXPAND-FILES.")
           (node-properties self) (%file-keywords file doc))
     self))
 
-(defun expand-files (&optional (files *org-graph-files*) (nodes *org-graph-nodes*))
-  (mapc (lambda (x) (pushnew x nodes :test 'equiv:equiv)) files)
-  nodes)
+(defun expand-files (&optional (files *org-graph-files*) (nodes *org-graph-nodes*) (edges *org-graph-edges*))
+  (mapc 
+   (lambda (x) 
+     (pushnew x nodes :test 'equiv)
+     (let ((stack))
+       (flet ((.push (a b)
+                (pushnew
+                 (make-instance 'org-graph-implicit-edge 
+                   :type :child 
+                   :in (id a) :out (id b)
+                   :timestamp (time:now)
+                   :point (or (idx a) (idx b)))
+                 edges
+                 :test 'equiv)))
+         (loop for h across (ast x)
+             if (or (null stack) (< (org-stars h) (org-stars (car stack))))
+             do (progn 
+                  (push h stack) 
+                  (.push x h))
+             else if (> (org-stars h) (org-stars (car stack)))
+             do (progn 
+                  (push h stack) 
+                  (.push (cadr stack) (car stack)))
+             else do (progn 
+                       (setf (car stack) h)
+                       (.push (or (cadr stack) x) h))))))
+   files)
+  (values nodes edges))
 
 ;; (defun expand-headings (&optional (files *org-graph-files*) (edges *org-graph-edges*)))
 
@@ -440,7 +470,7 @@ new ID to be serialized on export.")
    (mapcar (lambda (x)
              (let ((tbl (make-hash-table :test 'equal)))
                (setf (gethash "title" tbl) (org-title (org-headline x))
-                     (gethash "url" tbl) (when-let ((y (find x *org-graph-nodes* :test 'equiv:equiv))) (path y))
+                     (gethash "url" tbl) (when-let ((y (find x *org-graph-nodes* :test 'equiv))) (path y))
                      (gethash "body" tbl) (org-contents (org-contents (org-contents x))))
                tbl))
            (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)))

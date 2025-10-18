@@ -142,7 +142,7 @@
    :org-tags))
 
 (defpackage :organ/graph
-  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri :url)
+  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri :url :equiv)
   (:import-from :graph :in :out)
   (:export :init-org-graph :org-graph :org-id 
    :org-graph-schema :*org-graph-schema* :*org-graph-db-directory* :init-org-graph-db 

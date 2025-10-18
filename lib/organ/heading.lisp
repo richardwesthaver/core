@@ -20,6 +20,8 @@
               (id (find "ID" (org-contents props) :test 'string-equal :key 'name)))
     (value id)))
 
+(defaccessor org-stars ((self org-heading)) (org-stars (org-headline self)))
+
 (define-org-parser (heading :from stream)
   (when-let* ((l (read-line input))
               (headline (org-parse :headline l)))

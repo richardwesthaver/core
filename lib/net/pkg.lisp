@@ -3,11 +3,11 @@
 ;; 
 
 ;;; Code:
-(defpackage :net/int
+(defpackage :net-int
   (:use :cl :std)
   (:export :*net-packages*))
 
-(in-package :net/int)
+(in-package :net-int)
 
 (eval-always (defparameter *net-packages* nil))
 
