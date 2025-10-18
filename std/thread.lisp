@@ -1265,6 +1265,36 @@ Calling `broadcast-work' from inside a worker is an error."
 (pushnew 'exit-workers sb-ext:*save-hooks*)
 
 ;;; Utils
+(defmacro with-timeout* ((seconds timeout-form) &body body)
+  "Runs BODY as an implicit PROGN with timeout of SECONDS. If
+timeout occurs before BODY has finished, BODY is unwound and
+TIMEOUT-FORM is executed with its values returned instead.
+
+Note that BODY is unwound asynchronously when a timeout occurs,
+so unless all code executed during it -- including anything
+down the call chain -- is asynch unwind safe, bad things will
+happen. Use with care."
+  (let ((exec (gensym)) (unwind (gensym)) (timer (gensym))
+        (timeout (gensym)) (block (gensym)))
+    `(block ,block
+       (tagbody
+          (flet ((,unwind ()
+                   (go ,timeout))
+                 (,exec ()
+                   ,@body))
+            (declare (dynamic-extent #',exec #',unwind))
+            (let ((,timer (sb-ext:make-timer #',unwind)))
+              (sb-sys:without-interrupts
+                  (unwind-protect
+                       (progn
+                         (sb-ext:schedule-timer ,timer ,seconds)
+                         (return-from ,block
+                           (sb-sys:with-local-interrupts
+                               (,exec))))
+                    (sb-ext:unschedule-timer ,timer)))))
+          ,timeout
+          (return-from ,block ,timeout-form)))))
+
 (defmacro with-lock-no-wait (lock predicate &body body)
   ;; predicate intentionally evaluated twice
   (with-gensyms (lock-var)

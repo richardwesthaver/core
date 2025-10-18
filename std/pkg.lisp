@@ -918,7 +918,7 @@
    :copy :assign
    :assignee :started-p
    :verbp :init
-   :reset))
+   :reset :state))
 
 (defpkg :std/seq
   (:use :cl)
@@ -1078,6 +1078,7 @@
   (:import-from :std/macs :if-let :eval-always)
   (:import-from :std/list :deletef)
   (:export
+   :with-timeout*
    :limiter-lock :limiter-count
    :update-limiter-count
    :exit-thread-pools
@@ -1253,6 +1254,7 @@
 (defpkg :std/os
   (:use :cl :sb-alien)
   (:import-from :std/macs :with-gensyms :if-let)
+  (:import-from :std/prim :definline)
   (:import-from :std/file :probe-directory)
   (:import-from :std/path :directory-path)
   (:import-from :sb-posix :tcgetattr :tcsetattr 
@@ -1268,6 +1270,7 @@
    :user-info
    :user-add
    :group-add
+   :get-host-name
    :list-all-users
    :list-all-groups
    :with-umask

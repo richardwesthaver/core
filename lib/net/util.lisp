@@ -6,6 +6,28 @@
 (in-package :net/core)
 
 (defvar *localhost* #(127 0 0 1))
+(defvar *wildcard-host* #(0 0 0 0))
+(defvar *wildcard-port* 0)
+(defvar *default-mtu* 65507
+  "Theoretical maximum bytes in a UDP datagram.
+
+The IPv4 UDP packets have a 16-bit length constraint, and IP+UDP header has
+28-byte.
+
+IP_MAXPACKET = 65535,       /* netinet/ip.h */
+sizeof(struct ip) = 20,     /* netinet/ip.h */
+sizeof(struct udphdr) = 8,  /* netinet/udp.h */
+
+65535 - 20 - 8 = 65507
+
+(But for UDP broadcast, the maximum message size is limited by the MTU size of
+the underlying link).")
+
+(definline %socket-operation-in-progress-p (condition)
+  (typep condition 'sb-bsd-sockets:operation-in-progress)) ;; errno 36 
+
+(definline %socket-not-connected-p (condition)
+  (typep condition 'sb-bsd-sockets:not-connected-error)) ;; errno 36 
 
 ;; returns an alien struct pointer, allocated based on input
 (defun %sockaddr (&optional sockaddr &rest addr)
@@ -86,6 +108,30 @@
     `(let ((,var ,socket))
        (unwind-protect (when ,var ,@body)
          (when ,var (socket-close ,var))))))
+
+(defmacro with-client-socket ((socket-var stream-var &rest args) &body body)
+  "Bind the socket resulting from (APPLY 'SOCKET-CONNECT ARGS) to SOCKET-VAR and
+if STREAM-VAR is non-nil, also bind the associated socket stream to it."
+  `(with-open-socket (,socket-var (socket-connect . ,args))
+     ,(if (null stream-var)
+          `(progn . ,body)
+          `(let ((,stream-var (stream-of ,socket-var)))
+             . ,body))))
+
+(defmacro with-server-socket ((var socket) &body body)
+  "Bind SOCKET to VAR, ensuring socket destruction on exit. BODY is only
+evaluated when VAR is non-nil."
+  `(with-open-socket (,var ,socket)
+     . ,body))
+
+(defmacro with-socket-listener ((var &rest args) &body body)
+  "Bind the socket resulting from (APPLY 'SOCKET-LISTEN ARGS) to VAR and eval
+BODY."
+  `(with-server-socket (,var (socket-listen . ,args)) . ,body))
+
+(defmacro with-socket-connection ((var &rest args) &body body)
+  "Bind the result of (APPLY 'SOCKET-ACCEPT ARGS) to VAR and eval BODY."
+  `(with-server-socket (,var (socket-accept . ,args)) . ,body))
 
 (defmacro with-client-server (((socket-class &rest common-initargs)
                                    (listen-socket-var &rest listen-address)

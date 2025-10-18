@@ -34,7 +34,8 @@
        (socket-close ,socket-var))))
 
 ;;; Objects
-(defconfig udp-config (net-config) ())
+(defconfig udp-config (socket-config) 
+  ((broadcast)))
 
 (defclass udp-socket (socket) 
   ((sb-bsd-sockets::family :initform sockint::af-inet))

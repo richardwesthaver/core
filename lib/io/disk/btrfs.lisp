@@ -27,11 +27,11 @@
 
 (defclass btrfs-snapshot (disk-snapshot disk) ())
 
-  (defmethods sync 
-    (((self btrfs-subvolume) &key)
-     (btrfs-util-fs-sync (namestring (path self))))
-    (((self btrfs-disk) &key)
-     (btrfs-util-fs-sync (namestring (path self)))))
+(defmethods sync 
+  (((self btrfs-subvolume) &key)
+   (btrfs-util-fs-sync (namestring (path self))))
+  (((self btrfs-disk) &key)
+   (btrfs-util-fs-sync (namestring (path self)))))
          
 (defun btrfs-subvolumes (path)
   (when (subvolume-valid-p path)

@@ -14,6 +14,8 @@
   "The name of the currently logged-in user."
   (sb-posix::getenv "USER"))
 
+(definline get-host-name () (sb-unix:unix-gethostname))
+  
 (defun sudo-p ()
   "Return T if effective user is root."
   (zerop (parse-integer (with-output-to-string (str) (sb-ext:process-output (sb-ext:run-program "id" (list "-u") :search t :output str)) 0))))

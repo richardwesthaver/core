@@ -9,18 +9,6 @@
 ;; based on SWANK-CLIENT (Robert Brown <robert.brown@gmail.com>)
 
 ;;; Code:
-(std:defpkg :net/proto/swank
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
-  (:export #:swank-connection
-           #:slime-connect
-           #:slime-close
-           #:slime-eval
-           #:slime-eval-async
-           #:slime-migrate-evals
-           #:slime-network-error
-           #:slime-pending-evals-p
-           #:with-slime-connection))
-
 (in-package :net/proto/swank)
 
 (defconstant +maximum-thread-count+ 1000)
@@ -189,7 +177,7 @@ Returns a SWANK-CONNECTION when the connection attempt is successful.
 Otherwise, returns NIL.  May signal SLIME-NETWORK-ERROR if the user has a Slime
 secret file and there are network problems sending its contents to the remote
 Swank server."
-  (let ((sock (handler-case (socket-connect host-name port :element-type 'octet)
+  (let ((sock (handler-case (socket-connect (get-host-by-name host-name) port)
                    (socket-error ()
                      (return-from slime-net-connect nil)))))
     (socket-keep-alive (socket sock))
@@ -239,7 +227,7 @@ are communications problems."
          (setf id (incf (continuation-counter connection)))
          (push (list id continuation form package-name thread) (rex-continuations connection))
          (when (eq (state connection) :dead) (error 'slime-network-error)))
-       (let ((name (format nil "swank sender for ~A/~D" (host-name connection) (port connection))))
+       (let ((name (format nil "swank sender for ~A/~D" (host connection) (port connection))))
          (make-thread (lambda ()
                         ;; Catch network errors so the Swank sender thread exits gracefully if
                         ;; there are communications problems with the remote Lisp.
@@ -258,7 +246,7 @@ are communications problems."
        ;; The value returned is not for us.  Forward it to Slime.
        (when send-to-emacs
          (force-output)
-         (send-to-emacs `(:return ,(swank::current-thread) ,value ,id)))))
+         (send-to-emacs `(:return ,*current-thread* ,value ,id)))))
 
     ;; When a remote computation signals a condition and control ends up in the debugger, Swank
     ;; sends these events back to pop up a Slime breakpoint window.  Forward the events to Slime.

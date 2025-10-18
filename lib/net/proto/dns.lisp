@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :net/proto/dns)
 
-(define-condition dns-error (dns-condition protocol-error) ())
+(define-condition dns-error (dns-condition net-error) ())
 
 (define-condition dns-servers-exhausted (dns-error)
   ()

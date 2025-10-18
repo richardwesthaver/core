@@ -3,31 +3,6 @@
 ;;
 
 ;;; Code:
-(defpackage :net/proto/crew
-  (:nicknames :net/crew)
-  (:use :cl :sb-bsd-sockets :std :net/core :obj/id :net/proto/swank)
-  (:import-from #:sb-thread
-                #:condition-notify
-                #:condition-wait
-                #:make-mutex
-                #:make-thread
-                #:with-mutex)
-  (:import-from :sb-concurrency
-   :make-gate)
-  (:export 
-   :crew-connection-info
-   :make-worker-pool
-   :crew-worker :crew-worker-pool
-   :*crew-worker-pools-lock*
-   :*crew-worker-pools*
-   :connect-worker
-   :disconnect-worker
-   :parallel-mapcar :parallel-reduce
-   :eval-form-all-workers
-   :eval-form-repeatedly
-   :eval-repeatedly-async-state   
-   :reconnect-worker))
-
 (in-package :net/proto/crew)
 
 (defclass crew-connection-info ()
@@ -64,12 +39,6 @@
    (replay-forms-lock :initform (make-mutex :name "replay-forms-lock") :accessor replay-forms-lock)
    (replay-forms :type list :initform nil :accessor replay-forms)))
 
-(defvar *crew-worker-pools-lock* (make-mutex :name "worker-pools-lock")
-  "Lock protecting access to *CREW-WORKER-POOLS*.")
-
-;; could be chashtable
-(defvar *crew-worker-pools* (make-hash-table) "Mapping from worker pool IDs to active worker pools.")
-
 (defun worker-counts (worker-pool)
   "Returns the number of idle, busy, and disconnected workers in WORKER-POOL.
 This function executes without locking WORKER-POOL, so it may return
@@ -103,16 +72,7 @@ WORKER-POOL, so it may output inconsistent information."
       (format stream "id: ~S workers: ~D idle: ~D busy: ~D disconnected: ~D"
               (id worker-pool) (%worker-count worker-pool) idle busy disconnected))))
 
-(defmethod initialize-instance :after ((self crew-worker-pool) &key)
-  (with-mutex (*crew-worker-pools-lock*)
-    (setf (gethash (id self) *crew-worker-pools*) self)))
-
-(defun find-worker-pool (worker-pool-id)
-  "Returns the worker pool identified by WORKER-POOL-ID."
-  (with-mutex (*crew-worker-pools-lock*)
-    (gethash worker-pool-id *crew-worker-pools*)))
-
-(defun make-worker-pool (leader connect-infos connect-worker)
+(defun make-crew (leader connect-infos connect-worker)
   (let* ((worker-pool (make-instance 'crew-worker-pool
                         :leader leader))
          (workers
@@ -146,7 +106,7 @@ that workers can use to return results to the master."
   (let ((connect-infos
           (loop for (host . port) in host/port-alist
                 collect (make-instance 'crew-connection-info :host host :port port))))
-    (make-worker-pool leader connect-infos #'connect-worker)))
+    (make-crew leader connect-infos #'connect-worker)))
 
 (defun disconnect-workers (worker-pool)
   "Closes the Swank connections of all connected workers in WORKER-POOL."
@@ -309,7 +269,7 @@ it joins WORKER-POOL."
   "For a worker that has executed EVALUATED-COUNT of the replay forms associated
 with the worker-pool identified by WORKER-POOL-ID, returns a list of the forms
 the worker needs to evaluate in order to be completely up to date."
-  (let ((worker-pool (find-worker-pool worker-pool-id)))
+  (let ((worker-pool (find-thread-pool worker-pool-id)))
     (when worker-pool
       (with-mutex ((replay-forms-lock worker-pool))
         (nthcdr evaluated-count (reverse (replay-forms worker-pool)))))))

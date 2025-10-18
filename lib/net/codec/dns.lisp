@@ -7,7 +7,7 @@
 
 ;;; Record Types
 
-(define-condition dns-condition ()
+(define-condition dns-condition (net-condition)
   ())
 
 (define-condition dns-server-failure (error dns-condition)

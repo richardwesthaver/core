@@ -6,6 +6,7 @@
 (defpackage :net/int
   (:use :cl :std)
   (:export :*net-packages*))
+
 (in-package :net/int)
 
 (eval-always (defparameter *net-packages* nil))
@@ -18,12 +19,10 @@
   (:export
    ;; obj
    :net-condition
-   :protocol-condition
-   :codec-condition
    :net-error
-   :codec-error
-   :protocol-error
+   :net-warning
    :net-config
+   :socket-config
    :client
    :client-config
    :server
@@ -31,8 +30,6 @@
    :peer
    :proxy
    :tunnel
-   :codec-warning
-   :protocol-warning
    :connection
    :connect
    :disconnect
@@ -43,9 +40,9 @@
   ;; utils
   (:export :get-address-by-name
    :with-client-server :*localhost*
-   :with-open-socket :find-port)
-  ;; pkg
-  (:export :*net-packages*))
+   :with-open-socket :find-port
+   :*wildcard-host* :*wildcard-port*
+   :*default-mtu*))
 
 (defpkg :net/udp
   (:nicknames :udp)
@@ -289,6 +286,40 @@
    :cookie-p :copy-cookie
    :cookie-creation-timestamp :stringify-cookie
    :cookie-date))
+
+(defpkg :net/proto/swank
+  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
+  (:export 
+   #:swank-connection
+   #:slime-connect
+   #:slime-close
+   #:slime-eval
+   #:slime-eval-async
+   #:slime-migrate-evals
+   #:slime-network-error
+   #:slime-pending-evals-p
+   #:with-slime-connection))
+
+(defpkg :net/proto/crew
+  (:use :cl :sb-bsd-sockets :std :net/core :obj/id :net/proto/swank)
+  (:import-from #:sb-thread
+                #:condition-notify
+                #:condition-wait
+                #:make-mutex
+                #:make-thread
+                #:with-mutex)
+  (:import-from :sb-concurrency :make-gate)
+  (:export 
+   :crew-connection-info
+   :make-crew
+   :crew-worker :crew-worker-pool
+   :connect-worker
+   :disconnect-worker
+   :parallel-mapcar :parallel-reduce
+   :eval-form-all-workers
+   :eval-form-repeatedly
+   :eval-repeatedly-async-state   
+   :reconnect-worker))
 
 (defpkg :net/req
   (:nicknames :req)

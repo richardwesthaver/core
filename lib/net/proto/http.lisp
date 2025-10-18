@@ -52,7 +52,7 @@
   status-text)
 
 ;;; Conditions
-(define-condition http-error (protocol-error)
+(define-condition http-error (net-error)
   (description)
   (:report
    (lambda (condition stream)

@@ -79,3 +79,6 @@ Cookie: name=wookie
     (istype 'net/srv/http:http-service (make-instance 'net/srv/http:http-service))
     (istype 'net/srv/http:https-service (make-instance 'net/srv/http:https-service))
     (istype 'net/srv/udp:udp-service (make-instance 'net/srv/udp:udp-service))))
+
+;; TODO 2025-10-18: 
+(deftest swank ())

@@ -35,14 +35,26 @@
        (socket-close ,socket-var))))
 
 ;;; Objects
-(defconfig tcp-config (net-config) ())
+(defconfig tcp-config (socket-config) 
+  ((nodelay :type boolean)
+   (keepalive :type boolean)
+   (keepcnt)
+   (keepidle)
+   (keepintvl)
+   (user-timeout)))
 
 (defclass tcp-socket (socket) 
-  ((sb-bsd-sockets::family :initform sockint::af-inet))
-  (:default-initargs :type :stream :protocol :tcp))
+  ((sb-bsd-sockets::family :initarg :family :reader sb-bsd-sockets::socket-family))
+  (:default-initargs :type :stream :protocol :tcp :family sockint::af-inet))
 
 (defmethod sb-bsd-sockets::make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
   (apply 'net/core::%sockaddr sockaddr address))
+
+(defmethod sb-bsd-sockets::size-of-sockaddr ((socket tcp-socket))
+  (case (sb-bsd-sockets::socket-family socket)
+    (sockint::af-inet sockint::size-of-sockaddr-in)
+    (sockint::af-inet6 sockint::size-of-sockaddr-in6)
+    (t (error "unknown sockaddr size"))))
 
 (defclass tcp-client (tcp-socket client) ())
 (defclass tcp-server (tcp-socket server) ())
