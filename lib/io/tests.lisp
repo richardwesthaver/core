@@ -8,7 +8,7 @@
 (load-uring)
 (load-zstd)
 (btrfs:load-btrfs)
-(deftest sanity () (uring::io-uring-major-version))
+(deftest sanity () (is (positive-integer-p (uring::io-uring-major-version))))
 
 ;; (deftest uring-serve-event ()
 ;;   "See 'tests/serve-event.pure.lisp'"
@@ -29,7 +29,7 @@
                 (make-instance 'fundamental-binary-input-stream)))
         (output (make-chunked-stream 
                  (make-instance 'fundamental-binary-output-stream))))
-    (istype 'chunked-stream 
+    (istype 'chunked-io-stream
             (make-chunked-stream 
              (make-instance 'fundamental-binary-stream)))
     (istype 'chunked-input-stream input)
@@ -37,9 +37,9 @@
     (istype 'chunked-io-stream (make-chunked-stream (make-two-way-stream input output)))
     (istype 'blocked-input-stream (make-instance 'blocked-input-stream))))
 
-(defparameter *data-size* (* 10 1024))
+(defparameter *data-size* (ash 1024 4))
 
-(deftest zstd-simple ()
+(deftest zstd-buffer ()
   (let ((data (make-array *data-size* :element-type 'octet :initial-contents (random-bytes *data-size*)))
         (round-trip-data (make-octets *data-size*))
         compressed-data)

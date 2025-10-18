@@ -7,4 +7,8 @@
 ;;; Code:
 (in-package :organ)
 
-(define-org-object macro ())
+(define-org-object macro (name args))
+
+(define-org-parser (macro :from string)
+  (let ((r (org-create :macro)))
+    r))

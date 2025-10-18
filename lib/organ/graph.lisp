@@ -161,9 +161,18 @@ expansion. See EXPAND-FILES.")
   nil)
 
 (defmethod equiv:equiv ((a org-graph-node) (b org-heading))
-  (when-let* ((props (org-properties b))
-              (id (find "ID" (org-contents props) :test 'string-equal :key 'name)))
-    (uuid= (id a) (make-uuid-from-string (value id)))))
+  (when-let* ((a (id a))
+              (b (id b)))
+    (when (stringp b) (setf b (make-uuid-from-string b)))
+    (and (typep a 'uuid)
+         (uuid= a b))))
+
+(defmethod equiv:equiv ((a org-heading) (b org-graph-node))
+  (when-let* ((a (id a))
+              (b (id b)))
+    (when (stringp a) (setf a (make-uuid-from-string a)))
+    (and (typep b 'uuid)
+         (uuid= a b))))
 
 (defun expand-edges (&optional (edges *org-graph-edges*) (nodes *org-graph-nodes*))
   "Expand a list of EDGES, returning a list of newly discovered nodes."
@@ -364,9 +373,14 @@ provided then all are returned."
 
 (defvar *org-graph-export-id* -1)
 
-(definline %org-heading-hash-table (self)
+(defvar *org-graph-export-identity*
+    (lambda (id) (declare (ignore id)) (incf *org-graph-export-id*))
+  "A function which takes a single argument (the ID of an object) and returns a
+new ID to be serialized on export.")
+
+(definline %org-heading-hash-table (self identity)
   (let ((obj (make-hash-table :test 'equal)))
-    (setf (gethash "id" obj) (incf *org-graph-export-id*))
+    (setf (gethash "id" obj) (funcall identity (id self)))
     (setf (gethash "title" obj) (org-title (org-headline self)))
     (setf (gethash "tags" obj) (map 'list 'name (org-tags (org-headline self))))
     (setf (gethash "properties" obj) (%org-property-drawer-hash-table (org-properties self)))
@@ -374,7 +388,7 @@ provided then all are returned."
     obj))
 
 (defmethod json:json-write ((self org-heading) &optional stream)
-  (json:json-write (%org-heading-hash-table self) stream))
+  (json:json-write (%org-heading-hash-table self *org-graph-export-identity*) stream))
   
 (defmethod serialize ((self org-graph) (format (eql :json)) &key stream path)
   (if stream
@@ -414,8 +428,22 @@ provided then all are returned."
   (org-graph-node-fix-paths)
   (serialize graph :json :path "/opt/stash/data/web/cdn/data/org-graph.json"))
 
-(defun org-graph-index (&optional (files *org-graph-files*))
-  "Generate a json search index based on FILES."
-  (setf *org-graph-export-id* -1)
-  (serialize (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)) :json
-             :path "/opt/stash/data/web/cdn/data/org-graph-index.json"))
+(defun org-graph-minisearch-json (&optional (files *org-graph-files*))
+  "Generate a Minisearch json search index based on FILES."
+  (let ((*org-graph-export-id* -1))
+    (serialize (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)) :json
+               :path "/opt/stash/data/web/cdn/data/org-graph-index.json")))
+
+(defun org-graph-tinysearch-json (&optional (files *org-graph-files*))
+  "Generate a Tinysearch json search index based on FILES."
+  (serialize 
+   (mapcar (lambda (x)
+             (let ((tbl (make-hash-table :test 'equal)))
+               (setf (gethash "title" tbl) (org-title (org-headline x))
+                     (gethash "url" tbl) (when-let ((y (find x *org-graph-nodes* :test 'equiv:equiv))) (path y))
+                     (gethash "body" tbl) (org-contents (org-contents (org-contents x))))
+               tbl))
+           (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)))
+   :json
+   :path "/opt/stash/data/web/cdn/data/org-graph-search.json"))
+

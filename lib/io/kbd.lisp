@@ -45,24 +45,24 @@
     ;; singled long.
     (logand (aref array idx) (ash 1 (mod bit +long-bit+)))))
 
-(defun new-device-from-path (path &optional (error t))
+(defun new-device-from-path (path)
   ;; opening FD may fail if the user does not have read permissions. When
   ;; ERROR is non-nil (the default) this signals an error, else we return nil.
-  (handler-case
-      (with-fd (fd path :flags sb-posix:o-rdonly :close nil)
-        (sb-alien:with-alien ((dev (* evdev::libevdev)))
-          (let ((ret (evdev:libevdev-new-from-fd fd (sb-alien:addr dev))))
-            (if (minusp ret)
-                (simple-kbd-error (sb-unix::strerror (abs ret)))
-                dev))))
-    (error (c) (when error (error c)))))
+  (with-fd (fd path :flags sb-posix:o-rdonly :close nil)
+    (sb-alien:with-alien ((dev (* evdev::libevdev)))
+      (let ((ret (evdev:libevdev-new-from-fd fd (sb-alien:addr dev))))
+        (if (minusp ret)
+            (simple-kbd-error (sb-unix::strerror (abs ret)))
+            dev)))))
 
 (defun kbd-code-name (code)
   (with-alien ((str (* unsigned-char) (make-alien unsigned-char 11)))
     (xkb::xkb-keysym-get-name code str 11)
     (cast str c-string)))
+
 ;; (kbd-code-name 400) ; "0x00000190"
 ;; evdev::+ev-cnt+ evdev::+key-cnt+
+
 (defun keyboard-device-p (path)
   "Read some input on device at PATH returning T if it appears to be a keyboard
 device."
@@ -77,40 +77,54 @@ device."
             when (evdev-bit-p keybits i)
             return t))))
       
-(defun make-keyboard-from-dev (dev &optional keymap compose-table)
+(defun make-keyboard-from-dev (dev &rest args)
   "Return a KEYBOARD given a device, keymap, and compose table. Keyword argument
 ERROR when non-nil (the default) causes an error to be signaled if the device
 can't be opened, else returns nil."
-  (make-keyboard :sap dev :keymap keymap))
+  (apply 'make-keyboard :sap dev args))
 
 (defun get-keyboards (&optional (dir "/dev/input/"))
   (let ((devices (directory-files dir))
         ret)
     (dolist (dev devices ret)
-      (push (make-keyboard-from-dev (new-device-from-path dev))
-            ret))))
-
-;; (with-open-file (file "/dev/input/event4")
-;;   (let ((fd (sb-sys:fd-stream-fd file))
-;;         (evbits))))
+      (handler-case
+          (progn
+            (print-device-input-info dev)
+            (push (make-keyboard-from-dev (new-device-from-path dev) :path dev)
+                  ret))
+        (sb-posix:syscall-error () nil)
+        (simple-kbd-error () nil)))))
 
 ;; (xkb::xkb-consumed-mode :xkb)
 
-(defun print-device-input-info (path &optional (error t))
-  (when-let ((dev (new-device-from-path path error)))
-    (when (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
-      (println "best-guess: mouse"))
-    (list (evdev::libevdev-get-name dev) 
-          (evdev::libevdev-get-id-bustype dev) 
-          (evdev::libevdev-get-id-vendor dev)
-          (evdev::libevdev-get-id-product dev))))
+(defun print-device-input-info (path)
+  (when-let ((dev (new-device-from-path path)))
+    ;; (when (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
+    ;;   (println "best-guess: mouse"))
+    (pprint 
+     (list (evdev::libevdev-get-name dev) 
+           (evdev::libevdev-get-id-bustype dev) 
+           (evdev::libevdev-get-id-vendor dev)
+           (evdev::libevdev-get-id-product dev)))))
 
 (defun device-read-event (dev)
+  (declare (optimize (speed 3) (safety 0)))
   (with-alien ((ev evdev/input:input-event))
     (when (evdev::libevdev-has-event-pending dev)
       (println "has event pending")
       (evdev::libevdev-next-event dev (libevdev-read-flag :normal) (addr ev)))
     (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
       (values 
-       (cons (sb-posix::alien-timeval-sec time) (sb-posix::alien-timeval-usec time))
-       type code value))))
+       (sb-posix::alien-timeval-sec time) 
+       (sb-posix::alien-timeval-usec time)
+       (evdev::libevdev-event-type-get-name type) 
+       (evdev::libevdev-event-code-get-name type code) 
+       value))))
+
+(defun device-read-events (dev count)
+  (let (ret)
+    (dotimes (i count ret)
+      (multiple-value-bind (s ms type code val) (device-read-event dev)
+        (declare (ignore s ms))
+        (push (list type code val) ret)))))
+        

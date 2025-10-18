@@ -144,6 +144,7 @@
    :*decompressor* :*preferred-compression-type*
    :*compression-types*
    :compress-octet-vector
+   :flush
    :compress-octet
    :with-compressor))
 

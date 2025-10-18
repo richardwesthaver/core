@@ -180,6 +180,7 @@ URL.  Scanners are memoized in SCANNER-HASH once they are created."
                   #\=
                   (:greedy-repetition 0 nil (:inverted-char-class #\&))
                   #\&))))))
+
   (defun add-cookie-value-to-url (url &key
                                       (cookie-name (session-cookie-name *service*))
                                       (value (when-let ((session (session *request*)))

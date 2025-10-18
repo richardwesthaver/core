@@ -2366,26 +2366,24 @@ the input and the number of bytes written to the output."
    (make-decompressing-deflate-stream key stream)))
 
 ;;; COMPRESSION (salza2)
-;; HACK 2025-06-10: 
-(eval-always
-  (defparameter +input-limit+ 32768)
-  (defparameter +input-limit-mask+ (1- +input-limit+))
-  (defparameter +buffer-size+ (* +input-limit+ 2))
-  (defparameter +buffer-size-mask+ (1- +buffer-size+))
+(defparameter +input-limit+ 32768)
+(defparameter +input-limit-mask+ (1- +input-limit+))
+(defparameter +buffer-size+ (* +input-limit+ 2))
+(defparameter +buffer-size-mask+ (1- +buffer-size+))
 
-  (defparameter +input-size+ #x10000)
-  (defparameter +input-mask+ #x0FFFF)
-  (defparameter +hashes-size+ 8191)
-  (defparameter +radix+ 109)
-  (defparameter +rmax+ (* +radix+ +radix+))
+(defparameter +input-size+ #x10000)
+(defparameter +input-mask+ #x0FFFF)
+(defparameter +hashes-size+ 8191)
+(defparameter +radix+ 109)
+(defparameter +rmax+ (* +radix+ +radix+))
 
-  (defparameter +bitstream-buffer-size+ 4096)
-  (defparameter +bitstream-buffer-mask+ (1- +bitstream-buffer-size+))
-  (defparameter +bitstream-buffer-bits+ (* +bitstream-buffer-size+ 8))
-  (defparameter +bitstream-buffer-bitmask+ (1- +bitstream-buffer-bits+))
+(defparameter +bitstream-buffer-size+ 4096)
+(defparameter +bitstream-buffer-mask+ (1- +bitstream-buffer-size+))
+(defparameter +bitstream-buffer-bits+ (* +bitstream-buffer-size+ 8))
+(defparameter +bitstream-buffer-bitmask+ (1- +bitstream-buffer-bits+))
 
-  (defconstant +final-block+ #b1)
-  (defconstant +fixed-tables+ #b01))
+(defconstant +final-block+ #b1)
+(defconstant +fixed-tables+ #b01)
 
 ;;;; Types
 (deftype input-index ()
@@ -2454,6 +2452,7 @@ the input and the number of bytes written to the output."
        (setf hash (* hash 109))
        (setf p0 (logand (1+ p0) #xFFFF))
        (setf hash (+ hash (aref input p1)))))))
+
 ;;;; Matches
 (defconstant +maximum-match-length+ 258
   "The maximum match length allowed.")
@@ -2461,8 +2460,7 @@ the input and the number of bytes written to the output."
 (defconstant +maximum-match-distance+ 32768
   "The maximum distance for a match.")
 
-(declaim (inline match-length))
-(defun match-length (p1 p2 input end)
+(definline match-length (p1 p2 input end)
   "Returns the length of the match between positions p1 and p2 in
 INPUT; END is a sentinel position that ends the match length
 check if reached."
@@ -2507,6 +2505,7 @@ check if reached."
                  match-length possible-length))
          (setf p2 (aref chains p2)))
        (incf test-count)))))
+
 ;;;; Bitstream
 (defun bitstream-callback-missing (&rest args)
   (declare (ignore args))
@@ -2594,10 +2593,10 @@ check if reached."
     :bits 0
     :callback #'bitstream-callback-missing))
 
+;; custom writer methods which use MERGE-BITS and MERGE-OCTET internally
 (defgeneric write-bits (code size bitstream))
 (defgeneric write-octet (octet bitstream))
 (defgeneric write-octet-vector (vector bitstream &key start end))
-(defgeneric flush (bitstream))
 
 (defmethod write-bits (code size (bitstream bitstream))
   (setf (bits bitstream)
@@ -2720,9 +2719,9 @@ with OUTPUT, a starting offset, and the count of pending data."
    (counter
     :initarg :counter
     :accessor counter)
-   (octet-buffer
-    :initarg :octet-buffer
-    :accessor octet-buffer)
+   (buffer
+    :initarg :buffer
+    :accessor buffer)
    (bitstream
     :initarg :bitstream
     :accessor bitstream)
@@ -2749,7 +2748,7 @@ with OUTPUT, a starting offset, and the count of pending data."
    :end 0
    :counter 0
    :bitstream (make-instance 'bitstream)
-   :octet-buffer (make-octets 1)))
+   :buffer (make-octets 1)))
 
 ;;;; Compressor
 (defun deflate (input chains start end
@@ -2846,7 +2845,7 @@ with OUTPUT, a starting offset, and the count of pending data."
     (write-bits +fixed-tables+ 2 bitstream)))
 
 (defmethod compress-octet (octet compressor)
-  (let ((vector (octet-buffer compressor)))
+  (let ((vector (buffer compressor)))
     (setf (aref vector 0) octet)
     (compress-octet-vector vector compressor)))
 

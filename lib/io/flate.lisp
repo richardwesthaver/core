@@ -61,6 +61,9 @@ ZSTD-DECOMPRESSOR in the case of zstd."))
   (:documentation "Compress INPUT using initial STATE, which may be a COMPRESSION-STATE object
 for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 
+(defgeneric flush (self)
+  (:documentation "Flush an object's buffer."))
+
 (defgeneric finish-compression (self)
   (:documentation "Finish the data format and flush all pending
   data in the bitstream."))
@@ -70,10 +73,6 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 
 ;; TODO 2024-06-08: maybe move this to generic io/stream protocol - 'RESET'
 
-(defgeneric reset-compressor (self)
-  (:documentation "Reset the state of compressor SELF."))
-(defgeneric reset-decompressor (self)
-  (:documentation "Reset the state of decompressor SELF."))
 (defgeneric compress-octet (octet compressor)
   (:documentation "Add OCTET to the compressed data of COMPRESSOR."))
 
@@ -83,6 +82,7 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 
 (defgeneric make-compressing-stream (key stream &key &allow-other-keys)
   (:documentation "Return a new COMPRESSING-STREAM of kind KEY, optionally wrapping STREAM."))
+
 (defgeneric make-decompressing-stream (key stream &key &allow-other-keys)
   (:documentation "Return a new DECOMPRESSING-STREAM of kind KEY, optionally wrapping STREAM."))
 

@@ -8,7 +8,7 @@
 (in-readtable :std)
 
 (deftest dns ()
-  (istype '(array octet 4) (make-inet-address (resolve "compiler.company")))
+  (istype '(simple-array (unsigned-byte 8) (4)) (make-inet-address (resolve "otom8.dev")))
   (istype 'string (hostname (resolve "google.com"))))
 
 (deftest tcp ()
@@ -61,9 +61,9 @@ Cookie: name=wookie
 
 (deftest req ()
   (istype 'net/req::keep-alive-chunked-stream
-          (req:get (uri:uri "https://compiler.company") :force-binary t :want-stream t :keep-alive t))
-  (istype 'string (req:get (uri:uri "https://compiler.company")))
-  (istype 'octet-vector (req:get (uri:uri "https://compiler.company") :force-binary t)))
+          (req:get (uri:uri "https://otom8.dev") :force-binary t :want-stream t :keep-alive t))
+  (istype 'string (req:get (uri:uri "https://otom8.dev")))
+  (istype 'octet-vector (req:get (uri:uri "https://otom8.dev") :force-binary t)))
 
 (deftest cookies ()
   (let ((cookies (net/cookie:make-cookie-jar))

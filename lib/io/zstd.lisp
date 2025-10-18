@@ -16,10 +16,10 @@
 
 ;;; Objects
 (defclass zstd-compressing-stream (compressing-stream)
-  ((%level :initform *compression-level* :accessor compression-level)
-   (%input :initform (allocate-zstd-inbuffer) :reader input)
-   (%output :initform (allocate-zstd-outbuffer) :reader output)
-   (%stream :initform (zstd-createcstream)
+  ((level :initform *compression-level* :accessor compression-level)
+   (input :initform (allocate-zstd-inbuffer) :reader input)
+   (output :initform (allocate-zstd-outbuffer) :reader output)
+   (stream :initform (zstd-createcstream)
             :type (alien (* zstd-cstream))
             :reader cstream)))
 
@@ -84,16 +84,16 @@
 
 (defmethod stream-write-sequence ((stream zstd-compressing-stream) seq &optional start end))
     
-(defmethod close ((stream zstd-compressing-stream) &key abort &allow-other-keys)
-  ;; (sb-alien:free-alien (input stream))
-  ;; (sb-alien:free-alien (output stream))
-  ;; (zstd-freecstream (cstream stream))
-  )
+(defmethod close ((stream zstd-compressing-stream) &key abort)
+  (declare (ignore abort))
+  (sb-alien:free-alien (input stream))
+  (sb-alien:free-alien (output stream))
+  (zstd-freecstream (cstream stream)))
 
 (defclass zstd-decompressing-stream (decompressing-stream)
-  ((%input :initform (allocate-zstd-inbuffer) :reader input :type (alien zstd-inbuffer))
-   (%output :initform (allocate-zstd-outbuffer) :reader output :type (alien zstd-outbuffer))
-   (%stream :initform (zstd-createdstream)
+  ((input :initform (allocate-zstd-inbuffer) :reader input :type (alien zstd-inbuffer))
+   (output :initform (allocate-zstd-outbuffer) :reader output :type (alien zstd-outbuffer))
+   (stream :initform (zstd-createdstream)
             :type (alien (* zstd-dstream))
             :reader dstream)))
 
@@ -137,7 +137,7 @@
   (setf (zstd-outbuffer-pos (output self)) new))
 
 (defmacro with-zstd-stream (stream (zst in out) &body body)
-  `(let ((,zst (slot-value ,stream '%stream))
+  `(let ((,zst (slot-value ,stream 'stream))
          (,in (input ,stream))
          (,out (output ,stream)))
      ,@body))
@@ -150,9 +150,10 @@
   ;; returns recommended
   (print (zstd-initdstream (dstream self))))
 
-(defmethod close ((stream zstd-decompressing-stream) &key abort &allow-other-keys)  
-  ;; (sb-alien:free-alien (input stream))
-  ;; (sb-alien:free-alien (output stream))
+(defmethod close ((stream zstd-decompressing-stream) &key abort)
+  (declare (ignore abort))
+  (sb-alien:free-alien (input stream))
+  (sb-alien:free-alien (output stream))
   (zstd-freedstream (dstream stream)))
 
 (defmethod sb-gray:stream-read-sequence ((self zstd-decompressing-stream) (seq vector) &optional start end)

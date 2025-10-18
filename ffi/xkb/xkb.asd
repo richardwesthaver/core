@@ -8,8 +8,7 @@
   :depends-on (:std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
-                                      :package :xkb)
-               (:file "x11"))
+                                      :package :xkb))
   :in-order-to ((test-op (test-op :xkb/tests))))
 
 (defsystem :xkb/tests

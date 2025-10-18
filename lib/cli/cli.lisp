@@ -53,28 +53,6 @@ only."
   "Eval BODY, a list of shell command strings, with sudo privileges."
   `(progn ,@(mapcar (lambda (x) `(call-with-sudo ,x)) body)))
 
-;;; Pretty Log Messages
-(defclass pretty-log-message (simple-log-message) ())
-
-(defmethod format-message (stream (message pretty-log-message))
-  (let ((*standard-output* stream))
-    (format stream log::*simple-log-message-formatter*
-            (with-output-to-string (*standard-output*)
-              (.sgr 48 5 7)
-              (format-timestring *standard-output* 
-                                 (timestamp message) 
-                                 :format log::*log-timestamp-format*)
-              (.sgr 0))
-            (with-output-to-string (*standard-output*)
-              (.sgr 48 5 7)
-              (print (level message) *standard-output*)
-              (.sgr 0))
-            (with-output-to-string (*standard-output*)
-              (.sgr 48 5 7)
-              (print (log::tags message) *standard-output*)
-              (.sgr 0))
-            (format-message nil (log::content message)))))
-
 ;;; DEFSYS Providers
 (std/defsys::defprovider :cli (name &key package)
   `(clap:load-package-cli ,name . ,(when package '(:package package))))
