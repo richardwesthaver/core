@@ -115,8 +115,8 @@ can't be opened, else returns nil."
       (evdev::libevdev-next-event dev (libevdev-read-flag :normal) (addr ev)))
     (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
       (values 
-       (sb-posix::alien-timeval-sec time) 
-       (sb-posix::alien-timeval-usec time)
+       (time:make-timestamp :sec (sb-posix::alien-timeval-sec time) 
+                            :nsec (* 1000 (sb-posix::alien-timeval-usec time)))
        (evdev::libevdev-event-type-get-name type) 
        (evdev::libevdev-event-code-get-name type code) 
        value))))
@@ -125,6 +125,5 @@ can't be opened, else returns nil."
   (let (ret)
     (dotimes (i count ret)
       (multiple-value-bind (s ms type code val) (device-read-event dev)
-        (declare (ignore s ms))
-        (push (list type code val) ret)))))
+        (push (list type code val ) ret)))))
         

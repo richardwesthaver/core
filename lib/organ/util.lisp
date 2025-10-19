@@ -38,3 +38,23 @@
   (handler-case (uuid:uuid-to-octet-vector id)
     (simple-error () id)
     (sb-pcl::missing-slot () id)))
+
+(defun org-file-headings (path &rest ids)
+  "Return a list of org headings corresponding to IDS in PATH. If no IDS are
+provided then all are returned."
+  ;; first get an org-document and list of headings
+  (let* ((doc (org-parse :document (pathname path)))
+         (headings (ast doc))
+         (ret)
+         (ids-p (when ids t)))
+    ;; map over IDs, searching for matches
+    (loop for h across headings
+          if (typep h 'org-heading)
+          do
+             (when-let ((id (id:id h)))
+               (if ids-p
+                   (when-let ((found (find (value id) ids :test 'equal)))
+                     (removef ids found :test 'equal)
+                     (push h ret))
+                   (push h ret)))
+          finally (return ret))))

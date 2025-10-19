@@ -318,19 +318,6 @@
    :syntax-warning :syntax-condition
    :invalid-ast))
 
-(defpkg :obj/graph
-  (:nicknames :graph)
-  (:use :cl :std :obj/id :ast :std/readtable)
-  (:export 
-   :vertex :edge :graph :make-edge :make-graph
-   :nodes :edges :add-node :add-edge
-   :weighted-edge :directed-edge :undirected-edge :directed-graph
-   :edge-value :edge-weight :node-edges
-   :edgex
-   :edge-out
-   :edge-in
-   :class-graph))
-
 (defpkg :obj/config
   (:nicknames :config)
   (:use :cl :std :ast)
@@ -549,6 +536,20 @@
    :create-column
    :db-config
    :*database-collection-type*))
+
+(defpkg :obj/graph
+  (:nicknames :graph)
+  (:use :cl :std :obj/id :ast :std/readtable)
+  (:import-from :obj/db :get-val)
+  (:export 
+   :vertex :edge :graph :make-edge :make-graph
+   :nodes :edges :add-node :add-edge
+   :weighted-edge :directed-edge :undirected-edge :directed-graph
+   :edge-value :edge-weight :node-edges
+   :edgex
+   :edge-out
+   :edge-in
+   :class-graph))
 
 (defpkg :obj/tree
   (:nicknames :tree)

@@ -35,7 +35,10 @@
 (defvar *org-graph-nodes* nil)
 (defvar *org-graph-edges* nil)
 
-(defclass org-graph (directed-graph) ())
+(defclass org-graph (directed-graph) ()
+  (:default-initargs 
+   :nodes (make-array 0 :element-type 'node :adjustable t)
+   :edges (make-array 0 :element-type 'edge :adjustable t)))
 
 (defmethod read-ast ((fmt (eql :org-graph)) stream)
   "Read an ORG-GRAPH specification from STREAM."
@@ -249,9 +252,9 @@ expansion. See EXPAND-FILES.")
      (let ((stack))
        (flet ((.push (a b)
                 (pushnew
-                 (make-instance 'org-graph-implicit-edge 
+                 (make-instance 'org-graph-implicit-edge
                    :type :child 
-                   :in (id a) :out (id b)
+                   :in (or (id a) (id x)) :out (or (id b) (id x))
                    :timestamp (time:now)
                    :point (or (idx a) (idx b)))
                  edges
@@ -282,37 +285,37 @@ expansion. See EXPAND-FILES.")
 		 :opts (default-rdb-opts))
    *org-graph-schema*))
 
-(defvar *org-graph-db* (make-db :rdb :path *org-graph-db-directory*))
+(defvar *org-graph-db* (make-org-graph-db))
 
 (defun close-org-graph-db ()
   (when (db-open-p *org-graph-db*)
-    (shutdown-db *org-graph-db*)))
+    (shutdown-db *org-graph-db* :wait t)
+    (close-db *org-graph-db*)))
 
 (defun init-org-graph-db ()
   (ensure-directories-exist
    (make-pathname :directory (butlast (pathname-directory *org-graph-db-directory*)))
    :verbose t)
-  (with-db (db :open (not (db-open-p *org-graph-db*)) :close nil :db *org-graph-db*)
-    (create-columns db)
-    (insert-org-files)
-    (insert-org-nodes)
-    (insert-org-edges)
-    (log:info! "created org-graph-db" *org-graph-db* *org-graph-db-directory* *org-graph-schema*)))
+  (open-org-graph-db)
+  (make-thread 'insert-org-files)
+  (make-thread 'insert-org-nodes)
+  (make-thread 'insert-org-edges)
+  (log:info! "created org-graph-db" *org-graph-db* *org-graph-db-directory* *org-graph-schema*))
 
 (defun open-org-graph-db ()
   (unless *org-graph* (init-org-graph))
-  (unless (probe-file *org-graph-db-directory*)
-    (init-org-graph-db))
   (if (and *org-graph-db* (db-open-p *org-graph-db*))
       *org-graph-db*
       (progn
-	(rdb:load-opts *org-graph-db*)
+        (setq *org-graph-db* (make-org-graph-db))
+        (push-opts *org-graph-db*)
 	(open-columns* *org-graph-db*))))
 
 (defun destroy-org-graph-db ()
   (unless (db-closed-p *org-graph-db*)
-    (close-db *org-graph-db*)
-    (log:info! "destroyed org-graph-db at ~A" *org-graph-db-directory*)))
+    (close-db *org-graph-db*))
+  (destroy-db *org-graph-db*)
+  (log:info! "destroyed org-graph-db at ~A" *org-graph-db-directory*))
 
 (defun og-get (key &optional (from "node"))
   (get-val *org-graph-db* key :data-type 'string :column from))
@@ -323,18 +326,29 @@ expansion. See EXPAND-FILES.")
     (loop while iter-valid-p
 	  collect (cons (handler-case (octet-vector-to-uuid key)
 			  (simple-type-error () (sb-ext:octets-to-string key)))
-			(sb-ext:octets-to-string val))
+                        (when (zerop (mod (length val) 16))
+                          (loop for i from 0 below (length val) by 16
+                                collect (octet-vector-to-uuid (subseq val i (+ i 16))))))
 	  do (progn next))))
 
 (defun insert-org-files ()
   (log:info! "inserting org files")
-  (mapcar 
-   (lambda (n) (insert-key *org-graph-db* (uuid-octets* (id n)) (path n) :column "file"))
-   (nodes *org-graph*)))
+  (mapc
+   (lambda (n) (insert-key *org-graph-db* 
+                           (namestring (path n))
+                           (apply 'concatenate 'vector
+                                  (mapcar 'uuid-to-octet-vector
+                                          (flatten
+                                           (map 'list (lambda (x) 
+                                                        (when-let ((i (id x)))
+                                                          (make-uuid-from-string i)))
+                                                (ast n)))))
+                           :column "file"))
+   *org-graph-files*))
 
 (defun insert-org-nodes ()
   (log:info! "inserting org nodes")
-  (dolist (id (mapcar 'id (nodes *org-graph*)))
+  (dolist (id (mapcar 'id *org-graph-nodes*))
     (insert-key *org-graph-db*
                 (uuid-octets* id)
                 ;; TODO 2024-12-30: 
@@ -343,32 +357,11 @@ expansion. See EXPAND-FILES.")
 
 (defun insert-org-edges ()
   (log:info! "inserting org edges")
-  (dolist (e (edges *org-graph*))
+  (dolist (e *org-graph-edges*)
     (insert-key *org-graph-db*
                 (uuid-octets* (edge-in e)) 
                 (uuid-octets* (edge-out e))
                 :column "edge")))
-
-;;; Files
-(defun org-graph-file-search (path &rest ids)
-  "Return a list of org headings corresponding to IDS in PATH. If no IDS are
-provided then all are returned."
-  ;; first get an org-document and list of headings
-  (let* ((doc (org-parse :document path))
-	 (headings (ast doc))
-	 (ret)
-         (ids-p (when ids t)))
-    ;; map over IDs, searching for matches
-    (loop for h across headings
-	  if (typep h 'org-heading)
-	  do
-	     (when-let ((id (id h)))
-               (if ids-p
-                   (when-let ((found (find (value id) ids :test 'equal)))
-		     (removef ids found :test 'equal)
-                     (push h ret))
-                   (push h ret)))
-	  finally (return ret))))
 
 ;;; Serde
 (defmethod serialize ((self org-graph) format &key stream)

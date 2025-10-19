@@ -244,14 +244,18 @@ in-memory objects."))
            (slot-boundp instance slot-name))
       (slot-value instance slot-name)))
 
-(defgeneric get-val (object element &key &allow-other-keys)
+(defgeneric get-val (object element &key)
   (:documentation "Returns the value in a object based on the supplied element name and possible
 type hints.")
-  (:method (object element &key data-type)
+  (:method (object element &rest args &key data-type default test key start end from-end &allow-other-keys)
     (when object
       (typecase object
         (hash-table
-         (gethash element object))
+         (gethash element object default))
+        (array
+         (if (or test key start end from-end)
+             (apply 'find element object args)
+             (aref object element)))
         (standard-object
          (slot-val object element))
         (t
@@ -270,9 +274,14 @@ type hints.")
 (defgeneric (setf get-val) (new-value object element &key &allow-other-keys)
   (:documentation "Set the value in a object based on the supplied element name and possible type
 hints.")
-  (:method (new-value object element &key data-type)
+  (:method (new-value object element &rest args &key default data-type test key start end from-end &allow-other-keys)
     (typecase (or data-type object)
-      (hash-table (setf (gethash element object) new-value))
+      (hash-table (setf (gethash element object default) new-value))
+      (array
+       (if (or test key start end from-end)
+           (let ((n (apply 'position element object args)))
+             (setf (aref object n) new-value))
+           (setf (aref object element) new-value)))
       (standard-object (setf (slot-value object element) new-value))
       (t
        (if data-type
@@ -293,7 +302,11 @@ hints.")
   (:method (elt (obj hash-table))
     (gethash elt obj)))
 
-(defgeneric (setf get-value) (new elt obj))
+(defgeneric (setf get-value) (new elt obj)
+  (:method (new elt (obj sequence))
+    (setf (elt obj elt) new))
+  (:method (new elt (obj hash-table))
+    (setf (gethash elt obj) new)))
 
 (defgeneric put-kv (self kv)
   (:documentation "Insert a KeyVal object."))

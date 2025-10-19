@@ -143,7 +143,17 @@ function NAME and be skipped for (setf NAME)."
 (defgeneric copy-object (self)
   (:documentation "Return a copy of object SELF.")
   (:method ((self standard-object))
-    (shallow-copy-object self)))
+    (shallow-copy-object self))
+  (:method ((self hash-table))
+    (std/hash:copy-hash self))
+  (:method ((self list))
+    (copy-list self))
+  (:method ((self array))
+    (std/array:copy-array self))
+  (:method ((self symbol))
+    (copy-symbol self))
+  (:method ((self structure-object))
+    (copy-structure self)))
 
 (defun list-indirect-class-methods (class)
   "List all indirect methods of CLASS."

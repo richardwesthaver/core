@@ -1,3 +1,8 @@
+;;; rdb.lisp --- RocksDB Low-level Structures
+
+;; 
+
+;;; Code:
 (in-package :rdb)
 
 ;;; rdb-opts
@@ -484,7 +489,7 @@ internal sap slots are initialized."
                   :db sap
                   :message "Database is already open")
           sap)
-        (setf sap (open-db-raw name (sap opts))))))
+        (setf sap (open-db-raw name (or (sap opts) (push-sap* )))))
 
 (defmethod db-prop ((self rdb) (propname string))
   (unless-null-db () self

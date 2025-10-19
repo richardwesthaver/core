@@ -45,21 +45,6 @@ that a vertex always carries an ID slot."))
   ((weight :initform 1d0 :initarg :weight :accessor weight-of)))
 
 ;;; Hashing
-(defun copy-hash (hash &optional test comb)
-  "Return a copy of HASH.
-Optional argument TEST specifies a new equality test to use for the
-copy.  Second optional argument COMB specifies a function to use to
-combine the values of elements of HASH which collide in the copy due
-to a new equality test specified with TEST."
-  (let ((comb (when comb (fdefinition comb)))
-        (copy (make-hash-table :test (or test (hash-table-test hash)))))
-    (maphash (lambda (k v) (setf (gethash k copy)
-                            (if (and (gethash k copy) comb)
-                                (funcall comb (gethash k copy) v)
-                                v)))
-             hash)
-    copy))
-
 (defun node-hash-equal (hash1 hash2)
   "Test node hashes HASH1 and HASH2 for equality."
   (set-equal (hash-table-alist hash1)
@@ -154,23 +139,26 @@ Delete and return the old edges of NODE in GRAPH."))
           :accessor nodes
           :initarg :nodes)
    (edges :initform (make-hash-table :test 'edge-equalp)
-          :type hash-table
+          :type (or (vector edge) hash-table)
           :accessor edges
           :initarg :edges))
   (:documentation "generic graph object."))
 
 (defmethod copy-graph ((graph graph))
-  (make-instance (type-of graph) :nodes (copy-hash (nodes graph)) :edges (copy-hash (edges graph))))
+  (make-instance (type-of graph) :nodes (copy-object (nodes graph)) :edges (copy-object (edges graph))))
+
+(defmethod copy-object ((graph graph))
+  (copy-graph graph))
 
 (defmethod subgraph ((graph graph) nodes)
-  (make-instance (type-of graph) :nodes nodes :edges (copy-hash (edges graph))))
+  (make-instance (type-of graph) :nodes nodes :edges (copy-object (edges graph))))
 
 (defmethod has-edge-p ((graph graph) edge)
-  (multiple-value-bind (value included) (gethash edge (edges graph))
+  (multiple-value-bind (value included) (get-val (edges graph) edge)
     (declare (ignorable value)) included))
 
 (defmethod has-node-p ((graph graph) node)
-  (multiple-value-bind (value included) (gethash node (nodes graph))
+  (multiple-value-bind (value included) (get-val (nodes graph) node)
     (declare (ignorable value)) included))
 
 (defmethod delete-node ((graph graph) node)
@@ -180,19 +168,19 @@ Delete and return the old edges of NODE in GRAPH."))
 
 (defmethod delete-edge ((graph graph) edge)
   (prog1 (edge-value graph edge)
-    (mapc (lambda (node) (setf (gethash node (nodes graph))
-                          (remove edge (gethash node (nodes graph))
+    (mapc (lambda (node) (setf (get-val (nodes graph) node)
+                          (remove edge (get-val (nodes graph) node)
                                   :test 'edge-equalp)))
           edge)
     (remhash edge (edges graph))))
 
 (defmethod node-edges ((graph graph) node)
-  (multiple-value-bind (edges included) (gethash node (nodes graph))
+  (multiple-value-bind (edges included) (get-val (nodes graph) node)
     (assert included (node graph) "~S doesn't include ~S" graph node)
     edges))
 
 (defmethod (setf node-edges) (new (graph graph) node)
-  (prog1 (mapc {delete-edge graph} (gethash node (nodes graph)))
+  (prog1 (mapc {delete-edge graph} (get-val (nodes graph) node))
     (mapc {add-edge graph} new)))
 
 (defmethod add-edge ((graph graph) (edge list) &optional value)
@@ -202,10 +190,10 @@ Delete and return the old edges of NODE in GRAPH."))
           (pushnew (case (type-of graph)
                      (graph (remove-duplicates edge))
                      (directed-graph edge))
-                   (gethash node (nodes graph))
+                   (get-val (nodes graph) node)
                    :test 'edge-equalp))
         edge)
-  (setf (gethash edge (edges graph)) value)
+  (setf (get-val (edges graph) edge) value)
   edge)
 
 (defmethod add-edge ((graph graph) (edge edge) &optional value)
@@ -216,24 +204,20 @@ Delete and return the old edges of NODE in GRAPH."))
       (pushnew (case (type-of graph)
                  (graph (remove-duplicates edge))
                  (directed-graph edge))
-               (gethash n (nodes graph))
+               (get-val (nodes graph) n)
                :test 'edge-equalp)))
-  (setf (gethash (name edge) (edges graph)) (or value edge))
+  (setf (get-val (edges graph) (name edge)) (or value edge))
   edge)
 
 (defmethod add-edge ((graph graph) (edge id) &optional value)
   (add-edge graph (id edge) (or value edge)))
 
 (defmethod edge-value ((graph graph) edge)
-  (etypecase (edges graph)
-    (hash-table
-     (name (gethash edge (edges graph))))
-    (sequence
-     (name (find edge (edges graph) :key 'id:id)))))
+  (name (get-val (edges graph) edge :key 'id)))
 
 (defmethod (setf edge-value) (new (graph graph) edge)
   (etypecase (edges graph)
-    (hash-table (setf (gethash edge (edges graph)) new))
+    (hash-table (setf (get-val (edges graph) edge) new))
     (sequence (setf (nth (position edge (edges graph) :key 'id:id) (edges graph)) new))))
 
 (defgeneric merge-nodes (graph node1 node2 &key new)
@@ -286,7 +270,7 @@ EDGE2 will be combined."))
           "Nodes must be numbers, symbols, strings or keywords, not ~S.~%Invalid node:~S"
           (type-of node) node)
   (unless (and (hash-table-p (nodes graph)) (has-node-p graph node))
-    (setf (gethash node (nodes graph)) nil)
+    (setf (get-val (nodes graph) node) nil)
     node))
 
 (defmethod add-node ((graph graph) (node id))
@@ -334,43 +318,43 @@ implementation of A*.")
               (f (make-hash-table)))
     (when (equal a b) (return-from shortest-path nil))
     (labels ((reconstruct-path (current)
-               (destructuring-bind (node . edge) (gethash current from)
+               (destructuring-bind (node . edge) (get-val from current)
                  (cons edge (unless (member a edge) (reconstruct-path node))))))
-      (setf (gethash a g) 0
-            (gethash a f) (funcall heuristic a)
-            (gethash a open) t)
+      (setf (get-val g a) 0
+            (get-val f a) (funcall heuristic a)
+            (get-val open a) t)
 
-      (sb-concurrency:enqueue (gethash a f) fringe)
+      (sb-concurrency:enqueue (get-val f a) fringe)
 
       (do ((current (sb-concurrency:dequeue fringe) (sb-concurrency:dequeue fringe)))
           ((zerop (hash-table-count open))
-           (multiple-value-bind (value present-p) (gethash b f)
+           (multiple-value-bind (value present-p) (get-val f b)
              (when present-p
                (values (nreverse (reconstruct-path b)) value))))
 
         (when (eql current b)
           (return-from shortest-path
             (values (nreverse (reconstruct-path current))
-                    (gethash current f))))
+                    (get-val f current))))
 
         (remhash current open)
-        (setf (gethash current closed) t)
+        (setf (get-val closed current) t)
 
         (mapc (lambda (edge)
                 (let ((weight (or (edge-value graph edge) 1)))
                   (mapc (lambda (next)
-                          (unless (gethash next closed)
-                            (setf (gethash next open) t)
-                            (let ((tentative (+ (gethash current g) weight)))
+                          (unless (get-val closed next)
+                            (setf (get-val open next) t)
+                            (let ((tentative (+ (get-val g current) weight)))
                               (multiple-value-bind (value present-p)
-                                  (gethash next g)
+                                  (get-val g next)
                                 (when (or (not present-p)
                                           (< tentative value))
-                                  (setf (gethash next from) (cons current edge)
-                                        (gethash next g) tentative
-                                        (gethash next f)
+                                  (setf (get-val from next) (cons current edge)
+                                        (get-val g next) tentative
+                                        (get-val f next)
                                         (+ tentative (funcall heuristic next)))
-                                  (sb-concurrency:enqueue fringe (gethash next f)))))))
+                                  (sb-concurrency:enqueue fringe (get-val f next)))))))
                         (etypecase graph
                           (directed-graph (cdr (member current edge)))
                           (graph (remove current edge))))))
@@ -413,10 +397,10 @@ implementation of A*.")
                            (cdr (assoc b merged-nodes))))
              (setq merged-nodes
                    (remove-if (lambda (it) (eql (car it) b)) merged-nodes))))
-      (loop :while (> (length (nodes g)) 1) :do
+      (loop while (> (length (nodes g)) 1) do
          (let* ((a (list (random (nodes g))))
                 (rest (remove (car a) (nodes g))))
-           (loop :while rest :do
+           (loop while rest do
               ;; grow A by adding the node most tightly connected to A
               (let ((new (car (sort rest #'> :key {connection-weight a}))))
                 (setf rest (remove new rest))

@@ -12,7 +12,15 @@
 ;; class, something like IO-STREAM.
 
 ;;; Code:
-(defpackage :io/proto
+(pkg:defpkg :io-int
+  (:use :cl :std)
+  (:export :*io-packages*))
+
+(in-package :io-int)
+(defparameter *io-packages* nil)
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *io-packages* :test 'string=)))
+
+(defpkg :io/proto
   (:use :cl :std/condition)
   (:export :io-error
    :output :input
@@ -26,7 +34,7 @@
    :snapshot
    :sync))
 
-(defpackage :io/stream
+(defpkg :io/stream
   (:use :cl :io/proto :sb-gray :std/meta)
   (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
   (:export :io-stream-error :io-stream :make-bound-stream
@@ -40,7 +48,7 @@
    :dec-fill-buffer
    :needs-to-fill-buffer-p))
 
-(defpackage :io/static
+(defpkg :io/static
   (:use :cl :std :sb-alien :io/stream)
   (:shadow :constantp)
   (:export
@@ -62,7 +70,7 @@
    :with-static-streams
    :reset-static-stream))
 
-(defpackage :io/fast
+(defpkg :io/fast
   (:use :cl :std :io/proto :io/stream)
   (:import-from :io/static :make-static-vector)
   (:import-from :std/macs :once-only)
@@ -85,12 +93,12 @@
    #:read128-le #:readu128-le #:read128-be #:readu128-be
    #:fast-output-stream #:fast-input-stream))
 
-(defpackage :io/uring
+(defpkg :io/uring
   (:use :cl :uring :io/proto)
   (:import-from :sb-alien :addr)
   (:import-from :std :deferror :eval-always))
 
-(defpackage :io/chunky
+(defpkg :io/chunky
   (:nicknames :chunky)
   (:use :cl :std/stream :io/proto :io/stream :sb-gray :std/meta)
   (:import-from :std :deferror :when-let :define-constant :eval-always)
@@ -121,14 +129,14 @@
    #:*accept-bogus-eols*
    #:*treat-semicolon-as-continuation*))
 
-(defpackage :io/socket
+(defpkg :io/socket
   (:use :cl :io/proto :sb-alien)
   (:import-from :std :deferror :eval-always :timeval)
   (:export :io-socket-error 
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
    :sockopt-peercred))
 
-(defpackage :io/flate
+(defpkg :io/flate
   (:use :cl :io/proto :sb-gray)
   (:import-from :std :deferror :eval-always)
   (:import-from :std/stream :wrapped-stream)
@@ -148,7 +156,7 @@
    :compress-octet
    :with-compressor))
 
-(defpackage :io/zstd
+(defpkg :io/zstd
   (:use :cl :std :io/proto :io/flate :sb-alien)
   (:import-from :zstd :zstd-createdstream :zstd-createcstream
    :zstd-dstream :zstd-cstream :zstd-freecstream :zstd-freedstream
@@ -165,7 +173,7 @@
    :with-zstd-output :with-zstd-input
    :with-zstd-buffer :with-zstd-stream))
 
-(defpackage :io/deflate
+(defpkg :io/deflate
   (:use :cl :std :io/proto :io/flate)
   (:import-from :std :deferror :eval-always)
   (:import-from :sb-gray :stream-force-output :stream-finish-output
@@ -187,7 +195,7 @@
    :zlib-compressor
    :gzip-compressor))
 
-(defpackage :io/kbd
+(defpkg :io/kbd
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error
    :load-kbd-libs
@@ -201,7 +209,7 @@
    :kbd-code-name
    :get-keyboards))
 
-(defpackage io/xsubseq
+(defpkg io/xsubseq
   (:use :cl)
   (:import-from :sb-cltl2 :variable-information)
   (:import-from :std/type :octet-vector)
@@ -214,7 +222,7 @@
    :coerce-to-sequence :coerce-to-string
    :with-xsubseqs))
 
-(defpackage io/smart-buffer
+(defpkg :io/smart-buffer
   (:use :cl :io/xsubseq)
   (:export :*default-memory-limit*
    :*default-disk-limit* :smart-buffer

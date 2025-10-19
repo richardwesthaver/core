@@ -709,9 +709,8 @@ either side, and deletes both sides of a link."
 'C-u' don't create a backlink to the target."
   (interactive)
   (let ((target (org-graph-edge-search-function)))
-    (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
-                                                   (get-file-buffer (car (cdr target))))
-                                       nil no-backlink)))
+    (org-graph-edge-insert-link-marker target nil no-backlink)))
+                                       
 
 ;;;###autoload
 (defun org-graph-node (&optional arg invisible-ok level)
@@ -797,25 +796,22 @@ either side, and deletes both sides of a link."
   "Insert a backlink edge from the target to current heading."
   (interactive)
   (let ((target (org-graph-edge-search-function)))
-    (org-graph-edge-insert-link-marker (set-marker (make-marker) (car (cdddr target))
-                                                   (get-file-buffer (car (cdr target)))) 
-                                       t)))
+    (org-graph-edge-insert-link-marker target t)))
+                                       
 
 (defun org-graph-edge-child (&optional no-parent)
   "Insert a child edge from the target to the current heading."
   (interactive "P")
   (let ((target (org-graph-edge-search-function)))
-    (org-graph-edge-insert-child-marker (set-marker (make-marker) (car (cdddr target))
-                                                    (get-file-buffer (car (cdr target)))) 
-                                        no-parent)))
+    (org-graph-edge-insert-child-marker target no-parent)))
+                                        
 
 (defun org-graph-edge-parent (&optional no-child)
   "Insert a parent edge to the current heading from the target."
   (interactive "P")
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-parent-marker
-     (set-marker (make-marker) (car (cdddr target))
-		 (get-file-buffer (car (cdr target))))
+     target
      no-child)))
 
 (defun org-graph-edge-web (&optional link desc)

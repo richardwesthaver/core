@@ -139,7 +139,8 @@
    :org-id
    :org-keywords
    :org-title
-   :org-tags))
+   :org-tags
+   :org-file-headings))
 
 (defpackage :organ/graph
   (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri :url :equiv)

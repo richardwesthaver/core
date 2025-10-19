@@ -5,6 +5,21 @@
 ;;; Code:
 (in-package :std/hash)
 
+(defun copy-hash (hash &optional test comb)
+  "Return a copy of HASH.
+Optional argument TEST specifies a new equality test to use for the
+copy.  Second optional argument COMB specifies a function to use to
+combine the values of elements of HASH which collide in the copy due
+to a new equality test specified with TEST."
+  (let ((comb (when comb (fdefinition comb)))
+        (copy (make-hash-table :test (or test (hash-table-test hash)))))
+    (maphash (lambda (k v) (setf (gethash k copy)
+                            (if (and (gethash k copy) comb)
+                                (funcall comb (gethash k copy) v)
+                                v)))
+             hash)
+    copy))
+
 (defgeneric table (self))
 
 (definline maphash-keys (function table)

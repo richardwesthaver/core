@@ -553,6 +553,7 @@ extractor."
                collect (cf-to-field (cf c)))))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)) self)
+
 (defmethod open-transaction-db ((self rdb-database) &key path (opts (rocksdb-transactiondb-options-create)) optimistic)
   (setf (transaction-db self) (open-transaction-db (db self) :opts opts :path path :optimistic optimistic)))
 
