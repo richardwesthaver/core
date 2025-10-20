@@ -3,7 +3,8 @@
 ;;; Code:
 (in-package :cli/repl)
 
-(defconfig repl-config (ast) ())
+(defconfig repl-config (ast) 
+  (sysinit userinit package))
 
 ;;; TOPLEVEL
 (defun make-toplevel-init (&key (package *package*) 

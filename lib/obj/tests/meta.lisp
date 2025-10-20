@@ -46,7 +46,7 @@
   1)
 
 (deftest filtered-function ()
-  (is= 362880 (fac 10)))
+  (is= 3628800 (fac 10)))
 
 ;;;; Stored
 (defsclass person ()

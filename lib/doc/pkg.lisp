@@ -52,8 +52,6 @@
   (:export
    :definition-specifier
    :find-definitions
-   ;; err
-   :doc-error 
    ;; methods
    :doc-file :doc-files :doc-symbol :doc-symbols :doc-package :doc-packages :doc-dist
    :doc-pathnames :doc-directories :doc-parse :doc-system :doc-dependencies :doc-dependents

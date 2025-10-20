@@ -36,7 +36,6 @@
 (deftest doc-symbol ()
   (is-doc-typep symbol-documentation (symbol-documentation 'car)))
 
-
 (deftest doc-package ()
   (is-doc-typep package-documentation (package-documentation)))
 

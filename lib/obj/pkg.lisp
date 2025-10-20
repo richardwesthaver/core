@@ -12,6 +12,193 @@
 
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *obj-packages* :test 'string=)))
 
+;;; Meta Packages
+(defpkg :obj/meta/stealth
+  (:nicknames :meta/stealth :stealth)
+  (:use :cl :std :sb-mop)
+  (:export
+   #:add-mixin
+   #:define-stealth-mixin))
+
+(defpkg :obj/meta/filtered
+  (:nicknames :meta/filtered :filtered)
+  (:use :cl :std :sb-mop)
+  (:export
+   :define-filtered-function :filtered :filtered-function :filtered-method
+   :generic-function-filter-expression :generic-function-filters :method-filter :simple-filtered-function))
+
+(defpkg :obj/meta/sealed
+  (:nicknames :meta/sealed :sealed)
+  (:use :cl :std)
+  (:import-from :sb-pcl :eql-specializer :intern-eql-specializer
+   :eql-specializer-object :funcallable-standard-class)
+  (:import-from :sb-mop :class-finalized-p :finalize-inheritance
+   :class-precedence-list :class-direct-superclasses :specializer :method-specializers
+   :generic-function-argument-precedence-order :generic-function-name :generic-function-methods :class-direct-subclasses
+   :class-prototype)
+  (:export
+   :ensure-specializer
+   :specializer-type
+   :specializer-prototype
+   :specializer-direct-superspecializers
+   :specializer-intersectionp
+   :specializer-subsetp
+   :domain
+   :ensure-domain
+   :method-domain
+   :domain-specializers
+   :domain-arity
+   :domain-equal
+   :domain-intersectionp
+   :domain-subsetp
+
+   :metaobject-sealable-p
+   :class-sealable-p
+   :generic-function-sealable-p
+   :method-sealable-p
+   :specializer-sealable-p
+
+   :metaobject-sealed-p
+   :class-sealed-p
+   :generic-function-sealed-p
+   :method-sealed-p
+   :specializer-sealed-p
+
+   :seal-class
+   :seal-generic-function
+   :seal-method
+   :seal-domain
+   :seal-specializer
+
+   :method-properties
+   :validate-method-property
+
+   :static-call-signature
+   :static-call-signature-types
+   :static-call-signature-prototypes
+
+   :sealed-domains
+   :compute-static-call-signatures
+   :externalizable-object-p
+   :sealable-class
+   :sealable-generic-function
+   :sealable-standard-generic-function
+   :potentially-sealable-method
+   :potentially-sealable-standard-method))
+
+(defpkg :obj/meta/fast
+  (:nicknames :meta/fast :fast)
+  (:use :cl :std :obj/meta/sealed)
+  (:import-from :sb-int :gensymify)
+  (:import-from :sb-walker :macroexpand-all)
+  (:export :fast-generic-function :fast-method :inlineable :.lambda.))
+
+(defpkg :obj/meta/lazy
+  (:nicknames :meta/lazy :lazy)
+  (:use :cl :std))
+
+(defpkg :obj/meta/overloaded
+  (:nicknames :meta/overloaded :overloaded)
+  (:use :cl :std))
+
+(defpkg :obj/meta/stored
+  (:nicknames :meta/stored :stored)
+  (:use :cl :std :sb-mop)
+  (:export
+   :stored-class :initialize-stored-class
+   :stored-slot
+   :stored
+   :stored-object
+   :stored-collection
+   :oid
+   :cid
+   :spec
+   :stored-p
+   :indexed-slot-names
+   :indexed-slot-defs
+   :stored-slot-definition
+   :indexed-slot-definition
+   :derived-slot-triggers
+   :derived-fn
+   :get-slot-def-index
+   :add-slot-def-index
+   :clear-slot-def-index
+   :indexed-slot-base
+   :indexed-slot-indices
+   :get-store-schemas
+   :get-class-indexing
+   :get-cache-style
+   :has-class-schema-p
+   :find-slot-defs-by-type
+   :migrate-class-index-p
+   :class-indexing-enabled-p
+   :defsclass
+   :get-class-schema
+   :drop-instance
+   :register-instance
+   :cache-instance
+   :get-cached-instance
+   :uncache-instance
+   :flush-instance-cache
+   :stored-slot-makunbound
+   :stored-slot-boundp
+   :stored-slot-writer
+   :stored-slot-reader
+   :get-store
+   :read-oid
+   :write-oid
+   :stored-slot-names
+   :all-stored-slot-names
+   :all-single-valued-slot-defs
+   :cached-slot-definition
+   :cached-direct-slot-definition
+   :transient-slot-definition
+   :cached-slot-names
+   :transient-p
+   :transient-slot-names
+   :database-allocation-p
+   :slot-definition-allocation
+   :association-slot-base
+   :association-type
+   :association-effective-slot-definition
+   :association-slot-definition
+   :association-slot-indices
+   :foreign-classname
+   :foreign-slotname
+   :foreign-class
+   :association-end-p
+   :association-slot-defs
+   :association-slot-names
+   :association-end-slot-names
+   :get-association-slot-index
+   :add-association-slot-index
+   :remove-association-slot-index
+   :set-valued-slot-definition
+   :set-valued-direct-slot-definition
+   :set-valued-effective-slot-definition))
+
+(defpkg :obj/meta/dynamic
+  (:nicknames :meta/dynamic :dynamic)
+  (:use :cl :std :std/macs)
+  (:export :dset :dref :dynamic-class
+   :slot-dlet :slot-dvar :slot-dvar*))
+
+(defpkg :obj/meta/mix
+  (:use #:cl #:std)
+  (:export 
+   #:mixin-class #:mixin-object #:mixin-classes
+   #:ensure-mix #:delete-from-mix #:mix
+   #:replace-class #:replace-class-in-mixin
+   #:set-mix-rule #:*class-ordering-rules*
+   #:%find-class
+   #:ensure-mixin
+   #:make-mix-list
+   #:mix-list))
+
+(defpkg :obj/meta/method
+  (:use :cl :std))
+
+;;; Objective Packages
 (defpkg :obj/id
   (:nicknames :id)
   (:use :cl :std)
@@ -335,7 +522,7 @@
 
 (defpkg :obj/schema
   (:nicknames :schema)
-  (:use :cl :std :config :build :meta :stored :sb-mop :id :ast :dynamic :plan)
+  (:use :cl :std :config :build :stored :sb-mop :id :ast :dynamic :plan)
   (:export
    #:schema
    #:object-schema
@@ -674,7 +861,7 @@
 
 (defpkg :obj/store
   (:nicknames :store)
-  (:use :cl :std :stored :sb-mop :meta :btree :id :db :schema :config :cache)
+  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache)
   (:export
    #:store
    #:next-oid

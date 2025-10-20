@@ -116,6 +116,7 @@ function NAME and be skipped for (setf NAME)."
 (defverb call (self &rest args)
   (:documentation "Call SELF with ARGS."))
 
+;;; *-OBJECT
 (defgeneric run-object (self &key &allow-other-keys)
   (:documentation "Explicitly run the object SELF."))
 
@@ -155,6 +156,48 @@ function NAME and be skipped for (setf NAME)."
   (:method ((self structure-object))
     (copy-structure self)))
 
+;;; Struct Constructor
+(defgeneric struct-constructor (class)
+  (:documentation "Called to get the constructor name for a struct class. Users
+                  should overload this when they want to serialize
+                  non-standard constructor names. The default constructor
+                  make-xxx will work by default. The argument is an eql style
+                  type: i.e. of type (eql 'my-struct)"))
+
+(defmethod struct-constructor ((class t))
+  (symbol-function (intern (concatenate 'string "MAKE-" (symbol-name class))
+                           (symbol-package class))))
+
+;;; Helpers
+(defun class-equalp (c1 c2)
+  (when (symbolp c1) (setf c1 (find-class c1)))
+  (when (symbolp c2) (setf c2 (find-class c2)))
+  (eq c1 c2))
+
+(defun type-specifier-and (&rest type-specifiers)
+  (let ((relevant (remove t type-specifiers)))
+    (cond ((null relevant) t)
+          ((null (cdr relevant)) (first relevant))
+          (t `(and ,@relevant)))))
+
+(defun type-specifier-or (&rest type-specifiers)
+  (let ((relevant (remove nil type-specifiers)))
+    (cond ((null relevant) nil)
+          ((null (cdr relevant)) (first relevant))
+          (t `(or ,@relevant)))))
+
+(defun type-specifier-not (type-specifier)
+  (cond ((eql type-specifier t) nil)
+        ((eql type-specifier nil) t)
+        (t `(not ,type-specifier))))
+
+(defparameter *standard-metaobjects*
+  (list (find-class 'standard-object)
+        (find-class 'standard-class)
+        (find-class 'standard-generic-function)
+        (find-class 'standard-method)
+        (find-class 'built-in-class)))
+
 (defun list-indirect-class-methods (class)
   "List all indirect methods of CLASS."
   (remove-duplicates (mapcan #'specializer-direct-generic-functions (compute-class-precedence-list class))))
@@ -191,6 +234,52 @@ non-nil, also include indirect (parent) methods."
               with cn = (symb (slot-definition-name c))
               when (eq sn cn)
                 collect c))))
+
+(defun find-class-for-direct-slot (class def)
+  (let ((list (sb-mop:compute-class-precedence-list class)))
+    (labels ((rec (super)
+               (if (null super)
+                   nil
+                   (aif (find-direct-slot-def-by-name super (sb-mop:slot-definition-name def))
+                        (class-name super)
+                        (rec (pop list))))))
+      (rec class))))
+
+(defun find-direct-slot-def-by-name (class slot-name)
+  (loop for slot-def in (sb-mop:class-direct-slots class)
+        when (eq (sb-mop:slot-definition-name slot-def) slot-name)
+        do (return slot-def)))
+
+(defun find-slot-def-by-name (class slot-name)
+  (loop for slot-def in (sb-mop:class-slots class)
+        when (eq (sb-mop:slot-definition-name slot-def) slot-name)
+        do (return slot-def)))
+
+(defgeneric find-slot-defs-by-type (class type &optional by-subtype))
+(defgeneric find-slot-def-names-by-type (class type &optional by-subtype))
+
+(defun slots-and-values (o)
+  "List of slot names followed by values for object"
+  (loop for sd in (sb-mop:compute-slots (class-of o))
+        for slot-name = (sb-mop:slot-definition-name sd)
+        with ret = ()
+        do
+        (when (and (slot-boundp o slot-name)
+                   (eq :instance
+                       (sb-mop:slot-definition-allocation sd)))
+          (push (slot-value o slot-name) ret)
+          (push slot-name ret))
+        finally (return ret)))
+
+(defun struct-slots-and-values (object)
+  "List of slot names followed by values for structure object"
+  (let ((result nil)
+        (slots 
+          (mapcar #'sb-mop:slot-definition-name (sb-mop:class-slots (class-of object)))))
+    (loop for slot in slots do
+         (push (slot-value object slot) result)
+         (push slot result))
+    result))
 
 (definline slot-values (obj &optional (slots (mapcar 'slot-definition-name (class-slots (class-of obj)))))
   "Returns a list containing slot-values of OBJ corresponding to symbols in the list SLOTS.

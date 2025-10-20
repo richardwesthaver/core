@@ -919,7 +919,16 @@
    :copy :assign
    :assignee :started-p
    :verbp :init
-   :reset :state))
+   :reset :state
+   :class-equalp
+   :*standard-metaobjects*
+   :find-slot-def-by-name
+   :find-direct-slot-def-by-name
+   :find-slot-defs-by-type
+   :find-slot-def-names-by-type
+   :struct-slots-and-values
+   :slots-and-values
+   :struct-constructor))
 
 (defpkg :std/seq
   (:use :cl)

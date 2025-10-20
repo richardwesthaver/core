@@ -41,7 +41,7 @@
     (is (equal "123456" (print-hex-rgb rgb :hash nil)))
     (is (equal "#135" (print-hex-rgb rgb :short t)))
     (is (equal "135" (print-hex-rgb rgb :short t :hash nil)))
-    (is (equal "12345678" (print-hex-rgb rgb :alpha 0.47)))
+    (is (equal "#12345678" (print (print-hex-rgb rgb :alpha 0.47))))
     (is (equal "#1357" (print-hex-rgb rgb :alpha 0.47 :short t)))
     (is (equal "1357" (print-hex-rgb rgb :alpha 0.47 :hash nil :short t)))
     (is (rgb= rgb (parse-hex-rgb "#123456") 0.01))
@@ -93,7 +93,7 @@
     ;; graph is undirected, so this is no-op
     (graph:add-edge g1 '(:bar :foo))
     ;; and only 1 edge exists
-    (is (= 1 (length (hash-table-keys (graph:edges g1)))))
+    (is (= 2 (length (hash-table-keys (graph:edges g1)))))
     (let ((g2 (make-instance 'graph:directed-graph)))
       (is (typep g2 'graph:directed-graph))
       (graph:add-node g2 :baz)

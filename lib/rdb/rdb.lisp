@@ -489,7 +489,7 @@ internal sap slots are initialized."
                   :db sap
                   :message "Database is already open")
           sap)
-        (setf sap (open-db-raw name (or (sap opts) (push-sap* )))))
+        (setf sap (open-db-raw name (or (sap opts) (push-sap* )))))))
 
 (defmethod db-prop ((self rdb) (propname string))
   (unless-null-db () self

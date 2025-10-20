@@ -4,7 +4,6 @@
   :depends-on (:std :organ :parse :obj :rdb :log)
   :components ((:file "pkg")
                (:file "proto")
-               (:file "err")
                (:file "symbol")
                (:file "file")
                (:file "package")
