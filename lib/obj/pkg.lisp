@@ -199,6 +199,11 @@
   (:use :cl :std))
 
 ;;; Objective Packages
+(defpkg :obj/val
+  (:nicknames :val)
+  (:use :cl :std)
+  (:export :get-val :get-value))
+
 (defpkg :obj/id
   (:nicknames :id)
   (:use :cl :std)
@@ -613,8 +618,6 @@
   (:nicknames :db)
   (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :plan :config)
   (:export
-   :get-val
-   :set-val
    :ensure-transaction
    :dbs
    :get-db

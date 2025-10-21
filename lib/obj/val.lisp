@@ -1,0 +1,79 @@
+;;; val.lisp --- Simple Value API
+
+;; GET-VAL and friends
+
+;;; Code:
+(in-package :obj/val)
+
+(defun slot-val (instance slot-name)
+  (if (and instance
+           (slot-boundp instance slot-name))
+      (slot-value instance slot-name)))
+
+(deferror get-val-error (invalid-argument) ()
+  (:auto t)
+  (:default-initargs :reason "GET-VAL does not handle this type of object. Specialize your own method."))
+
+(defgeneric get-val (object element &key)
+  (:documentation "Returns the value in a object based on the supplied element name and possible
+type hints.")
+  (:method (object element &rest args &key data-type default test key start end from-end &allow-other-keys)
+    (when object
+      (typecase object
+        (hash-table
+         (gethash element object default))
+        (array
+         (if (or test key start end from-end)
+             (apply 'find element object args)
+             (aref object element)))
+        (standard-object
+         (slot-val object element))
+        (t
+         (if data-type
+             (cond 
+               ((equal 'alist data-type)
+                (second (assoc element object :test #'equal)))
+               ((equal 'plist data-type)
+                (get object element))
+               (t
+                (get-val-error object)
+             (if (listp object)
+                 (second (assoc element object :test #'equal))
+                 (get-val-error object))))))))))
+
+(defgeneric (setf get-val) (new-value object element &key &allow-other-keys)
+  (:documentation "Set the value in a object based on the supplied element name and possible type
+hints.")
+  (:method (new-value object element &rest args &key default data-type test key start end from-end &allow-other-keys)
+    (typecase (or data-type object)
+      (hash-table (setf (gethash element object default) new-value))
+      (array
+       (if (or test key start end from-end)
+           (let ((n (apply 'position element object args)))
+             (setf (aref object n) new-value))
+           (setf (aref object element) new-value)))
+      (standard-object (setf (slot-value object element) new-value))
+      (t
+       (if data-type
+           (cond ((equal 'alist data-type)
+                  (replace object (list (list element new-value))))
+                 ((equal 'plist data-type)
+                  ;;TODO: Implement this properly.
+                  (get object element ))
+                 (t
+                  (get-val-error object)))
+           (if (listp object)
+               (replace object (list (list element new-value)))
+               (get-val-error object)))))))
+
+(defgeneric get-value (elt obj)
+  (:method (elt (obj sequence))
+    (find elt obj :test 'equal))
+  (:method (elt (obj hash-table))
+    (gethash elt obj)))
+
+(defgeneric (setf get-value) (new elt obj)
+  (:method (new elt (obj sequence))
+    (setf (elt obj elt) new))
+  (:method (new elt (obj hash-table))
+    (setf (gethash elt obj) new)))

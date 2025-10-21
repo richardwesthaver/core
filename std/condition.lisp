@@ -64,13 +64,13 @@
          (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
        (when ',fun
          (cond 
-           ((or (member 'simple-error ',%ancestors)
-                (member 'simple-condition ',%ancestors))
-            (def-simple-error-reporter ,name))
            ((or
              (member 'invalid-item ',%ancestors)
              (member 'invalid-argument ',%ancestors))
             (def-invalid-item-reporter ,name))
+           ((or (member 'simple-error ',%ancestors)
+                (member 'simple-condition ',%ancestors))
+            (def-simple-error-reporter ,name))
            ((stringp ',fun)
             (define-error-reporter ,name ',fun))
            (t (define-error-reporter ,name)))))))

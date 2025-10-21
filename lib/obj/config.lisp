@@ -55,4 +55,6 @@ on the slot name."
 ;;; TODO 2024-10-27: Simple Config AST
 (defmacro define-simple-config (name prototype &body accessors)
   "Define a SIMPLE-CONFIG consisting of a MAKE-* function, a predicate, a type
-definition, and an optional list of accessors.")
+definition, and an optional list of accessors."
+  `(progn
+     (defconfig ,name (ast) ,prototype)))

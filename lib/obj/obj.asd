@@ -15,7 +15,7 @@
                  (:file "dynamic")
                  (:file "mix")
                  (:file "method")))
-
+   (:file "val")
    (:file "id")
    (:module "uri"
     :components ((:file "punycode")
