@@ -99,25 +99,26 @@ need to be shifted back as per ARRAY-SHIFT."
   (declare (type (or vector list) seq))
   (etypecase seq
     (cons
-     (let ((ret (make-array n element-type element-type)))
+     (let ((ret (make-array n :element-type element-type)))
        (loop for i of-type fixnum from 0 below n
              for lst = seq then (cdr lst)
              do (setf (aref ret i) (car lst))
              finally (return ret))))
     (vector
-     (let ((ret (make-array n element-type element-type)))
+     (let ((ret (make-array n :element-type element-type)))
        (loop for i of-type fixnum from 0 below n
              for ele across seq	    
              do (setf (aref ret i) ele)
              finally (return ret))))))
 
-(defmacro make-array-allocator (allocator-name type init &optional doc)
+(defmacro make-array-allocator (name type init &optional doc)
+  "Define an allocator function with NAME which produces a vector with
+element-type TYPE and default value INIT."
   `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (definline ,allocator-name (size &optional (initial-element ,init))
+     (definline ,name (size &optional (initial-element ,init))
        ,@(unless (null doc)
 	   `(,doc))
-       (make-array size
-		   :element-type ,type :initial-element initial-element))))
+       (make-array size :element-type ,type :initial-element initial-element))))
 
 (definline vector-foldl (func vec)
   (declare (type vector))
@@ -202,5 +203,6 @@ need to be shifted back as per ARRAY-SHIFT."
   (cond
     ((not i) def)
     ((not d) i)
-    (t (assert (if openp (<= (- (1+ d)) i d) (< (- (1+ d)) i d)) nil 'std/condition:invalid-argument)
+    (t (assert (if openp (<= (- (1+ d)) i d) (< (- (1+ d)) i d)) nil 'std/condition:invalid-argument 
+               :reason "invalid index" :item i)
        (if (< i 0) (if (and openp (= i (- (1+ d)))) -1 (mod i d)) i))))

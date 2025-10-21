@@ -634,7 +634,6 @@
    :db-closed-p
    :db-open-p
    :*db*
-   :get-value
    :insert-key
    :insert-kv
    :make-kv

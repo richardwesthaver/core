@@ -38,7 +38,7 @@ type hints.")
                (t
                 (get-val-error object)
              (if (listp object)
-                 (second (assoc element object :test #'equal))
+                 (apply 'find element object args)
                  (get-val-error object))))))))))
 
 (defgeneric (setf get-val) (new-value object element &key &allow-other-keys)
@@ -56,14 +56,13 @@ hints.")
       (t
        (if data-type
            (cond ((equal 'alist data-type)
-                  (replace object (list (list element new-value))))
+                  (setf (assoc-value object element) new-value))
                  ((equal 'plist data-type)
-                  ;;TODO: Implement this properly.
-                  (get object element ))
+                  (setf (getf object element) new-value))
                  (t
                   (get-val-error object)))
            (if (listp object)
-               (replace object (list (list element new-value)))
+               (apply 'nsubstitute new-value element object args)
                (get-val-error object)))))))
 
 (defgeneric get-value (elt obj)

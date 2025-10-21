@@ -14,7 +14,7 @@
 (in-package :std/num)
 
 (defun encode-leb128 (i)
-  "Encode an integer of arbitrary length into a leb128 unsigned-8 buffer"
+  "Encode an integer of arbitrary length into a leb128 octet-buffer"
   (let ((more t) (curr) (in 0) (int (make-array
                                      4
                                      :fill-pointer 0

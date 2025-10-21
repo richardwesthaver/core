@@ -14,8 +14,7 @@
   (the index-store-vector (make-array (length contents) :element-type 'index-type
                                                         :initial-contents contents)))
 
-(declaim (inline simple-array-type))
-(defun simple-array-type (sym &optional (size '*))
+(definline simple-array-type (sym &optional (size '*))
   "Create the list representing simple-array with type SYM."
   `(simple-array ,sym (,size)))
 

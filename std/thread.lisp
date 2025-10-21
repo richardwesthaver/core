@@ -1388,6 +1388,11 @@ before returning."
      (unwind-protect (progn ,@body)
        ,@(when shutdown `((end-thread-pool ,@(when (eql shutdown :wait) '(:wait t))))))))
 
+(defmacro with-channel (sym &body body)
+  (let ((bind (if (consp sym) `(,(car sym) (make-channel :capacity ,(second sym)))
+                  `(,sym (make-channel)))))
+    `(let (,bind) ,@body)))
+
 ;;; Pipes
 ;; From Shinmera's VERBOSE
 (defstruct sync-message

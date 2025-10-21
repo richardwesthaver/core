@@ -1118,6 +1118,7 @@
    :with-temp-pool
    :call-with-temp-pool
    :with-thread-pool
+   :with-channel
    :receive-indexed
    :with-submit-indexed
    :submit-with-cancel
