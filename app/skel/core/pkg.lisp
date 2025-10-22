@@ -46,8 +46,7 @@
    :*default-skelfile* :*default-skel-user* 
    :*default-skel-vc-kind*
    :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
-   :*skel-init-hook*)
-  (:export
+   :*skel-hook*
    #:*skel-stash*
    #:*skel-store*
    #:*skel-cache*
@@ -73,8 +72,8 @@
 
 (defpackage :skel/core/obj
   (:use :cl :std :obj
-   :skel/core/proto :skel/core/int
-   :skel/core/header :vc :log :config :id :ast)
+        :skel/core/proto :skel/core/int
+        :skel/core/header :vc :log :config :id :ast)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-stash :sk-cache :sk-data :sk-user :sk-version
    :sk-store :sk-push :sk-pull :sk-include
@@ -97,16 +96,16 @@
 
 (defpackage :skel/core/db
   (:use :cl :std :skel/core/int :skel/core/schema
-   :skel/core/obj :skel/core/proto :db
-   :store :schema :rdb
-   :id :stored :log :config :build)
+        :skel/core/obj :skel/core/proto :db
+        :store :schema :rdb
+        :id :stored :log :config :build)
   (:export :skel-db 
    :skel-db-path))
 
 (defpackage :skel/core/log
   (:use :cl :std :log :skel/core/db :skel/core/int 
-   :skel/core/obj :skel/core/proto :db
-   :store :schema :rdb :id :stored :log :config :build :skel/core/schema)
+        :skel/core/obj :skel/core/proto :db
+        :store :schema :rdb :id :stored :log :config :build :skel/core/schema)
   (:export
    :sk-log-schema
    :*skel-log-schema*

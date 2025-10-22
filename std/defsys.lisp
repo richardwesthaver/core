@@ -16,11 +16,16 @@
 ;; - LISP ONLY -- multi-lang systems are handled by skel
 ;; notes:
 
+;; operations we care about:
+;; - read
+;; - load
+;; - compile
+
 ;;; Code:
 (in-package :std/defsys)
 (in-readtable :std)
 
-(defvar *system-definitions* nil
+(defvar *sysdefs* nil
   "A list of files containing DEFSYS forms.")
 
 (defvar *system-cache-directory* #l"user:stash;cache;lisp;sys;")
@@ -48,7 +53,7 @@
 (defwarning simple-system-warning (simple-warning system-warning) () (:auto t))
 (deferror simple-system-error (simple-error system-condition) () (:auto t))
 
-(define-condition sysdef-error (system-error file-error)
+(deferror defsys-load-error (system-error file-error)
   ((system-name :initarg :name :accessor error-system-name))
   (:report (lambda (c s) 
              (format s "System ~A not found after loading file ~A" 
@@ -107,17 +112,240 @@ directory recursively.")
   (:documentation "A FILE-COMPONENT which matches a SB-GROVEL constants file.")
   (:keyword :grovel))
 
+;;; Compile Failures
+(define-condition compile-condition (condition)
+  ((context-format
+    :initform nil :reader compile-condition-context-format :initarg :context-format)
+   (context-arguments
+    :initform nil :reader compile-condition-context-arguments :initarg :context-arguments)
+   (description
+    :initform nil :reader compile-condition-description :initarg :description))
+  (:report (lambda (c s)
+             (format s "~@<~A~@[ while ~?~]~@:>"
+                     (or (compile-condition-description c) (type-of c))
+                     (compile-condition-context-format c)
+                     (compile-condition-context-arguments c)))))
+(define-condition compile-file-error (compile-condition error) ())
+(define-condition compile-warned-warning (compile-condition warning) ())
+(define-condition compile-warned-error (compile-condition error) ())
+(define-condition compile-failed-warning (compile-condition warning) ())
+(define-condition compile-failed-error (compile-condition error) ())
+
+(declaim ((member :warn :error :ignore) *compile-file-failure-action* *compile-file-warning-action*))
+(defvar *compile-file-failure-action* :error)
+(defvar *compile-file-warning-action* :warn)
+
+(defun check-lisp-compile-warnings (warnings-p failure-p
+                                    &optional context-format context-arguments)
+  "Given the warnings or failures as resulted from COMPILE-FILE or checking deferred warnings,
+raise an error or warning as appropriate"
+  (when failure-p
+    (case *compile-file-failure-action*
+      (:warn (warn 'compile-failed-warning
+                   :description "Lisp compilation failed"
+                   :context-format context-format
+                   :context-arguments context-arguments))
+      (:error (error 'compile-failed-error
+                     :description "Lisp compilation failed"
+                     :context-format context-format
+                     :context-arguments context-arguments))
+      (:ignore nil)))
+  (when warnings-p
+    (case *compile-file-warning-action*
+      (:warn (warn 'compile-warned-warning
+                   :description "Lisp compilation had style-warnings"
+                   :context-format context-format
+                   :context-arguments context-arguments))
+      (:error (error 'compile-warned-error
+                     :description "Lisp compilation had style-warnings"
+                     :context-format context-format
+                     :context-arguments context-arguments))
+      (:ignore nil))))
+
+(defun check-lisp-compile-results (output warnings-p failure-p
+                                   &optional context-format context-arguments)
+  "Given the results of COMPILE-FILE, raise an error or warning as appropriate"
+  (unless output
+    (error 'compile-file-error :context-format context-format :context-arguments context-arguments))
+  (check-lisp-compile-warnings warnings-p failure-p context-format context-arguments))
+
+;;; Safe IO Syntax
+;; TODO 2025-10-22: refactor?
+(defvar *standard-readtable* (with-standard-io-syntax *readtable*)
+  "The standard readtable, implementing the syntax specified by the CLHS.
+It must never be modified, though only good implementations will even enforce that.")
+
+(defmacro with-safe-io-syntax ((&optional (package :std)) &body body)
+  "Establish safe CL reader options around the evaluation of BODY"
+  `(call-with-safe-io-syntax #'(lambda () (let ((*package* (find-package ,package))) ,@body))))
+
+(defun call-with-safe-io-syntax (thunk &key (package :std))
+  (with-standard-io-syntax
+    (let ((*package* (find-package package))
+          (*read-default-float-format* 'double-float)
+          (*print-readably* nil)
+          (*read-eval* nil))
+      (funcall thunk))))
+
+(defun safe-read-from-string (string &key (package :cl) (eof-error-p t) eof-value (start 0) end preserve-whitespace)
+  "Read from STRING using a safe syntax, as per WITH-SAFE-IO-SYNTAX"
+  (with-safe-io-syntax (package)
+    (read-from-string string eof-error-p eof-value :start start :end end :preserve-whitespace preserve-whitespace)))
+
+;;; Deferred Warnings
+(defun reify-undefined-warning (warning)
+  ;; Extracting undefined-warnings from the compilation-unit
+  ;; To be passed through the above reify/unreify link, it must be a "simple-sexp"
+  (list*
+   (sb-c::undefined-warning-kind warning)
+   (sb-c::undefined-warning-name warning)
+   (sb-c::undefined-warning-count warning)
+   (mapcar
+    #'(lambda (frob)
+        ;; the lexenv slot can be ignored for reporting purposes
+        `(:enclosing-source ,(sb-c::compiler-error-context-enclosing-source frob)
+          :source ,(sb-c::compiler-error-context-source frob)
+          :original-source ,(sb-c::compiler-error-context-original-source frob)
+          :context ,(sb-c::compiler-error-context-context frob)
+          :file-name ,(sb-c::compiler-error-context-file-name frob) ; a pathname
+          :file-position ,(sb-c::compiler-error-context-file-position frob) ; an integer
+          :original-source-path ,(sb-c::compiler-error-context-original-source-path frob)))
+    (sb-c::undefined-warning-warnings warning))))
+
+(defun reify-deferred-warnings ()
+  "return a portable S-expression, portably readable and writeable in any Common Lisp implementation
+using READ within a WITH-SAFE-IO-SYNTAX, that represents the warnings currently deferred by
+WITH-COMPILATION-UNIT. One of three functions required for deferred-warnings support in ASDF."
+  (when sb-c::*in-compilation-unit*
+    ;; Try to send nothing through the pipe if nothing needs to be accumulated
+    `(,@(when sb-c::*undefined-warnings*
+          `((sb-c::*undefined-warnings*
+             ,@(mapcar #'reify-undefined-warning sb-c::*undefined-warnings*))))
+      ,@(loop :for what :in '(sb-c::*aborted-compilation-unit-count*
+                              sb-c::*compiler-error-count*
+                              sb-c::*compiler-warning-count*
+                              sb-c::*compiler-style-warning-count*
+                              sb-c::*compiler-note-count*)
+              :for value = (symbol-value what)
+              :when (plusp value)
+              :collect `(,what . ,value)))))
+
+(defun unreify-deferred-warnings (reified-deferred-warnings)
+  "given a S-expression created by REIFY-DEFERRED-WARNINGS, reinstantiate the corresponding
+deferred warnings as to be handled at the end of the current WITH-COMPILATION-UNIT.
+Handle any warning that has been resolved already,
+such as an undefined function that has been defined since.
+One of three functions required for deferred-warnings support in ASDF."
+  (declare (ignorable reified-deferred-warnings))
+  (dolist (item reified-deferred-warnings)
+    ;; Each item is (symbol . adjustment) where the adjustment depends on the symbol.
+    ;; For *undefined-warnings*, the adjustment is a list of initargs.
+    ;; For everything else, it's an integer.
+    (destructuring-bind (symbol . adjustment) item
+      (case symbol
+        ((sb-c::*undefined-warnings*)
+         (setf sb-c::*undefined-warnings*
+               (nconc (mapcan
+                       #'(lambda (stuff)
+                           (destructuring-bind (kind name count . rest) stuff
+                             (unless (case kind (:function (fboundp name)))
+                               (list
+                                (sb-c::make-undefined-warning
+                                 :name name
+                                 :kind kind
+                                 :count count
+                                 :warnings
+                                 (mapcar #'(lambda (x)
+                                             (apply #'sb-c::make-compiler-error-context x))
+                                         rest))))))
+                       adjustment)
+                      sb-c::*undefined-warnings*)))
+        (otherwise
+         (set symbol (+ (symbol-value symbol) adjustment)))))))
+
+(defun reset-deferred-warnings ()
+  "Reset the set of deferred warnings to be handled at the end of the current
+WITH-COMPILATION-UNIT."
+  (when sb-c::*in-compilation-unit*
+    (setf sb-c::*undefined-warnings* nil
+          sb-c::*aborted-compilation-unit-count* 0
+          sb-c::*compiler-error-count* 0
+          sb-c::*compiler-warning-count* 0
+          sb-c::*compiler-style-warning-count* 0
+          sb-c::*compiler-note-count* 0)))
+
+(defun save-deferred-warnings (warnings-file)
+  "Save forward reference conditions so they may be issued at a latter time,
+possibly in a different process."
+  (with-open-file (s warnings-file :direction :output :if-exists :supersede
+                                   :element-type 'character
+                                   :external-format :utf-8)
+    (with-safe-io-syntax (:cl)
+      (let ((*read-eval* t))
+        (write (reify-deferred-warnings) :stream s :pretty t :readably t)))
+    (terpri s)))
+
+(defun check-deferred-warnings (files &optional context-format context-arguments)
+  "Given a list of FILES containing deferred warnings saved by CALL-WITH-SAVED-DEFERRED-WARNINGS,
+re-intern and raise any warnings that are still meaningful."
+  (let ((file-errors nil)
+        (failure-p nil)
+        (warnings-p nil))
+    (handler-bind
+        ((warning #'(lambda (c)
+                      (setf warnings-p t)
+                      (unless (typep c 'style-warning)
+                        (setf failure-p t)))))
+      (with-compilation-unit (:override t)
+        (reset-deferred-warnings)
+        (dolist (file files)
+          (unreify-deferred-warnings
+           (handler-case
+               (with-safe-io-syntax ()
+                 (let ((*read-eval* t))
+                   (read-lisp-file file)))
+             (error (c)
+               ;;(delete-file-if-exists file) ;; deleting forces rebuild but prevents debugging
+               (push c file-errors)
+               nil))))))
+    (dolist (error file-errors) (error error))
+    (check-lisp-compile-warnings
+     (or failure-p warnings-p) failure-p context-format context-arguments)))
+
+(defun call-with-saved-deferred-warnings (thunk warnings-file &key source-namestring)
+  "If WARNINGS-FILE is not nil, record the deferred-warnings around a call to THUNK
+and save those warnings to the given file for latter use,
+possibly in a different process. Otherwise just call THUNK."
+  (declare (ignorable source-namestring))
+  (if warnings-file
+      (with-compilation-unit (:override t #+sbcl :source-namestring #+sbcl source-namestring)
+        (unwind-protect
+             (let (#+sbcl (sb-c::*undefined-warnings* nil))
+               (multiple-value-prog1
+                   (funcall thunk)
+                 (save-deferred-warnings warnings-file)))
+          (reset-deferred-warnings)))
+      (funcall thunk)))
+
+(defmacro with-saved-deferred-warnings ((warnings-file &key source-namestring) &body body)
+  "Trivial syntax for CALL-WITH-SAVED-DEFERRED-WARNINGS"
+  `(call-with-saved-deferred-warnings
+    #'(lambda () ,@body) ,warnings-file :source-namestring ,source-namestring))
+
 ;;; Component Ops
 ;; Functions which are performed directly on instances of the COMPONENT class
 ;; in the calling thread.
-(defun read-component (comp &key)
-  "Read a component from its PATH slot.")
+(defun read-component (comp &key (external-format :default))
+  "Read a component from its PATH slot."
+  (std:read-lisp-file (path comp) :external-format external-format))
 
-(defun compile-component (comp &key)
-  "Compile a component.")
+(defun compile-component (comp &rest args)
+  "Compile a component."
+  (apply 'compile-file (path comp) args))
 
-(defun load-component (comp &key)
-  "Load a component.")
+(defun load-component (comp &rest args)
+  "Load a component."
+  (apply 'load (path comp) args))
 
 (defun find-component (path self)
   "Find a component designated by PATH which is either an atom designating a
@@ -525,12 +753,12 @@ the following extensions:
 
 (defun compile-sys (path)
   "Compile a SYS file at PATH. Default extension is FSYS."
-  (compile-file path :output-file (make-pathname :name (pathname-name path) :type "fsys") 
+  (compile-file path :output-file (make-pathname :name (pathname-name path) :type "fsys")
                      :entry-points '(load-sys)))
 
 (defun load-sys (path &optional name)
   "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD
-internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
+internally. On success the path is added to the *SYSDEFS* list."
   (let ((path (truename path)))
     (with-system-session
       (let ((*default-pathname-defaults* (pathname (directory-namestring path))))
@@ -543,16 +771,16 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
                 (load p)))
           (setf (gethash path (system-session-file-cache *system-session*))
                 (sb-ext:get-time-of-day))
-          (pushnew (namestring (truename path)) *system-definitions* :test 'equal)
+          (pushnew (namestring (truename path)) *sysdefs* :test 'equal)
           (if name 
-              (find-system name :default (lambda () (error 'sysdef-error :name name :pathname path)))
+              (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
               t))))))
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key)
   (setq *system-table* (make-hash-table)
         *system-session* nil
-        *system-definitions* nil
+        *sysdefs* nil
         *module* nil
         *module-stack* nil
         *module-table* (make-hash-table :test 'equal))
@@ -582,21 +810,21 @@ internally. On success the path is added to the *SYSTEM-DEFINITIONS* list."
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
-  (:method ((self system) &key force)
-    (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self))
-    ;; TODO 2025-08-31: 
-    (asdf:load-system (name self) :verbose nil :force force))
-  (:method ((self symbol) &key)
+  (:method ((self system) &key force verbose)
+    (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self)))
+    ;; TODO 2025-08-31:
+    (asdf:load-system (name self) :verbose verbose :force force))
+  (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
-      (load-system sys))))
+      (apply 'load-system sys args))))
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
   (:method ((self system) &key)
     (mumble "Compiling system ~A" (name self))
-    (asdf:compile-system self :verbose nil))
-  (:method ((self symbol) &key)
-    (compile-system (find-system self :default :error))))
+    (asdf:compile-system (name self) :verbose nil))
+  (:method ((self symbol) &rest args)
+    (apply 'compile-system (find-system self :default :error) args)))
 
 (defgeneric save-system (self &key &allow-other-keys)
   (:documentation "Save the system SELF."))

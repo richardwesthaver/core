@@ -133,6 +133,7 @@
    :interact-line
    :*error-message*
    :*handlers*
+   :*uninteresting-conditions*
    :std-error :error-message
    :define-error-reporter
    :deferror
@@ -1330,6 +1331,7 @@
    :std/print :std/meta :std/path :std/sym
    :std/macs)
   (:import-from :std/named-readtables :in-readtable)
+  (:import-from :std/file :read-lisp-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
   (:shadow :load-system :compile-system :find-system :system)

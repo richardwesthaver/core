@@ -2,12 +2,34 @@
 
 ;;; Code:
 (in-package :std/condition)
-(declaim (optimize (speed 3)))
+
+(defun sb-grovel-unknown-constant-condition-p (c)
+  "Detect SB-GROVEL unknown-constant conditions on older versions of SBCL"
+  (and (typep c 'sb-int:simple-style-warning)
+       (stringp (simple-condition-format-control c))
+       (string= "Couldn't grovel for " (subseq (simple-condition-format-control c) 0 20))))
+
 ;;; Vars
 (defvar *error-message* "An error occured"
   "The default error message used in STD-ERROR conditions.")
 (defvar *handlers* nil
   "A list of condition handlers - often useful in asynchronous contexts.")
+
+(defvar *uninteresting-conditions*
+   '(sb-c::simple-compiler-note
+     "&OPTIONAL and &KEY found in the same lambda list: ~S"
+     sb-kernel:lexical-environment-too-complex
+     sb-kernel:undefined-alien-style-warning
+     sb-grovel-unknown-constant-condition ; defined above.
+     sb-ext:implicit-generic-function-warning ;; Controversial.
+     sb-int:package-at-variance
+     sb-kernel:uninteresting-redefinition
+     ;; BEWARE: the below four are controversial to include here.
+     sb-kernel:redefinition-with-defun
+     sb-kernel:redefinition-with-defgeneric
+     sb-kernel:redefinition-with-defmethod
+     sb-kernel:redefinition-with-defmacro)
+   "A suggested value to which to set or bind *uninteresting-conditions*.")
 
 ;;; Utils
 (defmacro nyi! (&optional comment)
