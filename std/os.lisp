@@ -156,7 +156,8 @@ arrange for FVAR to be closed after BODY."
 
 ;;; XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
-(defvar *xdg-user-dirs* 
+;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
+(defvar *xdg-dir-table*
   (let ((tbl (make-hash-table)))
     (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
           '((:desktop . "Desktop")
@@ -166,55 +167,45 @@ arrange for FVAR to be closed after BODY."
             (:documents . "Documents")
             (:music . "Music")
             (:pictures . "Pictures")
-            (:videos . "Videos")))
-    tbl))
-
-(defun xdg-user-dir (key)
-  (gethash key *xdg-user-dirs*))
-
-(defun (setf xdg-user-dir) (v k)
-  (let ((new (if (typep v 'std/path:absolute-pathname)
-                 v
-                 (merge-pathnames v "~/"))))
-    (setf (gethash k *xdg-user-dirs*) new)))
-
-(defun init-xdg-user-dirs ()
-  "Init *XDG-USER-DIRS* from environment."
-  (mapc
-   (lambda (k)
-     (std/macs:when-let ((e (sb-posix:getenv (concatenate 'string "XDG_" (substitute #\_ #\- (string k)) "DIR"))))
-       (setf (xdg-user-dir k) (pathname e))))
-   (std/hash:hash-table-keys *xdg-user-dirs*))
-  *xdg-user-dirs*)
-
-;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
-(defvar *xdg-base-dirs*
-  (let ((tbl (make-hash-table)))
-    (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
-          `((:data-home . ".data")
+            (:videos . "Videos")
+            (:data-home . ".data")
             (:config-home . ".config")
             (:state-home . ".local/state")
             (:data-dirs . (#p"/usr/local/share/" #p"/usr/share/"))
-            (:config-dirs . (#P"/etc/xdg"))
+            (:config-dirs . (#P"/etc/xdg/"))
             (:cache-home . ".cache")
             (:runtime-dir)))
     tbl))
 
-(defun xdg-base-dir (key) (gethash key *xdg-base-dirs*))
+(defun xdg-path-split (str)
+  "Split a colon-separated list of paths."
+  (mapcar (lambda (x) (pathname (directory-path x))) (ssplit ":" str :omit-nulls t)))
 
-(defun (setf xdg-base-dir) (v k)
-  (let ((new (if (typep v 'std/path:absolute-pathname)
-                 v
-                 (merge-pathnames v "~/"))))
-    (setf (gethash k *xdg-base-dirs*) new)))
+(defun xdg-dir (key)
+  "Like GETHASH, but second value only returns T when the value is a pathname or non-nil list."
+  (multiple-value-bind (v p) (gethash key *xdg-dir-table*)
+    (values v (and p (or (pathnamep v) (consp v))))))
 
-(defun init-xdg-base-dirs ()
-  "Init *XDG-BASE-DIRS* from environment."
-  (mapc
-   (lambda (k)
-     (std/macs:when-let ((e (sb-posix:getenv (concatenate 'string "XDG_" (substitute #\_ #\- (string k))))))
-       (setf (xdg-base-dir k) (pathname e))))
-   (std/hash:hash-table-keys *xdg-base-dirs*)))
+(defun (setf xdg-dir) (v k)
+  (setf (gethash k *xdg-dir-table*) v))
+
+(defun init-xdg-dirs ()
+  "Init *XDG-USER-DIRS* from environment."
+  (flet ((.xdg (x) 
+           (if-let ((y (or (sb-posix:getenv (format nil "XDG_~:@(~A~)" (substitute #\_ #\- (string x))))
+                           (sb-posix:getenv (format nil "XDG_~:@(~A~)DEV" (substitute #\_ #\- (string x)))))))
+             (case x
+               ((or :data-dirs :config-dirs) (xdg-path-split y))
+               (t (directory-path y)))
+             (multiple-value-bind (z p) (xdg-dir x)
+               (print p)
+               (if p z (probe-file (merge-homedir-pathnames z)))))))
+    (mapc
+     (lambda (k)
+       (when-let ((e (.xdg k)))
+         (setf (xdg-dir k) e)))
+     (hash-table-keys *xdg-dir-table*))
+    *xdg-dir-table*))
 
 ;;; user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
@@ -336,7 +327,7 @@ is wild or does not designate a directory."
     (let ((dp (sb-posix:opendir dir)))
       (labels ((one-iter ()
                  (let ((dir (sb-posix:readdir dp)))
-                   (unless (or (null dir) (null-alien dir))
+                   (unless (null-alien dir)
                      (let ((name (sb-posix:dirent-name dir)))
                        (cond
                          ((member name '("." "..") :test #'string=)
@@ -349,6 +340,7 @@ is wild or does not designate a directory."
                                 (make-pathname :name (subseq name 0 dotpos)
                                                :type (subseq name (1+ dotpos)))
                                 (make-pathname :name name))))))))))
+        (declare (dynamic-extent #'one-iter))
         (unwind-protect
              (let ((*default-pathname-defaults* dir))
                (setf (current-directory) dir)

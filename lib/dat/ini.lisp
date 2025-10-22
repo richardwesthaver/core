@@ -40,6 +40,13 @@
     (when (and c (ini-key-char-p c))
       c)))
 
+(defun ini-read-name (stream)
+  (with-output-to-string (s)
+    (loop for c = (peek-char nil stream nil nil)
+          while (and c (not (char= c #\])))
+          do (write-char (read-char stream) s))
+    s))
+
 (defun ini-read-key (stream)
   (with-output-to-string (s)
     (loop for c = (peek-char t stream nil nil)
@@ -55,7 +62,7 @@
 
 (defun ini-read-section (stream)
   (ini-read-char stream #\[ :skip-ws t)
-  (let ((ret (list (ini-read-key stream))))
+  (let ((ret (print (list (ini-read-name stream)))))
     (ini-read-char stream #\] :skip-ws t)
     (loop while (or (ini-read-comment stream) (ini-peek-key-char stream))
           do (push (ini-read-pair stream) ret))

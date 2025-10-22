@@ -1263,11 +1263,12 @@
    :*mumble-timestamp*))
 
 (defpkg :std/os
-  (:use :cl :sb-alien)
-  (:import-from :std/macs :with-gensyms :if-let)
+  (:use :cl :sb-alien :std/string)
+  (:import-from :std/macs :with-gensyms :if-let :when-let)
   (:import-from :std/prim :definline)
   (:import-from :std/file :probe-directory)
-  (:import-from :std/path :directory-path)
+  (:import-from :std/path :directory-path :merge-homedir-pathnames)
+  (:import-from :std/hash :hash-table-keys)
   (:import-from :sb-posix :tcgetattr :tcsetattr 
    :termios :termios-cc :termios-cflag :termios-iflag 
    :termios-oflag :termios-lflag)
@@ -1303,9 +1304,9 @@
    :+tcsadrain+
    :+opost+
    :current-user
-   :*xdg-user-dirs*
-   :xdg-user-dir
-   :xdg-base-dir
+   :*xdg-dir-table*
+   :xdg-dir
+   :init-xdg-dirs
    :termios
    :winsize
    :isatty
@@ -1313,9 +1314,6 @@
    :tcsetattr
    :tcgetattr*
    :tcsetattr*
-   :*xdg-base-dirs*
-   :init-xdg-user-dirs
-   :init-xdg-base-dirs
    :relative-pathname-p
    :absolute-pathname-p
    :unmerge-pathnames

@@ -14,9 +14,9 @@
 | skel-id     | 4611004031065916102                |
 | root        | ~/comp/core/                       |
 | tags        | (core lisp emacs c)                |
-| updated     | Mon Oct 20 20:31:08 2025 -0400     |
+| updated     | Tue Oct 21 19:13:03 2025 -0400     |
 | langs       | c elisp lisp org text              |
-| lines       | 152576 :λ 120877 :# 14046 :_ 17653 |
+| lines       | 152573 :λ 120876 :# 14046 :_ 17651 |
 |-------------+------------------------------------|
 
 #+END:
