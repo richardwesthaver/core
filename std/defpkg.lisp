@@ -21,7 +21,10 @@
    :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
    :with-package :define-lisp-package
    :defpackage* :*default-package* :*defpkg-hook* :package-symbols-except
-   :*default-package-file-name*))
+   :*default-package-file-name*
+   :test-package-p
+   :module-package-p
+   :internal-package-p))
 
 (in-package :std/defpkg)
 
@@ -798,4 +801,15 @@ package."
                     :key (lambda (x)
                            (if (consp x)
                                (string (second x))
-                               (string x))) :test #'string-equal)))
+                               (string x))) 
+                    :test #'string-equal)))
+
+;; helpers
+(defun internal-package-p (package)
+  (search "-INT" (package-name package) :from-end t))
+
+(defun module-package-p (package)
+  (find #\/ (package-name package)))
+
+(defun test-package-p (package)
+  (search "/TESTS" (package-name package) :from-end t))
