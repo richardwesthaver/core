@@ -4,15 +4,36 @@
 
 ;;; Commentary:
 
-;; Mostly modeled off of eschulte's GRAPH library - see also DAT/DOT
+;; Modeled off of eschulte's GRAPH library - see also DAT/DOT
 
 ;; ref: https://eschulte.github.io/graph/
 
 ;; Our goals are slightly different than the original library - we prioritize
-;; flexibility over speed or code size. To this end the base GRAPH class
-;; accepts NODE vectors in addition to hash-tables. We also make minimal
-;; assumptions about the underling node types - it is a blank class
-;; definition. Edges are a bit more complicated - they subclass ID which can be
+;; flexibility over speed or code size and generally prefer vectors to
+;; hash-tables. To this end, we support either collection type as the values
+;; of the NODES and EDGES slots of the GRAPH class. Mix and match - no
+;; problemo.
+
+;; Eschulte's graph library only supports symbols and integers as node values
+;; (keys must be EQUAL-safe), our implementation supports strings as well, and
+;; supports Eschulte's graph API. Note that the intended use-case here - when
+;; using simple objects as node values + hash-tables, is that you are
+;; supplying 'pointers' to objects which exist elsewhere - it is assumed that
+;; you are encoding as little 'information' into your graph directly and
+;; instead using it to perform complex calculations and transformations using
+;; the 'shape' which your graph's nodes and edges imply.
+
+;; Nowadays we prefer CLOS objects where possible. NODE is a class from them
+;; OBJ/AST module which has a single AST slot and serves as the basis for both
+;; the VERTEX and EDGE classes in this module. A VERTEX is a KV pair where
+;; K=ID and V=AST. The AST slot may be used as the EDGE-VALUE (property list,
+;; etc) of the EDGE class, which also includes IN and OUT slots. In Graphviz
+;; parlance the EDGE class is 'undirected' (--), the DIRECTED-EDGE class
+;; represents the 'directed' variant (->). Finally we supply a default
+;; WEIGHTED-EDGE which contains an additional WEIGHT slot.
+
+;; If you care about direction, use DIRECTED-GRAPH instead of GRAPH.
+
 
 ;;; Code:
 (in-package :obj/graph)
@@ -45,6 +66,8 @@ that a vertex always carries an ID slot."))
   ((weight :initform 1d0 :initarg :weight :accessor weight-of)))
 
 ;;; Hashing
+;; despite preferring vectors, we provide support for custom hashers for
+;; users. These functions support ESCHULTE's API only.
 (defun node-hash-equal (hash1 hash2)
   "Test node hashes HASH1 and HASH2 for equality."
   (set-equal (hash-table-alist hash1)
@@ -264,8 +287,6 @@ EDGE2 will be combined."))
   (length (node-edges graph node)))
 
 (defmethod add-node ((graph graph) node)
-  ;; NOTE: This is where our implementation breaks character from Eschulte's
-  ;; implementation. We currently accept strings in addition to numbers and symbols.
   (assert (or (numberp node) (symbolp node) (stringp node)) (node)
           "Nodes must be numbers, symbols, strings or keywords, not ~S.~%Invalid node:~S"
           (type-of node) node)
