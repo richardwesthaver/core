@@ -20,9 +20,11 @@
 
 (defconfig core-app-config (service-config)
   ((logger :initarg :logger :type logger-config)
-   (db :initarg :db :type db-config)))
+   (db :initarg :db :type db-config)
+   (thread-pool :initarg :thread-pool :type thread-pool)
+   (hook :initarg :hook :type hook)))
 
-(pkg:defpkg :core/user 
+(pkg:defpkg :core/user
   (:nicknames :user)
   (:use :std-lisp :core)
   (:import-from :tree-sitter :load-tree-sitter :load-tree-sitter-alien :load-tree-sitter-c)

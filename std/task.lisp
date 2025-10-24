@@ -66,6 +66,11 @@ Tasks are _currently_ funcallable kernels.."))
 
 (defmethod taskp ((self task)) t)
 
+(defun make-task (kernel &optional state)
+  (let ((task (make-instance 'task :state state)))
+    (set-funcallable-instance-function task kernel)
+    task))
+
 (defun run-task (worker task &optional (priority *task-priority*))
   "Run TASK in WORKER, which must be a task-worker."
   (push-priority-queue (tasks worker) task priority)

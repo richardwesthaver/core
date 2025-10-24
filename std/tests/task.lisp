@@ -18,7 +18,14 @@
 (deftest simple-task ()
   "Test simple tasks in sync/async contexts.")
     
+;; TODO 2025-10-23: 
 (deftest job ()
   "Basic JOB functionality."
-  (let ((j1 (make-instance 'job)))
-    (is (jobp j1))))
+  (let ((j1 (apply 'make-job (collecting (do ((i 0 (incf i))) ((= i 10)) (collect (make-task (constantly t) t)))))))
+    (is (jobp j1))
+    (is (taskp (aref (tasks j1) 0)))
+    (is (vectorp (tasks j1)))
+    (is= (length (tasks j1)) 10)
+    (with-temp-pool (4 :worker-class 'task-worker)
+      (run-job (aref (workers*) 0) j1))))
+    

@@ -6,20 +6,6 @@
 (in-package :std/stream)
 (declaim (optimize speed))
 
-(definline read-until-end (stream)
-  "Read input from STREAM until EOF and return a string."
-  (with-output-to-string (s)
-    (loop for c = (read-char stream nil)
-	  until (not c)
-	  do (write-char c s))))
-
-(definline read-lisp-until-end (stream)
-  "Read input from STREAM until EOF and return a form."
-  (with-gensyms (eof)
-    (loop for c = (read stream nil eof)
-	  until (eql c eof)
-	  collect c)))
-
 (definline copy-stream (input output &key (element-type (stream-element-type input))
                     (buffer-size 4096)
                     (buffer (make-array buffer-size :element-type element-type))

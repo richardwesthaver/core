@@ -241,3 +241,43 @@ Example:
        (labels ((,fname (x) (or (gethash x ,htbl) (setf (gethash x ,htbl) (gensym (symbol-name x))))))
          (macrolet ((,mname (x) `(,', fname ',x)))
            ,@body)))))
+
+;;; Safe IO Syntax
+(defvar *standard-readtable* (with-standard-io-syntax *readtable*)
+  "The standard readtable, implementing the syntax specified by the CLHS.
+It must never be modified, though only good implementations will even enforce that.")
+
+(defmacro with-safe-io-syntax ((&optional (package :std)) &body body)
+  "Establish safe CL reader options around the evaluation of BODY"
+  `(call-with-safe-io-syntax #'(lambda () (let ((*package* (find-package ,package))) ,@body))))
+
+(defun call-with-safe-io-syntax (thunk &key (package :std))
+  (with-standard-io-syntax
+    (let ((*package* (find-package package))
+          (*read-default-float-format* 'double-float)
+          (*print-readably* nil)
+          (*read-eval* nil))
+      (funcall thunk))))
+
+(defun safe-read-from-string (string &key (package :cl) (eof-error-p t) eof-value (start 0) end preserve-whitespace)
+  "Read from STRING using a safe syntax, as per WITH-SAFE-IO-SYNTAX"
+  (with-safe-io-syntax (package)
+    (read-from-string string eof-error-p eof-value :start start :end end :preserve-whitespace preserve-whitespace)))
+
+(definline read-until-end (stream)
+  "Read input from STREAM until EOF and return a string."
+  (with-output-to-string (s)
+    (loop for c = (read-char stream nil)
+          until (not c)
+          do (write-char c s))))
+
+(definline read-lisp-until-end (stream)
+  "Read input from STREAM until EOF and return a form."
+  (with-gensyms (eof)
+    (loop for c = (read stream nil eof)
+          until (eql c eof)
+          collect c)))
+
+(defun read-lisp-file (file &key if-does-not-exist (external-format :default))
+  (with-open-file (f file :if-does-not-exist if-does-not-exist :external-format external-format)
+    (read-lisp-until-end f)))

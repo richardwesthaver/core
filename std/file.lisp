@@ -26,10 +26,6 @@
   (with-output-to-string (s)
     (write-file-into-stream path s :if-does-not-exist if-does-not-exist :external-format external-format)))
 
-(defun read-lisp-file (file &key if-does-not-exist (external-format :default))
-  (with-open-file (f file :if-does-not-exist if-does-not-exist :external-format external-format)
-    (std/stream:read-lisp-until-end f)))
-
 (defun file-read-forms (file)
   (declare (sb-kernel:pathname-designator file))
   (std/macs:awhen (the list (uiop:read-file-forms file))

@@ -589,3 +589,200 @@ takes very little time."
 (defun inspect-ir (form fun &rest checked-compile-args)
   (let ((*compile-component-hook* fun))
     (apply #'checked-compile form checked-compile-args)))
+
+;;; Compile Failures
+(define-condition compile-condition (condition)
+  ((context-format
+    :initform nil :reader compile-condition-context-format :initarg :context-format)
+   (context-arguments
+    :initform nil :reader compile-condition-context-arguments :initarg :context-arguments)
+   (description
+    :initform nil :reader compile-condition-description :initarg :description))
+  (:report (lambda (c s)
+             (format s "~@<~A~@[ while ~?~]~@:>"
+                     (or (compile-condition-description c) (type-of c))
+                     (compile-condition-context-format c)
+                     (compile-condition-context-arguments c)))))
+(define-condition compile-file-error (compile-condition error) ())
+(define-condition compile-warned-warning (compile-condition warning) ())
+(define-condition compile-warned-error (compile-condition error) ())
+(define-condition compile-failed-warning (compile-condition warning) ())
+(define-condition compile-failed-error (compile-condition error) ())
+
+(declaim ((member :warn :error :ignore) *compile-file-failure-action* *compile-file-warning-action*))
+(defvar *compile-file-failure-action* :error)
+(defvar *compile-file-warning-action* :warn)
+
+(defun check-lisp-compile-warnings (warnings-p failure-p
+                                    &optional context-format context-arguments)
+  "Given the warnings or failures as resulted from COMPILE-FILE or checking deferred warnings,
+raise an error or warning as appropriate"
+  (when failure-p
+    (case *compile-file-failure-action*
+      (:warn (warn 'compile-failed-warning
+                   :description "Lisp compilation failed"
+                   :context-format context-format
+                   :context-arguments context-arguments))
+      (:error (error 'compile-failed-error
+                     :description "Lisp compilation failed"
+                     :context-format context-format
+                     :context-arguments context-arguments))
+      (:ignore nil)))
+  (when warnings-p
+    (case *compile-file-warning-action*
+      (:warn (warn 'compile-warned-warning
+                   :description "Lisp compilation had style-warnings"
+                   :context-format context-format
+                   :context-arguments context-arguments))
+      (:error (error 'compile-warned-error
+                     :description "Lisp compilation had style-warnings"
+                     :context-format context-format
+                     :context-arguments context-arguments))
+      (:ignore nil))))
+
+(defun check-lisp-compile-results (output warnings-p failure-p
+                                   &optional context-format context-arguments)
+  "Given the results of COMPILE-FILE, raise an error or warning as appropriate"
+  (unless output
+    (error 'compile-file-error :context-format context-format :context-arguments context-arguments))
+  (check-lisp-compile-warnings warnings-p failure-p context-format context-arguments))
+
+;;; Deferred Warnings
+(defun reify-undefined-warning (warning)
+  ;; Extracting undefined-warnings from the compilation-unit
+  ;; To be passed through the above reify/unreify link, it must be a "simple-sexp"
+  (list*
+   (sb-c::undefined-warning-kind warning)
+   (sb-c::undefined-warning-name warning)
+   (sb-c::undefined-warning-count warning)
+   (mapcar
+    #'(lambda (frob)
+        ;; the lexenv slot can be ignored for reporting purposes
+        `(:enclosing-source ,(sb-c::compiler-error-context-enclosing-source frob)
+          :source ,(sb-c::compiler-error-context-source frob)
+          :original-source ,(sb-c::compiler-error-context-original-source frob)
+          :context ,(sb-c::compiler-error-context-context frob)
+          :file-name ,(sb-c::compiler-error-context-file-name frob) ; a pathname
+          :file-position ,(sb-c::compiler-error-context-file-position frob) ; an integer
+          :original-source-path ,(sb-c::compiler-error-context-original-source-path frob)))
+    (sb-c::undefined-warning-warnings warning))))
+
+(defun reify-deferred-warnings ()
+  "return a portable S-expression, portably readable and writeable in any Common Lisp implementation
+using READ within a WITH-SAFE-IO-SYNTAX, that represents the warnings currently deferred by
+WITH-COMPILATION-UNIT. One of three functions required for deferred-warnings support in ASDF."
+  (when sb-c::*in-compilation-unit*
+    ;; Try to send nothing through the pipe if nothing needs to be accumulated
+    `(,@(when sb-c::*undefined-warnings*
+          `((sb-c::*undefined-warnings*
+             ,@(mapcar #'reify-undefined-warning sb-c::*undefined-warnings*))))
+      ,@(loop :for what :in '(sb-c::*aborted-compilation-unit-count*
+                              sb-c::*compiler-error-count*
+                              sb-c::*compiler-warning-count*
+                              sb-c::*compiler-style-warning-count*
+                              sb-c::*compiler-note-count*)
+              :for value = (symbol-value what)
+              :when (plusp value)
+              :collect `(,what . ,value)))))
+
+(defun unreify-deferred-warnings (reified-deferred-warnings)
+  "given a S-expression created by REIFY-DEFERRED-WARNINGS, reinstantiate the corresponding
+deferred warnings as to be handled at the end of the current WITH-COMPILATION-UNIT.
+Handle any warning that has been resolved already,
+such as an undefined function that has been defined since.
+One of three functions required for deferred-warnings support in ASDF."
+  (declare (ignorable reified-deferred-warnings))
+  (dolist (item reified-deferred-warnings)
+    ;; Each item is (symbol . adjustment) where the adjustment depends on the symbol.
+    ;; For *undefined-warnings*, the adjustment is a list of initargs.
+    ;; For everything else, it's an integer.
+    (destructuring-bind (symbol . adjustment) item
+      (case symbol
+        ((sb-c::*undefined-warnings*)
+         (setf sb-c::*undefined-warnings*
+               (nconc (mapcan
+                       #'(lambda (stuff)
+                           (destructuring-bind (kind name count . rest) stuff
+                             (unless (case kind (:function (fboundp name)))
+                               (list
+                                (sb-c::make-undefined-warning
+                                 :name name
+                                 :kind kind
+                                 :count count
+                                 :warnings
+                                 (mapcar #'(lambda (x)
+                                             (apply #'sb-c::make-compiler-error-context x))
+                                         rest))))))
+                       adjustment)
+                      sb-c::*undefined-warnings*)))
+        (otherwise
+         (set symbol (+ (symbol-value symbol) adjustment)))))))
+
+(defun reset-deferred-warnings ()
+  "Reset the set of deferred warnings to be handled at the end of the current
+WITH-COMPILATION-UNIT."
+  (when sb-c::*in-compilation-unit*
+    (setf sb-c::*undefined-warnings* nil
+          sb-c::*aborted-compilation-unit-count* 0
+          sb-c::*compiler-error-count* 0
+          sb-c::*compiler-warning-count* 0
+          sb-c::*compiler-style-warning-count* 0
+          sb-c::*compiler-note-count* 0)))
+
+(defun save-deferred-warnings (warnings-file)
+  "Save forward reference conditions so they may be issued at a latter time,
+possibly in a different process."
+  (with-open-file (s warnings-file :direction :output :if-exists :supersede
+                                   :element-type 'character
+                                   :external-format :utf-8)
+    (with-safe-io-syntax (:cl)
+      (let ((*read-eval* t))
+        (write (reify-deferred-warnings) :stream s :pretty t :readably t)))
+    (terpri s)))
+
+(defun check-deferred-warnings (files &optional context-format context-arguments)
+  "Given a list of FILES containing deferred warnings saved by CALL-WITH-SAVED-DEFERRED-WARNINGS,
+re-intern and raise any warnings that are still meaningful."
+  (let ((file-errors nil)
+        (failure-p nil)
+        (warnings-p nil))
+    (handler-bind
+        ((warning #'(lambda (c)
+                      (setf warnings-p t)
+                      (unless (typep c 'style-warning)
+                        (setf failure-p t)))))
+      (with-compilation-unit (:override t)
+        (reset-deferred-warnings)
+        (dolist (file files)
+          (unreify-deferred-warnings
+           (handler-case
+               (with-safe-io-syntax ()
+                 (let ((*read-eval* t))
+                   (read-lisp-file file)))
+             (error (c)
+               ;;(delete-file-if-exists file) ;; deleting forces rebuild but prevents debugging
+               (push c file-errors)
+               nil))))))
+    (dolist (error file-errors) (error error))
+    (check-lisp-compile-warnings
+     (or failure-p warnings-p) failure-p context-format context-arguments)))
+
+(defun call-with-saved-deferred-warnings (thunk warnings-file &key source-namestring)
+  "If WARNINGS-FILE is not nil, record the deferred-warnings around a call to THUNK
+and save those warnings to the given file for latter use,
+possibly in a different process. Otherwise just call THUNK."
+  (declare (ignorable source-namestring))
+  (if warnings-file
+      (with-compilation-unit (:override t #+sbcl :source-namestring #+sbcl source-namestring)
+        (unwind-protect
+             (let (#+sbcl (sb-c::*undefined-warnings* nil))
+               (multiple-value-prog1
+                   (funcall thunk)
+                 (save-deferred-warnings warnings-file)))
+          (reset-deferred-warnings)))
+      (funcall thunk)))
+
+(defmacro with-saved-deferred-warnings ((warnings-file &key source-namestring) &body body)
+  "Trivial syntax for CALL-WITH-SAVED-DEFERRED-WARNINGS"
+  `(call-with-saved-deferred-warnings
+    #'(lambda () ,@body) ,warnings-file :source-namestring ,source-namestring))

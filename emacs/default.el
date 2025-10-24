@@ -372,6 +372,7 @@ function: '(ql:quickload :clouseau)'."
  (:inherit "sbcl")
  (:indentation
   (defpkg (as defpackage))
+  (init 1)
   (defpackage* (as defpackage))
   (blasfunc 2)
   (symbol-call 2)

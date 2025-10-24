@@ -92,6 +92,13 @@
   (:import-from :std/sym :symb :with-gensyms)
   (:import-from :std/named-readtables :parse-body)
   (:export 
+   :read-until-end
+   :read-lisp-until-end
+   :read-lisp-file
+   :*standard-readtable*
+   :with-safe-io-syntax
+   :call-with-safe-io-syntax
+   :safe-read-from-string
    :kernel-class
    :defkernel
    :kernel-object
@@ -174,7 +181,7 @@
 
 (defpkg :std/comp
   (:use :cl)
-  (:import-from :std/prim :definline)
+  (:import-from :std/prim :definline :with-safe-io-syntax :read-lisp-file)
   (:import-from :sb-c :deftransform :defoptimizer 
    :define-vop :parse-deftransform 
    :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
@@ -207,7 +214,25 @@
    :print-form-and-optimize :print-signaled-conditions
    :print-arguments
    :checked-compile :runtime :asm-search :inspect-ir
-   :ea)
+   :ea
+   :compile-condition
+   :compile-condition-context-format
+   :compile-condition-context-arguments
+   :compile-condition-description
+   :compile-file-error
+   :compile-warned-warning
+   :compile-warned-error
+   :compile-failed-warning
+   :compile-failed-error
+   :*compile-file-failure-action*
+   :*compile-file-warning-action*
+   :check-lisp-compile-warnings
+   :check-lisp-compile-results
+   :reset-deferred-warnings
+   :save-deferred-warnings
+   :check-deferred-warnings
+   :call-with-save-deferred-warnings
+   :with-save-deferred-warnings)
   (:recycle :sb-c))
 
 (defpkg :std/type
@@ -406,8 +431,6 @@
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/prim :definline)
   (:export
-   :read-lisp-until-end
-   :read-until-end
    ;; stream
    :copy-stream
    :wrapped-stream :wrapped-stream-p
@@ -1030,7 +1053,6 @@
    :probe-delete-directory
    :delete-directories
    :read-file
-   :read-lisp-file
    :file-read-forms
    :tmpfile
    :dir
@@ -1228,8 +1250,10 @@
    :task :job 
    :async-task
    :scheduled-task
+   :make-task
    :make-job
-   :jobp :taskp :task))
+   :run-job
+   :jobp :taskp :task :task-worker))
 
 (defpkg :std/rand
   (:use :cl)
@@ -1331,13 +1355,15 @@
    :std/print :std/meta :std/path :std/sym
    :std/macs)
   (:import-from :std/named-readtables :in-readtable)
-  (:import-from :std/file :read-lisp-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
   (:shadow :load-system :compile-system :find-system :system)
   (:import-from :asdf :module-provide-asdf :defsystem)
   (:shadowing-import-from :std/meta :version)
   (:export 
+   :*sysdefs*
+   :sysdefs
+   :sysdef
    :defsys
    :defprovider
    :defcomponent

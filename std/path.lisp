@@ -135,6 +135,9 @@ their only argument."
       (when (funcall recursep subdir)
         (walk-directory subdir collectp recursep collector)))))
 
+;; TODO 2025-10-22: PWALK
+
+;;; Directory Wildcards
 (defun directory-empty-p (&optional (dir *default-pathname-defaults*))
   "Return non-nil if DIR is a DIRECTORY-PATHNAME which does not contain any files
 or directories."

@@ -167,8 +167,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
             (,set *skel-project* (load-skelfile project)
                   *skel-path* (sk-src *skel-project*)
                   *skel-cache* (sk-cache *skel-project*)))
-          (when-let ((hooks *skel-init-hook*))
-            (mapc 'funcall hooks))
+          (when-let ((hook *skel-hook*))
+            (funcall hook))
           (values))))
 
   (defun init-skel ()
