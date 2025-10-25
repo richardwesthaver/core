@@ -585,7 +585,7 @@ the following extensions:
 (defun compile-sys (path)
   "Compile a SYS file at PATH. Default extension is FSYS."
   (unless (pathnamep path) (setf path (path (find-system path))))
-  (compile-file path
+  (checked-compile-file path
                 :output-file (make-pathname :name (pathname-name path) :type "fsys")
                 :entry-points '(load-sys)))
 
@@ -644,7 +644,7 @@ calling any component ops."
       (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
-  (:method ((self t) &key default)
+  (:method ((self t) &key (default :error))
     (multiple-value-bind (val found) (gethash (keywordicate self) *system-table*)
       (cond
         (found (values val found))

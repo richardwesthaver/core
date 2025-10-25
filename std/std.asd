@@ -12,6 +12,8 @@ that ASDF can find, or have quicklisp installed.")))
 
 (require 'sb-cltl2)
 (require 'sb-concurrency)
+(require 'sb-sprof)
+(require 'sb-introspect)
 
 (defsystem :std
   :version "0.1.0"

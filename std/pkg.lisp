@@ -1356,6 +1356,7 @@
    :std/print :std/meta :std/path :std/sym
    :std/macs)
   (:import-from :std/named-readtables :in-readtable)
+  (:import-from :std/comp :checked-compile-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   ;; (:shadowing-import-from :asdf :retry)
   (:shadow :load-system :compile-system :find-system :system)
