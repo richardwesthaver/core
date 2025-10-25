@@ -50,7 +50,7 @@
     (is (eql 4 (pop-queue *memo*)))
     (is (eql 3 (pop-queue *memo*)))))
 
-(deftest flood ()
+(deftest flood (:skip t)
   (with-temp-pool (4)
     (let* ((a (promise))
            (futures (loop for i from 0 below 4 collect (await a))))

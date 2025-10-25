@@ -735,7 +735,7 @@ possibly in a different process."
   (with-open-file (s warnings-file :direction :output :if-exists :supersede
                                    :element-type 'character
                                    :external-format :utf-8)
-    (with-safe-io-syntax (:cl)
+    (with-safe-io-syntax (:std)
       (let ((*read-eval* t))
         (write (reify-deferred-warnings) :stream s :pretty t :readably t)))
     (terpri s)))
@@ -786,3 +786,8 @@ possibly in a different process. Otherwise just call THUNK."
   "Trivial syntax for CALL-WITH-SAVED-DEFERRED-WARNINGS"
   `(call-with-saved-deferred-warnings
     #'(lambda () ,@body) ,warnings-file :source-namestring ,source-namestring))
+
+(defun checked-compile-file (path &rest args &key warnings-file &allow-other-keys)
+  (remf args :warnings-file)
+  (with-saved-deferred-warnings (warnings-file)
+    (apply 'compile-file path args)))

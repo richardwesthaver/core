@@ -231,8 +231,9 @@
    :reset-deferred-warnings
    :save-deferred-warnings
    :check-deferred-warnings
-   :call-with-save-deferred-warnings
-   :with-save-deferred-warnings)
+   :call-with-saved-deferred-warnings
+   :with-saved-deferred-warnings
+   :checked-compile-file)
   (:recycle :sb-c))
 
 (defpkg :std/type
@@ -1383,7 +1384,15 @@
    :module
    :load-module
    :unload-module
-   :with-module))
+   :with-module
+   :load-system
+   :compile-system
+   :register-system
+   :test-system
+   :with-system-session
+   :*system-session*
+   :*system-table*
+   :+sys-extension+))
 
 (setq *defpkg-hook* nil)
 

@@ -13,7 +13,7 @@
 (define-lisp-package :core)
 
 (defreadtable :core
-  (:merge :modern :std :shell :graph :tensor :q))
+  (:fuse :modern :std :shell :graph :tensor :q))
 
 (eval-when (:load-toplevel)
   (pushnew :core *features*))

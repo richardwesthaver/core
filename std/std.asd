@@ -68,7 +68,6 @@ that ASDF can find, or have quicklisp installed.")))
    (:file "rand")
    (:file "defsys"))
   :build-pathname "../.stash/std"
-  :build-operation asdf:monolithic-compile-bundle-op
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (defsystem :std/tests

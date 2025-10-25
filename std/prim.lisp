@@ -247,11 +247,11 @@ Example:
   "The standard readtable, implementing the syntax specified by the CLHS.
 It must never be modified, though only good implementations will even enforce that.")
 
-(defmacro with-safe-io-syntax ((&optional (package :std)) &body body)
+(defmacro with-safe-io-syntax ((&optional (package :std-user)) &body body)
   "Establish safe CL reader options around the evaluation of BODY"
   `(call-with-safe-io-syntax #'(lambda () (let ((*package* (find-package ,package))) ,@body))))
 
-(defun call-with-safe-io-syntax (thunk &key (package :std))
+(defun call-with-safe-io-syntax (thunk &key (package :std-user))
   (with-standard-io-syntax
     (let ((*package* (find-package package))
           (*read-default-float-format* 'double-float)

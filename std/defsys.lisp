@@ -7,7 +7,7 @@
 ;; replacement/wrapper for ASDF
 
 ;; goals:
-;; - default to asdf (wrap)
+;; - dynamic asdf compatibility
 ;; - replace quicklisp (will need to be in lib/sys)
 ;; - share resources between system and dependency manager
 ;; - integrate with skel/packy (package distributor)
@@ -41,6 +41,11 @@
 
 (defvar *defining-system* nil
   "When non-nil, indicates the name of the system currently being defined.")
+
+(defvar *asdf-compatibility* nil
+  "When non-nil, enable compatibility between STD/DEFSYS and SYSTTEM - component
+operations will use ASDF and DEFSYS will first pass all argument to
+ASDF:DEFSYSTEM.")
 
 (define-constant +sys-extension+ "sys" 
   :test 'string=
@@ -89,15 +94,15 @@
   (setf (gethash name *component-class-table*) class))
 
 (defmacro defcomponent (name supers slots &rest opts)
-  (let ((kw (find :keyword opts :key #'car)))
-    (setf opts (delete :keyword opts :key #'car))
+  (let ((kw (find :keyword opts :key 'car)))
+    (setf opts (delete :keyword opts :key 'car))
     `(prog1 (defclass* ,name ,(or supers '(component)) ,slots ,@opts)
        (register-component-class ,(cadr kw) (find-class ',name)))))
 
 (defmethod make-load-form ((self component) &optional env)
-  (declare (ignore env))
-  (make-load-form-saving-slots self 
-    :slot-names (mapcar 'sb-mop:slot-definition-name (class-slots (class-of self)))))
+  (make-load-form-saving-slots self
+    :slot-names (mapcar 'sb-mop:slot-definition-name (class-slots (class-of self)))
+    :environment env))
 
 (defmethod print-object ((self component) stream)
   (print-unreadable-object (self stream :type t)
@@ -114,6 +119,9 @@
 (defcomponent mod-component (component) 
   ((components :accessor components))
   (:keyword :mod))
+
+(defun mod-component-p (c)
+  (typep c 'mod-component))
 
 (defmethod print-object ((self mod-component) stream)
   (print-unreadable-object (self stream :type t)
@@ -138,15 +146,24 @@ directory recursively.")
 ;; in the calling thread.
 (defun read-component (comp &key (external-format :default))
   "Read a component from its PATH slot."
-  (std:read-lisp-file (path comp) :external-format external-format))
+  (etypecase comp
+    (mod-component (mapcar 'read-component (components comp)))
+    (component (read-lisp-file (path comp) :external-format external-format))
+    (pathname (read-lisp-file comp :external-format external-format))))
 
 (defun compile-component (comp &rest args)
   "Compile a component."
-  (apply 'compile-file (path comp) args))
+  (etypecase comp
+    (mod-component (mapcar 'compile-component (components comp)))
+    (component (apply 'std/comp:checked-compile-file (path comp) args))
+    (pathname (apply 'std/comp:checked-compile-file comp args))))
 
 (defun load-component (comp &rest args)
   "Load a component."
-  (apply 'load (path comp) args))
+  (etypecase comp
+    (mod-component (mapcar 'load-component (components comp)))
+    (component (apply 'load (path comp) args))
+    (pathname (apply 'load comp args))))
 
 (defun find-component (path self)
   "Find a component designated by PATH which is either an atom designating a
@@ -356,12 +373,12 @@ system jobs to be executed in an async context."
    (make-instance new-class-name
      :name (asdf:component-name instance)
      :path (asdf:component-pathname instance)
-     :components (mapcar #'change-component-class (asdf:component-children instance))))
+     :components (mapcar 'change-component-class (asdf:component-children instance))))
   (((instance mod-component) (new-class-name (eql 'asdf:module)) &key)
    (make-instance new-class-name
      :name (name instance)
      :path (asdf:component-pathname instance)
-     :components (mapcar #'revert-component-class (components instance))))
+     :components (mapcar 'revert-component-class (components instance))))
   ;; system
   (((instance asdf:system) (new-class-name (eql 'system)) &key)
    (make-instance new-class-name
@@ -369,7 +386,7 @@ system jobs to be executed in an async context."
      :name (keywordicate (string-upcase (asdf:component-name instance)))
      :path (asdf:component-pathname instance)
      :description (asdf::component-description instance)
-     :components (mapcar #'change-component-class (asdf:component-children instance))))
+     :components (mapcar 'change-component-class (asdf:component-children instance))))
   (((instance system) (new-class-name (eql 'asdf:system)) &key)
    (warn 'simple-system-warning 
          :format-control "Erasing system slots (:require :provide :hook) from system ~A." 
@@ -378,7 +395,7 @@ system jobs to be executed in an async context."
      :version (version instance)
      :name (name instance)
      :description (system-description instance)
-     :components (mapcar #'revert-component-class (components instance)))))
+     :components (mapcar 'revert-component-class (components instance)))))
 
 ;;; Test System
 (defcomponent test-system (system) ()
@@ -400,7 +417,7 @@ system jobs to be executed in an async context."
     :name (keywordicate (string-upcase (asdf:component-name instance)))
     :path (asdf:component-pathname instance)
     :description (asdf::component-description instance)
-    :components (mapcar #'change-component-class (asdf:component-children instance))))
+    :components (mapcar 'change-component-class (asdf:component-children instance))))
 
 (defcomponent bench-system (system) ()
   (:keyword :bench))
@@ -411,7 +428,7 @@ system jobs to be executed in an async context."
     :name (keywordicate (string-upcase (asdf:component-name instance)))
     :path (asdf:component-pathname instance)
     :description (asdf::component-description instance)
-    :components (mapcar #'change-component-class (asdf:component-children instance))))
+    :components (mapcar 'change-component-class (asdf:component-children instance))))
 
 (defun bench-system-name-p (name)
   (std/seq:ends-with-subseq "/BENCH" (string-upcase name)))
@@ -445,11 +462,15 @@ system jobs to be executed in an async context."
 (sb-ext:defglobal *system-session* nil
   "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
 
-(defmacro with-system-session (&body body)
+(defmacro with-system-session ((&optional sys) &body body)
   "Bind *SYSTEM-SESSION* to a fresh value around BODY."
   `(progn
      (unless *system-session* (setf *system-session* (make-system-session)))
-     ,@body))
+     . ,(if sys
+            `((let ((*default-pathname-defaults* (if (pathnamep ,sys) ,sys
+                                                     (pathname (directory-namestring (probe-file (path ,sys)))))))
+                ,@body))
+            `(,@body))))
 
 ;;; Defsys
 (defun %parse-provide-form (form)
@@ -471,6 +492,8 @@ system jobs to be executed in an async context."
      x)
    form))
 
+(defvar *wildcard-regexp* (cl-ppcre:create-scanner ".*"))
+
 (defun %parse-component-form (form)
   (if (atom form)
       (if (directory-path-p form)
@@ -479,9 +502,9 @@ system jobs to be executed in an async context."
             :name (last (pathname-directory form))
             :path form)
           (make-instance 'file-component 
-            :type (or (pathname-type form) "lisp") 
+            :type (or (pathname-type form) "lisp")
             :name (pathname-name form)
-            :path form))
+            :path (make-pathname :name form :type (or (pathname-type form) "lisp"))))
       (let ((n (cadr form))
             (kind (gethash (car form) *component-class-table*))
             (props (cddr form)))
@@ -502,7 +525,7 @@ system jobs to be executed in an async context."
           (:dir
            (let* ((path (directory-path n))
                   (*default-pathname-defaults* path)
-                  (inc (or (getf props :include) (cl-ppcre:create-scanner ".*")))
+                  (inc (or (getf props :include) *wildcard-regexp*))
                   (exc (getf props :exclude))
                   (c (make-instance kind
                        :name n
@@ -520,7 +543,13 @@ system jobs to be executed in an async context."
              c))))))
 
 (defun %parse-components-form (form)
-  (mapcar #'%parse-component-form form))
+  (mapcar '%parse-component-form form))
+
+(defmacro %make-sys (name class &body args)
+  `(progn
+     (if *asdf-compatibility*
+         (change-class (defsystem ,name . ,args) ,class)
+         (make-instance ,class :name ,name :version nil))))
 
 (defmacro defsys (name &body body)
   "Define a SYSTEM with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
@@ -543,19 +572,22 @@ the following extensions:
           (*defining-system* name))
       (declare (ignore meth))
       (std/sym:with-gensyms (sys)
-        `(let ((,sys (change-class (defsystem ,name ,@body) ,class)))
+        `(let ((,sys (%make-sys ,name ,class ,@body)))
            (setf (path ,sys) (or *compile-file-truename* *load-truename*)
                  (slot-value ,sys 'plan) ,plan
-                 (slot-value ,sys 'components) ',(%parse-components-form comp)
+                 (slot-value ,sys 'components) (%parse-components-form ',comp)
                  (slot-value ,sys 'provide) ',(%parse-provide-form prov)
                  (slot-value ,sys 'require) ',(%parse-require-form req))
            (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
-           (register-system ,name ,sys))))))
+           (register-system ,name ,sys)
+           (values))))))
 
 (defun compile-sys (path)
   "Compile a SYS file at PATH. Default extension is FSYS."
-  (compile-file path :output-file (make-pathname :name (pathname-name path) :type "fsys")
-                     :entry-points '(load-sys)))
+  (unless (pathnamep path) (setf path (path (find-system path))))
+  (compile-file path
+                :output-file (make-pathname :name (pathname-name path) :type "fsys")
+                :entry-points '(load-sys)))
 
 (defun load-sys (path &optional name)
   "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD
@@ -563,21 +595,20 @@ internally. On success the path is added to the *SYSDEFS* list."
   (let ((path (etypecase path
                 ((or string pathname) (truename path))
                 (t (find path *sysdefs* :key 'pathname-name :test 'string-equal)))))
-    (with-system-session
-      (let ((*default-pathname-defaults* (pathname (directory-namestring path))))
-        (when 
-            (restart-case (load path)
-              (load-file (p)
-                :report "Load a different file." 
-                :interactive (lambda () 
-                               (list (setf path (interact-line "File: "))))
-                (load p)))
-          (setf (gethash path (system-session-file-cache *system-session*))
-                (sb-ext:get-time-of-day))
-          (pushnew (namestring (truename path)) *sysdefs* :test 'equal)
-          (if name 
-              (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
-              t))))))
+    (with-system-session ((pathname (directory-namestring path)))
+      (when 
+          (restart-case (load path)
+            (load-file (p)
+              :report "Load a different file." 
+              :interactive (lambda () 
+                             (list (setf path (interact-line "File: "))))
+              (load p)))
+        (setf (gethash path (system-session-file-cache *system-session*))
+              (sb-ext:get-time-of-day))
+        (pushnew (namestring (truename path)) *sysdefs* :test 'equal)
+        (if name 
+            (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
+            t)))))
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key sysdefs (preload t))
@@ -590,10 +621,26 @@ internally. On success the path is added to the *SYSDEFS* list."
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
+(declaim (sb-ext:maybe-inline expand-component-paths))
+
+(defun expand-component-paths (c)
+  "Walk the components of component C, expanding PATH slots along the way to
+absolute pathnames. Calling this function on a system is required before
+calling any component ops."
+  (labels ((.expand (comp)
+             (when (probe-file (path comp)) (setf (path comp) (probe-file (path comp))))
+             (when (and (mod-component-p comp) (components comp))
+               (let ((*default-pathname-defaults* (path comp)))
+                 (mapc #'.expand (components comp))))))
+    (declare (dynamic-extent (function .expand))
+             (optimize (speed 3) (safety 0)))
+    (mapc (the (function (component) (values)) #'.expand) (components c))))
+
 (defgeneric register-system (name self)
   (:documentation "Register system SELF as NAME. This is called during DEFSYS.")
   (:method (name (self system))
-    (with-system-session
+    (with-system-session (self)
+      (expand-component-paths self)
       (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
@@ -606,27 +653,36 @@ internally. On success the path is added to the *SYSDEFS* list."
         (t default)))))
 
 (defgeneric remove-system (self &key &allow-other-keys)
-  (:method ((self symbol) &key)
-    (with-system-session
+  (:method ((self system) &rest args)
+    (apply 'remove-system (name self) args))
+  (:method ((self t) &key)
+    (with-system-session ()
       ;; freeze the session by acquiring the queue lock
       (with-queue-lock (system-session-systems *system-session*)
         (remhash self *system-table*)))))
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
-  (:method ((self system) &key force verbose)
+  (:method ((self system) &key force (verbose t) (asdf *asdf-compatibility*))
     (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self)))
     ;; TODO 2025-08-31:
-    (asdf:load-system (name self) :verbose verbose :force force))
+    ;; - build-plan
+    (if asdf 
+        (asdf:load-system (name self) :verbose verbose :force force)
+        (with-system-session (self)
+          (mapc 'load-component (components self)))))
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
       (apply 'load-system sys args))))
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
-  (:method ((self system) &key)
+  (:method ((self system) &key (asdf *asdf-compatibility* verbose))
     (mumble "Compiling system ~A" (name self))
-    (asdf:compile-system (name self) :verbose nil))
+    (if asdf
+        (asdf:compile-system (name self) :verbose verbose)
+        (with-system-session (self)
+          (mapc 'compile-component (components self)))))
   (:method ((self symbol) &rest args)
     (apply 'compile-system (find-system self :default :error) args)))
 
@@ -636,9 +692,11 @@ internally. On success the path is added to the *SYSDEFS* list."
 (defgeneric make-system (self &key &allow-other-keys)
   (:documentation "Make the system SELF which usually entails loading, compiling, and then saving
 an image.")
-  (:method ((self system) &key)
+  (:method ((self system) &key (asdf *asdf-compatibility*))
     (mumble "Making system ~A" (name self))
-    (asdf:make self :verbose nil))
+    (if asdf (asdf:make self :verbose nil)
+        ;; else
+        ))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
       (make-system sys))))
@@ -654,9 +712,12 @@ an image.")
 
 (defgeneric test-system (self &rest args)
   (:documentation "Test the system SELF.")
-  (:method ((self system) &rest args)
+  (:method ((self system) &rest args &key (asdf *asdf-compatibility*))
+    (remf args :asdf)
     (mumble "Testing system ~A" (name self))
-    (apply 'pkg:symbol-call :rt :do-suite (name self) args))
+    (if asdf
+        (asdf:test-system self args)
+        (apply 'pkg:symbol-call :rt :do-suite (name self) args)))
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
       (apply #'test-system sys args))))
