@@ -120,7 +120,7 @@ Tasks are _currently_ funcallable kernels.."))
 
 (defun run-job (worker job)
   "Run JOB on WORKER."
-  (setf (tasks worker) (make-priority-queue (length (tasks job)) :initial-contents (tasks job)))
+  (setf (tasks worker) (make-priority-queue (length (tasks job)) :initial-contents (tasks job) :extend t))
   (run-worker worker))
 
 (defmethod run-object ((self job) &key worker)

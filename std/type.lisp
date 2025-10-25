@@ -4,6 +4,7 @@
 
 ;;; Code:
 (in-package :std/type)
+(declaim (optimize (speed 3)))
 
 ;; Bytes aren't necessarily 8 bits wide in Lisp. OCTET is always 8
 ;; bits.
@@ -220,8 +221,10 @@ non-unique ID prefix.")
   (defvar *simple-types* (make-array 128 :adjustable nil)
     "A vector containing the simple set of lisp objects .")
 
+  (declaim (hash-table *core-type-table*)
+           (simple-vector *core-types*))
   (defvar *core-type-table*)
-  (defvar *core-types*))
+  (defvar *core-types*)
 
 (definline next-type-id (&optional (table *core-type-table*))
   (hash-table-count table))
@@ -231,6 +234,7 @@ non-unique ID prefix.")
         *core-types* *simple-types*))
 
 (defun register-type-id (type &optional id (table *core-type-table*) (vector *core-types*))
+  (declare (simple-vector vector) (hash-table table))
   (unless id (setf id (next-type-id table)))
   (setf (gethash type table) id
         (aref vector id) type))
@@ -276,7 +280,7 @@ non-unique ID prefix.")
    simple-array simple-vector 
    simple-string base-string
    octet-vector)
-  (reset-core-types))
+  (reset-core-types)))
 
 (defmacro simple-type-id (obj)
   (let ((cases))
@@ -285,6 +289,7 @@ non-unique ID prefix.")
        ,@cases)))
 
 (defun get-core-type-id (obj)
+  (declare (optimize (safety 0) (speed 3)))
   (or (gethash (type-of obj) *core-type-table*)
       (let ((id (simple-type-id obj)))
         (when id
@@ -294,11 +299,12 @@ non-unique ID prefix.")
   "Return the name of the primitive type of OBJ."
   (sb-vm::primitive-type-name (sb-vm::primitive-type-of obj)))
 
-(definline core-type-id (obj)
+(defun core-type-id (obj)
   "Return the 'core-type-id' of OBJ which is a 16-bit integer containing type
 information. The first 8 bits are the associated object widetag followed by an
 8-bit tag corresponding to an index of the *CORE-OBJECTS* vector, which may be
 extended by the user using the REGISTER-TYPE-ID function. "
+  (declare (optimize (speed 3) (safety 0)))
   (let ((id 0))
     (declare ((unsigned-byte 16) id) (dynamic-extent id))
     (setf (ldb (byte 8 0) id) (widetag-of obj)) ;; 8 bits
