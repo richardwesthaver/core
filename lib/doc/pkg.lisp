@@ -70,7 +70,10 @@
    ;; dist
    :dist-documentation
    ;; image
-   :image-documentation))
+   :image-documentation
+   :file-commentary
+   :file-summary
+   :file-description))
 
 (in-package :doc)
 

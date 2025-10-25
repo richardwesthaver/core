@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :io/disk)
 
-(define-constant +option-separator+    "," :test #'string=)
+(define-constant +option-separator+ "," :test #'string=)
 
 (define-constant +suboption-separator+ "=" :test #'string=)
 
@@ -64,9 +64,9 @@
   (let* ((raw            (mountpoint-get mount-info-file mountpoint 'mnt-opts))
          (comma-splitted (ssplit +option-separator+ raw)))
     (loop for i in comma-splitted collect
-         (if (cl-ppcre:scan  #.(format nil "[~A]" +suboption-separator+) i)
-             (ssplit +suboption-separator+ i)
-             i))))
+             (if (cl-ppcre:scan  #.(format nil "[~A]" +suboption-separator+) i)
+                 (ssplit +suboption-separator+ i)
+                 i))))
 
 (defun all-mountpoints (&optional (mount-info-file "/etc/mtab"))
   (mapcar 
@@ -123,17 +123,17 @@
   (multiple-value-bind (bsize frsize blocks bfree bavail files
                         ffree favail fsig flag namemax)
       (statvfs path)
-      (declare (ignore bsize files ffree favail fsig flag namemax))
-      (if human-readable-p
-          (values (human-readable-size (* frsize blocks))
-                  (human-readable-size (* frsize bfree))
-                  (human-readable-size (* frsize bavail)))
-          (values (* frsize blocks) (* frsize bfree) (* frsize bavail)))))
+    (declare (ignore bsize files ffree favail fsig flag namemax))
+    (if human-readable-p
+        (values (human-readable-size (* frsize blocks))
+                (human-readable-size (* frsize bfree))
+                (human-readable-size (* frsize bavail)))
+        (values (* frsize blocks) (* frsize bfree) (* frsize bavail)))))
 
 (defun disk-total-space (path &optional human-readable-p)
   "Disk total space."
   (multiple-value-bind (bsize frsize blocks bfree bavail files
-                              ffree favail fsig flag namemax)
+                        ffree favail fsig flag namemax)
       (statvfs path)
     (declare (ignore bsize bfree bavail files ffree favail fsig flag namemax))
     (if human-readable-p
@@ -143,7 +143,7 @@
 (defun disk-free-space (path &optional human-readable-p)
   "Disk free space."
   (multiple-value-bind (bsize frsize blocks bfree bavail files
-                              ffree favail fsig flag namemax)
+                        ffree favail fsig flag namemax)
       (statvfs path)
     (declare (ignore bsize blocks bavail files ffree favail fsig flag namemax))
     (if human-readable-p
@@ -153,7 +153,7 @@
 (defun disk-available-space (path &optional human-readable-p)
   "Disk available space."
   (multiple-value-bind (bsize frsize blocks bfree bavail files
-                              ffree favail fsig flag namemax)
+                        ffree favail fsig flag namemax)
       (statvfs path)
     (declare (ignore bsize blocks bfree files ffree favail fsig flag namemax))
     (if human-readable-p
@@ -228,4 +228,4 @@
  \(:DISK \"/mnt\" :TOTAL \"19.68 GB\" :FREE \"1.91 GB\" :AVAILABLE \"929.52 MB\"
   :USE-PERCENT 95))"
   (loop for disk in (list-disks nil)
-     collect (disk-info disk human-readable-p)))
+        collect (disk-info disk human-readable-p)))
