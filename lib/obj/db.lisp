@@ -2,10 +2,6 @@
 
 ;;
 
-;;; Commentary:
-
-;; This set of 
-
 ;;; Code:
 (in-package :obj/db)
 

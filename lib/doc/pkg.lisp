@@ -1,9 +1,12 @@
-;;; lib/doc/pkg.lisp --- CL Documentation
+;;; lib/doc/pkg.lisp --- Documentation
 
 ;; This package is designed to help us navigate our Lisp systems,
 ;; packages, symbols, and files to extract information relevant to
-;; documentation. This is a rather broad category. Here are some of
-;; the categories of information we're interested in:
+;; documentation.
+
+;;; Commentary:
+
+;; Here are some of the categories of information we're interested in:
 
 ;; - Comments :: like this one.
 #| or this one |#
@@ -19,19 +22,8 @@
 ;; - Source :: the source code which defines a symbol and its
 ;;   file/line location.
 
-;;; Commentary:
-
 ;; Documentation is a tricky craft, good thing we have a
 ;; self-documenting language :).
-
-;; The API consists of extractors for the above categories of
-;; information and a compiler (in comp.lisp) which can be used to
-;; generate documentation output.
-
-;; This library DOES NOT implement export/publishing per se. We use
-;; the ORGAN system to generate ORG-DOCUMENT objects, which themselves
-;; implement the functionality needed to generate *.org files and
-;; translate to html,pdf,txt and other formats.
 
 ;;; Code:
 (eval-when (:compile-toplevel :load-toplevel) (require :sb-introspect))
@@ -39,41 +31,36 @@
 (defpackage :doc
   (:use :cl :std :organ :sb-mop :sb-introspect :obj/id :log)
   (:import-from :uiop :string-prefix-p)
-  (:shadowing-import-from :asdf :component-name :component-children
-   :system :component-pathname :find-system :system-description
-   :system-depends-on)
   (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)
   (:import-from :sb-kernel :symbol-package-id)
   (:import-from :sb-ext :restrict-compiler-policy)
-  (:import-from :ql-dist :dist :find-dist :provided-systems :installed-systems)
   (:import-from :sb-impl :print-standard-describe-header :describe-object)
   (:import-from :sb-int :condition)
   (:import-from :sb-alien :alien-type-p)
   (:export
    :definition-specifier
    :find-definitions
-   ;; methods
-   :doc-file :doc-files :doc-symbol :doc-symbols :doc-package :doc-packages :doc-dist
-   :doc-pathnames :doc-directories :doc-parse :doc-system :doc-dependencies :doc-dependents
-   ;; symbol
-   :do-symbol* :classify-symbol :symbol-classification-string
-   :symbol-documentation
-   ;; package
-   :package-documentation
-   ;; file
-   :define-source-file* :*source-file-types*
+   :classify-symbol :symbol-classification-string
+   :file-commentary
+   :file-summary
+   :file-description
    :file-heading :file-headline :file-header :read-file-header
    :+max-heading-level+ :+min-heading-level+
    :file-documentation
-   ;; system
    :system-documentation
-   ;; dist
-   :dist-documentation
-   ;; image
    :image-documentation
-   :file-commentary
-   :file-summary
-   :file-description))
+   :package-documentation
+   :symbol-documentation
+   :doc
+   :print-doc
+   :print-documentation))
+
+(defpackage :doc/asdf
+  (:use :std-lisp :doc)
+  (:shadowing-import-from :asdf :component-name :component-children
+   :system :component-pathname :find-system :system-description
+   :system-depends-on)
+  (:export :asdf-system-documentation))
 
 (in-package :doc)
 
@@ -119,7 +106,4 @@
           do (loop for defsrc in defsrcs
                    do (push (make-dspec type name defsrc) dspecs)
                       (dolist (d (sb-introspect:find-definition-sources-by-name name type)) (push d defs))))
-    (values defs dspecs)))
-
-;;; DEFSYS Providers
-;; (defprovider :doc (name &rest args))
+    (values dspecs defs)))

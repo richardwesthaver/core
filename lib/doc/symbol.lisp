@@ -5,16 +5,6 @@
 ;;; Code:
 (in-package :doc)
 
-(defmacro do-symbols* ((var &optional (package '*package*) result-form)
-                       &body body)
-  "Just like do-symbols, but makes sure a symbol is visited only once."
-  (let ((seen-ht (gensym "SEEN-HT")))
-    `(let ((,seen-ht (make-hash-table :test #'eq)))
-       (do-symbols (,var ,package ,result-form)
-         (unless (gethash ,var ,seen-ht)
-           (setf (gethash ,var ,seen-ht) t)
-           (tagbody ,@body))))))
-
 #|
 (Public)
 :CLASS
@@ -42,6 +32,7 @@
 :VOP
 :IR1-CONVERT
 |#
+
 (defun classify-symbol (symbol)
   "Returns a list of classifiers that classify SYMBOL according to its
 underneath objects (e.g. :BOUNDP if SYMBOL constitutes a special

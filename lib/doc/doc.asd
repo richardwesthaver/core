@@ -7,8 +7,8 @@
                (:file "symbol")
                (:file "file")
                (:file "package")
-               (:file "system")
-               (:file "dist")
+               (:file "asdf")
+               (:file "sys")
                (:file "reprex"))
   :in-order-to ((test-op (test-op :doc/tests))))
 

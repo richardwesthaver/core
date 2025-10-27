@@ -9,6 +9,16 @@
 ;; :sb-int
 ;; :include '(:with-unique-names :symbolicate :package-symbolicate :keywordicate :gensymify*))
 
+(defmacro do-symbols* ((var &optional (package '*package*) result-form)
+                       &body body)
+  "Just like do-symbols, but makes sure a symbol is visited only once."
+  (let ((seen-ht (gensym "SEEN-HT")))
+    `(let ((,seen-ht (make-hash-table :test #'eq)))
+       (do-symbols (,var ,package ,result-form)
+         (unless (gethash ,var ,seen-ht)
+           (setf (gethash ,var ,seen-ht) t)
+           (tagbody ,@body))))))
+
 ;; On SBCL, `with-unique-names' is defined under
 ;; src/code/primordial-extensions.lisp. We use that instead of
 ;; defining our own.

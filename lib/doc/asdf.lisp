@@ -1,28 +1,28 @@
 ;;; lib/doc/system.lisp --- System Documentation
 
-;; Documentation support for a Lisp System
+;; Documentation support for ASDF Systems.
 
 ;;; Code:
-(in-package :doc)
+(in-package :doc/asdf)
 
-(defclass system-documentation ()
+(defclass asdf-system-documentation ()
   ((system :initarg :system :type system :accessor doc-system)))
 
-(defmethod name ((self system-documentation))
+(defmethod name ((self asdf-system-documentation))
   (asdf:component-name (doc-system self)))
 
-(defun system-documentation (system)
+(defun asdf-system-documentation (system)
   "Return the SYSTEM-DOCUMENTATION for a specified SYSTEM."
   (let ((s (find-system system)))
-    (make-instance 'system-documentation
+    (make-instance 'asdf-system-documentation
       :system s)))
 
-(defmethod print-object ((self system-documentation) stream)
+(defmethod print-object ((self asdf-system-documentation) stream)
   (with-slots (system) self
     (print-unreadable-object (self stream :type t)
       (format stream "~A" (component-name system)))))
 
-(defmethod doc-files ((self system-documentation))
+(defmethod doc-files ((self asdf-system-documentation))
   "Return a list of source file components from SELF."
   (flet ((%rec (s) (if (typep s 'asdf:module)
                        (doc-files s)
@@ -39,7 +39,7 @@
 ;; prefix of a different system name. e.g. "DOC" and "DOC-UTILS"
 
 ;; TODO: system separator handling and optimizations
-(defmethod doc-packages ((self system-documentation))
+(defmethod doc-packages ((self asdf-system-documentation))
   "Return a list of packages which can be traced back to SELF. This
 method will only return packages that are prefixed with the name of
 SELF."
@@ -65,13 +65,13 @@ SELF."
                  (list-all-packages))))))
 
 ;; TODO 2025-03-02: handle (:feature :foo :sysname) in system-depends-on results
-(defmethod doc-dependencies ((self system-documentation))
+(defmethod doc-dependencies ((self asdf-system-documentation))
   (mapcar (lambda (x) 
              (if (consp x)
                  (if (eql (pop x) :feature)
                      (when (sb-int:featurep (pop x))
-                       (system-documentation (pop x))))
-                 (system-documentation x)))
+                       (asdf-system-documentation (pop x))))
+                 (asdf-system-documentation x)))
           (system-depends-on (doc-system self))))
 
 (defun find-system-dependents (system)
@@ -89,5 +89,5 @@ SELF."
       (push s r)))
   r))
 
-(defmethod doc-dependents ((self system-documentation))
-  (mapcar #'system-documentation (find-system-dependents (doc-system self))))
+(defmethod doc-dependents ((self asdf-system-documentation))
+  (mapcar #'asdf-system-documentation (find-system-dependents (doc-system self))))

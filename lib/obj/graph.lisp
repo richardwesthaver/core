@@ -34,7 +34,6 @@
 
 ;; If you care about direction, use DIRECTED-GRAPH instead of GRAPH.
 
-
 ;;; Code:
 (in-package :obj/graph)
 

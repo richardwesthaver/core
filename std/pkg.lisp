@@ -33,7 +33,8 @@
    :gensymify* 
    :fboundp! :vboundp!
    :alias-macro
-   :alias-function))
+   :alias-function
+   :do-symbols*))
 
 (defpkg :std/list
   (:use :cl)

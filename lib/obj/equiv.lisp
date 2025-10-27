@@ -2,20 +2,6 @@
 
 ;; extended equivalence API for Lisp objects
 
-;;; Refs:
-
-;; https://en.wikipedia.org/wiki/E-graph
-
-;; https://en.wikipedia.org/wiki/Equivalence_relation
-
-;; https://doc.rust-lang.org/std/cmp/index.html
-
-;; https://gitlab.com/fstamour/catchall/-/tree/master/egraph
-
-;; https://en.wikipedia.org/wiki/Disjoint-set_data_structure
-
-;; https://clojure.org/guides/equality
-
 ;;; Commentary:
 
 ;; A valid complaint of Common Lisp is the lack of an intuitive
@@ -56,6 +42,20 @@
 ;;   turn the MAX and MIN functions build off of Ord (total
 ;;   order). The APIs that follow (order.lisp,limit.lisp) will be
 ;;   designed with these relationships in mind.
+
+;;; Refs:
+
+;; https://en.wikipedia.org/wiki/E-graph
+
+;; https://en.wikipedia.org/wiki/Equivalence_relation
+
+;; https://doc.rust-lang.org/std/cmp/index.html
+
+;; https://gitlab.com/fstamour/catchall/-/tree/master/egraph
+
+;; https://en.wikipedia.org/wiki/Disjoint-set_data_structure
+
+;; https://clojure.org/guides/equality
 
 ;;; Code:
 (in-package :obj/equiv)

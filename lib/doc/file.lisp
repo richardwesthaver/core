@@ -116,10 +116,14 @@ the name of the next top-level headline or NIL."
           while l
           if (heading-line-p l)
           do (progn (setf next (decomment l)) (return-from desc))
-          else do (push (decomment l) description))
+          else 
+          do (unless (sequence:emptyp (trim l)) 
+               (push (decomment l) description) 
+               (push (make-string 1 :initial-element #\newline) description)))
     (values 
-     (when description (trim (apply #'concatenate 'string description)))
-     (string-right-trim ":" next))))
+     (when description (trim (apply #'concatenate 'string (nreverse description))))
+     (unless (string-equal  "Code" (subseq next 0 4)) 
+       (string-right-trim ":" next)))))
 
 (defun headline-values-p (string)
   (unless (> 5 (length string))
@@ -166,7 +170,7 @@ position is always assumed to be 0."
     (multiple-value-bind (hl next) (read-file-headline f)
       (when hl
         (let ((h (make-instance 'file-header :headline hl)))
-          (when next 
+          (when next
             (setf (slot-value h 'commentary) 
                   (make-instance 'file-heading 
                     :level 0 :name next
@@ -176,7 +180,7 @@ position is always assumed to be 0."
                             (loop for l = (read-line f nil)
                                   while l
                                   until (string-prefix-p ";;; Code:" l)
-                                  unless (or (sequence:emptyp l) (not (char= #\; (schar l 0))))
+                                  unless (sequence:emptyp (trim l))
                                   collect (decomment l)
                                   collect (make-string 1 :initial-element #\newline)))))))
           h)))))
