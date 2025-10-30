@@ -42,6 +42,24 @@
   "Return T if the CAR of CONS is EQL to A."
   (eql a (car cons)))
 
+(defun invoke-transfer-error (error)
+  "Equivalent to (invoke-restart 'transfer-error error)."
+  (invoke-restart 'transfer-error error))
+
+(defun transfer-error-report (stream)
+  (format stream "Transfer this error to a dependent thread, if one exists."))
+
+(defun condition-handler (condition)
+  "Mimic the CL handling mechanism, calling handlers until one assumes
+control (or not)."
+  (loop for ((condition-type . handler) . rest) on *handlers*
+        do (when (typep condition condition-type)
+             (let ((*handlers* rest))
+               (handler-bind ((condition #'condition-handler))
+                 (funcall handler condition)))))
+  (when (typep condition 'error)
+    (invoke-transfer-error condition)))
+
 ;;; Standard Conditions
 (define-condition std-error (error)
   ((message :initarg :message

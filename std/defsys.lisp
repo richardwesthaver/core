@@ -300,9 +300,11 @@ USE should be called in order to load and activate a module."
 (defcomponent system (mod-component module)
   ((version :accessor version)
    description
-   (plan :description "The default plan associated with this object which specifies the ordering of
+   (plan 
+    :documentation "The default plan associated with this object which specifies the ordering of
 system jobs to be executed in an async context."
-         :initform :serial))
+    :initform :serial
+    :accessor plan))
   (:keyword :sys)
   (:default-initargs :hook (make-instance 'key-hook)))
 
@@ -670,7 +672,9 @@ calling any component ops."
     (if asdf 
         (asdf:load-system (name self) :verbose verbose :force force)
         (with-system-session (self)
-          (mapc 'load-component (components self)))))
+          (case (system-plan self)
+            (:sequential (mapc 'load-component (components self)))
+            (t (nyi! "Unrecognized PLAN keyword"))))))
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
       (apply 'load-system sys args))))

@@ -106,24 +106,6 @@ is bound to the correct target THREAD-POOL before calling."
 (defvar *error-workers-lock* (make-mutex :name "error workers")
   "Lock for *ERROR-WORKERS*.")
 
-(defun invoke-transfer-error (error)
-  "Equivalent to (invoke-restart 'transfer-error error)."
-  (invoke-restart 'transfer-error error))
-
-(defun transfer-error-report (stream)
-  (format stream "Transfer this error to a dependent thread, if one exists."))
-
-(defun condition-handler (condition)
-  "Mimic the CL handling mechanism, calling handlers until one assumes
-control (or not)."
-  (loop for ((condition-type . handler) . rest) on *handlers*
-	do (when (typep condition condition-type)
-	     (let ((*handlers* rest))
-	       (handler-bind ((condition #'condition-handler))
-		 (funcall handler condition)))))
-  (when (typep condition 'error)
-    (invoke-transfer-error condition)))
-
 (defconstant +work-tag+ '%work)
 
 (defvar *debugger-error* nil
@@ -1018,7 +1000,7 @@ provided. *THREAD-POOL* is returned."
 (defun scheduler* () (scheduler *thread-pool*))
 
 (defun start-workers (pool)
-  "Start all workers in the given task POOL."
+  "Start all workers in the given thread POOL."
   (loop for w across (workers pool)
         do (start-worker w)))
 
@@ -1360,7 +1342,7 @@ arguments `make-pool-args'.
 **NOTE**: Use this only if you understand its implications. Since
 `*thread-pool*' is unaffected outside `body', the REPL will be useless with
 respect to the temporary pool. For instance calling `kill'
-from the REPL will not affect tasks that are running in the temporary
+from the REPL will not affect work that is running in the temporary
 pool.
 
 Multiple uses of `with-temp-pool' within the same application are

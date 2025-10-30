@@ -49,8 +49,10 @@ hints.")
       (hash-table (setf (gethash element object default) new-value))
       (array
        (if (or test key start end from-end)
-           (let ((n (apply 'position element object args)))
-             (setf (aref object n) new-value))
+           (if-let ((n (apply 'position element object args)))
+             (setf (aref object n) new-value)
+             ;; new element
+             (vector-push-extend new-value object))
            (setf (aref object element) new-value)))
       (standard-object (setf (slot-value object element) new-value))
       (t

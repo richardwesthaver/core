@@ -728,7 +728,7 @@
 
 (defpkg :obj/graph
   (:nicknames :graph)
-  (:use :cl :std :obj/id :ast :std/readtable)
+  (:use :cl :std :obj/id :ast :std/readtable :obj/equiv)
   (:import-from :obj/val :get-val)
   (:export 
    :vertex :edge :graph :make-edge :make-graph

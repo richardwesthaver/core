@@ -179,7 +179,7 @@
     :thunk skc-config))
   :cmds 
   ((:name init
-    :description "initialize a skelfile in the current directory"
+    :description "initialize a project"
     :opts ((:name "name" :description "project name" :type string))
     :thunk skc-init)
    (:name id

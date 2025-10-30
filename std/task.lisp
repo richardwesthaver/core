@@ -1,6 +1,21 @@
 ;;; task.lisp --- Standard Task API
 
-;; 
+;; Tasks, Jobs, Plans, Oh My!
+
+;;; Commentary:
+
+;; Tasks are our preferred level of abstraction for dealing with 'units of
+;; work'. The Threading API accessible via the THREAD-POOL class is not
+;; natively aware of tasks since WORKERs only understand functions, but is
+;; well-suited for executing them in worker threads nonetheless.
+
+;; <2025-10-30 Thu> In addition to executing tasks as functions in worker
+;; threads, this module aims to provide a TASK-POOL class.
+
+;; Jobs are effectively a collection of tasks, and plans establish an order of
+;; execution given an asynchronous context. Planners are to be used
+;; pre-emptively (often at compile or macro-expand time) to optimize the
+;; generation of efficient plans.
 
 ;;; Code:
 (in-package :std/task)
@@ -13,16 +28,6 @@
 (defvar *task*)
 (defvar *task-class* 'task)
 (defvar *task-priority* :low)
-
-(define-condition task-error (thread-error) ()
-  (:report (lambda (condition stream)
-             (format stream "Unhandled task error in thread ~A" 
-                     (thread-error-thread condition))))
-  (:documentation "An error which occurs while processing a task."))
-
-(defun task-error (thread)
-  "Signal a TASK-ERROR associated with THREAD."
-  (error 'task-error :thread thread))
 
 ;;; Proto
 (defgeneric task (self)
@@ -126,9 +131,13 @@ Tasks are _currently_ funcallable kernels.."))
 (defmethod run-object ((self job) &key worker)
   (run-job worker self))
 
-;; RESEARCH 2025-07-26: 
-;;; Task Scheduler?
-;;; Async-*
+;;; Task Scheduler
+(defclass task-scheduler (biased-scheduler) ())
+
+;;; Task Pool
+(defclass task-pool (thread-pool) ())
+
+;;; Async Tasks
 (defkernel async-task (task) ()
   (:documentation "Asynchronous tasks compatible with the future/promise API in STD/ASYNC. Tasks
 are scheduled and executed with the current *THREAD-POOL*."))
@@ -136,3 +145,28 @@ are scheduled and executed with the current *THREAD-POOL*."))
 ;;; Simple Tasks
 (defkernel simple-task (task) ()
   (:documentation "Simple Tasks support sync/async variants of task objects."))
+
+;;; Plan
+(defclass plan () ())
+
+;;;; conditions
+
+;;;; status
+(defstruct status
+  (bits)
+  (stamp)
+  (group)
+  (index))
+
+;; status bits
+(std:define-bitfield status-bits
+  ;; 3 bits, same as ASDF
+  (keep boolean)
+  (done boolean)
+  (need boolean))
+
+;;;; plan
+(defclass plan (scheduler) ())
+
+;;;; planner
+(defclass planner () ())

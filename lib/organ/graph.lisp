@@ -37,8 +37,8 @@
 
 (defclass org-graph (directed-graph) ()
   (:default-initargs 
-   :nodes (make-array 0 :element-type 'node :adjustable t)
-   :edges (make-array 0 :element-type 'edge :adjustable t)))
+   :nodes (make-array 0 :element-type 'node :adjustable t :fill-pointer t)
+   :edges (make-array 0 :element-type 'edge :adjustable t :fill-pointer t)))
 
 (defmethod read-ast ((fmt (eql :org-graph)) stream)
   "Read an ORG-GRAPH specification from STREAM."
@@ -413,13 +413,16 @@ new ID to be serialized on export.")
 (defmethod json:json-write ((self org-heading) &optional stream)
   (json:json-write (%org-heading-hash-table self *org-graph-export-identity*) stream))
   
-(defmethod serialize ((self org-graph) (format (eql :json)) &key stream path)
+(defmethod serialize ((self org-graph) (format (eql :json)) &key stream path if-exists if-does-not-exist)
   (if stream
       (let ((obj (make-hash-table :test 'equal)))
         (setf (gethash "nodes" obj) *org-graph-nodes*
               (gethash "links" obj) *org-graph-edges*)
         (json:json-write obj stream))
-      (with-open-file (f path :direction :output :external-format :utf-8)
+      (with-open-file (f path :direction :output 
+                              :external-format :utf-8 
+                              :if-does-not-exist if-does-not-exist 
+                              :if-exists if-exists)
         (serialize self :json :stream f))))
 
 (defun %fix-path (obj root &optional id)
@@ -446,18 +449,19 @@ new ID to be serialized on export.")
 (defun org-graph-node-fix-paths (&optional (nodes *org-graph-nodes*) (root "https://otom8.dev/graph/"))
   (mapc (lambda (x) (org-graph-node-fix-path x root)) nodes))
 
-(defun org-graph-json (&optional (graph *org-graph*))
+(defun org-graph-json (&optional (graph *org-graph*) (if-exists :supersede))
   "Generate a json object containing the nodes and edges of GRAPH."
   (org-graph-node-fix-paths)
-  (serialize graph :json :path "/opt/stash/data/web/cdn/data/org-graph.json"))
+  (serialize graph :json :path "/opt/stash/data/web/cdn/data/org-graph.json" :if-exists if-exists))
 
-(defun org-graph-minisearch-json (&optional (files *org-graph-files*))
+(defun org-graph-minisearch-json (&optional (files *org-graph-files*) (if-exists :supersede))
   "Generate a Minisearch json search index based on FILES."
   (let ((*org-graph-export-id* -1))
     (serialize (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)) :json
-               :path "/opt/stash/data/web/cdn/data/org-graph-index.json")))
+               :path "/opt/stash/data/web/cdn/data/org-graph-index.json"
+               :if-exists if-exists)))
 
-(defun org-graph-tinysearch-json (&optional (files *org-graph-files*))
+(defun org-graph-tinysearch-json (&optional (files *org-graph-files*) (if-exists :supersede))
   "Generate a Tinysearch json search index based on FILES."
   (serialize 
    (mapcar (lambda (x)
@@ -468,5 +472,6 @@ new ID to be serialized on export.")
                tbl))
            (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)))
    :json
-   :path "/opt/stash/data/web/cdn/data/org-graph-search.json"))
+   :path "/opt/stash/data/web/cdn/data/org-graph-search.json"
+   :if-exists if-exists))
 

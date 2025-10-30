@@ -156,16 +156,23 @@ Delete and return the old edges of NODE in GRAPH."))
 
 ;;; Graph
 (defclass graph (node)
-  ((nodes :initform (make-hash-table :test 'equal)
-          :type (or (vector node) hash-table)
+  ((nodes 
+    :initform (required-argument :nodes)
+    :type (or (vector node) hash-table)
           :accessor nodes
           :initarg :nodes)
-   (edges :initform (make-hash-table :test 'edge-equalp)
-          :type (or (vector edge) hash-table)
-          :accessor edges
-          :initarg :edges))
+   (edges 
+    :initform (required-argument :edges)
+    :type (or (vector edge) hash-table)
+    :accessor edges
+    :initarg :edges))
   (:documentation "generic graph object."))
 
+(defclass simple-graph (graph) ()
+  (:default-initargs 
+   :nodes (make-hash-table :test 'equal)
+   :edges (make-hash-table :test 'edge-equalp)))
+  
 (defmethod copy-graph ((graph graph))
   (make-instance (type-of graph) :nodes (copy-object (nodes graph)) :edges (copy-object (edges graph))))
 
@@ -183,10 +190,15 @@ Delete and return the old edges of NODE in GRAPH."))
   (multiple-value-bind (value included) (get-val (nodes graph) node)
     (declare (ignorable value)) included))
 
-(defmethod delete-node ((graph graph) node)
+(defmethod delete-node ((graph simple-graph) node)
   (prog1 (mapcar (lambda (edge) (cons edge (delete-edge graph edge)))
                  (node-edges graph node))
     (remhash node (nodes graph))))
+
+(defmethod delete-node ((graph graph) (node node))
+  (prog1 (mapcar (lambda (edge) (delete-edge graph edge))
+                 (node-edges graph node))
+    (remove node (nodes graph) :test 'equiv)))
 
 (defmethod delete-edge ((graph graph) edge)
   (prog1 (edge-value graph edge)
@@ -195,6 +207,14 @@ Delete and return the old edges of NODE in GRAPH."))
                                   :test 'edge-equalp)))
           edge)
     (remhash edge (edges graph))))
+
+(defmethod delete-edge ((graph graph) (edge edge))
+  (prog1 (edge-value graph edge)
+    (mapc (lambda (node) (setf (get-val (nodes graph) node)
+                               (remove edge (get-val (nodes graph) node)
+                                       :test 'equiv)))
+          (nodes edge))
+    (remove edge (edges graph) :test 'equiv)))
 
 (defmethod node-edges ((graph graph) node)
   (multiple-value-bind (edges included) (get-val (nodes graph) node)
@@ -228,7 +248,7 @@ Delete and return the old edges of NODE in GRAPH."))
                  (directed-graph edge))
                (get-val (nodes graph) n)
                :test 'edge-equalp)))
-  (setf (get-val (edges graph) (name edge)) (or value edge))
+  (setf (get-val (edges graph) edge :test 'equiv) (or value edge))
   edge)
 
 (defmethod add-edge ((graph graph) (edge id) &optional value)

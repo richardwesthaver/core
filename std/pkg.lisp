@@ -1255,7 +1255,9 @@
    :make-task
    :make-job
    :run-job
-   :jobp :taskp :task :task-worker))
+   :jobp :taskp :task :task-worker
+   :plan :status :planner :plan-bits
+   :task-pool :task-scheduler))
 
 (defpkg :std/rand
   (:use :cl)

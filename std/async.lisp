@@ -7,12 +7,11 @@
 ;; based on LPARALLEL
 
 #|
-           promise-base
-             /     \
-          promise  plan
+                  promise
                    /  \
  speculation = future  delay
 |#
+
 ;; NOTE: instead of 'force' we use 'await'
 
 ;; ref: https://github.com/lmj/lparallel
