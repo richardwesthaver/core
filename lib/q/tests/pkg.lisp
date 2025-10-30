@@ -4,10 +4,10 @@
 
 ;;; Code:
 (defpackage :q/tests/fuzz
-  (:use :cl :std :rt/fuzz :q :log :plan :schema :sql :dql))
+  (:use :cl :std :rt/fuzz :q :log :schema :sql :dql))
 
 (defpackage :q/tests
-  (:use :cl :std :rt :q :log :parse/pratt :sql :dql :ast :plan :schema))
+  (:use :cl :std :rt :q :log :parse/pratt :sql :dql :ast :schema))
 
 (in-package :q/tests)
 (defsuite :q)

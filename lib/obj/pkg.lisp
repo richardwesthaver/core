@@ -517,17 +517,9 @@
    :config-find :config-get :defconfig
    :load-config))
 
-(defpkg :obj/plan
-  (:nicknames :plan)
-  (:use :cl :std :obj/ast :obj/config :obj/build)
-  (:export :plan :planner
-           :logical-plan
-           :physical-plan
-           :make-physical-plan))
-
 (defpkg :obj/schema
   (:nicknames :schema)
-  (:use :cl :std :config :build :stored :sb-mop :id :ast :dynamic :plan)
+  (:use :cl :std :config :build :stored :sb-mop :id :ast :dynamic)
   (:export
    #:schema
    #:object-schema
@@ -610,13 +602,13 @@
 
 (defpkg :obj/project
   (:nicknames :project)
-  (:use :cl :std :id :schema :plan :config :ast)
+  (:use :cl :std :id :schema :config :ast)
   (:export :project :project-config :make-project
    :*default-project-class* :simple-project))
 
 (defpkg :obj/db
   (:nicknames :db)
-  (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :plan :config)
+  (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :config)
   (:export
    :ensure-transaction
    :dbs

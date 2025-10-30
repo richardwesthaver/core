@@ -74,7 +74,7 @@
     :initform nil :initarg :duration)
    (format :initform nil :initarg :format)))
 
-(defclass status ()
+(defclass mpd-status ()
   ((volume :reader volume :initarg :volume :initform nil)
    (repeat :reader repeatp :initarg :repeat :initform nil)
    (random :reader randomized :initarg :random :initform nil)
@@ -338,7 +338,7 @@
 
 (defcommand status ()
   "Return status of MPD."
-  (make-class (send "status") 'status))
+  (make-class (send "status") 'mpd-status))
 
 (defcommand stats ()
   "Return statisics."

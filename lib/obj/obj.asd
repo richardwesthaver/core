@@ -56,7 +56,6 @@
    (:file "build")
    (:file "ast")
    (:file "config")
-   (:file "plan")
    (:file "schema")
    (:file "project")
    (:file "db")

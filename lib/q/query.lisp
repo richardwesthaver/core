@@ -621,6 +621,9 @@
         (mult-expression (make-instance 'mult-physical-expression :lhs l :rhs r))
         (div-expression (make-instance 'div-physical-expression :lhs l :rhs r))))))
 
+(defgeneric make-physical-plan (plan)
+  (:documentation "Create a physical plan from logical plan."))
+
 ;; ;; Control Stack dies here?
 ;; (defmethod make-physical-plan ((plan logical-query-plan))
 ;;   (etypecase plan

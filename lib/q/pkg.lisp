@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :q/proto
   ;; (:nicknames :query)
-  (:use :cl :std :plan :ast :schema)
+  (:use :cl :std :ast :schema)
   (:export 
    :query
    :query-expression
@@ -110,13 +110,13 @@
    :query-parser))
 
 (defpackage :q/select
-  (:use :cl :std :q/proto :plan :schema :ast)
+  (:use :cl :std :q/proto :schema :ast)
   (:shadow :select)
   (:export :select))
 
 (defpackage :q/sql
   (:nicknames :sql)
-  (:use :cl :std :q/proto :parse/pratt :id :schema :parse/proto :ast :plan)
+  (:use :cl :std :q/proto :parse/pratt :id :schema :parse/proto :ast)
   (:export
    :sql-error
    :read-sql-string
@@ -162,7 +162,7 @@
 
 (defpackage :q/dql
   (:nicknames :dql)
-  (:use :cl :std :q/proto :id :dat/proto :ast :schema :plan)
+  (:use :cl :std :q/proto :id :dat/proto :ast :schema)
   (:export
    :dql-error
    :dql-data-source
@@ -174,7 +174,7 @@
    :dql-anonymous-p))
 
 (pkg:defpkg :q
-  (:use :cl :std :plan :id :schema :ast :srv)
+  (:use :cl :std :id :schema :ast :srv)
   (:use-reexport :q/proto)
   (:export
    :query-engine :query-parser
