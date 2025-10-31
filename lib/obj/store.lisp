@@ -319,7 +319,7 @@ equal comparison"))
    "The source of unique object IDs."))
 
 (let ((%next-oid -1))
-  (defmethod next-oid ((store list))
+  (defmethod next-oid (store)
     (incf %next-oid)))
 
 (defgeneric next-cid (store)
@@ -327,7 +327,7 @@ equal comparison"))
    "The source of unique class schema IDs."))
 
 (let ((%next-cid -1))
-  (defmethod next-cid ((store list))
+  (defmethod next-cid (store)
     (incf %next-cid)))
 
 (defun unindex-slot-value (sc key value old-name old-base)
@@ -818,7 +818,7 @@ cache is needed because we cache in the class slots.")
 (defgeneric default-class-id (base-type sc)
   (:documentation "A method implemented by the store for providing
    fixed class ids for basic btree derivative types")
-  (:method ((base-type t) (sc list))
+  (:method ((base-type t) (sc t))
     (sxhash base-type)))
 
 (defgeneric default-class-id-type (id sc)

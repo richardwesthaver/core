@@ -117,8 +117,6 @@ that a vertex always carries an ID slot."))
 (defgeneric edges (graph))
 (defgeneric (setf edges) (graph edges))
 
-(defgeneric graph-equal (graph1 graph2))
-
 (defgeneric subgraph (graph nodes)
   (:documentation "Return the subgraph of GRAPH restricted to NODES."))
 
@@ -128,14 +126,16 @@ Delete and return the old edges of NODE in GRAPH."))
 
 (defgeneric has-node-p (graph node)
   (:documentation "Return non-nil if GRAPH has node NODE."))
+
 (defgeneric has-edge-p (graph edge)
   (:documentation "Return `true' if GRAPH has edge EDGE."))
 
 (defgeneric edge-weight (edge &key &allow-other-keys)
-  (:method ((edge t) &key &allow-other-keys) (values 1.0)))
+  (:method ((edge t) &key) (values 1.0))
+  (:method ((edge weighted-edge) &key) (weight-of edge)))
 
 (defgeneric edge-value (graph edge)
-  (:method ((graph t) (edge t)) (values nil)))
+  (:method ((graph t) (edge t)) nil))
 
 (defgeneric (setf edge-value) (new graph edge))
 
@@ -173,11 +173,8 @@ Delete and return the old edges of NODE in GRAPH."))
    :nodes (make-hash-table :test 'equal)
    :edges (make-hash-table :test 'edge-equalp)))
   
-(defmethod copy-graph ((graph graph))
-  (make-instance (type-of graph) :nodes (copy-object (nodes graph)) :edges (copy-object (edges graph))))
-
 (defmethod copy-object ((graph graph))
-  (copy-graph graph))
+  (make-instance (type-of graph) :nodes (copy-object (nodes graph)) :edges (copy-object (edges graph))))
 
 (defmethod subgraph ((graph graph) nodes)
   (make-instance (type-of graph) :nodes nodes :edges (copy-object (edges graph))))
@@ -258,9 +255,10 @@ Delete and return the old edges of NODE in GRAPH."))
   (name (get-val (edges graph) edge :key 'id)))
 
 (defmethod (setf edge-value) (new (graph graph) edge)
-  (etypecase (edges graph)
-    (hash-table (setf (get-val (edges graph) edge) new))
-    (sequence (setf (nth (position edge (edges graph) :key 'id:id) (edges graph)) new))))
+  (setf (nth (position edge (edges graph) :key 'id:id) (edges graph)) new))
+
+(defmethod (setf edge-value) (new (graph simple-graph) edge)
+  (setf (get-val (edges graph) edge) new))
 
 (defgeneric merge-nodes (graph node1 node2 &key new)
   (:documentation "Combine NODE1 and NODE2 in GRAPH into the node NEW.
@@ -300,10 +298,9 @@ EDGE2 will be combined."))
           (delete-edge graph edge2)))
 
 (defgeneric degree (graph node)
-  (:documentation "Return the degree of NODE in GRAPH."))
-
-(defmethod degree ((graph graph) node)
-  (length (node-edges graph node)))
+  (:documentation "Return the degree of NODE in GRAPH.")
+  (:method ((graph graph) node)
+    (length (node-edges graph node))))
 
 (defmethod add-node ((graph graph) node)
   (assert (or (numberp node) (symbolp node) (stringp node)) (node)
@@ -324,17 +321,19 @@ EDGE2 will be combined."))
           :initarg :edges))
   (:documentation "graph with only directed edges."))
 
-(defgeneric indegree (digraph node)
-  (:documentation "The number of edges directed to NODE in GRAPH."))
+(defclass simple-directed-graph (directed-graph simple-graph) ()
+  (:default-initargs 
+   :edges (make-hash-table :test 'directed-edge-equalp)))
 
-(defmethod indegree ((digraph directed-graph) node)
-  (length (remove-if-not [{member node} #'cdr] (node-edges digraph node))))
+(defgeneric indegree (digraph node)
+  (:documentation "The number of edges directed to NODE in GRAPH.")
+  (:method ((digraph directed-graph) node)
+    (length (remove-if-not [{member node} #'cdr] (node-edges digraph node)))))
 
 (defgeneric outdegree (digraph node)
-  (:documentation "The number of edges directed from NODE in DIGRAPH."))
-
-(defmethod outdegree ((digraph directed-graph) node)
-  (length (remove-if-not [{equal node} #'car] (node-edges digraph node))))
+  (:documentation "The number of edges directed from NODE in DIGRAPH.")
+  (:method ((digraph directed-graph) node)
+    (length (remove-if-not [{equal node} #'car] (node-edges digraph node)))))
 
 ;;; Shortest Path
 (defgeneric shortest-path (graph a b &optional heuristic)
@@ -409,18 +408,20 @@ implementation of A*.")
 ;;          t in G.  Then (min-cut G) is equal to the minimum of the
 ;;          min cut of s and t in G and (min-cut G').
 (defun weigh-cut (graph cut)
-  (reduce #'+ (mapcar {edge-value graph}
-                      (remove-if-not (lambda (edge)
-                                       (and (intersection edge (first cut))
-                                            (intersection edge (second cut))))
-                                     (edges graph)))))
+  (reduce 
+   #'+ 
+   (mapcar 
+    {edge-value graph}
+    (remove-if-not 
+     (lambda (x) (intersection x (first cut)) (intersection x (second cut)))
+     (edges graph)))))
 
 (defgeneric min-cut (graph)
   (:documentation
    "Return both the global min-cut of GRAPH and the weight of the cut."))
 
 (defmethod min-cut ((graph graph))
-  (let ((g (copy-graph graph))
+  (let ((g (copy-object graph))
         (merged-nodes (mapcar (lambda (n) (list n n)) (nodes graph)))
         cuts-of-phase)
     (flet ((connection-weight (group node)

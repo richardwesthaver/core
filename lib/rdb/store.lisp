@@ -845,7 +845,7 @@ serialized object schemas."))
 
 (defmethod cursor-delete ((cursor rdb-dup-cursor))
   (if (cursor-initialized-p cursor)
-      (progn (db-cursor-delete (cursor-handle cursor))
+      (progn (cursor-delete (cursor-handle cursor))
              (setf (cursor-initialized-p cursor) nil))
       (error "Can't delete with uninitialized cursor!")))
 

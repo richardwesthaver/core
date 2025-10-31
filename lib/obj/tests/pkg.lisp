@@ -80,29 +80,33 @@
 
 (deftest btree (:skip t)
   ;; FIX 2025-02-27: 
-  (is (make-instance 'btree:btree-index :store (make-array 100))))
+  (is (make-instance 'btree:btree :store (make-instance 'store))
 
 ;;; Graphs
 (deftest basic-graph ()
   "Test basic graph functionality."
-  (let ((g1 (make-instance 'graph:graph)))
+  (let ((g1 (make-instance 'graph:simple-graph)))
     (is (typep g1 'graph:graph))
-    (graph:add-node g1 :foo)
-    (graph:add-node g1 :bar)
-    (graph:add-edge g1 '(:foo :bar))
+    (graph:add-node g1 0)
+    (graph:add-node g1 1)
+    (graph:add-edge g1 '(0 1))
     ;; graph is undirected, so this is no-op
-    (graph:add-edge g1 '(:bar :foo))
+    (graph:add-edge g1 '(1 0))
+    (is (equiv (copy-object g1) g1))
+    ;; FIX 2025-10-30: 
+    (isnt (shortest-path g1 0 1))
     ;; and only 1 edge exists
     (is (= 2 (length (hash-table-keys (graph:edges g1)))))
-    (let ((g2 (make-instance 'graph:directed-graph)))
+    (let ((g2 (make-instance 'graph:simple-directed-graph)))
       (is (typep g2 'graph:directed-graph))
-      (graph:add-node g2 :baz)
-      (graph:add-node g2 :buz)
-      (graph:add-edge g2 '(:baz :buz))
+      (graph:add-node g2 (make-instance 'graph:vertex :id :baz))
+      (graph:add-node g2 (make-instance 'graph:vertex :id :buz))
+      (graph:add-edge g2 (make-instance 'graph:directed-edge :in :baz :out :buz))
       ;; graph is directed, so this is a unique edge
       (graph:add-edge g2 '(:buz :baz))
       ;; 2 edges exist
       (is (= 2 (length (hash-table-keys (graph:edges g2)))))
+      ;; (shortest-path g2 :buz :baz)
       ;; (graph:add-node g1 g2)
       ;; (is (graph::has-node-p g1 g2))
       ;; (graph::delete-node g1 g2)
@@ -162,7 +166,7 @@
 (deftest store ())
 
 ;;; Tensors
-(deftest simple-tensors ())
+(deftest simple-tensor ())
 
 ;;; Cache
 (deftest simple-cache ())

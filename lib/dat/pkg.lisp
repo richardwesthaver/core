@@ -1,11 +1,11 @@
 ;;; dat/pkg.lisp --- Data
 
 ;;; Code:
-(defpackage :dat/int
-  (:use :cl :std)
+(defpackage :dat-int
+  (:use :std-lisp)
   (:export *dat-packages*))
 
-(in-package :dat/int)
+(in-package :dat-int)
 
 (eval-always (defparameter *dat-packages* nil))
 
@@ -506,4 +506,4 @@
 (eval-always
   (pkg:defpkg :dat
     (:use :cl :std)
-    #.`(:use-reexport ,@dat/int:*dat-packages*)))
+    #.`(:use-reexport ,@dat-int:*dat-packages*)))

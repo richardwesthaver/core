@@ -3,10 +3,10 @@
 ;;
 
 ;;; Code:
-(defpackage obj/int
+(defpackage obj-int
   (:use :cl :std)
   (:export :*obj-packages*))
-(in-package :obj/int)
+(in-package :obj-int)
 
 (eval-always (defvar *obj-packages* nil))
 
@@ -103,7 +103,7 @@
 
 (defpkg :obj/meta/stored
   (:nicknames :meta/stored :stored)
-  (:use :cl :std :sb-mop)
+  (:use :cl :std :sb-mop :val)
   (:export
    :stored-class :initialize-stored-class
    :stored-slot
@@ -230,9 +230,9 @@
   (:nicknames :uri)
   (:use :cl :std :std/seq :punycode)
   (:export
-   :uri				; class
+   :uri
    :uri-p
-   :iri				; subclass of uri
+   :iri
    :iri-p
    :copy-uri
    :uri-parse-error
@@ -246,14 +246,14 @@
    :uri-ipv6
    :uri-zone-id
    :uri-plist
-   :uri-authority			; pseudo-slot accessor
+   :uri-authority
    :uri-host
-   :urn				; class
+   :urn
    :urn-nid
    :urn-nss
-   :urn-q-component			; RFC 8141
-   :urn-f-component			; RFC 8141
-   :urn-r-component			; RFC 8141
+   :urn-q-component
+   :urn-f-component
+   :urn-r-component
    :*strict-parse*
    :parse-uri
    :merge-uris
@@ -266,7 +266,7 @@
    :iri-to-string
    :parse-uri-string-rfc3986
    :parse-iri-string-rfc3987
-   :make-uri-space			; interning...
+   :make-uri-space
    :uri-space
    :uri=
    :intern-uri
@@ -723,14 +723,18 @@
   (:use :cl :std :obj/id :ast :std/readtable :obj/equiv)
   (:import-from :obj/val :get-val)
   (:export 
-   :vertex :edge :graph :make-edge :make-graph
+   :vertex :edge :make-edge :make-graph
    :nodes :edges :add-node :add-edge
-   :weighted-edge :directed-edge :undirected-edge :directed-graph
-   :edge-value :edge-weight :node-edges
-   :edgex
-   :edge-out
-   :edge-in
-   :class-graph))
+   :weighted-edge :directed-edge :edge-value :edge-weight
+   :edge-weight :node-edges :edgex :edge-out
+   :edge-in :subgraph :delete-node :merge-nodes :merge-edges :degree
+   :graph
+   :simple-graph
+   :directed-graph
+   :simple-directed-graph
+   :class-graph
+   :indegree :outdegree
+   :shortest-path :min-cut))
 
 (defpkg :obj/tree
   (:nicknames :tree)
@@ -740,7 +744,7 @@
 
 (defpkg :obj/tree/btree
   (:nicknames :obj/btree :btree)
-  (:use :cl :std :obj/tree :stored :db :obj/val)
+  (:use :cl :std :obj/tree :stored :db :val)
   (:export
    #:existsp
    #:btree
@@ -855,7 +859,7 @@
 
 (defpkg :obj/store
   (:nicknames :store)
-  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache)
+  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val)
   (:export
    #:store
    #:next-oid

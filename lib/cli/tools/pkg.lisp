@@ -3,7 +3,7 @@
 ;; Convenience functions for working with common CLI programs
 
 ;;; Code:
-(in-package :cli/int)
+(in-package :cli-int)
 
 (defparameter *cli-tool-packages* `(,(package-name *package*)))
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cli-tool-packages* :test 'string=)))

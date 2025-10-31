@@ -10,7 +10,7 @@
            (slot-boundp instance slot-name))
       (slot-value instance slot-name)))
 
-(deferror get-val-error (invalid-argument) ()
+(deferror value-error (invalid-argument) ()
   (:auto t)
   (:default-initargs :reason "GET-VAL does not handle this type of object. Specialize your own method."))
 
@@ -36,10 +36,10 @@ type hints.")
                ((equal 'plist data-type)
                 (get object element))
                (t
-                (get-val-error object)
+                (value-error object)
              (if (listp object)
                  (apply 'find element object args)
-                 (get-val-error object))))))))))
+                 (value-error object))))))))))
 
 (defgeneric (setf get-val) (new-value object element &key &allow-other-keys)
   (:documentation "Set the value in a object based on the supplied element name and possible type
@@ -62,10 +62,10 @@ hints.")
                  ((equal 'plist data-type)
                   (setf (getf object element) new-value))
                  (t
-                  (get-val-error object)))
+                  (value-error object)))
            (if (listp object)
                (apply 'nsubstitute new-value element object args)
-               (get-val-error object)))))))
+               (value-error object)))))))
 
 (defgeneric get-value (elt obj)
   (:method (elt (obj sequence))

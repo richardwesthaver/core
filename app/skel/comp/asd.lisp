@@ -4,7 +4,7 @@
 
 ;; The problem with ASD files is that they're read-only afaik - eg there's no
 ;; 'write' methods implemented on ASD:SYSTEM objects. This makes it a bit
-;; tedious because we obviously want to transform SK-LISP-SYSTEM objects
+;; tedious because we obviously want to transform SK-ASDF-SYSTEM objects
 ;; directly to ASDF:SYSTEM, but also need to be able to write them out as
 ;; discrete files for portability. Probably will end up violating all that is
 ;; DRY and holy.
@@ -12,13 +12,13 @@
 ;;; Code:
 (in-package :skel/comp/asd)
 
-(defclass sk-lisp-system (sk-mod asdf:system)
+(defclass sk-asdf-system (sk-mod asdf:system)
   ;; these slots are inferred in ASDF:SYSTEM. Since we are primarily concerned
   ;; with generating ASDF:SYSTEM definitions rather than parsing them we restore them here.
-  ((serial :initform nil :type boolean :accessor sk-lisp-system-serial)
-   (perform :initform nil :type list :accessor sk-lisp-system-perform)))
+  ((serial :initform nil :type boolean :accessor sk-asdf-system-serial)
+   (perform :initform nil :type list :accessor sk-asdf-system-perform)))
 
-(defmethod name ((self sk-lisp-system)) (asdf::coerce-name self))
+(defmethod name ((self sk-asdf-system)) (asdf::coerce-name self))
 
 (defun read-system-definitions (system)
   (with-open-file (file (asdf:system-source-file system))
@@ -26,23 +26,23 @@
           while x
           collect x)))
 
-(defun to-sk-system (system)
-  (let ((sys (change-class system 'sk-lisp-system)))
-    (setf (sk-lisp-system-serial sys) nil
-          (sk-lisp-system-perform sys) nil)
+(defun asd-to-sk-system (system)
+  (let ((sys (change-class system 'sk-asdf-system)))
+    (setf (sk-asdf-system-serial sys) nil
+          (sk-asdf-system-perform sys) nil)
     (id:update-id sys)
     sys))
 
 (defmethod sk-convert ((self asdf:system))
-  (to-sk-system self))
+  (asd-to-sk-system self))
 
-(defun find-sk-system (system)
-  (to-sk-system (asdf:find-system system)))
+(defun find-sk-asdf-system (system)
+  (asd-to-sk-system (asdf:find-system system)))
 
-(defun parse-sk-lisp-system (name path &optional opts)
-  (to-sk-system (asdf::parse-component-form nil (list* :system name :pathname path opts))))
+(defun parse-sk-asdf-system (name path &optional opts)
+  (asd-to-sk-system (asdf::parse-component-form nil (list* :system name :pathname path opts))))
 
-(defmethod sk-load ((self sk-lisp-system) &key force force-not verbose version)
+(defmethod sk-load ((self sk-asdf-system) &key force force-not verbose version)
   (asdf:load-system self :force force :force-not force-not :verbose verbose :version version))
 
 (defmethods sk-load-component 
@@ -53,9 +53,9 @@
    (let* ((type (pathname-type form))
           (name (namestring (if type (pathname-name form) form)))
           (fname (if type form (make-pathname :name name :type "asd"))))
-     (parse-sk-lisp-system name (merge-pathnames fname path)))))
+     (parse-sk-asdf-system name (merge-pathnames fname path)))))
 
-(defmethod sk-compile ((self sk-lisp-system) &key force force-not verbose version &allow-other-keys)
+(defmethod sk-compile ((self sk-asdf-system) &key force force-not verbose version &allow-other-keys)
   (asdf:compile-system self :force force :force-not force-not :verbose verbose :version version))
 
 (defun sk-write-asd-components (module)
@@ -77,7 +77,7 @@
        ,@(when-let ((x (asdf:module-components module)))
            `(:components ,(mapcar #'sk-write-asd-components x)))))))
 
-(defmethod sk-write-file ((self sk-lisp-system) &key path)
+(defmethod sk-write-file ((self sk-asdf-system) &key path)
   (let ((name (asdf:component-name self)))
     (with-open-file (s path
                        :direction :output
@@ -85,7 +85,7 @@
       (format s ";;; ASDF definition for system ~A" name)
       (let ((*print-case* :downcase))
         (pprint `(defsystem ,name
-                   :class sk-lisp-system
+                   :class sk-asdf-system
                    ,@(when-let ((x (asdf:component-version self))) `(:version ,x))
                    ,@(when-let ((x (asdf:system-depends-on self))) `(:depends-on ,x))
                    ,@(when-let ((x (asdf:system-description self))) `(:description ,x))
@@ -101,15 +101,15 @@
                    ,@(when-let ((x (asdf::component-build-pathname self))) `(:build-pathname ,x))
                    ,@(when-let ((x (asdf::component-build-operation self))) `(:build-operation ,x))
                    ,@(when-let ((x (asdf::component-entry-point self))) `(:entry-point ,x))
-                   ,@(when-let ((x (sk-lisp-system-perform self))) `(:perform ,x))
-                   ,@(when-let ((x (sk-lisp-system-serial self))) `(:serial ,x))
+                   ,@(when-let ((x (sk-asdf-system-perform self))) `(:perform ,x))
+                   ,@(when-let ((x (sk-asdf-system-serial self))) `(:serial ,x))
                    :components ,(mapcar #'sk-write-asd-components
                                         (asdf:module-components self)))
                 s)
         (terpri s)))))
 
 ;; (sk-write-file (find-sk-system :obj) :path "test")
-;; (describe (parse-sk-lisp-system "skel" "/home/ellis/comp/core/lib/"))
+;; (describe (parse-sk-asdf-system "skel" "/home/ellis/comp/core/lib/"))
 
-(defmethod sk-read-file ((self sk-lisp-system) path)
-  (parse-sk-lisp-system (pathname-name path) (pathname-directory path)))
+(defmethod sk-read-file ((self sk-asdf-system) path)
+  (parse-sk-asdf-system (pathname-name path) (pathname-directory path)))

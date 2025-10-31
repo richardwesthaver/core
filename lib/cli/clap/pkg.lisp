@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :cli/int)
+(in-package :cli-int)
 (defparameter *cli-clap-packages* nil)
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cli-clap-packages* :test 'string=)))
 

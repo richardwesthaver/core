@@ -7,7 +7,7 @@
 
 (defpkg :obj
   (:use :cl :std)
-  (:use-reexport . #.obj/int:*obj-packages*))
+  (:use-reexport . #.obj-int:*obj-packages*))
 
 ;;; DEFSYS Providers
 ;; (defprovider :ast (name))

@@ -19,11 +19,11 @@
 
 ;;; Code:
 (in-package :std-user)
-(defpkg :cli/int 
+(defpkg :cli-int 
   (:use :cl :std) 
   (:export :*cli-packages* :*cli-tool-packages* :*cli-clap-packages*))
 
-(in-package :cli/int)
+(in-package :cli-int)
 
 (defparameter *cli-packages* nil)
 

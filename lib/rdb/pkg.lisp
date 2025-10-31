@@ -12,7 +12,7 @@
    :sb-alien :db :schema :btree 
    :store :stored :log :io/static 
    :time :config :build :ast 
-   :id :std/seq :srv :net/srv)
+   :id :std/seq :srv :net/srv :val)
   (:import-from :db :backend :options)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
