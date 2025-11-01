@@ -909,7 +909,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
 ;; (map nil #'receive-worker-start workers)))
 ;; (map nil #'receive-worker-start workers)))
 
-(defun make-thread-pool (worker-count &key (name :default)
+(defun make-thread-pool (worker-count &key name
 					   (bind `((*standard-output* . ,*standard-output*)
 						   (*error-output* . ,*error-output*)))
 					   (worker-kernel *worker-kernel*)
@@ -921,8 +921,8 @@ and execution of concurrent work using a pool of 'worker' threads."))
                                            (worker-class *worker-class*))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
-NAME when non-nil is an EQL-unique identifier associated with the thread-pool
-in *THREAD-POOL-TABLE*.
+NAME is an EQL-unique identifier associated with the thread-pool in
+*THREAD-POOL-TABLE* (NIL is the default name).
 
 BIND is an alist for establishing thread-local dynamic bindings inside worker
 threads.

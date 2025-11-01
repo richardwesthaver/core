@@ -5,9 +5,10 @@
 ;;; Code:
 (defpackage :q/proto
   ;; (:nicknames :query)
-  (:use :cl :std :ast :schema)
+  (:use :cl :std :ast :schema :id :srv)
   (:export 
    :query
+   :query-engine
    :query-expression
    :logical-expression
    :column-expression
@@ -177,7 +178,6 @@
   (:use :cl :std :id :schema :ast :srv)
   (:use-reexport :q/proto)
   (:export
-   :query-engine :query-parser
    :*query-engine*
    :*query-dialect*
    :query-dialect-designator

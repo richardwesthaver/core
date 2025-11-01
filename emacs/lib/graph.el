@@ -922,6 +922,8 @@ either side, and deletes both sides of a link."
 ;; TODO 2025-10-31: 
 (defun graph-menu--populate ())
   
+(defun graph-menu--refresh (&optional _arg _no-confirm))
+
 (define-derived-mode graph-menu-mode tabulated-list-mode "Graph Menu"
   "Major mode for browsing a list of graph nodes."
   :interactive nil
@@ -934,8 +936,6 @@ either side, and deletes both sides of a link."
   (setq tabulated-list-sort-key (cons "Title" nil))
   (setq revert-buffer-function 'graph-menu--refresh)
   (tabulated-list-init-header))
-
-(defun graph-menu--refresh (&optional _arg _no-confirm))
   
 (defun graph-list ()
   (interactive)

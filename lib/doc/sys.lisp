@@ -12,7 +12,10 @@
 ;;; Code:
 (in-package :doc)
 
-(defclass system-documentation (org-document)
-  ((system :initarg :system :accessor doc-system :type std:system)))
+(defclass system-documentation ()
+  ((system :initarg :system :accessor doc-system :type std:system)
+   (packages :initarg :packages :accessor doc-packages :type (vector package-documentation))))
 
 (defmethod std/defsys::system-description ((self system-documentation)) (std/defsys::system-description (doc-system self)))
+
+(defclass system-document (system-documentation org-document) ())

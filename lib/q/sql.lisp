@@ -700,8 +700,9 @@
     (sql-alias (make-instance 'alias-expression
                  :expr (make-sql-logical-expression (slot-value expr 'expr) input)
                  :alias (id (slot-value expr 'alias))))
-    ;; TODO 2024-08-04: requires cast-expression impl in obj/query
-    ;; (sql-cast (make-instance 'cast))
+    (sql-cast (make-instance 'cast-expression 
+                :expr (make-sql-logical-expression (slot-value expr 'expr) input)
+                :data-type (slot-value expr 'type)))
     (sql-function
      (when (id expr)
        (string-case ((id expr))

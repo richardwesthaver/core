@@ -8,21 +8,13 @@
 ;; all levels of Query processing.
 
 ;;; Code:
-(in-package :q)
+(in-package :q/proto)
 
 ;;; Vars
 (defvar *query-engine*)
 (deftype query-dialect-designator () `(member :sql :dql :simple))
 (declaim (query-dialect-designator *query-dialect*))
 (defvar *query-dialect* :sql)
-
-;;; Engine
-
-;; (sb-mop:class-slots (find-class 'query-engine)) ;; service schema
-(defclass query-engine (query-planner execution-context data-source engine)
-  ((sources :initarg :sources)
-   (parser :initarg :parser :type query-parser)
-   (optimizer :initarg :optimizer :type query-optimizer)))
 
 (defgeneric sql (self input)
   (:documentation "Process sql input and return a DATA-FRAME."))

@@ -27,8 +27,8 @@
 
 (defclass package-documentation ()
   ((package :initform *package* :initarg :package :type package :accessor doc-package)
-   (files :initform #() :initarg :files :type (array file-documentation) :accessor doc-files)
-   (symbols :initform #() :initarg :symbols :type (array symbol-documentation) :accessor doc-symbols)))
+   (files :initform #() :initarg :files :type (vector file-documentation) :accessor doc-files)
+   (symbols :initform #() :initarg :symbols :type (vector symbol-documentation) :accessor doc-symbols)))
 
 (defmethod name ((self package-documentation))
   (package-name (doc-package self)))

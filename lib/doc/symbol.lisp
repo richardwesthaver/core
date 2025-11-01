@@ -96,12 +96,6 @@ boundp fboundp generic-function class macro special-operator package"
 (defmethod name ((self symbol-documentation))
   (symbol-name (doc-symbol self)))
 
-#|
-(setq *defs* 
- (loop for x across (doc-symbols (package-documentation)) collect (doc-definitions x)))
-
-|#
-
 (defun symbol-documentation (s)
   "Return the SYMBOL-DOCUMENTATION object of S, a symbol."
   (let ((class (classify-symbol s)))
@@ -125,7 +119,7 @@ boundp fboundp generic-function class macro special-operator package"
     (remove-if
      #'null ;; definition-source-pathname is allowed to be nil,
             ;; indicating no path to definition.
-    (mapcar #'definition-source-pathname (doc-definitions self)))))
+     (mapcar #'definition-source-pathname (doc-specs self)))))
 
 (defmethod describe-object ((self symbol-documentation) stream)
   (with-slots (symbol id definitions specs alloc) self

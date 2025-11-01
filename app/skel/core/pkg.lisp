@@ -146,4 +146,4 @@
   (:export))
 
 (defpackage :skel/core/plan
-  (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto :plan))
+  (:use :cl :std :skel/core/int :skel/core/obj :skel/core/proto))

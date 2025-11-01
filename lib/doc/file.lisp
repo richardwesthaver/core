@@ -117,12 +117,12 @@ the name of the next top-level headline or NIL."
           if (heading-line-p l)
           do (progn (setf next (decomment l)) (return-from desc))
           else 
-          do (unless (sequence:emptyp (trim l)) 
-               (push (decomment l) description) 
+          do (unless (sequence:emptyp (trim l))
+               (push (decomment l) description)
                (push (make-string 1 :initial-element #\newline) description)))
     (values 
      (when description (trim (apply #'concatenate 'string (nreverse description))))
-     (unless (string-equal  "Code" (subseq next 0 4)) 
+     (unless (or (< (length next) 4) (string-equal "Code" (subseq next 0 4)))
        (string-right-trim ":" next)))))
 
 (defun headline-values-p (string)

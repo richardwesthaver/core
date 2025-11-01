@@ -758,3 +758,10 @@ accumulator."
   (exec
    (make-physical-plan
     (optimize-query (make-instance 'projection-pushdown-optimizer) self))))
+
+;;; Engine                                                                 
+;; (sb-mop:class-slots (find-class 'query-engine)) ;; service schema       
+(defclass query-engine (query-planner execution-context data-source engine)
+  ((sources :initarg :sources)                                             
+   (parser :initarg :parser :type query-parser)                            
+   (optimizer :initarg :optimizer :type query-optimizer)))

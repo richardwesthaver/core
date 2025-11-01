@@ -12,6 +12,12 @@
 
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *obj-packages* :test 'string=)))
 
+;;; Internals
+(defpkg :obj/val                 
+  (:nicknames :val)              
+  (:use :cl :std)                
+  (:export :get-val :get-value)) 
+
 ;;; Meta Packages
 (defpkg :obj/meta/stealth
   (:nicknames :meta/stealth :stealth)
@@ -199,11 +205,6 @@
   (:use :cl :std))
 
 ;;; Objective Packages
-(defpkg :obj/val
-  (:nicknames :val)
-  (:use :cl :std)
-  (:export :get-val :get-value))
-
 (defpkg :obj/id
   (:nicknames :id)
   (:use :cl :std)

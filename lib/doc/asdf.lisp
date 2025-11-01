@@ -13,27 +13,27 @@
 
 (defun asdf-system-documentation (system)
   "Return the SYSTEM-DOCUMENTATION for a specified SYSTEM."
-  (let ((s (find-system system)))
+  (let ((s (asdf:find-system system)))
     (make-instance 'asdf-system-documentation
       :system s)))
 
 (defmethod print-object ((self asdf-system-documentation) stream)
   (with-slots (system) self
     (print-unreadable-object (self stream :type t)
-      (format stream "~A" (component-name system)))))
+      (format stream "~A" (asdf:component-name system)))))
 
 (defmethod doc-files ((self asdf-system-documentation))
   "Return a list of source file components from SELF."
   (flet ((%rec (s) (if (typep s 'asdf:module)
                        (doc-files s)
-                       (component-pathname s))))
-    (flatten (mapcar #'%rec (component-children (doc-system self))))))
+                       (asdf:component-pathname s))))
+    (flatten (mapcar #'%rec (asdf:component-children (doc-system self))))))
 
 (defmethod doc-files ((self asdf:module))
   (flet ((%rec (s) (if (typep s 'asdf:module)
                        (doc-files s)
-                       (component-pathname s))))
-    (mapcar #'%rec (component-children self))))
+                       (asdf:component-pathname s))))
+    (mapcar #'%rec (asdf:component-children self))))
   
 ;; TODO: to do this correctly we need to also check if SELF is a
 ;; prefix of a different system name. e.g. "DOC" and "DOC-UTILS"
@@ -44,7 +44,7 @@
 method will only return packages that are prefixed with the name of
 SELF."
   ;; (asdf:component-loaded-p
-  (let ((s (component-name (doc-system self))))
+  (let ((s (asdf:component-name (doc-system self))))
     (mapcar
      #'package-documentation
      (remove-if #'null
@@ -55,10 +55,10 @@ SELF."
                                (string=
                                 (string-upcase s) 
                                 (package-name p))
-			       (string-prefix-p 
+			       (starts-with-subseq
 				(concatenate 'string (string-upcase s) "-")
 				(package-name p))
-			       (string-prefix-p 
+			       (starts-with-subseq
 				(concatenate 'string (string-upcase s) "/")
 				(package-name p))))
                      p))
@@ -72,14 +72,14 @@ SELF."
                      (when (sb-int:featurep (pop x))
                        (asdf-system-documentation (pop x))))
                  (asdf-system-documentation x)))
-          (system-depends-on (doc-system self))))
+          (asdf:system-depends-on (doc-system self))))
 
 (defun find-system-dependents (system)
   "Return a list of systems which depend on SYSTEM by iterating over ASDF:REGISTER-SYSTEMS."
   (let ((r))
   (dolist (s (asdf:registered-systems))
     (setf s (find-system s))
-    (when (and s (member (component-name system)
+    (when (and s (member (asdf:component-name system)
                          (mapcar
                           (lambda (dep)
                             (when (atom dep)
