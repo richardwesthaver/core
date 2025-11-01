@@ -116,6 +116,10 @@ function NAME and be skipped for (setf NAME)."
 (defverb call (self &rest args)
   (:documentation "Call SELF with ARGS."))
 
+(definline init* (&rest keys)
+  "Call the default initializer on each arg."
+  (mapc 'init keys))
+
 ;;; *-OBJECT
 (defgeneric run-object (self &key &allow-other-keys)
   (:documentation "Explicitly run the object SELF."))

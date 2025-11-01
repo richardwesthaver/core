@@ -24,8 +24,13 @@ Logging is enabled for all levels, which is equivalent to :TRACE.")
 T which indicates that message data will be sent without generating a new
 object.")
 
-(defvar *log-show-backtrace* t)
-(defvar *logger* nil)
+(defvar *log-show-backtrace* t
+  "Whether or not to show a backtrace with log messages.")
+
+(defvar *logger* nil
+  "The global logger instance currently in use by applications. If this value is
+NIL then log messages are printed directly to standard output.")
+
 (defvar *log-timestamp* t 
   "If non-nil, print a timestamp with log output. The value may be a
 function in which case it is used as the function value of

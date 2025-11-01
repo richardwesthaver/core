@@ -10,6 +10,8 @@
 (defclass ini-section (ini-object) ())
 ;; (defun ini-write (value &optional stream))
 
+(defaccessor name ((self ini-section)) (car (ast self)))
+
 (defmethod print-object ((self ini-object) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (car (ast self)))))
@@ -62,7 +64,7 @@
 
 (defun ini-read-section (stream)
   (ini-read-char stream #\[ :skip-ws t)
-  (let ((ret (print (list (ini-read-name stream)))))
+  (let ((ret (list (ini-read-name stream))))
     (ini-read-char stream #\] :skip-ws t)
     (loop while (or (ini-read-comment stream) (ini-peek-key-char stream))
           do (push (ini-read-pair stream) ret))

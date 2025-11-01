@@ -80,7 +80,7 @@ arrange for FVAR to be closed after BODY."
      (unwind-protect (progn ,@body)
        ,@(when close `(sb-posix:close ,fvar)))))
 
-;;; Linux
+;;;_ Linux
 ;; https://man7.org/linux/man-pages/man3/statvfs.3.html
 (defar statvfs int
   (path c-string)
@@ -128,7 +128,7 @@ arrange for FVAR to be closed after BODY."
 (defconstant +tcsaflush+ 2)
 (defconstant +opost+ #x01)
 
-;;;; IOCTLs
+;;;_ IOCTLs
 ;; based on functions from Shinmera's CL-SPIDEV
 ;; TODO 2025-04-27: 
 (defun ioctl (fd cmd)
@@ -154,7 +154,7 @@ arrange for FVAR to be closed after BODY."
 
 ;; (defmacro define-ioctl (name fd cmd))
 
-;;; XDG
+;;;_ XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
 ;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
 (defvar *xdg-dir-table*
@@ -198,7 +198,6 @@ arrange for FVAR to be closed after BODY."
                ((or :data-dirs :config-dirs) (xdg-path-split y))
                (t (directory-path y)))
              (multiple-value-bind (z p) (xdg-dir x)
-               (print p)
                (if p z (probe-file (merge-homedir-pathnames z)))))))
     (mapc
      (lambda (k)
@@ -207,7 +206,13 @@ arrange for FVAR to be closed after BODY."
      (hash-table-keys *xdg-dir-table*))
     *xdg-dir-table*))
 
-;;; user-add
+(defmethod std/meta:init ((self (eql :xdg)) &rest args)
+  (prog1 (init-xdg-dirs)
+    (unless (null args)
+      (std/list:doplist (k v) args
+        (setf (xdg-dir k) v)))))
+
+;;;_ user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
   (let ((useradd (probe-file "/bin/useradd")))
     (if useradd
@@ -225,7 +230,7 @@ arrange for FVAR to be closed after BODY."
          :output output)
         (error "unable to find USERADD program (/bin/useradd)"))))
                             
-;;; group-add
+;;;_ group-add
 (defun group-add (name &key force id users (output t))
   (let ((groupadd (probe-file "/bin/groupadd")))
     (if groupadd
@@ -237,7 +242,7 @@ arrange for FVAR to be closed after BODY."
          :output output)
         (error "unable to find GROUPADD program (/bin/groupadd)"))))
 
-;;; with-directory-iterator
+;;;_ with-directory-iterator
 (defun %get-file-kind (namestring follow-p)
   (handler-case
       (let ((mode (sb-posix:stat-mode
@@ -271,7 +276,7 @@ arrange for FVAR to be closed after BODY."
 (defun get-file-kind (file follow-p)
   (%get-file-kind (sb-ext:native-namestring file) follow-p))
 
-;;;; Hopefully portable pathname manipulations
+;;;_. Ambitiously portable pathname manipulations
 (defun absolute-pathname-p (pathspec)
   "Returns T if the PATHSPEC designates an absolute pathname, NIL otherwise."
   (eq :absolute (car (pathname-directory pathspec))))
@@ -394,7 +399,7 @@ Signals an error if PATHSPEC is wild."
     (merge-pathnames path (namestring (directory-path %default)))
     path))
 
-;;; StumpWM exec utils
+;;;_ StumpWM exec utils
 ;; from stumpwm/wrappers.lisp
 (defun execv (program &rest arguments)
   "Call the system execv() function, replacing the current process image with a
@@ -437,3 +442,4 @@ stream, and the second value is the output stream."
     (sb-alien:alien-sap
      (sb-alien::alien-lambda sb-alien:void ((signum sb-alien:int))
        ,@body))))
+

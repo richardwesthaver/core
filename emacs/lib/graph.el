@@ -888,5 +888,62 @@ either side, and deletes both sides of a link."
 
 (add-hook 'org-mode-hook 'org-graph-maybe-enable)
 
+;;; Graph Menu Mode
+(defcustom node-title-column-width 30
+  "Column width for the Node title in the graph menu."
+  :type 'natnum
+  :group 'graph)
+
+(defcustom node-edges-column-width 14
+  "Column width for the Node edges in the graph menu."
+  :type 'natnum
+  :group 'graph)
+
+(defcustom node-tags-column-width 14
+  "Column width for the Node tags in the graph menu."
+  :type 'natnum
+  :group 'graph)
+
+(defcustom node-properties-column-width 12
+  "Column width for the Node properties in the graph menu."
+  :type 'natnum
+  :group 'graph)
+
+(defcustom graph-async t
+  "If non-nil, graph-menu will use async operations when possible."
+  :type 'boolean
+  :group 'graph)
+
+(defun graph-menu--title-predicate (a b))
+(defun graph-menu--edges-predicate (a b))
+(defun graph-menu--tags-predicate (a b))
+(defun graph-menu--properties-predicate (a b))
+  
+;; TODO 2025-10-31: 
+(defun graph-menu--populate ())
+  
+(define-derived-mode graph-menu-mode tabulated-list-mode "Graph Menu"
+  "Major mode for browsing a list of graph nodes."
+  :interactive nil
+  (setq tabulated-list-format
+	`[("Title" ,node-title-column-width graph-menu--title-predicate)
+	  ("Edges" ,node-edges-column-width graph-menu--edges-predicate)
+	  ("Tags"  ,node-tags-column-width  graph-menu--tags-predicate)
+	  ("Properties" ,node-properties-column-width graph-menu--properties-predicate)])
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "Title" nil))
+  (setq revert-buffer-function 'graph-menu--refresh)
+  (tabulated-list-init-header))
+
+(defun graph-menu--refresh (&optional _arg _no-confirm))
+  
+(defun graph-list ()
+  (interactive)
+  (let ((buf (get-buffer-create "*Graph*")))
+    (with-current-buffer buf
+      (setq buffer-file-coding-system 'utf-8)
+      (graph-menu-mode))
+    (pop-to-buffer-same-window buf)))
+
 (provide 'graph)
 ;; graph.el ends here

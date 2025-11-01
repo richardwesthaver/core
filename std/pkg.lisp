@@ -946,6 +946,7 @@
    :assignee :started-p
    :verbp :init
    :reset :state
+   :init*
    :class-equalp
    :*standard-metaobjects*
    :find-slot-def-by-name

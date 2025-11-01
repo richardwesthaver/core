@@ -1523,7 +1523,6 @@ keep-alive-stream), and should handle clean-up of it"
                          :if-exists if-exists
                          :if-does-not-exist :create
                          :element-type '(unsigned-byte 8))
-      
       (remf args :if-exists)
       (let ((body (apply #'req:get uri :want-stream t :force-binary t args)))
         (copy-stream body out)

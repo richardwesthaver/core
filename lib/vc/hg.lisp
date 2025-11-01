@@ -87,13 +87,30 @@ parameter begins after a \";\" immediately following the \"<type>\" value."
 
 ;;; Config
 ;; https://www.mercurial-scm.org/doc/hgrc.5.html
-(config:defconfig hg-config (vc-config) 
+(config:defconfig hg-config (vc-config dat/ini:ini-document)
   ((paths :initarg :paths)
    (ui :initarg :ui)))
 
 (defmethod make-config ((self (eql :hg)) &key paths)
   (declare (ignore self))
   (make-instance 'hg-config :paths paths))
+
+(defmethod change-class ((self dat/ini:ini-document) (new (eql 'hg-config)) &key)
+  (let* ((ast (ast self))
+         (paths (find "paths" ast :key 'name :test 'string-equal))
+         (ui (find "ui" ast :key 'name :test 'string-equal)))
+    (when paths (removef ast paths))
+    (when ui (removef ast ui))
+    (make-instance 'hg-config 
+      :paths (cdr (ast paths))
+      :ui (cdr (ast ui))
+      :ast ast)))
+                             
+(defmethod find-config ((obj (eql :hg)) &rest args &key (directory (user-homedir-pathname)))
+  (declare (ignore args))
+  (let ((*default-pathname-defaults* directory))
+    (when-let ((config (directory ".hgrc")))
+      (change-class (deserialize (car config) :ini) 'hg-config))))
 
 (defun parse-hg-uri (obj)
   "Parse a URI which may be prefixed with '[stuff]' - the uri is returned as the

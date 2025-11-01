@@ -30,14 +30,17 @@
   (vc/proto::make-vc-ignore :path path :patterns (vc/proto::map-lines #'vc/proto::glob-path-match path)))
 
 ;; https://git-scm.com/docs/git-config
-(defclass git-config (vc-config) ())
+(defclass git-config (vc-config dat/ini:ini-document) ())
 
-;; TODO 2024-08-22: read ini files
+;; TODO 2025-10-31: 
+(defmethod change-class ((self dat/ini:ini-document) (new (eql 'git-config)) &key)
+  (make-instance 'git-config :ast (ast:ast self)))
+
 (defmethod find-config ((obj (eql :git)) &rest args &key (directory (user-homedir-pathname)))
   (declare (ignore args))
   (let ((*default-pathname-defaults* directory))
     (when-let ((config (directory ".gitconfig")))
-      (car config))))
+      (change-class (deserialize (car config) :ini) 'git-config))))
 
 (defclass git-repo (vc-repo)
   ((index))) ;; working-directory
