@@ -120,6 +120,9 @@ function NAME and be skipped for (setf NAME)."
   "Call the default initializer on each arg."
   (mapc 'init keys))
 
+;; TODO 2025-11-01: 
+(defverb scan (self seq &key))
+
 ;;; *-OBJECT
 (defgeneric run-object (self &key &allow-other-keys)
   (:documentation "Explicitly run the object SELF."))

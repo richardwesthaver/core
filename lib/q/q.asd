@@ -4,7 +4,6 @@
   :depends-on (:std :obj :log :dat :parse)
   :components ((:file "pkg")
                (:file "query")
-               (:file "select")
                (:file "parser")
                (:file "engine")
                (:file "sql")

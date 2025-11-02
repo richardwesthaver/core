@@ -52,15 +52,14 @@
    :package-documentation
    :symbol-documentation
    :doc
+   :doc-files
+   :doc-symbols
+   :doc-dependencies
+   :doc-dependents
+   :doc-packages
    :print-doc
-   :print-documentation))
-
-(defpackage :doc/asdf
-  (:use :std-lisp :doc)
-  (:shadowing-import-from :asdf :component-name :component-children
-   :system :component-pathname :find-system :system-description
-   :system-depends-on)
-  (:export :asdf-system-documentation))
+   :print-documentation
+   :asdf-system-documentation))
 
 (in-package :doc)
 

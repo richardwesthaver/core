@@ -38,12 +38,15 @@ uninitialized with non-nil :ast slots.")
 (defvar *skel-project-symbol-macros* nil)
 (defvar *skel-project-functions* nil)
 
+(defun skel-config-directory () (merge-pathnames "skel/" (std:xdg-dir :config-home)))
+  
 (declaim (pathname *skel-stash* *skel-store*
                *skel-cache* *user-skelrc* *system-skelrc*))
-(sb-ext:define-load-time-global *skel-stash* (merge-homedir-pathnames ".stash/skel/stash/"))
-(sb-ext:define-load-time-global *skel-store* (merge-homedir-pathnames  ".stash/skel/store/"))
-(sb-ext:define-load-time-global *skel-cache* (merge-homedir-pathnames ".stash/skel/cache/"))
-(sb-ext:define-load-time-global *skel-data* (merge-homedir-pathnames ".stash/skel/data/"))
-(sb-ext:define-load-time-global *skel-path* *default-pathname-defaults*)
-(sb-ext:define-load-time-global *user-skelrc* (merge-homedir-pathnames *default-skelrc*))
-(sb-ext:define-load-time-global *system-skelrc* (pathname "/etc/skelrc"))
+(defvar *skel-stash* (merge-homedir-pathnames ".stash/skel/stash/"))
+(defvar *skel-store* (merge-homedir-pathnames  ".stash/skel/store/"))
+(defvar *skel-cache* (merge-homedir-pathnames ".stash/skel/cache/"))
+(defvar *skel-data* (merge-homedir-pathnames ".stash/skel/data/"))
+(defvar *skel-path* *default-pathname-defaults*)
+(defvar *user-skelrc* (merge-pathnames "skelrc" (std:xdg-dir :config-home)))
+    
+(defvar *system-skelrc* (pathname "/etc/skelrc"))

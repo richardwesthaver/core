@@ -26,6 +26,9 @@
 (defun load-pacman-config (&optional (path #p"/etc/pacman.conf"))
   (deserialize path :pacman-config))
 
+(defmethod find-config ((self (eql :pacman)) &key (path #p"/etc/pacman.conf"))
+  (load-pacman-config path))
+
 (define-cli-tool :makepkg (&rest args)
   (let ((proc (sb-ext:run-program *makepkg* (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
@@ -96,3 +99,6 @@
                      while l 
                      collect l))))
     (make-instance 'makepkg-config :ast ast)))
+
+(defmethod find-config ((self (eql :makepkg)) &key (path #p"/etc/makepkg.conf"))
+  (load-makepkg-config path))

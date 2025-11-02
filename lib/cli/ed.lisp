@@ -93,6 +93,9 @@ state of each file in FILES."
 (push #'run-emacsclient sb-ext:*ed-functions*)
 (push #'run-emacs sb-ext:*ed-functions*)
 
+;;; Conditions
+;; TODO 2025-11-01: 'EDIT' restart
+
 ;;; Config
 (defconfig editor-config (ast) ())
 

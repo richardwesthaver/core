@@ -389,11 +389,5 @@ If given a prefix (C-u), set all args to t"
 	   (org-element-property :drawer-name drawer)
 	   contents))
 
-(defun org-cc-html-drawer (drawer contents info)
-  (org-html-drawer drawer contents info))
-
-(defun org-cc-html-format-drawer (name contents)
-  contents)
-
 (provide 'publish)
 ;;; publish.el ends here

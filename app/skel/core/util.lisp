@@ -23,7 +23,7 @@
                  :pretty t))
 
 (defun load-user-skelrc (&optional (file *user-skelrc*) (init t))
-  "Load a user-skelrc configuration from FILE. Defaults to USER-SKELR*.
+  "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
 
 If FILE does not exists, it is created with a default configuration."
   (flet ((%load () 
@@ -182,8 +182,9 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 *SKEL-STASH*
 *SKEL-LOGGER*
 ASDF:*USER-CACHE*"
-    (prog1 (%init setq)
-      (setq asdf:*user-cache* *skel-cache*)))
+    (init :xdg)
+    (setq *user-skelrc* (merge-pathnames "skelrc" (std:xdg-dir :config-home)))
+    (%init setq))
   (defun setf-skel-vars () (%init setf)))
 
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))

@@ -647,7 +647,7 @@ calling any component ops."
 
 (defgeneric find-system (self &key &allow-other-keys)
   (:method ((self t) &key (default :error))
-    (multiple-value-bind (val found) (gethash (keywordicate self) *system-table*)
+    (multiple-value-bind (val found) (gethash (keywordicate (string-upcase self)) *system-table*)
       (cond
         (found (values val found))
         ((eql default :error) (simple-system-error "System ~A not found." self))

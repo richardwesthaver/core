@@ -1155,8 +1155,8 @@ Add this function to appropriate major mode hooks such as
 
 ;;;###autoload
 (defun org-adjust-tags-column-reset-tags ()
-  "In org-mode buffers it will reset tag position according to
-`org-tags-column'."
+  "In org-mode buffers, reset tag position according to `org-tags-column'."
+  (interactive)
   (when (and
          (not (string= (buffer-name) "*Remember*"))
          (eql major-mode 'org-mode))

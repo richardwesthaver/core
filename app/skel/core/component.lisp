@@ -36,12 +36,12 @@
   "Make a new SK-MOD."
   (if (listp form)
       (apply #'make-instance 'sk-mod
-	     (let ((name (pop form))
-		   (components 
-		     (mapcar 
-		      (lambda (f)
-			(sk-load-component (car f) (if (= 1 (length (cdr f))) (cadr f) (cdr f))))
-		      form)))
+	     (let* ((name (pop form))
+		    (components 
+		      (mapcar 
+		       (lambda (f)
+			 (sk-load-component (car f) (if (= 1 (length (cdr f))) (cadr f) (cdr f)) (directory-path name)))
+		       form)))
 	       `(:name ,name :components ,components)))
       (make-instance 'sk-mod :name form :components nil)))
 

@@ -24,8 +24,8 @@
 ;;
 ;;; Commentary:
 ;;
-;; This gives you a chance to get rid of old entries in your Org files
-;; by expiring them.
+;; This package gives you a chance to get rid of old entries in your
+;; Org files by expiring them.
 ;;
 ;; By default, entries that have no EXPIRY property are considered to be
 ;; new (i.e. 0 day old) and only entries older than one year go to the
@@ -74,7 +74,6 @@
 ;; deadlining items.  You can deinsinuate: M-x org-expiry-deinsinuate
 
 ;;; Code:
-
 (require 'org)
 
 ;;; User variables:

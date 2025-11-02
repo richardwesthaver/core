@@ -36,6 +36,25 @@
    :json))
 
 ;; (systemctl-json "--user")
+(defstruct systemd-unit type name load active sub description)
+
+(defun parse-json-unit (json)
+  (let ((ast (ast:ast json)))
+    (assert (string-equal "unit" (caar ast)))
+    (let* ((name (cadr (pop ast)))
+           (type (pathname-type name)))
+      (setf name (pathname-name name))
+      (flet ((.assoc (x) (when-let ((y (assoc x ast :test 'string-equal))) (cadr y))))
+        (make-systemd-unit 
+         :type type
+         :name name 
+         :load (.assoc "load") 
+         :active (.assoc "active") 
+         :sub (.assoc "sub") 
+         :description (.assoc "description"))))))
+
+(defun systemd-units (&optional user)
+  (mapcar 'parse-json-unit (apply 'systemctl-json (when user (list "--user")))))
 
 (define-cli-tool :journalctl (&rest args)
   (let ((proc (sb-ext:run-program *journalctl* args :wait t :output t)))
@@ -51,3 +70,18 @@
   (let ((proc (sb-ext:run-program *networkctl* args :wait t :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (resolvectl-error "Networkctl command failed: ~A ~A" *resolvectl* (or args "")))))
+
+(define-cli-tool :loginctl (&rest args)
+  (let ((proc (sb-ext:run-program *loginctl* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (resolvectl-error "Loginctl command failed: ~A ~A" *loginctl* (or args "")))))
+
+(define-cli-tool :homectl (&rest args)
+  (let ((proc (sb-ext:run-program *homectl* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (resolvectl-error "Homectl command failed: ~A ~A" *homectl* (or args "")))))
+
+(define-cli-tool :userdbctl (&rest args)
+  (let ((proc (sb-ext:run-program *userdbctl* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (resolvectl-error "Userdbctl command failed: ~A ~A" *userdbctl* (or args "")))))

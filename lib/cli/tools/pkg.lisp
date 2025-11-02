@@ -194,12 +194,10 @@
 (defpkg :cli/tools/sys
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*systemctl* :run-systemd :run-systemctl
-   :systemd-error
-           :systemctl-stop
-   :systemctl-start
-   :systemctl-restart
-   :systemctl-status
-   :systemctl-json))
+   :systemd-error :systemctl-stop
+   :systemctl-start :systemctl-restart
+   :systemctl-status :systemctl-json
+   :systemd-units))
 
 (defpkg :cli/tools/rust
   (:nicknames :tools/rust)
@@ -259,3 +257,12 @@ ARGS and BODY are parsed as the args and body of the run-NAME function."
          ,@(when var `((pushnew ,name *cli-tools*)))
          (deferror ,err (cli-tool-error) () (:auto t))
          ,@(when args `((defun ,run ,args ,@body)))))))
+
+(defun tool-function (n) `(function ,(intern (format nil "RUN-~A" n) :cli/tools)))
+(defun tool-path (n) (symbol-value (intern (format nil "*~A*" n) :cli/tools)))
+(defun tool-error (n) (find-class (intern (format nil "~A-ERROR" n) :cli/tools)))
+
+(definline find-tool (name)
+  (when (memq name *cli-tools*)
+    (let ((n (symbol-name name)))
+      (values (tool-function n) (tool-path n) (tool-error n)))))

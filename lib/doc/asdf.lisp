@@ -3,7 +3,7 @@
 ;; Documentation support for ASDF Systems.
 
 ;;; Code:
-(in-package :doc/asdf)
+(in-package :doc)
 
 (defclass asdf-system-documentation ()
   ((system :initarg :system :type system :accessor doc-system)))
@@ -78,7 +78,7 @@ SELF."
   "Return a list of systems which depend on SYSTEM by iterating over ASDF:REGISTER-SYSTEMS."
   (let ((r))
   (dolist (s (asdf:registered-systems))
-    (setf s (find-system s))
+    (setf s (asdf:find-system s))
     (when (and s (member (asdf:component-name system)
                          (mapcar
                           (lambda (dep)

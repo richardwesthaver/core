@@ -22,7 +22,8 @@
 :components 
 ((:org "readme")
  (:asd "core")
- (:mod "std" (:asd "std"))
+ (:sys "core")
+ (:mod "std" (:asd "std") (:sys "std"))
  (:mod "ffi" (:asd "ffi"))
  (:mod "bin" (:asd "bin"))
  (:mod "app"
